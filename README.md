@@ -104,6 +104,8 @@ Das Orakel übernimmt die Rolle der Spielleitung. Es besteht aus zwei getrennten
 
 ### Inspirationskarte
 
+**Vorlage für Inhalt und Layout der Karte:** GameMaster's Apprentice, Second Edition (Base Deck). Die Kategorien auf Englisch und Deutsch stehen im Glossar [docs/gma2e-begriffe.md](docs/gma2e-begriffe.md).
+
 Das Vorbild für Bedienung und Aufbau ist die Web-Umsetzung des Game Master's Apprentice von James Turner:
 <https://jamesturneronline.net/game-masters-apprentice/>
 
