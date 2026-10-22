@@ -26,7 +26,10 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 
 **Zweiter Screen: Charaktere**
 - Karten für die **Spielercharaktere** mit UPP, Fertigkeiten, Ausrüstung, Credits und Notiz.
-- **Proben:** Fertigkeit auf der Charakterkarte antippen → Proben-Fenster mit Fertigkeit, Attributen (aus / Bonus / Malus), sonstigem DM und Schwierigkeit 10+ / 8+ / 6+. Die App zeigt den nötigen Wurf mit Wahrscheinlichkeit, würfelt und schreibt das Ergebnis in den Log.
+- **Proben direkt im Charakter-Screen** (kein eigenes Fenster):
+  - Oben auf der Charakterkarte die **Fertigkeit** antippen (oder „Ohne“ für −3).
+  - **Attribute** sind standardmäßig nicht dabei; ein Tippen auf ein Attribut im UPP schaltet aus → Bonus → Malus.
+  - **Unten** stehen fest die drei Schwierigkeiten **10+ / 8+ / 6+** (dieselbe Auswahl wie Gering/Mittel/Hoch beim Orakel), darüber der nötige Wurf mit Wahrscheinlichkeit und der Knopf „Probe würfeln“. Das Ergebnis geht in den Log.
 
 **Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf, Welten- und Charaktererschaffung, Sektorkarte, Schiffe, NSC-Karten, Chaosfaktor.
 
@@ -137,7 +140,7 @@ Die drei Stufen des Orakels sind gleichzeitig die drei Schwierigkeiten nach Rule
 | Mittel (50 %) | 8+ (Durchschnittlich) |
 | Hoch (75 %) | 6+ (Einfach) |
 
-In der App sitzt diese Auswahl **ganz unten** auf dem Hauptscreen und **bleibt stehen**, bis man sie ändert. Der Knopf „Ja/Nein“ fragt das Orakel mit der eingestellten Stufe. Im Proben-Fenster erscheint dieselbe Auswahl mit **10+ / 8+ / 6+** beschriftet.
+In der App sitzt diese Auswahl **ganz unten** auf dem Hauptscreen und **bleibt stehen**, bis man sie ändert. Der Knopf „Ja/Nein“ fragt das Orakel mit der eingestellten Stufe. Im Charakter-Screen steht dieselbe Auswahl ebenfalls ganz unten, dort mit **10+ / 8+ / 6+** beschriftet.
 
 ---
 
