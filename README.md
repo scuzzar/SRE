@@ -86,7 +86,45 @@ Geplanter Umfang (Classic Traveller, Books 1–3 als Basis, Erweiterungen späte
 1. Grundstufe wählen: **Einfach 6+**, **Durchschnittlich 8+**, **Schwierig 10+**.
 2. Bei Bedarf um **einen Punkt feinjustieren** (z. B. eine besonders harte schwierige Aufgabe: 11+).
 
-Bei einer Probe kommen DMs aus Fertigkeiten und Attributen wie gewohnt dazu. Die Skala liegt als Daten vor und kann angepasst werden.
+Die Skala liegt als Daten vor und kann angepasst werden.
+
+#### Fertigkeiten und Attribute (Hausregel, einheitlich nach 68A)
+
+**Was Classic Traveller selbst sagt** (Starter Edition, S. 11–16): Es gibt keine allgemeine Formel. Fertigkeiten und Attribute wirken als DMs, die beim jeweiligen Wurf stehen:
+- **Ohne Fertigkeit** nennen manche Fertigkeiten einen eigenen DM, zum Beispiel Administration −3, Forward Observer −4, Vacc Suit −4 und Streetwise −5.
+- **Stufe 0 für alle:** Bei Default Skills kann die Spielleitung allen Figuren Stufe 0 geben. In allen Waffen hat jede Figur ohnehin Stufe 0. Jack of All Trades zählt als Stufe 0 in jeder anderen Fertigkeit.
+- **Attribute** wirken über Schwellen beim einzelnen Wurf, zum Beispiel „+1 bei INT 8+“ oder „Chirurg nur mit GES 8+“.
+
+**Vereinheitlichung für die App:** Statt vieler Einzelregeln gilt eine Formel, die Flexibilität kommt über die Auswahl im konkreten Fall:
+
+> **2W6 + Fertigkeit + gewählte Attribute + sonstige DMs ≥ Zielwert (6+ / 8+ / 10+, ±1)**
+
+**Fertigkeit**
+
+| Fall | DM |
+|---|---|
+| Fertigkeit vorhanden | + Stufe (Pilot-2 → +2) |
+| Stufe 0 (Default Skills, Waffen, Jack of All Trades) | ±0 |
+| Ohne Fertigkeit | −2 (eine 68A-Stufe schwerer) |
+
+**Attribute:** Bei jeder Probe wählt man, welche Attribute zählen und ob jeweils als **Bonus** (hilft nur bei hohem Wert), als **Malus** (schadet nur bei niedrigem Wert) oder als beides. Die Schwellen nutzen die 68A-Zahlen und liegen symmetrisch um den 2W6-Schnitt von 7:
+
+| Modus | Attributwert | DM |
+|---|---|---|
+| Bonus | 8–9 | +1 |
+| Bonus | 10+ (A+) | +2 |
+| Malus | 5–6 | −1 |
+| Malus | 4 oder weniger | −2 |
+
+**Beispiele** (Kira, UPP 7A8975; Jonas, UPP 687A88):
+
+| Situation | Zielwert | DMs | Braucht auf 2W6 |
+|---|---|---|---|
+| Kira fliegt ein Stunt-Manöver | Schwierig 10+ | Pilot +2, GES-Bonus +2 | 6+ (72 %) |
+| Kira weicht stundenlang Asteroiden aus | Schwierig 10+ | Pilot +2, GES-Bonus +2, AUS-Malus ±0 | 6+ (72 %) |
+| Jonas (ohne Pilot) im selben Asteroidenfeld | Schwierig 10+ | ohne Fertigkeit −2, GES-Bonus +1, AUS-Malus ±0 | 11+ (8 %) |
+
+Vor dem Wurf zeigt die App an, was auf 2W6 nötig ist und wie wahrscheinlich das ist.
 
 ---
 
