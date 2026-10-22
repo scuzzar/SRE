@@ -28,7 +28,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 - Karten für die **Spielercharaktere** mit UPP, Fertigkeiten, Ausrüstung, Credits und Notiz.
 - **Proben direkt im Charakter-Screen** (kein eigenes Fenster):
   - Oben auf der Charakterkarte die **Fertigkeit** antippen (oder „Ohne“ für −3).
-  - **Attribute** sind standardmäßig nicht dabei und lassen sich **erst nach der Fertigkeit** dazuwählen; ein Tippen auf ein Attribut im UPP schaltet es an oder aus; der DM ergibt sich aus dem Wert (9+ → +1, 7–8 → ±0, 6− → −1).
+  - **Attribute** sind standardmäßig nicht dabei und lassen sich **erst nach der Fertigkeit** dazuwählen; ein Tippen auf ein Attribut im UPP schaltet es an oder aus; der DM ergibt sich aus dem Wert (9+ → +1, 6–8 → ±0, 5− → −1). Sobald die Fertigkeit gewählt ist, zeigt jedes Attribut an, ob es überhaupt +1 oder −1 brächte; neutrale Werte sind nicht wählbar.
   - **Unten** stehen fest die drei Schwierigkeiten **6+ / 8+ / 10+** (dieselbe Auswahl wie Hoch/Mittel/Gering beim Orakel), darüber der nötige Wurf mit Wahrscheinlichkeit und der Knopf „Probe würfeln“.
   - Das **Ergebnis erscheint als Popup**. Danach geht es zurück zum Orakel-Screen; **geloggt wird nur dort**. Der Charakter-Screen hat keinen Log.
 
@@ -112,13 +112,13 @@ Die Skala liegt als Daten vor und kann angepasst werden.
 | Stufe 0 (Default Skills, Waffen, Jack of All Trades) | ±0 |
 | Ohne Fertigkeit | −3 (wie Administration im Buch; als Option abschaltbar, falls wir es weglassen) |
 
-**Attribute:** Bei jeder Probe wählt man, welche Attribute zählen. Ein gewähltes Attribut ist je nach Wert automatisch Bonus oder Malus. Die Schwellen orientieren sich an den Beispielen der Starter Edition (Boni meist ab 9, Abzüge z. B. bei AUS 6 oder weniger):
+**Attribute:** Bei jeder Probe wählt man, welche Attribute zählen. Ein gewähltes Attribut ist je nach Wert automatisch Bonus oder Malus. Die Schwellen orientieren sich an den Beispielen der Starter Edition (Boni meist ab 9) und liegen symmetrisch um den 2W6-Schnitt von 7, sodass Bonus und Malus gleich häufig sind (je etwa 28 % der Attributwerte):
 
 | Attributwert (wenn gewählt) | DM |
 |---|---|
 | 9 oder mehr | +1 |
-| 7–8 | ±0 |
-| 6 oder weniger | −1 |
+| 6–8 | ±0 |
+| 5 oder weniger | −1 |
 
 Mehr als ±1 pro Attribut gibt es nicht: In den Beispielen der Starter Edition liefern Attribute bei Fertigkeitswürfen ebenfalls nur +1.
 
