@@ -43,7 +43,7 @@ Heute läuft eine Solo-Session auf Papier: ein Journal und daneben viele Karten.
 
 | Heute auf Papier | In der App |
 |---|---|
-| Indexkarten für SC und NSCs | Charakterkarten mit UPP, Fertigkeiten, Ausrüstung und Notizen. NSCs entstehen direkt aus dem NSC-Reiter der Inspirationskarte. |
+| Indexkarten für SC und NSCs | Charakterkarten mit UPP, Fertigkeiten, Ausrüstung und Notizen. NSCs lassen sich aus Namen, Merkmalen und Besitz der Inspirationskarte anlegen. |
 | Indexkarten für Schiffe | Schiffskarten mit Werten, Treibstoff, Fracht und Schäden |
 | Karte für die Waffen-×-Rüstungs-Matrix | Fällt als Karte weg: Im Kampf rechnet die App den DM selbst aus Waffe und Rüstung |
 | Sektorkarte | Interaktive Hex-Karte; ein Klick auf ein System öffnet die Planetenkarte |
