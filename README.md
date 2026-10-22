@@ -126,7 +126,9 @@ Die Karte ist vorerst **nur für Prompts** da. Ja/Nein-Antworten, Schwierigkeite
 | Merkmale | Tugend, Laster, Merkmal |
 | Flavortext | Ein aufgeschnapptes Zitat |
 
-Besitz und Situation stehen wie auf der GMA-Karte links, Namen und Merkmale rechts daneben. Die Inhalte der App sind eigene Listen mit Traveller-Bezug, nicht die Texte des GMA-Decks.
+Besitz und Situation stehen wie auf der GMA-Karte links, Namen und Merkmale rechts daneben.
+
+**Themen-Reiter (vorläufig):** Unter der Karte hängen die Traveller-Reiter **Auftrag, NSC, Begegnung, Welt, Schiff, Handel**, deren Felder ebenfalls antippbar sind und mit in den Log gehen. Sie sollen später an einen anderen Ort in der App wandern; wohin, ist noch offen. Die Inhalte der App sind eigene Listen mit Traveller-Bezug, nicht die Texte des GMA-Decks.
 
 **Noch nicht auf der Karte:** Chancen (dafür gibt es das eigene Ja/Nein-Orakel), Schwierigkeitsgenerator, Würfelrad, Impuls-Symbole, Kartensymbol, Kartennummer.
 
@@ -164,6 +166,7 @@ Diese Punkte werden als Nächstes gemeinsam geklärt:
 - **Entschieden: mobil zuerst.** Offen ist, ob als Web-App (PWA) oder als native App.
 - Später: Wie gibt man physische Würfe am schnellsten ein (z. B. Würfelaugen antippen, Summe eintippen)?
 - Später: Wie wächst die App über Version 1 hinaus, ohne den Hauptscreen zu überladen?
+- Wohin wandern die Themen-Reiter (Auftrag, NSC, Begegnung, Welt, Schiff, Handel), die vorläufig unter der Karte hängen?
 
 ### Architektur
 - Trennung von **Regel-Engine**, **Orakel-Engine** und **UI** als eigenständige Module?
