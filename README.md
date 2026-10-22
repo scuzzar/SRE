@@ -5,15 +5,38 @@ Eine App für **Solo-Rollenspiel mit Classic Traveller**. Sie soll zwei Dinge in
 1. **Die Regeln von Classic Traveller** – vollständig implementiert, damit Würfe, Tabellen und Abläufe nicht mehr von Hand nachgeschlagen werden müssen.
 2. **Ein Orakel**, das die Spielleitung ersetzt – angelehnt teils an **Mythic** (Mythic Game Master Emulator) und teils an den **Game Master's Apprentice (GMA)**.
 
-> Status: Konzeptphase. UI und Architektur sind noch offen (siehe [Offene Fragen](#offene-fragen)).
+> Status: Konzeptphase. Die Richtung der UI steht (Spieltisch, Journal bleibt auf Papier); Details und Architektur sind noch offen (siehe [Offene Fragen](#offene-fragen)).
 
 ---
 
 ## Ziele
 
-- Eine komplette Solo-Kampagne in Classic Traveller spielen können, ohne zwischen Regelbüchern, Orakeltabellen und Notizzetteln wechseln zu müssen.
+- Eine komplette Solo-Kampagne in Classic Traveller spielen können, ohne einen Stapel Papiere neben dem Journal zu brauchen.
 - Regeln und Orakel greifen ineinander: Das Orakel kennt den aktuellen Spielstand (Charaktere, Welt, Schiff, offene Handlungsfäden) und die Regel-Engine liefert die Würfe, wenn das Orakel eine Situation auslöst.
-- Alles, was passiert, landet in einem durchgehenden **Spieljournal**.
+- **Echte Würfel bleiben erlaubt**: Wo man selbst würfeln will, gibt man das Ergebnis ein (siehe [Physische Würfel](#physische-würfel)).
+
+### Was die App ersetzt und was nicht
+
+Heute läuft eine Solo-Session auf Papier: ein Journal und daneben viele Karten. Die App ersetzt **die Karten**, nicht das Journal.
+
+| Heute auf Papier | In der App |
+|---|---|
+| Indexkarten für SC und NSCs | Charakterkarten mit UPP, Fertigkeiten, Ausrüstung und Notizen. NSCs entstehen direkt aus dem NSC-Reiter der Inspirationskarte. |
+| Indexkarten für Schiffe | Schiffskarten mit Werten, Treibstoff, Fracht und Schäden |
+| Karte für die Waffen-×-Rüstungs-Matrix | Fällt als Karte weg: Im Kampf rechnet die App den DM selbst aus Waffe und Rüstung |
+| Sektorkarte | Interaktive Hex-Karte; ein Klick auf ein System öffnet die Planetenkarte |
+| Planetenkarten | Weltkarten mit UWP im Klartext, Handelscodes, Raumhafen und Notizen |
+
+**Journal:** Das erzählerische Journal bleibt vorerst **auf Papier**. Die App führt nur einen schlanken **Verlauf** aller Würfe, Orakelantworten und Ziehungen, damit man nachschlagen kann, was passiert ist. Der Verlauf kann als Markdown exportiert werden. Ein voller Journal-Editor kann später auf diesem Verlauf aufbauen.
+
+### Physische Würfel
+
+Für **Weltenerschaffung**, **Charaktererschaffung** und **Kampf** muss man auf jeden Fall mit echten Würfeln spielen können:
+
+- Jeder Wurf hat zwei Modi: **„App würfelt“** oder **„Ich würfle selbst“**. Die Voreinstellung lässt sich je Bereich festlegen.
+- Beim eigenen Würfeln sagt die App genau an, was zu würfeln ist (z. B. „2W6, Ziel 8+, DM +2“). Man gibt die Augen ein, und die App rechnet DMs, Ergebnis und Folgen aus.
+- Welten- und Charaktererschaffung laufen **Schritt für Schritt** ab, ein Wurf nach dem anderen, damit man jeden Wurf selbst machen kann.
+- Im Verlauf ist vermerkt, ob ein Wurf von der App oder von Hand kam.
 
 ---
 
@@ -95,7 +118,7 @@ Für die Solo RPG Engine werden diese Reiter **auf Traveller übertragen**, zum 
 
 - **Nur Prompts**: Die Ja/Nein-Antworten, die Schwierigkeit und die Würfelleiste (W4 bis W100) des Vorbilds entfallen auf der Karte. Ja/Nein-Fragen übernimmt das eigene Ja/Nein-Orakel, Würfe und Schwierigkeiten die Regel-Engine.
 - **Kontext statt Leerlauf**: Ereignisse greifen auf die Listen der Kampagne zu (Threads, Charaktere, aktuelle Welt).
-- **Journal**: Jeder Zug kann mit einem Klick ins Spieljournal übernommen werden. Im Original gibt es keinen Verlauf.
+- **Verlauf**: Jeder Zug landet im Verlauf der App und kann von dort ins Papier-Journal übertragen werden. Im Original gibt es keinen Verlauf.
 - **Direkter Regelbezug**: Felder wie „Begegnung“ oder „Reaktion“ können direkt die passenden Traveller-Regeln aufrufen.
 
 ### Ideen aus den beiden Systemen im Detail
@@ -124,8 +147,8 @@ Diese Punkte werden als Nächstes gemeinsam geklärt:
 
 ### UI
 - Plattform: Web-App, Desktop-App, Mobile – oder alles über eine Web-App (PWA)?
-- Aufbau: Journal-zentriert (Chat-/Logbuch-Stil) oder Dashboard mit Panels (Charakterbogen, Orakel, Karte, Schiff)?
-- Orakel: Die Inspirationskarte folgt dem GMA-Vorbild (Kernbereich und Themen-Reiter). Offen ist, wie Karte, Ja/Nein-Orakel, Journal und Charakterbogen auf einem Bildschirm zusammenspielen.
+- **Richtung: Spieltisch statt Logbuch.** In der Mitte die Sektorkarte oder die aktive Szene, an der Seite ein Kartenstapel mit SC, NSCs, Schiffen und Welten, die man sich „auf den Tisch legt“. Inspirationskarte, Ja/Nein-Orakel und Verlauf sind immer erreichbar. Offen ist, wie das im Detail aussieht.
+- Wie gibt man physische Würfe am schnellsten ein (z. B. Würfelaugen antippen, Summe eintippen)?
 
 ### Architektur
 - Trennung von **Regel-Engine**, **Orakel-Engine** und **UI** als eigenständige Module?
