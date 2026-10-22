@@ -15,8 +15,8 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 
 **Hauptscreen (Orakel)**, klar und ohne Ablenkung. Aufbau wie ein Chat: oben der **Log**, der nach oben wächst (das Neueste steht unten, direkt über den Knöpfen). Unten, im Daumenbereich, sitzen fest **Orakel, „Karte ziehen“ und „2W6“**.
 - **Optionale Frage**: Ein Fragefeld über den Knöpfen gilt für das Orakel **und** für die Karte. Die Frage wird mit der Antwort bzw. der Kartenauswahl im Log gespeichert.
-- **Ja/Nein-Orakel** mit drei Stufen: Unwahrscheinlich, 50/50, Wahrscheinlich.
-- **Knopf „Karte ziehen“**: zieht eine Inspirationskarte (Prompts, Ereignis, Sinne, Themen wie Auftrag oder NSC). Die Karte landet **nicht direkt im Log**, sondern erscheint im Vordergrund:
+- **Ja/Nein-Orakel** mit drei Stufen wie beim GMA: Gering (25 %), Mittel (50 %), Hoch (75 %).
+- **Knopf „Karte ziehen“**: zieht eine Inspirationskarte im Aufbau des GMA2e (Zufallsereignis, Sinne, Szenentyp, Besitz, Situation, Namen, Merkmale, Flavortext). Die Karte landet **nicht direkt im Log**, sondern erscheint im Vordergrund:
   - Eine gestellte Frage steht oben auf der Karte.
   - Man tippt die Einträge an, die man nutzen will (**Mehrfachauswahl**, auch über mehrere Themen hinweg).
   - Unten bestätigt ein **Haken** die Auswahl: Nur die ausgewählten Einträge kommen in den Log.
@@ -99,7 +99,7 @@ Das Orakel übernimmt die Rolle der Spielleitung. Es besteht aus zwei getrennten
 
 ### Ja/Nein-Orakel
 
-- Der Spieler stellt eine Frage und wählt eine von **drei Wahrscheinlichkeitsstufen**, wie beim GMA: **Unwahrscheinlich**, **50/50**, **Wahrscheinlich**.
+- Der Spieler stellt eine Frage und wählt eine von **drei Wahrscheinlichkeitsstufen**, wie beim GMA: **Gering**, **Mittel**, **Hoch**.
 - Die Antwort kommt aus Mythics **Fate Chart**. Sie hängt vom **Chaosfaktor** ab und kann „Außergewöhnlich Ja/Nein“ sowie **Zufallsereignisse** auslösen.
 
 ### Inspirationskarte
@@ -111,44 +111,35 @@ Das Vorbild für Bedienung und Aufbau ist die Web-Umsetzung des Game Master's Ap
 
 Das Prinzip: **Ein Klick auf „Neu ziehen“ erzeugt alles auf einmal.** Danach liegt eine komplette „Karte“ vor dir. Du liest nur die Felder, die zu deiner aktuellen Situation passen, und ignorierst den Rest.
 
-Die Karte ist vorerst **nur für Prompts und Themen wie Aufträge** da. Ja/Nein-Antworten, Schwierigkeiten und Würfe gehören nicht auf die Karte. Die Karte besteht aus zwei Bereichen.
+Die Karte ist vorerst **nur für Prompts** da. Ja/Nein-Antworten, Schwierigkeiten und Würfe gehören nicht auf die Karte.
 
-**1. Kernbereich (immer sichtbar)**
+**Aufbau nach GMA2e:** Inhalt und Layout folgen der Karte des GameMaster's Apprentice, Second Edition. Von oben nach unten (Begriffe siehe [Glossar](docs/gma2e-begriffe.md)):
 
-| Feld | Inhalt |
+| Bereich auf der Karte | Felder (einzeln antippbar) |
 |---|---|
-| Wortgenerator | Verb, Adjektiv, Substantiv als Inspirations-Dreiklang |
-| Ereignisgenerator (Mythic) | Fokus, Aktion, Thema |
-| Sinneseindrücke | Geräusch, Anblick, Gefühl, Geruch |
-| Symbole & Richtung | Streurichtung (für Treffer/Abweichung), Symbole als Interpretationshilfe |
+| Zufallsereignis | Verb · Adjektiv · Substantiv |
+| Sinneseindrücke | Hören, Sehen, Fühlen, Riechen |
+| Szenentyp | Eine Szenenidee |
+| Besitz | Eine Kategorie mit drei Beispielen |
+| Situation | Auslöser, Ort, Einsatz |
+| Namen | Drei Vornamen |
+| Merkmale | Tugend, Laster, Merkmal |
+| Flavortext | Ein aufgeschnapptes Zitat |
 
-**2. Themen-Reiter (Tabs)**
+Besitz und Situation stehen wie auf der GMA-Karte links, Namen und Merkmale rechts daneben. Die Inhalte der App sind eigene Listen mit Traveller-Bezug, nicht die Texte des GMA-Decks.
 
-Im Original gibt es Reiter wie *Orakel, Quest, Dungeon, Falle, Wildnis, Stadt, NSC, Begegnung, Schatz*. Jeder Reiter zeigt zusätzliche, thematisch passende Ergebnisse, die bei jedem Zug ebenfalls neu erzeugt werden.
-
-Für die Solo RPG Engine werden diese Reiter **auf Traveller übertragen**, zum Beispiel:
-
-| Reiter | Inhalt |
-|---|---|
-| **Auftrag** | Auslöser, Ziel, Ort, Komplikation (Patron-Aufträge) |
-| **NSC** | Name, Status/Beruf, Motivation, Aussehen, Persönlichkeit, Eigenart, Besitz |
-| **Begegnung** | Reaktion (allgemein, Kampf, Handel, Hilfe, Information, Loyalität), Kampfaktion, Spielleiter-Zug |
-| **Welt & Raumhafen** | Ort auf der Welt, Stimmung, Zwischenfall am Raumhafen, Gesetzesstufe-Ereignis |
-| **Raumschiff** | Schiffsbegegnung, Störung/Wartungsproblem, Ereignis im Sprung |
-| **Handel** | Marktlage, Händler-Eigenart, Komplikation beim Geschäft |
-| **Wildnis** | Gelände, Tageszeit, Wetter, Gefahr |
+**Noch nicht auf der Karte:** Chancen (dafür gibt es das eigene Ja/Nein-Orakel), Schwierigkeitsgenerator, Würfelrad, Impuls-Symbole, Kartensymbol, Kartennummer.
 
 **Was sich gegenüber dem Vorbild ändert**
 
-- **Nur Prompts**: Die Ja/Nein-Antworten, die Schwierigkeit und die Würfelleiste (W4 bis W100) des Vorbilds entfallen auf der Karte. Ja/Nein-Fragen übernimmt das eigene Ja/Nein-Orakel, Würfe und Schwierigkeiten die Regel-Engine.
 - **Kontext statt Leerlauf**: Ereignisse greifen auf die Listen der Kampagne zu (Threads, Charaktere, aktuelle Welt).
 - **Verlauf**: Jeder Zug landet im Verlauf der App und kann von dort ins Papier-Journal übertragen werden. Im Original gibt es keinen Verlauf.
-- **Direkter Regelbezug**: Felder wie „Begegnung“ oder „Reaktion“ können direkt die passenden Traveller-Regeln aufrufen.
+- **Direkter Regelbezug**: Felder wie „Situation“ oder „Merkmale“ können später direkt die passenden Traveller-Regeln aufrufen (z. B. einen NSC anlegen).
 
 ### Ideen aus den beiden Systemen im Detail
 
 #### Von Mythic übernommen
-- **Ja/Nein-Fragen über die Fate Chart**, beschränkt auf drei Stufen (Unwahrscheinlich, 50/50, Wahrscheinlich), inklusive „Außergewöhnlich Ja/Nein“.
+- **Ja/Nein-Fragen über die Fate Chart**, beschränkt auf drei Stufen (Gering, Mittel, Hoch), inklusive „Außergewöhnlich Ja/Nein“.
 - **Chaosfaktor**, der steuert, wie unvorhersehbar die Geschichte verläuft.
 - **Zufallsereignisse** mit Ereignisfokus, Aktion und Thema.
 - **Szenenstruktur**: Erwartete Szene, veränderte Szene, unterbrochene Szene.
