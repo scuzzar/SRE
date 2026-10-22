@@ -52,8 +52,7 @@ Die Karte besteht aus zwei Bereichen.
 | Feld | Inhalt |
 |---|---|
 | Ja/Nein-Orakel | Antworten für mehrere Wahrscheinlichkeiten gleichzeitig (im Original: Niedrig 25 %, Ausgeglichen 50 %, Hoch 75 %) |
-| Schwierigkeit | Ein Schwierigkeitsgrad für die aktuelle Probe |
-| Würfel | W4, W6, W8, W10, W12, W20, W100, für Traveller zusätzlich 2W6 |
+| Schwierigkeit | Eine gezogene Schwierigkeitsstufe, wahlweise als Wahrscheinlichkeit für das Orakel oder als Zielwert für eine Probe (siehe [Schwierigkeit](#schwierigkeit)) |
 | Wortgenerator | Verb, Adjektiv, Substantiv als Inspirations-Dreiklang |
 | Ereignisgenerator (Mythic) | Fokus, Aktion, Thema |
 | Sinneseindrücke | Geräusch, Anblick, Gefühl, Geruch |
@@ -81,6 +80,25 @@ Für die Solo RPG Engine werden diese Reiter **auf Traveller übertragen**, zum 
 - **Kontext statt Leerlauf**: Ereignisse greifen auf die Listen der Kampagne zu (Threads, Charaktere, aktuelle Welt).
 - **Journal**: Jeder Zug kann mit einem Klick ins Spieljournal übernommen werden. Im Original gibt es keinen Verlauf.
 - **Direkter Regelbezug**: Felder wie „Begegnung“ oder „Reaktion“ können direkt die passenden Traveller-Regeln aufrufen.
+- **Keine freien Würfel**: Die Würfelleiste des Vorbilds (W4 bis W100) entfällt. Würfe macht die Regel-Engine dort, wo eine Regel sie verlangt.
+
+### Schwierigkeit
+
+Die Schwierigkeit auf der Karte hilft, wenn man selbst nicht weiß, wie schwer etwas ist. Sie gilt **entweder** für eine Orakelfrage **oder** für eine Probe. Die Karte zeigt beide Lesarten an, und man nutzt die, die gerade passt.
+
+**Grundlage in Classic Traveller:** Classic Traveller kennt keine feste Skala mit benannten Schwierigkeitsstufen. Die Standardprobe ist **2W6 + DMs, Erfolg bei 8+**. Die Schwierigkeit legt die Spielleitung über DMs fest (oder über einen anderen Zielwert). Benannte Stufen wie *Simple, Routine, Difficult, Formidable* kamen erst mit späteren Task-Systemen, vor allem MegaTraveller.
+
+**Vorschlag (Hausregel):** Fünf Stufen, die an der Standardprobe 8+ hängen und sich auf Mythics Wahrscheinlichkeiten abbilden lassen:
+
+| Stufe | Probe (2W6) | entspricht DM auf 8+ | Orakel (Mythic) |
+|---|---|---|---|
+| Einfach | 6+ | +2 | Sehr wahrscheinlich |
+| Routine | 7+ | +1 | Wahrscheinlich |
+| Durchschnittlich | 8+ | ±0 | 50/50 |
+| Schwierig | 10+ | −2 | Unwahrscheinlich |
+| Sehr schwierig | 12+ | −4 | Sehr unwahrscheinlich |
+
+Bei einer Probe kommen DMs aus Fertigkeiten und Attributen wie gewohnt dazu. Die Skala liegt als Daten vor und kann angepasst werden.
 
 ### Ideen aus den beiden Systemen im Detail
 
