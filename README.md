@@ -24,7 +24,7 @@ Geplanter Umfang (Classic Traveller, Books 1–3 als Basis, Erweiterungen späte
 | Bereich | Inhalt |
 |---|---|
 | **Charaktererschaffung** | Attribute (UPP), Dienstzweige, Musterung, Dienstzeiten, Überleben, Beförderung, Fertigkeiten, Altern, Ausmusterung und Abfindung |
-| **Fertigkeiten & Würfe** | 2W6-Würfe mit DMs, Schwierigkeiten, Fertigkeitswürfe |
+| **Fertigkeiten & Würfe** | 2W6-Würfe mit DMs, Fertigkeitswürfe, Schwierigkeit nach Rule 68A (siehe [Proben und Schwierigkeit](#proben-und-schwierigkeit)) |
 | **Persönlicher Kampf** | Reichweiten, Waffen- und Rüstungsmatrix, Schaden an Attributen, Bewusstlosigkeit, Tod |
 | **Raumschiffe** | Schiffsdesign, Sprungantrieb, Treibstoff, Wartung, Raumkampf |
 | **Handel & Spekulation** | Fracht, Passagiere, Post, spekulativer Handel |
@@ -32,27 +32,44 @@ Geplanter Umfang (Classic Traveller, Books 1–3 als Basis, Erweiterungen späte
 | **Begegnungen** | Tierbegegnungen, Patrons, zufällige Begegnungen, Reaktionen von NSCs |
 | **Ausrüstung** | Ausrüstungslisten, Preise, Tech Level |
 
+### Proben und Schwierigkeit
+
+**Grundlage in Classic Traveller:** Classic Traveller kennt keine feste Skala mit benannten Schwierigkeitsstufen. Die Standardprobe ist **2W6 + DMs, Erfolg bei 8+**. Die Schwierigkeit legt die Spielleitung über DMs fest (oder über einen anderen Zielwert). Benannte Stufen wie *Simple, Routine, Difficult, Formidable* kamen erst mit späteren Task-Systemen, vor allem MegaTraveller.
+
+**Hausregel: Rule 68A.** Für Proben nutzt die App vorerst nur Rule 68A, einen verbreiteten Leitfaden aus der Classic-Traveller-Community. Das ist kein eigenes Task-System; die Regel hilft nur dabei, Zielwerte für normale CT-Würfe festzulegen. Der Name ist die hexadezimale Schreibweise von 6-8-10.
+
+1. Grundstufe wählen: **Einfach 6+**, **Durchschnittlich 8+**, **Schwierig 10+**.
+2. Bei Bedarf um **einen Punkt feinjustieren** (z. B. eine besonders harte schwierige Aufgabe: 11+).
+
+Bei einer Probe kommen DMs aus Fertigkeiten und Attributen wie gewohnt dazu. Die Skala liegt als Daten vor und kann angepasst werden.
+
 ---
 
 ## Teil 2: Das Orakel
 
-Das Orakel übernimmt die Rolle der Spielleitung.
+Das Orakel übernimmt die Rolle der Spielleitung. Es besteht aus zwei getrennten Werkzeugen:
 
-### Vorbild: GM's Apprentice (Web-Version)
+1. **Ja/Nein-Orakel** (nach Mythic) für konkrete Fragen an die Geschichte.
+2. **Inspirationskarte** (nach dem GM's Apprentice) für Prompts und Ideen, etwa für Aufträge, NSCs und Begegnungen.
+
+### Ja/Nein-Orakel
+
+- Der Spieler stellt eine Frage und wählt eine von **drei Wahrscheinlichkeitsstufen**, wie beim GMA: **Unwahrscheinlich**, **50/50**, **Wahrscheinlich**.
+- Die Antwort kommt aus Mythics **Fate Chart**. Sie hängt vom **Chaosfaktor** ab und kann „Außergewöhnlich Ja/Nein“ sowie **Zufallsereignisse** auslösen.
+
+### Inspirationskarte
 
 Das Vorbild für Bedienung und Aufbau ist die Web-Umsetzung des Game Master's Apprentice von James Turner:
 <https://jamesturneronline.net/game-masters-apprentice/>
 
-Das Prinzip: **Ein Klick auf „Neu ziehen“ würfelt alles auf einmal.** Danach liegt eine komplette „Karte“ vor dir. Du liest nur die Felder, die zu deiner aktuellen Frage passen, und ignorierst den Rest.
+Das Prinzip: **Ein Klick auf „Neu ziehen“ erzeugt alles auf einmal.** Danach liegt eine komplette „Karte“ vor dir. Du liest nur die Felder, die zu deiner aktuellen Situation passen, und ignorierst den Rest.
 
-Die Karte besteht aus zwei Bereichen.
+Die Karte ist vorerst **nur für Prompts und Themen wie Aufträge** da. Ja/Nein-Antworten, Schwierigkeiten und Würfe gehören nicht auf die Karte. Die Karte besteht aus zwei Bereichen.
 
 **1. Kernbereich (immer sichtbar)**
 
 | Feld | Inhalt |
 |---|---|
-| Ja/Nein-Orakel | Drei Antworten gleichzeitig, eine je Stufe: **Unwahrscheinlich**, **50/50**, **Wahrscheinlich** (im Original: Niedrig 25 %, Ausgeglichen 50 %, Hoch 75 %) |
-| Schwierigkeit | Eine gezogene Schwierigkeitsstufe, wahlweise als Wahrscheinlichkeit für das Orakel oder als Zielwert für eine Probe (siehe [Schwierigkeit](#schwierigkeit)) |
 | Wortgenerator | Verb, Adjektiv, Substantiv als Inspirations-Dreiklang |
 | Ereignisgenerator (Mythic) | Fokus, Aktion, Thema |
 | Sinneseindrücke | Geräusch, Anblick, Gefühl, Geruch |
@@ -74,34 +91,12 @@ Für die Solo RPG Engine werden diese Reiter **auf Traveller übertragen**, zum 
 | **Handel** | Marktlage, Händler-Eigenart, Komplikation beim Geschäft |
 | **Wildnis** | Gelände, Tageszeit, Wetter, Gefahr |
 
-### Was sich gegenüber dem Vorbild ändert
+**Was sich gegenüber dem Vorbild ändert**
 
-- **Drei Stufen, aber mit Mythic-Mechanik**: Wie beim GMA gibt es nur drei Wahrscheinlichkeitsstufen. Die Antworten kommen aber aus Mythics Fate Chart: Sie hängen vom **Chaosfaktor** ab und können „Außergewöhnlich Ja/Nein“ sowie **Zufallsereignisse** auslösen.
+- **Nur Prompts**: Die Ja/Nein-Antworten, die Schwierigkeit und die Würfelleiste (W4 bis W100) des Vorbilds entfallen auf der Karte. Ja/Nein-Fragen übernimmt das eigene Ja/Nein-Orakel, Würfe und Schwierigkeiten die Regel-Engine.
 - **Kontext statt Leerlauf**: Ereignisse greifen auf die Listen der Kampagne zu (Threads, Charaktere, aktuelle Welt).
 - **Journal**: Jeder Zug kann mit einem Klick ins Spieljournal übernommen werden. Im Original gibt es keinen Verlauf.
 - **Direkter Regelbezug**: Felder wie „Begegnung“ oder „Reaktion“ können direkt die passenden Traveller-Regeln aufrufen.
-- **Keine freien Würfel**: Die Würfelleiste des Vorbilds (W4 bis W100) entfällt. Würfe macht die Regel-Engine dort, wo eine Regel sie verlangt.
-
-### Schwierigkeit
-
-Die Schwierigkeit auf der Karte hilft, wenn man selbst nicht weiß, wie schwer etwas ist. Sie gilt **entweder** für eine Orakelfrage **oder** für eine Probe. Die Karte zeigt beide Lesarten an, und man nutzt die, die gerade passt.
-
-**Grundlage in Classic Traveller:** Classic Traveller kennt keine feste Skala mit benannten Schwierigkeitsstufen. Die Standardprobe ist **2W6 + DMs, Erfolg bei 8+**. Die Schwierigkeit legt die Spielleitung über DMs fest (oder über einen anderen Zielwert). Benannte Stufen wie *Simple, Routine, Difficult, Formidable* kamen erst mit späteren Task-Systemen, vor allem MegaTraveller.
-
-**Hausregel: Rule 68A.** Die App nutzt Rule 68A, einen verbreiteten Leitfaden aus der Classic-Traveller-Community. Das ist kein eigenes Task-System; die Regel hilft nur dabei, Zielwerte für normale CT-Würfe festzulegen. Der Name ist die hexadezimale Schreibweise von 6-8-10.
-
-1. Grundstufe wählen: **Einfach 6+**, **Durchschnittlich 8+**, **Schwierig 10+**.
-2. Bei Bedarf um **einen Punkt feinjustieren** (z. B. eine besonders harte schwierige Aufgabe: 11+).
-
-Die Karte zieht nur die Grundstufe, also eine von drei Stufen. Diese gilt gleichermaßen für Proben und Orakel; beim Orakel reichen wie beim GMA ohnehin drei Stufen. Die Feinjustierung um einen Punkt bleibt, wie in Rule 68A vorgesehen, eine bewusste Entscheidung des Spielers und wird nicht gezogen:
-
-| Grundstufe | Probe (2W6) | Orakel |
-|---|---|---|
-| Einfach | 6+ | Wahrscheinlich |
-| Durchschnittlich | 8+ | 50/50 |
-| Schwierig | 10+ | Unwahrscheinlich |
-
-Bei einer Probe kommen DMs aus Fertigkeiten und Attributen wie gewohnt dazu. Die Skala liegt als Daten vor und kann angepasst werden.
 
 ### Ideen aus den beiden Systemen im Detail
 
@@ -113,7 +108,7 @@ Bei einer Probe kommen DMs aus Fertigkeiten und Attributen wie gewohnt dazu. Die
 - **Listen** für Handlungsfäden (Threads) und Charaktere, aus denen Ereignisse gezogen werden.
 
 #### Vom Game Master's Apprentice übernommen
-- **Ein Zug – viele Antworten**: Eine einzige Ziehung liefert gleichzeitig mehrere Informationen (Ja/Nein-Antwort, Ereignis, Inspirationswörter, Namen, Details), statt für jede Frage eine eigene Tabelle zu bemühen.
+- **Ein Zug – viele Antworten**: Eine einzige Ziehung liefert gleichzeitig mehrere Prompts (Inspirationswörter, Ereignis, Namen, Details), statt für jede Idee eine eigene Tabelle zu bemühen.
 - **Inspirationsorientiert**: Kurze Stichworte, die zur Interpretation einladen, statt fester Ergebnisse.
 - **Science-Fiction-Bezug**: Begriffe und Namen passend zum Traveller-Setting.
 
@@ -130,7 +125,7 @@ Diese Punkte werden als Nächstes gemeinsam geklärt:
 ### UI
 - Plattform: Web-App, Desktop-App, Mobile – oder alles über eine Web-App (PWA)?
 - Aufbau: Journal-zentriert (Chat-/Logbuch-Stil) oder Dashboard mit Panels (Charakterbogen, Orakel, Karte, Schiff)?
-- Orakel: Die Darstellung ist durch das GMA-Vorbild gesetzt (eine Karte mit Kernbereich und Themen-Reitern). Offen ist, wie die Karte mit Journal und Charakterbogen auf einem Bildschirm zusammenspielt.
+- Orakel: Die Inspirationskarte folgt dem GMA-Vorbild (Kernbereich und Themen-Reiter). Offen ist, wie Karte, Ja/Nein-Orakel, Journal und Charakterbogen auf einem Bildschirm zusammenspielen.
 
 ### Architektur
 - Trennung von **Regel-Engine**, **Orakel-Engine** und **UI** als eigenständige Module?
