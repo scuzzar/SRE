@@ -93,13 +93,13 @@ Die Schwierigkeit auf der Karte hilft, wenn man selbst nicht weiß, wie schwer e
 1. Grundstufe wählen: **Einfach 6+**, **Durchschnittlich 8+**, **Schwierig 10+**.
 2. Bei Bedarf um **einen Punkt feinjustieren** (z. B. eine besonders harte schwierige Aufgabe: 11+).
 
-Die Karte zieht Grundstufe und Feinjustierung. Die Feinjustierung gilt nur für Proben. Für das Orakel zählt nur die Grundstufe, denn dort reichen wie beim GMA drei Stufen:
+Die Karte zieht nur die Grundstufe, also eine von drei Stufen. Diese gilt gleichermaßen für Proben und Orakel; beim Orakel reichen wie beim GMA ohnehin drei Stufen. Die Feinjustierung um einen Punkt bleibt, wie in Rule 68A vorgesehen, eine bewusste Entscheidung des Spielers und wird nicht gezogen:
 
 | Grundstufe | Probe (2W6) | Orakel |
 |---|---|---|
-| Einfach | 6+ (±1) | Wahrscheinlich |
-| Durchschnittlich | 8+ (±1) | 50/50 |
-| Schwierig | 10+ (±1) | Unwahrscheinlich |
+| Einfach | 6+ | Wahrscheinlich |
+| Durchschnittlich | 8+ | 50/50 |
+| Schwierig | 10+ | Unwahrscheinlich |
 
 Bei einer Probe kommen DMs aus Fertigkeiten und Attributen wie gewohnt dazu. Die Skala liegt als Daten vor und kann angepasst werden.
 
