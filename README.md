@@ -28,7 +28,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 - Karten für die **Spielercharaktere** mit UPP, Fertigkeiten, Ausrüstung, Credits und Notiz.
 - **Proben direkt im Charakter-Screen** (kein eigenes Fenster):
   - Oben auf der Charakterkarte die **Fertigkeit** antippen (oder „Ohne“ für −3).
-  - **Attribute** sind standardmäßig nicht dabei und lassen sich **erst nach der Fertigkeit** dazuwählen; ein Tippen auf ein Attribut im UPP schaltet es an oder aus; der DM ergibt sich aus dem Wert (8+ → +1, 6− → −1, 7 → ±0).
+  - **Attribute** sind standardmäßig nicht dabei und lassen sich **erst nach der Fertigkeit** dazuwählen; ein Tippen auf ein Attribut im UPP schaltet es an oder aus; der DM ergibt sich aus dem Wert (9+ → +1, 7–8 → ±0, 6− → −1).
   - **Unten** stehen fest die drei Schwierigkeiten **6+ / 8+ / 10+** (dieselbe Auswahl wie Hoch/Mittel/Gering beim Orakel), darüber der nötige Wurf mit Wahrscheinlichkeit und der Knopf „Probe würfeln“.
   - Das **Ergebnis erscheint als Popup**. Danach geht es zurück zum Orakel-Screen; **geloggt wird nur dort**. Der Charakter-Screen hat keinen Log.
 
@@ -112,23 +112,35 @@ Die Skala liegt als Daten vor und kann angepasst werden.
 | Stufe 0 (Default Skills, Waffen, Jack of All Trades) | ±0 |
 | Ohne Fertigkeit | −3 (wie Administration im Buch; als Option abschaltbar, falls wir es weglassen) |
 
-**Attribute:** Bei jeder Probe wählt man, welche Attribute zählen. Ein gewähltes Attribut ist je nach Wert automatisch Bonus oder Malus; die Schwellen nutzen die 68A-Zahlen 6 und 8 und liegen symmetrisch um den 2W6-Schnitt von 7:
+**Attribute:** Bei jeder Probe wählt man, welche Attribute zählen. Ein gewähltes Attribut ist je nach Wert automatisch Bonus oder Malus. Die Schwellen orientieren sich an den Beispielen der Starter Edition (Boni meist ab 9, Abzüge z. B. bei AUS 6 oder weniger):
 
 | Attributwert (wenn gewählt) | DM |
 |---|---|
-| 8 oder mehr | +1 |
-| 7 | ±0 |
+| 9 oder mehr | +1 |
+| 7–8 | ±0 |
 | 6 oder weniger | −1 |
 
 Mehr als ±1 pro Attribut gibt es nicht: In den Beispielen der Starter Edition liefern Attribute bei Fertigkeitswürfen ebenfalls nur +1.
+
+Beispiele aus der Starter Edition, an denen sich die Schwellen orientieren:
+
+| Beispiel | Schwelle | DM | Seite |
+|---|---|---|---|
+| Navy-Musterung | INT 8+ / BIL 9+ | +1 / +2 | 9 |
+| Fortgeschrittene Ausbildung | BIL 8+ | Voraussetzung | 10 |
+| Electronics (Vorschlag für die Spielleitung) | INT über ~10, BIL über ~9 | je +1 | 14 |
+| Chirurg | GES 8+ | Voraussetzung | 15 |
+| Kälteschlaf-Passage | AUS 6 oder weniger | −1 | 17 |
+| Entermesser | STR unter 7 / STR 11+ | −2 / +2 | 21 |
+| Schwerelosigkeit | GES 9+ / 11+ | +2 / weitere +2 | 27 |
 
 **Beispiele** (Kira, UPP 7A8975; Jonas, UPP 687A88):
 
 | Situation | Zielwert | DMs | Braucht auf 2W6 |
 |---|---|---|---|
 | Kira fliegt ein Stunt-Manöver | Schwierig 10+ | Pilot +2, GES A +1 | 7+ (58 %) |
-| Kira weicht stundenlang Asteroiden aus | Schwierig 10+ | Pilot +2, GES A +1, AUS 8 +1 | 6+ (72 %) |
-| Jonas (ohne Pilot) im selben Asteroidenfeld | Schwierig 10+ | ohne Fertigkeit −3, GES 8 +1, AUS 7 ±0 | 12+ (3 %) |
+| Kira weicht stundenlang Asteroiden aus | Schwierig 10+ | Pilot +2, GES A +1, AUS 8 ±0 | 7+ (58 %) |
+| Jonas (ohne Pilot) im selben Asteroidenfeld | Schwierig 10+ | ohne Fertigkeit −3, GES 8 ±0, AUS 7 ±0 | 13+ (unmöglich) |
 
 Vor dem Wurf zeigt die App an, was auf 2W6 nötig ist und wie wahrscheinlich das ist.
 
