@@ -5,7 +5,24 @@ Eine App für **Solo-Rollenspiel mit Classic Traveller**. Sie soll zwei Dinge in
 1. **Die Regeln von Classic Traveller** – vollständig implementiert, damit Würfe, Tabellen und Abläufe nicht mehr von Hand nachgeschlagen werden müssen.
 2. **Ein Orakel**, das die Spielleitung ersetzt – angelehnt teils an **Mythic** (Mythic Game Master Emulator) und teils an den **Game Master's Apprentice (GMA)**.
 
-> Status: Konzeptphase. Die Richtung der UI steht (Spieltisch, Journal bleibt auf Papier); Details und Architektur sind noch offen (siehe [Offene Fragen](#offene-fragen)).
+> Status: Konzeptphase. Wir fangen klein an, mit einer **mobilen Version 1** (siehe [Version 1](#version-1-mobil)). Architektur und Technik sind noch offen (siehe [Offene Fragen](#offene-fragen)).
+
+---
+
+## Version 1 (mobil)
+
+Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Desktop-Version ist später denkbar, hat aber keine Priorität.
+
+**Hauptscreen (Orakel)**, klar und ohne Ablenkung:
+- **Ja/Nein-Orakel** mit drei Stufen: Unwahrscheinlich, 50/50, Wahrscheinlich. Optional mit einer kurzen Frage.
+- **Knopf „Karte ziehen“**: zieht eine Inspirationskarte (Prompts, Ereignis, Sinne, Themen wie Auftrag oder NSC).
+- **Knopf „2W6“**: ein einfacher Würfelwurf durch die App.
+- **Log**: Alle Orakelantworten, Karten und Würfe landen untereinander im Log, das neueste oben.
+
+**Zweiter Screen: Charaktere**
+- Karten für die **Spielercharaktere** mit UPP, Fertigkeiten, Ausrüstung, Credits und Notiz.
+
+**Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf, Welten- und Charaktererschaffung, Sektorkarte, Schiffe, NSC-Karten, Chaosfaktor.
 
 ---
 
@@ -13,7 +30,7 @@ Eine App für **Solo-Rollenspiel mit Classic Traveller**. Sie soll zwei Dinge in
 
 - Eine komplette Solo-Kampagne in Classic Traveller spielen können, ohne einen Stapel Papiere neben dem Journal zu brauchen.
 - Regeln und Orakel greifen ineinander: Das Orakel kennt den aktuellen Spielstand (Charaktere, Welt, Schiff, offene Handlungsfäden) und die Regel-Engine liefert die Würfe, wenn das Orakel eine Situation auslöst.
-- **Echte Würfel bleiben erlaubt**: Wo man selbst würfeln will, gibt man das Ergebnis ein (siehe [Physische Würfel](#physische-würfel)).
+- **Echte Würfel bleiben erlaubt** (ab einer späteren Version): Wo man selbst würfeln will, gibt man das Ergebnis ein (siehe [Physische Würfel](#physische-würfel-später)).
 
 ### Was die App ersetzt und was nicht
 
@@ -29,9 +46,9 @@ Heute läuft eine Solo-Session auf Papier: ein Journal und daneben viele Karten.
 
 **Journal:** Das erzählerische Journal bleibt vorerst **auf Papier**. Die App führt nur einen schlanken **Verlauf** aller Würfe, Orakelantworten und Ziehungen, damit man nachschlagen kann, was passiert ist. Der Verlauf kann als Markdown exportiert werden. Ein voller Journal-Editor kann später auf diesem Verlauf aufbauen.
 
-### Physische Würfel
+### Physische Würfel (später)
 
-Für **Weltenerschaffung**, **Charaktererschaffung** und **Kampf** muss man auf jeden Fall mit echten Würfeln spielen können:
+Nicht in Version 1. Später gilt: Für **Weltenerschaffung**, **Charaktererschaffung** und **Kampf** muss man auf jeden Fall mit echten Würfeln spielen können:
 
 - Jeder Wurf hat zwei Modi: **„App würfelt“** oder **„Ich würfle selbst“**. Die Voreinstellung lässt sich je Bereich festlegen.
 - Beim eigenen Würfeln sagt die App genau an, was zu würfeln ist (z. B. „2W6, Ziel 8+, DM +2“). Man gibt die Augen ein, und die App rechnet DMs, Ergebnis und Folgen aus.
@@ -146,9 +163,9 @@ Für die Solo RPG Engine werden diese Reiter **auf Traveller übertragen**, zum 
 Diese Punkte werden als Nächstes gemeinsam geklärt:
 
 ### UI
-- Plattform: Web-App, Desktop-App, Mobile – oder alles über eine Web-App (PWA)?
-- **Richtung: Spieltisch statt Logbuch.** In der Mitte die Sektorkarte oder die aktive Szene, an der Seite ein Kartenstapel mit SC, NSCs, Schiffen und Welten, die man sich „auf den Tisch legt“. Inspirationskarte, Ja/Nein-Orakel und Verlauf sind immer erreichbar. Offen ist, wie das im Detail aussieht.
-- Wie gibt man physische Würfe am schnellsten ein (z. B. Würfelaugen antippen, Summe eintippen)?
+- **Entschieden: mobil zuerst.** Offen ist, ob als Web-App (PWA) oder als native App.
+- Später: Wie gibt man physische Würfe am schnellsten ein (z. B. Würfelaugen antippen, Summe eintippen)?
+- Später: Wie wächst die App über Version 1 hinaus, ohne den Hauptscreen zu überladen?
 
 ### Architektur
 - Trennung von **Regel-Engine**, **Orakel-Engine** und **UI** als eigenständige Module?
