@@ -32,6 +32,8 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
   - **Unten** stehen fest die drei Schwierigkeiten **6+ / 8+ / 10+** (dieselbe Auswahl wie Hoch/Mittel/Gering beim Orakel), darüber der nötige Wurf mit Wahrscheinlichkeit und der Knopf „Probe würfeln“.
   - Das **Ergebnis erscheint als Popup**. Danach geht es zurück zum Orakel-Screen; **geloggt wird nur dort**. Der Charakter-Screen hat keinen Log.
 
+**UI-Entwurf:** Der klickbare Entwurf liegt in [docs/ui-entwurf](docs/ui-entwurf/).
+
 **Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf, Welten- und Charaktererschaffung, Sektorkarte, Schiffe, NSC-Karten, Chaosfaktor.
 
 ---

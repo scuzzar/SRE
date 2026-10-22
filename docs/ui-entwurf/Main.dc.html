@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Solo RPG Engine – Hauptscreen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&amp;family=IBM+Plex+Sans:wght@400;600;700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden; background: #111111; color: #ECEAE4; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.45">
+
+  <header style="flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #2A2A2A">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <div aria-hidden="true" style="width: 5px; height: 22px; background: #C62F35"></div>
+      <span style="font-weight: 700; letter-spacing: 0.14em; font-size: 13px">SOLO RPG ENGINE</span>
+    </div>
+    <span style="font-size: 13px; color: #A3A09A">{{screenTitle}}</span>
+  </header>
+
+  <div style="{{orakelStyle}}">
+    <section aria-labelledby="log-h" style="flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column-reverse; padding: 16px">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <h2 id="log-h" style="margin: 0; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #A3A09A; font-weight: 600">Log · Szene 4</h2>
+        <ol aria-live="polite" style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px">
+          <sc-for list="{{log}}" as="e" hint-placeholder-count="3">
+            <li style="{{e.boxStyle}}">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px">
+                <span style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #EF5A5F; font-weight: 600">{{e.kicker}}</span>
+                <span style="font-size: 12px; color: #A3A09A; font-family: 'IBM Plex Mono', monospace">{{e.t}}</span>
+              </div>
+
+              <sc-if value="{{e.isOracle}}" hint-placeholder-val="{{false}}">
+                <span style="font-size: 14px; color: #A3A09A">{{e.question}}</span>
+                <span style="{{e.answerStyle}}">{{e.answer}}</span>
+                <span style="font-size: 12px; color: #A3A09A; font-family: 'IBM Plex Mono', monospace">{{e.detail}}</span>
+              </sc-if>
+
+              <sc-if value="{{e.isProbe}}" hint-placeholder-val="{{false}}">
+                <span style="font-size: 14px; font-weight: 600">{{e.title}}</span>
+                <span style="{{e.answerStyle}}">{{e.answer}}</span>
+                <span style="font-size: 12px; color: #A3A09A; font-family: 'IBM Plex Mono', monospace">{{e.detail}}</span>
+                <span style="font-size: 12px; color: #A3A09A">{{e.dms}}</span>
+              </sc-if>
+
+              <sc-if value="{{e.isDice}}" hint-placeholder-val="{{false}}">
+                <div style="display: flex; align-items: baseline; gap: 12px">
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 700">{{e.total}}</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; color: #A3A09A">{{e.detail}}</span>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{e.isCard}}" hint-placeholder-val="{{true}}">
+                <sc-if value="{{e.hasQuestion}}" hint-placeholder-val="{{false}}">
+                  <span style="font-size: 14px; color: #A3A09A">{{e.question}}</span>
+                </sc-if>
+                <dl style="margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px">
+                  <sc-for list="{{e.items}}" as="it" hint-placeholder-count="3">
+                    <dt style="font-size: 13px; color: #A3A09A">{{it.label}}</dt>
+                    <dd style="margin: 0; font-weight: 600">{{it.value}}</dd>
+                  </sc-for>
+                </dl>
+              </sc-if>
+            </li>
+          </sc-for>
+        </ol>
+      </div>
+    </section>
+
+    <section aria-label="Orakel und Aktionen" style="flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border-top: 1px solid #2A2A2A; background: #161616">
+      <label for="frage" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Frage (optional), gilt für Orakel und Karte</label>
+      <input id="frage" type="text" value="{{q}}" onChange="{{onQ}}" placeholder="Frage (optional) – für Orakel und Karte" style="min-height: 44px; padding: 8px 12px; background: #111111; color: #ECEAE4; border: 1px solid #555555; font: inherit; box-sizing: border-box; width: 100%">
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 0.8fr); gap: 6px">
+        <button type="button" onClick="{{askOracle}}" style="min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; background: #ECEAE4; color: #111111; border: 0; font: inherit; font-weight: 700; font-size: 15px; cursor: pointer">
+          Ja/Nein
+          <span style="font-size: 11px; font-weight: 400; color: #3A3833">{{levelHint}}</span>
+        </button>
+        <button type="button" onClick="{{drawCard}}" style="min-height: 56px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #C62F35; color: #FFFFFF; border: 0; font: inherit; font-weight: 700; font-size: 15px; cursor: pointer">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="6" y="3" width="13" height="17" rx="1.5"></rect><path d="M4 7v12.5A1.5 1.5 0 0 0 5.5 21H15"></path></svg>
+          Karte ziehen
+        </button>
+        <button type="button" onClick="{{rollDice}}" style="min-height: 56px; display: flex; align-items: center; justify-content: center; gap: 6px; background: transparent; color: #ECEAE4; border: 1px solid #ECEAE4; font: inherit; font-weight: 700; font-size: 15px; cursor: pointer">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="17" height="17" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor"></circle><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor"></circle><circle cx="12" cy="12" r="1.2" fill="currentColor"></circle></svg>
+          2W6
+        </button>
+      </div>
+      <div role="radiogroup" aria-label="Wahrscheinlichkeit für Ja" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #555555">
+        <sc-for list="{{levelsOracle}}" as="lv" hint-placeholder-count="3">
+          <button type="button" role="radio" aria-checked="{{lv.checked}}" onClick="{{lv.pick}}" style="{{lv.style}}">
+            <span style="font-weight: 600; font-size: 13px">{{lv.label}}</span>
+            <span style="{{lv.subStyle}}">{{lv.sub}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+
+  <div style="{{charsStyle}}">
+    <section aria-labelledby="chars-h" style="flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+      <h2 id="chars-h" style="margin: 0; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #A3A09A; font-weight: 600">Spielercharaktere</h2>
+      <sc-for list="{{pcs}}" as="pc" hint-placeholder-count="2">
+        <article style="{{pc.boxStyle}}">
+          <button type="button" aria-expanded="{{pc.expanded}}" onClick="{{pc.toggle}}" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-height: 48px; padding: 0; background: transparent; color: #ECEAE4; border: 0; font: inherit; text-align: left; cursor: pointer">
+            <span style="font-size: 20px; font-weight: 700">{{pc.name}}</span>
+            <span style="font-size: 13px; color: #A3A09A">{{pc.sub}}</span>
+          </button>
+          <div role="group" aria-label="Attribute, nach der Fertigkeit dazuwählbar" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px">
+            <sc-for list="{{pc.upp}}" as="a" hint-placeholder-count="6">
+              <button type="button" aria-label="{{a.aria}}" aria-pressed="{{a.pressed}}" disabled="{{a.disabled}}" onClick="{{a.cycle}}" style="{{a.style}}">
+                <span style="font-size: 10px; letter-spacing: 0.06em">{{a.label}}</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; line-height: 1.2">{{a.code}}</span>
+                <span style="{{a.stateStyle}}">{{a.state}}</span>
+              </button>
+            </sc-for>
+          </div>
+          <sc-if value="{{pc.open}}" hint-placeholder-val="{{false}}">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <span style="font-size: 11px; color: #A3A09A">Fertigkeit für die Probe</span>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px">
+                <sc-for list="{{pc.skills}}" as="sk" hint-placeholder-count="5">
+                  <button type="button" aria-pressed="{{sk.pressed}}" onClick="{{sk.pick}}" style="{{sk.style}}">{{sk.label}}</button>
+                </sc-for>
+              </div>
+            </div>
+            <dl style="margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 12px; font-size: 14px">
+              <sc-for list="{{pc.fields}}" as="f" hint-placeholder-count="3">
+                <dt style="color: #A3A09A">{{f.k}}</dt>
+                <dd style="margin: 0">{{f.v}}</dd>
+              </sc-for>
+            </dl>
+          </sc-if>
+        </article>
+      </sc-for>
+      <div style="padding: 14px; border: 1px dashed #444444; color: #A3A09A; text-align: center; font-size: 14px">Neuer Charakter (folgt)</div>
+    </section>
+
+    <section aria-label="Probe" style="flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border-top: 1px solid #2A2A2A; background: #161616">
+      <div aria-live="polite" style="display: flex; flex-direction: column; gap: 2px; min-height: 64px; justify-content: center">
+        <span style="font-size: 13px; font-weight: 600">{{pb.title}}</span>
+        <sc-if value="{{pb.ready}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap">
+            <span style="font-size: 20px; font-weight: 700">{{pb.need}}</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #A3A09A">{{pb.chance}} · {{pb.formula}}</span>
+          </div>
+          <span style="font-size: 12px; color: #A3A09A">{{pb.parts}}</span>
+        </sc-if>
+      </div>
+      <button type="button" onClick="{{rollProbe}}" disabled="{{pb.disabled}}" style="{{pb.rollStyle}}">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="17" height="17" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor"></circle><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor"></circle><circle cx="12" cy="12" r="1.2" fill="currentColor"></circle></svg>
+        Probe würfeln
+      </button>
+      <div role="radiogroup" aria-label="Schwierigkeit" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #555555">
+        <sc-for list="{{levelsProbe}}" as="lv" hint-placeholder-count="3">
+          <button type="button" role="radio" aria-checked="{{lv.checked}}" onClick="{{lv.pick}}" style="{{lv.style}}">
+            <span style="font-weight: 700; font-size: 16px; font-family: 'IBM Plex Mono', monospace">{{lv.label}}</span>
+            <span style="{{lv.subStyle}}">{{lv.sub}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+
+  <nav aria-label="Bereiche" style="flex: 0 0 auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid #2A2A2A; background: #0B0B0B">
+    <button type="button" aria-current="{{navOrakel.current}}" onClick="{{toOrakel}}" style="{{navOrakel.style}}">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6"></path><circle cx="12" cy="17" r="0.6" fill="currentColor"></circle></svg>
+      <span>Orakel</span>
+    </button>
+    <button type="button" aria-current="{{navChars.current}}" onClick="{{toChars}}" style="{{navChars.style}}">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"></path></svg>
+      <span>Charaktere</span>
+    </button>
+  </nav>
+
+  <sc-if value="{{hasProbeResult}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; z-index: 20; background: rgba(0, 0, 0, 0.72); display: flex; align-items: center; justify-content: center; padding: 24px">
+      <section role="alertdialog" aria-modal="true" aria-labelledby="res-h" style="width: 100%; display: flex; flex-direction: column; gap: 8px; padding: 20px; background: #1A1A1A; border: 1px solid #666666; border-radius: 12px">
+        <span style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #EF5A5F; font-weight: 600">Probe</span>
+        <span style="font-size: 15px; font-weight: 600">{{res.title}}</span>
+        <h2 id="res-h" style="{{res.style}}">{{res.answer}}</h2>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #A3A09A">{{res.detail}}</span>
+        <span style="font-size: 13px; color: #A3A09A">{{res.dms}}</span>
+        <button type="button" onClick="{{closeResult}}" style="margin-top: 8px; min-height: 52px; background: #ECEAE4; color: #111111; border: 0; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer">Weiter zum Orakel</button>
+      </section>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{hasDraft}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; z-index: 10; background: rgba(0, 0, 0, 0.72); display: flex; flex-direction: column; padding-top: 20px">
+      <section role="dialog" aria-modal="true" aria-labelledby="karte-h" style="flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; background: #1A1A1A; border: 1px solid #555555; border-bottom: 0; border-radius: 16px 16px 0 0">
+        <div style="flex: 0 0 auto; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 14px 16px 8px">
+          <h2 id="karte-h" style="margin: 0; font-size: 18px; font-weight: 700">Inspirationskarte</h2>
+          <span style="font-size: 13px; color: #A3A09A">Antippen, was du nutzen willst</span>
+        </div>
+        <sc-if value="{{d.hasQuestion}}" hint-placeholder-val="{{false}}">
+          <div style="flex: 0 0 auto; margin: 0 16px 10px; padding: 8px 12px; background: #111111; border: 1px solid #333333; display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #EF5A5F; font-weight: 600">Deine Frage</span>
+            <span style="font-weight: 600">{{d.question}}</span>
+          </div>
+        </sc-if>
+
+        <div style="flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0 12px 12px">
+          <article aria-label="Karte" style="display: flex; flex-direction: column; gap: 6px; padding: 8px; background: #0E0E0E; border: 2px solid #555555; border-radius: 6px">
+
+            <div role="group" aria-label="Zufallsereignis" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px">
+              <button type="button" aria-pressed="{{d.verb.pressed}}" onClick="{{d.verb.toggle}}" style="{{d.verb.style}}"><span style="{{d.verb.labelStyle}}">Verb</span><span style="font-weight: 600">{{d.verb.value}}</span></button>
+              <button type="button" aria-pressed="{{d.adj.pressed}}" onClick="{{d.adj.toggle}}" style="{{d.adj.style}}"><span style="{{d.adj.labelStyle}}">Adjektiv</span><span style="font-weight: 600">{{d.adj.value}}</span></button>
+              <button type="button" aria-pressed="{{d.noun.pressed}}" onClick="{{d.noun.toggle}}" style="{{d.noun.style}}"><span style="{{d.noun.labelStyle}}">Substantiv</span><span style="font-weight: 600">{{d.noun.value}}</span></button>
+            </div>
+
+            <div role="group" aria-label="Sinneseindrücke" style="display: flex; flex-direction: column; gap: 4px">
+              <button type="button" aria-pressed="{{d.hear.pressed}}" onClick="{{d.hear.toggle}}" style="{{d.hear.rowStyle}}">
+                <svg role="img" aria-label="Hören" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 9a5 5 0 0 1 10 0c0 3-3 4-3 7a3 3 0 0 1-5.5 1.6"></path><path d="M10 9a2 2 0 0 1 4 0"></path></svg>
+                <span>{{d.hear.value}}</span>
+              </button>
+              <button type="button" aria-pressed="{{d.see.pressed}}" onClick="{{d.see.toggle}}" style="{{d.see.rowStyle}}">
+                <svg role="img" aria-label="Sehen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"></path><circle cx="12" cy="12" r="2.8"></circle></svg>
+                <span>{{d.see.value}}</span>
+              </button>
+              <button type="button" aria-pressed="{{d.feel.pressed}}" onClick="{{d.feel.toggle}}" style="{{d.feel.rowStyle}}">
+                <svg role="img" aria-label="Fühlen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12V5.5a1.5 1.5 0 0 1 3 0V11"></path><path d="M11 10.5V4.5a1.5 1.5 0 0 1 3 0v6"></path><path d="M14 10.5V6a1.5 1.5 0 0 1 3 0v8a6 6 0 0 1-6 6h-.5a6 6 0 0 1-4.6-2.2L4 15.5a1.5 1.5 0 0 1 2.3-1.9L8 15.5"></path></svg>
+                <span>{{d.feel.value}}</span>
+              </button>
+              <button type="button" aria-pressed="{{d.smell.pressed}}" onClick="{{d.smell.toggle}}" style="{{d.smell.rowStyle}}">
+                <svg role="img" aria-label="Riechen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-1 4-4 9-4 12a4 4 0 0 0 8 0"></path><path d="M9 17.5c-1.5.5-3 .2-3-1.2"></path><path d="M15 17.5c1.5.5 3 .2 3-1.2"></path></svg>
+                <span>{{d.smell.value}}</span>
+              </button>
+            </div>
+
+            <button type="button" aria-pressed="{{d.scene.pressed}}" onClick="{{d.scene.toggle}}" style="{{d.scene.style}}"><span style="{{d.scene.labelStyle}}">Szenentyp</span><span style="font-weight: 600">{{d.scene.value}}</span></button>
+
+            <div style="display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 6px">
+              <div style="display: flex; flex-direction: column; gap: 4px">
+                <div style="padding: 3px 6px; background: #2E2E2E; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-align: center">BESITZ</div>
+                <button type="button" aria-pressed="{{d.belong.pressed}}" onClick="{{d.belong.toggle}}" style="{{d.belong.style}}"><span style="font-weight: 600">{{d.belong.value}}</span></button>
+                <div style="padding: 3px 6px; background: #2E2E2E; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-align: center">SITUATION</div>
+                <button type="button" aria-pressed="{{d.catalyst.pressed}}" onClick="{{d.catalyst.toggle}}" style="{{d.catalyst.style}}"><span style="{{d.catalyst.labelStyle}}">Auslöser</span><span style="font-weight: 600">{{d.catalyst.value}}</span></button>
+                <button type="button" aria-pressed="{{d.location.pressed}}" onClick="{{d.location.toggle}}" style="{{d.location.style}}"><span style="{{d.location.labelStyle}}">Ort</span><span style="font-weight: 600">{{d.location.value}}</span></button>
+                <button type="button" aria-pressed="{{d.stakes.pressed}}" onClick="{{d.stakes.toggle}}" style="{{d.stakes.style}}"><span style="{{d.stakes.labelStyle}}">Einsatz</span><span style="font-weight: 600">{{d.stakes.value}}</span></button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px">
+                <div style="padding: 3px 6px; background: #2E2E2E; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-align: center">NAMEN</div>
+                <button type="button" aria-pressed="{{d.name0.pressed}}" onClick="{{d.name0.toggle}}" style="{{d.name0.centerStyle}}">{{d.name0.value}}</button>
+                <button type="button" aria-pressed="{{d.name1.pressed}}" onClick="{{d.name1.toggle}}" style="{{d.name1.centerStyle}}">{{d.name1.value}}</button>
+                <button type="button" aria-pressed="{{d.name2.pressed}}" onClick="{{d.name2.toggle}}" style="{{d.name2.centerStyle}}">{{d.name2.value}}</button>
+                <div style="padding: 3px 6px; background: #2E2E2E; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-align: center">MERKMALE</div>
+                <button type="button" aria-pressed="{{d.virtue.pressed}}" onClick="{{d.virtue.toggle}}" style="{{d.virtue.style}}"><span style="{{d.virtue.labelStyle}}">Tugend</span><span style="font-weight: 600">{{d.virtue.value}}</span></button>
+                <button type="button" aria-pressed="{{d.vice.pressed}}" onClick="{{d.vice.toggle}}" style="{{d.vice.style}}"><span style="{{d.vice.labelStyle}}">Laster</span><span style="font-weight: 600">{{d.vice.value}}</span></button>
+                <button type="button" aria-pressed="{{d.trait.pressed}}" onClick="{{d.trait.toggle}}" style="{{d.trait.style}}"><span style="{{d.trait.labelStyle}}">Merkmal</span><span style="font-weight: 600">{{d.trait.value}}</span></button>
+              </div>
+            </div>
+
+            <button type="button" aria-pressed="{{d.flavor.pressed}}" onClick="{{d.flavor.toggle}}" style="{{d.flavor.flavorStyle}}">{{d.flavor.value}}</button>
+          </article>
+
+          <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 6px">
+            <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #A3A09A; font-weight: 600">Themen (vorläufig)</span>
+            <div role="tablist" aria-label="Thema" style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px">
+              <sc-for list="{{d.tabs}}" as="tb" hint-placeholder-count="6">
+                <button type="button" role="tab" aria-selected="{{tb.selected}}" onClick="{{tb.pick}}" style="{{tb.style}}">{{tb.label}}</button>
+              </sc-for>
+            </div>
+            <div role="tabpanel" aria-label="{{d.tabLabel}}" style="display: flex; flex-direction: column; gap: 4px">
+              <sc-for list="{{d.tabItems}}" as="it" hint-placeholder-count="4">
+                <button type="button" aria-pressed="{{it.pressed}}" onClick="{{it.toggle}}" style="{{it.style}}"><span style="{{it.labelStyle}}">{{it.label}}</span><span style="font-weight: 600">{{it.value}}</span></button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 12px 16px 16px; border-top: 1px solid #333333; background: #161616">
+          <button type="button" onClick="{{discard}}" aria-label="Karte verwerfen" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: transparent; color: #ECEAE4; border: 1px solid #555555; cursor: pointer">
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+          <button type="button" onClick="{{redraw}}" style="min-height: 48px; padding: 8px 14px; background: transparent; color: #ECEAE4; border: 1px solid #555555; font: inherit; font-size: 14px; cursor: pointer">Neu ziehen</button>
+          <span style="flex: 1 1 auto; text-align: right; font-size: 13px; color: #A3A09A">{{d.countLabel}}</span>
+          <button type="button" onClick="{{confirm}}" disabled="{{d.empty}}" aria-label="{{d.confirmAria}}" style="{{d.confirmStyle}}">
+            <svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+          </button>
+        </div>
+      </section>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["orakel","karte","chars"],"default":"orakel"},"$preview":{"width":390,"height":844}}'>
+// Inhalte der Inspirationskarte. Aufbau nach GMA2e (siehe docs/gma2e-begriffe.md), Inhalte eigene Platzhalter mit Traveller-Bezug.
+var SRE_LISTS = {
+  verb: ['verraten', 'schützen', 'suchen', 'verfolgen', 'verhandeln', 'sabotieren', 'entdecken', 'fliehen', 'bestechen', 'reparieren', 'verstecken', 'enthüllen'],
+  adj: ['verlassen', 'korrupt', 'uralt', 'beschädigt', 'heimlich', 'verzweifelt', 'illegal', 'fremdartig', 'wertvoll', 'instabil', 'loyal', 'gefälscht'],
+  noun: ['Fracht', 'Signal', 'Datenkern', 'Patron', 'Schulden', 'Waffe', 'Botschaft', 'Wrack', 'Gefangener', 'Artefakt', 'Vertrag', 'Treibstoff'],
+  hear: ['Das Summen der Lebenserhaltung…', 'Ein schriller Alarmton…', 'Schritte auf Metallgittern…', 'Funkrauschen, dann eine Stimme…', 'Ein dumpfer Schlag gegen den Rumpf…', 'Plötzliche Stille…', 'Ein Zischen aus einer Leitung…', 'Gedämpfte Musik aus einer Bar…'],
+  see: ['Flackernde Notbeleuchtung…', 'Rostspuren an den Schotten…', 'Ein Schwarm Wartungsdrohnen…', 'Leere Andockbuchten…', 'Brandspuren an der Wand…', 'Ein Wappen des Imperiums…', 'Kondenswasser auf dem Visier…', 'Ein fremdes Schiff am Horizont…'],
+  feel: ['Die Deckplatten vibrieren…', 'Beißende Kälte…', 'Die Schwerkraft schwankt kurz…', 'Feuchte, stickige Luft…', 'Statische Aufladung kribbelt…', 'Ein Luftzug, wo keiner sein sollte…', 'Ein Stoß von hinten…', 'Hitze strahlt von der Wand…'],
+  smell: ['Ozon…', 'Schmieröl…', 'Fremde Gewürze…', 'Verbranntes Plastik…', 'Desinfektionsmittel…', 'Ungewaschene Raumfahrer…', 'Frisch gebrühter Kaffee…', 'Kühlmittel…'],
+  scene: ['Ein alter Bekannter taucht auf.', 'Die Behörden machen eine Kontrolle.', 'Ein Geschäft bietet sich an.', 'Ein Notruf geht ein.', 'Eine ruhige Pause wird gestört.', 'Ein Streit eskaliert.', 'Eine Spur führt weiter.', 'Etwas an Bord geht kaputt.', 'Ein Fremder bittet um Hilfe.', 'Ein Fest im Raumhafen.'],
+  belong: ['Kommunikation: Handkomm, Funkgerät, verschlüsselter Datenstab.', 'Reisegepäck: Seesack, Passagierticket, Thermodecke.', 'Waffen: Messer, Autopistole, Laserkarabiner.', 'Papiere: Frachtbriefe, Ausweis, gefälschte Lizenz.', 'Werkzeug: Multitool, Lötgerät, Diagnosescanner.', 'Medizin: Verbandszeug, Schmerzmittel, Medkit.', 'Luxus: Armbanduhr, Seidenschal, seltener Wein.', 'Andenken: Foto, Orden, Brief von zu Hause.'],
+  names: ['Ilsa', 'Teodor', 'Mara', 'Jun', 'Elias', 'Nadia', 'Oren', 'Kira', 'Salim', 'Freya', 'Dax', 'Yuki', 'Brann', 'Lenore', 'Tamsin', 'Rafe', 'Aiko', 'Corvin'],
+  catalyst: ['Ein Notsignal im Sprungpunkt.', 'Ein Patron bittet um Hilfe.', 'Gefälschte Frachtpapiere.', 'Ein Unfall im Dock.', 'Eine Schuld wird eingefordert.', 'Ein Kopfgeld wird ausgesetzt.', 'Eine Lieferung verschwindet.', 'Ein Verräter in den eigenen Reihen.'],
+  location: ['Orbitalstation.', 'Raumhafen-Bar.', 'Asteroidenbasis.', 'Frachtraum.', 'Regierungsviertel.', 'Bergbaukolonie.', 'Treibendes Wrack.', 'Marktplatz.', 'Forschungsstation.', 'Unterstadt.'],
+  stakes: ['Schulden begleichen.', 'Einen Freund retten.', 'Den Ruf wahren.', 'Das Schiff behalten.', 'Die Wahrheit aufdecken.', 'Rache nehmen.', 'Überleben.', 'Einen Vertrag erfüllen.'],
+  virtue: ['Nächstenliebe', 'Keuschheit', 'Mitgefühl', 'Mut', 'Fleiß', 'Ehrlichkeit', 'Demut', 'Loyalität', 'Barmherzigkeit', 'Mäßigung'],
+  vice: ['Neid', 'Furcht', 'Betrug', 'Völlerei', 'Habgier', 'Wollust', 'Hochmut', 'Trägheit', 'Heimtücke', 'Zorn'],
+  trait: ['Narbe im Gesicht', 'Spricht sehr leise', 'Kybernetisches Auge', 'Nervöses Lachen', 'Tätowiert', 'Makellose Uniform', 'Hinkt', 'Kaut ständig', 'Zitiert Gesetze', 'Grauer Zopf'],
+  flavor: ['„Sprung in drei… zwei…“', '„Das war so nicht abgemacht.“', '„Wer hat die Schleuse offen gelassen?“', '„Ich kenne da jemanden.“', '„Das Imperium vergisst nicht.“', '„Nur noch eine Lieferung, dann höre ich auf.“']
+};
+
+// Wählbare Felder der Karte in Kartenreihenfolge: Schlüssel, Liste, Bezeichnung im Log
+var SRE_FIELDS = [
+  ['verb', 'verb', 'Verb'], ['adj', 'adj', 'Adjektiv'], ['noun', 'noun', 'Substantiv'],
+  ['hear', 'hear', 'Hören'], ['see', 'see', 'Sehen'], ['feel', 'feel', 'Fühlen'], ['smell', 'smell', 'Riechen'],
+  ['scene', 'scene', 'Szenentyp'],
+  ['belong', 'belong', 'Besitz'],
+  ['catalyst', 'catalyst', 'Situation · Auslöser'], ['location', 'location', 'Situation · Ort'], ['stakes', 'stakes', 'Situation · Einsatz'],
+  ['name0', 'names', 'Name'], ['name1', 'names', 'Name'], ['name2', 'names', 'Name'],
+  ['virtue', 'virtue', 'Merkmale · Tugend'], ['vice', 'vice', 'Merkmale · Laster'], ['trait', 'trait', 'Merkmale · Merkmal'],
+  ['flavor', 'flavor', 'Flavortext']
+];
+
+// Themen-Reiter unter der Karte (vorläufig, sollen später an einen anderen Ort)
+var SRE_TABS = [
+  { id: 'auftrag', label: 'Auftrag', fields: [
+    { label: 'Auslöser', list: ['Notsignal im Sprungpunkt', 'Ein Patron spricht dich an', 'Gerücht in der Raumhafen-Bar', 'Gefälschte Frachtpapiere', 'Hilferuf eines alten Freundes'] },
+    { label: 'Ziel', list: ['Person bergen', 'Fracht ausliefern', 'Information beschaffen', 'Schiff zurückholen', 'Jemanden beschützen'] },
+    { label: 'Ort', list: ['Asteroidenbasis', 'Orbitalstation', 'Unterstadt am Raumhafen', 'Bergbaukolonie', 'Verlassene Forschungsstation'] },
+    { label: 'Komplikation', list: ['Der Patron lügt', 'Ein Rivale ist schneller', 'Die Behörden ermitteln', 'Das Ziel will nicht gerettet werden', 'Die Zeit läuft ab'] }
+  ] },
+  { id: 'nsc', label: 'NSC', fields: [
+    { label: 'Name', list: ['Ilsa Morrow', 'Teodor Vance', 'Mara Quell', 'Jun Ashari', 'Elias Krall', 'Nadia Ferro'] },
+    { label: 'Beruf', list: ['Händler', 'Ex-Marine', 'Bürokratin', 'Schmuggler', 'Wissenschaftlerin', 'Adeliger'] },
+    { label: 'Motivation', list: ['Rache', 'Reichtum', 'Flucht', 'Pflicht', 'Neugier', 'Anerkennung'] },
+    { label: 'Eigenart', list: ['spricht sehr leise', 'misstraut Robotern', 'sammelt alte Münzen', 'lacht zu laut', 'zitiert Gesetze'] }
+  ] },
+  { id: 'begegnung', label: 'Begegnung', fields: [
+    { label: 'Haltung', list: ['feindselig', 'misstrauisch', 'abwartend', 'interessiert', 'hilfsbereit'] },
+    { label: 'Aktion', list: ['Deckung suchen', 'Flankieren', 'Rückzug', 'Geisel nehmen', 'Feuer eröffnen'] },
+    { label: 'Spielleiter-Zug', list: ['Trenne die Gruppe', 'Zeige eine drohende Gefahr', 'Biete eine Gelegenheit mit Preis', 'Nutze eine Schwäche', 'Verknappe Ressourcen'] }
+  ] },
+  { id: 'welt', label: 'Welt', fields: [
+    { label: 'Ort', list: ['Markt', 'Raumhafen-Bar', 'Regierungsviertel', 'Slums', 'Wildnis am Stadtrand'] },
+    { label: 'Stimmung', list: ['angespannt', 'feierlich', 'gleichgültig', 'ängstlich', 'aufgebracht'] },
+    { label: 'Zwischenfall', list: ['Zollkontrolle', 'Taschendieb', 'Protestmarsch', 'Stromausfall', 'Ein Anwerber spricht dich an'] }
+  ] },
+  { id: 'schiff', label: 'Schiff', fields: [
+    { label: 'Begegnung', list: ['Freihändler', 'Patrouille', 'Piraten', 'Treibendes Wrack', 'Unbekanntes Signal'] },
+    { label: 'Störung', list: ['Sprungantrieb', 'Lebenserhaltung', 'Sensoren', 'Verunreinigter Treibstoff', 'Bordcomputer'] },
+    { label: 'Im Sprung', list: ['Ein Passagier verhält sich seltsam', 'Blinder Passagier', 'Frachtschaden', 'Streit an Bord'] }
+  ] },
+  { id: 'handel', label: 'Handel', fields: [
+    { label: 'Marktlage', list: ['Überangebot', 'Knappheit', 'Embargo', 'Boom', 'Preisverfall'] },
+    { label: 'Händler', list: ['gierig', 'fair', 'verzweifelt', 'misstrauisch', 'redselig'] },
+    { label: 'Komplikation', list: ['Die Ware ist heiß', 'Der Zoll will Bestechung', 'Der Käufer springt ab', 'Ein Konkurrent bietet mehr'] }
+  ] }
+];
+
+// Alle wählbaren Felder in fester Reihenfolge für den Log: erst die Karte, dann die Themen
+function sreAllFields() {
+  var out = SRE_FIELDS.map(function (f) { return [f[0], f[2]]; });
+  SRE_TABS.forEach(function (tb) { tb.fields.forEach(function (f, i) { out.push([tb.id + '.' + i, tb.label + ' · ' + f.label]); }); });
+  return out;
+}
+
+var SRE_PCS = [
+  { id: 'kira', name: 'Kira Vant', sub: 'Ex-Scout · 4 Dienstzeiten · 34 Jahre', upp: '7A8975',
+    skills: ['Pilot-2', 'Navigation-1', 'Pistole-1', 'Vakuumanzug-1'],
+    fields: [['Ausrüstung', 'Autopistole, Jack-Rüstung, Vakuumanzug'], ['Credits', 'Cr 12.400'], ['Notiz', 'Schuldet Dr. Halvek einen Gefallen']] },
+  { id: 'jonas', name: 'Jonas Reyl', sub: 'Ex-Händler · 3 Dienstzeiten · 30 Jahre', upp: '687A88',
+    skills: ['Steward-1', 'Bestechung-1', 'Admin-1', 'Klinge-1'],
+    fields: [['Ausrüstung', 'Klinge, Mesh-Rüstung, Handcomputer'], ['Credits', 'Cr 3.150'], ['Notiz', 'Sucht seinen verschollenen Bruder']] }
+];
+var SRE_UPP = ['STR', 'GES', 'AUS', 'INT', 'BIL', 'SOZ'];
+var SRE_HEX = '0123456789ABCDEFG';
+
+// Eine Auswahl für Orakel und Proben: Gering/Mittel/Hoch = 10+/8+/6+ (Rule 68A)
+// Reihenfolge: leicht/wahrscheinlich links, schwer/unwahrscheinlich rechts
+var SRE_LEVELS = [
+  { id: 'hoch', label: 'Hoch', pct: 75, target: 6, probe: 'Einfach' },
+  { id: 'mittel', label: 'Mittel', pct: 50, target: 8, probe: 'Durchschnittl.' },
+  { id: 'gering', label: 'Gering', pct: 25, target: 10, probe: 'Schwierig' }
+];
+// Hausregeln für Proben (siehe README): ohne Fertigkeit −3; ein gewähltes Attribut gibt +1 ab 9, −1 bis 5, sonst ±0
+var SRE_NO_SKILL_DM = -3;
+var SRE_CHANCE = { 2: 100, 3: 97, 4: 92, 5: 83, 6: 72, 7: 58, 8: 42, 9: 28, 10: 17, 11: 8, 12: 3 };
+
+function sreRand(n) { return Math.floor(Math.random() * n); }
+function sreNow() { var d = new Date(); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+function sreSign(n) { return n > 0 ? '+' + n : n < 0 ? '−' + Math.abs(n) : '±0'; }
+function sreLevel(id) { return SRE_LEVELS.filter(function (l) { return l.id === id; })[0] || SRE_LEVELS[1]; }
+function srePc(id) { return SRE_PCS.filter(function (p) { return p.id === id; })[0] || null; }
+
+// DM eines gewählten Attributs, allein aus dem Wert
+function sreAttrDm(value) {
+  return value >= 9 ? 1 : value <= 5 ? -1 : 0;
+}
+
+// Rechnet eine Probe aus. skill: Name der Fertigkeit, null = ohne Fertigkeit, undefined = noch nicht gewählt
+function sreProbeCalc(probe, level) {
+  var pc = srePc(probe.pc), dm = 0, parts = [];
+  if (probe.skill) {
+    var lvl = parseInt(probe.skill.split('-').pop(), 10) || 0;
+    dm += lvl; parts.push(probe.skill + ' ' + sreSign(lvl));
+  } else if (probe.skill === null) {
+    dm += SRE_NO_SKILL_DM; parts.push('ohne Fertigkeit ' + sreSign(SRE_NO_SKILL_DM));
+  }
+  pc.upp.split('').forEach(function (c, i) {
+    if (!probe.attrs[i]) return;
+    var v = sreAttrDm(SRE_HEX.indexOf(c));
+    dm += v; parts.push(SRE_UPP[i] + ' ' + c + ' ' + sreSign(v));
+  });
+  var need = level.target - dm;
+  var chance = need <= 2 ? 100 : need > 12 ? 0 : SRE_CHANCE[need];
+  return { pc: pc, dm: dm, need: need, chance: chance, parts: parts };
+}
+
+// Eine gezogene Karte: Schlüssel → Wert. Die drei Namen sind verschieden.
+function sreCard(fixed) {
+  var card = {}, n = 0, usedNames = {};
+  SRE_FIELDS.forEach(function (f) {
+    var list = SRE_LISTS[f[1]], i;
+    n++;
+    i = fixed ? (n * 5 + 1) % list.length : sreRand(list.length);
+    if (f[1] === 'names') { while (usedNames[i]) i = (i + 1) % list.length; usedNames[i] = true; }
+    card[f[0]] = list[i];
+  });
+  SRE_TABS.forEach(function (tb) {
+    tb.fields.forEach(function (f, i) { n++; card[tb.id + '.' + i] = fixed ? f.list[(n * 5 + 1) % f.list.length] : f.list[sreRand(f.list.length)]; });
+  });
+  return card;
+}
+
+var SRE_TILE = 'display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0; min-height: 44px; padding: 5px 8px; text-align: left; font: inherit; font-size: 13px; line-height: 1.3; cursor: pointer; box-sizing: border-box; width: 100%; ';
+function sreColors(on) { return 'border: 1px solid ' + (on ? '#ECEAE4' : '#3A3A3A') + '; background: ' + (on ? '#ECEAE4' : '#1A1A1A') + '; color: ' + (on ? '#111111' : '#ECEAE4'); }
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.nextId = 10;
+    var demoCard = props.screen === 'karte', demoChars = props.screen === 'chars';
+    this.state = {
+      screen: demoChars ? 'chars' : 'orakel',
+      level: demoChars ? 'gering' : 'mittel',
+      q: '',
+      probeResult: null,
+      openPc: 'kira',
+      draft: demoCard ? { card: sreCard(true), sel: { noun: true, see: true, stakes: true, name1: true, 'auftrag.3': true }, tab: 'auftrag', question: 'Was will der Kontakt am Raumhafen wirklich?' } : null,
+      // Probe direkt im Charakter-Screen: Fertigkeit oben wählen, Attribute dazutippen, Schwierigkeit unten
+      probe: demoChars ? { pc: 'kira', skill: 'Pilot-2', attrs: { 1: true }, result: null } : null,
+      log: [
+        { id: 4, type: 'probe', t: '14:20', title: 'Kira Vant · Pilot-2 · 10+', answer: 'ERFOLG', detail: '2W6: 4 + 5 = 9, DM +3 → 12', dms: 'Pilot-2 +2, GES A +1' },
+        { id: 3, type: 'card', t: '14:12', question: 'Was steckt hinter dem Notsignal?', items: [{ label: 'Verb', value: 'verraten' }, { label: 'Substantiv', value: 'Datenkern' }, { label: 'Situation · Einsatz', value: 'Schulden begleichen.' }] },
+        { id: 2, type: 'oracle', t: '14:05', question: '„Ist Halvek ehrlich?“', odds: 'Gering', answer: 'NEIN', detail: 'W100: 61 · Ja bis 25' },
+        { id: 1, type: 'dice', t: '13:58', total: 9, detail: '5 + 4' }
+      ]
+    };
+  }
+
+  push(entry) {
+    entry.id = this.nextId++;
+    entry.t = sreNow();
+    this.setState(function (s) { return { log: [entry].concat(s.log) }; });
+  }
+
+  toggleSel(key) {
+    this.setState(function (s) {
+      var sel = Object.assign({}, s.draft.sel);
+      if (sel[key]) delete sel[key]; else sel[key] = true;
+      return { draft: Object.assign({}, s.draft, { sel: sel }) };
+    });
+  }
+
+  // Probe für einen Charakter holen; wechselt der Charakter, beginnt eine neue Probe
+  probeFor(st, pcId) {
+    return st.probe && st.probe.pc === pcId ? st.probe : { pc: pcId, skill: undefined, attrs: {}, result: null };
+  }
+
+  renderVals() {
+    var self = this, s = this.state;
+    var level = sreLevel(s.level);
+
+    // Stufen-Auswahl: dieselbe Auswahl, im Orakel und in der Probe unterschiedlich beschriftet
+    function levelButtons(forProbe) {
+      return SRE_LEVELS.map(function (l) {
+        var on = l.id === level.id;
+        return {
+          label: forProbe ? l.target + '+' : l.label,
+          sub: forProbe ? l.probe : l.pct + ' %',
+          checked: on ? 'true' : 'false',
+          pick: function () { self.setState(function (st) { return { level: l.id, probe: st.probe ? Object.assign({}, st.probe, { result: null }) : null }; }); },
+          style: 'min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; border: 0; font: inherit; cursor: pointer; background: ' + (on ? '#ECEAE4' : 'transparent') + '; color: ' + (on ? '#111111' : '#ECEAE4'),
+          subStyle: 'font-size: 11px; font-family: \'IBM Plex Mono\', monospace; color: ' + (on ? '#3A3833' : '#A3A09A')
+        };
+      });
+    }
+
+    // Der Log ist neueste-zuerst gespeichert; angezeigt wird er wie ein Chat: älteste oben, neueste unten
+    var log = s.log.map(function (e, idx) {
+      var v = {
+        t: e.t, isOracle: e.type === 'oracle', isDice: e.type === 'dice', isCard: e.type === 'card', isProbe: e.type === 'probe',
+        boxStyle: 'display: flex; flex-direction: column; gap: 8px; padding: 14px; background: ' + (idx === 0 ? '#1F1F1F' : '#161616') + '; border: 1px solid ' + (idx === 0 ? '#666666' : '#2E2E2E')
+      };
+      if (e.type === 'oracle') {
+        v.kicker = 'Orakel · ' + e.odds;
+        v.question = e.question; v.answer = e.answer; v.detail = e.detail;
+        v.answerStyle = 'font-size: 30px; font-weight: 700; letter-spacing: 0.06em; color: ' + (e.answer === 'JA' ? '#ECEAE4' : '#EF5A5F');
+      } else if (e.type === 'probe') {
+        v.kicker = 'Probe';
+        v.title = e.title; v.answer = e.answer; v.detail = e.detail; v.dms = e.dms;
+        v.answerStyle = 'font-size: 26px; font-weight: 700; letter-spacing: 0.06em; color: ' + (e.answer === 'ERFOLG' ? '#ECEAE4' : '#EF5A5F');
+      } else if (e.type === 'dice') {
+        v.kicker = 'Würfel · 2W6';
+        v.total = e.total; v.detail = e.detail;
+      } else {
+        v.kicker = 'Karte';
+        v.items = e.items;
+        v.hasQuestion = !!e.question;
+        v.question = e.question ? '„' + e.question + '“' : '';
+      }
+      return v;
+    }).reverse();
+
+    var d = { hasQuestion: false, question: '', empty: true, countLabel: '', confirmAria: '', confirmStyle: '', tabs: [], tabItems: [], tabLabel: '' };
+    if (s.draft) {
+      var draft = s.draft, card = draft.card, sel = draft.sel;
+      var count = Object.keys(sel).length;
+      SRE_FIELDS.forEach(function (f) {
+        var key = f[0], on = !!sel[key];
+        d[key] = {
+          value: card[key], pressed: on ? 'true' : 'false',
+          toggle: function () { self.toggleSel(key); },
+          style: SRE_TILE + sreColors(on),
+          labelStyle: 'font-size: 10px; color: ' + (on ? '#3A3833' : '#A3A09A'),
+          rowStyle: 'display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 6px 10px; text-align: left; font: inherit; font-size: 14px; line-height: 1.3; cursor: pointer; width: 100%; box-sizing: border-box; ' + sreColors(on),
+          centerStyle: 'min-height: 40px; padding: 4px 6px; font: inherit; font-size: 14px; font-weight: 600; text-align: center; cursor: pointer; width: 100%; box-sizing: border-box; ' + sreColors(on),
+          flavorStyle: 'min-height: 40px; padding: 6px 10px; font: inherit; font-size: 13px; font-style: italic; text-align: left; cursor: pointer; width: 100%; box-sizing: border-box; ' + sreColors(on)
+        };
+      });
+      var tabDef = SRE_TABS.filter(function (tb) { return tb.id === draft.tab; })[0] || SRE_TABS[0];
+      d.tabLabel = tabDef.label;
+      d.tabs = SRE_TABS.map(function (tb) {
+        var on = tb.id === tabDef.id;
+        var n = tb.fields.filter(function (f, i) { return sel[tb.id + '.' + i]; }).length;
+        return {
+          label: n ? tb.label + ' · ' + n : tb.label, selected: on ? 'true' : 'false',
+          pick: function () { self.setState({ draft: Object.assign({}, draft, { tab: tb.id }) }); },
+          style: 'flex: 0 0 auto; min-height: 40px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; border: 1px solid ' + (on ? '#EF5A5F' : '#444444') + '; background: ' + (on ? '#2A1415' : 'transparent') + '; color: #ECEAE4; font-weight: ' + (on ? '600' : '400')
+        };
+      });
+      d.tabItems = tabDef.fields.map(function (f, i) {
+        var key = tabDef.id + '.' + i, on = !!sel[key];
+        return { label: f.label, value: card[key], pressed: on ? 'true' : 'false', toggle: function () { self.toggleSel(key); }, style: SRE_TILE + sreColors(on), labelStyle: 'font-size: 10px; color: ' + (on ? '#3A3833' : '#A3A09A') };
+      });
+      d.hasQuestion = !!draft.question;
+      d.question = draft.question ? '„' + draft.question + '“' : '';
+      d.empty = count === 0;
+      d.countLabel = count === 0 ? 'Nichts ausgewählt' : count + ' ausgewählt';
+      d.confirmAria = count + ' Einträge in den Log übernehmen';
+      d.confirmStyle = 'width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 0; cursor: ' + (count ? 'pointer' : 'not-allowed') + '; background: ' + (count ? '#C62F35' : '#333333') + '; color: ' + (count ? '#FFFFFF' : '#8C8A85');
+    }
+
+    // Charakterkarten mit Probe: Fertigkeit wählen, Attribute dazutippen
+    var pr = s.probe;
+    var pcs = SRE_PCS.map(function (pc) {
+      var open = s.openPc === pc.id;
+      var active = !!pr && pr.pc === pc.id;
+      return {
+        name: pc.name, sub: pc.sub, open: open, expanded: open ? 'true' : 'false',
+        toggle: function () { self.setState({ openPc: open ? '' : pc.id }); },
+        upp: pc.upp.split('').map(function (c, i) {
+          // Nach der Fertigkeitswahl zeigt jedes Attribut, ob es überhaupt einen DM brächte; neutrale Werte sind nicht wählbar
+          var potential = sreAttrDm(SRE_HEX.indexOf(c));
+          var skillChosen = active && pr.skill !== undefined;
+          var on = active && !!pr.attrs[i];
+          var canEdit = skillChosen && (potential !== 0 || on);
+          var hint = skillChosen && !on && potential !== 0;
+          var stateText = on ? 'DM ' + sreSign(potential) : hint ? sreSign(potential) : '';
+          return {
+            label: SRE_UPP[i], code: c, state: stateText,
+            stateStyle: 'font-size: ' + (on ? '10px' : '12px') + '; font-weight: 700; min-height: 13px; line-height: 1.3; color: ' + (on ? '#111111' : potential < 0 ? '#EF5A5F' : '#ECEAE4'),
+            aria: SRE_UPP[i] + ' ' + c + (!skillChosen ? '. Erst eine Fertigkeit wählen.' : on ? ': gewählt, DM ' + sreSign(potential) + '. Tippen zum Abwählen.' : potential !== 0 ? ': würde DM ' + sreSign(potential) + ' geben. Tippen zum Dazuwählen.' : ': kein Einfluss.'),
+            pressed: on ? 'true' : 'false',
+            disabled: !canEdit,
+            cycle: function () {
+              if (!canEdit) return;
+              self.setState(function (st) {
+                var p = self.probeFor(st, pc.id), a = Object.assign({}, p.attrs);
+                if (a[i]) delete a[i]; else a[i] = true;
+                return { probe: Object.assign({}, p, { attrs: a, result: null }) };
+              });
+            },
+            style: 'min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 4px 0; font: inherit; cursor: ' + (canEdit ? 'pointer' : 'default') + '; border: 1px ' + (on ? 'solid #ECEAE4' : hint ? 'dashed ' + (potential < 0 ? '#EF5A5F' : '#ECEAE4') : 'solid #333333') + '; background: ' + (on ? '#ECEAE4' : '#111111') + '; color: ' + (on ? '#111111' : skillChosen && potential === 0 ? '#8C8A85' : '#ECEAE4')
+          };
+        }),
+        skills: pc.skills.concat([null]).map(function (sk) {
+          var on = active && pr.skill === sk;
+          return {
+            label: sk || 'Ohne (' + sreSign(SRE_NO_SKILL_DM) + ')', pressed: on ? 'true' : 'false',
+            pick: function () {
+              self.setState(function (st) {
+                var p = self.probeFor(st, pc.id);
+                var off = p.skill === sk;
+                return { probe: Object.assign({}, p, { skill: off ? undefined : sk, attrs: off ? {} : p.attrs, result: null }) };
+              });
+            },
+            style: 'min-height: 40px; padding: 6px 12px; font: inherit; font-size: 14px; cursor: pointer; border: 1px ' + (sk ? 'solid ' : 'dashed ') + (on ? '#ECEAE4' : '#555555') + '; background: ' + (on ? '#ECEAE4' : 'transparent') + '; color: ' + (on ? '#111111' : '#ECEAE4') + '; font-weight: ' + (on ? '700' : '400')
+          };
+        }),
+        fields: pc.fields.map(function (f) { return { k: f[0], v: f[1] }; }),
+        boxStyle: 'display: flex; flex-direction: column; gap: 12px; padding: 14px; background: ' + (open ? '#1F1F1F' : '#161616') + '; border: 1px solid ' + (active ? '#ECEAE4' : open ? '#666666' : '#2E2E2E')
+      };
+    });
+
+    // Leiste unten im Charakter-Screen
+    var pb = { title: 'Fertigkeit antippen, dann Attribute dazuwählen', ready: false, hasResult: false, disabled: true };
+    if (pr && srePc(pr.pc)) {
+      var calc = sreProbeCalc(pr, level);
+      var chosen = pr.skill !== undefined;
+      pb.title = calc.pc.name + ' · ' + (pr.skill ? pr.skill : pr.skill === null ? 'ohne Fertigkeit' : 'Fertigkeit wählen');
+      pb.ready = chosen;
+      pb.disabled = !chosen;
+      pb.need = calc.need <= 2 ? 'Gelingt immer' : calc.need > 12 ? 'Unmöglich' : 'Braucht ' + calc.need + '+';
+      pb.chance = calc.chance + ' %';
+      pb.formula = '2W6 ' + sreSign(calc.dm) + ' ≥ ' + level.target;
+      pb.parts = calc.parts.join(' · ');
+      pb.hasResult = !!pr.result;
+      if (pr.result) {
+        var sum = pr.result.a + pr.result.b;
+        pb.resultLabel = pr.result.ok ? 'ERFOLG' : 'FEHLSCHLAG';
+        pb.resultDetail = pr.result.a + ' + ' + pr.result.b + ' = ' + sum + ' ' + sreSign(calc.dm) + ' → ' + (sum + calc.dm);
+        pb.resultStyle = 'font-size: 18px; font-weight: 700; letter-spacing: 0.06em; color: ' + (pr.result.ok ? '#ECEAE4' : '#EF5A5F');
+      }
+    }
+    pb.rollStyle = 'min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 0; font: inherit; font-weight: 700; font-size: 16px; cursor: ' + (pb.disabled ? 'not-allowed' : 'pointer') + '; background: ' + (pb.disabled ? '#333333' : '#C62F35') + '; color: ' + (pb.disabled ? '#8C8A85' : '#FFFFFF');
+
+    function nav(on) {
+      return {
+        current: on ? 'page' : 'false',
+        style: 'min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: transparent; border: 0; border-top: 2px solid ' + (on ? '#EF5A5F' : 'transparent') + '; font: inherit; font-size: 12px; font-weight: ' + (on ? '600' : '400') + '; cursor: pointer; color: ' + (on ? '#ECEAE4' : '#A3A09A')
+      };
+    }
+
+    var isOrakel = s.screen !== 'chars';
+    return {
+      screenTitle: isOrakel ? 'Orakel' : 'Charaktere',
+      orakelStyle: 'flex: 1 1 auto; min-height: 0; flex-direction: column; display: ' + (isOrakel ? 'flex' : 'none'),
+      charsStyle: 'flex: 1 1 auto; min-height: 0; flex-direction: column; display: ' + (isOrakel ? 'none' : 'flex'),
+      q: s.q, onQ: function (ev) { self.setState({ q: ev.target.value }); },
+      levelsOracle: levelButtons(false), levelsProbe: levelButtons(true),
+      levelHint: level.label + ' · ' + level.pct + ' %',
+      askOracle: function () {
+        var r = 1 + sreRand(100);
+        var q = (s.q || '').trim();
+        self.push({ type: 'oracle', question: q ? '„' + q + '“' : 'Ohne Frage', odds: level.label, answer: r <= level.pct ? 'JA' : 'NEIN', detail: 'W100: ' + r + ' · Ja bis ' + level.pct });
+        self.setState({ q: '' });
+      },
+      drawCard: function () { self.setState({ draft: { card: sreCard(false), sel: {}, tab: 'auftrag', question: (s.q || '').trim() } }); },
+      rollDice: function () { var a = 1 + sreRand(6), b = 1 + sreRand(6); self.push({ type: 'dice', total: a + b, detail: a + ' + ' + b }); },
+      log: log,
+      hasDraft: !!s.draft, d: d,
+      discard: function () { self.setState({ draft: null }); },
+      redraw: function () { self.setState({ draft: { card: sreCard(false), sel: {}, tab: s.draft ? s.draft.tab : 'auftrag', question: s.draft ? s.draft.question : '' } }); },
+      confirm: function () {
+        if (!s.draft) return;
+        var picked = sreAllFields().filter(function (f) { return s.draft.sel[f[0]]; }).map(function (f) { return { label: f[1], value: s.draft.card[f[0]] }; });
+        if (!picked.length) return;
+        self.push({ type: 'card', question: s.draft.question, items: picked });
+        self.setState({ draft: null, q: '' });
+      },
+      pcs: pcs, pb: pb,
+      hasProbeResult: !!s.probeResult,
+      res: s.probeResult ? {
+        title: s.probeResult.title, answer: s.probeResult.answer, detail: s.probeResult.detail, dms: s.probeResult.dms,
+        style: 'margin: 0; font-size: 34px; font-weight: 700; letter-spacing: 0.06em; color: ' + (s.probeResult.answer === 'ERFOLG' ? '#ECEAE4' : '#EF5A5F')
+      } : { title: '', answer: '', detail: '', dms: '', style: '' },
+      closeResult: function () { self.setState({ probeResult: null, probe: null, screen: 'orakel' }); },
+      rollProbe: function () {
+        if (!pr || pr.skill === undefined) return;
+        var calc = sreProbeCalc(pr, level);
+        var a = 1 + sreRand(6), b = 1 + sreRand(6), ok = a + b + calc.dm >= level.target;
+        var entry = {
+          type: 'probe', title: calc.pc.name + ' · ' + (pr.skill || 'ohne Fertigkeit') + ' · ' + level.target + '+',
+          answer: ok ? 'ERFOLG' : 'FEHLSCHLAG',
+          detail: '2W6: ' + a + ' + ' + b + ' = ' + (a + b) + ', DM ' + sreSign(calc.dm) + ' → ' + (a + b + calc.dm),
+          dms: calc.parts.join(', ')
+        };
+        // Ergebnis als Popup; geloggt wird nur im Orakel-Screen
+        self.setState({ probeResult: entry });
+        self.push(Object.assign({}, entry));
+      },
+      navOrakel: nav(isOrakel), navChars: nav(!isOrakel),
+      toOrakel: function () { self.setState({ screen: 'orakel' }); },
+      toChars: function () { self.setState({ screen: 'chars' }); }
+    };
+  }
+}
+</script>
+</body>
+</html>
