@@ -88,15 +88,24 @@ Die Schwierigkeit auf der Karte hilft, wenn man selbst nicht weiß, wie schwer e
 
 **Grundlage in Classic Traveller:** Classic Traveller kennt keine feste Skala mit benannten Schwierigkeitsstufen. Die Standardprobe ist **2W6 + DMs, Erfolg bei 8+**. Die Schwierigkeit legt die Spielleitung über DMs fest (oder über einen anderen Zielwert). Benannte Stufen wie *Simple, Routine, Difficult, Formidable* kamen erst mit späteren Task-Systemen, vor allem MegaTraveller.
 
-**Vorschlag (Hausregel):** Fünf Stufen, die an der Standardprobe 8+ hängen und sich auf Mythics Wahrscheinlichkeiten abbilden lassen:
+**Hausregel: Rule 68A.** Die App nutzt Rule 68A, einen verbreiteten Leitfaden aus der Classic-Traveller-Community. Das ist kein eigenes Task-System; die Regel hilft nur dabei, Zielwerte für normale CT-Würfe festzulegen. Der Name ist die hexadezimale Schreibweise von 6-8-10.
 
-| Stufe | Probe (2W6) | entspricht DM auf 8+ | Orakel (Mythic) |
-|---|---|---|---|
-| Einfach | 6+ | +2 | Sehr wahrscheinlich |
-| Routine | 7+ | +1 | Wahrscheinlich |
-| Durchschnittlich | 8+ | ±0 | 50/50 |
-| Schwierig | 10+ | −2 | Unwahrscheinlich |
-| Sehr schwierig | 12+ | −4 | Sehr unwahrscheinlich |
+1. Grundstufe wählen: **Einfach 6+**, **Durchschnittlich 8+**, **Schwierig 10+**.
+2. Bei Bedarf um **einen Punkt feinjustieren** (z. B. eine besonders harte schwierige Aufgabe: 11+).
+
+Die Karte zieht Grundstufe und Feinjustierung. Für das Orakel wird jede Stufe auf Mythics Wahrscheinlichkeiten abgebildet:
+
+| Stufe | Probe (2W6) | Orakel (Mythic) |
+|---|---|---|
+| Einfach −1 | 5+ | Fast sicher |
+| Einfach | 6+ | Sehr wahrscheinlich |
+| Einfach +1 / Durchschnittlich −1 | 7+ | Wahrscheinlich |
+| Durchschnittlich | 8+ | 50/50 |
+| Durchschnittlich +1 / Schwierig −1 | 9+ | Unwahrscheinlich |
+| Schwierig | 10+ | Sehr unwahrscheinlich |
+| Schwierig +1 | 11+ | Fast unmöglich |
+
+Die Zuordnung zu Mythic ist eine eigene Ergänzung: Die sieben möglichen Zielwerte (5+ bis 11+) werden der Reihe nach auf die mittleren sieben Wahrscheinlichkeitsstufen der Mythic Fate Chart gelegt. „Sicher“ und „Unmöglich“ bleiben für Fragen, die man bewusst so einstuft.
 
 Bei einer Probe kommen DMs aus Fertigkeiten und Attributen wie gewohnt dazu. Die Skala liegt als Daten vor und kann angepasst werden.
 
