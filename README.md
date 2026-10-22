@@ -107,21 +107,21 @@ Die Skala liegt als Daten vor und kann angepasst werden.
 | Stufe 0 (Default Skills, Waffen, Jack of All Trades) | ±0 |
 | Ohne Fertigkeit | −2 (eine 68A-Stufe schwerer) |
 
-**Attribute:** Bei jeder Probe wählt man, welche Attribute zählen und ob jeweils als **Bonus** (hilft nur bei hohem Wert), als **Malus** (schadet nur bei niedrigem Wert) oder als beides. Die Schwellen nutzen die 68A-Zahlen und liegen symmetrisch um den 2W6-Schnitt von 7:
+**Attribute:** Bei jeder Probe wählt man, welche Attribute zählen und ob jeweils als **Bonus** (hilft nur bei hohem Wert), als **Malus** (schadet nur bei niedrigem Wert) oder als beides. Die Schwellen nutzen die 68A-Zahlen 6 und 8 und liegen symmetrisch um den 2W6-Schnitt von 7:
 
 | Modus | Attributwert | DM |
 |---|---|---|
-| Bonus | 8–9 | +1 |
-| Bonus | 10+ (A+) | +2 |
-| Malus | 5–6 | −1 |
-| Malus | 4 oder weniger | −2 |
+| Bonus | 8+ | +1 |
+| Malus | 6 oder weniger | −1 |
+
+Mehr als ±1 pro Attribut gibt es nicht: In den Beispielen der Starter Edition liefern Attribute bei Fertigkeitswürfen ebenfalls nur +1. Ein Wert von 7 ist neutral.
 
 **Beispiele** (Kira, UPP 7A8975; Jonas, UPP 687A88):
 
 | Situation | Zielwert | DMs | Braucht auf 2W6 |
 |---|---|---|---|
-| Kira fliegt ein Stunt-Manöver | Schwierig 10+ | Pilot +2, GES-Bonus +2 | 6+ (72 %) |
-| Kira weicht stundenlang Asteroiden aus | Schwierig 10+ | Pilot +2, GES-Bonus +2, AUS-Malus ±0 | 6+ (72 %) |
+| Kira fliegt ein Stunt-Manöver | Schwierig 10+ | Pilot +2, GES-Bonus +1 | 7+ (58 %) |
+| Kira weicht stundenlang Asteroiden aus | Schwierig 10+ | Pilot +2, GES-Bonus +1, AUS-Malus ±0 | 7+ (58 %) |
 | Jonas (ohne Pilot) im selben Asteroidenfeld | Schwierig 10+ | ohne Fertigkeit −2, GES-Bonus +1, AUS-Malus ±0 | 11+ (8 %) |
 
 Vor dem Wurf zeigt die App an, was auf 2W6 nötig ist und wie wahrscheinlich das ist.
