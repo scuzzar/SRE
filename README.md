@@ -15,7 +15,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 
 **Hauptscreen (Orakel)**, klar und ohne Ablenkung. Aufbau wie ein Chat: oben der **Log**, der nach oben wächst (das Neueste steht unten, direkt über den Knöpfen). Unten, im Daumenbereich, sitzen fest **Orakel, „Karte ziehen“ und „2W6“**.
 - **Optionale Frage**: Ein Fragefeld über den Knöpfen gilt für das Orakel **und** für die Karte. Die Frage wird mit der Antwort bzw. der Kartenauswahl im Log gespeichert.
-- **Ja/Nein-Orakel** mit drei Stufen wie beim GMA: Gering (25 %), Mittel (50 %), Hoch (75 %).
+- **Ja/Nein-Orakel** mit drei Stufen wie beim GMA: Gering (25 %), Mittel (50 %), Hoch (75 %). Die Stufe wird ganz unten eingestellt und bleibt stehen; sie gilt auch als Schwierigkeit für Proben (10+ / 8+ / 6+).
 - **Knopf „Karte ziehen“**: zieht eine Inspirationskarte im Aufbau des GMA2e (Zufallsereignis, Sinne, Szenentyp, Besitz, Situation, Namen, Merkmale, Flavortext). Die Karte landet **nicht direkt im Log**, sondern erscheint im Vordergrund:
   - Eine gestellte Frage steht oben auf der Karte.
   - Man tippt die Einträge an, die man nutzen will (**Mehrfachauswahl**, auch über mehrere Themen hinweg).
@@ -26,6 +26,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 
 **Zweiter Screen: Charaktere**
 - Karten für die **Spielercharaktere** mit UPP, Fertigkeiten, Ausrüstung, Credits und Notiz.
+- **Proben:** Fertigkeit auf der Charakterkarte antippen → Proben-Fenster mit Fertigkeit, Attributen (aus / Bonus / Malus), sonstigem DM und Schwierigkeit 10+ / 8+ / 6+. Die App zeigt den nötigen Wurf mit Wahrscheinlichkeit, würfelt und schreibt das Ergebnis in den Log.
 
 **Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf, Welten- und Charaktererschaffung, Sektorkarte, Schiffe, NSC-Karten, Chaosfaktor.
 
@@ -105,7 +106,7 @@ Die Skala liegt als Daten vor und kann angepasst werden.
 |---|---|
 | Fertigkeit vorhanden | + Stufe (Pilot-2 → +2) |
 | Stufe 0 (Default Skills, Waffen, Jack of All Trades) | ±0 |
-| Ohne Fertigkeit | −2 (eine 68A-Stufe schwerer) |
+| Ohne Fertigkeit | −3 (wie Administration im Buch; als Option abschaltbar, falls wir es weglassen) |
 
 **Attribute:** Bei jeder Probe wählt man, welche Attribute zählen und ob jeweils als **Bonus** (hilft nur bei hohem Wert), als **Malus** (schadet nur bei niedrigem Wert) oder als beides. Die Schwellen nutzen die 68A-Zahlen 6 und 8 und liegen symmetrisch um den 2W6-Schnitt von 7:
 
@@ -122,9 +123,21 @@ Mehr als ±1 pro Attribut gibt es nicht: In den Beispielen der Starter Edition l
 |---|---|---|---|
 | Kira fliegt ein Stunt-Manöver | Schwierig 10+ | Pilot +2, GES-Bonus +1 | 7+ (58 %) |
 | Kira weicht stundenlang Asteroiden aus | Schwierig 10+ | Pilot +2, GES-Bonus +1, AUS-Malus ±0 | 7+ (58 %) |
-| Jonas (ohne Pilot) im selben Asteroidenfeld | Schwierig 10+ | ohne Fertigkeit −2, GES-Bonus +1, AUS-Malus ±0 | 11+ (8 %) |
+| Jonas (ohne Pilot) im selben Asteroidenfeld | Schwierig 10+ | ohne Fertigkeit −3, GES-Bonus +1, AUS-Malus ±0 | 12+ (3 %) |
 
 Vor dem Wurf zeigt die App an, was auf 2W6 nötig ist und wie wahrscheinlich das ist.
+
+#### Eine Auswahl für Orakel und Proben
+
+Die drei Stufen des Orakels sind gleichzeitig die drei Schwierigkeiten nach Rule 68A:
+
+| Orakel (Chance auf Ja) | Probe (Zielwert) |
+|---|---|
+| Gering (25 %) | 10+ (Schwierig) |
+| Mittel (50 %) | 8+ (Durchschnittlich) |
+| Hoch (75 %) | 6+ (Einfach) |
+
+In der App sitzt diese Auswahl **ganz unten** auf dem Hauptscreen und **bleibt stehen**, bis man sie ändert. Der Knopf „Ja/Nein“ fragt das Orakel mit der eingestellten Stufe. Im Proben-Fenster erscheint dieselbe Auswahl mit **10+ / 8+ / 6+** beschriftet.
 
 ---
 
