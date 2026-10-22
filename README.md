@@ -15,7 +15,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 
 **Hauptscreen (Orakel)**, klar und ohne Ablenkung. Aufbau wie ein Chat: oben der **Log**, der nach oben wächst (das Neueste steht unten, direkt über den Knöpfen). Unten, im Daumenbereich, sitzen fest **Orakel, „Karte ziehen“ und „2W6“**.
 - **Optionale Frage**: Ein Fragefeld über den Knöpfen gilt für das Orakel **und** für die Karte. Die Frage wird mit der Antwort bzw. der Kartenauswahl im Log gespeichert.
-- **Ja/Nein-Orakel** mit drei Stufen wie beim GMA: Gering (25 %), Mittel (50 %), Hoch (75 %). Die Stufe wird ganz unten eingestellt und bleibt stehen; sie gilt auch als Schwierigkeit für Proben (10+ / 8+ / 6+).
+- **Ja/Nein-Orakel** mit drei Stufen wie beim GMA: Hoch (75 %), Mittel (50 %), Gering (25 %). Die Stufe wird ganz unten eingestellt und bleibt stehen; sie gilt auch als Schwierigkeit für Proben (6+ / 8+ / 10+).
 - **Knopf „Karte ziehen“**: zieht eine Inspirationskarte im Aufbau des GMA2e (Zufallsereignis, Sinne, Szenentyp, Besitz, Situation, Namen, Merkmale, Flavortext). Die Karte landet **nicht direkt im Log**, sondern erscheint im Vordergrund:
   - Eine gestellte Frage steht oben auf der Karte.
   - Man tippt die Einträge an, die man nutzen will (**Mehrfachauswahl**, auch über mehrere Themen hinweg).
@@ -28,8 +28,9 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 - Karten für die **Spielercharaktere** mit UPP, Fertigkeiten, Ausrüstung, Credits und Notiz.
 - **Proben direkt im Charakter-Screen** (kein eigenes Fenster):
   - Oben auf der Charakterkarte die **Fertigkeit** antippen (oder „Ohne“ für −3).
-  - **Attribute** sind standardmäßig nicht dabei; ein Tippen auf ein Attribut im UPP schaltet aus → Bonus → Malus.
-  - **Unten** stehen fest die drei Schwierigkeiten **10+ / 8+ / 6+** (dieselbe Auswahl wie Gering/Mittel/Hoch beim Orakel), darüber der nötige Wurf mit Wahrscheinlichkeit und der Knopf „Probe würfeln“. Das Ergebnis geht in den Log.
+  - **Attribute** sind standardmäßig nicht dabei und lassen sich **erst nach der Fertigkeit** dazuwählen; ein Tippen auf ein Attribut im UPP schaltet aus → Bonus → Malus.
+  - **Unten** stehen fest die drei Schwierigkeiten **6+ / 8+ / 10+** (dieselbe Auswahl wie Hoch/Mittel/Gering beim Orakel), darüber der nötige Wurf mit Wahrscheinlichkeit und der Knopf „Probe würfeln“.
+  - Das **Ergebnis erscheint als Popup**. Danach geht es zurück zum Orakel-Screen; **geloggt wird nur dort**. Der Charakter-Screen hat keinen Log.
 
 **Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf, Welten- und Charaktererschaffung, Sektorkarte, Schiffe, NSC-Karten, Chaosfaktor.
 
@@ -136,11 +137,13 @@ Die drei Stufen des Orakels sind gleichzeitig die drei Schwierigkeiten nach Rule
 
 | Orakel (Chance auf Ja) | Probe (Zielwert) |
 |---|---|
-| Gering (25 %) | 10+ (Schwierig) |
-| Mittel (50 %) | 8+ (Durchschnittlich) |
 | Hoch (75 %) | 6+ (Einfach) |
+| Mittel (50 %) | 8+ (Durchschnittlich) |
+| Gering (25 %) | 10+ (Schwierig) |
 
-In der App sitzt diese Auswahl **ganz unten** auf dem Hauptscreen und **bleibt stehen**, bis man sie ändert. Der Knopf „Ja/Nein“ fragt das Orakel mit der eingestellten Stufe. Im Charakter-Screen steht dieselbe Auswahl ebenfalls ganz unten, dort mit **10+ / 8+ / 6+** beschriftet.
+In der Leiste steht **leicht bzw. wahrscheinlich links**, **schwer bzw. unwahrscheinlich rechts**.
+
+In der App sitzt diese Auswahl **ganz unten** auf dem Hauptscreen und **bleibt stehen**, bis man sie ändert. Der Knopf „Ja/Nein“ fragt das Orakel mit der eingestellten Stufe. Im Charakter-Screen steht dieselbe Auswahl ebenfalls ganz unten, dort mit **6+ / 8+ / 10+** beschriftet.
 
 ---
 
