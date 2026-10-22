@@ -51,7 +51,7 @@ Die Karte besteht aus zwei Bereichen.
 
 | Feld | Inhalt |
 |---|---|
-| Ja/Nein-Orakel | Antworten für mehrere Wahrscheinlichkeiten gleichzeitig (im Original: Niedrig 25 %, Ausgeglichen 50 %, Hoch 75 %) |
+| Ja/Nein-Orakel | Drei Antworten gleichzeitig, eine je Stufe: **Unwahrscheinlich**, **50/50**, **Wahrscheinlich** (im Original: Niedrig 25 %, Ausgeglichen 50 %, Hoch 75 %) |
 | Schwierigkeit | Eine gezogene Schwierigkeitsstufe, wahlweise als Wahrscheinlichkeit für das Orakel oder als Zielwert für eine Probe (siehe [Schwierigkeit](#schwierigkeit)) |
 | Wortgenerator | Verb, Adjektiv, Substantiv als Inspirations-Dreiklang |
 | Ereignisgenerator (Mythic) | Fokus, Aktion, Thema |
@@ -76,7 +76,7 @@ Für die Solo RPG Engine werden diese Reiter **auf Traveller übertragen**, zum 
 
 ### Was sich gegenüber dem Vorbild ändert
 
-- **Mythic statt fester Prozentwerte**: Die Ja/Nein-Antworten kommen aus Mythics Fate Chart. Sie hängen vom **Chaosfaktor** ab und können „Außergewöhnlich Ja/Nein“ sowie **Zufallsereignisse** auslösen.
+- **Drei Stufen, aber mit Mythic-Mechanik**: Wie beim GMA gibt es nur drei Wahrscheinlichkeitsstufen. Die Antworten kommen aber aus Mythics Fate Chart: Sie hängen vom **Chaosfaktor** ab und können „Außergewöhnlich Ja/Nein“ sowie **Zufallsereignisse** auslösen.
 - **Kontext statt Leerlauf**: Ereignisse greifen auf die Listen der Kampagne zu (Threads, Charaktere, aktuelle Welt).
 - **Journal**: Jeder Zug kann mit einem Klick ins Spieljournal übernommen werden. Im Original gibt es keinen Verlauf.
 - **Direkter Regelbezug**: Felder wie „Begegnung“ oder „Reaktion“ können direkt die passenden Traveller-Regeln aufrufen.
@@ -93,26 +93,20 @@ Die Schwierigkeit auf der Karte hilft, wenn man selbst nicht weiß, wie schwer e
 1. Grundstufe wählen: **Einfach 6+**, **Durchschnittlich 8+**, **Schwierig 10+**.
 2. Bei Bedarf um **einen Punkt feinjustieren** (z. B. eine besonders harte schwierige Aufgabe: 11+).
 
-Die Karte zieht Grundstufe und Feinjustierung. Für das Orakel wird jede Stufe auf Mythics Wahrscheinlichkeiten abgebildet:
+Die Karte zieht Grundstufe und Feinjustierung. Die Feinjustierung gilt nur für Proben. Für das Orakel zählt nur die Grundstufe, denn dort reichen wie beim GMA drei Stufen:
 
-| Stufe | Probe (2W6) | Orakel (Mythic) |
+| Grundstufe | Probe (2W6) | Orakel |
 |---|---|---|
-| Einfach −1 | 5+ | Fast sicher |
-| Einfach | 6+ | Sehr wahrscheinlich |
-| Einfach +1 / Durchschnittlich −1 | 7+ | Wahrscheinlich |
-| Durchschnittlich | 8+ | 50/50 |
-| Durchschnittlich +1 / Schwierig −1 | 9+ | Unwahrscheinlich |
-| Schwierig | 10+ | Sehr unwahrscheinlich |
-| Schwierig +1 | 11+ | Fast unmöglich |
-
-Die Zuordnung zu Mythic ist eine eigene Ergänzung: Die sieben möglichen Zielwerte (5+ bis 11+) werden der Reihe nach auf die mittleren sieben Wahrscheinlichkeitsstufen der Mythic Fate Chart gelegt. „Sicher“ und „Unmöglich“ bleiben für Fragen, die man bewusst so einstuft.
+| Einfach | 6+ (±1) | Wahrscheinlich |
+| Durchschnittlich | 8+ (±1) | 50/50 |
+| Schwierig | 10+ (±1) | Unwahrscheinlich |
 
 Bei einer Probe kommen DMs aus Fertigkeiten und Attributen wie gewohnt dazu. Die Skala liegt als Daten vor und kann angepasst werden.
 
 ### Ideen aus den beiden Systemen im Detail
 
 #### Von Mythic übernommen
-- **Ja/Nein-Fragen mit Wahrscheinlichkeiten** (Fate Chart / Fate Check), inklusive „Außergewöhnlich Ja/Nein“.
+- **Ja/Nein-Fragen über die Fate Chart**, beschränkt auf drei Stufen (Unwahrscheinlich, 50/50, Wahrscheinlich), inklusive „Außergewöhnlich Ja/Nein“.
 - **Chaosfaktor**, der steuert, wie unvorhersehbar die Geschichte verläuft.
 - **Zufallsereignisse** mit Ereignisfokus, Aktion und Thema.
 - **Szenenstruktur**: Erwartete Szene, veränderte Szene, unterbrochene Szene.
