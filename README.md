@@ -36,21 +36,67 @@ Geplanter Umfang (Classic Traveller, Books 1–3 als Basis, Erweiterungen späte
 
 ## Teil 2: Das Orakel
 
-Das Orakel übernimmt die Rolle der Spielleitung. Es kombiniert Ideen aus zwei Systemen:
+Das Orakel übernimmt die Rolle der Spielleitung.
 
-### Von Mythic übernommen
+### Vorbild: GM's Apprentice (Web-Version)
+
+Das Vorbild für Bedienung und Aufbau ist die Web-Umsetzung des Game Master's Apprentice von James Turner:
+<https://jamesturneronline.net/game-masters-apprentice/>
+
+Das Prinzip: **Ein Klick auf „Neu ziehen“ würfelt alles auf einmal.** Danach liegt eine komplette „Karte“ vor dir. Du liest nur die Felder, die zu deiner aktuellen Frage passen, und ignorierst den Rest.
+
+Die Karte besteht aus zwei Bereichen.
+
+**1. Kernbereich (immer sichtbar)**
+
+| Feld | Inhalt |
+|---|---|
+| Ja/Nein-Orakel | Antworten für mehrere Wahrscheinlichkeiten gleichzeitig (im Original: Niedrig 25 %, Ausgeglichen 50 %, Hoch 75 %) |
+| Schwierigkeit | Ein Schwierigkeitsgrad für die aktuelle Probe |
+| Würfel | W4, W6, W8, W10, W12, W20, W100, für Traveller zusätzlich 2W6 |
+| Wortgenerator | Verb, Adjektiv, Substantiv als Inspirations-Dreiklang |
+| Ereignisgenerator (Mythic) | Fokus, Aktion, Thema |
+| Sinneseindrücke | Geräusch, Anblick, Gefühl, Geruch |
+| Symbole & Richtung | Streurichtung (für Treffer/Abweichung), Symbole als Interpretationshilfe |
+
+**2. Themen-Reiter (Tabs)**
+
+Im Original gibt es Reiter wie *Orakel, Quest, Dungeon, Falle, Wildnis, Stadt, NSC, Begegnung, Schatz*. Jeder Reiter zeigt zusätzliche, thematisch passende Ergebnisse, die bei jedem Zug ebenfalls neu erzeugt werden.
+
+Für die Solo RPG Engine werden diese Reiter **auf Traveller übertragen**, zum Beispiel:
+
+| Reiter | Inhalt |
+|---|---|
+| **Auftrag** | Auslöser, Ziel, Ort, Komplikation (Patron-Aufträge) |
+| **NSC** | Name, Status/Beruf, Motivation, Aussehen, Persönlichkeit, Eigenart, Besitz |
+| **Begegnung** | Reaktion (allgemein, Kampf, Handel, Hilfe, Information, Loyalität), Kampfaktion, Spielleiter-Zug |
+| **Welt & Raumhafen** | Ort auf der Welt, Stimmung, Zwischenfall am Raumhafen, Gesetzesstufe-Ereignis |
+| **Raumschiff** | Schiffsbegegnung, Störung/Wartungsproblem, Ereignis im Sprung |
+| **Handel** | Marktlage, Händler-Eigenart, Komplikation beim Geschäft |
+| **Wildnis** | Gelände, Tageszeit, Wetter, Gefahr |
+
+### Was sich gegenüber dem Vorbild ändert
+
+- **Mythic statt fester Prozentwerte**: Die Ja/Nein-Antworten kommen aus Mythics Fate Chart. Sie hängen vom **Chaosfaktor** ab und können „Außergewöhnlich Ja/Nein“ sowie **Zufallsereignisse** auslösen.
+- **Kontext statt Leerlauf**: Ereignisse greifen auf die Listen der Kampagne zu (Threads, Charaktere, aktuelle Welt).
+- **Journal**: Jeder Zug kann mit einem Klick ins Spieljournal übernommen werden. Im Original gibt es keinen Verlauf.
+- **Direkter Regelbezug**: Felder wie „Begegnung“ oder „Reaktion“ können direkt die passenden Traveller-Regeln aufrufen.
+
+### Ideen aus den beiden Systemen im Detail
+
+#### Von Mythic übernommen
 - **Ja/Nein-Fragen mit Wahrscheinlichkeiten** (Fate Chart / Fate Check), inklusive „Außergewöhnlich Ja/Nein“.
 - **Chaosfaktor**, der steuert, wie unvorhersehbar die Geschichte verläuft.
 - **Zufallsereignisse** mit Ereignisfokus, Aktion und Thema.
 - **Szenenstruktur**: Erwartete Szene, veränderte Szene, unterbrochene Szene.
 - **Listen** für Handlungsfäden (Threads) und Charaktere, aus denen Ereignisse gezogen werden.
 
-### Vom Game Master's Apprentice übernommen
+#### Vom Game Master's Apprentice übernommen
 - **Ein Zug – viele Antworten**: Eine einzige Ziehung liefert gleichzeitig mehrere Informationen (Ja/Nein-Antwort, Ereignis, Inspirationswörter, Namen, Details), statt für jede Frage eine eigene Tabelle zu bemühen.
 - **Inspirationsorientiert**: Kurze Stichworte, die zur Interpretation einladen, statt fester Ergebnisse.
 - **Science-Fiction-Bezug**: Begriffe und Namen passend zum Traveller-Setting.
 
-### Verzahnung mit den Regeln
+#### Verzahnung mit den Regeln
 - Orakelergebnisse können direkt Regelmechaniken auslösen (z. B. „Begegnung“ → Begegnungstabelle der aktuellen Welt, „Gefahr“ → Kampf).
 - Der Kontext des Spiels (aktuelle Welt, Schiff, NSCs, Threads) fließt in die Ereignisse ein.
 
@@ -63,7 +109,7 @@ Diese Punkte werden als Nächstes gemeinsam geklärt:
 ### UI
 - Plattform: Web-App, Desktop-App, Mobile – oder alles über eine Web-App (PWA)?
 - Aufbau: Journal-zentriert (Chat-/Logbuch-Stil) oder Dashboard mit Panels (Charakterbogen, Orakel, Karte, Schiff)?
-- Wie werden Würfe und Orakelergebnisse dargestellt (animiert, als Karten, als Logeinträge)?
+- Orakel: Die Darstellung ist durch das GMA-Vorbild gesetzt (eine Karte mit Kernbereich und Themen-Reitern). Offen ist, wie die Karte mit Journal und Charakterbogen auf einem Bildschirm zusammenspielt.
 
 ### Architektur
 - Trennung von **Regel-Engine**, **Orakel-Engine** und **UI** als eigenständige Module?
@@ -75,4 +121,4 @@ Diese Punkte werden als Nächstes gemeinsam geklärt:
 
 ## Rechtlicher Hinweis
 
-Classic Traveller ist ein Markenzeichen von Far Future Enterprises. Mythic Game Master Emulator ist ein Produkt von Word Mill Games. Game Master's Apprentice ist ein Produkt von Ken Wickham. Dieses Projekt ist ein inoffizielles Fan-Projekt; Lizenz- und Fair-Use-Bedingungen der jeweiligen Rechteinhaber werden vor einer Veröffentlichung geprüft.
+Classic Traveller ist ein Markenzeichen von Far Future Enterprises. Mythic Game Master Emulator ist ein Produkt von Word Mill Games. Game Master's Apprentice ist ein Produkt von Larcenous Designs, LLC; die Web-Version stammt von James Turner. Dieses Projekt ist ein inoffizielles Fan-Projekt; Lizenz- und Fair-Use-Bedingungen der jeweiligen Rechteinhaber werden vor einer Veröffentlichung geprüft.
