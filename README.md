@@ -15,9 +15,12 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 
 **Hauptscreen (Orakel)**, klar und ohne Ablenkung:
 - **Ja/Nein-Orakel** mit drei Stufen: Unwahrscheinlich, 50/50, Wahrscheinlich. Optional mit einer kurzen Frage.
-- **Knopf „Karte ziehen“**: zieht eine Inspirationskarte (Prompts, Ereignis, Sinne, Themen wie Auftrag oder NSC).
+- **Knopf „Karte ziehen“**: zieht eine Inspirationskarte (Prompts, Ereignis, Sinne, Themen wie Auftrag oder NSC). Die Karte landet **nicht direkt im Log**, sondern erscheint im Vordergrund:
+  - Man tippt die Einträge an, die man nutzen will (**Mehrfachauswahl**, auch über mehrere Themen hinweg).
+  - Unten bestätigt ein **Haken** die Auswahl: Nur die ausgewählten Einträge kommen in den Log.
+  - Außerdem: Karte verwerfen oder neu ziehen.
 - **Knopf „2W6“**: ein einfacher Würfelwurf durch die App.
-- **Log**: Alle Orakelantworten, Karten und Würfe landen untereinander im Log, das neueste oben.
+- **Log**: Orakelantworten, Würfe und die ausgewählten Karteneinträge landen untereinander im Log, das neueste oben.
 
 **Zweiter Screen: Charaktere**
 - Karten für die **Spielercharaktere** mit UPP, Fertigkeiten, Ausrüstung, Credits und Notiz.
