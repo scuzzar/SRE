@@ -18,8 +18,8 @@ Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
 gestricheltem Rahmen** ist flüchtig: Es besteht zwischen zwei Eingaben und wird nie gespeichert. Es
 kommt nur ins Diagramm, wenn sich ein Ablauf sonst nicht abbilden lässt. Im Code liegt es im Paket
-`draft`; das Diagramm zeigt das nur durch die Farbe. **Grün**
-sind Referenzdaten: feste Tabellen, in jeder Kampagne gleich. **Weiß** sind Werte und Wertelisten.
+`draft`; das Diagramm zeigt das nur durch die Farbe. **Grün** sind Referenzdaten: feste Tabellen, in
+jeder Kampagne gleich. **Weiß** sind Werte und Wertelisten.
 
 ## Begriffe
 
@@ -35,7 +35,7 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
 | Fertigkeit | `Skill` | Eine Fertigkeit aus der Liste, z. B. Pilot |
 | Fertigkeitsstufe | `SkillLevel` | Die Stufe, die ein Charakter in einer Fertigkeit hat, z. B. Pilot-2 |
 | Stufe (Hoch/Mittel/Gering) | `Odds` | Die eine Auswahl für Orakel und Proben |
-| Hausregeln | `HouseRules` | Die einstellbaren Zahlen für Proben |
+| Hausregeln | `HouseRules` | Die Zahlen, nach denen Proben gerechnet werden |
 | Log | `LogEntry` | Ein Eintrag im Verlauf |
 | Orakelantwort | `OracleAnswer` | Ja oder Nein auf eine Frage |
 | Würfelwurf (2W6) | `DiceRoll` | Ein einfacher Wurf mit zwei Würfeln |
@@ -84,15 +84,15 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
   kommen erst nach Version 1.
 - **Karte ziehen.** Ziehen legt eine `Card` an: für jedes Feld aller Bereiche einen seiner Einträge
   zufällig (`drawn`), die Themen-Reiter eingeschlossen, in der Reihenfolge der Bereiche und Felder.
-  Eine gestellte Frage geht auf die Karte über. Es gibt höchstens eine offene Karte.
+  Eine gestellte Frage geht auf die Karte über.
 - **Die Karte ist offen, bis man sie bestätigt oder verwirft.** Antippen nimmt einen gezogenen
   Eintrag in die Auswahl (`picked`) auf oder wieder heraus; ausgewählt sein kann nur, was gezogen
   wurde. *Verwerfen* schließt die Karte ohne Logeintrag. *Neu ziehen* ersetzt sie durch eine neue;
-  die Auswahl geht verloren, die Frage bleibt. Die offene Karte wird nie gespeichert: Beendet das
-  Handy die App, ist sie weg.
+  die Auswahl geht verloren, die Frage bleibt.
 - **Bestätigen** legt einen `CardPick` mit der Frage der Karte an und darin je ausgewähltem Eintrag
-  ein `PickedItem`, in der Reihenfolge der Karte; danach ist die Karte zu. Das `PickedItem` verweist auf das Feld (`Slot`) und auf
-  den gezogenen Eintrag (`Entry`); der Eintrag gehört immer zu diesem Feld.
+  ein `PickedItem`, in der Reihenfolge der Karte; danach ist die Karte zu. Das `PickedItem`
+  verweist auf das Feld (`Slot`) und auf den gezogenen Eintrag (`Entry`); der Eintrag gehört immer
+  zu diesem Feld.
 - **Probe.** Es gilt: 2W6 + Fertigkeit + gewählte Attribute ≥ Zielwert.
   - Zuerst wählt man die Fertigkeit: eine Fertigkeitsstufe des Charakters (DM = Stufe) oder „ohne
     Fertigkeit“ (DM aus den Hausregeln, −3). Solange keine gewählt ist, gibt es keine Probe zu
@@ -104,20 +104,22 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
     über 12 unmöglich.
   - Die Probe in Vorbereitung ist eine `Task`. Sie verweist auf den Charakter, auf eine seiner
     Fertigkeitsstufen (`uses`) oder ist `unskilled`, nie beides; keins von beiden heißt: noch keine
-    Fertigkeit gewählt. Es gibt höchstens eine. Wechselt man den Charakter, beginnt eine neue Probe.
-    Die Probe wird nie gespeichert.
+    Fertigkeit gewählt. Wechselt man den Charakter, beginnt eine neue Probe.
   - Gewürfelt wird eine Probe als `TaskResult` in den Log übernommen. Es verweist auf Charakter,
     Fertigkeitsstufe (keine heißt „ohne Fertigkeit“), die gewählten Attribute und die Stufe, und es
     hält die zwei Würfel sowie DM (`dm`) und Zielwert (`target`) zum Zeitpunkt des Wurfs fest. Der
     Erfolg (`/success`: Würfel + `dm` ≥ `target`) folgt allein daraus, nie aus dem heutigen Stand von
     Charakter, Hausregeln oder Stufe. Die Verweise sagen, wer und womit gewürfelt hat.
+  - Bei `Task` und `TaskResult` gehört die Fertigkeitsstufe (`uses`) immer dem Charakter, auf den sie
+    verweisen (`for`), und der Charakter immer zur Kampagne.
 - **Charakter.** Die sechs UPP-Werte liegen zwischen 0 und 15. Eine Fertigkeit kommt bei einem
   Charakter höchstens einmal vor, ihre Stufe ist 0 oder mehr. Ausrüstung, Herkunft (`background`,
   z. B. „Ex-Scout · 4 Dienstzeiten · 34 Jahre“) und Notiz sind in Version 1 freier Text, Credits eine
   ganze Zahl.
-- **Referenzdaten sind Daten.** Stufen, Hausregeln, Fertigkeiten, Bereiche, Felder und Listen stehen
-  als Dateien unter `src/data/` und werden beim Start geprüft. Pfeile führen nur aus dem Spielstand in
-  die Referenzdaten, nie zurück. Die Listen sind eigene Inhalte, nicht die Texte des GMA-Decks.
+- **Referenzdaten sind Daten.** Stufen, Hausregeln, Fertigkeiten, Bereiche, Felder und Einträge
+  stehen als Dateien unter `src/data/` und werden beim Start geprüft. Pfeile führen nur aus Spielstand
+  und Entwürfen in die Referenzdaten, nie zurück. Die Einträge sind eigene Inhalte, nicht die Texte
+  des GMA-Decks.
 
 ## Offene Fragen zum Entwurf
 
@@ -132,16 +134,22 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
 6. **Unmögliche Probe** (nötiger Wurf über 12): Darf man trotzdem würfeln, damit es im Log steht?
 7. **Charaktere pflegen:** Legt man in Version 1 Charaktere von Hand an und bearbeitet sie, oder
    reichen zunächst fest eingetragene?
-8. **Namen:** Die GMA-Karte zeigt drei verschiedene Namen. Ohne gemeinsame Liste hat jedes der drei
-   Namensfelder eigene Einträge. Sollen es drei Felder mit je eigener Liste sein (z. B. eher
+8. **Namen:** Die GMA-Karte zeigt drei verschiedene Namen. Weil jedes Feld seine eigenen Einträge
+   hat, gibt es keine gemeinsame Namensliste mehr. Sollen es drei Felder mit je eigener Liste sein (z. B. eher
    weiblich, eher männlich, neutral, wie beim GMA), oder ein Feld, aus dem drei verschiedene Einträge
    gezogen werden?
 9. **Doppelter Verweis:** Da jeder Eintrag zu genau einem Feld gehört, folgt das Feld eines
-   `PickedItem` schon aus seinem Eintrag. Den Pfeil `in` behalten (wie vorgeschlagen) oder als
-   abgeleitet (`/in`) kennzeichnen?
+   `PickedItem` schon aus seinem Eintrag. Den Pfeil `in` von `PickedItem` zu `Slot` behalten (wie
+   vorgeschlagen) oder als abgeleitet (`/in`) kennzeichnen?
 10. **Hausregeln einstellbar:** Sind `HouseRules` in Version 1 nur Daten im Code, oder kann man sie in
    der App ändern (z. B. „ohne Fertigkeit −3“ abschalten)? Im zweiten Fall wären sie Spielstand
    (blau), nicht Referenzdaten.
+11. **Orakel und geänderte Stufen:** Die README sagt, die Skala der Stufen liegt als Daten vor und
+    kann angepasst werden. `OracleAnswer` hält aber nur den Wurf und verweist auf die Stufe; Ja oder
+    Nein wird mit der *heutigen* Chance gerechnet. Ändert man Hoch von 75 % auf 70 %, wird ein altes
+    Ja mit Wurf 72 im Log zum Nein. Bei der Probe haben wir das mit `dm` und `target` gelöst. Soll
+    `OracleAnswer` ebenso die Chance (`chance`) festhalten, oder sind die Werte der Stufen fest und
+    ändern sich nie?
 
 ## Wo der Code noch nicht folgt
 

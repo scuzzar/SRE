@@ -19,8 +19,8 @@ sagt nur, wo die Teile liegen und wie sie miteinander reden.
 | 1 | `src/model/` | **Model**: der gespeicherte Stand des Domänenmodells und seine Regeln | `data` |
 | 1a | `src/model/draft/` | **Model, Entwürfe**: `Card`, `Task`; flüchtig, nie gespeichert | `data`, `model` |
 | 2 | `src/platform/` | Was das Model von außen braucht: Speicher (Dexie), Zufall, Uhr | `model` ohne `draft` |
-| 3 | `src/controller/` | **Controller**: eine Methode pro Absicht des Spielers | `model` |
-| 4 | `src/view/` | **View**: React-Komponenten | `controller`, `model` (nur Typen) |
+| 3 | `src/controller/` | **Controller**: eine Methode pro Absicht des Spielers | `model` mit `draft` |
+| 4 | `src/view/` | **View**: React-Komponenten | `controller`, `model` mit `draft` (nur Typen) |
 | 5 | `src/main.tsx` | Verdrahtung | alles |
 
 Plattform und Controller kennen sich nicht. Das Model definiert die Schnittstellen
@@ -35,14 +35,15 @@ kann ein Entwurf gar nicht in den Speicher geraten.
 **2. Der Controller nimmt jede Eingabe an.** Die View ruft für jede Eingabe genau eine
 Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
 
-- **Er ändert das Model**, als Einziger, und speichert den gespeicherten Stand über das Repository: `askOracle(question)`,
-  `rollDice()`, `drawCard(question)`, `togglePick(entry)`, `confirmCard()`, `discardCard()`,
-  `setOdds(odds)`, `chooseCharacter(c)`, `chooseSkill(skill)`, `toggleCharacteristic(c)`,
-  `rollTask()`. Offene Karte und Probe in Vorbereitung sind Teil des Models, werden aber nicht
-  gespeichert.
-- **Er wählt, welche View zu sehen ist**: Orakel- oder Charakter-Screen (`showScreen(screen)`), die
-  Inspirationskarte im Vordergrund, das Ergebnis-Popup. Auch der Ablauf ist seine Sache, etwa „nach
-  dem Schließen des Ergebnisses zurück zum Orakel“ (`closeResult()`).
+- **Er ändert das Model**, als Einziger, und speichert den Spielstand über das Repository:
+  `askOracle(question)`, `rollDice()`, `drawCard(question)`, `togglePick(entry)`, `confirmCard()`,
+  `discardCard()`, `setOdds(odds)`, `chooseCharacter(c)`, `chooseSkill(skill)`,
+  `toggleCharacteristic(c)`, `rollTask()`. Offene Karte und Probe in Vorbereitung sind Teil des
+  Models (`model/draft/`), werden aber nicht gespeichert.
+- **Er wählt, welche View zu sehen ist**: Orakel- oder Charakter-Screen (`showScreen(screen)`) und
+  das Ergebnis-Popup. Auch der Ablauf ist seine Sache, etwa „nach dem Schließen des Ergebnisses zurück
+  zum Orakel“ (`closeResult()`). Die Inspirationskarte steht im Vordergrund, solange es eine offene
+  `Card` gibt; das folgt aus dem Model und braucht keinen eigenen Zustand.
 
 Die View sieht das Model nur lesend (`Readonly`-Typen); ein Schreibzugriff aus der View ist ein
 Compilerfehler.
