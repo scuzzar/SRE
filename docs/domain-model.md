@@ -16,7 +16,7 @@ erzeugen mit `java -jar plantuml.jar -tpng docs/domain-model.puml`; Graphviz ist
 
 Das Diagramm zeigt nur den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten
 und Beziehungen, keine Operationen. Was nur kurz während der Bedienung besteht (eine offene Karte,
-eine Probe in Vorbereitung), ist Zustand der View und steht nicht im Diagramm. **Blau** ist der
+eine Probe in Vorbereitung), hält der Controller; es steht nicht im Diagramm. **Blau** ist der
 Spielstand, den die App speichert. **Grün** sind Referenzdaten: feste Tabellen, in jeder Kampagne
 gleich. **Weiß** sind Werte und Wertelisten.
 
@@ -47,13 +47,13 @@ gemeinsame Sprache: Wer „Probenergebnis“ sagt, meint `TaskResult`, und umgek
 
 ## Regeln, die das Bild nicht zeigt
 
-- **Was draußen bleibt.** Alles, was nur die Anzeige betrifft, gehört nicht ins Modell: welcher
-  Screen offen ist, welcher Themen-Reiter gewählt ist, der Text im Fragefeld vor dem Absenden, ob das
-  Ergebnis-Popup gerade zu sehen ist, Farben, die Hex-Schreibweise der UPP und das Format der Uhrzeit.
-  Das ist Zustand der View. Dazu gehören auch die **offene Inspirationskarte** (welcher Eintrag je
-  Feld gezogen wurde und was gerade angetippt ist) und die **Probe in Vorbereitung** (Charakter,
-  gewählte Fertigkeit, gewählte Attribute). Beides ist kein Teil des Modells; die Regeln dafür
-  schon.
+- **Was draußen bleibt.** Was nicht gespeichert wird, gehört nicht ins Modell. Der Controller hält
+  den Ablauf: welcher Screen offen ist, ob das Ergebnis-Popup zu sehen ist, die **offene
+  Inspirationskarte** (welcher Eintrag je Feld gezogen wurde und was gerade angetippt ist) und die
+  **Probe in Vorbereitung** (Charakter, gewählte Fertigkeit, gewählte Attribute). Die Regeln dafür
+  gehören trotzdem ins Model. Reine Darstellung bleibt in der View: der gewählte Themen-Reiter, der
+  Text im Fragefeld während des Tippens, Farben, die Hex-Schreibweise der UPP und das Format der
+  Uhrzeit.
 - **Eine Kampagne.** In Version 1 gibt es genau eine Kampagne. Alles, was gespeichert wird, hängt an
   ihr.
 - **Eine Auswahl für Orakel und Proben.** Die Kampagne hat immer genau eine gewählte Stufe (`odds`).
@@ -77,7 +77,8 @@ gemeinsame Sprache: Wer „Probenergebnis“ sagt, meint `TaskResult`, und umgek
   kommen erst nach Version 1.
 - **Karte ziehen.** Ziehen heißt: für jedes Feld aller Bereiche einen seiner Einträge zufällig
   wählen, die Themen-Reiter eingeschlossen. Das Ziehen ist eine Regel des Modells, das Ergebnis aber
-  kein Objekt darin: Die View hält die offene Karte, bis man sie bestätigt, verwirft oder neu zieht.
+  kein Objekt darin: Der Controller hält die offene Karte, bis man sie bestätigt, verwirft oder neu
+  zieht.
   Verwerfen und neu ziehen hinterlassen nichts im Modell.
 - **Bestätigen** legt einen `CardPick` mit der Frage an und darin je ausgewähltem Feld ein
   `PickedItem`, in der Reihenfolge der Karte. Das `PickedItem` verweist auf das Feld (`Slot`) und auf

@@ -25,26 +25,37 @@ sagt nur, wo die Teile liegen und wie sie miteinander reden.
 Speicher und Controller kennen sich nicht. Der Controller bekommt den Speicher als Schnittstelle
 (`CampaignRepository`, im Model definiert), `main.tsx` reicht die Dexie-Umsetzung hinein.
 
-**2. Nur der Controller ändert das Model.** Die View ruft für jede Eingabe genau eine
-Controller-Methode auf, zum Beispiel `askOracle(question)`, `rollDice()`, `confirmCard(question,
-picks)`, `setOdds(odds)`, `rollTask(character, skill, characteristics)`. Der Controller ruft das
-Model, speichert über das Repository und meldet die Änderung. Daneben gibt es Abfragen, die das Model
-nicht ändern: `drawCard()` liefert gezogene Einträge, `previewTask(character, skill,
-characteristics)` liefert DM, nötigen Wurf, Wahrscheinlichkeit und die wählbaren Attribute. Die View sieht das Model nur lesend (`Readonly`-Typen); ein
-Schreibzugriff aus der View ist ein Compilerfehler.
+**2. Der Controller nimmt jede Eingabe an.** Die View ruft für jede Eingabe genau eine
+Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
 
-**3. Nach oben wird gemeldet, nicht gerufen.** Der Controller kennt keine Komponenten. Er bietet
-`subscribe(listener)` und `snapshot()` an; die View hängt sich mit `useSyncExternalStore` daran und
-zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von unten nach oben.
+- **Er ändert das Model**, als Einziger, und speichert über das Repository: `askOracle()`,
+  `rollDice()`, `confirmCard()`, `setOdds(odds)`, `rollTask()`.
+- **Er wählt, welche View zu sehen ist**: Orakel- oder Charakter-Screen (`showScreen(screen)`), die
+  Inspirationskarte im Vordergrund, das Ergebnis-Popup. Auch der Ablauf ist seine Sache, etwa „nach
+  dem Schließen des Ergebnisses zurück zum Orakel“ (`closeResult()`).
+- **Er hält, was eine spätere Eingabe braucht**: die gezogene Karte mit den angetippten Feldern
+  (`drawCard()`, `togglePick(slot)`, `discardCard()`) und die Probe in Vorbereitung
+  (`chooseCharacter(c)`, `chooseSkill(skill)`, `toggleCharacteristic(c)`). Das ist kein Spielstand
+  und wird nicht gespeichert; es steht deshalb nicht im Domänenmodell.
 
-**4. Das Model ist frei von Seiteneffekten, die View frei von Regeln.**
+Die View sieht das Model nur lesend (`Readonly`-Typen); ein Schreibzugriff aus der View ist ein
+Compilerfehler.
+
+**3. Nach oben wird gemeldet, nicht gerufen.** Der Controller kennt keine Komponenten. Er wählt die
+View, indem er seinen Zustand ändert, nicht indem er Komponenten aufruft. Er bietet
+`subscribe(listener)` und `snapshot()` an: den Spielstand aus dem Model und seinen eigenen Zustand
+(welcher Screen, welche Karte, welche Probe). Die View hängt sich mit `useSyncExternalStore` daran
+und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von unten nach oben.
+
+**4. Das Model ist frei von Seiteneffekten, die View frei von Regeln und Ablauf.**
 - Das Model kennt kein DOM, keinen Speicher, kein `Math.random()` und kein `Date.now()`. Zufall und
   Uhr kommen als Schnittstellen herein (`Random`, `Clock`). So sind Tests deterministisch, und
   physische Würfel (später) sind nur eine weitere Zufallsquelle.
-- Die View rechnet nichts aus, was eine Regel ist. Welche Attribute wählbar sind, welcher DM gilt, was
-  auf 2W6 nötig ist und wie wahrscheinlich das ist: Das alles liefert das Model. Die View darf nur
-  ihren eigenen Anzeigezustand halten (offener Screen, Reiter, Text im Fragefeld, Popup sichtbar, die
-  offene Inspirationskarte mit ihrer Auswahl).
+- Die View rechnet nichts aus, was eine Regel ist, und entscheidet nichts über den Ablauf. Welche
+  Attribute wählbar sind, welcher DM gilt, was auf 2W6 nötig ist und wie wahrscheinlich das ist,
+  liefert das Model über den Snapshot des Controllers. Die View hält nur, was reine Darstellung ist:
+  den gewählten Themen-Reiter, den Text im Fragefeld während des Tippens, die Scrollposition.
+  Faustregel: Braucht der Controller es für eine Entscheidung, gehört es dem Controller.
 
 ## Wie die Regeln geprüft werden
 
@@ -52,5 +63,6 @@ zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von unten 
   Ein Import nach oben bricht `npm run lint`.
 - **Schreibzugriffe:** `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` und
   `Readonly`-Typen für alles, was der Controller der View gibt.
-- **Regeln:** Unit-Tests mit Vitest für Model und Controller, darunter die Beispiele aus der README
-  (Kira, Jonas). Playwright prüft die Oberfläche bei 390 × 844.
+- **Regeln und Ablauf:** Unit-Tests mit Vitest für Model und Controller, darunter die Beispiele aus
+  der README (Kira, Jonas). Weil der Controller den Ablauf hält, lässt sich auch „Probe würfeln →
+  Popup → zurück zum Orakel“ ohne Browser testen. Playwright prüft die Oberfläche bei 390 × 844.
