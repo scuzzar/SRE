@@ -25,7 +25,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 - **Log**: Orakelantworten, Würfe und die ausgewählten Karteneinträge landen untereinander im Log, das neueste unten.
 
 **Zweiter Screen: Charaktere**
-- Karten für die **Spielercharaktere** mit UPP, Fertigkeiten, Ausrüstung, Credits und Notiz.
+- Karten für die **Spielercharaktere** mit UPP, Fertigkeiten, Ausrüstung, Credits und Notiz. Charaktere legt man in der App an und bearbeitet sie; Fertigkeiten kommen aus einer festen Liste. Wer schon im Log vorkommt, wird nicht gelöscht, sondern ausgeblendet.
 - **Proben direkt im Charakter-Screen** (kein eigenes Fenster):
   - Oben auf der Charakterkarte die **Fertigkeit** antippen (oder „Ohne“ für −3).
   - **Attribute** sind standardmäßig nicht dabei und lassen sich **erst nach der Fertigkeit** dazuwählen; ein Tippen auf ein Attribut im UPP schaltet es an oder aus; der DM ergibt sich aus dem Wert (9+ → +1, 6–8 → ±0, 5− → −1). Sobald die Fertigkeit gewählt ist, zeigt jedes Attribut an, ob es überhaupt +1 oder −1 brächte; neutrale Werte sind nicht wählbar.
@@ -34,7 +34,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 
 **UI-Entwurf:** Der klickbare Entwurf liegt in [docs/ui-entwurf](docs/ui-entwurf/).
 
-**Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf, Welten- und Charaktererschaffung, Sektorkarte, Schiffe, NSC-Karten, Chaosfaktor.
+**Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf, Welten- und Charaktererschaffung, Sektorkarte, Schiffe, NSC-Karten, Chaosfaktor, Szenen, mehrere Kampagnen, Feinjustierung ±1, eigene Fertigkeiten, Hausregeln in der App einstellen.
 
 ---
 
@@ -241,8 +241,8 @@ Diese Punkte werden als Nächstes gemeinsam geklärt:
 - Wohin wandern die Themen-Reiter (Auftrag, NSC, Begegnung, Welt, Schiff, Handel), die vorläufig unter der Karte hängen?
 
 ### Architektur
-- **Entschieden: domänengetrieben.** Das [Domänenmodell](docs/domain-model.md) führt, der Code folgt ihm. Der Entwurf hat noch offene Fragen.
-- **Entschieden: strikt MVC** mit Regel-Engine und Orakel im Model, siehe [ARCHITECTURE.md](ARCHITECTURE.md).
+- **Entschieden: domänengetrieben.** Das [Domänenmodell](docs/domain-model.md) führt, der Code folgt ihm. Die Fragen zum Entwurf sind beantwortet; er wartet auf die Freigabe.
+- **Entschieden: klassisches MVC**, streng getrennt, mit Regel-Engine und Orakel im Model, siehe [ARCHITECTURE.md](ARCHITECTURE.md).
 - **Entschieden: Regeln und Tabellen als Daten** (JSON, beim Start geprüft).
 - **Entschieden: Speicherung lokal** (IndexedDB) mit Export und Import; Synchronisation später.
 - **Entschieden: TypeScript** mit Vite, React und Dexie.
@@ -251,4 +251,14 @@ Diese Punkte werden als Nächstes gemeinsam geklärt:
 
 ## Rechtlicher Hinweis
 
-Classic Traveller ist ein Markenzeichen von Far Future Enterprises. Mythic Game Master Emulator ist ein Produkt von Word Mill Games. Game Master's Apprentice ist ein Produkt von Larcenous Designs, LLC; die Web-Version stammt von James Turner. Dieses Projekt ist ein inoffizielles Fan-Projekt; Lizenz- und Fair-Use-Bedingungen der jeweiligen Rechteinhaber werden vor einer Veröffentlichung geprüft.
+Classic Traveller ist ein Markenzeichen von Far Future Enterprises. Mythic Game Master Emulator ist ein Produkt von Word Mill Games. Game Master's Apprentice ist ein Produkt von Larcenous Designs, LLC; die Web-Version stammt von James Turner. Dieses Projekt ist ein inoffizielles Fan-Projekt und wird kostenlos angeboten.
+
+Was das für die Inhalte der App heißt (Stand der Prüfung: Oktober 2026; keine Rechtsberatung):
+
+| Quelle | Was wir übernehmen dürfen | Bedingungen |
+|---|---|---|
+| **Mythic** (Word Mill Games, Tana Pigeon) | Den **Text** von Mythic GME 2e und weiteren Mythic-Produkten, auch die Tabellen (Fate Chart, Zufallsereignisse, Bedeutungstabellen); Übersetzen und Anpassen ist erlaubt. | Lizenz [CC BY-NC](https://wordmillgames.com/license.html): nicht kommerziell, Quellenangabe (Produkt, Autorin, Link zu Word Mill Games), Hinweis auf Änderungen, nicht als „offiziell“ ausgeben. Grafik und Gestaltung der Bücher sind nicht abgedeckt. Die Mythic-Daten behalten diese Lizenz, auch wenn der Code eine andere hat. |
+| **Game Master's Apprentice** (Larcenous Designs) | Nur den **Aufbau** der Karte (Bereiche und Felder). | Die Karteninhalte sind geschützt und nur mit Erlaubnis von Larcenous Designs nutzbar. Bis dahin füllen wir die Felder mit eigenen Einträgen. |
+| **Classic Traveller** (Far Future Enterprises) | Die **Mechanik**: Würfe, DMs, Abläufe als Programm. | Nach der Fan-Policy von FFE: kostenlos, Copyright- und Markenhinweis in der App, Regeltexte nicht über etwa eine Seite hinaus abschreiben. Vor einer Veröffentlichung die aktuelle Policy prüfen. |
+
+Die Quellenangaben stehen schon in Version 1 in der App, auf einem „Über“-Bildschirm.

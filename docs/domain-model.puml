@@ -43,6 +43,7 @@ hide <<value>> stereotype
     equipment: string
     credits: number
     note: string
+    retired: boolean
   }
   class Upp <<value>> {
     str: number
@@ -54,6 +55,7 @@ hide <<value>> stereotype
   }
   class SkillLevel {
     level: number
+    retired: boolean
   }
 
 ' Verlauf
@@ -163,7 +165,7 @@ Card "0..1" --> "1" Campaign : in
 Card "*" --> "1..*" Entry : drawn {ordered}
 Card "*" --> "*" Entry : picked
 Card ..> CardPick : on confirm
-PickedItem "*" --> "1" Slot : in
+PickedItem "*" --> "1" Slot : /in
 PickedItem "*" --> "1" Entry : picked
 Section "1" *-- "1..*" Slot : slots {ordered}
 Section --> SectionKind

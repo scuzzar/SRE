@@ -5,9 +5,8 @@ hier gemacht, abgestimmt und dann in den Code übertragen. Das Diagramm wird nie
 es zu dem passt, was der Code gerade tut. Solange der Code noch nicht nachgezogen hat, stehen die
 Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 
-> **Stand: Entwurf, noch nicht abgestimmt.** Die offenen Fragen stehen unter
-> [Offene Fragen zum Entwurf](#offene-fragen-zum-entwurf). Erst wenn sie geklärt sind, gilt das
-> Modell, und erst dann beginnt der Code.
+> **Stand: Alle offenen Fragen sind beantwortet; das Modell wartet auf die Freigabe des Owners.**
+> Erst danach gilt es, und erst dann beginnt der Code.
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -63,6 +62,9 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
   Entwürfen. Entwürfe werden nie gespeichert; beendet das Handy die App, sind sie weg.
 - **Eine Kampagne.** In Version 1 gibt es genau eine Kampagne. Alles, was gespeichert wird, hängt an
   ihr.
+- **Nicht in Version 1.** Szenen (der Log läuft ohne Gliederung durch; Szenen kommen mit Mythics
+  Szenenstruktur), mehrere Kampagnen, die Feinjustierung des Zielwerts um ±1, eigene Fertigkeiten und
+  Hausregeln, die man in der App einstellt.
 - **Eine Auswahl für Orakel und Proben.** Die Kampagne hat immer genau eine gewählte Stufe (`odds`).
   Die drei Stufen sind Referenzdaten: Hoch (75 %, 6+), Mittel (50 %, 8+), Gering (25 %, 10+), in
   dieser Reihenfolge, leicht links. Die Auswahl bleibt stehen, bis man sie ändert, auch über einen
@@ -87,15 +89,18 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
   kommen erst nach Version 1.
 - **Karte ziehen.** Ziehen legt eine `Card` an: für jedes Feld aller Bereiche einen seiner Einträge
   zufällig (`drawn`), die Themen-Reiter eingeschlossen, in der Reihenfolge der Bereiche und Felder.
-  Eine gestellte Frage geht auf die Karte über.
+  Eine gestellte Frage geht auf die Karte über. Der Bereich *Namen* hat drei Felder mit je eigenen
+  Einträgen (eher weiblich, eher männlich, neutral bzw. Genre-Name), wie auf der GMA-Karte; so sind
+  die drei Namen immer verschieden.
 - **Die Karte ist offen, bis man sie bestätigt oder verwirft.** Antippen nimmt einen gezogenen
   Eintrag in die Auswahl (`picked`) auf oder wieder heraus; ausgewählt sein kann nur, was gezogen
   wurde. *Verwerfen* schließt die Karte ohne Logeintrag. *Neu ziehen* ersetzt sie durch eine neue;
   die Auswahl geht verloren, die Frage bleibt.
-- **Bestätigen** legt einen `CardPick` mit der Frage der Karte an und darin je ausgewähltem Eintrag
-  ein `PickedItem`, in der Reihenfolge der Karte; danach ist die Karte zu. Das `PickedItem`
-  verweist auf das Feld (`Slot`) und auf den gezogenen Eintrag (`Entry`); der Eintrag gehört immer
-  zu diesem Feld.
+- **Bestätigen** geht erst, wenn mindestens ein Eintrag ausgewählt ist; ohne Auswahl bleibt nur
+  Verwerfen. Es legt einen `CardPick` mit der Frage der Karte an und darin je ausgewähltem Eintrag
+  ein `PickedItem`, in der Reihenfolge der Karte; danach ist die Karte zu. Das `PickedItem` verweist
+  auf den gezogenen Eintrag (`Entry`); das Feld (`/in`) folgt daraus, weil jeder Eintrag zu genau
+  einem Feld gehört.
 - **Probe.** Es gilt: 2W6 + Fertigkeit + gewählte Attribute ≥ Zielwert.
   - Zuerst wählt man die Fertigkeit: eine Fertigkeitsstufe des Charakters (DM = Stufe) oder „ohne
     Fertigkeit“ (DM aus den Hausregeln, −3). Solange keine gewählt ist, gibt es keine Probe zu
@@ -104,7 +109,8 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
     −1 bis `malusUpTo` (5), sonst ±0. Attribute mit ±0 sind nicht wählbar.
   - Der Zielwert kommt aus der gewählten Stufe. Der nötige Wurf ist Zielwert minus DM, die
     Wahrscheinlichkeit wird exakt aus den 36 Kombinationen von 2W6 gezählt: Bis 2 ist sie sicher,
-    über 12 unmöglich.
+    über 12 unmöglich. Auch eine unmögliche Probe darf man würfeln; sie misslingt immer und steht
+    trotzdem im Log.
   - Die Probe in Vorbereitung ist eine `Task`. Sie verweist auf den Charakter, auf eine seiner
     Fertigkeitsstufen (`uses`) oder ist `unskilled`, nie beides; keins von beiden heißt: noch keine
     Fertigkeit gewählt. Wechselt man den Charakter, beginnt eine neue Probe.
@@ -115,38 +121,22 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
     Charakter, Hausregeln oder Stufe. Die Verweise sagen, wer und womit gewürfelt hat.
   - Bei `Task` und `TaskResult` gehört die Fertigkeitsstufe (`uses`) immer dem Charakter, auf den sie
     verweisen (`for`), und der Charakter immer zur Kampagne.
-- **Charakter.** Die sechs UPP-Werte liegen zwischen 0 und 15. Eine Fertigkeit kommt bei einem
-  Charakter höchstens einmal vor, ihre Stufe ist 0 oder mehr. Ausrüstung, Herkunft (`background`,
-  z. B. „Ex-Scout · 4 Dienstzeiten · 34 Jahre“) und Notiz sind in Version 1 freier Text, Credits eine
+- **Charakter.** Charaktere legt man in der App an und bearbeitet sie; eine Charaktererschaffung
+  nach Regeln gibt es in Version 1 nicht. Die sechs UPP-Werte liegen zwischen 0 und 15. Eine
+  Fertigkeit kommt bei einem Charakter höchstens einmal vor, ihre Stufe ist 0 oder mehr; Fertigkeiten
+  kommen nur aus der festen Liste der Referenzdaten. Ausrüstung, Herkunft (`background`, z. B.
+  „Ex-Scout · 4 Dienstzeiten · 34 Jahre“) und Notiz sind in Version 1 freier Text, Credits eine
   ganze Zahl.
+- **Löschen und Ausblenden.** Ein Charakter oder eine Fertigkeitsstufe, auf die kein Logeintrag
+  verweist, wird wirklich gelöscht. Verweist der Log darauf, wird sie stattdessen ausgeblendet
+  (`retired`): Sie verschwindet aus dem Charakter-Screen und lässt sich nicht mehr für Proben wählen,
+  bleibt aber gespeichert, und der Log zeigt sie weiter. Ein ausgeblendeter Charakter lässt sich
+  wieder einblenden.
 - **Referenzdaten sind Daten.** Stufen, Hausregeln, Fertigkeiten, Bereiche, Felder und Einträge
-  stehen als Dateien unter `src/data/` und werden beim Start geprüft. Pfeile führen nur aus Spielstand
+  stehen als Dateien unter `src/data/` und werden beim Start geprüft. Man ändert sie nur dort, nicht
+  in der App. Pfeile führen nur aus Spielstand
   und Entwürfen in die Referenzdaten, nie zurück. Die Einträge sind eigene Inhalte, nicht die Texte
   des GMA-Decks.
-
-## Offene Fragen zum Entwurf
-
-1. **Sprache im Code:** Englische Bezeichner im Code, deutsche Begriffe in Oberfläche und Doku, mit
-   der Tabelle oben als Brücke. Einverstanden, oder lieber deutsche Bezeichner?
-2. **Szenen:** Der UI-Entwurf zeigt „Log · Szene 4“. Gehören Szenen schon in Version 1, also eine
-   `Scene`, die Logeinträge gruppiert? Oder erst mit Mythics Szenenstruktur?
-3. **Mehrere Kampagnen:** Reicht in Version 1 eine?
-4. **Feinjustierung ±1** (Rule 68A, z. B. 11+): schon in Version 1 oder später?
-5. **Karte ohne Auswahl bestätigen:** Soll das nichts in den Log schreiben, nur die Frage, oder gar
-   nicht möglich sein?
-6. **Unmögliche Probe** (nötiger Wurf über 12): Darf man trotzdem würfeln, damit es im Log steht?
-7. **Charaktere pflegen:** Legt man in Version 1 Charaktere von Hand an und bearbeitet sie, oder
-   reichen zunächst fest eingetragene?
-8. **Namen:** Die GMA-Karte zeigt drei verschiedene Namen. Weil jedes Feld seine eigenen Einträge
-   hat, gibt es keine gemeinsame Namensliste mehr. Sollen es drei Felder mit je eigener Liste sein (z. B. eher
-   weiblich, eher männlich, neutral, wie beim GMA), oder ein Feld, aus dem drei verschiedene Einträge
-   gezogen werden?
-9. **Doppelter Verweis:** Da jeder Eintrag zu genau einem Feld gehört, folgt das Feld eines
-   `PickedItem` schon aus seinem Eintrag. Den Pfeil `in` von `PickedItem` zu `Slot` behalten (wie
-   vorgeschlagen) oder als abgeleitet (`/in`) kennzeichnen?
-10. **Hausregeln einstellbar:** Sind `HouseRules` in Version 1 nur Daten im Code, oder kann man sie in
-   der App ändern (z. B. „ohne Fertigkeit −3“ abschalten)? Im zweiten Fall wären sie Spielstand
-   (blau), nicht Referenzdaten.
 
 ## Wo der Code noch nicht folgt
 

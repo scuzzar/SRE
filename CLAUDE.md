@@ -11,3 +11,7 @@
 - `ARCHITECTURE.md` legt die vier MVC-Regeln und die Schichtentabelle fest. Beide müssen stimmen.
 - Die README beschreibt, was die App können soll; das Domänenmodell, wie es im Modell aussieht.
   Widersprechen sie sich, nachfragen statt raten.
+- **Commits laufen unter dem Namen des Owners**: Autor und Committer
+  `Scuzzar <scuzzarGalaxy@googlemail.com>`, nie Claude. Je Befehl setzen
+  (`git -c user.name=Scuzzar -c user.email=scuzzarGalaxy@googlemail.com commit …`), ebenso für
+  Merges nach `main`.
