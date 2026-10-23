@@ -1,0 +1,191 @@
+' Das Domänenmodell der Solo RPG Engine. Es führt: der Code folgt ihm, nie umgekehrt.
+' Rendern: java -jar plantuml.jar -tpng docs/domain-model.puml (ohne Graphviz)
+@startuml
+!pragma layout smetana
+title Solo RPG Engine – Domänenmodell (Version 1, Entwurf)
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign {
+    name: string
+  }
+  class Character {
+    name: string
+    background: string
+    equipment: string
+    credits: number
+    note: string
+  }
+  class Upp <<value>> {
+    str: number
+    dex: number
+    end: number
+    int: number
+    edu: number
+    soc: number
+  }
+  class SkillLevel {
+    level: number
+  }
+
+' Verlauf
+  abstract class LogEntry {
+    at: datetime
+  }
+  class OracleAnswer {
+    question: string [0..1]
+    odds: string
+    chance: number
+    roll: number
+    /yes: boolean
+  }
+  class DiceRoll {
+    dice: number[2]
+    /total: number
+  }
+  class CardPick {
+    question: string [0..1]
+  }
+  class PickedItem {
+    label: string
+    text: string
+  }
+  class TaskResult {
+    character: string
+    target: number
+    dice: number[2]
+    /success: boolean
+  }
+  class Modifier <<value>> {
+    label: string
+    dm: number
+  }
+
+' nur solange offen, nie gespeichert
+  class Card <<transient>> {
+    question: string [0..1]
+  }
+  class CardField <<transient>> {
+    text: string
+    picked: boolean
+  }
+  class Task <<transient>> {
+    /dm: number
+    /need: number
+    /chance: number
+  }
+  abstract class SkillChoice <<transient>>
+  class WithSkill <<transient>>
+  class Unskilled <<transient>>
+
+' Referenzdaten
+  class Odds <<reference>> {
+    name: string
+    chance: number
+    target: number
+  }
+  class HouseRules <<reference>> {
+    unskilledDm: number
+    bonusFrom: number
+    malusUpTo: number
+  }
+  class Skill <<reference>> {
+    name: string
+  }
+  class Section <<reference>> {
+    name: string
+    kind: SectionKind
+  }
+  class Slot <<reference>> {
+    label: string
+  }
+  class WordList <<reference>> {
+    entries: string[*]
+  }
+  enum SectionKind <<value>> {
+    card
+    theme
+  }
+  enum Characteristic <<value>> {
+    STR
+    DEX
+    END
+    INT
+    EDU
+    SOC
+  }
+
+' Kampagne
+Campaign "1" *-- "*" Character : characters
+Campaign "*" --> "1" Odds : odds
+Campaign "1" *-- "*" LogEntry : log {ordered}
+Campaign "1" *-- "0..1" Card : drawn
+Campaign "1" *-- "0..1" Task : prepared
+
+' Charakter
+Character "1" *-- "1" Upp : upp
+Character "1" *-- "*" SkillLevel : skills
+SkillLevel "*" --> "1" Skill : of
+
+' Verlauf
+LogEntry <|-- OracleAnswer
+LogEntry <|-- DiceRoll
+LogEntry <|-- CardPick
+LogEntry <|-- TaskResult
+CardPick "1" *-- "1..*" PickedItem : items {ordered}
+TaskResult "1" *-- "1..*" Modifier : modifiers {ordered}
+OracleAnswer ..> Odds : copied from
+CardPick ..> Card : copied from, on confirm
+TaskResult ..> Task : copied from, on roll
+
+' Karte
+Card "1" *-- "1..*" CardField : fields {ordered}
+CardField "*" --> "1" Slot : in
+Section "1" *-- "1..*" Slot : slots {ordered}
+Section --> SectionKind
+Slot "*" --> "1" WordList : draws from
+
+' Probe
+Task "*" --> "1" Character : for
+Task "1" *-- "0..1" SkillChoice : skill
+SkillChoice <|-- WithSkill
+SkillChoice <|-- Unskilled
+WithSkill "*" --> "1" SkillLevel : uses
+Task --> "0..6" Characteristic : counts
+Task ..> HouseRules : follows
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Nur solange offen, wird nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+@enduml

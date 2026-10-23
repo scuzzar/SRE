@@ -5,7 +5,7 @@ Eine App für **Solo-Rollenspiel mit Classic Traveller**. Sie soll zwei Dinge in
 1. **Die Regeln von Classic Traveller** – vollständig implementiert, damit Würfe, Tabellen und Abläufe nicht mehr von Hand nachgeschlagen werden müssen.
 2. **Ein Orakel**, das die Spielleitung ersetzt – angelehnt teils an **Mythic** (Mythic Game Master Emulator) und teils an den **Game Master's Apprentice (GMA)**.
 
-> Status: Konzeptphase. Wir fangen klein an, mit einer **mobilen Version 1** (siehe [Version 1](#version-1-mobil)). Architektur und Technik sind noch offen (siehe [Offene Fragen](#offene-fragen)).
+> Status: Konzeptphase. Wir fangen klein an, mit einer **mobilen Version 1** (siehe [Version 1](#version-1-mobil)). Gebaut wird domänengetrieben: Zuerst steht das [Domänenmodell](docs/domain-model.md) (Entwurf), dann der Code. Technik und MVC-Aufbau stehen in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ---
 
@@ -235,16 +235,17 @@ Besitz und Situation stehen wie auf der GMA-Karte links, Namen und Merkmale rech
 Diese Punkte werden als Nächstes gemeinsam geklärt:
 
 ### UI
-- **Entschieden: mobil zuerst.** Offen ist, ob als Web-App (PWA) oder als native App.
+- **Entschieden: mobil zuerst, als Web-App (PWA).** Eine native App ist später über Capacitor möglich, ohne Neuschreiben.
 - Später: Wie gibt man physische Würfe am schnellsten ein (z. B. Würfelaugen antippen, Summe eintippen)?
 - Später: Wie wächst die App über Version 1 hinaus, ohne den Hauptscreen zu überladen?
 - Wohin wandern die Themen-Reiter (Auftrag, NSC, Begegnung, Welt, Schiff, Handel), die vorläufig unter der Karte hängen?
 
 ### Architektur
-- Trennung von **Regel-Engine**, **Orakel-Engine** und **UI** als eigenständige Module?
-- Regeln und Tabellen als **Daten** (z. B. JSON/YAML) statt fest im Code, damit Erweiterungen und Hausregeln leicht möglich sind?
-- Speicherung: lokal (Datei, Browser-Speicher) oder mit Synchronisation?
-- Technologie-Stack (z. B. TypeScript, Kotlin, Python …).
+- **Entschieden: domänengetrieben.** Das [Domänenmodell](docs/domain-model.md) führt, der Code folgt ihm. Der Entwurf hat noch offene Fragen.
+- **Entschieden: strikt MVC** mit Regel-Engine und Orakel im Model, siehe [ARCHITECTURE.md](ARCHITECTURE.md).
+- **Entschieden: Regeln und Tabellen als Daten** (JSON, beim Start geprüft).
+- **Entschieden: Speicherung lokal** (IndexedDB) mit Export und Import; Synchronisation später.
+- **Entschieden: TypeScript** mit Vite, React und Dexie.
 
 ---
 
