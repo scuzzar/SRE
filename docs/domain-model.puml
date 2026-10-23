@@ -75,7 +75,8 @@ hide <<value>> stereotype
   class PickedItem
   class TaskResult {
     dice: number[2]
-    /dm: number
+    dm: number
+    target: number
     /success: boolean
   }
 

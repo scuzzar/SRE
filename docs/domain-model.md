@@ -59,15 +59,15 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
   dieser Reihenfolge, leicht links. Die Auswahl bleibt stehen, bis man sie ändert, auch über einen
   Neustart der App hinweg. Orakel und Probe lesen sie, keiner von beiden hat eine eigene.
 - **Der Log verweist, er kopiert nicht.** Ein Logeintrag hält nur fest, was allein ihm gehört: Frage,
-  Zeitpunkt und Würfel. Alles andere ist ein Verweis: auf die Stufe, den Charakter, die
-  Fertigkeitsstufe, die Attribute, auf Feld und Eintrag der Karte. Was der Log anzeigt (Name, DM,
-  Zielwert, Erfolg), wird aus dem Verwiesenen berechnet. Logeinträge werden nur angehängt, nie
-  geändert oder gelöscht. Die Reihenfolge ist die Reihenfolge der Ereignisse; dass das Neueste unten
-  steht, ist Sache der Anzeige.
+  Zeitpunkt und Würfel, bei einer Probe dazu DM und Zielwert (siehe *Probe*). Alles andere ist ein
+  Verweis: auf die Stufe, den Charakter, die Fertigkeitsstufe, die Attribute, auf Feld und Eintrag
+  der Karte. Logeinträge werden nur angehängt, nie geändert oder gelöscht. Die Reihenfolge ist die
+  Reihenfolge der Ereignisse; dass das Neueste unten steht, ist Sache der Anzeige.
 - **Worauf der Log verweist, wird nie gelöscht.** Ein Charakter, der im Log vorkommt, bleibt in der
   Kampagne, ebenso seine Fertigkeitsstufen; Stufen, Felder und Einträge der Referenzdaten haben eine
-  feste Id und bleiben in den Daten. Ändert sich etwas daran (ein Charakter lernt Pilot-3, eine
-  Hausregel ändert sich), zeigen auch die alten Logeinträge die neuen Werte.
+  feste Id und bleiben in den Daten. Ändert sich etwas daran (ein Charakter heißt anders, lernt
+  Pilot-3), zeigen auch alte Logeinträge den neuen Stand. Das Ergebnis einer Probe ändert sich
+  dadurch nicht, weil DM und Zielwert festgehalten sind.
 - **Würfe stehen im Log, nicht nur ihr Ergebnis.** Gespeichert werden die einzelnen Würfel (`dice`,
   `roll`); Summe, Ja/Nein und Erfolg (`/total`, `/yes`, `/success`) folgen daraus.
 - **Orakel.** Ein Wurf von 1 bis 100; Ja, wenn er höchstens die Chance der gewählten Stufe ist. Die
@@ -91,9 +91,11 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
     über 12 unmöglich.
   - Wechselt man den Charakter, beginnt eine neue Probe. Eine vorbereitete Probe wird nicht
     gespeichert.
-  - Gewürfelt wird eine Probe als `TaskResult` in den Log übernommen. Es hält die zwei Würfel und
-    verweist auf Charakter, Fertigkeitsstufe (keine heißt „ohne Fertigkeit“), die gewählten Attribute
-    und die Stufe. DM, Zielwert und Erfolg folgen daraus.
+  - Gewürfelt wird eine Probe als `TaskResult` in den Log übernommen. Es verweist auf Charakter,
+    Fertigkeitsstufe (keine heißt „ohne Fertigkeit“), die gewählten Attribute und die Stufe, und es
+    hält die zwei Würfel sowie DM (`dm`) und Zielwert (`target`) zum Zeitpunkt des Wurfs fest. Der
+    Erfolg (`/success`: Würfel + `dm` ≥ `target`) folgt allein daraus, nie aus dem heutigen Stand von
+    Charakter, Hausregeln oder Stufe. Die Verweise sagen, wer und womit gewürfelt hat.
 - **Charakter.** Die sechs UPP-Werte liegen zwischen 0 und 15. Eine Fertigkeit kommt bei einem
   Charakter höchstens einmal vor, ihre Stufe ist 0 oder mehr. Ausrüstung, Herkunft (`background`,
   z. B. „Ex-Scout · 4 Dienstzeiten · 34 Jahre“) und Notiz sind in Version 1 freier Text, Credits eine
@@ -122,12 +124,7 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
 9. **Doppelter Verweis:** Da jeder Eintrag zu genau einem Feld gehört, folgt das Feld eines
    `PickedItem` schon aus seinem Eintrag. Den Pfeil `in` behalten (wie vorgeschlagen) oder als
    abgeleitet (`/in`) kennzeichnen?
-10. **Verlauf und spätere Änderungen:** Weil der Log nur verweist, rechnet er alte Proben mit den
-    heutigen Werten. Lernt Kira später Pilot-3, stünde bei einer alten Probe „Pilot-3, DM +4“, und
-    ein damaliger Misserfolg könnte im Log zum Erfolg werden. Ist das so gewollt? Die Alternative:
-    Der `TaskResult` hält zusätzlich die zwei Zahlen fest, die das Ergebnis entschieden haben (`dm`
-    und `target`), und verweist für alles andere.
-11. **Hausregeln einstellbar:** Sind `HouseRules` in Version 1 nur Daten im Code, oder kann man sie in
+10. **Hausregeln einstellbar:** Sind `HouseRules` in Version 1 nur Daten im Code, oder kann man sie in
    der App ändern (z. B. „ohne Fertigkeit −3“ abschalten)? Im zweiten Fall wären sie Spielstand
    (blau), nicht Referenzdaten.
 
