@@ -74,8 +74,7 @@ hide <<value>> stereotype
   }
   class PickedItem
 
-' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert
-package "draft" {
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Card <<transient>> {
     question: string [0..1]
   }
@@ -85,7 +84,6 @@ package "draft" {
     /need: number
     /chance: number
   }
-}
   class TaskResult {
     dice: number[2]
     dm: number

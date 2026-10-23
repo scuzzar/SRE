@@ -17,8 +17,8 @@ erzeugen mit `java -jar plantuml.jar -tpng docs/domain-model.puml`; Graphviz ist
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
 gestricheltem Rahmen** ist flüchtig: Es besteht zwischen zwei Eingaben und wird nie gespeichert. Es
-kommt nur ins Diagramm, wenn sich ein Ablauf sonst nicht abbilden lässt, und liegt im Paket
-`draft`. **Grün**
+kommt nur ins Diagramm, wenn sich ein Ablauf sonst nicht abbilden lässt. Im Code liegt es im Paket
+`draft`; das Diagramm zeigt das nur durch die Farbe. **Grün**
 sind Referenzdaten: feste Tabellen, in jeder Kampagne gleich. **Weiß** sind Werte und Wertelisten.
 
 ## Begriffe
