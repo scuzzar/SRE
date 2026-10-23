@@ -1,0 +1,84 @@
+' Das Domänenmodell von <Projekt>. Es führt: der Code folgt ihm, nie umgekehrt.
+' Rendern: bash .claude/skills/domain-model/scripts/render.sh docs/domain-model.puml
+@startuml
+!pragma layout smetana
+title <Projekt> – Domänenmodell (Version 1, Entwurf)
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Gespeicherter Stand (blau)
+  class Root {
+    name: string
+  }
+  class Item {
+    label: string
+    retired: boolean
+  }
+  abstract class LogEntry {
+    at: datetime
+  }
+  class Result {
+    roll: number
+    chance: number
+    /success: boolean
+  }
+
+' Flüchtig (grau): nur wenn ein Ablauf zwischen zwei Eingaben sonst nicht abbildbar ist
+  class Draft <<transient>> {
+    question: string [0..1]
+  }
+
+' Referenzdaten (grün)
+  class Kind <<reference>> {
+    name: string
+  }
+
+' Werte (weiß)
+  enum Level <<value>> {
+    low
+    high
+  }
+
+Root "1" *-- "*" Item : items
+Root "1" *-- "*" LogEntry : log {ordered}
+LogEntry <|-- Result
+Result "*" --> "1" Item : for
+Item "*" --> "1" Kind : of
+Item --> Level
+Draft "0..1" --> "1" Root : in
+Draft ..> Result : on confirm
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Gespeicherter Stand |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: feste Tabellen, überall gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+@enduml
