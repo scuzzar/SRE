@@ -5,8 +5,8 @@ hier gemacht, abgestimmt und dann in den Code übertragen. Das Diagramm wird nie
 es zu dem passt, was der Code gerade tut. Solange der Code noch nicht nachgezogen hat, stehen die
 Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 
-> **Stand: Alle offenen Fragen sind beantwortet; das Modell wartet auf die Freigabe des Owners.**
-> Erst danach gilt es, und erst dann beginnt der Code.
+> **Stand: Freigegeben für Version 1** (23. Oktober 2026). Änderungen nur noch auf dem oben
+> beschriebenen Weg: erst hier, abgestimmt, dann im Code.
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 

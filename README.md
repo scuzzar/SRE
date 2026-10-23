@@ -5,7 +5,7 @@ Eine App für **Solo-Rollenspiel mit Classic Traveller**. Sie soll zwei Dinge in
 1. **Die Regeln von Classic Traveller** – vollständig implementiert, damit Würfe, Tabellen und Abläufe nicht mehr von Hand nachgeschlagen werden müssen.
 2. **Ein Orakel**, das die Spielleitung ersetzt – angelehnt teils an **Mythic** (Mythic Game Master Emulator) und teils an den **Game Master's Apprentice (GMA)**.
 
-> Status: Konzeptphase. Wir fangen klein an, mit einer **mobilen Version 1** (siehe [Version 1](#version-1-mobil)). Gebaut wird domänengetrieben: Zuerst steht das [Domänenmodell](docs/domain-model.md) (Entwurf), dann der Code. Technik und MVC-Aufbau stehen in [ARCHITECTURE.md](ARCHITECTURE.md).
+> Status: Konzeptphase. Wir fangen klein an, mit einer **mobilen Version 1** (siehe [Version 1](#version-1-mobil)). Gebaut wird domänengetrieben: Das [Domänenmodell](docs/domain-model.md) für Version 1 ist freigegeben, als Nächstes kommt der Code. Technik und MVC-Aufbau stehen in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ---
 
@@ -241,7 +241,7 @@ Diese Punkte werden als Nächstes gemeinsam geklärt:
 - Wohin wandern die Themen-Reiter (Auftrag, NSC, Begegnung, Welt, Schiff, Handel), die vorläufig unter der Karte hängen?
 
 ### Architektur
-- **Entschieden: domänengetrieben.** Das [Domänenmodell](docs/domain-model.md) führt, der Code folgt ihm. Die Fragen zum Entwurf sind beantwortet; er wartet auf die Freigabe.
+- **Entschieden: domänengetrieben.** Das [Domänenmodell](docs/domain-model.md) führt, der Code folgt ihm. Das Modell für Version 1 ist freigegeben.
 - **Entschieden: klassisches MVC**, streng getrennt, mit Regel-Engine und Orakel im Model, siehe [ARCHITECTURE.md](ARCHITECTURE.md).
 - **Entschieden: Regeln und Tabellen als Daten** (JSON, beim Start geprüft).
 - **Entschieden: Speicherung lokal** (IndexedDB) mit Export und Import; Synchronisation später.

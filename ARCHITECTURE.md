@@ -1,6 +1,6 @@
 # Architektur
 
-> **Stand: Entwurf.** Es gibt noch keinen Code. Dieses Dokument legt fest, wie er gebaut wird.
+> **Stand: Festgelegt, es gibt noch keinen Code.** Dieses Dokument legt fest, wie er gebaut wird.
 
 Die App ist eine Progressive Web App in **TypeScript** (Vite, React, Dexie für IndexedDB, Zod für
 die Referenzdaten, Vitest und Playwright für Tests). Sie folgt **strikt MVC**: Model, View und

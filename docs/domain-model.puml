@@ -2,7 +2,7 @@
 ' Rendern: java -jar plantuml.jar -tpng docs/domain-model.puml (ohne Graphviz)
 @startuml
 !pragma layout smetana
-title Solo RPG Engine – Domänenmodell (Version 1, Entwurf)
+title Solo RPG Engine – Domänenmodell (Version 1)
 hide empty members
 hide methods
 skinparam classAttributeIconSize 0
