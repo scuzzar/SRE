@@ -63,12 +63,6 @@ export function CharacterCard({ character }: { character: CharacterView }) {
       {character.chosen && (
         <>
           <dl className="facts">
-            {!skillChosen && character.skills.length > 0 && (
-              <>
-                <dt>Fertigkeiten</dt>
-                <dd>{character.skills.map((s) => `${s.name}-${s.level}`).join(', ')}</dd>
-              </>
-            )}
             <dt>Ausrüstung</dt>
             <dd>{character.equipment || '–'}</dd>
             <dt>Credits</dt>
