@@ -1,0 +1,43 @@
+import { describe, expect, it } from 'vitest';
+import { ReferenceDataSchema, referenceData } from './index';
+
+describe('Referenzdaten', () => {
+  it('sind gültig', () => {
+    expect(referenceData.odds.map((o) => o.name)).toEqual(['Hoch', 'Mittel', 'Gering']);
+    expect(referenceData.odds.map((o) => [o.chance, o.target])).toEqual([
+      [75, 6],
+      [50, 8],
+      [25, 10],
+    ]);
+  });
+
+  it('haben die Bereiche der GMA2e-Karte in Kartenreihenfolge, dann die Themen-Reiter', () => {
+    expect(referenceData.sections.map((s) => `${s.kind}:${s.name}`)).toEqual([
+      'card:Zufallsereignis',
+      'card:Sinneseindrücke',
+      'card:Szenentyp',
+      'card:Besitz',
+      'card:Situation',
+      'card:Namen',
+      'card:Merkmale',
+      'card:Flavortext',
+      'theme:Auftrag',
+      'theme:NSC',
+      'theme:Begegnung',
+      'theme:Welt',
+      'theme:Schiff',
+      'theme:Handel',
+    ]);
+  });
+
+  it('weisen doppelte Ids zurück', () => {
+    const broken = { ...referenceData, skills: [...referenceData.skills, { id: 'pilot', name: 'Noch ein Pilot' }] };
+    expect(() => ReferenceDataSchema.parse(broken)).toThrow(/pilot kommt doppelt vor/);
+  });
+
+  it('weisen Beispielcharaktere mit unbekannter Fertigkeit zurück', () => {
+    const [kira] = referenceData.examples;
+    const broken = { ...referenceData, examples: [{ ...kira!, skills: [{ of: 'telepathy', level: 1 }] }] };
+    expect(() => ReferenceDataSchema.parse(broken)).toThrow(/Unbekannte Fertigkeit telepathy/);
+  });
+});

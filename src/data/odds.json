@@ -1,0 +1,5 @@
+[
+  { "id": "high", "name": "Hoch", "chance": 75, "target": 6 },
+  { "id": "medium", "name": "Mittel", "chance": 50, "target": 8 },
+  { "id": "low", "name": "Gering", "chance": 25, "target": 10 }
+]

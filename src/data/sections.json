@@ -1,0 +1,619 @@
+[
+  {
+    "id": "event",
+    "name": "Zufallsereignis",
+    "kind": "card",
+    "slots": [
+      {
+        "id": "event.verb",
+        "label": "Verb",
+        "entries": [
+          {"id": "event.verb.1", "text": "verraten"},
+          {"id": "event.verb.2", "text": "schützen"},
+          {"id": "event.verb.3", "text": "suchen"},
+          {"id": "event.verb.4", "text": "verfolgen"},
+          {"id": "event.verb.5", "text": "verhandeln"},
+          {"id": "event.verb.6", "text": "sabotieren"},
+          {"id": "event.verb.7", "text": "entdecken"},
+          {"id": "event.verb.8", "text": "fliehen"},
+          {"id": "event.verb.9", "text": "bestechen"},
+          {"id": "event.verb.10", "text": "reparieren"},
+          {"id": "event.verb.11", "text": "verstecken"},
+          {"id": "event.verb.12", "text": "enthüllen"}
+        ]
+      },
+      {
+        "id": "event.adjective",
+        "label": "Adjektiv",
+        "entries": [
+          {"id": "event.adjective.1", "text": "verlassen"},
+          {"id": "event.adjective.2", "text": "korrupt"},
+          {"id": "event.adjective.3", "text": "uralt"},
+          {"id": "event.adjective.4", "text": "beschädigt"},
+          {"id": "event.adjective.5", "text": "heimlich"},
+          {"id": "event.adjective.6", "text": "verzweifelt"},
+          {"id": "event.adjective.7", "text": "illegal"},
+          {"id": "event.adjective.8", "text": "fremdartig"},
+          {"id": "event.adjective.9", "text": "wertvoll"},
+          {"id": "event.adjective.10", "text": "instabil"},
+          {"id": "event.adjective.11", "text": "loyal"},
+          {"id": "event.adjective.12", "text": "gefälscht"}
+        ]
+      },
+      {
+        "id": "event.noun",
+        "label": "Substantiv",
+        "entries": [
+          {"id": "event.noun.1", "text": "Fracht"},
+          {"id": "event.noun.2", "text": "Signal"},
+          {"id": "event.noun.3", "text": "Datenkern"},
+          {"id": "event.noun.4", "text": "Patron"},
+          {"id": "event.noun.5", "text": "Schulden"},
+          {"id": "event.noun.6", "text": "Waffe"},
+          {"id": "event.noun.7", "text": "Botschaft"},
+          {"id": "event.noun.8", "text": "Wrack"},
+          {"id": "event.noun.9", "text": "Gefangener"},
+          {"id": "event.noun.10", "text": "Artefakt"},
+          {"id": "event.noun.11", "text": "Vertrag"},
+          {"id": "event.noun.12", "text": "Treibstoff"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "senses",
+    "name": "Sinneseindrücke",
+    "kind": "card",
+    "slots": [
+      {
+        "id": "senses.hear",
+        "label": "Hören",
+        "entries": [
+          {"id": "senses.hear.1", "text": "Das Summen der Lebenserhaltung …"},
+          {"id": "senses.hear.2", "text": "Ein schriller Alarmton …"},
+          {"id": "senses.hear.3", "text": "Schritte auf Metallgittern …"},
+          {"id": "senses.hear.4", "text": "Funkrauschen, dann eine Stimme …"},
+          {"id": "senses.hear.5", "text": "Ein dumpfer Schlag gegen den Rumpf …"},
+          {"id": "senses.hear.6", "text": "Plötzliche Stille …"},
+          {"id": "senses.hear.7", "text": "Ein Zischen aus einer Leitung …"},
+          {"id": "senses.hear.8", "text": "Gedämpfte Musik aus einer Bar …"}
+        ]
+      },
+      {
+        "id": "senses.see",
+        "label": "Sehen",
+        "entries": [
+          {"id": "senses.see.1", "text": "Flackernde Notbeleuchtung …"},
+          {"id": "senses.see.2", "text": "Rostspuren an den Schotten …"},
+          {"id": "senses.see.3", "text": "Ein Schwarm Wartungsdrohnen …"},
+          {"id": "senses.see.4", "text": "Leere Andockbuchten …"},
+          {"id": "senses.see.5", "text": "Brandspuren an der Wand …"},
+          {"id": "senses.see.6", "text": "Ein Wappen des Imperiums …"},
+          {"id": "senses.see.7", "text": "Kondenswasser auf dem Visier …"},
+          {"id": "senses.see.8", "text": "Ein fremdes Schiff am Horizont …"}
+        ]
+      },
+      {
+        "id": "senses.feel",
+        "label": "Fühlen",
+        "entries": [
+          {"id": "senses.feel.1", "text": "Die Deckplatten vibrieren …"},
+          {"id": "senses.feel.2", "text": "Beißende Kälte …"},
+          {"id": "senses.feel.3", "text": "Die Schwerkraft schwankt kurz …"},
+          {"id": "senses.feel.4", "text": "Feuchte, stickige Luft …"},
+          {"id": "senses.feel.5", "text": "Statische Aufladung kribbelt …"},
+          {"id": "senses.feel.6", "text": "Ein Luftzug, wo keiner sein sollte …"},
+          {"id": "senses.feel.7", "text": "Ein Stoß von hinten …"},
+          {"id": "senses.feel.8", "text": "Hitze strahlt von der Wand …"}
+        ]
+      },
+      {
+        "id": "senses.smell",
+        "label": "Riechen",
+        "entries": [
+          {"id": "senses.smell.1", "text": "Ozon …"},
+          {"id": "senses.smell.2", "text": "Schmieröl …"},
+          {"id": "senses.smell.3", "text": "Fremde Gewürze …"},
+          {"id": "senses.smell.4", "text": "Verbranntes Plastik …"},
+          {"id": "senses.smell.5", "text": "Desinfektionsmittel …"},
+          {"id": "senses.smell.6", "text": "Ungewaschene Raumfahrer …"},
+          {"id": "senses.smell.7", "text": "Frisch gebrühter Kaffee …"},
+          {"id": "senses.smell.8", "text": "Kühlmittel …"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "scene",
+    "name": "Szenentyp",
+    "kind": "card",
+    "slots": [
+      {
+        "id": "scene.scene",
+        "label": "Szenentyp",
+        "entries": [
+          {"id": "scene.scene.1", "text": "Ein alter Bekannter taucht auf."},
+          {"id": "scene.scene.2", "text": "Die Behörden machen eine Kontrolle."},
+          {"id": "scene.scene.3", "text": "Ein Geschäft bietet sich an."},
+          {"id": "scene.scene.4", "text": "Ein Notruf geht ein."},
+          {"id": "scene.scene.5", "text": "Eine ruhige Pause wird gestört."},
+          {"id": "scene.scene.6", "text": "Ein Streit eskaliert."},
+          {"id": "scene.scene.7", "text": "Eine Spur führt weiter."},
+          {"id": "scene.scene.8", "text": "Etwas an Bord geht kaputt."},
+          {"id": "scene.scene.9", "text": "Ein Fremder bittet um Hilfe."},
+          {"id": "scene.scene.10", "text": "Ein Fest im Raumhafen."}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "belongings",
+    "name": "Besitz",
+    "kind": "card",
+    "slots": [
+      {
+        "id": "belongings.belongings",
+        "label": "Besitz",
+        "entries": [
+          {"id": "belongings.belongings.1", "text": "Kommunikation: Handkomm, Funkgerät, verschlüsselter Datenstab."},
+          {"id": "belongings.belongings.2", "text": "Reisegepäck: Seesack, Passagierticket, Thermodecke."},
+          {"id": "belongings.belongings.3", "text": "Waffen: Messer, Autopistole, Laserkarabiner."},
+          {"id": "belongings.belongings.4", "text": "Papiere: Frachtbriefe, Ausweis, gefälschte Lizenz."},
+          {"id": "belongings.belongings.5", "text": "Werkzeug: Multitool, Lötgerät, Diagnosescanner."},
+          {"id": "belongings.belongings.6", "text": "Medizin: Verbandszeug, Schmerzmittel, Medkit."},
+          {"id": "belongings.belongings.7", "text": "Luxus: Armbanduhr, Seidenschal, seltener Wein."},
+          {"id": "belongings.belongings.8", "text": "Andenken: Foto, Orden, Brief von zu Hause."}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "situation",
+    "name": "Situation",
+    "kind": "card",
+    "slots": [
+      {
+        "id": "situation.catalyst",
+        "label": "Auslöser",
+        "entries": [
+          {"id": "situation.catalyst.1", "text": "Ein Notsignal im Sprungpunkt."},
+          {"id": "situation.catalyst.2", "text": "Ein Patron bittet um Hilfe."},
+          {"id": "situation.catalyst.3", "text": "Gefälschte Frachtpapiere."},
+          {"id": "situation.catalyst.4", "text": "Ein Unfall im Dock."},
+          {"id": "situation.catalyst.5", "text": "Eine Schuld wird eingefordert."},
+          {"id": "situation.catalyst.6", "text": "Ein Kopfgeld wird ausgesetzt."},
+          {"id": "situation.catalyst.7", "text": "Eine Lieferung verschwindet."},
+          {"id": "situation.catalyst.8", "text": "Ein Verräter in den eigenen Reihen."}
+        ]
+      },
+      {
+        "id": "situation.location",
+        "label": "Ort",
+        "entries": [
+          {"id": "situation.location.1", "text": "Orbitalstation."},
+          {"id": "situation.location.2", "text": "Raumhafen-Bar."},
+          {"id": "situation.location.3", "text": "Asteroidenbasis."},
+          {"id": "situation.location.4", "text": "Frachtraum."},
+          {"id": "situation.location.5", "text": "Regierungsviertel."},
+          {"id": "situation.location.6", "text": "Bergbaukolonie."},
+          {"id": "situation.location.7", "text": "Treibendes Wrack."},
+          {"id": "situation.location.8", "text": "Marktplatz."},
+          {"id": "situation.location.9", "text": "Forschungsstation."},
+          {"id": "situation.location.10", "text": "Unterstadt."}
+        ]
+      },
+      {
+        "id": "situation.stakes",
+        "label": "Einsatz",
+        "entries": [
+          {"id": "situation.stakes.1", "text": "Schulden begleichen."},
+          {"id": "situation.stakes.2", "text": "Einen Freund retten."},
+          {"id": "situation.stakes.3", "text": "Den Ruf wahren."},
+          {"id": "situation.stakes.4", "text": "Das Schiff behalten."},
+          {"id": "situation.stakes.5", "text": "Die Wahrheit aufdecken."},
+          {"id": "situation.stakes.6", "text": "Rache nehmen."},
+          {"id": "situation.stakes.7", "text": "Überleben."},
+          {"id": "situation.stakes.8", "text": "Einen Vertrag erfüllen."}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "names",
+    "name": "Namen",
+    "kind": "card",
+    "slots": [
+      {
+        "id": "names.female",
+        "label": "Eher weiblich",
+        "entries": [
+          {"id": "names.female.1", "text": "Ilsa"},
+          {"id": "names.female.2", "text": "Mara"},
+          {"id": "names.female.3", "text": "Nadia"},
+          {"id": "names.female.4", "text": "Freya"},
+          {"id": "names.female.5", "text": "Lenore"},
+          {"id": "names.female.6", "text": "Aiko"},
+          {"id": "names.female.7", "text": "Tamsin"},
+          {"id": "names.female.8", "text": "Sela"},
+          {"id": "names.female.9", "text": "Inga"},
+          {"id": "names.female.10", "text": "Talia"},
+          {"id": "names.female.11", "text": "Mireille"},
+          {"id": "names.female.12", "text": "Yara"}
+        ]
+      },
+      {
+        "id": "names.male",
+        "label": "Eher männlich",
+        "entries": [
+          {"id": "names.male.1", "text": "Teodor"},
+          {"id": "names.male.2", "text": "Elias"},
+          {"id": "names.male.3", "text": "Oren"},
+          {"id": "names.male.4", "text": "Salim"},
+          {"id": "names.male.5", "text": "Brann"},
+          {"id": "names.male.6", "text": "Rafe"},
+          {"id": "names.male.7", "text": "Corvin"},
+          {"id": "names.male.8", "text": "Dax"},
+          {"id": "names.male.9", "text": "Kasimir"},
+          {"id": "names.male.10", "text": "Bruno"},
+          {"id": "names.male.11", "text": "Hamid"},
+          {"id": "names.male.12", "text": "Matthis"}
+        ]
+      },
+      {
+        "id": "names.neutral",
+        "label": "Neutral oder Genre",
+        "entries": [
+          {"id": "names.neutral.1", "text": "Jun"},
+          {"id": "names.neutral.2", "text": "Sasha"},
+          {"id": "names.neutral.3", "text": "Robin"},
+          {"id": "names.neutral.4", "text": "Vesh"},
+          {"id": "names.neutral.5", "text": "Nyx"},
+          {"id": "names.neutral.6", "text": "Quill"},
+          {"id": "names.neutral.7", "text": "Zeren"},
+          {"id": "names.neutral.8", "text": "Lio"},
+          {"id": "names.neutral.9", "text": "Ashari"},
+          {"id": "names.neutral.10", "text": "Kel"},
+          {"id": "names.neutral.11", "text": "Arkh"},
+          {"id": "names.neutral.12", "text": "Toma"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "traits",
+    "name": "Merkmale",
+    "kind": "card",
+    "slots": [
+      {
+        "id": "traits.virtue",
+        "label": "Tugend",
+        "entries": [
+          {"id": "traits.virtue.1", "text": "Nächstenliebe"},
+          {"id": "traits.virtue.2", "text": "Keuschheit"},
+          {"id": "traits.virtue.3", "text": "Mitgefühl"},
+          {"id": "traits.virtue.4", "text": "Mut"},
+          {"id": "traits.virtue.5", "text": "Fleiß"},
+          {"id": "traits.virtue.6", "text": "Ehrlichkeit"},
+          {"id": "traits.virtue.7", "text": "Demut"},
+          {"id": "traits.virtue.8", "text": "Loyalität"},
+          {"id": "traits.virtue.9", "text": "Barmherzigkeit"},
+          {"id": "traits.virtue.10", "text": "Mäßigung"}
+        ]
+      },
+      {
+        "id": "traits.vice",
+        "label": "Laster",
+        "entries": [
+          {"id": "traits.vice.1", "text": "Neid"},
+          {"id": "traits.vice.2", "text": "Furcht"},
+          {"id": "traits.vice.3", "text": "Betrug"},
+          {"id": "traits.vice.4", "text": "Völlerei"},
+          {"id": "traits.vice.5", "text": "Habgier"},
+          {"id": "traits.vice.6", "text": "Wollust"},
+          {"id": "traits.vice.7", "text": "Hochmut"},
+          {"id": "traits.vice.8", "text": "Trägheit"},
+          {"id": "traits.vice.9", "text": "Heimtücke"},
+          {"id": "traits.vice.10", "text": "Zorn"}
+        ]
+      },
+      {
+        "id": "traits.trait",
+        "label": "Merkmal",
+        "entries": [
+          {"id": "traits.trait.1", "text": "Narbe im Gesicht"},
+          {"id": "traits.trait.2", "text": "Spricht sehr leise"},
+          {"id": "traits.trait.3", "text": "Kybernetisches Auge"},
+          {"id": "traits.trait.4", "text": "Nervöses Lachen"},
+          {"id": "traits.trait.5", "text": "Tätowiert"},
+          {"id": "traits.trait.6", "text": "Makellose Uniform"},
+          {"id": "traits.trait.7", "text": "Hinkt"},
+          {"id": "traits.trait.8", "text": "Kaut ständig"},
+          {"id": "traits.trait.9", "text": "Zitiert Gesetze"},
+          {"id": "traits.trait.10", "text": "Grauer Zopf"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "flavor",
+    "name": "Flavortext",
+    "kind": "card",
+    "slots": [
+      {
+        "id": "flavor.flavor",
+        "label": "Flavortext",
+        "entries": [
+          {"id": "flavor.flavor.1", "text": "„Sprung in drei … zwei …“"},
+          {"id": "flavor.flavor.2", "text": "„Das war so nicht abgemacht.“"},
+          {"id": "flavor.flavor.3", "text": "„Wer hat die Schleuse offen gelassen?“"},
+          {"id": "flavor.flavor.4", "text": "„Ich kenne da jemanden.“"},
+          {"id": "flavor.flavor.5", "text": "„Das Imperium vergisst nicht.“"},
+          {"id": "flavor.flavor.6", "text": "„Nur noch eine Lieferung, dann höre ich auf.“"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "job",
+    "name": "Auftrag",
+    "kind": "theme",
+    "slots": [
+      {
+        "id": "job.catalyst",
+        "label": "Auslöser",
+        "entries": [
+          {"id": "job.catalyst.1", "text": "Notsignal im Sprungpunkt"},
+          {"id": "job.catalyst.2", "text": "Ein Patron spricht dich an"},
+          {"id": "job.catalyst.3", "text": "Gerücht in der Raumhafen-Bar"},
+          {"id": "job.catalyst.4", "text": "Gefälschte Frachtpapiere"},
+          {"id": "job.catalyst.5", "text": "Hilferuf eines alten Freundes"}
+        ]
+      },
+      {
+        "id": "job.goal",
+        "label": "Ziel",
+        "entries": [
+          {"id": "job.goal.1", "text": "Person bergen"},
+          {"id": "job.goal.2", "text": "Fracht ausliefern"},
+          {"id": "job.goal.3", "text": "Information beschaffen"},
+          {"id": "job.goal.4", "text": "Schiff zurückholen"},
+          {"id": "job.goal.5", "text": "Jemanden beschützen"}
+        ]
+      },
+      {
+        "id": "job.location",
+        "label": "Ort",
+        "entries": [
+          {"id": "job.location.1", "text": "Asteroidenbasis"},
+          {"id": "job.location.2", "text": "Orbitalstation"},
+          {"id": "job.location.3", "text": "Unterstadt am Raumhafen"},
+          {"id": "job.location.4", "text": "Bergbaukolonie"},
+          {"id": "job.location.5", "text": "Verlassene Forschungsstation"}
+        ]
+      },
+      {
+        "id": "job.complication",
+        "label": "Komplikation",
+        "entries": [
+          {"id": "job.complication.1", "text": "Der Patron lügt"},
+          {"id": "job.complication.2", "text": "Ein Rivale ist schneller"},
+          {"id": "job.complication.3", "text": "Die Behörden ermitteln"},
+          {"id": "job.complication.4", "text": "Das Ziel will nicht gerettet werden"},
+          {"id": "job.complication.5", "text": "Die Zeit läuft ab"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "npc",
+    "name": "NSC",
+    "kind": "theme",
+    "slots": [
+      {
+        "id": "npc.name",
+        "label": "Name",
+        "entries": [
+          {"id": "npc.name.1", "text": "Ilsa Morrow"},
+          {"id": "npc.name.2", "text": "Teodor Vance"},
+          {"id": "npc.name.3", "text": "Mara Quell"},
+          {"id": "npc.name.4", "text": "Jun Ashari"},
+          {"id": "npc.name.5", "text": "Elias Krall"},
+          {"id": "npc.name.6", "text": "Nadia Ferro"}
+        ]
+      },
+      {
+        "id": "npc.occupation",
+        "label": "Beruf",
+        "entries": [
+          {"id": "npc.occupation.1", "text": "Händler"},
+          {"id": "npc.occupation.2", "text": "Ex-Marine"},
+          {"id": "npc.occupation.3", "text": "Bürokratin"},
+          {"id": "npc.occupation.4", "text": "Schmuggler"},
+          {"id": "npc.occupation.5", "text": "Wissenschaftlerin"},
+          {"id": "npc.occupation.6", "text": "Adeliger"}
+        ]
+      },
+      {
+        "id": "npc.motivation",
+        "label": "Motivation",
+        "entries": [
+          {"id": "npc.motivation.1", "text": "Rache"},
+          {"id": "npc.motivation.2", "text": "Reichtum"},
+          {"id": "npc.motivation.3", "text": "Flucht"},
+          {"id": "npc.motivation.4", "text": "Pflicht"},
+          {"id": "npc.motivation.5", "text": "Neugier"},
+          {"id": "npc.motivation.6", "text": "Anerkennung"}
+        ]
+      },
+      {
+        "id": "npc.quirk",
+        "label": "Eigenart",
+        "entries": [
+          {"id": "npc.quirk.1", "text": "spricht sehr leise"},
+          {"id": "npc.quirk.2", "text": "misstraut Robotern"},
+          {"id": "npc.quirk.3", "text": "sammelt alte Münzen"},
+          {"id": "npc.quirk.4", "text": "lacht zu laut"},
+          {"id": "npc.quirk.5", "text": "zitiert Gesetze"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "encounter",
+    "name": "Begegnung",
+    "kind": "theme",
+    "slots": [
+      {
+        "id": "encounter.attitude",
+        "label": "Haltung",
+        "entries": [
+          {"id": "encounter.attitude.1", "text": "feindselig"},
+          {"id": "encounter.attitude.2", "text": "misstrauisch"},
+          {"id": "encounter.attitude.3", "text": "abwartend"},
+          {"id": "encounter.attitude.4", "text": "interessiert"},
+          {"id": "encounter.attitude.5", "text": "hilfsbereit"}
+        ]
+      },
+      {
+        "id": "encounter.action",
+        "label": "Aktion",
+        "entries": [
+          {"id": "encounter.action.1", "text": "Deckung suchen"},
+          {"id": "encounter.action.2", "text": "Flankieren"},
+          {"id": "encounter.action.3", "text": "Rückzug"},
+          {"id": "encounter.action.4", "text": "Geisel nehmen"},
+          {"id": "encounter.action.5", "text": "Feuer eröffnen"}
+        ]
+      },
+      {
+        "id": "encounter.move",
+        "label": "Spielleiter-Zug",
+        "entries": [
+          {"id": "encounter.move.1", "text": "Trenne die Gruppe"},
+          {"id": "encounter.move.2", "text": "Zeige eine drohende Gefahr"},
+          {"id": "encounter.move.3", "text": "Biete eine Gelegenheit mit Preis"},
+          {"id": "encounter.move.4", "text": "Nutze eine Schwäche"},
+          {"id": "encounter.move.5", "text": "Verknappe Ressourcen"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "world",
+    "name": "Welt",
+    "kind": "theme",
+    "slots": [
+      {
+        "id": "world.location",
+        "label": "Ort",
+        "entries": [
+          {"id": "world.location.1", "text": "Markt"},
+          {"id": "world.location.2", "text": "Raumhafen-Bar"},
+          {"id": "world.location.3", "text": "Regierungsviertel"},
+          {"id": "world.location.4", "text": "Slums"},
+          {"id": "world.location.5", "text": "Wildnis am Stadtrand"}
+        ]
+      },
+      {
+        "id": "world.mood",
+        "label": "Stimmung",
+        "entries": [
+          {"id": "world.mood.1", "text": "angespannt"},
+          {"id": "world.mood.2", "text": "feierlich"},
+          {"id": "world.mood.3", "text": "gleichgültig"},
+          {"id": "world.mood.4", "text": "ängstlich"},
+          {"id": "world.mood.5", "text": "aufgebracht"}
+        ]
+      },
+      {
+        "id": "world.incident",
+        "label": "Zwischenfall",
+        "entries": [
+          {"id": "world.incident.1", "text": "Zollkontrolle"},
+          {"id": "world.incident.2", "text": "Taschendieb"},
+          {"id": "world.incident.3", "text": "Protestmarsch"},
+          {"id": "world.incident.4", "text": "Stromausfall"},
+          {"id": "world.incident.5", "text": "Ein Anwerber spricht dich an"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ship",
+    "name": "Schiff",
+    "kind": "theme",
+    "slots": [
+      {
+        "id": "ship.encounter",
+        "label": "Begegnung",
+        "entries": [
+          {"id": "ship.encounter.1", "text": "Freihändler"},
+          {"id": "ship.encounter.2", "text": "Patrouille"},
+          {"id": "ship.encounter.3", "text": "Piraten"},
+          {"id": "ship.encounter.4", "text": "Treibendes Wrack"},
+          {"id": "ship.encounter.5", "text": "Unbekanntes Signal"}
+        ]
+      },
+      {
+        "id": "ship.malfunction",
+        "label": "Störung",
+        "entries": [
+          {"id": "ship.malfunction.1", "text": "Sprungantrieb"},
+          {"id": "ship.malfunction.2", "text": "Lebenserhaltung"},
+          {"id": "ship.malfunction.3", "text": "Sensoren"},
+          {"id": "ship.malfunction.4", "text": "Verunreinigter Treibstoff"},
+          {"id": "ship.malfunction.5", "text": "Bordcomputer"}
+        ]
+      },
+      {
+        "id": "ship.jump",
+        "label": "Im Sprung",
+        "entries": [
+          {"id": "ship.jump.1", "text": "Ein Passagier verhält sich seltsam"},
+          {"id": "ship.jump.2", "text": "Blinder Passagier"},
+          {"id": "ship.jump.3", "text": "Frachtschaden"},
+          {"id": "ship.jump.4", "text": "Streit an Bord"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "trade",
+    "name": "Handel",
+    "kind": "theme",
+    "slots": [
+      {
+        "id": "trade.market",
+        "label": "Marktlage",
+        "entries": [
+          {"id": "trade.market.1", "text": "Überangebot"},
+          {"id": "trade.market.2", "text": "Knappheit"},
+          {"id": "trade.market.3", "text": "Embargo"},
+          {"id": "trade.market.4", "text": "Boom"},
+          {"id": "trade.market.5", "text": "Preisverfall"}
+        ]
+      },
+      {
+        "id": "trade.trader",
+        "label": "Händler",
+        "entries": [
+          {"id": "trade.trader.1", "text": "gierig"},
+          {"id": "trade.trader.2", "text": "fair"},
+          {"id": "trade.trader.3", "text": "verzweifelt"},
+          {"id": "trade.trader.4", "text": "misstrauisch"},
+          {"id": "trade.trader.5", "text": "redselig"}
+        ]
+      },
+      {
+        "id": "trade.complication",
+        "label": "Komplikation",
+        "entries": [
+          {"id": "trade.complication.1", "text": "Die Ware ist heiß"},
+          {"id": "trade.complication.2", "text": "Der Zoll will Bestechung"},
+          {"id": "trade.complication.3", "text": "Der Käufer springt ab"},
+          {"id": "trade.complication.4", "text": "Ein Konkurrent bietet mehr"}
+        ]
+      }
+    ]
+  }
+]
