@@ -63,6 +63,7 @@ hide <<value>> stereotype
   class OracleAnswer {
     question: string [0..1]
     roll: number
+    chance: number
     /yes: boolean
   }
   class DiceRoll {

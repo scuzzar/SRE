@@ -68,19 +68,22 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
   dieser Reihenfolge, leicht links. Die Auswahl bleibt stehen, bis man sie ändert, auch über einen
   Neustart der App hinweg. Orakel und Probe lesen sie, keiner von beiden hat eine eigene.
 - **Der Log verweist, er kopiert nicht.** Ein Logeintrag hält nur fest, was allein ihm gehört: Frage,
-  Zeitpunkt und Würfel, bei einer Probe dazu DM und Zielwert (siehe *Probe*). Alles andere ist ein
+  Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei einer Probe DM und Zielwert (siehe
+  *Orakel* und *Probe*). Alles andere ist ein
   Verweis: auf die Stufe, den Charakter, die Fertigkeitsstufe, die Attribute, auf Feld und Eintrag
   der Karte. Logeinträge werden nur angehängt, nie geändert oder gelöscht. Die Reihenfolge ist die
   Reihenfolge der Ereignisse; dass das Neueste unten steht, ist Sache der Anzeige.
 - **Worauf der Log verweist, wird nie gelöscht.** Ein Charakter, der im Log vorkommt, bleibt in der
   Kampagne, ebenso seine Fertigkeitsstufen; Stufen, Felder und Einträge der Referenzdaten haben eine
   feste Id und bleiben in den Daten. Ändert sich etwas daran (ein Charakter heißt anders, lernt
-  Pilot-3), zeigen auch alte Logeinträge den neuen Stand. Das Ergebnis einer Probe ändert sich
-  dadurch nicht, weil DM und Zielwert festgehalten sind.
+  Pilot-3), zeigen auch alte Logeinträge den neuen Stand. Das Ergebnis einer Orakelfrage oder Probe
+  ändert sich dadurch nicht, weil Chance bzw. DM und Zielwert festgehalten sind.
 - **Würfe stehen im Log, nicht nur ihr Ergebnis.** Gespeichert werden die einzelnen Würfel (`dice`,
   `roll`); Summe, Ja/Nein und Erfolg (`/total`, `/yes`, `/success`) folgen daraus.
 - **Orakel.** Ein Wurf von 1 bis 100; Ja, wenn er höchstens die Chance der gewählten Stufe ist. Die
-  Frage ist freiwillig. „Außergewöhnlich Ja/Nein“, Chaosfaktor und Zufallsereignisse nach Mythic
+  `OracleAnswer` verweist auf die Stufe und hält die Chance zum Zeitpunkt des Wurfs fest (`chance`);
+  Ja oder Nein (`/yes`: `roll` ≤ `chance`) folgt allein daraus, nie aus dem heutigen Stand der Stufe.
+  Die Frage ist freiwillig. „Außergewöhnlich Ja/Nein“, Chaosfaktor und Zufallsereignisse nach Mythic
   kommen erst nach Version 1.
 - **Karte ziehen.** Ziehen legt eine `Card` an: für jedes Feld aller Bereiche einen seiner Einträge
   zufällig (`drawn`), die Themen-Reiter eingeschlossen, in der Reihenfolge der Bereiche und Felder.
@@ -144,12 +147,6 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
 10. **Hausregeln einstellbar:** Sind `HouseRules` in Version 1 nur Daten im Code, oder kann man sie in
    der App ändern (z. B. „ohne Fertigkeit −3“ abschalten)? Im zweiten Fall wären sie Spielstand
    (blau), nicht Referenzdaten.
-11. **Orakel und geänderte Stufen:** Die README sagt, die Skala der Stufen liegt als Daten vor und
-    kann angepasst werden. `OracleAnswer` hält aber nur den Wurf und verweist auf die Stufe; Ja oder
-    Nein wird mit der *heutigen* Chance gerechnet. Ändert man Hoch von 75 % auf 70 %, wird ein altes
-    Ja mit Wurf 72 im Log zum Nein. Bei der Probe haben wir das mit `dm` und `target` gelöst. Soll
-    `OracleAnswer` ebenso die Chance (`chance`) festhalten, oder sind die Werte der Stufen fest und
-    ändern sich nie?
 
 ## Wo der Code noch nicht folgt
 
