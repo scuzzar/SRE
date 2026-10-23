@@ -74,10 +74,7 @@ hide <<value>> stereotype
   class CardPick {
     question: string [0..1]
   }
-  class PickedItem {
-    label: string
-    text: string
-  }
+  class PickedItem
   class TaskResult {
     character: string
     target: number
@@ -90,13 +87,6 @@ hide <<value>> stereotype
   }
 
 ' nur solange offen, nie gespeichert
-  class Card <<transient>> {
-    question: string [0..1]
-  }
-  class CardField <<transient>> {
-    text: string
-    picked: boolean
-  }
   class Task <<transient>> {
     /dm: number
     /need: number
@@ -127,8 +117,8 @@ hide <<value>> stereotype
   class Slot <<reference>> {
     label: string
   }
-  class WordList <<reference>> {
-    entries: string[*]
+  class Entry <<reference>> {
+    text: string
   }
   enum SectionKind <<value>> {
     card
@@ -147,7 +137,6 @@ hide <<value>> stereotype
 Campaign "1" *-- "*" Character : characters
 Campaign "*" --> "1" Odds : odds
 Campaign "1" *-- "*" LogEntry : log {ordered}
-Campaign "1" *-- "0..1" Card : drawn
 Campaign "1" *-- "0..1" Task : prepared
 
 ' Charakter
@@ -163,15 +152,14 @@ LogEntry <|-- TaskResult
 CardPick "1" *-- "1..*" PickedItem : items {ordered}
 TaskResult "1" *-- "1..*" Modifier : modifiers {ordered}
 OracleAnswer ..> Odds : copied from
-CardPick ..> Card : copied from, on confirm
 TaskResult ..> Task : copied from, on roll
 
 ' Karte
-Card "1" *-- "1..*" CardField : fields {ordered}
-CardField "*" --> "1" Slot : in
+PickedItem "*" --> "1" Slot : in
+PickedItem "*" --> "1" Entry : picked
 Section "1" *-- "1..*" Slot : slots {ordered}
 Section --> SectionKind
-Slot "*" --> "1" WordList : draws from
+Slot "1" *-- "1..*" Entry : entries
 
 ' Probe
 Task "*" --> "1" Character : for

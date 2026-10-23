@@ -26,9 +26,9 @@ Speicher und Controller kennen sich nicht. Der Controller bekommt den Speicher a
 (`CampaignRepository`, im Model definiert), `main.tsx` reicht die Dexie-Umsetzung hinein.
 
 **2. Nur der Controller ändert das Model.** Die View ruft für jede Eingabe genau eine
-Controller-Methode auf, zum Beispiel `askOracle(question)`, `rollDice()`, `drawCard(question)`,
-`togglePick(field)`, `confirmCard()`, `discardCard()`, `setOdds(odds)`, `chooseSkill(skill)`,
-`toggleCharacteristic(c)`, `rollTask()`. Der Controller ruft das Model, speichert über das
+Controller-Methode auf, zum Beispiel `askOracle(question)`, `rollDice()`, `drawCard()`,
+`confirmCard(question, picks)`, `setOdds(odds)`, `chooseSkill(skill)`, `toggleCharacteristic(c)`,
+`rollTask()`. `drawCard()` liefert die gezogenen Einträge an die View, ohne das Model zu ändern. Der Controller ruft das Model, speichert über das
 Repository und meldet die Änderung. Die View sieht das Model nur lesend (`Readonly`-Typen); ein
 Schreibzugriff aus der View ist ein Compilerfehler.
 
@@ -42,7 +42,8 @@ zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von unten 
   physische Würfel (später) sind nur eine weitere Zufallsquelle.
 - Die View rechnet nichts aus, was eine Regel ist. Welche Attribute wählbar sind, welcher DM gilt, was
   auf 2W6 nötig ist und wie wahrscheinlich das ist: Das alles liefert das Model. Die View darf nur
-  ihren eigenen Anzeigezustand halten (offener Screen, Reiter, Text im Fragefeld, Popup sichtbar).
+  ihren eigenen Anzeigezustand halten (offener Screen, Reiter, Text im Fragefeld, Popup sichtbar, die
+  offene Inspirationskarte mit ihrer Auswahl).
 
 ## Wie die Regeln geprüft werden
 

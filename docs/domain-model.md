@@ -16,7 +16,7 @@ erzeugen mit `java -jar plantuml.jar -tpng docs/domain-model.puml`; Graphviz ist
 
 Das Diagramm zeigt nur Daten und Beziehungen, keine Operationen. **Blau** ist der Spielstand, den
 die App speichert. **Grau mit gestricheltem Rahmen** gibt es nur, solange etwas offen ist (eine
-gezogene Karte, eine vorbereitete Probe); das wird nie gespeichert. **Grün** sind Referenzdaten:
+vorbereitete Probe); das wird nie gespeichert. **Grün** sind Referenzdaten:
 feste Tabellen, in jeder Kampagne gleich. **Weiß** sind Werte und Wertelisten.
 
 ## Begriffe
@@ -37,45 +37,48 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
 | Log | `LogEntry` | Ein Eintrag im Verlauf |
 | Orakelantwort | `OracleAnswer` | Ja oder Nein auf eine Frage |
 | Würfelwurf (2W6) | `DiceRoll` | Ein einfacher Wurf mit zwei Würfeln |
-| Kartenauswahl | `CardPick`, `PickedItem` | Was man von einer Karte in den Log übernimmt |
+| Kartenauswahl | `CardPick` | Was man von einer Karte in den Log übernimmt, mit der Frage |
+| Ausgewählter Eintrag | `PickedItem` | Ein übernommenes Feld: welches Feld, welcher Eintrag |
 | Probenergebnis | `TaskResult`, `Modifier` | Eine gewürfelte Probe mit ihren DMs |
-| Inspirationskarte | `Card`, `CardField` | Eine gezogene Karte, solange sie offen ist |
 | Probe | `Task` | Eine Probe, solange sie im Charakter-Screen vorbereitet wird |
 | Bereich der Karte, Themen-Reiter | `Section` | Zufallsereignis, Sinneseindrücke, …; Auftrag, NSC, … |
 | Feld der Karte | `Slot` | Verb, Hören, Name, Auslöser, … |
-| Liste | `WordList` | Die Einträge, aus denen ein Feld gezogen wird |
+| Eintrag | `Entry` | Ein möglicher Text eines Feldes, z. B. „Schulden begleichen.“ |
 
 ## Regeln, die das Bild nicht zeigt
 
 - **Was draußen bleibt.** Alles, was nur die Anzeige betrifft, gehört nicht ins Modell: welcher
   Screen offen ist, welcher Themen-Reiter gewählt ist, der Text im Fragefeld vor dem Absenden, ob das
   Ergebnis-Popup gerade zu sehen ist, Farben, die Hex-Schreibweise der UPP und das Format der Uhrzeit.
-  Das ist Zustand der View.
+  Das ist Zustand der View. Dazu gehört auch die **offene Inspirationskarte**: welcher Eintrag je Feld
+  gezogen wurde und was gerade angetippt ist. Sie ist kein Teil des Modells.
 - **Eine Kampagne.** In Version 1 gibt es genau eine Kampagne. Alles, was gespeichert wird, hängt an
   ihr.
 - **Eine Auswahl für Orakel und Proben.** Die Kampagne hat immer genau eine gewählte Stufe (`odds`).
   Die drei Stufen sind Referenzdaten: Hoch (75 %, 6+), Mittel (50 %, 8+), Gering (25 %, 10+), in
   dieser Reihenfolge, leicht links. Die Auswahl bleibt stehen, bis man sie ändert, auch über einen
   Neustart der App hinweg. Orakel und Probe lesen sie, keiner von beiden hat eine eigene.
-- **Der Log hält Kopien, keine Verweise.** Ein Logeintrag hält fest, was in dem Moment galt: den
-  Namen der Stufe und ihre Chance, den Namen des Charakters, die DMs mit ihren Bezeichnungen, den Text
-  der Karteneinträge. Ändert sich später ein Charakter, eine Liste oder eine Hausregel, bleibt der
-  Log, wie er war. Einträge werden nur angehängt, nie geändert oder gelöscht. Die Reihenfolge ist die
+- **Der Log hält Kopien, keine Verweise, mit einer Ausnahme.** Ein Logeintrag hält fest, was in dem
+  Moment galt: den Namen der Stufe und ihre Chance, den Namen des Charakters, die DMs mit ihren
+  Bezeichnungen. Ändert sich später ein Charakter oder eine Hausregel, bleibt der Log, wie er war.
+  Die Ausnahme ist die Kartenauswahl: Ein `PickedItem` verweist auf Feld und Eintrag der
+  Referenzdaten (siehe *Einträge sind beständig*). Einträge werden nur angehängt, nie geändert oder gelöscht. Die Reihenfolge ist die
   Reihenfolge der Ereignisse; dass das Neueste unten steht, ist Sache der Anzeige.
 - **Würfe stehen im Log, nicht nur ihr Ergebnis.** Gespeichert werden die einzelnen Würfel (`dice`,
   `roll`); Summe, Ja/Nein und Erfolg (`/total`, `/yes`, `/success`) folgen daraus.
 - **Orakel.** Ein Wurf von 1 bis 100; Ja, wenn er höchstens die Chance der gewählten Stufe ist. Die
   Frage ist freiwillig. „Außergewöhnlich Ja/Nein“, Chaosfaktor und Zufallsereignisse nach Mythic
   kommen erst nach Version 1.
-- **Karte ziehen.** Eine Karte zieht für jedes Feld aller Bereiche einen Eintrag aus dessen Liste,
-  die Themen-Reiter eingeschlossen. Die drei Namensfelder ziehen aus derselben Liste und sind immer
-  verschieden. Eine gestellte Frage geht beim Ziehen auf die Karte über.
-- **Die Karte ist offen, bis man sie bestätigt oder verwirft.** Es gibt höchstens eine offene Karte.
-  Man wählt beliebig viele Felder aus, über Bereiche und Reiter hinweg. *Bestätigen* übernimmt nur
-  die ausgewählten Felder in den Log, als Kopie von Bezeichnung und Text, in der Reihenfolge der
-  Karte; danach ist die Karte zu. *Verwerfen* schließt sie ohne Logeintrag. *Neu ziehen* ersetzt sie
-  durch eine neue; die Auswahl geht verloren, die Frage bleibt. Eine offene Karte wird nicht
-  gespeichert.
+- **Karte ziehen.** Ziehen heißt: für jedes Feld aller Bereiche einen seiner Einträge zufällig
+  wählen, die Themen-Reiter eingeschlossen. Das Ziehen ist eine Regel des Modells, das Ergebnis aber
+  kein Objekt darin: Die View hält die offene Karte, bis man sie bestätigt, verwirft oder neu zieht.
+  Verwerfen und neu ziehen hinterlassen nichts im Modell.
+- **Bestätigen** legt einen `CardPick` mit der Frage an und darin je ausgewähltem Feld ein
+  `PickedItem`, in der Reihenfolge der Karte. Das `PickedItem` verweist auf das Feld (`Slot`) und auf
+  den gezogenen Eintrag (`Entry`); der Eintrag gehört immer zu diesem Feld.
+- **Einträge sind beständig.** Weil der Log auf Felder und Einträge verweist, hat jedes Feld und
+  jeder Eintrag eine feste Id. Einträge werden nie gelöscht und ihr Text nie umgedeutet, sonst ändert
+  sich rückwirkend der Log; Tippfehler dürfen korrigiert werden.
 - **Probe.** Es gilt: 2W6 + Fertigkeit + gewählte Attribute ≥ Zielwert.
   - Zuerst wählt man die Fertigkeit: eine Fertigkeitsstufe des Charakters (DM = Stufe) oder „ohne
     Fertigkeit“ (DM aus den Hausregeln, −3). Solange keine gewählt ist, gibt es keine Probe zu
@@ -111,7 +114,14 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
 6. **Unmögliche Probe** (nötiger Wurf über 12): Darf man trotzdem würfeln, damit es im Log steht?
 7. **Charaktere pflegen:** Legt man in Version 1 Charaktere von Hand an und bearbeitet sie, oder
    reichen zunächst fest eingetragene?
-8. **Hausregeln einstellbar:** Sind `HouseRules` in Version 1 nur Daten im Code, oder kann man sie in
+8. **Namen:** Die GMA-Karte zeigt drei verschiedene Namen. Ohne gemeinsame Liste hat jedes der drei
+   Namensfelder eigene Einträge. Sollen es drei Felder mit je eigener Liste sein (z. B. eher
+   weiblich, eher männlich, neutral, wie beim GMA), oder ein Feld, aus dem drei verschiedene Einträge
+   gezogen werden?
+9. **Doppelter Verweis:** Da jeder Eintrag zu genau einem Feld gehört, folgt das Feld eines
+   `PickedItem` schon aus seinem Eintrag. Den Pfeil `in` behalten (wie vorgeschlagen) oder als
+   abgeleitet (`/in`) kennzeichnen?
+10. **Hausregeln einstellbar:** Sind `HouseRules` in Version 1 nur Daten im Code, oder kann man sie in
    der App ändern (z. B. „ohne Fertigkeit −3“ abschalten)? Im zweiten Fall wären sie Spielstand
    (blau), nicht Referenzdaten.
 
