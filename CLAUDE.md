@@ -5,7 +5,8 @@
   einholen, dann in den Code übertragen. Das Diagramm nie umzeichnen, damit es zum Code passt; wo der
   Code noch nicht folgt, steht das in `docs/domain-model.md` unter „Wo der Code noch nicht folgt“,
   bis es behoben ist. Die Quelle des Diagramms ist `docs/domain-model.puml` (PlantUML); nach jeder Änderung
-  `docs/domain-model.png` neu erzeugen.
+  `docs/domain-model.png` neu erzeugen. Wie man das Modell gemeinsam baut und rendert, steht im Skill
+  `domain-model` (`.claude/skills/domain-model/`).
 - Begriffe aus der Tabelle „Begriffe“ in `docs/domain-model.md` benutzen, in Code, Doku und Gespräch.
   Neue Begriffe kommen zuerst dort hinein.
 - `ARCHITECTURE.md` legt die vier MVC-Regeln und die Schichtentabelle fest. Beide müssen stimmen.

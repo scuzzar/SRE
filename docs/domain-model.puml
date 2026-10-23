@@ -1,5 +1,5 @@
 ' Das Domänenmodell der Solo RPG Engine. Es führt: der Code folgt ihm, nie umgekehrt.
-' Rendern: java -jar plantuml.jar -tpng docs/domain-model.puml (ohne Graphviz)
+' Rendern: bash .claude/skills/domain-model/scripts/render.sh docs/domain-model.puml
 @startuml
 !pragma layout smetana
 title Solo RPG Engine – Domänenmodell (Version 1)
