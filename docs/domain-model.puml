@@ -1,0 +1,181 @@
+' Das Domänenmodell der Solo RPG Engine. Es führt: der Code folgt ihm, nie umgekehrt.
+' Rendern: java -jar plantuml.jar -tpng docs/domain-model.puml (ohne Graphviz)
+@startuml
+!pragma layout smetana
+title Solo RPG Engine – Domänenmodell (Version 1)
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign {
+    name: string
+  }
+  class Character {
+    name: string
+    background: string
+    equipment: string
+    credits: number
+    note: string
+    retired: boolean
+  }
+  class Upp <<value>> {
+    str: number
+    dex: number
+    end: number
+    int: number
+    edu: number
+    soc: number
+  }
+  class SkillLevel {
+    level: number
+    retired: boolean
+  }
+
+' Verlauf
+  abstract class LogEntry {
+    at: datetime
+  }
+  class OracleAnswer {
+    question: string [0..1]
+    roll: number
+    chance: number
+    /yes: boolean
+  }
+  class DiceRoll {
+    dice: number[2]
+    /total: number
+  }
+  class CardPick {
+    question: string [0..1]
+  }
+  class PickedItem
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Card <<transient>> {
+    question: string [0..1]
+  }
+  class Task <<transient>> {
+    unskilled: boolean
+    /dm: number
+    /need: number
+    /chance: number
+  }
+  class TaskResult {
+    dice: number[2]
+    dm: number
+    target: number
+    /success: boolean
+  }
+
+' Referenzdaten
+  class Odds <<reference>> {
+    name: string
+    chance: number
+    target: number
+  }
+  class HouseRules <<reference>> {
+    unskilledDm: number
+    bonusFrom: number
+    malusUpTo: number
+  }
+  class Skill <<reference>> {
+    name: string
+  }
+  class Section <<reference>> {
+    name: string
+    kind: SectionKind
+  }
+  class Slot <<reference>> {
+    label: string
+  }
+  class Entry <<reference>> {
+    text: string
+  }
+  enum SectionKind <<value>> {
+    card
+    theme
+  }
+  enum Characteristic <<value>> {
+    STR
+    DEX
+    END
+    INT
+    EDU
+    SOC
+  }
+
+' Kampagne
+Campaign "1" *-- "*" Character : characters
+Campaign "*" --> "1" Odds : odds
+Campaign "1" *-- "*" LogEntry : log {ordered}
+
+' Charakter
+Character "1" *-- "1" Upp : upp
+Character "1" *-- "*" SkillLevel : skills
+SkillLevel "*" --> "1" Skill : of
+
+' Verlauf
+LogEntry <|-- OracleAnswer
+LogEntry <|-- DiceRoll
+LogEntry <|-- CardPick
+LogEntry <|-- TaskResult
+CardPick "1" *-- "1..*" PickedItem : items {ordered}
+OracleAnswer "*" --> "1" Odds : at
+TaskResult "*" --> "1" Character : for
+TaskResult "*" --> "0..1" SkillLevel : uses
+TaskResult --> "0..6" Characteristic : counts
+TaskResult "*" --> "1" Odds : at
+
+' Probe
+Task "0..1" --> "1" Campaign : in
+Task "*" --> "1" Character : for
+Task "*" --> "0..1" SkillLevel : uses
+Task --> "0..6" Characteristic : counts
+Task ..> TaskResult : on roll
+
+' Karte
+Card "0..1" --> "1" Campaign : in
+Card "*" --> "1..*" Entry : drawn {ordered}
+Card "*" --> "*" Entry : picked
+Card ..> CardPick : on confirm
+PickedItem "*" --> "1" Slot : /in
+PickedItem "*" --> "1" Entry : picked
+Section "1" *-- "1..*" Slot : slots {ordered}
+Section --> SectionKind
+Slot "1" *-- "1..*" Entry : entries
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+@enduml
