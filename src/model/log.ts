@@ -22,7 +22,7 @@ export interface OracleAnswer extends LogEntryBase {
   readonly roll: number;
   /** Die Chance der Stufe zum Zeitpunkt des Wurfs. */
   readonly chance: number;
-  /** Verweis auf die Stufe (im Diagramm: Assoziation `at`). */
+  /** Verweis auf die Stufe. */
   readonly odds: string;
 }
 
@@ -49,7 +49,7 @@ export interface TaskResult extends LogEntryBase {
   /** Die Fertigkeit, deren Stufe der Charakter genutzt hat; keine heißt „ohne Fertigkeit“. */
   readonly uses?: string;
   readonly counts: readonly Characteristic[];
-  /** Verweis auf die Stufe (im Diagramm: Assoziation `at`). */
+  /** Verweis auf die Stufe. */
   readonly odds: string;
   readonly dice: Dice;
   readonly dm: number;

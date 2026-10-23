@@ -147,11 +147,11 @@ LogEntry <|-- DiceRoll
 LogEntry <|-- CardPick
 LogEntry <|-- TaskResult
 CardPick "1" *-- "1..*" PickedItem : items {ordered}
-OracleAnswer "*" --> "1" Odds : at
+OracleAnswer "*" --> "1" Odds : odds
 TaskResult "*" --> "1" Character : for
 TaskResult "*" --> "0..1" SkillLevel : uses
 TaskResult --> "0..6" Characteristic : counts
-TaskResult "*" --> "1" Odds : at
+TaskResult "*" --> "1" Odds : odds
 
 ' Probe
 Task "0..1" --> "1" Campaign : in
