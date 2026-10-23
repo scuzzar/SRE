@@ -11,6 +11,8 @@ skinparam packageStyle rectangle
 skinparam class {
   BackgroundColor #e8ecfb
   BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
   BackgroundColor<<reference>> #e6f4e6
   BorderColor<<reference>> #4f9a4f
   BackgroundColor<<value>> #ffffff
@@ -18,6 +20,16 @@ skinparam class {
 }
 skinparam legendBackgroundColor #ffffff
 skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
 hide <<reference>> stereotype
 hide <<value>> stereotype
 
@@ -61,6 +73,11 @@ hide <<value>> stereotype
     question: string [0..1]
   }
   class PickedItem
+
+' flüchtig: zwischen zwei Eingaben da, nie gespeichert
+  class Card <<transient>> {
+    question: string [0..1]
+  }
   class TaskResult {
     dice: number[2]
     dm: number
@@ -128,6 +145,10 @@ TaskResult --> "0..6" Characteristic : counts
 TaskResult "*" --> "1" Odds : at
 
 ' Karte
+Campaign "1" *-- "0..1" Card : open
+Card "*" --> "1..*" Entry : drawn {ordered}
+Card "*" --> "*" Entry : picked
+Card ..> CardPick : on confirm
 PickedItem "*" --> "1" Slot : in
 PickedItem "*" --> "1" Entry : picked
 Section "1" *-- "1..*" Slot : slots {ordered}
@@ -137,6 +158,7 @@ Slot "1" *-- "1..*" Entry : entries
 
 legend right
   |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend

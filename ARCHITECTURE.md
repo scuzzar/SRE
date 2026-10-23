@@ -29,14 +29,14 @@ Speicher und Controller kennen sich nicht. Der Controller bekommt den Speicher a
 Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
 
 - **Er ändert das Model**, als Einziger, und speichert über das Repository: `askOracle(question)`,
-  `rollDice()`, `confirmCard()`, `setOdds(odds)`, `rollTask()`.
+  `rollDice()`, `drawCard(question)`, `togglePick(entry)`, `confirmCard()`, `discardCard()`,
+  `setOdds(odds)`, `rollTask()`. Die offene Karte ist Teil des Models, wird aber nicht gespeichert.
 - **Er wählt, welche View zu sehen ist**: Orakel- oder Charakter-Screen (`showScreen(screen)`), die
   Inspirationskarte im Vordergrund, das Ergebnis-Popup. Auch der Ablauf ist seine Sache, etwa „nach
   dem Schließen des Ergebnisses zurück zum Orakel“ (`closeResult()`).
-- **Er hält, was eine spätere Eingabe braucht**: die gezogene Karte mit den angetippten Feldern
-  (`drawCard(question)`, `togglePick(slot)`, `discardCard()`) und die Probe in Vorbereitung
+- **Er hält, was eine spätere Eingabe braucht** und nicht im Model steht: die Probe in Vorbereitung
   (`chooseCharacter(c)`, `chooseSkill(skill)`, `toggleCharacteristic(c)`). Das ist kein Spielstand
-  und wird nicht gespeichert; es steht deshalb nicht im Domänenmodell.
+  und wird nicht gespeichert.
 
 Die View sieht das Model nur lesend (`Readonly`-Typen); ein Schreibzugriff aus der View ist ein
 Compilerfehler.
@@ -44,7 +44,7 @@ Compilerfehler.
 **3. Nach oben wird gemeldet, nicht gerufen.** Der Controller kennt keine Komponenten. Er wählt die
 View, indem er seinen Zustand ändert, nicht indem er Komponenten aufruft. Er bietet
 `subscribe(listener)` und `snapshot()` an: den Spielstand aus dem Model und seinen eigenen Zustand
-(welcher Screen, welche Karte, welche Probe). Die View hängt sich mit `useSyncExternalStore` daran
+(welcher Screen, welche Probe). Die View hängt sich mit `useSyncExternalStore` daran
 und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von unten nach oben.
 
 **4. Das Model ist frei von Seiteneffekten, die View frei von Regeln und Ablauf.**

@@ -14,11 +14,11 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild neu
 erzeugen mit `java -jar plantuml.jar -tpng docs/domain-model.puml`; Graphviz ist nicht nötig.
 
-Das Diagramm zeigt nur den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten
-und Beziehungen, keine Operationen. Was nur kurz während der Bedienung besteht (eine offene Karte,
-eine Probe in Vorbereitung), hält der Controller; es steht nicht im Diagramm. **Blau** ist der
-Spielstand, den die App speichert. **Grün** sind Referenzdaten: feste Tabellen, in jeder Kampagne
-gleich. **Weiß** sind Werte und Wertelisten.
+Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
+Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
+gestricheltem Rahmen** ist flüchtig: Es besteht zwischen zwei Eingaben und wird nie gespeichert. Es
+kommt nur ins Diagramm, wenn sich ein Ablauf sonst nicht abbilden lässt (die offene Karte). **Grün**
+sind Referenzdaten: feste Tabellen, in jeder Kampagne gleich. **Weiß** sind Werte und Wertelisten.
 
 ## Begriffe
 
@@ -38,6 +38,7 @@ gemeinsame Sprache: Wer „Probenergebnis“ sagt, meint `TaskResult`, und umgek
 | Log | `LogEntry` | Ein Eintrag im Verlauf |
 | Orakelantwort | `OracleAnswer` | Ja oder Nein auf eine Frage |
 | Würfelwurf (2W6) | `DiceRoll` | Ein einfacher Wurf mit zwei Würfeln |
+| Inspirationskarte | `Card` | Eine gezogene Karte, solange sie offen ist |
 | Kartenauswahl | `CardPick` | Was man von einer Karte in den Log übernimmt, mit der Frage |
 | Ausgewählter Eintrag | `PickedItem` | Ein übernommenes Feld: welches Feld, welcher Eintrag |
 | Probenergebnis | `TaskResult` | Eine gewürfelte Probe |
@@ -47,11 +48,10 @@ gemeinsame Sprache: Wer „Probenergebnis“ sagt, meint `TaskResult`, und umgek
 
 ## Regeln, die das Bild nicht zeigt
 
-- **Was draußen bleibt.** Was nicht gespeichert wird, gehört nicht ins Modell. Der Controller hält
-  den Ablauf: welcher Screen offen ist, ob das Ergebnis-Popup zu sehen ist, die **offene
-  Inspirationskarte** (welcher Eintrag je Feld gezogen wurde und was gerade angetippt ist) und die
-  **Probe in Vorbereitung** (Charakter, gewählte Fertigkeit, gewählte Attribute). Die Regeln dafür
-  gehören trotzdem ins Model. Reine Darstellung bleibt in der View: der gewählte Themen-Reiter, der
+- **Was draußen bleibt.** Was nicht gespeichert wird, gehört nicht ins Modell, außer der offenen
+  Karte. Der Controller hält den Ablauf: welcher Screen offen ist, ob das Ergebnis-Popup zu sehen ist
+  und die **Probe in Vorbereitung** (Charakter, gewählte Fertigkeit, gewählte Attribute). Die Regeln
+  dafür gehören trotzdem ins Model. Reine Darstellung bleibt in der View: der gewählte Themen-Reiter, der
   Text im Fragefeld während des Tippens, Farben, die Hex-Schreibweise der UPP und das Format der
   Uhrzeit.
 - **Eine Kampagne.** In Version 1 gibt es genau eine Kampagne. Alles, was gespeichert wird, hängt an
@@ -75,13 +75,16 @@ gemeinsame Sprache: Wer „Probenergebnis“ sagt, meint `TaskResult`, und umgek
 - **Orakel.** Ein Wurf von 1 bis 100; Ja, wenn er höchstens die Chance der gewählten Stufe ist. Die
   Frage ist freiwillig. „Außergewöhnlich Ja/Nein“, Chaosfaktor und Zufallsereignisse nach Mythic
   kommen erst nach Version 1.
-- **Karte ziehen.** Ziehen heißt: für jedes Feld aller Bereiche einen seiner Einträge zufällig
-  wählen, die Themen-Reiter eingeschlossen. Das Ziehen ist eine Regel des Modells, das Ergebnis aber
-  kein Objekt darin: Der Controller hält die offene Karte, bis man sie bestätigt, verwirft oder neu
-  zieht.
-  Verwerfen und neu ziehen hinterlassen nichts im Modell.
-- **Bestätigen** legt einen `CardPick` mit der Frage an und darin je ausgewähltem Feld ein
-  `PickedItem`, in der Reihenfolge der Karte. Das `PickedItem` verweist auf das Feld (`Slot`) und auf
+- **Karte ziehen.** Ziehen legt eine `Card` an: für jedes Feld aller Bereiche einen seiner Einträge
+  zufällig (`drawn`), die Themen-Reiter eingeschlossen, in der Reihenfolge der Bereiche und Felder.
+  Eine gestellte Frage geht auf die Karte über. Es gibt höchstens eine offene Karte.
+- **Die Karte ist offen, bis man sie bestätigt oder verwirft.** Antippen nimmt einen gezogenen
+  Eintrag in die Auswahl (`picked`) auf oder wieder heraus; ausgewählt sein kann nur, was gezogen
+  wurde. *Verwerfen* schließt die Karte ohne Logeintrag. *Neu ziehen* ersetzt sie durch eine neue;
+  die Auswahl geht verloren, die Frage bleibt. Die offene Karte wird nie gespeichert: Beendet das
+  Handy die App, ist sie weg.
+- **Bestätigen** legt einen `CardPick` mit der Frage der Karte an und darin je ausgewähltem Eintrag
+  ein `PickedItem`, in der Reihenfolge der Karte; danach ist die Karte zu. Das `PickedItem` verweist auf das Feld (`Slot`) und auf
   den gezogenen Eintrag (`Entry`); der Eintrag gehört immer zu diesem Feld.
 - **Probe.** Es gilt: 2W6 + Fertigkeit + gewählte Attribute ≥ Zielwert.
   - Zuerst wählt man die Fertigkeit: eine Fertigkeitsstufe des Charakters (DM = Stufe) oder „ohne
