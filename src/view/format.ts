@@ -1,0 +1,84 @@
+import type { DmPart, TaskItem } from '../controller';
+import type { Characteristic, Upp } from '../model';
+
+// Reine Darstellung: Schreibweisen, die keine Regel sind.
+
+const hexDigits = '0123456789ABCDEFG';
+
+/** Ein Attributwert in der Hex-Schreibweise der UPP (10 → A). */
+export function hex(value: number): string {
+  return hexDigits[value] ?? String(value);
+}
+
+export function uppCode(upp: Upp): string {
+  return [upp.str, upp.dex, upp.end, upp.int, upp.edu, upp.soc].map(hex).join('');
+}
+
+/** Deutsche Kürzel der Attribute. */
+export const characteristicLabel: Record<Characteristic, string> = {
+  STR: 'STR',
+  DEX: 'GES',
+  END: 'AUS',
+  INT: 'INT',
+  EDU: 'BIL',
+  SOC: 'SOZ',
+};
+
+/** Ein DM mit Vorzeichen: +2, −1, ±0. */
+export function signed(n: number): string {
+  if (n > 0) return `+${n}`;
+  if (n < 0) return `−${Math.abs(n)}`;
+  return '±0';
+}
+
+export function percent(chance: number): string {
+  return `${Math.round(chance)} %`;
+}
+
+/** Uhrzeit eines Logeintrags, in Ortszeit. */
+export function clockTime(iso: string): string {
+  const date = new Date(iso);
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+export function credits(amount: number): string {
+  return `Cr ${amount.toLocaleString('de-DE')}`;
+}
+
+export function quoted(text: string): string {
+  return `„${text}“`;
+}
+
+export function partLabel(part: DmPart): string {
+  switch (part.kind) {
+    case 'skill':
+      return `${part.name}-${part.level} ${signed(part.dm)}`;
+    case 'unskilled':
+      return `ohne Fertigkeit ${signed(part.dm)}`;
+    case 'characteristic':
+      return `${characteristicLabel[part.characteristic]} ${hex(part.value)} ${signed(part.dm)}`;
+  }
+}
+
+/** Die Fertigkeit einer Probe, wie sie im Titel steht: „Pilot-2“ oder „ohne Fertigkeit“. */
+export function skillTitle(parts: readonly DmPart[]): string {
+  const first = parts[0];
+  if (first?.kind === 'skill') return `${first.name}-${first.level}`;
+  return 'ohne Fertigkeit';
+}
+
+export function taskTitle(item: TaskItem): string {
+  return `${item.character} · ${skillTitle(item.parts)} · ${item.target}+`;
+}
+
+export function taskDetail(item: TaskItem): string {
+  const [a, b] = item.dice;
+  return `2W6: ${a} + ${b} = ${a + b}, DM ${signed(item.dm)} → ${item.total}`;
+}
+
+/** Was auf 2W6 nötig ist, in Worten. */
+export function needText(need: number, chance: number): string {
+  if (chance >= 100) return 'Gelingt immer';
+  if (chance <= 0) return 'Unmöglich';
+  return `Braucht ${need}+`;
+}

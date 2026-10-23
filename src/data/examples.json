@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Kira Vant",
+    "background": "Ex-Scout · 4 Dienstzeiten · 34 Jahre",
+    "upp": { "str": 7, "dex": 10, "end": 8, "int": 9, "edu": 7, "soc": 5 },
+    "skills": [
+      { "of": "pilot", "level": 2 },
+      { "of": "navigation", "level": 1 },
+      { "of": "auto-pistol", "level": 1 },
+      { "of": "vacc-suit", "level": 1 }
+    ],
+    "equipment": "Autopistole, Jack-Rüstung, Vakuumanzug",
+    "credits": 12400,
+    "note": "Schuldet Dr. Halvek einen Gefallen"
+  },
+  {
+    "name": "Jonas Reyl",
+    "background": "Ex-Händler · 3 Dienstzeiten · 30 Jahre",
+    "upp": { "str": 6, "dex": 8, "end": 7, "int": 10, "edu": 8, "soc": 8 },
+    "skills": [
+      { "of": "steward", "level": 1 },
+      { "of": "bribery", "level": 1 },
+      { "of": "admin", "level": 1 },
+      { "of": "blade", "level": 1 }
+    ],
+    "equipment": "Klinge, Mesh-Rüstung, Handcomputer",
+    "credits": 3150,
+    "note": "Sucht seinen verschollenen Bruder"
+  }
+]

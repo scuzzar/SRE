@@ -1,0 +1,184 @@
+import { DomainError } from './errors';
+import type { LogEntry } from './log';
+import { defaultOdds, oddsOf, ref, skillOf, type ExampleCharacter } from './reference';
+
+/** Die sechs Attributwerte, je 0 bis 15. */
+export interface Upp {
+  readonly str: number;
+  readonly dex: number;
+  readonly end: number;
+  readonly int: number;
+  readonly edu: number;
+  readonly soc: number;
+}
+
+export type CharacterId = string;
+
+/** Die Stufe, die ein Charakter in einer Fertigkeit hat. Eine Fertigkeit kommt je Charakter höchstens einmal vor. */
+export interface SkillLevel {
+  /** Verweis auf die Fertigkeit. */
+  readonly of: string;
+  readonly level: number;
+  readonly retired: boolean;
+}
+
+export interface Character {
+  readonly id: CharacterId;
+  readonly name: string;
+  readonly background: string;
+  readonly equipment: string;
+  readonly credits: number;
+  readonly note: string;
+  readonly retired: boolean;
+  readonly upp: Upp;
+  readonly skills: readonly SkillLevel[];
+}
+
+/** Alles, was zu einem Spiel gehört. In Version 1 gibt es genau eine. */
+export interface Campaign {
+  readonly name: string;
+  readonly characters: readonly Character[];
+  /** Die eine gewählte Stufe für Orakel und Proben. */
+  readonly odds: string;
+  /** In der Reihenfolge der Ereignisse. */
+  readonly log: readonly LogEntry[];
+}
+
+/** Was man beim Anlegen und Bearbeiten eines Charakters eingibt. */
+export interface CharacterInput {
+  readonly name: string;
+  readonly background: string;
+  readonly equipment: string;
+  readonly credits: number;
+  readonly note: string;
+  readonly upp: Upp;
+  readonly skills: readonly { readonly of: string; readonly level: number }[];
+}
+
+/** Eine neue Kampagne mit den Beispielcharakteren aus den Referenzdaten. */
+export function createCampaign(examples: readonly ExampleCharacter[] = ref.examples): Campaign {
+  let campaign: Campaign = { name: 'Kampagne', characters: [], odds: defaultOdds.id, log: [] };
+  for (const example of examples) campaign = addCharacter(campaign, example).campaign;
+  return campaign;
+}
+
+export function setOdds(campaign: Campaign, oddsId: string): Campaign {
+  return { ...campaign, odds: oddsOf(oddsId).id };
+}
+
+export function appendLog(campaign: Campaign, entry: LogEntry): Campaign {
+  return { ...campaign, log: [...campaign.log, entry] };
+}
+
+export function characterOf(campaign: Campaign, id: CharacterId): Character {
+  const character = campaign.characters.find((c) => c.id === id);
+  if (!character) throw new DomainError(`Den Charakter ${id} gibt es nicht`);
+  return character;
+}
+
+export function activeCharacters(campaign: Campaign): readonly Character[] {
+  return campaign.characters.filter((c) => !c.retired);
+}
+
+export function retiredCharacters(campaign: Campaign): readonly Character[] {
+  return campaign.characters.filter((c) => c.retired);
+}
+
+export function activeSkills(character: Character): readonly SkillLevel[] {
+  return character.skills.filter((s) => !s.retired);
+}
+
+/** Verweist ein Logeintrag auf den Charakter? Dann wird er nie gelöscht. */
+export function isInLog(campaign: Campaign, id: CharacterId): boolean {
+  return campaign.log.some((e) => e.kind === 'task' && e.for === id);
+}
+
+/** Verweist ein Logeintrag auf die Fertigkeitsstufe? Dann wird sie nie gelöscht. */
+export function isSkillLevelInLog(campaign: Campaign, id: CharacterId, skill: string): boolean {
+  return campaign.log.some((e) => e.kind === 'task' && e.for === id && e.uses === skill);
+}
+
+export function validateCharacter(input: CharacterInput): void {
+  if (!input.name.trim()) throw new DomainError('Der Charakter braucht einen Namen.');
+  for (const [key, value] of Object.entries(input.upp)) {
+    if (!Number.isInteger(value) || value < 0 || value > 15) {
+      throw new DomainError(`Attributwerte liegen zwischen 0 und 15 (${key.toUpperCase()}: ${value}).`);
+    }
+  }
+  if (!Number.isInteger(input.credits)) throw new DomainError('Credits sind eine ganze Zahl.');
+  const seen = new Set<string>();
+  for (const skill of input.skills) {
+    const name = skillOf(skill.of).name;
+    if (seen.has(skill.of)) throw new DomainError(`${name} kommt doppelt vor.`);
+    seen.add(skill.of);
+    if (!Number.isInteger(skill.level) || skill.level < 0) throw new DomainError(`Die Stufe von ${name} ist 0 oder mehr.`);
+  }
+}
+
+function nextId(campaign: Campaign): CharacterId {
+  const numbers = campaign.characters.map((c) => Number(c.id.replace(/^c/, ''))).filter(Number.isFinite);
+  return `c${Math.max(0, ...numbers) + 1}`;
+}
+
+function fields(input: CharacterInput) {
+  return {
+    name: input.name.trim(),
+    background: input.background.trim(),
+    equipment: input.equipment.trim(),
+    credits: input.credits,
+    note: input.note.trim(),
+    upp: { ...input.upp },
+  };
+}
+
+export function addCharacter(campaign: Campaign, input: CharacterInput): { campaign: Campaign; id: CharacterId } {
+  validateCharacter(input);
+  const id = nextId(campaign);
+  const character: Character = {
+    id,
+    ...fields(input),
+    retired: false,
+    skills: input.skills.map((s) => ({ of: s.of, level: s.level, retired: false })),
+  };
+  return { campaign: { ...campaign, characters: [...campaign.characters, character] }, id };
+}
+
+/**
+ * Übernimmt die Eingabe. Eine Fertigkeitsstufe, die in der Eingabe fehlt, wird gelöscht, wenn der Log
+ * nicht auf sie verweist, sonst ausgeblendet. Kommt eine ausgeblendete Fertigkeit wieder, wird sie
+ * wieder eingeblendet.
+ */
+export function updateCharacter(campaign: Campaign, id: CharacterId, input: CharacterInput): Campaign {
+  validateCharacter(input);
+  const before = characterOf(campaign, id);
+  const wanted = new Map(input.skills.map((s) => [s.of, s.level]));
+  const kept: SkillLevel[] = [];
+  for (const skill of before.skills) {
+    const level = wanted.get(skill.of);
+    if (level !== undefined) kept.push({ of: skill.of, level, retired: false });
+    else if (isSkillLevelInLog(campaign, id, skill.of)) kept.push({ ...skill, retired: true });
+  }
+  const known = new Set(before.skills.map((s) => s.of));
+  const added = input.skills.filter((s) => !known.has(s.of)).map((s) => ({ of: s.of, level: s.level, retired: false }));
+  const after: Character = { ...before, ...fields(input), skills: [...kept, ...added] };
+  return { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? after : c)) };
+}
+
+/** Löscht den Charakter, wenn der Log nicht auf ihn verweist; sonst wird er ausgeblendet. */
+export function removeCharacter(campaign: Campaign, id: CharacterId): Campaign {
+  characterOf(campaign, id);
+  if (!isInLog(campaign, id)) return { ...campaign, characters: campaign.characters.filter((c) => c.id !== id) };
+  return { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? { ...c, retired: true } : c)) };
+}
+
+/** Blendet einen ausgeblendeten Charakter wieder ein. */
+export function restoreCharacter(campaign: Campaign, id: CharacterId): Campaign {
+  characterOf(campaign, id);
+  return { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? { ...c, retired: false } : c)) };
+}
+
+/** Was eine Eingabe für einen bestehenden Charakter wäre, mit seinen eingeblendeten Fertigkeiten. */
+export function inputOf(character: Character): CharacterInput {
+  const { name, background, equipment, credits, note, upp } = character;
+  return { name, background, equipment, credits, note, upp, skills: activeSkills(character).map(({ of, level }) => ({ of, level })) };
+}

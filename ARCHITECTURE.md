@@ -1,6 +1,6 @@
 # Architektur
 
-> **Stand: Festgelegt, es gibt noch keinen Code.** Dieses Dokument legt fest, wie er gebaut wird.
+> **Stand: Umgesetzt für Version 1.** Dieses Dokument legt fest, wie der Code gebaut ist.
 
 Die App ist eine Progressive Web App in **TypeScript** (Vite, React, Dexie für IndexedDB, Zod für
 die Referenzdaten, Vitest und Playwright für Tests). Sie folgt **strikt MVC**: Model, View und
@@ -73,3 +73,21 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
 - **Regeln und Ablauf:** Unit-Tests mit Vitest für Model und Controller, darunter die Beispiele aus
   der README (Kira, Jonas). Weil der Controller den Ablauf hält, lässt sich auch „Probe würfeln →
   Popup → zurück zum Orakel“ ohne Browser testen. Playwright prüft die Oberfläche bei 390 × 844.
+
+## Befehle
+
+| Befehl | Was |
+|---|---|
+| `npm run dev` | Entwicklungsserver mit Neuladen |
+| `npm run check` | Typecheck, Lint (mit den Schichtenregeln) und Unit-Tests |
+| `npm run test:e2e` | GUI-Tests mit Playwright (baut vorher und startet `vite preview`) |
+| `npm run build` | Build für GitHub Pages nach `dist/` (relative Pfade, läuft in jedem Unterordner) |
+| `npm run build:single` | Die ganze App als eine HTML-Datei nach `dist-single/index.html` |
+
+**Deployment.** `.github/workflows/pages.yml` baut bei jedem Push auf `main` und veröffentlicht
+`dist/` auf GitHub Pages. Einmalig nötig: in den Repo-Einstellungen unter *Pages* als Quelle
+„GitHub Actions“ wählen. `.github/workflows/ci.yml` prüft jeden Pull Request (Check und GUI-Tests).
+
+**Speicher.** `platform/repository.ts` öffnet IndexedDB über Dexie. Geht das nicht (privates
+Fenster, eingebettete Vorschau), läuft die App mit einem Speicher im Arbeitsspeicher weiter; der
+„Über“-Bildschirm sagt dann, dass nichts dauerhaft gespeichert wird.
