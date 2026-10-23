@@ -62,8 +62,6 @@ hide <<value>> stereotype
   }
   class OracleAnswer {
     question: string [0..1]
-    odds: string
-    chance: number
     roll: number
     /yes: boolean
   }
@@ -76,14 +74,9 @@ hide <<value>> stereotype
   }
   class PickedItem
   class TaskResult {
-    character: string
-    target: number
     dice: number[2]
+    /dm: number
     /success: boolean
-  }
-  class Modifier <<value>> {
-    label: string
-    dm: number
   }
 
 ' nur solange offen, nie gespeichert
@@ -150,9 +143,12 @@ LogEntry <|-- DiceRoll
 LogEntry <|-- CardPick
 LogEntry <|-- TaskResult
 CardPick "1" *-- "1..*" PickedItem : items {ordered}
-TaskResult "1" *-- "1..*" Modifier : modifiers {ordered}
-OracleAnswer ..> Odds : copied from
-TaskResult ..> Task : copied from, on roll
+OracleAnswer "*" --> "1" Odds : at
+TaskResult "*" --> "1" Character : for
+TaskResult "*" --> "0..1" SkillLevel : uses
+TaskResult --> "0..6" Characteristic : counts
+TaskResult "*" --> "1" Odds : at
+TaskResult ..> Task : made from, on roll
 
 ' Karte
 PickedItem "*" --> "1" Slot : in

@@ -39,7 +39,7 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
 | Würfelwurf (2W6) | `DiceRoll` | Ein einfacher Wurf mit zwei Würfeln |
 | Kartenauswahl | `CardPick` | Was man von einer Karte in den Log übernimmt, mit der Frage |
 | Ausgewählter Eintrag | `PickedItem` | Ein übernommenes Feld: welches Feld, welcher Eintrag |
-| Probenergebnis | `TaskResult`, `Modifier` | Eine gewürfelte Probe mit ihren DMs |
+| Probenergebnis | `TaskResult` | Eine gewürfelte Probe |
 | Probe | `Task` | Eine Probe, solange sie im Charakter-Screen vorbereitet wird |
 | Bereich der Karte, Themen-Reiter | `Section` | Zufallsereignis, Sinneseindrücke, …; Auftrag, NSC, … |
 | Feld der Karte | `Slot` | Verb, Hören, Name, Auslöser, … |
@@ -58,12 +58,16 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
   Die drei Stufen sind Referenzdaten: Hoch (75 %, 6+), Mittel (50 %, 8+), Gering (25 %, 10+), in
   dieser Reihenfolge, leicht links. Die Auswahl bleibt stehen, bis man sie ändert, auch über einen
   Neustart der App hinweg. Orakel und Probe lesen sie, keiner von beiden hat eine eigene.
-- **Der Log hält Kopien, keine Verweise, mit einer Ausnahme.** Ein Logeintrag hält fest, was in dem
-  Moment galt: den Namen der Stufe und ihre Chance, den Namen des Charakters, die DMs mit ihren
-  Bezeichnungen. Ändert sich später ein Charakter oder eine Hausregel, bleibt der Log, wie er war.
-  Die Ausnahme ist die Kartenauswahl: Ein `PickedItem` verweist auf Feld und Eintrag der
-  Referenzdaten (siehe *Einträge sind beständig*). Einträge werden nur angehängt, nie geändert oder gelöscht. Die Reihenfolge ist die
-  Reihenfolge der Ereignisse; dass das Neueste unten steht, ist Sache der Anzeige.
+- **Der Log verweist, er kopiert nicht.** Ein Logeintrag hält nur fest, was allein ihm gehört: Frage,
+  Zeitpunkt und Würfel. Alles andere ist ein Verweis: auf die Stufe, den Charakter, die
+  Fertigkeitsstufe, die Attribute, auf Feld und Eintrag der Karte. Was der Log anzeigt (Name, DM,
+  Zielwert, Erfolg), wird aus dem Verwiesenen berechnet. Logeinträge werden nur angehängt, nie
+  geändert oder gelöscht. Die Reihenfolge ist die Reihenfolge der Ereignisse; dass das Neueste unten
+  steht, ist Sache der Anzeige.
+- **Worauf der Log verweist, wird nie gelöscht.** Ein Charakter, der im Log vorkommt, bleibt in der
+  Kampagne, ebenso seine Fertigkeitsstufen; Stufen, Felder und Einträge der Referenzdaten haben eine
+  feste Id und bleiben in den Daten. Ändert sich etwas daran (ein Charakter lernt Pilot-3, eine
+  Hausregel ändert sich), zeigen auch die alten Logeinträge die neuen Werte.
 - **Würfe stehen im Log, nicht nur ihr Ergebnis.** Gespeichert werden die einzelnen Würfel (`dice`,
   `roll`); Summe, Ja/Nein und Erfolg (`/total`, `/yes`, `/success`) folgen daraus.
 - **Orakel.** Ein Wurf von 1 bis 100; Ja, wenn er höchstens die Chance der gewählten Stufe ist. Die
@@ -76,9 +80,6 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
 - **Bestätigen** legt einen `CardPick` mit der Frage an und darin je ausgewähltem Feld ein
   `PickedItem`, in der Reihenfolge der Karte. Das `PickedItem` verweist auf das Feld (`Slot`) und auf
   den gezogenen Eintrag (`Entry`); der Eintrag gehört immer zu diesem Feld.
-- **Einträge sind beständig.** Weil der Log auf Felder und Einträge verweist, hat jedes Feld und
-  jeder Eintrag eine feste Id. Einträge werden nie gelöscht und ihr Text nie umgedeutet, sonst ändert
-  sich rückwirkend der Log; Tippfehler dürfen korrigiert werden.
 - **Probe.** Es gilt: 2W6 + Fertigkeit + gewählte Attribute ≥ Zielwert.
   - Zuerst wählt man die Fertigkeit: eine Fertigkeitsstufe des Charakters (DM = Stufe) oder „ohne
     Fertigkeit“ (DM aus den Hausregeln, −3). Solange keine gewählt ist, gibt es keine Probe zu
@@ -90,9 +91,9 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
     über 12 unmöglich.
   - Wechselt man den Charakter, beginnt eine neue Probe. Eine vorbereitete Probe wird nicht
     gespeichert.
-  - Gewürfelt wird eine Probe als `TaskResult` in den Log übernommen: Name des Charakters, Zielwert,
-    die zwei Würfel und je DM eine Zeile mit Bezeichnung (z. B. „Pilot-2“, „GES A“, „ohne
-    Fertigkeit“).
+  - Gewürfelt wird eine Probe als `TaskResult` in den Log übernommen. Es hält die zwei Würfel und
+    verweist auf Charakter, Fertigkeitsstufe (keine heißt „ohne Fertigkeit“), die gewählten Attribute
+    und die Stufe. DM, Zielwert und Erfolg folgen daraus.
 - **Charakter.** Die sechs UPP-Werte liegen zwischen 0 und 15. Eine Fertigkeit kommt bei einem
   Charakter höchstens einmal vor, ihre Stufe ist 0 oder mehr. Ausrüstung, Herkunft (`background`,
   z. B. „Ex-Scout · 4 Dienstzeiten · 34 Jahre“) und Notiz sind in Version 1 freier Text, Credits eine
@@ -121,7 +122,12 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
 9. **Doppelter Verweis:** Da jeder Eintrag zu genau einem Feld gehört, folgt das Feld eines
    `PickedItem` schon aus seinem Eintrag. Den Pfeil `in` behalten (wie vorgeschlagen) oder als
    abgeleitet (`/in`) kennzeichnen?
-10. **Hausregeln einstellbar:** Sind `HouseRules` in Version 1 nur Daten im Code, oder kann man sie in
+10. **Verlauf und spätere Änderungen:** Weil der Log nur verweist, rechnet er alte Proben mit den
+    heutigen Werten. Lernt Kira später Pilot-3, stünde bei einer alten Probe „Pilot-3, DM +4“, und
+    ein damaliger Misserfolg könnte im Log zum Erfolg werden. Ist das so gewollt? Die Alternative:
+    Der `TaskResult` hält zusätzlich die zwei Zahlen fest, die das Ergebnis entschieden haben (`dm`
+    und `target`), und verweist für alles andere.
+11. **Hausregeln einstellbar:** Sind `HouseRules` in Version 1 nur Daten im Code, oder kann man sie in
    der App ändern (z. B. „ohne Fertigkeit −3“ abschalten)? Im zweiten Fall wären sie Spielstand
    (blau), nicht Referenzdaten.
 
