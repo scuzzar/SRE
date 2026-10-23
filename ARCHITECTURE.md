@@ -28,13 +28,13 @@ Speicher und Controller kennen sich nicht. Der Controller bekommt den Speicher a
 **2. Der Controller nimmt jede Eingabe an.** Die View ruft für jede Eingabe genau eine
 Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
 
-- **Er ändert das Model**, als Einziger, und speichert über das Repository: `askOracle()`,
+- **Er ändert das Model**, als Einziger, und speichert über das Repository: `askOracle(question)`,
   `rollDice()`, `confirmCard()`, `setOdds(odds)`, `rollTask()`.
 - **Er wählt, welche View zu sehen ist**: Orakel- oder Charakter-Screen (`showScreen(screen)`), die
   Inspirationskarte im Vordergrund, das Ergebnis-Popup. Auch der Ablauf ist seine Sache, etwa „nach
   dem Schließen des Ergebnisses zurück zum Orakel“ (`closeResult()`).
 - **Er hält, was eine spätere Eingabe braucht**: die gezogene Karte mit den angetippten Feldern
-  (`drawCard()`, `togglePick(slot)`, `discardCard()`) und die Probe in Vorbereitung
+  (`drawCard(question)`, `togglePick(slot)`, `discardCard()`) und die Probe in Vorbereitung
   (`chooseCharacter(c)`, `chooseSkill(skill)`, `toggleCharacteristic(c)`). Das ist kein Spielstand
   und wird nicht gespeichert; es steht deshalb nicht im Domänenmodell.
 
