@@ -74,7 +74,8 @@ hide <<value>> stereotype
   }
   class PickedItem
 
-' flüchtig: zwischen zwei Eingaben da, nie gespeichert
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert
+package "draft" {
   class Card <<transient>> {
     question: string [0..1]
   }
@@ -84,6 +85,7 @@ hide <<value>> stereotype
     /need: number
     /chance: number
   }
+}
   class TaskResult {
     dice: number[2]
     dm: number
@@ -151,14 +153,14 @@ TaskResult --> "0..6" Characteristic : counts
 TaskResult "*" --> "1" Odds : at
 
 ' Probe
-Campaign "1" *-- "0..1" Task : prepared
+Task "0..1" --> "1" Campaign : in
 Task "*" --> "1" Character : for
 Task "*" --> "0..1" SkillLevel : uses
 Task --> "0..6" Characteristic : counts
 Task ..> TaskResult : on roll
 
 ' Karte
-Campaign "1" *-- "0..1" Card : open
+Card "0..1" --> "1" Campaign : in
 Card "*" --> "1..*" Entry : drawn {ordered}
 Card "*" --> "*" Entry : picked
 Card ..> CardPick : on confirm

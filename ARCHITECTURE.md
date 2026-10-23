@@ -16,19 +16,26 @@ sagt nur, wo die Teile liegen und wie sie miteinander reden.
 | # | Ordner | Schicht | Darf importieren aus |
 |--:|---|---|---|
 | 0 | `src/data/` | Referenzdaten: Tabellen als JSON, Schemas | — |
-| 1 | `src/model/` | **Model**: die Klassen des Domänenmodells und ihre Regeln | `data` |
-| 2 | `src/storage/` | Speicher: Dexie, liest und schreibt die Kampagne | `model` |
+| 1 | `src/model/` | **Model**: der gespeicherte Stand des Domänenmodells und seine Regeln | `data` |
+| 1a | `src/model/draft/` | **Model, Entwürfe**: `Card`, `Task`; flüchtig, nie gespeichert | `data`, `model` |
+| 2 | `src/platform/` | Was das Model von außen braucht: Speicher (Dexie), Zufall, Uhr | `model` ohne `draft` |
 | 3 | `src/controller/` | **Controller**: eine Methode pro Absicht des Spielers | `model` |
 | 4 | `src/view/` | **View**: React-Komponenten | `controller`, `model` (nur Typen) |
 | 5 | `src/main.tsx` | Verdrahtung | alles |
 
-Speicher und Controller kennen sich nicht. Der Controller bekommt den Speicher als Schnittstelle
-(`CampaignRepository`, im Model definiert), `main.tsx` reicht die Dexie-Umsetzung hinein.
+Plattform und Controller kennen sich nicht. Das Model definiert die Schnittstellen
+(`CampaignRepository`, `Random`, `Clock`), `platform/` setzt sie um (Dexie, `crypto.getRandomValues`,
+`Date`), und `main.tsx` reicht die Umsetzungen in den Controller. Physische Würfel (später) sind eine
+zweite Umsetzung von `Random`, die das Ergebnis vom Spieler erfragt.
+
+Innerhalb des Models gilt dieselbe Richtung: `model/draft/` darf den gespeicherten Stand kennen, der
+gespeicherte Stand nie `model/draft/`. Weil `platform/` nichts aus `model/draft/` importieren darf,
+kann ein Entwurf gar nicht in den Speicher geraten.
 
 **2. Der Controller nimmt jede Eingabe an.** Die View ruft für jede Eingabe genau eine
 Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
 
-- **Er ändert das Model**, als Einziger, und speichert über das Repository: `askOracle(question)`,
+- **Er ändert das Model**, als Einziger, und speichert den gespeicherten Stand über das Repository: `askOracle(question)`,
   `rollDice()`, `drawCard(question)`, `togglePick(entry)`, `confirmCard()`, `discardCard()`,
   `setOdds(odds)`, `chooseCharacter(c)`, `chooseSkill(skill)`, `toggleCharacteristic(c)`,
   `rollTask()`. Offene Karte und Probe in Vorbereitung sind Teil des Models, werden aber nicht

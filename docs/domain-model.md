@@ -17,8 +17,8 @@ erzeugen mit `java -jar plantuml.jar -tpng docs/domain-model.puml`; Graphviz ist
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
 gestricheltem Rahmen** ist flüchtig: Es besteht zwischen zwei Eingaben und wird nie gespeichert. Es
-kommt nur ins Diagramm, wenn sich ein Ablauf sonst nicht abbilden lässt (die offene Karte, die
-Probe in Vorbereitung). **Grün**
+kommt nur ins Diagramm, wenn sich ein Ablauf sonst nicht abbilden lässt, und liegt im Paket
+`draft`. **Grün**
 sind Referenzdaten: feste Tabellen, in jeder Kampagne gleich. **Weiß** sind Werte und Wertelisten.
 
 ## Begriffe
@@ -42,6 +42,7 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
 | Inspirationskarte | `Card` | Eine gezogene Karte, solange sie offen ist |
 | Kartenauswahl | `CardPick` | Was man von einer Karte in den Log übernimmt, mit der Frage |
 | Ausgewählter Eintrag | `PickedItem` | Ein übernommenes Feld: welches Feld, welcher Eintrag |
+| Entwurf | Paket `draft` | Was später ein Logeintrag wird, solange es noch offen ist |
 | Probe | `Task` | Eine Probe, solange sie im Charakter-Screen vorbereitet wird |
 | Probenergebnis | `TaskResult` | Eine gewürfelte Probe |
 | Bereich der Karte, Themen-Reiter | `Section` | Zufallsereignis, Sinneseindrücke, …; Auftrag, NSC, … |
@@ -55,6 +56,11 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
   Ergebnis-Popup zu sehen ist. Reine Darstellung bleibt in der View: der gewählte Themen-Reiter, der
   Text im Fragefeld während des Tippens, Farben, die Hex-Schreibweise der UPP und das Format der
   Uhrzeit.
+- **Entwürfe.** Im Paket `draft` liegen die Entwürfe eines Logeintrags: die offene Karte (`Card`,
+  wird beim Bestätigen zum `CardPick`) und die Probe in Vorbereitung (`Task`, wird beim Würfeln zum
+  `TaskResult`). Je Kampagne gibt es höchstens eine offene Karte und höchstens eine Probe. Pfeile
+  führen nur aus `draft` heraus, nie hinein: Der gespeicherte Stand weiß nichts von seinen
+  Entwürfen. Entwürfe werden nie gespeichert; beendet das Handy die App, sind sie weg.
 - **Eine Kampagne.** In Version 1 gibt es genau eine Kampagne. Alles, was gespeichert wird, hängt an
   ihr.
 - **Eine Auswahl für Orakel und Proben.** Die Kampagne hat immer genau eine gewählte Stufe (`odds`).
