@@ -17,13 +17,14 @@ erzeugen mit `java -jar plantuml.jar -tpng docs/domain-model.puml`; Graphviz ist
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
 gestricheltem Rahmen** ist flüchtig: Es besteht zwischen zwei Eingaben und wird nie gespeichert. Es
-kommt nur ins Diagramm, wenn sich ein Ablauf sonst nicht abbilden lässt (die offene Karte). **Grün**
+kommt nur ins Diagramm, wenn sich ein Ablauf sonst nicht abbilden lässt (die offene Karte, die
+Probe in Vorbereitung). **Grün**
 sind Referenzdaten: feste Tabellen, in jeder Kampagne gleich. **Weiß** sind Werte und Wertelisten.
 
 ## Begriffe
 
 Die Bezeichner im Code sind englisch, Oberfläche und Dokumentation deutsch. Diese Tabelle ist die
-gemeinsame Sprache: Wer „Probenergebnis“ sagt, meint `TaskResult`, und umgekehrt.
+gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
 
 | Deutsch | Code | Was |
 |---|---|---|
@@ -41,6 +42,7 @@ gemeinsame Sprache: Wer „Probenergebnis“ sagt, meint `TaskResult`, und umgek
 | Inspirationskarte | `Card` | Eine gezogene Karte, solange sie offen ist |
 | Kartenauswahl | `CardPick` | Was man von einer Karte in den Log übernimmt, mit der Frage |
 | Ausgewählter Eintrag | `PickedItem` | Ein übernommenes Feld: welches Feld, welcher Eintrag |
+| Probe | `Task` | Eine Probe, solange sie im Charakter-Screen vorbereitet wird |
 | Probenergebnis | `TaskResult` | Eine gewürfelte Probe |
 | Bereich der Karte, Themen-Reiter | `Section` | Zufallsereignis, Sinneseindrücke, …; Auftrag, NSC, … |
 | Feld der Karte | `Slot` | Verb, Hören, Name, Auslöser, … |
@@ -49,9 +51,8 @@ gemeinsame Sprache: Wer „Probenergebnis“ sagt, meint `TaskResult`, und umgek
 ## Regeln, die das Bild nicht zeigt
 
 - **Was draußen bleibt.** Was nicht gespeichert wird, gehört nicht ins Modell, außer der offenen
-  Karte. Der Controller hält den Ablauf: welcher Screen offen ist, ob das Ergebnis-Popup zu sehen ist
-  und die **Probe in Vorbereitung** (Charakter, gewählte Fertigkeit, gewählte Attribute). Die Regeln
-  dafür gehören trotzdem ins Model. Reine Darstellung bleibt in der View: der gewählte Themen-Reiter, der
+  Karte und der Probe in Vorbereitung. Der Controller hält, welcher Screen offen ist und ob das
+  Ergebnis-Popup zu sehen ist. Reine Darstellung bleibt in der View: der gewählte Themen-Reiter, der
   Text im Fragefeld während des Tippens, Farben, die Hex-Schreibweise der UPP und das Format der
   Uhrzeit.
 - **Eine Kampagne.** In Version 1 gibt es genau eine Kampagne. Alles, was gespeichert wird, hängt an
@@ -95,7 +96,10 @@ gemeinsame Sprache: Wer „Probenergebnis“ sagt, meint `TaskResult`, und umgek
   - Der Zielwert kommt aus der gewählten Stufe. Der nötige Wurf ist Zielwert minus DM, die
     Wahrscheinlichkeit wird exakt aus den 36 Kombinationen von 2W6 gezählt: Bis 2 ist sie sicher,
     über 12 unmöglich.
-  - Wechselt man den Charakter, beginnt eine neue Probe.
+  - Die Probe in Vorbereitung ist eine `Task`. Sie verweist auf den Charakter, auf eine seiner
+    Fertigkeitsstufen (`uses`) oder ist `unskilled`, nie beides; keins von beiden heißt: noch keine
+    Fertigkeit gewählt. Es gibt höchstens eine. Wechselt man den Charakter, beginnt eine neue Probe.
+    Die Probe wird nie gespeichert.
   - Gewürfelt wird eine Probe als `TaskResult` in den Log übernommen. Es verweist auf Charakter,
     Fertigkeitsstufe (keine heißt „ohne Fertigkeit“), die gewählten Attribute und die Stufe, und es
     hält die zwei Würfel sowie DM (`dm`) und Zielwert (`target`) zum Zeitpunkt des Wurfs fest. Der
