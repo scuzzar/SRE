@@ -141,4 +141,16 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
 
 ## Wo der Code noch nicht folgt
 
-Es gibt noch keinen Code.
+Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
+Diagramm mit diesen Ausnahmen:
+
+- **Assoziation `at` zur Stufe.** `OracleAnswer → Odds` und `TaskResult → Odds` heißen im Diagramm
+  `at`. Im Code heißt das Feld `odds`, weil `at` schon der Zeitpunkt des Logeintrags ist (`LogEntry.at`)
+  und ein Objekt nicht zwei Felder gleichen Namens haben kann. Vorschlag: die Assoziation im Diagramm
+  in `odds` umbenennen, wie bei `Campaign → Odds`. Wartet auf die Zustimmung des Owners.
+- **`Card → Campaign : in` und `Task → Campaign : in`** sind im Code kein Feld. Der Controller hält
+  höchstens eine offene Karte und höchstens eine Probe neben der einen Kampagne; damit ist die
+  Multiplizität erfüllt. Kommen mehrere Kampagnen, braucht es das Feld.
+- **Beispielcharaktere.** Eine neue Kampagne beginnt mit Kira Vant und Jonas Reyl aus der README
+  (`src/data/examples.json`). Das Modell sagt dazu nichts; die beiden lassen sich löschen, solange
+  der Log nicht auf sie verweist.
