@@ -11,8 +11,6 @@ skinparam packageStyle rectangle
 skinparam class {
   BackgroundColor #e8ecfb
   BorderColor #5b64b8
-  BackgroundColor<<transient>> #f4f4f4
-  BorderColor<<transient>> #8a8a8a
   BackgroundColor<<reference>> #e6f4e6
   BorderColor<<reference>> #4f9a4f
   BackgroundColor<<value>> #ffffff
@@ -20,16 +18,6 @@ skinparam class {
 }
 skinparam legendBackgroundColor #ffffff
 skinparam legendBorderColor #8a8a8a
-<style>
-classDiagram {
-  class {
-    .transient {
-      LineStyle 5-3
-    }
-  }
-}
-</style>
-hide <<transient>> stereotype
 hide <<reference>> stereotype
 hide <<value>> stereotype
 
@@ -80,16 +68,6 @@ hide <<value>> stereotype
     /success: boolean
   }
 
-' nur solange offen, nie gespeichert
-  class Task <<transient>> {
-    /dm: number
-    /need: number
-    /chance: number
-  }
-  abstract class SkillChoice <<transient>>
-  class WithSkill <<transient>>
-  class Unskilled <<transient>>
-
 ' Referenzdaten
   class Odds <<reference>> {
     name: string
@@ -131,7 +109,6 @@ hide <<value>> stereotype
 Campaign "1" *-- "*" Character : characters
 Campaign "*" --> "1" Odds : odds
 Campaign "1" *-- "*" LogEntry : log {ordered}
-Campaign "1" *-- "0..1" Task : prepared
 
 ' Charakter
 Character "1" *-- "1" Upp : upp
@@ -149,7 +126,6 @@ TaskResult "*" --> "1" Character : for
 TaskResult "*" --> "0..1" SkillLevel : uses
 TaskResult --> "0..6" Characteristic : counts
 TaskResult "*" --> "1" Odds : at
-TaskResult ..> Task : made from, on roll
 
 ' Karte
 PickedItem "*" --> "1" Slot : in
@@ -158,18 +134,9 @@ Section "1" *-- "1..*" Slot : slots {ordered}
 Section --> SectionKind
 Slot "1" *-- "1..*" Entry : entries
 
-' Probe
-Task "*" --> "1" Character : for
-Task "1" *-- "0..1" SkillChoice : skill
-SkillChoice <|-- WithSkill
-SkillChoice <|-- Unskilled
-WithSkill "*" --> "1" SkillLevel : uses
-Task --> "0..6" Characteristic : counts
-Task ..> HouseRules : follows
 
 legend right
   |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
-  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Nur solange offen, wird nie gespeichert |
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend

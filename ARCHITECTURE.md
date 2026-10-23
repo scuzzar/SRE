@@ -26,10 +26,11 @@ Speicher und Controller kennen sich nicht. Der Controller bekommt den Speicher a
 (`CampaignRepository`, im Model definiert), `main.tsx` reicht die Dexie-Umsetzung hinein.
 
 **2. Nur der Controller ändert das Model.** Die View ruft für jede Eingabe genau eine
-Controller-Methode auf, zum Beispiel `askOracle(question)`, `rollDice()`, `drawCard()`,
-`confirmCard(question, picks)`, `setOdds(odds)`, `chooseSkill(skill)`, `toggleCharacteristic(c)`,
-`rollTask()`. `drawCard()` liefert die gezogenen Einträge an die View, ohne das Model zu ändern. Der Controller ruft das Model, speichert über das
-Repository und meldet die Änderung. Die View sieht das Model nur lesend (`Readonly`-Typen); ein
+Controller-Methode auf, zum Beispiel `askOracle(question)`, `rollDice()`, `confirmCard(question,
+picks)`, `setOdds(odds)`, `rollTask(character, skill, characteristics)`. Der Controller ruft das
+Model, speichert über das Repository und meldet die Änderung. Daneben gibt es Abfragen, die das Model
+nicht ändern: `drawCard()` liefert gezogene Einträge, `previewTask(character, skill,
+characteristics)` liefert DM, nötigen Wurf, Wahrscheinlichkeit und die wählbaren Attribute. Die View sieht das Model nur lesend (`Readonly`-Typen); ein
 Schreibzugriff aus der View ist ein Compilerfehler.
 
 **3. Nach oben wird gemeldet, nicht gerufen.** Der Controller kennt keine Komponenten. Er bietet

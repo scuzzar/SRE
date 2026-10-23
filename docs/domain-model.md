@@ -14,15 +14,16 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild neu
 erzeugen mit `java -jar plantuml.jar -tpng docs/domain-model.puml`; Graphviz ist nicht nötig.
 
-Das Diagramm zeigt nur Daten und Beziehungen, keine Operationen. **Blau** ist der Spielstand, den
-die App speichert. **Grau mit gestricheltem Rahmen** gibt es nur, solange etwas offen ist (eine
-vorbereitete Probe); das wird nie gespeichert. **Grün** sind Referenzdaten:
-feste Tabellen, in jeder Kampagne gleich. **Weiß** sind Werte und Wertelisten.
+Das Diagramm zeigt nur den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten
+und Beziehungen, keine Operationen. Was nur kurz während der Bedienung besteht (eine offene Karte,
+eine Probe in Vorbereitung), ist Zustand der View und steht nicht im Diagramm. **Blau** ist der
+Spielstand, den die App speichert. **Grün** sind Referenzdaten: feste Tabellen, in jeder Kampagne
+gleich. **Weiß** sind Werte und Wertelisten.
 
 ## Begriffe
 
 Die Bezeichner im Code sind englisch, Oberfläche und Dokumentation deutsch. Diese Tabelle ist die
-gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
+gemeinsame Sprache: Wer „Probenergebnis“ sagt, meint `TaskResult`, und umgekehrt.
 
 | Deutsch | Code | Was |
 |---|---|---|
@@ -40,7 +41,6 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
 | Kartenauswahl | `CardPick` | Was man von einer Karte in den Log übernimmt, mit der Frage |
 | Ausgewählter Eintrag | `PickedItem` | Ein übernommenes Feld: welches Feld, welcher Eintrag |
 | Probenergebnis | `TaskResult` | Eine gewürfelte Probe |
-| Probe | `Task` | Eine Probe, solange sie im Charakter-Screen vorbereitet wird |
 | Bereich der Karte, Themen-Reiter | `Section` | Zufallsereignis, Sinneseindrücke, …; Auftrag, NSC, … |
 | Feld der Karte | `Slot` | Verb, Hören, Name, Auslöser, … |
 | Eintrag | `Entry` | Ein möglicher Text eines Feldes, z. B. „Schulden begleichen.“ |
@@ -50,8 +50,10 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
 - **Was draußen bleibt.** Alles, was nur die Anzeige betrifft, gehört nicht ins Modell: welcher
   Screen offen ist, welcher Themen-Reiter gewählt ist, der Text im Fragefeld vor dem Absenden, ob das
   Ergebnis-Popup gerade zu sehen ist, Farben, die Hex-Schreibweise der UPP und das Format der Uhrzeit.
-  Das ist Zustand der View. Dazu gehört auch die **offene Inspirationskarte**: welcher Eintrag je Feld
-  gezogen wurde und was gerade angetippt ist. Sie ist kein Teil des Modells.
+  Das ist Zustand der View. Dazu gehören auch die **offene Inspirationskarte** (welcher Eintrag je
+  Feld gezogen wurde und was gerade angetippt ist) und die **Probe in Vorbereitung** (Charakter,
+  gewählte Fertigkeit, gewählte Attribute). Beides ist kein Teil des Modells; die Regeln dafür
+  schon.
 - **Eine Kampagne.** In Version 1 gibt es genau eine Kampagne. Alles, was gespeichert wird, hängt an
   ihr.
 - **Eine Auswahl für Orakel und Proben.** Die Kampagne hat immer genau eine gewählte Stufe (`odds`).
@@ -89,8 +91,7 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
   - Der Zielwert kommt aus der gewählten Stufe. Der nötige Wurf ist Zielwert minus DM, die
     Wahrscheinlichkeit wird exakt aus den 36 Kombinationen von 2W6 gezählt: Bis 2 ist sie sicher,
     über 12 unmöglich.
-  - Wechselt man den Charakter, beginnt eine neue Probe. Eine vorbereitete Probe wird nicht
-    gespeichert.
+  - Wechselt man den Charakter, beginnt eine neue Probe.
   - Gewürfelt wird eine Probe als `TaskResult` in den Log übernommen. Es verweist auf Charakter,
     Fertigkeitsstufe (keine heißt „ohne Fertigkeit“), die gewählten Attribute und die Stufe, und es
     hält die zwei Würfel sowie DM (`dm`) und Zielwert (`target`) zum Zeitpunkt des Wurfs fest. Der
