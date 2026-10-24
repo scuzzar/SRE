@@ -19,6 +19,11 @@
   --accent-text: #ef5a5f;
   --accent-wash: #2a1415;
   --disabled: #333333;
+  /* Würfel und Urteil, angelehnt an Baldur's Gate 3: Gold auf dunklem Grund. */
+  --gold: #d9b45f;
+  --gold-bright: #f5dc96;
+  --gold-deep: #8a6a2a;
+  --gold-glow: rgba(233, 190, 92, 0.5);
   --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   color-scheme: dark;
@@ -430,6 +435,18 @@ button:disabled {
   background: transparent;
   color: var(--text);
   border: 1px solid var(--text);
+}
+
+.action,
+.roll,
+.confirm {
+  transition: transform 0.08s ease-out;
+}
+
+.action:active,
+.roll:active:not(:disabled),
+.confirm:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 /* --- Inspirationskarte ---------------------------------------------------------------------- */
@@ -1196,4 +1213,585 @@ button:disabled {
 .links a svg {
   flex: 0 0 auto;
   color: var(--muted);
+}
+
+/* --- Animationen ---------------------------------------------------------------------------- */
+/* Reine Darstellung. Die Zeiten passen zu THROW_MS (Dice.tsx), LEAVE_MS (CardSheet.tsx) und den
+   Mustern in haptics.ts. Bei „Bewegung reduzieren“ steht alles sofort da (ganz unten). */
+
+/* Würfel: geworfen von unten, zweimal aufgeschlagen, liegen auf dem Ergebnis. */
+
+.dice-stage {
+  --s: 64px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: calc(var(--s) * 0.6);
+  height: calc(var(--s) * 1.8);
+  pointer-events: none;
+}
+
+.dice-stage.small {
+  --s: 46px;
+}
+
+.die {
+  position: relative;
+  width: var(--s);
+  height: var(--s);
+}
+
+.die-throw {
+  width: 100%;
+  height: 100%;
+  perspective: 700px;
+  animation: die-throw 850ms both;
+}
+
+.die-cube {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateZ(var(--z)) rotateX(var(--x)) rotateY(var(--y));
+  animation: die-tumble 850ms cubic-bezier(0.15, 0.55, 0.25, 1) both;
+}
+
+.die-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template: repeat(3, minmax(0, 1fr)) / repeat(3, minmax(0, 1fr));
+  padding: 15%;
+  border-radius: 14%;
+  background: radial-gradient(circle at 30% 25%, #3b352b, #1b1915 72%);
+  border: 1px solid rgba(217, 180, 95, 0.5);
+  box-shadow:
+    inset 0 0 calc(var(--s) * 0.14) rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 240, 200, 0.12);
+  transform: var(--face) translateZ(calc(var(--s) / 2));
+  backface-visibility: hidden;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s,
+    filter 0.3s;
+}
+
+.die-face .pip {
+  place-self: center;
+  width: 74%;
+  height: 74%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold) 55%, var(--gold-deep));
+  box-shadow: 0 0 3px rgba(233, 190, 92, 0.45);
+}
+
+.die-shadow {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: calc(var(--s) * -0.2);
+  height: calc(var(--s) * 0.24);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.75), transparent);
+  animation: die-shadow 850ms both;
+}
+
+.dice-flash {
+  position: absolute;
+  left: 50%;
+  top: calc(100% - var(--s) / 2);
+  width: calc(var(--s) * 3.4);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  translate: -50% -50%;
+  background: radial-gradient(closest-side, rgba(245, 220, 150, 0.4), transparent);
+  opacity: 0;
+}
+
+.dice-flash::after {
+  content: '';
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  opacity: 0;
+}
+
+/* Gelandet (oder übersprungen): Würfel liegen, Kanten und Augen leuchten golden auf. */
+.dice-stage.landed .die-throw,
+.dice-stage.landed .die-cube,
+.dice-stage.landed .die-shadow {
+  animation: none;
+}
+
+.dice-stage.landed .die-face {
+  border-color: var(--gold);
+  box-shadow:
+    inset 0 0 calc(var(--s) * 0.14) rgba(0, 0, 0, 0.85),
+    0 0 calc(var(--s) * 0.25) var(--gold-glow);
+}
+
+.dice-stage.landed .pip {
+  box-shadow: 0 0 6px var(--gold-glow);
+}
+
+.dice-stage.landed .dice-flash {
+  animation: dice-flash 600ms ease-out;
+}
+
+.dice-stage.landed .dice-flash::after {
+  animation: dice-ring 600ms ease-out;
+}
+
+@keyframes die-throw {
+  0% {
+    opacity: 0;
+    transform: translate3d(var(--dx), calc(var(--s) * 4.5), 0) scale(0.6);
+    animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1);
+  }
+  10% {
+    opacity: 1;
+  }
+  42% {
+    transform: translate3d(calc(var(--dx) * 0.35), calc(var(--s) * -1.1), 0) scale(1.12);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.5);
+  }
+  70% {
+    transform: translate3d(0, 0, 0) scale(1);
+    animation-timing-function: cubic-bezier(0.2, 0.6, 0.4, 1);
+  }
+  81% {
+    transform: translate3d(0, calc(var(--s) * -0.22), 0) scale(1.02);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.5);
+  }
+  92%,
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes die-tumble {
+  from {
+    transform: rotateZ(var(--z0)) rotateX(var(--x0)) rotateY(var(--y0));
+  }
+  to {
+    transform: rotateZ(var(--z)) rotateX(var(--x)) rotateY(var(--y));
+  }
+}
+
+@keyframes die-shadow {
+  0% {
+    opacity: 0;
+    transform: translateX(var(--dx)) scale(0.3);
+  }
+  42% {
+    opacity: 0.3;
+    transform: translateX(calc(var(--dx) * 0.35)) scale(0.55);
+  }
+  70%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes dice-flash {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes dice-ring {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.4);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+
+/* 2W6 im Vordergrund: Würfel über dem abgedunkelten Log, die Summe leuchtet. */
+
+.dice-roll {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding-bottom: 60px;
+  background: radial-gradient(ellipse at 50% 45%, rgba(26, 21, 13, 0.6), rgba(0, 0, 0, 0.9) 72%);
+  animation: fade-in 150ms ease-out both;
+  cursor: pointer;
+}
+
+.dice-roll.leaving {
+  animation: fade-out 200ms ease-in both;
+}
+
+.dice-roll-kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  color: var(--gold);
+}
+
+.dice-sum {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--mono);
+  opacity: 0;
+}
+
+.dice-sum.shown {
+  animation: pop 320ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.dice-sum strong {
+  font-size: 68px;
+  line-height: 1;
+  color: var(--gold-bright);
+  text-shadow:
+    0 0 20px var(--gold-glow),
+    0 0 2px #000000;
+}
+
+.dice-sum span {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/* Ergebnis einer Probe: Zielwert oben, Würfel, DM dazu, dann das Urteil. */
+
+.roll-result {
+  align-items: center;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 30%, #231e15, var(--raised) 70%);
+  border-color: #5a4b2c;
+  animation: dialog-in 200ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
+}
+
+.roll-result.success {
+  border-color: var(--gold);
+  box-shadow: 0 0 44px rgba(233, 190, 92, 0.22);
+}
+
+.roll-result.failure {
+  border-color: var(--accent);
+  box-shadow: 0 0 44px rgba(198, 47, 53, 0.2);
+}
+
+.roll-result.failure .die-face {
+  filter: saturate(0.4) brightness(0.75);
+}
+
+.roll-target {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 4px;
+  padding: 4px 22px 6px;
+  border: 1px solid rgba(217, 180, 95, 0.45);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.roll-target span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.roll-target strong {
+  font-family: var(--mono);
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.roll-result .dice-stage {
+  margin-top: 6px;
+}
+
+.roll-sum {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  font-family: var(--mono);
+}
+
+.roll-result.phase-0 .roll-sum {
+  visibility: hidden;
+}
+
+.roll-result:not(.phase-0) .roll-sum {
+  animation: pop 300ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.roll-total {
+  display: inline-block;
+  font-size: 46px;
+  line-height: 1.1;
+  color: var(--gold-bright);
+  text-shadow: 0 0 16px var(--gold-glow);
+}
+
+.roll-result.phase-2 .roll-total {
+  animation: pop 280ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.roll-dm {
+  padding: 2px 8px;
+  border: 1px solid rgba(217, 180, 95, 0.5);
+  border-radius: 999px;
+  font-size: 14px;
+  color: var(--gold);
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+}
+
+.roll-result.phase-0 .roll-dm,
+.roll-result.phase-1 .roll-dm {
+  opacity: 0;
+  transform: translateX(14px);
+}
+
+.roll-result .roll-verdict {
+  margin: 2px 0 0;
+  font-size: 38px;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  color: var(--gold-bright);
+  text-shadow: 0 0 24px var(--gold-glow);
+  opacity: 0;
+}
+
+.roll-result .roll-verdict.negative {
+  color: var(--accent-text);
+  text-shadow: 0 0 20px rgba(198, 47, 53, 0.55);
+}
+
+.roll-result.phase-3 .roll-verdict {
+  animation: verdict 380ms cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+
+.roll-result.phase-3.failure .roll-verdict {
+  animation:
+    verdict 380ms cubic-bezier(0.2, 1.3, 0.4, 1) both,
+    shake 320ms 260ms ease-in-out;
+}
+
+.roll-after {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  opacity: 0;
+}
+
+.roll-result.phase-3 .roll-after {
+  animation: fade-up 240ms 200ms ease-out both;
+}
+
+/* Inspirationskarte: kommt von unten und wird als Ganzes umgedreht, Themen-Tafeln eingeschlossen. */
+
+.overlay {
+  animation: backdrop-in 180ms ease-out both;
+}
+
+.overlay .sheet {
+  animation: sheet-in 300ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.overlay.leaving {
+  animation: fade-out 200ms ease-in both;
+}
+
+.overlay.leaving .sheet {
+  animation: sheet-out 200ms ease-in both;
+}
+
+.card-flip {
+  position: relative;
+  transform-style: preserve-3d;
+  animation: card-flip 620ms backwards;
+}
+
+.card-front {
+  backface-visibility: hidden;
+}
+
+.card-back {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #3a3a3a;
+  border-radius: 10px;
+  background: radial-gradient(circle at 50% 50%, rgba(198, 47, 53, 0.22), transparent 55%), repeating-linear-gradient(45deg, #181818 0 6px, #111111 6px 12px);
+  box-shadow:
+    inset 0 0 0 7px #0e0e0e,
+    inset 0 0 0 8px rgba(198, 47, 53, 0.65);
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+}
+
+/* Das Zeichen der App (public/icon.svg) auf dem Rücken. */
+.card-back-mark {
+  width: 112px;
+  height: 112px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='18' y='14' width='7' height='36' fill='%23C62F35'/%3E%3Crect x='30' y='20' width='18' height='24' rx='3' fill='none' stroke='%23ECEAE4' stroke-width='3.5'/%3E%3Ccircle cx='35.5' cy='26' r='2' fill='%23ECEAE4'/%3E%3Ccircle cx='42.5' cy='38' r='2' fill='%23ECEAE4'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+/* Antippen: Das Feld gibt kurz nach, der Haken springt auf. */
+.tile[aria-pressed='true'] {
+  animation: press 200ms ease-out;
+}
+
+.tile[aria-pressed='true']::after {
+  animation: pop 220ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+/* Der neueste Logeintrag rückt nach. */
+.entry.latest {
+  animation: fade-up 260ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+}
+
+/* Erst liegt der Rücken oben, solange die Karte hereingleitet; dann wird sie umgedreht. */
+@keyframes card-flip {
+  0%,
+  30% {
+    transform: perspective(1200px) rotateY(-180deg) scale(0.94);
+    animation-timing-function: cubic-bezier(0.45, 0, 0.3, 1);
+  }
+  80% {
+    transform: perspective(1200px) rotateY(6deg) scale(1.01);
+    animation-timing-function: ease-out;
+  }
+  100% {
+    transform: perspective(1200px) rotateY(0deg) scale(1);
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(70%);
+  }
+}
+
+@keyframes sheet-out {
+  to {
+    transform: translateY(60%);
+  }
+}
+
+@keyframes backdrop-in {
+  from {
+    background-color: transparent;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes press {
+  50% {
+    transform: scale(0.96);
+  }
+}
+
+@keyframes verdict {
+  from {
+    opacity: 0;
+    transform: scale(1.9);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes shake {
+  20%,
+  60% {
+    translate: -6px 0;
+  }
+  40%,
+  80% {
+    translate: 6px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
 }

@@ -1,20 +1,44 @@
+import { useEffect, useRef, useState } from 'react';
 import type { CardSectionView, CardView } from '../../controller';
 import { pairText, quoted } from '../format';
 import { useGame } from '../game-context';
+import { animated, haptic } from '../haptics';
 import { CheckIcon, CloseIcon, SenseIcon } from '../icons';
 
 type SlotView = CardSectionView['slots'][number];
 
-/** Die offene Inspirationskarte im Vordergrund. Aufbau nach der GMA2e-Karte, darunter die Themen-Tafeln. Ein Paar steht in einem Feld. */
+/** So lange gleitet die Karte hinaus, bevor sie verworfen oder übernommen ist; passt zu `sheet-out`. */
+const LEAVE_MS = 200;
+
+/**
+ * Die offene Inspirationskarte im Vordergrund. Aufbau nach der GMA2e-Karte, darunter die Themen-Tafeln. Ein Paar steht in einem Feld.
+ *
+ * Animation (reine Darstellung): Die Karte kommt von unten, wo „Karte ziehen“ sitzt, und wird dabei
+ * vom Rücken auf die Vorderseite gedreht, Themen-Tafeln eingeschlossen. „Neu ziehen“ dreht eine
+ * neue Karte um. Verwerfen und Übernehmen lassen die Karte erst hinausgleiten.
+ */
 export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: () => void }) {
   const game = useGame();
+  // Zählt die Ziehungen, damit jede neue Karte ihre Drehung von vorn spielt.
+  const [draw, setDraw] = useState(0);
+  const [leaving, setLeaving] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  /** Erst hinausgleiten, dann die Eingabe an den Controller; doppeltes Tippen zählt einmal. */
+  const leave = (then: () => void) => {
+    if (leaving) return;
+    if (!animated()) return then();
+    setLeaving(true);
+    timer.current = setTimeout(then, LEAVE_MS);
+  };
   const cardSections = card.sections.filter((s) => s.kind === 'card');
   const themes = card.sections.filter((s) => s.kind === 'theme');
   const section = (id: string) => cardSections.find((s) => s.id === id);
   const known = ['event', 'senses', 'scene', 'belongings', 'situation', 'names', 'traits', 'flavor'];
 
   return (
-    <div className="overlay">
+    <div className={leaving ? 'overlay leaving' : 'overlay'}>
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="card-title">
         <div className="sheet-head">
           <h2 id="card-title">Inspirationskarte</h2>
@@ -28,34 +52,57 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
           </div>
         )}
         <div className="sheet-body">
-          <article className="card" aria-label="Karte">
-            <Stack section={section('event')} />
-            <Senses section={section('senses')} />
-            <Stack section={section('scene')} />
-            <div className="card-columns">
-              <div className="card-stack">
-                <Banded section={section('belongings')} hideLabels />
-                <Banded section={section('situation')} />
-              </div>
-              <div className="card-stack">
-                <Banded section={section('names')} variant="name" hideLabels />
-                <Banded section={section('traits')} />
-              </div>
+          <div key={draw} className="card-flip">
+            <div className="card-front">
+              <article className="card" aria-label="Karte">
+                <Stack section={section('event')} />
+                <Senses section={section('senses')} />
+                <Stack section={section('scene')} />
+                <div className="card-columns">
+                  <div className="card-stack">
+                    <Banded section={section('belongings')} hideLabels />
+                    <Banded section={section('situation')} />
+                  </div>
+                  <div className="card-stack">
+                    <Banded section={section('names')} variant="name" hideLabels />
+                    <Banded section={section('traits')} />
+                  </div>
+                </div>
+                <Stack section={section('flavor')} variant="flavor" hideLabels />
+                {cardSections
+                  .filter((s) => !known.includes(s.id))
+                  .map((s) => (
+                    <Banded key={s.id} section={s} />
+                  ))}
+              </article>
+              {themes.length > 0 && <Themes themes={themes} />}
             </div>
-            <Stack section={section('flavor')} variant="flavor" hideLabels />
-            {cardSections
-              .filter((s) => !known.includes(s.id))
-              .map((s) => (
-                <Banded key={s.id} section={s} />
-              ))}
-          </article>
-          {themes.length > 0 && <Themes themes={themes} />}
+            <div className="card-back" aria-hidden="true">
+              <span className="card-back-mark" />
+            </div>
+          </div>
         </div>
         <div className="sheet-foot">
-          <button type="button" className="ghost square" aria-label="Karte verwerfen" onClick={() => game.discardCard()}>
+          <button
+            type="button"
+            className="ghost square"
+            aria-label="Karte verwerfen"
+            onClick={() => {
+              haptic('discard');
+              leave(() => game.discardCard());
+            }}
+          >
             <CloseIcon />
           </button>
-          <button type="button" className="ghost" onClick={() => game.redrawCard()}>
+          <button
+            type="button"
+            className="ghost"
+            onClick={() => {
+              haptic('draw');
+              game.redrawCard();
+              setDraw((d) => d + 1);
+            }}
+          >
             Neu ziehen
           </button>
           <span className="count" aria-live="polite">
@@ -67,8 +114,11 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
             disabled={!card.canConfirm}
             aria-label={`${card.pickedCount} ${card.pickedCount === 1 ? 'Eintrag' : 'Einträge'} in den Log übernehmen`}
             onClick={() => {
-              game.confirmCard();
-              onConfirmed();
+              haptic('confirm');
+              leave(() => {
+                game.confirmCard();
+                onConfirmed();
+              });
             }}
           >
             <CheckIcon />
@@ -88,7 +138,10 @@ function Tile({ slot, variant, hideLabel }: { slot: SlotView; variant?: 'sense' 
       className={variant ? `tile ${variant}` : 'tile'}
       aria-pressed={slot.picked}
       aria-label={hideLabel || variant === 'sense' ? `${slot.label}: ${pairText(slot.texts)}` : undefined}
-      onClick={() => game.togglePick(slot.id)}
+      onClick={() => {
+        haptic(slot.picked ? 'unpick' : 'pick');
+        game.togglePick(slot.id);
+      }}
     >
       {variant === 'sense' && <SenseIcon sense={sense} />}
       {!hideLabel && variant !== 'sense' && <span className="tile-label">{slot.label}</span>}
