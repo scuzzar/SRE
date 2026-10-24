@@ -9,6 +9,10 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > beschriebenen Weg: erst hier, abgestimmt, dann im Code. Seitdem freigegeben: `Entry.retired`
 > (24. Oktober 2026, siehe *Einträge austauschen*); ausgeblendete Felder und Bereiche (ebenso).
 >
+> **In Abstimmung** (24. Oktober 2026): Spalten und Paare. Ein Feld hat eine oder zwei Spalten
+> (`Column`); ein Feld mit zwei Spalten zieht ein Paar, das man immer ganz nimmt (siehe
+> *Karte ziehen*, *Paare aus Mythic*).
+>
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic: Verb, Adjektiv und Substantiv
 > des Zufallsereignisses, Hören und Riechen sowie die Themen-Reiter NSC, Welt, Schiff, Wesen und
 > Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
@@ -55,7 +59,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Probe | `Task` | Eine Probe, solange sie im Charakter-Screen vorbereitet wird |
 | Probenergebnis | `TaskResult` | Eine gewürfelte Probe |
 | Bereich der Karte, Themen-Reiter | `Section` | Zufallsereignis, Sinneseindrücke, …; Auftrag, NSC, … |
-| Feld der Karte | `Slot` | Verb, Hören, Name, Auslöser, … |
+| Feld der Karte | `Slot` | Aktion, Hören, Aussehen, Name, Auslöser, … |
+| Spalte | `Column` | Eine Liste von Einträgen in einem Feld; ein Feld hat eine oder zwei |
+| Paar | (zwei Einträge im `drawn` eines Feldes) | Was ein Feld mit zwei Spalten zieht: aus jeder Spalte einen Eintrag, z. B. „verraten · Technologie“ |
 | Eintrag | `Entry` | Ein möglicher Text eines Feldes, z. B. „Schulden begleichen.“ |
 
 ## Regeln, die das Bild nicht zeigt
@@ -97,21 +103,23 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Ja oder Nein (`/yes`: `roll` ≤ `chance`) folgt allein daraus, nie aus dem heutigen Stand der Stufe.
   Die Frage ist freiwillig. „Außergewöhnlich Ja/Nein“, Chaosfaktor und Zufallsereignisse nach Mythic
   kommen erst nach Version 1.
-- **Karte ziehen.** Ziehen legt eine `Card` an: für jedes Feld aller Bereiche einen seiner nicht
-  ausgeblendeten Einträge zufällig (`drawn`), die Themen-Reiter eingeschlossen, in der Reihenfolge der Bereiche und Felder.
-  Felder ohne solchen Eintrag übergeht es (siehe *Einträge austauschen*).
+- **Karte ziehen.** Ziehen legt eine `Card` an: für jedes Feld aller Bereiche aus jeder seiner
+  Spalten einen nicht ausgeblendeten Eintrag zufällig (`drawn`), die Themen-Reiter eingeschlossen,
+  in der Reihenfolge der Bereiche, Felder und Spalten. Ein Feld mit zwei Spalten zieht so ein
+  **Paar**. Ausgeblendete Felder übergeht es (siehe *Einträge austauschen*).
   Eine gestellte Frage geht auf die Karte über. Der Bereich *Namen* hat drei Felder mit je eigenen
   Einträgen (eher weiblich, eher männlich, neutral bzw. Genre-Name), wie auf der GMA-Karte; so sind
   die drei Namen immer verschieden.
-- **Die Karte ist offen, bis man sie bestätigt oder verwirft.** Antippen nimmt einen gezogenen
-  Eintrag in die Auswahl (`picked`) auf oder wieder heraus; ausgewählt sein kann nur, was gezogen
-  wurde. *Verwerfen* schließt die Karte ohne Logeintrag. *Neu ziehen* ersetzt sie durch eine neue;
+- **Die Karte ist offen, bis man sie bestätigt oder verwirft.** Antippen nimmt ein gezogenes Feld
+  in die Auswahl (`picked`) auf oder wieder heraus, mit allem, was es gezogen hat: Ein Paar nimmt
+  man immer ganz, nie einen Begriff allein. Ausgewählt sein kann nur ein Feld, das gezogen wurde. *Verwerfen* schließt die Karte ohne Logeintrag. *Neu ziehen* ersetzt sie durch eine neue;
   die Auswahl geht verloren, die Frage bleibt.
-- **Bestätigen** geht erst, wenn mindestens ein Eintrag ausgewählt ist; ohne Auswahl bleibt nur
-  Verwerfen. Es legt einen `CardPick` mit der Frage der Karte an und darin je ausgewähltem Eintrag
+- **Bestätigen** geht erst, wenn mindestens ein Feld ausgewählt ist; ohne Auswahl bleibt nur
+  Verwerfen. Es legt einen `CardPick` mit der Frage der Karte an und darin je ausgewähltem Feld
   ein `PickedItem`, in der Reihenfolge der Karte; danach ist die Karte zu. Das `PickedItem` verweist
-  auf den gezogenen Eintrag (`Entry`); das Feld (`/in`) folgt daraus, weil jeder Eintrag zu genau
-  einem Feld gehört.
+  auf die gezogenen Einträge des Feldes, beim Paar auf beide in der Reihenfolge der Spalten; das
+  Feld (`/in`) folgt daraus, weil jeder Eintrag zu genau einer Spalte und jede Spalte zu genau
+  einem Feld gehört. Ältere `PickedItem`s mit nur einem Eintrag bleiben gültig.
 - **Probe.** Es gilt: 2W6 + Fertigkeit + gewählte Attribute ≥ Zielwert.
   - Zuerst wählt man die Fertigkeit: eine Fertigkeitsstufe des Charakters (DM = Stufe) oder „ohne
     Fertigkeit“ (DM aus den Hausregeln, −3). Solange keine gewählt ist, gibt es keine Probe zu
@@ -150,16 +158,21 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   in der App. Pfeile führen nur aus Spielstand
   und Entwürfen in die Referenzdaten, nie zurück. Die Einträge sind eigene Inhalte oder stammen aus
   Mythic GME 2e (Lizenz CC BY-NC, ins Deutsche übersetzt), nie aus den Texten des GMA-Decks.
-- **Zwei Begriffe je Mythic-Tabelle.** Aus einer Elements-Tabelle zieht man wie bei Mythic zwei
-  Begriffe. Dafür hat der Bereich zwei Felder mit gleicher Beschriftung, jedes mit eigenen Einträgen
-  (wie bei *Namen*), sodass jeder Eintrag zu genau einem Feld gehört. Die beiden Begriffe können
-  gleich ausfallen. In den Daten steht jede Tabelle nur einmal (`src/data/mythic-tables.json`);
-  die zwei Felder entstehen beim Laden.
+- **Paare aus Mythic.** Mythic zieht aus seinen Bedeutungstabellen immer zwei Begriffe, die man
+  zusammen deutet. Jede Mythic-Tabelle ist deshalb ein Feld mit zwei Spalten:
+  - *Actions* und *Descriptions* haben selbst zwei Spalten. Im Zufallsereignis werden sie zu den
+    Feldern *Aktion* (Verb · Substantiv) und *Beschreibung* (Adverb · Adjektiv).
+  - Eine *Elements*-Tabelle hat eine Spalte, aus der Mythic zweimal zieht. Ihr Feld hat zwei
+    Spalten mit demselben Inhalt, jede mit eigenen Einträgen, sodass jeder Eintrag zu genau einer
+    Spalte gehört. Die beiden Begriffe können gleich ausfallen.
+
+  In den Daten steht jede Tabelle nur einmal (`src/data/mythic-tables.json`); die Spalten entstehen
+  beim Laden.
 - **Einträge austauschen.** Ein Eintrag, der nicht mehr gezogen werden soll, wird nicht gelöscht und
   seine Id nicht neu vergeben, sondern ausgeblendet (`retired`): Ziehen übergeht ihn, alte
   Logeinträge zeigen ihn weiter mit seinem Text. Ob ein Log auf ihn verweist, weiß nur das jeweilige
-  Gerät; deshalb wird jeder ausgetauschte Eintrag ausgeblendet. Sind alle Einträge eines Feldes
-  ausgeblendet, ist das Feld ausgeblendet: Ziehen übergeht es, die Karte zeigt es nicht, und ein
+  Gerät; deshalb wird jeder ausgetauschte Eintrag ausgeblendet. Hat eine Spalte nur ausgeblendete
+  Einträge, ist ihr Feld ausgeblendet: Ziehen übergeht es, die Karte zeigt es nicht, und ein
   Bereich ohne sichtbares Feld fehlt auf der Karte ganz. Der Log zeigt alte Einträge daraus weiter.
   Mindestens ein Feld hat einen Eintrag, der nicht ausgeblendet ist.
 
@@ -171,6 +184,7 @@ Diagramm mit diesen Ausnahmen:
 - **`Card → Campaign : in` und `Task → Campaign : in`** sind im Code kein Feld. Der Controller hält
   höchstens eine offene Karte und höchstens eine Probe neben der einen Kampagne; damit ist die
   Multiplizität erfüllt. Kommen mehrere Kampagnen, braucht es das Feld.
+- **Spalten und Paare** gibt es im Code noch nicht; die Änderung ist in Abstimmung.
 - **Beispielcharaktere.** Eine neue Kampagne beginnt mit Kira Vant und Jonas Reyl aus der README
   (`src/data/examples.json`). Das Modell sagt dazu nichts; die beiden lassen sich löschen, solange
   der Log nicht auf sie verweist.

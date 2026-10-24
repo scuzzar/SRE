@@ -116,6 +116,7 @@ hide <<value>> stereotype
   class Slot <<reference>> {
     label: string
   }
+  class Column <<reference>>
   class Entry <<reference>> {
     text: string
     retired: boolean
@@ -165,13 +166,14 @@ Task ..> TaskResult : on roll
 ' Karte
 Card "0..1" --> "1" Campaign : in
 Card "*" --> "1..*" Entry : drawn {ordered}
-Card "*" --> "*" Entry : picked
+Card "*" --> "*" Slot : picked
 Card ..> CardPick : on confirm
 PickedItem "*" --> "1" Slot : /in
-PickedItem "*" --> "1" Entry : picked
+PickedItem "*" --> "1..2" Entry : picked {ordered}
 Section "1" *-- "1..*" Slot : slots {ordered}
 Section --> SectionKind
-Slot "1" *-- "1..*" Entry : entries
+Slot "1" *-- "1..2" Column : columns {ordered}
+Column "1" *-- "1..*" Entry : entries
 
 
 legend right
