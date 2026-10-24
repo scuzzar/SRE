@@ -28,7 +28,7 @@ import {
   type TaskResult,
   type Upp,
 } from '../model';
-import { canConfirm, characteristicOptions, evaluateTask, hasSkill, startTask, type Card, type CharacteristicOption, type Task } from '../model/draft';
+import { canConfirm, characteristicOptions, drawnIn, evaluateTask, hasSkill, startTask, type Card, type CharacteristicOption, type Task } from '../model/draft';
 
 /**
  * Was die View zu sehen bekommt: den Spielstand aus dem Model, schon ausgewertet, und den Zustand des
@@ -88,7 +88,8 @@ export interface CardItem {
   readonly kind: 'card';
   readonly at: string;
   readonly question: string | undefined;
-  readonly items: readonly { readonly section: string; readonly slot: string; readonly text: string }[];
+  /** Je übernommenem Feld seine Texte: einer, beim Paar zwei. */
+  readonly items: readonly { readonly section: string; readonly slot: string; readonly texts: readonly string[] }[];
 }
 
 export interface TaskItem {
@@ -124,8 +125,8 @@ export interface CardSectionView {
   readonly slots: readonly {
     readonly id: string;
     readonly label: string;
-    readonly entry: string;
-    readonly text: string;
+    /** Was das Feld gezogen hat: einen Text, beim Paar zwei. */
+    readonly texts: readonly string[];
     readonly picked: boolean;
   }[];
 }
@@ -235,7 +236,7 @@ function logItem(campaign: Campaign, entry: LogEntry): LogItem {
         question: entry.question,
         items: entry.items.map((item) => {
           const slot = slotOf(item);
-          return { section: sectionOfSlot(slot.id).name, slot: slot.label, text: entryOf(item.picked).text };
+          return { section: sectionOfSlot(slot.id).name, slot: slot.label, texts: item.picked.map((e) => entryOf(e).text) };
         }),
       };
     case 'task':
@@ -244,7 +245,6 @@ function logItem(campaign: Campaign, entry: LogEntry): LogItem {
 }
 
 function cardView(card: Card): CardView {
-  const drawn = new Set(card.drawn);
   return {
     question: card.question,
     // Ausgeblendete Felder hat die Karte nicht gezogen; sie fehlen, ebenso Bereiche ohne gezogenes Feld.
@@ -254,8 +254,8 @@ function cardView(card: Card): CardView {
         name: section.name,
         kind: section.kind,
         slots: section.slots.flatMap((slot) => {
-          const entry = slot.entries.find((e) => drawn.has(e.id));
-          return entry ? [{ id: slot.id, label: slot.label, entry: entry.id, text: entry.text, picked: card.picked.includes(entry.id) }] : [];
+          const drawn = drawnIn(card, slot.id);
+          return drawn.length > 0 ? [{ id: slot.id, label: slot.label, texts: drawn.map((e) => entryOf(e).text), picked: card.picked.includes(slot.id) }] : [];
         }),
       }))
       .filter((section) => section.slots.length > 0),

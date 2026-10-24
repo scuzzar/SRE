@@ -24,6 +24,11 @@ export const characteristicLabel: Record<Characteristic, string> = {
   SOC: 'SOC',
 };
 
+/** Was ein Feld gezogen hat, in einer Zeile: ein Begriff, beim Paar beide (verraten · Technologie). */
+export function pairText(texts: readonly string[]): string {
+  return texts.join(' · ');
+}
+
 /** Ein DM mit Vorzeichen: +2, −1, ±0. */
 export function signed(n: number): string {
   if (n > 0) return `+${n}`;

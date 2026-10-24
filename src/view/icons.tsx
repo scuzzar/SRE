@@ -110,9 +110,12 @@ const senses: Record<string, { label: string; path: ReactNode }> = {
   },
 };
 
-/** Icon für einen Sinn; `sense` ist der letzte Teil der Feld-Id (hear, see, feel, smell). */
+/** Die Felder mit Mythics Tabellen (Sounds, Smells) zeigen dieselben Icons wie Hören und Riechen. */
+const senseAliases: Record<string, string> = { sounds: 'hear', smells: 'smell' };
+
+/** Icon für einen Sinn; `sense` ist der letzte Teil der Feld-Id (hear, see, feel, smell, sounds, smells). */
 export function SenseIcon({ sense }: { sense: string }) {
-  const icon = senses[sense];
+  const icon = senses[senseAliases[sense] ?? sense];
   if (!icon) return null;
   return (
     <svg {...base} width={18} height={18} strokeLinecap="round" strokeLinejoin="round" role="img" aria-label={icon.label} aria-hidden={undefined}>

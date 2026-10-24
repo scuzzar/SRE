@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ReferenceDataSchema, referenceData } from './index';
+import { ReferenceDataSchema, referenceData, type Column } from './index';
 
 describe('Referenzdaten', () => {
   it('sind gültig', () => {
@@ -32,38 +32,39 @@ describe('Referenzdaten', () => {
     ]);
   });
 
-  it('ziehen das Zufallsereignis aus den Mythic-Tabellen, die alten Einträge sind ausgeblendet', () => {
-    const event = referenceData.sections[0]!;
-    expect(event.slots.map((s) => [s.label, s.entries.filter((e) => !e.retired).length, s.entries.filter((e) => e.retired).length])).toEqual([
-      ['Verb', 100, 12],
-      ['Adjektiv', 100, 12],
-      ['Substantiv', 100, 12],
+  const slot = (id: string) => referenceData.sections.flatMap((s) => s.slots).find((s) => s.id === id)!;
+  const active = (column: Column) => column.entries.filter((e) => !e.retired);
+
+  it('machen aus jeder Mythic-Tabelle ein Feld mit zwei Spalten, Actions und Descriptions mit verschiedenen Spalten', () => {
+    const event = referenceData.sections[0]!.slots.filter((s) => s.columns.every((c) => active(c).length > 0));
+    expect(event.map((s) => [s.label, s.columns.map((c) => active(c)[0]!.text)])).toEqual([
+      ['Aktion', ['aufgeben', 'Vorteil']],
+      ['Beschreibung', ['abenteuerlustig', 'abnorm']],
     ]);
-    expect(event.slots.map((s) => s.entries.find((e) => !e.retired)!.text)).toEqual(['aufgeben', 'abnorm', 'Vorteil']);
+    const appearance = slot('npc.mythic.appearance');
+    expect(appearance.columns.map((c) => c.entries.length)).toEqual([100, 100]);
+    expect(appearance.columns[0]!.entries.map((e) => e.text)).toEqual(appearance.columns[1]!.entries.map((e) => e.text));
+    expect(appearance.columns.map((c) => c.entries[0]!.id)).toEqual(['npc.appearance.1.mythic.1', 'npc.appearance.2.mythic.1']);
   });
 
-  it('ziehen Hören und Riechen aus den Mythic-Tabellen, Sehen und Fühlen sind ausgeblendet', () => {
-    const senses = referenceData.sections[1]!;
-    expect(senses.slots.map((s) => [s.label, s.entries.filter((e) => !e.retired).length, s.entries.filter((e) => e.retired).length])).toEqual([
-      ['Hören', 100, 8],
-      ['Sehen', 0, 8],
-      ['Fühlen', 0, 8],
-      ['Riechen', 100, 8],
-    ]);
-    expect(senses.slots.map((s) => s.entries.find((e) => !e.retired)?.text)).toEqual(['Aktivität', undefined, undefined, 'beißend']);
+  it('blenden die Felder aus der Zeit vor den Paaren aus', () => {
+    for (const id of ['event.verb', 'event.adjective', 'event.noun', 'senses.hear', 'senses.see', 'senses.feel', 'senses.smell', 'npc.occupation']) {
+      expect(slot(id).columns.flatMap(active)).toEqual([]);
+    }
   });
 
-  it('haben nur in den Mythic-Feldern Einträge, die nicht ausgeblendet sind', () => {
-    const drawable = referenceData.sections.flatMap((s) => s.slots).filter((slot) => slot.entries.some((e) => !e.retired));
-    expect(drawable.every((slot) => slot.entries.filter((e) => !e.retired).every((e) => e.id.includes('.mythic.')))).toBe(true);
-    expect(drawable.slice(0, 5).map((slot) => slot.id)).toEqual(['event.verb', 'event.adjective', 'event.noun', 'senses.hear', 'senses.smell']);
+  it('ziehen nur Paare aus Mythic', () => {
+    const visible = referenceData.sections.flatMap((s) => s.slots).filter((s) => s.columns.every((c) => active(c).length > 0));
+    expect(visible.every((s) => s.columns.length === 2 && s.columns.flatMap(active).every((e) => e.id.includes('.mythic.')))).toBe(true);
+    expect(visible.slice(0, 4).map((s) => s.label)).toEqual(['Aktion', 'Beschreibung', 'Hören', 'Riechen']);
   });
 
-  it('ordnen die Mythic-Tabellen den Themen zu, je Tabelle zwei Felder mit gleicher Beschriftung', () => {
-    const tables = (id: string) => {
-      const slots = referenceData.sections.find((s) => s.id === id)!.slots.filter((slot) => slot.id.endsWith('.1') || slot.id.endsWith('.2'));
-      return slots.filter((_, i) => i % 2 === 0).map((slot) => slot.label);
-    };
+  it('ordnen die Mythic-Tabellen den Themen zu', () => {
+    const tables = (id: string) =>
+      referenceData.sections
+        .find((s) => s.id === id)!
+        .slots.filter((s) => s.columns.length === 2)
+        .map((s) => s.label);
     expect(tables('npc')).toEqual([
       'Aussehen',
       'Persönlichkeit',
@@ -80,20 +81,22 @@ describe('Referenzdaten', () => {
     expect(tables('ship')).toEqual(['Raumschiff']);
     expect(tables('creatures')).toEqual(['Spezies', 'Kreatur', 'Fähigkeit', 'Tierverhalten']);
     expect(tables('plot')).toEqual(['Wendung', 'Stimmung', 'Botschaft', 'Gegenstand', 'Fund']);
-    const npc = referenceData.sections.find((s) => s.id === 'npc')!.slots;
-    const [first, second] = [npc.find((s) => s.id === 'npc.appearance.1')!, npc.find((s) => s.id === 'npc.appearance.2')!];
-    expect([first.label, second.label]).toEqual(['Aussehen', 'Aussehen']);
-    expect(first.entries.map((e) => e.text)).toEqual(second.entries.map((e) => e.text));
-    expect([first.entries[0]!.id, second.entries[0]!.id]).toEqual(['npc.appearance.1.mythic.1', 'npc.appearance.2.mythic.1']);
-    expect(first.entries.slice(0, 3).map((e) => e.text)).toEqual(['abnorm', 'bewaffnet', 'aromatisch']);
+    expect(active(slot('npc.mythic.appearance').columns[0]!).slice(0, 3).map((e) => e.text)).toEqual(['abnorm', 'bewaffnet', 'aromatisch']);
   });
 
-  it('verlangen mindestens ein Feld mit einem Eintrag, der nicht ausgeblendet ist', () => {
+  it('verlangen mindestens ein sichtbares Feld', () => {
     const sections = referenceData.sections.map((section) => ({
       ...section,
-      slots: section.slots.map((slot) => ({ ...slot, entries: slot.entries.map((e) => ({ ...e, retired: true })) })),
+      slots: section.slots.map((s) => ({ ...s, columns: s.columns.map((c, i) => (i === 0 ? { entries: c.entries.map((e) => ({ ...e, retired: true })) } : c)) })),
     }));
-    expect(() => ReferenceDataSchema.parse({ ...referenceData, sections })).toThrow(/Kein Feld hat einen Eintrag/);
+    expect(() => ReferenceDataSchema.parse({ ...referenceData, sections })).toThrow(/Kein Feld ist sichtbar/);
+  });
+
+  it('erlauben höchstens zwei Spalten je Feld', () => {
+    const [first, ...rest] = referenceData.sections;
+    const [s0, ...others] = first!.slots;
+    const three = { ...s0!, columns: [...s0!.columns, ...s0!.columns.slice(0, 1)] };
+    expect(() => ReferenceDataSchema.parse({ ...referenceData, sections: [{ ...first!, slots: [three, ...others] }, ...rest] })).toThrow();
   });
 
   it('weisen doppelte Ids zurück', () => {

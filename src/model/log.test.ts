@@ -33,7 +33,8 @@ describe('Würfelwurf und Kartenauswahl', () => {
   });
 
   it('leitet das Feld eines übernommenen Eintrags ab', () => {
-    expect(slotOf({ picked: 'situation.stakes.1' }).label).toBe('Einsatz');
+    expect(slotOf({ picked: ['situation.stakes.1'] }).label).toBe('Einsatz');
+    expect(slotOf({ picked: ['event.action.1.mythic.1', 'event.action.2.mythic.1'] }).label).toBe('Aktion');
   });
 });
 

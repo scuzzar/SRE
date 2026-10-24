@@ -7,14 +7,11 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 
 > **Stand: Freigegeben für Version 1** (23. Oktober 2026). Änderungen nur noch auf dem oben
 > beschriebenen Weg: erst hier, abgestimmt, dann im Code. Seitdem freigegeben: `Entry.retired`
-> (24. Oktober 2026, siehe *Einträge austauschen*); ausgeblendete Felder und Bereiche (ebenso).
+> (24. Oktober 2026, siehe *Einträge austauschen*); ausgeblendete Felder und Bereiche (ebenso);
+> Spalten und Paare (24. Oktober 2026, siehe *Karte ziehen*, *Paare aus Mythic*).
 >
-> **In Abstimmung** (24. Oktober 2026): Spalten und Paare. Ein Feld hat eine oder zwei Spalten
-> (`Column`); ein Feld mit zwei Spalten zieht ein Paar, das man immer ganz nimmt (siehe
-> *Karte ziehen*, *Paare aus Mythic*).
->
-> **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic: Verb, Adjektiv und Substantiv
-> des Zufallsereignisses, Hören und Riechen sowie die Themen-Reiter NSC, Welt, Schiff, Wesen und
+> **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic, alle als Paar: Aktion und
+> Beschreibung des Zufallsereignisses, Hören und Riechen sowie die Themen-Reiter NSC, Welt, Schiff, Wesen und
 > Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
 > Einträge für sie gibt.
 
@@ -184,7 +181,6 @@ Diagramm mit diesen Ausnahmen:
 - **`Card → Campaign : in` und `Task → Campaign : in`** sind im Code kein Feld. Der Controller hält
   höchstens eine offene Karte und höchstens eine Probe neben der einen Kampagne; damit ist die
   Multiplizität erfüllt. Kommen mehrere Kampagnen, braucht es das Feld.
-- **Spalten und Paare** gibt es im Code noch nicht; die Änderung ist in Abstimmung.
 - **Beispielcharaktere.** Eine neue Kampagne beginnt mit Kira Vant und Jonas Reyl aus der README
   (`src/data/examples.json`). Das Modell sagt dazu nichts; die beiden lassen sich löschen, solange
   der Log nicht auf sie verweist.

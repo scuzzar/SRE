@@ -42,13 +42,14 @@ test('Inspirationskarte: auswählen, bestätigen, nur die Auswahl kommt in den L
   await expect(card.getByRole('button', { name: /in den Log übernehmen/ })).toBeDisabled();
   await expect(page.locator('.entry')).toHaveCount(0);
 
-  const verb = card.getByRole('group', { name: 'Zufallsereignis' }).getByRole('button').first();
-  const verbText = await verb.locator('.tile-text').innerText();
-  await verb.click();
-  await expect(verb).toHaveAttribute('aria-pressed', 'true');
+  const action = card.getByRole('group', { name: 'Zufallsereignis' }).getByRole('button').first();
+  const actionText = await action.locator('.tile-text').innerText();
+  expect(actionText).toContain(' · ');
+  await action.click();
+  await expect(action).toHaveAttribute('aria-pressed', 'true');
   await expect(card.getByRole('tab')).toHaveText(['NSC', 'Welt', 'Schiff', 'Wesen', 'Handlung']);
   await card.getByRole('tab', { name: 'NSC' }).click();
-  await card.getByRole('tabpanel').getByRole('button').nth(1).click();
+  await card.getByRole('tabpanel').getByRole('button').first().click();
   await expect(card.getByRole('tab', { name: 'NSC · 1' })).toBeVisible();
   await expect(card).toContainText('2 ausgewählt');
 
@@ -57,8 +58,8 @@ test('Inspirationskarte: auswählen, bestätigen, nur die Auswahl kommt in den L
   const entry = page.locator('.entry').last();
   await expect(entry).toContainText('Karte');
   await expect(entry).toContainText('„Was steckt hinter dem Notsignal?“');
-  await expect(entry.locator('dt')).toHaveText(['Zufallsereignis · Verb', 'NSC · Aussehen']);
-  await expect(entry.locator('dd').first()).toHaveText(verbText);
+  await expect(entry.locator('dt')).toHaveText(['Zufallsereignis · Aktion', 'NSC · Aussehen']);
+  await expect(entry.locator('dd').first()).toHaveText(actionText);
   await expect(page.getByPlaceholder(/Frage/)).toHaveValue('');
 });
 

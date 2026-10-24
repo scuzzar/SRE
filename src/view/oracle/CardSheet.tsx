@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import type { CardSectionView, CardView } from '../../controller';
-import { quoted } from '../format';
+import { pairText, quoted } from '../format';
 import { useGame } from '../game-context';
 import { CheckIcon, CloseIcon, SenseIcon } from '../icons';
 
 type SlotView = CardSectionView['slots'][number];
 
-/** Die offene Inspirationskarte im Vordergrund. Aufbau nach der GMA2e-Karte, darunter die Themen-Reiter. */
+/** Die offene Inspirationskarte im Vordergrund. Aufbau nach der GMA2e-Karte, darunter die Themen-Reiter. Ein Paar steht in einem Feld. */
 export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: () => void }) {
   const game = useGame();
   const cardSections = card.sections.filter((s) => s.kind === 'card');
@@ -31,7 +31,7 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
         )}
         <div className="sheet-body">
           <article className="card" aria-label="Karte">
-            <Row section={section('event')} />
+            <Stack section={section('event')} />
             <Senses section={section('senses')} />
             <Stack section={section('scene')} />
             <div className="card-columns">
@@ -89,24 +89,13 @@ function Tile({ slot, variant, hideLabel }: { slot: SlotView; variant?: 'sense' 
       type="button"
       className={variant ? `tile ${variant}` : 'tile'}
       aria-pressed={slot.picked}
-      aria-label={hideLabel || variant === 'sense' ? `${slot.label}: ${slot.text}` : undefined}
-      onClick={() => game.togglePick(slot.entry)}
+      aria-label={hideLabel || variant === 'sense' ? `${slot.label}: ${pairText(slot.texts)}` : undefined}
+      onClick={() => game.togglePick(slot.id)}
     >
       {variant === 'sense' && <SenseIcon sense={sense} />}
       {!hideLabel && variant !== 'sense' && <span className="tile-label">{slot.label}</span>}
-      <span className="tile-text">{slot.text}</span>
+      <span className="tile-text">{pairText(slot.texts)}</span>
     </button>
-  );
-}
-
-function Row({ section }: { section: CardSectionView | undefined }) {
-  if (!section) return null;
-  return (
-    <div className="card-row-3" role="group" aria-label={section.name}>
-      {section.slots.map((slot) => (
-        <Tile key={slot.id} slot={slot} />
-      ))}
-    </div>
   );
 }
 
@@ -174,29 +163,10 @@ function Themes({ themes }: { themes: readonly CardSectionView[] }) {
         })}
       </div>
       <div className="card-stack" role="tabpanel" id="theme-panel" aria-labelledby={`tab-${current.id}`}>
-        {byLabel(current.slots).map((group) =>
-          group.length > 1 ? (
-            <div key={group[0]!.id} className="card-row-2">
-              {group.map((slot) => (
-                <Tile key={slot.id} slot={slot} />
-              ))}
-            </div>
-          ) : (
-            <Tile key={group[0]!.id} slot={group[0]!} />
-          ),
-        )}
+        {current.slots.map((slot) => (
+          <Tile key={slot.id} slot={slot} />
+        ))}
       </div>
     </div>
   );
-}
-
-/** Felder mit gleicher Beschriftung nebeneinander, etwa die zwei Begriffe aus einer Mythic-Tabelle. */
-function byLabel(slots: readonly SlotView[]): SlotView[][] {
-  const groups: SlotView[][] = [];
-  for (const slot of slots) {
-    const last = groups.at(-1);
-    if (last && last[0]!.label === slot.label) last.push(slot);
-    else groups.push([slot]);
-  }
-  return groups;
 }

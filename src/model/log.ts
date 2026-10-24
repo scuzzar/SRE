@@ -39,8 +39,8 @@ export interface CardPick extends LogEntryBase {
 }
 
 export interface PickedItem {
-  /** Verweis auf den übernommenen Eintrag. */
-  readonly picked: string;
+  /** Verweis auf die übernommenen Einträge eines Feldes: einer, beim Paar beide in der Reihenfolge der Spalten. */
+  readonly picked: readonly string[];
 }
 
 export interface TaskResult extends LogEntryBase {
@@ -83,9 +83,9 @@ export function totalOf(roll: DiceRoll): number {
   return sum(roll.dice);
 }
 
-/** `/in`: Das Feld folgt aus dem Eintrag. */
+/** `/in`: Das Feld folgt aus den Einträgen; alle gehören zu Spalten desselben Feldes. */
 export function slotOf(item: PickedItem): Slot {
-  return slotOfEntry(item.picked);
+  return slotOfEntry(item.picked[0]!);
 }
 
 /** `/success`: Würfel + DM ≥ Zielwert, allein aus dem, was der Eintrag festhält. */

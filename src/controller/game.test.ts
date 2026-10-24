@@ -75,9 +75,10 @@ describe('Orakel-Screen', () => {
     expect(card.question).toBe('Was steckt hinter dem Notsignal?');
     expect(card.canConfirm).toBe(false);
     const smell = card.sections.find((s) => s.id === 'senses')!.slots.find((s) => s.label === 'Riechen')!;
-    const verb = card.sections[0]!.slots[0]!;
-    game.togglePick(smell.entry);
-    game.togglePick(verb.entry);
+    const action = card.sections[0]!.slots[0]!;
+    expect(action).toMatchObject({ label: 'Aktion', texts: ['aufgeben', 'Vorteil'] });
+    game.togglePick(smell.id);
+    game.togglePick(action.id);
     expect(game.snapshot().card).toMatchObject({ pickedCount: 2, canConfirm: true });
     expect(game.snapshot().log).toHaveLength(0);
     game.confirmCard();
@@ -88,8 +89,8 @@ describe('Orakel-Screen', () => {
         at: '2026-10-23T14:00:00.000Z',
         question: 'Was steckt hinter dem Notsignal?',
         items: [
-          { section: 'Zufallsereignis', slot: 'Verb', text: 'aufgeben' },
-          { section: 'Sinneseindrücke', slot: 'Riechen', text: 'beißend' },
+          { section: 'Zufallsereignis', slot: 'Aktion', texts: ['aufgeben', 'Vorteil'] },
+          { section: 'Sinneseindrücke', slot: 'Riechen', texts: ['beißend', 'beißend'] },
         ],
       },
     ]);
@@ -98,7 +99,7 @@ describe('Orakel-Screen', () => {
   it('verwirft eine Karte ohne Logeintrag; neu ziehen behält die Frage', async () => {
     const { game } = await started();
     game.drawCard('Und jetzt?');
-    game.togglePick(game.snapshot().card!.sections[0]!.slots[0]!.entry);
+    game.togglePick(game.snapshot().card!.sections[0]!.slots[0]!.id);
     game.redrawCard();
     expect(game.snapshot().card).toMatchObject({ question: 'Und jetzt?', pickedCount: 0 });
     game.discardCard();

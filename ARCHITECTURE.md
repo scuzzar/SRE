@@ -36,7 +36,7 @@ kann ein Entwurf gar nicht in den Speicher geraten.
 Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
 
 - **Er ändert das Model**, als Einziger, und speichert den Spielstand über das Repository:
-  `askOracle(question)`, `rollDice()`, `drawCard(question)`, `togglePick(entry)`, `confirmCard()`,
+  `askOracle(question)`, `rollDice()`, `drawCard(question)`, `togglePick(slot)`, `confirmCard()`,
   `discardCard()`, `setOdds(odds)`, `chooseCharacter(c)`, `chooseSkill(c, skill)`,
   `toggleCharacteristic(c)`, `rollTask()`. Offene Karte und Probe in Vorbereitung sind Teil des
   Models (`model/draft/`), werden aber nicht gespeichert.

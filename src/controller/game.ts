@@ -106,8 +106,8 @@ export class GameController {
     this.update({ card: drawCard(this.deps.random, question) });
   }
 
-  togglePick(entry: string): void {
-    this.update({ card: togglePick(this.openCard, entry) });
+  togglePick(slot: string): void {
+    this.update({ card: togglePick(this.openCard, slot) });
   }
 
   redrawCard(): void {

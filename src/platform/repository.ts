@@ -32,12 +32,29 @@ export class DexieCampaignRepository implements CampaignRepository {
   }
 
   async load(): Promise<Campaign | undefined> {
-    return (await this.db.campaigns.get(KEY))?.campaign;
+    const stored = (await this.db.campaigns.get(KEY))?.campaign;
+    return stored && upgraded(stored);
   }
 
   async save(campaign: Campaign): Promise<void> {
     await this.db.campaigns.put({ key: KEY, campaign });
   }
+}
+
+/**
+ * Bringt einen älteren Spielstand auf den heutigen Aufbau. Vor den Paaren hielt ein `PickedItem`
+ * genau einen Eintrag als Text (`picked: 'event.verb.3'`); heute ist es eine Liste.
+ */
+export function upgraded(campaign: Campaign): Campaign {
+  const log = campaign.log.map((entry) => {
+    if (entry.kind !== 'card') return entry;
+    const items = entry.items.map((item) => {
+      const picked: unknown = item.picked;
+      return typeof picked === 'string' ? { picked: [picked] } : item;
+    });
+    return { ...entry, items };
+  });
+  return { ...campaign, log };
 }
 
 /** Hält den Spielstand nur im Arbeitsspeicher; er geht beim Schließen verloren. */

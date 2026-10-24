@@ -1,9 +1,9 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
-import { appendLog, createCampaign } from '../model';
+import { appendLog, createCampaign, type LogEntry } from '../model';
 import { systemClock } from './clock';
 import { cryptoRandom } from './random';
-import { DexieCampaignRepository, MemoryCampaignRepository } from './repository';
+import { DexieCampaignRepository, MemoryCampaignRepository, upgraded } from './repository';
 
 describe('cryptoRandom', () => {
   it('bleibt im Bereich und trifft jeden Wert', () => {
@@ -38,5 +38,16 @@ describe.each([
     const campaign = appendLog(createCampaign(), { kind: 'dice', at: '2026-10-23T14:00:00.000Z', dice: [3, 4] });
     await repository.save(campaign);
     expect(await repository.load()).toEqual(campaign);
+  });
+});
+
+describe('Ältere Spielstände', () => {
+  it('lesen eine Kartenauswahl mit einem Eintrag als Text noch ein', async () => {
+    const old = { kind: 'card', at: '2026-10-23T14:00:00.000Z', items: [{ picked: 'event.verb.3' }] } as unknown as LogEntry;
+    const campaign = appendLog(createCampaign(), old);
+    expect(upgraded(campaign).log).toEqual([{ kind: 'card', at: '2026-10-23T14:00:00.000Z', items: [{ picked: ['event.verb.3'] }] }]);
+    const repository = await new DexieCampaignRepository(`test-${Math.random()}`).open();
+    await repository.save(campaign);
+    expect((await repository.load())?.log).toEqual(upgraded(campaign).log);
   });
 });

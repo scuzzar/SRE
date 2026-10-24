@@ -1,13 +1,19 @@
 import { z } from 'zod';
 import type { Section } from './schema';
 
-/** Eine Tabelle aus Mythic GME 2e (Elements), übersetzt. Mythic zieht zwei Begriffe daraus. */
+const words = z.array(z.string().min(1)).length(100);
+
+/**
+ * Eine Bedeutungstabelle aus Mythic GME 2e, übersetzt. Actions und Descriptions haben zwei Spalten
+ * (`entries`, `entries2`); aus einer Elements-Tabelle mit einer Spalte zieht Mythic zweimal.
+ */
 export const MythicTableSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
   /** Name der Tabelle in Mythic, zum Nachschlagen. */
   source: z.string().min(1),
-  entries: z.array(z.string().min(1)).length(100),
+  entries: words,
+  entries2: words.optional(),
 });
 
 /** Die Mythic-Tabellen eines Bereichs. Gibt es den Bereich noch nicht, braucht er einen Namen und wird ein Themen-Reiter. */
@@ -19,12 +25,11 @@ export const MythicSectionSchema = z.object({
 
 export const MythicTablesSchema = z.array(MythicSectionSchema);
 
-/** Wie oft aus jeder Tabelle gezogen wird: zwei Begriffe, wie bei Mythic. */
-export const DRAWS_PER_TABLE = 2;
-
 /**
- * Legt je Mythic-Tabelle zwei Felder mit gleicher Beschriftung an, jedes mit eigenen Einträgen
- * (`npc.appearance.1.mythic.5`), damit jeder Eintrag zu genau einem Feld gehört.
+ * Legt je Mythic-Tabelle ein Feld mit zwei Spalten an (`npc.mythic.appearance`), damit die Karte ein
+ * Paar zieht. Hat die Tabelle nur eine Spalte, bekommen beide Spalten ihren Inhalt, jede mit eigenen
+ * Einträgen (`npc.appearance.1.mythic.5`, `npc.appearance.2.mythic.5`). Diese Ids stehen im Log und
+ * bleiben, wie sie sind; die Ids der Felder speichert niemand.
  */
 export function withMythicTables(sections: readonly Section[], tables: z.infer<typeof MythicTablesSchema>): Section[] {
   const result = sections.map((s) => ({ ...s, slots: [...s.slots] }));
@@ -36,10 +41,11 @@ export function withMythicTables(sections: readonly Section[], tables: z.infer<t
       result.push(section);
     }
     for (const table of group.tables) {
-      for (let n = 1; n <= DRAWS_PER_TABLE; n++) {
-        const id = `${group.section}.${table.id}.${n}`;
-        section.slots.push({ id, label: table.label, entries: table.entries.map((text, i) => ({ id: `${id}.mythic.${i + 1}`, text, retired: false })) });
-      }
+      const prefix = `${group.section}.${table.id}`;
+      const columns = [table.entries, table.entries2 ?? table.entries].map((texts, c) => ({
+        entries: texts.map((text, i) => ({ id: `${prefix}.${c + 1}.mythic.${i + 1}`, text, retired: false })),
+      }));
+      section.slots.push({ id: `${group.section}.mythic.${table.id}`, label: table.label, columns });
     }
   }
   return result;
