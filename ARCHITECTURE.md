@@ -41,8 +41,9 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   `toggleCharacteristic(c)`, `rollTask()`. Offene Karte und Probe in Vorbereitung sind Teil des
   Models (`model/draft/`), werden aber nicht gespeichert.
 - **Er wählt, welche View zu sehen ist**: Orakel- oder Charakter-Screen (`showScreen(screen)`) und
-  das Ergebnis-Popup. Auch der Ablauf ist seine Sache, etwa „nach dem Schließen des Ergebnisses zurück
-  zum Orakel“ (`closeResult()`). Die Inspirationskarte steht im Vordergrund, solange es eine offene
+  das Ergebnis-Popup, und ob die Details des Charakters der Probe aufgeklappt sind (die Fertigkeit
+  antippen startet eine Probe, ohne aufzuklappen; erst der Name klappt auf). Auch der Ablauf ist
+  seine Sache, etwa „nach dem Schließen des Ergebnisses zurück zum Orakel“ (`closeResult()`). Die Inspirationskarte steht im Vordergrund, solange es eine offene
   `Card` gibt; das folgt aus dem Model und braucht keinen eigenen Zustand.
 
 Die View sieht das Model nur lesend (`Readonly`-Typen); ein Schreibzugriff aus der View ist ein
@@ -51,7 +52,7 @@ Compilerfehler.
 **3. Nach oben wird gemeldet, nicht gerufen.** Der Controller kennt keine Komponenten. Er wählt die
 View, indem er seinen Zustand ändert, nicht indem er Komponenten aufruft. Er bietet
 `subscribe(listener)` und `snapshot()` an: den Spielstand aus dem Model und seinen eigenen Zustand
-(welcher Screen, ob das Popup offen ist). Die View hängt sich mit `useSyncExternalStore` daran
+(welcher Screen, ob das Popup offen ist, ob die Details des Charakters der Probe aufgeklappt sind). Die View hängt sich mit `useSyncExternalStore` daran
 und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von unten nach oben.
 
 **4. Das Model ist frei von Seiteneffekten, die View frei von Regeln und Ablauf.**

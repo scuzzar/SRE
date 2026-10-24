@@ -148,10 +148,16 @@ describe('Charakter-Screen: Probe würfeln → Popup → zurück zum Orakel', ()
     expect(game.snapshot().task).toBeUndefined();
   });
 
-  it('startet die Probe direkt mit der Fertigkeit, auch ohne den Charakter vorher anzutippen', async () => {
+  it('startet die Probe direkt mit der Fertigkeit, ohne die Details aufzuklappen', async () => {
     const { game } = await started();
     game.chooseSkill('c1', 'pilot');
     expect(game.snapshot().task).toMatchObject({ character: 'Kira Vant', ready: true, dm: 2 });
+    expect(game.snapshot().characters[0]).toMatchObject({ chosen: true, open: false });
+    game.chooseCharacter('c1');
+    expect(game.snapshot().characters[0]).toMatchObject({ chosen: true, open: true });
+    expect(game.snapshot().task?.ready).toBe(true);
+    game.chooseSkill('c1', 'navigation');
+    expect(game.snapshot().characters[0]).toMatchObject({ open: true });
     game.chooseSkill('c2', null);
     expect(game.snapshot().characters.map((c) => [c.name, c.chosen])).toEqual([
       ['Kira Vant', false],
