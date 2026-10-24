@@ -94,15 +94,26 @@ function Tile({ slot, variant, hideLabel }: { slot: SlotView; variant?: 'sense' 
     >
       {variant === 'sense' && <SenseIcon sense={sense} />}
       {!hideLabel && variant !== 'sense' && <span className="tile-label">{slot.label}</span>}
-      <span className="tile-text">{pairText(slot.texts)}</span>
+      <span className="tile-text">
+        {slot.texts.map((text, i) => (
+          <span key={i} className="tile-line">
+            {text}
+          </span>
+        ))}
+      </span>
     </button>
   );
+}
+
+/** Felder mit Paaren stehen zu zweit nebeneinander, jeder Begriff in einer eigenen Zeile; das spart Platz. */
+function layout(slots: readonly SlotView[]): string {
+  return slots.every((slot) => slot.texts.length > 1) ? 'card-grid' : 'card-stack';
 }
 
 function Senses({ section }: { section: CardSectionView | undefined }) {
   if (!section) return null;
   return (
-    <div className="card-stack" role="group" aria-label={section.name}>
+    <div className={layout(section.slots)} role="group" aria-label={section.name}>
       {section.slots.map((slot) => (
         <Tile key={slot.id} slot={slot} variant="sense" />
       ))}
@@ -113,7 +124,7 @@ function Senses({ section }: { section: CardSectionView | undefined }) {
 function Stack({ section, variant, hideLabels }: { section: CardSectionView | undefined; variant?: 'flavor'; hideLabels?: boolean }) {
   if (!section) return null;
   return (
-    <div className="card-stack" role="group" aria-label={section.name}>
+    <div className={layout(section.slots)} role="group" aria-label={section.name}>
       {section.slots.map((slot) => (
         <Tile key={slot.id} slot={slot} {...(variant ? { variant } : {})} hideLabel={hideLabels ?? false} />
       ))}
@@ -162,7 +173,7 @@ function Themes({ themes }: { themes: readonly CardSectionView[] }) {
           );
         })}
       </div>
-      <div className="card-stack" role="tabpanel" id="theme-panel" aria-labelledby={`tab-${current.id}`}>
+      <div className={layout(current.slots)} role="tabpanel" id="theme-panel" aria-labelledby={`tab-${current.id}`}>
         {current.slots.map((slot) => (
           <Tile key={slot.id} slot={slot} />
         ))}

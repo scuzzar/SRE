@@ -43,8 +43,9 @@ test('Inspirationskarte: auswählen, bestätigen, nur die Auswahl kommt in den L
   await expect(page.locator('.entry')).toHaveCount(0);
 
   const action = card.getByRole('group', { name: 'Zufallsereignis' }).getByRole('button').first();
-  const actionText = await action.locator('.tile-text').innerText();
-  expect(actionText).toContain(' · ');
+  // Ein Paar steht in einem Feld, jeder Begriff in einer eigenen Zeile; im Log in einer Zeile.
+  const actionWords = await action.locator('.tile-line').allInnerTexts();
+  expect(actionWords).toHaveLength(2);
   await action.click();
   await expect(action).toHaveAttribute('aria-pressed', 'true');
   await expect(card.getByRole('tab')).toHaveText(['NSC', 'Welt', 'Schiff', 'Wesen', 'Handlung']);
@@ -59,7 +60,7 @@ test('Inspirationskarte: auswählen, bestätigen, nur die Auswahl kommt in den L
   await expect(entry).toContainText('Karte');
   await expect(entry).toContainText('„Was steckt hinter dem Notsignal?“');
   await expect(entry.locator('dt')).toHaveText(['Zufallsereignis · Aktion', 'NSC · Aussehen']);
-  await expect(entry.locator('dd').first()).toHaveText(actionText);
+  await expect(entry.locator('dd').first()).toHaveText(actionWords.join(' · '));
   await expect(page.getByPlaceholder(/Frage/)).toHaveValue('');
 });
 
