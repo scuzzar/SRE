@@ -107,6 +107,7 @@ hide <<value>> stereotype
   }
   class Skill <<reference>> {
     name: string
+    short: string
   }
   class Section <<reference>> {
     name: string

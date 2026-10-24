@@ -35,6 +35,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | UPP | `Upp` | Die sechs Attributwerte |
 | Attribut | `Characteristic` | STR, DEX, END, INT, EDU, SOC |
 | Fertigkeit | `Skill` | Eine Fertigkeit aus der Liste, z. B. Pilot |
+| Kürzel | `Skill.short` | Drei Zeichen für eine Fertigkeit, z. B. Pil für Pilot |
 | Fertigkeitsstufe | `SkillLevel` | Die Stufe, die ein Charakter in einer Fertigkeit hat, z. B. Pilot-2 |
 | Stufe (Hoch/Mittel/Gering) | `Odds` | Die eine Auswahl für Orakel und Proben |
 | Hausregeln | `HouseRules` | Die Zahlen, nach denen Proben gerechnet werden |
@@ -127,7 +128,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 - **Charakter.** Charaktere legt man in der App an und bearbeitet sie; eine Charaktererschaffung
   nach Regeln gibt es in Version 1 nicht. Die sechs UPP-Werte liegen zwischen 0 und 15. Eine
   Fertigkeit kommt bei einem Charakter höchstens einmal vor, ihre Stufe ist 0 oder mehr; Fertigkeiten
-  kommen nur aus der festen Liste der Referenzdaten. Ausrüstung, Herkunft (`background`, z. B.
+  kommen nur aus der festen Liste der Referenzdaten. Jede Fertigkeit hat ein Kürzel aus genau drei Zeichen,
+  das in der Liste nur einmal vorkommt (Pil für Pilot, JoT für Jack-of-all-Trades). Es dient der
+  knappen Anzeige; der Log zeigt den vollen Namen. Ausrüstung, Herkunft (`background`, z. B.
   „Ex-Scout · 4 Terms · 34 Jahre“) und Notiz sind in Version 1 freier Text, Credits eine
   ganze Zahl.
 - **Löschen und Ausblenden.** Ein Charakter oder eine Fertigkeitsstufe, auf die kein Logeintrag

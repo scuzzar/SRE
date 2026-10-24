@@ -17,6 +17,8 @@ export const HouseRulesSchema = z.object({
 export const SkillSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
+  /** Drei Zeichen für die knappe Anzeige, z. B. Pil. */
+  short: z.string().length(3),
 });
 
 export const EntrySchema = z.object({
@@ -82,6 +84,7 @@ export const ReferenceDataSchema = z
     const slots = data.sections.flatMap((s) => s.slots);
     uniqueIds(data.odds.map((o) => o.id), 'Stufe', ctx);
     uniqueIds(data.skills.map((s) => s.id), 'Fertigkeit', ctx);
+    uniqueIds(data.skills.map((s) => s.short), 'Kürzel', ctx);
     uniqueIds(data.sections.map((s) => s.id), 'Bereich', ctx);
     uniqueIds(slots.map((s) => s.id), 'Feld', ctx);
     uniqueIds(slots.flatMap((s) => s.entries.map((e) => e.id)), 'Eintrag', ctx);

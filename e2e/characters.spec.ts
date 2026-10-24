@@ -13,7 +13,9 @@ test('Probe: Fertigkeit, dann Attribute, Schwierigkeit unten, Ergebnis als Popup
   const kira = card(page, 'Kira Vant');
   await expect(dock(page).getByRole('button', { name: 'Probe würfeln' })).toBeDisabled();
 
+  await expect(kira.getByRole('button', { name: 'Pilot-2' })).toHaveText('Pil-2');
   await kira.getByRole('button', { name: /Kira Vant/ }).click();
+  await expect(kira.getByRole('button', { name: 'Pilot-2' })).toHaveText('Pilot-2');
   await expect(kira.getByRole('button', { name: /^DEX A/ })).toBeDisabled();
   await kira.getByRole('button', { name: 'Pilot-2' }).click();
 

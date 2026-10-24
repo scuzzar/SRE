@@ -2,7 +2,11 @@ import type { CharacterView } from '../../controller';
 import { characteristicLabel, credits, hex, signed } from '../format';
 import { useGame } from '../game-context';
 
-/** Eine Charakterkarte. Eine Fertigkeit antippen startet die Probe, dann Attribute im UPP dazuwählen; der Kopf klappt Ausrüstung und Notiz auf. */
+/**
+ * Eine Charakterkarte: oben das UPP, darunter die Fertigkeiten mit Kürzel. Eine Fertigkeit antippen
+ * startet die Probe, dann Attribute im UPP dazuwählen. Der gewählte Charakter zeigt die vollen Namen,
+ * Ausrüstung und Notiz.
+ */
 export function CharacterCard({ character }: { character: CharacterView }) {
   const game = useGame();
   const skillChosen = character.chosen && (character.unskilled.chosen || character.skills.some((s) => s.chosen));
@@ -13,17 +17,6 @@ export function CharacterCard({ character }: { character: CharacterView }) {
         <span className="pc-name">{character.name}</span>
         {character.background && <span className="pc-sub">{character.background}</span>}
       </button>
-
-      <div className="chips" role="group" aria-label="Fertigkeit für die Probe">
-        {character.skills.map((skill) => (
-          <button key={skill.of} type="button" aria-pressed={skill.chosen} onClick={() => game.chooseSkill(character.id, skill.of)}>
-            {skill.name}-{skill.level}
-          </button>
-        ))}
-        <button type="button" className="unskilled" aria-pressed={character.unskilled.chosen} onClick={() => game.chooseSkill(character.id, null)}>
-          Ohne ({signed(character.unskilled.dm)})
-        </button>
-      </div>
 
       <div className="upp" role="group" aria-label="Attribute, nach der Fertigkeit dazuwählbar">
         {character.characteristics.map((c) => {
@@ -53,6 +46,23 @@ export function CharacterCard({ character }: { character: CharacterView }) {
             </button>
           );
         })}
+      </div>
+
+      <div className="chips" role="group" aria-label="Fertigkeit für die Probe">
+        {character.skills.map((skill) => (
+          <button
+            key={skill.of}
+            type="button"
+            aria-label={`${skill.name}-${skill.level}`}
+            aria-pressed={skill.chosen}
+            onClick={() => game.chooseSkill(character.id, skill.of)}
+          >
+            {character.chosen ? skill.name : skill.short}-{skill.level}
+          </button>
+        ))}
+        <button type="button" className="unskilled" aria-pressed={character.unskilled.chosen} onClick={() => game.chooseSkill(character.id, null)}>
+          Ohne ({signed(character.unskilled.dm)})
+        </button>
       </div>
 
       {character.chosen && (

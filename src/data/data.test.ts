@@ -31,8 +31,15 @@ describe('Referenzdaten', () => {
   });
 
   it('weisen doppelte Ids zurück', () => {
-    const broken = { ...referenceData, skills: [...referenceData.skills, { id: 'pilot', name: 'Noch ein Pilot' }] };
+    const broken = { ...referenceData, skills: [...referenceData.skills, { id: 'pilot', name: 'Noch ein Pilot', short: 'NeP' }] };
     expect(() => ReferenceDataSchema.parse(broken)).toThrow(/pilot kommt doppelt vor/);
+  });
+
+  it('verlangen für jede Fertigkeit ein eigenes Kürzel aus drei Zeichen', () => {
+    const twice = { ...referenceData, skills: [...referenceData.skills, { id: 'piloting', name: 'Piloting', short: 'Pil' }] };
+    expect(() => ReferenceDataSchema.parse(twice)).toThrow(/Kürzel Pil kommt doppelt vor/);
+    const long = { ...referenceData, skills: [...referenceData.skills, { id: 'piloting', name: 'Piloting', short: 'Pilo' }] };
+    expect(() => ReferenceDataSchema.parse(long)).toThrow();
   });
 
   it('weisen Beispielcharaktere mit unbekannter Fertigkeit zurück', () => {
