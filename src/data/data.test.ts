@@ -30,6 +30,24 @@ describe('Referenzdaten', () => {
     ]);
   });
 
+  it('ziehen das Zufallsereignis aus den Mythic-Tabellen, die alten Einträge sind ausgeblendet', () => {
+    const event = referenceData.sections[0]!;
+    expect(event.slots.map((s) => [s.label, s.entries.filter((e) => !e.retired).length, s.entries.filter((e) => e.retired).length])).toEqual([
+      ['Verb', 100, 12],
+      ['Adjektiv', 100, 12],
+      ['Substantiv', 100, 12],
+    ]);
+    expect(event.slots.map((s) => s.entries.find((e) => !e.retired)!.text)).toEqual(['aufgeben', 'abnorm', 'Vorteil']);
+  });
+
+  it('verlangen in jedem Feld einen Eintrag, der nicht ausgeblendet ist', () => {
+    const [first, ...rest] = referenceData.sections;
+    const [slot, ...others] = first!.slots;
+    const retired = { ...slot!, entries: slot!.entries.map((e) => ({ ...e, retired: true })) };
+    const broken = { ...referenceData, sections: [{ ...first!, slots: [retired, ...others] }, ...rest] };
+    expect(() => ReferenceDataSchema.parse(broken)).toThrow(/event.verb hat keinen Eintrag/);
+  });
+
   it('weisen doppelte Ids zurück', () => {
     const broken = { ...referenceData, skills: [...referenceData.skills, { id: 'pilot', name: 'Noch ein Pilot', short: 'NeP' }] };
     expect(() => ReferenceDataSchema.parse(broken)).toThrow(/pilot kommt doppelt vor/);

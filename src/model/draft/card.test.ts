@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { ref, slotOf } from '..';
+import { entryOf, ref, slotOf } from '..';
 import { fixedClock, fixedRandom } from '../testing';
-import { canConfirm, confirmCard, drawCard, redrawCard, togglePick } from './card';
+import { canConfirm, confirmCard, drawableEntries, drawCard, redrawCard, togglePick } from './card';
 
 const slots = ref.sections.flatMap((s) => s.slots);
 
 describe('Karte ziehen', () => {
   it('zieht für jedes Feld aller Bereiche einen Eintrag, Themen-Reiter eingeschlossen, in Kartenreihenfolge', () => {
     const card = drawCard(fixedRandom());
-    expect(card.drawn).toEqual(slots.map((slot) => slot.entries[0]!.id));
+    expect(card.drawn).toEqual(slots.map((slot) => drawableEntries(slot)[0]!.id));
     expect(card.picked).toEqual([]);
   });
 
@@ -26,6 +26,20 @@ describe('Karte ziehen', () => {
       expect(new Set(names).size).toBe(3);
     }
   });
+
+  it('zieht nie einen ausgeblendeten Eintrag, auch nicht mit dem größten Wurf', () => {
+    const highest = { int: (_min: number, max: number) => max };
+    const retired = new Set(slots.flatMap((s) => s.entries.filter((e) => e.retired).map((e) => e.id)));
+    expect(retired.size).toBeGreaterThan(0);
+    for (const random of [fixedRandom(), highest]) {
+      expect(drawCard(random).drawn.filter((e) => retired.has(e))).toEqual([]);
+    }
+  });
+
+  it('behält ausgetauschte Einträge für alte Logeinträge', () => {
+    expect(entryOf('event.verb.3')).toMatchObject({ text: 'suchen', retired: true });
+    expect(slotOf({ picked: 'event.verb.3' }).label).toBe('Verb');
+  });
 });
 
 describe('Auswahl auf der Karte', () => {
@@ -39,7 +53,7 @@ describe('Auswahl auf der Karte', () => {
   });
 
   it('lässt nur gezogene Einträge auswählen', () => {
-    const notDrawn = slots[0]!.entries[1]!.id;
+    const notDrawn = drawableEntries(slots[0]!)[1]!.id;
     expect(() => togglePick(card, notDrawn)).toThrow(/nur, was gezogen wurde/);
   });
 
@@ -63,6 +77,6 @@ describe('Auswahl auf der Karte', () => {
     const again = redrawCard(picked, fixedRandom(1));
     expect(again.picked).toEqual([]);
     expect(again.question).toBe('Und jetzt?');
-    expect(again.drawn[0]).toBe(slots[0]!.entries[1]!.id);
+    expect(again.drawn[0]).toBe(drawableEntries(slots[0]!)[1]!.id);
   });
 });

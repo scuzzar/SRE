@@ -118,6 +118,7 @@ hide <<value>> stereotype
   }
   class Entry <<reference>> {
     text: string
+    retired: boolean
   }
   enum SectionKind <<value>> {
     card

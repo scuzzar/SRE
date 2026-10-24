@@ -43,8 +43,8 @@ export function AboutScreen({ persistent }: { persistent: boolean }) {
         <div>
           <h2>Game Master&apos;s Apprentice</h2>
           <p>
-            Der Aufbau der Inspirationskarte folgt dem GameMaster&apos;s Apprentice, Second Edition, von Larcenous Designs, LLC. Die Einträge auf
-            der Karte sind eigene Inhalte mit Traveller-Bezug, nicht die Texte des GMA-Decks. Vorbild für die Bedienung ist die Web-Umsetzung von{' '}
+            Der Aufbau der Inspirationskarte folgt dem GameMaster&apos;s Apprentice, Second Edition, von Larcenous Designs, LLC. Die übrigen Einträge
+            auf der Karte sind eigene Inhalte mit Traveller-Bezug, nicht die Texte des GMA-Decks. Vorbild für die Bedienung ist die Web-Umsetzung von{' '}
             <a href="https://jamesturneronline.net/game-masters-apprentice/" target="_blank" rel="noreferrer">
               James Turner
             </a>
@@ -54,11 +54,16 @@ export function AboutScreen({ persistent }: { persistent: boolean }) {
         <div>
           <h2>Mythic</h2>
           <p>
-            Das Orakel ist angelehnt an den Mythic Game Master Emulator von Tana Pigeon,{' '}
-            <a href="https://wordmillgames.com/license.html" target="_blank" rel="noreferrer">
+            Das Orakel ist angelehnt an den Mythic Game Master Emulator, Second Edition, von Tana Pigeon,{' '}
+            <a href="https://wordmillgames.com" target="_blank" rel="noreferrer">
               Word Mill Games
             </a>
-            . In Version 1 übernimmt die App noch keine Mythic-Texte oder -Tabellen.
+            . Verb, Adjektiv und Substantiv des Zufallsereignisses stammen aus seinen Bedeutungstabellen (Actions 1 und 2, Descriptions 2), ins
+            Deutsche übersetzt und in der Schreibweise angepasst. Diese Inhalte stehen unter der Lizenz{' '}
+            <a href="https://wordmillgames.com/license.html" target="_blank" rel="noreferrer">
+              CC BY-NC
+            </a>
+            . Kein offizielles Produkt von Word Mill Games.
           </p>
         </div>
         <p className="muted">Ein inoffizielles Fan-Projekt, kostenlos angeboten.</p>
