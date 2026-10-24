@@ -74,9 +74,9 @@ describe('Orakel-Screen', () => {
     const card = game.snapshot().card!;
     expect(card.question).toBe('Was steckt hinter dem Notsignal?');
     expect(card.canConfirm).toBe(false);
-    const stakes = card.sections.find((s) => s.id === 'situation')!.slots.find((s) => s.label === 'Einsatz')!;
+    const smell = card.sections.find((s) => s.id === 'senses')!.slots.find((s) => s.label === 'Riechen')!;
     const verb = card.sections[0]!.slots[0]!;
-    game.togglePick(stakes.entry);
+    game.togglePick(smell.entry);
     game.togglePick(verb.entry);
     expect(game.snapshot().card).toMatchObject({ pickedCount: 2, canConfirm: true });
     expect(game.snapshot().log).toHaveLength(0);
@@ -89,7 +89,7 @@ describe('Orakel-Screen', () => {
         question: 'Was steckt hinter dem Notsignal?',
         items: [
           { section: 'Zufallsereignis', slot: 'Verb', text: 'aufgeben' },
-          { section: 'Situation', slot: 'Einsatz', text: 'Schulden begleichen.' },
+          { section: 'Sinneseindrücke', slot: 'Riechen', text: 'beißend' },
         ],
       },
     ]);

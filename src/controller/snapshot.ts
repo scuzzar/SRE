@@ -247,15 +247,18 @@ function cardView(card: Card): CardView {
   const drawn = new Set(card.drawn);
   return {
     question: card.question,
-    sections: ref.sections.map((section) => ({
-      id: section.id,
-      name: section.name,
-      kind: section.kind,
-      slots: section.slots.map((slot) => {
-        const entry = slot.entries.find((e) => drawn.has(e.id))!;
-        return { id: slot.id, label: slot.label, entry: entry.id, text: entry.text, picked: card.picked.includes(entry.id) };
-      }),
-    })),
+    // Ausgeblendete Felder hat die Karte nicht gezogen; sie fehlen, ebenso Bereiche ohne gezogenes Feld.
+    sections: ref.sections
+      .map((section) => ({
+        id: section.id,
+        name: section.name,
+        kind: section.kind,
+        slots: section.slots.flatMap((slot) => {
+          const entry = slot.entries.find((e) => drawn.has(e.id));
+          return entry ? [{ id: slot.id, label: slot.label, entry: entry.id, text: entry.text, picked: card.picked.includes(entry.id) }] : [];
+        }),
+      }))
+      .filter((section) => section.slots.length > 0),
     pickedCount: card.picked.length,
     canConfirm: canConfirm(card),
   };

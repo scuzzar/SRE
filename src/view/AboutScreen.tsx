@@ -43,8 +43,8 @@ export function AboutScreen({ persistent }: { persistent: boolean }) {
         <div>
           <h2>Game Master&apos;s Apprentice</h2>
           <p>
-            Der Aufbau der Inspirationskarte folgt dem GameMaster&apos;s Apprentice, Second Edition, von Larcenous Designs, LLC. Die übrigen Einträge
-            auf der Karte sind eigene Inhalte mit Traveller-Bezug, nicht die Texte des GMA-Decks. Vorbild für die Bedienung ist die Web-Umsetzung von{' '}
+            Der Aufbau der Inspirationskarte folgt dem GameMaster&apos;s Apprentice, Second Edition, von Larcenous Designs, LLC. Die Einträge stammen
+            nicht aus dem GMA-Deck; ältere Einträge im Log sind eigene Inhalte mit Traveller-Bezug. Vorbild für die Bedienung ist die Web-Umsetzung von{' '}
             <a href="https://jamesturneronline.net/game-masters-apprentice/" target="_blank" rel="noreferrer">
               James Turner
             </a>
@@ -58,8 +58,8 @@ export function AboutScreen({ persistent }: { persistent: boolean }) {
             <a href="https://wordmillgames.com" target="_blank" rel="noreferrer">
               Word Mill Games
             </a>
-            . Verb, Adjektiv und Substantiv des Zufallsereignisses stammen aus seinen Bedeutungstabellen (Actions 1 und 2, Descriptions 2), ins
-            Deutsche übersetzt und in der Schreibweise angepasst. Diese Inhalte stehen unter der Lizenz{' '}
+            . Verb, Adjektiv und Substantiv des Zufallsereignisses sowie Hören und Riechen bei den Sinneseindrücken stammen aus seinen
+            Bedeutungstabellen (Actions 1 und 2, Descriptions 2, Sounds, Smells), ins Deutsche übersetzt und in der Schreibweise angepasst. Diese Inhalte stehen unter der Lizenz{' '}
             <a href="https://wordmillgames.com/license.html" target="_blank" rel="noreferrer">
               CC BY-NC
             </a>

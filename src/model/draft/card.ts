@@ -3,7 +3,7 @@ import { DomainError, ref, withQuestion, type CardPick, type Clock, type Entry, 
 /** Die offene Inspirationskarte. Flüchtig: wird beim Bestätigen zum `CardPick`, nie gespeichert. */
 export interface Card {
   readonly question?: string;
-  /** Je Feld aller Bereiche ein Eintrag, Themen-Reiter eingeschlossen, in der Reihenfolge der Bereiche und Felder. */
+  /** Je Feld mit nicht ausgeblendeten Einträgen ein Eintrag, Themen-Reiter eingeschlossen, in der Reihenfolge der Bereiche und Felder. */
   readonly drawn: readonly string[];
   /** Die ausgewählten Einträge; nur gezogene. */
   readonly picked: readonly string[];
@@ -14,12 +14,15 @@ export function drawableEntries(slot: Slot): readonly Entry[] {
   return slot.entries.filter((e) => !e.retired);
 }
 
-/** Zieht eine Karte: für jedes Feld aller Bereiche einen seiner nicht ausgeblendeten Einträge zufällig. */
+/**
+ * Zieht eine Karte: für jedes Feld aller Bereiche einen seiner nicht ausgeblendeten Einträge zufällig.
+ * Ein Feld, dessen Einträge alle ausgeblendet sind, ist selbst ausgeblendet und wird übergangen.
+ */
 export function drawCard(random: Random, question?: string): Card {
   const drawn = ref.sections.flatMap((section) =>
-    section.slots.map((slot) => {
+    section.slots.flatMap((slot) => {
       const entries = drawableEntries(slot);
-      return entries[random.int(0, entries.length - 1)]!.id;
+      return entries.length === 0 ? [] : [entries[random.int(0, entries.length - 1)]!.id];
     }),
   );
   return withQuestion({ drawn, picked: [] }, question);

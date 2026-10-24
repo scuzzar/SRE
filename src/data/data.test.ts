@@ -40,12 +40,28 @@ describe('Referenzdaten', () => {
     expect(event.slots.map((s) => s.entries.find((e) => !e.retired)!.text)).toEqual(['aufgeben', 'abnorm', 'Vorteil']);
   });
 
-  it('verlangen in jedem Feld einen Eintrag, der nicht ausgeblendet ist', () => {
-    const [first, ...rest] = referenceData.sections;
-    const [slot, ...others] = first!.slots;
-    const retired = { ...slot!, entries: slot!.entries.map((e) => ({ ...e, retired: true })) };
-    const broken = { ...referenceData, sections: [{ ...first!, slots: [retired, ...others] }, ...rest] };
-    expect(() => ReferenceDataSchema.parse(broken)).toThrow(/event.verb hat keinen Eintrag/);
+  it('ziehen Hören und Riechen aus den Mythic-Tabellen, Sehen und Fühlen sind ausgeblendet', () => {
+    const senses = referenceData.sections[1]!;
+    expect(senses.slots.map((s) => [s.label, s.entries.filter((e) => !e.retired).length, s.entries.filter((e) => e.retired).length])).toEqual([
+      ['Hören', 100, 8],
+      ['Sehen', 0, 8],
+      ['Fühlen', 0, 8],
+      ['Riechen', 100, 8],
+    ]);
+    expect(senses.slots.map((s) => s.entries.find((e) => !e.retired)?.text)).toEqual(['Aktivität', undefined, undefined, 'beißend']);
+  });
+
+  it('haben nur in den Mythic-Feldern Einträge, die nicht ausgeblendet sind', () => {
+    const drawable = referenceData.sections.flatMap((s) => s.slots).filter((slot) => slot.entries.some((e) => !e.retired));
+    expect(drawable.map((slot) => slot.id)).toEqual(['event.verb', 'event.adjective', 'event.noun', 'senses.hear', 'senses.smell']);
+  });
+
+  it('verlangen mindestens ein Feld mit einem Eintrag, der nicht ausgeblendet ist', () => {
+    const sections = referenceData.sections.map((section) => ({
+      ...section,
+      slots: section.slots.map((slot) => ({ ...slot, entries: slot.entries.map((e) => ({ ...e, retired: true })) })),
+    }));
+    expect(() => ReferenceDataSchema.parse({ ...referenceData, sections })).toThrow(/Kein Feld hat einen Eintrag/);
   });
 
   it('weisen doppelte Ids zurück', () => {

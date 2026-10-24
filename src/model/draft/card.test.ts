@@ -3,10 +3,10 @@ import { entryOf, ref, slotOf } from '..';
 import { fixedClock, fixedRandom } from '../testing';
 import { canConfirm, confirmCard, drawableEntries, drawCard, redrawCard, togglePick } from './card';
 
-const slots = ref.sections.flatMap((s) => s.slots);
+const slots = ref.sections.flatMap((s) => s.slots).filter((slot) => drawableEntries(slot).length > 0);
 
 describe('Karte ziehen', () => {
-  it('zieht für jedes Feld aller Bereiche einen Eintrag, Themen-Reiter eingeschlossen, in Kartenreihenfolge', () => {
+  it('zieht für jedes Feld mit nicht ausgeblendeten Einträgen einen Eintrag, in Kartenreihenfolge', () => {
     const card = drawCard(fixedRandom());
     expect(card.drawn).toEqual(slots.map((slot) => drawableEntries(slot)[0]!.id));
     expect(card.picked).toEqual([]);
@@ -17,14 +17,9 @@ describe('Karte ziehen', () => {
     expect('question' in drawCard(fixedRandom(), '')).toBe(false);
   });
 
-  it('zieht drei verschiedene Namen aus drei Feldern', () => {
-    for (let i = 0; i < 12; i++) {
-      const random = { int: (min: number, max: number) => Math.min(max, min + i) };
-      const names = drawCard(random)
-        .drawn.filter((e) => e.startsWith('names.'))
-        .map((e) => ref.sections.find((s) => s.id === 'names')!.slots.flatMap((sl) => sl.entries).find((x) => x.id === e)!.text);
-      expect(new Set(names).size).toBe(3);
-    }
+  it('übergeht Felder, deren Einträge alle ausgeblendet sind', () => {
+    const drawnSlots = drawCard(fixedRandom()).drawn.map((e) => slotOf({ picked: e }).id);
+    expect(drawnSlots).toEqual(['event.verb', 'event.adjective', 'event.noun', 'senses.hear', 'senses.smell']);
   });
 
   it('zieht nie einen ausgeblendeten Eintrag, auch nicht mit dem größten Wurf', () => {
