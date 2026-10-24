@@ -31,10 +31,6 @@ export function signed(n: number): string {
   return '±0';
 }
 
-export function percent(chance: number): string {
-  return `${Math.round(chance)} %`;
-}
-
 /** Uhrzeit eines Logeintrags, in Ortszeit. */
 export function clockTime(iso: string): string {
   const date = new Date(iso);
@@ -65,6 +61,19 @@ export function skillTitle(parts: readonly DmPart[]): string {
   const first = parts[0];
   if (first?.kind === 'skill') return `${first.name}-${first.level}`;
   return 'ohne Fertigkeit';
+}
+
+/** Das Wichtigste einer Probe in Vorbereitung: die Fertigkeit ausgeschrieben und der Zielwert. */
+export function taskHeadline(parts: readonly DmPart[], target: number): string {
+  const first = parts[0];
+  const skill = first?.kind === 'skill' ? `${first.name}-${first.level}` : 'Ohne Fertigkeit';
+  return `${skill} · ${target}+`;
+}
+
+/** Die gewählten Attribute knapp, als Zusatz zum DM: „ (DEX +1, SOC −1)“, ohne Attribute leer. */
+export function taskFigures(parts: readonly DmPart[]): string {
+  const counted = parts.flatMap((p) => (p.kind === 'characteristic' ? [`${characteristicLabel[p.characteristic]} ${signed(p.dm)}`] : []));
+  return counted.length > 0 ? ` (${counted.join(', ')})` : '';
 }
 
 export function taskTitle(item: TaskItem): string {

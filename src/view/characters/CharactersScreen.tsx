@@ -1,5 +1,5 @@
 import type { Snapshot } from '../../controller';
-import { needText, partLabel, percent, signed } from '../format';
+import { needText, signed, taskFigures, taskHeadline } from '../format';
 import { useGame } from '../game-context';
 import { DiceIcon } from '../icons';
 import { OddsBar } from '../OddsBar';
@@ -42,21 +42,14 @@ export function CharactersScreen({ view }: { view: Snapshot }) {
 
       <section className="dock" aria-label="Probe">
         <div className="task-info" aria-live="polite">
-          {!task ? (
-            <span className="task-title">Fertigkeit antippen, um eine Probe zu starten</span>
-          ) : !task.ready ? (
-            <span className="task-title">{task.character} · Fertigkeit wählen</span>
+          {!task?.ready ? (
+            <span className="task-hint">{task ? 'Fertigkeit wählen' : 'Fertigkeit antippen, um eine Probe zu starten'}</span>
           ) : (
             <>
-              <span className="task-title">{task.character}</span>
-              <div className="task-need">
-                <strong>{needText(task.need, task.chance)}</strong>
-                <span className="mono muted" style={{ fontSize: 14 }}>
-                  {percent(task.chance)} · 2W6 {signed(task.dm)} ≥ {task.target}
-                </span>
-              </div>
-              <span className="muted" style={{ fontSize: 12 }}>
-                {task.parts.map(partLabel).join(' · ')}
+              <strong className="task-headline">{taskHeadline(task.parts, task.target)}</strong>
+              <span className="task-figures">
+                2W6 {signed(task.dm)}
+                {taskFigures(task.parts)} · {needText(task.need, task.chance)}
               </span>
             </>
           )}

@@ -26,9 +26,10 @@ test('Probe: Fertigkeit, dann Attribute, Schwierigkeit unten, Ergebnis als Popup
   await expect(kira.getByRole('button', { name: /^DEX A: gewählt/ })).toHaveAttribute('aria-pressed', 'true');
 
   await dock(page).getByRole('radio', { name: '10+' }).click();
-  await expect(dock(page)).toContainText('Braucht 7+');
-  await expect(dock(page)).toContainText('58 % · 2W6 +3 ≥ 10');
-  await expect(dock(page)).toContainText('Pilot-2 +2 · DEX A +1');
+  await expect(dock(page)).toContainText('Pilot-2 · 10+');
+  await expect(dock(page)).toContainText('2W6 +3 (DEX +1) · Braucht 7+');
+  await expect(dock(page)).not.toContainText('%');
+  await expect(dock(page)).not.toContainText('Kira Vant');
 
   await dock(page).getByRole('button', { name: 'Probe würfeln' }).click();
   const result = page.getByRole('alertdialog');
@@ -48,11 +49,10 @@ test('Probe ohne Fertigkeit: direkt aus der Karte gestartet, unmöglich, aber w�
   await dock(page).getByRole('radio', { name: '10+' }).click();
   const jonas = card(page, 'Jonas Reyl');
   await jonas.getByRole('button', { name: 'Ohne (−3)' }).click();
-  await expect(dock(page)).toContainText('Jonas Reyl');
   await expect(jonas.getByRole('button', { name: 'Bearbeiten' })).toBeHidden();
   await expect(jonas.getByRole('button', { name: 'Steward-1' })).toHaveText('Ste-1');
-  await expect(dock(page)).toContainText('Unmöglich');
-  await expect(dock(page)).toContainText('0 %');
+  await expect(dock(page)).toContainText('Ohne Fertigkeit · 10+');
+  await expect(dock(page)).toContainText('2W6 −3 · Unmöglich');
   await dock(page).getByRole('button', { name: 'Probe würfeln' }).click();
   await expect(page.getByRole('alertdialog').getByRole('heading')).toHaveText('FEHLSCHLAG');
 });
