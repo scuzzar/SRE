@@ -872,23 +872,23 @@ button:disabled {
   flex-direction: column;
   justify-content: center;
   gap: 2px;
-  min-height: 64px;
+  min-height: 46px;
 }
 
-.task-title {
+.task-hint {
   font-size: 13px;
-  font-weight: 600;
+  color: var(--muted);
 }
 
-.task-need {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  flex-wrap: wrap;
+.task-headline {
+  font-size: 18px;
+  line-height: 1.2;
 }
 
-.task-need strong {
-  font-size: 20px;
+.task-figures {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--muted);
 }
 
 .roll {
