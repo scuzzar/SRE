@@ -190,7 +190,7 @@ Die Karte ist vorerst **nur für Prompts** da. Ja/Nein-Antworten, Schwierigkeite
 | Bereich auf der Karte | Felder (einzeln antippbar) |
 |---|---|
 | Zufallsereignis | Verb · Adjektiv · Substantiv (aus Mythics Bedeutungstabellen, siehe unten) |
-| Sinneseindrücke | Hören, Sehen, Fühlen, Riechen |
+| Sinneseindrücke | Hören, Sehen, Fühlen, Riechen (Hören und Riechen aus Mythics Tabellen, siehe unten) |
 | Szenentyp | Eine Szenenidee |
 | Besitz | Eine Kategorie mit drei Beispielen |
 | Situation | Auslöser, Ort, Einsatz |
@@ -200,7 +200,7 @@ Die Karte ist vorerst **nur für Prompts** da. Ja/Nein-Antworten, Schwierigkeite
 
 Besitz und Situation stehen wie auf der GMA-Karte links, Namen und Merkmale rechts daneben.
 
-**Themen-Reiter (vorläufig):** Unter der Karte hängen die Traveller-Reiter **Auftrag, NSC, Begegnung, Welt, Schiff, Handel**, deren Felder ebenfalls antippbar sind und mit in den Log gehen. Sie sollen später an einen anderen Ort in der App wandern; wohin, ist noch offen. Die Inhalte der App sind eigene Listen mit Traveller-Bezug, nicht die Texte des GMA-Decks. Ausnahme ist das Zufallsereignis: Verb, Adjektiv und Substantiv kommen aus den Bedeutungstabellen von Mythic GME 2e (Actions 1, Descriptions 2, Actions 2, je 100 Einträge, ins Deutsche übersetzt).
+**Themen-Reiter (vorläufig):** Unter der Karte hängen die Traveller-Reiter **Auftrag, NSC, Begegnung, Welt, Schiff, Handel**, deren Felder ebenfalls antippbar sind und mit in den Log gehen. Sie sollen später an einen anderen Ort in der App wandern; wohin, ist noch offen. Die Inhalte der App sind eigene Listen mit Traveller-Bezug, nicht die Texte des GMA-Decks. Ausnahmen kommen aus den Bedeutungstabellen von Mythic GME 2e, ins Deutsche übersetzt, je 100 Einträge: Verb, Adjektiv und Substantiv des Zufallsereignisses (Actions 1, Descriptions 2, Actions 2) sowie Hören und Riechen bei den Sinneseindrücken (Sounds, Smells).
 
 **Noch nicht auf der Karte:** Chancen (dafür gibt es das eigene Ja/Nein-Orakel), Schwierigkeitsgenerator, Würfelrad, Impuls-Symbole, Kartensymbol, Kartennummer.
 
@@ -258,7 +258,7 @@ Was das für die Inhalte der App heißt (Stand der Prüfung: Oktober 2026; keine
 
 | Quelle | Was wir übernehmen dürfen | Bedingungen |
 |---|---|---|
-| **Mythic** (Word Mill Games, Tana Pigeon) | Den **Text** von Mythic GME 2e und weiteren Mythic-Produkten, auch die Tabellen (Fate Chart, Zufallsereignisse, Bedeutungstabellen); Übersetzen und Anpassen ist erlaubt. | Lizenz [CC BY-NC](https://wordmillgames.com/license.html): nicht kommerziell, Quellenangabe (Produkt, Autorin, Link zu Word Mill Games), Hinweis auf Änderungen, nicht als „offiziell“ ausgeben. Grafik und Gestaltung der Bücher sind nicht abgedeckt. Die Mythic-Daten behalten diese Lizenz, auch wenn der Code eine andere hat. In der App sind das bisher die Einträge `event.*.mythic.*` in `src/data/sections.json`. |
+| **Mythic** (Word Mill Games, Tana Pigeon) | Den **Text** von Mythic GME 2e und weiteren Mythic-Produkten, auch die Tabellen (Fate Chart, Zufallsereignisse, Bedeutungstabellen); Übersetzen und Anpassen ist erlaubt. | Lizenz [CC BY-NC](https://wordmillgames.com/license.html): nicht kommerziell, Quellenangabe (Produkt, Autorin, Link zu Word Mill Games), Hinweis auf Änderungen, nicht als „offiziell“ ausgeben. Grafik und Gestaltung der Bücher sind nicht abgedeckt. Die Mythic-Daten behalten diese Lizenz, auch wenn der Code eine andere hat. In der App sind das bisher die Einträge `*.mythic.*` in `src/data/sections.json`. |
 | **Game Master's Apprentice** (Larcenous Designs) | Nur den **Aufbau** der Karte (Bereiche und Felder). | Die Karteninhalte sind geschützt und nur mit Erlaubnis von Larcenous Designs nutzbar. Bis dahin füllen wir die Felder mit eigenen Einträgen. |
 | **Classic Traveller** (Far Future Enterprises) | Die **Mechanik**: Würfe, DMs, Abläufe als Programm. | Nach der Fan-Policy von FFE: kostenlos, Copyright- und Markenhinweis in der App, Regeltexte nicht über etwa eine Seite hinaus abschreiben. Vor einer Veröffentlichung die aktuelle Policy prüfen. |
 

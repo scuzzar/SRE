@@ -58,8 +58,8 @@ export function AboutScreen({ persistent }: { persistent: boolean }) {
             <a href="https://wordmillgames.com" target="_blank" rel="noreferrer">
               Word Mill Games
             </a>
-            . Verb, Adjektiv und Substantiv des Zufallsereignisses stammen aus seinen Bedeutungstabellen (Actions 1 und 2, Descriptions 2), ins
-            Deutsche übersetzt und in der Schreibweise angepasst. Diese Inhalte stehen unter der Lizenz{' '}
+            . Verb, Adjektiv und Substantiv des Zufallsereignisses sowie Hören und Riechen bei den Sinneseindrücken stammen aus seinen
+            Bedeutungstabellen (Actions 1 und 2, Descriptions 2, Sounds, Smells), ins Deutsche übersetzt und in der Schreibweise angepasst. Diese Inhalte stehen unter der Lizenz{' '}
             <a href="https://wordmillgames.com/license.html" target="_blank" rel="noreferrer">
               CC BY-NC
             </a>

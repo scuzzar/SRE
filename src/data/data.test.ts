@@ -40,6 +40,22 @@ describe('Referenzdaten', () => {
     expect(event.slots.map((s) => s.entries.find((e) => !e.retired)!.text)).toEqual(['aufgeben', 'abnorm', 'Vorteil']);
   });
 
+  it('ziehen Hören und Riechen aus den Mythic-Tabellen, Sehen und Fühlen bleiben eigene Einträge', () => {
+    const senses = referenceData.sections[1]!;
+    expect(senses.slots.map((s) => [s.label, s.entries.filter((e) => !e.retired).length, s.entries.filter((e) => e.retired).length])).toEqual([
+      ['Hören', 100, 8],
+      ['Sehen', 8, 0],
+      ['Fühlen', 8, 0],
+      ['Riechen', 100, 8],
+    ]);
+    expect(senses.slots.map((s) => s.entries.find((e) => !e.retired)!.text)).toEqual([
+      'Aktivität',
+      'Flackernde Notbeleuchtung …',
+      'Die Deckplatten vibrieren …',
+      'beißend',
+    ]);
+  });
+
   it('verlangen in jedem Feld einen Eintrag, der nicht ausgeblendet ist', () => {
     const [first, ...rest] = referenceData.sections;
     const [slot, ...others] = first!.slots;
