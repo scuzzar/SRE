@@ -200,7 +200,9 @@ Die Karte ist vorerst **nur für Prompts** da. Ja/Nein-Antworten, Schwierigkeite
 
 Besitz und Situation stehen wie auf der GMA-Karte links, Namen und Merkmale rechts daneben.
 
-**Themen-Reiter (vorläufig):** Unter der Karte hängen die Traveller-Reiter **Auftrag, NSC, Begegnung, Welt, Schiff, Handel**, deren Felder ebenfalls antippbar sind und mit in den Log gehen. Sie sollen später an einen anderen Ort in der App wandern; wohin, ist noch offen. Die Inhalte der App sind eigene Listen mit Traveller-Bezug, nicht die Texte des GMA-Decks. Ausnahmen kommen aus den Bedeutungstabellen von Mythic GME 2e, ins Deutsche übersetzt, je 100 Einträge: Verb, Adjektiv und Substantiv des Zufallsereignisses (Actions 1, Descriptions 2, Actions 2) sowie Hören und Riechen bei den Sinneseindrücken (Sounds, Smells).
+**Zurzeit** zeigt die Karte nur die Felder, für die es Einträge aus Mythic gibt: Verb, Adjektiv und Substantiv des Zufallsereignisses sowie Hören und Riechen. Die übrigen Felder und Bereiche und die Themen-Reiter sind ausgeblendet, bis es Einträge für sie gibt; ältere Logeinträge daraus bleiben lesbar.
+
+**Themen-Reiter (vorläufig):** Unter der Karte hängen die Traveller-Reiter **Auftrag, NSC, Begegnung, Welt, Schiff, Handel**, deren Felder ebenfalls antippbar sind und mit in den Log gehen (zurzeit ausgeblendet). Sie sollen später an einen anderen Ort in der App wandern; wohin, ist noch offen. Die Inhalte der App sind eigene Listen mit Traveller-Bezug, nicht die Texte des GMA-Decks. Ausnahmen kommen aus den Bedeutungstabellen von Mythic GME 2e, ins Deutsche übersetzt, je 100 Einträge: Verb, Adjektiv und Substantiv des Zufallsereignisses (Actions 1, Descriptions 2, Actions 2) sowie Hören und Riechen bei den Sinneseindrücken (Sounds, Smells).
 
 **Noch nicht auf der Karte:** Chancen (dafür gibt es das eigene Ja/Nein-Orakel), Schwierigkeitsgenerator, Würfelrad, Impuls-Symbole, Kartensymbol, Kartennummer.
 

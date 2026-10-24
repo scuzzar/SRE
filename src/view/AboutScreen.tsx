@@ -43,8 +43,8 @@ export function AboutScreen({ persistent }: { persistent: boolean }) {
         <div>
           <h2>Game Master&apos;s Apprentice</h2>
           <p>
-            Der Aufbau der Inspirationskarte folgt dem GameMaster&apos;s Apprentice, Second Edition, von Larcenous Designs, LLC. Die übrigen Einträge
-            auf der Karte sind eigene Inhalte mit Traveller-Bezug, nicht die Texte des GMA-Decks. Vorbild für die Bedienung ist die Web-Umsetzung von{' '}
+            Der Aufbau der Inspirationskarte folgt dem GameMaster&apos;s Apprentice, Second Edition, von Larcenous Designs, LLC. Die Einträge stammen
+            nicht aus dem GMA-Deck; ältere Einträge im Log sind eigene Inhalte mit Traveller-Bezug. Vorbild für die Bedienung ist die Web-Umsetzung von{' '}
             <a href="https://jamesturneronline.net/game-masters-apprentice/" target="_blank" rel="noreferrer">
               James Turner
             </a>

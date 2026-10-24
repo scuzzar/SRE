@@ -46,9 +46,8 @@ test('Inspirationskarte: auswählen, bestätigen, nur die Auswahl kommt in den L
   const verbText = await verb.locator('.tile-text').innerText();
   await verb.click();
   await expect(verb).toHaveAttribute('aria-pressed', 'true');
-  await card.getByRole('tab', { name: 'NSC' }).click();
-  await card.getByRole('tabpanel').getByRole('button').nth(1).click();
-  await expect(card.getByRole('tab', { name: 'NSC · 1' })).toBeVisible();
+  await expect(card.getByRole('tab')).toHaveCount(0);
+  await card.getByRole('button', { name: /^Riechen:/ }).click();
   await expect(card).toContainText('2 ausgewählt');
 
   await card.getByRole('button', { name: /2 Einträge in den Log übernehmen/ }).click();
@@ -56,7 +55,7 @@ test('Inspirationskarte: auswählen, bestätigen, nur die Auswahl kommt in den L
   const entry = page.locator('.entry').last();
   await expect(entry).toContainText('Karte');
   await expect(entry).toContainText('„Was steckt hinter dem Notsignal?“');
-  await expect(entry.locator('dt')).toHaveText(['Zufallsereignis · Verb', 'NSC · Beruf']);
+  await expect(entry.locator('dt')).toHaveText(['Zufallsereignis · Verb', 'Sinneseindrücke · Riechen']);
   await expect(entry.locator('dd').first()).toHaveText(verbText);
   await expect(page.getByPlaceholder(/Frage/)).toHaveValue('');
 });

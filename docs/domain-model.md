@@ -7,7 +7,11 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 
 > **Stand: Freigegeben für Version 1** (23. Oktober 2026). Änderungen nur noch auf dem oben
 > beschriebenen Weg: erst hier, abgestimmt, dann im Code. Seitdem freigegeben: `Entry.retired`
-> (24. Oktober 2026, siehe *Einträge austauschen*).
+> (24. Oktober 2026, siehe *Einträge austauschen*); ausgeblendete Felder und Bereiche (ebenso).
+>
+> **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic: Verb, Adjektiv und Substantiv
+> des Zufallsereignisses sowie Hören und Riechen. Alle übrigen Felder und Bereiche, die
+> Themen-Reiter eingeschlossen, sind ausgeblendet, bis es Einträge für sie gibt.
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -94,6 +98,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   kommen erst nach Version 1.
 - **Karte ziehen.** Ziehen legt eine `Card` an: für jedes Feld aller Bereiche einen seiner nicht
   ausgeblendeten Einträge zufällig (`drawn`), die Themen-Reiter eingeschlossen, in der Reihenfolge der Bereiche und Felder.
+  Felder ohne solchen Eintrag übergeht es (siehe *Einträge austauschen*).
   Eine gestellte Frage geht auf die Karte über. Der Bereich *Namen* hat drei Felder mit je eigenen
   Einträgen (eher weiblich, eher männlich, neutral bzw. Genre-Name), wie auf der GMA-Karte; so sind
   die drei Namen immer verschieden.
@@ -147,8 +152,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 - **Einträge austauschen.** Ein Eintrag, der nicht mehr gezogen werden soll, wird nicht gelöscht und
   seine Id nicht neu vergeben, sondern ausgeblendet (`retired`): Ziehen übergeht ihn, alte
   Logeinträge zeigen ihn weiter mit seinem Text. Ob ein Log auf ihn verweist, weiß nur das jeweilige
-  Gerät; deshalb wird jeder ausgetauschte Eintrag ausgeblendet. Jedes Feld behält mindestens einen
-  Eintrag, der nicht ausgeblendet ist.
+  Gerät; deshalb wird jeder ausgetauschte Eintrag ausgeblendet. Sind alle Einträge eines Feldes
+  ausgeblendet, ist das Feld ausgeblendet: Ziehen übergeht es, die Karte zeigt es nicht, und ein
+  Bereich ohne sichtbares Feld fehlt auf der Karte ganz. Der Log zeigt alte Einträge daraus weiter.
+  Mindestens ein Feld hat einen Eintrag, der nicht ausgeblendet ist.
 
 ## Wo der Code noch nicht folgt
 

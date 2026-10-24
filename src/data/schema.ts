@@ -90,8 +90,8 @@ export const ReferenceDataSchema = z
     uniqueIds(data.sections.map((s) => s.id), 'Bereich', ctx);
     uniqueIds(slots.map((s) => s.id), 'Feld', ctx);
     uniqueIds(slots.flatMap((s) => s.entries.map((e) => e.id)), 'Eintrag', ctx);
-    for (const slot of slots) {
-      if (slot.entries.every((e) => e.retired)) ctx.addIssue({ code: 'custom', message: `Feld ${slot.id} hat keinen Eintrag, der nicht ausgeblendet ist` });
+    if (slots.every((slot) => slot.entries.every((e) => e.retired))) {
+      ctx.addIssue({ code: 'custom', message: 'Kein Feld hat einen Eintrag, der nicht ausgeblendet ist' });
     }
     const skillIds = new Set(data.skills.map((s) => s.id));
     for (const example of data.examples) {
