@@ -48,10 +48,12 @@ test('Inspirationskarte: auswählen, bestätigen, nur die Auswahl kommt in den L
   expect(actionWords).toHaveLength(2);
   await action.click();
   await expect(action).toHaveAttribute('aria-pressed', 'true');
-  // Alle Themen-Tafeln stehen mit Überschrift auf einmal da, ohne Scrollen.
+  // Alle Themen-Tafeln stehen mit Überschrift auf einmal da, ohne Scrollen. Ein sehr langes Wort
+  // (zufällig gezogen) kann auf drei Zeilen umbrechen; dafür bleibt eine Zeile Spielraum.
   await expect(card.getByRole('heading', { level: 3 })).toHaveText(['NSC', 'NSC-Aktionen', 'Welt', 'Wesen', 'Handlung']);
+  await expect(card.locator('.theme-box')).toHaveCount(3);
   const body = card.locator('.sheet-body');
-  expect(await body.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(0);
+  expect(await body.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(16);
   await card.getByRole('group', { name: 'NSC', exact: true }).getByRole('button').first().click();
   await expect(card).toContainText('2 ausgewählt');
 

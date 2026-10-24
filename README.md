@@ -202,7 +202,7 @@ Besitz und Situation stehen wie auf der GMA-Karte links, Namen und Merkmale rech
 
 **Zurzeit** zeigt die Karte nur die Felder, für die es Einträge aus Mythic gibt: Aktion und Beschreibung des Zufallsereignisses, Hören und Riechen sowie die Themen-Tafeln mit Mythics Elements-Tabellen (siehe unten). Die übrigen Felder und Bereiche sind ausgeblendet, bis es Einträge für sie gibt; ältere Logeinträge daraus bleiben lesbar.
 
-**Themen-Tafeln (vorläufig):** Unter der Karte stehen Tafeln mit Überschrift, alle auf einmal und ohne Reiter, sodass die ganze Karte auf einen Handybildschirm passt. Ihre Felder sind ebenfalls antippbar und gehen mit in den Log. Zurzeit sind es die Elements-Tabellen von Mythic GME 2e, die zu Traveller passen, nach Themen sortiert. Aus jeder Tabelle zieht die Karte wie bei Mythic **ein Paar** von Begriffen in einem Feld; bis zu drei Felder stehen nebeneinander:
+**Themen-Tafeln (vorläufig):** Unter der Karte stehen Tafeln mit Überschrift, alle auf einmal und ohne Reiter, in Kästen wie die Karte selbst (NSC mit NSC-Aktionen, Welt mit Wesen, Handlung allein), sodass die ganze Karte auf einen Handybildschirm passt. Ihre Felder sind ebenfalls antippbar und gehen mit in den Log. Zurzeit sind es die Elements-Tabellen von Mythic GME 2e, die zu Traveller passen, nach Themen sortiert. Aus jeder Tabelle zieht die Karte wie bei Mythic **ein Paar** von Begriffen in einem Feld; bis zu drei Felder stehen nebeneinander:
 
 | Tafel | Tabellen |
 |---|---|

@@ -635,7 +635,13 @@ button:disabled {
 }
 
 .themes {
-  margin-top: 6px;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.theme-box {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px 3px;

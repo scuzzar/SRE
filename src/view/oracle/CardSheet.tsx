@@ -154,25 +154,39 @@ function Banded({ section, variant, hideLabels }: { section: CardSectionView | u
   );
 }
 
+/** Welche Themen-Tafeln sich einen Kasten teilen. Eine Tafel, die hier fehlt, bekommt einen eigenen. */
+const boxes: readonly (readonly string[])[] = [['npc', 'npc-actions'], ['world', 'creatures'], ['plot']];
+
+function boxed(themes: readonly CardSectionView[]): CardSectionView[][] {
+  const grouped = boxes.map((ids) => themes.filter((t) => ids.includes(t.id))).filter((group) => group.length > 0);
+  const rest = themes.filter((t) => !boxes.some((ids) => ids.includes(t.id))).map((t) => [t]);
+  return [...grouped, ...rest];
+}
+
 /**
  * Die Themen-Tafeln (vorläufig), alle mit Überschrift auf einmal, damit die ganze Karte auf einen
- * Bildschirm passt. Eine Tafel ist so breit, wie sie Felder nebeneinander hat; kleine Tafeln teilen
+ * Bildschirm passt. Verwandte Tafeln stehen in einem Kasten wie die Karte oben (NSC mit NSC-Aktionen,
+ * Welt mit Wesen). Eine Tafel ist so breit, wie sie Felder nebeneinander hat; kleine Tafeln teilen
  * sich so eine Reihe.
  */
 function Themes({ themes }: { themes: readonly CardSectionView[] }) {
   return (
     <div className="themes">
-      {themes.map((theme) => (
-        <section key={theme.id} className={`theme span-${columns(theme.slots)}`} aria-labelledby={`theme-${theme.id}`}>
-          <h3 id={`theme-${theme.id}`} className="theme-title">
-            {theme.name}
-          </h3>
-          <div className={layout(theme.slots)} role="group" aria-label={theme.name}>
-            {theme.slots.map((slot) => (
-              <Tile key={slot.id} slot={slot} />
-            ))}
-          </div>
-        </section>
+      {boxed(themes).map((group) => (
+        <div key={group[0]!.id} className="card theme-box">
+          {group.map((theme) => (
+            <section key={theme.id} className={`theme span-${columns(theme.slots)}`} aria-labelledby={`theme-${theme.id}`}>
+              <h3 id={`theme-${theme.id}`} className="theme-title">
+                {theme.name}
+              </h3>
+              <div className={layout(theme.slots)} role="group" aria-label={theme.name}>
+                {theme.slots.map((slot) => (
+                  <Tile key={slot.id} slot={slot} />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       ))}
     </div>
   );
