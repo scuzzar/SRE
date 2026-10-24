@@ -2,7 +2,6 @@ name: CI
 
 on:
   push:
-    branches: [main]
   pull_request:
 
 jobs:
@@ -18,7 +17,16 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
-      - run: npx playwright install --with-deps chromium
+
+      # Die Systembibliotheken für Chromium hat der Runner schon. `--with-deps` holte nur Schriften
+      # und xvfb nach und brauchte dafür über den Ubuntu-Mirror bis zu 10 Minuten.
+      - id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - run: npx playwright install --only-shell chromium
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v7
         if: failure()

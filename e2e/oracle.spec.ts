@@ -84,8 +84,22 @@ test('Spielstand und Stufe überstehen einen Neustart', async ({ page }) => {
   await expect(page.locator('.entry')).toHaveCount(1);
 });
 
-test('Über: Quellenangaben', async ({ page }) => {
+test('Über: Quellenangaben und Links zum Projekt', async ({ page }) => {
   await page.getByRole('button', { name: 'Über die App' }).click();
   await expect(page.getByText(/Traveller ist ein Markenzeichen von Far Future Enterprises/)).toBeVisible();
   await expect(page.getByText(/Larcenous Designs/)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Quellcode auf GitHub' })).toHaveAttribute('href', 'https://github.com/scuzzar/SRE');
+  await expect(page.getByRole('link', { name: 'Fehler melden oder Idee vorschlagen' })).toHaveAttribute(
+    'href',
+    'https://github.com/scuzzar/SRE/issues/new',
+  );
+});
+
+test('Vollbild: der Knopf neben dem i schaltet an und aus', async ({ page }) => {
+  const header = page.getByRole('banner');
+  await header.getByRole('button', { name: 'Vollbild' }).click();
+  await expect(header.getByRole('button', { name: 'Vollbild beenden' })).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.evaluate(() => document.fullscreenElement !== null)).toBe(true);
+  await header.getByRole('button', { name: 'Vollbild beenden' }).click();
+  await expect(header.getByRole('button', { name: 'Vollbild' })).toHaveAttribute('aria-pressed', 'false');
 });

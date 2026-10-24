@@ -120,3 +120,27 @@ export function SenseIcon({ sense }: { sense: string }) {
     </svg>
   );
 }
+
+export function ExpandIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+    </svg>
+  );
+}
+
+export function ShrinkIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+    </svg>
+  );
+}
+
+export function ExternalIcon() {
+  return (
+    <svg {...base} width={16} height={16} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+    </svg>
+  );
+}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AboutScreen } from './AboutScreen';
 import { CharacterEditor } from './characters/CharacterEditor';
 import { CharactersScreen } from './characters/CharactersScreen';
+import { FullscreenButton } from './FullscreenButton';
 import { ResultDialog } from './characters/ResultDialog';
 import { useGame, useSnapshot } from './game-context';
 import { InfoIcon, OracleIcon, PersonIcon } from './icons';
@@ -24,6 +25,7 @@ export function App() {
         <span className="brand">SOLO RPG ENGINE</span>
         <span className="header-right">
           {titles[view.screen]}
+          <FullscreenButton />
           <button
             type="button"
             className="icon-button"
