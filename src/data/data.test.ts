@@ -49,7 +49,7 @@ describe('Referenzdaten', () => {
   });
 
   it('blenden die Felder aus der Zeit vor den Paaren aus', () => {
-    for (const id of ['event.verb', 'event.adjective', 'event.noun', 'senses.hear', 'senses.see', 'senses.feel', 'senses.smell', 'npc.occupation', 'mythic.npc.skills']) {
+    for (const id of ['event.verb', 'event.adjective', 'event.noun', 'senses.hear', 'senses.see', 'senses.feel', 'senses.smell', 'npc.occupation', 'mythic.npc.skills', 'mythic.creatures.ability']) {
       expect(slot(id).columns.flatMap(active)).toEqual([]);
     }
   });
@@ -70,7 +70,7 @@ describe('Referenzdaten', () => {
     expect(tables('npc-actions')).toEqual(['Gespräch', 'Kampfaktion', 'Aktion']);
     expect(tables('world')).toEqual(['Ort', 'Stadt', 'Schiff', 'Zivilisation', 'Gelände', 'Behausung']);
     expect(tables('ship')).toEqual([]);
-    expect(tables('creatures')).toEqual(['Spezies', 'Kreatur', 'Fähigkeit', 'Tierverhalten']);
+    expect(tables('creatures')).toEqual(['Spezies', 'Kreatur', 'Tierverhalten']);
     expect(tables('plot')).toEqual(['Wendung', 'Stimmung', 'Botschaft', 'Gegenstand', 'Fund']);
     expect(active(slot('mythic.npc.appearance').columns[0]!).slice(0, 3).map((e) => e.text)).toEqual(['abnorm', 'bewaffnet', 'aromatisch']);
   });

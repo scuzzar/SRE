@@ -209,10 +209,10 @@ Besitz und Situation stehen wie auf der GMA-Karte links, Namen und Merkmale rech
 | NSC | Aussehen, Persönlichkeit, Motivation, Hintergrund, Identität, Eigenschaft & Schwäche |
 | NSC-Aktionen | Gespräch, Kampfaktion, Aktion |
 | Welt | Ort, Stadt, Schiff, Zivilisation, Gelände, Behausung |
-| Wesen | Spezies, Kreatur, Fähigkeit, Tierverhalten |
+| Wesen | Spezies, Kreatur, Tierverhalten |
 | Handlung | Wendung, Stimmung, Botschaft, Gegenstand, Fund |
 
-Die früheren eigenen Reiter (Auftrag, Begegnung, Handel und die eigenen Reiter und Felder von NSC, Welt, Schiff) sind ausgeblendet, ebenso die einzelnen Felder Verb, Adjektiv und Substantiv aus der Zeit vor den Paaren und die NSC-Tabelle Fertigkeit. Die Tafeln sollen später an einen anderen Ort in der App wandern; wohin, ist noch offen. Die Inhalte der App sind eigene Listen mit Traveller-Bezug, nicht die Texte des GMA-Decks. Ausnahmen kommen aus den Bedeutungstabellen von Mythic GME 2e, ins Deutsche übersetzt, je 100 Einträge: Aktion und Beschreibung des Zufallsereignisses (Actions, Descriptions, je mit ihren zwei Spalten), Hören und Riechen bei den Sinneseindrücken (Sounds, Smells) und die Elements-Tabellen der Themen-Tafeln; aus einer Elements-Tabelle zieht die Karte wie Mythic zweimal.
+Die früheren eigenen Reiter (Auftrag, Begegnung, Handel und die eigenen Reiter und Felder von NSC, Welt, Schiff) sind ausgeblendet, ebenso die einzelnen Felder Verb, Adjektiv und Substantiv aus der Zeit vor den Paaren die NSC-Tabelle Fertigkeit und die Wesen-Tabelle Fähigkeit. Die Tafeln sollen später an einen anderen Ort in der App wandern; wohin, ist noch offen. Die Inhalte der App sind eigene Listen mit Traveller-Bezug, nicht die Texte des GMA-Decks. Ausnahmen kommen aus den Bedeutungstabellen von Mythic GME 2e, ins Deutsche übersetzt, je 100 Einträge: Aktion und Beschreibung des Zufallsereignisses (Actions, Descriptions, je mit ihren zwei Spalten), Hören und Riechen bei den Sinneseindrücken (Sounds, Smells) und die Elements-Tabellen der Themen-Tafeln; aus einer Elements-Tabelle zieht die Karte wie Mythic zweimal.
 
 **Noch nicht auf der Karte:** Chancen (dafür gibt es das eigene Ja/Nein-Orakel), Schwierigkeitsgenerator, Würfelrad, Impuls-Symbole, Kartensymbol, Kartennummer.
 
