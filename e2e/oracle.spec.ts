@@ -42,14 +42,19 @@ test('Inspirationskarte: auswählen, bestätigen, nur die Auswahl kommt in den L
   await expect(card.getByRole('button', { name: /in den Log übernehmen/ })).toBeDisabled();
   await expect(page.locator('.entry')).toHaveCount(0);
 
-  const verb = card.getByRole('group', { name: 'Zufallsereignis' }).getByRole('button').first();
-  const verbText = await verb.locator('.tile-text').innerText();
-  await verb.click();
-  await expect(verb).toHaveAttribute('aria-pressed', 'true');
-  await expect(card.getByRole('tab')).toHaveText(['NSC', 'Welt', 'Schiff', 'Wesen', 'Handlung']);
-  await card.getByRole('tab', { name: 'NSC' }).click();
-  await card.getByRole('tabpanel').getByRole('button').nth(1).click();
-  await expect(card.getByRole('tab', { name: 'NSC · 1' })).toBeVisible();
+  const action = card.getByRole('group', { name: 'Zufallsereignis' }).getByRole('button').first();
+  // Ein Paar steht in einem Feld, jeder Begriff in einer eigenen Zeile; im Log in einer Zeile.
+  const actionWords = await action.locator('.tile-line').allInnerTexts();
+  expect(actionWords).toHaveLength(2);
+  await action.click();
+  await expect(action).toHaveAttribute('aria-pressed', 'true');
+  // Alle Themen-Tafeln stehen mit Überschrift auf einmal da, ohne Scrollen. Ein sehr langes Wort
+  // (zufällig gezogen) kann auf drei Zeilen umbrechen; dafür bleibt eine Zeile Spielraum.
+  await expect(card.getByRole('heading', { level: 3 })).toHaveText(['NSC', 'NSC-Aktionen', 'Welt', 'Wesen', 'Handlung']);
+  await expect(card.locator('.theme-box')).toHaveCount(3);
+  const body = card.locator('.sheet-body');
+  expect(await body.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(16);
+  await card.getByRole('group', { name: 'NSC', exact: true }).getByRole('button').first().click();
   await expect(card).toContainText('2 ausgewählt');
 
   await card.getByRole('button', { name: /2 Einträge in den Log übernehmen/ }).click();
@@ -57,8 +62,8 @@ test('Inspirationskarte: auswählen, bestätigen, nur die Auswahl kommt in den L
   const entry = page.locator('.entry').last();
   await expect(entry).toContainText('Karte');
   await expect(entry).toContainText('„Was steckt hinter dem Notsignal?“');
-  await expect(entry.locator('dt')).toHaveText(['Zufallsereignis · Verb', 'NSC · Aussehen']);
-  await expect(entry.locator('dd').first()).toHaveText(verbText);
+  await expect(entry.locator('dt')).toHaveText(['Zufallsereignis · Aktion', 'NSC · Aussehen']);
+  await expect(entry.locator('dd').first()).toHaveText(actionWords.join(' · '));
   await expect(page.getByPlaceholder(/Frage/)).toHaveValue('');
 });
 

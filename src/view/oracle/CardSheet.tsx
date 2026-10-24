@@ -1,12 +1,11 @@
-import { useState } from 'react';
 import type { CardSectionView, CardView } from '../../controller';
-import { quoted } from '../format';
+import { pairText, quoted } from '../format';
 import { useGame } from '../game-context';
 import { CheckIcon, CloseIcon, SenseIcon } from '../icons';
 
 type SlotView = CardSectionView['slots'][number];
 
-/** Die offene Inspirationskarte im Vordergrund. Aufbau nach der GMA2e-Karte, darunter die Themen-Reiter. */
+/** Die offene Inspirationskarte im Vordergrund. Aufbau nach der GMA2e-Karte, darunter die Themen-Tafeln. Ein Paar steht in einem Feld. */
 export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: () => void }) {
   const game = useGame();
   const cardSections = card.sections.filter((s) => s.kind === 'card');
@@ -25,13 +24,12 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
         </div>
         {card.question && (
           <div className="card-question">
-            <span className="kicker">Deine Frage</span>
-            <span style={{ fontWeight: 600 }}>{quoted(card.question)}</span>
+            <span className="kicker">Frage</span> <span style={{ fontWeight: 600 }}>{quoted(card.question)}</span>
           </div>
         )}
         <div className="sheet-body">
           <article className="card" aria-label="Karte">
-            <Row section={section('event')} />
+            <Stack section={section('event')} />
             <Senses section={section('senses')} />
             <Stack section={section('scene')} />
             <div className="card-columns">
@@ -89,31 +87,41 @@ function Tile({ slot, variant, hideLabel }: { slot: SlotView; variant?: 'sense' 
       type="button"
       className={variant ? `tile ${variant}` : 'tile'}
       aria-pressed={slot.picked}
-      aria-label={hideLabel || variant === 'sense' ? `${slot.label}: ${slot.text}` : undefined}
-      onClick={() => game.togglePick(slot.entry)}
+      aria-label={hideLabel || variant === 'sense' ? `${slot.label}: ${pairText(slot.texts)}` : undefined}
+      onClick={() => game.togglePick(slot.id)}
     >
       {variant === 'sense' && <SenseIcon sense={sense} />}
       {!hideLabel && variant !== 'sense' && <span className="tile-label">{slot.label}</span>}
-      <span className="tile-text">{slot.text}</span>
+      <span className="tile-text">
+        {slot.texts.map((text, i) => (
+          <span key={i} className="tile-line">
+            {text}
+          </span>
+        ))}
+      </span>
     </button>
   );
 }
 
-function Row({ section }: { section: CardSectionView | undefined }) {
-  if (!section) return null;
-  return (
-    <div className="card-row-3" role="group" aria-label={section.name}>
-      {section.slots.map((slot) => (
-        <Tile key={slot.id} slot={slot} />
-      ))}
-    </div>
-  );
+/**
+ * Wie viele Felder mit Paaren nebeneinanderstehen: drei je Reihe, zwei und vier zu zweit, damit keine
+ * Reihe halb leer bleibt, ein einzelnes allein.
+ */
+function columns(slots: readonly SlotView[]): 1 | 2 | 3 {
+  if (slots.length === 1) return 1;
+  return slots.length === 2 || slots.length === 4 ? 2 : 3;
+}
+
+/** Felder mit Paaren stehen nebeneinander, jeder Begriff in einer eigenen Zeile; das spart Platz. */
+function layout(slots: readonly SlotView[]): string {
+  if (!slots.every((slot) => slot.texts.length > 1)) return 'card-stack';
+  return `card-grid cols-${columns(slots)}`;
 }
 
 function Senses({ section }: { section: CardSectionView | undefined }) {
   if (!section) return null;
   return (
-    <div className="card-stack" role="group" aria-label={section.name}>
+    <div className={layout(section.slots)} role="group" aria-label={section.name}>
       {section.slots.map((slot) => (
         <Tile key={slot.id} slot={slot} variant="sense" />
       ))}
@@ -124,7 +132,7 @@ function Senses({ section }: { section: CardSectionView | undefined }) {
 function Stack({ section, variant, hideLabels }: { section: CardSectionView | undefined; variant?: 'flavor'; hideLabels?: boolean }) {
   if (!section) return null;
   return (
-    <div className="card-stack" role="group" aria-label={section.name}>
+    <div className={layout(section.slots)} role="group" aria-label={section.name}>
       {section.slots.map((slot) => (
         <Tile key={slot.id} slot={slot} {...(variant ? { variant } : {})} hideLabel={hideLabels ?? false} />
       ))}
@@ -146,57 +154,40 @@ function Banded({ section, variant, hideLabels }: { section: CardSectionView | u
   );
 }
 
-/** Die Themen-Reiter (vorläufig). Welcher Reiter gewählt ist, ist reine Darstellung. */
-function Themes({ themes }: { themes: readonly CardSectionView[] }) {
-  const [tab, setTab] = useState(themes[0]!.id);
-  const current = themes.find((t) => t.id === tab) ?? themes[0]!;
-  return (
-    <div className="themes">
-      <span className="section-title" style={{ fontSize: 11 }}>
-        Themen (vorläufig)
-      </span>
-      <div className="tabs" role="tablist" aria-label="Thema">
-        {themes.map((theme) => {
-          const picked = theme.slots.filter((s) => s.picked).length;
-          return (
-            <button
-              key={theme.id}
-              type="button"
-              role="tab"
-              id={`tab-${theme.id}`}
-              aria-selected={theme.id === current.id}
-              aria-controls="theme-panel"
-              onClick={() => setTab(theme.id)}
-            >
-              {picked ? `${theme.name} · ${picked}` : theme.name}
-            </button>
-          );
-        })}
-      </div>
-      <div className="card-stack" role="tabpanel" id="theme-panel" aria-labelledby={`tab-${current.id}`}>
-        {byLabel(current.slots).map((group) =>
-          group.length > 1 ? (
-            <div key={group[0]!.id} className="card-row-2">
-              {group.map((slot) => (
-                <Tile key={slot.id} slot={slot} />
-              ))}
-            </div>
-          ) : (
-            <Tile key={group[0]!.id} slot={group[0]!} />
-          ),
-        )}
-      </div>
-    </div>
-  );
+/** Welche Themen-Tafeln sich einen Kasten teilen. Eine Tafel, die hier fehlt, bekommt einen eigenen. */
+const boxes: readonly (readonly string[])[] = [['npc', 'npc-actions'], ['world', 'creatures'], ['plot']];
+
+function boxed(themes: readonly CardSectionView[]): CardSectionView[][] {
+  const grouped = boxes.map((ids) => themes.filter((t) => ids.includes(t.id))).filter((group) => group.length > 0);
+  const rest = themes.filter((t) => !boxes.some((ids) => ids.includes(t.id))).map((t) => [t]);
+  return [...grouped, ...rest];
 }
 
-/** Felder mit gleicher Beschriftung nebeneinander, etwa die zwei Begriffe aus einer Mythic-Tabelle. */
-function byLabel(slots: readonly SlotView[]): SlotView[][] {
-  const groups: SlotView[][] = [];
-  for (const slot of slots) {
-    const last = groups.at(-1);
-    if (last && last[0]!.label === slot.label) last.push(slot);
-    else groups.push([slot]);
-  }
-  return groups;
+/**
+ * Die Themen-Tafeln (vorläufig), alle mit Überschrift auf einmal, damit die ganze Karte auf einen
+ * Bildschirm passt. Verwandte Tafeln stehen in einem Kasten wie die Karte oben (NSC mit NSC-Aktionen,
+ * Welt mit Wesen). Eine Tafel ist so breit, wie sie Felder nebeneinander hat; kleine Tafeln teilen
+ * sich so eine Reihe.
+ */
+function Themes({ themes }: { themes: readonly CardSectionView[] }) {
+  return (
+    <div className="themes">
+      {boxed(themes).map((group) => (
+        <div key={group[0]!.id} className="card theme-box">
+          {group.map((theme) => (
+            <section key={theme.id} className={`theme span-${columns(theme.slots)}`} aria-labelledby={`theme-${theme.id}`}>
+              <h3 id={`theme-${theme.id}`} className="theme-title">
+                {theme.name}
+              </h3>
+              <div className={layout(theme.slots)} role="group" aria-label={theme.name}>
+                {theme.slots.map((slot) => (
+                  <Tile key={slot.id} slot={slot} />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
 }

@@ -28,10 +28,16 @@ export const EntrySchema = z.object({
   retired: z.boolean().default(false),
 });
 
+/** Eine Spalte eines Feldes: eine Liste von Einträgen. */
+export const ColumnSchema = z.object({
+  entries: z.array(EntrySchema).min(1),
+});
+
+/** Ein Feld hat eine oder zwei Spalten; mit zwei Spalten zieht es ein Paar. */
 export const SlotSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
-  entries: z.array(EntrySchema).min(1),
+  columns: z.array(ColumnSchema).min(1).max(2),
 });
 
 export const SectionKindSchema = z.enum(['card', 'theme']);
@@ -89,9 +95,9 @@ export const ReferenceDataSchema = z
     uniqueIds(data.skills.map((s) => s.short), 'Kürzel', ctx);
     uniqueIds(data.sections.map((s) => s.id), 'Bereich', ctx);
     uniqueIds(slots.map((s) => s.id), 'Feld', ctx);
-    uniqueIds(slots.flatMap((s) => s.entries.map((e) => e.id)), 'Eintrag', ctx);
-    if (slots.every((slot) => slot.entries.every((e) => e.retired))) {
-      ctx.addIssue({ code: 'custom', message: 'Kein Feld hat einen Eintrag, der nicht ausgeblendet ist' });
+    uniqueIds(slots.flatMap((s) => s.columns.flatMap((c) => c.entries.map((e) => e.id))), 'Eintrag', ctx);
+    if (slots.every((slot) => slot.columns.some((c) => c.entries.every((e) => e.retired)))) {
+      ctx.addIssue({ code: 'custom', message: 'Kein Feld ist sichtbar: Jedes hat eine Spalte nur mit ausgeblendeten Einträgen' });
     }
     const skillIds = new Set(data.skills.map((s) => s.id));
     for (const example of data.examples) {
@@ -106,6 +112,7 @@ export type Odds = z.infer<typeof OddsSchema>;
 export type HouseRules = z.infer<typeof HouseRulesSchema>;
 export type Skill = z.infer<typeof SkillSchema>;
 export type Entry = z.infer<typeof EntrySchema>;
+export type Column = z.infer<typeof ColumnSchema>;
 export type Slot = z.infer<typeof SlotSchema>;
 export type SectionKind = z.infer<typeof SectionKindSchema>;
 export type Section = z.infer<typeof SectionSchema>;

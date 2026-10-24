@@ -58,7 +58,7 @@ export function AboutScreen({ persistent }: { persistent: boolean }) {
             <a href="https://wordmillgames.com" target="_blank" rel="noreferrer">
               Word Mill Games
             </a>
-            . Verb, Adjektiv und Substantiv des Zufallsereignisses, Hören und Riechen bei den Sinneseindrücken und die Themen-Reiter stammen
+            . Aktion und Beschreibung des Zufallsereignisses, Hören und Riechen bei den Sinneseindrücken und die Themen-Tafeln stammen
             aus seinen Bedeutungstabellen (Actions, Descriptions und Elements), ins Deutsche übersetzt und in der Schreibweise angepasst. Diese Inhalte stehen unter der Lizenz{' '}
             <a href="https://wordmillgames.com/license.html" target="_blank" rel="noreferrer">
               CC BY-NC

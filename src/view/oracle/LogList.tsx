@@ -1,5 +1,5 @@
 import type { LogItem } from '../../controller';
-import { clockTime, partLabel, quoted, taskDetail, taskTitle } from '../format';
+import { clockTime, pairText, partLabel, quoted, taskDetail, taskTitle } from '../format';
 
 /** Der Log wie ein Chat: das Älteste oben, das Neueste unten, direkt über den Knöpfen. */
 export function LogList({ log }: { log: readonly LogItem[] }) {
@@ -79,7 +79,7 @@ function EntryBody({ item }: { item: LogItem }) {
             {item.items.map((pick, i) => (
               <div key={i} style={{ display: 'contents' }}>
                 <dt>{pick.section === pick.slot ? pick.section : `${pick.section} · ${pick.slot}`}</dt>
-                <dd>{pick.text}</dd>
+                <dd>{pairText(pick.texts)}</dd>
               </div>
             ))}
           </dl>

@@ -1,7 +1,7 @@
 import { referenceData, type Entry, type Odds, type Section, type Skill, type Slot } from '../data';
 import { DomainError } from './errors';
 
-export type { Entry, ExampleCharacter, HouseRules, Odds, Section, SectionKind, Skill, Slot } from '../data';
+export type { Column, Entry, ExampleCharacter, HouseRules, Odds, Section, SectionKind, Skill, Slot } from '../data';
 
 /** Die Referenzdaten: feste Tabellen, in jeder Kampagne gleich. */
 export const ref = referenceData;
@@ -16,7 +16,7 @@ for (const section of ref.sections) {
   for (const slot of section.slots) {
     slotById.set(slot.id, slot);
     sectionBySlot.set(slot.id, section);
-    for (const entry of slot.entries) {
+    for (const entry of slot.columns.flatMap((c) => c.entries)) {
       entryById.set(entry.id, entry);
       slotByEntry.set(entry.id, slot);
     }
@@ -40,9 +40,13 @@ export function entryOf(id: string): Entry {
   return found(entryById.get(id), 'Den Eintrag', id);
 }
 
-/** Das Feld, zu dem ein Eintrag gehört. Jeder Eintrag gehört zu genau einem Feld. */
+/** Das Feld, zu dem ein Eintrag gehört. Jeder Eintrag gehört zu genau einer Spalte, jede Spalte zu genau einem Feld. */
 export function slotOfEntry(entryId: string): Slot {
   return found(slotByEntry.get(entryId), 'Den Eintrag', entryId);
+}
+
+export function slotWithId(id: string): Slot {
+  return found(slotById.get(id), 'Das Feld', id);
 }
 
 export function sectionOfSlot(slotId: string): Section {

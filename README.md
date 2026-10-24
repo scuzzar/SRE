@@ -18,7 +18,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 - **Ja/Nein-Orakel** mit drei Stufen wie beim GMA: Hoch (75 %), Mittel (50 %), Gering (25 %). Die Stufe wird ganz unten eingestellt und bleibt stehen; sie gilt auch als Schwierigkeit für Proben (6+ / 8+ / 10+).
 - **Knopf „Karte ziehen“**: zieht eine Inspirationskarte im Aufbau des GMA2e (Zufallsereignis, Sinne, Szenentyp, Besitz, Situation, Namen, Merkmale, Flavortext). Die Karte landet **nicht direkt im Log**, sondern erscheint im Vordergrund:
   - Eine gestellte Frage steht oben auf der Karte.
-  - Man tippt die Einträge an, die man nutzen will (**Mehrfachauswahl**, auch über mehrere Themen hinweg).
+  - Man tippt die Felder an, die man nutzen will (**Mehrfachauswahl**, auch über mehrere Themen hinweg). Ein Feld aus Mythic zieht immer ein **Paar** von Begriffen (verraten · Technologie); man nimmt das Paar immer ganz.
   - Unten bestätigt ein **Haken** die Auswahl: Nur die ausgewählten Einträge kommen in den Log.
   - Außerdem: Karte verwerfen oder neu ziehen.
 - **Knopf „2W6“**: ein einfacher Würfelwurf durch die App.
@@ -189,8 +189,8 @@ Die Karte ist vorerst **nur für Prompts** da. Ja/Nein-Antworten, Schwierigkeite
 
 | Bereich auf der Karte | Felder (einzeln antippbar) |
 |---|---|
-| Zufallsereignis | Verb · Adjektiv · Substantiv (aus Mythics Bedeutungstabellen, siehe unten) |
-| Sinneseindrücke | Hören, Sehen, Fühlen, Riechen (Hören und Riechen aus Mythics Tabellen, siehe unten) |
+| Zufallsereignis | Aktion (Verb · Substantiv) und Beschreibung (Adverb · Adjektiv), je ein Paar aus Mythics Bedeutungstabellen, siehe unten |
+| Sinneseindrücke | Hören, Sehen, Fühlen, Riechen (Hören und Riechen als Paar aus Mythics Tabellen, siehe unten) |
 | Szenentyp | Eine Szenenidee |
 | Besitz | Eine Kategorie mit drei Beispielen |
 | Situation | Auslöser, Ort, Einsatz |
@@ -200,19 +200,19 @@ Die Karte ist vorerst **nur für Prompts** da. Ja/Nein-Antworten, Schwierigkeite
 
 Besitz und Situation stehen wie auf der GMA-Karte links, Namen und Merkmale rechts daneben.
 
-**Zurzeit** zeigt die Karte nur die Felder, für die es Einträge aus Mythic gibt: Verb, Adjektiv und Substantiv des Zufallsereignisses, Hören und Riechen sowie die Themen-Reiter mit Mythics Elements-Tabellen (siehe unten). Die übrigen Felder und Bereiche sind ausgeblendet, bis es Einträge für sie gibt; ältere Logeinträge daraus bleiben lesbar.
+**Zurzeit** zeigt die Karte nur die Felder, für die es Einträge aus Mythic gibt: Aktion und Beschreibung des Zufallsereignisses, Hören und Riechen sowie die Themen-Tafeln mit Mythics Elements-Tabellen (siehe unten). Die übrigen Felder und Bereiche sind ausgeblendet, bis es Einträge für sie gibt; ältere Logeinträge daraus bleiben lesbar.
 
-**Themen-Reiter (vorläufig):** Unter der Karte hängen Reiter, deren Felder ebenfalls antippbar sind und mit in den Log gehen. Zurzeit sind es die Elements-Tabellen von Mythic GME 2e, die zu Traveller passen, nach Themen sortiert. Aus jeder Tabelle zieht die Karte wie bei Mythic **zwei Begriffe**, die nebeneinanderstehen:
+**Themen-Tafeln (vorläufig):** Unter der Karte stehen Tafeln mit Überschrift, alle auf einmal und ohne Reiter, in Kästen wie die Karte selbst (NSC mit NSC-Aktionen, Welt mit Wesen, Handlung allein), sodass die ganze Karte auf einen Handybildschirm passt. Ihre Felder sind ebenfalls antippbar und gehen mit in den Log. Zurzeit sind es die Elements-Tabellen von Mythic GME 2e, die zu Traveller passen, nach Themen sortiert. Aus jeder Tabelle zieht die Karte wie bei Mythic **ein Paar** von Begriffen in einem Feld; bis zu drei Felder stehen nebeneinander:
 
-| Reiter | Tabellen |
+| Tafel | Tabellen |
 |---|---|
-| NSC | Aussehen, Persönlichkeit, Motivation, Hintergrund, Identität, Fertigkeit, Eigenschaft & Schwäche, Gespräch, Kampfaktion, Aktion |
-| Welt | Zivilisation, Stadt, Gelände, Behausung, Ort |
-| Schiff | Raumschiff |
-| Wesen | Spezies, Kreatur, Fähigkeit, Tierverhalten |
+| NSC | Aussehen, Persönlichkeit, Motivation, Hintergrund, Identität, Eigenschaft & Schwäche |
+| NSC-Aktionen | Gespräch, Kampfaktion, Aktion |
+| Welt | Ort, Stadt, Schiff, Zivilisation, Gelände, Behausung |
+| Wesen | Spezies, Kreatur, Tierverhalten |
 | Handlung | Wendung, Stimmung, Botschaft, Gegenstand, Fund |
 
-Die früheren eigenen Reiter (Auftrag, Begegnung, Handel und die eigenen Felder von NSC, Welt, Schiff) sind ausgeblendet. Die Reiter sollen später an einen anderen Ort in der App wandern; wohin, ist noch offen. Die Inhalte der App sind eigene Listen mit Traveller-Bezug, nicht die Texte des GMA-Decks. Ausnahmen kommen aus den Bedeutungstabellen von Mythic GME 2e, ins Deutsche übersetzt, je 100 Einträge: Verb, Adjektiv und Substantiv des Zufallsereignisses (Actions 1, Descriptions 2, Actions 2) sowie Hören und Riechen bei den Sinneseindrücken (Sounds, Smells); dazu die Elements-Tabellen der Themen-Reiter.
+Die früheren eigenen Reiter (Auftrag, Begegnung, Handel und die eigenen Reiter und Felder von NSC, Welt, Schiff) sind ausgeblendet, ebenso die einzelnen Felder Verb, Adjektiv und Substantiv aus der Zeit vor den Paaren die NSC-Tabelle Fertigkeit und die Wesen-Tabelle Fähigkeit. Die Tafeln sollen später an einen anderen Ort in der App wandern; wohin, ist noch offen. Die Inhalte der App sind eigene Listen mit Traveller-Bezug, nicht die Texte des GMA-Decks. Ausnahmen kommen aus den Bedeutungstabellen von Mythic GME 2e, ins Deutsche übersetzt, je 100 Einträge: Aktion und Beschreibung des Zufallsereignisses (Actions, Descriptions, je mit ihren zwei Spalten), Hören und Riechen bei den Sinneseindrücken (Sounds, Smells) und die Elements-Tabellen der Themen-Tafeln; aus einer Elements-Tabelle zieht die Karte wie Mythic zweimal.
 
 **Noch nicht auf der Karte:** Chancen (dafür gibt es das eigene Ja/Nein-Orakel), Schwierigkeitsgenerator, Würfelrad, Impuls-Symbole, Kartensymbol, Kartennummer.
 
@@ -250,7 +250,7 @@ Diese Punkte werden als Nächstes gemeinsam geklärt:
 - **Entschieden: mobil zuerst, als Web-App (PWA).** Eine native App ist später über Capacitor möglich, ohne Neuschreiben.
 - Später: Wie gibt man physische Würfe am schnellsten ein (z. B. Würfelaugen antippen, Summe eintippen)?
 - Später: Wie wächst die App über Version 1 hinaus, ohne den Hauptscreen zu überladen?
-- Wohin wandern die Themen-Reiter (Auftrag, NSC, Begegnung, Welt, Schiff, Handel), die vorläufig unter der Karte hängen?
+- Wohin wandern die Themen-Tafeln (NSC, NSC-Aktionen, Welt, Wesen, Handlung), die vorläufig unter der Karte stehen?
 - Der UI-Entwurf zeigt unter 6+ / 8+ / 10+ die Namen *Einfach / Durchschnittlich / Schwierig*. Die Stufe (`Odds`) hat im Domänenmodell dafür kein Feld; die App zeigt deshalb vorerst nur die Zielwerte. Soll `Odds` ein zweites Namensfeld für Proben bekommen?
 
 ### Architektur
