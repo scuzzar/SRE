@@ -14,19 +14,19 @@ test('Probe: Fertigkeit, dann Attribute, Schwierigkeit unten, Ergebnis als Popup
   await expect(dock(page).getByRole('button', { name: 'Probe würfeln' })).toBeDisabled();
 
   await kira.getByRole('button', { name: /Kira Vant/ }).click();
-  await expect(kira.getByRole('button', { name: /^GES A/ })).toBeDisabled();
+  await expect(kira.getByRole('button', { name: /^DEX A/ })).toBeDisabled();
   await kira.getByRole('button', { name: 'Pilot-2' }).click();
 
-  await expect(kira.getByRole('button', { name: /^GES A: würde DM \+1/ })).toBeEnabled();
-  await expect(kira.getByRole('button', { name: /^SOZ 5: würde DM −1/ })).toBeEnabled();
-  await expect(kira.getByRole('button', { name: /^AUS 8: kein Einfluss/ })).toBeDisabled();
-  await kira.getByRole('button', { name: /^GES A/ }).click();
-  await expect(kira.getByRole('button', { name: /^GES A: gewählt/ })).toHaveAttribute('aria-pressed', 'true');
+  await expect(kira.getByRole('button', { name: /^DEX A: würde DM \+1/ })).toBeEnabled();
+  await expect(kira.getByRole('button', { name: /^SOC 5: würde DM −1/ })).toBeEnabled();
+  await expect(kira.getByRole('button', { name: /^END 8: kein Einfluss/ })).toBeDisabled();
+  await kira.getByRole('button', { name: /^DEX A/ }).click();
+  await expect(kira.getByRole('button', { name: /^DEX A: gewählt/ })).toHaveAttribute('aria-pressed', 'true');
 
   await dock(page).getByRole('radio', { name: '10+' }).click();
   await expect(dock(page)).toContainText('Braucht 7+');
   await expect(dock(page)).toContainText('58 % · 2W6 +3 ≥ 10');
-  await expect(dock(page)).toContainText('Pilot-2 +2 · GES A +1');
+  await expect(dock(page)).toContainText('Pilot-2 +2 · DEX A +1');
 
   await dock(page).getByRole('button', { name: 'Probe würfeln' }).click();
   const result = page.getByRole('alertdialog');
@@ -41,12 +41,12 @@ test('Probe: Fertigkeit, dann Attribute, Schwierigkeit unten, Ergebnis als Popup
   await expect(entry).toContainText('Kira Vant · Pilot-2 · 10+');
 });
 
-test('Probe ohne Fertigkeit: unmöglich, aber würfelbar', async ({ page }) => {
+test('Probe ohne Fertigkeit: direkt aus der Karte gestartet, unmöglich, aber würfelbar', async ({ page }) => {
   await openCharacters(page);
   await dock(page).getByRole('radio', { name: '10+' }).click();
   const jonas = card(page, 'Jonas Reyl');
-  await jonas.getByRole('button', { name: /Jonas Reyl/ }).click();
   await jonas.getByRole('button', { name: 'Ohne (−3)' }).click();
+  await expect(dock(page)).toContainText('Jonas Reyl');
   await expect(dock(page)).toContainText('Unmöglich');
   await expect(dock(page)).toContainText('0 %');
   await dock(page).getByRole('button', { name: 'Probe würfeln' }).click();
@@ -62,15 +62,15 @@ test('Charakter anlegen: Fehler im Editor, dann gespeichert', async ({ page }) =
 
   await editor.getByLabel('Name').fill('Mara Quell');
   await editor.getByLabel('INT').selectOption('11');
-  await editor.getByLabel('Fertigkeit hinzufügen').selectOption({ label: 'Medizin' });
-  await editor.getByLabel('Stufe Medizin').fill('2');
+  await editor.getByLabel('Fertigkeit hinzufügen').selectOption({ label: 'Medical' });
+  await editor.getByLabel('Stufe Medical').fill('2');
   await editor.getByLabel('Credits').fill('800');
   await editor.getByRole('button', { name: 'Speichern' }).click();
   await expect(editor).toBeHidden();
 
   const mara = card(page, 'Mara Quell');
   await mara.getByRole('button', { name: /Mara Quell/ }).click();
-  await expect(mara.getByRole('button', { name: 'Medizin-2' })).toBeVisible();
+  await expect(mara.getByRole('button', { name: 'Medical-2' })).toBeVisible();
   await expect(mara.getByRole('button', { name: /^INT B/ })).toBeVisible();
   await expect(mara).toContainText('Cr 800');
 });

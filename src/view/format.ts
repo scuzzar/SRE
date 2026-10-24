@@ -14,14 +14,14 @@ export function uppCode(upp: Upp): string {
   return [upp.str, upp.dex, upp.end, upp.int, upp.edu, upp.soc].map(hex).join('');
 }
 
-/** Deutsche Kürzel der Attribute. */
+/** Kürzel der Attribute, wie Classic Traveller sie schreibt. */
 export const characteristicLabel: Record<Characteristic, string> = {
   STR: 'STR',
-  DEX: 'GES',
-  END: 'AUS',
+  DEX: 'DEX',
+  END: 'END',
   INT: 'INT',
-  EDU: 'BIL',
-  SOC: 'SOZ',
+  EDU: 'EDU',
+  SOC: 'SOC',
 };
 
 /** Ein DM mit Vorzeichen: +2, −1, ±0. */

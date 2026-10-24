@@ -43,7 +43,7 @@ export function CharactersScreen({ view }: { view: Snapshot }) {
       <section className="dock" aria-label="Probe">
         <div className="task-info" aria-live="polite">
           {!task ? (
-            <span className="task-title">Charakter antippen, dann Fertigkeit wählen</span>
+            <span className="task-title">Fertigkeit antippen, um eine Probe zu starten</span>
           ) : !task.ready ? (
             <span className="task-title">{task.character} · Fertigkeit wählen</span>
           ) : (
@@ -61,11 +61,13 @@ export function CharactersScreen({ view }: { view: Snapshot }) {
             </>
           )}
         </div>
-        <button type="button" className="roll" disabled={!task?.ready} onClick={() => game.rollTask()}>
-          <DiceIcon />
-          Probe würfeln
-        </button>
-        <OddsBar odds={view.odds} variant="task" />
+        <div className="odds-row">
+          <OddsBar odds={view.odds} variant="task" />
+          <button type="button" className="roll" disabled={!task?.ready} onClick={() => game.rollTask()}>
+            <DiceIcon />
+            Probe würfeln
+          </button>
+        </div>
       </section>
     </div>
   );

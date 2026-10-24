@@ -133,9 +133,13 @@ export class GameController {
     this.update({ task: this.state.task?.for === id ? undefined : startTask(this.campaign, id) });
   }
 
-  /** `null` heißt „ohne Fertigkeit“. */
-  chooseSkill(skill: string | null): void {
-    this.update({ task: chooseSkill(this.openTask, this.campaign, skill) });
+  /**
+   * Wählt die Fertigkeit eines Charakters für die Probe; `null` heißt „ohne Fertigkeit“. Gilt die
+   * Probe noch keinem oder einem anderen Charakter, beginnt sie mit dieser Wahl neu.
+   */
+  chooseSkill(id: string, skill: string | null): void {
+    const task = this.state.task?.for === id ? this.state.task : startTask(this.campaign, id);
+    this.update({ task: chooseSkill(task, this.campaign, skill) });
   }
 
   toggleCharacteristic(characteristic: Characteristic): void {

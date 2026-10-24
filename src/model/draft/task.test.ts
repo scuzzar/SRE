@@ -29,7 +29,7 @@ describe('Probe vorbereiten', () => {
     expect(() => toggleCharacteristic(task, hard, 'END')).toThrow(/keinen Einfluss/);
   });
 
-  it('Kira fliegt ein Stunt-Manöver: Schwierig 10+, Pilot +2, GES A +1 → braucht 7+ (58 %)', () => {
+  it('Kira fliegt ein Stunt-Manöver: Schwierig 10+, Pilot +2, DEX A +1 → braucht 7+ (58 %)', () => {
     const task = toggleCharacteristic(chooseSkill(startTask(hard, 'c1'), hard, 'pilot'), hard, 'DEX');
     const odds = evaluateTask(task, hard);
     expect(odds).toMatchObject({ dm: 3, target: 10, need: 7 });

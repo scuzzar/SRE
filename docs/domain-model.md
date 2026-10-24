@@ -24,14 +24,16 @@ jeder Kampagne gleich. **Weiß** sind Werte und Wertelisten.
 ## Begriffe
 
 Die Bezeichner im Code sind englisch, Oberfläche und Dokumentation deutsch. Diese Tabelle ist die
-gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
+gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt. Begriffe und Werte aus Classic
+Traveller bleiben englisch, wie im Regelwerk: die Attributkürzel, die Namen der Fertigkeiten (Pilot,
+Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
 | Deutsch | Code | Was |
 |---|---|---|
 | Kampagne | `Campaign` | Alles, was zu einem Spiel gehört |
 | Charakter | `Character` | Ein Spielercharakter mit seiner Charakterkarte |
 | UPP | `Upp` | Die sechs Attributwerte |
-| Attribut | `Characteristic` | STR, GES (`DEX`), AUS (`END`), INT, BIL (`EDU`), SOZ (`SOC`) |
+| Attribut | `Characteristic` | STR, DEX, END, INT, EDU, SOC |
 | Fertigkeit | `Skill` | Eine Fertigkeit aus der Liste, z. B. Pilot |
 | Fertigkeitsstufe | `SkillLevel` | Die Stufe, die ein Charakter in einer Fertigkeit hat, z. B. Pilot-2 |
 | Stufe (Hoch/Mittel/Gering) | `Odds` | Die eine Auswahl für Orakel und Proben |
@@ -126,7 +128,7 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt.
   nach Regeln gibt es in Version 1 nicht. Die sechs UPP-Werte liegen zwischen 0 und 15. Eine
   Fertigkeit kommt bei einem Charakter höchstens einmal vor, ihre Stufe ist 0 oder mehr; Fertigkeiten
   kommen nur aus der festen Liste der Referenzdaten. Ausrüstung, Herkunft (`background`, z. B.
-  „Ex-Scout · 4 Dienstzeiten · 34 Jahre“) und Notiz sind in Version 1 freier Text, Credits eine
+  „Ex-Scout · 4 Terms · 34 Jahre“) und Notiz sind in Version 1 freier Text, Credits eine
   ganze Zahl.
 - **Löschen und Ausblenden.** Ein Charakter oder eine Fertigkeitsstufe, auf die kein Logeintrag
   verweist, wird wirklich gelöscht. Verweist der Log darauf, wird sie stattdessen ausgeblendet

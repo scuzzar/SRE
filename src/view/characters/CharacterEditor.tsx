@@ -63,7 +63,7 @@ export function CharacterEditor({ editor, skills }: { editor: EditorView; skills
             <input
               value={form.background}
               onChange={(e) => setForm({ ...form, background: e.target.value })}
-              placeholder="z. B. Ex-Scout · 4 Dienstzeiten · 34 Jahre"
+              placeholder="z. B. Ex-Scout · 4 Terms · 34 Jahre"
             />
           </label>
           <fieldset>
