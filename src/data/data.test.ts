@@ -27,6 +27,8 @@ describe('Referenzdaten', () => {
       'theme:Welt',
       'theme:Schiff',
       'theme:Handel',
+      'theme:Wesen',
+      'theme:Handlung',
     ]);
   });
 
@@ -53,7 +55,37 @@ describe('Referenzdaten', () => {
 
   it('haben nur in den Mythic-Feldern Einträge, die nicht ausgeblendet sind', () => {
     const drawable = referenceData.sections.flatMap((s) => s.slots).filter((slot) => slot.entries.some((e) => !e.retired));
-    expect(drawable.map((slot) => slot.id)).toEqual(['event.verb', 'event.adjective', 'event.noun', 'senses.hear', 'senses.smell']);
+    expect(drawable.every((slot) => slot.entries.filter((e) => !e.retired).every((e) => e.id.includes('.mythic.')))).toBe(true);
+    expect(drawable.slice(0, 5).map((slot) => slot.id)).toEqual(['event.verb', 'event.adjective', 'event.noun', 'senses.hear', 'senses.smell']);
+  });
+
+  it('ordnen die Mythic-Tabellen den Themen zu, je Tabelle zwei Felder mit gleicher Beschriftung', () => {
+    const tables = (id: string) => {
+      const slots = referenceData.sections.find((s) => s.id === id)!.slots.filter((slot) => slot.id.endsWith('.1') || slot.id.endsWith('.2'));
+      return slots.filter((_, i) => i % 2 === 0).map((slot) => slot.label);
+    };
+    expect(tables('npc')).toEqual([
+      'Aussehen',
+      'Persönlichkeit',
+      'Motivation',
+      'Hintergrund',
+      'Identität',
+      'Fertigkeit',
+      'Eigenschaft & Schwäche',
+      'Gespräch',
+      'Kampfaktion',
+      'Aktion',
+    ]);
+    expect(tables('world')).toEqual(['Zivilisation', 'Stadt', 'Gelände', 'Behausung', 'Ort']);
+    expect(tables('ship')).toEqual(['Raumschiff']);
+    expect(tables('creatures')).toEqual(['Spezies', 'Kreatur', 'Fähigkeit', 'Tierverhalten']);
+    expect(tables('plot')).toEqual(['Wendung', 'Stimmung', 'Botschaft', 'Gegenstand', 'Fund']);
+    const npc = referenceData.sections.find((s) => s.id === 'npc')!.slots;
+    const [first, second] = [npc.find((s) => s.id === 'npc.appearance.1')!, npc.find((s) => s.id === 'npc.appearance.2')!];
+    expect([first.label, second.label]).toEqual(['Aussehen', 'Aussehen']);
+    expect(first.entries.map((e) => e.text)).toEqual(second.entries.map((e) => e.text));
+    expect([first.entries[0]!.id, second.entries[0]!.id]).toEqual(['npc.appearance.1.mythic.1', 'npc.appearance.2.mythic.1']);
+    expect(first.entries.slice(0, 3).map((e) => e.text)).toEqual(['abnorm', 'bewaffnet', 'aromatisch']);
   });
 
   it('verlangen mindestens ein Feld mit einem Eintrag, der nicht ausgeblendet ist', () => {

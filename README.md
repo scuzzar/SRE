@@ -200,9 +200,19 @@ Die Karte ist vorerst **nur für Prompts** da. Ja/Nein-Antworten, Schwierigkeite
 
 Besitz und Situation stehen wie auf der GMA-Karte links, Namen und Merkmale rechts daneben.
 
-**Zurzeit** zeigt die Karte nur die Felder, für die es Einträge aus Mythic gibt: Verb, Adjektiv und Substantiv des Zufallsereignisses sowie Hören und Riechen. Die übrigen Felder und Bereiche und die Themen-Reiter sind ausgeblendet, bis es Einträge für sie gibt; ältere Logeinträge daraus bleiben lesbar.
+**Zurzeit** zeigt die Karte nur die Felder, für die es Einträge aus Mythic gibt: Verb, Adjektiv und Substantiv des Zufallsereignisses, Hören und Riechen sowie die Themen-Reiter mit Mythics Elements-Tabellen (siehe unten). Die übrigen Felder und Bereiche sind ausgeblendet, bis es Einträge für sie gibt; ältere Logeinträge daraus bleiben lesbar.
 
-**Themen-Reiter (vorläufig):** Unter der Karte hängen die Traveller-Reiter **Auftrag, NSC, Begegnung, Welt, Schiff, Handel**, deren Felder ebenfalls antippbar sind und mit in den Log gehen (zurzeit ausgeblendet). Sie sollen später an einen anderen Ort in der App wandern; wohin, ist noch offen. Die Inhalte der App sind eigene Listen mit Traveller-Bezug, nicht die Texte des GMA-Decks. Ausnahmen kommen aus den Bedeutungstabellen von Mythic GME 2e, ins Deutsche übersetzt, je 100 Einträge: Verb, Adjektiv und Substantiv des Zufallsereignisses (Actions 1, Descriptions 2, Actions 2) sowie Hören und Riechen bei den Sinneseindrücken (Sounds, Smells).
+**Themen-Reiter (vorläufig):** Unter der Karte hängen Reiter, deren Felder ebenfalls antippbar sind und mit in den Log gehen. Zurzeit sind es die Elements-Tabellen von Mythic GME 2e, die zu Traveller passen, nach Themen sortiert. Aus jeder Tabelle zieht die Karte wie bei Mythic **zwei Begriffe**, die nebeneinanderstehen:
+
+| Reiter | Tabellen |
+|---|---|
+| NSC | Aussehen, Persönlichkeit, Motivation, Hintergrund, Identität, Fertigkeit, Eigenschaft & Schwäche, Gespräch, Kampfaktion, Aktion |
+| Welt | Zivilisation, Stadt, Gelände, Behausung, Ort |
+| Schiff | Raumschiff |
+| Wesen | Spezies, Kreatur, Fähigkeit, Tierverhalten |
+| Handlung | Wendung, Stimmung, Botschaft, Gegenstand, Fund |
+
+Die früheren eigenen Reiter (Auftrag, Begegnung, Handel und die eigenen Felder von NSC, Welt, Schiff) sind ausgeblendet. Die Reiter sollen später an einen anderen Ort in der App wandern; wohin, ist noch offen. Die Inhalte der App sind eigene Listen mit Traveller-Bezug, nicht die Texte des GMA-Decks. Ausnahmen kommen aus den Bedeutungstabellen von Mythic GME 2e, ins Deutsche übersetzt, je 100 Einträge: Verb, Adjektiv und Substantiv des Zufallsereignisses (Actions 1, Descriptions 2, Actions 2) sowie Hören und Riechen bei den Sinneseindrücken (Sounds, Smells); dazu die Elements-Tabellen der Themen-Reiter.
 
 **Noch nicht auf der Karte:** Chancen (dafür gibt es das eigene Ja/Nein-Orakel), Schwierigkeitsgenerator, Würfelrad, Impuls-Symbole, Kartensymbol, Kartennummer.
 
@@ -260,7 +270,7 @@ Was das für die Inhalte der App heißt (Stand der Prüfung: Oktober 2026; keine
 
 | Quelle | Was wir übernehmen dürfen | Bedingungen |
 |---|---|---|
-| **Mythic** (Word Mill Games, Tana Pigeon) | Den **Text** von Mythic GME 2e und weiteren Mythic-Produkten, auch die Tabellen (Fate Chart, Zufallsereignisse, Bedeutungstabellen); Übersetzen und Anpassen ist erlaubt. | Lizenz [CC BY-NC](https://wordmillgames.com/license.html): nicht kommerziell, Quellenangabe (Produkt, Autorin, Link zu Word Mill Games), Hinweis auf Änderungen, nicht als „offiziell“ ausgeben. Grafik und Gestaltung der Bücher sind nicht abgedeckt. Die Mythic-Daten behalten diese Lizenz, auch wenn der Code eine andere hat. In der App sind das bisher die Einträge `*.mythic.*` in `src/data/sections.json`. |
+| **Mythic** (Word Mill Games, Tana Pigeon) | Den **Text** von Mythic GME 2e und weiteren Mythic-Produkten, auch die Tabellen (Fate Chart, Zufallsereignisse, Bedeutungstabellen); Übersetzen und Anpassen ist erlaubt. | Lizenz [CC BY-NC](https://wordmillgames.com/license.html): nicht kommerziell, Quellenangabe (Produkt, Autorin, Link zu Word Mill Games), Hinweis auf Änderungen, nicht als „offiziell“ ausgeben. Grafik und Gestaltung der Bücher sind nicht abgedeckt. Die Mythic-Daten behalten diese Lizenz, auch wenn der Code eine andere hat. In der App sind das die Einträge `*.mythic.*` in `src/data/sections.json` und alles in `src/data/mythic-tables.json`. |
 | **Game Master's Apprentice** (Larcenous Designs) | Nur den **Aufbau** der Karte (Bereiche und Felder). | Die Karteninhalte sind geschützt und nur mit Erlaubnis von Larcenous Designs nutzbar. Bis dahin füllen wir die Felder mit eigenen Einträgen. |
 | **Classic Traveller** (Far Future Enterprises) | Die **Mechanik**: Würfe, DMs, Abläufe als Programm. | Nach der Fan-Policy von FFE: kostenlos, Copyright- und Markenhinweis in der App, Regeltexte nicht über etwa eine Seite hinaus abschreiben. Vor einer Veröffentlichung die aktuelle Policy prüfen. |
 

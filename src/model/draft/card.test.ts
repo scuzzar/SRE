@@ -19,7 +19,9 @@ describe('Karte ziehen', () => {
 
   it('übergeht Felder, deren Einträge alle ausgeblendet sind', () => {
     const drawnSlots = drawCard(fixedRandom()).drawn.map((e) => slotOf({ picked: e }).id);
-    expect(drawnSlots).toEqual(['event.verb', 'event.adjective', 'event.noun', 'senses.hear', 'senses.smell']);
+    expect(drawnSlots.slice(0, 5)).toEqual(['event.verb', 'event.adjective', 'event.noun', 'senses.hear', 'senses.smell']);
+    expect(drawnSlots).not.toContain('senses.see');
+    expect(drawnSlots).not.toContain('npc.occupation');
   });
 
   it('zieht nie einen ausgeblendeten Eintrag, auch nicht mit dem größten Wurf', () => {

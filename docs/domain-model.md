@@ -10,8 +10,9 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > (24. Oktober 2026, siehe *Einträge austauschen*); ausgeblendete Felder und Bereiche (ebenso).
 >
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic: Verb, Adjektiv und Substantiv
-> des Zufallsereignisses sowie Hören und Riechen. Alle übrigen Felder und Bereiche, die
-> Themen-Reiter eingeschlossen, sind ausgeblendet, bis es Einträge für sie gibt.
+> des Zufallsereignisses, Hören und Riechen sowie die Themen-Reiter NSC, Welt, Schiff, Wesen und
+> Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
+> Einträge für sie gibt.
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -149,6 +150,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   in der App. Pfeile führen nur aus Spielstand
   und Entwürfen in die Referenzdaten, nie zurück. Die Einträge sind eigene Inhalte oder stammen aus
   Mythic GME 2e (Lizenz CC BY-NC, ins Deutsche übersetzt), nie aus den Texten des GMA-Decks.
+- **Zwei Begriffe je Mythic-Tabelle.** Aus einer Elements-Tabelle zieht man wie bei Mythic zwei
+  Begriffe. Dafür hat der Bereich zwei Felder mit gleicher Beschriftung, jedes mit eigenen Einträgen
+  (wie bei *Namen*), sodass jeder Eintrag zu genau einem Feld gehört. Die beiden Begriffe können
+  gleich ausfallen. In den Daten steht jede Tabelle nur einmal (`src/data/mythic-tables.json`);
+  die zwei Felder entstehen beim Laden.
 - **Einträge austauschen.** Ein Eintrag, der nicht mehr gezogen werden soll, wird nicht gelöscht und
   seine Id nicht neu vergeben, sondern ausgeblendet (`retired`): Ziehen übergeht ihn, alte
   Logeinträge zeigen ihn weiter mit seinem Text. Ob ein Log auf ihn verweist, weiß nur das jeweilige
