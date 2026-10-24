@@ -157,7 +157,7 @@ function Banded({ section, variant, hideLabels }: { section: CardSectionView | u
 /**
  * Die Themen-Tafeln (vorläufig), alle mit Überschrift auf einmal, damit die ganze Karte auf einen
  * Bildschirm passt. Eine Tafel ist so breit, wie sie Felder nebeneinander hat; kleine Tafeln teilen
- * sich so eine Reihe (Schiff neben Wesen).
+ * sich so eine Reihe.
  */
 function Themes({ themes }: { themes: readonly CardSectionView[] }) {
   return (

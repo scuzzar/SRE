@@ -26,9 +26,9 @@ describe('Referenzdaten', () => {
       'theme:NSC-Aktionen',
       'theme:Begegnung',
       'theme:Welt',
-      'theme:Schiff',
       'theme:Wesen',
       'theme:Handlung',
+      'theme:Schiff',
       'theme:Handel',
     ]);
   });
@@ -68,8 +68,8 @@ describe('Referenzdaten', () => {
         .map((s) => s.label);
     expect(tables('npc')).toEqual(['Aussehen', 'Persönlichkeit', 'Motivation', 'Hintergrund', 'Identität', 'Eigenschaft & Schwäche']);
     expect(tables('npc-actions')).toEqual(['Gespräch', 'Kampfaktion', 'Aktion']);
-    expect(tables('world')).toEqual(['Zivilisation', 'Stadt', 'Gelände', 'Behausung', 'Ort']);
-    expect(tables('ship')).toEqual(['Raumschiff']);
+    expect(tables('world')).toEqual(['Ort', 'Stadt', 'Schiff', 'Zivilisation', 'Gelände', 'Behausung']);
+    expect(tables('ship')).toEqual([]);
     expect(tables('creatures')).toEqual(['Spezies', 'Kreatur', 'Fähigkeit', 'Tierverhalten']);
     expect(tables('plot')).toEqual(['Wendung', 'Stimmung', 'Botschaft', 'Gegenstand', 'Fund']);
     expect(active(slot('mythic.npc.appearance').columns[0]!).slice(0, 3).map((e) => e.text)).toEqual(['abnorm', 'bewaffnet', 'aromatisch']);

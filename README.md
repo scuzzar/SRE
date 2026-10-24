@@ -208,12 +208,11 @@ Besitz und Situation stehen wie auf der GMA-Karte links, Namen und Merkmale rech
 |---|---|
 | NSC | Aussehen, Persönlichkeit, Motivation, Hintergrund, Identität, Eigenschaft & Schwäche |
 | NSC-Aktionen | Gespräch, Kampfaktion, Aktion |
-| Welt | Zivilisation, Stadt, Gelände, Behausung, Ort |
-| Schiff | Raumschiff |
+| Welt | Ort, Stadt, Schiff, Zivilisation, Gelände, Behausung |
 | Wesen | Spezies, Kreatur, Fähigkeit, Tierverhalten |
 | Handlung | Wendung, Stimmung, Botschaft, Gegenstand, Fund |
 
-Die früheren eigenen Reiter (Auftrag, Begegnung, Handel und die eigenen Felder von NSC, Welt, Schiff) sind ausgeblendet, ebenso die einzelnen Felder Verb, Adjektiv und Substantiv aus der Zeit vor den Paaren und die NSC-Tabelle Fertigkeit. Die Tafeln sollen später an einen anderen Ort in der App wandern; wohin, ist noch offen. Die Inhalte der App sind eigene Listen mit Traveller-Bezug, nicht die Texte des GMA-Decks. Ausnahmen kommen aus den Bedeutungstabellen von Mythic GME 2e, ins Deutsche übersetzt, je 100 Einträge: Aktion und Beschreibung des Zufallsereignisses (Actions, Descriptions, je mit ihren zwei Spalten), Hören und Riechen bei den Sinneseindrücken (Sounds, Smells) und die Elements-Tabellen der Themen-Tafeln; aus einer Elements-Tabelle zieht die Karte wie Mythic zweimal.
+Die früheren eigenen Reiter (Auftrag, Begegnung, Handel und die eigenen Reiter und Felder von NSC, Welt, Schiff) sind ausgeblendet, ebenso die einzelnen Felder Verb, Adjektiv und Substantiv aus der Zeit vor den Paaren und die NSC-Tabelle Fertigkeit. Die Tafeln sollen später an einen anderen Ort in der App wandern; wohin, ist noch offen. Die Inhalte der App sind eigene Listen mit Traveller-Bezug, nicht die Texte des GMA-Decks. Ausnahmen kommen aus den Bedeutungstabellen von Mythic GME 2e, ins Deutsche übersetzt, je 100 Einträge: Aktion und Beschreibung des Zufallsereignisses (Actions, Descriptions, je mit ihren zwei Spalten), Hören und Riechen bei den Sinneseindrücken (Sounds, Smells) und die Elements-Tabellen der Themen-Tafeln; aus einer Elements-Tabelle zieht die Karte wie Mythic zweimal.
 
 **Noch nicht auf der Karte:** Chancen (dafür gibt es das eigene Ja/Nein-Orakel), Schwierigkeitsgenerator, Würfelrad, Impuls-Symbole, Kartensymbol, Kartennummer.
 
@@ -251,7 +250,7 @@ Diese Punkte werden als Nächstes gemeinsam geklärt:
 - **Entschieden: mobil zuerst, als Web-App (PWA).** Eine native App ist später über Capacitor möglich, ohne Neuschreiben.
 - Später: Wie gibt man physische Würfe am schnellsten ein (z. B. Würfelaugen antippen, Summe eintippen)?
 - Später: Wie wächst die App über Version 1 hinaus, ohne den Hauptscreen zu überladen?
-- Wohin wandern die Themen-Tafeln (NSC, NSC-Aktionen, Welt, Schiff, Wesen, Handlung), die vorläufig unter der Karte stehen?
+- Wohin wandern die Themen-Tafeln (NSC, NSC-Aktionen, Welt, Wesen, Handlung), die vorläufig unter der Karte stehen?
 - Der UI-Entwurf zeigt unter 6+ / 8+ / 10+ die Namen *Einfach / Durchschnittlich / Schwierig*. Die Stufe (`Odds`) hat im Domänenmodell dafür kein Feld; die App zeigt deshalb vorerst nur die Zielwerte. Soll `Odds` ein zweites Namensfeld für Proben bekommen?
 
 ### Architektur

@@ -49,7 +49,7 @@ test('Inspirationskarte: auswählen, bestätigen, nur die Auswahl kommt in den L
   await action.click();
   await expect(action).toHaveAttribute('aria-pressed', 'true');
   // Alle Themen-Tafeln stehen mit Überschrift auf einmal da, ohne Scrollen.
-  await expect(card.getByRole('heading', { level: 3 })).toHaveText(['NSC', 'NSC-Aktionen', 'Welt', 'Schiff', 'Wesen', 'Handlung']);
+  await expect(card.getByRole('heading', { level: 3 })).toHaveText(['NSC', 'NSC-Aktionen', 'Welt', 'Wesen', 'Handlung']);
   const body = card.locator('.sheet-body');
   expect(await body.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(0);
   await card.getByRole('group', { name: 'NSC', exact: true }).getByRole('button').first().click();

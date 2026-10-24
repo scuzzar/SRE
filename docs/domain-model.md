@@ -12,7 +12,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 >
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen sowie die Themen-Tafeln NSC, NSC-Aktionen,
-> Welt, Schiff, Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
+> Welt (mit Schiff), Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
 > Einträge für sie gibt.
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
