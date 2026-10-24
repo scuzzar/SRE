@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { CardSectionView, CardView } from '../../controller';
 import { pairText, quoted } from '../format';
 import { useGame } from '../game-context';
@@ -6,7 +5,7 @@ import { CheckIcon, CloseIcon, SenseIcon } from '../icons';
 
 type SlotView = CardSectionView['slots'][number];
 
-/** Die offene Inspirationskarte im Vordergrund. Aufbau nach der GMA2e-Karte, darunter die Themen-Reiter. Ein Paar steht in einem Feld. */
+/** Die offene Inspirationskarte im Vordergrund. Aufbau nach der GMA2e-Karte, darunter die Themen-Tafeln. Ein Paar steht in einem Feld. */
 export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: () => void }) {
   const game = useGame();
   const cardSections = card.sections.filter((s) => s.kind === 'card');
@@ -25,8 +24,7 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
         </div>
         {card.question && (
           <div className="card-question">
-            <span className="kicker">Deine Frage</span>
-            <span style={{ fontWeight: 600 }}>{quoted(card.question)}</span>
+            <span className="kicker">Frage</span> <span style={{ fontWeight: 600 }}>{quoted(card.question)}</span>
           </div>
         )}
         <div className="sheet-body">
@@ -105,9 +103,19 @@ function Tile({ slot, variant, hideLabel }: { slot: SlotView; variant?: 'sense' 
   );
 }
 
-/** Felder mit Paaren stehen zu zweit nebeneinander, jeder Begriff in einer eigenen Zeile; das spart Platz. */
+/**
+ * Wie viele Felder mit Paaren nebeneinanderstehen: drei je Reihe, zwei und vier zu zweit, damit keine
+ * Reihe halb leer bleibt, ein einzelnes allein.
+ */
+function columns(slots: readonly SlotView[]): 1 | 2 | 3 {
+  if (slots.length === 1) return 1;
+  return slots.length === 2 || slots.length === 4 ? 2 : 3;
+}
+
+/** Felder mit Paaren stehen nebeneinander, jeder Begriff in einer eigenen Zeile; das spart Platz. */
 function layout(slots: readonly SlotView[]): string {
-  return slots.every((slot) => slot.texts.length > 1) ? 'card-grid' : 'card-stack';
+  if (!slots.every((slot) => slot.texts.length > 1)) return 'card-stack';
+  return `card-grid cols-${columns(slots)}`;
 }
 
 function Senses({ section }: { section: CardSectionView | undefined }) {
@@ -146,38 +154,26 @@ function Banded({ section, variant, hideLabels }: { section: CardSectionView | u
   );
 }
 
-/** Die Themen-Reiter (vorläufig). Welcher Reiter gewählt ist, ist reine Darstellung. */
+/**
+ * Die Themen-Tafeln (vorläufig), alle mit Überschrift auf einmal, damit die ganze Karte auf einen
+ * Bildschirm passt. Eine Tafel ist so breit, wie sie Felder nebeneinander hat; kleine Tafeln teilen
+ * sich so eine Reihe (Schiff neben Wesen).
+ */
 function Themes({ themes }: { themes: readonly CardSectionView[] }) {
-  const [tab, setTab] = useState(themes[0]!.id);
-  const current = themes.find((t) => t.id === tab) ?? themes[0]!;
   return (
     <div className="themes">
-      <span className="section-title" style={{ fontSize: 11 }}>
-        Themen (vorläufig)
-      </span>
-      <div className="tabs" role="tablist" aria-label="Thema">
-        {themes.map((theme) => {
-          const picked = theme.slots.filter((s) => s.picked).length;
-          return (
-            <button
-              key={theme.id}
-              type="button"
-              role="tab"
-              id={`tab-${theme.id}`}
-              aria-selected={theme.id === current.id}
-              aria-controls="theme-panel"
-              onClick={() => setTab(theme.id)}
-            >
-              {picked ? `${theme.name} · ${picked}` : theme.name}
-            </button>
-          );
-        })}
-      </div>
-      <div className={layout(current.slots)} role="tabpanel" id="theme-panel" aria-labelledby={`tab-${current.id}`}>
-        {current.slots.map((slot) => (
-          <Tile key={slot.id} slot={slot} />
-        ))}
-      </div>
+      {themes.map((theme) => (
+        <section key={theme.id} className={`theme span-${columns(theme.slots)}`} aria-labelledby={`theme-${theme.id}`}>
+          <h3 id={`theme-${theme.id}`} className="theme-title">
+            {theme.name}
+          </h3>
+          <div className={layout(theme.slots)} role="group" aria-label={theme.name}>
+            {theme.slots.map((slot) => (
+              <Tile key={slot.id} slot={slot} />
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

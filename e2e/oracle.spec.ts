@@ -48,10 +48,11 @@ test('Inspirationskarte: auswählen, bestätigen, nur die Auswahl kommt in den L
   expect(actionWords).toHaveLength(2);
   await action.click();
   await expect(action).toHaveAttribute('aria-pressed', 'true');
-  await expect(card.getByRole('tab')).toHaveText(['NSC', 'Welt', 'Schiff', 'Wesen', 'Handlung']);
-  await card.getByRole('tab', { name: 'NSC' }).click();
-  await card.getByRole('tabpanel').getByRole('button').first().click();
-  await expect(card.getByRole('tab', { name: 'NSC · 1' })).toBeVisible();
+  // Alle Themen-Tafeln stehen mit Überschrift auf einmal da, ohne Scrollen.
+  await expect(card.getByRole('heading', { level: 3 })).toHaveText(['NSC', 'NSC-Aktionen', 'Welt', 'Schiff', 'Wesen', 'Handlung']);
+  const body = card.locator('.sheet-body');
+  expect(await body.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(0);
+  await card.getByRole('group', { name: 'NSC', exact: true }).getByRole('button').first().click();
   await expect(card).toContainText('2 ausgewählt');
 
   await card.getByRole('button', { name: /2 Einträge in den Log übernehmen/ }).click();

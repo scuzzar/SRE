@@ -4,7 +4,7 @@ import { DomainError, ref, slotOfEntry, withQuestion, type CardPick, type Clock,
 export interface Card {
   readonly question?: string;
   /**
-   * Je sichtbarem Feld aus jeder Spalte ein Eintrag, Themen-Reiter eingeschlossen, in der Reihenfolge
+   * Je sichtbarem Feld aus jeder Spalte ein Eintrag, Themen-Tafeln eingeschlossen, in der Reihenfolge
    * der Bereiche, Felder und Spalten. Ein Feld mit zwei Spalten steht hier mit seinem Paar.
    */
   readonly drawn: readonly string[];

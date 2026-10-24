@@ -15,9 +15,9 @@ describe('Karte ziehen', () => {
 
   it('zieht aus jeder Mythic-Tabelle ein Paar', () => {
     const card = drawCard(fixedRandom());
-    expect(drawnIn(card, 'event.mythic.action').map((e) => entryOf(e).text)).toEqual(['aufgeben', 'Vorteil']);
-    expect(drawnIn(card, 'event.mythic.description').map((e) => entryOf(e).text)).toEqual(['abenteuerlustig', 'abnorm']);
-    expect(drawnIn(card, 'npc.mythic.appearance')).toEqual(['npc.appearance.1.mythic.1', 'npc.appearance.2.mythic.1']);
+    expect(drawnIn(card, 'mythic.event.action').map((e) => entryOf(e).text)).toEqual(['aufgeben', 'Vorteil']);
+    expect(drawnIn(card, 'mythic.event.description').map((e) => entryOf(e).text)).toEqual(['abenteuerlustig', 'abnorm']);
+    expect(drawnIn(card, 'mythic.npc.appearance')).toEqual(['npc.appearance.1.mythic.1', 'npc.appearance.2.mythic.1']);
   });
 
   it('nimmt eine gestellte Frage mit auf die Karte', () => {
@@ -27,7 +27,7 @@ describe('Karte ziehen', () => {
 
   it('übergeht Felder, in denen eine Spalte nur ausgeblendete Einträge hat', () => {
     const drawnSlots = [...new Set(drawCard(fixedRandom()).drawn.map((e) => slotOf({ picked: [e] }).id))];
-    expect(drawnSlots.slice(0, 4)).toEqual(['event.mythic.action', 'event.mythic.description', 'senses.mythic.sounds', 'senses.mythic.smells']);
+    expect(drawnSlots.slice(0, 4)).toEqual(['mythic.event.action', 'mythic.event.description', 'mythic.senses.sounds', 'mythic.senses.smells']);
     expect(drawnSlots).not.toContain('event.verb');
     expect(drawnSlots).not.toContain('npc.occupation');
   });
@@ -46,7 +46,7 @@ describe('Karte ziehen', () => {
   it('behält ausgetauschte Einträge für alte Logeinträge', () => {
     expect(entryOf('event.verb.3')).toMatchObject({ text: 'suchen', retired: true });
     expect(slotOf({ picked: ['event.verb.3'] }).label).toBe('Verb');
-    expect(slotOf({ picked: ['npc.appearance.2.mythic.5'] }).id).toBe('npc.mythic.appearance');
+    expect(slotOf({ picked: ['npc.appearance.2.mythic.5'] }).id).toBe('mythic.npc.appearance');
   });
 });
 
@@ -54,9 +54,9 @@ describe('Auswahl auf der Karte', () => {
   const card = drawCard(fixedRandom());
 
   it('nimmt ein Feld mit seinem ganzen Paar auf und wieder heraus', () => {
-    const once = togglePick(card, 'event.mythic.description');
-    expect(once.picked).toEqual(['event.mythic.description']);
-    expect(togglePick(once, 'event.mythic.description').picked).toEqual([]);
+    const once = togglePick(card, 'mythic.event.description');
+    expect(once.picked).toEqual(['mythic.event.description']);
+    expect(togglePick(once, 'mythic.event.description').picked).toEqual([]);
   });
 
   it('lässt nur gezogene Felder auswählen', () => {
@@ -67,19 +67,19 @@ describe('Auswahl auf der Karte', () => {
     const asked = { ...card, question: 'Wer steckt dahinter?' };
     expect(canConfirm(asked)).toBe(false);
     expect(() => confirmCard(asked, fixedClock())).toThrow(/mindestens ein Feld/);
-    const picked = togglePick(togglePick(asked, 'npc.mythic.appearance'), 'event.mythic.action');
+    const picked = togglePick(togglePick(asked, 'mythic.npc.appearance'), 'mythic.event.action');
     const pick = confirmCard(picked, fixedClock());
     expect(pick).toEqual({
       kind: 'card',
       at: '2026-10-23T14:00:00.000Z',
       question: 'Wer steckt dahinter?',
-      items: [{ picked: firstOf('event.mythic.action') }, { picked: firstOf('npc.mythic.appearance') }],
+      items: [{ picked: firstOf('mythic.event.action') }, { picked: firstOf('mythic.npc.appearance') }],
     });
     expect(pick.items.map((i) => slotOf(i).label)).toEqual(['Aktion', 'Aussehen']);
   });
 
   it('neu ziehen verliert die Auswahl und behält die Frage', () => {
-    const picked = togglePick({ ...card, question: 'Und jetzt?' }, 'event.mythic.action');
+    const picked = togglePick({ ...card, question: 'Und jetzt?' }, 'mythic.event.action');
     const again = redrawCard(picked, fixedRandom(1));
     expect(again.picked).toEqual([]);
     expect(again.question).toBe('Und jetzt?');

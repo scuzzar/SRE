@@ -11,7 +11,7 @@ describe('Referenzdaten', () => {
     ]);
   });
 
-  it('haben die Bereiche der GMA2e-Karte in Kartenreihenfolge, dann die Themen-Reiter', () => {
+  it('haben die Bereiche der GMA2e-Karte in Kartenreihenfolge, dann die Themen-Tafeln', () => {
     expect(referenceData.sections.map((s) => `${s.kind}:${s.name}`)).toEqual([
       'card:Zufallsereignis',
       'card:Sinneseindrücke',
@@ -23,12 +23,13 @@ describe('Referenzdaten', () => {
       'card:Flavortext',
       'theme:Auftrag',
       'theme:NSC',
+      'theme:NSC-Aktionen',
       'theme:Begegnung',
       'theme:Welt',
       'theme:Schiff',
-      'theme:Handel',
       'theme:Wesen',
       'theme:Handlung',
+      'theme:Handel',
     ]);
   });
 
@@ -41,14 +42,14 @@ describe('Referenzdaten', () => {
       ['Aktion', ['aufgeben', 'Vorteil']],
       ['Beschreibung', ['abenteuerlustig', 'abnorm']],
     ]);
-    const appearance = slot('npc.mythic.appearance');
+    const appearance = slot('mythic.npc.appearance');
     expect(appearance.columns.map((c) => c.entries.length)).toEqual([100, 100]);
     expect(appearance.columns[0]!.entries.map((e) => e.text)).toEqual(appearance.columns[1]!.entries.map((e) => e.text));
     expect(appearance.columns.map((c) => c.entries[0]!.id)).toEqual(['npc.appearance.1.mythic.1', 'npc.appearance.2.mythic.1']);
   });
 
   it('blenden die Felder aus der Zeit vor den Paaren aus', () => {
-    for (const id of ['event.verb', 'event.adjective', 'event.noun', 'senses.hear', 'senses.see', 'senses.feel', 'senses.smell', 'npc.occupation']) {
+    for (const id of ['event.verb', 'event.adjective', 'event.noun', 'senses.hear', 'senses.see', 'senses.feel', 'senses.smell', 'npc.occupation', 'mythic.npc.skills']) {
       expect(slot(id).columns.flatMap(active)).toEqual([]);
     }
   });
@@ -63,25 +64,21 @@ describe('Referenzdaten', () => {
     const tables = (id: string) =>
       referenceData.sections
         .find((s) => s.id === id)!
-        .slots.filter((s) => s.columns.length === 2)
+        .slots.filter((s) => s.columns.every((c) => active(c).length > 0))
         .map((s) => s.label);
-    expect(tables('npc')).toEqual([
-      'Aussehen',
-      'Persönlichkeit',
-      'Motivation',
-      'Hintergrund',
-      'Identität',
-      'Fertigkeit',
-      'Eigenschaft & Schwäche',
-      'Gespräch',
-      'Kampfaktion',
-      'Aktion',
-    ]);
+    expect(tables('npc')).toEqual(['Aussehen', 'Persönlichkeit', 'Motivation', 'Hintergrund', 'Identität', 'Eigenschaft & Schwäche']);
+    expect(tables('npc-actions')).toEqual(['Gespräch', 'Kampfaktion', 'Aktion']);
     expect(tables('world')).toEqual(['Zivilisation', 'Stadt', 'Gelände', 'Behausung', 'Ort']);
     expect(tables('ship')).toEqual(['Raumschiff']);
     expect(tables('creatures')).toEqual(['Spezies', 'Kreatur', 'Fähigkeit', 'Tierverhalten']);
     expect(tables('plot')).toEqual(['Wendung', 'Stimmung', 'Botschaft', 'Gegenstand', 'Fund']);
-    expect(active(slot('npc.mythic.appearance').columns[0]!).slice(0, 3).map((e) => e.text)).toEqual(['abnorm', 'bewaffnet', 'aromatisch']);
+    expect(active(slot('mythic.npc.appearance').columns[0]!).slice(0, 3).map((e) => e.text)).toEqual(['abnorm', 'bewaffnet', 'aromatisch']);
+  });
+
+  it('behalten die Ids der Einträge, auch wenn eine Tabelle in einen anderen Bereich umzieht', () => {
+    const conversation = slot('mythic.npc.conversation');
+    expect(referenceData.sections.find((s) => s.slots.includes(conversation))!.name).toBe('NSC-Aktionen');
+    expect(conversation.columns.map((c) => c.entries[0]!.id)).toEqual(['npc.conversation.1.mythic.1', 'npc.conversation.2.mythic.1']);
   });
 
   it('verlangen mindestens ein sichtbares Feld', () => {

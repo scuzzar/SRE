@@ -11,8 +11,8 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Spalten und Paare (24. Oktober 2026, siehe *Karte ziehen*, *Paare aus Mythic*).
 >
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic, alle als Paar: Aktion und
-> Beschreibung des Zufallsereignisses, Hören und Riechen sowie die Themen-Reiter NSC, Welt, Schiff, Wesen und
-> Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
+> Beschreibung des Zufallsereignisses, Hören und Riechen sowie die Themen-Tafeln NSC, NSC-Aktionen,
+> Welt, Schiff, Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
 > Einträge für sie gibt.
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
@@ -55,7 +55,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Entwurf | Paket `draft` | Was später ein Logeintrag wird, solange es noch offen ist |
 | Probe | `Task` | Eine Probe, solange sie im Charakter-Screen vorbereitet wird |
 | Probenergebnis | `TaskResult` | Eine gewürfelte Probe |
-| Bereich der Karte, Themen-Reiter | `Section` | Zufallsereignis, Sinneseindrücke, …; Auftrag, NSC, … |
+| Bereich der Karte, Themen-Tafel | `Section` | Zufallsereignis, Sinneseindrücke, …; NSC, Welt, … |
 | Feld der Karte | `Slot` | Aktion, Hören, Aussehen, Name, Auslöser, … |
 | Spalte | `Column` | Eine Liste von Einträgen in einem Feld; ein Feld hat eine oder zwei |
 | Paar | (zwei Einträge im `drawn` eines Feldes) | Was ein Feld mit zwei Spalten zieht: aus jeder Spalte einen Eintrag, z. B. „verraten · Technologie“ |
@@ -65,7 +65,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
 - **Was draußen bleibt.** Was nicht gespeichert wird, gehört nicht ins Modell, außer der offenen
   Karte und der Probe in Vorbereitung. Der Controller hält, welcher Screen offen ist und ob das
-  Ergebnis-Popup zu sehen ist. Reine Darstellung bleibt in der View: der gewählte Themen-Reiter, der
+  Ergebnis-Popup zu sehen ist. Reine Darstellung bleibt in der View: wie Felder und Tafeln angeordnet sind, der
   Text im Fragefeld während des Tippens, Farben, die Hex-Schreibweise der UPP und das Format der
   Uhrzeit.
 - **Entwürfe.** Im Paket `draft` liegen die Entwürfe eines Logeintrags: die offene Karte (`Card`,
@@ -101,7 +101,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Die Frage ist freiwillig. „Außergewöhnlich Ja/Nein“, Chaosfaktor und Zufallsereignisse nach Mythic
   kommen erst nach Version 1.
 - **Karte ziehen.** Ziehen legt eine `Card` an: für jedes Feld aller Bereiche aus jeder seiner
-  Spalten einen nicht ausgeblendeten Eintrag zufällig (`drawn`), die Themen-Reiter eingeschlossen,
+  Spalten einen nicht ausgeblendeten Eintrag zufällig (`drawn`), die Themen-Tafeln eingeschlossen,
   in der Reihenfolge der Bereiche, Felder und Spalten. Ein Feld mit zwei Spalten zieht so ein
   **Paar**. Ausgeblendete Felder übergeht es (siehe *Einträge austauschen*).
   Eine gestellte Frage geht auf die Karte über. Der Bereich *Namen* hat drei Felder mit je eigenen
