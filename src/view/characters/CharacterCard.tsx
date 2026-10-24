@@ -4,8 +4,8 @@ import { useGame } from '../game-context';
 
 /**
  * Eine Charakterkarte: oben das UPP, darunter die Fertigkeiten mit Kürzel. Eine Fertigkeit antippen
- * startet die Probe, dann Attribute im UPP dazuwählen. Der gewählte Charakter zeigt die vollen Namen,
- * Ausrüstung und Notiz.
+ * startet die Probe, ohne die Details aufzuklappen; dann Attribute im UPP dazuwählen. Erst der Kopf
+ * klappt die Details auf: volle Namen, Ausrüstung und Notiz.
  */
 export function CharacterCard({ character }: { character: CharacterView }) {
   const game = useGame();
@@ -13,7 +13,7 @@ export function CharacterCard({ character }: { character: CharacterView }) {
 
   return (
     <article className={character.chosen ? 'pc chosen' : 'pc'} aria-label={character.name}>
-      <button type="button" className="pc-head" aria-expanded={character.chosen} onClick={() => game.chooseCharacter(character.id)}>
+      <button type="button" className="pc-head" aria-expanded={character.open} onClick={() => game.chooseCharacter(character.id)}>
         <span className="pc-name">{character.name}</span>
         {character.background && <span className="pc-sub">{character.background}</span>}
       </button>
@@ -57,7 +57,7 @@ export function CharacterCard({ character }: { character: CharacterView }) {
             aria-pressed={skill.chosen}
             onClick={() => game.chooseSkill(character.id, skill.of)}
           >
-            {character.chosen ? skill.name : skill.short}-{skill.level}
+            {character.open ? skill.name : skill.short}-{skill.level}
           </button>
         ))}
         <button type="button" className="unskilled" aria-pressed={character.unskilled.chosen} onClick={() => game.chooseSkill(character.id, null)}>
@@ -65,7 +65,7 @@ export function CharacterCard({ character }: { character: CharacterView }) {
         </button>
       </div>
 
-      {character.chosen && (
+      {character.open && (
         <>
           <dl className="facts">
             <dt>Ausrüstung</dt>

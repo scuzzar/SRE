@@ -140,6 +140,8 @@ export interface CharacterView {
   readonly upp: Upp;
   /** Für diesen Charakter wird gerade eine Probe vorbereitet. */
   readonly chosen: boolean;
+  /** Die Details sind aufgeklappt: volle Namen der Fertigkeiten, Ausrüstung, Credits, Notiz. */
+  readonly open: boolean;
   readonly skills: readonly { readonly of: string; readonly name: string; readonly short: string; readonly level: number; readonly chosen: boolean }[];
   readonly unskilled: { readonly dm: number; readonly chosen: boolean };
   readonly characteristics: readonly CharacteristicOption[];
@@ -173,6 +175,8 @@ export interface ControllerState {
   readonly screen: Screen;
   readonly card: Card | undefined;
   readonly task: Task | undefined;
+  /** Die Details des Charakters der Probe (volle Namen, Ausrüstung, Notiz) sind aufgeklappt. */
+  readonly details: boolean;
   /** Index des Logeintrags, dessen Ergebnis-Popup offen ist. */
   readonly result: number | undefined;
   readonly editor: { readonly id: string | undefined; readonly error: string | undefined } | undefined;
@@ -257,7 +261,7 @@ function cardView(card: Card): CardView {
   };
 }
 
-function characterView(campaign: Campaign, character: Character, task: Task | undefined): CharacterView {
+function characterView(campaign: Campaign, character: Character, task: Task | undefined, details: boolean): CharacterView {
   const own = task?.for === character.id ? task : undefined;
   return {
     id: character.id,
@@ -268,6 +272,7 @@ function characterView(campaign: Campaign, character: Character, task: Task | un
     note: character.note,
     upp: character.upp,
     chosen: own !== undefined,
+    open: own !== undefined && details,
     skills: activeSkills(character).map((s) => {
       const skill = skillOf(s.of);
       return { of: s.of, name: skill.name, short: skill.short, level: s.level, chosen: own?.uses === s.of };
@@ -297,7 +302,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     odds: ref.odds.map((o) => ({ id: o.id, name: o.name, chance: o.chance, target: o.target, selected: o.id === campaign.odds })),
     log: campaign.log.map((entry) => logItem(campaign, entry)),
     card: state.card && cardView(state.card),
-    characters: activeCharacters(campaign).map((c) => characterView(campaign, c, state.task)),
+    characters: activeCharacters(campaign).map((c) => characterView(campaign, c, state.task, state.details)),
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
     result: resultEntry?.kind === 'task' ? taskItem(campaign, resultEntry) : undefined,

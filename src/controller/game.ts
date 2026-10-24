@@ -55,6 +55,7 @@ export class GameController {
       screen: 'oracle',
       card: undefined,
       task: undefined,
+      details: false,
       result: undefined,
       editor: undefined,
     };
@@ -128,18 +129,24 @@ export class GameController {
     this.update({ screen });
   }
 
-  /** Wählt den Charakter für eine Probe. Ein anderer Charakter beginnt eine neue Probe; derselbe klappt ihn wieder zu. */
+  /**
+   * Wählt den Charakter für eine Probe und klappt seine Details auf. Ein anderer Charakter beginnt
+   * eine neue Probe. Derselbe klappt auf, wenn er noch zu ist, sonst wieder zu und beendet die Probe.
+   */
   chooseCharacter(id: string): void {
-    this.update({ task: this.state.task?.for === id ? undefined : startTask(this.campaign, id) });
+    if (this.state.task?.for !== id) this.update({ task: startTask(this.campaign, id), details: true });
+    else if (!this.state.details) this.update({ details: true });
+    else this.update({ task: undefined, details: false });
   }
 
   /**
    * Wählt die Fertigkeit eines Charakters für die Probe; `null` heißt „ohne Fertigkeit“. Gilt die
-   * Probe noch keinem oder einem anderen Charakter, beginnt sie mit dieser Wahl neu.
+   * Probe noch keinem oder einem anderen Charakter, beginnt sie mit dieser Wahl neu, ohne die
+   * Details aufzuklappen.
    */
   chooseSkill(id: string, skill: string | null): void {
-    const task = this.state.task?.for === id ? this.state.task : startTask(this.campaign, id);
-    this.update({ task: chooseSkill(task, this.campaign, skill) });
+    if (this.state.task?.for === id) this.update({ task: chooseSkill(this.state.task, this.campaign, skill) });
+    else this.update({ task: chooseSkill(startTask(this.campaign, id), this.campaign, skill), details: false });
   }
 
   toggleCharacteristic(characteristic: Characteristic): void {

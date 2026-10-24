@@ -49,6 +49,8 @@ test('Probe ohne Fertigkeit: direkt aus der Karte gestartet, unmöglich, aber w�
   const jonas = card(page, 'Jonas Reyl');
   await jonas.getByRole('button', { name: 'Ohne (−3)' }).click();
   await expect(dock(page)).toContainText('Jonas Reyl');
+  await expect(jonas.getByRole('button', { name: 'Bearbeiten' })).toBeHidden();
+  await expect(jonas.getByRole('button', { name: 'Steward-1' })).toHaveText('Ste-1');
   await expect(dock(page)).toContainText('Unmöglich');
   await expect(dock(page)).toContainText('0 %');
   await dock(page).getByRole('button', { name: 'Probe würfeln' }).click();
