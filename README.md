@@ -27,9 +27,9 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 **Zweiter Screen: Charaktere**
 - Karten für die **Spielercharaktere** mit UPP, Fertigkeiten, Ausrüstung, Credits und Notiz. Charaktere legt man in der App an und bearbeitet sie; Fertigkeiten kommen aus einer festen Liste. Wer schon im Log vorkommt, wird nicht gelöscht, sondern ausgeblendet.
 - **Proben direkt im Charakter-Screen** (kein eigenes Fenster):
-  - Oben auf der Charakterkarte die **Fertigkeit** antippen (oder „Ohne“ für −3).
+  - Auf der Charakterkarte die **Fertigkeit** antippen (oder „Ohne“ für −3); die Fertigkeiten stehen immer sichtbar unter dem Namen, ein Tippen startet die Probe direkt. Herkunft, Terms und Alter stehen in der Zeile des Namens.
   - **Attribute** sind standardmäßig nicht dabei und lassen sich **erst nach der Fertigkeit** dazuwählen; ein Tippen auf ein Attribut im UPP schaltet es an oder aus; der DM ergibt sich aus dem Wert (9+ → +1, 6–8 → ±0, 5− → −1). Sobald die Fertigkeit gewählt ist, zeigt jedes Attribut an, ob es überhaupt +1 oder −1 brächte; neutrale Werte sind nicht wählbar.
-  - **Unten** stehen fest die drei Schwierigkeiten **6+ / 8+ / 10+** (dieselbe Auswahl wie Hoch/Mittel/Gering beim Orakel), darüber der nötige Wurf mit Wahrscheinlichkeit und der Knopf „Probe würfeln“.
+  - **Unten** stehen fest die drei Schwierigkeiten **6+ / 8+ / 10+** (dieselbe Auswahl wie Hoch/Mittel/Gering beim Orakel), in derselben Zeile der Knopf „Probe würfeln“, darüber der nötige Wurf mit Wahrscheinlichkeit.
   - Das **Ergebnis erscheint als Popup**. Danach geht es zurück zum Orakel-Screen; **geloggt wird nur dort**. Der Charakter-Screen hat keinen Log.
 
 **UI-Entwurf:** Der klickbare Entwurf liegt in [docs/ui-entwurf](docs/ui-entwurf/).
@@ -100,7 +100,7 @@ Die Skala liegt als Daten vor und kann angepasst werden.
 **Was Classic Traveller selbst sagt** (Starter Edition, S. 11–16): Es gibt keine allgemeine Formel. Fertigkeiten und Attribute wirken als DMs, die beim jeweiligen Wurf stehen:
 - **Ohne Fertigkeit** nennen manche Fertigkeiten einen eigenen DM, zum Beispiel Administration −3, Forward Observer −4, Vacc Suit −4 und Streetwise −5.
 - **Stufe 0 für alle:** Bei Default Skills kann die Spielleitung allen Figuren Stufe 0 geben. In allen Waffen hat jede Figur ohnehin Stufe 0. Jack of All Trades zählt als Stufe 0 in jeder anderen Fertigkeit.
-- **Attribute** wirken über Schwellen beim einzelnen Wurf, zum Beispiel „+1 bei INT 8+“ oder „Chirurg nur mit GES 8+“.
+- **Attribute** wirken über Schwellen beim einzelnen Wurf, zum Beispiel „+1 bei INT 8+“ oder „Chirurg nur mit DEX 8+“.
 
 **Vereinheitlichung für die App:** Statt vieler Einzelregeln gilt eine Formel, die Flexibilität kommt über die Auswahl im konkreten Fall:
 
@@ -128,21 +128,21 @@ Beispiele aus der Starter Edition, an denen sich die Schwellen orientieren:
 
 | Beispiel | Schwelle | DM | Seite |
 |---|---|---|---|
-| Navy-Musterung | INT 8+ / BIL 9+ | +1 / +2 | 9 |
-| Fortgeschrittene Ausbildung | BIL 8+ | Voraussetzung | 10 |
-| Electronics (Vorschlag für die Spielleitung) | INT über ~10, BIL über ~9 | je +1 | 14 |
-| Chirurg | GES 8+ | Voraussetzung | 15 |
-| Kälteschlaf-Passage | AUS 6 oder weniger | −1 | 17 |
-| Entermesser | STR unter 7 / STR 11+ | −2 / +2 | 21 |
-| Schwerelosigkeit | GES 9+ / 11+ | +2 / weitere +2 | 27 |
+| Navy-Musterung | INT 8+ / EDU 9+ | +1 / +2 | 9 |
+| Fortgeschrittene Ausbildung | EDU 8+ | Voraussetzung | 10 |
+| Electronics (Vorschlag für die Spielleitung) | INT über ~10, EDU über ~9 | je +1 | 14 |
+| Chirurg | DEX 8+ | Voraussetzung | 15 |
+| Low Passage | END 6 oder weniger | −1 | 17 |
+| Cutlass | STR unter 7 / STR 11+ | −2 / +2 | 21 |
+| Schwerelosigkeit | DEX 9+ / 11+ | +2 / weitere +2 | 27 |
 
 **Beispiele** (Kira, UPP 7A8975; Jonas, UPP 687A88):
 
 | Situation | Zielwert | DMs | Braucht auf 2W6 |
 |---|---|---|---|
-| Kira fliegt ein Stunt-Manöver | Schwierig 10+ | Pilot +2, GES A +1 | 7+ (58 %) |
-| Kira weicht stundenlang Asteroiden aus | Schwierig 10+ | Pilot +2, GES A +1, AUS 8 ±0 | 7+ (58 %) |
-| Jonas (ohne Pilot) im selben Asteroidenfeld | Schwierig 10+ | ohne Fertigkeit −3, GES 8 ±0, AUS 7 ±0 | 13+ (unmöglich) |
+| Kira fliegt ein Stunt-Manöver | Schwierig 10+ | Pilot +2, DEX A +1 | 7+ (58 %) |
+| Kira weicht stundenlang Asteroiden aus | Schwierig 10+ | Pilot +2, DEX A +1, END 8 ±0 | 7+ (58 %) |
+| Jonas (ohne Pilot) im selben Asteroidenfeld | Schwierig 10+ | ohne Fertigkeit −3, DEX 8 ±0, END 7 ±0 | 13+ (unmöglich) |
 
 Vor dem Wurf zeigt die App an, was auf 2W6 nötig ist und wie wahrscheinlich das ist.
 
@@ -158,7 +158,7 @@ Die drei Stufen des Orakels sind gleichzeitig die drei Schwierigkeiten nach Rule
 
 In der Leiste steht **leicht bzw. wahrscheinlich links**, **schwer bzw. unwahrscheinlich rechts**.
 
-In der App sitzt diese Auswahl **ganz unten** auf dem Hauptscreen und **bleibt stehen**, bis man sie ändert. Der Knopf „Ja/Nein“ fragt das Orakel mit der eingestellten Stufe. Im Charakter-Screen steht dieselbe Auswahl ebenfalls ganz unten, dort mit **6+ / 8+ / 10+** beschriftet.
+In der App sitzt diese Auswahl **ganz unten** auf dem Hauptscreen und **bleibt stehen**, bis man sie ändert. Der Knopf „Ja/Nein“ steht in derselben Zeile und fragt das Orakel mit der eingestellten Stufe. Im Charakter-Screen steht dieselbe Auswahl ebenfalls ganz unten, dort mit **6+ / 8+ / 10+** beschriftet und neben dem Knopf „Probe würfeln“.
 
 ---
 

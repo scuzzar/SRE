@@ -392,7 +392,14 @@ button:disabled {
 
 .actions {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 0.8fr);
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 6px;
+}
+
+/* Der Knopf für Orakel bzw. Probe steht in einer Zeile mit der Stufenauswahl. */
+.odds-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 6px;
 }
 
@@ -408,16 +415,10 @@ button:disabled {
 }
 
 .action.oracle {
-  flex-direction: column;
-  gap: 0;
+  min-height: 48px;
+  padding: 0 18px;
   background: var(--text);
   color: var(--ink);
-}
-
-.action.oracle small {
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--ink-muted);
 }
 
 .action.draw {
@@ -690,9 +691,11 @@ button:disabled {
 
 .pc-head {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  align-content: center;
+  column-gap: 10px;
+  row-gap: 2px;
   width: 100%;
   min-height: 48px;
   padding: 0;
@@ -889,14 +892,15 @@ button:disabled {
 }
 
 .roll {
-  min-height: 52px;
+  min-height: 48px;
+  padding: 0 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   border: 0;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 15px;
   background: var(--accent);
   color: #ffffff;
 }

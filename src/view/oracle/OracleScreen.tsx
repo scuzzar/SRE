@@ -7,7 +7,6 @@ import { LogList } from './LogList';
 /** Der Text im Fragefeld während des Tippens ist reine Darstellung; übergeben wird er beim Absenden. */
 export function OracleScreen({ view, question, onQuestion }: { view: Snapshot; question: string; onQuestion: (q: string) => void }) {
   const game = useGame();
-  const odds = view.odds.find((o) => o.selected);
 
   return (
     <div className="screen">
@@ -33,21 +32,6 @@ export function OracleScreen({ view, question, onQuestion }: { view: Snapshot; q
           }}
         />
         <div className="actions">
-          <button
-            type="button"
-            className="action oracle"
-            onClick={() => {
-              game.askOracle(question);
-              onQuestion('');
-            }}
-          >
-            Ja/Nein
-            {odds && (
-              <small>
-                {odds.name} · {odds.chance} %
-              </small>
-            )}
-          </button>
           <button type="button" className="action draw" onClick={() => game.drawCard(question)}>
             <CardIcon />
             Karte ziehen
@@ -57,7 +41,19 @@ export function OracleScreen({ view, question, onQuestion }: { view: Snapshot; q
             2W6
           </button>
         </div>
-        <OddsBar odds={view.odds} variant="oracle" />
+        <div className="odds-row">
+          <OddsBar odds={view.odds} variant="oracle" />
+          <button
+            type="button"
+            className="action oracle"
+            onClick={() => {
+              game.askOracle(question);
+              onQuestion('');
+            }}
+          >
+            Ja/Nein
+          </button>
+        </div>
       </section>
     </div>
   );

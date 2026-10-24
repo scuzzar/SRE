@@ -2,7 +2,7 @@ import type { CharacterView } from '../../controller';
 import { characteristicLabel, credits, hex, signed } from '../format';
 import { useGame } from '../game-context';
 
-/** Eine Charakterkarte. Angetippt wird sie zur Probe: oben die Fertigkeit, dann Attribute im UPP dazuwählen. */
+/** Eine Charakterkarte. Eine Fertigkeit antippen startet die Probe, dann Attribute im UPP dazuwählen; der Kopf klappt Ausrüstung und Notiz auf. */
 export function CharacterCard({ character }: { character: CharacterView }) {
   const game = useGame();
   const skillChosen = character.chosen && (character.unskilled.chosen || character.skills.some((s) => s.chosen));
@@ -14,21 +14,16 @@ export function CharacterCard({ character }: { character: CharacterView }) {
         {character.background && <span className="pc-sub">{character.background}</span>}
       </button>
 
-      {character.chosen && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span className="small-label">Fertigkeit für die Probe</span>
-          <div className="chips">
-            {character.skills.map((skill) => (
-              <button key={skill.of} type="button" aria-pressed={skill.chosen} onClick={() => game.chooseSkill(skill.of)}>
-                {skill.name}-{skill.level}
-              </button>
-            ))}
-            <button type="button" className="unskilled" aria-pressed={character.unskilled.chosen} onClick={() => game.chooseSkill(null)}>
-              Ohne ({signed(character.unskilled.dm)})
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="chips" role="group" aria-label="Fertigkeit für die Probe">
+        {character.skills.map((skill) => (
+          <button key={skill.of} type="button" aria-pressed={skill.chosen} onClick={() => game.chooseSkill(character.id, skill.of)}>
+            {skill.name}-{skill.level}
+          </button>
+        ))}
+        <button type="button" className="unskilled" aria-pressed={character.unskilled.chosen} onClick={() => game.chooseSkill(character.id, null)}>
+          Ohne ({signed(character.unskilled.dm)})
+        </button>
+      </div>
 
       <div className="upp" role="group" aria-label="Attribute, nach der Fertigkeit dazuwählbar">
         {character.characteristics.map((c) => {
