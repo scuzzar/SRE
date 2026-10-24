@@ -557,7 +557,11 @@ button:disabled {
 }
 
 .tile .tile-text {
+  max-width: 100%;
   font-weight: 600;
+  /* Lange Wörter (durchschnittlich, Waffenstillstand) trennen statt abschneiden. */
+  hyphens: auto;
+  overflow-wrap: anywhere;
 }
 
 .tile[aria-pressed='true'] {

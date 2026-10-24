@@ -1,4 +1,4 @@
-import { DomainError, ref, withQuestion, type CardPick, type Clock, type Random } from '..';
+import { DomainError, ref, withQuestion, type CardPick, type Clock, type Entry, type Random, type Slot } from '..';
 
 /** Die offene Inspirationskarte. Flüchtig: wird beim Bestätigen zum `CardPick`, nie gespeichert. */
 export interface Card {
@@ -9,10 +9,18 @@ export interface Card {
   readonly picked: readonly string[];
 }
 
-/** Zieht eine Karte: für jedes Feld aller Bereiche einen seiner Einträge zufällig. */
+/** Die Einträge eines Feldes, die gezogen werden können: alle, die nicht ausgeblendet sind. */
+export function drawableEntries(slot: Slot): readonly Entry[] {
+  return slot.entries.filter((e) => !e.retired);
+}
+
+/** Zieht eine Karte: für jedes Feld aller Bereiche einen seiner nicht ausgeblendeten Einträge zufällig. */
 export function drawCard(random: Random, question?: string): Card {
   const drawn = ref.sections.flatMap((section) =>
-    section.slots.map((slot) => slot.entries[random.int(0, slot.entries.length - 1)]!.id),
+    section.slots.map((slot) => {
+      const entries = drawableEntries(slot);
+      return entries[random.int(0, entries.length - 1)]!.id;
+    }),
   );
   return withQuestion({ drawn, picked: [] }, question);
 }
