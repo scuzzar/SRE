@@ -140,7 +140,7 @@ export interface CharacterView {
   readonly upp: Upp;
   /** Für diesen Charakter wird gerade eine Probe vorbereitet. */
   readonly chosen: boolean;
-  readonly skills: readonly { readonly of: string; readonly name: string; readonly level: number; readonly chosen: boolean }[];
+  readonly skills: readonly { readonly of: string; readonly name: string; readonly short: string; readonly level: number; readonly chosen: boolean }[];
   readonly unskilled: { readonly dm: number; readonly chosen: boolean };
   readonly characteristics: readonly CharacteristicOption[];
   /** Kommt im Log vor: Entfernen blendet aus, statt zu löschen. */
@@ -268,7 +268,10 @@ function characterView(campaign: Campaign, character: Character, task: Task | un
     note: character.note,
     upp: character.upp,
     chosen: own !== undefined,
-    skills: activeSkills(character).map((s) => ({ of: s.of, name: skillOf(s.of).name, level: s.level, chosen: own?.uses === s.of })),
+    skills: activeSkills(character).map((s) => {
+      const skill = skillOf(s.of);
+      return { of: s.of, name: skill.name, short: skill.short, level: s.level, chosen: own?.uses === s.of };
+    }),
     unskilled: { dm: ref.houseRules.unskilledDm, chosen: own?.unskilled ?? false },
     characteristics: characteristicOptions(own ?? startTask(campaign, character.id), campaign),
     inLog: isInLog(campaign, character.id),
