@@ -7,6 +7,9 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 
 > **Stand: Freigegeben für Version 1** (23. Oktober 2026). Änderungen nur noch auf dem oben
 > beschriebenen Weg: erst hier, abgestimmt, dann im Code.
+>
+> **In Abstimmung** (24. Oktober 2026): `Entry.retired`, damit sich Einträge austauschen lassen,
+> ohne dass alte Logeinträge ins Leere zeigen (siehe *Einträge austauschen*).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -91,8 +94,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Ja oder Nein (`/yes`: `roll` ≤ `chance`) folgt allein daraus, nie aus dem heutigen Stand der Stufe.
   Die Frage ist freiwillig. „Außergewöhnlich Ja/Nein“, Chaosfaktor und Zufallsereignisse nach Mythic
   kommen erst nach Version 1.
-- **Karte ziehen.** Ziehen legt eine `Card` an: für jedes Feld aller Bereiche einen seiner Einträge
-  zufällig (`drawn`), die Themen-Reiter eingeschlossen, in der Reihenfolge der Bereiche und Felder.
+- **Karte ziehen.** Ziehen legt eine `Card` an: für jedes Feld aller Bereiche einen seiner nicht
+  ausgeblendeten Einträge zufällig (`drawn`), die Themen-Reiter eingeschlossen, in der Reihenfolge der Bereiche und Felder.
   Eine gestellte Frage geht auf die Karte über. Der Bereich *Namen* hat drei Felder mit je eigenen
   Einträgen (eher weiblich, eher männlich, neutral bzw. Genre-Name), wie auf der GMA-Karte; so sind
   die drei Namen immer verschieden.
@@ -141,8 +144,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 - **Referenzdaten sind Daten.** Stufen, Hausregeln, Fertigkeiten, Bereiche, Felder und Einträge
   stehen als Dateien unter `src/data/` und werden beim Start geprüft. Man ändert sie nur dort, nicht
   in der App. Pfeile führen nur aus Spielstand
-  und Entwürfen in die Referenzdaten, nie zurück. Die Einträge sind eigene Inhalte, nicht die Texte
-  des GMA-Decks.
+  und Entwürfen in die Referenzdaten, nie zurück. Die Einträge sind eigene Inhalte oder stammen aus
+  Mythic GME 2e (Lizenz CC BY-NC, ins Deutsche übersetzt), nie aus den Texten des GMA-Decks.
+- **Einträge austauschen.** Ein Eintrag, der nicht mehr gezogen werden soll, wird nicht gelöscht und
+  seine Id nicht neu vergeben, sondern ausgeblendet (`retired`): Ziehen übergeht ihn, alte
+  Logeinträge zeigen ihn weiter mit seinem Text. Ob ein Log auf ihn verweist, weiß nur das jeweilige
+  Gerät; deshalb wird jeder ausgetauschte Eintrag ausgeblendet. Jedes Feld behält mindestens einen
+  Eintrag, der nicht ausgeblendet ist.
 
 ## Wo der Code noch nicht folgt
 
@@ -152,6 +160,7 @@ Diagramm mit diesen Ausnahmen:
 - **`Card → Campaign : in` und `Task → Campaign : in`** sind im Code kein Feld. Der Controller hält
   höchstens eine offene Karte und höchstens eine Probe neben der einen Kampagne; damit ist die
   Multiplizität erfüllt. Kommen mehrere Kampagnen, braucht es das Feld.
+- **`Entry.retired`** gibt es im Code noch nicht; die Änderung ist in Abstimmung.
 - **Beispielcharaktere.** Eine neue Kampagne beginnt mit Kira Vant und Jonas Reyl aus der README
   (`src/data/examples.json`). Das Modell sagt dazu nichts; die beiden lassen sich löschen, solange
   der Log nicht auf sie verweist.
