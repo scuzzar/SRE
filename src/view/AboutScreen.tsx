@@ -1,4 +1,8 @@
-/** Quellenangaben und Hinweise, wie sie die README für Version 1 verlangt. */
+import { ExternalIcon } from './icons';
+
+const repository = 'https://github.com/scuzzar/SRE';
+
+/** Quellenangaben und Hinweise, wie sie die README für Version 1 verlangt, dazu die Links zum Projekt. */
 export function AboutScreen({ persistent }: { persistent: boolean }) {
   return (
     <div className="screen">
@@ -15,6 +19,20 @@ export function AboutScreen({ persistent }: { persistent: boolean }) {
               : 'Hier lässt sich nichts dauerhaft speichern: Der Spielstand geht beim Schließen verloren.'}
           </p>
         </div>
+        <ul className="links" aria-label="Projekt">
+          <li>
+            <a href={repository} target="_blank" rel="noreferrer">
+              <span>Quellcode auf GitHub</span>
+              <ExternalIcon />
+            </a>
+          </li>
+          <li>
+            <a href={`${repository}/issues/new`} target="_blank" rel="noreferrer">
+              <span>Fehler melden oder Idee vorschlagen</span>
+              <ExternalIcon />
+            </a>
+          </li>
+        </ul>
         <div>
           <h2>Classic Traveller</h2>
           <p>
