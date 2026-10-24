@@ -174,10 +174,29 @@ function Themes({ themes }: { themes: readonly CardSectionView[] }) {
         })}
       </div>
       <div className="card-stack" role="tabpanel" id="theme-panel" aria-labelledby={`tab-${current.id}`}>
-        {current.slots.map((slot) => (
-          <Tile key={slot.id} slot={slot} />
-        ))}
+        {byLabel(current.slots).map((group) =>
+          group.length > 1 ? (
+            <div key={group[0]!.id} className="card-row-2">
+              {group.map((slot) => (
+                <Tile key={slot.id} slot={slot} />
+              ))}
+            </div>
+          ) : (
+            <Tile key={group[0]!.id} slot={group[0]!} />
+          ),
+        )}
       </div>
     </div>
   );
+}
+
+/** Felder mit gleicher Beschriftung nebeneinander, etwa die zwei Begriffe aus einer Mythic-Tabelle. */
+function byLabel(slots: readonly SlotView[]): SlotView[][] {
+  const groups: SlotView[][] = [];
+  for (const slot of slots) {
+    const last = groups.at(-1);
+    if (last && last[0]!.label === slot.label) last.push(slot);
+    else groups.push([slot]);
+  }
+  return groups;
 }

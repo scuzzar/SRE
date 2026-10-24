@@ -513,6 +513,12 @@ button:disabled {
   gap: 4px;
 }
 
+.card-row-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+
 .card-stack {
   display: flex;
   flex-direction: column;
