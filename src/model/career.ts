@@ -78,10 +78,26 @@ export type Effect =
   | { readonly kind: 'dead' }
   | { readonly kind: 'nothing' };
 
+/** Woraus der DM eines Wurfs besteht: ein Attribut über seiner Schwelle, Gambling oder ein hoher Rang. */
+export interface DmSource {
+  readonly label: string;
+  readonly dm: number;
+}
+
+/** Eine Bedingung eines Wurfs mit Zielwert und ob sie beim Stand der UPP greift. */
+export interface ThrowCondition {
+  readonly characteristic: Characteristic;
+  readonly atLeast: number;
+  readonly dm: number;
+  readonly applies: boolean;
+}
+
 export interface RollOutcome {
   /** Der Term, in dem gewürfelt wurde; 0 vor dem ersten. */
   readonly term: number;
   readonly effects: readonly Effect[];
+  /** Woraus der DM bestand, nach dem heutigen Stand der Tabellen; der Wurf selbst hält nur die Summe fest. */
+  readonly sources: readonly DmSource[];
 }
 
 export interface Possessed {
@@ -146,6 +162,17 @@ export function throwDm(th: Throw, upp: Upp): number {
   return th.dms.reduce((dm, d) => (upp[uppKey[d.characteristic]] >= d.atLeast ? dm + d.dm : dm), 0);
 }
 
+/** Die Bedingungen eines Wurfs: welches Attribut ab welchem Wert welchen DM gibt, und ob es greift. */
+export function throwConditions(th: Throw, upp: Upp): readonly ThrowCondition[] {
+  return th.dms.map((d) => ({ ...d, applies: upp[uppKey[d.characteristic]] >= d.atLeast }));
+}
+
+/** DM-Quellen der Abmusterung: Gambling auf Geld, Rang 5+ auf Sachwerte. */
+export function musterSources(kind: 'cash' | 'benefit', skills: readonly { readonly of: string; readonly level: number }[], rank: number): readonly DmSource[] {
+  if (kind === 'cash') return skills.some((s) => s.of === 'gambling' && s.level > 0) ? [{ label: 'Gambling', dm: 1 }] : [];
+  return rank >= 5 ? [{ label: `Rang ${rank}`, dm: 1 }] : [];
+}
+
 export function ageOf(terms: number): number {
   return START_AGE + TERM_YEARS * terms;
 }
@@ -198,6 +225,7 @@ class Replay {
     const term = this.terms;
     this.checkDice(roll);
     this.expect(roll);
+    const sources = this.sources(roll);
     switch (roll.kind) {
       case 'characteristic': {
         const c = characteristics[this.rolled]!;
@@ -303,7 +331,20 @@ class Replay {
         break;
       }
     }
-    this.outcomes.push({ term: Math.max(term, this.terms), effects: this.effects });
+    this.outcomes.push({ term: Math.max(term, this.terms), effects: this.effects, sources });
+  }
+
+  /** Woraus der DM des Wurfs besteht, beim Stand vor dem Wurf. */
+  private sources(roll: CareerRoll): readonly DmSource[] {
+    const th =
+      roll.kind === 'enlistment' && roll.for !== undefined
+        ? serviceOf(roll.for).enlistment
+        : roll.kind === 'survival' || roll.kind === 'commission' || roll.kind === 'promotion'
+          ? this.service?.[roll.kind]
+          : undefined;
+    if (th) return throwConditions(th, this.upp).flatMap((c) => (c.applies ? [{ label: c.characteristic, dm: c.dm }] : []));
+    if (roll.kind === 'cash' || roll.kind === 'benefit') return musterSources(roll.kind, this.skills, this.rank);
+    return [];
   }
 
   /** Ob die Art des Wurfs zum Schritt passt. */

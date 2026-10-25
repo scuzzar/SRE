@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CareerLine, GenerationAction, GenerationView } from '../../controller';
+import type { ThrowOdds } from '../../model';
 import { DiceView, THROW_MS, useTimeline } from '../Dice';
 import { characteristicLabel, credits, hex, signed } from '../format';
 import { useGame } from '../game-context';
@@ -151,7 +152,7 @@ export function CareerList({ lines, heading = true }: { lines: readonly CareerLi
                   <span className="career-label">{l.label}</span>
                   <span className="career-roll mono">
                     {l.dice.join('+')}
-                    {l.dm !== 0 ? ` ${signed(l.dm)}` : ''}
+                    {dmText(l)}
                     {l.target !== undefined ? ` / ${l.target}+` : ''}
                   </span>
                   <span className="career-result">{l.result}</span>
@@ -198,7 +199,7 @@ function RollStage({ line, animate, onSettled }: { line: CareerLine; animate: bo
       <div className="generation-roll-result" aria-live="polite">
         {phase >= LANDED && String(line.total) !== line.result && (
           <span className="mono generation-total">
-            {line.dm !== 0 ? `${line.dice.reduce((a, b) => a + b, 0)} ${signed(line.dm)} = ${line.total}` : line.total}
+            {line.dm !== 0 ? `${line.dice.reduce((a, b) => a + b, 0)}${dmText(line)} = ${line.total}` : line.total}
           </span>
         )}
         {phase >= DONE && <strong>{line.result}</strong>}
@@ -207,9 +208,34 @@ function RollStage({ line, animate, onSettled }: { line: CareerLine; animate: bo
   );
 }
 
-function oddsHint(odds: { target: number; dm: number; need: number; chance: number }): string {
-  const need = odds.chance >= 100 ? 'gelingt immer' : odds.chance <= 0 ? 'unmöglich' : `braucht ${odds.need}+`;
-  return `${odds.target}+${odds.dm !== 0 ? ` · DM ${signed(odds.dm)}` : ''} · ${need}`;
+/** Der DM eines Wurfs mit Namen („ INT +1 EDU +2“); passen die Teile nicht zur Summe, nur die Summe. */
+function dmText(line: CareerLine): string {
+  if (line.dm === 0) return '';
+  const fits = line.parts.reduce((sum, p) => sum + p.dm, 0) === line.dm;
+  return fits ? line.parts.map((p) => ` ${p.label} ${signed(p.dm)}`).join('') : ` ${signed(line.dm)}`;
+}
+
+function needText(odds: ThrowOdds): string {
+  return odds.chance >= 100 ? 'gelingt immer' : odds.chance <= 0 ? 'unmöglich' : `braucht ${odds.need}+`;
+}
+
+/**
+ * Was ein Wurf braucht: Zielwert, je Attribut die Schwelle mit ihrem DM (hervorgehoben, wenn sie
+ * greift) und der nötige Wurf.
+ */
+function OddsLines({ odds }: { odds: ThrowOdds }) {
+  return (
+    <span className="odds-lines">
+      <span>Zielwert {odds.target}+</span>
+      {odds.conditions.map((c) => (
+        <span key={c.characteristic} className={c.applies ? 'met' : 'unmet'}>
+          {c.characteristic} {c.atLeast}+ → {signed(c.dm)}
+          {c.applies ? ' ✓' : ''}
+        </span>
+      ))}
+      <span>{needText(odds)}</span>
+    </span>
+  );
 }
 
 /** Die Knöpfe für den nächsten Schritt. */
@@ -224,17 +250,17 @@ function Actions({ action, disabled }: { action: GenerationAction; disabled: boo
           <DiceIcon />
           <span>
             {action.label}
-            <span className="small-label">{action.odds ? oddsHint(action.odds) : action.dice === 1 ? '1W6' : '2W6'}</span>
+            {action.odds ? <OddsLines odds={action.odds} /> : <span className="small-label">{action.dice === 1 ? '1W6' : '2W6'}</span>}
           </span>
         </button>
       );
     case 'service':
       return (
-        <div className="choice-grid three" role="group" aria-label="Laufbahn">
+        <div className="choice-grid services" role="group" aria-label="Laufbahn">
           {action.options.map((o) => (
             <button key={o.id} type="button" disabled={disabled} onClick={() => game.chooseService(o.id)}>
               <strong>{o.name}</strong>
-              <span className="small-label">{oddsHint(o)}</span>
+              <OddsLines odds={o} />
             </button>
           ))}
         </div>
@@ -278,7 +304,7 @@ function Actions({ action, disabled }: { action: GenerationAction; disabled: boo
           </button>
           <button type="button" className="preferred" disabled={disabled} onClick={() => game.reenlist(true)}>
             <strong>Weiterverpflichten</strong>
-            <span className="small-label">{oddsHint(action.odds)}</span>
+            <OddsLines odds={action.odds} />
           </button>
         </div>
       );
@@ -288,12 +314,12 @@ function Actions({ action, disabled }: { action: GenerationAction; disabled: boo
           <button type="button" disabled={disabled || action.cashLeft === 0} onClick={() => game.musterOut('cash')}>
             <strong>Geld</strong>
             <span className="small-label">
-              noch {action.cashLeft}× {action.cashDm !== 0 ? `· DM ${signed(action.cashDm)}` : ''}
+              noch {action.cashLeft}×{action.cashDm.map((s) => ` · ${s.label} ${signed(s.dm)}`).join('')}
             </span>
           </button>
           <button type="button" disabled={disabled} onClick={() => game.musterOut('benefit')}>
             <strong>Sachwerte</strong>
-            <span className="small-label">1W6{action.benefitDm !== 0 ? ` · DM ${signed(action.benefitDm)}` : ''}</span>
+            <span className="small-label">1W6{action.benefitDm.map((s) => ` · ${s.label} ${signed(s.dm)}`).join('')}</span>
           </button>
         </div>
       );

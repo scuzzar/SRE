@@ -44,6 +44,18 @@ describe('Charaktererschaffung', () => {
     const navy = serviceOptions(stateOf(kira())).find((o) => o.service.id === 'navy')!;
     // Navy 8+, INT 9 ≥ 8 gibt +1, EDU 7 < 9 nichts.
     expect(navy.odds).toMatchObject({ dm: 1, target: 8, need: 7 });
+    expect(navy.odds.conditions).toEqual([
+      { characteristic: 'INT', atLeast: 8, dm: 1, applies: true },
+      { characteristic: 'EDU', atLeast: 9, dm: 2, applies: false },
+    ]);
+  });
+
+  it('hält fest, welche Attribute den DM eines Wurfs gebracht haben', () => {
+    let g = enlist(kira(), 'marines', fixedRandom(6, 6));
+    expect(stateOf(g).outcomes.at(-1)!.sources).toEqual([{ label: 'INT', dm: 1 }]);
+    g = rollNext(g, fixedRandom(6, 6)); // Überleben: END 8 ≥ 8 gibt +2
+    expect(stateOf(g).outcomes.at(-1)!.sources).toEqual([{ label: 'END', dm: 2 }]);
+    expect(nextThrow(stateOf(g))!.conditions).toEqual([{ characteristic: 'EDU', atLeast: 7, dm: 1, applies: true }]);
   });
 
   it('nimmt bei gelungener Musterung die Laufbahn mit dem, was sie mitgibt, und beginnt den ersten Term', () => {
