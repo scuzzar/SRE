@@ -14,8 +14,9 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > nicht*), dafür ändert sich das Bild nicht: `Campaign` war schon die oberste Ebene und hat schon
 > einen Namen. Neu im Bild: `Character.dead` (siehe *Tot*).
 >
-> **Entwurf, noch nicht abgestimmt** (25. Oktober 2026): Charaktererschaffung nach den Regeln von
-> Classic Traveller, mit Lebenslauf am Charakter (siehe *Charaktererschaffung* und *Offene Fragen*).
+> Ebenfalls am 25. Oktober 2026 freigegeben: Charaktererschaffung nach den Regeln von Classic
+> Traveller, mit Lebenslauf am Charakter (siehe *Charaktererschaffung*), und Gegenstände mit Besitz
+> (siehe *Gegenstände*).
 > Neu im Bild: `Generation`, `Career`, `CareerRoll`, `Character.career`, Gegenstände
 > (`Item`, `Possession`, siehe *Gegenstände*) und die Laufbahnen als Referenzdaten (`Service`,
 > `Throw`, `Rank`, `Table`, `Gain`, `Cascade`, `Aging`).
@@ -206,11 +207,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Klinge und Schusswaffe nutzt genau ihre Fertigkeit (`uses`).
   - **TL, Gewicht und Preis** (`tl`, `weight`, `price`) stehen, wie in den Charts angegeben. Das
     Gewicht ist immer in kg (S. 4 nennt Gramm, S. 23 bei Fahrzeugen Tonnen = 1000 kg), der Preis
-    immer in Cr (KCr und MCr umgerechnet). Was die Charts nicht angeben, fehlt (Club und die
+    immer in Cr (KCr und MCr umgerechnet). Steht im Chart ein offensichtlicher Druckfehler (Grav Belt
+    „10 tons“), gilt trotzdem das Chart; die Daten vermerken es. Was die Charts nicht angeben, fehlt (Club und die
     Travellers' Aid Society haben keinen Preis, Passagen und Mitgliedschaft kein Gewicht). Bei Schiffen und Small Craft sind „tons“
     Verdrängung, kein Gewicht; sie haben deshalb keins. Gibt es einen Gegenstand in mehreren TL
-    (Vacc Suit TL 8 bis 13), ist jede Zeile ein eigener Gegenstand mit eigener Id. Was eine Zeile
-    „10 % of price“ kostet (Accessories), ist kein Gegenstand.
+    (Vacc Suit TL 8 bis 13), ist jede Zeile ein eigener Gegenstand mit eigener Id. Keine Gegenstände sind
+    Accessories („10 % of price“) und Recharge (eine Leistung).
   - **Später**, mit Kampf und Handel: Kampfwerte der Waffen und Rüstungen (S. 4: Länge, nötige
     Stärke, DMs, Reichweite), Kaufen und Verkaufen, Gesamtgewicht. Schiffe sind vorerst nur ein
     Gegenstand; Schiffskarten kommen später. Alles, was nicht in der Liste steht, bleibt freier Text
@@ -236,7 +238,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Lebenslauf statt Zwischenstand.** Eine Erschaffung hält nur ihren Lebenslauf (`Career`): die
     Würfe der Reihe nach, jeder mit der Entscheidung, die zu ihm gehört. Alles andere folgt daraus:
     UPP, Fertigkeiten, Laufbahn (`/in`), Terms, Rang, Alter (18 + 4 je Term), ob eingezogen, ob tot,
-    Pension, Geld, Gegenstände und welcher Schritt dran ist (`/step`). Würfe werden nur angehängt.
+    Pension, Geld, Gegenstände und welcher Schritt dran ist (`/step`). Würfe werden nur angehängt;
+    nur die Wahl aus einer Kaskade kommt nach dem Wurf noch zu ihm hinzu (Schritt `cascade`).
   - **Was ein Wurf festhält.** Jeder `CareerRoll` hält seine Art (`kind`), die Würfel (`dice`, einer
     oder zwei) und den DM fest, bei Würfen mit Zielwert auch den Zielwert (`target`); Erfolg
     (`/success`: Würfel + `dm` ≥ `target`) folgt allein daraus. Was er sonst braucht, je Art:
@@ -261,19 +264,20 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        eingezogen wurde, darf im ersten Term kein Offizierspatent versuchen. Was eine Laufbahn bei
        der Musterung mitgibt (Marines Cutlass-1, Army Rifle-1, Scouts Pilot-1), kommt sofort dazu.
     3. *Term*, jedes Mal in dieser Reihenfolge: Überleben (`survival`); misslingt es, ist der
-       Charakter tot und die Erschaffung zu Ende (`dead`). Ohne Rang und in einer Laufbahn mit Rängen:
-       Offizierspatent, das gibt Rang 1. Mit Rang unter 6: Beförderung, einmal je Term, auch im Term
-       des Patents. Dann die Fertigkeiten: im ersten Term 2, danach 1, bei den Scouts immer 2
+       Charakter tot und die Erschaffung zu Ende (`dead`) wie im Regelwerk. Ohne Rang und in einer Laufbahn mit Rängen:
+       Offizierspatent, das gibt Rang 1. Mit Rang unter dem höchsten der Laufbahn (Merchants haben 5):
+       Beförderung, einmal je Term, auch im Term des Patents. Dann die Fertigkeiten: im ersten Term 2, danach 1, bei den Scouts immer 2
        (`skillsPerTerm`); +1 für Patent, +1 für Beförderung. Für jede wählt man eine Tabelle; die
        vierte (`minEdu` 8) nur mit EDU 8+, gemessen vor dem Wurf. Ein Rang bringt, was in ihm steht
        (`grants`, z. B. Navy Captain +1 SOC).
     4. *Altern* ab dem Ende des 4. Terms: je Attribut der Aging Table ein Wurf nach der Zeile mit dem
        größten `fromTerm`, der den Term nicht übersteigt (INT erst ab dem 12. Term);
        unter dem Zielwert sinkt das Attribut um `loss`. Fällt ein Attribut dadurch unter 1, folgt eine
-       *Krise* (`crisis`, 2W6, 8+): gelingt sie, steht das Attribut auf 1, sonst ist der Charakter tot.
+       *Krise* (Schritt und Wurf `crisis`, 2W6, 8+): gelingt sie, steht das Attribut auf 1, sonst ist
+       der Charakter tot. Die Krise stammt aus dem Vorbild, nicht aus den Charts.
     5. *Weiterverpflichtung*: Man sagt, ob man bleiben will (`wants`), dann wird immer gewürfelt. Eine
        12 heißt bleiben, egal was man wollte. Sonst bleibt, wer will und den Zielwert schafft, außer
-       nach dem 7. Term: dann nur mit 12. Wer bleibt, beginnt den nächsten Term (3.), alle anderen
+       nach dem 7. Term: dann nur mit 12 (aus dem Vorbild). Wer bleibt, beginnt den nächsten Term (3.), alle anderen
        mustern ab.
     6. *Abmusterung*: so viele Würfe wie Terms, dazu +1 bei Rang 1–2, +2 bei Rang 3–4, +3 bei Rang
        5–6. Je Wurf wählt man Geld oder Sachwerte; Geld höchstens dreimal. DM +1 auf Geld mit
@@ -295,6 +299,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Alter („Ex-Navy · Commander · 5 Terms · 38 Jahre“), die Pension in der Notiz. Der Lebenslauf zieht
     mit um (`Character.career`) und bleibt danach unverändert; den Charakter bearbeitet man wie jeden
     anderen. Von Hand angelegte Charaktere haben keinen Lebenslauf. Danach ist die Erschaffung zu.
+  - **Laufbahnen** sind die sechs aus dem Regelwerk: Navy, Marines, Army, Scouts, Merchants, Other.
+    Weitere (etwa aus *Citizens of the Imperium*) wären nur Daten.
+  - **Fertigkeiten aus den Tabellen**, die es vorher nicht gab, kommen in die Liste: Brawling,
+    Forgery und die einzelnen Fahrzeuge der Kaskade Vehicle (Grav, Tracked und Wheeled Vehicle,
+    Prop-driven und Jet-driven Fixed Wing, Helicopter, Large und Small Watercraft, Hovercraft,
+    Submersible). Vehicle bleibt in der Liste für Charaktere von Hand; die Tabellen geben es nie.
   - **Verwerfen** geht jederzeit und löscht die Erschaffung ohne Spur. Ein Toter lässt sich nur
     verwerfen, nicht übernehmen.
   - Die Erschaffung steht nicht im Log; ihr Lebenslauf ist ihr Verlauf.
@@ -323,39 +333,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Bereich ohne sichtbares Feld fehlt auf der Karte ganz. Der Log zeigt alte Einträge daraus weiter.
   Mindestens ein Feld hat einen Eintrag, der nicht ausgeblendet ist.
 
-## Offene Fragen
-
-Zur Charaktererschaffung und zu den Gegenständen; das Bild zeigt jeweils die empfohlene Antwort.
-
-1. **Erschaffung speichern?** Empfehlung: ja, als Teil der Kampagne (blau). Eine Erschaffung dauert
-   einige Minuten; schließt das Handy die App, wäre sie sonst weg, und man könnte durch Neuladen neu
-   würfeln. Alternative: flüchtig wie die Probe (grau), dann fällt sie aus der Kampagnendatei.
-2. **Lebenslauf am Charakter behalten?** Empfehlung: ja (`Character.career`), die Details der
-   Charakterkarte zeigen ihn knapp. Alternative: nur die Werte übernehmen; dann entfällt `Career` am
-   Charakter, und der Lebenslauf ist nach dem Abschluss weg.
-3. **Tod beim Überlebenswurf.** Empfehlung: wie im Regelwerk tot, die Erschaffung endet und lässt sich
-   nur verwerfen. Alternative (verbreitete Hausregel): verletzt, die Laufbahn endet nach diesem Term,
-   abmustern wie sonst. Dann käme in `CareerRoll` nichts hinzu, aber die Regel *Term* ändert sich.
-4. **Welche Laufbahnen?** Empfehlung: die sechs aus dem Regelwerk (Navy, Marines, Army, Scouts,
-   Merchants, Other). Das Vorbild hat 17 (aus *Citizens of the Imperium*); sie ließen sich später als
-   Daten ergänzen, ohne das Modell zu ändern.
-5. **Wie viel von der Liste der Gegenstände jetzt?** Empfehlung: alles von S. 23 und dazu Passagen,
-   Schiffe und TAS (siehe *Gegenstände*), damit man im Editor gleich jede Ausrüstung als Besitz
-   eintragen kann. Alternative: nur, was die Abmusterung bringen kann; der Rest bliebe freier Text.
-
-Dazu ohne Frage, nur zur Kenntnis: In die Liste der Fertigkeiten kommen Brawling, Forgery und die
-einzelnen Fahrzeuge (Grav, Tracked, Wheeled, Prop-driven und Jet-driven Fixed Wing, Helicopter, Large
-und Small Watercraft, Hovercraft, Submersible). Vehicle bleibt für Charaktere von Hand. Krise beim
-Altern und „nach dem 7. Term nur mit 12“ stehen nicht in den Charts, aber im Regelwerk bzw. im
-Vorbild; sie sind oben übernommen.
-
 ## Wo der Code noch nicht folgt
 
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
 - **Charaktererschaffung** (`Generation`, `Career`, `CareerRoll`, `Character.career` und die
-  Laufbahnen in den Referenzdaten) sowie Gegenstände und Besitz gibt es im Code noch nicht (Entwurf, siehe *Charaktererschaffung*).
+  Laufbahnen in den Referenzdaten) sowie Gegenstände und Besitz gibt es im Code noch nicht
+  (freigegeben, in Arbeit).
 
 - **`Card → Campaign : in` und `Task → Campaign : in`** sind im Code kein Feld. Der Controller hält
   höchstens eine offene Karte und höchstens eine Probe, beide immer zur offenen Kampagne; beim

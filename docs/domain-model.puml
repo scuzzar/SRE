@@ -2,7 +2,7 @@
 ' Rendern: bash .claude/skills/domain-model/scripts/render.sh docs/domain-model.puml
 @startuml
 !pragma layout smetana
-title Solo RPG Engine – Domänenmodell (Version 1, Entwurf: Charaktererschaffung)
+title Solo RPG Engine – Domänenmodell (Version 1)
 hide empty members
 hide methods
 skinparam classAttributeIconSize 0
@@ -222,6 +222,7 @@ hide <<value>> stereotype
     skill
     cascade
     aging
+    crisis
     reenlist
     muster
     name
