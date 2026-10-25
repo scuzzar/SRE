@@ -16,7 +16,8 @@ const patterns: Record<Feel, readonly number[]> = {
   add: [25],
   success: [40, 80, 80],
   failure: [150, 60, 60],
-  draw: [25, 170, 35],
+  // Abheben, Umdrehen (Karte steht hochkant bei etwa 620 ms), Ankommen; im Takt von `card-draw`.
+  draw: [20, 600, 40, 240, 25],
   pick: [25],
   unpick: [20],
   confirm: [30, 60, 50],

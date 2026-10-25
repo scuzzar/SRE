@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { CardSectionView, CardView } from '../../controller';
 import { pairText, quoted } from '../format';
 import { useGame } from '../game-context';
@@ -7,29 +7,40 @@ import { CheckIcon, CloseIcon, SenseIcon } from '../icons';
 
 type SlotView = CardSectionView['slots'][number];
 
-/** So lange gleitet die Karte hinaus, bevor sie verworfen oder übernommen ist; passt zu `sheet-out`. */
-const LEAVE_MS = 200;
+/** So lange fliegt die Karte herein und dreht sich um; passt zu `card-draw` in styles.css. */
+const DRAW_MS = 1000;
+
+/** So lange fliegt die Karte hinaus, bevor sie verworfen oder übernommen ist; passt zu `sheet-toss` und `sheet-sink`. */
+const LEAVE_MS = 260;
 
 /**
  * Die offene Inspirationskarte im Vordergrund. Aufbau nach der GMA2e-Karte, darunter die Themen-Tafeln. Ein Paar steht in einem Feld.
  *
- * Animation (reine Darstellung): Die Karte kommt von unten, wo „Karte ziehen“ sitzt, und wird dabei
- * vom Rücken auf die Vorderseite gedreht, Themen-Tafeln eingeschlossen. „Neu ziehen“ dreht eine
- * neue Karte um. Verwerfen und Übernehmen lassen die Karte erst hinausgleiten.
+ * Animation (reine Darstellung), so inszeniert wie der Würfelwurf: Die Karte fliegt mit dem Rücken
+ * nach oben von unten herein, wo „Karte ziehen“ sitzt, schwebt kurz mit rotem Glimmen und dreht sich
+ * dann mit Schwung um, Themen-Tafeln eingeschlossen. Ein Lichtreflex läuft über die Vorderseite, die
+ * Felder erscheinen der Reihe nach. „Neu ziehen“ spielt das mit einer neuen Karte. Übernehmen lässt
+ * die Karte nach unten in den Log sinken, Verwerfen wirft sie zur Seite weg.
  */
 export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: () => void }) {
   const game = useGame();
   // Zählt die Ziehungen, damit jede neue Karte ihre Drehung von vorn spielt.
   const [draw, setDraw] = useState(0);
-  const [leaving, setLeaving] = useState(false);
+  // Solange die Karte hereinfliegt, schneidet der Kartenbereich ab, statt kurz zu scrollen.
+  const [drawing, setDrawing] = useState(animated);
+  const [leaving, setLeaving] = useState<'confirm' | 'discard' | undefined>(undefined);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
+  useEffect(() => {
+    const done = setTimeout(() => setDrawing(false), DRAW_MS);
+    return () => clearTimeout(done);
+  }, [draw]);
 
-  /** Erst hinausgleiten, dann die Eingabe an den Controller; doppeltes Tippen zählt einmal. */
-  const leave = (then: () => void) => {
+  /** Erst hinausfliegen, dann die Eingabe an den Controller; doppeltes Tippen zählt einmal. */
+  const leave = (how: 'confirm' | 'discard', then: () => void) => {
     if (leaving) return;
     if (!animated()) return then();
-    setLeaving(true);
+    setLeaving(how);
     timer.current = setTimeout(then, LEAVE_MS);
   };
   const cardSections = card.sections.filter((s) => s.kind === 'card');
@@ -38,7 +49,7 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
   const known = ['event', 'senses', 'scene', 'belongings', 'situation', 'names', 'traits', 'flavor'];
 
   return (
-    <div className={leaving ? 'overlay leaving' : 'overlay'}>
+    <div className={leaving ? `overlay leaving ${leaving}` : 'overlay'}>
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="card-title">
         <div className="sheet-head">
           <h2 id="card-title">Inspirationskarte</h2>
@@ -51,7 +62,7 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
             <span className="kicker">Frage</span> <span style={{ fontWeight: 600 }}>{quoted(card.question)}</span>
           </div>
         )}
-        <div className="sheet-body">
+        <div className={drawing ? 'sheet-body drawing' : 'sheet-body'}>
           <div key={draw} className="card-flip">
             <div className="card-front">
               <article className="card" aria-label="Karte">
@@ -89,7 +100,7 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
             aria-label="Karte verwerfen"
             onClick={() => {
               haptic('discard');
-              leave(() => game.discardCard());
+              leave('discard', () => game.discardCard());
             }}
           >
             <CloseIcon />
@@ -101,6 +112,7 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
               haptic('draw');
               game.redrawCard();
               setDraw((d) => d + 1);
+              setDrawing(animated());
             }}
           >
             Neu ziehen
@@ -115,7 +127,7 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
             aria-label={`${card.pickedCount} ${card.pickedCount === 1 ? 'Eintrag' : 'Einträge'} in den Log übernehmen`}
             onClick={() => {
               haptic('confirm');
-              leave(() => {
+              leave('confirm', () => {
                 game.confirmCard();
                 onConfirmed();
               });
@@ -225,8 +237,8 @@ function boxed(themes: readonly CardSectionView[]): CardSectionView[][] {
 function Themes({ themes }: { themes: readonly CardSectionView[] }) {
   return (
     <div className="themes">
-      {boxed(themes).map((group) => (
-        <div key={group[0]!.id} className="card theme-box">
+      {boxed(themes).map((group, i) => (
+        <div key={group[0]!.id} className="card theme-box" style={{ '--deal': i } as CSSProperties}>
           {group.map((theme) => (
             <section key={theme.id} className={`theme span-${columns(theme.slots)}`} aria-labelledby={`theme-${theme.id}`}>
               <h3 id={`theme-${theme.id}`} className="theme-title">

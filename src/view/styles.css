@@ -1652,32 +1652,64 @@ button:disabled {
   animation: fade-up 240ms 200ms ease-out both;
 }
 
-/* Inspirationskarte: kommt von unten und wird als Ganzes umgedreht, Themen-Tafeln eingeschlossen. */
+/* Inspirationskarte, so inszeniert wie der Würfelwurf: Die Karte fliegt mit dem Rücken nach oben
+   herein, schwebt kurz mit rotem Glimmen, dreht sich mit Schwung um; ein Lichtreflex läuft über die
+   Vorderseite, die Felder erscheinen der Reihe nach. Übernehmen lässt sie sinken, Verwerfen wirft sie
+   weg. Die Zeiten passen zu DRAW_MS und LEAVE_MS (CardSheet.tsx) und zu `draw` in haptics.ts. */
 
 .overlay {
-  animation: backdrop-in 180ms ease-out both;
+  background: transparent;
+}
+
+/* Die Bühne: abgedunkelt mit Vignette, wie beim Würfeln. */
+.overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(ellipse at 50% 45%, rgba(42, 12, 14, 0.6), rgba(0, 0, 0, 0.9) 72%);
+  animation: fade-in 200ms ease-out both;
 }
 
 .overlay .sheet {
-  animation: sheet-in 300ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  animation: sheet-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
 }
 
-.overlay.leaving {
-  animation: fade-out 200ms ease-in both;
-}
-
-.overlay.leaving .sheet {
-  animation: sheet-out 200ms ease-in both;
+.sheet-body.drawing {
+  overflow: hidden;
 }
 
 .card-flip {
   position: relative;
   transform-style: preserve-3d;
-  animation: card-flip 620ms backwards;
+  animation: card-draw 900ms backwards;
 }
 
 .card-front {
+  position: relative;
   backface-visibility: hidden;
+  animation: card-reveal 700ms 560ms ease-out backwards;
+}
+
+/* Der Lichtreflex nach dem Umdrehen. */
+.card-front::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 10px;
+  pointer-events: none;
+  background: linear-gradient(
+      110deg,
+      transparent 38%,
+      rgba(255, 236, 200, 0.16) 47%,
+      rgba(255, 255, 255, 0.28) 50%,
+      rgba(255, 236, 200, 0.16) 53%,
+      transparent 62%
+    )
+    0 0 / 260% 100% no-repeat;
+  opacity: 0;
+  animation: card-glint 650ms 760ms ease-in-out;
 }
 
 .card-back {
@@ -1694,6 +1726,7 @@ button:disabled {
     inset 0 0 0 8px rgba(198, 47, 53, 0.65);
   transform: rotateY(180deg);
   backface-visibility: hidden;
+  animation: back-glow 900ms ease-in-out backwards;
 }
 
 /* Das Zeichen der App (public/icon.svg) auf dem Rücken. */
@@ -1702,6 +1735,143 @@ button:disabled {
   height: 112px;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='18' y='14' width='7' height='36' fill='%23C62F35'/%3E%3Crect x='30' y='20' width='18' height='24' rx='3' fill='none' stroke='%23ECEAE4' stroke-width='3.5'/%3E%3Ccircle cx='35.5' cy='26' r='2' fill='%23ECEAE4'/%3E%3Ccircle cx='42.5' cy='38' r='2' fill='%23ECEAE4'/%3E%3C/svg%3E")
     center / contain no-repeat;
+  animation: mark-pulse 900ms ease-in-out backwards;
+}
+
+/* Die Felder erscheinen der Reihe nach: erst die Karte oben, dann Kasten für Kasten. */
+.card-front .card {
+  --tile-base: 780ms;
+}
+
+.card-front .theme-box {
+  --tile-base: calc(840ms + var(--deal, 0) * 70ms);
+}
+
+.card-front .tile {
+  animation: tile-in 240ms calc(var(--tile-base) + var(--n, 0) * 18ms) cubic-bezier(0.2, 0.9, 0.3, 1.2) backwards;
+}
+
+.card-front .tile:nth-child(2) {
+  --n: 1;
+}
+.card-front .tile:nth-child(3) {
+  --n: 2;
+}
+.card-front .tile:nth-child(4) {
+  --n: 3;
+}
+.card-front .tile:nth-child(5) {
+  --n: 4;
+}
+.card-front .tile:nth-child(6) {
+  --n: 5;
+}
+.card-front .tile:nth-child(n + 7) {
+  --n: 6;
+}
+
+/* Übernehmen: Die Karte sinkt nach unten in den Log. Verwerfen: Sie fliegt zur Seite weg. */
+.overlay.leaving::before {
+  animation: fade-out 260ms ease-in both;
+}
+
+.overlay.leaving.confirm .sheet {
+  animation: sheet-sink 260ms cubic-bezier(0.5, 0, 0.8, 0.5) both;
+}
+
+.overlay.leaving.discard .sheet {
+  animation: sheet-toss 260ms cubic-bezier(0.5, 0, 0.8, 0.5) both;
+}
+
+@keyframes card-draw {
+  0% {
+    transform: perspective(1200px) translateY(80vh) rotateZ(-14deg) rotateY(-180deg) scale(0.6);
+    animation-timing-function: cubic-bezier(0.15, 0.75, 0.3, 1);
+  }
+  38% {
+    transform: perspective(1200px) translateY(-4px) rotateZ(1.5deg) rotateY(-180deg) scale(1.03);
+    animation-timing-function: ease-in-out;
+  }
+  52% {
+    transform: perspective(1200px) translateY(-10px) rotateZ(0deg) rotateY(-180deg) scale(1.05);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1);
+  }
+  86% {
+    transform: perspective(1200px) translateY(0) rotateZ(0deg) rotateY(8deg) scale(1.01);
+    animation-timing-function: ease-out;
+  }
+  100% {
+    transform: perspective(1200px) translateY(0) rotateZ(0deg) rotateY(0deg) scale(1);
+  }
+}
+
+@keyframes back-glow {
+  0%,
+  30% {
+    box-shadow:
+      inset 0 0 0 7px #0e0e0e,
+      inset 0 0 0 8px rgba(198, 47, 53, 0.65),
+      0 0 0 rgba(198, 47, 53, 0);
+  }
+  52% {
+    box-shadow:
+      inset 0 0 0 7px #0e0e0e,
+      inset 0 0 0 8px rgba(239, 90, 95, 1),
+      0 0 38px rgba(198, 47, 53, 0.6);
+  }
+}
+
+@keyframes mark-pulse {
+  0%,
+  30% {
+    transform: scale(0.9);
+    filter: none;
+  }
+  52% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 12px rgba(239, 90, 95, 0.8));
+  }
+}
+
+@keyframes card-reveal {
+  from {
+    filter: drop-shadow(0 0 26px rgba(239, 90, 95, 0.75)) brightness(1.35);
+  }
+  to {
+    filter: drop-shadow(0 0 0 rgba(239, 90, 95, 0)) brightness(1);
+  }
+}
+
+@keyframes card-glint {
+  0% {
+    opacity: 1;
+    background-position: 100% 0;
+  }
+  100% {
+    opacity: 1;
+    background-position: 0 0;
+  }
+}
+
+@keyframes tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.94);
+  }
+}
+
+@keyframes sheet-sink {
+  to {
+    opacity: 0;
+    transform: translateY(45%) scale(0.85);
+  }
+}
+
+@keyframes sheet-toss {
+  to {
+    opacity: 0;
+    transform: translateX(-110%) rotate(-12deg);
+  }
 }
 
 /* Antippen: Das Feld gibt kurz nach, der Haken springt auf. */
@@ -1718,37 +1888,10 @@ button:disabled {
   animation: fade-up 260ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
 }
 
-/* Erst liegt der Rücken oben, solange die Karte hereingleitet; dann wird sie umgedreht. */
-@keyframes card-flip {
-  0%,
-  30% {
-    transform: perspective(1200px) rotateY(-180deg) scale(0.94);
-    animation-timing-function: cubic-bezier(0.45, 0, 0.3, 1);
-  }
-  80% {
-    transform: perspective(1200px) rotateY(6deg) scale(1.01);
-    animation-timing-function: ease-out;
-  }
-  100% {
-    transform: perspective(1200px) rotateY(0deg) scale(1);
-  }
-}
-
 @keyframes sheet-in {
   from {
-    transform: translateY(70%);
-  }
-}
-
-@keyframes sheet-out {
-  to {
-    transform: translateY(60%);
-  }
-}
-
-@keyframes backdrop-in {
-  from {
-    background-color: transparent;
+    opacity: 0;
+    transform: translateY(24px);
   }
 }
 

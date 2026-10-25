@@ -21,7 +21,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
   - Man tippt die Felder an, die man nutzen will (**Mehrfachauswahl**, auch über mehrere Themen hinweg). Ein Feld aus Mythic zieht immer ein **Paar** von Begriffen (verraten · Technologie); man nimmt das Paar immer ganz.
   - Unten bestätigt ein **Haken** die Auswahl: Nur die ausgewählten Einträge kommen in den Log.
   - Außerdem: Karte verwerfen oder neu ziehen.
-  - Die Karte kommt mit ihrem Rücken nach oben aus dem Daumenbereich und wird umgedreht; „Neu ziehen“ dreht eine neue Karte um. Verwerfen und Übernehmen lassen sie hinausgleiten.
+  - Die Karte wird so inszeniert wie der Würfelwurf: Sie fliegt mit dem Rücken nach oben aus dem Daumenbereich herein, schwebt kurz mit rotem Glimmen, dreht sich mit Schwung um, ein Lichtreflex läuft über die Vorderseite, und die Felder erscheinen der Reihe nach. „Neu ziehen“ spielt das mit einer neuen Karte. Übernehmen lässt sie nach unten sinken, Verwerfen wirft sie zur Seite weg.
 - **Knopf „2W6“**: ein einfacher Würfelwurf durch die App. Zwei Würfel werden im Vordergrund geworfen, angelehnt an Baldur's Gate 3: dunkle Würfel mit goldenen Augen, die aufschlagen, liegen bleiben und aufleuchten; dann die Summe. Ein Tippen überspringt.
 - **Animation und Vibration**: Würfeln und Karte sind kurz animiert (unter zwei Sekunden) und vibrieren dazu (Android über die Vibrations-API, iPhone ab iOS 18 über einen kurzen Ruck). Wer im System „Bewegung reduzieren“ eingestellt hat, sieht gleich das Ergebnis.
 - **Log**: Orakelantworten, Würfe und die ausgewählten Karteneinträge landen untereinander im Log, das neueste unten.
