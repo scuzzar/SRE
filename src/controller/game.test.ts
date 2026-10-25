@@ -108,7 +108,7 @@ describe('Orakel-Screen', () => {
   });
 });
 
-describe('Charakter-Screen: Probe würfeln → Popup → zurück zum Orakel', () => {
+describe('Charakter-Screen: Probe würfeln → Popup → weiter oder zum Orakel', () => {
   it('bereitet die Probe vor, würfelt, zeigt das Ergebnis und kehrt zum Orakel zurück', async () => {
     const { game } = await started(fixedRandom(4, 5));
     game.showScreen('characters');
@@ -131,8 +131,18 @@ describe('Charakter-Screen: Probe würfeln → Popup → zurück zum Orakel', ()
     expect(view.result).toMatchObject({ character: 'Kira Vant', dice: [4, 5], dm: 3, total: 12, target: 10, success: true });
     expect(view.log.at(-1)).toEqual(view.result);
 
-    game.closeResult();
+    game.closeResultToOracle();
     expect(game.snapshot()).toMatchObject({ screen: 'oracle', result: undefined, task: undefined });
+  });
+
+  it('bleibt nach „Weiter“ im Charakter-Screen, die Probe bleibt vorbereitet', async () => {
+    const { game } = await started(fixedRandom(4, 5));
+    game.showScreen('characters');
+    game.chooseSkill('c1', 'pilot');
+    game.rollTask();
+    game.closeResult();
+    expect(game.snapshot()).toMatchObject({ screen: 'characters', result: undefined, task: { character: 'Kira Vant', ready: true } });
+    expect(game.snapshot().log).toHaveLength(1);
   });
 
   it('beginnt mit einem anderen Charakter eine neue Probe und klappt denselben wieder zu', async () => {

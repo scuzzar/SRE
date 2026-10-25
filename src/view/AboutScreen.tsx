@@ -78,29 +78,33 @@ export function AboutScreen({ persistent }: { persistent: boolean }) {
 const kinds = {
   api: 'Dieser Browser kann vibrieren (Vibrations-API).',
   switch: 'Dieser Browser kennt keine Vibrations-API; die App nutzt den kurzen Ruck des iPhones (ab iOS 18).',
+  firefox: 'Firefox lässt Webseiten nicht vibrieren, auch wenn das Gerät es kann. In Chrome, Samsung Internet oder Edge vibrieren Würfel und Karte.',
   none: 'Dieser Browser kann nicht vibrieren.',
 } as const;
 
 /** Zum Ausprobieren, ob Würfel und Karte hier vibrieren können. Das Ergebnis ist reine Anzeige. */
 function Vibration() {
   const [answer, setAnswer] = useState<string | undefined>(undefined);
+  const kind = vibrationKind();
   return (
     <div>
       <h2>Vibration</h2>
-      <p>{kinds[vibrationKind()]}</p>
-      <button
-        type="button"
-        className="ghost"
-        onClick={() =>
-          setAnswer(
-            testHaptic()
-              ? 'Gesendet. Spürst du nichts, ist die Vibration im System aus, unter Android etwa in den Einstellungen unter „Töne und Vibration“ bzw. „Vibration und Haptik“, oder ein Energiesparmodus hält sie an.'
-              : 'Der Browser hat die Vibration abgelehnt.',
-          )
-        }
-      >
-        Vibration testen
-      </button>
+      <p>{kinds[kind]}</p>
+      {kind !== 'firefox' && kind !== 'none' && (
+        <button
+          type="button"
+          className="ghost"
+          onClick={() =>
+            setAnswer(
+              testHaptic()
+                ? 'Gesendet. Spürst du nichts, ist die Vibration im System aus, unter Android etwa in den Einstellungen unter „Töne und Vibration“ bzw. „Vibration und Haptik“, oder ein Energiesparmodus hält sie an.'
+                : 'Der Browser hat die Vibration abgelehnt.',
+            )
+          }
+        >
+          Vibration testen
+        </button>
+      )}
       {answer && (
         <p className="muted" role="status" style={{ marginTop: 8 }}>
           {answer}

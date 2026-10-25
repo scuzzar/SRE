@@ -16,7 +16,8 @@ const patterns: Record<Feel, readonly number[]> = {
   add: [25],
   success: [40, 80, 80],
   failure: [150, 60, 60],
-  draw: [25, 170, 35],
+  // Abheben, Umdrehen (Karte steht hochkant bei etwa 620 ms), Ankommen; im Takt von `card-draw`.
+  draw: [20, 600, 40, 240, 25],
   pick: [25],
   unpick: [20],
   confirm: [30, 60, 50],
@@ -73,8 +74,17 @@ export function stopHaptics(): void {
   if (canVibrate()) navigator.vibrate(0);
 }
 
+/**
+ * Firefox für Android hat die Vibration für Webseiten abgeschaltet (seit Version 79): `vibrate()`
+ * meldet Erfolg, aber nichts vibriert. Erkennen lässt sich das nur am Browser selbst.
+ */
+function firefox(): boolean {
+  return typeof navigator !== 'undefined' && /Firefox\//.test(navigator.userAgent);
+}
+
 /** Wie dieses Gerät vibriert: über die Vibrations-API, über den Schalter-Ruck des iPhones oder gar nicht. */
-export function vibrationKind(): 'api' | 'switch' | 'none' {
+export function vibrationKind(): 'api' | 'switch' | 'firefox' | 'none' {
+  if (firefox()) return 'firefox';
   if (canVibrate()) return 'api';
   if (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches) return 'switch';
   return 'none';
@@ -82,6 +92,7 @@ export function vibrationKind(): 'api' | 'switch' | 'none' {
 
 /** Ein langer, deutlicher Puls zum Ausprobieren. Gibt zurück, ob der Browser ihn angenommen hat. */
 export function testHaptic(): boolean {
+  if (firefox()) return false;
   if (canVibrate()) return navigator.vibrate(400);
   switchTick();
   return vibrationKind() === 'switch';
