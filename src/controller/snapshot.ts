@@ -1,6 +1,7 @@
 import {
   activeCharacters,
   activeSkills,
+  byName,
   characterOf,
   characteristicDm,
   isInLog,
@@ -36,6 +37,12 @@ import { canConfirm, characteristicOptions, drawnIn, evaluateTask, hasSkill, sta
  */
 export interface Snapshot {
   readonly ready: boolean;
+  /** Die offene Kampagne. */
+  readonly campaign: { readonly id: string; readonly name: string };
+  /** Alle Kampagnen nach Namen, für die Kampagnenwahl. */
+  readonly campaigns: readonly CampaignChoice[];
+  /** Die Kampagnenwahl ist offen. */
+  readonly campaignSheet: CampaignSheetView | undefined;
   /** Ob der Spielstand das Schließen der App übersteht. */
   readonly persistent: boolean;
   readonly storageError: string | undefined;
@@ -56,6 +63,20 @@ export interface Snapshot {
 }
 
 export type Screen = 'oracle' | 'characters' | 'about';
+
+export interface CampaignChoice {
+  readonly id: string;
+  readonly name: string;
+  readonly open: boolean;
+  readonly characters: number;
+  readonly entries: number;
+}
+
+export interface CampaignSheetView {
+  readonly error: string | undefined;
+  /** Die letzte Kampagne lässt sich nicht löschen. */
+  readonly canDelete: boolean;
+}
 
 export interface OddsChoice {
   readonly id: string;
@@ -170,7 +191,11 @@ export interface EditorView {
 }
 
 export interface ControllerState {
+  /** Alle Kampagnen, die offene eingeschlossen. */
+  readonly campaigns: readonly Campaign[];
+  /** Die offene Kampagne. */
   readonly campaign: Campaign | undefined;
+  readonly campaignSheet: { readonly error: string | undefined } | undefined;
   readonly persistent: boolean;
   readonly storageError: string | undefined;
   readonly screen: Screen;
@@ -295,13 +320,16 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { persistent: state.persistent, storageError: state.storageError, screen: state.screen, skills: ref.skills };
   if (!campaign) {
-    return { ...base, ready: false, odds: [], log: [], card: undefined, characters: [], retired: [], task: undefined, result: undefined, editor: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, characters: [], retired: [], task: undefined, result: undefined, editor: undefined };
   }
   const resultEntry = state.result === undefined ? undefined : campaign.log[state.result];
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   return {
     ...base,
     ready: true,
+    campaign: { id: campaign.id, name: campaign.name },
+    campaigns: byName(state.campaigns).map((c) => ({ id: c.id, name: c.name, open: c.id === campaign.id, characters: activeCharacters(c).length, entries: c.log.length })),
+    campaignSheet: state.campaignSheet && { error: state.campaignSheet.error, canDelete: state.campaigns.length > 1 },
     odds: ref.odds.map((o) => ({ id: o.id, name: o.name, chance: o.chance, target: o.target, selected: o.id === campaign.odds })),
     log: campaign.log.map((entry) => logItem(campaign, entry)),
     card: state.card && cardView(state.card),

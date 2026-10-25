@@ -34,8 +34,11 @@ export interface Character {
   readonly skills: readonly SkillLevel[];
 }
 
-/** Alles, was zu einem Spiel gehört. In Version 1 gibt es genau eine. */
+export type CampaignId = string;
+
+/** Alles, was zu einem Spiel gehört; die oberste Ebene. Kampagnen wissen nichts voneinander. */
 export interface Campaign {
+  readonly id: CampaignId;
   readonly name: string;
   readonly characters: readonly Character[];
   /** Die eine gewählte Stufe für Orakel und Proben. */
@@ -55,11 +58,40 @@ export interface CharacterInput {
   readonly skills: readonly { readonly of: string; readonly level: number }[];
 }
 
-/** Eine neue Kampagne mit den Beispielcharakteren aus den Referenzdaten. */
-export function createCampaign(examples: readonly ExampleCharacter[] = ref.examples): Campaign {
-  let campaign: Campaign = { name: 'Kampagne', characters: [], odds: defaultOdds.id, log: [] };
+/** Eine neue Kampagne, ohne Log, mit der Standardstufe und den angegebenen Charakteren. */
+export function createCampaign(examples: readonly ExampleCharacter[] = ref.examples, name = 'Kampagne', id: CampaignId = 'k1'): Campaign {
+  let campaign: Campaign = { id, name: validName(name), characters: [], odds: defaultOdds.id, log: [] };
   for (const example of examples) campaign = addCharacter(campaign, example).campaign;
   return campaign;
+}
+
+/** Eine Id für eine weitere Kampagne. Ids gelten nur auf dem Gerät; eine Kampagnendatei hat keine. */
+export function nextCampaignId(campaigns: readonly Campaign[]): CampaignId {
+  const numbers = campaigns.map((c) => Number(c.id.replace(/^k/, ''))).filter(Number.isFinite);
+  return `k${Math.max(0, ...numbers) + 1}`;
+}
+
+/** Löscht eine Kampagne mit allem, was an ihr hängt. Die letzte lässt sich nicht löschen. */
+export function removeCampaign(campaigns: readonly Campaign[], id: CampaignId): readonly Campaign[] {
+  if (!campaigns.some((c) => c.id === id)) throw new DomainError(`Die Kampagne ${id} gibt es nicht`);
+  if (campaigns.length === 1) throw new DomainError('Die letzte Kampagne lässt sich nicht löschen. Lege erst eine neue an.');
+  return campaigns.filter((c) => c.id !== id);
+}
+
+/** Die Kampagnen nach Namen, für die Auswahl. */
+export function byName(campaigns: readonly Campaign[]): readonly Campaign[] {
+  return [...campaigns].sort((a, b) => a.name.localeCompare(b.name, 'de') || a.id.localeCompare(b.id));
+}
+
+/** Der Name einer Kampagne ist nicht leer. */
+export function validName(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) throw new DomainError('Die Kampagne braucht einen Namen.');
+  return trimmed;
+}
+
+export function renameCampaign(campaign: Campaign, name: string): Campaign {
+  return { ...campaign, name: validName(name) };
 }
 
 export function setOdds(campaign: Campaign, oddsId: string): Campaign {
@@ -68,6 +100,12 @@ export function setOdds(campaign: Campaign, oddsId: string): Campaign {
 
 export function appendLog(campaign: Campaign, entry: LogEntry): Campaign {
   return { ...campaign, log: [...campaign.log, entry] };
+}
+
+/** Löscht einen Logeintrag endgültig; die übrigen behalten ihre Reihenfolge. */
+export function removeLogEntry(campaign: Campaign, index: number): Campaign {
+  if (!Number.isInteger(index) || index < 0 || index >= campaign.log.length) throw new DomainError('Diesen Logeintrag gibt es nicht.');
+  return { ...campaign, log: campaign.log.filter((_, i) => i !== index) };
 }
 
 export function characterOf(campaign: Campaign, id: CharacterId): Character {

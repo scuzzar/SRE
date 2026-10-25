@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { appendLog, createCampaign, type CampaignRepository } from '../model';
-import { fixedClock, fixedRandom, memoryRepository } from '../model/testing';
+import { appendLog, createCampaign, fromCampaignFile, type CampaignRepository } from '../model';
+import { fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 
-async function started(random = fixedRandom(), repository = memoryRepository()) {
-  const game = new GameController({ repository, random, clock: fixedClock() });
+async function started(random = fixedRandom(), repository = memoryRepository(), download = memoryDownload()) {
+  const game = new GameController({ repository, random, clock: fixedClock(), download });
   await game.init();
-  return { game, repository };
+  return { game, repository, download };
 }
 
 describe('Start', () => {
@@ -28,11 +28,22 @@ describe('Start', () => {
   });
 
   it('meldet, wenn sich nicht speichern lässt', async () => {
-    const broken: CampaignRepository = { load: async () => undefined, save: async () => Promise.reject(new Error('voll')) };
-    const game = new GameController({ repository: broken, random: fixedRandom(), clock: fixedClock() });
+    const broken: CampaignRepository = { ...memoryRepository(), save: async () => Promise.reject(new Error('voll')) };
+    const game = new GameController({ repository: broken, random: fixedRandom(), clock: fixedClock(), download: memoryDownload() });
     await game.init();
     await game.whenSaved();
     expect(game.snapshot().storageError).toMatch(/nicht speichern: Error: voll/);
+  });
+
+  it('öffnet die Kampagne, die zuletzt offen war', async () => {
+    const repository = memoryRepository(createCampaign([], 'Spinward', 'k1'), createCampaign([], 'Aramis', 'k2'));
+    repository.open = 'k1';
+    const { game } = await started(fixedRandom(), repository);
+    expect(game.snapshot().campaign).toEqual({ id: 'k1', name: 'Spinward' });
+    expect(game.snapshot().campaigns.map((c) => [c.name, c.open])).toEqual([
+      ['Aramis', false],
+      ['Spinward', true],
+    ]);
   });
 
   it('meldet Änderungen an die View und hält den Snapshot dazwischen stabil', async () => {
@@ -237,5 +248,115 @@ describe('Charaktere anlegen, bearbeiten, entfernen', () => {
     expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'task', character: 'Jonas Reyl', success: false });
     game.restoreCharacter('c2');
     expect(game.snapshot().characters.map((c) => c.name)).toEqual(['Jonas Reyl']);
+  });
+});
+
+describe('Log', () => {
+  it('löscht einen Logeintrag endgültig; die übrigen bleiben in ihrer Reihenfolge', async () => {
+    const { game, repository } = await started(fixedRandom(1, 1, 2, 2, 3, 3));
+    game.rollDice();
+    game.rollDice();
+    game.rollDice();
+    game.deleteLogEntry(1);
+    await game.whenSaved();
+    expect(game.snapshot().log.map((e) => e.kind === 'dice' && e.total)).toEqual([2, 6]);
+    expect(repository.saved?.log).toHaveLength(2);
+  });
+
+  it('macht einen Charakter wieder löschbar, wenn der Eintrag weg ist, der auf ihn verwies', async () => {
+    const { game } = await started();
+    game.chooseSkill('c2', null);
+    game.rollTask();
+    game.closeResultToOracle();
+    expect(game.snapshot().characters[1]?.inLog).toBe(true);
+    game.deleteLogEntry(0);
+    expect(game.snapshot().characters[1]?.inLog).toBe(false);
+    game.removeCharacter('c2');
+    expect(game.snapshot()).toMatchObject({ characters: [{ name: 'Kira Vant' }], retired: [] });
+  });
+});
+
+describe('Kampagnen', () => {
+  it('legt eine leere Kampagne an, öffnet sie und merkt sich, welche offen ist', async () => {
+    const { game, repository } = await started();
+    game.showCampaigns();
+    game.createCampaign('  ');
+    expect(game.snapshot().campaignSheet?.error).toBe('Die Kampagne braucht einen Namen.');
+    game.createCampaign('Spinward Run');
+    await game.whenSaved();
+    const view = game.snapshot();
+    expect(view.campaignSheet).toBeUndefined();
+    expect(view.campaign).toEqual({ id: 'k2', name: 'Spinward Run' });
+    expect(view).toMatchObject({ characters: [], log: [], odds: expect.arrayContaining([expect.objectContaining({ name: 'Mittel', selected: true })]) });
+    expect(repository.open).toBe('k2');
+    expect([...repository.campaigns.keys()]).toEqual(['k1', 'k2']);
+  });
+
+  it('wechselt die Kampagne; offene Karte und Probe verfallen, jede behält ihren Log', async () => {
+    const { game, repository } = await started(fixedRandom(3, 4));
+    game.rollDice();
+    game.createCampaign('Zweite');
+    expect(game.snapshot().characters).toEqual([]);
+    game.openCampaign('k1');
+    game.chooseSkill('c1', 'pilot');
+    game.drawCard();
+    game.openCampaign('k2');
+    await game.whenSaved();
+    expect(game.snapshot()).toMatchObject({ campaign: { name: 'Zweite' }, card: undefined, task: undefined, log: [] });
+    expect(repository.open).toBe('k2');
+    game.openCampaign('k1');
+    expect(game.snapshot().log).toHaveLength(1);
+  });
+
+  it('benennt die offene Kampagne um', async () => {
+    const { game, repository } = await started();
+    game.showCampaigns();
+    game.renameCampaign('Spinward Run');
+    await game.whenSaved();
+    expect(game.snapshot().campaign.name).toBe('Spinward Run');
+    expect(game.snapshot().campaigns.map((c) => c.name)).toEqual(['Spinward Run']);
+    expect(repository.saved?.name).toBe('Spinward Run');
+  });
+
+  it('löscht eine Kampagne, aber nie die letzte; war sie offen, öffnet sich eine andere', async () => {
+    const { game, repository } = await started();
+    game.showCampaigns();
+    expect(game.snapshot().campaignSheet?.canDelete).toBe(false);
+    game.deleteCampaign('k1');
+    expect(game.snapshot().campaignSheet?.error).toMatch(/letzte Kampagne/);
+    game.createCampaign('Zweite');
+    game.showCampaigns();
+    expect(game.snapshot().campaignSheet?.canDelete).toBe(true);
+    game.deleteCampaign('k2');
+    await game.whenSaved();
+    expect(game.snapshot().campaign.id).toBe('k1');
+    expect(repository.open).toBe('k1');
+    expect([...repository.campaigns.keys()]).toEqual(['k1']);
+  });
+
+  it('exportiert eine Kampagne als Download und importiert sie als neue Kampagne', async () => {
+    const { game, download } = await started(fixedRandom(5, 6));
+    game.rollDice();
+    game.renameCampaign('Spinward Run');
+    game.exportCampaign('k1');
+    expect(download.files).toHaveLength(1);
+    const file = download.files[0]!;
+    expect(file).toMatchObject({ fileName: 'Spinward-Run-2026-10-23.json', type: 'application/json' });
+    expect(fromCampaignFile(file.content, 'x')).toMatchObject({ name: 'Spinward Run', log: [{ kind: 'dice', dice: [5, 6] }] });
+
+    game.importCampaign(file.content);
+    const view = game.snapshot();
+    expect(view.campaign).toEqual({ id: 'k2', name: 'Spinward Run' });
+    expect(view.campaigns.map((c) => c.id)).toEqual(['k1', 'k2']);
+    expect(view.log).toEqual([expect.objectContaining({ kind: 'dice', total: 11 })]);
+    expect(view.characters.map((c) => c.name)).toEqual(['Kira Vant', 'Jonas Reyl']);
+  });
+
+  it('importiert nichts aus einer falschen Datei und sagt, warum', async () => {
+    const { game } = await started();
+    game.showCampaigns();
+    game.importCampaign('kein json');
+    expect(game.snapshot().campaignSheet?.error).toMatch(/keine Kampagnendatei/);
+    expect(game.snapshot().campaigns).toHaveLength(1);
   });
 });

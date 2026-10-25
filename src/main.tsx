@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GameController } from './controller';
 import { systemClock } from './platform/clock';
+import { browserDownload } from './platform/download';
 import { cryptoRandom } from './platform/random';
 import { openRepository } from './platform/repository';
 import { App } from './view/App';
@@ -10,7 +11,7 @@ import './view/styles.css';
 
 // Verdrahtung: Die Umsetzungen aus platform/ gehen in den Controller, der Controller in die View.
 const { repository, persistent } = await openRepository();
-const game = new GameController({ repository, random: cryptoRandom, clock: systemClock, persistent });
+const game = new GameController({ repository, random: cryptoRandom, clock: systemClock, download: browserDownload, persistent });
 await game.init();
 
 createRoot(document.getElementById('root')!).render(

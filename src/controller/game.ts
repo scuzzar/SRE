@@ -2,18 +2,28 @@ import {
   addCharacter,
   appendLog,
   askOracle,
+  byName,
+  campaignFileName,
   createCampaign,
   DomainError,
+  fromCampaignFile,
+  nextCampaignId,
+  removeCampaign,
   removeCharacter,
+  removeLogEntry,
+  renameCampaign,
   restoreCharacter,
   rollDice,
   setOdds,
+  toCampaignFile,
   updateCharacter,
   type Campaign,
+  type CampaignId,
   type CampaignRepository,
   type CharacterInput,
   type Characteristic,
   type Clock,
+  type Download,
   type Random,
 } from '../model';
 import {
@@ -28,10 +38,14 @@ import {
 } from '../model/draft';
 import { buildSnapshot, type ControllerState, type Screen, type Snapshot } from './snapshot';
 
+/** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
+const closedDrafts = { card: undefined, task: undefined, details: false, result: undefined, editor: undefined } as const;
+
 export interface GameDependencies {
   readonly repository: CampaignRepository;
   readonly random: Random;
   readonly clock: Clock;
+  readonly download: Download;
   /** Ob der Speicher das Schließen der App übersteht. */
   readonly persistent?: boolean;
 }
@@ -49,7 +63,9 @@ export class GameController {
 
   constructor(private readonly deps: GameDependencies) {
     this.state = {
+      campaigns: [],
       campaign: undefined,
+      campaignSheet: undefined,
       persistent: deps.persistent ?? true,
       storageError: undefined,
       screen: 'oracle',
@@ -62,16 +78,22 @@ export class GameController {
     this.current = buildSnapshot(this.state);
   }
 
-  /** Lädt die Kampagne; gibt es noch keine, beginnt eine neue mit den Beispielcharakteren. */
+  /**
+   * Lädt die Kampagnen und öffnet die, die zuletzt offen war. Gibt es noch keine, beginnt die erste
+   * mit den Beispielcharakteren.
+   */
   async init(): Promise<void> {
-    let campaign: Campaign | undefined;
+    let campaigns: readonly Campaign[] = [];
+    let open: CampaignId | undefined;
     try {
-      campaign = await this.deps.repository.load();
+      campaigns = await this.deps.repository.list();
+      open = await this.deps.repository.loadOpen();
     } catch (error) {
       this.update({ storageError: `Der Spielstand ließ sich nicht laden: ${String(error)}` });
     }
-    if (campaign) this.update({ campaign });
-    else this.change(createCampaign());
+    const campaign = campaigns.find((c) => c.id === open) ?? byName(campaigns)[0];
+    if (campaign) this.update({ campaigns, campaign });
+    else this.addCampaign(createCampaign());
   }
 
   // --- Verbindung zur View ---------------------------------------------------------------------
@@ -86,6 +108,62 @@ export class GameController {
   /** Wartet, bis alle Änderungen gespeichert sind. */
   whenSaved(): Promise<void> {
     return this.saving;
+  }
+
+  // --- Kampagnen ------------------------------------------------------------------------------
+
+  /** Öffnet die Kampagnenwahl. */
+  showCampaigns(): void {
+    this.update({ campaignSheet: { error: undefined } });
+  }
+
+  closeCampaigns(): void {
+    this.update({ campaignSheet: undefined });
+  }
+
+  /** Wechselt in eine andere Kampagne; offene Karte und Probe verfallen. */
+  openCampaign(id: CampaignId): void {
+    const campaign = this.state.campaigns.find((c) => c.id === id);
+    if (!campaign) throw new DomainError(`Die Kampagne ${id} gibt es nicht`);
+    this.update({ ...closedDrafts, campaign, campaignSheet: undefined });
+    this.persist(() => this.deps.repository.saveOpen(id));
+  }
+
+  /** Legt eine leere Kampagne an und öffnet sie. */
+  createCampaign(name: string): void {
+    this.inCampaignSheet(() => this.addCampaign(createCampaign([], name, nextCampaignId(this.state.campaigns))));
+  }
+
+  /** Benennt die offene Kampagne um. */
+  renameCampaign(name: string): void {
+    this.inCampaignSheet(() => this.change(renameCampaign(this.campaign, name)));
+  }
+
+  /** Löscht eine Kampagne endgültig. War sie offen, öffnet sich die erste der übrigen. */
+  deleteCampaign(id: CampaignId): void {
+    this.inCampaignSheet(() => {
+      const campaigns = removeCampaign(this.state.campaigns, id);
+      if (this.campaign.id !== id) {
+        this.update({ campaigns });
+      } else {
+        const campaign = byName(campaigns)[0]!;
+        this.update({ ...closedDrafts, campaigns, campaign });
+        this.persist(() => this.deps.repository.saveOpen(campaign.id));
+      }
+      this.persist(() => this.deps.repository.remove(id));
+    });
+  }
+
+  /** Bietet die Kampagne als Kampagnendatei zum Download an. */
+  exportCampaign(id: CampaignId): void {
+    const campaign = this.state.campaigns.find((c) => c.id === id);
+    if (!campaign) throw new DomainError(`Die Kampagne ${id} gibt es nicht`);
+    this.deps.download.offer(campaignFileName(campaign, this.deps.clock.now()), toCampaignFile(campaign), 'application/json');
+  }
+
+  /** Liest eine Kampagnendatei als neue Kampagne ein und öffnet sie; ist die Datei falsch, passiert nichts. */
+  importCampaign(text: string): void {
+    this.inCampaignSheet(() => this.addCampaign(fromCampaignFile(text, nextCampaignId(this.state.campaigns))));
   }
 
   // --- Orakel-Screen ---------------------------------------------------------------------------
@@ -121,6 +199,11 @@ export class GameController {
   confirmCard(): void {
     const pick = confirmCard(this.openCard, this.deps.clock);
     this.change(appendLog(this.campaign, pick), { card: undefined });
+  }
+
+  /** Löscht einen Logeintrag endgültig. */
+  deleteLogEntry(index: number): void {
+    this.change(removeLogEntry(this.campaign, index), { result: undefined });
   }
 
   // --- Charakter-Screen und Proben -------------------------------------------------------------
@@ -230,13 +313,39 @@ export class GameController {
     return this.state.task;
   }
 
-  /** Ändert den Spielstand und speichert ihn. */
+  /** Ändert die offene Kampagne und speichert sie. */
   private change(campaign: Campaign, rest: Partial<ControllerState> = {}): void {
-    this.update({ ...rest, campaign });
+    const campaigns = this.state.campaigns.map((c) => (c.id === campaign.id ? campaign : c));
+    this.update({ ...rest, campaigns, campaign });
+    this.persist(() => this.deps.repository.save(campaign), true);
+  }
+
+  /** Nimmt eine neue Kampagne auf, öffnet und speichert sie. */
+  private addCampaign(campaign: Campaign): void {
+    this.update({ ...closedDrafts, campaigns: [...this.state.campaigns, campaign], campaign, campaignSheet: undefined });
+    this.persist(() => this.deps.repository.save(campaign), true);
+    this.persist(() => this.deps.repository.saveOpen(campaign.id));
+  }
+
+  /** Führt eine Eingabe aus der Kampagnenwahl aus; verletzt sie eine Regel, steht das in der Kampagnenwahl. */
+  private inCampaignSheet(action: () => void): void {
+    try {
+      action();
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ campaignSheet: { error: error.message } });
+    }
+  }
+
+  /**
+   * Speichert der Reihe nach, damit nichts Älteres etwas Neueres überschreibt. Eine Fehlermeldung
+   * nimmt erst eine gespeicherte Kampagne wieder weg (`saved`), nicht schon das Merken der offenen.
+   */
+  private persist(write: () => Promise<void>, saved = false): void {
     this.saving = this.saving.then(() =>
-      this.deps.repository.save(campaign).then(
+      write().then(
         () => {
-          if (this.state.storageError) this.update({ storageError: undefined });
+          if (saved && this.state.storageError) this.update({ storageError: undefined });
         },
         (error: unknown) => this.update({ storageError: `Der Spielstand ließ sich nicht speichern: ${String(error)}` }),
       ),
