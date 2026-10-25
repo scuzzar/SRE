@@ -1,0 +1,1126 @@
+[
+  {
+    "id": "respirator",
+    "name": "Respirator",
+    "kind": "equipment",
+    "tl": 5,
+    "price": 100
+  },
+  {
+    "id": "filter-mask",
+    "name": "Filter Mask",
+    "kind": "equipment",
+    "tl": 3,
+    "price": 10
+  },
+  {
+    "id": "combination",
+    "name": "Combination",
+    "kind": "equipment",
+    "tl": 5,
+    "price": 150
+  },
+  {
+    "id": "oxygen-tanks",
+    "name": "Oxygen Tanks",
+    "kind": "equipment",
+    "tl": 5,
+    "weight": 5,
+    "price": 500
+  },
+  {
+    "id": "refill-oxygen-tanks",
+    "name": "Refill (Oxygen Tanks)",
+    "kind": "equipment",
+    "tl": 5,
+    "price": 20
+  },
+  {
+    "id": "underwater-air-tanks",
+    "name": "Underwater Air Tanks",
+    "kind": "equipment",
+    "tl": 5,
+    "weight": 5,
+    "price": 800
+  },
+  {
+    "id": "refill-underwater-air-tanks",
+    "name": "Refill (Underwater Air Tanks)",
+    "kind": "equipment",
+    "tl": 4,
+    "price": 20
+  },
+  {
+    "id": "artificial-gill",
+    "name": "Artificial Gill",
+    "kind": "equipment",
+    "tl": 8,
+    "weight": 4,
+    "price": 4000
+  },
+  {
+    "id": "swimming-equipment",
+    "name": "Swimming Equipment",
+    "kind": "equipment",
+    "tl": 3,
+    "weight": 1,
+    "price": 200
+  },
+  {
+    "id": "protective-suit-jack",
+    "name": "Protective Suit (jack)",
+    "kind": "equipment",
+    "tl": 5,
+    "weight": 5,
+    "price": 700
+  },
+  {
+    "id": "protective-suit-cloth",
+    "name": "Protective Suit (cloth)",
+    "kind": "equipment",
+    "tl": 5,
+    "weight": 7,
+    "price": 1400
+  },
+  {
+    "id": "vacc-suit-tl8",
+    "name": "Vacc Suit",
+    "kind": "equipment",
+    "tl": 8,
+    "weight": 10,
+    "price": 10000
+  },
+  {
+    "id": "vacc-suit-tl9",
+    "name": "Vacc Suit",
+    "kind": "equipment",
+    "tl": 9,
+    "weight": 8,
+    "price": 10000
+  },
+  {
+    "id": "vacc-suit-tl10",
+    "name": "Vacc Suit",
+    "kind": "equipment",
+    "tl": 10,
+    "weight": 6,
+    "price": 10000
+  },
+  {
+    "id": "vacc-suit-tl11",
+    "name": "Vacc Suit",
+    "kind": "equipment",
+    "tl": 11,
+    "weight": 4,
+    "price": 10000
+  },
+  {
+    "id": "vacc-suit-tl12",
+    "name": "Vacc Suit",
+    "kind": "equipment",
+    "tl": 12,
+    "weight": 2,
+    "price": 10000
+  },
+  {
+    "id": "vacc-suit-tl13",
+    "name": "Vacc Suit",
+    "kind": "equipment",
+    "tl": 13,
+    "price": 10000
+  },
+  {
+    "id": "cold-weather-clothing-tl1",
+    "name": "Cold Weather Clothing",
+    "kind": "equipment",
+    "tl": 1,
+    "weight": 2,
+    "price": 200
+  },
+  {
+    "id": "cold-weather-clothing-tl10",
+    "name": "Cold Weather Clothing",
+    "kind": "equipment",
+    "tl": 10,
+    "price": 800
+  },
+  {
+    "id": "survival-bubble",
+    "name": "Survival Bubble",
+    "kind": "equipment",
+    "tl": 9,
+    "weight": 3,
+    "price": 600
+  },
+  {
+    "id": "binoculars",
+    "name": "Binoculars",
+    "kind": "equipment",
+    "tl": 3,
+    "weight": 1,
+    "price": 75
+  },
+  {
+    "id": "infrared-goggles",
+    "name": "Infrared Goggles",
+    "kind": "equipment",
+    "tl": 6,
+    "price": 500
+  },
+  {
+    "id": "light-intensifier-goggles",
+    "name": "Light Intensifier Goggles",
+    "kind": "equipment",
+    "tl": 7,
+    "price": 500
+  },
+  {
+    "id": "torch",
+    "name": "Torch",
+    "kind": "equipment",
+    "tl": 1,
+    "weight": 0.25,
+    "price": 1
+  },
+  {
+    "id": "electric-torch",
+    "name": "Electric Torch",
+    "kind": "equipment",
+    "tl": 5,
+    "weight": 0.5,
+    "price": 10
+  },
+  {
+    "id": "gas-or-oil-lamp",
+    "name": "Gas or Oil Lamp",
+    "kind": "equipment",
+    "tl": 2,
+    "weight": 0.5,
+    "price": 10
+  },
+  {
+    "id": "refill-of-gas-or-oil",
+    "name": "Refill of Gas or Oil",
+    "kind": "equipment",
+    "tl": 2,
+    "price": 2
+  },
+  {
+    "id": "cold-light-lantern",
+    "name": "Cold Light Lantern",
+    "kind": "equipment",
+    "tl": 6,
+    "weight": 0.25,
+    "price": 20
+  },
+  {
+    "id": "voice-recorder",
+    "name": "Voice Recorder",
+    "kind": "equipment",
+    "tl": 6,
+    "weight": 0.5,
+    "price": 100
+  },
+  {
+    "id": "recording-tape-voice-recorder",
+    "name": "Recording Tape (Voice Recorder)",
+    "kind": "equipment",
+    "tl": 6,
+    "price": 1
+  },
+  {
+    "id": "recording-crystal-voice-recorder",
+    "name": "Recording Crystal (Voice Recorder)",
+    "kind": "equipment",
+    "tl": 13,
+    "price": 1
+  },
+  {
+    "id": "video-recorder",
+    "name": "Video Recorder",
+    "kind": "equipment",
+    "tl": 8,
+    "weight": 1.2,
+    "price": 900
+  },
+  {
+    "id": "recording-tape-video-recorder",
+    "name": "Recording Tape (Video Recorder)",
+    "kind": "equipment",
+    "tl": 8,
+    "price": 2
+  },
+  {
+    "id": "recording-crystal-video-recorder",
+    "name": "Recording Crystal (Video Recorder)",
+    "kind": "equipment",
+    "tl": 13,
+    "price": 2
+  },
+  {
+    "id": "text-recorder",
+    "name": "Text Recorder",
+    "kind": "equipment",
+    "tl": 10,
+    "weight": 1,
+    "price": 1200
+  },
+  {
+    "id": "recording-tape-text-recorder",
+    "name": "Recording Tape (Text Recorder)",
+    "kind": "equipment",
+    "tl": 10,
+    "price": 3
+  },
+  {
+    "id": "recording-crystal-text-recorder",
+    "name": "Recording Crystal (Text Recorder)",
+    "kind": "equipment",
+    "tl": 13,
+    "price": 3
+  },
+  {
+    "id": "carpentry-tool-set",
+    "name": "Carpentry Tool Set",
+    "kind": "equipment",
+    "tl": 2,
+    "weight": 25,
+    "price": 300
+  },
+  {
+    "id": "metalwork-tool-set",
+    "name": "Metalwork Tool Set",
+    "kind": "equipment",
+    "tl": 4,
+    "weight": 50,
+    "price": 1500
+  },
+  {
+    "id": "mechanical-tool-set",
+    "name": "Mechanical Tool Set",
+    "kind": "equipment",
+    "tl": 5,
+    "weight": 20,
+    "price": 1000
+  },
+  {
+    "id": "medical-kit",
+    "name": "Medical Kit",
+    "kind": "equipment",
+    "tl": 7,
+    "weight": 10,
+    "price": 1000
+  },
+  {
+    "id": "electronic-tool-set",
+    "name": "Electronic Tool Set",
+    "kind": "equipment",
+    "tl": 7,
+    "weight": 5,
+    "price": 2000
+  },
+  {
+    "id": "lockpick-set",
+    "name": "Lockpick Set",
+    "kind": "equipment",
+    "tl": 4,
+    "price": 10
+  },
+  {
+    "id": "communicator-short-range-tl5",
+    "name": "Communicator, Short Range",
+    "kind": "equipment",
+    "tl": 5,
+    "weight": 20,
+    "price": 225
+  },
+  {
+    "id": "communicator-short-range-tl8",
+    "name": "Communicator, Short Range",
+    "kind": "equipment",
+    "tl": 8,
+    "weight": 0.1,
+    "price": 75
+  },
+  {
+    "id": "communicator-medium-range-tl5",
+    "name": "Communicator, Medium Range",
+    "kind": "equipment",
+    "tl": 5,
+    "weight": 70,
+    "price": 750
+  },
+  {
+    "id": "communicator-medium-range-tl10",
+    "name": "Communicator, Medium Range",
+    "kind": "equipment",
+    "tl": 10,
+    "weight": 0.4,
+    "price": 250
+  },
+  {
+    "id": "communicator-medium-range-tl13",
+    "name": "Communicator, Medium Range",
+    "kind": "equipment",
+    "tl": 13,
+    "weight": 0.1,
+    "price": 250
+  },
+  {
+    "id": "communicator-long-range-tl5",
+    "name": "Communicator, Long Range",
+    "kind": "equipment",
+    "tl": 5,
+    "weight": 150,
+    "price": 1500
+  },
+  {
+    "id": "communicator-long-range-tl9",
+    "name": "Communicator, Long Range",
+    "kind": "equipment",
+    "tl": 9,
+    "weight": 1.2,
+    "price": 500
+  },
+  {
+    "id": "communicator-long-range-tl14",
+    "name": "Communicator, Long Range",
+    "kind": "equipment",
+    "tl": 14,
+    "weight": 0.5,
+    "price": 500
+  },
+  {
+    "id": "communicator-continental-range-tl5",
+    "name": "Communicator, Continental Range",
+    "kind": "equipment",
+    "tl": 5,
+    "weight": 300,
+    "price": 15000
+  },
+  {
+    "id": "communicator-continental-range-tl9",
+    "name": "Communicator, Continental Range",
+    "kind": "equipment",
+    "tl": 9,
+    "weight": 1.5,
+    "price": 5000
+  },
+  {
+    "id": "communicator-continental-range-tl12",
+    "name": "Communicator, Continental Range",
+    "kind": "equipment",
+    "tl": 12,
+    "weight": 5,
+    "price": 5000
+  },
+  {
+    "id": "magnetic-compass",
+    "name": "Magnetic Compass",
+    "kind": "equipment",
+    "tl": 3,
+    "price": 10
+  },
+  {
+    "id": "inertial-locator",
+    "name": "Inertial Locator",
+    "kind": "equipment",
+    "tl": 9,
+    "weight": 1.5,
+    "price": 1200
+  },
+  {
+    "id": "metal-detector",
+    "name": "Metal Detector",
+    "kind": "equipment",
+    "tl": 6,
+    "weight": 1,
+    "price": 300
+  },
+  {
+    "id": "radiation-detector",
+    "name": "Radiation Detector",
+    "kind": "equipment",
+    "tl": 5,
+    "weight": 1,
+    "price": 250
+  },
+  {
+    "id": "bull-horn",
+    "name": "Bull-Horn",
+    "kind": "equipment",
+    "tl": 5,
+    "weight": 0.5,
+    "price": 120
+  },
+  {
+    "id": "hand-calculator",
+    "name": "Hand Calculator",
+    "kind": "equipment",
+    "tl": 7,
+    "weight": 0.1,
+    "price": 10
+  },
+  {
+    "id": "hand-computer",
+    "name": "Hand Computer",
+    "kind": "equipment",
+    "tl": 11,
+    "weight": 0.5,
+    "price": 1000
+  },
+  {
+    "id": "artificial-psi-shield",
+    "name": "Artificial Psi Shield",
+    "kind": "equipment",
+    "tl": 8,
+    "weight": 1,
+    "price": 4000
+  },
+  {
+    "id": "handcuffs",
+    "name": "Handcuffs",
+    "kind": "equipment",
+    "tl": 2,
+    "weight": 0.3,
+    "price": 25
+  },
+  {
+    "id": "wrist-watch",
+    "name": "Wrist Watch",
+    "kind": "equipment",
+    "tl": 4,
+    "price": 100
+  },
+  {
+    "id": "tarpaulin",
+    "name": "Tarpaulin",
+    "kind": "equipment",
+    "tl": 1,
+    "weight": 2,
+    "price": 10
+  },
+  {
+    "id": "tent",
+    "name": "Tent",
+    "kind": "equipment",
+    "tl": 2,
+    "weight": 3,
+    "price": 200
+  },
+  {
+    "id": "pressure-tent",
+    "name": "Pressure Tent",
+    "kind": "equipment",
+    "tl": 7,
+    "weight": 25,
+    "price": 2000
+  },
+  {
+    "id": "pre-fab-cabin",
+    "name": "Pre-Fab Cabin",
+    "kind": "equipment",
+    "tl": 6,
+    "weight": 4000,
+    "price": 10000
+  },
+  {
+    "id": "advance-base",
+    "name": "Advance Base",
+    "kind": "equipment",
+    "tl": 8,
+    "weight": 6000,
+    "price": 50000
+  },
+  {
+    "id": "club",
+    "name": "Club",
+    "kind": "weapon",
+    "tl": 0,
+    "weight": 1
+  },
+  {
+    "id": "dagger",
+    "name": "Dagger",
+    "kind": "weapon",
+    "tl": 1,
+    "weight": 0.25,
+    "price": 10,
+    "uses": "dagger"
+  },
+  {
+    "id": "blade",
+    "name": "Blade",
+    "kind": "weapon",
+    "tl": 3,
+    "weight": 0.35,
+    "price": 50,
+    "uses": "blade"
+  },
+  {
+    "id": "foil",
+    "name": "Foil",
+    "kind": "weapon",
+    "tl": 3,
+    "weight": 0.5,
+    "price": 100,
+    "uses": "foil"
+  },
+  {
+    "id": "cutlass",
+    "name": "Cutlass",
+    "kind": "weapon",
+    "tl": 3,
+    "weight": 1.25,
+    "price": 100,
+    "uses": "cutlass"
+  },
+  {
+    "id": "sword",
+    "name": "Sword",
+    "kind": "weapon",
+    "tl": 1,
+    "weight": 1,
+    "price": 150,
+    "uses": "sword"
+  },
+  {
+    "id": "broadsword",
+    "name": "Broadsword",
+    "kind": "weapon",
+    "tl": 2,
+    "weight": 2.5,
+    "price": 300,
+    "uses": "broadsword"
+  },
+  {
+    "id": "bayonet",
+    "name": "Bayonet",
+    "kind": "weapon",
+    "tl": 3,
+    "weight": 0.25,
+    "price": 10,
+    "uses": "bayonet"
+  },
+  {
+    "id": "spear",
+    "name": "Spear",
+    "kind": "weapon",
+    "tl": 0,
+    "weight": 2,
+    "price": 10,
+    "uses": "spear"
+  },
+  {
+    "id": "halberd",
+    "name": "Halberd",
+    "kind": "weapon",
+    "tl": 2,
+    "weight": 2.5,
+    "price": 75,
+    "uses": "halberd"
+  },
+  {
+    "id": "pike",
+    "name": "Pike",
+    "kind": "weapon",
+    "tl": 1,
+    "weight": 3,
+    "price": 40,
+    "uses": "pike"
+  },
+  {
+    "id": "cudgel",
+    "name": "Cudgel",
+    "kind": "weapon",
+    "tl": 0,
+    "weight": 1,
+    "price": 10,
+    "uses": "cudgel"
+  },
+  {
+    "id": "body-pistol",
+    "name": "Body Pistol",
+    "kind": "weapon",
+    "tl": 7,
+    "weight": 0.25,
+    "price": 500,
+    "uses": "body-pistol"
+  },
+  {
+    "id": "body-pistol-ammo",
+    "name": "Body Pistol Ammo (6 rds)",
+    "kind": "ammunition",
+    "tl": 7,
+    "weight": 0.05,
+    "price": 20
+  },
+  {
+    "id": "automatic-pistol",
+    "name": "Automatic Pistol",
+    "kind": "weapon",
+    "tl": 5,
+    "weight": 0.75,
+    "price": 200,
+    "uses": "auto-pistol"
+  },
+  {
+    "id": "automatic-pistol-ammo",
+    "name": "Automatic Pistol Ammo (15 rds)",
+    "kind": "ammunition",
+    "tl": 5,
+    "weight": 0.25,
+    "price": 10
+  },
+  {
+    "id": "revolver",
+    "name": "Revolver",
+    "kind": "weapon",
+    "tl": 4,
+    "weight": 0.9,
+    "price": 150,
+    "uses": "revolver"
+  },
+  {
+    "id": "revolver-ammo",
+    "name": "Revolver Ammo (6 rds)",
+    "kind": "ammunition",
+    "tl": 4,
+    "weight": 0.1,
+    "price": 5
+  },
+  {
+    "id": "carbine",
+    "name": "Carbine",
+    "kind": "weapon",
+    "tl": 5,
+    "weight": 3,
+    "price": 200,
+    "uses": "carbine"
+  },
+  {
+    "id": "carbine-ammo",
+    "name": "Carbine Ammo (10 rds)",
+    "kind": "ammunition",
+    "tl": 5,
+    "weight": 0.125,
+    "price": 10
+  },
+  {
+    "id": "rifle",
+    "name": "Rifle",
+    "kind": "weapon",
+    "tl": 5,
+    "weight": 4,
+    "price": 200,
+    "uses": "rifle"
+  },
+  {
+    "id": "rifle-ammo",
+    "name": "Rifle Ammo (20 rds)",
+    "kind": "ammunition",
+    "tl": 5,
+    "weight": 0.5,
+    "price": 20
+  },
+  {
+    "id": "auto-rifle",
+    "name": "Auto Rifle",
+    "kind": "weapon",
+    "tl": 6,
+    "weight": 5,
+    "price": 1000,
+    "uses": "auto-rifle"
+  },
+  {
+    "id": "auto-rifle-ammo",
+    "name": "Auto Rifle Ammo (20 rds)",
+    "kind": "ammunition",
+    "tl": 6,
+    "weight": 0.5,
+    "price": 20
+  },
+  {
+    "id": "shotgun",
+    "name": "Shotgun",
+    "kind": "weapon",
+    "tl": 4,
+    "weight": 3.75,
+    "price": 150,
+    "uses": "shotgun"
+  },
+  {
+    "id": "shotgun-ammo",
+    "name": "Shotgun Ammo (10 rds)",
+    "kind": "ammunition",
+    "tl": 4,
+    "weight": 0.75,
+    "price": 10
+  },
+  {
+    "id": "submachinegun",
+    "name": "Submachinegun",
+    "kind": "weapon",
+    "tl": 5,
+    "weight": 2.5,
+    "price": 500,
+    "uses": "submachinegun"
+  },
+  {
+    "id": "submachinegun-ammo",
+    "name": "Submachinegun Ammo (30 rds)",
+    "kind": "ammunition",
+    "tl": 5,
+    "weight": 0.5,
+    "price": 20
+  },
+  {
+    "id": "laser-carbine",
+    "name": "Laser Carbine",
+    "kind": "weapon",
+    "tl": 8,
+    "weight": 5,
+    "price": 2500,
+    "uses": "laser-carbine"
+  },
+  {
+    "id": "lc-power-pack",
+    "name": "LC Power Pack",
+    "kind": "ammunition",
+    "tl": 8,
+    "weight": 3,
+    "price": 1000
+  },
+  {
+    "id": "laser-rifle",
+    "name": "Laser Rifle",
+    "kind": "weapon",
+    "tl": 9,
+    "weight": 6,
+    "price": 3500,
+    "uses": "laser-rifle"
+  },
+  {
+    "id": "lr-power-pack",
+    "name": "LR Power Pack",
+    "kind": "ammunition",
+    "tl": 9,
+    "weight": 4,
+    "price": 1500
+  },
+  {
+    "id": "telescopic-sights",
+    "name": "Telescopic Sights",
+    "kind": "equipment",
+    "tl": 6,
+    "weight": 0.8,
+    "price": 200
+  },
+  {
+    "id": "electronic-sights",
+    "name": "Electronic Sights",
+    "kind": "equipment",
+    "tl": 9,
+    "weight": 1.5,
+    "price": 2000
+  },
+  {
+    "id": "silencer",
+    "name": "Silencer",
+    "kind": "equipment",
+    "tl": 6,
+    "weight": 0.6,
+    "price": 200
+  },
+  {
+    "id": "shoulder-stock",
+    "name": "Shoulder Stock",
+    "kind": "equipment",
+    "tl": 5,
+    "weight": 1,
+    "price": 75
+  },
+  {
+    "id": "folding-stock",
+    "name": "Folding Stock",
+    "kind": "equipment",
+    "tl": 6,
+    "weight": 0.5,
+    "price": 100
+  },
+  {
+    "id": "jack",
+    "name": "Jack",
+    "kind": "armor",
+    "tl": 1,
+    "weight": 1,
+    "price": 50
+  },
+  {
+    "id": "mesh",
+    "name": "Mesh",
+    "kind": "armor",
+    "tl": 7,
+    "weight": 2,
+    "price": 150
+  },
+  {
+    "id": "cloth",
+    "name": "Cloth",
+    "kind": "armor",
+    "tl": 6,
+    "weight": 2,
+    "price": 250
+  },
+  {
+    "id": "reflec",
+    "name": "Reflec",
+    "kind": "armor",
+    "tl": 10,
+    "weight": 1,
+    "price": 1500
+  },
+  {
+    "id": "ablat",
+    "name": "Ablat",
+    "kind": "armor",
+    "tl": 9,
+    "weight": 2,
+    "price": 75
+  },
+  {
+    "id": "combat-armor",
+    "name": "Combat Armor",
+    "kind": "armor",
+    "tl": 11,
+    "weight": 6,
+    "price": 20000
+  },
+  {
+    "id": "battle-dress",
+    "name": "Battle Dress",
+    "kind": "armor",
+    "tl": 13,
+    "weight": 20,
+    "price": 200000
+  },
+  {
+    "id": "vehicle-primitive-biplane",
+    "name": "Primitive Biplane",
+    "kind": "vehicle",
+    "tl": 5,
+    "weight": 1000,
+    "price": 20000
+  },
+  {
+    "id": "vehicle-fixed-wing-aircraft",
+    "name": "Fixed Wing Aircraft",
+    "kind": "vehicle",
+    "tl": 6,
+    "weight": 5000,
+    "price": 1000000
+  },
+  {
+    "id": "vehicle-helicopter",
+    "name": "Helicopter",
+    "kind": "vehicle",
+    "tl": 6,
+    "weight": 1000,
+    "price": 100000
+  },
+  {
+    "id": "vehicle-air-raft",
+    "name": "Air/Raft",
+    "kind": "vehicle",
+    "tl": 8,
+    "weight": 4000,
+    "price": 600000
+  },
+  {
+    "id": "vehicle-gcarrier",
+    "name": "GCarrier",
+    "kind": "vehicle",
+    "tl": 8,
+    "weight": 8000,
+    "price": 1000000
+  },
+  {
+    "id": "vehicle-speeder",
+    "name": "Speeder",
+    "kind": "vehicle",
+    "tl": 8,
+    "weight": 6000,
+    "price": 1000000
+  },
+  {
+    "id": "vehicle-grav-belt",
+    "name": "Grav Belt",
+    "kind": "vehicle",
+    "tl": 12,
+    "weight": 10000,
+    "price": 100000,
+    "note": "Gewicht wie im Chart („10 tons“), vermutlich ein Druckfehler für 10 kg"
+  },
+  {
+    "id": "vehicle-ground-car",
+    "name": "Ground Car",
+    "kind": "vehicle",
+    "tl": 5,
+    "weight": 2000,
+    "price": 4000
+  },
+  {
+    "id": "vehicle-wheeled-atv",
+    "name": "Wheeled ATV",
+    "kind": "vehicle",
+    "tl": 6,
+    "weight": 10000,
+    "price": 30000
+  },
+  {
+    "id": "vehicle-tracked-atv",
+    "name": "Tracked ATV",
+    "kind": "vehicle",
+    "tl": 6,
+    "weight": 10000,
+    "price": 30000
+  },
+  {
+    "id": "vehicle-motor-boat",
+    "name": "Motor Boat",
+    "kind": "vehicle",
+    "tl": 5,
+    "weight": 60000,
+    "price": 60000
+  },
+  {
+    "id": "vehicle-submersible",
+    "name": "Submersible",
+    "kind": "vehicle",
+    "tl": 6,
+    "weight": 500000,
+    "price": 2000000
+  },
+  {
+    "id": "vehicle-hovercraft",
+    "name": "Hovercraft",
+    "kind": "vehicle",
+    "tl": 7,
+    "weight": 8000,
+    "price": 200000
+  },
+  {
+    "id": "craft-launch-or-lifeboat",
+    "name": "Launch (or Lifeboat)",
+    "kind": "ship",
+    "tl": 8,
+    "price": 13000000
+  },
+  {
+    "id": "craft-ship-s-boat",
+    "name": "Ship's Boat",
+    "kind": "ship",
+    "tl": 8,
+    "price": 16000000
+  },
+  {
+    "id": "craft-slow-boat",
+    "name": "Slow Boat",
+    "kind": "ship",
+    "tl": 8,
+    "price": 15000000
+  },
+  {
+    "id": "craft-pinnace",
+    "name": "Pinnace",
+    "kind": "ship",
+    "tl": 8,
+    "price": 20000000
+  },
+  {
+    "id": "craft-slow-pinnace",
+    "name": "Slow Pinnace",
+    "kind": "ship",
+    "tl": 8,
+    "price": 18000000
+  },
+  {
+    "id": "craft-modular-cutter",
+    "name": "Modular Cutter",
+    "kind": "ship",
+    "tl": 8,
+    "price": 28000000
+  },
+  {
+    "id": "craft-atv-module",
+    "name": "ATV Module",
+    "kind": "ship",
+    "tl": 8,
+    "price": 1800000
+  },
+  {
+    "id": "craft-fuel-module",
+    "name": "Fuel Module",
+    "kind": "ship",
+    "tl": 8,
+    "price": 1000000
+  },
+  {
+    "id": "craft-open-module",
+    "name": "Open Module",
+    "kind": "ship",
+    "tl": 8,
+    "price": 2000000
+  },
+  {
+    "id": "craft-shuttle",
+    "name": "Shuttle",
+    "kind": "ship",
+    "tl": 8,
+    "price": 33000000
+  },
+  {
+    "id": "craft-fighter",
+    "name": "Fighter",
+    "kind": "ship",
+    "tl": 8,
+    "price": 18000000
+  },
+  {
+    "id": "scout-ship",
+    "name": "Scout Ship",
+    "kind": "ship",
+    "price": 29430000,
+    "once": true
+  },
+  {
+    "id": "free-trader",
+    "name": "Free Trader",
+    "kind": "ship",
+    "price": 37080000
+  },
+  {
+    "id": "high-passage",
+    "name": "High Passage",
+    "kind": "passage",
+    "price": 10000
+  },
+  {
+    "id": "middle-passage",
+    "name": "Middle Passage",
+    "kind": "passage",
+    "price": 8000
+  },
+  {
+    "id": "low-passage",
+    "name": "Low Passage",
+    "kind": "passage",
+    "price": 1000
+  },
+  {
+    "id": "travellers-aid-society",
+    "name": "Travellers' Aid Society",
+    "kind": "membership",
+    "once": true
+  }
+]

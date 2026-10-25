@@ -42,5 +42,17 @@
   { "id": "shotgun", "name": "Shotgun", "short": "Sht" },
   { "id": "submachinegun", "name": "Submachinegun", "short": "SMG" },
   { "id": "laser-carbine", "name": "Laser Carbine", "short": "LCb" },
-  { "id": "laser-rifle", "name": "Laser Rifle", "short": "LRi" }
+  { "id": "laser-rifle", "name": "Laser Rifle", "short": "LRi" },
+  { "id": "brawling", "name": "Brawling", "short": "Brw" },
+  { "id": "forgery", "name": "Forgery", "short": "Fgy" },
+  { "id": "grav-vehicle", "name": "Grav Vehicle", "short": "Grv" },
+  { "id": "tracked-vehicle", "name": "Tracked Vehicle", "short": "Trk" },
+  { "id": "wheeled-vehicle", "name": "Wheeled Vehicle", "short": "Whl" },
+  { "id": "prop-fixed-wing", "name": "Prop-driven Fixed Wing", "short": "Prp" },
+  { "id": "jet-fixed-wing", "name": "Jet-driven Fixed Wing", "short": "Jet" },
+  { "id": "helicopter", "name": "Helicopter", "short": "Hel" },
+  { "id": "large-watercraft", "name": "Large Watercraft", "short": "LWc" },
+  { "id": "small-watercraft", "name": "Small Watercraft", "short": "SWc" },
+  { "id": "hovercraft", "name": "Hovercraft", "short": "Hov" },
+  { "id": "submersible", "name": "Submersible", "short": "Sub" }
 ]
