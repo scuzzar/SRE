@@ -19,7 +19,9 @@ import {
   totalOf,
   valueOf,
   entryOf,
+  itemOf,
   type Campaign,
+  type ItemKind,
   type Character,
   type CharacterInput,
   type Characteristic,
@@ -31,6 +33,7 @@ import {
   type Upp,
 } from '../model';
 import { canConfirm, characteristicOptions, drawnIn, evaluateTask, hasSkill, startTask, type Card, type CharacteristicOption, type Task } from '../model/draft';
+import { careerLines, generationView, itemLabel, type CareerLine, type GenerationView } from './generation-view';
 
 /**
  * Was die View zu sehen bekommt: den Spielstand aus dem Model, schon ausgewertet, und den Zustand des
@@ -63,6 +66,20 @@ export interface Snapshot {
   readonly editor: EditorView | undefined;
   /** Die feste Liste der Fertigkeiten, für den Editor. */
   readonly skills: readonly Skill[];
+  /** Die feste Liste der Gegenstände, für den Editor. */
+  readonly items: readonly ItemChoice[];
+  /** Die Charaktererschaffung im Vordergrund, solange sie offen ist. */
+  readonly generation: GenerationView | undefined;
+  /** In der Kampagne läuft eine Charaktererschaffung (vielleicht gerade nicht im Vordergrund). */
+  readonly generationRunning: boolean;
+}
+
+export interface ItemChoice {
+  readonly id: string;
+  /** Mit TL, wenn es den Gegenstand in mehreren TL gibt. */
+  readonly label: string;
+  readonly kind: ItemKind;
+  readonly once: boolean;
 }
 
 export type Screen = 'oracle' | 'characters' | 'about';
@@ -168,6 +185,9 @@ export interface CharacterView {
   /** Die Details sind aufgeklappt: volle Namen der Fertigkeiten, Ausrüstung, Credits, Notiz. */
   readonly open: boolean;
   readonly skills: readonly { readonly of: string; readonly name: string; readonly short: string; readonly level: number; readonly chosen: boolean }[];
+  readonly possessions: readonly { readonly name: string; readonly count: number }[];
+  /** Der Lebenslauf, wenn der Charakter über die Charaktererschaffung entstanden ist. */
+  readonly career: readonly CareerLine[] | undefined;
   readonly unskilled: { readonly dm: number; readonly chosen: boolean };
   readonly characteristics: readonly CharacteristicOption[];
   /** Kommt im Log vor: Entfernen blendet aus, statt zu löschen. */
@@ -209,6 +229,9 @@ export interface ControllerState {
   /** Index des Logeintrags, dessen Ergebnis-Popup offen ist. */
   readonly result: number | undefined;
   readonly editor: { readonly id: string | undefined; readonly error: string | undefined } | undefined;
+  /** Die Charaktererschaffung steht im Vordergrund. */
+  readonly generating: boolean;
+  readonly generationError: string | undefined;
 }
 
 const emptyInput: CharacterInput = {
@@ -220,6 +243,7 @@ const emptyInput: CharacterInput = {
   note: '',
   upp: { str: 7, dex: 7, end: 7, int: 7, edu: 7, soc: 7 },
   skills: [],
+  possessions: [],
 };
 
 function dmParts(character: Character, uses: string | undefined, unskilled: boolean, counts: readonly Characteristic[]): DmPart[] {
@@ -309,6 +333,8 @@ function characterView(campaign: Campaign, character: Character, task: Task | un
       const skill = skillOf(s.of);
       return { of: s.of, name: skill.name, short: skill.short, level: s.level, chosen: own?.uses === s.of };
     }),
+    possessions: character.possessions.map((p) => ({ name: itemLabel(itemOf(p.of)), count: p.count })),
+    career: character.career && careerLines(character.career),
     unskilled: { dm: ref.houseRules.unskilledDm, chosen: own?.unskilled ?? false },
     characteristics: characteristicOptions(own ?? startTask(campaign, character.id), campaign),
     inLog: isInLog(campaign, character.id),
@@ -320,11 +346,13 @@ function taskView(campaign: Campaign, task: Task): TaskView {
   return { character: character.name, ready: hasSkill(task), ...evaluateTask(task, campaign), parts: dmParts(character, task.uses, task.unskilled, task.counts) };
 }
 
+const items: readonly ItemChoice[] = ref.items.map((i) => ({ id: i.id, label: itemLabel(i), kind: i.kind, once: i.once }));
+
 export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
-  const base = { persistent: state.persistent, storageError: state.storageError, screen: state.screen, skills: ref.skills };
+  const base = { persistent: state.persistent, storageError: state.storageError, screen: state.screen, skills: ref.skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, characters: [], dead: [], retired: [], task: undefined, result: undefined, editor: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, characters: [], dead: [], retired: [], task: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false };
   }
   const resultEntry = state.result === undefined ? undefined : campaign.log[state.result];
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
@@ -348,5 +376,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
       error: state.editor.error,
       inLog: editing ? isInLog(campaign, editing.id) : false,
     },
+    generation: state.generating && campaign.generation ? generationView(campaign.generation, state.generationError) : undefined,
+    generationRunning: campaign.generation !== undefined,
   };
 }
