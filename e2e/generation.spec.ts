@@ -72,8 +72,9 @@ test.describe('mit Animation', () => {
     const dialog = page.getByRole('dialog', { name: 'Charaktererschaffung' });
     const str = dialog.locator('.upp-cell').first().locator('.upp-code');
     await dialog.getByRole('button', { name: 'STR würfeln' }).click();
+    // Während des Wurfs: oben noch kein Wert, unten noch der alte Schritt, gesperrt.
     await expect(str).toHaveText('–');
-    await expect(dialog.getByRole('button', { name: 'DEX würfeln' })).toBeDisabled();
+    await expect(dialog.getByRole('button', { name: 'STR würfeln' })).toBeDisabled();
     await expect(str).toHaveText(/^[2-9A-C]$/);
     await expect(dialog.getByRole('button', { name: 'DEX würfeln' })).toBeEnabled();
   });
