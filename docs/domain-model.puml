@@ -58,6 +58,9 @@ hide <<value>> stereotype
     level: number
     retired: boolean
   }
+  class Possession {
+    count: number
+  }
 
 ' Charaktererschaffung und Lebenslauf
   class Generation {
@@ -166,9 +169,19 @@ hide <<value>> stereotype
   }
   class Gain <<reference>> {
     change: number [0..1]
-    item: string [0..1]
-    once: boolean
     credits: number [0..1]
+    weapon: boolean
+  }
+  class Item <<reference>> {
+    name: string
+    kind: ItemKind
+    once: boolean
+  }
+  enum ItemKind <<value>> {
+    weapon
+    passage
+    membership
+    ship
   }
   class Cascade <<reference>> {
     name: string
@@ -257,6 +270,7 @@ Rank "1" *-- "0..1" Gain : grants
 Table "1" *-- "6..7" Gain : rows {ordered}
 Gain "*" --> "0..1" Skill : skill
 Gain "*" --> "0..1" Cascade : choose
+Gain "*" --> "0..1" Item : item
 Gain --> "0..1" Characteristic : changes
 Cascade "*" --> "1..*" Skill : options
 Aging --> "1" Characteristic : of
@@ -265,6 +279,10 @@ Aging --> "1" Characteristic : of
 Character "1" *-- "1" Upp : upp
 Character "1" *-- "*" SkillLevel : skills
 SkillLevel "*" --> "1" Skill : of
+Character "1" *-- "*" Possession : possessions
+Possession "*" --> "1" Item : of
+Item --> ItemKind
+Item "0..1" --> "0..1" Skill : uses
 
 ' Verlauf
 LogEntry <|-- OracleAnswer

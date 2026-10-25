@@ -16,8 +16,9 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 >
 > **Entwurf, noch nicht abgestimmt** (25. Oktober 2026): Charaktererschaffung nach den Regeln von
 > Classic Traveller, mit Lebenslauf am Charakter (siehe *Charaktererschaffung* und *Offene Fragen*).
-> Neu im Bild: `Generation`, `Career`, `CareerRoll`, `Character.career` und die Laufbahnen als
-> Referenzdaten (`Service`, `Throw`, `Rank`, `Table`, `Gain`, `Cascade`, `Aging`).
+> Neu im Bild: `Generation`, `Career`, `CareerRoll`, `Character.career`, Gegenstände
+> (`Item`, `Possession`, siehe *Gegenstände*) und die Laufbahnen als Referenzdaten (`Service`,
+> `Throw`, `Rank`, `Table`, `Gain`, `Cascade`, `Aging`).
 >
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen sowie die Themen-Tafeln NSC, NSC-Aktionen,
@@ -56,6 +57,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Fertigkeit | `Skill` | Eine Fertigkeit aus der Liste, z. B. Pilot |
 | Kürzel | `Skill.short` | Drei Zeichen für eine Fertigkeit, z. B. Pil für Pilot |
 | Fertigkeitsstufe | `SkillLevel` | Die Stufe, die ein Charakter in einer Fertigkeit hat, z. B. Pilot-2 |
+| Gegenstand | `Item` | Etwas aus der festen Liste, das man besitzen kann: Waffe, Passage, Mitgliedschaft, Schiff |
+| Art des Gegenstands | `ItemKind` | weapon, passage, membership, ship |
+| Besitz | `Possession` | Ein Gegenstand, den ein Charakter hat, mit Anzahl, z. B. 2 × Low Passage |
 | Stufe (Hoch/Mittel/Gering) | `Odds` | Die eine Auswahl für Orakel und Proben |
 | Hausregeln | `HouseRules` | Die Zahlen, nach denen Proben gerechnet werden |
 | Log | `LogEntry` | Ein Eintrag im Verlauf |
@@ -87,7 +91,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Wurf mit Zielwert | `Throw` | Ein 2W6-Wurf einer Laufbahn, z. B. Survival 5+, mit seinen DMs |
 | Rang | `Rank` | Ein Rang einer Laufbahn, z. B. Lt Cmdr (Rang 3 der Navy) |
 | Tabelle | `Table` | Eine Fertigkeitstabelle, die Sachwerte- oder die Geldtabelle einer Laufbahn |
-| Zugewinn | `Gain` | Eine Zeile einer Tabelle oder was ein Rang bringt: Fertigkeit, Attribut, Gegenstand oder Geld |
+| Zugewinn | `Gain` | Eine Zeile einer Tabelle oder was ein Rang bringt: Fertigkeit, Attribut, Gegenstand, Waffe oder Geld |
 | Kaskade | `Cascade` | Ein Sammelbegriff, aus dem man eine Fertigkeit wählt: Blade Combat, Gun Combat, Vehicle |
 | Altern | `Aging` | Eine Zeile der Aging Table: ab welchem Term welches Attribut wie viel verlieren kann |
 
@@ -188,6 +192,15 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   knappen Anzeige; der Log zeigt den vollen Namen. Ausrüstung, Herkunft (`background`, z. B.
   „Ex-Scout · 4 Terms · 34 Jahre“) und Notiz sind in Version 1 freier Text, Credits eine
   ganze Zahl.
+- **Gegenstände.** Was ein Charakter besitzt, steht als Besitz (`possessions`) an ihm: je Gegenstand
+  aus der festen Liste höchstens ein Eintrag, mit einer Anzahl von 1 oder mehr (3 × Low Passage,
+  2 × Free Trader für zwei abbezahlte Raten). Ein Gegenstand mit `once` hat immer die Anzahl 1. Im
+  Editor lässt sich Besitz hinzufügen, zählen und entfernen wie Fertigkeiten; entfernt wird er
+  wirklich, weil der Log nicht auf ihn verweist. Die Liste umfasst zunächst, was die Abmusterung
+  bringen kann: alle Klingen und Schusswaffen der Charts (jede nutzt genau ihre Fertigkeit, `uses`),
+  Low, Middle und High Passage, Travellers' Aid Society, Scout Ship und Free Trader. Preise, Gewichte,
+  Rüstungen und Kaufen kommen später mit Kampf und Handel. Alles andere bleibt freier Text in der
+  Ausrüstung (`equipment`). Schiffe sind vorerst nur ein Gegenstand; Schiffskarten kommen später.
 - **Löschen und Ausblenden.** Ein Charakter oder eine Fertigkeitsstufe, auf die kein Logeintrag
   verweist, wird wirklich gelöscht. Verweist der Log darauf, wird sie stattdessen ausgeblendet
   (`retired`): Sie verschwindet aus dem Charakter-Screen und lässt sich nicht mehr für Proben wählen,
@@ -252,18 +265,19 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        5–6. Je Wurf wählt man Geld oder Sachwerte; Geld höchstens dreimal. DM +1 auf Geld mit
        Gambling, DM +1 auf Sachwerte ab Rang 5. Ein Gegenstand mit `once` (Travellers' Aid Society,
        Scout Ship) kommt nur einmal; ein zweites Mal bringt nichts. Eine Waffe (Blade, Gun) ist eine
-       Kaskade: Man wählt die Waffe; wählt man eine, die man schon aus der Abmusterung hat, steigt
-       stattdessen die Fertigkeit darin um 1. Nach mindestens 5 Terms gibt es eine Pension (Cr 4000
+       Kaskade mit `weapon`: Man wählt eine Fertigkeit daraus und bekommt den Gegenstand, der sie
+       nutzt (`uses`), statt der Fertigkeit. Wählt man eine Waffe, die man schon aus der Abmusterung
+       hat, steigt stattdessen die Fertigkeit darin um 1. Nach mindestens 5 Terms gibt es eine Pension (Cr 4000
        bei 5 Terms, je Term mehr Cr 2000).
     7. *Name*: Zum Schluss gibt man den Namen ein und schließt ab.
   - **Zugewinne.** Eine Zeile (`Gain`) bringt genau eins: eine Fertigkeit +1 (`skill`), eine Wahl aus
-    einer Kaskade (`choose`), ein Attribut ± `change` (`changes`), einen Gegenstand (`item`) oder Geld
-    (`credits`); eine leere Zeile (Scouts und Other, 7 auf der Sachwertetabelle) bringt nichts.
+    einer Kaskade (`choose`, mit `weapon` die Waffe statt der Fertigkeit), ein Attribut ± `change`
+    (`changes`), einen Gegenstand (`item`) oder Geld (`credits`); eine leere Zeile (Scouts und Other, 7 auf der Sachwertetabelle) bringt nichts.
     Attribute bleiben zwischen 0 und 15. Eine Kaskade bietet Fertigkeiten an (`options`); die Wahl
     gehört zum Wurf (`chosen`). Vehicle bietet die einzelnen Fahrzeuge an, Aircraft und Watercraft
     sind darin schon aufgefächert.
   - **Abschließen** legt einen Charakter an (`on finish`): Name, UPP und Fertigkeiten wie zuletzt,
-    Credits aus dem Geld, Ausrüstung aus den Gegenständen, Herkunft aus Laufbahn, Rang, Terms und
+    Credits aus dem Geld, Besitz aus den Gegenständen (gleiche zusammengezählt), Herkunft aus Laufbahn, Rang, Terms und
     Alter („Ex-Navy · Commander · 5 Terms · 38 Jahre“), die Pension in der Notiz. Der Lebenslauf zieht
     mit um (`Character.career`) und bleibt danach unverändert; den Charakter bearbeitet man wie jeden
     anderen. Von Hand angelegte Charaktere haben keinen Lebenslauf. Danach ist die Erschaffung zu.
@@ -272,7 +286,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Die Erschaffung steht nicht im Log; ihr Lebenslauf ist ihr Verlauf.
   - Die Kampagnendatei enthält die offene Erschaffung und die Lebensläufe; beim Import wird jeder
     Lebenslauf von vorn nachgespielt und gegen diese Regeln geprüft.
-- **Referenzdaten sind Daten.** Stufen, Hausregeln, Fertigkeiten, Laufbahnen, Bereiche, Felder und Einträge
+- **Referenzdaten sind Daten.** Stufen, Hausregeln, Fertigkeiten, Gegenstände, Laufbahnen, Bereiche, Felder und Einträge
   stehen als Dateien unter `src/data/` und werden beim Start geprüft. Man ändert sie nur dort, nicht
   in der App. Pfeile führen nur aus Spielstand
   und Entwürfen in die Referenzdaten, nie zurück. Die Einträge sind eigene Inhalte oder stammen aus
@@ -324,7 +338,7 @@ Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECT
 Diagramm mit diesen Ausnahmen:
 
 - **Charaktererschaffung** (`Generation`, `Career`, `CareerRoll`, `Character.career` und die
-  Laufbahnen in den Referenzdaten) gibt es im Code noch nicht (Entwurf, siehe *Charaktererschaffung*).
+  Laufbahnen in den Referenzdaten) sowie Gegenstände und Besitz gibt es im Code noch nicht (Entwurf, siehe *Charaktererschaffung*).
 
 - **`Card → Campaign : in` und `Task → Campaign : in`** sind im Code kein Feld. Der Controller hält
   höchstens eine offene Karte und höchstens eine Probe, beide immer zur offenen Kampagne; beim
