@@ -2,6 +2,7 @@ import type { CharacterView } from '../../controller';
 import { characteristicLabel, credits, hex, signed } from '../format';
 import { useGame } from '../game-context';
 import { PencilIcon } from '../icons';
+import { CareerList } from './GenerationSheet';
 
 /**
  * Eine Charakterkarte: oben das UPP, darunter die Fertigkeiten mit Kürzel. Eine Fertigkeit antippen
@@ -74,6 +75,12 @@ export function CharacterCard({ character }: { character: CharacterView }) {
 
       {character.open && (
         <dl className="facts">
+          {character.possessions.length > 0 && (
+            <>
+              <dt>Besitz</dt>
+              <dd>{character.possessions.map((p) => (p.count > 1 ? `${p.count} × ${p.name}` : p.name)).join(', ')}</dd>
+            </>
+          )}
           <dt>Ausrüstung</dt>
           <dd>{character.equipment || '–'}</dd>
           <dt>Credits</dt>
@@ -81,6 +88,12 @@ export function CharacterCard({ character }: { character: CharacterView }) {
           <dt>Notiz</dt>
           <dd>{character.note || '–'}</dd>
         </dl>
+      )}
+      {character.open && character.career && (
+        <details className="career-details">
+          <summary>Lebenslauf</summary>
+          <CareerList lines={character.career} heading={false} />
+        </details>
       )}
     </article>
   );

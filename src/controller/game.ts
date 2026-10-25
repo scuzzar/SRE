@@ -14,8 +14,17 @@ import {
   removeLogEntry,
   renameCampaign,
   restoreCharacter,
+  chooseCascade as chooseCareerCascade,
+  enlist,
+  finishGeneration,
+  muster,
+  reenlist,
   rollDice,
+  rollNext,
+  rollSkill,
+  setGeneration,
   setOdds,
+  startGeneration,
   toCampaignFile,
   updateCharacter,
   type Campaign,
@@ -25,6 +34,7 @@ import {
   type Characteristic,
   type Clock,
   type Download,
+  type Generation,
   type Random,
 } from '../model';
 import {
@@ -40,7 +50,7 @@ import {
 import { buildSnapshot, type ControllerState, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, task: undefined, details: false, result: undefined, editor: undefined } as const;
+const closedDrafts = { card: undefined, task: undefined, details: false, result: undefined, editor: undefined, generating: false, generationError: undefined } as const;
 
 export interface GameDependencies {
   readonly repository: CampaignRepository;
@@ -75,6 +85,8 @@ export class GameController {
       details: false,
       result: undefined,
       editor: undefined,
+      generating: false,
+      generationError: undefined,
     };
     this.current = buildSnapshot(this.state);
   }
@@ -299,11 +311,86 @@ export class GameController {
     this.change(restoreCharacter(this.campaign, id));
   }
 
+  // --- Charaktererschaffung -------------------------------------------------------------------
+
+  /** Öffnet die Charaktererschaffung; läuft schon eine, geht es dort weiter. */
+  openGeneration(): void {
+    if (this.campaign.generation) this.update({ generating: true, generationError: undefined });
+    else this.change(setGeneration(this.campaign, startGeneration()), { generating: true, generationError: undefined });
+  }
+
+  /** „Später weiter“: schließt die Erschaffung; sie bleibt gespeichert. */
+  closeGeneration(): void {
+    this.update({ generating: false, generationError: undefined });
+  }
+
+  /** Verwirft die Erschaffung ohne Spur. */
+  discardGeneration(): void {
+    this.change(setGeneration(this.campaign, undefined), { generating: false, generationError: undefined });
+  }
+
+  /** Verwirft die Erschaffung (etwa nach dem Tod) und beginnt eine neue. */
+  restartGeneration(): void {
+    this.change(setGeneration(this.campaign, startGeneration()), { generating: true, generationError: undefined });
+  }
+
+  /** Würfelt den Schritt, der keine Wahl braucht (Attribut, Einberufung, Überleben, Patent, …). */
+  rollGeneration(): void {
+    this.inGeneration((g) => rollNext(g, this.deps.random));
+  }
+
+  /** Wählt die Laufbahn und würfelt die Musterung. */
+  chooseService(service: string): void {
+    this.inGeneration((g) => enlist(g, service, this.deps.random));
+  }
+
+  /** Wählt die Fertigkeitstabelle und würfelt darauf. */
+  chooseSkillTable(table: string): void {
+    this.inGeneration((g) => rollSkill(g, table, this.deps.random));
+  }
+
+  /** Wählt aus einer Kaskade: Fertigkeit oder Waffe. */
+  chooseCascade(skill: string): void {
+    this.inGeneration((g) => chooseCareerCascade(g, skill));
+  }
+
+  /** Bleiben oder abmustern; gewürfelt wird in beiden Fällen. */
+  reenlist(wants: boolean): void {
+    this.inGeneration((g) => reenlist(g, wants, this.deps.random));
+  }
+
+  /** Ein Abmusterungswurf auf Geld oder Sachwerte. */
+  musterOut(kind: 'cash' | 'benefit'): void {
+    this.inGeneration((g) => muster(g, kind, this.deps.random));
+  }
+
+  /** Schließt die Erschaffung mit Namen ab; der neue Charakter steht im Charakter-Screen. */
+  finishGeneration(name: string): void {
+    try {
+      this.change(finishGeneration(this.campaign, name).campaign, { generating: false, generationError: undefined, screen: 'characters' });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ generationError: error.message });
+    }
+  }
+
   // --- intern ----------------------------------------------------------------------------------
 
   private get campaign(): Campaign {
     if (!this.state.campaign) throw new Error('Die Kampagne ist noch nicht geladen.');
     return this.state.campaign;
+  }
+
+  /** Führt einen Schritt der Erschaffung aus; verletzt er eine Regel, steht das in der Erschaffung. */
+  private inGeneration(step: (generation: Generation) => Generation): void {
+    const generation = this.campaign.generation;
+    if (!generation) throw new DomainError('Es läuft keine Charaktererschaffung.');
+    try {
+      this.change(setGeneration(this.campaign, step(generation)), { generationError: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ generationError: error.message });
+    }
   }
 
   private get openCard() {

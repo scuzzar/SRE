@@ -58,6 +58,30 @@ hide <<value>> stereotype
     level: number
     retired: boolean
   }
+  class Possession {
+    count: number
+  }
+
+' Charaktererschaffung und Lebenslauf
+  class Generation {
+    /step: GenerationStep
+  }
+  class Career {
+    /terms: number
+    /rank: number
+    /age: number
+    /drafted: boolean
+    /dead: boolean
+    /pension: number
+  }
+  class CareerRoll {
+    kind: RollKind
+    dice: number[1..2]
+    dm: number
+    target: number [0..1]
+    wants: boolean [0..1]
+    /success: boolean [0..1]
+  }
 
 ' Verlauf
   abstract class LogEntry {
@@ -122,6 +146,88 @@ hide <<value>> stereotype
     text: string
     retired: boolean
   }
+  class Service <<reference>> {
+    name: string
+    draft: number
+    reenlist: number
+    skillsPerTerm: number [0..1]
+  }
+  class Throw <<value>> {
+    target: number
+  }
+  class ThrowDm <<value>> {
+    atLeast: number
+    dm: number
+  }
+  class Rank <<reference>> {
+    level: number
+    title: string
+  }
+  class Table <<reference>> {
+    name: string
+    minEdu: number [0..1]
+  }
+  class Gain <<reference>> {
+    change: number [0..1]
+    credits: number [0..1]
+    weapon: boolean
+  }
+  class Item <<reference>> {
+    name: string
+    kind: ItemKind
+    tl: number [0..1]
+    weight: number [0..1]
+    price: number [0..1]
+    once: boolean
+  }
+  enum ItemKind <<value>> {
+    weapon
+    ammunition
+    armor
+    equipment
+    vehicle
+    ship
+    passage
+    membership
+  }
+  class Cascade <<reference>> {
+    name: string
+  }
+  class Aging <<reference>> {
+    fromTerm: number
+    loss: number
+    target: number
+  }
+  enum RollKind <<value>> {
+    characteristic
+    enlistment
+    draft
+    survival
+    commission
+    promotion
+    skill
+    aging
+    crisis
+    reenlist
+    cash
+    benefit
+  }
+  enum GenerationStep <<value>> {
+    characteristics
+    service
+    draft
+    survival
+    commission
+    promotion
+    skill
+    cascade
+    aging
+    crisis
+    reenlist
+    muster
+    name
+    dead
+  }
   enum SectionKind <<value>> {
     card
     theme
@@ -140,10 +246,51 @@ Campaign "1" *-- "*" Character : characters
 Campaign "*" --> "1" Odds : odds
 Campaign "1" *-- "*" LogEntry : log {ordered}
 
+' Charaktererschaffung und Lebenslauf
+Campaign "1" *-- "0..1" Generation : generation
+Generation "1" *-- "1" Career : career
+Generation ..> Character : on finish
+Generation --> GenerationStep
+Character "1" *-- "0..1" Career : career
+Career "1" *-- "*" CareerRoll : rolls {ordered}
+Career "*" --> "0..1" Service : /in
+CareerRoll --> RollKind
+CareerRoll --> "0..1" Characteristic : of
+CareerRoll "*" --> "0..1" Service : for
+CareerRoll "*" --> "0..1" Table : on
+CareerRoll "*" --> "0..1" Gain : gained
+CareerRoll "*" --> "0..1" Skill : chosen
+CareerRoll "*" --> "0..1" Aging : against
+
+' Laufbahnen (Referenzdaten)
+Service "1" *-- "1" Throw : enlistment
+Service "1" *-- "1" Throw : survival
+Service "1" *-- "0..1" Throw : commission
+Service "1" *-- "0..1" Throw : promotion
+Throw "1" *-- "0..2" ThrowDm : dms
+ThrowDm --> "1" Characteristic : if
+Service "1" *-- "0..6" Rank : ranks {ordered}
+Service "1" *-- "4" Table : skills {ordered}
+Service "1" *-- "1" Table : benefits
+Service "1" *-- "1" Table : cash
+Service "1" *-- "0..1" Gain : onEnlistment
+Rank "1" *-- "0..1" Gain : grants
+Table "1" *-- "6..7" Gain : rows {ordered}
+Gain "*" --> "0..1" Skill : skill
+Gain "*" --> "0..1" Cascade : choose
+Gain "*" --> "0..1" Item : item
+Gain --> "0..1" Characteristic : changes
+Cascade "*" --> "1..*" Skill : options
+Aging --> "1" Characteristic : of
+
 ' Charakter
 Character "1" *-- "1" Upp : upp
 Character "1" *-- "*" SkillLevel : skills
 SkillLevel "*" --> "1" Skill : of
+Character "1" *-- "*" Possession : possessions
+Possession "*" --> "1" Item : of
+Item --> ItemKind
+Item "0..1" --> "0..1" Skill : uses
 
 ' Verlauf
 LogEntry <|-- OracleAnswer

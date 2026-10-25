@@ -29,16 +29,27 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 - **Log**: Orakelantworten, Würfe und die ausgewählten Karteneinträge landen untereinander im Log, das neueste unten. **Lange drücken** auf einen Eintrag bietet an, ihn zu löschen.
 
 **Zweiter Screen: Charaktere**
-- Karten für die **Spielercharaktere** mit UPP, Fertigkeiten, Ausrüstung, Credits und Notiz. Charaktere legt man in der App an und bearbeitet sie; Fertigkeiten kommen aus einer festen Liste. Im Kopf jeder Charakterkarte sitzt ein Stift zum **Bearbeiten**; dort lässt sich der Charakter auch löschen oder als **tot** markieren (er steht dann unter „Verstorben“, ist für Proben nicht wählbar, und das lässt sich zurücknehmen). Wer schon im Log vorkommt, wird nicht gelöscht, sondern ausgeblendet.
+- Karten für die **Spielercharaktere** mit UPP, Fertigkeiten, Besitz, Ausrüstung, Credits und Notiz. Charaktere legt man in der App an und bearbeitet sie; Fertigkeiten und Gegenstände kommen aus festen Listen (Gegenstände mit TL, Gewicht und Preis aus den Charts der Starter Edition, S. 23), alles andere ist freier Text in der Ausrüstung. Im Kopf jeder Charakterkarte sitzt ein Stift zum **Bearbeiten**; dort lässt sich der Charakter auch löschen oder als **tot** markieren (er steht dann unter „Verstorben“, ist für Proben nicht wählbar, und das lässt sich zurücknehmen). Wer schon im Log vorkommt, wird nicht gelöscht, sondern ausgeblendet.
 - **Proben direkt im Charakter-Screen** (kein eigenes Fenster):
   - Auf der Charakterkarte die **Fertigkeit** antippen (oder „Ohne“ für −3); die Fertigkeiten stehen immer sichtbar unter dem UPP, mit einem Kürzel aus drei Zeichen (Pil-2), damit sie in eine Zeile passen; ein Tippen startet die Probe direkt, ohne die Karte aufzuklappen. Erst ein Tippen auf den Namen klappt die Details auf: volle Namen, Ausrüstung, Credits und Notiz. Herkunft, Terms und Alter stehen in der Zeile des Namens.
   - **Attribute** sind standardmäßig nicht dabei und lassen sich **erst nach der Fertigkeit** dazuwählen; ein Tippen auf ein Attribut im UPP schaltet es an oder aus; der DM ergibt sich aus dem Wert (9+ → +1, 6–8 → ±0, 5− → −1). Sobald die Fertigkeit gewählt ist, zeigt jedes Attribut an, ob es überhaupt +1 oder −1 brächte; neutrale Werte sind nicht wählbar.
   - **Unten** stehen fest die drei Schwierigkeiten **6+ / 8+ / 10+** (dieselbe Auswahl wie Hoch/Mittel/Gering beim Orakel), in derselben Zeile der Knopf „Probe würfeln“. Darüber steht knapp die Probe: die Fertigkeit ausgeschrieben mit Zielwert (Pilot-2 · 10+), darunter DM, gewählte Attribute und der nötige Wurf (2W6 +3 (DEX +1) · Braucht 7+). Ohne Prozente und ohne den Namen des Charakters, der ist auf seiner Karte markiert.
   - Das **Ergebnis erscheint als Popup**, wie in Baldur's Gate 3: zuerst erscheint der Zielwert, dann rollen die Würfel, dann kommen die Fertigkeit und jedes gewählte Attribut einzeln mit Namen dazu (Pilot-2 +2, dann DEX +1), jeweils mit Zwischensumme, zuletzt fällt das Urteil (Erfolg golden, Fehlschlag rot). Ein Tippen springt zum Urteil. Unten stehen links **„Zum Orakel“** und rechts **„Weiter“**: „Weiter“ bleibt im Charakter-Screen, die Probe bleibt vorbereitet; „Zum Orakel“ wechselt zum Orakel-Screen. Geloggt ist die Probe schon; der Log steht nur im Orakel-Screen, der Charakter-Screen hat keinen.
 
+**Charaktererschaffung nach den Regeln** (Starter Edition, *Charts and Tables* S. 2–3): Im Charakter-Screen „Nach Regeln erschaffen“ öffnet eine Charakterkarte im Vordergrund, wie bei den Proben. Jeder Wert wird einzeln mit der Würfelanimation bestimmt; unten führen Knöpfe durch die Schritte:
+  1. Die sechs Attribute, jedes mit eigenem 2W6-Wurf.
+  2. **Welche Laufbahn?** Navy, Marines, Army, Scouts, Merchants oder Other, jede mit Zielwert und DM; misslingt die Musterung, bestimmt die Einberufung (1W6) die Laufbahn.
+  3. Je Term: Überleben (misslingt es, ist der Charakter tot), Offizierspatent und Beförderung, dann je Fertigkeit **welche Tabelle?** (Personal Development, Service Skills, Advanced Education, mit EDU 8+ auch die vierte). Blade Combat, Gun Combat und Vehicle fragen nach der genauen Fertigkeit.
+  4. Ab dem 4. Term das Altern.
+  5. **Weiterverpflichten?** Gewürfelt wird immer; eine 12 heißt bleiben, nach 7 Terms geht es nur mit 12 weiter.
+  6. Abmusterung: je Wurf **Geld oder Sachwerte**; Waffen wählt man, eine zweite gleiche wird zur Fertigkeit.
+  7. Name eingeben und übernehmen: Der Charakter bekommt UPP, Fertigkeiten, Besitz, Credits, Herkunft („Ex-Navy · Commander · 5 Terms · 38 Jahre“), die Pension in der Notiz und seinen **Lebenslauf**, den die Details der Karte zeigen.
+
+  Die Erschaffung wird gespeichert: „Später weiter“ schließt sie, „Erschaffung fortsetzen“ holt sie zurück. Verwerfen geht jederzeit. Vorbild für das Verhalten: der interaktive Generator auf <https://www.batintheattic.com/traveller/interactive.html>.
+
 **UI-Entwurf:** Der klickbare Entwurf liegt in [docs/ui-entwurf](docs/ui-entwurf/).
 
-**Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf, Welten- und Charaktererschaffung, Sektorkarte, Schiffe, NSC-Karten, Chaosfaktor, Szenen, Feinjustierung ±1, eigene Fertigkeiten, Hausregeln in der App einstellen.
+**Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf, Weltenerschaffung, Kaufen und Verkaufen, Sektorkarte, Schiffe, NSC-Karten, Chaosfaktor, Szenen, Feinjustierung ±1, eigene Fertigkeiten, Hausregeln in der App einstellen.
 
 ---
 

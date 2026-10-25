@@ -45,7 +45,7 @@ function wobble(seed: number, range: number): number {
   return Math.round((n - Math.floor(n)) * range * 2 - range);
 }
 
-function Die({ value, index, seed }: { value: number; index: number; seed: number }) {
+function Die({ value, index, seed, alone = false }: { value: number; index: number; seed: number; alone?: boolean }) {
   const end = rest[value] ?? { x: 0, y: 0 };
   const s = seed * 2 + index;
   const tilt = wobble(s + 1, 14);
@@ -57,7 +57,7 @@ function Die({ value, index, seed }: { value: number; index: number; seed: numbe
     '--x0': `${end.x + (index ? -1 : 1) * (720 + wobble(s + 2, 60))}deg`,
     '--y0': `${end.y + (index ? 1 : -1) * (540 + wobble(s + 3, 60))}deg`,
     '--z0': `${tilt + wobble(s + 4, 120)}deg`,
-    '--dx': `${(index ? 1 : -1) * (70 + wobble(s + 5, 30))}px`,
+    '--dx': `${alone ? wobble(s + 5, 30) : (index ? 1 : -1) * (70 + wobble(s + 5, 30))}px`,
   } as CSSProperties;
 
   return (
@@ -79,17 +79,23 @@ function Die({ value, index, seed }: { value: number; index: number; seed: numbe
 }
 
 /**
- * Zwei geworfene Würfel. `landed` lässt sie sofort liegen (übersprungen) und leuchtet auf; `seed`
- * unterscheidet die Würfe.
+ * Geworfene Würfel, einer oder zwei. `landed` lässt sie sofort liegen (übersprungen) und leuchtet
+ * auf; `seed` unterscheidet die Würfe.
  */
-export function DicePairView({ dice, seed, landed, size = 'large' }: { dice: DicePair; seed: number; landed: boolean; size?: 'large' | 'small' }) {
+export function DiceView({ dice, seed, landed, size = 'large' }: { dice: readonly number[]; seed: number; landed: boolean; size?: 'large' | 'small' }) {
   return (
     <div className={`dice-stage ${size}${landed ? ' landed' : ''}`} aria-hidden="true">
-      <Die value={dice[0]} index={0} seed={seed} />
-      <Die value={dice[1]} index={1} seed={seed} />
+      {dice.map((value, i) => (
+        <Die key={i} value={value} index={i} seed={seed} alone={dice.length === 1} />
+      ))}
       <div className="dice-flash" />
     </div>
   );
+}
+
+/** Zwei geworfene Würfel, wie beim 2W6-Wurf und der Probe. */
+export function DicePairView(props: { dice: DicePair; seed: number; landed: boolean; size?: 'large' | 'small' }) {
+  return <DiceView {...props} />;
 }
 
 /**

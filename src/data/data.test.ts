@@ -113,4 +113,44 @@ describe('Referenzdaten', () => {
     const broken = { ...referenceData, examples: [{ ...kira!, skills: [{ of: 'telepathy', level: 1 }] }] };
     expect(() => ReferenceDataSchema.parse(broken)).toThrow(/Unbekannte Fertigkeit telepathy/);
   });
+
+  it('haben die sechs Laufbahnen des Regelwerks mit den Würfen der Prior Service Table', () => {
+    const [navy, marines, army, scouts, merchants, other] = referenceData.services;
+    expect(referenceData.services.map((s) => `${s.draft}:${s.name}`)).toEqual(['1:Navy', '2:Marines', '3:Army', '4:Scouts', '5:Merchants', '6:Other']);
+    expect(navy!.enlistment).toEqual({ target: 8, dms: [{ characteristic: 'INT', atLeast: 8, dm: 1 }, { characteristic: 'EDU', atLeast: 9, dm: 2 }] });
+    expect(referenceData.services.map((s) => s.reenlist)).toEqual([6, 6, 7, 3, 4, 5]);
+    expect(merchants!.ranks.map((r) => r.title)).toEqual(['4th Officer', '3rd Officer', '2nd Officer', '1st Officer', 'Captain']);
+    expect(scouts!.commission).toBeUndefined();
+    expect(scouts!.skillsPerTerm).toBe(2);
+    expect(marines!.onEnlistment).toEqual({ id: 'marines.enlistment', skill: 'cutlass', weapon: false });
+    expect(army!.ranks[0]!.grants).toEqual({ id: 'army.rank.1', skill: 'submachinegun', weapon: false });
+    expect(other!.skills[0]!.rows[5]).toEqual({ id: 'other.personal.6', characteristic: 'SOC', change: -1, weapon: false });
+    expect(navy!.cash.rows.map((r) => r.credits)).toEqual([1000, 5000, 5000, 10000, 20000, 50000, 50000]);
+    expect(scouts!.benefits.rows.map((r) => r.item ?? r.choose ?? r.characteristic ?? '-')).toEqual(['low-passage', 'INT', 'EDU', 'blade-combat', 'gun-combat', 'scout-ship', '-']);
+  });
+
+  it('haben jede Waffe aus Blade und Gun Combat genau einmal als Gegenstand', () => {
+    const weapons = referenceData.items.filter((i) => i.kind === 'weapon');
+    expect(weapons.find((w) => w.uses === 'auto-pistol')).toMatchObject({ name: 'Automatic Pistol', tl: 5, weight: 0.75, price: 200 });
+    expect(weapons.find((w) => w.name === 'Club')).toMatchObject({ tl: 0, weight: 1 });
+    expect(weapons.find((w) => w.name === 'Club')!.price).toBeUndefined();
+  });
+
+  it('rechnen Tonnen in kg und KCr bzw. MCr in Cr um', () => {
+    const item = (id: string) => referenceData.items.find((i) => i.id === id)!;
+    expect(item('vehicle-air-raft')).toMatchObject({ kind: 'vehicle', tl: 8, weight: 4000, price: 600_000 });
+    expect(item('craft-ship-s-boat')).toMatchObject({ kind: 'ship', price: 16_000_000 });
+    expect(item('craft-ship-s-boat').weight).toBeUndefined();
+    expect(item('free-trader')).toMatchObject({ price: 37_080_000, once: false });
+    expect(item('travellers-aid-society')).toMatchObject({ kind: 'membership', once: true });
+    expect(item('vehicle-grav-belt').note).toMatch(/Druckfehler/);
+    expect(referenceData.items.filter((i) => i.name === 'Vacc Suit').map((i) => i.tl)).toEqual([8, 9, 10, 11, 12, 13]);
+  });
+
+  it('weisen einen Zugewinn zurück, der mehr als eins bringt', () => {
+    const [navy, ...rest] = referenceData.services;
+    const rows = navy!.cash.rows.map((r, i) => (i === 0 ? { ...r, item: 'low-passage' } : r));
+    const broken = { ...referenceData, services: [{ ...navy!, cash: { ...navy!.cash, rows } }, ...rest] };
+    expect(() => ReferenceDataSchema.parse(broken)).toThrow(/navy.cash.1 bringt mehr als eins/);
+  });
 });

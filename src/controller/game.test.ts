@@ -390,3 +390,59 @@ describe('Kampagnen', () => {
     expect(game.snapshot().campaigns).toHaveLength(1);
   });
 });
+
+describe('Charaktererschaffung', () => {
+  it('würfelt Schritt für Schritt, speichert dabei und schließt mit Namen ab', async () => {
+    // Attribute 7, 10, 8, 9, 7, 5; Other mit 6+6; überlebt; zwei Fertigkeiten; mustert ab; Geld 6.
+    const random = fixedRandom(3, 4, 5, 5, 4, 4, 4, 5, 3, 4, 2, 3, 6, 6, 6, 6, 1, 1, 1, 1, 6);
+    const { game, repository } = await started(random);
+    game.openGeneration();
+    expect(game.snapshot().generation).toMatchObject({ step: 'characteristics', action: { kind: 'roll', label: 'STR würfeln' } });
+    for (let i = 0; i < 6; i++) game.rollGeneration();
+    expect(game.snapshot().generation?.upp.map((u) => u.value)).toEqual([7, 10, 8, 9, 7, 5]);
+    expect(game.snapshot().generation?.action.kind).toBe('service');
+
+    // „Später weiter“: Die Erschaffung bleibt gespeichert.
+    game.closeGeneration();
+    await game.whenSaved();
+    expect(game.snapshot()).toMatchObject({ generation: undefined, generationRunning: true });
+    expect(repository.saved?.generation?.career.rolls).toHaveLength(6);
+    game.openGeneration();
+
+    game.chooseService('other');
+    expect(game.snapshot().generation).toMatchObject({ step: 'survival', status: 'Other · Term 1' });
+    game.rollGeneration();
+    game.chooseSkillTable('other.personal');
+    game.chooseSkillTable('other.personal');
+    game.reenlist(false);
+    game.musterOut('cash');
+    const view = game.snapshot().generation!;
+    expect(view.step).toBe('name');
+    expect(view.lines.map((l) => `${l.label}: ${l.result}`).slice(6)).toEqual([
+      'Musterung Other: angenommen',
+      'Überleben: überlebt',
+      'Personal Development: STR +1',
+      'Personal Development: STR +1',
+      'Abmustern: mustert ab · 1 Abmusterungswurf',
+      'Abmusterung: Geld: Cr 50.000',
+    ]);
+
+    game.finishGeneration('  ');
+    expect(game.snapshot().generation?.error).toMatch(/Namen/);
+    game.finishGeneration('Mara Quell');
+    const after = game.snapshot();
+    expect(after).toMatchObject({ generation: undefined, generationRunning: false, screen: 'characters' });
+    const mara = after.characters.find((c) => c.name === 'Mara Quell')!;
+    expect(mara).toMatchObject({ background: 'Ex-Other · 1 Term · 22 Jahre', credits: 50000, upp: { str: 9 } });
+    expect(mara.career).toHaveLength(12);
+  });
+
+  it('zeigt einen Fehler in der Erschaffung, statt zu werfen, und verwirft auf Wunsch', async () => {
+    const { game } = await started();
+    game.openGeneration();
+    game.chooseService('navy');
+    expect(game.snapshot().generation?.error).toMatch(/Schritt/);
+    game.discardGeneration();
+    expect(game.snapshot()).toMatchObject({ generation: undefined, generationRunning: false });
+  });
+});
