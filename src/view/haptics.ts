@@ -4,20 +4,23 @@
 
 export type Feel = 'shake' | 'land' | 'add' | 'success' | 'failure' | 'draw' | 'pick' | 'unpick' | 'confirm' | 'discard';
 
-/** Muster wie bei `navigator.vibrate`: an, aus, an, … in Millisekunden. */
+/**
+ * Muster wie bei `navigator.vibrate`: an, aus, an, … in Millisekunden. Kein Puls unter 20 ms: Viele
+ * Vibrationsmotoren unter Android laufen so schnell gar nicht an, dann spürt man nichts.
+ */
 const patterns: Record<Feel, readonly number[]> = {
   // Würfel in der Hand schütteln, dann zweimal aufschlagen, im Takt von `die-throw` in styles.css
   // (Aufschläge bei 70 % und 92 % von 850 ms).
-  shake: [10, 30, 10, 30, 12, 503, 18, 169, 10],
-  land: [28],
-  add: [10],
-  success: [18, 70, 40],
-  failure: [60, 50, 20],
-  draw: [8, 150, 16],
-  pick: [7],
-  unpick: [4],
-  confirm: [12, 50, 26],
-  discard: [8],
+  shake: [20, 40, 20, 40, 20, 455, 45, 142, 30],
+  land: [50],
+  add: [25],
+  success: [40, 80, 80],
+  failure: [150, 60, 60],
+  draw: [25, 170, 35],
+  pick: [25],
+  unpick: [20],
+  confirm: [30, 60, 50],
+  discard: [25],
 };
 
 let pending: ReturnType<typeof setTimeout>[] = [];
@@ -45,14 +48,15 @@ function switchTick(): void {
   label.remove();
 }
 
-/** Spielt ein Muster und bricht ein laufendes ab. */
+/** Spielt ein Muster; ein neues ersetzt ein laufendes. */
 export function haptic(feel: Feel): void {
-  stopHaptics();
   const pattern = patterns[feel];
   if (canVibrate()) {
     navigator.vibrate([...pattern]);
     return;
   }
+  pending.forEach(clearTimeout);
+  pending = [];
   let at = 0;
   pattern.forEach((ms, i) => {
     if (i % 2 === 0) {
@@ -67,6 +71,20 @@ export function stopHaptics(): void {
   pending.forEach(clearTimeout);
   pending = [];
   if (canVibrate()) navigator.vibrate(0);
+}
+
+/** Wie dieses Gerät vibriert: über die Vibrations-API, über den Schalter-Ruck des iPhones oder gar nicht. */
+export function vibrationKind(): 'api' | 'switch' | 'none' {
+  if (canVibrate()) return 'api';
+  if (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches) return 'switch';
+  return 'none';
+}
+
+/** Ein langer, deutlicher Puls zum Ausprobieren. Gibt zurück, ob der Browser ihn angenommen hat. */
+export function testHaptic(): boolean {
+  if (canVibrate()) return navigator.vibrate(400);
+  switchTick();
+  return vibrationKind() === 'switch';
 }
 
 /** Ob Animationen laufen sollen; bei „Bewegung reduzieren“ steht gleich das Ergebnis da. */

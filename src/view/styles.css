@@ -1541,12 +1541,8 @@ button:disabled {
   font-family: var(--mono);
 }
 
-.roll-result.phase-0 .roll-sum {
+.roll-result.rolling .roll-sum {
   visibility: hidden;
-}
-
-.roll-result:not(.phase-0) .roll-sum {
-  animation: pop 300ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
 }
 
 .roll-total {
@@ -1557,25 +1553,50 @@ button:disabled {
   text-shadow: 0 0 16px var(--gold-glow);
 }
 
-.roll-result.phase-2 .roll-total {
+.roll-result:not(.rolling) .roll-total {
   animation: pop 280ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
 }
 
-.roll-dm {
-  padding: 2px 8px;
-  border: 1px solid rgba(217, 180, 95, 0.5);
-  border-radius: 999px;
-  font-size: 14px;
-  color: var(--gold);
-  transition:
-    opacity 0.2s,
-    transform 0.2s;
+.roll-parts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  min-height: 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.roll-result.phase-0 .roll-dm,
-.roll-result.phase-1 .roll-dm {
+.roll-part {
+  padding: 3px 10px;
+  border: 1px solid rgba(217, 180, 95, 0.4);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--muted);
   opacity: 0;
-  transform: translateX(14px);
+  transform: translateY(8px) scale(0.9);
+  transition:
+    opacity 0.2s,
+    transform 0.2s cubic-bezier(0.2, 1.5, 0.4, 1),
+    border-color 0.2s,
+    color 0.2s;
+}
+
+.roll-part strong {
+  font-family: var(--mono);
+  color: var(--gold);
+}
+
+.roll-part.added {
+  opacity: 1;
+  transform: none;
+}
+
+.roll-part.latest {
+  border-color: var(--gold);
+  color: var(--text);
+  box-shadow: 0 0 12px rgba(233, 190, 92, 0.3);
 }
 
 .roll-result .roll-verdict {
@@ -1593,11 +1614,11 @@ button:disabled {
   text-shadow: 0 0 20px rgba(198, 47, 53, 0.55);
 }
 
-.roll-result.phase-3 .roll-verdict {
+.roll-result.judged .roll-verdict {
   animation: verdict 380ms cubic-bezier(0.2, 1.3, 0.4, 1) both;
 }
 
-.roll-result.phase-3.failure .roll-verdict {
+.roll-result.judged.failure .roll-verdict {
   animation:
     verdict 380ms cubic-bezier(0.2, 1.3, 0.4, 1) both,
     shake 320ms 260ms ease-in-out;
@@ -1611,7 +1632,7 @@ button:disabled {
   opacity: 0;
 }
 
-.roll-result.phase-3 .roll-after {
+.roll-result.judged .roll-after {
   animation: fade-up 240ms 200ms ease-out both;
 }
 

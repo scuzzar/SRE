@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { testHaptic, vibrationKind } from './haptics';
 import { ExternalIcon } from './icons';
 
 const repository = 'https://github.com/scuzzar/SRE';
@@ -19,6 +21,7 @@ export function AboutScreen({ persistent }: { persistent: boolean }) {
               : 'Hier lässt sich nichts dauerhaft speichern: Der Spielstand geht beim Schließen verloren.'}
           </p>
         </div>
+        <Vibration />
         <ul className="links" aria-label="Projekt">
           <li>
             <a href={repository} target="_blank" rel="noreferrer">
@@ -68,6 +71,41 @@ export function AboutScreen({ persistent }: { persistent: boolean }) {
         </div>
         <p className="muted">Ein inoffizielles Fan-Projekt, kostenlos angeboten.</p>
       </section>
+    </div>
+  );
+}
+
+const kinds = {
+  api: 'Dieser Browser kann vibrieren (Vibrations-API).',
+  switch: 'Dieser Browser kennt keine Vibrations-API; die App nutzt den kurzen Ruck des iPhones (ab iOS 18).',
+  none: 'Dieser Browser kann nicht vibrieren.',
+} as const;
+
+/** Zum Ausprobieren, ob Würfel und Karte hier vibrieren können. Das Ergebnis ist reine Anzeige. */
+function Vibration() {
+  const [answer, setAnswer] = useState<string | undefined>(undefined);
+  return (
+    <div>
+      <h2>Vibration</h2>
+      <p>{kinds[vibrationKind()]}</p>
+      <button
+        type="button"
+        className="ghost"
+        onClick={() =>
+          setAnswer(
+            testHaptic()
+              ? 'Gesendet. Spürst du nichts, ist die Vibration im System aus, unter Android etwa in den Einstellungen unter „Töne und Vibration“ bzw. „Vibration und Haptik“, oder ein Energiesparmodus hält sie an.'
+              : 'Der Browser hat die Vibration abgelehnt.',
+          )
+        }
+      >
+        Vibration testen
+      </button>
+      {answer && (
+        <p className="muted" role="status" style={{ marginTop: 8 }}>
+          {answer}
+        </p>
+      )}
     </div>
   );
 }
