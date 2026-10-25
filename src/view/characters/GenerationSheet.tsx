@@ -267,11 +267,24 @@ function Actions({ action, disabled }: { action: GenerationAction; disabled: boo
       );
     case 'skill':
       return (
-        <div className="choice-grid" role="group" aria-label="Fertigkeitstabelle">
+        <div className="skill-tables" role="group" aria-label="Fertigkeitstabelle">
           {action.options.map((o) => (
-            <button key={o.id} type="button" disabled={disabled || !o.available} onClick={() => game.chooseSkillTable(o.id)}>
+            <button
+              key={o.id}
+              type="button"
+              disabled={disabled || !o.available}
+              aria-label={`${o.name}: ${o.rows.map((r, i) => `${i + 1} ${r}`).join(', ')}`}
+              onClick={() => game.chooseSkillTable(o.id)}
+            >
               <strong>{o.name}</strong>
-              <span className="small-label">1W6</span>
+              <ol lang="en">
+                {o.rows.map((row, i) => (
+                  <li key={i}>
+                    <span className="mono">{i + 1}</span>
+                    {row}
+                  </li>
+                ))}
+              </ol>
             </button>
           ))}
         </div>
