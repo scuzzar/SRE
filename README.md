@@ -13,6 +13,8 @@ Eine App für **Solo-Rollenspiel mit Classic Traveller**. Sie soll zwei Dinge in
 
 Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Desktop-Version ist später denkbar, hat aber keine Priorität.
 
+**Kampagnen**: Die oberste Ebene ist die Kampagne; Charaktere und Log gehören immer zu genau einer. Oben in der Kopfzeile steht der Name der offenen Kampagne; ein Tippen darauf öffnet die **Kampagnenwahl**: Kampagne wechseln, umbenennen, neu anlegen (mit Namen) und löschen. Dort lässt sich jede Kampagne auch **exportieren** (kommt als Download, eine JSON-Datei) und eine solche Datei wieder **importieren**; der Import legt immer eine neue Kampagne an.
+
 **Hauptscreen (Orakel)**, klar und ohne Ablenkung. Aufbau wie ein Chat: oben der **Log**, der nach oben wächst (das Neueste steht unten, direkt über den Knöpfen). Unten, im Daumenbereich, sitzen fest **Orakel, „Karte ziehen“ und „2W6“**.
 - **Optionale Frage**: Ein Fragefeld über den Knöpfen gilt für das Orakel **und** für die Karte. Die Frage wird mit der Antwort bzw. der Kartenauswahl im Log gespeichert.
 - **Ja/Nein-Orakel** mit drei Stufen wie beim GMA: Hoch (75 %), Mittel (50 %), Gering (25 %). Die Stufe wird ganz unten eingestellt und bleibt stehen; sie gilt auch als Schwierigkeit für Proben (6+ / 8+ / 10+).
@@ -24,10 +26,10 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
   - Die Karte wird so inszeniert wie der Würfelwurf: Sie fliegt mit dem Rücken nach oben (Hexraster wie auf einer Sektorkarte, in der Mitte das Emblem der App) aus dem Daumenbereich herein, schwebt kurz mit rotem Glimmen, dreht sich mit Schwung um, ein Lichtreflex läuft über die Vorderseite, und die Felder erscheinen der Reihe nach. „Neu ziehen“ spielt das mit einer neuen Karte. Übernehmen lässt sie nach unten sinken, Verwerfen wirft sie zur Seite weg.
 - **Knopf „2W6“**: ein einfacher Würfelwurf durch die App. Zwei Würfel werden im Vordergrund geworfen, angelehnt an Baldur's Gate 3: dunkle Würfel mit goldenen Augen, die aufschlagen, liegen bleiben und aufleuchten; dann die Summe. Ein Tippen überspringt.
 - **Animation und Vibration**: Würfeln und Karte sind kurz animiert (unter zwei Sekunden) und vibrieren dazu (Android in Chrome, Samsung Internet oder Edge über die Vibrations-API, iPhone ab iOS 18 über einen kurzen Ruck; Firefox lässt Webseiten nicht vibrieren, das sagt die App unter „Über“). Wer im System „Bewegung reduzieren“ eingestellt hat, sieht gleich das Ergebnis.
-- **Log**: Orakelantworten, Würfe und die ausgewählten Karteneinträge landen untereinander im Log, das neueste unten.
+- **Log**: Orakelantworten, Würfe und die ausgewählten Karteneinträge landen untereinander im Log, das neueste unten. **Lange drücken** auf einen Eintrag bietet an, ihn zu löschen.
 
 **Zweiter Screen: Charaktere**
-- Karten für die **Spielercharaktere** mit UPP, Fertigkeiten, Ausrüstung, Credits und Notiz. Charaktere legt man in der App an und bearbeitet sie; Fertigkeiten kommen aus einer festen Liste. Wer schon im Log vorkommt, wird nicht gelöscht, sondern ausgeblendet.
+- Karten für die **Spielercharaktere** mit UPP, Fertigkeiten, Ausrüstung, Credits und Notiz. Charaktere legt man in der App an und bearbeitet sie; Fertigkeiten kommen aus einer festen Liste. Im Kopf jeder Charakterkarte sitzt ein Stift zum **Bearbeiten**; dort lässt sich der Charakter auch löschen. Wer schon im Log vorkommt, wird nicht gelöscht, sondern ausgeblendet.
 - **Proben direkt im Charakter-Screen** (kein eigenes Fenster):
   - Auf der Charakterkarte die **Fertigkeit** antippen (oder „Ohne“ für −3); die Fertigkeiten stehen immer sichtbar unter dem UPP, mit einem Kürzel aus drei Zeichen (Pil-2), damit sie in eine Zeile passen; ein Tippen startet die Probe direkt, ohne die Karte aufzuklappen. Erst ein Tippen auf den Namen klappt die Details auf: volle Namen, Ausrüstung, Credits und Notiz. Herkunft, Terms und Alter stehen in der Zeile des Namens.
   - **Attribute** sind standardmäßig nicht dabei und lassen sich **erst nach der Fertigkeit** dazuwählen; ein Tippen auf ein Attribut im UPP schaltet es an oder aus; der DM ergibt sich aus dem Wert (9+ → +1, 6–8 → ±0, 5− → −1). Sobald die Fertigkeit gewählt ist, zeigt jedes Attribut an, ob es überhaupt +1 oder −1 brächte; neutrale Werte sind nicht wählbar.
@@ -36,7 +38,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 
 **UI-Entwurf:** Der klickbare Entwurf liegt in [docs/ui-entwurf](docs/ui-entwurf/).
 
-**Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf, Welten- und Charaktererschaffung, Sektorkarte, Schiffe, NSC-Karten, Chaosfaktor, Szenen, mehrere Kampagnen, Feinjustierung ±1, eigene Fertigkeiten, Hausregeln in der App einstellen.
+**Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf, Welten- und Charaktererschaffung, Sektorkarte, Schiffe, NSC-Karten, Chaosfaktor, Szenen, Feinjustierung ±1, eigene Fertigkeiten, Hausregeln in der App einstellen.
 
 ---
 

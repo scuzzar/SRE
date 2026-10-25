@@ -9,6 +9,10 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > beschriebenen Weg: erst hier, abgestimmt, dann im Code. Seitdem freigegeben: `Entry.retired`
 > (24. Oktober 2026, siehe *Einträge austauschen*); ausgeblendete Felder und Bereiche (ebenso);
 > Spalten und Paare (24. Oktober 2026, siehe *Karte ziehen*, *Paare aus Mythic*).
+> **In Abstimmung** (25. Oktober 2026): mehrere Kampagnen mit Namen, Export und Import als Datei,
+> Logeinträge löschen (siehe *Mehrere Kampagnen*, *Kampagnendatei*, *Der Log verweist, er kopiert
+> nicht*). Das Bild ändert sich dadurch nicht: `Campaign` war schon die oberste Ebene und hat schon
+> einen Namen.
 >
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen sowie die Themen-Tafeln NSC, NSC-Aktionen,
@@ -37,7 +41,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
 | Deutsch | Code | Was |
 |---|---|---|
-| Kampagne | `Campaign` | Alles, was zu einem Spiel gehört |
+| Kampagne | `Campaign` | Alles, was zu einem Spiel gehört; die oberste Ebene |
+| Offene Kampagne | (Zustand des Controllers) | Die Kampagne, in der man gerade spielt |
+| Kampagnendatei | `CampaignFile` | Eine Kampagne als JSON-Datei, zum Sichern und Weitergeben |
 | Charakter | `Character` | Ein Spielercharakter mit seiner Charakterkarte |
 | UPP | `Upp` | Die sechs Attributwerte |
 | Attribut | `Characteristic` | STR, DEX, END, INT, EDU, SOC |
@@ -73,10 +79,22 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   `TaskResult`). Je Kampagne gibt es höchstens eine offene Karte und höchstens eine Probe. Pfeile
   führen nur aus `draft` heraus, nie hinein: Der gespeicherte Stand weiß nichts von seinen
   Entwürfen. Entwürfe werden nie gespeichert; beendet das Handy die App, sind sie weg.
-- **Eine Kampagne.** In Version 1 gibt es genau eine Kampagne. Alles, was gespeichert wird, hängt an
-  ihr.
+- **Mehrere Kampagnen.** Die Kampagne ist die oberste Ebene: Alles, was gespeichert wird, hängt an
+  genau einer Kampagne, und Kampagnen wissen nichts voneinander. Es gibt immer mindestens eine;
+  die letzte lässt sich nicht löschen. Jede hat einen Namen, der nicht leer ist und sich ändern
+  lässt; zwei Kampagnen dürfen gleich heißen. Gespielt wird immer in genau einer, der **offenen
+  Kampagne**. Welche das ist, merkt sich das Gerät über einen Neustart hinweg; zum Spielstand gehört
+  das nicht. Wechselt man die Kampagne, sind offene Karte und Probe in Vorbereitung weg. Eine neue
+  Kampagne beginnt leer: ohne Charaktere, ohne Log, mit der Stufe Mittel. Eine Kampagne löschen
+  löscht alles, was an ihr hängt, endgültig.
+- **Kampagnendatei.** Eine Kampagne lässt sich als Datei exportieren und wieder importieren. Die
+  Datei enthält alles, was an der Kampagne hängt (Name, Stufe, Charaktere mit ausgeblendeten, Log),
+  aber keine Entwürfe und keine Referenzdaten: Verweise bleiben Ids. Beim Import wird die Datei
+  gegen die Regeln dieses Modells geprüft, auch jeder Verweis in die Referenzdaten und auf die
+  eigenen Charaktere; ist etwas falsch, wird nichts importiert. Ein Import legt immer eine neue
+  Kampagne an, auch wenn es dieselbe schon gibt, und überschreibt nie eine bestehende.
 - **Nicht in Version 1.** Szenen (der Log läuft ohne Gliederung durch; Szenen kommen mit Mythics
-  Szenenstruktur), mehrere Kampagnen, die Feinjustierung des Zielwerts um ±1, eigene Fertigkeiten und
+  Szenenstruktur), die Feinjustierung des Zielwerts um ±1, eigene Fertigkeiten und
   Hausregeln, die man in der App einstellt.
 - **Eine Auswahl für Orakel und Proben.** Die Kampagne hat immer genau eine gewählte Stufe (`odds`).
   Die drei Stufen sind Referenzdaten: Hoch (75 %, 6+), Mittel (50 %, 8+), Gering (25 %, 10+), in
@@ -86,10 +104,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei einer Probe DM und Zielwert (siehe
   *Orakel* und *Probe*). Alles andere ist ein
   Verweis: auf die Stufe, den Charakter, die Fertigkeitsstufe, die Attribute, auf Feld und Eintrag
-  der Karte. Logeinträge werden nur angehängt, nie geändert oder gelöscht. Die Reihenfolge ist die
+  der Karte. Logeinträge werden angehängt und nie geändert. Ein einzelner Eintrag lässt sich löschen,
+  dann ist er endgültig weg; die übrigen behalten ihre Reihenfolge. Die Reihenfolge ist die
   Reihenfolge der Ereignisse; dass das Neueste unten steht, ist Sache der Anzeige.
 - **Worauf der Log verweist, wird nie gelöscht.** Ein Charakter, der im Log vorkommt, bleibt in der
-  Kampagne, ebenso seine Fertigkeitsstufen; Stufen, Felder und Einträge der Referenzdaten haben eine
+  Kampagne, solange ein Eintrag auf ihn verweist, ebenso seine Fertigkeitsstufen; Stufen, Felder und Einträge der Referenzdaten haben eine
   feste Id und bleiben in den Daten. Ändert sich etwas daran (ein Charakter heißt anders, lernt
   Pilot-3), zeigen auch alte Logeinträge den neuen Stand. Das Ergebnis einer Orakelfrage oder Probe
   ändert sich dadurch nicht, weil Chance bzw. DM und Zielwert festgehalten sind.
@@ -149,7 +168,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   verweist, wird wirklich gelöscht. Verweist der Log darauf, wird sie stattdessen ausgeblendet
   (`retired`): Sie verschwindet aus dem Charakter-Screen und lässt sich nicht mehr für Proben wählen,
   bleibt aber gespeichert, und der Log zeigt sie weiter. Ein ausgeblendeter Charakter lässt sich
-  wieder einblenden.
+  wieder einblenden. Sind die Logeinträge gelöscht, die auf ihn verwiesen, lässt er sich auch
+  löschen.
 - **Referenzdaten sind Daten.** Stufen, Hausregeln, Fertigkeiten, Bereiche, Felder und Einträge
   stehen als Dateien unter `src/data/` und werden beim Start geprüft. Man ändert sie nur dort, nicht
   in der App. Pfeile führen nur aus Spielstand
@@ -179,8 +199,9 @@ Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECT
 Diagramm mit diesen Ausnahmen:
 
 - **`Card → Campaign : in` und `Task → Campaign : in`** sind im Code kein Feld. Der Controller hält
-  höchstens eine offene Karte und höchstens eine Probe neben der einen Kampagne; damit ist die
-  Multiplizität erfüllt. Kommen mehrere Kampagnen, braucht es das Feld.
-- **Beispielcharaktere.** Eine neue Kampagne beginnt mit Kira Vant und Jonas Reyl aus der README
-  (`src/data/examples.json`). Das Modell sagt dazu nichts; die beiden lassen sich löschen, solange
-  der Log nicht auf sie verweist.
+  höchstens eine offene Karte und höchstens eine Probe, beide immer zur offenen Kampagne; beim
+  Wechsel der Kampagne verfallen sie. Damit ist die Multiplizität erfüllt.
+- **Beispielcharaktere.** Die allererste Kampagne auf einem Gerät beginnt mit Kira Vant und Jonas
+  Reyl aus der README (`src/data/examples.json`), damit man gleich etwas ausprobieren kann. Das
+  Modell sagt dazu nichts; die beiden lassen sich löschen, solange der Log nicht auf sie verweist.
+  Jede weitere Kampagne beginnt leer.
