@@ -3,12 +3,12 @@ import type { CardSectionView, CardView } from '../../controller';
 import { pairText, quoted } from '../format';
 import { useGame } from '../game-context';
 import { animated, haptic } from '../haptics';
-import { CheckIcon, CloseIcon, SenseIcon } from '../icons';
+import { CheckIcon, CloseIcon, Emblem, SenseIcon } from '../icons';
 
 type SlotView = CardSectionView['slots'][number];
 
 /** So lange fliegt die Karte herein und dreht sich um; passt zu `card-draw` in styles.css. */
-const DRAW_MS = 1000;
+const DRAW_MS = 750;
 
 /** So lange fliegt die Karte hinaus, bevor sie verworfen oder übernommen ist; passt zu `sheet-toss` und `sheet-sink`. */
 const LEAVE_MS = 260;
@@ -89,7 +89,9 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
               {themes.length > 0 && <Themes themes={themes} />}
             </div>
             <div className="card-back" aria-hidden="true">
-              <span className="card-back-mark" />
+              <span className="card-back-frame" />
+              <Emblem className="card-back-mark" />
+              <span className="card-back-title">Inspiration</span>
             </div>
           </div>
         </div>

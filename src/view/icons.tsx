@@ -147,3 +147,46 @@ export function ExternalIcon() {
     </svg>
   );
 }
+
+/** Ecken eines Sechsecks mit Spitze oben, als `points` für `<polygon>`. */
+function hexPoints(r: number): string {
+  return [-90, -30, 30, 90, 150, 210]
+    .map((deg) => `${(60 + r * Math.cos((deg * Math.PI) / 180)).toFixed(2)},${(60 + r * Math.sin((deg * Math.PI) / 180)).toFixed(2)}`)
+    .join(' ');
+}
+
+/**
+ * Das Emblem der App: das Zeichen aus public/icon.svg (roter Balken, Würfel mit zwei Augen) in einem
+ * Sechseck wie auf einer Traveller-Sektorkarte, umkreist von einer Kursanzeige und einer Umlaufbahn.
+ * Steht auf dem Rücken der Inspirationskarte.
+ */
+export function Emblem({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 120 120" fill="none" aria-hidden="true">
+      <polygon points={hexPoints(54)} fill="#121212" stroke="#c62f35" strokeWidth="2.5" strokeLinejoin="round" />
+      <polygon points={hexPoints(47)} stroke="#c62f35" strokeOpacity="0.35" />
+      <circle cx="60" cy="60" r="35" stroke="#eceae4" strokeOpacity="0.18" />
+      {Array.from({ length: 24 }, (_, i) => (
+        <line
+          key={i}
+          x1="60"
+          y1={i % 6 === 0 ? 21 : 23}
+          x2="60"
+          y2="27"
+          stroke="#eceae4"
+          strokeOpacity={i % 6 === 0 ? 0.7 : 0.3}
+          strokeWidth={i % 6 === 0 ? 1.6 : 1}
+          transform={`rotate(${i * 15} 60 60)`}
+        />
+      ))}
+      <g transform="rotate(-24 60 60)">
+        <ellipse cx="60" cy="60" rx="44" ry="13" stroke="#c62f35" strokeOpacity="0.85" strokeWidth="1.4" />
+        <circle cx="18.7" cy="55.2" r="3" fill="#eceae4" />
+      </g>
+      <rect x="39" y="40" width="7" height="40" fill="#c62f35" />
+      <rect x="51" y="45" width="30" height="30" rx="5" fill="#121212" stroke="#eceae4" strokeWidth="3.2" />
+      <circle cx="58.5" cy="52.5" r="2.7" fill="#eceae4" />
+      <circle cx="73.5" cy="67.5" r="2.7" fill="#eceae4" />
+    </svg>
+  );
+}
