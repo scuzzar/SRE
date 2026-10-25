@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+<!-- Favicon: das Emblem vereinfacht, damit es klein lesbar bleibt (Sechseck, Balken, Würfel). -->
+<rect width="120" height="120" rx="26" fill="#111111"/>
+<polygon points="60,8 105.03,34 105.03,86 60,112 14.97,86 14.97,34" fill="#121212" stroke="#c62f35" stroke-width="6" stroke-linejoin="round"/>
+<rect x="34" y="37" width="10" height="46" fill="#c62f35"/>
+<rect x="50" y="43" width="35" height="35" rx="6" fill="#121212" stroke="#eceae4" stroke-width="5.5"/>
+<circle cx="59" cy="52" r="4" fill="#eceae4"/>
+<circle cx="76" cy="69" r="4" fill="#eceae4"/>
+</svg>
