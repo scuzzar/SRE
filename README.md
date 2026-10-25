@@ -23,7 +23,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
   - Außerdem: Karte verwerfen oder neu ziehen.
   - Die Karte wird so inszeniert wie der Würfelwurf: Sie fliegt mit dem Rücken nach oben aus dem Daumenbereich herein, schwebt kurz mit rotem Glimmen, dreht sich mit Schwung um, ein Lichtreflex läuft über die Vorderseite, und die Felder erscheinen der Reihe nach. „Neu ziehen“ spielt das mit einer neuen Karte. Übernehmen lässt sie nach unten sinken, Verwerfen wirft sie zur Seite weg.
 - **Knopf „2W6“**: ein einfacher Würfelwurf durch die App. Zwei Würfel werden im Vordergrund geworfen, angelehnt an Baldur's Gate 3: dunkle Würfel mit goldenen Augen, die aufschlagen, liegen bleiben und aufleuchten; dann die Summe. Ein Tippen überspringt.
-- **Animation und Vibration**: Würfeln und Karte sind kurz animiert (unter zwei Sekunden) und vibrieren dazu (Android über die Vibrations-API, iPhone ab iOS 18 über einen kurzen Ruck). Wer im System „Bewegung reduzieren“ eingestellt hat, sieht gleich das Ergebnis.
+- **Animation und Vibration**: Würfeln und Karte sind kurz animiert (unter zwei Sekunden) und vibrieren dazu (Android in Chrome, Samsung Internet oder Edge über die Vibrations-API, iPhone ab iOS 18 über einen kurzen Ruck; Firefox lässt Webseiten nicht vibrieren, das sagt die App unter „Über“). Wer im System „Bewegung reduzieren“ eingestellt hat, sieht gleich das Ergebnis.
 - **Log**: Orakelantworten, Würfe und die ausgewählten Karteneinträge landen untereinander im Log, das neueste unten.
 
 **Zweiter Screen: Charaktere**
