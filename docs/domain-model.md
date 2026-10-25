@@ -11,8 +11,8 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Spalten und Paare (24. Oktober 2026, siehe *Karte ziehen*, *Paare aus Mythic*).
 > **In Abstimmung** (25. Oktober 2026): mehrere Kampagnen mit Namen, Export und Import als Datei,
 > Logeinträge löschen (siehe *Mehrere Kampagnen*, *Kampagnendatei*, *Der Log verweist, er kopiert
-> nicht*). Das Bild ändert sich dadurch nicht: `Campaign` war schon die oberste Ebene und hat schon
-> einen Namen.
+> nicht*), dafür ändert sich das Bild nicht: `Campaign` war schon die oberste Ebene und hat schon
+> einen Namen. Neu im Bild: `Character.dead` (siehe *Tot*).
 >
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen sowie die Themen-Tafeln NSC, NSC-Aktionen,
@@ -45,6 +45,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Offene Kampagne | (Zustand des Controllers) | Die Kampagne, in der man gerade spielt |
 | Kampagnendatei | `CampaignFile` | Eine Kampagne als JSON-Datei, zum Sichern und Weitergeben |
 | Charakter | `Character` | Ein Spielercharakter mit seiner Charakterkarte |
+| Tot | `Character.dead` | Der Charakter ist in der Geschichte gestorben; er bleibt in der Kampagne |
 | UPP | `Upp` | Die sechs Attributwerte |
 | Attribut | `Characteristic` | STR, DEX, END, INT, EDU, SOC |
 | Fertigkeit | `Skill` | Eine Fertigkeit aus der Liste, z. B. Pilot |
@@ -170,6 +171,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   bleibt aber gespeichert, und der Log zeigt sie weiter. Ein ausgeblendeter Charakter lässt sich
   wieder einblenden. Sind die Logeinträge gelöscht, die auf ihn verwiesen, lässt er sich auch
   löschen.
+- **Tot.** Im Editor lässt sich ein Charakter als tot markieren (`dead`) und, falls das ein Irrtum
+  war, wieder zurück. Ein toter Charakter bleibt in der Kampagne und im Charakter-Screen, aber
+  getrennt von den Lebenden unter „Verstorben“, nur mit Namen und Herkunft. Für Proben ist er nicht
+  wählbar; war gerade eine Probe für ihn vorbereitet, endet sie. Tot und ausgeblendet sind
+  unabhängig: Auch einen toten Charakter kann man löschen bzw. ausblenden, nach denselben Regeln.
+  Der Log zeigt ihn weiter wie bisher; alte Proben ändern sich dadurch nicht, weil DM und Zielwert
+  festgehalten sind. Die Kampagnendatei enthält auch die Toten.
 - **Referenzdaten sind Daten.** Stufen, Hausregeln, Fertigkeiten, Bereiche, Felder und Einträge
   stehen als Dateien unter `src/data/` und werden beim Start geprüft. Man ändert sie nur dort, nicht
   in der App. Pfeile führen nur aus Spielstand
@@ -197,6 +205,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
+
+- **`Character.dead`** gibt es im Code noch nicht (in Abstimmung, siehe *Tot*).
 
 - **`Card → Campaign : in` und `Task → Campaign : in`** sind im Code kein Feld. Der Controller hält
   höchstens eine offene Karte und höchstens eine Probe, beide immer zur offenen Kampagne; beim
