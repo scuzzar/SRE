@@ -19,9 +19,14 @@ export function CharactersScreen({ view }: { view: Snapshot }) {
         {view.characters.map((character) => (
           <CharacterCard key={character.id} character={character} />
         ))}
-        <button type="button" className="add-character" onClick={() => game.newCharacter()}>
-          + Neuer Charakter
-        </button>
+        <div className="add-characters">
+          <button type="button" className="add-character" onClick={() => game.newCharacter()}>
+            + Neuer Charakter
+          </button>
+          <button type="button" className="add-character" onClick={() => game.openGeneration()}>
+            {view.generationRunning ? 'Erschaffung fortsetzen' : '+ Nach Regeln erschaffen'}
+          </button>
+        </div>
         {view.dead.length > 0 && (
           <div className="fallen">
             <h3 className="section-title" style={{ fontSize: 11 }}>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { EditorView } from '../../controller';
-import type { Skill, Upp } from '../../model';
+import type { EditorView, ItemChoice } from '../../controller';
+import type { ItemKind, Skill, Upp } from '../../model';
 import { characteristicLabel, hex } from '../format';
 import { useGame } from '../game-context';
 import { CloseIcon } from '../icons';
@@ -14,17 +14,30 @@ const uppFields = [
   ['soc', 'SOC'],
 ] as const;
 
+const kindNames: Record<ItemKind, string> = {
+  weapon: 'Waffen',
+  ammunition: 'Munition',
+  armor: 'Rüstungen',
+  equipment: 'Ausrüstung',
+  vehicle: 'Fahrzeuge',
+  ship: 'Schiffe und Small Craft',
+  passage: 'Passagen',
+  membership: 'Mitgliedschaften',
+};
+
 /** Charakter anlegen oder bearbeiten. Die Eingaben während des Tippens hält die View; prüfen und speichern tut der Controller. */
-export function CharacterEditor({ editor, skills }: { editor: EditorView; skills: readonly Skill[] }) {
+export function CharacterEditor({ editor, skills, items }: { editor: EditorView; skills: readonly Skill[]; items: readonly ItemChoice[] }) {
   const game = useGame();
   const [form, setForm] = useState(() => ({
     ...editor.input,
     credits: String(editor.input.credits),
     skills: editor.input.skills.map((s) => ({ of: s.of, level: String(s.level) })),
+    possessions: (editor.input.possessions ?? []).map((p) => ({ of: p.of, count: String(p.count) })),
   }));
   const [confirmRemove, setConfirmRemove] = useState(false);
   const isNew = editor.id === undefined;
   const unused = skills.filter((s) => !form.skills.some((f) => f.of === s.id));
+  const unowned = items.filter((i) => !form.possessions.some((p) => p.of === i.id));
 
   const setUpp = (key: keyof Upp, value: number) => setForm({ ...form, upp: { ...form.upp, [key]: value } });
 
@@ -46,6 +59,7 @@ export function CharacterEditor({ editor, skills }: { editor: EditorView; skills
               ...form,
               credits: Number(form.credits === '' ? 0 : form.credits),
               skills: form.skills.map((s) => ({ of: s.of, level: Number(s.level) })),
+              possessions: form.possessions.map((p) => ({ of: p.of, count: Number(p.count) })),
             });
           }}
         >
@@ -119,6 +133,53 @@ export function CharacterEditor({ editor, skills }: { editor: EditorView; skills
                 <option key={s.id} value={s.id}>
                   {s.name}
                 </option>
+              ))}
+            </select>
+          </fieldset>
+          <fieldset>
+            <legend>Besitz</legend>
+            {form.possessions.map((possession, i) => {
+              const item = items.find((it) => it.id === possession.of);
+              const name = item?.label ?? possession.of;
+              return (
+                <div key={possession.of} className="skill-row">
+                  <span>{name}</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    aria-label={`Anzahl ${name}`}
+                    disabled={item?.once}
+                    value={possession.count}
+                    onChange={(e) => setForm({ ...form, possessions: form.possessions.map((p, j) => (j === i ? { ...p, count: e.target.value } : p)) })}
+                  />
+                  <button
+                    type="button"
+                    className="ghost square"
+                    aria-label={`${name} entfernen`}
+                    onClick={() => setForm({ ...form, possessions: form.possessions.filter((_, j) => j !== i) })}
+                  >
+                    <CloseIcon />
+                  </button>
+                </div>
+              );
+            })}
+            <select
+              aria-label="Gegenstand hinzufügen"
+              value=""
+              onChange={(e) => e.target.value && setForm({ ...form, possessions: [...form.possessions, { of: e.target.value, count: '1' }] })}
+            >
+              <option value="">+ Gegenstand hinzufügen</option>
+              {(Object.keys(kindNames) as ItemKind[]).map((kind) => (
+                <optgroup key={kind} label={kindNames[kind]}>
+                  {unowned
+                    .filter((i) => i.kind === kind)
+                    .map((i) => (
+                      <option key={i.id} value={i.id}>
+                        {i.label}
+                      </option>
+                    ))}
+                </optgroup>
               ))}
             </select>
           </fieldset>

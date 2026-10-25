@@ -223,4 +223,51 @@ describe('Charaktererschaffung', () => {
     const broken = toCampaignFile(campaign).replace('"other.service.1"', '"other.service.2"');
     expect(() => fromCampaignFile(broken, 'k9')).toThrow(/Zeile passt nicht/);
   });
+
+  it('spielt viele zufällige Laufbahnen bis zum Ende, ohne hängen zu bleiben', () => {
+    let seed = 42;
+    const random = {
+      int(min: number, max: number) {
+        seed = (seed * 1103515245 + 12345) % 2 ** 31;
+        return min + (Math.floor(seed / 65536) % (max - min + 1));
+      },
+    };
+    const pick = <T,>(xs: readonly T[]): T => xs[random.int(0, xs.length - 1)]!;
+    const ends = { name: 0, dead: 0 };
+    let longest = 0;
+    for (let n = 0; n < 500; n++) {
+      let g = startGeneration();
+      for (let step = 0; step < 300; step++) {
+        const state = stateOf(g);
+        if (state.step === 'name' || state.step === 'dead') {
+          ends[state.step]++;
+          longest = Math.max(longest, state.terms);
+          break;
+        }
+        if (step === 299) throw new Error(`hängt in ${state.step}`);
+        switch (state.step) {
+          case 'service':
+            g = enlist(g, pick(serviceOptions(state)).service.id, random);
+            break;
+          case 'skill':
+            g = rollSkill(g, pick(tableOptions(state).filter((o) => o.available)).table.id, random);
+            break;
+          case 'cascade':
+            g = chooseCascade(g, pick(cascadeOptions(g)).skill);
+            break;
+          case 'reenlist':
+            g = reenlist(g, random.int(1, 6) > 1, random);
+            break;
+          case 'muster':
+            g = muster(g, state.cashRolls < 3 && random.int(0, 1) === 0 ? 'cash' : 'benefit', random);
+            break;
+          default:
+            g = rollNext(g, random);
+        }
+      }
+    }
+    expect(ends.name + ends.dead).toBe(500);
+    expect(ends.dead).toBeGreaterThan(0);
+    expect(longest).toBeGreaterThanOrEqual(7);
+  });
 });

@@ -3,6 +3,7 @@ import { AboutScreen } from './AboutScreen';
 import { CampaignSheet } from './CampaignSheet';
 import { CharacterEditor } from './characters/CharacterEditor';
 import { CharactersScreen } from './characters/CharactersScreen';
+import { GenerationSheet } from './characters/GenerationSheet';
 import { FullscreenButton } from './FullscreenButton';
 import { ResultDialog } from './characters/ResultDialog';
 import { useGame, useSnapshot } from './game-context';
@@ -63,7 +64,8 @@ export function App() {
       </nav>
 
       {view.card && <CardSheet card={view.card} onConfirmed={() => setQuestion('')} />}
-      {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} />}
+      {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
+      {view.generation && <GenerationSheet generation={view.generation} />}
       {view.result && <ResultDialog result={view.result} />}
       {view.campaignSheet && <CampaignSheet key={view.campaign.id} sheet={view.campaignSheet} campaigns={view.campaigns} open={view.campaign} />}
     </div>
