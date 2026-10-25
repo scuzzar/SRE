@@ -44,7 +44,8 @@ test('Charaktererschaffung: Attribute einzeln, Laufbahn, Terms, Abmusterung, Nam
   await expect(dialog).toBeHidden();
 
   const mara = page.getByRole('article', { name: 'Mara Quell' });
-  await expect(mara).toContainText(/Ex-Other · \d+ Terms? · \d+ Jahre/);
+  // Bei einer 2 misslingt auch die Musterung für Other; dann wird man eingezogen.
+  await expect(mara).toContainText(/Ex-\w+ · (.+ · )?\d+ Terms? · \d+ Jahre/);
   await mara.getByRole('button', { name: /Mara Quell/ }).click();
   await mara.getByText('Lebenslauf').click();
   await expect(mara.getByRole('region', { name: 'Lebenslauf' })).toContainText('Musterung Other');
@@ -78,4 +79,36 @@ test.describe('mit Animation', () => {
     await expect(str).toHaveText(/^[2-9A-C]$/);
     await expect(dialog.getByRole('button', { name: 'DEX würfeln' })).toBeEnabled();
   });
+
+  test('Würfe mit Zielwert laufen groß als Popup; Tippen springt zum Urteil, noch ein Tippen schließt', async ({ page }) => {
+    await openCharacters(page);
+    await page.getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Charaktererschaffung' });
+    for (const c of ['STR', 'DEX', 'END', 'INT', 'EDU', 'SOC']) {
+      await dialog.getByRole('button', { name: `${c} würfeln` }).click();
+      // Irgendwo tippen beendet die Animation sofort.
+      await page.mouse.click(200, 150);
+      await expect(dialog.getByRole('button', { name: /würfeln|^Navy/ }).first()).toBeEnabled();
+    }
+    await dialog.getByRole('button', { name: /^Other/ }).click();
+    const popup = page.getByRole('alertdialog');
+    await expect(popup).toContainText('Musterung Other');
+    await expect(popup).toContainText('Zielwert');
+    await expect(dialog.locator('.generation-prompt')).toContainText('Laufbahn wählen');
+    await popup.click();
+    await expect(popup.getByRole('heading')).toHaveText(/ERFOLG|FEHLSCHLAG/);
+    await popup.click();
+    await expect(popup).toBeHidden();
+    await expect(dialog.locator('.generation-prompt')).not.toContainText('Laufbahn wählen');
+  });
+});
+
+test('Inspirationskarte: Tippen, solange sie hereinkommt, zeigt sie sofort ganz und wählt nichts aus', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/');
+  await page.getByRole('button', { name: /Karte ziehen/ }).click();
+  const sheet = page.getByRole('dialog', { name: 'Inspirationskarte' });
+  await sheet.locator('.tile').first().click({ force: true });
+  await expect(sheet).toContainText('Nichts ausgewählt');
+  await expect(page.locator('.overlay.skip-animation')).toHaveCount(1);
 });

@@ -1,4 +1,9 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
+
+/** Solange die Karte hereinkommt, beendet ein Tippen nur die Animation; das Tippen auf die Überschrift tut sonst nichts. */
+async function revealed(card: Locator) {
+  await card.getByRole('heading', { name: 'Inspirationskarte' }).click();
+}
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -38,6 +43,7 @@ test('Inspirationskarte: auswählen, bestätigen, nur die Auswahl kommt in den L
   await page.getByRole('button', { name: 'Karte ziehen' }).click();
 
   const card = page.getByRole('dialog', { name: 'Inspirationskarte' });
+  await revealed(card);
   await expect(card).toContainText('„Was steckt hinter dem Notsignal?“');
   await expect(card.getByRole('button', { name: /in den Log übernehmen/ })).toBeDisabled();
   await expect(page.locator('.entry')).toHaveCount(0);
@@ -71,8 +77,11 @@ test('Inspirationskarte: verwerfen schreibt nichts in den Log, neu ziehen behäl
   await page.getByPlaceholder(/Frage/).fill('Und jetzt?');
   await page.getByRole('button', { name: 'Karte ziehen' }).click();
   const card = page.getByRole('dialog', { name: 'Inspirationskarte' });
+  await revealed(card);
   await card.locator('.tile').first().click();
+  await expect(card).toContainText('1 ausgewählt');
   await card.getByRole('button', { name: 'Neu ziehen' }).click();
+  await revealed(card);
   await expect(card).toContainText('Nichts ausgewählt');
   await expect(card).toContainText('„Und jetzt?“');
   await card.getByRole('button', { name: 'Karte verwerfen' }).click();

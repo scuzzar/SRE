@@ -24,6 +24,7 @@ import {
   type DmSource,
   type Effect,
   type Gain,
+  type RollKind,
   type Generation,
   type GenerationStep,
   type Item,
@@ -33,6 +34,7 @@ import {
 /** Eine Zeile im Lebenslauf: ein Wurf mit dem, was er bewirkt hat. */
 export interface CareerLine {
   readonly index: number;
+  readonly kind: RollKind;
   /** 0 vor dem ersten Term. */
   readonly term: number;
   readonly label: string;
@@ -217,6 +219,7 @@ export function careerLines(career: Career): readonly CareerLine[] {
     const outcome = outcomes[index]!;
     return {
       index,
+      kind: roll.kind,
       term: outcome.term,
       label: label(roll),
       dice: roll.dice,
