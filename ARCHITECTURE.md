@@ -40,7 +40,11 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   `discardCard()`, `deleteLogEntry(index)`, `setOdds(odds)`, `chooseCharacter(c)`,
   `chooseSkill(c, skill)`, `toggleCharacteristic(c)`, `rollTask()`; für Kampagnen
   `openCampaign(id)`, `createCampaign(name)`, `renameCampaign(name)`, `deleteCampaign(id)`,
-  `exportCampaign(id)` und `importCampaign(text)`. Die View liest eine gewählte Datei nur als Text
+  `exportCampaign(id)` und `importCampaign(text)`; für die Charaktererschaffung `openGeneration()`,
+  `rollGeneration()`, `chooseService(id)`, `chooseSkillTable(id)`, `chooseCascade(skill)`,
+  `reenlist(wants)`, `musterOut(kind)`, `finishGeneration(name)`, `discardGeneration()` und
+  `restartGeneration()`. Die Erschaffung ist gespeicherter Stand (`model/generation.ts`,
+  `model/career.ts`): Sie hält nur die Würfe, alles andere spielt `replay` daraus nach. Die View liest eine gewählte Datei nur als Text
   ein und reicht ihn weiter; prüfen tut das Model (`fromCampaignFile`), anbieten zum Download der
   Controller über `Download`. Offene Karte und Probe in Vorbereitung sind Teil des
   Models (`model/draft/`), werden aber nicht gespeichert.
@@ -57,7 +61,7 @@ Compilerfehler.
 **3. Nach oben wird gemeldet, nicht gerufen.** Der Controller kennt keine Komponenten. Er wählt die
 View, indem er seinen Zustand ändert, nicht indem er Komponenten aufruft. Er bietet
 `subscribe(listener)` und `snapshot()` an: den Spielstand aus dem Model und seinen eigenen Zustand
-(welcher Screen, ob das Popup offen ist, ob die Details des Charakters der Probe aufgeklappt sind). Die View hängt sich mit `useSyncExternalStore` daran
+(welcher Screen, ob das Popup offen ist, ob die Details des Charakters der Probe aufgeklappt sind, ob die Charaktererschaffung im Vordergrund steht). Die View hängt sich mit `useSyncExternalStore` daran
 und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von unten nach oben.
 
 **4. Das Model ist frei von Seiteneffekten, die View frei von Regeln und Ablauf.**

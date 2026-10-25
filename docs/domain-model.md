@@ -338,10 +338,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
-- **Charaktererschaffung** (`Generation`, `Career`, `CareerRoll`, `Character.career` und die
-  Laufbahnen in den Referenzdaten) sowie Gegenstände und Besitz gibt es im Code noch nicht
-  (freigegeben, in Arbeit).
 
+- **`Gain` in den Daten.** Im Bild bringt eine Zeile ein Attribut über einen Verweis (`changes`);
+  in `src/data/services.json` steht das Attribut als Feld `characteristic` neben `change`, weil
+  `Characteristic` eine Werteliste ist. Ebenso stehen die DMs eines `Throw` als `characteristic`,
+  `atLeast`, `dm`.
 - **`Card → Campaign : in` und `Task → Campaign : in`** sind im Code kein Feld. Der Controller hält
   höchstens eine offene Karte und höchstens eine Probe, beide immer zur offenen Kampagne; beim
   Wechsel der Kampagne verfallen sie. Damit ist die Multiplizität erfüllt.
