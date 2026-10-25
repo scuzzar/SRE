@@ -2,6 +2,7 @@ import {
   addCharacter,
   appendLog,
   askOracle,
+  characterOf,
   byName,
   campaignFileName,
   createCampaign,
@@ -276,8 +277,10 @@ export class GameController {
       } else {
         const id = editor.id;
         const campaign = updateCharacter(this.campaign, id, input);
-        // Die Fertigkeit der Probe kann weg sein: Die Probe für diesen Charakter beginnt neu.
-        const task = this.state.task?.for === id ? startTask(campaign, id) : this.state.task;
+        // Die Fertigkeit der Probe kann weg sein: Die Probe für diesen Charakter beginnt neu. Ist er
+        // jetzt tot, endet sie.
+        const own = this.state.task?.for === id;
+        const task = !own ? this.state.task : characterOf(campaign, id).dead ? undefined : startTask(campaign, id);
         this.change(campaign, { editor: undefined, task });
       }
     } catch (error) {

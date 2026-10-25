@@ -251,6 +251,36 @@ describe('Charaktere anlegen, bearbeiten, entfernen', () => {
   });
 });
 
+describe('Tot', () => {
+  it('markiert einen Charakter im Editor als tot: unter „Verstorben“, für Proben nicht wählbar, wieder zurücknehmbar', async () => {
+    const { game, repository } = await started();
+    game.chooseSkill('c1', 'pilot');
+    game.editCharacter('c1');
+    game.saveCharacter({ ...game.snapshot().editor!.input, dead: true });
+    await game.whenSaved();
+    const view = game.snapshot();
+    expect(view.task).toBeUndefined();
+    expect(view.characters.map((c) => c.name)).toEqual(['Jonas Reyl']);
+    expect(view.dead).toEqual([{ id: 'c1', name: 'Kira Vant', background: 'Ex-Scout · 4 Terms · 34 Jahre' }]);
+    expect(view.campaigns[0]?.characters).toBe(1);
+    expect(repository.saved?.characters[0]?.dead).toBe(true);
+    expect(() => game.chooseSkill('c1', 'pilot')).toThrow('Kira Vant ist tot.');
+
+    game.editCharacter('c1');
+    expect(game.snapshot().editor?.input.dead).toBe(true);
+    game.saveCharacter({ ...game.snapshot().editor!.input, dead: false });
+    expect(game.snapshot()).toMatchObject({ dead: [], characters: [{ name: 'Kira Vant' }, { name: 'Jonas Reyl' }] });
+  });
+
+  it('löscht auch einen Toten nach denselben Regeln', async () => {
+    const { game } = await started();
+    game.editCharacter('c2');
+    game.saveCharacter({ ...game.snapshot().editor!.input, dead: true });
+    game.removeCharacter('c2');
+    expect(game.snapshot()).toMatchObject({ dead: [], retired: [] });
+  });
+});
+
 describe('Log', () => {
   it('löscht einen Logeintrag endgültig; die übrigen bleiben in ihrer Reihenfolge', async () => {
     const { game, repository } = await started(fixedRandom(1, 1, 2, 2, 3, 3));

@@ -55,6 +55,7 @@ export interface CharacteristicOption {
 function activeCharacter(campaign: Campaign, id: CharacterId): Character {
   const character = characterOf(campaign, id);
   if (character.retired) throw new DomainError(`${character.name} ist ausgeblendet.`);
+  if (character.dead) throw new DomainError(`${character.name} ist tot.`);
   return character;
 }
 

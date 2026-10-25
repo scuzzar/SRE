@@ -2,7 +2,7 @@ import type { Snapshot } from '../../controller';
 import { needText, signed, taskFigures, taskHeadline } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
-import { DiceIcon } from '../icons';
+import { DiceIcon, PencilIcon } from '../icons';
 import { OddsBar } from '../OddsBar';
 import { CharacterCard } from './CharacterCard';
 
@@ -22,6 +22,27 @@ export function CharactersScreen({ view }: { view: Snapshot }) {
         <button type="button" className="add-character" onClick={() => game.newCharacter()}>
           + Neuer Charakter
         </button>
+        {view.dead.length > 0 && (
+          <div className="fallen">
+            <h3 className="section-title" style={{ fontSize: 11 }}>
+              Verstorben
+            </h3>
+            <ul>
+              {view.dead.map((c) => (
+                <li key={c.id} aria-label={`${c.name}, tot`}>
+                  <span className="fallen-name">
+                    <span aria-hidden="true">† </span>
+                    {c.name}
+                    {c.background && <span className="pc-sub"> {c.background}</span>}
+                  </span>
+                  <button type="button" className="icon-button" aria-label="Bearbeiten" onClick={() => game.editCharacter(c.id)}>
+                    <PencilIcon />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {view.retired.length > 0 && (
           <div className="retired">
             <h3 className="section-title" style={{ fontSize: 11 }}>

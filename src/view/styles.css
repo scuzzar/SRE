@@ -1042,6 +1042,66 @@ button:disabled {
   padding-top: 4px;
 }
 
+.fallen {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.fallen ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fallen li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 4px 2px 14px;
+  border: 1px solid var(--rule-soft);
+  color: var(--muted);
+}
+
+.fallen-name {
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.fallen-name .pc-sub {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+}
+
+.form .toggle input {
+  flex: 0 0 auto;
+  width: 24px;
+  min-height: 24px;
+  height: 24px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+}
+
+.toggle > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 15px;
+}
+
 .retired li {
   display: flex;
   align-items: center;

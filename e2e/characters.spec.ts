@@ -148,3 +148,20 @@ test('Logeintrag löschen: lange drücken, dann bestätigen; danach lässt sich 
   await editor.getByRole('button', { name: 'Wirklich löschen?' }).click();
   await expect(jonas).toBeHidden();
 });
+
+test('Tot: im Editor markieren, steht unter „Verstorben“, lässt sich zurücknehmen', async ({ page }) => {
+  await openCharacters(page);
+  await card(page, 'Kira Vant').getByRole('button', { name: 'Bearbeiten' }).click();
+  const editor = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
+  await editor.getByLabel(/^Tot/).check();
+  await editor.getByRole('button', { name: 'Speichern' }).click();
+  await expect(card(page, 'Kira Vant')).toBeHidden();
+  const fallen = page.getByRole('listitem', { name: 'Kira Vant, tot' });
+  await expect(fallen).toContainText('† Kira Vant');
+
+  await fallen.getByRole('button', { name: 'Bearbeiten' }).click();
+  await editor.getByLabel(/^Tot/).uncheck();
+  await editor.getByRole('button', { name: 'Speichern' }).click();
+  await expect(card(page, 'Kira Vant')).toBeVisible();
+  await expect(page.getByText('Verstorben')).toBeHidden();
+});

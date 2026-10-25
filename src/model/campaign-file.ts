@@ -42,6 +42,7 @@ const CharacterSchema = z.object({
   equipment: z.string(),
   credits: z.number(),
   note: z.string(),
+  dead: z.boolean().default(false),
   retired: z.boolean(),
   upp: z.object({ str: value, dex: value, end: value, int: value, edu: value, soc: value }),
   skills: z.array(z.object({ of: z.string(), level: z.number(), retired: z.boolean() })),

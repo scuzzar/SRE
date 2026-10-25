@@ -9,7 +9,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > beschriebenen Weg: erst hier, abgestimmt, dann im Code. Seitdem freigegeben: `Entry.retired`
 > (24. Oktober 2026, siehe *Einträge austauschen*); ausgeblendete Felder und Bereiche (ebenso);
 > Spalten und Paare (24. Oktober 2026, siehe *Karte ziehen*, *Paare aus Mythic*).
-> **In Abstimmung** (25. Oktober 2026): mehrere Kampagnen mit Namen, Export und Import als Datei,
+> Am 25. Oktober 2026 freigegeben: mehrere Kampagnen mit Namen, Export und Import als Datei,
 > Logeinträge löschen (siehe *Mehrere Kampagnen*, *Kampagnendatei*, *Der Log verweist, er kopiert
 > nicht*), dafür ändert sich das Bild nicht: `Campaign` war schon die oberste Ebene und hat schon
 > einen Namen. Neu im Bild: `Character.dead` (siehe *Tot*).
@@ -205,8 +205,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
-
-- **`Character.dead`** gibt es im Code noch nicht (in Abstimmung, siehe *Tot*).
 
 - **`Card → Campaign : in` und `Task → Campaign : in`** sind im Code kein Feld. Der Controller hält
   höchstens eine offene Karte und höchstens eine Probe, beide immer zur offenen Kampagne; beim

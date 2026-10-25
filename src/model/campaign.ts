@@ -29,6 +29,8 @@ export interface Character {
   readonly equipment: string;
   readonly credits: number;
   readonly note: string;
+  /** In der Geschichte gestorben: bleibt in der Kampagne, ist aber für Proben nicht wählbar. */
+  readonly dead: boolean;
   readonly retired: boolean;
   readonly upp: Upp;
   readonly skills: readonly SkillLevel[];
@@ -54,6 +56,8 @@ export interface CharacterInput {
   readonly equipment: string;
   readonly credits: number;
   readonly note: string;
+  /** Fehlt bei den Beispielcharakteren: Sie leben. */
+  readonly dead?: boolean;
   readonly upp: Upp;
   readonly skills: readonly { readonly of: string; readonly level: number }[];
 }
@@ -114,8 +118,19 @@ export function characterOf(campaign: Campaign, id: CharacterId): Character {
   return character;
 }
 
+/** Die nicht ausgeblendeten Charaktere, lebend oder tot. */
 export function activeCharacters(campaign: Campaign): readonly Character[] {
   return campaign.characters.filter((c) => !c.retired);
+}
+
+/** Die Lebenden: Nur sie lassen sich für Proben wählen. */
+export function livingCharacters(campaign: Campaign): readonly Character[] {
+  return activeCharacters(campaign).filter((c) => !c.dead);
+}
+
+/** Die Toten, die nicht ausgeblendet sind; sie stehen unter „Verstorben“. */
+export function deadCharacters(campaign: Campaign): readonly Character[] {
+  return activeCharacters(campaign).filter((c) => c.dead);
 }
 
 export function retiredCharacters(campaign: Campaign): readonly Character[] {
@@ -175,6 +190,7 @@ export function addCharacter(campaign: Campaign, input: CharacterInput): { campa
   const character: Character = {
     id,
     ...fields(input),
+    dead: input.dead ?? false,
     retired: false,
     skills: input.skills.map((s) => ({ of: s.of, level: s.level, retired: false })),
   };
@@ -198,7 +214,7 @@ export function updateCharacter(campaign: Campaign, id: CharacterId, input: Char
   }
   const known = new Set(before.skills.map((s) => s.of));
   const added = input.skills.filter((s) => !known.has(s.of)).map((s) => ({ of: s.of, level: s.level, retired: false }));
-  const after: Character = { ...before, ...fields(input), skills: [...kept, ...added] };
+  const after: Character = { ...before, ...fields(input), dead: input.dead ?? before.dead, skills: [...kept, ...added] };
   return { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? after : c)) };
 }
 
@@ -217,6 +233,6 @@ export function restoreCharacter(campaign: Campaign, id: CharacterId): Campaign 
 
 /** Was eine Eingabe für einen bestehenden Charakter wäre, mit seinen eingeblendeten Fertigkeiten. */
 export function inputOf(character: Character): CharacterInput {
-  const { name, background, equipment, credits, note, upp } = character;
-  return { name, background, equipment, credits, note, upp, skills: activeSkills(character).map(({ of, level }) => ({ of, level })) };
+  const { name, background, equipment, credits, note, dead, upp } = character;
+  return { name, background, equipment, credits, note, dead, upp, skills: activeSkills(character).map(({ of, level }) => ({ of, level })) };
 }

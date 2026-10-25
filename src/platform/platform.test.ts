@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { describe, expect, it } from 'vitest';
-import { appendLog, createCampaign, type Campaign, type LogEntry } from '../model';
+import { appendLog, createCampaign, type Campaign, type Character, type LogEntry } from '../model';
 import { systemClock } from './clock';
 import { cryptoRandom } from './random';
 import { DexieCampaignRepository, MemoryCampaignRepository, upgraded } from './repository';
@@ -70,6 +70,10 @@ describe('Ältere Spielstände', () => {
     const repository = await new DexieCampaignRepository(name).open();
     const [loaded] = await repository.list();
     expect(loaded).toEqual({ ...campaign, id: 'current' });
+
+    // Ein Charakter von vor „tot“ lebt.
+    const older = { ...campaign.characters![0]!, dead: undefined } as unknown as Character;
+    expect(upgraded({ ...createCampaign(), characters: [older] }).characters[0]?.dead).toBe(false);
     await repository.save({ ...loaded!, name: 'Spinward' });
     expect((await repository.list()).map((c) => [c.id, c.name])).toEqual([['current', 'Spinward']]);
   });
