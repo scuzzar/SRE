@@ -25,7 +25,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
   - Außerdem: Karte verwerfen oder neu ziehen.
   - Die Karte wird so inszeniert wie der Würfelwurf: Sie fliegt mit dem Rücken nach oben (Hexraster wie auf einer Sektorkarte, in der Mitte das Emblem der App) aus dem Daumenbereich herein, schwebt kurz mit rotem Glimmen, dreht sich mit Schwung um, ein Lichtreflex läuft über die Vorderseite, und die Felder erscheinen der Reihe nach. „Neu ziehen“ spielt das mit einer neuen Karte. Übernehmen lässt sie nach unten sinken, Verwerfen wirft sie zur Seite weg.
 - **Knopf „2W6“**: ein einfacher Würfelwurf durch die App. Zwei Würfel werden im Vordergrund geworfen, angelehnt an Baldur's Gate 3: dunkle Würfel mit goldenen Augen, die aufschlagen, liegen bleiben und aufleuchten; dann die Summe. Ein Tippen überspringt.
-- **Animation und Vibration**: Würfeln und Karte sind kurz animiert (unter zwei Sekunden) und vibrieren dazu (Android in Chrome, Samsung Internet oder Edge über die Vibrations-API, iPhone ab iOS 18 über einen kurzen Ruck; Firefox lässt Webseiten nicht vibrieren, das sagt die App unter „Über“). Wer im System „Bewegung reduzieren“ eingestellt hat, sieht gleich das Ergebnis.
+- **Animation und Vibration**: Würfeln und Karte sind kurz animiert (unter zwei Sekunden); ein Tippen während einer Animation beendet sie und zeigt sofort das Ergebnis und vibrieren dazu (Android in Chrome, Samsung Internet oder Edge über die Vibrations-API, iPhone ab iOS 18 über einen kurzen Ruck; Firefox lässt Webseiten nicht vibrieren, das sagt die App unter „Über“). Wer im System „Bewegung reduzieren“ eingestellt hat, sieht gleich das Ergebnis.
 - **Log**: Orakelantworten, Würfe und die ausgewählten Karteneinträge landen untereinander im Log, das neueste unten. **Lange drücken** auf einen Eintrag bietet an, ihn zu löschen.
 
 **Zweiter Screen: Charaktere**
@@ -44,6 +44,8 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
   5. **Weiterverpflichten?** Gewürfelt wird immer; eine 12 heißt bleiben, nach 7 Terms geht es nur mit 12 weiter.
   6. Abmusterung: je Wurf **Geld oder Sachwerte**; Waffen wählt man, eine zweite gleiche wird zur Fertigkeit.
   7. Name eingeben und übernehmen: Der Charakter bekommt UPP, Fertigkeiten, Besitz, Credits, Herkunft („Ex-Navy · Commander · 5 Terms · 38 Jahre“), die Pension in der Notiz und seinen **Lebenslauf**, den die Details der Karte zeigen.
+
+  Würfe mit Zielwert (Musterung, Überleben, Patent, Beförderung, Altern, Krise) laufen groß als Popup wie die Probe: Zielwert, Würfel, dann jedes Attribut einzeln mit Namen (DEX +1, END +2), zuletzt das Urteil. Neue Werte erscheinen auf der Karte erst, wenn der Wurf feststeht.
 
   Die Erschaffung wird gespeichert: „Später weiter“ schließt sie, „Erschaffung fortsetzen“ holt sie zurück. Verwerfen geht jederzeit. Vorbild für das Verhalten: der interaktive Generator auf <https://www.batintheattic.com/traveller/interactive.html>.
 

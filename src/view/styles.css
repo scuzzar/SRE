@@ -1626,6 +1626,18 @@ button:disabled {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.roll-actions.single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.throw-result {
+  font-size: 18px;
+}
+
+.roll-result.judged.failure .throw-result {
+  color: var(--accent-text);
+}
+
 .odds-lines {
   display: flex;
   flex-direction: column;
@@ -2617,6 +2629,16 @@ button:disabled {
   80% {
     translate: 6px 0;
   }
+}
+
+/* Übersprungen: Ein Tippen beendet eine Animation, alles steht sofort auf seinem Endstand. */
+.skip-animation,
+.skip-animation *,
+.skip-animation *::before,
+.skip-animation *::after {
+  animation-duration: 1ms !important;
+  animation-delay: 0ms !important;
+  transition-duration: 1ms !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

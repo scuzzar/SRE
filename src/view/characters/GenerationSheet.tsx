@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CareerLine, GenerationAction, GenerationView } from '../../controller';
-import type { ThrowOdds } from '../../model';
-import { DiceView, THROW_MS, useTimeline } from '../Dice';
+import type { RollKind, ThrowOdds } from '../../model';
+import { DicePairView, DiceView, THROW_MS, useTimeline } from '../Dice';
 import { characteristicLabel, credits, hex, signed } from '../format';
 import { useGame } from '../game-context';
 import { animated, haptic, stopHaptics } from '../haptics';
@@ -15,8 +15,9 @@ const SETTLE_MS = 350;
  * darunter der Lebenslauf. Unten die Würfelbühne mit dem letzten Wurf und die Knöpfe für den
  * nächsten Schritt. Jeder Wert wird einzeln mit der Würfelanimation bestimmt; geloggt ist der Wurf
  * schon, bevor die Würfel rollen. Karte, Lebenslauf und nächster Schritt zeigen aber erst dann den
- * neuen Stand, wenn das Ergebnis unten feststeht; bis dahin bleibt der vorige Snapshot stehen. Ein
- * Tippen auf die Bühne überspringt.
+ * neuen Stand, wenn das Ergebnis unten feststeht; bis dahin bleibt der vorige Snapshot stehen.
+ * Würfe mit Zielwert (Musterung, Überleben, Patent, Beförderung, Altern, Krise) laufen groß als Popup
+ * wie die Probe. Ein Tippen irgendwo beendet eine Animation und zeigt sofort das Ergebnis.
  */
 export function GenerationSheet({ generation }: { generation: GenerationView }) {
   const game = useGame();
@@ -32,6 +33,11 @@ export function GenerationSheet({ generation }: { generation: GenerationView }) 
   const [shown, setShown] = useState(generation);
   if (!rolling && shown !== generation) setShown(generation);
   const view = rolling ? shown : generation;
+  // Ein Tippen während des Wurfs springt zum Ergebnis; der Zähler sagt es der Bühne.
+  const [skips, setSkips] = useState(0);
+  // Das große Popup bleibt nach dem Urteil offen, bis man weitertippt.
+  const [closed, setClosed] = useState(-1);
+  const dramatic = animate && dramaticKinds.includes(latest.kind) && latest.dice.length === 2 && latest.target !== undefined;
   // Der Lebenslauf wächst nach unten; der neueste Wurf soll zu sehen sein.
   const body = useRef<HTMLDivElement>(null);
   const count = view.lines.length;
@@ -40,7 +46,16 @@ export function GenerationSheet({ generation }: { generation: GenerationView }) 
   }, [count]);
 
   return (
-    <div className="overlay">
+    <div
+      className="overlay"
+      onClickCapture={(e) => {
+        if (!rolling) return;
+        e.stopPropagation();
+        e.preventDefault();
+        stopHaptics();
+        setSkips((n) => n + 1);
+      }}
+    >
       <section className="sheet generation" role="dialog" aria-modal="true" aria-labelledby="generation-title">
         <div className="sheet-head" style={{ alignItems: 'center' }}>
           <h2 id="generation-title">Charaktererschaffung</h2>
@@ -66,7 +81,9 @@ export function GenerationSheet({ generation }: { generation: GenerationView }) 
         </div>
 
         <div className="generation-dock">
-          {latest && <RollStage key={latest.index} line={latest} animate={animate} onSettled={setSettled} />}
+          {latest && !(dramatic && rolling) && (
+            <RollStage key={latest.index} line={latest} animate={animate && !dramatic} onSettled={setSettled} skips={skips} />
+          )}
           <p className="generation-prompt" aria-live="polite">
             {view.prompt}
           </p>
@@ -76,6 +93,106 @@ export function GenerationSheet({ generation }: { generation: GenerationView }) 
             </p>
           )}
           <Actions action={view.action} disabled={rolling} />
+        </div>
+      </section>
+      {dramatic && closed < latest.index && (
+        <ThrowDialog key={latest.index} line={latest} skips={skips} onSettled={setSettled} onClose={() => setClosed(latest.index)} />
+      )}
+    </div>
+  );
+}
+
+/** Würfe, die groß als Popup laufen. */
+const dramaticKinds: readonly RollKind[] = ['enlistment', 'survival', 'commission', 'promotion', 'aging', 'crisis'];
+
+/** Der DM in Teilen mit Namen; passen sie nicht zur festgehaltenen Summe, die Summe als ein Teil. */
+function dmParts(line: CareerLine): readonly { readonly label: string; readonly dm: number }[] {
+  if (line.dm === 0) return [];
+  return line.parts.reduce((sum, p) => sum + p.dm, 0) === line.dm ? line.parts : [{ label: 'DM', dm: line.dm }];
+}
+
+/**
+ * Ein Wurf mit Zielwert groß, wie die Probe: Zielwert, dann rollen die Würfel, dann kommt jedes
+ * Attribut einzeln mit Namen dazu, zuletzt das Urteil und was daraus folgt. Ein Tippen springt zum
+ * Urteil, ein weiteres schließt.
+ */
+function ThrowDialog({ line, skips, onSettled, onClose }: { line: CareerLine; skips: number; onSettled: (index: number) => void; onClose: () => void }) {
+  const parts = dmParts(line);
+  const [phase, skip] = useTimeline([500, THROW_MS, 350, ...parts.map(() => 380)]);
+  const THROWN = 1;
+  const LANDED = 2;
+  const added = Math.max(0, Math.min(phase - LANDED, parts.length));
+  const VERDICT = parts.length + 3;
+  const close = useRef<HTMLButtonElement>(null);
+
+  const [skipsAtStart] = useState(skips);
+  useEffect(() => {
+    if (skips > skipsAtStart) skip(VERDICT);
+  }, [skips, skipsAtStart, skip, VERDICT]);
+
+  useEffect(() => {
+    if (phase === THROWN) haptic('shake');
+    if (phase > LANDED && phase < VERDICT) haptic('add');
+    if (phase >= VERDICT) {
+      haptic(line.success ? 'success' : 'failure');
+      onSettled(line.index);
+      close.current?.focus();
+    }
+  }, [phase, VERDICT, line.success, line.index, onSettled]);
+
+  const [a, b] = line.dice;
+  const sum = (a ?? 0) + (b ?? 0);
+  const shown = added === parts.length ? line.total : parts.slice(0, added).reduce((total, part) => total + part.dm, sum);
+  const state = phase < LANDED ? ' rolling' : phase >= VERDICT ? (line.success ? ' judged success' : ' judged failure') : '';
+
+  return (
+    <div className="modal">
+      <section
+        className={`result roll-result${state}`}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="throw-title"
+        aria-describedby="throw-detail"
+        onClick={() => {
+          if (phase >= VERDICT) return onClose();
+          stopHaptics();
+          skip(VERDICT);
+        }}
+      >
+        <span className="kicker">{line.label}</span>
+        <div className="roll-target" aria-hidden="true">
+          <span>Zielwert</span>
+          <strong>{line.target}+</strong>
+        </div>
+        {phase >= THROWN ? (
+          <DicePairView dice={[a ?? 1, b ?? 1]} seed={line.index + 1} landed={phase >= LANDED} size="small" />
+        ) : (
+          <div className="dice-stage small" aria-hidden="true" />
+        )}
+        <div className="roll-sum" aria-hidden="true">
+          <strong key={shown} className="roll-total">
+            {shown}
+          </strong>
+        </div>
+        <ol className="roll-parts" aria-hidden="true">
+          {parts.map((part, i) => (
+            <li key={i} className={i < added ? (i === added - 1 && phase < VERDICT ? 'roll-part added latest' : 'roll-part added') : 'roll-part'}>
+              {part.label} <strong>{signed(part.dm)}</strong>
+            </li>
+          ))}
+        </ol>
+        <h2 id="throw-title" className={line.success ? 'roll-verdict' : 'roll-verdict negative'}>
+          {line.success ? 'ERFOLG' : 'FEHLSCHLAG'}
+        </h2>
+        <div className="roll-after">
+          <strong id="throw-detail" className="throw-result">
+            {line.result}
+          </strong>
+          <div className="roll-actions single">
+            <button ref={close} type="button" className="primary" onClick={onClose}>
+              Weiter
+            </button>
+          </div>
         </div>
       </section>
     </div>
@@ -169,14 +286,20 @@ export function CareerList({ lines, heading = true }: { lines: readonly CareerLi
  * Der letzte Wurf auf der Bühne: Würfel rollen, landen, dann steht das Ergebnis da und wird gemeldet
  * (`onSettled`); erst dann ziehen Karte und Knöpfe nach. Ein Tippen springt zum Ergebnis.
  */
-function RollStage({ line, animate, onSettled }: { line: CareerLine; animate: boolean; onSettled: (index: number) => void }) {
+function RollStage({ line, animate, onSettled, skips }: { line: CareerLine; animate: boolean; onSettled: (index: number) => void; skips: number }) {
   const [phase, skip] = useTimeline(animate ? [THROW_MS, SETTLE_MS] : []);
   const LANDED = animate ? 1 : 0;
   const DONE = animate ? 2 : 0;
 
+  // Ein Tippen irgendwo in der Erschaffung springt zum Ergebnis.
+  const [skipsAtStart] = useState(skips);
   useEffect(() => {
-    if (phase >= DONE) onSettled(line.index);
+    if (skips > skipsAtStart) skip(DONE);
+  }, [skips, skipsAtStart, skip, DONE]);
+
+  useEffect(() => {
     if (!animate) return;
+    if (phase >= DONE) onSettled(line.index);
     if (phase === 0) haptic(line.dice.length === 1 ? 'land' : 'shake');
     if (phase === DONE) haptic(line.success === undefined ? 'add' : line.success ? 'success' : 'failure');
   }, [phase, DONE, animate, line.index, line.dice.length, line.success, onSettled]);

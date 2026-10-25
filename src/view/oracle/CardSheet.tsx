@@ -10,6 +10,9 @@ type SlotView = CardSectionView['slots'][number];
 /** So lange fliegt die Karte herein und dreht sich um; passt zu `card-draw` in styles.css. */
 const DRAW_MS = 750;
 
+/** So lange, bis auch das letzte Feld erschienen ist (Themen-Tafeln eingeschlossen); passt zu `tile-in`. */
+const REVEAL_MS = 1150;
+
 /** So lange fliegt die Karte hinaus, bevor sie verworfen oder übernommen ist; passt zu `sheet-toss` und `sheet-sink`. */
 const LEAVE_MS = 260;
 
@@ -20,7 +23,8 @@ const LEAVE_MS = 260;
  * nach oben von unten herein, wo „Karte ziehen“ sitzt, schwebt kurz mit rotem Glimmen und dreht sich
  * dann mit Schwung um, Themen-Tafeln eingeschlossen. Ein Lichtreflex läuft über die Vorderseite, die
  * Felder erscheinen der Reihe nach. „Neu ziehen“ spielt das mit einer neuen Karte. Übernehmen lässt
- * die Karte nach unten in den Log sinken, Verwerfen wirft sie zur Seite weg.
+ * die Karte nach unten in den Log sinken, Verwerfen wirft sie zur Seite weg. Ein Tippen, solange sie
+ * noch hereinkommt, beendet die Animation und zeigt sofort die ganze Karte, ohne etwas auszuwählen.
  */
 export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: () => void }) {
   const game = useGame();
@@ -28,12 +32,23 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
   const [draw, setDraw] = useState(0);
   // Solange die Karte hereinfliegt, schneidet der Kartenbereich ab, statt kurz zu scrollen.
   const [drawing, setDrawing] = useState(animated);
+  // Solange die Felder noch erscheinen, beendet ein Tippen die Animation, statt etwas auszuwählen.
+  const [revealing, setRevealing] = useState(animated);
+  const [skipped, setSkipped] = useState(false);
   const [leaving, setLeaving] = useState<'confirm' | 'discard' | undefined>(undefined);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
   useEffect(() => {
     const done = setTimeout(() => setDrawing(false), DRAW_MS);
-    return () => clearTimeout(done);
+    // Danach sind alle Animationen ohnehin am Ende; ohne `skip-animation` darf die Karte wieder normal hinausfliegen.
+    const revealed = setTimeout(() => {
+      setRevealing(false);
+      setSkipped(false);
+    }, REVEAL_MS);
+    return () => {
+      clearTimeout(done);
+      clearTimeout(revealed);
+    };
   }, [draw]);
 
   /** Erst hinausfliegen, dann die Eingabe an den Controller; doppeltes Tippen zählt einmal. */
@@ -49,7 +64,17 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
   const known = ['event', 'senses', 'scene', 'belongings', 'situation', 'names', 'traits', 'flavor'];
 
   return (
-    <div className={leaving ? `overlay leaving ${leaving}` : 'overlay'}>
+    <div
+      className={[leaving ? `overlay leaving ${leaving}` : 'overlay', skipped ? 'skip-animation' : ''].filter(Boolean).join(' ')}
+      onClickCapture={(e) => {
+        if (!revealing) return;
+        e.stopPropagation();
+        e.preventDefault();
+        setRevealing(false);
+        setDrawing(false);
+        setSkipped(true);
+      }}
+    >
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="card-title">
         <div className="sheet-head">
           <h2 id="card-title">Inspirationskarte</h2>
@@ -115,6 +140,8 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
               game.redrawCard();
               setDraw((d) => d + 1);
               setDrawing(animated());
+              setRevealing(animated());
+              setSkipped(false);
             }}
           >
             Neu ziehen
