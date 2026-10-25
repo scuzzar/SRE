@@ -5,7 +5,7 @@ import {
   characteristics,
   gainOf,
   itemOf,
-  musterDm,
+  musterSources,
   nextThrow,
   pensionOf,
   ref,
@@ -21,6 +21,7 @@ import {
   type Career,
   type CareerRoll,
   type Characteristic,
+  type DmSource,
   type Effect,
   type Generation,
   type GenerationStep,
@@ -36,6 +37,8 @@ export interface CareerLine {
   readonly label: string;
   readonly dice: readonly number[];
   readonly dm: number;
+  /** Woraus der DM besteht, mit Namen: „INT +1“, „Gambling +1“. */
+  readonly parts: readonly { readonly label: string; readonly dm: number }[];
   readonly total: number;
   readonly target: number | undefined;
   readonly success: boolean | undefined;
@@ -48,7 +51,14 @@ export type GenerationAction =
   | { readonly kind: 'skill'; readonly left: number; readonly options: readonly { readonly id: string; readonly name: string; readonly available: boolean }[] }
   | { readonly kind: 'cascade'; readonly name: string; readonly options: readonly { readonly skill: string; readonly name: string; readonly item: string | undefined }[] }
   | { readonly kind: 'reenlist'; readonly odds: ThrowOdds; readonly last: boolean }
-  | { readonly kind: 'muster'; readonly left: number; readonly cashLeft: number; readonly cashDm: number; readonly benefitDm: number }
+  | {
+      readonly kind: 'muster';
+      readonly left: number;
+      readonly cashLeft: number;
+      /** Woraus der DM auf Geld bzw. Sachwerte besteht: Gambling, Rang 5+. */
+      readonly cashDm: readonly DmSource[];
+      readonly benefitDm: readonly DmSource[];
+    }
   | { readonly kind: 'name' }
   | { readonly kind: 'dead' };
 
@@ -195,6 +205,7 @@ export function careerLines(career: Career): readonly CareerLine[] {
       label: label(roll),
       dice: roll.dice,
       dm: roll.dm,
+      parts: outcome.sources,
       total: sumOf(roll) + roll.dm,
       target: roll.target,
       success: roll.kind === 'reenlist' ? outcome.effects.some((e) => e.kind === 'term') : successOf(roll),
@@ -285,8 +296,8 @@ export function generationView(generation: Generation, error: string | undefined
         kind: 'muster',
         left: state.musterLeft,
         cashLeft: canTakeCash(state) ? 3 - state.cashRolls : 0,
-        cashDm: musterDm(state, 'cash'),
-        benefitDm: musterDm(state, 'benefit'),
+        cashDm: musterSources('cash', state.skills, state.rank),
+        benefitDm: musterSources('benefit', state.skills, state.rank),
       };
       break;
     case 'name':

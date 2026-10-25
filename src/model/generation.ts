@@ -5,14 +5,17 @@ import {
   MAX_CASH_ROLLS,
   pensionOf,
   replay,
+  musterSources,
+  throwConditions,
   throwDm,
   type Career,
   type CareerRoll,
   type CareerState,
+  type ThrowCondition,
 } from './career';
 import { DomainError } from './errors';
 import type { Random } from './ports';
-import { cascadeOf, ref, serviceOf, skillOf, weaponFor, type Service, type Table } from './reference';
+import { cascadeOf, ref, serviceOf, skillOf, weaponFor, type Service, type Table, type Throw } from './reference';
 import { chance2d6, characteristics } from './rules';
 
 /** Eine Charaktererschaffung: je Kampagne höchstens eine; sie hält nur ihren Lebenslauf. */
@@ -22,6 +25,8 @@ export interface Generation {
 
 /** Was ein Wurf mit Zielwert braucht: DM, Zielwert, nötiger Wurf auf 2W6 und die Chance in Prozent. */
 export interface ThrowOdds {
+  /** Welche Attribute ab welchem Wert einen DM geben, und ob sie greifen. */
+  readonly conditions: readonly ThrowCondition[];
   readonly dm: number;
   readonly target: number;
   readonly need: number;
@@ -36,8 +41,12 @@ export function stateOf(generation: Generation): CareerState {
   return replay(generation.career);
 }
 
-function odds(dm: number, target: number): ThrowOdds {
-  return { dm, target, need: target - dm, chance: chance2d6(target - dm) };
+function odds(dm: number, target: number, conditions: readonly ThrowCondition[] = []): ThrowOdds {
+  return { conditions, dm, target, need: target - dm, chance: chance2d6(target - dm) };
+}
+
+function throwOdds(th: Throw, upp: CareerState['upp']): ThrowOdds {
+  return odds(throwDm(th, upp), th.target, throwConditions(th, upp));
 }
 
 function append(generation: Generation, roll: CareerRoll): Generation {
@@ -60,7 +69,7 @@ function twoDice(random: Random): number[] {
 
 /** Wie die Musterung für jede Laufbahn stünde. */
 export function serviceOptions(state: CareerState): readonly { readonly service: Service; readonly odds: ThrowOdds }[] {
-  return ref.services.map((service) => ({ service, odds: odds(throwDm(service.enlistment, state.upp), service.enlistment.target) }));
+  return ref.services.map((service) => ({ service, odds: throwOdds(service.enlistment, state.upp) }));
 }
 
 /** Die Fertigkeitstabellen der Laufbahn; die mit `minEdu` nur mit genug EDU. */
@@ -84,8 +93,7 @@ export function cascadeOptions(generation: Generation): readonly { readonly skil
 
 /** DM auf Geld (Gambling) und auf Sachwerte (ab Rang 5). */
 export function musterDm(state: CareerState, kind: 'cash' | 'benefit'): number {
-  if (kind === 'cash') return state.skills.some((s) => s.of === 'gambling' && s.level > 0) ? 1 : 0;
-  return state.rank >= 5 ? 1 : 0;
+  return musterSources(kind, state.skills, state.rank).reduce((dm, s) => dm + s.dm, 0);
 }
 
 export function canTakeCash(state: CareerState): boolean {
@@ -97,11 +105,11 @@ export function nextThrow(state: CareerState): ThrowOdds | undefined {
   const service = state.service;
   switch (state.step) {
     case 'survival':
-      return odds(throwDm(service!.survival, state.upp), service!.survival.target);
+      return throwOdds(service!.survival, state.upp);
     case 'commission':
-      return odds(throwDm(service!.commission!, state.upp), service!.commission!.target);
+      return throwOdds(service!.commission!, state.upp);
     case 'promotion':
-      return odds(throwDm(service!.promotion!, state.upp), service!.promotion!.target);
+      return throwOdds(service!.promotion!, state.upp);
     case 'aging':
       return odds(0, state.aging!.target);
     case 'crisis':
