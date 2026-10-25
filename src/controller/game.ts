@@ -71,6 +71,8 @@ export class GameController {
   private current: Snapshot;
   private readonly listeners = new Set<() => void>();
   private saving: Promise<void> = Promise.resolve();
+  /** Nach einem Fehler beim Laden schreibt die App nichts mehr, damit sie den alten Spielstand nicht überschreibt. */
+  private writable = true;
 
   constructor(private readonly deps: GameDependencies) {
     this.state = {
@@ -93,16 +95,22 @@ export class GameController {
 
   /**
    * Lädt die Kampagnen und öffnet die, die zuletzt offen war. Gibt es noch keine, beginnt die erste
-   * mit den Beispielcharakteren.
+   * mit den Beispielcharakteren. Lassen sich die Kampagnen nicht laden, läuft die App ohne Speichern
+   * weiter: Die neue erste Kampagne darf keine gespeicherte mit derselben Id überschreiben.
    */
   async init(): Promise<void> {
     let campaigns: readonly Campaign[] = [];
     let open: CampaignId | undefined;
     try {
       campaigns = await this.deps.repository.list();
-      open = await this.deps.repository.loadOpen();
     } catch (error) {
-      this.update({ storageError: `Der Spielstand ließ sich nicht laden: ${String(error)}` });
+      this.writable = false;
+      this.update({ persistent: false, storageError: `Der Spielstand ließ sich nicht laden: ${String(error)}. Damit nichts überschrieben wird, speichert die App bis zum nächsten Start nichts.` });
+    }
+    try {
+      if (this.writable) open = await this.deps.repository.loadOpen();
+    } catch {
+      // Welche Kampagne offen war, ist nur eine Bequemlichkeit; dann öffnet sich die erste.
     }
     const campaign = campaigns.find((c) => c.id === open) ?? byName(campaigns)[0];
     if (campaign) this.update({ campaigns, campaign });
@@ -432,6 +440,7 @@ export class GameController {
    * nimmt erst eine gespeicherte Kampagne wieder weg (`saved`), nicht schon das Merken der offenen.
    */
   private persist(write: () => Promise<void>, saved = false): void {
+    if (!this.writable) return;
     this.saving = this.saving.then(() =>
       write().then(
         () => {

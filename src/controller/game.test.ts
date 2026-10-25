@@ -35,6 +35,19 @@ describe('Start', () => {
     expect(game.snapshot().storageError).toMatch(/nicht speichern: Error: voll/);
   });
 
+  it('überschreibt nichts, wenn sich der Spielstand nicht laden lässt', async () => {
+    const stored = createCampaign([], 'Spinward', 'k1');
+    const repository = memoryRepository(stored);
+    const broken: CampaignRepository = { ...repository, list: async () => Promise.reject(new Error('kaputt')) };
+    const game = new GameController({ repository: broken, random: fixedRandom(), clock: fixedClock(), download: memoryDownload() });
+    await game.init();
+    game.rollDice();
+    await game.whenSaved();
+    expect(game.snapshot()).toMatchObject({ ready: true, persistent: false, storageError: expect.stringMatching(/nicht laden: Error: kaputt/) });
+    expect(repository.campaigns.get('k1')).toBe(stored);
+    expect(repository.open).toBeUndefined();
+  });
+
   it('öffnet die Kampagne, die zuletzt offen war', async () => {
     const repository = memoryRepository(createCampaign([], 'Spinward', 'k1'), createCampaign([], 'Aramis', 'k2'));
     repository.open = 'k1';
