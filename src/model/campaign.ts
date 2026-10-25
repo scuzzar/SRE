@@ -1,6 +1,8 @@
+import type { Career } from './career';
 import { DomainError } from './errors';
+import type { Generation } from './generation';
 import type { LogEntry } from './log';
-import { defaultOdds, oddsOf, ref, skillOf, type ExampleCharacter } from './reference';
+import { defaultOdds, itemOf, oddsOf, ref, skillOf, type ExampleCharacter } from './reference';
 
 /** Die sechs Attributwerte, je 0 bis 15. */
 export interface Upp {
@@ -22,6 +24,13 @@ export interface SkillLevel {
   readonly retired: boolean;
 }
 
+/** Ein Gegenstand, den ein Charakter besitzt, mit Anzahl. Je Gegenstand höchstens ein Eintrag. */
+export interface Possession {
+  /** Verweis auf den Gegenstand. */
+  readonly of: string;
+  readonly count: number;
+}
+
 export interface Character {
   readonly id: CharacterId;
   readonly name: string;
@@ -34,6 +43,9 @@ export interface Character {
   readonly retired: boolean;
   readonly upp: Upp;
   readonly skills: readonly SkillLevel[];
+  readonly possessions: readonly Possession[];
+  /** Der Lebenslauf, wenn der Charakter über die Charaktererschaffung entstanden ist. */
+  readonly career?: Career;
 }
 
 export type CampaignId = string;
@@ -47,6 +59,8 @@ export interface Campaign {
   readonly odds: string;
   /** In der Reihenfolge der Ereignisse. */
   readonly log: readonly LogEntry[];
+  /** Die Charaktererschaffung, die gerade läuft; höchstens eine. */
+  readonly generation?: Generation;
 }
 
 /** Was man beim Anlegen und Bearbeiten eines Charakters eingibt. */
@@ -60,6 +74,8 @@ export interface CharacterInput {
   readonly dead?: boolean;
   readonly upp: Upp;
   readonly skills: readonly { readonly of: string; readonly level: number }[];
+  /** Fehlt bei den Beispielcharakteren: Sie besitzen nichts aus der Liste. */
+  readonly possessions?: readonly Possession[];
 }
 
 /** Eine neue Kampagne, ohne Log, mit der Standardstufe und den angegebenen Charakteren. */
@@ -166,6 +182,14 @@ export function validateCharacter(input: CharacterInput): void {
     seen.add(skill.of);
     if (!Number.isInteger(skill.level) || skill.level < 0) throw new DomainError(`Die Stufe von ${name} ist 0 oder mehr.`);
   }
+  const owned = new Set<string>();
+  for (const possession of input.possessions ?? []) {
+    const item = itemOf(possession.of);
+    if (owned.has(possession.of)) throw new DomainError(`${item.name} kommt doppelt vor.`);
+    owned.add(possession.of);
+    if (!Number.isInteger(possession.count) || possession.count < 1) throw new DomainError(`Die Anzahl von ${item.name} ist 1 oder mehr.`);
+    if (item.once && possession.count > 1) throw new DomainError(`${item.name} kann man nur einmal haben.`);
+  }
 }
 
 function nextId(campaign: Campaign): CharacterId {
@@ -181,10 +205,12 @@ function fields(input: CharacterInput) {
     credits: input.credits,
     note: input.note.trim(),
     upp: { ...input.upp },
+    possessions: (input.possessions ?? []).map(({ of, count }) => ({ of, count })),
   };
 }
 
-export function addCharacter(campaign: Campaign, input: CharacterInput): { campaign: Campaign; id: CharacterId } {
+/** Legt einen Charakter an; mit `career` hat er einen Lebenslauf aus der Charaktererschaffung. */
+export function addCharacter(campaign: Campaign, input: CharacterInput, career?: Career): { campaign: Campaign; id: CharacterId } {
   validateCharacter(input);
   const id = nextId(campaign);
   const character: Character = {
@@ -193,6 +219,7 @@ export function addCharacter(campaign: Campaign, input: CharacterInput): { campa
     dead: input.dead ?? false,
     retired: false,
     skills: input.skills.map((s) => ({ of: s.of, level: s.level, retired: false })),
+    ...(career ? { career } : {}),
   };
   return { campaign: { ...campaign, characters: [...campaign.characters, character] }, id };
 }
@@ -214,7 +241,13 @@ export function updateCharacter(campaign: Campaign, id: CharacterId, input: Char
   }
   const known = new Set(before.skills.map((s) => s.of));
   const added = input.skills.filter((s) => !known.has(s.of)).map((s) => ({ of: s.of, level: s.level, retired: false }));
-  const after: Character = { ...before, ...fields(input), dead: input.dead ?? before.dead, skills: [...kept, ...added] };
+  const after: Character = {
+    ...before,
+    ...fields(input),
+    possessions: input.possessions === undefined ? before.possessions : fields(input).possessions,
+    dead: input.dead ?? before.dead,
+    skills: [...kept, ...added],
+  };
   return { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? after : c)) };
 }
 
@@ -233,6 +266,12 @@ export function restoreCharacter(campaign: Campaign, id: CharacterId): Campaign 
 
 /** Was eine Eingabe für einen bestehenden Charakter wäre, mit seinen eingeblendeten Fertigkeiten. */
 export function inputOf(character: Character): CharacterInput {
-  const { name, background, equipment, credits, note, dead, upp } = character;
-  return { name, background, equipment, credits, note, dead, upp, skills: activeSkills(character).map(({ of, level }) => ({ of, level })) };
+  const { name, background, equipment, credits, note, dead, upp, possessions } = character;
+  return { name, background, equipment, credits, note, dead, upp, possessions, skills: activeSkills(character).map(({ of, level }) => ({ of, level })) };
+}
+
+/** Beginnt oder ersetzt die Charaktererschaffung der Kampagne; `undefined` verwirft sie. */
+export function setGeneration(campaign: Campaign, generation: Generation | undefined): Campaign {
+  const { id, name, characters, odds, log } = campaign;
+  return generation ? { id, name, characters, odds, log, generation } : { id, name, characters, odds, log };
 }

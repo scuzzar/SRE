@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { validateCharacter, validName, type Campaign, type CampaignId, type Character } from './campaign';
+import { replay, type Career, type CareerRoll } from './career';
 import { DomainError } from './errors';
 import { withQuestion, type LogEntry } from './log';
 import { entryOf, oddsOf, slotOfEntry } from './reference';
@@ -34,6 +35,21 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
   }),
 ]);
 
+const CareerRollSchema = z.object({
+  kind: z.enum(['characteristic', 'enlistment', 'draft', 'survival', 'commission', 'promotion', 'skill', 'aging', 'crisis', 'reenlist', 'cash', 'benefit']),
+  dice: z.array(die).min(1).max(2),
+  dm: z.number().int(),
+  target: z.number().int().optional(),
+  wants: z.boolean().optional(),
+  of: z.enum(characteristics).optional(),
+  for: z.string().optional(),
+  on: z.string().optional(),
+  gained: z.string().optional(),
+  chosen: z.string().optional(),
+  against: z.string().optional(),
+});
+const CareerSchema = z.object({ rolls: z.array(CareerRollSchema) });
+
 const value = z.number();
 const CharacterSchema = z.object({
   id: z.string().min(1),
@@ -46,6 +62,8 @@ const CharacterSchema = z.object({
   retired: z.boolean(),
   upp: z.object({ str: value, dex: value, end: value, int: value, edu: value, soc: value }),
   skills: z.array(z.object({ of: z.string(), level: z.number(), retired: z.boolean() })),
+  possessions: z.array(z.object({ of: z.string(), count: z.number() })).default([]),
+  career: CareerSchema.optional(),
 });
 
 const CampaignFileSchema = z.object({
@@ -56,13 +74,14 @@ const CampaignFileSchema = z.object({
     odds: z.string(),
     characters: z.array(CharacterSchema),
     log: z.array(LogEntrySchema),
+    generation: z.object({ career: CareerSchema }).optional(),
   }),
 });
 
 /** Die Kampagne als Inhalt einer Kampagnendatei. */
 export function toCampaignFile(campaign: Campaign): string {
-  const { name, odds, characters, log } = campaign;
-  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { name, odds, characters, log } }, null, 2);
+  const { name, odds, characters, log, generation } = campaign;
+  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { name, odds, characters, log, generation } }, null, 2);
 }
 
 /** Ein Dateiname aus dem Namen der Kampagne und dem Tag, z. B. „Spinward-Run-2026-10-25.json“. */
@@ -89,14 +108,32 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
   }
   try {
     const file = parsed.data.campaign;
-    const characters: Character[] = file.characters.map((c) => ({ ...c, skills: c.skills.map((s) => ({ ...s })) }));
-    const campaign: Campaign = { id, name: validName(file.name), odds: oddsOf(file.odds).id, characters, log: file.log.map(logEntry) };
+    const characters: Character[] = file.characters.map(({ career, ...c }) => ({
+      ...c,
+      skills: c.skills.map((s) => ({ ...s })),
+      ...(career ? { career: careerOf(career) } : {}),
+    }));
+    const campaign: Campaign = {
+      id,
+      name: validName(file.name),
+      odds: oddsOf(file.odds).id,
+      characters,
+      log: file.log.map(logEntry),
+      ...(file.generation ? { generation: { career: careerOf(file.generation.career) } } : {}),
+    };
     validate(campaign);
     return campaign;
   } catch (error) {
     if (error instanceof DomainError) throw new DomainError(`Die Kampagne in der Datei verletzt eine Regel: ${error.message}`);
     throw error;
   }
+}
+
+/** Ein Lebenslauf ohne leere optionale Felder, wie er im Spielstand steht. */
+function careerOf(career: z.infer<typeof CareerSchema>): Career {
+  return {
+    rolls: career.rolls.map((roll) => Object.fromEntries(Object.entries(roll).filter(([, v]) => v !== undefined)) as unknown as CareerRoll),
+  };
 }
 
 /** Ohne leere optionale Felder, wie sie im Spielstand stehen. */
@@ -122,7 +159,10 @@ function validate(campaign: Campaign): void {
     if (ids.has(character.id)) throw new DomainError(`Die Id ${character.id} kommt doppelt vor.`);
     ids.add(character.id);
     validateCharacter({ ...character, skills: character.skills });
+    // Ein Lebenslauf wird von vorn nachgespielt; am Charakter ist er abgeschlossen.
+    if (character.career && replay(character.career).step !== 'name') throw new DomainError(`Der Lebenslauf von ${character.name} ist nicht abgeschlossen.`);
   }
+  if (campaign.generation) replay(campaign.generation.career);
   for (const entry of campaign.log) {
     switch (entry.kind) {
       case 'oracle':
