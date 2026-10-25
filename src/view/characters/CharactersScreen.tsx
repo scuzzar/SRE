@@ -62,7 +62,7 @@ export function CharactersScreen({ view }: { view: Snapshot }) {
             className="roll"
             disabled={!task?.ready}
             onClick={() => {
-              haptic('shake');
+              haptic('land');
               game.rollTask();
             }}
           >

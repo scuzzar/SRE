@@ -160,8 +160,13 @@ export class GameController {
     this.change(campaign, { result: campaign.log.length - 1 });
   }
 
-  /** Schließt das Ergebnis; danach geht es zurück zum Orakel, wo geloggt wird. */
+  /** „Weiter“: schließt das Ergebnis und bleibt im Charakter-Screen; die Probe bleibt vorbereitet. */
   closeResult(): void {
+    this.update({ result: undefined });
+  }
+
+  /** „Zum Orakel“: schließt das Ergebnis und geht zum Orakel, wo der Log steht. */
+  closeResultToOracle(): void {
     this.update({ result: undefined, task: undefined, screen: 'oracle' });
   }
 

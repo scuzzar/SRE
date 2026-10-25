@@ -8,7 +8,7 @@ async function openCharacters(page: Page) {
 const card = (page: Page, name: string) => page.getByRole('article', { name });
 const dock = (page: Page) => page.getByRole('region', { name: 'Probe' });
 
-test('Probe: Fertigkeit, dann Attribute, Schwierigkeit unten, Ergebnis als Popup, zurück zum Orakel', async ({ page }) => {
+test('Probe: Fertigkeit, dann Attribute, Schwierigkeit unten, Ergebnis als Popup, zum Orakel', async ({ page }) => {
   await openCharacters(page);
   const kira = card(page, 'Kira Vant');
   await expect(dock(page).getByRole('button', { name: 'Probe würfeln' })).toBeDisabled();
@@ -37,7 +37,7 @@ test('Probe: Fertigkeit, dann Attribute, Schwierigkeit unten, Ergebnis als Popup
   await expect(result.getByRole('heading')).toHaveText(/ERFOLG|FEHLSCHLAG/);
   await expect(result).toContainText(/2W6: [1-6] \+ [1-6] = \d+, DM \+3 → \d+/);
 
-  await result.getByRole('button', { name: 'Weiter zum Orakel' }).click();
+  await result.getByRole('button', { name: 'Zum Orakel' }).click();
   await expect(page.getByRole('button', { name: 'Karte ziehen' })).toBeVisible();
   const entry = page.locator('.entry').last();
   await expect(entry).toContainText('Probe');
@@ -55,6 +55,11 @@ test('Probe ohne Fertigkeit: direkt aus der Karte gestartet, unmöglich, aber w�
   await expect(dock(page)).toContainText('2W6 −3 · Unmöglich');
   await dock(page).getByRole('button', { name: 'Probe würfeln' }).click();
   await expect(page.getByRole('alertdialog').getByRole('heading')).toHaveText('FEHLSCHLAG');
+  // „Weiter“ bleibt im Charakter-Screen, die Probe bleibt vorbereitet.
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByRole('alertdialog')).toBeHidden();
+  await expect(dock(page)).toContainText('Ohne Fertigkeit · 10+');
+  await expect(dock(page).getByRole('button', { name: 'Probe würfeln' })).toBeEnabled();
 });
 
 test('Charakter anlegen: Fehler im Editor, dann gespeichert', async ({ page }) => {
@@ -85,7 +90,7 @@ test('Wer im Log vorkommt, wird ausgeblendet statt gelöscht und lässt sich wie
   await jonas.getByRole('button', { name: /Jonas Reyl/ }).click();
   await jonas.getByRole('button', { name: 'Steward-1' }).click();
   await dock(page).getByRole('button', { name: 'Probe würfeln' }).click();
-  await page.getByRole('button', { name: 'Weiter zum Orakel' }).click();
+  await page.getByRole('button', { name: 'Zum Orakel' }).click();
   await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
 
   await jonas.getByRole('button', { name: /Jonas Reyl/ }).click();

@@ -43,7 +43,8 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
 - **Er wählt, welche View zu sehen ist**: Orakel- oder Charakter-Screen (`showScreen(screen)`) und
   das Ergebnis-Popup, und ob die Details des Charakters der Probe aufgeklappt sind (die Fertigkeit
   antippen startet eine Probe, ohne aufzuklappen; erst der Name klappt auf). Auch der Ablauf ist
-  seine Sache, etwa „nach dem Schließen des Ergebnisses zurück zum Orakel“ (`closeResult()`). Die Inspirationskarte steht im Vordergrund, solange es eine offene
+  seine Sache, etwa „nach dem Ergebnis weiter im Charakter-Screen oder zum Orakel“ (`closeResult()`,
+  `closeResultToOracle()`). Die Inspirationskarte steht im Vordergrund, solange es eine offene
   `Card` gibt; das folgt aus dem Model und braucht keinen eigenen Zustand.
 
 Die View sieht das Model nur lesend (`Readonly`-Typen); ein Schreibzugriff aus der View ist ein
@@ -76,7 +77,7 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
   `Readonly`-Typen für alles, was der Controller der View gibt.
 - **Regeln und Ablauf:** Unit-Tests mit Vitest für Model und Controller, darunter die Beispiele aus
   der README (Kira, Jonas). Weil der Controller den Ablauf hält, lässt sich auch „Probe würfeln →
-  Popup → zurück zum Orakel“ ohne Browser testen. Playwright prüft die Oberfläche bei 390 × 844.
+  Popup → weiter oder zum Orakel“ ohne Browser testen. Playwright prüft die Oberfläche bei 390 × 844.
 
 ## Befehle
 
