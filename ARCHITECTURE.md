@@ -62,7 +62,10 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
 - Die View rechnet nichts aus, was eine Regel ist, und entscheidet nichts über den Ablauf. Welche
   Attribute wählbar sind, welcher DM gilt, was auf 2W6 nötig ist und wie wahrscheinlich das ist,
   liefert das Model über den Snapshot des Controllers. Die View hält nur, was reine Darstellung ist:
-  die Anordnung von Feldern und Tafeln, den Text im Fragefeld während des Tippens, die Scrollposition.
+  die Anordnung von Feldern und Tafeln, den Text im Fragefeld während des Tippens, die Scrollposition,
+  Animationen und Vibration (`view/Dice.tsx`, `view/haptics.ts`). Eine Animation zeigt nur, was schon
+  im Snapshot steht: Der Wurf ist geloggt, bevor die Würfel rollen. Sie darf den Aufruf des
+  Controllers kurz aufschieben (die Karte gleitet hinaus, dann `confirmCard()`), aber nie ersetzen.
   Faustregel: Braucht der Controller es für eine Entscheidung, gehört es dem Controller.
 
 ## Wie die Regeln geprüft werden

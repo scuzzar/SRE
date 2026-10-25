@@ -1,12 +1,19 @@
+import { useCallback, useState } from 'react';
 import type { Snapshot } from '../../controller';
 import { useGame } from '../game-context';
+import { animated, haptic } from '../haptics';
 import { CardIcon, DiceIcon } from '../icons';
 import { OddsBar } from '../OddsBar';
+import { DiceRoll } from './DiceRoll';
 import { LogList } from './LogList';
 
 /** Der Text im Fragefeld während des Tippens ist reine Darstellung; übergeben wird er beim Absenden. */
 export function OracleScreen({ view, question, onQuestion }: { view: Snapshot; question: string; onQuestion: (q: string) => void }) {
   const game = useGame();
+  // Welcher Logeintrag gerade als Wurf im Vordergrund rollt; reine Anzeige, im Log steht er schon.
+  const [rolling, setRolling] = useState<number | undefined>(undefined);
+  const rolled = rolling === undefined ? undefined : view.log[rolling];
+  const done = useCallback(() => setRolling(undefined), []);
 
   return (
     <div className="screen">
@@ -32,11 +39,26 @@ export function OracleScreen({ view, question, onQuestion }: { view: Snapshot; q
           }}
         />
         <div className="actions">
-          <button type="button" className="action draw" onClick={() => game.drawCard(question)}>
+          <button
+            type="button"
+            className="action draw"
+            onClick={() => {
+              haptic('draw');
+              game.drawCard(question);
+            }}
+          >
             <CardIcon />
             Karte ziehen
           </button>
-          <button type="button" className="action dice" onClick={() => game.rollDice()}>
+          <button
+            type="button"
+            className="action dice"
+            onClick={() => {
+              haptic('shake');
+              game.rollDice();
+              if (animated()) setRolling(view.log.length);
+            }}
+          >
             <DiceIcon />
             2W6
           </button>
@@ -55,6 +77,7 @@ export function OracleScreen({ view, question, onQuestion }: { view: Snapshot; q
           </button>
         </div>
       </section>
+      {rolled?.kind === 'dice' && <DiceRoll key={rolling} item={rolled} seed={rolling ?? 0} onDone={done} />}
     </div>
   );
 }

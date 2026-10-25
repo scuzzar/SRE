@@ -1,6 +1,7 @@
 import type { Snapshot } from '../../controller';
 import { needText, signed, taskFigures, taskHeadline } from '../format';
 import { useGame } from '../game-context';
+import { haptic } from '../haptics';
 import { DiceIcon } from '../icons';
 import { OddsBar } from '../OddsBar';
 import { CharacterCard } from './CharacterCard';
@@ -56,7 +57,15 @@ export function CharactersScreen({ view }: { view: Snapshot }) {
         </div>
         <div className="odds-row">
           <OddsBar odds={view.odds} variant="task" />
-          <button type="button" className="roll" disabled={!task?.ready} onClick={() => game.rollTask()}>
+          <button
+            type="button"
+            className="roll"
+            disabled={!task?.ready}
+            onClick={() => {
+              haptic('shake');
+              game.rollTask();
+            }}
+          >
             <DiceIcon />
             Probe würfeln
           </button>

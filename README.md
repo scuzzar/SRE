@@ -21,7 +21,9 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
   - Man tippt die Felder an, die man nutzen will (**Mehrfachauswahl**, auch über mehrere Themen hinweg). Ein Feld aus Mythic zieht immer ein **Paar** von Begriffen (verraten · Technologie); man nimmt das Paar immer ganz.
   - Unten bestätigt ein **Haken** die Auswahl: Nur die ausgewählten Einträge kommen in den Log.
   - Außerdem: Karte verwerfen oder neu ziehen.
-- **Knopf „2W6“**: ein einfacher Würfelwurf durch die App.
+  - Die Karte kommt mit ihrem Rücken nach oben aus dem Daumenbereich und wird umgedreht; „Neu ziehen“ dreht eine neue Karte um. Verwerfen und Übernehmen lassen sie hinausgleiten.
+- **Knopf „2W6“**: ein einfacher Würfelwurf durch die App. Zwei Würfel werden im Vordergrund geworfen, angelehnt an Baldur's Gate 3: dunkle Würfel mit goldenen Augen, die aufschlagen, liegen bleiben und aufleuchten; dann die Summe. Ein Tippen überspringt.
+- **Animation und Vibration**: Würfeln und Karte sind kurz animiert (unter zwei Sekunden) und vibrieren dazu (Android über die Vibrations-API, iPhone ab iOS 18 über einen kurzen Ruck). Wer im System „Bewegung reduzieren“ eingestellt hat, sieht gleich das Ergebnis.
 - **Log**: Orakelantworten, Würfe und die ausgewählten Karteneinträge landen untereinander im Log, das neueste unten.
 
 **Zweiter Screen: Charaktere**
@@ -30,7 +32,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
   - Auf der Charakterkarte die **Fertigkeit** antippen (oder „Ohne“ für −3); die Fertigkeiten stehen immer sichtbar unter dem UPP, mit einem Kürzel aus drei Zeichen (Pil-2), damit sie in eine Zeile passen; ein Tippen startet die Probe direkt, ohne die Karte aufzuklappen. Erst ein Tippen auf den Namen klappt die Details auf: volle Namen, Ausrüstung, Credits und Notiz. Herkunft, Terms und Alter stehen in der Zeile des Namens.
   - **Attribute** sind standardmäßig nicht dabei und lassen sich **erst nach der Fertigkeit** dazuwählen; ein Tippen auf ein Attribut im UPP schaltet es an oder aus; der DM ergibt sich aus dem Wert (9+ → +1, 6–8 → ±0, 5− → −1). Sobald die Fertigkeit gewählt ist, zeigt jedes Attribut an, ob es überhaupt +1 oder −1 brächte; neutrale Werte sind nicht wählbar.
   - **Unten** stehen fest die drei Schwierigkeiten **6+ / 8+ / 10+** (dieselbe Auswahl wie Hoch/Mittel/Gering beim Orakel), in derselben Zeile der Knopf „Probe würfeln“. Darüber steht knapp die Probe: die Fertigkeit ausgeschrieben mit Zielwert (Pilot-2 · 10+), darunter DM, gewählte Attribute und der nötige Wurf (2W6 +3 (DEX +1) · Braucht 7+). Ohne Prozente und ohne den Namen des Charakters, der ist auf seiner Karte markiert.
-  - Das **Ergebnis erscheint als Popup**. Danach geht es zurück zum Orakel-Screen; **geloggt wird nur dort**. Der Charakter-Screen hat keinen Log.
+  - Das **Ergebnis erscheint als Popup**, wie in Baldur's Gate 3: oben der Zielwert, darunter rollen die Würfel, dann kommt der DM dazu, zuletzt fällt das Urteil (Erfolg golden, Fehlschlag rot). Ein Tippen springt zum Urteil. Danach geht es zurück zum Orakel-Screen; **geloggt wird nur dort**. Der Charakter-Screen hat keinen Log.
 
 **UI-Entwurf:** Der klickbare Entwurf liegt in [docs/ui-entwurf](docs/ui-entwurf/).
 
