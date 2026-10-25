@@ -1666,6 +1666,62 @@ button:disabled {
   justify-content: flex-start;
 }
 
+/* Die Fertigkeitstabellen nebeneinander wie im Chart; eine Spalte antippen würfelt darauf. */
+.skill-tables {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.skill-tables button {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 6px 4px;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  text-align: left;
+}
+
+.skill-tables button strong {
+  min-height: 2.6em;
+  font-size: 11px;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.skill-tables ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.skill-tables li {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr);
+  gap: 3px;
+  font-size: 11px;
+  line-height: 1.2;
+  hyphens: auto;
+  overflow-wrap: break-word;
+}
+
+.skill-tables li .mono {
+  color: var(--gold);
+}
+
+.skill-tables button:disabled {
+  opacity: 0.35;
+}
+
+.skill-tables button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
 .choice-grid.scroll-choices {
   max-height: 38vh;
   overflow-y: auto;

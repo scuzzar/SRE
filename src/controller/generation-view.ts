@@ -23,6 +23,7 @@ import {
   type Characteristic,
   type DmSource,
   type Effect,
+  type Gain,
   type Generation,
   type GenerationStep,
   type Item,
@@ -48,7 +49,12 @@ export interface CareerLine {
 export type GenerationAction =
   | { readonly kind: 'roll'; readonly label: string; readonly dice: 1 | 2; readonly odds: ThrowOdds | undefined }
   | { readonly kind: 'service'; readonly options: readonly ({ readonly id: string; readonly name: string } & ThrowOdds)[] }
-  | { readonly kind: 'skill'; readonly left: number; readonly options: readonly { readonly id: string; readonly name: string; readonly available: boolean }[] }
+  | {
+      readonly kind: 'skill';
+      readonly left: number;
+      /** Die Tabellen der Laufbahn mit ihren Zeilen, je Zeile was sie bringt („+1 STR“, „Blade Combat“). */
+      readonly options: readonly { readonly id: string; readonly name: string; readonly available: boolean; readonly rows: readonly string[] }[];
+    }
   | { readonly kind: 'cascade'; readonly name: string; readonly options: readonly { readonly skill: string; readonly name: string; readonly item: string | undefined }[] }
   | { readonly kind: 'reenlist'; readonly odds: ThrowOdds; readonly last: boolean }
   | {
@@ -91,6 +97,16 @@ function credits(n: number): string {
 
 function signed(n: number): string {
   return n > 0 ? `+${n}` : n < 0 ? `−${Math.abs(n)}` : '±0';
+}
+
+/** Was eine Zeile einer Tabelle bringt, knapp: „+1 STR“, „Pilot“, „Blade Combat“, „Low Passage“, „Cr 5.000“. */
+export function gainText(gain: Gain): string {
+  if (gain.skill !== undefined) return skillOf(gain.skill).name;
+  if (gain.choose !== undefined) return ref.cascades.find((c) => c.id === gain.choose)?.name ?? gain.choose;
+  if (gain.characteristic !== undefined) return `${signed(gain.change!)} ${gain.characteristic}`;
+  if (gain.item !== undefined) return itemLabel(itemOf(gain.item));
+  if (gain.credits !== undefined) return credits(gain.credits);
+  return '–';
 }
 
 function effectText(effect: Effect): string | undefined {
@@ -263,6 +279,7 @@ export function generationView(generation: Generation, error: string | undefined
           id: table.id,
           name: table.minEdu === undefined ? table.name : `${table.name} (EDU ${table.minEdu}+)`,
           available,
+          rows: table.rows.map(gainText),
         })),
       };
       break;
