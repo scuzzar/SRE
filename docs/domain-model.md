@@ -57,8 +57,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Fertigkeit | `Skill` | Eine Fertigkeit aus der Liste, z. B. Pilot |
 | Kürzel | `Skill.short` | Drei Zeichen für eine Fertigkeit, z. B. Pil für Pilot |
 | Fertigkeitsstufe | `SkillLevel` | Die Stufe, die ein Charakter in einer Fertigkeit hat, z. B. Pilot-2 |
-| Gegenstand | `Item` | Etwas aus der festen Liste, das man besitzen kann: Waffe, Passage, Mitgliedschaft, Schiff |
-| Art des Gegenstands | `ItemKind` | weapon, passage, membership, ship |
+| Gegenstand | `Item` | Etwas aus der festen Liste, das man besitzen kann, mit TL, Gewicht und Preis aus den Charts |
+| Art des Gegenstands | `ItemKind` | weapon, ammunition, armor, equipment, vehicle, ship, passage, membership |
+| TL | `Item.tl` | Tech Level, ab dem es den Gegenstand gibt |
 | Besitz | `Possession` | Ein Gegenstand, den ein Charakter hat, mit Anzahl, z. B. 2 × Low Passage |
 | Stufe (Hoch/Mittel/Gering) | `Odds` | Die eine Auswahl für Orakel und Proben |
 | Hausregeln | `HouseRules` | Die Zahlen, nach denen Proben gerechnet werden |
@@ -196,11 +197,24 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   aus der festen Liste höchstens ein Eintrag, mit einer Anzahl von 1 oder mehr (3 × Low Passage,
   2 × Free Trader für zwei abbezahlte Raten). Ein Gegenstand mit `once` hat immer die Anzahl 1. Im
   Editor lässt sich Besitz hinzufügen, zählen und entfernen wie Fertigkeiten; entfernt wird er
-  wirklich, weil der Log nicht auf ihn verweist. Die Liste umfasst zunächst, was die Abmusterung
-  bringen kann: alle Klingen und Schusswaffen der Charts (jede nutzt genau ihre Fertigkeit, `uses`),
-  Low, Middle und High Passage, Travellers' Aid Society, Scout Ship und Free Trader. Preise, Gewichte,
-  Rüstungen und Kaufen kommen später mit Kampf und Handel. Alles andere bleibt freier Text in der
-  Ausrüstung (`equipment`). Schiffe sind vorerst nur ein Gegenstand; Schiffskarten kommen später.
+  wirklich, weil der Log nicht auf ihn verweist.
+  - **Die Liste** kommt aus den Charts der Starter Edition: *Personal Equipment and Vehicles* (S. 23:
+    Ausrüstung, Kommunikatoren, Geräte, Sichthilfen, Werkzeug, Unterkünfte, Fahrzeuge, Small Craft,
+    Waffen mit Munition und Energiezellen, Rüstungen), dazu die Passagen (Ship Revenues, S. 9: High
+    Cr 10.000, Middle Cr 8.000, Low Cr 1.000), die Schiffe aus der Abmusterung (Standard Ship
+    Designs, S. 11: Scout MCr 29,43, Free Trader MCr 37,08) und die Travellers' Aid Society. Jede
+    Klinge und Schusswaffe nutzt genau ihre Fertigkeit (`uses`).
+  - **TL, Gewicht und Preis** (`tl`, `weight`, `price`) stehen, wie in den Charts angegeben. Das
+    Gewicht ist immer in kg (S. 4 nennt Gramm, S. 23 bei Fahrzeugen Tonnen = 1000 kg), der Preis
+    immer in Cr (KCr und MCr umgerechnet). Was die Charts nicht angeben, fehlt (Club und die
+    Travellers' Aid Society haben keinen Preis, Passagen und Mitgliedschaft kein Gewicht). Bei Schiffen und Small Craft sind „tons“
+    Verdrängung, kein Gewicht; sie haben deshalb keins. Gibt es einen Gegenstand in mehreren TL
+    (Vacc Suit TL 8 bis 13), ist jede Zeile ein eigener Gegenstand mit eigener Id. Was eine Zeile
+    „10 % of price“ kostet (Accessories), ist kein Gegenstand.
+  - **Später**, mit Kampf und Handel: Kampfwerte der Waffen und Rüstungen (S. 4: Länge, nötige
+    Stärke, DMs, Reichweite), Kaufen und Verkaufen, Gesamtgewicht. Schiffe sind vorerst nur ein
+    Gegenstand; Schiffskarten kommen später. Alles, was nicht in der Liste steht, bleibt freier Text
+    in der Ausrüstung (`equipment`).
 - **Löschen und Ausblenden.** Ein Charakter oder eine Fertigkeitsstufe, auf die kein Logeintrag
   verweist, wird wirklich gelöscht. Verweist der Log darauf, wird sie stattdessen ausgeblendet
   (`retired`): Sie verschwindet aus dem Charakter-Screen und lässt sich nicht mehr für Proben wählen,
@@ -311,7 +325,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
 ## Offene Fragen
 
-Zur Charaktererschaffung; das Bild zeigt jeweils die empfohlene Antwort.
+Zur Charaktererschaffung und zu den Gegenständen; das Bild zeigt jeweils die empfohlene Antwort.
 
 1. **Erschaffung speichern?** Empfehlung: ja, als Teil der Kampagne (blau). Eine Erschaffung dauert
    einige Minuten; schließt das Handy die App, wäre sie sonst weg, und man könnte durch Neuladen neu
@@ -325,6 +339,9 @@ Zur Charaktererschaffung; das Bild zeigt jeweils die empfohlene Antwort.
 4. **Welche Laufbahnen?** Empfehlung: die sechs aus dem Regelwerk (Navy, Marines, Army, Scouts,
    Merchants, Other). Das Vorbild hat 17 (aus *Citizens of the Imperium*); sie ließen sich später als
    Daten ergänzen, ohne das Modell zu ändern.
+5. **Wie viel von der Liste der Gegenstände jetzt?** Empfehlung: alles von S. 23 und dazu Passagen,
+   Schiffe und TAS (siehe *Gegenstände*), damit man im Editor gleich jede Ausrüstung als Besitz
+   eintragen kann. Alternative: nur, was die Abmusterung bringen kann; der Rest bliebe freier Text.
 
 Dazu ohne Frage, nur zur Kenntnis: In die Liste der Fertigkeiten kommen Brawling, Forgery und die
 einzelnen Fahrzeuge (Grav, Tracked, Wheeled, Prop-driven und Jet-driven Fixed Wing, Helicopter, Large

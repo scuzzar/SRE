@@ -175,13 +175,20 @@ hide <<value>> stereotype
   class Item <<reference>> {
     name: string
     kind: ItemKind
+    tl: number [0..1]
+    weight: number [0..1]
+    price: number [0..1]
     once: boolean
   }
   enum ItemKind <<value>> {
     weapon
+    ammunition
+    armor
+    equipment
+    vehicle
+    ship
     passage
     membership
-    ship
   }
   class Cascade <<reference>> {
     name: string
