@@ -156,9 +156,9 @@ function hexPoints(r: number): string {
 }
 
 /**
- * Das Emblem der App: das Zeichen aus public/icon.svg (roter Balken, Würfel mit zwei Augen) in einem
- * Sechseck wie auf einer Traveller-Sektorkarte, umkreist von einer Kursanzeige und einer Umlaufbahn.
- * Steht auf dem Rücken der Inspirationskarte.
+ * Das Emblem der App: roter Balken und Würfel mit zwei Augen in einem Sechseck wie auf einer
+ * Traveller-Sektorkarte, umkreist von einer Kursanzeige und einer Umlaufbahn. Steht auf dem Rücken der
+ * Inspirationskarte und ist das App-Icon (public/icon.svg; vereinfacht als public/favicon.svg).
  */
 export function Emblem({ className }: { className?: string }) {
   return (
