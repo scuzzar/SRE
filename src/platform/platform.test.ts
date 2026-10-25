@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
+import Dexie from 'dexie';
 import { describe, expect, it } from 'vitest';
-import { appendLog, createCampaign, type LogEntry } from '../model';
+import { appendLog, createCampaign, type Campaign, type Character, type LogEntry } from '../model';
 import { systemClock } from './clock';
 import { cryptoRandom } from './random';
 import { DexieCampaignRepository, MemoryCampaignRepository, upgraded } from './repository';
@@ -32,12 +33,19 @@ describe.each([
   ['Dexie', () => new DexieCampaignRepository(`test-${Math.random()}`).open()],
   ['Arbeitsspeicher', async () => new MemoryCampaignRepository()],
 ])('Speicher (%s)', (_, open) => {
-  it('ist anfangs leer und gibt den gespeicherten Stand zurück', async () => {
+  it('ist anfangs leer und gibt die gespeicherten Kampagnen zurück', async () => {
     const repository = await open();
-    expect(await repository.load()).toBeUndefined();
+    expect(await repository.list()).toEqual([]);
+    expect(await repository.loadOpen()).toBeUndefined();
     const campaign = appendLog(createCampaign(), { kind: 'dice', at: '2026-10-23T14:00:00.000Z', dice: [3, 4] });
+    const other = createCampaign([], 'Zweite', 'k2');
     await repository.save(campaign);
-    expect(await repository.load()).toEqual(campaign);
+    await repository.save(other);
+    await repository.saveOpen('k2');
+    expect([...(await repository.list())].sort((a, b) => a.id.localeCompare(b.id))).toEqual([campaign, other]);
+    expect(await repository.loadOpen()).toBe('k2');
+    await repository.remove('k1');
+    expect(await repository.list()).toEqual([other]);
   });
 });
 
@@ -48,6 +56,25 @@ describe('Ältere Spielstände', () => {
     expect(upgraded(campaign).log).toEqual([{ kind: 'card', at: '2026-10-23T14:00:00.000Z', items: [{ picked: ['event.verb.3'] }] }]);
     const repository = await new DexieCampaignRepository(`test-${Math.random()}`).open();
     await repository.save(campaign);
-    expect((await repository.load())?.log).toEqual(upgraded(campaign).log);
+    expect((await repository.list())[0]?.log).toEqual(upgraded(campaign).log);
+  });
+
+  it('übernehmen die eine Kampagne aus der Zeit vor mehreren Kampagnen', async () => {
+    const name = `test-${Math.random()}`;
+    const old = new Dexie(name);
+    old.version(1).stores({ campaigns: 'key' });
+    const campaign: { -readonly [K in keyof Campaign]?: Campaign[K] } = createCampaign();
+    delete campaign.id;
+    await old.table('campaigns').put({ key: 'current', campaign });
+    old.close();
+    const repository = await new DexieCampaignRepository(name).open();
+    const [loaded] = await repository.list();
+    expect(loaded).toEqual({ ...campaign, id: 'current' });
+
+    // Ein Charakter von vor „tot“ lebt.
+    const older = { ...campaign.characters![0]!, dead: undefined } as unknown as Character;
+    expect(upgraded({ ...createCampaign(), characters: [older] }).characters[0]?.dead).toBe(false);
+    await repository.save({ ...loaded!, name: 'Spinward' });
+    expect((await repository.list()).map((c) => [c.id, c.name])).toEqual([['current', 'Spinward']]);
   });
 });

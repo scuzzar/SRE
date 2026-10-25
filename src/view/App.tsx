@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { AboutScreen } from './AboutScreen';
+import { CampaignSheet } from './CampaignSheet';
 import { CharacterEditor } from './characters/CharacterEditor';
 import { CharactersScreen } from './characters/CharactersScreen';
 import { FullscreenButton } from './FullscreenButton';
 import { ResultDialog } from './characters/ResultDialog';
 import { useGame, useSnapshot } from './game-context';
-import { InfoIcon, OracleIcon, PersonIcon } from './icons';
+import { ChevronDownIcon, InfoIcon, OracleIcon, PersonIcon } from './icons';
 import { CardSheet } from './oracle/CardSheet';
 import { OracleScreen } from './oracle/OracleScreen';
 
@@ -22,7 +23,10 @@ export function App() {
   return (
     <div className="app">
       <header className="header">
-        <span className="brand">SOLO RPG ENGINE</span>
+        <button type="button" className="brand campaign-switch" aria-label={`Kampagne ${view.campaign.name}, wechseln oder verwalten`} onClick={() => game.showCampaigns()}>
+          <span className="campaign-name">{view.campaign.name}</span>
+          <ChevronDownIcon />
+        </button>
         <span className="header-right">
           {titles[view.screen]}
           <FullscreenButton />
@@ -61,6 +65,7 @@ export function App() {
       {view.card && <CardSheet card={view.card} onConfirmed={() => setQuestion('')} />}
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} />}
       {view.result && <ResultDialog result={view.result} />}
+      {view.campaignSheet && <CampaignSheet key={view.campaign.id} sheet={view.campaignSheet} campaigns={view.campaigns} open={view.campaign} />}
     </div>
   );
 }

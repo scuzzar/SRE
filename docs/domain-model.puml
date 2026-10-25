@@ -43,6 +43,7 @@ hide <<value>> stereotype
     equipment: string
     credits: number
     note: string
+    dead: boolean
     retired: boolean
   }
   class Upp <<value>> {

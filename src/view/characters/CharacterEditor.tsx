@@ -135,6 +135,15 @@ export function CharacterEditor({ editor, skills }: { editor: EditorView; skills
             <textarea value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
           </label>
           {!isNew && (
+            <label className="toggle">
+              <input type="checkbox" checked={form.dead ?? false} onChange={(e) => setForm({ ...form, dead: e.target.checked })} />
+              <span>
+                Tot
+                <span className="small-label">Steht dann unter „Verstorben“ und ist für Proben nicht wählbar. Lässt sich zurücknehmen.</span>
+              </span>
+            </label>
+          )}
+          {!isNew && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {confirmRemove ? (
                 <button type="button" className="ghost danger" onClick={() => game.removeCharacter(editor.id!)}>

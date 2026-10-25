@@ -114,6 +114,47 @@ const senses: Record<string, { label: string; path: ReactNode }> = {
 const senseAliases: Record<string, string> = { sounds: 'hear', smells: 'smell' };
 
 /** Icon für einen Sinn; `sense` ist der letzte Teil der Feld-Id (hear, see, feel, smell, sounds, smells). */
+export function PencilIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 20l1-4.5L15.5 5a2.1 2.1 0 0 1 3 3L8 18.5 4 20z" />
+      <path d="M13.5 7l3 3" />
+    </svg>
+  );
+}
+
+export function TrashIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5" />
+    </svg>
+  );
+}
+
+export function DownloadIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14" />
+    </svg>
+  );
+}
+
+export function UploadIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 15.5V4.5M7.5 9L12 4.5 16.5 9M5 19.5h14" />
+    </svg>
+  );
+}
+
+export function ChevronDownIcon() {
+  return (
+    <svg {...base} width={16} height={16} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 9.5l6 6 6-6" />
+    </svg>
+  );
+}
+
 export function SenseIcon({ sense }: { sense: string }) {
   const icon = senses[senseAliases[sense] ?? sense];
   if (!icon) return null;

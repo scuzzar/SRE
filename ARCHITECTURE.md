@@ -18,14 +18,14 @@ sagt nur, wo die Teile liegen und wie sie miteinander reden.
 | 0 | `src/data/` | Referenzdaten: Tabellen als JSON, Schemas | — |
 | 1 | `src/model/` | **Model**: der gespeicherte Stand des Domänenmodells und seine Regeln | `data` |
 | 1a | `src/model/draft/` | **Model, Entwürfe**: `Card`, `Task`; flüchtig, nie gespeichert | `data`, `model` |
-| 2 | `src/platform/` | Was das Model von außen braucht: Speicher (Dexie), Zufall, Uhr | `model` ohne `draft` |
+| 2 | `src/platform/` | Was das Model von außen braucht: Speicher (Dexie), Zufall, Uhr, Download | `model` ohne `draft` |
 | 3 | `src/controller/` | **Controller**: eine Methode pro Absicht des Spielers | `model` mit `draft` |
 | 4 | `src/view/` | **View**: React-Komponenten | `controller`, `model` mit `draft` (nur Typen) |
 | 5 | `src/main.tsx` | Verdrahtung | alles |
 
 Plattform und Controller kennen sich nicht. Das Model definiert die Schnittstellen
-(`CampaignRepository`, `Random`, `Clock`), `platform/` setzt sie um (Dexie, `crypto.getRandomValues`,
-`Date`), und `main.tsx` reicht die Umsetzungen in den Controller. Physische Würfel (später) sind eine
+(`CampaignRepository`, `Random`, `Clock`, `Download`), `platform/` setzt sie um (Dexie,
+`crypto.getRandomValues`, `Date`, ein Link mit `download`), und `main.tsx` reicht die Umsetzungen in den Controller. Physische Würfel (später) sind eine
 zweite Umsetzung von `Random`, die das Ergebnis vom Spieler erfragt.
 
 Innerhalb des Models gilt dieselbe Richtung: `model/draft/` darf den gespeicherten Stand kennen, der
@@ -37,11 +37,15 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
 
 - **Er ändert das Model**, als Einziger, und speichert den Spielstand über das Repository:
   `askOracle(question)`, `rollDice()`, `drawCard(question)`, `togglePick(slot)`, `confirmCard()`,
-  `discardCard()`, `setOdds(odds)`, `chooseCharacter(c)`, `chooseSkill(c, skill)`,
-  `toggleCharacteristic(c)`, `rollTask()`. Offene Karte und Probe in Vorbereitung sind Teil des
+  `discardCard()`, `deleteLogEntry(index)`, `setOdds(odds)`, `chooseCharacter(c)`,
+  `chooseSkill(c, skill)`, `toggleCharacteristic(c)`, `rollTask()`; für Kampagnen
+  `openCampaign(id)`, `createCampaign(name)`, `renameCampaign(name)`, `deleteCampaign(id)`,
+  `exportCampaign(id)` und `importCampaign(text)`. Die View liest eine gewählte Datei nur als Text
+  ein und reicht ihn weiter; prüfen tut das Model (`fromCampaignFile`), anbieten zum Download der
+  Controller über `Download`. Offene Karte und Probe in Vorbereitung sind Teil des
   Models (`model/draft/`), werden aber nicht gespeichert.
-- **Er wählt, welche View zu sehen ist**: Orakel- oder Charakter-Screen (`showScreen(screen)`) und
-  das Ergebnis-Popup, und ob die Details des Charakters der Probe aufgeklappt sind (die Fertigkeit
+- **Er wählt, welche View zu sehen ist**: Orakel- oder Charakter-Screen (`showScreen(screen)`), die
+  Kampagnenwahl (`showCampaigns()`, `closeCampaigns()`) und das Ergebnis-Popup, und ob die Details des Charakters der Probe aufgeklappt sind (die Fertigkeit
   antippen startet eine Probe, ohne aufzuklappen; erst der Name klappt auf). Auch der Ablauf ist
   seine Sache, etwa „nach dem Ergebnis weiter im Charakter-Screen oder zum Orakel“ (`closeResult()`,
   `closeResultToOracle()`). Die Inspirationskarte steht im Vordergrund, solange es eine offene
@@ -63,7 +67,8 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
 - Die View rechnet nichts aus, was eine Regel ist, und entscheidet nichts über den Ablauf. Welche
   Attribute wählbar sind, welcher DM gilt, was auf 2W6 nötig ist und wie wahrscheinlich das ist,
   liefert das Model über den Snapshot des Controllers. Die View hält nur, was reine Darstellung ist:
-  die Anordnung von Feldern und Tafeln, den Text im Fragefeld während des Tippens, die Scrollposition,
+  die Anordnung von Feldern und Tafeln, den Text in Eingabefeldern während des Tippens, ob ein
+  Löschen gerade bestätigt werden will, das Erkennen von langem Drücken, die Scrollposition,
   Animationen und Vibration (`view/Dice.tsx`, `view/haptics.ts`). Eine Animation zeigt nur, was schon
   im Snapshot steht: Der Wurf ist geloggt, bevor die Würfel rollen. Sie darf den Aufruf des
   Controllers kurz aufschieben (die Karte gleitet hinaus, dann `confirmCard()`), aber nie ersetzen.
@@ -93,6 +98,8 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
 `dist/` auf GitHub Pages. Einmalig nötig: in den Repo-Einstellungen unter *Pages* als Quelle
 „GitHub Actions“ wählen. `.github/workflows/ci.yml` prüft jeden Pull Request (Check und GUI-Tests).
 
-**Speicher.** `platform/repository.ts` öffnet IndexedDB über Dexie. Geht das nicht (privates
+**Speicher.** `platform/repository.ts` öffnet IndexedDB über Dexie. Jede Kampagne liegt unter ihrer
+Id; welche offen ist, steht daneben unter `settings`. Die eine Kampagne aus der Zeit vor mehreren
+Kampagnen lag unter dem Schlüssel `current` und behält ihn als Id. Geht das nicht (privates
 Fenster, eingebettete Vorschau), läuft die App mit einem Speicher im Arbeitsspeicher weiter; der
 „Über“-Bildschirm sagt dann, dass nichts dauerhaft gespeichert wird.

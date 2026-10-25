@@ -124,12 +124,38 @@ button:disabled {
 
 .brand::before {
   content: '';
+  flex: 0 0 auto;
   width: 5px;
   height: 22px;
   background: var(--accent);
 }
 
+/* Die Kopfzeile trägt den Namen der offenen Kampagne; ein Tippen öffnet die Kampagnenwahl. */
+.campaign-switch {
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 6px 0 0;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  font-size: 15px;
+}
+
+.campaign-switch svg {
+  flex: 0 0 auto;
+  margin-left: -4px;
+  color: var(--muted);
+}
+
+.campaign-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .header-right {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -318,6 +344,31 @@ button:disabled {
 .entry.latest {
   background: var(--highlight);
   border-color: #666666;
+}
+
+/* Langes Drücken löscht: Das System soll dabei weder Text markieren noch ein Menü zeigen. */
+.log .entry {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.entry.confirming {
+  border-color: var(--accent);
+}
+
+.entry-delete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+  font-size: 13px;
+}
+
+.entry-delete span {
+  flex: 1 1 auto;
 }
 
 .entry-head {
@@ -821,7 +872,20 @@ button:disabled {
   border-color: var(--text);
 }
 
+.pc-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin: -2px -8px 0 0;
+}
+
+.pc-top .icon-button {
+  flex: 0 0 auto;
+}
+
 .pc-head {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -961,10 +1025,6 @@ button:disabled {
   color: var(--muted);
 }
 
-.pc-tools {
-  display: flex;
-  justify-content: flex-end;
-}
 
 .add-character {
   min-height: 48px;
@@ -980,6 +1040,66 @@ button:disabled {
   flex-direction: column;
   gap: 6px;
   padding-top: 4px;
+}
+
+.fallen {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.fallen ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fallen li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 4px 2px 14px;
+  border: 1px solid var(--rule-soft);
+  color: var(--muted);
+}
+
+.fallen-name {
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.fallen-name .pc-sub {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+}
+
+.form .toggle input {
+  flex: 0 0 auto;
+  width: 24px;
+  min-height: 24px;
+  height: 24px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+}
+
+.toggle > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 15px;
 }
 
 .retired li {
@@ -1145,6 +1265,87 @@ button:disabled {
   font-family: var(--mono);
   font-weight: 700;
   font-size: 16px;
+}
+
+/* Kampagnenwahl */
+.inline-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.inline-form .field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.inline-form .ghost {
+  flex: 0 0 auto;
+  min-height: 44px;
+}
+
+.campaigns {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.campaigns li {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.campaign-pick {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 12px;
+  background: var(--panel);
+  border: 1px solid var(--rule-soft);
+  text-align: left;
+}
+
+.campaigns li.open .campaign-pick {
+  border-color: var(--accent);
+  border-left-width: 4px;
+}
+
+.campaign-title {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.campaigns .ghost {
+  min-height: 56px;
+}
+
+.campaigns .ghost:disabled {
+  opacity: 0.35;
+}
+
+.import {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.import:focus-within {
+  outline: 2px solid var(--text);
 }
 
 .skill-row {

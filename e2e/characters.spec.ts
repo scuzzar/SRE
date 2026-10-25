@@ -49,7 +49,7 @@ test('Probe ohne Fertigkeit: direkt aus der Karte gestartet, unmöglich, aber w�
   await dock(page).getByRole('radio', { name: '10+' }).click();
   const jonas = card(page, 'Jonas Reyl');
   await jonas.getByRole('button', { name: 'Ohne (−3)' }).click();
-  await expect(jonas.getByRole('button', { name: 'Bearbeiten' })).toBeHidden();
+  await expect(jonas.getByText('Ausrüstung')).toBeHidden();
   await expect(jonas.getByRole('button', { name: 'Steward-1' })).toHaveText('Ste-1');
   await expect(dock(page)).toContainText('Ohne Fertigkeit · 10+');
   await expect(dock(page)).toContainText('2W6 −3 · Unmöglich');
@@ -93,7 +93,6 @@ test('Wer im Log vorkommt, wird ausgeblendet statt gelöscht und lässt sich wie
   await page.getByRole('button', { name: 'Zum Orakel' }).click();
   await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
 
-  await jonas.getByRole('button', { name: /Jonas Reyl/ }).click();
   await jonas.getByRole('button', { name: 'Bearbeiten' }).click();
   const editor = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
   await editor.getByRole('button', { name: 'Ausblenden' }).click();
@@ -107,11 +106,62 @@ test('Wer im Log vorkommt, wird ausgeblendet statt gelöscht und lässt sich wie
 test('Wer nicht im Log vorkommt, wird gelöscht', async ({ page }) => {
   await openCharacters(page);
   const kira = card(page, 'Kira Vant');
-  await kira.getByRole('button', { name: /Kira Vant/ }).click();
+  // Der Stift im Kopf öffnet den Editor, ohne die Details aufzuklappen.
   await kira.getByRole('button', { name: 'Bearbeiten' }).click();
   const editor = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
   await editor.getByRole('button', { name: 'Löschen' }).click();
   await editor.getByRole('button', { name: 'Wirklich löschen?' }).click();
   await expect(kira).toBeHidden();
   await expect(page.getByText('Ausgeblendet')).toBeHidden();
+});
+
+test('Logeintrag löschen: lange drücken, dann bestätigen; danach lässt sich der Charakter löschen', async ({ page }) => {
+  await openCharacters(page);
+  const jonas = card(page, 'Jonas Reyl');
+  await jonas.getByRole('button', { name: 'Steward-1' }).click();
+  await dock(page).getByRole('button', { name: 'Probe würfeln' }).click();
+  await page.getByRole('button', { name: 'Zum Orakel' }).click();
+  await page.getByRole('button', { name: '2W6' }).click();
+  await expect(page.locator('.entry')).toHaveCount(2);
+  await expect(page.locator('.dice-roll')).toBeHidden();
+
+  const entry = page.locator('.entry').first();
+  const box = (await entry.boundingBox())!;
+  await page.mouse.move(box.x + 40, box.y + 30);
+  await page.mouse.down();
+  await page.waitForTimeout(800);
+  await page.mouse.up();
+  const ask = entry.getByRole('group', { name: 'Eintrag löschen?' });
+  await ask.getByRole('button', { name: 'Behalten' }).click();
+  await expect(ask).toBeHidden();
+  await expect(page.locator('.entry')).toHaveCount(2);
+
+  await entry.dispatchEvent('contextmenu');
+  await ask.getByRole('button', { name: 'Löschen' }).click();
+  await expect(page.locator('.entry')).toHaveCount(1);
+  await expect(page.locator('.entry')).toContainText('Würfel · 2W6');
+
+  await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
+  await jonas.getByRole('button', { name: 'Bearbeiten' }).click();
+  const editor = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
+  await editor.getByRole('button', { name: 'Löschen' }).click();
+  await editor.getByRole('button', { name: 'Wirklich löschen?' }).click();
+  await expect(jonas).toBeHidden();
+});
+
+test('Tot: im Editor markieren, steht unter „Verstorben“, lässt sich zurücknehmen', async ({ page }) => {
+  await openCharacters(page);
+  await card(page, 'Kira Vant').getByRole('button', { name: 'Bearbeiten' }).click();
+  const editor = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
+  await editor.getByLabel(/^Tot/).check();
+  await editor.getByRole('button', { name: 'Speichern' }).click();
+  await expect(card(page, 'Kira Vant')).toBeHidden();
+  const fallen = page.getByRole('listitem', { name: 'Kira Vant, tot' });
+  await expect(fallen).toContainText('† Kira Vant');
+
+  await fallen.getByRole('button', { name: 'Bearbeiten' }).click();
+  await editor.getByLabel(/^Tot/).uncheck();
+  await editor.getByRole('button', { name: 'Speichern' }).click();
+  await expect(card(page, 'Kira Vant')).toBeVisible();
+  await expect(page.getByText('Verstorben')).toBeHidden();
 });

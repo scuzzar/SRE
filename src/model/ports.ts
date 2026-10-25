@@ -1,4 +1,4 @@
-import type { Campaign } from './campaign';
+import type { Campaign, CampaignId } from './campaign';
 
 /**
  * Was das Model von außen braucht. Das Model definiert die Schnittstellen, `platform/` setzt sie um,
@@ -16,8 +16,18 @@ export interface Clock {
   now(): string;
 }
 
-/** Der Speicher für den Spielstand. In Version 1 gibt es genau eine Kampagne. */
+/** Der Speicher für den Spielstand: alle Kampagnen, und welche zuletzt offen war. */
 export interface CampaignRepository {
-  load(): Promise<Campaign | undefined>;
+  /** Alle gespeicherten Kampagnen, in keiner bestimmten Reihenfolge. */
+  list(): Promise<readonly Campaign[]>;
   save(campaign: Campaign): Promise<void>;
+  remove(id: CampaignId): Promise<void>;
+  /** Welche Kampagne offen ist, merkt sich das Gerät; zum Spielstand gehört es nicht. */
+  loadOpen(): Promise<CampaignId | undefined>;
+  saveOpen(id: CampaignId): Promise<void>;
+}
+
+/** Gibt dem Spieler eine Datei zum Speichern, als Download. */
+export interface Download {
+  offer(fileName: string, content: string, type: string): void;
 }
