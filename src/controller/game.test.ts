@@ -196,6 +196,17 @@ describe('Charakter-Screen: Probe würfeln → Popup → weiter oder zum Orakel'
     expect(jonas.unskilled).toEqual({ dm: -3, chosen: true });
     expect(jonas.characteristics.filter((c) => c.selectable).map((c) => c.characteristic)).toEqual(['INT']);
   });
+
+  it('bietet mit Jack-of-all-Trades kein „ohne Fertigkeit“ an; JoT gibt ±0', async () => {
+    const { game } = await started();
+    const jonas = game.snapshot().characters[1]!;
+    game.editCharacter('c2');
+    game.saveCharacter({ ...game.snapshot().editor!.input, skills: [...game.snapshot().editor!.input.skills, { of: 'jack-of-all-trades', level: 1 }] });
+    expect(game.snapshot().characters[1]!.unskilled).toBeUndefined();
+    expect(jonas.unskilled).toEqual({ dm: -3, chosen: false });
+    game.chooseSkill('c2', 'jack-of-all-trades');
+    expect(game.snapshot().task).toMatchObject({ ready: true, dm: 0, parts: [{ kind: 'skill', name: 'Jack-of-all-Trades', level: 1, dm: 0 }] });
+  });
 });
 
 describe('Charaktere anlegen, bearbeiten, entfernen', () => {

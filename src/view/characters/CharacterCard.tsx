@@ -12,7 +12,7 @@ import { CareerList } from './GenerationSheet';
  */
 export function CharacterCard({ character }: { character: CharacterView }) {
   const game = useGame();
-  const skillChosen = character.chosen && (character.unskilled.chosen || character.skills.some((s) => s.chosen));
+  const skillChosen = character.chosen && (character.unskilled?.chosen || character.skills.some((s) => s.chosen));
 
   return (
     <article className={character.chosen ? 'pc chosen' : 'pc'} aria-label={character.name}>
@@ -68,9 +68,11 @@ export function CharacterCard({ character }: { character: CharacterView }) {
             {character.open ? skill.name : skill.short}-{skill.level}
           </button>
         ))}
-        <button type="button" className="unskilled" aria-pressed={character.unskilled.chosen} onClick={() => game.chooseSkill(character.id, null)}>
-          Ohne ({signed(character.unskilled.dm)})
-        </button>
+        {character.unskilled && (
+          <button type="button" className="unskilled" aria-pressed={character.unskilled.chosen} onClick={() => game.chooseSkill(character.id, null)}>
+            Ohne ({signed(character.unskilled.dm)})
+          </button>
+        )}
       </div>
 
       {character.open && (

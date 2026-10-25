@@ -1,4 +1,4 @@
-import type { Upp } from './campaign';
+import type { SkillLevel, Upp } from './campaign';
 import type { Random } from './ports';
 import { ref, type HouseRules } from './reference';
 
@@ -17,6 +17,19 @@ export function characteristicDm(value: number, rules: HouseRules = ref.houseRul
   if (value >= rules.bonusFrom) return 1;
   if (value <= rules.malusUpTo) return -1;
   return 0;
+}
+
+/** Jack-of-all-Trades zählt in jeder Probe als Stufe 0 und ersetzt „ohne Fertigkeit“. */
+export const JACK_OF_ALL_TRADES = 'jack-of-all-trades';
+
+/** DM einer Fertigkeitsstufe in der Probe: ihre Stufe, bei Jack-of-all-Trades immer ±0. */
+export function skillDm(skill: SkillLevel): number {
+  return skill.of === JACK_OF_ALL_TRADES ? 0 : skill.level;
+}
+
+/** Ob „ohne Fertigkeit“ geht: nur ohne Jack-of-all-Trades unter den eingeblendeten Fertigkeiten. */
+export function canGoUnskilled(skills: readonly SkillLevel[]): boolean {
+  return !skills.some((s) => s.of === JACK_OF_ALL_TRADES && !s.retired);
 }
 
 /** Wahrscheinlichkeit in Prozent, mit 2W6 mindestens `need` zu werfen, exakt aus den 36 Kombinationen. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createCampaign, isSuccess, removeCharacter, appendLog, setOdds, type Campaign } from '..';
+import { createCampaign, inputOf, isSuccess, removeCharacter, appendLog, setOdds, updateCharacter, characterOf, type Campaign } from '..';
 import { fixedClock, fixedRandom } from '../testing';
 import { characteristicOptions, chooseSkill, evaluateTask, hasSkill, rollTask, startTask, toggleCharacteristic, type Task } from './task';
 
@@ -42,6 +42,18 @@ describe('Probe vorbereiten', () => {
     const result = rollTask(task, hard, fixedRandom(6, 6), fixedClock());
     expect(isSuccess(result)).toBe(false);
     expect('uses' in result).toBe(false);
+  });
+
+  it('Jack-of-all-Trades zählt als Stufe 0, egal welche Stufe, und ersetzt „ohne Fertigkeit“', () => {
+    const jonas = characterOf(hard, 'c2');
+    const campaign = updateCharacter(hard, 'c2', { ...inputOf(jonas), skills: [...inputOf(jonas).skills, { of: 'jack-of-all-trades', level: 2 }] });
+    const task = chooseSkill(startTask(campaign, 'c2'), campaign, 'jack-of-all-trades');
+    expect(evaluateTask(task, campaign)).toMatchObject({ dm: 0, target: 10, need: 10 });
+    expect(rollTask(task, campaign, fixedRandom(5, 5), fixedClock())).toMatchObject({ uses: 'jack-of-all-trades', dm: 0 });
+    expect(() => chooseSkill(startTask(campaign, 'c2'), campaign, null)).toThrow(/Jack-of-all-Trades/);
+    // Eine vorbereitete Probe ohne Fertigkeit lässt sich nicht mehr würfeln, sobald er JoT hat.
+    const unskilled = chooseSkill(startTask(hard, 'c2'), hard, null);
+    expect(() => rollTask(unskilled, campaign, fixedRandom(), fixedClock())).toThrow(/Jack-of-all-Trades/);
   });
 
   it('nimmt die Wahl zurück, wenn man dieselbe Fertigkeit noch einmal wählt', () => {

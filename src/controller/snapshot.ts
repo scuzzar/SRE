@@ -1,6 +1,7 @@
 import {
   activeSkills,
   byName,
+  canGoUnskilled,
   characterOf,
   characteristicDm,
   deadCharacters,
@@ -13,6 +14,7 @@ import {
   ref,
   retiredCharacters,
   sectionOfSlot,
+  skillDm,
   skillOf,
   slotOf,
   sum,
@@ -188,7 +190,8 @@ export interface CharacterView {
   readonly possessions: readonly { readonly name: string; readonly count: number }[];
   /** Der Lebenslauf, wenn der Charakter über die Charaktererschaffung entstanden ist. */
   readonly career: readonly CareerLine[] | undefined;
-  readonly unskilled: { readonly dm: number; readonly chosen: boolean };
+  /** „Ohne Fertigkeit“; fehlt, wenn der Charakter Jack-of-all-Trades hat. */
+  readonly unskilled: { readonly dm: number; readonly chosen: boolean } | undefined;
   readonly characteristics: readonly CharacteristicOption[];
   /** Kommt im Log vor: Entfernen blendet aus, statt zu löschen. */
   readonly inLog: boolean;
@@ -249,8 +252,8 @@ const emptyInput: CharacterInput = {
 function dmParts(character: Character, uses: string | undefined, unskilled: boolean, counts: readonly Characteristic[]): DmPart[] {
   const parts: DmPart[] = [];
   if (uses !== undefined) {
-    const level = character.skills.find((s) => s.of === uses)?.level ?? 0;
-    parts.push({ kind: 'skill', name: skillOf(uses).name, level, dm: level });
+    const skill = character.skills.find((s) => s.of === uses);
+    parts.push({ kind: 'skill', name: skillOf(uses).name, level: skill?.level ?? 0, dm: skill ? skillDm(skill) : 0 });
   } else if (unskilled) {
     parts.push({ kind: 'unskilled', dm: ref.houseRules.unskilledDm });
   }
@@ -335,7 +338,7 @@ function characterView(campaign: Campaign, character: Character, task: Task | un
     }),
     possessions: character.possessions.map((p) => ({ name: itemLabel(itemOf(p.of)), count: p.count })),
     career: character.career && careerLines(character.career),
-    unskilled: { dm: ref.houseRules.unskilledDm, chosen: own?.unskilled ?? false },
+    unskilled: canGoUnskilled(character.skills) ? { dm: ref.houseRules.unskilledDm, chosen: own?.unskilled ?? false } : undefined,
     characteristics: characteristicOptions(own ?? startTask(campaign, character.id), campaign),
     inLog: isInLog(campaign, character.id),
   };
