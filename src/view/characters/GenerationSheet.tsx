@@ -3,7 +3,7 @@ import type { CareerLine, GenerationAction, GenerationView } from '../../control
 import { DiceView, THROW_MS, useTimeline } from '../Dice';
 import { characteristicLabel, credits, hex, signed } from '../format';
 import { useGame } from '../game-context';
-import { haptic, stopHaptics } from '../haptics';
+import { animated, haptic, stopHaptics } from '../haptics';
 import { CloseIcon, DiceIcon } from '../icons';
 
 /** Wie lange das Ergebnis nach dem Landen braucht, bis es feststeht und die Knöpfe wieder gehen. */
@@ -13,18 +13,27 @@ const SETTLE_MS = 350;
  * Die Charaktererschaffung im Vordergrund: oben die Charakterkarte, die sich Wurf für Wurf füllt,
  * darunter der Lebenslauf. Unten die Würfelbühne mit dem letzten Wurf und die Knöpfe für den
  * nächsten Schritt. Jeder Wert wird einzeln mit der Würfelanimation bestimmt; geloggt ist der Wurf
- * schon, bevor die Würfel rollen. Ein Tippen auf die Bühne überspringt.
+ * schon, bevor die Würfel rollen. Karte, Lebenslauf und nächster Schritt zeigen aber erst dann den
+ * neuen Stand, wenn das Ergebnis unten feststeht; bis dahin bleibt der vorige Snapshot stehen. Ein
+ * Tippen auf die Bühne überspringt.
  */
 export function GenerationSheet({ generation }: { generation: GenerationView }) {
   const game = useGame();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   // Was schon da war, als die Erschaffung aufging, rollt nicht noch einmal.
   const [seen] = useState(generation.lines.length);
-  const [busy, setBusy] = useState(false);
   const latest = generation.lines.at(-1);
+  // Der letzte Wurf, dessen Ergebnis unten feststeht; bis dahin rollt er noch.
+  const [settled, setSettled] = useState(-1);
+  const animate = latest !== undefined && latest.index >= seen && animated();
+  const rolling = animate && settled < latest.index;
+  // Was oben steht: der Stand vor dem Wurf, solange er rollt.
+  const [shown, setShown] = useState(generation);
+  if (!rolling && shown !== generation) setShown(generation);
+  const view = rolling ? shown : generation;
   // Der Lebenslauf wächst nach unten; der neueste Wurf soll zu sehen sein.
   const body = useRef<HTMLDivElement>(null);
-  const count = generation.lines.length;
+  const count = view.lines.length;
   useEffect(() => {
     body.current?.scrollTo({ top: body.current.scrollHeight });
   }, [count]);
@@ -51,21 +60,21 @@ export function GenerationSheet({ generation }: { generation: GenerationView }) 
         </div>
 
         <div className="sheet-body" ref={body}>
-          <CharacterSheet generation={generation} />
-          <CareerList lines={generation.lines} />
+          <CharacterSheet generation={view} />
+          <CareerList lines={view.lines} />
         </div>
 
         <div className="generation-dock">
-          {latest && <RollStage key={latest.index} line={latest} animate={latest.index >= seen} onBusy={setBusy} />}
+          {latest && <RollStage key={latest.index} line={latest} animate={animate} onSettled={setSettled} />}
           <p className="generation-prompt" aria-live="polite">
-            {generation.prompt}
+            {view.prompt}
           </p>
-          {generation.error && (
+          {view.error && (
             <p className="error" role="alert">
-              {generation.error}
+              {view.error}
             </p>
           )}
-          <Actions action={generation.action} disabled={busy} />
+          <Actions action={view.action} disabled={rolling} />
         </div>
       </section>
     </div>
@@ -156,21 +165,20 @@ export function CareerList({ lines, heading = true }: { lines: readonly CareerLi
 }
 
 /**
- * Der letzte Wurf auf der Bühne: Würfel rollen, landen, dann steht das Ergebnis da. Die Knöpfe
- * warten so lange (`onBusy`); ein Tippen springt zum Ergebnis.
+ * Der letzte Wurf auf der Bühne: Würfel rollen, landen, dann steht das Ergebnis da und wird gemeldet
+ * (`onSettled`); erst dann ziehen Karte und Knöpfe nach. Ein Tippen springt zum Ergebnis.
  */
-function RollStage({ line, animate, onBusy }: { line: CareerLine; animate: boolean; onBusy: (busy: boolean) => void }) {
+function RollStage({ line, animate, onSettled }: { line: CareerLine; animate: boolean; onSettled: (index: number) => void }) {
   const [phase, skip] = useTimeline(animate ? [THROW_MS, SETTLE_MS] : []);
   const LANDED = animate ? 1 : 0;
   const DONE = animate ? 2 : 0;
 
   useEffect(() => {
-    onBusy(phase < DONE);
+    if (phase >= DONE) onSettled(line.index);
     if (!animate) return;
     if (phase === 0) haptic(line.dice.length === 1 ? 'land' : 'shake');
     if (phase === DONE) haptic(line.success === undefined ? 'add' : line.success ? 'success' : 'failure');
-  }, [phase, DONE, animate, line.dice.length, line.success, onBusy]);
-  useEffect(() => () => onBusy(false), [onBusy]);
+  }, [phase, DONE, animate, line.index, line.dice.length, line.success, onSettled]);
 
   const verdict = line.success === undefined ? '' : line.success ? ' success' : ' failure';
   return (

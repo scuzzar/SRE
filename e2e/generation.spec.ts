@@ -62,3 +62,19 @@ test('Besitz: Gegenstand aus der Liste mit Anzahl, in den Details', async ({ pag
   await kira.getByRole('button', { name: /Kira Vant/ }).click();
   await expect(kira).toContainText('2 × Low Passage, Vacc Suit (TL 12)');
 });
+
+test.describe('mit Animation', () => {
+  test.use({ reducedMotion: 'no-preference' });
+
+  test('der gewürfelte Wert erscheint oben erst, wenn er unten feststeht', async ({ page }) => {
+    await openCharacters(page);
+    await page.getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Charaktererschaffung' });
+    const str = dialog.locator('.upp-cell').first().locator('.upp-code');
+    await dialog.getByRole('button', { name: 'STR würfeln' }).click();
+    await expect(str).toHaveText('–');
+    await expect(dialog.getByRole('button', { name: 'DEX würfeln' })).toBeDisabled();
+    await expect(str).toHaveText(/^[2-9A-C]$/);
+    await expect(dialog.getByRole('button', { name: 'DEX würfeln' })).toBeEnabled();
+  });
+});
