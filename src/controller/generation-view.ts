@@ -220,6 +220,8 @@ export function careerLines(career: Career): readonly CareerLine[] {
   const { outcomes } = replay(career);
   return career.rolls.map((roll, index) => {
     const outcome = outcomes[index]!;
+    // Wer abmustern will, hat weder Erfolg noch Fehlschlag; der Zielwert zählt für ihn nicht, nur eine 12.
+    const leaving = roll.kind === 'reenlist' && !roll.wants;
     return {
       index,
       kind: roll.kind,
@@ -229,8 +231,8 @@ export function careerLines(career: Career): readonly CareerLine[] {
       dm: roll.dm,
       parts: outcome.sources,
       total: sumOf(roll) + roll.dm,
-      target: roll.target,
-      success: roll.kind === 'reenlist' ? outcome.effects.some((e) => e.kind === 'term') : successOf(roll),
+      target: leaving ? undefined : roll.target,
+      success: leaving ? undefined : roll.kind === 'reenlist' ? outcome.effects.some((e) => e.kind === 'term') : successOf(roll),
       result: result(roll, outcome.effects),
     };
   });

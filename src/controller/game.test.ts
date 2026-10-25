@@ -450,6 +450,8 @@ describe('Charaktererschaffung', () => {
       'Abmustern: mustert ab · 1 Abmusterungswurf',
       'Abmusterung: Geld: Cr 50.000',
     ]);
+    // Wer abmustern will und abmustert, ist kein Fehlschlag.
+    expect(view.lines[10]).toMatchObject({ label: 'Abmustern', success: undefined, target: undefined });
 
     game.finishGeneration('  ');
     expect(game.snapshot().generation?.error).toMatch(/Namen/);
