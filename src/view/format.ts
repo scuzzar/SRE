@@ -1,5 +1,5 @@
 import type { DmPart, TaskItem } from '../controller';
-import type { Characteristic, Upp } from '../model';
+import type { Characteristic } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
 
@@ -8,10 +8,6 @@ const hexDigits = '0123456789ABCDEFG';
 /** Ein Attributwert in der Hex-Schreibweise der UPP (10 → A). */
 export function hex(value: number): string {
   return hexDigits[value] ?? String(value);
-}
-
-export function uppCode(upp: Upp): string {
-  return [upp.str, upp.dex, upp.end, upp.int, upp.edu, upp.soc].map(hex).join('');
 }
 
 /** Kürzel der Attribute, wie Classic Traveller sie schreibt. */
@@ -70,9 +66,8 @@ export function skillTitle(parts: readonly DmPart[]): string {
 
 /** Das Wichtigste einer Probe in Vorbereitung: die Fertigkeit ausgeschrieben und der Zielwert. */
 export function taskHeadline(parts: readonly DmPart[], target: number): string {
-  const first = parts[0];
-  const skill = first?.kind === 'skill' ? `${first.name}-${first.level}` : 'Ohne Fertigkeit';
-  return `${skill} · ${target}+`;
+  const skill = skillTitle(parts);
+  return `${skill.charAt(0).toUpperCase()}${skill.slice(1)} · ${target}+`;
 }
 
 /** Die gewählten Attribute knapp, als Zusatz zum DM: „ (DEX +1, SOC −1)“, ohne Attribute leer. */

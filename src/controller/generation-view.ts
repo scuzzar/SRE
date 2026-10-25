@@ -1,10 +1,13 @@
 import {
   ageOf,
   canTakeCash,
+  cascadeOf,
   cascadeOptions,
   characteristics,
   gainOf,
   itemOf,
+  MAX_CASH_ROLLS,
+  MAX_TERMS,
   musterSources,
   nextThrow,
   pensionOf,
@@ -104,7 +107,7 @@ function signed(n: number): string {
 /** Was eine Zeile einer Tabelle bringt, knapp: „+1 STR“, „Pilot“, „Blade Combat“, „Low Passage“, „Cr 5.000“. */
 export function gainText(gain: Gain): string {
   if (gain.skill !== undefined) return skillOf(gain.skill).name;
-  if (gain.choose !== undefined) return ref.cascades.find((c) => c.id === gain.choose)?.name ?? gain.choose;
+  if (gain.choose !== undefined) return cascadeOf(gain.choose).name;
   if (gain.characteristic !== undefined) return `${signed(gain.change!)} ${gain.characteristic}`;
   if (gain.item !== undefined) return itemLabel(itemOf(gain.item));
   if (gain.credits !== undefined) return credits(gain.credits);
@@ -172,7 +175,7 @@ function result(roll: CareerRoll, effects: readonly Effect[]): string {
   const withGains = (head: string) => [head, ...gains].join(' · ');
   const pending = () => {
     const gained = roll.gained ? gainOf(roll.gained) : undefined;
-    const cascade = gained?.choose ? ref.cascades.find((c) => c.id === gained.choose) : undefined;
+    const cascade = gained?.choose ? cascadeOf(gained.choose) : undefined;
     return cascade ? `${cascade.name}: wählen` : undefined;
   };
   switch (roll.kind) {
@@ -305,8 +308,8 @@ export function generationView(generation: Generation, error: string | undefined
       action = { kind: 'roll', label: 'Krise würfeln', dice: 2, odds };
       break;
     case 'reenlist': {
-      const last = state.terms >= 7;
-      prompt = last ? `Ende von ${term}: nach 7 Terms bleibt nur, wer eine 12 würfelt` : `Ende von ${term}: weiterverpflichten?`;
+      const last = state.terms >= MAX_TERMS;
+      prompt = last ? `Ende von ${term}: nach ${MAX_TERMS} Terms bleibt nur, wer eine 12 würfelt` : `Ende von ${term}: weiterverpflichten?`;
       action = { kind: 'reenlist', odds: odds!, last };
       break;
     }
@@ -315,7 +318,7 @@ export function generationView(generation: Generation, error: string | undefined
       action = {
         kind: 'muster',
         left: state.musterLeft,
-        cashLeft: canTakeCash(state) ? 3 - state.cashRolls : 0,
+        cashLeft: canTakeCash(state) ? MAX_CASH_ROLLS - state.cashRolls : 0,
         cashDm: musterSources('cash', state.skills, state.rank),
         benefitDm: musterSources('benefit', state.skills, state.rank),
       };

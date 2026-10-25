@@ -1,6 +1,6 @@
 import type { Upp } from './campaign';
 import { DomainError } from './errors';
-import { cascadeOf, gainOf, ref, serviceOf, skillOf, tableOf, weaponFor, type Aging, type Cascade, type Gain, type Service, type Throw } from './reference';
+import { cascadeOf, gainOf, itemOf, ref, serviceOf, skillOf, tableOf, weaponFor, type Aging, type Cascade, type Gain, type Service, type Throw } from './reference';
 import { characteristics, type Characteristic } from './rules';
 
 /**
@@ -505,7 +505,7 @@ class Replay {
   private addItem(of: string, onceMatters: boolean): void {
     const index = this.possessions.findIndex((p) => p.of === of);
     const had = this.possessions[index];
-    if (had && onceMatters && ref.items.find((i) => i.id === of)?.once) {
+    if (had && onceMatters && itemOf(of).once) {
       this.effects.push({ kind: 'nothing' });
       return;
     }

@@ -6,7 +6,7 @@ import { roll2d6, sum, type Characteristic, type Dice } from './rules';
 /**
  * Der Log verweist, er kopiert nicht. Ein Eintrag hält nur fest, was allein ihm gehört: Frage,
  * Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei einer Probe DM und Zielwert.
- * Einträge werden nur angehängt, nie geändert oder gelöscht.
+ * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
 export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult;
 

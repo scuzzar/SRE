@@ -1,4 +1,4 @@
-import { referenceData, type Aging, type Cascade, type Entry, type Gain, type Item, type Odds, type Section, type Service, type Skill, type Slot, type Table } from '../data';
+import { referenceData, type Cascade, type Entry, type Gain, type Item, type Odds, type Section, type Service, type Skill, type Slot, type Table } from '../data';
 import { DomainError } from './errors';
 
 export type { Aging, Cascade, Column, Entry, ExampleCharacter, Gain, HouseRules, Item, ItemKind, Odds, Rank, Section, SectionKind, Service, Skill, Slot, Table, Throw } from '../data';
@@ -26,14 +26,11 @@ for (const section of ref.sections) {
 const itemById = new Map(ref.items.map((i) => [i.id, i]));
 const serviceById = new Map(ref.services.map((s) => [s.id, s]));
 const cascadeById = new Map(ref.cascades.map((c) => [c.id, c]));
-const agingById = new Map(ref.aging.map((a) => [a.id, a]));
 const tableById = new Map<string, Table>();
-const serviceByTable = new Map<string, Service>();
 const gainById = new Map<string, Gain>();
 for (const service of ref.services) {
   for (const table of [...service.skills, service.benefits, service.cash]) {
     tableById.set(table.id, table);
-    serviceByTable.set(table.id, service);
     for (const gain of table.rows) gainById.set(gain.id, gain);
   }
 }
@@ -83,17 +80,8 @@ export function cascadeOf(id: string): Cascade {
   return found(cascadeById.get(id), 'Die Kaskade', id);
 }
 
-export function agingOf(id: string): Aging {
-  return found(agingById.get(id), 'Die Zeile der Aging Table', id);
-}
-
 export function tableOf(id: string): Table {
   return found(tableById.get(id), 'Die Tabelle', id);
-}
-
-/** Die Laufbahn, zu der eine Tabelle gehört. */
-export function serviceOfTable(id: string): Service {
-  return found(serviceByTable.get(id), 'Die Tabelle', id);
 }
 
 /** Eine Zeile einer Tabelle. */
