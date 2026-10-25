@@ -14,6 +14,9 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > nicht*), dafür ändert sich das Bild nicht: `Campaign` war schon die oberste Ebene und hat schon
 > einen Namen. Neu im Bild: `Character.dead` (siehe *Tot*).
 >
+> Ebenfalls am 25. Oktober 2026 freigegeben: Jack-of-all-Trades zählt in Proben als Stufe 0 und
+> ersetzt „ohne Fertigkeit“ (siehe *Probe*); das Bild ändert sich dadurch nicht.
+>
 > Ebenfalls am 25. Oktober 2026 freigegeben: Charaktererschaffung nach den Regeln von Classic
 > Traveller, mit Lebenslauf am Charakter (siehe *Charaktererschaffung*), und Gegenstände mit Besitz
 > (siehe *Gegenstände*).
@@ -170,6 +173,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Zuerst wählt man die Fertigkeit: eine Fertigkeitsstufe des Charakters (DM = Stufe) oder „ohne
     Fertigkeit“ (DM aus den Hausregeln, −3). Solange keine gewählt ist, gibt es keine Probe zu
     würfeln.
+  - **Jack-of-all-Trades** zählt in jeder Probe als Stufe 0: DM ±0, egal welche Stufe der Charakter
+    darin hat. Wer es hat (nicht ausgeblendet), nimmt es für alles, wofür ihm die Fertigkeit fehlt;
+    „ohne Fertigkeit“ gibt es für ihn nicht.
   - Erst danach lassen sich Attribute dazuwählen. Ein gewähltes Attribut gibt +1 ab `bonusFrom` (9),
     −1 bis `malusUpTo` (5), sonst ±0. Attribute mit ±0 sind nicht wählbar.
   - Der Zielwert kommt aus der gewählten Stufe. Der nötige Wurf ist Zielwert minus DM, die
