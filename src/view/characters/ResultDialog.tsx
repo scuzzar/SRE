@@ -1,15 +1,15 @@
 import { useEffect, useRef } from 'react';
-import type { TaskItem } from '../../controller';
+import type { DmPart, TaskItem } from '../../controller';
 import { DicePairView, THROW_MS, useTimeline } from '../Dice';
-import { partLabel, signed, taskDetail, taskTitle } from '../format';
+import { characteristicLabel, partLabel, signed, skillTitle, taskDetail, taskTitle } from '../format';
 import { useGame } from '../game-context';
 import { haptic, stopHaptics } from '../haptics';
 
 /**
  * Das Ergebnis einer Probe als Popup. Danach geht es zurück zum Orakel; geloggt ist es schon.
  *
- * Wie in Baldur's Gate 3 steht der Zielwert oben, darunter rollen die Würfel; dann kommt der DM
- * dazu, und zuletzt fällt das Urteil. Alles steht von Anfang an im Dokument (für Screenreader und
+ * Wie in Baldur's Gate 3 steht der Zielwert oben, darunter rollen die Würfel; dann kommen die
+ * Fertigkeit und jedes gewählte Attribut einzeln mit Namen dazu, und zuletzt fällt das Urteil. Alles steht von Anfang an im Dokument (für Screenreader und
  * Tests), die Animation blendet es nur nacheinander ein. Ein Tippen springt zum Urteil.
  */
 export function ResultDialog({ result }: { result: TaskItem }) {
@@ -17,23 +17,26 @@ export function ResultDialog({ result }: { result: TaskItem }) {
   const close = useRef<HTMLButtonElement>(null);
   useEffect(() => close.current?.focus(), []);
 
-  // Werfen, Augen zeigen, DM dazu, Urteil.
-  const [phase, skip] = useTimeline([THROW_MS, result.dm === 0 ? 250 : 380, result.dm === 0 ? 0 : 420]);
-  const VERDICT = 3;
+  // Werfen, Augen zeigen, dann je Teil des DM ein Schritt (erst die Fertigkeit, dann die Attribute), Urteil.
+  const parts = result.parts;
+  const [phase, skip] = useTimeline([THROW_MS, 350, ...parts.map(() => 380)]);
+  const added = Math.max(0, Math.min(phase - 1, parts.length));
+  const VERDICT = parts.length + 2;
 
   useEffect(() => {
-    if (phase === 2 && result.dm !== 0) haptic('add');
+    if (phase >= 2 && phase < VERDICT) haptic('add');
     if (phase === VERDICT) haptic(result.success ? 'success' : 'failure');
-  }, [phase, result.dm, result.success]);
+  }, [phase, VERDICT, result.success]);
 
   const [a, b] = result.dice;
-  const shown = phase >= 2 ? result.total : a + b;
-  const verdict = phase >= VERDICT ? (result.success ? ' success' : ' failure') : '';
+  // Die Zwischensummen sind nur Anzeige; am Ende steht die Summe, die das Model ausgerechnet hat.
+  const shown = added === parts.length ? result.total : parts.slice(0, added).reduce((sum, part) => sum + part.dm, a + b);
+  const state = phase === 0 ? ' rolling' : phase >= VERDICT ? (result.success ? ' judged success' : ' judged failure') : '';
 
   return (
     <div className="modal">
       <section
-        className={`result roll-result phase-${Math.min(phase, VERDICT)}${verdict}`}
+        className={`result roll-result${state}`}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="result-title"
@@ -55,8 +58,14 @@ export function ResultDialog({ result }: { result: TaskItem }) {
           <strong key={shown} className="roll-total">
             {shown}
           </strong>
-          {result.dm !== 0 && <span className="roll-dm">DM {signed(result.dm)}</span>}
         </div>
+        <ol className="roll-parts" aria-hidden="true">
+          {parts.map((part, i) => (
+            <li key={i} className={i < added ? (i === added - 1 && phase < VERDICT ? 'roll-part added latest' : 'roll-part added') : 'roll-part'}>
+              {partName(part)} <strong>{signed(part.dm)}</strong>
+            </li>
+          ))}
+        </ol>
         <h2 id="result-title" className={result.success ? 'roll-verdict' : 'roll-verdict negative'}>
           {result.success ? 'ERFOLG' : 'FEHLSCHLAG'}
         </h2>
@@ -74,4 +83,9 @@ export function ResultDialog({ result }: { result: TaskItem }) {
       </section>
     </div>
   );
+}
+
+/** Ein Teil des DM mit Namen, so knapp wie möglich: „Pilot-2“, „ohne Fertigkeit“, „DEX“. */
+function partName(part: DmPart): string {
+  return part.kind === 'characteristic' ? characteristicLabel[part.characteristic] : skillTitle([part]);
 }
