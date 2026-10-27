@@ -219,8 +219,8 @@ function CharacterSheet({ generation }: { generation: GenerationView }) {
       {generation.skills.length > 0 && (
         <ul className="chips static" aria-label="Fertigkeiten">
           {generation.skills.map((s) => (
-            <li key={s.name}>
-              {withLevel(s.name, s.level)}
+            <li key={s.name} aria-label={withLevel(s.name, s.level)} title={s.name}>
+              {withLevel(s.short, s.level)}
             </li>
           ))}
         </ul>

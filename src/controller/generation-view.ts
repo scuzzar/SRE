@@ -50,7 +50,7 @@ export interface CareerLine {
   readonly target: number | undefined;
   readonly success: boolean | undefined;
   readonly result: string;
-  /** Was der Wurf eingebracht hat, knapp: „STR 10“, „ATV-1“, „Lieutenant“, „END −1“; für die Zusammenfassung eines Terms. */
+  /** Was der Wurf eingebracht hat, knapp, Fertigkeiten mit Kürzel: „STR 10“, „SMG-1“, „Lieutenant“, „END −1“; für die Zusammenfassung eines Terms. */
   readonly gains: readonly string[];
 }
 
@@ -116,6 +116,12 @@ export function gainText(gain: Gain): string {
   if (gain.item !== undefined) return itemLabel(itemOf(gain.item));
   if (gain.credits !== undefined) return credits(gain.credits);
   return '–';
+}
+
+/** Eine Fertigkeit mit Kürzel: „SMG-1“, bei Jack-of-all-Trades ohne Stufe: „JoT“. */
+function shortSkillText(of: string, level: number): string {
+  const shown = shownLevel({ of, level });
+  return shown === undefined ? skillOf(of).short : `${skillOf(of).short}-${shown}`;
 }
 
 function effectText(effect: Effect): string | undefined {
@@ -245,7 +251,7 @@ export function careerLines(career: Career): readonly CareerLine[] {
       result: result(roll, outcome.effects),
       gains: outcome.effects.flatMap((e) => {
         const gained = e.kind === 'characteristic' || e.kind === 'skill' || e.kind === 'item' || e.kind === 'credits' || e.kind === 'rank';
-        const text = gained ? effectText(e) : undefined;
+        const text = e.kind === 'skill' ? shortSkillText(e.skill, e.level) : gained ? effectText(e) : undefined;
         return text === undefined ? [] : [text];
       }),
     };

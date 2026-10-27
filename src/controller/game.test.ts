@@ -468,6 +468,16 @@ describe('Charaktererschaffung', () => {
     expect(mara.career).toHaveLength(12);
   });
 
+  it('fasst einen Term mit den Kürzeln der Fertigkeiten zusammen', async () => {
+    const { game } = await started(fixedRandom(3, 4, 5, 5, 4, 4, 4, 5, 3, 4, 2, 3, 6, 6));
+    game.openGeneration();
+    for (let i = 0; i < 6; i++) game.rollGeneration();
+    game.chooseService('marines'); // Musterung mit 6+6, die Marines geben Cutlass-1 mit
+    const view = game.snapshot().generation!;
+    expect(view.lines.at(-1)).toMatchObject({ result: 'angenommen · Cutlass-1', gains: ['Cut-1'] });
+    expect(view.skills).toEqual([{ name: 'Cutlass', short: 'Cut', level: 1 }]);
+  });
+
   it('zeigt einen Fehler in der Erschaffung, statt zu werfen, und verwirft auf Wunsch', async () => {
     const { game } = await started();
     game.openGeneration();
