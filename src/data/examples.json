@@ -9,7 +9,12 @@
       { "of": "auto-pistol", "level": 1 },
       { "of": "vacc-suit", "level": 1 }
     ],
-    "equipment": "Auto Pistol, Jack, Vacc Suit",
+    "possessions": [
+      { "of": "automatic-pistol", "count": 1 },
+      { "of": "jack", "count": 1 },
+      { "of": "vacc-suit-tl12", "count": 1 }
+    ],
+    "equipment": "",
     "credits": 12400,
     "note": "Schuldet Dr. Halvek einen Gefallen"
   },
@@ -23,7 +28,12 @@
       { "of": "admin", "level": 1 },
       { "of": "blade", "level": 1 }
     ],
-    "equipment": "Blade, Mesh, Handcomputer",
+    "possessions": [
+      { "of": "blade", "count": 1 },
+      { "of": "mesh", "count": 1 },
+      { "of": "hand-computer", "count": 1 }
+    ],
+    "equipment": "",
     "credits": 3150,
     "note": "Sucht seinen verschollenen Bruder"
   }

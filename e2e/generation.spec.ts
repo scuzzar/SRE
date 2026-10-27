@@ -58,10 +58,10 @@ test('Besitz: Gegenstand aus der Liste mit Anzahl, in den Details', async ({ pag
   const editor = page.getByRole('dialog');
   await editor.getByLabel('Gegenstand hinzufügen').selectOption({ label: 'Low Passage' });
   await editor.getByLabel('Anzahl Low Passage').fill('2');
-  await editor.getByLabel('Gegenstand hinzufügen').selectOption({ label: 'Vacc Suit (TL 12)' });
   await editor.getByRole('button', { name: 'Speichern' }).click();
   await kira.getByRole('button', { name: /Kira Vant/ }).click();
-  await expect(kira).toContainText('2 × Low Passage, Vacc Suit (TL 12)');
+  // Was sie schon als Beispielcharakter besitzt, steht davor.
+  await expect(kira).toContainText('Automatic Pistol, Jack, Vacc Suit (TL 12), 2 × Low Passage');
 });
 
 test.describe('mit Animation', () => {

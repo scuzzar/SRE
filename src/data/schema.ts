@@ -158,6 +158,8 @@ export const ExampleCharacterSchema = z.object({
   background: z.string(),
   upp: UppSchema,
   skills: z.array(z.object({ of: z.string().min(1), level })),
+  /** Was er aus der Liste der Gegenstände besitzt. */
+  possessions: z.array(z.object({ of: z.string().min(1), count: z.number().int().min(1) })).default([]),
   equipment: z.string(),
   credits: z.number().int(),
   note: z.string(),
@@ -200,6 +202,10 @@ export const ReferenceDataSchema = z
       uniqueIds(example.skills.map((s) => s.of), `Fertigkeit bei ${example.name}:`, ctx);
       for (const s of example.skills) {
         if (!skillIds.has(s.of)) ctx.addIssue({ code: 'custom', message: `Unbekannte Fertigkeit ${s.of} bei ${example.name}` });
+      }
+      uniqueIds(example.possessions.map((p) => p.of), `Gegenstand bei ${example.name}:`, ctx);
+      for (const p of example.possessions) {
+        if (!data.items.some((i) => i.id === p.of)) ctx.addIssue({ code: 'custom', message: `Unbekannter Gegenstand ${p.of} bei ${example.name}` });
       }
     }
   });
