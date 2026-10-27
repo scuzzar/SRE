@@ -56,9 +56,12 @@ export function LogList({ log }: { log: readonly LogItem[] }) {
   return (
     <section className="scroll log-scroll" aria-labelledby="log-title">
       <div className="log">
-        <h2 id="log-title" className="section-title">
-          Log
-        </h2>
+        <div className="log-head">
+          <h2 id="log-title" className="section-title">
+            Log
+          </h2>
+          {log.length > 0 && <span className="log-hint">Eintrag lange drücken zum Löschen</span>}
+        </div>
         {log.length === 0 ? (
           <p className="log-empty">Noch nichts im Log. Stell eine Frage, zieh eine Karte oder würfle.</p>
         ) : (

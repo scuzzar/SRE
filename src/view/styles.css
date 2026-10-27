@@ -316,6 +316,18 @@ button:disabled {
   gap: 10px;
 }
 
+.log-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.log-hint {
+  font-size: 11px;
+  color: var(--muted);
+}
+
 .log ol {
   list-style: none;
   margin: 0;
