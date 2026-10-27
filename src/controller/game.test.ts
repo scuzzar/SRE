@@ -442,6 +442,8 @@ describe('Charaktererschaffung', () => {
     game.chooseSkillTable('other.personal');
     game.chooseSkillTable('other.personal');
     game.reenlist(false);
+    // Nur ein Abmusterungswurf: Geld also auch nur noch einmal, nicht dreimal.
+    expect(game.snapshot().generation?.action).toMatchObject({ kind: 'muster', left: 1, cashLeft: 1 });
     game.musterOut('cash');
     const view = game.snapshot().generation!;
     expect(view.step).toBe('name');

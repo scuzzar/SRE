@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import type { CareerLine, GenerationAction, GenerationView } from '../../controller';
 import type { RollKind, ThrowOdds } from '../../model';
 import { DicePairView, DiceView, THROW_MS, useTimeline } from '../Dice';
@@ -77,7 +77,7 @@ export function GenerationSheet({ generation }: { generation: GenerationView }) 
 
         <div className="sheet-body" ref={body}>
           <CharacterSheet generation={view} />
-          <CareerList lines={view.lines} />
+          <CareerList lines={view.lines} compact />
         </div>
 
         <div className="generation-dock">
@@ -247,10 +247,16 @@ function CharacterSheet({ generation }: { generation: GenerationView }) {
   );
 }
 
-/** Der Lebenslauf, nach Terms gegliedert. Auch die Details der Charakterkarte zeigen ihn. */
-export function CareerList({ lines, heading = true }: { lines: readonly CareerLine[]; heading?: boolean }) {
+/**
+ * Der Lebenslauf, nach Terms gegliedert. Auch die Details der Charakterkarte zeigen ihn, dort ganz
+ * aufgeklappt. In der Erschaffung (`compact`) stehen die Attributwürfe in einer Zeile, und nur der
+ * laufende Term ist offen; frühere klappen auf, wenn man sie antippt, und zeigen zugeklappt, was sie
+ * eingebracht haben.
+ */
+export function CareerList({ lines, heading = true, compact = false }: { lines: readonly CareerLine[]; heading?: boolean; compact?: boolean }) {
   if (lines.length === 0) return null;
   const terms = [...new Set(lines.map((l) => l.term))];
+  const current = terms.at(-1);
   return (
     <section className="career" aria-label="Lebenslauf">
       {heading && (
@@ -258,27 +264,68 @@ export function CareerList({ lines, heading = true }: { lines: readonly CareerLi
           Lebenslauf
         </h3>
       )}
-      {terms.map((term) => (
-        <div key={term} className="career-term">
-          <h4>{term === 0 ? 'Vor dem Dienst' : `Term ${term}`}</h4>
-          <ol>
-            {lines
-              .filter((l) => l.term === term)
-              .map((l) => (
-                <li key={l.index} className={l.success === false ? 'failed' : undefined}>
-                  <span className="career-label">{l.label}</span>
-                  <span className="career-roll mono">
-                    {l.dice.join('+')}
-                    {dmText(l)}
-                    {l.target !== undefined ? ` / ${l.target}+` : ''}
-                  </span>
-                  <span className="career-result">{l.result}</span>
-                </li>
-              ))}
-          </ol>
-        </div>
-      ))}
+      {terms.map((term) => {
+        const termLines = lines.filter((l) => l.term === term);
+        const title = term === 0 ? 'Vor dem Dienst' : `Term ${term}`;
+        const list = <CareerLines lines={termLines} compact={compact} />;
+        if (!compact || term === current) {
+          return (
+            <div key={term} className="career-term">
+              <h4>{title}</h4>
+              {list}
+            </div>
+          );
+        }
+        return (
+          <details key={term} className="career-term folded">
+            <summary>
+              <h4>{title}</h4>
+              <span className="career-gains">{gainsText(termLines.flatMap((l) => l.gains))}</span>
+            </summary>
+            {list}
+          </details>
+        );
+      })}
     </section>
+  );
+}
+
+/** Was ein Term eingebracht hat, jeder Zugewinn am Stück („Mechanical-1“ bricht nicht am Bindestrich um). */
+function gainsText(gains: readonly string[]) {
+  if (gains.length === 0) return 'nichts gewonnen';
+  return gains.map((g, i) => (
+    <Fragment key={i}>
+      {i > 0 && ' · '}
+      <span className="career-gain">{g}</span>
+    </Fragment>
+  ));
+}
+
+/** Die Würfe eines Terms; `compact` fasst die Attributwürfe zu einer Zeile zusammen. */
+function CareerLines({ lines, compact }: { lines: readonly CareerLine[]; compact: boolean }) {
+  const characteristics = compact ? lines.filter((l) => l.kind === 'characteristic') : [];
+  const rest = compact ? lines.filter((l) => l.kind !== 'characteristic') : lines;
+  return (
+    <ol>
+      {characteristics.length > 0 && (
+        <li>
+          <span className="career-label">Attribute</span>
+          <span className="career-roll mono">2W6</span>
+          <span className="career-result">{characteristics.map((l) => `${l.label} ${l.result} (${l.dice.join('+')})`).join(' · ')}</span>
+        </li>
+      )}
+      {rest.map((l) => (
+        <li key={l.index} className={l.success === false ? 'failed' : undefined}>
+          <span className="career-label">{l.label}</span>
+          <span className="career-roll mono">
+            {l.dice.join('+')}
+            {dmText(l)}
+            {l.target !== undefined ? ` / ${l.target}+` : ''}
+          </span>
+          <span className="career-result">{l.result}</span>
+        </li>
+      ))}
+    </ol>
   );
 }
 

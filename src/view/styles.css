@@ -1496,6 +1496,48 @@ button:disabled {
   color: var(--accent-text);
 }
 
+.career-term.folded summary {
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer;
+  list-style: none;
+}
+
+.career-term.folded summary::-webkit-details-marker {
+  display: none;
+}
+
+.career-term.folded summary h4 {
+  margin: 0;
+}
+
+.career-term.folded summary h4::after {
+  content: ' ▸';
+  color: var(--dim);
+}
+
+.career-term.folded[open] summary h4::after {
+  content: ' ▾';
+}
+
+.career-gains {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.career-gain {
+  white-space: nowrap;
+}
+
+.career-term.folded[open] .career-gains {
+  display: none;
+}
+
 .career-details summary {
   min-height: 44px;
   display: flex;

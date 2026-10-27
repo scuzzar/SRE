@@ -50,6 +50,8 @@ export interface CareerLine {
   readonly target: number | undefined;
   readonly success: boolean | undefined;
   readonly result: string;
+  /** Was der Wurf eingebracht hat, knapp: „STR 10“, „ATV-1“, „Lieutenant“, „END −1“; für die Zusammenfassung eines Terms. */
+  readonly gains: readonly string[];
 }
 
 export type GenerationAction =
@@ -241,6 +243,11 @@ export function careerLines(career: Career): readonly CareerLine[] {
       target: leaving ? undefined : roll.target,
       success: leaving ? undefined : roll.kind === 'reenlist' ? outcome.effects.some((e) => e.kind === 'term') : successOf(roll),
       result: result(roll, outcome.effects),
+      gains: outcome.effects.flatMap((e) => {
+        const gained = e.kind === 'characteristic' || e.kind === 'skill' || e.kind === 'item' || e.kind === 'credits' || e.kind === 'rank';
+        const text = gained ? effectText(e) : undefined;
+        return text === undefined ? [] : [text];
+      }),
     };
   });
 }
@@ -327,7 +334,8 @@ export function generationView(generation: Generation, error: string | undefined
       action = {
         kind: 'muster',
         left: state.musterLeft,
-        cashLeft: canTakeCash(state) ? MAX_CASH_ROLLS - state.cashRolls : 0,
+        // Geld höchstens dreimal, und nie öfter, als es noch Würfe gibt.
+        cashLeft: canTakeCash(state) ? Math.min(MAX_CASH_ROLLS - state.cashRolls, state.musterLeft) : 0,
         cashDm: musterSources('cash', state.skills, state.rank),
         benefitDm: musterSources('benefit', state.skills, state.rank),
       };
