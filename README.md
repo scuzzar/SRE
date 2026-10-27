@@ -211,13 +211,15 @@ Die Karte ist vorerst **nur für Prompts** da. Ja/Nein-Antworten, Schwierigkeite
 | Szenentyp | Eine Szenenidee |
 | Besitz | Eine Kategorie mit drei Beispielen |
 | Situation | Auslöser, Ort, Einsatz |
-| Namen | Drei Vornamen |
+| Namen | Drei Namen aus Vor- und Nachname (eher weiblich, eher männlich, neutral oder Genre) |
 | Merkmale | Tugend, Laster, Merkmal |
 | Flavortext | Ein aufgeschnapptes Zitat |
 
-Besitz und Situation stehen wie auf der GMA-Karte links, Namen und Merkmale rechts daneben.
+Besitz und Situation stehen wie auf der GMA-Karte links, Namen und Merkmale rechts daneben. Solange Besitz und Situation ausgeblendet sind, stehen die drei Namen in einer knappen Zeile über die volle Breite, unter den Sinneseindrücken.
 
-**Zurzeit** zeigt die Karte nur die Felder, für die es Einträge aus Mythic gibt: Aktion und Beschreibung des Zufallsereignisses, Hören und Riechen sowie die Themen-Tafeln mit Mythics Elements-Tabellen (siehe unten). Die übrigen Felder und Bereiche sind ausgeblendet, bis es Einträge für sie gibt; ältere Logeinträge daraus bleiben lesbar.
+**Namen:** eigene Listen, grob passend zum Third Imperium: je 100 Vornamen für die drei Felder und 300 gemeinsame Nachnamen, überwiegend irdisch und aus allen Weltgegenden, etwa ein Fünftel erfunden und fremd klingend nach dem Vorbild der Vilani. Jedes Feld zieht ein Paar aus Vor- und Nachname; im Log steht der Name am Stück („Paloma Valdez“).
+
+**Zurzeit** zeigt die Karte nur die Felder, für die es Einträge gibt: Aktion und Beschreibung des Zufallsereignisses, Hören und Riechen (aus Mythic), die drei Namen sowie die Themen-Tafeln mit Mythics Elements-Tabellen (siehe unten). Die übrigen Felder und Bereiche sind ausgeblendet, bis es Einträge für sie gibt; ältere Logeinträge daraus bleiben lesbar.
 
 **Themen-Tafeln (vorläufig):** Unter der Karte stehen Tafeln mit Überschrift, alle auf einmal und ohne Reiter, in Kästen wie die Karte selbst (NSC mit NSC-Aktionen, Welt mit Wesen, Handlung allein), sodass die ganze Karte auf einen Handybildschirm passt. Ihre Felder sind ebenfalls antippbar und gehen mit in den Log. Zurzeit sind es die Elements-Tabellen von Mythic GME 2e, die zu Traveller passen, nach Themen sortiert. Aus jeder Tabelle zieht die Karte wie bei Mythic **ein Paar** von Begriffen in einem Feld; bis zu drei Felder stehen nebeneinander:
 

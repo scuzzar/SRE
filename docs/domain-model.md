@@ -26,8 +26,11 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > (`Item`, `Possession`, siehe *Gegenstände*) und die Laufbahnen als Referenzdaten (`Service`,
 > `Throw`, `Rank`, `Table`, `Gain`, `Cascade`, `Aging`).
 >
-> **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic, alle als Paar: Aktion und
-> Beschreibung des Zufallsereignisses, Hören und Riechen sowie die Themen-Tafeln NSC, NSC-Aktionen,
+> Am 27. Oktober 2026 freigegeben: Namen auf der Karte als Paar aus Vor- und Nachname (siehe
+> *Namen*); das Bild ändert sich dadurch nicht.
+>
+> **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
+> Beschreibung des Zufallsereignisses, Hören und Riechen, die drei Namen sowie die Themen-Tafeln NSC, NSC-Aktionen,
 > Welt (mit Schiff), Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
 > Einträge für sie gibt.
 
@@ -158,9 +161,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Spalten einen nicht ausgeblendeten Eintrag zufällig (`drawn`), die Themen-Tafeln eingeschlossen,
   in der Reihenfolge der Bereiche, Felder und Spalten. Ein Feld mit zwei Spalten zieht so ein
   **Paar**. Ausgeblendete Felder übergeht es (siehe *Einträge austauschen*).
-  Eine gestellte Frage geht auf die Karte über. Der Bereich *Namen* hat drei Felder mit je eigenen
-  Einträgen (eher weiblich, eher männlich, neutral bzw. Genre-Name), wie auf der GMA-Karte; so sind
-  die drei Namen immer verschieden.
+  Eine gestellte Frage geht auf die Karte über. Der Bereich *Namen* hat drei Felder (eher weiblich,
+  eher männlich, neutral bzw. Genre-Name), wie auf der GMA-Karte; jedes zieht ein Paar aus Vor- und
+  Nachname (siehe *Namen*).
 - **Die Karte ist offen, bis man sie bestätigt oder verwirft.** Antippen nimmt ein gezogenes Feld
   in die Auswahl (`picked`) auf oder wieder heraus, mit allem, was es gezogen hat: Ein Paar nimmt
   man immer ganz, nie einen Begriff allein. Ausgewählt sein kann nur ein Feld, das gezogen wurde. *Verwerfen* schließt die Karte ohne Logeintrag. *Neu ziehen* ersetzt sie durch eine neue;
@@ -339,6 +342,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
   In den Daten steht jede Tabelle nur einmal (`src/data/mythic-tables.json`); die Spalten entstehen
   beim Laden.
+- **Namen.** Jedes der drei Namensfelder hat zwei Spalten: Vornamen, für jedes Feld eigene, und
+  Nachnamen. Die Nachnamen kommen aus einer gemeinsamen Liste; jedes Feld hat sie als eigene Spalte
+  mit eigenen Einträgen, sodass jeder Eintrag zu genau einer Spalte gehört, wie bei den
+  Elements-Tabellen. So sind die drei Vornamen immer verschieden, die Nachnamen können gleich
+  ausfallen. Die Namen sind eigene Inhalte und passen grob ins Third Imperium: überwiegend irdisch
+  und aus allen Weltgegenden, etwa ein Fünftel erfunden und fremd klingend, angelehnt an den Klang
+  der Vilani. In den Daten steht jede Liste nur einmal (`src/data/names.json`); die Spalten
+  entstehen beim Laden. Die früheren Platzhalter-Vornamen bleiben ausgeblendet in ihrer Spalte.
 - **Einträge austauschen.** Ein Eintrag, der nicht mehr gezogen werden soll, wird nicht gelöscht und
   seine Id nicht neu vergeben, sondern ausgeblendet (`retired`): Ziehen übergeht ihn, alte
   Logeinträge zeigen ihn weiter mit seinem Text. Ob ein Log auf ihn verweist, weiß nur das jeweilige
