@@ -27,6 +27,11 @@ export function skillDm(skill: SkillLevel): number {
   return skill.of === JACK_OF_ALL_TRADES ? 0 : skill.level;
 }
 
+/** Die Stufe, wie die App sie zeigt; Jack-of-all-Trades zeigt keine, weil seine Stufe nichts ändert. */
+export function shownLevel(skill: { readonly of: string; readonly level: number }): number | undefined {
+  return skill.of === JACK_OF_ALL_TRADES ? undefined : skill.level;
+}
+
 /** Ob „ohne Fertigkeit“ geht: nur ohne Jack-of-all-Trades unter den eingeblendeten Fertigkeiten. */
 export function canGoUnskilled(skills: readonly SkillLevel[]): boolean {
   return !skills.some((s) => s.of === JACK_OF_ALL_TRADES && !s.retired);

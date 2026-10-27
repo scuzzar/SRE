@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CareerLine, GenerationAction, GenerationView } from '../../controller';
 import type { RollKind, ThrowOdds } from '../../model';
 import { DicePairView, DiceView, THROW_MS, useTimeline } from '../Dice';
-import { characteristicLabel, credits, hex, signed } from '../format';
+import { characteristicLabel, credits, hex, signed, withLevel } from '../format';
 import { useGame } from '../game-context';
 import { animated, haptic, stopHaptics } from '../haptics';
 import { CloseIcon, DiceIcon } from '../icons';
@@ -220,7 +220,7 @@ function CharacterSheet({ generation }: { generation: GenerationView }) {
         <ul className="chips static" aria-label="Fertigkeiten">
           {generation.skills.map((s) => (
             <li key={s.name}>
-              {s.name}-{s.level}
+              {withLevel(s.name, s.level)}
             </li>
           ))}
         </ul>

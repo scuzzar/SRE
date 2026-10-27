@@ -218,7 +218,10 @@ describe('Charakter-Screen: Probe würfeln → Popup → weiter oder zum Orakel'
     expect(game.snapshot().characters[1]!.unskilled).toBeUndefined();
     expect(jonas.unskilled).toEqual({ dm: -3, chosen: false });
     game.chooseSkill('c2', 'jack-of-all-trades');
-    expect(game.snapshot().task).toMatchObject({ ready: true, dm: 0, parts: [{ kind: 'skill', name: 'Jack-of-all-Trades', level: 1, dm: 0 }] });
+    expect(game.snapshot().task).toMatchObject({ ready: true, dm: 0, parts: [{ kind: 'skill', name: 'Jack-of-all-Trades', level: undefined, dm: 0 }] });
+    // JoT zeigt keine Stufe, weder auf der Karte noch im Editor.
+    expect(game.snapshot().characters[1]!.skills.find((s) => s.of === 'jack-of-all-trades')).toMatchObject({ short: 'JoT', level: undefined });
+    expect(game.snapshot().skills.filter((s) => !s.leveled).map((s) => s.id)).toEqual(['jack-of-all-trades']);
   });
 });
 

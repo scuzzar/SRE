@@ -1,7 +1,7 @@
 import type { Upp } from './campaign';
 import { DomainError } from './errors';
 import { cascadeOf, gainOf, itemOf, ref, serviceOf, skillOf, tableOf, weaponFor, type Aging, type Cascade, type Gain, type Service, type Throw } from './reference';
-import { characteristics, type Characteristic } from './rules';
+import { characteristics, JACK_OF_ALL_TRADES, type Characteristic } from './rules';
 
 /**
  * Der Lebenslauf: alle Würfe einer Charaktererschaffung der Reihe nach, jeder mit der Entscheidung,
@@ -76,7 +76,9 @@ export type Effect =
   | { readonly kind: 'term'; readonly term: number }
   | { readonly kind: 'muster'; readonly rolls: number }
   | { readonly kind: 'dead' }
-  | { readonly kind: 'nothing' };
+  | { readonly kind: 'nothing' }
+  /** Ein zweites Jack-of-all-Trades: nichts, dafür ein weiterer Fertigkeitswurf. */
+  | { readonly kind: 'again' };
 
 /** Woraus der DM eines Wurfs besteht: ein Attribut über seiner Schwelle, Gambling oder ein hoher Rang. */
 export interface DmSource {
@@ -220,6 +222,9 @@ class Replay {
   outcomes: RollOutcome[] = [];
   private effects: Effect[] = [];
 
+  /** `legacy`: die Regel von vor dem 27. Oktober 2026, nach der ein zweites JoT die Stufe erhöhte. */
+  constructor(private readonly legacy = false) {}
+
   apply(roll: CareerRoll, last: boolean): void {
     this.effects = [];
     const term = this.terms;
@@ -271,6 +276,10 @@ class Replay {
         if (!this.service!.skills.some((t) => t.id === table.id)) throw new DomainError(`${table.name} gehört nicht zur Laufbahn.`);
         if (table.minEdu !== undefined && this.upp.edu < table.minEdu) throw new DomainError(`${table.name} geht erst mit EDU ${table.minEdu}+.`);
         const gain = this.row(roll, table.rows, roll.dice[0]!);
+        if (!this.legacy && gain.skill === JACK_OF_ALL_TRADES && this.skills.some((s) => s.of === JACK_OF_ALL_TRADES)) {
+          this.effects.push({ kind: 'again' });
+          break;
+        }
         if (!this.gain(gain, roll.chosen, last, false)) break;
         this.skillsLeft--;
         this.afterSkill();
@@ -539,13 +548,27 @@ class Replay {
   }
 }
 
+function replayWith(career: Career, legacy: boolean): CareerState {
+  const r = new Replay(legacy);
+  career.rolls.forEach((roll, i) => r.apply(roll, i === career.rolls.length - 1));
+  return r.state();
+}
+
 /**
  * Spielt einen Lebenslauf von vorn nach und prüft dabei jeden Wurf gegen die Regeln. Ergebnisse
  * folgen allein aus dem, was die Würfe festhalten (Würfel, DM, Zielwert, Zeile), nie aus dem heutigen
- * Stand der Tabellen. Verletzt ein Wurf eine Regel, gibt es einen DomainError.
+ * Stand der Tabellen. Verletzt ein Wurf eine Regel, gibt es einen DomainError. Ein Lebenslauf, der
+ * nur zur alten Regel für ein zweites Jack-of-all-Trades passt, gilt nach der alten.
  */
 export function replay(career: Career): CareerState {
-  const r = new Replay();
-  career.rolls.forEach((roll, i) => r.apply(roll, i === career.rolls.length - 1));
-  return r.state();
+  try {
+    return replayWith(career, false);
+  } catch (error) {
+    if (!(error instanceof DomainError)) throw error;
+    try {
+      return replayWith(career, true);
+    } catch {
+      throw error;
+    }
+  }
 }

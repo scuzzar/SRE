@@ -1,5 +1,5 @@
 import type { CharacterView } from '../../controller';
-import { characteristicLabel, credits, hex, signed } from '../format';
+import { characteristicLabel, credits, hex, signed, withLevel } from '../format';
 import { useGame } from '../game-context';
 import { PencilIcon } from '../icons';
 import { CareerList } from './GenerationSheet';
@@ -61,11 +61,11 @@ export function CharacterCard({ character }: { character: CharacterView }) {
           <button
             key={skill.of}
             type="button"
-            aria-label={`${skill.name}-${skill.level}`}
+            aria-label={withLevel(skill.name, skill.level)}
             aria-pressed={skill.chosen}
             onClick={() => game.chooseSkill(character.id, skill.of)}
           >
-            {character.open ? skill.name : skill.short}-{skill.level}
+            {withLevel(character.open ? skill.name : skill.short, skill.level)}
           </button>
         ))}
         {character.unskilled && (

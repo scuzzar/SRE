@@ -119,6 +119,31 @@ describe('Charaktererschaffung', () => {
     expect(stateOf(g)).toMatchObject({ step: 'skill', skillsLeft: 1, skills: [{ of: 'cutlass', level: 1 }] });
   });
 
+  it('gibt bei einem zweiten Jack-of-all-Trades nichts, aber einen weiteren Fertigkeitswurf', () => {
+    let g = enlist(kira(), 'scouts', fixedRandom(6, 6));
+    g = rollNext(g, fixedRandom(6, 6)); // Überleben
+    g = rollSkill(g, 'scouts.service', fixedRandom(6)); // JoT
+    expect(stateOf(g)).toMatchObject({ step: 'skill', skillsLeft: 1, skills: [{ of: 'pilot', level: 1 }, { of: 'jack-of-all-trades', level: 1 }] });
+    g = rollSkill(g, 'scouts.education', fixedRandom(4)); // noch einmal JoT
+    expect(stateOf(g)).toMatchObject({ step: 'skill', skillsLeft: 1, skills: [{ of: 'pilot', level: 1 }, { of: 'jack-of-all-trades', level: 1 }] });
+    expect(stateOf(g).outcomes.at(-1)!.effects).toEqual([{ kind: 'again' }]);
+    g = rollSkill(g, 'scouts.service', fixedRandom(1)); // Air/Raft
+    expect(stateOf(g)).toMatchObject({ step: 'reenlist', skillsLeft: 0 });
+  });
+
+  it('lässt ältere Lebensläufe gelten, in denen ein zweites JoT die Stufe erhöht hat', () => {
+    let g = enlist(kira(), 'scouts', fixedRandom(6, 6));
+    g = rollNext(g, fixedRandom(6, 6));
+    g = rollSkill(g, 'scouts.service', fixedRandom(6));
+    g = rollSkill(g, 'scouts.education', fixedRandom(4));
+    // Nach der alten Regel war der Term damit fertig, es folgte gleich die Weiterverpflichtung.
+    const old = { rolls: [...g.career.rolls, { kind: 'reenlist' as const, wants: false, dice: [1, 1], dm: 0, target: 3 }] };
+    expect(replay(old)).toMatchObject({ step: 'muster', skills: [{ of: 'pilot', level: 1 }, { of: 'jack-of-all-trades', level: 2 }] });
+    // Passt ein Lebenslauf zu keiner der beiden Regeln, bleibt es beim Fehler der heutigen.
+    const broken = { rolls: [...old.rolls, { kind: 'survival' as const, dice: [6, 6], dm: 0, target: 7 }] };
+    expect(() => replay(broken)).toThrow(/passt nicht zum Schritt „skill“/);
+  });
+
   it('nimmt die Zeilen der Aging Table mit dem größten Term, der passt', () => {
     expect(agingFor(3)).toEqual([]);
     expect(agingFor(4).map((a) => a.id)).toEqual(['aging.4.str', 'aging.4.dex', 'aging.4.end']);

@@ -14,6 +14,7 @@ import {
   ref,
   retiredCharacters,
   sectionOfSlot,
+  shownLevel,
   skillDm,
   skillOf,
   slotOf,
@@ -67,13 +68,18 @@ export interface Snapshot {
   readonly result: TaskItem | undefined;
   readonly editor: EditorView | undefined;
   /** Die feste Liste der Fertigkeiten, für den Editor. */
-  readonly skills: readonly Skill[];
+  readonly skills: readonly SkillChoice[];
   /** Die feste Liste der Gegenstände, für den Editor. */
   readonly items: readonly ItemChoice[];
   /** Die Charaktererschaffung im Vordergrund, solange sie offen ist. */
   readonly generation: GenerationView | undefined;
   /** In der Kampagne läuft eine Charaktererschaffung (vielleicht gerade nicht im Vordergrund). */
   readonly generationRunning: boolean;
+}
+
+export interface SkillChoice extends Skill {
+  /** Ob man eine Stufe eingibt; bei Jack-of-all-Trades nicht. */
+  readonly leveled: boolean;
 }
 
 export interface ItemChoice {
@@ -150,7 +156,8 @@ export interface TaskItem {
 }
 
 export type DmPart =
-  | { readonly kind: 'skill'; readonly name: string; readonly level: number; readonly dm: number }
+  /** Ohne `level` bei Jack-of-all-Trades. */
+  | { readonly kind: 'skill'; readonly name: string; readonly level: number | undefined; readonly dm: number }
   | { readonly kind: 'unskilled'; readonly dm: number }
   | { readonly kind: 'characteristic'; readonly characteristic: Characteristic; readonly value: number; readonly dm: number };
 
@@ -186,7 +193,8 @@ export interface CharacterView {
   readonly chosen: boolean;
   /** Die Details sind aufgeklappt: volle Namen der Fertigkeiten, Ausrüstung, Credits, Notiz. */
   readonly open: boolean;
-  readonly skills: readonly { readonly of: string; readonly name: string; readonly short: string; readonly level: number; readonly chosen: boolean }[];
+  /** Ohne `level` bei Jack-of-all-Trades. */
+  readonly skills: readonly { readonly of: string; readonly name: string; readonly short: string; readonly level: number | undefined; readonly chosen: boolean }[];
   readonly possessions: readonly { readonly name: string; readonly count: number }[];
   /** Der Lebenslauf, wenn der Charakter über die Charaktererschaffung entstanden ist. */
   readonly career: readonly CareerLine[] | undefined;
@@ -253,7 +261,7 @@ function dmParts(character: Character, uses: string | undefined, unskilled: bool
   const parts: DmPart[] = [];
   if (uses !== undefined) {
     const skill = character.skills.find((s) => s.of === uses);
-    parts.push({ kind: 'skill', name: skillOf(uses).name, level: skill?.level ?? 0, dm: skill ? skillDm(skill) : 0 });
+    parts.push({ kind: 'skill', name: skillOf(uses).name, level: shownLevel({ of: uses, level: skill?.level ?? 0 }), dm: skill ? skillDm(skill) : 0 });
   } else if (unskilled) {
     parts.push({ kind: 'unskilled', dm: ref.houseRules.unskilledDm });
   }
@@ -334,7 +342,7 @@ function characterView(campaign: Campaign, character: Character, task: Task | un
     open: own !== undefined && details,
     skills: activeSkills(character).map((s) => {
       const skill = skillOf(s.of);
-      return { of: s.of, name: skill.name, short: skill.short, level: s.level, chosen: own?.uses === s.of };
+      return { of: s.of, name: skill.name, short: skill.short, level: shownLevel(s), chosen: own?.uses === s.of };
     }),
     possessions: character.possessions.map((p) => ({ name: itemLabel(itemOf(p.of)), count: p.count })),
     career: character.career && careerLines(character.career),
@@ -349,11 +357,12 @@ function taskView(campaign: Campaign, task: Task): TaskView {
   return { character: character.name, ready: hasSkill(task), ...evaluateTask(task, campaign), parts: dmParts(character, task.uses, task.unskilled, task.counts) };
 }
 
+const skills: readonly SkillChoice[] = ref.skills.map((s) => ({ ...s, leveled: shownLevel({ of: s.id, level: 0 }) !== undefined }));
 const items: readonly ItemChoice[] = ref.items.map((i) => ({ id: i.id, label: itemLabel(i), kind: i.kind, once: i.once }));
 
 export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
-  const base = { persistent: state.persistent, storageError: state.storageError, screen: state.screen, skills: ref.skills, items };
+  const base = { persistent: state.persistent, storageError: state.storageError, screen: state.screen, skills, items };
   if (!campaign) {
     return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, characters: [], dead: [], retired: [], task: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false };
   }

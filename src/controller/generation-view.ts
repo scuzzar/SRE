@@ -15,6 +15,7 @@ import {
   replay,
   serviceOf,
   serviceOptions,
+  shownLevel,
   skillOf,
   stateOf,
   successOf,
@@ -81,7 +82,8 @@ export interface GenerationView {
   readonly status: string;
   readonly age: number;
   readonly upp: readonly { readonly characteristic: Characteristic; readonly value: number | undefined }[];
-  readonly skills: readonly { readonly name: string; readonly short: string; readonly level: number }[];
+  /** Ohne `level` bei Jack-of-all-Trades. */
+  readonly skills: readonly { readonly name: string; readonly short: string; readonly level: number | undefined }[];
   readonly possessions: readonly { readonly name: string; readonly count: number }[];
   readonly credits: number;
   readonly pension: number;
@@ -119,7 +121,10 @@ function effectText(effect: Effect): string | undefined {
     case 'characteristic':
       return effect.change === undefined ? `${effect.characteristic} ${effect.value}` : `${effect.characteristic} ${signed(effect.change)}`;
     case 'skill':
-      return `${skillOf(effect.skill).name}-${effect.level}`;
+    {
+      const level = shownLevel({ of: effect.skill, level: effect.level });
+      return level === undefined ? skillOf(effect.skill).name : `${skillOf(effect.skill).name}-${level}`;
+    }
     case 'item':
       return effect.count > 1 ? `${itemLabel(itemOf(effect.item))} (${effect.count})` : itemLabel(itemOf(effect.item));
     case 'credits':
@@ -130,6 +135,8 @@ function effectText(effect: Effect): string | undefined {
       return 'tot';
     case 'nothing':
       return 'nichts';
+    case 'again':
+      return 'schon da · noch ein Wurf';
     case 'muster':
       return `${effect.rolls} ${effect.rolls === 1 ? 'Abmusterungswurf' : 'Abmusterungswürfe'}`;
     case 'service':
@@ -346,7 +353,7 @@ export function generationView(generation: Generation, error: string | undefined
     })),
     skills: state.skills.map((s) => {
       const skill = skillOf(s.of);
-      return { name: skill.name, short: skill.short, level: s.level };
+      return { name: skill.name, short: skill.short, level: shownLevel(s) };
     }),
     possessions: state.possessions.map((p) => ({ name: itemLabel(itemOf(p.of)), count: p.count })),
     credits: state.credits,

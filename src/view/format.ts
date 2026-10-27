@@ -46,10 +46,15 @@ export function quoted(text: string): string {
   return `„${text}“`;
 }
 
+/** Eine Fertigkeit mit Stufe („Pilot-2“), ohne, wenn sie keine zeigt („JoT“). */
+export function withLevel(name: string, level: number | undefined): string {
+  return level === undefined ? name : `${name}-${level}`;
+}
+
 export function partLabel(part: DmPart): string {
   switch (part.kind) {
     case 'skill':
-      return `${part.name}-${part.level} ${signed(part.dm)}`;
+      return `${withLevel(part.name, part.level)} ${signed(part.dm)}`;
     case 'unskilled':
       return `ohne Fertigkeit ${signed(part.dm)}`;
     case 'characteristic':
@@ -60,7 +65,7 @@ export function partLabel(part: DmPart): string {
 /** Die Fertigkeit einer Probe, wie sie im Titel steht: „Pilot-2“ oder „ohne Fertigkeit“. */
 export function skillTitle(parts: readonly DmPart[]): string {
   const first = parts[0];
-  if (first?.kind === 'skill') return `${first.name}-${first.level}`;
+  if (first?.kind === 'skill') return withLevel(first.name, first.level);
   return 'ohne Fertigkeit';
 }
 
