@@ -138,7 +138,7 @@ export interface CardItem {
   readonly at: string;
   readonly question: string | undefined;
   /** Je übernommenem Feld seine Texte: einer, beim Paar zwei. */
-  readonly items: readonly { readonly section: string; readonly slot: string; readonly texts: readonly string[] }[];
+  readonly items: readonly { readonly sectionId: string; readonly section: string; readonly slot: string; readonly texts: readonly string[] }[];
 }
 
 export interface TaskItem {
@@ -300,7 +300,8 @@ function logItem(campaign: Campaign, entry: LogEntry): LogItem {
         question: entry.question,
         items: entry.items.map((item) => {
           const slot = slotOf(item);
-          return { section: sectionOfSlot(slot.id).name, slot: slot.label, texts: item.picked.map((e) => entryOf(e).text) };
+          const section = sectionOfSlot(slot.id);
+          return { sectionId: section.id, section: section.name, slot: slot.label, texts: item.picked.map((e) => entryOf(e).text) };
         }),
       };
     case 'task':

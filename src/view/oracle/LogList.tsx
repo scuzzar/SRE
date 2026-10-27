@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 import type { LogItem } from '../../controller';
-import { clockTime, pairText, partLabel, quoted, taskDetail, taskTitle } from '../format';
+import { clockTime, partLabel, pickText, quoted, taskDetail, taskTitle } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 
@@ -164,7 +164,7 @@ function EntryBody({ item }: { item: LogItem }) {
             {item.items.map((pick, i) => (
               <div key={i} style={{ display: 'contents' }}>
                 <dt>{pick.section === pick.slot ? pick.section : `${pick.section} · ${pick.slot}`}</dt>
-                <dd>{pairText(pick.texts)}</dd>
+                <dd>{pickText(pick.sectionId, pick.texts)}</dd>
               </div>
             ))}
           </dl>

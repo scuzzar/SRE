@@ -113,8 +113,8 @@ describe('Orakel-Screen', () => {
         at: '2026-10-23T14:00:00.000Z',
         question: 'Was steckt hinter dem Notsignal?',
         items: [
-          { section: 'Zufallsereignis', slot: 'Aktion', texts: ['aufgeben', 'Vorteil'] },
-          { section: 'Sinneseindrücke', slot: 'Riechen', texts: ['beißend', 'beißend'] },
+          { sectionId: 'event', section: 'Zufallsereignis', slot: 'Aktion', texts: ['aufgeben', 'Vorteil'] },
+          { sectionId: 'senses', section: 'Sinneseindrücke', slot: 'Riechen', texts: ['beißend', 'beißend'] },
         ],
       },
     ]);

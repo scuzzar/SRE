@@ -25,6 +25,16 @@ export function pairText(texts: readonly string[]): string {
   return texts.join(' · ');
 }
 
+/** Ein Name aus Vor- und Nachname, wie man ihn schreibt: „Vera Tan“. */
+export function nameText(texts: readonly string[]): string {
+  return texts.join(' ');
+}
+
+/** Was ein übernommenes Feld im Log zeigt: ein Name am Stück, sonst Begriff · Begriff. */
+export function pickText(sectionId: string, texts: readonly string[]): string {
+  return sectionId === 'names' ? nameText(texts) : pairText(texts);
+}
+
 /** Ein DM mit Vorzeichen: +2, −1, ±0. */
 export function signed(n: number): string {
   if (n > 0) return `+${n}`;

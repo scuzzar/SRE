@@ -747,6 +747,13 @@ button:disabled {
   font-size: 14px;
 }
 
+.card-grid.wide-band .tile.name {
+  min-height: 0;
+  padding: 3px 6px;
+  font-size: 12px;
+  line-height: 1.15;
+}
+
 .tile.flavor {
   min-height: 40px;
   font-style: italic;
@@ -854,6 +861,25 @@ button:disabled {
   transition:
     background-color 0.15s,
     box-shadow 0.15s;
+}
+
+/* Die Karte: Kopf und Fuß knapp, damit sie mit Frage und Namen auf einen Handybildschirm passt. */
+.card-sheet .sheet-head {
+  padding: 6px 16px 3px;
+}
+
+.card-sheet .card-question {
+  margin-bottom: 4px;
+}
+
+.card-sheet .sheet-foot {
+  padding: 5px 16px 7px;
+  padding-bottom: max(7px, env(safe-area-inset-bottom));
+}
+
+.card-sheet .confirm {
+  width: 48px;
+  height: 48px;
 }
 
 .confirm:disabled {
