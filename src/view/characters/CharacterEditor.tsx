@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { EditorView, ItemChoice } from '../../controller';
-import type { ItemKind, Skill, Upp } from '../../model';
+import type { EditorView, ItemChoice, SkillChoice } from '../../controller';
+import type { ItemKind, Upp } from '../../model';
 import { characteristicLabel, hex } from '../format';
 import { useGame } from '../game-context';
 import { CloseIcon } from '../icons';
@@ -26,7 +26,7 @@ const kindNames: Record<ItemKind, string> = {
 };
 
 /** Charakter anlegen oder bearbeiten. Die Eingaben während des Tippens hält die View; prüfen und speichern tut der Controller. */
-export function CharacterEditor({ editor, skills, items }: { editor: EditorView; skills: readonly Skill[]; items: readonly ItemChoice[] }) {
+export function CharacterEditor({ editor, skills, items }: { editor: EditorView; skills: readonly SkillChoice[]; items: readonly ItemChoice[] }) {
   const game = useGame();
   const [form, setForm] = useState(() => ({
     ...editor.input,
@@ -100,18 +100,23 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
           <fieldset>
             <legend>Fertigkeiten</legend>
             {form.skills.map((skill, i) => {
-              const name = skills.find((s) => s.id === skill.of)?.name ?? skill.of;
+              const choice = skills.find((s) => s.id === skill.of);
+              const name = choice?.name ?? skill.of;
               return (
                 <div key={skill.of} className="skill-row">
                   <span>{name}</span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    aria-label={`Stufe ${name}`}
-                    value={skill.level}
-                    onChange={(e) => setForm({ ...form, skills: form.skills.map((s, j) => (j === i ? { ...s, level: e.target.value } : s)) })}
-                  />
+                  {choice?.leveled === false ? (
+                    <span className="small-label">ohne Stufe</span>
+                  ) : (
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      aria-label={`Stufe ${name}`}
+                      value={skill.level}
+                      onChange={(e) => setForm({ ...form, skills: form.skills.map((s, j) => (j === i ? { ...s, level: e.target.value } : s)) })}
+                    />
+                  )}
                   <button
                     type="button"
                     className="ghost square"

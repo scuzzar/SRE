@@ -82,9 +82,8 @@ export function ResultDialog({ result }: { result: TaskItem }) {
           <span id="result-detail" className="mono muted" style={{ fontSize: 14 }}>
             {taskDetail(result)}
           </span>
-          <span className="muted" style={{ fontSize: 13 }}>
-            {result.parts.map(partLabel).join(', ')}
-          </span>
+          {/* Für Screenreader: Die Teile des DM stehen oben schon sichtbar, aber dort nur für das Auge. */}
+          <span className="visually-hidden">{result.parts.map(partLabel).join(', ')}</span>
           <div className="roll-actions">
             <button type="button" className="ghost" onClick={() => game.closeResultToOracle()}>
               Zum Orakel

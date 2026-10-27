@@ -1,10 +1,13 @@
 import {
   ageOf,
   canTakeCash,
+  cascadeOf,
   cascadeOptions,
   characteristics,
   gainOf,
   itemOf,
+  MAX_CASH_ROLLS,
+  MAX_TERMS,
   musterSources,
   nextThrow,
   pensionOf,
@@ -12,6 +15,7 @@ import {
   replay,
   serviceOf,
   serviceOptions,
+  shownLevel,
   skillOf,
   stateOf,
   successOf,
@@ -46,6 +50,8 @@ export interface CareerLine {
   readonly target: number | undefined;
   readonly success: boolean | undefined;
   readonly result: string;
+  /** Was der Wurf eingebracht hat, knapp, Fertigkeiten mit Kürzel: „STR 10“, „SMG-1“, „Lieutenant“, „END −1“; für die Zusammenfassung eines Terms. */
+  readonly gains: readonly string[];
 }
 
 export type GenerationAction =
@@ -78,7 +84,8 @@ export interface GenerationView {
   readonly status: string;
   readonly age: number;
   readonly upp: readonly { readonly characteristic: Characteristic; readonly value: number | undefined }[];
-  readonly skills: readonly { readonly name: string; readonly short: string; readonly level: number }[];
+  /** Ohne `level` bei Jack-of-all-Trades. */
+  readonly skills: readonly { readonly name: string; readonly short: string; readonly level: number | undefined }[];
   readonly possessions: readonly { readonly name: string; readonly count: number }[];
   readonly credits: number;
   readonly pension: number;
@@ -104,11 +111,17 @@ function signed(n: number): string {
 /** Was eine Zeile einer Tabelle bringt, knapp: „+1 STR“, „Pilot“, „Blade Combat“, „Low Passage“, „Cr 5.000“. */
 export function gainText(gain: Gain): string {
   if (gain.skill !== undefined) return skillOf(gain.skill).name;
-  if (gain.choose !== undefined) return ref.cascades.find((c) => c.id === gain.choose)?.name ?? gain.choose;
+  if (gain.choose !== undefined) return cascadeOf(gain.choose).name;
   if (gain.characteristic !== undefined) return `${signed(gain.change!)} ${gain.characteristic}`;
   if (gain.item !== undefined) return itemLabel(itemOf(gain.item));
   if (gain.credits !== undefined) return credits(gain.credits);
   return '–';
+}
+
+/** Eine Fertigkeit mit Kürzel: „SMG-1“, bei Jack-of-all-Trades ohne Stufe: „JoT“. */
+function shortSkillText(of: string, level: number): string {
+  const shown = shownLevel({ of, level });
+  return shown === undefined ? skillOf(of).short : `${skillOf(of).short}-${shown}`;
 }
 
 function effectText(effect: Effect): string | undefined {
@@ -116,7 +129,10 @@ function effectText(effect: Effect): string | undefined {
     case 'characteristic':
       return effect.change === undefined ? `${effect.characteristic} ${effect.value}` : `${effect.characteristic} ${signed(effect.change)}`;
     case 'skill':
-      return `${skillOf(effect.skill).name}-${effect.level}`;
+    {
+      const level = shownLevel({ of: effect.skill, level: effect.level });
+      return level === undefined ? skillOf(effect.skill).name : `${skillOf(effect.skill).name}-${level}`;
+    }
     case 'item':
       return effect.count > 1 ? `${itemLabel(itemOf(effect.item))} (${effect.count})` : itemLabel(itemOf(effect.item));
     case 'credits':
@@ -127,6 +143,8 @@ function effectText(effect: Effect): string | undefined {
       return 'tot';
     case 'nothing':
       return 'nichts';
+    case 'again':
+      return 'schon da · noch ein Wurf';
     case 'muster':
       return `${effect.rolls} ${effect.rolls === 1 ? 'Abmusterungswurf' : 'Abmusterungswürfe'}`;
     case 'service':
@@ -172,7 +190,7 @@ function result(roll: CareerRoll, effects: readonly Effect[]): string {
   const withGains = (head: string) => [head, ...gains].join(' · ');
   const pending = () => {
     const gained = roll.gained ? gainOf(roll.gained) : undefined;
-    const cascade = gained?.choose ? ref.cascades.find((c) => c.id === gained.choose) : undefined;
+    const cascade = gained?.choose ? cascadeOf(gained.choose) : undefined;
     return cascade ? `${cascade.name}: wählen` : undefined;
   };
   switch (roll.kind) {
@@ -217,6 +235,8 @@ export function careerLines(career: Career): readonly CareerLine[] {
   const { outcomes } = replay(career);
   return career.rolls.map((roll, index) => {
     const outcome = outcomes[index]!;
+    // Wer abmustern will, hat weder Erfolg noch Fehlschlag; der Zielwert zählt für ihn nicht, nur eine 12.
+    const leaving = roll.kind === 'reenlist' && !roll.wants;
     return {
       index,
       kind: roll.kind,
@@ -226,9 +246,14 @@ export function careerLines(career: Career): readonly CareerLine[] {
       dm: roll.dm,
       parts: outcome.sources,
       total: sumOf(roll) + roll.dm,
-      target: roll.target,
-      success: roll.kind === 'reenlist' ? outcome.effects.some((e) => e.kind === 'term') : successOf(roll),
+      target: leaving ? undefined : roll.target,
+      success: leaving ? undefined : roll.kind === 'reenlist' ? outcome.effects.some((e) => e.kind === 'term') : successOf(roll),
       result: result(roll, outcome.effects),
+      gains: outcome.effects.flatMap((e) => {
+        const gained = e.kind === 'characteristic' || e.kind === 'skill' || e.kind === 'item' || e.kind === 'credits' || e.kind === 'rank';
+        const text = e.kind === 'skill' ? shortSkillText(e.skill, e.level) : gained ? effectText(e) : undefined;
+        return text === undefined ? [] : [text];
+      }),
     };
   });
 }
@@ -305,8 +330,8 @@ export function generationView(generation: Generation, error: string | undefined
       action = { kind: 'roll', label: 'Krise würfeln', dice: 2, odds };
       break;
     case 'reenlist': {
-      const last = state.terms >= 7;
-      prompt = last ? `Ende von ${term}: nach 7 Terms bleibt nur, wer eine 12 würfelt` : `Ende von ${term}: weiterverpflichten?`;
+      const last = state.terms >= MAX_TERMS;
+      prompt = last ? `Ende von ${term}: nach ${MAX_TERMS} Terms bleibt nur, wer eine 12 würfelt` : `Ende von ${term}: weiterverpflichten?`;
       action = { kind: 'reenlist', odds: odds!, last };
       break;
     }
@@ -315,7 +340,8 @@ export function generationView(generation: Generation, error: string | undefined
       action = {
         kind: 'muster',
         left: state.musterLeft,
-        cashLeft: canTakeCash(state) ? 3 - state.cashRolls : 0,
+        // Geld höchstens dreimal, und nie öfter, als es noch Würfe gibt.
+        cashLeft: canTakeCash(state) ? Math.min(MAX_CASH_ROLLS - state.cashRolls, state.musterLeft) : 0,
         cashDm: musterSources('cash', state.skills, state.rank),
         benefitDm: musterSources('benefit', state.skills, state.rank),
       };
@@ -341,7 +367,7 @@ export function generationView(generation: Generation, error: string | undefined
     })),
     skills: state.skills.map((s) => {
       const skill = skillOf(s.of);
-      return { name: skill.name, short: skill.short, level: s.level };
+      return { name: skill.name, short: skill.short, level: shownLevel(s) };
     }),
     possessions: state.possessions.map((p) => ({ name: itemLabel(itemOf(p.of)), count: p.count })),
     credits: state.credits,

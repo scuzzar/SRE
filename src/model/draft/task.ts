@@ -1,5 +1,6 @@
 import {
   activeSkills,
+  canGoUnskilled,
   characterOf,
   characteristicDm,
   characteristics,
@@ -8,6 +9,7 @@ import {
   oddsOf,
   ref,
   roll2d6,
+  skillDm,
   skillOf,
   valueOf,
   type Campaign,
@@ -75,15 +77,23 @@ export function hasSkill(task: Task): boolean {
   return task.uses !== undefined || task.unskilled;
 }
 
+function checkUnskilled(character: Character): void {
+  if (!canGoUnskilled(character.skills)) throw new DomainError(`${character.name} hat Jack-of-all-Trades; das zählt als Stufe 0 statt „ohne Fertigkeit“.`);
+}
+
 /**
- * Wählt die Fertigkeit: eine Fertigkeitsstufe des Charakters oder `null` für „ohne Fertigkeit“.
- * Die gewählte noch einmal wählen nimmt die Wahl zurück; dann zählen auch keine Attribute mehr.
+ * Wählt die Fertigkeit: eine Fertigkeitsstufe des Charakters oder `null` für „ohne Fertigkeit“; das
+ * gibt es nicht, wenn der Charakter Jack-of-all-Trades hat. Die gewählte noch einmal wählen nimmt
+ * die Wahl zurück; dann zählen auch keine Attribute mehr.
  */
 export function chooseSkill(task: Task, campaign: Campaign, skill: string | null): Task {
   const character = activeCharacter(campaign, task.for);
   const same = skill === null ? task.unskilled : task.uses === skill;
   if (same) return { for: task.for, unskilled: false, counts: [] };
-  if (skill === null) return { for: task.for, unskilled: true, counts: task.counts };
+  if (skill === null) {
+    checkUnskilled(character);
+    return { for: task.for, unskilled: true, counts: task.counts };
+  }
   usedSkill({ ...task, uses: skill }, character);
   return { for: task.for, uses: skill, unskilled: false, counts: task.counts };
 }
@@ -109,11 +119,11 @@ export function toggleCharacteristic(task: Task, campaign: Campaign, characteris
   return { ...task, counts };
 }
 
-/** 2W6 + Fertigkeit + gewählte Attribute ≥ Zielwert der gewählten Stufe. */
+/** 2W6 + Fertigkeit + gewählte Attribute ≥ Zielwert der gewählten Stufe; Jack-of-all-Trades zählt als Stufe 0. */
 export function evaluateTask(task: Task, campaign: Campaign): TaskOdds {
   const character = characterOf(campaign, task.for);
   const skill = usedSkill(task, character);
-  let dm = skill ? skill.level : task.unskilled ? ref.houseRules.unskilledDm : 0;
+  let dm = skill ? skillDm(skill) : task.unskilled ? ref.houseRules.unskilledDm : 0;
   for (const c of task.counts) dm += characteristicDm(valueOf(character.upp, c), ref.houseRules);
   const target = oddsOf(campaign.odds).target;
   const need = target - dm;
@@ -123,6 +133,7 @@ export function evaluateTask(task: Task, campaign: Campaign): TaskOdds {
 /** Würfelt die Probe. Auch eine unmögliche Probe darf man würfeln; sie misslingt und steht trotzdem im Log. */
 export function rollTask(task: Task, campaign: Campaign, random: Random, clock: Clock): TaskResult {
   if (!hasSkill(task)) throw new DomainError('Erst eine Fertigkeit wählen.');
+  if (task.unskilled) checkUnskilled(activeCharacter(campaign, task.for));
   const { dm, target } = evaluateTask(task, campaign);
   const result: TaskResult = {
     kind: 'task',

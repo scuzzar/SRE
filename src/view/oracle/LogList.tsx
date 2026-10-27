@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 import type { LogItem } from '../../controller';
-import { clockTime, pairText, partLabel, quoted, taskDetail, taskTitle } from '../format';
+import { clockTime, partLabel, pickText, quoted, taskDetail, taskTitle } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 
@@ -56,9 +56,12 @@ export function LogList({ log }: { log: readonly LogItem[] }) {
   return (
     <section className="scroll log-scroll" aria-labelledby="log-title">
       <div className="log">
-        <h2 id="log-title" className="section-title">
-          Log
-        </h2>
+        <div className="log-head">
+          <h2 id="log-title" className="section-title">
+            Log
+          </h2>
+          {log.length > 0 && <span className="log-hint">Eintrag lange drücken zum Löschen</span>}
+        </div>
         {log.length === 0 ? (
           <p className="log-empty">Noch nichts im Log. Stell eine Frage, zieh eine Karte oder würfle.</p>
         ) : (
@@ -161,7 +164,7 @@ function EntryBody({ item }: { item: LogItem }) {
             {item.items.map((pick, i) => (
               <div key={i} style={{ display: 'contents' }}>
                 <dt>{pick.section === pick.slot ? pick.section : `${pick.section} · ${pick.slot}`}</dt>
-                <dd>{pairText(pick.texts)}</dd>
+                <dd>{pickText(pick.sectionId, pick.texts)}</dd>
               </div>
             ))}
           </dl>

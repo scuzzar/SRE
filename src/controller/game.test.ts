@@ -35,6 +35,19 @@ describe('Start', () => {
     expect(game.snapshot().storageError).toMatch(/nicht speichern: Error: voll/);
   });
 
+  it('überschreibt nichts, wenn sich der Spielstand nicht laden lässt', async () => {
+    const stored = createCampaign([], 'Spinward', 'k1');
+    const repository = memoryRepository(stored);
+    const broken: CampaignRepository = { ...repository, list: async () => Promise.reject(new Error('kaputt')) };
+    const game = new GameController({ repository: broken, random: fixedRandom(), clock: fixedClock(), download: memoryDownload() });
+    await game.init();
+    game.rollDice();
+    await game.whenSaved();
+    expect(game.snapshot()).toMatchObject({ ready: true, persistent: false, storageError: expect.stringMatching(/nicht laden: Error: kaputt/) });
+    expect(repository.campaigns.get('k1')).toBe(stored);
+    expect(repository.open).toBeUndefined();
+  });
+
   it('öffnet die Kampagne, die zuletzt offen war', async () => {
     const repository = memoryRepository(createCampaign([], 'Spinward', 'k1'), createCampaign([], 'Aramis', 'k2'));
     repository.open = 'k1';
@@ -100,8 +113,8 @@ describe('Orakel-Screen', () => {
         at: '2026-10-23T14:00:00.000Z',
         question: 'Was steckt hinter dem Notsignal?',
         items: [
-          { section: 'Zufallsereignis', slot: 'Aktion', texts: ['aufgeben', 'Vorteil'] },
-          { section: 'Sinneseindrücke', slot: 'Riechen', texts: ['beißend', 'beißend'] },
+          { sectionId: 'event', section: 'Zufallsereignis', slot: 'Aktion', texts: ['aufgeben', 'Vorteil'] },
+          { sectionId: 'senses', section: 'Sinneseindrücke', slot: 'Riechen', texts: ['beißend', 'beißend'] },
         ],
       },
     ]);
@@ -195,6 +208,20 @@ describe('Charakter-Screen: Probe würfeln → Popup → weiter oder zum Orakel'
     const jonas = game.snapshot().characters[1]!;
     expect(jonas.unskilled).toEqual({ dm: -3, chosen: true });
     expect(jonas.characteristics.filter((c) => c.selectable).map((c) => c.characteristic)).toEqual(['INT']);
+  });
+
+  it('bietet mit Jack-of-all-Trades kein „ohne Fertigkeit“ an; JoT gibt ±0', async () => {
+    const { game } = await started();
+    const jonas = game.snapshot().characters[1]!;
+    game.editCharacter('c2');
+    game.saveCharacter({ ...game.snapshot().editor!.input, skills: [...game.snapshot().editor!.input.skills, { of: 'jack-of-all-trades', level: 1 }] });
+    expect(game.snapshot().characters[1]!.unskilled).toBeUndefined();
+    expect(jonas.unskilled).toEqual({ dm: -3, chosen: false });
+    game.chooseSkill('c2', 'jack-of-all-trades');
+    expect(game.snapshot().task).toMatchObject({ ready: true, dm: 0, parts: [{ kind: 'skill', name: 'Jack-of-all-Trades', level: undefined, dm: 0 }] });
+    // JoT zeigt keine Stufe, weder auf der Karte noch im Editor.
+    expect(game.snapshot().characters[1]!.skills.find((s) => s.of === 'jack-of-all-trades')).toMatchObject({ short: 'JoT', level: undefined });
+    expect(game.snapshot().skills.filter((s) => !s.leveled).map((s) => s.id)).toEqual(['jack-of-all-trades']);
   });
 });
 
@@ -415,6 +442,8 @@ describe('Charaktererschaffung', () => {
     game.chooseSkillTable('other.personal');
     game.chooseSkillTable('other.personal');
     game.reenlist(false);
+    // Nur ein Abmusterungswurf: Geld also auch nur noch einmal, nicht dreimal.
+    expect(game.snapshot().generation?.action).toMatchObject({ kind: 'muster', left: 1, cashLeft: 1 });
     game.musterOut('cash');
     const view = game.snapshot().generation!;
     expect(view.step).toBe('name');
@@ -426,6 +455,8 @@ describe('Charaktererschaffung', () => {
       'Abmustern: mustert ab · 1 Abmusterungswurf',
       'Abmusterung: Geld: Cr 50.000',
     ]);
+    // Wer abmustern will und abmustert, ist kein Fehlschlag.
+    expect(view.lines[10]).toMatchObject({ label: 'Abmustern', success: undefined, target: undefined });
 
     game.finishGeneration('  ');
     expect(game.snapshot().generation?.error).toMatch(/Namen/);
@@ -435,6 +466,16 @@ describe('Charaktererschaffung', () => {
     const mara = after.characters.find((c) => c.name === 'Mara Quell')!;
     expect(mara).toMatchObject({ background: 'Ex-Other · 1 Term · 22 Jahre', credits: 50000, upp: { str: 9 } });
     expect(mara.career).toHaveLength(12);
+  });
+
+  it('fasst einen Term mit den Kürzeln der Fertigkeiten zusammen', async () => {
+    const { game } = await started(fixedRandom(3, 4, 5, 5, 4, 4, 4, 5, 3, 4, 2, 3, 6, 6));
+    game.openGeneration();
+    for (let i = 0; i < 6; i++) game.rollGeneration();
+    game.chooseService('marines'); // Musterung mit 6+6, die Marines geben Cutlass-1 mit
+    const view = game.snapshot().generation!;
+    expect(view.lines.at(-1)).toMatchObject({ result: 'angenommen · Cutlass-1', gains: ['Cut-1'] });
+    expect(view.skills).toEqual([{ name: 'Cutlass', short: 'Cut', level: 1 }]);
   });
 
   it('zeigt einen Fehler in der Erschaffung, statt zu werfen, und verwirft auf Wunsch', async () => {

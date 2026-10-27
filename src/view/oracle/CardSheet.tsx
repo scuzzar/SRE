@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { CardSectionView, CardView } from '../../controller';
-import { pairText, quoted } from '../format';
+import { nameText, pairText, quoted } from '../format';
 import { useGame } from '../game-context';
 import { animated, haptic } from '../haptics';
 import { CheckIcon, CloseIcon, Emblem, SenseIcon } from '../icons';
@@ -75,7 +75,7 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
         setSkipped(true);
       }}
     >
-      <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="card-title">
+      <section className="sheet card-sheet" role="dialog" aria-modal="true" aria-labelledby="card-title">
         <div className="sheet-head">
           <h2 id="card-title">Inspirationskarte</h2>
           <span className="muted" style={{ fontSize: 13 }}>
@@ -94,16 +94,24 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
                 <Stack section={section('event')} />
                 <Senses section={section('senses')} />
                 <Stack section={section('scene')} />
-                <div className="card-columns">
-                  <div className="card-stack">
-                    <Banded section={section('belongings')} hideLabels />
-                    <Banded section={section('situation')} />
+                {section('belongings') || section('situation') ? (
+                  <div className="card-columns">
+                    <div className="card-stack">
+                      <Banded section={section('belongings')} hideLabels />
+                      <Banded section={section('situation')} />
+                    </div>
+                    <div className="card-stack">
+                      <Banded section={section('names')} variant="name" hideLabels />
+                      <Banded section={section('traits')} />
+                    </div>
                   </div>
-                  <div className="card-stack">
-                    <Banded section={section('names')} variant="name" hideLabels />
+                ) : (
+                  // Solange links nichts steht, nehmen die Namen die volle Breite, nebeneinander.
+                  <>
+                    <Banded section={section('names')} variant="name" hideLabels wide />
                     <Banded section={section('traits')} />
-                  </div>
-                </div>
+                  </>
+                )}
                 <Stack section={section('flavor')} variant="flavor" hideLabels />
                 {cardSections
                   .filter((s) => !known.includes(s.id))
@@ -178,7 +186,7 @@ function Tile({ slot, variant, hideLabel }: { slot: SlotView; variant?: 'sense' 
       type="button"
       className={variant ? `tile ${variant}` : 'tile'}
       aria-pressed={slot.picked}
-      aria-label={hideLabel || variant === 'sense' ? `${slot.label}: ${pairText(slot.texts)}` : undefined}
+      aria-label={hideLabel || variant === 'sense' ? `${slot.label}: ${variant === 'name' ? nameText(slot.texts) : pairText(slot.texts)}` : undefined}
       onClick={() => {
         haptic(slot.picked ? 'unpick' : 'pick');
         game.togglePick(slot.id);
@@ -187,11 +195,15 @@ function Tile({ slot, variant, hideLabel }: { slot: SlotView; variant?: 'sense' 
       {variant === 'sense' && <SenseIcon sense={sense} />}
       {!hideLabel && variant !== 'sense' && <span className="tile-label">{slot.label}</span>}
       <span className="tile-text">
-        {slot.texts.map((text, i) => (
-          <span key={i} className="tile-line">
-            {text}
-          </span>
-        ))}
+        {variant === 'name' ? (
+          <span className="tile-line">{nameText(slot.texts)}</span>
+        ) : (
+          slot.texts.map((text, i) => (
+            <span key={i} className="tile-line">
+              {text}
+            </span>
+          ))
+        )}
       </span>
     </button>
   );
@@ -234,16 +246,23 @@ function Stack({ section, variant, hideLabels }: { section: CardSectionView | un
   );
 }
 
-function Banded({ section, variant, hideLabels }: { section: CardSectionView | undefined; variant?: 'name'; hideLabels?: boolean }) {
+function Banded({ section, variant, hideLabels, wide = false }: { section: CardSectionView | undefined; variant?: 'name'; hideLabels?: boolean; wide?: boolean }) {
   if (!section) return null;
+  const tiles = section.slots.map((slot) => <Tile key={slot.id} slot={slot} {...(variant ? { variant } : {})} hideLabel={hideLabels ?? false} />);
+  // Über die volle Breite eine knappe Zeile ohne Band, damit die ganze Karte auf einen Bildschirm passt.
+  if (wide) {
+    return (
+      <div className={`card-grid cols-${columns(section.slots)} wide-band`} role="group" aria-label={section.name}>
+        {tiles}
+      </div>
+    );
+  }
   return (
     <div className="card-stack" role="group" aria-label={section.name}>
       <div className="card-band" aria-hidden="true">
         {section.name}
       </div>
-      {section.slots.map((slot) => (
-        <Tile key={slot.id} slot={slot} {...(variant ? { variant } : {})} hideLabel={hideLabels ?? false} />
-      ))}
+      {tiles}
     </div>
   );
 }

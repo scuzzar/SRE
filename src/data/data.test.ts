@@ -54,10 +54,26 @@ describe('Referenzdaten', () => {
     }
   });
 
-  it('ziehen nur Paare aus Mythic', () => {
+  it('ziehen nur Paare: aus Mythic und die Namen', () => {
     const visible = referenceData.sections.flatMap((s) => s.slots).filter((s) => s.columns.every((c) => active(c).length > 0));
-    expect(visible.every((s) => s.columns.length === 2 && s.columns.flatMap(active).every((e) => e.id.includes('.mythic.')))).toBe(true);
+    const own = (id: string) => id.includes('.mythic.') || /^names\.\w+\.(first|last)\./.test(id);
+    expect(visible.every((s) => s.columns.length === 2 && s.columns.flatMap(active).every((e) => own(e.id)))).toBe(true);
     expect(visible.slice(0, 4).map((s) => s.label)).toEqual(['Aktion', 'Beschreibung', 'Hören', 'Riechen']);
+  });
+
+  it('ziehen je Namensfeld Vor- und Nachname; die Platzhalter bleiben ausgeblendet', () => {
+    for (const id of ['names.female', 'names.male', 'names.neutral']) {
+      const [first, last] = slot(id).columns;
+      expect(active(first!)).toHaveLength(100);
+      expect(first!.entries.filter((e) => e.retired)).toHaveLength(12);
+      expect(active(last!)).toHaveLength(300);
+      expect(last!.entries.every((e) => e.id.startsWith(`${id}.last.`))).toBe(true);
+    }
+    // Die drei Felder haben verschiedene Vornamen, aber dieselben Nachnamen.
+    const firstNames = (id: string) => active(slot(id).columns[0]!).map((e) => e.text);
+    const all = [...firstNames('names.female'), ...firstNames('names.male'), ...firstNames('names.neutral')];
+    expect(new Set(all).size).toBe(300);
+    expect(active(slot('names.female').columns[1]!).map((e) => e.text)).toEqual(active(slot('names.male').columns[1]!).map((e) => e.text));
   });
 
   it('ordnen die Mythic-Tabellen den Themen zu', () => {
@@ -112,6 +128,12 @@ describe('Referenzdaten', () => {
     const [kira] = referenceData.examples;
     const broken = { ...referenceData, examples: [{ ...kira!, skills: [{ of: 'telepathy', level: 1 }] }] };
     expect(() => ReferenceDataSchema.parse(broken)).toThrow(/Unbekannte Fertigkeit telepathy/);
+  });
+
+  it('weisen Beispielcharaktere mit unbekanntem Gegenstand zurück', () => {
+    const [kira] = referenceData.examples;
+    const broken = { ...referenceData, examples: [{ ...kira!, possessions: [{ of: 'lightsaber', count: 1 }] }] };
+    expect(() => ReferenceDataSchema.parse(broken)).toThrow(/Unbekannter Gegenstand lightsaber/);
   });
 
   it('haben die sechs Laufbahnen des Regelwerks mit den Würfen der Prior Service Table', () => {

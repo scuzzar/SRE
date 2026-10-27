@@ -73,6 +73,21 @@ test('Inspirationskarte: auswählen, bestätigen, nur die Auswahl kommt in den L
   await expect(page.getByPlaceholder(/Frage/)).toHaveValue('');
 });
 
+test('Inspirationskarte: drei Namen aus Vor- und Nachname, im Log am Stück', async ({ page }) => {
+  await page.getByRole('button', { name: 'Karte ziehen' }).click();
+  const card = page.getByRole('dialog', { name: 'Inspirationskarte' });
+  await revealed(card);
+  const names = card.getByRole('group', { name: 'Namen' }).getByRole('button');
+  await expect(names).toHaveCount(3);
+  await expect(names.first()).toHaveAccessibleName(/^Eher weiblich: \S+ \S+$/);
+  const name = await names.first().innerText();
+  await names.first().click();
+  await card.getByRole('button', { name: /1 Eintrag in den Log übernehmen/ }).click();
+  const entry = page.locator('.entry').last();
+  await expect(entry.locator('dt')).toHaveText(['Namen · Eher weiblich']);
+  await expect(entry.locator('dd')).toHaveText(name);
+});
+
 test('Inspirationskarte: verwerfen schreibt nichts in den Log, neu ziehen behält die Frage', async ({ page }) => {
   await page.getByPlaceholder(/Frage/).fill('Und jetzt?');
   await page.getByRole('button', { name: 'Karte ziehen' }).click();

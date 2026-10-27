@@ -14,6 +14,11 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > nicht*), dafür ändert sich das Bild nicht: `Campaign` war schon die oberste Ebene und hat schon
 > einen Namen. Neu im Bild: `Character.dead` (siehe *Tot*).
 >
+> Ebenfalls am 25. Oktober 2026 freigegeben: Jack-of-all-Trades zählt in Proben als Stufe 0 und
+> ersetzt „ohne Fertigkeit“ (siehe *Probe*); das Bild ändert sich dadurch nicht. Am 27. Oktober 2026
+> ergänzt: Jack-of-all-Trades zeigt keine Stufe, und ein zweites JoT in der Erschaffung gibt einen
+> weiteren Fertigkeitswurf (siehe *Zugewinne*); auch das ändert das Bild nicht.
+>
 > Ebenfalls am 25. Oktober 2026 freigegeben: Charaktererschaffung nach den Regeln von Classic
 > Traveller, mit Lebenslauf am Charakter (siehe *Charaktererschaffung*), und Gegenstände mit Besitz
 > (siehe *Gegenstände*).
@@ -21,8 +26,11 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > (`Item`, `Possession`, siehe *Gegenstände*) und die Laufbahnen als Referenzdaten (`Service`,
 > `Throw`, `Rank`, `Table`, `Gain`, `Cascade`, `Aging`).
 >
-> **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic, alle als Paar: Aktion und
-> Beschreibung des Zufallsereignisses, Hören und Riechen sowie die Themen-Tafeln NSC, NSC-Aktionen,
+> Am 27. Oktober 2026 freigegeben: Namen auf der Karte als Paar aus Vor- und Nachname (siehe
+> *Namen*); das Bild ändert sich dadurch nicht.
+>
+> **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
+> Beschreibung des Zufallsereignisses, Hören und Riechen, die drei Namen sowie die Themen-Tafeln NSC, NSC-Aktionen,
 > Welt (mit Schiff), Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
 > Einträge für sie gibt.
 
@@ -153,9 +161,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Spalten einen nicht ausgeblendeten Eintrag zufällig (`drawn`), die Themen-Tafeln eingeschlossen,
   in der Reihenfolge der Bereiche, Felder und Spalten. Ein Feld mit zwei Spalten zieht so ein
   **Paar**. Ausgeblendete Felder übergeht es (siehe *Einträge austauschen*).
-  Eine gestellte Frage geht auf die Karte über. Der Bereich *Namen* hat drei Felder mit je eigenen
-  Einträgen (eher weiblich, eher männlich, neutral bzw. Genre-Name), wie auf der GMA-Karte; so sind
-  die drei Namen immer verschieden.
+  Eine gestellte Frage geht auf die Karte über. Der Bereich *Namen* hat drei Felder (eher weiblich,
+  eher männlich, neutral bzw. Genre-Name), wie auf der GMA-Karte; jedes zieht ein Paar aus Vor- und
+  Nachname (siehe *Namen*).
 - **Die Karte ist offen, bis man sie bestätigt oder verwirft.** Antippen nimmt ein gezogenes Feld
   in die Auswahl (`picked`) auf oder wieder heraus, mit allem, was es gezogen hat: Ein Paar nimmt
   man immer ganz, nie einen Begriff allein. Ausgewählt sein kann nur ein Feld, das gezogen wurde. *Verwerfen* schließt die Karte ohne Logeintrag. *Neu ziehen* ersetzt sie durch eine neue;
@@ -170,6 +178,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Zuerst wählt man die Fertigkeit: eine Fertigkeitsstufe des Charakters (DM = Stufe) oder „ohne
     Fertigkeit“ (DM aus den Hausregeln, −3). Solange keine gewählt ist, gibt es keine Probe zu
     würfeln.
+  - **Jack-of-all-Trades** zählt in jeder Probe als Stufe 0: DM ±0, egal welche Stufe der Charakter
+    darin hat. Wer es hat (nicht ausgeblendet), nimmt es für alles, wofür ihm die Fertigkeit fehlt;
+    „ohne Fertigkeit“ gibt es für ihn nicht. Weil seine Stufe nichts ändert, zeigt die App sie
+    nicht: auf der Karte „JoT“, in der Probe „Jack-of-all-Trades ±0“.
   - Erst danach lassen sich Attribute dazuwählen. Ein gewähltes Attribut gibt +1 ab `bonusFrom` (9),
     −1 bis `malusUpTo` (5), sonst ±0. Attribute mit ±0 sind nicht wählbar.
   - Der Zielwert kommt aus der gewählten Stufe. Der nötige Wurf ist Zielwert minus DM, die
@@ -294,6 +306,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Attribute bleiben zwischen 0 und 15. Eine Kaskade bietet Fertigkeiten an (`options`); die Wahl
     gehört zum Wurf (`chosen`). Vehicle bietet die einzelnen Fahrzeuge an, Aircraft und Watercraft
     sind darin schon aufgefächert.
+  - **Ein zweites Jack-of-all-Trades** bringt nichts, gibt aber einen weiteren Fertigkeitswurf: Der
+    Wurf zählt nicht zu den Fertigkeiten des Terms, man wählt wieder eine Tabelle. So hat ein
+    Charakter aus der Erschaffung JoT höchstens einmal. Lebensläufe von vor dieser Regel, in denen ein
+    zweites JoT die Stufe erhöht hat, bleiben gültig: Passen ihre Würfe nur zur alten Regel, gilt für
+    sie die alte.
   - **Abschließen** legt einen Charakter an (`on finish`): Name, UPP und Fertigkeiten wie zuletzt,
     Credits aus dem Geld, Besitz aus den Gegenständen (gleiche zusammengezählt), Herkunft aus Laufbahn, Rang, Terms und
     Alter („Ex-Navy · Commander · 5 Terms · 38 Jahre“), die Pension in der Notiz. Der Lebenslauf zieht
@@ -325,6 +342,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
   In den Daten steht jede Tabelle nur einmal (`src/data/mythic-tables.json`); die Spalten entstehen
   beim Laden.
+- **Namen.** Jedes der drei Namensfelder hat zwei Spalten: Vornamen, für jedes Feld eigene, und
+  Nachnamen. Die Nachnamen kommen aus einer gemeinsamen Liste; jedes Feld hat sie als eigene Spalte
+  mit eigenen Einträgen, sodass jeder Eintrag zu genau einer Spalte gehört, wie bei den
+  Elements-Tabellen. So sind die drei Vornamen immer verschieden, die Nachnamen können gleich
+  ausfallen. Die Namen sind eigene Inhalte und passen grob ins Third Imperium: überwiegend irdisch
+  und aus allen Weltgegenden, etwa ein Fünftel erfunden und fremd klingend, angelehnt an den Klang
+  der Vilani. In den Daten steht jede Liste nur einmal (`src/data/names.json`); die Spalten
+  entstehen beim Laden. Die früheren Platzhalter-Vornamen bleiben ausgeblendet in ihrer Spalte.
 - **Einträge austauschen.** Ein Eintrag, der nicht mehr gezogen werden soll, wird nicht gelöscht und
   seine Id nicht neu vergeben, sondern ausgeblendet (`retired`): Ziehen übergeht ihn, alte
   Logeinträge zeigen ihn weiter mit seinem Text. Ob ein Log auf ihn verweist, weiß nur das jeweilige
