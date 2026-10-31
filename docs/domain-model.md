@@ -29,8 +29,8 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Am 27. Oktober 2026 freigegeben: Namen auf der Karte als Paar aus Vor- und Nachname (siehe
 > *Namen*); das Bild ändert sich dadurch nicht.
 >
-> **Entwurf, wartet auf Freigabe** (31. Oktober 2026): der Subsektor mit Weltenerschaffung (siehe
-> *Subsektor* und *Weltenerschaffung*). Neu im Bild: `Hex`, `WorldRoll`, `Campaign.hexes`,
+> Am 31. Oktober 2026 freigegeben: der Subsektor mit Weltenerschaffung (siehe *Subsektor* und
+> *Weltenerschaffung*). Neu im Bild: `Hex`, `WorldRoll`, `Campaign.hexes`,
 > `WorldStep`, `WorldRollKind` und als Referenzdaten `SystemContents`, `UwpDigit`, `TradeCode`.
 >
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
@@ -123,8 +123,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 ## Regeln, die das Bild nicht zeigt
 
 - **Was draußen bleibt.** Was nicht gespeichert wird, gehört nicht ins Modell, außer der offenen
-  Karte und der Probe in Vorbereitung. Der Controller hält, welcher Screen offen ist und ob das
-  Ergebnis-Popup zu sehen ist. Reine Darstellung bleibt in der View: wie Felder und Tafeln angeordnet sind, der
+  Karte und der Probe in Vorbereitung. Der Controller hält, welcher Screen offen ist, ob das
+  Ergebnis-Popup zu sehen ist und welche Weltkarte offen ist. Reine Darstellung bleibt in der View: wie Felder und Tafeln angeordnet sind, der
   Text im Fragefeld während des Tippens, Farben, die Hex-Schreibweise der UPP und das Format der
   Uhrzeit.
 - **Entwürfe.** Im Paket `draft` liegen die Entwürfe eines Logeintrags: die offene Karte (`Card`,
@@ -138,11 +138,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   lässt; zwei Kampagnen dürfen gleich heißen. Gespielt wird immer in genau einer, der **offenen
   Kampagne**. Welche das ist, merkt sich das Gerät über einen Neustart hinweg; zum Spielstand gehört
   das nicht. Wechselt man die Kampagne, sind offene Karte und Probe in Vorbereitung weg. Eine neue
-  Kampagne beginnt leer: ohne Charaktere, ohne Log, mit der Stufe Mittel. Eine Kampagne löschen
+  Kampagne beginnt leer: ohne Charaktere, ohne Log, ohne Hexfelder, mit der Stufe Mittel. Eine Kampagne löschen
   löscht alles, was an ihr hängt, endgültig.
 - **Kampagnendatei.** Eine Kampagne lässt sich als Datei exportieren und wieder importieren. Die
-  Datei enthält alles, was an der Kampagne hängt (Name, Stufe, Charaktere mit ausgeblendeten, Log),
-  aber keine Entwürfe und keine Referenzdaten: Verweise bleiben Ids. Beim Import wird die Datei
+  Datei enthält alles, was an der Kampagne hängt (Name, Stufe, Charaktere mit ausgeblendeten, Log,
+  Hexfelder), aber keine Entwürfe und keine Referenzdaten: Verweise bleiben Ids. Beim Import wird die Datei
   gegen die Regeln dieses Modells geprüft, auch jeder Verweis in die Referenzdaten und auf die
   eigenen Charaktere; ist etwas falsch, wird nichts importiert. Ein Import legt immer eine neue
   Kampagne an, auch wenn es dieselbe schon gibt, und überschreibt nie eine bestehende.
@@ -398,7 +398,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
      Hydrographie, Bevölkerung und Regierung. Der DM eines Wurfs ist alles außer den Würfeln, also
      bei der Atmosphäre −7 + Größe. Ein Wert unter 0 gilt als 0, die Hydrographie höchstens als A.
      Sonst begrenzt nichts: Atmosphäre D–F, Regierung E–F und Gesetz über A haben in den Charts
-     keinen Text, die App zeigt dann nur die Ziffer (Ziffern über F in eHex ohne I und O).
+     keinen Text (`UwpDigit.text` fehlt), die App zeigt dann nur die Ziffer (Ziffern über F in eHex
+     ohne I und O, der Raumhafen X ist so die Ziffer 31).
   4. *Name*: Zum Schluss gibt man den Namen ein (nicht leer); dann ist die Welt fertig (`done`).
 
   **Verwerfen** geht, solange die Welt in Erschaffung ist, und macht das Feld wieder zu einem nicht
@@ -423,8 +424,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
-
-- **Subsektor und Weltenerschaffung** sind noch nicht umgesetzt (Entwurf vom 31. Oktober 2026).
 
 
 - **`Gain` in den Daten.** Im Bild bringt eine Zeile ein Attribut über einen Verweis (`changes`);

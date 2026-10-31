@@ -219,7 +219,7 @@ hide <<value>> stereotype
   }
   class UwpDigit <<reference>> {
     digit: number
-    text: string
+    text: string [0..1]
     techDm: number
   }
   class TradeCode <<reference>> {
