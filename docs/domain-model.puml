@@ -83,6 +83,23 @@ hide <<value>> stereotype
     /success: boolean [0..1]
   }
 
+' Subsektor und Welten
+  class Hex {
+    column: number
+    row: number
+    name: string [0..1]
+    /step: WorldStep
+    /empty: boolean
+  }
+  class WorldRoll {
+    kind: WorldRollKind
+    dice: number[1..2]
+    dm: number
+    target: number [0..1]
+    /value: number [0..1]
+    /success: boolean [0..1]
+  }
+
 ' Verlauf
   abstract class LogEntry {
     at: datetime
@@ -193,6 +210,44 @@ hide <<value>> stereotype
   class Cascade <<reference>> {
     name: string
   }
+  class SystemContents <<reference>> {
+    roll: number
+    starport: string
+    navalBase: boolean
+    scoutBase: boolean
+    gasGiant: boolean
+  }
+  class UwpDigit <<reference>> {
+    digit: number
+    text: string
+    techDm: number
+  }
+  class TradeCode <<reference>> {
+    code: string
+    name: string
+  }
+  class TradeCondition <<value>> {
+    digits: number[]
+  }
+  enum WorldRollKind <<value>> {
+    occurrence
+    starport
+    navalBase
+    scoutBase
+    gasGiant
+    size
+    atmosphere
+    hydrographics
+    population
+    government
+    law
+    tech
+  }
+  enum WorldStep <<value>> {
+    <i>alle Arten aus WorldRollKind</i>
+    name
+    done
+  }
   class Aging <<reference>> {
     fromTerm: number
     loss: number
@@ -282,6 +337,18 @@ Gain "*" --> "0..1" Item : item
 Gain --> "0..1" Characteristic : changes
 Cascade "*" --> "1..*" Skill : options
 Aging --> "1" Characteristic : of
+
+' Subsektor und Welten
+Campaign "1" *-- "*" Hex : hexes
+Hex "1" *-- "1..*" WorldRoll : rolls {ordered}
+Hex --> WorldStep
+Hex "*" --> "0..8" UwpDigit : /uwp {ordered}
+Hex "*" --> "*" TradeCode : /trade
+WorldRoll --> WorldRollKind
+WorldRoll "*" --> "0..1" SystemContents : /row
+UwpDigit --> "1" WorldRollKind : of
+TradeCode "1" *-- "1..*" TradeCondition : if
+TradeCondition --> "1" WorldRollKind : of
 
 ' Charakter
 Character "1" *-- "1" Upp : upp
