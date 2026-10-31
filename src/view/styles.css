@@ -232,7 +232,7 @@ button:disabled {
 .nav {
   flex: 0 0 auto;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   border-top: 1px solid var(--rule);
   background: var(--deep);
   padding-bottom: env(safe-area-inset-bottom);
@@ -2729,4 +2729,204 @@ button:disabled {
     animation-delay: 0ms !important;
     transition-duration: 1ms !important;
   }
+}
+
+/* --- Subsektor ------------------------------------------------------------------------------ */
+
+.sector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sector-map {
+  flex: 0 0 auto;
+  width: 100%;
+  height: auto;
+  display: block;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hex polygon:first-child {
+  stroke-width: 1;
+  transition: fill 0.15s;
+}
+
+.hex-open polygon:first-child {
+  fill: var(--deep);
+  stroke: #262626;
+}
+
+.hex-open .hex-id {
+  fill: #4a4844;
+}
+
+.hex-empty polygon:first-child,
+.hex-world polygon:first-child,
+.hex-pending polygon:first-child {
+  fill: var(--panel);
+  stroke: var(--line-strong);
+}
+
+.hex-pending polygon:first-child {
+  stroke: var(--gold);
+  stroke-dasharray: 4 3;
+}
+
+.hex[role='button'] {
+  cursor: pointer;
+  outline: none;
+}
+
+.hex[role='button']:active polygon:first-child,
+.hex[role='button']:focus-visible polygon:first-child {
+  fill: var(--highlight);
+  stroke: var(--accent-text);
+}
+
+.hex text {
+  text-anchor: middle;
+  dominant-baseline: middle;
+  font-family: var(--sans);
+  fill: var(--text);
+  pointer-events: none;
+}
+
+.hex-id {
+  font-size: 9px;
+  fill: var(--dim);
+  font-family: var(--mono) !important;
+}
+
+.hex-port {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.hex-name {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.hex-pending {
+  font-size: 16px;
+  fill: var(--gold) !important;
+}
+
+.hex-world.wet {
+  fill: var(--text);
+}
+
+.hex-world.dry {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.6;
+}
+
+.hex-belt circle {
+  fill: var(--text);
+}
+
+.hex-base,
+.hex-giant {
+  fill: var(--gold);
+}
+
+.sector-legend {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.world-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.world-list button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto 2.2em;
+  grid-template-areas:
+    'name hex uwp bases'
+    'trade trade trade trade';
+  column-gap: 10px;
+  align-items: baseline;
+  padding: 8px 2px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+}
+
+.world-list-name {
+  grid-area: name;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.world-list-hex {
+  grid-area: hex;
+  color: var(--dim);
+  font-size: 13px;
+}
+
+.world-list-uwp {
+  grid-area: uwp;
+  font-size: 14px;
+}
+
+.world-list-bases {
+  grid-area: bases;
+  color: var(--gold);
+  font-size: 13px;
+}
+
+.world-list-trade {
+  grid-area: trade;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.world-profile {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 3px 10px;
+  font-size: 13px;
+}
+
+.world-profile > div {
+  display: contents;
+}
+
+.world-profile .pending dd,
+.world-profile .pending dt {
+  color: var(--dim);
+}
+
+.world-digit {
+  display: inline-block;
+  min-width: 1.4em;
+  font-weight: 700;
+}
+
+.world-text {
+  color: var(--muted);
+}
+
+.world-extras {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.sheet.world-sheet .world-card {
+  position: static;
 }

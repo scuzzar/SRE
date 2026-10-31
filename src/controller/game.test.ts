@@ -487,3 +487,81 @@ describe('Charaktererschaffung', () => {
     expect(game.snapshot()).toMatchObject({ generation: undefined, generationRunning: false });
   });
 });
+
+describe('Subsektor und Weltenerschaffung', () => {
+  // Vorkommen 5; Raumhafen C; Scoutbasis ja; Gasriese ja; dann UWP C788545-7.
+  const regina = [5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 4, 4, 3, 4, 3, 3, 4, 4, 4];
+
+  it('zeigt 80 Felder, alle nicht erzeugt, im Reiter Sektor', async () => {
+    const { game } = await started();
+    game.showScreen('sector');
+    const view = game.snapshot();
+    expect(view.screen).toBe('sector');
+    expect(view.sector).toHaveLength(80);
+    expect(view.sector[0]).toMatchObject({ id: '0101', state: 'open' });
+    expect(view.sector.at(-1)).toMatchObject({ id: '0810', state: 'open' });
+    expect(view.worlds).toEqual([]);
+  });
+
+  it('erschafft eine Welt Wurf für Wurf und speichert sie im Feld', async () => {
+    const { game, repository } = await started(fixedRandom(...regina));
+    game.openHex(3, 4);
+    expect(game.snapshot().world).toMatchObject({ id: '0304', step: 'occurrence', lines: [], action: { kind: 'roll', dice: 1, target: 4 } });
+    // Das Hexfeld entsteht erst mit dem ersten Wurf.
+    expect(game.snapshot().sector.find((h) => h.id === '0304')?.state).toBe('open');
+    game.rollWorld();
+    await game.whenSaved();
+    expect(repository.saved?.hexes).toHaveLength(1);
+    expect(game.snapshot().sector.find((h) => h.id === '0304')?.state).toBe('pending');
+
+    // „Später weiter“ und wieder öffnen: Es geht weiter, wo es war.
+    game.closeWorld();
+    expect(game.snapshot().world).toBeUndefined();
+    game.openHex(3, 4);
+    expect(game.snapshot().world?.step).toBe('starport');
+
+    for (let i = 0; i < 10; i++) game.rollWorld();
+    const before = game.snapshot().world!;
+    expect(before).toMatchObject({ step: 'name', uwp: 'C788545-7', navalBase: false, scoutBase: true, gasGiant: true, action: { kind: 'name' } });
+    expect(before.profile.find((p) => p.kind === 'atmosphere')).toEqual({ kind: 'atmosphere', label: 'Atmosphäre', code: '8', text: 'Dense' });
+    expect(before.lines.find((l) => l.kind === 'tech')).toMatchObject({ dm: 3, parts: [{ label: 'Raumhafen C', dm: 2 }, { label: 'Bevölkerung 5', dm: 1 }], result: '7 · circa 1970 to 1979' });
+
+    game.nameWorld('');
+    expect(game.snapshot().world?.error).toMatch(/Namen/);
+    game.nameWorld('Regina');
+    const after = game.snapshot();
+    expect(after.world).toMatchObject({ name: 'Regina', step: 'done', action: { kind: 'done' }, trade: [{ code: 'Ag' }, { code: 'Ni' }] });
+    expect(after.sector.find((h) => h.id === '0304')).toMatchObject({ state: 'world', name: 'Regina', starport: 'C', scoutBase: true, gasGiant: true, hydrographics: 8 });
+    expect(after.worlds).toEqual([{ id: '0304', column: 3, row: 4, name: 'Regina', uwp: 'C788545-7', bases: 'S', trade: ['Ag', 'Ni'], gasGiant: true }]);
+  });
+
+  it('lässt ein leeres Feld zu und öffnet es nicht wieder', async () => {
+    const { game } = await started(fixedRandom(2));
+    game.openHex(1, 1);
+    game.rollWorld();
+    expect(game.snapshot().world).toMatchObject({ empty: true, step: 'done', prompt: 'Kein System in diesem Feld' });
+    game.closeWorld();
+    expect(game.snapshot().sector[0]?.state).toBe('empty');
+    game.openHex(1, 1);
+    expect(game.snapshot().world).toBeUndefined();
+  });
+
+  it('verwirft eine Welt in Erschaffung', async () => {
+    const { game } = await started(fixedRandom(5));
+    game.openHex(2, 2);
+    game.rollWorld();
+    game.discardWorld();
+    const view = game.snapshot();
+    expect(view.world).toBeUndefined();
+    expect(view.sector.find((h) => h.id === '0202')?.state).toBe('open');
+  });
+
+  it('nimmt die Hexfelder in die Kampagnendatei mit', async () => {
+    const { game, download } = await started(fixedRandom(2));
+    game.openHex(5, 5);
+    game.rollWorld();
+    game.exportCampaign(game.snapshot().campaign.id);
+    const imported = fromCampaignFile(download.files.at(-1)!.content, 'k9');
+    expect(imported.hexes).toEqual([{ column: 5, row: 5, rolls: [{ kind: 'occurrence', dice: [2], dm: 0, target: 4 }] }]);
+  });
+});

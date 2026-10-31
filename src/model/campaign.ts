@@ -2,6 +2,7 @@ import type { Career } from './career';
 import { DomainError } from './errors';
 import type { Generation } from './generation';
 import type { LogEntry } from './log';
+import type { Hex } from './sector';
 import { defaultOdds, itemOf, oddsOf, ref, skillOf, type ExampleCharacter } from './reference';
 
 /** Die sechs Attributwerte, je 0 bis 15. */
@@ -61,6 +62,8 @@ export interface Campaign {
   readonly log: readonly LogEntry[];
   /** Die Charaktererschaffung, die gerade läuft; höchstens eine. */
   readonly generation?: Generation;
+  /** Die erzeugten Hexfelder des Subsektors; ein Feld, das fehlt, ist nicht erzeugt. */
+  readonly hexes: readonly Hex[];
 }
 
 /** Was man beim Anlegen und Bearbeiten eines Charakters eingibt. */
@@ -80,7 +83,7 @@ export interface CharacterInput {
 
 /** Eine neue Kampagne, ohne Log, mit der Standardstufe und den angegebenen Charakteren. */
 export function createCampaign(examples: readonly ExampleCharacter[] = ref.examples, name = 'Kampagne', id: CampaignId = 'k1'): Campaign {
-  let campaign: Campaign = { id, name: validName(name), characters: [], odds: defaultOdds.id, log: [] };
+  let campaign: Campaign = { id, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [] };
   for (const example of examples) campaign = addCharacter(campaign, example).campaign;
   return campaign;
 }
@@ -272,6 +275,11 @@ export function inputOf(character: Character): CharacterInput {
 
 /** Beginnt oder ersetzt die Charaktererschaffung der Kampagne; `undefined` verwirft sie. */
 export function setGeneration(campaign: Campaign, generation: Generation | undefined): Campaign {
-  const { id, name, characters, odds, log } = campaign;
-  return generation ? { id, name, characters, odds, log, generation } : { id, name, characters, odds, log };
+  const { id, name, characters, odds, log, hexes } = campaign;
+  return generation ? { id, name, characters, odds, log, hexes, generation } : { id, name, characters, odds, log, hexes };
+}
+
+/** Ersetzt die Hexfelder des Subsektors. */
+export function setHexes(campaign: Campaign, hexes: readonly Hex[]): Campaign {
+  return { ...campaign, hexes };
 }

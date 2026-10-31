@@ -65,7 +65,8 @@ export class DexieCampaignRepository implements CampaignRepository {
  * Bringt einen älteren Spielstand auf den heutigen Aufbau. Vor mehreren Kampagnen hatte die eine
  * Kampagne keine Id; sie bekommt den Schlüssel, unter dem sie lag. Vor „tot“ hatte ein Charakter kein
  * `dead`; er lebt. Vor den Gegenständen hatte er keinen Besitz. Vor den Paaren hielt ein `PickedItem`
- * genau einen Eintrag als Text (`picked: 'event.verb.3'`); heute ist es eine Liste.
+ * genau einen Eintrag als Text (`picked: 'event.verb.3'`); heute ist es eine Liste. Vor dem
+ * Subsektor hatte eine Kampagne keine Hexfelder.
  */
 export function upgraded(campaign: Campaign): Campaign {
   const log = campaign.log.map((entry) => {
@@ -77,7 +78,7 @@ export function upgraded(campaign: Campaign): Campaign {
     return { ...entry, items };
   });
   const characters = campaign.characters.map((c) => ({ ...c, dead: c.dead ?? false, possessions: c.possessions ?? [] }));
-  return { ...campaign, characters, log };
+  return { ...campaign, characters, log, hexes: campaign.hexes ?? [] };
 }
 
 /** Hält den Spielstand nur im Arbeitsspeicher; er geht beim Schließen verloren. */

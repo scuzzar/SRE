@@ -58,3 +58,15 @@ describe('Logeintrag löschen', () => {
     expect(() => removeLogEntry(campaign(), 5)).toThrow(/gibt es nicht/);
   });
 });
+
+describe('Kampagnendatei mit Subsektor', () => {
+  it('liest eine Datei von vor dem Subsektor mit leerem Subsektor', () => {
+    const text = fileWith((c) => delete c.hexes);
+    expect(fromCampaignFile(text, 'k2').hexes).toEqual([]);
+  });
+
+  it('weist Hexfelder zurück, deren Würfe nicht zu den Regeln passen', () => {
+    const text = fileWith((c) => (c.hexes = [{ column: 1, row: 1, rolls: [{ kind: 'size', dice: [3, 3], dm: -2 }] }]));
+    expect(() => fromCampaignFile(text, 'k2')).toThrow(/verletzt eine Regel: .*passt nicht zum Schritt/);
+  });
+});

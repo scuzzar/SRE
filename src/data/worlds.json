@@ -1,0 +1,841 @@
+{
+  "systemContents": [
+    {
+      "roll": 2,
+      "starport": "A",
+      "navalBase": false,
+      "scoutBase": false,
+      "gasGiant": true
+    },
+    {
+      "roll": 3,
+      "starport": "A",
+      "navalBase": false,
+      "scoutBase": false,
+      "gasGiant": true
+    },
+    {
+      "roll": 4,
+      "starport": "A",
+      "navalBase": false,
+      "scoutBase": false,
+      "gasGiant": true
+    },
+    {
+      "roll": 5,
+      "starport": "B",
+      "navalBase": false,
+      "scoutBase": false,
+      "gasGiant": true
+    },
+    {
+      "roll": 6,
+      "starport": "B",
+      "navalBase": false,
+      "scoutBase": false,
+      "gasGiant": true
+    },
+    {
+      "roll": 7,
+      "starport": "C",
+      "navalBase": false,
+      "scoutBase": true,
+      "gasGiant": true
+    },
+    {
+      "roll": 8,
+      "starport": "C",
+      "navalBase": true,
+      "scoutBase": true,
+      "gasGiant": true
+    },
+    {
+      "roll": 9,
+      "starport": "D",
+      "navalBase": true,
+      "scoutBase": true,
+      "gasGiant": true
+    },
+    {
+      "roll": 10,
+      "starport": "E",
+      "navalBase": true,
+      "scoutBase": true,
+      "gasGiant": false
+    },
+    {
+      "roll": 11,
+      "starport": "E",
+      "navalBase": true,
+      "scoutBase": true,
+      "gasGiant": false
+    },
+    {
+      "roll": 12,
+      "starport": "X",
+      "navalBase": true,
+      "scoutBase": true,
+      "gasGiant": false
+    }
+  ],
+  "uwpDigits": {
+    "starport": [
+      {
+        "digit": 10,
+        "text": "Excellent quality installation",
+        "techDm": 6
+      },
+      {
+        "digit": 11,
+        "text": "Good quality installation",
+        "techDm": 4
+      },
+      {
+        "digit": 12,
+        "text": "Routine quality installation",
+        "techDm": 2
+      },
+      {
+        "digit": 13,
+        "text": "Poor quality installation",
+        "techDm": 0
+      },
+      {
+        "digit": 14,
+        "text": "Frontier installation",
+        "techDm": 0
+      },
+      {
+        "digit": 31,
+        "text": "No starport",
+        "techDm": -4
+      }
+    ],
+    "size": [
+      {
+        "digit": 0,
+        "text": "Asteroid/Planetoid Belt",
+        "techDm": 2
+      },
+      {
+        "digit": 1,
+        "text": "1.600 km",
+        "techDm": 2
+      },
+      {
+        "digit": 2,
+        "text": "3.200 km",
+        "techDm": 1
+      },
+      {
+        "digit": 3,
+        "text": "4.800 km",
+        "techDm": 1
+      },
+      {
+        "digit": 4,
+        "text": "6.400 km",
+        "techDm": 1
+      },
+      {
+        "digit": 5,
+        "text": "8.000 km",
+        "techDm": 0
+      },
+      {
+        "digit": 6,
+        "text": "9.600 km",
+        "techDm": 0
+      },
+      {
+        "digit": 7,
+        "text": "11.200 km",
+        "techDm": 0
+      },
+      {
+        "digit": 8,
+        "text": "12.800 km",
+        "techDm": 0
+      },
+      {
+        "digit": 9,
+        "text": "14.400 km",
+        "techDm": 0
+      },
+      {
+        "digit": 10,
+        "text": "16.000 km",
+        "techDm": 0
+      }
+    ],
+    "atmosphere": [
+      {
+        "digit": 0,
+        "text": "No atmosphere",
+        "techDm": 1
+      },
+      {
+        "digit": 1,
+        "text": "Trace",
+        "techDm": 1
+      },
+      {
+        "digit": 2,
+        "text": "Very thin, tainted",
+        "techDm": 1
+      },
+      {
+        "digit": 3,
+        "text": "Very thin",
+        "techDm": 1
+      },
+      {
+        "digit": 4,
+        "text": "Thin, tainted",
+        "techDm": 0
+      },
+      {
+        "digit": 5,
+        "text": "Thin",
+        "techDm": 0
+      },
+      {
+        "digit": 6,
+        "text": "Standard",
+        "techDm": 0
+      },
+      {
+        "digit": 7,
+        "text": "Standard, tainted",
+        "techDm": 0
+      },
+      {
+        "digit": 8,
+        "text": "Dense",
+        "techDm": 0
+      },
+      {
+        "digit": 9,
+        "text": "Dense, tainted",
+        "techDm": 0
+      },
+      {
+        "digit": 10,
+        "text": "Exotic",
+        "techDm": 1
+      },
+      {
+        "digit": 11,
+        "text": "Corrosive",
+        "techDm": 1
+      },
+      {
+        "digit": 12,
+        "text": "Insidious",
+        "techDm": 1
+      },
+      {
+        "digit": 13,
+        "techDm": 1
+      },
+      {
+        "digit": 14,
+        "techDm": 1
+      }
+    ],
+    "hydrographics": [
+      {
+        "digit": 0,
+        "text": "No free standing water",
+        "techDm": 0
+      },
+      {
+        "digit": 1,
+        "text": "10% water",
+        "techDm": 0
+      },
+      {
+        "digit": 2,
+        "text": "20% water",
+        "techDm": 0
+      },
+      {
+        "digit": 3,
+        "text": "30% water",
+        "techDm": 0
+      },
+      {
+        "digit": 4,
+        "text": "40% water",
+        "techDm": 0
+      },
+      {
+        "digit": 5,
+        "text": "50% water",
+        "techDm": 0
+      },
+      {
+        "digit": 6,
+        "text": "60% water",
+        "techDm": 0
+      },
+      {
+        "digit": 7,
+        "text": "70% water",
+        "techDm": 0
+      },
+      {
+        "digit": 8,
+        "text": "80% water",
+        "techDm": 0
+      },
+      {
+        "digit": 9,
+        "text": "90% water",
+        "techDm": 1
+      },
+      {
+        "digit": 10,
+        "text": "No land masses",
+        "techDm": 2
+      }
+    ],
+    "population": [
+      {
+        "digit": 0,
+        "text": "No inhabitants",
+        "techDm": 0
+      },
+      {
+        "digit": 1,
+        "text": "Tens of inhabitants",
+        "techDm": 1
+      },
+      {
+        "digit": 2,
+        "text": "Hundreds of inhabitants",
+        "techDm": 1
+      },
+      {
+        "digit": 3,
+        "text": "Thousands of inhabitants",
+        "techDm": 1
+      },
+      {
+        "digit": 4,
+        "text": "Tens of thousands",
+        "techDm": 1
+      },
+      {
+        "digit": 5,
+        "text": "Hundreds of thousands",
+        "techDm": 1
+      },
+      {
+        "digit": 6,
+        "text": "Millions of inhabitants",
+        "techDm": 0
+      },
+      {
+        "digit": 7,
+        "text": "Tens of millions",
+        "techDm": 0
+      },
+      {
+        "digit": 8,
+        "text": "Hundreds of millions",
+        "techDm": 0
+      },
+      {
+        "digit": 9,
+        "text": "Billions of inhabitants",
+        "techDm": 2
+      },
+      {
+        "digit": 10,
+        "text": "Tens of billions",
+        "techDm": 4
+      }
+    ],
+    "government": [
+      {
+        "digit": 0,
+        "text": "No government structure",
+        "techDm": 1
+      },
+      {
+        "digit": 1,
+        "text": "Company/Corporation",
+        "techDm": 0
+      },
+      {
+        "digit": 2,
+        "text": "Participating Democracy",
+        "techDm": 0
+      },
+      {
+        "digit": 3,
+        "text": "Self-Perpetuating Oligarchy",
+        "techDm": 0
+      },
+      {
+        "digit": 4,
+        "text": "Representative Democracy",
+        "techDm": 0
+      },
+      {
+        "digit": 5,
+        "text": "Feudal Technocracy",
+        "techDm": 1
+      },
+      {
+        "digit": 6,
+        "text": "Captive Government",
+        "techDm": 0
+      },
+      {
+        "digit": 7,
+        "text": "Balkanization",
+        "techDm": 0
+      },
+      {
+        "digit": 8,
+        "text": "Civil Service Bureaucracy",
+        "techDm": 0
+      },
+      {
+        "digit": 9,
+        "text": "Impersonal Bureaucracy",
+        "techDm": 0
+      },
+      {
+        "digit": 10,
+        "text": "Charismatic Dictator",
+        "techDm": 0
+      },
+      {
+        "digit": 11,
+        "text": "Non-Charismatic Leader",
+        "techDm": 0
+      },
+      {
+        "digit": 12,
+        "text": "Charismatic Oligarchy",
+        "techDm": 0
+      },
+      {
+        "digit": 13,
+        "text": "Religious Dictatorship",
+        "techDm": -2
+      }
+    ],
+    "law": [
+      {
+        "digit": 0,
+        "text": "No prohibitions",
+        "techDm": 0
+      },
+      {
+        "digit": 1,
+        "text": "Body pistols, explosives and poison gas prohibited",
+        "techDm": 0
+      },
+      {
+        "digit": 2,
+        "text": "Portable energy weapons prohibited",
+        "techDm": 0
+      },
+      {
+        "digit": 3,
+        "text": "Weapons of a strict military nature prohibited",
+        "techDm": 0
+      },
+      {
+        "digit": 4,
+        "text": "Light assault weapons prohibited",
+        "techDm": 0
+      },
+      {
+        "digit": 5,
+        "text": "Personal concealable firearms prohibited",
+        "techDm": 0
+      },
+      {
+        "digit": 6,
+        "text": "Most firearms (all except shotguns) prohibited",
+        "techDm": 0
+      },
+      {
+        "digit": 7,
+        "text": "Shotguns prohibited",
+        "techDm": 0
+      },
+      {
+        "digit": 8,
+        "text": "Long bladed weapons controlled",
+        "techDm": 0
+      },
+      {
+        "digit": 9,
+        "text": "Any weapon outside one's residence prohibited",
+        "techDm": 0
+      },
+      {
+        "digit": 10,
+        "text": "Possession of any weapon prohibited",
+        "techDm": 0
+      }
+    ],
+    "tech": [
+      {
+        "digit": 0,
+        "text": "Stone Age. Primitive",
+        "techDm": 0
+      },
+      {
+        "digit": 1,
+        "text": "Bronze Age to Middle Ages",
+        "techDm": 0
+      },
+      {
+        "digit": 2,
+        "text": "circa 1400 to 1700",
+        "techDm": 0
+      },
+      {
+        "digit": 3,
+        "text": "circa 1700 to 1860",
+        "techDm": 0
+      },
+      {
+        "digit": 4,
+        "text": "circa 1860 to 1900",
+        "techDm": 0
+      },
+      {
+        "digit": 5,
+        "text": "circa 1900 to 1939",
+        "techDm": 0
+      },
+      {
+        "digit": 6,
+        "text": "circa 1940 to 1969",
+        "techDm": 0
+      },
+      {
+        "digit": 7,
+        "text": "circa 1970 to 1979",
+        "techDm": 0
+      },
+      {
+        "digit": 8,
+        "text": "circa 1980 to 1989",
+        "techDm": 0
+      },
+      {
+        "digit": 9,
+        "text": "circa 1990 to 2000",
+        "techDm": 0
+      },
+      {
+        "digit": 10,
+        "text": "Interstellar community",
+        "techDm": 0
+      },
+      {
+        "digit": 11,
+        "text": "Average Imperial",
+        "techDm": 0
+      },
+      {
+        "digit": 12,
+        "text": "Average Imperial",
+        "techDm": 0
+      },
+      {
+        "digit": 13,
+        "text": "Above average Imperial",
+        "techDm": 0
+      },
+      {
+        "digit": 14,
+        "text": "Above average Imperial",
+        "techDm": 0
+      },
+      {
+        "digit": 15,
+        "text": "Technical maximum Imperial",
+        "techDm": 0
+      },
+      {
+        "digit": 16,
+        "text": "Occasional non-Imperial",
+        "techDm": 0
+      }
+    ]
+  },
+  "tradeCodes": [
+    {
+      "id": "Ag",
+      "name": "Agricultural",
+      "if": [
+        {
+          "of": "atmosphere",
+          "digits": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "of": "hydrographics",
+          "digits": [
+            4,
+            5,
+            6,
+            7,
+            8
+          ]
+        },
+        {
+          "of": "population",
+          "digits": [
+            5,
+            6,
+            7
+          ]
+        }
+      ]
+    },
+    {
+      "id": "Na",
+      "name": "Non-Agricultural",
+      "if": [
+        {
+          "of": "atmosphere",
+          "digits": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "of": "hydrographics",
+          "digits": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "of": "population",
+          "digits": [
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        }
+      ]
+    },
+    {
+      "id": "In",
+      "name": "Industrial",
+      "if": [
+        {
+          "of": "atmosphere",
+          "digits": [
+            0,
+            1,
+            2,
+            4,
+            7,
+            9
+          ]
+        },
+        {
+          "of": "population",
+          "digits": [
+            9,
+            10
+          ]
+        }
+      ]
+    },
+    {
+      "id": "Ni",
+      "name": "Non-Industrial",
+      "if": [
+        {
+          "of": "population",
+          "digits": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "id": "Ri",
+      "name": "Rich",
+      "if": [
+        {
+          "of": "atmosphere",
+          "digits": [
+            6,
+            8
+          ]
+        },
+        {
+          "of": "population",
+          "digits": [
+            6,
+            7,
+            8
+          ]
+        },
+        {
+          "of": "government",
+          "digits": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        }
+      ]
+    },
+    {
+      "id": "Po",
+      "name": "Poor",
+      "if": [
+        {
+          "of": "atmosphere",
+          "digits": [
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "of": "hydrographics",
+          "digits": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "Wa",
+      "name": "Water World",
+      "if": [
+        {
+          "of": "hydrographics",
+          "digits": [
+            10
+          ]
+        }
+      ]
+    },
+    {
+      "id": "De",
+      "name": "Desert World",
+      "if": [
+        {
+          "of": "hydrographics",
+          "digits": [
+            0
+          ]
+        },
+        {
+          "of": "atmosphere",
+          "digits": [
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ]
+        }
+      ]
+    },
+    {
+      "id": "Va",
+      "name": "Vacuum World",
+      "if": [
+        {
+          "of": "atmosphere",
+          "digits": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "As",
+      "name": "Asteroid Belt",
+      "if": [
+        {
+          "of": "size",
+          "digits": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "Ic",
+      "name": "Ice-capped",
+      "if": [
+        {
+          "of": "atmosphere",
+          "digits": [
+            0,
+            1
+          ]
+        },
+        {
+          "of": "hydrographics",
+          "digits": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        }
+      ]
+    }
+  ]
+}

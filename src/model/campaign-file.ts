@@ -5,6 +5,7 @@ import { DomainError } from './errors';
 import { withQuestion, type LogEntry } from './log';
 import { entryOf, oddsOf, slotOfEntry } from './reference';
 import { characteristics } from './rules';
+import { validateHexes, type Hex, type WorldRoll } from './sector';
 
 /**
  * Die Kampagnendatei: eine Kampagne als JSON, zum Sichern und Weitergeben. Sie enthält alles, was an
@@ -50,6 +51,20 @@ const CareerRollSchema = z.object({
 });
 const CareerSchema = z.object({ rolls: z.array(CareerRollSchema) });
 
+const HexSchema = z.object({
+  column: z.number().int(),
+  row: z.number().int(),
+  name: z.string().optional(),
+  rolls: z.array(
+    z.object({
+      kind: z.enum(['occurrence', 'starport', 'navalBase', 'scoutBase', 'gasGiant', 'size', 'atmosphere', 'hydrographics', 'population', 'government', 'law', 'tech']),
+      dice: z.array(die).min(1).max(2),
+      dm: z.number().int(),
+      target: z.number().int().optional(),
+    }),
+  ),
+});
+
 const value = z.number();
 const CharacterSchema = z.object({
   id: z.string().min(1),
@@ -75,13 +90,15 @@ const CampaignFileSchema = z.object({
     characters: z.array(CharacterSchema),
     log: z.array(LogEntrySchema),
     generation: z.object({ career: CareerSchema }).optional(),
+    /** Fehlt in Dateien von vor dem Subsektor. */
+    hexes: z.array(HexSchema).default([]),
   }),
 });
 
 /** Die Kampagne als Inhalt einer Kampagnendatei. */
 export function toCampaignFile(campaign: Campaign): string {
-  const { name, odds, characters, log, generation } = campaign;
-  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { name, odds, characters, log, generation } }, null, 2);
+  const { name, odds, characters, log, generation, hexes } = campaign;
+  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { name, odds, characters, log, generation, hexes } }, null, 2);
 }
 
 /** Ein Dateiname aus dem Namen der Kampagne und dem Tag, z. B. „Spinward-Run-2026-10-25.json“. */
@@ -119,6 +136,7 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
       odds: oddsOf(file.odds).id,
       characters,
       log: file.log.map(logEntry),
+      hexes: file.hexes.map(hexOf),
       ...(file.generation ? { generation: { career: careerOf(file.generation.career) } } : {}),
     };
     validate(campaign);
@@ -134,6 +152,12 @@ function careerOf(career: z.infer<typeof CareerSchema>): Career {
   return {
     rolls: career.rolls.map((roll) => Object.fromEntries(Object.entries(roll).filter(([, v]) => v !== undefined)) as unknown as CareerRoll),
   };
+}
+
+/** Ein Hexfeld ohne leere optionale Felder, wie es im Spielstand steht. */
+function hexOf(hex: z.infer<typeof HexSchema>): Hex {
+  const rolls = hex.rolls.map(({ target, ...roll }): WorldRoll => (target === undefined ? roll : { ...roll, target }));
+  return hex.name === undefined ? { column: hex.column, row: hex.row, rolls } : { column: hex.column, row: hex.row, name: hex.name, rolls };
 }
 
 /** Ohne leere optionale Felder, wie sie im Spielstand stehen. */
@@ -163,6 +187,7 @@ function validate(campaign: Campaign): void {
     if (character.career && replay(character.career).step !== 'name') throw new DomainError(`Der Lebenslauf von ${character.name} ist nicht abgeschlossen.`);
   }
   if (campaign.generation) replay(campaign.generation.career);
+  validateHexes(campaign.hexes);
   for (const entry of campaign.log) {
     switch (entry.kind) {
       case 'oracle':

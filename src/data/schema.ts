@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { WorldTablesSchema } from './worlds';
 
 /** Eine Stufe: die eine Auswahl für Orakel (Chance auf Ja) und Proben (Zielwert). */
 export const OddsSchema = z.object({
@@ -184,6 +185,8 @@ export const ReferenceDataSchema = z
     services: z.array(ServiceSchema).min(1),
     cascades: z.array(CascadeSchema),
     aging: z.array(AgingSchema),
+    /** Die Tabellen der Weltenerschaffung. */
+    worlds: WorldTablesSchema,
   })
   .superRefine((data, ctx) => {
     const slots = data.sections.flatMap((s) => s.slots);

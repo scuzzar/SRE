@@ -5,7 +5,7 @@ Eine App für **Solo-Rollenspiel mit Classic Traveller**. Sie soll zwei Dinge in
 1. **Die Regeln von Classic Traveller** – vollständig implementiert, damit Würfe, Tabellen und Abläufe nicht mehr von Hand nachgeschlagen werden müssen.
 2. **Ein Orakel**, das die Spielleitung ersetzt – angelehnt teils an **Mythic** (Mythic Game Master Emulator) und teils an den **Game Master's Apprentice (GMA)**.
 
-> Status: **Version 1 in Arbeit.** Wir fangen klein an, mit einer **mobilen Version 1** (siehe [Version 1](#version-1-mobil)). Gebaut wird domänengetrieben: Das [Domänenmodell](docs/domain-model.md) für Version 1 ist freigegeben, Orakel-Screen und Charakter-Screen sind umgesetzt. Technik, MVC-Aufbau und Befehle stehen in [ARCHITECTURE.md](ARCHITECTURE.md).
+> Status: **Version 1 in Arbeit.** Wir fangen klein an, mit einer **mobilen Version 1** (siehe [Version 1](#version-1-mobil)). Gebaut wird domänengetrieben: Das [Domänenmodell](docs/domain-model.md) für Version 1 ist freigegeben, Orakel-Screen, Charakter-Screen und Sektor-Screen sind umgesetzt. Technik, MVC-Aufbau und Befehle stehen in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ---
 
@@ -49,9 +49,13 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 
   Die Erschaffung wird gespeichert: „Später weiter“ schließt sie, „Erschaffung fortsetzen“ holt sie zurück. Verwerfen geht jederzeit. Vorbild für das Verhalten: der interaktive Generator auf <https://www.batintheattic.com/traveller/interactive.html>.
 
+**Dritter Screen: Sektor** (Starter Edition, *Charts and Tables* S. 14–15 und TAS Form 6): ein Subsektor aus 8 × 10 Hexfeldern wie auf dem Subsector Map Grid, 0101 links oben. Dunkle Felder sind **nicht erzeugt**, helle ohne Zeichen **leer**. Welten stehen in der üblichen Darstellung von Classic Traveller: oben die Nummer, darüber der Raumhafen, in der Mitte die Welt (● mit Wasser, ○ ohne, Punkte für einen Asteroidengürtel), ★ Marinebasis, ▲ Scoutbasis, ein kleiner Kreis rechts oben für den Gasriesen, darunter der Name, ab Bevölkerung 9 in Großbuchstaben. Unter der Karte stehen die Welten als Liste mit UWP, Basen und Handelscodes.
+  - Ein **nicht erzeugtes Feld** antippen beginnt die **Weltenerschaffung**, Wurf für Wurf mit der Würfelanimation wie bei der Charaktererschaffung: erst das Vorkommen (1W6, bei 4+ gibt es eine Welt, sonst bleibt das Feld leer), dann Raumhafen, Marine- und Scoutbasis, Gasriese, Größe, Atmosphäre, Hydrographie, Bevölkerung, Regierung, Gesetz und Tech Level, zum Schluss der Name. Jeder Knopf sagt, was gewürfelt wird und mit welchem DM. „Später weiter“ behält die Welt, Verwerfen macht das Feld wieder frei.
+  - Eine **Welt** antippen öffnet ihre Weltkarte: UWP (z. B. C788545-7) und jede Stelle im Klartext aus den Charts, Basen, Gasriese, Handelscodes und darunter ihre Würfe.
+
 **UI-Entwurf:** Der klickbare Entwurf liegt in [docs/ui-entwurf](docs/ui-entwurf/).
 
-**Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf, Weltenerschaffung, Kaufen und Verkaufen, Sektorkarte, Schiffe, NSC-Karten, Chaosfaktor, Szenen, Feinjustierung ±1, eigene Fertigkeiten, Hausregeln in der App einstellen.
+**Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf, Kaufen und Verkaufen, Reisezonen und Notizen zu Welten, Sprungrouten, ganze Sektoren aus mehreren Subsektoren, Schiffe, NSC-Karten, Chaosfaktor, Szenen, Feinjustierung ±1, eigene Fertigkeiten, Hausregeln in der App einstellen.
 
 ---
 

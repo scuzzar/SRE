@@ -22,7 +22,13 @@ import {
   rollDice,
   rollNext,
   rollSkill,
+  rollWorld,
+  nameWorld,
+  discardWorld,
+  hexAt,
+  replayHex,
   setGeneration,
+  setHexes,
   setOdds,
   startGeneration,
   toCampaignFile,
@@ -35,6 +41,7 @@ import {
   type Clock,
   type Download,
   type Generation,
+  type Hex,
   type Random,
 } from '../model';
 import {
@@ -50,7 +57,7 @@ import {
 import { buildSnapshot, type ControllerState, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, task: undefined, details: false, result: undefined, editor: undefined, generating: false, generationError: undefined } as const;
+const closedDrafts = { card: undefined, task: undefined, details: false, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined } as const;
 
 export interface GameDependencies {
   readonly repository: CampaignRepository;
@@ -89,6 +96,8 @@ export class GameController {
       editor: undefined,
       generating: false,
       generationError: undefined,
+      world: undefined,
+      worldError: undefined,
     };
     this.current = buildSnapshot(this.state);
   }
@@ -382,7 +391,55 @@ export class GameController {
     }
   }
 
+  // --- Subsektor und Weltenerschaffung --------------------------------------------------------
+
+  /**
+   * Öffnet ein Feld des Subsektors: eine Welt zeigt ihre Weltkarte, eine Welt in Erschaffung geht
+   * weiter, ein nicht erzeugtes Feld beginnt eine Weltenerschaffung (das Hexfeld entsteht erst mit
+   * dem ersten Wurf). Ein leeres Feld öffnet nichts.
+   */
+  openHex(column: number, row: number): void {
+    const hex = hexAt(this.campaign.hexes, column, row);
+    if (hex) {
+      const state = replayHex(hex);
+      if (state.step === 'done' && state.empty) return;
+    }
+    this.update({ world: { column, row }, worldError: undefined });
+  }
+
+  /** Schließt die Weltkarte; eine Welt in Erschaffung bleibt gespeichert. */
+  closeWorld(): void {
+    this.update({ world: undefined, worldError: undefined });
+  }
+
+  /** Würfelt den nächsten Wurf der offenen Welt. */
+  rollWorld(): void {
+    this.inWorld((hexes, { column, row }) => rollWorld(hexes, column, row, this.deps.random));
+  }
+
+  /** Gibt der fertig gewürfelten Welt ihren Namen. */
+  nameWorld(name: string): void {
+    this.inWorld((hexes, { column, row }) => nameWorld(hexes, column, row, name));
+  }
+
+  /** Verwirft die Welt in Erschaffung; das Feld ist wieder nicht erzeugt. */
+  discardWorld(): void {
+    this.inWorld((hexes, { column, row }) => discardWorld(hexes, column, row), true);
+  }
+
   // --- intern ----------------------------------------------------------------------------------
+
+  /** Führt einen Schritt der Weltenerschaffung aus; verletzt er eine Regel, steht das auf der Weltkarte. */
+  private inWorld(step: (hexes: readonly Hex[], at: { column: number; row: number }) => readonly Hex[], close = false): void {
+    const at = this.state.world;
+    if (!at) throw new DomainError('Es ist keine Weltkarte offen.');
+    try {
+      this.change(setHexes(this.campaign, step(this.campaign.hexes, at)), close ? { world: undefined, worldError: undefined } : { worldError: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ worldError: error.message });
+    }
+  }
 
   private get campaign(): Campaign {
     if (!this.state.campaign) throw new Error('Die Kampagne ist noch nicht geladen.');
