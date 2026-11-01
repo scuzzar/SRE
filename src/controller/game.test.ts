@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { appendLog, createCampaign, fromCampaignFile, setHexes, type CampaignRepository } from '../model';
+import { appendLog, createCampaign, fromCampaignFile, setHexes, type CampaignRepository, type Random } from '../model';
 import { fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 
-async function started(random = fixedRandom(), repository = memoryRepository(), download = memoryDownload()) {
+async function started(random: Random = fixedRandom(), repository = memoryRepository(), download = memoryDownload()) {
   const game = new GameController({ repository, random, clock: fixedClock(), download });
   await game.init();
   return { game, repository, download };
@@ -596,5 +596,68 @@ describe('Subsektor und Weltenerschaffung', () => {
     game.exportCampaign(game.snapshot().campaign.id);
     const imported = fromCampaignFile(download.files.at(-1)!.content, 'k9');
     expect(imported.hexes).toEqual([{ column: 5, row: 5, empty: true, uwp: {} }]);
+  });
+});
+
+describe('Durchlaufen lassen', () => {
+  const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
+
+  /** Eine Zufallsquelle, die immer weiter würfelt, reproduzierbar. */
+  function seeded(seed: number) {
+    return {
+      int(min: number, max: number) {
+        seed = (seed * 1103515245 + 12345) % 2 ** 31;
+        return min + (Math.floor(seed / 65536) % (max - min + 1));
+      },
+    };
+  }
+
+  it('würfelt die ganze Erschaffung bis zum Namen oder Tod, mit Heimatwelt und Welt je Term', async () => {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const { game } = await started(seeded(seed), memoryRepository(setHexes(createCampaign([]), [regina])));
+      game.openGeneration();
+      game.runGeneration();
+      const view = game.snapshot().generation!;
+      expect(['name', 'dead']).toContain(view.step);
+      expect(view.homeworld).toBe('Regina');
+      // Jeder Term fand auf einer Welt statt: „wie zuletzt“, also Regina.
+      const terms = new Set(view.lines.map((l) => l.term).filter((t) => t > 0)).size;
+      expect(view.termWorlds).toEqual(Array.from({ length: terms }, () => 'Regina'));
+    }
+  });
+
+  it('hält ohne fertige Welt bei der Heimatwelt an', async () => {
+    const { game } = await started(seeded(1));
+    game.openGeneration();
+    game.runGeneration();
+    expect(game.snapshot().generation).toMatchObject({ step: 'homeworld', action: { kind: 'world', worlds: [] } });
+    expect(game.snapshot().generation?.lines).toHaveLength(6);
+  });
+
+  it('lässt eine Welt bis zum Namen durchlaufen, im Subsektor mit dem Vorkommen', async () => {
+    // Vorkommen 5, dann die Welt C788545-7.
+    const { game } = await started(fixedRandom(5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 4, 4, 3, 4, 3, 3, 4, 4, 4));
+    game.chooseHex(3, 4);
+    game.runOccurrence();
+    expect(game.snapshot()).toMatchObject({ selected: undefined, world: { id: '0304', step: 'name', uwp: 'C788545-7' } });
+    expect(game.snapshot().world?.lines.map((l) => l.kind)).toEqual(['occurrence', 'starport', 'scoutBase', 'gasGiant', 'size', 'atmosphere', 'hydrographics', 'population', 'government', 'law', 'tech']);
+  });
+
+  it('bleibt bei einem leeren Feld im Subsektor und zeigt das Vorkommen', async () => {
+    const { game } = await started(fixedRandom(2));
+    game.chooseHex(3, 4);
+    game.runOccurrence();
+    expect(game.snapshot()).toMatchObject({ world: undefined, selected: { state: 'empty', occurrence: { result: 'leer' } } });
+  });
+
+  it('lässt eine angefangene Welt auf der Weltkarte durchlaufen', async () => {
+    const { game } = await started(fixedRandom(5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 4, 4, 3, 4, 3, 3, 4, 4, 4));
+    game.chooseHex(3, 4);
+    game.rollOccurrence();
+    game.chooseHex(3, 4);
+    game.rollWorld();
+    game.runWorld();
+    expect(game.snapshot().world).toMatchObject({ step: 'name', uwp: 'C788545-7' });
+    expect(game.snapshot().world?.lines).toHaveLength(10);
   });
 });

@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, useState, type ReactNode, type TouchEvent } fr
 import type { HexView, SelectedHexView, Snapshot } from '../../controller';
 import { useGame } from '../game-context';
 import { animated } from '../haptics';
+import { HoldButton } from '../HoldButton';
 import { CloseIcon, DiceIcon } from '../icons';
 import { RollStage } from './WorldSheet';
 
@@ -135,7 +136,21 @@ function HexCell({ hex, selected, disabled }: { hex: HexView; selected: boolean;
  * Würfel rollen hier, nicht auf der Weltkarte. Gibt es eine Welt, geht es mit „Welt erschaffen“ auf
  * die Weltkarte.
  */
-function SectorDock({ selected, rolled, rolling, onRoll, onSettled }: { selected: SelectedHexView; rolled: boolean; rolling: boolean; onRoll: () => void; onSettled: () => void }) {
+function SectorDock({
+  selected,
+  rolled,
+  rolling,
+  skips,
+  onRoll,
+  onSettled,
+}: {
+  selected: SelectedHexView;
+  rolled: boolean;
+  rolling: boolean;
+  skips: number;
+  onRoll: () => void;
+  onSettled: () => void;
+}) {
   const game = useGame();
   const line = selected.occurrence;
   return (
@@ -146,15 +161,15 @@ function SectorDock({ selected, rolled, rolling, onRoll, onSettled }: { selected
           <CloseIcon />
         </button>
       </div>
-      {line && <RollStage key={line.index} line={line} animate={rolled && animated()} onSettled={onSettled} skips={0} />}
+      {line && <RollStage key={line.index} line={line} animate={rolled && animated()} onSettled={onSettled} skips={skips} />}
       {selected.state === 'open' && (
-        <button type="button" className="roll generation-main" onClick={onRoll}>
+        <HoldButton className="roll generation-main" onPress={onRoll} onHold={() => game.runOccurrence()}>
           <DiceIcon />
           <span>
             Vorkommen würfeln
             <span className="small-label">1W6 · Welt bei {selected.target}+</span>
           </span>
-        </button>
+        </HoldButton>
       )}
       {!rolling && selected.state === 'empty' && <p className="generation-prompt">Kein System in diesem Feld</p>}
       {!rolling && (selected.state === 'pending' || selected.state === 'world') && (
@@ -268,8 +283,18 @@ export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; 
   const [shown, setShown] = useState(view.sector);
   if (!rolling && shown !== view.sector) setShown(view.sector);
   const sector = rolling ? shown : view.sector;
+  // Ein Tippen irgendwo, solange der Würfel rollt, springt zum Ergebnis; der Zähler sagt es der Bühne.
+  const [skips, setSkips] = useState(0);
   return (
-    <div className="screen">
+    <div
+      className="screen"
+      onClickCapture={(e) => {
+        if (!rolling) return;
+        e.stopPropagation();
+        e.preventDefault();
+        setSkips((n) => n + 1);
+      }}
+    >
       <section className="scroll sector" aria-labelledby="sector-title">
         <h2 id="sector-title" className="section-title">
           {heading}
@@ -313,6 +338,7 @@ export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; 
           selected={selected}
           rolled={rolled === selected.id}
           rolling={rolling}
+          skips={skips}
           onRoll={() => {
             setRolled(selected.id);
             setSettled(undefined);

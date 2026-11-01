@@ -1,5 +1,5 @@
 import { addCharacter, setGeneration, type Campaign, type CharacterId } from './campaign';
-import { worldOf } from './sector';
+import { hexId, isWorld, worldOf } from './sector';
 import {
   ageOf,
   CRISIS_TARGET,
@@ -259,4 +259,73 @@ export function finishGeneration(campaign: Campaign, name: string): { campaign: 
     generation.career,
   );
   return { campaign: setGeneration(added, undefined), id };
+}
+
+function pick<T>(items: readonly T[], random: Random): T {
+  return items[random.int(0, items.length - 1)]!;
+}
+
+/** Eine Laufbahn, zufällig, gewichtet nach der Chance der Musterung. */
+function pickService(state: CareerState, random: Random): string {
+  const options = serviceOptions(state).map((o) => ({ id: o.service.id, weight: Math.max(1, Math.round(o.odds.chance)) }));
+  let n = random.int(1, options.reduce((sum, o) => sum + o.weight, 0));
+  for (const option of options) {
+    n -= option.weight;
+    if (n <= 0) return option.id;
+  }
+  return options.at(-1)!.id;
+}
+
+/** Wie viele Schritte ein Durchlauf höchstens macht; eine Erschaffung braucht weit weniger. */
+const MAX_RUN_STEPS = 1000;
+
+/**
+ * Lässt die Erschaffung durchlaufen: würfelt jeden Schritt und trifft jede Entscheidung zufällig,
+ * bis zum Namen oder zum Tod (siehe domain-model.md, *Durchlaufen*). Gibt es für die Heimatwelt
+ * keine fertige Welt, hält der Lauf dort an.
+ */
+export function runGeneration(campaign: Campaign, random: Random): Campaign {
+  let current = campaign;
+  for (let i = 0; i < MAX_RUN_STEPS; i++) {
+    const generation = current.generation;
+    if (!generation) throw new DomainError('Es läuft keine Charaktererschaffung.');
+    const state = stateOf(generation);
+    const step = (next: Generation) => (current = setGeneration(current, next));
+    switch (state.step) {
+      case 'name':
+      case 'dead':
+        return current;
+      case 'homeworld': {
+        const worlds = current.hexes.filter(isWorld);
+        if (worlds.length === 0) return current;
+        const world = pick(worlds, random);
+        current = chooseGenerationWorld(current, hexId(world.column, world.row));
+        break;
+      }
+      case 'world': {
+        const previous = previousWorld(state);
+        if (previous === undefined) return current;
+        current = chooseGenerationWorld(current, previous);
+        break;
+      }
+      case 'service':
+        step(enlist(generation, pickService(state, random), random));
+        break;
+      case 'skill':
+        step(rollSkill(generation, pick(tableOptions(state).filter((o) => o.available), random).table.id, random));
+        break;
+      case 'cascade':
+        step(chooseCascade(generation, pick(cascadeOptions(generation), random).skill));
+        break;
+      case 'reenlist':
+        step(reenlist(generation, random.int(0, 1) === 1, random));
+        break;
+      case 'muster':
+        step(muster(generation, canTakeCash(state) && random.int(0, 1) === 1 ? 'cash' : 'benefit', random));
+        break;
+      default:
+        step(rollNext(generation, random));
+    }
+  }
+  throw new DomainError('Die Erschaffung kommt beim Durchlaufen nicht zum Ende.');
 }

@@ -77,3 +77,15 @@ export function rollWorld(hexes: readonly Hex[], column: number, row: number, ra
     roll: { ...thrown, parts: next.parts, value, success: undefined, row: table ? systemRow(totalOf(thrown)) : undefined },
   };
 }
+
+/** Lässt eine Welt in Erschaffung durchlaufen: alle Würfe bis zum Namen. */
+export function runWorld(hexes: readonly Hex[], column: number, row: number, random: Random): { hexes: readonly Hex[]; rolls: readonly WorldRoll[] } {
+  const rolls: WorldRoll[] = [];
+  let current = hexes;
+  for (let hex = hexAt(current, column, row); hex && nextWorldRoll(hex); hex = hexAt(current, column, row)) {
+    const next = rollWorld(current, column, row, random);
+    current = next.hexes;
+    rolls.push(next.roll);
+  }
+  return { hexes: current, rolls };
+}
