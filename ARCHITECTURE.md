@@ -42,8 +42,8 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   `openCampaign(id)`, `createCampaign(name)`, `renameCampaign(name)`, `deleteCampaign(id)`,
   `exportCampaign(id)` und `importCampaign(text)`; für die Charaktererschaffung `openGeneration()`,
   `rollGeneration()`, `chooseService(id)`, `chooseSkillTable(id)`, `chooseCascade(skill)`,
-  `reenlist(wants)`, `musterOut(kind)`, `finishGeneration(name)`, `discardGeneration()` und
-  `restartGeneration()`; für den Subsektor `chooseHex(column, row)`, `clearHex()`, `rollOccurrence()`,
+  `reenlist(wants)`, `musterOut(kind)`, `chooseGenerationWorld(id)`, `pickGenerationWorld()`,
+  `closePicker()`, `finishGeneration(name)`, `discardGeneration()` und `restartGeneration()`; für den Subsektor `chooseHex(column, row)`, `clearHex()`, `rollOccurrence()`,
   `rollWorld()`, `nameWorld(name)`, `discardWorld()` und `closeWorld()`. Ein Hexfeld (`model/sector.ts`) hält die Werte seiner Welt;
   ein Wurf der Weltenerschaffung (`model/draft/world-roll.ts`) trägt sein Ergebnis ein und lebt nur,
   solange Weltkarte oder Feldwahl offen sind (im Zustand des Controllers). Die Erschaffung ist gespeicherter Stand (`model/generation.ts`,

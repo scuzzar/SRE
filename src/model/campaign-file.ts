@@ -5,7 +5,7 @@ import { DomainError } from './errors';
 import { withQuestion, type LogEntry } from './log';
 import { entryOf, oddsOf, slotOfEntry } from './reference';
 import { characteristics } from './rules';
-import { hexFromRolls, uwpKinds, validateHexes, type Hex, type LegacyWorldRoll } from './sector';
+import { hexFromRolls, uwpKinds, validateHexes, worldOf, type Hex, type LegacyWorldRoll } from './sector';
 
 /**
  * Die Kampagnendatei: eine Kampagne als JSON, zum Sichern und Weitergeben. Sie enthält alles, was an
@@ -49,7 +49,7 @@ const CareerRollSchema = z.object({
   chosen: z.string().optional(),
   against: z.string().optional(),
 });
-const CareerSchema = z.object({ rolls: z.array(CareerRollSchema) });
+const CareerSchema = z.object({ rolls: z.array(CareerRollSchema), homeworld: z.string().optional(), worlds: z.array(z.string()).optional() });
 
 const position = { column: z.number().int(), row: z.number().int(), name: z.string().optional() };
 const HexSchema = z.union([
@@ -89,6 +89,7 @@ const CharacterSchema = z.object({
   skills: z.array(z.object({ of: z.string(), level: z.number(), retired: z.boolean() })),
   possessions: z.array(z.object({ of: z.string(), count: z.number() })).default([]),
   career: CareerSchema.optional(),
+  homeworld: z.string().optional(),
 });
 
 const CampaignFileSchema = z.object({
@@ -135,10 +136,11 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
   }
   try {
     const file = parsed.data.campaign;
-    const characters: Character[] = file.characters.map(({ career, ...c }) => ({
+    const characters: Character[] = file.characters.map(({ career, homeworld, ...c }) => ({
       ...c,
       skills: c.skills.map((s) => ({ ...s })),
       ...(career ? { career: careerOf(career) } : {}),
+      ...(homeworld === undefined ? {} : { homeworld }),
     }));
     const campaign: Campaign = {
       id,
@@ -160,6 +162,8 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
 /** Ein Lebenslauf ohne leere optionale Felder, wie er im Spielstand steht. */
 function careerOf(career: z.infer<typeof CareerSchema>): Career {
   return {
+    ...(career.homeworld === undefined ? {} : { homeworld: career.homeworld }),
+    ...(career.worlds === undefined ? {} : { worlds: career.worlds }),
     rolls: career.rolls.map((roll) => Object.fromEntries(Object.entries(roll).filter(([, v]) => v !== undefined)) as unknown as CareerRoll),
   };
 }
@@ -206,6 +210,11 @@ function validate(campaign: Campaign): void {
   }
   if (campaign.generation) replay(campaign.generation.career);
   validateHexes(campaign.hexes);
+  // Heimatwelten und Welten der Terms verweisen auf fertige Welten des Subsektors.
+  const careers = [...campaign.characters.flatMap((c) => (c.career ? [c.career] : [])), ...(campaign.generation ? [campaign.generation.career] : [])];
+  for (const id of [...campaign.characters.flatMap((c) => (c.homeworld === undefined ? [] : [c.homeworld])), ...careers.flatMap((c) => [...(c.homeworld === undefined ? [] : [c.homeworld]), ...(c.worlds ?? [])])]) {
+    worldOf(campaign.hexes, id);
+  }
   for (const entry of campaign.log) {
     switch (entry.kind) {
       case 'oracle':

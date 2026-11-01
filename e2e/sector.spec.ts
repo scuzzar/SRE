@@ -46,3 +46,25 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
   }
   expect(named).toBe(true);
 });
+
+test('Sektor: Die Karte lässt sich vergrößern und wieder verkleinern', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
+  const viewport = page.locator('.sector-viewport');
+  const canvas = page.locator('.sector-canvas');
+  const out = page.getByRole('button', { name: 'Verkleinern' });
+  await expect(out).toBeDisabled();
+  const before = (await canvas.boundingBox())!.width;
+  await page.getByRole('button', { name: 'Vergrößern' }).click();
+  await page.getByRole('button', { name: 'Vergrößern' }).click();
+  const zoomed = (await canvas.boundingBox())!.width;
+  expect(zoomed).toBeGreaterThan(before * 2);
+  // Größer als der Ausschnitt: verschieben geht durch Scrollen.
+  expect(await viewport.evaluate((e) => e.scrollWidth > e.clientWidth)).toBe(true);
+  // Auch vergrößert lässt sich ein Feld antippen.
+  await page.getByRole('button', { name: /, nicht erzeugt$/ }).first().click();
+  await expect(page.locator('.sector-dock')).toBeVisible();
+  await out.click();
+  await out.click();
+  await expect(out).toBeDisabled();
+});

@@ -10,6 +10,13 @@ import { characteristics, JACK_OF_ALL_TRADES, type Characteristic } from './rule
  */
 export interface Career {
   readonly rolls: readonly CareerRoll[];
+  /** Die Heimatwelt: ein Hexfeld mit fertiger Welt, als Spalte und Zeile (0304). */
+  readonly homeworld?: string;
+  /**
+   * Je Term die Welt, auf der er stattfand, in der Reihenfolge der Terms. Fehlt bei Lebensläufen von
+   * vor den Welten; dann gibt es weder Heimatwelt noch Welten.
+   */
+  readonly worlds?: readonly string[];
 }
 
 export type RollKind =
@@ -51,8 +58,10 @@ export interface CareerRoll {
 
 export type GenerationStep =
   | 'characteristics'
+  | 'homeworld'
   | 'service'
   | 'draft'
+  | 'world'
   | 'survival'
   | 'commission'
   | 'promotion'
@@ -135,6 +144,9 @@ export interface CareerState {
   readonly dead: boolean;
   /** Je Wurf, was er bewirkt hat. */
   readonly outcomes: readonly RollOutcome[];
+  readonly homeworld: string | undefined;
+  /** Je Term seine Welt, soweit gewählt. */
+  readonly worlds: readonly string[];
 }
 
 export const START_AGE = 18;
@@ -222,8 +234,25 @@ class Replay {
   outcomes: RollOutcome[] = [];
   private effects: Effect[] = [];
 
-  /** `legacy`: die Regel von vor dem 27. Oktober 2026, nach der ein zweites JoT die Stufe erhöhte. */
-  constructor(private readonly legacy = false) {}
+  /**
+   * `legacy`: die Regel von vor dem 27. Oktober 2026, nach der ein zweites JoT die Stufe erhöhte.
+   * Ohne `worlds` stammt der Lebenslauf von vor den Welten: keine Heimatwelt, keine Welten je Term.
+   */
+  constructor(
+    private readonly legacy: boolean,
+    private readonly homeworld: string | undefined,
+    private readonly worlds: readonly string[] | undefined,
+  ) {}
+
+  /** Nach den Attributen: die Heimatwelt, wenn sie noch fehlt, sonst die Laufbahn. */
+  private afterCharacteristics(): void {
+    this.step = this.worlds !== undefined && this.homeworld === undefined ? 'homeworld' : 'service';
+  }
+
+  /** Am Anfang eines Terms: seine Welt, wenn sie noch fehlt, sonst Überleben. */
+  private startTerm(): void {
+    this.step = this.worlds !== undefined && this.worlds.length < this.terms ? 'world' : 'survival';
+  }
 
   apply(roll: CareerRoll, last: boolean): void {
     this.effects = [];
@@ -237,7 +266,7 @@ class Replay {
         if (roll.of !== c) throw new DomainError(`Als Nächstes wird ${c} gewürfelt.`);
         this.set(c, sumOf(roll));
         this.rolled++;
-        if (this.rolled === characteristics.length) this.step = 'service';
+        if (this.rolled === characteristics.length) this.afterCharacteristics();
         break;
       }
       case 'enlistment': {
@@ -360,8 +389,10 @@ class Replay {
   private expect(roll: CareerRoll): void {
     const allowed: Record<GenerationStep, readonly RollKind[]> = {
       characteristics: ['characteristic'],
+      homeworld: [],
       service: ['enlistment'],
       draft: ['draft'],
+      world: [],
       survival: ['survival'],
       commission: ['commission'],
       promotion: ['promotion'],
@@ -424,7 +455,7 @@ class Replay {
     this.promoted = false;
     this.skillsLeft = this.service!.skillsPerTerm ?? (this.terms === 1 ? 2 : 1);
     this.effects.push({ kind: 'term', term: this.terms });
-    this.step = 'survival';
+    this.startTerm();
   }
 
   private canCommission(): boolean {
@@ -544,13 +575,24 @@ class Replay {
       crisis: this.crisis,
       dead: this.dead,
       outcomes: this.outcomes,
+      homeworld: this.homeworld,
+      worlds: this.worlds ?? [],
     };
+  }
+
+  /** Heimatwelt erst nach den Attributen, höchstens eine Welt je begonnenem Term. */
+  check(): void {
+    if (this.homeworld !== undefined && (this.worlds === undefined || this.rolled < characteristics.length)) {
+      throw new DomainError('Die Heimatwelt kommt erst nach den Attributen.');
+    }
+    if (this.worlds !== undefined && this.worlds.length > this.terms) throw new DomainError('Es gibt mehr Welten als Terms.');
   }
 }
 
 function replayWith(career: Career, legacy: boolean): CareerState {
-  const r = new Replay(legacy);
+  const r = new Replay(legacy, career.homeworld, career.worlds);
   career.rolls.forEach((roll, i) => r.apply(roll, i === career.rolls.length - 1));
+  r.check();
   return r.state();
 }
 

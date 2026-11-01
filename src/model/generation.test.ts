@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { createCampaign, setGeneration } from './campaign';
+import { createCampaign, setGeneration, setHexes } from './campaign';
 import { fromCampaignFile, toCampaignFile } from './campaign-file';
 import { agingFor, musterRollsOf, pensionOf, replay } from './career';
 import {
   cascadeOptions,
   chooseCascade,
+  chooseGenerationWorld,
+  previousWorld,
   enlist,
   finishGeneration,
   muster,
@@ -18,11 +20,20 @@ import {
   tableOptions,
   type Generation,
 } from './generation';
+import type { Hex } from './sector';
 import { fixedRandom } from './testing';
+
+/**
+ * Die Regeln der Laufbahn prüfen diese Tests an Lebensläufen ohne Welten, wie es sie vor den Welten
+ * gab; die Welten haben eigene Tests unten.
+ */
+function startClassic(): Generation {
+  return { career: { rolls: [] } };
+}
 
 /** Würfelt die sechs Attribute, je zwei Würfel aus `pairs`. */
 function withCharacteristics(...pairs: [number, number][]): Generation {
-  let g = startGeneration();
+  let g = startClassic();
   for (const [a, b] of pairs) g = rollNext(g, fixedRandom(a, b));
   return g;
 }
@@ -32,7 +43,7 @@ const kira = () => withCharacteristics([3, 4], [5, 5], [4, 4], [4, 5], [3, 4], [
 
 describe('Charaktererschaffung', () => {
   it('würfelt die Attribute einzeln in der Reihenfolge der UPP', () => {
-    let g = startGeneration();
+    let g = startClassic();
     g = rollNext(g, fixedRandom(3, 4));
     expect(stateOf(g)).toMatchObject({ step: 'characteristics', rolled: 1, upp: { str: 7, dex: 0 } });
     g = kira();
@@ -261,7 +272,7 @@ describe('Charaktererschaffung', () => {
     expect(() => fromCampaignFile(broken, 'k9')).toThrow(/Zeile passt nicht/);
   });
 
-  it('spielt viele zufällige Laufbahnen bis zum Ende, ohne hängen zu bleiben', () => {
+  it('spielt viele zufällige Laufbahnen mit Welten bis zum Ende, ohne hängen zu bleiben', () => {
     let seed = 42;
     const random = {
       int(min: number, max: number) {
@@ -283,6 +294,12 @@ describe('Charaktererschaffung', () => {
         }
         if (step === 299) throw new Error(`hängt in ${state.step}`);
         switch (state.step) {
+          case 'homeworld':
+            g = { career: { ...g.career, homeworld: '0101' } };
+            break;
+          case 'world':
+            g = { career: { ...g.career, worlds: [...(g.career.worlds ?? []), random.int(0, 1) ? '0101' : '0202'] } };
+            break;
           case 'service':
             g = enlist(g, pick(serviceOptions(state)).service.id, random);
             break;
@@ -304,7 +321,76 @@ describe('Charaktererschaffung', () => {
       }
     }
     expect(ends.name + ends.dead).toBe(500);
+    expect(replay(startGeneration().career).step).toBe('characteristics');
     expect(ends.dead).toBeGreaterThan(0);
     expect(longest).toBeGreaterThanOrEqual(7);
   });
 });
+
+describe('Heimatwelt und Welten der Terms', () => {
+  const regina: Hex = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
+  const efate: Hex = { ...regina, column: 2, row: 2, name: 'Efate' };
+  const pending: Hex = { column: 3, row: 3, empty: false, uwp: {} };
+
+  /** Eine Kampagne mit drei Feldern und einer Erschaffung nach den Attributen (UPP wie Kira). */
+  function campaignAfterCharacteristics() {
+    let g = startGeneration();
+    for (const [a, b] of [[3, 4], [5, 5], [4, 4], [4, 5], [3, 4], [2, 3]] as const) g = rollNext(g, fixedRandom(a, b));
+    return setGeneration(setHexes(createCampaign([]), [regina, efate, pending]), g);
+  }
+
+  it('fragt nach den Attributen nach der Heimatwelt, vor der Laufbahn', () => {
+    let campaign = campaignAfterCharacteristics();
+    expect(stateOf(campaign.generation!).step).toBe('homeworld');
+    expect(() => enlist(campaign.generation!, 'navy', fixedRandom(6, 6))).toThrow(/Schritt/);
+    expect(() => chooseGenerationWorld(campaign, '0303')).toThrow(/keine fertige Welt/);
+    expect(() => chooseGenerationWorld(campaign, '0808')).toThrow(/keine fertige Welt/);
+    campaign = chooseGenerationWorld(campaign, '0101');
+    expect(campaign.generation!.career.homeworld).toBe('0101');
+    expect(stateOf(campaign.generation!)).toMatchObject({ step: 'service', homeworld: '0101' });
+  });
+
+  it('fragt am Anfang jedes Terms nach seiner Welt; „wie zuletzt“ ist die vorige, im ersten Term die Heimatwelt', () => {
+    let campaign = chooseGenerationWorld(campaignAfterCharacteristics(), '0101');
+    campaign = setGeneration(campaign, enlist(campaign.generation!, 'merchants', fixedRandom(6, 6)));
+    let state = stateOf(campaign.generation!);
+    expect(state).toMatchObject({ step: 'world', terms: 1 });
+    expect(previousWorld(state)).toBe('0101');
+    expect(() => rollNext(campaign.generation!, fixedRandom(6, 6))).toThrow();
+    campaign = chooseGenerationWorld(campaign, '0202');
+    state = stateOf(campaign.generation!);
+    expect(state).toMatchObject({ step: 'survival', worlds: ['0202'] });
+    let g = rollNext(campaign.generation!, fixedRandom(6, 6)); // Überleben
+    g = rollNext(g, fixedRandom(1, 1)); // kein Patent
+    g = rollSkill(g, 'merchants.personal', fixedRandom(6));
+    g = rollSkill(g, 'merchants.service', fixedRandom(2));
+    g = reenlist(g, true, fixedRandom(6, 6));
+    expect(stateOf(g)).toMatchObject({ step: 'world', terms: 2 });
+    expect(previousWorld(stateOf(g))).toBe('0202');
+  });
+
+  it('gibt dem Charakter die Heimatwelt mit; die Welten der Terms bleiben im Lebenslauf', () => {
+    let campaign = chooseGenerationWorld(campaignAfterCharacteristics(), '0202');
+    campaign = setGeneration(campaign, enlist(campaign.generation!, 'merchants', fixedRandom(6, 6)));
+    campaign = chooseGenerationWorld(campaign, '0101');
+    let g = rollNext(campaign.generation!, fixedRandom(6, 6));
+    g = rollNext(g, fixedRandom(1, 1));
+    g = rollSkill(g, 'merchants.personal', fixedRandom(6));
+    g = rollSkill(g, 'merchants.service', fixedRandom(2));
+    g = reenlist(g, false, fixedRandom(2, 2));
+    g = muster(g, 'benefit', fixedRandom(1));
+    const { campaign: done, id } = finishGeneration(setGeneration(campaign, g), 'Mara Quell');
+    const character = done.characters.find((c) => c.id === id)!;
+    expect(character.homeworld).toBe('0202');
+    expect(character.career).toMatchObject({ homeworld: '0202', worlds: ['0101'] });
+    const back = fromCampaignFile(toCampaignFile(done), 'k9');
+    expect(back.characters.find((c) => c.id === id)).toMatchObject({ homeworld: '0202', career: { worlds: ['0101'] } });
+  });
+
+  it('weist Lebensläufe mit Welten an der falschen Stelle zurück', () => {
+    expect(() => replay({ rolls: [], worlds: [], homeworld: '0101' })).toThrow(/nach den Attributen/);
+    const g = kira();
+    expect(() => replay({ ...g.career, worlds: ['0101'] })).toThrow(/mehr Welten als Terms/);
+  });
+});
+

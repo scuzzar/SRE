@@ -7,6 +7,17 @@ async function openCharacters(page: Page) {
 
 test.use({ reducedMotion: 'reduce' });
 
+/** Öffnet über die Kampagnenwahl eine neue Kampagne mit einer fertigen Welt Regina in 0101. */
+async function campaignWithWorld(page: Page) {
+  await page.goto('/');
+  const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
+  const file = { format: 'solo-rpg-engine/kampagne', version: 1, campaign: { name: 'Mit Welt', odds: 'medium', characters: [], log: [], hexes: [regina] } };
+  await page.getByRole('banner').getByRole('button', { name: /^Kampagne / }).click();
+  await page.getByRole('dialog', { name: 'Kampagnen' }).locator('input[type=file]').setInputFiles({ name: 'welt.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
+  await expect(page.getByRole('dialog', { name: 'Kampagnen' })).toBeHidden();
+  await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
+}
+
 test('Charaktererschaffung: Attribute einzeln, Laufbahn, Terms, Abmusterung, Name', async ({ page }) => {
   await openCharacters(page);
   await page.getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
@@ -17,8 +28,36 @@ test('Charaktererschaffung: Attribute einzeln, Laufbahn, Terms, Abmusterung, Nam
     await expect(prompt).toContainText(`Attribute würfeln: ${c}`);
     await dialog.getByRole('button', { name: `${c} würfeln` }).click();
   }
+  // Heimatwelt: auf der Karte ein freies Feld wählen, Vorkommen würfeln, bis es eine Welt gibt, sie erschaffen.
+  await expect(prompt).toContainText('Heimatwelt');
+  await dialog.getByRole('button', { name: /Auf der Karte wählen/ }).click();
+  const picker = page.getByRole('dialog', { name: 'Heimatwelt wählen' });
+  const map = picker.getByRole('group', { name: 'Karte des Subsektors' });
+  for (const id of ['0101', '0202', '0303', '0404', '0505', '0606', '0707', '0808', '0109', '0210']) {
+    await map.getByRole('button', { name: `${id}, nicht erzeugt` }).click();
+    await picker.getByRole('button', { name: /Vorkommen würfeln/ }).click();
+    if (await picker.getByText('Kein System in diesem Feld').isVisible()) continue;
+    await picker.getByRole('button', { name: 'Welt erschaffen' }).click();
+    const world = page.getByRole('dialog', { name: `Weltenerschaffung ${id}` });
+    for (let i = 0; i < 12 && (await world.locator('.generation-main').count()) > 0; i++) await world.locator('.generation-main').click();
+    await world.getByLabel('Name der Welt').fill('Regina');
+    await world.getByRole('button', { name: 'Übernehmen' }).click();
+    break;
+  }
+  await expect(picker).toBeHidden();
+  await expect(dialog.getByRole('article', { name: 'Neuer Charakter' })).toContainText('von Regina');
   await expect(prompt).toHaveText('Laufbahn wählen; dann wird die Musterung gewürfelt');
   await expect(dialog.getByRole('group', { name: 'Laufbahn' }).getByRole('button')).toHaveCount(6);
+
+  // Orakel und Karte gehen mitten in der Erschaffung; die Antwort steht auch im Log.
+  await dialog.getByLabel('Frage an das Orakel').fill('Ist die Musterung gerecht?');
+  await dialog.getByRole('button', { name: /^Ja\/Nein fragen/ }).click();
+  await expect(dialog.locator('.generation-oracle-answer')).toContainText(/JA|NEIN/);
+  await dialog.getByRole('button', { name: 'Karte ziehen' }).click();
+  const card = page.getByRole('dialog', { name: 'Inspirationskarte' });
+  await expect(card).toBeVisible();
+  await card.getByRole('button', { name: 'Karte verwerfen' }).click();
+  await expect(card).toBeHidden();
 
   // „Später weiter“ behält die Erschaffung.
   await dialog.getByRole('button', { name: 'Später weiter' }).click();
@@ -26,7 +65,8 @@ test('Charaktererschaffung: Attribute einzeln, Laufbahn, Terms, Abmusterung, Nam
   await expect(prompt).toHaveText('Laufbahn wählen; dann wird die Musterung gewürfelt');
 
   await dialog.getByRole('button', { name: /^Other/ }).click();
-  // Von hier an: immer der erste mögliche Knopf, bis der Charakter fertig oder tot ist.
+  // Von hier an: immer der erste mögliche Knopf, bis der Charakter fertig oder tot ist; bei der Welt
+  // eines Terms ist das „Wie zuletzt“.
   for (let i = 0; i < 200; i++) {
     const text = await prompt.innerText();
     if (text.startsWith('Fertig:') || text.startsWith('Gestorben')) break;
@@ -49,6 +89,8 @@ test('Charaktererschaffung: Attribute einzeln, Laufbahn, Terms, Abmusterung, Nam
   await mara.getByRole('button', { name: /Mara Quell/ }).click();
   await mara.getByText('Lebenslauf').click();
   await expect(mara.getByRole('region', { name: 'Lebenslauf' })).toContainText('Musterung Other');
+  await expect(mara.getByRole('region', { name: 'Lebenslauf' })).toContainText('Term 1 · Regina');
+  await expect(mara).toContainText('Heimatwelt');
 });
 
 test('Besitz: Gegenstand aus der Liste mit Anzahl, in den Details', async ({ page }) => {
@@ -81,15 +123,17 @@ test.describe('mit Animation', () => {
   });
 
   test('Würfe mit Zielwert laufen groß als Popup; Tippen springt zum Urteil, noch ein Tippen schließt', async ({ page }) => {
-    await openCharacters(page);
+    await campaignWithWorld(page);
     await page.getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
     const dialog = page.getByRole('dialog', { name: 'Charaktererschaffung' });
     for (const c of ['STR', 'DEX', 'END', 'INT', 'EDU', 'SOC']) {
       await dialog.getByRole('button', { name: `${c} würfeln` }).click();
       // Irgendwo tippen beendet die Animation sofort.
       await page.mouse.click(200, 150);
-      await expect(dialog.getByRole('button', { name: /würfeln|^Navy/ }).first()).toBeEnabled();
+      await expect(dialog.getByRole('button', { name: /würfeln|^Regina/ }).first()).toBeEnabled();
     }
+    // Die Heimatwelt aus der Liste: eine fertige Welt antippen.
+    await dialog.getByRole('button', { name: /^Regina/ }).click();
     await dialog.getByRole('button', { name: /^Other/ }).click();
     const popup = page.getByRole('alertdialog');
     await expect(popup).toContainText('Musterung Other');

@@ -77,6 +77,12 @@ export function CharacterCard({ character }: { character: CharacterView }) {
 
       {character.open && (
         <dl className="facts">
+          {character.homeworld && (
+            <>
+              <dt>Heimatwelt</dt>
+              <dd>{character.homeworld}</dd>
+            </>
+          )}
           {character.possessions.length > 0 && (
             <>
               <dt>Besitz</dt>
@@ -94,7 +100,7 @@ export function CharacterCard({ character }: { character: CharacterView }) {
       {character.open && character.career && (
         <details className="career-details">
           <summary>Lebenslauf</summary>
-          <CareerList lines={character.career} heading={false} />
+          <CareerList lines={character.career} worlds={character.termWorlds} heading={false} />
         </details>
       )}
     </article>

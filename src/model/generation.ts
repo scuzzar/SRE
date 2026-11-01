@@ -1,4 +1,5 @@
 import { addCharacter, setGeneration, type Campaign, type CharacterId } from './campaign';
+import { worldOf } from './sector';
 import {
   ageOf,
   CRISIS_TARGET,
@@ -34,7 +35,7 @@ export interface ThrowOdds {
 }
 
 export function startGeneration(): Generation {
-  return { career: { rolls: [] } };
+  return { career: { rolls: [], worlds: [] } };
 }
 
 export function stateOf(generation: Generation): CareerState {
@@ -50,7 +51,7 @@ function throwOdds(th: Throw, upp: CareerState['upp']): ThrowOdds {
 }
 
 function append(generation: Generation, roll: CareerRoll): Generation {
-  const next: Generation = { career: { rolls: [...generation.career.rolls, roll] } };
+  const next: Generation = { career: { ...generation.career, rolls: [...generation.career.rolls, roll] } };
   replay(next.career);
   return next;
 }
@@ -152,6 +153,26 @@ export function rollNext(generation: Generation, random: Random): Generation {
   }
 }
 
+/**
+ * Wählt im Schritt `homeworld` die Heimatwelt, im Schritt `world` die Welt des Terms: eine fertige
+ * Welt des Subsektors der Kampagne.
+ */
+export function chooseGenerationWorld(campaign: Campaign, id: string): Campaign {
+  const generation = campaign.generation;
+  if (!generation) throw new DomainError('Es läuft keine Charaktererschaffung.');
+  const state = stateOf(generation);
+  expectStep(state, 'homeworld', 'world');
+  worldOf(campaign.hexes, id);
+  const career = state.step === 'homeworld' ? { ...generation.career, homeworld: id } : { ...generation.career, worlds: [...(generation.career.worlds ?? []), id] };
+  replay(career);
+  return setGeneration(campaign, { career });
+}
+
+/** Die Welt, die „wie zuletzt“ meint: die des vorigen Terms, im ersten Term die Heimatwelt. */
+export function previousWorld(state: CareerState): string | undefined {
+  return state.step === 'world' ? (state.worlds.at(-1) ?? state.homeworld) : undefined;
+}
+
 /** Wählt eine Laufbahn und würfelt die Musterung. */
 export function enlist(generation: Generation, serviceId: string, random: Random): Generation {
   const state = stateOf(generation);
@@ -178,7 +199,7 @@ export function chooseCascade(generation: Generation, skill: string): Generation
   expectStep(state, 'cascade');
   if (!state.cascade!.cascade.options.includes(skill)) throw new DomainError(`${skillOf(skill).name} gehört nicht zu ${cascadeOf(state.cascade!.cascade.id).name}.`);
   const rolls = generation.career.rolls;
-  const next: Generation = { career: { rolls: [...rolls.slice(0, -1), { ...rolls.at(-1)!, chosen: skill }] } };
+  const next: Generation = { career: { ...generation.career, rolls: [...rolls.slice(0, -1), { ...rolls.at(-1)!, chosen: skill }] } };
   replay(next.career);
   return next;
 }
@@ -233,6 +254,7 @@ export function finishGeneration(campaign: Campaign, name: string): { campaign: 
       upp: state.upp,
       skills: state.skills,
       possessions: state.possessions,
+      ...(state.homeworld === undefined ? {} : { homeworld: state.homeworld }),
     },
     generation.career,
   );

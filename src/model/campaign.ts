@@ -2,7 +2,7 @@ import type { Career } from './career';
 import { DomainError } from './errors';
 import type { Generation } from './generation';
 import type { LogEntry } from './log';
-import type { Hex } from './sector';
+import { worldOf, type Hex } from './sector';
 import { defaultOdds, itemOf, oddsOf, ref, skillOf, type ExampleCharacter } from './reference';
 
 /** Die sechs Attributwerte, je 0 bis 15. */
@@ -47,6 +47,8 @@ export interface Character {
   readonly possessions: readonly Possession[];
   /** Der Lebenslauf, wenn der Charakter über die Charaktererschaffung entstanden ist. */
   readonly career?: Career;
+  /** Die Heimatwelt: ein Hexfeld mit fertiger Welt, als Spalte und Zeile (0304). */
+  readonly homeworld?: string;
 }
 
 export type CampaignId = string;
@@ -79,6 +81,8 @@ export interface CharacterInput {
   readonly skills: readonly { readonly of: string; readonly level: number }[];
   /** Fehlt bei den Beispielcharakteren: Sie besitzen nichts aus der Liste. */
   readonly possessions?: readonly Possession[];
+  /** Die Heimatwelt; fehlt, wenn der Charakter keine hat. */
+  readonly homeworld?: string;
 }
 
 /** Eine neue Kampagne, ohne Log, mit der Standardstufe und den angegebenen Charakteren. */
@@ -200,6 +204,11 @@ function nextId(campaign: Campaign): CharacterId {
   return `c${Math.max(0, ...numbers) + 1}`;
 }
 
+/** Die Heimatwelt muss eine fertige Welt des Subsektors sein. */
+function checkHomeworld(campaign: Campaign, input: CharacterInput): void {
+  if (input.homeworld !== undefined) worldOf(campaign.hexes, input.homeworld);
+}
+
 function fields(input: CharacterInput) {
   return {
     name: input.name.trim(),
@@ -215,6 +224,7 @@ function fields(input: CharacterInput) {
 /** Legt einen Charakter an; mit `career` hat er einen Lebenslauf aus der Charaktererschaffung. */
 export function addCharacter(campaign: Campaign, input: CharacterInput, career?: Career): { campaign: Campaign; id: CharacterId } {
   validateCharacter(input);
+  checkHomeworld(campaign, input);
   const id = nextId(campaign);
   const character: Character = {
     id,
@@ -223,6 +233,7 @@ export function addCharacter(campaign: Campaign, input: CharacterInput, career?:
     retired: false,
     skills: input.skills.map((s) => ({ of: s.of, level: s.level, retired: false })),
     ...(career ? { career } : {}),
+    ...(input.homeworld === undefined ? {} : { homeworld: input.homeworld }),
   };
   return { campaign: { ...campaign, characters: [...campaign.characters, character] }, id };
 }
@@ -234,6 +245,7 @@ export function addCharacter(campaign: Campaign, input: CharacterInput, career?:
  */
 export function updateCharacter(campaign: Campaign, id: CharacterId, input: CharacterInput): Campaign {
   validateCharacter(input);
+  checkHomeworld(campaign, input);
   const before = characterOf(campaign, id);
   const wanted = new Map(input.skills.map((s) => [s.of, s.level]));
   const kept: SkillLevel[] = [];
@@ -244,12 +256,15 @@ export function updateCharacter(campaign: Campaign, id: CharacterId, input: Char
   }
   const known = new Set(before.skills.map((s) => s.of));
   const added = input.skills.filter((s) => !known.has(s.of)).map((s) => ({ of: s.of, level: s.level, retired: false }));
+  // Die Eingabe sagt, welche Heimatwelt gilt; fehlt sie, hat der Charakter keine.
+  const rest = Object.fromEntries(Object.entries(before).filter(([key]) => key !== 'homeworld')) as Omit<Character, 'homeworld'>;
   const after: Character = {
-    ...before,
+    ...rest,
     ...fields(input),
     possessions: input.possessions === undefined ? before.possessions : fields(input).possessions,
     dead: input.dead ?? before.dead,
     skills: [...kept, ...added],
+    ...(input.homeworld === undefined ? {} : { homeworld: input.homeworld }),
   };
   return { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? after : c)) };
 }
@@ -269,8 +284,9 @@ export function restoreCharacter(campaign: Campaign, id: CharacterId): Campaign 
 
 /** Was eine Eingabe für einen bestehenden Charakter wäre, mit seinen eingeblendeten Fertigkeiten. */
 export function inputOf(character: Character): CharacterInput {
-  const { name, background, equipment, credits, note, dead, upp, possessions } = character;
-  return { name, background, equipment, credits, note, dead, upp, possessions, skills: activeSkills(character).map(({ of, level }) => ({ of, level })) };
+  const { name, background, equipment, credits, note, dead, upp, possessions, homeworld } = character;
+  const input = { name, background, equipment, credits, note, dead, upp, possessions, skills: activeSkills(character).map(({ of, level }) => ({ of, level })) };
+  return homeworld === undefined ? input : { ...input, homeworld };
 }
 
 /** Beginnt oder ersetzt die Charaktererschaffung der Kampagne; `undefined` verwirft sie. */
