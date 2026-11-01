@@ -91,3 +91,21 @@ test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis 
   }
   throw new Error('Kein Feld mit Welt gefunden');
 });
+
+test('Sektor: UWP und Handelscodes erscheinen auf der Karte, sobald sie beim Zoomen lesbar sind', async ({ page }) => {
+  await page.goto('/');
+  const efate = { column: 2, row: 1, empty: false, name: 'Efate', navalBase: false, scoutBase: false, gasGiant: true, uwp: { starport: 10, size: 6, atmosphere: 4, hydrographics: 6, population: 6, government: 2, law: 4, tech: 12 } };
+  const file = { format: 'solo-rpg-engine/kampagne', version: 1, campaign: { name: 'Karte', odds: 'medium', characters: [], log: [], hexes: [efate] } };
+  await page.getByRole('banner').getByRole('button', { name: /^Kampagne / }).click();
+  await page.getByRole('dialog', { name: 'Kampagnen' }).locator('input[type=file]').setInputFiles({ name: 'k.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
+  await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
+  const world = page.getByRole('button', { name: '0201, Efate: Weltkarte öffnen' });
+  await expect(world).toBeVisible();
+  // Ganz herausgezoomt: nur Zeichen und Name.
+  await expect(world.locator('.hex-uwp')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Vergrößern' }).click();
+  await expect(world.locator('.hex-uwp')).toHaveText('A646624-C');
+  await expect(world.locator('.hex-trade')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Vergrößern' }).click();
+  await expect(world.locator('.hex-trade')).toHaveText('Ag Ni');
+});

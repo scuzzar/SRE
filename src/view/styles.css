@@ -2811,6 +2811,21 @@ button:disabled {
   font-weight: 600;
 }
 
+.hex-name.small {
+  font-size: 9px;
+}
+
+.hex-uwp {
+  font-size: 7.5px;
+  font-family: var(--mono) !important;
+  fill: var(--gold-bright) !important;
+}
+
+.hex-trade {
+  font-size: 6.5px;
+  fill: var(--muted) !important;
+}
+
 .hex-pending {
   font-size: 16px;
   fill: var(--gold) !important;

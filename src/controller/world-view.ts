@@ -36,6 +36,10 @@ export interface HexView {
   readonly size: number | undefined;
   readonly hydrographics: number | undefined;
   readonly population: number | undefined;
+  /** Das UWP einer fertigen Welt, z. B. C788545-7. */
+  readonly uwp: string | undefined;
+  /** Die Handelscodes einer fertigen Welt, z. B. Ag Ni. */
+  readonly trade: readonly string[];
 }
 
 /** Das gewählte Feld auf der Karte: noch nicht erzeugt, oder mit seinem Vorkommen. */
@@ -179,6 +183,8 @@ export function sectorView(hexes: readonly Hex[]): readonly HexView[] {
         size: hex?.uwp.size,
         hydrographics: hex?.uwp.hydrographics,
         population: hex?.uwp.population,
+        uwp: hex && hexState(hex) === 'world' ? uwpCode(hex.uwp) : undefined,
+        trade: hex && hexState(hex) === 'world' ? tradeCodesOf(hex).map((t) => t.id) : [],
       });
     }
   }

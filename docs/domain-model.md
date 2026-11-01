@@ -462,7 +462,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   oben die Nummer des Feldes, darunter der Raumhafen, in der Mitte die Welt (gefüllter Kreis mit
   Wasser, leerer Kreis ohne, Punkte für einen Asteroidengürtel), Stern für die Marinebasis, Dreieck
   für die Scoutbasis, kleiner Kreis rechts oben für den Gasriesen, darunter der Name, in
-  Großbuchstaben ab Bevölkerung 9.
+  Großbuchstaben ab Bevölkerung 9. Ist die Karte groß genug gezoomt, kommen darunter das UWP und
+  die Handelscodes dazu, jedes erst, wenn es lesbar ist.
 - **Später**, nicht in diesem Schritt: Reisezonen (Amber, Red), Notizen zur Welt, Verbindungen
   (communications routes), Subsector Capital, ein Name für den Subsektor, mehrere Subsektoren zu
   einem Sektor und eine fertige Welt wieder löschen.

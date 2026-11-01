@@ -62,6 +62,20 @@ function label(hex: HexView): string {
 }
 
 /** Die Welt in der Mitte: Punkte für einen Asteroidengürtel, gefüllter Kreis mit Wasser, leerer ohne. */
+/**
+ * Wie viel ein Feld zeigt, je nachdem, wie groß es gerade auf dem Bildschirm ist: 0 nur die Zeichen
+ * und der Name, 1 dazu das UWP, 2 dazu die Handelscodes.
+ */
+type Detail = 0 | 1 | 2;
+
+/** Ab so vielen Bildschirmpixeln je Einheit der Zeichnung ist das UWP bzw. sind die Handelscodes lesbar. */
+const UWP_FROM = 1;
+const TRADE_FROM = 1.4;
+
+function detailAt(pixelsPerUnit: number): Detail {
+  return pixelsPerUnit >= TRADE_FROM ? 2 : pixelsPerUnit >= UWP_FROM ? 1 : 0;
+}
+
 function WorldSymbol({ hex, x, y }: { hex: HexView; x: number; y: number }) {
   if (hex.size === 0) {
     return (
@@ -83,9 +97,12 @@ function WorldSymbol({ hex, x, y }: { hex: HexView; x: number; y: number }) {
   return <circle className={hex.hydrographics !== undefined && hex.hydrographics > 0 ? 'hex-world wet' : 'hex-world dry'} cx={x} cy={y} r={7} />;
 }
 
-function HexCell({ hex, selected, disabled }: { hex: HexView; selected: boolean; disabled: boolean }) {
+function HexCell({ hex, selected, disabled, detail }: { hex: HexView; selected: boolean; disabled: boolean; detail: Detail }) {
   const game = useGame();
-  const { x, y } = center(hex.column, hex.row);
+  const { x, y: middle } = center(hex.column, hex.row);
+  // Mit UWP rückt alles ein Stück nach oben, damit darunter Platz ist.
+  const detailed = detail > 0 && hex.uwp !== undefined;
+  const y = detailed ? middle - 9 : middle;
   const shown = hex.state === 'world' || hex.state === 'pending';
   const choose = () => {
     if (!disabled) game.chooseHex(hex.column, hex.row);
@@ -104,8 +121,8 @@ function HexCell({ hex, selected, disabled }: { hex: HexView; selected: boolean;
         choose();
       }}
     >
-      <polygon points={corners(x, y)} />
-      <text className="hex-id" x={x} y={y - S * 0.58}>
+      <polygon points={corners(x, middle)} />
+      <text className="hex-id" x={x} y={detailed ? middle - 27 : y - S * 0.58}>
         {hex.id}
       </text>
       {shown && hex.starport !== undefined && (
@@ -123,8 +140,18 @@ function HexCell({ hex, selected, disabled }: { hex: HexView; selected: boolean;
       {shown && hex.scoutBase && <polygon className="hex-base" points={`${x - S * 0.45},${y + S * 0.1} ${x - S * 0.45 - 5},${y + S * 0.1 + 8.5} ${x - S * 0.45 + 5},${y + S * 0.1 + 8.5}`} />}
       {shown && hex.gasGiant && <circle className="hex-giant" cx={x + S * 0.45} cy={y - S * 0.12} r={3.2} />}
       {hex.state === 'world' && hex.name && (
-        <text className="hex-name" x={x} y={y + S * 0.62}>
+        <text className={detailed ? 'hex-name small' : 'hex-name'} x={x} y={detailed ? middle + 9 : y + S * 0.62}>
           {shortName(hex.name, (hex.population ?? 0) >= 9)}
+        </text>
+      )}
+      {detailed && (
+        <text className="hex-uwp" x={x} y={middle + 19}>
+          {hex.uwp}
+        </text>
+      )}
+      {detailed && detail === 2 && hex.trade.length > 0 && (
+        <text className="hex-trade" x={x} y={middle + 27.5}>
+          {hex.trade.join(' ')}
         </text>
       )}
     </g>
@@ -211,9 +238,20 @@ function distance(e: TouchEvent): number {
  * Beim Zoomen bleibt der Punkt zwischen den Fingern (bei den Knöpfen die Mitte) an seiner Stelle.
  * Reine Darstellung: Der Zoom gehört der Ansicht.
  */
-function ZoomableMap({ children }: { children: ReactNode }) {
+function ZoomableMap({ children }: { children: (pixelsPerUnit: number) => ReactNode }) {
   const viewport = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
+  // Wie breit der Ausschnitt ist; daraus und aus dem Zoom folgt, wie groß ein Feld gerade erscheint.
+  const [width, setWidth] = useState(0);
+  useLayoutEffect(() => {
+    const el = viewport.current;
+    if (!el) return;
+    const measure = () => setWidth(el.clientWidth);
+    measure();
+    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(measure);
+    observer?.observe(el);
+    return () => observer?.disconnect();
+  }, []);
   // Wohin beim nächsten Zeichnen gescrollt wird, damit der Punkt unter den Fingern stehen bleibt.
   const anchor = useRef<{ x: number; y: number; from: number } | undefined>(undefined);
   const pinch = useRef<{ distance: number; zoom: number } | undefined>(undefined);
@@ -258,7 +296,7 @@ function ZoomableMap({ children }: { children: ReactNode }) {
         }}
       >
         <div className="sector-canvas" style={{ width: `${zoom * 100}%` }}>
-          {children}
+          {children((width * zoom) / WIDTH)}
         </div>
       </div>
       <div className="sector-zoom" role="group" aria-label="Zoom">
@@ -300,11 +338,13 @@ export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; 
           {heading}
         </h2>
         <ZoomableMap>
-          <svg className="sector-map" viewBox={`0 0 ${WIDTH.toFixed(1)} ${HEIGHT.toFixed(1)}`} role="group" aria-label="Karte des Subsektors">
-            {sector.map((hex) => (
-              <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} />
-            ))}
-          </svg>
+          {(pixelsPerUnit) => (
+            <svg className="sector-map" viewBox={`0 0 ${WIDTH.toFixed(1)} ${HEIGHT.toFixed(1)}`} role="group" aria-label="Karte des Subsektors">
+              {sector.map((hex) => (
+                <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} detail={detailAt(pixelsPerUnit)} />
+              ))}
+            </svg>
+          )}
         </ZoomableMap>
         <p className="sector-legend small-label">
           Dunkle Felder sind nicht erzeugt: antippen, dann unten das Vorkommen würfeln. Helle ohne Zeichen sind leer. ● mit Wasser, ○ ohne, ★ Marinebasis, ▲ Scoutbasis, • rechts oben Gasriese.
