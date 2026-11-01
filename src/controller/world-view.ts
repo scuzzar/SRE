@@ -2,6 +2,7 @@ import {
   ehex,
   hexAt,
   hexId,
+  OCCURRENCE_TARGET,
   nextWorldRoll,
   replayHex,
   SECTOR_COLUMNS,
@@ -38,6 +39,20 @@ export interface HexView {
   readonly size: number | undefined;
   readonly hydrographics: number | undefined;
   readonly population: number | undefined;
+}
+
+/** Das gewählte Feld auf der Karte: noch nicht erzeugt, oder mit seinem Vorkommen. */
+export interface SelectedHexView {
+  readonly id: string;
+  readonly column: number;
+  readonly row: number;
+  /** Nicht erzeugt: Vorkommen würfeln. Sonst steht da, was es ergeben hat. */
+  readonly state: HexView['state'];
+  /** Ab welchem Wurf auf 1W6 es eine Welt gibt. */
+  readonly target: number;
+  /** Der Wurf auf das Vorkommen, sobald gewürfelt. */
+  readonly occurrence: WorldLine | undefined;
+  readonly error: string | undefined;
 }
 
 /** Eine Welt in der Liste unter der Karte. */
@@ -190,6 +205,20 @@ export function worldList(hexes: readonly Hex[]): readonly WorldListItem[] {
         },
       ];
     });
+}
+
+export function selectedView(hexes: readonly Hex[], column: number, row: number, error: string | undefined): SelectedHexView {
+  const hex = hexAt(hexes, column, row);
+  const state = hex ? replayHex(hex) : undefined;
+  return {
+    id: hexId(column, row),
+    column,
+    row,
+    state: !state ? 'open' : state.step !== 'done' ? 'pending' : state.empty ? 'empty' : 'world',
+    target: OCCURRENCE_TARGET,
+    occurrence: hex && state ? worldLines(hex, state)[0] : undefined,
+    error,
+  };
 }
 
 const rollLabels: Record<WorldRollKind, string> = {

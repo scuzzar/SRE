@@ -378,8 +378,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Hexfeld (`Hex`) gibt es erst, wenn für es gewürfelt wurde; je Spalte und Zeile höchstens eins.
   Ein Feld ist also **nicht erzeugt** (kein `Hex`), **in Erschaffung** (`/step` vor `done`),
   **leer** (`/empty`) oder hat eine **Welt**. Nur ein nicht erzeugtes Feld lässt eine neue
-  Weltenerschaffung zu; eine Welt antippen öffnet ihre Weltkarte, ein Feld in Erschaffung setzt sie
-  fort. Mehrere Felder dürfen zugleich in Erschaffung sein. Die Kampagnendatei enthält die
+  Weltenerschaffung zu: Ihr erster Wurf, das Vorkommen, wird im Subsektor selbst gewürfelt, die
+  übrigen auf der Weltkarte. Eine Welt antippen öffnet ihre Weltkarte, ein Feld in Erschaffung setzt
+  sie fort. Mehrere Felder dürfen zugleich in Erschaffung sein. Die Kampagnendatei enthält die
   Hexfelder; eine neue Kampagne beginnt mit einem Subsektor ohne Hexfelder.
 - **Weltenerschaffung** nach der *World Generation Checklist* (Charts S. 15), jeder Wert einzeln
   gewürfelt wie bei der Charaktererschaffung. Das Hexfeld hält nur seine Würfe (`rolls`) und den

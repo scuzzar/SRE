@@ -8,18 +8,21 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
   const map = page.getByRole('group', { name: 'Karte des Subsektors' });
   await expect(map.getByRole('button', { name: /nicht erzeugt/ })).toHaveCount(80);
 
-  // Würfeln, bis eine Welt entsteht; ein leeres Feld lässt sich danach nicht mehr öffnen.
+  // Das Vorkommen wird im Subsektor gewürfelt, nicht auf der Weltkarte.
   let named = false;
   for (const id of ['0101', '0202', '0303', '0404', '0505', '0606', '0707', '0808', '0109', '0210']) {
-    await map.getByRole('button', { name: `${id}, nicht erzeugt: Welt erschaffen` }).click();
-    const dialog = page.getByRole('dialog', { name: `Weltenerschaffung ${id}` });
-    await expect(dialog.locator('.generation-prompt')).toHaveText('Gibt es hier eine Welt? Bei 4+ ja');
-    await dialog.getByRole('button', { name: /Vorkommen würfeln/ }).click();
-    if (await page.getByRole('dialog', { name: `Leer · ${id}` }).isVisible()) {
-      await page.getByRole('button', { name: 'Schließen' }).last().click();
-      await expect(map.getByRole('img', { name: `${id}, leer` })).toBeVisible();
+    await map.getByRole('button', { name: `${id}, nicht erzeugt` }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    const dock = page.locator('.sector-dock');
+    await expect(dock).toContainText(`Feld ${id}`);
+    await dock.getByRole('button', { name: /Vorkommen würfeln/ }).click();
+    if (await dock.getByText('Kein System in diesem Feld').isVisible()) {
+      await expect(map.getByRole('button', { name: `${id}, leer` })).toBeVisible();
       continue;
     }
+    await dock.getByRole('button', { name: 'Welt erschaffen' }).click();
+    const dialog = page.getByRole('dialog', { name: `Weltenerschaffung ${id}` });
+    await expect(dialog.locator('.generation-prompt')).toHaveText('Systeminhalt: Raumhafen');
     // „Später weiter“ behält die Welt in Erschaffung.
     await dialog.getByRole('button', { name: 'Später weiter' }).click();
     await map.getByRole('button', { name: `${id}, in Erschaffung: fortsetzen` }).click();

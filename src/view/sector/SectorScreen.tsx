@@ -1,5 +1,9 @@
-import type { HexView, Snapshot } from '../../controller';
+import { useState } from 'react';
+import type { HexView, SelectedHexView, Snapshot } from '../../controller';
 import { useGame } from '../game-context';
+import { animated } from '../haptics';
+import { CloseIcon, DiceIcon } from '../icons';
+import { RollStage } from './WorldSheet';
 
 // Reine Darstellung: die Karte eines Subsektors wie TAS Form 6, mit den Zeichen, die in Classic
 // Traveller üblich sind. Welche Felder es gibt und was in ihnen steht, kommt aus dem Snapshot.
@@ -46,7 +50,7 @@ function shortName(name: string, capitals: boolean): string {
 function label(hex: HexView): string {
   switch (hex.state) {
     case 'open':
-      return `${hex.id}, nicht erzeugt: Welt erschaffen`;
+      return `${hex.id}, nicht erzeugt`;
     case 'pending':
       return `${hex.id}, in Erschaffung: fortsetzen`;
     case 'empty':
@@ -78,27 +82,26 @@ function WorldSymbol({ hex, x, y }: { hex: HexView; x: number; y: number }) {
   return <circle className={hex.hydrographics !== undefined && hex.hydrographics > 0 ? 'hex-world wet' : 'hex-world dry'} cx={x} cy={y} r={7} />;
 }
 
-function HexCell({ hex }: { hex: HexView }) {
+function HexCell({ hex, selected, disabled }: { hex: HexView; selected: boolean; disabled: boolean }) {
   const game = useGame();
   const { x, y } = center(hex.column, hex.row);
   const shown = hex.state === 'world' || hex.state === 'pending';
-  const interactive = hex.state !== 'empty';
+  const choose = () => {
+    if (!disabled) game.chooseHex(hex.column, hex.row);
+  };
   return (
     <g
-      className={`hex hex-${hex.state}`}
-      role={interactive ? 'button' : 'img'}
-      tabIndex={interactive ? 0 : undefined}
+      className={`hex hex-${hex.state}${selected ? ' hex-selected' : ''}`}
+      role="button"
+      tabIndex={0}
       aria-label={label(hex)}
-      onClick={interactive ? () => game.openHex(hex.column, hex.row) : undefined}
-      onKeyDown={
-        interactive
-          ? (e) => {
-              if (e.key !== 'Enter' && e.key !== ' ') return;
-              e.preventDefault();
-              game.openHex(hex.column, hex.row);
-            }
-          : undefined
-      }
+      aria-pressed={hex.state === 'open' || hex.state === 'empty' ? selected : undefined}
+      onClick={choose}
+      onKeyDown={(e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        choose();
+      }}
     >
       <polygon points={corners(x, y)} />
       <text className="hex-id" x={x} y={y - S * 0.58}>
@@ -128,11 +131,62 @@ function HexCell({ hex }: { hex: HexView }) {
 }
 
 /**
- * Der Subsektor: 8 × 10 Felder wie TAS Form 6. Ein nicht erzeugtes Feld (dunkel) antippen beginnt
- * die Weltenerschaffung, eine Welt antippen öffnet ihre Weltkarte. Darunter die Welten als Liste.
+ * Unten im Subsektor: das gewählte Feld. Ist es nicht erzeugt, würfelt der Knopf das Vorkommen; die
+ * Würfel rollen hier, nicht auf der Weltkarte. Gibt es eine Welt, geht es mit „Welt erschaffen“ auf
+ * die Weltkarte.
+ */
+function SectorDock({ selected, rolled, rolling, onRoll, onSettled }: { selected: SelectedHexView; rolled: boolean; rolling: boolean; onRoll: () => void; onSettled: () => void }) {
+  const game = useGame();
+  const line = selected.occurrence;
+  return (
+    <div className="generation-dock sector-dock" aria-label={`Feld ${selected.id}`}>
+      <div className="sector-dock-head">
+        <span className="kicker">Feld {selected.id}</span>
+        <button type="button" className="icon-button" aria-label="Feld abwählen" onClick={() => game.clearHex()}>
+          <CloseIcon />
+        </button>
+      </div>
+      {line && <RollStage key={line.index} line={line} animate={rolled && animated()} onSettled={onSettled} skips={0} />}
+      {selected.state === 'open' && (
+        <button type="button" className="roll generation-main" onClick={onRoll}>
+          <DiceIcon />
+          <span>
+            Vorkommen würfeln
+            <span className="small-label">1W6 · Welt bei {selected.target}+</span>
+          </span>
+        </button>
+      )}
+      {!rolling && selected.state === 'empty' && <p className="generation-prompt">Kein System in diesem Feld</p>}
+      {!rolling && (selected.state === 'pending' || selected.state === 'world') && (
+        <button type="button" className="primary" onClick={() => game.chooseHex(selected.column, selected.row)}>
+          Welt erschaffen
+        </button>
+      )}
+      {selected.error && (
+        <p className="error" role="alert">
+          {selected.error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Der Subsektor: 8 × 10 Felder wie TAS Form 6. Ein nicht erzeugtes Feld (dunkel) antippen wählt es;
+ * unten würfelt man dann das Vorkommen. Eine Welt antippen öffnet ihre Weltkarte, auch eine, die
+ * noch entsteht. Darunter die Welten als Liste. Während die Würfel rollen, zeigt die Karte noch den
+ * Stand davor.
  */
 export function SectorScreen({ view }: { view: Snapshot }) {
   const game = useGame();
+  // Das Feld, dessen Vorkommen hier gerade gewürfelt wurde, und ob sein Ergebnis schon feststeht.
+  const [rolled, setRolled] = useState<string>();
+  const [settled, setSettled] = useState<string>();
+  const selected = view.selected;
+  const rolling = rolled !== undefined && rolled === selected?.id && settled !== rolled && selected.occurrence !== undefined && animated();
+  const [shown, setShown] = useState(view.sector);
+  if (!rolling && shown !== view.sector) setShown(view.sector);
+  const sector = rolling ? shown : view.sector;
   return (
     <div className="screen">
       <section className="scroll sector" aria-labelledby="sector-title">
@@ -140,12 +194,12 @@ export function SectorScreen({ view }: { view: Snapshot }) {
           Subsektor
         </h2>
         <svg className="sector-map" viewBox={`0 0 ${WIDTH.toFixed(1)} ${HEIGHT.toFixed(1)}`} role="group" aria-label="Karte des Subsektors">
-          {view.sector.map((hex) => (
-            <HexCell key={hex.id} hex={hex} />
+          {sector.map((hex) => (
+            <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} />
           ))}
         </svg>
         <p className="sector-legend small-label">
-          Dunkle Felder sind nicht erzeugt: antippen, um zu würfeln. Helle ohne Zeichen sind leer. ● mit Wasser, ○ ohne, ★ Marinebasis, ▲ Scoutbasis, • rechts oben Gasriese.
+          Dunkle Felder sind nicht erzeugt: antippen, dann unten das Vorkommen würfeln. Helle ohne Zeichen sind leer. ● mit Wasser, ○ ohne, ★ Marinebasis, ▲ Scoutbasis, • rechts oben Gasriese.
         </p>
         {view.worlds.length > 0 && (
           <>
@@ -155,7 +209,7 @@ export function SectorScreen({ view }: { view: Snapshot }) {
             <ul className="world-list">
               {view.worlds.map((w) => (
                 <li key={w.id}>
-                  <button type="button" onClick={() => game.openHex(w.column, w.row)}>
+                  <button type="button" onClick={() => game.chooseHex(w.column, w.row)}>
                     <span className="world-list-name">{w.name}</span>
                     <span className="mono world-list-hex">{w.id}</span>
                     <span className="mono world-list-uwp">{w.uwp}</span>
@@ -170,6 +224,20 @@ export function SectorScreen({ view }: { view: Snapshot }) {
           </>
         )}
       </section>
+      {selected && (
+        <SectorDock
+          key={selected.id}
+          selected={selected}
+          rolled={rolled === selected.id}
+          rolling={rolling}
+          onRoll={() => {
+            setRolled(selected.id);
+            setSettled(undefined);
+            game.rollOccurrence();
+          }}
+          onSettled={() => setSettled(selected.id)}
+        />
+      )}
     </div>
   );
 }

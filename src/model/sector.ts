@@ -287,19 +287,27 @@ function replaceHex(hexes: readonly Hex[], hex: Hex): readonly Hex[] {
   return [...others, hex];
 }
 
-/**
- * Würfelt den nächsten Wurf eines Feldes. Für ein nicht erzeugtes Feld ist das das Vorkommen; damit
- * entsteht das Hexfeld.
- */
-export function rollWorld(hexes: readonly Hex[], column: number, row: number, random: Random): readonly Hex[] {
-  checkPosition(column, row);
-  const hex: Hex = hexAt(hexes, column, row) ?? { column, row, rolls: [] };
+function appendRoll(hexes: readonly Hex[], hex: Hex, random: Random): readonly Hex[] {
   const next = nextWorldRoll(replayHex(hex));
-  if (!next) throw new DomainError(`Für das Feld ${hexId(column, row)} gibt es nichts mehr zu würfeln.`);
+  if (!next) throw new DomainError(`Für das Feld ${hexId(hex.column, hex.row)} gibt es nichts mehr zu würfeln.`);
   const dice = Array.from({ length: next.dice }, () => random.int(1, 6));
   const dm = next.parts.reduce((sum, part) => sum + part.dm, 0);
   const roll: WorldRoll = next.target === undefined ? { kind: next.kind, dice, dm } : { kind: next.kind, dice, dm, target: next.target };
   return replaceHex(hexes, { ...hex, rolls: [...hex.rolls, roll] });
+}
+
+/** Würfelt das Vorkommen eines nicht erzeugten Feldes; damit entsteht das Hexfeld, leer oder mit Welt. */
+export function rollOccurrence(hexes: readonly Hex[], column: number, row: number, random: Random): readonly Hex[] {
+  checkPosition(column, row);
+  if (hexAt(hexes, column, row)) throw new DomainError(`Das Feld ${hexId(column, row)} ist schon erzeugt.`);
+  return appendRoll(hexes, { column, row, rolls: [] }, random);
+}
+
+/** Würfelt den nächsten Wurf einer Welt in Erschaffung. */
+export function rollWorld(hexes: readonly Hex[], column: number, row: number, random: Random): readonly Hex[] {
+  const hex = hexAt(hexes, column, row);
+  if (!hex) throw new DomainError(`Für das Feld ${hexId(column, row)} erst das Vorkommen würfeln.`);
+  return appendRoll(hexes, hex, random);
 }
 
 /** Gibt der fertig gewürfelten Welt ihren Namen; danach ist sie fertig. */

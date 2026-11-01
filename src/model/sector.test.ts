@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from './errors';
-import { discardWorld, hexAt, nameWorld, replayHex, rollWorld, tradeCodesOf, uwpCode, validateHexes, type Hex } from './sector';
+import { discardWorld, hexAt, nameWorld, replayHex, rollOccurrence, rollWorld, tradeCodesOf, uwpCode, validateHexes, type Hex } from './sector';
 import { fixedRandom } from './testing';
 
 /** Würfelt so oft, wie es Zahlen gibt; jeder Wurf nimmt sich seine Würfel der Reihe nach. */
 function rollAll(dice: number[], hexes: readonly Hex[] = [], column = 3, row = 4): readonly Hex[] {
   const random = fixedRandom(...dice);
+  hexes = rollOccurrence(hexes, column, row, random);
   while (random.calls < dice.length) hexes = rollWorld(hexes, column, row, random);
   return hexes;
 }
@@ -78,8 +79,13 @@ describe('Weltenerschaffung', () => {
   });
 
   it('kennt nur die Felder des Subsektors', () => {
-    expect(() => rollWorld([], 9, 1, fixedRandom())).toThrow(/nicht im Subsektor/);
-    expect(() => rollWorld([], 1, 11, fixedRandom())).toThrow(/nicht im Subsektor/);
+    expect(() => rollOccurrence([], 9, 1, fixedRandom())).toThrow(/nicht im Subsektor/);
+    expect(() => rollOccurrence([], 1, 11, fixedRandom())).toThrow(/nicht im Subsektor/);
+  });
+
+  it('würfelt das Vorkommen nur für ein nicht erzeugtes Feld, alles andere nur danach', () => {
+    expect(() => rollWorld([], 1, 1, fixedRandom())).toThrow(/erst das Vorkommen/);
+    expect(() => rollOccurrence(rollAll([5]), 3, 4, fixedRandom())).toThrow(/schon erzeugt/);
   });
 
   it('prüft beim Nachspielen Reihenfolge, Würfel und Namen', () => {

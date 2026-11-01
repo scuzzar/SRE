@@ -176,8 +176,8 @@ function WorldLines({ lines }: { lines: readonly WorldLine[] }) {
   );
 }
 
-/** Der letzte Wurf auf der Bühne: Würfel rollen, landen, dann steht das Ergebnis da. */
-function RollStage({ line, animate, onSettled, skips }: { line: WorldLine; animate: boolean; onSettled: (index: number) => void; skips: number }) {
+/** Der letzte Wurf auf der Bühne: Würfel rollen, landen, dann steht das Ergebnis da. Auch im Subsektor für das Vorkommen. */
+export function RollStage({ line, animate, onSettled, skips }: { line: WorldLine; animate: boolean; onSettled: (index: number) => void; skips: number }) {
   const [phase, skip] = useTimeline(animate ? [THROW_MS, SETTLE_MS] : []);
   const LANDED = animate ? 1 : 0;
   const DONE = animate ? 2 : 0;

@@ -22,6 +22,7 @@ import {
   rollDice,
   rollNext,
   rollSkill,
+  rollOccurrence,
   rollWorld,
   nameWorld,
   discardWorld,
@@ -57,7 +58,7 @@ import {
 import { buildSnapshot, type ControllerState, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, task: undefined, details: false, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined } as const;
+const closedDrafts = { card: undefined, task: undefined, details: false, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined } as const;
 
 export interface GameDependencies {
   readonly repository: CampaignRepository;
@@ -98,6 +99,7 @@ export class GameController {
       generationError: undefined,
       world: undefined,
       worldError: undefined,
+      selected: undefined,
     };
     this.current = buildSnapshot(this.state);
   }
@@ -394,17 +396,33 @@ export class GameController {
   // --- Subsektor und Weltenerschaffung --------------------------------------------------------
 
   /**
-   * Öffnet ein Feld des Subsektors: eine Welt zeigt ihre Weltkarte, eine Welt in Erschaffung geht
-   * weiter, ein nicht erzeugtes Feld beginnt eine Weltenerschaffung (das Hexfeld entsteht erst mit
-   * dem ersten Wurf). Ein leeres Feld öffnet nichts.
+   * Ein Feld des Subsektors antippen: Ein nicht erzeugtes oder leeres Feld wird auf der Karte
+   * gewählt (unten steht dann das Vorkommen); eine Welt, auch in Erschaffung, öffnet ihre Weltkarte.
+   * Dasselbe gewählte Feld noch einmal antippen hebt die Wahl auf.
    */
-  openHex(column: number, row: number): void {
+  chooseHex(column: number, row: number): void {
     const hex = hexAt(this.campaign.hexes, column, row);
-    if (hex) {
-      const state = replayHex(hex);
-      if (state.step === 'done' && state.empty) return;
+    const world = hex !== undefined && !replayHex(hex).empty;
+    if (world) return this.update({ world: { column, row }, worldError: undefined, selected: undefined });
+    const same = this.state.selected?.column === column && this.state.selected.row === row;
+    this.update({ selected: same ? undefined : { column, row }, worldError: undefined });
+  }
+
+  /** Hebt die Wahl eines Feldes auf. */
+  clearHex(): void {
+    this.update({ selected: undefined, worldError: undefined });
+  }
+
+  /** Würfelt im Subsektor das Vorkommen des gewählten Feldes; das Feld bleibt gewählt und zeigt das Ergebnis. */
+  rollOccurrence(): void {
+    const at = this.state.selected;
+    if (!at) throw new DomainError('Es ist kein Feld gewählt.');
+    try {
+      this.change(setHexes(this.campaign, rollOccurrence(this.campaign.hexes, at.column, at.row, this.deps.random)), { worldError: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ worldError: error.message });
     }
-    this.update({ world: { column, row }, worldError: undefined });
   }
 
   /** Schließt die Weltkarte; eine Welt in Erschaffung bleibt gespeichert. */

@@ -503,21 +503,29 @@ describe('Subsektor und Weltenerschaffung', () => {
     expect(view.worlds).toEqual([]);
   });
 
-  it('erschafft eine Welt Wurf für Wurf und speichert sie im Feld', async () => {
+  it('würfelt das Vorkommen im Subsektor und erschafft die Welt dann Wurf für Wurf auf der Weltkarte', async () => {
     const { game, repository } = await started(fixedRandom(...regina));
-    game.openHex(3, 4);
-    expect(game.snapshot().world).toMatchObject({ id: '0304', step: 'occurrence', lines: [], action: { kind: 'roll', dice: 1, target: 4 } });
-    // Das Hexfeld entsteht erst mit dem ersten Wurf.
+    // Ein nicht erzeugtes Feld antippen wählt es nur; die Weltkarte geht nicht auf.
+    game.chooseHex(3, 4);
+    expect(game.snapshot()).toMatchObject({ world: undefined, selected: { id: '0304', state: 'open', target: 4, occurrence: undefined } });
     expect(game.snapshot().sector.find((h) => h.id === '0304')?.state).toBe('open');
-    game.rollWorld();
+    game.rollOccurrence();
     await game.whenSaved();
     expect(repository.saved?.hexes).toHaveLength(1);
+    expect(game.snapshot()).toMatchObject({ world: undefined, selected: { id: '0304', state: 'pending', occurrence: { label: 'Vorkommen', dice: [5], target: 4, success: true, result: 'Welt' } } });
     expect(game.snapshot().sector.find((h) => h.id === '0304')?.state).toBe('pending');
+    // Noch einmal würfeln geht nicht: Das Feld ist erzeugt.
+    game.rollOccurrence();
+    expect(game.snapshot().selected?.error).toMatch(/schon erzeugt/);
+
+    // „Welt erschaffen“: Die Weltkarte geht auf, die Wahl auf der Karte ist weg.
+    game.chooseHex(3, 4);
+    expect(game.snapshot()).toMatchObject({ selected: undefined, world: { id: '0304', step: 'starport' } });
 
     // „Später weiter“ und wieder öffnen: Es geht weiter, wo es war.
     game.closeWorld();
     expect(game.snapshot().world).toBeUndefined();
-    game.openHex(3, 4);
+    game.chooseHex(3, 4);
     expect(game.snapshot().world?.step).toBe('starport');
 
     for (let i = 0; i < 10; i++) game.rollWorld();
@@ -535,21 +543,26 @@ describe('Subsektor und Weltenerschaffung', () => {
     expect(after.worlds).toEqual([{ id: '0304', column: 3, row: 4, name: 'Regina', uwp: 'C788545-7', bases: 'S', trade: ['Ag', 'Ni'], gasGiant: true }]);
   });
 
-  it('lässt ein leeres Feld zu und öffnet es nicht wieder', async () => {
+  it('lässt ein leeres Feld zu; antippen zeigt nur sein Vorkommen', async () => {
     const { game } = await started(fixedRandom(2));
-    game.openHex(1, 1);
-    game.rollWorld();
-    expect(game.snapshot().world).toMatchObject({ empty: true, step: 'done', prompt: 'Kein System in diesem Feld' });
-    game.closeWorld();
+    game.chooseHex(1, 1);
+    game.rollOccurrence();
+    expect(game.snapshot()).toMatchObject({ world: undefined, selected: { state: 'empty', occurrence: { result: 'leer', success: false } } });
     expect(game.snapshot().sector[0]?.state).toBe('empty');
-    game.openHex(1, 1);
-    expect(game.snapshot().world).toBeUndefined();
+    // Dasselbe Feld noch einmal antippen hebt die Wahl auf, ein weiteres Mal wählt es wieder.
+    game.chooseHex(1, 1);
+    expect(game.snapshot().selected).toBeUndefined();
+    game.chooseHex(1, 1);
+    expect(game.snapshot()).toMatchObject({ world: undefined, selected: { id: '0101', state: 'empty' } });
+    game.clearHex();
+    expect(game.snapshot().selected).toBeUndefined();
   });
 
   it('verwirft eine Welt in Erschaffung', async () => {
     const { game } = await started(fixedRandom(5));
-    game.openHex(2, 2);
-    game.rollWorld();
+    game.chooseHex(2, 2);
+    game.rollOccurrence();
+    game.chooseHex(2, 2);
     game.discardWorld();
     const view = game.snapshot();
     expect(view.world).toBeUndefined();
@@ -558,8 +571,8 @@ describe('Subsektor und Weltenerschaffung', () => {
 
   it('nimmt die Hexfelder in die Kampagnendatei mit', async () => {
     const { game, download } = await started(fixedRandom(2));
-    game.openHex(5, 5);
-    game.rollWorld();
+    game.chooseHex(5, 5);
+    game.rollOccurrence();
     game.exportCampaign(game.snapshot().campaign.id);
     const imported = fromCampaignFile(download.files.at(-1)!.content, 'k9');
     expect(imported.hexes).toEqual([{ column: 5, row: 5, rolls: [{ kind: 'occurrence', dice: [2], dm: 0, target: 4 }] }]);

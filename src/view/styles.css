@@ -2930,3 +2930,15 @@ button:disabled {
 .sheet.world-sheet .world-card {
   position: static;
 }
+
+.hex-selected polygon:first-child {
+  stroke: var(--accent-text) !important;
+  stroke-width: 2.5 !important;
+}
+
+.sector-dock-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -4px -6px -4px 0;
+}
