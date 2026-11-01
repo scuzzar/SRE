@@ -66,3 +66,18 @@ test('Kampagne exportieren kommt als Download, Import legt sie neu an', async ({
   await sheet(page).locator('input[type=file]').setInputFiles({ name: 'falsch.json', mimeType: 'application/json', buffer: Buffer.from('{}') });
   await expect(sheet(page).getByRole('alert')).toContainText('keine gültige Kampagnendatei');
 });
+
+test('Ohne dauerhaften Speicher steht oben ein Hinweis', async ({ page }) => {
+  // Ohne IndexedDB (etwa bei einer lokal geöffneten Datei auf manchen Handys) läuft die App im Arbeitsspeicher.
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'indexedDB', { value: undefined });
+  });
+  await page.goto('/');
+  await expect(page.getByRole('status')).toContainText('speichert hier nichts dauerhaft');
+});
+
+test('Mit dauerhaftem Speicher gibt es den Hinweis nicht', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('navigation')).toBeVisible();
+  await expect(page.getByText('speichert hier nichts dauerhaft')).toHaveCount(0);
+});

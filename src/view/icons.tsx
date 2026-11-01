@@ -43,6 +43,16 @@ export function PersonIcon() {
   );
 }
 
+/** Ein Hexfeld mit einer Welt darin, für den Subsektor. */
+export function SectorIcon() {
+  return (
+    <svg {...base} width={22} height={22} strokeLinejoin="round">
+      <path d="M7.5 4h9l4.5 8-4.5 8h-9L3 12z" />
+      <circle cx="12" cy="12" r="2.4" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function InfoIcon() {
   return (
     <svg {...base} strokeLinecap="round">

@@ -11,8 +11,10 @@ import items from './items.json';
 import services from './services.json';
 import { MythicTablesSchema, withMythicTables } from './mythic';
 import { NamesSchema, withNames } from './names';
+import worlds from './worlds.json';
 
 export * from './schema';
+export * from './worlds';
 
 /** Die Referenzdaten, beim Start gegen die Schemas geprüft. Ein Fehler hier bricht den Start ab. */
 export const referenceData: ReferenceData = ReferenceDataSchema.parse({
@@ -23,4 +25,5 @@ export const referenceData: ReferenceData = ReferenceDataSchema.parse({
   examples,
   items,
   ...services,
+  worlds,
 });

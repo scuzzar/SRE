@@ -43,12 +43,14 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   `exportCampaign(id)` und `importCampaign(text)`; für die Charaktererschaffung `openGeneration()`,
   `rollGeneration()`, `chooseService(id)`, `chooseSkillTable(id)`, `chooseCascade(skill)`,
   `reenlist(wants)`, `musterOut(kind)`, `finishGeneration(name)`, `discardGeneration()` und
-  `restartGeneration()`. Die Erschaffung ist gespeicherter Stand (`model/generation.ts`,
+  `restartGeneration()`; für den Subsektor `chooseHex(column, row)`, `clearHex()`, `rollOccurrence()`,
+  `rollWorld()`, `nameWorld(name)`, `discardWorld()` und `closeWorld()`. Auch die Weltenerschaffung ist gespeicherter Stand
+  (`model/sector.ts`): Ein Hexfeld hält nur seine Würfe, `replayHex` spielt den Rest daraus nach. Die Erschaffung ist gespeicherter Stand (`model/generation.ts`,
   `model/career.ts`): Sie hält nur die Würfe, alles andere spielt `replay` daraus nach. Die View liest eine gewählte Datei nur als Text
   ein und reicht ihn weiter; prüfen tut das Model (`fromCampaignFile`), anbieten zum Download der
   Controller über `Download`. Offene Karte und Probe in Vorbereitung sind Teil des
   Models (`model/draft/`), werden aber nicht gespeichert.
-- **Er wählt, welche View zu sehen ist**: Orakel- oder Charakter-Screen (`showScreen(screen)`), die
+- **Er wählt, welche View zu sehen ist**: Orakel-, Charakter- oder Sektor-Screen (`showScreen(screen)`), das gewählte Feld im Subsektor, die Weltkarte eines Feldes, die
   Kampagnenwahl (`showCampaigns()`, `closeCampaigns()`) und das Ergebnis-Popup, und ob die Details des Charakters der Probe aufgeklappt sind (die Fertigkeit
   antippen startet eine Probe, ohne aufzuklappen; erst der Name klappt auf). Auch der Ablauf ist
   seine Sache, etwa „nach dem Ergebnis weiter im Charakter-Screen oder zum Orakel“ (`closeResult()`,
@@ -105,5 +107,6 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
 **Speicher.** `platform/repository.ts` öffnet IndexedDB über Dexie. Jede Kampagne liegt unter ihrer
 Id; welche offen ist, steht daneben unter `settings`. Die eine Kampagne aus der Zeit vor mehreren
 Kampagnen lag unter dem Schlüssel `current` und behält ihn als Id. Geht das nicht (privates
-Fenster, eingebettete Vorschau), läuft die App mit einem Speicher im Arbeitsspeicher weiter; der
-„Über“-Bildschirm sagt dann, dass nichts dauerhaft gespeichert wird.
+Fenster, eingebettete Vorschau, eine lokal geöffnete Datei auf manchen Handys), läuft die App mit
+einem Speicher im Arbeitsspeicher weiter; ein Hinweis oben unter der Kopfzeile und der
+„Über“-Bildschirm sagen dann, dass nichts dauerhaft gespeichert wird.

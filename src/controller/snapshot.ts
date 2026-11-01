@@ -37,6 +37,7 @@ import {
 } from '../model';
 import { canConfirm, characteristicOptions, drawnIn, evaluateTask, hasSkill, startTask, type Card, type CharacteristicOption, type Task } from '../model/draft';
 import { careerLines, generationView, itemLabel, type CareerLine, type GenerationView } from './generation-view';
+import { sectorView, selectedView, worldList, worldView, type HexView, type SelectedHexView, type WorldListItem, type WorldView } from './world-view';
 
 /**
  * Was die View zu sehen bekommt: den Spielstand aus dem Model, schon ausgewertet, und den Zustand des
@@ -75,6 +76,14 @@ export interface Snapshot {
   readonly generation: GenerationView | undefined;
   /** In der Kampagne läuft eine Charaktererschaffung (vielleicht gerade nicht im Vordergrund). */
   readonly generationRunning: boolean;
+  /** Alle Felder des Subsektors, spaltenweise. */
+  readonly sector: readonly HexView[];
+  /** Die fertigen Welten, nach Feld. */
+  readonly worlds: readonly WorldListItem[];
+  /** Die Weltkarte im Vordergrund: eine Welt, die entsteht oder fertig ist. */
+  readonly world: WorldView | undefined;
+  /** Das gewählte Feld auf der Karte, mit seinem Vorkommen, sobald gewürfelt. */
+  readonly selected: SelectedHexView | undefined;
 }
 
 export interface SkillChoice extends Skill {
@@ -90,7 +99,7 @@ export interface ItemChoice {
   readonly once: boolean;
 }
 
-export type Screen = 'oracle' | 'characters' | 'about';
+export type Screen = 'oracle' | 'characters' | 'sector' | 'about';
 
 export interface CampaignChoice {
   readonly id: string;
@@ -243,6 +252,11 @@ export interface ControllerState {
   /** Die Charaktererschaffung steht im Vordergrund. */
   readonly generating: boolean;
   readonly generationError: string | undefined;
+  /** Das Feld, dessen Weltkarte offen ist. */
+  readonly world: { readonly column: number; readonly row: number } | undefined;
+  readonly worldError: string | undefined;
+  /** Das gewählte Feld auf der Karte, nicht erzeugt oder leer. */
+  readonly selected: { readonly column: number; readonly row: number } | undefined;
 }
 
 const emptyInput: CharacterInput = {
@@ -365,7 +379,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { persistent: state.persistent, storageError: state.storageError, screen: state.screen, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, characters: [], dead: [], retired: [], task: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, characters: [], dead: [], retired: [], task: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined };
   }
   const resultEntry = state.result === undefined ? undefined : campaign.log[state.result];
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
@@ -391,5 +405,9 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     },
     generation: state.generating && campaign.generation ? generationView(campaign.generation, state.generationError) : undefined,
     generationRunning: campaign.generation !== undefined,
+    sector: sectorView(campaign.hexes),
+    worlds: worldList(campaign.hexes),
+    world: state.world && worldView(campaign.hexes, state.world.column, state.world.row, state.worldError),
+    selected: state.selected && selectedView(campaign.hexes, state.selected.column, state.selected.row, state.world ? undefined : state.worldError),
   };
 }

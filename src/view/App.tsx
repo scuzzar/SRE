@@ -7,11 +7,13 @@ import { GenerationSheet } from './characters/GenerationSheet';
 import { FullscreenButton } from './FullscreenButton';
 import { ResultDialog } from './characters/ResultDialog';
 import { useGame, useSnapshot } from './game-context';
-import { ChevronDownIcon, InfoIcon, OracleIcon, PersonIcon } from './icons';
+import { ChevronDownIcon, InfoIcon, OracleIcon, PersonIcon, SectorIcon } from './icons';
 import { CardSheet } from './oracle/CardSheet';
 import { OracleScreen } from './oracle/OracleScreen';
+import { SectorScreen } from './sector/SectorScreen';
+import { WorldSheet } from './sector/WorldSheet';
 
-const titles = { oracle: 'Orakel', characters: 'Charaktere', about: 'Über' } as const;
+const titles = { oracle: 'Orakel', characters: 'Charaktere', sector: 'Sektor', about: 'Über' } as const;
 
 export function App() {
   const game = useGame();
@@ -47,9 +49,15 @@ export function App() {
           {view.storageError}
         </p>
       )}
+      {!view.persistent && !view.storageError && (
+        <p className="banner" role="status">
+          Dieser Browser speichert hier nichts dauerhaft: Kampagnen, Charaktere und Sektor sind beim Schließen weg. Zum Sichern über die Kampagnenwahl exportieren.
+        </p>
+      )}
 
       {view.screen === 'oracle' && <OracleScreen view={view} question={question} onQuestion={setQuestion} />}
       {view.screen === 'characters' && <CharactersScreen view={view} />}
+      {view.screen === 'sector' && <SectorScreen view={view} />}
       {view.screen === 'about' && <AboutScreen persistent={view.persistent} />}
 
       <nav className="nav" aria-label="Bereiche">
@@ -61,11 +69,16 @@ export function App() {
           <PersonIcon />
           Charaktere
         </button>
+        <button type="button" aria-current={view.screen === 'sector' ? 'page' : undefined} onClick={() => game.showScreen('sector')}>
+          <SectorIcon />
+          Sektor
+        </button>
       </nav>
 
       {view.card && <CardSheet card={view.card} onConfirmed={() => setQuestion('')} />}
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
       {view.generation && <GenerationSheet generation={view.generation} />}
+      {view.world && <WorldSheet key={view.world.id} world={view.world} />}
       {view.result && <ResultDialog result={view.result} />}
       {view.campaignSheet && <CampaignSheet key={view.campaign.id} sheet={view.campaignSheet} campaigns={view.campaigns} open={view.campaign} />}
     </div>

@@ -22,7 +22,14 @@ import {
   rollDice,
   rollNext,
   rollSkill,
+  rollOccurrence,
+  rollWorld,
+  nameWorld,
+  discardWorld,
+  hexAt,
+  replayHex,
   setGeneration,
+  setHexes,
   setOdds,
   startGeneration,
   toCampaignFile,
@@ -35,6 +42,7 @@ import {
   type Clock,
   type Download,
   type Generation,
+  type Hex,
   type Random,
 } from '../model';
 import {
@@ -50,7 +58,7 @@ import {
 import { buildSnapshot, type ControllerState, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, task: undefined, details: false, result: undefined, editor: undefined, generating: false, generationError: undefined } as const;
+const closedDrafts = { card: undefined, task: undefined, details: false, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined } as const;
 
 export interface GameDependencies {
   readonly repository: CampaignRepository;
@@ -89,6 +97,9 @@ export class GameController {
       editor: undefined,
       generating: false,
       generationError: undefined,
+      world: undefined,
+      worldError: undefined,
+      selected: undefined,
     };
     this.current = buildSnapshot(this.state);
   }
@@ -382,7 +393,71 @@ export class GameController {
     }
   }
 
+  // --- Subsektor und Weltenerschaffung --------------------------------------------------------
+
+  /**
+   * Ein Feld des Subsektors antippen: Ein nicht erzeugtes oder leeres Feld wird auf der Karte
+   * gewählt (unten steht dann das Vorkommen); eine Welt, auch in Erschaffung, öffnet ihre Weltkarte.
+   * Dasselbe gewählte Feld noch einmal antippen hebt die Wahl auf.
+   */
+  chooseHex(column: number, row: number): void {
+    const hex = hexAt(this.campaign.hexes, column, row);
+    const world = hex !== undefined && !replayHex(hex).empty;
+    if (world) return this.update({ world: { column, row }, worldError: undefined, selected: undefined });
+    const same = this.state.selected?.column === column && this.state.selected.row === row;
+    this.update({ selected: same ? undefined : { column, row }, worldError: undefined });
+  }
+
+  /** Hebt die Wahl eines Feldes auf. */
+  clearHex(): void {
+    this.update({ selected: undefined, worldError: undefined });
+  }
+
+  /** Würfelt im Subsektor das Vorkommen des gewählten Feldes; das Feld bleibt gewählt und zeigt das Ergebnis. */
+  rollOccurrence(): void {
+    const at = this.state.selected;
+    if (!at) throw new DomainError('Es ist kein Feld gewählt.');
+    try {
+      this.change(setHexes(this.campaign, rollOccurrence(this.campaign.hexes, at.column, at.row, this.deps.random)), { worldError: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ worldError: error.message });
+    }
+  }
+
+  /** Schließt die Weltkarte; eine Welt in Erschaffung bleibt gespeichert. */
+  closeWorld(): void {
+    this.update({ world: undefined, worldError: undefined });
+  }
+
+  /** Würfelt den nächsten Wurf der offenen Welt. */
+  rollWorld(): void {
+    this.inWorld((hexes, { column, row }) => rollWorld(hexes, column, row, this.deps.random));
+  }
+
+  /** Gibt der fertig gewürfelten Welt ihren Namen. */
+  nameWorld(name: string): void {
+    this.inWorld((hexes, { column, row }) => nameWorld(hexes, column, row, name));
+  }
+
+  /** Verwirft die Welt in Erschaffung; das Feld ist wieder nicht erzeugt. */
+  discardWorld(): void {
+    this.inWorld((hexes, { column, row }) => discardWorld(hexes, column, row), true);
+  }
+
   // --- intern ----------------------------------------------------------------------------------
+
+  /** Führt einen Schritt der Weltenerschaffung aus; verletzt er eine Regel, steht das auf der Weltkarte. */
+  private inWorld(step: (hexes: readonly Hex[], at: { column: number; row: number }) => readonly Hex[], close = false): void {
+    const at = this.state.world;
+    if (!at) throw new DomainError('Es ist keine Weltkarte offen.');
+    try {
+      this.change(setHexes(this.campaign, step(this.campaign.hexes, at)), close ? { world: undefined, worldError: undefined } : { worldError: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ worldError: error.message });
+    }
+  }
 
   private get campaign(): Campaign {
     if (!this.state.campaign) throw new Error('Die Kampagne ist noch nicht geladen.');
