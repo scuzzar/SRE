@@ -270,7 +270,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   festgehalten sind. Die Kampagnendatei enthält auch die Toten.
 - **Charaktererschaffung.** Neben dem Anlegen von Hand lässt sich ein Charakter nach den Regeln von
   Classic Traveller erschaffen (Starter Edition, *Charts and Tables* S. 2–3). Jeder Wert wird einzeln
-  gewürfelt, jede Entscheidung trifft der Spieler. Je Kampagne gibt es höchstens eine Erschaffung
+  gewürfelt, jede Entscheidung trifft der Spieler, außer er lässt die Erschaffung durchlaufen (siehe
+  *Durchlaufen*). Je Kampagne gibt es höchstens eine Erschaffung
   (`generation`); sie wird gespeichert und übersteht einen Neustart. Wechselt man die Kampagne, bleibt
   sie in ihrer Kampagne liegen.
   - **Lebenslauf statt Zwischenstand.** Eine Erschaffung hält nur ihren Lebenslauf (`Career`): die
