@@ -2927,8 +2927,28 @@ button:disabled {
   color: var(--muted);
 }
 
+/* Die Welt bleibt oben stehen, nur die Würfe darunter scrollen; dafür ist sie knapp gesetzt. */
 .sheet.world-sheet .world-card {
-  position: static;
+  gap: 6px;
+}
+
+.sheet.world-sheet .world-card .pc-head {
+  min-height: 0;
+}
+
+.sheet.world-sheet .world-profile {
+  gap: 1px 10px;
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.sheet.world-sheet .world-text {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
 }
 
 .hex-selected polygon:first-child {
@@ -2941,4 +2961,15 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   margin: -4px -6px -4px 0;
+}
+
+.sheet.world-sheet .world-profile dd {
+  min-width: 0;
+  display: flex;
+  white-space: nowrap;
+}
+
+.sheet.world-sheet .world-profile .world-text {
+  flex: 1 1 auto;
+  min-width: 0;
 }
