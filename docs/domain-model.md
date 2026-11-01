@@ -34,8 +34,8 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 >
 > Am 1. November 2026 freigegeben: Ein Hexfeld speichert die Werte seiner Welt, nicht ihre Würfe.
 >
-> **Entwurf, wartet auf Freigabe** (1. November 2026): Heimatwelt und Welten der Terms (siehe
-> *Heimatwelt und Welten der Terms*). Neu im Bild: `Character.homeworld`, `Career.homeworld`,
+> Ebenfalls am 1. November 2026 freigegeben: Heimatwelt und Welten der Terms (siehe *Heimatwelt
+> und Welten der Terms*). Neu im Bild: `Character.homeworld`, `Career.homeworld`,
 > `Career.worlds` und die Schritte `homeworld` und `world`. Neu im Bild: `Uwp`, die Felder `empty`, `navalBase`, `scoutBase`, `gasGiant` am
 > `Hex`; `WorldRoll` ist flüchtig. Neu im Bild: `Hex`, `WorldRoll`, `Campaign.hexes`,
 > `WorldStep`, `WorldRollKind` und als Referenzdaten `SystemContents`, `UwpDigit`, `TradeCode`.
@@ -359,11 +359,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Attributen und vor der Laufbahn, und jeder Term findet auf einer Welt statt (`Career.worlds`, je
   Term eine, in der Reihenfolge der Terms; dieselbe Welt darf mehrmals vorkommen). Beides ist eine
   Entscheidung, kein Wurf: Man wählt eine fertige Welt, oder man erschafft sie gleich: Man wählt ein
-  nicht erzeugtes Feld, die Weltenerschaffung läuft dort wie im Subsektor, und ist die Welt fertig
-  (mit Namen), ist sie gewählt. Solange sie entsteht, wartet die Charaktererschaffung im selben
-  Schritt. Die Wahl hat in Version 1 keine Folgen für die Würfe. Abschließen übernimmt die
+  nicht erzeugtes Feld, die Weltenerschaffung läuft dort wie im Subsektor, mit dem Vorkommen (bleibt
+  das Feld leer, wählt man ein anderes), und ist die Welt fertig (mit Namen), ist sie gewählt.
+  Solange sie entsteht, wartet die Charaktererschaffung im selben Schritt. Für einen Term gibt es
+  dazu „wie zuletzt“: die Welt des vorigen Terms, im ersten Term die Heimatwelt. Die Wahl hat in Version 1 keine Folgen für die Würfe. Abschließen übernimmt die
   Heimatwelt an den Charakter; die Welten der Terms bleiben im Lebenslauf. Von Hand angelegte
-  Charaktere wählen ihre Heimatwelt im Editor, oder keine. Weil der Lebenslauf und der Charakter auf
+  Charaktere wählen ihre Heimatwelt im Editor, oder keine. Verwiesen wird auf ein Hexfeld über seine
+  Spalte und Zeile (0304). Weil der Lebenslauf und der Charakter auf
   Welten verweisen, gilt wie beim Log: Eine Welt, auf die verwiesen wird, wird nie gelöscht (fertige
   Welten lassen sich ohnehin nicht löschen). Lebensläufe von vor dieser Regel, ohne Heimatwelt und
   ohne Welten, bleiben gültig. Während der Erschaffung lassen sich Orakel und Inspirationskarte
