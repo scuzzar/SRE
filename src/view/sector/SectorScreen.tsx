@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react';
 import type { HexView, SelectedHexView, Snapshot } from '../../controller';
 import { useGame } from '../game-context';
 import { animated } from '../haptics';
@@ -177,7 +177,88 @@ function SectorDock({ selected, rolled, rolling, onRoll, onSettled }: { selected
  * noch entsteht. Darunter die Welten als Liste. Während die Würfel rollen, zeigt die Karte noch den
  * Stand davor.
  */
-export function SectorScreen({ view }: { view: Snapshot }) {
+/** Wie weit die Karte sich vergrößern lässt. */
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 4;
+const ZOOM_STEP = 1.5;
+
+function clampZoom(zoom: number): number {
+  return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
+}
+
+function distance(e: TouchEvent): number {
+  const [a, b] = [e.touches[0]!, e.touches[1]!];
+  return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+}
+
+/**
+ * Die Karte im Ausschnitt: mit zwei Fingern oder mit + und − zoomen, mit einem Finger verschieben.
+ * Beim Zoomen bleibt der Punkt zwischen den Fingern (bei den Knöpfen die Mitte) an seiner Stelle.
+ * Reine Darstellung: Der Zoom gehört der Ansicht.
+ */
+function ZoomableMap({ children }: { children: ReactNode }) {
+  const viewport = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
+  // Wohin beim nächsten Zeichnen gescrollt wird, damit der Punkt unter den Fingern stehen bleibt.
+  const anchor = useRef<{ x: number; y: number; from: number } | undefined>(undefined);
+  const pinch = useRef<{ distance: number; zoom: number } | undefined>(undefined);
+
+  function zoomTo(next: number, x?: number, y?: number) {
+    const el = viewport.current;
+    const target = clampZoom(next);
+    if (!el || target === zoom) return;
+    anchor.current = { x: x ?? el.clientWidth / 2, y: y ?? el.clientHeight / 2, from: zoom };
+    setZoom(target);
+  }
+
+  useLayoutEffect(() => {
+    const el = viewport.current;
+    const a = anchor.current;
+    if (!el || !a) return;
+    const ratio = zoom / a.from;
+    el.scrollLeft = (el.scrollLeft + a.x) * ratio - a.x;
+    el.scrollTop = (el.scrollTop + a.y) * ratio - a.y;
+    anchor.current = undefined;
+  }, [zoom]);
+
+  return (
+    <div className="sector-zoom-frame">
+      <div
+        ref={viewport}
+        className="sector-viewport"
+        style={{ aspectRatio: `${WIDTH.toFixed(1)} / ${HEIGHT.toFixed(1)}` }}
+        onTouchStart={(e) => {
+          if (e.touches.length === 2) pinch.current = { distance: distance(e), zoom };
+        }}
+        onTouchMove={(e) => {
+          const start = pinch.current;
+          const el = viewport.current;
+          if (!start || !el || e.touches.length !== 2) return;
+          const box = el.getBoundingClientRect();
+          const [a, b] = [e.touches[0]!, e.touches[1]!];
+          zoomTo(start.zoom * (distance(e) / start.distance), (a.clientX + b.clientX) / 2 - box.left, (a.clientY + b.clientY) / 2 - box.top);
+        }}
+        onTouchEnd={(e) => {
+          if (e.touches.length < 2) pinch.current = undefined;
+        }}
+      >
+        <div className="sector-canvas" style={{ width: `${zoom * 100}%` }}>
+          {children}
+        </div>
+      </div>
+      <div className="sector-zoom" role="group" aria-label="Zoom">
+        <button type="button" className="icon-button" aria-label="Verkleinern" disabled={zoom <= MIN_ZOOM} onClick={() => zoomTo(zoom / ZOOM_STEP)}>
+          −
+        </button>
+        <button type="button" className="icon-button" aria-label="Vergrößern" disabled={zoom >= MAX_ZOOM} onClick={() => zoomTo(zoom * ZOOM_STEP)}>
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; heading?: string }) {
   const game = useGame();
   // Das Feld, dessen Vorkommen hier gerade gewürfelt wurde, und ob sein Ergebnis schon feststeht.
   const [rolled, setRolled] = useState<string>();
@@ -191,13 +272,15 @@ export function SectorScreen({ view }: { view: Snapshot }) {
     <div className="screen">
       <section className="scroll sector" aria-labelledby="sector-title">
         <h2 id="sector-title" className="section-title">
-          Subsektor
+          {heading}
         </h2>
-        <svg className="sector-map" viewBox={`0 0 ${WIDTH.toFixed(1)} ${HEIGHT.toFixed(1)}`} role="group" aria-label="Karte des Subsektors">
-          {sector.map((hex) => (
-            <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} />
-          ))}
-        </svg>
+        <ZoomableMap>
+          <svg className="sector-map" viewBox={`0 0 ${WIDTH.toFixed(1)} ${HEIGHT.toFixed(1)}`} role="group" aria-label="Karte des Subsektors">
+            {sector.map((hex) => (
+              <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} />
+            ))}
+          </svg>
+        </ZoomableMap>
         <p className="sector-legend small-label">
           Dunkle Felder sind nicht erzeugt: antippen, dann unten das Vorkommen würfeln. Helle ohne Zeichen sind leer. ● mit Wasser, ○ ohne, ★ Marinebasis, ▲ Scoutbasis, • rechts oben Gasriese.
         </p>
@@ -238,6 +321,28 @@ export function SectorScreen({ view }: { view: Snapshot }) {
           onSettled={() => setSettled(selected.id)}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * Die Karte über der Charaktererschaffung, um die Heimatwelt oder die Welt eines Terms zu wählen:
+ * Eine fertige Welt antippen wählt sie; ein freies Feld antippen, Vorkommen würfeln und die Welt
+ * erschaffen wählt die neue Welt, sobald sie ihren Namen hat.
+ */
+export function SectorPicker({ view, title }: { view: Snapshot; title: string }) {
+  const game = useGame();
+  return (
+    <div className="overlay">
+      <section className="sheet sector-picker" role="dialog" aria-modal="true" aria-labelledby="picker-title">
+        <div className="sheet-head" style={{ alignItems: 'center' }}>
+          <h2 id="picker-title">{title}</h2>
+          <button type="button" className="icon-button" aria-label="Zurück zur Erschaffung" onClick={() => game.closePicker()}>
+            <CloseIcon />
+          </button>
+        </div>
+        <SectorScreen view={view} heading="Welt antippen oder freies Feld wählen" />
+      </section>
     </div>
   );
 }

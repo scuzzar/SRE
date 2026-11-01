@@ -18,6 +18,7 @@ import {
   skillDm,
   skillOf,
   slotOf,
+  stateOf,
   sum,
   totalOf,
   valueOf,
@@ -36,7 +37,7 @@ import {
   type Upp,
 } from '../model';
 import { canConfirm, characteristicOptions, drawnIn, evaluateTask, hasSkill, startTask, type Card, type CharacteristicOption, type Task, type WorldRoll } from '../model/draft';
-import { careerLines, generationView, itemLabel, type CareerLine, type GenerationView } from './generation-view';
+import { careerLines, generationView, itemLabel, worldChoices, worldName, type CareerLine, type GenerationView, type WorldChoice } from './generation-view';
 import { sectorView, selectedView, worldList, worldView, type HexView, type SelectedHexView, type WorldListItem, type WorldView } from './world-view';
 
 /**
@@ -84,6 +85,8 @@ export interface Snapshot {
   readonly world: WorldView | undefined;
   /** Das gewählte Feld auf der Karte, mit seinem Vorkommen, sobald gewürfelt. */
   readonly selected: SelectedHexView | undefined;
+  /** Die Karte steht im Vordergrund, um für die Charaktererschaffung eine Welt zu wählen oder zu erschaffen. */
+  readonly picking: { readonly title: string } | undefined;
 }
 
 export interface SkillChoice extends Skill {
@@ -207,6 +210,10 @@ export interface CharacterView {
   readonly possessions: readonly { readonly name: string; readonly count: number }[];
   /** Der Lebenslauf, wenn der Charakter über die Charaktererschaffung entstanden ist. */
   readonly career: readonly CareerLine[] | undefined;
+  /** Der Name der Heimatwelt. */
+  readonly homeworld: string | undefined;
+  /** Je Term der Name seiner Welt, aus dem Lebenslauf. */
+  readonly termWorlds: readonly string[];
   /** „Ohne Fertigkeit“; fehlt, wenn der Charakter Jack-of-all-Trades hat. */
   readonly unskilled: { readonly dm: number; readonly chosen: boolean } | undefined;
   readonly characteristics: readonly CharacteristicOption[];
@@ -231,6 +238,8 @@ export interface EditorView {
   readonly input: CharacterInput;
   readonly error: string | undefined;
   readonly inLog: boolean;
+  /** Die fertigen Welten des Subsektors, für die Heimatwelt. */
+  readonly worlds: readonly WorldChoice[];
 }
 
 export interface ControllerState {
@@ -257,6 +266,8 @@ export interface ControllerState {
   readonly worldError: string | undefined;
   /** Das gewählte Feld auf der Karte, nicht erzeugt oder leer; mit dem Vorkommen, wenn es gerade hier gewürfelt wurde. */
   readonly selected: { readonly column: number; readonly row: number; readonly occurrence?: WorldRoll } | undefined;
+  /** Die Karte steht über der Charaktererschaffung, um eine Welt zu wählen. */
+  readonly picking: boolean;
 }
 
 /** Eine offene Weltkarte. Ihre Würfe sind flüchtig: Sie gelten nur, solange sie offen ist. */
@@ -368,6 +379,8 @@ function characterView(campaign: Campaign, character: Character, task: Task | un
     }),
     possessions: character.possessions.map((p) => ({ name: itemLabel(itemOf(p.of)), count: p.count })),
     career: character.career && careerLines(character.career),
+    homeworld: character.homeworld === undefined ? undefined : worldName(campaign.hexes, character.homeworld),
+    termWorlds: (character.career?.worlds ?? []).map((id) => worldName(campaign.hexes, id)),
     unskilled: canGoUnskilled(character.skills) ? { dm: ref.houseRules.unskilledDm, chosen: own?.unskilled ?? false } : undefined,
     characteristics: characteristicOptions(own ?? startTask(campaign, character.id), campaign),
     inLog: isInLog(campaign, character.id),
@@ -382,11 +395,20 @@ function taskView(campaign: Campaign, task: Task): TaskView {
 const skills: readonly SkillChoice[] = ref.skills.map((s) => ({ ...s, leveled: shownLevel({ of: s.id, level: 0 }) !== undefined }));
 const items: readonly ItemChoice[] = ref.items.map((i) => ({ id: i.id, label: itemLabel(i), kind: i.kind, once: i.once }));
 
+/** Die Karte zur Wahl einer Welt, solange die Erschaffung im Schritt Heimatwelt oder Welt eines Terms ist. */
+function pickingView(state: ControllerState, campaign: Campaign): { readonly title: string } | undefined {
+  if (!state.picking || !campaign.generation) return undefined;
+  const generation = stateOf(campaign.generation);
+  if (generation.step === 'homeworld') return { title: 'Heimatwelt wählen' };
+  if (generation.step === 'world') return { title: `Welt für Term ${generation.terms} wählen` };
+  return undefined;
+}
+
 export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { persistent: state.persistent, storageError: state.storageError, screen: state.screen, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, characters: [], dead: [], retired: [], task: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, characters: [], dead: [], retired: [], task: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
   }
   const resultEntry = state.result === undefined ? undefined : campaign.log[state.result];
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
@@ -409,12 +431,14 @@ export function buildSnapshot(state: ControllerState): Snapshot {
       input: editing ? inputOf(editing) : emptyInput,
       error: state.editor.error,
       inLog: editing ? isInLog(campaign, editing.id) : false,
+      worlds: worldChoices(campaign.hexes),
     },
-    generation: state.generating && campaign.generation ? generationView(campaign.generation, state.generationError) : undefined,
+    generation: state.generating && campaign.generation ? generationView(campaign.generation, campaign.hexes, state.generationError) : undefined,
     generationRunning: campaign.generation !== undefined,
     sector: sectorView(campaign.hexes),
     worlds: worldList(campaign.hexes),
     world: state.world && worldView(campaign.hexes, state.world.column, state.world.row, state.world.rolls, state.worldError),
+    picking: pickingView(state, campaign),
     selected: state.selected && selectedView(campaign.hexes, state.selected.column, state.selected.row, state.selected.occurrence, state.world ? undefined : state.worldError),
   };
 }

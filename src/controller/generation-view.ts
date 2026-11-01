@@ -5,7 +5,12 @@ import {
   cascadeOptions,
   characteristics,
   gainOf,
+  hexById,
+  hexId,
+  isWorld,
   itemOf,
+  previousWorld,
+  uwpCode,
   MAX_CASH_ROLLS,
   MAX_TERMS,
   musterSources,
@@ -31,6 +36,7 @@ import {
   type RollKind,
   type Generation,
   type GenerationStep,
+  type Hex,
   type Item,
   type ThrowOdds,
 } from '../model';
@@ -73,8 +79,24 @@ export type GenerationAction =
       readonly cashDm: readonly DmSource[];
       readonly benefitDm: readonly DmSource[];
     }
+  | {
+      readonly kind: 'world';
+      /** Die Heimatwelt oder die Welt eines Terms. */
+      readonly for: 'homeworld' | 'term';
+      /** Die fertigen Welten des Subsektors. */
+      readonly worlds: readonly WorldChoice[];
+      /** „Wie zuletzt“: die Welt des vorigen Terms, im ersten die Heimatwelt. */
+      readonly previous: WorldChoice | undefined;
+    }
   | { readonly kind: 'name' }
   | { readonly kind: 'dead' };
+
+/** Eine Welt zur Wahl. */
+export interface WorldChoice {
+  readonly id: string;
+  readonly name: string;
+  readonly uwp: string;
+}
 
 export interface GenerationView {
   readonly step: GenerationStep;
@@ -90,8 +112,30 @@ export interface GenerationView {
   readonly credits: number;
   readonly pension: number;
   readonly lines: readonly CareerLine[];
+  /** Der Name der Heimatwelt, sobald gewählt. */
+  readonly homeworld: string | undefined;
+  /** Je Term der Name seiner Welt, soweit gewählt. */
+  readonly termWorlds: readonly string[];
   readonly action: GenerationAction;
   readonly error: string | undefined;
+}
+
+/** Der Name einer Welt, auf die verwiesen wird; ihr Feld, falls sie nicht (mehr) da ist. */
+export function worldName(hexes: readonly Hex[], id: string): string {
+  return hexById(hexes, id)?.name ?? id;
+}
+
+function worldChoice(hexes: readonly Hex[], id: string): WorldChoice {
+  const hex = hexById(hexes, id);
+  return { id, name: worldName(hexes, id), uwp: hex ? uwpCode(hex.uwp) : '' };
+}
+
+/** Die fertigen Welten des Subsektors zur Wahl, nach Namen. */
+export function worldChoices(hexes: readonly Hex[]): readonly WorldChoice[] {
+  return hexes
+    .filter(isWorld)
+    .map((h) => worldChoice(hexes, hexId(h.column, h.row)))
+    .sort((a, b) => a.name.localeCompare(b.name, 'de'));
 }
 
 /** Der Name eines Gegenstands, mit TL, wenn es ihn in mehreren TL gibt: „Vacc Suit (TL 8)“. */
@@ -264,7 +308,7 @@ const stepNames: Partial<Record<GenerationStep, string>> = {
   promotion: 'Beförderung',
 };
 
-export function generationView(generation: Generation, error: string | undefined): GenerationView {
+export function generationView(generation: Generation, hexes: readonly Hex[], error: string | undefined): GenerationView {
   const state = stateOf(generation);
   const service = state.service;
   const rank = service && state.rank > 0 ? service.ranks[state.rank - 1]!.title : undefined;
@@ -279,6 +323,13 @@ export function generationView(generation: Generation, error: string | undefined
       const c = characteristics[state.rolled]!;
       prompt = `Attribute würfeln: ${c} (${state.rolled + 1} von 6)`;
       action = { kind: 'roll', label: `${c} würfeln`, dice: 2, odds: undefined };
+      break;
+    }
+    case 'homeworld':
+    case 'world': {
+      const previous = previousWorld(state);
+      prompt = state.step === 'homeworld' ? 'Heimatwelt: eine Welt wählen oder auf der Karte eine neue erschaffen' : `${term}: Auf welcher Welt? Wählen oder neu erschaffen`;
+      action = { kind: 'world', for: state.step === 'homeworld' ? 'homeworld' : 'term', worlds: worldChoices(hexes), previous: previous === undefined ? undefined : worldChoice(hexes, previous) };
       break;
     }
     case 'service':
@@ -373,6 +424,8 @@ export function generationView(generation: Generation, error: string | undefined
     credits: state.credits,
     pension: pensionOf(state.terms, state.dead),
     lines: careerLines(generation.career),
+    homeworld: state.homeworld === undefined ? undefined : worldName(hexes, state.homeworld),
+    termWorlds: state.worlds.map((id) => worldName(hexes, id)),
     action,
     error,
   };

@@ -15,6 +15,10 @@ import {
   renameCampaign,
   restoreCharacter,
   chooseCascade as chooseCareerCascade,
+  chooseGenerationWorld,
+  hexId,
+  isWorld,
+  stateOf,
   enlist,
   finishGeneration,
   muster,
@@ -57,7 +61,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, task: undefined, details: false, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined } as const;
+const closedDrafts = { card: undefined, task: undefined, details: false, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
 
 export interface GameDependencies {
   readonly repository: CampaignRepository;
@@ -99,6 +103,7 @@ export class GameController {
       world: undefined,
       worldError: undefined,
       selected: undefined,
+      picking: false,
     };
     this.current = buildSnapshot(this.state);
   }
@@ -339,7 +344,33 @@ export class GameController {
 
   /** „Später weiter“: schließt die Erschaffung; sie bleibt gespeichert. */
   closeGeneration(): void {
-    this.update({ generating: false, generationError: undefined });
+    this.update({ generating: false, generationError: undefined, picking: false, selected: undefined });
+  }
+
+  /**
+   * Heimatwelt oder Welt des Terms: eine fertige Welt wählen. Geht auch aus der Karte, wenn man dort
+   * eine Welt antippt oder eine neue fertig erschafft.
+   */
+  chooseGenerationWorld(id: string): void {
+    try {
+      this.change(chooseGenerationWorld(this.campaign, id), { picking: false, selected: undefined, world: undefined, worldError: undefined, generationError: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ generationError: error.message });
+    }
+  }
+
+  /** Öffnet die Karte über der Erschaffung, um eine Welt zu wählen oder zu erschaffen. */
+  pickGenerationWorld(): void {
+    const generation = this.campaign.generation;
+    const step = generation && stateOf(generation).step;
+    if (step !== 'homeworld' && step !== 'world') return;
+    this.update({ picking: true, selected: undefined, generationError: undefined });
+  }
+
+  /** Schließt die Karte und kehrt zur Erschaffung zurück. */
+  closePicker(): void {
+    this.update({ picking: false, selected: undefined, worldError: undefined });
   }
 
   /** Verwirft die Erschaffung ohne Spur. */
@@ -401,6 +432,8 @@ export class GameController {
    */
   chooseHex(column: number, row: number): void {
     const hex = hexAt(this.campaign.hexes, column, row);
+    // Wird für die Erschaffung gewählt, ist eine fertige Welt die Wahl.
+    if (this.state.picking && isWorld(hex)) return this.chooseGenerationWorld(hexId(column, row));
     const world = hex !== undefined && !hex.empty;
     if (world) return this.update({ world: { column, row, rolls: [] }, worldError: undefined, selected: undefined });
     const same = this.state.selected?.column === column && this.state.selected.row === row;
@@ -440,7 +473,10 @@ export class GameController {
 
   /** Gibt der fertig gewürfelten Welt ihren Namen. */
   nameWorld(name: string): void {
-    this.inWorld((hexes, at) => ({ hexes: nameWorld(hexes, at.column, at.row, name), world: at }));
+    const at = this.state.world;
+    this.inWorld((hexes, open) => ({ hexes: nameWorld(hexes, open.column, open.row, name), world: open }));
+    // Entstand die Welt für die Erschaffung, ist sie mit ihrem Namen gewählt.
+    if (at && this.state.picking && isWorld(hexAt(this.campaign.hexes, at.column, at.row))) this.chooseGenerationWorld(hexId(at.column, at.row));
   }
 
   /** Verwirft die Welt in Erschaffung; das Feld ist wieder nicht erzeugt. */

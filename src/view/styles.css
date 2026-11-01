@@ -2973,3 +2973,115 @@ button:disabled {
   flex: 1 1 auto;
   min-width: 0;
 }
+
+/* --- Zoom der Karte ------------------------------------------------------------------------- */
+
+.sector-zoom-frame {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.sector-viewport {
+  width: 100%;
+  overflow: auto;
+  touch-action: pan-x pan-y;
+  overscroll-behavior: contain;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--deep);
+}
+
+.sector-canvas {
+  min-width: 100%;
+}
+
+.sector-canvas .sector-map {
+  width: 100%;
+}
+
+.sector-zoom {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+}
+
+.sector-zoom .icon-button {
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+  background: rgba(22, 22, 22, 0.85);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.sector-zoom .icon-button:disabled {
+  opacity: 0.35;
+}
+
+/* --- Karte über der Erschaffung ------------------------------------------------------------- */
+
+.sheet.sector-picker .screen {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* --- Welt wählen in der Erschaffung --------------------------------------------------------- */
+
+.world-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.world-choice .choice-grid {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.world-choice > .preferred {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 52px;
+  padding: 8px 12px;
+}
+
+/* --- Orakel in der Erschaffung -------------------------------------------------------------- */
+
+.generation-oracle {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 12px 8px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.generation-oracle-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.generation-oracle-row .question-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 40px;
+  font-size: 14px;
+}
+
+.generation-oracle-answer {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.generation-oracle-answer .verdict {
+  font-size: 15px;
+}

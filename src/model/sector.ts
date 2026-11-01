@@ -56,6 +56,23 @@ export function hexAt(hexes: readonly Hex[], column: number, row: number): Hex |
   return hexes.find((h) => h.column === column && h.row === row);
 }
 
+/** Das Hexfeld zu einem Verweis wie 0304. */
+export function hexById(hexes: readonly Hex[], id: string): Hex | undefined {
+  return hexes.find((h) => hexId(h.column, h.row) === id);
+}
+
+/** Eine fertige Welt: erzeugt, nicht leer, mit Namen. */
+export function isWorld(hex: Hex | undefined): hex is Hex & { readonly name: string } {
+  return hex !== undefined && !hex.empty && stepOf(hex) === 'done';
+}
+
+/** Die fertige Welt, auf die verwiesen wird; sonst ein DomainError. */
+export function worldOf(hexes: readonly Hex[], id: string): Hex & { readonly name: string } {
+  const hex = hexById(hexes, id);
+  if (!isWorld(hex)) throw new DomainError(`Im Feld ${id} gibt es keine fertige Welt.`);
+  return hex;
+}
+
 /** Die Ziffer einer Stelle des UWP; fehlt sie in den Charts, gibt es keinen Text und keinen DM. */
 export function uwpDigitOf(kind: UwpKind, value: number): UwpDigit | undefined {
   return ref.worlds.uwpDigits[kind].find((d) => d.digit === value);

@@ -33,6 +33,8 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
     credits: String(editor.input.credits),
     skills: editor.input.skills.map((s) => ({ of: s.of, level: String(s.level) })),
     possessions: (editor.input.possessions ?? []).map((p) => ({ of: p.of, count: String(p.count) })),
+    // Leer heißt: keine Heimatwelt.
+    homeworld: editor.input.homeworld ?? '',
   }));
   const [confirmRemove, setConfirmRemove] = useState(false);
   const isNew = editor.id === undefined;
@@ -55,11 +57,13 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
           id="character-form"
           onSubmit={(e) => {
             e.preventDefault();
+            const { homeworld, ...rest } = form;
             game.saveCharacter({
-              ...form,
+              ...rest,
               credits: Number(form.credits === '' ? 0 : form.credits),
               skills: form.skills.map((s) => ({ of: s.of, level: Number(s.level) })),
               possessions: form.possessions.map((p) => ({ of: p.of, count: Number(p.count) })),
+              ...(homeworld ? { homeworld } : {}),
             });
           }}
         >
@@ -79,6 +83,17 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
               onChange={(e) => setForm({ ...form, background: e.target.value })}
               placeholder="z. B. Ex-Scout · 4 Terms · 34 Jahre"
             />
+          </label>
+          <label className="field">
+            <span>Heimatwelt</span>
+            <select value={form.homeworld} onChange={(e) => setForm({ ...form, homeworld: e.target.value })}>
+              <option value="">keine</option>
+              {editor.worlds.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name} ({w.id} · {w.uwp})
+                </option>
+              ))}
+            </select>
           </label>
           <fieldset>
             <legend>UPP</legend>

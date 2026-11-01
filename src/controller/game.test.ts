@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { appendLog, createCampaign, fromCampaignFile, type CampaignRepository } from '../model';
+import { appendLog, createCampaign, fromCampaignFile, setHexes, type CampaignRepository } from '../model';
 import { fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 
@@ -420,14 +420,16 @@ describe('Kampagnen', () => {
 
 describe('Charaktererschaffung', () => {
   it('würfelt Schritt für Schritt, speichert dabei und schließt mit Namen ab', async () => {
-    // Attribute 7, 10, 8, 9, 7, 5; Other mit 6+6; überlebt; zwei Fertigkeiten; mustert ab; Geld 6.
-    const random = fixedRandom(3, 4, 5, 5, 4, 4, 4, 5, 3, 4, 2, 3, 6, 6, 6, 6, 1, 1, 1, 1, 6);
+    // Attribute 7, 10, 8, 9, 7, 5; Heimatwelt neu erschaffen (Vorkommen 5, dann C788545-7);
+    // Other mit 6+6; überlebt; zwei Fertigkeiten; mustert ab; Geld 6.
+    const world = [5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 4, 4, 3, 4, 3, 3, 4, 4, 4];
+    const random = fixedRandom(3, 4, 5, 5, 4, 4, 4, 5, 3, 4, 2, 3, ...world, 6, 6, 6, 6, 1, 1, 1, 1, 6);
     const { game, repository } = await started(random);
     game.openGeneration();
     expect(game.snapshot().generation).toMatchObject({ step: 'characteristics', action: { kind: 'roll', label: 'STR würfeln' } });
     for (let i = 0; i < 6; i++) game.rollGeneration();
     expect(game.snapshot().generation?.upp.map((u) => u.value)).toEqual([7, 10, 8, 9, 7, 5]);
-    expect(game.snapshot().generation?.action.kind).toBe('service');
+    expect(game.snapshot().generation?.action).toMatchObject({ kind: 'world', for: 'homeworld', worlds: [], previous: undefined });
 
     // „Später weiter“: Die Erschaffung bleibt gespeichert.
     game.closeGeneration();
@@ -436,8 +438,20 @@ describe('Charaktererschaffung', () => {
     expect(repository.saved?.generation?.career.rolls).toHaveLength(6);
     game.openGeneration();
 
+    // Heimatwelt auf der Karte neu erschaffen: Feld wählen, Vorkommen, Welt, Name; dann ist sie gewählt.
+    game.pickGenerationWorld();
+    expect(game.snapshot().picking).toEqual({ title: 'Heimatwelt wählen' });
+    game.chooseHex(3, 4);
+    game.rollOccurrence();
+    game.chooseHex(3, 4);
+    for (let i = 0; i < 10; i++) game.rollWorld();
+    game.nameWorld('Regina');
+    expect(game.snapshot()).toMatchObject({ picking: undefined, world: undefined, generation: { step: 'service', homeworld: 'Regina' } });
+
     game.chooseService('other');
-    expect(game.snapshot().generation).toMatchObject({ step: 'survival', status: 'Other · Term 1' });
+    expect(game.snapshot().generation).toMatchObject({ step: 'world', action: { kind: 'world', for: 'term', previous: { id: '0304', name: 'Regina' } } });
+    game.chooseGenerationWorld('0304');
+    expect(game.snapshot().generation).toMatchObject({ step: 'survival', status: 'Other · Term 1', termWorlds: ['Regina'] });
     game.rollGeneration();
     game.chooseSkillTable('other.personal');
     game.chooseSkillTable('other.personal');
@@ -464,14 +478,20 @@ describe('Charaktererschaffung', () => {
     const after = game.snapshot();
     expect(after).toMatchObject({ generation: undefined, generationRunning: false, screen: 'characters' });
     const mara = after.characters.find((c) => c.name === 'Mara Quell')!;
-    expect(mara).toMatchObject({ background: 'Ex-Other · 1 Term · 22 Jahre', credits: 50000, upp: { str: 9 } });
+    expect(mara).toMatchObject({ background: 'Ex-Other · 1 Term · 22 Jahre', credits: 50000, upp: { str: 9 }, homeworld: 'Regina', termWorlds: ['Regina'] });
     expect(mara.career).toHaveLength(12);
   });
 
   it('fasst einen Term mit den Kürzeln der Fertigkeiten zusammen', async () => {
-    const { game } = await started(fixedRandom(3, 4, 5, 5, 4, 4, 4, 5, 3, 4, 2, 3, 6, 6));
+    const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
+    const { game } = await started(fixedRandom(3, 4, 5, 5, 4, 4, 4, 5, 3, 4, 2, 3, 6, 6), memoryRepository(setHexes(createCampaign([]), [regina])));
     game.openGeneration();
     for (let i = 0; i < 6; i++) game.rollGeneration();
+    expect(game.snapshot().generation?.action).toMatchObject({ kind: 'world', worlds: [{ id: '0101', name: 'Regina', uwp: 'C788545-7' }] });
+    // Auf der Karte eine fertige Welt antippen wählt sie.
+    game.pickGenerationWorld();
+    game.chooseHex(1, 1);
+    expect(game.snapshot()).toMatchObject({ picking: undefined, generation: { step: 'service', homeworld: 'Regina' } });
     game.chooseService('marines'); // Musterung mit 6+6, die Marines geben Cutlass-1 mit
     const view = game.snapshot().generation!;
     expect(view.lines.at(-1)).toMatchObject({ result: 'angenommen · Cutlass-1', gains: ['Cut-1'] });

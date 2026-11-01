@@ -1,11 +1,11 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
-import type { CareerLine, GenerationAction, GenerationView } from '../../controller';
+import type { CareerLine, GenerationAction, GenerationView, LogItem, OddsChoice } from '../../controller';
 import type { RollKind, ThrowOdds } from '../../model';
 import { DicePairView, DiceView, THROW_MS, useTimeline } from '../Dice';
 import { characteristicLabel, credits, hex, signed, withLevel } from '../format';
 import { useGame } from '../game-context';
 import { animated, haptic, stopHaptics } from '../haptics';
-import { CloseIcon, DiceIcon } from '../icons';
+import { CardIcon, CloseIcon, DiceIcon, SectorIcon } from '../icons';
 
 /** Wie lange das Ergebnis nach dem Landen braucht, bis es feststeht und die Knöpfe wieder gehen. */
 const SETTLE_MS = 350;
@@ -19,7 +19,7 @@ const SETTLE_MS = 350;
  * Würfe mit Zielwert (Musterung, Überleben, Patent, Beförderung, Altern, Krise) laufen groß als Popup
  * wie die Probe. Ein Tippen irgendwo beendet eine Animation und zeigt sofort das Ergebnis.
  */
-export function GenerationSheet({ generation }: { generation: GenerationView }) {
+export function GenerationSheet({ generation, odds, log }: { generation: GenerationView; odds: readonly OddsChoice[]; log: readonly LogItem[] }) {
   const game = useGame();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   // Was schon da war, als die Erschaffung aufging, rollt nicht noch einmal.
@@ -75,9 +75,11 @@ export function GenerationSheet({ generation }: { generation: GenerationView }) 
           </span>
         </div>
 
+        <OracleBar odds={odds} log={log} />
+
         <div className="sheet-body" ref={body}>
           <CharacterSheet generation={view} />
-          <CareerList lines={view.lines} compact />
+          <CareerList lines={view.lines} worlds={view.termWorlds} compact />
         </div>
 
         <div className="generation-dock">
@@ -206,7 +208,7 @@ function CharacterSheet({ generation }: { generation: GenerationView }) {
     <article className="pc generation-card" aria-label="Neuer Charakter">
       <div className="pc-head static">
         <span className="pc-name">{generation.step === 'dead' ? '† Neuer Charakter' : 'Neuer Charakter'}</span>
-        <span className="pc-sub">{[generation.status, `${generation.age} Jahre`].filter(Boolean).join(' · ')}</span>
+        <span className="pc-sub">{[generation.status, `${generation.age} Jahre`, generation.homeworld && `von ${generation.homeworld}`].filter(Boolean).join(' · ')}</span>
       </div>
       <div className="upp" role="group" aria-label="UPP">
         {generation.upp.map((u) => (
@@ -253,7 +255,18 @@ function CharacterSheet({ generation }: { generation: GenerationView }) {
  * laufende Term ist offen; frühere klappen auf, wenn man sie antippt, und zeigen zugeklappt, was sie
  * eingebracht haben.
  */
-export function CareerList({ lines, heading = true, compact = false }: { lines: readonly CareerLine[]; heading?: boolean; compact?: boolean }) {
+export function CareerList({
+  lines,
+  worlds = [],
+  heading = true,
+  compact = false,
+}: {
+  lines: readonly CareerLine[];
+  /** Je Term der Name seiner Welt, soweit bekannt. */
+  worlds?: readonly string[];
+  heading?: boolean;
+  compact?: boolean;
+}) {
   if (lines.length === 0) return null;
   const terms = [...new Set(lines.map((l) => l.term))];
   const current = terms.at(-1);
@@ -266,7 +279,8 @@ export function CareerList({ lines, heading = true, compact = false }: { lines: 
       )}
       {terms.map((term) => {
         const termLines = lines.filter((l) => l.term === term);
-        const title = term === 0 ? 'Vor dem Dienst' : `Term ${term}`;
+        const world = term > 0 ? worlds[term - 1] : undefined;
+        const title = term === 0 ? 'Vor dem Dienst' : world ? `Term ${term} · ${world}` : `Term ${term}`;
         const list = <CareerLines lines={termLines} compact={compact} />;
         if (!compact || term === current) {
           return (
@@ -506,6 +520,40 @@ function Actions({ action, disabled }: { action: GenerationAction; disabled: boo
           </button>
         </div>
       );
+    case 'world':
+      return (
+        <div className="world-choice" role="group" aria-label={action.for === 'homeworld' ? 'Heimatwelt' : 'Welt des Terms'}>
+          {action.previous && (
+            <button type="button" className="preferred" disabled={disabled} onClick={() => game.chooseGenerationWorld(action.previous!.id)}>
+              <strong>Wie zuletzt: {action.previous.name}</strong>
+              <span className="small-label mono">
+                {action.previous.id} · {action.previous.uwp}
+              </span>
+            </button>
+          )}
+          {action.worlds.length > 0 && (
+            <div className="choice-grid scroll-choices">
+              {action.worlds
+                .filter((w) => w.id !== action.previous?.id)
+                .map((w) => (
+                  <button key={w.id} type="button" disabled={disabled} onClick={() => game.chooseGenerationWorld(w.id)}>
+                    <strong>{w.name}</strong>
+                    <span className="small-label mono">
+                      {w.id} · {w.uwp}
+                    </span>
+                  </button>
+                ))}
+            </div>
+          )}
+          <button type="button" className="roll generation-main" disabled={disabled} onClick={() => game.pickGenerationWorld()}>
+            <SectorIcon />
+            <span>
+              Auf der Karte wählen
+              <span className="small-label">oder ein freies Feld antippen und eine neue Welt erschaffen</span>
+            </span>
+          </button>
+        </div>
+      );
     case 'name':
       return (
         <form
@@ -536,4 +584,58 @@ function Actions({ action, disabled }: { action: GenerationAction; disabled: boo
         </div>
       );
   }
+}
+
+/**
+ * Orakel und Inspirationskarte mitten in der Erschaffung: eine Frage (freiwillig), Ja/Nein mit der
+ * eingestellten Stufe und die Karte. Die Antwort steht wie sonst im Log; hier zeigt eine Zeile die
+ * letzte, die man in dieser Erschaffung gefragt hat. Die Karte öffnet sich über der Erschaffung.
+ */
+function OracleBar({ odds, log }: { odds: readonly OddsChoice[]; log: readonly LogItem[] }) {
+  const game = useGame();
+  const [question, setQuestion] = useState('');
+  // Was schon im Log stand, als die Erschaffung aufging, zeigt die Leiste nicht.
+  const [seen] = useState(log.length);
+  const latest = log.length > seen ? log.at(-1) : undefined;
+  const selected = odds.find((o) => o.selected);
+  return (
+    <div className="generation-oracle">
+      <div className="generation-oracle-row">
+        <label htmlFor="generation-question" className="visually-hidden">
+          Frage an das Orakel
+        </label>
+        <input
+          id="generation-question"
+          className="question-input"
+          placeholder="Frage (freiwillig)"
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          autoComplete="off"
+        />
+        <button type="button" className="ghost compact" onClick={() => game.askOracle(question.trim() || undefined)} aria-label={`Ja/Nein fragen, ${selected?.name ?? ''}`}>
+          Ja/Nein
+        </button>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label="Karte ziehen"
+          onClick={() => {
+            game.drawCard(question.trim() || undefined);
+            setQuestion('');
+          }}
+        >
+          <CardIcon />
+        </button>
+      </div>
+      {latest?.kind === 'oracle' && (
+        <p className="generation-oracle-answer" aria-live="polite">
+          <strong className={latest.yes ? 'verdict' : 'verdict negative'}>{latest.yes ? 'JA' : 'NEIN'}</strong>
+          <span className="small-label">
+            {latest.question ? `„${latest.question}“ · ` : ''}
+            {latest.odds} · W100: {latest.roll} · Ja bis {latest.chance}
+          </span>
+        </p>
+      )}
+    </div>
+  );
 }

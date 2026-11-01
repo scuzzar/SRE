@@ -10,7 +10,7 @@ import { useGame, useSnapshot } from './game-context';
 import { ChevronDownIcon, InfoIcon, OracleIcon, PersonIcon, SectorIcon } from './icons';
 import { CardSheet } from './oracle/CardSheet';
 import { OracleScreen } from './oracle/OracleScreen';
-import { SectorScreen } from './sector/SectorScreen';
+import { SectorPicker, SectorScreen } from './sector/SectorScreen';
 import { WorldSheet } from './sector/WorldSheet';
 
 const titles = { oracle: 'Orakel', characters: 'Charaktere', sector: 'Sektor', about: 'Über' } as const;
@@ -75,10 +75,11 @@ export function App() {
         </button>
       </nav>
 
-      {view.card && <CardSheet card={view.card} onConfirmed={() => setQuestion('')} />}
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
-      {view.generation && <GenerationSheet generation={view.generation} />}
+      {view.generation && <GenerationSheet generation={view.generation} odds={view.odds} log={view.log} />}
+      {view.picking && <SectorPicker view={view} title={view.picking.title} />}
       {view.world && <WorldSheet key={view.world.id} world={view.world} />}
+      {view.card && <CardSheet card={view.card} onConfirmed={() => setQuestion('')} />}
       {view.result && <ResultDialog result={view.result} />}
       {view.campaignSheet && <CampaignSheet key={view.campaign.id} sheet={view.campaignSheet} campaigns={view.campaigns} open={view.campaign} />}
     </div>
