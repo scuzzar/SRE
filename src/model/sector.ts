@@ -1,6 +1,5 @@
 import { EHEX, uwpKinds, type SystemContents, type TradeCode, type UwpDigit, type UwpKind } from '../data';
 import { DomainError } from './errors';
-import type { Random } from './ports';
 import { ref } from './reference';
 
 export { EHEX, uwpKinds, type SystemContents, type TradeCode, type UwpDigit, type UwpKind } from '../data';
@@ -18,56 +17,29 @@ export type WorldRollKind = 'occurrence' | 'navalBase' | 'scoutBase' | 'gasGiant
 /** Was in der Weltenerschaffung als Nächstes dran ist: ein Wurf, der Name, oder fertig. */
 export type WorldStep = WorldRollKind | 'name' | 'done';
 
-/** Ein Wurf der Weltenerschaffung. Er hält Art, Würfel und DM fest, das Vorkommen auch seinen Zielwert. */
-export interface WorldRoll {
-  readonly kind: WorldRollKind;
-  /** Ein oder zwei Würfel. */
-  readonly dice: readonly number[];
-  readonly dm: number;
-  readonly target?: number;
-}
+/** Die Stellen des UWP, jede, sobald sie feststeht. */
+export type Uwp = Readonly<Partial<Record<UwpKind, number>>>;
 
 /**
- * Ein erzeugtes Hexfeld des Subsektors. Es hält nur seine Würfe und den Namen der Welt; alles andere
- * folgt aus dem Nachspielen (`replayHex`). Fehlt ein Hexfeld, ist es nicht erzeugt.
+ * Ein erzeugtes Hexfeld des Subsektors. Es hält die Werte seiner Welt, jeden, sobald er feststeht;
+ * die Würfe werden nicht gespeichert. Fehlt ein Hexfeld, ist es nicht erzeugt.
  */
 export interface Hex {
   readonly column: number;
   readonly row: number;
+  /** Das Vorkommen hat keine Welt ergeben. */
+  readonly empty: boolean;
   readonly name?: string;
-  readonly rolls: readonly WorldRoll[];
+  readonly navalBase?: boolean;
+  readonly scoutBase?: boolean;
+  readonly gasGiant?: boolean;
+  readonly uwp: Uwp;
 }
 
-/** Woraus der DM eines Wurfs besteht, mit Namen: „Größe +7“, „Raumhafen A +6“. */
+/** Woraus der DM eines Wurfs besteht, mit Namen: „Größe 7 +7“; ohne Namen der feste Teil der Formel (−7). */
 export interface WorldDmPart {
   readonly label: string;
   readonly dm: number;
-}
-
-/** Was ein Wurf ergeben hat. */
-export interface WorldRollOutcome {
-  /** Der Wert einer Stelle des UWP. */
-  readonly value: number | undefined;
-  /** Beim Vorkommen: gibt es eine Welt? */
-  readonly success: boolean | undefined;
-  /** Bei Raumhafen, Basen und Gasriese: die Zeile der System Contents Table. */
-  readonly row: SystemContents | undefined;
-  /** Woraus der DM bestand, nach dem heutigen Stand der Tabellen; der Wurf selbst hält nur die Summe. */
-  readonly parts: readonly WorldDmPart[];
-}
-
-/** Der Stand nach dem Nachspielen eines Hexfeldes. */
-export interface WorldState {
-  readonly step: WorldStep;
-  /** Der erste Wurf hat keine Welt ergeben. */
-  readonly empty: boolean;
-  /** Die Stellen des UWP, soweit sie feststehen (auch ohne Wurf, etwa Atmosphäre 0 bei Größe 0). */
-  readonly uwp: Readonly<Partial<Record<UwpKind, number>>>;
-  /** `undefined`, solange es noch nicht feststeht. */
-  readonly navalBase: boolean | undefined;
-  readonly scoutBase: boolean | undefined;
-  readonly gasGiant: boolean | undefined;
-  readonly outcomes: readonly WorldRollOutcome[];
 }
 
 /** Die Ziffer in eHex, wie das UWP sie schreibt: 10 → A, 31 → X. */
@@ -89,7 +61,7 @@ export function uwpDigitOf(kind: UwpKind, value: number): UwpDigit | undefined {
   return ref.worlds.uwpDigits[kind].find((d) => d.digit === value);
 }
 
-function diceCount(kind: WorldRollKind): 1 | 2 {
+export function diceCount(kind: WorldRollKind): 1 | 2 {
   return kind === 'occurrence' || kind === 'tech' ? 1 : 2;
 }
 
@@ -113,50 +85,42 @@ export function worldLabel(kind: WorldRollKind): string {
   return labels[kind];
 }
 
-function sumOf(roll: WorldRoll): number {
-  return roll.dice.reduce((a, b) => a + b, 0);
-}
-
-function systemRow(total: number): SystemContents {
+/** Die Zeile der System Contents Table für Summe + DM, auf 2 bis 12 begrenzt. */
+export function systemRow(total: number): SystemContents {
   return ref.worlds.systemContents[Math.min(12, Math.max(2, total)) - 2]!;
 }
 
-/** Wo der Spielstand gerade steht, während nachgespielt wird. */
-interface Progress {
-  empty: boolean;
-  occurrence: boolean;
-  uwp: Partial<Record<UwpKind, number>>;
-  navalBase: boolean | undefined;
-  scoutBase: boolean | undefined;
-  gasGiant: boolean | undefined;
-}
-
-/** Der nächste Wurf, oder `name`, wenn alle Würfe da sind. */
-function nextStep(p: Progress): WorldStep {
-  if (!p.occurrence) return 'occurrence';
-  if (p.empty) return 'done';
-  const { uwp } = p;
-  if (uwp.starport === undefined) return 'starport';
-  if (p.navalBase === undefined) return 'navalBase';
-  if (p.scoutBase === undefined) return 'scoutBase';
-  if (p.gasGiant === undefined) return 'gasGiant';
-  for (const kind of uwpKinds) if (uwp[kind] === undefined) return kind;
-  return 'name';
+/** Was ein Hexfeld als Nächstes braucht: einen Wurf, den Namen, oder nichts mehr. */
+export function stepOf(hex: Hex): WorldStep {
+  if (hex.empty) return 'done';
+  if (hex.uwp.starport === undefined) return 'starport';
+  if (hex.navalBase === undefined) return 'navalBase';
+  if (hex.scoutBase === undefined) return 'scoutBase';
+  if (hex.gasGiant === undefined) return 'gasGiant';
+  for (const kind of uwpKinds) if (hex.uwp[kind] === undefined) return kind;
+  return hex.name === undefined ? 'name' : 'done';
 }
 
 /** Setzt, was ohne Wurf feststeht: keine Basis bei manchen Raumhäfen, Atmosphäre und Hydrographie bei kleinen Welten. */
-function settle(p: Progress): void {
-  const { uwp } = p;
-  const port = uwp.starport === undefined ? undefined : ehex(uwp.starport);
-  if (port !== undefined && p.navalBase === undefined && !['A', 'B'].includes(port)) p.navalBase = false;
-  if (port !== undefined && p.scoutBase === undefined && ['E', 'X'].includes(port)) p.scoutBase = false;
+function settle(hex: Hex): Hex {
+  const port = hex.uwp.starport === undefined ? undefined : ehex(hex.uwp.starport);
+  const uwp = { ...hex.uwp };
+  let { navalBase, scoutBase } = hex;
+  if (port !== undefined && navalBase === undefined && !['A', 'B'].includes(port)) navalBase = false;
+  if (port !== undefined && scoutBase === undefined && ['E', 'X'].includes(port)) scoutBase = false;
   if (uwp.size === 0 && uwp.atmosphere === undefined) uwp.atmosphere = 0;
   if (uwp.size !== undefined && uwp.size <= 1 && uwp.hydrographics === undefined) uwp.hydrographics = 0;
+  return {
+    ...hex,
+    uwp,
+    ...(navalBase === undefined ? {} : { navalBase }),
+    ...(scoutBase === undefined ? {} : { scoutBase }),
+  };
 }
 
-/** Der DM des nächsten Wurfs in Teilen; die Summe ist der DM, den der Wurf festhält. */
-export function worldDmParts(state: Pick<WorldState, 'uwp'>, kind: WorldRollKind): readonly WorldDmPart[] {
-  const { uwp } = state;
+/** Der DM des nächsten Wurfs in Teilen; die Summe ist der DM des Wurfs. */
+export function worldDmParts(hex: Pick<Hex, 'uwp'>, kind: WorldRollKind): readonly WorldDmPart[] {
+  const { uwp } = hex;
   const value = (k: UwpKind) => uwp[k] ?? 0;
   switch (kind) {
     case 'scoutBase': {
@@ -198,82 +162,44 @@ export function worldDmParts(state: Pick<WorldState, 'uwp'>, kind: WorldRollKind
   }
 }
 
-/** Was ein Wurf für den Stand bedeutet; `parts` nach dem Stand vor dem Wurf. */
-function apply(p: Progress, roll: WorldRoll, parts: readonly WorldDmPart[]): WorldRollOutcome {
-  const total = sumOf(roll) + roll.dm;
-  const none = { value: undefined, success: undefined, row: undefined, parts };
-  switch (roll.kind) {
-    case 'occurrence': {
-      const success = total >= (roll.target ?? OCCURRENCE_TARGET);
-      p.occurrence = true;
-      p.empty = !success;
-      return { ...none, success };
-    }
-    case 'navalBase':
-    case 'scoutBase':
-    case 'gasGiant': {
-      const row = systemRow(total);
-      p[roll.kind] = row[roll.kind];
-      return { ...none, row };
-    }
-    case 'starport': {
-      const row = systemRow(total);
-      const value = EHEX.indexOf(row.starport);
-      p.uwp.starport = value;
-      return { ...none, row, value };
-    }
-    default: {
-      const value = Math.max(0, roll.kind === 'hydrographics' ? Math.min(MAX_HYDROGRAPHICS, total) : total);
-      p.uwp[roll.kind] = value;
-      return { ...none, value };
-    }
-  }
+/** Ein neues Hexfeld nach dem Vorkommen: Summe + DM ≥ Zielwert heißt, es gibt eine Welt. */
+export function occurrenceHex(column: number, row: number, total: number, target: number): Hex {
+  return { column, row, empty: total < target, uwp: {} };
 }
 
 /**
- * Spielt die Würfe eines Hexfeldes der Reihe nach nach und prüft sie gegen die Regeln: Jeder Wurf
- * muss der sein, der als Nächstes dran ist, mit so vielen Würfeln, wie er braucht.
+ * Trägt das Ergebnis eines Wurfs (Summe + DM) ins Hexfeld ein. Der Wurf muss der sein, der als
+ * Nächstes dran ist; was danach ohne Wurf feststeht, wird mit gesetzt.
  */
-export function replayHex(hex: Pick<Hex, 'rolls' | 'name'>): WorldState {
-  const p: Progress = { empty: false, occurrence: false, uwp: {}, navalBase: undefined, scoutBase: undefined, gasGiant: undefined };
-  const outcomes: WorldRollOutcome[] = [];
-  for (const roll of hex.rolls) {
-    const step = nextStep(p);
-    if (roll.kind !== step) throw new DomainError(`Ein Wurf „${roll.kind}“ passt nicht zum Schritt „${step}“.`);
-    const count = diceCount(roll.kind);
-    if (roll.dice.length !== count || roll.dice.some((d) => !Number.isInteger(d) || d < 1 || d > 6)) {
-      throw new DomainError(`Ein Wurf „${roll.kind}“ hat ${count === 1 ? 'einen Würfel' : 'zwei Würfel'} von 1 bis 6.`);
+export function enterRoll(hex: Hex, kind: WorldRollKind, total: number): Hex {
+  const step = stepOf(hex);
+  if (kind !== step) throw new DomainError(`Ein Wurf „${kind}“ passt nicht zum Schritt „${step}“.`);
+  switch (kind) {
+    case 'occurrence':
+      throw new DomainError('Das Vorkommen würfelt man für ein nicht erzeugtes Feld.');
+    case 'starport':
+      return settle({ ...hex, uwp: { ...hex.uwp, starport: EHEX.indexOf(systemRow(total).starport) } });
+    case 'navalBase':
+    case 'scoutBase':
+    case 'gasGiant':
+      return settle({ ...hex, [kind]: systemRow(total)[kind] });
+    default: {
+      const value = Math.max(0, kind === 'hydrographics' ? Math.min(MAX_HYDROGRAPHICS, total) : total);
+      return settle({ ...hex, uwp: { ...hex.uwp, [kind]: value } });
     }
-    if (!Number.isInteger(roll.dm)) throw new DomainError('Ein DM ist eine ganze Zahl.');
-    outcomes.push(apply(p, roll, worldDmParts(p, roll.kind)));
-    settle(p);
   }
-  let step = nextStep(p);
-  if (hex.name !== undefined) {
-    if (step !== 'name') throw new DomainError('Nur eine fertig gewürfelte Welt hat einen Namen.');
-    if (!hex.name.trim()) throw new DomainError('Die Welt braucht einen Namen.');
-    step = 'done';
-  }
-  return { step, empty: p.empty, uwp: { ...p.uwp }, navalBase: p.navalBase, scoutBase: p.scoutBase, gasGiant: p.gasGiant, outcomes };
 }
 
-/** Die Handelscodes einer fertigen Welt: jeder, dessen Bedingungen alle erfüllt sind. */
-export function tradeCodesOf(state: WorldState): readonly TradeCode[] {
-  if (state.empty || uwpKinds.some((k) => state.uwp[k] === undefined)) return [];
-  return ref.worlds.tradeCodes.filter((code) => code.if.every((c) => c.digits.includes(state.uwp[c.of]!)));
+/** Die Handelscodes einer Welt, sobald das UWP vollständig ist: jeder, dessen Bedingungen alle erfüllt sind. */
+export function tradeCodesOf(hex: Hex): readonly TradeCode[] {
+  if (hex.empty || uwpKinds.some((k) => hex.uwp[k] === undefined)) return [];
+  return ref.worlds.tradeCodes.filter((code) => code.if.every((c) => c.digits.includes(hex.uwp[c.of]!)));
 }
 
 /** Das UWP in der üblichen Schreibweise, z. B. A788899-C; offene Stellen als „?“. */
-export function uwpCode(state: WorldState): string {
-  const digit = (k: UwpKind) => (state.uwp[k] === undefined ? '?' : ehex(state.uwp[k]));
+export function uwpCode(uwp: Uwp): string {
+  const digit = (k: UwpKind) => (uwp[k] === undefined ? '?' : ehex(uwp[k]));
   return `${uwpKinds.slice(0, -1).map(digit).join('')}-${digit('tech')}`;
-}
-
-/** Was der nächste Wurf braucht: Würfel, DM in Teilen und beim Vorkommen den Zielwert. */
-export function nextWorldRoll(state: WorldState): { readonly kind: WorldRollKind; readonly dice: 1 | 2; readonly parts: readonly WorldDmPart[]; readonly target: number | undefined } | undefined {
-  const step = state.step;
-  if (step === 'name' || step === 'done') return undefined;
-  return { kind: step, dice: diceCount(step), parts: worldDmParts(state, step), target: step === 'occurrence' ? OCCURRENCE_TARGET : undefined };
 }
 
 function checkPosition(column: number, row: number): void {
@@ -282,52 +208,80 @@ function checkPosition(column: number, row: number): void {
   }
 }
 
-function replaceHex(hexes: readonly Hex[], hex: Hex): readonly Hex[] {
-  const others = hexes.filter((h) => h.column !== hex.column || h.row !== hex.row);
-  return [...others, hex];
-}
-
-function appendRoll(hexes: readonly Hex[], hex: Hex, random: Random): readonly Hex[] {
-  const next = nextWorldRoll(replayHex(hex));
-  if (!next) throw new DomainError(`Für das Feld ${hexId(hex.column, hex.row)} gibt es nichts mehr zu würfeln.`);
-  const dice = Array.from({ length: next.dice }, () => random.int(1, 6));
-  const dm = next.parts.reduce((sum, part) => sum + part.dm, 0);
-  const roll: WorldRoll = next.target === undefined ? { kind: next.kind, dice, dm } : { kind: next.kind, dice, dm, target: next.target };
-  return replaceHex(hexes, { ...hex, rolls: [...hex.rolls, roll] });
-}
-
-/** Würfelt das Vorkommen eines nicht erzeugten Feldes; damit entsteht das Hexfeld, leer oder mit Welt. */
-export function rollOccurrence(hexes: readonly Hex[], column: number, row: number, random: Random): readonly Hex[] {
-  checkPosition(column, row);
-  if (hexAt(hexes, column, row)) throw new DomainError(`Das Feld ${hexId(column, row)} ist schon erzeugt.`);
-  return appendRoll(hexes, { column, row, rolls: [] }, random);
-}
-
-/** Würfelt den nächsten Wurf einer Welt in Erschaffung. */
-export function rollWorld(hexes: readonly Hex[], column: number, row: number, random: Random): readonly Hex[] {
-  const hex = hexAt(hexes, column, row);
-  if (!hex) throw new DomainError(`Für das Feld ${hexId(column, row)} erst das Vorkommen würfeln.`);
-  return appendRoll(hexes, hex, random);
+/** Ersetzt ein Hexfeld oder nimmt es neu auf. */
+export function putHex(hexes: readonly Hex[], hex: Hex): readonly Hex[] {
+  checkPosition(hex.column, hex.row);
+  return [...hexes.filter((h) => h.column !== hex.column || h.row !== hex.row), hex];
 }
 
 /** Gibt der fertig gewürfelten Welt ihren Namen; danach ist sie fertig. */
 export function nameWorld(hexes: readonly Hex[], column: number, row: number, name: string): readonly Hex[] {
   const hex = hexAt(hexes, column, row);
-  if (!hex || replayHex(hex).step !== 'name') throw new DomainError('Erst alles würfeln, dann den Namen geben.');
+  if (!hex || stepOf(hex) !== 'name') throw new DomainError('Erst alles würfeln, dann den Namen geben.');
   const trimmed = name.trim();
   if (!trimmed) throw new DomainError('Die Welt braucht einen Namen.');
-  return replaceHex(hexes, { ...hex, name: trimmed });
+  return putHex(hexes, { ...hex, name: trimmed });
 }
 
 /** Verwirft eine Welt in Erschaffung: Das Feld ist wieder nicht erzeugt. Fertiges bleibt. */
 export function discardWorld(hexes: readonly Hex[], column: number, row: number): readonly Hex[] {
   const hex = hexAt(hexes, column, row);
   if (!hex) return hexes;
-  if (replayHex(hex).step === 'done') throw new DomainError('Ein fertiges Feld lässt sich nicht verwerfen.');
+  if (stepOf(hex) === 'done') throw new DomainError('Ein fertiges Feld lässt sich nicht verwerfen.');
   return hexes.filter((h) => h !== hex);
 }
 
-/** Prüft die Hexfelder einer Kampagne: im Subsektor, je Feld höchstens eins, jedes mit mindestens einem Wurf. */
+/** Welche Werte ein Wurf ergeben kann (Summe + DM, unter 0 als 0). */
+const ranges: Record<UwpKind, readonly [number, number]> = {
+  starport: [10, 31],
+  size: [0, 10],
+  atmosphere: [0, 15],
+  hydrographics: [0, MAX_HYDROGRAPHICS],
+  population: [0, 10],
+  government: [0, 15],
+  law: [0, 20],
+  tech: [0, 22],
+};
+
+/**
+ * Prüft ein Hexfeld gegen die Regeln: Werte nur in der Reihenfolge des Ablaufs, jeder in dem Bereich,
+ * den sein Wurf ergeben kann, und die Werte ohne Wurf so, wie die Regeln sie setzen.
+ */
+export function validateHex(hex: Hex): void {
+  const id = hexId(hex.column, hex.row);
+  const fail = (why: string) => {
+    throw new DomainError(`Das Feld ${id}: ${why}`);
+  };
+  const values: [string, unknown][] = [
+    ['starport', hex.uwp.starport],
+    ['navalBase', hex.navalBase],
+    ['scoutBase', hex.scoutBase],
+    ['gasGiant', hex.gasGiant],
+    ...uwpKinds.slice(1).map((k): [string, unknown] => [k, hex.uwp[k]]),
+    ['name', hex.name],
+  ];
+  if (hex.empty && values.some(([, v]) => v !== undefined)) fail('Ein leeres Feld hat keine Welt.');
+  const missing = values.findIndex(([, v]) => v === undefined);
+  if (missing >= 0 && values.slice(missing).some(([, v]) => v !== undefined)) fail(`Es fehlt ${values[missing]![0]}, aber Späteres steht schon da.`);
+  for (const kind of uwpKinds) {
+    const value = hex.uwp[kind];
+    if (value === undefined) continue;
+    const [min, max] = ranges[kind];
+    if (!Number.isInteger(value) || value < min || value > max) fail(`${labels[kind]} ${value} kann kein Wurf ergeben.`);
+  }
+  if (hex.uwp.starport !== undefined && !ref.worlds.systemContents.some((r) => EHEX.indexOf(r.starport) === hex.uwp.starport)) fail('Diesen Raumhafen gibt es nicht.');
+  if (hex.name !== undefined && !hex.name.trim()) fail('Die Welt braucht einen Namen.');
+  // Was ohne Wurf feststeht, muss so stehen, wie die Regeln es setzen.
+  const settled = settle(hex);
+  const port = hex.uwp.starport === undefined ? undefined : ehex(hex.uwp.starport);
+  if (port !== undefined && !['A', 'B'].includes(port) && hex.navalBase === true) fail(`Bei Raumhafen ${port} gibt es keine Marinebasis.`);
+  if (port !== undefined && ['E', 'X'].includes(port) && hex.scoutBase === true) fail(`Bei Raumhafen ${port} gibt es keine Scoutbasis.`);
+  if (hex.uwp.size === 0 && hex.uwp.atmosphere !== undefined && hex.uwp.atmosphere !== 0) fail('Größe 0 hat keine Atmosphäre.');
+  if (hex.uwp.size !== undefined && hex.uwp.size <= 1 && hex.uwp.hydrographics !== undefined && hex.uwp.hydrographics !== 0) fail('Größe 0 oder 1 hat keine Hydrographie.');
+  if (stepOf(settled) !== stepOf(hex)) fail('Ein Wert, der ohne Wurf feststeht, fehlt.');
+}
+
+/** Prüft die Hexfelder einer Kampagne: im Subsektor, je Feld höchstens eins, jedes nach den Regeln. */
 export function validateHexes(hexes: readonly Hex[]): void {
   const seen = new Set<string>();
   for (const hex of hexes) {
@@ -335,7 +289,31 @@ export function validateHexes(hexes: readonly Hex[]): void {
     const id = hexId(hex.column, hex.row);
     if (seen.has(id)) throw new DomainError(`Das Feld ${id} kommt doppelt vor.`);
     seen.add(id);
-    if (hex.rolls.length === 0) throw new DomainError(`Das Feld ${id} hat keinen Wurf.`);
-    replayHex(hex);
+    validateHex(hex);
   }
+}
+
+/** Ein Wurf, wie Hexfelder ihn gespeichert haben, bevor sie Werte statt Würfe hielten. */
+export interface LegacyWorldRoll {
+  readonly kind: WorldRollKind;
+  readonly dice: readonly number[];
+  readonly dm: number;
+  readonly target?: number;
+}
+
+/**
+ * Ein Hexfeld aus der Zeit, als es seine Würfe hielt: Die Würfe werden nachgespielt und als Werte
+ * übernommen. Passt ein Wurf nicht zu den Regeln, gibt es einen DomainError.
+ */
+export function hexFromRolls(old: { readonly column: number; readonly row: number; readonly name?: string; readonly rolls: readonly LegacyWorldRoll[] }): Hex {
+  const [first, ...rest] = old.rolls;
+  if (first?.kind !== 'occurrence') throw new DomainError(`Das Feld ${hexId(old.column, old.row)} beginnt nicht mit dem Vorkommen.`);
+  const total = (r: LegacyWorldRoll) => r.dice.reduce((a, b) => a + b, 0) + r.dm;
+  let hex = occurrenceHex(old.column, old.row, total(first), first.target ?? OCCURRENCE_TARGET);
+  for (const roll of rest) hex = enterRoll(hex, roll.kind, total(roll));
+  if (old.name !== undefined) {
+    if (stepOf(hex) !== 'name') throw new DomainError('Nur eine fertig gewürfelte Welt hat einen Namen.');
+    hex = { ...hex, name: old.name };
+  }
+  return hex;
 }

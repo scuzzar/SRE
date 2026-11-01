@@ -5,7 +5,7 @@ import { DomainError } from './errors';
 import { withQuestion, type LogEntry } from './log';
 import { entryOf, oddsOf, slotOfEntry } from './reference';
 import { characteristics } from './rules';
-import { validateHexes, type Hex, type WorldRoll } from './sector';
+import { hexFromRolls, uwpKinds, validateHexes, type Hex, type LegacyWorldRoll } from './sector';
 
 /**
  * Die Kampagnendatei: eine Kampagne als JSON, zum Sichern und Weitergeben. Sie enthält alles, was an
@@ -51,19 +51,29 @@ const CareerRollSchema = z.object({
 });
 const CareerSchema = z.object({ rolls: z.array(CareerRollSchema) });
 
-const HexSchema = z.object({
-  column: z.number().int(),
-  row: z.number().int(),
-  name: z.string().optional(),
-  rolls: z.array(
-    z.object({
-      kind: z.enum(['occurrence', 'starport', 'navalBase', 'scoutBase', 'gasGiant', 'size', 'atmosphere', 'hydrographics', 'population', 'government', 'law', 'tech']),
-      dice: z.array(die).min(1).max(2),
-      dm: z.number().int(),
-      target: z.number().int().optional(),
-    }),
-  ),
-});
+const position = { column: z.number().int(), row: z.number().int(), name: z.string().optional() };
+const HexSchema = z.union([
+  z.object({
+    ...position,
+    empty: z.boolean(),
+    navalBase: z.boolean().optional(),
+    scoutBase: z.boolean().optional(),
+    gasGiant: z.boolean().optional(),
+    uwp: z.object(Object.fromEntries(uwpKinds.map((k) => [k, z.number().int().optional()])) as Record<(typeof uwpKinds)[number], z.ZodOptional<z.ZodNumber>>),
+  }),
+  /** Aus der Zeit, als ein Hexfeld seine Würfe hielt; wird nachgespielt und als Werte übernommen. */
+  z.object({
+    ...position,
+    rolls: z.array(
+      z.object({
+        kind: z.enum(['occurrence', 'starport', 'navalBase', 'scoutBase', 'gasGiant', 'size', 'atmosphere', 'hydrographics', 'population', 'government', 'law', 'tech']),
+        dice: z.array(die).min(1).max(2),
+        dm: z.number().int(),
+        target: z.number().int().optional(),
+      }),
+    ),
+  }),
+]);
 
 const value = z.number();
 const CharacterSchema = z.object({
@@ -156,8 +166,16 @@ function careerOf(career: z.infer<typeof CareerSchema>): Career {
 
 /** Ein Hexfeld ohne leere optionale Felder, wie es im Spielstand steht. */
 function hexOf(hex: z.infer<typeof HexSchema>): Hex {
-  const rolls = hex.rolls.map(({ target, ...roll }): WorldRoll => (target === undefined ? roll : { ...roll, target }));
-  return hex.name === undefined ? { column: hex.column, row: hex.row, rolls } : { column: hex.column, row: hex.row, name: hex.name, rolls };
+  if ('rolls' in hex) {
+    const rolls = hex.rolls.map((r) => stripped(r) as LegacyWorldRoll);
+    return hexFromRolls(hex.name === undefined ? { column: hex.column, row: hex.row, rolls } : { column: hex.column, row: hex.row, name: hex.name, rolls });
+  }
+  return { ...stripped(hex), uwp: stripped(hex.uwp) } as Hex;
+}
+
+/** Ein Objekt ohne Felder, die `undefined` sind. */
+function stripped<T extends object>(value: T): T {
+  return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as T;
 }
 
 /** Ohne leere optionale Felder, wie sie im Spielstand stehen. */

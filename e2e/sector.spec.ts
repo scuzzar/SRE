@@ -26,14 +26,19 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     // „Später weiter“ behält die Welt in Erschaffung.
     await dialog.getByRole('button', { name: 'Später weiter' }).click();
     await map.getByRole('button', { name: `${id}, in Erschaffung: fortsetzen` }).click();
+    await expect(dialog.getByRole('button', { name: 'Verwerfen' })).toBeVisible();
     for (let i = 0; i < 12 && (await dialog.locator('.generation-main').count()) > 0; i++) await dialog.locator('.generation-main').click();
+    await expect(dialog.getByRole('region', { name: 'Würfe' })).toBeVisible();
     await dialog.getByLabel('Name der Welt').fill('Regina');
     await dialog.getByRole('button', { name: 'Übernehmen' }).click();
     const done = page.getByRole('dialog', { name: `Regina · ${id}` });
     await expect(done.getByRole('article', { name: 'Welt' })).toContainText(/[A-EX][0-9A-F]{6}-[0-9A-Z]/);
     await done.getByRole('button', { name: 'Schließen' }).first().click();
     await map.getByRole('button', { name: `${id}, Regina: Weltkarte öffnen` }).click();
-    await expect(page.getByRole('dialog', { name: `Regina · ${id}` })).toBeVisible();
+    // Wieder geöffnet: nur die Werte, keine Würfe.
+    const reopened = page.getByRole('dialog', { name: `Regina · ${id}` });
+    await expect(reopened.getByRole('article', { name: 'Welt' })).toBeVisible();
+    await expect(reopened.getByRole('region', { name: 'Würfe' })).toHaveCount(0);
     await page.getByRole('button', { name: 'Schließen' }).first().click();
     await expect(page.locator('.world-list')).toContainText('Regina');
     named = true;

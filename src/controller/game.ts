@@ -22,12 +22,9 @@ import {
   rollDice,
   rollNext,
   rollSkill,
-  rollOccurrence,
-  rollWorld,
   nameWorld,
   discardWorld,
   hexAt,
-  replayHex,
   setGeneration,
   setHexes,
   setOdds,
@@ -54,8 +51,10 @@ import {
   startTask,
   toggleCharacteristic,
   togglePick,
+  rollOccurrence,
+  rollWorld,
 } from '../model/draft';
-import { buildSnapshot, type ControllerState, type Screen, type Snapshot } from './snapshot';
+import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
 const closedDrafts = { card: undefined, task: undefined, details: false, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined } as const;
@@ -402,8 +401,8 @@ export class GameController {
    */
   chooseHex(column: number, row: number): void {
     const hex = hexAt(this.campaign.hexes, column, row);
-    const world = hex !== undefined && !replayHex(hex).empty;
-    if (world) return this.update({ world: { column, row }, worldError: undefined, selected: undefined });
+    const world = hex !== undefined && !hex.empty;
+    if (world) return this.update({ world: { column, row, rolls: [] }, worldError: undefined, selected: undefined });
     const same = this.state.selected?.column === column && this.state.selected.row === row;
     this.update({ selected: same ? undefined : { column, row }, worldError: undefined });
   }
@@ -418,7 +417,8 @@ export class GameController {
     const at = this.state.selected;
     if (!at) throw new DomainError('Es ist kein Feld gewählt.');
     try {
-      this.change(setHexes(this.campaign, rollOccurrence(this.campaign.hexes, at.column, at.row, this.deps.random)), { worldError: undefined });
+      const { hexes, roll } = rollOccurrence(this.campaign.hexes, at.column, at.row, this.deps.random);
+      this.change(setHexes(this.campaign, hexes), { selected: { ...at, occurrence: roll }, worldError: undefined });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ worldError: error.message });
@@ -432,27 +432,31 @@ export class GameController {
 
   /** Würfelt den nächsten Wurf der offenen Welt. */
   rollWorld(): void {
-    this.inWorld((hexes, { column, row }) => rollWorld(hexes, column, row, this.deps.random));
+    this.inWorld((hexes, at) => {
+      const { hexes: next, roll } = rollWorld(hexes, at.column, at.row, this.deps.random);
+      return { hexes: next, world: { ...at, rolls: [...at.rolls, roll] } };
+    });
   }
 
   /** Gibt der fertig gewürfelten Welt ihren Namen. */
   nameWorld(name: string): void {
-    this.inWorld((hexes, { column, row }) => nameWorld(hexes, column, row, name));
+    this.inWorld((hexes, at) => ({ hexes: nameWorld(hexes, at.column, at.row, name), world: at }));
   }
 
   /** Verwirft die Welt in Erschaffung; das Feld ist wieder nicht erzeugt. */
   discardWorld(): void {
-    this.inWorld((hexes, { column, row }) => discardWorld(hexes, column, row), true);
+    this.inWorld((hexes, at) => ({ hexes: discardWorld(hexes, at.column, at.row), world: undefined }));
   }
 
   // --- intern ----------------------------------------------------------------------------------
 
   /** Führt einen Schritt der Weltenerschaffung aus; verletzt er eine Regel, steht das auf der Weltkarte. */
-  private inWorld(step: (hexes: readonly Hex[], at: { column: number; row: number }) => readonly Hex[], close = false): void {
+  private inWorld(step: (hexes: readonly Hex[], at: OpenWorld) => { hexes: readonly Hex[]; world: OpenWorld | undefined }): void {
     const at = this.state.world;
     if (!at) throw new DomainError('Es ist keine Weltkarte offen.');
     try {
-      this.change(setHexes(this.campaign, step(this.campaign.hexes, at)), close ? { world: undefined, worldError: undefined } : { worldError: undefined });
+      const { hexes, world } = step(this.campaign.hexes, at);
+      this.change(setHexes(this.campaign, hexes), { world, worldError: undefined });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ worldError: error.message });

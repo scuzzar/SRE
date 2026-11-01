@@ -24,9 +24,9 @@ function dmText(line: WorldLine): string {
 
 /**
  * Die Weltkarte im Vordergrund: oben die Welt, wie sie gerade steht (UWP im Klartext, Basen,
- * Handelscodes), darunter ihre Würfe. Solange sie entsteht, unten die Würfelbühne und der Knopf für
- * den nächsten Wurf, wie in der Charaktererschaffung. Geloggt ist der Wurf schon, bevor die Würfel
- * rollen; die Karte zeigt den neuen Stand erst, wenn das Ergebnis unten feststeht. Ein Tippen
+ * Handelscodes), darunter die Würfe, seit sie offen ist; wieder geöffnet zeigt sie nur die Werte.
+ * Solange sie entsteht, unten die Würfelbühne und der Knopf für den nächsten Wurf, wie in der
+ * Charaktererschaffung. Eingetragen ist der Wurf schon, bevor die Würfel rollen; die Karte zeigt den neuen Stand erst, wenn das Ergebnis unten feststeht. Ein Tippen
  * irgendwo beendet die Animation.
  */
 export function WorldSheet({ world }: { world: WorldView }) {
@@ -68,7 +68,6 @@ export function WorldSheet({ world }: { world: WorldView }) {
           <h2 id="world-title">{running ? `Weltenerschaffung ${world.id}` : `${world.name ?? 'Leer'} · ${world.id}`}</h2>
           <span className="header-right">
             {running &&
-              world.lines.length > 0 &&
               (confirmDiscard ? (
                 <button type="button" className="ghost danger compact" onClick={() => game.discardWorld()}>
                   Wirklich verwerfen?

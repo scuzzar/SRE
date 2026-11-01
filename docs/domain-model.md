@@ -30,7 +30,10 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > *Namen*); das Bild ändert sich dadurch nicht.
 >
 > Am 31. Oktober 2026 freigegeben: der Subsektor mit Weltenerschaffung (siehe *Subsektor* und
-> *Weltenerschaffung*). Neu im Bild: `Hex`, `WorldRoll`, `Campaign.hexes`,
+> *Weltenerschaffung*).
+>
+> Am 1. November 2026 freigegeben: Ein Hexfeld speichert die Werte seiner Welt, nicht ihre Würfe. Neu im Bild: `Uwp`, die Felder `empty`, `navalBase`, `scoutBase`, `gasGiant` am
+> `Hex`; `WorldRoll` ist flüchtig. Neu im Bild: `Hex`, `WorldRoll`, `Campaign.hexes`,
 > `WorldStep`, `WorldRollKind` und als Referenzdaten `SystemContents`, `UwpDigit`, `TradeCode`.
 >
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
@@ -111,11 +114,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Subsektor | (`Campaign.hexes`) | Die Karte der Kampagne: 8 × 10 Hexfelder wie auf TAS Form 6; in der App der Reiter „Sektor“ |
 | Hexfeld | `Hex` | Ein erzeugtes Feld des Subsektors, benannt nach Spalte und Zeile, z. B. 0304 |
 | Nicht erzeugt | (kein `Hex`) | Ein Feld, für das noch nicht gewürfelt wurde; nur hier beginnt eine Weltenerschaffung |
-| Leer | `Hex./empty` | Ein erzeugtes Feld ohne Welt: Der erste Wurf hat keine ergeben |
+| Leer | `Hex.empty` | Ein erzeugtes Feld ohne Welt: Das Vorkommen hat keine ergeben |
 | Welt | `Hex` mit Welt | Ein Hexfeld mit Welt (Planet): Name, UWP, Basen, Gasriese, Handelscodes |
 | Weltenerschaffung | `Hex` mit `/step` vor `done` | Eine Welt, die gerade Wurf für Wurf entsteht |
-| Wurf der Weltenerschaffung | `WorldRoll` | Ein Wurf aus der World Generation Checklist, z. B. Atmosphäre 2W6 − 7 + Größe |
-| UWP | `Hex./uwp` | Universal World Profile, z. B. A788899-C: Raumhafen, Größe, Atmosphäre, Hydrographie, Bevölkerung, Regierung, Gesetz, TL |
+| Wurf der Weltenerschaffung | `WorldRoll` | Ein Wurf aus der World Generation Checklist, z. B. Atmosphäre 2W6 − 7 + Größe; flüchtig, gespeichert wird nur sein Ergebnis |
+| UWP | `Uwp` | Universal World Profile, z. B. A788899-C: Raumhafen, Größe, Atmosphäre, Hydrographie, Bevölkerung, Regierung, Gesetz, TL |
 | Ziffer des UWP | `UwpDigit` | Eine Ziffer einer Stelle des UWP mit ihrem Text und ihrem DM auf den TL, z. B. Atmosphäre 8, Dense |
 | Systeminhalt | `SystemContents` | Eine Zeile der System Contents Table: Raumhafen, Marinebasis, Scoutbasis, Gasriese |
 | Handelscode | `TradeCode` | Ag, Na, In, Ni, Ri, Po, Wa, De, Va, As, Ic, mit Bedingungen an das UWP |
@@ -131,7 +134,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   wird beim Bestätigen zum `CardPick`) und die Probe in Vorbereitung (`Task`, wird beim Würfeln zum
   `TaskResult`). Je Kampagne gibt es höchstens eine offene Karte und höchstens eine Probe. Pfeile
   führen nur aus `draft` heraus, nie hinein: Der gespeicherte Stand weiß nichts von seinen
-  Entwürfen. Entwürfe werden nie gespeichert; beendet das Handy die App, sind sie weg.
+  Entwürfen. Entwürfe werden nie gespeichert; beendet das Handy die App, sind sie weg. Ebenso flüchtig ist der Wurf
+  der Weltenerschaffung (`WorldRoll`, siehe dort): Gespeichert wird nur, was er ins Hexfeld einträgt.
 - **Mehrere Kampagnen.** Die Kampagne ist die oberste Ebene: Alles, was gespeichert wird, hängt an
   genau einer Kampagne, und Kampagnen wissen nichts voneinander. Es gibt immer mindestens eine;
   die letzte lässt sich nicht löschen. Jede hat einen Namen, der nicht leer ist und sich ändern
@@ -377,21 +381,25 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   (Charts S. 26): 0101 links oben, die Spalten mit gerader Nummer eine halbe Zeile tiefer. Ein
   Hexfeld (`Hex`) gibt es erst, wenn für es gewürfelt wurde; je Spalte und Zeile höchstens eins.
   Ein Feld ist also **nicht erzeugt** (kein `Hex`), **in Erschaffung** (`/step` vor `done`),
-  **leer** (`/empty`) oder hat eine **Welt**. Nur ein nicht erzeugtes Feld lässt eine neue
+  **leer** (`empty`) oder hat eine **Welt**. Nur ein nicht erzeugtes Feld lässt eine neue
   Weltenerschaffung zu: Ihr erster Wurf, das Vorkommen, wird im Subsektor selbst gewürfelt, die
   übrigen auf der Weltkarte. Eine Welt antippen öffnet ihre Weltkarte, ein Feld in Erschaffung setzt
   sie fort. Mehrere Felder dürfen zugleich in Erschaffung sein. Die Kampagnendatei enthält die
   Hexfelder; eine neue Kampagne beginnt mit einem Subsektor ohne Hexfelder.
 - **Weltenerschaffung** nach der *World Generation Checklist* (Charts S. 15), jeder Wert einzeln
-  gewürfelt wie bei der Charaktererschaffung. Das Hexfeld hält nur seine Würfe (`rolls`) und den
-  Namen; UWP, Basen, Gasriese, Handelscodes und der nächste Schritt (`/step`) folgen daraus. Würfe
-  werden nur angehängt. Jeder `WorldRoll` hält Art, Würfel und DM fest, das Vorkommen auch seinen
-  Zielwert; der Wert (`/value`) folgt allein daraus. Der Ablauf, in dieser Reihenfolge:
-  1. *Vorkommen* (`occurrence`): 1W6, Welt bei 4+. Sonst ist das Feld **leer** und fertig.
+  gewürfelt wie bei der Charaktererschaffung. **Gespeichert werden die Werte, nicht die Würfe:** Das
+  Hexfeld hält, ob es leer ist, die Stellen des UWP (`Uwp`), die Basen, den Gasriesen und den Namen,
+  jedes, sobald es feststeht. Der nächste Schritt (`/step`) folgt daraus, welche Werte schon da sind;
+  die Handelscodes folgen aus dem UWP. Ein Wurf (`WorldRoll`) ist flüchtig: Er hält Art, Würfel und
+  DM, beim Vorkommen den Zielwert, und trägt sein Ergebnis ins Hexfeld ein (`on roll`); danach wird
+  er nicht gespeichert. Die Weltkarte zeigt die Würfe, die man gemacht hat, seit sie offen ist;
+  öffnet man eine Welt wieder, zeigt sie nur die Werte. Der Ablauf, in dieser Reihenfolge:
+  1. *Vorkommen* (`occurrence`): 1W6, Welt bei 4+. Sonst ist das Feld **leer** und fertig. Mit
+     diesem Wurf entsteht das Hexfeld (`empty`).
   2. *Systeminhalt*, je eine Spalte der System Contents Table mit 2W6 (`/row`, Summe + DM, auf 2
      bis 12 begrenzt): Raumhafen; Marinebasis nur bei Raumhafen A oder B; Scoutbasis nicht bei E
-     oder X, mit DM −1 bei C, −2 bei B, −3 bei A; Gasriese. Ein Wurf, der nicht stattfindet, fehlt
-     unter den Würfen und heißt „nein“.
+     oder X, mit DM −1 bei C, −2 bei B, −3 bei A; Gasriese. Eine Basis, für die nicht gewürfelt
+     wird, steht sofort auf „nein“.
   3. *UWP*: Größe 2W6 − 2; Atmosphäre 2W6 − 7 + Größe, bei Größe 0 kein Wurf und 0; Hydrographie
      2W6 − 7 + Größe, DM −4 bei Atmosphäre 0, 1 oder A+, bei Größe 0 oder 1 kein Wurf und 0;
      Bevölkerung 2W6 − 2; Regierung 2W6 − 7 + Bevölkerung; Gesetz 2W6 − 7 + Regierung; TL 1W6 plus
@@ -405,8 +413,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
   **Verwerfen** geht, solange die Welt in Erschaffung ist, und macht das Feld wieder zu einem nicht
   erzeugten. Ein leeres Feld und eine fertige Welt bleiben, wie sie sind. Die Weltenerschaffung
-  steht nicht im Log; ihre Würfe sind ihr Verlauf. Beim Import wird jedes Hexfeld von vorn
-  nachgespielt und gegen diese Regeln geprüft.
+  steht nicht im Log und hat keinen Verlauf. Beim Import wird jedes Hexfeld gegen diese Regeln
+  geprüft: Werte nur in der Reihenfolge des Ablaufs, jeder in dem Bereich, den sein Wurf ergeben
+  kann, und die Werte ohne Wurf so, wie die Regeln sie setzen (Atmosphäre 0 bei Größe 0, keine
+  Marinebasis bei Raumhafen C). Hexfelder aus der Zeit, als die Würfe gespeichert wurden, werden
+  beim Laden nachgespielt und als Werte übernommen.
 - **Handelscodes** folgen aus dem UWP (`/trade`): Ein Code gilt, wenn jede seiner Bedingungen
   (`TradeCondition`: Stelle des UWP und erlaubte Ziffern) erfüllt ist. Es sind die elf aus den
   Charts (S. 15): Agricultural, Non-Agricultural, Industrial, Non-Industrial, Rich, Poor, Water

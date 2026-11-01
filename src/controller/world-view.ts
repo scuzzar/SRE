@@ -3,10 +3,9 @@ import {
   hexAt,
   hexId,
   OCCURRENCE_TARGET,
-  nextWorldRoll,
-  replayHex,
   SECTOR_COLUMNS,
   SECTOR_ROWS,
+  stepOf,
   tradeCodesOf,
   uwpCode,
   uwpDigitOf,
@@ -15,12 +14,10 @@ import {
   type Hex,
   type UwpKind,
   type WorldDmPart,
-  type WorldRoll,
   type WorldRollKind,
-  type WorldRollOutcome,
-  type WorldState,
   type WorldStep,
 } from '../model';
+import { nextWorldRoll, totalOf, type WorldRoll } from '../model/draft';
 
 /** Ein Feld der Karte. */
 export interface HexView {
@@ -120,43 +117,47 @@ function yesNo(value: boolean | undefined): string {
   return value ? 'ja' : 'nein';
 }
 
-function resultOf(roll: WorldRoll, outcome: WorldRollOutcome): string {
+function resultOf(roll: WorldRoll): string {
   switch (roll.kind) {
     case 'occurrence':
-      return outcome.success ? 'Welt' : 'leer';
+      return roll.success ? 'Welt' : 'leer';
     case 'navalBase':
     case 'scoutBase':
     case 'gasGiant':
-      return yesNo(outcome.row?.[roll.kind]);
+      return yesNo(roll.row?.[roll.kind]);
     default: {
-      const value = outcome.value!;
+      const value = roll.value!;
       const text = uwpDigitOf(roll.kind, value)?.text;
       return text ? `${ehex(value)} · ${text}` : ehex(value);
     }
   }
 }
 
-function worldLines(hex: Hex, state: WorldState): readonly WorldLine[] {
-  return hex.rolls.map((roll, index) => {
-    const outcome = state.outcomes[index]!;
-    return {
-      index,
-      kind: roll.kind,
-      label: worldLabel(roll.kind),
-      dice: roll.dice,
-      dm: roll.dm,
-      parts: outcome.parts,
-      total: roll.dice.reduce((a, b) => a + b, 0) + roll.dm,
-      target: roll.target,
-      success: outcome.success,
-      result: resultOf(roll, outcome),
-    };
-  });
+/** Ein Wurf als Zeile; `index` zählt die Würfe, seit die Weltkarte offen ist. */
+function worldLine(roll: WorldRoll, index: number): WorldLine {
+  return {
+    index,
+    kind: roll.kind,
+    label: worldLabel(roll.kind),
+    dice: roll.dice,
+    dm: roll.dm,
+    parts: roll.parts,
+    total: totalOf(roll),
+    target: roll.target,
+    success: roll.success,
+    result: resultOf(roll),
+  };
 }
 
 /** Welche Basen eine Welt hat, wie in der Liste eines Subsektors: N für Marine, S für Scouts. */
-function basesText(state: WorldState): string {
-  return `${state.navalBase ? 'N' : ''}${state.scoutBase ? 'S' : ''}`;
+function basesText(hex: Hex): string {
+  return `${hex.navalBase ? 'N' : ''}${hex.scoutBase ? 'S' : ''}`;
+}
+
+function hexState(hex: Hex | undefined): HexView['state'] {
+  if (!hex) return 'open';
+  if (hex.empty) return 'empty';
+  return stepOf(hex) === 'done' ? 'world' : 'pending';
 }
 
 /** Alle 80 Felder des Subsektors, spaltenweise. */
@@ -165,20 +166,19 @@ export function sectorView(hexes: readonly Hex[]): readonly HexView[] {
   for (let column = 1; column <= SECTOR_COLUMNS; column++) {
     for (let row = 1; row <= SECTOR_ROWS; row++) {
       const hex = hexAt(hexes, column, row);
-      const state = hex ? replayHex(hex) : undefined;
       cells.push({
         id: hexId(column, row),
         column,
         row,
-        state: !state ? 'open' : state.step !== 'done' ? 'pending' : state.empty ? 'empty' : 'world',
+        state: hexState(hex),
         name: hex?.name,
-        starport: state?.uwp.starport === undefined ? undefined : ehex(state.uwp.starport),
-        navalBase: state?.navalBase ?? false,
-        scoutBase: state?.scoutBase ?? false,
-        gasGiant: state?.gasGiant ?? false,
-        size: state?.uwp.size,
-        hydrographics: state?.uwp.hydrographics,
-        population: state?.uwp.population,
+        starport: hex?.uwp.starport === undefined ? undefined : ehex(hex.uwp.starport),
+        navalBase: hex?.navalBase ?? false,
+        scoutBase: hex?.scoutBase ?? false,
+        gasGiant: hex?.gasGiant ?? false,
+        size: hex?.uwp.size,
+        hydrographics: hex?.uwp.hydrographics,
+        population: hex?.uwp.population,
       });
     }
   }
@@ -190,33 +190,31 @@ export function worldList(hexes: readonly Hex[]): readonly WorldListItem[] {
   return [...hexes]
     .sort((a, b) => a.column - b.column || a.row - b.row)
     .flatMap((hex) => {
-      const state = replayHex(hex);
-      if (state.step !== 'done' || state.empty) return [];
+      if (hexState(hex) !== 'world') return [];
       return [
         {
           id: hexId(hex.column, hex.row),
           column: hex.column,
           row: hex.row,
           name: hex.name!,
-          uwp: uwpCode(state),
-          bases: basesText(state),
-          trade: tradeCodesOf(state).map((t) => t.id),
-          gasGiant: state.gasGiant ?? false,
+          uwp: uwpCode(hex.uwp),
+          bases: basesText(hex),
+          trade: tradeCodesOf(hex).map((t) => t.id),
+          gasGiant: hex.gasGiant ?? false,
         },
       ];
     });
 }
 
-export function selectedView(hexes: readonly Hex[], column: number, row: number, error: string | undefined): SelectedHexView {
-  const hex = hexAt(hexes, column, row);
-  const state = hex ? replayHex(hex) : undefined;
+/** Das gewählte Feld; `occurrence` ist das Vorkommen, wenn es gerade hier gewürfelt wurde. */
+export function selectedView(hexes: readonly Hex[], column: number, row: number, occurrence: WorldRoll | undefined, error: string | undefined): SelectedHexView {
   return {
     id: hexId(column, row),
     column,
     row,
-    state: !state ? 'open' : state.step !== 'done' ? 'pending' : state.empty ? 'empty' : 'world',
+    state: hexState(hexAt(hexes, column, row)),
     target: OCCURRENCE_TARGET,
-    occurrence: hex && state ? worldLines(hex, state)[0] : undefined,
+    occurrence: occurrence && worldLine(occurrence, 0),
     error,
   };
 }
@@ -251,33 +249,33 @@ const prompts: Record<WorldRollKind, string> = {
   tech: 'UWP: Tech Level, 1W6 + DMs',
 };
 
-/** Die Weltkarte eines Feldes, auch eines nicht erzeugten (dann ohne Würfe). */
-export function worldView(hexes: readonly Hex[], column: number, row: number, error: string | undefined): WorldView {
-  const hex: Hex = hexAt(hexes, column, row) ?? { column, row, rolls: [] };
-  const state = replayHex(hex);
-  const next = nextWorldRoll(state);
+/** Die Weltkarte eines Feldes mit den Würfen, die man gemacht hat, seit sie offen ist. */
+export function worldView(hexes: readonly Hex[], column: number, row: number, rolls: readonly WorldRoll[], error: string | undefined): WorldView {
+  const hex: Hex = hexAt(hexes, column, row) ?? { column, row, empty: false, uwp: {} };
+  const step = stepOf(hex);
+  const next = nextWorldRoll(hex);
   const action: WorldAction = next
-    ? { kind: 'roll', label: rollLabels[next.kind], dice: next.dice, parts: next.parts, target: next.target }
-    : state.step === 'name'
+    ? { kind: 'roll', label: rollLabels[next.kind], dice: next.dice, parts: next.parts, target: undefined }
+    : step === 'name'
       ? { kind: 'name' }
       : { kind: 'done' };
-  const prompt = next ? prompts[next.kind] : state.step === 'name' ? 'Fertig gewürfelt: Namen eingeben und übernehmen' : state.empty ? 'Kein System in diesem Feld' : '';
+  const prompt = next ? prompts[next.kind] : step === 'name' ? 'Fertig gewürfelt: Namen eingeben und übernehmen' : hex.empty ? 'Kein System in diesem Feld' : '';
   return {
     id: hexId(column, row),
     name: hex.name,
-    step: state.step,
-    empty: state.empty,
+    step,
+    empty: hex.empty,
     prompt,
-    uwp: uwpCode(state),
+    uwp: uwpCode(hex.uwp),
     profile: uwpKinds.map((kind) => {
-      const value = state.uwp[kind];
+      const value = hex.uwp[kind];
       return { kind, label: worldLabel(kind), code: value === undefined ? undefined : ehex(value), text: value === undefined ? undefined : uwpDigitOf(kind, value)?.text };
     }),
-    navalBase: state.navalBase,
-    scoutBase: state.scoutBase,
-    gasGiant: state.gasGiant,
-    trade: tradeCodesOf(state).map((t) => ({ code: t.id, name: t.name })),
-    lines: worldLines(hex, state),
+    navalBase: hex.navalBase,
+    scoutBase: hex.scoutBase,
+    gasGiant: hex.gasGiant,
+    trade: tradeCodesOf(hex).map((t) => ({ code: t.id, name: t.name })),
+    lines: rolls.map(worldLine),
     action,
     error,
   };

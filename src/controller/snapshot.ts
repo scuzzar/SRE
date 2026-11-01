@@ -35,7 +35,7 @@ import {
   type TaskResult,
   type Upp,
 } from '../model';
-import { canConfirm, characteristicOptions, drawnIn, evaluateTask, hasSkill, startTask, type Card, type CharacteristicOption, type Task } from '../model/draft';
+import { canConfirm, characteristicOptions, drawnIn, evaluateTask, hasSkill, startTask, type Card, type CharacteristicOption, type Task, type WorldRoll } from '../model/draft';
 import { careerLines, generationView, itemLabel, type CareerLine, type GenerationView } from './generation-view';
 import { sectorView, selectedView, worldList, worldView, type HexView, type SelectedHexView, type WorldListItem, type WorldView } from './world-view';
 
@@ -252,11 +252,18 @@ export interface ControllerState {
   /** Die Charaktererschaffung steht im Vordergrund. */
   readonly generating: boolean;
   readonly generationError: string | undefined;
-  /** Das Feld, dessen Weltkarte offen ist. */
-  readonly world: { readonly column: number; readonly row: number } | undefined;
+  /** Das Feld, dessen Weltkarte offen ist, mit den Würfen, seit sie offen ist. */
+  readonly world: OpenWorld | undefined;
   readonly worldError: string | undefined;
-  /** Das gewählte Feld auf der Karte, nicht erzeugt oder leer. */
-  readonly selected: { readonly column: number; readonly row: number } | undefined;
+  /** Das gewählte Feld auf der Karte, nicht erzeugt oder leer; mit dem Vorkommen, wenn es gerade hier gewürfelt wurde. */
+  readonly selected: { readonly column: number; readonly row: number; readonly occurrence?: WorldRoll } | undefined;
+}
+
+/** Eine offene Weltkarte. Ihre Würfe sind flüchtig: Sie gelten nur, solange sie offen ist. */
+export interface OpenWorld {
+  readonly column: number;
+  readonly row: number;
+  readonly rolls: readonly WorldRoll[];
 }
 
 const emptyInput: CharacterInput = {
@@ -407,7 +414,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     generationRunning: campaign.generation !== undefined,
     sector: sectorView(campaign.hexes),
     worlds: worldList(campaign.hexes),
-    world: state.world && worldView(campaign.hexes, state.world.column, state.world.row, state.worldError),
-    selected: state.selected && selectedView(campaign.hexes, state.selected.column, state.selected.row, state.world ? undefined : state.worldError),
+    world: state.world && worldView(campaign.hexes, state.world.column, state.world.row, state.world.rolls, state.worldError),
+    selected: state.selected && selectedView(campaign.hexes, state.selected.column, state.selected.row, state.selected.occurrence, state.world ? undefined : state.worldError),
   };
 }
