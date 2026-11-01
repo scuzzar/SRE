@@ -32,7 +32,11 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Am 31. Oktober 2026 freigegeben: der Subsektor mit Weltenerschaffung (siehe *Subsektor* und
 > *Weltenerschaffung*).
 >
-> Am 1. November 2026 freigegeben: Ein Hexfeld speichert die Werte seiner Welt, nicht ihre Würfe. Neu im Bild: `Uwp`, die Felder `empty`, `navalBase`, `scoutBase`, `gasGiant` am
+> Am 1. November 2026 freigegeben: Ein Hexfeld speichert die Werte seiner Welt, nicht ihre Würfe.
+>
+> **Entwurf, wartet auf Freigabe** (1. November 2026): Heimatwelt und Welten der Terms (siehe
+> *Heimatwelt und Welten der Terms*). Neu im Bild: `Character.homeworld`, `Career.homeworld`,
+> `Career.worlds` und die Schritte `homeworld` und `world`. Neu im Bild: `Uwp`, die Felder `empty`, `navalBase`, `scoutBase`, `gasGiant` am
 > `Hex`; `WorldRoll` ist flüchtig. Neu im Bild: `Hex`, `WorldRoll`, `Campaign.hexes`,
 > `WorldStep`, `WorldRollKind` und als Referenzdaten `SystemContents`, `UwpDigit`, `TradeCode`.
 >
@@ -101,6 +105,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Musterung | `CareerRoll` mit `enlistment` | Der Wurf, um in die gewählte Laufbahn zu kommen |
 | Einberufung | `CareerRoll` mit `draft` | 1W6, wenn die Musterung scheitert; bestimmt die Laufbahn |
 | Term | (`Career./terms`) | Vier Jahre Dienst |
+| Heimatwelt | `Character.homeworld`, `Career.homeworld` | Die Welt, von der ein Charakter stammt |
+| Welt eines Terms | `Career.worlds` | Die Welt, auf der ein Charakter einen Term gedient hat |
 | Offizierspatent | `CareerRoll` mit `commission` | Der Wurf auf den ersten Rang |
 | Beförderung | `CareerRoll` mit `promotion` | Der Wurf auf den nächsten Rang |
 | Weiterverpflichtung | `CareerRoll` mit `reenlist` | Der Wurf am Ende jedes Terms; 12 heißt: bleiben müssen |
@@ -290,11 +296,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     der Tabellen keinen alten Lebenslauf.
   - **Ablauf** (die Schritte in `GenerationStep`):
     1. *Attribute*: STR, DEX, END, INT, EDU, SOC, in dieser Reihenfolge je 2W6.
+    1a. *Heimatwelt* (`homeworld`): eine fertige Welt des Subsektors, siehe *Heimatwelt und Welten
+       der Terms*.
     2. *Laufbahn*: Man wählt eine der sechs Laufbahnen und würfelt die Musterung (2W6 + DMs ≥
        Zielwert). Scheitert sie, folgt die *Einberufung*: 1W6 bestimmt die Laufbahn (`draft`). Wer
        eingezogen wurde, darf im ersten Term kein Offizierspatent versuchen. Was eine Laufbahn bei
        der Musterung mitgibt (Marines Cutlass-1, Army Rifle-1, Scouts Pilot-1), kommt sofort dazu.
-    3. *Term*, jedes Mal in dieser Reihenfolge: Überleben (`survival`); misslingt es, ist der
+    3. *Term*, jedes Mal in dieser Reihenfolge: zuerst die Welt des Terms (`world`), dann Überleben (`survival`); misslingt es, ist der
        Charakter tot und die Erschaffung zu Ende (`dead`) wie im Regelwerk. Ohne Rang und in einer Laufbahn mit Rängen:
        Offizierspatent, das gibt Rang 1. Mit Rang unter dem höchsten der Laufbahn (Merchants haben 5):
        Beförderung, einmal je Term, auch im Term des Patents. Dann die Fertigkeiten: im ersten Term 2, danach 1, bei den Scouts immer 2
@@ -346,6 +354,20 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Die Erschaffung steht nicht im Log; ihr Lebenslauf ist ihr Verlauf.
   - Die Kampagnendatei enthält die offene Erschaffung und die Lebensläufe; beim Import wird jeder
     Lebenslauf von vorn nachgespielt und gegen diese Regeln geprüft.
+- **Heimatwelt und Welten der Terms.** Ein Charakter kann eine Heimatwelt haben (`homeworld`): eine
+  fertige Welt des Subsektors seiner Kampagne. In der Charaktererschaffung kommt sie nach den
+  Attributen und vor der Laufbahn, und jeder Term findet auf einer Welt statt (`Career.worlds`, je
+  Term eine, in der Reihenfolge der Terms; dieselbe Welt darf mehrmals vorkommen). Beides ist eine
+  Entscheidung, kein Wurf: Man wählt eine fertige Welt, oder man erschafft sie gleich: Man wählt ein
+  nicht erzeugtes Feld, die Weltenerschaffung läuft dort wie im Subsektor, und ist die Welt fertig
+  (mit Namen), ist sie gewählt. Solange sie entsteht, wartet die Charaktererschaffung im selben
+  Schritt. Die Wahl hat in Version 1 keine Folgen für die Würfe. Abschließen übernimmt die
+  Heimatwelt an den Charakter; die Welten der Terms bleiben im Lebenslauf. Von Hand angelegte
+  Charaktere wählen ihre Heimatwelt im Editor, oder keine. Weil der Lebenslauf und der Charakter auf
+  Welten verweisen, gilt wie beim Log: Eine Welt, auf die verwiesen wird, wird nie gelöscht (fertige
+  Welten lassen sich ohnehin nicht löschen). Lebensläufe von vor dieser Regel, ohne Heimatwelt und
+  ohne Welten, bleiben gültig. Während der Erschaffung lassen sich Orakel und Inspirationskarte
+  befragen; ihre Antworten stehen wie sonst im Log.
 - **Referenzdaten sind Daten.** Stufen, Hausregeln, Fertigkeiten, Gegenstände, Laufbahnen, die Tabellen der Weltenerschaffung, Bereiche, Felder und Einträge
   stehen als Dateien unter `src/data/` und werden beim Start geprüft. Man ändert sie nur dort, nicht
   in der App. Pfeile führen nur aus Spielstand

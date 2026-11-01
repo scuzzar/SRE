@@ -282,8 +282,10 @@ hide <<value>> stereotype
   }
   enum GenerationStep <<value>> {
     characteristics
+    homeworld
     service
     draft
+    world
     survival
     commission
     promotion
@@ -322,6 +324,9 @@ Generation --> GenerationStep
 Character "1" *-- "0..1" Career : career
 Career "1" *-- "*" CareerRoll : rolls {ordered}
 Career "*" --> "0..1" Service : /in
+Career "*" --> "0..1" Hex : homeworld
+Career "*" --> "*" Hex : worlds {ordered}
+Character "*" --> "0..1" Hex : homeworld
 CareerRoll --> RollKind
 CareerRoll --> "0..1" Characteristic : of
 CareerRoll "*" --> "0..1" Service : for
