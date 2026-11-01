@@ -55,10 +55,12 @@ test('Sektor: Die Karte lässt sich vergrößern und wieder verkleinern', async 
   const out = page.getByRole('button', { name: 'Verkleinern' });
   await expect(out).toBeDisabled();
   const before = (await canvas.boundingBox())!.width;
+  const width = async () => (await canvas.boundingBox())!.width;
+  // Je Tippen ein Schritt (× 1,5); gemessen wird, wenn die Karte neu gezeichnet ist.
   await page.getByRole('button', { name: 'Vergrößern' }).click();
+  await expect.poll(width).toBeGreaterThan(before * 1.4);
   await page.getByRole('button', { name: 'Vergrößern' }).click();
-  const zoomed = (await canvas.boundingBox())!.width;
-  expect(zoomed).toBeGreaterThan(before * 2);
+  await expect.poll(width).toBeGreaterThan(before * 2);
   // Größer als der Ausschnitt: verschieben geht durch Scrollen.
   expect(await viewport.evaluate((e) => e.scrollWidth > e.clientWidth)).toBe(true);
   // Auch vergrößert lässt sich ein Feld antippen.

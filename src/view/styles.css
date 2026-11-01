@@ -60,6 +60,8 @@ textarea {
 button {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  /* Zwei schnelle Tipper sind zwei Tipper, kein Doppeltipp-Zoom des Browsers. */
+  touch-action: manipulation;
 }
 
 button:disabled {
