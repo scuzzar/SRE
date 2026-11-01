@@ -17,7 +17,7 @@ sagt nur, wo die Teile liegen und wie sie miteinander reden.
 |--:|---|---|---|
 | 0 | `src/data/` | Referenzdaten: Tabellen als JSON, Schemas | — |
 | 1 | `src/model/` | **Model**: der gespeicherte Stand des Domänenmodells und seine Regeln | `data` |
-| 1a | `src/model/draft/` | **Model, Entwürfe**: `Card`, `Task`; flüchtig, nie gespeichert | `data`, `model` |
+| 1a | `src/model/draft/` | **Model, Entwürfe**: `Card`, `Task`, `WorldRoll`; flüchtig, nie gespeichert | `data`, `model` |
 | 2 | `src/platform/` | Was das Model von außen braucht: Speicher (Dexie), Zufall, Uhr, Download | `model` ohne `draft` |
 | 3 | `src/controller/` | **Controller**: eine Methode pro Absicht des Spielers | `model` mit `draft` |
 | 4 | `src/view/` | **View**: React-Komponenten | `controller`, `model` mit `draft` (nur Typen) |
@@ -44,8 +44,9 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   `rollGeneration()`, `chooseService(id)`, `chooseSkillTable(id)`, `chooseCascade(skill)`,
   `reenlist(wants)`, `musterOut(kind)`, `finishGeneration(name)`, `discardGeneration()` und
   `restartGeneration()`; für den Subsektor `chooseHex(column, row)`, `clearHex()`, `rollOccurrence()`,
-  `rollWorld()`, `nameWorld(name)`, `discardWorld()` und `closeWorld()`. Auch die Weltenerschaffung ist gespeicherter Stand
-  (`model/sector.ts`): Ein Hexfeld hält nur seine Würfe, `replayHex` spielt den Rest daraus nach. Die Erschaffung ist gespeicherter Stand (`model/generation.ts`,
+  `rollWorld()`, `nameWorld(name)`, `discardWorld()` und `closeWorld()`. Ein Hexfeld (`model/sector.ts`) hält die Werte seiner Welt;
+  ein Wurf der Weltenerschaffung (`model/draft/world-roll.ts`) trägt sein Ergebnis ein und lebt nur,
+  solange Weltkarte oder Feldwahl offen sind (im Zustand des Controllers). Die Erschaffung ist gespeicherter Stand (`model/generation.ts`,
   `model/career.ts`): Sie hält nur die Würfe, alles andere spielt `replay` daraus nach. Die View liest eine gewählte Datei nur als Text
   ein und reicht ihn weiter; prüfen tut das Model (`fromCampaignFile`), anbieten zum Download der
   Controller über `Download`. Offene Karte und Probe in Vorbereitung sind Teil des

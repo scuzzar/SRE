@@ -575,6 +575,6 @@ describe('Subsektor und Weltenerschaffung', () => {
     game.rollOccurrence();
     game.exportCampaign(game.snapshot().campaign.id);
     const imported = fromCampaignFile(download.files.at(-1)!.content, 'k9');
-    expect(imported.hexes).toEqual([{ column: 5, row: 5, rolls: [{ kind: 'occurrence', dice: [2], dm: 0, target: 4 }] }]);
+    expect(imported.hexes).toEqual([{ column: 5, row: 5, empty: true, uwp: {} }]);
   });
 });

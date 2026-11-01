@@ -59,6 +59,16 @@ describe('Ältere Spielstände', () => {
     expect((await repository.list())[0]?.log).toEqual(upgraded(campaign).log);
   });
 
+  it('übernehmen Hexfelder mit gespeicherten Würfen als Werte und ergänzen fehlende Hexfelder', () => {
+    const rolls = [
+      { kind: 'occurrence', dice: [2], dm: 0, target: 4 },
+    ];
+    const old = { ...createCampaign(), hexes: [{ column: 1, row: 2, rolls }] } as unknown as Campaign;
+    expect(upgraded(old).hexes).toEqual([{ column: 1, row: 2, empty: true, uwp: {} }]);
+    const without = { ...createCampaign(), hexes: undefined } as unknown as Campaign;
+    expect(upgraded(without).hexes).toEqual([]);
+  });
+
   it('übernehmen die eine Kampagne aus der Zeit vor mehreren Kampagnen', async () => {
     const name = `test-${Math.random()}`;
     const old = new Dexie(name);

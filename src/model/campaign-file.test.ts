@@ -65,8 +65,25 @@ describe('Kampagnendatei mit Subsektor', () => {
     expect(fromCampaignFile(text, 'k2').hexes).toEqual([]);
   });
 
-  it('weist Hexfelder zurück, deren Würfe nicht zu den Regeln passen', () => {
-    const text = fileWith((c) => (c.hexes = [{ column: 1, row: 1, rolls: [{ kind: 'size', dice: [3, 3], dm: -2 }] }]));
-    expect(() => fromCampaignFile(text, 'k2')).toThrow(/verletzt eine Regel: .*passt nicht zum Schritt/);
+  it('nimmt Welten als Werte mit und liest sie unverändert zurück', () => {
+    const hex = { column: 2, row: 7, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
+    const text = fileWith((c) => (c.hexes = [hex, { column: 1, row: 1, empty: true, uwp: {} }]));
+    expect(fromCampaignFile(text, 'k2').hexes).toEqual([hex, { column: 1, row: 1, empty: true, uwp: {} }]);
+  });
+
+  it('weist Hexfelder zurück, deren Werte nicht zu den Regeln passen', () => {
+    const text = fileWith((c) => (c.hexes = [{ column: 1, row: 1, empty: false, uwp: { size: 5 } }]));
+    expect(() => fromCampaignFile(text, 'k2')).toThrow(/verletzt eine Regel: .*Es fehlt starport/);
+  });
+
+  it('übernimmt Hexfelder mit gespeicherten Würfen aus älteren Dateien als Werte', () => {
+    const rolls = [
+      { kind: 'occurrence', dice: [5], dm: 0, target: 4 },
+      { kind: 'starport', dice: [6, 6], dm: 0 },
+    ];
+    const text = fileWith((c) => (c.hexes = [{ column: 4, row: 4, rolls }]));
+    expect(fromCampaignFile(text, 'k2').hexes).toEqual([{ column: 4, row: 4, empty: false, navalBase: false, scoutBase: false, uwp: { starport: 31 } }]);
+    const wrong = fileWith((c) => (c.hexes = [{ column: 1, row: 1, rolls: [{ kind: 'size', dice: [3, 3], dm: -2 }] }]));
+    expect(() => fromCampaignFile(wrong, 'k2')).toThrow(/verletzt eine Regel: .*Vorkommen/);
   });
 });
