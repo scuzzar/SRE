@@ -43,8 +43,10 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   `exportCampaign(id)` und `importCampaign(text)`; für die Charaktererschaffung `openGeneration()`,
   `rollGeneration()`, `chooseService(id)`, `chooseSkillTable(id)`, `chooseCascade(skill)`,
   `reenlist(wants)`, `musterOut(kind)`, `chooseGenerationWorld(id)`, `pickGenerationWorld()`,
-  `closePicker()`, `finishGeneration(name)`, `discardGeneration()` und `restartGeneration()`; für den Subsektor `chooseHex(column, row)`, `clearHex()`, `rollOccurrence()`,
-  `rollWorld()`, `nameWorld(name)`, `discardWorld()` und `closeWorld()`. Ein Hexfeld (`model/sector.ts`) hält die Werte seiner Welt;
+  `closePicker()`, `runGeneration()`, `finishGeneration(name)`, `discardGeneration()` und
+  `restartGeneration()`; für den Subsektor `chooseHex(column, row)`, `clearHex()`, `rollOccurrence()`,
+  `runOccurrence()`, `rollWorld()`, `runWorld()`, `nameWorld(name)`, `discardWorld()` und
+  `closeWorld()`. Ein Hexfeld (`model/sector.ts`) hält die Werte seiner Welt;
   ein Wurf der Weltenerschaffung (`model/draft/world-roll.ts`) trägt sein Ergebnis ein und lebt nur,
   solange Weltkarte oder Feldwahl offen sind (im Zustand des Controllers). Die Erschaffung ist gespeicherter Stand (`model/generation.ts`,
   `model/career.ts`): Sie hält nur die Würfe, alles andere spielt `replay` daraus nach. Die View liest eine gewählte Datei nur als Text
@@ -75,7 +77,7 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
   Attribute wählbar sind, welcher DM gilt, was auf 2W6 nötig ist und wie wahrscheinlich das ist,
   liefert das Model über den Snapshot des Controllers. Die View hält nur, was reine Darstellung ist:
   die Anordnung von Feldern und Tafeln, den Text in Eingabefeldern während des Tippens, ob ein
-  Löschen gerade bestätigt werden will, das Erkennen von langem Drücken, die Scrollposition,
+  Löschen gerade bestätigt werden will, das Erkennen von langem Drücken (auch der Knopf, der sich dabei füllt, `view/HoldButton.tsx`), die Scrollposition,
   Animationen und Vibration (`view/Dice.tsx`, `view/haptics.ts`). Eine Animation zeigt nur, was schon
   im Snapshot steht: Der Wurf ist geloggt, bevor die Würfel rollen. Sie darf den Aufruf des
   Controllers kurz aufschieben (die Karte gleitet hinaus, dann `confirmCard()`), aber nie ersetzen.

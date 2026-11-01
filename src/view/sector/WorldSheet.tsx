@@ -5,6 +5,7 @@ import { DiceView, THROW_MS, useTimeline } from '../Dice';
 import { signed } from '../format';
 import { useGame } from '../game-context';
 import { animated, haptic, stopHaptics } from '../haptics';
+import { HoldButton } from '../HoldButton';
 import { CloseIcon, DiceIcon } from '../icons';
 
 /** Wie lange das Ergebnis nach dem Landen braucht, bis es feststeht und die Knöpfe wieder gehen. */
@@ -33,7 +34,7 @@ export function WorldSheet({ world }: { world: WorldView }) {
   const game = useGame();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   // Was schon da war, als die Weltkarte aufging, rollt nicht noch einmal.
-  const [seen] = useState(world.lines.length);
+  const [seen, setSeen] = useState(world.lines.length);
   const latest = world.lines.at(-1);
   const [settled, setSettled] = useState(-1);
   // Ein Wurf aus dieser Sitzung der Weltkarte; ältere rollen nicht noch einmal.
@@ -101,7 +102,14 @@ export function WorldSheet({ world }: { world: WorldView }) {
                 {view.error}
               </p>
             )}
-            <Actions action={view.action} disabled={rolling} />
+            <Actions
+              action={view.action}
+              disabled={rolling}
+              onRun={() => {
+                game.runWorld();
+                setSeen(game.snapshot().world?.lines.length ?? 0);
+              }}
+            />
           </div>
         )}
       </section>
@@ -222,13 +230,14 @@ export function RollStage({ line, animate, onSettled, skips }: { line: WorldLine
   );
 }
 
-function Actions({ action, disabled }: { action: WorldAction; disabled: boolean }) {
+/** Ein Tippen während des Wurfs überspringt die Animation; lange drücken lässt die Welt bis zum Namen durchlaufen. */
+function Actions({ action, disabled, onRun }: { action: WorldAction; disabled: boolean; onRun: () => void }) {
   const game = useGame();
   const [name, setName] = useState('');
   switch (action.kind) {
     case 'roll':
       return (
-        <button type="button" className="roll generation-main" disabled={disabled} onClick={() => game.rollWorld()}>
+        <HoldButton className="roll generation-main" busy={disabled} onPress={() => game.rollWorld()} onHold={onRun}>
           <DiceIcon />
           <span>
             {action.label}
@@ -238,7 +247,7 @@ function Actions({ action, disabled }: { action: WorldAction; disabled: boolean 
               {action.target !== undefined ? ` · ${action.target}+` : ''}
             </span>
           </span>
-        </button>
+        </HoldButton>
       );
     case 'name':
       return (
@@ -251,16 +260,16 @@ function Actions({ action, disabled }: { action: WorldAction; disabled: boolean 
         >
           <label className="field">
             <span>Name der Welt</span>
-            <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" disabled={disabled} />
+            <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" readOnly={disabled} />
           </label>
-          <button type="submit" className="primary" disabled={disabled}>
+          <button type="submit" className="primary" aria-disabled={disabled || undefined}>
             Übernehmen
           </button>
         </form>
       );
     case 'done':
       return (
-        <button type="button" className="primary" disabled={disabled} onClick={() => game.closeWorld()}>
+        <button type="button" className="primary" aria-disabled={disabled || undefined} onClick={() => game.closeWorld()}>
           Schließen
         </button>
       );

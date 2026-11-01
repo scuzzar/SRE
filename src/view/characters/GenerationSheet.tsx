@@ -4,6 +4,7 @@ import type { RollKind, ThrowOdds } from '../../model';
 import { DicePairView, DiceView, THROW_MS, useTimeline } from '../Dice';
 import { characteristicLabel, credits, hex, signed, withLevel } from '../format';
 import { useGame } from '../game-context';
+import { HoldButton } from '../HoldButton';
 import { animated, haptic, stopHaptics } from '../haptics';
 import { CardIcon, CloseIcon, DiceIcon, SectorIcon } from '../icons';
 
@@ -22,8 +23,9 @@ const SETTLE_MS = 350;
 export function GenerationSheet({ generation, odds, log }: { generation: GenerationView; odds: readonly OddsChoice[]; log: readonly LogItem[] }) {
   const game = useGame();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
-  // Was schon da war, als die Erschaffung aufging, rollt nicht noch einmal.
-  const [seen] = useState(generation.lines.length);
+  // Was schon da war, als die Erschaffung aufging, rollt nicht noch einmal; ebenso, was ein
+  // Durchlauf gewürfelt hat.
+  const [seen, setSeen] = useState(generation.lines.length);
   const latest = generation.lines.at(-1);
   // Der letzte Wurf, dessen Ergebnis unten feststeht; bis dahin rollt er noch.
   const [settled, setSettled] = useState(-1);
@@ -94,7 +96,14 @@ export function GenerationSheet({ generation, odds, log }: { generation: Generat
               {view.error}
             </p>
           )}
-          <Actions action={view.action} disabled={rolling} />
+          <Actions
+            action={view.action}
+            disabled={rolling}
+            onRun={() => {
+              game.runGeneration();
+              setSeen(game.snapshot().generation?.lines.length ?? 0);
+            }}
+          />
         </div>
       </section>
       {dramatic && closed < latest.index && (
@@ -423,26 +432,31 @@ function OddsLines({ odds }: { odds: ThrowOdds }) {
 }
 
 /** Die Knöpfe für den nächsten Schritt. */
-function Actions({ action, disabled }: { action: GenerationAction; disabled: boolean }) {
+/**
+ * Die Knöpfe für den nächsten Schritt. Während ein Wurf rollt, sind sie nicht gesperrt: Ein Tippen
+ * überspringt dann die Animation (das fängt die Erschaffung ab). Lange drücken auf einen Würfelknopf
+ * lässt die ganze Erschaffung durchlaufen (`onRun`).
+ */
+function Actions({ action, disabled, onRun }: { action: GenerationAction; disabled: boolean; onRun: () => void }) {
   const game = useGame();
   const [name, setName] = useState('');
 
   switch (action.kind) {
     case 'roll':
       return (
-        <button type="button" className="roll generation-main" disabled={disabled} onClick={() => game.rollGeneration()}>
+        <HoldButton className="roll generation-main" busy={disabled} onPress={() => game.rollGeneration()} onHold={onRun}>
           <DiceIcon />
           <span>
             {action.label}
             {action.odds ? <OddsLines odds={action.odds} /> : <span className="small-label">{action.dice === 1 ? '1W6' : '2W6'}</span>}
           </span>
-        </button>
+        </HoldButton>
       );
     case 'service':
       return (
         <div className="choice-grid services" role="group" aria-label="Laufbahn">
           {action.options.map((o) => (
-            <button key={o.id} type="button" disabled={disabled} onClick={() => game.chooseService(o.id)}>
+            <button key={o.id} type="button" aria-disabled={disabled || undefined} onClick={() => game.chooseService(o.id)}>
               <strong>{o.name}</strong>
               <OddsLines odds={o} />
             </button>
@@ -456,7 +470,7 @@ function Actions({ action, disabled }: { action: GenerationAction; disabled: boo
             <button
               key={o.id}
               type="button"
-              disabled={disabled || !o.available}
+              disabled={!o.available} aria-disabled={disabled || undefined}
               aria-label={`${o.name}: ${o.rows.map((r, i) => `${i + 1} ${r}`).join(', ')}`}
               onClick={() => game.chooseSkillTable(o.id)}
             >
@@ -477,7 +491,7 @@ function Actions({ action, disabled }: { action: GenerationAction; disabled: boo
       return (
         <div className="choice-grid three scroll-choices" role="group" aria-label={action.name}>
           {action.options.map((o) => (
-            <button key={o.skill} type="button" disabled={disabled} onClick={() => game.chooseCascade(o.skill)}>
+            <button key={o.skill} type="button" aria-disabled={disabled || undefined} onClick={() => game.chooseCascade(o.skill)}>
               <strong>{o.item ?? o.name}</strong>
               <span className="small-label">{o.item ? 'Waffe' : '+1'}</span>
             </button>
@@ -486,20 +500,20 @@ function Actions({ action, disabled }: { action: GenerationAction; disabled: boo
       );
     case 'reenlist':
       return action.last ? (
-        <button type="button" className="roll generation-main" disabled={disabled} onClick={() => game.reenlist(false)}>
+        <HoldButton className="roll generation-main" busy={disabled} onPress={() => game.reenlist(false)} onHold={onRun}>
           <DiceIcon />
           <span>
             Weiterverpflichtung würfeln
             <span className="small-label">nur eine 12 verlängert</span>
           </span>
-        </button>
+        </HoldButton>
       ) : (
         <div className="choice-grid" role="group" aria-label="Weiterverpflichtung">
-          <button type="button" disabled={disabled} onClick={() => game.reenlist(false)}>
+          <button type="button" aria-disabled={disabled || undefined} onClick={() => game.reenlist(false)}>
             <strong>Abmustern</strong>
             <span className="small-label">eine 12 heißt trotzdem bleiben</span>
           </button>
-          <button type="button" className="preferred" disabled={disabled} onClick={() => game.reenlist(true)}>
+          <button type="button" className="preferred" aria-disabled={disabled || undefined} onClick={() => game.reenlist(true)}>
             <strong>Weiterverpflichten</strong>
             <OddsLines odds={action.odds} />
           </button>
@@ -508,13 +522,13 @@ function Actions({ action, disabled }: { action: GenerationAction; disabled: boo
     case 'muster':
       return (
         <div className="choice-grid" role="group" aria-label="Abmusterung">
-          <button type="button" disabled={disabled || action.cashLeft === 0} onClick={() => game.musterOut('cash')}>
+          <button type="button" disabled={action.cashLeft === 0} aria-disabled={disabled || undefined} onClick={() => game.musterOut('cash')}>
             <strong>Geld</strong>
             <span className="small-label">
               noch {action.cashLeft}×{action.cashDm.map((s) => ` · ${s.label} ${signed(s.dm)}`).join('')}
             </span>
           </button>
-          <button type="button" disabled={disabled} onClick={() => game.musterOut('benefit')}>
+          <button type="button" aria-disabled={disabled || undefined} onClick={() => game.musterOut('benefit')}>
             <strong>Sachwerte</strong>
             <span className="small-label">1W6{action.benefitDm.map((s) => ` · ${s.label} ${signed(s.dm)}`).join('')}</span>
           </button>
@@ -524,7 +538,7 @@ function Actions({ action, disabled }: { action: GenerationAction; disabled: boo
       return (
         <div className="world-choice" role="group" aria-label={action.for === 'homeworld' ? 'Heimatwelt' : 'Welt des Terms'}>
           {action.previous && (
-            <button type="button" className="preferred" disabled={disabled} onClick={() => game.chooseGenerationWorld(action.previous!.id)}>
+            <button type="button" className="preferred" aria-disabled={disabled || undefined} onClick={() => game.chooseGenerationWorld(action.previous!.id)}>
               <strong>Wie zuletzt: {action.previous.name}</strong>
               <span className="small-label mono">
                 {action.previous.id} · {action.previous.uwp}
@@ -536,7 +550,7 @@ function Actions({ action, disabled }: { action: GenerationAction; disabled: boo
               {action.worlds
                 .filter((w) => w.id !== action.previous?.id)
                 .map((w) => (
-                  <button key={w.id} type="button" disabled={disabled} onClick={() => game.chooseGenerationWorld(w.id)}>
+                  <button key={w.id} type="button" aria-disabled={disabled || undefined} onClick={() => game.chooseGenerationWorld(w.id)}>
                     <strong>{w.name}</strong>
                     <span className="small-label mono">
                       {w.id} · {w.uwp}
@@ -545,7 +559,7 @@ function Actions({ action, disabled }: { action: GenerationAction; disabled: boo
                 ))}
             </div>
           )}
-          <button type="button" className="roll generation-main" disabled={disabled} onClick={() => game.pickGenerationWorld()}>
+          <button type="button" className="roll generation-main" aria-disabled={disabled || undefined} onClick={() => game.pickGenerationWorld()}>
             <SectorIcon />
             <span>
               Auf der Karte wählen
@@ -565,9 +579,9 @@ function Actions({ action, disabled }: { action: GenerationAction; disabled: boo
         >
           <label className="field">
             <span>Name</span>
-            <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" disabled={disabled} />
+            <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" readOnly={disabled} />
           </label>
-          <button type="submit" className="primary" disabled={disabled}>
+          <button type="submit" className="primary" aria-disabled={disabled || undefined}>
             Übernehmen
           </button>
         </form>
@@ -575,10 +589,10 @@ function Actions({ action, disabled }: { action: GenerationAction; disabled: boo
     case 'dead':
       return (
         <div className="choice-grid" role="group" aria-label="Nach dem Tod">
-          <button type="button" disabled={disabled} onClick={() => game.discardGeneration()}>
+          <button type="button" aria-disabled={disabled || undefined} onClick={() => game.discardGeneration()}>
             <strong>Verwerfen</strong>
           </button>
-          <button type="button" className="preferred" disabled={disabled} onClick={() => game.restartGeneration()}>
+          <button type="button" className="preferred" aria-disabled={disabled || undefined} onClick={() => game.restartGeneration()}>
             <strong>Neu beginnen</strong>
           </button>
         </div>

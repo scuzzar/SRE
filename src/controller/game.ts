@@ -16,6 +16,7 @@ import {
   restoreCharacter,
   chooseCascade as chooseCareerCascade,
   chooseGenerationWorld,
+  runGeneration,
   hexId,
   isWorld,
   stateOf,
@@ -57,6 +58,7 @@ import {
   togglePick,
   rollOccurrence,
   rollWorld,
+  runWorld,
 } from '../model/draft';
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
@@ -388,6 +390,16 @@ export class GameController {
     this.inGeneration((g) => rollNext(g, this.deps.random));
   }
 
+  /** Lässt die Erschaffung durchlaufen: alle Würfe, die Entscheidungen zufällig, bis zum Namen oder zum Tod. */
+  runGeneration(): void {
+    try {
+      this.change(runGeneration(this.campaign, this.deps.random), { generationError: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ generationError: error.message });
+    }
+  }
+
   /** Wählt die Laufbahn und würfelt die Musterung. */
   chooseService(service: string): void {
     this.inGeneration((g) => enlist(g, service, this.deps.random));
@@ -469,6 +481,32 @@ export class GameController {
       const { hexes: next, roll } = rollWorld(hexes, at.column, at.row, this.deps.random);
       return { hexes: next, world: { ...at, rolls: [...at.rolls, roll] } };
     });
+  }
+
+  /** Lässt die offene Welt durchlaufen: alle Würfe bis zum Namen. */
+  runWorld(): void {
+    this.inWorld((hexes, at) => {
+      const { hexes: next, rolls } = runWorld(hexes, at.column, at.row, this.deps.random);
+      return { hexes: next, world: { ...at, rolls: [...at.rolls, ...rolls] } };
+    });
+  }
+
+  /**
+   * Im Subsektor durchlaufen: das Vorkommen des gewählten Feldes und, gibt es eine Welt, alle ihre
+   * Würfe bis zum Namen; dann geht ihre Weltkarte auf.
+   */
+  runOccurrence(): void {
+    const at = this.state.selected;
+    if (!at) throw new DomainError('Es ist kein Feld gewählt.');
+    try {
+      const first = rollOccurrence(this.campaign.hexes, at.column, at.row, this.deps.random);
+      if (!first.roll.success) return this.change(setHexes(this.campaign, first.hexes), { selected: { ...at, occurrence: first.roll }, worldError: undefined });
+      const { hexes, rolls } = runWorld(first.hexes, at.column, at.row, this.deps.random);
+      this.change(setHexes(this.campaign, hexes), { selected: undefined, world: { column: at.column, row: at.row, rolls: [first.roll, ...rolls] }, worldError: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ worldError: error.message });
+    }
   }
 
   /** Gibt der fertig gewürfelten Welt ihren Namen. */

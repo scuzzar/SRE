@@ -106,6 +106,27 @@ test('Besitz: Gegenstand aus der Liste mit Anzahl, in den Details', async ({ pag
   await expect(kira).toContainText('Automatic Pistol, Jack, Vacc Suit (TL 12), 2 × Low Passage');
 });
 
+/** Drückt lange auf einen Knopf, bis er sich gefüllt hat. */
+async function hold(page: Page, button: ReturnType<Page['getByRole']>) {
+  const box = (await button.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await expect(button).toHaveClass(/holding/);
+  await page.waitForTimeout(1100);
+  await page.mouse.up();
+}
+
+test('Lange drücken lässt die ganze Erschaffung durchlaufen, mit zufälligen Entscheidungen', async ({ page }) => {
+  await campaignWithWorld(page);
+  await page.getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Charaktererschaffung' });
+  await hold(page, dialog.getByRole('button', { name: /STR würfeln/ }));
+  await expect(dialog.locator('.generation-prompt')).toHaveText(/^(Fertig:|Gestorben)/);
+  await expect(dialog.getByRole('article', { name: 'Neuer Charakter' })).toContainText('von Regina');
+  // Kurz tippen nach dem Durchlauf ist wieder ein gewöhnliches Tippen: Kein Popup steht offen.
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
+});
+
 test.describe('mit Animation', () => {
   test.use({ reducedMotion: 'no-preference' });
 
@@ -115,11 +136,26 @@ test.describe('mit Animation', () => {
     const dialog = page.getByRole('dialog', { name: 'Charaktererschaffung' });
     const str = dialog.locator('.upp-cell').first().locator('.upp-code');
     await dialog.getByRole('button', { name: 'STR würfeln' }).click();
-    // Während des Wurfs: oben noch kein Wert, unten noch der alte Schritt, gesperrt.
+    // Während des Wurfs: oben noch kein Wert, unten noch der alte Schritt, der nicht noch einmal würfelt.
     await expect(str).toHaveText('–');
-    await expect(dialog.getByRole('button', { name: 'STR würfeln' })).toBeDisabled();
+    await expect(dialog.getByRole('button', { name: 'STR würfeln' })).toHaveAttribute('aria-disabled', 'true');
     await expect(str).toHaveText(/^[2-9A-C]$/);
     await expect(dialog.getByRole('button', { name: 'DEX würfeln' })).toBeEnabled();
+  });
+
+  test('noch einmal auf den Würfelknopf tippen überspringt die Animation', async ({ page }) => {
+    await openCharacters(page);
+    await page.getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Charaktererschaffung' });
+    const str = dialog.locator('.upp-cell').first().locator('.upp-code');
+    const button = dialog.getByRole('button', { name: 'STR würfeln' });
+    await button.click();
+    // Wie ein Mensch: sofort noch einmal tippen, ohne zu warten, bis der Knopf wieder bereit ist.
+    await button.click({ force: true });
+    // Sofort das Ergebnis, ohne zu warten, bis die Würfel liegen; gewürfelt wurde nur einmal.
+    await expect(str).toHaveText(/^[2-9A-C]$/, { timeout: 400 });
+    await expect(dialog.getByRole('button', { name: 'DEX würfeln' })).toBeEnabled({ timeout: 800 });
+    await expect(dialog.locator('.career li')).toHaveCount(1);
   });
 
   test('Würfe mit Zielwert laufen groß als Popup; Tippen springt zum Urteil, noch ein Tippen schließt', async ({ page }) => {

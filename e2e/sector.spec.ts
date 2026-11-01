@@ -68,3 +68,24 @@ test('Sektor: Die Karte lässt sich vergrößern und wieder verkleinern', async 
   await out.click();
   await expect(out).toBeDisabled();
 });
+
+test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis zum Namen', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
+  const map = page.getByRole('group', { name: 'Karte des Subsektors' });
+  for (const id of ['0101', '0202', '0303', '0404', '0505', '0606', '0707', '0808', '0109', '0210']) {
+    await map.getByRole('button', { name: `${id}, nicht erzeugt` }).click();
+    const button = page.locator('.sector-dock').getByRole('button', { name: /Vorkommen würfeln/ });
+    const box = (await button.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(1100);
+    await page.mouse.up();
+    if (await page.locator('.sector-dock').getByText('Kein System in diesem Feld').isVisible()) continue;
+    const dialog = page.getByRole('dialog', { name: `Weltenerschaffung ${id}` });
+    await expect(dialog.getByLabel('Name der Welt')).toBeVisible();
+    await expect(dialog.getByRole('article', { name: 'Welt' })).toContainText(/[A-EX][0-9A-F]{6}-[0-9A-Z]/);
+    return;
+  }
+  throw new Error('Kein Feld mit Welt gefunden');
+});
