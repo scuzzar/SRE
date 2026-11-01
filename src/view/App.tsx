@@ -49,6 +49,11 @@ export function App() {
           {view.storageError}
         </p>
       )}
+      {!view.persistent && !view.storageError && (
+        <p className="banner" role="status">
+          Dieser Browser speichert hier nichts dauerhaft: Kampagnen, Charaktere und Sektor sind beim Schließen weg. Zum Sichern über die Kampagnenwahl exportieren.
+        </p>
+      )}
 
       {view.screen === 'oracle' && <OracleScreen view={view} question={question} onQuestion={setQuestion} />}
       {view.screen === 'characters' && <CharactersScreen view={view} />}

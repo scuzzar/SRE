@@ -107,5 +107,6 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
 **Speicher.** `platform/repository.ts` öffnet IndexedDB über Dexie. Jede Kampagne liegt unter ihrer
 Id; welche offen ist, steht daneben unter `settings`. Die eine Kampagne aus der Zeit vor mehreren
 Kampagnen lag unter dem Schlüssel `current` und behält ihn als Id. Geht das nicht (privates
-Fenster, eingebettete Vorschau), läuft die App mit einem Speicher im Arbeitsspeicher weiter; der
-„Über“-Bildschirm sagt dann, dass nichts dauerhaft gespeichert wird.
+Fenster, eingebettete Vorschau, eine lokal geöffnete Datei auf manchen Handys), läuft die App mit
+einem Speicher im Arbeitsspeicher weiter; ein Hinweis oben unter der Kopfzeile und der
+„Über“-Bildschirm sagen dann, dass nichts dauerhaft gespeichert wird.
