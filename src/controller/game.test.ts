@@ -143,17 +143,15 @@ describe('Orakel-Screen', () => {
   });
 });
 
-describe('Charakter-Screen: Probe würfeln → Popup → weiter oder zum Orakel', () => {
-  it('bereitet die Probe vor, würfelt, zeigt das Ergebnis und kehrt zum Orakel zurück', async () => {
+describe('Charakter oben: Probe im Orakel-Screen', () => {
+  it('bereitet die Probe für den Charakter oben vor, würfelt, zeigt das Ergebnis; „Weiter“ lässt sie vorbereitet', async () => {
     const { game } = await started(fixedRandom(4, 5));
-    game.showScreen('characters');
-    game.chooseCharacter('c1');
-    expect(game.snapshot().task).toMatchObject({ character: 'Kira Vant', ready: false });
-    game.chooseSkill('c1', 'pilot');
+    expect(game.snapshot()).toMatchObject({ screen: 'oracle', focus: 'c1', task: undefined });
+    game.chooseSkill('pilot');
     game.toggleCharacteristic('DEX');
     game.setOdds('low');
     const task = game.snapshot().task!;
-    expect(task).toMatchObject({ ready: true, dm: 3, target: 10, need: 7 });
+    expect(task).toMatchObject({ character: 'Kira Vant', ready: true, dm: 3, target: 10, need: 7 });
     expect(Math.round(task.chance)).toBe(58);
     expect(task.parts).toEqual([
       { kind: 'skill', name: 'Pilot', level: 2, dm: 2 },
@@ -162,63 +160,48 @@ describe('Charakter-Screen: Probe würfeln → Popup → weiter oder zum Orakel'
 
     game.rollTask();
     const view = game.snapshot();
-    expect(view.screen).toBe('characters');
+    expect(view.screen).toBe('oracle');
     expect(view.result).toMatchObject({ character: 'Kira Vant', dice: [4, 5], dm: 3, total: 12, target: 10, success: true });
     expect(view.log.at(-1)).toEqual(view.result);
 
-    game.closeResultToOracle();
-    expect(game.snapshot()).toMatchObject({ screen: 'oracle', result: undefined, task: undefined });
-  });
-
-  it('bleibt nach „Weiter“ im Charakter-Screen, die Probe bleibt vorbereitet', async () => {
-    const { game } = await started(fixedRandom(4, 5));
-    game.showScreen('characters');
-    game.chooseSkill('c1', 'pilot');
-    game.rollTask();
     game.closeResult();
-    expect(game.snapshot()).toMatchObject({ screen: 'characters', result: undefined, task: { character: 'Kira Vant', ready: true } });
-    expect(game.snapshot().log).toHaveLength(1);
-  });
-
-  it('beginnt mit einem anderen Charakter eine neue Probe und klappt denselben wieder zu', async () => {
-    const { game } = await started();
-    game.chooseCharacter('c1');
-    game.chooseSkill('c1', 'pilot');
-    game.chooseCharacter('c2');
-    expect(game.snapshot().characters.map((c) => [c.name, c.chosen])).toEqual([
-      ['Kira Vant', false],
-      ['Jonas Reyl', true],
-    ]);
-    expect(game.snapshot().task?.ready).toBe(false);
-    game.chooseCharacter('c2');
+    expect(game.snapshot()).toMatchObject({ result: undefined, task: { character: 'Kira Vant', ready: true } });
+    game.endTask();
     expect(game.snapshot().task).toBeUndefined();
   });
 
-  it('startet die Probe direkt mit der Fertigkeit, ohne die Details aufzuklappen', async () => {
-    const { game } = await started();
-    game.chooseSkill('c1', 'pilot');
-    expect(game.snapshot().task).toMatchObject({ character: 'Kira Vant', ready: true, dm: 2 });
-    expect(game.snapshot().characters[0]).toMatchObject({ chosen: true, open: false });
-    game.chooseCharacter('c1');
-    expect(game.snapshot().characters[0]).toMatchObject({ chosen: true, open: true });
-    expect(game.snapshot().task?.ready).toBe(true);
-    game.chooseSkill('c1', 'navigation');
-    expect(game.snapshot().characters[0]).toMatchObject({ open: true });
-    game.chooseSkill('c2', null);
-    expect(game.snapshot().characters.map((c) => [c.name, c.chosen])).toEqual([
+  it('Wischen stellt einen anderen Charakter nach oben, speichert ihn und beendet die Probe', async () => {
+    const { game, repository } = await started();
+    game.chooseSkill('pilot');
+    game.focusCharacter('c2');
+    await game.whenSaved();
+    expect(game.snapshot().characters.map((c) => [c.name, c.focus])).toEqual([
       ['Kira Vant', false],
       ['Jonas Reyl', true],
     ]);
+    expect(game.snapshot().task).toBeUndefined();
+    expect(repository.saved?.focus).toBe('c2');
+    game.chooseSkill(null);
     expect(game.snapshot().task).toMatchObject({ character: 'Jonas Reyl', ready: true, dm: -3 });
   });
 
-  it('zeigt im Charakter, welche Fertigkeit gewählt ist und welche Attribute wählbar sind', async () => {
+  it('dieselbe Fertigkeit noch einmal nimmt die Wahl zurück', async () => {
     const { game } = await started();
-    game.chooseCharacter('c2');
-    game.chooseSkill('c2', null);
+    game.chooseSkill('pilot');
+    game.chooseSkill('pilot');
+    expect(game.snapshot().task?.ready).toBe(false);
+    expect(game.snapshot().characters[0]!.skills.some((s) => s.chosen)).toBe(false);
+  });
+
+  it('zeigt am Charakter oben, welche Fertigkeit gewählt ist und welche Attribute wählbar sind', async () => {
+    const { game } = await started();
+    game.focusCharacter('c2');
+    game.chooseSkill(null);
     const jonas = game.snapshot().characters[1]!;
     expect(jonas.unskilled).toEqual({ dm: -3, chosen: true });
     expect(jonas.characteristics.filter((c) => c.selectable).map((c) => c.characteristic)).toEqual(['INT']);
+    // Wer nicht oben steht, hat nichts zu wählen.
+    expect(game.snapshot().characters[0]!.characteristics.some((c) => c.selectable)).toBe(false);
   });
 
   it('bietet mit Jack-of-all-Trades kein „ohne Fertigkeit“ an; JoT gibt ±0', async () => {
@@ -228,11 +211,46 @@ describe('Charakter-Screen: Probe würfeln → Popup → weiter oder zum Orakel'
     game.saveCharacter({ ...game.snapshot().editor!.input, skills: [...game.snapshot().editor!.input.skills, { of: 'jack-of-all-trades', level: 1 }] });
     expect(game.snapshot().characters[1]!.unskilled).toBeUndefined();
     expect(jonas.unskilled).toEqual({ dm: -3, chosen: false });
-    game.chooseSkill('c2', 'jack-of-all-trades');
+    game.focusCharacter('c2');
+    game.chooseSkill('jack-of-all-trades');
     expect(game.snapshot().task).toMatchObject({ ready: true, dm: 0, parts: [{ kind: 'skill', name: 'Jack-of-all-Trades', level: undefined, dm: 0 }] });
     // JoT zeigt keine Stufe, weder auf der Karte noch im Editor.
     expect(game.snapshot().characters[1]!.skills.find((s) => s.of === 'jack-of-all-trades')).toMatchObject({ short: 'JoT', level: undefined });
     expect(game.snapshot().skills.filter((s) => !s.leveled).map((s) => s.id)).toEqual(['jack-of-all-trades']);
+  });
+
+  it('klappt die Leiste ein und auf; das Gerät merkt es sich über einen Neustart', async () => {
+    const { game, repository } = await started();
+    expect(game.snapshot().stripCollapsed).toBe(false);
+    game.toggleStrip();
+    await game.whenSaved();
+    expect(game.snapshot().stripCollapsed).toBe(true);
+    expect(repository.stripCollapsed).toBe(true);
+    const again = new GameController({ repository, random: fixedRandom(), clock: fixedClock(), download: memoryDownload() });
+    await again.init();
+    expect(again.snapshot().stripCollapsed).toBe(true);
+  });
+
+  it('ein neu erschaffener Charakter steht oben, im Orakel-Screen', async () => {
+    const { game } = await started();
+    game.newCharacter();
+    game.saveCharacter({ name: 'Mara Quell', background: '', equipment: '', credits: 0, note: '', upp: { str: 6, dex: 7, end: 7, int: 11, edu: 10, soc: 6 }, skills: [] });
+    expect(game.snapshot().focus).toBe('c3');
+  });
+});
+
+describe('Charakter-Screen: verwalten', () => {
+  it('klappt die Details eines Charakters auf und wieder zu, ohne eine Probe zu beginnen', async () => {
+    const { game } = await started();
+    game.showScreen('characters');
+    game.toggleDetails('c2');
+    expect(game.snapshot().characters.map((c) => [c.name, c.open])).toEqual([
+      ['Kira Vant', false],
+      ['Jonas Reyl', true],
+    ]);
+    expect(game.snapshot().task).toBeUndefined();
+    game.toggleDetails('c2');
+    expect(game.snapshot().characters[1]!.open).toBe(false);
   });
 });
 
@@ -258,21 +276,20 @@ describe('Charaktere anlegen, bearbeiten, entfernen', () => {
     expect(game.snapshot().characters.at(-1)).toMatchObject({ name: 'Mara Quell', skills: [{ of: 'medical', name: 'Medical', level: 2 }] });
   });
 
-  it('bearbeitet einen Charakter; die Probe für ihn beginnt neu', async () => {
+  it('bearbeitet einen Charakter; bearbeitet man den Charakter oben, endet seine Probe', async () => {
     const { game } = await started();
-    game.chooseCharacter('c1');
-    game.chooseSkill('c1', 'pilot');
+    game.chooseSkill('pilot');
     game.editCharacter('c1');
     const input = game.snapshot().editor!.input;
     game.saveCharacter({ ...input, skills: input.skills.filter((s) => s.of !== 'pilot') });
-    expect(game.snapshot().task).toMatchObject({ character: 'Kira Vant', ready: false });
+    expect(game.snapshot().task).toBeUndefined();
     expect(game.snapshot().characters[0]!.skills.map((s) => s.name)).not.toContain('Pilot');
   });
 
   it('löscht Charaktere ohne Logeintrag und blendet die mit Logeintrag aus', async () => {
     const { game } = await started(fixedRandom(1, 1));
-    game.chooseCharacter('c2');
-    game.chooseSkill('c2', null);
+    game.focusCharacter('c2');
+    game.chooseSkill(null);
     game.rollTask();
     game.closeResult();
     expect(game.snapshot().characters.map((c) => [c.name, c.inLog])).toEqual([
@@ -280,19 +297,21 @@ describe('Charaktere anlegen, bearbeiten, entfernen', () => {
       ['Jonas Reyl', true],
     ]);
     game.removeCharacter('c1');
+    expect(game.snapshot()).toMatchObject({ focus: 'c2', task: { character: 'Jonas Reyl' } });
     game.removeCharacter('c2');
-    expect(game.snapshot().characters).toEqual([]);
+    expect(game.snapshot()).toMatchObject({ characters: [], focus: undefined, task: undefined });
     expect(game.snapshot().retired).toEqual([{ id: 'c2', name: 'Jonas Reyl' }]);
     expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'task', character: 'Jonas Reyl', success: false });
     game.restoreCharacter('c2');
     expect(game.snapshot().characters.map((c) => c.name)).toEqual(['Jonas Reyl']);
+    expect(game.snapshot().focus).toBe('c2');
   });
 });
 
 describe('Tot', () => {
-  it('markiert einen Charakter im Editor als tot: unter „Verstorben“, für Proben nicht wählbar, wieder zurücknehmbar', async () => {
+  it('markiert einen Charakter im Editor als tot: unter „Verstorben“, nicht mehr oben, wieder zurücknehmbar', async () => {
     const { game, repository } = await started();
-    game.chooseSkill('c1', 'pilot');
+    game.chooseSkill('pilot');
     game.editCharacter('c1');
     game.saveCharacter({ ...game.snapshot().editor!.input, dead: true });
     await game.whenSaved();
@@ -302,12 +321,13 @@ describe('Tot', () => {
     expect(view.dead).toEqual([{ id: 'c1', name: 'Kira Vant', background: 'Ex-Scout · 4 Terms · 34 Jahre' }]);
     expect(view.campaigns[0]?.characters).toBe(1);
     expect(repository.saved?.characters[0]?.dead).toBe(true);
-    expect(() => game.chooseSkill('c1', 'pilot')).toThrow('Kira Vant ist tot.');
+    expect(view.focus).toBe('c2');
+    expect(() => game.focusCharacter('c1')).toThrow('Kira Vant ist tot.');
 
     game.editCharacter('c1');
     expect(game.snapshot().editor?.input.dead).toBe(true);
     game.saveCharacter({ ...game.snapshot().editor!.input, dead: false });
-    expect(game.snapshot()).toMatchObject({ dead: [], characters: [{ name: 'Kira Vant' }, { name: 'Jonas Reyl' }] });
+    expect(game.snapshot()).toMatchObject({ dead: [], characters: [{ name: 'Kira Vant' }, { name: 'Jonas Reyl' }], focus: 'c2' });
   });
 
   it('löscht auch einen Toten nach denselben Regeln', async () => {
@@ -333,9 +353,10 @@ describe('Log', () => {
 
   it('macht einen Charakter wieder löschbar, wenn der Eintrag weg ist, der auf ihn verwies', async () => {
     const { game } = await started();
-    game.chooseSkill('c2', null);
+    game.focusCharacter('c2');
+    game.chooseSkill(null);
     game.rollTask();
-    game.closeResultToOracle();
+    game.closeResult();
     expect(game.snapshot().characters[1]?.inLog).toBe(true);
     game.deleteLogEntry(0);
     expect(game.snapshot().characters[1]?.inLog).toBe(false);
@@ -366,7 +387,7 @@ describe('Kampagnen', () => {
     game.createCampaign('Zweite');
     expect(game.snapshot().characters).toEqual([]);
     game.openCampaign('k1');
-    game.chooseSkill('c1', 'pilot');
+    game.chooseSkill('pilot');
     game.drawCard();
     game.openCampaign('k2');
     await game.whenSaved();
@@ -487,8 +508,9 @@ describe('Charaktererschaffung', () => {
     expect(game.snapshot().generation?.error).toMatch(/Namen/);
     game.finishGeneration('Mara Quell');
     const after = game.snapshot();
-    expect(after).toMatchObject({ generation: undefined, generationRunning: false, screen: 'characters' });
+    expect(after).toMatchObject({ generation: undefined, generationRunning: false, screen: 'oracle' });
     const mara = after.characters.find((c) => c.name === 'Mara Quell')!;
+    expect(after.focus).toBe(mara?.id);
     expect(mara).toMatchObject({ background: 'Ex-Other · 1 Term · 22 Jahre', credits: 50000, upp: { str: 9 }, homeworld: 'Regina', termWorlds: ['Regina'] });
     expect(mara.career).toHaveLength(12);
   });

@@ -25,6 +25,9 @@ export interface CampaignRepository {
   /** Welche Kampagne offen ist, merkt sich das Gerät; zum Spielstand gehört es nicht. */
   loadOpen(): Promise<CampaignId | undefined>;
   saveOpen(id: CampaignId): Promise<void>;
+  /** Ob die Leiste mit dem Charakter oben eingeklappt ist, merkt sich das Gerät; zum Spielstand gehört es nicht. */
+  loadStripCollapsed(): Promise<boolean>;
+  saveStripCollapsed(collapsed: boolean): Promise<void>;
 }
 
 /** Gibt dem Spieler eine Datei zum Speichern, als Download. */

@@ -15,7 +15,7 @@ export function AboutScreen({ persistent, durable }: { persistent: boolean; dura
         </h2>
         <div>
           <h2>Solo RPG Engine</h2>
-          <p>Eine App für Solo-Rollenspiel mit Classic Traveller: ein Ja/Nein-Orakel, eine Inspirationskarte und Proben direkt im Charakter-Screen.</p>
+          <p>Eine App für Solo-Rollenspiel mit Classic Traveller: ein Ja/Nein-Orakel, eine Inspirationskarte und Proben für den Charakter oben, alles auf einem Bildschirm.</p>
           <p className="muted">
             {persistent
               ? ['Der Spielstand liegt nur auf diesem Gerät, im Speicher des Browsers.', durable === undefined ? '' : durableText[durable ? 'yes' : 'no']].join(' ').trim()

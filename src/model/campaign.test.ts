@@ -3,11 +3,15 @@ import {
   activeCharacters,
   addCharacter,
   appendLog,
+  characterOf,
   createCampaign,
+  focusOf,
   inputOf,
+  keepFocus,
   removeCharacter,
   restoreCharacter,
   retiredCharacters,
+  setFocus,
   setOdds,
   updateCharacter,
   type Campaign,
@@ -109,5 +113,61 @@ describe('Charaktere löschen und ausblenden', () => {
   it('vergibt nach dem Löschen keine Id doppelt, solange ein Charakter mit höherer Id bleibt', () => {
     const campaign = removeCharacter(createCampaign(), 'c1');
     expect(addCharacter(campaign, input).id).toBe('c3');
+  });
+});
+
+describe('Charakter oben', () => {
+  const input = (name: string, dead = false): CharacterInput => ({ name, background: '', equipment: '', credits: 0, note: '', dead, upp: { str: 7, dex: 7, end: 7, int: 7, edu: 7, soc: 7 }, skills: [] });
+  // Kira (c1), Jonas (c2), Mira (c3); oben steht zuerst Kira.
+  const three = (): Campaign => setFocus(addCharacter(createCampaign(), input('Mira')).campaign, 'c1');
+  const inLog = (campaign: Campaign, id: string): Campaign => appendLog(campaign, { kind: 'task', at: '', for: id, counts: [], odds: 'medium', dice: [1, 1], dm: 0, target: 8 });
+
+  it('ist in einer neuen Kampagne der erste Lebende, in einer leeren keiner', () => {
+    expect(focusOf(createCampaign())?.name).toBe('Kira Vant');
+    expect(createCampaign().focus).toBe('c1');
+    expect(focusOf(createCampaign([]))).toBeUndefined();
+    expect('focus' in createCampaign([])).toBe(false);
+  });
+
+  it('wechselt beim Wischen, aber nur zu Lebenden, die nicht ausgeblendet sind', () => {
+    expect(setFocus(three(), 'c3').focus).toBe('c3');
+    const dead = updateCharacter(three(), 'c2', { ...inputOf(characterOf(three(), 'c2')), dead: true });
+    expect(() => setFocus(dead, 'c2')).toThrow(/tot/);
+    const retired = removeCharacter(inLog(three(), 'c2'), 'c2');
+    expect(() => setFocus(retired, 'c2')).toThrow(/ausgeblendet/);
+  });
+
+  it('ein neuer Charakter steht oben, ein toter nicht', () => {
+    expect(addCharacter(three(), input('Ada')).campaign.focus).toBe('c4');
+    expect(addCharacter(three(), input('Bea', true)).campaign.focus).toBe('c1');
+  });
+
+  it('stirbt der Charakter oben, rückt der nächste Lebende nach, hinter dem letzten der vorige', () => {
+    const kira = characterOf(three(), 'c1');
+    expect(updateCharacter(three(), 'c1', { ...inputOf(kira), dead: true }).focus).toBe('c2');
+    const last = setFocus(three(), 'c3');
+    expect(updateCharacter(last, 'c3', { ...inputOf(characterOf(last, 'c3')), dead: true }).focus).toBe('c2');
+  });
+
+  it('auch beim Ausblenden und Löschen; ohne Lebende gibt es keinen', () => {
+    expect(removeCharacter(inLog(three(), 'c1'), 'c1').focus).toBe('c2');
+    expect(removeCharacter(three(), 'c1').focus).toBe('c2');
+    const alone = removeCharacter(addCharacter(createCampaign([]), input('Ada')).campaign, 'c1');
+    expect(alone.focus).toBeUndefined();
+    expect(focusOf(alone)).toBeUndefined();
+  });
+
+  it('wieder lebendig oder eingeblendet ändert nichts, außer es gab keinen', () => {
+    const jonasDead = updateCharacter(three(), 'c2', { ...inputOf(characterOf(three(), 'c2')), dead: true });
+    expect(updateCharacter(jonasDead, 'c2', { ...inputOf(characterOf(jonasDead, 'c2')), dead: false }).focus).toBe('c1');
+    const gone = removeCharacter(inLog(addCharacter(createCampaign([]), input('Ada')).campaign, 'c1'), 'c1');
+    expect(gone.focus).toBeUndefined();
+    expect(restoreCharacter(gone, 'c1').focus).toBe('c1');
+  });
+
+  it('bleibt bei anderen Änderungen der Kampagne erhalten', () => {
+    const campaign = setOdds(setFocus(three(), 'c2'), 'high');
+    expect(campaign.focus).toBe('c2');
+    expect(keepFocus(campaign, campaign)).toBe(campaign);
   });
 });

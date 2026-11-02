@@ -41,7 +41,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Hex`; `WorldRoll` ist flüchtig. Neu im Bild: `Hex`, `WorldRoll`, `Campaign.hexes`,
 > `WorldStep`, `WorldRollKind` und als Referenzdaten `SystemContents`, `UwpDigit`, `TradeCode`.
 >
-> **Entwurf, wartet auf Freigabe** (2. November 2026): der Charakter oben im Orakel-Screen (siehe
+> Am 2. November 2026 freigegeben: der Charakter oben im Orakel-Screen (siehe
 > *Charakter oben*). Proben würfelt man dort statt im Charakter-Screen; der Charakter-Screen dient
 > nur noch der Verwaltung. Neu im Bild: `Campaign.focus`; `Task.for` ist jetzt abgeleitet
 > (`/for`). Der UI-Entwurf dazu liegt unter [`ui-entwurf/charakter-leiste/`](ui-entwurf/charakter-leiste/).

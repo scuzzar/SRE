@@ -13,6 +13,7 @@ async function campaignWithWorld(page: Page) {
   const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
   const file = { format: 'solo-rpg-engine/kampagne', version: 1, campaign: { name: 'Mit Welt', odds: 'medium', characters: [], log: [], hexes: [regina] } };
   await page.getByRole('banner').getByRole('button', { name: /^Kampagne / }).click();
+  await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Kampagnen wechseln und verwalten' }).click();
   await page.getByRole('dialog', { name: 'Kampagnen' }).locator('input[type=file]').setInputFiles({ name: 'welt.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
   await expect(page.getByRole('dialog', { name: 'Kampagnen' })).toBeHidden();
   await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
@@ -83,6 +84,9 @@ test('Charaktererschaffung: Attribute einzeln, Laufbahn, Terms, Abmusterung, Nam
   await dialog.getByRole('button', { name: 'Übernehmen' }).click();
   await expect(dialog).toBeHidden();
 
+  // Der neue Charakter steht oben im Orakel-Screen; die Details stehen im Charakter-Screen.
+  await expect(page.getByRole('region', { name: 'Spielercharaktere' }).getByRole('article', { name: 'Mara Quell' })).toBeVisible();
+  await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
   const mara = page.getByRole('article', { name: 'Mara Quell' });
   // Bei einer 2 misslingt auch die Musterung für Other; dann wird man eingezogen.
   await expect(mara).toContainText(/Ex-\w+ · (.+ · )?\d+ Terms? · \d+ Jahre/);

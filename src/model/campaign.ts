@@ -66,6 +66,11 @@ export interface Campaign {
   readonly generation?: Generation;
   /** Die erzeugten Hexfelder des Subsektors; ein Feld, das fehlt, ist nicht erzeugt. */
   readonly hexes: readonly Hex[];
+  /**
+   * Der Charakter oben im Orakel-Screen; für ihn würfelt man Proben. Lebt und ist nicht ausgeblendet;
+   * fehlt nur, wenn es keinen solchen Charakter gibt.
+   */
+  readonly focus?: CharacterId;
 }
 
 /** Was man beim Anlegen und Bearbeiten eines Charakters eingibt. */
@@ -89,7 +94,8 @@ export interface CharacterInput {
 export function createCampaign(examples: readonly ExampleCharacter[] = ref.examples, name = 'Kampagne', id: CampaignId = 'k1'): Campaign {
   let campaign: Campaign = { id, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [] };
   for (const example of examples) campaign = addCharacter(campaign, example).campaign;
-  return campaign;
+  // Bei mehreren Beispielen steht der erste oben, nicht der zuletzt angelegte.
+  return withFocus(campaign, livingCharacters(campaign)[0]?.id);
 }
 
 /** Eine Id für eine weitere Kampagne. Ids gelten nur auf dem Gerät; eine Kampagnendatei hat keine. */
@@ -158,6 +164,47 @@ export function deadCharacters(campaign: Campaign): readonly Character[] {
 
 export function retiredCharacters(campaign: Campaign): readonly Character[] {
   return campaign.characters.filter((c) => c.retired);
+}
+
+/** Kann der Charakter oben stehen? Nur wer lebt und nicht ausgeblendet ist. */
+function canFocus(character: Character | undefined): character is Character {
+  return character !== undefined && !character.dead && !character.retired;
+}
+
+/** Setzt den Charakter oben, oder keinen. */
+function withFocus(campaign: Campaign, focus: CharacterId | undefined): Campaign {
+  const rest = Object.fromEntries(Object.entries(campaign).filter(([key]) => key !== 'focus')) as Omit<Campaign, 'focus'>;
+  return focus === undefined ? rest : { ...rest, focus };
+}
+
+/** Der Charakter oben, oder keiner, wenn es keinen Lebenden gibt, der nicht ausgeblendet ist. */
+export function focusOf(campaign: Campaign): Character | undefined {
+  const focus = campaign.characters.find((c) => c.id === campaign.focus);
+  return canFocus(focus) ? focus : livingCharacters(campaign)[0];
+}
+
+/** Wischen: Ein anderer Charakter steht oben. Nur wer lebt und nicht ausgeblendet ist. */
+export function setFocus(campaign: Campaign, id: CharacterId): Campaign {
+  const character = characterOf(campaign, id);
+  if (character.retired) throw new DomainError(`${character.name} ist ausgeblendet.`);
+  if (character.dead) throw new DomainError(`${character.name} ist tot.`);
+  return withFocus(campaign, id);
+}
+
+/**
+ * Hält die Regel für den Charakter oben, nachdem sich die Charaktere geändert haben: Ist er noch da
+ * und lebt, bleibt er. Sonst rückt der nächste Lebende nach, hinter dem letzten der vorige. Gab es
+ * keinen, wird es der erste Lebende (auch für Kampagnen von vor dieser Regel).
+ */
+export function keepFocus(before: Campaign, after: Campaign): Campaign {
+  const current = after.characters.find((c) => c.id === after.focus);
+  if (canFocus(current)) return after;
+  const living = livingCharacters(after);
+  const at = before.characters.findIndex((c) => c.id === before.focus);
+  if (at < 0) return withFocus(after, living[0]?.id);
+  const ids = new Set(living.map((c) => c.id));
+  const next = before.characters.slice(at + 1).find((c) => ids.has(c.id)) ?? [...before.characters.slice(0, at)].reverse().find((c) => ids.has(c.id));
+  return withFocus(after, next?.id ?? living[0]?.id);
 }
 
 export function activeSkills(character: Character): readonly SkillLevel[] {
@@ -235,7 +282,9 @@ export function addCharacter(campaign: Campaign, input: CharacterInput, career?:
     ...(career ? { career } : {}),
     ...(input.homeworld === undefined ? {} : { homeworld: input.homeworld }),
   };
-  return { campaign: { ...campaign, characters: [...campaign.characters, character] }, id };
+  const added = { ...campaign, characters: [...campaign.characters, character] };
+  // Ein neuer Charakter steht oben, wenn er lebt.
+  return { campaign: canFocus(character) ? withFocus(added, id) : keepFocus(campaign, added), id };
 }
 
 /**
@@ -266,20 +315,20 @@ export function updateCharacter(campaign: Campaign, id: CharacterId, input: Char
     skills: [...kept, ...added],
     ...(input.homeworld === undefined ? {} : { homeworld: input.homeworld }),
   };
-  return { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? after : c)) };
+  return keepFocus(campaign, { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? after : c)) });
 }
 
 /** Löscht den Charakter, wenn der Log nicht auf ihn verweist; sonst wird er ausgeblendet. */
 export function removeCharacter(campaign: Campaign, id: CharacterId): Campaign {
   characterOf(campaign, id);
-  if (!isInLog(campaign, id)) return { ...campaign, characters: campaign.characters.filter((c) => c.id !== id) };
-  return { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? { ...c, retired: true } : c)) };
+  if (!isInLog(campaign, id)) return keepFocus(campaign, { ...campaign, characters: campaign.characters.filter((c) => c.id !== id) });
+  return keepFocus(campaign, { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? { ...c, retired: true } : c)) });
 }
 
 /** Blendet einen ausgeblendeten Charakter wieder ein. */
 export function restoreCharacter(campaign: Campaign, id: CharacterId): Campaign {
   characterOf(campaign, id);
-  return { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? { ...c, retired: false } : c)) };
+  return keepFocus(campaign, { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? { ...c, retired: false } : c)) });
 }
 
 /** Was eine Eingabe für einen bestehenden Charakter wäre, mit seinen eingeblendeten Fertigkeiten. */
@@ -291,8 +340,8 @@ export function inputOf(character: Character): CharacterInput {
 
 /** Beginnt oder ersetzt die Charaktererschaffung der Kampagne; `undefined` verwirft sie. */
 export function setGeneration(campaign: Campaign, generation: Generation | undefined): Campaign {
-  const { id, name, characters, odds, log, hexes } = campaign;
-  return generation ? { id, name, characters, odds, log, hexes, generation } : { id, name, characters, odds, log, hexes };
+  const rest = Object.fromEntries(Object.entries(campaign).filter(([key]) => key !== 'generation')) as Omit<Campaign, 'generation'>;
+  return generation ? { ...rest, generation } : rest;
 }
 
 /** Ersetzt die Hexfelder des Subsektors. */

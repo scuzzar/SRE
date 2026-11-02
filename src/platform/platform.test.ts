@@ -117,4 +117,18 @@ describe('Ältere Spielstände', () => {
     await repository.save({ ...loaded!, name: 'Spinward' });
     expect((await repository.list()).map((c) => [c.id, c.name])).toEqual([['current', 'Spinward']]);
   });
+
+  it('geben Kampagnen von vor dem Charakter oben den ersten Lebenden', () => {
+    const { focus, ...old } = createCampaign();
+    expect(focus).toBe('c1');
+    expect(upgraded(old).focus).toBe('c1');
+    expect(upgraded({ ...old, characters: [] }).focus).toBeUndefined();
+  });
+
+  it('merken sich, ob die Leiste eingeklappt ist', async () => {
+    const repository = await new DexieCampaignRepository(`test-${Math.random()}`).open();
+    expect(await repository.loadStripCollapsed()).toBe(false);
+    await repository.saveStripCollapsed(true);
+    expect(await repository.loadStripCollapsed()).toBe(true);
+  });
 });

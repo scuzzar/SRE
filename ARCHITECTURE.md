@@ -38,8 +38,9 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
 
 - **Er ändert das Model**, als Einziger, und speichert den Spielstand über das Repository:
   `askOracle(question)`, `rollDice()`, `drawCard(question)`, `togglePick(slot)`, `confirmCard()`,
-  `discardCard()`, `deleteLogEntry(index)`, `setOdds(odds)`, `chooseCharacter(c)`,
-  `chooseSkill(c, skill)`, `toggleCharacteristic(c)`, `rollTask()`; für Kampagnen
+  `discardCard()`, `deleteLogEntry(index)`, `setOdds(odds)`; für den Charakter oben und die Probe
+  `focusCharacter(id)` (Wischen), `chooseSkill(skill)`, `toggleCharacteristic(c)`, `rollTask()`,
+  `endTask()`; für Kampagnen
   `openCampaign(id)`, `createCampaign(name)`, `renameCampaign(name)`, `deleteCampaign(id)`,
   `exportCampaign(id)` und `importCampaign(text)`; für die Charaktererschaffung `openGeneration()`,
   `rollGeneration()`, `chooseService(id)`, `chooseSkillTable(id)`, `chooseCascade(skill)`,
@@ -55,10 +56,12 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   Controller über `Download`. Offene Karte und Probe in Vorbereitung sind Teil des
   Models (`model/draft/`), werden aber nicht gespeichert.
 - **Er wählt, welche View zu sehen ist**: Orakel-, Charakter- oder Sektor-Screen (`showScreen(screen)`), das gewählte Feld im Subsektor, die Weltkarte eines Feldes, die
-  Kampagnenwahl (`showCampaigns()`, `closeCampaigns()`) und das Ergebnis-Popup, und ob die Details des Charakters der Probe aufgeklappt sind (die Fertigkeit
-  antippen startet eine Probe, ohne aufzuklappen; erst der Name klappt auf). Auch der Ablauf ist
-  seine Sache, etwa „nach dem Ergebnis weiter im Charakter-Screen oder zum Orakel“ (`closeResult()`,
-  `closeResultToOracle()`). Die Inspirationskarte steht im Vordergrund, solange es eine offene
+  Kampagnenwahl (`showCampaigns()`, `closeCampaigns()`) und das Ergebnis-Popup (`closeResult()`),
+  welcher Charakter im Charakter-Screen seine Details zeigt (`toggleDetails(id)`) und ob die Leiste
+  mit dem Charakter oben eingeklappt ist (`toggleStrip()`; das merkt sich das Gerät über das
+  Repository, wie die offene Kampagne). Auch der Ablauf ist seine Sache: Steht nach einer Änderung
+  ein anderer Charakter oben, endet die Probe; nach der Erschaffung geht es zum Orakel-Screen, wo der
+  Neue oben steht. Die Inspirationskarte steht im Vordergrund, solange es eine offene
   `Card` gibt; das folgt aus dem Model und braucht keinen eigenen Zustand.
 
 Die View sieht das Model nur lesend (`Readonly`-Typen); ein Schreibzugriff aus der View ist ein
@@ -67,7 +70,7 @@ Compilerfehler.
 **3. Nach oben wird gemeldet, nicht gerufen.** Der Controller kennt keine Komponenten. Er wählt die
 View, indem er seinen Zustand ändert, nicht indem er Komponenten aufruft. Er bietet
 `subscribe(listener)` und `snapshot()` an: den Spielstand aus dem Model und seinen eigenen Zustand
-(welcher Screen, ob das Popup offen ist, ob die Details des Charakters der Probe aufgeklappt sind, ob die Charaktererschaffung im Vordergrund steht). Die View hängt sich mit `useSyncExternalStore` daran
+(welcher Screen, ob das Popup offen ist, wessen Details aufgeklappt sind, ob die Leiste eingeklappt ist, ob die Charaktererschaffung im Vordergrund steht). Die View hängt sich mit `useSyncExternalStore` daran
 und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von unten nach oben.
 
 **4. Das Model ist frei von Seiteneffekten, die View frei von Regeln und Ablauf.**
@@ -78,7 +81,9 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
   Attribute wählbar sind, welcher DM gilt, was auf 2W6 nötig ist und wie wahrscheinlich das ist,
   liefert das Model über den Snapshot des Controllers. Die View hält nur, was reine Darstellung ist:
   die Anordnung von Feldern und Tafeln, den Text in Eingabefeldern während des Tippens, ob ein
-  Löschen gerade bestätigt werden will, das Erkennen von langem Drücken (auch der Knopf, der sich dabei füllt, `view/HoldButton.tsx`), die Scrollposition,
+  Löschen gerade bestätigt werden will, ob das Menü offen ist (`view/Menu.tsx`), wo die Leiste beim
+  Wischen gerade steht (`view/oracle/CharacterStrip.tsx` meldet dem Controller nur, bei welcher
+  Karte sie liegen bleibt), das Erkennen von langem Drücken (auch der Knopf, der sich dabei füllt, `view/HoldButton.tsx`), die Scrollposition,
   Animationen und Vibration (`view/Dice.tsx`, `view/haptics.ts`), der Hinweis zum Installieren (`view/install.ts`). Eine Animation zeigt nur, was schon
   im Snapshot steht: Der Wurf ist geloggt, bevor die Würfel rollen. Sie darf den Aufruf des
   Controllers kurz aufschieben (die Karte gleitet hinaus, dann `confirmCard()`), aber nie ersetzen.
@@ -91,8 +96,8 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
 - **Schreibzugriffe:** `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` und
   `Readonly`-Typen für alles, was der Controller der View gibt.
 - **Regeln und Ablauf:** Unit-Tests mit Vitest für Model und Controller, darunter die Beispiele aus
-  der README (Kira, Jonas). Weil der Controller den Ablauf hält, lässt sich auch „Probe würfeln →
-  Popup → weiter oder zum Orakel“ ohne Browser testen. Playwright prüft die Oberfläche bei 390 × 844.
+  der README (Kira, Jonas). Weil der Controller den Ablauf hält, lässt sich auch „wischen →
+  Fertigkeit → Probe würfeln → Popup → weiter“ ohne Browser testen. Playwright prüft die Oberfläche bei 390 × 844.
 
 ## Befehle
 
