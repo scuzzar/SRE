@@ -310,6 +310,9 @@ button:disabled {
 .log-scroll {
   display: flex;
   flex-direction: column-reverse;
+  /* Unter der Leiste mit dem Charakter oben läuft der Log weich aus, statt hart abgeschnitten. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 56px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 56px);
 }
 
 .log {
@@ -3136,9 +3139,12 @@ button:disabled {
 /* --- Charakter oben: die Leiste im Orakel-Screen -------------------------------------------- */
 
 .strip {
+  position: relative;
+  z-index: 1;
   flex: 0 0 auto;
-  border-bottom: 1px solid var(--rule);
-  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  background: var(--deep);
+  box-shadow: 0 10px 14px -10px rgba(0, 0, 0, 0.9);
 }
 
 .strip-empty {
@@ -3157,7 +3163,8 @@ button:disabled {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding: 10px 16px 0;
+  /* Unten immer Abstand, auch ohne Punkte: Die Karte sitzt nie bündig auf dem Log. */
+  padding: 10px 16px 12px;
   scroll-padding: 0 16px;
   scroll-snap-type: x mandatory;
   overscroll-behavior-x: contain;
@@ -3176,8 +3183,10 @@ button:disabled {
   gap: 6px;
   padding: 6px 8px 10px 12px;
   scroll-snap-align: start;
-  background: var(--panel);
-  border: 1px solid var(--rule-soft);
+  /* Die Charakterkarte sieht anders aus als ein Logeintrag: heller Grund, kräftiger Rahmen, rote Kante oben. */
+  background: var(--highlight);
+  border: 1px solid var(--line-strong);
+  border-top: 3px solid var(--accent);
 }
 
 .strip.collapsed .strip-card {
@@ -3263,7 +3272,8 @@ button:disabled {
 .strip-dots {
   display: flex;
   justify-content: center;
-  padding: 2px 0;
+  margin-top: -8px;
+  padding-bottom: 4px;
 }
 
 .strip-dots button {
