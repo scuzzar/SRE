@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { testHaptic, vibrationKind } from './haptics';
 import { ExternalIcon } from './icons';
+import { canPromptInstall, installKind, promptInstall, subscribeInstall } from './install';
 
 const repository = 'https://github.com/scuzzar/SRE';
 
 /** Quellenangaben und Hinweise, wie sie die README für Version 1 verlangt, dazu die Links zum Projekt. */
-export function AboutScreen({ persistent }: { persistent: boolean }) {
+export function AboutScreen({ persistent, durable }: { persistent: boolean; durable: boolean | undefined }) {
   return (
     <div className="screen">
       <section className="scroll about" aria-labelledby="about-title">
@@ -17,10 +18,11 @@ export function AboutScreen({ persistent }: { persistent: boolean }) {
           <p>Eine App für Solo-Rollenspiel mit Classic Traveller: ein Ja/Nein-Orakel, eine Inspirationskarte und Proben direkt im Charakter-Screen.</p>
           <p className="muted">
             {persistent
-              ? 'Der Spielstand liegt nur auf diesem Gerät, im Speicher des Browsers.'
+              ? ['Der Spielstand liegt nur auf diesem Gerät, im Speicher des Browsers.', durable === undefined ? '' : durableText[durable ? 'yes' : 'no']].join(' ').trim()
               : 'Hier lässt sich nichts dauerhaft speichern: Der Spielstand geht beim Schließen verloren.'}
           </p>
         </div>
+        <Install />
         <Vibration />
         <ul className="links" aria-label="Projekt">
           <li>
@@ -71,6 +73,50 @@ export function AboutScreen({ persistent }: { persistent: boolean }) {
         </div>
         <p className="muted">Ein inoffizielles Fan-Projekt, kostenlos angeboten.</p>
       </section>
+    </div>
+  );
+}
+
+/** Ob der Browser zugesagt hat, den Spielstand nicht zu löschen; ohne Antwort steht nichts da. */
+const durableText = {
+  yes: 'Der Browser hält ihn dauerhaft und löscht ihn nicht, auch wenn der Platz knapp wird.',
+  no:
+    'Der Browser hat nicht zugesagt, ihn dauerhaft zu halten: Wird der Platz knapp oder bleibt die App lange unbenutzt, kann er ihn löschen. Installieren hilft; sicher ist ein Export.',
+} as const;
+
+const exportTip = 'Kampagnen nimmt man über Export und Import in der Kampagnenwahl mit.';
+
+const installTexts = {
+  installed: ['Die App ist installiert und startet auch ohne Netz.'],
+  'installed-ios': [
+    'Die App ist installiert und startet auch ohne Netz.',
+    `Auf dem iPhone hat die installierte App ihren eigenen Speicher, getrennt von Safari. Wer das Icon löscht, löscht auch die Kampagnen: vorher exportieren. ${exportTip}`,
+  ],
+  ios: [
+    'Im Browser auf den Teilen-Knopf tippen, dann „Zum Home-Bildschirm“. Danach startet die App vom Home-Bildschirm, auch ohne Netz.',
+    `Die installierte App hat ihren eigenen Speicher, getrennt von diesem Browser. ${exportTip}`,
+  ],
+  browser: ['Im Menü des Browsers „App installieren“ oder „Zum Startbildschirm hinzufügen“ wählen. Danach startet die App wie jede andere, auch ohne Netz.'],
+  file: ['Als lokal geöffnete Datei lässt sich die App nicht installieren. Das geht über ihre Adresse im Netz (GitHub Pages).'],
+} as const;
+
+/** Wie man die App auf diesem Gerät installiert; wo der Browser es erlaubt, mit eigenem Knopf. */
+function Install() {
+  const offered = useSyncExternalStore(subscribeInstall, canPromptInstall);
+  const kind = installKind();
+  return (
+    <div>
+      <h2>Installieren</h2>
+      {offered ? (
+        <>
+          <p>Installiert startet die App wie jede andere, auch ohne Netz.</p>
+          <button type="button" className="ghost" onClick={() => void promptInstall()}>
+            App installieren
+          </button>
+        </>
+      ) : (
+        installTexts[kind].map((text) => <p key={text}>{text}</p>)
+      )}
     </div>
   );
 }

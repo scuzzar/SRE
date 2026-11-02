@@ -72,6 +72,8 @@ export interface GameDependencies {
   readonly download: Download;
   /** Ob der Speicher das Schließen der App übersteht. */
   readonly persistent?: boolean;
+  /** Ob der Browser zusagt, den Speicher nicht zu löschen; `undefined`, wo er das nicht kennt. */
+  readonly durable?: Promise<boolean | undefined>;
 }
 
 /**
@@ -93,6 +95,7 @@ export class GameController {
       campaign: undefined,
       campaignSheet: undefined,
       persistent: deps.persistent ?? true,
+      durable: undefined,
       storageError: undefined,
       screen: 'oracle',
       card: undefined,
@@ -116,6 +119,8 @@ export class GameController {
    * weiter: Die neue erste Kampagne darf keine gespeicherte mit derselben Id überschreiben.
    */
   async init(): Promise<void> {
+    // Die Antwort des Browsers wartet nicht auf den Start; Firefox fragt dafür erst den Spieler.
+    void this.deps.durable?.then((durable) => this.update({ durable }));
     let campaigns: readonly Campaign[] = [];
     let open: CampaignId | undefined;
     try {

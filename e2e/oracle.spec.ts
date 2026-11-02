@@ -125,6 +125,28 @@ test('Über: Quellenangaben und Links zum Projekt', async ({ page }) => {
   );
 });
 
+test('Über: wie man die App installiert und ob der Speicher bleibt', async ({ page }) => {
+  await page.getByRole('button', { name: 'Über die App' }).click();
+  await expect(page.getByRole('heading', { name: 'Installieren' })).toBeVisible();
+  await expect(page.getByText(/„App installieren“ oder „Zum Startbildschirm hinzufügen“/)).toBeVisible();
+  await expect(page.getByText(/Der Spielstand liegt nur auf diesem Gerät/)).toBeVisible();
+});
+
+test('Über: auf dem iPhone der Weg über Teilen und der Hinweis auf den eigenen Speicher', async ({ browser }) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+  });
+  const page = await context.newPage();
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Über die App' }).click();
+  await expect(page.getByText(/Teilen-Knopf tippen, dann „Zum Home-Bildschirm“/)).toBeVisible();
+  await expect(page.getByText(/eigenen Speicher, getrennt von diesem Browser/)).toBeVisible();
+  await context.close();
+});
+
 test('Vollbild: der Knopf neben dem i schaltet an und aus', async ({ page }) => {
   const header = page.getByRole('banner');
   await header.getByRole('button', { name: 'Vollbild' }).click();

@@ -58,7 +58,7 @@ export function App() {
       {view.screen === 'oracle' && <OracleScreen view={view} question={question} onQuestion={setQuestion} />}
       {view.screen === 'characters' && <CharactersScreen view={view} />}
       {view.screen === 'sector' && <SectorScreen view={view} />}
-      {view.screen === 'about' && <AboutScreen persistent={view.persistent} />}
+      {view.screen === 'about' && <AboutScreen persistent={view.persistent} durable={view.durable} />}
 
       <nav className="nav" aria-label="Bereiche">
         <button type="button" aria-current={view.screen === 'oracle' ? 'page' : undefined} onClick={() => game.showScreen('oracle')}>

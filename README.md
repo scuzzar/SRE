@@ -275,7 +275,7 @@ Die früheren eigenen Reiter (Auftrag, Begegnung, Handel und die eigenen Reiter 
 Diese Punkte werden als Nächstes gemeinsam geklärt:
 
 ### UI
-- **Entschieden: mobil zuerst, als Web-App (PWA).** Man installiert sie aus dem Browser (Android: Menü → „App installieren“; iPhone: in Safari Teilen → „Zum Home-Bildschirm“); nach dem ersten Start läuft sie auch ohne Netz. Eine native App ist später über Capacitor möglich, ohne Neuschreiben.
+- **Entschieden: mobil zuerst, als Web-App (PWA).** Man installiert sie aus dem Browser (Android: Menü → „App installieren“; iPhone: in Safari Teilen → „Zum Home-Bildschirm“); nach dem ersten Start läuft sie auch ohne Netz. Unter „Über“ steht, wie das auf dem jeweiligen Gerät geht (wo Chrome oder Edge es erlauben, mit Knopf „App installieren“), auf dem iPhone mit dem Hinweis, dass die installierte App eigenen Speicher hat, und ob der Browser zugesagt hat, den Spielstand dauerhaft zu halten. Eine native App ist später über Capacitor möglich, ohne Neuschreiben.
 - Später: Wie gibt man physische Würfe am schnellsten ein (z. B. Würfelaugen antippen, Summe eintippen)?
 - Später: Wie wächst die App über Version 1 hinaus, ohne den Hauptscreen zu überladen?
 - Wohin wandern die Themen-Tafeln (NSC, NSC-Aktionen, Welt, Wesen, Handlung), die vorläufig unter der Karte stehen?

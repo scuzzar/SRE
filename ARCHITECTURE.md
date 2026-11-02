@@ -79,7 +79,7 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
   liefert das Model über den Snapshot des Controllers. Die View hält nur, was reine Darstellung ist:
   die Anordnung von Feldern und Tafeln, den Text in Eingabefeldern während des Tippens, ob ein
   Löschen gerade bestätigt werden will, das Erkennen von langem Drücken (auch der Knopf, der sich dabei füllt, `view/HoldButton.tsx`), die Scrollposition,
-  Animationen und Vibration (`view/Dice.tsx`, `view/haptics.ts`). Eine Animation zeigt nur, was schon
+  Animationen und Vibration (`view/Dice.tsx`, `view/haptics.ts`), der Hinweis zum Installieren (`view/install.ts`). Eine Animation zeigt nur, was schon
   im Snapshot steht: Der Wurf ist geloggt, bevor die Würfel rollen. Sie darf den Aufruf des
   Controllers kurz aufschieben (die Karte gleitet hinaus, dann `confirmCard()`), aber nie ersetzen.
   Faustregel: Braucht der Controller es für eine Entscheidung, gehört es dem Controller.
@@ -114,7 +114,10 @@ Id; welche offen ist, steht daneben unter `settings`. Die eine Kampagne aus der 
 Kampagnen lag unter dem Schlüssel `current` und behält ihn als Id. Geht das nicht (privates
 Fenster, eingebettete Vorschau, eine lokal geöffnete Datei auf manchen Handys), läuft die App mit
 einem Speicher im Arbeitsspeicher weiter; ein Hinweis oben unter der Kopfzeile und der
-„Über“-Bildschirm sagen dann, dass nichts dauerhaft gespeichert wird.
+„Über“-Bildschirm sagen dann, dass nichts dauerhaft gespeichert wird. Läuft IndexedDB, bittet
+`requestDurable()` den Browser, den Speicher dauerhaft zu halten (`navigator.storage.persist()`). Die
+Antwort geht als Promise in den Controller und wartet nicht auf den Start, weil Firefox dafür den
+Spieler fragt; der Snapshot meldet sie als `durable`, der „Über“-Bildschirm zeigt sie an.
 
 **Installieren und offline.** `public/manifest.webmanifest` macht die App installierbar, mit PNG-Icons
 (192 und 512 px, eines maskierbar für Android) und `apple-touch-icon.png` für das iPhone; alle

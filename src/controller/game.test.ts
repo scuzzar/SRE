@@ -35,6 +35,17 @@ describe('Start', () => {
     expect(game.snapshot().storageError).toMatch(/nicht speichern: Error: voll/);
   });
 
+  it('meldet, ob der Browser den Speicher dauerhaft hält, ohne den Start aufzuhalten', async () => {
+    let answer: (durable: boolean) => void = () => undefined;
+    const durable = new Promise<boolean | undefined>((resolve) => (answer = resolve));
+    const game = new GameController({ repository: memoryRepository(), random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), durable });
+    await game.init();
+    expect(game.snapshot()).toMatchObject({ ready: true, durable: undefined });
+    answer(true);
+    await durable;
+    expect(game.snapshot().durable).toBe(true);
+  });
+
   it('überschreibt nichts, wenn sich der Spielstand nicht laden lässt', async () => {
     const stored = createCampaign([], 'Spinward', 'k1');
     const repository = memoryRepository(stored);
