@@ -143,7 +143,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Handelscode | `TradeCode` | Ag, Na, In, Ni, Ri, Po, Wa, De, Va, As, Ic, mit Bedingungen an das UWP |
 | Temperatur | `Hex.temperature`, `Temperature` | Wie warm eine Welt im Mittel ist: Gefroren, Kalt, Gemäßigt, Heiß oder Kochend, nach Mongoose Traveller 2e (S. 251); nicht Teil des UWP |
 | Temperatur-DM | `UwpDigit.temperatureDm` | Der DM einer Atmosphäre auf den Temperaturwurf, z. B. −2 bei Atmosphäre 2 oder 3 |
-| Wasser-DM | `Temperature.hydroDm` | Der DM einer Temperatur auf die Hydrographie: −2 bei Heiß, −6 bei Kochend |
+| Wasser-DM | `Temperature.hydroDm` | Der DM einer Temperatur auf die Hydrographie: −2 bei Heiß, −6 bei Kochend, nicht bei Atmosphäre D |
 
 ## Regeln, die das Bild nicht zeigt
 
@@ -483,8 +483,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
      am Tag und Frost in der Nacht schwankt. Die Texte der Tabelle sind eigene, deutsche
      Beschreibungen, keine Übersetzung des Regeltexts.
   5. *Rest des UWP*: Hydrographie 2W6 − 7 + Größe, DM −4 bei Atmosphäre 0, 1 oder A+, dazu der
-     Wasser-DM der Temperatur (`Temperature.hydroDm`, nach Mongoose): −2 bei *Heiß*, −6 bei
-     *Kochend*, sonst 0; bei Größe 0 oder 1 kein Wurf und 0. Bevölkerung 2W6 − 2; Regierung
+     Wasser-DM der Temperatur (`Temperature.hydroDm`, nach Mongoose S. 252): −2 bei *Heiß*, −6 bei
+     *Kochend*, sonst 0. Er gilt nicht bei Atmosphäre D (dicht, nur in der Höhe atembar), die das
+     Wasser auch bei großer Hitze hält. Mongoose nimmt auch eine panthalassische Atmosphäre F aus;
+     in Classic Traveller ist F aber dünn und tief liegend (*Thin, Low*), dort gilt der DM.
+     Bei Größe 0 oder 1 kein Wurf und 0. Bevölkerung 2W6 − 2; Regierung
      2W6 − 7 + Bevölkerung; Gesetz 2W6 − 7 + Regierung; TL 1W6 plus die DMs der Tech Level Table
      (`UwpDigit.techDm`) von Raumhafen, Größe, Atmosphäre, Hydrographie, Bevölkerung und
      Regierung. Über die Hydrographie wirkt die Temperatur so auch auf TL und Handelscodes.
@@ -527,9 +530,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
 ## Offene Fragen
 
-- **Ausnahmen beim Wasser-DM.** Mongoose nimmt nach meiner Erinnerung manche Atmosphären vom Malus
-  der Temperatur aus (etwa D, dichte Atmosphäre in der Höhe). Das ist nicht geprüft; bitte im Core
-  Rulebook bei der Hydrographie (S. 252) nachsehen. Bis dahin gilt der Malus für jede Atmosphäre.
 
 - **Rand der habitablen Zone.** Mongoose erlaubt der Spielleitung wahlweise DM +4 (heißer Rand) oder
   DM −4 (kalter Rand). Ohne Sternsystem weiß die App nicht, wo die Welt liegt. Empfehlung:
