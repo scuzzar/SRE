@@ -2,11 +2,11 @@ import {
   addCharacter,
   appendLog,
   askOracle,
-  characterOf,
   byName,
   campaignFileName,
   createCampaign,
   DomainError,
+  focusOf,
   fromCampaignFile,
   nextCampaignId,
   removeCampaign,
@@ -32,6 +32,7 @@ import {
   hexAt,
   setGeneration,
   setHexes,
+  setFocus,
   setOdds,
   startGeneration,
   toCampaignFile,
@@ -63,7 +64,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, task: undefined, details: false, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, task: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
 
 export interface GameDependencies {
   readonly repository: CampaignRepository;
@@ -100,7 +101,8 @@ export class GameController {
       screen: 'oracle',
       card: undefined,
       task: undefined,
-      details: false,
+      opened: undefined,
+      stripCollapsed: false,
       result: undefined,
       editor: undefined,
       generating: false,
@@ -133,6 +135,11 @@ export class GameController {
       if (this.writable) open = await this.deps.repository.loadOpen();
     } catch {
       // Welche Kampagne offen war, ist nur eine Bequemlichkeit; dann öffnet sich die erste.
+    }
+    try {
+      if (this.writable) this.update({ stripCollapsed: await this.deps.repository.loadStripCollapsed() });
+    } catch {
+      // Ob die Leiste eingeklappt war, ist nur eine Bequemlichkeit; dann ist sie offen.
     }
     const campaign = campaigns.find((c) => c.id === open) ?? byName(campaigns)[0];
     if (campaign) this.update({ campaigns, campaign });
@@ -249,30 +256,41 @@ export class GameController {
     this.change(removeLogEntry(this.campaign, index), { result: undefined });
   }
 
-  // --- Charakter-Screen und Proben -------------------------------------------------------------
+  // --- Charakter oben und Proben ---------------------------------------------------------------
 
   showScreen(screen: Screen): void {
     this.update({ screen });
   }
 
-  /**
-   * Wählt den Charakter für eine Probe und klappt seine Details auf. Ein anderer Charakter beginnt
-   * eine neue Probe. Derselbe klappt auf, wenn er noch zu ist, sonst wieder zu und beendet die Probe.
-   */
-  chooseCharacter(id: string): void {
-    if (this.state.task?.for !== id) this.update({ task: startTask(this.campaign, id), details: true });
-    else if (!this.state.details) this.update({ details: true });
-    else this.update({ task: undefined, details: false });
+  /** Wischen: Ein anderer Charakter steht oben; eine vorbereitete Probe endet. */
+  focusCharacter(id: string): void {
+    if (focusOf(this.campaign)?.id === id) return;
+    this.change(setFocus(this.campaign, id), { task: undefined });
+  }
+
+  /** Klappt die Leiste mit dem Charakter oben ein oder auf; das Gerät merkt es sich. */
+  toggleStrip(): void {
+    const stripCollapsed = !this.state.stripCollapsed;
+    this.update({ stripCollapsed });
+    this.persist(() => this.deps.repository.saveStripCollapsed(stripCollapsed));
   }
 
   /**
-   * Wählt die Fertigkeit eines Charakters für die Probe; `null` heißt „ohne Fertigkeit“. Gilt die
-   * Probe noch keinem oder einem anderen Charakter, beginnt sie mit dieser Wahl neu, ohne die
-   * Details aufzuklappen.
+   * Wählt die Fertigkeit des Charakters oben für die Probe; `null` heißt „ohne Fertigkeit“. Ohne
+   * vorbereitete Probe beginnt sie mit dieser Wahl. Dieselbe noch einmal nimmt die Wahl zurück.
    */
-  chooseSkill(id: string, skill: string | null): void {
-    if (this.state.task?.for === id) this.update({ task: chooseSkill(this.state.task, this.campaign, skill) });
-    else this.update({ task: chooseSkill(startTask(this.campaign, id), this.campaign, skill), details: false });
+  chooseSkill(skill: string | null): void {
+    this.update({ task: chooseSkill(this.state.task ?? startTask(this.campaign), this.campaign, skill) });
+  }
+
+  /** Beendet die vorbereitete Probe, ohne zu würfeln. */
+  endTask(): void {
+    this.update({ task: undefined });
+  }
+
+  /** Im Charakter-Screen: klappt die Details eines Charakters auf oder zu (volle Namen, Ausrüstung, Notiz, Lebenslauf). */
+  toggleDetails(id: string): void {
+    this.update({ opened: this.state.opened === id ? undefined : id });
   }
 
   toggleCharacteristic(characteristic: Characteristic): void {
@@ -286,14 +304,9 @@ export class GameController {
     this.change(campaign, { result: campaign.log.length - 1 });
   }
 
-  /** „Weiter“: schließt das Ergebnis und bleibt im Charakter-Screen; die Probe bleibt vorbereitet. */
+  /** „Weiter“: schließt das Ergebnis; die Probe bleibt vorbereitet, der Log darunter zeigt sie schon. */
   closeResult(): void {
     this.update({ result: undefined });
-  }
-
-  /** „Zum Orakel“: schließt das Ergebnis und geht zum Orakel, wo der Log steht. */
-  closeResultToOracle(): void {
-    this.update({ result: undefined, task: undefined, screen: 'oracle' });
   }
 
   // --- Charaktere anlegen und bearbeiten -------------------------------------------------------
@@ -318,12 +331,9 @@ export class GameController {
         this.change(addCharacter(this.campaign, input).campaign, { editor: undefined });
       } else {
         const id = editor.id;
-        const campaign = updateCharacter(this.campaign, id, input);
-        // Die Fertigkeit der Probe kann weg sein: Die Probe für diesen Charakter beginnt neu. Ist er
-        // jetzt tot, endet sie.
-        const own = this.state.task?.for === id;
-        const task = !own ? this.state.task : characterOf(campaign, id).dead ? undefined : startTask(campaign, id);
-        this.change(campaign, { editor: undefined, task });
+        // Die Fertigkeit der Probe kann weg sein: Wer den Charakter oben bearbeitet, beendet seine Probe.
+        const task = focusOf(this.campaign)?.id === id ? undefined : this.state.task;
+        this.change(updateCharacter(this.campaign, id, input), { editor: undefined, task });
       }
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
@@ -333,8 +343,7 @@ export class GameController {
 
   /** Entfernt den Charakter: gelöscht, wenn der Log nicht auf ihn verweist, sonst ausgeblendet. */
   removeCharacter(id: string): void {
-    const task = this.state.task?.for === id ? undefined : this.state.task;
-    this.change(removeCharacter(this.campaign, id), { editor: undefined, task });
+    this.change(removeCharacter(this.campaign, id), { editor: undefined });
   }
 
   restoreCharacter(id: string): void {
@@ -430,10 +439,10 @@ export class GameController {
     this.inGeneration((g) => muster(g, kind, this.deps.random));
   }
 
-  /** Schließt die Erschaffung mit Namen ab; der neue Charakter steht im Charakter-Screen. */
+  /** Schließt die Erschaffung mit Namen ab; der neue Charakter steht oben im Orakel-Screen. */
   finishGeneration(name: string): void {
     try {
-      this.change(finishGeneration(this.campaign, name).campaign, { generating: false, generationError: undefined, screen: 'characters' });
+      this.change(finishGeneration(this.campaign, name).campaign, { generating: false, generationError: undefined, screen: 'oracle' });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ generationError: error.message });
@@ -569,8 +578,9 @@ export class GameController {
     return this.state.task;
   }
 
-  /** Ändert die offene Kampagne und speichert sie. */
+  /** Ändert die offene Kampagne und speichert sie. Steht danach ein anderer Charakter oben, endet die Probe. */
   private change(campaign: Campaign, rest: Partial<ControllerState> = {}): void {
+    if (this.state.campaign && focusOf(this.state.campaign)?.id !== focusOf(campaign)?.id) rest = { ...rest, task: undefined };
     const campaigns = this.state.campaigns.map((c) => (c.id === campaign.id ? campaign : c));
     this.update({ ...rest, campaigns, campaign });
     this.persist(() => this.deps.repository.save(campaign), true);

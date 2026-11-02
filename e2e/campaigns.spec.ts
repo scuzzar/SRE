@@ -6,6 +6,7 @@ const pick = (page: Page, name: string) => sheet(page).locator('.campaign-pick',
 
 async function openCampaigns(page: Page) {
   await header(page).getByRole('button', { name: /^Kampagne / }).click();
+  await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Kampagnen wechseln und verwalten' }).click();
   await expect(sheet(page)).toBeVisible();
 }
 

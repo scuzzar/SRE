@@ -63,6 +63,14 @@ export function InfoIcon() {
   );
 }
 
+export function MenuIcon() {
+  return (
+    <svg {...base} strokeLinecap="round">
+      <path d="M4 7h16M4 12h16M4 17h16" />
+    </svg>
+  );
+}
+
 export function CloseIcon() {
   return (
     <svg {...base} strokeWidth={2} strokeLinecap="round">

@@ -314,6 +314,7 @@ hide <<value>> stereotype
 ' Kampagne
 Campaign "1" *-- "*" Character : characters
 Campaign "*" --> "1" Odds : odds
+Campaign "0..1" --> "0..1" Character : focus
 Campaign "1" *-- "*" LogEntry : log {ordered}
 
 ' Charaktererschaffung und Lebenslauf
@@ -392,7 +393,7 @@ TaskResult "*" --> "1" Odds : odds
 
 ' Probe
 Task "0..1" --> "1" Campaign : in
-Task "*" --> "1" Character : for
+Task "*" --> "1" Character : /for
 Task "*" --> "0..1" SkillLevel : uses
 Task --> "0..6" Characteristic : counts
 Task ..> TaskResult : on roll

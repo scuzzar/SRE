@@ -1,14 +1,14 @@
 import type { Snapshot } from '../../controller';
-import { needText, signed, taskFigures, taskHeadline } from '../format';
 import { useGame } from '../game-context';
-import { haptic } from '../haptics';
-import { DiceIcon, PencilIcon } from '../icons';
-import { OddsBar } from '../OddsBar';
+import { PencilIcon } from '../icons';
 import { CharacterCard } from './CharacterCard';
 
+/**
+ * Der Charakter-Screen zum Verwalten: anlegen, nach Regeln erschaffen, bearbeiten, Details mit
+ * Lebenslauf, Verstorbene und Ausgeblendete. Proben würfelt man oben im Orakel-Screen.
+ */
 export function CharactersScreen({ view }: { view: Snapshot }) {
   const game = useGame();
-  const task = view.task;
 
   return (
     <div className="screen">
@@ -65,37 +65,6 @@ export function CharactersScreen({ view }: { view: Snapshot }) {
             </ul>
           </div>
         )}
-      </section>
-
-      <section className="dock" aria-label="Probe">
-        <div className="task-info" aria-live="polite">
-          {!task?.ready ? (
-            <span className="task-hint">{task ? 'Fertigkeit wählen' : 'Fertigkeit antippen, um eine Probe zu starten'}</span>
-          ) : (
-            <>
-              <strong className="task-headline">{taskHeadline(task.parts, task.target)}</strong>
-              <span className="task-figures">
-                2W6 {signed(task.dm)}
-                {taskFigures(task.parts)} · {needText(task.need, task.chance)}
-              </span>
-            </>
-          )}
-        </div>
-        <div className="odds-row">
-          <OddsBar odds={view.odds} variant="task" />
-          <button
-            type="button"
-            className="roll"
-            disabled={!task?.ready}
-            onClick={() => {
-              haptic('land');
-              game.rollTask();
-            }}
-          >
-            <DiceIcon />
-            Probe würfeln
-          </button>
-        </div>
       </section>
     </div>
   );

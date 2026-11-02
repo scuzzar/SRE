@@ -907,11 +907,6 @@ button:disabled {
   border: 1px solid var(--rule-soft);
 }
 
-.pc.chosen {
-  background: var(--highlight);
-  border-color: var(--text);
-}
-
 .pc-top {
   display: flex;
   align-items: flex-start;
@@ -956,7 +951,8 @@ button:disabled {
   gap: 4px;
 }
 
-.upp button {
+.upp button,
+.upp .cell {
   min-height: 64px;
   display: flex;
   flex-direction: column;
@@ -1022,9 +1018,13 @@ button:disabled {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.chips button {
+.chips button,
+.chips .chip {
   min-height: 40px;
   padding: 6px 8px;
   font-size: 14px;
@@ -3130,4 +3130,266 @@ button:disabled {
 .hold-button.holding .hold-fill {
   transform: scaleX(1);
   transition: transform var(--hold-ms) linear;
+}
+
+
+/* --- Charakter oben: die Leiste im Orakel-Screen -------------------------------------------- */
+
+.strip {
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--rule);
+  background: var(--card);
+}
+
+.strip-empty {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px 16px;
+}
+
+.strip-empty .add-character {
+  min-height: 44px;
+  padding: 8px;
+}
+
+.strip-track {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px 16px 0;
+  scroll-padding: 0 16px;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.strip-track::-webkit-scrollbar {
+  display: none;
+}
+
+.strip-card {
+  flex: 0 0 calc(100% - 24px);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 8px 10px 12px;
+  scroll-snap-align: start;
+  background: var(--panel);
+  border: 1px solid var(--rule-soft);
+}
+
+.strip.collapsed .strip-card {
+  padding-bottom: 6px;
+}
+
+.strip-card:only-child {
+  flex-basis: 100%;
+}
+
+.strip-head {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: -4px;
+}
+
+.strip-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 40px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  text-align: left;
+}
+
+.strip-name {
+  flex: 0 0 auto;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.strip-title .pc-sub {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.strip-position {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.strip-head .icon-button {
+  width: 36px;
+  height: 36px;
+}
+
+.strip-toggle svg {
+  transition: transform 0.15s ease-out;
+}
+
+.strip.collapsed .strip-toggle svg {
+  transform: rotate(-90deg);
+}
+
+.strip .upp button,
+.strip .upp .cell {
+  min-height: 50px;
+}
+
+.strip .upp .upp-code {
+  font-size: 18px;
+}
+
+.strip .chips button,
+.strip .chips .chip {
+  min-height: 36px;
+  padding: 4px 9px;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.strip-dots {
+  display: flex;
+  justify-content: center;
+  padding: 2px 0;
+}
+
+.strip-dots button {
+  width: 28px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.strip-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+}
+
+.strip-dots button[aria-current='true'] span {
+  background: var(--text);
+}
+
+/* Die vorbereitete Probe steht über den Knöpfen; aus „2W6“ wird „Probe würfeln“. */
+.task-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0 4px 12px;
+  border: 1px solid var(--line-strong);
+  background: var(--raised);
+}
+
+.task-bar .task-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.task-bar .task-headline {
+  font-size: 15px;
+}
+
+.task-bar .task-figures {
+  font-size: 12px;
+}
+
+.action.task-roll {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+/* --- Menü hinter ☰ -------------------------------------------------------------------------- */
+
+.menu-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+}
+
+.menu-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.menu {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(300px, 85%);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding-top: env(safe-area-inset-top);
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+}
+
+.menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  padding: 0 8px 0 16px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.menu-title {
+  font-weight: 700;
+}
+
+.menu-section {
+  padding: 16px 16px 6px;
+  font-size: 11px;
+}
+
+.menu-campaign {
+  margin: 0;
+  padding: 0 16px 8px;
+  font-size: 17px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.menu-item {
+  min-height: 48px;
+  padding: 0 16px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--rule);
+  color: var(--text);
+  font-size: 15px;
+}
+
+.menu-item[aria-current='page'] {
+  font-weight: 700;
+}
+
+.menu-note {
+  padding: 0 16px 12px;
+  font-size: 12px;
+  color: var(--muted);
 }

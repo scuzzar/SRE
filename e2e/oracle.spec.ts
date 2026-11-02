@@ -115,7 +115,8 @@ test('Spielstand und Stufe überstehen einen Neustart', async ({ page }) => {
 });
 
 test('Über: Quellenangaben und Links zum Projekt', async ({ page }) => {
-  await page.getByRole('button', { name: 'Über die App' }).click();
+  await page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Über die App' }).click();
   await expect(page.getByText(/Traveller ist ein Markenzeichen von Far Future Enterprises/)).toBeVisible();
   await expect(page.getByText(/Larcenous Designs/)).toBeVisible();
   await expect(page.getByRole('link', { name: 'Quellcode auf GitHub' })).toHaveAttribute('href', 'https://github.com/scuzzar/SRE');
@@ -126,7 +127,8 @@ test('Über: Quellenangaben und Links zum Projekt', async ({ page }) => {
 });
 
 test('Über: wie man die App installiert und ob der Speicher bleibt', async ({ page }) => {
-  await page.getByRole('button', { name: 'Über die App' }).click();
+  await page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Über die App' }).click();
   await expect(page.getByRole('heading', { name: 'Installieren' })).toBeVisible();
   await expect(page.getByText(/„App installieren“ oder „Zum Startbildschirm hinzufügen“/)).toBeVisible();
   await expect(page.getByText(/Der Spielstand liegt nur auf diesem Gerät/)).toBeVisible();
@@ -141,7 +143,8 @@ test('Über: auf dem iPhone der Weg über Teilen und der Hinweis auf den eigenen
   });
   const page = await context.newPage();
   await page.goto('/');
-  await page.getByRole('button', { name: 'Über die App' }).click();
+  await page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Über die App' }).click();
   await expect(page.getByText(/Teilen-Knopf tippen, dann „Zum Home-Bildschirm“/)).toBeVisible();
   await expect(page.getByText(/eigenen Speicher, getrennt von diesem Browser/)).toBeVisible();
   await context.close();

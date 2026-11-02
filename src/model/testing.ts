@@ -35,11 +35,13 @@ export function memoryRepository(...initial: Campaign[]): CampaignRepository & {
   saved: Campaign | undefined;
   readonly campaigns: Map<string, Campaign>;
   open: string | undefined;
+  stripCollapsed: boolean;
 } {
   return {
     saved: initial.at(-1),
     campaigns: new Map(initial.map((c) => [c.id, c])),
     open: undefined,
+    stripCollapsed: false,
     async list() {
       return [...this.campaigns.values()];
     },
@@ -55,6 +57,12 @@ export function memoryRepository(...initial: Campaign[]): CampaignRepository & {
     },
     async saveOpen(id) {
       this.open = id;
+    },
+    async loadStripCollapsed() {
+      return this.stripCollapsed;
+    },
+    async saveStripCollapsed(collapsed) {
+      this.stripCollapsed = collapsed;
     },
   };
 }

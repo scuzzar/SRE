@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import { hexFromRolls, type Campaign, type CampaignId, type CampaignRepository, type Hex, type LegacyWorldRoll } from '../model';
+import { hexFromRolls, keepFocus, type Campaign, type CampaignId, type CampaignRepository, type Hex, type LegacyWorldRoll } from '../model';
 
 /** Eine Kampagne liegt unter ihrer Id. */
 interface StoredCampaign {
@@ -14,6 +14,8 @@ interface Setting {
 
 /** Unter diesem Schlüssel steht, welche Kampagne zuletzt offen war. */
 const OPEN = 'open';
+/** Unter diesem Schlüssel steht, ob die Leiste mit dem Charakter oben eingeklappt ist. */
+const STRIP = 'strip-collapsed';
 
 class SreDatabase extends Dexie {
   campaigns!: EntityTable<StoredCampaign, 'key'>;
@@ -59,6 +61,14 @@ export class DexieCampaignRepository implements CampaignRepository {
   async saveOpen(id: CampaignId): Promise<void> {
     await this.db.settings.put({ key: OPEN, value: id });
   }
+
+  async loadStripCollapsed(): Promise<boolean> {
+    return (await this.db.settings.get(STRIP))?.value === 'true';
+  }
+
+  async saveStripCollapsed(collapsed: boolean): Promise<void> {
+    await this.db.settings.put({ key: STRIP, value: String(collapsed) });
+  }
 }
 
 /**
@@ -67,7 +77,8 @@ export class DexieCampaignRepository implements CampaignRepository {
  * `dead`; er lebt. Vor den Gegenständen hatte er keinen Besitz. Vor den Paaren hielt ein `PickedItem`
  * genau einen Eintrag als Text (`picked: 'event.verb.3'`); heute ist es eine Liste. Vor dem
  * Subsektor hatte eine Kampagne keine Hexfelder; danach hielt ein Hexfeld eine Zeit lang seine Würfe
- * (`rolls`), heute seine Werte: Die Würfe werden nachgespielt.
+ * (`rolls`), heute seine Werte: Die Würfe werden nachgespielt. Vor dem Charakter oben hatte eine
+ * Kampagne keinen; sie bekommt den ersten Lebenden.
  */
 export function upgraded(campaign: Campaign): Campaign {
   const log = campaign.log.map((entry) => {
@@ -83,13 +94,15 @@ export function upgraded(campaign: Campaign): Campaign {
     const old = hex as Hex & { readonly rolls?: readonly LegacyWorldRoll[] };
     return old.rolls ? hexFromRolls({ column: old.column, row: old.row, ...(old.name === undefined ? {} : { name: old.name }), rolls: old.rolls }) : hex;
   });
-  return { ...campaign, characters, log, hexes };
+  const upgraded = { ...campaign, characters, log, hexes };
+  return keepFocus(upgraded, upgraded);
 }
 
 /** Hält den Spielstand nur im Arbeitsspeicher; er geht beim Schließen verloren. */
 export class MemoryCampaignRepository implements CampaignRepository {
   private readonly campaigns = new Map<CampaignId, Campaign>();
   private open: CampaignId | undefined;
+  private collapsed = false;
 
   async list(): Promise<readonly Campaign[]> {
     return [...this.campaigns.values()];
@@ -109,6 +122,14 @@ export class MemoryCampaignRepository implements CampaignRepository {
 
   async saveOpen(id: CampaignId): Promise<void> {
     this.open = id;
+  }
+
+  async loadStripCollapsed(): Promise<boolean> {
+    return this.collapsed;
+  }
+
+  async saveStripCollapsed(collapsed: boolean): Promise<void> {
+    this.collapsed = collapsed;
   }
 }
 

@@ -1,11 +1,11 @@
 import {
   activeSkills,
   canGoUnskilled,
-  characterOf,
   characteristicDm,
   characteristics,
   chance2d6,
   DomainError,
+  focusOf,
   oddsOf,
   ref,
   roll2d6,
@@ -14,7 +14,6 @@ import {
   valueOf,
   type Campaign,
   type Character,
-  type CharacterId,
   type Characteristic,
   type Clock,
   type Random,
@@ -23,12 +22,12 @@ import {
 } from '..';
 
 /**
- * Eine Probe, solange sie im Charakter-Screen vorbereitet wird. Flüchtig: wird beim Würfeln zum
- * `TaskResult`, nie gespeichert. Sie nutzt eine Fertigkeitsstufe des Charakters (`uses`) oder ist
- * `unskilled`, nie beides; keins von beiden heißt: noch keine Fertigkeit gewählt.
+ * Eine Probe, solange sie für den Charakter oben vorbereitet wird. Flüchtig: wird beim Würfeln zum
+ * `TaskResult`, nie gespeichert. Für wen sie gilt, folgt aus der Kampagne (`/for`: der Charakter
+ * oben); wechselt er, endet die Probe. Sie nutzt eine Fertigkeitsstufe des Charakters (`uses`) oder
+ * ist `unskilled`, nie beides; keins von beiden heißt: noch keine Fertigkeit gewählt.
  */
 export interface Task {
-  readonly for: CharacterId;
   readonly uses?: string;
   readonly unskilled: boolean;
   readonly counts: readonly Characteristic[];
@@ -54,10 +53,10 @@ export interface CharacteristicOption {
   readonly selectable: boolean;
 }
 
-function activeCharacter(campaign: Campaign, id: CharacterId): Character {
-  const character = characterOf(campaign, id);
-  if (character.retired) throw new DomainError(`${character.name} ist ausgeblendet.`);
-  if (character.dead) throw new DomainError(`${character.name} ist tot.`);
+/** Für wen die Probe gilt: den Charakter oben. Ohne ihn gibt es keine Probe. */
+export function taskCharacter(campaign: Campaign): Character {
+  const character = focusOf(campaign);
+  if (!character) throw new DomainError('Es gibt keinen lebenden Charakter für eine Probe.');
   return character;
 }
 
@@ -68,9 +67,10 @@ function usedSkill(task: Task, character: Character): SkillLevel | undefined {
   return skill;
 }
 
-/** Eine neue Probe für einen Charakter. Wechselt man den Charakter, beginnt eine neue Probe. */
-export function startTask(campaign: Campaign, id: CharacterId): Task {
-  return { for: activeCharacter(campaign, id).id, unskilled: false, counts: [] };
+/** Eine neue Probe für den Charakter oben, noch ohne Fertigkeit. */
+export function startTask(campaign: Campaign): Task {
+  taskCharacter(campaign);
+  return { unskilled: false, counts: [] };
 }
 
 export function hasSkill(task: Task): boolean {
@@ -87,24 +87,24 @@ function checkUnskilled(character: Character): void {
  * die Wahl zurück; dann zählen auch keine Attribute mehr.
  */
 export function chooseSkill(task: Task, campaign: Campaign, skill: string | null): Task {
-  const character = activeCharacter(campaign, task.for);
+  const character = taskCharacter(campaign);
   const same = skill === null ? task.unskilled : task.uses === skill;
-  if (same) return { for: task.for, unskilled: false, counts: [] };
+  if (same) return { unskilled: false, counts: [] };
   if (skill === null) {
     checkUnskilled(character);
-    return { for: task.for, unskilled: true, counts: task.counts };
+    return { unskilled: true, counts: task.counts };
   }
   usedSkill({ ...task, uses: skill }, character);
-  return { for: task.for, uses: skill, unskilled: false, counts: task.counts };
+  return { uses: skill, unskilled: false, counts: task.counts };
 }
 
-export function characteristicOptions(task: Task, campaign: Campaign): readonly CharacteristicOption[] {
-  const character = characterOf(campaign, task.for);
+/** Wie die Attribute des Charakters oben in der Probe wirken würden; ohne Probe ist keins wählbar. */
+export function characteristicOptions(task: Task | undefined, campaign: Campaign, character: Character = taskCharacter(campaign)): readonly CharacteristicOption[] {
   return characteristics.map((characteristic) => {
     const value = valueOf(character.upp, characteristic);
     const dm = characteristicDm(value, ref.houseRules);
-    const counted = task.counts.includes(characteristic);
-    return { characteristic, value, dm, counted, selectable: hasSkill(task) && (dm !== 0 || counted) };
+    const counted = task?.counts.includes(characteristic) ?? false;
+    return { characteristic, value, dm, counted, selectable: task !== undefined && hasSkill(task) && (dm !== 0 || counted) };
   });
 }
 
@@ -121,7 +121,7 @@ export function toggleCharacteristic(task: Task, campaign: Campaign, characteris
 
 /** 2W6 + Fertigkeit + gewählte Attribute ≥ Zielwert der gewählten Stufe; Jack-of-all-Trades zählt als Stufe 0. */
 export function evaluateTask(task: Task, campaign: Campaign): TaskOdds {
-  const character = characterOf(campaign, task.for);
+  const character = taskCharacter(campaign);
   const skill = usedSkill(task, character);
   let dm = skill ? skillDm(skill) : task.unskilled ? ref.houseRules.unskilledDm : 0;
   for (const c of task.counts) dm += characteristicDm(valueOf(character.upp, c), ref.houseRules);
@@ -133,12 +133,13 @@ export function evaluateTask(task: Task, campaign: Campaign): TaskOdds {
 /** Würfelt die Probe. Auch eine unmögliche Probe darf man würfeln; sie misslingt und steht trotzdem im Log. */
 export function rollTask(task: Task, campaign: Campaign, random: Random, clock: Clock): TaskResult {
   if (!hasSkill(task)) throw new DomainError('Erst eine Fertigkeit wählen.');
-  if (task.unskilled) checkUnskilled(activeCharacter(campaign, task.for));
+  const character = taskCharacter(campaign);
+  if (task.unskilled) checkUnskilled(character);
   const { dm, target } = evaluateTask(task, campaign);
   const result: TaskResult = {
     kind: 'task',
     at: clock.now(),
-    for: task.for,
+    for: character.id,
     counts: task.counts,
     odds: campaign.odds,
     dice: roll2d6(random),

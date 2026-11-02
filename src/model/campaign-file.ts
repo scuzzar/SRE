@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { validateCharacter, validName, type Campaign, type CampaignId, type Character } from './campaign';
+import { keepFocus, validateCharacter, validName, type Campaign, type CampaignId, type Character } from './campaign';
 import { replay, type Career, type CareerRoll } from './career';
 import { DomainError } from './errors';
 import { withQuestion, type LogEntry } from './log';
@@ -103,13 +103,15 @@ const CampaignFileSchema = z.object({
     generation: z.object({ career: CareerSchema }).optional(),
     /** Fehlt in Dateien von vor dem Subsektor. */
     hexes: z.array(HexSchema).default([]),
+    /** Der Charakter oben; fehlt in Dateien von vor dieser Regel, dann wird es der erste Lebende. */
+    focus: z.string().optional(),
   }),
 });
 
 /** Die Kampagne als Inhalt einer Kampagnendatei. */
 export function toCampaignFile(campaign: Campaign): string {
-  const { name, odds, characters, log, generation, hexes } = campaign;
-  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { name, odds, characters, log, generation, hexes } }, null, 2);
+  const { name, odds, characters, log, generation, hexes, focus } = campaign;
+  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { name, odds, characters, log, generation, hexes, focus } }, null, 2);
 }
 
 /** Ein Dateiname aus dem Namen der Kampagne und dem Tag, z. B. „Spinward-Run-2026-10-25.json“. */
@@ -150,9 +152,10 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
       log: file.log.map(logEntry),
       hexes: file.hexes.map(hexOf),
       ...(file.generation ? { generation: { career: careerOf(file.generation.career) } } : {}),
+      ...(file.focus === undefined ? {} : { focus: file.focus }),
     };
     validate(campaign);
-    return campaign;
+    return keepFocus(campaign, campaign);
   } catch (error) {
     if (error instanceof DomainError) throw new DomainError(`Die Kampagne in der Datei verletzt eine Regel: ${error.message}`);
     throw error;
@@ -209,6 +212,11 @@ function validate(campaign: Campaign): void {
     if (character.career && replay(character.career).step !== 'name') throw new DomainError(`Der Lebenslauf von ${character.name} ist nicht abgeschlossen.`);
   }
   if (campaign.generation) replay(campaign.generation.career);
+  if (campaign.focus !== undefined) {
+    const focus = campaign.characters.find((c) => c.id === campaign.focus);
+    if (!focus) throw new DomainError(`Der Charakter oben (${campaign.focus}) ist keiner der Kampagne.`);
+    if (focus.dead || focus.retired) throw new DomainError(`Der Charakter oben (${focus.name}) lebt nicht oder ist ausgeblendet.`);
+  }
   validateHexes(campaign.hexes);
   // Heimatwelten und Welten der Terms verweisen auf fertige Welten des Subsektors.
   const careers = [...campaign.characters.flatMap((c) => (c.career ? [c.career] : [])), ...(campaign.generation ? [campaign.generation.career] : [])];

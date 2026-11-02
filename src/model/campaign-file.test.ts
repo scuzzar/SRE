@@ -51,6 +51,27 @@ describe('Kampagnendatei', () => {
   });
 });
 
+describe('Kampagnendatei mit Charakter oben', () => {
+  it('nimmt den Charakter oben mit', () => {
+    const text = fileWith((c) => (c.focus = 'c2'));
+    expect(fromCampaignFile(text, 'k9').focus).toBe('c2');
+  });
+
+  it('gibt Dateien von vor dieser Regel den ersten Lebenden', () => {
+    const text = fileWith((c) => delete c.focus);
+    expect(fromCampaignFile(text, 'k9').focus).toBe('c1');
+  });
+
+  it('weist einen Charakter oben zurück, den es nicht gibt oder der tot ist', () => {
+    expect(() => fromCampaignFile(fileWith((c) => (c.focus = 'c7')), 'k9')).toThrow(/Charakter oben \(c7\)/);
+    const dead = fileWith((c) => {
+      c.focus = 'c2';
+      (c.characters as { dead: boolean }[])[1]!.dead = true;
+    });
+    expect(() => fromCampaignFile(dead, 'k9')).toThrow(/lebt nicht/);
+  });
+});
+
 describe('Logeintrag löschen', () => {
   it('nimmt genau den Eintrag heraus', () => {
     const after = removeLogEntry(campaign(), 1);

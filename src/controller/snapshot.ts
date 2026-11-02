@@ -5,6 +5,7 @@ import {
   characterOf,
   characteristicDm,
   deadCharacters,
+  focusOf,
   isInLog,
   livingCharacters,
   isSuccess,
@@ -36,7 +37,7 @@ import {
   type TaskResult,
   type Upp,
 } from '../model';
-import { canConfirm, characteristicOptions, drawnIn, evaluateTask, hasSkill, startTask, type Card, type CharacteristicOption, type Task, type WorldRoll } from '../model/draft';
+import { canConfirm, characteristicOptions, drawnIn, evaluateTask, hasSkill, type Card, type CharacteristicOption, type Task, type WorldRoll } from '../model/draft';
 import { careerLines, generationView, itemLabel, worldChoices, worldName, type CareerLine, type GenerationView, type WorldChoice } from './generation-view';
 import { sectorView, selectedView, worldList, worldView, type HexView, type SelectedHexView, type WorldListItem, type WorldView } from './world-view';
 
@@ -63,7 +64,12 @@ export interface Snapshot {
   readonly log: readonly LogItem[];
   /** Die offene Inspirationskarte; solange es sie gibt, steht sie im Vordergrund. */
   readonly card: CardView | undefined;
+  /** Die Lebenden, die nicht ausgeblendet sind, in der Reihenfolge der Kampagne. */
   readonly characters: readonly CharacterView[];
+  /** Der Charakter oben im Orakel-Screen; fehlt, wenn es keinen Lebenden gibt. */
+  readonly focus: string | undefined;
+  /** Die Leiste mit dem Charakter oben ist eingeklappt. */
+  readonly stripCollapsed: boolean;
   /** Die Toten unter „Verstorben“, getrennt von den Lebenden. */
   readonly dead: readonly { readonly id: string; readonly name: string; readonly background: string }[];
   readonly retired: readonly { readonly id: string; readonly name: string }[];
@@ -203,9 +209,9 @@ export interface CharacterView {
   readonly credits: number;
   readonly note: string;
   readonly upp: Upp;
-  /** Für diesen Charakter wird gerade eine Probe vorbereitet. */
-  readonly chosen: boolean;
-  /** Die Details sind aufgeklappt: volle Namen der Fertigkeiten, Ausrüstung, Credits, Notiz. */
+  /** Der Charakter oben: Für ihn würfelt man Proben. */
+  readonly focus: boolean;
+  /** Im Charakter-Screen sind die Details aufgeklappt: volle Namen der Fertigkeiten, Ausrüstung, Credits, Notiz. */
   readonly open: boolean;
   /** Ohne `level` bei Jack-of-all-Trades. */
   readonly skills: readonly { readonly of: string; readonly name: string; readonly short: string; readonly level: number | undefined; readonly chosen: boolean }[];
@@ -256,8 +262,10 @@ export interface ControllerState {
   readonly screen: Screen;
   readonly card: Card | undefined;
   readonly task: Task | undefined;
-  /** Die Details des Charakters der Probe (volle Namen, Ausrüstung, Notiz) sind aufgeklappt. */
-  readonly details: boolean;
+  /** Der Charakter, dessen Details im Charakter-Screen aufgeklappt sind. */
+  readonly opened: string | undefined;
+  /** Die Leiste mit dem Charakter oben ist eingeklappt; das Gerät merkt es sich. */
+  readonly stripCollapsed: boolean;
   /** Index des Logeintrags, dessen Ergebnis-Popup offen ist. */
   readonly result: number | undefined;
   readonly editor: { readonly id: string | undefined; readonly error: string | undefined } | undefined;
@@ -364,8 +372,9 @@ function cardView(card: Card): CardView {
   };
 }
 
-function characterView(campaign: Campaign, character: Character, task: Task | undefined, details: boolean): CharacterView {
-  const own = task?.for === character.id ? task : undefined;
+function characterView(campaign: Campaign, character: Character, state: ControllerState): CharacterView {
+  const focus = focusOf(campaign)?.id === character.id;
+  const own = focus ? state.task : undefined;
   return {
     id: character.id,
     name: character.name,
@@ -374,8 +383,8 @@ function characterView(campaign: Campaign, character: Character, task: Task | un
     credits: character.credits,
     note: character.note,
     upp: character.upp,
-    chosen: own !== undefined,
-    open: own !== undefined && details,
+    focus,
+    open: state.opened === character.id,
     skills: activeSkills(character).map((s) => {
       const skill = skillOf(s.of);
       return { of: s.of, name: skill.name, short: skill.short, level: shownLevel(s), chosen: own?.uses === s.of };
@@ -385,13 +394,13 @@ function characterView(campaign: Campaign, character: Character, task: Task | un
     homeworld: character.homeworld === undefined ? undefined : worldName(campaign.hexes, character.homeworld),
     termWorlds: (character.career?.worlds ?? []).map((id) => worldName(campaign.hexes, id)),
     unskilled: canGoUnskilled(character.skills) ? { dm: ref.houseRules.unskilledDm, chosen: own?.unskilled ?? false } : undefined,
-    characteristics: characteristicOptions(own ?? startTask(campaign, character.id), campaign),
+    characteristics: characteristicOptions(own, campaign, character),
     inLog: isInLog(campaign, character.id),
   };
 }
 
 function taskView(campaign: Campaign, task: Task): TaskView {
-  const character = characterOf(campaign, task.for);
+  const character = focusOf(campaign)!;
   return { character: character.name, ready: hasSkill(task), ...evaluateTask(task, campaign), parts: dmParts(character, task.uses, task.unskilled, task.counts) };
 }
 
@@ -409,9 +418,9 @@ function pickingView(state: ControllerState, campaign: Campaign): { readonly tit
 
 export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
-  const base = { persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, skills, items };
+  const base = { persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, characters: [], dead: [], retired: [], task: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, characters: [], focus: undefined, dead: [], retired: [], task: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
   }
   const resultEntry = state.result === undefined ? undefined : campaign.log[state.result];
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
@@ -424,7 +433,8 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     odds: ref.odds.map((o) => ({ id: o.id, name: o.name, chance: o.chance, target: o.target, selected: o.id === campaign.odds })),
     log: campaign.log.map((entry) => logItem(campaign, entry)),
     card: state.card && cardView(state.card),
-    characters: livingCharacters(campaign).map((c) => characterView(campaign, c, state.task, state.details)),
+    characters: livingCharacters(campaign).map((c) => characterView(campaign, c, state)),
+    focus: focusOf(campaign)?.id,
     dead: deadCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background })),
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),

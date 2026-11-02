@@ -6,8 +6,7 @@ import { useGame } from '../game-context';
 import { haptic, stopHaptics } from '../haptics';
 
 /**
- * Das Ergebnis einer Probe als Popup; geloggt ist es schon. Danach „Weiter“ im Charakter-Screen oder
- * „Zum Orakel“.
+ * Das Ergebnis einer Probe als Popup; geloggt ist es schon und steht nach „Weiter“ im Log darunter.
  *
  * Wie in Baldur's Gate 3 erscheint zuerst der Zielwert, dann rollen die Würfel; dann kommen die
  * Fertigkeit und jedes gewählte Attribut einzeln mit Namen dazu, und zuletzt fällt das Urteil. Alles steht von Anfang an im Dokument (für Screenreader und
@@ -84,10 +83,7 @@ export function ResultDialog({ result }: { result: TaskItem }) {
           </span>
           {/* Für Screenreader: Die Teile des DM stehen oben schon sichtbar, aber dort nur für das Auge. */}
           <span className="visually-hidden">{result.parts.map(partLabel).join(', ')}</span>
-          <div className="roll-actions">
-            <button type="button" className="ghost" onClick={() => game.closeResultToOracle()}>
-              Zum Orakel
-            </button>
+          <div className="roll-actions single">
             <button ref={close} type="button" className="primary" onClick={() => game.closeResult()}>
               Weiter
             </button>

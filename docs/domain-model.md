@@ -41,6 +41,11 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Hex`; `WorldRoll` ist flüchtig. Neu im Bild: `Hex`, `WorldRoll`, `Campaign.hexes`,
 > `WorldStep`, `WorldRollKind` und als Referenzdaten `SystemContents`, `UwpDigit`, `TradeCode`.
 >
+> Am 2. November 2026 freigegeben: der Charakter oben im Orakel-Screen (siehe
+> *Charakter oben*). Proben würfelt man dort statt im Charakter-Screen; der Charakter-Screen dient
+> nur noch der Verwaltung. Neu im Bild: `Campaign.focus`; `Task.for` ist jetzt abgeleitet
+> (`/for`). Der UI-Entwurf dazu liegt unter [`ui-entwurf/charakter-leiste/`](ui-entwurf/charakter-leiste/).
+>
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen, die drei Namen sowie die Themen-Tafeln NSC, NSC-Aktionen,
 > Welt (mit Schiff), Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
@@ -72,6 +77,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Offene Kampagne | (Zustand des Controllers) | Die Kampagne, in der man gerade spielt |
 | Kampagnendatei | `CampaignFile` | Eine Kampagne als JSON-Datei, zum Sichern und Weitergeben |
 | Charakter | `Character` | Ein Spielercharakter mit seiner Charakterkarte |
+| Charakter oben | `Campaign.focus` | Der Charakter, der oben im Orakel-Screen steht; für ihn würfelt man Proben |
 | Tot | `Character.dead` | Der Charakter ist in der Geschichte gestorben; er bleibt in der Kampagne |
 | UPP | `Upp` | Die sechs Attributwerte |
 | Attribut | `Characteristic` | STR, DEX, END, INT, EDU, SOC |
@@ -91,7 +97,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Kartenauswahl | `CardPick` | Was man von einer Karte in den Log übernimmt, mit der Frage |
 | Ausgewählter Eintrag | `PickedItem` | Ein übernommenes Feld: welches Feld, welcher Eintrag |
 | Entwurf | Paket `draft` | Was später ein Logeintrag wird, solange es noch offen ist |
-| Probe | `Task` | Eine Probe, solange sie im Charakter-Screen vorbereitet wird |
+| Probe | `Task` | Eine Probe, solange sie für den Charakter oben vorbereitet wird |
 | Probenergebnis | `TaskResult` | Eine gewürfelte Probe |
 | Bereich der Karte, Themen-Tafel | `Section` | Zufallsereignis, Sinneseindrücke, …; NSC, Welt, … |
 | Feld der Karte | `Slot` | Aktion, Hören, Aussehen, Name, Auslöser, … |
@@ -134,7 +140,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
 - **Was draußen bleibt.** Was nicht gespeichert wird, gehört nicht ins Modell, außer der offenen
   Karte und der Probe in Vorbereitung. Der Controller hält, welcher Screen offen ist, ob das
-  Ergebnis-Popup zu sehen ist und welche Weltkarte offen ist. Reine Darstellung bleibt in der View: wie Felder und Tafeln angeordnet sind, der
+  Ergebnis-Popup zu sehen ist und welche Weltkarte offen ist. Ob die Leiste mit dem Charakter oben
+  eingeklappt ist, merkt sich das Gerät über einen Neustart hinweg, wie die offene Kampagne; zum
+  Spielstand gehört das nicht. Reine Darstellung bleibt in der View: wie Felder und Tafeln angeordnet sind, ob das Menü offen ist, der
   Text im Fragefeld während des Tippens, Farben, die Hex-Schreibweise der UPP und das Format der
   Uhrzeit.
 - **Entwürfe.** Im Paket `draft` liegen die Entwürfe eines Logeintrags: die offene Karte (`Card`,
@@ -149,10 +157,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   lässt; zwei Kampagnen dürfen gleich heißen. Gespielt wird immer in genau einer, der **offenen
   Kampagne**. Welche das ist, merkt sich das Gerät über einen Neustart hinweg; zum Spielstand gehört
   das nicht. Wechselt man die Kampagne, sind offene Karte und Probe in Vorbereitung weg. Eine neue
-  Kampagne beginnt leer: ohne Charaktere, ohne Log, ohne Hexfelder, mit der Stufe Mittel. Eine Kampagne löschen
+  Kampagne beginnt leer: ohne Charaktere (also ohne Charakter oben), ohne Log, ohne Hexfelder, mit der Stufe Mittel. Eine Kampagne löschen
   löscht alles, was an ihr hängt, endgültig.
 - **Kampagnendatei.** Eine Kampagne lässt sich als Datei exportieren und wieder importieren. Die
-  Datei enthält alles, was an der Kampagne hängt (Name, Stufe, Charaktere mit ausgeblendeten, Log,
+  Datei enthält alles, was an der Kampagne hängt (Name, Stufe, Charakter oben, Charaktere mit ausgeblendeten, Log,
   Hexfelder), aber keine Entwürfe und keine Referenzdaten: Verweise bleiben Ids. Beim Import wird die Datei
   gegen die Regeln dieses Modells geprüft, auch jeder Verweis in die Referenzdaten und auf die
   eigenen Charaktere; ist etwas falsch, wird nichts importiert. Ein Import legt immer eine neue
@@ -214,9 +222,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Wahrscheinlichkeit wird exakt aus den 36 Kombinationen von 2W6 gezählt: Bis 2 ist sie sicher,
     über 12 unmöglich. Auch eine unmögliche Probe darf man würfeln; sie misslingt immer und steht
     trotzdem im Log.
-  - Die Probe in Vorbereitung ist eine `Task`. Sie verweist auf den Charakter, auf eine seiner
-    Fertigkeitsstufen (`uses`) oder ist `unskilled`, nie beides; keins von beiden heißt: noch keine
-    Fertigkeit gewählt. Wechselt man den Charakter, beginnt eine neue Probe.
+  - Die Probe in Vorbereitung ist eine `Task`. Sie gilt immer dem Charakter oben (`/for`, siehe
+    *Charakter oben*) und verweist auf eine seiner Fertigkeitsstufen (`uses`) oder ist `unskilled`,
+    nie beides; keins von beiden heißt: noch keine Fertigkeit gewählt. Wechselt der Charakter oben,
+    endet die Probe; für den neuen beginnt keine, bis man eine Fertigkeit wählt.
   - Gewürfelt wird eine Probe als `TaskResult` in den Log übernommen. Es verweist auf Charakter,
     Fertigkeitsstufe (keine heißt „ohne Fertigkeit“), die gewählten Attribute und die Stufe, und es
     hält die zwei Würfel sowie DM (`dm`) und Zielwert (`target`) zum Zeitpunkt des Wurfs fest. Der
@@ -224,6 +233,23 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Charakter, Hausregeln oder Stufe. Die Verweise sagen, wer und womit gewürfelt hat.
   - Bei `Task` und `TaskResult` gehört die Fertigkeitsstufe (`uses`) immer dem Charakter, auf den sie
     verweisen (`for`), und der Charakter immer zur Kampagne.
+- **Charakter oben.** Oben im Orakel-Screen steht ein Charakter der Kampagne, der **Charakter oben**
+  (`focus`); für ihn würfelt man Proben, ohne den Screen zu wechseln. Wischen zeigt den nächsten
+  bzw. vorigen. Infrage kommen nur Lebende, die nicht ausgeblendet sind, in der Reihenfolge der
+  Charaktere der Kampagne.
+  - Die Kampagne speichert ihn, er übersteht also einen Neustart und steht in der Kampagnendatei.
+    Er verweist immer auf einen Charakter derselben Kampagne, der lebt und nicht ausgeblendet ist.
+    Keinen gibt es nur, wenn es keinen solchen Charakter gibt; dann bietet der Orakel-Screen oben an,
+    einen anzulegen oder nach Regeln zu erschaffen.
+  - Stirbt der Charakter oben, wird er ausgeblendet oder gelöscht, rückt der nächste Lebende nach,
+    hinter dem letzten der vorige. Ein neuer Charakter, von Hand angelegt oder aus der Erschaffung
+    übernommen, wird zum Charakter oben. Wird ein Toter wieder lebendig oder ein Ausgeblendeter
+    wieder eingeblendet, bleibt der Charakter oben, wie er ist; nur wenn es keinen gab, wird es
+    dieser.
+  - Kampagnen und Kampagnendateien von vor dieser Regel haben keinen Charakter oben; sie bekommen
+    den ersten Lebenden, der nicht ausgeblendet ist.
+  - Der Charakter-Screen bleibt für die Verwaltung: anlegen, nach Regeln erschaffen, bearbeiten,
+    Details mit Lebenslauf, Verstorbene. Proben würfelt man dort nicht mehr.
 - **Charakter.** Charaktere legt man in der App an und bearbeitet sie, von Hand oder über die
   Charaktererschaffung (siehe dort). Die sechs UPP-Werte liegen zwischen 0 und 15. Eine
   Fertigkeit kommt bei einem Charakter höchstens einmal vor, ihre Stufe ist 0 oder mehr; Fertigkeiten
@@ -257,14 +283,15 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     in der Ausrüstung (`equipment`).
 - **Löschen und Ausblenden.** Ein Charakter oder eine Fertigkeitsstufe, auf die kein Logeintrag
   verweist, wird wirklich gelöscht. Verweist der Log darauf, wird sie stattdessen ausgeblendet
-  (`retired`): Sie verschwindet aus dem Charakter-Screen und lässt sich nicht mehr für Proben wählen,
+  (`retired`): Sie verschwindet aus dem Charakter-Screen und aus der Leiste oben und lässt sich nicht mehr für Proben wählen,
   bleibt aber gespeichert, und der Log zeigt sie weiter. Ein ausgeblendeter Charakter lässt sich
   wieder einblenden. Sind die Logeinträge gelöscht, die auf ihn verwiesen, lässt er sich auch
   löschen.
 - **Tot.** Im Editor lässt sich ein Charakter als tot markieren (`dead`) und, falls das ein Irrtum
   war, wieder zurück. Ein toter Charakter bleibt in der Kampagne und im Charakter-Screen, aber
   getrennt von den Lebenden unter „Verstorben“, nur mit Namen und Herkunft. Für Proben ist er nicht
-  wählbar; war gerade eine Probe für ihn vorbereitet, endet sie. Tot und ausgeblendet sind
+  wählbar und steht nicht in der Leiste oben; war er der Charakter oben, rückt ein anderer nach
+  (siehe *Charakter oben*), und eine vorbereitete Probe endet. Tot und ausgeblendet sind
   unabhängig: Auch einen toten Charakter kann man löschen bzw. ausblenden, nach denselben Regeln.
   Der Log zeigt ihn weiter wie bisher; alte Proben ändern sich dadurch nicht, weil DM und Zielwert
   festgehalten sind. Die Kampagnendatei enthält auch die Toten.

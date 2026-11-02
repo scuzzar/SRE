@@ -7,40 +7,33 @@ import { GenerationSheet } from './characters/GenerationSheet';
 import { FullscreenButton } from './FullscreenButton';
 import { ResultDialog } from './characters/ResultDialog';
 import { useGame, useSnapshot } from './game-context';
-import { ChevronDownIcon, InfoIcon, OracleIcon, PersonIcon, SectorIcon } from './icons';
+import { MenuIcon, OracleIcon, PersonIcon, SectorIcon } from './icons';
+import { Menu } from './Menu';
 import { CardSheet } from './oracle/CardSheet';
 import { OracleScreen } from './oracle/OracleScreen';
 import { SectorPicker, SectorScreen } from './sector/SectorScreen';
 import { WorldSheet } from './sector/WorldSheet';
-
-const titles = { oracle: 'Orakel', characters: 'Charaktere', sector: 'Sektor', about: 'Über' } as const;
 
 export function App() {
   const game = useGame();
   const view = useSnapshot();
   // Der Text im Fragefeld gilt für Orakel und Karte; nach dem Bestätigen der Karte ist er verbraucht.
   const [question, setQuestion] = useState('');
+  // Ob das Menü offen ist, ist reine Darstellung; was man darin wählt, entscheidet der Controller.
+  const [menu, setMenu] = useState(false);
 
   if (!view.ready) return <div className="app" aria-busy="true" />;
 
   return (
     <div className="app">
       <header className="header">
-        <button type="button" className="brand campaign-switch" aria-label={`Kampagne ${view.campaign.name}, wechseln oder verwalten`} onClick={() => game.showCampaigns()}>
+        <button type="button" className="brand campaign-switch" aria-label={`Kampagne ${view.campaign.name}, Menü öffnen`} onClick={() => setMenu(true)}>
           <span className="campaign-name">{view.campaign.name}</span>
-          <ChevronDownIcon />
         </button>
         <span className="header-right">
-          {titles[view.screen]}
           <FullscreenButton />
-          <button
-            type="button"
-            className="icon-button"
-            aria-label="Über die App"
-            aria-current={view.screen === 'about' ? 'page' : undefined}
-            onClick={() => game.showScreen(view.screen === 'about' ? 'oracle' : 'about')}
-          >
-            <InfoIcon />
+          <button type="button" className="icon-button menu-button" aria-label="Menü" aria-expanded={menu} onClick={() => setMenu(true)}>
+            <MenuIcon />
           </button>
         </span>
       </header>
@@ -75,6 +68,7 @@ export function App() {
         </button>
       </nav>
 
+      {menu && <Menu view={view} onClose={() => setMenu(false)} />}
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
       {view.generation && <GenerationSheet generation={view.generation} odds={view.odds} log={view.log} />}
       {view.picking && <SectorPicker view={view} title={view.picking.title} />}
