@@ -236,6 +236,36 @@ hide <<value>> stereotype
     techDm: number
     temperatureDm: number [0..1]
   }
+  class Surface <<value>> {
+    water: number
+    plates: number
+    majorContinents: number
+    minorContinents: number
+    majorIslands: number
+    archipelagos: number
+    majorOceans: number
+    minorOceans: number
+    smallSeas: number
+    scatteredLakes: number
+    life: boolean
+  }
+  class SurfaceRow <<reference>> {
+    table: SurfaceTable
+    roll: number
+    major: DiceExpr
+    minor: DiceExpr
+    small: DiceExpr
+    scattered: DiceExpr
+    onlyScattered: boolean
+  }
+  enum SurfaceTable <<value>> {
+    continents
+    oceans
+  }
+  class DiceExpr <<value>> {
+    dice: number
+    dm: number
+  }
   class Temperature <<reference>> {
     from: number [0..1]
     to: number [0..1]
@@ -268,6 +298,7 @@ hide <<value>> stereotype
   }
   enum WorldStep <<value>> {
     <i>alle Arten aus WorldRollKind</i>
+    surface
     name
     done
   }
@@ -375,6 +406,10 @@ WorldRoll "*" --> "1" Hex : for
 WorldRoll ..> Hex : on roll
 Hex "*" --> "*" TradeCode : /trade
 Hex "*" --> "0..1" Temperature : temperature
+Hex "1" *-- "0..1" Surface : surface
+Surface "*" --> "0..1" SurfaceRow : /row
+SurfaceRow --> SurfaceTable
+SurfaceRow -[hidden]- DiceExpr
 WorldRoll --> WorldRollKind
 WorldRoll "*" --> "0..1" SystemContents : /row
 UwpDigit --> "1" WorldRollKind : of
