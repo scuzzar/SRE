@@ -242,6 +242,7 @@ hide <<value>> stereotype
     name: string
     average: string
     text: string
+    hydroDm: number
   }
   class TradeCode <<reference>> {
     code: string
@@ -258,12 +259,12 @@ hide <<value>> stereotype
     gasGiant
     size
     atmosphere
+    temperature
     hydrographics
     population
     government
     law
     tech
-    temperature
   }
   enum WorldStep <<value>> {
     <i>alle Arten aus WorldRollKind</i>
