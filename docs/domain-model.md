@@ -56,6 +56,9 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > *World Builder's Handbook* (DGP), als Vorarbeit für eine spätere Oberflächenkarte (siehe
 > *Weltenerschaffung*, Schritt 6, und *Oberfläche*). Neu im Bild: `Surface` am `Hex`, der Schritt
 > `surface` und als Referenzdaten `SurfaceRow` mit `SurfaceTable` und `DiceExpr`.
+> Nach einer Probe mit 20.000 Welten ergänzt (ebenfalls 2. November 2026 freigegeben): höchstens
+> 6 große Kontinente, und die Weltkarte nennt „nur Archipele“ bzw. „nur Seen“ ohne die große
+> Zahl (siehe *Oberfläche*). Das Bild ändert sich dadurch nicht.
 >
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen, die drei Namen sowie die Themen-Tafeln NSC, NSC-Aktionen,
@@ -555,7 +558,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
      bis 49 % die Ozeane-Tabelle, jeweils mit 1W6 + Hydrographie × 3 (`/row`); die Zeile sagt, mit
      welchem Würfelausdruck (`DiceExpr`) jede Menge gewürfelt wird:
      - Kontinente-Tabelle: große Kontinente (`major`), kleine Kontinente (`minor`), große Inseln
-       (`small`) und Archipele (`scattered`). Ozeane gibt es dann keine.
+       (`small`) und Archipele (`scattered`). Ozeane gibt es dann keine. **Hausregel: höchstens 6
+       große Kontinente**, denn jeder hat mindestens 15 % der Landfläche; was die Tabelle darüber
+       ergibt (sie würfelt bis 2W6 + 1), zählt zu den kleinen Kontinenten.
      - Ozeane-Tabelle: große Ozeane (`major`), kleine Ozeane (`minor`), kleine Meere (`small`) und
        verstreute Seen (`scattered`). Kontinente gibt es dann keine.
      - Sagt die Zeile *nur* Archipele bzw. *nur* verstreute Seen (`onlyScattered`), ist alles Land
@@ -571,7 +576,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Bewegung, Gebirge, Flüsse, Wüsten, Dschungel, Vergletscherung, die Temperatur je Hexreihe) oder
   braucht ein Sternsystem (Vulkane über den Seismik-Faktor, Achsneigung, Umlauf). Die Weltkarte
   zeigt die Oberfläche an der Stelle, wo bisher die Würfe standen, in Worten, z. B. „59 % Wasser ·
-  6 Platten · 1 großer und 4 kleine Kontinente · 5 große Inseln · 7 Archipele · Leben“.
+  6 Platten · 1 großer und 4 kleine Kontinente · 5 große Inseln · 7 Archipele · Leben“. Ist alles
+  Land Archipel bzw. alles Wasser verstreuter See (die Zahl ist die ganze Fläche in halben Hexen,
+  und es gibt keine anderen Land- bzw. Wassermassen), schreibt sie „Land nur als Archipele“ bzw.
+  „Wasser nur als verstreute Seen“ statt einer Zahl wie 150.
 - **Handelscodes** folgen aus dem UWP (`/trade`): Ein Code gilt, wenn jede seiner Bedingungen
   (`TradeCondition`: Stelle des UWP und erlaubte Ziffern) erfüllt ist. Es sind die elf aus den
   Charts (S. 15): Agricultural, Non-Agricultural, Industrial, Non-Industrial, Rich, Poor, Water

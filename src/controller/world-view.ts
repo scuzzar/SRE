@@ -6,6 +6,8 @@ import {
   SECTOR_COLUMNS,
   SECTOR_ROWS,
   nextWorldAction,
+  onlyArchipelagos,
+  onlyLakes,
   stepOf,
   temperatureOf,
   tradeCodesOf,
@@ -299,8 +301,10 @@ export function surfaceLines(surface: Surface): readonly string[] {
     surface.smallSeas && count(surface.smallSeas, 'kleines Meer', 'kleine Meere'),
     surface.scatteredLakes && count(surface.scatteredLakes, 'verstreuter See', 'verstreute Seen'),
   ].filter((x): x is string => Boolean(x));
-  if (land.length > 0) lines.push(join(land));
-  if (sea.length > 0) lines.push(join(sea));
+  if (onlyArchipelagos(surface)) lines.push('Land nur als Archipele');
+  else if (land.length > 0) lines.push(join(land));
+  if (onlyLakes(surface)) lines.push('Wasser nur als verstreute Seen');
+  else if (sea.length > 0) lines.push(join(sea));
   if (surface.water === 0) lines.push('kein Wasser an der Oberfläche');
   if (surface.water === 100) lines.push('kein nennenswertes Land');
   lines.push(surface.life ? 'einheimisches Leben' : 'kein einheimisches Leben');
