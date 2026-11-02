@@ -2,7 +2,7 @@
 ' Rendern: bash .claude/skills/domain-model/scripts/render.sh docs/domain-model.puml
 @startuml
 !pragma layout smetana
-title Solo RPG Engine – Domänenmodell (Version 1)
+title Solo RPG Engine – Domänenmodell (Version 1; Entwurf: Charakter oben)
 hide empty members
 hide methods
 skinparam classAttributeIconSize 0
@@ -314,6 +314,7 @@ hide <<value>> stereotype
 ' Kampagne
 Campaign "1" *-- "*" Character : characters
 Campaign "*" --> "1" Odds : odds
+Campaign "0..1" --> "0..1" Character : focus
 Campaign "1" *-- "*" LogEntry : log {ordered}
 
 ' Charaktererschaffung und Lebenslauf
@@ -392,7 +393,7 @@ TaskResult "*" --> "1" Odds : odds
 
 ' Probe
 Task "0..1" --> "1" Campaign : in
-Task "*" --> "1" Character : for
+Task "*" --> "1" Character : /for
 Task "*" --> "0..1" SkillLevel : uses
 Task --> "0..6" Characteristic : counts
 Task ..> TaskResult : on roll

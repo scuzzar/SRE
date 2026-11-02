@@ -1,0 +1,15 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-02T07:45:00Z" },
+  "title": "Orakel mit Charakter-Leiste",
+  "launch": { "view": "focused", "file": "Main.dc.html" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 390, "h": 844, "title": "Orakel mit Leiste (zum Ausprobieren)", "is_interactive": true },
+    "Menue.dc.html": { "x": 470, "y": 0, "w": 390, "h": 844, "title": "Menü hinter ☰" },
+    "Ohne-Charaktere.dc.html": { "x": 940, "y": 0, "w": 390, "h": 844, "title": "Noch kein lebender Charakter" }
+  },
+  "order": ["Main.dc.html", "Menue.dc.html", "Ohne-Charaktere.dc.html"],
+  "notes": {},
+  "designSystems": []
+}

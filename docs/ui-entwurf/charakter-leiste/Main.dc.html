@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Orakel mit Charakter-Leiste</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&amp;family=IBM+Plex+Sans:wght@400;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#eceae4}a:hover{color:#ffffff}
+.strip::-webkit-scrollbar{display:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden; background: #111111; color: #eceae4; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.4">
+
+  <header style="flex: none; height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px 0 16px; border-bottom: 1px solid #2a2a2a">
+    <button type="button" onClick="{{ openMenu }}" aria-label="Menü öffnen: Kampagne Spinward Run" style="display: flex; align-items: center; gap: 10px; background: none; border: 0; padding: 0; color: #eceae4; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer; min-height: 44px">
+      <span style="width: 4px; height: 20px; background: #c62f35"></span>
+      <span>Spinward Run</span>
+    </button>
+    <div style="display: flex; align-items: center">
+      <button type="button" aria-label="Vollbild" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: none; border: 0; color: #a3a09a; cursor: pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg>
+      </button>
+      <button type="button" onClick="{{ openMenu }}" aria-label="Menü" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: none; border: 0; color: #eceae4; cursor: pointer">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <sc-if value="{{ onOracle }}" hint-placeholder-val="{{ true }}">
+
+    <sc-if value="{{ hasChars }}" hint-placeholder-val="{{ true }}">
+      <section aria-label="Spielercharaktere" style="flex: none; border-bottom: 1px solid #2a2a2a; background: #0e0e0e">
+        <div class="strip" onScroll="{{ onStripScroll }}" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; gap: 8px; padding: 10px 16px 0; scroll-padding: 0 16px">
+          <sc-for list="{{ chars }}" as="c" hint-placeholder-count="2">
+            <article style="flex: 0 0 334px; scroll-snap-align: start; box-sizing: border-box; border: 1px solid {{ c.border }}; background: #161616; padding: 10px 12px">
+              <div style="display: flex; align-items: center; gap: 8px">
+                <button type="button" onClick="{{ toggleCollapsed }}" aria-expanded="{{ expandedAttr }}" style="flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; background: none; border: 0; padding: 0; color: #eceae4; font: inherit; text-align: left; cursor: pointer; min-height: 32px">
+                  <span style="font-weight: 700; font-size: 17px; white-space: nowrap">{{ c.name }}</span>
+                  <span style="color: #a3a09a; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ c.background }}</span>
+                </button>
+                <span style="color: #8c8a85; font-family: 'IBM Plex Mono', monospace; font-size: 12px">{{ c.position }}</span>
+                <button type="button" onClick="{{ toggleCollapsed }}" aria-label="{{ collapseLabel }}" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: none; border: 0; color: #a3a09a; cursor: pointer">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: rotate({{ chevronTurn }})" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+                </button>
+              </div>
+              <sc-if value="{{ expanded }}" hint-placeholder-val="{{ true }}">
+                <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin-top: 8px">
+                  <sc-for list="{{ c.attrs }}" as="a" hint-placeholder-count="6">
+                    <button type="button" onClick="{{ a.toggle }}" aria-pressed="{{ a.pressed }}" style="height: 46px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid {{ a.border }}; background: {{ a.bg }}; color: {{ a.color }}; font: inherit; cursor: {{ a.cursor }}; padding: 0">
+                      <span style="font-size: 10px; letter-spacing: 0.06em; color: {{ a.labelColor }}">{{ a.key }}</span>
+                      <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 17px; line-height: 1.1">{{ a.value }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 10px">
+                  <sc-for list="{{ c.skills }}" as="s" hint-placeholder-count="5">
+                    <button type="button" onClick="{{ s.pick }}" aria-pressed="{{ s.pressed }}" style="height: 36px; padding: 0 10px; border: 1px {{ s.borderStyle }} {{ s.border }}; background: {{ s.bg }}; color: {{ s.color }}; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; cursor: pointer">{{ s.label }}</button>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ collapsed }}" hint-placeholder-val="{{ false }}">
+                <div style="height: 6px"></div>
+              </sc-if>
+            </article>
+          </sc-for>
+        </div>
+        <div style="display: flex; justify-content: center; gap: 6px; padding: 8px 0 8px">
+          <sc-for list="{{ dots }}" as="d" hint-placeholder-count="2">
+            <span style="width: 6px; height: 6px; border-radius: 3px; background: {{ d.bg }}"></span>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ noChars }}" hint-placeholder-val="{{ false }}">
+      <section aria-label="Spielercharaktere" style="flex: none; display: flex; gap: 8px; padding: 10px 16px; border-bottom: 1px solid #2a2a2a; background: #0e0e0e">
+        <button type="button" style="flex: 1; height: 44px; border: 1px dashed #555555; background: none; color: #a3a09a; font: inherit; font-size: 14px; cursor: pointer">+ Charakter anlegen</button>
+        <button type="button" style="flex: 1; height: 44px; border: 1px dashed #555555; background: none; color: #a3a09a; font: inherit; font-size: 14px; cursor: pointer">+ Nach Regeln erschaffen</button>
+      </section>
+    </sc-if>
+
+    <section aria-label="Log" style="flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 10px 16px 8px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; color: #a3a09a">LOG</span>
+        <span style="font-size: 11px; color: #8c8a85">Eintrag lange drücken zum Löschen</span>
+      </div>
+      <div style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px">
+        <sc-for list="{{ log }}" as="e" hint-placeholder-count="3">
+          <div style="border: 1px solid #2e2e2e; background: {{ e.bg }}; padding: 8px 12px">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; letter-spacing: 0.08em">
+              <span style="color: #ef5a5f">{{ e.label }}</span>
+              <span style="color: #8c8a85; font-family: 'IBM Plex Mono', monospace; font-weight: 400; letter-spacing: 0">{{ e.time }}</span>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 10px; margin-top: 2px">
+              <span style="font-size: 22px; font-weight: 700; color: {{ e.mainColor }}">{{ e.main }}</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #a3a09a">{{ e.detail }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section aria-label="Orakel und Proben" style="flex: none; border-top: 1px solid #2a2a2a; padding: 10px 16px 10px; display: flex; flex-direction: column; gap: 8px">
+      <sc-if value="{{ hasTask }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: center; gap: 8px; border: 1px solid #555555; background: #1a1a1a; padding: 6px 6px 6px 12px">
+          <div style="flex: 1; min-width: 0">
+            <div style="font-weight: 600; font-size: 14px">{{ task.title }}</div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #a3a09a">{{ task.line }}</div>
+          </div>
+          <button type="button" onClick="{{ clearTask }}" aria-label="Probe abbrechen" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: none; border: 0; color: #a3a09a; cursor: pointer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ noTask }}" hint-placeholder-val="{{ true }}">
+        <label style="display: block">
+          <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Frage</span>
+          <input type="text" placeholder="Frage (optional) – für Orakel und Karte" style="width: 100%; box-sizing: border-box; height: 44px; padding: 0 12px; border: 1px solid #3a3a3a; background: #0b0b0b; color: #eceae4; font: inherit; font-size: 14px">
+        </label>
+      </sc-if>
+      <div style="display: flex; gap: 6px">
+        <button type="button" onClick="{{ drawCard }}" style="flex: 1.3; height: 50px; border: 0; background: #c62f35; color: #ffffff; font: inherit; font-weight: 700; cursor: pointer">Karte ziehen</button>
+        <sc-if value="{{ noTask }}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{ rollDice }}" style="flex: 1; height: 50px; border: 1px solid #eceae4; background: none; color: #eceae4; font: inherit; font-weight: 700; cursor: pointer">2W6</button>
+        </sc-if>
+        <sc-if value="{{ hasTask }}" hint-placeholder-val="{{ false }}">
+          <button type="button" onClick="{{ rollTask }}" style="flex: 1; height: 50px; border: 0; background: #d9b45f; color: #111111; font: inherit; font-weight: 700; cursor: pointer">Probe würfeln</button>
+        </sc-if>
+      </div>
+      <div style="display: flex; gap: 6px">
+        <div role="radiogroup" aria-label="Stufe" style="flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #3a3a3a">
+          <sc-for list="{{ odds }}" as="o" hint-placeholder-count="3">
+            <button type="button" role="radio" aria-checked="{{ o.checked }}" onClick="{{ o.pick }}" style="height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 0; background: {{ o.bg }}; color: {{ o.color }}; font: inherit; cursor: pointer; padding: 0">
+              <span style="font-size: 13px; font-weight: 600">{{ o.name }}</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: {{ o.subColor }}">{{ o.sub }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <button type="button" onClick="{{ askOracle }}" style="width: 92px; height: 50px; border: 0; background: #eceae4; color: #111111; font: inherit; font-weight: 700; cursor: pointer">Ja/Nein</button>
+      </div>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ onChars }}" hint-placeholder-val="{{ false }}">
+    <section aria-label="Charaktere" style="flex: 1; min-height: 0; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; color: #a3a09a">CHARAKTERE VERWALTEN</span>
+      <p style="margin: 0; color: #a3a09a; font-size: 14px">Wie bisher, nur ohne Proben: anlegen, nach Regeln erschaffen, bearbeiten, Details mit Lebenslauf, Verstorbene. Proben würfelt man oben im Orakel.</p>
+      <sc-for list="{{ allChars }}" as="c" hint-placeholder-count="2">
+        <div style="border: 1px solid #2e2e2e; background: #161616; padding: 12px; display: flex; justify-content: space-between; align-items: baseline">
+          <span style="font-weight: 700">{{ c.name }}</span>
+          <span style="color: #a3a09a; font-size: 12px">{{ c.background }}</span>
+        </div>
+      </sc-for>
+      <div style="display: flex; gap: 8px">
+        <button type="button" style="flex: 1; height: 56px; border: 1px dashed #555555; background: none; color: #a3a09a; font: inherit; font-size: 14px; cursor: pointer">+ Neuer Charakter</button>
+        <button type="button" style="flex: 1; height: 56px; border: 1px dashed #555555; background: none; color: #a3a09a; font: inherit; font-size: 14px; cursor: pointer">+ Nach Regeln erschaffen</button>
+      </div>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ onSector }}" hint-placeholder-val="{{ false }}">
+    <section aria-label="Sektor" style="flex: 1; min-height: 0; padding: 16px">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; color: #a3a09a">SEKTOR</span>
+      <p style="margin: 8px 0 0; color: #a3a09a; font-size: 14px">Unverändert, nicht Teil dieses Entwurfs.</p>
+    </section>
+  </sc-if>
+
+  <nav aria-label="Bereiche" style="flex: none; height: 62px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid #2a2a2a; background: #0b0b0b">
+    <sc-for list="{{ nav }}" as="n" hint-placeholder-count="3">
+      <button type="button" onClick="{{ n.go }}" aria-current="{{ n.current }}" style="border: 0; border-top: 2px solid {{ n.bar }}; background: none; color: {{ n.color }}; font: inherit; font-size: 12px; font-weight: {{ n.weight }}; cursor: pointer">{{ n.label }}</button>
+    </sc-for>
+  </nav>
+
+  <sc-if value="{{ showResult }}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(0, 0, 0, 0.72); display: flex; align-items: center; justify-content: center; padding: 24px">
+      <div role="dialog" aria-label="Ergebnis der Probe" style="width: 100%; border: 1px solid #8a6a2a; background: #161616; padding: 20px; display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center">
+        <span style="font-size: 12px; letter-spacing: 0.1em; color: #a3a09a">{{ result.who }}</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; color: #a3a09a">{{ result.target }}</span>
+        <span style="font-size: 48px; font-weight: 700; color: #f5dc96; line-height: 1">{{ result.total }}</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #a3a09a">{{ result.sum }}</span>
+        <span style="font-size: 22px; font-weight: 700; color: {{ result.verdictColor }}">{{ result.verdict }}</span>
+        <button type="button" onClick="{{ closeResult }}" style="width: 100%; height: 48px; margin-top: 6px; border: 1px solid #eceae4; background: none; color: #eceae4; font: inherit; font-weight: 700; cursor: pointer">Weiter</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(0, 0, 0, 0.6)">
+      <button type="button" onClick="{{ closeMenu }}" aria-label="Menü schließen" style="position: absolute; inset: 0; border: 0; background: none; cursor: pointer"></button>
+      <div role="dialog" aria-label="Menü" style="position: absolute; top: 0; right: 0; bottom: 0; width: 300px; background: #161616; border-left: 1px solid #3a3a3a; display: flex; flex-direction: column; overflow-y: auto">
+        <div style="height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px 0 16px; border-bottom: 1px solid #2a2a2a">
+          <span style="font-weight: 700">Menü</span>
+          <button type="button" onClick="{{ closeMenu }}" aria-label="Menü schließen" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: none; border: 0; color: #eceae4; cursor: pointer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+        </div>
+        <div style="padding: 14px 16px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; color: #a3a09a">KAMPAGNE</div>
+        <div style="padding: 0 16px 8px; font-weight: 700; font-size: 17px">Spinward Run</div>
+        <sc-for list="{{ campaignItems }}" as="m" hint-placeholder-count="5">
+          <button type="button" style="height: 48px; display: flex; align-items: center; padding: 0 16px; border: 0; border-top: 1px solid #2a2a2a; background: none; color: #eceae4; font: inherit; font-size: 15px; text-align: left; cursor: pointer">{{ m }}</button>
+        </sc-for>
+        <div style="padding: 18px 16px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; color: #a3a09a; border-top: 1px solid #2a2a2a">APP</div>
+        <sc-for list="{{ appItems }}" as="m" hint-placeholder-count="5">
+          <button type="button" style="height: 48px; display: flex; align-items: center; padding: 0 16px; border: 0; border-top: 1px solid #2a2a2a; background: none; color: #eceae4; font: inherit; font-size: 15px; text-align: left; cursor: pointer">{{ m }}</button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"ohneCharaktere":{"editor":"boolean","default":false},"menuOffen":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      idx: 0,
+      collapsed: false,
+      skill: null,
+      attrs: [],
+      odds: 'mittel',
+      menu: null,
+      screen: 'oracle',
+      result: null,
+      log: [
+        { label: 'ORAKEL · MITTEL', time: '17:31', main: 'Ja', detail: 'Ist die Schleuse offen? · 34 von 50', mainColor: '#eceae4' },
+        { label: 'WÜRFEL · 2W6', time: '17:34', main: '8', detail: '3 + 5', mainColor: '#eceae4' },
+      ],
+    };
+  }
+
+  characters() {
+    if (this.props.ohneCharaktere) return [];
+    return [
+      { name: 'Kira Vant', background: 'Ex-Scout · 4 Terms · 34 Jahre', upp: [7, 10, 8, 9, 7, 5], skills: [['Pil', 'Pilot', 2], ['Nav', 'Navigation', 1], ['APi', 'Auto Pistol', 1], ['Vac', 'Vacc Suit', 1]] },
+      { name: 'Jonas Reyl', background: 'Ex-Merchant · 3 Terms · 30 Jahre', upp: [6, 8, 7, 10, 8, 8], skills: [['Ste', 'Steward', 1], ['Bri', 'Bribery', 1], ['Adm', 'Administration', 1], ['Bla', 'Blade', 1]] },
+      { name: 'Mira Okonkwo', background: 'Ex-Navy · 2 Terms · 26 Jahre', upp: [8, 9, 9, 7, 9, 6], skills: [['Eng', 'Engineering', 1], ['Gun', 'Gunnery', 1], ['Vac', 'Vacc Suit', 1]] },
+    ];
+  }
+
+  now() {
+    const d = new Date();
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  addLog(entry) {
+    this.setState({ log: [...this.state.log, { time: this.now(), mainColor: '#eceae4', ...entry }].slice(-12) });
+  }
+
+  d6() {
+    return 1 + Math.floor(Math.random() * 6);
+  }
+
+  renderVals() {
+    const keys = ['STR', 'DEX', 'END', 'INT', 'EDU', 'SOC'];
+    const hex = (v) => (v < 10 ? String(v) : String.fromCharCode(55 + v));
+    const dmOf = (v) => (v >= 9 ? 1 : v <= 5 ? -1 : 0);
+    const sign = (n) => (n > 0 ? '+' + n : n < 0 ? '−' + Math.abs(n) : '±0');
+    const oddsList = [
+      { id: 'hoch', name: 'Hoch', pct: 75, target: 6 },
+      { id: 'mittel', name: 'Mittel', pct: 50, target: 8 },
+      { id: 'gering', name: 'Gering', pct: 25, target: 10 },
+    ];
+    const s = this.state;
+    const chars = this.characters();
+    const idx = Math.min(s.idx, Math.max(chars.length - 1, 0));
+    const odd = oddsList.find((o) => o.id === s.odds);
+    const current = chars[idx];
+
+    const skillOf = (c, i) => (i === 'ohne' ? ['Ohne', 'Ohne Fertigkeit', -3] : c.skills[i]);
+    const task = current && s.skill !== null ? (() => {
+      const sk = skillOf(current, s.skill);
+      const attrDm = s.attrs.reduce((sum, k) => sum + dmOf(current.upp[k]), 0);
+      const dm = sk[2] + attrDm;
+      const attrText = s.attrs.map((k) => keys[k] + ' ' + sign(dmOf(current.upp[k]))).join(', ');
+      return {
+        sk, dm, attrText,
+        title: (s.skill === 'ohne' ? 'Ohne Fertigkeit' : sk[1] + '-' + sk[2]) + ' · ' + odd.target + '+',
+        line: '2W6 ' + sign(dm) + (attrText ? ' (' + attrText + ')' : '') + ' · Braucht ' + Math.max(2, odd.target - dm) + '+',
+      };
+    })() : null;
+
+    const pickSkill = (ci, i) => () => {
+      if (ci !== idx) return;
+      this.setState(s.skill === i ? { skill: null, attrs: [] } : { skill: i, attrs: [] });
+    };
+
+    const viewChars = chars.map((c, ci) => {
+      const active = ci === idx;
+      const skills = [...c.skills.map((sk, i) => ({ label: sk[0] + '-' + sk[2], i })), { label: 'Ohne (−3)', i: 'ohne' }].map((x) => {
+        const on = active && s.skill === x.i;
+        return {
+          label: x.label,
+          pick: pickSkill(ci, x.i),
+          pressed: on ? 'true' : 'false',
+          bg: on ? '#eceae4' : 'transparent',
+          color: on ? '#111111' : '#eceae4',
+          border: on ? '#eceae4' : x.i === 'ohne' ? '#555555' : '#3a3a3a',
+          borderStyle: x.i === 'ohne' && !on ? 'dashed' : 'solid',
+        };
+      });
+      const attrs = c.upp.map((v, k) => {
+        const dm = dmOf(v);
+        const selectable = active && s.skill !== null && dm !== 0;
+        const on = active && s.attrs.includes(k);
+        return {
+          key: keys[k],
+          value: hex(v),
+          pressed: on ? 'true' : 'false',
+          toggle: () => {
+            if (!selectable) return;
+            this.setState({ attrs: on ? s.attrs.filter((x) => x !== k) : [...s.attrs, k] });
+          },
+          bg: on ? '#eceae4' : '#0b0b0b',
+          color: on ? '#111111' : selectable ? '#eceae4' : s.skill !== null && active ? '#8c8a85' : '#eceae4',
+          labelColor: on ? '#3a3833' : selectable ? (dm > 0 ? '#d9b45f' : '#ef5a5f') : '#8c8a85',
+          border: on ? '#eceae4' : selectable ? '#555555' : '#2a2a2a',
+          cursor: selectable ? 'pointer' : 'default',
+        };
+      });
+      return { name: c.name, background: c.background, position: ci + 1 + '/' + chars.length, border: active && s.skill !== null ? '#555555' : '#2e2e2e', attrs, skills };
+    });
+
+    const screens = [['oracle', 'Orakel'], ['chars', 'Charaktere'], ['sector', 'Sektor']];
+    const menuOpen = s.menu === null ? !!this.props.menuOffen : s.menu;
+
+    return {
+      onOracle: s.screen === 'oracle',
+      onChars: s.screen === 'chars',
+      onSector: s.screen === 'sector',
+      hasChars: chars.length > 0,
+      noChars: chars.length === 0,
+      chars: viewChars,
+      allChars: chars,
+      expanded: !s.collapsed,
+      collapsed: s.collapsed,
+      expandedAttr: s.collapsed ? 'false' : 'true',
+      collapseLabel: s.collapsed ? 'Leiste aufklappen' : 'Leiste einklappen',
+      chevronTurn: s.collapsed ? '-90deg' : '0deg',
+      toggleCollapsed: () => this.setState({ collapsed: !s.collapsed }),
+      dots: chars.map((_, i) => ({ bg: i === idx ? '#eceae4' : '#3a3a3a' })),
+      onStripScroll: (e) => {
+        const el = e.currentTarget;
+        const next = Math.round(el.scrollLeft / 342);
+        if (next !== s.idx) this.setState({ idx: next, skill: null, attrs: [] });
+      },
+      hasTask: !!task,
+      noTask: !task,
+      task: task || { title: '', line: '' },
+      clearTask: () => this.setState({ skill: null, attrs: [] }),
+      odds: oddsList.map((o) => {
+        const on = o.id === s.odds;
+        return {
+          name: o.name,
+          sub: o.pct + ' % · ' + o.target + '+',
+          checked: on ? 'true' : 'false',
+          pick: () => this.setState({ odds: o.id }),
+          bg: on ? '#eceae4' : 'transparent',
+          color: on ? '#111111' : '#eceae4',
+          subColor: on ? '#3a3833' : '#8c8a85',
+        };
+      }),
+      log: s.log.map((e) => ({ ...e, bg: '#161616' })),
+      askOracle: () => {
+        const roll = 1 + Math.floor(Math.random() * 100);
+        this.addLog({ label: 'ORAKEL · ' + odd.name.toUpperCase(), main: roll <= odd.pct ? 'Ja' : 'Nein', detail: roll + ' von ' + odd.pct });
+      },
+      rollDice: () => {
+        const a = this.d6(), b = this.d6();
+        this.addLog({ label: 'WÜRFEL · 2W6', main: String(a + b), detail: a + ' + ' + b });
+      },
+      drawCard: () => this.addLog({ label: 'KARTE', main: '…', detail: 'Inspirationskarte wie bisher' }),
+      rollTask: () => {
+        if (!task) return;
+        const a = this.d6(), b = this.d6();
+        const total = a + b + task.dm;
+        const ok = total >= odd.target;
+        const result = {
+          who: current.name.toUpperCase() + ' · ' + task.title,
+          target: 'Zielwert ' + odd.target + '+',
+          total: String(total),
+          sum: a + ' + ' + b + ' ' + sign(task.dm),
+          verdict: ok ? 'Erfolg' : 'Fehlschlag',
+          verdictColor: ok ? '#f5dc96' : '#ef5a5f',
+        };
+        this.setState({
+          result,
+          log: [...s.log, { label: 'PROBE · ' + current.name.toUpperCase(), time: this.now(), main: ok ? 'Erfolg' : 'Fehlschlag', mainColor: ok ? '#d9b45f' : '#ef5a5f', detail: task.title + ' · ' + total }].slice(-12),
+        });
+      },
+      showResult: !!s.result,
+      result: s.result || { who: '', target: '', total: '', sum: '', verdict: '', verdictColor: '#eceae4' },
+      closeResult: () => this.setState({ result: null }),
+      menuOpen,
+      openMenu: () => this.setState({ menu: true }),
+      closeMenu: () => this.setState({ menu: false }),
+      campaignItems: ['Kampagne wechseln', 'Neue Kampagne', 'Umbenennen', 'Exportieren', 'Importieren'],
+      appItems: ['Installieren', 'Vibration testen', 'Über die App'],
+      nav: screens.map(([id, label]) => {
+        const on = s.screen === id;
+        return {
+          label,
+          go: () => this.setState({ screen: id, menu: false }),
+          current: on ? 'page' : 'false',
+          bar: on ? '#c62f35' : 'transparent',
+          color: on ? '#eceae4' : '#a3a09a',
+          weight: on ? '700' : '400',
+        };
+      }),
+    };
+  }
+}
+</script>
+</body>
+</html>
