@@ -315,6 +315,12 @@ export function surfaceTableFor(water: number): SurfaceRow['table'] | undefined 
   return undefined;
 }
 
+/**
+ * Höchstens so viele große Kontinente: Jeder hat mindestens 15 % der Landfläche. Hausregel, weil die
+ * Kontinente-Tabelle bis 2W6 + 1 würfelt; was darüber liegt, zählt zu den kleinen.
+ */
+export const MAX_MAJOR_CONTINENTS = 6;
+
 /** Ab welcher Summe auf 2W6 es einheimisches Leben gibt. */
 export const LIFE_TARGET = 10;
 
@@ -352,7 +358,8 @@ export function rollSurface(hex: Hex, random: Random): Surface {
     const row = surfaceRow(table, rollDice(1, random) + hydrographics * 3);
     const [major, minor, small, scattered] = [row.major, row.minor, row.small, row.scattered].map((expr) => rollExpr(expr, random)) as [number, number, number, number];
     if (table === 'continents') {
-      Object.assign(masses, { majorContinents: major, minorContinents: minor, majorIslands: small, archipelagos: row.onlyScattered ? (100 - water) * 5 * 2 : scattered });
+      const capped = Math.min(major, MAX_MAJOR_CONTINENTS);
+      Object.assign(masses, { majorContinents: capped, minorContinents: minor + major - capped, majorIslands: small, archipelagos: row.onlyScattered ? (100 - water) * 5 * 2 : scattered });
     } else {
       Object.assign(masses, { majorOceans: major, minorOceans: minor, smallSeas: small, scatteredLakes: row.onlyScattered ? water * 5 * 2 : scattered });
     }
@@ -366,6 +373,16 @@ export function rollSurface(hex: Hex, random: Random): Surface {
 export function enterSurface(hex: Hex, random: Random): Hex {
   if (nextWorldAction(hex) !== 'surface') throw new DomainError(`Die Oberfläche ist für das Feld ${hexId(hex.column, hex.row)} nicht dran.`);
   return { ...hex, surface: rollSurface(hex, random) };
+}
+
+/** Ist alles Land Archipel: keine anderen Landmassen, und die Archipele sind die ganze Landfläche in halben Hexen. */
+export function onlyArchipelagos(surface: Surface): boolean {
+  return surface.archipelagos > 0 && surface.majorContinents + surface.minorContinents + surface.majorIslands === 0 && surface.archipelagos === (100 - surface.water) * 5 * 2;
+}
+
+/** Ist alles Wasser verstreuter See: keine anderen Gewässer, und die Seen sind die ganze Wasserfläche in halben Hexen. */
+export function onlyLakes(surface: Surface): boolean {
+  return surface.scatteredLakes > 0 && surface.majorOceans + surface.minorOceans + surface.smallSeas === 0 && surface.scatteredLakes === surface.water * 5 * 2;
 }
 
 /** Prüft die Oberfläche einer Welt: Sie braucht Temperatur und TL, und jeder Wert liegt dort, wo die Regeln ihn hinbringen können. */
@@ -384,6 +401,7 @@ function validateSurface(hex: Hex, fail: (why: string) => never): void {
   const land = surface.majorContinents + surface.minorContinents + surface.majorIslands + surface.archipelagos;
   const sea = surface.majorOceans + surface.minorOceans + surface.smallSeas + surface.scatteredLakes;
   if ((table !== 'continents' && land > 0) || (table !== 'oceans' && sea > 0)) fail(`Bei ${surface.water} % Wasser passen diese Land- und Wassermassen nicht.`);
+  if (surface.majorContinents > MAX_MAJOR_CONTINENTS) fail(`Mehr als ${MAX_MAJOR_CONTINENTS} große Kontinente gibt es nicht.`);
 }
 
 /** Die Handelscodes einer Welt, sobald das UWP vollständig ist: jeder, dessen Bedingungen alle erfüllt sind. */

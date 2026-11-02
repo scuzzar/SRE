@@ -168,6 +168,16 @@ describe('Weltenerschaffung', () => {
     expect(rollSurface(base, fixedRandom(6, 6, 1, 1)).water).toBe(5);
   });
 
+  it('gibt höchstens 6 große Kontinente; der Rest zählt zu den kleinen', () => {
+    const base: Hex = { column: 1, row: 1, empty: false, name: 'Viele', navalBase: false, scoutBase: false, gasGiant: false, uwp: { starport: 10, size: 8, atmosphere: 6, hydrographics: 5, population: 1, government: 1, law: 1, tech: 5 }, temperature: 'temperate' };
+    // Wasser 50 + 9 − 7 = 52 %; Platten 8 + 5 − 2 = 11; Tabelle 3 + 15 = 18 (2W6 + 1, 3W6 − 3): 6 + 6 + 1 = 13 groß, 1 + 1 + 1 − 3 = 0 klein.
+    const surface = rollSurface(base, fixedRandom(4, 5, 1, 1, 3, 6, 6, 1, 1, 1));
+    expect(surface).toMatchObject({ water: 52, plates: 11, majorContinents: 6, minorContinents: 7 });
+    const world = { ...base, surface };
+    expect(() => validateHexes([world])).not.toThrow();
+    expect(() => validateHexes([{ ...world, surface: { ...surface, majorContinents: 7 } }])).toThrow(/Mehr als 6 große Kontinente/);
+  });
+
   it('gibt einem Asteroidengürtel weder Wasser noch Platten', () => {
     const belt: Hex = { column: 1, row: 1, empty: false, uwp: { starport: 10, size: 0, atmosphere: 0, hydrographics: 0, population: 1, government: 1, law: 1, tech: 5 }, temperature: 'frozen' };
     // Nur das Leben wird gewürfelt: 6 + 6 − 3 − 2 − 1 = 6, kein Leben.

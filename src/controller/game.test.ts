@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { appendLog, createCampaign, fromCampaignFile, setHexes, type CampaignRepository, type Random } from '../model';
 import { fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
+import { surfaceLines } from './world-view';
 
 async function started(random: Random = fixedRandom(), repository = memoryRepository(), download = memoryDownload()) {
   const game = new GameController({ repository, random, clock: fixedClock(), download });
@@ -606,6 +607,13 @@ describe('Subsektor und Weltenerschaffung', () => {
     game.rollWorld();
     expect(game.snapshot().world).toMatchObject({ action: { kind: 'done' }, lines: [] });
     expect(game.snapshot().world?.surface?.[0]).toBe('75 % Wasser');
+  });
+
+  it('schreibt „nur Archipele“ und „nur Seen“ statt der ganzen Fläche als Zahl', () => {
+    const none = { water: 0, plates: 1, majorContinents: 0, minorContinents: 0, majorIslands: 0, archipelagos: 0, majorOceans: 0, minorOceans: 0, smallSeas: 0, scatteredLakes: 0, life: false };
+    expect(surfaceLines({ ...none, water: 85, archipelagos: 150 })).toContain('Land nur als Archipele');
+    expect(surfaceLines({ ...none, water: 3, scatteredLakes: 30 })).toContain('Wasser nur als verstreute Seen');
+    expect(surfaceLines({ ...none, water: 60, archipelagos: 7, majorIslands: 2 })).toContain('2 große Inseln, 7 Archipele');
   });
 
   it('lässt ein leeres Feld zu; antippen zeigt nur sein Vorkommen', async () => {
