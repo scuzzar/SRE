@@ -52,7 +52,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Hex.temperature`, `WorldRollKind.temperature`, `UwpDigit.temperatureDm` und als Referenzdaten
 > `Temperature` mit `hydroDm`.
 >
-> **Entwurf, wartet auf Freigabe** (2. November 2026): die **Oberfläche** einer Welt nach dem
+> Ebenfalls am 2. November 2026 freigegeben: die **Oberfläche** einer Welt nach dem
 > *World Builder's Handbook* (DGP), als Vorarbeit für eine spätere Oberflächenkarte (siehe
 > *Weltenerschaffung*, Schritt 6, und *Oberfläche*). Neu im Bild: `Surface` am `Hex`, der Schritt
 > `surface` und als Referenzdaten `SurfaceRow` mit `SurfaceTable` und `DiceExpr`.
@@ -591,11 +591,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
-
-- **Oberfläche.** `Surface`, der Schritt `surface`, die Tabellen `SurfaceRow` und die Weltkarte
-  ohne Liste der Würfe fehlen im Code noch (Entwurf, siehe oben), ebenso das *World Builder's
-  Handbook* als Quelle auf dem „Über“-Bildschirm.
-
 
 - **`Gain` in den Daten.** Im Bild bringt eine Zeile ein Attribut über einen Verweis (`changes`);
   in `src/data/services.json` steht das Attribut als Feld `characteristic` neben `change`, weil

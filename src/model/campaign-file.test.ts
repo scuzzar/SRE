@@ -87,10 +87,11 @@ describe('Kampagnendatei mit Subsektor', () => {
   });
 
   it('nimmt Welten als Werte mit und liest sie unverändert zurück', () => {
-    const hex = { column: 2, row: 7, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 }, temperature: 'temperate' };
-    // Eine Welt von vor der Temperatur hat keine.
+    const hex = { column: 2, row: 7, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 }, temperature: 'temperate', surface: { water: 80, plates: 8, majorContinents: 1, minorContinents: 4, majorIslands: 5, archipelagos: 7, majorOceans: 0, minorOceans: 0, smallSeas: 0, scatteredLakes: 0, life: true } };
+    // Eine Welt von vor der Temperatur hat keine, und damit auch keine Oberfläche.
     const old: Record<string, unknown> = { ...hex, column: 3 };
     delete old.temperature;
+    delete old.surface;
     const text = fileWith((c) => (c.hexes = [hex, old, { column: 1, row: 1, empty: true, uwp: {} }]));
     expect(fromCampaignFile(text, 'k2').hexes).toEqual([hex, old, { column: 1, row: 1, empty: true, uwp: {} }]);
   });

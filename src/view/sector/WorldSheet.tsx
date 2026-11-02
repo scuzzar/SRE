@@ -88,7 +88,7 @@ export function WorldSheet({ world }: { world: WorldView }) {
 
         <div className="sheet-body" ref={body}>
           {!view.empty && <WorldCard world={view} />}
-          <WorldLines lines={view.lines} />
+          {view.surface && <SurfaceSection lines={view.surface} />}
         </div>
 
         {(hasRoll || fresh) && (
@@ -185,27 +185,17 @@ function TemperatureRow({ temperature }: { temperature: WorldView['temperature']
   );
 }
 
-function WorldLines({ lines }: { lines: readonly WorldLine[] }) {
-  if (lines.length === 0) return null;
+/** Die Oberfläche nach dem World Builder's Handbook, an der Stelle der früheren Liste der Würfe. */
+function SurfaceSection({ lines }: { lines: readonly string[] }) {
   return (
-    <section className="career" aria-label="Würfe">
+    <section className="career world-surface" aria-label="Oberfläche">
       <div className="career-term">
-        <h4>Würfe</h4>
-        <ol>
-          {lines.map((l) => (
-            <li key={l.index} className={l.success === false ? 'failed' : undefined}>
-              <span className="career-label">{l.label}</span>
-              <span className="career-roll mono">
-                {l.dice.join('+')}
-                {dmText(l)}
-                {l.target !== undefined ? ` / ${l.target}+` : ''}
-              </span>
-              <span className="career-result" lang="en">
-                {l.result}
-              </span>
-            </li>
+        <h4>Oberfläche</h4>
+        <ul>
+          {lines.map((line) => (
+            <li key={line}>{line}</li>
           ))}
-        </ol>
+        </ul>
       </div>
     </section>
   );
@@ -276,6 +266,13 @@ function Actions({ action, disabled, onRun }: { action: WorldAction; disabled: b
             </span>
           </span>
         </HoldButton>
+      );
+    case 'surface':
+      return (
+        <button type="button" className="roll generation-main" aria-disabled={disabled || undefined} onClick={() => game.rollWorld()}>
+          <DiceIcon />
+          <span>{action.label}</span>
+        </button>
       );
     case 'name':
       return (

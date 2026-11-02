@@ -1,8 +1,9 @@
-import { EHEX, uwpKinds, type SystemContents, type Temperature, type TemperatureId, type TradeCode, type UwpDigit, type UwpKind } from '../data';
+import { EHEX, uwpKinds, type DiceExpr, type SurfaceRow, type SystemContents, type Temperature, type TemperatureId, type TradeCode, type UwpDigit, type UwpKind } from '../data';
 import { DomainError } from './errors';
+import type { Random } from './ports';
 import { ref } from './reference';
 
-export { EHEX, temperatureIds, uwpKinds, type SystemContents, type Temperature, type TemperatureId, type TradeCode, type UwpDigit, type UwpKind } from '../data';
+export { EHEX, temperatureIds, uwpKinds, type DiceExpr, type SurfaceRow, type SurfaceTable, type SystemContents, type Temperature, type TemperatureId, type TradeCode, type UwpDigit, type UwpKind } from '../data';
 
 /** Der Subsektor hat 8 Spalten und 10 Zeilen wie TAS Form 6. */
 export const SECTOR_COLUMNS = 8;
@@ -16,8 +17,27 @@ const ATMOSPHERE_KEEPS_WATER = 13;
 
 export type WorldRollKind = 'occurrence' | 'navalBase' | 'scoutBase' | 'gasGiant' | 'temperature' | UwpKind;
 
-/** Was in der Weltenerschaffung als Nächstes dran ist: ein Wurf, der Name, oder fertig. */
-export type WorldStep = WorldRollKind | 'name' | 'done';
+/** Was in der Weltenerschaffung als Nächstes dran ist: ein Wurf, die Oberfläche, der Name, oder fertig. */
+export type WorldStep = WorldRollKind | 'surface' | 'name' | 'done';
+
+/**
+ * Die Oberfläche einer Welt nach dem World Builder's Handbook, ohne Karte: Wasseranteil, Platten,
+ * Land- und Wassermassen und einheimisches Leben. Sie entsteht in einem Zug.
+ */
+export interface Surface {
+  /** Wasseranteil in Prozent, 0 bis 100. */
+  readonly water: number;
+  readonly plates: number;
+  readonly majorContinents: number;
+  readonly minorContinents: number;
+  readonly majorIslands: number;
+  readonly archipelagos: number;
+  readonly majorOceans: number;
+  readonly minorOceans: number;
+  readonly smallSeas: number;
+  readonly scatteredLakes: number;
+  readonly life: boolean;
+}
 
 /** Die Stellen des UWP, jede, sobald sie feststeht. */
 export type Uwp = Readonly<Partial<Record<UwpKind, number>>>;
@@ -38,6 +58,8 @@ export interface Hex {
   readonly uwp: Uwp;
   /** Die Temperatur nach Mongoose Traveller; fehlt bei Welten, deren Hydrographie vorher gewürfelt wurde. */
   readonly temperature?: TemperatureId;
+  /** Die Oberfläche; fehlt bei Welten, die ihren TL vorher bekamen. */
+  readonly surface?: Surface;
 }
 
 /** Woraus der DM eines Wurfs besteht, mit Namen: „Größe 7 +7“; ohne Namen der feste Teil der Formel (−7). */
@@ -136,6 +158,8 @@ export function stepOf(hex: Hex): WorldStep {
     if (kind === 'hydrographics' && hex.uwp.hydrographics === undefined && hex.temperature === undefined) return 'temperature';
     if (hex.uwp[kind] === undefined) return kind;
   }
+  // Welten von vor der Temperatur bekommen die Oberfläche erst, wenn sie fertig sind.
+  if (hex.surface === undefined && hex.temperature !== undefined && hex.name === undefined) return 'surface';
   return hex.name === undefined ? 'name' : 'done';
 }
 
@@ -144,11 +168,22 @@ export function lacksTemperature(hex: Hex): boolean {
   return !hex.empty && hex.temperature === undefined && stepOf(hex) === 'done';
 }
 
-/** Der Wurf, der als Nächstes dran ist: der Schritt, bei einer fertigen Welt ohne Temperatur diese; sonst keiner. */
-export function nextRollKind(hex: Hex): WorldRollKind | undefined {
+/**
+ * Was eine Welt als Nächstes würfelt: einen Wurf, die Oberfläche (in einem Zug) oder nichts. Eine
+ * fertige Welt ohne Temperatur würfelt sie nach, danach die Oberfläche, wenn sie fehlt.
+ */
+export function nextWorldAction(hex: Hex): WorldRollKind | 'surface' | undefined {
   const step = stepOf(hex);
   if (step !== 'name' && step !== 'done') return step;
-  return lacksTemperature(hex) ? 'temperature' : undefined;
+  if (step === 'name' || hex.empty) return undefined;
+  if (hex.temperature === undefined) return 'temperature';
+  return hex.surface === undefined ? 'surface' : undefined;
+}
+
+/** Der Wurf, der als Nächstes dran ist; keiner, wenn die Oberfläche, der Name oder nichts mehr dran ist. */
+export function nextRollKind(hex: Hex): WorldRollKind | undefined {
+  const next = nextWorldAction(hex);
+  return next === 'surface' ? undefined : next;
 }
 
 /**
@@ -258,6 +293,99 @@ function applyRoll(hex: Hex, kind: WorldRollKind, total: number): Hex {
   }
 }
 
+function rollDice(count: number, random: Random): number {
+  let sum = 0;
+  for (let i = 0; i < count; i++) sum += random.int(1, 6);
+  return sum;
+}
+
+function rollExpr(expr: DiceExpr, random: Random): number {
+  return Math.max(0, rollDice(expr.dice, random) + expr.dm);
+}
+
+/** Die Zeile der Kontinente- bzw. Ozeane-Tabelle für einen Wurf. */
+export function surfaceRow(table: SurfaceRow['table'], roll: number): SurfaceRow {
+  return ref.worlds.surfaceRows.find((row) => row.table === table && row.roll === roll)!;
+}
+
+/** Welche Tabelle ein Wasseranteil braucht: 50–99 % Kontinente, 1–49 % Ozeane; bei 0 und 100 % keine. */
+export function surfaceTableFor(water: number): SurfaceRow['table'] | undefined {
+  if (water >= 50 && water <= 99) return 'continents';
+  if (water >= 1 && water <= 49) return 'oceans';
+  return undefined;
+}
+
+/** Ab welcher Summe auf 2W6 es einheimisches Leben gibt. */
+export const LIFE_TARGET = 10;
+
+/** Der DM auf das einheimische Leben, in Teilen. */
+export function lifeDmParts(hex: Pick<Hex, 'uwp' | 'temperature'>): readonly WorldDmPart[] {
+  const atmosphere = hex.uwp.atmosphere ?? 0;
+  const hydrographics = hex.uwp.hydrographics ?? 0;
+  const parts: WorldDmPart[] = [];
+  if (atmosphere === 0) parts.push({ label: 'Atmosphäre 0', dm: -3 });
+  if (atmosphere >= 4 && atmosphere <= 9) parts.push({ label: `Atmosphäre ${ehex(atmosphere)}`, dm: 4 });
+  if (hydrographics === 0) parts.push({ label: 'Hydrographie 0', dm: -2 });
+  if (hydrographics >= 2 && hydrographics <= 8) parts.push({ label: `Hydrographie ${ehex(hydrographics)}`, dm: 1 });
+  if (hex.temperature !== undefined && hex.temperature !== 'temperate') parts.push({ label: temperatureOf(hex.temperature).name, dm: -1 });
+  return parts;
+}
+
+/**
+ * Würfelt die Oberfläche einer Welt in einem Zug (World Builder's Handbook S. 68–70): Wasseranteil,
+ * Platten, Land- bzw. Wassermassen, einheimisches Leben.
+ */
+export function rollSurface(hex: Hex, random: Random): Surface {
+  const size = hex.uwp.size ?? 0;
+  const hydrographics = hex.uwp.hydrographics ?? 0;
+  // Wasseranteil: Hydrographie × 10 + (2W6 − 7), eine 12 wird neu gewürfelt.
+  let water = 0;
+  if (size > 0) {
+    let offset = 12;
+    while (offset === 12) offset = rollDice(2, random);
+    water = Math.min(100, Math.max(0, hydrographics * 10 + offset - 7));
+  }
+  const plates = size > 0 ? Math.max(1, size + hydrographics - rollDice(2, random)) : 0;
+  const masses = { majorContinents: 0, minorContinents: 0, majorIslands: 0, archipelagos: 0, majorOceans: 0, minorOceans: 0, smallSeas: 0, scatteredLakes: 0 };
+  const table = surfaceTableFor(water);
+  if (table) {
+    const row = surfaceRow(table, rollDice(1, random) + hydrographics * 3);
+    const [major, minor, small, scattered] = [row.major, row.minor, row.small, row.scattered].map((expr) => rollExpr(expr, random)) as [number, number, number, number];
+    if (table === 'continents') {
+      Object.assign(masses, { majorContinents: major, minorContinents: minor, majorIslands: small, archipelagos: row.onlyScattered ? (100 - water) * 5 * 2 : scattered });
+    } else {
+      Object.assign(masses, { majorOceans: major, minorOceans: minor, smallSeas: small, scatteredLakes: row.onlyScattered ? water * 5 * 2 : scattered });
+    }
+  }
+  const lifeDm = lifeDmParts(hex).reduce((sum, p) => sum + p.dm, 0);
+  const life = rollDice(2, random) + lifeDm >= LIFE_TARGET;
+  return { water, plates, ...masses, life };
+}
+
+/** Trägt die Oberfläche ein, wenn sie dran ist; sonst ein DomainError. */
+export function enterSurface(hex: Hex, random: Random): Hex {
+  if (nextWorldAction(hex) !== 'surface') throw new DomainError(`Die Oberfläche ist für das Feld ${hexId(hex.column, hex.row)} nicht dran.`);
+  return { ...hex, surface: rollSurface(hex, random) };
+}
+
+/** Prüft die Oberfläche einer Welt: Sie braucht Temperatur und TL, und jeder Wert liegt dort, wo die Regeln ihn hinbringen können. */
+function validateSurface(hex: Hex, fail: (why: string) => never): void {
+  const surface = hex.surface;
+  if (surface === undefined) return;
+  if (hex.empty || hex.uwp.tech === undefined || hex.temperature === undefined) fail('Die Oberfläche braucht TL und Temperatur.');
+  const counts = [surface.plates, surface.majorContinents, surface.minorContinents, surface.majorIslands, surface.archipelagos, surface.majorOceans, surface.minorOceans, surface.smallSeas, surface.scatteredLakes];
+  if (!Number.isInteger(surface.water) || counts.some((n) => !Number.isInteger(n) || n < 0) || typeof surface.life !== 'boolean') fail('Die Oberfläche hat ungültige Werte.');
+  const size = hex.uwp.size ?? 0;
+  const hydrographics = hex.uwp.hydrographics ?? 0;
+  const [low, high] = size === 0 ? [0, 0] : [Math.max(0, hydrographics * 10 - 5), Math.min(100, hydrographics * 10 + 4)];
+  if (surface.water < low || surface.water > high) fail(`Ein Wasseranteil von ${surface.water} % passt nicht zur Hydrographie ${ehex(hydrographics)}.`);
+  if (size === 0 ? surface.plates !== 0 : surface.plates < 1 || surface.plates > Math.max(1, size + hydrographics - 2)) fail(`${surface.plates} Platten kann kein Wurf ergeben.`);
+  const table = surfaceTableFor(surface.water);
+  const land = surface.majorContinents + surface.minorContinents + surface.majorIslands + surface.archipelagos;
+  const sea = surface.majorOceans + surface.minorOceans + surface.smallSeas + surface.scatteredLakes;
+  if ((table !== 'continents' && land > 0) || (table !== 'oceans' && sea > 0)) fail(`Bei ${surface.water} % Wasser passen diese Land- und Wassermassen nicht.`);
+}
+
 /** Die Handelscodes einer Welt, sobald das UWP vollständig ist: jeder, dessen Bedingungen alle erfüllt sind. */
 export function tradeCodesOf(hex: Hex): readonly TradeCode[] {
   if (hex.empty || uwpKinds.some((k) => hex.uwp[k] === undefined)) return [];
@@ -317,7 +445,7 @@ const ranges: Record<UwpKind, readonly [number, number]> = {
  */
 export function validateHex(hex: Hex): void {
   const id = hexId(hex.column, hex.row);
-  const fail = (why: string) => {
+  const fail = (why: string): never => {
     throw new DomainError(`Das Feld ${id}: ${why}`);
   };
   const values: [string, unknown][] = [
@@ -331,6 +459,7 @@ export function validateHex(hex: Hex): void {
   if (hex.empty && (hex.temperature !== undefined || values.some(([, v]) => v !== undefined))) fail('Ein leeres Feld hat keine Welt.');
   if (hex.temperature !== undefined && !ref.worlds.temperatures.some((t) => t.id === hex.temperature)) fail('Diese Temperatur gibt es nicht.');
   if (hex.temperature !== undefined && hex.uwp.atmosphere === undefined) fail('Die Temperatur steht da, aber die Atmosphäre fehlt.');
+  validateSurface(hex, fail);
   const missing = values.findIndex(([, v]) => v === undefined);
   if (missing >= 0 && values.slice(missing).some(([, v]) => v !== undefined)) fail(`Es fehlt ${values[missing]![0]}, aber Späteres steht schon da.`);
   for (const kind of uwpKinds) {
