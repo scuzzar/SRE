@@ -311,8 +311,8 @@ button:disabled {
   display: flex;
   flex-direction: column-reverse;
   /* Unter der Leiste mit dem Charakter oben läuft der Log weich aus, statt hart abgeschnitten. */
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 44px);
-  mask-image: linear-gradient(to bottom, transparent 0, #000 44px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 56px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 56px);
 }
 
 .log {
@@ -3163,7 +3163,8 @@ button:disabled {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding: 10px 16px 0;
+  /* Unten immer Abstand, auch ohne Punkte: Die Karte sitzt nie bündig auf dem Log. */
+  padding: 10px 16px 12px;
   scroll-padding: 0 16px;
   scroll-snap-type: x mandatory;
   overscroll-behavior-x: contain;
@@ -3271,7 +3272,8 @@ button:disabled {
 .strip-dots {
   display: flex;
   justify-content: center;
-  padding: 2px 0;
+  margin-top: -8px;
+  padding-bottom: 4px;
 }
 
 .strip-dots button {
