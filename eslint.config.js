@@ -71,6 +71,18 @@ export default tseslint.config(
     },
   },
   {
+    // Hilfsskripte laufen mit Node.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: { globals: globals.node },
+  },
+  {
+    // Der Service Worker läuft im eigenen Kontext; den Platzhalter setzt der Build ein (vite.config.ts).
+    files: ['src/service-worker.js'],
+    languageOptions: {
+      globals: { ...globals.serviceworker, __PRECACHE__: 'readonly', __VERSION__: 'readonly' },
+    },
+  },
+  {
     // Regel 1 und 2: Die View sieht das Model nur über Typen; Werte und Abläufe kommen vom Controller.
     files: ['src/view/**/*.{ts,tsx}'],
     rules: {
