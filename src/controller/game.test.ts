@@ -454,7 +454,7 @@ describe('Charaktererschaffung', () => {
   it('würfelt Schritt für Schritt, speichert dabei und schließt mit Namen ab', async () => {
     // Attribute 7, 10, 8, 9, 7, 5; Heimatwelt neu erschaffen (Vorkommen 5, dann C788545-7);
     // Other mit 6+6; überlebt; zwei Fertigkeiten; mustert ab; Geld 6.
-    const world = [5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 4, 4, 3, 4, 3, 3, 4, 4, 4];
+    const world = [5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4];
     const random = fixedRandom(3, 4, 5, 5, 4, 4, 4, 5, 3, 4, 2, 3, ...world, 6, 6, 6, 6, 1, 1, 1, 1, 6);
     const { game, repository } = await started(random);
     game.openGeneration();
@@ -476,7 +476,7 @@ describe('Charaktererschaffung', () => {
     game.chooseHex(3, 4);
     game.rollOccurrence();
     game.chooseHex(3, 4);
-    for (let i = 0; i < 10; i++) game.rollWorld();
+    for (let i = 0; i < 11; i++) game.rollWorld();
     game.nameWorld('Regina');
     expect(game.snapshot()).toMatchObject({ picking: undefined, world: undefined, generation: { step: 'service', homeworld: 'Regina' } });
 
@@ -543,7 +543,7 @@ describe('Charaktererschaffung', () => {
 
 describe('Subsektor und Weltenerschaffung', () => {
   // Vorkommen 5; Raumhafen C; Scoutbasis ja; Gasriese ja; dann UWP C788545-7.
-  const regina = [5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 4, 4, 3, 4, 3, 3, 4, 4, 4];
+  const regina = [5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4];
 
   it('zeigt 80 Felder, alle nicht erzeugt, im Reiter Sektor', async () => {
     const { game } = await started();
@@ -581,7 +581,7 @@ describe('Subsektor und Weltenerschaffung', () => {
     game.chooseHex(3, 4);
     expect(game.snapshot().world?.step).toBe('starport');
 
-    for (let i = 0; i < 10; i++) game.rollWorld();
+    for (let i = 0; i < 11; i++) game.rollWorld();
     const before = game.snapshot().world!;
     expect(before).toMatchObject({ step: 'name', uwp: 'C788545-7', navalBase: false, scoutBase: true, gasGiant: true, action: { kind: 'name' } });
     expect(before.profile.find((p) => p.kind === 'atmosphere')).toEqual({ kind: 'atmosphere', label: 'Atmosphäre', code: '8', text: 'Dense' });
@@ -669,11 +669,11 @@ describe('Durchlaufen lassen', () => {
 
   it('lässt eine Welt bis zum Namen durchlaufen, im Subsektor mit dem Vorkommen', async () => {
     // Vorkommen 5, dann die Welt C788545-7.
-    const { game } = await started(fixedRandom(5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 4, 4, 3, 4, 3, 3, 4, 4, 4));
+    const { game } = await started(fixedRandom(5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4));
     game.chooseHex(3, 4);
     game.runOccurrence();
     expect(game.snapshot()).toMatchObject({ selected: undefined, world: { id: '0304', step: 'name', uwp: 'C788545-7' } });
-    expect(game.snapshot().world?.lines.map((l) => l.kind)).toEqual(['occurrence', 'starport', 'scoutBase', 'gasGiant', 'size', 'atmosphere', 'hydrographics', 'population', 'government', 'law', 'tech']);
+    expect(game.snapshot().world?.lines.map((l) => l.kind)).toEqual(['occurrence', 'starport', 'scoutBase', 'gasGiant', 'size', 'atmosphere', 'temperature', 'hydrographics', 'population', 'government', 'law', 'tech']);
   });
 
   it('bleibt bei einem leeren Feld im Subsektor und zeigt das Vorkommen', async () => {
@@ -684,13 +684,13 @@ describe('Durchlaufen lassen', () => {
   });
 
   it('lässt eine angefangene Welt auf der Weltkarte durchlaufen', async () => {
-    const { game } = await started(fixedRandom(5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 4, 4, 3, 4, 3, 3, 4, 4, 4));
+    const { game } = await started(fixedRandom(5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4));
     game.chooseHex(3, 4);
     game.rollOccurrence();
     game.chooseHex(3, 4);
     game.rollWorld();
     game.runWorld();
     expect(game.snapshot().world).toMatchObject({ step: 'name', uwp: 'C788545-7' });
-    expect(game.snapshot().world?.lines).toHaveLength(10);
+    expect(game.snapshot().world?.lines).toHaveLength(11);
   });
 });

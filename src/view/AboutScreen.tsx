@@ -46,6 +46,14 @@ export function AboutScreen({ persistent, durable }: { persistent: boolean; dura
           </p>
         </div>
         <div>
+          <h2>Mongoose Traveller</h2>
+          <p>
+            Die Temperatur einer Welt und ihr Malus auf die Hydrographie folgen Mongoose Traveller, Second Edition (Core Rulebook), von Mongoose
+            Publishing. Übernommen ist nur die Mechanik nach der Fair-Use-Policy für Traveller; die Texte sind eigene. Kein offizielles Produkt von
+            Mongoose Publishing.
+          </p>
+        </div>
+        <div>
           <h2>Game Master&apos;s Apprentice</h2>
           <p>
             Der Aufbau der Inspirationskarte folgt dem GameMaster&apos;s Apprentice, Second Edition, von Larcenous Designs, LLC. Die Einträge stammen

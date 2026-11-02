@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import type { WorldDmPart } from '../../model';
 import type { WorldAction, WorldLine, WorldView } from '../../controller';
 import { DiceView, THROW_MS, useTimeline } from '../Dice';
@@ -45,7 +45,9 @@ export function WorldSheet({ world }: { world: WorldView }) {
   if (!rolling && shown !== world) setShown(world);
   const view = rolling ? shown : world;
   const [skips, setSkips] = useState(0);
-  const running = world.action.kind !== 'done';
+  // In Erschaffung; eine fertige Welt ohne Temperatur würfelt sie nur nach.
+  const running = world.step !== 'done';
+  const hasRoll = world.action.kind !== 'done';
 
   const body = useRef<HTMLDivElement>(null);
   const count = view.lines.length;
@@ -89,7 +91,7 @@ export function WorldSheet({ world }: { world: WorldView }) {
           <WorldLines lines={view.lines} />
         </div>
 
-        {(running || fresh) && (
+        {(hasRoll || fresh) && (
           <div className="generation-dock">
             {latest && <RollStage key={latest.index} line={latest} animate={animate} onSettled={setSettled} skips={skips} />}
             {view.prompt && (
@@ -117,7 +119,7 @@ export function WorldSheet({ world }: { world: WorldView }) {
   );
 }
 
-/** Die Welt, wie sie gerade steht: UWP, jede Stelle im Klartext, Basen, Gasriese, Handelscodes. */
+/** Die Welt, wie sie gerade steht: UWP, jede Stelle im Klartext, Temperatur, Basen, Gasriese, Handelscodes. */
 function WorldCard({ world }: { world: WorldView }) {
   const yes = (value: boolean | undefined) => (value === undefined ? '–' : value ? 'ja' : 'nein');
   return (
@@ -130,13 +132,16 @@ function WorldCard({ world }: { world: WorldView }) {
       </div>
       <dl className="facts world-profile" lang="en">
         {world.profile.map((p) => (
-          <div key={p.kind} className={p.code === undefined ? 'pending' : undefined}>
-            <dt lang="de">{p.label}</dt>
-            <dd>
-              <span className="mono world-digit">{p.code ?? '–'}</span>
-              {p.text && <span className="world-text">{p.text}</span>}
-            </dd>
-          </div>
+          <Fragment key={p.kind}>
+            <div className={p.code === undefined ? 'pending' : undefined}>
+              <dt lang="de">{p.label}</dt>
+              <dd>
+                <span className="mono world-digit">{p.code ?? '–'}</span>
+                {p.text && <span className="world-text">{p.text}</span>}
+              </dd>
+            </div>
+            {p.kind === 'atmosphere' && <TemperatureRow temperature={world.temperature} />}
+          </Fragment>
         ))}
       </dl>
       <p className="world-extras">
@@ -154,6 +159,29 @@ function WorldCard({ world }: { world: WorldView }) {
         </ul>
       )}
     </article>
+  );
+}
+
+/** Die Temperatur nach Mongoose Traveller, zwischen Atmosphäre und Hydrographie wie in der Erschaffung. */
+function TemperatureRow({ temperature }: { temperature: WorldView['temperature'] }) {
+  const swings = temperature?.swings ? ' Schwankt stark: glühend am Tag, gefroren in der Nacht.' : '';
+  return (
+    <div className={temperature === undefined ? 'pending' : 'world-temperature'} lang="de">
+      <dt>Temperatur</dt>
+      <dd>
+        {temperature === undefined ? (
+          <span className="mono world-digit">–</span>
+        ) : (
+          <>
+            <span className="world-word">{temperature.name}</span>
+            <span className="world-text">
+              {temperature.average} · {temperature.text}
+              {swings}
+            </span>
+          </>
+        )}
+      </dd>
+    </div>
   );
 }
 

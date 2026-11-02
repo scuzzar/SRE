@@ -46,6 +46,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > nur noch der Verwaltung. Neu im Bild: `Campaign.focus`; `Task.for` ist jetzt abgeleitet
 > (`/for`). Der UI-Entwurf dazu liegt unter [`ui-entwurf/charakter-leiste/`](ui-entwurf/charakter-leiste/).
 >
+> Am 2. November 2026 freigegeben: die Temperatur als zusätzlicher Wurf der
+> Weltenerschaffung nach Mongoose Traveller 2e, nach der Atmosphäre und vor der Hydrographie, die
+> bei heißen Welten einen Malus bekommt (siehe *Weltenerschaffung*, Schritt 4 und 5). Neu im Bild:
+> `Hex.temperature`, `WorldRollKind.temperature`, `UwpDigit.temperatureDm` und als Referenzdaten
+> `Temperature` mit `hydroDm`.
+>
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen, die drei Namen sowie die Themen-Tafeln NSC, NSC-Aktionen,
 > Welt (mit Schiff), Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
@@ -135,6 +141,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Ziffer des UWP | `UwpDigit` | Eine Ziffer einer Stelle des UWP mit ihrem Text und ihrem DM auf den TL, z. B. Atmosphäre 8, Dense |
 | Systeminhalt | `SystemContents` | Eine Zeile der System Contents Table: Raumhafen, Marinebasis, Scoutbasis, Gasriese |
 | Handelscode | `TradeCode` | Ag, Na, In, Ni, Ri, Po, Wa, De, Va, As, Ic, mit Bedingungen an das UWP |
+| Temperatur | `Hex.temperature`, `Temperature` | Wie warm eine Welt im Mittel ist: Gefroren, Kalt, Gemäßigt, Heiß oder Kochend, nach Mongoose Traveller 2e (S. 251); nicht Teil des UWP |
+| Temperatur-DM | `UwpDigit.temperatureDm` | Der DM einer Atmosphäre auf den Temperaturwurf, z. B. −2 bei Atmosphäre 2 oder 3 |
+| Wasser-DM | `Temperature.hydroDm` | Der DM einer Temperatur auf die Hydrographie: −2 bei Heiß, −6 bei Kochend, nicht bei Atmosphäre D |
 
 ## Regeln, die das Bild nicht zeigt
 
@@ -462,23 +471,49 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
      bis 12 begrenzt): Raumhafen; Marinebasis nur bei Raumhafen A oder B; Scoutbasis nicht bei E
      oder X, mit DM −1 bei C, −2 bei B, −3 bei A; Gasriese. Eine Basis, für die nicht gewürfelt
      wird, steht sofort auf „nein“.
-  3. *UWP*: Größe 2W6 − 2; Atmosphäre 2W6 − 7 + Größe, bei Größe 0 kein Wurf und 0; Hydrographie
-     2W6 − 7 + Größe, DM −4 bei Atmosphäre 0, 1 oder A+, bei Größe 0 oder 1 kein Wurf und 0;
-     Bevölkerung 2W6 − 2; Regierung 2W6 − 7 + Bevölkerung; Gesetz 2W6 − 7 + Regierung; TL 1W6 plus
-     die DMs der Tech Level Table (`UwpDigit.techDm`) von Raumhafen, Größe, Atmosphäre,
-     Hydrographie, Bevölkerung und Regierung. Der DM eines Wurfs ist alles außer den Würfeln, also
-     bei der Atmosphäre −7 + Größe. Ein Wert unter 0 gilt als 0, die Hydrographie höchstens als A.
-     Sonst begrenzt nichts: Atmosphäre D–F, Regierung E–F und Gesetz über A haben in den Charts
-     keinen Text (`UwpDigit.text` fehlt), die App zeigt dann nur die Ziffer (Ziffern über F in eHex
-     ohne I und O, der Raumhafen X ist so die Ziffer 31).
-  4. *Name*: Zum Schluss gibt man den Namen ein (nicht leer); dann ist die Welt fertig (`done`).
+  3. *Größe und Atmosphäre*: Größe 2W6 − 2; Atmosphäre 2W6 − 7 + Größe, bei Größe 0 kein Wurf
+     und 0.
+  4. *Temperatur* (`temperature`), nach Mongoose Traveller 2e (Core Rulebook, S. 251): 2W6 plus
+     den Temperatur-DM der Atmosphäre (`UwpDigit.temperatureDm`): 0 oder 1 kein DM, 2 oder 3 −2,
+     4, 5 oder E −1, 6 oder 7 ±0, 8 oder 9 +1, A, D oder F +2, B oder C +6. Die Summe wählt die
+     Zeile der Tabelle `Temperature` (`from` bis `to`, an den Enden offen): bis 2 *Gefroren*
+     (−51 °C oder kälter), 3–4 *Kalt* (−51 bis 0 °C), 5–9 *Gemäßigt* (0 bis 30 °C), 10–11 *Heiß*
+     (31 bis 80 °C), ab 12 *Kochend* (81 °C und mehr). Gespeichert wird die Zeile, nicht die Summe.
+     Bei Atmosphäre 0 oder 1 sagt die Weltkarte dazu, dass die Temperatur zwischen glühender Hitze
+     am Tag und Frost in der Nacht schwankt. Die Texte der Tabelle sind eigene, deutsche
+     Beschreibungen, keine Übersetzung des Regeltexts. Den wahlweisen DM für den heißen oder kalten
+     Rand der habitablen Zone (+4 bzw. −4) gibt es vorerst nicht; er kommt später mit dem
+     Sternsystem.
+  5. *Rest des UWP*: Hydrographie 2W6 − 7 + Größe, DM −4 bei Atmosphäre 0, 1 oder A+, dazu der
+     Wasser-DM der Temperatur (`Temperature.hydroDm`, nach Mongoose S. 252): −2 bei *Heiß*, −6 bei
+     *Kochend*, sonst 0. Er gilt nicht bei Atmosphäre D (dicht, nur in der Höhe atembar), die das
+     Wasser auch bei großer Hitze hält. Mongoose nimmt auch eine panthalassische Atmosphäre F aus;
+     in Classic Traveller ist F aber dünn und tief liegend (*Thin, Low*), dort gilt der DM.
+     Bei Größe 0 oder 1 kein Wurf und 0. Bevölkerung 2W6 − 2; Regierung
+     2W6 − 7 + Bevölkerung; Gesetz 2W6 − 7 + Regierung; TL 1W6 plus die DMs der Tech Level Table
+     (`UwpDigit.techDm`) von Raumhafen, Größe, Atmosphäre, Hydrographie, Bevölkerung und
+     Regierung. Über die Hydrographie wirkt die Temperatur so auch auf TL und Handelscodes.
+     Der DM eines Wurfs ist alles außer den Würfeln, also bei der Atmosphäre −7 + Größe. Ein Wert
+     unter 0 gilt als 0, die Hydrographie höchstens als A. Sonst begrenzt nichts: Atmosphäre D–F,
+     Regierung E–F und Gesetz über A haben in den Charts keinen Text (`UwpDigit.text` fehlt), die
+     App zeigt dann nur die Ziffer (Ziffern über F in eHex ohne I und O, der Raumhafen X ist so die
+     Ziffer 31).
+  6. *Name*: Zum Schluss gibt man den Namen ein (nicht leer); dann ist die Welt fertig (`done`).
+
+  **Welten ohne Temperatur.** Welten, deren Hydrographie vor diesem Schritt gewürfelt wurde, haben
+  keine Temperatur. Das ist erlaubt: Ihre Erschaffung geht ohne Temperatur weiter, und ist die Welt
+  fertig, bietet ihre Weltkarte „Temperatur würfeln“ an, mit derselben Würfelanimation. Die
+  Hydrographie bleibt dann, wie sie ist; der Wasser-DM gilt nur, wenn die Temperatur vorher
+  feststand.
 
   **Verwerfen** geht, solange die Welt in Erschaffung ist, und macht das Feld wieder zu einem nicht
   erzeugten. Ein leeres Feld und eine fertige Welt bleiben, wie sie sind. Die Weltenerschaffung
   steht nicht im Log und hat keinen Verlauf. Beim Import wird jedes Hexfeld gegen diese Regeln
   geprüft: Werte nur in der Reihenfolge des Ablaufs, jeder in dem Bereich, den sein Wurf ergeben
   kann, und die Werte ohne Wurf so, wie die Regeln sie setzen (Atmosphäre 0 bei Größe 0, keine
-  Marinebasis bei Raumhafen C). Hexfelder aus der Zeit, als die Würfe gespeichert wurden, werden
+  Marinebasis bei Raumhafen C). Einzige Ausnahme von der Reihenfolge: Eine Welt mit Hydrographie
+  darf ohne Temperatur sein (siehe *Welten ohne Temperatur*); dann gilt für ihre Hydrographie der
+  Bereich ohne Wasser-DM. Hexfelder aus der Zeit, als die Würfe gespeichert wurden, werden
   beim Laden nachgespielt und als Werte übernommen.
 - **Handelscodes** folgen aus dem UWP (`/trade`): Ein Code gilt, wenn jede seiner Bedingungen
   (`TradeCondition`: Stelle des UWP und erlaubte Ziffern) erfüllt ist. Es sind die elf aus den
@@ -491,7 +526,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   für die Scoutbasis, kleiner Kreis rechts oben für den Gasriesen, darunter der Name, in
   Großbuchstaben ab Bevölkerung 9. Ist die Karte groß genug gezoomt, kommen darunter das UWP und
   die Handelscodes dazu, jedes erst, wenn es lesbar ist.
-- **Später**, nicht in diesem Schritt: Reisezonen (Amber, Red), Notizen zur Welt, Verbindungen
+- **Später**, nicht in diesem Schritt: der Rand der habitablen Zone beim Temperaturwurf, Reisezonen (Amber, Red), Notizen zur Welt, Verbindungen
   (communications routes), Subsector Capital, ein Name für den Subsektor, mehrere Subsektoren zu
   einem Sektor und eine fertige Welt wieder löschen.
 

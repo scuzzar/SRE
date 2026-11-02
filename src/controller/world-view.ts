@@ -6,6 +6,7 @@ import {
   SECTOR_COLUMNS,
   SECTOR_ROWS,
   stepOf,
+  temperatureOf,
   tradeCodesOf,
   uwpCode,
   uwpDigitOf,
@@ -98,6 +99,16 @@ export interface ProfileItem {
   readonly text: string | undefined;
 }
 
+/** Die Temperatur auf der Weltkarte. */
+export interface TemperatureView {
+  readonly name: string;
+  /** Die mittlere Temperatur, z. B. „0 bis 30 °C“. */
+  readonly average: string;
+  readonly text: string;
+  /** Bei Atmosphäre 0 oder 1 schwankt sie stark zwischen Tag und Nacht. */
+  readonly swings: boolean;
+}
+
 export interface WorldView {
   readonly id: string;
   readonly name: string | undefined;
@@ -111,6 +122,8 @@ export interface WorldView {
   readonly navalBase: boolean | undefined;
   readonly scoutBase: boolean | undefined;
   readonly gasGiant: boolean | undefined;
+  /** `undefined`, solange sie noch nicht feststeht, und bei Welten von vor der Temperatur. */
+  readonly temperature: TemperatureView | undefined;
   readonly trade: readonly { readonly code: string; readonly name: string }[];
   readonly lines: readonly WorldLine[];
   readonly action: WorldAction;
@@ -129,6 +142,8 @@ function resultOf(roll: WorldRoll): string {
     case 'scoutBase':
     case 'gasGiant':
       return yesNo(roll.row?.[roll.kind]);
+    case 'temperature':
+      return `${roll.temperature!.name} · ${roll.temperature!.average}`;
     default: {
       const value = roll.value!;
       const text = uwpDigitOf(roll.kind, value)?.text;
@@ -233,6 +248,7 @@ const rollLabels: Record<WorldRollKind, string> = {
   gasGiant: 'Gasriese würfeln',
   size: 'Größe würfeln',
   atmosphere: 'Atmosphäre würfeln',
+  temperature: 'Temperatur würfeln',
   hydrographics: 'Hydrographie würfeln',
   population: 'Bevölkerung würfeln',
   government: 'Regierung würfeln',
@@ -248,12 +264,19 @@ const prompts: Record<WorldRollKind, string> = {
   gasGiant: 'Systeminhalt: Gasriese (bis 9)',
   size: 'UWP: Größe, 2W6 − 2',
   atmosphere: 'UWP: Atmosphäre, 2W6 − 7 + Größe',
+  temperature: 'Temperatur (Mongoose Traveller): 2W6 + DM der Atmosphäre',
   hydrographics: 'UWP: Hydrographie, 2W6 − 7 + Größe',
   population: 'UWP: Bevölkerung, 2W6 − 2',
   government: 'UWP: Regierung, 2W6 − 7 + Bevölkerung',
   law: 'UWP: Gesetz, 2W6 − 7 + Regierung',
   tech: 'UWP: Tech Level, 1W6 + DMs',
 };
+
+function temperatureViewOf(hex: Hex): TemperatureView {
+  const { name, average, text } = temperatureOf(hex.temperature!);
+  const atmosphere = hex.uwp.atmosphere;
+  return { name, average, text, swings: atmosphere !== undefined && atmosphere <= 1 };
+}
 
 /** Die Weltkarte eines Feldes mit den Würfen, die man gemacht hat, seit sie offen ist. */
 export function worldView(hexes: readonly Hex[], column: number, row: number, rolls: readonly WorldRoll[], error: string | undefined): WorldView {
@@ -280,6 +303,7 @@ export function worldView(hexes: readonly Hex[], column: number, row: number, ro
     navalBase: hex.navalBase,
     scoutBase: hex.scoutBase,
     gasGiant: hex.gasGiant,
+    temperature: hex.temperature === undefined ? undefined : temperatureViewOf(hex),
     trade: tradeCodesOf(hex).map((t) => ({ code: t.id, name: t.name })),
     lines: rolls.map(worldLine),
     action,

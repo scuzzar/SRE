@@ -234,6 +234,15 @@ hide <<value>> stereotype
     digit: number
     text: string [0..1]
     techDm: number
+    temperatureDm: number [0..1]
+  }
+  class Temperature <<reference>> {
+    from: number [0..1]
+    to: number [0..1]
+    name: string
+    average: string
+    text: string
+    hydroDm: number
   }
   class TradeCode <<reference>> {
     code: string
@@ -250,6 +259,7 @@ hide <<value>> stereotype
     gasGiant
     size
     atmosphere
+    temperature
     hydrographics
     population
     government
@@ -364,6 +374,7 @@ Hex --> WorldStep
 WorldRoll "*" --> "1" Hex : for
 WorldRoll ..> Hex : on roll
 Hex "*" --> "*" TradeCode : /trade
+Hex "*" --> "0..1" Temperature : temperature
 WorldRoll --> WorldRollKind
 WorldRoll "*" --> "0..1" SystemContents : /row
 UwpDigit --> "1" WorldRollKind : of

@@ -1,8 +1,8 @@
-import { EHEX, uwpKinds, type SystemContents, type TradeCode, type UwpDigit, type UwpKind } from '../data';
+import { EHEX, uwpKinds, type SystemContents, type Temperature, type TemperatureId, type TradeCode, type UwpDigit, type UwpKind } from '../data';
 import { DomainError } from './errors';
 import { ref } from './reference';
 
-export { EHEX, uwpKinds, type SystemContents, type TradeCode, type UwpDigit, type UwpKind } from '../data';
+export { EHEX, temperatureIds, uwpKinds, type SystemContents, type Temperature, type TemperatureId, type TradeCode, type UwpDigit, type UwpKind } from '../data';
 
 /** Der Subsektor hat 8 Spalten und 10 Zeilen wie TAS Form 6. */
 export const SECTOR_COLUMNS = 8;
@@ -11,8 +11,10 @@ export const SECTOR_ROWS = 10;
 export const OCCURRENCE_TARGET = 4;
 /** Die Hydrographie geht nicht über A: keine Landmassen. */
 export const MAX_HYDROGRAPHICS = 10;
+/** Atmosphäre D (dicht, nur in der Höhe atembar) hält das Wasser auch bei großer Hitze: kein Wasser-DM. */
+const ATMOSPHERE_KEEPS_WATER = 13;
 
-export type WorldRollKind = 'occurrence' | 'navalBase' | 'scoutBase' | 'gasGiant' | UwpKind;
+export type WorldRollKind = 'occurrence' | 'navalBase' | 'scoutBase' | 'gasGiant' | 'temperature' | UwpKind;
 
 /** Was in der Weltenerschaffung als Nächstes dran ist: ein Wurf, der Name, oder fertig. */
 export type WorldStep = WorldRollKind | 'name' | 'done';
@@ -34,6 +36,8 @@ export interface Hex {
   readonly scoutBase?: boolean;
   readonly gasGiant?: boolean;
   readonly uwp: Uwp;
+  /** Die Temperatur nach Mongoose Traveller; fehlt bei Welten, deren Hydrographie vorher gewürfelt wurde. */
+  readonly temperature?: TemperatureId;
 }
 
 /** Woraus der DM eines Wurfs besteht, mit Namen: „Größe 7 +7“; ohne Namen der feste Teil der Formel (−7). */
@@ -78,6 +82,15 @@ export function uwpDigitOf(kind: UwpKind, value: number): UwpDigit | undefined {
   return ref.worlds.uwpDigits[kind].find((d) => d.digit === value);
 }
 
+/** Die Zeile der Temperaturtabelle, in die eine Summe fällt. */
+export function temperatureFor(total: number): Temperature {
+  return ref.worlds.temperatures.find((t) => (t.from === undefined || total >= t.from) && (t.to === undefined || total <= t.to))!;
+}
+
+export function temperatureOf(id: TemperatureId): Temperature {
+  return ref.worlds.temperatures.find((t) => t.id === id)!;
+}
+
 export function diceCount(kind: WorldRollKind): 1 | 2 {
   return kind === 'occurrence' || kind === 'tech' ? 1 : 2;
 }
@@ -90,6 +103,7 @@ const labels: Record<WorldRollKind, string> = {
   gasGiant: 'Gasriese',
   size: 'Größe',
   atmosphere: 'Atmosphäre',
+  temperature: 'Temperatur',
   hydrographics: 'Hydrographie',
   population: 'Bevölkerung',
   government: 'Regierung',
@@ -107,18 +121,40 @@ export function systemRow(total: number): SystemContents {
   return ref.worlds.systemContents[Math.min(12, Math.max(2, total)) - 2]!;
 }
 
-/** Was ein Hexfeld als Nächstes braucht: einen Wurf, den Namen, oder nichts mehr. */
+/**
+ * Was ein Hexfeld als Nächstes braucht: einen Wurf, den Namen, oder nichts mehr. Die Temperatur kommt
+ * vor der Hydrographie; steht die Hydrographie schon (aus der Zeit vor der Temperatur), geht es ohne
+ * sie weiter.
+ */
 export function stepOf(hex: Hex): WorldStep {
   if (hex.empty) return 'done';
   if (hex.uwp.starport === undefined) return 'starport';
   if (hex.navalBase === undefined) return 'navalBase';
   if (hex.scoutBase === undefined) return 'scoutBase';
   if (hex.gasGiant === undefined) return 'gasGiant';
-  for (const kind of uwpKinds) if (hex.uwp[kind] === undefined) return kind;
+  for (const kind of uwpKinds) {
+    if (kind === 'hydrographics' && hex.uwp.hydrographics === undefined && hex.temperature === undefined) return 'temperature';
+    if (hex.uwp[kind] === undefined) return kind;
+  }
   return hex.name === undefined ? 'name' : 'done';
 }
 
-/** Setzt, was ohne Wurf feststeht: keine Basis bei manchen Raumhäfen, Atmosphäre und Hydrographie bei kleinen Welten. */
+/** Eine fertige Welt ohne Temperatur: Ihre Weltkarte bietet an, sie nachzuwürfeln. */
+export function lacksTemperature(hex: Hex): boolean {
+  return !hex.empty && hex.temperature === undefined && stepOf(hex) === 'done';
+}
+
+/** Der Wurf, der als Nächstes dran ist: der Schritt, bei einer fertigen Welt ohne Temperatur diese; sonst keiner. */
+export function nextRollKind(hex: Hex): WorldRollKind | undefined {
+  const step = stepOf(hex);
+  if (step !== 'name' && step !== 'done') return step;
+  return lacksTemperature(hex) ? 'temperature' : undefined;
+}
+
+/**
+ * Setzt, was ohne Wurf feststeht: keine Basis bei manchen Raumhäfen, Atmosphäre und (nach der
+ * Temperatur) Hydrographie bei kleinen Welten.
+ */
 function settle(hex: Hex): Hex {
   const port = hex.uwp.starport === undefined ? undefined : ehex(hex.uwp.starport);
   const uwp = { ...hex.uwp };
@@ -126,7 +162,7 @@ function settle(hex: Hex): Hex {
   if (port !== undefined && navalBase === undefined && !['A', 'B'].includes(port)) navalBase = false;
   if (port !== undefined && scoutBase === undefined && ['E', 'X'].includes(port)) scoutBase = false;
   if (uwp.size === 0 && uwp.atmosphere === undefined) uwp.atmosphere = 0;
-  if (uwp.size !== undefined && uwp.size <= 1 && uwp.hydrographics === undefined) uwp.hydrographics = 0;
+  if (uwp.size !== undefined && uwp.size <= 1 && uwp.hydrographics === undefined && hex.temperature !== undefined) uwp.hydrographics = 0;
   return {
     ...hex,
     uwp,
@@ -136,7 +172,7 @@ function settle(hex: Hex): Hex {
 }
 
 /** Der DM des nächsten Wurfs in Teilen; die Summe ist der DM des Wurfs. */
-export function worldDmParts(hex: Pick<Hex, 'uwp'>, kind: WorldRollKind): readonly WorldDmPart[] {
+export function worldDmParts(hex: Pick<Hex, 'uwp' | 'temperature'>, kind: WorldRollKind): readonly WorldDmPart[] {
   const { uwp } = hex;
   const value = (k: UwpKind) => uwp[k] ?? 0;
   switch (kind) {
@@ -155,7 +191,16 @@ export function worldDmParts(hex: Pick<Hex, 'uwp'>, kind: WorldRollKind): readon
       ];
       const atmosphere = value('atmosphere');
       if (kind === 'hydrographics' && (atmosphere <= 1 || atmosphere >= 10)) parts.push({ label: `Atmosphäre ${ehex(atmosphere)}`, dm: -4 });
+      if (kind === 'hydrographics' && hex.temperature !== undefined && atmosphere !== ATMOSPHERE_KEEPS_WATER) {
+        const temperature = temperatureOf(hex.temperature);
+        if (temperature.hydroDm !== 0) parts.push({ label: temperature.name, dm: temperature.hydroDm });
+      }
       return parts;
+    }
+    case 'temperature': {
+      const atmosphere = value('atmosphere');
+      const dm = uwpDigitOf('atmosphere', atmosphere)?.temperatureDm ?? 0;
+      return dm === 0 ? [] : [{ label: `Atmosphäre ${ehex(atmosphere)}`, dm }];
     }
     case 'government':
       return [
@@ -189,8 +234,12 @@ export function occurrenceHex(column: number, row: number, total: number, target
  * Nächstes dran ist; was danach ohne Wurf feststeht, wird mit gesetzt.
  */
 export function enterRoll(hex: Hex, kind: WorldRollKind, total: number): Hex {
-  const step = stepOf(hex);
-  if (kind !== step) throw new DomainError(`Ein Wurf „${kind}“ passt nicht zum Schritt „${step}“.`);
+  if (kind !== nextRollKind(hex)) throw new DomainError(`Ein Wurf „${kind}“ passt nicht zum Schritt „${stepOf(hex)}“.`);
+  return applyRoll(hex, kind, total);
+}
+
+/** Trägt ein Ergebnis ein, ohne zu prüfen, ob es dran ist. */
+function applyRoll(hex: Hex, kind: WorldRollKind, total: number): Hex {
   switch (kind) {
     case 'occurrence':
       throw new DomainError('Das Vorkommen würfelt man für ein nicht erzeugtes Feld.');
@@ -200,6 +249,8 @@ export function enterRoll(hex: Hex, kind: WorldRollKind, total: number): Hex {
     case 'scoutBase':
     case 'gasGiant':
       return settle({ ...hex, [kind]: systemRow(total)[kind] });
+    case 'temperature':
+      return settle({ ...hex, temperature: temperatureFor(total).id });
     default: {
       const value = Math.max(0, kind === 'hydrographics' ? Math.min(MAX_HYDROGRAPHICS, total) : total);
       return settle({ ...hex, uwp: { ...hex.uwp, [kind]: value } });
@@ -277,7 +328,9 @@ export function validateHex(hex: Hex): void {
     ...uwpKinds.slice(1).map((k): [string, unknown] => [k, hex.uwp[k]]),
     ['name', hex.name],
   ];
-  if (hex.empty && values.some(([, v]) => v !== undefined)) fail('Ein leeres Feld hat keine Welt.');
+  if (hex.empty && (hex.temperature !== undefined || values.some(([, v]) => v !== undefined))) fail('Ein leeres Feld hat keine Welt.');
+  if (hex.temperature !== undefined && !ref.worlds.temperatures.some((t) => t.id === hex.temperature)) fail('Diese Temperatur gibt es nicht.');
+  if (hex.temperature !== undefined && hex.uwp.atmosphere === undefined) fail('Die Temperatur steht da, aber die Atmosphäre fehlt.');
   const missing = values.findIndex(([, v]) => v === undefined);
   if (missing >= 0 && values.slice(missing).some(([, v]) => v !== undefined)) fail(`Es fehlt ${values[missing]![0]}, aber Späteres steht schon da.`);
   for (const kind of uwpKinds) {
@@ -327,7 +380,17 @@ export function hexFromRolls(old: { readonly column: number; readonly row: numbe
   if (first?.kind !== 'occurrence') throw new DomainError(`Das Feld ${hexId(old.column, old.row)} beginnt nicht mit dem Vorkommen.`);
   const total = (r: LegacyWorldRoll) => r.dice.reduce((a, b) => a + b, 0) + r.dm;
   let hex = occurrenceHex(old.column, old.row, total(first), first.target ?? OCCURRENCE_TARGET);
-  for (const roll of rest) hex = enterRoll(hex, roll.kind, total(roll));
+  for (const roll of rest) {
+    // Damals kam nach der Atmosphäre gleich die Hydrographie, bei kleinen Welten ohne Wurf als 0.
+    if (stepOf(hex) === 'temperature' && roll.kind !== 'temperature') {
+      if (hex.uwp.size !== undefined && hex.uwp.size <= 1) hex = { ...hex, uwp: { ...hex.uwp, hydrographics: 0 } };
+      else if (roll.kind === 'hydrographics') {
+        hex = applyRoll(hex, roll.kind, total(roll));
+        continue;
+      }
+    }
+    hex = enterRoll(hex, roll.kind, total(roll));
+  }
   if (old.name !== undefined) {
     if (stepOf(hex) !== 'name') throw new DomainError('Nur eine fertig gewürfelte Welt hat einen Namen.');
     hex = { ...hex, name: old.name };

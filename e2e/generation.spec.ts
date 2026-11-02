@@ -40,7 +40,7 @@ test('Charaktererschaffung: Attribute einzeln, Laufbahn, Terms, Abmusterung, Nam
     if (await picker.getByText('Kein System in diesem Feld').isVisible()) continue;
     await picker.getByRole('button', { name: 'Welt erschaffen' }).click();
     const world = page.getByRole('dialog', { name: `Weltenerschaffung ${id}` });
-    for (let i = 0; i < 12 && (await world.locator('.generation-main').count()) > 0; i++) await world.locator('.generation-main').click();
+    for (let i = 0; i < 14 && (await world.locator('.generation-main').count()) > 0; i++) await world.locator('.generation-main').click();
     await world.getByLabel('Name der Welt').fill('Regina');
     await world.getByRole('button', { name: 'Übernehmen' }).click();
     break;

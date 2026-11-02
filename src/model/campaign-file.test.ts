@@ -87,9 +87,12 @@ describe('Kampagnendatei mit Subsektor', () => {
   });
 
   it('nimmt Welten als Werte mit und liest sie unverändert zurück', () => {
-    const hex = { column: 2, row: 7, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
-    const text = fileWith((c) => (c.hexes = [hex, { column: 1, row: 1, empty: true, uwp: {} }]));
-    expect(fromCampaignFile(text, 'k2').hexes).toEqual([hex, { column: 1, row: 1, empty: true, uwp: {} }]);
+    const hex = { column: 2, row: 7, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 }, temperature: 'temperate' };
+    // Eine Welt von vor der Temperatur hat keine.
+    const old: Record<string, unknown> = { ...hex, column: 3 };
+    delete old.temperature;
+    const text = fileWith((c) => (c.hexes = [hex, old, { column: 1, row: 1, empty: true, uwp: {} }]));
+    expect(fromCampaignFile(text, 'k2').hexes).toEqual([hex, old, { column: 1, row: 1, empty: true, uwp: {} }]);
   });
 
   it('weist Hexfelder zurück, deren Werte nicht zu den Regeln passen', () => {
