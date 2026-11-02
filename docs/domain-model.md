@@ -50,7 +50,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Weltenerschaffung nach Mongoose Traveller 2e, nach der Atmosphäre und vor der Hydrographie, die
 > bei heißen Welten einen Malus bekommt (siehe *Weltenerschaffung*, Schritt 4 und 5). Neu im Bild:
 > `Hex.temperature`, `WorldRollKind.temperature`, `UwpDigit.temperatureDm` und als Referenzdaten
-> `Temperature` mit `hydroDm`. Offen sind noch die Fragen unter [Offene Fragen](#offene-fragen).
+> `Temperature` mit `hydroDm`. Alle Fragen dazu sind geklärt.
 >
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen, die drei Namen sowie die Themen-Tafeln NSC, NSC-Aktionen,
@@ -481,7 +481,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
      (31 bis 80 °C), ab 12 *Kochend* (81 °C und mehr). Gespeichert wird die Zeile, nicht die Summe.
      Bei Atmosphäre 0 oder 1 sagt die Weltkarte dazu, dass die Temperatur zwischen glühender Hitze
      am Tag und Frost in der Nacht schwankt. Die Texte der Tabelle sind eigene, deutsche
-     Beschreibungen, keine Übersetzung des Regeltexts.
+     Beschreibungen, keine Übersetzung des Regeltexts. Den wahlweisen DM für den heißen oder kalten
+     Rand der habitablen Zone (+4 bzw. −4) gibt es vorerst nicht; er kommt später mit dem
+     Sternsystem.
   5. *Rest des UWP*: Hydrographie 2W6 − 7 + Größe, DM −4 bei Atmosphäre 0, 1 oder A+, dazu der
      Wasser-DM der Temperatur (`Temperature.hydroDm`, nach Mongoose S. 252): −2 bei *Heiß*, −6 bei
      *Kochend*, sonst 0. Er gilt nicht bei Atmosphäre D (dicht, nur in der Höhe atembar), die das
@@ -524,17 +526,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   für die Scoutbasis, kleiner Kreis rechts oben für den Gasriesen, darunter der Name, in
   Großbuchstaben ab Bevölkerung 9. Ist die Karte groß genug gezoomt, kommen darunter das UWP und
   die Handelscodes dazu, jedes erst, wenn es lesbar ist.
-- **Später**, nicht in diesem Schritt: Reisezonen (Amber, Red), Notizen zur Welt, Verbindungen
+- **Später**, nicht in diesem Schritt: der Rand der habitablen Zone beim Temperaturwurf, Reisezonen (Amber, Red), Notizen zur Welt, Verbindungen
   (communications routes), Subsector Capital, ein Name für den Subsektor, mehrere Subsektoren zu
   einem Sektor und eine fertige Welt wieder löschen.
-
-## Offene Fragen
-
-
-- **Rand der habitablen Zone.** Mongoose erlaubt der Spielleitung wahlweise DM +4 (heißer Rand) oder
-  DM −4 (kalter Rand). Ohne Sternsystem weiß die App nicht, wo die Welt liegt. Empfehlung:
-  vorerst weglassen; kommt später mit dem Sternsystem oder als Wahl vor dem Wurf. Davon hängt ab,
-  ob `Hex` ein Feld für die Lage in der Zone braucht.
 
 ## Wo der Code noch nicht folgt
 
