@@ -21,3 +21,11 @@ createRoot(document.getElementById('root')!).render(
     </GameProvider>
   </StrictMode>,
 );
+
+// Offline: Der Service Worker legt die App ab, damit sie installiert auch ohne Netz startet.
+// Nicht im Entwicklungsserver und nicht in der Einzeldatei (dist-single), die ohne Server läuft.
+if (import.meta.env.PROD && import.meta.env.MODE !== 'single' && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch((error: unknown) => {
+    console.warn('Service Worker nicht registriert, die App läuft ohne Offline-Ablage.', error);
+  });
+}

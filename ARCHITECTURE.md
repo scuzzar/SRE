@@ -22,6 +22,7 @@ sagt nur, wo die Teile liegen und wie sie miteinander reden.
 | 3 | `src/controller/` | **Controller**: eine Methode pro Absicht des Spielers | `model` mit `draft` |
 | 4 | `src/view/` | **View**: React-Komponenten | `controller`, `model` mit `draft` (nur Typen) |
 | 5 | `src/main.tsx` | Verdrahtung | alles |
+| — | `src/service-worker.js` | Service Worker: legt die Dateien der App für offline ab, läuft im eigenen Kontext | nichts |
 
 Plattform und Controller kennen sich nicht. Das Model definiert die Schnittstellen
 (`CampaignRepository`, `Random`, `Clock`, `Download`), `platform/` setzt sie um (Dexie,
@@ -102,6 +103,7 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
 | `npm run test:e2e` | GUI-Tests mit Playwright (baut vorher und startet `vite preview`) |
 | `npm run build` | Build für GitHub Pages nach `dist/` (relative Pfade, läuft in jedem Unterordner) |
 | `npm run build:single` | Die ganze App als eine HTML-Datei nach `dist-single/index.html` |
+| `npm run icons` | Die PNG-Icons in `public/` neu aus `public/icon.svg` rendern (nach jeder Änderung am Icon) |
 
 **Deployment.** `.github/workflows/pages.yml` baut bei jedem Push auf `main` und veröffentlicht
 `dist/` auf GitHub Pages. Einmalig nötig: in den Repo-Einstellungen unter *Pages* als Quelle
@@ -113,3 +115,14 @@ Kampagnen lag unter dem Schlüssel `current` und behält ihn als Id. Geht das ni
 Fenster, eingebettete Vorschau, eine lokal geöffnete Datei auf manchen Handys), läuft die App mit
 einem Speicher im Arbeitsspeicher weiter; ein Hinweis oben unter der Kopfzeile und der
 „Über“-Bildschirm sagen dann, dass nichts dauerhaft gespeichert wird.
+
+**Installieren und offline.** `public/manifest.webmanifest` macht die App installierbar, mit PNG-Icons
+(192 und 512 px, eines maskierbar für Android) und `apple-touch-icon.png` für das iPhone; alle
+entstehen mit `npm run icons` aus `icon.svg`. Beim normalen Build schreibt das Plugin `serviceWorker`
+in `vite.config.ts` aus `src/service-worker.js` die Datei `dist/sw.js`, mit der Liste aller Dateien
+des Builds und einer Version aus ihrem Inhalt; `main.tsx` registriert sie (nicht im
+Entwicklungsserver und nicht in der Einzeldatei). Der Worker legt beim ersten Start alle Dateien ab
+und liefert sie danach aus der Ablage. Beim Start fragt er zuerst das Netz nach einer neuen Version
+(höchstens 3 Sekunden), sonst nimmt er die abgelegte; ein neuer Build ist also beim nächsten Start
+mit Netz da. Die Schriften von Google Fonts legt er beim ersten Laden mit Netz ab; ohne sie greift
+die Ersatzschrift. Spielstände berührt er nicht, die bleiben in IndexedDB.
