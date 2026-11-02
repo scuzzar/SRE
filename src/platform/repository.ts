@@ -113,6 +113,23 @@ export class MemoryCampaignRepository implements CampaignRepository {
 }
 
 /**
+ * Bittet den Browser, den Speicher dauerhaft zu halten: Er löscht ihn dann nicht, wenn der Platz knapp
+ * wird oder die App länger nicht benutzt wurde. Chrome und Safari entscheiden selbst (installiert sagen
+ * sie eher zu), Firefox fragt den Spieler. Gibt zurück, ob der Browser zusagt, `undefined`, wo er das
+ * nicht kennt.
+ */
+export async function requestDurable(
+  storage: Pick<StorageManager, 'persist' | 'persisted'> | undefined = globalThis.navigator?.storage,
+): Promise<boolean | undefined> {
+  if (typeof storage?.persist !== 'function' || typeof storage.persisted !== 'function') return undefined;
+  try {
+    return (await storage.persisted()) || (await storage.persist());
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Öffnet den Speicher. Ist IndexedDB nicht verfügbar (privates Fenster, eingebettete Vorschau),
  * läuft die App mit einem Speicher im Arbeitsspeicher weiter.
  */

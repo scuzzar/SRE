@@ -4,14 +4,16 @@ import { GameController } from './controller';
 import { systemClock } from './platform/clock';
 import { browserDownload } from './platform/download';
 import { cryptoRandom } from './platform/random';
-import { openRepository } from './platform/repository';
+import { openRepository, requestDurable } from './platform/repository';
 import { App } from './view/App';
 import { GameProvider } from './view/game-context';
 import './view/styles.css';
 
 // Verdrahtung: Die Umsetzungen aus platform/ gehen in den Controller, der Controller in die View.
 const { repository, persistent } = await openRepository();
-const game = new GameController({ repository, random: cryptoRandom, clock: systemClock, download: browserDownload, persistent });
+// Ob der Browser den Speicher dauerhaft hält, kommt später; Firefox fragt dafür erst den Spieler.
+const durable = persistent ? requestDurable() : Promise.resolve(undefined);
+const game = new GameController({ repository, random: cryptoRandom, clock: systemClock, download: browserDownload, persistent, durable });
 await game.init();
 
 createRoot(document.getElementById('root')!).render(

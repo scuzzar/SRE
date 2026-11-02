@@ -54,6 +54,8 @@ export interface Snapshot {
   readonly campaignSheet: CampaignSheetView | undefined;
   /** Ob der Spielstand das Schließen der App übersteht. */
   readonly persistent: boolean;
+  /** Ob der Browser zusagt, den Spielstand nicht zu löschen; `undefined`, solange er nicht geantwortet hat oder das nicht kennt. */
+  readonly durable: boolean | undefined;
   readonly storageError: string | undefined;
   readonly screen: Screen;
   readonly odds: readonly OddsChoice[];
@@ -249,6 +251,7 @@ export interface ControllerState {
   readonly campaign: Campaign | undefined;
   readonly campaignSheet: { readonly error: string | undefined } | undefined;
   readonly persistent: boolean;
+  readonly durable: boolean | undefined;
   readonly storageError: string | undefined;
   readonly screen: Screen;
   readonly card: Card | undefined;
@@ -406,7 +409,7 @@ function pickingView(state: ControllerState, campaign: Campaign): { readonly tit
 
 export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
-  const base = { persistent: state.persistent, storageError: state.storageError, screen: state.screen, skills, items };
+  const base = { persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, skills, items };
   if (!campaign) {
     return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, characters: [], dead: [], retired: [], task: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
   }

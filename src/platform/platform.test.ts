@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { appendLog, createCampaign, type Campaign, type Character, type LogEntry } from '../model';
 import { systemClock } from './clock';
 import { cryptoRandom } from './random';
-import { DexieCampaignRepository, MemoryCampaignRepository, upgraded } from './repository';
+import { DexieCampaignRepository, MemoryCampaignRepository, requestDurable, upgraded } from './repository';
 
 describe('cryptoRandom', () => {
   it('bleibt im Bereich und trifft jeden Wert', () => {
@@ -20,6 +20,36 @@ describe('cryptoRandom', () => {
 
   it('weist leere Bereiche zurück', () => {
     expect(() => cryptoRandom.int(3, 2)).toThrow(RangeError);
+  });
+});
+
+describe('requestDurable', () => {
+  const storage = (persisted: boolean, persist: boolean) => {
+    const calls = { persist: 0 };
+    return {
+      calls,
+      persisted: async () => persisted,
+      persist: async () => {
+        calls.persist++;
+        return persist;
+      },
+    };
+  };
+
+  it('fragt nicht noch einmal, wenn der Speicher schon dauerhaft ist', async () => {
+    const granted = storage(true, false);
+    expect(await requestDurable(granted)).toBe(true);
+    expect(granted.calls.persist).toBe(0);
+  });
+
+  it('bittet sonst darum und meldet die Antwort', async () => {
+    expect(await requestDurable(storage(false, true))).toBe(true);
+    expect(await requestDurable(storage(false, false))).toBe(false);
+  });
+
+  it('weiß nichts, wo der Browser das nicht kennt oder ablehnt', async () => {
+    expect(await requestDurable(undefined)).toBeUndefined();
+    expect(await requestDurable({ persisted: async () => false, persist: async () => Promise.reject(new Error('nein')) })).toBeUndefined();
   });
 });
 
