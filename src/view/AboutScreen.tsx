@@ -54,6 +54,14 @@ export function AboutScreen({ persistent, durable }: { persistent: boolean; dura
           </p>
         </div>
         <div>
+          <h2>World Builder&apos;s Handbook</h2>
+          <p>
+            Die Oberfläche einer Welt (Wasseranteil, tektonische Platten, Kontinente und Ozeane, einheimisches Leben) folgt dem World Builder&apos;s
+            Handbook von Digest Group Publications (1989, für MegaTraveller). Übernommen sind nur Würfe und Tabellenwerte; die Texte sind eigene.
+            Kein offizielles Produkt von Digest Group Publications.
+          </p>
+        </div>
+        <div>
           <h2>Game Master&apos;s Apprentice</h2>
           <p>
             Der Aufbau der Inspirationskarte folgt dem GameMaster&apos;s Apprentice, Second Edition, von Larcenous Designs, LLC. Die Einträge stammen

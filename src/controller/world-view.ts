@@ -5,6 +5,7 @@ import {
   OCCURRENCE_TARGET,
   SECTOR_COLUMNS,
   SECTOR_ROWS,
+  nextWorldAction,
   stepOf,
   temperatureOf,
   tradeCodesOf,
@@ -13,6 +14,7 @@ import {
   uwpKinds,
   worldLabel,
   type Hex,
+  type Surface,
   type UwpKind,
   type WorldDmPart,
   type WorldRollKind,
@@ -86,6 +88,7 @@ export interface WorldLine {
 
 export type WorldAction =
   | { readonly kind: 'roll'; readonly label: string; readonly dice: 1 | 2; readonly parts: readonly WorldDmPart[]; readonly target: number | undefined }
+  | { readonly kind: 'surface'; readonly label: string }
   | { readonly kind: 'name' }
   | { readonly kind: 'done' };
 
@@ -124,6 +127,8 @@ export interface WorldView {
   readonly gasGiant: boolean | undefined;
   /** `undefined`, solange sie noch nicht feststeht, und bei Welten von vor der Temperatur. */
   readonly temperature: TemperatureView | undefined;
+  /** Die Oberfläche in Worten, je Zeile ein Wert; `undefined`, solange sie fehlt. */
+  readonly surface: readonly string[] | undefined;
   readonly trade: readonly { readonly code: string; readonly name: string }[];
   readonly lines: readonly WorldLine[];
   readonly action: WorldAction;
@@ -272,6 +277,36 @@ const prompts: Record<WorldRollKind, string> = {
   tech: 'UWP: Tech Level, 1W6 + DMs',
 };
 
+/** Eine Menge mit Wort in Einzahl oder Mehrzahl: „1 großer Kontinent“, „4 kleine Kontinente“. */
+function count(n: number, one: string, many: string): string {
+  return `${n} ${n === 1 ? one : many}`;
+}
+
+/** Die Oberfläche in Worten; Mengen, die es nicht gibt, fallen weg. */
+export function surfaceLines(surface: Surface): readonly string[] {
+  const join = (parts: readonly string[]) => parts.join(', ');
+  const lines = [`${surface.water} % Wasser`];
+  if (surface.plates > 0) lines.push(count(surface.plates, 'tektonische Platte', 'tektonische Platten'));
+  const land = [
+    surface.majorContinents && count(surface.majorContinents, 'großer Kontinent', 'große Kontinente'),
+    surface.minorContinents && count(surface.minorContinents, 'kleiner Kontinent', 'kleine Kontinente'),
+    surface.majorIslands && count(surface.majorIslands, 'große Insel', 'große Inseln'),
+    surface.archipelagos && count(surface.archipelagos, 'Archipel', 'Archipele'),
+  ].filter((x): x is string => Boolean(x));
+  const sea = [
+    surface.majorOceans && count(surface.majorOceans, 'großer Ozean', 'große Ozeane'),
+    surface.minorOceans && count(surface.minorOceans, 'kleiner Ozean', 'kleine Ozeane'),
+    surface.smallSeas && count(surface.smallSeas, 'kleines Meer', 'kleine Meere'),
+    surface.scatteredLakes && count(surface.scatteredLakes, 'verstreuter See', 'verstreute Seen'),
+  ].filter((x): x is string => Boolean(x));
+  if (land.length > 0) lines.push(join(land));
+  if (sea.length > 0) lines.push(join(sea));
+  if (surface.water === 0) lines.push('kein Wasser an der Oberfläche');
+  if (surface.water === 100) lines.push('kein nennenswertes Land');
+  lines.push(surface.life ? 'einheimisches Leben' : 'kein einheimisches Leben');
+  return lines;
+}
+
 function temperatureViewOf(hex: Hex): TemperatureView {
   const { name, average, text } = temperatureOf(hex.temperature!);
   const atmosphere = hex.uwp.atmosphere;
@@ -283,12 +318,23 @@ export function worldView(hexes: readonly Hex[], column: number, row: number, ro
   const hex: Hex = hexAt(hexes, column, row) ?? { column, row, empty: false, uwp: {} };
   const step = stepOf(hex);
   const next = nextWorldRoll(hex);
+  const surfaceDue = nextWorldAction(hex) === 'surface';
   const action: WorldAction = next
     ? { kind: 'roll', label: rollLabels[next.kind], dice: next.dice, parts: next.parts, target: undefined }
-    : step === 'name'
-      ? { kind: 'name' }
-      : { kind: 'done' };
-  const prompt = next ? prompts[next.kind] : step === 'name' ? 'Fertig gewürfelt: Namen eingeben und übernehmen' : hex.empty ? 'Kein System in diesem Feld' : '';
+    : surfaceDue
+      ? { kind: 'surface', label: 'Oberfläche würfeln' }
+      : step === 'name'
+        ? { kind: 'name' }
+        : { kind: 'done' };
+  const prompt = next
+    ? prompts[next.kind]
+    : surfaceDue
+      ? "Oberfläche nach dem World Builder's Handbook: Wasser, Platten, Land, Leben"
+      : step === 'name'
+        ? 'Fertig gewürfelt: Namen eingeben und übernehmen'
+        : hex.empty
+          ? 'Kein System in diesem Feld'
+          : '';
   return {
     id: hexId(column, row),
     name: hex.name,
@@ -304,6 +350,7 @@ export function worldView(hexes: readonly Hex[], column: number, row: number, ro
     scoutBase: hex.scoutBase,
     gasGiant: hex.gasGiant,
     temperature: hex.temperature === undefined ? undefined : temperatureViewOf(hex),
+    surface: hex.surface === undefined ? undefined : surfaceLines(hex.surface),
     trade: tradeCodesOf(hex).map((t) => ({ code: t.id, name: t.name })),
     lines: rolls.map(worldLine),
     action,

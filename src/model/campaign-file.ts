@@ -61,6 +61,21 @@ const HexSchema = z.union([
     gasGiant: z.boolean().optional(),
     uwp: z.object(Object.fromEntries(uwpKinds.map((k) => [k, z.number().int().optional()])) as Record<(typeof uwpKinds)[number], z.ZodOptional<z.ZodNumber>>),
     temperature: z.enum(temperatureIds).optional(),
+    surface: z
+      .object({
+        water: z.number().int(),
+        plates: z.number().int(),
+        majorContinents: z.number().int(),
+        minorContinents: z.number().int(),
+        majorIslands: z.number().int(),
+        archipelagos: z.number().int(),
+        majorOceans: z.number().int(),
+        minorOceans: z.number().int(),
+        smallSeas: z.number().int(),
+        scatteredLakes: z.number().int(),
+        life: z.boolean(),
+      })
+      .optional(),
   }),
   /** Aus der Zeit, als ein Hexfeld seine Würfe hielt; wird nachgespielt und als Werte übernommen. */
   z.object({

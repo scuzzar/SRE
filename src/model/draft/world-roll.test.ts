@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { discardWorld, DomainError, hexAt, hexFromRolls, nameWorld, stepOf, tradeCodesOf, uwpCode, validateHexes, type Hex } from '..';
+import { discardWorld, DomainError, hexAt, hexFromRolls, nameWorld, nextWorldAction, rollSurface, stepOf, tradeCodesOf, uwpCode, validateHexes, type Hex } from '..';
 import { fixedRandom } from '../testing';
-import { rollOccurrence, rollWorld, type WorldRoll } from './world-roll';
+import { rollOccurrence, rollSurfaceAt, rollWorld, type WorldRoll } from './world-roll';
+
+/** Ein Hexfeld ohne ein optionales Feld, wie Welten aus der Zeit, bevor es das Feld gab. */
+function omit(hex: Hex, key: 'surface' | 'temperature'): Hex {
+  const copy = { ...hex };
+  delete copy[key];
+  return copy;
+}
 
 /** Würfelt so oft, wie es Zahlen gibt: erst das Vorkommen, dann jeder Wurf mit seinen Würfeln. */
 function rollAll(dice: number[], hexes: readonly Hex[] = [], column = 3, row = 4): { hexes: readonly Hex[]; rolls: WorldRoll[] } {
@@ -20,7 +27,9 @@ function rollAll(dice: number[], hexes: readonly Hex[] = [], column = 3, row = 4
 // Vorkommen 5; Raumhafen 8 → C (keine Marinebasis möglich); Scoutbasis 8 − 1 → ja; Gasriese 6 → ja;
 // Größe 9 − 2 = 7; Atmosphäre 8 − 7 + 7 = 8; Temperatur 6 + 1 = 7, gemäßigt; Hydrographie 8 − 7 + 7 = 8; Bevölkerung 7 − 2 = 5;
 // Regierung 6 − 7 + 5 = 4; Gesetz 8 − 7 + 4 = 5; TL 4 + 2 (C) + 1 (Bevölkerung 5) = 7.
-const regina = [5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4];
+// Oberfläche: Wasser 80 + 7 − 7 = 80 %; Platten 7 + 8 − 7 = 8; Kontinente-Tabelle 3 + 24 = 27
+// (1W6 − 1, 3W6, 3W6 − 3, 2W6): 1 großer, 4 kleine Kontinente, 5 große Inseln, 7 Archipele; Leben 6 + 5 = 11.
+const regina = [5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 4, 3, 4, 3, 2, 1, 1, 2, 2, 3, 3, 3, 4, 3, 3];
 
 describe('Weltenerschaffung', () => {
   it('würfelt eine Welt nach der Checklist, speichert nur die Werte und gibt ihr zum Schluss einen Namen', () => {
@@ -41,6 +50,7 @@ describe('Weltenerschaffung', () => {
       gasGiant: true,
       uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 },
       temperature: 'temperate',
+      surface: { water: 80, plates: 8, majorContinents: 1, minorContinents: 4, majorIslands: 5, archipelagos: 7, majorOceans: 0, minorOceans: 0, smallSeas: 0, scatteredLakes: 0, life: true },
     });
     expect(result.rolls.find((r) => r.kind === 'temperature')).toMatchObject({ dice: [3, 3], dm: 1, parts: [{ label: 'Atmosphäre 8', dm: 1 }], temperature: { id: 'temperate' } });
     expect(stepOf(hex)).toBe('name');
@@ -126,10 +136,44 @@ describe('Weltenerschaffung', () => {
     const old: Hex = { column: 3, row: 4, empty: false, name: 'Alt', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
     expect(stepOf(old)).toBe('done');
     expect(() => validateHexes([old])).not.toThrow();
+    // Temperatur 6 + 6 + 1, kochend; gleich danach die Oberfläche, mit den übrigen Würfeln als 1.
     const { hexes, roll } = rollWorld([old], 3, 4, fixedRandom(6, 6));
     expect(roll).toMatchObject({ kind: 'temperature', dm: 1, temperature: { id: 'boiling' } });
-    expect(hexAt(hexes, 3, 4)).toEqual({ ...old, temperature: 'boiling' });
+    expect(hexAt(hexes, 3, 4)).toMatchObject({ ...old, temperature: 'boiling', surface: { water: 75 } });
     expect(() => rollWorld(hexes, 3, 4, fixedRandom())).toThrow(/nichts mehr zu würfeln/);
+  });
+
+  it('würfelt die Oberfläche nach dem TL in einem Zug; der Name kommt danach', () => {
+    const hex = hexAt(rollAll(regina).hexes, 3, 4)!;
+    expect(stepOf(hex)).toBe('name');
+    expect(nextWorldAction(hex)).toBeUndefined();
+    // Eine fertige Welt mit Temperatur, aber ohne Oberfläche, bekommt sie auf Wunsch nach.
+    const without = omit({ ...hex, name: 'Alt' }, 'surface');
+    expect(stepOf(without)).toBe('done');
+    expect(nextWorldAction(without)).toBe('surface');
+    expect(rollSurfaceAt([without], 3, 4, fixedRandom(1, 1))).toHaveLength(1);
+    expect(hexAt(rollSurfaceAt([without], 3, 4, fixedRandom(1, 1)), 3, 4)?.surface?.water).toBe(75);
+    // Eine angefangene Welt mit TL und Temperatur, aber ohne Oberfläche, ist bei der Oberfläche.
+    const pending = omit(hex, 'surface');
+    expect(stepOf(pending)).toBe('surface');
+    expect(() => nameWorld([pending], 3, 4, 'Zu früh')).toThrow(/Erst alles würfeln/);
+  });
+
+  it('nimmt bei 1–49 % Wasser die Ozeane-Tabelle und rechnet „nur Seen“ aus der Fläche', () => {
+    const base: Hex = { column: 1, row: 1, empty: false, uwp: { starport: 10, size: 5, atmosphere: 4, hydrographics: 1, population: 1, government: 1, law: 1, tech: 5 }, temperature: 'cold' };
+    // Wasser 10 + 4 − 7 = 7 %; Platten 5 + 1 − 6 = 0 → 1; Ozeane-Tabelle 2 + 3 = 5: nur verstreute Seen, 7 × 5 × 2 = 70; Leben 4 + 4 − 1.
+    const surface = rollSurface(base, fixedRandom(2, 2, 3, 3, 2, 2, 2));
+    expect(surface).toEqual({ water: 7, plates: 1, majorContinents: 0, minorContinents: 0, majorIslands: 0, archipelagos: 0, majorOceans: 0, minorOceans: 0, smallSeas: 0, scatteredLakes: 70, life: false });
+    // Eine 12 beim Wasser wird neu gewürfelt.
+    expect(rollSurface(base, fixedRandom(6, 6, 1, 1)).water).toBe(5);
+  });
+
+  it('gibt einem Asteroidengürtel weder Wasser noch Platten', () => {
+    const belt: Hex = { column: 1, row: 1, empty: false, uwp: { starport: 10, size: 0, atmosphere: 0, hydrographics: 0, population: 1, government: 1, law: 1, tech: 5 }, temperature: 'frozen' };
+    // Nur das Leben wird gewürfelt: 6 + 6 − 3 − 2 − 1 = 6, kein Leben.
+    const random = fixedRandom(6, 6);
+    expect(rollSurface(belt, random)).toMatchObject({ water: 0, plates: 0, life: false });
+    expect(random.calls).toBe(2);
   });
 
   it('verwirft eine Welt in Erschaffung: Das Feld ist wieder nicht erzeugt', () => {
@@ -167,6 +211,13 @@ describe('Hexfelder prüfen', () => {
     expect(() => validateHexes([{ ...base, uwp: { starport: 10, size: 5, atmosphere: 5 }, temperature: 'warm' } as unknown as Hex])).toThrow(/Temperatur gibt es nicht/);
     expect(() => validateHexes([{ ...base, uwp: { starport: 10, size: 1, atmosphere: 0 }, temperature: 'cold' }])).toThrow(/ohne Wurf feststeht/);
     expect(() => validateHexes([{ column: 1, row: 1, empty: true, uwp: {}, temperature: 'cold' }])).toThrow(/leeres Feld/);
+    const world = hexAt(rollAll(regina).hexes, 3, 4)!;
+    expect(() => validateHexes([world])).not.toThrow();
+    expect(() => validateHexes([{ ...world, surface: { ...world.surface!, water: 60 } }])).toThrow(/Wasseranteil von 60/);
+    expect(() => validateHexes([{ ...world, surface: { ...world.surface!, plates: 20 } }])).toThrow(/20 Platten/);
+    expect(() => validateHexes([{ ...world, surface: { ...world.surface!, majorOceans: 1 } }])).toThrow(/Land- und Wassermassen/);
+    const noTemperature = omit(world, 'temperature');
+    expect(() => validateHexes([noTemperature])).toThrow(/braucht TL und Temperatur/);
     expect(() => validateHexes([{ ...base, column: 9 }])).toThrow(/nicht im Subsektor/);
   });
 

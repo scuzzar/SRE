@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
 // Die Tabellen der Weltenerschaffung aus den Charts der Starter Edition (S. 14–15), dazu die
-// Temperatur nach Mongoose Traveller 2e (Core Rulebook S. 251–252) mit eigenen deutschen Texten.
+// Temperatur nach Mongoose Traveller 2e (Core Rulebook S. 251–252) mit eigenen deutschen Texten und
+// die Kontinente- und Ozeane-Tabelle aus dem World Builder's Handbook (DGP, S. 70).
 
 /**
  * Die Ziffern des UWP in eHex: 0–9, dann A–Z ohne I und O. So ist der Raumhafen X die Ziffer 31,
@@ -71,12 +72,36 @@ export const TradeCodeSchema = z.object({
   if: z.array(TradeConditionSchema).min(1),
 });
 
+/** Wie viele W6 plus welcher DM, z. B. 2W6 + 1; ohne Würfel ein fester Wert. */
+export const DiceExprSchema = z.object({
+  dice: z.number().int().min(0).max(3),
+  dm: z.number().int(),
+});
+
+export const surfaceTables = ['continents', 'oceans'] as const;
+
+/**
+ * Eine Zeile der Kontinente- bzw. Ozeane-Tabelle: Mit welchem Würfelausdruck die großen und kleinen
+ * Massen, die kleinen (große Inseln bzw. kleine Meere) und die verstreuten (Archipele bzw. Seen)
+ * gewürfelt werden. `onlyScattered`: alles Land bzw. Wasser ist Archipel bzw. See.
+ */
+export const SurfaceRowSchema = z.object({
+  table: z.enum(surfaceTables),
+  roll: z.number().int().min(1),
+  major: DiceExprSchema,
+  minor: DiceExprSchema,
+  small: DiceExprSchema,
+  scattered: DiceExprSchema,
+  onlyScattered: z.boolean(),
+});
+
 export const WorldTablesSchema = z
   .object({
     systemContents: z.array(SystemContentsSchema).length(11),
     uwpDigits: z.object(Object.fromEntries(uwpKinds.map((k) => [k, z.array(UwpDigitSchema).min(1)])) as Record<(typeof uwpKinds)[number], z.ZodArray<typeof UwpDigitSchema>>),
     tradeCodes: z.array(TradeCodeSchema).min(1),
     temperatures: z.array(TemperatureSchema).length(temperatureIds.length),
+    surfaceRows: z.array(SurfaceRowSchema).min(1),
   })
   .superRefine((data, ctx) => {
     const issue = (message: string) => ctx.addIssue({ code: 'custom', message });
@@ -102,6 +127,14 @@ export const WorldTablesSchema = z
       if (before?.to !== undefined && t.from !== before.to + 1) issue(`Zwischen ${before.id} und ${t.id} ist eine Lücke`);
       if (t.from !== undefined && t.to !== undefined && t.from > t.to) issue(`Die Temperatur ${t.id} hat keine Summe`);
     });
+    // Jede Tabelle hat jede Zeile, die 1W6 + Hydrographie × 3 bei ihrem Wasseranteil ergeben kann, genau einmal.
+    const needed = { continents: [16, 36], oceans: [1, 21] } as const;
+    for (const table of surfaceTables) {
+      const rolls = data.surfaceRows.filter((row) => row.table === table).map((row) => row.roll);
+      const [from, to] = needed[table];
+      for (let roll = from; roll <= to; roll++) if (rolls.filter((x) => x === roll).length !== 1) issue(`Die Zeile ${roll} der Tabelle ${table} fehlt oder kommt doppelt vor`);
+      if (rolls.some((x) => x < from || x > to)) issue(`Die Tabelle ${table} hat eine Zeile außerhalb von ${from} bis ${to}`);
+    }
     for (const d of data.uwpDigits.atmosphere) if (d.temperatureDm === undefined) issue(`Die Atmosphäre ${EHEX[d.digit]} hat keinen DM auf die Temperatur`);
     for (const kind of uwpKinds) {
       if (kind !== 'atmosphere' && data.uwpDigits[kind].some((d) => d.temperatureDm !== undefined)) issue(`Nur die Atmosphäre hat einen DM auf die Temperatur, nicht ${kind}`);
@@ -115,4 +148,7 @@ export type TradeCode = z.infer<typeof TradeCodeSchema>;
 export type TradeCondition = z.infer<typeof TradeConditionSchema>;
 export type TemperatureId = z.infer<typeof TemperatureIdSchema>;
 export type Temperature = z.infer<typeof TemperatureSchema>;
+export type DiceExpr = z.infer<typeof DiceExprSchema>;
+export type SurfaceTable = (typeof surfaceTables)[number];
+export type SurfaceRow = z.infer<typeof SurfaceRowSchema>;
 export type WorldTables = z.infer<typeof WorldTablesSchema>;

@@ -2,9 +2,11 @@ import {
   diceCount,
   DomainError,
   enterRoll,
+  enterSurface,
   hexAt,
   hexId,
   nextRollKind,
+  nextWorldAction,
   occurrenceHex,
   OCCURRENCE_TARGET,
   putHex,
@@ -75,7 +77,9 @@ export function rollWorld(hexes: readonly Hex[], column: number, row: number, ra
   const next = nextWorldRoll(hex);
   if (!next) throw new DomainError(`Für das Feld ${hexId(column, row)} gibt es nichts mehr zu würfeln.`);
   const thrown = { kind: next.kind, dice: dice(next.dice, random), dm: next.parts.reduce((sum, p) => sum + p.dm, 0) };
-  const after = enterRoll(hex, next.kind, totalOf(thrown));
+  let after = enterRoll(hex, next.kind, totalOf(thrown));
+  // Ist danach die Oberfläche dran, entsteht sie gleich mit, in einem Zug und ohne eigenen Knopf.
+  if (nextWorldAction(after) === 'surface') after = enterSurface(after, random);
   const kind = next.kind;
   const table = kind === 'starport' || kind === 'navalBase' || kind === 'scoutBase' || kind === 'gasGiant';
   const value = kind === 'navalBase' || kind === 'scoutBase' || kind === 'gasGiant' || kind === 'occurrence' || kind === 'temperature' ? undefined : after.uwp[kind];
@@ -92,10 +96,19 @@ export function rollWorld(hexes: readonly Hex[], column: number, row: number, ra
   };
 }
 
-/** Lässt eine Welt in Erschaffung durchlaufen: alle Würfe bis zum Namen. */
+/** Würfelt die Oberfläche einer Welt, die nur noch sie braucht (Welten von vor der Oberfläche). */
+export function rollSurfaceAt(hexes: readonly Hex[], column: number, row: number, random: Random): readonly Hex[] {
+  const hex = hexAt(hexes, column, row);
+  if (!hex) throw new DomainError(`Für das Feld ${hexId(column, row)} erst das Vorkommen würfeln.`);
+  return putHex(hexes, enterSurface(hex, random));
+}
+
+/** Lässt eine Welt in Erschaffung durchlaufen: alle Würfe bis zum Namen, mit der Oberfläche. */
 export function runWorld(hexes: readonly Hex[], column: number, row: number, random: Random): { hexes: readonly Hex[]; rolls: readonly WorldRoll[] } {
   const rolls: WorldRoll[] = [];
   let current = hexes;
+  const start = hexAt(current, column, row);
+  if (start && nextWorldAction(start) === 'surface') current = rollSurfaceAt(current, column, row, random);
   for (let hex = hexAt(current, column, row); hex && nextWorldRoll(hex); hex = hexAt(current, column, row)) {
     const next = rollWorld(current, column, row, random);
     current = next.hexes;

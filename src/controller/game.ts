@@ -30,6 +30,7 @@ import {
   nameWorld,
   discardWorld,
   hexAt,
+  nextWorldAction,
   setGeneration,
   setHexes,
   setFocus,
@@ -58,6 +59,7 @@ import {
   toggleCharacteristic,
   togglePick,
   rollOccurrence,
+  rollSurfaceAt,
   rollWorld,
   runWorld,
 } from '../model/draft';
@@ -489,9 +491,11 @@ export class GameController {
     this.update({ world: undefined, worldError: undefined });
   }
 
-  /** Würfelt den nächsten Wurf der offenen Welt. */
+  /** Würfelt den nächsten Wurf der offenen Welt; braucht sie nur noch die Oberfläche, diese. */
   rollWorld(): void {
     this.inWorld((hexes, at) => {
+      const hex = hexAt(hexes, at.column, at.row);
+      if (hex && nextWorldAction(hex) === 'surface') return { hexes: rollSurfaceAt(hexes, at.column, at.row, this.deps.random), world: at };
       const { hexes: next, roll } = rollWorld(hexes, at.column, at.row, this.deps.random);
       return { hexes: next, world: { ...at, rolls: [...at.rolls, roll] } };
     });

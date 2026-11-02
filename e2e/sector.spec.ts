@@ -28,7 +28,9 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     await map.getByRole('button', { name: `${id}, in Erschaffung: fortsetzen` }).click();
     await expect(dialog.getByRole('button', { name: 'Verwerfen' })).toBeVisible();
     for (let i = 0; i < 14 && (await dialog.locator('.generation-main').count()) > 0; i++) await dialog.locator('.generation-main').click();
-    await expect(dialog.getByRole('region', { name: 'Würfe' })).toBeVisible();
+    // Nach dem TL steht die Oberfläche da, wo früher die Würfe standen; eine Liste der Würfe gibt es nicht.
+    await expect(dialog.getByRole('region', { name: 'Oberfläche' })).toContainText('% Wasser');
+    await expect(dialog.getByRole('region', { name: 'Würfe' })).toHaveCount(0);
     await dialog.getByLabel('Name der Welt').fill('Regina');
     await dialog.getByRole('button', { name: 'Übernehmen' }).click();
     const done = page.getByRole('dialog', { name: `Regina · ${id}` });
@@ -36,10 +38,10 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     await expect(done.getByRole('article', { name: 'Welt' })).toContainText(/Temperatur(Gefroren|Kalt|Gemäßigt|Heiß|Kochend)/);
     await done.getByRole('button', { name: 'Schließen' }).first().click();
     await map.getByRole('button', { name: `${id}, Regina: Weltkarte öffnen` }).click();
-    // Wieder geöffnet: nur die Werte, keine Würfe.
+    // Wieder geöffnet: die Werte mit der Oberfläche.
     const reopened = page.getByRole('dialog', { name: `Regina · ${id}` });
     await expect(reopened.getByRole('article', { name: 'Welt' })).toBeVisible();
-    await expect(reopened.getByRole('region', { name: 'Würfe' })).toHaveCount(0);
+    await expect(reopened.getByRole('region', { name: 'Oberfläche' })).toContainText(/einheimisches Leben/);
     await page.getByRole('button', { name: 'Schließen' }).first().click();
     await expect(page.locator('.world-list')).toContainText('Regina');
     named = true;
@@ -128,5 +130,7 @@ test('Sektor: Eine ältere Welt ohne Temperatur würfelt sie auf der Weltkarte n
   await dialog.locator('.generation-main').click();
   await expect(dialog.getByRole('article', { name: 'Welt' })).toContainText(/Temperatur(Gefroren|Kalt|Gemäßigt|Heiß|Kochend)/);
   await expect(dialog.getByRole('article', { name: 'Welt' })).toContainText('C788545-7');
+  // Gleich danach entsteht die Oberfläche mit; zu würfeln bleibt nichts.
+  await expect(dialog.getByRole('region', { name: 'Oberfläche' })).toContainText('% Wasser');
   await expect(dialog.locator('.generation-main')).toHaveCount(0);
 });

@@ -902,5 +902,889 @@
       "text": "Keine Polkappen und kaum flüssiges Wasser.",
       "hydroDm": -6
     }
+  ],
+  "surfaceRows": [
+    {
+      "table": "continents",
+      "roll": 16,
+      "major": {
+        "dice": 2,
+        "dm": 1
+      },
+      "minor": {
+        "dice": 1,
+        "dm": -1
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "continents",
+      "roll": 17,
+      "major": {
+        "dice": 2,
+        "dm": 1
+      },
+      "minor": {
+        "dice": 2,
+        "dm": -2
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "continents",
+      "roll": 18,
+      "major": {
+        "dice": 2,
+        "dm": 1
+      },
+      "minor": {
+        "dice": 3,
+        "dm": -3
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "continents",
+      "roll": 19,
+      "major": {
+        "dice": 2,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 1,
+        "dm": -1
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "continents",
+      "roll": 20,
+      "major": {
+        "dice": 2,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 2,
+        "dm": -2
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "continents",
+      "roll": 21,
+      "major": {
+        "dice": 2,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 3,
+        "dm": -3
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "continents",
+      "roll": 22,
+      "major": {
+        "dice": 1,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 1,
+        "dm": -1
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "continents",
+      "roll": 23,
+      "major": {
+        "dice": 1,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 2,
+        "dm": -2
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "continents",
+      "roll": 24,
+      "major": {
+        "dice": 1,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 3,
+        "dm": -3
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "continents",
+      "roll": 25,
+      "major": {
+        "dice": 1,
+        "dm": -1
+      },
+      "minor": {
+        "dice": 1,
+        "dm": 0
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "continents",
+      "roll": 26,
+      "major": {
+        "dice": 1,
+        "dm": -1
+      },
+      "minor": {
+        "dice": 2,
+        "dm": 0
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "continents",
+      "roll": 27,
+      "major": {
+        "dice": 1,
+        "dm": -1
+      },
+      "minor": {
+        "dice": 3,
+        "dm": 0
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "continents",
+      "roll": 28,
+      "major": {
+        "dice": 1,
+        "dm": -2
+      },
+      "minor": {
+        "dice": 1,
+        "dm": -1
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "continents",
+      "roll": 29,
+      "major": {
+        "dice": 1,
+        "dm": -3
+      },
+      "minor": {
+        "dice": 1,
+        "dm": -2
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "continents",
+      "roll": 30,
+      "major": {
+        "dice": 1,
+        "dm": -4
+      },
+      "minor": {
+        "dice": 1,
+        "dm": -3
+      },
+      "small": {
+        "dice": 2,
+        "dm": 0
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "continents",
+      "roll": 31,
+      "major": {
+        "dice": 0,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 0,
+        "dm": 0
+      },
+      "small": {
+        "dice": 1,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "continents",
+      "roll": 32,
+      "major": {
+        "dice": 0,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 0,
+        "dm": 0
+      },
+      "small": {
+        "dice": 0,
+        "dm": 0
+      },
+      "scattered": {
+        "dice": 0,
+        "dm": 0
+      },
+      "onlyScattered": true
+    },
+    {
+      "table": "continents",
+      "roll": 33,
+      "major": {
+        "dice": 0,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 0,
+        "dm": 0
+      },
+      "small": {
+        "dice": 0,
+        "dm": 0
+      },
+      "scattered": {
+        "dice": 0,
+        "dm": 0
+      },
+      "onlyScattered": true
+    },
+    {
+      "table": "continents",
+      "roll": 34,
+      "major": {
+        "dice": 0,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 0,
+        "dm": 0
+      },
+      "small": {
+        "dice": 0,
+        "dm": 0
+      },
+      "scattered": {
+        "dice": 0,
+        "dm": 0
+      },
+      "onlyScattered": true
+    },
+    {
+      "table": "continents",
+      "roll": 35,
+      "major": {
+        "dice": 0,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 0,
+        "dm": 0
+      },
+      "small": {
+        "dice": 0,
+        "dm": 0
+      },
+      "scattered": {
+        "dice": 0,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "continents",
+      "roll": 36,
+      "major": {
+        "dice": 0,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 0,
+        "dm": 0
+      },
+      "small": {
+        "dice": 0,
+        "dm": 0
+      },
+      "scattered": {
+        "dice": 0,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 1,
+      "major": {
+        "dice": 0,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 0,
+        "dm": 0
+      },
+      "small": {
+        "dice": 0,
+        "dm": 0
+      },
+      "scattered": {
+        "dice": 0,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 2,
+      "major": {
+        "dice": 0,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 0,
+        "dm": 0
+      },
+      "small": {
+        "dice": 0,
+        "dm": 0
+      },
+      "scattered": {
+        "dice": 0,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 3,
+      "major": {
+        "dice": 0,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 0,
+        "dm": 0
+      },
+      "small": {
+        "dice": 0,
+        "dm": 0
+      },
+      "scattered": {
+        "dice": 0,
+        "dm": 0
+      },
+      "onlyScattered": true
+    },
+    {
+      "table": "oceans",
+      "roll": 4,
+      "major": {
+        "dice": 0,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 0,
+        "dm": 0
+      },
+      "small": {
+        "dice": 0,
+        "dm": 0
+      },
+      "scattered": {
+        "dice": 0,
+        "dm": 0
+      },
+      "onlyScattered": true
+    },
+    {
+      "table": "oceans",
+      "roll": 5,
+      "major": {
+        "dice": 0,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 0,
+        "dm": 0
+      },
+      "small": {
+        "dice": 0,
+        "dm": 0
+      },
+      "scattered": {
+        "dice": 0,
+        "dm": 0
+      },
+      "onlyScattered": true
+    },
+    {
+      "table": "oceans",
+      "roll": 6,
+      "major": {
+        "dice": 0,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 0,
+        "dm": 0
+      },
+      "small": {
+        "dice": 1,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 7,
+      "major": {
+        "dice": 1,
+        "dm": -4
+      },
+      "minor": {
+        "dice": 1,
+        "dm": -3
+      },
+      "small": {
+        "dice": 2,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 8,
+      "major": {
+        "dice": 1,
+        "dm": -4
+      },
+      "minor": {
+        "dice": 1,
+        "dm": -2
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 9,
+      "major": {
+        "dice": 1,
+        "dm": -3
+      },
+      "minor": {
+        "dice": 1,
+        "dm": -1
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 10,
+      "major": {
+        "dice": 1,
+        "dm": -3
+      },
+      "minor": {
+        "dice": 1,
+        "dm": -1
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 11,
+      "major": {
+        "dice": 1,
+        "dm": -2
+      },
+      "minor": {
+        "dice": 1,
+        "dm": -1
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 12,
+      "major": {
+        "dice": 1,
+        "dm": -2
+      },
+      "minor": {
+        "dice": 2,
+        "dm": -2
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 13,
+      "major": {
+        "dice": 1,
+        "dm": -1
+      },
+      "minor": {
+        "dice": 1,
+        "dm": -1
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 14,
+      "major": {
+        "dice": 1,
+        "dm": -1
+      },
+      "minor": {
+        "dice": 2,
+        "dm": -2
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 15,
+      "major": {
+        "dice": 1,
+        "dm": -1
+      },
+      "minor": {
+        "dice": 3,
+        "dm": -3
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 16,
+      "major": {
+        "dice": 1,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 1,
+        "dm": -1
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 17,
+      "major": {
+        "dice": 1,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 2,
+        "dm": -2
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 18,
+      "major": {
+        "dice": 1,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 3,
+        "dm": -3
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 19,
+      "major": {
+        "dice": 0,
+        "dm": 1
+      },
+      "minor": {
+        "dice": 1,
+        "dm": -1
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 20,
+      "major": {
+        "dice": 0,
+        "dm": 1
+      },
+      "minor": {
+        "dice": 2,
+        "dm": -2
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    },
+    {
+      "table": "oceans",
+      "roll": 21,
+      "major": {
+        "dice": 0,
+        "dm": 1
+      },
+      "minor": {
+        "dice": 3,
+        "dm": -3
+      },
+      "small": {
+        "dice": 3,
+        "dm": -3
+      },
+      "scattered": {
+        "dice": 2,
+        "dm": 0
+      },
+      "onlyScattered": false
+    }
   ]
 }
