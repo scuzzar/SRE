@@ -4,15 +4,17 @@ import {
   enterRoll,
   hexAt,
   hexId,
+  nextRollKind,
   occurrenceHex,
   OCCURRENCE_TARGET,
   putHex,
-  stepOf,
   systemRow,
+  temperatureFor,
   worldDmParts,
   type Hex,
   type Random,
   type SystemContents,
+  type Temperature,
   type WorldDmPart,
   type WorldRollKind,
 } from '..';
@@ -32,6 +34,8 @@ export interface WorldRoll {
   readonly parts: readonly WorldDmPart[];
   /** Der Wert, den der Wurf eingetragen hat: eine Stelle des UWP. */
   readonly value: number | undefined;
+  /** Bei der Temperatur: die Zeile der Temperaturtabelle. */
+  readonly temperature?: Temperature;
   /** Beim Vorkommen: gibt es eine Welt? */
   readonly success: boolean | undefined;
   /** Bei Raumhafen, Basen und Gasriese: die Zeile der System Contents Table. */
@@ -42,11 +46,14 @@ export function totalOf(roll: Pick<WorldRoll, 'dice' | 'dm'>): number {
   return roll.dice.reduce((a, b) => a + b, 0) + roll.dm;
 }
 
-/** Was der nächste Wurf eines Hexfeldes braucht: Würfel und DM in Teilen; beim Namen oder fertig nichts. */
+/**
+ * Was der nächste Wurf eines Hexfeldes braucht: Würfel und DM in Teilen; beim Namen oder fertig
+ * nichts, außer einer fertigen Welt ohne Temperatur.
+ */
 export function nextWorldRoll(hex: Hex): { readonly kind: WorldRollKind; readonly dice: 1 | 2; readonly parts: readonly WorldDmPart[] } | undefined {
-  const step = stepOf(hex);
-  if (step === 'name' || step === 'done') return undefined;
-  return { kind: step, dice: diceCount(step), parts: worldDmParts(hex, step) };
+  const kind = nextRollKind(hex);
+  if (kind === undefined) return undefined;
+  return { kind, dice: diceCount(kind), parts: worldDmParts(hex, kind) };
 }
 
 function dice(count: number, random: Random): number[] {
@@ -71,10 +78,17 @@ export function rollWorld(hexes: readonly Hex[], column: number, row: number, ra
   const after = enterRoll(hex, next.kind, totalOf(thrown));
   const kind = next.kind;
   const table = kind === 'starport' || kind === 'navalBase' || kind === 'scoutBase' || kind === 'gasGiant';
-  const value = kind === 'navalBase' || kind === 'scoutBase' || kind === 'gasGiant' || kind === 'occurrence' ? undefined : after.uwp[kind];
+  const value = kind === 'navalBase' || kind === 'scoutBase' || kind === 'gasGiant' || kind === 'occurrence' || kind === 'temperature' ? undefined : after.uwp[kind];
   return {
     hexes: putHex(hexes, after),
-    roll: { ...thrown, parts: next.parts, value, success: undefined, row: table ? systemRow(totalOf(thrown)) : undefined },
+    roll: {
+      ...thrown,
+      parts: next.parts,
+      value,
+      success: undefined,
+      row: table ? systemRow(totalOf(thrown)) : undefined,
+      ...(kind === 'temperature' ? { temperature: temperatureFor(totalOf(thrown)) } : {}),
+    },
   };
 }
 

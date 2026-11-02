@@ -2938,6 +2938,11 @@ button:disabled {
   color: var(--muted);
 }
 
+.world-word {
+  font-weight: 700;
+  margin-right: 0.4em;
+}
+
 .world-extras {
   margin: 0;
   display: flex;
@@ -2969,6 +2974,12 @@ button:disabled {
   text-overflow: ellipsis;
   white-space: nowrap;
   vertical-align: bottom;
+}
+
+/* Die Temperatur ist ein Wort mit kurzer Beschreibung; sie bricht um, statt abgeschnitten zu werden. */
+.sheet.world-sheet .world-temperature .world-text {
+  display: inline;
+  white-space: normal;
 }
 
 .hex-selected polygon:first-child {

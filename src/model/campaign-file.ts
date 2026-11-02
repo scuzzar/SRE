@@ -5,7 +5,7 @@ import { DomainError } from './errors';
 import { withQuestion, type LogEntry } from './log';
 import { entryOf, oddsOf, slotOfEntry } from './reference';
 import { characteristics } from './rules';
-import { hexFromRolls, uwpKinds, validateHexes, worldOf, type Hex, type LegacyWorldRoll } from './sector';
+import { hexFromRolls, temperatureIds, uwpKinds, validateHexes, worldOf, type Hex, type LegacyWorldRoll } from './sector';
 
 /**
  * Die Kampagnendatei: eine Kampagne als JSON, zum Sichern und Weitergeben. Sie enthält alles, was an
@@ -60,6 +60,7 @@ const HexSchema = z.union([
     scoutBase: z.boolean().optional(),
     gasGiant: z.boolean().optional(),
     uwp: z.object(Object.fromEntries(uwpKinds.map((k) => [k, z.number().int().optional()])) as Record<(typeof uwpKinds)[number], z.ZodOptional<z.ZodNumber>>),
+    temperature: z.enum(temperatureIds).optional(),
   }),
   /** Aus der Zeit, als ein Hexfeld seine Würfe hielt; wird nachgespielt und als Werte übernommen. */
   z.object({

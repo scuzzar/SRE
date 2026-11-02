@@ -172,75 +172,95 @@
       {
         "digit": 0,
         "text": "No atmosphere",
-        "techDm": 1
+        "techDm": 1,
+        "temperatureDm": 0
       },
       {
         "digit": 1,
         "text": "Trace",
-        "techDm": 1
+        "techDm": 1,
+        "temperatureDm": 0
       },
       {
         "digit": 2,
         "text": "Very thin, tainted",
-        "techDm": 1
+        "techDm": 1,
+        "temperatureDm": -2
       },
       {
         "digit": 3,
         "text": "Very thin",
-        "techDm": 1
+        "techDm": 1,
+        "temperatureDm": -2
       },
       {
         "digit": 4,
         "text": "Thin, tainted",
-        "techDm": 0
+        "techDm": 0,
+        "temperatureDm": -1
       },
       {
         "digit": 5,
         "text": "Thin",
-        "techDm": 0
+        "techDm": 0,
+        "temperatureDm": -1
       },
       {
         "digit": 6,
         "text": "Standard",
-        "techDm": 0
+        "techDm": 0,
+        "temperatureDm": 0
       },
       {
         "digit": 7,
         "text": "Standard, tainted",
-        "techDm": 0
+        "techDm": 0,
+        "temperatureDm": 0
       },
       {
         "digit": 8,
         "text": "Dense",
-        "techDm": 0
+        "techDm": 0,
+        "temperatureDm": 1
       },
       {
         "digit": 9,
         "text": "Dense, tainted",
-        "techDm": 0
+        "techDm": 0,
+        "temperatureDm": 1
       },
       {
         "digit": 10,
         "text": "Exotic",
-        "techDm": 1
+        "techDm": 1,
+        "temperatureDm": 2
       },
       {
         "digit": 11,
         "text": "Corrosive",
-        "techDm": 1
+        "techDm": 1,
+        "temperatureDm": 6
       },
       {
         "digit": 12,
         "text": "Insidious",
-        "techDm": 1
+        "techDm": 1,
+        "temperatureDm": 6
       },
       {
         "digit": 13,
-        "techDm": 1
+        "techDm": 1,
+        "temperatureDm": 2
       },
       {
         "digit": 14,
-        "techDm": 1
+        "techDm": 1,
+        "temperatureDm": -1
+      },
+      {
+        "digit": 15,
+        "techDm": 0,
+        "temperatureDm": 2
       }
     ],
     "hydrographics": [
@@ -836,6 +856,51 @@
           ]
         }
       ]
+    }
+  ],
+  "temperatures": [
+    {
+      "id": "frozen",
+      "to": 2,
+      "name": "Gefroren",
+      "average": "−51 °C oder kälter",
+      "text": "Kein flüssiges Wasser, sehr trockene Luft.",
+      "hydroDm": 0
+    },
+    {
+      "id": "cold",
+      "from": 3,
+      "to": 4,
+      "name": "Kalt",
+      "average": "−51 bis 0 °C",
+      "text": "Eiswelt mit großen Polkappen, wenig flüssigem Wasser und kaum Wolken.",
+      "hydroDm": 0
+    },
+    {
+      "id": "temperate",
+      "from": 5,
+      "to": 9,
+      "name": "Gemäßigt",
+      "average": "0 bis 30 °C",
+      "text": "Erdähnlich: viel Wasser, flüssig und als Dunst, mäßige Polkappen.",
+      "hydroDm": 0
+    },
+    {
+      "id": "hot",
+      "from": 10,
+      "to": 11,
+      "name": "Heiß",
+      "average": "31 bis 80 °C",
+      "text": "Kleine oder keine Polkappen, wenig flüssiges Wasser, das meiste steckt in den Wolken.",
+      "hydroDm": -2
+    },
+    {
+      "id": "boiling",
+      "from": 12,
+      "name": "Kochend",
+      "average": "81 °C und mehr",
+      "text": "Keine Polkappen und kaum flüssiges Wasser.",
+      "hydroDm": -6
     }
   ]
 }

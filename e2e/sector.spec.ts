@@ -27,12 +27,13 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     await dialog.getByRole('button', { name: 'Später weiter' }).click();
     await map.getByRole('button', { name: `${id}, in Erschaffung: fortsetzen` }).click();
     await expect(dialog.getByRole('button', { name: 'Verwerfen' })).toBeVisible();
-    for (let i = 0; i < 12 && (await dialog.locator('.generation-main').count()) > 0; i++) await dialog.locator('.generation-main').click();
+    for (let i = 0; i < 14 && (await dialog.locator('.generation-main').count()) > 0; i++) await dialog.locator('.generation-main').click();
     await expect(dialog.getByRole('region', { name: 'Würfe' })).toBeVisible();
     await dialog.getByLabel('Name der Welt').fill('Regina');
     await dialog.getByRole('button', { name: 'Übernehmen' }).click();
     const done = page.getByRole('dialog', { name: `Regina · ${id}` });
     await expect(done.getByRole('article', { name: 'Welt' })).toContainText(/[A-EX][0-9A-F]{6}-[0-9A-Z]/);
+    await expect(done.getByRole('article', { name: 'Welt' })).toContainText(/Temperatur(Gefroren|Kalt|Gemäßigt|Heiß|Kochend)/);
     await done.getByRole('button', { name: 'Schließen' }).first().click();
     await map.getByRole('button', { name: `${id}, Regina: Weltkarte öffnen` }).click();
     // Wieder geöffnet: nur die Werte, keine Würfe.
@@ -109,4 +110,23 @@ test('Sektor: UWP und Handelscodes erscheinen auf der Karte, sobald sie beim Zoo
   await expect(world.locator('.hex-trade')).toHaveCount(0);
   await page.getByRole('button', { name: 'Vergrößern' }).click();
   await expect(world.locator('.hex-trade')).toHaveText('Ag Ni');
+});
+
+test('Sektor: Eine ältere Welt ohne Temperatur würfelt sie auf der Weltkarte nach', async ({ page }) => {
+  await page.goto('/');
+  const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
+  const file = { format: 'solo-rpg-engine/kampagne', version: 1, campaign: { name: 'Alte Welt', odds: 'medium', characters: [], log: [], hexes: [regina] } };
+  await page.getByRole('banner').getByRole('button', { name: /^Kampagne / }).click();
+  await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Kampagnen wechseln und verwalten' }).click();
+  await page.getByRole('dialog', { name: 'Kampagnen' }).locator('input[type=file]').setInputFiles({ name: 'welt.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
+  await expect(page.getByRole('dialog', { name: 'Kampagnen' })).toBeHidden();
+  await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
+  await page.getByRole('group', { name: 'Karte des Subsektors' }).getByRole('button', { name: '0101, Regina: Weltkarte öffnen' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Regina · 0101' });
+  // Eine fertige Welt lässt sich nicht verwerfen, auch wenn sie noch etwas zu würfeln hat.
+  await expect(dialog.getByRole('button', { name: 'Verwerfen' })).toHaveCount(0);
+  await dialog.locator('.generation-main').click();
+  await expect(dialog.getByRole('article', { name: 'Welt' })).toContainText(/Temperatur(Gefroren|Kalt|Gemäßigt|Heiß|Kochend)/);
+  await expect(dialog.getByRole('article', { name: 'Welt' })).toContainText('C788545-7');
+  await expect(dialog.locator('.generation-main')).toHaveCount(0);
 });

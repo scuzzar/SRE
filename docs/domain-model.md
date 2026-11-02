@@ -46,11 +46,11 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > nur noch der Verwaltung. Neu im Bild: `Campaign.focus`; `Task.for` ist jetzt abgeleitet
 > (`/for`). Der UI-Entwurf dazu liegt unter [`ui-entwurf/charakter-leiste/`](ui-entwurf/charakter-leiste/).
 >
-> **Entwurf, wartet auf Freigabe** (2. November 2026): die Temperatur als zusätzlicher Wurf der
+> Am 2. November 2026 freigegeben: die Temperatur als zusätzlicher Wurf der
 > Weltenerschaffung nach Mongoose Traveller 2e, nach der Atmosphäre und vor der Hydrographie, die
 > bei heißen Welten einen Malus bekommt (siehe *Weltenerschaffung*, Schritt 4 und 5). Neu im Bild:
 > `Hex.temperature`, `WorldRollKind.temperature`, `UwpDigit.temperatureDm` und als Referenzdaten
-> `Temperature` mit `hydroDm`. Alle Fragen dazu sind geklärt.
+> `Temperature` mit `hydroDm`.
 >
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen, die drei Namen sowie die Themen-Tafeln NSC, NSC-Aktionen,
@@ -531,10 +531,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   einem Sektor und eine fertige Welt wieder löschen.
 
 ## Wo der Code noch nicht folgt
-
-- **Temperatur.** Der Wurf, `Hex.temperature`, die Tabelle `Temperature` und
-  `UwpDigit.temperatureDm` und der Wasser-DM fehlen im Code noch (Entwurf, siehe oben), ebenso
-  Mongoose Traveller als Quelle auf dem „Über“-Bildschirm (siehe README, *Rechtlicher Hinweis*).
 
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
