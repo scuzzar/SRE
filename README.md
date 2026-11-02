@@ -297,7 +297,7 @@ Diese Punkte werden als Nächstes gemeinsam geklärt:
 
 ## Rechtlicher Hinweis
 
-Classic Traveller ist ein Markenzeichen von Far Future Enterprises. Mythic Game Master Emulator ist ein Produkt von Word Mill Games. Game Master's Apprentice ist ein Produkt von Larcenous Designs, LLC; die Web-Version stammt von James Turner. Dieses Projekt ist ein inoffizielles Fan-Projekt und wird kostenlos angeboten.
+Classic Traveller ist ein Markenzeichen von Far Future Enterprises. Mongoose Traveller ist ein Produkt von Mongoose Publishing. Mythic Game Master Emulator ist ein Produkt von Word Mill Games. Game Master's Apprentice ist ein Produkt von Larcenous Designs, LLC; die Web-Version stammt von James Turner. Dieses Projekt ist ein inoffizielles Fan-Projekt und wird kostenlos angeboten.
 
 Was das für die Inhalte der App heißt (Stand der Prüfung: Oktober 2026; keine Rechtsberatung):
 
@@ -306,5 +306,6 @@ Was das für die Inhalte der App heißt (Stand der Prüfung: Oktober 2026; keine
 | **Mythic** (Word Mill Games, Tana Pigeon) | Den **Text** von Mythic GME 2e und weiteren Mythic-Produkten, auch die Tabellen (Fate Chart, Zufallsereignisse, Bedeutungstabellen); Übersetzen und Anpassen ist erlaubt. | Lizenz [CC BY-NC](https://wordmillgames.com/license.html): nicht kommerziell, Quellenangabe (Produkt, Autorin, Link zu Word Mill Games), Hinweis auf Änderungen, nicht als „offiziell“ ausgeben. Grafik und Gestaltung der Bücher sind nicht abgedeckt. Die Mythic-Daten behalten diese Lizenz, auch wenn der Code eine andere hat. In der App sind das die Einträge `*.mythic.*` in `src/data/sections.json` und alles in `src/data/mythic-tables.json`. |
 | **Game Master's Apprentice** (Larcenous Designs) | Nur den **Aufbau** der Karte (Bereiche und Felder). | Die Karteninhalte sind geschützt und nur mit Erlaubnis von Larcenous Designs nutzbar. Bis dahin füllen wir die Felder mit eigenen Einträgen. |
 | **Classic Traveller** (Far Future Enterprises) | Die **Mechanik**: Würfe, DMs, Abläufe als Programm. | Nach der Fan-Policy von FFE: kostenlos, Copyright- und Markenhinweis in der App, Regeltexte nicht über etwa eine Seite hinaus abschreiben. Vor einer Veröffentlichung die aktuelle Policy prüfen. |
+| **Mongoose Traveller 2e** (Mongoose Publishing) | Nur die **Mechanik** einzelner Regeln, zurzeit die Temperatur einer Welt und ihr Malus auf die Hydrographie (Core Rulebook S. 251–252). | Fair-Use-Policy für Traveller: kostenlos, nicht kommerziell; eigene deutsche Texte statt Übersetzung des Regeltexts, keine Bilder aus den Büchern. Quelle auf dem „Über“-Bildschirm nennen. Vor einer Veröffentlichung den aktuellen Wortlaut der Policy prüfen. |
 
 Die Quellenangaben stehen schon in Version 1 in der App, auf einem „Über“-Bildschirm.

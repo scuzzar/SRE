@@ -535,16 +535,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   DM −4 (kalter Rand). Ohne Sternsystem weiß die App nicht, wo die Welt liegt. Empfehlung:
   vorerst weglassen; kommt später mit dem Sternsystem oder als Wahl vor dem Wurf. Davon hängt ab,
   ob `Hex` ein Feld für die Lage in der Zone braucht.
-- **Mongoose als zweite Regelquelle.** Bisher nennt der rechtliche Hinweis der README nur Classic
-  Traveller. Die Fair-Use-Policy von Mongoose bzw. Far Future erlaubt nach dem, was sich finden
-  ließ, kostenlose Fan-Werke, der aktuelle Wortlaut ist aber noch zu prüfen. Empfehlung: eine
-  Zeile für Mongoose Traveller 2e in die Tabelle (nur die Mechanik, eigene Texte, kein Bild) und
-  die Quelle auf „Über“ nennen.
 
 ## Wo der Code noch nicht folgt
 
 - **Temperatur.** Der Wurf, `Hex.temperature`, die Tabelle `Temperature` und
-  `UwpDigit.temperatureDm` und der Wasser-DM fehlen im Code noch (Entwurf, siehe oben).
+  `UwpDigit.temperatureDm` und der Wasser-DM fehlen im Code noch (Entwurf, siehe oben), ebenso
+  Mongoose Traveller als Quelle auf dem „Über“-Bildschirm (siehe README, *Rechtlicher Hinweis*).
 
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
