@@ -88,6 +88,10 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > flüchtig der Angriff in Vorbereitung (`Attack`), im Log das Angriffsergebnis (`AttackResult`)
 > und der Schadenswurf (`DamageRoll`).
 >
+> **Entwurf, noch nicht freigegeben** (3. November 2026): **Aufenthaltsort, Gruppenkasse, Shop und
+> Munition** (siehe dort). Neu im Bild: `Campaign.location`, `Campaign./funds`, `Booking` mit
+> `BookingKind`, `Hex./offer`, `Possession.rounds` und an der Waffe `rounds`, `law` und `ammo`.
+>
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen, dazu die drei Wurffelder sowie die Themen-Tafeln NSC
 > (mit den sechs Namen), NSC-Aktionen, Welt (mit Schiff), Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
@@ -160,6 +164,15 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Rüstungsklasse | `ArmorClass` | Was das Ziel trägt: Nothing, Jack, Mesh, Cloth, Reflec, Ablat, Combat |
 | Reichweite | `Range` | Close, Short, Medium, Long, Very Long |
 | Waffe in der Hand | `Character.wields` | Die Waffe, die ein Charakter gerade führt; keine heißt Hände |
+| Aufenthaltsort | `Campaign.location` | Die Welt, auf der die Gruppe gerade ist; dort kauft sie ein |
+| Gruppenkasse | `Campaign./funds` | Das gemeinsame Geld der Gruppe in Cr, die Summe aller Buchungen |
+| Buchung | `Booking` | Eine Bewegung der Gruppenkasse: Einnahme, Ausgabe, Einzahlung, Auszahlung oder Kauf |
+| Art der Buchung | `BookingKind` | income (Einnahme, z. B. Belohnung), expense (Ausgabe), deposit (Einzahlung eines Charakters), payout (Auszahlung an einen Charakter), purchase (Kauf) |
+| Angebot | `Hex./offer` | Was man auf der Welt kaufen kann: nach TL und Gesetz der Welt |
+| Shop | (Reiter „Shop“) | Der Screen für Kasse und Einkauf auf dem Aufenthaltsort |
+| Magazin | `Weapon.ammo` | Der Gegenstand, der eine Schusswaffe lädt, z. B. Rifle Ammo (20 rds) oder LC Power Pack |
+| Schuss im Magazin | `Possession.rounds`, `Weapon.rounds` | Wie viele Schuss eine Schusswaffe gerade geladen hat bzw. voll fasst |
+| Verboten ab Gesetz | `Weapon.law` | Ab dieser Gesetzesstufe ist die Waffe verboten (S. 14), z. B. Body Pistol ab 1 |
 | Angriff | `Attack` | Ein Angriff, solange er für den Charakter oben vorbereitet wird |
 | Angriffsergebnis | `AttackResult` | Ein gewürfelter Angriff: Treffer oder nicht |
 | Schadenswurf | `DamageRoll` | Der Wurf auf den Schaden eines Treffers, z. B. 3W6 = 11 |
@@ -405,6 +418,61 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Später**: DMs des Verteidigers (Parieren, Ausweichen, Deckung), Zubehör, Dunkelheit,
     Überraschung, Autofeuer, Schrot, geschwächte Hiebe, die eigene Rüstung eines Charakters, Angriffe
     auf Charaktere und Schaden an Attributen verteilen (Bewusstlosigkeit, Tod), Munition.
+- **Aufenthaltsort.** Die Gruppe, also alle Charaktere der Kampagne, ist immer an höchstens einem
+  Ort (`location`): einer fertigen Welt des Subsektors. Man setzt ihn auf der Weltkarte („Gruppe ist
+  hier“); die Karte zeigt ihn. Eine neue Kampagne hat keinen. Ohne Aufenthaltsort gibt es keinen
+  Einkauf. Wird die Welt verworfen (das geht heute nicht), fällt er weg.
+- **Gruppenkasse.** Die Gruppe hat ein gemeinsames Konto. Sein Stand (`/funds`) ist die Summe aller
+  Buchungen (`bookings`), in der Reihenfolge, in der sie entstanden sind; eine neue Kampagne beginnt
+  mit Cr 0 und ohne Buchung.
+  - Jede Buchung hält Zeitpunkt, Art (`kind`) und Betrag (`amount`, ganze Cr, positiv für Geld in
+    die Kasse, negativ für Geld hinaus) fest, dazu freiwillig einen Text (`text`, z. B. „Belohnung
+    von Dr. Halvek“).
+  - *Einnahme* (`income`) und *Ausgabe* (`expense`) gibt man frei ein, mit Betrag und Text.
+  - *Einzahlung* (`deposit`) nimmt Credits eines Charakters (`for`) in die Kasse, *Auszahlung*
+    (`payout`) gibt Geld aus der Kasse an einen Charakter; seine `credits` ändern sich um denselben
+    Betrag. Ein Charakter zahlt nie mehr ein, als er hat.
+  - *Kauf* (`purchase`) siehe *Shop*.
+  - Die Kasse wird nie negativ: Ausgabe, Auszahlung und Kauf gehen nur bis zum Stand.
+  - Buchungen werden nur angehängt, nie geändert oder gelöscht; einen Fehler bucht man zurück
+    (eine Gegenbuchung mit dem umgekehrten Betrag).
+  - Die Kampagnendatei enthält Aufenthaltsort und Buchungen; beim Import muss jede Buchung zu ihrer
+    Art passen und die Kasse nach keiner Buchung negativ sein.
+- **Shop.** Im Reiter *Shop* kauft die Gruppe auf ihrem Aufenthaltsort ein, aus der Gruppenkasse.
+  - **Angebot** (`/offer`): jeder Gegenstand aus der Liste mit Preis, dessen TL höchstens der TL der
+    Welt ist (S. 23: „TL is the minimum technological level at which the item is available“), ohne
+    Schiffe und Mitgliedschaften. Waffen, die auf der Welt verboten sind, gibt es nicht zu kaufen:
+    Eine Waffe ist verboten, wenn das Gesetz der Welt mindestens `law` ist (S. 14); ihr Magazin
+    ebenso. Der Shop zeigt sie ausgegraut mit dem Grund („verboten ab Gesetz 5“).
+  - Die Verbote nach S. 14: ab 1 Body Pistol; ab 2 Laser Carbine und Laser Rifle; ab 3 Automatic
+    Rifle; ab 4 Submachinegun; ab 5 Automatic Pistol und Revolver; ab 6 alle übrigen Schusswaffen
+    außer der Shotgun (Carbine, Rifle); ab 7 Shotgun; ab 8 alle Klingen außer dem Dagger; ab 9
+    (Waffen außerhalb der eigenen Wohnung verboten) auch Dagger, Club und Cudgel. Rüstungen und alles
+    andere verbietet das Gesetz nicht.
+  - **Preis** ist der Preis aus den Charts, ohne Aufschlag: Classic Traveller kennt für Ausrüstung
+    keine Preisänderung je Welt; die Preis-DMs auf S. 22 gelten nur für Handelsgüter in Tonnen.
+  - **Kaufen**: Man wählt einen Gegenstand, eine Anzahl (1 oder mehr; mit `once` genau 1) und den
+    Charakter, der ihn bekommt (einen Lebenden). Der Kauf ist eine Buchung `purchase` mit
+    `amount` = −Preis × Anzahl, `bought` (Gegenstand), `count` (Anzahl), `for` (Charakter) und
+    `in` (die Welt); der Gegenstand kommt in seinen Besitz. Er geht nur, wenn die Kasse reicht.
+  - **Später**: Verkaufen, Preisänderungen nach Hausregel, die Industrie einer Welt, Schiffe kaufen,
+    Leistungen (Recharge, Refill) und Zubehör.
+- **Munition.** Eine Schusswaffe fasst `rounds` Schuss und lädt mit ihrem Magazin (`ammo`), nach
+  S. 4 und 23: Body Pistol 6, Automatic Pistol 15, Revolver 6, Carbine 10, Rifle 20, Automatic Rifle
+  20, Shotgun 10, Submachinegun 30 Schuss je Magazin; Laser Carbine 50 und Laser Rifle 100 Schuss je
+  Power Pack. Klingen und Hände haben keine.
+  - Wie viele Schuss eine Schusswaffe im Besitz gerade geladen hat, steht am Besitz (`rounds`, 0 bis
+    `Weapon.rounds`); fehlt das Feld, ist sie voll. Hat ein Charakter dieselbe Schusswaffe mehrfach,
+    gilt die Zahl für die in der Hand.
+  - Eine gekaufte Schusswaffe kommt leer (`rounds` 0), wenn der Charakter sie noch nicht hatte;
+    Magazine kauft man dazu. Waffen aus der Abmusterung kommen geladen.
+  - Jeder Angriff mit einer Schusswaffe verbraucht einen Schuss. Mit 0 Schuss gibt es keinen Angriff.
+  - **Nachladen** im Reiter Kampf nimmt ein Magazin aus dem Besitz (Anzahl − 1, beim letzten ist der
+    Besitz weg) und setzt `rounds` auf voll; ein angebrochenes Magazin geht dabei verloren. Ohne
+    Magazin gibt es kein Nachladen.
+  - Der Angriff im Log bleibt, wie er ist; welcher Schuss es war, hält er nicht fest.
+  - **Später**: Automatisches Feuer (mehrere Schuss), angebrochene Magazine aufheben, Recharge der
+    Power Packs.
 - **Charakter oben.** Oben im Orakel-Screen steht ein Charakter der Kampagne, der **Charakter oben**
   (`focus`); für ihn würfelt man Proben, ohne den Screen zu wechseln. Wischen zeigt den nächsten
   bzw. vorigen. Infrage kommen nur Lebende, die nicht ausgeblendet sind, in der Reihenfolge der
@@ -450,7 +518,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Verdrängung, kein Gewicht; sie haben deshalb keins. Gibt es einen Gegenstand in mehreren TL
     (Vacc Suit TL 8 bis 13), ist jede Zeile ein eigener Gegenstand mit eigener Id. Keine Gegenstände sind
     Accessories („10 % of price“) und Recharge (eine Leistung).
-  - **Später**, mit Handel: die Rüstungsklasse einer Rüstung als Gegenstand, Länge der Waffen,
+  - **Später**, mit Handel: Verkaufen, die Rüstungsklasse einer Rüstung als Gegenstand, Länge der Waffen,
     Kaufen und Verkaufen, Gesamtgewicht. Schiffe sind vorerst nur ein
     Gegenstand; Schiffskarten kommen später. Alles, was nicht in der Liste steht, bleibt freier Text
     in der Ausrüstung (`equipment`).

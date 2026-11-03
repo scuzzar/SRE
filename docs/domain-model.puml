@@ -36,6 +36,21 @@ hide <<value>> stereotype
 ' Kampagne und Charaktere
   class Campaign {
     name: string
+    /funds: number
+  }
+  class Booking {
+    at: datetime
+    kind: BookingKind
+    amount: number
+    count: number [0..1]
+    text: string [0..1]
+  }
+  enum BookingKind <<value>> {
+    income
+    expense
+    deposit
+    payout
+    purchase
   }
   class Character {
     name: string
@@ -60,6 +75,7 @@ hide <<value>> stereotype
   }
   class Possession {
     count: number
+    rounds: number [0..1]
   }
 
 ' Charaktererschaffung und Lebenslauf
@@ -278,6 +294,8 @@ hide <<value>> stereotype
     advantageous: number
     advantageousDm: number
     wounds: number
+    rounds: number [0..1]
+    law: number [0..1]
   }
   class ArmorDm <<value>> {
     armor: ArmorClass
@@ -455,6 +473,12 @@ Campaign "1" *-- "*" Character : characters
 Campaign "*" --> "1" Odds : odds
 Campaign "0..1" --> "0..1" Character : focus
 Campaign "1" *-- "*" LogEntry : log {ordered}
+Campaign "*" --> "0..1" Hex : location
+Campaign "1" *-- "*" Booking : bookings {ordered}
+Booking "*" --> "0..1" Character : for
+Booking "*" --> "0..1" Item : bought
+Booking "*" --> "0..1" Hex : in
+Booking --> BookingKind
 
 ' Charaktererschaffung und Lebenslauf
 Campaign "1" *-- "0..1" Generation : generation
@@ -527,6 +551,8 @@ Character "*" --> "0..1" Weapon : wields
 
 ' Waffen (Referenzdaten)
 Weapon "*" --> "1" Skill : uses
+Weapon "*" --> "0..1" Item : ammo
+Hex "*" --> "*" Item : /offer
 Weapon --> AttackKind
 Weapon "1" *-- "7" ArmorDm : vsArmor {ordered}
 Weapon "1" *-- "5" RangeDm : atRange {ordered}
