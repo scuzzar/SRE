@@ -51,6 +51,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
   - **„Ziel“** an einem NSC: Der Charakter oben greift ihn an; seine Rüstung steht fest, in der Tabelle ist nur ihre Zeile wählbar.
   - **„Greift an“** an einem NSC: Er greift den Charakter oben an; die Tabelle zeigt seine Waffe gegen die getragene Rüstung des Charakters. Die Rüstung zieht man über der Tabelle an („Kira trägt …“), auch im Editor.
   - **Wunden** (S. 7): Ein Treffer mit Ziel verteilt seinen Schaden auf STR, DEX und END, jeder Würfel ganz auf ein Attribut, was über 0 geht, verfällt. Der erste Treffer geht ganz auf ein zufälliges Attribut; danach verteilt bei NSC die App, bei SC der Spieler (Würfel für Würfel antippen). Ein Attribut auf 0: bewusstlos, zwei: schwer verwundet, drei: tot; Bewusstlose greifen nicht an, ein toter SC steht unter „Verstorben“.
+  - **Heilung** (S. 7): **„Heilen“** am Charakter oben oder an einem NSC. *Aufwachen* nach 10 Minuten (ein Attribut auf 0: die Wunden gehen zur Hälfte zurück) bzw. 3 Stunden (schwere Wunde: die Werte bleiben, mindestens 1). *Behandlung* durch einen SC heilt ganz: leichte Wunden mit Medical-1 und Medical Kit in 30 Minuten, schwere mit Medical-3 in einer medizinischen Einrichtung in 5W6 Tagen. *3 Tage Ruhe* heilt nur leichte Wunden. Wer nicht behandeln kann, steht mit Grund in der Auswahl. Nach voller Heilung zählt der nächste Treffer wieder als erster. Jede Heilung steht im Log; löscht man sie, sind die Wunden wieder da.
   - **„Übernehmen“** macht einen NSC zum SC oder zum dauerhaften NSC, mit Waffe, Rüstung und Fertigkeit; dauerhafte NSC stehen im Charakter-Screen unter „NSC“. **„Beenden“** schließt die Begegnung.
 - **Munition**: Bei einer Schusswaffe zeigt der Kampf, wie viele Schuss im Magazin sind und wie viele Magazine der Charakter hat (Rifle 20 Schuss je Rifle Ammo, Laser mit Power Pack). Jeder Angriff verbraucht einen Schuss; leer gibt es keinen Angriff. **„Nachladen“** nimmt ein Magazin aus dem Besitz; ein angebrochenes geht dabei verloren. Waffen aus der Abmusterung kommen geladen, gekaufte leer.
 
@@ -90,7 +91,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 
 **UI-Entwurf:** Der klickbare Entwurf liegt in [docs/ui-entwurf](docs/ui-entwurf/).
 
-**Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf über Angriff und Wunden hinaus (Heilung, Verteidigung, Deckung, Überraschung, Moral, Kampfrunden), Kaufen und Verkaufen, Reisezonen, Sprungrouten, ganze Sektoren aus mehreren Subsektoren, Schiffe, NSC-Karten, Chaosfaktor, Szenen, Feinjustierung ±1, eigene Fertigkeiten, Hausregeln in der App einstellen.
+**Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf über Angriff und Wunden hinaus (Medical Drugs, Verteidigung, Deckung, Überraschung, Moral, Kampfrunden), Kaufen und Verkaufen, Reisezonen, Sprungrouten, ganze Sektoren aus mehreren Subsektoren, Schiffe, NSC-Karten, Chaosfaktor, Szenen, Feinjustierung ±1, eigene Fertigkeiten, Hausregeln in der App einstellen.
 
 ---
 

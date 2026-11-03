@@ -88,7 +88,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > flüchtig der Angriff in Vorbereitung (`Attack`), im Log das Angriffsergebnis (`AttackResult`)
 > und der Schadenswurf (`DamageRoll`).
 >
-> **Entwurf, noch nicht freigegeben** (3. November 2026): **Heilung** (siehe *Heilung*). Neu im Bild:
+> Ebenfalls am 3. November 2026 freigegeben: **Heilung** (siehe *Heilung*). Neu im Bild:
 > der Logeintrag `Recovery` mit `RecoveryKind` (Aufwachen, Behandlung, Ruhe), Patient (`for` bzw.
 > `npc`) und Behandelnder (`by`).
 >
@@ -1017,6 +1017,8 @@ Diagramm mit diesen Ausnahmen:
 - **`Card → Campaign : in`, `Task → Campaign : in` und `Attack → Campaign : in`** sind im Code
   kein Feld. Der Controller hält höchstens eine offene Karte, höchstens eine Probe und höchstens
   einen Angriff, alle immer zur offenen Kampagne; beim Wechsel der Kampagne verfallen sie. Damit ist die Multiplizität erfüllt.
+- **`Recovery.kind`** heißt im Code `how`, weil `kind` bei Logeinträgen schon die Art des Eintrags
+  ist (`'recovery'`).
 - **Beispielcharaktere.** Die allererste Kampagne auf einem Gerät beginnt mit Kira Vant und Jonas
   Reyl aus der README (`src/data/examples.json`), damit man gleich etwas ausprobieren kann. Das
   Modell sagt dazu nichts; die beiden lassen sich löschen, solange der Log nicht auf sie verweist.

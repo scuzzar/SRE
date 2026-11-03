@@ -472,6 +472,35 @@ describe('Begegnung und Kampf gegen NSC', () => {
     expect(game.snapshot().characters[0]).toMatchObject({ state: 'wounded' });
   });
 
+  it('heilt: ein bewusstloser NSC wacht auf; Ruhe heilt Kiras leichte Wunde; was nicht geht, steht im Kampf', async () => {
+    const { game, random } = await onRegina();
+    game.rollEncounter(15);
+    game.aimAt('n2');
+    game.chooseTarget('nothing', 'close');
+    random.queue.push(6, 6);
+    game.rollAttack();
+    random.queue.push(6, 0);
+    game.rollDamage();
+    game.closeResult();
+    expect(game.snapshot().combat!.encounter!.npcs[1]).toMatchObject({ state: 'unconscious', healing: { wake: true, treatable: true } });
+    game.recover('wake', 'n2');
+    expect(game.snapshot().combat!.encounter!.npcs[1]!.state).toBe('wounded');
+    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'recovery', how: 'wake', patient: game.snapshot().combat!.encounter!.npcs[1]!.name });
+    game.recover('treatment', 'n2', 'c1');
+    expect(game.snapshot().combat!.note).toMatch(/Kira Vant braucht Medical-1/);
+
+    game.attackBy('n2');
+    random.queue.push(6, 6);
+    game.rollAttack();
+    random.queue.push(2, 1, 0);
+    game.rollDamage();
+    game.closeResult();
+    expect(game.snapshot().combat!.healing).toMatchObject({ rest: true, serious: false });
+    game.recover('rest', undefined);
+    expect(game.snapshot().combat).toMatchObject({ state: 'unhurt', note: undefined });
+    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'recovery', how: 'rest', patient: 'Kira Vant' });
+  });
+
   it('übernimmt einen NSC als dauerhaften NSC; beenden lässt die Begegnung mit Log-Verweisen zurück', async () => {
     const { game, random } = await onRegina();
     game.rollEncounter(15);

@@ -167,7 +167,9 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
 /** Verweist ein Angriff im Log auf einen NSC dieser Begegnung? */
 function isEncounterInLog(campaign: Campaign, encounter: Encounter): boolean {
   const ids = new Set(encounter.npcs.map((n) => n.id));
-  return campaign.log.some((e) => e.kind === 'attack' && ((e.by !== undefined && ids.has(e.by)) || (e.against !== undefined && ids.has(e.against))));
+  return campaign.log.some(
+    (e) => (e.kind === 'attack' && ((e.by !== undefined && ids.has(e.by)) || (e.against !== undefined && ids.has(e.against)))) || (e.kind === 'recovery' && e.npc !== undefined && ids.has(e.npc)),
+  );
 }
 
 /** Beendet die laufende Begegnung; verweist der Log nicht auf sie, ist sie danach weg. */

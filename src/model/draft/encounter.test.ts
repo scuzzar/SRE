@@ -12,6 +12,9 @@ import {
   markDeath,
   needsWounding,
   npcCharacters,
+  recover,
+  recoveryOptions,
+  isFirstHit,
   rollDamage,
   rollEncounter,
   setHexes,
@@ -191,5 +194,88 @@ describe('Kampagnendatei mit Begegnung', () => {
     const json = JSON.parse(toCampaignFile(campaign));
     json.campaign.log.push({ kind: 'damage', at: '2026-11-03T10:00:00.000Z', of: 0, dice: [3, 4], to: ['STR', 'DEX'] });
     expect(() => fromCampaignFile(JSON.stringify(json), 'k2')).toThrow(/ganz auf ein Attribut/);
+  });
+});
+
+describe('Heilung', () => {
+  /** Kira mit Medical-1 und Medical Kit, Jonas mit Medical-3; zwei Thugs. */
+  function medics(): Campaign {
+    const campaign = thugs();
+    return {
+      ...campaign,
+      characters: campaign.characters.map((c) =>
+        c.id === 'c1'
+          ? { ...c, skills: [...c.skills, { of: 'medical', level: 1, retired: false }], possessions: [...c.possessions, { of: 'medical-kit', count: 1 }] }
+          : { ...c, skills: [...c.skills, { of: 'medical', level: 3, retired: false }] },
+      ),
+    };
+  }
+
+  /** Ein Treffer des Thugs n2 auf Jonas mit diesem Schaden auf diese Attribute. */
+  function hitJonas(campaign: Campaign, dice: number[], to: ('STR' | 'DEX' | 'END')[]): Campaign {
+    const focused = { ...campaign, focus: 'c2' };
+    const attack = attackBy(startAttack(focused), focused, 'n2');
+    let after = appendLog(focused, rollAttack(chooseTarget(focused, 'nothing', 'close', attack), focused, fixedRandom(6, 6), clock));
+    const of = after.log.length - 1;
+    after = appendLog(after, { kind: 'damage', at: clock.now(), of, dice, to });
+    return { ...after, focus: 'c1' };
+  }
+
+  it('Aufwachen nach einem Attribut auf 0: die Mitte zwischen verwundet und voll, abgerundet', () => {
+    // Jonas: STR 6, DEX 8, END 7. Erster Treffer 6 auf STR → 0, bewusstlos.
+    let campaign = hitJonas(medics(), [6, 6], ['STR', 'STR']);
+    expect(woundStateOf(campaign, { pc: 'c2' })).toBe('unconscious');
+    expect(recoveryOptions(campaign, { pc: 'c2' })).toMatchObject({ wake: true, rest: true, serious: false, treatable: true });
+    campaign = appendLog(campaign, recover(campaign, 'wake', { pc: 'c2' }, fixedRandom(), clock));
+    expect(woundsOf(campaign, { pc: 'c2' })).toEqual({ str: 3, dex: 0, end: 0 });
+    expect(woundStateOf(campaign, { pc: 'c2' })).toBe('wounded');
+    expect(() => recover(campaign, 'wake', { pc: 'c2' }, fixedRandom(), clock)).toThrow(/nicht bewusstlos/);
+  });
+
+  it('leichte Wunden: Behandlung mit Medical-1 und Medical Kit oder 3 Tage Ruhe heilt ganz; danach ist der nächste Treffer wieder ein erster', () => {
+    let campaign = hitJonas(medics(), [3, 2], ['DEX', 'DEX']);
+    expect(recoveryOptions(campaign, { pc: 'c2' }).healers).toEqual([
+      { id: 'c1', name: 'Kira Vant', able: true },
+      { id: 'c2', name: 'Jonas Reyl', able: false, why: 'braucht ein Medical Kit' },
+    ]);
+    const treated = recover(campaign, 'treatment', { pc: 'c2' }, fixedRandom(), clock, 'c1');
+    expect(treated).toMatchObject({ kind: 'recovery', how: 'treatment', for: 'c2', by: 'c1' });
+    expect(treated).not.toHaveProperty('dice');
+    expect(isFirstHit(campaign.log, { pc: 'c2' })).toBe(false);
+    campaign = appendLog(campaign, treated);
+    expect(woundsOf(campaign, { pc: 'c2' })).toEqual({ str: 0, dex: 0, end: 0 });
+    expect(isFirstHit(campaign.log, { pc: 'c2' })).toBe(true);
+    const rested = hitJonas(medics(), [1, 1], ['END', 'END']);
+    expect(woundsOf(appendLog(rested, recover(rested, 'rest', { pc: 'c2' }, fixedRandom(), clock)), { pc: 'c2' }).end).toBe(0);
+  });
+
+  it('schwere Wunden: Aufwachen auf mindestens 1, keine Ruhe, Behandlung nur mit Medical-3 in einer Einrichtung, 5W6 Tage', () => {
+    let campaign = hitJonas(medics(), [6, 6], ['STR', 'STR']);
+    campaign = hitJonas(campaign, [6, 6], ['DEX', 'DEX']);
+    expect(woundStateOf(campaign, { pc: 'c2' })).toBe('serious');
+    campaign = appendLog(campaign, recover(campaign, 'wake', { pc: 'c2' }, fixedRandom(), clock));
+    expect(woundsOf(campaign, { pc: 'c2' })).toEqual({ str: 5, dex: 7, end: 0 });
+    const options = recoveryOptions(campaign, { pc: 'c2' });
+    expect(options).toMatchObject({ serious: true, rest: false, treatable: true });
+    expect(options.healers[0]).toEqual({ id: 'c1', name: 'Kira Vant', able: false, why: 'braucht Medical-3' });
+    expect(() => recover(campaign, 'rest', { pc: 'c2' }, fixedRandom(), clock)).toThrow(/heilt ohne Behandlung nicht/);
+    expect(() => recover(campaign, 'treatment', { pc: 'c2' }, fixedRandom(), clock, 'c1')).toThrow(/Medical-3/);
+    expect(() => recover(campaign, 'treatment', { pc: 'c2' }, fixedRandom(), clock, 'c2')).toThrow(/Einrichtung/);
+    const treated = recover(campaign, 'treatment', { pc: 'c2' }, fixedRandom(3, 4, 5, 6, 2), clock, 'c2', true);
+    expect(treated.dice).toEqual([3, 4, 5, 6, 2]);
+    campaign = appendLog(campaign, treated);
+    expect(woundStateOf(campaign, { pc: 'c2' })).toBe('unhurt');
+    expect(fromCampaignFile(toCampaignFile(campaign), 'k2').log).toEqual(campaign.log);
+  });
+
+  it('auch ein NSC der laufenden Begegnung lässt sich wecken und behandeln, ein toter nicht', () => {
+    let campaign = medics();
+    const attack = aimAt(startAttack(campaign), campaign, 'n2');
+    campaign = appendLog(campaign, rollAttack(chooseTarget(campaign, 'nothing', 'close', attack), campaign, fixedRandom(6, 6), clock));
+    campaign = appendLog(campaign, rollDamage(campaign, 0, fixedRandom(6, 0), clock));
+    expect(woundStateOf(campaign, { npc: 'n2' })).toBe('unconscious');
+    campaign = appendLog(campaign, recover(campaign, 'wake', { npc: 'n2' }, fixedRandom(), clock));
+    campaign = appendLog(campaign, recover(campaign, 'treatment', { npc: 'n2' }, fixedRandom(), clock, 'c1'));
+    expect(woundStateOf(campaign, { npc: 'n2' })).toBe('unhurt');
   });
 });

@@ -87,6 +87,10 @@ import {
   woundedUpp,
   woundsOf,
   woundStateOf,
+  daysOf,
+  recoveryOptions,
+  type RecoveryKind,
+  type RecoveryOptions,
 } from '../model';
 import {
   attackerOf,
@@ -217,7 +221,7 @@ export interface OddsChoice {
   readonly selected: boolean;
 }
 
-export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | AttackItem | DamageItem | NoteItem;
+export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | NoteItem;
 
 /** Eine Notiz, oder mit `interprets` eine Deutung zum Ergebnis an dieser Stelle des Logs. */
 export interface NoteItem {
@@ -319,6 +323,20 @@ export interface DamageItem {
   readonly damage: number;
 }
 
+/** Eine Heilung: wer, wie, durch wen, wie lange, und wie die Werte danach sind. */
+export interface RecoveryItem {
+  readonly kind: 'recovery';
+  readonly at: string;
+  readonly how: RecoveryKind;
+  readonly patient: string;
+  readonly healer: string | undefined;
+  /** Bei einer schweren Wunde: 5W6 Tage. */
+  readonly days: number | undefined;
+}
+
+/** Was an Heilung geht, für die Anzeige. */
+export type HealingView = RecoveryOptions;
+
 /** Ein NSC der laufenden Begegnung, wie der Kampf ihn zeigt. */
 export interface NpcView {
   readonly id: string;
@@ -336,6 +354,8 @@ export interface NpcView {
   readonly state: WoundState;
   /** Übernommen als dieser Charakter. */
   readonly became: string | undefined;
+  /** Was an Heilung geht. */
+  readonly healing: HealingView;
   /** Das Ziel des Charakters oben. */
   readonly targeted: boolean;
   /** Er greift gerade den Charakter oben an. */
@@ -384,9 +404,10 @@ export interface CombatView {
   readonly weapons: readonly WeaponChoice[];
   /** Was der Charakter oben anziehen kann; `worn` ist die getragene. */
   readonly armors: readonly { readonly id: string; readonly label: string; readonly worn: boolean }[];
-  /** Zustand und UPP mit Wunden des Charakters oben. */
+  /** Zustand und UPP mit Wunden des Charakters oben, und was an Heilung geht. */
   readonly state: WoundState;
   readonly current: Upp;
+  readonly healing: HealingView;
   readonly weapon: {
     readonly id: string;
     readonly name: string;
@@ -731,6 +752,7 @@ function npcView(campaign: Campaign, npc: Npc, attack: Attack | undefined): NpcV
     current: fighter.upp,
     state: fighter.state,
     became: npc.became === undefined ? undefined : characterOf(campaign, npc.became).name,
+    healing: recoveryOptions(campaign, { npc: npc.id }),
     targeted: attack?.against === npc.id,
     attacking: attack?.by === npc.id,
   };
@@ -769,6 +791,7 @@ function combatView(campaign: Campaign, attack: Attack | undefined, log: readonl
     armors: armorsOf(character).map((id) => ({ id, label: itemLabel(itemOf(id)), worn: character.wears === id })),
     state: pc.state,
     current: pc.upp,
+    healing: recoveryOptions(campaign, { pc: character.id }),
     weapon: {
       id: weapon.id,
       name: weaponName(weapon.id),
@@ -898,6 +921,10 @@ function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
       return attackItem(campaign, entry, index);
     case 'damage':
       return damageItem(campaign, entry);
+    case 'recovery': {
+      const patient: Combatant = entry.for !== undefined ? { pc: entry.for } : { npc: entry.npc! };
+      return { kind: 'recovery', at: entry.at, how: entry.how, patient: nameOf(campaign, patient), healer: entry.by === undefined ? undefined : characterOf(campaign, entry.by).name, days: daysOf(entry) };
+    }
     case 'note':
       return { kind: 'note', at: entry.at, text: entry.text, interprets: entry.interprets };
   }

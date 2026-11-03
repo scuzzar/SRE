@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import type { CombatView, NpcView, Snapshot } from '../../controller';
+import type { CombatView, HealingView, NpcView, Snapshot } from '../../controller';
 import { armorText, attackText, characteristicLabel, damageDetail, hex, partLabel, rangeMeters, rangeShort, rangeText, signed, woundStateText } from '../format';
+import { CloseIcon } from '../icons';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { CombatIcon, DiceIcon } from '../icons';
@@ -14,22 +15,31 @@ import { CharacterStrip } from '../oracle/CharacterStrip';
  * Tabelle seine Waffe gegen die Rüstung des Charakters oben. Eine Zelle antippen wählt die
  * Reichweite; „Angreifen“ würfelt. Gerechnet wird im Model; die View zeigt nur.
  */
+/** Wen der Heilen-Dialog gerade zeigt: den Charakter oben oder einen NSC. Reine Anzeige. */
+interface Patient {
+  readonly npc: string | undefined;
+  readonly name: string;
+}
+
 export function CombatScreen({ view }: { view: Snapshot }) {
   const combat = view.combat;
+  const [patient, setPatient] = useState<Patient | undefined>(undefined);
+  const healing = patient && combat && (patient.npc === undefined ? combat.healing : combat.encounter?.npcs.find((n) => n.id === patient.npc)?.healing);
   return (
     <div className="screen">
       <CharacterStrip view={view} weapons />
       {combat ? (
         <>
           <section className="scroll combat-scroll" aria-label="Angriff">
-            <EncounterPanel combat={combat} />
-            <ArmorChips combat={combat} />
+            <EncounterPanel combat={combat} onHeal={setPatient} />
+            <ArmorChips combat={combat} onHeal={setPatient} />
             <WeaponHead combat={combat} />
             <AttackTable combat={combat} />
             <Recent combat={combat} />
           </section>
           <AttackDock combat={combat} />
           {combat.wounding && <WoundingDialog combat={combat} />}
+          {patient && healing && <HealDialog key={patient.npc ?? 'pc'} patient={patient} healing={healing} note={combat.note} onClose={() => setPatient(undefined)} />}
         </>
       ) : (
         <section className="scroll combat-scroll">
@@ -41,7 +51,7 @@ export function CombatScreen({ view }: { view: Snapshot }) {
 }
 
 /** Die laufende Begegnung mit ihren NSC, oder Würfeln bzw. Wählen einer neuen. */
-function EncounterPanel({ combat }: { combat: CombatView }) {
+function EncounterPanel({ combat, onHeal }: { combat: CombatView; onHeal: (patient: Patient) => void }) {
   const game = useGame();
   const encounter = combat.encounter;
   if (!encounter) {
@@ -88,14 +98,14 @@ function EncounterPanel({ combat }: { combat: CombatView }) {
       </p>
       <ol className="npc-list">
         {encounter.npcs.map((npc) => (
-          <NpcCard key={npc.id} npc={npc} />
+          <NpcCard key={npc.id} npc={npc} onHeal={() => onHeal({ npc: npc.id, name: npc.name })} />
         ))}
       </ol>
     </div>
   );
 }
 
-function NpcCard({ npc }: { npc: NpcView }) {
+function NpcCard({ npc, onHeal }: { npc: NpcView; onHeal: () => void }) {
   const game = useGame();
   // Ob die Wahl „als SC / als NSC“ offen ist, ist reine Anzeige.
   const [adopting, setAdopting] = useState(false);
@@ -128,6 +138,11 @@ function NpcCard({ npc }: { npc: NpcView }) {
           <button type="button" className="ghost compact" aria-pressed={npc.attacking} disabled={npc.state !== 'unhurt' && npc.state !== 'wounded'} onClick={() => game.attackBy(npc.id)}>
             Greift an
           </button>
+          {(npc.healing.wake || npc.healing.treatable) && (
+            <button type="button" className="ghost compact" onClick={onHeal}>
+              Heilen
+            </button>
+          )}
           {adopting ? (
             <>
               <button type="button" className="ghost compact" onClick={() => game.adoptNpc(npc.id, false)}>
@@ -149,7 +164,7 @@ function NpcCard({ npc }: { npc: NpcView }) {
 }
 
 /** Die getragene Rüstung des Charakters oben, und wie verwundet er ist. */
-function ArmorChips({ combat }: { combat: CombatView }) {
+function ArmorChips({ combat, onHeal }: { combat: CombatView; onHeal: (patient: Patient) => void }) {
   const game = useGame();
   const physical = (['str', 'dex', 'end'] as const).map((k) => `${k.toUpperCase()} ${hex(Math.max(0, combat.current[k]))}`);
   return (
@@ -168,9 +183,17 @@ function ArmorChips({ combat }: { combat: CombatView }) {
         ))}
       </div>
       {combat.state !== 'unhurt' && (
-        <p className={`combat-state state-${combat.state}`}>
-          {combat.character}: {woundStateText[combat.state]} · {physical.join(' · ')}
-        </p>
+        <div className="combat-state-row">
+          <p className={`combat-state state-${combat.state}`}>
+            {combat.character}: {woundStateText[combat.state]}
+            {combat.healing.serious ? ' (schwere Wunde)' : ''} · {physical.join(' · ')}
+          </p>
+          {(combat.healing.wake || combat.healing.treatable) && (
+            <button type="button" className="ghost compact" onClick={() => onHeal({ npc: undefined, name: combat.character })}>
+              Heilen
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
@@ -394,6 +417,76 @@ function WoundingDialog({ combat }: { combat: CombatView }) {
             Übernehmen
           </button>
         </div>
+      </section>
+    </div>
+  );
+}
+
+/** Heilen nach S. 7: Aufwachen, Behandlung durch einen SC, Ruhe. Was geht, sagt das Model. */
+function HealDialog({ patient, healing, note, onClose }: { patient: Patient; healing: HealingView; note: string | undefined; onClose: () => void }) {
+  const game = useGame();
+  const able = healing.healers.filter((h) => h.able);
+  const [healer, setHealer] = useState(able[0]?.id ?? '');
+  const [facility, setFacility] = useState(false);
+  const done = (how: 'wake' | 'treatment' | 'rest') => {
+    haptic('pick');
+    game.recover(how, patient.npc, how === 'treatment' ? healer : undefined, facility);
+    if (how !== 'wake') onClose();
+  };
+  return (
+    <div className="modal">
+      <section className="result heal" role="dialog" aria-modal="true" aria-labelledby="heal-title">
+        <div className="sheet-head" style={{ alignItems: 'center' }}>
+          <h2 id="heal-title" className="shop-buy-title">
+            {patient.name} heilen
+          </h2>
+          <button type="button" className="icon-button" aria-label="Schließen" onClick={onClose}>
+            <CloseIcon />
+          </button>
+        </div>
+        <p className="muted">{healing.serious ? 'Schwere Wunde: Sie heilt nur mit Behandlung (Medical-3, medizinische Einrichtung, 5W6 Tage).' : 'Leichte Wunde: Behandlung mit Medical-1 und Medical Kit (30 Minuten) oder 3 Tage Ruhe.'}</p>
+        {note && (
+          <p className="error" role="alert">
+            {note}
+          </p>
+        )}
+        {healing.wake && (
+          <button type="button" className="ghost" onClick={() => done('wake')}>
+            Aufwachen {healing.serious ? '(nach 3 Stunden; Werte bleiben, mindestens 1)' : '(nach 10 Minuten; halbe Wunden zurück)'}
+          </button>
+        )}
+        {healing.treatable && able.length === 0 && (
+          <p className="muted">Behandeln kann gerade niemand: {healing.healers.map((h) => `${h.name} ${h.why}`).join(', ')}.</p>
+        )}
+        {healing.treatable && able.length > 0 && (
+          <>
+            <label className="field">
+              <span>Behandelt von</span>
+              <select value={healer} onChange={(e) => setHealer(e.target.value)}>
+                {healing.healers.map((h) => (
+                  <option key={h.id} value={h.id} disabled={!h.able}>
+                    {h.name}
+                    {h.why ? ` – ${h.why}` : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {healing.serious && (
+              <label className="toggle">
+                <input type="checkbox" checked={facility} onChange={(e) => setFacility(e.target.checked)} />
+                <span>In einer medizinischen Einrichtung (Krankenhaus, Sick Bay)</span>
+              </label>
+            )}
+            <button type="button" className="primary" disabled={!healer || (healing.serious && !facility)} onClick={() => done('treatment')}>
+              Behandeln {healing.serious ? '(5W6 Tage)' : '(30 Minuten)'}
+            </button>
+          </>
+        )}
+        {healing.rest && (
+          <button type="button" className="ghost" onClick={() => done('rest')}>
+            3 Tage Ruhe
+          </button>
+        )}
       </section>
     </div>
   );

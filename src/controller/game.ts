@@ -23,6 +23,8 @@ import {
   rollEncounter,
   endEncounter,
   adoptNpc,
+  recover,
+  type RecoveryKind,
   type AttackResult,
   type DamageRoll,
   type PhysicalCharacteristic,
@@ -433,6 +435,22 @@ export class GameController {
   /** Beendet die laufende Begegnung. */
   endEncounter(): void {
     this.change(endEncounter(this.campaign), { attack: undefined, combatNote: undefined });
+  }
+
+  /**
+   * Heilt den Charakter oben oder einen NSC der laufenden Begegnung: Aufwachen, Ruhe oder Behandlung
+   * durch einen SC, bei einer schweren Wunde in einer medizinischen Einrichtung.
+   */
+  recover(how: RecoveryKind, npc: string | undefined, healer?: string, facility = false): void {
+    try {
+      const character = focusOf(this.campaign);
+      if (npc === undefined && !character) throw new DomainError('Es gibt keinen lebenden Charakter.');
+      const who = npc === undefined ? { pc: character!.id } : { npc };
+      this.change(appendLog(this.campaign, recover(this.campaign, how, who, this.deps.random, this.deps.clock, healer, facility)), { combatNote: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ combatNote: error.message });
+    }
   }
 
   /** Übernimmt einen NSC als SC oder als dauerhaften NSC. */

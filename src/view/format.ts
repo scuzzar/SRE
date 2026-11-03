@@ -1,5 +1,5 @@
-import type { AttackItem, CardItem, DamageItem, DmPart, LogItem, TaskItem } from '../controller';
-import type { ArmorClass, AttackKind, BookingKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
+import type { AttackItem, CardItem, DamageItem, DmPart, LogItem, RecoveryItem, TaskItem } from '../controller';
+import type { ArmorClass, AttackKind, BookingKind, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
 
@@ -39,6 +39,15 @@ export const woundStateText: Record<WoundState, string> = {
   serious: 'schwer verwundet',
   dead: 'tot',
 };
+
+export const recoveryText: Record<RecoveryKind, string> = { wake: 'Aufwachen', treatment: 'Behandlung', rest: 'Ruhe' };
+
+/** Eine Heilung in einer Zeile: „Jonas Reyl · Behandlung durch Kira Vant (30 Minuten)“. */
+export function recoveryLine(item: RecoveryItem): string {
+  const how = item.how === 'treatment' ? `Behandlung durch ${item.healer}` : recoveryText[item.how];
+  const time = item.how === 'wake' ? '' : item.how === 'rest' ? ' (3 Tage)' : item.days === undefined ? ' (30 Minuten)' : ` (${item.days} Tage)`;
+  return `${item.patient} · ${how}${time}`;
+}
 
 export const bookingText: Record<BookingKind, string> = {
   income: 'Einnahme',
@@ -257,6 +266,8 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
       return { head: item.success ? 'TREFFER' : 'DANEBEN', rest: attackTitle(item) };
     case 'damage':
       return { head: `Schaden ${item.damage}`, rest: `${item.weapon} · ${item.dice.join(' + ')}` };
+    case 'recovery':
+      return { head: 'Heilung', rest: recoveryLine(item) };
     case 'note':
       return { head: item.interprets === undefined ? 'Notiz' : 'Deutung', rest: item.text };
   }

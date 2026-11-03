@@ -5,7 +5,8 @@ import { DomainError } from './errors';
 import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, type PathKind } from './card-roll';
 import { checkDamageRoll, ATTACK_TARGET } from './combat';
 import { npcOf, type Encounter, type Npc } from './encounter';
-import { checkInterprets, physical, withQuestion, type AttackResult, type CardPick, type DamageRoll, type LogEntry } from './log';
+import { checkInterprets, physical, recoveryKinds, withQuestion, type AttackResult, type CardPick, type DamageRoll, type LogEntry, type Recovery } from './log';
+import { checkRecovery } from './wounds';
 import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, ranges, slotOfEntry, weaponOf } from './reference';
 import { characteristics } from './rules';
 import { bookingKinds, validateBookings, type Booking } from './shop';
@@ -62,6 +63,15 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     target: z.number().int(),
   }),
   z.object({ kind: z.literal('damage'), at, of: z.number().int(), dice: z.array(die).min(1).max(5), to: z.array(z.enum(physical)).optional() }),
+  z.object({
+    kind: z.literal('recovery'),
+    at,
+    how: z.enum(recoveryKinds),
+    for: z.string().optional(),
+    npc: z.string().optional(),
+    by: z.string().optional(),
+    dice: z.array(die).length(5).optional(),
+  }),
   z.object({ kind: z.literal('note'), at, text: z.string().trim().min(1), interprets: z.number().int().optional() }),
 ]);
 
@@ -299,6 +309,8 @@ function logEntry(entry: z.infer<typeof LogEntrySchema>): LogEntry {
       return stripped(entry) as AttackResult;
     case 'damage':
       return stripped(entry) as DamageRoll;
+    case 'recovery':
+      return stripped(entry) as Recovery;
     case 'dice':
       return entry;
     case 'note': {
@@ -364,6 +376,9 @@ function validate(campaign: Campaign): void {
       }
       case 'damage':
         checkDamageRoll(campaign.log, entry, index);
+        break;
+      case 'recovery':
+        checkRecovery(campaign, entry, index);
         break;
       case 'card':
         if (entry.items.length === 0 && entry.bell === undefined && entry.scatter === undefined && entry.map === undefined) {

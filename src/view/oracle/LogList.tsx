@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 import type { DamageItem, LogItem, NoteItem } from '../../controller';
-import { attackTitle, clockTime, damageDetail, mapText, partLabel, pickText, quoted, scatterText, taskDetail, taskTitle } from '../format';
+import { attackTitle, clockTime, damageDetail, recoveryLine, recoveryText, mapText, partLabel, pickText, quoted, scatterText, taskDetail, taskTitle } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { MapIconSvg, ScatterRose } from './CardRollIcons';
@@ -265,6 +265,8 @@ function kicker(item: LogItem): string {
       return 'Angriff';
     case 'damage':
       return 'Schaden';
+    case 'recovery':
+      return `Heilung · ${recoveryText[item.how]}`;
     case 'note':
       return item.interprets === undefined ? 'Notiz' : 'Deutung';
   }
@@ -357,6 +359,8 @@ function EntryBody({ item }: { item: LogItem }) {
       );
     case 'damage':
       return <span className="entry-detail">{damageDetail(item)}</span>;
+    case 'recovery':
+      return <span style={{ fontSize: 14, fontWeight: 600 }}>{recoveryLine(item)}</span>;
     case 'note':
       return <p className="note-text">{item.text}</p>;
   }

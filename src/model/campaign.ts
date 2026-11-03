@@ -252,7 +252,9 @@ export function activeSkills(character: Character): readonly SkillLevel[] {
 
 /** Verweist ein Logeintrag auf den Charakter? Dann wird er nie gelöscht. */
 export function isInLog(campaign: Campaign, id: CharacterId): boolean {
-  return campaign.log.some((e) => (e.kind === 'task' && e.for === id) || (e.kind === 'attack' && (e.for === id || e.victim === id)));
+  return campaign.log.some(
+    (e) => (e.kind === 'task' && e.for === id) || (e.kind === 'attack' && (e.for === id || e.victim === id)) || (e.kind === 'recovery' && (e.for === id || e.by === id)),
+  );
 }
 
 /** Verweist ein Logeintrag auf die Fertigkeitsstufe? Dann wird sie nie gelöscht. */

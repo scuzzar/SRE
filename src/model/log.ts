@@ -10,7 +10,7 @@ import { roll2d6, sum, type Characteristic, type Dice } from './rules';
  * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei Probe und Angriff DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Note;
+export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | Note;
 
 /** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
 export type LogResult = Exclude<LogEntry, Note>;
@@ -97,6 +97,24 @@ export interface DamageRoll extends LogEntryBase {
   readonly dice: readonly number[];
   /** Bei einem Treffer mit Ziel: je Würfel das Attribut, auf das er geht. */
   readonly to?: readonly PhysicalCharacteristic[];
+}
+
+/** Aufwachen, Behandlung, Ruhe (S. 7). */
+export const recoveryKinds = ['wake', 'treatment', 'rest'] as const;
+export type RecoveryKind = (typeof recoveryKinds)[number];
+
+/**
+ * Eine Heilung: nimmt Wunden eines SC (`for`) oder NSC (`npc`) zurück, genau eines. Bei der
+ * Behandlung der Behandelnde (`by`), bei einer schweren Wunde die 5W6 Tage (`dice`). `how` ist im
+ * Modell `kind`.
+ */
+export interface Recovery extends LogEntryBase {
+  readonly kind: 'recovery';
+  readonly how: RecoveryKind;
+  readonly for?: CharacterId;
+  readonly npc?: string;
+  readonly by?: CharacterId;
+  readonly dice?: readonly number[];
 }
 
 /** Die körperlichen Attribute, die Wunden nehmen (S. 7). */
