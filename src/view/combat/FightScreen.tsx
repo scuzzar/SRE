@@ -8,8 +8,8 @@ import { DicePairView, THROW_MS, useTimeline } from '../Dice';
 import type { Patient } from './CombatScreen';
 
 /**
- * Die Kampfsimulation einer laufenden Begegnung: oben Runde, Entfernung und Überraschung, darunter
- * die Kämpfer in Zugreihenfolge. Wer am Zug ist, wählt nur ein Ziel und würfelt; Rüstung ist die des
+ * Die Kampfsimulation einer laufenden Begegnung: oben fest Runde, Reaktion, Überraschung und
+ * Entfernung, darunter scrollen die NSC in Zugreihenfolge. Wer am Zug ist, wählt nur ein Ziel und würfelt; Rüstung ist die des
  * Ziels, Reichweite die Entfernung. Nach einem Treffer der Schaden, dann der nächste Zug.
  */
 export function FightScreen({ combat, onHeal }: { combat: CombatView; onHeal: (patient: Patient) => void }) {
@@ -27,14 +27,16 @@ export function FightScreen({ combat, onHeal }: { combat: CombatView; onHeal: (p
   };
   return (
     <>
-      <section className="scroll combat-scroll fight" aria-label="Kampfsimulation">
+      <header className="fight-top">
         <FightHead sim={sim} />
+        <RangeBar sim={sim} />
+      </header>
+      <section className="scroll combat-scroll fight" aria-label="Kampfsimulation">
         {combat.note && (
           <p className="error" role="alert">
             {combat.note}
           </p>
         )}
-        <RangeBar sim={sim} />
         <PcHeal sim={sim} character={combat.character} onHeal={onHeal} />
         <Fighters sim={sim} onHeal={onHeal} selection={selection} />
         <Recent combat={combat} />
@@ -109,9 +111,13 @@ function useLongPress(onHold: () => void) {
   };
 }
 
+/**
+ * Knapp, damit die NSC Platz haben: Runde und Beenden, darunter in einer Zeile Reaktion und wer
+ * zuerst zieht. Antippen zeigt die Übersicht mit allen Würfen.
+ */
 function FightHead({ sim }: { sim: SimView }) {
   const game = useGame();
-  const surprise = sim.pcSurprise && sim.npcSurprise ? `Überraschung: SC ${sim.pcSurprise.die}${signed(sim.pcSurprise.dm)} gegen NSC ${sim.npcSurprise.die}${signed(sim.npcSurprise.dm)}` : undefined;
+  const surprise = sim.pcSurprise && sim.npcSurprise ? (sim.surprise ? `Überraschung: ${sideName[sim.surprise]}` : `${sideName[sim.first]} ziehen zuerst`) : undefined;
   return (
     <div className="fight-head">
       <div className="encounter-head">
@@ -123,15 +129,9 @@ function FightHead({ sim }: { sim: SimView }) {
         </button>
       </div>
       <button type="button" className="encounter-reaction link" onClick={() => game.showEncounterIntro()}>
-        Reaktion {sim.reactionDice ? `${sim.reactionDice[0]} + ${sim.reactionDice[1]}${sim.reactionDm ? ` ${signed(sim.reactionDm)}` : ''} = ` : ''}
-        {sim.reaction}: {sim.reactionText}
+        Reaktion {sim.reaction}: {sim.reactionText}
+        {surprise ? ` · ${surprise}` : ''}
       </button>
-      {surprise && (
-        <p className="encounter-reaction">
-          {surprise}
-          {sim.surprise ? ` – die ${sideName[sim.surprise]} haben Überraschung und ziehen in Runde 1 allein.` : ` – die ${sideName[sim.first]} ziehen zuerst.`}
-        </p>
-      )}
       {sim.defeated && <p className="fight-decided">Entschieden: Die {sideName[sim.defeated]} sind außer Gefecht.</p>}
     </div>
   );

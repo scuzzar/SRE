@@ -4366,10 +4366,36 @@ button:disabled {
 
 /* --- Kampfsimulation ------------------------------------------------------------------------ */
 
+.fight-top {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--rule);
+}
+
 .fight-head {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+}
+
+.fight-top .encounter-head .ghost.compact {
+  min-height: 30px;
+  padding: 0 10px;
+}
+
+.fight-top .encounter-reaction {
+  font-size: 12px;
+}
+
+.fight-top .fight-range {
+  gap: 2px;
+}
+
+.fight-top .segmented button {
+  min-height: 34px;
 }
 
 .fight-decided {
