@@ -71,7 +71,6 @@ import {
   type Upp,
   type Combatant,
   type Fighter,
-  type Npc,
   type PhysicalCharacteristic,
   type WoundState,
   armorsOf,
@@ -88,6 +87,16 @@ import {
   woundsOf,
   woundStateOf,
   daysOf,
+  DomainError,
+  defeatedSide,
+  fightOrder,
+  firstSide,
+  surpriseOf,
+  turnOf,
+  type Encounter,
+  type FightSlot,
+  type Side,
+  type Weapon,
   recoveryOptions,
   type RecoveryKind,
   type RecoveryOptions,
@@ -95,6 +104,7 @@ import {
 import {
   attackerOf,
   attackTable,
+  turnAttack,
   defenderOf,
   type Wounding,
   canConfirm,
@@ -337,29 +347,62 @@ export interface RecoveryItem {
 /** Was an Heilung geht, für die Anzeige. */
 export type HealingView = RecoveryOptions;
 
-/** Ein NSC der laufenden Begegnung, wie der Kampf ihn zeigt. */
-export interface NpcView {
+/** Ein Kämpfer der Simulation: SC oder NSC. */
+export interface FighterView {
   readonly id: string;
+  readonly side: Side;
   readonly name: string;
   readonly leader: boolean;
   readonly weapon: string;
-  /** Die Fertigkeit mit Stufe, z. B. „Foil-2“. */
   readonly skill: string;
-  /** Die getragene Rüstung, wenn er eine hat. */
   readonly armor: string | undefined;
   readonly armorClass: ArmorClass;
   readonly upp: Upp;
-  /** Das UPP mit Wunden. */
   readonly current: Upp;
   readonly state: WoundState;
-  /** Übernommen als dieser Charakter. */
-  readonly became: string | undefined;
-  /** Was an Heilung geht. */
-  readonly healing: HealingView;
-  /** Das Ziel des Charakters oben. */
+  /** In dieser Runde schon dran gewesen. */
+  readonly acted: boolean;
+  readonly turn: boolean;
+  /** Kann Ziel dessen sein, der am Zug ist. */
+  readonly targetable: boolean;
   readonly targeted: boolean;
-  /** Er greift gerade den Charakter oben an. */
-  readonly attacking: boolean;
+  readonly healing: HealingView;
+}
+
+/** Die Kampfsimulation einer laufenden Begegnung. */
+export interface SimView {
+  readonly name: string;
+  readonly reaction: number;
+  readonly reactionText: string;
+  readonly round: number;
+  readonly range: Range;
+  readonly rangeDice: readonly number[] | undefined;
+  readonly terrain: { readonly name: string; readonly dm: number } | undefined;
+  readonly surprise: Side | undefined;
+  readonly first: Side;
+  readonly pcSurprise: { readonly die: number; readonly dm: number } | undefined;
+  readonly npcSurprise: { readonly die: number; readonly dm: number } | undefined;
+  /** Alle Kämpfer in Zugreihenfolge. */
+  readonly fighters: readonly FighterView[];
+  /** Wer am Zug ist, mit Waffe und, wenn ein Ziel gewählt ist, nötigem Wurf. */
+  readonly turn:
+    | {
+        readonly id: string;
+        readonly side: Side;
+        readonly name: string;
+        readonly weapon: string;
+        readonly target: string | undefined;
+        readonly odds: { readonly dm: number; readonly need: number; readonly chance: number; readonly parts: readonly DmPart[] } | undefined;
+        /** Reicht die Waffe auf die Entfernung? */
+        readonly reaches: boolean;
+        /** Bei einer Schusswaffe eines SC. */
+        readonly ammo: { readonly rounds: number; readonly capacity: number; readonly magazines: number } | undefined;
+      }
+    | undefined;
+  /** Ist eine Partei außer Gefecht, ist der Kampf entschieden. */
+  readonly defeated: Side | undefined;
+  /** Je Entfernung, ob die Waffe dessen am Zug hinreicht. */
+  readonly ranges: readonly { readonly range: Range; readonly reaches: boolean }[];
 }
 
 /** Schaden an einem SC, den der Spieler auf STR, DEX und END verteilt. */
@@ -436,8 +479,10 @@ export interface CombatView {
   readonly ammo: { readonly rounds: number; readonly capacity: number; readonly magazine: string; readonly magazines: number } | undefined;
   /** Kann der Angreifer angreifen (nicht bewusstlos, Ziel nicht tot, Magazin nicht leer)? */
   readonly canAttack: boolean;
-  /** Die laufende Begegnung. */
-  readonly encounter: { readonly name: string; readonly reaction: number; readonly reactionText: string; readonly npcs: readonly NpcView[] } | undefined;
+  /** Die laufende Begegnung: Mit ihr zeigt der Reiter die Kampfsimulation statt der Waffentabelle. */
+  readonly sim: SimView | undefined;
+  /** Die Geländearten zum Anlegen einer Begegnung. */
+  readonly terrains: readonly { readonly id: string; readonly name: string; readonly dm: number }[];
   /** Eine Begegnung braucht einen Aufenthaltsort. */
   readonly canEncounter: boolean;
   /** Die Arten der Random Encounter List, zum Wählen. */
@@ -592,6 +637,8 @@ export interface ControllerState {
   readonly wounding: Wounding | undefined;
   /** Was beim Würfeln einer Begegnung herauskam, wenn es keine gibt, oder was nicht ging. */
   readonly combatNote: string | undefined;
+  /** Das Ziel dessen, der in der Kampfsimulation am Zug ist (Id eines SC oder NSC). */
+  readonly simTarget: string | undefined;
   /** Der Charakter, dessen Details im Charakter-Screen aufgeklappt sind. */
   readonly opened: string | undefined;
   /** Die Leiste mit dem Charakter oben ist eingeklappt; das Gerät merkt es sich. */
@@ -738,27 +785,7 @@ function weaponName(id: string): string {
   return id === HANDS ? 'Hände' : weaponOf(id).name;
 }
 
-function npcView(campaign: Campaign, npc: Npc, attack: Attack | undefined): NpcView {
-  const fighter = fighterOf(campaign, { npc: npc.id });
-  return {
-    id: npc.id,
-    name: npc.name,
-    leader: npc.leader,
-    weapon: weaponName(fighter.weapon.id),
-    skill: `${skillOf(fighter.weapon.uses).name}-${npc.skill}`,
-    armor: npc.wears === undefined ? undefined : itemLabel(itemOf(npc.wears)),
-    armorClass: fighter.armor,
-    upp: npc.upp,
-    current: fighter.upp,
-    state: fighter.state,
-    became: npc.became === undefined ? undefined : characterOf(campaign, npc.became).name,
-    healing: recoveryOptions(campaign, { npc: npc.id }),
-    targeted: attack?.against === npc.id,
-    attacking: attack?.by === npc.id,
-  };
-}
-
-function combatView(campaign: Campaign, attack: Attack | undefined, log: readonly LogItem[], wounding: Wounding | undefined, note: string | undefined): CombatView | undefined {
+function combatView(campaign: Campaign, attack: Attack | undefined, log: readonly LogItem[], wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined): CombatView | undefined {
   const character = focusOf(campaign);
   if (!character) return undefined;
   const current = attack ?? {};
@@ -828,16 +855,91 @@ function combatView(campaign: Campaign, attack: Attack | undefined, log: readonl
     damage: pendingHit && pending !== undefined ? { index: pending, weapon: weaponName(pendingHit.with), wounds: weaponOf(pendingHit.with).wounds } : undefined,
     recent,
     ammo: current.by === undefined && ammo ? { rounds: ammo.rounds, capacity: ammo.capacity, magazine: itemLabel(itemOf(ammo.ammo)), magazines: ammo.magazines } : undefined,
-    encounter: encounter && {
-      name: encounterTypeOfEncounter(encounter).name,
-      reaction: encounter.reaction,
-      reactionText: reactionText(encounter.reaction),
-      npcs: encounter.npcs.map((n) => npcView(campaign, n, attack)),
-    },
+    sim: encounter && simView(campaign, encounter, simTarget),
+    terrains: ref.encounters.terrains,
     canEncounter: campaign.location !== undefined,
     encounterTypes: ref.encounters.types.map((t) => ({ roll: t.roll, name: t.name, quantity: t.quantity })),
     wounding: wounding && woundingView(campaign, wounding),
     note,
+  };
+}
+
+function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, turn: FightSlot | undefined, target: string | undefined): FighterView {
+  const fighter = fighterOf(campaign, slot.who);
+  const npc = 'npc' in slot.who ? npcOf(campaign, slot.who.npc) : undefined;
+  const character = 'pc' in slot.who ? characterOf(campaign, slot.who.pc) : undefined;
+  const wears = npc?.wears ?? character?.wears;
+  return {
+    id: slot.id,
+    side: slot.side,
+    name: fighter.name,
+    leader: npc?.leader ?? false,
+    weapon: weaponName(fighter.weapon.id),
+    skill: `${skillOf(fighter.weapon.uses).name}-${fighter.skill}`,
+    armor: wears === undefined ? undefined : itemLabel(itemOf(wears)),
+    armorClass: fighter.armor,
+    upp: npc?.upp ?? character!.upp,
+    current: fighter.upp,
+    state: fighter.state,
+    acted: encounter.acted.includes(slot.id),
+    turn: turn?.id === slot.id,
+    targetable: turn !== undefined && turn.side !== slot.side && fighter.state !== 'dead',
+    targeted: target === slot.id,
+    healing: recoveryOptions(campaign, slot.who),
+  };
+}
+
+function simView(campaign: Campaign, encounter: Encounter, target: string | undefined): SimView {
+  const turn = turnOf(campaign);
+  const order = fightOrder(campaign, encounter);
+  const ground = encounter.terrain === undefined ? undefined : ref.encounters.terrains.find((t) => t.id === encounter.terrain);
+  let turnView: SimView['turn'];
+  let weapon: Weapon | undefined;
+  if (turn) {
+    const attacker = fighterOf(campaign, turn.who);
+    weapon = attacker.weapon;
+    let odds: NonNullable<SimView['turn']>['odds'];
+    const valid = target !== undefined && order.some((s) => s.id === target && s.side !== turn.side);
+    if (valid) {
+      try {
+        const attack = turnAttack(campaign, target);
+        const evaluated = evaluateAttack(attack, campaign);
+        if (evaluated && attack.armor !== undefined && attack.range !== undefined) {
+          odds = { dm: evaluated.dm.total, need: evaluated.need, chance: evaluated.chance, parts: attackParts(attacker, attacker.weapon.id, attack.armor, attack.range) };
+        }
+      } catch (error) {
+        if (!(error instanceof DomainError)) throw error;
+      }
+    }
+    const character = 'pc' in turn.who ? characterOf(campaign, turn.who.pc) : undefined;
+    const ammo = character && ammoOf(character);
+    turnView = {
+      id: turn.id,
+      side: turn.side,
+      name: attacker.name,
+      weapon: weaponName(attacker.weapon.id),
+      target: valid ? target : undefined,
+      odds,
+      reaches: rangeDm(attacker.weapon, encounter.range) !== undefined,
+      ammo: ammo && { rounds: ammo.rounds, capacity: ammo.capacity, magazines: ammo.magazines },
+    };
+  }
+  return {
+    name: encounterTypeOfEncounter(encounter).name,
+    reaction: encounter.reaction,
+    reactionText: reactionText(encounter.reaction),
+    round: encounter.round,
+    range: encounter.range,
+    rangeDice: encounter.rangeDice,
+    terrain: ground && { name: ground.name, dm: ground.dm },
+    surprise: surpriseOf(encounter),
+    first: firstSide(encounter),
+    pcSurprise: encounter.pcSurprise,
+    npcSurprise: encounter.npcSurprise,
+    fighters: order.map((slot) => fighterView(campaign, slot, encounter, turn, turnView?.target)),
+    turn: turnView,
+    defeated: defeatedSide(campaign, encounter),
+    ranges: ranges.map((range) => ({ range, reaches: weapon === undefined || rangeDm(weapon, range) !== undefined })),
   };
 }
 
@@ -1029,7 +1131,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     npcs: npcCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background, dead: c.dead })),
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
-    combat: combatView(campaign, state.attack, log, state.wounding, state.combatNote),
+    combat: combatView(campaign, state.attack, log, state.wounding, state.combatNote, state.simTarget),
     shop: shopView(campaign, state.shopError),
     location: campaign.location,
     result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : undefined,

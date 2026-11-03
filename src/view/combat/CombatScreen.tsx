@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { CombatView, HealingView, NpcView, Snapshot } from '../../controller';
+import type { CombatView, HealingView, Snapshot } from '../../controller';
+import { FightScreen } from './FightScreen';
 import { armorText, attackText, characteristicLabel, damageDetail, hex, partLabel, rangeMeters, rangeShort, rangeText, signed, woundStateText } from '../format';
 import { CloseIcon } from '../icons';
 import { useGame } from '../game-context';
@@ -8,158 +9,94 @@ import { CombatIcon, DiceIcon } from '../icons';
 import { CharacterStrip } from '../oracle/CharacterStrip';
 
 /**
- * Der Reiter Kampf: oben die Leiste mit dem Charakter oben und seinen Waffen, darunter die laufende
- * Begegnung mit ihren NSC (oder der Knopf, eine zu würfeln), die getragene Rüstung des Charakters oben
- * und die klassische Tabelle der Waffe des Angreifers (Rüstung × Reichweite, in jeder Zelle der
- * nötige Wurf mit allen DMs). Ein NSC als Ziel legt die Rüstung fest; greift ein NSC an, zeigt die
- * Tabelle seine Waffe gegen die Rüstung des Charakters oben. Eine Zelle antippen wählt die
- * Reichweite; „Angreifen“ würfelt. Gerechnet wird im Model; die View zeigt nur.
+ * Der Reiter Kampf, in zwei Modi. Ohne laufende Begegnung die **Waffentabelle**: oben die Leiste mit
+ * dem Charakter oben und seinen Waffen, Begegnung würfeln, die getragene Rüstung und die klassische
+ * Tabelle der Waffe in der Hand (Rüstung × Reichweite, in jeder Zelle der nötige Wurf). Mit laufender
+ * Begegnung die **Kampfsimulation** (FightScreen). Gerechnet wird im Model; die View zeigt nur.
  */
+
 /** Wen der Heilen-Dialog gerade zeigt: den Charakter oben oder einen NSC. Reine Anzeige. */
-interface Patient {
+export interface Patient {
   readonly npc: string | undefined;
+  /** In der Simulation: welcher SC; sonst der Charakter oben. */
+  readonly pc?: string;
   readonly name: string;
 }
 
 export function CombatScreen({ view }: { view: Snapshot }) {
   const combat = view.combat;
   const [patient, setPatient] = useState<Patient | undefined>(undefined);
-  const healing = patient && combat && (patient.npc === undefined ? combat.healing : combat.encounter?.npcs.find((n) => n.id === patient.npc)?.healing);
+  const healing = patient && combat && (patient.npc === undefined && !combat.sim ? combat.healing : combat.sim?.fighters.find((f) => f.id === (patient.npc ?? patient.pc))?.healing);
   return (
     <div className="screen">
       <CharacterStrip view={view} weapons />
-      {combat ? (
+      {!combat ? (
+        <section className="scroll combat-scroll">
+          <p className="log-empty">Ohne lebenden Charakter gibt es keinen Angriff.</p>
+        </section>
+      ) : combat.sim ? (
+        <FightScreen combat={combat} onHeal={setPatient} />
+      ) : (
         <>
-          <section className="scroll combat-scroll" aria-label="Angriff">
-            <EncounterPanel combat={combat} onHeal={setPatient} />
+          <section className="scroll combat-scroll" aria-label="Waffentabelle">
+            <EncounterStart combat={combat} />
             <ArmorChips combat={combat} onHeal={setPatient} />
             <WeaponHead combat={combat} />
             <AttackTable combat={combat} />
             <Recent combat={combat} />
           </section>
           <AttackDock combat={combat} />
-          {combat.wounding && <WoundingDialog combat={combat} />}
-          {patient && healing && <HealDialog key={patient.npc ?? 'pc'} patient={patient} healing={healing} note={combat.note} onClose={() => setPatient(undefined)} />}
         </>
-      ) : (
-        <section className="scroll combat-scroll">
-          <p className="log-empty">Ohne lebenden Charakter gibt es keinen Angriff.</p>
-        </section>
       )}
+      {combat?.wounding && <WoundingDialog combat={combat} />}
+      {combat && patient && healing && <HealDialog key={patient.npc ?? patient.pc ?? 'pc'} patient={patient} healing={healing} note={combat.note} onClose={() => setPatient(undefined)} />}
     </div>
   );
 }
 
-/** Die laufende Begegnung mit ihren NSC, oder Würfeln bzw. Wählen einer neuen. */
-function EncounterPanel({ combat, onHeal }: { combat: CombatView; onHeal: (patient: Patient) => void }) {
+/** Eine Begegnung würfeln oder wählen, mit Gelände für die Entfernung; danach beginnt die Kampfsimulation. */
+function EncounterStart({ combat }: { combat: CombatView }) {
   const game = useGame();
-  const encounter = combat.encounter;
-  if (!encounter) {
-    return (
-      <div className="encounter">
-        <div className="encounter-start">
-          <button
-            type="button"
-            className="primary"
-            disabled={!combat.canEncounter}
-            onClick={() => {
-              haptic('shake');
-              game.rollEncounter();
-            }}
-          >
-            Begegnung würfeln
-          </button>
-          <select aria-label="Begegnung wählen" value="" disabled={!combat.canEncounter} onChange={(e) => e.target.value && game.rollEncounter(Number(e.target.value))}>
-            <option value="">oder wählen …</option>
-            {combat.encounterTypes.map((t) => (
-              <option key={t.roll} value={t.roll}>
-                {t.roll} · {t.quantity}W6 {t.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        {!combat.canEncounter && <p className="combat-hint">Eine Begegnung braucht einen Aufenthaltsort: im Sektor eine Welt öffnen und „Gruppe ist hier“ wählen.</p>}
-        {combat.note && <p className="combat-hint">{combat.note}</p>}
-      </div>
-    );
-  }
+  // Das Gelände gilt erst beim Würfeln; bis dahin hält es nur die View.
+  const [terrain, setTerrain] = useState('');
+  const ground = terrain || undefined;
   return (
     <div className="encounter">
-      <div className="encounter-head">
-        <h2 className="section-title">
-          {encounter.npcs.length} × {encounter.name}
-        </h2>
-        <button type="button" className="ghost compact" onClick={() => game.endEncounter()}>
-          Beenden
+      <div className="encounter-start">
+        <button
+          type="button"
+          className="primary"
+          disabled={!combat.canEncounter}
+          onClick={() => {
+            haptic('shake');
+            game.rollEncounter(undefined, ground);
+          }}
+        >
+          Begegnung würfeln
         </button>
+        <select aria-label="Begegnung wählen" value="" disabled={!combat.canEncounter} onChange={(e) => e.target.value && game.rollEncounter(Number(e.target.value), ground)}>
+          <option value="">oder wählen …</option>
+          {combat.encounterTypes.map((t) => (
+            <option key={t.roll} value={t.roll}>
+              {t.roll} · {t.quantity}W6 {t.name}
+            </option>
+          ))}
+        </select>
       </div>
-      <p className="encounter-reaction">
-        Reaktion {encounter.reaction}: {encounter.reactionText}
-      </p>
-      <ol className="npc-list">
-        {encounter.npcs.map((npc) => (
-          <NpcCard key={npc.id} npc={npc} onHeal={() => onHeal({ npc: npc.id, name: npc.name })} />
-        ))}
-      </ol>
+      <label className="field encounter-terrain">
+        <span>Gelände (DM auf die Entfernung)</span>
+        <select value={terrain} disabled={!combat.canEncounter} onChange={(e) => setTerrain(e.target.value)}>
+          <option value="">ohne (±0)</option>
+          {combat.terrains.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name} ({signed(t.dm)})
+            </option>
+          ))}
+        </select>
+      </label>
+      {!combat.canEncounter && <p className="combat-hint">Eine Begegnung braucht einen Aufenthaltsort: im Sektor eine Welt öffnen und „Gruppe ist hier“ wählen.</p>}
+      {combat.note && <p className="combat-hint">{combat.note}</p>}
     </div>
-  );
-}
-
-function NpcCard({ npc, onHeal }: { npc: NpcView; onHeal: () => void }) {
-  const game = useGame();
-  // Ob die Wahl „als SC / als NSC“ offen ist, ist reine Anzeige.
-  const [adopting, setAdopting] = useState(false);
-  const out = npc.state === 'dead' || npc.became !== undefined;
-  const physical = (['str', 'dex', 'end'] as const).map((k) => ({ k, label: k.toUpperCase(), value: npc.current[k], hurt: npc.current[k] < npc.upp[k] }));
-  return (
-    <li className={['npc', out ? 'out' : '', npc.targeted ? 'targeted' : '', npc.attacking ? 'attacking' : ''].filter(Boolean).join(' ')} aria-label={npc.name}>
-      <div className="npc-head">
-        <strong>
-          {npc.name}
-          {npc.leader && <span className="npc-leader"> · Anführer</span>}
-        </strong>
-        <span className={`npc-state state-${npc.state}`}>{npc.became ? `übernommen als ${npc.became}` : woundStateText[npc.state]}</span>
-      </div>
-      <div className="npc-stats mono">
-        {physical.map((p) => (
-          <span key={p.k} className={p.hurt ? 'hurt' : undefined}>
-            {p.label} {hex(Math.max(0, p.value))}
-          </span>
-        ))}
-        <span className="muted">
-          {npc.weapon} ({npc.skill}) · {npc.armor ?? 'keine Rüstung'}
-        </span>
-      </div>
-      {!out && (
-        <div className="npc-actions">
-          <button type="button" className="ghost compact" aria-pressed={npc.targeted} onClick={() => game.aimAt(npc.id)}>
-            Ziel
-          </button>
-          <button type="button" className="ghost compact" aria-pressed={npc.attacking} disabled={npc.state !== 'unhurt' && npc.state !== 'wounded'} onClick={() => game.attackBy(npc.id)}>
-            Greift an
-          </button>
-          {(npc.healing.wake || npc.healing.treatable) && (
-            <button type="button" className="ghost compact" onClick={onHeal}>
-              Heilen
-            </button>
-          )}
-          {adopting ? (
-            <>
-              <button type="button" className="ghost compact" onClick={() => game.adoptNpc(npc.id, false)}>
-                Als SC
-              </button>
-              <button type="button" className="ghost compact" onClick={() => game.adoptNpc(npc.id, true)}>
-                Als NSC
-              </button>
-            </>
-          ) : (
-            <button type="button" className="ghost compact" onClick={() => setAdopting(true)}>
-              Übernehmen
-            </button>
-          )}
-        </div>
-      )}
-    </li>
   );
 }
 
@@ -371,7 +308,7 @@ function AttackDock({ combat }: { combat: CombatView }) {
 }
 
 /** Schaden an einem SC: Der Spieler gibt jedem Würfel ein Attribut, dann kommt er in den Log. */
-function WoundingDialog({ combat }: { combat: CombatView }) {
+export function WoundingDialog({ combat }: { combat: CombatView }) {
   const game = useGame();
   const w = combat.wounding!;
   const next = w.to.length;
@@ -423,14 +360,14 @@ function WoundingDialog({ combat }: { combat: CombatView }) {
 }
 
 /** Heilen nach S. 7: Aufwachen, Behandlung durch einen SC, Ruhe. Was geht, sagt das Model. */
-function HealDialog({ patient, healing, note, onClose }: { patient: Patient; healing: HealingView; note: string | undefined; onClose: () => void }) {
+export function HealDialog({ patient, healing, note, onClose }: { patient: Patient; healing: HealingView; note: string | undefined; onClose: () => void }) {
   const game = useGame();
   const able = healing.healers.filter((h) => h.able);
   const [healer, setHealer] = useState(able[0]?.id ?? '');
   const [facility, setFacility] = useState(false);
   const done = (how: 'wake' | 'treatment' | 'rest') => {
     haptic('pick');
-    game.recover(how, patient.npc, how === 'treatment' ? healer : undefined, facility);
+    game.recover(how, patient.npc, how === 'treatment' ? healer : undefined, facility, patient.pc);
     if (how !== 'wake') onClose();
   };
   return (

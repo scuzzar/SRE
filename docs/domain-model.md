@@ -88,7 +88,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > flüchtig der Angriff in Vorbereitung (`Attack`), im Log das Angriffsergebnis (`AttackResult`)
 > und der Schadenswurf (`DamageRoll`).
 >
-> **Entwurf, noch nicht freigegeben** (3. November 2026): **Kampfsimulation** getrennt von der
+> Ebenfalls am 3. November 2026 freigegeben: **Kampfsimulation** getrennt von der
 > **Waffentabelle** (siehe *Zwei Modi im Reiter Kampf* und *Kampfsimulation*). Neu im Bild: an der
 > `Encounter` Entfernung (`rangeDice`, `range`, `terrain`), Überraschung (`pcSurprise`,
 > `npcSurprise`, `/surprise`, `/first`), Runde und Zug (`round`, `acted`, `/turn`); `Side`,

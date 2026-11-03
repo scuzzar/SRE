@@ -392,7 +392,7 @@ describe('Shop und Gruppenkasse', () => {
   });
 });
 
-describe('Begegnung und Kampf gegen NSC', () => {
+describe('Begegnung und Kampfsimulation', () => {
   const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
 
   /** Eine Zufallsquelle, der man vor jedem Wurf die nächsten Zahlen gibt; sonst das Kleinste. */
@@ -410,111 +410,76 @@ describe('Begegnung und Kampf gegen NSC', () => {
     return { game, random };
   }
 
-  it('ohne Aufenthaltsort keine Begegnung; 61–66 bringen keine', async () => {
+  it('ohne Begegnung zeigt Kampf die Waffentabelle; ohne Aufenthaltsort gibt es keine Begegnung, 61–66 bringen keine', async () => {
     const { game } = await started();
-    expect(game.snapshot().combat).toMatchObject({ canEncounter: false, encounter: undefined });
+    expect(game.snapshot().combat).toMatchObject({ canEncounter: false, sim: undefined });
     const { game: there, random } = await onRegina();
     random.queue.push(6, 3);
     there.rollEncounter();
-    expect(there.snapshot().combat).toMatchObject({ encounter: undefined, note: 'Wurf 63: keine Begegnung.' });
+    expect(there.snapshot().combat).toMatchObject({ sim: undefined, note: 'Wurf 63: keine Begegnung.' });
   });
 
-  it('Kira zielt auf den Anführer der Thugs, trifft und verwundet ihn; ein Thug schlägt zurück, sie verteilt den Schaden', async () => {
+  it('mit der Begegnung beginnt die Simulation: Entfernung und Überraschung gewürfelt, Partei für Partei, nur Ziel wählen und würfeln', async () => {
     const { game, random } = await onRegina();
-    game.rollEncounter(15);
-    const encounter = game.snapshot().combat!.encounter!;
-    expect(encounter).toMatchObject({ name: 'Thugs', reaction: 2, reactionText: 'Violent. Immediate attack.' });
-    expect(encounter.npcs.map((n) => [n.leader, n.weapon, n.armorClass])).toEqual([
-      [true, 'Foil', 'mesh'],
-      [false, 'Club', 'nothing'],
-    ]);
+    game.rollEncounter(15, 'clear');
+    let sim = game.snapshot().combat!.sim!;
+    // Entfernung 1 + 1 + 3 (Clear) = 5 → Short; Überraschung SC 1, Thugs 1 + 1 (Anführer): die NSC ziehen zuerst.
+    expect(sim).toMatchObject({ round: 1, range: 'short', rangeDice: [1, 1], terrain: { name: 'Clear, Road, Open', dm: 3 }, surprise: undefined, first: 'npcs' });
+    expect(sim.fighters.map((f) => f.id)).toEqual(['n1', 'n2', 'c1', 'c2']);
+    // Der Anführer ist dran; die App schlägt Kira als Ziel vor, sie steht oben.
+    expect(sim.turn).toMatchObject({ id: 'n1', target: 'c1', reaches: true });
+    expect(game.snapshot().focus).toBe('c1');
 
-    game.aimAt('n1');
-    let combat = game.snapshot().combat!;
-    expect(combat.defender).toEqual({ name: encounter.npcs[0]!.name, armor: 'mesh' });
-    expect(combat.rows.find((r) => r.fixed)?.armor).toBe('mesh');
-    expect(combat.rows.find((r) => r.armor === 'jack')!.cells.every((c) => !c.open)).toBe(true);
-    game.chooseTarget('mesh', 'close');
+    // Treffer; der erste Schaden geht ganz auf STR; danach ist der zweite Thug dran und nimmt Jonas.
     random.queue.push(6, 6);
-    game.rollAttack();
-    expect(game.snapshot().result).toMatchObject({ kind: 'attack', success: true, victim: encounter.npcs[0]!.name });
-    random.queue.push(4, 1);
+    game.fightAttack();
+    expect(game.snapshot().result).toMatchObject({ kind: 'attack', success: true, victim: 'Kira Vant' });
+    expect(game.snapshot().combat!.sim!.turn!.id).toBe('n1');
+    random.queue.push(3, 0, 1);
     game.rollDamage();
-    expect(game.snapshot().result).toMatchObject({ kind: 'damage', to: ['DEX'] });
     game.closeResult();
-    expect(game.snapshot().combat!.encounter!.npcs[0]).toMatchObject({ state: 'unconscious', current: { dex: 0 } });
+    sim = game.snapshot().combat!.sim!;
+    expect(sim.fighters.find((f) => f.id === 'c1')).toMatchObject({ current: { str: 4 }, state: 'wounded' });
+    expect(sim.turn).toMatchObject({ id: 'n2', target: 'c2' });
+    expect(game.snapshot().focus).toBe('c2');
 
-    // Der zweite Thug greift Kira an; erster Treffer: alles auf STR.
-    game.attackBy('n2');
-    combat = game.snapshot().combat!;
-    // Die Reichweite bleibt gewählt; die Rüstung ist jetzt Kiras.
-    expect(combat).toMatchObject({ npcAttacks: true, defender: { name: 'Kira Vant', armor: 'nothing' }, weapon: { name: 'Club' }, target: { armor: 'nothing', range: 'close' } });
-    random.queue.push(6, 6);
-    game.rollAttack();
-    random.queue.push(2, 2, 0);
-    game.rollDamage();
+    // Daneben beendet den Zug gleich; dann ist Kira dran und zielt auf den ersten NSC.
+    random.queue.push(1, 1);
+    game.fightAttack();
     game.closeResult();
-    expect(game.snapshot().combat).toMatchObject({ state: 'wounded', current: { str: 3 } });
-    // Zweiter Treffer: Kira verteilt selbst.
-    random.queue.push(6, 6);
-    game.rollAttack();
-    random.queue.push(3, 5);
-    game.rollDamage();
-    expect(game.snapshot().combat!.wounding).toMatchObject({ victim: 'Kira Vant', dice: [3, 5], to: [] });
-    game.assignWound('DEX');
-    game.assignWound('STR');
-    game.unassignWound();
-    game.assignWound('END');
-    game.confirmWounding();
-    expect(game.snapshot().result).toMatchObject({ kind: 'damage', to: ['DEX', 'END'] });
-    game.closeResult();
-    expect(game.snapshot().combat).toMatchObject({ wounding: undefined, current: { str: 3, dex: 7, end: 3 } });
-    expect(game.snapshot().characters[0]).toMatchObject({ state: 'wounded' });
+    sim = game.snapshot().combat!.sim!;
+    expect(sim.turn).toMatchObject({ id: 'c1', side: 'pcs', target: 'n1' });
+    expect(game.snapshot().focus).toBe('c1');
+    game.chooseFightTarget('n2');
+    expect(game.snapshot().combat!.sim!.turn).toMatchObject({ target: 'n2', odds: { parts: expect.arrayContaining([{ kind: 'range', range: 'short', dm: 1 }]) } });
+    game.setRange('medium');
+    expect(game.snapshot().combat!.sim!.turn).toMatchObject({ reaches: false });
+    game.setRange('close');
+    game.skipTurn();
+    expect(game.snapshot().combat!.sim!.turn!.id).toBe('c2');
+    game.skipTurn();
+    expect(game.snapshot().combat!.sim).toMatchObject({ round: 2, turn: { id: 'n1' } });
+
+    game.endEncounter();
+    expect(game.snapshot().combat!.sim).toBeUndefined();
   });
 
-  it('heilt: ein bewusstloser NSC wacht auf; Ruhe heilt Kiras leichte Wunde; was nicht geht, steht im Kampf', async () => {
+  it('heilt einen SC in der Simulation und übernimmt einen NSC; er kämpft dann nicht mehr mit', async () => {
     const { game, random } = await onRegina();
     game.rollEncounter(15);
-    game.aimAt('n2');
-    game.chooseTarget('nothing', 'close');
     random.queue.push(6, 6);
-    game.rollAttack();
-    random.queue.push(6, 0);
-    game.rollDamage();
-    game.closeResult();
-    expect(game.snapshot().combat!.encounter!.npcs[1]).toMatchObject({ state: 'unconscious', healing: { wake: true, treatable: true } });
-    game.recover('wake', 'n2');
-    expect(game.snapshot().combat!.encounter!.npcs[1]!.state).toBe('wounded');
-    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'recovery', how: 'wake', patient: game.snapshot().combat!.encounter!.npcs[1]!.name });
-    game.recover('treatment', 'n2', 'c1');
-    expect(game.snapshot().combat!.note).toMatch(/Kira Vant braucht Medical-1/);
-
-    game.attackBy('n2');
-    random.queue.push(6, 6);
-    game.rollAttack();
+    game.fightAttack();
     random.queue.push(2, 1, 0);
     game.rollDamage();
     game.closeResult();
-    expect(game.snapshot().combat!.healing).toMatchObject({ rest: true, serious: false });
-    game.recover('rest', undefined);
-    expect(game.snapshot().combat).toMatchObject({ state: 'unhurt', note: undefined });
+    expect(game.snapshot().combat!.sim!.fighters.find((f) => f.id === 'c1')!.healing).toMatchObject({ rest: true });
+    game.recover('rest', undefined, undefined, false, 'c1');
+    expect(game.snapshot().combat!.sim!.fighters.find((f) => f.id === 'c1')!.state).toBe('unhurt');
     expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'recovery', how: 'rest', patient: 'Kira Vant' });
-  });
 
-  it('übernimmt einen NSC als dauerhaften NSC; beenden lässt die Begegnung mit Log-Verweisen zurück', async () => {
-    const { game, random } = await onRegina();
-    game.rollEncounter(15);
-    game.adoptNpc('n2', true);
+    game.adoptNpc('n1', true);
     expect(game.snapshot().npcs).toHaveLength(1);
-    expect(game.snapshot().characters.map((c) => c.name)).toEqual(['Kira Vant', 'Jonas Reyl']);
-    expect(game.snapshot().combat!.encounter!.npcs[1]!.became).toBe(game.snapshot().npcs[0]!.name);
-    game.aimAt('n1');
-    game.chooseTarget('mesh', 'close');
-    random.queue.push(1, 1);
-    game.rollAttack();
-    game.closeResult();
-    game.endEncounter();
-    expect(game.snapshot().combat!.encounter).toBeUndefined();
+    expect(game.snapshot().combat!.sim!.fighters.map((f) => f.id)).toEqual(['n2', 'c1', 'c2']);
   });
 });
 

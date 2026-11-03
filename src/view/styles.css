@@ -4363,3 +4363,123 @@ button:disabled {
 .heal .primary {
   min-height: 44px;
 }
+
+/* --- Kampfsimulation ------------------------------------------------------------------------ */
+
+.fight-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fight-decided {
+  margin: 0;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.fight-range {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.segmented.fight-ranges {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.segmented button.out {
+  color: var(--dim);
+  text-decoration: line-through;
+}
+
+.fighters {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fighter-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fighter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+}
+
+.fighter.turn {
+  border-color: var(--gold);
+}
+
+.fighter.targeted {
+  border-color: var(--accent-text);
+  background: var(--accent-wash);
+}
+
+.fighter.acted,
+.fighter.out {
+  opacity: 0.6;
+}
+
+.fighter-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 8px;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.fighter-main:disabled {
+  color: var(--text);
+  opacity: 1;
+}
+
+.fighter-main .npc-stats {
+  grid-column: 1 / -1;
+}
+
+.fighter-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.fighter-turn {
+  color: var(--gold);
+}
+
+.fighter .npc-actions {
+  padding: 0 10px 8px;
+}
+
+.fight-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  border: 1px solid var(--line-strong);
+  background: var(--raised);
+}
+
+.fight-actions:has(> :nth-child(3)) {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr);
+}
+
+.fight-actions:has(> :nth-child(2):last-child) {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+}
+
+.encounter-terrain select {
+  min-height: 40px;
+}

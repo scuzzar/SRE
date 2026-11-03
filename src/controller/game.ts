@@ -24,6 +24,14 @@ import {
   endEncounter,
   adoptNpc,
   recover,
+  turnOf,
+  endTurn,
+  setRange,
+  currentEncounter,
+  livingCharacters,
+  canFight,
+  woundStateOf,
+  isSuccess,
   type RecoveryKind,
   type AttackResult,
   type DamageRoll,
@@ -81,9 +89,8 @@ import {
   chooseTarget,
   keepTarget,
   rollAttack,
-  aimAt,
-  attackBy,
   startAttack,
+  turnAttack,
   startWounding,
   assignWound,
   unassignWound,
@@ -105,7 +112,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, simTarget: undefined, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
 
 export interface GameDependencies {
   readonly repository: CampaignRepository;
@@ -146,6 +153,7 @@ export class GameController {
       attack: undefined,
       wounding: undefined,
       combatNote: undefined,
+      simTarget: undefined,
       shopError: undefined,
       opened: undefined,
       stripCollapsed: false,
@@ -393,18 +401,6 @@ export class GameController {
     this.update({ attack: undefined });
   }
 
-  /** Der Charakter oben zielt auf einen NSC der laufenden Begegnung; derselbe noch einmal hebt das Ziel auf. */
-  aimAt(npc: string): void {
-    const attack = this.state.attack ?? startAttack(this.campaign);
-    this.update({ attack: aimAt(attack, this.campaign, attack.against === npc ? undefined : npc) });
-  }
-
-  /** Ein NSC der laufenden Begegnung greift den Charakter oben an; derselbe noch einmal: wieder der SC. */
-  attackBy(npc: string): void {
-    const attack = this.state.attack ?? startAttack(this.campaign);
-    this.update({ attack: attackBy(attack, this.campaign, attack.by === npc ? undefined : npc) });
-  }
-
   /** Würfelt den Angriff, schreibt ihn in den Log und zeigt das Ergebnis als Popup; das Ziel bleibt gewählt. Eine Schusswaffe eines SC verbraucht einen Schuss. */
   rollAttack(): void {
     const result = rollAttack(this.state.attack ?? {}, this.campaign, this.deps.random, this.deps.clock);
@@ -421,31 +417,105 @@ export class GameController {
     this.change(campaign, { attack: this.state.attack && keepTarget(this.state.attack, campaign) });
   }
 
-  /** Würfelt eine Begegnung auf dem Aufenthaltsort, zufällig oder von dieser Art; die Zeilen 61–66 sind leer. */
-  rollEncounter(roll?: number): void {
+  /**
+   * Würfelt eine Begegnung auf dem Aufenthaltsort, zufällig oder von dieser Art, mit Gelände für die
+   * Entfernung; die Zeilen 61–66 sind leer. Mit der Begegnung beginnt die Kampfsimulation.
+   */
+  rollEncounter(roll?: number, terrain?: string): void {
     try {
-      const rolled = rollEncounter(this.campaign, this.deps.random, this.deps.clock, roll);
-      this.change(rolled.campaign, { attack: undefined, combatNote: rolled.encounter ? undefined : `Wurf ${rolled.roll}: keine Begegnung.` });
+      const rolled = rollEncounter(this.campaign, this.deps.random, this.deps.clock, roll, undefined, terrain);
+      const prepared = rolled.encounter ? this.prepareTurn(rolled.campaign, undefined) : { campaign: rolled.campaign, simTarget: undefined };
+      this.change(prepared.campaign, { attack: undefined, simTarget: prepared.simTarget, combatNote: rolled.encounter ? undefined : `Wurf ${rolled.roll}: keine Begegnung.` });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ combatNote: error.message });
     }
   }
 
-  /** Beendet die laufende Begegnung. */
+  /** Beendet die laufende Begegnung; der Reiter Kampf zeigt wieder die Waffentabelle. */
   endEncounter(): void {
-    this.change(endEncounter(this.campaign), { attack: undefined, combatNote: undefined });
+    this.change(endEncounter(this.campaign), { attack: undefined, combatNote: undefined, simTarget: undefined });
+  }
+
+  // --- Kampfsimulation ----------------------------------------------------------------------------
+
+  /**
+   * Bereitet den Zug vor: Ist ein SC dran, steht er oben, und das Ziel bleibt oder wird der erste
+   * NSC, der nicht tot ist. Ist ein NSC dran, schlägt die App einen zufälligen wachen SC als Ziel vor;
+   * er steht oben.
+   */
+  private prepareTurn(campaign: Campaign, target: string | undefined): { campaign: Campaign; simTarget: string | undefined } {
+    const turn = turnOf(campaign);
+    const encounter = currentEncounter(campaign);
+    if (!turn || !encounter) return { campaign, simTarget: undefined };
+    if (turn.side === 'pcs') {
+      const npcs = encounter.npcs.filter((n) => n.became === undefined && woundStateOf(campaign, { npc: n.id }) !== 'dead');
+      const keep = npcs.some((n) => n.id === target) ? target : npcs[0]?.id;
+      return { campaign: focusOf(campaign)?.id === turn.id ? campaign : setFocus(campaign, turn.id), simTarget: keep };
+    }
+    const pcs = livingCharacters(campaign);
+    const awake = pcs.filter((c) => canFight(woundStateOf(campaign, { pc: c.id })));
+    const pool = awake.length > 0 ? awake : pcs;
+    const pick = pool[this.deps.random.int(0, pool.length - 1)]!;
+    return { campaign: focusOf(campaign)?.id === pick.id ? campaign : setFocus(campaign, pick.id), simTarget: pick.id };
+  }
+
+  /** Beendet den Zug und bereitet den nächsten vor. */
+  private nextTurn(campaign: Campaign, rest: Partial<ControllerState> = {}): void {
+    const prepared = this.prepareTurn(endTurn(campaign), this.state.simTarget);
+    this.change(prepared.campaign, { ...rest, simTarget: prepared.simTarget });
+  }
+
+  /** Wählt das Ziel des Zugs: für einen SC einen NSC, für einen NSC einen SC (er steht dann oben). */
+  chooseFightTarget(id: string): void {
+    const turn = turnOf(this.campaign);
+    if (!turn) throw new DomainError('Es ist keiner am Zug.');
+    if (turn.side === 'pcs') {
+      this.update({ simTarget: id });
+      return;
+    }
+    this.change(focusOf(this.campaign)?.id === id ? this.campaign : setFocus(this.campaign, id), { simTarget: id });
+  }
+
+  /** Ändert die Entfernung der laufenden Begegnung. */
+  setRange(range: Range): void {
+    this.change(setRange(this.campaign, range));
+  }
+
+  /** Der Kämpfer am Zug greift sein Ziel an. Daneben beendet den Zug gleich; ein Treffer erst mit dem Schaden. */
+  fightAttack(): void {
+    const target = this.state.simTarget;
+    if (target === undefined) throw new DomainError('Erst ein Ziel wählen.');
+    const attack = turnAttack(this.campaign, target);
+    const result = rollAttack(attack, this.campaign, this.deps.random, this.deps.clock);
+    const logged = appendLog(this.campaign, result);
+    const campaign = result.for === undefined ? logged : spendRound(logged, result.for);
+    const index = campaign.log.length - 1;
+    if (isSuccess(result)) this.change(campaign, { result: index });
+    else this.nextTurn(campaign, { result: index });
+  }
+
+  /** Der SC am Zug lädt nach; das ist sein Zug. */
+  fightReload(): void {
+    const turn = turnOf(this.campaign);
+    if (!turn || turn.side !== 'pcs') throw new DomainError('Nachladen kann nur ein SC am Zug.');
+    this.nextTurn(reload(this.campaign, turn.id));
+  }
+
+  /** Der Kämpfer am Zug setzt aus. */
+  skipTurn(): void {
+    this.nextTurn(this.campaign);
   }
 
   /**
-   * Heilt den Charakter oben oder einen NSC der laufenden Begegnung: Aufwachen, Ruhe oder Behandlung
-   * durch einen SC, bei einer schweren Wunde in einer medizinischen Einrichtung.
+   * Heilt einen SC (ohne Angabe den Charakter oben) oder einen NSC der laufenden Begegnung:
+   * Aufwachen, Ruhe oder Behandlung durch einen SC, bei einer schweren Wunde in einer Einrichtung.
    */
-  recover(how: RecoveryKind, npc: string | undefined, healer?: string, facility = false): void {
+  recover(how: RecoveryKind, npc: string | undefined, healer?: string, facility = false, pc?: string): void {
     try {
-      const character = focusOf(this.campaign);
-      if (npc === undefined && !character) throw new DomainError('Es gibt keinen lebenden Charakter.');
-      const who = npc === undefined ? { pc: character!.id } : { npc };
+      const character = pc ?? focusOf(this.campaign)?.id;
+      if (npc === undefined && character === undefined) throw new DomainError('Es gibt keinen lebenden Charakter.');
+      const who = npc === undefined ? { pc: character! } : { npc };
       this.change(appendLog(this.campaign, recover(this.campaign, how, who, this.deps.random, this.deps.clock, healer, facility)), { combatNote: undefined });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
@@ -521,12 +591,16 @@ export class GameController {
     this.logDamage(confirmWounding(this.openWounding, this.campaign, this.deps.clock));
   }
 
+  /** Schreibt den Schaden in den Log. War es der Treffer dessen, der in der Simulation am Zug ist, endet sein Zug. */
   private logDamage(roll: DamageRoll): void {
     const hit = this.campaign.log[roll.of] as AttackResult;
     const logged = appendLog(this.campaign, roll);
     const who = victimOf(hit);
     const campaign = who ? markDeath(logged, who) : logged;
-    this.change(campaign, { result: campaign.log.length - 1, wounding: undefined });
+    const turn = turnOf(this.campaign);
+    const ownTurn = turn !== undefined && (hit.for === turn.id || hit.by === turn.id);
+    if (ownTurn) this.nextTurn(campaign, { result: campaign.log.length - 1, wounding: undefined });
+    else this.change(campaign, { result: campaign.log.length - 1, wounding: undefined });
   }
 
   private get openWounding() {
