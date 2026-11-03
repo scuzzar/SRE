@@ -234,7 +234,7 @@ button:disabled {
 .nav {
   flex: 0 0 auto;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   border-top: 1px solid var(--rule);
   background: var(--deep);
   padding-bottom: env(safe-area-inset-bottom);
@@ -3748,4 +3748,188 @@ button:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* --- Kampf ---------------------------------------------------------------------------------- */
+
+.strip .chips button .chip-skill {
+  margin-left: 4px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.strip .chips button[aria-pressed='true'] .chip-skill {
+  color: var(--ink-muted);
+}
+
+.combat-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.weapon-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.weapon-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.weapon-title .section-title {
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.weapon-dms {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.combat-table-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.combat-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-family: var(--mono);
+}
+
+.combat-table th,
+.combat-table td {
+  border: 1px solid var(--rule);
+  padding: 0;
+  text-align: center;
+}
+
+.combat-table th {
+  padding: 4px 2px;
+  font-weight: 600;
+  font-size: 11px;
+  background: var(--raised);
+}
+
+.combat-table thead th:first-child,
+.combat-table tbody th {
+  width: 24%;
+}
+
+.combat-table tbody th {
+  text-align: left;
+  padding-left: 6px;
+}
+
+.combat-table th .head-name,
+.combat-table th .head-dm {
+  display: block;
+}
+
+.combat-table th .head-dm {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.combat-table th.out {
+  color: var(--dim);
+}
+
+.combat-table .corner {
+  font-size: 9px;
+  color: var(--muted);
+}
+
+.combat-table .corner span {
+  display: block;
+}
+
+.combat-table .cell-button {
+  width: 100%;
+  min-height: 40px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.combat-table .cell-button.impossible {
+  color: var(--dim);
+  font-weight: 400;
+}
+
+.combat-table .cell-button.sure {
+  color: var(--gold);
+}
+
+.combat-table .cell-button[aria-pressed='true'] {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+.combat-table .cell-out {
+  display: block;
+  min-height: 40px;
+  line-height: 40px;
+  color: var(--dim);
+  background: var(--deep);
+}
+
+.combat-hint,
+.combat-pick {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.combat-recent ol {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.combat-recent-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  font-size: 13px;
+}
+
+.combat-recent-item .verdict {
+  font-size: 15px;
+}
+
+.combat-recent-item .mono {
+  font-size: 12px;
+}
+
+.dock .actions:has(> :only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.action:disabled {
+  background: var(--disabled);
+  color: var(--dim);
+}
+
+.interpretation.damage .dice-total strong {
+  color: var(--accent-text);
 }

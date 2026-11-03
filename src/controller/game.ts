@@ -13,6 +13,9 @@ import {
   removeCharacter,
   removeLogEntry,
   renameCampaign,
+  pendingDamage,
+  rollDamage,
+  setWields,
   restoreCharacter,
   chooseCascade as chooseCareerCascade,
   chooseGenerationWorld,
@@ -49,11 +52,16 @@ import {
   type Download,
   type Generation,
   type Hex,
+  type ArmorClass,
+  type Range,
   type CardRoll,
   type Random,
 } from '../model';
 import {
   chooseSkill,
+  chooseTarget,
+  keepTarget,
+  rollAttack,
   confirmCard,
   drawCard,
   redrawCard,
@@ -71,7 +79,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
 
 export interface GameDependencies {
   readonly repository: CampaignRepository;
@@ -109,6 +117,7 @@ export class GameController {
       card: undefined,
       names: undefined,
       task: undefined,
+      attack: undefined,
       opened: undefined,
       stripCollapsed: false,
       result: undefined,
@@ -289,10 +298,10 @@ export class GameController {
     this.update({ screen });
   }
 
-  /** Wischen: Ein anderer Charakter steht oben; eine vorbereitete Probe endet. */
+  /** Wischen: Ein anderer Charakter steht oben; eine vorbereitete Probe und ein vorbereiteter Angriff enden. */
   focusCharacter(id: string): void {
     if (focusOf(this.campaign)?.id === id) return;
-    this.change(setFocus(this.campaign, id), { task: undefined });
+    this.change(setFocus(this.campaign, id), { task: undefined, attack: undefined });
   }
 
   /** Klappt die Leiste mit dem Charakter oben ein oder auf; das Gerät merkt es sich. */
@@ -331,6 +340,42 @@ export class GameController {
     this.change(campaign, { result: campaign.log.length - 1 });
   }
 
+  // --- Kampf ------------------------------------------------------------------------------------
+
+  /** Wechselt die Waffe in der Hand des Charakters oben; das Ziel bleibt, wenn die Waffe dort hinreicht. */
+  wieldWeapon(weapon: string): void {
+    const character = focusOf(this.campaign);
+    if (!character) throw new DomainError('Es gibt keinen lebenden Charakter.');
+    const campaign = setWields(this.campaign, character.id, weapon);
+    this.change(campaign, { attack: this.state.attack && keepTarget(this.state.attack, campaign) });
+  }
+
+  /** Wählt Rüstung und Reichweite des Ziels; dieselbe Zelle noch einmal nimmt die Wahl zurück. */
+  chooseTarget(armor: ArmorClass, range: Range): void {
+    const attack = this.state.attack;
+    if (attack?.armor === armor && attack.range === range) this.update({ attack: undefined });
+    else this.update({ attack: chooseTarget(this.campaign, armor, range) });
+  }
+
+  /** Nimmt das Ziel zurück, ohne zu würfeln. */
+  endAttack(): void {
+    this.update({ attack: undefined });
+  }
+
+  /** Würfelt den Angriff, schreibt ihn in den Log und zeigt das Ergebnis als Popup; das Ziel bleibt gewählt. */
+  rollAttack(): void {
+    const result = rollAttack(this.state.attack ?? {}, this.campaign, this.deps.random, this.deps.clock);
+    const campaign = appendLog(this.campaign, result);
+    this.change(campaign, { result: campaign.log.length - 1 });
+  }
+
+  /** Würfelt den Schaden des neuesten Treffers, für den noch keiner gewürfelt ist, und schließt das Popup. */
+  rollDamage(): void {
+    const index = pendingDamage(this.campaign.log);
+    if (index === undefined) throw new DomainError('Es gibt keinen Treffer ohne Schaden.');
+    this.change(appendLog(this.campaign, rollDamage(this.campaign, index, this.deps.random, this.deps.clock)), { result: undefined });
+  }
+
   /** „Weiter“: schließt das Ergebnis; die Probe bleibt vorbereitet, der Log darunter zeigt sie schon. */
   closeResult(): void {
     this.update({ result: undefined });
@@ -359,8 +404,12 @@ export class GameController {
       } else {
         const id = editor.id;
         // Die Fertigkeit der Probe kann weg sein: Wer den Charakter oben bearbeitet, beendet seine Probe.
-        const task = focusOf(this.campaign)?.id === id ? undefined : this.state.task;
-        this.change(updateCharacter(this.campaign, id, input), { editor: undefined, task });
+        // Der Angriff bleibt, solange die Waffe in der Hand dorthin reicht.
+        const top = focusOf(this.campaign)?.id === id;
+        const task = top ? undefined : this.state.task;
+        const campaign = updateCharacter(this.campaign, id, input);
+        const attack = top && this.state.attack ? keepTarget(this.state.attack, campaign) : this.state.attack;
+        this.change(campaign, { editor: undefined, task, attack });
       }
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
@@ -612,9 +661,9 @@ export class GameController {
     return this.state.task;
   }
 
-  /** Ändert die offene Kampagne und speichert sie. Steht danach ein anderer Charakter oben, endet die Probe. */
+  /** Ändert die offene Kampagne und speichert sie. Steht danach ein anderer Charakter oben, enden Probe und Angriff. */
   private change(campaign: Campaign, rest: Partial<ControllerState> = {}): void {
-    if (this.state.campaign && focusOf(this.state.campaign)?.id !== focusOf(campaign)?.id) rest = { ...rest, task: undefined };
+    if (this.state.campaign && focusOf(this.state.campaign)?.id !== focusOf(campaign)?.id) rest = { ...rest, task: undefined, attack: undefined };
     const campaigns = this.state.campaigns.map((c) => (c.id === campaign.id ? campaign : c));
     this.update({ ...rest, campaigns, campaign });
     this.persist(() => this.deps.repository.save(campaign), true);

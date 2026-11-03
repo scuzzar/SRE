@@ -275,6 +275,61 @@ describe('Charakter oben: Probe im Orakel-Screen', () => {
   });
 });
 
+describe('Kampf', () => {
+  it('zeigt die Tabelle der Waffe in der Hand; ohne Waffe sind es die Hände', async () => {
+    const { game } = await started();
+    game.showScreen('combat');
+    const combat = game.snapshot().combat!;
+    expect(combat.character).toBe('Kira Vant');
+    expect(combat.weapons.map((w) => [w.name, w.short, w.wielded])).toEqual([
+      ['Hände', 'Brw-0', true],
+      ['Automatic Pistol', 'APi-1', false],
+    ]);
+    expect(combat.ranges.map((r) => r.dm)).toEqual([2, 1, undefined, undefined, undefined]);
+    expect(combat.rows.map((r) => r.armor)).toEqual(['nothing', 'jack', 'mesh', 'cloth', 'reflec', 'ablat', 'combat']);
+  });
+
+  it('Kira zieht die Pistole, wählt ein Ziel in Jack auf Short, trifft und würfelt den Schaden', async () => {
+    const { game, repository } = await started(fixedRandom(4, 3, 6, 5, 4));
+    game.showScreen('combat');
+    game.wieldWeapon('automatic-pistol');
+    expect(game.snapshot().combat!.rows[1]!.cells.map((c) => c.odds?.need)).toEqual([4, 3, 9, 11, undefined]);
+    game.chooseTarget('jack', 'short');
+    expect(game.snapshot().combat!.target).toMatchObject({ dm: 5, need: 3 });
+    game.rollAttack();
+    const view = game.snapshot();
+    expect(view.result).toMatchObject({ kind: 'attack', success: true, total: 12, damagePending: true, wounds: 3 });
+    expect(view.combat!.damage).toMatchObject({ index: 0, wounds: 3 });
+    game.rollDamage();
+    const after = game.snapshot();
+    expect(after.result).toBeUndefined();
+    expect(after.log[1]).toMatchObject({ kind: 'damage', of: 0, dice: [6, 5, 4], damage: 15 });
+    expect(after.combat!.damage).toBeUndefined();
+    expect(after.combat!.target).toMatchObject({ armor: 'jack', range: 'short' });
+    await game.whenSaved();
+    expect(repository.saved?.characters[0]?.wields).toBe('automatic-pistol');
+  });
+
+  it('nimmt das Ziel mit derselben Zelle zurück, und Wischen beendet den Angriff', async () => {
+    const { game } = await started();
+    game.chooseTarget('mesh', 'close');
+    game.chooseTarget('mesh', 'close');
+    expect(game.snapshot().combat!.target).toBeUndefined();
+    game.chooseTarget('mesh', 'close');
+    game.focusCharacter('c2');
+    expect(game.snapshot().combat).toMatchObject({ character: 'Jonas Reyl', target: undefined });
+  });
+
+  it('lässt die Reichweite fallen, wenn die neue Waffe nicht hinreicht', async () => {
+    const { game } = await started();
+    game.wieldWeapon('automatic-pistol');
+    game.chooseTarget('cloth', 'long');
+    game.wieldWeapon('hands');
+    expect(game.snapshot().combat!.target).toBeUndefined();
+    expect(() => game.chooseTarget('cloth', 'long')).toThrow(/kein Angriff/);
+  });
+});
+
 describe('Charakter-Screen: verwalten', () => {
   it('klappt die Details eines Charakters auf und wieder zu, ohne eine Probe zu beginnen', async () => {
     const { game } = await started();

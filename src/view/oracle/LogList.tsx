@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
-import type { LogItem, NoteItem } from '../../controller';
-import { clockTime, mapText, partLabel, pickText, quoted, scatterText, taskDetail, taskTitle } from '../format';
+import type { DamageItem, LogItem, NoteItem } from '../../controller';
+import { attackTitle, clockTime, damageDetail, mapText, partLabel, pickText, quoted, scatterText, taskDetail, taskTitle } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { MapIconSvg, ScatterRose } from './CardRollIcons';
@@ -21,7 +21,8 @@ interface LogListProps {
 
 /**
  * Der Log wie ein Chat: das Älteste oben, das Neueste unten, direkt über den Knöpfen. Eine Deutung
- * steht im Kasten ihres Ergebnisses, auch wenn sie später geschrieben wurde; das ist nur Anzeige.
+ * steht im Kasten ihres Ergebnisses, auch wenn sie später geschrieben wurde, ebenso der Schadenswurf im
+ * Kasten seines Treffers; das ist nur Anzeige.
  * Antippen eines Ergebnisses wählt es als Ziel der Deutung. Langes Drücken auf einen Eintrag (oder
  * ein Rechtsklick) bietet an, ihn zu löschen; welcher Eintrag das gerade ist, hält die View, das
  * Löschen der Controller.
@@ -82,8 +83,20 @@ export function LogList({ log, target, marked, onPick }: LogListProps) {
     },
   });
 
-  // Die Kästen: jedes Ergebnis und jede Notiz, mit den Deutungen, die zum Ergebnis gehören.
-  const groups = log.flatMap((item, index) => (item.kind === 'note' && item.interprets !== undefined ? [] : [{ item, index, notes: interpretationsAt(log, index) }]));
+  // Die Kästen: jedes Ergebnis und jede Notiz, mit den Deutungen, die zum Ergebnis gehören, und beim
+  // Treffer mit seinem Schadenswurf und dessen Deutungen.
+  const groups = log.flatMap((item, index) =>
+    (item.kind === 'note' && item.interprets !== undefined) || item.kind === 'damage'
+      ? []
+      : [
+          {
+            item,
+            index,
+            notes: interpretationsAt(log, index),
+            damage: damageAt(log, index),
+          },
+        ],
+  );
   const last = log.length - 1;
 
   return (
@@ -99,12 +112,12 @@ export function LogList({ log, target, marked, onPick }: LogListProps) {
           <p className="log-empty">Noch nichts im Log. Stell eine Frage, zieh eine Karte oder würfle.</p>
         ) : (
           <ol aria-live="polite">
-            {groups.map(({ item, index, notes }) => {
+            {groups.map(({ item, index, notes, damage }) => {
               const result = item.kind !== 'note';
               const classes = [
                 'entry',
                 result ? 'outcome' : 'note',
-                index === last || notes.some((n) => n.index === last) ? 'latest' : '',
+                index === last || notes.some((n) => n.index === last) || (damage && (damage.index === last || damage.notes.some((n) => n.index === last))) ? 'latest' : '',
                 marked && index === target ? 'target' : '',
                 confirm === index ? 'confirming' : '',
               ]
@@ -144,7 +157,37 @@ export function LogList({ log, target, marked, onPick }: LogListProps) {
                       <DeleteBar {...deletion(note.index, 0)} what="Deutung" />
                     </div>
                   ))}
-                  <DeleteBar {...deletion(index, notes.length)} what="Eintrag" />
+                  {damage && (
+                    <div
+                      className={confirm === damage.index ? 'interpretation damage confirming' : marked && damage.index === target ? 'interpretation damage target' : 'interpretation damage'}
+                      {...pressHandlers(damage.index)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (offered.current) return;
+                        haptic('pick');
+                        onPick(damage.index);
+                      }}
+                    >
+                      <div className="entry-head">
+                        <span className="kicker">Schaden</span>
+                        <time className="entry-time" dateTime={damage.item.at}>
+                          {clockTime(damage.item.at)}
+                        </time>
+                      </div>
+                      <div className="dice-total">
+                        <strong>{damage.item.damage}</strong>
+                        <span className="muted">{damageDetail(damage.item)}</span>
+                      </div>
+                      {damage.notes.map((note) => (
+                        <div key={note.index} className={confirm === note.index ? 'damage-note confirming' : 'damage-note'} {...pressHandlers(note.index)}>
+                          <p className="note-text">{note.item.text}</p>
+                          <DeleteBar {...deletion(note.index, 0)} what="Deutung" />
+                        </div>
+                      ))}
+                      <DeleteBar {...deletion(damage.index, damage.notes.length)} what="Schadenswurf" />
+                    </div>
+                  )}
+                  <DeleteBar {...deletion(index, notes.length + (damage ? 1 + damage.notes.length : 0))} what="Eintrag" />
                 </li>
               );
             })}
@@ -153,6 +196,27 @@ export function LogList({ log, target, marked, onPick }: LogListProps) {
       </div>
     </section>
   );
+}
+
+/** Der Schadenswurf des Treffers an der Stelle `index`, mit seinen Deutungen. */
+function damageAt(
+  log: readonly LogItem[],
+  index: number,
+):
+  | {
+      item: DamageItem;
+      index: number;
+      notes: { item: NoteItem; index: number }[];
+    }
+  | undefined {
+  const at = log.findIndex((item) => item.kind === 'damage' && item.of === index);
+  return at < 0
+    ? undefined
+    : {
+        item: log[at] as DamageItem,
+        index: at,
+        notes: interpretationsAt(log, at),
+      };
 }
 
 /** Die Deutungen des Ergebnisses an der Stelle `index`, in der Reihenfolge des Logs. */
@@ -197,6 +261,10 @@ function kicker(item: LogItem): string {
       return 'Karte';
     case 'task':
       return 'Probe';
+    case 'attack':
+      return 'Angriff';
+    case 'damage':
+      return 'Schaden';
     case 'note':
       return item.interprets === undefined ? 'Notiz' : 'Deutung';
   }
@@ -274,6 +342,21 @@ function EntryBody({ item }: { item: LogItem }) {
           </span>
         </>
       );
+    case 'attack':
+      return (
+        <>
+          <span style={{ fontSize: 14, fontWeight: 600 }}>{attackTitle(item)}</span>
+          <span className={item.success ? 'verdict' : 'verdict negative'} style={{ fontSize: 26 }}>
+            {item.success ? 'TREFFER' : 'DANEBEN'}
+          </span>
+          <span className="entry-detail">{taskDetail(item)}</span>
+          <span className="entry-question" style={{ fontSize: 12 }}>
+            {item.parts.map(partLabel).join(', ')}
+          </span>
+        </>
+      );
+    case 'damage':
+      return <span className="entry-detail">{damageDetail(item)}</span>;
     case 'note':
       return <p className="note-text">{item.text}</p>;
   }

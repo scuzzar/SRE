@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { AboutScreen } from './AboutScreen';
 import { CampaignSheet } from './CampaignSheet';
 import { CharacterEditor } from './characters/CharacterEditor';
+import { CombatScreen } from './combat/CombatScreen';
 import { CharactersScreen } from './characters/CharactersScreen';
 import { GenerationSheet } from './characters/GenerationSheet';
 import { FullscreenButton } from './FullscreenButton';
 import { ResultDialog } from './characters/ResultDialog';
 import { useGame, useSnapshot } from './game-context';
-import { MenuIcon, OracleIcon, PersonIcon, SectorIcon } from './icons';
+import { CombatIcon, MenuIcon, OracleIcon, PersonIcon, SectorIcon } from './icons';
 import { Menu } from './Menu';
 import { CardSheet } from './oracle/CardSheet';
 import { OracleScreen } from './oracle/OracleScreen';
@@ -49,6 +50,7 @@ export function App() {
       )}
 
       {view.screen === 'oracle' && <OracleScreen view={view} question={question} onQuestion={setQuestion} />}
+      {view.screen === 'combat' && <CombatScreen view={view} />}
       {view.screen === 'characters' && <CharactersScreen view={view} />}
       {view.screen === 'sector' && <SectorScreen view={view} />}
       {view.screen === 'about' && <AboutScreen persistent={view.persistent} durable={view.durable} />}
@@ -57,6 +59,10 @@ export function App() {
         <button type="button" aria-current={view.screen === 'oracle' ? 'page' : undefined} onClick={() => game.showScreen('oracle')}>
           <OracleIcon />
           Orakel
+        </button>
+        <button type="button" aria-current={view.screen === 'combat' ? 'page' : undefined} onClick={() => game.showScreen('combat')}>
+          <CombatIcon />
+          Kampf
         </button>
         <button type="button" aria-current={view.screen === 'characters' ? 'page' : undefined} onClick={() => game.showScreen('characters')}>
           <PersonIcon />

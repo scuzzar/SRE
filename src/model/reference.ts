@@ -1,8 +1,32 @@
-import { referenceData, type Cascade, type Entry, type Gain, type Item, type Odds, type Section, type Service, type Skill, type Slot, type Table } from '../data';
+import { referenceData, type Cascade, type Entry, type Gain, type Item, type Odds, type Section, type Service, type Skill, type Slot, type Table, type Weapon } from '../data';
 import { DomainError } from './errors';
 
 export { nameSlotIds, nameSounds, type NameSound } from '../data';
-export type { Aging, Cascade, Column, Entry, ExampleCharacter, Gain, HouseRules, Item, ItemKind, Odds, Rank, Section, SectionKind, Service, Skill, Slot, Table, Throw } from '../data';
+export { armorClasses, ranges } from '../data';
+export type {
+  Aging,
+  ArmorClass,
+  AttackKind,
+  Cascade,
+  Column,
+  Entry,
+  ExampleCharacter,
+  Gain,
+  HouseRules,
+  Item,
+  ItemKind,
+  Odds,
+  Range,
+  Rank,
+  Section,
+  SectionKind,
+  Service,
+  Skill,
+  Slot,
+  Table,
+  Throw,
+  Weapon,
+} from '../data';
 
 /** Die Referenzdaten: feste Tabellen, in jeder Kampagne gleich. */
 export const ref = referenceData;
@@ -25,6 +49,8 @@ for (const section of ref.sections) {
 }
 
 const itemById = new Map(ref.items.map((i) => [i.id, i]));
+const weaponById = new Map(ref.weapons.map((w) => [w.id, w]));
+const itemByWeapon = new Map(ref.items.flatMap((i) => (i.weapon === undefined ? [] : [[i.weapon, i] as const])));
 const serviceById = new Map(ref.services.map((s) => [s.id, s]));
 const cascadeById = new Map(ref.cascades.map((c) => [c.id, c]));
 const tableById = new Map<string, Table>();
@@ -90,7 +116,24 @@ export function gainOf(id: string): Gain {
   return found(gainById.get(id), 'Die Zeile', id);
 }
 
-/** Die Waffe, die eine Fertigkeit nutzt; für jede Waffe aus Blade und Gun Combat gibt es genau eine. */
+export function weaponOf(id: string): Weapon {
+  return found(weaponById.get(id), 'Die Waffe', id);
+}
+
+/** Die Hände: die Waffe, die jeder hat und die zu keinem Gegenstand gehört. */
+export const HANDS = 'hands';
+
+/** Der Gegenstand, zu dem eine Waffe gehört; die Hände gehören zu keinem. */
+export function itemOfWeapon(weapon: string): Item | undefined {
+  return itemByWeapon.get(weapon);
+}
+
+/** `Item./uses`: die Fertigkeit eines Gegenstands, aus seiner Waffe. */
+export function usesOf(item: Item): string | undefined {
+  return item.weapon === undefined ? undefined : weaponOf(item.weapon).uses;
+}
+
+/** Der Gegenstand, dessen Waffe eine Fertigkeit nutzt; für jede Waffe aus Blade und Gun Combat gibt es genau einen. */
 export function weaponFor(skill: string): Item {
-  return found(ref.items.find((i) => i.kind === 'weapon' && i.uses === skill), 'Die Waffe für', skill);
+  return found(ref.items.find((i) => usesOf(i) === skill), 'Die Waffe für', skill);
 }

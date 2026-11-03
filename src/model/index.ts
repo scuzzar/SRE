@@ -5,6 +5,7 @@ export * from './career';
 export * from './generation';
 export * from './errors';
 export * from './card-roll';
+export * from './combat';
 export * from './log';
 export * from './ports';
 export * from './reference';

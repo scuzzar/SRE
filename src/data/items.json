@@ -537,7 +537,8 @@
     "name": "Club",
     "kind": "weapon",
     "tl": 0,
-    "weight": 1
+    "weight": 1,
+    "weapon": "club"
   },
   {
     "id": "dagger",
@@ -546,7 +547,7 @@
     "tl": 1,
     "weight": 0.25,
     "price": 10,
-    "uses": "dagger"
+    "weapon": "dagger"
   },
   {
     "id": "blade",
@@ -555,7 +556,7 @@
     "tl": 3,
     "weight": 0.35,
     "price": 50,
-    "uses": "blade"
+    "weapon": "blade"
   },
   {
     "id": "foil",
@@ -564,7 +565,7 @@
     "tl": 3,
     "weight": 0.5,
     "price": 100,
-    "uses": "foil"
+    "weapon": "foil"
   },
   {
     "id": "cutlass",
@@ -573,7 +574,7 @@
     "tl": 3,
     "weight": 1.25,
     "price": 100,
-    "uses": "cutlass"
+    "weapon": "cutlass"
   },
   {
     "id": "sword",
@@ -582,7 +583,7 @@
     "tl": 1,
     "weight": 1,
     "price": 150,
-    "uses": "sword"
+    "weapon": "sword"
   },
   {
     "id": "broadsword",
@@ -591,7 +592,7 @@
     "tl": 2,
     "weight": 2.5,
     "price": 300,
-    "uses": "broadsword"
+    "weapon": "broadsword"
   },
   {
     "id": "bayonet",
@@ -600,7 +601,7 @@
     "tl": 3,
     "weight": 0.25,
     "price": 10,
-    "uses": "bayonet"
+    "weapon": "bayonet"
   },
   {
     "id": "spear",
@@ -609,7 +610,7 @@
     "tl": 0,
     "weight": 2,
     "price": 10,
-    "uses": "spear"
+    "weapon": "spear"
   },
   {
     "id": "halberd",
@@ -618,7 +619,7 @@
     "tl": 2,
     "weight": 2.5,
     "price": 75,
-    "uses": "halberd"
+    "weapon": "halberd"
   },
   {
     "id": "pike",
@@ -627,7 +628,7 @@
     "tl": 1,
     "weight": 3,
     "price": 40,
-    "uses": "pike"
+    "weapon": "pike"
   },
   {
     "id": "cudgel",
@@ -636,7 +637,7 @@
     "tl": 0,
     "weight": 1,
     "price": 10,
-    "uses": "cudgel"
+    "weapon": "cudgel"
   },
   {
     "id": "body-pistol",
@@ -645,7 +646,7 @@
     "tl": 7,
     "weight": 0.25,
     "price": 500,
-    "uses": "body-pistol"
+    "weapon": "body-pistol"
   },
   {
     "id": "body-pistol-ammo",
@@ -662,7 +663,7 @@
     "tl": 5,
     "weight": 0.75,
     "price": 200,
-    "uses": "auto-pistol"
+    "weapon": "automatic-pistol"
   },
   {
     "id": "automatic-pistol-ammo",
@@ -679,7 +680,7 @@
     "tl": 4,
     "weight": 0.9,
     "price": 150,
-    "uses": "revolver"
+    "weapon": "revolver"
   },
   {
     "id": "revolver-ammo",
@@ -696,7 +697,7 @@
     "tl": 5,
     "weight": 3,
     "price": 200,
-    "uses": "carbine"
+    "weapon": "carbine"
   },
   {
     "id": "carbine-ammo",
@@ -713,7 +714,7 @@
     "tl": 5,
     "weight": 4,
     "price": 200,
-    "uses": "rifle"
+    "weapon": "rifle"
   },
   {
     "id": "rifle-ammo",
@@ -730,7 +731,7 @@
     "tl": 6,
     "weight": 5,
     "price": 1000,
-    "uses": "auto-rifle"
+    "weapon": "auto-rifle"
   },
   {
     "id": "auto-rifle-ammo",
@@ -747,7 +748,7 @@
     "tl": 4,
     "weight": 3.75,
     "price": 150,
-    "uses": "shotgun"
+    "weapon": "shotgun"
   },
   {
     "id": "shotgun-ammo",
@@ -764,7 +765,7 @@
     "tl": 5,
     "weight": 2.5,
     "price": 500,
-    "uses": "submachinegun"
+    "weapon": "submachinegun"
   },
   {
     "id": "submachinegun-ammo",
@@ -781,7 +782,7 @@
     "tl": 8,
     "weight": 5,
     "price": 2500,
-    "uses": "laser-carbine"
+    "weapon": "laser-carbine"
   },
   {
     "id": "lc-power-pack",
@@ -798,7 +799,7 @@
     "tl": 9,
     "weight": 6,
     "price": 3500,
-    "uses": "laser-rifle"
+    "weapon": "laser-rifle"
   },
   {
     "id": "lr-power-pack",

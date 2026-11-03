@@ -2,15 +2,15 @@ import type { CharacterId } from './campaign';
 import { DomainError } from './errors';
 import type { MapIcon, Scatter } from './card-roll';
 import type { Clock, Random } from './ports';
-import { oddsOf, slotOfEntry, type Slot } from './reference';
+import { oddsOf, slotOfEntry, type ArmorClass, type Range, type Slot } from './reference';
 import { roll2d6, sum, type Characteristic, type Dice } from './rules';
 
 /**
  * Der Log verweist, er kopiert nicht. Ein Eintrag hält nur fest, was allein ihm gehört: Frage,
- * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei einer Probe DM und Zielwert.
+ * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei Probe und Angriff DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | Note;
+export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Note;
 
 /** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
 export type LogResult = Exclude<LogEntry, Note>;
@@ -63,6 +63,31 @@ export interface TaskResult extends LogEntryBase {
   readonly dice: Dice;
   readonly dm: number;
   readonly target: number;
+}
+
+/** Ein gewürfelter Angriff: Treffer oder nicht. Rüstung und Reichweite sind die des Ziels. */
+export interface AttackResult extends LogEntryBase {
+  readonly kind: 'attack';
+  readonly for: CharacterId;
+  /** Verweis auf die Waffe. */
+  readonly with: string;
+  /** Die Fertigkeit der Waffe, wenn der Charakter eine Stufe darin hat; sonst zählte Stufe 0. */
+  readonly uses?: string;
+  readonly armor: ArmorClass;
+  readonly range: Range;
+  readonly dice: Dice;
+  readonly dm: number;
+  readonly target: number;
+}
+
+/**
+ * Der Schadenswurf zu einem Treffer: so viele W6, wie die Waffe `wounds` hat. `of` ist im Code die
+ * Stelle des Treffers im Log; sie liegt immer davor.
+ */
+export interface DamageRoll extends LogEntryBase {
+  readonly kind: 'damage';
+  readonly of: number;
+  readonly dice: readonly number[];
 }
 
 /**
@@ -136,6 +161,16 @@ export function slotOf(item: PickedItem): Slot {
 }
 
 /** `/success`: Würfel + DM ≥ Zielwert, allein aus dem, was der Eintrag festhält. */
-export function isSuccess(result: TaskResult): boolean {
+export function isSuccess(result: TaskResult | AttackResult): boolean {
   return sum(result.dice) + result.dm >= result.target;
+}
+
+/** `/damage`: die Summe der Schadenswürfel. */
+export function damageOf(roll: DamageRoll): number {
+  return roll.dice.reduce((total, d) => total + d, 0);
+}
+
+/** Die Stellen der Schadenswürfe, die auf den Eintrag an der Stelle `index` verweisen; höchstens einer. */
+export function damageRollsOf(log: readonly LogEntry[], index: number): number[] {
+  return log.flatMap((entry, i) => (entry.kind === 'damage' && entry.of === index ? [i] : []));
 }

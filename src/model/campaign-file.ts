@@ -3,8 +3,9 @@ import { keepFocus, validateCharacter, validName, type Campaign, type CampaignId
 import { replay, type Career, type CareerRoll } from './career';
 import { DomainError } from './errors';
 import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, type PathKind } from './card-roll';
+import { checkDamageRoll, ATTACK_TARGET } from './combat';
 import { checkInterprets, withQuestion, type CardPick, type LogEntry } from './log';
-import { entryOf, oddsOf, slotOfEntry } from './reference';
+import { armorClasses, entryOf, itemOf, oddsOf, ranges, slotOfEntry, weaponOf } from './reference';
 import { characteristics } from './rules';
 import { hexFromRolls, temperatureIds, uwpKinds, validateHexes, worldOf, type Hex, type LegacyWorldRoll } from './sector';
 
@@ -43,6 +44,19 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     dm: z.number().int(),
     target: z.number().int(),
   }),
+  z.object({
+    kind: z.literal('attack'),
+    at,
+    for: z.string(),
+    with: z.string(),
+    uses: z.string().optional(),
+    armor: z.enum(armorClasses),
+    range: z.enum(ranges),
+    dice,
+    dm: z.number().int(),
+    target: z.number().int(),
+  }),
+  z.object({ kind: z.literal('damage'), at, of: z.number().int(), dice: z.array(die).min(1).max(5) }),
   z.object({ kind: z.literal('note'), at, text: z.string().trim().min(1), interprets: z.number().int().optional() }),
 ]);
 
@@ -117,6 +131,7 @@ const CharacterSchema = z.object({
   possessions: z.array(z.object({ of: z.string(), count: z.number() })).default([]),
   career: CareerSchema.optional(),
   homeworld: z.string().optional(),
+  wields: z.string().optional(),
 });
 
 const CampaignFileSchema = z.object({
@@ -165,11 +180,12 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
   }
   try {
     const file = parsed.data.campaign;
-    const characters: Character[] = file.characters.map(({ career, homeworld, ...c }) => ({
+    const characters: Character[] = file.characters.map(({ career, homeworld, wields, ...c }) => ({
       ...c,
       skills: c.skills.map((s) => ({ ...s })),
       ...(career ? { career: careerOf(career) } : {}),
       ...(homeworld === undefined ? {} : { homeworld }),
+      ...(wields === undefined ? {} : { wields }),
     }));
     const campaign: Campaign = {
       id,
@@ -227,7 +243,12 @@ function logEntry(entry: z.infer<typeof LogEntrySchema>): LogEntry {
       const { uses, ...rest } = entry;
       return uses === undefined ? rest : { ...rest, uses };
     }
+    case 'attack': {
+      const { uses, ...rest } = entry;
+      return uses === undefined ? rest : { ...rest, uses };
+    }
     case 'dice':
+    case 'damage':
       return entry;
     case 'note': {
       const { interprets, ...rest } = entry;
@@ -242,6 +263,9 @@ function validate(campaign: Campaign): void {
     if (ids.has(character.id)) throw new DomainError(`Die Id ${character.id} kommt doppelt vor.`);
     ids.add(character.id);
     validateCharacter({ ...character, skills: character.skills });
+    if (character.wields !== undefined && !character.possessions.some((p) => weaponOfItem(p.of) === character.wields)) {
+      throw new DomainError(`${character.name} führt eine Waffe, die nicht in seinem Besitz ist.`);
+    }
     // Ein Lebenslauf wird von vorn nachgespielt; am Charakter ist er abgeschlossen.
     if (character.career && replay(character.career).step !== 'name') throw new DomainError(`Der Lebenslauf von ${character.name} ist nicht abgeschlossen.`);
   }
@@ -266,6 +290,19 @@ function validate(campaign: Campaign): void {
         oddsOf(entry.odds);
         break;
       case 'dice':
+        break;
+      case 'attack': {
+        const weapon = weaponOf(entry.with);
+        const character = campaign.characters.find((c) => c.id === entry.for);
+        if (!character) throw new DomainError(`Ein Angriff verweist auf den Charakter ${entry.for}, den es nicht gibt.`);
+        if (entry.uses !== undefined && (entry.uses !== weapon.uses || !character.skills.some((s) => s.of === entry.uses))) {
+          throw new DomainError(`Ein Angriff von ${character.name} verweist auf eine Fertigkeit, die nicht zur Waffe passt oder die der Charakter nicht hat.`);
+        }
+        if (entry.target !== ATTACK_TARGET) throw new DomainError(`Ein Angriff hat den Zielwert ${ATTACK_TARGET}.`);
+        break;
+      }
+      case 'damage':
+        checkDamageRoll(campaign.log, entry, index);
         break;
       case 'card':
         if (entry.items.length === 0 && entry.bell === undefined && entry.scatter === undefined && entry.map === undefined) {
@@ -293,4 +330,8 @@ function validate(campaign: Campaign): void {
       }
     }
   }
+}
+
+function weaponOfItem(item: string): string | undefined {
+  return itemOf(item).weapon;
 }

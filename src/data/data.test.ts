@@ -170,9 +170,32 @@ describe('Referenzdaten', () => {
 
   it('haben jede Waffe aus Blade und Gun Combat genau einmal als Gegenstand', () => {
     const weapons = referenceData.items.filter((i) => i.kind === 'weapon');
-    expect(weapons.find((w) => w.uses === 'auto-pistol')).toMatchObject({ name: 'Automatic Pistol', tl: 5, weight: 0.75, price: 200 });
+    const uses = (id: string) => referenceData.weapons.find((w) => w.id === id)?.uses;
+    expect(weapons.find((w) => w.weapon !== undefined && uses(w.weapon) === 'auto-pistol')).toMatchObject({ name: 'Automatic Pistol', tl: 5, weight: 0.75, price: 200 });
     expect(weapons.find((w) => w.name === 'Club')).toMatchObject({ tl: 0, weight: 1 });
     expect(weapons.find((w) => w.name === 'Club')!.price).toBeUndefined();
+  });
+
+  it('haben die Kampfwerte der Waffen aus den Charts (S. 4 und 6)', () => {
+    const weapon = (id: string) => referenceData.weapons.find((w) => w.id === id)!;
+    expect(weapon('rifle')).toMatchObject({ attack: 'shot', uses: 'rifle', required: 6, requiredDm: -2, advantageous: 8, advantageousDm: 1, wounds: 3 });
+    expect(weapon('rifle').vsArmor).toEqual([
+      { armor: 'nothing', dm: 3 },
+      { armor: 'jack', dm: 3 },
+      { armor: 'mesh', dm: 0 },
+      { armor: 'cloth', dm: -3 },
+      { armor: 'reflec', dm: 2 },
+      { armor: 'ablat', dm: 1 },
+      { armor: 'combat', dm: -5 },
+    ]);
+    expect(weapon('rifle').atRange.map((r) => r.dm)).toEqual([-4, 1, 0, -1, -3]);
+    expect(weapon('body-pistol').atRange.map((r) => r.dm)).toEqual([2, 1, -6, undefined, undefined]);
+    expect(weapon('hands')).toMatchObject({ attack: 'blow', uses: 'brawling', wounds: 1 });
+    expect(weapon('club').uses).toBe('brawling');
+    expect(weapon('broadsword').atRange.map((r) => r.dm)).toEqual([-8, 3, undefined, undefined, undefined]);
+    expect(weapon('laser-rifle')).toMatchObject({ wounds: 5, advantageous: 11 });
+    expect(referenceData.items.filter((i) => i.kind === 'weapon').every((i) => i.weapon === i.id)).toBe(true);
+    expect(referenceData.items.some((i) => i.weapon === 'hands')).toBe(false);
   });
 
   it('rechnen Tonnen in kg und KCr bzw. MCr in Cr um', () => {

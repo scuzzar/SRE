@@ -17,7 +17,7 @@ sagt nur, wo die Teile liegen und wie sie miteinander reden.
 |--:|---|---|---|
 | 0 | `src/data/` | Referenzdaten: Tabellen als JSON, Schemas | — |
 | 1 | `src/model/` | **Model**: der gespeicherte Stand des Domänenmodells und seine Regeln | `data` |
-| 1a | `src/model/draft/` | **Model, Entwürfe**: `Card`, `Task`, `WorldRoll`; flüchtig, nie gespeichert | `data`, `model` |
+| 1a | `src/model/draft/` | **Model, Entwürfe**: `Card`, `Task`, `Attack`, `WorldRoll`; flüchtig, nie gespeichert | `data`, `model` |
 | 2 | `src/platform/` | Was das Model von außen braucht: Speicher (Dexie), Zufall, Uhr, Download | `model` ohne `draft` |
 | 3 | `src/controller/` | **Controller**: eine Methode pro Absicht des Spielers | `model` mit `draft` |
 | 4 | `src/view/` | **View**: React-Komponenten | `controller`, `model` mit `draft` (nur Typen) |
@@ -40,7 +40,8 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   `askOracle(question)`, `rollDice()`, `drawCard(question)`, `togglePick(slot)`, `toggleRoll(roll)`
   (Wurffeld), `confirmCard()`, `discardCard()`, `drawNames()` und `closeNames()` (Name von der Karte), `writeNote(text, interprets)`, `deleteLogEntry(index)`, `setOdds(odds)`; für den Charakter oben und die Probe
   `focusCharacter(id)` (Wischen), `chooseSkill(skill)`, `toggleCharacteristic(c)`, `rollTask()`,
-  `endTask()`; für Kampagnen
+  `endTask()`; für den Kampf `wieldWeapon(weapon)`, `chooseTarget(armor, range)`, `endAttack()`,
+  `rollAttack()` und `rollDamage()`; für Kampagnen
   `openCampaign(id)`, `createCampaign(name)`, `renameCampaign(name)`, `deleteCampaign(id)`,
   `exportCampaign(id)` und `importCampaign(text)`; für die Charaktererschaffung `openGeneration()`,
   `rollGeneration()`, `chooseService(id)`, `chooseSkillTable(id)`, `chooseCascade(skill)`,
@@ -53,9 +54,9 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   solange Weltkarte oder Feldwahl offen sind (im Zustand des Controllers). Die Erschaffung ist gespeicherter Stand (`model/generation.ts`,
   `model/career.ts`): Sie hält nur die Würfe, alles andere spielt `replay` daraus nach. Die View liest eine gewählte Datei nur als Text
   ein und reicht ihn weiter; prüfen tut das Model (`fromCampaignFile`), anbieten zum Download der
-  Controller über `Download`. Offene Karte und Probe in Vorbereitung sind Teil des
+  Controller über `Download`. Offene Karte, Probe und Angriff in Vorbereitung sind Teil des
   Models (`model/draft/`), werden aber nicht gespeichert.
-- **Er wählt, welche View zu sehen ist**: Orakel-, Charakter- oder Sektor-Screen (`showScreen(screen)`), das gewählte Feld im Subsektor, die Weltkarte eines Feldes, die
+- **Er wählt, welche View zu sehen ist**: Orakel-, Kampf-, Charakter- oder Sektor-Screen (`showScreen(screen)`), das gewählte Feld im Subsektor, die Weltkarte eines Feldes, die
   Kampagnenwahl (`showCampaigns()`, `closeCampaigns()`) und das Ergebnis-Popup (`closeResult()`),
   welcher Charakter im Charakter-Screen seine Details zeigt (`toggleDetails(id)`) und ob die Leiste
   mit dem Charakter oben eingeklappt ist (`toggleStrip()`; das merkt sich das Gerät über das

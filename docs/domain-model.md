@@ -810,10 +810,13 @@ Diagramm mit diesen Ausnahmen:
 - **`Gain` in den Daten.** Im Bild bringt eine Zeile ein Attribut über einen Verweis (`changes`);
   in `src/data/services.json` steht das Attribut als Feld `characteristic` neben `change`, weil
   `Characteristic` eine Werteliste ist. Ebenso stehen die DMs eines `Throw` als `characteristic`,
-  `atLeast`, `dm`.
+  `atLeast`, `dm`. In `src/data/weapons.json` stehen die DMs einer Waffe (`vsArmor`, `atRange`) knapp
+  als Liste in der Reihenfolge der Matrix, „no“ als `null`; das Schema macht daraus beim Laden
+  `ArmorDm` bzw. `RangeDm` mit Rüstungsklasse bzw. Reichweite, wie im Bild.
 - **`Note → LogEntry : interprets`** ist im Code die Stelle des gedeuteten Ergebnisses im Log (eine
   Zahl), weil Logeinträge keine eigene Id haben. Löschen rückt die Stellen nach, sodass jede Deutung
-  weiter auf ihr Ergebnis zeigt; damit ist der Verweis erfüllt.
+  weiter auf ihr Ergebnis zeigt; damit ist der Verweis erfüllt. Ebenso ist **`DamageRoll →
+  AttackResult : of`** die Stelle des Treffers im Log.
 - **`Card → Campaign : in`, `Task → Campaign : in` und `Attack → Campaign : in`** sind im Code
   kein Feld. Der Controller hält höchstens eine offene Karte, höchstens eine Probe und höchstens
   einen Angriff, alle immer zur offenen Kampagne; beim Wechsel der Kampagne verfallen sie. Damit ist die Multiplizität erfüllt.

@@ -36,6 +36,8 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
     possessions: (editor.input.possessions ?? []).map((p) => ({ of: p.of, count: String(p.count) })),
     // Leer heißt: keine Heimatwelt.
     homeworld: editor.input.homeworld ?? '',
+    // Leer heißt: die Hände.
+    wields: editor.input.wields ?? '',
   }));
   const [confirmRemove, setConfirmRemove] = useState(false);
   const isNew = editor.id === undefined;
@@ -58,13 +60,14 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
           id="character-form"
           onSubmit={(e) => {
             e.preventDefault();
-            const { homeworld, ...rest } = form;
+            const { homeworld, wields, ...rest } = form;
             game.saveCharacter({
               ...rest,
               credits: Number(form.credits === '' ? 0 : form.credits),
               skills: form.skills.map((s) => ({ of: s.of, level: Number(s.level) })),
               possessions: form.possessions.map((p) => ({ of: p.of, count: Number(p.count) })),
               ...(homeworld ? { homeworld } : {}),
+              ...(wields ? { wields } : {}),
             });
           }}
         >
@@ -207,6 +210,22 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
               ))}
             </select>
           </fieldset>
+          <label className="field">
+            <span>Waffe in der Hand</span>
+            <select value={form.wields} onChange={(e) => setForm({ ...form, wields: e.target.value })}>
+              <option value="">Hände</option>
+              {form.possessions.flatMap((p) => {
+                const item = items.find((it) => it.id === p.of);
+                return item?.weapon
+                  ? [
+                      <option key={item.weapon} value={item.weapon}>
+                        {item.label}
+                      </option>,
+                    ]
+                  : [];
+              })}
+            </select>
+          </label>
           <label className="field">
             <span>Ausrüstung</span>
             <textarea value={form.equipment} onChange={(e) => setForm({ ...form, equipment: e.target.value })} />

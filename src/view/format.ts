@@ -1,5 +1,5 @@
-import type { CardItem, DmPart, LogItem, TaskItem } from '../controller';
-import type { Characteristic, MapDirection, MapIcon, PathKind, Scatter } from '../model';
+import type { AttackItem, CardItem, DamageItem, DmPart, LogItem, TaskItem } from '../controller';
+import type { ArmorClass, AttackKind, Characteristic, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
 
@@ -18,6 +18,50 @@ export const characteristicLabel: Record<Characteristic, string> = {
   INT: 'INT',
   EDU: 'EDU',
   SOC: 'SOC',
+};
+
+/** Die Rüstungsklassen, wie die Matrix sie schreibt. */
+export const armorText: Record<ArmorClass, string> = {
+  nothing: 'Nothing',
+  jack: 'Jack',
+  mesh: 'Mesh',
+  cloth: 'Cloth',
+  reflec: 'Reflec',
+  ablat: 'Ablat',
+  combat: 'Combat',
+};
+
+/** Die Reichweiten, wie die Matrix sie schreibt. */
+export const rangeText: Record<Range, string> = {
+  close: 'Close',
+  short: 'Short',
+  medium: 'Medium',
+  long: 'Long',
+  veryLong: 'Very Long',
+};
+
+/** Knapp, für die Köpfe der Tabelle. */
+export const rangeShort: Record<Range, string> = {
+  close: 'Close',
+  short: 'Short',
+  medium: 'Med.',
+  long: 'Long',
+  veryLong: 'V. Long',
+};
+
+/** Die Reichweiten in Metern (S. 7). */
+export const rangeMeters: Record<Range, string> = {
+  close: 'Berührung',
+  short: '1–5 m',
+  medium: '6–50 m',
+  long: '51–250 m',
+  veryLong: '251–500 m',
+};
+
+export const attackText: Record<AttackKind, string> = {
+  blow: 'Schlag',
+  swing: 'Hieb',
+  shot: 'Schuss',
 };
 
 /** Was ein Feld gezogen hat, in einer Zeile: ein Begriff, beim Paar beide (verraten · Technologie). */
@@ -123,6 +167,10 @@ export function partLabel(part: DmPart): string {
       return `ohne Fertigkeit ${signed(part.dm)}`;
     case 'characteristic':
       return `${characteristicLabel[part.characteristic]} ${hex(part.value)} ${signed(part.dm)}`;
+    case 'armor':
+      return `${armorText[part.armor]} ${signed(part.dm)}`;
+    case 'range':
+      return `${rangeText[part.range]} ${signed(part.dm)}`;
   }
 }
 
@@ -149,6 +197,21 @@ export function taskTitle(item: TaskItem): string {
   return `${item.character} · ${skillTitle(item.parts)} · ${item.target}+`;
 }
 
+/** Ein Angriff in einer Zeile: „Kira Vant · Automatic Pistol · Jack, Short“. */
+export function attackTitle(item: AttackItem): string {
+  return `${item.character} · ${item.weapon} · ${armorText[item.armor]}, ${rangeText[item.range]}`;
+}
+
+/** Der Titel im Popup: Probe oder Angriff. */
+export function rollTitle(item: TaskItem | AttackItem): string {
+  return item.kind === 'attack' ? attackTitle(item) : taskTitle(item);
+}
+
+/** Ein Schadenswurf: „3W6: 4 + 2 + 6 = 12“. */
+export function damageDetail(item: DamageItem): string {
+  return `${item.dice.length}W6: ${item.dice.join(' + ')} = ${item.damage}`;
+}
+
 /** Ein Ergebnis in einer Zeile, für die Zeile über der Schreibzeile: Urteil, dann die Frage. */
 export function resultLine(item: LogItem): { head: string; rest: string } {
   switch (item.kind) {
@@ -160,12 +223,16 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
       return { head: 'Karte', rest: item.question ? quoted(item.question) : cardPickText(item) };
     case 'task':
       return { head: item.success ? 'ERFOLG' : 'FEHLSCHLAG', rest: taskTitle(item) };
+    case 'attack':
+      return { head: item.success ? 'TREFFER' : 'DANEBEN', rest: attackTitle(item) };
+    case 'damage':
+      return { head: `Schaden ${item.damage}`, rest: `${item.weapon} · ${item.dice.join(' + ')}` };
     case 'note':
       return { head: item.interprets === undefined ? 'Notiz' : 'Deutung', rest: item.text };
   }
 }
 
-export function taskDetail(item: TaskItem): string {
+export function taskDetail(item: TaskItem | AttackItem): string {
   const [a, b] = item.dice;
   return `2W6: ${a} + ${b} = ${a + b}, DM ${signed(item.dm)} → ${item.total}`;
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { Snapshot } from '../../controller';
+import type { CombatView, Snapshot } from '../../controller';
 import { SkillChips, UppRow } from '../characters/CharacterCard';
 import { useGame } from '../game-context';
 import { ChevronDownIcon, PencilIcon } from '../icons';
@@ -11,9 +11,10 @@ const SETTLE_MS = 120;
  * Die Leiste oben im Orakel-Screen: die Lebenden nebeneinander, der Charakter oben in der Mitte.
  * Wischen zeigt den nächsten; welcher oben steht, entscheidet der Controller, die Leiste meldet nur,
  * bei welcher Karte das Wischen liegen geblieben ist. Fertigkeit antippen startet eine Probe, danach
- * lassen sich Attribute dazuwählen. Der Kopf klappt die Leiste ein und auf.
+ * lassen sich Attribute dazuwählen. Der Kopf klappt die Leiste ein und auf. Im Reiter Kampf zeigt
+ * sie statt der Fertigkeiten die Waffen des Charakters oben; antippen nimmt sie in die Hand.
  */
-export function CharacterStrip({ view }: { view: Snapshot }) {
+export function CharacterStrip({ view, weapons = false }: { view: Snapshot; weapons?: boolean }) {
   const game = useGame();
   const track = useRef<HTMLDivElement>(null);
   const settle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -88,8 +89,18 @@ export function CharacterStrip({ view }: { view: Snapshot }) {
             </div>
             {!collapsed && (
               <>
-                <UppRow character={character} interactive={character.focus} />
-                <SkillChips character={character} interactive={character.focus} />
+                <UppRow character={character} interactive={character.focus && !weapons} />
+                {weapons ? (
+                  character.focus && view.combat ? (
+                    <WeaponChips combat={view.combat} />
+                  ) : (
+                    <ul className="chips" aria-hidden="true">
+                      <li className="chip">…</li>
+                    </ul>
+                  )
+                ) : (
+                  <SkillChips character={character} interactive={character.focus} />
+                )}
               </>
             )}
           </article>
@@ -105,5 +116,19 @@ export function CharacterStrip({ view }: { view: Snapshot }) {
         </div>
       )}
     </section>
+  );
+}
+
+/** Die Waffen des Charakters oben: die Hände und die aus seinem Besitz; die in der Hand ist gedrückt. */
+function WeaponChips({ combat }: { combat: CombatView }) {
+  const game = useGame();
+  return (
+    <div className="chips" role="group" aria-label="Waffe in der Hand">
+      {combat.weapons.map((weapon) => (
+        <button key={weapon.id} type="button" aria-label={`${weapon.name} (${weapon.skill})`} aria-pressed={weapon.wielded} onClick={() => game.wieldWeapon(weapon.id)}>
+          {weapon.name} <span className="chip-skill">{weapon.short}</span>
+        </button>
+      ))}
+    </div>
   );
 }

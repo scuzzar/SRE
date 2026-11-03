@@ -43,6 +43,17 @@ export function PersonIcon() {
   );
 }
 
+/** Ein Fadenkreuz, für den Kampf. */
+export function CombatIcon() {
+  return (
+    <svg {...base} width={22} height={22} strokeLinecap="round">
+      <circle cx="12" cy="12" r="7.5" />
+      <circle cx="12" cy="12" r="1.4" fill="currentColor" />
+      <path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4" />
+    </svg>
+  );
+}
+
 /** Ein Hexfeld mit einer Welt darin, für den Subsektor. */
 export function SectorIcon() {
   return (

@@ -1,18 +1,18 @@
 import { useEffect, useRef } from 'react';
-import type { DmPart, TaskItem } from '../../controller';
+import type { AttackItem, DmPart, TaskItem } from '../../controller';
 import { DicePairView, THROW_MS, useTimeline } from '../Dice';
-import { characteristicLabel, partLabel, signed, skillTitle, taskDetail, taskTitle } from '../format';
+import { armorText, characteristicLabel, partLabel, rangeText, rollTitle, signed, skillTitle, taskDetail } from '../format';
 import { useGame } from '../game-context';
 import { haptic, stopHaptics } from '../haptics';
 
 /**
- * Das Ergebnis einer Probe als Popup; geloggt ist es schon und steht nach „Weiter“ im Log darunter.
+ * Das Ergebnis einer Probe oder eines Angriffs als Popup; geloggt ist es schon und steht nach „Weiter“ im Log darunter.
  *
  * Wie in Baldur's Gate 3 erscheint zuerst der Zielwert, dann rollen die Würfel; dann kommen die
  * Fertigkeit und jedes gewählte Attribut einzeln mit Namen dazu, und zuletzt fällt das Urteil. Alles steht von Anfang an im Dokument (für Screenreader und
  * Tests), die Animation blendet es nur nacheinander ein. Ein Tippen springt zum Urteil.
  */
-export function ResultDialog({ result }: { result: TaskItem }) {
+export function ResultDialog({ result }: { result: TaskItem | AttackItem }) {
   const game = useGame();
   const close = useRef<HTMLButtonElement>(null);
   useEffect(() => close.current?.focus(), []);
@@ -51,8 +51,8 @@ export function ResultDialog({ result }: { result: TaskItem }) {
           skip(VERDICT);
         }}
       >
-        <span className="kicker">Probe</span>
-        <span style={{ fontSize: 15, fontWeight: 600 }}>{taskTitle(result)}</span>
+        <span className="kicker">{result.kind === 'attack' ? 'Angriff' : 'Probe'}</span>
+        <span style={{ fontSize: 15, fontWeight: 600 }}>{rollTitle(result)}</span>
         <div className="roll-target" aria-hidden="true">
           <span>Zielwert</span>
           <strong>{result.target}+</strong>
@@ -75,7 +75,7 @@ export function ResultDialog({ result }: { result: TaskItem }) {
           ))}
         </ol>
         <h2 id="result-title" className={result.success ? 'roll-verdict' : 'roll-verdict negative'}>
-          {result.success ? 'ERFOLG' : 'FEHLSCHLAG'}
+          {verdict(result)}
         </h2>
         <div className="roll-after">
           <span id="result-detail" className="mono muted" style={{ fontSize: 14 }}>
@@ -83,18 +83,50 @@ export function ResultDialog({ result }: { result: TaskItem }) {
           </span>
           {/* Für Screenreader: Die Teile des DM stehen oben schon sichtbar, aber dort nur für das Auge. */}
           <span className="visually-hidden">{result.parts.map(partLabel).join(', ')}</span>
-          <div className="roll-actions single">
-            <button ref={close} type="button" className="primary" onClick={() => game.closeResult()}>
-              Weiter
-            </button>
-          </div>
+          {result.kind === 'attack' && result.damagePending ? (
+            <div className="roll-actions">
+              <button ref={close} type="button" className="ghost" onClick={() => game.closeResult()}>
+                Weiter
+              </button>
+              <button
+                type="button"
+                className="primary"
+                onClick={() => {
+                  haptic('shake');
+                  game.rollDamage();
+                }}
+              >
+                Schaden würfeln ({result.wounds}W6)
+              </button>
+            </div>
+          ) : (
+            <div className="roll-actions single">
+              <button ref={close} type="button" className="primary" onClick={() => game.closeResult()}>
+                Weiter
+              </button>
+            </div>
+          )}
         </div>
       </section>
     </div>
   );
 }
 
-/** Ein Teil des DM mit Namen, so knapp wie möglich: „Pilot-2“, „ohne Fertigkeit“, „DEX“. */
+function verdict(result: TaskItem | AttackItem): string {
+  if (result.kind === 'attack') return result.success ? 'TREFFER' : 'DANEBEN';
+  return result.success ? 'ERFOLG' : 'FEHLSCHLAG';
+}
+
+/** Ein Teil des DM mit Namen, so knapp wie möglich: „Pilot-2“, „ohne Fertigkeit“, „DEX“, „Jack“. */
 function partName(part: DmPart): string {
-  return part.kind === 'characteristic' ? characteristicLabel[part.characteristic] : skillTitle([part]);
+  switch (part.kind) {
+    case 'characteristic':
+      return characteristicLabel[part.characteristic];
+    case 'armor':
+      return armorText[part.armor];
+    case 'range':
+      return rangeText[part.range];
+    default:
+      return skillTitle([part]);
+  }
 }

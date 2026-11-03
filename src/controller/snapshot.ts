@@ -1,11 +1,25 @@
 import {
   activeSkills,
+  armorClasses,
+  armorDm,
+  attackCharacteristic,
   byName,
+  characteristicAttackDm,
+  damageOf,
+  damageRollsOf,
+  pendingDamage,
+  rangeDm,
+  ranges,
+  weaponOf,
+  weaponSkill,
+  weaponsOf,
+  wieldedWeapon,
   canGoUnskilled,
   characterOf,
   characteristicDm,
   deadCharacters,
   focusOf,
+  HANDS,
   isInLog,
   livingCharacters,
   isSuccess,
@@ -27,8 +41,13 @@ import {
   valueOf,
   entryOf,
   itemOf,
+  type ArmorClass,
+  type AttackKind,
+  type AttackResult,
   type Campaign,
+  type DamageRoll,
   type ItemKind,
+  type Range,
   type Character,
   type CharacterInput,
   type Characteristic,
@@ -41,7 +60,22 @@ import {
   type TaskResult,
   type Upp,
 } from '../model';
-import { canConfirm, characteristicOptions, drawnIn, evaluateTask, hasSkill, pickedCount, type Card, type CharacteristicOption, type NameChoices, type Task, type WorldRoll } from '../model/draft';
+import {
+  attackTable,
+  canConfirm,
+  characteristicOptions,
+  drawnIn,
+  evaluateAttack,
+  evaluateTask,
+  hasSkill,
+  pickedCount,
+  type Attack,
+  type Card,
+  type CharacteristicOption,
+  type NameChoices,
+  type Task,
+  type WorldRoll,
+} from '../model/draft';
 import { careerLines, generationView, itemLabel, worldChoices, worldName, type CareerLine, type GenerationView, type WorldChoice } from './generation-view';
 import { sectorView, selectedView, worldList, worldView, type HexView, type SelectedHexView, type WorldListItem, type WorldView } from './world-view';
 
@@ -80,8 +114,10 @@ export interface Snapshot {
   readonly dead: readonly { readonly id: string; readonly name: string; readonly background: string }[];
   readonly retired: readonly { readonly id: string; readonly name: string }[];
   readonly task: TaskView | undefined;
-  /** Das Ergebnis-Popup nach einer Probe. */
-  readonly result: TaskItem | undefined;
+  /** Der Reiter Kampf für den Charakter oben; fehlt, wenn es keinen Lebenden gibt. */
+  readonly combat: CombatView | undefined;
+  /** Das Ergebnis-Popup nach einer Probe oder einem Angriff. */
+  readonly result: TaskItem | AttackItem | undefined;
   readonly editor: EditorView | undefined;
   /** Die feste Liste der Fertigkeiten, für den Editor. */
   readonly skills: readonly SkillChoice[];
@@ -114,9 +150,11 @@ export interface ItemChoice {
   readonly label: string;
   readonly kind: ItemKind;
   readonly once: boolean;
+  /** Bei Waffen: die Waffe, die man damit in die Hand nehmen kann. */
+  readonly weapon: string | undefined;
 }
 
-export type Screen = 'oracle' | 'characters' | 'sector' | 'about';
+export type Screen = 'oracle' | 'combat' | 'characters' | 'sector' | 'about';
 
 export interface CampaignChoice {
   readonly id: string;
@@ -140,7 +178,7 @@ export interface OddsChoice {
   readonly selected: boolean;
 }
 
-export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | NoteItem;
+export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | AttackItem | DamageItem | NoteItem;
 
 /** Eine Notiz, oder mit `interprets` eine Deutung zum Ergebnis an dieser Stelle des Logs. */
 export interface NoteItem {
@@ -197,7 +235,88 @@ export type DmPart =
   /** Ohne `level` bei Jack-of-all-Trades. */
   | { readonly kind: 'skill'; readonly name: string; readonly level: number | undefined; readonly dm: number }
   | { readonly kind: 'unskilled'; readonly dm: number }
-  | { readonly kind: 'characteristic'; readonly characteristic: Characteristic; readonly value: number; readonly dm: number };
+  | { readonly kind: 'characteristic'; readonly characteristic: Characteristic; readonly value: number; readonly dm: number }
+  | { readonly kind: 'armor'; readonly armor: ArmorClass; readonly dm: number }
+  | { readonly kind: 'range'; readonly range: Range; readonly dm: number };
+
+/** Ein gewürfelter Angriff; bei einem Treffer mit seinem Schaden, sobald gewürfelt. */
+export interface AttackItem {
+  readonly kind: 'attack';
+  readonly at: string;
+  readonly character: string;
+  readonly weapon: string;
+  readonly armor: ArmorClass;
+  readonly range: Range;
+  readonly target: number;
+  readonly dice: Dice;
+  readonly dm: number;
+  /** Würfel + DM */
+  readonly total: number;
+  readonly success: boolean;
+  /** Woraus der DM besteht: Fertigkeit, Rüstung, Reichweite, Attribut, nach dem heutigen Stand des Charakters. */
+  readonly parts: readonly DmPart[];
+  /** Wie viele W6 Schaden die Waffe macht. */
+  readonly wounds: number;
+  /** Für einen Treffer, für den noch kein Schaden gewürfelt ist. */
+  readonly damagePending: boolean;
+}
+
+/** Ein Schadenswurf; er steht im Kasten seines Treffers (`of`). */
+export interface DamageItem {
+  readonly kind: 'damage';
+  readonly at: string;
+  readonly of: number;
+  readonly weapon: string;
+  readonly dice: readonly number[];
+  readonly damage: number;
+}
+
+/** Eine Waffe, die der Charakter oben führen kann, mit der Fertigkeit, die sie nutzt. */
+export interface WeaponChoice {
+  readonly id: string;
+  readonly name: string;
+  /** Die Fertigkeit mit Stufe; ohne zählt Stufe 0: „Brawling-0“. */
+  readonly skill: string;
+  /** Dasselbe mit Kürzel: „Brw-0“. */
+  readonly short: string;
+  readonly wielded: boolean;
+}
+
+export interface CombatCell {
+  readonly range: Range;
+  /** Fehlt, wo die Waffe nicht hinreicht. */
+  readonly odds: { readonly dm: number; readonly need: number; readonly chance: number } | undefined;
+  readonly chosen: boolean;
+}
+
+export interface CombatView {
+  readonly character: string;
+  readonly weapons: readonly WeaponChoice[];
+  readonly weapon: {
+    readonly id: string;
+    readonly name: string;
+    readonly attack: AttackKind;
+    readonly wounds: number;
+    readonly characteristic: Characteristic;
+    readonly value: number;
+    readonly required: number;
+    readonly requiredDm: number;
+    readonly advantageous: number;
+    readonly advantageousDm: number;
+  };
+  /** Der Teil des DM, der in jeder Zelle gleich ist: Fertigkeit und Attribut. */
+  readonly base: readonly DmPart[];
+  /** Die Spalten: je Reichweite der DM der Waffe; ohne DM reicht sie nicht hin. */
+  readonly ranges: readonly { readonly range: Range; readonly dm: number | undefined }[];
+  /** Die Zeilen: je Rüstung der DM der Waffe und die Zellen. */
+  readonly rows: readonly { readonly armor: ArmorClass; readonly dm: number; readonly cells: readonly CombatCell[] }[];
+  /** Das gewählte Ziel mit DM, nötigem Wurf und Chance; erst dann lässt sich angreifen. */
+  readonly target: { readonly armor: ArmorClass; readonly range: Range; readonly dm: number; readonly need: number; readonly chance: number; readonly parts: readonly DmPart[] } | undefined;
+  /** Der neueste Treffer ohne Schaden: dafür lässt sich der Schaden würfeln. */
+  readonly damage: { readonly index: number; readonly weapon: string; readonly wounds: number } | undefined;
+  /** Die letzten Angriffe des Logs, das Neueste zuletzt, mit ihrem Schaden. */
+  readonly recent: readonly { readonly index: number; readonly item: AttackItem; readonly damage: DamageItem | undefined }[];
+}
 
 export interface CardView {
   readonly question: string | undefined;
@@ -288,6 +407,8 @@ export interface ControllerState {
   /** Die offene Namenswahl. */
   readonly names: NameChoices | undefined;
   readonly task: Task | undefined;
+  /** Der Angriff in Vorbereitung, für den Charakter oben. */
+  readonly attack: Attack | undefined;
   /** Der Charakter, dessen Details im Charakter-Screen aufgeklappt sind. */
   readonly opened: string | undefined;
   /** Die Leiste mit dem Charakter oben ist eingeklappt; das Gerät merkt es sich. */
@@ -356,7 +477,155 @@ function taskItem(campaign: Campaign, entry: TaskResult): TaskItem {
   };
 }
 
-function logItem(campaign: Campaign, entry: LogEntry): LogItem {
+/** Die Teile des DM eines Angriffs, nach dem heutigen Stand des Charakters; Rüstung und Reichweite aus den Referenzdaten. */
+function attackParts(character: Character, weaponId: string, armor: ArmorClass, range: Range): DmPart[] {
+  const weapon = weaponOf(weaponId);
+  const characteristic = attackCharacteristic(weapon);
+  const value = valueOf(character.upp, characteristic);
+  return [
+    {
+      kind: 'skill',
+      name: skillOf(weapon.uses).name,
+      level: weaponSkill(character, weapon)?.level ?? 0,
+      dm: weaponSkill(character, weapon)?.level ?? 0,
+    },
+    { kind: 'armor', armor, dm: armorDm(weapon, armor) },
+    { kind: 'range', range, dm: rangeDm(weapon, range) ?? 0 },
+    {
+      kind: 'characteristic',
+      characteristic,
+      value,
+      dm: characteristicAttackDm(weapon, value),
+    },
+  ];
+}
+
+function attackItem(campaign: Campaign, entry: AttackResult, index: number): AttackItem {
+  const character = characterOf(campaign, entry.for);
+  const success = isSuccess(entry);
+  return {
+    kind: 'attack',
+    at: entry.at,
+    character: character.name,
+    weapon: weaponName(entry.with),
+    armor: entry.armor,
+    range: entry.range,
+    target: entry.target,
+    dice: entry.dice,
+    dm: entry.dm,
+    total: sum(entry.dice) + entry.dm,
+    success,
+    parts: attackParts(character, entry.with, entry.armor, entry.range),
+    wounds: weaponOf(entry.with).wounds,
+    damagePending: success && damageRollsOf(campaign.log, index).length === 0,
+  };
+}
+
+function damageItem(campaign: Campaign, entry: DamageRoll): DamageItem {
+  const hit = campaign.log[entry.of] as AttackResult;
+  return {
+    kind: 'damage',
+    at: entry.at,
+    of: entry.of,
+    weapon: weaponName(hit.with),
+    dice: entry.dice,
+    damage: damageOf(entry),
+  };
+}
+
+function weaponLabel(character: Character, weaponId: string): WeaponChoice {
+  const weapon = weaponOf(weaponId);
+  const level = weaponSkill(character, weapon)?.level ?? 0;
+  const skill = skillOf(weapon.uses);
+  return {
+    id: weapon.id,
+    name: weaponName(weapon.id),
+    skill: `${skill.name}-${level}`,
+    short: `${skill.short}-${level}`,
+    wielded: wieldedWeapon(character).id === weapon.id,
+  };
+}
+
+/** Die Hände heißen auf Deutsch so; alle anderen Waffen wie in den Charts. */
+function weaponName(id: string): string {
+  return id === HANDS ? 'Hände' : weaponOf(id).name;
+}
+
+function combatView(campaign: Campaign, attack: Attack | undefined, log: readonly LogItem[]): CombatView | undefined {
+  const character = focusOf(campaign);
+  if (!character) return undefined;
+  const weapon = wieldedWeapon(character);
+  const characteristic = attackCharacteristic(weapon);
+  const value = valueOf(character.upp, characteristic);
+  const [skill, , , counted] = attackParts(character, weapon.id, 'nothing', 'close');
+  const table = attackTable(campaign);
+  const target = attack ? evaluateAttack(attack, campaign) : undefined;
+  const pending = pendingDamage(campaign.log);
+  const pendingHit = pending === undefined ? undefined : (campaign.log[pending] as AttackResult);
+  const recent = log
+    .flatMap((item, index) => (item.kind === 'attack' ? [{ index, item }] : []))
+    .slice(-3)
+    .map(({ index, item }) => {
+      const damage = log.find((d): d is DamageItem => d.kind === 'damage' && d.of === index);
+      return { index, item, damage };
+    });
+  return {
+    character: character.name,
+    weapons: weaponsOf(character).map((id) => weaponLabel(character, id)),
+    weapon: {
+      id: weapon.id,
+      name: weaponName(weapon.id),
+      attack: weapon.attack,
+      wounds: weapon.wounds,
+      characteristic,
+      value,
+      required: weapon.required,
+      requiredDm: weapon.requiredDm,
+      advantageous: weapon.advantageous,
+      advantageousDm: weapon.advantageousDm,
+    },
+    base: [skill!, counted!],
+    ranges: ranges.map((range) => ({ range, dm: rangeDm(weapon, range) })),
+    rows: armorClasses.map((armor, i) => ({
+      armor,
+      dm: armorDm(weapon, armor),
+      cells: ranges.map((range, j) => {
+        const odds = table[i]![j];
+        return {
+          range,
+          odds: odds && {
+            dm: odds.dm.total,
+            need: odds.need,
+            chance: odds.chance,
+          },
+          chosen: attack?.armor === armor && attack.range === range,
+        };
+      }),
+    })),
+    target:
+      attack?.armor !== undefined && attack.range !== undefined && target
+        ? {
+            armor: attack.armor,
+            range: attack.range,
+            dm: target.dm.total,
+            need: target.need,
+            chance: target.chance,
+            parts: attackParts(character, weapon.id, attack.armor, attack.range),
+          }
+        : undefined,
+    damage:
+      pendingHit && pending !== undefined
+        ? {
+            index: pending,
+            weapon: weaponName(pendingHit.with),
+            wounds: weaponOf(pendingHit.with).wounds,
+          }
+        : undefined,
+    recent,
+  };
+}
+
+function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
   switch (entry.kind) {
     case 'oracle':
       return { kind: 'oracle', at: entry.at, question: entry.question, odds: oddsOf(entry.odds).name, roll: entry.roll, chance: entry.chance, yes: isYes(entry) };
@@ -378,6 +647,10 @@ function logItem(campaign: Campaign, entry: LogEntry): LogItem {
       };
     case 'task':
       return taskItem(campaign, entry);
+    case 'attack':
+      return attackItem(campaign, entry, index);
+    case 'damage':
+      return damageItem(campaign, entry);
     case 'note':
       return { kind: 'note', at: entry.at, text: entry.text, interprets: entry.interprets };
   }
@@ -444,7 +717,7 @@ function taskView(campaign: Campaign, task: Task): TaskView {
 }
 
 const skills: readonly SkillChoice[] = ref.skills.map((s) => ({ ...s, leveled: shownLevel({ of: s.id, level: 0 }) !== undefined }));
-const items: readonly ItemChoice[] = ref.items.map((i) => ({ id: i.id, label: itemLabel(i), kind: i.kind, once: i.once }));
+const items: readonly ItemChoice[] = ref.items.map((i) => ({ id: i.id, label: itemLabel(i), kind: i.kind, once: i.once, weapon: i.weapon }));
 
 /** Die Karte zur Wahl einer Welt, solange die Erschaffung im Schritt Heimatwelt oder Welt eines Terms ist. */
 function pickingView(state: ControllerState, campaign: Campaign): { readonly title: string } | undefined {
@@ -459,10 +732,11 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], retired: [], task: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], retired: [], task: undefined, combat: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
   }
-  const resultEntry = state.result === undefined ? undefined : campaign.log[state.result];
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
+  const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
+  const resultItem = state.result === undefined ? undefined : log[state.result];
   return {
     ...base,
     ready: true,
@@ -470,7 +744,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     campaigns: byName(state.campaigns).map((c) => ({ id: c.id, name: c.name, open: c.id === campaign.id, characters: livingCharacters(c).length, entries: c.log.length })),
     campaignSheet: state.campaignSheet && { error: state.campaignSheet.error, canDelete: state.campaigns.length > 1 },
     odds: ref.odds.map((o) => ({ id: o.id, name: o.name, chance: o.chance, target: o.target, selected: o.id === campaign.odds })),
-    log: campaign.log.map((entry) => logItem(campaign, entry)),
+    log,
     card: state.card && cardView(state.card),
     names: state.names,
     characters: livingCharacters(campaign).map((c) => characterView(campaign, c, state)),
@@ -478,7 +752,8 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     dead: deadCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background })),
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
-    result: resultEntry?.kind === 'task' ? taskItem(campaign, resultEntry) : undefined,
+    combat: combatView(campaign, state.attack, log),
+    result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' ? resultItem : undefined,
     editor: state.editor && {
       id: state.editor.id,
       input: editing ? inputOf(editing) : emptyInput,
