@@ -6,6 +6,7 @@ import {
   itemKinds,
   locationOf,
   offerOf,
+  salePrice,
   ehex,
   uwpCode,
   armorClasses,
@@ -366,8 +367,14 @@ export interface ShopView {
   readonly offer: readonly { readonly kind: ItemKind; readonly items: readonly ShopItem[] }[];
   /** Die Buchungen, die neueste zuerst. */
   readonly bookings: readonly BookingItem[];
-  /** Die Lebenden, für Kauf, Einzahlung und Auszahlung, mit ihren Credits. */
-  readonly members: readonly { readonly id: string; readonly name: string; readonly credits: number }[];
+  /** Die Lebenden, für Kauf, Verkauf, Einzahlung und Auszahlung, mit ihren Credits und was sie verkaufen könnten. */
+  readonly members: readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly credits: number;
+    /** Gegenstände aus dem Besitz mit Preis, mit dem vorgeschlagenen Erlös je Stück (halber Preis). */
+    readonly sellable: readonly { readonly id: string; readonly label: string; readonly count: number; readonly price: number }[];
+  }[];
   readonly error: string | undefined;
 }
 
@@ -705,11 +712,20 @@ function shopView(campaign: Campaign, error: string | undefined): ShopView {
       amount: b.amount,
       text: b.text,
       character: name(b.for),
-      item: b.bought === undefined ? undefined : itemLabel(itemOf(b.bought)),
+      item: b.bought ?? b.sold ? itemLabel(itemOf((b.bought ?? b.sold)!)) : undefined,
       count: b.count,
       world: b.in === undefined ? undefined : (campaign.hexes.find((h) => hexId(h.column, h.row) === b.in)?.name ?? b.in),
     })),
-    members: livingCharacters(campaign).map((c) => ({ id: c.id, name: c.name, credits: c.credits })),
+    members: livingCharacters(campaign).map((c) => ({
+      id: c.id,
+      name: c.name,
+      credits: c.credits,
+      sellable: c.possessions.flatMap((p) => {
+        const item = itemOf(p.of);
+        const price = salePrice(item);
+        return price === undefined ? [] : [{ id: item.id, label: itemLabel(item), count: p.count, price }];
+      }),
+    })),
     error,
   };
 }

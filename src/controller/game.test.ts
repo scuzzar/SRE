@@ -368,6 +368,18 @@ describe('Shop und Gruppenkasse', () => {
     expect(repository.saved?.location).toBe('0101');
   });
 
+  it('verkauft aus dem Besitz eines Charakters, mit dem vorgeschlagenen halben Preis', async () => {
+    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina])));
+    game.chooseHex(1, 1);
+    game.stayHere();
+    const jonas = game.snapshot().shop!.members.find((m) => m.name === 'Jonas Reyl')!;
+    expect(jonas.sellable.find((s) => s.id === 'blade')).toMatchObject({ count: 1, price: 25 });
+    game.sell('blade', 1, 30, 'c2');
+    const shop = game.snapshot().shop!;
+    expect(shop.funds).toBe(30);
+    expect(shop.bookings[0]).toMatchObject({ kind: 'sale', amount: 30, item: 'Blade', character: 'Jonas Reyl', world: 'Regina' });
+  });
+
   it('meldet im Shop, was nicht geht, und ändert dann nichts', async () => {
     const { game } = await started();
     game.book('expense', 100);

@@ -10,6 +10,8 @@ import {
   itemOf,
   offerOf,
   reload,
+  salePrice,
+  sell,
   setHexes,
   setLocation,
   setWields,
@@ -90,6 +92,42 @@ describe('Shop', () => {
     expect(() => buy(campaign, 'cutlass', 10, 'c2', clock)).toThrow(/nicht in der Gruppenkasse/);
     expect(() => buy(campaign, 'laser-rifle', 1, 'c2', clock)).toThrow(/gibt es auf Regina nicht/);
     expect(() => buy(createCampaign(), 'rifle', 1, 'c2', clock)).toThrow(/auf keiner Welt/);
+  });
+});
+
+describe('Verkaufen', () => {
+  it('schlägt den halben Preis vor; Schiffe, Mitgliedschaften und Dinge ohne Preis verkauft man nicht', () => {
+    expect(salePrice(itemOf('rifle'))).toBe(100);
+    expect(salePrice(itemOf('revolver-ammo'))).toBe(2);
+    expect(salePrice(itemOf('club'))).toBeUndefined();
+    expect(salePrice(itemOf('free-trader'))).toBeUndefined();
+    expect(salePrice(itemOf('travellers-aid-society'))).toBeUndefined();
+  });
+
+  it('der Erlös geht in die Kasse, der Gegenstand aus dem Besitz; mit der Waffe in der Hand bleiben die Hände', () => {
+    const armed = setWields(there, 'c1', 'automatic-pistol');
+    const sold = sell(armed, 'automatic-pistol', 1, 120, 'c1', clock);
+    expect(fundsOf(sold)).toBe(120);
+    expect(sold.bookings[0]).toMatchObject({ kind: 'sale', amount: 120, for: 'c1', sold: 'automatic-pistol', count: 1, in: '0207' });
+    const kira = characterOf(sold, 'c1');
+    expect(kira.possessions.some((p) => p.of === 'automatic-pistol')).toBe(false);
+    expect(kira).not.toHaveProperty('wields');
+    // Auch ein verbotener Gegenstand oder einer über dem TL der Welt lässt sich verkaufen.
+    expect(fundsOf(sell(there, 'vacc-suit-tl12', 1, 5000, 'c1', clock))).toBe(5000);
+  });
+
+  it('verkauft nicht mehr, als der Charakter hat, nicht für 0 Cr und nicht ohne Aufenthaltsort', () => {
+    const two = buy(book(there, 'income', 100, clock), 'rifle-ammo', 2, 'c2', clock);
+    expect(characterOf(sell(two, 'rifle-ammo', 1, 10, 'c2', clock), 'c2').possessions).toContainEqual({ of: 'rifle-ammo', count: 1 });
+    expect(() => sell(two, 'rifle-ammo', 3, 10, 'c2', clock)).toThrow(/hat 2 × Rifle Ammo/);
+    expect(() => sell(two, 'rifle-ammo', 1, 0, 'c2', clock)).toThrow(/über 0/);
+    expect(() => sell(two, 'rifle', 1, 10, 'c2', clock)).toThrow(/hat kein Rifle/);
+    expect(() => sell(createCampaign(), 'blade', 1, 10, 'c2', clock)).toThrow(/auf keiner Welt/);
+  });
+
+  it('übersteht die Kampagnendatei', () => {
+    const sold = sell(there, 'blade', 1, 25, 'c2', clock);
+    expect(fromCampaignFile(toCampaignFile(sold), 'k2').bookings).toEqual(sold.bookings);
   });
 });
 

@@ -53,6 +53,15 @@ test('Shop: auf einer Welt einkaufen und die Waffe in die Hand nehmen', async ({
   await expect(page.locator('.shop-funds')).toContainText('Cr 990');
   await expect(page.locator('.shop-booking').first()).toContainText('1 × Spear für Kira Vant auf Regina');
 
+  // Jonas verkauft seine Blade; vorgeschlagen ist der halbe Preis, Cr 25.
+  await page.getByLabel('Aus dem Besitz von').selectOption({ label: 'Jonas Reyl' });
+  await page.getByRole('button', { name: 'Blade verkaufen' }).click();
+  const sale = page.getByRole('dialog', { name: 'Blade verkaufen' });
+  await expect(sale.getByLabel('Erlös je Stück (Cr)')).toHaveValue('25');
+  await sale.getByRole('button', { name: 'Verkaufen' }).click();
+  await expect(page.locator('.shop-funds')).toContainText('Cr 1.015');
+  await expect(page.locator('.shop-booking').first()).toContainText('1 × Blade von Jonas Reyl auf Regina');
+
   await page.getByRole('navigation').getByRole('button', { name: 'Kampf' }).click();
   await page.getByRole('group', { name: 'Waffe in der Hand' }).getByRole('button', { name: /Spear/ }).click();
   await expect(page.getByRole('heading', { name: 'Spear' })).toBeVisible();

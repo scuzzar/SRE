@@ -16,6 +16,7 @@ const freeKinds: readonly FreeKind[] = ['income', 'expense', 'deposit', 'payout'
 export function ShopScreen({ view }: { view: Snapshot }) {
   const shop = view.shop;
   const [buying, setBuying] = useState<ShopItem | undefined>(undefined);
+  const [selling, setSelling] = useState<Selling | undefined>(undefined);
   if (!shop) return null;
   return (
     <div className="screen">
@@ -44,9 +45,11 @@ export function ShopScreen({ view }: { view: Snapshot }) {
         )}
         <BookingForm shop={shop} />
         {shop.world && <Offer shop={shop} onBuy={setBuying} />}
+        {shop.world && <Sale shop={shop} onSell={setSelling} />}
         <Ledger shop={shop} />
       </section>
       {buying && <BuyDialog key={buying.id} item={buying} shop={shop} onClose={() => setBuying(undefined)} />}
+      {selling && <SellDialog key={`${selling.member}-${selling.item.id}`} selling={selling} shop={shop} onClose={() => setSelling(undefined)} />}
     </div>
   );
 }
@@ -190,6 +193,107 @@ function BuyDialog({ item, shop, onClose }: { item: ShopItem; shop: ShopView; on
   );
 }
 
+type Sellable = ShopView['members'][number]['sellable'][number];
+
+/** Was gerade verkauft werden soll: von wem welcher Gegenstand. Reine Anzeige, bis man bestätigt. */
+interface Selling {
+  readonly member: string;
+  readonly item: Sellable;
+}
+
+/** Verkaufen aus dem Besitz eines Charakters: vorgeschlagen ist der halbe Preis. */
+function Sale({ shop, onSell }: { shop: ShopView; onSell: (selling: Selling) => void }) {
+  const [member, setMember] = useState(shop.members[0]?.id ?? '');
+  const who = shop.members.find((m) => m.id === member) ?? shop.members[0];
+  if (!who) return null;
+  return (
+    <div className="shop-offer shop-sale">
+      <h2 className="section-title">Verkaufen auf {shop.world?.name}</h2>
+      <label className="field">
+        <span>Aus dem Besitz von</span>
+        <select value={who.id} onChange={(e) => setMember(e.target.value)}>
+          {shop.members.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      {who.sellable.length === 0 ? (
+        <p className="muted">{who.name} hat nichts, das sich verkaufen lässt.</p>
+      ) : (
+        <ul>
+          {who.sellable.map((item) => (
+            <li key={item.id} className="shop-item">
+              <span className="shop-item-name">
+                {item.count > 1 ? `${item.count} × ` : ''}
+                {item.label}
+              </span>
+              <span className="mono muted shop-item-tl">je</span>
+              <span className="mono shop-item-price">{credits(item.price)}</span>
+              <button type="button" className="ghost compact" aria-label={`${item.label} verkaufen`} onClick={() => onSell({ member: who.id, item })}>
+                Verkaufen
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function SellDialog({ selling, shop, onClose }: { selling: Selling; shop: ShopView; onClose: () => void }) {
+  const game = useGame();
+  const { item } = selling;
+  const [count, setCount] = useState(1);
+  const [price, setPrice] = useState(String(item.price));
+  const each = Number(price);
+  const valid = Number.isInteger(each) && each >= 1;
+  const name = shop.members.find((m) => m.id === selling.member)?.name;
+  return (
+    <div className="modal">
+      <section className="result shop-buy" role="dialog" aria-modal="true" aria-labelledby="sell-title">
+        <div className="sheet-head" style={{ alignItems: 'center' }}>
+          <h2 id="sell-title" className="shop-buy-title">
+            {item.label} verkaufen
+          </h2>
+          <button type="button" className="icon-button" aria-label="Schließen" onClick={onClose}>
+            <CloseIcon />
+          </button>
+        </div>
+        <p className="muted">
+          {name} hat {item.count}. Vorgeschlagen ist der halbe Preis der Charts; nach Verhandlung lässt er sich ändern.
+        </p>
+        <div className="shop-book-row">
+          <label className="field">
+            <span>Anzahl</span>
+            <input type="number" inputMode="numeric" min={1} max={item.count} value={count} onChange={(e) => setCount(Math.min(item.count, Math.max(1, Math.floor(Number(e.target.value) || 1))))} />
+          </label>
+          <label className="field">
+            <span>Erlös je Stück (Cr)</span>
+            <input type="number" inputMode="numeric" min={1} value={price} onChange={(e) => setPrice(e.target.value)} />
+          </label>
+        </div>
+        <p className="mono">
+          {count} × {credits(valid ? each : 0)} = <b>{credits(valid ? each * count : 0)}</b> <span className="muted">in die Kasse</span>
+        </p>
+        <button
+          type="button"
+          className="primary"
+          disabled={!valid}
+          onClick={() => {
+            haptic('pick');
+            game.sell(item.id, count, each, selling.member);
+            onClose();
+          }}
+        >
+          Verkaufen
+        </button>
+      </section>
+    </div>
+  );
+}
+
 function Ledger({ shop }: { shop: ShopView }) {
   if (shop.bookings.length === 0) return <p className="log-empty">Noch keine Buchung. Eine Einnahme buchen, etwa eine Belohnung, oder Credits eines Charakters einzahlen.</p>;
   return (
@@ -200,7 +304,11 @@ function Ledger({ shop }: { shop: ShopView }) {
           <li key={i} className="shop-booking">
             <span className="kicker">{bookingText[b.kind]}</span>
             <span className="shop-booking-text">
-              {b.kind === 'purchase' ? `${b.count} × ${b.item} für ${b.character} auf ${b.world}` : [b.character, b.text].filter(Boolean).join(' · ') || '—'}
+              {b.kind === 'purchase'
+                ? `${b.count} × ${b.item} für ${b.character} auf ${b.world}`
+                : b.kind === 'sale'
+                  ? `${b.count} × ${b.item} von ${b.character} auf ${b.world}`
+                  : [b.character, b.text].filter(Boolean).join(' · ') || '—'}
             </span>
             <span className={b.amount < 0 ? 'mono shop-out' : 'mono shop-in'}>{credits(b.amount)}</span>
             <time className="entry-time" dateTime={b.at}>

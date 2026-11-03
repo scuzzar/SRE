@@ -88,8 +88,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > flüchtig der Angriff in Vorbereitung (`Attack`), im Log das Angriffsergebnis (`AttackResult`)
 > und der Schadenswurf (`DamageRoll`).
 >
-> **Entwurf, noch nicht freigegeben** (3. November 2026): **Verkaufen** im Shop (siehe *Shop*). Neu
-> im Bild: die Buchungsart `sale` und der Verweis `Booking.sold`.
+> Ebenfalls am 3. November 2026 freigegeben: **Verkaufen** im Shop (siehe *Shop*). Neu im Bild: die Buchungsart `sale` und der Verweis `Booking.sold`.
 >
 > Ebenfalls am 3. November 2026 freigegeben: **Aufenthaltsort, Gruppenkasse, Shop und Munition**
 > (siehe dort), mit dem neuen Reiter *Shop*. Neu im Bild: `Campaign.location`, `Campaign./funds`, `Booking` mit

@@ -20,6 +20,7 @@ import {
   reload,
   book,
   buy,
+  sell,
   setLocation,
   type BookingKind,
   restoreCharacter,
@@ -394,8 +395,13 @@ export class GameController {
   }
 
   /** Bucht Geld: Einnahme oder Ausgabe frei, Einzahlung oder Auszahlung mit einem Charakter. */
-  book(kind: Exclude<BookingKind, 'purchase'>, amount: number, text?: string, character?: string): void {
+  book(kind: Exclude<BookingKind, 'purchase' | 'sale'>, amount: number, text?: string, character?: string): void {
     this.inShop(() => book(this.campaign, kind, amount, this.deps.clock, text, character));
+  }
+
+  /** Verkauft auf dem Aufenthaltsort aus dem Besitz eines Charakters, zu diesem Erlös je Stück. */
+  sell(item: string, count: number, price: number, character: string): void {
+    this.inShop(() => sell(this.campaign, item, count, price, character, this.deps.clock));
   }
 
   /** Kauft auf dem Aufenthaltsort aus der Gruppenkasse für einen Charakter. */

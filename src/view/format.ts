@@ -38,6 +38,7 @@ export const bookingText: Record<BookingKind, string> = {
   deposit: 'Einzahlung',
   payout: 'Auszahlung',
   purchase: 'Kauf',
+  sale: 'Verkauf',
 };
 
 /** Die Rüstungsklassen, wie die Matrix sie schreibt. */
@@ -188,9 +189,9 @@ export function partLabel(part: DmPart): string {
     case 'characteristic':
       return `${characteristicLabel[part.characteristic]} ${hex(part.value)} ${signed(part.dm)}`;
     case 'armor':
-      return `${armorText[part.armor]} ${signed(part.dm)}`;
+      return `gegen ${armorText[part.armor]} ${signed(part.dm)}`;
     case 'range':
-      return `${rangeText[part.range]} ${signed(part.dm)}`;
+      return `auf ${rangeText[part.range]} ${signed(part.dm)}`;
   }
 }
 

@@ -159,6 +159,7 @@ const CampaignFileSchema = z.object({
           text: z.string().trim().min(1).optional(),
           for: z.string().optional(),
           bought: z.string().optional(),
+          sold: z.string().optional(),
           count: z.number().int().min(1).optional(),
           in: z.string().optional(),
         }),

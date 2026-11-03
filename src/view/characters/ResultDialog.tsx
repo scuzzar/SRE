@@ -123,9 +123,9 @@ function partName(part: DmPart): string {
     case 'characteristic':
       return characteristicLabel[part.characteristic];
     case 'armor':
-      return armorText[part.armor];
+      return `gegen ${armorText[part.armor]}`;
     case 'range':
-      return rangeText[part.range];
+      return `auf ${rangeText[part.range]}`;
     default:
       return skillTitle([part]);
   }

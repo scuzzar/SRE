@@ -42,7 +42,8 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   `focusCharacter(id)` (Wischen), `chooseSkill(skill)`, `toggleCharacteristic(c)`, `rollTask()`,
   `endTask()`; für den Kampf `wieldWeapon(weapon)`, `chooseTarget(armor, range)`, `endAttack()`,
   `rollAttack()`, `rollDamage()` und `reload()`; für Shop und Gruppenkasse `stayHere()` (auf der
-  Weltkarte), `book(kind, amount, text, character)` und `buy(item, count, character)`; für Kampagnen
+  Weltkarte), `book(kind, amount, text, character)`, `buy(item, count, character)` und
+  `sell(item, count, price, character)`; für Kampagnen
   `openCampaign(id)`, `createCampaign(name)`, `renameCampaign(name)`, `deleteCampaign(id)`,
   `exportCampaign(id)` und `importCampaign(text)`; für die Charaktererschaffung `openGeneration()`,
   `rollGeneration()`, `chooseService(id)`, `chooseSkillTable(id)`, `chooseCascade(skill)`,

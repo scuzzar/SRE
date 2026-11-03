@@ -4,8 +4,8 @@ import type { Clock } from './ports';
 import { itemOf, ref, weaponOf, type Item } from './reference';
 import { hexById, worldOf, type Hex } from './sector';
 
-/** Einnahme, Ausgabe, Einzahlung eines Charakters, Auszahlung an einen Charakter, Kauf. */
-export const bookingKinds = ['income', 'expense', 'deposit', 'payout', 'purchase'] as const;
+/** Einnahme, Ausgabe, Einzahlung eines Charakters, Auszahlung an einen Charakter, Kauf, Verkauf. */
+export const bookingKinds = ['income', 'expense', 'deposit', 'payout', 'purchase', 'sale'] as const;
 export type BookingKind = (typeof bookingKinds)[number];
 
 /**
@@ -20,8 +20,9 @@ export interface Booking {
   readonly text?: string;
   /** Bei Einzahlung, Auszahlung und Kauf: der Charakter. */
   readonly for?: CharacterId;
-  /** Beim Kauf: der Gegenstand, die Anzahl und die Welt, als Spalte und Zeile (0304). */
+  /** Beim Kauf bzw. Verkauf: der Gegenstand, die Anzahl und die Welt, als Spalte und Zeile (0304). */
   readonly bought?: string;
+  readonly sold?: string;
   readonly count?: number;
   readonly in?: string;
 }
@@ -90,7 +91,7 @@ function withText<T extends object>(value: T, text: string | undefined): T & { t
  * Bucht Geld in die Kasse oder hinaus. `amount` ist immer positiv; die Art sagt die Richtung.
  * Einzahlung und Auszahlung ändern die Credits des Charakters um denselben Betrag.
  */
-export function book(campaign: Campaign, kind: Exclude<BookingKind, 'purchase'>, amount: number, clock: Clock, text?: string, character?: CharacterId): Campaign {
+export function book(campaign: Campaign, kind: Exclude<BookingKind, 'purchase' | 'sale'>, amount: number, clock: Clock, text?: string, character?: CharacterId): Campaign {
   checkAmount(amount);
   const signed = kind === 'income' || kind === 'deposit' ? amount : -amount;
   if (kind === 'income' || kind === 'expense') {
@@ -125,18 +126,50 @@ export function buy(campaign: Campaign, itemId: string, count: number, character
   return { ...booked, characters: booked.characters.map((c) => (c.id === character ? { ...c, possessions } : c)) };
 }
 
+/** Der vorgeschlagene Erlös je Stück: der halbe Preis der Charts, abgerundet; ohne Preis oder bei Schiffen und Mitgliedschaften nicht verkäuflich. */
+export function salePrice(item: Item): number | undefined {
+  if (item.price === undefined || notSold.has(item.kind)) return undefined;
+  return Math.max(1, Math.floor(item.price / 2));
+}
+
+/**
+ * Verkauft auf dem Aufenthaltsort aus dem Besitz eines Lebenden; der Erlös geht in die Gruppenkasse.
+ * Geht die Waffe in der Hand ganz weg, hat er wieder die Hände.
+ */
+export function sell(campaign: Campaign, itemId: string, count: number, price: number, character: CharacterId, clock: Clock): Campaign {
+  const world = locationOf(campaign);
+  if (!world || campaign.location === undefined) throw new DomainError('Die Gruppe ist auf keiner Welt; erst auf der Sektorkarte den Aufenthaltsort wählen.');
+  const item = itemOf(itemId);
+  if (salePrice(item) === undefined) throw new DomainError(`${item.name} lässt sich nicht verkaufen.`);
+  checkAmount(price);
+  const who = characterOf(campaign, character);
+  if (!livingCharacters(campaign).some((c) => c.id === character)) throw new DomainError(`${who.name} kann nichts verkaufen.`);
+  const had = who.possessions.find((p) => p.of === itemId);
+  if (!had) throw new DomainError(`${who.name} hat kein ${item.name}.`);
+  if (!Number.isInteger(count) || count < 1 || count > had.count) throw new DomainError(`${who.name} hat ${had.count} × ${item.name}.`);
+  const booked = withBooking(campaign, { at: clock.now(), kind: 'sale', amount: price * count, for: character, sold: itemId, count, in: campaign.location });
+  const possessions = who.possessions.flatMap((p) => (p.of !== itemId ? [p] : p.count > count ? [{ ...p, count: p.count - count }] : []));
+  const gone = !possessions.some((p) => p.of === itemId);
+  const rest = Object.fromEntries(Object.entries(who).filter(([key]) => !(gone && key === 'wields' && item.weapon === who.wields))) as typeof who;
+  return { ...booked, characters: booked.characters.map((c) => (c.id === character ? { ...rest, possessions } : c)) };
+}
+
 /** Prüft die Buchungen einer Kampagnendatei: jede passt zu ihrer Art, und die Kasse ist nach keiner negativ. */
 export function validateBookings(campaign: Campaign): void {
   let funds = 0;
   for (const b of campaign.bookings) {
     if (!Number.isInteger(b.amount) || b.amount === 0) throw new DomainError('Eine Buchung hat einen Betrag in ganzen Cr.');
-    const inward = b.kind === 'income' || b.kind === 'deposit';
+    const inward = b.kind === 'income' || b.kind === 'deposit' || b.kind === 'sale';
     if (inward !== b.amount > 0) throw new DomainError(`Eine Buchung der Art ${b.kind} geht in die falsche Richtung.`);
-    const needs = b.kind === 'deposit' || b.kind === 'payout' || b.kind === 'purchase';
+    const needs = b.kind === 'deposit' || b.kind === 'payout' || b.kind === 'purchase' || b.kind === 'sale';
     if (needs !== (b.for !== undefined)) throw new DomainError(`Eine Buchung der Art ${b.kind} hat ${needs ? 'keinen' : 'einen'} Charakter.`);
     if (b.for !== undefined) characterOf(campaign, b.for);
-    if ((b.kind === 'purchase') !== (b.bought !== undefined && b.count !== undefined && b.in !== undefined)) throw new DomainError('Nur ein Kauf hat Gegenstand, Anzahl und Welt.');
+    if ((b.kind === 'purchase') !== (b.bought !== undefined)) throw new DomainError('Nur ein Kauf hat einen gekauften Gegenstand.');
+    if ((b.kind === 'sale') !== (b.sold !== undefined)) throw new DomainError('Nur ein Verkauf hat einen verkauften Gegenstand.');
+    const trade = b.kind === 'purchase' || b.kind === 'sale';
+    if (trade !== (b.count !== undefined && b.in !== undefined)) throw new DomainError('Nur Kauf und Verkauf haben Anzahl und Welt.');
     if (b.bought !== undefined) itemOf(b.bought);
+    if (b.sold !== undefined) itemOf(b.sold);
     if (b.in !== undefined && !hexById(campaign.hexes, b.in)) throw new DomainError(`Ein Kauf verweist auf das Feld ${b.in}, das es nicht gibt.`);
     funds += b.amount;
     if (funds < 0) throw new DomainError('Die Gruppenkasse wird negativ.');
