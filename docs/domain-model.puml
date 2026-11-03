@@ -224,6 +224,16 @@ hide <<value>> stereotype
     target: number
     /success: boolean
   }
+  class Recovery {
+    kind: RecoveryKind
+    dice: number[0..5]
+    /days: number [0..1]
+  }
+  enum RecoveryKind <<value>> {
+    wake
+    treatment
+    rest
+  }
   class DamageRoll {
     dice: number[1..5]
     to: Characteristic[1..5]
@@ -612,6 +622,11 @@ LogEntry <|-- CardPick
 LogEntry <|-- TaskResult
 LogEntry <|-- AttackResult
 LogEntry <|-- DamageRoll
+LogEntry <|-- Recovery
+Recovery "*" --> "0..1" Character : for
+Recovery "*" --> "0..1" Npc : npc
+Recovery "*" --> "0..1" Character : by
+Recovery --> RecoveryKind
 LogEntry <|-- Note
 Note "*" --> "0..1" LogEntry : interprets
 CardPick "1" *-- "*" PickedItem : items {ordered}

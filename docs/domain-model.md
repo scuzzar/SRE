@@ -88,6 +88,10 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > flüchtig der Angriff in Vorbereitung (`Attack`), im Log das Angriffsergebnis (`AttackResult`)
 > und der Schadenswurf (`DamageRoll`).
 >
+> **Entwurf, noch nicht freigegeben** (3. November 2026): **Heilung** (siehe *Heilung*). Neu im Bild:
+> der Logeintrag `Recovery` mit `RecoveryKind` (Aufwachen, Behandlung, Ruhe), Patient (`for` bzw.
+> `npc`) und Behandelnder (`by`).
+>
 > Ebenfalls am 3. November 2026 freigegeben: **Begegnungen mit NSC, Angriffe in beide Richtungen
 > und Wunden** (siehe *Begegnung*, *NSC*, *Wunden*, *Getragene Rüstung*). Neu im Bild:
 > `Encounter`, `Npc`, `Wounds`, `WoundState`, als Referenzdaten `EncounterType`, flüchtig
@@ -193,6 +197,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Rüstungsklasse einer Rüstung | `Item.armor` | Wie eine Rüstung in der Matrix zählt, z. B. Vacc Suit als Cloth, Battle Dress als Combat |
 | Wunden | `/wounds`, `Wounds` | Wie viel STR, DEX und END jemand durch Treffer verloren hat |
 | Zustand | `/state`, `WoundState` | unverletzt, verwundet, bewusstlos (ein Attribut auf 0), schwer verwundet (zwei), tot (drei) |
+| Heilung | `Recovery` | Ein Logeintrag, der Wunden zurücknimmt: Aufwachen, Behandlung oder Ruhe (S. 7) |
+| Aufwachen | `RecoveryKind.wake` | Ein Bewusstloser kommt zu sich; die Wunden gehen zur Hälfte zurück, bei einer schweren Wunde nur auf mindestens 1 |
+| Behandlung | `RecoveryKind.treatment` | Ein SC mit Medical heilt die Wunden ganz: leichte mit Medical-1 und Medical Kit in 30 Minuten, schwere mit Medical-3 in einer medizinischen Einrichtung in 5W6 Tagen |
+| Ruhe | `RecoveryKind.rest` | Leichte Wunden heilen ohne Behandlung in 3 Tagen ganz |
+| Leichte und schwere Wunde | `/severity` | Schwer, wenn seit der letzten vollen Heilung zwei Attribute zugleich auf 0 standen; sonst leicht |
 | Schaden verteilen | `Wounding` | Ein gewürfelter Schaden an einem SC, solange der Spieler die Würfel auf Attribute verteilt |
 | Angriff | `Attack` | Ein Angriff, solange er für den Charakter oben vorbereitet wird |
 | Angriffsergebnis | `AttackResult` | Ein gewürfelter Angriff: Treffer oder nicht |
@@ -570,9 +579,29 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     im Editor zurücknehmen.
   - Ein Treffer ohne Ziel (frei gewählte Rüstung) würfelt seinen Schaden wie bisher, verteilt ihn
     aber nicht (`to` fehlt).
-  - **Später**: Heilung (Medical Kit, Medical-1/-3, Ruhe), das Aufwachen auf die Mitte zwischen
-    verwundet und voll, Wunden mit Zeit, Munition der NSC, Fahrzeuge, Überraschung, Entfernung,
+  - **Später**: Medical Drugs, Wunden mit Zeit, Munition der NSC, Fahrzeuge, Überraschung, Entfernung,
     Moral und Kampfrunden.
+- **Heilung.** Nach S. 7. Eine Heilung ist ein Logeintrag (`Recovery`) für einen verwundeten SC
+  (`for`) oder NSC der laufenden Begegnung (`npc`), nie für einen Toten. Die Wunden (`/wounds`)
+  folgen aus Schadenswürfen und Heilungen im Log, der Reihe nach; eine Heilung löschen nimmt sie
+  zurück.
+  - **Leicht oder schwer** (`/severity`): Eine Wunde ist *schwer*, wenn seit der letzten vollen
+    Heilung zwei Attribute zugleich auf 0 standen, sonst *leicht*. Aufwachen macht eine schwere
+    Wunde nicht leicht.
+  - **Aufwachen** (`wake`): nur für Bewusstlose und schwer Verwundete. Bei einem Attribut auf 0 (10
+    Minuten bewusstlos) steht jedes verwundete Attribut danach in der Mitte zwischen verwundetem und
+    vollem Wert, abgerundet. Bei zwei auf 0 (3 Stunden bewusstlos) bleiben die Werte verwundet, aber
+    mindestens 1.
+  - **Behandlung** (`treatment`): Ein lebender SC, der nicht bewusstlos ist (`by`, auch der Patient
+    selbst, wenn er wach ist), heilt alle Wunden ganz. Bei einer leichten Wunde braucht er Medical-1
+    und ein Medical Kit im Besitz; es dauert 30 Minuten. Bei einer schweren Wunde braucht er
+    Medical-3 und eine medizinische Einrichtung (Krankenstation, Sick Bay eines Schiffs); ob es eine
+    gibt, bestätigt der Spieler. Die Dauer sind 5W6 Tage (`dice`, `/days`).
+  - **Ruhe** (`rest`): heilt eine leichte Wunde ganz nach 3 Tagen, ohne Behandelnden. Eine schwere
+    Wunde heilt ohne Behandlung nicht.
+  - Nach einer vollen Heilung (Behandlung oder Ruhe) zählt der nächste Treffer wieder als erster
+    (er geht ganz auf ein zufälliges Attribut).
+  - Die App führt keine Spielzeit; Dauern stehen nur im Log.
 - **Charakter oben.** Oben im Orakel-Screen steht ein Charakter der Kampagne, der **Charakter oben**
   (`focus`); für ihn würfelt man Proben, ohne den Screen zu wechseln. Wischen zeigt den nächsten
   bzw. vorigen. Infrage kommen nur Lebende, die nicht ausgeblendet sind, in der Reihenfolge der
