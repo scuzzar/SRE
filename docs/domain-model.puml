@@ -2,7 +2,7 @@
 ' Rendern: bash .claude/skills/domain-model/scripts/render.sh docs/domain-model.puml
 @startuml
 !pragma layout smetana
-title Solo RPG Engine – Domänenmodell (Version 1, Entwurf: Angriff)
+title Solo RPG Engine – Domänenmodell (Version 1)
 hide empty members
 hide methods
 skinparam classAttributeIconSize 0
@@ -202,8 +202,10 @@ hide <<value>> stereotype
     dice: number[2]
     dm: number
     target: number
-    wounds: number[0..5]
     /success: boolean
+  }
+  class DamageRoll {
+    dice: number[1..5]
     /damage: number
   }
 
@@ -537,6 +539,7 @@ LogEntry <|-- DiceRoll
 LogEntry <|-- CardPick
 LogEntry <|-- TaskResult
 LogEntry <|-- AttackResult
+LogEntry <|-- DamageRoll
 LogEntry <|-- Note
 Note "*" --> "0..1" LogEntry : interprets
 CardPick "1" *-- "*" PickedItem : items {ordered}
@@ -555,12 +558,14 @@ Task --> "0..6" Characteristic : counts
 Task ..> TaskResult : on roll
 
 ' Angriff
+Attack "0..1" --> "1" Campaign : in
 Attack "*" --> "1" Character : /for
 Attack "*" --> "1" Weapon : /with
 Attack ..> AttackResult : on roll
 AttackResult "*" --> "1" Character : for
 AttackResult "*" --> "1" Weapon : with
 AttackResult "*" --> "0..1" SkillLevel : uses
+DamageRoll "0..1" --> "1" AttackResult : of
 
 ' Karte
 Card "0..1" --> "1" Campaign : in

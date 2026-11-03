@@ -81,12 +81,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > *Fund* weg (ausgeblendet). Der UI-Entwurf dazu liegt unter
 > [`ui-entwurf/kartensymbol/`](ui-entwurf/kartensymbol/).
 >
-> **Entwurf, noch nicht freigegeben** (3. November 2026): der **Angriff** (siehe *Waffen* und
-> *Angriff*). Neu im Bild: als Referenzdaten `Weapon` mit `ArmorDm` und `RangeDm`, die Werte
-> `AttackKind`, `ArmorClass` und `Range`, `Item.weapon`; `Item.uses` ist jetzt abgeleitet
-> (`/uses`, aus der Waffe). Am Charakter die Waffe in der Hand (`Character.wields`), flüchtig der
-> Angriff in Vorbereitung (`Attack`) und im Log das Angriffsergebnis (`AttackResult`). Offen sind
-> die Fragen unter [Offene Fragen zum Angriff](#offene-fragen-zum-angriff).
+> Ebenfalls am 3. November 2026 freigegeben: der **Angriff** im neuen Reiter *Kampf* (siehe
+> *Waffen*, *Angriff* und *Schaden*). Neu im Bild: als Referenzdaten `Weapon` mit `ArmorDm` und
+> `RangeDm`, die Werte `AttackKind`, `ArmorClass` und `Range`, `Item.weapon`; `Item.uses` ist jetzt
+> abgeleitet (`/uses`, aus der Waffe). Am Charakter die Waffe in der Hand (`Character.wields`),
+> flüchtig der Angriff in Vorbereitung (`Attack`), im Log das Angriffsergebnis (`AttackResult`)
+> und der Schadenswurf (`DamageRoll`).
 >
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen, dazu die drei Wurffelder sowie die Themen-Tafeln NSC
@@ -136,7 +136,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Orakelantwort | `OracleAnswer` | Ja oder Nein auf eine Frage |
 | Notiz | `Note` ohne `interprets` | Freier Text im Log, z. B. „Wir landen auf Regina.“ |
 | Deutung | `Note` mit `interprets` | Was man aus einem Ergebnis macht, z. B. „Die Tür ist offen, aber jemand war schon hier.“ |
-| Ergebnis | `OracleAnswer`, `DiceRoll`, `CardPick`, `TaskResult`, `AttackResult` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
+| Ergebnis | `OracleAnswer`, `DiceRoll`, `CardPick`, `TaskResult`, `AttackResult`, `DamageRoll` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
 | Schreibzeile | (Fragefeld) | Das eine Textfeld über den Knöpfen; was der Text wird, entscheidet der Knopf |
 | Würfelwurf (2W6) | `DiceRoll` | Ein einfacher Wurf mit zwei Würfeln |
 | Inspirationskarte | `Card` | Eine gezogene Karte, solange sie offen ist |
@@ -156,12 +156,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Art des Angriffs | `AttackKind` | Schlag (*blow*, Hände), Hieb (*swing*, Klingen) oder Schuss (*shot*, Schusswaffen) |
 | Nötiges Attribut | `Weapon.required`, `requiredDm` | Darunter gibt es den DM, z. B. Cutlass unter STR 7: −2 |
 | Vorteilhaftes Attribut | `Weapon.advantageous`, `advantageousDm` | Ab da gibt es den DM, z. B. Cutlass ab STR 11: +2 |
-| Schaden | `Weapon.wounds`, `AttackResult.wounds` | Wie viele W6 ein Treffer verursacht (Rifle 3W6) bzw. was sie gezeigt haben |
+| Schaden | `Weapon.wounds` | Wie viele W6 ein Treffer verursacht, z. B. Rifle 3W6 |
 | Rüstungsklasse | `ArmorClass` | Was das Ziel trägt: Nothing, Jack, Mesh, Cloth, Reflec, Ablat, Combat |
 | Reichweite | `Range` | Close, Short, Medium, Long, Very Long |
 | Waffe in der Hand | `Character.wields` | Die Waffe, die ein Charakter gerade führt; keine heißt Hände |
 | Angriff | `Attack` | Ein Angriff, solange er für den Charakter oben vorbereitet wird |
-| Angriffsergebnis | `AttackResult` | Ein gewürfelter Angriff, bei einem Treffer mit Schaden |
+| Angriffsergebnis | `AttackResult` | Ein gewürfelter Angriff: Treffer oder nicht |
+| Schadenswurf | `DamageRoll` | Der Wurf auf den Schaden eines Treffers, z. B. 3W6 = 11 |
+| Kampf | (Reiter „Kampf“) | Der Screen für Angriffe: Charakter oben, Waffe in der Hand, Tabelle der Waffe |
 | Bereich der Karte, Themen-Tafel | `Section` | Zufallsereignis, Sinneseindrücke, …; NSC, Welt, … |
 | Feld der Karte | `Slot` | Aktion, Hören, Aussehen, Name, Auslöser, … |
 | Spalte | `Column` | Eine Liste von Einträgen in einem Feld; ein Feld hat eine oder zwei |
@@ -219,15 +221,16 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 ## Regeln, die das Bild nicht zeigt
 
 - **Was draußen bleibt.** Was nicht gespeichert wird, gehört nicht ins Modell, außer der offenen
-  Karte und der Probe in Vorbereitung. Der Controller hält, welcher Screen offen ist, ob das
+  Karte, der Probe und dem Angriff in Vorbereitung. Der Controller hält, welcher Screen offen ist, ob das
   Ergebnis-Popup zu sehen ist und welche Weltkarte offen ist. Ob die Leiste mit dem Charakter oben
   eingeklappt ist, merkt sich das Gerät über einen Neustart hinweg, wie die offene Kampagne; zum
   Spielstand gehört das nicht. Reine Darstellung bleibt in der View: wie Felder und Tafeln angeordnet sind, ob das Menü offen ist, der
   Text im Fragefeld während des Tippens, Farben, die Hex-Schreibweise der UPP und das Format der
   Uhrzeit.
 - **Entwürfe.** Im Paket `draft` liegen die Entwürfe eines Logeintrags: die offene Karte (`Card`,
-  wird beim Bestätigen zum `CardPick`) und die Probe in Vorbereitung (`Task`, wird beim Würfeln zum
-  `TaskResult`). Je Kampagne gibt es höchstens eine offene Karte und höchstens eine Probe. Pfeile
+  wird beim Bestätigen zum `CardPick`) die Probe in Vorbereitung (`Task`, wird beim Würfeln zum
+  `TaskResult`) und der Angriff in Vorbereitung (`Attack`, wird beim Würfeln zum `AttackResult`).
+  Je Kampagne gibt es höchstens eine offene Karte, höchstens eine Probe und höchstens einen Angriff. Pfeile
   führen nur aus `draft` heraus, nie hinein: Der gespeicherte Stand weiß nichts von seinen
   Entwürfen. Entwürfe werden nie gespeichert; beendet das Handy die App, sind sie weg. Ebenso flüchtig ist der Wurf
   der Weltenerschaffung (`WorldRoll`, siehe dort): Gespeichert wird nur, was er ins Hexfeld einträgt.
@@ -236,7 +239,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   die letzte lässt sich nicht löschen. Jede hat einen Namen, der nicht leer ist und sich ändern
   lässt; zwei Kampagnen dürfen gleich heißen. Gespielt wird immer in genau einer, der **offenen
   Kampagne**. Welche das ist, merkt sich das Gerät über einen Neustart hinweg; zum Spielstand gehört
-  das nicht. Wechselt man die Kampagne, sind offene Karte und Probe in Vorbereitung weg. Eine neue
+  das nicht. Wechselt man die Kampagne, sind offene Karte, Probe und Angriff in Vorbereitung weg. Eine neue
   Kampagne beginnt leer: ohne Charaktere (also ohne Charakter oben), ohne Log, ohne Hexfelder, mit der Stufe Mittel. Eine Kampagne löschen
   löscht alles, was an ihr hängt, endgültig.
 - **Kampagnendatei.** Eine Kampagne lässt sich als Datei exportieren und wieder importieren. Die
@@ -275,7 +278,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Karte ziehen), eine Deutung oder eine Notiz; einen Modus gibt es nicht. Beide sind ein `Note` mit
   Text, der nicht leer ist (Leerraum am Rand fällt weg).
   - Eine **Deutung** verweist auf genau ein Ergebnis (`interprets`): eine Orakelantwort, einen Wurf,
-    eine Kartenauswahl oder eine Probe, nie auf eine Notiz oder Deutung, und immer auf einen
+    eine Kartenauswahl, eine Probe, einen Angriff oder einen Schadenswurf, nie auf eine Notiz oder Deutung, und immer auf einen
     früheren Eintrag. Vorgeschlagen ist das neueste Ergebnis; Antippen eines anderen Ergebnisses im
     Log macht es zum Ziel. Ein Ergebnis kann mehrere Deutungen haben.
   - Eine **Notiz** verweist auf nichts; sie steht für sich im Log.
@@ -285,8 +288,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     geschrieben wurde; ihre eigene Zeit behält sie. Das ist Sache der Anzeige: Die Reihenfolge im Log
     bleibt die der Ereignisse.
   - **Ein Ergebnis löschen löscht seine Deutungen mit.** Die Rückfrage sagt das („Eintrag mit
-    1 Deutung endgültig löschen?“). Eine Deutung allein lässt sich löschen, ihr Ergebnis bleibt. Das
-    ist die einzige Stelle, an der ein Logeintrag auf einen anderen verweist; die Regel *Worauf der
+    1 Deutung endgültig löschen?“). Eine Deutung allein lässt sich löschen, ihr Ergebnis bleibt. Außer
+    dem Schadenswurf (siehe *Angriff*) ist das die einzige Stelle, an der ein Logeintrag auf einen
+    anderen verweist; die Regel *Worauf der
     Log verweist, wird nie gelöscht* gilt für Charaktere und Referenzdaten, nicht für den Log selbst.
   - Die **Kampagnendatei** enthält Deutungen und Notizen; beim Import muss jede Deutung auf ein
     früheres Ergebnis derselben Datei verweisen, sonst wird nichts importiert.
@@ -369,6 +373,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - *Attribut*: STR bzw. DEX des Angreifers unter dem nötigen Wert gibt `requiredDm`, ab dem
     vorteilhaften Wert `advantageousDm`, dazwischen ±0. Das ist nicht die Hausregel ±1 der Probe;
     die Hausregeln und die gewählte Stufe (`odds`) zählen beim Angriff nicht.
+  - Angriffe würfelt man im Reiter **Kampf**. Oben steht dort dieselbe Leiste wie im Orakel-Screen,
+    mit dem Charakter oben; Wischen wählt den Charakter, für den man angreift. Statt der
+    Fertigkeiten zeigt die Leiste dort die Waffen: die Hände und die Waffen aus seinem Besitz, die
+    Waffe in der Hand hervorgehoben; antippen wechselt sie.
   - Der Angriff in Vorbereitung ist ein `Attack`, flüchtig im Paket `draft` wie die Probe. Er gilt
     immer dem Charakter oben (`/for`) und seiner Waffe in der Hand (`/with`). Man wählt Rüstung
     und Reichweite des Ziels; erst mit beiden gibt es DM, nötigen Wurf (8 − DM) und Chance, exakt
@@ -379,12 +387,21 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Gewürfelt wird ein Angriff als `AttackResult` in den Log übernommen. Es verweist auf
     Charakter, Waffe und, wenn er sie hat, seine Fertigkeitsstufe darin; es hält Rüstung,
     Reichweite, die zwei Würfel sowie DM und Zielwert fest. Der Erfolg (`/success`: Würfel + `dm` ≥
-    `target`) folgt allein daraus. Trifft der Angriff, würfelt die App im selben Zug den Schaden:
-    so viele W6, wie die Waffe `wounds` hat, einzeln festgehalten (`wounds`); `/damage` ist ihre
-    Summe. Ohne Treffer gibt es keinen Schaden.
+    `target`) folgt allein daraus. Der Angriff bleibt danach offen, sodass man gleich noch einmal
+    angreifen kann.
   - Ein Angriffsergebnis ist ein Ergebnis wie das Probenergebnis: Man kann es deuten, und die
     Fertigkeitsstufe und der Charakter, auf die es verweist, werden nicht gelöscht, sondern
     ausgeblendet (siehe *Löschen und Ausblenden*).
+  - **Schaden.** Nach einem Treffer bietet der Reiter Kampf an, den Schaden zu würfeln: so viele W6,
+    wie die Waffe `wounds` hat. Er wird ein eigener Logeintrag, der Schadenswurf (`DamageRoll`), der
+    auf seinen Treffer verweist (`of`) und die Würfel einzeln festhält; `/damage` ist ihre Summe. Für
+    jeden Treffer gibt es höchstens einen Schadenswurf, für einen Fehlschlag keinen. Angeboten wird
+    er für den neuesten Treffer im Log, solange es dafür noch keinen gibt; der Log zeigt ihn unter
+    seinem Treffer, im selben Kasten. Ein Angriffsergebnis löschen löscht seinen Schadenswurf mit,
+    wie seine Deutungen; den Schadenswurf allein zu löschen lässt den Treffer stehen, und man kann
+    neu würfeln. In der Kampagnendatei muss jeder Schadenswurf auf einen früheren Treffer derselben
+    Datei verweisen, auf den kein anderer verweist, und so viele Würfel haben, wie die Waffe
+    `wounds` hat.
   - **Später**: DMs des Verteidigers (Parieren, Ausweichen, Deckung), Zubehör, Dunkelheit,
     Überraschung, Autofeuer, Schrot, geschwächte Hiebe, die eigene Rüstung eines Charakters, Angriffe
     auf Charaktere und Schaden an Attributen verteilen (Bewusstlosigkeit, Tod), Munition.
@@ -785,16 +802,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   (communications routes), Subsector Capital, ein Name für den Subsektor, mehrere Subsektoren zu
   einem Sektor und eine fertige Welt wieder löschen.
 
-## Offene Fragen zum Angriff
-
-1. **Hände und Club mit Brawling?** Die Charts nennen zu Hands und Club keine Fertigkeit; im
-   Entwurf nutzen beide Brawling. Sonst hätten sie keine und zählten immer Stufe 0.
-2. **Schaden gleich mitwürfeln?** Im Entwurf würfelt die App bei einem Treffer den Schaden im
-   selben Zug. Sonst wäre der Schaden ein eigener Wurf danach.
-3. **Wo liegt der Angriff?** Vorschlag: im Orakel-Screen. Die Leiste oben zeigt die Waffe in der
-   Hand (z. B. „Rifle-1“); sie antippen öffnet den Angriff mit Auswahl der Waffe und der Tabelle,
-   das Ergebnis kommt in den Log wie bei einer Probe. Das Modell ändert sich dadurch nicht.
-
 ## Wo der Code noch nicht folgt
 
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
@@ -807,9 +814,9 @@ Diagramm mit diesen Ausnahmen:
 - **`Note → LogEntry : interprets`** ist im Code die Stelle des gedeuteten Ergebnisses im Log (eine
   Zahl), weil Logeinträge keine eigene Id haben. Löschen rückt die Stellen nach, sodass jede Deutung
   weiter auf ihr Ergebnis zeigt; damit ist der Verweis erfüllt.
-- **`Card → Campaign : in` und `Task → Campaign : in`** sind im Code kein Feld. Der Controller hält
-  höchstens eine offene Karte und höchstens eine Probe, beide immer zur offenen Kampagne; beim
-  Wechsel der Kampagne verfallen sie. Damit ist die Multiplizität erfüllt.
+- **`Card → Campaign : in`, `Task → Campaign : in` und `Attack → Campaign : in`** sind im Code
+  kein Feld. Der Controller hält höchstens eine offene Karte, höchstens eine Probe und höchstens
+  einen Angriff, alle immer zur offenen Kampagne; beim Wechsel der Kampagne verfallen sie. Damit ist die Multiplizität erfüllt.
 - **Beispielcharaktere.** Die allererste Kampagne auf einem Gerät beginnt mit Kira Vant und Jonas
   Reyl aus der README (`src/data/examples.json`), damit man gleich etwas ausprobieren kann. Das
   Modell sagt dazu nichts; die beiden lassen sich löschen, solange der Log nicht auf sie verweist.

@@ -69,7 +69,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 
 **UI-Entwurf:** Der klickbare Entwurf liegt in [docs/ui-entwurf](docs/ui-entwurf/).
 
-**Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf, Kaufen und Verkaufen, Reisezonen, Sprungrouten, ganze Sektoren aus mehreren Subsektoren, Schiffe, NSC-Karten, Chaosfaktor, Szenen, Feinjustierung ±1, eigene Fertigkeiten, Hausregeln in der App einstellen.
+**Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf über den Angriff hinaus (Verteidigung, Deckung, Schaden an Attributen), Kaufen und Verkaufen, Reisezonen, Sprungrouten, ganze Sektoren aus mehreren Subsektoren, Schiffe, NSC-Karten, Chaosfaktor, Szenen, Feinjustierung ±1, eigene Fertigkeiten, Hausregeln in der App einstellen.
 
 ---
 
