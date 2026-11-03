@@ -81,6 +81,7 @@ import {
   npcCharacters,
   npcOf,
   reactionText,
+  reactionDm,
   uppOf,
   victimOf,
   woundedUpp,
@@ -375,6 +376,12 @@ export interface SimView {
   readonly name: string;
   readonly reaction: number;
   readonly reactionText: string;
+  /** Die Würfel der Reaktion und ihr DM; fehlen bei Begegnungen von vorher. */
+  readonly reactionDice: readonly number[] | undefined;
+  readonly reactionDm: number;
+  /** Die Zeile der Random Encounter List (11–56) und wie viele W6 die Anzahl hat. */
+  readonly roll: number;
+  readonly quantity: number;
   readonly round: number;
   readonly range: Range;
   readonly rangeDice: readonly number[] | undefined;
@@ -486,6 +493,11 @@ export interface CombatView {
   readonly terrains: readonly { readonly id: string; readonly name: string; readonly dm: number }[];
   /** Eine Begegnung braucht einen Aufenthaltsort. */
   readonly canEncounter: boolean;
+  /** Der Aufenthaltsort als Feld (0304), und welche fertigen Welten es dafür gibt. */
+  readonly location: string | undefined;
+  readonly worlds: readonly WorldChoice[];
+  /** Die Übersicht der eben gewürfelten Begegnung steht im Vordergrund. */
+  readonly intro: boolean;
   /** Die Arten der Random Encounter List, zum Wählen. */
   readonly encounterTypes: readonly { readonly roll: number; readonly name: string; readonly quantity: number }[];
   /** Schaden, den der Spieler gerade verteilt. */
@@ -640,6 +652,8 @@ export interface ControllerState {
   readonly combatNote: string | undefined;
   /** Das Ziel dessen, der in der Kampfsimulation am Zug ist (Id eines SC oder NSC). */
   readonly simTarget: string | undefined;
+  /** Die Übersicht einer eben gewürfelten Begegnung steht im Vordergrund. */
+  readonly encounterIntro: boolean;
   /** Der Charakter, dessen Details im Charakter-Screen aufgeklappt sind. */
   readonly opened: string | undefined;
   /** Die Leiste mit dem Charakter oben ist eingeklappt; das Gerät merkt es sich. */
@@ -788,7 +802,7 @@ function weaponName(id: string): string {
   return id === HANDS ? 'Hände' : weaponOf(id).name;
 }
 
-function combatView(campaign: Campaign, attack: Attack | undefined, log: readonly LogItem[], wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined): CombatView | undefined {
+function combatView(campaign: Campaign, attack: Attack | undefined, log: readonly LogItem[], wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined, intro: boolean): CombatView | undefined {
   const character = focusOf(campaign);
   if (!character) return undefined;
   const current = attack ?? {};
@@ -861,6 +875,9 @@ function combatView(campaign: Campaign, attack: Attack | undefined, log: readonl
     sim: encounter && simView(campaign, encounter, simTarget),
     terrains: ref.encounters.terrains,
     canEncounter: campaign.location !== undefined,
+    location: campaign.location,
+    worlds: worldChoices(campaign.hexes),
+    intro: intro && encounter !== undefined,
     encounterTypes: ref.encounters.types.map((t) => ({ roll: t.roll, name: t.name, quantity: t.quantity })),
     wounding: wounding && woundingView(campaign, wounding),
     note,
@@ -935,6 +952,10 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
     name: encounterTypeOfEncounter(encounter).name,
     reaction: encounter.reaction,
     reactionText: reactionText(encounter.reaction),
+    reactionDice: encounter.reactionDice,
+    reactionDm: reactionDm(campaign, encounter),
+    roll: encounter.of,
+    quantity: encounterTypeOfEncounter(encounter).quantity,
     round: encounter.round,
     range: encounter.range,
     rangeDice: encounter.rangeDice,
@@ -1138,7 +1159,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     npcs: npcCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background, dead: c.dead })),
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
-    combat: combatView(campaign, state.attack, log, state.wounding, state.combatNote, state.simTarget),
+    combat: combatView(campaign, state.attack, log, state.wounding, state.combatNote, state.simTarget, state.encounterIntro),
     shop: shopView(campaign, state.shopError),
     location: campaign.location,
     result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : undefined,

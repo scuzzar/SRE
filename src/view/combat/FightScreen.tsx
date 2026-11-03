@@ -4,6 +4,7 @@ import { damageDetail, hex, partLabel, rangeText, signed, woundStateText } from 
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { CombatIcon, DiceIcon } from '../icons';
+import { DicePairView, THROW_MS, useTimeline } from '../Dice';
 import type { Patient } from './CombatScreen';
 
 /**
@@ -23,8 +24,8 @@ export function FightScreen({ combat, onHeal }: { combat: CombatView; onHeal: (p
           </p>
         )}
         <RangeBar sim={sim} />
-        <Fighters sim={sim} side={sim.first} onHeal={onHeal} />
-        <Fighters sim={sim} side={sim.first === 'pcs' ? 'npcs' : 'pcs'} onHeal={onHeal} />
+        <Fighters sim={sim} side={sim.first} onHeal={onHeal} combat={combat} />
+        <Fighters sim={sim} side={sim.first === 'pcs' ? 'npcs' : 'pcs'} onHeal={onHeal} combat={combat} />
         <Recent combat={combat} />
       </section>
       <FightDock combat={combat} sim={sim} />
@@ -47,9 +48,10 @@ function FightHead({ sim }: { sim: SimView }) {
           Beenden
         </button>
       </div>
-      <p className="encounter-reaction">
-        Reaktion {sim.reaction}: {sim.reactionText}
-      </p>
+      <button type="button" className="encounter-reaction link" onClick={() => game.showEncounterIntro()}>
+        Reaktion {sim.reactionDice ? `${sim.reactionDice[0]} + ${sim.reactionDice[1]}${sim.reactionDm ? ` ${signed(sim.reactionDm)}` : ''} = ` : ''}
+        {sim.reaction}: {sim.reactionText}
+      </button>
       {surprise && (
         <p className="encounter-reaction">
           {surprise}
@@ -82,7 +84,7 @@ function RangeBar({ sim }: { sim: SimView }) {
 }
 
 /** Die Kämpfer einer Partei; wer zum Ziel dessen am Zug taugt, lässt sich antippen. */
-function Fighters({ sim, side, onHeal }: { sim: SimView; side: 'pcs' | 'npcs'; onHeal: (patient: Patient) => void }) {
+function Fighters({ sim, side, onHeal, combat }: { sim: SimView; side: 'pcs' | 'npcs'; onHeal: (patient: Patient) => void; combat: CombatView }) {
   const fighters = sim.fighters.filter((f) => f.side === side);
   if (fighters.length === 0) return null;
   return (
@@ -92,14 +94,14 @@ function Fighters({ sim, side, onHeal }: { sim: SimView; side: 'pcs' | 'npcs'; o
       </h3>
       <ol className="fighter-list">
         {fighters.map((f) => (
-          <FighterRow key={f.id} fighter={f} onHeal={onHeal} />
+          <FighterRow key={f.id} fighter={f} onHeal={onHeal} weapons={f.turn && f.side === 'pcs' ? combat.weapons : undefined} />
         ))}
       </ol>
     </div>
   );
 }
 
-function FighterRow({ fighter: f, onHeal }: { fighter: FighterView; onHeal: (patient: Patient) => void }) {
+function FighterRow({ fighter: f, onHeal, weapons }: { fighter: FighterView; onHeal: (patient: Patient) => void; weapons: CombatView['weapons'] | undefined }) {
   const game = useGame();
   // Ob „Übernehmen als SC / als NSC“ offen ist, ist reine Anzeige.
   const [adopting, setAdopting] = useState(false);
@@ -133,6 +135,15 @@ function FighterRow({ fighter: f, onHeal }: { fighter: FighterView; onHeal: (pat
           </span>
         </span>
       </button>
+      {weapons && (
+        <div className="chips fighter-weapons" role="group" aria-label="Waffe in der Hand">
+          {weapons.map((w) => (
+            <button key={w.id} type="button" aria-pressed={w.wielded} onClick={() => game.wieldWeapon(w.id)}>
+              {w.name} <span className="chip-skill">{w.short}</span>
+            </button>
+          ))}
+        </div>
+      )}
       {(f.healing.wake || f.healing.treatable || f.side === 'npcs') && (
         <div className="npc-actions">
           {(f.healing.wake || f.healing.treatable) && (
@@ -252,5 +263,63 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
         )}
       </div>
     </section>
+  );
+}
+
+/**
+ * Die Übersicht einer eben gewürfelten Begegnung: wer kommt, und die Würfe für Reaktion, Entfernung
+ * und Überraschung. Die Reaktion rollt; ein Tippen überspringt. Gespeichert ist schon alles.
+ */
+export function EncounterIntro({ sim }: { sim: SimView }) {
+  const game = useGame();
+  const [phase, skip] = useTimeline([300, THROW_MS, 250]);
+  const landed = phase >= 2;
+  const npcs = sim.fighters.filter((f) => f.side === 'npcs');
+  return (
+    <div className="modal">
+      <section className="result encounter-intro" role="dialog" aria-modal="true" aria-labelledby="intro-title" onClick={() => phase < 3 && skip(3)}>
+        <span className="kicker">Begegnung · Wurf {sim.roll}</span>
+        <h2 id="intro-title" className="shop-buy-title">
+          {npcs.length} × {sim.name}
+          <span className="muted"> ({sim.quantity}W6)</span>
+        </h2>
+        <div className="intro-reaction">
+          <span className="small-label">Reaktion (2W6{sim.reactionDm ? `, Bevölkerung 9+ ${signed(sim.reactionDm)}` : ''})</span>
+          {sim.reactionDice && phase >= 1 ? (
+            <DicePairView dice={[sim.reactionDice[0]!, sim.reactionDice[1]!]} seed={sim.reactionDice[0]! * 7 + sim.reactionDice[1]!} landed={landed} size="small" />
+          ) : (
+            <div className="dice-stage small" aria-hidden="true" />
+          )}
+          <p className={landed || !sim.reactionDice ? 'intro-verdict shown' : 'intro-verdict'}>
+            <strong>{sim.reaction}</strong> {sim.reactionText}
+          </p>
+        </div>
+        <p className="intro-line">
+          Entfernung: <b>{rangeText[sim.range]}</b>
+          {sim.rangeDice ? ` (2W6: ${sim.rangeDice[0]} + ${sim.rangeDice[1]}${sim.terrain ? `, ${sim.terrain.name} ${signed(sim.terrain.dm)}` : ''})` : ''}
+        </p>
+        {sim.pcSurprise && sim.npcSurprise && (
+          <p className="intro-line">
+            Überraschung: SC {sim.pcSurprise.die} {signed(sim.pcSurprise.dm)} gegen NSC {sim.npcSurprise.die} {signed(sim.npcSurprise.dm)}
+            {sim.surprise ? ` – die ${sideName[sim.surprise]} haben Überraschung.` : ` – keine; die ${sideName[sim.first]} ziehen zuerst.`}
+          </p>
+        )}
+        <ol className="intro-npcs">
+          {npcs.map((n) => (
+            <li key={n.id}>
+              <b>{n.name}</b>
+              {n.leader && <span className="npc-leader"> · Anführer</span>}
+              <span className="muted mono">
+                {' '}
+                STR {hex(n.upp.str)} DEX {hex(n.upp.dex)} END {hex(n.upp.end)} · {n.weapon} ({n.skill}) · {n.armor ?? 'keine Rüstung'}
+              </span>
+            </li>
+          ))}
+        </ol>
+        <button type="button" className="primary" onClick={() => game.closeEncounterIntro()}>
+          Zum Kampf
+        </button>
+      </section>
+    </div>
   );
 }

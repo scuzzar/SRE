@@ -88,6 +88,10 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > flüchtig der Angriff in Vorbereitung (`Attack`), im Log das Angriffsergebnis (`AttackResult`)
 > und der Schadenswurf (`DamageRoll`).
 >
+> Ebenfalls am 3. November 2026 auf ausdrücklichen Wunsch des Owners freigegeben: Die Begegnung hält
+> die Würfel ihrer Reaktion (`reactionDice`), damit die App sie zeigen kann; nach dem Würfeln zeigt
+> sie, wer kommt (siehe *Begegnung*).
+>
 > Ebenfalls am 3. November 2026 freigegeben: **Kampfsimulation** getrennt von der
 > **Waffentabelle** (siehe *Zwei Modi im Reiter Kampf* und *Kampfsimulation*). Neu im Bild: an der
 > `Encounter` Entfernung (`rangeDice`, `range`, `terrain`), Überraschung (`pcSurprise`,
@@ -542,8 +546,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     höchsten TL, bei Gleichstand die teuerste, ebenso die Rüstung, auch ohne A) und Fertigkeit 2.
   - *Fahrzeug* (V) hält die Art fest; im Kampf zählt es vorerst nicht.
   - *Entfernung und Überraschung* werden beim Anlegen mitgewürfelt (siehe *Kampfsimulation*).
-  - *Reaktion* (`reaction`): 2W6, DM −1 auf einer Welt mit Bevölkerung 9+; eine echte 2 oder 12
-    bleibt, sonst begrenzt auf 3 bis 11. Der Text (`/reactionText`) kommt aus der Tabelle.
+  - *Reaktion* (`reaction`): 2W6 (`reactionDice`), DM −1 auf einer Welt mit Bevölkerung 9+; eine
+    echte 2 oder 12 bleibt, sonst begrenzt auf 3 bis 11. Der Text (`/reactionText`) kommt aus der
+    Tabelle.
+  - *Zeigen*: Nach dem Würfeln zeigt die App die Begegnung, bevor der Kampf beginnt: wer kommt (jeder
+    NSC mit Waffe, Rüstung, Anführer), und die Würfe für Reaktion, Entfernung und Überraschung, jeder
+    mit Würfeln, DM und Ergebnis. Das ist Anzeige; gespeichert ist es schon.
   - Es gibt höchstens **eine laufende Begegnung**. Sie bleibt gespeichert, bis man sie beendet
     (`ended`); beendete Begegnungen bleiben in der Kampagne, weil der Log auf ihre NSC verweist,
     und werden nicht mehr gezeigt. Eine Begegnung, auf die der Log nicht verweist, wird beim Beenden

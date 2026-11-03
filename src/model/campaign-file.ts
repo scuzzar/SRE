@@ -169,6 +169,7 @@ const EncounterSchema = z.object({
   of: z.number().int(),
   in: z.string().optional(),
   reaction: z.number().int().min(2).max(12),
+  reactionDice: z.tuple([die, die]).optional(),
   ended: z.boolean(),
   npcs: z.array(NpcSchema).min(1),
   /** Fehlen bei Begegnungen von vor der Kampfsimulation. */

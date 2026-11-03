@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { DiceRoll } from '../oracle/DiceRoll';
 import type { CombatView, HealingView, Snapshot } from '../../controller';
-import { FightScreen } from './FightScreen';
+import { EncounterIntro, FightScreen } from './FightScreen';
 import { armorText, attackText, characteristicLabel, damageDetail, hex, partLabel, rangeMeters, rangeShort, rangeText, signed, woundStateText } from '../format';
 import { CloseIcon } from '../icons';
 import { useGame } from '../game-context';
@@ -30,7 +30,8 @@ export function CombatScreen({ view }: { view: Snapshot }) {
   const healing = patient && combat && (patient.npc === undefined && !combat.sim ? combat.healing : combat.sim?.fighters.find((f) => f.id === (patient.npc ?? patient.pc))?.healing);
   return (
     <div className="screen">
-      <CharacterStrip view={view} weapons />
+      {/* In der Kampfsimulation stehen alle Kämpfer in der Liste; die Leiste oben fiele doppelt. */}
+      {!combat?.sim && <CharacterStrip view={view} weapons />}
       {!combat ? (
         <section className="scroll combat-scroll">
           <p className="log-empty">Ohne lebenden Charakter gibt es keinen Angriff.</p>
@@ -49,6 +50,7 @@ export function CombatScreen({ view }: { view: Snapshot }) {
           <AttackDock combat={combat} />
         </>
       )}
+      {combat?.intro && combat.sim && <EncounterIntro sim={combat.sim} />}
       {combat?.wounding && <WoundingDialog key={`${combat.wounding.victim}-${combat.wounding.dice.join('-')}-${view.log.length}`} combat={combat} />}
       {combat && patient && healing && <HealDialog key={patient.npc ?? patient.pc ?? 'pc'} patient={patient} healing={healing} note={combat.note} onClose={() => setPatient(undefined)} />}
     </div>
@@ -95,9 +97,37 @@ function EncounterStart({ combat }: { combat: CombatView }) {
           ))}
         </select>
       </label>
-      {!combat.canEncounter && <p className="combat-hint">Eine Begegnung braucht einen Aufenthaltsort: im Sektor eine Welt öffnen und „Gruppe ist hier“ wählen.</p>}
+      <LocationPick combat={combat} />
       {combat.note && <p className="combat-hint">{combat.note}</p>}
     </div>
+  );
+}
+
+/** Wo die Gruppe ist; ohne Aufenthaltsort gibt es keine Begegnung. Gibt es keine fertige Welt, geht es zum Sektor. */
+function LocationPick({ combat }: { combat: CombatView }) {
+  const game = useGame();
+  if (combat.worlds.length === 0) {
+    return (
+      <div className="location-pick">
+        <p className="combat-hint">Eine Begegnung findet auf einer Welt statt. Erst im Sektor eine Welt erschaffen.</p>
+        <button type="button" className="ghost" onClick={() => game.showScreen('sector')}>
+          Zum Sektor
+        </button>
+      </div>
+    );
+  }
+  return (
+    <label className="field location-pick">
+      <span>{combat.location ? 'Die Gruppe ist auf' : 'Wo ist die Gruppe? (für Begegnungen nötig)'}</span>
+      <select value={combat.location ?? ''} onChange={(e) => e.target.value && game.stayAt(e.target.value)}>
+        {!combat.location && <option value="">Welt wählen …</option>}
+        {combat.worlds.map((w) => (
+          <option key={w.id} value={w.id}>
+            {w.name} ({w.id} · {w.uwp})
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 

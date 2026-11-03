@@ -112,7 +112,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, simTarget: undefined, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, simTarget: undefined, encounterIntro: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
 
 export interface GameDependencies {
   readonly repository: CampaignRepository;
@@ -154,6 +154,7 @@ export class GameController {
       wounding: undefined,
       combatNote: undefined,
       simTarget: undefined,
+      encounterIntro: false,
       shopError: undefined,
       opened: undefined,
       stripCollapsed: false,
@@ -432,16 +433,36 @@ export class GameController {
     try {
       const rolled = rollEncounter(this.campaign, this.deps.random, this.deps.clock, roll, undefined, terrain);
       const prepared = rolled.encounter ? this.prepareTurn(rolled.campaign, undefined) : { campaign: rolled.campaign, simTarget: undefined };
-      this.change(prepared.campaign, { attack: undefined, simTarget: prepared.simTarget, combatNote: rolled.encounter ? undefined : `Wurf ${rolled.roll}: keine Begegnung.` });
+      this.change(prepared.campaign, {
+        attack: undefined,
+        simTarget: prepared.simTarget,
+        encounterIntro: rolled.encounter !== undefined,
+        combatNote: rolled.encounter ? undefined : `Wurf ${rolled.roll}: keine Begegnung.`,
+      });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ combatNote: error.message });
     }
   }
 
+  /** Schließt die Übersicht der Begegnung; der Kampf beginnt. */
+  closeEncounterIntro(): void {
+    this.update({ encounterIntro: false });
+  }
+
+  /** Zeigt die Übersicht der laufenden Begegnung noch einmal. */
+  showEncounterIntro(): void {
+    this.update({ encounterIntro: true });
+  }
+
+  /** Im Kampf: Die Gruppe ist auf dieser fertigen Welt (wie „Gruppe ist hier“ auf der Weltkarte). */
+  stayAt(id: string): void {
+    this.inFight(() => this.change(setLocation(this.campaign, id), { combatNote: undefined }));
+  }
+
   /** Beendet die laufende Begegnung; der Reiter Kampf zeigt wieder die Waffentabelle. */
   endEncounter(): void {
-    this.change(endEncounter(this.campaign), { attack: undefined, combatNote: undefined, simTarget: undefined });
+    this.change(endEncounter(this.campaign), { attack: undefined, combatNote: undefined, simTarget: undefined, encounterIntro: false });
   }
 
   // --- Kampfsimulation ----------------------------------------------------------------------------

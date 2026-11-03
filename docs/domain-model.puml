@@ -245,6 +245,7 @@ hide <<value>> stereotype
   }
   class Encounter {
     at: datetime
+    reactionDice: number[2]
     reaction: number
     ended: boolean
     /reactionText: string

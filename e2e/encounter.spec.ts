@@ -20,14 +20,27 @@ test('Kampf: Waffentabelle ohne Begegnung; mit Begegnung die Simulation mit Rund
     world = page.getByRole('dialog', { name: `Regina · ${id}` });
     break;
   }
-  await world!.getByRole('button', { name: 'Gruppe ist hier' }).click();
+  // Den Aufenthaltsort wählt man diesmal im Kampf selbst.
   await world!.getByRole('button', { name: 'Schließen' }).first().click();
 
   await page.getByRole('navigation').getByRole('button', { name: 'Kampf' }).click();
-  // Waffentabelle: ohne Begegnung.
+  // Waffentabelle: ohne Begegnung; ohne Aufenthaltsort gesperrt, bis man die Welt wählt.
   await expect(page.locator('.combat-table')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Begegnung würfeln' })).toBeDisabled();
+  await page.getByLabel(/Wo ist die Gruppe/).selectOption({ index: 1 });
+  await expect(page.getByLabel('Die Gruppe ist auf')).toContainText('Regina');
   await page.getByLabel('Gelände (DM auf die Entfernung)').selectOption('city');
   await page.getByLabel('Begegnung wählen').selectOption('15');
+
+  // Erst die Übersicht: wer kommt, und die Würfe für Reaktion, Entfernung und Überraschung.
+  const intro = page.getByRole('dialog', { name: /Thugs/ });
+  await expect(intro).toContainText('Reaktion (2W6');
+  await expect(intro).toContainText('Entfernung:');
+  await expect(intro).toContainText('Überraschung:');
+  await expect(intro.locator('.intro-npcs li').first()).toContainText('Anführer');
+  await intro.getByRole('button', { name: 'Zum Kampf' }).click();
+  // In der Simulation fällt die Leiste oben weg; alle Kämpfer stehen in der Liste.
+  await expect(page.locator('.strip')).toHaveCount(0);
 
   // Kampfsimulation: Runde, Entfernung, Kämpfer; die Tabelle ist weg.
   await expect(page.locator('.fight-head')).toContainText('Runde 1');

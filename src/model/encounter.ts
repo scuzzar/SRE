@@ -30,8 +30,9 @@ export interface Encounter {
   readonly of: number;
   /** Die Welt, auf der sie stattfindet, als Spalte und Zeile (0304). */
   readonly in?: string;
-  /** Der Wurf auf die Reactions-Tabelle, 2 bis 12, mit DMs. */
+  /** Der Wurf auf die Reactions-Tabelle, 2 bis 12, mit DMs; die Würfel fehlen bei Begegnungen von vorher. */
   readonly reaction: number;
+  readonly reactionDice?: readonly [number, number];
   readonly ended: boolean;
   readonly npcs: readonly Npc[];
   /** Die Entfernung: gewürfelt (`rangeDice`, mit dem DM des Geländes) und danach jederzeit änderbar. */
@@ -163,7 +164,8 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
     const armor = leader ? best(armors) : type.armor ? pick(armors, random) : undefined;
     return { id: `n${first + i}`, name, leader, skill: leader ? 2 : 1, upp, wields: weapon.id, ...(armor ? { wears: armor.id } : {}) };
   });
-  const raw = d6(random, 2);
+  const reactionDice = [d6(random), d6(random)] as const;
+  const raw = reactionDice[0] + reactionDice[1];
   const dm = (world.uwp.population ?? 0) >= 9 ? -1 : 0;
   const reaction = raw === 2 || raw === 12 ? raw : Math.min(11, Math.max(3, raw + dm));
   const ground = terrain === undefined ? undefined : ref.encounters.terrains.find((t) => t.id === terrain);
@@ -180,6 +182,7 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
     of: roll,
     in: campaign.location,
     reaction,
+    reactionDice,
     ended: false,
     npcs,
     range: encounterRange(rangeDice, ground?.dm ?? 0),
@@ -266,4 +269,10 @@ export function adoptNpc(campaign: Campaign, id: string, asNpc: boolean): Campai
     ...added,
     encounters: added.encounters.map((e) => (e.id !== encounter.id ? e : { ...e, npcs: e.npcs.map((n) => (n.id === id ? { ...n, became: character } : n)) })),
   };
+}
+
+/** Der DM auf die Reaktion: −1 auf einer Welt mit Bevölkerung 9 oder mehr (S. 21). */
+export function reactionDm(campaign: Campaign, encounter: Encounter): number {
+  const world = encounter.in === undefined ? undefined : campaign.hexes.find((h) => `${String(h.column).padStart(2, '0')}${String(h.row).padStart(2, '0')}` === encounter.in);
+  return (world?.uwp.population ?? 0) >= 9 ? -1 : 0;
 }
