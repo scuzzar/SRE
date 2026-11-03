@@ -338,7 +338,9 @@ export class GameController {
   /** Wischen: Ein anderer Charakter steht oben; eine vorbereitete Probe und ein vorbereiteter Angriff enden. */
   focusCharacter(id: string): void {
     if (focusOf(this.campaign)?.id === id) return;
-    this.change(setFocus(this.campaign, id), { task: undefined, attack: undefined });
+    // In der Kampfsimulation: Ist ein NSC am Zug, wird der SC, zu dem man wischt, sein Ziel.
+    const npcTurn = turnOf(this.campaign)?.side === 'npcs';
+    this.change(setFocus(this.campaign, id), { task: undefined, attack: undefined, ...(npcTurn ? { simTarget: id } : {}) });
   }
 
   /** Klappt die Leiste mit dem Charakter oben ein oder auf; das Gerät merkt es sich. */
@@ -462,49 +464,79 @@ export class GameController {
 
   /** Beendet den Zug und bereitet den nächsten vor. */
   private nextTurn(campaign: Campaign, rest: Partial<ControllerState> = {}): void {
-    const prepared = this.prepareTurn(endTurn(campaign), this.state.simTarget);
-    this.change(prepared.campaign, { ...rest, simTarget: prepared.simTarget });
+    // Hat der Zug den Kampf entschieden, ist keiner mehr dran; dann gibt es nichts zu beenden.
+    const ended = turnOf(campaign) ? endTurn(campaign) : campaign;
+    const prepared = this.prepareTurn(ended, this.state.simTarget);
+    this.change(prepared.campaign, { ...rest, simTarget: prepared.simTarget, combatNote: undefined });
+  }
+
+  /** Führt eine Eingabe der Kampfsimulation aus; verletzt sie eine Regel, steht das im Kampf. */
+  private inFight(step: () => void): void {
+    try {
+      step();
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ combatNote: error.message });
+    }
+  }
+
+  /** Wer oben stehen muss, damit der Zug geht: der SC am Zug bzw. das Ziel des NSC am Zug. */
+  private focusedForTurn(campaign: Campaign, target: string): Campaign {
+    const turn = turnOf(campaign);
+    if (!turn) return campaign;
+    const top = turn.side === 'pcs' ? turn.id : target;
+    return focusOf(campaign)?.id === top ? campaign : setFocus(campaign, top);
   }
 
   /** Wählt das Ziel des Zugs: für einen SC einen NSC, für einen NSC einen SC (er steht dann oben). */
   chooseFightTarget(id: string): void {
-    const turn = turnOf(this.campaign);
-    if (!turn) throw new DomainError('Es ist keiner am Zug.');
-    if (turn.side === 'pcs') {
-      this.update({ simTarget: id });
-      return;
-    }
-    this.change(focusOf(this.campaign)?.id === id ? this.campaign : setFocus(this.campaign, id), { simTarget: id });
+    this.inFight(() => {
+      const turn = turnOf(this.campaign);
+      if (!turn) throw new DomainError('Es ist keiner am Zug.');
+      if (turn.side === 'pcs') {
+        this.update({ simTarget: id, combatNote: undefined });
+        return;
+      }
+      this.change(focusOf(this.campaign)?.id === id ? this.campaign : setFocus(this.campaign, id), { simTarget: id, combatNote: undefined });
+    });
   }
 
   /** Ändert die Entfernung der laufenden Begegnung. */
   setRange(range: Range): void {
-    this.change(setRange(this.campaign, range));
+    this.inFight(() => this.change(setRange(this.campaign, range), { combatNote: undefined }));
   }
 
-  /** Der Kämpfer am Zug greift sein Ziel an. Daneben beendet den Zug gleich; ein Treffer erst mit dem Schaden. */
+  /**
+   * Der Kämpfer am Zug greift sein Ziel an. Daneben beendet den Zug gleich; ein Treffer erst mit dem
+   * Schaden. Wer für den Zug oben stehen muss, kommt vorher nach oben (auch nach Wischen in der Leiste).
+   */
   fightAttack(): void {
-    const target = this.state.simTarget;
-    if (target === undefined) throw new DomainError('Erst ein Ziel wählen.');
-    const attack = turnAttack(this.campaign, target);
-    const result = rollAttack(attack, this.campaign, this.deps.random, this.deps.clock);
-    const logged = appendLog(this.campaign, result);
-    const campaign = result.for === undefined ? logged : spendRound(logged, result.for);
-    const index = campaign.log.length - 1;
-    if (isSuccess(result)) this.change(campaign, { result: index });
-    else this.nextTurn(campaign, { result: index });
+    this.inFight(() => {
+      const target = this.state.simTarget;
+      if (target === undefined) throw new DomainError('Erst ein Ziel wählen.');
+      const ready = this.focusedForTurn(this.campaign, target);
+      const attack = turnAttack(ready, target);
+      const result = rollAttack(attack, ready, this.deps.random, this.deps.clock);
+      const logged = appendLog(ready, result);
+      const campaign = result.for === undefined ? logged : spendRound(logged, result.for);
+      const index = campaign.log.length - 1;
+      if (isSuccess(result)) this.change(campaign, { result: index, combatNote: undefined });
+      else this.nextTurn(campaign, { result: index });
+    });
   }
 
   /** Der SC am Zug lädt nach; das ist sein Zug. */
   fightReload(): void {
-    const turn = turnOf(this.campaign);
-    if (!turn || turn.side !== 'pcs') throw new DomainError('Nachladen kann nur ein SC am Zug.');
-    this.nextTurn(reload(this.campaign, turn.id));
+    this.inFight(() => {
+      const turn = turnOf(this.campaign);
+      if (!turn || turn.side !== 'pcs') throw new DomainError('Nachladen kann nur ein SC am Zug.');
+      this.nextTurn(reload(this.campaign, turn.id));
+    });
   }
 
   /** Der Kämpfer am Zug setzt aus. */
   skipTurn(): void {
-    this.nextTurn(this.campaign);
+    this.inFight(() => this.nextTurn(this.campaign));
   }
 
   /**
@@ -567,6 +599,10 @@ export class GameController {
    * im Vordergrund. Trifft er einen SC nach dessen erstem Treffer, verteilt der Spieler erst die Würfel.
    */
   rollDamage(): void {
+    this.inFight(() => this.rollPendingDamage());
+  }
+
+  private rollPendingDamage(): void {
     const index = pendingDamage(this.campaign.log);
     if (index === undefined) throw new DomainError('Es gibt keinen Treffer ohne Schaden.');
     if (needsWounding(this.campaign, index)) {
@@ -588,7 +624,7 @@ export class GameController {
 
   /** Sind alle Würfel verteilt, kommt der Schaden in den Log. */
   confirmWounding(): void {
-    this.logDamage(confirmWounding(this.openWounding, this.campaign, this.deps.clock));
+    this.inFight(() => this.logDamage(confirmWounding(this.openWounding, this.campaign, this.deps.clock)));
   }
 
   /** Schreibt den Schaden in den Log. War es der Treffer dessen, der in der Simulation am Zug ist, endet sein Zug. */

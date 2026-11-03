@@ -17,6 +17,11 @@ export function FightScreen({ combat, onHeal }: { combat: CombatView; onHeal: (p
     <>
       <section className="scroll combat-scroll fight" aria-label="Kampfsimulation">
         <FightHead sim={sim} />
+        {combat.note && (
+          <p className="error" role="alert">
+            {combat.note}
+          </p>
+        )}
         <RangeBar sim={sim} />
         <Fighters sim={sim} side={sim.first} onHeal={onHeal} />
         <Fighters sim={sim} side={sim.first === 'pcs' ? 'npcs' : 'pcs'} onHeal={onHeal} />

@@ -902,8 +902,11 @@ function simView(campaign: Campaign, encounter: Encounter, target: string | unde
     const valid = target !== undefined && order.some((s) => s.id === target && s.side !== turn.side);
     if (valid) {
       try {
-        const attack = turnAttack(campaign, target);
-        const evaluated = evaluateAttack(attack, campaign);
+        // Für den Zug steht der SC am Zug bzw. das Ziel des NSC oben; der Controller holt ihn beim Angriff nach oben.
+        const top = turn.side === 'pcs' ? turn.id : target;
+        const ready = focusOf(campaign)?.id === top ? campaign : { ...campaign, focus: top };
+        const attack = turnAttack(ready, target);
+        const evaluated = evaluateAttack(attack, ready);
         if (evaluated && attack.armor !== undefined && attack.range !== undefined) {
           odds = { dm: evaluated.dm.total, need: evaluated.need, chance: evaluated.chance, parts: attackParts(attacker, attacker.weapon.id, attack.armor, attack.range) };
         }

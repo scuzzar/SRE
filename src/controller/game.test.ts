@@ -464,6 +464,97 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot().combat!.sim).toBeUndefined();
   });
 
+  it('ein Schaden, der den Kampf entscheidet, kommt an; danach ist keiner mehr dran', async () => {
+    const { game, random } = await onRegina();
+    // 1W6 Peasants: ein einziger NSC; die SC ziehen zuerst.
+    game.rollEncounter(11);
+    expect(game.snapshot().combat!.sim!.turn).toMatchObject({ id: 'c1', target: 'n1' });
+    random.queue.push(6, 6);
+    game.fightAttack();
+    random.queue.push(6, 0);
+    game.rollDamage();
+    const view = game.snapshot();
+    expect(view.result).toMatchObject({ kind: 'damage', damage: 6 });
+    expect(view.combat!.sim).toMatchObject({ defeated: 'npcs', turn: undefined });
+    expect(view.combat!.note).toBeUndefined();
+    // Ohne Zug ist Aussetzen nichts, und nichts bricht ab.
+    expect(() => game.skipTurn()).not.toThrow();
+    expect(game.snapshot().combat!.sim!.defeated).toBe('npcs');
+  });
+
+  it('Wischen in der Leiste: im NSC-Zug wird der SC das Ziel; im SC-Zug greift trotzdem der SC am Zug an', async () => {
+    const { game, random } = await onRegina();
+    game.rollEncounter(15);
+    expect(game.snapshot().combat!.sim!.turn).toMatchObject({ id: 'n1', target: 'c1' });
+    game.focusCharacter('c2');
+    expect(game.snapshot().combat!.sim!.turn).toMatchObject({ target: 'c2', odds: expect.anything() });
+    random.queue.push(1, 1);
+    game.fightAttack();
+    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'attack', victim: 'Jonas Reyl' });
+    game.closeResult();
+    game.skipTurn();
+    expect(game.snapshot().combat!.sim!.turn).toMatchObject({ id: 'c1' });
+    game.focusCharacter('c2');
+    expect(game.snapshot().combat!.sim!.turn!.odds).toBeDefined();
+    random.queue.push(1, 1);
+    game.fightAttack();
+    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'attack', character: 'Kira Vant' });
+    expect(game.snapshot().combat!.note).toBeUndefined();
+  });
+
+  it('viele zufällige Kämpfe laufen bis zur Entscheidung durch, ohne dass etwas stecken bleibt', async () => {
+    let decided = 0;
+    for (let seed = 1; seed <= 40; seed++) {
+      let state = seed;
+      const random = {
+        int(min: number, max: number) {
+          state = (state * 1103515245 + 12345) % 2 ** 31;
+          return min + (Math.floor(state / 65536) % (max - min + 1));
+        },
+      };
+      const { game } = await started(random, memoryRepository(setHexes(createCampaign(), [regina])));
+      game.chooseHex(1, 1);
+      game.stayHere();
+      game.closeWorld();
+      game.rollEncounter(11 + (seed % 5) * 10 + (seed % 6));
+      if (!game.snapshot().combat!.sim) continue;
+      for (let step = 0; step < 400; step++) {
+        const view = game.snapshot();
+        const combat = view.combat;
+        if (!combat?.sim) break;
+        expect(combat.note).toBeUndefined();
+        if (view.result) {
+          game.closeResult();
+          continue;
+        }
+        const sim = combat.sim;
+        if (combat.wounding) {
+          if (combat.wounding.to.length < combat.wounding.dice.length) game.assignWound((['STR', 'DEX', 'END'] as const)[step % 3]!);
+          else game.confirmWounding();
+          continue;
+        }
+        if (combat.damage) {
+          game.rollDamage();
+          continue;
+        }
+        const turn = sim.turn;
+        if (!turn) break;
+        if (turn.ammo && turn.ammo.rounds === 0) {
+          game.skipTurn();
+          continue;
+        }
+        if (!turn.reaches) game.setRange('close');
+        else if (turn.target === undefined) game.chooseFightTarget(sim.fighters.find((f) => f.targetable)!.id);
+        else game.fightAttack();
+      }
+      const end = game.snapshot().combat?.sim;
+      expect(end === undefined || end.defeated !== undefined || end.turn !== undefined).toBe(true);
+      if (end?.defeated) decided++;
+    }
+    // Die meisten Kämpfe kommen in 400 Schritten zur Entscheidung.
+    expect(decided).toBeGreaterThan(20);
+  });
+
   it('heilt einen SC in der Simulation und übernimmt einen NSC; er kämpft dann nicht mehr mit', async () => {
     const { game, random } = await onRegina();
     game.rollEncounter(15);
