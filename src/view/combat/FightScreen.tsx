@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 import type { CombatView, FighterView, SimView } from '../../controller';
-import { damageDetail, hex, partLabel, rangeText, signed, woundStateText } from '../format';
+import { damageDetail, hex, rangeText, signed, woundStateText } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { CombatIcon, DiceIcon } from '../icons';
@@ -280,7 +280,7 @@ function Recent({ combat }: { combat: CombatView }) {
   );
 }
 
-/** Unten: wer am Zug ist, gegen wen, was er braucht; Angreifen, Schaden, Nachladen, Aussetzen. */
+/** Unten in einer Zeile: wer gegen wen (Waffe, Magazin) und was er braucht; darunter Angreifen, Schaden, Nachladen, Aussetzen. */
 function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
   const game = useGame();
   const turn = sim.turn;
@@ -290,18 +290,14 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
     <section className="dock" aria-label="Zug">
       {turn ? (
         <div className="fight-turn" aria-live="polite">
-          <strong>
-            {turn.name} ({turn.weapon}) {target ? `→ ${target.name}` : '– Ziel antippen'}
-          </strong>
-          {turn.side === 'npcs' && <span className="small-label">Ziel ist der SC oben; wischen wählt einen anderen.</span>}
-          <span className="task-figures">
-            {!turn.reaches
-              ? `Reicht nicht auf ${rangeText[sim.range]}.`
-              : turn.odds
-                ? `${turn.odds.parts.map(partLabel).join(', ')} · ${turn.odds.chance <= 0 ? 'unmöglich' : `braucht ${Math.max(2, turn.odds.need)}+ (${Math.round(turn.odds.chance)} %)`}`
-                : ''}
-            {turn.ammo ? ` · Magazin ${turn.ammo.rounds}/${turn.ammo.capacity}` : ''}
+          <span className="fight-who">
+            {turn.name} {target ? `→ ${target.name}` : '– Ziel antippen'}{' '}
+            <span className="muted">
+              ({turn.weapon}
+              {turn.ammo ? ` ${turn.ammo.rounds}/${turn.ammo.capacity}` : ''})
+            </span>
           </span>
+          <strong className="fight-need">{!turn.reaches ? 'reicht nicht' : turn.odds ? (turn.odds.chance <= 0 ? 'unmöglich' : `${Math.max(2, turn.odds.need)}+`) : ''}</strong>
         </div>
       ) : (
         <p className="combat-pick">{sim.defeated ? 'Der Kampf ist entschieden. Heilen, übernehmen (lange drücken) oder die Begegnung beenden.' : 'Keiner ist am Zug.'}</p>
@@ -361,8 +357,7 @@ function AdoptDock({ picked, selection }: { picked: readonly string[]; selection
   return (
     <section className="dock" aria-label="Übernehmen">
       <div className="fight-turn" aria-live="polite">
-        <strong>{picked.length === 0 ? 'NSC antippen zum Übernehmen' : `${picked.length} NSC übernehmen`}</strong>
-        <span className="small-label">Als SC kämpfen sie mit, als dauerhafte NSC stehen sie im Charakter-Screen unter „NSC“.</span>
+        <span className="fight-who">{picked.length === 0 ? 'NSC antippen zum Übernehmen' : `${picked.length} NSC übernehmen`}</span>
       </div>
       <div className="actions fight-actions">
         <button type="button" className="action dice" onClick={selection.end}>

@@ -4527,11 +4527,25 @@ button:disabled {
 
 .fight-turn {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: baseline;
+  gap: 8px;
   padding: 6px 10px;
   border: 1px solid var(--line-strong);
   background: var(--raised);
+}
+
+.fight-who {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+.fight-need {
+  flex: 0 0 auto;
+  font-family: var(--mono);
 }
 
 .fight-actions:has(> :nth-child(3)) {
