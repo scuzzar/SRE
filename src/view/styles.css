@@ -4124,3 +4124,223 @@ button:disabled {
   font-size: 18px;
   letter-spacing: 0;
 }
+
+/* --- Begegnung, NSC und Wunden -------------------------------------------------------------- */
+
+.encounter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.encounter-start {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.encounter-start .primary,
+.encounter-start select {
+  min-height: 44px;
+}
+
+.encounter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.encounter-head .section-title {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.encounter-reaction {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.npc-list {
+  margin: 0 -16px;
+  padding: 0 16px 4px;
+  list-style: none;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+
+.npc {
+  flex: 0 0 172px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  scroll-snap-align: start;
+}
+
+.npc-head {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.npc-actions .ghost.compact {
+  flex: 1 1 auto;
+  min-height: 34px;
+  padding: 0 6px;
+  font-size: 12px;
+}
+
+.npc.targeted {
+  border-color: var(--gold);
+}
+
+.npc.attacking {
+  border-color: var(--accent-text);
+}
+
+.npc.out {
+  opacity: 0.55;
+}
+
+.npc-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.npc-leader {
+  color: var(--gold);
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.npc-state,
+.combat-state,
+.strip-state {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.state-wounded {
+  color: var(--gold);
+}
+
+.state-unconscious,
+.state-serious,
+.state-dead {
+  color: var(--accent-text);
+}
+
+.npc-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 12px;
+}
+
+.npc-stats .hurt {
+  color: var(--accent-text);
+}
+
+.npc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.npc-actions .ghost[aria-pressed='true'] {
+  background: var(--text);
+  color: var(--ink);
+}
+
+.combat-armor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.combat-armor .chips button {
+  min-height: 34px;
+  font-size: 13px;
+}
+
+.combat-state,
+.strip-state {
+  margin: 0;
+}
+
+.strip-state {
+  padding: 0 0 4px;
+}
+
+.combat-who {
+  margin: 0;
+  font-size: 14px;
+}
+
+.combat-table tr.fixed th {
+  color: var(--gold);
+}
+
+.combat-table .cell-button:disabled {
+  color: var(--dim);
+  opacity: 0.35;
+}
+
+.wounding {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.wound-dice {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 18px;
+}
+
+.wound-dice li {
+  min-width: 44px;
+  padding: 6px 10px;
+  border: 1px solid var(--line-strong);
+  text-align: center;
+}
+
+.wound-dice li.next {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.wound-dice li.done {
+  color: var(--muted);
+}
+
+.wound-targets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.wound-targets button {
+  min-height: 48px;
+  font-family: var(--mono);
+}
+
+.chips-label {
+  align-self: center;
+  margin-right: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}

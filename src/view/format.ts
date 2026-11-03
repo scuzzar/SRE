@@ -1,5 +1,5 @@
 import type { AttackItem, CardItem, DamageItem, DmPart, LogItem, TaskItem } from '../controller';
-import type { ArmorClass, AttackKind, BookingKind, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
+import type { ArmorClass, AttackKind, BookingKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
 
@@ -30,6 +30,14 @@ export const kindNames: Record<ItemKind, string> = {
   ship: 'Schiffe und Small Craft',
   passage: 'Passagen',
   membership: 'Mitgliedschaften',
+};
+
+export const woundStateText: Record<WoundState, string> = {
+  unhurt: 'unverletzt',
+  wounded: 'verwundet',
+  unconscious: 'bewusstlos',
+  serious: 'schwer verwundet',
+  dead: 'tot',
 };
 
 export const bookingText: Record<BookingKind, string> = {
@@ -218,9 +226,9 @@ export function taskTitle(item: TaskItem): string {
   return `${item.character} · ${skillTitle(item.parts)} · ${item.target}+`;
 }
 
-/** Ein Angriff in einer Zeile: „Kira Vant · Automatic Pistol · Jack, Short“. */
+/** Ein Angriff in einer Zeile: „Kira Vant · Automatic Pistol · Jack, Short“, mit Ziel „Kira Vant → Ada Abara · …“. */
 export function attackTitle(item: AttackItem): string {
-  return `${item.character} · ${item.weapon} · ${armorText[item.armor]}, ${rangeText[item.range]}`;
+  return `${item.character}${item.victim ? ` → ${item.victim}` : ''} · ${item.weapon} · ${armorText[item.armor]}, ${rangeText[item.range]}`;
 }
 
 /** Der Titel im Popup: Probe oder Angriff. */
@@ -230,7 +238,8 @@ export function rollTitle(item: TaskItem | AttackItem): string {
 
 /** Ein Schadenswurf: „3W6: 4 + 2 + 6 = 12“. */
 export function damageDetail(item: DamageItem): string {
-  return `${item.dice.length}W6: ${item.dice.join(' + ')} = ${item.damage}`;
+  const to = item.to ? ` (${item.dice.map((d, i) => `${item.to![i]} ${d}`).join(', ')})` : '';
+  return `${item.dice.length}W6: ${item.dice.join(' + ')} = ${item.damage}${to}`;
 }
 
 /** Ein Ergebnis in einer Zeile, für die Zeile über der Schreibzeile: Urteil, dann die Frage. */

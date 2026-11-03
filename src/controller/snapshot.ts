@@ -69,9 +69,30 @@ import {
   type Skill,
   type TaskResult,
   type Upp,
+  type Combatant,
+  type Fighter,
+  type Npc,
+  type PhysicalCharacteristic,
+  type WoundState,
+  armorsOf,
+  canFight,
+  currentEncounter,
+  encounterTypeOfEncounter,
+  fighterOf,
+  npcCharacters,
+  npcOf,
+  reactionText,
+  uppOf,
+  victimOf,
+  woundedUpp,
+  woundsOf,
+  woundStateOf,
 } from '../model';
 import {
+  attackerOf,
   attackTable,
+  defenderOf,
+  type Wounding,
   canConfirm,
   characteristicOptions,
   drawnIn,
@@ -120,6 +141,8 @@ export interface Snapshot {
   readonly focus: string | undefined;
   /** Die Leiste mit dem Charakter oben ist eingeklappt. */
   readonly stripCollapsed: boolean;
+  /** Die dauerhaften NSC unter „NSC“, getrennt von den SC. */
+  readonly npcs: readonly { readonly id: string; readonly name: string; readonly background: string; readonly dead: boolean }[];
   /** Die Toten unter „Verstorben“, getrennt von den Lebenden. */
   readonly dead: readonly { readonly id: string; readonly name: string; readonly background: string }[];
   readonly retired: readonly { readonly id: string; readonly name: string }[];
@@ -166,6 +189,8 @@ export interface ItemChoice {
   readonly once: boolean;
   /** Bei Waffen: die Waffe, die man damit in die Hand nehmen kann. */
   readonly weapon: string | undefined;
+  /** Bei Rüstungen und Anzügen: lässt sich anziehen. */
+  readonly armor: boolean;
 }
 
 export type Screen = 'oracle' | 'combat' | 'shop' | 'characters' | 'sector' | 'about';
@@ -257,7 +282,10 @@ export type DmPart =
 export interface AttackItem {
   readonly kind: 'attack';
   readonly at: string;
+  /** Wer angreift: SC oder NSC. */
   readonly character: string;
+  /** Wer getroffen werden soll, wenn es ein Ziel gibt. */
+  readonly victim: string | undefined;
   readonly weapon: string;
   readonly armor: ArmorClass;
   readonly range: Range;
@@ -283,8 +311,46 @@ export interface DamageItem {
   readonly at: string;
   readonly of: number;
   readonly weapon: string;
+  /** Wen der Schaden trifft, wenn der Treffer ein Ziel hatte. */
+  readonly victim: string | undefined;
   readonly dice: readonly number[];
+  /** Je Würfel das Attribut, auf das er ging. */
+  readonly to: readonly PhysicalCharacteristic[] | undefined;
   readonly damage: number;
+}
+
+/** Ein NSC der laufenden Begegnung, wie der Kampf ihn zeigt. */
+export interface NpcView {
+  readonly id: string;
+  readonly name: string;
+  readonly leader: boolean;
+  readonly weapon: string;
+  /** Die Fertigkeit mit Stufe, z. B. „Foil-2“. */
+  readonly skill: string;
+  /** Die getragene Rüstung, wenn er eine hat. */
+  readonly armor: string | undefined;
+  readonly armorClass: ArmorClass;
+  readonly upp: Upp;
+  /** Das UPP mit Wunden. */
+  readonly current: Upp;
+  readonly state: WoundState;
+  /** Übernommen als dieser Charakter. */
+  readonly became: string | undefined;
+  /** Das Ziel des Charakters oben. */
+  readonly targeted: boolean;
+  /** Er greift gerade den Charakter oben an. */
+  readonly attacking: boolean;
+}
+
+/** Schaden an einem SC, den der Spieler auf STR, DEX und END verteilt. */
+export interface WoundingView {
+  readonly victim: string;
+  readonly weapon: string;
+  readonly dice: readonly number[];
+  readonly to: readonly PhysicalCharacteristic[];
+  /** Die Werte vor diesem Schaden, mit den früheren Wunden. */
+  readonly current: Upp;
+  readonly full: Upp;
 }
 
 /** Eine Waffe, die der Charakter oben führen kann, mit der Fertigkeit, die sie nutzt. */
@@ -303,11 +369,24 @@ export interface CombatCell {
   /** Fehlt, wo die Waffe nicht hinreicht. */
   readonly odds: { readonly dm: number; readonly need: number; readonly chance: number } | undefined;
   readonly chosen: boolean;
+  /** Wählbar: Die Waffe reicht hin, und steht das Ziel fest, ist es seine Rüstung. */
+  readonly open: boolean;
 }
 
 export interface CombatView {
+  /** Der Charakter oben. */
   readonly character: string;
+  /** Wer angreift: der Charakter oben oder ein NSC. */
+  readonly attacker: string;
+  readonly npcAttacks: boolean;
+  /** Wer angegriffen wird, wenn das Ziel feststeht, mit seiner Rüstung. */
+  readonly defender: { readonly name: string; readonly armor: ArmorClass } | undefined;
   readonly weapons: readonly WeaponChoice[];
+  /** Was der Charakter oben anziehen kann; `worn` ist die getragene. */
+  readonly armors: readonly { readonly id: string; readonly label: string; readonly worn: boolean }[];
+  /** Zustand und UPP mit Wunden des Charakters oben. */
+  readonly state: WoundState;
+  readonly current: Upp;
   readonly weapon: {
     readonly id: string;
     readonly name: string;
@@ -324,8 +403,8 @@ export interface CombatView {
   readonly base: readonly DmPart[];
   /** Die Spalten: je Reichweite der DM der Waffe; ohne DM reicht sie nicht hin. */
   readonly ranges: readonly { readonly range: Range; readonly dm: number | undefined }[];
-  /** Die Zeilen: je Rüstung der DM der Waffe und die Zellen. */
-  readonly rows: readonly { readonly armor: ArmorClass; readonly dm: number; readonly cells: readonly CombatCell[] }[];
+  /** Die Zeilen: je Rüstung der DM der Waffe und die Zellen; `fixed` ist die Rüstung des feststehenden Ziels. */
+  readonly rows: readonly { readonly armor: ArmorClass; readonly dm: number; readonly fixed: boolean; readonly cells: readonly CombatCell[] }[];
   /** Das gewählte Ziel mit DM, nötigem Wurf und Chance; erst dann lässt sich angreifen. */
   readonly target: { readonly armor: ArmorClass; readonly range: Range; readonly dm: number; readonly need: number; readonly chance: number; readonly parts: readonly DmPart[] } | undefined;
   /** Der neueste Treffer ohne Schaden: dafür lässt sich der Schaden würfeln. */
@@ -334,6 +413,18 @@ export interface CombatView {
   readonly recent: readonly { readonly index: number; readonly item: AttackItem; readonly damage: DamageItem | undefined }[];
   /** Bei Schusswaffen: geladene Schuss, Größe des Magazins, wie viele Magazine (mit Namen) im Besitz sind. */
   readonly ammo: { readonly rounds: number; readonly capacity: number; readonly magazine: string; readonly magazines: number } | undefined;
+  /** Kann der Angreifer angreifen (nicht bewusstlos, Ziel nicht tot, Magazin nicht leer)? */
+  readonly canAttack: boolean;
+  /** Die laufende Begegnung. */
+  readonly encounter: { readonly name: string; readonly reaction: number; readonly reactionText: string; readonly npcs: readonly NpcView[] } | undefined;
+  /** Eine Begegnung braucht einen Aufenthaltsort. */
+  readonly canEncounter: boolean;
+  /** Die Arten der Random Encounter List, zum Wählen. */
+  readonly encounterTypes: readonly { readonly roll: number; readonly name: string; readonly quantity: number }[];
+  /** Schaden, den der Spieler gerade verteilt. */
+  readonly wounding: WoundingView | undefined;
+  /** Was beim Würfeln einer Begegnung herauskam oder nicht ging. */
+  readonly note: string | undefined;
 }
 
 export interface ShopItem {
@@ -432,6 +523,9 @@ export interface CharacterView {
   readonly characteristics: readonly CharacteristicOption[];
   /** Kommt im Log vor: Entfernen blendet aus, statt zu löschen. */
   readonly inLog: boolean;
+  /** Zustand nach Wunden und das UPP mit Wunden. */
+  readonly state: WoundState;
+  readonly current: Upp;
 }
 
 export interface TaskView {
@@ -473,6 +567,10 @@ export interface ControllerState {
   readonly attack: Attack | undefined;
   /** Was im Shop zuletzt nicht ging. */
   readonly shopError: string | undefined;
+  /** Schaden an einem SC, den der Spieler gerade verteilt. */
+  readonly wounding: Wounding | undefined;
+  /** Was beim Würfeln einer Begegnung herauskam, wenn es keine gibt, oder was nicht ging. */
+  readonly combatNote: string | undefined;
   /** Der Charakter, dessen Details im Charakter-Screen aufgeklappt sind. */
   readonly opened: string | undefined;
   /** Die Leiste mit dem Charakter oben ist eingeklappt; das Gerät merkt es sich. */
@@ -541,36 +639,36 @@ function taskItem(campaign: Campaign, entry: TaskResult): TaskItem {
   };
 }
 
-/** Die Teile des DM eines Angriffs, nach dem heutigen Stand des Charakters; Rüstung und Reichweite aus den Referenzdaten. */
-function attackParts(character: Character, weaponId: string, armor: ArmorClass, range: Range): DmPart[] {
+/** Die Teile des DM eines Angriffs, nach dem heutigen Stand des Angreifers; Rüstung und Reichweite aus den Referenzdaten. */
+function attackParts(attacker: Fighter, weaponId: string, armor: ArmorClass, range: Range): DmPart[] {
   const weapon = weaponOf(weaponId);
   const characteristic = attackCharacteristic(weapon);
-  const value = valueOf(character.upp, characteristic);
+  const value = valueOf(attacker.upp, characteristic);
   return [
-    {
-      kind: 'skill',
-      name: skillOf(weapon.uses).name,
-      level: weaponSkill(character, weapon)?.level ?? 0,
-      dm: weaponSkill(character, weapon)?.level ?? 0,
-    },
+    { kind: 'skill', name: skillOf(weapon.uses).name, level: attacker.skill, dm: attacker.skill },
     { kind: 'armor', armor, dm: armorDm(weapon, armor) },
     { kind: 'range', range, dm: rangeDm(weapon, range) ?? 0 },
-    {
-      kind: 'characteristic',
-      characteristic,
-      value,
-      dm: characteristicAttackDm(weapon, value),
-    },
+    { kind: 'characteristic', characteristic, value, dm: characteristicAttackDm(weapon, value) },
   ];
 }
 
+function attackerOfEntry(entry: AttackResult): Combatant {
+  return entry.by !== undefined ? { npc: entry.by } : { pc: entry.for! };
+}
+
+function nameOf(campaign: Campaign, who: Combatant): string {
+  return 'pc' in who ? characterOf(campaign, who.pc).name : npcOf(campaign, who.npc).name;
+}
+
 function attackItem(campaign: Campaign, entry: AttackResult, index: number): AttackItem {
-  const character = characterOf(campaign, entry.for);
+  const attacker = fighterOf(campaign, attackerOfEntry(entry));
+  const victim = victimOf(entry);
   const success = isSuccess(entry);
   return {
     kind: 'attack',
     at: entry.at,
-    character: character.name,
+    character: attacker.name,
+    victim: victim && nameOf(campaign, victim),
     weapon: weaponName(entry.with),
     armor: entry.armor,
     range: entry.range,
@@ -580,7 +678,7 @@ function attackItem(campaign: Campaign, entry: AttackResult, index: number): Att
     total: sum(entry.dice) + entry.dm,
     need: entry.target - entry.dm,
     success,
-    parts: attackParts(character, entry.with, entry.armor, entry.range),
+    parts: attackParts(attacker, entry.with, entry.armor, entry.range),
     wounds: weaponOf(entry.with).wounds,
     damagePending: success && damageRollsOf(campaign.log, index).length === 0,
   };
@@ -588,12 +686,15 @@ function attackItem(campaign: Campaign, entry: AttackResult, index: number): Att
 
 function damageItem(campaign: Campaign, entry: DamageRoll): DamageItem {
   const hit = campaign.log[entry.of] as AttackResult;
+  const victim = victimOf(hit);
   return {
     kind: 'damage',
     at: entry.at,
     of: entry.of,
     weapon: weaponName(hit.with),
+    victim: victim && nameOf(campaign, victim),
     dice: entry.dice,
+    to: entry.to,
     damage: damageOf(entry),
   };
 }
@@ -616,14 +717,36 @@ function weaponName(id: string): string {
   return id === HANDS ? 'Hände' : weaponOf(id).name;
 }
 
-function combatView(campaign: Campaign, attack: Attack | undefined, log: readonly LogItem[]): CombatView | undefined {
+function npcView(campaign: Campaign, npc: Npc, attack: Attack | undefined): NpcView {
+  const fighter = fighterOf(campaign, { npc: npc.id });
+  return {
+    id: npc.id,
+    name: npc.name,
+    leader: npc.leader,
+    weapon: weaponName(fighter.weapon.id),
+    skill: `${skillOf(fighter.weapon.uses).name}-${npc.skill}`,
+    armor: npc.wears === undefined ? undefined : itemLabel(itemOf(npc.wears)),
+    armorClass: fighter.armor,
+    upp: npc.upp,
+    current: fighter.upp,
+    state: fighter.state,
+    became: npc.became === undefined ? undefined : characterOf(campaign, npc.became).name,
+    targeted: attack?.against === npc.id,
+    attacking: attack?.by === npc.id,
+  };
+}
+
+function combatView(campaign: Campaign, attack: Attack | undefined, log: readonly LogItem[], wounding: Wounding | undefined, note: string | undefined): CombatView | undefined {
   const character = focusOf(campaign);
   if (!character) return undefined;
-  const weapon = wieldedWeapon(character);
+  const current = attack ?? {};
+  const attacker = attackerOf(current, campaign);
+  const defender = defenderOf(current, campaign);
+  const weapon = attacker.weapon;
   const characteristic = attackCharacteristic(weapon);
-  const value = valueOf(character.upp, characteristic);
-  const [skill, , , counted] = attackParts(character, weapon.id, 'nothing', 'close');
-  const table = attackTable(campaign);
+  const value = valueOf(attacker.upp, characteristic);
+  const [skill, , , counted] = attackParts(attacker, weapon.id, 'nothing', 'close');
+  const table = attackTable(campaign, current);
   const target = attack ? evaluateAttack(attack, campaign) : undefined;
   const pending = pendingDamage(campaign.log);
   const pendingHit = pending === undefined ? undefined : (campaign.log[pending] as AttackResult);
@@ -634,9 +757,18 @@ function combatView(campaign: Campaign, attack: Attack | undefined, log: readonl
       const damage = log.find((d): d is DamageItem => d.kind === 'damage' && d.of === index);
       return { index, item, damage };
     });
+  const encounter = currentEncounter(campaign);
+  const pc = fighterOf(campaign, { pc: character.id });
+  const ammo = ammoOf(character);
   return {
     character: character.name,
+    attacker: attacker.name,
+    npcAttacks: current.by !== undefined,
+    defender: defender && { name: defender.name, armor: defender.armor },
     weapons: weaponsOf(character).map((id) => weaponLabel(character, id)),
+    armors: armorsOf(character).map((id) => ({ id, label: itemLabel(itemOf(id)), worn: character.wears === id })),
+    state: pc.state,
+    current: pc.upp,
     weapon: {
       id: weapon.id,
       name: weaponName(weapon.id),
@@ -654,43 +786,50 @@ function combatView(campaign: Campaign, attack: Attack | undefined, log: readonl
     rows: armorClasses.map((armor, i) => ({
       armor,
       dm: armorDm(weapon, armor),
+      fixed: defender?.armor === armor,
       cells: ranges.map((range, j) => {
         const odds = table[i]![j];
         return {
           range,
-          odds: odds && {
-            dm: odds.dm.total,
-            need: odds.need,
-            chance: odds.chance,
-          },
+          odds: odds && { dm: odds.dm.total, need: odds.need, chance: odds.chance },
           chosen: attack?.armor === armor && attack.range === range,
+          open: odds !== undefined && (defender === undefined || defender.armor === armor),
         };
       }),
     })),
     target:
       attack?.armor !== undefined && attack.range !== undefined && target
-        ? {
-            armor: attack.armor,
-            range: attack.range,
-            dm: target.dm.total,
-            need: target.need,
-            chance: target.chance,
-            parts: attackParts(character, weapon.id, attack.armor, attack.range),
-          }
+        ? { armor: attack.armor, range: attack.range, dm: target.dm.total, need: target.need, chance: target.chance, parts: attackParts(attacker, weapon.id, attack.armor, attack.range) }
         : undefined,
-    damage:
-      pendingHit && pending !== undefined
-        ? {
-            index: pending,
-            weapon: weaponName(pendingHit.with),
-            wounds: weaponOf(pendingHit.with).wounds,
-          }
-        : undefined,
+    canAttack: canFight(attacker.state) && defender?.state !== 'dead' && !(current.by === undefined && ammo?.rounds === 0),
+    damage: pendingHit && pending !== undefined ? { index: pending, weapon: weaponName(pendingHit.with), wounds: weaponOf(pendingHit.with).wounds } : undefined,
     recent,
-    ammo: (() => {
-      const ammo = ammoOf(character);
-      return ammo && { rounds: ammo.rounds, capacity: ammo.capacity, magazine: itemLabel(itemOf(ammo.ammo)), magazines: ammo.magazines };
-    })(),
+    ammo: current.by === undefined && ammo ? { rounds: ammo.rounds, capacity: ammo.capacity, magazine: itemLabel(itemOf(ammo.ammo)), magazines: ammo.magazines } : undefined,
+    encounter: encounter && {
+      name: encounterTypeOfEncounter(encounter).name,
+      reaction: encounter.reaction,
+      reactionText: reactionText(encounter.reaction),
+      npcs: encounter.npcs.map((n) => npcView(campaign, n, attack)),
+    },
+    canEncounter: campaign.location !== undefined,
+    encounterTypes: ref.encounters.types.map((t) => ({ roll: t.roll, name: t.name, quantity: t.quantity })),
+    wounding: wounding && woundingView(campaign, wounding),
+    note,
+  };
+}
+
+function woundingView(campaign: Campaign, wounding: Wounding): WoundingView {
+  const hit = campaign.log[wounding.of] as AttackResult;
+  const victim = victimOf(hit)!;
+  const upp = uppOf(campaign, victim);
+  const before = woundsOf(campaign, victim);
+  return {
+    victim: nameOf(campaign, victim),
+    weapon: weaponName(hit.with),
+    dice: wounding.dice,
+    to: wounding.to,
+    current: woundedUpp(upp, before),
+    full: upp,
   };
 }
 
@@ -816,6 +955,8 @@ function characterView(campaign: Campaign, character: Character, state: Controll
     unskilled: canGoUnskilled(character.skills) ? { dm: ref.houseRules.unskilledDm, chosen: own?.unskilled ?? false } : undefined,
     characteristics: characteristicOptions(own, campaign, character),
     inLog: isInLog(campaign, character.id),
+    state: woundStateOf(campaign, { pc: character.id }),
+    current: woundedUpp(character.upp, woundsOf(campaign, { pc: character.id })),
   };
 }
 
@@ -825,7 +966,7 @@ function taskView(campaign: Campaign, task: Task): TaskView {
 }
 
 const skills: readonly SkillChoice[] = ref.skills.map((s) => ({ ...s, leveled: shownLevel({ of: s.id, level: 0 }) !== undefined }));
-const items: readonly ItemChoice[] = ref.items.map((i) => ({ id: i.id, label: itemLabel(i), kind: i.kind, once: i.once, weapon: i.weapon }));
+const items: readonly ItemChoice[] = ref.items.map((i) => ({ id: i.id, label: itemLabel(i), kind: i.kind, once: i.once, weapon: i.weapon, armor: i.armor !== undefined }));
 
 /** Die Karte zur Wahl einer Welt, solange die Erschaffung im Schritt Heimatwelt oder Welt eines Terms ist. */
 function pickingView(state: ControllerState, campaign: Campaign): { readonly title: string } | undefined {
@@ -840,7 +981,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], retired: [], task: undefined, combat: undefined, shop: undefined, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: [], retired: [], task: undefined, combat: undefined, shop: undefined, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -858,9 +999,10 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     characters: livingCharacters(campaign).map((c) => characterView(campaign, c, state)),
     focus: focusOf(campaign)?.id,
     dead: deadCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background })),
+    npcs: npcCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background, dead: c.dead })),
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
-    combat: combatView(campaign, state.attack, log),
+    combat: combatView(campaign, state.attack, log, state.wounding, state.combatNote),
     shop: shopView(campaign, state.shopError),
     location: campaign.location,
     result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : undefined,

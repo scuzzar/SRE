@@ -1,15 +1,18 @@
-import type { CombatView, Snapshot } from '../../controller';
-import { armorText, attackText, characteristicLabel, damageDetail, hex, partLabel, rangeMeters, rangeShort, rangeText, signed } from '../format';
+import { useState } from 'react';
+import type { CombatView, NpcView, Snapshot } from '../../controller';
+import { armorText, attackText, characteristicLabel, damageDetail, hex, partLabel, rangeMeters, rangeShort, rangeText, signed, woundStateText } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { CombatIcon, DiceIcon } from '../icons';
 import { CharacterStrip } from '../oracle/CharacterStrip';
 
 /**
- * Der Reiter Kampf: oben die Leiste mit dem Charakter oben und seinen Waffen, darunter die klassische
- * Tabelle der Waffe in der Hand (Rüstung × Reichweite, in jeder Zelle der nötige Wurf mit allen DMs).
- * Eine Zelle antippen wählt Rüstung und Reichweite des Ziels; „Angreifen“ würfelt. Nach einem Treffer
- * lässt sich der Schaden würfeln. Gerechnet wird im Model; die View zeigt nur.
+ * Der Reiter Kampf: oben die Leiste mit dem Charakter oben und seinen Waffen, darunter die laufende
+ * Begegnung mit ihren NSC (oder der Knopf, eine zu würfeln), die getragene Rüstung des Charakters oben
+ * und die klassische Tabelle der Waffe des Angreifers (Rüstung × Reichweite, in jeder Zelle der
+ * nötige Wurf mit allen DMs). Ein NSC als Ziel legt die Rüstung fest; greift ein NSC an, zeigt die
+ * Tabelle seine Waffe gegen die Rüstung des Charakters oben. Eine Zelle antippen wählt die
+ * Reichweite; „Angreifen“ würfelt. Gerechnet wird im Model; die View zeigt nur.
  */
 export function CombatScreen({ view }: { view: Snapshot }) {
   const combat = view.combat;
@@ -19,11 +22,14 @@ export function CombatScreen({ view }: { view: Snapshot }) {
       {combat ? (
         <>
           <section className="scroll combat-scroll" aria-label="Angriff">
+            <EncounterPanel combat={combat} />
+            <ArmorChips combat={combat} />
             <WeaponHead combat={combat} />
             <AttackTable combat={combat} />
             <Recent combat={combat} />
           </section>
           <AttackDock combat={combat} />
+          {combat.wounding && <WoundingDialog combat={combat} />}
         </>
       ) : (
         <section className="scroll combat-scroll">
@@ -34,11 +40,157 @@ export function CombatScreen({ view }: { view: Snapshot }) {
   );
 }
 
+/** Die laufende Begegnung mit ihren NSC, oder Würfeln bzw. Wählen einer neuen. */
+function EncounterPanel({ combat }: { combat: CombatView }) {
+  const game = useGame();
+  const encounter = combat.encounter;
+  if (!encounter) {
+    return (
+      <div className="encounter">
+        <div className="encounter-start">
+          <button
+            type="button"
+            className="primary"
+            disabled={!combat.canEncounter}
+            onClick={() => {
+              haptic('shake');
+              game.rollEncounter();
+            }}
+          >
+            Begegnung würfeln
+          </button>
+          <select aria-label="Begegnung wählen" value="" disabled={!combat.canEncounter} onChange={(e) => e.target.value && game.rollEncounter(Number(e.target.value))}>
+            <option value="">oder wählen …</option>
+            {combat.encounterTypes.map((t) => (
+              <option key={t.roll} value={t.roll}>
+                {t.roll} · {t.quantity}W6 {t.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        {!combat.canEncounter && <p className="combat-hint">Eine Begegnung braucht einen Aufenthaltsort: im Sektor eine Welt öffnen und „Gruppe ist hier“ wählen.</p>}
+        {combat.note && <p className="combat-hint">{combat.note}</p>}
+      </div>
+    );
+  }
+  return (
+    <div className="encounter">
+      <div className="encounter-head">
+        <h2 className="section-title">
+          {encounter.npcs.length} × {encounter.name}
+        </h2>
+        <button type="button" className="ghost compact" onClick={() => game.endEncounter()}>
+          Beenden
+        </button>
+      </div>
+      <p className="encounter-reaction">
+        Reaktion {encounter.reaction}: {encounter.reactionText}
+      </p>
+      <ol className="npc-list">
+        {encounter.npcs.map((npc) => (
+          <NpcCard key={npc.id} npc={npc} />
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+function NpcCard({ npc }: { npc: NpcView }) {
+  const game = useGame();
+  // Ob die Wahl „als SC / als NSC“ offen ist, ist reine Anzeige.
+  const [adopting, setAdopting] = useState(false);
+  const out = npc.state === 'dead' || npc.became !== undefined;
+  const physical = (['str', 'dex', 'end'] as const).map((k) => ({ k, label: k.toUpperCase(), value: npc.current[k], hurt: npc.current[k] < npc.upp[k] }));
+  return (
+    <li className={['npc', out ? 'out' : '', npc.targeted ? 'targeted' : '', npc.attacking ? 'attacking' : ''].filter(Boolean).join(' ')} aria-label={npc.name}>
+      <div className="npc-head">
+        <strong>
+          {npc.name}
+          {npc.leader && <span className="npc-leader"> · Anführer</span>}
+        </strong>
+        <span className={`npc-state state-${npc.state}`}>{npc.became ? `übernommen als ${npc.became}` : woundStateText[npc.state]}</span>
+      </div>
+      <div className="npc-stats mono">
+        {physical.map((p) => (
+          <span key={p.k} className={p.hurt ? 'hurt' : undefined}>
+            {p.label} {hex(Math.max(0, p.value))}
+          </span>
+        ))}
+        <span className="muted">
+          {npc.weapon} ({npc.skill}) · {npc.armor ?? 'keine Rüstung'}
+        </span>
+      </div>
+      {!out && (
+        <div className="npc-actions">
+          <button type="button" className="ghost compact" aria-pressed={npc.targeted} onClick={() => game.aimAt(npc.id)}>
+            Ziel
+          </button>
+          <button type="button" className="ghost compact" aria-pressed={npc.attacking} disabled={npc.state !== 'unhurt' && npc.state !== 'wounded'} onClick={() => game.attackBy(npc.id)}>
+            Greift an
+          </button>
+          {adopting ? (
+            <>
+              <button type="button" className="ghost compact" onClick={() => game.adoptNpc(npc.id, false)}>
+                Als SC
+              </button>
+              <button type="button" className="ghost compact" onClick={() => game.adoptNpc(npc.id, true)}>
+                Als NSC
+              </button>
+            </>
+          ) : (
+            <button type="button" className="ghost compact" onClick={() => setAdopting(true)}>
+              Übernehmen
+            </button>
+          )}
+        </div>
+      )}
+    </li>
+  );
+}
+
+/** Die getragene Rüstung des Charakters oben, und wie verwundet er ist. */
+function ArmorChips({ combat }: { combat: CombatView }) {
+  const game = useGame();
+  const physical = (['str', 'dex', 'end'] as const).map((k) => `${k.toUpperCase()} ${hex(Math.max(0, combat.current[k]))}`);
+  return (
+    <div className="combat-armor">
+      <div className="chips" role="group" aria-label={`Rüstung von ${combat.character}`}>
+        <span className="chips-label" aria-hidden="true">
+          {combat.character.split(' ')[0]} trägt
+        </span>
+        <button type="button" aria-pressed={!combat.armors.some((a) => a.worn)} onClick={() => game.wear(undefined)}>
+          Keine Rüstung
+        </button>
+        {combat.armors.map((a) => (
+          <button key={a.id} type="button" aria-pressed={a.worn} onClick={() => game.wear(a.id)}>
+            {a.label}
+          </button>
+        ))}
+      </div>
+      {combat.state !== 'unhurt' && (
+        <p className={`combat-state state-${combat.state}`}>
+          {combat.character}: {woundStateText[combat.state]} · {physical.join(' · ')}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function WeaponHead({ combat }: { combat: CombatView }) {
   const { weapon, base } = combat;
   const characteristic = characteristicLabel[weapon.characteristic];
   return (
     <div className="weapon-head">
+      {combat.npcAttacks && combat.defender && (
+        <p className="combat-who">
+          <b>{combat.attacker}</b> greift <b>{combat.defender.name}</b> an ({armorText[combat.defender.armor]})
+        </p>
+      )}
+      {!combat.npcAttacks && combat.defender && (
+        <p className="combat-who">
+          Ziel: <b>{combat.defender.name}</b> ({armorText[combat.defender.armor]})
+        </p>
+      )}
       <div className="weapon-title">
         <h2 className="section-title">{weapon.name}</h2>
         <span className="muted">
@@ -84,7 +236,7 @@ function AttackTable({ combat }: { combat: CombatView }) {
         </thead>
         <tbody>
           {combat.rows.map((row) => (
-            <tr key={row.armor}>
+            <tr key={row.armor} className={row.fixed ? 'fixed' : undefined}>
               <th scope="row">
                 <span className="head-name">{armorText[row.armor]}</span>
                 <span className="head-dm">{signed(row.dm)}</span>
@@ -96,6 +248,7 @@ function AttackTable({ combat }: { combat: CombatView }) {
                       type="button"
                       className={['cell-button', cell.odds.chance <= 0 ? 'impossible' : '', cell.odds.chance >= 100 ? 'sure' : ''].filter(Boolean).join(' ')}
                       aria-pressed={cell.chosen}
+                      disabled={!cell.open}
                       aria-label={`${armorText[row.armor]}, ${rangeText[cell.range]}: braucht ${cell.odds.need}+, ${Math.round(cell.odds.chance)} %`}
                       onClick={() => {
                         haptic('pick');
@@ -131,7 +284,8 @@ function Recent({ combat }: { combat: CombatView }) {
           <li key={index} className="combat-recent-item">
             <span className={item.success ? 'verdict' : 'verdict negative'}>{item.success ? 'TREFFER' : 'DANEBEN'}</span>
             <span>
-              {item.character} · {item.weapon} · {armorText[item.armor]}, {rangeText[item.range]}
+              {item.character}
+              {item.victim ? ` → ${item.victim}` : ''} · {item.weapon} · {armorText[item.armor]}, {rangeText[item.range]}
             </span>
             <span className="muted mono">
               {item.dice[0]} + {item.dice[1]} {signed(item.dm)} = {item.total}
@@ -179,16 +333,68 @@ function AttackDock({ combat }: { combat: CombatView }) {
         <button
           type="button"
           className="action task-roll"
-          disabled={!target || combat.ammo?.rounds === 0}
+          disabled={!target || !combat.canAttack}
           onClick={() => {
             haptic('land');
             game.rollAttack();
           }}
         >
           <CombatIcon />
-          Angreifen
+          {combat.npcAttacks ? `${combat.attacker.split(' ')[0]} greift an` : 'Angreifen'}
         </button>
       </div>
     </section>
+  );
+}
+
+/** Schaden an einem SC: Der Spieler gibt jedem Würfel ein Attribut, dann kommt er in den Log. */
+function WoundingDialog({ combat }: { combat: CombatView }) {
+  const game = useGame();
+  const w = combat.wounding!;
+  const next = w.to.length;
+  const taken = (c: 'STR' | 'DEX' | 'END') => w.to.reduce((sum, to, i) => (to === c ? sum + w.dice[i]! : sum), 0);
+  const value = (c: 'STR' | 'DEX' | 'END') => w.current[c.toLowerCase() as 'str' | 'dex' | 'end'];
+  return (
+    <div className="modal">
+      <section className="result wounding" role="dialog" aria-modal="true" aria-labelledby="wounding-title">
+        <span className="kicker">Schaden verteilen</span>
+        <h2 id="wounding-title" className="shop-buy-title">
+          {w.victim} · {w.weapon} · {w.dice.length}W6
+        </h2>
+        <p className="muted">Jeder Würfel geht ganz auf ein Attribut; was über 0 hinausgeht, verfällt.</p>
+        <ol className="wound-dice mono">
+          {w.dice.map((d, i) => (
+            <li key={i} className={i === next ? 'next' : i < next ? 'done' : undefined}>
+              {d}
+              {i < next ? ` → ${w.to[i]}` : ''}
+            </li>
+          ))}
+        </ol>
+        <div className="wound-targets">
+          {(['STR', 'DEX', 'END'] as const).map((c) => (
+            <button key={c} type="button" className="ghost" disabled={next >= w.dice.length} onClick={() => game.assignWound(c)}>
+              {c} {hex(Math.max(0, value(c)))}
+              {taken(c) > 0 ? ` −${taken(c)}` : ''}
+            </button>
+          ))}
+        </div>
+        <div className="roll-actions">
+          <button type="button" className="ghost" disabled={next === 0} onClick={() => game.unassignWound()}>
+            Zurück
+          </button>
+          <button
+            type="button"
+            className="primary"
+            disabled={next < w.dice.length}
+            onClick={() => {
+              haptic('land');
+              game.confirmWounding();
+            }}
+          >
+            Übernehmen
+          </button>
+        </div>
+      </section>
+    </div>
   );
 }

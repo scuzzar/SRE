@@ -47,6 +47,11 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 - Gerechnet wird **2W6 + Fertigkeit + Rüstung + Reichweite + Attribut ≥ 8**. Das Attribut ist STR bei Händen und Klingen, DEX bei Schusswaffen: unter dem nötigen Wert gibt es dessen Malus, ab dem vorteilhaften dessen Bonus (Rifle: DEX unter 6 −2, ab 8 +1). Die Stufe unten zählt beim Angriff nicht.
 - Eine **Zelle antippen** wählt Rüstung und Reichweite des Ziels; über den Knöpfen steht dann der Angriff mit DM und Chance. **„Angreifen“** würfelt; das Ergebnis erscheint als Popup: oben die Modifikatoren (Fertigkeit, gegen die Rüstung, auf die Reichweite, Attribut) und der nötige Wurf wie in der Tabelle (Braucht 3+), dann rollen die Würfel, zuletzt TREFFER oder DANEBEN; anders als bei der Probe kommt nichts Schritt für Schritt dazu, weil der nötige Wurf schon feststeht. Es steht im Log. Nach einem Treffer würfelt **„Schaden würfeln“** die W6 der Waffe (Rifle 3W6); der Schaden steht im Log im Kasten seines Treffers. Die letzten drei Angriffe stehen unter der Tabelle.
 
+- **Begegnung** (*Charts and Tables* S. 21): **„Begegnung würfeln“** würfelt auf dem Aufenthaltsort eine Zeile der Random Encounter List (z. B. „3W6 Bandits“), oder man wählt die Art aus der Liste. Die NSC entstehen ohne weitere Eingabe: Name von der Tafel NSC, 2W6 je Attribut, eine Waffe bis zum TL der Gruppe (Klingen, mit G Schusswaffen), mit A eine Rüstung, Fertigkeit 1; der Anführer (L) bekommt das Beste und Fertigkeit 2. Dazu die Reaktion (2W6, z. B. „Hostile. Attack on 8+“). Die NSC stehen nebeneinander zum Wischen, mit STR, DEX, END (verwundet rot), Waffe, Rüstung und Zustand.
+  - **„Ziel“** an einem NSC: Der Charakter oben greift ihn an; seine Rüstung steht fest, in der Tabelle ist nur ihre Zeile wählbar.
+  - **„Greift an“** an einem NSC: Er greift den Charakter oben an; die Tabelle zeigt seine Waffe gegen die getragene Rüstung des Charakters. Die Rüstung zieht man über der Tabelle an („Kira trägt …“), auch im Editor.
+  - **Wunden** (S. 7): Ein Treffer mit Ziel verteilt seinen Schaden auf STR, DEX und END, jeder Würfel ganz auf ein Attribut, was über 0 geht, verfällt. Der erste Treffer geht ganz auf ein zufälliges Attribut; danach verteilt bei NSC die App, bei SC der Spieler (Würfel für Würfel antippen). Ein Attribut auf 0: bewusstlos, zwei: schwer verwundet, drei: tot; Bewusstlose greifen nicht an, ein toter SC steht unter „Verstorben“.
+  - **„Übernehmen“** macht einen NSC zum SC oder zum dauerhaften NSC, mit Waffe, Rüstung und Fertigkeit; dauerhafte NSC stehen im Charakter-Screen unter „NSC“. **„Beenden“** schließt die Begegnung.
 - **Munition**: Bei einer Schusswaffe zeigt der Kampf, wie viele Schuss im Magazin sind und wie viele Magazine der Charakter hat (Rifle 20 Schuss je Rifle Ammo, Laser mit Power Pack). Jeder Angriff verbraucht einen Schuss; leer gibt es keinen Angriff. **„Nachladen“** nimmt ein Magazin aus dem Besitz; ein angebrochenes geht dabei verloren. Waffen aus der Abmusterung kommen geladen, gekaufte leer.
 
 **Dritter Screen: Shop** (Starter Edition, *Charts and Tables* S. 14 und 23): die **Gruppenkasse** und der Einkauf auf der Welt, auf der die Gruppe gerade ist.
@@ -85,7 +90,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
 
 **UI-Entwurf:** Der klickbare Entwurf liegt in [docs/ui-entwurf](docs/ui-entwurf/).
 
-**Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf über den Angriff hinaus (Verteidigung, Deckung, Schaden an Attributen), Kaufen und Verkaufen, Reisezonen, Sprungrouten, ganze Sektoren aus mehreren Subsektoren, Schiffe, NSC-Karten, Chaosfaktor, Szenen, Feinjustierung ±1, eigene Fertigkeiten, Hausregeln in der App einstellen.
+**Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf über Angriff und Wunden hinaus (Heilung, Verteidigung, Deckung, Überraschung, Moral, Kampfrunden), Kaufen und Verkaufen, Reisezonen, Sprungrouten, ganze Sektoren aus mehreren Subsektoren, Schiffe, NSC-Karten, Chaosfaktor, Szenen, Feinjustierung ±1, eigene Fertigkeiten, Hausregeln in der App einstellen.
 
 ---
 

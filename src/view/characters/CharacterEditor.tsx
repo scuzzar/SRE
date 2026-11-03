@@ -28,6 +28,8 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
     homeworld: editor.input.homeworld ?? '',
     // Leer heißt: die Hände.
     wields: editor.input.wields ?? '',
+    // Leer heißt: keine Rüstung.
+    wears: editor.input.wears ?? '',
   }));
   const [confirmRemove, setConfirmRemove] = useState(false);
   const isNew = editor.id === undefined;
@@ -50,7 +52,7 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
           id="character-form"
           onSubmit={(e) => {
             e.preventDefault();
-            const { homeworld, wields, ...rest } = form;
+            const { homeworld, wields, wears, ...rest } = form;
             game.saveCharacter({
               ...rest,
               credits: Number(form.credits === '' ? 0 : form.credits),
@@ -58,6 +60,7 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
               possessions: form.possessions.map((p) => ({ of: p.of, count: Number(p.count) })),
               ...(homeworld ? { homeworld } : {}),
               ...(wields ? { wields } : {}),
+              ...(wears ? { wears } : {}),
             });
           }}
         >
@@ -217,6 +220,22 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
             </select>
           </label>
           <label className="field">
+            <span>Getragene Rüstung</span>
+            <select value={form.wears} onChange={(e) => setForm({ ...form, wears: e.target.value })}>
+              <option value="">keine</option>
+              {form.possessions.flatMap((p) => {
+                const item = items.find((it) => it.id === p.of);
+                return item?.armor
+                  ? [
+                      <option key={item.id} value={item.id}>
+                        {item.label}
+                      </option>,
+                    ]
+                  : [];
+              })}
+            </select>
+          </label>
+          <label className="field">
             <span>Ausrüstung</span>
             <textarea value={form.equipment} onChange={(e) => setForm({ ...form, equipment: e.target.value })} />
           </label>
@@ -227,6 +246,13 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
           <label className="field">
             <span>Notiz</span>
             <textarea value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
+          </label>
+          <label className="toggle">
+            <input type="checkbox" checked={form.npc ?? false} onChange={(e) => setForm({ ...form, npc: e.target.checked })} />
+            <span>
+              NSC
+              <span className="small-label">Kein Spielercharakter: steht unter „NSC“, nicht in der Leiste oben und nicht im Shop.</span>
+            </span>
           </label>
           {!isNew && (
             <label className="toggle">

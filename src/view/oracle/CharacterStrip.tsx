@@ -3,6 +3,7 @@ import type { CombatView, Snapshot } from '../../controller';
 import { SkillChips, UppRow } from '../characters/CharacterCard';
 import { useGame } from '../game-context';
 import { ChevronDownIcon, PencilIcon } from '../icons';
+import { hex, woundStateText } from '../format';
 
 /** So lange nach dem letzten Scrollen gilt das Wischen als beendet. */
 const SETTLE_MS = 120;
@@ -87,6 +88,11 @@ export function CharacterStrip({ view, weapons = false }: { view: Snapshot; weap
                 <ChevronDownIcon />
               </button>
             </div>
+            {character.state !== 'unhurt' && (
+              <p className={`strip-state state-${character.state}`}>
+                {woundStateText[character.state]} · STR {hex(Math.max(0, character.current.str))} · DEX {hex(Math.max(0, character.current.dex))} · END {hex(Math.max(0, character.current.end))}
+              </p>
+            )}
             {!collapsed && (
               <>
                 <UppRow character={character} interactive={character.focus && !weapons} />
