@@ -2,7 +2,7 @@
 ' Rendern: bash .claude/skills/domain-model/scripts/render.sh docs/domain-model.puml
 @startuml
 !pragma layout smetana
-title Solo RPG Engine – Domänenmodell (Version 1)
+title Solo RPG Engine – Domänenmodell (Version 1, Entwurf: Angriff)
 hide empty members
 hide methods
 skinparam classAttributeIconSize 0
@@ -189,6 +189,23 @@ hide <<value>> stereotype
     target: number
     /success: boolean
   }
+  class Attack <<transient>> {
+    armor: ArmorClass [0..1]
+    range: Range [0..1]
+    /dm: number
+    /need: number
+    /chance: number
+  }
+  class AttackResult {
+    armor: ArmorClass
+    range: Range
+    dice: number[2]
+    dm: number
+    target: number
+    wounds: number[0..5]
+    /success: boolean
+    /damage: number
+  }
 
 ' Referenzdaten
   class Odds <<reference>> {
@@ -250,6 +267,44 @@ hide <<value>> stereotype
     weight: number [0..1]
     price: number [0..1]
     once: boolean
+  }
+  class Weapon <<reference>> {
+    name: string
+    attack: AttackKind
+    required: number
+    requiredDm: number
+    advantageous: number
+    advantageousDm: number
+    wounds: number
+  }
+  class ArmorDm <<value>> {
+    armor: ArmorClass
+    dm: number
+  }
+  class RangeDm <<value>> {
+    range: Range
+    dm: number [0..1]
+  }
+  enum AttackKind <<value>> {
+    blow
+    swing
+    shot
+  }
+  enum ArmorClass <<value>> {
+    nothing
+    jack
+    mesh
+    cloth
+    reflec
+    ablat
+    combat
+  }
+  enum Range <<value>> {
+    close
+    short
+    medium
+    long
+    veryLong
   }
   enum ItemKind <<value>> {
     weapon
@@ -464,13 +519,24 @@ SkillLevel "*" --> "1" Skill : of
 Character "1" *-- "*" Possession : possessions
 Possession "*" --> "1" Item : of
 Item --> ItemKind
-Item "0..1" --> "0..1" Skill : uses
+Item "0..1" --> "0..1" Skill : /uses
+Item "0..1" --> "0..1" Weapon : weapon
+Character "*" --> "0..1" Weapon : wields
+
+' Waffen (Referenzdaten)
+Weapon "*" --> "1" Skill : uses
+Weapon --> AttackKind
+Weapon "1" *-- "7" ArmorDm : vsArmor {ordered}
+Weapon "1" *-- "5" RangeDm : atRange {ordered}
+ArmorDm -[hidden]- ArmorClass
+RangeDm -[hidden]- Range
 
 ' Verlauf
 LogEntry <|-- OracleAnswer
 LogEntry <|-- DiceRoll
 LogEntry <|-- CardPick
 LogEntry <|-- TaskResult
+LogEntry <|-- AttackResult
 LogEntry <|-- Note
 Note "*" --> "0..1" LogEntry : interprets
 CardPick "1" *-- "*" PickedItem : items {ordered}
@@ -487,6 +553,14 @@ Task "*" --> "1" Character : /for
 Task "*" --> "0..1" SkillLevel : uses
 Task --> "0..6" Characteristic : counts
 Task ..> TaskResult : on roll
+
+' Angriff
+Attack "*" --> "1" Character : /for
+Attack "*" --> "1" Weapon : /with
+Attack ..> AttackResult : on roll
+AttackResult "*" --> "1" Character : for
+AttackResult "*" --> "1" Weapon : with
+AttackResult "*" --> "0..1" SkillLevel : uses
 
 ' Karte
 Card "0..1" --> "1" Campaign : in

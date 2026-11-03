@@ -81,6 +81,13 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > *Fund* weg (ausgeblendet). Der UI-Entwurf dazu liegt unter
 > [`ui-entwurf/kartensymbol/`](ui-entwurf/kartensymbol/).
 >
+> **Entwurf, noch nicht freigegeben** (3. November 2026): der **Angriff** (siehe *Waffen* und
+> *Angriff*). Neu im Bild: als Referenzdaten `Weapon` mit `ArmorDm` und `RangeDm`, die Werte
+> `AttackKind`, `ArmorClass` und `Range`, `Item.weapon`; `Item.uses` ist jetzt abgeleitet
+> (`/uses`, aus der Waffe). Am Charakter die Waffe in der Hand (`Character.wields`), flüchtig der
+> Angriff in Vorbereitung (`Attack`) und im Log das Angriffsergebnis (`AttackResult`). Offen sind
+> die Fragen unter [Offene Fragen zum Angriff](#offene-fragen-zum-angriff).
+>
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen, dazu die drei Wurffelder sowie die Themen-Tafeln NSC
 > (mit den sechs Namen), NSC-Aktionen, Welt (mit Schiff), Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
@@ -129,7 +136,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Orakelantwort | `OracleAnswer` | Ja oder Nein auf eine Frage |
 | Notiz | `Note` ohne `interprets` | Freier Text im Log, z. B. „Wir landen auf Regina.“ |
 | Deutung | `Note` mit `interprets` | Was man aus einem Ergebnis macht, z. B. „Die Tür ist offen, aber jemand war schon hier.“ |
-| Ergebnis | `OracleAnswer`, `DiceRoll`, `CardPick`, `TaskResult` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
+| Ergebnis | `OracleAnswer`, `DiceRoll`, `CardPick`, `TaskResult`, `AttackResult` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
 | Schreibzeile | (Fragefeld) | Das eine Textfeld über den Knöpfen; was der Text wird, entscheidet der Knopf |
 | Würfelwurf (2W6) | `DiceRoll` | Ein einfacher Wurf mit zwei Würfeln |
 | Inspirationskarte | `Card` | Eine gezogene Karte, solange sie offen ist |
@@ -144,6 +151,17 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Entwurf | Paket `draft` | Was später ein Logeintrag wird, solange es noch offen ist |
 | Probe | `Task` | Eine Probe, solange sie für den Charakter oben vorbereitet wird |
 | Probenergebnis | `TaskResult` | Eine gewürfelte Probe |
+| Waffe | `Weapon` | Die Kampfwerte einer Waffe aus den Charts (S. 4 und 6), z. B. Rifle: DEX 6 (−2) bzw. 8 (+1), 3W6, DMs gegen Rüstung und je Reichweite; dazu die Hände |
+| Hände | `Weapon` *Hands* | Die Waffe, die jeder hat; sie gehört zu keinem Gegenstand |
+| Art des Angriffs | `AttackKind` | Schlag (*blow*, Hände), Hieb (*swing*, Klingen) oder Schuss (*shot*, Schusswaffen) |
+| Nötiges Attribut | `Weapon.required`, `requiredDm` | Darunter gibt es den DM, z. B. Cutlass unter STR 7: −2 |
+| Vorteilhaftes Attribut | `Weapon.advantageous`, `advantageousDm` | Ab da gibt es den DM, z. B. Cutlass ab STR 11: +2 |
+| Schaden | `Weapon.wounds`, `AttackResult.wounds` | Wie viele W6 ein Treffer verursacht (Rifle 3W6) bzw. was sie gezeigt haben |
+| Rüstungsklasse | `ArmorClass` | Was das Ziel trägt: Nothing, Jack, Mesh, Cloth, Reflec, Ablat, Combat |
+| Reichweite | `Range` | Close, Short, Medium, Long, Very Long |
+| Waffe in der Hand | `Character.wields` | Die Waffe, die ein Charakter gerade führt; keine heißt Hände |
+| Angriff | `Attack` | Ein Angriff, solange er für den Charakter oben vorbereitet wird |
+| Angriffsergebnis | `AttackResult` | Ein gewürfelter Angriff, bei einem Treffer mit Schaden |
 | Bereich der Karte, Themen-Tafel | `Section` | Zufallsereignis, Sinneseindrücke, …; NSC, Welt, … |
 | Feld der Karte | `Slot` | Aktion, Hören, Aussehen, Name, Auslöser, … |
 | Spalte | `Column` | Eine Liste von Einträgen in einem Feld; ein Feld hat eine oder zwei |
@@ -315,6 +333,61 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Charakter, Hausregeln oder Stufe. Die Verweise sagen, wer und womit gewürfelt hat.
   - Bei `Task` und `TaskResult` gehört die Fertigkeitsstufe (`uses`) immer dem Charakter, auf den sie
     verweisen (`for`), und der Charakter immer zur Kampagne.
+- **Waffen.** Die Kampfwerte der Waffen sind Referenzdaten (`Weapon`), aus den Charts der Starter
+  Edition: *Weapons and Equipment* (S. 4) und *Weapons and Range Matrix* (S. 6).
+  - Je Waffe: die Art des Angriffs (`attack`), das nötige und das vorteilhafte Attribut mit ihren
+    DMs (`required`, `requiredDm`, `advantageous`, `advantageousDm`), der Schaden in W6 (`wounds`),
+    je Rüstungsklasse ein DM (`vsArmor`, sieben, in der Reihenfolge der Matrix) und je Reichweite
+    ein DM (`atRange`, fünf). Steht in der Matrix „no“, hat die Reichweite keinen DM: Auf diese
+    Reichweite geht mit der Waffe kein Angriff (Body Pistol auf Long, alle Klingen ab Medium).
+  - Bei Schlägen und Hieben (Hände, Klingen) zählt STR, bei Schüssen DEX.
+  - Jeder Gegenstand der Art *weapon* hat genau eine Waffe (`Item.weapon`), und jede Waffe gehört
+    zu höchstens einem Gegenstand. Dazu kommen die **Hände** (*Hands*), die zu keinem Gegenstand
+    gehören und die jeder hat.
+  - Jede Waffe nutzt genau eine Fertigkeit (`uses`): Klingen und Schusswaffen ihre eigene aus Blade
+    bzw. Gun Combat, Hände und Club Brawling. Die Fertigkeit eines Gegenstands folgt aus seiner
+    Waffe (`Item./uses`); die Abmusterung findet darüber weiter den Gegenstand zu einer Waffe aus
+    Blade oder Gun Combat.
+  - Tierwaffen (Claws, Teeth, Horns, …), Zubehör (Sights, Stocks, Silencer), Länge und Munition
+    kommen später.
+- **Rüstungsklasse und Reichweite.** Die sieben Rüstungsklassen (`ArmorClass`) sind die Spalten der
+  Matrix: Nothing, Jack, Mesh, Cloth, Reflec, Ablat, Combat. Vacc Suit zählt als Cloth, Battle
+  Dress als Combat (S. 4). Die fünf Reichweiten (`Range`) sind Close (Berührung), Short (1–5 m),
+  Medium (6–50 m), Long (51–250 m) und Very Long (251–500 m), nach S. 7.
+- **Waffe in der Hand.** Jeder Charakter führt gerade höchstens eine Waffe (`wields`); keine heißt:
+  Hände. Infrage kommt nur die Waffe eines Gegenstands aus seinem Besitz. Sie wird gespeichert,
+  übersteht also einen Neustart und steht in der Kampagnendatei. Entfernt man den Gegenstand aus dem
+  Besitz, hat der Charakter wieder die Hände. Im Angriff wechselt man sie, im Editor auch.
+- **Angriff.** Es gilt: 2W6 + DM ≥ 8 (*Basic Throw to Hit*, S. 6), mit
+  DM = Fertigkeit + Rüstung + Reichweite + Attribut.
+  - *Fertigkeit*: die Stufe in der Fertigkeit der Waffe. Ohne diese Fertigkeit zählt Stufe 0, also
+    ±0: In allen Waffen hat jede Figur Stufe 0 (siehe README). „Ohne Fertigkeit“ mit −3 gibt es
+    hier nicht, und Jack-of-all-Trades ändert nichts.
+  - *Rüstung*: der DM der Waffe gegen die Rüstungsklasse des Ziels, z. B. Rifle gegen Jack +3,
+    gegen Reflec +2, gegen Combat −5.
+  - *Reichweite*: der DM der Waffe auf diese Reichweite. Ohne DM („no“) gibt es den Angriff nicht.
+  - *Attribut*: STR bzw. DEX des Angreifers unter dem nötigen Wert gibt `requiredDm`, ab dem
+    vorteilhaften Wert `advantageousDm`, dazwischen ±0. Das ist nicht die Hausregel ±1 der Probe;
+    die Hausregeln und die gewählte Stufe (`odds`) zählen beim Angriff nicht.
+  - Der Angriff in Vorbereitung ist ein `Attack`, flüchtig im Paket `draft` wie die Probe. Er gilt
+    immer dem Charakter oben (`/for`) und seiner Waffe in der Hand (`/with`). Man wählt Rüstung
+    und Reichweite des Ziels; erst mit beiden gibt es DM, nötigen Wurf (8 − DM) und Chance, exakt
+    aus den 36 Kombinationen. Wechselt der Charakter oben, endet der Angriff; wechselt die Waffe in
+    der Hand, bleiben Rüstung und Reichweite, außer die Reichweite geht mit der neuen Waffe nicht.
+  - Die Ansicht zeigt dazu die klassische Tabelle der Waffe: Rüstung × Reichweite, in jeder Zelle
+    der nötige Wurf mit allen DMs des Charakters; eine Zelle antippen wählt Rüstung und Reichweite.
+  - Gewürfelt wird ein Angriff als `AttackResult` in den Log übernommen. Es verweist auf
+    Charakter, Waffe und, wenn er sie hat, seine Fertigkeitsstufe darin; es hält Rüstung,
+    Reichweite, die zwei Würfel sowie DM und Zielwert fest. Der Erfolg (`/success`: Würfel + `dm` ≥
+    `target`) folgt allein daraus. Trifft der Angriff, würfelt die App im selben Zug den Schaden:
+    so viele W6, wie die Waffe `wounds` hat, einzeln festgehalten (`wounds`); `/damage` ist ihre
+    Summe. Ohne Treffer gibt es keinen Schaden.
+  - Ein Angriffsergebnis ist ein Ergebnis wie das Probenergebnis: Man kann es deuten, und die
+    Fertigkeitsstufe und der Charakter, auf die es verweist, werden nicht gelöscht, sondern
+    ausgeblendet (siehe *Löschen und Ausblenden*).
+  - **Später**: DMs des Verteidigers (Parieren, Ausweichen, Deckung), Zubehör, Dunkelheit,
+    Überraschung, Autofeuer, Schrot, geschwächte Hiebe, die eigene Rüstung eines Charakters, Angriffe
+    auf Charaktere und Schaden an Attributen verteilen (Bewusstlosigkeit, Tod), Munition.
 - **Charakter oben.** Oben im Orakel-Screen steht ein Charakter der Kampagne, der **Charakter oben**
   (`focus`); für ihn würfelt man Proben, ohne den Screen zu wechseln. Wischen zeigt den nächsten
   bzw. vorigen. Infrage kommen nur Lebende, die nicht ausgeblendet sind, in der Reihenfolge der
@@ -350,7 +423,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Waffen mit Munition und Energiezellen, Rüstungen), dazu die Passagen (Ship Revenues, S. 9: High
     Cr 10.000, Middle Cr 8.000, Low Cr 1.000), die Schiffe aus der Abmusterung (Standard Ship
     Designs, S. 11: Scout MCr 29,43, Free Trader MCr 37,08) und die Travellers' Aid Society. Jede
-    Klinge und Schusswaffe nutzt genau ihre Fertigkeit (`uses`).
+    Klinge und Schusswaffe hat ihre Kampfwerte als Waffe (siehe *Waffen*) und nutzt über sie genau
+    ihre Fertigkeit (`/uses`).
   - **TL, Gewicht und Preis** (`tl`, `weight`, `price`) stehen, wie in den Charts angegeben. Das
     Gewicht ist immer in kg (S. 4 nennt Gramm, S. 23 bei Fahrzeugen Tonnen = 1000 kg), der Preis
     immer in Cr (KCr und MCr umgerechnet). Steht im Chart ein offensichtlicher Druckfehler (Grav Belt
@@ -359,8 +433,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Verdrängung, kein Gewicht; sie haben deshalb keins. Gibt es einen Gegenstand in mehreren TL
     (Vacc Suit TL 8 bis 13), ist jede Zeile ein eigener Gegenstand mit eigener Id. Keine Gegenstände sind
     Accessories („10 % of price“) und Recharge (eine Leistung).
-  - **Später**, mit Kampf und Handel: Kampfwerte der Waffen und Rüstungen (S. 4: Länge, nötige
-    Stärke, DMs, Reichweite), Kaufen und Verkaufen, Gesamtgewicht. Schiffe sind vorerst nur ein
+  - **Später**, mit Handel: die Rüstungsklasse einer Rüstung als Gegenstand, Länge der Waffen,
+    Kaufen und Verkaufen, Gesamtgewicht. Schiffe sind vorerst nur ein
     Gegenstand; Schiffskarten kommen später. Alles, was nicht in der Liste steht, bleibt freier Text
     in der Ausrüstung (`equipment`).
 - **Löschen und Ausblenden.** Ein Charakter oder eine Fertigkeitsstufe, auf die kein Logeintrag
@@ -710,6 +784,16 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 - **Später**, nicht in diesem Schritt: der Rand der habitablen Zone beim Temperaturwurf, Reisezonen (Amber, Red), Verbindungen
   (communications routes), Subsector Capital, ein Name für den Subsektor, mehrere Subsektoren zu
   einem Sektor und eine fertige Welt wieder löschen.
+
+## Offene Fragen zum Angriff
+
+1. **Hände und Club mit Brawling?** Die Charts nennen zu Hands und Club keine Fertigkeit; im
+   Entwurf nutzen beide Brawling. Sonst hätten sie keine und zählten immer Stufe 0.
+2. **Schaden gleich mitwürfeln?** Im Entwurf würfelt die App bei einem Treffer den Schaden im
+   selben Zug. Sonst wäre der Schaden ein eigener Wurf danach.
+3. **Wo liegt der Angriff?** Vorschlag: im Orakel-Screen. Die Leiste oben zeigt die Waffe in der
+   Hand (z. B. „Rifle-1“); sie antippen öffnet den Angriff mit Auswahl der Waffe und der Tabelle,
+   das Ergebnis kommt in den Log wie bei einer Probe. Das Modell ändert sich dadurch nicht.
 
 ## Wo der Code noch nicht folgt
 
