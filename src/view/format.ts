@@ -1,5 +1,5 @@
-import type { DmPart, LogItem, TaskItem } from '../controller';
-import type { Characteristic } from '../model';
+import type { CardItem, DmPart, LogItem, TaskItem } from '../controller';
+import type { Characteristic, MapDirection, MapIcon, PathKind, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
 
@@ -31,8 +31,62 @@ export function nameText(texts: readonly string[]): string {
 }
 
 /** Was ein übernommenes Feld im Log zeigt: ein Name am Stück, sonst Begriff · Begriff. */
-export function pickText(sectionId: string, texts: readonly string[]): string {
-  return sectionId === 'names' ? nameText(texts) : pairText(texts);
+export function pickText(name: boolean, texts: readonly string[]): string {
+  return name ? nameText(texts) : pairText(texts);
+}
+
+/** Der Streuwürfel in Worten: Richtung mit deutschen Kürzeln (Osten ist O), Volltreffer oder Fehlschlag. */
+export const scatterText: Record<Scatter, string> = {
+  n: 'N',
+  ne: 'NO',
+  e: 'O',
+  se: 'SO',
+  s: 'S',
+  sw: 'SW',
+  w: 'W',
+  nw: 'NW',
+  hit: 'Volltreffer',
+  miss: 'Fehlschlag',
+};
+
+export const pathText: Record<PathKind, string> = {
+  none: 'kein Weg',
+  path: 'Weg',
+  deadEnd: 'Sackgasse',
+  hidden: 'verborgen',
+  obstacle: 'Hindernis',
+};
+
+export const directionText: Record<MapDirection, string> = { north: 'N', east: 'O', south: 'S', west: 'W', up: 'oben', down: 'unten' };
+
+/** In dieser Reihenfolge nennt die Anzeige die Richtungen. */
+const directionOrder: readonly MapDirection[] = ['north', 'east', 'south', 'west', 'up', 'down'];
+
+/** Das Kartensymbol in Worten: jede Richtung mit Weg, z. B. „N Weg · O verborgen · unten Hindernis“. */
+export function mapText(map: MapIcon): string {
+  return directionOrder
+    .filter((d) => map[d] !== 'none')
+    .map((d) => `${directionText[d]} ${pathText[map[d]]}`)
+    .join(' · ');
+}
+
+/** Das Kartensymbol ganz knapp: nur die Richtungen mit Weg, mit schmalem Abstand, z. B. „N O S ↓“. */
+export function mapShort(map: MapIcon): string {
+  const short: Record<MapDirection, string> = { north: 'N', east: 'O', south: 'S', west: 'W', up: '↑', down: '↓' };
+  return directionOrder
+    .filter((d) => map[d] !== 'none')
+    .map((d) => short[d])
+    .join('\u2009');
+}
+
+/** Eine Kartenauswahl in einer Zeile: Wurffelder, dann die Felder. */
+export function cardPickText(item: CardItem): string {
+  return [
+    ...(item.bell === undefined ? [] : [`1–10: ${item.bell}`]),
+    ...(item.scatter === undefined ? [] : [`Streuwürfel ${scatterText[item.scatter]}`]),
+    ...(item.map === undefined ? [] : [`Kartensymbol ${mapText(item.map)}`]),
+    ...item.items.map((i) => pickText(i.name, i.texts)),
+  ].join(', ');
 }
 
 /** Ein DM mit Vorzeichen: +2, −1, ±0. */
@@ -103,7 +157,7 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
     case 'dice':
       return { head: `2W6: ${item.total}`, rest: `${item.dice[0]} + ${item.dice[1]}` };
     case 'card':
-      return { head: 'Karte', rest: item.question ? quoted(item.question) : item.items.map((i) => pickText(i.sectionId, i.texts)).join(', ') };
+      return { head: 'Karte', rest: item.question ? quoted(item.question) : cardPickText(item) };
     case 'task':
       return { head: item.success ? 'ERFOLG' : 'FEHLSCHLAG', rest: taskTitle(item) };
     case 'note':

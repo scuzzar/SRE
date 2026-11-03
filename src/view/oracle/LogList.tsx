@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 import type { LogItem, NoteItem } from '../../controller';
-import { clockTime, partLabel, pickText, quoted, taskDetail, taskTitle } from '../format';
+import { clockTime, mapText, partLabel, pickText, quoted, scatterText, taskDetail, taskTitle } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
+import { MapIconSvg, ScatterRose } from './CardRollIcons';
 
 /** So lange muss man auf einen Eintrag drücken, damit er sich löschen lässt. */
 const LONG_PRESS_MS = 550;
@@ -227,10 +228,34 @@ function EntryBody({ item }: { item: LogItem }) {
         <>
           {item.question && <span className="entry-question">{quoted(item.question)}</span>}
           <dl className="picks">
+            {item.bell !== undefined && (
+              <div style={{ display: 'contents' }}>
+                <dt>1–10</dt>
+                <dd className="pick-bell">{item.bell}</dd>
+              </div>
+            )}
+            {item.scatter !== undefined && (
+              <div style={{ display: 'contents' }}>
+                <dt>Streuwürfel</dt>
+                <dd className="pick-roll">
+                  <ScatterRose value={item.scatter} />
+                  <span>{scatterText[item.scatter]}</span>
+                </dd>
+              </div>
+            )}
+            {item.map !== undefined && (
+              <div style={{ display: 'contents' }}>
+                <dt>Kartensymbol</dt>
+                <dd className="pick-roll">
+                  <MapIconSvg map={item.map} />
+                  <span>{mapText(item.map)}</span>
+                </dd>
+              </div>
+            )}
             {item.items.map((pick, i) => (
               <div key={i} style={{ display: 'contents' }}>
                 <dt>{pick.section === pick.slot ? pick.section : `${pick.section} · ${pick.slot}`}</dt>
-                <dd>{pickText(pick.sectionId, pick.texts)}</dd>
+                <dd>{pickText(pick.name, pick.texts)}</dd>
               </div>
             ))}
           </dl>

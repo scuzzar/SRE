@@ -7,6 +7,7 @@ import { useGame } from '../game-context';
 import { HoldButton } from '../HoldButton';
 import { animated, haptic, stopHaptics } from '../haptics';
 import { CardIcon, CloseIcon, DiceIcon, LightbulbIcon, PencilIcon, SectorIcon } from '../icons';
+import { NameFromCard } from '../NameFromCard';
 
 /** Wie lange das Ergebnis nach dem Landen braucht, bis es feststeht und die Knöpfe wieder gehen. */
 const SETTLE_MS = 350;
@@ -581,6 +582,7 @@ function Actions({ action, disabled, onRun }: { action: GenerationAction; disabl
             <span>Name</span>
             <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" readOnly={disabled} />
           </label>
+          <NameFromCard onPick={setName} disabled={disabled} />
           <button type="submit" className="primary" aria-disabled={disabled || undefined}>
             Übernehmen
           </button>

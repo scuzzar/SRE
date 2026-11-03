@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { entryOf, ref, slotOf, slotWithId } from '..';
 import { fixedClock, fixedRandom } from '../testing';
-import { canConfirm, confirmCard, drawableEntries, drawCard, drawnIn, isVisible, redrawCard, togglePick } from './card';
+import { canConfirm, confirmCard, drawableEntries, drawCard, drawNames, drawnIn, isVisible, pickedCount, redrawCard, togglePick, toggleRoll } from './card';
+import { bellWeights, pathCount, rollBell, rollMap, rollScatter, scatters } from '../card-roll';
 
 const visible = ref.sections.flatMap((s) => s.slots).filter(isVisible);
 const firstOf = (slot: string) => slotWithId(slot).columns.map((c) => drawableEntries(c)[0]!.id);
@@ -84,5 +85,72 @@ describe('Auswahl auf der Karte', () => {
     expect(again.picked).toEqual([]);
     expect(again.question).toBe('Und jetzt?');
     expect(entryOf(again.drawn[0]!).text).toBe('begleiten');
+  });
+});
+
+describe('Wurffelder der Karte', () => {
+  it('würfelt die Glockenzahl nach Gewichten: 1 und 10 je 1 von 200, 5 und 6 je 47', () => {
+    expect(bellWeights.reduce((a, b) => a + b, 0)).toBe(200);
+    expect(rollBell(fixedRandom(1))).toBe(1);
+    expect(rollBell(fixedRandom(2))).toBe(2);
+    expect(rollBell(fixedRandom(53))).toBe(4);
+    expect(rollBell(fixedRandom(54))).toBe(5);
+    expect(rollBell(fixedRandom(200))).toBe(10);
+  });
+
+  it('würfelt den Streuwürfel: zehn gleich wahrscheinliche Werte', () => {
+    expect(scatters).toHaveLength(10);
+    expect(rollScatter(fixedRandom(0))).toBe('n');
+    expect(rollScatter(fixedRandom(8))).toBe('hit');
+    expect(rollScatter(fixedRandom(9))).toBe('miss');
+  });
+
+  it('würfelt das Kartensymbol neu, bis es mindestens zwei Wege hat', () => {
+    // Erster Versuch: N Weg (1), sonst kein Weg (8 auf der Ebene, 3 für oben und unten) – zu wenig.
+    const random = fixedRandom(1, 8, 8, 8, 3, 3, 8, 1, 15, 17, 3, 20);
+    const map = rollMap(random);
+    expect(map).toEqual({ north: 'none', east: 'path', south: 'deadEnd', west: 'hidden', up: 'none', down: 'obstacle' });
+    expect(random.calls).toBe(12);
+    expect(pathCount(map)).toBe(4);
+  });
+
+  it('zieht die Wurffelder mit jeder Karte, nach den Feldern', () => {
+    const card = drawCard(fixedRandom());
+    expect(card).toMatchObject({ bell: 1, scatter: 'n', pickedRolls: [] });
+    expect(pathCount(card.map)).toBe(6);
+  });
+
+  it('wählt Wurffelder aus wie Felder; bestätigen geht auch nur mit einem Wurffeld', () => {
+    const card = drawCard(fixedRandom());
+    expect(canConfirm(card)).toBe(false);
+    const picked = toggleRoll(toggleRoll(card, 'map'), 'bell');
+    expect(pickedCount(picked)).toBe(2);
+    expect(toggleRoll(picked, 'map').pickedRolls).toEqual(['bell']);
+    const pick = confirmCard({ ...picked, question: 'Wohin?' }, fixedClock());
+    expect(pick).toEqual({ kind: 'card', at: '2026-10-23T14:00:00.000Z', question: 'Wohin?', bell: 1, map: card.map, items: [] });
+  });
+});
+
+describe('Name von der Karte', () => {
+  it('zieht je Namensfeld zwei verschiedene Vornamen und Nachnamen, irdisch vor spacig', () => {
+    const names = drawNames(fixedRandom());
+    expect(names.first.map((n) => n.label)).toEqual([
+      'Weiblich, irdisch',
+      'Weiblich, irdisch',
+      'Männlich, irdisch',
+      'Männlich, irdisch',
+      'Neutral, irdisch',
+      'Neutral, irdisch',
+      'Weiblich, spacig',
+      'Weiblich, spacig',
+      'Männlich, spacig',
+      'Männlich, spacig',
+      'Neutral, spacig',
+      'Neutral, spacig',
+    ]);
+    expect(names.first.slice(0, 2).map((n) => n.text)).toEqual(['Ada', 'Aiko']);
+    expect(names.first[6]).toEqual({ text: 'Aashira', label: 'Weiblich, spacig', sound: 'spacey' });
+    // Derselbe Nachname steht nur einmal zur Wahl.
+    expect(names.last.map((n) => n.text)).toEqual(['Abara', 'Achterberg', 'Aarkhashi', 'Akiirun']);
   });
 });

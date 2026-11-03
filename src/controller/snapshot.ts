@@ -12,6 +12,8 @@ import {
   isYes,
   inputOf,
   oddsOf,
+  bellWeights,
+  nameSlotIds,
   ref,
   retiredCharacters,
   sectionOfSlot,
@@ -32,12 +34,14 @@ import {
   type Characteristic,
   type Dice,
   type LogEntry,
+  type MapIcon,
+  type Scatter,
   type SectionKind,
   type Skill,
   type TaskResult,
   type Upp,
 } from '../model';
-import { canConfirm, characteristicOptions, drawnIn, evaluateTask, hasSkill, type Card, type CharacteristicOption, type Task, type WorldRoll } from '../model/draft';
+import { canConfirm, characteristicOptions, drawnIn, evaluateTask, hasSkill, pickedCount, type Card, type CharacteristicOption, type NameChoices, type Task, type WorldRoll } from '../model/draft';
 import { careerLines, generationView, itemLabel, worldChoices, worldName, type CareerLine, type GenerationView, type WorldChoice } from './generation-view';
 import { sectorView, selectedView, worldList, worldView, type HexView, type SelectedHexView, type WorldListItem, type WorldView } from './world-view';
 
@@ -64,6 +68,8 @@ export interface Snapshot {
   readonly log: readonly LogItem[];
   /** Die offene Inspirationskarte; solange es sie gibt, steht sie im Vordergrund. */
   readonly card: CardView | undefined;
+  /** Die offene Namenswahl (Name von der Karte); solange es sie gibt, steht sie im Vordergrund. */
+  readonly names: NameChoices | undefined;
   /** Die Lebenden, die nicht ausgeblendet sind, in der Reihenfolge der Kampagne. */
   readonly characters: readonly CharacterView[];
   /** Der Charakter oben im Orakel-Screen; fehlt, wenn es keinen Lebenden gibt. */
@@ -165,8 +171,12 @@ export interface CardItem {
   readonly kind: 'card';
   readonly at: string;
   readonly question: string | undefined;
-  /** Je übernommenem Feld seine Texte: einer, beim Paar zwei. */
-  readonly items: readonly { readonly sectionId: string; readonly section: string; readonly slot: string; readonly texts: readonly string[] }[];
+  /** Die übernommenen Wurffelder; nicht übernommene fehlen. */
+  readonly bell: number | undefined;
+  readonly scatter: Scatter | undefined;
+  readonly map: MapIcon | undefined;
+  /** Je übernommenem Feld seine Texte: einer, beim Paar zwei; ein Name aus Vor- und Nachname. */
+  readonly items: readonly { readonly section: string; readonly slot: string; readonly texts: readonly string[]; readonly name: boolean }[];
 }
 
 export interface TaskItem {
@@ -191,6 +201,10 @@ export type DmPart =
 
 export interface CardView {
   readonly question: string | undefined;
+  /** Die Wurffelder mit ihrem Wert und ob sie ausgewählt sind. */
+  readonly bell: { readonly value: number; readonly picked: boolean; readonly weights: readonly number[] };
+  readonly scatter: { readonly value: Scatter; readonly picked: boolean };
+  readonly map: { readonly value: MapIcon; readonly picked: boolean };
   readonly sections: readonly CardSectionView[];
   readonly pickedCount: number;
   readonly canConfirm: boolean;
@@ -206,6 +220,8 @@ export interface CardSectionView {
     /** Was das Feld gezogen hat: einen Text, beim Paar zwei. */
     readonly texts: readonly string[];
     readonly picked: boolean;
+    /** Ein Namensfeld: Vor- und Nachname, am Stück zu lesen. */
+    readonly name: boolean;
   }[];
 }
 
@@ -269,6 +285,8 @@ export interface ControllerState {
   readonly storageError: string | undefined;
   readonly screen: Screen;
   readonly card: Card | undefined;
+  /** Die offene Namenswahl. */
+  readonly names: NameChoices | undefined;
   readonly task: Task | undefined;
   /** Der Charakter, dessen Details im Charakter-Screen aufgeklappt sind. */
   readonly opened: string | undefined;
@@ -349,10 +367,13 @@ function logItem(campaign: Campaign, entry: LogEntry): LogItem {
         kind: 'card',
         at: entry.at,
         question: entry.question,
+        bell: entry.bell,
+        scatter: entry.scatter,
+        map: entry.map,
         items: entry.items.map((item) => {
           const slot = slotOf(item);
           const section = sectionOfSlot(slot.id);
-          return { sectionId: section.id, section: section.name, slot: slot.label, texts: item.picked.map((e) => entryOf(e).text) };
+          return { section: section.name, slot: slot.label, texts: item.picked.map((e) => entryOf(e).text), name: isNameSlot(slot.id) };
         }),
       };
     case 'task':
@@ -362,9 +383,17 @@ function logItem(campaign: Campaign, entry: LogEntry): LogItem {
   }
 }
 
+/** Ein Namensfeld: die sechs auf der Tafel NSC und die drei des früheren Bereichs *Namen*. */
+function isNameSlot(slotId: string): boolean {
+  return nameSlotIds.includes(slotId) || sectionOfSlot(slotId).id === 'names';
+}
+
 function cardView(card: Card): CardView {
   return {
     question: card.question,
+    bell: { value: card.bell, picked: card.pickedRolls.includes('bell'), weights: bellWeights },
+    scatter: { value: card.scatter, picked: card.pickedRolls.includes('scatter') },
+    map: { value: card.map, picked: card.pickedRolls.includes('map') },
     // Ausgeblendete Felder hat die Karte nicht gezogen; sie fehlen, ebenso Bereiche ohne gezogenes Feld.
     sections: ref.sections
       .map((section) => ({
@@ -373,11 +402,11 @@ function cardView(card: Card): CardView {
         kind: section.kind,
         slots: section.slots.flatMap((slot) => {
           const drawn = drawnIn(card, slot.id);
-          return drawn.length > 0 ? [{ id: slot.id, label: slot.label, texts: drawn.map((e) => entryOf(e).text), picked: card.picked.includes(slot.id) }] : [];
+          return drawn.length > 0 ? [{ id: slot.id, label: slot.label, texts: drawn.map((e) => entryOf(e).text), picked: card.picked.includes(slot.id), name: isNameSlot(slot.id) }] : [];
         }),
       }))
       .filter((section) => section.slots.length > 0),
-    pickedCount: card.picked.length,
+    pickedCount: pickedCount(card),
     canConfirm: canConfirm(card),
   };
 }
@@ -430,7 +459,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, characters: [], focus: undefined, dead: [], retired: [], task: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], retired: [], task: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
   }
   const resultEntry = state.result === undefined ? undefined : campaign.log[state.result];
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
@@ -443,6 +472,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     odds: ref.odds.map((o) => ({ id: o.id, name: o.name, chance: o.chance, target: o.target, selected: o.id === campaign.odds })),
     log: campaign.log.map((entry) => logItem(campaign, entry)),
     card: state.card && cardView(state.card),
+    names: state.names,
     characters: livingCharacters(campaign).map((c) => characterView(campaign, c, state)),
     focus: focusOf(campaign)?.id,
     dead: deadCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background })),

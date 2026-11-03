@@ -124,12 +124,47 @@ describe('Orakel-Screen', () => {
         kind: 'card',
         at: '2026-10-23T14:00:00.000Z',
         question: 'Was steckt hinter dem Notsignal?',
+        bell: undefined,
+        scatter: undefined,
+        map: undefined,
         items: [
-          { sectionId: 'event', section: 'Zufallsereignis', slot: 'Aktion', texts: ['aufgeben', 'Vorteil'] },
-          { sectionId: 'senses', section: 'Sinneseindrücke', slot: 'Riechen', texts: ['beißend', 'beißend'] },
+          { section: 'Zufallsereignis', slot: 'Aktion', texts: ['aufgeben', 'Vorteil'], name: false },
+          { section: 'Sinneseindrücke', slot: 'Riechen', texts: ['beißend', 'beißend'], name: false },
         ],
       },
     ]);
+  });
+
+  it('übernimmt Wurffelder mit ihrem Wert, vor den Feldern; ein Name steht am Stück', async () => {
+    const { game } = await started();
+    game.drawCard();
+    const card = game.snapshot().card!;
+    expect(card.bell).toMatchObject({ value: 1, picked: false });
+    expect(card.scatter).toMatchObject({ value: 'n', picked: false });
+    expect(card.map.value).toEqual({ north: 'path', east: 'path', south: 'path', west: 'path', up: 'path', down: 'path' });
+    const npc = card.sections.find((s) => s.id === 'npc')!;
+    expect(npc.slots.filter((s) => s.name).map((s) => s.label)).toEqual(['Weiblich, irdisch', 'Männlich, irdisch', 'Neutral, irdisch', 'Weiblich, spacig', 'Männlich, spacig', 'Neutral, spacig']);
+    game.toggleRoll('map');
+    game.toggleRoll('scatter');
+    game.togglePick('npc.names.male.spacey');
+    expect(game.snapshot().card).toMatchObject({ pickedCount: 3, canConfirm: true, scatter: { picked: true }, bell: { picked: false } });
+    game.confirmCard();
+    const [item] = game.snapshot().log;
+    expect(item).toMatchObject({ kind: 'card', bell: undefined, scatter: 'n', map: card.map.value, items: [{ section: 'NSC', slot: 'Männlich, spacig', name: true }] });
+  });
+
+  it('Name von der Karte: zieht Vor- und Nachnamen zur Wahl, ohne Logeintrag', async () => {
+    const { game } = await started();
+    game.drawNames();
+    const names = game.snapshot().names!;
+    expect(names.first).toHaveLength(12);
+    expect(names.first.slice(0, 6).every((n) => n.sound === 'earthly')).toBe(true);
+    expect(names.first.slice(6).every((n) => n.sound === 'spacey')).toBe(true);
+    expect(new Set(names.first.map((n) => n.text)).size).toBe(12);
+    expect(names.last.length).toBeGreaterThanOrEqual(2);
+    game.closeNames();
+    expect(game.snapshot().names).toBeUndefined();
+    expect(game.snapshot().log).toHaveLength(0);
   });
 
   it('verwirft eine Karte ohne Logeintrag; neu ziehen behält die Frage', async () => {

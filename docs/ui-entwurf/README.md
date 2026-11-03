@@ -43,3 +43,17 @@ und lässt sich direkt im Browser öffnen.
 - Die Dateien sind im *Design-Component-Format* (`.dc.html`) der Entwurfsfläche geschrieben. Sie brauchen deren Laufzeit (`support.js`) und lassen sich nicht direkt im Browser öffnen.
 - Der Entwurf ist ein **Prototyp**, kein Produktivcode. Er zeigt Bedienung und Regeln; die Inhalte der Karte sind Platzhalter.
 - Regeln und Begriffe stehen in der [Haupt-README](../../README.md) und im [GMA2e-Glossar](../gma2e-begriffe.md).
+
+## Wurffelder und Namen (Entwurf vom 3. November 2026, freigegeben und umgesetzt)
+
+Im Ordner [`kartensymbol/`](kartensymbol/) liegt der Entwurf für die drei Wurffelder oben auf der
+Inspirationskarte (siehe *Wurffelder der Karte* im [Domänenmodell](../domain-model.md)). In der
+App stehen die Wurffelder knapper (Bild links, Beschriftung rechts), damit alle Tafeln auf einen
+Bildschirm passen; die Namenswahl zeigt Vor- und Nachnamen getrennt.
+
+| Datei | Inhalt |
+|---|---|
+| `kartensymbol/Karte.html` | Die ganze Inspirationskarte der App mit allem zusammen: Wurffelder unter den Sinneseindrücken (wo bisher die Namen standen), die sechs Namen oben auf der Tafel NSC (erste Reihe irdisch, zweite spacig, je weiblich, männlich, neutral), *Handlung* ohne Gegenstand und Fund. Gebaut aus der echten Karte mit den Stilen der App; Antippen wählt aus, „Neu ziehen“ würfelt Wurffelder und Namen neu |
+| `kartensymbol/Entwurf.html` | Glockenzahl 1–10 mit kleiner Glockenkurve, Streuwürfel als Windrose mit Pfeil (Volltreffer als Stern, Fehlschlag als roter Strich), Kartensymbol als Raum von oben mit Wegen nach N, O, S, W und Pfeilen nach oben und unten; Legende der Wegarten; Übernehmen zeigt, wie es im Log steht. „Neu ziehen“ würfelt mit den Gewichten aus dem Modell; auf der Tafel NSC die sechs Namen (oben irdisch, unten spacig); „Name von der Karte“ mit dem Knopf *Karte* neben dem Namensfeld, für Charakter und Welt |
+
+Wie der Entwurf zur Deutung ist es eine gewöhnliche HTML-Datei, die sich direkt im Browser öffnen lässt.

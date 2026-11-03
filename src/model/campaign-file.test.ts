@@ -13,6 +13,20 @@ const log: LogEntry[] = [
   { kind: 'note', at: '2026-10-23T14:06:00.000Z', text: 'Wir landen auf Regina.' },
 ];
 
+/** Kartenauswahlen mit Wurffeldern und einem Namen von der Tafel NSC. */
+const rolled: LogEntry[] = [
+  {
+    kind: 'card',
+    at: '2026-10-23T14:07:00.000Z',
+    question: 'Wohin führt der Gang?',
+    bell: 6,
+    scatter: 'ne',
+    map: { north: 'path', east: 'none', south: 'deadEnd', west: 'hidden', up: 'none', down: 'obstacle' },
+    items: [{ picked: ['npc.names.male.spacey.first.3', 'npc.names.male.spacey.last.17'] }],
+  },
+  { kind: 'card', at: '2026-10-23T14:08:00.000Z', bell: 1, items: [] },
+];
+
 function campaign(): Campaign {
   return log.reduce(appendLog, createCampaign(undefined, 'Spinward Run'));
 }
@@ -24,7 +38,19 @@ function fileWith(change: (c: Record<string, unknown>) => void): string {
   return JSON.stringify(file);
 }
 
+/** Eine Datei mit den Kartenauswahlen mit Wurffeldern, mit einer Änderung daran. */
+function rolledWith(change: (log: { bell?: number; scatter?: string; map?: Record<string, string> }[]) => void): string {
+  const file = JSON.parse(toCampaignFile(rolled.reduce(appendLog, createCampaign(undefined, 'Tief unten')))) as { campaign: { log: [] } };
+  change(file.campaign.log);
+  return JSON.stringify(file);
+}
+
 describe('Kampagnendatei', () => {
+  it('liest Kartenauswahlen mit Wurffeldern und Namen von der Tafel NSC unverändert zurück', () => {
+    const original = rolled.reduce(appendLog, createCampaign(undefined, 'Tief unten'));
+    expect(fromCampaignFile(toCampaignFile(original), 'k8')).toEqual({ ...original, id: 'k8' });
+  });
+
   it('enthält alles, was an der Kampagne hängt, ohne Id, und liest sich unverändert zurück', () => {
     const original = campaign();
     const text = toCampaignFile(original);
@@ -52,6 +78,14 @@ describe('Kampagnendatei', () => {
     ['mit einer Deutung einer Deutung', () => fileWith((c) => ((c.log as { interprets?: number }[])[6]!.interprets = 5)), /nur ein Ergebnis/],
     ['mit einer Deutung ins Leere', () => fileWith((c) => ((c.log as { interprets?: number }[])[5]!.interprets = 9)), /Eintrag, den es davor nicht gibt/],
     ['mit einem Würfel über 6', () => fileWith((c) => ((c.log as { dice?: number[] }[])[1]!.dice = [7, 1])), /keine gültige/],
+    ['mit einer Kartenauswahl ohne alles', () => rolledWith((log) => delete log[1]!.bell), /ohne Feld und ohne Wurffeld/],
+    ['mit einer Glockenzahl über 10', () => rolledWith((log) => (log[1]!.bell = 11)), /keine gültige/],
+    ['mit einem unbekannten Streuwürfel', () => rolledWith((log) => (log[0]!.scatter = 'up')), /keine gültige/],
+    [
+      'mit einem Kartensymbol mit nur einem Weg',
+      () => rolledWith((log) => (log[0]!.map = { north: 'path', east: 'none', south: 'none', west: 'none', up: 'none', down: 'none' })),
+      /mindestens zwei Wege/,
+    ],
   ])('weist eine Datei %s zurück', (_, text, message) => {
     expect(() => fromCampaignFile(text(), 'k2')).toThrow(message);
   });

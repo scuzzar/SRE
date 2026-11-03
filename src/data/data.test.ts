@@ -56,24 +56,41 @@ describe('Referenzdaten', () => {
 
   it('ziehen nur Paare: aus Mythic und die Namen', () => {
     const visible = referenceData.sections.flatMap((s) => s.slots).filter((s) => s.columns.every((c) => active(c).length > 0));
-    const own = (id: string) => id.includes('.mythic.') || /^names\.\w+\.(first|last)\./.test(id);
+    const own = (id: string) => id.includes('.mythic.') || /^npc\.names\.\w+\.(earthly|spacey)\.(first|last)\./.test(id);
     expect(visible.every((s) => s.columns.length === 2 && s.columns.flatMap(active).every((e) => own(e.id)))).toBe(true);
     expect(visible.slice(0, 4).map((s) => s.label)).toEqual(['Aktion', 'Beschreibung', 'Hören', 'Riechen']);
   });
 
-  it('ziehen je Namensfeld Vor- und Nachname; die Platzhalter bleiben ausgeblendet', () => {
+  it('blenden den früheren Bereich Namen ganz aus; alte Ids bleiben mit ihrem Text', () => {
     for (const id of ['names.female', 'names.male', 'names.neutral']) {
       const [first, last] = slot(id).columns;
-      expect(active(first!)).toHaveLength(100);
-      expect(first!.entries.filter((e) => e.retired)).toHaveLength(12);
-      expect(active(last!)).toHaveLength(300);
-      expect(last!.entries.every((e) => e.id.startsWith(`${id}.last.`))).toBe(true);
+      expect(active(first!)).toEqual([]);
+      expect(active(last!)).toEqual([]);
+      expect(first!.entries.filter((e) => e.id.startsWith(`${id}.first.`))).toHaveLength(100);
+      expect(last!.entries).toHaveLength(300);
     }
-    // Die drei Felder haben verschiedene Vornamen, aber dieselben Nachnamen.
-    const firstNames = (id: string) => active(slot(id).columns[0]!).map((e) => e.text);
-    const all = [...firstNames('names.female'), ...firstNames('names.male'), ...firstNames('names.neutral')];
-    expect(new Set(all).size).toBe(300);
-    expect(active(slot('names.female').columns[1]!).map((e) => e.text)).toEqual(active(slot('names.male').columns[1]!).map((e) => e.text));
+    expect(slot('names.female').columns[0]!.entries.find((e) => e.id === 'names.female.first.81')!.text).toBe('Aashira');
+  });
+
+  it('haben auf der Tafel NSC sechs Namensfelder: weiblich, männlich, neutral, je irdisch und spacig', () => {
+    const npc = referenceData.sections.find((s) => s.id === 'npc')!;
+    expect(npc.slots.slice(0, 6).map((s) => s.label)).toEqual(['Weiblich, irdisch', 'Männlich, irdisch', 'Neutral, irdisch', 'Weiblich, spacig', 'Männlich, spacig', 'Neutral, spacig']);
+    for (const kind of ['female', 'male', 'neutral']) {
+      for (const sound of ['earthly', 'spacey']) {
+        const id = `npc.names.${kind}.${sound}`;
+        const [first, last] = slot(id).columns;
+        expect(first!.entries.every((e) => e.id.startsWith(`${id}.first.`) && !e.retired)).toBe(true);
+        expect(last!.entries.every((e) => e.id.startsWith(`${id}.last.`) && !e.retired)).toBe(true);
+      }
+    }
+    // Irdische Vornamen bekommen irdische Nachnamen, spacige spacige.
+    expect(active(slot('npc.names.female.earthly').columns[1]!).map((e) => e.text)).toContain('Okonkwo');
+    expect(active(slot('npc.names.female.spacey').columns[1]!).map((e) => e.text)).toContain('Bariikun');
+    expect(active(slot('npc.names.female.spacey').columns[1]!).map((e) => e.text)).not.toContain('Okonkwo');
+    // Jeder Vorname steht genau einmal: in einem Feld und einer Klangart.
+    const firstNames = ['female', 'male', 'neutral'].flatMap((k) => ['earthly', 'spacey'].flatMap((sound) => active(slot(`npc.names.${k}.${sound}`).columns[0]!).map((e) => e.text)));
+    expect(new Set(firstNames).size).toBe(firstNames.length);
+    expect(active(slot('npc.names.male.spacey').columns[0]!).length).toBeGreaterThanOrEqual(40);
   });
 
   it('ordnen die Mythic-Tabellen den Themen zu', () => {
@@ -82,12 +99,12 @@ describe('Referenzdaten', () => {
         .find((s) => s.id === id)!
         .slots.filter((s) => s.columns.every((c) => active(c).length > 0))
         .map((s) => s.label);
-    expect(tables('npc')).toEqual(['Aussehen', 'Persönlichkeit', 'Motivation', 'Hintergrund', 'Identität', 'Eigenschaft & Schwäche']);
+    expect(tables('npc').slice(6)).toEqual(['Aussehen', 'Persönlichkeit', 'Motivation', 'Hintergrund', 'Identität', 'Eigenschaft & Schwäche']);
     expect(tables('npc-actions')).toEqual(['Gespräch', 'Kampfaktion', 'Aktion']);
     expect(tables('world')).toEqual(['Ort', 'Stadt', 'Schiff', 'Zivilisation', 'Gelände', 'Behausung']);
     expect(tables('ship')).toEqual([]);
     expect(tables('creatures')).toEqual(['Spezies', 'Kreatur', 'Tierverhalten']);
-    expect(tables('plot')).toEqual(['Wendung', 'Stimmung', 'Botschaft', 'Gegenstand', 'Fund']);
+    expect(tables('plot')).toEqual(['Wendung', 'Stimmung', 'Botschaft']);
     expect(active(slot('mythic.npc.appearance').columns[0]!).slice(0, 3).map((e) => e.text)).toEqual(['abnorm', 'bewaffnet', 'aromatisch']);
   });
 

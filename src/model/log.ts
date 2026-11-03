@@ -1,5 +1,6 @@
 import type { CharacterId } from './campaign';
 import { DomainError } from './errors';
+import type { MapIcon, Scatter } from './card-roll';
 import type { Clock, Random } from './ports';
 import { oddsOf, slotOfEntry, type Slot } from './reference';
 import { roll2d6, sum, type Characteristic, type Dice } from './rules';
@@ -38,7 +39,11 @@ export interface DiceRoll extends LogEntryBase {
 export interface CardPick extends LogEntryBase {
   readonly kind: 'card';
   readonly question?: string;
-  /** In der Reihenfolge der Karte, mindestens einer. */
+  /** Die Werte der ausgewählten Wurffelder; nicht ausgewählte fehlen. */
+  readonly bell?: number;
+  readonly scatter?: Scatter;
+  readonly map?: MapIcon;
+  /** In der Reihenfolge der Karte. Zusammen mit den Wurffeldern mindestens einer. */
   readonly items: readonly PickedItem[];
 }
 

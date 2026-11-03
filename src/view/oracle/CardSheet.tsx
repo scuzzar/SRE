@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { CardSectionView, CardView } from '../../controller';
-import { nameText, pairText, quoted } from '../format';
+import { mapShort, mapText, nameText, pairText, quoted, scatterText } from '../format';
 import { useGame } from '../game-context';
 import { animated, haptic } from '../haptics';
 import { CheckIcon, CloseIcon, Emblem, SenseIcon } from '../icons';
+import { BellCurve, MapIconSvg, ScatterRose } from './CardRollIcons';
 
 type SlotView = CardSectionView['slots'][number];
 
@@ -61,7 +62,7 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
   const cardSections = card.sections.filter((s) => s.kind === 'card');
   const themes = card.sections.filter((s) => s.kind === 'theme');
   const section = (id: string) => cardSections.find((s) => s.id === id);
-  const known = ['event', 'senses', 'scene', 'belongings', 'situation', 'names', 'traits', 'flavor'];
+  const known = ['event', 'senses', 'scene', 'belongings', 'situation', 'traits', 'flavor'];
 
   return (
     <div
@@ -93,6 +94,7 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
               <article className="card" aria-label="Karte">
                 <Stack section={section('event')} />
                 <Senses section={section('senses')} />
+                <Rolls card={card} />
                 <Stack section={section('scene')} />
                 {section('belongings') || section('situation') ? (
                   <div className="card-columns">
@@ -101,16 +103,11 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
                       <Banded section={section('situation')} />
                     </div>
                     <div className="card-stack">
-                      <Banded section={section('names')} variant="name" hideLabels />
                       <Banded section={section('traits')} />
                     </div>
                   </div>
                 ) : (
-                  // Solange links nichts steht, nehmen die Namen die volle Breite, nebeneinander.
-                  <>
-                    <Banded section={section('names')} variant="name" hideLabels wide />
-                    <Banded section={section('traits')} />
-                  </>
+                  <Banded section={section('traits')} />
                 )}
                 <Stack section={section('flavor')} variant="flavor" hideLabels />
                 {cardSections
@@ -174,6 +171,47 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
           </button>
         </div>
       </section>
+    </div>
+  );
+}
+
+/**
+ * Die Wurffelder unter den Sinneseindrücken: Glockenzahl 1–10, Streuwürfel und Kartensymbol. Antippen
+ * wählt aus wie bei einem Feld.
+ */
+function Rolls({ card }: { card: CardView }) {
+  const game = useGame();
+  // Bild links, Beschriftung und Wert rechts daneben: So bleibt die Reihe niedrig.
+  const tile = (roll: 'bell' | 'scatter' | 'map', picked: boolean, label: string, ariaLabel: string, visual: ReactNode, caption: ReactNode) => (
+    <button
+      type="button"
+      className={`tile card-roll ${roll}`}
+      aria-pressed={picked}
+      aria-label={ariaLabel}
+      onClick={() => {
+        haptic(picked ? 'unpick' : 'pick');
+        game.toggleRoll(roll);
+      }}
+    >
+      {visual}
+      <span className="roll-text">
+        <span className="tile-label">{label}</span>
+        <span className="roll-caption">{caption}</span>
+      </span>
+    </button>
+  );
+  return (
+    <div className="card-grid cols-3 card-rolls" role="group" aria-label="Wurffelder">
+      {tile(
+        'bell',
+        card.bell.picked,
+        '1–10',
+        `1–10: ${card.bell.value}`,
+        <span className="bell-number">{card.bell.value}</span>,
+        <BellCurve value={card.bell.value} weights={card.bell.weights} />,
+      )}
+      {tile('scatter', card.scatter.picked, 'Streuwürfel', `Streuwürfel: ${scatterText[card.scatter.value]}`, <ScatterRose value={card.scatter.value} />, scatterText[card.scatter.value])}
+      {tile('map', card.map.picked, 'Wege', `Kartensymbol: ${mapText(card.map.value)}`, <MapIconSvg map={card.map.value} />, mapShort(card.map.value))}
     </div>
   );
 }
@@ -288,14 +326,26 @@ function Themes({ themes }: { themes: readonly CardSectionView[] }) {
       {boxed(themes).map((group, i) => (
         <div key={group[0]!.id} className="card theme-box" style={{ '--deal': i } as CSSProperties}>
           {group.map((theme) => (
-            <section key={theme.id} className={`theme span-${columns(theme.slots)}`} aria-labelledby={`theme-${theme.id}`}>
+            <section key={theme.id} className={`theme span-${columns(theme.slots.filter((slot) => !slot.name))}`} aria-labelledby={`theme-${theme.id}`}>
               <h3 id={`theme-${theme.id}`} className="theme-title">
                 {theme.name}
               </h3>
-              <div className={layout(theme.slots)} role="group" aria-label={theme.name}>
-                {theme.slots.map((slot) => (
-                  <Tile key={slot.id} slot={slot} />
-                ))}
+              {theme.slots.some((slot) => slot.name) && (
+                // Die Namen knapp nebeneinander, am Stück zu lesen: oben irdisch, unten spacig.
+                <div className="card-grid cols-3 wide-band theme-names" role="group" aria-label="Namen">
+                  {theme.slots
+                    .filter((slot) => slot.name)
+                    .map((slot) => (
+                      <Tile key={slot.id} slot={slot} variant="name" hideLabel />
+                    ))}
+                </div>
+              )}
+              <div className={layout(theme.slots.filter((slot) => !slot.name))} role="group" aria-label={theme.name}>
+                {theme.slots
+                  .filter((slot) => !slot.name)
+                  .map((slot) => (
+                    <Tile key={slot.id} slot={slot} />
+                  ))}
               </div>
             </section>
           ))}
