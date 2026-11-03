@@ -60,6 +60,11 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > 6 große Kontinente, und die Weltkarte nennt „nur Archipele“ bzw. „nur Seen“ ohne die große
 > Zahl (siehe *Oberfläche*). Das Bild ändert sich dadurch nicht.
 >
+> **Entwurf vom 3. November 2026, noch nicht freigegeben:** Deutungen und Notizen im Log (siehe
+> *Deutungen und Notizen*). Neu im Bild: `Note` mit `text` und dem Verweis `interprets`. Der
+> UI-Entwurf dazu liegt unter [`ui-entwurf/deutung/`](ui-entwurf/deutung/). Bis zur Freigabe folgt
+> der Code nicht.
+>
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen, die drei Namen sowie die Themen-Tafeln NSC, NSC-Aktionen,
 > Welt (mit Schiff), Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
@@ -106,6 +111,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Hausregeln | `HouseRules` | Die Zahlen, nach denen Proben gerechnet werden |
 | Log | `LogEntry` | Ein Eintrag im Verlauf |
 | Orakelantwort | `OracleAnswer` | Ja oder Nein auf eine Frage |
+| Notiz | `Note` ohne `interprets` | Freier Text im Log, z. B. „Wir landen auf Regina.“ |
+| Deutung | `Note` mit `interprets` | Was man aus einem Ergebnis macht, z. B. „Die Tür ist offen, aber jemand war schon hier.“ |
+| Ergebnis | `OracleAnswer`, `DiceRoll`, `CardPick`, `TaskResult` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
+| Schreibzeile | (Fragefeld) | Das eine Textfeld über den Knöpfen; was der Text wird, entscheidet der Knopf |
 | Würfelwurf (2W6) | `DiceRoll` | Ein einfacher Wurf mit zwei Würfeln |
 | Inspirationskarte | `Card` | Eine gezogene Karte, solange sie offen ist |
 | Kartenauswahl | `CardPick` | Was man von einer Karte in den Log übernimmt, mit der Frage |
@@ -201,7 +210,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   dieser Reihenfolge, leicht links. Die Auswahl bleibt stehen, bis man sie ändert, auch über einen
   Neustart der App hinweg. Orakel und Probe lesen sie, keiner von beiden hat eine eigene.
 - **Der Log verweist, er kopiert nicht.** Ein Logeintrag hält nur fest, was allein ihm gehört: Frage,
-  Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei einer Probe DM und Zielwert (siehe
+  Text einer Notiz oder Deutung, Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei einer Probe DM und Zielwert (siehe
   *Orakel* und *Probe*). Alles andere ist ein
   Verweis: auf die Stufe, den Charakter, die Fertigkeitsstufe, die Attribute, auf Feld und Eintrag
   der Karte. Logeinträge werden angehängt und nie geändert. Ein einzelner Eintrag lässt sich löschen,
@@ -219,6 +228,27 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Ja oder Nein (`/yes`: `roll` ≤ `chance`) folgt allein daraus, nie aus dem heutigen Stand der Stufe.
   Die Frage ist freiwillig. „Außergewöhnlich Ja/Nein“, Chaosfaktor und Zufallsereignisse nach Mythic
   kommen erst nach Version 1.
+- **Deutungen und Notizen.** Was in der Schreibzeile steht, wird je nach Knopf eine Frage (Ja/Nein,
+  Karte ziehen), eine Deutung oder eine Notiz; einen Modus gibt es nicht. Beide sind ein `Note` mit
+  Text, der nicht leer ist (Leerraum am Rand fällt weg).
+  - Eine **Deutung** verweist auf genau ein Ergebnis (`interprets`): eine Orakelantwort, einen Wurf,
+    eine Kartenauswahl oder eine Probe, nie auf eine Notiz oder Deutung, und immer auf einen
+    früheren Eintrag. Vorgeschlagen ist das neueste Ergebnis; Antippen eines anderen Ergebnisses im
+    Log macht es zum Ziel. Ein Ergebnis kann mehrere Deutungen haben.
+  - Eine **Notiz** verweist auf nichts; sie steht für sich im Log.
+  - Wie jeder Logeintrag wird ein `Note` angehängt und nie geändert. Wer sich verschrieben hat,
+    löscht ihn und schreibt neu.
+  - Der Log zeigt eine Deutung direkt unter ihrem Ergebnis, im selben Kasten, auch wenn sie später
+    geschrieben wurde; ihre eigene Zeit behält sie. Das ist Sache der Anzeige: Die Reihenfolge im Log
+    bleibt die der Ereignisse.
+  - **Ein Ergebnis löschen löscht seine Deutungen mit.** Die Rückfrage sagt das („Eintrag mit
+    1 Deutung endgültig löschen?“). Eine Deutung allein lässt sich löschen, ihr Ergebnis bleibt. Das
+    ist die einzige Stelle, an der ein Logeintrag auf einen anderen verweist; die Regel *Worauf der
+    Log verweist, wird nie gelöscht* gilt für Charaktere und Referenzdaten, nicht für den Log selbst.
+  - Die **Kampagnendatei** enthält Deutungen und Notizen; beim Import muss jede Deutung auf ein
+    früheres Ergebnis derselben Datei verweisen, sonst wird nichts importiert.
+  - In der Erschaffung (Leiste mit Fragefeld) gibt es vorerst nur Fragen; Deutungen und Notizen
+    schreibt man im Orakel-Screen.
 - **Karte ziehen.** Ziehen legt eine `Card` an: für jedes Feld aller Bereiche aus jeder seiner
   Spalten einen nicht ausgeblendeten Eintrag zufällig (`drawn`), die Themen-Tafeln eingeschlossen,
   in der Reihenfolge der Bereiche, Felder und Spalten. Ein Feld mit zwei Spalten zieht so ein

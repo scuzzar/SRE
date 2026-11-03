@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deutung und Notiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+<style>
+/* Farben und Schrift aus dem UI-Entwurf (docs/ui-entwurf). */
+:root {
+  --bg: #111111;
+  --panel: #161616;
+  --raised: #1a1a1a;
+  --highlight: #1f1f1f;
+  --deep: #0b0b0b;
+  --card: #0e0e0e;
+  --rule: #2a2a2a;
+  --rule-soft: #2e2e2e;
+  --line: #3a3a3a;
+  --line-strong: #555555;
+  --text: #eceae4;
+  --muted: #a3a09a;
+  --dim: #8c8a85;
+  --ink: #111111;
+  --ink-muted: #3a3833;
+  --accent: #c62f35;
+  --accent-text: #ef5a5f;
+  --accent-wash: #2a1415;
+  --disabled: #333333;
+  /* Würfel und Urteil, angelehnt an Baldur's Gate 3: Gold auf dunklem Grund. */
+  --gold: #d9b45f;
+  --gold-bright: #f5dc96;
+  --gold-deep: #8a6a2a;
+  --gold-glow: rgba(233, 190, 92, 0.5);
+  --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--deep);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
+}
+
+#root {
+  height: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* Zwei schnelle Tipper sind zwei Tipper, kein Doppeltipp-Zoom des Browsers. */
+  touch-action: manipulation;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* --- Rahmen der App ------------------------------------------------------------------------- */
+
+.app {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 480px;
+  height: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 8px 10px 16px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  border-bottom: 1px solid var(--rule);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  font-size: 13px;
+}
+
+.brand::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 5px;
+  height: 22px;
+  background: var(--accent);
+}
+
+/* Die Kopfzeile trägt den Namen der offenen Kampagne; ein Tippen öffnet die Kampagnenwahl. */
+.campaign-switch {
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 6px 0 0;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  font-size: 15px;
+}
+
+.campaign-switch svg {
+  flex: 0 0 auto;
+  margin-left: -4px;
+  color: var(--muted);
+}
+
+.campaign-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.header-right {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+}
+
+.icon-button[aria-current='page'] {
+  color: var(--text);
+}
+
+.banner {
+  flex: 0 0 auto;
+  padding: 6px 16px;
+  font-size: 12px;
+  background: var(--accent-wash);
+  color: var(--text);
+  border-bottom: 1px solid var(--accent);
+}
+
+.screen {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.dock {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--rule);
+  background: var(--panel);
+}
+
+.section-title {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.kicker {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.nav {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--rule);
+  background: var(--deep);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.nav button {
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: transparent;
+  border: 0;
+  border-top: 2px solid transparent;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.nav button[aria-current='page'] {
+  border-top-color: var(--accent-text);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* --- Stufenauswahl -------------------------------------------------------------------------- */
+
+.odds {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--line-strong);
+}
+
+.odds button {
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+}
+
+.odds button[aria-checked='true'] {
+  background: var(--text);
+  color: var(--ink);
+}
+
+.odds .odds-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.odds .odds-target {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.odds .odds-sub {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.odds button[aria-checked='true'] .odds-sub {
+  color: var(--ink-muted);
+}
+
+/* --- Orakel-Screen -------------------------------------------------------------------------- */
+
+.log-scroll {
+  display: flex;
+  flex-direction: column-reverse;
+  /* Unter der Leiste mit dem Charakter oben läuft der Log weich aus, statt hart abgeschnitten. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 56px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 56px);
+}
+
+.log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.log-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.log-hint {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.log ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.log-empty {
+  padding: 24px 8px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid var(--rule-soft);
+}
+
+.entry.latest {
+  background: var(--highlight);
+  border-color: #666666;
+}
+
+/* Langes Drücken löscht: Das System soll dabei weder Text markieren noch ein Menü zeigen. */
+.log .entry {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.entry.confirming {
+  border-color: var(--accent);
+}
+
+.entry-delete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+  font-size: 13px;
+}
+
+.entry-delete span {
+  flex: 1 1 auto;
+}
+
+.entry-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.entry-time {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+.entry-question {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.entry-detail {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+.verdict {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
+}
+
+.verdict.negative {
+  color: var(--accent-text);
+}
+
+.dice-total {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-family: var(--mono);
+}
+
+.dice-total strong {
+  font-size: 30px;
+}
+
+.picks {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 12px;
+}
+
+.picks dt {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.picks dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.question-input {
+  min-height: 44px;
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+}
+
+.question-input::placeholder {
+  color: var(--dim);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 6px;
+}
+
+/* Der Knopf für Orakel bzw. Probe steht in einer Zeile mit der Stufenauswahl. */
+.odds-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.action {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.action.oracle {
+  min-height: 48px;
+  padding: 0 18px;
+  background: var(--text);
+  color: var(--ink);
+}
+
+.action.draw {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.action.dice {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--text);
+}
+
+.action,
+.roll,
+.confirm {
+  transition: transform 0.08s ease-out;
+}
+
+.action:active,
+.roll:active:not(:disabled),
+.confirm:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* --- Inspirationskarte ---------------------------------------------------------------------- */
+
+
+/* --- Neu im Entwurf: Schreibzeile, Deutung, Notiz ----------------------------------------- */
+
+.write-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 6px;
+}
+
+.write-button {
+  min-height: 44px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.write-button.interpret {
+  border-color: var(--gold-deep);
+  color: var(--gold);
+}
+
+.write-button:disabled {
+  border-color: var(--disabled);
+  color: var(--dim);
+}
+
+.target-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 4px 4px 4px 10px;
+  border-left: 3px solid var(--gold);
+  background: #18150e;
+  font-size: 13px;
+}
+
+.target-line .target-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--muted);
+}
+
+.target-line .target-text b {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.target-line .icon-button {
+  width: 32px;
+  height: 32px;
+}
+
+.entry.target {
+  border-color: var(--gold);
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+
+.entry.result {
+  cursor: pointer;
+}
+
+.interpretation {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+  padding: 8px 0 0 10px;
+  border-top: 1px solid var(--rule);
+  border-left: 2px solid var(--gold-deep);
+}
+
+.interpretation .kicker {
+  color: var(--gold);
+}
+
+.interpretation p,
+.note-text {
+  margin: 0;
+  font-size: 15px;
+  white-space: pre-wrap;
+}
+
+.interpretation.confirming {
+  border-left-color: var(--accent);
+}
+
+.entry.note {
+  background: transparent;
+  border-style: dashed;
+}
+
+.entry.note .kicker {
+  color: var(--muted);
+}
+
+.entry.note.latest {
+  background: transparent;
+  border-color: #666666;
+}
+
+.ghost {
+  min-height: 36px;
+  padding: 0 10px;
+  background: transparent;
+  border: 1px solid var(--line-strong);
+}
+
+.ghost.danger {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.toast {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 64px;
+  z-index: 5;
+  padding: 10px 12px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.toast b {
+  color: var(--text);
+}
+</style>
+</head>
+<body>
+<div id="root">
+  <div class="app">
+    <header class="header">
+      <span class="brand campaign-switch"><span class="campaign-name">Spinward Run</span></span>
+      <span class="header-right muted">Entwurf</span>
+    </header>
+    <div class="toast" id="toast">
+      <b>Entwurf: Deutung und Notiz.</b> Text eintippen, dann entscheidet der Knopf:
+      <b>Ja/Nein</b> oder <b>Karte</b> = Frage, <b>Deuten</b> = Deutung zum gold markierten Ergebnis,
+      <b>Notiz</b> = freier Eintrag. Ein Ergebnis im Log antippen macht es zum Ziel der Deutung.
+      Lange drücken löscht.
+      <button type="button" class="ghost" style="margin-top:8px;display:block" onclick="this.parentNode.remove()">Verstanden</button>
+    </div>
+    <div class="screen">
+      <section class="scroll log-scroll" aria-labelledby="log-title">
+        <div class="log">
+          <div class="log-head">
+            <h2 id="log-title" class="section-title">Log</h2>
+            <span class="log-hint">Ergebnis antippen zum Deuten · lange drücken zum Löschen</span>
+          </div>
+          <ol id="log" aria-live="polite"></ol>
+        </div>
+      </section>
+      <section class="dock" aria-label="Orakel und Proben">
+        <div class="target-line" id="target-line" hidden>
+          <span class="target-text" id="target-text"></span>
+          <button type="button" class="icon-button" id="target-reset" aria-label="Zurück zum neuesten Ergebnis" title="Zurück zum neuesten Ergebnis">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div class="write-row">
+          <label for="question" class="visually-hidden">Frage, Deutung oder Notiz</label>
+          <input id="question" class="question-input" type="text" placeholder="Frage, Deutung oder Notiz …" autocomplete="off" enterkeyhint="send">
+          <button type="button" class="write-button interpret" id="interpret" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>
+            Deuten
+          </button>
+          <button type="button" class="write-button" id="note" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4"/></svg>
+            Notiz
+          </button>
+        </div>
+        <div class="actions">
+          <button type="button" class="action draw" id="draw">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1"/></svg>
+            Karte ziehen
+          </button>
+          <button type="button" class="action dice" id="dice">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/><circle cx="15" cy="15" r="1.2" fill="currentColor"/></svg>
+            2W6
+          </button>
+        </div>
+        <div class="odds-row">
+          <div class="odds" role="radiogroup" aria-label="Stufe">
+            <button type="button" role="radio" aria-checked="false"><span class="odds-name">Hoch</span><span class="odds-sub">75 % · 6+</span></button>
+            <button type="button" role="radio" aria-checked="true"><span class="odds-name">Mittel</span><span class="odds-sub">50 % · 8+</span></button>
+            <button type="button" role="radio" aria-checked="false"><span class="odds-name">Gering</span><span class="odds-sub">25 % · 10+</span></button>
+          </div>
+          <button type="button" class="action oracle" id="oracle">Ja/Nein</button>
+        </div>
+      </section>
+    </div>
+    <nav class="nav" aria-label="Bereiche">
+      <button type="button" aria-current="page">Orakel</button>
+      <button type="button">Charaktere</button>
+      <button type="button">Sektor</button>
+    </nav>
+  </div>
+</div>
+<script>
+// Prototyp, kein Produktivcode. Der Log ist eine Liste in der Reihenfolge der Ereignisse; eine
+// Deutung verweist auf ein früheres Ergebnis (interprets) und wird unter ihm angezeigt.
+let nextId = 1;
+const now = new Date();
+const at = (min) => new Date(now.getTime() - min * 60000);
+const log = [
+  { id: nextId++, kind: 'card', at: at(42), question: 'Wer wartet im Hangar?', picks: [['Namen · eher weiblich', 'Paloma Valdez'], ['NSC', 'misstrauisch · Händlerin']] },
+  { id: nextId++, kind: 'note', at: at(40), text: 'Wir sind auf Regina gelandet, Startport A. Die Fracht ist noch an Bord.' },
+  { id: nextId++, kind: 'oracle', at: at(31), question: 'Ist die Tür zum Lager offen?', yes: true, roll: 34, chance: 50, odds: 'Mittel' },
+  { id: nextId++, kind: 'note', at: at(30), interprets: 3, text: 'Offen, aber das Schloss ist aufgebrochen. Jemand war vor uns hier.' },
+  { id: nextId++, kind: 'dice', at: at(12), dice: [5, 2] },
+  { id: nextId++, kind: 'oracle', at: at(3), question: 'Hat Paloma etwas damit zu tun?', yes: false, roll: 71, chance: 50, odds: 'Mittel' },
+];
+
+const isResult = (e) => e.kind !== 'note';
+let chosen; // vom Spieler angetipptes Ziel; sonst das neueste Ergebnis
+let confirm; // { id } eines Eintrags, der gelöscht werden will
+
+const $ = (id) => document.getElementById(id);
+const input = $('question');
+
+function target() {
+  if (chosen !== undefined && log.some((e) => e.id === chosen)) return chosen;
+  const results = log.filter(isResult);
+  return results.length ? results[results.length - 1].id : undefined;
+}
+
+const time = (d) => d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+function kicker(e) {
+  switch (e.kind) {
+    case 'oracle': return `Orakel · ${e.odds}`;
+    case 'dice': return 'Würfel · 2W6';
+    case 'card': return 'Karte';
+    case 'note': return 'Notiz';
+  }
+}
+
+function short(e) {
+  switch (e.kind) {
+    case 'oracle': return `<b>${e.yes ? 'JA' : 'NEIN'}</b>${e.question ? ' · „' + esc(e.question) + '“' : ''}`;
+    case 'dice': return `<b>2W6: ${e.dice[0] + e.dice[1]}</b>`;
+    case 'card': return `<b>Karte</b>${e.question ? ' · „' + esc(e.question) + '“' : ' · ' + esc(e.picks[0][1])}`;
+  }
+}
+
+function body(e) {
+  switch (e.kind) {
+    case 'oracle':
+      return `<span class="entry-question">${e.question ? '„' + esc(e.question) + '“' : 'Ohne Frage'}</span>
+        <span class="${e.yes ? 'verdict' : 'verdict negative'}">${e.yes ? 'JA' : 'NEIN'}</span>
+        <span class="entry-detail">W100: ${e.roll} · Ja bis ${e.chance}</span>`;
+    case 'dice':
+      return `<div class="dice-total"><strong>${e.dice[0] + e.dice[1]}</strong><span class="muted">${e.dice[0]} + ${e.dice[1]}</span></div>`;
+    case 'card':
+      return `${e.question ? '<span class="entry-question">„' + esc(e.question) + '“</span>' : ''}
+        <dl class="picks">${e.picks.map(([k, v]) => `<div style="display:contents"><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`;
+    case 'note':
+      return `<p class="note-text">${esc(e.text)}</p>`;
+  }
+}
+
+function deleteBar(e, count) {
+  const what = count ? `Eintrag mit ${count} ${count === 1 ? 'Deutung' : 'Deutungen'} endgültig löschen?` : e.interprets ? 'Deutung endgültig löschen?' : 'Eintrag endgültig löschen?';
+  return `<div class="entry-delete" role="group"><span>${what}</span>
+    <button type="button" class="ghost" data-keep>Behalten</button>
+    <button type="button" class="ghost danger" data-delete="${e.id}">Löschen</button></div>`;
+}
+
+function render() {
+  const t = target();
+  const top = log.filter((e) => !e.interprets);
+  const last = log[log.length - 1];
+  const lastTop = last && (last.interprets ?? last.id);
+  $('log').innerHTML = top.map((e) => {
+    const deutungen = log.filter((d) => d.interprets === e.id);
+    const cls = ['entry', isResult(e) ? 'result' : 'note', e.id === lastTop ? 'latest' : '', e.id === t && input.value.trim() ? 'target' : '', confirm === e.id ? 'confirming' : ''].filter(Boolean).join(' ');
+    return `<li class="${cls}" data-id="${e.id}">
+      <div class="entry-head"><span class="kicker">${kicker(e)}</span><time class="entry-time">${time(e.at)}</time></div>
+      ${body(e)}
+      ${deutungen.map((d) => `<div class="interpretation${confirm === d.id ? ' confirming' : ''}" data-id="${d.id}">
+          <div class="entry-head"><span class="kicker">Deutung</span><time class="entry-time">${time(d.at)}</time></div>
+          <p>${esc(d.text)}</p>
+          ${confirm === d.id ? deleteBar(d) : ''}
+        </div>`).join('')}
+      ${confirm === e.id ? deleteBar(e, deutungen.length) : ''}
+    </li>`;
+  }).join('');
+
+  const text = input.value.trim();
+  $('interpret').disabled = !text || t === undefined;
+  $('note').disabled = !text;
+  const line = $('target-line');
+  const te = log.find((e) => e.id === t);
+  line.hidden = !text || !te;
+  if (te) $('target-text').innerHTML = `Deutung zu ${short(te)}`;
+  $('target-reset').hidden = chosen === undefined;
+}
+
+function add(entry) {
+  log.push({ id: nextId++, at: new Date(), ...entry });
+  chosen = undefined;
+  confirm = undefined;
+  input.value = '';
+  render();
+}
+
+input.addEventListener('input', render);
+input.addEventListener('keydown', (e) => { if (e.key === 'Enter') $('oracle').click(); });
+
+$('interpret').onclick = () => add({ kind: 'note', interprets: target(), text: input.value.trim() });
+$('note').onclick = () => add({ kind: 'note', text: input.value.trim() });
+$('oracle').onclick = () => {
+  const roll = 1 + Math.floor(Math.random() * 100);
+  add({ kind: 'oracle', question: input.value.trim() || undefined, roll, chance: 50, yes: roll <= 50, odds: 'Mittel' });
+};
+$('dice').onclick = () => add({ kind: 'dice', dice: [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)] });
+$('draw').onclick = () => {
+  const pool = [['Aktion', 'verraten · Technologie'], ['Hören', 'Summen · fern'], ['Namen · neutral', 'Arin Kaskel'], ['Handlung', 'Flucht · Schulden']];
+  add({ kind: 'card', question: input.value.trim() || undefined, picks: [pool[Math.floor(Math.random() * pool.length)]] });
+};
+$('target-reset').onclick = () => { chosen = undefined; render(); };
+document.querySelectorAll('.odds button').forEach((b) => b.onclick = () => {
+  document.querySelectorAll('.odds button').forEach((o) => o.setAttribute('aria-checked', String(o === b)));
+});
+
+// Antippen eines Ergebnisses macht es zum Ziel; lange drücken bietet Löschen an.
+let press;
+const logEl = $('log');
+function idAt(el) {
+  const node = el.closest('.interpretation') || el.closest('.entry');
+  return node ? Number(node.dataset.id) : undefined;
+}
+logEl.addEventListener('click', (ev) => {
+  if (ev.target.closest('[data-keep]')) { confirm = undefined; render(); return; }
+  const del = ev.target.closest('[data-delete]');
+  if (del) {
+    const id = Number(del.dataset.delete);
+    for (let i = log.length - 1; i >= 0; i--) if (log[i].id === id || log[i].interprets === id) log.splice(i, 1);
+    confirm = undefined;
+    render();
+    return;
+  }
+  if (press?.fired) return;
+  const entry = ev.target.closest('.entry.result');
+  if (!entry || ev.target.closest('.interpretation')) return;
+  chosen = Number(entry.dataset.id);
+  if (!input.value.trim()) input.focus();
+  render();
+});
+logEl.addEventListener('pointerdown', (ev) => {
+  const id = idAt(ev.target);
+  if (id === undefined || ev.target.closest('button')) return;
+  press = { x: ev.clientX, y: ev.clientY, fired: false, timer: setTimeout(() => { press.fired = true; confirm = id; render(); }, 550) };
+});
+const cancel = () => { if (press) clearTimeout(press.timer); };
+logEl.addEventListener('pointermove', (ev) => { if (press && Math.hypot(ev.clientX - press.x, ev.clientY - press.y) > 10) cancel(); });
+logEl.addEventListener('pointerup', () => { cancel(); setTimeout(() => { if (press) press.fired = false; }, 0); });
+logEl.addEventListener('pointercancel', cancel);
+logEl.addEventListener('contextmenu', (ev) => { ev.preventDefault(); const id = idAt(ev.target); if (id !== undefined) { confirm = id; render(); } });
+
+render();
+</script>
+</body>
+</html>
