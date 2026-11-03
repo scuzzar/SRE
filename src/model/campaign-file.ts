@@ -62,6 +62,7 @@ const HexSchema = z.union([
     gasGiant: z.boolean().optional(),
     uwp: z.object(Object.fromEntries(uwpKinds.map((k) => [k, z.number().int().optional()])) as Record<(typeof uwpKinds)[number], z.ZodOptional<z.ZodNumber>>),
     temperature: z.enum(temperatureIds).optional(),
+    note: z.string().optional(),
     surface: z
       .object({
         water: z.number().int(),

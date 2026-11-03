@@ -89,6 +89,7 @@ export function WorldSheet({ world }: { world: WorldView }) {
         <div className="sheet-body" ref={body}>
           {!view.empty && <WorldCard world={view} />}
           {view.surface && <SurfaceSection lines={view.surface} />}
+          {world.canNote && <NoteSection note={world.note} />}
         </div>
 
         {(hasRoll || fresh) && (
@@ -198,6 +199,28 @@ function SurfaceSection({ lines }: { lines: readonly string[] }) {
         </ul>
       </div>
     </section>
+  );
+}
+
+/**
+ * Die Notiz zur Welt: freier Text, den man jederzeit ändert. Was getippt wird, ist reine Darstellung;
+ * gespeichert wird beim Verlassen des Feldes, also auch, wenn man die Weltkarte schließt.
+ */
+function NoteSection({ note }: { note: string | undefined }) {
+  const game = useGame();
+  const [text, setText] = useState(note ?? '');
+  return (
+    <label className="field world-note">
+      <span>Notiz zur Welt</span>
+      <textarea
+        value={text}
+        placeholder="Was man über die Welt weiß: Orte, Leute, Gerüchte …"
+        onChange={(e) => setText(e.target.value)}
+        onBlur={() => {
+          if (text.trim() !== (note ?? '')) game.noteWorld(text);
+        }}
+      />
+    </label>
   );
 }
 

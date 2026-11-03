@@ -29,6 +29,7 @@ import {
   rollNext,
   rollSkill,
   nameWorld,
+  noteWorld,
   discardWorld,
   hexAt,
   nextWorldAction,
@@ -539,6 +540,11 @@ export class GameController {
     this.inWorld((hexes, open) => ({ hexes: nameWorld(hexes, open.column, open.row, name), world: open }));
     // Entstand die Welt für die Erschaffung, ist sie mit ihrem Namen gewählt.
     if (at && this.state.picking && isWorld(hexAt(this.campaign.hexes, at.column, at.row))) this.chooseGenerationWorld(hexId(at.column, at.row));
+  }
+
+  /** Setzt die Notiz der offenen Welt; eine leere Notiz entfernt sie. Nur für fertige Welten. */
+  noteWorld(note: string): void {
+    this.inWorld((hexes, at) => ({ hexes: noteWorld(hexes, at.column, at.row, note), world: at }));
   }
 
   /** Verwirft die Welt in Erschaffung; das Feld ist wieder nicht erzeugt. */

@@ -616,7 +616,30 @@ describe('Subsektor und Weltenerschaffung', () => {
     const after = game.snapshot();
     expect(after.world).toMatchObject({ name: 'Regina', step: 'done', action: { kind: 'done' }, trade: [{ code: 'Ag' }, { code: 'Ni' }] });
     expect(after.sector.find((h) => h.id === '0304')).toMatchObject({ state: 'world', name: 'Regina', starport: 'C', scoutBase: true, gasGiant: true, hydrographics: 8 });
-    expect(after.worlds).toEqual([{ id: '0304', column: 3, row: 4, name: 'Regina', uwp: 'C788545-7', bases: 'S', trade: ['Ag', 'Ni'], gasGiant: true }]);
+    expect(after.worlds).toEqual([{ id: '0304', column: 3, row: 4, name: 'Regina', uwp: 'C788545-7', bases: 'S', trade: ['Ag', 'Ni'], gasGiant: true, note: undefined }]);
+  });
+
+  it('schreibt einer fertigen Welt eine Notiz, ändert und entfernt sie; die Liste zeigt ihre erste Zeile', async () => {
+    const world = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 }, temperature: 'temperate' as const, surface: { water: 80, plates: 8, majorContinents: 1, minorContinents: 4, majorIslands: 5, archipelagos: 7, majorOceans: 0, minorOceans: 0, smallSeas: 0, scatteredLakes: 0, life: true } };
+    const unfinished = { column: 2, row: 1, empty: false, uwp: { starport: 12 } };
+    const { game, repository } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign([]), [world, unfinished])));
+    game.chooseHex(1, 1);
+    expect(game.snapshot().world).toMatchObject({ canNote: true, note: undefined });
+    game.noteWorld('  Halveks Werft am Südpol.\nZoll ist bestechlich.  ');
+    await game.whenSaved();
+    expect(game.snapshot().world?.note).toBe('Halveks Werft am Südpol.\nZoll ist bestechlich.');
+    expect(game.snapshot().worlds[0]?.note).toBe('Halveks Werft am Südpol.');
+    expect(repository.saved?.hexes.find((h) => h.name === 'Regina')?.note).toBe('Halveks Werft am Südpol.\nZoll ist bestechlich.');
+    game.noteWorld('   ');
+    await game.whenSaved();
+    expect(game.snapshot().world?.note).toBeUndefined();
+    expect('note' in repository.saved!.hexes.find((h) => h.name === 'Regina')!).toBe(false);
+
+    game.closeWorld();
+    game.chooseHex(2, 1);
+    expect(game.snapshot().world).toMatchObject({ canNote: false });
+    game.noteWorld('Noch nicht.');
+    expect(game.snapshot().world?.error).toMatch(/fertige Welt/);
   });
 
   it('würfelt einer älteren Welt mit Temperatur die Oberfläche nach', async () => {

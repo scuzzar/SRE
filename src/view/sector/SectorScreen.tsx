@@ -365,6 +365,7 @@ export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; 
                     <span className="world-list-trade">
                       {[...w.trade, ...(w.gasGiant ? ['G'] : [])].join(' ')}
                     </span>
+                    {w.note && <span className="world-list-note">{w.note}</span>}
                   </button>
                 </li>
               ))}

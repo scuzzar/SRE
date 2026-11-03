@@ -2990,7 +2990,8 @@ button:disabled {
   grid-template-columns: minmax(0, 1fr) auto auto 2.2em;
   grid-template-areas:
     'name hex uwp bases'
-    'trade trade trade trade';
+    'trade trade trade trade'
+    'note note note note';
   column-gap: 10px;
   align-items: baseline;
   padding: 8px 2px;
@@ -3029,6 +3030,35 @@ button:disabled {
   grid-area: trade;
   font-size: 12px;
   color: var(--muted);
+}
+
+/* Die erste Zeile der Notiz zur Welt. */
+.world-list-note {
+  grid-area: note;
+  margin-top: 2px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.world-note {
+  margin-top: 12px;
+}
+
+.world-note textarea {
+  min-height: 88px;
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  resize: vertical;
+}
+
+.world-note textarea::placeholder {
+  color: var(--dim);
 }
 
 .world-profile {
@@ -3531,4 +3561,29 @@ button:disabled {
   padding: 0 16px 12px;
   font-size: 12px;
   color: var(--muted);
+}
+
+/* --- Deuten und Notiz in der Leiste der Charaktererschaffung -------------------------------- */
+
+.generation-oracle-row .icon-button.interpret {
+  color: var(--gold);
+}
+
+.generation-oracle-row .icon-button:disabled {
+  color: var(--disabled);
+}
+
+.generation-target {
+  margin: 0;
+}
+
+.generation-note .kicker {
+  color: var(--gold);
+}
+
+.generation-note .small-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

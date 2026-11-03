@@ -111,8 +111,18 @@ describe('Kampagnendatei mit Subsektor', () => {
     const old: Record<string, unknown> = { ...hex, column: 3 };
     delete old.temperature;
     delete old.surface;
-    const text = fileWith((c) => (c.hexes = [hex, old, { column: 1, row: 1, empty: true, uwp: {} }]));
-    expect(fromCampaignFile(text, 'k2').hexes).toEqual([hex, old, { column: 1, row: 1, empty: true, uwp: {} }]);
+    const text = fileWith((c) => (c.hexes = [{ ...hex, note: 'Halveks Werft am Südpol.' }, old, { column: 1, row: 1, empty: true, uwp: {} }]));
+    expect(fromCampaignFile(text, 'k2').hexes).toEqual([{ ...hex, note: 'Halveks Werft am Südpol.' }, old, { column: 1, row: 1, empty: true, uwp: {} }]);
+  });
+
+  it('weist eine Notiz an einem leeren Feld, einer Welt in Erschaffung oder ohne Text zurück', () => {
+    for (const hex of [
+      { column: 1, row: 1, empty: true, uwp: {}, note: 'Nichts.' },
+      { column: 1, row: 1, empty: false, uwp: { starport: 12 }, note: 'Bald.' },
+      { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 }, note: '  ' },
+    ]) {
+      expect(() => fromCampaignFile(fileWith((c) => (c.hexes = [hex])), 'k2')).toThrow(/Notiz/);
+    }
   });
 
   it('weist Hexfelder zurück, deren Werte nicht zu den Regeln passen', () => {

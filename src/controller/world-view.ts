@@ -2,6 +2,7 @@ import {
   ehex,
   hexAt,
   hexId,
+  isWorld,
   OCCURRENCE_TARGET,
   SECTOR_COLUMNS,
   SECTOR_ROWS,
@@ -71,6 +72,8 @@ export interface WorldListItem {
   readonly bases: string;
   readonly trade: readonly string[];
   readonly gasGiant: boolean;
+  /** Die erste Zeile der Notiz zur Welt, falls es eine gibt. */
+  readonly note: string | undefined;
 }
 
 /** Eine Zeile im Verlauf der Weltenerschaffung: ein Wurf mit dem, was er ergeben hat. */
@@ -135,6 +138,10 @@ export interface WorldView {
   readonly lines: readonly WorldLine[];
   readonly action: WorldAction;
   readonly error: string | undefined;
+  /** Die Notiz zur Welt; `undefined`, solange keine geschrieben ist. */
+  readonly note: string | undefined;
+  /** Nur eine fertige Welt hat eine Notiz. */
+  readonly canNote: boolean;
 }
 
 function yesNo(value: boolean | undefined): string {
@@ -229,6 +236,7 @@ export function worldList(hexes: readonly Hex[]): readonly WorldListItem[] {
           bases: basesText(hex),
           trade: tradeCodesOf(hex).map((t) => t.id),
           gasGiant: hex.gasGiant ?? false,
+          note: hex.note?.split('\n')[0],
         },
       ];
     });
@@ -358,6 +366,8 @@ export function worldView(hexes: readonly Hex[], column: number, row: number, ro
     trade: tradeCodesOf(hex).map((t) => ({ code: t.id, name: t.name })),
     lines: rolls.map(worldLine),
     action,
+    note: hex.note,
+    canNote: isWorld(hex),
     error,
   };
 }

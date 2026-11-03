@@ -60,6 +60,8 @@ export interface Hex {
   readonly temperature?: TemperatureId;
   /** Die Oberfläche; fehlt bei Welten, die ihren TL vorher bekamen. */
   readonly surface?: Surface;
+  /** Freier Text zu einer fertigen Welt; nie leer, lässt sich jederzeit ändern. */
+  readonly note?: string;
 }
 
 /** Woraus der DM eines Wurfs besteht, mit Namen: „Größe 7 +7“; ohne Namen der feste Teil der Formel (−7). */
@@ -437,6 +439,16 @@ export function nameWorld(hexes: readonly Hex[], column: number, row: number, na
   return putHex(hexes, { ...hex, name: trimmed });
 }
 
+/** Setzt die Notiz einer fertigen Welt; Leerraum am Rand fällt weg, eine leere Notiz entfernt sie. */
+export function noteWorld(hexes: readonly Hex[], column: number, row: number, note: string): readonly Hex[] {
+  const hex = hexAt(hexes, column, row);
+  if (!isWorld(hex)) throw new DomainError('Eine Notiz hat nur eine fertige Welt.');
+  const rest: Hex = { ...hex };
+  delete (rest as { note?: string }).note;
+  const trimmed = note.trim();
+  return putHex(hexes, trimmed ? { ...rest, note: trimmed } : rest);
+}
+
 /** Verwirft eine Welt in Erschaffung: Das Feld ist wieder nicht erzeugt. Fertiges bleibt. */
 export function discardWorld(hexes: readonly Hex[], column: number, row: number): readonly Hex[] {
   const hex = hexAt(hexes, column, row);
@@ -488,6 +500,8 @@ export function validateHex(hex: Hex): void {
   }
   if (hex.uwp.starport !== undefined && !ref.worlds.systemContents.some((r) => EHEX.indexOf(r.starport) === hex.uwp.starport)) fail('Diesen Raumhafen gibt es nicht.');
   if (hex.name !== undefined && !hex.name.trim()) fail('Die Welt braucht einen Namen.');
+  if (hex.note !== undefined && (hex.empty || stepOf(hex) !== 'done')) fail('Eine Notiz hat nur eine fertige Welt.');
+  if (hex.note !== undefined && !hex.note.trim()) fail('Eine leere Notiz gibt es nicht.');
   // Was ohne Wurf feststeht, muss so stehen, wie die Regeln es setzen.
   const settled = settle(hex);
   const port = hex.uwp.starport === undefined ? undefined : ehex(hex.uwp.starport);

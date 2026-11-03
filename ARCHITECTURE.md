@@ -47,7 +47,7 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   `reenlist(wants)`, `musterOut(kind)`, `chooseGenerationWorld(id)`, `pickGenerationWorld()`,
   `closePicker()`, `runGeneration()`, `finishGeneration(name)`, `discardGeneration()` und
   `restartGeneration()`; für den Subsektor `chooseHex(column, row)`, `clearHex()`, `rollOccurrence()`,
-  `runOccurrence()`, `rollWorld()`, `runWorld()`, `nameWorld(name)`, `discardWorld()` und
+  `runOccurrence()`, `rollWorld()`, `runWorld()`, `nameWorld(name)`, `noteWorld(note)`, `discardWorld()` und
   `closeWorld()`. Ein Hexfeld (`model/sector.ts`) hält die Werte seiner Welt;
   ein Wurf der Weltenerschaffung (`model/draft/world-roll.ts`) trägt sein Ergebnis ein und lebt nur,
   solange Weltkarte oder Feldwahl offen sind (im Zustand des Controllers). Die Erschaffung ist gespeicherter Stand (`model/generation.ts`,
