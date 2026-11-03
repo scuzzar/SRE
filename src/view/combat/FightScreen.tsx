@@ -24,8 +24,8 @@ export function FightScreen({ combat, onHeal }: { combat: CombatView; onHeal: (p
           </p>
         )}
         <RangeBar sim={sim} />
-        <Fighters sim={sim} side={sim.first} onHeal={onHeal} combat={combat} />
-        <Fighters sim={sim} side={sim.first === 'pcs' ? 'npcs' : 'pcs'} onHeal={onHeal} combat={combat} />
+        <PcHeal sim={sim} character={combat.character} onHeal={onHeal} />
+        <Fighters sim={sim} onHeal={onHeal} />
         <Recent combat={combat} />
       </section>
       <FightDock combat={combat} sim={sim} />
@@ -83,25 +83,36 @@ function RangeBar({ sim }: { sim: SimView }) {
   );
 }
 
-/** Die Kämpfer einer Partei; wer zum Ziel dessen am Zug taugt, lässt sich antippen. */
-function Fighters({ sim, side, onHeal, combat }: { sim: SimView; side: 'pcs' | 'npcs'; onHeal: (patient: Patient) => void; combat: CombatView }) {
-  const fighters = sim.fighters.filter((f) => f.side === side);
+/** Ist der SC oben verwundet, lässt er sich heilen; sein Zustand steht schon in der Leiste. */
+function PcHeal({ sim, character, onHeal }: { sim: SimView; character: string; onHeal: (patient: Patient) => void }) {
+  const pc = sim.fighters.find((f) => f.side === 'pcs' && f.name === character);
+  if (!pc || !(pc.healing.wake || pc.healing.treatable)) return null;
+  return (
+    <button type="button" className="ghost compact pc-heal" onClick={() => onHeal({ npc: undefined, pc: pc.id, name: pc.name })}>
+      {pc.name} heilen
+    </button>
+  );
+}
+
+/** Die NSC der Begegnung; die SC stehen oben in der Leiste. Wer zum Ziel eines SC am Zug taugt, lässt sich antippen. */
+function Fighters({ sim, onHeal }: { sim: SimView; onHeal: (patient: Patient) => void }) {
+  const fighters = sim.fighters.filter((f) => f.side === 'npcs');
   if (fighters.length === 0) return null;
   return (
     <div className="fighters">
       <h3 className="section-title" style={{ fontSize: 11 }}>
-        {side === 'pcs' ? 'Spielercharaktere' : 'NSC'}
+        NSC
       </h3>
       <ol className="fighter-list">
         {fighters.map((f) => (
-          <FighterRow key={f.id} fighter={f} onHeal={onHeal} weapons={f.turn && f.side === 'pcs' ? combat.weapons : undefined} />
+          <FighterRow key={f.id} fighter={f} onHeal={onHeal} />
         ))}
       </ol>
     </div>
   );
 }
 
-function FighterRow({ fighter: f, onHeal, weapons }: { fighter: FighterView; onHeal: (patient: Patient) => void; weapons: CombatView['weapons'] | undefined }) {
+function FighterRow({ fighter: f, onHeal }: { fighter: FighterView; onHeal: (patient: Patient) => void }) {
   const game = useGame();
   // Ob „Übernehmen als SC / als NSC“ offen ist, ist reine Anzeige.
   const [adopting, setAdopting] = useState(false);
@@ -135,15 +146,6 @@ function FighterRow({ fighter: f, onHeal, weapons }: { fighter: FighterView; onH
           </span>
         </span>
       </button>
-      {weapons && (
-        <div className="chips fighter-weapons" role="group" aria-label="Waffe in der Hand">
-          {weapons.map((w) => (
-            <button key={w.id} type="button" aria-pressed={w.wielded} onClick={() => game.wieldWeapon(w.id)}>
-              {w.name} <span className="chip-skill">{w.short}</span>
-            </button>
-          ))}
-        </div>
-      )}
       {(f.healing.wake || f.healing.treatable || f.side === 'npcs') && (
         <div className="npc-actions">
           {(f.healing.wake || f.healing.treatable) && (
@@ -210,6 +212,7 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
           <strong>
             {turn.name} ({turn.weapon}) {target ? `→ ${target.name}` : '– Ziel antippen'}
           </strong>
+          {turn.side === 'npcs' && <span className="small-label">Ziel ist der SC oben; wischen wählt einen anderen.</span>}
           <span className="task-figures">
             {!turn.reaches
               ? `Reicht nicht auf ${rangeText[sim.range]}.`

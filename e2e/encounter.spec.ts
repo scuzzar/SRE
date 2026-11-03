@@ -38,16 +38,18 @@ test('Kampf: Waffentabelle ohne Begegnung; mit Begegnung die Simulation mit Rund
   await expect(intro).toContainText('Entfernung:');
   await expect(intro).toContainText('Überraschung:');
   await expect(intro.locator('.intro-npcs li').first()).toContainText('Anführer');
+  const npcs = await intro.locator('.intro-npcs li').count();
   await intro.getByRole('button', { name: 'Zum Kampf' }).click();
-  // In der Simulation fällt die Leiste oben weg; alle Kämpfer stehen in der Liste.
-  await expect(page.locator('.strip')).toHaveCount(0);
+  // Die SC stehen oben in der Leiste; die Liste zeigt nur die NSC.
+  await expect(page.locator('.strip')).toBeVisible();
+  await expect(page.locator('.fighter')).toHaveCount(npcs);
 
   // Kampfsimulation: Runde, Entfernung, Kämpfer; die Tabelle ist weg.
   await expect(page.locator('.fight-head')).toContainText('Runde 1');
   await expect(page.locator('.fight-head')).toContainText('Thugs');
   await expect(page.locator('.combat-table')).toHaveCount(0);
   await expect(page.getByText(/Entfernung \(2W6: \d \+ \d, City −4\)/)).toBeVisible();
-  await expect(page.locator('.fighter.turn')).toHaveCount(1);
+  await expect(page.locator('.fight-turn')).toBeVisible();
 
   // Wer am Zug ist, hat ein Ziel; Close reicht für jede Waffe.
   await page.getByRole('radiogroup', { name: 'Entfernung' }).getByRole('radio', { name: 'Close' }).click();

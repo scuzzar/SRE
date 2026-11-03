@@ -30,8 +30,8 @@ export function CombatScreen({ view }: { view: Snapshot }) {
   const healing = patient && combat && (patient.npc === undefined && !combat.sim ? combat.healing : combat.sim?.fighters.find((f) => f.id === (patient.npc ?? patient.pc))?.healing);
   return (
     <div className="screen">
-      {/* In der Kampfsimulation stehen alle Kämpfer in der Liste; die Leiste oben fiele doppelt. */}
-      {!combat?.sim && <CharacterStrip view={view} weapons />}
+      {/* Die SC stehen oben in der Leiste, auch in der Kampfsimulation; die Liste dort zeigt nur die NSC. */}
+      <CharacterStrip view={view} weapons />
       {!combat ? (
         <section className="scroll combat-scroll">
           <p className="log-empty">Ohne lebenden Charakter gibt es keinen Angriff.</p>

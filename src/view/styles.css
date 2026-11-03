@@ -4550,3 +4550,7 @@ button:disabled {
   flex-direction: column;
   gap: 6px;
 }
+
+.pc-heal {
+  align-self: flex-start;
+}
