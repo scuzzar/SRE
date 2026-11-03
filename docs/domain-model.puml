@@ -248,6 +248,29 @@ hide <<value>> stereotype
     reaction: number
     ended: boolean
     /reactionText: string
+    rangeDice: number[2]
+    range: Range
+    round: number
+    acted: string[*]
+    /surprise: Side [0..1]
+    /first: Side
+    /turn: string [0..1]
+  }
+  class SurpriseRoll <<value>> {
+    die: number
+    dm: number
+  }
+  enum Side <<value>> {
+    pcs
+    npcs
+  }
+  class Terrain <<reference>> {
+    name: string
+    dm: number
+  }
+  class EncounterRange <<reference>> {
+    roll: number
+    range: Range
   }
   class Npc {
     name: string
@@ -277,6 +300,7 @@ hide <<value>> stereotype
     guns: boolean
     armor: boolean
     vehicle: boolean
+    military: boolean
   }
 
 ' Referenzdaten
@@ -665,6 +689,11 @@ Wounding ..> DamageRoll : on confirm
 ' Begegnung
 Campaign "1" *-- "*" Encounter : encounters {ordered}
 Encounter "*" --> "1" EncounterType : of
+Encounter "*" --> "0..1" Terrain : terrain
+Encounter "1" *-- "1" SurpriseRoll : pcSurprise
+Encounter "1" *-- "1" SurpriseRoll : npcSurprise
+Encounter --> Side
+EncounterRange -[hidden]- Terrain
 Encounter "*" --> "0..1" Hex : in
 Encounter "1" *-- "1..*" Npc : npcs {ordered}
 Npc "1" *-- "1" Upp : upp

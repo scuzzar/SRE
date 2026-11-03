@@ -88,6 +88,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > flüchtig der Angriff in Vorbereitung (`Attack`), im Log das Angriffsergebnis (`AttackResult`)
 > und der Schadenswurf (`DamageRoll`).
 >
+> **Entwurf, noch nicht freigegeben** (3. November 2026): **Kampfsimulation** getrennt von der
+> **Waffentabelle** (siehe *Zwei Modi im Reiter Kampf* und *Kampfsimulation*). Neu im Bild: an der
+> `Encounter` Entfernung (`rangeDice`, `range`, `terrain`), Überraschung (`pcSurprise`,
+> `npcSurprise`, `/surprise`, `/first`), Runde und Zug (`round`, `acted`, `/turn`); `Side`,
+> `SurpriseRoll`, als Referenzdaten `Terrain`, `EncounterRange` und `EncounterType.military`.
+>
 > Ebenfalls am 3. November 2026 freigegeben: **Heilung** (siehe *Heilung*). Neu im Bild:
 > der Logeintrag `Recovery` mit `RecoveryKind` (Aufwachen, Behandlung, Ruhe), Patient (`for` bzw.
 > `npc`) und Behandelnder (`by`).
@@ -197,6 +203,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Rüstungsklasse einer Rüstung | `Item.armor` | Wie eine Rüstung in der Matrix zählt, z. B. Vacc Suit als Cloth, Battle Dress als Combat |
 | Wunden | `/wounds`, `Wounds` | Wie viel STR, DEX und END jemand durch Treffer verloren hat |
 | Zustand | `/state`, `WoundState` | unverletzt, verwundet, bewusstlos (ein Attribut auf 0), schwer verwundet (zwei), tot (drei) |
+| Waffentabelle | (Modus des Reiters Kampf) | Die Tabelle der Waffe in der Hand mit frei gewählter Rüstung und Reichweite, ohne Begegnung |
+| Kampfsimulation | (Modus des Reiters Kampf) | Der Kampf einer laufenden Begegnung: Entfernung, Überraschung, Runden und Züge |
+| Entfernung | `Encounter.range` | Wie weit die Parteien auseinander sind; gilt für jeden Angriff der Begegnung |
+| Gelände | `Terrain` | Wo die Begegnung stattfindet, mit DM auf die Entfernung (S. 5), z. B. Clear +3, City −4 |
+| Überraschung | `pcSurprise`, `npcSurprise`, `/surprise` | 1W6 je Partei mit DMs (S. 5); wer 3 oder mehr höher liegt, hat Überraschung |
+| Partei | `Side` | Die SC (`pcs`) oder die NSC der Begegnung (`npcs`) |
+| Runde, Zug | `round`, `acted`, `/turn` | Eine Kampfrunde, in der jeder Kämpfer einmal dran ist; wer gerade dran ist |
 | Heilung | `Recovery` | Ein Logeintrag, der Wunden zurücknimmt: Aufwachen, Behandlung oder Ruhe (S. 7) |
 | Aufwachen | `RecoveryKind.wake` | Ein Bewusstloser kommt zu sich; die Wunden gehen zur Hälfte zurück, bei einer schweren Wunde nur auf mindestens 1 |
 | Behandlung | `RecoveryKind.treatment` | Ein SC mit Medical heilt die Wunden ganz: leichte mit Medical-1 und Medical Kit in 30 Minuten, schwere mit Medical-3 in einer medizinischen Einrichtung in 5W6 Tagen |
@@ -528,6 +541,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - *Anführer* (L): der erste NSC; er bekommt die beste Ausrüstung bis zum TL (die Waffe mit dem
     höchsten TL, bei Gleichstand die teuerste, ebenso die Rüstung, auch ohne A) und Fertigkeit 2.
   - *Fahrzeug* (V) hält die Art fest; im Kampf zählt es vorerst nicht.
+  - *Entfernung und Überraschung* werden beim Anlegen mitgewürfelt (siehe *Kampfsimulation*).
   - *Reaktion* (`reaction`): 2W6, DM −1 auf einer Welt mit Bevölkerung 9+; eine echte 2 oder 12
     bleibt, sonst begrenzt auf 3 bis 11. Der Text (`/reactionText`) kommt aus der Tabelle.
   - Es gibt höchstens **eine laufende Begegnung**. Sie bleibt gespeichert, bis man sie beendet
@@ -581,6 +595,38 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     aber nicht (`to` fehlt).
   - **Später**: Medical Drugs, Wunden mit Zeit, Munition der NSC, Fahrzeuge, Überraschung, Entfernung,
     Moral und Kampfrunden.
+- **Zwei Modi im Reiter Kampf.** Ohne laufende Begegnung zeigt der Reiter die **Waffentabelle**: die
+  Waffe in der Hand des Charakters oben, Rüstung und Reichweite frei gewählt (siehe *Angriff*). Wird
+  eine Begegnung gewürfelt oder gewählt, wechselt er in die **Kampfsimulation**; beendet man sie,
+  zeigt er wieder die Waffentabelle. Beides ist nur Anzeige; gespeichert wird die Begegnung.
+- **Kampfsimulation.** Gilt für die laufende Begegnung. Es kämpfen die SC (die Lebenden, nicht
+  ausgeblendet, ohne dauerhafte NSC) gegen die NSC der Begegnung, die nicht übernommen sind.
+  - *Entfernung*: Beim Anlegen der Begegnung 2W6 plus DM des Geländes (`terrain`, wählbar, ohne
+    Gelände ±0) auf die Encounter Ranges (S. 5): 1 Short, 2 Close, 3 Short, 4 Medium, 5 Short,
+    6 Medium, 7 Medium, 8 Long, 9 Medium, 10 Very Long, 11 Long, 12 Very Long; unter 1 gilt 1, über
+    12 gilt 12. Die Würfel (`rangeDice`) bleiben; die Entfernung (`range`) lässt sich jederzeit
+    ändern (näherkommen, zurückweichen) und gilt für jeden Angriff der Begegnung.
+  - *Überraschung* (S. 5): beim Anlegen 1W6 je Partei (`pcSurprise`, `npcSurprise`) mit DMs:
+    Battle Dress getragen +2; Leader-Fertigkeit +1 (bei NSC: ein Anführer); Tactics +1; militärische
+    Erfahrung (SC aus Army oder Marines, NSC einer militärischen Art: Soldiers, Marines, Security
+    Troops, Soldiers on Patrol) +1; Fahrzeug −1 (NSC mit V); 8 oder mehr in der Partei −1. Liegt
+    eine Partei 3 oder mehr höher, hat sie Überraschung (`/surprise`).
+  - *Reihenfolge* (Hausregel nach der Überraschung): Die Partei mit dem höheren Wurf zieht in jeder
+    Runde zuerst (`/first`), bei Gleichstand die SC; erst alle ihre Kämpfer, dann die der anderen.
+    Innerhalb einer Partei SC in der Reihenfolge der Kampagne, NSC in der der Begegnung. In Runde 1
+    zieht nur die Partei mit Überraschung, wenn es eine gibt.
+  - *Zug* (`/turn`): der erste Kämpfer dieser Reihenfolge, der in dieser Runde noch nicht dran war
+    (`acted`) und kämpfen kann (nicht bewusstlos, schwer verwundet oder tot). Ist keiner mehr übrig,
+    beginnt die nächste Runde (`round` + 1, `acted` leer).
+  - Im Zug wählt man nur das **Ziel** (einen Kämpfer der anderen Partei, der nicht tot ist) und
+    würfelt; Rüstung ist die des Ziels, Reichweite die Entfernung. Ist ein NSC dran, schlägt die App
+    einen zufälligen wachen SC als Ziel vor; man kann es ändern. Ist ein SC dran, steht er oben.
+  - Der Zug endet mit dem Angriff, sobald sein Schaden verteilt ist (oder er daneben ging), mit
+    **Nachladen** oder mit **Aussetzen**. Wunden wirken sofort: Wer bewusstlos wird, ist in dieser
+    Runde nicht mehr dran.
+  - Ist eine Partei ganz außer Gefecht (alle bewusstlos, schwer verwundet oder tot), ist der Kampf
+    entschieden; die Begegnung läuft weiter, bis man sie beendet.
+  - **Später**: Flucht (S. 5), Moral, Bewegung in Range Bands, Deckung, mehrere Gegnergruppen.
 - **Heilung.** Nach S. 7. Eine Heilung ist ein Logeintrag (`Recovery`) für einen verwundeten SC
   (`for`) oder NSC der laufenden Begegnung (`npc`), nie für einen Toten. Die Wunden (`/wounds`)
   folgen aus Schadenswürfen und Heilungen im Log, der Reihe nach; eine Heilung löschen nimmt sie
