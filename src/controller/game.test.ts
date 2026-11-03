@@ -605,9 +605,18 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot().combat!.sim!.fighters.find((f) => f.id === 'c1')!.state).toBe('unhurt');
     expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'recovery', how: 'rest', patient: 'Kira Vant' });
 
-    game.adoptNpc('n1', true);
+    game.adoptNpcs(['n1'], true);
     expect(game.snapshot().npcs).toHaveLength(1);
     expect(game.snapshot().combat!.sim!.fighters.map((f) => f.id)).toEqual(['n2', 'c1', 'c2']);
+  });
+  it('übernimmt mehrere NSC auf einmal; die Begegnung hat danach keine NSC mehr', async () => {
+    const { game } = await onRegina();
+    game.rollEncounter(15);
+    const before = game.snapshot().characters.length;
+    game.adoptNpcs(['n1', 'n2'], false);
+    expect(game.snapshot().characters.length).toBe(before + 2);
+    expect(game.snapshot().combat!.sim!.fighters.filter((f) => f.side === 'npcs')).toEqual([]);
+    expect(() => game.adoptNpcs(['n1'], true)).toThrow();
   });
 });
 

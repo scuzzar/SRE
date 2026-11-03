@@ -56,7 +56,7 @@ const steps: readonly [string, Step][] = [
     else if (h.rest && p(2)) g.recover('rest', npc, undefined, false, pc);
     else if (h.treatable && healer) g.recover('treatment', npc, healer, true, pc);
   }],
-  ['adopt', (g, p) => { const n = g.snapshot().combat?.sim?.fighters.filter((f) => f.side === 'npcs' && f.state !== 'dead') ?? []; if (n.length && !p(4)) g.adoptNpc(n[p(n.length)]!.id, p(2) === 0); }],
+  ['adopt', (g, p) => { const n = g.snapshot().combat?.sim?.fighters.filter((f) => f.side === 'npcs' && f.state !== 'dead') ?? []; if (n.length && !p(4)) g.adoptNpcs(n.filter(() => p(2) === 0).map((f) => f.id), p(2) === 0); }],
   ['close', (g) => g.snapshot().result && g.closeResult()],
   ['remove', (g, p) => { const c = g.snapshot().characters; if (c.length > 1 && !p(6)) g.removeCharacter(c[p(c.length)]!.id); }],
   ['kill', (g, p) => { const c = g.snapshot().characters; if (c.length > 1 && !p(8)) { const who = c[p(c.length)]!; g.editCharacter(who.id); g.saveCharacter({ ...g.snapshot().editor!.input, dead: true }); } }],

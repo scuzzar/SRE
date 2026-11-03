@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 import type { CombatView, FighterView, SimView } from '../../controller';
 import { damageDetail, hex, partLabel, rangeText, signed, woundStateText } from '../format';
 import { useGame } from '../game-context';
@@ -14,6 +14,17 @@ import type { Patient } from './CombatScreen';
  */
 export function FightScreen({ combat, onHeal }: { combat: CombatView; onHeal: (patient: Patient) => void }) {
   const sim = combat.sim!;
+  // Welche NSC zum Übernehmen angehakt sind; undefined heißt: keine Auswahl offen. Reine Anzeige,
+  // übernehmen tut der Controller. Wer nicht mehr übernommen werden kann, fällt heraus.
+  const [chosen, setChosen] = useState<readonly string[] | undefined>(undefined);
+  const adoptable = sim.fighters.filter(canAdopt).map((f) => f.id);
+  const picked = chosen?.filter((id) => adoptable.includes(id));
+  const selection: Selection = {
+    picked,
+    start: (id) => setChosen([id]),
+    toggle: (id) => setChosen((now) => (now === undefined ? [id] : now.includes(id) ? now.filter((n) => n !== id) : [...now, id])),
+    end: () => setChosen(undefined),
+  };
   return (
     <>
       <section className="scroll combat-scroll fight" aria-label="Kampfsimulation">
@@ -25,15 +36,78 @@ export function FightScreen({ combat, onHeal }: { combat: CombatView; onHeal: (p
         )}
         <RangeBar sim={sim} />
         <PcHeal sim={sim} character={combat.character} onHeal={onHeal} />
-        <Fighters sim={sim} onHeal={onHeal} />
+        <Fighters sim={sim} onHeal={onHeal} selection={selection} />
         <Recent combat={combat} />
       </section>
-      <FightDock combat={combat} sim={sim} />
+      {picked ? <AdoptDock picked={picked} selection={selection} /> : <FightDock combat={combat} sim={sim} />}
     </>
   );
 }
 
 const sideName = { pcs: 'SC', npcs: 'NSC' } as const;
+
+/** Übernehmen lässt sich jeder NSC, der noch lebt; Übernommene stehen nicht mehr in der Liste. */
+const canAdopt = (f: FighterView) => f.side === 'npcs' && f.state !== 'dead';
+
+/** Die Auswahl der NSC zum Übernehmen: `picked` ist offen, solange es sie gibt. */
+interface Selection {
+  readonly picked: readonly string[] | undefined;
+  start(id: string): void;
+  toggle(id: string): void;
+  end(): void;
+}
+
+/** So lange muss man auf einen NSC drücken, bis die Auswahl zum Übernehmen aufgeht. */
+const LONG_PRESS_MS = 550;
+/** So weit darf sich der Finger bewegen (Scrollen), ohne dass der lange Druck abbricht. */
+const SLOP_PX = 10;
+
+/**
+ * Langes Drücken (oder ein Rechtsklick) löst `onHold` aus; das Loslassen danach ist kein Tippen.
+ * Gibt die Handler für das Element und `consumed()` für dessen Klick zurück.
+ */
+function useLongPress(onHold: () => void) {
+  const press = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | undefined>(undefined);
+  const held = useRef(false);
+  const cancel = () => {
+    if (press.current) clearTimeout(press.current.timer);
+    press.current = undefined;
+  };
+  useEffect(() => cancel, []);
+  const hold = () => {
+    cancel();
+    held.current = true;
+    haptic('confirm');
+    onHold();
+  };
+  return {
+    handlers: {
+      onPointerDown: (e: PointerEvent) => {
+        held.current = false;
+        if (e.button !== 0) return;
+        cancel();
+        press.current = { timer: setTimeout(hold, LONG_PRESS_MS), x: e.clientX, y: e.clientY };
+      },
+      onPointerMove: (e: PointerEvent) => {
+        if (press.current && Math.hypot(e.clientX - press.current.x, e.clientY - press.current.y) > SLOP_PX) cancel();
+      },
+      onPointerUp: cancel,
+      onPointerCancel: cancel,
+      onPointerLeave: cancel,
+      // Auf dem Handy folgt dem langen Druck oft noch das Kontextmenü; das ist derselbe Druck.
+      onContextMenu: (e: MouseEvent) => {
+        e.preventDefault();
+        if (!held.current) hold();
+      },
+    },
+    /** Ob der Klick nur das Ende eines langen Drucks ist; dann zählt er nicht. */
+    consumed: () => {
+      const was = held.current;
+      held.current = false;
+      return was;
+    },
+  };
+}
 
 function FightHead({ sim }: { sim: SimView }) {
   const game = useGame();
@@ -94,39 +168,63 @@ function PcHeal({ sim, character, onHeal }: { sim: SimView; character: string; o
   );
 }
 
-/** Die NSC der Begegnung; die SC stehen oben in der Leiste. Wer zum Ziel eines SC am Zug taugt, lässt sich antippen. */
-function Fighters({ sim, onHeal }: { sim: SimView; onHeal: (patient: Patient) => void }) {
+/**
+ * Die NSC der Begegnung; die SC stehen oben in der Leiste. Wer zum Ziel eines SC am Zug taugt, lässt
+ * sich antippen. Langes Drücken auf einen NSC öffnet die Auswahl zum Übernehmen; dann hakt Antippen an.
+ */
+function Fighters({ sim, onHeal, selection }: { sim: SimView; onHeal: (patient: Patient) => void; selection: Selection }) {
   const fighters = sim.fighters.filter((f) => f.side === 'npcs');
   if (fighters.length === 0) return null;
   return (
     <div className="fighters">
-      <h3 className="section-title" style={{ fontSize: 11 }}>
-        NSC
-      </h3>
+      <div className="fighters-head">
+        <h3 className="section-title" style={{ fontSize: 11 }}>
+          NSC
+        </h3>
+        {!selection.picked && fighters.some(canAdopt) && <span className="log-hint">lange drücken zum Übernehmen</span>}
+      </div>
       <ol className="fighter-list">
         {fighters.map((f) => (
-          <FighterRow key={f.id} fighter={f} onHeal={onHeal} />
+          <FighterRow key={f.id} fighter={f} onHeal={onHeal} selection={selection} />
         ))}
       </ol>
     </div>
   );
 }
 
-function FighterRow({ fighter: f, onHeal }: { fighter: FighterView; onHeal: (patient: Patient) => void }) {
+function FighterRow({ fighter: f, onHeal, selection }: { fighter: FighterView; onHeal: (patient: Patient) => void; selection: Selection }) {
   const game = useGame();
-  // Ob „Übernehmen als SC / als NSC“ offen ist, ist reine Anzeige.
-  const [adopting, setAdopting] = useState(false);
+  const adoptable = canAdopt(f);
+  const choosing = selection.picked !== undefined;
+  const checked = selection.picked?.includes(f.id) ?? false;
+  const press = useLongPress(() => (choosing ? selection.toggle(f.id) : selection.start(f.id)));
   const physical = (['str', 'dex', 'end'] as const).map((k) => ({ k, value: f.current[k], hurt: f.current[k] < f.upp[k] }));
-  const classes = ['fighter', f.turn ? 'turn' : '', f.targeted ? 'targeted' : '', f.acted ? 'acted' : '', f.state === 'dead' ? 'out' : ''].filter(Boolean).join(' ');
-  const pick = () => {
-    if (!f.targetable) return;
+  const classes = ['fighter', f.turn ? 'turn' : '', f.targeted && !choosing ? 'targeted' : '', checked ? 'chosen' : '', f.acted ? 'acted' : '', f.state === 'dead' ? 'out' : ''].filter(Boolean).join(' ');
+  // In der Auswahl hakt Antippen an; sonst wählt es das Ziel, wenn der NSC dazu taugt.
+  const enabled = choosing ? adoptable : f.targetable;
+  const tap = () => {
+    if (press.consumed() || !enabled) return;
     haptic('pick');
-    game.chooseFightTarget(f.id);
+    if (choosing) selection.toggle(f.id);
+    else game.chooseFightTarget(f.id);
   };
+  const role = choosing ? { role: 'checkbox', 'aria-checked': checked } : { 'aria-pressed': f.targetable ? f.targeted : undefined };
   return (
     <li className={classes}>
-      <button type="button" className="fighter-main" aria-pressed={f.targetable ? f.targeted : undefined} disabled={!f.targetable} onClick={pick} aria-label={`${f.name}${f.turn ? ', am Zug' : ''}${f.targetable ? ', als Ziel wählen' : ''}`}>
+      <button
+        type="button"
+        className="fighter-main"
+        {...role}
+        aria-disabled={!enabled || undefined}
+        {...(adoptable ? press.handlers : {})}
+        onClick={tap}
+        aria-label={`${f.name}${f.turn ? ', am Zug' : ''}${choosing ? (adoptable ? ', zum Übernehmen wählen' : '') : f.targetable ? ', als Ziel wählen' : ''}`}
+        aria-description={adoptable && !choosing ? 'Lange drücken: übernehmen' : undefined}
+      >
         <span className="fighter-name">
+          {choosing && adoptable && <span className={checked ? 'fighter-check checked' : 'fighter-check'} aria-hidden="true">
+              {checked ? '✓' : ''}
+            </span>}
           {f.turn && <span className="fighter-turn">▶ </span>}
           {f.name}
           {f.leader && <span className="npc-leader"> · Anführer</span>}
@@ -146,28 +244,11 @@ function FighterRow({ fighter: f, onHeal }: { fighter: FighterView; onHeal: (pat
           </span>
         </span>
       </button>
-      {(f.healing.wake || f.healing.treatable || f.side === 'npcs') && (
+      {!choosing && (f.healing.wake || f.healing.treatable) && (
         <div className="npc-actions">
-          {(f.healing.wake || f.healing.treatable) && (
-            <button type="button" className="ghost compact" onClick={() => onHeal(f.side === 'npcs' ? { npc: f.id, name: f.name } : { npc: undefined, pc: f.id, name: f.name })}>
-              Heilen
-            </button>
-          )}
-          {f.side === 'npcs' && f.state !== 'dead' &&
-            (adopting ? (
-              <>
-                <button type="button" className="ghost compact" onClick={() => game.adoptNpc(f.id, false)}>
-                  Als SC
-                </button>
-                <button type="button" className="ghost compact" onClick={() => game.adoptNpc(f.id, true)}>
-                  Als NSC
-                </button>
-              </>
-            ) : (
-              <button type="button" className="ghost compact" onClick={() => setAdopting(true)}>
-                Übernehmen
-              </button>
-            ))}
+          <button type="button" className="ghost compact" onClick={() => onHeal(f.side === 'npcs' ? { npc: f.id, name: f.name } : { npc: undefined, pc: f.id, name: f.name })}>
+            Heilen
+          </button>
         </div>
       )}
     </li>
@@ -223,7 +304,7 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
           </span>
         </div>
       ) : (
-        <p className="combat-pick">{sim.defeated ? 'Der Kampf ist entschieden. Heilen, übernehmen oder die Begegnung beenden.' : 'Keiner ist am Zug.'}</p>
+        <p className="combat-pick">{sim.defeated ? 'Der Kampf ist entschieden. Heilen, übernehmen (lange drücken) oder die Begegnung beenden.' : 'Keiner ist am Zug.'}</p>
       )}
       <div className="actions fight-actions">
         {combat.damage ? (
@@ -264,6 +345,35 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
             </button>
           </>
         )}
+      </div>
+    </section>
+  );
+}
+
+/** Unten statt der Zugknöpfe, solange NSC zum Übernehmen gewählt werden: als SC, als NSC oder abbrechen. */
+function AdoptDock({ picked, selection }: { picked: readonly string[]; selection: Selection }) {
+  const game = useGame();
+  const adopt = (asNpc: boolean) => {
+    haptic('confirm');
+    game.adoptNpcs(picked, asNpc);
+    selection.end();
+  };
+  return (
+    <section className="dock" aria-label="Übernehmen">
+      <div className="fight-turn" aria-live="polite">
+        <strong>{picked.length === 0 ? 'NSC antippen zum Übernehmen' : `${picked.length} NSC übernehmen`}</strong>
+        <span className="small-label">Als SC kämpfen sie mit, als dauerhafte NSC stehen sie im Charakter-Screen unter „NSC“.</span>
+      </div>
+      <div className="actions fight-actions">
+        <button type="button" className="action dice" onClick={selection.end}>
+          Abbrechen
+        </button>
+        <button type="button" className="action dice" disabled={picked.length === 0} onClick={() => adopt(true)}>
+          Als NSC
+        </button>
+        <button type="button" className="action task-roll" disabled={picked.length === 0} onClick={() => adopt(false)}>
+          Als SC
+        </button>
       </div>
     </section>
   );

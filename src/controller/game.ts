@@ -581,11 +581,16 @@ export class GameController {
     }
   }
 
-  /** Übernimmt einen NSC als SC oder als dauerhaften NSC. */
-  adoptNpc(npc: string, asNpc: boolean): void {
+  /** Übernimmt die gewählten NSC auf einmal als SC oder als dauerhafte NSC. */
+  adoptNpcs(npcs: readonly string[], asNpc: boolean): void {
+    if (npcs.length === 0) return;
     const attack = this.state.attack;
-    const keep = attack && attack.against !== npc && attack.by !== npc ? attack : undefined;
-    this.change(adoptNpc(this.campaign, npc, asNpc), { attack: keep });
+    const involved = (id: string | undefined) => id !== undefined && npcs.includes(id);
+    const keep = attack && !involved(attack.against) && !involved(attack.by) ? attack : undefined;
+    this.change(
+      npcs.reduce((campaign, npc) => adoptNpc(campaign, npc, asNpc), this.campaign),
+      { attack: keep },
+    );
   }
 
   /** Lädt die Schusswaffe in der Hand des Charakters oben mit einem Magazin aus seinem Besitz nach. */

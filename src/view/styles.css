@@ -4441,9 +4441,45 @@ button:disabled {
   text-align: left;
 }
 
-.fighter-main:disabled {
-  color: var(--text);
-  opacity: 1;
+.fighter-main[aria-disabled='true'] {
+  cursor: default;
+}
+
+.fighter-main {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.fighter.chosen {
+  border-color: var(--accent-text);
+  background: var(--accent-wash);
+}
+
+.fighters-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.fighter-check {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  vertical-align: -3px;
+  border: 1.5px solid var(--line-strong);
+  background: var(--raised);
+  color: var(--panel);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.fighter-check.checked {
+  border-color: var(--accent-text);
+  background: var(--accent-text);
 }
 
 .fighter-main .npc-stats {

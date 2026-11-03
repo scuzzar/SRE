@@ -67,6 +67,26 @@ test('Kampf: Waffentabelle ohne Begegnung; mit Begegnung die Simulation mit Rund
   }
   await page.getByRole('button', { name: 'Aussetzen' }).click();
 
+  // Übernehmen: Langes Drücken auf einen NSC öffnet die Auswahl mit Haken; unten stehen dann
+  // „Als SC“ und „Als NSC“ statt der Zugknöpfe. Antippen hakt weitere an.
+  const alive = page.locator('.fighter:not(.out) .fighter-main');
+  const before = await page.locator('.fighter').count();
+  const box = (await alive.first().boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(800);
+  await page.mouse.up();
+  const adopt = page.getByRole('region', { name: 'Übernehmen' });
+  await expect(adopt).toContainText('1 NSC übernehmen');
+  await expect(page.getByRole('button', { name: 'Angreifen' })).toHaveCount(0);
+  await expect(alive.first()).toHaveAttribute('aria-checked', 'true');
+  const chosen = (await alive.count()) > 1 ? 2 : 1;
+  if (chosen === 2) await alive.nth(1).click();
+  await expect(adopt).toContainText(`${chosen} NSC übernehmen`);
+  await adopt.getByRole('button', { name: 'Als NSC' }).click();
+  await expect(page.locator('.fighter')).toHaveCount(before - chosen);
+  await expect(page.getByRole('region', { name: 'Übernehmen' })).toHaveCount(0);
+
   await page.getByRole('button', { name: 'Beenden' }).click();
   await expect(page.locator('.combat-table')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Begegnung würfeln' })).toBeVisible();

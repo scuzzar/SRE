@@ -42,7 +42,7 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   `focusCharacter(id)` (Wischen), `chooseSkill(skill)`, `toggleCharacteristic(c)`, `rollTask()`,
   `endTask()`; für den Kampf `wieldWeapon(weapon)`, `chooseTarget(armor, range)`, `endAttack()`,
   `rollAttack()`, `rollDamage()`, `reload()`, `wear(item)`, für Begegnungen `rollEncounter(roll)`,
-  `endEncounter()`, `adoptNpc(npc, asNpc)`, in der Kampfsimulation `chooseFightTarget(id)`,
+  `endEncounter()`, `adoptNpcs(npcs, asNpc)`, in der Kampfsimulation `chooseFightTarget(id)`,
   `setRange(range)`, `fightAttack()`, `fightReload()` und `skipTurn()`, für Heilung
   `recover(how, npc, healer, facility, pc)` und für Wunden an SC
   `assignWound(to)`, `unassignWound()`, `confirmWounding()`; für Shop und Gruppenkasse `stayHere()` (auf der
