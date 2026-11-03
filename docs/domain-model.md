@@ -77,6 +77,11 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > keinen `PickedItem` mehr (`items` jetzt `*`). Der UI-Entwurf dazu liegt unter
 > [`ui-entwurf/kartensymbol/`](ui-entwurf/kartensymbol/). Bis zur Freigabe folgt der Code nicht.
 >
+> Zum selben Entwurf gehören die **Namen auf der Tafel NSC**: sechs Felder statt drei, je weiblich,
+> männlich und neutral, einmal irdisch und einmal spacig; der Bereich *Namen* fällt dafür weg
+> (siehe *Namen*). Dazu **Name von der Karte** beim Benennen von Charakteren und Welten (siehe
+> dort). Das Bild ändert sich dadurch nicht: Felder, Spalten und Einträge sind Referenzdaten.
+>
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen, die drei Namen sowie die Themen-Tafeln NSC, NSC-Aktionen,
 > Welt (mit Schiff), Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
@@ -143,6 +148,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Bereich der Karte, Themen-Tafel | `Section` | Zufallsereignis, Sinneseindrücke, …; NSC, Welt, … |
 | Feld der Karte | `Slot` | Aktion, Hören, Aussehen, Name, Auslöser, … |
 | Spalte | `Column` | Eine Liste von Einträgen in einem Feld; ein Feld hat eine oder zwei |
+| Klangart der Namen | (Felder der Tafel NSC) | Irdisch (Namen von der Erde) oder spacig (erfunden, fremd klingend) |
+| Name von der Karte | (Knopf neben einem Namensfeld) | Zieht die sechs Namensfelder und schreibt den gewählten Namen ins Feld; kein Logeintrag |
 | Paar | (zwei Einträge im `drawn` eines Feldes) | Was ein Feld mit zwei Spalten zieht: aus jeder Spalte einen Eintrag, z. B. „verraten · Technologie“ |
 | Eintrag | `Entry` | Ein möglicher Text eines Feldes, z. B. „Schulden begleichen.“ |
 | Charaktererschaffung | `Generation` | Ein Charakter, der gerade nach den Regeln entsteht; wird beim Abschluss zum `Character` |
@@ -272,9 +279,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Spalten einen nicht ausgeblendeten Eintrag zufällig (`drawn`), die Themen-Tafeln eingeschlossen,
   in der Reihenfolge der Bereiche, Felder und Spalten. Ein Feld mit zwei Spalten zieht so ein
   **Paar**. Ausgeblendete Felder übergeht es (siehe *Einträge austauschen*).
-  Eine gestellte Frage geht auf die Karte über. Der Bereich *Namen* hat drei Felder (eher weiblich,
-  eher männlich, neutral bzw. Genre-Name), wie auf der GMA-Karte; jedes zieht ein Paar aus Vor- und
-  Nachname (siehe *Namen*).
+  Eine gestellte Frage geht auf die Karte über. Die Namen stehen auf der Themen-Tafel *NSC* in
+  sechs Feldern; jedes zieht ein Paar aus Vor- und Nachname (siehe *Namen*).
 - **Die Karte ist offen, bis man sie bestätigt oder verwirft.** Antippen nimmt ein gezogenes Feld
   in die Auswahl (`picked`) auf oder wieder heraus, mit allem, was es gezogen hat: Ein Paar nimmt
   man immer ganz, nie einen Begriff allein. Ausgewählt sein kann nur ein Feld, das gezogen wurde. *Verwerfen* schließt die Karte ohne Logeintrag. *Neu ziehen* ersetzt sie durch eine neue;
@@ -500,14 +506,27 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
   In den Daten steht jede Tabelle nur einmal (`src/data/mythic-tables.json`); die Spalten entstehen
   beim Laden.
-- **Namen.** Jedes der drei Namensfelder hat zwei Spalten: Vornamen, für jedes Feld eigene, und
-  Nachnamen. Die Nachnamen kommen aus einer gemeinsamen Liste; jedes Feld hat sie als eigene Spalte
-  mit eigenen Einträgen, sodass jeder Eintrag zu genau einer Spalte gehört, wie bei den
-  Elements-Tabellen. So sind die drei Vornamen immer verschieden, die Nachnamen können gleich
-  ausfallen. Die Namen sind eigene Inhalte und passen grob ins Third Imperium: überwiegend irdisch
-  und aus allen Weltgegenden, etwa ein Fünftel erfunden und fremd klingend, angelehnt an den Klang
-  der Vilani. In den Daten steht jede Liste nur einmal (`src/data/names.json`); die Spalten
-  entstehen beim Laden. Die früheren Platzhalter-Vornamen bleiben ausgeblendet in ihrer Spalte.
+- **Namen.** Die Namen gehören zur Themen-Tafel *NSC*. Sie hat sechs Namensfelder, je weiblich,
+  männlich und neutral wie auf der GMA-Karte, und jedes zweimal: **irdisch** (Namen aus allen
+  Weltgegenden der Erde) und **spacig** (erfunden und fremd klingend, angelehnt an den Klang der
+  Vilani). Auf der Tafel stehen sie in zwei Reihen: oben irdisch, unten spacig, jeweils weiblich,
+  männlich, neutral. Jedes Feld hat zwei Spalten, Vornamen und Nachnamen; irdische Vornamen bekommen
+  irdische Nachnamen, spacige spacige. Die Nachnamen einer Klangart kommen aus einer gemeinsamen
+  Liste; jedes Feld hat sie als eigene Spalte mit eigenen Einträgen, sodass jeder Eintrag zu genau
+  einer Spalte gehört, wie bei den Elements-Tabellen. Die Namen sind eigene Inhalte. In den Daten
+  steht jede Liste nur einmal (`src/data/names.json`), je Name mit seiner Klangart; die Spalten
+  entstehen beim Laden.
+  - Der frühere Bereich *Namen* mit drei Feldern bleibt mit allen Einträgen ausgeblendet in den
+    Daten, damit alte Logeinträge ihre Namen behalten; auf der Karte fehlt er. Die sechs neuen Felder
+    haben neue Ids.
+- **Name von der Karte.** Wo man einen Namen eintippt, für einen Charakter (letzter Schritt der
+  Charaktererschaffung, Charakter-Editor) oder für eine Welt (letzter Schritt der
+  Weltenerschaffung), steht neben dem Feld ein Knopf **Karte**. Er zieht nur die sechs Namensfelder
+  der Tafel NSC, nach denselben Regeln wie *Karte ziehen*, und zeigt sie zur Wahl. Ein Tippen auf
+  einen Namen schreibt „Vorname Nachname“ ins Feld, bei einer Welt nur den Vornamen, und schließt
+  die Wahl; danach lässt sich der Text wie getippt ändern. *Neu ziehen* zeigt sechs andere.
+  Gespeichert wird nur der Name, so wie er am Ende im Feld steht; die Wahl selbst ist kein
+  Logeintrag und verweist auf nichts.
 - **Einträge austauschen.** Ein Eintrag, der nicht mehr gezogen werden soll, wird nicht gelöscht und
   seine Id nicht neu vergeben, sondern ausgeblendet (`retired`): Ziehen übergeht ihn, alte
   Logeinträge zeigen ihn weiter mit seinem Text. Ob ein Log auf ihn verweist, weiß nur das jeweilige
