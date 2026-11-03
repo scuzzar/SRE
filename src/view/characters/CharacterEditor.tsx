@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { EditorView, ItemChoice, SkillChoice } from '../../controller';
 import type { ItemKind, Upp } from '../../model';
-import { characteristicLabel, hex } from '../format';
+import { characteristicLabel, hex, kindNames } from '../format';
 import { useGame } from '../game-context';
 import { CloseIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
@@ -15,16 +15,6 @@ const uppFields = [
   ['soc', 'SOC'],
 ] as const;
 
-const kindNames: Record<ItemKind, string> = {
-  weapon: 'Waffen',
-  ammunition: 'Munition',
-  armor: 'Rüstungen',
-  equipment: 'Ausrüstung',
-  vehicle: 'Fahrzeuge',
-  ship: 'Schiffe und Small Craft',
-  passage: 'Passagen',
-  membership: 'Mitgliedschaften',
-};
 
 /** Charakter anlegen oder bearbeiten. Die Eingaben während des Tippens hält die View; prüfen und speichern tut der Controller. */
 export function CharacterEditor({ editor, skills, items }: { editor: EditorView; skills: readonly SkillChoice[]; items: readonly ItemChoice[] }) {

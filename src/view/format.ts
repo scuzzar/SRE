@@ -1,5 +1,5 @@
 import type { AttackItem, CardItem, DamageItem, DmPart, LogItem, TaskItem } from '../controller';
-import type { ArmorClass, AttackKind, Characteristic, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
+import type { ArmorClass, AttackKind, BookingKind, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
 
@@ -18,6 +18,26 @@ export const characteristicLabel: Record<Characteristic, string> = {
   INT: 'INT',
   EDU: 'EDU',
   SOC: 'SOC',
+};
+
+/** Die Arten der Gegenstände, wie Editor und Shop sie gruppieren. */
+export const kindNames: Record<ItemKind, string> = {
+  weapon: 'Waffen',
+  ammunition: 'Munition',
+  armor: 'Rüstungen',
+  equipment: 'Ausrüstung',
+  vehicle: 'Fahrzeuge',
+  ship: 'Schiffe und Small Craft',
+  passage: 'Passagen',
+  membership: 'Mitgliedschaften',
+};
+
+export const bookingText: Record<BookingKind, string> = {
+  income: 'Einnahme',
+  expense: 'Ausgabe',
+  deposit: 'Einzahlung',
+  payout: 'Auszahlung',
+  purchase: 'Kauf',
 };
 
 /** Die Rüstungsklassen, wie die Matrix sie schreibt. */

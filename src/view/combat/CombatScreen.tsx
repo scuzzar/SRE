@@ -45,6 +45,11 @@ function WeaponHead({ combat }: { combat: CombatView }) {
           {attackText[weapon.attack]} · Schaden {weapon.wounds}W6
         </span>
       </div>
+      {combat.ammo && (
+        <p className={combat.ammo.rounds === 0 ? 'weapon-ammo empty' : 'weapon-ammo'}>
+          Magazin {combat.ammo.rounds}/{combat.ammo.capacity} Schuss · {combat.ammo.magazines} × {combat.ammo.magazine}
+        </p>
+      )}
       <p className="weapon-dms">
         {base.map(partLabel).join(' · ')}
         <span className="muted">
@@ -176,10 +181,23 @@ function AttackDock({ combat }: { combat: CombatView }) {
             Schaden würfeln ({combat.damage.wounds}W6)
           </button>
         )}
+        {combat.ammo && (combat.ammo.rounds < combat.ammo.capacity || combat.ammo.rounds === 0) && (
+          <button
+            type="button"
+            className="action dice"
+            disabled={combat.ammo.magazines === 0}
+            onClick={() => {
+              haptic('pick');
+              game.reload();
+            }}
+          >
+            Nachladen ({combat.ammo.magazines})
+          </button>
+        )}
         <button
           type="button"
           className="action task-roll"
-          disabled={!target}
+          disabled={!target || combat.ammo?.rounds === 0}
           onClick={() => {
             haptic('land');
             game.rollAttack();

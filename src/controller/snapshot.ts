@@ -1,5 +1,13 @@
 import {
   activeSkills,
+  ammoOf,
+  fundsOf,
+  hexId,
+  itemKinds,
+  locationOf,
+  offerOf,
+  ehex,
+  uwpCode,
   armorClasses,
   armorDm,
   attackCharacteristic,
@@ -44,6 +52,7 @@ import {
   type ArmorClass,
   type AttackKind,
   type AttackResult,
+  type BookingKind,
   type Campaign,
   type DamageRoll,
   type ItemKind,
@@ -116,6 +125,10 @@ export interface Snapshot {
   readonly task: TaskView | undefined;
   /** Der Reiter Kampf für den Charakter oben; fehlt, wenn es keinen Lebenden gibt. */
   readonly combat: CombatView | undefined;
+  /** Der Reiter Shop: Kasse und Angebot auf dem Aufenthaltsort. */
+  readonly shop: ShopView | undefined;
+  /** Der Aufenthaltsort der Gruppe, als Feld (0304). */
+  readonly location: string | undefined;
   /** Das Ergebnis-Popup nach einer Probe oder einem Angriff. */
   readonly result: TaskItem | AttackItem | undefined;
   readonly editor: EditorView | undefined;
@@ -154,7 +167,7 @@ export interface ItemChoice {
   readonly weapon: string | undefined;
 }
 
-export type Screen = 'oracle' | 'combat' | 'characters' | 'sector' | 'about';
+export type Screen = 'oracle' | 'combat' | 'shop' | 'characters' | 'sector' | 'about';
 
 export interface CampaignChoice {
   readonly id: string;
@@ -316,6 +329,46 @@ export interface CombatView {
   readonly damage: { readonly index: number; readonly weapon: string; readonly wounds: number } | undefined;
   /** Die letzten Angriffe des Logs, das Neueste zuletzt, mit ihrem Schaden. */
   readonly recent: readonly { readonly index: number; readonly item: AttackItem; readonly damage: DamageItem | undefined }[];
+  /** Bei Schusswaffen: geladene Schuss, Größe des Magazins, wie viele Magazine (mit Namen) im Besitz sind. */
+  readonly ammo: { readonly rounds: number; readonly capacity: number; readonly magazine: string; readonly magazines: number } | undefined;
+}
+
+export interface ShopItem {
+  readonly id: string;
+  readonly label: string;
+  readonly kind: ItemKind;
+  readonly tl: number | undefined;
+  readonly price: number;
+  /** Ab welcher Gesetzesstufe verboten, wenn das Gesetz der Welt ihn verbietet; kaufen geht trotzdem. */
+  readonly banned: number | undefined;
+  readonly once: boolean;
+  /** Reicht die Kasse für einen? */
+  readonly affordable: boolean;
+}
+
+export interface BookingItem {
+  readonly at: string;
+  readonly kind: BookingKind;
+  readonly amount: number;
+  readonly text: string | undefined;
+  readonly character: string | undefined;
+  readonly item: string | undefined;
+  readonly count: number | undefined;
+  readonly world: string | undefined;
+}
+
+export interface ShopView {
+  /** Der Stand der Gruppenkasse in Cr. */
+  readonly funds: number;
+  /** Der Aufenthaltsort; ohne ihn gibt es kein Angebot. */
+  readonly world: { readonly id: string; readonly name: string; readonly uwp: string; readonly tech: string; readonly law: string } | undefined;
+  /** Das Angebot nach Art des Gegenstands, in der Reihenfolge der Liste. */
+  readonly offer: readonly { readonly kind: ItemKind; readonly items: readonly ShopItem[] }[];
+  /** Die Buchungen, die neueste zuerst. */
+  readonly bookings: readonly BookingItem[];
+  /** Die Lebenden, für Kauf, Einzahlung und Auszahlung, mit ihren Credits. */
+  readonly members: readonly { readonly id: string; readonly name: string; readonly credits: number }[];
+  readonly error: string | undefined;
 }
 
 export interface CardView {
@@ -409,6 +462,8 @@ export interface ControllerState {
   readonly task: Task | undefined;
   /** Der Angriff in Vorbereitung, für den Charakter oben. */
   readonly attack: Attack | undefined;
+  /** Was im Shop zuletzt nicht ging. */
+  readonly shopError: string | undefined;
   /** Der Charakter, dessen Details im Charakter-Screen aufgeklappt sind. */
   readonly opened: string | undefined;
   /** Die Leiste mit dem Charakter oben ist eingeklappt; das Gerät merkt es sich. */
@@ -622,6 +677,40 @@ function combatView(campaign: Campaign, attack: Attack | undefined, log: readonl
           }
         : undefined,
     recent,
+    ammo: (() => {
+      const ammo = ammoOf(character);
+      return ammo && { rounds: ammo.rounds, capacity: ammo.capacity, magazine: itemLabel(itemOf(ammo.ammo)), magazines: ammo.magazines };
+    })(),
+  };
+}
+
+function shopView(campaign: Campaign, error: string | undefined): ShopView {
+  const funds = fundsOf(campaign);
+  const world = locationOf(campaign);
+  const offer = world ? offerOf(world) : [];
+  const kinds = itemKinds.filter((kind) => offer.some((o) => o.item.kind === kind));
+  const name = (id: string | undefined) => (id === undefined ? undefined : campaign.characters.find((c) => c.id === id)?.name);
+  return {
+    funds,
+    world: world && { id: hexId(world.column, world.row), name: world.name, uwp: uwpCode(world.uwp), tech: ehex(world.uwp.tech ?? 0), law: ehex(world.uwp.law ?? 0) },
+    offer: kinds.map((kind) => ({
+      kind,
+      items: offer
+        .filter((o) => o.item.kind === kind)
+        .map((o) => ({ id: o.item.id, label: itemLabel(o.item), kind, tl: o.item.tl, price: o.price, banned: o.banned, once: o.item.once, affordable: o.price <= funds })),
+    })),
+    bookings: [...campaign.bookings].reverse().map((b) => ({
+      at: b.at,
+      kind: b.kind,
+      amount: b.amount,
+      text: b.text,
+      character: name(b.for),
+      item: b.bought === undefined ? undefined : itemLabel(itemOf(b.bought)),
+      count: b.count,
+      world: b.in === undefined ? undefined : (campaign.hexes.find((h) => hexId(h.column, h.row) === b.in)?.name ?? b.in),
+    })),
+    members: livingCharacters(campaign).map((c) => ({ id: c.id, name: c.name, credits: c.credits })),
+    error,
   };
 }
 
@@ -732,7 +821,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], retired: [], task: undefined, combat: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], retired: [], task: undefined, combat: undefined, shop: undefined, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -753,6 +842,8 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
     combat: combatView(campaign, state.attack, log),
+    shop: shopView(campaign, state.shopError),
+    location: campaign.location,
     result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' ? resultItem : undefined,
     editor: state.editor && {
       id: state.editor.id,

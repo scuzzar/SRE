@@ -52,7 +52,8 @@ export const SectionSchema = z.object({
 
 export const CharacteristicSchema = z.enum(['STR', 'DEX', 'END', 'INT', 'EDU', 'SOC']);
 
-export const ItemKindSchema = z.enum(['weapon', 'ammunition', 'armor', 'equipment', 'vehicle', 'ship', 'passage', 'membership']);
+export const itemKinds = ['weapon', 'ammunition', 'armor', 'equipment', 'vehicle', 'ship', 'passage', 'membership'] as const;
+export const ItemKindSchema = z.enum(itemKinds);
 
 /** Ein Gegenstand aus den Charts, mit TL, Gewicht in kg und Preis in Cr, soweit die Charts sie angeben. */
 export const ItemSchema = z.object({

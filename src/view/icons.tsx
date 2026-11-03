@@ -43,6 +43,16 @@ export function PersonIcon() {
   );
 }
 
+/** Eine Einkaufstasche, für den Shop. */
+export function ShopIcon() {
+  return (
+    <svg {...base} width={22} height={22} strokeLinejoin="round" strokeLinecap="round">
+      <path d="M5 8h14l-1 12H6z" />
+      <path d="M9 10V6.5a3 3 0 0 1 6 0V10" />
+    </svg>
+  );
+}
+
 /** Ein Fadenkreuz, für den Kampf. */
 export function CombatIcon() {
   return (

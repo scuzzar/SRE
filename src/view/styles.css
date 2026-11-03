@@ -234,7 +234,7 @@ button:disabled {
 .nav {
   flex: 0 0 auto;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   border-top: 1px solid var(--rule);
   background: var(--deep);
   padding-bottom: env(safe-area-inset-bottom);
@@ -3932,4 +3932,195 @@ button:disabled {
 
 .interpretation.damage .dice-total strong {
   color: var(--accent-text);
+}
+
+/* --- Shop ----------------------------------------------------------------------------------- */
+
+.hex.hex-here polygon {
+  stroke: var(--gold);
+  stroke-width: 2.5;
+}
+
+.world-list-here {
+  color: var(--gold);
+  font-size: 12px;
+}
+
+.stay-here {
+  align-self: flex-start;
+  min-height: 40px;
+  margin: 8px 0;
+}
+
+.weapon-ammo {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.weapon-ammo.empty {
+  color: var(--accent-text);
+}
+
+.dock .actions:has(> :nth-child(3)) {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.shop-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.shop-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shop-funds {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.shop-funds strong {
+  font-size: 24px;
+  color: var(--gold);
+}
+
+.shop-world {
+  margin: 0;
+  font-size: 14px;
+}
+
+.shop-book {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--line-strong);
+}
+
+.segmented button {
+  min-height: 40px;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.segmented button[aria-checked='true'] {
+  background: var(--text);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.shop-book-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 8px;
+}
+
+.shop-group {
+  border-bottom: 1px solid var(--rule);
+}
+
+.shop-group summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.shop-group ul {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.shop-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 14px;
+}
+
+.shop-item-tl,
+.shop-item-price {
+  font-size: 12px;
+}
+
+.shop-banned {
+  color: var(--accent-text);
+  font-size: 12px;
+}
+
+.shop-buy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.shop-ledger ol {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shop-booking {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'kind text amount' 'time text amount';
+  column-gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 13px;
+}
+
+.shop-booking .kicker {
+  grid-area: kind;
+}
+
+.shop-booking .entry-time {
+  grid-area: time;
+}
+
+.shop-booking-text {
+  grid-area: text;
+}
+
+.shop-booking .shop-in,
+.shop-booking .shop-out {
+  grid-area: amount;
+  text-align: right;
+}
+
+.shop-in {
+  color: var(--gold);
+}
+
+.shop-out {
+  color: var(--accent-text);
+}
+
+.shop-buy .shop-buy-title {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: 0;
 }

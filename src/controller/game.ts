@@ -16,6 +16,12 @@ import {
   pendingDamage,
   rollDamage,
   setWields,
+  spendRound,
+  reload,
+  book,
+  buy,
+  setLocation,
+  type BookingKind,
   restoreCharacter,
   chooseCascade as chooseCareerCascade,
   chooseGenerationWorld,
@@ -79,7 +85,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
 
 export interface GameDependencies {
   readonly repository: CampaignRepository;
@@ -118,6 +124,7 @@ export class GameController {
       names: undefined,
       task: undefined,
       attack: undefined,
+      shopError: undefined,
       opened: undefined,
       stripCollapsed: false,
       result: undefined,
@@ -362,11 +369,38 @@ export class GameController {
     this.update({ attack: undefined });
   }
 
-  /** Würfelt den Angriff, schreibt ihn in den Log und zeigt das Ergebnis als Popup; das Ziel bleibt gewählt. */
+  /** Würfelt den Angriff, schreibt ihn in den Log und zeigt das Ergebnis als Popup; das Ziel bleibt gewählt. Eine Schusswaffe verbraucht einen Schuss. */
   rollAttack(): void {
     const result = rollAttack(this.state.attack ?? {}, this.campaign, this.deps.random, this.deps.clock);
-    const campaign = appendLog(this.campaign, result);
+    const campaign = spendRound(appendLog(this.campaign, result), result.for);
     this.change(campaign, { result: campaign.log.length - 1 });
+  }
+
+  /** Lädt die Schusswaffe in der Hand des Charakters oben mit einem Magazin aus seinem Besitz nach. */
+  reload(): void {
+    const character = focusOf(this.campaign);
+    if (!character) throw new DomainError('Es gibt keinen lebenden Charakter.');
+    this.change(reload(this.campaign, character.id));
+  }
+
+  // --- Shop und Gruppenkasse ---------------------------------------------------------------------
+
+  /** Auf der Weltkarte: Die Gruppe ist auf der offenen Welt; noch einmal heißt: nirgends. */
+  stayHere(): void {
+    const at = this.state.world;
+    if (!at) throw new DomainError('Es ist keine Weltkarte offen.');
+    const id = hexId(at.column, at.row);
+    this.change(setLocation(this.campaign, this.campaign.location === id ? undefined : id));
+  }
+
+  /** Bucht Geld: Einnahme oder Ausgabe frei, Einzahlung oder Auszahlung mit einem Charakter. */
+  book(kind: Exclude<BookingKind, 'purchase'>, amount: number, text?: string, character?: string): void {
+    this.inShop(() => book(this.campaign, kind, amount, this.deps.clock, text, character));
+  }
+
+  /** Kauft auf dem Aufenthaltsort aus der Gruppenkasse für einen Charakter. */
+  buy(item: string, count: number, character: string): void {
+    this.inShop(() => buy(this.campaign, item, count, character, this.deps.clock));
   }
 
   /** Würfelt den Schaden des neuesten Treffers, für den noch keiner gewürfelt ist, und schließt das Popup. */
@@ -637,6 +671,16 @@ export class GameController {
   private get campaign(): Campaign {
     if (!this.state.campaign) throw new Error('Die Kampagne ist noch nicht geladen.');
     return this.state.campaign;
+  }
+
+  /** Führt eine Eingabe im Shop aus; verletzt sie eine Regel, steht das im Shop. */
+  private inShop(step: () => Campaign): void {
+    try {
+      this.change(step(), { shopError: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ shopError: error.message });
+    }
   }
 
   /** Führt einen Schritt der Erschaffung aus; verletzt er eine Regel, steht das in der Erschaffung. */

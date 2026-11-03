@@ -31,7 +31,7 @@ function dmText(line: WorldLine): string {
  * Charaktererschaffung. Eingetragen ist der Wurf schon, bevor die Würfel rollen; die Karte zeigt den neuen Stand erst, wenn das Ergebnis unten feststeht. Ein Tippen
  * irgendwo beendet die Animation.
  */
-export function WorldSheet({ world }: { world: WorldView }) {
+export function WorldSheet({ world, here }: { world: WorldView; here: boolean }) {
   const game = useGame();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   // Was schon da war, als die Weltkarte aufging, rollt nicht noch einmal.
@@ -90,6 +90,11 @@ export function WorldSheet({ world }: { world: WorldView }) {
         <div className="sheet-body" ref={body}>
           {!view.empty && <WorldCard world={view} />}
           {view.surface && <SurfaceSection lines={view.surface} />}
+          {world.canNote && (
+            <button type="button" className={here ? 'primary stay-here' : 'ghost stay-here'} aria-pressed={here} onClick={() => game.stayHere()}>
+              {here ? 'Die Gruppe ist hier' : 'Gruppe ist hier'}
+            </button>
+          )}
           {world.canNote && <NoteSection note={world.note} />}
         </div>
 

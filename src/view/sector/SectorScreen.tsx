@@ -97,7 +97,7 @@ function WorldSymbol({ hex, x, y }: { hex: HexView; x: number; y: number }) {
   return <circle className={hex.hydrographics !== undefined && hex.hydrographics > 0 ? 'hex-world wet' : 'hex-world dry'} cx={x} cy={y} r={7} />;
 }
 
-function HexCell({ hex, selected, disabled, detail }: { hex: HexView; selected: boolean; disabled: boolean; detail: Detail }) {
+function HexCell({ hex, selected, disabled, detail, here = false }: { hex: HexView; selected: boolean; disabled: boolean; detail: Detail; here?: boolean }) {
   const game = useGame();
   const { x, y: middle } = center(hex.column, hex.row);
   // Mit UWP rückt alles ein Stück nach oben, damit darunter Platz ist.
@@ -109,10 +109,10 @@ function HexCell({ hex, selected, disabled, detail }: { hex: HexView; selected: 
   };
   return (
     <g
-      className={`hex hex-${hex.state}${selected ? ' hex-selected' : ''}`}
+      className={`hex hex-${hex.state}${selected ? ' hex-selected' : ''}${here ? ' hex-here' : ''}`}
       role="button"
       tabIndex={0}
-      aria-label={label(hex)}
+      aria-label={here ? `${label(hex)}, die Gruppe ist hier` : label(hex)}
       aria-pressed={hex.state === 'open' || hex.state === 'empty' ? selected : undefined}
       onClick={choose}
       onKeyDown={(e) => {
@@ -341,7 +341,7 @@ export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; 
           {(pixelsPerUnit) => (
             <svg className="sector-map" viewBox={`0 0 ${WIDTH.toFixed(1)} ${HEIGHT.toFixed(1)}`} role="group" aria-label="Karte des Subsektors">
               {sector.map((hex) => (
-                <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} detail={detailAt(pixelsPerUnit)} />
+                <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} detail={detailAt(pixelsPerUnit)} here={hex.id === view.location} />
               ))}
             </svg>
           )}
@@ -365,6 +365,7 @@ export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; 
                     <span className="world-list-trade">
                       {[...w.trade, ...(w.gasGiant ? ['G'] : [])].join(' ')}
                     </span>
+                    {w.id === view.location && <span className="world-list-here">Die Gruppe ist hier</span>}
                     {w.note && <span className="world-list-note">{w.note}</span>}
                   </button>
                 </li>

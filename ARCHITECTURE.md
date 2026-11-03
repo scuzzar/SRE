@@ -41,7 +41,8 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   (Wurffeld), `confirmCard()`, `discardCard()`, `drawNames()` und `closeNames()` (Name von der Karte), `writeNote(text, interprets)`, `deleteLogEntry(index)`, `setOdds(odds)`; für den Charakter oben und die Probe
   `focusCharacter(id)` (Wischen), `chooseSkill(skill)`, `toggleCharacteristic(c)`, `rollTask()`,
   `endTask()`; für den Kampf `wieldWeapon(weapon)`, `chooseTarget(armor, range)`, `endAttack()`,
-  `rollAttack()` und `rollDamage()`; für Kampagnen
+  `rollAttack()`, `rollDamage()` und `reload()`; für Shop und Gruppenkasse `stayHere()` (auf der
+  Weltkarte), `book(kind, amount, text, character)` und `buy(item, count, character)`; für Kampagnen
   `openCampaign(id)`, `createCampaign(name)`, `renameCampaign(name)`, `deleteCampaign(id)`,
   `exportCampaign(id)` und `importCampaign(text)`; für die Charaktererschaffung `openGeneration()`,
   `rollGeneration()`, `chooseService(id)`, `chooseSkillTable(id)`, `chooseCascade(skill)`,
@@ -56,7 +57,7 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   ein und reicht ihn weiter; prüfen tut das Model (`fromCampaignFile`), anbieten zum Download der
   Controller über `Download`. Offene Karte, Probe und Angriff in Vorbereitung sind Teil des
   Models (`model/draft/`), werden aber nicht gespeichert.
-- **Er wählt, welche View zu sehen ist**: Orakel-, Kampf-, Charakter- oder Sektor-Screen (`showScreen(screen)`), das gewählte Feld im Subsektor, die Weltkarte eines Feldes, die
+- **Er wählt, welche View zu sehen ist**: Orakel-, Kampf-, Shop-, Charakter- oder Sektor-Screen (`showScreen(screen)`), das gewählte Feld im Subsektor, die Weltkarte eines Feldes, die
   Kampagnenwahl (`showCampaigns()`, `closeCampaigns()`) und das Ergebnis-Popup (`closeResult()`),
   welcher Charakter im Charakter-Screen seine Details zeigt (`toggleDetails(id)`) und ob die Leiste
   mit dem Charakter oben eingeklappt ist (`toggleStrip()`; das merkt sich das Gerät über das

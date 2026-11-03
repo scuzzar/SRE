@@ -2,7 +2,7 @@ import { referenceData, type Cascade, type Entry, type Gain, type Item, type Odd
 import { DomainError } from './errors';
 
 export { nameSlotIds, nameSounds, type NameSound } from '../data';
-export { armorClasses, ranges } from '../data';
+export { armorClasses, itemKinds, ranges } from '../data';
 export type {
   Aging,
   ArmorClass,

@@ -330,6 +330,54 @@ describe('Kampf', () => {
   });
 });
 
+describe('Shop und Gruppenkasse', () => {
+  const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
+
+  it('die Gruppe ist auf Regina, bucht eine Belohnung, kauft eine Rifle mit Magazin, lädt und schießt', async () => {
+    const { game, repository } = await started(fixedRandom(6, 6), memoryRepository(setHexes(createCampaign(), [regina])));
+    expect(game.snapshot().shop).toMatchObject({ funds: 0, world: undefined, offer: [] });
+    game.chooseHex(1, 1);
+    game.stayHere();
+    expect(game.snapshot().location).toBe('0101');
+    expect(game.snapshot().shop!.world).toMatchObject({ name: 'Regina', tech: '7', law: '5' });
+
+    game.book('income', 1000, 'Belohnung von Dr. Halvek');
+    game.buy('rifle', 1, 'c2');
+    game.buy('rifle-ammo', 1, 'c2');
+    game.buy('free-trader', 1, 'c2');
+    const shop = game.snapshot().shop!;
+    expect(shop.error).toMatch(/gibt es auf Regina nicht/);
+    expect(shop.funds).toBe(780);
+    expect(shop.bookings.map((b) => [b.kind, b.amount])).toEqual([
+      ['purchase', -20],
+      ['purchase', -200],
+      ['income', 1000],
+    ]);
+    expect(shop.offer.find((g) => g.kind === 'weapon')!.items.find((i) => i.id === 'revolver')).toMatchObject({ banned: 5, affordable: true });
+
+    game.focusCharacter('c2');
+    game.wieldWeapon('rifle');
+    expect(game.snapshot().combat!.ammo).toEqual({ rounds: 0, capacity: 20, magazine: 'Rifle Ammo (20 rds)', magazines: 1 });
+    game.chooseTarget('nothing', 'medium');
+    expect(() => game.rollAttack()).toThrow(/leer/);
+    game.reload();
+    game.rollAttack();
+    expect(game.snapshot().combat!.ammo).toMatchObject({ rounds: 19, magazines: 0 });
+    await game.whenSaved();
+    expect(repository.saved?.bookings).toHaveLength(3);
+    expect(repository.saved?.location).toBe('0101');
+  });
+
+  it('meldet im Shop, was nicht geht, und ändert dann nichts', async () => {
+    const { game } = await started();
+    game.book('expense', 100);
+    expect(game.snapshot().shop).toMatchObject({ funds: 0, error: expect.stringMatching(/nicht in der Gruppenkasse/) });
+    game.book('deposit', 400, undefined, 'c1');
+    expect(game.snapshot().shop).toMatchObject({ funds: 400, error: undefined });
+    expect(game.snapshot().shop!.members[0]).toMatchObject({ name: 'Kira Vant', credits: 12000 });
+  });
+});
+
 describe('Charakter-Screen: verwalten', () => {
   it('klappt die Details eines Charakters auf und wieder zu, ohne eine Probe zu beginnen', async () => {
     const { game } = await started();

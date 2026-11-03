@@ -3,12 +3,13 @@ import { AboutScreen } from './AboutScreen';
 import { CampaignSheet } from './CampaignSheet';
 import { CharacterEditor } from './characters/CharacterEditor';
 import { CombatScreen } from './combat/CombatScreen';
+import { ShopScreen } from './shop/ShopScreen';
 import { CharactersScreen } from './characters/CharactersScreen';
 import { GenerationSheet } from './characters/GenerationSheet';
 import { FullscreenButton } from './FullscreenButton';
 import { ResultDialog } from './characters/ResultDialog';
 import { useGame, useSnapshot } from './game-context';
-import { CombatIcon, MenuIcon, OracleIcon, PersonIcon, SectorIcon } from './icons';
+import { CombatIcon, MenuIcon, OracleIcon, PersonIcon, SectorIcon, ShopIcon } from './icons';
 import { Menu } from './Menu';
 import { CardSheet } from './oracle/CardSheet';
 import { OracleScreen } from './oracle/OracleScreen';
@@ -51,6 +52,7 @@ export function App() {
 
       {view.screen === 'oracle' && <OracleScreen view={view} question={question} onQuestion={setQuestion} />}
       {view.screen === 'combat' && <CombatScreen view={view} />}
+      {view.screen === 'shop' && <ShopScreen view={view} />}
       {view.screen === 'characters' && <CharactersScreen view={view} />}
       {view.screen === 'sector' && <SectorScreen view={view} />}
       {view.screen === 'about' && <AboutScreen persistent={view.persistent} durable={view.durable} />}
@@ -63,6 +65,10 @@ export function App() {
         <button type="button" aria-current={view.screen === 'combat' ? 'page' : undefined} onClick={() => game.showScreen('combat')}>
           <CombatIcon />
           Kampf
+        </button>
+        <button type="button" aria-current={view.screen === 'shop' ? 'page' : undefined} onClick={() => game.showScreen('shop')}>
+          <ShopIcon />
+          Shop
         </button>
         <button type="button" aria-current={view.screen === 'characters' ? 'page' : undefined} onClick={() => game.showScreen('characters')}>
           <PersonIcon />
@@ -78,7 +84,7 @@ export function App() {
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
       {view.generation && <GenerationSheet generation={view.generation} odds={view.odds} log={view.log} />}
       {view.picking && <SectorPicker view={view} title={view.picking.title} />}
-      {view.world && <WorldSheet key={view.world.id} world={view.world} />}
+      {view.world && <WorldSheet key={view.world.id} world={view.world} here={view.location === view.world.id} />}
       {view.card && <CardSheet card={view.card} onConfirmed={() => setQuestion('')} />}
       {view.result && <ResultDialog result={view.result} />}
       {view.campaignSheet && <CampaignSheet key={view.campaign.id} sheet={view.campaignSheet} campaigns={view.campaigns} open={view.campaign} />}
