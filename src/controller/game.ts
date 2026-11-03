@@ -49,6 +49,7 @@ import {
   type Download,
   type Generation,
   type Hex,
+  type CardRoll,
   type Random,
 } from '../model';
 import {
@@ -60,6 +61,8 @@ import {
   startTask,
   toggleCharacteristic,
   togglePick,
+  toggleRoll,
+  drawNames,
   rollOccurrence,
   rollSurfaceAt,
   rollWorld,
@@ -68,7 +71,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, task: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
 
 export interface GameDependencies {
   readonly repository: CampaignRepository;
@@ -104,6 +107,7 @@ export class GameController {
       storageError: undefined,
       screen: 'oracle',
       card: undefined,
+      names: undefined,
       task: undefined,
       opened: undefined,
       stripCollapsed: false,
@@ -245,6 +249,20 @@ export class GameController {
 
   togglePick(slot: string): void {
     this.update({ card: togglePick(this.openCard, slot) });
+  }
+
+  /** Wählt ein Wurffeld der offenen Karte aus oder nimmt es wieder heraus. */
+  toggleRoll(roll: CardRoll): void {
+    this.update({ card: toggleRoll(this.openCard, roll) });
+  }
+
+  /** Name von der Karte: öffnet die Namenswahl mit neu gezogenen Namen, auch wenn sie schon offen ist. */
+  drawNames(): void {
+    this.update({ names: drawNames(this.deps.random) });
+  }
+
+  closeNames(): void {
+    this.update({ names: undefined });
   }
 
   redrawCard(): void {

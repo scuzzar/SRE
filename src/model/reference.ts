@@ -1,6 +1,7 @@
 import { referenceData, type Cascade, type Entry, type Gain, type Item, type Odds, type Section, type Service, type Skill, type Slot, type Table } from '../data';
 import { DomainError } from './errors';
 
+export { nameSlotIds, nameSounds, type NameSound } from '../data';
 export type { Aging, Cascade, Column, Entry, ExampleCharacter, Gain, HouseRules, Item, ItemKind, Odds, Rank, Section, SectionKind, Service, Skill, Slot, Table, Throw } from '../data';
 
 /** Die Referenzdaten: feste Tabellen, in jeder Kampagne gleich. */

@@ -92,6 +92,16 @@ test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis 
     await expect(dialog.getByRole('article', { name: 'Welt' })).toContainText(/[A-EX][0-9A-F]{6}-[0-9A-Z]/);
     // In Erschaffung gibt es keine Notiz; die fertige Welt bekommt eine, die Liste zeigt ihre erste Zeile.
     await expect(dialog.getByLabel('Notiz zur Welt')).toHaveCount(0);
+    // Name von der Karte: Vor- und Nachnamen getrennt; ein Nachname allein geht auch.
+    await dialog.getByRole('button', { name: 'Karte' }).click();
+    const picker = page.getByRole('dialog', { name: 'Name von der Karte' });
+    await expect(picker.getByRole('group', { name: 'Vornamen' }).getByRole('button')).toHaveCount(12);
+    const surname = picker.getByRole('group', { name: 'Nachnamen' }).getByRole('button').last();
+    const text = await surname.innerText();
+    await surname.click();
+    await picker.getByRole('button', { name: 'Übernehmen' }).click();
+    await expect(picker).toBeHidden();
+    await expect(dialog.getByLabel('Name der Welt')).toHaveValue(text);
     await dialog.getByLabel('Name der Welt').fill('Regina');
     await dialog.getByRole('button', { name: 'Übernehmen' }).click();
     const done = page.getByRole('dialog', { name: `Regina · ${id}` });

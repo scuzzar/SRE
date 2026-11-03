@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { keepFocus, validateCharacter, validName, type Campaign, type CampaignId, type Character } from './campaign';
 import { replay, type Career, type CareerRoll } from './career';
 import { DomainError } from './errors';
-import { checkInterprets, withQuestion, type LogEntry } from './log';
+import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, type PathKind } from './card-roll';
+import { checkInterprets, withQuestion, type CardPick, type LogEntry } from './log';
 import { entryOf, oddsOf, slotOfEntry } from './reference';
 import { characteristics } from './rules';
 import { hexFromRolls, temperatureIds, uwpKinds, validateHexes, worldOf, type Hex, type LegacyWorldRoll } from './sector';
@@ -22,7 +23,15 @@ const question = z.string().trim().min(1).optional();
 const LogEntrySchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('oracle'), at, question, roll: z.number().int().min(1).max(100), chance: z.number().int().min(0).max(100), odds: z.string() }),
   z.object({ kind: z.literal('dice'), at, dice }),
-  z.object({ kind: z.literal('card'), at, question, items: z.array(z.object({ picked: z.array(z.string()).min(1).max(2) })).min(1) }),
+  z.object({
+    kind: z.literal('card'),
+    at,
+    question,
+    bell: z.number().int().min(1).max(10).optional(),
+    scatter: z.enum(scatters).optional(),
+    map: z.object(Object.fromEntries(mapDirections.map((d) => [d, z.enum(pathKinds)])) as Record<MapDirection, z.ZodEnum<{ [K in PathKind]: K }>>).optional(),
+    items: z.array(z.object({ picked: z.array(z.string()).min(1).max(2) })),
+  }),
   z.object({
     kind: z.literal('task'),
     at,
@@ -206,10 +215,13 @@ function stripped<T extends object>(value: T): T {
 /** Ohne leere optionale Felder, wie sie im Spielstand stehen. */
 function logEntry(entry: z.infer<typeof LogEntrySchema>): LogEntry {
   switch (entry.kind) {
-    case 'oracle':
-    case 'card': {
+    case 'oracle': {
       const { question, ...rest } = entry;
       return withQuestion(rest, question);
+    }
+    case 'card': {
+      const { question, ...rest } = entry;
+      return withQuestion(stripped(rest) as Omit<CardPick, 'question'>, question);
     }
     case 'task': {
       const { uses, ...rest } = entry;
@@ -256,6 +268,10 @@ function validate(campaign: Campaign): void {
       case 'dice':
         break;
       case 'card':
+        if (entry.items.length === 0 && entry.bell === undefined && entry.scatter === undefined && entry.map === undefined) {
+          throw new DomainError('Eine Kartenauswahl ohne Feld und ohne Wurffeld gibt es nicht.');
+        }
+        if (entry.map && mapDirections.filter((d) => entry.map![d] !== 'none').length < minMapPaths) throw new DomainError('Ein Kartensymbol hat mindestens zwei Wege.');
         for (const item of entry.items) {
           const slot = slotOfEntry(item.picked[0]!);
           for (const picked of item.picked) {

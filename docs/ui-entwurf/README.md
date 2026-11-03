@@ -44,11 +44,12 @@ und lässt sich direkt im Browser öffnen.
 - Der Entwurf ist ein **Prototyp**, kein Produktivcode. Er zeigt Bedienung und Regeln; die Inhalte der Karte sind Platzhalter.
 - Regeln und Begriffe stehen in der [Haupt-README](../../README.md) und im [GMA2e-Glossar](../gma2e-begriffe.md).
 
-## Wurffelder und Namen (Entwurf vom 3. November 2026)
+## Wurffelder und Namen (Entwurf vom 3. November 2026, freigegeben und umgesetzt)
 
 Im Ordner [`kartensymbol/`](kartensymbol/) liegt der Entwurf für die drei Wurffelder oben auf der
-Inspirationskarte (siehe *Wurffelder der Karte* im [Domänenmodell](../domain-model.md)), noch nicht
-freigegeben.
+Inspirationskarte (siehe *Wurffelder der Karte* im [Domänenmodell](../domain-model.md)). In der
+App stehen die Wurffelder knapper (Bild links, Beschriftung rechts), damit alle Tafeln auf einen
+Bildschirm passen; die Namenswahl zeigt Vor- und Nachnamen getrennt.
 
 | Datei | Inhalt |
 |---|---|

@@ -73,19 +73,40 @@ test('Inspirationskarte: auswählen, bestätigen, nur die Auswahl kommt in den L
   await expect(page.getByPlaceholder(/Frage/)).toHaveValue('');
 });
 
-test('Inspirationskarte: drei Namen aus Vor- und Nachname, im Log am Stück', async ({ page }) => {
+test('Inspirationskarte: sechs Namen auf der Tafel NSC, im Log am Stück', async ({ page }) => {
   await page.getByRole('button', { name: 'Karte ziehen' }).click();
   const card = page.getByRole('dialog', { name: 'Inspirationskarte' });
   await revealed(card);
   const names = card.getByRole('group', { name: 'Namen' }).getByRole('button');
-  await expect(names).toHaveCount(3);
-  await expect(names.first()).toHaveAccessibleName(/^Eher weiblich: \S+ \S+$/);
-  const name = await names.first().innerText();
-  await names.first().click();
+  await expect(names).toHaveCount(6);
+  await expect(names.first()).toHaveAccessibleName(/^Weiblich, irdisch: \S+ \S+$/);
+  await expect(names.nth(4)).toHaveAccessibleName(/^Männlich, spacig: \S+ \S+$/);
+  const name = await names.nth(4).innerText();
+  await names.nth(4).click();
   await card.getByRole('button', { name: /1 Eintrag in den Log übernehmen/ }).click();
   const entry = page.locator('.entry').last();
-  await expect(entry.locator('dt')).toHaveText(['Namen · Eher weiblich']);
+  await expect(entry.locator('dt')).toHaveText(['NSC · Männlich, spacig']);
   await expect(entry.locator('dd')).toHaveText(name);
+});
+
+test('Inspirationskarte: Wurffelder 1–10, Streuwürfel und Kartensymbol; im Log mit Bild', async ({ page }) => {
+  await page.getByRole('button', { name: 'Karte ziehen' }).click();
+  const card = page.getByRole('dialog', { name: 'Inspirationskarte' });
+  await revealed(card);
+  const rolls = card.getByRole('group', { name: 'Wurffelder' }).getByRole('button');
+  await expect(rolls).toHaveCount(3);
+  await expect(rolls.nth(0)).toHaveAccessibleName(/^1–10: (10|[1-9])$/);
+  await expect(rolls.nth(1)).toHaveAccessibleName(/^Streuwürfel: (N|NO|O|SO|S|SW|W|NW|Volltreffer|Fehlschlag)$/);
+  await expect(rolls.nth(2)).toHaveAccessibleName(/^Kartensymbol: /);
+  const bell = (await rolls.nth(0).getAttribute('aria-label'))!.replace('1–10: ', '');
+  await rolls.nth(0).click();
+  await rolls.nth(2).click();
+  await expect(card).toContainText('2 ausgewählt');
+  await card.getByRole('button', { name: /2 Einträge in den Log übernehmen/ }).click();
+  const entry = page.locator('.entry').last();
+  await expect(entry.locator('dt')).toHaveText(['1–10', 'Kartensymbol']);
+  await expect(entry.locator('dd').first()).toHaveText(bell);
+  await expect(entry.getByRole('img', { name: /^Kartensymbol: / })).toBeVisible();
 });
 
 test('Inspirationskarte: verwerfen schreibt nichts in den Log, neu ziehen behält die Frage', async ({ page }) => {

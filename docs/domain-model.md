@@ -68,26 +68,22 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Notizen auch in der Charaktererschaffung (siehe *Deutungen und Notizen*) und eine Notiz zu jeder
 > fertigen Welt (siehe *Notiz zur Welt*). Neu im Bild: `Hex.note`.
 >
-> **Entwurf vom 3. November 2026, noch nicht freigegeben:** drei **Wurffelder** auf der Karte nach
-> dem GMA2e: die **Glockenzahl** (1–10, meist 4–7), der **Streuwürfel** (8 Richtungen, Volltreffer,
+> Ebenfalls am 3. November 2026 freigegeben: drei **Wurffelder** auf der Karte nach dem GMA2e:
+> die **Glockenzahl** (1–10, meist 4–7), der **Streuwürfel** (8 Richtungen, Volltreffer,
 > Fehlschlag) und das **Kartensymbol** (ein Raum mit Wegen nach N, O, S, W und nach oben und
-> unten, je Weg eine Wegart). Siehe *Wurffelder der Karte*. Neu im Bild: `Card.bell`,
+> unten, je Weg eine Wegart); siehe *Wurffelder der Karte*. Neu im Bild: `Card.bell`,
 > `Card.scatter`, `Card.pickedRolls`, `Card.map`, `CardPick.bell`, `CardPick.scatter`,
 > `CardPick.map`, die Werte `MapIcon`, `PathKind`, `Scatter`, `CardRoll`; ein `CardPick` braucht
-> keinen `PickedItem` mehr (`items` jetzt `*`). Der UI-Entwurf dazu liegt unter
-> [`ui-entwurf/kartensymbol/`](ui-entwurf/kartensymbol/). Bis zur Freigabe folgt der Code nicht.
->
-> Zum selben Entwurf gehören die **Namen auf der Tafel NSC**: sechs Felder statt drei, je weiblich,
-> männlich und neutral, einmal irdisch und einmal spacig; der Bereich *Namen* fällt dafür weg
-> (siehe *Namen*). Dazu **Name von der Karte** beim Benennen von Charakteren und Welten (siehe
-> dort). Das Bild ändert sich dadurch nicht: Felder, Spalten und Einträge sind Referenzdaten.
-> Damit alles auf die Karte passt, fallen auf der Tafel *Handlung* *Gegenstand* und *Fund* weg
-> (ausgeblendet). Wie die ganze Karte dann aussieht, zeigt
-> [`ui-entwurf/kartensymbol/Karte.html`](ui-entwurf/kartensymbol/Karte.html).
+> keinen `PickedItem` mehr (`items` jetzt `*`). Dazu die **Namen auf der Tafel NSC** (sechs Felder,
+> je weiblich, männlich und neutral, einmal irdisch und einmal spacig; siehe *Namen*) und **Name
+> von der Karte** beim Benennen von Charakteren und Welten (siehe dort); dafür ändert sich das Bild
+> nicht. Damit alles auf einen Bildschirm passt, fallen auf der Tafel *Handlung* *Gegenstand* und
+> *Fund* weg (ausgeblendet). Der UI-Entwurf dazu liegt unter
+> [`ui-entwurf/kartensymbol/`](ui-entwurf/kartensymbol/).
 >
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
-> Beschreibung des Zufallsereignisses, Hören und Riechen, die drei Namen sowie die Themen-Tafeln NSC, NSC-Aktionen,
-> Welt (mit Schiff), Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
+> Beschreibung des Zufallsereignisses, Hören und Riechen, dazu die drei Wurffelder sowie die Themen-Tafeln NSC
+> (mit den sechs Namen), NSC-Aktionen, Welt (mit Schiff), Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
 > Einträge für sie gibt.
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
@@ -152,7 +148,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Feld der Karte | `Slot` | Aktion, Hören, Aussehen, Name, Auslöser, … |
 | Spalte | `Column` | Eine Liste von Einträgen in einem Feld; ein Feld hat eine oder zwei |
 | Klangart der Namen | (Felder der Tafel NSC) | Irdisch (Namen von der Erde) oder spacig (erfunden, fremd klingend) |
-| Name von der Karte | (Knopf neben einem Namensfeld) | Zieht die sechs Namensfelder und schreibt den gewählten Namen ins Feld; kein Logeintrag |
+| Name von der Karte | (Knopf „Karte“ neben einem Namensfeld) | Zeigt Vor- und Nachnamen von der Tafel NSC getrennt zur Wahl und schreibt den gewählten Namen ins Feld; kein Logeintrag |
 | Paar | (zwei Einträge im `drawn` eines Feldes) | Was ein Feld mit zwei Spalten zieht: aus jeder Spalte einen Eintrag, z. B. „verraten · Technologie“ |
 | Eintrag | `Entry` | Ein möglicher Text eines Feldes, z. B. „Schulden begleichen.“ |
 | Charaktererschaffung | `Generation` | Ein Charakter, der gerade nach den Regeln entsteht; wird beim Abschluss zum `Character` |
@@ -524,10 +520,15 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     haben neue Ids.
 - **Name von der Karte.** Wo man einen Namen eintippt, für einen Charakter (letzter Schritt der
   Charaktererschaffung, Charakter-Editor) oder für eine Welt (letzter Schritt der
-  Weltenerschaffung), steht neben dem Feld ein Knopf **Karte**. Er zieht nur die sechs Namensfelder
-  der Tafel NSC, nach denselben Regeln wie *Karte ziehen*, und zeigt sie zur Wahl. Ein Tippen auf
-  einen Namen schreibt „Vorname Nachname“ ins Feld, bei einer Welt nur den Vornamen, und schließt
-  die Wahl; danach lässt sich der Text wie getippt ändern. *Neu ziehen* zeigt sechs andere.
+  Weltenerschaffung), steht neben dem Feld ein Knopf **Karte**. Er öffnet die Namenswahl mit
+  Vornamen und Nachnamen getrennt: Jedes der sechs Namensfelder der Tafel NSC wird zweimal gezogen,
+  nach denselben Regeln wie *Karte ziehen*, mit zwei verschiedenen Vornamen und zwei verschiedenen
+  Nachnamen je Feld. Oben stehen die zwölf Vornamen (erst irdisch, dann spacig, je weiblich,
+  männlich, neutral), darunter die Nachnamen (erst irdisch, dann spacig; derselbe Nachname steht nur
+  einmal da). Man tippt höchstens einen Vornamen und höchstens einen Nachnamen an; *Übernehmen*
+  schreibt „Vorname Nachname“ ins Feld, oder nur den einen, wenn nur einer gewählt ist. Das gilt für
+  Charakter und Welt gleich: Wer will, nimmt für eine Welt nur einen Namen. Danach lässt sich der
+  Text wie getippt ändern. *Neu ziehen* zeigt neue Namen, *Abbrechen* lässt das Feld, wie es war.
   Gespeichert wird nur der Name, so wie er am Ende im Feld steht; die Wahl selbst ist kein
   Logeintrag und verweist auf nichts.
 - **Einträge austauschen.** Ein Eintrag, der nicht mehr gezogen werden soll, wird nicht gelöscht und
@@ -562,7 +563,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     weniger, wird es ganz neu gewürfelt.
   - Ziehen würfelt alle drei, *Neu ziehen* ebenso. Die Wurffelder stehen auf der Karte unter den
     Sinneseindrücken, wo bisher die Namen standen, in der Reihenfolge Glockenzahl, Streuwürfel,
-    Kartensymbol. In der Reihenfolge der Karte (für den Log) kommen sie vor allen Feldern.
+    Kartensymbol (auf der Karte knapp „Wege“ beschriftet). In der Reihenfolge der Karte (für den Log) kommen sie vor allen Feldern.
   - Damit die ganze Karte weiter auf einen Bildschirm passt, fallen auf der Tafel *Handlung* die
     Mythic-Tabellen *Gegenstand* (`plot.object`) und *Fund* (`plot.salvage`) weg: Ihre Einträge
     werden ausgeblendet (siehe *Einträge austauschen*), alte Logeinträge zeigen sie weiter. Die

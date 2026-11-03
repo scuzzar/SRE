@@ -4,6 +4,7 @@ import type { ItemKind, Upp } from '../../model';
 import { characteristicLabel, hex } from '../format';
 import { useGame } from '../game-context';
 import { CloseIcon } from '../icons';
+import { NameFromCard } from '../NameFromCard';
 
 const uppFields = [
   ['str', 'STR'],
@@ -72,10 +73,13 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
               {editor.error}
             </p>
           )}
-          <label className="field">
-            <span>Name</span>
-            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoComplete="off" />
-          </label>
+          <div className="inline-form">
+            <label className="field">
+              <span>Name</span>
+              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoComplete="off" />
+            </label>
+            <NameFromCard onPick={(name) => setForm((f) => ({ ...f, name }))} />
+          </div>
           <label className="field">
             <span>Herkunft</span>
             <input

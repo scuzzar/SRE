@@ -1,4 +1,25 @@
-import { DomainError, ref, slotOfEntry, withQuestion, type CardPick, type Clock, type Column, type Entry, type Random, type Slot } from '..';
+import {
+  DomainError,
+  nameSlotIds,
+  nameSounds,
+  ref,
+  rollBell,
+  rollMap,
+  rollScatter,
+  slotOfEntry,
+  slotWithId,
+  withQuestion,
+  type CardPick,
+  type CardRoll,
+  type Clock,
+  type Column,
+  type Entry,
+  type MapIcon,
+  type NameSound,
+  type Random,
+  type Scatter,
+  type Slot,
+} from '..';
 
 /** Die offene Inspirationskarte. Flüchtig: wird beim Bestätigen zum `CardPick`, nie gespeichert. */
 export interface Card {
@@ -10,6 +31,12 @@ export interface Card {
   readonly drawn: readonly string[];
   /** Die ausgewählten Felder; nur gezogene. Ein Feld nimmt man immer mit allem, was es gezogen hat. */
   readonly picked: readonly string[];
+  /** Die Wurffelder: Glockenzahl 1–10, Streuwürfel und Kartensymbol. */
+  readonly bell: number;
+  readonly scatter: Scatter;
+  readonly map: MapIcon;
+  /** Die ausgewählten Wurffelder. */
+  readonly pickedRolls: readonly CardRoll[];
 }
 
 /** Die Einträge einer Spalte, die gezogen werden können: alle, die nicht ausgeblendet sind. */
@@ -35,7 +62,8 @@ export function drawCard(random: Random, question?: string): Card {
       }),
     ),
   );
-  return withQuestion({ drawn, picked: [] }, question);
+  // Die Wurffelder nach den Feldern, damit die Einträge immer mit denselben Würfen gezogen werden.
+  return withQuestion({ drawn, picked: [], bell: rollBell(random), scatter: rollScatter(random), map: rollMap(random), pickedRolls: [] }, question);
 }
 
 /** Neu ziehen: eine neue Karte, die Auswahl geht verloren, die Frage bleibt. */
@@ -55,8 +83,19 @@ export function togglePick(card: Card, slot: string): Card {
   return { ...card, picked };
 }
 
+/** Nimmt ein Wurffeld in die Auswahl auf oder wieder heraus. */
+export function toggleRoll(card: Card, roll: CardRoll): Card {
+  const pickedRolls = card.pickedRolls.includes(roll) ? card.pickedRolls.filter((r) => r !== roll) : [...card.pickedRolls, roll];
+  return { ...card, pickedRolls };
+}
+
+/** Wie viel ausgewählt ist: Felder und Wurffelder. */
+export function pickedCount(card: Card): number {
+  return card.picked.length + card.pickedRolls.length;
+}
+
 export function canConfirm(card: Card): boolean {
-  return card.picked.length > 0;
+  return pickedCount(card) > 0;
 }
 
 /** Bestätigen: ein `CardPick` mit der Frage der Karte und je ausgewähltem Feld seinen Einträgen, in der Reihenfolge der Karte. */
@@ -64,6 +103,56 @@ export function confirmCard(card: Card, clock: Clock): CardPick {
   if (!canConfirm(card)) throw new DomainError('Bestätigen geht erst, wenn mindestens ein Feld ausgewählt ist.');
   const slots = [...new Set(card.drawn.map((e) => slotOfEntry(e).id))].filter((s) => card.picked.includes(s));
   const items = slots.map((slot) => ({ picked: drawnIn(card, slot) }));
-  const pick: CardPick = { kind: 'card', at: clock.now(), items };
+  const rolled = card.pickedRolls;
+  const pick: CardPick = {
+    kind: 'card',
+    at: clock.now(),
+    ...(rolled.includes('bell') ? { bell: card.bell } : {}),
+    ...(rolled.includes('scatter') ? { scatter: card.scatter } : {}),
+    ...(rolled.includes('map') ? { map: card.map } : {}),
+    items,
+  };
   return withQuestion(pick, card.question);
+}
+
+/** Ein Name zur Wahl: der Text und das Namensfeld, aus dem er kommt. */
+export interface NameChoice {
+  readonly text: string;
+  /** Die Beschriftung des Namensfeldes, z. B. „Weiblich, spacig“. */
+  readonly label: string;
+  readonly sound: NameSound;
+}
+
+/** Die Namenswahl beim Benennen von Charakteren und Welten: Vornamen und Nachnamen getrennt. */
+export interface NameChoices {
+  readonly first: readonly NameChoice[];
+  readonly last: readonly NameChoice[];
+}
+
+/** Die Klangart eines Namensfeldes steht am Ende seiner Id (`npc.names.female.spacey`). */
+function soundOf(slotId: string): NameSound {
+  return nameSounds.find((sound) => slotId.endsWith(`.${sound}`)) ?? 'earthly';
+}
+
+/** So oft zieht die Namenswahl jedes Namensfeld. */
+export const nameDraws = 2;
+
+/**
+ * Name von der Karte: zieht jedes der sechs Namensfelder der Tafel NSC zweimal, nach denselben Regeln
+ * wie *Karte ziehen*, aber je Feld zwei verschiedene Vornamen und zwei verschiedene Nachnamen.
+ * Reihenfolge wie auf der Tafel: erst die irdischen, dann die spacigen Felder, jedes Feld zweimal
+ * hintereinander. Nichts davon kommt in den Log.
+ */
+export function drawNames(random: Random): NameChoices {
+  const slots = nameSlotIds.map(slotWithId).filter(isVisible);
+  const distinct = (column: Column): string[] => {
+    const entries = [...drawableEntries(column)];
+    return Array.from({ length: Math.min(nameDraws, entries.length) }, () => entries.splice(random.int(0, entries.length - 1), 1)[0]!.text);
+  };
+  // Derselbe Nachname kann in mehreren Feldern gezogen werden; zur Wahl steht er nur einmal.
+  const choices = (column: 0 | 1) =>
+    slots
+      .flatMap((slot) => distinct(slot.columns[column]!).map((text) => ({ text, label: slot.label, sound: soundOf(slot.id) })))
+      .filter((choice, i, all) => all.findIndex((c) => c.text === choice.text) === i);
+  return { first: choices(0), last: choices(1) };
 }
