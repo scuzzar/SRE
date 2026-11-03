@@ -4,11 +4,12 @@ import { replay, type Career, type CareerRoll } from './career';
 import { DomainError } from './errors';
 import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, type PathKind } from './card-roll';
 import { checkDamageRoll, ATTACK_TARGET } from './combat';
-import { checkInterprets, withQuestion, type CardPick, type LogEntry } from './log';
-import { armorClasses, entryOf, itemOf, oddsOf, ranges, slotOfEntry, weaponOf } from './reference';
+import { npcOf, type Encounter, type Npc } from './encounter';
+import { checkInterprets, physical, withQuestion, type AttackResult, type CardPick, type DamageRoll, type LogEntry } from './log';
+import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, ranges, slotOfEntry, weaponOf } from './reference';
 import { characteristics } from './rules';
 import { bookingKinds, validateBookings, type Booking } from './shop';
-import { hexFromRolls, temperatureIds, uwpKinds, validateHexes, worldOf, type Hex, type LegacyWorldRoll } from './sector';
+import { hexById, hexFromRolls, temperatureIds, uwpKinds, validateHexes, worldOf, type Hex, type LegacyWorldRoll } from './sector';
 
 /**
  * Die Kampagnendatei: eine Kampagne als JSON, zum Sichern und Weitergeben. Sie enthält alles, was an
@@ -48,7 +49,10 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('attack'),
     at,
-    for: z.string(),
+    for: z.string().optional(),
+    by: z.string().optional(),
+    against: z.string().optional(),
+    victim: z.string().optional(),
     with: z.string(),
     uses: z.string().optional(),
     armor: z.enum(armorClasses),
@@ -57,7 +61,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     dm: z.number().int(),
     target: z.number().int(),
   }),
-  z.object({ kind: z.literal('damage'), at, of: z.number().int(), dice: z.array(die).min(1).max(5) }),
+  z.object({ kind: z.literal('damage'), at, of: z.number().int(), dice: z.array(die).min(1).max(5), to: z.array(z.enum(physical)).optional() }),
   z.object({ kind: z.literal('note'), at, text: z.string().trim().min(1), interprets: z.number().int().optional() }),
 ]);
 
@@ -133,6 +137,30 @@ const CharacterSchema = z.object({
   career: CareerSchema.optional(),
   homeworld: z.string().optional(),
   wields: z.string().optional(),
+  wears: z.string().optional(),
+  /** Fehlt in Dateien von vor den NSC: ein SC. */
+  npc: z.boolean().default(false),
+});
+
+const NpcSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().trim().min(1),
+  leader: z.boolean(),
+  skill: z.number().int().min(0),
+  upp: z.object({ str: value, dex: value, end: value, int: value, edu: value, soc: value }),
+  wields: z.string(),
+  wears: z.string().optional(),
+  became: z.string().optional(),
+});
+
+const EncounterSchema = z.object({
+  id: z.string().min(1),
+  at,
+  of: z.number().int(),
+  in: z.string().optional(),
+  reaction: z.number().int().min(2).max(12),
+  ended: z.boolean(),
+  npcs: z.array(NpcSchema).min(1),
 });
 
 const CampaignFileSchema = z.object({
@@ -148,8 +176,9 @@ const CampaignFileSchema = z.object({
     hexes: z.array(HexSchema).default([]),
     /** Der Charakter oben; fehlt in Dateien von vor dieser Regel, dann wird es der erste Lebende. */
     focus: z.string().optional(),
-    /** Fehlen in Dateien von vor dem Shop. */
+    /** Fehlen in Dateien von vor dem Shop bzw. den Begegnungen. */
     location: z.string().optional(),
+    encounters: z.array(EncounterSchema).default([]),
     bookings: z
       .array(
         z.object({
@@ -170,8 +199,8 @@ const CampaignFileSchema = z.object({
 
 /** Die Kampagne als Inhalt einer Kampagnendatei. */
 export function toCampaignFile(campaign: Campaign): string {
-  const { name, odds, characters, log, generation, hexes, focus, location, bookings } = campaign;
-  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { name, odds, characters, log, generation, hexes, focus, location, bookings } }, null, 2);
+  const { name, odds, characters, log, generation, hexes, focus, location, bookings, encounters } = campaign;
+  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { name, odds, characters, log, generation, hexes, focus, location, bookings, encounters } }, null, 2);
 }
 
 /** Ein Dateiname aus dem Namen der Kampagne und dem Tag, z. B. „Spinward-Run-2026-10-25.json“. */
@@ -198,13 +227,14 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
   }
   try {
     const file = parsed.data.campaign;
-    const characters: Character[] = file.characters.map(({ career, homeworld, wields, ...c }) => ({
+    const characters: Character[] = file.characters.map(({ career, homeworld, wields, wears, ...c }) => ({
       ...c,
       skills: c.skills.map((s) => ({ ...s })),
       possessions: c.possessions.map((p) => stripped(p) as Possession),
       ...(career ? { career: careerOf(career) } : {}),
       ...(homeworld === undefined ? {} : { homeworld }),
       ...(wields === undefined ? {} : { wields }),
+      ...(wears === undefined ? {} : { wears }),
     }));
     const campaign: Campaign = {
       id,
@@ -217,6 +247,7 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
       ...(file.focus === undefined ? {} : { focus: file.focus }),
       ...(file.location === undefined ? {} : { location: file.location }),
       bookings: file.bookings.map((b) => stripped(b) as Booking),
+      encounters: file.encounters.map((e) => ({ ...stripped(e), npcs: e.npcs.map((n) => stripped(n) as Npc) }) as Encounter),
     };
     validate(campaign);
     return keepFocus(campaign, campaign);
@@ -264,12 +295,11 @@ function logEntry(entry: z.infer<typeof LogEntrySchema>): LogEntry {
       const { uses, ...rest } = entry;
       return uses === undefined ? rest : { ...rest, uses };
     }
-    case 'attack': {
-      const { uses, ...rest } = entry;
-      return uses === undefined ? rest : { ...rest, uses };
-    }
-    case 'dice':
+    case 'attack':
+      return stripped(entry) as AttackResult;
     case 'damage':
+      return stripped(entry) as DamageRoll;
+    case 'dice':
       return entry;
     case 'note': {
       const { interprets, ...rest } = entry;
@@ -299,6 +329,7 @@ function validate(campaign: Campaign): void {
   validateHexes(campaign.hexes);
   if (campaign.location !== undefined) worldOf(campaign.hexes, campaign.location);
   validateBookings(campaign);
+  validateEncounters(campaign);
   // Heimatwelten und Welten der Terms verweisen auf fertige Welten des Subsektors.
   const careers = [...campaign.characters.flatMap((c) => (c.career ? [c.career] : [])), ...(campaign.generation ? [campaign.generation.career] : [])];
   for (const id of [...campaign.characters.flatMap((c) => (c.homeworld === undefined ? [] : [c.homeworld])), ...careers.flatMap((c) => [...(c.homeworld === undefined ? [] : [c.homeworld]), ...(c.worlds ?? [])])]) {
@@ -316,11 +347,18 @@ function validate(campaign: Campaign): void {
         break;
       case 'attack': {
         const weapon = weaponOf(entry.with);
-        const character = campaign.characters.find((c) => c.id === entry.for);
-        if (!character) throw new DomainError(`Ein Angriff verweist auf den Charakter ${entry.for}, den es nicht gibt.`);
-        if (entry.uses !== undefined && (entry.uses !== weapon.uses || !character.skills.some((s) => s.of === entry.uses))) {
-          throw new DomainError(`Ein Angriff von ${character.name} verweist auf eine Fertigkeit, die nicht zur Waffe passt oder die der Charakter nicht hat.`);
-        }
+        if ((entry.for === undefined) === (entry.by === undefined)) throw new DomainError('Ein Angriff hat genau einen Angreifer, einen SC oder einen NSC.');
+        if (entry.against !== undefined && entry.victim !== undefined) throw new DomainError('Ein Angriff hat höchstens ein Ziel.');
+        if (entry.by !== undefined) npcOf(campaign, entry.by);
+        if (entry.against !== undefined) npcOf(campaign, entry.against);
+        if (entry.victim !== undefined && !campaign.characters.some((c) => c.id === entry.victim)) throw new DomainError(`Ein Angriff verweist auf den Charakter ${entry.victim}, den es nicht gibt.`);
+        if (entry.for !== undefined) {
+          const character = campaign.characters.find((c) => c.id === entry.for);
+          if (!character) throw new DomainError(`Ein Angriff verweist auf den Charakter ${entry.for}, den es nicht gibt.`);
+          if (entry.uses !== undefined && (entry.uses !== weapon.uses || !character.skills.some((s) => s.of === entry.uses))) {
+            throw new DomainError(`Ein Angriff von ${character.name} verweist auf eine Fertigkeit, die nicht zur Waffe passt oder die der Charakter nicht hat.`);
+          }
+        } else if (entry.uses !== undefined) throw new DomainError('Ein Angriff eines NSC verweist auf keine Fertigkeitsstufe.');
         if (entry.target !== ATTACK_TARGET) throw new DomainError(`Ein Angriff hat den Zielwert ${ATTACK_TARGET}.`);
         break;
       }
@@ -357,4 +395,22 @@ function validate(campaign: Campaign): void {
 
 function weaponOfItem(item: string): string | undefined {
   return itemOf(item).weapon;
+}
+
+/** Die Begegnungen: höchstens eine läuft, jede Art gibt es, NSC-Ids kommen nur einmal vor, Verweise gibt es. */
+function validateEncounters(campaign: Campaign): void {
+  if (campaign.encounters.filter((e) => !e.ended).length > 1) throw new DomainError('Es läuft mehr als eine Begegnung.');
+  const ids = new Set<string>();
+  for (const encounter of campaign.encounters) {
+    if (!encounterTypeOf(encounter.of)) throw new DomainError(`Eine Begegnung ${encounter.of} gibt es nicht.`);
+    if (encounter.in !== undefined && !hexById(campaign.hexes, encounter.in)) throw new DomainError(`Eine Begegnung verweist auf das Feld ${encounter.in}, das es nicht gibt.`);
+    for (const npc of encounter.npcs) {
+      if (ids.has(npc.id)) throw new DomainError(`Der NSC ${npc.id} kommt doppelt vor.`);
+      ids.add(npc.id);
+      if (itemOf(npc.wields).weapon === undefined) throw new DomainError(`${npc.name} kämpft mit etwas, das keine Waffe ist.`);
+      if (npc.wears !== undefined && itemOf(npc.wears).armor === undefined) throw new DomainError(`${npc.name} trägt etwas, das keine Rüstung ist.`);
+      if (npc.became !== undefined && !campaign.characters.some((c) => c.id === npc.became)) throw new DomainError(`${npc.name} ist als ein Charakter übernommen, den es nicht gibt.`);
+      for (const [k, v] of Object.entries(npc.upp)) if (!Number.isInteger(v) || v < 0 || v > 15) throw new DomainError(`Attributwerte liegen zwischen 0 und 15 (${k.toUpperCase()}: ${v}).`);
+    }
+  }
 }

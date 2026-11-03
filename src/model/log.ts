@@ -65,10 +65,17 @@ export interface TaskResult extends LogEntryBase {
   readonly target: number;
 }
 
-/** Ein gewürfelter Angriff: Treffer oder nicht. Rüstung und Reichweite sind die des Ziels. */
+/**
+ * Ein gewürfelter Angriff: Treffer oder nicht. Rüstung und Reichweite sind die des Ziels. Der
+ * Angreifer ist ein SC (`for`) oder ein NSC einer Begegnung (`by`), genau einer; das Ziel, wenn es
+ * eines gibt, ein NSC (`against`) oder ein SC (`victim`). `target` ist der Zielwert.
+ */
 export interface AttackResult extends LogEntryBase {
   readonly kind: 'attack';
-  readonly for: CharacterId;
+  readonly for?: CharacterId;
+  readonly by?: string;
+  readonly against?: string;
+  readonly victim?: CharacterId;
   /** Verweis auf die Waffe. */
   readonly with: string;
   /** Die Fertigkeit der Waffe, wenn der Charakter eine Stufe darin hat; sonst zählte Stufe 0. */
@@ -88,7 +95,13 @@ export interface DamageRoll extends LogEntryBase {
   readonly kind: 'damage';
   readonly of: number;
   readonly dice: readonly number[];
+  /** Bei einem Treffer mit Ziel: je Würfel das Attribut, auf das er geht. */
+  readonly to?: readonly PhysicalCharacteristic[];
 }
+
+/** Die körperlichen Attribute, die Wunden nehmen (S. 7). */
+export const physical = ['STR', 'DEX', 'END'] as const;
+export type PhysicalCharacteristic = (typeof physical)[number];
 
 /**
  * Eine Notiz, oder mit `interprets` eine Deutung. `interprets` ist im Code die Stelle des gedeuteten

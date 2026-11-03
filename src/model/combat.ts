@@ -1,9 +1,11 @@
-import { activeSkills, characterOf, type Campaign, type Character, type SkillLevel } from './campaign';
+import { activeSkills, characterOf, type Campaign, type Character, type SkillLevel, type Upp } from './campaign';
+import { npcOf } from './encounter';
 import { DomainError } from './errors';
-import { damageRollsOf, isSuccess, type AttackResult, type DamageRoll, type LogEntry } from './log';
+import { damageRollsOf, isSuccess, type AttackResult, type DamageRoll, type LogEntry, type PhysicalCharacteristic } from './log';
 import type { Clock, Random } from './ports';
 import { HANDS, itemOf, itemOfWeapon, weaponOf, type ArmorClass, type Range, type Weapon } from './reference';
 import { valueOf, type Characteristic } from './rules';
+import { autoWounds, checkWounds, isFirstHit, woundStateOf, victimOf, woundedUpp, woundsOf, type Combatant, type WoundState } from './wounds';
 
 /** *Basic Throw to Hit* (S. 6): 2W6 + DM ≥ 8. */
 export const ATTACK_TARGET = 8;
@@ -48,13 +50,42 @@ export interface AttackDm {
   readonly total: number;
 }
 
+/** Die getragene Rüstung eines Charakters als Rüstungsklasse; ohne Nothing. */
+export function wornArmor(character: { readonly wears?: string }): ArmorClass {
+  return character.wears === undefined ? 'nothing' : (itemOf(character.wears).armor ?? 'nothing');
+}
+
+/** Wer kämpft, mit allem, was ein Angriff von ihm und auf ihn braucht. STR und DEX mit Wunden. */
+export interface Fighter {
+  readonly who: Combatant;
+  readonly name: string;
+  readonly upp: Upp;
+  readonly weapon: Weapon;
+  /** Die Stufe in der Fertigkeit der Waffe; ohne 0. */
+  readonly skill: number;
+  readonly armor: ArmorClass;
+  readonly state: WoundState;
+}
+
+export function fighterOf(campaign: Campaign, who: Combatant): Fighter {
+  const upp = woundedUpp('pc' in who ? characterOf(campaign, who.pc).upp : npcOf(campaign, who.npc).upp, woundsOf(campaign, who));
+  const state = woundStateOf(campaign, who);
+  if ('pc' in who) {
+    const character = characterOf(campaign, who.pc);
+    const weapon = wieldedWeapon(character);
+    return { who, name: character.name, upp, weapon, skill: weaponSkill(character, weapon)?.level ?? 0, armor: wornArmor(character), state };
+  }
+  const npc = npcOf(campaign, who.npc);
+  return { who, name: npc.name, upp, weapon: weaponOf(itemOf(npc.wields).weapon!), skill: npc.skill, armor: wornArmor(npc), state };
+}
+
 /** Der DM eines Angriffs; `undefined`, wenn auf diese Reichweite mit der Waffe kein Angriff geht. */
-export function attackDm(character: Character, weapon: Weapon, armor: ArmorClass, range: Range): AttackDm | undefined {
+export function attackDm(attacker: { readonly upp: Upp; readonly skill: number }, weapon: Weapon, armor: ArmorClass, range: Range): AttackDm | undefined {
   const atRange = rangeDm(weapon, range);
   if (atRange === undefined) return undefined;
-  const skill = weaponSkill(character, weapon)?.level ?? 0;
+  const skill = attacker.skill;
   const vsArmor = armorDm(weapon, armor);
-  const characteristic = characteristicAttackDm(weapon, valueOf(character.upp, attackCharacteristic(weapon)));
+  const characteristic = characteristicAttackDm(weapon, valueOf(attacker.upp, attackCharacteristic(weapon)));
   return {
     skill,
     armor: vsArmor,
@@ -78,6 +109,7 @@ export function checkDamageRoll(log: readonly LogEntry[], roll: DamageRoll, at: 
   const wounds = weaponOf(target.with).wounds;
   if (roll.dice.length !== wounds) throw new DomainError(`Der Schaden mit ${weaponOf(target.with).name} sind ${wounds}W6.`);
   if (roll.dice.some((d) => !Number.isInteger(d) || d < 1 || d > 6)) throw new DomainError('Ein Würfel zeigt 1 bis 6.');
+  checkWounds(log.slice(0, at), roll, target);
 }
 
 /** Die Stelle des neuesten Treffers im Log, wenn dafür noch kein Schaden gewürfelt ist. */
@@ -88,15 +120,43 @@ export function pendingDamage(log: readonly LogEntry[]): number | undefined {
   return undefined;
 }
 
-/** Würfelt den Schaden des Treffers an der Stelle `of`: so viele W6, wie die Waffe `wounds` hat. */
-export function rollDamage(campaign: Campaign, of: number, random: Random, clock: Clock): DamageRoll {
-  const target = campaign.log[of];
+/** Der Treffer an der Stelle `of`; sonst gibt es keinen Schaden. */
+export function hitAt(log: readonly LogEntry[], of: number): AttackResult {
+  const target = log[of];
   if (!isHit(target)) throw new DomainError('Schaden gibt es nur für einen Treffer.');
-  characterOf(campaign, target.for);
-  const dice = Array.from({ length: weaponOf(target.with).wounds }, () => random.int(1, 6));
-  const roll: DamageRoll = { kind: 'damage', at: clock.now(), of, dice };
+  return target;
+}
+
+/** Die Schadenswürfel des Treffers an der Stelle `of`: so viele W6, wie die Waffe `wounds` hat. */
+export function damageDice(campaign: Campaign, of: number, random: Random): readonly number[] {
+  return Array.from({ length: weaponOf(hitAt(campaign.log, of).with).wounds }, () => random.int(1, 6));
+}
+
+/** Muss der Spieler den Schaden dieses Treffers selbst verteilen? Bei einem SC nach seinem ersten Treffer. */
+export function needsWounding(campaign: Campaign, of: number): boolean {
+  const who = victimOf(hitAt(campaign.log, of));
+  return who !== undefined && 'pc' in who && !isFirstHit(campaign.log, who);
+}
+
+/** Ein Schadenswurf aus Würfeln und, bei einem Treffer mit Ziel, der Verteilung auf Attribute. */
+export function damageRoll(campaign: Campaign, of: number, dice: readonly number[], to: readonly PhysicalCharacteristic[] | undefined, clock: Clock): DamageRoll {
+  const roll: DamageRoll = to === undefined ? { kind: 'damage', at: clock.now(), of, dice } : { kind: 'damage', at: clock.now(), of, dice, to };
   checkDamageRoll(campaign.log, roll, campaign.log.length);
   return roll;
+}
+
+/**
+ * Würfelt den Schaden des Treffers an der Stelle `of` und verteilt ihn, wo die App es tut (ohne Ziel
+ * gar nicht, beim ersten Treffer und bei NSC selbst). Bei einem SC nach dem ersten Treffer verteilt
+ * der Spieler; das geht über `Wounding` im Paket draft.
+ */
+export function rollDamage(campaign: Campaign, of: number, random: Random, clock: Clock): DamageRoll {
+  const who = victimOf(hitAt(campaign.log, of));
+  const dice = damageDice(campaign, of, random);
+  if (!who) return damageRoll(campaign, of, dice, undefined, clock);
+  const to = autoWounds(campaign, who, dice, random);
+  if (!to) throw new DomainError('Den Schaden an einem SC verteilt der Spieler.');
+  return damageRoll(campaign, of, dice, to, clock);
 }
 
 /** Munition der Waffe in der Hand: geladene Schuss, wie viele das Magazin fasst und wie viele Magazine im Besitz sind. */

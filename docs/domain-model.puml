@@ -633,13 +633,13 @@ Task ..> TaskResult : on roll
 Attack "0..1" --> "1" Campaign : in
 Attack "*" --> "0..1" Character : /for
 Attack "*" --> "0..1" Npc : by
-Attack "*" --> "0..1" Npc : target
+Attack "*" --> "0..1" Npc : against
 Attack "*" --> "0..1" Character : /victim
 Attack "*" --> "1" Weapon : /with
 Attack ..> AttackResult : on roll
 AttackResult "*" --> "0..1" Character : for
 AttackResult "*" --> "0..1" Npc : by
-AttackResult "*" --> "0..1" Npc : target
+AttackResult "*" --> "0..1" Npc : against
 AttackResult "*" --> "0..1" Character : victim
 AttackResult "*" --> "1" Weapon : with
 AttackResult "*" --> "0..1" SkillLevel : uses

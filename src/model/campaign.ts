@@ -4,6 +4,7 @@ import type { Generation } from './generation';
 import { damageRollsOf, interpretationsOf, type LogEntry } from './log';
 import { worldOf, type Hex } from './sector';
 import type { Booking } from './shop';
+import type { Encounter } from './encounter';
 import { defaultOdds, HANDS, itemOf, itemOfWeapon, oddsOf, ref, skillOf, weaponOf, type ExampleCharacter } from './reference';
 
 /** Die sechs Attributwerte, je 0 bis 15. */
@@ -54,6 +55,10 @@ export interface Character {
   readonly homeworld?: string;
   /** Die Waffe in der Hand: die Waffe eines Gegenstands aus seinem Besitz; fehlt sie, sind es die Hände. */
   readonly wields?: string;
+  /** Die getragene Rüstung: ein Gegenstand mit Rüstungsklasse aus seinem Besitz; fehlt sie, Nothing. */
+  readonly wears?: string;
+  /** Ein dauerhafter NSC, kein SC: nicht in der Leiste oben, nicht im Shop. */
+  readonly npc: boolean;
 }
 
 export type CampaignId = string;
@@ -80,6 +85,8 @@ export interface Campaign {
   readonly location?: string;
   /** Die Buchungen der Gruppenkasse, in der Reihenfolge, in der sie entstanden sind. */
   readonly bookings: readonly Booking[];
+  /** Die Begegnungen, die laufende zuletzt; beendete bleiben, wenn der Log auf ihre NSC verweist. */
+  readonly encounters: readonly Encounter[];
 }
 
 /** Was man beim Anlegen und Bearbeiten eines Charakters eingibt. */
@@ -99,11 +106,15 @@ export interface CharacterInput {
   readonly homeworld?: string;
   /** Die Waffe in der Hand; fehlt sie, sind es die Hände. Fehlt der Gegenstand im Besitz, fällt sie weg. */
   readonly wields?: string;
+  /** Die getragene Rüstung; fehlt sie, Nothing. Fehlt der Gegenstand im Besitz, fällt sie weg. */
+  readonly wears?: string;
+  /** Fehlt: ein SC. */
+  readonly npc?: boolean;
 }
 
 /** Eine neue Kampagne, ohne Log, mit der Standardstufe und den angegebenen Charakteren. */
 export function createCampaign(examples: readonly ExampleCharacter[] = ref.examples, name = 'Kampagne', id: CampaignId = 'k1'): Campaign {
-  let campaign: Campaign = { id, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [], bookings: [] };
+  let campaign: Campaign = { id, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [], bookings: [], encounters: [] };
   for (const example of examples) campaign = addCharacter(campaign, example).campaign;
   // Bei mehreren Beispielen steht der erste oben, nicht der zuletzt angelegte.
   return withFocus(campaign, livingCharacters(campaign)[0]?.id);
@@ -170,9 +181,14 @@ export function characterOf(campaign: Campaign, id: CharacterId): Character {
   return character;
 }
 
-/** Die nicht ausgeblendeten Charaktere, lebend oder tot. */
+/** Die nicht ausgeblendeten SC, lebend oder tot; dauerhafte NSC zählen nicht dazu. */
 export function activeCharacters(campaign: Campaign): readonly Character[] {
-  return campaign.characters.filter((c) => !c.retired);
+  return campaign.characters.filter((c) => !c.retired && !c.npc);
+}
+
+/** Die dauerhaften NSC, die nicht ausgeblendet sind; sie stehen im Charakter-Screen unter „NSC“. */
+export function npcCharacters(campaign: Campaign): readonly Character[] {
+  return campaign.characters.filter((c) => !c.retired && c.npc);
 }
 
 /** Die Lebenden: Nur sie lassen sich für Proben wählen. */
@@ -191,7 +207,7 @@ export function retiredCharacters(campaign: Campaign): readonly Character[] {
 
 /** Kann der Charakter oben stehen? Nur wer lebt und nicht ausgeblendet ist. */
 function canFocus(character: Character | undefined): character is Character {
-  return character !== undefined && !character.dead && !character.retired;
+  return character !== undefined && !character.dead && !character.retired && !character.npc;
 }
 
 /** Setzt den Charakter oben, oder keinen. */
@@ -236,7 +252,7 @@ export function activeSkills(character: Character): readonly SkillLevel[] {
 
 /** Verweist ein Logeintrag auf den Charakter? Dann wird er nie gelöscht. */
 export function isInLog(campaign: Campaign, id: CharacterId): boolean {
-  return campaign.log.some((e) => (e.kind === 'task' || e.kind === 'attack') && e.for === id);
+  return campaign.log.some((e) => (e.kind === 'task' && e.for === id) || (e.kind === 'attack' && (e.for === id || e.victim === id)));
 }
 
 /** Verweist ein Logeintrag auf die Fertigkeitsstufe? Dann wird sie nie gelöscht. */
@@ -253,6 +269,25 @@ export function weaponsOf(character: { readonly possessions?: readonly Possessio
 function wieldsOf(input: CharacterInput): { wields?: string } {
   if (input.wields === undefined || input.wields === HANDS) return {};
   return weaponsOf(input).includes(input.wields) ? { wields: input.wields } : {};
+}
+
+/** Was ein Charakter tragen kann: die Gegenstände mit Rüstungsklasse aus seinem Besitz, in dessen Reihenfolge. */
+export function armorsOf(character: { readonly possessions?: readonly Possession[] }): readonly string[] {
+  return (character.possessions ?? []).flatMap((p) => (itemOf(p.of).armor === undefined ? [] : [p.of]));
+}
+
+/** Die getragene Rüstung, nur wenn sie im Besitz ist; sonst Nothing (kein Feld). */
+function wearsOf(input: CharacterInput): { wears?: string } {
+  return input.wears !== undefined && armorsOf(input).includes(input.wears) ? { wears: input.wears } : {};
+}
+
+/** Zieht eine Rüstung aus dem Besitz an; `undefined` heißt: keine (Nothing). */
+export function setWears(campaign: Campaign, id: CharacterId, item: string | undefined): Campaign {
+  const character = characterOf(campaign, id);
+  if (item !== undefined && !armorsOf(character).includes(item)) throw new DomainError(`${character.name} hat kein ${itemOf(item).name} zum Anziehen.`);
+  const rest = Object.fromEntries(Object.entries(character).filter(([key]) => key !== 'wears')) as Omit<Character, 'wears'>;
+  const after: Character = item === undefined ? rest : { ...rest, wears: item };
+  return { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? after : c)) };
 }
 
 /** Wechselt die Waffe in der Hand: die Hände oder die Waffe eines Gegenstands aus dem Besitz. */
@@ -281,6 +316,7 @@ export function validateCharacter(input: CharacterInput): void {
     if (!Number.isInteger(skill.level) || skill.level < 0) throw new DomainError(`Die Stufe von ${name} ist 0 oder mehr.`);
   }
   if (input.wields !== undefined) weaponOf(input.wields);
+  if (input.wears !== undefined && itemOf(input.wears).armor === undefined) throw new DomainError(`${itemOf(input.wears).name} ist keine Rüstung.`);
   const owned = new Set<string>();
   for (const possession of input.possessions ?? []) {
     const item = itemOf(possession.of);
@@ -327,10 +363,12 @@ export function addCharacter(campaign: Campaign, input: CharacterInput, career?:
     ...fields(input),
     dead: input.dead ?? false,
     retired: false,
+    npc: input.npc ?? false,
     skills: input.skills.map((s) => ({ of: s.of, level: s.level, retired: false })),
     ...(career ? { career } : {}),
     ...(input.homeworld === undefined ? {} : { homeworld: input.homeworld }),
     ...wieldsOf(input),
+    ...wearsOf(input),
   };
   const added = { ...campaign, characters: [...campaign.characters, character] };
   // Ein neuer Charakter steht oben, wenn er lebt.
@@ -357,7 +395,7 @@ export function updateCharacter(campaign: Campaign, id: CharacterId, input: Char
   const added = input.skills.filter((s) => !known.has(s.of)).map((s) => ({ of: s.of, level: s.level, retired: false }));
   // Die Eingabe sagt, welche Heimatwelt gilt; fehlt sie, hat der Charakter keine.
   // Ebenso die Waffe in der Hand; fehlt ihr Gegenstand im Besitz, sind es wieder die Hände.
-  const rest = Object.fromEntries(Object.entries(before).filter(([key]) => key !== 'homeworld' && key !== 'wields')) as Omit<Character, 'homeworld' | 'wields'>;
+  const rest = Object.fromEntries(Object.entries(before).filter(([key]) => key !== 'homeworld' && key !== 'wields' && key !== 'wears')) as Omit<Character, 'homeworld' | 'wields' | 'wears'>;
   // Was eine Schusswaffe geladen hat, bleibt, wenn die Eingabe nichts dazu sagt.
   const loaded = new Map(before.possessions.flatMap((p) => (p.rounds === undefined ? [] : [[p.of, p.rounds] as const])));
   const possessions =
@@ -367,9 +405,11 @@ export function updateCharacter(campaign: Campaign, id: CharacterId, input: Char
     ...fields(input),
     possessions,
     dead: input.dead ?? before.dead,
+    npc: input.npc ?? before.npc,
     skills: [...kept, ...added],
     ...(input.homeworld === undefined ? {} : { homeworld: input.homeworld }),
     ...wieldsOf({ ...input, possessions }),
+    ...wearsOf({ ...input, possessions }),
   };
   return keepFocus(campaign, { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? after : c)) });
 }
@@ -389,9 +429,9 @@ export function restoreCharacter(campaign: Campaign, id: CharacterId): Campaign 
 
 /** Was eine Eingabe für einen bestehenden Charakter wäre, mit seinen eingeblendeten Fertigkeiten. */
 export function inputOf(character: Character): CharacterInput {
-  const { name, background, equipment, credits, note, dead, upp, possessions, homeworld, wields } = character;
-  const input = { name, background, equipment, credits, note, dead, upp, possessions, skills: activeSkills(character).map(({ of, level }) => ({ of, level })) };
-  return { ...input, ...(homeworld === undefined ? {} : { homeworld }), ...(wields === undefined ? {} : { wields }) };
+  const { name, background, equipment, credits, note, dead, npc, upp, possessions, homeworld, wields, wears } = character;
+  const input = { name, background, equipment, credits, note, dead, npc, upp, possessions, skills: activeSkills(character).map(({ of, level }) => ({ of, level })) };
+  return { ...input, ...(homeworld === undefined ? {} : { homeworld }), ...(wields === undefined ? {} : { wields }), ...(wears === undefined ? {} : { wears }) };
 }
 
 /** Beginnt oder ersetzt die Charaktererschaffung der Kampagne; `undefined` verwirft sie. */

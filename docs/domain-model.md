@@ -88,12 +88,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > flüchtig der Angriff in Vorbereitung (`Attack`), im Log das Angriffsergebnis (`AttackResult`)
 > und der Schadenswurf (`DamageRoll`).
 >
-> **Entwurf, noch nicht freigegeben** (3. November 2026): **Begegnungen mit NSC, Angriffe in beide
-> Richtungen und Wunden** (siehe *Begegnung*, *NSC*, *Wunden*, *Getragene Rüstung*). Neu im Bild:
+> Ebenfalls am 3. November 2026 freigegeben: **Begegnungen mit NSC, Angriffe in beide Richtungen
+> und Wunden** (siehe *Begegnung*, *NSC*, *Wunden*, *Getragene Rüstung*). Neu im Bild:
 > `Encounter`, `Npc`, `Wounds`, `WoundState`, als Referenzdaten `EncounterType`, flüchtig
 > `Wounding`; `Character.npc`, `Character.wears`, `Character./wounds`, `Character./state`,
 > `Item.armor`, `DamageRoll.to`; der Angriff kennt Angreifer und Ziel als SC oder NSC (`for`/`by`,
-> `target`/`victim`).
+> `against`/`victim`).
 >
 > Ebenfalls am 3. November 2026 freigegeben: **Verkaufen** im Shop (siehe *Shop*). Neu im Bild: die Buchungsart `sale` und der Verweis `Booking.sold`.
 >
@@ -536,12 +536,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Leiste oben, nicht unter den SC im Shop, und lassen sich im Editor zum SC machen und umgekehrt.
     Proben und Angriffe würfelt man für SC.
 - **Getragene Rüstung.** Jeder Charakter trägt höchstens eine Rüstung (`wears`), einen Gegenstand
-  der Art *armor* aus seinem Besitz; keine heißt Nothing. Wie die Rüstung in der Matrix zählt, steht
-  an ihr (`Item.armor`): Jack, Mesh, Cloth, Reflec, Ablat, Combat Armor als Combat, Vacc Suit als
-  Cloth, Battle Dress als Combat. Man wählt sie im Kampf und im Editor; geht sie aus dem Besitz,
+  mit Rüstungsklasse aus seinem Besitz; keine heißt Nothing. Wie er in der Matrix zählt, steht an
+  ihm (`Item.armor`): Jack, Mesh, Cloth, Reflec, Ablat, Combat Armor als Combat, Battle Dress als
+  Combat (S. 4), Vacc Suit als Cloth (S. 4), Protective Suit (jack) als Jack und Protective Suit
+  (cloth) als Cloth. NSC bekommen in Begegnungen nur Rüstungen der Art *armor*. Man wählt sie im Kampf und im Editor; geht sie aus dem Besitz,
   trägt er Nothing.
 - **Angriff in beide Richtungen.**
-  - *SC gegen NSC*: Der Charakter oben greift einen NSC der laufenden Begegnung an (`target`), der
+  - *SC gegen NSC*: Der Charakter oben greift einen NSC der laufenden Begegnung an (`against`), der
     weder tot noch übernommen ist. Die Rüstung ist die, die der NSC trägt; man wählt nur die
     Reichweite. Wie bisher geht auch ein Ziel ohne NSC, mit frei gewählter Rüstung.
   - *NSC gegen SC*: Ein NSC der Begegnung, der nicht bewusstlos oder tot ist, greift den Charakter
@@ -550,7 +551,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Angreifer mit Wunden: STR bzw. DEX zählen mit ihrem verwundeten Wert. Bewusstlose und Tote
     greifen nicht an.
   - Das Angriffsergebnis verweist auf Angreifer (`for` = SC oder `by` = NSC, genau einer) und, wenn
-    es eines gibt, auf das Ziel (`target` = NSC oder `victim` = SC, höchstens einer); es hält wie
+    es eines gibt, auf das Ziel (`against` = NSC oder `victim` = SC, höchstens einer); es hält wie
     bisher Rüstung, Reichweite, Würfel, DM und Zielwert fest.
 - **Wunden.** Nach S. 7. Der Schaden eines Treffers wird auf STR, DEX und END verteilt; jeder Würfel
   ist ein Block, der ganz auf ein Attribut geht und nicht geteilt wird (`DamageRoll.to`, je Würfel

@@ -1,4 +1,4 @@
-import { referenceData, type Cascade, type Entry, type Gain, type Item, type Odds, type Section, type Service, type Skill, type Slot, type Table, type Weapon } from '../data';
+import { referenceData, type Cascade, type Entry, type Gain, type Item, type Odds, type Section, type Service, type Skill, type Slot, type Table, type Weapon, type EncounterType } from '../data';
 import { DomainError } from './errors';
 
 export { nameSlotIds, nameSounds, type NameSound } from '../data';
@@ -9,6 +9,7 @@ export type {
   AttackKind,
   Cascade,
   Column,
+  EncounterType,
   Entry,
   ExampleCharacter,
   Gain,
@@ -136,4 +137,16 @@ export function usesOf(item: Item): string | undefined {
 /** Der Gegenstand, dessen Waffe eine Fertigkeit nutzt; für jede Waffe aus Blade und Gun Combat gibt es genau einen. */
 export function weaponFor(skill: string): Item {
   return found(ref.items.find((i) => usesOf(i) === skill), 'Die Waffe für', skill);
+}
+
+const encounterTypeByRoll = new Map(ref.encounters.types.map((t) => [t.roll, t]));
+
+/** Die Art einer Begegnung zu einem Wurf 11–66; die Zeilen 61–66 sind leer. */
+export function encounterTypeOf(roll: number): EncounterType | undefined {
+  return encounterTypeByRoll.get(roll);
+}
+
+/** Der Text der Reactions-Tabelle zu 2 bis 12. */
+export function reactionText(roll: number): string {
+  return found(ref.encounters.reactions.find((r) => r.roll === roll), 'Die Reaktion', String(roll)).text;
 }

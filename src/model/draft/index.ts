@@ -2,4 +2,5 @@
 export * from './card';
 export * from './task';
 export * from './attack';
+export * from './wounding';
 export * from './world-roll';

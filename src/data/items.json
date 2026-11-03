@@ -72,7 +72,8 @@
     "kind": "equipment",
     "tl": 5,
     "weight": 5,
-    "price": 700
+    "price": 700,
+    "armor": "jack"
   },
   {
     "id": "protective-suit-cloth",
@@ -80,7 +81,8 @@
     "kind": "equipment",
     "tl": 5,
     "weight": 7,
-    "price": 1400
+    "price": 1400,
+    "armor": "cloth"
   },
   {
     "id": "vacc-suit-tl8",
@@ -88,7 +90,8 @@
     "kind": "equipment",
     "tl": 8,
     "weight": 10,
-    "price": 10000
+    "price": 10000,
+    "armor": "cloth"
   },
   {
     "id": "vacc-suit-tl9",
@@ -96,7 +99,8 @@
     "kind": "equipment",
     "tl": 9,
     "weight": 8,
-    "price": 10000
+    "price": 10000,
+    "armor": "cloth"
   },
   {
     "id": "vacc-suit-tl10",
@@ -104,7 +108,8 @@
     "kind": "equipment",
     "tl": 10,
     "weight": 6,
-    "price": 10000
+    "price": 10000,
+    "armor": "cloth"
   },
   {
     "id": "vacc-suit-tl11",
@@ -112,7 +117,8 @@
     "kind": "equipment",
     "tl": 11,
     "weight": 4,
-    "price": 10000
+    "price": 10000,
+    "armor": "cloth"
   },
   {
     "id": "vacc-suit-tl12",
@@ -120,14 +126,16 @@
     "kind": "equipment",
     "tl": 12,
     "weight": 2,
-    "price": 10000
+    "price": 10000,
+    "armor": "cloth"
   },
   {
     "id": "vacc-suit-tl13",
     "name": "Vacc Suit",
     "kind": "equipment",
     "tl": 13,
-    "price": 10000
+    "price": 10000,
+    "armor": "cloth"
   },
   {
     "id": "cold-weather-clothing-tl1",
@@ -855,7 +863,8 @@
     "kind": "armor",
     "tl": 1,
     "weight": 1,
-    "price": 50
+    "price": 50,
+    "armor": "jack"
   },
   {
     "id": "mesh",
@@ -863,7 +872,8 @@
     "kind": "armor",
     "tl": 7,
     "weight": 2,
-    "price": 150
+    "price": 150,
+    "armor": "mesh"
   },
   {
     "id": "cloth",
@@ -871,7 +881,8 @@
     "kind": "armor",
     "tl": 6,
     "weight": 2,
-    "price": 250
+    "price": 250,
+    "armor": "cloth"
   },
   {
     "id": "reflec",
@@ -879,7 +890,8 @@
     "kind": "armor",
     "tl": 10,
     "weight": 1,
-    "price": 1500
+    "price": 1500,
+    "armor": "reflec"
   },
   {
     "id": "ablat",
@@ -887,7 +899,8 @@
     "kind": "armor",
     "tl": 9,
     "weight": 2,
-    "price": 75
+    "price": 75,
+    "armor": "ablat"
   },
   {
     "id": "combat-armor",
@@ -895,7 +908,8 @@
     "kind": "armor",
     "tl": 11,
     "weight": 6,
-    "price": 20000
+    "price": 20000,
+    "armor": "combat"
   },
   {
     "id": "battle-dress",
@@ -903,7 +917,8 @@
     "kind": "armor",
     "tl": 13,
     "weight": 20,
-    "price": 200000
+    "price": 200000,
+    "armor": "combat"
   },
   {
     "id": "vehicle-primitive-biplane",

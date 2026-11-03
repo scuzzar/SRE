@@ -55,6 +55,14 @@ export const CharacteristicSchema = z.enum(['STR', 'DEX', 'END', 'INT', 'EDU', '
 export const itemKinds = ['weapon', 'ammunition', 'armor', 'equipment', 'vehicle', 'ship', 'passage', 'membership'] as const;
 export const ItemKindSchema = z.enum(itemKinds);
 
+/** Die Rüstungsklassen, in der Reihenfolge der Spalten der Weapons and Range Matrix (S. 6). */
+export const armorClasses = ['nothing', 'jack', 'mesh', 'cloth', 'reflec', 'ablat', 'combat'] as const;
+export const ArmorClassSchema = z.enum(armorClasses);
+
+/** Die Reichweiten, von nah nach fern (S. 7). */
+export const ranges = ['close', 'short', 'medium', 'long', 'veryLong'] as const;
+export const RangeSchema = z.enum(ranges);
+
 /** Ein Gegenstand aus den Charts, mit TL, Gewicht in kg und Preis in Cr, soweit die Charts sie angeben. */
 export const ItemSchema = z.object({
   id: z.string().min(1),
@@ -67,17 +75,11 @@ export const ItemSchema = z.object({
   once: z.boolean().default(false),
   /** Bei Waffen: ihre Kampfwerte; die Fertigkeit, mit der man sie führt, folgt daraus. */
   weapon: z.string().min(1).optional(),
+  /** Bei Rüstungen und Anzügen: wie sie in der Matrix zählen. */
+  armor: ArmorClassSchema.optional(),
   /** Anmerkung zu den Daten, z. B. ein Druckfehler im Chart. */
   note: z.string().optional(),
 });
-
-/** Die Rüstungsklassen, in der Reihenfolge der Spalten der Weapons and Range Matrix (S. 6). */
-export const armorClasses = ['nothing', 'jack', 'mesh', 'cloth', 'reflec', 'ablat', 'combat'] as const;
-export const ArmorClassSchema = z.enum(armorClasses);
-
-/** Die Reichweiten, von nah nach fern (S. 7). */
-export const ranges = ['close', 'short', 'medium', 'long', 'veryLong'] as const;
-export const RangeSchema = z.enum(ranges);
 
 /** Schlag (Hände), Hieb (Klingen) oder Schuss (Schusswaffen); bei Schlag und Hieb zählt STR, beim Schuss DEX. */
 export const AttackKindSchema = z.enum(['blow', 'swing', 'shot']);
@@ -124,6 +126,24 @@ export const WeaponSchema = z.object({
     z.array(RangeDmSchema).refine((dms) => dms.length === ranges.length && dms.every((d, i) => d.range === ranges[i]), 'Die DMs je Reichweite stehen nicht in der Reihenfolge der Matrix'),
   ),
   note: z.string().optional(),
+});
+
+/** Eine Zeile der Random Encounter List (S. 21): Anzahl in W6, TL-Abweichung und L, G, A, V. */
+export const EncounterTypeSchema = z.object({
+  roll: z.number().int().min(11).max(66),
+  name: z.string().min(1),
+  quantity: z.number().int().min(1).max(6),
+  tl: z.number().int(),
+  leader: z.boolean(),
+  guns: z.boolean(),
+  armor: z.boolean(),
+  vehicle: z.boolean(),
+});
+
+/** Die Begegnungen und die Reactions-Tabelle (S. 21). */
+export const EncountersSchema = z.object({
+  types: z.array(EncounterTypeSchema).min(1),
+  reactions: z.array(z.object({ roll: z.number().int().min(2).max(12), text: z.string().min(1) })).length(11),
 });
 
 /** Ein Sammelbegriff, aus dem man eine Fertigkeit wählt: Blade Combat, Gun Combat, Vehicle. */
@@ -239,6 +259,7 @@ export const ReferenceDataSchema = z
     examples: z.array(ExampleCharacterSchema),
     items: z.array(ItemSchema).min(1),
     weapons: z.array(WeaponSchema).min(1),
+    encounters: EncountersSchema,
     services: z.array(ServiceSchema).min(1),
     cascades: z.array(CascadeSchema),
     aging: z.array(AgingSchema),
@@ -319,6 +340,7 @@ function checkCareerData(data: CareerData, skillIds: ReadonlySet<string>, ctx: z
     ctx,
   );
   if (!weapons.has('hands')) issue('Die Hände fehlen unter den Waffen');
+  for (const item of data.items) if (item.kind === 'armor' && item.armor === undefined) issue(`Die Rüstung ${item.id} hat keine Rüstungsklasse`);
   if (data.items.some((i) => i.weapon === 'hands')) issue('Die Hände gehören zu keinem Gegenstand');
   for (const cascade of data.cascades) {
     for (const option of cascade.options) if (!skillIds.has(option)) issue(`Unbekannte Fertigkeit ${option} in ${cascade.id}`);
@@ -368,6 +390,7 @@ export type ArmorClass = z.infer<typeof ArmorClassSchema>;
 export type Range = z.infer<typeof RangeSchema>;
 export type AttackKind = z.infer<typeof AttackKindSchema>;
 export type Weapon = z.infer<typeof WeaponSchema>;
+export type EncounterType = z.infer<typeof EncounterTypeSchema>;
 export type ArmorDm = z.infer<typeof ArmorDmSchema>;
 export type RangeDm = z.infer<typeof RangeDmSchema>;
 export type Cascade = z.infer<typeof CascadeSchema>;
