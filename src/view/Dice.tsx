@@ -45,7 +45,7 @@ function wobble(seed: number, range: number): number {
   return Math.round((n - Math.floor(n)) * range * 2 - range);
 }
 
-function Die({ value, index, seed, alone = false }: { value: number; index: number; seed: number; alone?: boolean }) {
+function Die({ value, index, count, seed }: { value: number; index: number; count: number; seed: number }) {
   const end = rest[value] ?? { x: 0, y: 0 };
   const s = seed * 2 + index;
   const tilt = wobble(s + 1, 14);
@@ -57,7 +57,8 @@ function Die({ value, index, seed, alone = false }: { value: number; index: numb
     '--x0': `${end.x + (index ? -1 : 1) * (720 + wobble(s + 2, 60))}deg`,
     '--y0': `${end.y + (index ? 1 : -1) * (540 + wobble(s + 3, 60))}deg`,
     '--z0': `${tilt + wobble(s + 4, 120)}deg`,
-    '--dx': `${alone ? wobble(s + 5, 30) : (index ? 1 : -1) * (70 + wobble(s + 5, 30))}px`,
+    // Von der Mitte weg, je weiter außen, desto mehr; ein einzelner nur ein wenig.
+    '--dx': `${count === 1 ? wobble(s + 5, 30) : Math.sign(index - (count - 1) / 2 || 1) * (70 + wobble(s + 5, 30))}px`,
   } as CSSProperties;
 
   return (
@@ -79,14 +80,14 @@ function Die({ value, index, seed, alone = false }: { value: number; index: numb
 }
 
 /**
- * Geworfene Würfel, einer oder zwei. `landed` lässt sie sofort liegen (übersprungen) und leuchtet
+ * Geworfene Würfel, einer oder mehrere; ab vier werden sie kleiner, damit sie nebeneinander passen. `landed` lässt sie sofort liegen (übersprungen) und leuchtet
  * auf; `seed` unterscheidet die Würfe.
  */
 export function DiceView({ dice, seed, landed, size = 'large' }: { dice: readonly number[]; seed: number; landed: boolean; size?: 'large' | 'small' }) {
   return (
-    <div className={`dice-stage ${size}${landed ? ' landed' : ''}`} aria-hidden="true">
+    <div className={`dice-stage ${dice.length > 3 ? 'small' : size}${landed ? ' landed' : ''}`} aria-hidden="true">
       {dice.map((value, i) => (
-        <Die key={i} value={value} index={i} seed={seed} alone={dice.length === 1} />
+        <Die key={i} value={value} index={i} count={dice.length} seed={seed} />
       ))}
       <div className="dice-flash" />
     </div>

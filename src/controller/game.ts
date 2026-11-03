@@ -409,11 +409,12 @@ export class GameController {
     this.inShop(() => buy(this.campaign, item, count, character, this.deps.clock));
   }
 
-  /** Würfelt den Schaden des neuesten Treffers, für den noch keiner gewürfelt ist, und schließt das Popup. */
+  /** Würfelt den Schaden des neuesten Treffers, für den noch keiner gewürfelt ist, und zeigt den Wurf im Vordergrund. */
   rollDamage(): void {
     const index = pendingDamage(this.campaign.log);
     if (index === undefined) throw new DomainError('Es gibt keinen Treffer ohne Schaden.');
-    this.change(appendLog(this.campaign, rollDamage(this.campaign, index, this.deps.random, this.deps.clock)), { result: undefined });
+    const campaign = appendLog(this.campaign, rollDamage(this.campaign, index, this.deps.random, this.deps.clock));
+    this.change(campaign, { result: campaign.log.length - 1 });
   }
 
   /** „Weiter“: schließt das Ergebnis; die Probe bleibt vorbereitet, der Log darunter zeigt sie schon. */

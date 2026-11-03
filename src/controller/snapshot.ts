@@ -130,8 +130,8 @@ export interface Snapshot {
   readonly shop: ShopView | undefined;
   /** Der Aufenthaltsort der Gruppe, als Feld (0304). */
   readonly location: string | undefined;
-  /** Das Ergebnis-Popup nach einer Probe oder einem Angriff. */
-  readonly result: TaskItem | AttackItem | undefined;
+  /** Das Ergebnis-Popup nach einer Probe oder einem Angriff, bzw. der Schadenswurf im Vordergrund. */
+  readonly result: TaskItem | AttackItem | DamageItem | undefined;
   readonly editor: EditorView | undefined;
   /** Die feste Liste der Fertigkeiten, für den Editor. */
   readonly skills: readonly SkillChoice[];
@@ -860,7 +860,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     combat: combatView(campaign, state.attack, log),
     shop: shopView(campaign, state.shopError),
     location: campaign.location,
-    result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' ? resultItem : undefined,
+    result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : undefined,
     editor: state.editor && {
       id: state.editor.id,
       input: editing ? inputOf(editing) : emptyInput,

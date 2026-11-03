@@ -302,8 +302,10 @@ describe('Kampf', () => {
     expect(view.combat!.damage).toMatchObject({ index: 0, wounds: 3 });
     game.rollDamage();
     const after = game.snapshot();
-    expect(after.result).toBeUndefined();
+    expect(after.result).toMatchObject({ kind: 'damage', of: 0, dice: [6, 5, 4], damage: 15, weapon: 'Automatic Pistol' });
     expect(after.log[1]).toMatchObject({ kind: 'damage', of: 0, dice: [6, 5, 4], damage: 15 });
+    game.closeResult();
+    expect(game.snapshot().result).toBeUndefined();
     expect(after.combat!.damage).toBeUndefined();
     expect(after.combat!.target).toMatchObject({ armor: 'jack', range: 'short' });
     await game.whenSaved();

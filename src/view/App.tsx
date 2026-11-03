@@ -12,6 +12,7 @@ import { useGame, useSnapshot } from './game-context';
 import { CombatIcon, MenuIcon, OracleIcon, PersonIcon, SectorIcon, ShopIcon } from './icons';
 import { Menu } from './Menu';
 import { CardSheet } from './oracle/CardSheet';
+import { DiceRoll } from './oracle/DiceRoll';
 import { OracleScreen } from './oracle/OracleScreen';
 import { SectorPicker, SectorScreen } from './sector/SectorScreen';
 import { WorldSheet } from './sector/WorldSheet';
@@ -25,6 +26,7 @@ export function App() {
   const [menu, setMenu] = useState(false);
 
   if (!view.ready) return <div className="app" aria-busy="true" />;
+  const closeResult = () => game.closeResult();
 
   return (
     <div className="app">
@@ -86,7 +88,11 @@ export function App() {
       {view.picking && <SectorPicker view={view} title={view.picking.title} />}
       {view.world && <WorldSheet key={view.world.id} world={view.world} here={view.location === view.world.id} />}
       {view.card && <CardSheet card={view.card} onConfirmed={() => setQuestion('')} />}
-      {view.result && <ResultDialog result={view.result} />}
+      {view.result?.kind === 'damage' ? (
+        <DiceRoll key={view.result.at} item={view.result} seed={view.result.of} onDone={closeResult} />
+      ) : (
+        view.result && <ResultDialog result={view.result} />
+      )}
       {view.campaignSheet && <CampaignSheet key={view.campaign.id} sheet={view.campaignSheet} campaigns={view.campaigns} open={view.campaign} />}
     </div>
   );

@@ -2,7 +2,7 @@ import type { CombatView, Snapshot } from '../../controller';
 import { armorText, attackText, characteristicLabel, damageDetail, hex, partLabel, rangeMeters, rangeShort, rangeText, signed } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
-import { CloseIcon, CombatIcon, DiceIcon } from '../icons';
+import { CombatIcon, DiceIcon } from '../icons';
 import { CharacterStrip } from '../oracle/CharacterStrip';
 
 /**
@@ -149,24 +149,6 @@ function AttackDock({ combat }: { combat: CombatView }) {
   const target = combat.target;
   return (
     <section className="dock" aria-label="Angreifen">
-      {target ? (
-        <div className="task-bar" aria-live="polite">
-          <div className="task-info">
-            <strong className="task-headline">
-              {combat.weapon.name} · {armorText[target.armor]}, {rangeText[target.range]} · 8+
-            </strong>
-            <span className="task-figures">
-              2W6 {signed(target.dm)} ({target.parts.map(partLabel).join(', ')}) ·{' '}
-              {target.chance <= 0 ? 'Unmöglich' : target.chance >= 100 ? 'Trifft immer' : `Braucht ${target.need}+ · ${Math.round(target.chance)} %`}
-            </span>
-          </div>
-          <button type="button" className="icon-button" aria-label="Ziel abwählen" onClick={() => game.endAttack()}>
-            <CloseIcon />
-          </button>
-        </div>
-      ) : (
-        <p className="combat-pick">Ziel wählen: eine Zelle der Tabelle antippen.</p>
-      )}
       <div className="actions">
         {combat.damage && (
           <button

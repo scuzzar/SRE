@@ -14,7 +14,7 @@ test('Kampf: Kira zieht die Pistole, wählt das Ziel in der Tabelle und greift a
   // Auto Pistol-1 +1, DEX A +1, Jack +1, Short +2 → 8 − 5 = 3+.
   await expect(page.getByRole('button', { name: 'Angreifen' })).toBeDisabled();
   await page.getByRole('button', { name: 'Jack, Short: braucht 3+, 97 %' }).click();
-  await expect(page.locator('.task-bar')).toContainText('Braucht 3+ · 97 %');
+  await expect(page.getByRole('button', { name: 'Jack, Short: braucht 3+, 97 %' })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByLabel('Very Long: kein Angriff').first()).toBeVisible();
 
   await page.getByRole('button', { name: 'Angreifen' }).click();
@@ -24,6 +24,12 @@ test('Kampf: Kira zieht die Pistole, wählt das Ziel in der Tabelle und greift a
   const verdict = await dialog.getByRole('heading').textContent();
   if (verdict === 'TREFFER') {
     await dialog.getByRole('button', { name: 'Schaden würfeln (3W6)' }).click();
+    // Der Schaden rollt im Vordergrund; ein Tippen überspringt, ein zweites schließt.
+    const roll = page.locator('.dice-roll');
+    await expect(roll).toContainText('SCHADEN · Automatic Pistol · 3W6');
+    await roll.click();
+    await roll.click();
+    await expect(roll).toBeHidden();
     await expect(page.locator('.combat-recent-item').first()).toContainText(/Schaden 3W6: [1-6] \+ [1-6] \+ [1-6] = \d+/);
   } else {
     await dialog.getByRole('button', { name: 'Weiter' }).click();
