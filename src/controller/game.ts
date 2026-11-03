@@ -25,6 +25,7 @@ import {
   muster,
   reenlist,
   rollDice,
+  writeNote,
   rollNext,
   rollSkill,
   nameWorld,
@@ -232,6 +233,11 @@ export class GameController {
     this.change(appendLog(this.campaign, rollDice(this.deps.random, this.deps.clock)));
   }
 
+  /** Eine Notiz, oder mit `interprets` (Stelle eines Ergebnisses im Log) eine Deutung dazu. */
+  writeNote(text: string, interprets?: number): void {
+    this.change(appendLog(this.campaign, writeNote(this.campaign.log, text, this.deps.clock, interprets)));
+  }
+
   drawCard(question?: string): void {
     this.update({ card: drawCard(this.deps.random, question) });
   }
@@ -253,7 +259,7 @@ export class GameController {
     this.change(appendLog(this.campaign, pick), { card: undefined });
   }
 
-  /** Löscht einen Logeintrag endgültig. */
+  /** Löscht einen Logeintrag endgültig, ein Ergebnis mit seinen Deutungen. */
   deleteLogEntry(index: number): void {
     this.change(removeLogEntry(this.campaign, index), { result: undefined });
   }

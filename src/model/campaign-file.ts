@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { keepFocus, validateCharacter, validName, type Campaign, type CampaignId, type Character } from './campaign';
 import { replay, type Career, type CareerRoll } from './career';
 import { DomainError } from './errors';
-import { withQuestion, type LogEntry } from './log';
+import { checkInterprets, withQuestion, type LogEntry } from './log';
 import { entryOf, oddsOf, slotOfEntry } from './reference';
 import { characteristics } from './rules';
 import { hexFromRolls, temperatureIds, uwpKinds, validateHexes, worldOf, type Hex, type LegacyWorldRoll } from './sector';
@@ -34,6 +34,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     dm: z.number().int(),
     target: z.number().int(),
   }),
+  z.object({ kind: z.literal('note'), at, text: z.string().trim().min(1), interprets: z.number().int().optional() }),
 ]);
 
 const CareerRollSchema = z.object({
@@ -215,6 +216,10 @@ function logEntry(entry: z.infer<typeof LogEntrySchema>): LogEntry {
     }
     case 'dice':
       return entry;
+    case 'note': {
+      const { interprets, ...rest } = entry;
+      return interprets === undefined ? rest : { ...rest, interprets };
+    }
   }
 }
 
@@ -239,8 +244,11 @@ function validate(campaign: Campaign): void {
   for (const id of [...campaign.characters.flatMap((c) => (c.homeworld === undefined ? [] : [c.homeworld])), ...careers.flatMap((c) => [...(c.homeworld === undefined ? [] : [c.homeworld]), ...(c.worlds ?? [])])]) {
     worldOf(campaign.hexes, id);
   }
-  for (const entry of campaign.log) {
+  for (const [index, entry] of campaign.log.entries()) {
     switch (entry.kind) {
+      case 'note':
+        if (entry.interprets !== undefined) checkInterprets(campaign.log, entry.interprets, index);
+        break;
       case 'oracle':
         oddsOf(entry.odds);
         break;

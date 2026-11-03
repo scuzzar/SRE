@@ -352,6 +352,26 @@ describe('Log', () => {
     expect(repository.saved?.log).toHaveLength(2);
   });
 
+  it('schreibt Notizen und Deutungen; ein Ergebnis löschen löscht seine Deutungen mit', async () => {
+    const { game, repository } = await started(fixedRandom(1, 1, 2, 2));
+    game.rollDice();
+    game.writeNote('  Wir landen auf Regina.  ');
+    game.rollDice();
+    game.writeNote('Der Zoll winkt uns durch.', 2);
+    game.writeNote('Doch nicht ganz glatt.', 0);
+    expect(game.snapshot().log.slice(1)).toEqual([
+      { kind: 'note', at: '2026-10-23T14:01:00.000Z', text: 'Wir landen auf Regina.', interprets: undefined },
+      expect.objectContaining({ kind: 'dice', total: 4 }),
+      { kind: 'note', at: '2026-10-23T14:03:00.000Z', text: 'Der Zoll winkt uns durch.', interprets: 2 },
+      { kind: 'note', at: '2026-10-23T14:04:00.000Z', text: 'Doch nicht ganz glatt.', interprets: 0 },
+    ]);
+    expect(() => game.writeNote('Zur Notiz?', 1)).toThrow(/nur ein Ergebnis/);
+    game.deleteLogEntry(0);
+    await game.whenSaved();
+    expect(game.snapshot().log.map((e) => e.kind === 'note' ? [e.text, e.interprets] : e.kind)).toEqual([['Wir landen auf Regina.', undefined], 'dice', ['Der Zoll winkt uns durch.', 1]]);
+    expect(repository.saved?.log).toHaveLength(3);
+  });
+
   it('macht einen Charakter wieder löschbar, wenn der Eintrag weg ist, der auf ihn verwies', async () => {
     const { game } = await started();
     game.focusCharacter('c2');

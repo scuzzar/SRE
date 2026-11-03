@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
-import type { LogItem } from '../../controller';
+import type { LogItem, NoteItem } from '../../controller';
 import { clockTime, partLabel, pickText, quoted, taskDetail, taskTitle } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
@@ -9,12 +9,23 @@ const LONG_PRESS_MS = 550;
 /** Bewegt sich der Finger weiter, scrollt man und drückt nicht. */
 const SLOP_PX = 10;
 
+interface LogListProps {
+  log: readonly LogItem[];
+  /** Das Ergebnis, auf das sich eine Deutung gerade bezöge; nur markiert, wenn `marked`. */
+  target: number | undefined;
+  marked: boolean;
+  /** Antippen eines Ergebnisses macht es zum Ziel der Deutung. */
+  onPick: (index: number) => void;
+}
+
 /**
- * Der Log wie ein Chat: das Älteste oben, das Neueste unten, direkt über den Knöpfen. Langes Drücken
- * auf einen Eintrag (oder ein Rechtsklick) bietet an, ihn zu löschen; welcher Eintrag das gerade ist,
- * hält die View, das Löschen der Controller.
+ * Der Log wie ein Chat: das Älteste oben, das Neueste unten, direkt über den Knöpfen. Eine Deutung
+ * steht im Kasten ihres Ergebnisses, auch wenn sie später geschrieben wurde; das ist nur Anzeige.
+ * Antippen eines Ergebnisses wählt es als Ziel der Deutung. Langes Drücken auf einen Eintrag (oder
+ * ein Rechtsklick) bietet an, ihn zu löschen; welcher Eintrag das gerade ist, hält die View, das
+ * Löschen der Controller.
  */
-export function LogList({ log }: { log: readonly LogItem[] }) {
+export function LogList({ log, target, marked, onPick }: LogListProps) {
   const game = useGame();
   // Welcher Eintrag gerade gelöscht werden will, zu welcher Länge des Logs: Ändert sich der Log,
   // kann es ein anderer sein, dann bietet die View nichts mehr an.
@@ -22,6 +33,8 @@ export function LogList({ log }: { log: readonly LogItem[] }) {
   const confirm = pending?.length === log.length ? pending.index : undefined;
   const setConfirm = (index: number | undefined) => setPending(index === undefined ? undefined : { index, length: log.length });
   const press = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | undefined>(undefined);
+  // Ein langes Drücken endet mit einem Klick; der soll nicht zusätzlich das Ziel wählen.
+  const offered = useRef(false);
 
   const cancelPress = () => {
     if (press.current) clearTimeout(press.current.timer);
@@ -31,12 +44,16 @@ export function LogList({ log }: { log: readonly LogItem[] }) {
 
   const offer = (index: number) => {
     cancelPress();
+    offered.current = true;
     haptic('pick');
     setConfirm(index);
   };
 
+  // Eine Deutung liegt im Kasten ihres Ergebnisses; ihr Drücken gilt nur ihr, nicht dem Kasten.
   const pressHandlers = (index: number) => ({
     onPointerDown: (e: PointerEvent) => {
+      e.stopPropagation();
+      offered.current = false;
       if (e.button !== 0 || confirm === index) return;
       cancelPress();
       press.current = { timer: setTimeout(() => offer(index), LONG_PRESS_MS), x: e.clientX, y: e.clientY };
@@ -49,9 +66,24 @@ export function LogList({ log }: { log: readonly LogItem[] }) {
     onPointerLeave: cancelPress,
     onContextMenu: (e: MouseEvent) => {
       e.preventDefault();
+      e.stopPropagation();
       offer(index);
     },
   });
+
+  const deletion = (index: number, interpretations: number) => ({
+    confirming: confirm === index,
+    interpretations,
+    onCancel: () => setConfirm(undefined),
+    onDelete: () => {
+      setConfirm(undefined);
+      game.deleteLogEntry(index);
+    },
+  });
+
+  // Die Kästen: jedes Ergebnis und jede Notiz, mit den Deutungen, die zum Ergebnis gehören.
+  const groups = log.flatMap((item, index) => (item.kind === 'note' && item.interprets !== undefined ? [] : [{ item, index, notes: interpretationsAt(log, index) }]));
+  const last = log.length - 1;
 
   return (
     <section className="scroll log-scroll" aria-labelledby="log-title">
@@ -60,26 +92,61 @@ export function LogList({ log }: { log: readonly LogItem[] }) {
           <h2 id="log-title" className="section-title">
             Log
           </h2>
-          {log.length > 0 && <span className="log-hint">Eintrag lange drücken zum Löschen</span>}
+          {log.length > 0 && <span className="log-hint">Ergebnis antippen zum Deuten · lange drücken zum Löschen</span>}
         </div>
         {log.length === 0 ? (
           <p className="log-empty">Noch nichts im Log. Stell eine Frage, zieh eine Karte oder würfle.</p>
         ) : (
           <ol aria-live="polite">
-            {log.map((item, index) => (
-              <LogEntry
-                key={index}
-                item={item}
-                latest={index === log.length - 1}
-                confirming={confirm === index}
-                handlers={pressHandlers(index)}
-                onCancel={() => setConfirm(undefined)}
-                onDelete={() => {
-                  setConfirm(undefined);
-                  game.deleteLogEntry(index);
-                }}
-              />
-            ))}
+            {groups.map(({ item, index, notes }) => {
+              const result = item.kind !== 'note';
+              const classes = [
+                'entry',
+                result ? 'outcome' : 'note',
+                index === last || notes.some((n) => n.index === last) ? 'latest' : '',
+                marked && index === target ? 'target' : '',
+                confirm === index ? 'confirming' : '',
+              ]
+                .filter(Boolean)
+                .join(' ');
+              return (
+                <li
+                  key={index}
+                  className={classes}
+                  {...pressHandlers(index)}
+                  onClick={
+                    result
+                      ? () => {
+                          if (offered.current) return;
+                          haptic('pick');
+                          onPick(index);
+                        }
+                      : undefined
+                  }
+                >
+                  <div className="entry-head">
+                    <span className="kicker">{kicker(item)}</span>
+                    <time className="entry-time" dateTime={item.at}>
+                      {clockTime(item.at)}
+                    </time>
+                  </div>
+                  <EntryBody item={item} />
+                  {notes.map((note) => (
+                    <div key={note.index} className={confirm === note.index ? 'interpretation confirming' : 'interpretation'} {...pressHandlers(note.index)} onClick={(e) => e.stopPropagation()}>
+                      <div className="entry-head">
+                        <span className="kicker">Deutung</span>
+                        <time className="entry-time" dateTime={note.item.at}>
+                          {clockTime(note.item.at)}
+                        </time>
+                      </div>
+                      <p className="note-text">{note.item.text}</p>
+                      <DeleteBar {...deletion(note.index, 0)} what="Deutung" />
+                    </div>
+                  ))}
+                  <DeleteBar {...deletion(index, notes.length)} what="Eintrag" />
+                </li>
+              );
+            })}
           </ol>
         )}
       </div>
@@ -87,38 +154,35 @@ export function LogList({ log }: { log: readonly LogItem[] }) {
   );
 }
 
-interface EntryProps {
-  item: LogItem;
-  latest: boolean;
+/** Die Deutungen des Ergebnisses an der Stelle `index`, in der Reihenfolge des Logs. */
+function interpretationsAt(log: readonly LogItem[], index: number): { item: NoteItem; index: number }[] {
+  return log.flatMap((item, i) => (item.kind === 'note' && item.interprets === index ? [{ item, index: i }] : []));
+}
+
+interface DeleteBarProps {
   confirming: boolean;
-  handlers: object;
+  what: string;
+  interpretations: number;
   onCancel: () => void;
   onDelete: () => void;
 }
 
-function LogEntry({ item, latest, confirming, handlers, onCancel, onDelete }: EntryProps) {
-  const classes = ['entry', latest ? 'latest' : '', confirming ? 'confirming' : ''].filter(Boolean).join(' ');
+function DeleteBar({ confirming, what, interpretations, onCancel, onDelete }: DeleteBarProps) {
+  if (!confirming) return null;
+  const withNotes = interpretations === 0 ? '' : ` mit ${interpretations} ${interpretations === 1 ? 'Deutung' : 'Deutungen'}`;
   return (
-    <li className={classes} {...handlers}>
-      <div className="entry-head">
-        <span className="kicker">{kicker(item)}</span>
-        <time className="entry-time" dateTime={item.at}>
-          {clockTime(item.at)}
-        </time>
-      </div>
-      <EntryBody item={item} />
-      {confirming && (
-        <div className="entry-delete" role="group" aria-label="Eintrag löschen?">
-          <span>Eintrag endgültig löschen?</span>
-          <button type="button" className="ghost" onClick={onCancel}>
-            Behalten
-          </button>
-          <button type="button" className="ghost danger" onClick={onDelete}>
-            Löschen
-          </button>
-        </div>
-      )}
-    </li>
+    <div className="entry-delete" role="group" aria-label={`${what} löschen?`} onClick={(e) => e.stopPropagation()}>
+      <span>
+        {what}
+        {withNotes} endgültig löschen?
+      </span>
+      <button type="button" className="ghost" onClick={onCancel}>
+        Behalten
+      </button>
+      <button type="button" className="ghost danger" onClick={onDelete}>
+        Löschen
+      </button>
+    </div>
   );
 }
 
@@ -132,6 +196,8 @@ function kicker(item: LogItem): string {
       return 'Karte';
     case 'task':
       return 'Probe';
+    case 'note':
+      return item.interprets === undefined ? 'Notiz' : 'Deutung';
   }
 }
 
@@ -183,5 +249,7 @@ function EntryBody({ item }: { item: LogItem }) {
           </span>
         </>
       );
+    case 'note':
+      return <p className="note-text">{item.text}</p>;
   }
 }

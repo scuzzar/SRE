@@ -134,7 +134,15 @@ export interface OddsChoice {
   readonly selected: boolean;
 }
 
-export type LogItem = OracleItem | DiceItem | CardItem | TaskItem;
+export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | NoteItem;
+
+/** Eine Notiz, oder mit `interprets` eine Deutung zum Ergebnis an dieser Stelle des Logs. */
+export interface NoteItem {
+  readonly kind: 'note';
+  readonly at: string;
+  readonly text: string;
+  readonly interprets: number | undefined;
+}
 
 export interface OracleItem {
   readonly kind: 'oracle';
@@ -349,6 +357,8 @@ function logItem(campaign: Campaign, entry: LogEntry): LogItem {
       };
     case 'task':
       return taskItem(campaign, entry);
+    case 'note':
+      return { kind: 'note', at: entry.at, text: entry.text, interprets: entry.interprets };
   }
 }
 

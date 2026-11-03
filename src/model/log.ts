@@ -1,14 +1,18 @@
 import type { CharacterId } from './campaign';
+import { DomainError } from './errors';
 import type { Clock, Random } from './ports';
 import { oddsOf, slotOfEntry, type Slot } from './reference';
 import { roll2d6, sum, type Characteristic, type Dice } from './rules';
 
 /**
  * Der Log verweist, er kopiert nicht. Ein Eintrag hält nur fest, was allein ihm gehört: Frage,
- * Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei einer Probe DM und Zielwert.
+ * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei einer Probe DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult;
+export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | Note;
+
+/** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
+export type LogResult = Exclude<LogEntry, Note>;
 
 interface LogEntryBase {
   /** Zeitpunkt als ISO-8601-Zeitstempel. */
@@ -54,6 +58,44 @@ export interface TaskResult extends LogEntryBase {
   readonly dice: Dice;
   readonly dm: number;
   readonly target: number;
+}
+
+/**
+ * Eine Notiz, oder mit `interprets` eine Deutung. `interprets` ist im Code die Stelle des gedeuteten
+ * Ergebnisses im Log; sie liegt immer vor der Deutung selbst.
+ */
+export interface Note extends LogEntryBase {
+  readonly kind: 'note';
+  readonly text: string;
+  readonly interprets?: number;
+}
+
+export function isResult(entry: LogEntry): entry is LogResult {
+  return entry.kind !== 'note';
+}
+
+/**
+ * Schreibt eine Notiz, oder mit `interprets` eine Deutung zu dem Ergebnis an dieser Stelle des Logs.
+ * Der Text darf nicht leer sein; Leerraum am Rand fällt weg.
+ */
+export function writeNote(log: readonly LogEntry[], text: string, clock: Clock, interprets?: number): Note {
+  const trimmed = text.trim();
+  if (!trimmed) throw new DomainError('Eine Notiz braucht Text.');
+  if (interprets === undefined) return { kind: 'note', at: clock.now(), text: trimmed };
+  checkInterprets(log, interprets, log.length);
+  return { kind: 'note', at: clock.now(), text: trimmed, interprets };
+}
+
+/** Eine Deutung an der Stelle `at` verweist auf ein früheres Ergebnis. */
+export function checkInterprets(log: readonly LogEntry[], interprets: number, at: number): void {
+  const target = log[interprets];
+  if (!Number.isInteger(interprets) || interprets < 0 || interprets >= at || !target) throw new DomainError('Eine Deutung verweist auf einen Eintrag, den es davor nicht gibt.');
+  if (!isResult(target)) throw new DomainError('Deuten lässt sich nur ein Ergebnis, keine Notiz oder Deutung.');
+}
+
+/** Die Stellen der Deutungen, die das Ergebnis an der Stelle `index` hat. */
+export function interpretationsOf(log: readonly LogEntry[], index: number): number[] {
+  return log.flatMap((entry, i) => (entry.kind === 'note' && entry.interprets === index ? [i] : []));
 }
 
 /** Eine Frage ist freiwillig; eine leere Frage gibt es nicht. */

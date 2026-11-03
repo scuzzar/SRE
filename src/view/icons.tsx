@@ -132,6 +132,14 @@ const senses: Record<string, { label: string; path: ReactNode }> = {
 const senseAliases: Record<string, string> = { sounds: 'hear', smells: 'smell' };
 
 /** Icon für einen Sinn; `sense` ist der letzte Teil der Feld-Id (hear, see, feel, smell, sounds, smells). */
+export function LightbulbIcon() {
+  return (
+    <svg {...base} width={16} height={16} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z" />
+    </svg>
+  );
+}
+
 export function PencilIcon() {
   return (
     <svg {...base} strokeLinecap="round" strokeLinejoin="round">

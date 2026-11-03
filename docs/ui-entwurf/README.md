@@ -26,6 +26,18 @@ Berechtigte).
 
 Mira Okonkwo ist nur für den Entwurf erfunden, damit man durch drei Charaktere wischen kann.
 
+## Deutung und Notiz (Entwurf vom 3. November 2026)
+
+Im Ordner [`deutung/`](deutung/) liegt der (freigegebene und umgesetzte) Entwurf für Deutungen und Notizen im Log (siehe
+*Deutungen und Notizen* im [Domänenmodell](../domain-model.md)).
+
+| Datei | Inhalt |
+|---|---|
+| `deutung/Entwurf.html` | Orakel-Screen mit der Schreibzeile: ein Textfeld, der Knopf entscheidet, was der Text wird (Ja/Nein und Karte: Frage, *Deuten*: Deutung zum gold markierten Ergebnis, *Notiz*: freier Eintrag). Ergebnis antippen wählt das Ziel der Deutung; Deutungen stehen im Kasten ihres Ergebnisses; lange drücken löscht, ein Ergebnis mit seinen Deutungen |
+
+Anders als die übrigen Entwürfe ist diese Datei eine gewöhnliche HTML-Datei mit den Stilen der App
+und lässt sich direkt im Browser öffnen.
+
 ## Hinweise
 
 - Die Dateien sind im *Design-Component-Format* (`.dc.html`) der Entwurfsfläche geschrieben. Sie brauchen deren Laufzeit (`support.js`) und lassen sich nicht direkt im Browser öffnen.

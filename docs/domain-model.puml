@@ -131,6 +131,9 @@ hide <<value>> stereotype
     question: string [0..1]
   }
   class PickedItem
+  class Note {
+    text: string
+  }
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Card <<transient>> {
@@ -430,6 +433,8 @@ LogEntry <|-- OracleAnswer
 LogEntry <|-- DiceRoll
 LogEntry <|-- CardPick
 LogEntry <|-- TaskResult
+LogEntry <|-- Note
+Note "*" --> "0..1" LogEntry : interprets
 CardPick "1" *-- "1..*" PickedItem : items {ordered}
 OracleAnswer "*" --> "1" Odds : odds
 TaskResult "*" --> "1" Character : for
