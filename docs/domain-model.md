@@ -81,6 +81,9 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > männlich und neutral, einmal irdisch und einmal spacig; der Bereich *Namen* fällt dafür weg
 > (siehe *Namen*). Dazu **Name von der Karte** beim Benennen von Charakteren und Welten (siehe
 > dort). Das Bild ändert sich dadurch nicht: Felder, Spalten und Einträge sind Referenzdaten.
+> Damit alles auf die Karte passt, fallen auf der Tafel *Handlung* *Gegenstand* und *Fund* weg
+> (ausgeblendet). Wie die ganze Karte dann aussieht, zeigt
+> [`ui-entwurf/kartensymbol/Karte.html`](ui-entwurf/kartensymbol/Karte.html).
 >
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen, die drei Namen sowie die Themen-Tafeln NSC, NSC-Aktionen,
@@ -557,8 +560,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
     Ein Kartensymbol hat mindestens zwei Richtungen mit einer Wegart außer *kein Weg*; hat es
     weniger, wird es ganz neu gewürfelt.
-  - Ziehen würfelt alle drei, *Neu ziehen* ebenso. Die Wurffelder stehen auf der Karte oben, vor dem
-    Zufallsereignis, in der Reihenfolge Glockenzahl, Streuwürfel, Kartensymbol.
+  - Ziehen würfelt alle drei, *Neu ziehen* ebenso. Die Wurffelder stehen auf der Karte unter den
+    Sinneseindrücken, wo bisher die Namen standen, in der Reihenfolge Glockenzahl, Streuwürfel,
+    Kartensymbol. In der Reihenfolge der Karte (für den Log) kommen sie vor allen Feldern.
+  - Damit die ganze Karte weiter auf einen Bildschirm passt, fallen auf der Tafel *Handlung* die
+    Mythic-Tabellen *Gegenstand* (`plot.object`) und *Fund* (`plot.salvage`) weg: Ihre Einträge
+    werden ausgeblendet (siehe *Einträge austauschen*), alte Logeinträge zeigen sie weiter. Die
+    Tafel *Handlung* hat danach eine Reihe: Wendung, Stimmung, Botschaft.
   - Antippen nimmt ein Wurffeld in die Auswahl (`pickedRolls`) auf oder wieder heraus, wie ein Feld.
     *Bestätigen* geht, sobald ein Feld oder ein Wurffeld ausgewählt ist. Der `CardPick` hält den Wert
     jedes ausgewählten Wurffelds selbst (`bell`, `scatter`, `map`), weil es nichts gibt, worauf er

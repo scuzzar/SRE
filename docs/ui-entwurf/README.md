@@ -52,6 +52,7 @@ freigegeben.
 
 | Datei | Inhalt |
 |---|---|
+| `kartensymbol/Karte.html` | Die ganze Inspirationskarte der App mit allem zusammen: Wurffelder unter den Sinneseindrücken (wo bisher die Namen standen), die sechs Namen oben auf der Tafel NSC (erste Reihe irdisch, zweite spacig, je weiblich, männlich, neutral), *Handlung* ohne Gegenstand und Fund. Gebaut aus der echten Karte mit den Stilen der App; Antippen wählt aus, „Neu ziehen“ würfelt Wurffelder und Namen neu |
 | `kartensymbol/Entwurf.html` | Glockenzahl 1–10 mit kleiner Glockenkurve, Streuwürfel als Windrose mit Pfeil (Volltreffer als Stern, Fehlschlag als roter Strich), Kartensymbol als Raum von oben mit Wegen nach N, O, S, W und Pfeilen nach oben und unten; Legende der Wegarten; Übernehmen zeigt, wie es im Log steht. „Neu ziehen“ würfelt mit den Gewichten aus dem Modell; auf der Tafel NSC die sechs Namen (oben irdisch, unten spacig); „Name von der Karte“ mit dem Knopf *Karte* neben dem Namensfeld, für Charakter und Welt |
 
 Wie der Entwurf zur Deutung ist es eine gewöhnliche HTML-Datei, die sich direkt im Browser öffnen lässt.
