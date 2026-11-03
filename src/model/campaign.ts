@@ -3,6 +3,7 @@ import { DomainError } from './errors';
 import type { Generation } from './generation';
 import { damageRollsOf, interpretationsOf, type LogEntry } from './log';
 import { worldOf, type Hex } from './sector';
+import type { Booking } from './shop';
 import { defaultOdds, HANDS, itemOf, itemOfWeapon, oddsOf, ref, skillOf, weaponOf, type ExampleCharacter } from './reference';
 
 /** Die sechs Attributwerte, je 0 bis 15. */
@@ -30,6 +31,8 @@ export interface Possession {
   /** Verweis auf den Gegenstand. */
   readonly of: string;
   readonly count: number;
+  /** Bei Schusswaffen: so viele Schuss sind geladen; fehlt das Feld, ist sie voll. */
+  readonly rounds?: number;
 }
 
 export interface Character {
@@ -73,6 +76,10 @@ export interface Campaign {
    * fehlt nur, wenn es keinen solchen Charakter gibt.
    */
   readonly focus?: CharacterId;
+  /** Der Aufenthaltsort der Gruppe: eine fertige Welt des Subsektors, als Spalte und Zeile (0304). */
+  readonly location?: string;
+  /** Die Buchungen der Gruppenkasse, in der Reihenfolge, in der sie entstanden sind. */
+  readonly bookings: readonly Booking[];
 }
 
 /** Was man beim Anlegen und Bearbeiten eines Charakters eingibt. */
@@ -96,7 +103,7 @@ export interface CharacterInput {
 
 /** Eine neue Kampagne, ohne Log, mit der Standardstufe und den angegebenen Charakteren. */
 export function createCampaign(examples: readonly ExampleCharacter[] = ref.examples, name = 'Kampagne', id: CampaignId = 'k1'): Campaign {
-  let campaign: Campaign = { id, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [] };
+  let campaign: Campaign = { id, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [], bookings: [] };
   for (const example of examples) campaign = addCharacter(campaign, example).campaign;
   // Bei mehreren Beispielen steht der erste oben, nicht der zuletzt angelegte.
   return withFocus(campaign, livingCharacters(campaign)[0]?.id);
@@ -281,6 +288,10 @@ export function validateCharacter(input: CharacterInput): void {
     owned.add(possession.of);
     if (!Number.isInteger(possession.count) || possession.count < 1) throw new DomainError(`Die Anzahl von ${item.name} ist 1 oder mehr.`);
     if (item.once && possession.count > 1) throw new DomainError(`${item.name} kann man nur einmal haben.`);
+    const capacity = item.weapon === undefined ? undefined : weaponOf(item.weapon).rounds;
+    if (possession.rounds !== undefined && (capacity === undefined || !Number.isInteger(possession.rounds) || possession.rounds < 0 || possession.rounds > capacity)) {
+      throw new DomainError(`${item.name} hat ${capacity === undefined ? 'kein Magazin' : `0 bis ${capacity} Schuss`}.`);
+    }
   }
 }
 
@@ -302,7 +313,7 @@ function fields(input: CharacterInput) {
     credits: input.credits,
     note: input.note.trim(),
     upp: { ...input.upp },
-    possessions: (input.possessions ?? []).map(({ of, count }) => ({ of, count })),
+    possessions: (input.possessions ?? []).map(({ of, count, rounds }) => (rounds === undefined ? { of, count } : { of, count, rounds })),
   };
 }
 
@@ -347,7 +358,10 @@ export function updateCharacter(campaign: Campaign, id: CharacterId, input: Char
   // Die Eingabe sagt, welche Heimatwelt gilt; fehlt sie, hat der Charakter keine.
   // Ebenso die Waffe in der Hand; fehlt ihr Gegenstand im Besitz, sind es wieder die Hände.
   const rest = Object.fromEntries(Object.entries(before).filter(([key]) => key !== 'homeworld' && key !== 'wields')) as Omit<Character, 'homeworld' | 'wields'>;
-  const possessions = input.possessions === undefined ? before.possessions : fields(input).possessions;
+  // Was eine Schusswaffe geladen hat, bleibt, wenn die Eingabe nichts dazu sagt.
+  const loaded = new Map(before.possessions.flatMap((p) => (p.rounds === undefined ? [] : [[p.of, p.rounds] as const])));
+  const possessions =
+    input.possessions === undefined ? before.possessions : fields(input).possessions.map((p) => (p.rounds !== undefined || !loaded.has(p.of) ? p : { ...p, rounds: loaded.get(p.of)! }));
   const after: Character = {
     ...rest,
     ...fields(input),

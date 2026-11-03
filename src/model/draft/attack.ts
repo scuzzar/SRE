@@ -1,4 +1,5 @@
 import {
+  ammoOf,
   armorClasses,
   ATTACK_TARGET,
   attackDm,
@@ -99,6 +100,7 @@ export function rollAttack(attack: Attack, campaign: Campaign, random: Random, c
   const weapon = wieldedWeapon(character);
   const evaluated = evaluateAttack(attack, campaign);
   if (!evaluated || attack.armor === undefined || attack.range === undefined) throw new DomainError('Erst Rüstung und Reichweite des Ziels wählen.');
+  if (ammoOf(character)?.rounds === 0) throw new DomainError(`${weapon.name} ist leer. Erst nachladen.`);
   const skill = weaponSkill(character, weapon);
   const result: AttackResult = {
     kind: 'attack',

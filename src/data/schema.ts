@@ -109,6 +109,11 @@ export const WeaponSchema = z.object({
   advantageousDm: z.number().int(),
   /** Schaden in W6. */
   wounds: z.number().int().min(1).max(5),
+  /** Bei Schusswaffen: so viele Schuss fasst ein Magazin (`ammo`). */
+  rounds: z.number().int().min(1).optional(),
+  ammo: z.string().min(1).optional(),
+  /** Ab dieser Gesetzesstufe ist die Waffe verboten (S. 14); fehlt bei den Händen. */
+  law: z.number().int().min(1).max(15).optional(),
   vsArmor: z.preprocess(
     inMatrixOrder(armorClasses, 'armor'),
     z.array(ArmorDmSchema).refine((dms) => dms.length === armorClasses.length && dms.every((d, i) => d.armor === armorClasses[i]), 'Die DMs gegen Rüstung stehen nicht in der Reihenfolge der Matrix'),
@@ -299,6 +304,9 @@ function checkCareerData(data: CareerData, skillIds: ReadonlySet<string>, ctx: z
   for (const weapon of data.weapons) {
     if (!skillIds.has(weapon.uses)) issue(`Unbekannte Fertigkeit ${weapon.uses} bei der Waffe ${weapon.id}`);
     if (weapon.required >= weapon.advantageous) issue(`Die Waffe ${weapon.id}: das nötige Attribut liegt nicht unter dem vorteilhaften`);
+    if ((weapon.rounds === undefined) !== (weapon.ammo === undefined)) issue(`Die Waffe ${weapon.id}: Magazin und Schuss nur zusammen`);
+    if ((weapon.rounds !== undefined) !== (weapon.attack === 'shot')) issue(`Die Waffe ${weapon.id}: genau die Schusswaffen haben ein Magazin`);
+    if (weapon.ammo !== undefined && data.items.find((i) => i.id === weapon.ammo)?.kind !== 'ammunition') issue(`Die Waffe ${weapon.id}: ihr Magazin ${weapon.ammo} ist keine Munition`);
   }
   for (const item of data.items) {
     if ((item.kind === 'weapon') !== (item.weapon !== undefined)) issue(`Der Gegenstand ${item.id}: genau die Waffen haben Kampfwerte`);

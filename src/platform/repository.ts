@@ -78,7 +78,7 @@ export class DexieCampaignRepository implements CampaignRepository {
  * genau einen Eintrag als Text (`picked: 'event.verb.3'`); heute ist es eine Liste. Vor dem
  * Subsektor hatte eine Kampagne keine Hexfelder; danach hielt ein Hexfeld eine Zeit lang seine Würfe
  * (`rolls`), heute seine Werte: Die Würfe werden nachgespielt. Vor dem Charakter oben hatte eine
- * Kampagne keinen; sie bekommt den ersten Lebenden.
+ * Kampagne keinen; sie bekommt den ersten Lebenden. Vor dem Shop hatte sie keine Buchungen.
  */
 export function upgraded(campaign: Campaign): Campaign {
   const log = campaign.log.map((entry) => {
@@ -94,7 +94,7 @@ export function upgraded(campaign: Campaign): Campaign {
     const old = hex as Hex & { readonly rolls?: readonly LegacyWorldRoll[] };
     return old.rolls ? hexFromRolls({ column: old.column, row: old.row, ...(old.name === undefined ? {} : { name: old.name }), rolls: old.rolls }) : hex;
   });
-  const upgraded = { ...campaign, characters, log, hexes };
+  const upgraded = { ...campaign, characters, log, hexes, bookings: campaign.bookings ?? [] };
   return keepFocus(upgraded, upgraded);
 }
 

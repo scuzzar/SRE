@@ -2,7 +2,7 @@ import { activeSkills, characterOf, type Campaign, type Character, type SkillLev
 import { DomainError } from './errors';
 import { damageRollsOf, isSuccess, type AttackResult, type DamageRoll, type LogEntry } from './log';
 import type { Clock, Random } from './ports';
-import { HANDS, weaponOf, type ArmorClass, type Range, type Weapon } from './reference';
+import { HANDS, itemOf, itemOfWeapon, weaponOf, type ArmorClass, type Range, type Weapon } from './reference';
 import { valueOf, type Characteristic } from './rules';
 
 /** *Basic Throw to Hit* (S. 6): 2W6 + DM ≥ 8. */
@@ -97,4 +97,52 @@ export function rollDamage(campaign: Campaign, of: number, random: Random, clock
   const roll: DamageRoll = { kind: 'damage', at: clock.now(), of, dice };
   checkDamageRoll(campaign.log, roll, campaign.log.length);
   return roll;
+}
+
+/** Munition der Waffe in der Hand: geladene Schuss, wie viele das Magazin fasst und wie viele Magazine im Besitz sind. */
+export interface Ammo {
+  readonly rounds: number;
+  readonly capacity: number;
+  /** Der Gegenstand, mit dem man nachlädt. */
+  readonly ammo: string;
+  readonly magazines: number;
+}
+
+/** Die Munition der Waffe in der Hand; `undefined` bei Händen und Klingen. */
+export function ammoOf(character: Character): Ammo | undefined {
+  const weapon = wieldedWeapon(character);
+  if (weapon.rounds === undefined || weapon.ammo === undefined) return undefined;
+  const item = itemOfWeapon(weapon.id)!;
+  const rounds = character.possessions.find((p) => p.of === item.id)?.rounds ?? weapon.rounds;
+  const magazines = character.possessions.find((p) => p.of === weapon.ammo)?.count ?? 0;
+  return { rounds, capacity: weapon.rounds, ammo: weapon.ammo, magazines };
+}
+
+function withCharacter(campaign: Campaign, character: Character): Campaign {
+  return { ...campaign, characters: campaign.characters.map((c) => (c.id === character.id ? character : c)) };
+}
+
+/** Ein Angriff mit einer Schusswaffe verbraucht einen Schuss; mit leerem Magazin gibt es keinen. */
+export function spendRound(campaign: Campaign, id: string): Campaign {
+  const character = characterOf(campaign, id);
+  const ammo = ammoOf(character);
+  if (!ammo) return campaign;
+  if (ammo.rounds === 0) throw new DomainError(`${wieldedWeapon(character).name} ist leer. Erst nachladen.`);
+  const item = itemOfWeapon(wieldedWeapon(character).id)!.id;
+  return withCharacter(campaign, { ...character, possessions: character.possessions.map((p) => (p.of === item ? { ...p, rounds: ammo.rounds - 1 } : p)) });
+}
+
+/** Nachladen: ein Magazin aus dem Besitz, die Waffe ist wieder voll; ein angebrochenes Magazin geht verloren. */
+export function reload(campaign: Campaign, id: string): Campaign {
+  const character = characterOf(campaign, id);
+  const ammo = ammoOf(character);
+  if (!ammo) throw new DomainError(`${wieldedWeapon(character).name} lädt man nicht nach.`);
+  if (ammo.magazines === 0) throw new DomainError(`${character.name} hat kein ${itemOf(ammo.ammo).name} mehr.`);
+  const item = itemOfWeapon(wieldedWeapon(character).id)!.id;
+  const possessions = character.possessions.flatMap((p) => {
+    if (p.of === item) return [{ ...p, rounds: ammo.capacity }];
+    if (p.of === ammo.ammo) return p.count > 1 ? [{ ...p, count: p.count - 1 }] : [];
+    return [p];
+  });
+  return withCharacter(campaign, { ...character, possessions });
 }

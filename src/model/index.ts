@@ -11,3 +11,4 @@ export * from './ports';
 export * from './reference';
 export * from './rules';
 export * from './sector';
+export * from './shop';

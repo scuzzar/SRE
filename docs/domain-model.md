@@ -88,8 +88,8 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > flüchtig der Angriff in Vorbereitung (`Attack`), im Log das Angriffsergebnis (`AttackResult`)
 > und der Schadenswurf (`DamageRoll`).
 >
-> **Entwurf, noch nicht freigegeben** (3. November 2026): **Aufenthaltsort, Gruppenkasse, Shop und
-> Munition** (siehe dort). Neu im Bild: `Campaign.location`, `Campaign./funds`, `Booking` mit
+> Ebenfalls am 3. November 2026 freigegeben: **Aufenthaltsort, Gruppenkasse, Shop und Munition**
+> (siehe dort), mit dem neuen Reiter *Shop*. Neu im Bild: `Campaign.location`, `Campaign./funds`, `Booking` mit
 > `BookingKind`, `Hex./offer`, `Possession.rounds` und an der Waffe `rounds`, `law` und `ammo`.
 >
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
@@ -441,9 +441,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 - **Shop.** Im Reiter *Shop* kauft die Gruppe auf ihrem Aufenthaltsort ein, aus der Gruppenkasse.
   - **Angebot** (`/offer`): jeder Gegenstand aus der Liste mit Preis, dessen TL höchstens der TL der
     Welt ist (S. 23: „TL is the minimum technological level at which the item is available“), ohne
-    Schiffe und Mitgliedschaften. Waffen, die auf der Welt verboten sind, gibt es nicht zu kaufen:
-    Eine Waffe ist verboten, wenn das Gesetz der Welt mindestens `law` ist (S. 14); ihr Magazin
-    ebenso. Der Shop zeigt sie ausgegraut mit dem Grund („verboten ab Gesetz 5“).
+    Schiffe und Mitgliedschaften. Auch Waffen, die auf der Welt verboten sind, kann man kaufen, aber
+    der Shop warnt: Eine Waffe ist verboten, wenn das Gesetz der Welt mindestens `law` ist (S. 14);
+    ihr Magazin ebenso. Der Shop zeigt das bei der Waffe („verboten ab Gesetz 5“) und fragt beim Kauf
+    nach.
   - Die Verbote nach S. 14: ab 1 Body Pistol; ab 2 Laser Carbine und Laser Rifle; ab 3 Automatic
     Rifle; ab 4 Submachinegun; ab 5 Automatic Pistol und Revolver; ab 6 alle übrigen Schusswaffen
     außer der Shotgun (Carbine, Rifle); ab 7 Shotgun; ab 8 alle Klingen außer dem Dagger; ab 9

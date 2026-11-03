@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { keepFocus, validateCharacter, validName, type Campaign, type CampaignId, type Character } from './campaign';
+import { keepFocus, validateCharacter, validName, type Campaign, type CampaignId, type Character, type Possession } from './campaign';
 import { replay, type Career, type CareerRoll } from './career';
 import { DomainError } from './errors';
 import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, type PathKind } from './card-roll';
@@ -7,6 +7,7 @@ import { checkDamageRoll, ATTACK_TARGET } from './combat';
 import { checkInterprets, withQuestion, type CardPick, type LogEntry } from './log';
 import { armorClasses, entryOf, itemOf, oddsOf, ranges, slotOfEntry, weaponOf } from './reference';
 import { characteristics } from './rules';
+import { bookingKinds, validateBookings, type Booking } from './shop';
 import { hexFromRolls, temperatureIds, uwpKinds, validateHexes, worldOf, type Hex, type LegacyWorldRoll } from './sector';
 
 /**
@@ -128,7 +129,7 @@ const CharacterSchema = z.object({
   retired: z.boolean(),
   upp: z.object({ str: value, dex: value, end: value, int: value, edu: value, soc: value }),
   skills: z.array(z.object({ of: z.string(), level: z.number(), retired: z.boolean() })),
-  possessions: z.array(z.object({ of: z.string(), count: z.number() })).default([]),
+  possessions: z.array(z.object({ of: z.string(), count: z.number(), rounds: z.number().optional() })).default([]),
   career: CareerSchema.optional(),
   homeworld: z.string().optional(),
   wields: z.string().optional(),
@@ -147,13 +148,29 @@ const CampaignFileSchema = z.object({
     hexes: z.array(HexSchema).default([]),
     /** Der Charakter oben; fehlt in Dateien von vor dieser Regel, dann wird es der erste Lebende. */
     focus: z.string().optional(),
+    /** Fehlen in Dateien von vor dem Shop. */
+    location: z.string().optional(),
+    bookings: z
+      .array(
+        z.object({
+          at,
+          kind: z.enum(bookingKinds),
+          amount: z.number(),
+          text: z.string().trim().min(1).optional(),
+          for: z.string().optional(),
+          bought: z.string().optional(),
+          count: z.number().int().min(1).optional(),
+          in: z.string().optional(),
+        }),
+      )
+      .default([]),
   }),
 });
 
 /** Die Kampagne als Inhalt einer Kampagnendatei. */
 export function toCampaignFile(campaign: Campaign): string {
-  const { name, odds, characters, log, generation, hexes, focus } = campaign;
-  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { name, odds, characters, log, generation, hexes, focus } }, null, 2);
+  const { name, odds, characters, log, generation, hexes, focus, location, bookings } = campaign;
+  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { name, odds, characters, log, generation, hexes, focus, location, bookings } }, null, 2);
 }
 
 /** Ein Dateiname aus dem Namen der Kampagne und dem Tag, z. B. „Spinward-Run-2026-10-25.json“. */
@@ -183,6 +200,7 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
     const characters: Character[] = file.characters.map(({ career, homeworld, wields, ...c }) => ({
       ...c,
       skills: c.skills.map((s) => ({ ...s })),
+      possessions: c.possessions.map((p) => stripped(p) as Possession),
       ...(career ? { career: careerOf(career) } : {}),
       ...(homeworld === undefined ? {} : { homeworld }),
       ...(wields === undefined ? {} : { wields }),
@@ -196,6 +214,8 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
       hexes: file.hexes.map(hexOf),
       ...(file.generation ? { generation: { career: careerOf(file.generation.career) } } : {}),
       ...(file.focus === undefined ? {} : { focus: file.focus }),
+      ...(file.location === undefined ? {} : { location: file.location }),
+      bookings: file.bookings.map((b) => stripped(b) as Booking),
     };
     validate(campaign);
     return keepFocus(campaign, campaign);
@@ -276,6 +296,8 @@ function validate(campaign: Campaign): void {
     if (focus.dead || focus.retired) throw new DomainError(`Der Charakter oben (${focus.name}) lebt nicht oder ist ausgeblendet.`);
   }
   validateHexes(campaign.hexes);
+  if (campaign.location !== undefined) worldOf(campaign.hexes, campaign.location);
+  validateBookings(campaign);
   // Heimatwelten und Welten der Terms verweisen auf fertige Welten des Subsektors.
   const careers = [...campaign.characters.flatMap((c) => (c.career ? [c.career] : [])), ...(campaign.generation ? [campaign.generation.career] : [])];
   for (const id of [...campaign.characters.flatMap((c) => (c.homeworld === undefined ? [] : [c.homeworld])), ...careers.flatMap((c) => [...(c.homeworld === undefined ? [] : [c.homeworld]), ...(c.worlds ?? [])])]) {
