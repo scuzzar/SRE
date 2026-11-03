@@ -74,7 +74,7 @@ test('Sektor: Die Karte lässt sich vergrößern und wieder verkleinern', async 
   await expect(out).toBeDisabled();
 });
 
-test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis zum Namen', async ({ page }) => {
+test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis zum Namen; die fertige Welt bekommt eine Notiz', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
   const map = page.getByRole('group', { name: 'Karte des Subsektors' });
@@ -90,6 +90,19 @@ test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis 
     const dialog = page.getByRole('dialog', { name: `Weltenerschaffung ${id}` });
     await expect(dialog.getByLabel('Name der Welt')).toBeVisible();
     await expect(dialog.getByRole('article', { name: 'Welt' })).toContainText(/[A-EX][0-9A-F]{6}-[0-9A-Z]/);
+    // In Erschaffung gibt es keine Notiz; die fertige Welt bekommt eine, die Liste zeigt ihre erste Zeile.
+    await expect(dialog.getByLabel('Notiz zur Welt')).toHaveCount(0);
+    await dialog.getByLabel('Name der Welt').fill('Regina');
+    await dialog.getByRole('button', { name: 'Übernehmen' }).click();
+    const done = page.getByRole('dialog', { name: `Regina · ${id}` });
+    await done.getByLabel('Notiz zur Welt').fill('Halveks Werft am Südpol.\nDer Zoll ist bestechlich.');
+    await done.getByRole('button', { name: 'Schließen' }).first().click();
+    await expect(done).toBeHidden();
+    await expect(page.locator('.world-list-note')).toHaveText('Halveks Werft am Südpol.');
+    await page.reload();
+    await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
+    await page.locator('.world-list').getByRole('button', { name: /Regina/ }).click();
+    await expect(page.getByRole('dialog', { name: `Regina · ${id}` }).getByLabel('Notiz zur Welt')).toHaveValue('Halveks Werft am Südpol.\nDer Zoll ist bestechlich.');
     return;
   }
   throw new Error('Kein Feld mit Welt gefunden');

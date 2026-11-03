@@ -64,6 +64,10 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Neu im Bild: `Note` mit `text` und dem Verweis `interprets`. Der UI-Entwurf dazu liegt unter
 > [`ui-entwurf/deutung/`](ui-entwurf/deutung/).
 >
+> Ebenfalls am 3. November 2026 auf ausdrücklichen Wunsch des Owners freigegeben: Deutungen und
+> Notizen auch in der Charaktererschaffung (siehe *Deutungen und Notizen*) und eine Notiz zu jeder
+> fertigen Welt (siehe *Notiz zur Welt*). Neu im Bild: `Hex.note`.
+>
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen, die drei Namen sowie die Themen-Tafeln NSC, NSC-Aktionen,
 > Welt (mit Schiff), Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
@@ -151,6 +155,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Nicht erzeugt | (kein `Hex`) | Ein Feld, für das noch nicht gewürfelt wurde; nur hier beginnt eine Weltenerschaffung |
 | Leer | `Hex.empty` | Ein erzeugtes Feld ohne Welt: Das Vorkommen hat keine ergeben |
 | Welt | `Hex` mit Welt | Ein Hexfeld mit Welt (Planet): Name, UWP, Basen, Gasriese, Handelscodes |
+| Notiz zur Welt | `Hex.note` | Freier Text auf der Weltkarte einer fertigen Welt, z. B. „Halveks Werft am Südpol“; lässt sich jederzeit ändern |
 | Weltenerschaffung | `Hex` mit `/step` vor `done` | Eine Welt, die gerade Wurf für Wurf entsteht |
 | Wurf der Weltenerschaffung | `WorldRoll` | Ein Wurf aus der World Generation Checklist, z. B. Atmosphäre 2W6 − 7 + Größe; flüchtig, gespeichert wird nur sein Ergebnis |
 | UWP | `Uwp` | Universal World Profile, z. B. A788899-C: Raumhafen, Größe, Atmosphäre, Hydrographie, Bevölkerung, Regierung, Gesetz, TL |
@@ -246,8 +251,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Log verweist, wird nie gelöscht* gilt für Charaktere und Referenzdaten, nicht für den Log selbst.
   - Die **Kampagnendatei** enthält Deutungen und Notizen; beim Import muss jede Deutung auf ein
     früheres Ergebnis derselben Datei verweisen, sonst wird nichts importiert.
-  - In der Erschaffung (Leiste mit Fragefeld) gibt es vorerst nur Fragen; Deutungen und Notizen
-    schreibt man im Orakel-Screen.
+  - Auch die Leiste der Charaktererschaffung hat *Deuten* und *Notiz*. Weil sie den Log nicht
+    zeigt, gilt eine Deutung dort immer dem neuesten Ergebnis; die Leiste sagt, welchem.
 - **Karte ziehen.** Ziehen legt eine `Card` an: für jedes Feld aller Bereiche aus jeder seiner
   Spalten einen nicht ausgeblendeten Eintrag zufällig (`drawn`), die Themen-Tafeln eingeschlossen,
   in der Reihenfolge der Bereiche, Felder und Spalten. Ein Feld mit zwei Spalten zieht so ein
@@ -609,6 +614,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Land Archipel bzw. alles Wasser verstreuter See (die Zahl ist die ganze Fläche in halben Hexen,
   und es gibt keine anderen Land- bzw. Wassermassen), schreibt sie „Land nur als Archipele“ bzw.
   „Wasser nur als verstreute Seen“ statt einer Zahl wie 150.
+- **Notiz zur Welt.** Eine fertige Welt (mit Namen, nicht leer) kann eine Notiz haben (`note`):
+  freier Text, auch über mehrere Zeilen. Anders als ein Logeintrag lässt sie sich jederzeit ändern,
+  wie die Notiz eines Charakters; Leerraum am Rand fällt weg, eine leere Notiz gibt es nicht (dann
+  fehlt das Feld). Eine Welt in Erschaffung und ein leeres Feld haben keine Notiz. Die Weltkarte
+  zeigt die Notiz unter der Oberfläche zum Bearbeiten; die Liste der Welten im Sektor zeigt ihre
+  erste Zeile.
 - **Handelscodes** folgen aus dem UWP (`/trade`): Ein Code gilt, wenn jede seiner Bedingungen
   (`TradeCondition`: Stelle des UWP und erlaubte Ziffern) erfüllt ist. Es sind die elf aus den
   Charts (S. 15): Agricultural, Non-Agricultural, Industrial, Non-Industrial, Rich, Poor, Water
@@ -620,7 +631,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   für die Scoutbasis, kleiner Kreis rechts oben für den Gasriesen, darunter der Name, in
   Großbuchstaben ab Bevölkerung 9. Ist die Karte groß genug gezoomt, kommen darunter das UWP und
   die Handelscodes dazu, jedes erst, wenn es lesbar ist.
-- **Später**, nicht in diesem Schritt: der Rand der habitablen Zone beim Temperaturwurf, Reisezonen (Amber, Red), Notizen zur Welt, Verbindungen
+- **Später**, nicht in diesem Schritt: der Rand der habitablen Zone beim Temperaturwurf, Reisezonen (Amber, Red), Verbindungen
   (communications routes), Subsector Capital, ein Name für den Subsektor, mehrere Subsektoren zu
   einem Sektor und eine fertige Welt wieder löschen.
 

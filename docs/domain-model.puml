@@ -92,6 +92,7 @@ hide <<value>> stereotype
     navalBase: boolean [0..1]
     scoutBase: boolean [0..1]
     gasGiant: boolean [0..1]
+    note: string [0..1]
     /step: WorldStep
   }
   class Uwp <<value>> {

@@ -2,11 +2,11 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import type { CareerLine, GenerationAction, GenerationView, LogItem, OddsChoice } from '../../controller';
 import type { RollKind, ThrowOdds } from '../../model';
 import { DicePairView, DiceView, THROW_MS, useTimeline } from '../Dice';
-import { characteristicLabel, credits, hex, signed, withLevel } from '../format';
+import { characteristicLabel, credits, hex, resultLine, signed, withLevel } from '../format';
 import { useGame } from '../game-context';
 import { HoldButton } from '../HoldButton';
 import { animated, haptic, stopHaptics } from '../haptics';
-import { CardIcon, CloseIcon, DiceIcon, SectorIcon } from '../icons';
+import { CardIcon, CloseIcon, DiceIcon, LightbulbIcon, PencilIcon, SectorIcon } from '../icons';
 
 /** Wie lange das Ergebnis nach dem Landen braucht, bis es feststeht und die Knöpfe wieder gehen. */
 const SETTLE_MS = 350;
@@ -602,8 +602,9 @@ function Actions({ action, disabled, onRun }: { action: GenerationAction; disabl
 
 /**
  * Orakel und Inspirationskarte mitten in der Erschaffung: eine Frage (freiwillig), Ja/Nein mit der
- * eingestellten Stufe und die Karte. Die Antwort steht wie sonst im Log; hier zeigt eine Zeile die
- * letzte, die man in dieser Erschaffung gefragt hat. Die Karte öffnet sich über der Erschaffung.
+ * eingestellten Stufe und die Karte; dazu Deuten (immer zum neuesten Ergebnis, den Log sieht man hier
+ * nicht) und Notiz. Alles steht wie sonst im Log; hier zeigt eine Zeile das Letzte, was man in dieser
+ * Erschaffung gefragt oder geschrieben hat. Die Karte öffnet sich über der Erschaffung.
  */
 function OracleBar({ odds, log }: { odds: readonly OddsChoice[]; log: readonly LogItem[] }) {
   const game = useGame();
@@ -612,6 +613,14 @@ function OracleBar({ odds, log }: { odds: readonly OddsChoice[]; log: readonly L
   const [seen] = useState(log.length);
   const latest = log.length > seen ? log.at(-1) : undefined;
   const selected = odds.find((o) => o.selected);
+  const text = question.trim();
+  const target = log.findLastIndex((item) => item.kind !== 'note');
+  const targetLine = target < 0 ? undefined : resultLine(log[target]!);
+  const write = (interprets: number | undefined) => {
+    haptic('pick');
+    game.writeNote(text, interprets);
+    setQuestion('');
+  };
   return (
     <div className="generation-oracle">
       <div className="generation-oracle-row">
@@ -621,12 +630,15 @@ function OracleBar({ odds, log }: { odds: readonly OddsChoice[]; log: readonly L
         <input
           id="generation-question"
           className="question-input"
-          placeholder="Frage (freiwillig)"
+          placeholder="Frage, Deutung, Notiz"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           autoComplete="off"
         />
-        <button type="button" className="ghost compact" onClick={() => game.askOracle(question.trim() || undefined)} aria-label={`Ja/Nein fragen, ${selected?.name ?? ''}`}>
+        <button type="button" className="ghost compact" onClick={() => {
+            game.askOracle(question.trim() || undefined);
+            setQuestion('');
+          }} aria-label={`Ja/Nein fragen, ${selected?.name ?? ''}`}>
           Ja/Nein
         </button>
         <button
@@ -640,7 +652,20 @@ function OracleBar({ odds, log }: { odds: readonly OddsChoice[]; log: readonly L
         >
           <CardIcon />
         </button>
+        <button type="button" className="icon-button interpret" aria-label="Deuten" title="Deuten" disabled={!text || !targetLine} onClick={() => write(target)}>
+          <LightbulbIcon />
+        </button>
+        <button type="button" className="icon-button" aria-label="Notiz" title="Notiz" disabled={!text} onClick={() => write(undefined)}>
+          <PencilIcon />
+        </button>
       </div>
+      {text && targetLine && (
+        <p className="target-line generation-target">
+          <span className="target-text">
+            Deuten zu <b>{targetLine.head}</b> · {targetLine.rest}
+          </span>
+        </p>
+      )}
       {latest?.kind === 'oracle' && (
         <p className="generation-oracle-answer" aria-live="polite">
           <strong className={latest.yes ? 'verdict' : 'verdict negative'}>{latest.yes ? 'JA' : 'NEIN'}</strong>
@@ -648,6 +673,12 @@ function OracleBar({ odds, log }: { odds: readonly OddsChoice[]; log: readonly L
             {latest.question ? `„${latest.question}“ · ` : ''}
             {latest.odds} · W100: {latest.roll} · Ja bis {latest.chance}
           </span>
+        </p>
+      )}
+      {latest?.kind === 'note' && (
+        <p className="generation-oracle-answer generation-note" aria-live="polite">
+          <strong className="kicker">{latest.interprets === undefined ? 'Notiz' : 'Deutung'}</strong>
+          <span className="small-label">{latest.text}</span>
         </p>
       )}
     </div>

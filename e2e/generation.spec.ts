@@ -54,6 +54,19 @@ test('Charaktererschaffung: Attribute einzeln, Laufbahn, Terms, Abmusterung, Nam
   await dialog.getByLabel('Frage an das Orakel').fill('Ist die Musterung gerecht?');
   await dialog.getByRole('button', { name: /^Ja\/Nein fragen/ }).click();
   await expect(dialog.locator('.generation-oracle-answer')).toContainText(/JA|NEIN/);
+  await expect(dialog.getByLabel('Frage an das Orakel')).toHaveValue('');
+  // Deuten gilt dem neuesten Ergebnis, Notiz steht für sich; beides auch im Log.
+  const bar = dialog.getByLabel('Frage an das Orakel');
+  await expect(dialog.getByRole('button', { name: 'Deuten' })).toBeDisabled();
+  await bar.fill('Der Werber lächelt zu breit.');
+  await expect(dialog.locator('.generation-target')).toContainText(/Deuten zu (JA|NEIN)/);
+  await dialog.getByRole('button', { name: 'Deuten' }).click();
+  await expect(dialog.locator('.generation-note')).toContainText('Deutung');
+  await expect(dialog.locator('.generation-note')).toContainText('Der Werber lächelt zu breit.');
+  await bar.fill('Drei Wochen Wartezeit im Rekrutierungsbüro.');
+  await dialog.getByRole('button', { name: 'Notiz' }).click();
+  await expect(dialog.locator('.generation-note')).toContainText('Notiz');
+  await expect(bar).toHaveValue('');
   await dialog.getByRole('button', { name: 'Karte ziehen' }).click();
   const card = page.getByRole('dialog', { name: 'Inspirationskarte' });
   await expect(card).toBeVisible();
