@@ -266,6 +266,8 @@ export interface AttackItem {
   readonly dm: number;
   /** Würfel + DM */
   readonly total: number;
+  /** Was auf 2W6 nötig war: Zielwert minus DM, wie in der Tabelle. */
+  readonly need: number;
   readonly success: boolean;
   /** Woraus der DM besteht: Fertigkeit, Rüstung, Reichweite, Attribut, nach dem heutigen Stand des Charakters. */
   readonly parts: readonly DmPart[];
@@ -576,6 +578,7 @@ function attackItem(campaign: Campaign, entry: AttackResult, index: number): Att
     dice: entry.dice,
     dm: entry.dm,
     total: sum(entry.dice) + entry.dm,
+    need: entry.target - entry.dm,
     success,
     parts: attackParts(character, entry.with, entry.armor, entry.range),
     wounds: weaponOf(entry.with).wounds,

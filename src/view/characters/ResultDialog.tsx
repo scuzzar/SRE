@@ -8,23 +8,28 @@ import { haptic, stopHaptics } from '../haptics';
 /**
  * Das Ergebnis einer Probe oder eines Angriffs als Popup; geloggt ist es schon und steht nach „Weiter“ im Log darunter.
  *
- * Wie in Baldur's Gate 3 erscheint zuerst der Zielwert, dann rollen die Würfel; dann kommen die
- * Fertigkeit und jedes gewählte Attribut einzeln mit Namen dazu, und zuletzt fällt das Urteil. Alles steht von Anfang an im Dokument (für Screenreader und
- * Tests), die Animation blendet es nur nacheinander ein. Ein Tippen springt zum Urteil.
+ * Wie in Baldur's Gate 3 erscheint bei der Probe zuerst der Zielwert, dann rollen die Würfel; dann
+ * kommen die Fertigkeit und jedes gewählte Attribut einzeln mit Namen dazu, und zuletzt fällt das
+ * Urteil. Beim Angriff steht der nötige Wurf schon in der Tabelle; dort stehen oben gleich die
+ * Modifikatoren und der nötige Wurf, dann rollen die Würfel, und das Urteil fällt. Alles steht von
+ * Anfang an im Dokument (für Screenreader und Tests), die Animation blendet es nur nacheinander ein.
+ * Ein Tippen springt zum Urteil.
  */
 export function ResultDialog({ result }: { result: TaskItem | AttackItem }) {
   const game = useGame();
   const close = useRef<HTMLButtonElement>(null);
   useEffect(() => close.current?.focus(), []);
 
-  // Zielwert zeigen, werfen, Augen zeigen, dann je Teil des DM ein Schritt (erst die Fertigkeit, dann
-  // die Attribute), Urteil.
+  // Zielwert zeigen, werfen, Augen zeigen, bei der Probe dann je Teil des DM ein Schritt (erst die
+  // Fertigkeit, dann die Attribute), Urteil. Beim Angriff kommt nichts mehr dazu.
+  const attack = result.kind === 'attack';
   const parts = result.parts;
-  const [phase, skip] = useTimeline([500, THROW_MS, 350, ...parts.map(() => 380)]);
+  const steps = attack ? [] : parts;
+  const [phase, skip] = useTimeline([500, THROW_MS, 350, ...steps.map(() => 380)]);
   const THROWN = 1;
   const LANDED = 2;
-  const added = Math.max(0, Math.min(phase - LANDED, parts.length));
-  const VERDICT = parts.length + 3;
+  const added = Math.max(0, Math.min(phase - LANDED, steps.length));
+  const VERDICT = steps.length + 3;
 
   useEffect(() => {
     if (phase === THROWN) haptic('shake');
@@ -34,7 +39,7 @@ export function ResultDialog({ result }: { result: TaskItem | AttackItem }) {
 
   const [a, b] = result.dice;
   // Die Zwischensummen sind nur Anzeige; am Ende steht die Summe, die das Model ausgerechnet hat.
-  const shown = added === parts.length ? result.total : parts.slice(0, added).reduce((sum, part) => sum + part.dm, a + b);
+  const shown = attack ? a + b : added === parts.length ? result.total : parts.slice(0, added).reduce((sum, part) => sum + part.dm, a + b);
   const state = phase < LANDED ? ' rolling' : phase >= VERDICT ? (result.success ? ' judged success' : ' judged failure') : '';
 
   return (
@@ -53,9 +58,18 @@ export function ResultDialog({ result }: { result: TaskItem | AttackItem }) {
       >
         <span className="kicker">{result.kind === 'attack' ? 'Angriff' : 'Probe'}</span>
         <span style={{ fontSize: 15, fontWeight: 600 }}>{rollTitle(result)}</span>
+        {attack && (
+          <ol className="roll-parts" aria-hidden="true">
+            {parts.map((part, i) => (
+              <li key={i} className="roll-part added">
+                {partName(part)} <strong>{signed(part.dm)}</strong>
+              </li>
+            ))}
+          </ol>
+        )}
         <div className="roll-target" aria-hidden="true">
-          <span>Zielwert</span>
-          <strong>{result.target}+</strong>
+          <span>{attack ? 'Braucht' : 'Zielwert'}</span>
+          <strong>{result.kind === 'attack' ? Math.max(2, result.need) : result.target}+</strong>
         </div>
         {phase >= THROWN ? (
           <DicePairView dice={result.dice} seed={result.dice[0] * 7 + result.dice[1]} landed={phase >= LANDED} size="small" />
@@ -67,19 +81,21 @@ export function ResultDialog({ result }: { result: TaskItem | AttackItem }) {
             {shown}
           </strong>
         </div>
-        <ol className="roll-parts" aria-hidden="true">
-          {parts.map((part, i) => (
-            <li key={i} className={i < added ? (i === added - 1 && phase < VERDICT ? 'roll-part added latest' : 'roll-part added') : 'roll-part'}>
-              {partName(part)} <strong>{signed(part.dm)}</strong>
-            </li>
-          ))}
-        </ol>
+        {!attack && (
+          <ol className="roll-parts" aria-hidden="true">
+            {parts.map((part, i) => (
+              <li key={i} className={i < added ? (i === added - 1 && phase < VERDICT ? 'roll-part added latest' : 'roll-part added') : 'roll-part'}>
+                {partName(part)} <strong>{signed(part.dm)}</strong>
+              </li>
+            ))}
+          </ol>
+        )}
         <h2 id="result-title" className={result.success ? 'roll-verdict' : 'roll-verdict negative'}>
           {verdict(result)}
         </h2>
         <div className="roll-after">
           <span id="result-detail" className="mono muted" style={{ fontSize: 14 }}>
-            {taskDetail(result)}
+            {result.kind === 'attack' ? `2W6: ${a} + ${b} = ${a + b}, braucht ${Math.max(2, result.need)}+` : taskDetail(result)}
           </span>
           {/* Für Screenreader: Die Teile des DM stehen oben schon sichtbar, aber dort nur für das Auge. */}
           <span className="visually-hidden">{result.parts.map(partLabel).join(', ')}</span>
