@@ -15,6 +15,15 @@ import {
   recover,
   recoveryOptions,
   isFirstHit,
+  encounterRange,
+  endTurn,
+  fightOrder,
+  firstSide,
+  surpriseOf,
+  turnOf,
+  defeatedSide,
+  setRange,
+  setFocus,
   rollDamage,
   rollEncounter,
   setHexes,
@@ -27,7 +36,7 @@ import {
   type Hex,
 } from '..';
 import { fixedClock, fixedRandom } from '../testing';
-import { aimAt, attackBy, chooseTarget, rollAttack, startAttack } from './attack';
+import { aimAt, attackBy, chooseTarget, rollAttack, startAttack, turnAttack } from './attack';
 import { assignWound, confirmWounding, startWounding } from './wounding';
 
 // Regina: TL 7, Bevölkerung 5.
@@ -277,5 +286,68 @@ describe('Heilung', () => {
     campaign = appendLog(campaign, recover(campaign, 'wake', { npc: 'n2' }, fixedRandom(), clock));
     campaign = appendLog(campaign, recover(campaign, 'treatment', { npc: 'n2' }, fixedRandom(), clock, 'c1'));
     expect(woundStateOf(campaign, { npc: 'n2' })).toBe('unhurt');
+  });
+});
+
+describe('Kampfsimulation', () => {
+  it('würfelt beim Anlegen Entfernung (2W6 + Gelände) und Überraschung je Partei mit DMs', () => {
+    const encounter = currentEncounter(thugs())!;
+    // Alle Würfe zeigen das Kleinste: Entfernung 1 + 1 = 2 → Close; Überraschung SC 1 ± 0, Thugs 1 + 1 (Anführer).
+    expect(encounter).toMatchObject({ rangeDice: [1, 1], range: 'close', pcSurprise: { die: 1, dm: 0 }, npcSurprise: { die: 1, dm: 1 }, round: 1, acted: [] });
+    expect(surpriseOf(encounter)).toBeUndefined();
+    expect(firstSide(encounter)).toBe('npcs');
+    const inside = rollEncounter(there, fixedRandom(), clock, 15, 2, 'interior').campaign.encounters[0]!;
+    expect(inside).toMatchObject({ terrain: 'interior', range: 'short' });
+    expect([2, 4, 7, 8, 10, 12].map((n) => encounterRange([1, n - 1] as const, 0))).toEqual(['close', 'medium', 'medium', 'long', 'veryLong', 'veryLong']);
+    expect(encounterRange([6, 6], 4)).toBe('veryLong');
+  });
+
+  it('zieht Partei für Partei, die mit dem höheren Wurf zuerst; nach allen beginnt die nächste Runde', () => {
+    let campaign = thugs();
+    const encounter = currentEncounter(campaign)!;
+    expect(fightOrder(campaign, encounter).map((s) => s.id)).toEqual(['n1', 'n2', 'c1', 'c2']);
+    const turns: string[] = [];
+    for (let i = 0; i < 5; i++) {
+      turns.push(`${currentEncounter(campaign)!.round}:${turnOf(campaign)!.id}`);
+      campaign = endTurn(campaign);
+    }
+    expect(turns).toEqual(['1:n1', '1:n2', '1:c1', '1:c2', '2:n1']);
+  });
+
+  it('mit Überraschung zieht in Runde 1 nur die überraschende Partei', () => {
+    const campaign = thugs();
+    const surprised: Campaign = { ...campaign, encounters: campaign.encounters.map((e) => ({ ...e, pcSurprise: { die: 6, dm: 0 }, npcSurprise: { die: 2, dm: 1 } })) };
+    expect(surpriseOf(currentEncounter(surprised)!)).toBe('pcs');
+    let c = surprised;
+    const turns: string[] = [];
+    for (let i = 0; i < 4; i++) {
+      turns.push(`${currentEncounter(c)!.round}:${turnOf(c)!.id}`);
+      c = endTurn(c);
+    }
+    expect(turns).toEqual(['1:c1', '1:c2', '2:c1', '2:c2']);
+  });
+
+  it('wer bewusstlos ist, kommt nicht dran; ist eine Partei außer Gefecht, ist keiner mehr dran', () => {
+    let campaign = thugs();
+    // Kira schlägt den Anführer bewusstlos (Hände, 1W6: 4 auf DEX).
+    campaign = appendLog(campaign, rollAttack(chooseTarget(campaign, 'mesh', 'close', aimAt(startAttack(campaign), campaign, 'n1')), campaign, fixedRandom(6, 6), clock));
+    campaign = appendLog(campaign, rollDamage(campaign, 0, fixedRandom(4, 1), clock));
+    expect(turnOf(campaign)!.id).toBe('n2');
+    campaign = appendLog(campaign, rollAttack(chooseTarget(campaign, 'nothing', 'close', aimAt(startAttack(campaign), campaign, 'n2')), campaign, fixedRandom(6, 6), clock));
+    campaign = appendLog(campaign, rollDamage(campaign, 2, fixedRandom(6, 0), clock));
+    expect(defeatedSide(campaign, currentEncounter(campaign)!)).toBe('npcs');
+    expect(turnOf(campaign)).toBeUndefined();
+  });
+
+  it('im Zug: nur das Ziel wählen, Rüstung und Entfernung stehen fest', () => {
+    let campaign = setRange(thugs(), 'short');
+    expect(turnOf(campaign)!.id).toBe('n1');
+    // Der Anführer greift an; sein Ziel steht oben.
+    expect(turnAttack(campaign, 'c1')).toEqual({ by: 'n1', armor: 'nothing', range: 'short' });
+    expect(() => turnAttack(campaign, 'c2')).toThrow(/steht nicht oben/);
+    campaign = endTurn(endTurn(campaign));
+    expect(turnOf(campaign)!.id).toBe('c1');
+    expect(turnAttack(campaign, 'n1')).toEqual({ against: 'n1', armor: 'mesh', range: 'short' });
+    expect(() => turnAttack(setFocus(campaign, 'c2'), 'n1')).toThrow(/am Zug steht nicht oben/);
   });
 });

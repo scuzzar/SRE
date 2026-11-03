@@ -1,7 +1,8 @@
-import { addCharacter, characterOf, type Campaign, type CharacterId, type Upp } from './campaign';
+import { activeSkills, addCharacter, characterOf, livingCharacters, type Campaign, type CharacterId, type Upp } from './campaign';
+import { replay } from './career';
 import { DomainError } from './errors';
 import type { Clock, Random } from './ports';
-import { encounterTypeOf, nameSlotIds, ref, slotWithId, type EncounterType, type Item } from './reference';
+import { encounterTypeOf, nameSlotIds, ref, slotWithId, type EncounterType, type Item, type Range } from './reference';
 import { locationOf } from './shop';
 
 /** Ein NSC einer Begegnung: Gegner oder Fremder, getrennt von den Charakteren der Kampagne. */
@@ -33,6 +34,22 @@ export interface Encounter {
   readonly reaction: number;
   readonly ended: boolean;
   readonly npcs: readonly Npc[];
+  /** Die Entfernung: gewürfelt (`rangeDice`, mit dem DM des Geländes) und danach jederzeit änderbar. */
+  readonly range: Range;
+  readonly rangeDice?: readonly [number, number];
+  /** Verweis auf das Gelände; fehlt es, ±0. */
+  readonly terrain?: string;
+  /** Die Überraschung je Partei: 1W6 und DM (S. 5). Fehlt bei Begegnungen von vor der Kampfsimulation. */
+  readonly pcSurprise?: SurpriseRoll;
+  readonly npcSurprise?: SurpriseRoll;
+  /** Die Kampfrunde, ab 1, und wer in ihr schon dran war (Ids von SC und NSC). */
+  readonly round: number;
+  readonly acted: readonly string[];
+}
+
+export interface SurpriseRoll {
+  readonly die: number;
+  readonly dm: number;
 }
 
 export function encounterTypeOfEncounter(encounter: Encounter): EncounterType {
@@ -120,7 +137,7 @@ export interface EncounterRoll {
  * vorgegeben), die Anzahl (oder vorgegeben), je NSC UPP, Name, Waffe und Rüstung nach dem TL der
  * Gruppe, dazu die Reaktion. Die Zeilen 61–66 sind leer: dann gibt es keine.
  */
-export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, chosen?: number, count?: number): EncounterRoll {
+export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, chosen?: number, count?: number, terrain?: string): EncounterRoll {
   if (currentEncounter(campaign)) throw new DomainError('Es läuft schon eine Begegnung; erst sie beenden.');
   const world = locationOf(campaign);
   if (!world || campaign.location === undefined) throw new DomainError('Die Gruppe ist auf keiner Welt; erst auf der Sektorkarte den Aufenthaltsort wählen.');
@@ -149,6 +166,11 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
   const raw = d6(random, 2);
   const dm = (world.uwp.population ?? 0) >= 9 ? -1 : 0;
   const reaction = raw === 2 || raw === 12 ? raw : Math.min(11, Math.max(3, raw + dm));
+  const ground = terrain === undefined ? undefined : ref.encounters.terrains.find((t) => t.id === terrain);
+  if (terrain !== undefined && !ground) throw new DomainError(`Das Gelände ${terrain} gibt es nicht.`);
+  const rangeDice = [d6(random), d6(random)] as const;
+  const pcSurprise = { die: d6(random), dm: pcSurpriseDm(campaign) };
+  const npcSurprise = { die: d6(random), dm: npcSurpriseDm(type, npcs) };
   const encounter: Encounter = {
     id: `e${nextNumber(
       campaign.encounters.map((e) => e.id),
@@ -160,8 +182,44 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
     reaction,
     ended: false,
     npcs,
+    range: encounterRange(rangeDice, ground?.dm ?? 0),
+    rangeDice,
+    ...(ground ? { terrain: ground.id } : {}),
+    pcSurprise,
+    npcSurprise,
+    round: 1,
+    acted: [],
   };
   return { roll, campaign: { ...campaign, encounters: [...campaign.encounters, encounter] }, encounter };
+}
+
+/** Die Entfernung nach den Encounter Ranges (S. 5): 2W6 plus DM des Geländes, auf 1 bis 12 begrenzt. */
+export function encounterRange(dice: readonly [number, number], dm: number): Range {
+  const roll = Math.min(12, Math.max(1, dice[0] + dice[1] + dm));
+  return ref.encounters.ranges.find((r) => r.roll === roll)!.range;
+}
+
+const BATTLE_DRESS = 'battle-dress';
+
+/** DM der SC auf die Überraschung (S. 5): Battle Dress +2, Leader +1, Tactics +1, Army oder Marines +1, 8 oder mehr −1. */
+export function pcSurpriseDm(campaign: Campaign): number {
+  const pcs = livingCharacters(campaign);
+  const skill = (id: string) => pcs.some((c) => activeSkills(c).some((s) => s.of === id && s.level >= 1));
+  const military = pcs.some((c) => c.career !== undefined && ['army', 'marines'].includes(replay(c.career).service?.id ?? ''));
+  return (pcs.some((c) => c.wears === BATTLE_DRESS) ? 2 : 0) + (skill('leader') ? 1 : 0) + (skill('tactics') ? 1 : 0) + (military ? 1 : 0) - (pcs.length >= 8 ? 1 : 0);
+}
+
+/** DM der NSC auf die Überraschung: Battle Dress +2, Anführer +1, militärische Art +1, Fahrzeug −1, 8 oder mehr −1. */
+export function npcSurpriseDm(type: EncounterType, npcs: readonly Npc[]): number {
+  return (npcs.some((n) => n.wears === BATTLE_DRESS) ? 2 : 0) + (type.leader ? 1 : 0) + (type.military ? 1 : 0) - (type.vehicle ? 1 : 0) - (npcs.length >= 8 ? 1 : 0);
+}
+
+/** Ändert die Entfernung der laufenden Begegnung (näherkommen, zurückweichen). */
+export function setRange(campaign: Campaign, range: Range): Campaign {
+  const encounter = currentEncounter(campaign);
+  if (!encounter) throw new DomainError('Es läuft keine Begegnung.');
+  if (!ref.encounters.ranges.some((r) => r.range === range)) throw new DomainError('Diese Entfernung gibt es nicht.');
+  return { ...campaign, encounters: campaign.encounters.map((e) => (e.id === encounter.id ? { ...e, range } : e)) };
 }
 
 /** Verweist ein Angriff im Log auf einen NSC dieser Begegnung? */

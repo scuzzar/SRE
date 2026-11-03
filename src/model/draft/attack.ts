@@ -13,6 +13,7 @@ import {
   rangeDm,
   ranges,
   roll2d6,
+  turnOf,
   weaponSkill,
   type ArmorClass,
   type AttackDm,
@@ -109,6 +110,23 @@ export function attackBy(attack: Attack, campaign: Campaign, npc: string | undef
   if (npc === undefined) return withRange(rest, campaign);
   encounterNpc(campaign, npc);
   return withRange({ ...rest, by: npc, armor: fighterOf(campaign, { pc: attackCharacter(campaign).id }).armor }, campaign);
+}
+
+/**
+ * Der Angriff dessen, der in der Kampfsimulation am Zug ist, auf dieses Ziel, mit der Entfernung
+ * der Begegnung. Ist ein SC am Zug, muss er oben stehen; greift ein NSC an, steht sein Ziel oben.
+ */
+export function turnAttack(campaign: Campaign, target: string): Attack {
+  const turn = turnOf(campaign);
+  const encounter = currentEncounter(campaign);
+  if (!turn || !encounter) throw new DomainError('Es ist keiner am Zug.');
+  const top = attackCharacter(campaign);
+  if (turn.side === 'pcs') {
+    if (top.id !== turn.id) throw new DomainError('Der SC am Zug steht nicht oben.');
+    return { ...aimAt({}, campaign, target), range: encounter.range };
+  }
+  if (top.id !== target) throw new DomainError('Das Ziel des NSC steht nicht oben.');
+  return { ...attackBy({}, campaign, turn.id), range: encounter.range };
 }
 
 /** Wählt Rüstung und Reichweite des Ziels. Steht das Ziel fest, ist seine Rüstung die einzige. */

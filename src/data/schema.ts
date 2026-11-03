@@ -138,12 +138,18 @@ export const EncounterTypeSchema = z.object({
   guns: z.boolean(),
   armor: z.boolean(),
   vehicle: z.boolean(),
+  /** Militärische Erfahrung (Army oder Marines) für die Überraschung (S. 5). */
+  military: z.boolean(),
 });
 
 /** Die Begegnungen und die Reactions-Tabelle (S. 21). */
 export const EncountersSchema = z.object({
   types: z.array(EncounterTypeSchema).min(1),
   reactions: z.array(z.object({ roll: z.number().int().min(2).max(12), text: z.string().min(1) })).length(11),
+  /** Die Geländearten mit ihrem DM auf die Entfernung (S. 5). */
+  terrains: z.array(z.object({ id: z.string().min(1), name: z.string().min(1), dm: z.number().int() })).min(1),
+  /** Die Encounter Ranges (S. 5): 1 bis 12 und ihre Entfernung. */
+  ranges: z.array(z.object({ roll: z.number().int().min(1).max(12), range: RangeSchema })).length(12),
 });
 
 /** Ein Sammelbegriff, aus dem man eine Fertigkeit wählt: Blade Combat, Gun Combat, Vehicle. */

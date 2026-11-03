@@ -94,7 +94,7 @@ export function upgraded(campaign: Campaign): Campaign {
     const old = hex as Hex & { readonly rolls?: readonly LegacyWorldRoll[] };
     return old.rolls ? hexFromRolls({ column: old.column, row: old.row, ...(old.name === undefined ? {} : { name: old.name }), rolls: old.rolls }) : hex;
   });
-  const upgraded = { ...campaign, characters, log, hexes, bookings: campaign.bookings ?? [], encounters: campaign.encounters ?? [] };
+  const upgraded = { ...campaign, characters, log, hexes, bookings: campaign.bookings ?? [], encounters: (campaign.encounters ?? []).map((e) => ({ ...e, range: e.range ?? 'short', round: e.round ?? 1, acted: e.acted ?? [] })) };
   return keepFocus(upgraded, upgraded);
 }
 

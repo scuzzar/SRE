@@ -7,7 +7,7 @@ import { checkDamageRoll, ATTACK_TARGET } from './combat';
 import { npcOf, type Encounter, type Npc } from './encounter';
 import { checkInterprets, physical, recoveryKinds, withQuestion, type AttackResult, type CardPick, type DamageRoll, type LogEntry, type Recovery } from './log';
 import { checkRecovery } from './wounds';
-import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, ranges, slotOfEntry, weaponOf } from './reference';
+import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, ranges, ref, slotOfEntry, weaponOf } from './reference';
 import { characteristics } from './rules';
 import { bookingKinds, validateBookings, type Booking } from './shop';
 import { hexById, hexFromRolls, temperatureIds, uwpKinds, validateHexes, worldOf, type Hex, type LegacyWorldRoll } from './sector';
@@ -171,6 +171,14 @@ const EncounterSchema = z.object({
   reaction: z.number().int().min(2).max(12),
   ended: z.boolean(),
   npcs: z.array(NpcSchema).min(1),
+  /** Fehlen bei Begegnungen von vor der Kampfsimulation. */
+  range: z.enum(ranges).default('short'),
+  rangeDice: z.tuple([die, die]).optional(),
+  terrain: z.string().optional(),
+  pcSurprise: z.object({ die, dm: z.number().int() }).optional(),
+  npcSurprise: z.object({ die, dm: z.number().int() }).optional(),
+  round: z.number().int().min(1).default(1),
+  acted: z.array(z.string()).default([]),
 });
 
 const CampaignFileSchema = z.object({
@@ -418,6 +426,7 @@ function validateEncounters(campaign: Campaign): void {
   const ids = new Set<string>();
   for (const encounter of campaign.encounters) {
     if (!encounterTypeOf(encounter.of)) throw new DomainError(`Eine Begegnung ${encounter.of} gibt es nicht.`);
+    if (encounter.terrain !== undefined && !ref.encounters.terrains.some((t) => t.id === encounter.terrain)) throw new DomainError(`Das Gelände ${encounter.terrain} gibt es nicht.`);
     if (encounter.in !== undefined && !hexById(campaign.hexes, encounter.in)) throw new DomainError(`Eine Begegnung verweist auf das Feld ${encounter.in}, das es nicht gibt.`);
     for (const npc of encounter.npcs) {
       if (ids.has(npc.id)) throw new DomainError(`Der NSC ${npc.id} kommt doppelt vor.`);
