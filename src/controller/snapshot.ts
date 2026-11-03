@@ -481,8 +481,6 @@ export interface CombatView {
   readonly target: { readonly armor: ArmorClass; readonly range: Range; readonly dm: number; readonly need: number; readonly chance: number; readonly parts: readonly DmPart[] } | undefined;
   /** Der neueste Treffer ohne Schaden: dafür lässt sich der Schaden würfeln. */
   readonly damage: { readonly index: number; readonly weapon: string; readonly wounds: number } | undefined;
-  /** Die letzten Angriffe des Logs, das Neueste zuletzt, mit ihrem Schaden. */
-  readonly recent: readonly { readonly index: number; readonly item: AttackItem; readonly damage: DamageItem | undefined }[];
   /** Bei Schusswaffen: geladene Schuss, Größe des Magazins, wie viele Magazine (mit Namen) im Besitz sind. */
   readonly ammo: { readonly rounds: number; readonly capacity: number; readonly magazine: string; readonly magazines: number } | undefined;
   /** Kann der Angreifer angreifen (nicht bewusstlos, Ziel nicht tot, Magazin nicht leer)? */
@@ -802,7 +800,7 @@ function weaponName(id: string): string {
   return id === HANDS ? 'Hände' : weaponOf(id).name;
 }
 
-function combatView(campaign: Campaign, attack: Attack | undefined, log: readonly LogItem[], wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined, intro: boolean): CombatView | undefined {
+function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined, intro: boolean): CombatView | undefined {
   const character = focusOf(campaign);
   if (!character) return undefined;
   const current = attack ?? {};
@@ -816,13 +814,6 @@ function combatView(campaign: Campaign, attack: Attack | undefined, log: readonl
   const target = attack ? evaluateAttack(attack, campaign) : undefined;
   const pending = pendingDamage(campaign.log);
   const pendingHit = pending === undefined ? undefined : (campaign.log[pending] as AttackResult);
-  const recent = log
-    .flatMap((item, index) => (item.kind === 'attack' ? [{ index, item }] : []))
-    .slice(-3)
-    .map(({ index, item }) => {
-      const damage = log.find((d): d is DamageItem => d.kind === 'damage' && d.of === index);
-      return { index, item, damage };
-    });
   const encounter = currentEncounter(campaign);
   const pc = fighterOf(campaign, { pc: character.id });
   const ammo = ammoOf(character);
@@ -870,7 +861,6 @@ function combatView(campaign: Campaign, attack: Attack | undefined, log: readonl
         : undefined,
     canAttack: canFight(attacker.state) && defender?.state !== 'dead' && !(current.by === undefined && ammo?.rounds === 0),
     damage: pendingHit && pending !== undefined ? { index: pending, weapon: weaponName(pendingHit.with), wounds: weaponOf(pendingHit.with).wounds } : undefined,
-    recent,
     ammo: current.by === undefined && ammo ? { rounds: ammo.rounds, capacity: ammo.capacity, magazine: itemLabel(itemOf(ammo.ammo)), magazines: ammo.magazines } : undefined,
     sim: encounter && simView(campaign, encounter, simTarget),
     terrains: ref.encounters.terrains,
@@ -1159,7 +1149,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     npcs: npcCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background, dead: c.dead })),
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
-    combat: combatView(campaign, state.attack, log, state.wounding, state.combatNote, state.simTarget, state.encounterIntro),
+    combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro),
     shop: shopView(campaign, state.shopError),
     location: campaign.location,
     result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : undefined,

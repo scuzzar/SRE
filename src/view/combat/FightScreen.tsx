@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 import type { CombatView, FighterView, SimView } from '../../controller';
-import { damageDetail, hex, rangeText, signed, woundStateText } from '../format';
+import { hex, rangeText, signed, woundStateText } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { CombatIcon, DiceIcon } from '../icons';
@@ -39,7 +39,6 @@ export function FightScreen({ combat, onHeal }: { combat: CombatView; onHeal: (p
         )}
         <PcHeal sim={sim} character={combat.character} onHeal={onHeal} />
         <Fighters sim={sim} onHeal={onHeal} selection={selection} />
-        <Recent combat={combat} />
       </section>
       {picked ? <AdoptDock picked={picked} selection={selection} /> : <FightDock combat={combat} sim={sim} />}
     </>
@@ -252,31 +251,6 @@ function FighterRow({ fighter: f, onHeal, selection }: { fighter: FighterView; o
         </div>
       )}
     </li>
-  );
-}
-
-/** Die letzten Angriffe mit ihrem Schaden. */
-function Recent({ combat }: { combat: CombatView }) {
-  if (combat.recent.length === 0) return null;
-  return (
-    <div className="combat-recent">
-      <h2 className="section-title">Letzte Angriffe</h2>
-      <ol>
-        {[...combat.recent].reverse().map(({ index, item, damage }) => (
-          <li key={index} className="combat-recent-item">
-            <span className={item.success ? 'verdict' : 'verdict negative'}>{item.success ? 'TREFFER' : 'DANEBEN'}</span>
-            <span>
-              {item.character}
-              {item.victim ? ` → ${item.victim}` : ''} · {item.weapon}
-            </span>
-            <span className="muted mono">
-              {item.dice[0]} + {item.dice[1]} {signed(item.dm)} = {item.total}
-              {damage ? ` · Schaden ${damageDetail(damage)}` : item.damagePending ? ' · Schaden offen' : ''}
-            </span>
-          </li>
-        ))}
-      </ol>
-    </div>
   );
 }
 

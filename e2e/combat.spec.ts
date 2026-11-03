@@ -30,10 +30,8 @@ test('Kampf: Kira zieht die Pistole, wählt das Ziel in der Tabelle und greift a
     await roll.click();
     await roll.click();
     await expect(roll).toBeHidden();
-    await expect(page.locator('.combat-recent-item').first()).toContainText(/Schaden 3W6: [1-6] \+ [1-6] \+ [1-6] = \d+/);
   } else {
     await dialog.getByRole('button', { name: 'Weiter' }).click();
-    await expect(page.locator('.combat-recent-item').first()).toContainText('DANEBEN');
   }
 
   await page.getByRole('navigation').getByRole('button', { name: 'Orakel' }).click();

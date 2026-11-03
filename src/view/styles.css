@@ -1277,7 +1277,6 @@ button:disabled {
   color: var(--muted);
 }
 
-
 .add-character {
   min-height: 48px;
   padding: 14px;
@@ -3456,7 +3455,6 @@ button:disabled {
   transition: transform var(--hold-ms) linear;
 }
 
-
 /* --- Charakter oben: die Leiste im Orakel-Screen -------------------------------------------- */
 
 .strip {
@@ -3892,33 +3890,6 @@ button:disabled {
   margin: 0;
   font-size: 12px;
   color: var(--muted);
-}
-
-.combat-recent ol {
-  margin: 8px 0 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.combat-recent-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 8px 10px;
-  border: 1px solid var(--rule);
-  background: var(--panel);
-  font-size: 13px;
-}
-
-.combat-recent-item .verdict {
-  font-size: 15px;
-}
-
-.combat-recent-item .mono {
-  font-size: 12px;
 }
 
 .dock .actions:has(> :only-child) {

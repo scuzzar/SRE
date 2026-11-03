@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { DiceRoll } from '../oracle/DiceRoll';
 import type { CombatView, HealingView, Snapshot } from '../../controller';
 import { EncounterIntro, FightScreen } from './FightScreen';
-import { armorText, attackText, characteristicLabel, damageDetail, hex, partLabel, rangeMeters, rangeShort, rangeText, signed, woundStateText } from '../format';
+import { armorText, attackText, characteristicLabel, hex, partLabel, rangeMeters, rangeShort, rangeText, signed, woundStateText } from '../format';
 import { CloseIcon } from '../icons';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
@@ -45,7 +45,6 @@ export function CombatScreen({ view }: { view: Snapshot }) {
             <ArmorChips combat={combat} onHeal={setPatient} />
             <WeaponHead combat={combat} />
             <AttackTable combat={combat} />
-            <Recent combat={combat} />
           </section>
           <AttackDock combat={combat} />
         </>
@@ -260,31 +259,6 @@ function AttackTable({ combat }: { combat: CombatView }) {
         </tbody>
       </table>
       <p className="combat-hint">Zelle antippen: Rüstung und Reichweite des Ziels. In der Zelle steht der nötige Wurf auf 2W6 (8+ mit allen DMs).</p>
-    </div>
-  );
-}
-
-/** Die letzten Angriffe mit ihrem Schaden; den ganzen Verlauf zeigt der Log im Orakel-Screen. */
-function Recent({ combat }: { combat: CombatView }) {
-  if (combat.recent.length === 0) return null;
-  return (
-    <div className="combat-recent">
-      <h2 className="section-title">Letzte Angriffe</h2>
-      <ol>
-        {[...combat.recent].reverse().map(({ index, item, damage }) => (
-          <li key={index} className="combat-recent-item">
-            <span className={item.success ? 'verdict' : 'verdict negative'}>{item.success ? 'TREFFER' : 'DANEBEN'}</span>
-            <span>
-              {item.character}
-              {item.victim ? ` → ${item.victim}` : ''} · {item.weapon} · {armorText[item.armor]}, {rangeText[item.range]}
-            </span>
-            <span className="muted mono">
-              {item.dice[0]} + {item.dice[1]} {signed(item.dm)} = {item.total}
-              {damage ? ` · Schaden ${damageDetail(damage)}` : item.damagePending ? ' · Schaden offen' : ''}
-            </span>
-          </li>
-        ))}
-      </ol>
     </div>
   );
 }
