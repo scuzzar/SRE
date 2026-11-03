@@ -43,3 +43,15 @@ und lässt sich direkt im Browser öffnen.
 - Die Dateien sind im *Design-Component-Format* (`.dc.html`) der Entwurfsfläche geschrieben. Sie brauchen deren Laufzeit (`support.js`) und lassen sich nicht direkt im Browser öffnen.
 - Der Entwurf ist ein **Prototyp**, kein Produktivcode. Er zeigt Bedienung und Regeln; die Inhalte der Karte sind Platzhalter.
 - Regeln und Begriffe stehen in der [Haupt-README](../../README.md) und im [GMA2e-Glossar](../gma2e-begriffe.md).
+
+## Wurffelder der Karte (Entwurf vom 3. November 2026)
+
+Im Ordner [`kartensymbol/`](kartensymbol/) liegt der Entwurf für die drei Wurffelder oben auf der
+Inspirationskarte (siehe *Wurffelder der Karte* im [Domänenmodell](../domain-model.md)), noch nicht
+freigegeben.
+
+| Datei | Inhalt |
+|---|---|
+| `kartensymbol/Entwurf.html` | Glockenzahl 1–10 mit kleiner Glockenkurve, Streuwürfel als Windrose mit Pfeil (Volltreffer als Stern, Fehlschlag als roter Strich), Kartensymbol als Raum von oben mit Wegen nach N, O, S, W und Pfeilen nach oben und unten; Legende der Wegarten; Übernehmen zeigt, wie es im Log steht. „Neu ziehen“ würfelt mit den Gewichten aus dem Modell |
+
+Wie der Entwurf zur Deutung ist es eine gewöhnliche HTML-Datei, die sich direkt im Browser öffnen lässt.

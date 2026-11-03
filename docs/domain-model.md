@@ -68,6 +68,15 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Notizen auch in der Charaktererschaffung (siehe *Deutungen und Notizen*) und eine Notiz zu jeder
 > fertigen Welt (siehe *Notiz zur Welt*). Neu im Bild: `Hex.note`.
 >
+> **Entwurf vom 3. November 2026, noch nicht freigegeben:** drei **Wurffelder** auf der Karte nach
+> dem GMA2e: die **Glockenzahl** (1–10, meist 4–7), der **Streuwürfel** (8 Richtungen, Volltreffer,
+> Fehlschlag) und das **Kartensymbol** (ein Raum mit Wegen nach N, O, S, W und nach oben und
+> unten, je Weg eine Wegart). Siehe *Wurffelder der Karte*. Neu im Bild: `Card.bell`,
+> `Card.scatter`, `Card.pickedRolls`, `Card.map`, `CardPick.bell`, `CardPick.scatter`,
+> `CardPick.map`, die Werte `MapIcon`, `PathKind`, `Scatter`, `CardRoll`; ein `CardPick` braucht
+> keinen `PickedItem` mehr (`items` jetzt `*`). Der UI-Entwurf dazu liegt unter
+> [`ui-entwurf/kartensymbol/`](ui-entwurf/kartensymbol/). Bis zur Freigabe folgt der Code nicht.
+>
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen, die drei Namen sowie die Themen-Tafeln NSC, NSC-Aktionen,
 > Welt (mit Schiff), Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
@@ -122,6 +131,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Inspirationskarte | `Card` | Eine gezogene Karte, solange sie offen ist |
 | Kartenauswahl | `CardPick` | Was man von einer Karte in den Log übernimmt, mit der Frage |
 | Ausgewählter Eintrag | `PickedItem` | Ein übernommenes Feld: welches Feld, welcher Eintrag |
+| Wurffeld | `CardRoll` | Ein Feld der Karte, das würfelt statt aus einer Liste zu ziehen: Glockenzahl, Streuwürfel, Kartensymbol |
+| Glockenzahl | `Card.bell`, `CardPick.bell` | Eine Zahl von 1 bis 10 nach einer Glockenkurve, meist 4–7; im GMA2e der *Difficulty Generator*. Nicht zu verwechseln mit der Stufe, die für Proben die Schwierigkeit setzt |
+| Streuwürfel | `Scatter` | Eine von 8 Richtungen (N, NO, O, SO, S, SW, W, NW), Volltreffer oder Fehlschlag; im GMA2e der *Scatter Die* |
+| Volltreffer, Fehlschlag | `Scatter.hit`, `Scatter.miss` | Der Streuwürfel trifft genau bzw. geht ganz daneben |
+| Kartensymbol | `MapIcon` | Ein Raum auf einer Ebene mit Wegen nach N, O, S, W und nach oben und unten; im GMA2e das *Map Icon* |
+| Wegart | `PathKind` | Was in eine Richtung führt: kein Weg, Weg, Sackgasse, verborgener Weg, Hindernis |
 | Entwurf | Paket `draft` | Was später ein Logeintrag wird, solange es noch offen ist |
 | Probe | `Task` | Eine Probe, solange sie für den Charakter oben vorbereitet wird |
 | Probenergebnis | `TaskResult` | Eine gewürfelte Probe |
@@ -217,7 +232,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Text einer Notiz oder Deutung, Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei einer Probe DM und Zielwert (siehe
   *Orakel* und *Probe*). Alles andere ist ein
   Verweis: auf die Stufe, den Charakter, die Fertigkeitsstufe, die Attribute, auf Feld und Eintrag
-  der Karte. Logeinträge werden angehängt und nie geändert. Ein einzelner Eintrag lässt sich löschen,
+  der Karte. Die Werte der Wurffelder hält die Kartenauswahl selbst (siehe *Wurffelder der Karte*). Logeinträge werden angehängt und nie geändert. Ein einzelner Eintrag lässt sich löschen,
   dann ist er endgültig weg; die übrigen behalten ihre Reihenfolge. Die Reihenfolge ist die
   Reihenfolge der Ereignisse; dass das Neueste unten steht, ist Sache der Anzeige.
 - **Worauf der Log verweist, wird nie gelöscht.** Ein Charakter, der im Log vorkommt, bleibt in der
@@ -500,6 +515,39 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Einträge, ist ihr Feld ausgeblendet: Ziehen übergeht es, die Karte zeigt es nicht, und ein
   Bereich ohne sichtbares Feld fehlt auf der Karte ganz. Der Log zeigt alte Einträge daraus weiter.
   Mindestens ein Feld hat einen Eintrag, der nicht ausgeblendet ist.
+- **Wurffelder der Karte.** Neben den Feldern mit Einträgen hat jede Karte drei Wurffelder, wie die
+  GMA2e-Karte. Sie ziehen keinen Eintrag aus einer Liste, sondern würfeln einen Wert; deshalb sind
+  sie keine `Slot`s, haben keine Einträge und werden nie ausgeblendet. Die Werte und die Gewichte
+  sind eigene, nicht die der GMA2e-Karten.
+  - **Glockenzahl** (`bell`): 1 bis 10 mit diesen Gewichten (von 200): 1 · 6 · 16 · 30 · 47 · 47 ·
+    30 · 16 · 6 · 1. Also 4–7 in 77 % der Fälle, 1 und 10 je 0,5 %. Gedacht für zwischendurch:
+    Reaktion eines NSC (1 sehr freundlich, 10 feindselig), Spannung, wie schwer etwas ist.
+  - **Streuwürfel** (`scatter`): jeder der zehn Werte gleich wahrscheinlich (10 %): die acht
+    Richtungen, Volltreffer und Fehlschlag. Norden ist oben, wie auf der Sektorkarte.
+  - **Kartensymbol** (`map`): ein Raum, von oben gesehen, mit sechs Richtungen: Norden, Osten,
+    Süden, Westen auf der Ebene, dazu oben und unten (Treppe, Schacht, Leiter, Lift). Je Richtung
+    eine Wegart:
+
+    | Wegart | Code | N, O, S, W (von 20) | Oben, unten (von 20) | Als Ortskarte | Als Beziehungskarte |
+    |---|---|---|---|---|---|
+    | Kein Weg | `none` | 7 | 15 | Kein Weg in diese Richtung | Keine Beziehung |
+    | Weg | `path` | 7 | 2 | Klarer Weg | Neutrale oder gute Verbindung |
+    | Sackgasse | `deadEnd` | 2 | 1 | Weg endet bald | Scheinbar gute Option, beendete Beziehung |
+    | Verborgen | `hidden` | 2 | 1 | Geheimgang | Versteckte Möglichkeit oder Beziehung |
+    | Hindernis | `obstacle` | 2 | 1 | Versperrt, bewacht | Option mit Hürden, angespannte Beziehung |
+
+    Ein Kartensymbol hat mindestens zwei Richtungen mit einer Wegart außer *kein Weg*; hat es
+    weniger, wird es ganz neu gewürfelt.
+  - Ziehen würfelt alle drei, *Neu ziehen* ebenso. Die Wurffelder stehen auf der Karte oben, vor dem
+    Zufallsereignis, in der Reihenfolge Glockenzahl, Streuwürfel, Kartensymbol.
+  - Antippen nimmt ein Wurffeld in die Auswahl (`pickedRolls`) auf oder wieder heraus, wie ein Feld.
+    *Bestätigen* geht, sobald ein Feld oder ein Wurffeld ausgewählt ist. Der `CardPick` hält den Wert
+    jedes ausgewählten Wurffelds selbst (`bell`, `scatter`, `map`), weil es nichts gibt, worauf er
+    verweisen könnte; nicht ausgewählte bleiben leer. Ein `CardPick` hat also mindestens einen
+    `PickedItem` oder einen Wert eines Wurffelds. Ältere `CardPick`s ohne Wurffelder bleiben gültig.
+  - Im Log stehen die Wurffelder vor den ausgewählten Feldern, in derselben Reihenfolge wie auf der
+    Karte, mit Bild: Glockenzahl als Zahl, Streuwürfel als Windrose mit Pfeil, Kartensymbol als
+    Raum mit seinen Wegen. Wie sie gezeichnet werden, ist Sache der Anzeige (siehe UI-Entwurf).
 
 - **Subsektor.** Jede Kampagne hat einen Subsektor aus 8 Spalten und 10 Zeilen wie TAS Form 6
   (Charts S. 26): 0101 links oben, die Spalten mit gerader Nummer eine halbe Zeile tiefer. Ein
