@@ -15,6 +15,7 @@ import {
   setHexes,
   setLocation,
   setWields,
+  setWears,
   spendRound,
   toCampaignFile,
   type Campaign,
@@ -112,6 +113,9 @@ describe('Verkaufen', () => {
     const kira = characterOf(sold, 'c1');
     expect(kira.possessions.some((p) => p.of === 'automatic-pistol')).toBe(false);
     expect(kira).not.toHaveProperty('wields');
+    // Wer seine getragene Rüstung verkauft, trägt danach keine mehr.
+    const worn = sell(setWears(there, 'c1', 'jack'), 'jack', 1, 25, 'c1', clock);
+    expect(characterOf(worn, 'c1')).not.toHaveProperty('wears');
     // Auch ein verbotener Gegenstand oder einer über dem TL der Welt lässt sich verkaufen.
     expect(fundsOf(sell(there, 'vacc-suit-tl12', 1, 5000, 'c1', clock))).toBe(5000);
   });

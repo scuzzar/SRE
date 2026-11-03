@@ -54,11 +54,20 @@ function waiting(campaign: Campaign, encounter: Encounter): readonly FightSlot[]
   );
 }
 
+/**
+ * Die Begegnung mit der Runde, die gerade gilt: Ist in der gespeicherten Runde keiner mehr dran (etwa
+ * weil der Letzte außerhalb seines Zugs übernommen oder ausgeblendet wurde), gilt schon die nächste.
+ */
+export function fightState(campaign: Campaign, encounter: Encounter): Encounter {
+  if (defeatedSide(campaign, encounter) || waiting(campaign, encounter).length > 0) return encounter;
+  return { ...encounter, round: encounter.round + 1, acted: [] };
+}
+
 /** `/turn`: wer in der laufenden Begegnung dran ist; keiner, wenn der Kampf entschieden ist. */
 export function turnOf(campaign: Campaign): FightSlot | undefined {
   const encounter = currentEncounter(campaign);
   if (!encounter || defeatedSide(campaign, encounter)) return undefined;
-  return waiting(campaign, encounter)[0];
+  return waiting(campaign, fightState(campaign, encounter))[0];
 }
 
 function withEncounter(campaign: Campaign, encounter: Encounter): Campaign {
@@ -70,9 +79,10 @@ function withEncounter(campaign: Campaign, encounter: Encounter): Campaign {
  * dieser Runde keiner mehr dran, beginnt die nächste.
  */
 export function endTurn(campaign: Campaign): Campaign {
-  const encounter = currentEncounter(campaign);
+  const running = currentEncounter(campaign);
   const turn = turnOf(campaign);
-  if (!encounter || !turn) throw new DomainError('Es ist keiner am Zug.');
+  if (!running || !turn) throw new DomainError('Es ist keiner am Zug.');
+  const encounter = fightState(campaign, running);
   let after: Encounter = { ...encounter, acted: [...encounter.acted, turn.id] };
   if (waiting(campaign, after).length === 0) after = { ...after, round: after.round + 1, acted: [] };
   return withEncounter(campaign, after);

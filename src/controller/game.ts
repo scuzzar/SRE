@@ -326,7 +326,12 @@ export class GameController {
 
   /** Löscht einen Logeintrag endgültig, ein Ergebnis mit seinen Deutungen. */
   deleteLogEntry(index: number): void {
-    this.change(removeLogEntry(this.campaign, index), { result: undefined });
+    const campaign = removeLogEntry(this.campaign, index);
+    // Schaden, der gerade verteilt wird, verweist auf seinen Treffer im Log; die Stelle rückt mit, oder
+    // der Treffer ist weg, dann auch das Verteilen.
+    const wounding = this.state.wounding;
+    const hit = wounding && campaign.log.indexOf(this.campaign.log[wounding.of]!);
+    this.change(campaign, { result: undefined, wounding: wounding && hit !== undefined && hit >= 0 ? { ...wounding, of: hit } : undefined });
   }
 
   // --- Charakter oben und Proben ---------------------------------------------------------------

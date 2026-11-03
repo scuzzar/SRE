@@ -587,6 +587,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     der Würfel.
   - Die Wunden (`/wounds`) folgen aus den Schadenswürfen im Log, die auf Treffer gegen diesen SC bzw.
     NSC verweisen. Ein Schadenswurf löschen nimmt seine Wunden zurück.
+  - Wunden senken STR, DEX und END für alles, was mit ihnen rechnet: Angriffe und Proben.
   - *Zustand* (`/state`): kein Attribut auf 0 und keine Wunde: unverletzt; Wunden, aber keins auf 0:
     verwundet; eins auf 0: bewusstlos (10 Minuten); zwei: schwer verwundet (3 Stunden
     bewusstlos); drei: tot. Stirbt ein SC so, markiert ihn die App als tot (`dead`); das lässt sich
@@ -617,7 +618,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     zieht nur die Partei mit Überraschung, wenn es eine gibt.
   - *Zug* (`/turn`): der erste Kämpfer dieser Reihenfolge, der in dieser Runde noch nicht dran war
     (`acted`) und kämpfen kann (nicht bewusstlos, schwer verwundet oder tot). Ist keiner mehr übrig,
-    beginnt die nächste Runde (`round` + 1, `acted` leer).
+    beginnt die nächste Runde (`round` + 1, `acted` leer), auch wenn der Letzte nicht durch seinen Zug
+    wegfiel, sondern etwa übernommen oder ausgeblendet wurde.
   - Im Zug wählt man nur das **Ziel** (einen Kämpfer der anderen Partei, der nicht tot ist) und
     würfelt; Rüstung ist die des Ziels, Reichweite die Entfernung. Ist ein NSC dran, schlägt die App
     einen zufälligen wachen SC als Ziel vor; man kann es ändern. Ist ein SC dran, steht er oben.
@@ -698,7 +700,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Gegenstand; Schiffskarten kommen später. Alles, was nicht in der Liste steht, bleibt freier Text
     in der Ausrüstung (`equipment`).
 - **Löschen und Ausblenden.** Ein Charakter oder eine Fertigkeitsstufe, auf die kein Logeintrag
-  verweist, wird wirklich gelöscht. Verweist der Log darauf, wird sie stattdessen ausgeblendet
+  verweist (bei einem Charakter auch keine Buchung der Gruppenkasse und kein übernommener NSC),
+  wird wirklich gelöscht. Verweist der Verlauf darauf, wird sie stattdessen ausgeblendet
   (`retired`): Sie verschwindet aus dem Charakter-Screen und aus der Leiste oben und lässt sich nicht mehr für Proben wählen,
   bleibt aber gespeichert, und der Log zeigt sie weiter. Ein ausgeblendeter Charakter lässt sich
   wieder einblenden. Sind die Logeinträge gelöscht, die auf ihn verwiesen, lässt er sich auch

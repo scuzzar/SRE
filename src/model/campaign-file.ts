@@ -335,7 +335,10 @@ function validate(campaign: Campaign): void {
     ids.add(character.id);
     validateCharacter({ ...character, skills: character.skills });
     if (character.wields !== undefined && !character.possessions.some((p) => weaponOfItem(p.of) === character.wields)) {
-      throw new DomainError(`${character.name} führt eine Waffe, die nicht in seinem Besitz ist.`);
+      throw new DomainError(`${character.name} führt eine Waffe, die nicht im Besitz ist.`);
+    }
+    if (character.wears !== undefined && !character.possessions.some((p) => p.of === character.wears)) {
+      throw new DomainError(`${character.name} trägt eine Rüstung, die nicht im Besitz ist.`);
     }
     // Ein Lebenslauf wird von vorn nachgespielt; am Charakter ist er abgeschlossen.
     if (character.career && replay(character.career).step !== 'name') throw new DomainError(`Der Lebenslauf von ${character.name} ist nicht abgeschlossen.`);

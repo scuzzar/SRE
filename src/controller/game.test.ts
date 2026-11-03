@@ -555,6 +555,41 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(decided).toBeGreaterThan(20);
   });
 
+  it('ein Logeintrag löschen, während Schaden verteilt wird, bricht nicht ab: die Stelle rückt mit, oder das Verteilen endet', async () => {
+    const { game, random } = await onRegina();
+    game.askOracle('Vorher?');
+    game.rollEncounter(15);
+    // Der Anführer trifft Kira (erster Treffer, verteilt sich von selbst), dann der zweite Thug: den verteilt sie.
+    random.queue.push(6, 6);
+    game.fightAttack();
+    random.queue.push(2, 0);
+    game.rollDamage();
+    game.closeResult();
+    expect(game.snapshot().combat!.sim!.turn).toMatchObject({ id: 'n2', target: 'c1' });
+    random.queue.push(6, 6);
+    game.fightAttack();
+    random.queue.push(2, 3);
+    game.rollDamage();
+    expect(game.snapshot().combat!.wounding).toMatchObject({ dice: [2, 3] });
+    // Die Orakelfrage vorn löschen: Die Stelle des Treffers rückt mit, das Verteilen geht weiter.
+    game.deleteLogEntry(0);
+    game.assignWound('END');
+    game.assignWound('END');
+    game.confirmWounding();
+    expect(game.snapshot().combat!.note).toBeUndefined();
+    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'damage', to: ['END', 'END'] });
+    // Den Treffer selbst löschen, während verteilt wird: Das Verteilen endet.
+    while (game.snapshot().combat!.sim!.turn!.side === 'pcs') game.skipTurn();
+    game.chooseFightTarget('c1');
+    random.queue.push(6, 6);
+    game.fightAttack();
+    random.queue.push(1, 1);
+    game.rollDamage();
+    expect(game.snapshot().combat!.wounding).toBeDefined();
+    game.deleteLogEntry(game.snapshot().log.length - 1);
+    expect(game.snapshot().combat!.wounding).toBeUndefined();
+  });
+
   it('heilt einen SC in der Simulation und übernimmt einen NSC; er kämpft dann nicht mehr mit', async () => {
     const { game, random } = await onRegina();
     game.rollEncounter(15);

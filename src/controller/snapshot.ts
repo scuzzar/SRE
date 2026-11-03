@@ -90,6 +90,7 @@ import {
   DomainError,
   defeatedSide,
   fightOrder,
+  fightState,
   firstSide,
   surpriseOf,
   turnOf,
@@ -677,7 +678,9 @@ const emptyInput: CharacterInput = {
   possessions: [],
 };
 
-function dmParts(character: Character, uses: string | undefined, unskilled: boolean, counts: readonly Characteristic[]): DmPart[] {
+function dmParts(campaign: Campaign, character: Character, uses: string | undefined, unskilled: boolean, counts: readonly Characteristic[]): DmPart[] {
+  // Wunden senken STR, DEX und END auch für Proben.
+  const upp = woundedUpp(character.upp, woundsOf(campaign, { pc: character.id }));
   const parts: DmPart[] = [];
   if (uses !== undefined) {
     const skill = character.skills.find((s) => s.of === uses);
@@ -686,7 +689,7 @@ function dmParts(character: Character, uses: string | undefined, unskilled: bool
     parts.push({ kind: 'unskilled', dm: ref.houseRules.unskilledDm });
   }
   for (const characteristic of counts) {
-    const value = valueOf(character.upp, characteristic);
+    const value = valueOf(upp, characteristic);
     parts.push({ kind: 'characteristic', characteristic, value, dm: characteristicDm(value, ref.houseRules) });
   }
   return parts;
@@ -703,7 +706,7 @@ function taskItem(campaign: Campaign, entry: TaskResult): TaskItem {
     dm: entry.dm,
     total: sum(entry.dice) + entry.dm,
     success: isSuccess(entry),
-    parts: dmParts(character, entry.uses, entry.uses === undefined, entry.counts),
+    parts: dmParts(campaign, character, entry.uses, entry.uses === undefined, entry.counts),
   };
 }
 
@@ -889,8 +892,9 @@ function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, 
   };
 }
 
-function simView(campaign: Campaign, encounter: Encounter, target: string | undefined): SimView {
+function simView(campaign: Campaign, running: Encounter, target: string | undefined): SimView {
   const turn = turnOf(campaign);
+  const encounter = fightState(campaign, running);
   const order = fightOrder(campaign, encounter);
   const ground = encounter.terrain === undefined ? undefined : ref.encounters.terrains.find((t) => t.id === encounter.terrain);
   let turnView: SimView['turn'];
@@ -1094,7 +1098,7 @@ function characterView(campaign: Campaign, character: Character, state: Controll
 
 function taskView(campaign: Campaign, task: Task): TaskView {
   const character = focusOf(campaign)!;
-  return { character: character.name, ready: hasSkill(task), ...evaluateTask(task, campaign), parts: dmParts(character, task.uses, task.unskilled, task.counts) };
+  return { character: character.name, ready: hasSkill(task), ...evaluateTask(task, campaign), parts: dmParts(campaign, character, task.uses, task.unskilled, task.counts) };
 }
 
 const skills: readonly SkillChoice[] = ref.skills.map((s) => ({ ...s, leveled: shownLevel({ of: s.id, level: 0 }) !== undefined }));

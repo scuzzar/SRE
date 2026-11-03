@@ -133,6 +133,6 @@ describe('Kampagnendatei mit Angriff', () => {
   it('weist eine Waffe in der Hand zurück, die nicht im Besitz ist', () => {
     const json = JSON.parse(toCampaignFile(createCampaign()));
     json.campaign.characters[0].wields = 'rifle';
-    expect(() => fromCampaignFile(JSON.stringify(json), 'k2')).toThrow(/nicht in seinem Besitz/);
+    expect(() => fromCampaignFile(JSON.stringify(json), 'k2')).toThrow(/nicht im Besitz/);
   });
 });

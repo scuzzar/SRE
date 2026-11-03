@@ -149,8 +149,9 @@ export function sell(campaign: Campaign, itemId: string, count: number, price: n
   if (!Number.isInteger(count) || count < 1 || count > had.count) throw new DomainError(`${who.name} hat ${had.count} × ${item.name}.`);
   const booked = withBooking(campaign, { at: clock.now(), kind: 'sale', amount: price * count, for: character, sold: itemId, count, in: campaign.location });
   const possessions = who.possessions.flatMap((p) => (p.of !== itemId ? [p] : p.count > count ? [{ ...p, count: p.count - count }] : []));
+  // Geht der Gegenstand ganz weg, fällt er auch aus der Hand bzw. wird ausgezogen.
   const gone = !possessions.some((p) => p.of === itemId);
-  const rest = Object.fromEntries(Object.entries(who).filter(([key]) => !(gone && key === 'wields' && item.weapon === who.wields))) as typeof who;
+  const rest = Object.fromEntries(Object.entries(who).filter(([key]) => !(gone && ((key === 'wields' && item.weapon === who.wields) || (key === 'wears' && itemId === who.wears))))) as typeof who;
   return { ...booked, characters: booked.characters.map((c) => (c.id === character ? { ...rest, possessions } : c)) };
 }
 

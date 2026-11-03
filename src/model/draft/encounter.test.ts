@@ -24,6 +24,8 @@ import {
   defeatedSide,
   setRange,
   setFocus,
+  book,
+  removeCharacter,
   rollDamage,
   rollEncounter,
   setHexes,
@@ -38,6 +40,7 @@ import {
 import { fixedClock, fixedRandom } from '../testing';
 import { aimAt, attackBy, chooseTarget, rollAttack, startAttack, turnAttack } from './attack';
 import { assignWound, confirmWounding, startWounding } from './wounding';
+import { characteristicOptions } from './task';
 
 // Regina: TL 7, Bevölkerung 5.
 const regina: Hex = {
@@ -349,5 +352,32 @@ describe('Kampfsimulation', () => {
     expect(turnOf(campaign)!.id).toBe('c1');
     expect(turnAttack(campaign, 'n1')).toEqual({ against: 'n1', armor: 'mesh', range: 'short' });
     expect(() => turnAttack(setFocus(campaign, 'c2'), 'n1')).toThrow(/am Zug steht nicht oben/);
+  });
+});
+
+describe('Fehler, die der Fuzz-Test gefunden hat', () => {
+  it('fällt der Letzte der Runde außerhalb seines Zugs weg, beginnt die nächste Runde statt stehenzubleiben', () => {
+    let campaign = thugs();
+    campaign = endTurn(endTurn(endTurn(campaign)));
+    expect(turnOf(campaign)!.id).toBe('c2');
+    // Jonas wird NSC: In Runde 1 ist keiner mehr übrig, also ist Runde 2 dran.
+    campaign = { ...campaign, characters: campaign.characters.map((c) => (c.id === 'c2' ? { ...c, npc: true } : c)) };
+    expect(turnOf(campaign)!.id).toBe('n1');
+    campaign = endTurn(campaign);
+    expect(currentEncounter(campaign)).toMatchObject({ round: 2, acted: ['n1'] });
+  });
+
+  it('wer im Kassenbuch steht, wird beim Entfernen ausgeblendet statt gelöscht', () => {
+    const paid = book(there, 'deposit', 100, clock, undefined, 'c2');
+    expect(characterOf(removeCharacter(paid, 'c2'), 'c2').retired).toBe(true);
+    expect(removeCharacter(there, 'c2').characters.map((c) => c.id)).toEqual(['c1']);
+  });
+
+  it('Wunden senken STR, DEX und END auch in Proben', () => {
+    // Jonas: DEX 8, eine Wunde von 4 auf DEX → 4, also −1 statt ±0.
+    let campaign = setFocus(thugs(), 'c2');
+    campaign = appendLog(campaign, rollAttack(chooseTarget(campaign, 'nothing', 'close', attackBy(startAttack(campaign), campaign, 'n2')), campaign, fixedRandom(6, 6), clock));
+    campaign = appendLog(campaign, { kind: 'damage', at: clock.now(), of: 0, dice: [2, 2], to: ['DEX', 'DEX'] });
+    expect(characteristicOptions(undefined, campaign).find((o) => o.characteristic === 'DEX')).toMatchObject({ value: 4, dm: -1 });
   });
 });

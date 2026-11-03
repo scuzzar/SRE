@@ -12,6 +12,8 @@ import {
   skillDm,
   skillOf,
   valueOf,
+  woundedUpp,
+  woundsOf,
   type Campaign,
   type Character,
   type Characteristic,
@@ -101,7 +103,8 @@ export function chooseSkill(task: Task, campaign: Campaign, skill: string | null
 /** Wie die Attribute des Charakters oben in der Probe wirken würden; ohne Probe ist keins wählbar. */
 export function characteristicOptions(task: Task | undefined, campaign: Campaign, character: Character = taskCharacter(campaign)): readonly CharacteristicOption[] {
   return characteristics.map((characteristic) => {
-    const value = valueOf(character.upp, characteristic);
+    // Wunden senken STR, DEX und END auch für Proben (S. 7).
+    const value = valueOf(woundedUpp(character.upp, woundsOf(campaign, { pc: character.id })), characteristic);
     const dm = characteristicDm(value, ref.houseRules);
     const counted = task?.counts.includes(characteristic) ?? false;
     return { characteristic, value, dm, counted, selectable: task !== undefined && hasSkill(task) && (dm !== 0 || counted) };
@@ -124,7 +127,8 @@ export function evaluateTask(task: Task, campaign: Campaign): TaskOdds {
   const character = taskCharacter(campaign);
   const skill = usedSkill(task, character);
   let dm = skill ? skillDm(skill) : task.unskilled ? ref.houseRules.unskilledDm : 0;
-  for (const c of task.counts) dm += characteristicDm(valueOf(character.upp, c), ref.houseRules);
+  const upp = woundedUpp(character.upp, woundsOf(campaign, { pc: character.id }));
+  for (const c of task.counts) dm += characteristicDm(valueOf(upp, c), ref.houseRules);
   const target = oddsOf(campaign.odds).target;
   const need = target - dm;
   return { dm, target, need, chance: chance2d6(need) };

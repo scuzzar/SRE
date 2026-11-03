@@ -250,8 +250,13 @@ export function activeSkills(character: Character): readonly SkillLevel[] {
   return character.skills.filter((s) => !s.retired);
 }
 
-/** Verweist ein Logeintrag auf den Charakter? Dann wird er nie gelöscht. */
+/**
+ * Verweist der Verlauf auf den Charakter: ein Logeintrag, eine Buchung der Gruppenkasse oder ein
+ * übernommener NSC? Dann wird er nie gelöscht, nur ausgeblendet.
+ */
 export function isInLog(campaign: Campaign, id: CharacterId): boolean {
+  if (campaign.bookings.some((b) => b.for === id)) return true;
+  if (campaign.encounters.some((e) => e.npcs.some((n) => n.became === id))) return true;
   return campaign.log.some(
     (e) => (e.kind === 'task' && e.for === id) || (e.kind === 'attack' && (e.for === id || e.victim === id)) || (e.kind === 'recovery' && (e.for === id || e.by === id)),
   );
