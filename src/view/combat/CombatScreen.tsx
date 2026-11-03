@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import { DiceRoll } from '../oracle/DiceRoll';
 import type { CombatView, HealingView, Snapshot } from '../../controller';
 import { FightScreen } from './FightScreen';
 import { armorText, attackText, characteristicLabel, damageDetail, hex, partLabel, rangeMeters, rangeShort, rangeText, signed, woundStateText } from '../format';
@@ -48,7 +49,7 @@ export function CombatScreen({ view }: { view: Snapshot }) {
           <AttackDock combat={combat} />
         </>
       )}
-      {combat?.wounding && <WoundingDialog combat={combat} />}
+      {combat?.wounding && <WoundingDialog key={`${combat.wounding.victim}-${combat.wounding.dice.join('-')}-${view.log.length}`} combat={combat} />}
       {combat && patient && healing && <HealDialog key={patient.npc ?? patient.pc ?? 'pc'} patient={patient} healing={healing} note={combat.note} onClose={() => setPatient(undefined)} />}
     </div>
   );
@@ -309,6 +310,18 @@ function AttackDock({ combat }: { combat: CombatView }) {
 
 /** Schaden an einem SC: Der Spieler gibt jedem Würfel ein Attribut, dann kommt er in den Log. */
 export function WoundingDialog({ combat }: { combat: CombatView }) {
+  const w = combat.wounding!;
+  // Erst rollen die Würfel im Vordergrund, dann verteilt man sie; das ist nur Anzeige.
+  const [rolled, setRolled] = useState(false);
+  const done = useCallback(() => setRolled(true), []);
+  if (!rolled) {
+    const item = { kind: 'damage' as const, at: '', of: -1, weapon: w.weapon, victim: w.victim, dice: w.dice, to: undefined, damage: w.dice.reduce((a, b) => a + b, 0) };
+    return <DiceRoll item={item} seed={w.dice.reduce((a, b) => a * 7 + b, 1)} onDone={done} />;
+  }
+  return <WoundingChoice combat={combat} />;
+}
+
+function WoundingChoice({ combat }: { combat: CombatView }) {
   const game = useGame();
   const w = combat.wounding!;
   const next = w.to.length;

@@ -578,6 +578,8 @@ describe('Begegnung und Kampfsimulation', () => {
     game.confirmWounding();
     expect(game.snapshot().combat!.note).toBeUndefined();
     expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'damage', to: ['END', 'END'] });
+    // Die Würfel sind vor dem Verteilen gerollt; danach rollen sie nicht noch einmal.
+    expect(game.snapshot().result).toBeUndefined();
     // Den Treffer selbst löschen, während verteilt wird: Das Verteilen endet.
     while (game.snapshot().combat!.sim!.turn!.side === 'pcs') game.skipTurn();
     game.chooseFightTarget('c1');

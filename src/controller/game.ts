@@ -628,20 +628,23 @@ export class GameController {
   }
 
   /** Sind alle Würfel verteilt, kommt der Schaden in den Log. */
+  /** Sind alle Würfel verteilt, kommt der Schaden in den Log; die Würfel sind schon vor dem Verteilen gerollt. */
   confirmWounding(): void {
-    this.inFight(() => this.logDamage(confirmWounding(this.openWounding, this.campaign, this.deps.clock)));
+    this.inFight(() => this.logDamage(confirmWounding(this.openWounding, this.campaign, this.deps.clock), false));
   }
 
   /** Schreibt den Schaden in den Log. War es der Treffer dessen, der in der Simulation am Zug ist, endet sein Zug. */
-  private logDamage(roll: DamageRoll): void {
+  /** `show`: Der Schadenswurf rollt danach im Vordergrund; beim Verteilen ist er schon vorher gerollt. */
+  private logDamage(roll: DamageRoll, show = true): void {
     const hit = this.campaign.log[roll.of] as AttackResult;
     const logged = appendLog(this.campaign, roll);
     const who = victimOf(hit);
     const campaign = who ? markDeath(logged, who) : logged;
     const turn = turnOf(this.campaign);
     const ownTurn = turn !== undefined && (hit.for === turn.id || hit.by === turn.id);
-    if (ownTurn) this.nextTurn(campaign, { result: campaign.log.length - 1, wounding: undefined });
-    else this.change(campaign, { result: campaign.log.length - 1, wounding: undefined });
+    const rest = { result: show ? campaign.log.length - 1 : undefined, wounding: undefined };
+    if (ownTurn) this.nextTurn(campaign, rest);
+    else this.change(campaign, rest);
   }
 
   private get openWounding() {
