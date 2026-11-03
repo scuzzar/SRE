@@ -88,6 +88,9 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > flüchtig der Angriff in Vorbereitung (`Attack`), im Log das Angriffsergebnis (`AttackResult`)
 > und der Schadenswurf (`DamageRoll`).
 >
+> **Entwurf, noch nicht freigegeben** (3. November 2026): **Verkaufen** im Shop (siehe *Shop*). Neu
+> im Bild: die Buchungsart `sale` und der Verweis `Booking.sold`.
+>
 > Ebenfalls am 3. November 2026 freigegeben: **Aufenthaltsort, Gruppenkasse, Shop und Munition**
 > (siehe dort), mit dem neuen Reiter *Shop*. Neu im Bild: `Campaign.location`, `Campaign./funds`, `Booking` mit
 > `BookingKind`, `Hex./offer`, `Possession.rounds` und an der Waffe `rounds`, `law` und `ammo`.
@@ -167,7 +170,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Aufenthaltsort | `Campaign.location` | Die Welt, auf der die Gruppe gerade ist; dort kauft sie ein |
 | Gruppenkasse | `Campaign./funds` | Das gemeinsame Geld der Gruppe in Cr, die Summe aller Buchungen |
 | Buchung | `Booking` | Eine Bewegung der Gruppenkasse: Einnahme, Ausgabe, Einzahlung, Auszahlung oder Kauf |
-| Art der Buchung | `BookingKind` | income (Einnahme, z. B. Belohnung), expense (Ausgabe), deposit (Einzahlung eines Charakters), payout (Auszahlung an einen Charakter), purchase (Kauf) |
+| Art der Buchung | `BookingKind` | income (Einnahme, z. B. Belohnung), expense (Ausgabe), deposit (Einzahlung eines Charakters), payout (Auszahlung an einen Charakter), purchase (Kauf), sale (Verkauf) |
 | Angebot | `Hex./offer` | Was man auf der Welt kaufen kann: nach TL und Gesetz der Welt |
 | Shop | (Reiter „Shop“) | Der Screen für Kasse und Einkauf auf dem Aufenthaltsort |
 | Magazin | `Weapon.ammo` | Der Gegenstand, der eine Schusswaffe lädt, z. B. Rifle Ammo (20 rds) oder LC Power Pack |
@@ -432,8 +435,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - *Einzahlung* (`deposit`) nimmt Credits eines Charakters (`for`) in die Kasse, *Auszahlung*
     (`payout`) gibt Geld aus der Kasse an einen Charakter; seine `credits` ändern sich um denselben
     Betrag. Ein Charakter zahlt nie mehr ein, als er hat.
-  - *Kauf* (`purchase`) siehe *Shop*.
-  - Die Kasse wird nie negativ: Ausgabe, Auszahlung und Kauf gehen nur bis zum Stand.
+  - *Kauf* (`purchase`) und *Verkauf* (`sale`) siehe *Shop*.
+  - Die Kasse wird nie negativ: Ausgabe, Auszahlung und Kauf gehen nur bis zum Stand. Einnahme,
+    Einzahlung und Verkauf bringen Geld in die Kasse.
   - Buchungen werden nur angehängt, nie geändert oder gelöscht; einen Fehler bucht man zurück
     (eine Gegenbuchung mit dem umgekehrten Betrag).
   - Die Kampagnendatei enthält Aufenthaltsort und Buchungen; beim Import muss jede Buchung zu ihrer
@@ -456,7 +460,15 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Charakter, der ihn bekommt (einen Lebenden). Der Kauf ist eine Buchung `purchase` mit
     `amount` = −Preis × Anzahl, `bought` (Gegenstand), `count` (Anzahl), `for` (Charakter) und
     `in` (die Welt); der Gegenstand kommt in seinen Besitz. Er geht nur, wenn die Kasse reicht.
-  - **Später**: Verkaufen, Preisänderungen nach Hausregel, die Industrie einer Welt, Schiffe kaufen,
+  - **Verkaufen**: Auf dem Aufenthaltsort verkauft ein Lebender Gegenstände aus seinem Besitz, die
+    einen Preis haben (ohne Schiffe und Mitgliedschaften), auch verbotene und solche über dem TL der
+    Welt. Man wählt Charakter, Gegenstand und Anzahl (höchstens, was er hat) und den Erlös je Stück:
+    vorgeschlagen ist der halbe Preis der Charts, abgerundet auf ganze Cr; man kann ihn ändern
+    (ganze Cr, mindestens 1). Der Verkauf ist eine Buchung `sale` mit `amount` = +Erlös × Anzahl,
+    `sold`, `count`, `for` und `in`; der Gegenstand geht aus dem Besitz (beim letzten Stück ist der
+    Besitz weg). Verkauft er die Waffe in der Hand ganz, hat er wieder die Hände; eine geladene
+    Schusswaffe geht mit ihren Schuss.
+  - **Später**: Preisänderungen nach Hausregel, die Industrie einer Welt, Schiffe kaufen,
     Leistungen (Recharge, Refill) und Zubehör.
 - **Munition.** Eine Schusswaffe fasst `rounds` Schuss und lädt mit ihrem Magazin (`ammo`), nach
   S. 4 und 23: Body Pistol 6, Automatic Pistol 15, Revolver 6, Carbine 10, Rifle 20, Automatic Rifle

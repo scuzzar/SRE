@@ -51,6 +51,7 @@ hide <<value>> stereotype
     deposit
     payout
     purchase
+    sale
   }
   class Character {
     name: string
@@ -477,6 +478,7 @@ Campaign "*" --> "0..1" Hex : location
 Campaign "1" *-- "*" Booking : bookings {ordered}
 Booking "*" --> "0..1" Character : for
 Booking "*" --> "0..1" Item : bought
+Booking "*" --> "0..1" Item : sold
 Booking "*" --> "0..1" Hex : in
 Booking --> BookingKind
 
