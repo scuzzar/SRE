@@ -1,7 +1,7 @@
 import type { Career } from './career';
 import { DomainError } from './errors';
 import type { Generation } from './generation';
-import type { LogEntry } from './log';
+import { interpretationsOf, type LogEntry } from './log';
 import { worldOf, type Hex } from './sector';
 import { defaultOdds, itemOf, oddsOf, ref, skillOf, type ExampleCharacter } from './reference';
 
@@ -135,10 +135,19 @@ export function appendLog(campaign: Campaign, entry: LogEntry): Campaign {
   return { ...campaign, log: [...campaign.log, entry] };
 }
 
-/** Löscht einen Logeintrag endgültig; die übrigen behalten ihre Reihenfolge. */
+/**
+ * Löscht einen Logeintrag endgültig, ein Ergebnis mit seinen Deutungen; die übrigen behalten ihre
+ * Reihenfolge, und Deutungen verweisen weiter auf ihr Ergebnis.
+ */
 export function removeLogEntry(campaign: Campaign, index: number): Campaign {
   if (!Number.isInteger(index) || index < 0 || index >= campaign.log.length) throw new DomainError('Diesen Logeintrag gibt es nicht.');
-  return { ...campaign, log: campaign.log.filter((_, i) => i !== index) };
+  const removed = new Set([index, ...interpretationsOf(campaign.log, index)]);
+  const shift = (i: number) => i - [...removed].filter((r) => r < i).length;
+  const log = campaign.log.flatMap((entry, i): LogEntry[] => {
+    if (removed.has(i)) return [];
+    return entry.kind === 'note' && entry.interprets !== undefined ? [{ ...entry, interprets: shift(entry.interprets) }] : [entry];
+  });
+  return { ...campaign, log };
 }
 
 export function characterOf(campaign: Campaign, id: CharacterId): Character {

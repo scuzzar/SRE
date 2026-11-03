@@ -60,10 +60,9 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > 6 große Kontinente, und die Weltkarte nennt „nur Archipele“ bzw. „nur Seen“ ohne die große
 > Zahl (siehe *Oberfläche*). Das Bild ändert sich dadurch nicht.
 >
-> **Entwurf vom 3. November 2026, noch nicht freigegeben:** Deutungen und Notizen im Log (siehe
-> *Deutungen und Notizen*). Neu im Bild: `Note` mit `text` und dem Verweis `interprets`. Der
-> UI-Entwurf dazu liegt unter [`ui-entwurf/deutung/`](ui-entwurf/deutung/). Bis zur Freigabe folgt
-> der Code nicht.
+> Am 3. November 2026 freigegeben: Deutungen und Notizen im Log (siehe *Deutungen und Notizen*).
+> Neu im Bild: `Note` mit `text` und dem Verweis `interprets`. Der UI-Entwurf dazu liegt unter
+> [`ui-entwurf/deutung/`](ui-entwurf/deutung/).
 >
 > **Zurzeit** hat die Karte nur die Felder mit Einträgen aus Mythic und die Namen, alle als Paar: Aktion und
 > Beschreibung des Zufallsereignisses, Hören und Riechen, die drei Namen sowie die Themen-Tafeln NSC, NSC-Aktionen,
@@ -634,6 +633,9 @@ Diagramm mit diesen Ausnahmen:
   in `src/data/services.json` steht das Attribut als Feld `characteristic` neben `change`, weil
   `Characteristic` eine Werteliste ist. Ebenso stehen die DMs eines `Throw` als `characteristic`,
   `atLeast`, `dm`.
+- **`Note → LogEntry : interprets`** ist im Code die Stelle des gedeuteten Ergebnisses im Log (eine
+  Zahl), weil Logeinträge keine eigene Id haben. Löschen rückt die Stellen nach, sodass jede Deutung
+  weiter auf ihr Ergebnis zeigt; damit ist der Verweis erfüllt.
 - **`Card → Campaign : in` und `Task → Campaign : in`** sind im Code kein Feld. Der Controller hält
   höchstens eine offene Karte und höchstens eine Probe, beide immer zur offenen Kampagne; beim
   Wechsel der Kampagne verfallen sie. Damit ist die Multiplizität erfüllt.

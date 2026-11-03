@@ -28,7 +28,7 @@ Mira Okonkwo ist nur für den Entwurf erfunden, damit man durch drei Charaktere 
 
 ## Deutung und Notiz (Entwurf vom 3. November 2026)
 
-Im Ordner [`deutung/`](deutung/) liegt der Entwurf für Deutungen und Notizen im Log (siehe
+Im Ordner [`deutung/`](deutung/) liegt der (freigegebene und umgesetzte) Entwurf für Deutungen und Notizen im Log (siehe
 *Deutungen und Notizen* im [Domänenmodell](../domain-model.md)).
 
 | Datei | Inhalt |

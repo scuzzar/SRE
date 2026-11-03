@@ -38,7 +38,7 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
 
 - **Er ändert das Model**, als Einziger, und speichert den Spielstand über das Repository:
   `askOracle(question)`, `rollDice()`, `drawCard(question)`, `togglePick(slot)`, `confirmCard()`,
-  `discardCard()`, `deleteLogEntry(index)`, `setOdds(odds)`; für den Charakter oben und die Probe
+  `discardCard()`, `writeNote(text, interprets)`, `deleteLogEntry(index)`, `setOdds(odds)`; für den Charakter oben und die Probe
   `focusCharacter(id)` (Wischen), `chooseSkill(skill)`, `toggleCharacteristic(c)`, `rollTask()`,
   `endTask()`; für Kampagnen
   `openCampaign(id)`, `createCampaign(name)`, `renameCampaign(name)`, `deleteCampaign(id)`,

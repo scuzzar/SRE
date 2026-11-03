@@ -9,6 +9,8 @@ const log: LogEntry[] = [
   { kind: 'card', at: '2026-10-23T14:02:00.000Z', items: [{ picked: ['event.action.1.mythic.1', 'event.action.2.mythic.1'] }] },
   { kind: 'task', at: '2026-10-23T14:03:00.000Z', for: 'c1', uses: 'pilot', counts: ['DEX'], odds: 'low', dice: [4, 5], dm: 3, target: 10 },
   { kind: 'task', at: '2026-10-23T14:04:00.000Z', for: 'c2', counts: [], odds: 'medium', dice: [1, 1], dm: -3, target: 8 },
+  { kind: 'note', at: '2026-10-23T14:05:00.000Z', text: 'Halvek lügt, und er weiß, dass wir es wissen.', interprets: 0 },
+  { kind: 'note', at: '2026-10-23T14:06:00.000Z', text: 'Wir landen auf Regina.' },
 ];
 
 function campaign(): Campaign {
@@ -45,6 +47,10 @@ describe('Kampagnendatei', () => {
     ['mit unbekannter Fertigkeit', () => fileWith((c) => ((c.characters as { skills: { of: string }[] }[])[0]!.skills[0]!.of = 'zauberei')), /Fertigkeit zauberei/],
     ['mit unbekanntem Karteneintrag', () => fileWith((c) => ((c.log as { items?: { picked: string[] }[] }[])[2]!.items![0]!.picked = ['gibt.es.nicht'])), /Eintrag/],
     ['mit einer Probe für einen fremden Charakter', () => fileWith((c) => ((c.log as { for?: string }[])[3]!.for = 'c9')), /Charakter c9/],
+    ['mit einer leeren Notiz', () => fileWith((c) => ((c.log as { text?: string }[])[6]!.text = '  ')), /keine gültige/],
+    ['mit einer Deutung einer Notiz', () => fileWith((c) => ((c.log as { interprets?: number }[])[5]!.interprets = 6)), /Eintrag, den es davor nicht gibt/],
+    ['mit einer Deutung einer Deutung', () => fileWith((c) => ((c.log as { interprets?: number }[])[6]!.interprets = 5)), /nur ein Ergebnis/],
+    ['mit einer Deutung ins Leere', () => fileWith((c) => ((c.log as { interprets?: number }[])[5]!.interprets = 9)), /Eintrag, den es davor nicht gibt/],
     ['mit einem Würfel über 6', () => fileWith((c) => ((c.log as { dice?: number[] }[])[1]!.dice = [7, 1])), /keine gültige/],
   ])('weist eine Datei %s zurück', (_, text, message) => {
     expect(() => fromCampaignFile(text(), 'k2')).toThrow(message);
@@ -75,8 +81,21 @@ describe('Kampagnendatei mit Charakter oben', () => {
 describe('Logeintrag löschen', () => {
   it('nimmt genau den Eintrag heraus', () => {
     const after = removeLogEntry(campaign(), 1);
-    expect(after.log.map((e) => e.kind)).toEqual(['oracle', 'card', 'task', 'task']);
-    expect(() => removeLogEntry(campaign(), 5)).toThrow(/gibt es nicht/);
+    expect(after.log.map((e) => e.kind)).toEqual(['oracle', 'card', 'task', 'task', 'note', 'note']);
+    expect(() => removeLogEntry(campaign(), 7)).toThrow(/gibt es nicht/);
+  });
+
+  it('löscht ein Ergebnis mit seinen Deutungen; andere Deutungen zeigen weiter auf ihr Ergebnis', () => {
+    const withMore = appendLog(campaign(), { kind: 'note', at: '2026-10-23T14:07:00.000Z', text: 'Ein Paar zum Verrat.', interprets: 2 });
+    const after = removeLogEntry(withMore, 0);
+    expect(after.log.map((e) => e.kind)).toEqual(['dice', 'card', 'task', 'task', 'note', 'note']);
+    expect(after.log.at(-1)).toMatchObject({ text: 'Ein Paar zum Verrat.', interprets: 1 });
+    expect(after.log[1]?.kind).toBe('card');
+  });
+
+  it('löscht eine Deutung allein; ihr Ergebnis bleibt', () => {
+    const after = removeLogEntry(campaign(), 5);
+    expect(after.log.map((e) => e.kind)).toEqual(['oracle', 'dice', 'card', 'task', 'task', 'note']);
   });
 });
 

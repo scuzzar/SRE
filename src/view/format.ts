@@ -1,4 +1,4 @@
-import type { DmPart, TaskItem } from '../controller';
+import type { DmPart, LogItem, TaskItem } from '../controller';
 import type { Characteristic } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
@@ -93,6 +93,22 @@ export function taskFigures(parts: readonly DmPart[]): string {
 
 export function taskTitle(item: TaskItem): string {
   return `${item.character} · ${skillTitle(item.parts)} · ${item.target}+`;
+}
+
+/** Ein Ergebnis in einer Zeile, für die Zeile über der Schreibzeile: Urteil, dann die Frage. */
+export function resultLine(item: LogItem): { head: string; rest: string } {
+  switch (item.kind) {
+    case 'oracle':
+      return { head: item.yes ? 'JA' : 'NEIN', rest: item.question ? quoted(item.question) : item.odds };
+    case 'dice':
+      return { head: `2W6: ${item.total}`, rest: `${item.dice[0]} + ${item.dice[1]}` };
+    case 'card':
+      return { head: 'Karte', rest: item.question ? quoted(item.question) : item.items.map((i) => pickText(i.sectionId, i.texts)).join(', ') };
+    case 'task':
+      return { head: item.success ? 'ERFOLG' : 'FEHLSCHLAG', rest: taskTitle(item) };
+    case 'note':
+      return { head: item.interprets === undefined ? 'Notiz' : 'Deutung', rest: item.text };
+  }
 }
 
 export function taskDetail(item: TaskItem): string {

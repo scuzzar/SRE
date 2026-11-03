@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { askOracle, isSuccess, isYes, rollDice, slotOf, totalOf, type TaskResult } from './log';
+import { askOracle, isSuccess, isYes, rollDice, slotOf, totalOf, writeNote, type LogEntry, type TaskResult } from './log';
 import { fixedClock, fixedRandom } from './testing';
 
 describe('Orakel', () => {
@@ -22,6 +22,28 @@ describe('Orakel', () => {
 
   it('kennt keine unbekannte Stufe', () => {
     expect(() => askOracle('certain', fixedRandom(1), fixedClock())).toThrow(/gibt es nicht/);
+  });
+});
+
+describe('Deutungen und Notizen', () => {
+  const log: LogEntry[] = [
+    { kind: 'oracle', at: '2026-10-23T14:00:00.000Z', roll: 61, chance: 25, odds: 'low' },
+    { kind: 'note', at: '2026-10-23T14:01:00.000Z', text: 'Wir landen auf Regina.' },
+  ];
+
+  it('schreibt eine Notiz ohne Verweis; Leerraum am Rand fällt weg', () => {
+    expect(writeNote(log, '  Fracht an Bord.  ', fixedClock())).toEqual({ kind: 'note', at: '2026-10-23T14:00:00.000Z', text: 'Fracht an Bord.' });
+  });
+
+  it('schreibt eine Deutung zu einem früheren Ergebnis', () => {
+    expect(writeNote(log, 'Halvek lügt.', fixedClock(), 0)).toMatchObject({ kind: 'note', text: 'Halvek lügt.', interprets: 0 });
+  });
+
+  it('kennt keine leere Notiz und deutet keine Notiz und nichts, was es nicht gibt', () => {
+    expect(() => writeNote(log, '   ', fixedClock())).toThrow(/braucht Text/);
+    expect(() => writeNote(log, 'So.', fixedClock(), 1)).toThrow(/nur ein Ergebnis/);
+    expect(() => writeNote(log, 'So.', fixedClock(), 2)).toThrow(/gibt/);
+    expect(() => writeNote(log, 'So.', fixedClock(), -1)).toThrow(/gibt/);
   });
 });
 

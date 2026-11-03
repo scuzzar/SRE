@@ -158,3 +158,36 @@ test('Vollbild: der Knopf neben dem i schaltet an und aus', async ({ page }) => 
   await header.getByRole('button', { name: 'Vollbild beenden' }).click();
   await expect(header.getByRole('button', { name: 'Vollbild' })).toHaveAttribute('aria-pressed', 'false');
 });
+
+test('Schreibzeile: Notiz für sich, Deutung im Kasten ihres Ergebnisses, Ergebnis antippen wählt das Ziel', async ({ page }) => {
+  const line = page.getByPlaceholder(/Frage, Deutung, Notiz/);
+  await page.getByRole('button', { name: /Ja\/Nein/ }).click();
+  await page.getByRole('button', { name: /2W6/ }).click();
+
+  await expect(page.getByRole('button', { name: 'Deuten' })).toBeDisabled();
+  await line.fill('Wir landen auf Regina.');
+  await page.getByRole('button', { name: 'Notiz' }).click();
+  await expect(line).toHaveValue('');
+  await expect(page.locator('.entry.note')).toContainText('Wir landen auf Regina.');
+
+  // Ohne Antippen gilt die Deutung dem neuesten Ergebnis, dem Wurf.
+  await line.fill('Glück gehabt.');
+  await expect(page.locator('.target-line')).toContainText('Deutung zu 2W6');
+  await page.getByRole('button', { name: 'Deuten' }).click();
+  await expect(page.locator('.entry', { hasText: 'Würfel · 2W6' }).locator('.interpretation')).toContainText('Glück gehabt.');
+
+  // Antippen des Orakels macht es zum Ziel.
+  await line.fill('Halvek lügt.');
+  await page.locator('.entry', { hasText: 'Orakel' }).click();
+  await expect(page.locator('.target-line')).toContainText(/Deutung zu (JA|NEIN)/);
+  await page.getByRole('button', { name: 'Deuten' }).click();
+  const oracle = page.locator('.entry', { hasText: 'Orakel' });
+  await expect(oracle.locator('.interpretation')).toContainText('Halvek lügt.');
+
+  // Ein Ergebnis löschen löscht seine Deutung mit.
+  await oracle.click({ button: 'right' });
+  await expect(oracle).toContainText('Eintrag mit 1 Deutung endgültig löschen?');
+  await oracle.getByRole('button', { name: 'Löschen' }).click();
+  await expect(page.getByText('Halvek lügt.')).toHaveCount(0);
+  await expect(page.getByText('Glück gehabt.')).toBeVisible();
+});
