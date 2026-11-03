@@ -88,6 +88,13 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > flüchtig der Angriff in Vorbereitung (`Attack`), im Log das Angriffsergebnis (`AttackResult`)
 > und der Schadenswurf (`DamageRoll`).
 >
+> **Entwurf, noch nicht freigegeben** (3. November 2026): **Begegnungen mit NSC, Angriffe in beide
+> Richtungen und Wunden** (siehe *Begegnung*, *NSC*, *Wunden*, *Getragene Rüstung*). Neu im Bild:
+> `Encounter`, `Npc`, `Wounds`, `WoundState`, als Referenzdaten `EncounterType`, flüchtig
+> `Wounding`; `Character.npc`, `Character.wears`, `Character./wounds`, `Character./state`,
+> `Item.armor`, `DamageRoll.to`; der Angriff kennt Angreifer und Ziel als SC oder NSC (`for`/`by`,
+> `target`/`victim`).
+>
 > Ebenfalls am 3. November 2026 freigegeben: **Verkaufen** im Shop (siehe *Shop*). Neu im Bild: die Buchungsart `sale` und der Verweis `Booking.sold`.
 >
 > Ebenfalls am 3. November 2026 freigegeben: **Aufenthaltsort, Gruppenkasse, Shop und Munition**
@@ -175,6 +182,18 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Magazin | `Weapon.ammo` | Der Gegenstand, der eine Schusswaffe lädt, z. B. Rifle Ammo (20 rds) oder LC Power Pack |
 | Schuss im Magazin | `Possession.rounds`, `Weapon.rounds` | Wie viele Schuss eine Schusswaffe gerade geladen hat bzw. voll fasst |
 | Verboten ab Gesetz | `Weapon.law` | Ab dieser Gesetzesstufe ist die Waffe verboten (S. 14), z. B. Body Pistol ab 1 |
+| Begegnung | `Encounter` | Eine Gruppe von NSC, auf die die Gruppe trifft, z. B. „5 Thugs“; gewürfelt nach der Random Encounter List (S. 21) |
+| Art der Begegnung | `EncounterType` | Eine Zeile der Random Encounter List: Anzahl in W6, Name, TL-Abweichung, Anführer (L), Schusswaffen (G), Rüstung (A), Fahrzeug (V) |
+| Reaktion | `Encounter.reaction` | 2W6 auf die Reactions-Tabelle (S. 21): 2 sofortiger Angriff … 12 freundlich |
+| NSC der Begegnung | `Npc` | Ein Gegner oder Fremder in einer Begegnung, mit UPP, Waffe, Rüstung, Fertigkeit und Wunden |
+| Anführer | `Npc.leader` | Der NSC mit der besten Ausrüstung, wenn die Begegnung einen hat (L) |
+| Übernehmen | `Npc.became` | Ein NSC wird zum Charakter der Kampagne, als SC oder als dauerhafter NSC |
+| Dauerhafter NSC | `Character` mit `npc` | Ein Charakter, der kein SC ist; er steht im Charakter-Screen unter „NSC“ |
+| Getragene Rüstung | `Character.wears`, `Npc.wears` | Die Rüstung, die jemand gerade anhat; sie zählt, wenn er angegriffen wird |
+| Rüstungsklasse einer Rüstung | `Item.armor` | Wie eine Rüstung in der Matrix zählt, z. B. Vacc Suit als Cloth, Battle Dress als Combat |
+| Wunden | `/wounds`, `Wounds` | Wie viel STR, DEX und END jemand durch Treffer verloren hat |
+| Zustand | `/state`, `WoundState` | unverletzt, verwundet, bewusstlos (ein Attribut auf 0), schwer verwundet (zwei), tot (drei) |
+| Schaden verteilen | `Wounding` | Ein gewürfelter Schaden an einem SC, solange der Spieler die Würfel auf Attribute verteilt |
 | Angriff | `Attack` | Ein Angriff, solange er für den Charakter oben vorbereitet wird |
 | Angriffsergebnis | `AttackResult` | Ein gewürfelter Angriff: Treffer oder nicht |
 | Schadenswurf | `DamageRoll` | Der Wurf auf den Schaden eines Treffers, z. B. 3W6 = 11 |
@@ -485,6 +504,74 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Der Angriff im Log bleibt, wie er ist; welcher Schuss es war, hält er nicht fest.
   - **Später**: Automatisches Feuer (mehrere Schuss), angebrochene Magazine aufheben, Recharge der
     Power Packs.
+- **Begegnung.** Im Reiter Kampf würfelt man auf dem Aufenthaltsort eine **Begegnung** (`Encounter`),
+  ohne weitere Eingabe; man kann die Art auch aus der Liste wählen, die Anzahl wird dann trotzdem
+  gewürfelt, außer man gibt sie vor.
+  - *Art*: 1W6 und 1W6 auf die Random Encounter List (S. 21), z. B. 14 = 3W6 Rowdies (L). Die Zeilen
+    61–66 sind leer: keine Begegnung, nichts wird angelegt.
+  - *Anzahl*: so viele W6, wie die Art angibt (mindestens 1 NSC).
+  - *TL der Gruppe*: TL der Welt plus die Abweichung der Art (z. B. +1 bei Soldiers), mindestens 0.
+  - *Jeder NSC* (`Npc`) bekommt 2W6 je Attribut, einen Namen von der Tafel NSC (Vor- und Nachname,
+    irdisch oder spacig zufällig), eine Waffe (`wields`) und mit A eine Rüstung (`wears`): Ohne G
+    eine zufällige Klinge bis zum TL der Gruppe (Club, Cudgel, Spear, Dagger, Blade …, nach
+    *Available Weapons by TL*), mit G eine zufällige Schusswaffe bis zum TL; mit A eine zufällige
+    Rüstung bis zum TL. Die Fertigkeit in seiner Waffe (`skill`) ist 1. Munition zählen NSC nicht.
+  - *Anführer* (L): der erste NSC; er bekommt die beste Ausrüstung bis zum TL (die Waffe mit dem
+    höchsten TL, bei Gleichstand die teuerste, ebenso die Rüstung, auch ohne A) und Fertigkeit 2.
+  - *Fahrzeug* (V) hält die Art fest; im Kampf zählt es vorerst nicht.
+  - *Reaktion* (`reaction`): 2W6, DM −1 auf einer Welt mit Bevölkerung 9+; eine echte 2 oder 12
+    bleibt, sonst begrenzt auf 3 bis 11. Der Text (`/reactionText`) kommt aus der Tabelle.
+  - Es gibt höchstens **eine laufende Begegnung**. Sie bleibt gespeichert, bis man sie beendet
+    (`ended`); beendete Begegnungen bleiben in der Kampagne, weil der Log auf ihre NSC verweist,
+    und werden nicht mehr gezeigt. Eine Begegnung, auf die der Log nicht verweist, wird beim Beenden
+    gelöscht.
+- **NSC.** Ein NSC lebt in seiner Begegnung, getrennt von den Charakteren.
+  - **Übernehmen**: Man kann einen NSC als SC oder als dauerhaften NSC in die Kampagne übernehmen.
+    Er wird ein Charakter mit seinem Namen, seinem UPP (die vollen Werte, ohne Wunden), seiner
+    Fertigkeit in der Waffe, Waffe und Rüstung im Besitz, Waffe in der Hand und getragener Rüstung,
+    Herkunft = Art der Begegnung. Als dauerhafter NSC hat er `npc`. Der NSC der Begegnung verweist
+    danach auf ihn (`became`), kämpft nicht mehr in der Begegnung und lässt sich nicht noch einmal
+    übernehmen.
+  - **Dauerhafte NSC** (`Character` mit `npc`) stehen im Charakter-Screen unter „NSC“, nicht in der
+    Leiste oben, nicht unter den SC im Shop, und lassen sich im Editor zum SC machen und umgekehrt.
+    Proben und Angriffe würfelt man für SC.
+- **Getragene Rüstung.** Jeder Charakter trägt höchstens eine Rüstung (`wears`), einen Gegenstand
+  der Art *armor* aus seinem Besitz; keine heißt Nothing. Wie die Rüstung in der Matrix zählt, steht
+  an ihr (`Item.armor`): Jack, Mesh, Cloth, Reflec, Ablat, Combat Armor als Combat, Vacc Suit als
+  Cloth, Battle Dress als Combat. Man wählt sie im Kampf und im Editor; geht sie aus dem Besitz,
+  trägt er Nothing.
+- **Angriff in beide Richtungen.**
+  - *SC gegen NSC*: Der Charakter oben greift einen NSC der laufenden Begegnung an (`target`), der
+    weder tot noch übernommen ist. Die Rüstung ist die, die der NSC trägt; man wählt nur die
+    Reichweite. Wie bisher geht auch ein Ziel ohne NSC, mit frei gewählter Rüstung.
+  - *NSC gegen SC*: Ein NSC der Begegnung, der nicht bewusstlos oder tot ist, greift den Charakter
+    oben an (`by`, `victim`). Es zählen die Fertigkeit des NSC (`skill`), seine Waffe, seine
+    STR/DEX mit Wunden, die getragene Rüstung des SC und die Reichweite.
+  - Angreifer mit Wunden: STR bzw. DEX zählen mit ihrem verwundeten Wert. Bewusstlose und Tote
+    greifen nicht an.
+  - Das Angriffsergebnis verweist auf Angreifer (`for` = SC oder `by` = NSC, genau einer) und, wenn
+    es eines gibt, auf das Ziel (`target` = NSC oder `victim` = SC, höchstens einer); es hält wie
+    bisher Rüstung, Reichweite, Würfel, DM und Zielwert fest.
+- **Wunden.** Nach S. 7. Der Schaden eines Treffers wird auf STR, DEX und END verteilt; jeder Würfel
+  ist ein Block, der ganz auf ein Attribut geht und nicht geteilt wird (`DamageRoll.to`, je Würfel
+  das Attribut). Was über 0 hinausgeht, verfällt.
+  - *Erster Treffer* (kritisch): Der erste Schaden, den jemand bekommt, geht ganz auf ein zufällig
+    gewähltes Attribut.
+  - *Weitere Treffer*: Bei einem NSC verteilt die App jeden Würfel zufällig auf ein Attribut über 0;
+    bei einem SC wählt der Spieler für jeden Würfel das Attribut (`Wounding`, flüchtig, bis alle
+    verteilt sind; erst dann steht der Schadenswurf im Log). Ist kein Attribut mehr über 0, verfällt
+    der Würfel.
+  - Die Wunden (`/wounds`) folgen aus den Schadenswürfen im Log, die auf Treffer gegen diesen SC bzw.
+    NSC verweisen. Ein Schadenswurf löschen nimmt seine Wunden zurück.
+  - *Zustand* (`/state`): kein Attribut auf 0 und keine Wunde: unverletzt; Wunden, aber keins auf 0:
+    verwundet; eins auf 0: bewusstlos (10 Minuten); zwei: schwer verwundet (3 Stunden
+    bewusstlos); drei: tot. Stirbt ein SC so, markiert ihn die App als tot (`dead`); das lässt sich
+    im Editor zurücknehmen.
+  - Ein Treffer ohne Ziel (frei gewählte Rüstung) würfelt seinen Schaden wie bisher, verteilt ihn
+    aber nicht (`to` fehlt).
+  - **Später**: Heilung (Medical Kit, Medical-1/-3, Ruhe), das Aufwachen auf die Mitte zwischen
+    verwundet und voll, Wunden mit Zeit, Munition der NSC, Fahrzeuge, Überraschung, Entfernung,
+    Moral und Kampfrunden.
 - **Charakter oben.** Oben im Orakel-Screen steht ein Charakter der Kampagne, der **Charakter oben**
   (`focus`); für ihn würfelt man Proben, ohne den Screen zu wechseln. Wischen zeigt den nächsten
   bzw. vorigen. Infrage kommen nur Lebende, die nicht ausgeblendet sind, in der Reihenfolge der

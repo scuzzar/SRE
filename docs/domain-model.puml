@@ -61,6 +61,9 @@ hide <<value>> stereotype
     note: string
     dead: boolean
     retired: boolean
+    npc: boolean
+    /wounds: Wounds
+    /state: WoundState
   }
   class Upp <<value>> {
     str: number
@@ -223,7 +226,47 @@ hide <<value>> stereotype
   }
   class DamageRoll {
     dice: number[1..5]
+    to: Characteristic[1..5]
     /damage: number
+  }
+  class Wounding <<transient>> {
+    dice: number[1..5]
+    to: Characteristic[0..5]
+  }
+  class Encounter {
+    at: datetime
+    reaction: number
+    ended: boolean
+    /reactionText: string
+  }
+  class Npc {
+    name: string
+    leader: boolean
+    skill: number
+    /wounds: Wounds
+    /state: WoundState
+  }
+  class Wounds <<value>> {
+    str: number
+    dex: number
+    end: number
+  }
+  enum WoundState <<value>> {
+    unhurt
+    wounded
+    unconscious
+    serious
+    dead
+  }
+  class EncounterType <<reference>> {
+    roll: number
+    name: string
+    quantity: number
+    tl: number
+    leader: boolean
+    guns: boolean
+    armor: boolean
+    vehicle: boolean
   }
 
 ' Referenzdaten
@@ -286,6 +329,7 @@ hide <<value>> stereotype
     weight: number [0..1]
     price: number [0..1]
     once: boolean
+    armor: ArmorClass [0..1]
   }
   class Weapon <<reference>> {
     name: string
@@ -587,13 +631,33 @@ Task ..> TaskResult : on roll
 
 ' Angriff
 Attack "0..1" --> "1" Campaign : in
-Attack "*" --> "1" Character : /for
+Attack "*" --> "0..1" Character : /for
+Attack "*" --> "0..1" Npc : by
+Attack "*" --> "0..1" Npc : target
+Attack "*" --> "0..1" Character : /victim
 Attack "*" --> "1" Weapon : /with
 Attack ..> AttackResult : on roll
-AttackResult "*" --> "1" Character : for
+AttackResult "*" --> "0..1" Character : for
+AttackResult "*" --> "0..1" Npc : by
+AttackResult "*" --> "0..1" Npc : target
+AttackResult "*" --> "0..1" Character : victim
 AttackResult "*" --> "1" Weapon : with
 AttackResult "*" --> "0..1" SkillLevel : uses
 DamageRoll "0..1" --> "1" AttackResult : of
+Wounding "0..1" --> "1" AttackResult : of
+Wounding ..> DamageRoll : on confirm
+
+' Begegnung
+Campaign "1" *-- "*" Encounter : encounters {ordered}
+Encounter "*" --> "1" EncounterType : of
+Encounter "*" --> "0..1" Hex : in
+Encounter "1" *-- "1..*" Npc : npcs {ordered}
+Npc "1" *-- "1" Upp : upp
+Npc "*" --> "1" Item : wields
+Npc "*" --> "0..1" Item : wears
+Npc "0..1" --> "0..1" Character : became
+Character "*" --> "0..1" Item : wears
+WoundState -[hidden]- Wounds
 
 ' Karte
 Card "0..1" --> "1" Campaign : in
