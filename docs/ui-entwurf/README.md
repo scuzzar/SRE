@@ -57,3 +57,15 @@ Bildschirm passen; die Namenswahl zeigt Vor- und Nachnamen getrennt.
 | `kartensymbol/Entwurf.html` | Glockenzahl 1–10 mit kleiner Glockenkurve, Streuwürfel als Windrose mit Pfeil (Volltreffer als Stern, Fehlschlag als roter Strich), Kartensymbol als Raum von oben mit Wegen nach N, O, S, W und Pfeilen nach oben und unten; Legende der Wegarten; Übernehmen zeigt, wie es im Log steht. „Neu ziehen“ würfelt mit den Gewichten aus dem Modell; auf der Tafel NSC die sechs Namen (oben irdisch, unten spacig); „Name von der Karte“ mit dem Knopf *Karte* neben dem Namensfeld, für Charakter und Welt |
 
 Wie der Entwurf zur Deutung ist es eine gewöhnliche HTML-Datei, die sich direkt im Browser öffnen lässt.
+
+## Entfernung in Range Bands (Entwurf vom 4. November 2026)
+
+Im Ordner [`range-bands/`](range-bands/) liegt der Entwurf (noch nicht freigegeben) für die Entfernung
+der Kampfsimulation in Range Bands nach Book 1 (S. 32–33) und den Charts (S. 7). Alle SC stehen
+zusammen, alle NSC auch; es gibt nur einen Abstand.
+
+| Datei | Inhalt |
+|---|---|
+| `range-bands/Entwurf.html` | Kampfsimulation mit der Leiste statt der fünf Knöpfe: Close, Band 0 (Short) bis Band 20, nach Reichweite eingeteilt; Pfeile links und rechts als Abschluss rücken die NSC ein Band näher oder weiter weg, ein Band antippen setzt den Abstand. Wohin die Waffe am Zug nicht reicht, ist schraffiert; über 20 Bands ist entkommen. Darunter, wie weit sich die Parteien in dieser Runde bewegt haben |
+
+Wie die Deutung eine gewöhnliche HTML-Datei mit den Stilen der App.
