@@ -428,7 +428,8 @@ export class GameController {
 
   /**
    * Würfelt eine Begegnung auf dem Aufenthaltsort, zufällig oder von dieser Art, mit Gelände für die
-   * Entfernung; die Zeilen 61–66 sind leer. Mit der Begegnung beginnt die Kampfsimulation.
+   * Entfernung; die Zeilen 61–66 sind leer. Mit der Begegnung beginnt die Kampfsimulation; erst
+   * zeigt die Übersicht, wer kommt.
    */
   rollEncounter(roll?: number, terrain?: string): void {
     try {
@@ -446,9 +447,9 @@ export class GameController {
     }
   }
 
-  /** Schließt die Übersicht der Begegnung; der Kampf beginnt. */
+  /** Schließt die Übersicht der Begegnung; der Kampf beginnt im Reiter Kampf. */
   closeEncounterIntro(): void {
-    this.update({ encounterIntro: false });
+    this.update({ encounterIntro: false, screen: 'combat' });
   }
 
   /** Zeigt die Übersicht der laufenden Begegnung noch einmal. */
@@ -461,7 +462,7 @@ export class GameController {
     this.inFight(() => this.change(setLocation(this.campaign, id), { combatNote: undefined }));
   }
 
-  /** Beendet die laufende Begegnung; der Reiter Kampf zeigt wieder die Waffentabelle. */
+  /** Beendet die laufende Begegnung; der Reiter Kampf zeigt wieder die Waffentabelle, der Reiter Begegnung die Auswahl. */
   endEncounter(): void {
     this.change(endEncounter(this.campaign), { attack: undefined, combatNote: undefined, simTarget: undefined, encounterIntro: false });
   }

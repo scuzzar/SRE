@@ -64,6 +64,18 @@ export function CombatIcon() {
   );
 }
 
+/** Zwei Gestalten, für die Begegnung. */
+export function EncounterIcon() {
+  return (
+    <svg {...base} width={22} height={22} strokeLinecap="round">
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5" />
+      <circle cx="16.5" cy="9" r="2.4" />
+      <path d="M16 14c2.4 0 4.1 1.5 4.6 4.2" />
+    </svg>
+  );
+}
+
 /** Ein Hexfeld mit einer Welt darin, für den Subsektor. */
 export function SectorIcon() {
   return (

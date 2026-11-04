@@ -212,7 +212,7 @@ export interface ItemChoice {
   readonly armor: boolean;
 }
 
-export type Screen = 'oracle' | 'combat' | 'shop' | 'characters' | 'sector' | 'about';
+export type Screen = 'oracle' | 'encounter' | 'combat' | 'shop' | 'characters' | 'sector' | 'about';
 
 export interface CampaignChoice {
   readonly id: string;

@@ -234,7 +234,7 @@ button:disabled {
 .nav {
   flex: 0 0 auto;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   border-top: 1px solid var(--rule);
   background: var(--deep);
   padding-bottom: env(safe-area-inset-bottom);
@@ -4183,6 +4183,39 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* --- Reiter Begegnung ----------------------------------------------------------------------- */
+
+.encounter-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.encounter-running {
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+}
+
+.encounter-running-title {
+  margin: 0;
+  font-size: 18px;
+}
+
+.encounter-running-facts {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.encounter-running-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px;
+  margin-top: 6px;
 }
 
 .encounter-start {

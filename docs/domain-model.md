@@ -240,7 +240,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Angriff | `Attack` | Ein Angriff, solange er für den Charakter oben vorbereitet wird |
 | Angriffsergebnis | `AttackResult` | Ein gewürfelter Angriff: Treffer oder nicht |
 | Schadenswurf | `DamageRoll` | Der Wurf auf den Schaden eines Treffers, z. B. 3W6 = 11 |
-| Kampf | (Reiter „Kampf“) | Der Screen für Angriffe: Charakter oben, Waffe in der Hand, Tabelle der Waffe |
+| Kampf | (Reiter „Kampf“) | Der Screen für Angriffe: ohne Begegnung die Waffentabelle, mit Begegnung die Kampfsimulation |
+| Reiter Begegnung | (Reiter „Begegnung“) | Der Screen, in dem man eine Begegnung würfelt oder wählt; läuft eine, zeigt er sie knapp |
 | Bereich der Karte, Themen-Tafel | `Section` | Zufallsereignis, Sinneseindrücke, …; NSC, Welt, … |
 | Feld der Karte | `Slot` | Aktion, Hören, Aussehen, Name, Auslöser, … |
 | Spalte | `Column` | Eine Liste von Einträgen in einem Feld; ein Feld hat eine oder zwei |
@@ -635,10 +636,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     aber nicht (`to` fehlt).
   - **Später**: Medical Drugs, Wunden mit Zeit, Munition der NSC, Fahrzeuge, Überraschung, Entfernung,
     Moral und Kampfrunden.
-- **Zwei Modi im Reiter Kampf.** Ohne laufende Begegnung zeigt der Reiter die **Waffentabelle**: die
-  Waffe in der Hand des Charakters oben, Rüstung und Reichweite frei gewählt (siehe *Angriff*). Wird
-  eine Begegnung gewürfelt oder gewählt, wechselt er in die **Kampfsimulation**; beendet man sie,
-  zeigt er wieder die Waffentabelle. Beides ist nur Anzeige; gespeichert wird die Begegnung.
+- **Reiter Begegnung und zwei Modi im Reiter Kampf.** Begegnungen würfelt oder wählt man im eigenen
+  Reiter **Begegnung**; die Übersicht danach führt mit „Zum Kampf“ in den Reiter Kampf. Läuft eine
+  Begegnung, zeigt der Reiter Begegnung sie knapp. Ohne laufende Begegnung zeigt der Reiter Kampf die
+  **Waffentabelle**: die Waffe in der Hand des Charakters oben, Rüstung und Reichweite frei gewählt
+  (siehe *Angriff*); mit laufender Begegnung die **Kampfsimulation**; beendet man sie, zeigt er
+  wieder die Waffentabelle. Das alles ist nur Anzeige; gespeichert wird die Begegnung.
 - **Kampfsimulation.** Gilt für die laufende Begegnung. Es kämpfen die SC (die Lebenden, nicht
   ausgeblendet, ohne dauerhafte NSC) gegen die NSC der Begegnung, die nicht übernommen sind.
   - *Entfernung*: Beim Anlegen der Begegnung 2W6 plus DM des Geländes (`terrain`, wählbar, ohne
