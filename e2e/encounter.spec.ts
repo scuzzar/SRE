@@ -42,8 +42,11 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await expect(intro).toContainText('Überraschung:');
   await expect(intro.locator('.intro-npcs li').first()).toContainText('Anführer');
   const npcs = await intro.locator('.intro-npcs li').count();
-  await intro.getByRole('button', { name: 'Zum Kampf' }).click();
-  // „Zum Kampf“ wechselt in den Reiter Kampf.
+  await intro.getByRole('button', { name: 'Weiter' }).click();
+  // „Weiter“ führt zurück in den Reiter Begegnung; nicht jede Begegnung wird ein Kampf. Erst „Zum Kampf“ wechselt.
+  await expect(page.getByRole('navigation').getByRole('button', { name: 'Begegnung' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('.encounter-running')).toContainText('Thugs');
+  await page.locator('.encounter-running').getByRole('button', { name: 'Zum Kampf' }).click();
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Kampf' })).toHaveAttribute('aria-current', 'page');
   // Die SC stehen oben in der Leiste; die Liste zeigt nur die NSC.
   await expect(page.locator('.strip')).toBeVisible();

@@ -447,9 +447,12 @@ export class GameController {
     }
   }
 
-  /** Schließt die Übersicht der Begegnung; der Kampf beginnt im Reiter Kampf. */
+  /**
+   * Schließt die Übersicht der Begegnung; der Reiter bleibt. Nach dem Würfeln ist das der Reiter
+   * Begegnung: Nicht jede Begegnung wird ein Kampf, dorthin geht es erst mit „Zum Kampf“.
+   */
   closeEncounterIntro(): void {
-    this.update({ encounterIntro: false, screen: 'combat' });
+    this.update({ encounterIntro: false });
   }
 
   /** Zeigt die Übersicht der laufenden Begegnung noch einmal. */

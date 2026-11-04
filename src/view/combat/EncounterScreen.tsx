@@ -7,8 +7,9 @@ import { distanceText, EncounterIntro } from './FightScreen';
 
 /**
  * Der Reiter Begegnung. Ohne laufende Begegnung: wo die Gruppe ist, das Gelände und Begegnung würfeln
- * oder wählen; danach zeigt die Übersicht, wer kommt, und „Zum Kampf“ wechselt in den Reiter Kampf.
- * Läuft eine Begegnung, zeigt er sie knapp, mit Zum Kampf, Übersicht und Beenden.
+ * oder wählen; danach zeigt die Übersicht, wer kommt, und „Weiter“ führt zurück hierher. Läuft eine
+ * Begegnung, zeigt er sie knapp, mit Zum Kampf, Übersicht und Beenden: Nicht jede Begegnung wird ein
+ * Kampf, man kann sie auch anders lösen und beenden.
  */
 export function EncounterScreen({ view }: { view: Snapshot }) {
   const combat = view.combat;

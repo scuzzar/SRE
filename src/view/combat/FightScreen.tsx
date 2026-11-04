@@ -463,7 +463,7 @@ export function EncounterIntro({ sim }: { sim: SimView }) {
           ))}
         </ol>
         <button type="button" className="primary" onClick={() => game.closeEncounterIntro()}>
-          Zum Kampf
+          Weiter
         </button>
       </section>
     </div>
