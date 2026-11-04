@@ -637,7 +637,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Später**: Medical Drugs, Wunden mit Zeit, Munition der NSC, Fahrzeuge, Überraschung, Entfernung,
     Moral und Kampfrunden.
 - **Reiter Begegnung und zwei Modi im Reiter Kampf.** Begegnungen würfelt oder wählt man im eigenen
-  Reiter **Begegnung**; die Übersicht danach führt mit „Zum Kampf“ in den Reiter Kampf. Läuft eine
+  Reiter **Begegnung**; die Übersicht danach führt zurück in den Reiter Begegnung, denn nicht jede
+  Begegnung wird ein Kampf; erst „Zum Kampf“ dort wechselt in den Reiter Kampf. Läuft eine
   Begegnung, zeigt der Reiter Begegnung sie knapp. Ohne laufende Begegnung zeigt der Reiter Kampf die
   **Waffentabelle**: die Waffe in der Hand des Charakters oben, Rüstung und Reichweite frei gewählt
   (siehe *Angriff*); mit laufender Begegnung die **Kampfsimulation**; beendet man sie, zeigt er

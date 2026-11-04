@@ -420,11 +420,16 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(there.snapshot().combat).toMatchObject({ sim: undefined, note: 'Wurf 63: keine Begegnung.' });
   });
 
-  it('im Reiter Begegnung gewürfelt, zeigt erst die Übersicht; „Zum Kampf“ wechselt in den Reiter Kampf', async () => {
+  it('im Reiter Begegnung gewürfelt, zeigt erst die Übersicht; danach bleibt der Reiter Begegnung, zum Kampf geht es erst auf Wunsch', async () => {
     const { game } = await onRegina();
     game.showScreen('encounter');
     game.rollEncounter(15, 'clear');
     expect(game.snapshot()).toMatchObject({ screen: 'encounter', combat: { intro: true } });
+    game.closeEncounterIntro();
+    expect(game.snapshot()).toMatchObject({ screen: 'encounter', combat: { intro: false } });
+    // Die Übersicht im Kampf zu öffnen und zu schließen, bleibt im Kampf.
+    game.showScreen('combat');
+    game.showEncounterIntro();
     game.closeEncounterIntro();
     expect(game.snapshot()).toMatchObject({ screen: 'combat', combat: { intro: false } });
   });
