@@ -62,7 +62,7 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   ein und reicht ihn weiter; prüfen tut das Model (`fromCampaignFile`), anbieten zum Download der
   Controller über `Download`. Offene Karte, Probe, Angriff in Vorbereitung und Schaden beim Verteilen sind Teil des
   Models (`model/draft/`), werden aber nicht gespeichert.
-- **Er wählt, welche View zu sehen ist**: Orakel-, Kampf-, Shop-, Charakter- oder Sektor-Screen (`showScreen(screen)`), das gewählte Feld im Subsektor, die Weltkarte eines Feldes, die
+- **Er wählt, welche View zu sehen ist**: Orakel-, Begegnungs-, Kampf-, Shop-, Charakter- oder Sektor-Screen (`showScreen(screen)`; „Zum Kampf“ in der Übersicht einer Begegnung, `closeEncounterIntro()`, wechselt in den Kampf-Screen), das gewählte Feld im Subsektor, die Weltkarte eines Feldes, die
   Kampagnenwahl (`showCampaigns()`, `closeCampaigns()`) und das Ergebnis-Popup (`closeResult()`),
   welcher Charakter im Charakter-Screen seine Details zeigt (`toggleDetails(id)`) und ob die Leiste
   mit dem Charakter oben eingeklappt ist (`toggleStrip()`; das merkt sich das Gerät über das

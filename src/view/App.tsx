@@ -3,13 +3,14 @@ import { AboutScreen } from './AboutScreen';
 import { CampaignSheet } from './CampaignSheet';
 import { CharacterEditor } from './characters/CharacterEditor';
 import { CombatScreen } from './combat/CombatScreen';
+import { EncounterScreen } from './combat/EncounterScreen';
 import { ShopScreen } from './shop/ShopScreen';
 import { CharactersScreen } from './characters/CharactersScreen';
 import { GenerationSheet } from './characters/GenerationSheet';
 import { FullscreenButton } from './FullscreenButton';
 import { ResultDialog } from './characters/ResultDialog';
 import { useGame, useSnapshot } from './game-context';
-import { CombatIcon, MenuIcon, OracleIcon, PersonIcon, SectorIcon, ShopIcon } from './icons';
+import { CombatIcon, EncounterIcon, MenuIcon, OracleIcon, PersonIcon, SectorIcon, ShopIcon } from './icons';
 import { Menu } from './Menu';
 import { CardSheet } from './oracle/CardSheet';
 import { DiceRoll } from './oracle/DiceRoll';
@@ -53,6 +54,7 @@ export function App() {
       )}
 
       {view.screen === 'oracle' && <OracleScreen view={view} question={question} onQuestion={setQuestion} />}
+      {view.screen === 'encounter' && <EncounterScreen view={view} />}
       {view.screen === 'combat' && <CombatScreen view={view} />}
       {view.screen === 'shop' && <ShopScreen view={view} />}
       {view.screen === 'characters' && <CharactersScreen view={view} />}
@@ -63,6 +65,10 @@ export function App() {
         <button type="button" aria-current={view.screen === 'oracle' ? 'page' : undefined} onClick={() => game.showScreen('oracle')}>
           <OracleIcon />
           Orakel
+        </button>
+        <button type="button" aria-current={view.screen === 'encounter' ? 'page' : undefined} onClick={() => game.showScreen('encounter')}>
+          <EncounterIcon />
+          Begegnung
         </button>
         <button type="button" aria-current={view.screen === 'combat' ? 'page' : undefined} onClick={() => game.showScreen('combat')}>
           <CombatIcon />

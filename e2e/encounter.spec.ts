@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('Kampf: Waffentabelle ohne Begegnung; mit Begegnung die Simulation mit Runde, Entfernung und Zügen', async ({ page }) => {
+test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Begegnung die Simulation mit Runde, Entfernung und Zügen', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
   const map = page.getByRole('group', { name: 'Karte des Subsektors' });
@@ -20,12 +20,15 @@ test('Kampf: Waffentabelle ohne Begegnung; mit Begegnung die Simulation mit Rund
     world = page.getByRole('dialog', { name: `Regina · ${id}` });
     break;
   }
-  // Den Aufenthaltsort wählt man diesmal im Kampf selbst.
+  // Den Aufenthaltsort wählt man diesmal im Reiter Begegnung selbst.
   await world!.getByRole('button', { name: 'Schließen' }).first().click();
 
+  // Kampf ohne Begegnung: nur die Waffentabelle, keine Begegnungsauswahl.
   await page.getByRole('navigation').getByRole('button', { name: 'Kampf' }).click();
-  // Waffentabelle: ohne Begegnung; ohne Aufenthaltsort gesperrt, bis man die Welt wählt.
   await expect(page.locator('.combat-table')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Begegnung würfeln' })).toHaveCount(0);
+  // Begegnung: ohne Aufenthaltsort gesperrt, bis man die Welt wählt.
+  await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
   await expect(page.getByRole('button', { name: 'Begegnung würfeln' })).toBeDisabled();
   await page.getByLabel(/Wo ist die Gruppe/).selectOption({ index: 1 });
   await expect(page.getByLabel('Die Gruppe ist auf')).toContainText('Regina');
@@ -40,6 +43,8 @@ test('Kampf: Waffentabelle ohne Begegnung; mit Begegnung die Simulation mit Rund
   await expect(intro.locator('.intro-npcs li').first()).toContainText('Anführer');
   const npcs = await intro.locator('.intro-npcs li').count();
   await intro.getByRole('button', { name: 'Zum Kampf' }).click();
+  // „Zum Kampf“ wechselt in den Reiter Kampf.
+  await expect(page.getByRole('navigation').getByRole('button', { name: 'Kampf' })).toHaveAttribute('aria-current', 'page');
   // Die SC stehen oben in der Leiste; die Liste zeigt nur die NSC.
   await expect(page.locator('.strip')).toBeVisible();
   await expect(page.locator('.fighter')).toHaveCount(npcs);
@@ -93,7 +98,14 @@ test('Kampf: Waffentabelle ohne Begegnung; mit Begegnung die Simulation mit Rund
   await expect(page.locator('.fighter')).toHaveCount(before - chosen);
   await expect(page.getByRole('region', { name: 'Übernehmen' })).toHaveCount(0);
 
+  // Im Reiter Begegnung steht die laufende Begegnung knapp; „Zum Kampf“ führt zurück.
+  await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
+  await expect(page.locator('.encounter-running')).toContainText('Thugs');
+  await page.locator('.encounter-running').getByRole('button', { name: 'Zum Kampf' }).click();
+  await expect(page.locator('.fight-head')).toBeVisible();
+
   await page.getByRole('button', { name: 'Beenden' }).click();
   await expect(page.locator('.combat-table')).toBeVisible();
+  await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
   await expect(page.getByRole('button', { name: 'Begegnung würfeln' })).toBeVisible();
 });

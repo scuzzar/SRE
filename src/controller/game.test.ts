@@ -420,6 +420,15 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(there.snapshot().combat).toMatchObject({ sim: undefined, note: 'Wurf 63: keine Begegnung.' });
   });
 
+  it('im Reiter Begegnung gewürfelt, zeigt erst die Übersicht; „Zum Kampf“ wechselt in den Reiter Kampf', async () => {
+    const { game } = await onRegina();
+    game.showScreen('encounter');
+    game.rollEncounter(15, 'clear');
+    expect(game.snapshot()).toMatchObject({ screen: 'encounter', combat: { intro: true } });
+    game.closeEncounterIntro();
+    expect(game.snapshot()).toMatchObject({ screen: 'combat', combat: { intro: false } });
+  });
+
   it('mit der Begegnung beginnt die Simulation: Entfernung und Überraschung gewürfelt, Partei für Partei, nur Ziel wählen und würfeln', async () => {
     const { game, random } = await onRegina();
     game.rollEncounter(15, 'clear');
