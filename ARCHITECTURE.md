@@ -41,7 +41,7 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   (Wurffeld), `confirmCard()`, `discardCard()`, `drawNames()` und `closeNames()` (Name von der Karte), `writeNote(text, interprets)`, `deleteLogEntry(index)`, `setOdds(odds)`; für den Charakter oben und die Probe
   `focusCharacter(id)` (Wischen), `chooseSkill(skill)`, `toggleCharacteristic(c)`, `rollTask()`,
   `endTask()`; für den Kampf `wieldWeapon(weapon)`, `chooseTarget(armor, range)`, `endAttack()`,
-  `rollAttack()`, `rollDamage()`, `reload()`, `wear(item)`, für Begegnungen `rollEncounter(roll)`,
+  `rollAttack()`, `rollDamage()`, `reload()`, für Begegnungen `rollEncounter(roll)`,
   `endEncounter()`, `adoptNpcs(npcs, asNpc)`, in der Kampfsimulation `chooseFightTarget(id)`,
   `setBand(band, close)`, `moveBand(step)`, `fightAttack()`, `fightReload()` und `skipTurn()`, für Heilung
   `recover(how, npc, healer, facility, pc)` und für Wunden an SC

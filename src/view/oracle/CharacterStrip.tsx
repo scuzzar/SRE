@@ -70,8 +70,11 @@ export function CharacterStrip({ view, weapons = false, heal }: { view: Snapshot
             <div className="strip-head">
               <button type="button" className="strip-title" aria-expanded={!collapsed} onClick={() => game.toggleStrip()} tabIndex={character.focus ? 0 : -1}>
                 <span className="strip-name">{character.name}</span>
-                {weapons && character.state !== 'unhurt' ? (
-                  <span className={`pc-sub state-${character.state}`}>{woundStateText[character.state]}</span>
+                {weapons ? (
+                  <span className="pc-sub">
+                    {character.state !== 'unhurt' && <span className={`state-${character.state}`}>{woundStateText[character.state]} · </span>}
+                    {character.armor ?? 'keine Rüstung'}
+                  </span>
                 ) : (
                   character.background && <span className="pc-sub">{character.background}</span>
                 )}

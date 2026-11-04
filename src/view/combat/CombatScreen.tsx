@@ -42,7 +42,6 @@ export function CombatScreen({ view }: { view: Snapshot }) {
       ) : (
         <>
           <section className="scroll combat-scroll" aria-label="Waffentabelle">
-            <ArmorChips combat={combat} />
             <WeaponHead combat={combat} />
             <AttackTable combat={combat} />
           </section>
@@ -65,28 +64,6 @@ function pcHeal(combat: CombatView, onHeal: (patient: Patient) => void): { reado
   const healing = combat.sim ? pc?.healing : combat.healing;
   if (!healing || !(healing.wake || healing.treatable)) return undefined;
   return { name: combat.character, onHeal: () => onHeal({ npc: undefined, ...(pc ? { pc: pc.id } : {}), name: combat.character }) };
-}
-
-/** Die getragene Rüstung des Charakters oben; wie verwundet er ist, steht oben in der Leiste. */
-function ArmorChips({ combat }: { combat: CombatView }) {
-  const game = useGame();
-  return (
-    <div className="combat-armor">
-      <div className="chips" role="group" aria-label={`Rüstung von ${combat.character}`}>
-        <span className="chips-label" aria-hidden="true">
-          {combat.character.split(' ')[0]} trägt
-        </span>
-        <button type="button" aria-pressed={!combat.armors.some((a) => a.worn)} onClick={() => game.wear(undefined)}>
-          Keine Rüstung
-        </button>
-        {combat.armors.map((a) => (
-          <button key={a.id} type="button" aria-pressed={a.worn} onClick={() => game.wear(a.id)}>
-            {a.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 function WeaponHead({ combat }: { combat: CombatView }) {
