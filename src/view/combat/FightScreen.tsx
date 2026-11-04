@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent } from 'react';
 import type { CombatView, FighterView, SimView } from '../../controller';
+import type { Range } from '../../model';
 import { hex, rangeText, signed, woundStateText } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
@@ -114,47 +115,116 @@ function useLongPress(onHold: () => void) {
 }
 
 /**
- * Knapp, damit die NSC Platz haben: Runde und Beenden, darunter in einer Zeile Reaktion und wer
- * zuerst zieht. Antippen zeigt die Übersicht mit allen Würfen.
+ * Knapp in einer Zeile, damit die NSC Platz haben: Runde und Begegnung, dahinter das erste Wort der
+ * Reaktion und wer zuerst zieht, dann Beenden. Antippen zeigt die Übersicht mit allen Würfen.
  */
 function FightHead({ sim }: { sim: SimView }) {
   const game = useGame();
+  const count = sim.fighters.filter((f) => f.side === 'npcs').length;
+  const reaction = sim.reactionText.split('.')[0];
+  const order = sim.pcSurprise && sim.npcSurprise ? (sim.surprise ? `Überraschung ${sideName[sim.surprise]}` : `${sideName[sim.first]} zuerst`) : undefined;
   const surprise = sim.pcSurprise && sim.npcSurprise ? (sim.surprise ? `Überraschung: ${sideName[sim.surprise]}` : `${sideName[sim.first]} ziehen zuerst`) : undefined;
   return (
     <div className="fight-head">
-      <div className="encounter-head">
-        <h2 className="section-title">
-          Runde {sim.round} · {sim.fighters.filter((f) => f.side === 'npcs').length} × {sim.name}
-        </h2>
+      <div className="encounter-head fight-head-line">
+        <button
+          type="button"
+          className="fight-head-main"
+          onClick={() => game.showEncounterIntro()}
+          aria-label={`Runde ${sim.round}, ${count} × ${sim.name}, Reaktion ${sim.reaction}: ${sim.reactionText}${surprise ? `, ${surprise}` : ''}. Übersicht zeigen`}
+        >
+          <span className="fight-head-title">
+            Runde {sim.round} · {count} × {sim.name}
+          </span>
+          <span className="fight-head-tail">
+            {reaction}
+            {order ? ` · ${order}` : ''}
+          </span>
+        </button>
         <button type="button" className="ghost compact" onClick={() => game.endEncounter()}>
           Beenden
         </button>
       </div>
-      <button type="button" className="encounter-reaction link" onClick={() => game.showEncounterIntro()}>
-        Reaktion {sim.reaction}: {sim.reactionText}
-        {surprise ? ` · ${surprise}` : ''}
-      </button>
       {sim.defeated && <p className="fight-decided">Entschieden: Die {sideName[sim.defeated]} sind außer Gefecht.</p>}
     </div>
   );
 }
 
-/** Die Entfernung für alle Angriffe; gewürfelt, jederzeit änderbar. */
+/** Schritte auf dem Strahl: 0 Berührung, 1 Band 0, 2–21 Band 1–20, 22 entkommen. */
+const LAST_STEP = 21;
+/** Abstand des Strahls zu seinem Rand in px, damit die Marken an den Enden ganz zu sehen sind (wie `--pad` im CSS). */
+const RAY_PAD = 6;
+const rangeAbbr: Record<Range, string> = { close: 'C', short: 'C/S', medium: 'M', long: 'L', veryLong: 'VL' };
+const stepOf = (sim: SimView) => (sim.close ? 0 : sim.band + 1);
+const bandOfStep = (sim: SimView, step: number) => (step === 0 ? sim.bands.find((b) => b.range === 'close')! : step === 1 ? sim.bands.find((b) => b.range === 'short')! : sim.bands.find((b) => b.from > 0 && b.from <= step - 1 && step - 1 <= b.to)!);
+
+/** Die Entfernung als Text: „Long, Band 4“, „Close, Berührung“ oder „entkommen“. */
+export function distanceText(sim: SimView): string {
+  if (sim.escaped || !sim.range) return 'entkommen, über 20 Bands';
+  return `${rangeText[sim.range]}, ${sim.close ? 'Berührung' : `Band ${sim.band}`}`;
+}
+
+/**
+ * Die Entfernung für alle Angriffe in einer Zeile: links die Reichweite, daneben der Strahl mit
+ * einem Punkt je Band und Strichen an den Grenzen, zwischen zwei Pfeilen. ◀ rückt näher, ▶ weiter
+ * weg; auf den Strahl tippen setzt das Band. Wohin die Waffe am Zug nicht reicht, ist gestrichelt.
+ */
 function RangeBar({ sim }: { sim: SimView }) {
   const game = useGame();
+  const step = stepOf(sim);
+  const reaches = (s: number) => bandOfStep(sim, s).reaches;
+  const steps = Array.from({ length: LAST_STEP + 1 }, (_, s) => s);
+  const lastReach = steps.filter(reaches).pop() ?? 0;
+  const at = (i: number, n?: number) => ({ '--i': String(i), ...(n === undefined ? {} : { '--n': String(n) }) }) as CSSProperties;
+  const zones = sim.bands.filter((b) => b.range !== 'close');
+  const tap = (e: MouseEvent<HTMLDivElement>) => {
+    const box = e.currentTarget.getBoundingClientRect();
+    const s = Math.min(LAST_STEP, Math.max(0, Math.round(((e.clientX - box.left - RAY_PAD) / (box.width - 2 * RAY_PAD)) * LAST_STEP)));
+    haptic('pick');
+    game.setBand(s === 0 ? 0 : s - 1, s === 0);
+  };
   return (
-    <div className="fight-range">
-      <span className="small-label">
-        Entfernung
-        {sim.rangeDice ? ` (2W6: ${sim.rangeDice[0]} + ${sim.rangeDice[1]}${sim.terrain ? `, ${sim.terrain.name} ${signed(sim.terrain.dm)}` : ''})` : ''}
-      </span>
-      <div className="segmented fight-ranges" role="radiogroup" aria-label="Entfernung">
-        {sim.ranges.map((r) => (
-          <button key={r.range} type="button" role="radio" aria-checked={sim.range === r.range} className={r.reaches ? undefined : 'out'} onClick={() => game.setRange(r.range)}>
-            {rangeText[r.range]}
-          </button>
-        ))}
+    <div className="ray-range">
+      <div className="ray-now" aria-live="polite">
+        <b>{sim.escaped || !sim.range ? 'Entkommen' : rangeText[sim.range]}</b>
+        <span>{sim.escaped ? 'über 20 Bands' : sim.close ? 'Berührung' : `Band ${sim.band}`}</span>
       </div>
+      <button type="button" className="ray-arrow" aria-label="Ein Band näher" disabled={step === 0} onClick={() => game.moveBand(-1)}>
+        ◀
+      </button>
+      <div className="ray" onClick={tap} role="img" aria-label={`Entfernung: ${distanceText(sim)}`}>
+        <span className="ray-line" style={at(0, lastReach)} />
+        {lastReach < LAST_STEP && <span className="ray-line out" style={at(lastReach, LAST_STEP - lastReach)} />}
+        {zones.map((b) => {
+          const first = b.range === 'short' ? 0 : b.from + 1;
+          const tick = b.range === 'short' ? 0 : b.from + 0.5;
+          return (
+            <Fragment key={b.range}>
+              {tick > 0 && <span className="ray-tick" style={at(tick)} />}
+              <span className={b.reaches ? (first === 0 ? 'ray-label first' : 'ray-label') : 'ray-label out'} style={at(tick)}>
+                {rangeAbbr[b.range]}
+              </span>
+            </Fragment>
+          );
+        })}
+        {steps.slice(1).map((s) => (
+          <span key={s} className={reaches(s) ? 'ray-dot' : 'ray-dot out'} style={at(s)} />
+        ))}
+        {!sim.escaped && step > 0 && <span className="ray-line span" style={at(0, step)} />}
+        <span className="ray-pc" style={at(0)} />
+        {sim.escaped ? (
+          <span className="ray-escaped" style={at(LAST_STEP)}>
+            entkommen ▲
+          </span>
+        ) : (
+          <span className={sim.close ? 'ray-npc close' : 'ray-npc'} style={at(step)}>
+            ▲
+          </span>
+        )}
+      </div>
+      <button type="button" className="ray-arrow" aria-label="Ein Band weiter weg" disabled={sim.escaped} onClick={() => game.moveBand(1)}>
+        ▶
+      </button>
     </div>
   );
 }
@@ -381,8 +451,10 @@ export function EncounterIntro({ sim }: { sim: SimView }) {
           </p>
         </div>
         <p className="intro-line">
-          Entfernung: <b>{rangeText[sim.range]}</b>
-          {sim.rangeDice ? ` (2W6: ${sim.rangeDice[0]} + ${sim.rangeDice[1]}${sim.terrain ? `, ${sim.terrain.name} ${signed(sim.terrain.dm)}` : ''})` : ''}
+          Entfernung: <b>{distanceText(sim)}</b>
+          {sim.rangeDice
+            ? ` (2W6: ${sim.rangeDice[0]} + ${sim.rangeDice[1]}${sim.terrain ? `, ${sim.terrain.name} ${signed(sim.terrain.dm)}` : ''}${sim.bandDie ? `; 1W${sim.bandDie.sides}: ${sim.bandDie.die}` : ''})`
+            : ''}
         </p>
         {sim.pcSurprise && sim.npcSurprise && (
           <p className="intro-line">

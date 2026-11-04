@@ -250,7 +250,11 @@ hide <<value>> stereotype
     ended: boolean
     /reactionText: string
     rangeDice: number[2]
-    range: Range
+    bandDie: number [0..1]
+    band: number
+    close: boolean
+    /range: Range [0..1]
+    /escaped: boolean
     round: number
     acted: string[*]
     /surprise: Side [0..1]
@@ -272,6 +276,11 @@ hide <<value>> stereotype
   class EncounterRange <<reference>> {
     roll: number
     range: Range
+  }
+  class RangeBand <<reference>> {
+    range: Range
+    from: number
+    to: number
   }
   class Npc {
     name: string
@@ -695,6 +704,7 @@ Encounter "1" *-- "1" SurpriseRoll : pcSurprise
 Encounter "1" *-- "1" SurpriseRoll : npcSurprise
 Encounter --> Side
 EncounterRange -[hidden]- Terrain
+RangeBand -[hidden]- EncounterRange
 Encounter "*" --> "0..1" Hex : in
 Encounter "1" *-- "1..*" Npc : npcs {ordered}
 Npc "1" *-- "1" Upp : upp

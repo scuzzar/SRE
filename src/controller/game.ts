@@ -26,7 +26,8 @@ import {
   recover,
   turnOf,
   endTurn,
-  setRange,
+  setBand,
+  moveBand,
   currentEncounter,
   livingCharacters,
   canFight,
@@ -527,9 +528,14 @@ export class GameController {
     });
   }
 
-  /** Ändert die Entfernung der laufenden Begegnung. */
-  setRange(range: Range): void {
-    this.inFight(() => this.change(setRange(this.campaign, range), { combatNote: undefined }));
+  /** Setzt die Entfernung der laufenden Begegnung auf ein Band (21: entkommen); Berührung nur auf Band 0. */
+  setBand(band: number, close = false): void {
+    this.inFight(() => this.change(setBand(this.campaign, band, close), { combatNote: undefined }));
+  }
+
+  /** Bewegt die Parteien einen Schritt näher (−1) oder weiter weg (+1). */
+  moveBand(step: -1 | 1): void {
+    this.inFight(() => this.change(moveBand(this.campaign, step), { combatNote: undefined }));
   }
 
   /**

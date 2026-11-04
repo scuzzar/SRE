@@ -4,7 +4,7 @@ import { replay, type Career, type CareerRoll } from './career';
 import { DomainError } from './errors';
 import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, type PathKind } from './card-roll';
 import { checkDamageRoll, ATTACK_TARGET } from './combat';
-import { npcOf, type Encounter, type Npc } from './encounter';
+import { ESCAPED_BAND, firstBand, npcOf, type Encounter, type Npc } from './encounter';
 import { checkInterprets, physical, recoveryKinds, withQuestion, type AttackResult, type CardPick, type DamageRoll, type LogEntry, type Recovery } from './log';
 import { checkRecovery } from './wounds';
 import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, ranges, ref, slotOfEntry, weaponOf } from './reference';
@@ -163,24 +163,31 @@ const NpcSchema = z.object({
   became: z.string().optional(),
 });
 
-const EncounterSchema = z.object({
-  id: z.string().min(1),
-  at,
-  of: z.number().int(),
-  in: z.string().optional(),
-  reaction: z.number().int().min(2).max(12),
-  reactionDice: z.tuple([die, die]).optional(),
-  ended: z.boolean(),
-  npcs: z.array(NpcSchema).min(1),
-  /** Fehlen bei Begegnungen von vor der Kampfsimulation. */
-  range: z.enum(ranges).default('short'),
-  rangeDice: z.tuple([die, die]).optional(),
-  terrain: z.string().optional(),
-  pcSurprise: z.object({ die, dm: z.number().int() }).optional(),
-  npcSurprise: z.object({ die, dm: z.number().int() }).optional(),
-  round: z.number().int().min(1).default(1),
-  acted: z.array(z.string()).default([]),
-});
+const EncounterSchema = z
+  .object({
+    id: z.string().min(1),
+    at,
+    of: z.number().int(),
+    in: z.string().optional(),
+    reaction: z.number().int().min(2).max(12),
+    reactionDice: z.tuple([die, die]).optional(),
+    ended: z.boolean(),
+    npcs: z.array(NpcSchema).min(1),
+    /** Fehlen bei Begegnungen von vor der Kampfsimulation. */
+    rangeDice: z.tuple([die, die]).optional(),
+    bandDie: z.number().int().min(1).max(10).optional(),
+    /** Fehlen bei Begegnungen von vor den Range Bands; dann gilt das erste Band ihrer Reichweite (`range`). */
+    band: z.number().int().min(0).max(ESCAPED_BAND).optional(),
+    close: z.boolean().optional(),
+    range: z.enum(ranges).optional(),
+    terrain: z.string().optional(),
+    pcSurprise: z.object({ die, dm: z.number().int() }).optional(),
+    npcSurprise: z.object({ die, dm: z.number().int() }).optional(),
+    round: z.number().int().min(1).default(1),
+    acted: z.array(z.string()).default([]),
+  })
+  .transform(({ range, band, close, ...rest }) => ({ ...rest, ...(band === undefined ? firstBand(range ?? 'short') : { band, close: close ?? false }) }))
+  .refine((e) => !e.close || e.band === 0, 'In Berührung sind die Parteien nur auf Band 0.');
 
 const CampaignFileSchema = z.object({
   format: z.literal(campaignFileFormat),

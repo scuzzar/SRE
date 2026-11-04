@@ -35,9 +35,14 @@ export interface Encounter {
   readonly reactionDice?: readonly [number, number];
   readonly ended: boolean;
   readonly npcs: readonly Npc[];
-  /** Die Entfernung: gewürfelt (`rangeDice`, mit dem DM des Geländes) und danach jederzeit änderbar. */
-  readonly range: Range;
+  /** Der Wurf auf die Encounter Ranges (mit dem DM des Geländes); fehlt bei Begegnungen von vorher. */
   readonly rangeDice?: readonly [number, number];
+  /** Der Würfel für das Startband innerhalb der Reichweite; fehlt bei Close und Short. */
+  readonly bandDie?: number;
+  /** Die Entfernung in Range Bands, 0 bis 20; 21 heißt mehr als 20: entkommen. Jederzeit änderbar. */
+  readonly band: number;
+  /** Auf Band 0 in Berührung (Close); sonst ist Band 0 Short. Auf anderen Bändern immer falsch. */
+  readonly close: boolean;
   /** Verweis auf das Gelände; fehlt es, ±0. */
   readonly terrain?: string;
   /** Die Überraschung je Partei: 1W6 und DM (S. 5). Fehlt bei Begegnungen von vor der Kampfsimulation. */
@@ -173,6 +178,7 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
   const rangeDice = [d6(random), d6(random)] as const;
   const pcSurprise = { die: d6(random), dm: pcSurpriseDm(campaign) };
   const npcSurprise = { die: d6(random), dm: npcSurpriseDm(type, npcs) };
+  const start = startBand(encounterRange(rangeDice, ground?.dm ?? 0), random);
   const encounter: Encounter = {
     id: `e${nextNumber(
       campaign.encounters.map((e) => e.id),
@@ -185,8 +191,8 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
     reactionDice,
     ended: false,
     npcs,
-    range: encounterRange(rangeDice, ground?.dm ?? 0),
     rangeDice,
+    ...start,
     ...(ground ? { terrain: ground.id } : {}),
     pcSurprise,
     npcSurprise,
@@ -202,6 +208,72 @@ export function encounterRange(dice: readonly [number, number], dm: number): Ran
   return ref.encounters.ranges.find((r) => r.roll === roll)!.range;
 }
 
+/** Mehr als 20 Bands: Die Parteien sind entkommen (Book 1, S. 33). */
+export const ESCAPED_BAND = 21;
+
+/** Wo eine Begegnung steht: Band und Berührung, mit dem Würfel des Startbands. */
+export interface BandPosition {
+  readonly band: number;
+  readonly close: boolean;
+  readonly bandDie?: number;
+}
+
+/**
+ * Das Startband einer gewürfelten Reichweite (Hausregel, gleichverteilt): Close Band 0 mit
+ * Berührung, Short Band 0 ohne; sonst ein Würfel über die Bands der Reichweite, Medium 1W2,
+ * Long 1W8, Very Long 1W10.
+ */
+export function startBand(range: Range, random: Random): BandPosition {
+  if (range === 'close') return { band: 0, close: true };
+  const { from, to } = ref.encounters.bands.find((b) => b.range === range)!;
+  if (from === to) return { band: from, close: false };
+  const bandDie = random.int(1, to - from + 1);
+  return { band: from - 1 + bandDie, close: false, bandDie };
+}
+
+/** Das erste Band einer Reichweite, für Begegnungen von vor den Range Bands. */
+export function firstBand(range: Range): BandPosition {
+  return range === 'close' ? { band: 0, close: true } : { band: ref.encounters.bands.find((b) => b.range === range)!.from, close: false };
+}
+
+/** Die Reichweite eines Bands nach den Range Bands; über 20 gibt es keine. */
+export function rangeOfBand(band: number, close: boolean): Range | undefined {
+  if (band > 20) return undefined;
+  if (band === 0) return close ? 'close' : 'short';
+  return ref.encounters.bands.find((b) => b.from <= band && band <= b.to)!.range;
+}
+
+/** Die Reichweite der Begegnung; fehlt, wenn die Parteien entkommen sind. */
+export function encounterRangeOf(encounter: Encounter): Range | undefined {
+  return rangeOfBand(encounter.band, encounter.close);
+}
+
+export function isEscaped(encounter: Encounter): boolean {
+  return encounter.band >= ESCAPED_BAND;
+}
+
+/** Setzt die Entfernung der laufenden Begegnung auf ein Band; Berührung gibt es nur auf Band 0. */
+export function setBand(campaign: Campaign, band: number, close = false): Campaign {
+  const encounter = currentEncounter(campaign);
+  if (!encounter) throw new DomainError('Es läuft keine Begegnung.');
+  if (!Number.isInteger(band) || band < 0 || band > ESCAPED_BAND) throw new DomainError(`Ein Band ${band} gibt es nicht.`);
+  if (close && band !== 0) throw new DomainError('In Berührung sind die Parteien nur auf Band 0.');
+  return { ...campaign, encounters: campaign.encounters.map((e) => (e.id === encounter.id ? { ...e, band, close } : e)) };
+}
+
+/**
+ * Bewegt die Parteien um einen Schritt näher (−1) oder weiter weg (+1). Die Schritte sind:
+ * Berührung, Band 0, Band 1 … 20, entkommen.
+ */
+export function moveBand(campaign: Campaign, step: -1 | 1): Campaign {
+  const encounter = currentEncounter(campaign);
+  if (!encounter) throw new DomainError('Es läuft keine Begegnung.');
+  const at = (encounter.close ? 0 : encounter.band + 1) + step;
+  if (at < 0) throw new DomainError('Näher als in Berührung geht nicht.');
+  if (at > ESCAPED_BAND + 1) throw new DomainError('Die Parteien sind schon entkommen.');
+  return at === 0 ? setBand(campaign, 0, true) : setBand(campaign, at - 1);
+}
+
 const BATTLE_DRESS = 'battle-dress';
 
 /** DM der SC auf die Überraschung (S. 5): Battle Dress +2, Leader +1, Tactics +1, Army oder Marines +1, 8 oder mehr −1. */
@@ -215,14 +287,6 @@ export function pcSurpriseDm(campaign: Campaign): number {
 /** DM der NSC auf die Überraschung: Battle Dress +2, Anführer +1, militärische Art +1, Fahrzeug −1, 8 oder mehr −1. */
 export function npcSurpriseDm(type: EncounterType, npcs: readonly Npc[]): number {
   return (npcs.some((n) => n.wears === BATTLE_DRESS) ? 2 : 0) + (type.leader ? 1 : 0) + (type.military ? 1 : 0) - (type.vehicle ? 1 : 0) - (npcs.length >= 8 ? 1 : 0);
-}
-
-/** Ändert die Entfernung der laufenden Begegnung (näherkommen, zurückweichen). */
-export function setRange(campaign: Campaign, range: Range): Campaign {
-  const encounter = currentEncounter(campaign);
-  if (!encounter) throw new DomainError('Es läuft keine Begegnung.');
-  if (!ref.encounters.ranges.some((r) => r.range === range)) throw new DomainError('Diese Entfernung gibt es nicht.');
-  return { ...campaign, encounters: campaign.encounters.map((e) => (e.id === encounter.id ? { ...e, range } : e)) };
 }
 
 /** Verweist ein Angriff im Log auf einen NSC dieser Begegnung? */

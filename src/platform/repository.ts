@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import { hexFromRolls, keepFocus, type Campaign, type CampaignId, type CampaignRepository, type Hex, type LegacyWorldRoll } from '../model';
+import { firstBand, hexFromRolls, keepFocus, type Campaign, type CampaignId, type CampaignRepository, type Encounter, type Hex, type LegacyWorldRoll, type Range } from '../model';
 
 /** Eine Kampagne liegt unter ihrer Id. */
 interface StoredCampaign {
@@ -94,7 +94,12 @@ export function upgraded(campaign: Campaign): Campaign {
     const old = hex as Hex & { readonly rolls?: readonly LegacyWorldRoll[] };
     return old.rolls ? hexFromRolls({ column: old.column, row: old.row, ...(old.name === undefined ? {} : { name: old.name }), rolls: old.rolls }) : hex;
   });
-  const upgraded = { ...campaign, characters, log, hexes, bookings: campaign.bookings ?? [], encounters: (campaign.encounters ?? []).map((e) => ({ ...e, range: e.range ?? 'short', round: e.round ?? 1, acted: e.acted ?? [] })) };
+  // Begegnungen von vor den Range Bands haben nur eine Reichweite: Sie bekommen deren erstes Band.
+  const encounters = (campaign.encounters ?? []).map((e): Encounter => {
+    const { range, ...rest } = e as Encounter & { readonly range?: Range };
+    return { ...rest, ...(rest.band === undefined ? firstBand(range ?? 'short') : {}), round: e.round ?? 1, acted: e.acted ?? [] };
+  });
+  const upgraded = { ...campaign, characters, log, hexes, bookings: campaign.bookings ?? [], encounters };
   return keepFocus(upgraded, upgraded);
 }
 

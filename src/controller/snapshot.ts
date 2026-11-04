@@ -76,6 +76,9 @@ import {
   armorsOf,
   canFight,
   currentEncounter,
+  encounterRange,
+  encounterRangeOf,
+  isEscaped,
   encounterTypeOfEncounter,
   fighterOf,
   npcCharacters,
@@ -383,8 +386,15 @@ export interface SimView {
   readonly roll: number;
   readonly quantity: number;
   readonly round: number;
-  readonly range: Range;
+  /** Die Reichweite aus dem Band; fehlt, wenn die Parteien entkommen sind. */
+  readonly range: Range | undefined;
+  /** Die Entfernung in Range Bands: 0 bis 20, 21 entkommen; auf Band 0 in Berührung oder nicht. */
+  readonly band: number;
+  readonly close: boolean;
+  readonly escaped: boolean;
   readonly rangeDice: readonly number[] | undefined;
+  /** Der Würfel des Startbands und wie viele Seiten er hatte (Medium 2, Long 8, Very Long 10). */
+  readonly bandDie: { readonly die: number; readonly sides: number } | undefined;
   readonly terrain: { readonly name: string; readonly dm: number } | undefined;
   readonly surprise: Side | undefined;
   readonly first: Side;
@@ -409,8 +419,8 @@ export interface SimView {
     | undefined;
   /** Ist eine Partei außer Gefecht, ist der Kampf entschieden. */
   readonly defeated: Side | undefined;
-  /** Je Entfernung, ob die Waffe dessen am Zug hinreicht. */
-  readonly ranges: readonly { readonly range: Range; readonly reaches: boolean }[];
+  /** Die Range Bands je Reichweite (erstes und letztes Band) und ob die Waffe dessen am Zug hinreicht. */
+  readonly bands: readonly { readonly range: Range; readonly from: number; readonly to: number; readonly reaches: boolean }[];
 }
 
 /** Schaden an einem SC, den der Spieler auf STR, DEX und END verteilt. */
@@ -904,6 +914,7 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
   const encounter = fightState(campaign, running);
   const order = fightOrder(campaign, encounter);
   const ground = encounter.terrain === undefined ? undefined : ref.encounters.terrains.find((t) => t.id === encounter.terrain);
+  const range = encounterRangeOf(encounter);
   let turnView: SimView['turn'];
   let weapon: Weapon | undefined;
   if (turn) {
@@ -934,7 +945,7 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
       weapon: weaponName(attacker.weapon.id),
       target: valid ? target : undefined,
       odds,
-      reaches: rangeDm(attacker.weapon, encounter.range) !== undefined,
+      reaches: range !== undefined && rangeDm(attacker.weapon, range) !== undefined,
       ammo: ammo && { rounds: ammo.rounds, capacity: ammo.capacity, magazines: ammo.magazines },
     };
   }
@@ -947,8 +958,12 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
     roll: encounter.of,
     quantity: encounterTypeOfEncounter(encounter).quantity,
     round: encounter.round,
-    range: encounter.range,
+    range,
+    band: encounter.band,
+    close: encounter.close,
+    escaped: isEscaped(encounter),
     rangeDice: encounter.rangeDice,
+    bandDie: bandDieView(encounter),
     terrain: ground && { name: ground.name, dm: ground.dm },
     surprise: surpriseOf(encounter),
     first: firstSide(encounter),
@@ -957,8 +972,16 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
     fighters: order.map((slot) => fighterView(campaign, slot, encounter, turn, turnView?.target)),
     turn: turnView,
     defeated: defeatedSide(campaign, encounter),
-    ranges: ranges.map((range) => ({ range, reaches: weapon === undefined || rangeDm(weapon, range) !== undefined })),
+    bands: ref.encounters.bands.map((b) => ({ range: b.range, from: b.from, to: b.to, reaches: weapon === undefined || rangeDm(weapon, b.range) !== undefined })),
   };
+}
+
+/** Der Würfel des Startbands mit seinen Seiten: so viele Bands hat die gewürfelte Reichweite. */
+function bandDieView(encounter: Encounter): SimView['bandDie'] {
+  if (encounter.bandDie === undefined || encounter.rangeDice === undefined) return undefined;
+  const ground = encounter.terrain === undefined ? undefined : ref.encounters.terrains.find((t) => t.id === encounter.terrain);
+  const rolled = ref.encounters.bands.find((b) => b.range === encounterRange(encounter.rangeDice!, ground?.dm ?? 0))!;
+  return { die: encounter.bandDie, sides: rolled.to - rolled.from + 1 };
 }
 
 function woundingView(campaign: Campaign, wounding: Wounding): WoundingView {

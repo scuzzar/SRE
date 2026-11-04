@@ -4354,19 +4354,45 @@ button:disabled {
 
 .fight-top .encounter-head .ghost.compact {
   min-height: 30px;
-  padding: 0 10px;
+  padding: 0 8px;
+  font-size: 13px;
 }
 
-.fight-top .encounter-reaction {
+/* Der Kopf in einer Zeile: Runde und Begegnung, dahinter knapp Reaktion und wer zuerst zieht. */
+.fight-head-line {
+  align-items: center;
+  gap: 8px;
+}
+
+.fight-head-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.fight-head-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.fight-head-tail {
+  flex: 0 0 auto;
   font-size: 12px;
-}
-
-.fight-top .fight-range {
-  gap: 2px;
-}
-
-.fight-top .segmented button {
-  min-height: 34px;
+  color: var(--muted);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
 }
 
 .fight-decided {
@@ -4375,19 +4401,153 @@ button:disabled {
   color: var(--gold);
 }
 
-.fight-range {
+/* Die Entfernung in einer Zeile: links die Reichweite, daneben der Strahl zwischen zwei Pfeilen. */
+.ray-range {
+  display: grid;
+  grid-template-columns: 62px 44px minmax(0, 1fr) 44px;
+  align-items: stretch;
+  gap: 4px;
+  height: 40px;
+}
+
+.ray-now {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  justify-content: center;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
-.segmented.fight-ranges {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+.ray-now b {
+  font-size: 13px;
+  color: var(--gold);
 }
 
-.segmented button.out {
+.ray-now span {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.ray-arrow {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  background: var(--raised);
+  color: var(--text);
+  font-size: 15px;
+}
+
+.ray-arrow:disabled {
+  border-color: var(--rule);
+  background: transparent;
+  color: var(--disabled);
+}
+
+.ray-arrow:active:not(:disabled) {
+  background: var(--highlight);
+}
+
+/* Der Strahl: Schritt i (0 Berührung, 1 Band 0, 2–21 Band 1–20) liegt bei --i von 21. */
+.ray {
+  --pad: 6px;
+  position: relative;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.ray > * {
+  position: absolute;
+  left: calc(var(--pad) + (100% - 2 * var(--pad)) * var(--i) / 21);
+}
+
+.ray-line {
+  top: 23px;
+  height: 2px;
+  width: calc((100% - 2 * var(--pad)) * var(--n) / 21);
+  background: var(--line-strong);
+}
+
+.ray-line.out {
+  background: repeating-linear-gradient(90deg, var(--line) 0 3px, transparent 3px 6px);
+}
+
+.ray-line.span {
+  background: var(--gold-deep);
+}
+
+.ray-dot {
+  top: 22px;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: var(--dim);
+}
+
+.ray-dot.out {
+  background: var(--line);
+}
+
+.ray-tick {
+  top: 4px;
+  width: 1px;
+  height: 25px;
+  background: var(--line-strong);
+}
+
+.ray-label {
+  top: 1px;
+  margin-left: 3px;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.ray-label.first {
+  margin-left: -6px;
+}
+
+.ray-label.out {
   color: var(--dim);
   text-decoration: line-through;
+}
+
+.ray-pc,
+.ray-npc {
+  top: 24px;
+  transform: translate(-50%, -50%);
+  line-height: 1;
+}
+
+.ray-pc {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--text);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+.ray-npc {
+  font-size: 13px;
+  color: var(--gold-bright);
+  text-shadow: 0 0 6px var(--gold-glow);
+}
+
+/* Close: Die NSC berühren die SC. */
+.ray-npc.close {
+  margin-left: 8px;
+}
+
+.ray-escaped {
+  top: 2px;
+  transform: translateX(-100%);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gold);
+  white-space: nowrap;
 }
 
 .fighters {
