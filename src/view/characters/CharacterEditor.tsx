@@ -5,6 +5,7 @@ import { characteristicLabel, hex, kindNames } from '../format';
 import { useGame } from '../game-context';
 import { CloseIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
+import { Form } from '../Form';
 
 const uppFields = [
   ['str', 'STR'],
@@ -46,6 +47,22 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
 
   const setUpp = (key: keyof Upp, value: number) => setForm({ ...form, upp: { ...form.upp, [key]: value } });
 
+  /** Speichert; der Knopf unten steht außerhalb des Formulars und ruft es direkt auf. */
+  const save = () => {
+    const { homeworld, primary, secondary, wields, wears, ...rest } = form;
+    game.saveCharacter({
+      ...rest,
+      credits: Number(form.credits === '' ? 0 : form.credits),
+      skills: form.skills.map((s) => ({ of: s.of, level: Number(s.level) })),
+      possessions: form.possessions.map((p) => ({ of: p.of, count: Number(p.count) })),
+      ...(homeworld ? { homeworld } : {}),
+      ...(primary ? { primary } : {}),
+      ...(secondary ? { secondary } : {}),
+      ...(wields ? { wields } : {}),
+      ...(wears ? { wears } : {}),
+    });
+  };
+
   return (
     <div className="overlay">
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="editor-title">
@@ -55,24 +72,10 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
             <CloseIcon />
           </button>
         </div>
-        <form
+        <Form
           className="sheet-body form"
           id="character-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const { homeworld, primary, secondary, wields, wears, ...rest } = form;
-            game.saveCharacter({
-              ...rest,
-              credits: Number(form.credits === '' ? 0 : form.credits),
-              skills: form.skills.map((s) => ({ of: s.of, level: Number(s.level) })),
-              possessions: form.possessions.map((p) => ({ of: p.of, count: Number(p.count) })),
-              ...(homeworld ? { homeworld } : {}),
-              ...(primary ? { primary } : {}),
-              ...(secondary ? { secondary } : {}),
-              ...(wields ? { wields } : {}),
-              ...(wears ? { wears } : {}),
-            });
-          }}
+          onSend={save}
         >
           {editor.error && (
             <p className="error" role="alert">
@@ -296,13 +299,13 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
               </span>
             </div>
           )}
-        </form>
+        </Form>
         <div className="sheet-foot">
           <button type="button" className="ghost" onClick={() => game.cancelEdit()}>
             Abbrechen
           </button>
           <span className="count" />
-          <button type="submit" form="character-form" className="primary" style={{ padding: '0 24px' }}>
+          <button type="button" className="primary" style={{ padding: '0 24px' }} onClick={save}>
             Speichern
           </button>
         </div>

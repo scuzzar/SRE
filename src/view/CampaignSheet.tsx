@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { CampaignChoice, CampaignSheetView } from '../controller';
 import { useGame } from './game-context';
 import { CloseIcon, DownloadIcon, TrashIcon, UploadIcon } from './icons';
+import { Form } from './Form';
 
 /**
  * Die Kampagnenwahl: wechseln, umbenennen, anlegen, löschen, exportieren und importieren. Die Texte
@@ -30,10 +31,9 @@ export function CampaignSheet({ sheet, campaigns, open }: { sheet: CampaignSheet
             </p>
           )}
 
-          <form
+          <Form
             className="inline-form"
-            onSubmit={(e) => {
-              e.preventDefault();
+            onSend={() => {
               game.renameCampaign(name);
             }}
           >
@@ -44,7 +44,7 @@ export function CampaignSheet({ sheet, campaigns, open }: { sheet: CampaignSheet
             <button type="submit" className="ghost" disabled={name.trim() === open.name}>
               Umbenennen
             </button>
-          </form>
+          </Form>
 
           <ul className="campaigns" aria-label="Alle Kampagnen">
             {campaigns.map((c) => (
@@ -88,10 +88,9 @@ export function CampaignSheet({ sheet, campaigns, open }: { sheet: CampaignSheet
               : 'Die letzte Kampagne lässt sich nicht löschen.'}
           </span>
 
-          <form
+          <Form
             className="inline-form"
-            onSubmit={(e) => {
-              e.preventDefault();
+            onSend={() => {
               game.createCampaign(newName);
             }}
           >
@@ -102,7 +101,7 @@ export function CampaignSheet({ sheet, campaigns, open }: { sheet: CampaignSheet
             <button type="submit" className="ghost">
               Anlegen
             </button>
-          </form>
+          </Form>
 
           <label className="ghost import">
             <UploadIcon />

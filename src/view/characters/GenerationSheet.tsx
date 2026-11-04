@@ -8,6 +8,7 @@ import { HoldButton } from '../HoldButton';
 import { animated, haptic, stopHaptics } from '../haptics';
 import { CardIcon, CloseIcon, DiceIcon, LightbulbIcon, PencilIcon, SectorIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
+import { Form } from '../Form';
 
 /** Wie lange das Ergebnis nach dem Landen braucht, bis es feststeht und die Knöpfe wieder gehen. */
 const SETTLE_MS = 350;
@@ -571,10 +572,9 @@ function Actions({ action, disabled, onRun }: { action: GenerationAction; disabl
       );
     case 'name':
       return (
-        <form
+        <Form
           className="inline-form generation-name"
-          onSubmit={(e) => {
-            e.preventDefault();
+          onSend={() => {
             game.finishGeneration(name);
           }}
         >
@@ -586,7 +586,7 @@ function Actions({ action, disabled, onRun }: { action: GenerationAction; disabl
           <button type="submit" className="primary" aria-disabled={disabled || undefined}>
             Übernehmen
           </button>
-        </form>
+        </Form>
       );
     case 'dead':
       return (

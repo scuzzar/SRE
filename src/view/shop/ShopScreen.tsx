@@ -4,6 +4,7 @@ import { bookingText, clockTime, credits, kindNames } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { CloseIcon } from '../icons';
+import { Form } from '../Form';
 
 type FreeKind = 'income' | 'expense' | 'deposit' | 'payout';
 const freeKinds: readonly FreeKind[] = ['income', 'expense', 'deposit', 'payout'];
@@ -63,10 +64,9 @@ function BookingForm({ shop }: { shop: ShopView }) {
   const withMember = kind === 'deposit' || kind === 'payout';
   const value = Number(amount);
   return (
-    <form
+    <Form
       className="shop-book"
-      onSubmit={(e) => {
-        e.preventDefault();
+      onSend={() => {
         haptic('pick');
         game.book(kind, value, text, withMember ? member : undefined);
         setAmount('');
@@ -106,7 +106,7 @@ function BookingForm({ shop }: { shop: ShopView }) {
       <button type="submit" className="primary" disabled={!(value > 0) || (withMember && !member)}>
         {bookingText[kind]} buchen
       </button>
-    </form>
+    </Form>
   );
 }
 
