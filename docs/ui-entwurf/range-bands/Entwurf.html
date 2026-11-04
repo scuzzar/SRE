@@ -4647,6 +4647,58 @@ button:disabled {
 </head>
 <body>
 <style>
+
+/* Kopf in einer Zeile: Runde und Begegnung, dahinter knapp Reaktion und wer zuerst zieht. */
+.encounter-head.one-line {
+  align-items: center;
+}
+
+.head-line {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.head-line .head-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.head-line .head-tail {
+  flex: 0 0 auto;
+}
+
+.encounter-head.one-line {
+  gap: 8px;
+}
+
+.fight-top .encounter-head.one-line .ghost.compact {
+  padding: 0 8px;
+  font-size: 13px;
+}
+
+.head-tail {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  color: var(--muted);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
 /* --- Entwurf: Entfernung als Strahl -------------------------------------------------------------- */
 
 /* Eine Zeile: links die Entfernung als Text, daneben der Strahl zwischen zwei Pfeilen. */
@@ -4833,11 +4885,13 @@ button:disabled {
 
     <header class="fight-top">
       <div class="fight-head">
-        <div class="encounter-head">
-          <h2 class="section-title">Runde <span id="round">2</span> · 3 × Bandits</h2>
+        <div class="encounter-head one-line">
+          <button type="button" class="head-line" aria-label="Runde 2, 3 Bandits, Reaktion 4: Hostile, SC ziehen zuerst. Übersicht zeigen">
+            <span class="head-title">Runde 2 · 3 × Bandits</span>
+            <span class="head-tail">Hostile · SC zuerst</span>
+          </button>
           <button type="button" class="ghost compact">Beenden</button>
         </div>
-        <button type="button" class="encounter-reaction link">Reaktion 4: Hostile. Attack on 8+ · SC ziehen zuerst</button>
       </div>
 
       <div class="ray-range">

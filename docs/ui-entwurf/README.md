@@ -68,5 +68,8 @@ zusammen, alle NSC auch; es gibt nur einen Abstand.
 |---|---|
 | `range-bands/Entwurf.html` | Kampfsimulation mit der Entfernung in einer Zeile statt der fünf Knöpfe: links die Reichweite als Text („Long“, „Band 4“), daneben ein Strahl mit einem Punkt je Band und Strichen an den Grenzen (C/S, M, L, VL), zwischen zwei Pfeilen. ◀ rückt die NSC ein Band näher, ▶ weiter weg, auf den Strahl tippen setzt den Abstand. Golden der Abstand von den SC (●) zu den NSC (▲); wohin die Waffe am Zug nicht reicht, ist gestrichelt; über 20 Bands ist entkommen |
 
-Wie die Deutung eine gewöhnliche HTML-Datei mit den Stilen der App. Die Zeile ist 36 px hoch, etwa
-18 px weniger als heute Beschriftung und Knöpfe.
+Darüber der Kopf in einer Zeile: „Runde 2 · 3 × Bandits“, dahinter knapp die Reaktion und wer zuerst
+zieht („Hostile · SC zuerst“, bei Überraschung „Überraschung SC“); Antippen zeigt wie bisher die
+Übersicht mit allen Würfen. Kopf und Entfernung zusammen sind 89 px hoch.
+
+Wie die Deutung eine gewöhnliche HTML-Datei mit den Stilen der App.
