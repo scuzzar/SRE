@@ -13,9 +13,10 @@ const SETTLE_MS = 120;
  * Wischen zeigt den nächsten; welcher oben steht, entscheidet der Controller, die Leiste meldet nur,
  * bei welcher Karte das Wischen liegen geblieben ist. Fertigkeit antippen startet eine Probe, danach
  * lassen sich Attribute dazuwählen. Der Kopf klappt die Leiste ein und auf. Im Reiter Kampf zeigt
- * sie statt der Fertigkeiten die Waffen des Charakters oben; antippen nimmt sie in die Hand.
+ * sie statt der Fertigkeiten die Waffen des Charakters oben; antippen nimmt sie in die Hand. Ist er
+ * verwundet und lässt sich etwas tun, steht dort im Kopf seiner Karte „Heilen“.
  */
-export function CharacterStrip({ view, weapons = false }: { view: Snapshot; weapons?: boolean }) {
+export function CharacterStrip({ view, weapons = false, heal }: { view: Snapshot; weapons?: boolean; heal?: { readonly name: string; readonly onHeal: () => void } | undefined }) {
   const game = useGame();
   const track = useRef<HTMLDivElement>(null);
   const settle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -75,6 +76,11 @@ export function CharacterStrip({ view, weapons = false }: { view: Snapshot; weap
                   character.background && <span className="pc-sub">{character.background}</span>
                 )}
               </button>
+              {heal && character.focus && heal.name === character.name && (
+                <button type="button" className="ghost compact strip-heal" onClick={heal.onHeal}>
+                  Heilen
+                </button>
+              )}
               <span className="strip-position" aria-hidden="true">
                 {i + 1}/{characters.length}
               </span>
