@@ -73,7 +73,6 @@ import {
   type Fighter,
   type PhysicalCharacteristic,
   type WoundState,
-  armorsOf,
   canFight,
   currentEncounter,
   encounterRange,
@@ -464,7 +463,6 @@ export interface CombatView {
   readonly defender: { readonly name: string; readonly armor: ArmorClass } | undefined;
   readonly weapons: readonly WeaponChoice[];
   /** Was der Charakter oben anziehen kann; `worn` ist die getragene. */
-  readonly armors: readonly { readonly id: string; readonly label: string; readonly worn: boolean }[];
   /** Zustand und UPP mit Wunden des Charakters oben, und was an Heilung geht. */
   readonly state: WoundState;
   readonly current: Upp;
@@ -613,6 +611,8 @@ export interface CharacterView {
   /** Zustand nach Wunden und das UPP mit Wunden. */
   readonly state: WoundState;
   readonly current: Upp;
+  /** Die getragene Rüstung; fehlt, wenn er keine trägt. Anlegen lässt sie sich nur im Editor. */
+  readonly armor: string | undefined;
 }
 
 export interface TaskView {
@@ -833,7 +833,6 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
     npcAttacks: current.by !== undefined,
     defender: defender && { name: defender.name, armor: defender.armor },
     weapons: armedWeaponsOf(character).map((id) => weaponLabel(character, id)),
-    armors: armorsOf(character).map((id) => ({ id, label: itemLabel(itemOf(id)), worn: character.wears === id })),
     state: pc.state,
     current: pc.upp,
     healing: recoveryOptions(campaign, { pc: character.id }),
@@ -1127,6 +1126,7 @@ function characterView(campaign: Campaign, character: Character, state: Controll
     inLog: isInLog(campaign, character.id),
     state: woundStateOf(campaign, { pc: character.id }),
     current: woundedUpp(character.upp, woundsOf(campaign, { pc: character.id })),
+    armor: character.wears === undefined ? undefined : itemLabel(itemOf(character.wears)),
   };
 }
 

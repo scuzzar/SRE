@@ -27,7 +27,6 @@ const steps: readonly [string, Step][] = [
   ['delete', (g, p) => g.snapshot().log.length > 0 && g.deleteLogEntry(p(g.snapshot().log.length))],
   ['focus', (g, p) => { const c = g.snapshot().characters; if (c.length) g.focusCharacter(c[p(c.length)]!.id); }],
   ['wield', (g, p) => { const w = g.snapshot().combat?.weapons ?? []; if (w.length) g.wieldWeapon(w[p(w.length)]!.id); }],
-  ['wear', (g, p) => { const a = g.snapshot().combat?.armors ?? []; g.wear(a.length && p(2) ? a[p(a.length)]!.id : undefined); }],
   ['table', (g, p) => { const c = g.snapshot().combat; if (!c || c.sim) return; const row = c.rows[p(c.rows.length)]!; const cell = row.cells[p(row.cells.length)]!; if (cell.odds) { g.chooseTarget(row.armor, cell.range); g.rollAttack(); } }],
   ['damage', (g) => g.snapshot().combat?.damage && g.rollDamage()],
   ['reload', (g) => { const a = g.snapshot().combat?.ammo; if (a && a.magazines > 0 && !g.snapshot().combat?.sim) g.reload(); }],

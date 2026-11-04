@@ -602,8 +602,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   mit Rüstungsklasse aus seinem Besitz; keine heißt Nothing. Wie er in der Matrix zählt, steht an
   ihm (`Item.armor`): Jack, Mesh, Cloth, Reflec, Ablat, Combat Armor als Combat, Battle Dress als
   Combat (S. 4), Vacc Suit als Cloth (S. 4), Protective Suit (jack) als Jack und Protective Suit
-  (cloth) als Cloth. NSC bekommen in Begegnungen nur Rüstungen der Art *armor*. Man wählt sie im Kampf und im Editor; geht sie aus dem Besitz,
-  trägt er Nothing.
+  (cloth) als Cloth. NSC bekommen in Begegnungen nur Rüstungen der Art *armor*. Man legt sie wie
+  Primär- und Sekundärwaffe nur im Editor an; im Kampf steht sie oben in der Leiste neben dem Namen.
+  Geht sie aus dem Besitz, trägt er Nothing.
 - **Angriff in beide Richtungen.**
   - *SC gegen NSC*: Der Charakter oben greift einen NSC der laufenden Begegnung an (`against`), der
     weder tot noch übernommen ist. Die Rüstung ist die, die der NSC trägt; man wählt nur die

@@ -16,7 +16,6 @@ import {
   pendingDamage,
   rollDamage,
   setWields,
-  setWears,
   needsWounding,
   markDeath,
   victimOf,
@@ -416,14 +415,6 @@ export class GameController {
     const logged = appendLog(this.campaign, result);
     const campaign = result.for === undefined ? logged : spendRound(logged, result.for);
     this.change(campaign, { result: campaign.log.length - 1 });
-  }
-
-  /** Zieht dem Charakter oben eine Rüstung aus seinem Besitz an; `undefined`: keine. */
-  wear(item: string | undefined): void {
-    const character = focusOf(this.campaign);
-    if (!character) throw new DomainError('Es gibt keinen lebenden Charakter.');
-    const campaign = setWears(this.campaign, character.id, item);
-    this.change(campaign, { attack: this.state.attack && keepTarget(this.state.attack, campaign) });
   }
 
   /**
