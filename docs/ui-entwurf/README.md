@@ -83,4 +83,4 @@ mit dem Charakter oben im Reiter *Kampf* (siehe *Primär- und Sekundärwaffe* im
 
 | Datei | Inhalt |
 |---|---|
-| `waffen-leiste/Entwurf.html` | Die Attribute als schmale Zeile wie bei den NSC statt der sechs Kästen; darunter in einer Zeile höchstens drei Waffen: Primärwaffe, Sekundärwaffe, Hände. Die Waffe in der Hand zeigt ihre Fertigkeit und wird nie gekürzt, die anderen nur ihren Namen; antippen wechselt. Die Leiste ist etwa 164 px statt 235 px hoch |
+| `waffen-leiste/Entwurf.html` | Die Attribute als schmale Zeile wie bei den NSC statt der sechs Kästen; darunter in einer Zeile höchstens drei Waffen: Primärwaffe, Sekundärwaffe, Hände. Die Waffe in der Hand zeigt ihre Fertigkeit und wird nie gekürzt, die anderen nur ihren Namen; antippen wechselt. Im Kampf ist die Kopfzeile der Karte nur so hoch wie die Schrift (30 px statt 40 px), mit weniger Abstand zwischen den Zeilen. Die Leiste ist etwa 140 px statt 235 px hoch |
