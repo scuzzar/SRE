@@ -120,6 +120,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > (mit den sechs Namen), NSC-Aktionen, Welt (mit Schiff), Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
 > Einträge für sie gibt.
 
+> **Vorschlag vom 4. November 2026, wartet auf Freigabe:** die **Entfernung in Range Bands** (siehe
+> *Kampfsimulation*). Neu im Bild: an der `Encounter` statt `range` das Band (`band`), die Berührung
+> (`close`), der Würfel für das Startband (`bandDie`), abgeleitet die Reichweite (`/range`) und
+> `/escaped`; als Referenzdaten `RangeBand`. Der UI-Entwurf dazu (freigegeben am 4. November 2026)
+> liegt unter [`ui-entwurf/range-bands/`](ui-entwurf/range-bands/).
+
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild neu
@@ -209,7 +215,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Zustand | `/state`, `WoundState` | unverletzt, verwundet, bewusstlos (ein Attribut auf 0), schwer verwundet (zwei), tot (drei) |
 | Waffentabelle | (Modus des Reiters Kampf) | Die Tabelle der Waffe in der Hand mit frei gewählter Rüstung und Reichweite, ohne Begegnung |
 | Kampfsimulation | (Modus des Reiters Kampf) | Der Kampf einer laufenden Begegnung: Entfernung, Überraschung, Runden und Züge |
-| Entfernung | `Encounter.range` | Wie weit die Parteien auseinander sind; gilt für jeden Angriff der Begegnung |
+| Entfernung | `Encounter.band`, `close`, `/range` | Wie weit die Parteien auseinander sind, in Range Bands; gilt für jeden Angriff der Begegnung |
+| Range Band | `RangeBand`, `Encounter.band` | Ein Abschnitt von etwa 25 m (Book 1, S. 32; Charts S. 7): Close und Short Band 0, Medium 1–2, Long 3–10, Very Long 11–20 |
+| Berührung | `Encounter.close` | Close: Die Parteien sind auf Band 0 in Berührung; sonst ist Band 0 Short |
+| Startband | `Encounter.bandDie` | Der Würfel, der das Band innerhalb der gewürfelten Reichweite bestimmt: Medium 1W2, Long 1W8, Very Long 1W10 |
+| Entkommen | `Encounter./escaped` | Mehr als 20 Bands Abstand: Die Parteien haben sich verloren (Book 1, S. 33) |
 | Gelände | `Terrain` | Wo die Begegnung stattfindet, mit DM auf die Entfernung (S. 5), z. B. Clear +3, City −4 |
 | Überraschung | `pcSurprise`, `npcSurprise`, `/surprise` | 1W6 je Partei mit DMs (S. 5); wer 3 oder mehr höher liegt, hat Überraschung |
 | Partei | `Side` | Die SC (`pcs`) oder die NSC der Begegnung (`npcs`) |
@@ -613,8 +623,24 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - *Entfernung*: Beim Anlegen der Begegnung 2W6 plus DM des Geländes (`terrain`, wählbar, ohne
     Gelände ±0) auf die Encounter Ranges (S. 5): 1 Short, 2 Close, 3 Short, 4 Medium, 5 Short,
     6 Medium, 7 Medium, 8 Long, 9 Medium, 10 Very Long, 11 Long, 12 Very Long; unter 1 gilt 1, über
-    12 gilt 12. Die Würfel (`rangeDice`) bleiben; die Entfernung (`range`) lässt sich jederzeit
-    ändern (näherkommen, zurückweichen) und gilt für jeden Angriff der Begegnung.
+    12 gilt 12. Die Würfel (`rangeDice`) bleiben.
+  - *Range Bands* (Book 1, S. 32–33; Charts S. 7): Die Entfernung wird in Bands von etwa 25 m
+    gehalten. Alle SC stehen zusammen, alle NSC auch; es gibt nur einen Abstand (`band`, 0–21).
+    Welche Reichweite ein Band ist, sagt `RangeBand`: Close und Short 0, Medium 1–2, Long 3–10,
+    Very Long 11–20. Auf Band 0 unterscheidet `close`, ob die Parteien in Berührung sind (Close)
+    oder nicht (Short); auf jedem anderen Band ist `close` falsch. Daraus folgt die Reichweite
+    (`/range`), die für jeden Angriff der Begegnung gilt. Band 21 heißt mehr als 20 Bands: Die
+    Parteien sind entkommen (`/escaped`), es gibt keine Reichweite und keinen Angriff; die
+    Begegnung läuft weiter, bis man sie beendet oder wieder näher rückt.
+  - *Startband* (Hausregel, gleichverteilt): Ergibt der Wurf Close, beginnt die Begegnung auf Band 0
+    mit Berührung, bei Short auf Band 0 ohne. Bei Medium, Long und Very Long bestimmt ein weiterer
+    Würfel (`bandDie`) das Band innerhalb der Reichweite: Medium 1W2 (Band 1–2), Long 1W8 (Band
+    2 + Würfel, also 3–10), Very Long 1W10 (Band 10 + Würfel, also 11–20). Bei Close und Short gibt
+    es keinen Würfel.
+  - *Bewegen*: Der Spieler bewegt die Parteien selbst, um ein Band je Schritt: näher (von Band 0 ohne
+    Berührung in die Berührung, von Band 1 auf Band 0) oder weiter weg (aus der Berührung auf Band 0
+    ohne, dann Band für Band bis 21). Er kann das Band auch direkt setzen. Das ist kein Zug und
+    jederzeit möglich; wer wie weit gelaufen ist, hält das Modell nicht fest.
   - *Überraschung* (S. 5): beim Anlegen 1W6 je Partei (`pcSurprise`, `npcSurprise`) mit DMs:
     Battle Dress getragen +2; Leader-Fertigkeit +1 (bei NSC: ein Anführer); Tactics +1; militärische
     Erfahrung (SC aus Army oder Marines, NSC einer militärischen Art: Soldiers, Marines, Security
@@ -636,7 +662,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Runde nicht mehr dran.
   - Ist eine Partei ganz außer Gefecht (alle bewusstlos, schwer verwundet oder tot), ist der Kampf
     entschieden; die Begegnung läuft weiter, bis man sie beendet.
-  - **Später**: Flucht (S. 5), Moral, Bewegung in Range Bands, Deckung, mehrere Gegnergruppen.
+  - **Später**: Flucht (S. 5), Moral, Bewegungsstatus je Runde nach Book 1 (Laufen 2 Bands ohne
+    Angriff und mit einem Combat Blow, Evade), Bewegung je Kämpfer statt je Partei, Tiere mit ihrer
+    Geschwindigkeit (S. 19), Deckung, mehrere Gegnergruppen.
 - **Heilung.** Nach S. 7. Eine Heilung ist ein Logeintrag (`Recovery`) für einen verwundeten SC
   (`for`) oder NSC der laufenden Begegnung (`npc`), nie für einen Toten. Die Wunden (`/wounds`)
   folgen aus Schadenswürfen und Heilungen im Log, der Reihe nach; eine Heilung löschen nimmt sie
@@ -1080,3 +1108,7 @@ Diagramm mit diesen Ausnahmen:
   Reyl aus der README (`src/data/examples.json`), damit man gleich etwas ausprobieren kann. Das
   Modell sagt dazu nichts; die beiden lassen sich löschen, solange der Log nicht auf sie verweist.
   Jede weitere Kampagne beginnt leer.
+- **Range Bands** (sobald freigegeben). Der Code hält an der `Encounter` noch die Reichweite
+  (`range`) statt `band`, `close` und `bandDie`, kennt `RangeBand` nicht und zeigt die Entfernung
+  als fünf Knöpfe. Gespeicherte Begegnungen bekommen beim Laden das Band ihrer Reichweite (Close:
+  Band 0 mit Berührung, Short 0, Medium 1, Long 3, Very Long 11) und keinen `bandDie`.
