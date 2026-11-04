@@ -60,7 +60,7 @@ Wie der Entwurf zur Deutung ist es eine gewöhnliche HTML-Datei, die sich direkt
 
 ## Entfernung in Range Bands (Entwurf vom 4. November 2026)
 
-Im Ordner [`range-bands/`](range-bands/) liegt der Entwurf (noch nicht freigegeben) für die Entfernung
+Im Ordner [`range-bands/`](range-bands/) liegt der (am 4. November 2026 freigegebene, noch nicht umgesetzte) Entwurf für die Entfernung
 der Kampfsimulation in Range Bands nach Book 1 (S. 32–33) und den Charts (S. 7). Alle SC stehen
 zusammen, alle NSC auch; es gibt nur einen Abstand.
 
