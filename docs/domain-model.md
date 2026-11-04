@@ -120,6 +120,11 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > (mit den sechs Namen), NSC-Aktionen, Welt (mit Schiff), Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
 > Einträge für sie gibt.
 
+> **Vorschlag vom 4. November 2026, wartet auf Freigabe:** **Primär- und Sekundärwaffe** (siehe
+> dort, *Waffe in der Hand*, *Kauf einer Waffe*), damit die Leiste im Kampf kompakt wird (siehe
+> *Angriff*). Neu im Bild: `Character.primary` und `Character.secondary`. Der UI-Entwurf dazu
+> liegt unter [`ui-entwurf/waffen-leiste/`](ui-entwurf/waffen-leiste/).
+>
 > Am 4. November 2026 freigegeben: die **Entfernung in Range Bands** (siehe
 > *Kampfsimulation*). Neu im Bild: an der `Encounter` statt `range` das Band (`band`), die Berührung
 > (`close`), der Würfel für das Startband (`bandDie`), abgeleitet die Reichweite (`/range`) und
@@ -192,7 +197,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Schaden | `Weapon.wounds` | Wie viele W6 ein Treffer verursacht, z. B. Rifle 3W6 |
 | Rüstungsklasse | `ArmorClass` | Was das Ziel trägt: Nothing, Jack, Mesh, Cloth, Reflec, Ablat, Combat |
 | Reichweite | `Range` | Close, Short, Medium, Long, Very Long |
-| Waffe in der Hand | `Character.wields` | Die Waffe, die ein Charakter gerade führt; keine heißt Hände |
+| Waffe in der Hand | `Character.wields` | Die Waffe, die ein Charakter gerade führt: Primär- oder Sekundärwaffe; keine heißt Hände |
+| Primärwaffe | `Character.primary` | Die Hauptwaffe eines Charakters, im Editor festgelegt, z. B. Automatic Pistol |
+| Sekundärwaffe | `Character.secondary` | Die zweite Waffe eines Charakters, im Editor festgelegt, z. B. Blade |
 | Aufenthaltsort | `Campaign.location` | Die Welt, auf der die Gruppe gerade ist; dort kauft sie ein |
 | Gruppenkasse | `Campaign./funds` | Das gemeinsame Geld der Gruppe in Cr, die Summe aller Buchungen |
 | Buchung | `Booking` | Eine Bewegung der Gruppenkasse: Einnahme, Ausgabe, Einzahlung, Auszahlung oder Kauf |
@@ -428,10 +435,21 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Matrix: Nothing, Jack, Mesh, Cloth, Reflec, Ablat, Combat. Vacc Suit zählt als Cloth, Battle
   Dress als Combat (S. 4). Die fünf Reichweiten (`Range`) sind Close (Berührung), Short (1–5 m),
   Medium (6–50 m), Long (51–250 m) und Very Long (251–500 m), nach S. 7.
+- **Primär- und Sekundärwaffe.** Im Editor legt man für jeden Charakter höchstens eine
+  Primärwaffe (`primary`) und höchstens eine Sekundärwaffe (`secondary`) fest. Infrage kommt nur die
+  Waffe eines Gegenstands aus seinem Besitz; die beiden sind verschieden, und die Hände sind keine
+  davon, weil man sie immer hat. Ändern lassen sie sich nur im Editor. Entfernt man den Gegenstand
+  aus dem Besitz (im Editor oder durch Verkauf), entfällt er als Primär- bzw. Sekundärwaffe.
+  Ältere Spielstände bekommen die Waffe in der Hand als Primärwaffe.
 - **Waffe in der Hand.** Jeder Charakter führt gerade höchstens eine Waffe (`wields`); keine heißt:
-  Hände. Infrage kommt nur die Waffe eines Gegenstands aus seinem Besitz. Sie wird gespeichert,
-  übersteht also einen Neustart und steht in der Kampagnendatei. Entfernt man den Gegenstand aus dem
-  Besitz, hat der Charakter wieder die Hände. Im Angriff wechselt man sie, im Editor auch.
+  Hände. Infrage kommen nur seine Primär- und seine Sekundärwaffe. Sie wird gespeichert,
+  übersteht also einen Neustart und steht in der Kampagnendatei. Im Kampf wechselt man zwischen
+  Primärwaffe, Sekundärwaffe und Händen. Ist die Waffe in der Hand nach einer Änderung im Editor
+  oder einem Verkauf keine der beiden mehr, nimmt der Charakter seine Primärwaffe in die Hand; hat
+  er keine, die Hände.
+- **Kauf einer Waffe.** Kauft ein Charakter eine Waffe und hat noch keine Primärwaffe, wird sie
+  seine Primärwaffe und er nimmt sie in die Hand; hat er schon eine, aber keine Sekundärwaffe, wird
+  sie seine Sekundärwaffe. Sonst ändert der Kauf nichts daran.
 - **Angriff.** Es gilt: 2W6 + DM ≥ 8 (*Basic Throw to Hit*, S. 6), mit
   DM = Fertigkeit + Rüstung + Reichweite + Attribut.
   - *Fertigkeit*: die Stufe in der Fertigkeit der Waffe. Ohne diese Fertigkeit zählt Stufe 0, also
@@ -444,9 +462,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     vorteilhaften Wert `advantageousDm`, dazwischen ±0. Das ist nicht die Hausregel ±1 der Probe;
     die Hausregeln und die gewählte Stufe (`odds`) zählen beim Angriff nicht.
   - Angriffe würfelt man im Reiter **Kampf**. Oben steht dort dieselbe Leiste wie im Orakel-Screen,
-    mit dem Charakter oben; Wischen wählt den Charakter, für den man angreift. Statt der
-    Fertigkeiten zeigt die Leiste dort die Waffen: die Hände und die Waffen aus seinem Besitz, die
-    Waffe in der Hand hervorgehoben; antippen wechselt sie.
+    mit dem Charakter oben; Wischen wählt den Charakter, für den man angreift. Dort ist sie
+    kompakt: die Attribute als schmale Zeile wie bei den NSC (mit Wunden), statt der Fertigkeiten
+    in einer Zeile die Waffen, also Primärwaffe, Sekundärwaffe und Hände, die Waffe in der Hand
+    hervorgehoben mit ihrer Fertigkeit; antippen wechselt sie.
   - Der Angriff in Vorbereitung ist ein `Attack`, flüchtig im Paket `draft` wie die Probe. Er gilt
     immer dem Charakter oben (`/for`) und seiner Waffe in der Hand (`/with`). Man wählt Rüstung
     und Reichweite des Ziels; erst mit beiden gibt es DM, nötigen Wurf (8 − DM) und Chance, exakt
@@ -520,8 +539,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     vorgeschlagen ist der halbe Preis der Charts, abgerundet auf ganze Cr; man kann ihn ändern
     (ganze Cr, mindestens 1). Der Verkauf ist eine Buchung `sale` mit `amount` = +Erlös × Anzahl,
     `sold`, `count`, `for` und `in`; der Gegenstand geht aus dem Besitz (beim letzten Stück ist der
-    Besitz weg). Verkauft er die Waffe in der Hand ganz, hat er wieder die Hände; eine geladene
-    Schusswaffe geht mit ihren Schuss.
+    Besitz weg). Verkauft er eine Waffe ganz, entfällt sie als Primär- bzw. Sekundärwaffe; war sie
+    in der Hand, gilt die Regel unter *Waffe in der Hand*. Eine geladene Schusswaffe geht mit ihren
+    Schuss.
   - **Später**: Preisänderungen nach Hausregel, die Industrie einer Welt, Schiffe kaufen,
     Leistungen (Recharge, Refill) und Zubehör.
 - **Munition.** Eine Schusswaffe fasst `rounds` Schuss und lädt mit ihrem Magazin (`ammo`), nach
@@ -569,7 +589,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 - **NSC.** Ein NSC lebt in seiner Begegnung, getrennt von den Charakteren.
   - **Übernehmen**: Man kann einen NSC als SC oder als dauerhaften NSC in die Kampagne übernehmen.
     Er wird ein Charakter mit seinem Namen, seinem UPP (die vollen Werte, ohne Wunden), seiner
-    Fertigkeit in der Waffe, Waffe und Rüstung im Besitz, Waffe in der Hand und getragener Rüstung,
+    Fertigkeit in der Waffe, Waffe und Rüstung im Besitz, der Waffe als Primärwaffe und in der Hand
+    und getragener Rüstung,
     Herkunft = Art der Begegnung. Als dauerhafter NSC hat er `npc`. Der NSC der Begegnung verweist
     danach auf ihn (`became`), kämpft nicht mehr in der Begegnung und lässt sich nicht noch einmal
     übernehmen.

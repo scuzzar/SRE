@@ -74,3 +74,13 @@ zieht („Hostile · SC zuerst“, bei Überraschung „Überraschung SC“); An
 Übersicht mit allen Würfen. Kopf und Entfernung zusammen sind 93 px hoch; die Pfeile sind 44 px breite Knöpfe, damit sie sich gut treffen lassen.
 
 Wie die Deutung eine gewöhnliche HTML-Datei mit den Stilen der App.
+
+## Kompakte Waffenleiste (Entwurf vom 4. November 2026)
+
+Im Ordner [`waffen-leiste/`](waffen-leiste/) liegt der Entwurf (noch nicht freigegeben) für die Leiste
+mit dem Charakter oben im Reiter *Kampf* (siehe *Primär- und Sekundärwaffe* im
+[Domänenmodell](../domain-model.md)). Grundlage ist der echte Kampfbildschirm der App.
+
+| Datei | Inhalt |
+|---|---|
+| `waffen-leiste/Entwurf.html` | Die Attribute als schmale Zeile wie bei den NSC statt der sechs Kästen; darunter in einer Zeile höchstens drei Waffen: Primärwaffe, Sekundärwaffe, Hände. Die Waffe in der Hand zeigt ihre Fertigkeit und wird nie gekürzt, die anderen nur ihren Namen; antippen wechselt. Die Leiste ist etwa 164 px statt 235 px hoch |
