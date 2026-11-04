@@ -47,6 +47,9 @@ export function FightScreen({ combat, onHeal }: { combat: CombatView; onHeal: (p
 
 const sideName = { pcs: 'SC', npcs: 'NSC' } as const;
 
+/** Die Waffe knapp: „Foil-2“, wenn die Fertigkeit wie die Waffe heißt, sonst „Automatic Pistol (APi-1)“. */
+const weaponText = (f: FighterView) => (f.skill.startsWith(`${f.weapon}-`) ? f.skill : `${f.weapon} (${f.skill})`);
+
 /** Übernehmen lässt sich jeder NSC, der noch lebt; Übernommene stehen nicht mehr in der Liste. */
 const canAdopt = (f: FighterView) => f.side === 'npcs' && f.state !== 'dead';
 
@@ -239,7 +242,8 @@ function FighterRow({ fighter: f, onHeal, selection }: { fighter: FighterView; o
             </span>
           ))}
           <span className="muted">
-            {f.weapon} ({f.skill}) · {f.armor ?? 'keine Rüstung'}
+            {weaponText(f)}
+            {f.armor ? ` · ${f.armor}` : ''}
           </span>
         </span>
       </button>

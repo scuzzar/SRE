@@ -4402,13 +4402,13 @@ button:disabled {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
+/* Eine Zeile je NSC, so knapp wie möglich: Name und Zustand, darunter Werte und Waffe; Heilen rechts daneben. */
 .fighter {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
   border: 1px solid var(--rule);
   background: var(--panel);
 }
@@ -4428,10 +4428,12 @@ button:disabled {
 }
 
 .fighter-main {
+  flex: 1 1 auto;
+  min-width: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 2px 8px;
-  padding: 8px 10px;
+  gap: 1px 8px;
+  padding: 5px 10px;
   border: 0;
   background: transparent;
   color: var(--text);
@@ -4481,9 +4483,23 @@ button:disabled {
 
 .fighter-main .npc-stats {
   grid-column: 1 / -1;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.fighter-main .npc-stats .muted {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .fighter-name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-weight: 600;
   font-size: 14px;
 }
@@ -4493,7 +4509,23 @@ button:disabled {
 }
 
 .fighter .npc-actions {
-  padding: 0 10px 8px;
+  flex: 0 0 auto;
+  padding: 0 6px 0 0;
+}
+
+.fighter .npc-actions .ghost.compact {
+  min-height: 30px;
+  padding: 0 8px;
+}
+
+.fight.combat-scroll {
+  gap: 8px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.fighters {
+  gap: 4px;
 }
 
 .fight-turn {
