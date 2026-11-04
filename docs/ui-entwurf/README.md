@@ -66,6 +66,7 @@ zusammen, alle NSC auch; es gibt nur einen Abstand.
 
 | Datei | Inhalt |
 |---|---|
-| `range-bands/Entwurf.html` | Kampfsimulation mit der Leiste statt der fünf Knöpfe: Close, Band 0 (Short) bis Band 20, nach Reichweite eingeteilt; Pfeile links und rechts als Abschluss rücken die NSC ein Band näher oder weiter weg, ein Band antippen setzt den Abstand. Wohin die Waffe am Zug nicht reicht, ist schraffiert; über 20 Bands ist entkommen. Darunter, wie weit sich die Parteien in dieser Runde bewegt haben |
+| `range-bands/Entwurf.html` | Kampfsimulation mit der Entfernung in einer Zeile statt der fünf Knöpfe: links die Reichweite als Text („Long“, „Band 4“), daneben ein Strahl mit einem Punkt je Band und Strichen an den Grenzen (C/S, M, L, VL), zwischen zwei Pfeilen. ◀ rückt die NSC ein Band näher, ▶ weiter weg, auf den Strahl tippen setzt den Abstand. Golden der Abstand von den SC (●) zu den NSC (▲); wohin die Waffe am Zug nicht reicht, ist gestrichelt; über 20 Bands ist entkommen |
 
-Wie die Deutung eine gewöhnliche HTML-Datei mit den Stilen der App.
+Wie die Deutung eine gewöhnliche HTML-Datei mit den Stilen der App. Die Zeile ist 36 px hoch, etwa
+18 px weniger als heute Beschriftung und Knöpfe.

@@ -4647,186 +4647,151 @@ button:disabled {
 </head>
 <body>
 <style>
-/* --- Entwurf: Entfernung in Range Bands ---------------------------------------------------------- */
+/* --- Entwurf: Entfernung als Strahl -------------------------------------------------------------- */
 
-.band-range {
+/* Eine Zeile: links die Entfernung als Text, daneben der Strahl zwischen zwei Pfeilen. */
+.ray-range {
+  display: grid;
+  grid-template-columns: 64px 30px minmax(0, 1fr) 30px;
+  align-items: stretch;
+  height: 36px;
+}
+
+.ray-now {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-
-.band-label {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.band-now {
+  justify-content: center;
+  line-height: 1.15;
   white-space: nowrap;
-  font-weight: 700;
-  font-size: 14px;
+  overflow: hidden;
 }
 
-.band-now .mono {
+.ray-now b {
+  font-size: 13px;
   color: var(--gold);
 }
 
-.band-row {
-  display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) 36px;
-  align-items: stretch;
-  border: 1px solid var(--line-strong);
+.ray-now span {
+  font-size: 10.5px;
+  color: var(--muted);
 }
 
-.band-arrow {
+.ray-arrow {
   display: grid;
   place-items: center;
+  padding: 0;
   border: 0;
-  background: var(--raised);
+  background: transparent;
   color: var(--text);
-  font-size: 16px;
+  font-size: 13px;
 }
 
-.band-arrow:first-child {
-  border-right: 1px solid var(--line-strong);
-}
-
-.band-arrow:last-child {
-  border-left: 1px solid var(--line-strong);
-}
-
-.band-arrow:disabled {
+.ray-arrow:disabled {
   color: var(--disabled);
 }
 
-.band-arrow:active:not(:disabled) {
+.ray-arrow:active:not(:disabled) {
   background: var(--highlight);
 }
 
-.band-track {
-  display: grid;
-  grid-template-columns: repeat(22, minmax(0, 1fr));
-  grid-template-rows: 14px 24px 12px;
-  padding: 3px 3px 2px;
-  min-width: 0;
-}
-
-.band-zone {
-  grid-row: 1;
-  overflow: hidden;
-  font-size: 9.5px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
-  text-align: center;
-  white-space: nowrap;
-  border-left: 1px solid var(--line);
-}
-
-.band-zone:first-child {
-  border-left: 0;
-}
-
-.band-cell {
-  grid-row: 2;
+.ray {
   position: relative;
-  margin: 0 0.5px;
-  border: 0;
-  padding: 0;
-  background: var(--z);
   min-width: 0;
+  cursor: pointer;
+  --pad: 6px;
 }
 
-.band-cell.z-cs { --z: #26241f; }
-.band-cell.z-m { --z: #2b2a24; }
-.band-cell.z-l { --z: #23221e; }
-.band-cell.z-vl { --z: #1d1c19; }
-
-.band-cell.out {
-  background: repeating-linear-gradient(135deg, var(--z) 0 3px, #0d0d0d 3px 5px);
-}
-
-/* Der Abstand: eine goldene Linie von den SC bis zu den NSC. */
-.band-cell.between::after {
-  content: '';
+/* Ort eines Schritts i (0 Close … 21 Band 20) auf dem Strahl. */
+.ray > * {
   position: absolute;
-  left: -1px;
-  right: -1px;
-  top: 50%;
+  left: calc(var(--pad) + (100% - 2 * var(--pad)) * var(--i) / 21);
+}
+
+.ray-line {
+  --i: 0;
+  top: 23px;
   height: 2px;
-  margin-top: -1px;
+  width: calc((100% - 2 * var(--pad)) * var(--n) / 21);
+  background: var(--line-strong);
+}
+
+.ray-line.out {
+  background: repeating-linear-gradient(90deg, var(--line) 0 3px, transparent 3px 6px);
+}
+
+.ray-line.span {
   background: var(--gold-deep);
+  height: 2px;
 }
 
-.band-cell.pc,
-.band-cell.npc {
-  z-index: 1;
+.ray-dot {
+  top: 22px;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: var(--dim);
 }
 
-.band-cell.pc::before,
-.band-cell.npc::before {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 11px;
-  font-weight: 700;
+.ray-dot.out {
+  background: var(--line);
+}
+
+.ray-tick {
+  top: 4px;
+  width: 1px;
+  height: 25px;
+  background: var(--line-strong);
+}
+
+.ray-label {
+  top: 1px;
+  margin-left: 3px;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.ray-label.out {
+  color: var(--dim);
+  text-decoration: line-through;
+}
+
+.ray-pc,
+.ray-npc {
+  top: 24px;
+  transform: translate(-50%, -50%);
   line-height: 1;
 }
 
-.band-cell.pc::before {
-  content: '●';
-  color: var(--text);
+.ray-pc {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--text);
+  box-shadow: 0 0 0 2px var(--bg);
 }
 
-.band-cell.npc {
-  background: var(--gold);
-  box-shadow: 0 0 6px var(--gold-glow);
+.ray-npc {
+  font-size: 13px;
+  color: var(--gold-bright);
+  text-shadow: 0 0 6px var(--gold-glow);
 }
 
-.band-cell.npc::before {
-  content: '▲';
-  color: var(--ink);
+/* Close: die NSC berühren die SC. */
+.ray-npc.close {
+  margin-left: 8px;
 }
 
-.band-cell.pc.npc::before {
-  content: '●▲';
-  font-size: 8px;
-  letter-spacing: -1px;
-}
-
-.band-tick {
-  grid-row: 3;
-  font-family: var(--mono);
-  font-size: 9px;
-  color: var(--dim);
-  text-align: center;
-  white-space: nowrap;
-}
-
-.band-note {
-  white-space: nowrap;
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 11.5px;
-  color: var(--muted);
-}
-
-.band-note .warn {
-  color: var(--accent-text);
-}
-
-.band-escaped {
-  grid-row: 2;
-  grid-column: 1 / -1;
-  display: grid;
-  place-items: center;
-  font-size: 12px;
+.ray-escaped {
+  --i: 21;
+  top: 2px;
+  transform: translateX(-100%);
+  font-size: 10px;
   font-weight: 700;
   color: var(--gold);
-  border: 1px dashed var(--gold-deep);
+  white-space: nowrap;
 }
 
 .mock-note {
@@ -4875,23 +4840,13 @@ button:disabled {
         <button type="button" class="encounter-reaction link">Reaktion 4: Hostile. Attack on 8+ · SC ziehen zuerst</button>
       </div>
 
-      <div class="band-range">
-        <div class="band-label">
-          <span class="band-now" id="now"></span>
-          <span class="small-label">● SC &nbsp;▲ NSC</span>
-        </div>
-        <div class="band-row">
-          <button type="button" class="band-arrow" id="closer" aria-label="Ein Band näher">◀</button>
-          <div class="band-track" id="track" role="group" aria-label="Entfernung in Range Bands"></div>
-          <button type="button" class="band-arrow" id="farther" aria-label="Ein Band weiter weg">▶</button>
-        </div>
-        <div class="band-note">
-          <span id="moved">Runde ohne Bewegung</span>
-          <span title="2W6: 4 + 3, Wald +1 → Long; Band 4 gewürfelt">Start: Long, Band 4</span>
-        </div>
+      <div class="ray-range">
+        <div class="ray-now" id="now"></div>
+        <button type="button" class="ray-arrow" id="closer" aria-label="Ein Band näher">◀</button>
+        <div class="ray" id="ray" role="group" aria-label="Entfernung in Range Bands"></div>
+        <button type="button" class="ray-arrow" id="farther" aria-label="Ein Band weiter weg">▶</button>
       </div>
     </header>
-
     <section class="scroll combat-scroll fight" aria-label="Kampfsimulation">
       <div class="fighters">
         <div class="fighters-head">
@@ -4922,7 +4877,7 @@ button:disabled {
           </li>
         </ol>
       </div>
-      <p class="mock-note">Entwurf: Pfeile oder ein Band antippen ändert den einen Abstand zwischen SC und NSC. Kira hat eine Automatic Pistol; auf Very Long reicht sie nicht (schraffiert). Der nötige Wurf unten folgt der Entfernung.</p>
+      <p class="mock-note">Entwurf: Pfeile oder auf den Strahl tippen ändert den einen Abstand zwischen SC (●) und NSC (▲). Kira hat eine Automatic Pistol; auf Very Long reicht sie nicht (gestrichelt). Der nötige Wurf unten folgt der Entfernung.</p>
     </section>
 
     <section class="dock" aria-label="Zug">
@@ -4931,7 +4886,7 @@ button:disabled {
         <strong class="fight-need" id="need"></strong>
       </div>
       <div class="actions fight-actions">
-        <button type="button" class="action dice" id="next">Nächste Runde</button>
+        <button type="button" class="action dice" id="next">Aussetzen</button>
         <button type="button" class="action task-roll" id="attack">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="7.5" /><circle cx="12" cy="12" r="1.4" fill="currentColor" /><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4" /></svg>
           Angreifen
@@ -4950,78 +4905,64 @@ button:disabled {
 </div>
 
 <script>
-// Schritte auf der Leiste: 0 Close, 1 Short (Band 0), 2–21 Band 1–20, 22 entkommen (über 20 Bands).
+// Schritte auf dem Strahl: 0 Close, 1 Short (Band 0), 2–21 Band 1–20, 22 entkommen (über 20 Bands).
 const ESCAPED = 22;
 const zoneOf = (s) => (s === 0 ? 'Close' : s === 1 ? 'Short' : s <= 3 ? 'Medium' : s <= 11 ? 'Long' : 'Very Long');
-const zoneClass = (s) => (s <= 1 ? 'z-cs' : s <= 3 ? 'z-m' : s <= 11 ? 'z-l' : 'z-vl');
-const bandText = (s) => (s === 0 ? 'Close (Berührung)' : s === 1 ? 'Band 0' : `${s - 1} ${s === 2 ? 'Band' : 'Bands'}`);
 
 // Kira: Automatic Pistol-1, Ziel in Jack (+1); DMs der Pistole je Reichweite (Charts S. 6).
 const rangeDm = { Close: 1, Short: 2, Medium: -4, Long: -6, 'Very Long': null };
 const SKILL = 1;
 const ARMOR = 1;
+const reaches = (s) => rangeDm[zoneOf(s)] !== null;
+const lastReach = [...Array(22).keys()].filter(reaches).pop();
 
 let step = 5; // Band 4: Long
-let moved = 0; // Bands in dieser Runde, negativ heißt näher
 
-const track = document.getElementById('track');
+const ray = document.getElementById('ray');
+
+function el(cls, i, extra = {}) {
+  const e = document.createElement('span');
+  e.className = cls;
+  e.style.setProperty('--i', String(i));
+  for (const [k, v] of Object.entries(extra)) e.style.setProperty(k, v);
+  return e;
+}
 
 function render() {
-  track.innerHTML = '';
-  const zones = [
-    ['C', 1, 1],
-    ['S', 2, 2],
-    ['Med', 3, 4],
-    ['Long', 5, 12],
-    ['Very Long', 13, 22],
-  ];
-  for (const [label, from, to] of zones) {
-    const z = document.createElement('span');
-    z.className = 'band-zone';
-    z.style.gridColumn = `${from} / ${to + 1}`;
-    z.textContent = label;
-    track.append(z);
+  ray.innerHTML = '';
+  // Die Linie: bis zur Reichweite der Waffe durchgezogen, danach gestrichelt.
+  ray.append(el('ray-line', 0, { '--n': String(lastReach) }));
+  ray.append(el('ray-line out', lastReach, { '--n': String(21 - lastReach) }));
+  // Striche an den Grenzen der Reichweiten, mit ihrem Namen.
+  for (const [label, at, first] of [['C/S', 0, 0], ['M', 1.5, 2], ['L', 3.5, 4], ['VL', 11.5, 12]]) {
+    if (at > 0) ray.append(el('ray-tick', at));
+    const l = el('ray-label' + (reaches(first) ? '' : ' out'), at);
+    l.textContent = label;
+    if (at === 0) l.style.marginLeft = '-6px';
+    ray.append(l);
   }
+  // Ein Punkt je Schritt: Short (Band 0), Band 1 … 20.
+  for (let s = 1; s < 22; s++) ray.append(el('ray-dot' + (reaches(s) ? '' : ' out'), s));
+  // Der Abstand golden, von den SC bis zu den NSC.
+  if (step !== ESCAPED && step > 0) ray.append(el('ray-line span', 0, { '--n': String(step) }));
   if (step === ESCAPED) {
-    const e = document.createElement('div');
-    e.className = 'band-escaped';
-    e.textContent = 'über 20 Bands – entkommen';
-    track.append(e);
+    ray.append(el('ray-pc', 0));
+    const e = el('ray-escaped', 21);
+    e.textContent = 'entkommen ▲';
+    ray.append(e);
   } else {
-    for (let s = 0; s < 22; s++) {
-      const b = document.createElement('button');
-      b.type = 'button';
-      const out = rangeDm[zoneOf(s)] === null;
-      b.className = ['band-cell', zoneClass(s), out ? 'out' : '', s === 1 || (step === 0 && s === 0) ? 'pc' : '', s === step ? 'npc' : '', s > 1 && s < step ? 'between' : ''].filter(Boolean).join(' ');
-      if (step === 0 && s === 1) b.classList.remove('pc');
-      b.style.gridColumn = String(s + 1);
-      b.setAttribute('aria-label', `${bandText(s)}, ${zoneOf(s)}`);
-      b.onclick = () => set(s);
-      track.append(b);
-    }
-  }
-  for (const [text, col] of [['0', 2], ['1', 3], ['3', 5], ['10', 12], ['20', 22]]) {
-    const t = document.createElement('span');
-    t.className = 'band-tick';
-    t.style.gridColumn = String(col);
-    t.textContent = text;
-    track.append(t);
+    ray.append(el('ray-pc', 0));
+    const n = el('ray-npc' + (step === 0 ? ' close' : ''), step);
+    n.textContent = '▲';
+    ray.append(n);
   }
 
   const now = document.getElementById('now');
-  if (step === ESCAPED) now.innerHTML = 'Entfernung: <span class="mono">entkommen</span>';
-  else now.innerHTML = `Entfernung: <span class="mono">${zoneOf(step)}</span> <span class="muted">· ${bandText(step)}</span>`;
+  if (step === ESCAPED) now.innerHTML = '<b>Entkommen</b><span>über 20 Bands</span>';
+  else now.innerHTML = `<b>${zoneOf(step)}</b><span>${step === 0 ? 'Berührung' : `Band ${step - 1}`}</span>`;
 
   document.getElementById('closer').disabled = step === 0;
   document.getElementById('farther').disabled = step === ESCAPED;
-
-  const m = document.getElementById('moved');
-  if (moved === 0) m.textContent = 'Runde ohne Bewegung';
-  else {
-    const n = Math.abs(moved);
-    const dir = moved < 0 ? 'näher' : 'weiter weg';
-    m.innerHTML = `Runde: ${n} ${n === 1 ? 'Band' : 'Bands'} ${dir}` + (n >= 2 ? ' · <span class="warn">gelaufen?</span>' : '');
-  }
 
   const need = document.getElementById('need');
   const attack = document.getElementById('attack');
@@ -5036,19 +4977,18 @@ function render() {
 }
 
 function set(s) {
-  moved += s - step;
-  step = s;
+  step = Math.max(0, Math.min(ESCAPED, s));
   render();
 }
 
+// Auf den Strahl tippen wählt das nächste Band.
+ray.onclick = (e) => {
+  const r = ray.getBoundingClientRect();
+  const pad = 6;
+  set(Math.round(((e.clientX - r.left - pad) / (r.width - 2 * pad)) * 21));
+};
 document.getElementById('closer').onclick = () => set(step - 1);
 document.getElementById('farther').onclick = () => set(step + 1);
-document.getElementById('next').onclick = () => {
-  moved = 0;
-  const r = document.getElementById('round');
-  r.textContent = String(Number(r.textContent) + 1);
-  render();
-};
 render();
 </script>
 </body>
