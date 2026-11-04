@@ -1,4 +1,4 @@
-import { characterOf, livingCharacters, type Campaign, type CharacterId, type Possession } from './campaign';
+import { characterOf, livingCharacters, withArms, type Campaign, type CharacterId, type Possession } from './campaign';
 import { DomainError } from './errors';
 import type { Clock } from './ports';
 import { itemOf, ref, weaponOf, type Item } from './reference';
@@ -123,7 +123,17 @@ export function buy(campaign: Campaign, itemId: string, count: number, character
   const empty = offer.item.weapon !== undefined && weaponOf(offer.item.weapon).rounds !== undefined;
   const added: Possession = { of: itemId, count, ...(empty ? { rounds: 0 } : {}) };
   const possessions = had ? who.possessions.map((p) => (p.of === itemId ? { ...p, count: p.count + count } : p)) : [...who.possessions, added];
-  return { ...booked, characters: booked.characters.map((c) => (c.id === character ? { ...c, possessions } : c)) };
+  // Eine Waffe wird Primärwaffe (und kommt in die Hand), wenn er keine hat; sonst Sekundärwaffe, wenn er keine hat.
+  const weapon = offer.item.weapon;
+  const arms =
+    weapon === undefined || weapon === who.primary || weapon === who.secondary
+      ? {}
+      : who.primary === undefined
+        ? { primary: weapon, wields: weapon }
+        : who.secondary === undefined
+          ? { secondary: weapon }
+          : {};
+  return { ...booked, characters: booked.characters.map((c) => (c.id === character ? withArms({ ...c, possessions, ...arms }) : c)) };
 }
 
 /** Der vorgeschlagene Erlös je Stück: der halbe Preis der Charts, abgerundet; ohne Preis oder bei Schiffen und Mitgliedschaften nicht verkäuflich. */
@@ -134,7 +144,7 @@ export function salePrice(item: Item): number | undefined {
 
 /**
  * Verkauft auf dem Aufenthaltsort aus dem Besitz eines Lebenden; der Erlös geht in die Gruppenkasse.
- * Geht die Waffe in der Hand ganz weg, hat er wieder die Hände.
+ * Geht eine Waffe ganz weg, entfällt sie als Primär- bzw. Sekundärwaffe.
  */
 export function sell(campaign: Campaign, itemId: string, count: number, price: number, character: CharacterId, clock: Clock): Campaign {
   const world = locationOf(campaign);
@@ -149,10 +159,11 @@ export function sell(campaign: Campaign, itemId: string, count: number, price: n
   if (!Number.isInteger(count) || count < 1 || count > had.count) throw new DomainError(`${who.name} hat ${had.count} × ${item.name}.`);
   const booked = withBooking(campaign, { at: clock.now(), kind: 'sale', amount: price * count, for: character, sold: itemId, count, in: campaign.location });
   const possessions = who.possessions.flatMap((p) => (p.of !== itemId ? [p] : p.count > count ? [{ ...p, count: p.count - count }] : []));
-  // Geht der Gegenstand ganz weg, fällt er auch aus der Hand bzw. wird ausgezogen.
+  // Geht der Gegenstand ganz weg, wird er ausgezogen; als Waffe entfällt er als Primär- bzw.
+  // Sekundärwaffe, und war er in der Hand, nimmt der Charakter seine Primärwaffe (siehe `withArms`).
   const gone = !possessions.some((p) => p.of === itemId);
-  const rest = Object.fromEntries(Object.entries(who).filter(([key]) => !(gone && ((key === 'wields' && item.weapon === who.wields) || (key === 'wears' && itemId === who.wears))))) as typeof who;
-  return { ...booked, characters: booked.characters.map((c) => (c.id === character ? { ...rest, possessions } : c)) };
+  const rest = Object.fromEntries(Object.entries(who).filter(([key]) => !(gone && key === 'wears' && itemId === who.wears))) as typeof who;
+  return { ...booked, characters: booked.characters.map((c) => (c.id === character ? withArms({ ...rest, possessions }) : c)) };
 }
 
 /** Prüft die Buchungen einer Kampagnendatei: jede passt zu ihrer Art, und die Kasse ist nach keiner negativ. */

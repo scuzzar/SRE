@@ -53,7 +53,10 @@ export interface Character {
   readonly career?: Career;
   /** Die Heimatwelt: ein Hexfeld mit fertiger Welt, als Spalte und Zeile (0304). */
   readonly homeworld?: string;
-  /** Die Waffe in der Hand: die Waffe eines Gegenstands aus seinem Besitz; fehlt sie, sind es die Hände. */
+  /** Primär- und Sekundärwaffe: Waffen von Gegenständen aus seinem Besitz, verschieden, nicht die Hände. */
+  readonly primary?: string;
+  readonly secondary?: string;
+  /** Die Waffe in der Hand: Primär- oder Sekundärwaffe; fehlt sie, sind es die Hände. */
   readonly wields?: string;
   /** Die getragene Rüstung: ein Gegenstand mit Rüstungsklasse aus seinem Besitz; fehlt sie, Nothing. */
   readonly wears?: string;
@@ -104,7 +107,10 @@ export interface CharacterInput {
   readonly possessions?: readonly Possession[];
   /** Die Heimatwelt; fehlt, wenn der Charakter keine hat. */
   readonly homeworld?: string;
-  /** Die Waffe in der Hand; fehlt sie, sind es die Hände. Fehlt der Gegenstand im Besitz, fällt sie weg. */
+  /** Primär- und Sekundärwaffe; fehlt der Gegenstand im Besitz, fallen sie weg. */
+  readonly primary?: string;
+  readonly secondary?: string;
+  /** Die Waffe in der Hand; fehlt sie, sind es die Hände. Ist sie weder Primär- noch Sekundärwaffe, gilt die Primärwaffe. */
   readonly wields?: string;
   /** Die getragene Rüstung; fehlt sie, Nothing. Fehlt der Gegenstand im Besitz, fällt sie weg. */
   readonly wears?: string;
@@ -115,7 +121,7 @@ export interface CharacterInput {
 /** Eine neue Kampagne, ohne Log, mit der Standardstufe und den angegebenen Charakteren. */
 export function createCampaign(examples: readonly ExampleCharacter[] = ref.examples, name = 'Kampagne', id: CampaignId = 'k1'): Campaign {
   let campaign: Campaign = { id, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [], bookings: [], encounters: [] };
-  for (const example of examples) campaign = addCharacter(campaign, example).campaign;
+  for (const { primary, ...example } of examples) campaign = addCharacter(campaign, { ...example, ...(primary === undefined ? {} : { primary }) }).campaign;
   // Bei mehreren Beispielen steht der erste oben, nicht der zuletzt angelegte.
   return withFocus(campaign, livingCharacters(campaign)[0]?.id);
 }
@@ -272,10 +278,37 @@ export function weaponsOf(character: { readonly possessions?: readonly Possessio
   return [HANDS, ...(character.possessions ?? []).flatMap((p) => itemOf(p.of).weapon ?? [])];
 }
 
-/** Die Waffe in der Hand, nur wenn der Gegenstand dazu im Besitz ist; sonst die Hände (kein Feld). */
-function wieldsOf(input: CharacterInput): { wields?: string } {
-  if (input.wields === undefined || input.wields === HANDS) return {};
-  return weaponsOf(input).includes(input.wields) ? { wields: input.wields } : {};
+/** Die Waffenfelder eines Charakters. */
+interface Arms {
+  readonly possessions?: readonly Possession[];
+  readonly primary?: string;
+  readonly secondary?: string;
+  readonly wields?: string;
+}
+
+/**
+ * Primär-, Sekundärwaffe und Waffe in der Hand, bereinigt: Primär- und Sekundärwaffe nur, wenn der
+ * Gegenstand im Besitz ist, und verschieden. Die Waffe in der Hand ist eine der beiden oder die
+ * Hände (kein Feld); war sie eine andere Waffe, nimmt er die Primärwaffe, ohne sie die Hände.
+ */
+function armsOf(input: Arms): { primary?: string; secondary?: string; wields?: string } {
+  const owned = weaponsOf(input).filter((w) => w !== HANDS);
+  const primary = input.primary !== undefined && owned.includes(input.primary) ? input.primary : undefined;
+  const secondary = input.secondary !== undefined && input.secondary !== primary && owned.includes(input.secondary) ? input.secondary : undefined;
+  const wanted = input.wields === HANDS ? undefined : input.wields;
+  const wields = wanted === undefined ? undefined : wanted === primary || wanted === secondary ? wanted : primary;
+  return { ...(primary === undefined ? {} : { primary }), ...(secondary === undefined ? {} : { secondary }), ...(wields === undefined ? {} : { wields }) };
+}
+
+/** Der Charakter mit bereinigten Waffenfeldern (siehe `armsOf`), etwa nachdem sich sein Besitz geändert hat. */
+export function withArms<T extends Arms>(character: T): T {
+  const rest = Object.fromEntries(Object.entries(character).filter(([key]) => key !== 'primary' && key !== 'secondary' && key !== 'wields')) as T;
+  return { ...rest, ...armsOf(character) };
+}
+
+/** Die Waffen, zwischen denen ein Charakter im Kampf wechselt: Primärwaffe, Sekundärwaffe und die Hände. */
+export function armedWeaponsOf(character: Character): readonly string[] {
+  return [...(character.primary === undefined ? [] : [character.primary]), ...(character.secondary === undefined ? [] : [character.secondary]), HANDS];
 }
 
 /** Was ein Charakter tragen kann: die Gegenstände mit Rüstungsklasse aus seinem Besitz, in dessen Reihenfolge. */
@@ -297,11 +330,12 @@ export function setWears(campaign: Campaign, id: CharacterId, item: string | und
   return { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? after : c)) };
 }
 
-/** Wechselt die Waffe in der Hand: die Hände oder die Waffe eines Gegenstands aus dem Besitz. */
+/** Wechselt die Waffe in der Hand: Primärwaffe, Sekundärwaffe oder die Hände. */
 export function setWields(campaign: Campaign, id: CharacterId, weapon: string): Campaign {
   const character = characterOf(campaign, id);
   const name = weaponOf(weapon).name;
   if (!weaponsOf(character).includes(weapon)) throw new DomainError(`${character.name} hat kein${itemOfWeapon(weapon) ? 'e' : ''} ${name}.`);
+  if (!armedWeaponsOf(character).includes(weapon)) throw new DomainError(`${name} ist weder Primär- noch Sekundärwaffe von ${character.name}; das legt man im Editor fest.`);
   const rest = Object.fromEntries(Object.entries(character).filter(([key]) => key !== 'wields')) as Omit<Character, 'wields'>;
   const after: Character = weapon === HANDS ? rest : { ...rest, wields: weapon };
   return { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? after : c)) };
@@ -322,7 +356,7 @@ export function validateCharacter(input: CharacterInput): void {
     seen.add(skill.of);
     if (!Number.isInteger(skill.level) || skill.level < 0) throw new DomainError(`Die Stufe von ${name} ist 0 oder mehr.`);
   }
-  if (input.wields !== undefined) weaponOf(input.wields);
+  for (const weapon of [input.primary, input.secondary, input.wields]) if (weapon !== undefined) weaponOf(weapon);
   if (input.wears !== undefined && itemOf(input.wears).armor === undefined) throw new DomainError(`${itemOf(input.wears).name} ist keine Rüstung.`);
   const owned = new Set<string>();
   for (const possession of input.possessions ?? []) {
@@ -374,7 +408,7 @@ export function addCharacter(campaign: Campaign, input: CharacterInput, career?:
     skills: input.skills.map((s) => ({ of: s.of, level: s.level, retired: false })),
     ...(career ? { career } : {}),
     ...(input.homeworld === undefined ? {} : { homeworld: input.homeworld }),
-    ...wieldsOf(input),
+    ...armsOf(input),
     ...wearsOf(input),
   };
   const added = { ...campaign, characters: [...campaign.characters, character] };
@@ -401,8 +435,11 @@ export function updateCharacter(campaign: Campaign, id: CharacterId, input: Char
   const known = new Set(before.skills.map((s) => s.of));
   const added = input.skills.filter((s) => !known.has(s.of)).map((s) => ({ of: s.of, level: s.level, retired: false }));
   // Die Eingabe sagt, welche Heimatwelt gilt; fehlt sie, hat der Charakter keine.
-  // Ebenso die Waffe in der Hand; fehlt ihr Gegenstand im Besitz, sind es wieder die Hände.
-  const rest = Object.fromEntries(Object.entries(before).filter(([key]) => key !== 'homeworld' && key !== 'wields' && key !== 'wears')) as Omit<Character, 'homeworld' | 'wields' | 'wears'>;
+  // Ebenso Primär-, Sekundärwaffe und Waffe in der Hand; fehlt ihr Gegenstand im Besitz, fallen sie weg.
+  const rest = Object.fromEntries(Object.entries(before).filter(([key]) => !['homeworld', 'primary', 'secondary', 'wields', 'wears'].includes(key))) as Omit<
+    Character,
+    'homeworld' | 'primary' | 'secondary' | 'wields' | 'wears'
+  >;
   // Was eine Schusswaffe geladen hat, bleibt, wenn die Eingabe nichts dazu sagt.
   const loaded = new Map(before.possessions.flatMap((p) => (p.rounds === undefined ? [] : [[p.of, p.rounds] as const])));
   const possessions =
@@ -415,7 +452,7 @@ export function updateCharacter(campaign: Campaign, id: CharacterId, input: Char
     npc: input.npc ?? before.npc,
     skills: [...kept, ...added],
     ...(input.homeworld === undefined ? {} : { homeworld: input.homeworld }),
-    ...wieldsOf({ ...input, possessions }),
+    ...armsOf({ ...input, possessions }),
     ...wearsOf({ ...input, possessions }),
   };
   return keepFocus(campaign, { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? after : c)) });
@@ -436,9 +473,16 @@ export function restoreCharacter(campaign: Campaign, id: CharacterId): Campaign 
 
 /** Was eine Eingabe für einen bestehenden Charakter wäre, mit seinen eingeblendeten Fertigkeiten. */
 export function inputOf(character: Character): CharacterInput {
-  const { name, background, equipment, credits, note, dead, npc, upp, possessions, homeworld, wields, wears } = character;
+  const { name, background, equipment, credits, note, dead, npc, upp, possessions, homeworld, primary, secondary, wields, wears } = character;
   const input = { name, background, equipment, credits, note, dead, npc, upp, possessions, skills: activeSkills(character).map(({ of, level }) => ({ of, level })) };
-  return { ...input, ...(homeworld === undefined ? {} : { homeworld }), ...(wields === undefined ? {} : { wields }), ...(wears === undefined ? {} : { wears }) };
+  return {
+    ...input,
+    ...(homeworld === undefined ? {} : { homeworld }),
+    ...(primary === undefined ? {} : { primary }),
+    ...(secondary === undefined ? {} : { secondary }),
+    ...(wields === undefined ? {} : { wields }),
+    ...(wears === undefined ? {} : { wears }),
+  };
 }
 
 /** Beginnt oder ersetzt die Charaktererschaffung der Kampagne; `undefined` verwirft sie. */

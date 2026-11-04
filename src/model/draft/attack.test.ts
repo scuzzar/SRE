@@ -79,6 +79,7 @@ describe('Angriff vorbereiten', () => {
           ? {
               ...c,
               possessions: [...c.possessions, { of: 'cutlass', count: 1 }],
+              secondary: 'cutlass',
             }
           : c,
       ),

@@ -247,6 +247,8 @@ export const ExampleCharacterSchema = z.object({
   skills: z.array(z.object({ of: z.string().min(1), level })),
   /** Was er aus der Liste der Gegenstände besitzt. */
   possessions: z.array(z.object({ of: z.string().min(1), count: z.number().int().min(1) })).default([]),
+  /** Die Primärwaffe: die Waffe eines Gegenstands aus seinem Besitz. */
+  primary: z.string().min(1).optional(),
   equipment: z.string(),
   credits: z.number().int(),
   note: z.string(),
@@ -297,6 +299,9 @@ export const ReferenceDataSchema = z
       uniqueIds(example.possessions.map((p) => p.of), `Gegenstand bei ${example.name}:`, ctx);
       for (const p of example.possessions) {
         if (!data.items.some((i) => i.id === p.of)) ctx.addIssue({ code: 'custom', message: `Unbekannter Gegenstand ${p.of} bei ${example.name}` });
+      }
+      if (example.primary !== undefined && !example.possessions.some((p) => data.items.find((i) => i.id === p.of)?.weapon === example.primary)) {
+        ctx.addIssue({ code: 'custom', message: `Die Primärwaffe ${example.primary} von ${example.name} ist nicht in seinem Besitz` });
       }
     }
   });

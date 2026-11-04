@@ -89,7 +89,14 @@ export function upgraded(campaign: Campaign): Campaign {
     });
     return { ...entry, items };
   });
-  const characters = campaign.characters.map((c) => ({ ...c, dead: c.dead ?? false, npc: c.npc ?? false, possessions: c.possessions ?? [] }));
+  // Charaktere von vor der Primär- und Sekundärwaffe: Die Waffe in der Hand wird die Primärwaffe.
+  const characters = campaign.characters.map((c) => ({
+    ...c,
+    dead: c.dead ?? false,
+    npc: c.npc ?? false,
+    possessions: c.possessions ?? [],
+    ...(c.primary === undefined && c.secondary === undefined && c.wields !== undefined ? { primary: c.wields } : {}),
+  }));
   const hexes = (campaign.hexes ?? []).map((hex): Hex => {
     const old = hex as Hex & { readonly rolls?: readonly LegacyWorldRoll[] };
     return old.rolls ? hexFromRolls({ column: old.column, row: old.row, ...(old.name === undefined ? {} : { name: old.name }), rolls: old.rolls }) : hex;

@@ -15,6 +15,8 @@ import {
   setHexes,
   setLocation,
   setWields,
+  inputOf,
+  updateCharacter,
   setWears,
   spendRound,
   toCampaignFile,
@@ -118,6 +120,30 @@ describe('Verkaufen', () => {
     expect(characterOf(worn, 'c1')).not.toHaveProperty('wears');
     // Auch ein verbotener Gegenstand oder einer über dem TL der Welt lässt sich verkaufen.
     expect(fundsOf(sell(there, 'vacc-suit-tl12', 1, 5000, 'c1', clock))).toBe(5000);
+  });
+
+  it('eine gekaufte Waffe wird Primärwaffe (in der Hand), sonst Sekundärwaffe, wenn noch keine da ist', () => {
+    const rich = book(there, 'income', 5000, clock);
+    // Jonas hat Blade als Primärwaffe: Die Rifle wird Sekundärwaffe, der Revolver danach nichts.
+    const rifle = buy(rich, 'rifle', 1, 'c2', clock);
+    expect(characterOf(rifle, 'c2')).toMatchObject({ primary: 'blade', secondary: 'rifle' });
+    expect(characterOf(rifle, 'c2')).not.toHaveProperty('wields');
+    const revolver = buy(rifle, 'revolver', 1, 'c2', clock);
+    expect(characterOf(revolver, 'c2')).toMatchObject({ primary: 'blade', secondary: 'rifle' });
+    // Ohne Primärwaffe wird die gekaufte Waffe Primärwaffe und kommt in die Hand.
+    const bare = updateCharacter(rich, 'c1', { ...inputOf(characterOf(rich, 'c1')), possessions: [] });
+    expect(characterOf(buy(bare, 'rifle', 1, 'c1', clock), 'c1')).toMatchObject({ primary: 'rifle', wields: 'rifle' });
+  });
+
+  it('verkauft er die Sekundärwaffe in der Hand, nimmt er die Primärwaffe; ohne Primärwaffe die Hände', () => {
+    const rich = book(there, 'income', 5000, clock);
+    const holding = setWields(buy(rich, 'rifle', 1, 'c2', clock), 'c2', 'rifle');
+    expect(characterOf(sell(holding, 'rifle', 1, 100, 'c2', clock), 'c2')).toMatchObject({ primary: 'blade', wields: 'blade' });
+    expect(characterOf(sell(holding, 'blade', 1, 20, 'c2', clock), 'c2')).toMatchObject({ secondary: 'rifle', wields: 'rifle' });
+    const onlyBlade = setWields(rich, 'c2', 'blade');
+    const sold = characterOf(sell(onlyBlade, 'blade', 1, 20, 'c2', clock), 'c2');
+    expect(sold).not.toHaveProperty('primary');
+    expect(sold).not.toHaveProperty('wields');
   });
 
   it('verkauft nicht mehr, als der Charakter hat, nicht für 0 Cr und nicht ohne Aufenthaltsort', () => {

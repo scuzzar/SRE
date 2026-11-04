@@ -638,6 +638,8 @@ Item --> ItemKind
 Item "0..1" --> "0..1" Skill : /uses
 Item "0..1" --> "0..1" Weapon : weapon
 Character "*" --> "0..1" Weapon : wields
+Character "*" --> "0..1" Weapon : primary
+Character "*" --> "0..1" Weapon : secondary
 
 ' Waffen (Referenzdaten)
 Weapon "*" --> "1" Skill : uses

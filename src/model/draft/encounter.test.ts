@@ -183,7 +183,7 @@ describe('Übernehmen', () => {
   it('als SC: mit Waffe und Rüstung in der Hand bzw. angezogen; als NSC unter „NSC“', () => {
     const asPc = adoptNpc(thugs(), 'n1', false);
     const pc = asPc.characters.at(-1)!;
-    expect(pc).toMatchObject({ npc: false, wields: 'foil', wears: 'mesh', skills: [{ of: 'foil', level: 2, retired: false }] });
+    expect(pc).toMatchObject({ npc: false, primary: 'foil', wields: 'foil', wears: 'mesh', skills: [{ of: 'foil', level: 2, retired: false }] });
     expect(pc.background).toBe('Thugs · Anführer');
     expect(currentEncounter(asPc)!.npcs[0]!.became).toBe(pc.id);
     expect(() => adoptNpc(asPc, 'n1', true)).toThrow(/schon übernommen/);

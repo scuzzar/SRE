@@ -1,0 +1,4898 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kompakte Waffenleiste</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+<style>
+/* Stile der App (src/view/styles.css), unverändert übernommen. */
+/* Farben und Schrift aus dem UI-Entwurf (docs/ui-entwurf). */
+:root {
+  --bg: #111111;
+  --panel: #161616;
+  --raised: #1a1a1a;
+  --highlight: #1f1f1f;
+  --deep: #0b0b0b;
+  --card: #0e0e0e;
+  --rule: #2a2a2a;
+  --rule-soft: #2e2e2e;
+  --line: #3a3a3a;
+  --line-strong: #555555;
+  --text: #eceae4;
+  --muted: #a3a09a;
+  --dim: #8c8a85;
+  --ink: #111111;
+  --ink-muted: #3a3833;
+  --accent: #c62f35;
+  --accent-text: #ef5a5f;
+  --accent-wash: #2a1415;
+  --disabled: #333333;
+  /* Würfel und Urteil, angelehnt an Baldur's Gate 3: Gold auf dunklem Grund. */
+  --gold: #d9b45f;
+  --gold-bright: #f5dc96;
+  --gold-deep: #8a6a2a;
+  --gold-glow: rgba(233, 190, 92, 0.5);
+  --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--deep);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
+}
+
+#root {
+  height: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* Zwei schnelle Tipper sind zwei Tipper, kein Doppeltipp-Zoom des Browsers. */
+  touch-action: manipulation;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* --- Rahmen der App ------------------------------------------------------------------------- */
+
+.app {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 480px;
+  height: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 8px 10px 16px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  border-bottom: 1px solid var(--rule);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  font-size: 13px;
+}
+
+.brand::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 5px;
+  height: 22px;
+  background: var(--accent);
+}
+
+/* Die Kopfzeile trägt den Namen der offenen Kampagne; ein Tippen öffnet die Kampagnenwahl. */
+.campaign-switch {
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 6px 0 0;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  font-size: 15px;
+}
+
+.campaign-switch svg {
+  flex: 0 0 auto;
+  margin-left: -4px;
+  color: var(--muted);
+}
+
+.campaign-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.header-right {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+}
+
+.icon-button[aria-current='page'] {
+  color: var(--text);
+}
+
+.banner {
+  flex: 0 0 auto;
+  padding: 6px 16px;
+  font-size: 12px;
+  background: var(--accent-wash);
+  color: var(--text);
+  border-bottom: 1px solid var(--accent);
+}
+
+.screen {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.dock {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--rule);
+  background: var(--panel);
+}
+
+.section-title {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.kicker {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.nav {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-top: 1px solid var(--rule);
+  background: var(--deep);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.nav button {
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: transparent;
+  border: 0;
+  border-top: 2px solid transparent;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.nav button[aria-current='page'] {
+  border-top-color: var(--accent-text);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* --- Stufenauswahl -------------------------------------------------------------------------- */
+
+.odds {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--line-strong);
+}
+
+.odds button {
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+}
+
+.odds button[aria-checked='true'] {
+  background: var(--text);
+  color: var(--ink);
+}
+
+.odds .odds-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.odds .odds-target {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.odds .odds-sub {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.odds button[aria-checked='true'] .odds-sub {
+  color: var(--ink-muted);
+}
+
+/* --- Orakel-Screen -------------------------------------------------------------------------- */
+
+.log-scroll {
+  display: flex;
+  flex-direction: column-reverse;
+  /* Unter der Leiste mit dem Charakter oben läuft der Log weich aus, statt hart abgeschnitten. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 56px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 56px);
+}
+
+.log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.log-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.log-hint {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.log ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.log-empty {
+  padding: 24px 8px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid var(--rule-soft);
+}
+
+.entry.latest {
+  background: var(--highlight);
+  border-color: #666666;
+}
+
+/* Langes Drücken löscht: Das System soll dabei weder Text markieren noch ein Menü zeigen. */
+.log .entry {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.entry.confirming {
+  border-color: var(--accent);
+}
+
+.entry-delete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+  font-size: 13px;
+}
+
+.entry-delete span {
+  flex: 1 1 auto;
+}
+
+.entry-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.entry-time {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+.entry-question {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.entry-detail {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+.verdict {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
+}
+
+.verdict.negative {
+  color: var(--accent-text);
+}
+
+.dice-total {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-family: var(--mono);
+}
+
+.dice-total strong {
+  font-size: 30px;
+}
+
+.picks {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 12px;
+}
+
+.picks dt {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.picks dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Wurffelder im Log: Windrose und Kartensymbol als kleines Bild neben dem Text. */
+.picks dd.pick-roll {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.picks dd.pick-roll .roll-svg {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  color: var(--gold);
+}
+
+.picks dd.pick-bell {
+  font-family: var(--mono);
+  font-size: 18px;
+  color: var(--gold-bright);
+}
+
+.question-input {
+  min-height: 44px;
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+}
+
+.question-input::placeholder {
+  color: var(--dim);
+}
+
+/* Die Schreibzeile: ein Textfeld, der Knopf entscheidet, ob es Frage, Deutung oder Notiz wird. */
+.write-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 6px;
+}
+
+.write-button {
+  min-height: 44px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.write-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.write-button.interpret {
+  border-color: var(--gold-deep);
+  color: var(--gold);
+}
+
+.write-button:disabled {
+  border-color: var(--disabled);
+  color: var(--dim);
+}
+
+/* Worauf sich eine Deutung bezöge; steht nur da, solange Text im Feld ist. */
+.target-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 2px 2px 2px 10px;
+  border-left: 3px solid var(--gold);
+  background: #18150e;
+  font-size: 13px;
+}
+
+.target-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--muted);
+}
+
+.target-text b {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.target-line .icon-button {
+  width: 32px;
+  height: 32px;
+}
+
+/* --- Deutungen und Notizen im Log ----------------------------------------------------------- */
+
+.entry.outcome {
+  cursor: pointer;
+}
+
+.entry.target {
+  border-color: var(--gold);
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+
+.interpretation {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+  padding: 8px 0 0 10px;
+  border-top: 1px solid var(--rule);
+  border-left: 2px solid var(--gold-deep);
+  cursor: default;
+}
+
+.interpretation .kicker {
+  color: var(--gold);
+}
+
+.interpretation.confirming {
+  border-left-color: var(--accent);
+}
+
+.note-text {
+  margin: 0;
+  font-size: 15px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.entry.note,
+.entry.note.latest {
+  background: transparent;
+  border-style: dashed;
+}
+
+.entry.note.latest {
+  border-color: #666666;
+}
+
+.entry.note .kicker {
+  color: var(--muted);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 6px;
+}
+
+/* Der Knopf für Orakel bzw. Probe steht in einer Zeile mit der Stufenauswahl. */
+.odds-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.action {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.action.oracle {
+  min-height: 48px;
+  padding: 0 18px;
+  background: var(--text);
+  color: var(--ink);
+}
+
+.action.draw {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.action.dice {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--text);
+}
+
+.action,
+.roll,
+.confirm {
+  transition: transform 0.08s ease-out;
+}
+
+.action:active,
+.roll:active:not(:disabled),
+.confirm:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* --- Inspirationskarte ---------------------------------------------------------------------- */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  flex-direction: column;
+  padding-top: 10px;
+}
+
+.sheet {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--raised);
+  border: 1px solid var(--line-strong);
+  border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+}
+
+.sheet-head {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 16px 6px;
+}
+
+.sheet-head h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.sheet-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 12px 6px;
+}
+
+.sheet-foot {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px 10px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  border-top: 1px solid #333333;
+  background: var(--panel);
+}
+
+.card-question {
+  margin: 0 12px 6px;
+  padding: 4px 8px;
+  background: var(--bg);
+  border: 1px solid #2c2c2c;
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: linear-gradient(180deg, #131313, #0e0e0e);
+  border: 1px solid #333333;
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.card-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: 3px;
+}
+
+.cols-1 {
+  --cols: 1;
+}
+
+.cols-2 {
+  --cols: 2;
+}
+
+.cols-3 {
+  --cols: 3;
+}
+
+/* Paare im Raster: knapp gesetzt, damit die ganze Karte auf einen Bildschirm passt. */
+.card-grid .tile {
+  min-height: 0;
+  padding: 3px 7px 4px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.card-grid .tile .tile-label {
+  margin-bottom: 1px;
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.card-grid .tile.sense {
+  min-height: 0;
+  gap: 7px;
+  font-size: 12px;
+}
+
+.card-grid .tile.sense .tile-text {
+  font-weight: 600;
+}
+
+.tile.sense svg {
+  flex: 0 0 auto;
+  color: var(--dim);
+}
+
+.tile .tile-line {
+  display: block;
+}
+
+.card-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  gap: 6px;
+}
+
+.card-band {
+  padding: 3px 6px;
+  background: var(--rule-soft);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 5px 8px;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.3;
+  background: #1b1b1b;
+  border: 1px solid #2c2c2c;
+  border-radius: 6px;
+  color: var(--text);
+  transition:
+    background-color 0.12s,
+    border-color 0.12s;
+}
+
+.tile:active {
+  background: #232323;
+}
+
+.tile .tile-label {
+  font-size: 10px;
+  color: var(--dim);
+}
+
+.tile .tile-text {
+  max-width: 100%;
+  font-weight: 600;
+  /* Lange Wörter (durchschnittlich, Waffenstillstand) trennen statt abschneiden. */
+  hyphens: auto;
+  overflow-wrap: anywhere;
+}
+
+/* Ausgewählt: rot umrandet mit Haken in der Ecke, der Text bleibt gut lesbar. */
+.tile[aria-pressed='true'] {
+  background: var(--accent-wash);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.tile[aria-pressed='true'] .tile-label,
+.tile[aria-pressed='true'] svg {
+  color: var(--accent-text);
+}
+
+.tile[aria-pressed='true']::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 6.2l2 2 4-4.4' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / 12px no-repeat;
+}
+
+.tile.sense {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  min-height: 40px;
+  font-size: 14px;
+}
+
+.tile.sense .tile-text {
+  font-weight: 400;
+}
+
+.tile.name {
+  align-items: center;
+  min-height: 40px;
+  font-size: 14px;
+}
+
+/* Die Wurffelder: Glockenzahl, Windrose und Kartensymbol. Bild links, Beschriftung und Wert rechts,
+   damit die Reihe niedrig bleibt und die ganze Karte auf einen Bildschirm passt. */
+.card-grid .tile.card-roll {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 2px 4px 2px 3px;
+}
+
+.tile.card-roll .roll-text {
+  /* Unten ausgerichtet, damit der Haken oben rechts die Beschriftung nicht verdeckt. */
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: flex-end;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.card-grid .tile.card-roll .tile-label {
+  margin: 0;
+  letter-spacing: 0.03em;
+}
+
+.tile.card-roll .roll-svg {
+  flex: none;
+  display: block;
+  width: 40px;
+  height: 40px;
+  color: var(--gold);
+}
+
+.tile.card-roll .roll-caption {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.tile.card-roll .bell-number {
+  flex: none;
+  width: 34px;
+  font-family: var(--mono);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 42px;
+  text-align: center;
+  color: var(--gold-bright);
+  text-shadow: 0 0 12px var(--gold-glow);
+}
+
+.tile.card-roll .bell-curve {
+  display: block;
+  width: 50px;
+  height: auto;
+}
+
+/* Die sechs Namen auf der Tafel NSC: knapp, damit die ganze Karte auf einen Bildschirm passt. */
+.theme-names {
+  margin-bottom: 3px;
+}
+
+/* Gleiche Spezifität wie `.card-grid.wide-band .tile.name`, deshalb mit `.theme` davor. */
+.theme .card-grid.theme-names .tile.name {
+  padding: 2px 3px;
+  font-size: 11px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.card-grid.wide-band .tile.name {
+  min-height: 0;
+  padding: 3px 6px;
+  font-size: 12px;
+  line-height: 1.15;
+}
+
+.tile.flavor {
+  min-height: 40px;
+  font-style: italic;
+}
+
+.tile.flavor .tile-text {
+  font-weight: 400;
+}
+
+.themes {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.theme-box {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px 3px;
+}
+
+.theme {
+  grid-column: span 3;
+  min-width: 0;
+}
+
+.theme.span-1 {
+  grid-column: span 1;
+}
+
+.theme.span-2 {
+  grid-column: span 2;
+}
+
+/* Überschrift einer Tafel: roter Strich, Name, feine Linie bis zum Rand. */
+.theme-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 1px 0 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.theme-title::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 3px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.theme-title::after {
+  content: '';
+  flex: 1 1 auto;
+  height: 1px;
+  background: #2a2a2a;
+}
+
+.ghost {
+  min-height: 48px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  font-size: 14px;
+}
+
+.sheet-foot .ghost {
+  border-color: #3a3a3a;
+  border-radius: 8px;
+}
+
+.square {
+  width: 48px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.count {
+  flex: 1 1 auto;
+  text-align: right;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.confirm {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(198, 47, 53, 0.35);
+  transition:
+    background-color 0.15s,
+    box-shadow 0.15s;
+}
+
+/* Die Karte: Kopf und Fuß knapp, damit sie mit Frage und Namen auf einen Handybildschirm passt. */
+.card-sheet .sheet-head {
+  padding: 6px 16px 3px;
+}
+
+.card-sheet .card-question {
+  margin-bottom: 4px;
+}
+
+.card-sheet .sheet-foot {
+  padding: 5px 16px 7px;
+  padding-bottom: max(7px, env(safe-area-inset-bottom));
+}
+
+.card-sheet .confirm {
+  width: 48px;
+  height: 48px;
+}
+
+.confirm:disabled {
+  background: var(--disabled);
+  color: var(--dim);
+  box-shadow: none;
+}
+
+/* --- Charakter-Screen ----------------------------------------------------------------------- */
+
+.characters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pc {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid var(--rule-soft);
+}
+
+.pc-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin: -2px -8px 0 0;
+}
+
+.pc-top .icon-button {
+  flex: 0 0 auto;
+}
+
+.pc-head {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  align-content: center;
+  column-gap: 10px;
+  row-gap: 2px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  text-align: left;
+}
+
+.pc-name {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.pc-sub {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.upp {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.upp button,
+.upp .cell {
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 0;
+  background: var(--bg);
+  border: 1px solid #333333;
+  color: var(--text);
+}
+
+.upp button:disabled {
+  cursor: default;
+}
+
+.upp .upp-label {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+.upp .upp-code {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.upp .upp-state {
+  min-height: 13px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.upp button.neutral {
+  color: var(--dim);
+}
+
+.upp button.offer {
+  border-style: dashed;
+  border-color: var(--text);
+}
+
+.upp button.offer.malus {
+  border-color: var(--accent-text);
+}
+
+.upp button.offer.malus .upp-state {
+  color: var(--accent-text);
+}
+
+.upp button[aria-pressed='true'] {
+  background: var(--text);
+  border: 1px solid var(--text);
+  color: var(--ink);
+}
+
+.upp button[aria-pressed='true'] .upp-state {
+  font-size: 10px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips button,
+.chips .chip {
+  min-height: 40px;
+  padding: 6px 8px;
+  font-size: 14px;
+  background: transparent;
+  border: 1px solid var(--line-strong);
+}
+
+.chips button.unskilled {
+  border-style: dashed;
+}
+
+.chips button[aria-pressed='true'] {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 12px;
+  font-size: 14px;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.small-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.add-character {
+  min-height: 48px;
+  padding: 14px;
+  background: transparent;
+  border: 1px dashed #444444;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.retired {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.fallen {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.fallen ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fallen li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 4px 2px 14px;
+  border: 1px solid var(--rule-soft);
+  color: var(--muted);
+}
+
+.fallen-name {
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.fallen-name .pc-sub {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+}
+
+.form .toggle input {
+  flex: 0 0 auto;
+  width: 24px;
+  min-height: 24px;
+  height: 24px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+}
+
+.toggle > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 15px;
+}
+
+.retired li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.retired ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.task-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-height: 46px;
+}
+
+.task-hint {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.task-headline {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.task-figures {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.roll {
+  min-height: 48px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 0;
+  font-weight: 700;
+  font-size: 15px;
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.roll:disabled {
+  background: var(--disabled);
+  color: var(--dim);
+}
+
+/* --- Ergebnis-Popup und Editor -------------------------------------------------------------- */
+
+.modal {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.result {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  background: var(--raised);
+  border: 1px solid #666666;
+  border-radius: 12px;
+}
+
+.result h2 {
+  margin: 0;
+  font-size: 34px;
+  letter-spacing: 0.06em;
+}
+
+.primary {
+  min-height: 52px;
+  border: 0;
+  background: var(--text);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 16px 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field > span,
+.form legend {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.form fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form input,
+.form select,
+.form textarea {
+  min-height: 44px;
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+}
+
+.form textarea {
+  min-height: 64px;
+  resize: vertical;
+}
+
+.upp-inputs {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.upp-inputs label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+.upp-inputs select {
+  padding: 4px 2px;
+  text-align: center;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* Kampagnenwahl */
+.inline-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.inline-form .field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.inline-form .ghost {
+  flex: 0 0 auto;
+  min-height: 44px;
+}
+
+.campaigns {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.campaigns li {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.campaign-pick {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 12px;
+  background: var(--panel);
+  border: 1px solid var(--rule-soft);
+  text-align: left;
+}
+
+.campaigns li.open .campaign-pick {
+  border-color: var(--accent);
+  border-left-width: 4px;
+}
+
+.campaign-title {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.campaigns .ghost {
+  min-height: 56px;
+}
+
+.campaigns .ghost:disabled {
+  opacity: 0.35;
+}
+
+.import {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.import:focus-within {
+  outline: 2px solid var(--text);
+}
+
+.skill-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 44px;
+  gap: 6px;
+  align-items: center;
+}
+
+.error {
+  padding: 8px 12px;
+  border: 1px solid var(--accent);
+  background: var(--accent-wash);
+  font-size: 14px;
+}
+
+.danger {
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+
+/* --- Charaktererschaffung ------------------------------------------------------------------- */
+/* Eine Charakterkarte, die sich Wurf für Wurf füllt; unten die Würfelbühne und die Knöpfe für den
+   nächsten Schritt, im Daumenbereich. */
+
+.add-characters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.ghost.compact {
+  min-height: 36px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.sheet.generation .sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 12px;
+}
+
+.sheet.generation .generation-card {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  gap: 8px;
+  padding: 10px 12px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+}
+
+.pc-head.static {
+  min-height: 0;
+}
+
+.upp-cell {
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border: 1px solid #333333;
+}
+
+.upp-cell .upp-label {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+.upp-cell .upp-code {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.upp-cell.next {
+  border-style: dashed;
+  border-color: var(--gold);
+}
+
+.chips.static {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips.static li {
+  padding: 5px 8px;
+  font-size: 13px;
+  border: 1px solid var(--line-strong);
+}
+
+.career {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.career h3 {
+  margin: 0;
+}
+
+.career-term h4 {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+}
+
+.career-term ol,
+.career-term ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.career-term li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 13px;
+}
+
+.career-label {
+  color: var(--muted);
+}
+
+.career-roll {
+  font-size: 12px;
+  color: var(--dim);
+  text-align: right;
+}
+
+.career-result {
+  grid-column: 1 / -1;
+  font-weight: 600;
+}
+
+.career-term li.failed .career-result {
+  color: var(--accent-text);
+}
+
+.career-term.folded summary {
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer;
+  list-style: none;
+}
+
+.career-term.folded summary::-webkit-details-marker {
+  display: none;
+}
+
+.career-term.folded summary h4 {
+  margin: 0;
+}
+
+.career-term.folded summary h4::after {
+  content: ' ▸';
+  color: var(--dim);
+}
+
+.career-term.folded[open] summary h4::after {
+  content: ' ▾';
+}
+
+.career-gains {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.career-gain {
+  white-space: nowrap;
+}
+
+.career-term.folded[open] .career-gains {
+  display: none;
+}
+
+.career-details summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.generation-dock {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 12px 10px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  border-top: 1px solid #333333;
+  background: var(--panel);
+}
+
+.generation-roll {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'head dice'
+    'result dice';
+  align-items: center;
+  column-gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid #5a4b2c;
+  border-radius: 10px;
+  background: radial-gradient(ellipse at 80% 50%, #231e15, var(--raised) 70%);
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
+}
+
+.generation-roll.judged.success {
+  border-color: var(--gold);
+  box-shadow: 0 0 24px rgba(233, 190, 92, 0.18);
+}
+
+.generation-roll.judged.failure {
+  border-color: var(--accent);
+  box-shadow: 0 0 24px rgba(198, 47, 53, 0.18);
+}
+
+.generation-roll.judged.failure .die-face {
+  filter: saturate(0.4) brightness(0.75);
+}
+
+.generation-roll-head {
+  grid-area: head;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.generation-roll-head .kicker {
+  color: var(--gold);
+}
+
+.generation-target {
+  padding: 0 8px;
+  border: 1px solid rgba(217, 180, 95, 0.45);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.generation-roll .dice-stage {
+  grid-area: dice;
+  --s: 34px;
+  height: 64px;
+}
+
+.generation-roll-result {
+  grid-area: result;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 40px;
+}
+
+.generation-total {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.generation-roll-result strong {
+  font-size: 17px;
+  color: var(--gold-bright);
+  animation: pop 280ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.generation-roll.judged.failure .generation-roll-result strong {
+  color: var(--accent-text);
+}
+
+.generation-prompt {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.generation-main {
+  width: 100%;
+  min-height: 56px;
+}
+
+.generation-main > span {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.generation-main .small-label {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 400;
+}
+
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.choice-grid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.roll-actions.single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.throw-result {
+  font-size: 18px;
+}
+
+.roll-result.judged.failure .throw-result {
+  color: var(--accent-text);
+}
+
+.odds-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: inherit;
+  gap: 1px;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+.odds-lines .met {
+  color: var(--gold-bright);
+  font-weight: 600;
+}
+
+.odds-lines .unmet {
+  color: var(--dim);
+}
+
+.generation-main .odds-lines {
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: 8px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.generation-main .odds-lines .met {
+  color: #ffffff;
+}
+
+.generation-main .odds-lines .unmet {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.choice-grid.services button {
+  min-height: 72px;
+  justify-content: flex-start;
+}
+
+/* Die Fertigkeitstabellen nebeneinander wie im Chart; eine Spalte antippen würfelt darauf. */
+.skill-tables {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.skill-tables button {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 6px 4px;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  text-align: left;
+}
+
+.skill-tables button strong {
+  min-height: 2.6em;
+  font-size: 11px;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.skill-tables ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.skill-tables li {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr);
+  gap: 3px;
+  font-size: 11px;
+  line-height: 1.2;
+  hyphens: auto;
+  overflow-wrap: break-word;
+}
+
+.skill-tables li .mono {
+  color: var(--gold);
+}
+
+.skill-tables button:disabled {
+  opacity: 0.35;
+}
+
+.skill-tables button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.choice-grid.scroll-choices {
+  max-height: 38vh;
+  overflow-y: auto;
+}
+
+.choice-grid button {
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 4px;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  text-align: center;
+}
+
+.choice-grid button strong {
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.choice-grid button.preferred {
+  border-color: var(--text);
+}
+
+.choice-grid button:disabled {
+  opacity: 0.4;
+}
+
+.choice-grid button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.generation-name input {
+  min-height: 44px;
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+}
+
+/* Name von der Karte: der Knopf neben dem Namensfeld und die Wahl im Vordergrund. */
+.name-from-card {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-color: var(--gold-deep);
+  color: var(--gold-bright);
+  font-weight: 600;
+}
+
+.name-picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.name-picker {
+  width: 100%;
+  max-width: 480px;
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 12px calc(12px + env(safe-area-inset-bottom));
+  background: var(--raised);
+  border: 1px solid var(--line-strong);
+  border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+}
+
+.name-picker .sheet-head {
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+.name-choices .card-grid {
+  gap: 4px;
+}
+
+.name-choices .tile.name {
+  min-height: 44px;
+  font-size: 14px;
+}
+
+.name-picker-result {
+  min-height: 28px;
+  padding: 2px 4px;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.name-picker-foot {
+  display: flex;
+  gap: 8px;
+}
+
+.name-picker-foot button {
+  flex: 1 1 0;
+  min-height: 48px;
+}
+
+.generation-name .primary {
+  min-height: 44px;
+  padding: 0 18px;
+}
+
+/* --- Über ----------------------------------------------------------------------------------- */
+
+.about {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.about h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.about p {
+  margin: 0 0 8px;
+}
+
+.about a {
+  color: var(--text);
+}
+
+.links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.links a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 14px;
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.links a svg {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+/* --- Animationen ---------------------------------------------------------------------------- */
+/* Reine Darstellung. Die Zeiten passen zu THROW_MS (Dice.tsx), LEAVE_MS (CardSheet.tsx) und den
+   Mustern in haptics.ts. Bei „Bewegung reduzieren“ steht alles sofort da (ganz unten). */
+
+/* Würfel: geworfen von unten, zweimal aufgeschlagen, liegen auf dem Ergebnis. */
+
+.dice-stage {
+  --s: 64px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: calc(var(--s) * 0.6);
+  height: calc(var(--s) * 1.8);
+  pointer-events: none;
+}
+
+.dice-stage.small {
+  --s: 46px;
+}
+
+.die {
+  position: relative;
+  width: var(--s);
+  height: var(--s);
+}
+
+.die-throw {
+  width: 100%;
+  height: 100%;
+  perspective: 700px;
+  animation: die-throw 850ms both;
+}
+
+.die-cube {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateZ(var(--z)) rotateX(var(--x)) rotateY(var(--y));
+  animation: die-tumble 850ms cubic-bezier(0.15, 0.55, 0.25, 1) both;
+}
+
+.die-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template: repeat(3, minmax(0, 1fr)) / repeat(3, minmax(0, 1fr));
+  padding: 15%;
+  border-radius: 14%;
+  background: radial-gradient(circle at 30% 25%, #3b352b, #1b1915 72%);
+  border: 1px solid rgba(217, 180, 95, 0.5);
+  box-shadow:
+    inset 0 0 calc(var(--s) * 0.14) rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 240, 200, 0.12);
+  transform: var(--face) translateZ(calc(var(--s) / 2));
+  backface-visibility: hidden;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s,
+    filter 0.3s;
+}
+
+.die-face .pip {
+  place-self: center;
+  width: 74%;
+  height: 74%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold) 55%, var(--gold-deep));
+  box-shadow: 0 0 3px rgba(233, 190, 92, 0.45);
+}
+
+.die-shadow {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: calc(var(--s) * -0.2);
+  height: calc(var(--s) * 0.24);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.75), transparent);
+  animation: die-shadow 850ms both;
+}
+
+.dice-flash {
+  position: absolute;
+  left: 50%;
+  top: calc(100% - var(--s) / 2);
+  width: calc(var(--s) * 3.4);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  translate: -50% -50%;
+  background: radial-gradient(closest-side, rgba(245, 220, 150, 0.4), transparent);
+  opacity: 0;
+}
+
+.dice-flash::after {
+  content: '';
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  opacity: 0;
+}
+
+/* Gelandet (oder übersprungen): Würfel liegen, Kanten und Augen leuchten golden auf. */
+.dice-stage.landed .die-throw,
+.dice-stage.landed .die-cube,
+.dice-stage.landed .die-shadow {
+  animation: none;
+}
+
+.dice-stage.landed .die-face {
+  border-color: var(--gold);
+  box-shadow:
+    inset 0 0 calc(var(--s) * 0.14) rgba(0, 0, 0, 0.85),
+    0 0 calc(var(--s) * 0.25) var(--gold-glow);
+}
+
+.dice-stage.landed .pip {
+  box-shadow: 0 0 6px var(--gold-glow);
+}
+
+.dice-stage.landed .dice-flash {
+  animation: dice-flash 600ms ease-out;
+}
+
+.dice-stage.landed .dice-flash::after {
+  animation: dice-ring 600ms ease-out;
+}
+
+@keyframes die-throw {
+  0% {
+    opacity: 0;
+    transform: translate3d(var(--dx), calc(var(--s) * 4.5), 0) scale(0.6);
+    animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1);
+  }
+  10% {
+    opacity: 1;
+  }
+  42% {
+    transform: translate3d(calc(var(--dx) * 0.35), calc(var(--s) * -1.1), 0) scale(1.12);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.5);
+  }
+  70% {
+    transform: translate3d(0, 0, 0) scale(1);
+    animation-timing-function: cubic-bezier(0.2, 0.6, 0.4, 1);
+  }
+  81% {
+    transform: translate3d(0, calc(var(--s) * -0.22), 0) scale(1.02);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.5);
+  }
+  92%,
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes die-tumble {
+  from {
+    transform: rotateZ(var(--z0)) rotateX(var(--x0)) rotateY(var(--y0));
+  }
+  to {
+    transform: rotateZ(var(--z)) rotateX(var(--x)) rotateY(var(--y));
+  }
+}
+
+@keyframes die-shadow {
+  0% {
+    opacity: 0;
+    transform: translateX(var(--dx)) scale(0.3);
+  }
+  42% {
+    opacity: 0.3;
+    transform: translateX(calc(var(--dx) * 0.35)) scale(0.55);
+  }
+  70%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes dice-flash {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes dice-ring {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.4);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+
+/* 2W6 im Vordergrund: Würfel über dem abgedunkelten Log, die Summe leuchtet. */
+
+.dice-roll {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding-bottom: 60px;
+  background: radial-gradient(ellipse at 50% 45%, rgba(26, 21, 13, 0.6), rgba(0, 0, 0, 0.9) 72%);
+  animation: fade-in 150ms ease-out both;
+  cursor: pointer;
+}
+
+.dice-roll.leaving {
+  animation: fade-out 200ms ease-in both;
+}
+
+.dice-roll-kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  color: var(--gold);
+}
+
+.dice-sum {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--mono);
+  opacity: 0;
+}
+
+.dice-sum.shown {
+  animation: pop 320ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.dice-sum strong {
+  font-size: 68px;
+  line-height: 1;
+  color: var(--gold-bright);
+  text-shadow:
+    0 0 20px var(--gold-glow),
+    0 0 2px #000000;
+}
+
+.dice-sum span {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/* Ergebnis einer Probe: Zielwert oben, Würfel, DM dazu, dann das Urteil. */
+
+.roll-result {
+  align-items: center;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 30%, #231e15, var(--raised) 70%);
+  border-color: #5a4b2c;
+  animation: dialog-in 200ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
+}
+
+.roll-result.success {
+  border-color: var(--gold);
+  box-shadow: 0 0 44px rgba(233, 190, 92, 0.22);
+}
+
+.roll-result.failure {
+  border-color: var(--accent);
+  box-shadow: 0 0 44px rgba(198, 47, 53, 0.2);
+}
+
+.roll-result.failure .die-face {
+  filter: saturate(0.4) brightness(0.75);
+}
+
+.roll-target {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 4px;
+  padding: 4px 22px 6px;
+  border: 1px solid rgba(217, 180, 95, 0.45);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.roll-target span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.roll-result .roll-target {
+  animation: target-in 380ms cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+
+.roll-target strong {
+  font-family: var(--mono);
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.roll-result .dice-stage {
+  margin-top: 6px;
+}
+
+.roll-sum {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  font-family: var(--mono);
+}
+
+.roll-result.rolling .roll-sum {
+  visibility: hidden;
+}
+
+.roll-total {
+  display: inline-block;
+  font-size: 46px;
+  line-height: 1.1;
+  color: var(--gold-bright);
+  text-shadow: 0 0 16px var(--gold-glow);
+}
+
+.roll-result:not(.rolling) .roll-total {
+  animation: pop 280ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.roll-parts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  min-height: 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.roll-part {
+  padding: 3px 10px;
+  border: 1px solid rgba(217, 180, 95, 0.4);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--muted);
+  opacity: 0;
+  transform: translateY(8px) scale(0.9);
+  transition:
+    opacity 0.2s,
+    transform 0.2s cubic-bezier(0.2, 1.5, 0.4, 1),
+    border-color 0.2s,
+    color 0.2s;
+}
+
+.roll-part strong {
+  font-family: var(--mono);
+  color: var(--gold);
+}
+
+.roll-part.added {
+  opacity: 1;
+  transform: none;
+}
+
+.roll-part.latest {
+  border-color: var(--gold);
+  color: var(--text);
+  box-shadow: 0 0 12px rgba(233, 190, 92, 0.3);
+}
+
+.roll-result .roll-verdict {
+  margin: 2px 0 0;
+  font-size: 38px;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  color: var(--gold-bright);
+  text-shadow: 0 0 24px var(--gold-glow);
+  opacity: 0;
+}
+
+.roll-result .roll-verdict.negative {
+  color: var(--accent-text);
+  text-shadow: 0 0 20px rgba(198, 47, 53, 0.55);
+}
+
+.roll-result.judged .roll-verdict {
+  animation: verdict 380ms cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+
+.roll-result.judged.failure .roll-verdict {
+  animation:
+    verdict 380ms cubic-bezier(0.2, 1.3, 0.4, 1) both,
+    shake 320ms 260ms ease-in-out;
+}
+
+.roll-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.roll-actions .ghost {
+  min-height: 52px;
+  font-weight: 600;
+}
+
+.roll-after {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  opacity: 0;
+}
+
+.roll-result.judged .roll-after {
+  animation: fade-up 240ms 200ms ease-out both;
+}
+
+/* Inspirationskarte, so inszeniert wie der Würfelwurf: Die Karte fliegt mit dem Rücken nach oben
+   herein, schwebt kurz mit rotem Glimmen, dreht sich mit Schwung um; ein Lichtreflex läuft über die
+   Vorderseite, die Felder erscheinen der Reihe nach. Übernehmen lässt sie sinken, Verwerfen wirft sie
+   weg. Die Zeiten passen zu DRAW_MS und LEAVE_MS (CardSheet.tsx) und zu `draw` in haptics.ts. */
+
+.overlay {
+  background: transparent;
+}
+
+/* Die Bühne: abgedunkelt mit Vignette, wie beim Würfeln. */
+.overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(ellipse at 50% 45%, rgba(42, 12, 14, 0.6), rgba(0, 0, 0, 0.9) 72%);
+  animation: fade-in 200ms ease-out both;
+}
+
+.overlay .sheet {
+  animation: sheet-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.sheet-body.drawing {
+  overflow: hidden;
+}
+
+.card-flip {
+  position: relative;
+  transform-style: preserve-3d;
+  animation: card-draw 650ms backwards;
+}
+
+.card-front {
+  position: relative;
+  backface-visibility: hidden;
+  animation: card-reveal 500ms 400ms ease-out backwards;
+}
+
+/* Der Lichtreflex nach dem Umdrehen. */
+.card-front::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 10px;
+  pointer-events: none;
+  background: linear-gradient(
+      110deg,
+      transparent 38%,
+      rgba(255, 236, 200, 0.16) 47%,
+      rgba(255, 255, 255, 0.28) 50%,
+      rgba(255, 236, 200, 0.16) 53%,
+      transparent 62%
+    )
+    0 0 / 260% 100% no-repeat;
+  opacity: 0;
+  animation: card-glint 500ms 540ms ease-in-out;
+}
+
+.card-back {
+  --frame: #ef5a5f;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  overflow: hidden;
+  border: 1px solid #3a3a3a;
+  border-radius: 10px;
+  /* Rotes Leuchten in der Mitte, dunkle Ränder, darunter ein feines Hexraster wie auf einer Sektorkarte. */
+  background:
+    radial-gradient(circle at 50% 50%, rgba(198, 47, 53, 0.3), transparent 45%),
+    radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.75) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20.78' height='36' viewBox='0 0 20.78 36'%3E%3Cpath d='M10.39 0L20.78 6V18L10.39 24L0 18V6ZM10.39 24V36' fill='none' stroke='%23c62f35' stroke-opacity='0.16' stroke-width='1'/%3E%3C/svg%3E")
+      center / 20.78px 36px,
+    #0d0d0d;
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+  animation: back-glow 650ms ease-in-out backwards;
+}
+
+/* Innerer Rahmen mit Eckwinkeln wie auf einer Anzeige im Cockpit. */
+.card-back-frame {
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgba(198, 47, 53, 0.45);
+  border-radius: 6px;
+}
+
+.card-back-frame::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  background:
+    linear-gradient(var(--frame), var(--frame)) top left / 20px 2px no-repeat,
+    linear-gradient(var(--frame), var(--frame)) top left / 2px 20px no-repeat,
+    linear-gradient(var(--frame), var(--frame)) top right / 20px 2px no-repeat,
+    linear-gradient(var(--frame), var(--frame)) top right / 2px 20px no-repeat,
+    linear-gradient(var(--frame), var(--frame)) bottom left / 20px 2px no-repeat,
+    linear-gradient(var(--frame), var(--frame)) bottom left / 2px 20px no-repeat,
+    linear-gradient(var(--frame), var(--frame)) bottom right / 20px 2px no-repeat,
+    linear-gradient(var(--frame), var(--frame)) bottom right / 2px 20px no-repeat;
+}
+
+/* Das Emblem (icons.tsx) in der Mitte des Rückens. */
+.card-back-mark {
+  position: relative;
+  width: 148px;
+  height: 148px;
+  filter: drop-shadow(0 0 14px rgba(198, 47, 53, 0.45));
+  animation: mark-pulse 650ms ease-in-out backwards;
+}
+
+.card-back-title {
+  position: relative;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  opacity: 0.85;
+}
+
+/* Die Felder erscheinen der Reihe nach: erst die Karte oben, dann Kasten für Kasten. */
+.card-front .card {
+  --tile-base: 540ms;
+}
+
+.card-front .theme-box {
+  --tile-base: calc(580ms + var(--deal, 0) * 50ms);
+}
+
+.card-front .tile {
+  animation: tile-in 200ms calc(var(--tile-base) + var(--n, 0) * 14ms) cubic-bezier(0.2, 0.9, 0.3, 1.2) backwards;
+}
+
+.card-front .tile:nth-child(2) {
+  --n: 1;
+}
+.card-front .tile:nth-child(3) {
+  --n: 2;
+}
+.card-front .tile:nth-child(4) {
+  --n: 3;
+}
+.card-front .tile:nth-child(5) {
+  --n: 4;
+}
+.card-front .tile:nth-child(6) {
+  --n: 5;
+}
+.card-front .tile:nth-child(n + 7) {
+  --n: 6;
+}
+
+/* Übernehmen: Die Karte sinkt nach unten in den Log. Verwerfen: Sie fliegt zur Seite weg. */
+.overlay.leaving::before {
+  animation: fade-out 260ms ease-in both;
+}
+
+.overlay.leaving.confirm .sheet {
+  animation: sheet-sink 260ms cubic-bezier(0.5, 0, 0.8, 0.5) both;
+}
+
+.overlay.leaving.discard .sheet {
+  animation: sheet-toss 260ms cubic-bezier(0.5, 0, 0.8, 0.5) both;
+}
+
+@keyframes card-draw {
+  0% {
+    transform: perspective(1200px) translateY(80vh) rotateZ(-14deg) rotateY(-180deg) scale(0.6);
+    animation-timing-function: cubic-bezier(0.15, 0.75, 0.3, 1);
+  }
+  38% {
+    transform: perspective(1200px) translateY(-4px) rotateZ(1.5deg) rotateY(-180deg) scale(1.03);
+    animation-timing-function: ease-in-out;
+  }
+  52% {
+    transform: perspective(1200px) translateY(-10px) rotateZ(0deg) rotateY(-180deg) scale(1.05);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1);
+  }
+  86% {
+    transform: perspective(1200px) translateY(0) rotateZ(0deg) rotateY(8deg) scale(1.01);
+    animation-timing-function: ease-out;
+  }
+  100% {
+    transform: perspective(1200px) translateY(0) rotateZ(0deg) rotateY(0deg) scale(1);
+  }
+}
+
+@keyframes back-glow {
+  0%,
+  30% {
+    border-color: #3a3a3a;
+    box-shadow: 0 0 0 rgba(198, 47, 53, 0);
+  }
+  52% {
+    border-color: var(--frame);
+    box-shadow: 0 0 38px rgba(198, 47, 53, 0.6);
+  }
+}
+
+@keyframes mark-pulse {
+  0%,
+  30% {
+    transform: scale(0.9);
+    filter: drop-shadow(0 0 6px rgba(198, 47, 53, 0.3));
+  }
+  52% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 20px rgba(239, 90, 95, 0.85));
+  }
+}
+
+@keyframes card-reveal {
+  from {
+    filter: drop-shadow(0 0 26px rgba(239, 90, 95, 0.75)) brightness(1.35);
+  }
+  to {
+    filter: drop-shadow(0 0 0 rgba(239, 90, 95, 0)) brightness(1);
+  }
+}
+
+@keyframes card-glint {
+  0% {
+    opacity: 1;
+    background-position: 100% 0;
+  }
+  100% {
+    opacity: 1;
+    background-position: 0 0;
+  }
+}
+
+@keyframes tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.94);
+  }
+}
+
+@keyframes sheet-sink {
+  to {
+    opacity: 0;
+    transform: translateY(45%) scale(0.85);
+  }
+}
+
+@keyframes sheet-toss {
+  to {
+    opacity: 0;
+    transform: translateX(-110%) rotate(-12deg);
+  }
+}
+
+/* Antippen: Das Feld gibt kurz nach, der Haken springt auf. */
+.tile[aria-pressed='true'] {
+  animation: press 200ms ease-out;
+}
+
+.tile[aria-pressed='true']::after {
+  animation: pop 220ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+/* Der neueste Logeintrag rückt nach. */
+.entry.latest {
+  animation: fade-up 260ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes press {
+  50% {
+    transform: scale(0.96);
+  }
+}
+
+@keyframes target-in {
+  from {
+    opacity: 0;
+    transform: scale(1.8);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes verdict {
+  from {
+    opacity: 0;
+    transform: scale(1.9);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes shake {
+  20%,
+  60% {
+    translate: -6px 0;
+  }
+  40%,
+  80% {
+    translate: 6px 0;
+  }
+}
+
+/* Übersprungen: Ein Tippen beendet eine Animation, alles steht sofort auf seinem Endstand. */
+.skip-animation,
+.skip-animation *,
+.skip-animation *::before,
+.skip-animation *::after {
+  animation-duration: 1ms !important;
+  animation-delay: 0ms !important;
+  transition-duration: 1ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* --- Subsektor ------------------------------------------------------------------------------ */
+
+.sector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sector-map {
+  flex: 0 0 auto;
+  width: 100%;
+  height: auto;
+  display: block;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hex polygon:first-child {
+  stroke-width: 1;
+  transition: fill 0.15s;
+}
+
+.hex-open polygon:first-child {
+  fill: var(--deep);
+  stroke: #262626;
+}
+
+.hex-open .hex-id {
+  fill: #4a4844;
+}
+
+.hex-empty polygon:first-child,
+.hex-world polygon:first-child,
+.hex-pending polygon:first-child {
+  fill: var(--panel);
+  stroke: var(--line-strong);
+}
+
+.hex-pending polygon:first-child {
+  stroke: var(--gold);
+  stroke-dasharray: 4 3;
+}
+
+.hex[role='button'] {
+  cursor: pointer;
+  outline: none;
+}
+
+.hex[role='button']:active polygon:first-child,
+.hex[role='button']:focus-visible polygon:first-child {
+  fill: var(--highlight);
+  stroke: var(--accent-text);
+}
+
+.hex text {
+  text-anchor: middle;
+  dominant-baseline: middle;
+  font-family: var(--sans);
+  fill: var(--text);
+  pointer-events: none;
+}
+
+.hex-id {
+  font-size: 9px;
+  fill: var(--dim);
+  font-family: var(--mono) !important;
+}
+
+.hex-port {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.hex-name {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.hex-name.small {
+  font-size: 9px;
+}
+
+.hex-uwp {
+  font-size: 7.5px;
+  font-family: var(--mono) !important;
+  fill: var(--gold-bright) !important;
+}
+
+.hex-trade {
+  font-size: 6.5px;
+  fill: var(--muted) !important;
+}
+
+.hex-pending {
+  font-size: 16px;
+  fill: var(--gold) !important;
+}
+
+.hex-world.wet {
+  fill: var(--text);
+}
+
+.hex-world.dry {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.6;
+}
+
+.hex-belt circle {
+  fill: var(--text);
+}
+
+.hex-base,
+.hex-giant {
+  fill: var(--gold);
+}
+
+.sector-legend {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.world-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.world-list button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto 2.2em;
+  grid-template-areas:
+    'name hex uwp bases'
+    'trade trade trade trade'
+    'note note note note';
+  column-gap: 10px;
+  align-items: baseline;
+  padding: 8px 2px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+}
+
+.world-list-name {
+  grid-area: name;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.world-list-hex {
+  grid-area: hex;
+  color: var(--dim);
+  font-size: 13px;
+}
+
+.world-list-uwp {
+  grid-area: uwp;
+  font-size: 14px;
+}
+
+.world-list-bases {
+  grid-area: bases;
+  color: var(--gold);
+  font-size: 13px;
+}
+
+.world-list-trade {
+  grid-area: trade;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Die erste Zeile der Notiz zur Welt. */
+.world-list-note {
+  grid-area: note;
+  margin-top: 2px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.world-note {
+  margin-top: 12px;
+}
+
+.world-note textarea {
+  min-height: 88px;
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  resize: vertical;
+}
+
+.world-note textarea::placeholder {
+  color: var(--dim);
+}
+
+.world-profile {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 3px 10px;
+  font-size: 13px;
+}
+
+.world-profile > div {
+  display: contents;
+}
+
+.world-profile .pending dd,
+.world-profile .pending dt {
+  color: var(--dim);
+}
+
+.world-digit {
+  display: inline-block;
+  min-width: 1.4em;
+  font-weight: 700;
+}
+
+.world-text {
+  color: var(--muted);
+}
+
+.world-word {
+  font-weight: 700;
+  margin-right: 0.4em;
+}
+
+.world-extras {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Die Welt bleibt oben stehen, nur die Würfe darunter scrollen; dafür ist sie knapp gesetzt. */
+.sheet.world-sheet .world-card {
+  gap: 6px;
+}
+
+.sheet.world-sheet .world-card .pc-head {
+  min-height: 0;
+}
+
+.sheet.world-sheet .world-profile {
+  gap: 1px 10px;
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.sheet.world-sheet .world-text {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+/* Die Temperatur ist ein Wort mit kurzer Beschreibung; sie bricht um, statt abgeschnitten zu werden. */
+.sheet.world-sheet .world-temperature .world-text {
+  display: inline;
+  white-space: normal;
+}
+
+.hex-selected polygon:first-child {
+  stroke: var(--accent-text) !important;
+  stroke-width: 2.5 !important;
+}
+
+.sector-dock-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -4px -6px -4px 0;
+}
+
+.sheet.world-sheet .world-profile dd {
+  min-width: 0;
+  display: flex;
+  white-space: nowrap;
+}
+
+.sheet.world-sheet .world-profile .world-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* --- Zoom der Karte ------------------------------------------------------------------------- */
+
+.sector-zoom-frame {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.sector-viewport {
+  width: 100%;
+  overflow: auto;
+  touch-action: pan-x pan-y;
+  overscroll-behavior: contain;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--deep);
+}
+
+.sector-canvas {
+  min-width: 100%;
+}
+
+.sector-canvas .sector-map {
+  width: 100%;
+}
+
+.sector-zoom {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+}
+
+.sector-zoom .icon-button {
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+  background: rgba(22, 22, 22, 0.85);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.sector-zoom .icon-button:disabled {
+  opacity: 0.35;
+}
+
+/* --- Karte über der Erschaffung ------------------------------------------------------------- */
+
+.sheet.sector-picker .screen {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* --- Welt wählen in der Erschaffung --------------------------------------------------------- */
+
+.world-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.world-choice .choice-grid {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.world-choice > .preferred {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 52px;
+  padding: 8px 12px;
+}
+
+/* --- Orakel in der Erschaffung -------------------------------------------------------------- */
+
+.generation-oracle {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 12px 8px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.generation-oracle-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.generation-oracle-row .question-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 40px;
+  font-size: 14px;
+}
+
+.generation-oracle-answer {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.generation-oracle-answer .verdict {
+  font-size: 15px;
+}
+
+/* --- Lange drücken: der Knopf füllt sich ---------------------------------------------------- */
+
+.hold-button {
+  position: relative;
+  overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.hold-button > :not(.hold-fill) {
+  position: relative;
+}
+
+.hold-fill {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.3);
+  transform: scaleX(0);
+  transform-origin: left center;
+  pointer-events: none;
+}
+
+.hold-button.holding .hold-fill {
+  transform: scaleX(1);
+  transition: transform var(--hold-ms) linear;
+}
+
+/* --- Charakter oben: die Leiste im Orakel-Screen -------------------------------------------- */
+
+.strip {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--line);
+  background: var(--deep);
+  box-shadow: 0 10px 14px -10px rgba(0, 0, 0, 0.9);
+}
+
+.strip-empty {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px 16px;
+}
+
+.strip-empty .add-character {
+  min-height: 44px;
+  padding: 8px;
+}
+
+.strip-track {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  /* Unten immer Abstand, auch ohne Punkte: Die Karte sitzt nie bündig auf dem Log. */
+  padding: 10px 16px 12px;
+  scroll-padding: 0 16px;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.strip-track::-webkit-scrollbar {
+  display: none;
+}
+
+.strip-card {
+  flex: 0 0 calc(100% - 24px);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 8px 10px 12px;
+  scroll-snap-align: start;
+  /* Die Charakterkarte sieht anders aus als ein Logeintrag: heller Grund, kräftiger Rahmen, rote Kante oben. */
+  background: var(--highlight);
+  border: 1px solid var(--line-strong);
+  border-top: 3px solid var(--accent);
+}
+
+.strip.collapsed .strip-card {
+  padding-bottom: 6px;
+}
+
+.strip-card:only-child {
+  flex-basis: 100%;
+}
+
+.strip-head {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: -4px;
+}
+
+.strip-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 40px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  text-align: left;
+}
+
+.strip-name {
+  flex: 0 0 auto;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.strip-title .pc-sub {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.strip-position {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.strip-head .icon-button {
+  width: 36px;
+  height: 36px;
+}
+
+.strip-toggle svg {
+  transition: transform 0.15s ease-out;
+}
+
+.strip.collapsed .strip-toggle svg {
+  transform: rotate(-90deg);
+}
+
+.strip .upp button,
+.strip .upp .cell {
+  min-height: 50px;
+}
+
+.strip .upp .upp-code {
+  font-size: 18px;
+}
+
+.strip .chips button,
+.strip .chips .chip {
+  min-height: 36px;
+  padding: 4px 9px;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.strip-dots {
+  display: flex;
+  justify-content: center;
+  margin-top: -8px;
+  padding-bottom: 4px;
+}
+
+.strip-dots button {
+  width: 28px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.strip-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+}
+
+.strip-dots button[aria-current='true'] span {
+  background: var(--text);
+}
+
+/* Die vorbereitete Probe steht über den Knöpfen; aus „2W6“ wird „Probe würfeln“. */
+.task-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0 4px 12px;
+  border: 1px solid var(--line-strong);
+  background: var(--raised);
+}
+
+.task-bar .task-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.task-bar .task-headline {
+  font-size: 15px;
+}
+
+.task-bar .task-figures {
+  font-size: 12px;
+}
+
+.action.task-roll {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+/* --- Menü hinter ☰ -------------------------------------------------------------------------- */
+
+.menu-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+}
+
+.menu-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.menu {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(300px, 85%);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding-top: env(safe-area-inset-top);
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+}
+
+.menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  padding: 0 8px 0 16px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.menu-title {
+  font-weight: 700;
+}
+
+.menu-section {
+  padding: 16px 16px 6px;
+  font-size: 11px;
+}
+
+.menu-campaign {
+  margin: 0;
+  padding: 0 16px 8px;
+  font-size: 17px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.menu-item {
+  min-height: 48px;
+  padding: 0 16px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--rule);
+  color: var(--text);
+  font-size: 15px;
+}
+
+.menu-item[aria-current='page'] {
+  font-weight: 700;
+}
+
+.menu-note {
+  padding: 0 16px 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* --- Deuten und Notiz in der Leiste der Charaktererschaffung -------------------------------- */
+
+.generation-oracle-row .icon-button.interpret {
+  color: var(--gold);
+}
+
+.generation-oracle-row .icon-button:disabled {
+  color: var(--disabled);
+}
+
+.generation-target {
+  margin: 0;
+}
+
+.generation-note .kicker {
+  color: var(--gold);
+}
+
+.generation-note .small-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Kampf ---------------------------------------------------------------------------------- */
+
+.strip .chips button .chip-skill {
+  margin-left: 4px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.strip .chips button[aria-pressed='true'] .chip-skill {
+  color: var(--ink-muted);
+}
+
+.combat-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.weapon-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.weapon-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.weapon-title .section-title {
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.weapon-dms {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.combat-table-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.combat-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-family: var(--mono);
+}
+
+.combat-table th,
+.combat-table td {
+  border: 1px solid var(--rule);
+  padding: 0;
+  text-align: center;
+}
+
+.combat-table th {
+  padding: 4px 2px;
+  font-weight: 600;
+  font-size: 11px;
+  background: var(--raised);
+}
+
+.combat-table thead th:first-child,
+.combat-table tbody th {
+  width: 24%;
+}
+
+.combat-table tbody th {
+  text-align: left;
+  padding-left: 6px;
+}
+
+.combat-table th .head-name,
+.combat-table th .head-dm {
+  display: block;
+}
+
+.combat-table th .head-dm {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.combat-table th.out {
+  color: var(--dim);
+}
+
+.combat-table .corner {
+  font-size: 9px;
+  color: var(--muted);
+}
+
+.combat-table .corner span {
+  display: block;
+}
+
+.combat-table .cell-button {
+  width: 100%;
+  min-height: 40px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.combat-table .cell-button.impossible {
+  color: var(--dim);
+  font-weight: 400;
+}
+
+.combat-table .cell-button.sure {
+  color: var(--gold);
+}
+
+.combat-table .cell-button[aria-pressed='true'] {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+.combat-table .cell-out {
+  display: block;
+  min-height: 40px;
+  line-height: 40px;
+  color: var(--dim);
+  background: var(--deep);
+}
+
+.combat-hint,
+.combat-pick {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.dock .actions:has(> :only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.action:disabled {
+  background: var(--disabled);
+  color: var(--dim);
+}
+
+.interpretation.damage .dice-total strong {
+  color: var(--accent-text);
+}
+
+/* --- Shop ----------------------------------------------------------------------------------- */
+
+.hex.hex-here polygon {
+  stroke: var(--gold);
+  stroke-width: 2.5;
+}
+
+.world-list-here {
+  color: var(--gold);
+  font-size: 12px;
+}
+
+.stay-here {
+  align-self: flex-start;
+  min-height: 40px;
+  margin: 8px 0;
+}
+
+.weapon-ammo {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.weapon-ammo.empty {
+  color: var(--accent-text);
+}
+
+.dock .actions:has(> :nth-child(3)) {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.shop-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.shop-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shop-funds {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.shop-funds strong {
+  font-size: 24px;
+  color: var(--gold);
+}
+
+.shop-world {
+  margin: 0;
+  font-size: 14px;
+}
+
+.shop-book {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--line-strong);
+}
+
+.segmented button {
+  min-height: 40px;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.segmented button[aria-checked='true'] {
+  background: var(--text);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.shop-book-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 8px;
+}
+
+.shop-group {
+  border-bottom: 1px solid var(--rule);
+}
+
+.shop-group summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.shop-group ul {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.shop-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 14px;
+}
+
+.shop-item-tl,
+.shop-item-price {
+  font-size: 12px;
+}
+
+.shop-banned {
+  color: var(--accent-text);
+  font-size: 12px;
+}
+
+.shop-buy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.shop-ledger ol {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shop-booking {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'kind text amount' 'time text amount';
+  column-gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 13px;
+}
+
+.shop-booking .kicker {
+  grid-area: kind;
+}
+
+.shop-booking .entry-time {
+  grid-area: time;
+}
+
+.shop-booking-text {
+  grid-area: text;
+}
+
+.shop-booking .shop-in,
+.shop-booking .shop-out {
+  grid-area: amount;
+  text-align: right;
+}
+
+.shop-in {
+  color: var(--gold);
+}
+
+.shop-out {
+  color: var(--accent-text);
+}
+
+.result .shop-buy-title {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+/* --- Begegnung, NSC und Wunden -------------------------------------------------------------- */
+
+.encounter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.encounter-start {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.encounter-start .primary,
+.encounter-start select {
+  min-height: 44px;
+}
+
+.encounter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.encounter-head .section-title {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.encounter-reaction {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.npc-list {
+  margin: 0 -16px;
+  padding: 0 16px 4px;
+  list-style: none;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+
+.npc {
+  flex: 0 0 172px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  scroll-snap-align: start;
+}
+
+.npc-head {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.npc-actions .ghost.compact {
+  flex: 1 1 auto;
+  min-height: 34px;
+  padding: 0 6px;
+  font-size: 12px;
+}
+
+.npc.targeted {
+  border-color: var(--gold);
+}
+
+.npc.attacking {
+  border-color: var(--accent-text);
+}
+
+.npc.out {
+  opacity: 0.55;
+}
+
+.npc-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.npc-leader {
+  color: var(--gold);
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.npc-state,
+.combat-state,
+.strip-state {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.state-wounded {
+  color: var(--gold);
+}
+
+.state-unconscious,
+.state-serious,
+.state-dead {
+  color: var(--accent-text);
+}
+
+.npc-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 12px;
+}
+
+.npc-stats .hurt {
+  color: var(--accent-text);
+}
+
+.npc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.npc-actions .ghost[aria-pressed='true'] {
+  background: var(--text);
+  color: var(--ink);
+}
+
+.combat-armor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.combat-armor .chips button {
+  min-height: 34px;
+  font-size: 13px;
+}
+
+.combat-state,
+.strip-state {
+  margin: 0;
+}
+
+.strip-state {
+  padding: 0 0 4px;
+}
+
+.combat-who {
+  margin: 0;
+  font-size: 14px;
+}
+
+.combat-table tr.fixed th {
+  color: var(--gold);
+}
+
+.combat-table .cell-button:disabled {
+  color: var(--dim);
+  opacity: 0.35;
+}
+
+.wounding {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.wound-dice {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 18px;
+}
+
+.wound-dice li {
+  min-width: 44px;
+  padding: 6px 10px;
+  border: 1px solid var(--line-strong);
+  text-align: center;
+}
+
+.wound-dice li.next {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.wound-dice li.done {
+  color: var(--muted);
+}
+
+.wound-targets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.wound-targets button {
+  min-height: 48px;
+  font-family: var(--mono);
+}
+
+.chips-label {
+  align-self: center;
+  margin-right: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.combat-state-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.heal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.heal .ghost,
+.heal .primary {
+  min-height: 44px;
+}
+
+/* --- Kampfsimulation ------------------------------------------------------------------------ */
+
+.fight-top {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.fight-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fight-top .encounter-head .ghost.compact {
+  min-height: 30px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+
+/* Der Kopf in einer Zeile: Runde und Begegnung, dahinter knapp Reaktion und wer zuerst zieht. */
+.fight-head-line {
+  align-items: center;
+  gap: 8px;
+}
+
+.fight-head-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.fight-head-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.fight-head-tail {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: var(--muted);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
+.fight-decided {
+  margin: 0;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+/* Die Entfernung in einer Zeile: links die Reichweite, daneben der Strahl zwischen zwei Pfeilen. */
+.ray-range {
+  display: grid;
+  grid-template-columns: 62px 44px minmax(0, 1fr) 44px;
+  align-items: stretch;
+  gap: 4px;
+  height: 40px;
+}
+
+.ray-now {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.ray-now b {
+  font-size: 13px;
+  color: var(--gold);
+}
+
+.ray-now span {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.ray-arrow {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  background: var(--raised);
+  color: var(--text);
+  font-size: 15px;
+}
+
+.ray-arrow:disabled {
+  border-color: var(--rule);
+  background: transparent;
+  color: var(--disabled);
+}
+
+.ray-arrow:active:not(:disabled) {
+  background: var(--highlight);
+}
+
+/* Der Strahl: Schritt i (0 Berührung, 1 Band 0, 2–21 Band 1–20) liegt bei --i von 21. */
+.ray {
+  --pad: 6px;
+  position: relative;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.ray > * {
+  position: absolute;
+  left: calc(var(--pad) + (100% - 2 * var(--pad)) * var(--i) / 21);
+}
+
+.ray-line {
+  top: 23px;
+  height: 2px;
+  width: calc((100% - 2 * var(--pad)) * var(--n) / 21);
+  background: var(--line-strong);
+}
+
+.ray-line.out {
+  background: repeating-linear-gradient(90deg, var(--line) 0 3px, transparent 3px 6px);
+}
+
+.ray-line.span {
+  background: var(--gold-deep);
+}
+
+.ray-dot {
+  top: 22px;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: var(--dim);
+}
+
+.ray-dot.out {
+  background: var(--line);
+}
+
+.ray-tick {
+  top: 4px;
+  width: 1px;
+  height: 25px;
+  background: var(--line-strong);
+}
+
+.ray-label {
+  top: 1px;
+  margin-left: 3px;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.ray-label.first {
+  margin-left: -6px;
+}
+
+.ray-label.out {
+  color: var(--dim);
+  text-decoration: line-through;
+}
+
+.ray-pc,
+.ray-npc {
+  top: 24px;
+  transform: translate(-50%, -50%);
+  line-height: 1;
+}
+
+.ray-pc {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--text);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+.ray-npc {
+  font-size: 13px;
+  color: var(--gold-bright);
+  text-shadow: 0 0 6px var(--gold-glow);
+}
+
+/* Close: Die NSC berühren die SC. */
+.ray-npc.close {
+  margin-left: 8px;
+}
+
+.ray-escaped {
+  top: 2px;
+  transform: translateX(-100%);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+.fighters {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fighter-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Eine Zeile je NSC, so knapp wie möglich: Name und Zustand, darunter Werte und Waffe; Heilen rechts daneben. */
+.fighter {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+}
+
+.fighter.turn {
+  border-color: var(--gold);
+}
+
+.fighter.targeted {
+  border-color: var(--accent-text);
+  background: var(--accent-wash);
+}
+
+.fighter.acted,
+.fighter.out {
+  opacity: 0.6;
+}
+
+.fighter-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1px 8px;
+  padding: 5px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.fighter-main[aria-disabled='true'] {
+  cursor: default;
+}
+
+.fighter-main {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.fighter.chosen {
+  border-color: var(--accent-text);
+  background: var(--accent-wash);
+}
+
+.fighters-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.fighter-check {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  vertical-align: -3px;
+  border: 1.5px solid var(--line-strong);
+  background: var(--raised);
+  color: var(--panel);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.fighter-check.checked {
+  border-color: var(--accent-text);
+  background: var(--accent-text);
+}
+
+.fighter-main .npc-stats {
+  grid-column: 1 / -1;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.fighter-main .npc-stats .muted {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fighter-name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.fighter-turn {
+  color: var(--gold);
+}
+
+.fighter .npc-actions {
+  flex: 0 0 auto;
+  padding: 0 6px 0 0;
+}
+
+.fighter .npc-actions .ghost.compact {
+  min-height: 30px;
+  padding: 0 8px;
+}
+
+.fight.combat-scroll {
+  gap: 8px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.fighters {
+  gap: 4px;
+}
+
+.fight-turn {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--line-strong);
+  background: var(--raised);
+}
+
+.fight-who {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+.fight-need {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+}
+
+.fight-actions:has(> :nth-child(3)) {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr);
+}
+
+.fight-actions:has(> :nth-child(2):last-child) {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+}
+
+.encounter-terrain select {
+  min-height: 40px;
+}
+
+/* --- Übersicht der Begegnung ---------------------------------------------------------------- */
+
+.encounter-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100% - 32px);
+  overflow-y: auto;
+  text-align: left;
+}
+
+.intro-reaction {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.intro-verdict {
+  margin: 0;
+  text-align: center;
+  opacity: 0;
+}
+
+.intro-verdict.shown {
+  animation: pop 320ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.intro-verdict strong {
+  font-size: 28px;
+  color: var(--gold-bright);
+  margin-right: 6px;
+}
+
+.intro-line {
+  margin: 0;
+  font-size: 13px;
+}
+
+.intro-npcs {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.encounter-reaction.link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  text-decoration: underline dotted;
+}
+
+.fighter-weapons {
+  padding: 0 10px;
+}
+
+.location-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pc-heal {
+  align-self: flex-start;
+}
+
+
+/* --- Entwurf: Leiste im Kampf kompakt ------------------------------------------------------------ */
+
+/* Im Kampf eng: Kopfzeile so hoch wie die Schrift, wenig Abstand zwischen den Zeilen. */
+.strip-combat .strip-track {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.strip-combat .strip-card {
+  gap: 4px;
+  padding: 2px 8px 8px 12px;
+}
+
+.strip-combat .strip-title {
+  min-height: 30px;
+  align-items: center;
+}
+
+.strip-combat .strip-head .icon-button {
+  width: 32px;
+  height: 30px;
+}
+
+.strip-combat .strip-dots {
+  margin-top: -6px;
+}
+
+/* Die Attribute als schmale Zeile wie bei den NSC. */
+.strip-upp {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.strip-upp .hurt {
+  color: var(--accent-text);
+}
+
+/* Höchstens drei Waffen in einer Zeile: Primär, Sekundär, Hände. Wird es zu eng, kürzt sich der
+   Name der anderen; die Waffe in der Hand wird nie gekürzt. */
+.chips.weapon-chips {
+  flex-wrap: nowrap;
+}
+
+.strip .chips.weapon-chips button {
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 32px;
+  display: flex;
+  align-items: baseline;
+  padding: 4px 8px;
+  font-family: var(--sans);
+  white-space: nowrap;
+}
+
+.strip .chips.weapon-chips button[aria-pressed='true'] {
+  flex: 0 0 auto;
+}
+
+.chip-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Die Fertigkeit zeigt nur die Waffe in der Hand; die anderen zeigen nur ihren Namen. */
+.strip .chips.weapon-chips button:not([aria-pressed='true']) .chip-skill {
+  display: none;
+}
+
+.strip .chips.weapon-chips .chip-skill {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+</style>
+</head>
+<body>
+<div class="app"><header class="header"><button type="button" class="brand campaign-switch" aria-label="Kampagne Kampagne, Menü öffnen"><span class="campaign-name">Kampagne</span></button><span class="header-right"><button type="button" class="icon-button" aria-label="Vollbild" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg></button><button type="button" class="icon-button menu-button" aria-label="Menü" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button></span></header><div class="screen"><section class="strip strip-combat" aria-label="Spielercharaktere"><div class="strip-track"><article class="strip-card focus" aria-label="Kira Vant" aria-hidden="false"><div class="strip-head"><button type="button" class="strip-title" aria-expanded="true"><span class="strip-name">Kira Vant</span><span class="pc-sub">Ex-Scout · 4 Terms · 34 Jahre</span></button><span class="strip-position" aria-hidden="true">1/2</span><button type="button" class="icon-button" aria-label="Kira Vant bearbeiten"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4.5L15.5 5a2.1 2.1 0 0 1 3 3L8 18.5 4 20z"></path><path d="M13.5 7l3 3"></path></svg></button><button type="button" class="icon-button strip-toggle" aria-label="Leiste einklappen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"></path></svg></button></div><p class="strip-upp mono"><span>STR 7</span><span>DEX A</span><span>END 8</span><span>INT 9</span><span>EDU 7</span><span>SOC 5</span></p><div class="chips weapon-chips" role="group" aria-label="Waffe in der Hand"><button type="button" aria-pressed="true"><span class="chip-name">Automatic Pistol</span><span class="chip-skill">APi-1</span></button><button type="button" aria-pressed="false"><span class="chip-name">Blade</span><span class="chip-skill">Bla-0</span></button><button type="button" aria-pressed="false"><span class="chip-name">Hände</span><span class="chip-skill">Brw-0</span></button></div></article><article class="strip-card" aria-label="Jonas Reyl" aria-hidden="true"><div class="strip-head"><button type="button" class="strip-title" aria-expanded="true"><span class="strip-name">Jonas Reyl</span><span class="pc-sub">Ex-Merchant · 3 Terms · 30 Jahre</span></button><span class="strip-position" aria-hidden="true">2/2</span><button type="button" class="icon-button" aria-label="Jonas Reyl bearbeiten"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4.5L15.5 5a2.1 2.1 0 0 1 3 3L8 18.5 4 20z"></path><path d="M13.5 7l3 3"></path></svg></button><button type="button" class="icon-button strip-toggle" aria-label="Leiste einklappen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"></path></svg></button></div><p class="strip-upp mono"><span>STR 6</span><span>DEX 8</span><span>END 7</span><span>INT A</span><span>EDU 8</span><span>SOC 8</span></p><div class="chips weapon-chips" role="group" aria-label="Waffe in der Hand"><button type="button" aria-pressed="true"><span class="chip-name">Shotgun</span><span class="chip-skill">Sho-1</span></button><button type="button" aria-pressed="false"><span class="chip-name">Hände</span><span class="chip-skill">Brw-0</span></button></div></article></div><div class="strip-dots" role="group" aria-label="Charakter oben wählen"><button type="button" aria-label="Kira Vant nach oben" aria-current="true"><span></span></button><button type="button" aria-label="Jonas Reyl nach oben" aria-current="false"><span></span></button></div></section><header class="fight-top"><div class="fight-head"><div class="encounter-head fight-head-line"><button type="button" class="fight-head-main" aria-label="Runde 1, 7 × Thugs, Reaktion 5: Hostile. May attack., SC ziehen zuerst. Übersicht zeigen"><span class="fight-head-title">Runde 1 · 7 × Thugs</span><span class="fight-head-tail">Hostile · SC zuerst</span></button><button type="button" class="ghost compact">Beenden</button></div></div><div class="ray-range"><div class="ray-now" aria-live="polite"><b>Medium</b><span>Band 2</span></div><button type="button" class="ray-arrow" aria-label="Ein Band näher">◀</button><div class="ray" role="img" aria-label="Entfernung: Medium, Band 2"><span class="ray-line" style="--i: 0; --n: 11;"></span><span class="ray-line out" style="--i: 11; --n: 10;"></span><span class="ray-label first" style="--i: 0;">C/S</span><span class="ray-tick" style="--i: 1.5;"></span><span class="ray-label" style="--i: 1.5;">M</span><span class="ray-tick" style="--i: 3.5;"></span><span class="ray-label" style="--i: 3.5;">L</span><span class="ray-tick" style="--i: 11.5;"></span><span class="ray-label out" style="--i: 11.5;">VL</span><span class="ray-dot" style="--i: 1;"></span><span class="ray-dot" style="--i: 2;"></span><span class="ray-dot" style="--i: 3;"></span><span class="ray-dot" style="--i: 4;"></span><span class="ray-dot" style="--i: 5;"></span><span class="ray-dot" style="--i: 6;"></span><span class="ray-dot" style="--i: 7;"></span><span class="ray-dot" style="--i: 8;"></span><span class="ray-dot" style="--i: 9;"></span><span class="ray-dot" style="--i: 10;"></span><span class="ray-dot" style="--i: 11;"></span><span class="ray-dot out" style="--i: 12;"></span><span class="ray-dot out" style="--i: 13;"></span><span class="ray-dot out" style="--i: 14;"></span><span class="ray-dot out" style="--i: 15;"></span><span class="ray-dot out" style="--i: 16;"></span><span class="ray-dot out" style="--i: 17;"></span><span class="ray-dot out" style="--i: 18;"></span><span class="ray-dot out" style="--i: 19;"></span><span class="ray-dot out" style="--i: 20;"></span><span class="ray-dot out" style="--i: 21;"></span><span class="ray-line span" style="--i: 0; --n: 3;"></span><span class="ray-pc" style="--i: 0;"></span><span class="ray-npc" style="--i: 3;">▲</span></div><button type="button" class="ray-arrow" aria-label="Ein Band weiter weg">▶</button></div></header><section class="scroll combat-scroll fight" aria-label="Kampfsimulation"><div class="fighters"><div class="fighters-head"><h3 class="section-title" style="font-size: 11px;">NSC</h3><span class="log-hint">lange drücken zum Übernehmen</span></div><ol class="fighter-list"><li class="fighter targeted"><button type="button" class="fighter-main" aria-pressed="true" aria-label="Esme Carver, als Ziel wählen" aria-description="Lange drücken: übernehmen"><span class="fighter-name">Esme Carver<span class="npc-leader"> · Anführer</span></span><span class="npc-state state-unhurt">unverletzt</span><span class="npc-stats mono"><span>STR A</span><span>DEX 6</span><span>END 5</span><span class="muted">Foil-2 · Reflec</span></span></button></li><li class="fighter"><button type="button" class="fighter-main" aria-pressed="false" aria-label="Eden Ashgrove, als Ziel wählen" aria-description="Lange drücken: übernehmen"><span class="fighter-name">Eden Ashgrove</span><span class="npc-state state-unhurt">unverletzt</span><span class="npc-stats mono"><span>STR 5</span><span>DEX 4</span><span>END B</span><span class="muted">Halberd-1</span></span></button></li><li class="fighter"><button type="button" class="fighter-main" aria-pressed="false" aria-label="Cyrus Jaeger, als Ziel wählen" aria-description="Lange drücken: übernehmen"><span class="fighter-name">Cyrus Jaeger</span><span class="npc-state state-unhurt">unverletzt</span><span class="npc-stats mono"><span>STR 8</span><span>DEX 6</span><span>END 7</span><span class="muted">Sword-1</span></span></button></li><li class="fighter"><button type="button" class="fighter-main" aria-pressed="false" aria-label="Haav Urshiin, als Ziel wählen" aria-description="Lange drücken: übernehmen"><span class="fighter-name">Haav Urshiin</span><span class="npc-state state-unhurt">unverletzt</span><span class="npc-stats mono"><span>STR 7</span><span>DEX 8</span><span>END 6</span><span class="muted">Club (Brawling-1)</span></span></button></li><li class="fighter"><button type="button" class="fighter-main" aria-pressed="false" aria-label="Ayla Mahlangu, als Ziel wählen" aria-description="Lange drücken: übernehmen"><span class="fighter-name">Ayla Mahlangu</span><span class="npc-state state-unhurt">unverletzt</span><span class="npc-stats mono"><span>STR 6</span><span>DEX 6</span><span>END 5</span><span class="muted">Foil-1</span></span></button></li><li class="fighter"><button type="button" class="fighter-main" aria-pressed="false" aria-label="Rune Saarkhin, als Ziel wählen" aria-description="Lange drücken: übernehmen"><span class="fighter-name">Rune Saarkhin</span><span class="npc-state state-unhurt">unverletzt</span><span class="npc-stats mono"><span>STR 8</span><span>DEX 8</span><span>END 6</span><span class="muted">Spear-1</span></span></button></li><li class="fighter"><button type="button" class="fighter-main" aria-pressed="false" aria-label="Remy Ebbesen, als Ziel wählen" aria-description="Lange drücken: übernehmen"><span class="fighter-name">Remy Ebbesen</span><span class="npc-state state-unhurt">unverletzt</span><span class="npc-stats mono"><span>STR 7</span><span>DEX 7</span><span>END A</span><span class="muted">Sword-1</span></span></button></li></ol></div></section><section class="dock" aria-label="Zug"><div class="fight-turn" aria-live="polite"><span class="fight-who">Kira Vant → Esme Carver <span class="muted">(Automatic Pistol 15/15)</span></span><strong class="fight-need">9+</strong></div><div class="actions fight-actions"><button type="button" class="action dice">Aussetzen</button><button type="button" class="action task-roll"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" stroke-linecap="round"><circle cx="12" cy="12" r="7.5"></circle><circle cx="12" cy="12" r="1.4" fill="currentColor"></circle><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4"></path></svg>Angreifen</button></div></section></div><nav class="nav" aria-label="Bereiche"><button type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6"></path><circle cx="12" cy="17" r="0.6" fill="currentColor"></circle></svg>Orakel</button><button type="button" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" stroke-linecap="round"><circle cx="12" cy="12" r="7.5"></circle><circle cx="12" cy="12" r="1.4" fill="currentColor"></circle><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4"></path></svg>Kampf</button><button type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" stroke-linejoin="round" stroke-linecap="round"><path d="M5 8h14l-1 12H6z"></path><path d="M9 10V6.5a3 3 0 0 1 6 0V10"></path></svg>Shop</button><button type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"></path></svg>Charaktere</button><button type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" stroke-linejoin="round"><path d="M7.5 4h9l4.5 8-4.5 8h-9L3 12z"></path><circle cx="12" cy="12" r="2.4" fill="currentColor"></circle></svg>Sektor</button></nav></div>
+<script>
+for (const group of document.querySelectorAll('.weapon-chips')) {
+  for (const b of group.querySelectorAll('button')) {
+    b.onclick = () => { for (const o of group.querySelectorAll('button')) o.setAttribute('aria-pressed', String(o === b)); };
+  }
+}
+</script>
+</body>
+</html>
