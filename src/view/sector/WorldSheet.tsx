@@ -8,6 +8,7 @@ import { animated, haptic, stopHaptics } from '../haptics';
 import { HoldButton } from '../HoldButton';
 import { CloseIcon, DiceIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
+import { Form } from '../Form';
 
 /** Wie lange das Ergebnis nach dem Landen braucht, bis es feststeht und die Knöpfe wieder gehen. */
 const SETTLE_MS = 350;
@@ -305,10 +306,9 @@ function Actions({ action, disabled, onRun }: { action: WorldAction; disabled: b
       );
     case 'name':
       return (
-        <form
+        <Form
           className="inline-form generation-name"
-          onSubmit={(e) => {
-            e.preventDefault();
+          onSend={() => {
             game.nameWorld(name);
           }}
         >
@@ -320,7 +320,7 @@ function Actions({ action, disabled, onRun }: { action: WorldAction; disabled: b
           <button type="submit" className="primary" aria-disabled={disabled || undefined}>
             Übernehmen
           </button>
-        </form>
+        </Form>
       );
     case 'done':
       return (
