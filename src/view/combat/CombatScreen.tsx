@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { DiceRoll } from '../oracle/DiceRoll';
 import type { CombatView, HealingView, Snapshot } from '../../controller';
 import { EncounterIntro, FightScreen } from './FightScreen';
-import { armorText, attackText, characteristicLabel, hex, partLabel, rangeMeters, rangeShort, rangeText, signed, woundStateText } from '../format';
+import { armorText, attackText, characteristicLabel, hex, partLabel, rangeMeters, rangeShort, rangeText, signed } from '../format';
 import { CloseIcon } from '../icons';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
@@ -32,7 +32,7 @@ export function CombatScreen({ view }: { view: Snapshot }) {
   return (
     <div className="screen">
       {/* Die SC stehen oben in der Leiste, auch in der Kampfsimulation; die Liste dort zeigt nur die NSC. */}
-      <CharacterStrip view={view} weapons />
+      <CharacterStrip view={view} weapons heal={combat && pcHeal(combat, setPatient)} />
       {!combat ? (
         <section className="scroll combat-scroll">
           <p className="log-empty">Ohne lebenden Charakter gibt es keinen Angriff.</p>
@@ -42,7 +42,7 @@ export function CombatScreen({ view }: { view: Snapshot }) {
       ) : (
         <>
           <section className="scroll combat-scroll" aria-label="Waffentabelle">
-            <ArmorChips combat={combat} onHeal={setPatient} />
+            <ArmorChips combat={combat} />
             <WeaponHead combat={combat} />
             <AttackTable combat={combat} />
           </section>
@@ -56,10 +56,20 @@ export function CombatScreen({ view }: { view: Snapshot }) {
   );
 }
 
-/** Die getragene Rüstung des Charakters oben, und wie verwundet er ist. */
-function ArmorChips({ combat, onHeal }: { combat: CombatView; onHeal: (patient: Patient) => void }) {
+/**
+ * Heilen für den Charakter oben, wenn er verwundet ist und sich etwas tun lässt: in der Simulation als
+ * Kämpfer, sonst mit den Werten der Waffentabelle. Der Knopf steht in der Leiste oben auf seiner Karte.
+ */
+function pcHeal(combat: CombatView, onHeal: (patient: Patient) => void): { readonly name: string; readonly onHeal: () => void } | undefined {
+  const pc = combat.sim?.fighters.find((f) => f.side === 'pcs' && f.name === combat.character);
+  const healing = combat.sim ? pc?.healing : combat.healing;
+  if (!healing || !(healing.wake || healing.treatable)) return undefined;
+  return { name: combat.character, onHeal: () => onHeal({ npc: undefined, ...(pc ? { pc: pc.id } : {}), name: combat.character }) };
+}
+
+/** Die getragene Rüstung des Charakters oben; wie verwundet er ist, steht oben in der Leiste. */
+function ArmorChips({ combat }: { combat: CombatView }) {
   const game = useGame();
-  const physical = (['str', 'dex', 'end'] as const).map((k) => `${k.toUpperCase()} ${hex(Math.max(0, combat.current[k]))}`);
   return (
     <div className="combat-armor">
       <div className="chips" role="group" aria-label={`Rüstung von ${combat.character}`}>
@@ -75,19 +85,6 @@ function ArmorChips({ combat, onHeal }: { combat: CombatView; onHeal: (patient: 
           </button>
         ))}
       </div>
-      {combat.state !== 'unhurt' && (
-        <div className="combat-state-row">
-          <p className={`combat-state state-${combat.state}`}>
-            {combat.character}: {woundStateText[combat.state]}
-            {combat.healing.serious ? ' (schwere Wunde)' : ''} · {physical.join(' · ')}
-          </p>
-          {(combat.healing.wake || combat.healing.treatable) && (
-            <button type="button" className="ghost compact" onClick={() => onHeal({ npc: undefined, name: combat.character })}>
-              Heilen
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }

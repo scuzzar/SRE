@@ -38,7 +38,6 @@ export function FightScreen({ combat, onHeal }: { combat: CombatView; onHeal: (p
             {combat.note}
           </p>
         )}
-        <PcHeal sim={sim} character={combat.character} onHeal={onHeal} />
         <Fighters sim={sim} onHeal={onHeal} selection={selection} />
       </section>
       {picked ? <AdoptDock picked={picked} selection={selection} /> : <FightDock combat={combat} sim={sim} />}
@@ -226,17 +225,6 @@ function RangeBar({ sim }: { sim: SimView }) {
         ▶
       </button>
     </div>
-  );
-}
-
-/** Ist der SC oben verwundet, lässt er sich heilen; sein Zustand steht schon in der Leiste. */
-function PcHeal({ sim, character, onHeal }: { sim: SimView; character: string; onHeal: (patient: Patient) => void }) {
-  const pc = sim.fighters.find((f) => f.side === 'pcs' && f.name === character);
-  if (!pc || !(pc.healing.wake || pc.healing.treatable)) return null;
-  return (
-    <button type="button" className="ghost compact pc-heal" onClick={() => onHeal({ npc: undefined, pc: pc.id, name: pc.name })}>
-      {pc.name} heilen
-    </button>
   );
 }
 
