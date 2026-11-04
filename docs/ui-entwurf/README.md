@@ -70,6 +70,6 @@ zusammen, alle NSC auch; es gibt nur einen Abstand.
 
 Darüber der Kopf in einer Zeile: „Runde 2 · 3 × Bandits“, dahinter knapp die Reaktion und wer zuerst
 zieht („Hostile · SC zuerst“, bei Überraschung „Überraschung SC“); Antippen zeigt wie bisher die
-Übersicht mit allen Würfen. Kopf und Entfernung zusammen sind 89 px hoch.
+Übersicht mit allen Würfen. Kopf und Entfernung zusammen sind 93 px hoch; die Pfeile sind 44 px breite Knöpfe, damit sie sich gut treffen lassen.
 
 Wie die Deutung eine gewöhnliche HTML-Datei mit den Stilen der App.

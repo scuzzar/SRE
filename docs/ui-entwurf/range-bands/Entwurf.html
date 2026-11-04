@@ -4704,9 +4704,10 @@ button:disabled {
 /* Eine Zeile: links die Entfernung als Text, daneben der Strahl zwischen zwei Pfeilen. */
 .ray-range {
   display: grid;
-  grid-template-columns: 64px 30px minmax(0, 1fr) 30px;
+  grid-template-columns: 62px 44px minmax(0, 1fr) 44px;
   align-items: stretch;
-  height: 36px;
+  gap: 4px;
+  height: 40px;
 }
 
 .ray-now {
@@ -4732,13 +4733,15 @@ button:disabled {
   display: grid;
   place-items: center;
   padding: 0;
-  border: 0;
-  background: transparent;
+  border: 1px solid var(--line-strong);
+  background: var(--raised);
   color: var(--text);
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .ray-arrow:disabled {
+  border-color: var(--rule);
+  background: transparent;
   color: var(--disabled);
 }
 
