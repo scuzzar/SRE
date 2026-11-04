@@ -62,7 +62,8 @@ Wie der Entwurf zur Deutung ist es eine gewöhnliche HTML-Datei, die sich direkt
 
 Im Ordner [`range-bands/`](range-bands/) liegt der (am 4. November 2026 freigegebene, noch nicht umgesetzte) Entwurf für die Entfernung
 der Kampfsimulation in Range Bands nach Book 1 (S. 32–33) und den Charts (S. 7). Alle SC stehen
-zusammen, alle NSC auch; es gibt nur einen Abstand.
+zusammen, alle NSC auch; es gibt nur einen Abstand. Live ansehen:
+<https://claude.ai/artifact/F8x2by2KML66BMnzTtVrA4> (privat, nur für Berechtigte).
 
 | Datei | Inhalt |
 |---|---|
