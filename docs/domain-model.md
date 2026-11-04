@@ -120,7 +120,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > (mit den sechs Namen), NSC-Aktionen, Welt (mit Schiff), Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
 > Einträge für sie gibt.
 
-> **Vorschlag vom 4. November 2026, wartet auf Freigabe:** die **Entfernung in Range Bands** (siehe
+> Am 4. November 2026 freigegeben: die **Entfernung in Range Bands** (siehe
 > *Kampfsimulation*). Neu im Bild: an der `Encounter` statt `range` das Band (`band`), die Berührung
 > (`close`), der Würfel für das Startband (`bandDie`), abgeleitet die Reichweite (`/range`) und
 > `/escaped`; als Referenzdaten `RangeBand`. Der UI-Entwurf dazu (freigegeben am 4. November 2026)
@@ -1108,7 +1108,7 @@ Diagramm mit diesen Ausnahmen:
   Reyl aus der README (`src/data/examples.json`), damit man gleich etwas ausprobieren kann. Das
   Modell sagt dazu nichts; die beiden lassen sich löschen, solange der Log nicht auf sie verweist.
   Jede weitere Kampagne beginnt leer.
-- **Range Bands** (sobald freigegeben). Der Code hält an der `Encounter` noch die Reichweite
-  (`range`) statt `band`, `close` und `bandDie`, kennt `RangeBand` nicht und zeigt die Entfernung
-  als fünf Knöpfe. Gespeicherte Begegnungen bekommen beim Laden das Band ihrer Reichweite (Close:
-  Band 0 mit Berührung, Short 0, Medium 1, Long 3, Very Long 11) und keinen `bandDie`.
+- **`RangeBand` in den Daten** steht in `src/data/encounters.json` als `bands`, je Reichweite mit
+  `from` und `to`, wie im Bild. Begegnungen von vor den Range Bands haben nur eine Reichweite
+  (`range`); beim Laden bekommen sie deren erstes Band (Close: Band 0 mit Berührung, Short 0,
+  Medium 1, Long 3, Very Long 11) und keinen `bandDie`.

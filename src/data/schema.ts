@@ -150,6 +150,10 @@ export const EncountersSchema = z.object({
   terrains: z.array(z.object({ id: z.string().min(1), name: z.string().min(1), dm: z.number().int() })).min(1),
   /** Die Encounter Ranges (S. 5): 1 bis 12 und ihre Entfernung. */
   ranges: z.array(z.object({ roll: z.number().int().min(1).max(12), range: RangeSchema })).length(12),
+  /** Die Range Bands (Book 1, S. 32; Charts S. 7): je Reichweite das erste und letzte Band. */
+  bands: z
+    .array(z.object({ range: RangeSchema, from: z.number().int().min(0).max(20), to: z.number().int().min(0).max(20) }))
+    .refine((bands) => bands.length === ranges.length && bands.every((b, i) => b.range === ranges[i] && b.from <= b.to), 'Die Range Bands stehen nicht je Reichweite in der Reihenfolge der Matrix'),
 });
 
 /** Ein Sammelbegriff, aus dem man eine Fertigkeit wählt: Blade Combat, Gun Combat, Vehicle. */

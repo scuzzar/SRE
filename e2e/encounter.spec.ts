@@ -35,7 +35,7 @@ test('Kampf: Waffentabelle ohne Begegnung; mit Begegnung die Simulation mit Rund
   // Erst die Übersicht: wer kommt, und die Würfe für Reaktion, Entfernung und Überraschung.
   const intro = page.getByRole('dialog', { name: /Thugs/ });
   await expect(intro).toContainText('Reaktion (2W6');
-  await expect(intro).toContainText('Entfernung:');
+  await expect(intro).toContainText(/Entfernung: \S.*\(2W6: \d \+ \d, City −4/);
   await expect(intro).toContainText('Überraschung:');
   await expect(intro.locator('.intro-npcs li').first()).toContainText('Anführer');
   const npcs = await intro.locator('.intro-npcs li').count();
@@ -48,11 +48,17 @@ test('Kampf: Waffentabelle ohne Begegnung; mit Begegnung die Simulation mit Rund
   await expect(page.locator('.fight-head')).toContainText('Runde 1');
   await expect(page.locator('.fight-head')).toContainText('Thugs');
   await expect(page.locator('.combat-table')).toHaveCount(0);
-  await expect(page.getByText(/Entfernung \(2W6: \d \+ \d, City −4\)/)).toBeVisible();
+  await expect(page.getByRole('img', { name: /^Entfernung: / })).toBeVisible();
   await expect(page.locator('.fight-turn')).toBeVisible();
 
-  // Wer am Zug ist, hat ein Ziel; Close reicht für jede Waffe.
-  await page.getByRole('radiogroup', { name: 'Entfernung' }).getByRole('radio', { name: 'Close' }).click();
+  // Wer am Zug ist, hat ein Ziel; mit ◀ Band für Band bis in die Berührung, Close reicht für jede Waffe.
+  const closer = page.getByRole('button', { name: 'Ein Band näher' });
+  for (let i = 0; i < 22 && (await closer.isEnabled()); i++) await closer.click();
+  await expect(closer).toBeDisabled();
+  await expect(page.getByRole('img', { name: 'Entfernung: Close, Berührung' })).toBeVisible();
+  await page.getByRole('button', { name: 'Ein Band weiter weg' }).click();
+  await expect(page.getByRole('img', { name: 'Entfernung: Short, Band 0' })).toBeVisible();
+  await closer.click();
   await expect(page.locator('.fight-turn')).toContainText('→');
   await page.getByRole('button', { name: 'Angreifen' }).click();
   const dialog = page.getByRole('alertdialog');

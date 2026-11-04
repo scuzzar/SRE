@@ -74,5 +74,12 @@
     {"roll": 10, "range": "veryLong"},
     {"roll": 11, "range": "long"},
     {"roll": 12, "range": "veryLong"}
+  ],
+  "bands": [
+    {"range": "close", "from": 0, "to": 0},
+    {"range": "short", "from": 0, "to": 0},
+    {"range": "medium", "from": 1, "to": 2},
+    {"range": "long", "from": 3, "to": 10},
+    {"range": "veryLong", "from": 11, "to": 20}
   ]
 }

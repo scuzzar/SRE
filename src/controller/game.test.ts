@@ -424,7 +424,7 @@ describe('Begegnung und Kampfsimulation', () => {
     game.rollEncounter(15, 'clear');
     let sim = game.snapshot().combat!.sim!;
     // Entfernung 1 + 1 + 3 (Clear) = 5 → Short; Überraschung SC 1, Thugs 1 + 1 (Anführer): die NSC ziehen zuerst.
-    expect(sim).toMatchObject({ round: 1, range: 'short', rangeDice: [1, 1], terrain: { name: 'Clear, Road, Open', dm: 3 }, surprise: undefined, first: 'npcs' });
+    expect(sim).toMatchObject({ round: 1, range: 'short', band: 0, close: false, escaped: false, bandDie: undefined, rangeDice: [1, 1], terrain: { name: 'Clear, Road, Open', dm: 3 }, surprise: undefined, first: 'npcs' });
     expect(sim.fighters.map((f) => f.id)).toEqual(['n1', 'n2', 'c1', 'c2']);
     // Der Anführer ist dran; die App schlägt Kira als Ziel vor, sie steht oben.
     expect(sim.turn).toMatchObject({ id: 'n1', target: 'c1', reaches: true });
@@ -452,9 +452,14 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot().focus).toBe('c1');
     game.chooseFightTarget('n2');
     expect(game.snapshot().combat!.sim!.turn).toMatchObject({ target: 'n2', odds: { parts: expect.arrayContaining([{ kind: 'range', range: 'short', dm: 1 }]) } });
-    game.setRange('medium');
-    expect(game.snapshot().combat!.sim!.turn).toMatchObject({ reaches: false });
-    game.setRange('close');
+    game.setBand(1);
+    expect(game.snapshot().combat!.sim).toMatchObject({ range: 'medium', band: 1, turn: { reaches: false } });
+    game.moveBand(-1);
+    game.moveBand(-1);
+    expect(game.snapshot().combat!.sim).toMatchObject({ range: 'close', band: 0, close: true, turn: { reaches: true } });
+    game.setBand(21);
+    expect(game.snapshot().combat!.sim).toMatchObject({ range: undefined, escaped: true, turn: { reaches: false, odds: undefined } });
+    game.setBand(0, true);
     game.skipTurn();
     expect(game.snapshot().combat!.sim!.turn!.id).toBe('c2');
     game.skipTurn();
@@ -543,7 +548,7 @@ describe('Begegnung und Kampfsimulation', () => {
           game.skipTurn();
           continue;
         }
-        if (!turn.reaches) game.setRange('close');
+        if (!turn.reaches) game.setBand(0, true);
         else if (turn.target === undefined) game.chooseFightTarget(sim.fighters.find((f) => f.targetable)!.id);
         else game.fightAttack();
       }

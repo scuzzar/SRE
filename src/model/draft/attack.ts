@@ -7,6 +7,7 @@ import {
   chance2d6,
   currentEncounter,
   DomainError,
+  encounterRangeOf,
   fighterOf,
   focusOf,
   npcOf,
@@ -113,20 +114,23 @@ export function attackBy(attack: Attack, campaign: Campaign, npc: string | undef
 }
 
 /**
- * Der Angriff dessen, der in der Kampfsimulation am Zug ist, auf dieses Ziel, mit der Entfernung
- * der Begegnung. Ist ein SC am Zug, muss er oben stehen; greift ein NSC an, steht sein Ziel oben.
+ * Der Angriff dessen, der in der Kampfsimulation am Zug ist, auf dieses Ziel, mit der Reichweite
+ * aus dem Band der Begegnung; sind die Parteien entkommen, hat er keine. Ist ein SC am Zug, muss er
+ * oben stehen; greift ein NSC an, steht sein Ziel oben.
  */
 export function turnAttack(campaign: Campaign, target: string): Attack {
   const turn = turnOf(campaign);
   const encounter = currentEncounter(campaign);
   if (!turn || !encounter) throw new DomainError('Es ist keiner am Zug.');
   const top = attackCharacter(campaign);
+  const range = encounterRangeOf(encounter);
+  const at = range === undefined ? {} : { range };
   if (turn.side === 'pcs') {
     if (top.id !== turn.id) throw new DomainError('Der SC am Zug steht nicht oben.');
-    return { ...aimAt({}, campaign, target), range: encounter.range };
+    return { ...aimAt({}, campaign, target), ...at };
   }
   if (top.id !== target) throw new DomainError('Das Ziel des NSC steht nicht oben.');
-  return { ...attackBy({}, campaign, turn.id), range: encounter.range };
+  return { ...attackBy({}, campaign, turn.id), ...at };
 }
 
 /** Wählt Rüstung und Reichweite des Ziels. Steht das Ziel fest, ist seine Rüstung die einzige. */
