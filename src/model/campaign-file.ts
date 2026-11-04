@@ -146,6 +146,9 @@ const CharacterSchema = z.object({
   possessions: z.array(z.object({ of: z.string(), count: z.number(), rounds: z.number().optional() })).default([]),
   career: CareerSchema.optional(),
   homeworld: z.string().optional(),
+  /** Fehlen in Dateien von vor der Primär- und Sekundärwaffe; dann ist die Waffe in der Hand die Primärwaffe. */
+  primary: z.string().optional(),
+  secondary: z.string().optional(),
   wields: z.string().optional(),
   wears: z.string().optional(),
   /** Fehlt in Dateien von vor den NSC: ein SC. */
@@ -253,13 +256,13 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
   }
   try {
     const file = parsed.data.campaign;
-    const characters: Character[] = file.characters.map(({ career, homeworld, wields, wears, ...c }) => ({
+    const characters: Character[] = file.characters.map(({ career, homeworld, primary, secondary, wields, wears, ...c }) => ({
       ...c,
       skills: c.skills.map((s) => ({ ...s })),
       possessions: c.possessions.map((p) => stripped(p) as Possession),
       ...(career ? { career: careerOf(career) } : {}),
       ...(homeworld === undefined ? {} : { homeworld }),
-      ...(wields === undefined ? {} : { wields }),
+      ...armsFromFile(primary, secondary, wields),
       ...(wears === undefined ? {} : { wears }),
     }));
     const campaign: Campaign = {
@@ -336,14 +339,24 @@ function logEntry(entry: z.infer<typeof LogEntrySchema>): LogEntry {
   }
 }
 
+/** Primär-, Sekundärwaffe und Waffe in der Hand aus der Datei; ältere Dateien kennen nur die Waffe in der Hand: Sie wird die Primärwaffe. */
+function armsFromFile(primary: string | undefined, secondary: string | undefined, wields: string | undefined): Pick<Character, 'primary' | 'secondary' | 'wields'> {
+  const first = primary ?? (secondary === undefined ? wields : undefined);
+  return { ...(first === undefined ? {} : { primary: first }), ...(secondary === undefined ? {} : { secondary }), ...(wields === undefined ? {} : { wields }) };
+}
+
 function validate(campaign: Campaign): void {
   const ids = new Set<string>();
   for (const character of campaign.characters) {
     if (ids.has(character.id)) throw new DomainError(`Die Id ${character.id} kommt doppelt vor.`);
     ids.add(character.id);
     validateCharacter({ ...character, skills: character.skills });
-    if (character.wields !== undefined && !character.possessions.some((p) => weaponOfItem(p.of) === character.wields)) {
-      throw new DomainError(`${character.name} führt eine Waffe, die nicht im Besitz ist.`);
+    for (const weapon of [character.primary, character.secondary, character.wields]) {
+      if (weapon !== undefined && !character.possessions.some((p) => weaponOfItem(p.of) === weapon)) throw new DomainError(`${character.name} führt eine Waffe, die nicht im Besitz ist.`);
+    }
+    if (character.secondary !== undefined && character.secondary === character.primary) throw new DomainError(`${character.name} hat dieselbe Waffe als Primär- und Sekundärwaffe.`);
+    if (character.wields !== undefined && character.wields !== character.primary && character.wields !== character.secondary) {
+      throw new DomainError(`${character.name} hat eine Waffe in der Hand, die weder Primär- noch Sekundärwaffe ist.`);
     }
     if (character.wears !== undefined && !character.possessions.some((p) => p.of === character.wears)) {
       throw new DomainError(`${character.name} trägt eine Rüstung, die nicht im Besitz ist.`);

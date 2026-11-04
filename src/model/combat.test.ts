@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   appendLog,
+  armedWeaponsOf,
   characterOf,
   createCampaign,
   damageOf,
@@ -62,6 +63,48 @@ describe('Waffe in der Hand', () => {
       possessions: kira.possessions.filter((p) => p.of !== 'automatic-pistol'),
     };
     expect(characterOf(updateCharacter(armed, 'c1', without), 'c1')).not.toHaveProperty('wields');
+  });
+});
+
+describe('Primär- und Sekundärwaffe', () => {
+  // Jonas besitzt Blade (Primärwaffe) und bekommt im Editor eine Cutlass und eine Rifle dazu.
+  const jonasWith = (campaign: Campaign, change: Partial<ReturnType<typeof inputOf>>) => {
+    const jonas = characterOf(campaign, 'c2');
+    const input = inputOf(jonas);
+    return updateCharacter(campaign, 'c2', { ...input, possessions: [...jonas.possessions, { of: 'cutlass', count: 1 }, { of: 'rifle', count: 1 }], ...change });
+  };
+
+  it('legt man im Editor fest; im Kampf wechselt man nur zwischen ihnen und den Händen', () => {
+    const campaign = jonasWith(createCampaign(), { secondary: 'cutlass' });
+    const jonas = characterOf(campaign, 'c2');
+    expect(jonas).toMatchObject({ primary: 'blade', secondary: 'cutlass' });
+    expect(armedWeaponsOf(jonas)).toEqual(['blade', 'cutlass', 'hands']);
+    expect(characterOf(setWields(campaign, 'c2', 'cutlass'), 'c2').wields).toBe('cutlass');
+    expect(() => setWields(campaign, 'c2', 'rifle')).toThrow(/weder Primär- noch Sekundärwaffe von Jonas Reyl/);
+  });
+
+  it('nur Waffen aus dem Besitz, verschieden; sonst fallen sie weg', () => {
+    const campaign = jonasWith(createCampaign(), { primary: 'rifle', secondary: 'rifle' });
+    expect(characterOf(campaign, 'c2')).toMatchObject({ primary: 'rifle' });
+    expect(characterOf(campaign, 'c2')).not.toHaveProperty('secondary');
+    const notOwned = updateCharacter(createCampaign(), 'c2', { ...inputOf(characterOf(createCampaign(), 'c2')), primary: 'rifle' });
+    expect(characterOf(notOwned, 'c2')).not.toHaveProperty('primary');
+  });
+
+  it('ist die Waffe in der Hand keine der beiden mehr, nimmt er die Primärwaffe; die Hände bleiben die Hände', () => {
+    const armed = setWields(jonasWith(createCampaign(), { secondary: 'cutlass' }), 'c2', 'cutlass');
+    const swapped = updateCharacter(armed, 'c2', { ...inputOf(characterOf(armed, 'c2')), secondary: 'rifle' });
+    expect(characterOf(swapped, 'c2')).toMatchObject({ primary: 'blade', secondary: 'rifle', wields: 'blade' });
+    const bare = jonasWith(createCampaign(), { secondary: 'rifle' });
+    expect(characterOf(bare, 'c2')).not.toHaveProperty('wields');
+  });
+
+  it('ältere Kampagnendateien: Die Waffe in der Hand wird die Primärwaffe', () => {
+    const json = JSON.parse(toCampaignFile(setWields(createCampaign(), 'c1', 'automatic-pistol'))) as { campaign: { characters: Record<string, unknown>[] } };
+    json.campaign.characters = json.campaign.characters.map((c) => Object.fromEntries(Object.entries(c).filter(([key]) => key !== 'primary')));
+    expect(characterOf(fromCampaignFile(JSON.stringify(json), 'k2'), 'c1')).toMatchObject({ primary: 'automatic-pistol', wields: 'automatic-pistol' });
+    json.campaign.characters[1] = { ...json.campaign.characters[1], primary: 'blade', wields: 'automatic-pistol' };
+    expect(() => fromCampaignFile(JSON.stringify(json), 'k2')).toThrow(/nicht im Besitz/);
   });
 });
 

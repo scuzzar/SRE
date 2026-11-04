@@ -325,6 +325,7 @@ export function adoptNpc(campaign: Campaign, id: string, asNpc: boolean): Campai
     upp: npc.upp,
     skills: [{ of: skill, level: npc.skill }],
     possessions: [{ of: npc.wields, count: 1 }, ...(npc.wears ? [{ of: npc.wears, count: 1 }] : [])],
+    primary: weapon.weapon!,
     wields: weapon.weapon!,
     ...(npc.wears ? { wears: npc.wears } : {}),
   });

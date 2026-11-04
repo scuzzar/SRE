@@ -62,14 +62,18 @@ export function CharacterStrip({ view, weapons = false }: { view: Snapshot; weap
 
   const collapsed = view.stripCollapsed;
   return (
-    <section className={collapsed ? 'strip collapsed' : 'strip'} aria-label="Spielercharaktere">
+    <section className={['strip', collapsed ? 'collapsed' : '', weapons ? 'strip-combat' : ''].filter(Boolean).join(' ')} aria-label="Spielercharaktere">
       <div className="strip-track" ref={track} onScroll={onScroll}>
         {characters.map((character, i) => (
           <article key={character.id} className={character.focus ? 'strip-card focus' : 'strip-card'} aria-label={character.name} aria-hidden={!character.focus}>
             <div className="strip-head">
               <button type="button" className="strip-title" aria-expanded={!collapsed} onClick={() => game.toggleStrip()} tabIndex={character.focus ? 0 : -1}>
                 <span className="strip-name">{character.name}</span>
-                {character.background && <span className="pc-sub">{character.background}</span>}
+                {weapons && character.state !== 'unhurt' ? (
+                  <span className={`pc-sub state-${character.state}`}>{woundStateText[character.state]}</span>
+                ) : (
+                  character.background && <span className="pc-sub">{character.background}</span>
+                )}
               </button>
               <span className="strip-position" aria-hidden="true">
                 {i + 1}/{characters.length}
@@ -88,14 +92,14 @@ export function CharacterStrip({ view, weapons = false }: { view: Snapshot; weap
                 <ChevronDownIcon />
               </button>
             </div>
-            {character.state !== 'unhurt' && (
+            {!weapons && character.state !== 'unhurt' && (
               <p className={`strip-state state-${character.state}`}>
                 {woundStateText[character.state]} · STR {hex(Math.max(0, character.current.str))} · DEX {hex(Math.max(0, character.current.dex))} · END {hex(Math.max(0, character.current.end))}
               </p>
             )}
             {!collapsed && (
               <>
-                <UppRow character={character} interactive={character.focus && !weapons} />
+                {weapons ? <UppLine character={character} /> : <UppRow character={character} interactive={character.focus} />}
                 {weapons ? (
                   character.focus && view.combat ? (
                     <WeaponChips combat={view.combat} />
@@ -126,15 +130,35 @@ export function CharacterStrip({ view, weapons = false }: { view: Snapshot; weap
 }
 
 /** Die Waffen des Charakters oben: die Hände und die aus seinem Besitz; die in der Hand ist gedrückt. */
+/**
+ * Im Kampf in einer Zeile: Primärwaffe, Sekundärwaffe und Hände. Nur die Waffe in der Hand zeigt
+ * ihre Fertigkeit und wird nie gekürzt; wird es eng, kürzt sich der Name der anderen.
+ */
 function WeaponChips({ combat }: { combat: CombatView }) {
   const game = useGame();
   return (
-    <div className="chips" role="group" aria-label="Waffe in der Hand">
+    <div className="chips weapon-chips" role="group" aria-label="Waffe in der Hand">
       {combat.weapons.map((weapon) => (
         <button key={weapon.id} type="button" aria-label={`${weapon.name} (${weapon.skill})`} aria-pressed={weapon.wielded} onClick={() => game.wieldWeapon(weapon.id)}>
-          {weapon.name} <span className="chip-skill">{weapon.short}</span>
+          <span className="chip-name">{weapon.name}</span>
+          <span className="chip-skill">{weapon.short}</span>
         </button>
       ))}
     </div>
+  );
+}
+
+const uppKeys = ['str', 'dex', 'end', 'int', 'edu', 'soc'] as const;
+
+/** Im Kampf die Attribute als schmale Zeile wie bei den NSC; verwundete Werte rot. */
+function UppLine({ character }: { character: Snapshot['characters'][number] }) {
+  return (
+    <p className="strip-upp mono" aria-label="Attribute">
+      {uppKeys.map((k) => (
+        <span key={k} className={character.current[k] < character.upp[k] ? 'hurt' : undefined}>
+          {k.toUpperCase()} {hex(Math.max(0, character.current[k]))}
+        </span>
+      ))}
+    </p>
   );
 }

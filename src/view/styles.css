@@ -3760,6 +3760,87 @@ button:disabled {
   color: var(--ink-muted);
 }
 
+/* Im Kampf ist die Leiste eng: Kopfzeile so hoch wie die Schrift, wenig Abstand zwischen den Zeilen. */
+.strip-combat .strip-track {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.strip-combat .strip-card {
+  gap: 4px;
+  padding: 2px 8px 8px 12px;
+}
+
+.strip-combat.collapsed .strip-card {
+  padding-bottom: 2px;
+}
+
+.strip-combat .strip-title {
+  min-height: 30px;
+  align-items: center;
+}
+
+.strip-combat .strip-head .icon-button {
+  width: 32px;
+  height: 30px;
+}
+
+.strip-combat .strip-dots {
+  margin-top: -6px;
+}
+
+/* Die Attribute als schmale Zeile wie bei den NSC. */
+.strip-upp {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.strip-upp .hurt {
+  color: var(--accent-text);
+}
+
+/* Höchstens drei Waffen in einer Zeile: Primär, Sekundär, Hände. Wird es zu eng, kürzt sich der
+   Name der anderen; die Waffe in der Hand wird nie gekürzt. */
+.chips.weapon-chips {
+  flex-wrap: nowrap;
+}
+
+.strip .chips.weapon-chips button {
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 32px;
+  display: flex;
+  align-items: baseline;
+  padding: 4px 8px;
+  font-family: var(--sans);
+  white-space: nowrap;
+}
+
+.strip .chips.weapon-chips button[aria-pressed='true'] {
+  flex: 0 0 auto;
+}
+
+.chip-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Die Fertigkeit zeigt nur die Waffe in der Hand; die anderen zeigen nur ihren Namen. */
+.strip .chips.weapon-chips button:not([aria-pressed='true']) .chip-skill {
+  display: none;
+}
+
+.strip .chips.weapon-chips .chip-skill {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
 .combat-scroll {
   display: flex;
   flex-direction: column;

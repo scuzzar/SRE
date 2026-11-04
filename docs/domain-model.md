@@ -120,7 +120,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > (mit den sechs Namen), NSC-Aktionen, Welt (mit Schiff), Wesen und Handlung mit Mythics Elements-Tabellen. Alle übrigen Felder und Bereiche sind ausgeblendet, bis es
 > Einträge für sie gibt.
 
-> **Vorschlag vom 4. November 2026, wartet auf Freigabe:** **Primär- und Sekundärwaffe** (siehe
+> Am 4. November 2026 freigegeben: **Primär- und Sekundärwaffe** (siehe
 > dort, *Waffe in der Hand*, *Kauf einer Waffe*), damit die Leiste im Kampf kompakt wird (siehe
 > *Angriff*). Neu im Bild: `Character.primary` und `Character.secondary`. Der UI-Entwurf dazu
 > liegt unter [`ui-entwurf/waffen-leiste/`](ui-entwurf/waffen-leiste/).
@@ -1128,7 +1128,8 @@ Diagramm mit diesen Ausnahmen:
 - **Beispielcharaktere.** Die allererste Kampagne auf einem Gerät beginnt mit Kira Vant und Jonas
   Reyl aus der README (`src/data/examples.json`), damit man gleich etwas ausprobieren kann. Das
   Modell sagt dazu nichts; die beiden lassen sich löschen, solange der Log nicht auf sie verweist.
-  Jede weitere Kampagne beginnt leer.
+  Jede weitere Kampagne beginnt leer. Kira hat die Automatic Pistol, Jonas die Blade als
+  Primärwaffe; in der Hand haben beide zu Beginn die Hände.
 - **`RangeBand` in den Daten** steht in `src/data/encounters.json` als `bands`, je Reichweite mit
   `from` und `to`, wie im Bild. Begegnungen von vor den Range Bands haben nur eine Reichweite
   (`range`); beim Laden bekommen sie deren erstes Band (Close: Band 0 mit Berührung, Short 0,

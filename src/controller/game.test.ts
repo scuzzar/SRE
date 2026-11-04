@@ -281,9 +281,10 @@ describe('Kampf', () => {
     game.showScreen('combat');
     const combat = game.snapshot().combat!;
     expect(combat.character).toBe('Kira Vant');
+    // Zur Wahl stehen Primärwaffe, Sekundärwaffe (Kira hat keine) und die Hände.
     expect(combat.weapons.map((w) => [w.name, w.short, w.wielded])).toEqual([
-      ['Hände', 'Brw-0', true],
       ['Automatic Pistol', 'APi-1', false],
+      ['Hände', 'Brw-0', true],
     ]);
     expect(combat.ranges.map((r) => r.dm)).toEqual([2, 1, undefined, undefined, undefined]);
     expect(combat.rows.map((r) => r.armor)).toEqual(['nothing', 'jack', 'mesh', 'cloth', 'reflec', 'ablat', 'combat']);

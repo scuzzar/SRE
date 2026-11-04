@@ -77,7 +77,7 @@ Wie die Deutung eine gewöhnliche HTML-Datei mit den Stilen der App.
 
 ## Kompakte Waffenleiste (Entwurf vom 4. November 2026)
 
-Im Ordner [`waffen-leiste/`](waffen-leiste/) liegt der Entwurf (noch nicht freigegeben) für die Leiste
+Im Ordner [`waffen-leiste/`](waffen-leiste/) liegt der (am 4. November 2026 freigegebene und umgesetzte) Entwurf für die Leiste
 mit dem Charakter oben im Reiter *Kampf* (siehe *Primär- und Sekundärwaffe* im
 [Domänenmodell](../domain-model.md)). Grundlage ist der echte Kampfbildschirm der App.
 

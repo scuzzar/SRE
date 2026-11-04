@@ -26,7 +26,9 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
     possessions: (editor.input.possessions ?? []).map((p) => ({ of: p.of, count: String(p.count) })),
     // Leer heißt: keine Heimatwelt.
     homeworld: editor.input.homeworld ?? '',
-    // Leer heißt: die Hände.
+    // Leer heißt: keine. Die Waffe in der Hand bleibt, wie sie ist; leer heißt die Hände.
+    primary: editor.input.primary ?? '',
+    secondary: editor.input.secondary ?? '',
     wields: editor.input.wields ?? '',
     // Leer heißt: keine Rüstung.
     wears: editor.input.wears ?? '',
@@ -35,6 +37,12 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
   const isNew = editor.id === undefined;
   const unused = skills.filter((s) => !form.skills.some((f) => f.of === s.id));
   const unowned = items.filter((i) => !form.possessions.some((p) => p.of === i.id));
+
+  // Primär- und Sekundärwaffe: die Waffen der Gegenstände im Besitz.
+  const weaponChoices = form.possessions.flatMap((p) => {
+    const item = items.find((it) => it.id === p.of);
+    return item?.weapon ? [{ weapon: item.weapon, label: item.label }] : [];
+  });
 
   const setUpp = (key: keyof Upp, value: number) => setForm({ ...form, upp: { ...form.upp, [key]: value } });
 
@@ -52,13 +60,15 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
           id="character-form"
           onSubmit={(e) => {
             e.preventDefault();
-            const { homeworld, wields, wears, ...rest } = form;
+            const { homeworld, primary, secondary, wields, wears, ...rest } = form;
             game.saveCharacter({
               ...rest,
               credits: Number(form.credits === '' ? 0 : form.credits),
               skills: form.skills.map((s) => ({ of: s.of, level: Number(s.level) })),
               possessions: form.possessions.map((p) => ({ of: p.of, count: Number(p.count) })),
               ...(homeworld ? { homeworld } : {}),
+              ...(primary ? { primary } : {}),
+              ...(secondary ? { secondary } : {}),
               ...(wields ? { wields } : {}),
               ...(wears ? { wears } : {}),
             });
@@ -203,22 +213,27 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
               ))}
             </select>
           </fieldset>
-          <label className="field">
-            <span>Waffe in der Hand</span>
-            <select value={form.wields} onChange={(e) => setForm({ ...form, wields: e.target.value })}>
-              <option value="">Hände</option>
-              {form.possessions.flatMap((p) => {
-                const item = items.find((it) => it.id === p.of);
-                return item?.weapon
-                  ? [
-                      <option key={item.weapon} value={item.weapon}>
-                        {item.label}
-                      </option>,
-                    ]
-                  : [];
-              })}
-            </select>
-          </label>
+          {(['primary', 'secondary'] as const).map((slot) => (
+            <label key={slot} className="field">
+              <span>{slot === 'primary' ? 'Primärwaffe' : 'Sekundärwaffe'}</span>
+              <select
+                value={form[slot]}
+                onChange={(e) => {
+                  const weapon = e.target.value;
+                  // Wer bisher keine Primärwaffe hatte, nimmt die neue gleich in die Hand.
+                  const wields = slot === 'primary' && form.primary === '' && form.wields === '' ? weapon : form.wields;
+                  setForm({ ...form, [slot]: weapon, wields });
+                }}
+              >
+                <option value="">keine</option>
+                {weaponChoices.filter((w) => w.weapon !== form[slot === 'primary' ? 'secondary' : 'primary']).map((w) => (
+                  <option key={w.weapon} value={w.weapon}>
+                    {w.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
           <label className="field">
             <span>Getragene Rüstung</span>
             <select value={form.wears} onChange={(e) => setForm({ ...form, wears: e.target.value })}>
