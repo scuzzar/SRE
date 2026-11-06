@@ -12,6 +12,10 @@
   Änderung** (`docs/changes/`), auf dem alles Neue rot markiert ist; die Bereichsausschnitte
   (`docs/views/`) dienen zum Nachschlagen. Ihm nie das Gesamtbild zur Freigabe schicken. Wie man
   markiert und Ausschnitte anlegt, steht im Skill unter „Ausschnitte und Markierungen“.
+- **Regeln nachschlagen in `docs/regeln-kampf.md`**, nicht in den PDFs: Dort stehen alle Regeln und
+  Tabellen zu Kampf und Begegnungen aus der Starter Edition (Charts) und Book 4, mit Seitenangabe und
+  Stand in der App. Setzt die App eine Regel um, dort den Stand nachziehen; fehlt etwas, erst das
+  PDF lesen und es dort ergänzen.
 - Begriffe aus der Tabelle „Begriffe“ in `docs/domain-model.md` benutzen, in Code, Doku und Gespräch.
   Neue Begriffe kommen zuerst dort hinein.
 - `ARCHITECTURE.md` legt die vier MVC-Regeln und die Schichtentabelle fest. Beide müssen stimmen.
