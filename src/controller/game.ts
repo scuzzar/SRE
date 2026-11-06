@@ -42,6 +42,7 @@ import {
   buy,
   sell,
   setLocation,
+  setQuantityDie,
   type BookingKind,
   restoreCharacter,
   chooseCascade as chooseCareerCascade,
@@ -454,6 +455,11 @@ export class GameController {
   /** Im Kampf: Die Gruppe ist auf dieser fertigen Welt (wie „Gruppe ist hier“ auf der Weltkarte). */
   stayAt(id: string): void {
     this.inFight(() => this.change(setLocation(this.campaign, id), { combatNote: undefined }));
+  }
+
+  /** Stellt den Würfel der Anzahl für kommende Begegnungen ein: W6 nach den Regeln, W4 oder W3 zum Ausgleichen. */
+  setQuantityDie(die: number): void {
+    this.inFight(() => this.change(setQuantityDie(this.campaign, die), { combatNote: undefined }));
   }
 
   /** Beendet die laufende Begegnung; der Reiter Kampf zeigt wieder die Waffentabelle, der Reiter Begegnung die Auswahl. */

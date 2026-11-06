@@ -21,11 +21,17 @@ export interface Npc {
   readonly became?: CharacterId;
 }
 
+/** Der Würfel der Anzahl: W6 nach den Regeln, W4 oder W3 zum Ausgleichen. */
+export const quantityDice = [6, 4, 3] as const;
+export type QuantityDie = (typeof quantityDice)[number];
+
 /** Eine Begegnung nach der Random Encounter List (S. 21). */
 export interface Encounter {
   readonly id: string;
   /** Zeitpunkt als ISO-8601-Zeitstempel. */
   readonly at: string;
+  /** Der Würfel, mit dem die Anzahl gewürfelt wurde; fehlt bei Begegnungen von vorher: W6. */
+  readonly quantityDie?: QuantityDie;
   /** Die Art: der Wurf 11–56 auf der Liste. */
   readonly of: number;
   /** Die Welt, auf der sie stattfindet, als Spalte und Zeile (0304). */
@@ -33,6 +39,8 @@ export interface Encounter {
   /** Der Wurf auf die Reactions-Tabelle, 2 bis 12, mit DMs; die Würfel fehlen bei Begegnungen von vorher. */
   readonly reaction: number;
   readonly reactionDice?: readonly [number, number];
+  /** Der DM auf die Reaktion, beim Würfeln festgehalten; fehlt bei Begegnungen von vorher: der DM der Welt. */
+  readonly reactionDm?: number;
   readonly ended: boolean;
   readonly npcs: readonly Npc[];
   /** Der Wurf auf die Encounter Ranges (mit dem DM des Geländes); fehlt bei Begegnungen von vorher. */
@@ -85,10 +93,22 @@ export function encounterOfNpc(campaign: Campaign, id: string): Encounter {
   return encounter;
 }
 
-function d6(random: Random, count = 1): number {
+function d6(random: Random, count = 1, sides = 6): number {
   let sum = 0;
-  for (let i = 0; i < count; i++) sum += random.int(1, 6);
+  for (let i = 0; i < count; i++) sum += random.int(1, sides);
   return sum;
+}
+
+/** Der Würfel der Anzahl der Kampagne; fehlt er, W6. */
+export function quantityDieOf(campaign: Campaign): QuantityDie {
+  return campaign.quantityDie ?? 6;
+}
+
+/** Stellt den Würfel der Anzahl für kommende Begegnungen ein; W6 ist die Regel und wird nicht gespeichert. */
+export function setQuantityDie(campaign: Campaign, die: number): Campaign {
+  if (!quantityDice.includes(die as QuantityDie)) throw new DomainError(`Einen Würfel W${die} für die Anzahl gibt es nicht; W6, W4 oder W3.`);
+  const rest = Object.fromEntries(Object.entries(campaign).filter(([key]) => key !== 'quantityDie')) as Omit<Campaign, 'quantityDie'>;
+  return die === 6 ? rest : { ...rest, quantityDie: die as QuantityDie };
 }
 
 /** Ein Name von der Tafel NSC: ein Namensfeld zufällig, daraus Vor- und Nachname. */
@@ -140,8 +160,9 @@ export interface EncounterRoll {
 
 /**
  * Würfelt eine Begegnung auf dem Aufenthaltsort: die Art nach der Random Encounter List (oder
- * vorgegeben), die Anzahl (oder vorgegeben), je NSC UPP, Name, Waffe und Rüstung nach dem TL der
- * Gruppe, dazu die Reaktion. Die Zeilen 61–66 sind leer: dann gibt es keine.
+ * vorgegeben), die Anzahl mit dem Würfel der Anzahl der Kampagne, je NSC UPP, Name, Waffe und
+ * Rüstung nach dem TL der Gruppe, dazu die Reaktion. Die Zeilen 61–66 sind leer: dann gibt es keine.
+ * `count` gibt die Anzahl fest vor; das nutzen nur Tests.
  */
 export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, chosen?: number, count?: number, terrain?: string): EncounterRoll {
   if (currentEncounter(campaign)) throw new DomainError('Es läuft schon eine Begegnung; erst sie beenden.');
@@ -152,7 +173,8 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
   const type = encounterTypeOf(roll);
   if (!type) return { roll, campaign, encounter: undefined };
   if (count !== undefined && (!Number.isInteger(count) || count < 1)) throw new DomainError('Eine Begegnung hat mindestens einen NSC.');
-  const size = count ?? Math.max(1, d6(random, type.quantity));
+  const quantityDie = quantityDieOf(campaign);
+  const size = count ?? Math.max(1, d6(random, type.quantity, quantityDie));
   const tl = Math.max(0, (world.uwp.tech ?? 0) + type.tl);
   const blades = weaponsUpTo(tl, false);
   const weapons = weaponsUpTo(tl, type.guns);
@@ -170,9 +192,8 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
     return { id: `n${first + i}`, name, leader, skill: leader ? 2 : 1, upp, wields: weapon.id, ...(armor ? { wears: armor.id } : {}) };
   });
   const reactionDice = [d6(random), d6(random)] as const;
-  const raw = reactionDice[0] + reactionDice[1];
-  const dm = (world.uwp.population ?? 0) >= 9 ? -1 : 0;
-  const reaction = raw === 2 || raw === 12 ? raw : Math.min(11, Math.max(3, raw + dm));
+  const dm = populationDm(world.uwp.population) + veteranDm(campaign);
+  const reaction = reactionOf(reactionDice, dm);
   const ground = terrain === undefined ? undefined : ref.encounters.terrains.find((t) => t.id === terrain);
   if (terrain !== undefined && !ground) throw new DomainError(`Das Gelände ${terrain} gibt es nicht.`);
   const rangeDice = [d6(random), d6(random)] as const;
@@ -185,10 +206,12 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
       'e',
     )}`,
     at: clock.now(),
+    quantityDie,
     of: roll,
     in: campaign.location,
     reaction,
     reactionDice,
+    reactionDm: dm,
     ended: false,
     npcs,
     rangeDice,
@@ -336,8 +359,35 @@ export function adoptNpc(campaign: Campaign, id: string, asNpc: boolean): Campai
   };
 }
 
-/** Der DM auf die Reaktion: −1 auf einer Welt mit Bevölkerung 9 oder mehr (S. 21). */
+/** Die Reaktion aus 2W6 und DM (S. 21): Eine echte 2 oder 12 gilt ohne DM, sonst 3 bis 12. */
+export function reactionOf(dice: readonly [number, number], dm: number): number {
+  const raw = dice[0] + dice[1];
+  return raw === 2 || raw === 12 ? raw : Math.min(12, Math.max(3, raw + dm));
+}
+
+const VETERAN_SERVICES = ['army', 'navy', 'scouts', 'marines'];
+
+/** −1 auf einer Welt mit Bevölkerung 9 oder mehr (S. 21). */
+function populationDm(population: number | undefined): number {
+  return (population ?? 0) >= 9 ? -1 : 0;
+}
+
+/** +1, wenn ein lebender SC nach seinem Lebenslauf 5 oder mehr Terms in Army, Navy, Scouts oder Marines gedient hat (S. 21). */
+export function veteranDm(campaign: Campaign): number {
+  const veteran = livingCharacters(campaign).some((c) => {
+    if (c.career === undefined) return false;
+    const state = replay(c.career);
+    return VETERAN_SERVICES.includes(state.service?.id ?? '') && state.terms >= 5;
+  });
+  return veteran ? 1 : 0;
+}
+
+/**
+ * Der DM auf die Reaktion: wie beim Würfeln festgehalten; bei Begegnungen von vorher der DM der
+ * Welt, −1 bei Bevölkerung 9 oder mehr (S. 21).
+ */
 export function reactionDm(campaign: Campaign, encounter: Encounter): number {
+  if (encounter.reactionDm !== undefined) return encounter.reactionDm;
   const world = encounter.in === undefined ? undefined : campaign.hexes.find((h) => `${String(h.column).padStart(2, '0')}${String(h.row).padStart(2, '0')}` === encounter.in);
-  return (world?.uwp.population ?? 0) >= 9 ? -1 : 0;
+  return populationDm(world?.uwp.population);
 }

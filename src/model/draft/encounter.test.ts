@@ -35,6 +35,10 @@ import {
   removeCharacter,
   rollDamage,
   rollEncounter,
+  reactionOf,
+  setGeneration,
+  setQuantityDie,
+  veteranDm,
   setHexes,
   setLocation,
   setWears,
@@ -45,6 +49,8 @@ import {
   type Hex,
 } from '..';
 import { fixedClock, fixedRandom } from '../testing';
+import { cascadeOptions, chooseCascade, enlist, finishGeneration, muster, reenlist, rollNext, rollSkill, stateOf, tableOptions, type Generation } from '../generation';
+import type { Random } from '../ports';
 import { aimAt, attackBy, chooseTarget, rollAttack, startAttack, turnAttack } from './attack';
 import { assignWound, confirmWounding, startWounding } from './wounding';
 import { characteristicOptions } from './task';
@@ -462,5 +468,76 @@ describe('Fehler, die der Fuzz-Test gefunden hat', () => {
     campaign = appendLog(campaign, rollAttack(chooseTarget(campaign, 'nothing', 'close', attackBy(startAttack(campaign), campaign, 'n2')), campaign, fixedRandom(6, 6), clock));
     campaign = appendLog(campaign, { kind: 'damage', at: clock.now(), of: 0, dice: [2, 2], to: ['DEX', 'DEX'] });
     expect(characteristicOptions(undefined, campaign).find((o) => o.characteristic === 'DEX')).toMatchObject({ value: 4, dm: -1 });
+  });
+});
+
+/** Würfelt immer das Höchste: Überleben, Patent, Beförderung, Weiterverpflichtung und Altern gelingen. */
+const high: Random = { int: (_min, max) => max };
+
+/**
+ * Ein SC, der `terms` Terms in `service` gedient hat: Alles gelingt, Fertigkeiten von der ersten
+ * Tabelle, nach dem letzten Term geht er ab (mit 1+1, sonst zwingt eine 12 zum Bleiben).
+ */
+function veteran(campaign: Campaign, service: string, terms: number): Campaign {
+  let g: Generation = { career: { rolls: [] } };
+  for (let i = 0; i < 6; i++) g = rollNext(g, high);
+  g = enlist(g, service, high);
+  for (let step = stateOf(g).step; step !== 'name'; step = stateOf(g).step) {
+    if (step === 'skill') g = rollSkill(g, tableOptions(stateOf(g)).find((o) => o.available)!.table.id, high);
+    else if (step === 'cascade') g = chooseCascade(g, cascadeOptions(g)[0]!.skill);
+    else if (step === 'reenlist') g = stateOf(g).terms < terms ? reenlist(g, true, high) : reenlist(g, false, fixedRandom(1, 1));
+    else if (step === 'muster') g = muster(g, 'benefit', fixedRandom(1));
+    else g = rollNext(g, high);
+  }
+  expect(stateOf(g)).toMatchObject({ terms, service: { id: service } });
+  return finishGeneration(setGeneration(campaign, g), 'Veteran').campaign;
+}
+
+describe('Würfel der Anzahl', () => {
+  it('würfelt die Anzahl mit dem Würfel der Kampagne; W6 ist die Regel und wird nicht gespeichert', () => {
+    const w3 = setQuantityDie(there, 3);
+    expect(w3.quantityDie).toBe(3);
+    // 14: 3W6 Rowdies, hier 3W3; ein Wurf über 3 ginge nicht.
+    const encounter = rollEncounter(w3, fixedRandom(3, 3, 2), clock, 14).encounter!;
+    expect(encounter).toMatchObject({ quantityDie: 3 });
+    expect(encounter.npcs).toHaveLength(8);
+    expect(() => rollEncounter(w3, fixedRandom(4), clock, 14)).toThrow(/nicht in 1–3/);
+    expect(rollEncounter(there, fixedRandom(6, 6), clock, 15).encounter).toMatchObject({ quantityDie: 6, npcs: { length: 12 } });
+    expect(setQuantityDie(w3, 6)).not.toHaveProperty('quantityDie');
+    expect(() => setQuantityDie(there, 5)).toThrow(/W5/);
+  });
+
+  it('übersteht die Kampagnendatei, an der Kampagne und an der Begegnung', () => {
+    const rolled = rollEncounter(setQuantityDie(there, 4), fixedRandom(4), clock, 23).campaign;
+    const back = fromCampaignFile(toCampaignFile(rolled), rolled.id);
+    expect(back.quantityDie).toBe(4);
+    expect(back.encounters[0]).toMatchObject({ quantityDie: 4, npcs: { length: 4 } });
+  });
+});
+
+describe('Reaktion', () => {
+  it('eine echte 2 oder 12 gilt ohne DM, sonst begrenzt auf 3 bis 12 (S. 21)', () => {
+    expect(reactionOf([5, 6], 1)).toBe(12);
+    expect(reactionOf([6, 6], -1)).toBe(12);
+    expect(reactionOf([1, 1], 1)).toBe(2);
+    expect(reactionOf([1, 2], -1)).toBe(3);
+    expect(reactionOf([3, 4], 0)).toBe(7);
+  });
+
+  it('DM +1 für einen lebenden SC mit 5 oder mehr Terms in Army, Navy, Scouts oder Marines', () => {
+    expect(veteranDm(there)).toBe(0);
+    const army = veteran(there, 'army', 5);
+    expect(veteranDm(army)).toBe(1);
+    expect(veteranDm(veteran(there, 'scouts', 5))).toBe(1);
+    expect(veteranDm(veteran(there, 'army', 4))).toBe(0);
+    expect(veteranDm(veteran(there, 'merchants', 5))).toBe(0);
+    expect(veteranDm({ ...army, characters: army.characters.map((c) => ({ ...c, dead: true })) })).toBe(0);
+  });
+
+  it('hält den DM an der Begegnung fest; Bevölkerung 9+ gleicht ihn aus', () => {
+    const army = veteran(there, 'army', 5);
+    expect(rollEncounter(army, fixedRandom(), clock, 15, 2).encounter).toMatchObject({ reactionDm: 1 });
+    const crowded = setLocation(setHexes(army, [{ ...regina, uwp: { ...regina.uwp, population: 9 } }]), '0207');
+    expect(rollEncounter(crowded, fixedRandom(), clock, 15, 2).encounter).toMatchObject({ reactionDm: 0 });
   });
 });

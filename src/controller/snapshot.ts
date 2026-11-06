@@ -83,6 +83,7 @@ import {
   npcCharacters,
   npcOf,
   reactionText,
+  quantityDieOf,
   reactionDm,
   uppOf,
   victimOf,
@@ -381,9 +382,10 @@ export interface SimView {
   /** Die Würfel der Reaktion und ihr DM; fehlen bei Begegnungen von vorher. */
   readonly reactionDice: readonly number[] | undefined;
   readonly reactionDm: number;
-  /** Die Zeile der Random Encounter List (11–56) und wie viele W6 die Anzahl hat. */
+  /** Die Zeile der Random Encounter List (11–56), wie viele Würfel die Anzahl hat und welcher (W6, W4, W3). */
   readonly roll: number;
   readonly quantity: number;
+  readonly quantityDie: number;
   readonly round: number;
   /** Die Reichweite aus dem Band; fehlt, wenn die Parteien entkommen sind. */
   readonly range: Range | undefined;
@@ -504,6 +506,8 @@ export interface CombatView {
   readonly worlds: readonly WorldChoice[];
   /** Die Übersicht der eben gewürfelten Begegnung steht im Vordergrund. */
   readonly intro: boolean;
+  /** Der Würfel der Anzahl für die nächste Begegnung: 6, 4 oder 3. */
+  readonly quantityDie: number;
   /** Die Arten der Random Encounter List, zum Wählen. */
   readonly encounterTypes: readonly { readonly roll: number; readonly name: string; readonly quantity: number }[];
   /** Schaden, den der Spieler gerade verteilt. */
@@ -877,6 +881,7 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
     location: campaign.location,
     worlds: worldChoices(campaign.hexes),
     intro: intro && encounter !== undefined,
+    quantityDie: quantityDieOf(campaign),
     encounterTypes: ref.encounters.types.map((t) => ({ roll: t.roll, name: t.name, quantity: t.quantity })),
     wounding: wounding && woundingView(campaign, wounding),
     note,
@@ -956,6 +961,7 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
     reactionDm: reactionDm(campaign, encounter),
     roll: encounter.of,
     quantity: encounterTypeOfEncounter(encounter).quantity,
+    quantityDie: encounter.quantityDie ?? 6,
     round: encounter.round,
     range,
     band: encounter.band,

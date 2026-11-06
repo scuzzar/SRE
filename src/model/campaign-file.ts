@@ -174,6 +174,9 @@ const EncounterSchema = z
     in: z.string().optional(),
     reaction: z.number().int().min(2).max(12),
     reactionDice: z.tuple([die, die]).optional(),
+    /** Fehlen bei Begegnungen von vor dem Würfel der Anzahl bzw. dem festgehaltenen DM. */
+    reactionDm: z.number().int().optional(),
+    quantityDie: z.union([z.literal(3), z.literal(4), z.literal(6)]).optional(),
     ended: z.boolean(),
     npcs: z.array(NpcSchema).min(1),
     /** Fehlen bei Begegnungen von vor der Kampfsimulation. */
@@ -208,6 +211,8 @@ const CampaignFileSchema = z.object({
     /** Fehlen in Dateien von vor dem Shop bzw. den Begegnungen. */
     location: z.string().optional(),
     encounters: z.array(EncounterSchema).default([]),
+    /** Fehlt in Dateien von vor dem Würfel der Anzahl: W6. */
+    quantityDie: z.union([z.literal(3), z.literal(4), z.literal(6)]).optional(),
     bookings: z
       .array(
         z.object({
@@ -228,8 +233,8 @@ const CampaignFileSchema = z.object({
 
 /** Die Kampagne als Inhalt einer Kampagnendatei. */
 export function toCampaignFile(campaign: Campaign): string {
-  const { name, odds, characters, log, generation, hexes, focus, location, bookings, encounters } = campaign;
-  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { name, odds, characters, log, generation, hexes, focus, location, bookings, encounters } }, null, 2);
+  const { name, odds, characters, log, generation, hexes, focus, location, bookings, encounters, quantityDie } = campaign;
+  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { name, odds, characters, log, generation, hexes, focus, location, bookings, encounters, quantityDie } }, null, 2);
 }
 
 /** Ein Dateiname aus dem Namen der Kampagne und dem Tag, z. B. „Spinward-Run-2026-10-25.json“. */
@@ -277,6 +282,7 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
       ...(file.location === undefined ? {} : { location: file.location }),
       bookings: file.bookings.map((b) => stripped(b) as Booking),
       encounters: file.encounters.map((e) => ({ ...stripped(e), npcs: e.npcs.map((n) => stripped(n) as Npc) }) as Encounter),
+      ...(file.quantityDie === undefined || file.quantityDie === 6 ? {} : { quantityDie: file.quantityDie }),
     };
     validate(campaign);
     return keepFocus(campaign, campaign);

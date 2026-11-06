@@ -4,7 +4,7 @@ import type { Generation } from './generation';
 import { damageRollsOf, interpretationsOf, type LogEntry } from './log';
 import { worldOf, type Hex } from './sector';
 import type { Booking } from './shop';
-import type { Encounter } from './encounter';
+import type { Encounter, QuantityDie } from './encounter';
 import { defaultOdds, HANDS, itemOf, itemOfWeapon, oddsOf, ref, skillOf, weaponOf, type ExampleCharacter } from './reference';
 
 /** Die sechs Attributwerte, je 0 bis 15. */
@@ -90,6 +90,8 @@ export interface Campaign {
   readonly bookings: readonly Booking[];
   /** Die Begegnungen, die laufende zuletzt; beendete bleiben, wenn der Log auf ihre NSC verweist. */
   readonly encounters: readonly Encounter[];
+  /** Der Würfel der Anzahl für kommende Begegnungen: 3, 4 oder 6; fehlt er, W6 nach den Regeln. */
+  readonly quantityDie?: QuantityDie;
 }
 
 /** Was man beim Anlegen und Bearbeiten eines Charakters eingibt. */
