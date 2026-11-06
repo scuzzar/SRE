@@ -1,0 +1,238 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Ausschnitt: Kampf: Waffen, Angriff, Wunden, Heilung
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne
+  class Character $kampagne
+  class SkillLevel $kampagne
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+
+' Verlauf
+  abstract class LogEntry $probe
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Attack <<transient>> $kampf {
+    armor: ArmorClass [0..1]
+    range: Range [0..1]
+    /dm: number
+    /need: number
+    /chance: number
+  }
+  class AttackResult $kampf {
+    armor: ArmorClass
+    range: Range
+    dice: number[2]
+    dm: number
+    target: number
+    /success: boolean
+  }
+  class Recovery $kampf {
+    kind: RecoveryKind
+    dice: number[0..5]
+    /days: number [0..1]
+  }
+  enum RecoveryKind <<value>> $kampf {
+    wake
+    treatment
+    rest
+  }
+  class DamageRoll $kampf {
+    dice: number[1..5]
+    to: Characteristic[1..5]
+    /damage: number
+  }
+  class Wounding <<transient>> $kampf {
+    dice: number[1..5]
+    to: Characteristic[0..5]
+  }
+  class Npc $begegnung
+  class Wounds <<value>> $kampf {
+    str: number
+    dex: number
+    end: number
+  }
+  enum WoundState <<value>> $kampf {
+    unhurt
+    wounded
+    unconscious
+    serious
+    dead
+  }
+
+' Referenzdaten
+  class Skill <<reference>> $kampagne
+  class Item <<reference>> $shop
+  class Weapon <<reference>> $kampf {
+    name: string
+    attack: AttackKind
+    required: number
+    requiredDm: number
+    advantageous: number
+    advantageousDm: number
+    wounds: number
+    rounds: number [0..1]
+    law: number [0..1]
+  }
+  class ArmorDm <<value>> $kampf {
+    armor: ArmorClass
+    dm: number
+  }
+  class RangeDm <<value>> $kampf {
+    range: Range
+    dm: number [0..1]
+  }
+  enum AttackKind <<value>> $kampf {
+    blow
+    swing
+    shot
+  }
+  enum ArmorClass <<value>> $kampf {
+    nothing
+    jack
+    mesh
+    cloth
+    reflec
+    ablat
+    combat
+  }
+  enum Range <<value>> $kampf {
+    close
+    short
+    medium
+    long
+    veryLong
+  }
+
+' Kampagne
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+
+' Charakter
+Item "0..1" --> "0..1" Weapon : weapon
+Character "*" --> "0..1" Weapon : wields
+Character "*" --> "0..1" Weapon : primary
+Character "*" --> "0..1" Weapon : secondary
+
+' Waffen (Referenzdaten)
+Weapon "*" --> "1" Skill : uses
+Weapon "*" --> "0..1" Item : ammo
+Weapon --> AttackKind
+Weapon "1" *-- "7" ArmorDm : vsArmor {ordered}
+Weapon "1" *-- "5" RangeDm : atRange {ordered}
+ArmorDm -[hidden]- ArmorClass
+RangeDm -[hidden]- Range
+
+' Verlauf
+LogEntry <|-- AttackResult
+LogEntry <|-- DamageRoll
+LogEntry <|-- Recovery
+Recovery "*" --> "0..1" Character : for
+Recovery "*" --> "0..1" Npc : npc
+Recovery "*" --> "0..1" Character : by
+Recovery --> RecoveryKind
+
+' Probe
+
+' Angriff
+Attack "0..1" --> "1" Campaign : in
+Attack "*" --> "0..1" Character : /for
+Attack "*" --> "0..1" Npc : by
+Attack "*" --> "0..1" Npc : against
+Attack "*" --> "0..1" Character : /victim
+Attack "*" --> "1" Weapon : /with
+Attack ..> AttackResult : on roll
+AttackResult "*" --> "0..1" Character : for
+AttackResult "*" --> "0..1" Npc : by
+AttackResult "*" --> "0..1" Npc : against
+AttackResult "*" --> "0..1" Character : victim
+AttackResult "*" --> "1" Weapon : with
+AttackResult "*" --> "0..1" SkillLevel : uses
+DamageRoll "0..1" --> "1" AttackResult : of
+Wounding "0..1" --> "1" AttackResult : of
+Wounding ..> DamageRoll : on confirm
+
+' Begegnung
+WoundState -[hidden]- Wounds
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+class Campaign #line:d0021b;line.bold
+@enduml

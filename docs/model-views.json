@@ -1,0 +1,47 @@
+{
+  "views": [
+    {
+      "id": "kampagne",
+      "title": "Kampagne und Charaktere"
+    },
+    {
+      "id": "shop",
+      "title": "Shop, Kasse und Besitz"
+    },
+    {
+      "id": "erschaffung",
+      "title": "Charaktererschaffung und Laufbahnen"
+    },
+    {
+      "id": "sektor",
+      "title": "Subsektor und Welten"
+    },
+    {
+      "id": "karte",
+      "title": "Karte und Orakel"
+    },
+    {
+      "id": "probe",
+      "title": "Probe und Verlauf"
+    },
+    {
+      "id": "kampf",
+      "title": "Kampf: Waffen, Angriff, Wunden, Heilung"
+    },
+    {
+      "id": "begegnung",
+      "title": "Begegnung"
+    }
+  ],
+  "changes": [
+    {
+      "id": "2026-11-06",
+      "file": "2026-11-06-wuerfel-der-anzahl",
+      "title": "Würfel der Anzahl, DM auf die Reaktion",
+      "approved": false,
+      "show": [
+        "Hex"
+      ]
+    }
+  ]
+}

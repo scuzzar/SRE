@@ -139,9 +139,31 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
-Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild neu
-erzeugen mit `bash .claude/skills/domain-model/scripts/render.sh docs/domain-model.puml`; das Skript
-lädt PlantUML bei Bedarf selbst und braucht nur Java, kein Graphviz.
+Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
+alle Ausschnitte neu erzeugen mit `bash .claude/skills/domain-model/scripts/render.sh` (ohne
+Argument); das Skript lädt PlantUML bei Bedarf selbst und braucht nur Java, kein Graphviz.
+
+**Ausschnitte.** Das ganze Bild ist zu groß, um es auf einmal zu lesen. Deshalb gibt es Ausschnitte,
+die aus dem Modell erzeugt werden, nie von Hand gezeichnet: je Bereich einer, mit den Klassen des
+Bereichs vollständig und ihren Nachbarn aus anderen Bereichen zugeklappt, und je offener Änderung
+einer, mit dem, was sie ändert. **Rot** ist, was noch nicht freigegeben ist: neue Felder rot und
+fett, entfallende rot durchgestrichen, neue Pfeile rot und dick, betroffene Klassen rot gerahmt.
+Welche Klasse zu welchem Bereich gehört, sagt ihr Tag im Modell (`class Encounter $begegnung`); die
+Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
+
+| Bereich | Ausschnitt |
+|---|---|
+| Kampagne und Charaktere | [views/kampagne.png](views/kampagne.png) |
+| Shop, Kasse und Besitz | [views/shop.png](views/shop.png) |
+| Charaktererschaffung und Laufbahnen | [views/erschaffung.png](views/erschaffung.png) |
+| Subsektor und Welten | [views/sektor.png](views/sektor.png) |
+| Karte und Orakel | [views/karte.png](views/karte.png) |
+| Probe und Verlauf | [views/probe.png](views/probe.png) |
+| Kampf: Waffen, Angriff, Wunden, Heilung | [views/kampf.png](views/kampf.png) |
+| Begegnung | [views/begegnung.png](views/begegnung.png) |
+
+Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
+[2026-11-06: Würfel der Anzahl, DM auf die Reaktion](changes/2026-11-06-wuerfel-der-anzahl.png).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit

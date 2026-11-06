@@ -1,0 +1,172 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Ausschnitt: Shop, Kasse und Besitz
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne
+  class Booking $shop {
+    at: datetime
+    kind: BookingKind
+    amount: number
+    count: number [0..1]
+    text: string [0..1]
+  }
+  enum BookingKind <<value>> $shop {
+    income
+    expense
+    deposit
+    payout
+    purchase
+    sale
+  }
+  class Character $kampagne
+  class Possession $shop {
+    count: number
+    rounds: number [0..1]
+  }
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+  class Hex $sektor
+
+' Verlauf
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Npc $begegnung
+
+' Referenzdaten
+  class Skill <<reference>> $kampagne
+  class Gain <<reference>> $erschaffung
+  class Item <<reference>> $shop {
+    name: string
+    kind: ItemKind
+    tl: number [0..1]
+    weight: number [0..1]
+    price: number [0..1]
+    once: boolean
+    armor: ArmorClass [0..1]
+  }
+  class Weapon <<reference>> $kampf
+  enum ItemKind <<value>> $shop {
+    weapon
+    ammunition
+    armor
+    equipment
+    vehicle
+    ship
+    passage
+    membership
+  }
+
+' Kampagne
+Campaign "1" *-- "*" Booking : bookings {ordered}
+Booking "*" --> "0..1" Character : for
+Booking "*" --> "0..1" Item : bought
+Booking "*" --> "0..1" Item : sold
+Booking "*" --> "0..1" Hex : in
+Booking --> BookingKind
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+Gain "*" --> "0..1" Item : item
+
+' Subsektor und Welten
+
+' Charakter
+Character "1" *-- "*" Possession : possessions
+Possession "*" --> "1" Item : of
+Item --> ItemKind
+Item "0..1" --> "0..1" Skill : /uses
+Item "0..1" --> "0..1" Weapon : weapon
+
+' Waffen (Referenzdaten)
+Weapon "*" --> "0..1" Item : ammo
+Hex "*" --> "*" Item : /offer
+
+' Verlauf
+
+' Probe
+
+' Angriff
+
+' Begegnung
+Npc "*" --> "1" Item : wields
+Npc "*" --> "0..1" Item : wears
+Character "*" --> "0..1" Item : wears
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+class Campaign #line:d0021b;line.bold
+@enduml

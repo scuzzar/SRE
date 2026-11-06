@@ -1,0 +1,202 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Ausschnitt: Karte und Orakel
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+
+' Verlauf
+  abstract class LogEntry $probe
+  class OracleAnswer $karte {
+    question: string [0..1]
+    roll: number
+    chance: number
+    /yes: boolean
+  }
+  class CardPick $karte {
+    question: string [0..1]
+    bell: number [0..1]
+    scatter: Scatter [0..1]
+  }
+  class PickedItem $karte
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Card <<transient>> $karte {
+    question: string [0..1]
+    bell: number
+    scatter: Scatter
+    pickedRolls: CardRoll [*]
+  }
+  class MapIcon <<value>> $karte {
+    north: PathKind
+    east: PathKind
+    south: PathKind
+    west: PathKind
+    up: PathKind
+    down: PathKind
+  }
+  enum PathKind <<value>> $karte {
+    none
+    path
+    deadEnd
+    hidden
+    obstacle
+  }
+  enum Scatter <<value>> $karte {
+    n
+    ne
+    e
+    se
+    s
+    sw
+    w
+    nw
+    hit
+    miss
+  }
+  enum CardRoll <<value>> $karte {
+    bell
+    scatter
+    map
+  }
+  class TaskResult $probe
+
+' Referenzdaten
+  class Odds <<reference>> $karte {
+    name: string
+    chance: number
+    target: number
+  }
+  class Section <<reference>> $karte {
+    name: string
+    kind: SectionKind
+  }
+  class Slot <<reference>> $karte {
+    label: string
+  }
+  class Column <<reference>> $karte
+  class Entry <<reference>> $karte {
+    text: string
+    retired: boolean
+  }
+  enum SectionKind <<value>> $karte {
+    card
+    theme
+  }
+
+' Kampagne
+Campaign "*" --> "1" Odds : odds
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+LogEntry <|-- OracleAnswer
+LogEntry <|-- CardPick
+CardPick "1" *-- "*" PickedItem : items {ordered}
+CardPick "1" *-- "0..1" MapIcon : map
+OracleAnswer "*" --> "1" Odds : odds
+TaskResult "*" --> "1" Odds : odds
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+Card "0..1" --> "1" Campaign : in
+Card "*" --> "1..*" Entry : drawn {ordered}
+Card "*" --> "*" Slot : picked
+Card ..> CardPick : on confirm
+Card "1" *-- "1" MapIcon : map
+PickedItem "*" --> "1" Slot : /in
+PickedItem "*" --> "1..2" Entry : picked {ordered}
+Section "1" *-- "1..*" Slot : slots {ordered}
+Section --> SectionKind
+Slot "1" *-- "1..2" Column : columns {ordered}
+Column "1" *-- "1..*" Entry : entries
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+class Campaign #line:d0021b;line.bold
+@enduml

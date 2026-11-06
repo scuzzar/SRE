@@ -1,6 +1,44 @@
 ' Das Domänenmodell der Solo RPG Engine. Es führt: der Code folgt ihm, nie umgekehrt.
 ' Rendern: bash .claude/skills/domain-model/scripts/render.sh docs/domain-model.puml
 @startuml
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
 !pragma layout smetana
 title Solo RPG Engine – Domänenmodell (Version 1)
 hide empty members
@@ -34,19 +72,19 @@ hide <<reference>> stereotype
 hide <<value>> stereotype
 
 ' Kampagne und Charaktere
-  class Campaign {
+  class Campaign $kampagne {
     name: string
     /funds: number
-    quantityDie: number [0..1]
+    $new("2026-11-06", "quantityDie: number [0..1]")
   }
-  class Booking {
+  class Booking $shop {
     at: datetime
     kind: BookingKind
     amount: number
     count: number [0..1]
     text: string [0..1]
   }
-  enum BookingKind <<value>> {
+  enum BookingKind <<value>> $shop {
     income
     expense
     deposit
@@ -54,7 +92,7 @@ hide <<value>> stereotype
     purchase
     sale
   }
-  class Character {
+  class Character $kampagne {
     name: string
     background: string
     equipment: string
@@ -66,7 +104,7 @@ hide <<value>> stereotype
     /wounds: Wounds
     /state: WoundState
   }
-  class Upp <<value>> {
+  class Upp <<value>> $kampagne {
     str: number
     dex: number
     end: number
@@ -74,20 +112,20 @@ hide <<value>> stereotype
     edu: number
     soc: number
   }
-  class SkillLevel {
+  class SkillLevel $kampagne {
     level: number
     retired: boolean
   }
-  class Possession {
+  class Possession $shop {
     count: number
     rounds: number [0..1]
   }
 
 ' Charaktererschaffung und Lebenslauf
-  class Generation {
+  class Generation $erschaffung {
     /step: GenerationStep
   }
-  class Career {
+  class Career $erschaffung {
     /terms: number
     /rank: number
     /age: number
@@ -95,7 +133,7 @@ hide <<value>> stereotype
     /dead: boolean
     /pension: number
   }
-  class CareerRoll {
+  class CareerRoll $erschaffung {
     kind: RollKind
     dice: number[1..2]
     dm: number
@@ -105,7 +143,7 @@ hide <<value>> stereotype
   }
 
 ' Subsektor und Welten
-  class Hex {
+  class Hex $sektor {
     column: number
     row: number
     empty: boolean
@@ -116,7 +154,7 @@ hide <<value>> stereotype
     note: string [0..1]
     /step: WorldStep
   }
-  class Uwp <<value>> {
+  class Uwp <<value>> $sektor {
     starport: number [0..1]
     size: number [0..1]
     atmosphere: number [0..1]
@@ -126,7 +164,7 @@ hide <<value>> stereotype
     law: number [0..1]
     tech: number [0..1]
   }
-  class WorldRoll <<transient>> {
+  class WorldRoll <<transient>> $sektor {
     kind: WorldRollKind
     dice: number[1..2]
     dm: number
@@ -136,37 +174,37 @@ hide <<value>> stereotype
   }
 
 ' Verlauf
-  abstract class LogEntry {
+  abstract class LogEntry $probe {
     at: datetime
   }
-  class OracleAnswer {
+  class OracleAnswer $karte {
     question: string [0..1]
     roll: number
     chance: number
     /yes: boolean
   }
-  class DiceRoll {
+  class DiceRoll $probe {
     dice: number[2]
     /total: number
   }
-  class CardPick {
+  class CardPick $karte {
     question: string [0..1]
     bell: number [0..1]
     scatter: Scatter [0..1]
   }
-  class PickedItem
-  class Note {
+  class PickedItem $karte
+  class Note $probe {
     text: string
   }
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
-  class Card <<transient>> {
+  class Card <<transient>> $karte {
     question: string [0..1]
     bell: number
     scatter: Scatter
     pickedRolls: CardRoll [*]
   }
-  class MapIcon <<value>> {
+  class MapIcon <<value>> $karte {
     north: PathKind
     east: PathKind
     south: PathKind
@@ -174,14 +212,14 @@ hide <<value>> stereotype
     up: PathKind
     down: PathKind
   }
-  enum PathKind <<value>> {
+  enum PathKind <<value>> $karte {
     none
     path
     deadEnd
     hidden
     obstacle
   }
-  enum Scatter <<value>> {
+  enum Scatter <<value>> $karte {
     n
     ne
     e
@@ -193,31 +231,31 @@ hide <<value>> stereotype
     hit
     miss
   }
-  enum CardRoll <<value>> {
+  enum CardRoll <<value>> $karte {
     bell
     scatter
     map
   }
-  class Task <<transient>> {
+  class Task <<transient>> $probe {
     unskilled: boolean
     /dm: number
     /need: number
     /chance: number
   }
-  class TaskResult {
+  class TaskResult $probe {
     dice: number[2]
     dm: number
     target: number
     /success: boolean
   }
-  class Attack <<transient>> {
+  class Attack <<transient>> $kampf {
     armor: ArmorClass [0..1]
     range: Range [0..1]
     /dm: number
     /need: number
     /chance: number
   }
-  class AttackResult {
+  class AttackResult $kampf {
     armor: ArmorClass
     range: Range
     dice: number[2]
@@ -225,30 +263,30 @@ hide <<value>> stereotype
     target: number
     /success: boolean
   }
-  class Recovery {
+  class Recovery $kampf {
     kind: RecoveryKind
     dice: number[0..5]
     /days: number [0..1]
   }
-  enum RecoveryKind <<value>> {
+  enum RecoveryKind <<value>> $kampf {
     wake
     treatment
     rest
   }
-  class DamageRoll {
+  class DamageRoll $kampf {
     dice: number[1..5]
     to: Characteristic[1..5]
     /damage: number
   }
-  class Wounding <<transient>> {
+  class Wounding <<transient>> $kampf {
     dice: number[1..5]
     to: Characteristic[0..5]
   }
-  class Encounter {
+  class Encounter $begegnung {
     at: datetime
-    quantityDie: number [0..1]
+    $new("2026-11-06", "quantityDie: number [0..1]")
     reactionDice: number[2]
-    reactionDm: number [0..1]
+    $new("2026-11-06", "reactionDm: number [0..1]")
     reaction: number
     ended: boolean
     /reactionText: string
@@ -264,47 +302,47 @@ hide <<value>> stereotype
     /first: Side
     /turn: string [0..1]
   }
-  class SurpriseRoll <<value>> {
+  class SurpriseRoll <<value>> $begegnung {
     die: number
     dm: number
   }
-  enum Side <<value>> {
+  enum Side <<value>> $begegnung {
     pcs
     npcs
   }
-  class Terrain <<reference>> {
+  class Terrain <<reference>> $begegnung {
     name: string
     dm: number
   }
-  class EncounterRange <<reference>> {
+  class EncounterRange <<reference>> $begegnung {
     roll: number
     range: Range
   }
-  class RangeBand <<reference>> {
+  class RangeBand <<reference>> $begegnung {
     range: Range
     from: number
     to: number
   }
-  class Npc {
+  class Npc $begegnung {
     name: string
     leader: boolean
     skill: number
     /wounds: Wounds
     /state: WoundState
   }
-  class Wounds <<value>> {
+  class Wounds <<value>> $kampf {
     str: number
     dex: number
     end: number
   }
-  enum WoundState <<value>> {
+  enum WoundState <<value>> $kampf {
     unhurt
     wounded
     unconscious
     serious
     dead
   }
-  class EncounterType <<reference>> {
+  class EncounterType <<reference>> $begegnung {
     roll: number
     name: string
     quantity: number
@@ -317,59 +355,59 @@ hide <<value>> stereotype
   }
 
 ' Referenzdaten
-  class Odds <<reference>> {
+  class Odds <<reference>> $karte {
     name: string
     chance: number
     target: number
   }
-  class HouseRules <<reference>> {
+  class HouseRules <<reference>> $probe {
     unskilledDm: number
     bonusFrom: number
     malusUpTo: number
   }
-  class Skill <<reference>> {
+  class Skill <<reference>> $kampagne {
     name: string
     short: string
   }
-  class Section <<reference>> {
+  class Section <<reference>> $karte {
     name: string
     kind: SectionKind
   }
-  class Slot <<reference>> {
+  class Slot <<reference>> $karte {
     label: string
   }
-  class Column <<reference>>
-  class Entry <<reference>> {
+  class Column <<reference>> $karte
+  class Entry <<reference>> $karte {
     text: string
     retired: boolean
   }
-  class Service <<reference>> {
+  class Service <<reference>> $erschaffung {
     name: string
     draft: number
     reenlist: number
     skillsPerTerm: number [0..1]
   }
-  class Throw <<value>> {
+  class Throw <<value>> $erschaffung {
     target: number
   }
-  class ThrowDm <<value>> {
+  class ThrowDm <<value>> $erschaffung {
     atLeast: number
     dm: number
   }
-  class Rank <<reference>> {
+  class Rank <<reference>> $erschaffung {
     level: number
     title: string
   }
-  class Table <<reference>> {
+  class Table <<reference>> $erschaffung {
     name: string
     minEdu: number [0..1]
   }
-  class Gain <<reference>> {
+  class Gain <<reference>> $erschaffung {
     change: number [0..1]
     credits: number [0..1]
     weapon: boolean
   }
-  class Item <<reference>> {
+  class Item <<reference>> $shop {
     name: string
     kind: ItemKind
     tl: number [0..1]
@@ -378,7 +416,7 @@ hide <<value>> stereotype
     once: boolean
     armor: ArmorClass [0..1]
   }
-  class Weapon <<reference>> {
+  class Weapon <<reference>> $kampf {
     name: string
     attack: AttackKind
     required: number
@@ -389,20 +427,20 @@ hide <<value>> stereotype
     rounds: number [0..1]
     law: number [0..1]
   }
-  class ArmorDm <<value>> {
+  class ArmorDm <<value>> $kampf {
     armor: ArmorClass
     dm: number
   }
-  class RangeDm <<value>> {
+  class RangeDm <<value>> $kampf {
     range: Range
     dm: number [0..1]
   }
-  enum AttackKind <<value>> {
+  enum AttackKind <<value>> $kampf {
     blow
     swing
     shot
   }
-  enum ArmorClass <<value>> {
+  enum ArmorClass <<value>> $kampf {
     nothing
     jack
     mesh
@@ -411,14 +449,14 @@ hide <<value>> stereotype
     ablat
     combat
   }
-  enum Range <<value>> {
+  enum Range <<value>> $kampf {
     close
     short
     medium
     long
     veryLong
   }
-  enum ItemKind <<value>> {
+  enum ItemKind <<value>> $shop {
     weapon
     ammunition
     armor
@@ -428,23 +466,23 @@ hide <<value>> stereotype
     passage
     membership
   }
-  class Cascade <<reference>> {
+  class Cascade <<reference>> $erschaffung {
     name: string
   }
-  class SystemContents <<reference>> {
+  class SystemContents <<reference>> $sektor {
     roll: number
     starport: string
     navalBase: boolean
     scoutBase: boolean
     gasGiant: boolean
   }
-  class UwpDigit <<reference>> {
+  class UwpDigit <<reference>> $sektor {
     digit: number
     text: string [0..1]
     techDm: number
     temperatureDm: number [0..1]
   }
-  class Surface <<value>> {
+  class Surface <<value>> $sektor {
     water: number
     plates: number
     majorContinents: number
@@ -457,7 +495,7 @@ hide <<value>> stereotype
     scatteredLakes: number
     life: boolean
   }
-  class SurfaceRow <<reference>> {
+  class SurfaceRow <<reference>> $sektor {
     table: SurfaceTable
     roll: number
     major: DiceExpr
@@ -466,15 +504,15 @@ hide <<value>> stereotype
     scattered: DiceExpr
     onlyScattered: boolean
   }
-  enum SurfaceTable <<value>> {
+  enum SurfaceTable <<value>> $sektor {
     continents
     oceans
   }
-  class DiceExpr <<value>> {
+  class DiceExpr <<value>> $sektor {
     dice: number
     dm: number
   }
-  class Temperature <<reference>> {
+  class Temperature <<reference>> $sektor {
     from: number [0..1]
     to: number [0..1]
     name: string
@@ -482,14 +520,14 @@ hide <<value>> stereotype
     text: string
     hydroDm: number
   }
-  class TradeCode <<reference>> {
+  class TradeCode <<reference>> $sektor {
     code: string
     name: string
   }
-  class TradeCondition <<value>> {
+  class TradeCondition <<value>> $sektor {
     digits: number[]
   }
-  enum WorldRollKind <<value>> {
+  enum WorldRollKind <<value>> $sektor {
     occurrence
     starport
     navalBase
@@ -504,18 +542,18 @@ hide <<value>> stereotype
     law
     tech
   }
-  enum WorldStep <<value>> {
+  enum WorldStep <<value>> $sektor {
     <i>alle Arten aus WorldRollKind</i>
     surface
     name
     done
   }
-  class Aging <<reference>> {
+  class Aging <<reference>> $erschaffung {
     fromTerm: number
     loss: number
     target: number
   }
-  enum RollKind <<value>> {
+  enum RollKind <<value>> $erschaffung {
     characteristic
     enlistment
     draft
@@ -529,7 +567,7 @@ hide <<value>> stereotype
     cash
     benefit
   }
-  enum GenerationStep <<value>> {
+  enum GenerationStep <<value>> $erschaffung {
     characteristics
     homeworld
     service
@@ -547,11 +585,11 @@ hide <<value>> stereotype
     name
     dead
   }
-  enum SectionKind <<value>> {
+  enum SectionKind <<value>> $karte {
     card
     theme
   }
-  enum Characteristic <<value>> {
+  enum Characteristic <<value>> $kampagne {
     STR
     DEX
     END
