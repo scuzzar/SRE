@@ -37,6 +37,7 @@ hide <<value>> stereotype
   class Campaign {
     name: string
     /funds: number
+    quantityDie: number [0..1]
   }
   class Booking {
     at: datetime
@@ -245,7 +246,9 @@ hide <<value>> stereotype
   }
   class Encounter {
     at: datetime
+    quantityDie: number [0..1]
     reactionDice: number[2]
+    reactionDm: number [0..1]
     reaction: number
     ended: boolean
     /reactionText: string
