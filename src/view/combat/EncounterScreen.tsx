@@ -55,7 +55,10 @@ function RunningEncounter({ sim }: { sim: SimView }) {
   );
 }
 
-/** Eine Begegnung würfeln oder wählen, mit Gelände für die Entfernung; danach beginnt die Kampfsimulation. */
+/**
+ * Eine Begegnung würfeln oder wählen, mit Gelände für die Entfernung und dem Würfel der Anzahl der
+ * Kampagne; danach beginnt die Kampfsimulation.
+ */
 function EncounterStart({ combat }: { combat: CombatView }) {
   const game = useGame();
   // Das Gelände gilt erst beim Würfeln; bis dahin hält es nur die View.
@@ -80,7 +83,7 @@ function EncounterStart({ combat }: { combat: CombatView }) {
           <option value="">oder wählen …</option>
           {combat.encounterTypes.map((t) => (
             <option key={t.roll} value={t.roll}>
-              {t.roll} · {t.quantity}W6 {t.name}
+              {t.roll} · {t.quantity}W{combat.quantityDie} {t.name}
             </option>
           ))}
         </select>
@@ -94,6 +97,14 @@ function EncounterStart({ combat }: { combat: CombatView }) {
               {t.name} ({signed(t.dm)})
             </option>
           ))}
+        </select>
+      </label>
+      <label className="field encounter-terrain">
+        <span>Anzahl würfeln mit</span>
+        <select aria-label="Würfel der Anzahl" value={combat.quantityDie} onChange={(e) => game.setQuantityDie(Number(e.target.value))}>
+          <option value={6}>W6 (Regel)</option>
+          <option value={4}>W4</option>
+          <option value={3}>W3</option>
         </select>
       </label>
       {combat.note && <p className="combat-hint">{combat.note}</p>}

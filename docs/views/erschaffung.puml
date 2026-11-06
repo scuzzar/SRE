@@ -1,0 +1,235 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Ausschnitt: Charaktererschaffung und Laufbahnen
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne
+  class Character $charakter
+
+' Charaktererschaffung und Lebenslauf
+  class Generation $erschaffung {
+    /step: GenerationStep
+  }
+  class Career $erschaffung {
+    /terms: number
+    /rank: number
+    /age: number
+    /drafted: boolean
+    /dead: boolean
+    /pension: number
+  }
+  class CareerRoll $erschaffung {
+    kind: RollKind
+    dice: number[1..2]
+    dm: number
+    target: number [0..1]
+    wants: boolean [0..1]
+    /success: boolean [0..1]
+  }
+
+' Subsektor und Welten
+  class Hex $sektor
+
+' Verlauf
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+
+' Referenzdaten
+  class Skill <<reference>> $charakter
+  class Service <<reference>> $erschaffung {
+    name: string
+    draft: number
+    reenlist: number
+    skillsPerTerm: number [0..1]
+  }
+  class Throw <<value>> $erschaffung {
+    target: number
+  }
+  class ThrowDm <<value>> $erschaffung {
+    atLeast: number
+    dm: number
+  }
+  class Rank <<reference>> $erschaffung {
+    level: number
+    title: string
+  }
+  class Table <<reference>> $erschaffung {
+    name: string
+    minEdu: number [0..1]
+  }
+  class Gain <<reference>> $erschaffung {
+    change: number [0..1]
+    credits: number [0..1]
+    weapon: boolean
+  }
+  class Item <<reference>> $shop
+  class Cascade <<reference>> $erschaffung {
+    name: string
+  }
+  class Aging <<reference>> $erschaffung {
+    fromTerm: number
+    loss: number
+    target: number
+  }
+  enum RollKind <<value>> $erschaffung {
+    characteristic
+    enlistment
+    draft
+    survival
+    commission
+    promotion
+    skill
+    aging
+    crisis
+    reenlist
+    cash
+    benefit
+  }
+  enum GenerationStep <<value>> $erschaffung {
+    characteristics
+    homeworld
+    service
+    draft
+    world
+    survival
+    commission
+    promotion
+    skill
+    cascade
+    aging
+    crisis
+    reenlist
+    muster
+    name
+    dead
+  }
+  enum Characteristic <<value>> $charakter
+
+' Kampagne
+
+' Charaktererschaffung und Lebenslauf
+Campaign "1" *-- "0..1" Generation : generation
+Generation "1" *-- "1" Career : career
+Generation ..> Character : on finish
+Generation --> GenerationStep
+Character "1" *-- "0..1" Career : career
+Career "1" *-- "*" CareerRoll : rolls {ordered}
+Career "*" --> "0..1" Service : /in
+Career "*" --> "0..1" Hex : homeworld
+Career "*" --> "*" Hex : worlds {ordered}
+CareerRoll --> RollKind
+CareerRoll --> "0..1" Characteristic : of
+CareerRoll "*" --> "0..1" Service : for
+CareerRoll "*" --> "0..1" Table : on
+CareerRoll "*" --> "0..1" Gain : gained
+CareerRoll "*" --> "0..1" Skill : chosen
+CareerRoll "*" --> "0..1" Aging : against
+
+' Laufbahnen (Referenzdaten)
+Service "1" *-- "1" Throw : enlistment
+Service "1" *-- "1" Throw : survival
+Service "1" *-- "0..1" Throw : commission
+Service "1" *-- "0..1" Throw : promotion
+Throw "1" *-- "0..2" ThrowDm : dms
+ThrowDm --> "1" Characteristic : if
+Service "1" *-- "0..6" Rank : ranks {ordered}
+Service "1" *-- "4" Table : skills {ordered}
+Service "1" *-- "1" Table : benefits
+Service "1" *-- "1" Table : cash
+Service "1" *-- "0..1" Gain : onEnlistment
+Rank "1" *-- "0..1" Gain : grants
+Table "1" *-- "6..7" Gain : rows {ordered}
+Gain "*" --> "0..1" Skill : skill
+Gain "*" --> "0..1" Cascade : choose
+Gain "*" --> "0..1" Item : item
+Gain --> "0..1" Characteristic : changes
+Cascade "*" --> "1..*" Skill : options
+Aging --> "1" Characteristic : of
+
+' Subsektor und Welten
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+@enduml

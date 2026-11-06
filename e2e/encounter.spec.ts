@@ -33,10 +33,14 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await page.getByLabel(/Wo ist die Gruppe/).selectOption({ index: 1 });
   await expect(page.getByLabel('Die Gruppe ist auf')).toContainText('Regina');
   await page.getByLabel('Gelände (DM auf die Entfernung)').selectOption('city');
+  // Der Würfel der Anzahl: W3 statt W6, auch in der Liste der Arten.
+  await page.getByLabel('Würfel der Anzahl').selectOption('3');
+  await expect(page.getByLabel('Begegnung wählen')).toContainText('15 · 2W3 Thugs');
   await page.getByLabel('Begegnung wählen').selectOption('15');
 
   // Erst die Übersicht: wer kommt, und die Würfe für Reaktion, Entfernung und Überraschung.
   const intro = page.getByRole('dialog', { name: /Thugs/ });
+  await expect(intro).toContainText('(2W3)');
   await expect(intro).toContainText('Reaktion (2W6');
   await expect(intro).toContainText(/Entfernung: \S.*\(2W6: \d \+ \d, City −4/);
   await expect(intro).toContainText('Überraschung:');

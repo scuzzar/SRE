@@ -1,0 +1,165 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Ausschnitt: Probe und Verlauf
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne
+  class Character $charakter
+  class SkillLevel $charakter
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+
+' Verlauf
+  abstract class LogEntry $probe {
+    at: datetime
+  }
+  class OracleAnswer $karte
+  class DiceRoll $probe {
+    dice: number[2]
+    /total: number
+  }
+  class CardPick $karte
+  class Note $probe {
+    text: string
+  }
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Task <<transient>> $probe {
+    unskilled: boolean
+    /dm: number
+    /need: number
+    /chance: number
+  }
+  class TaskResult $probe {
+    dice: number[2]
+    dm: number
+    target: number
+    /success: boolean
+  }
+  class AttackResult $kampf
+  class Recovery $kampf
+  class DamageRoll $kampf
+
+' Referenzdaten
+  class Odds <<reference>> $karte
+  class HouseRules <<reference>> $probe {
+    unskilledDm: number
+    bonusFrom: number
+    malusUpTo: number
+  }
+  enum Characteristic <<value>> $charakter
+
+' Kampagne
+Campaign "1" *-- "*" LogEntry : log {ordered}
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+LogEntry <|-- OracleAnswer
+LogEntry <|-- DiceRoll
+LogEntry <|-- CardPick
+LogEntry <|-- TaskResult
+LogEntry <|-- AttackResult
+LogEntry <|-- DamageRoll
+LogEntry <|-- Recovery
+LogEntry <|-- Note
+Note "*" --> "0..1" LogEntry : interprets
+TaskResult "*" --> "1" Character : for
+TaskResult "*" --> "0..1" SkillLevel : uses
+TaskResult --> "0..6" Characteristic : counts
+TaskResult "*" --> "1" Odds : odds
+
+' Probe
+Task "0..1" --> "1" Campaign : in
+Task "*" --> "1" Character : /for
+Task "*" --> "0..1" SkillLevel : uses
+Task --> "0..6" Characteristic : counts
+Task ..> TaskResult : on roll
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+@enduml

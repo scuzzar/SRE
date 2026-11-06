@@ -130,12 +130,43 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > (`close`), der Würfel für das Startband (`bandDie`), abgeleitet die Reichweite (`/range`) und
 > `/escaped`; als Referenzdaten `RangeBand`. Der UI-Entwurf dazu (freigegeben am 4. November 2026)
 > liegt unter [`ui-entwurf/range-bands/`](ui-entwurf/range-bands/).
+>
+> Am 6. November 2026 freigegeben: der **Würfel für die Anzahl** einer
+> Begegnung, W6 nach den Regeln oder W4 bzw. W3 zum Ausgleichen, statt einer festen Anzahl; dazu der
+> **DM +1 auf die Reaktion** für 5 oder mehr Terms in Army, Navy, Scouts oder Marines (siehe
+> *Begegnung*). Neu im Bild: `Campaign.quantityDie`, `Encounter.quantityDie` und
+> `Encounter.reactionDm`. Dazu begrenzt die Reaktion wie in der Quelle auf 3 bis 12 statt 3 bis 11.
+> Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-06-wuerfel-der-anzahl.png`](changes/2026-11-06-wuerfel-der-anzahl.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
-Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild neu
-erzeugen mit `bash .claude/skills/domain-model/scripts/render.sh docs/domain-model.puml`; das Skript
-lädt PlantUML bei Bedarf selbst und braucht nur Java, kein Graphviz.
+Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
+alle Ausschnitte neu erzeugen mit `bash .claude/skills/domain-model/scripts/render.sh` (ohne
+Argument); das Skript lädt PlantUML bei Bedarf selbst und braucht nur Java, kein Graphviz.
+
+**Ausschnitte.** Das ganze Bild ist zu groß, um es auf einmal zu lesen. Deshalb gibt es Ausschnitte,
+die aus dem Modell erzeugt werden, nie von Hand gezeichnet: je Bereich einer, mit den Klassen des
+Bereichs vollständig und ihren Nachbarn aus anderen Bereichen zugeklappt, und je offener Änderung
+einer, mit dem, was sie ändert. **Rot** ist, was noch nicht freigegeben ist: neue Felder rot und
+fett, entfallende rot durchgestrichen, neue Pfeile rot und dick, betroffene Klassen rot gerahmt.
+Welche Klasse zu welchem Bereich gehört, sagt ihr Tag im Modell (`class Encounter $begegnung`); die
+Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
+
+| Bereich | Ausschnitt |
+|---|---|
+| Kampagne | [views/kampagne.png](views/kampagne.png) |
+| Charaktere | [views/charakter.png](views/charakter.png) |
+| Shop, Kasse und Besitz | [views/shop.png](views/shop.png) |
+| Charaktererschaffung und Laufbahnen | [views/erschaffung.png](views/erschaffung.png) |
+| Subsektor und Welten | [views/sektor.png](views/sektor.png) |
+| Karte und Orakel | [views/karte.png](views/karte.png) |
+| Probe und Verlauf | [views/probe.png](views/probe.png) |
+| Kampf: Waffen, Angriff, Wunden, Heilung | [views/kampf.png](views/kampf.png) |
+| Begegnung | [views/begegnung.png](views/begegnung.png) |
+
+Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -210,7 +241,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Schuss im Magazin | `Possession.rounds`, `Weapon.rounds` | Wie viele Schuss eine Schusswaffe gerade geladen hat bzw. voll fasst |
 | Verboten ab Gesetz | `Weapon.law` | Ab dieser Gesetzesstufe ist die Waffe verboten (S. 14), z. B. Body Pistol ab 1 |
 | Begegnung | `Encounter` | Eine Gruppe von NSC, auf die die Gruppe trifft, z. B. „5 Thugs“; gewürfelt nach der Random Encounter List (S. 21) |
-| Art der Begegnung | `EncounterType` | Eine Zeile der Random Encounter List: Anzahl in W6, Name, TL-Abweichung, Anführer (L), Schusswaffen (G), Rüstung (A), Fahrzeug (V) |
+| Art der Begegnung | `EncounterType` | Eine Zeile der Random Encounter List: Anzahl in Würfeln, Name, TL-Abweichung, Anführer (L), Schusswaffen (G), Rüstung (A), Fahrzeug (V) |
+| Würfel der Anzahl | `Campaign.quantityDie`, `Encounter.quantityDie` | Der Würfel, mit dem die Anzahl der NSC gewürfelt wird: W6 nach den Regeln, W4 oder W3 zum Ausgleichen |
 | Reaktion | `Encounter.reaction` | 2W6 auf die Reactions-Tabelle (S. 21): 2 sofortiger Angriff … 12 freundlich |
 | NSC der Begegnung | `Npc` | Ein Gegner oder Fremder in einer Begegnung, mit UPP, Waffe, Rüstung, Fertigkeit und Wunden |
 | Anführer | `Npc.leader` | Der NSC mit der besten Ausrüstung, wenn die Begegnung einen hat (L) |
@@ -563,10 +595,16 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Power Packs.
 - **Begegnung.** Im Reiter Kampf würfelt man auf dem Aufenthaltsort eine **Begegnung** (`Encounter`),
   ohne weitere Eingabe; man kann die Art auch aus der Liste wählen, die Anzahl wird dann trotzdem
-  gewürfelt, außer man gibt sie vor.
+  gewürfelt.
   - *Art*: 1W6 und 1W6 auf die Random Encounter List (S. 21), z. B. 14 = 3W6 Rowdies (L). Die Zeilen
     61–66 sind leer: keine Begegnung, nichts wird angelegt.
-  - *Anzahl*: so viele W6, wie die Art angibt (mindestens 1 NSC).
+  - *Anzahl*: so viele Würfel, wie die Art angibt (mindestens 1 NSC). Nach den Regeln ist es der
+    W6; zum Ausgleichen, etwa mit nur ein oder zwei SC, wählt man vor dem Würfeln W4 oder W3, dann
+    kommen z. B. 3W3 statt 3W6 Rowdies. Die Wahl ist der **Würfel der Anzahl** der Kampagne
+    (`Campaign.quantityDie`, 3, 4 oder 6; fehlt er, W6); sie gilt für alle folgenden Begegnungen,
+    bis man sie ändert, ob man würfelt oder die Art wählt. Die Begegnung hält ihren Würfel fest
+    (`Encounter.quantityDie`), damit die Übersicht z. B. „3W3“ zeigt; fehlt er (Begegnungen von
+    vorher), war es W6.
   - *TL der Gruppe*: TL der Welt plus die Abweichung der Art (z. B. +1 bei Soldiers), mindestens 0.
   - *Jeder NSC* (`Npc`) bekommt 2W6 je Attribut, einen Namen von der Tafel NSC (Vor- und Nachname,
     irdisch oder spacig zufällig), eine Waffe (`wields`) und mit A eine Rüstung (`wears`): Ohne G
@@ -577,9 +615,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     höchsten TL, bei Gleichstand die teuerste, ebenso die Rüstung, auch ohne A) und Fertigkeit 2.
   - *Fahrzeug* (V) hält die Art fest; im Kampf zählt es vorerst nicht.
   - *Entfernung und Überraschung* werden beim Anlegen mitgewürfelt (siehe *Kampfsimulation*).
-  - *Reaktion* (`reaction`): 2W6 (`reactionDice`), DM −1 auf einer Welt mit Bevölkerung 9+; eine
-    echte 2 oder 12 bleibt, sonst begrenzt auf 3 bis 11. Der Text (`/reactionText`) kommt aus der
-    Tabelle.
+  - *Reaktion* (`reaction`): 2W6 (`reactionDice`) plus DM (`reactionDm`): +1, wenn ein lebender
+    SC 5 oder mehr Terms in Army, Navy, Scouts oder Marines gedient hat (nach seinem Lebenslauf; SC
+    ohne Lebenslauf zählen nicht), −1 auf einer Welt mit Bevölkerung 9+; beides zusammen ±0. Eine
+    echte 2 oder 12 bleibt, sonst begrenzt auf 3 bis 12 (S. 21). Der DM wird beim Würfeln festgehalten,
+    damit ein späterer Tod oder Ausblenden ihn nicht rückwirkend ändert; fehlt er (Begegnungen von
+    vorher), gilt der DM der Welt. Der Text (`/reactionText`) kommt aus der Tabelle.
   - *Zeigen*: Nach dem Würfeln zeigt die App die Begegnung, bevor der Kampf beginnt: wer kommt (jeder
     NSC mit Waffe, Rüstung, Anführer), und die Würfe für Reaktion, Entfernung und Überraschung, jeder
     mit Würfeln, DM und Ergebnis. Das ist Anzeige; gespeichert ist es schon.

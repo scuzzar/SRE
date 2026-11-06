@@ -1,0 +1,246 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Ausschnitt: Subsektor und Welten
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne
+  class Booking $shop
+  class Character $charakter
+
+' Charaktererschaffung und Lebenslauf
+  class Career $erschaffung
+
+' Subsektor und Welten
+  class Hex $sektor {
+    column: number
+    row: number
+    empty: boolean
+    name: string [0..1]
+    navalBase: boolean [0..1]
+    scoutBase: boolean [0..1]
+    gasGiant: boolean [0..1]
+    note: string [0..1]
+    /step: WorldStep
+  }
+  class Uwp <<value>> $sektor {
+    starport: number [0..1]
+    size: number [0..1]
+    atmosphere: number [0..1]
+    hydrographics: number [0..1]
+    population: number [0..1]
+    government: number [0..1]
+    law: number [0..1]
+    tech: number [0..1]
+  }
+  class WorldRoll <<transient>> $sektor {
+    kind: WorldRollKind
+    dice: number[1..2]
+    dm: number
+    target: number [0..1]
+    /value: number [0..1]
+    /success: boolean [0..1]
+  }
+
+' Verlauf
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Encounter $begegnung
+
+' Referenzdaten
+  class Item <<reference>> $shop
+  class SystemContents <<reference>> $sektor {
+    roll: number
+    starport: string
+    navalBase: boolean
+    scoutBase: boolean
+    gasGiant: boolean
+  }
+  class UwpDigit <<reference>> $sektor {
+    digit: number
+    text: string [0..1]
+    techDm: number
+    temperatureDm: number [0..1]
+  }
+  class Surface <<value>> $sektor {
+    water: number
+    plates: number
+    majorContinents: number
+    minorContinents: number
+    majorIslands: number
+    archipelagos: number
+    majorOceans: number
+    minorOceans: number
+    smallSeas: number
+    scatteredLakes: number
+    life: boolean
+  }
+  class SurfaceRow <<reference>> $sektor {
+    table: SurfaceTable
+    roll: number
+    major: DiceExpr
+    minor: DiceExpr
+    small: DiceExpr
+    scattered: DiceExpr
+    onlyScattered: boolean
+  }
+  enum SurfaceTable <<value>> $sektor {
+    continents
+    oceans
+  }
+  class DiceExpr <<value>> $sektor {
+    dice: number
+    dm: number
+  }
+  class Temperature <<reference>> $sektor {
+    from: number [0..1]
+    to: number [0..1]
+    name: string
+    average: string
+    text: string
+    hydroDm: number
+  }
+  class TradeCode <<reference>> $sektor {
+    code: string
+    name: string
+  }
+  class TradeCondition <<value>> $sektor {
+    digits: number[]
+  }
+  enum WorldRollKind <<value>> $sektor {
+    occurrence
+    starport
+    navalBase
+    scoutBase
+    gasGiant
+    size
+    atmosphere
+    temperature
+    hydrographics
+    population
+    government
+    law
+    tech
+  }
+  enum WorldStep <<value>> $sektor {
+    <i>alle Arten aus WorldRollKind</i>
+    surface
+    name
+    done
+  }
+
+' Kampagne
+Campaign "*" --> "0..1" Hex : location
+Booking "*" --> "0..1" Hex : in
+
+' Charaktererschaffung und Lebenslauf
+Career "*" --> "0..1" Hex : homeworld
+Career "*" --> "*" Hex : worlds {ordered}
+Character "*" --> "0..1" Hex : homeworld
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+Campaign "1" *-- "*" Hex : hexes
+Hex "1" *-- "1" Uwp : uwp
+Hex --> WorldStep
+WorldRoll "*" --> "1" Hex : for
+WorldRoll ..> Hex : on roll
+Hex "*" --> "*" TradeCode : /trade
+Hex "*" --> "0..1" Temperature : temperature
+Hex "1" *-- "0..1" Surface : surface
+Surface "*" --> "0..1" SurfaceRow : /row
+SurfaceRow --> SurfaceTable
+SurfaceRow -[hidden]- DiceExpr
+WorldRoll --> WorldRollKind
+WorldRoll "*" --> "0..1" SystemContents : /row
+UwpDigit --> "1" WorldRollKind : of
+TradeCode "1" *-- "1..*" TradeCondition : if
+TradeCondition --> "1" WorldRollKind : of
+
+' Charakter
+
+' Waffen (Referenzdaten)
+Hex "*" --> "*" Item : /offer
+
+' Verlauf
+
+' Probe
+
+' Angriff
+
+' Begegnung
+Encounter "*" --> "0..1" Hex : in
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+@enduml

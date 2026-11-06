@@ -56,6 +56,9 @@ Skinparams entfernen.
 | `docs/domain-model.png` | Gerendertes Bild, wird mit eingecheckt |
 | `docs/domain-model.md` | Status, Bild, Farblegende, Begriffe, Regeln, die das Bild nicht zeigt, offene Fragen, „Wo der Code noch nicht folgt“. Vorlage: `assets/domain-model.md` |
 | `CLAUDE.md` | Die Regel „das Modell führt“. Baustein: `assets/claude-md-snippet.md` |
+| `docs/model-views.json` | Die Bereiche (`views`) und die Änderungen (`changes`) für die Ausschnitte |
+| `docs/views/*.puml`, `.png` | Je Bereich ein Ausschnitt, erzeugt, nie von Hand ändern |
+| `docs/changes/*.puml`, `.png` | Je Änderung ein Ausschnitt mit roter Markierung; nach der Freigabe der Nachweis |
 
 Gibt es schon eine `ARCHITECTURE.md`, verweist sie auf das Modell und sagt, in welchem Ordner
 gespeicherter Stand, Flüchtiges und Referenzdaten liegen.
@@ -63,16 +66,57 @@ gespeicherter Stand, Flüchtiges und Referenzdaten liegen.
 ## Rendern und zeigen
 
 ```bash
-bash .claude/skills/domain-model/scripts/render.sh docs/domain-model.puml
+bash .claude/skills/domain-model/scripts/render.sh
 ```
 
-Das Skript lädt bei Bedarf PlantUML von Maven Central nach `~/.cache/plantuml/` und braucht nur
-Java; `!pragma layout smetana` macht Graphviz überflüssig. Nach jedem Rendern:
+Ohne Argument erzeugt das Skript mit `views.mjs` die Ausschnitte (gibt es `docs/model-views.json`)
+und rendert `docs/domain-model.puml` mit allen Ausschnitten; mit Argumenten nur die genannten
+Dateien. Es lädt bei Bedarf PlantUML von Maven Central nach `~/.cache/plantuml/` und braucht Java
+und Node; `!pragma layout smetana` macht Graphviz überflüssig. Nach jedem Rendern:
 
-1. Das PNG mit dem Read-Werkzeug ansehen: Sind Beschriftungen lesbar, überlappt etwas, stimmt die
-   Legende?
-2. Das Bild dem Owner zeigen (`SendUserFile` mit `display: "render"`, sonst Pfad nennen). Der Owner
-   denkt im Bild, nicht im PlantUML-Text.
+1. Den Ausschnitt der Änderung mit dem Read-Werkzeug ansehen: Ist alles Geänderte rot, sind
+   Beschriftungen lesbar, überlappt etwas, fehlt ein Nachbar, der zum Verständnis nötig ist?
+2. **Den Ausschnitt der Änderung** dem Owner zeigen (`SendUserFile` mit `display: "render"`), nicht
+   das Gesamtbild: Das ist zu groß, um es zu prüfen. Der Owner denkt im Bild, nicht im
+   PlantUML-Text.
+
+## Ausschnitte und Markierungen
+
+Das Gesamtmodell bleibt die einzige Quelle. Ausschnitte sind **gefilterte Auszüge** daraus, die
+`scripts/views.mjs` bei jedem Rendern neu erzeugt: die Klassen im Fokus vollständig, ihre Nachbarn
+zugeklappt (nur der Name), und nur die Pfeile, die eine Klasse im Fokus berühren. Kopf, Farben,
+Markierungen und Legende kommen unverändert aus der Quelle. In einem Ausschnitt wird nichts von Hand
+gezeichnet; die erzeugten `.puml` nie bearbeiten.
+
+- **Bereiche.** Jede Klasse trägt im Modell genau einen Bereich als Tag:
+  `class Encounter $begegnung {`, `enum Side <<value>> $begegnung {`. Die Bereiche mit Titel stehen
+  unter `views` in `docs/model-views.json`. Fehlt einer Klasse der Tag, bricht `views.mjs` mit
+  einer Meldung ab; eine neue Klasse bekommt ihn also gleich beim Anlegen. Ein Bereichsausschnitt
+  zeigt alles Offene rot.
+- **Markieren.** Was eine Änderung bringt oder streicht, bekommt ihr Kennzeichen (das Datum, bei
+  mehreren am Tag mit Zusatz, z. B. `2026-11-06b`). Die Funktionen stehen im Kopf von
+  `domain-model.puml`:
+
+  | Was | Schreibweise | Im Ausschnitt |
+  |---|---|---|
+  | Neues oder geändertes Feld | `$new("2026-11-06", "quantityDie: number [0..1]")` | rot, fett |
+  | Entfallendes Feld | `$gone("2026-11-06", "count: number")` | rot, durchgestrichen |
+  | Neue Klasse | `class Foo $bereich $newClass("2026-11-06") {` | roter Rahmen |
+  | Neuer Pfeil | `A "1" -$newArrow("2026-11-06")-> "*" B : name` | rot, dick |
+
+  Ein geändertes Feld: die alte Fassung mit `$gone`, die neue mit `$new` direkt darunter, wie bei
+  Änderungsverfolgung. Klassen mit markierten Feldern rahmt `views.mjs` selbst rot. Ein entfallender
+  Pfeil oder eine entfallende Klasse bleibt bis zur Freigabe stehen; das in der Notiz zur Änderung
+  sagen.
+- **Änderung eintragen.** Unter `changes` in `docs/model-views.json`: `id` (das Kennzeichen),
+  `file` (z. B. `2026-11-06-wuerfel-der-anzahl`), `title`, `approved: false`, optional `show` mit
+  Klassen aus anderen Bereichen, die zum Verständnis daneben stehen sollen. Der Ausschnitt einer
+  Änderung zeigt, was sie markiert, und die Nachbarn aus demselben Bereich; nur diese Änderung ist
+  dort rot.
+- **Nach der Freigabe** die Kennzeichen aus dem Modell nehmen (`$new("…", "x")` wird `x`, `$gone`-Zeilen
+  und Entfallenes löschen, `$newClass`/`$newArrow` entfernen), `approved: true` setzen und neu
+  rendern. Freigegebene Änderungen erzeugt `views.mjs` nicht mehr neu; ihr Bild bleibt als Nachweis.
+  Stehen Kennzeichen einer freigegebenen Änderung noch im Modell, bricht `views.mjs` ab.
 
 ## Ablauf
 
@@ -94,9 +138,10 @@ Java; `!pragma layout smetana` macht Graphviz überflüssig. Nach jedem Rendern:
 - **Bei Gegenvorschlägen erklären, mit Beispiel.** „Lernt Kira später Pilot-3, wird eine alte
   gescheiterte Probe im Log zum Erfolg“ überzeugt mehr als „Verweise sind instabil“.
 - **Eine Empfehlung geben**, nicht nur Optionen aufzählen.
-- Je Änderung: `.puml` ändern → rendern → ansehen → `domain-model.md` nachziehen (Regeln, Begriffe,
-  offene Fragen) → `ARCHITECTURE.md` prüfen → committen → Bild zeigen → in wenigen Sätzen sagen, was
-  sich geändert hat und was jetzt offen ist.
+- Je Änderung: `.puml` ändern und markieren, die Änderung in `model-views.json` eintragen → rendern
+  → Ausschnitt ansehen → `domain-model.md` nachziehen (Regeln, Begriffe, offene Fragen) →
+  `ARCHITECTURE.md` prüfen → committen → Ausschnitt der Änderung zeigen → in wenigen Sätzen sagen,
+  was sich geändert hat und was jetzt offen ist.
 - Wenn Unklarheit herrscht, was eine Farbe oder ein Bereich bedeutet: am konkreten Ablauf erklären
   (was passiert beim Ziehen, Antippen, Bestätigen; was überlebt einen Neustart).
 
@@ -123,7 +168,11 @@ entfernen und Status „wartet auf Freigabe“ setzen.
 
 ### 5. Freigabe
 
-Erst auf ausdrückliches „freigegeben“ des Owners: Status in `domain-model.md` auf „Freigegeben für
+Für eine einzelne Änderung: Kennzeichen entfernen und `approved: true` (siehe *Ausschnitte und
+Markierungen*), Status-Absatz in `domain-model.md` von „wartet auf Freigabe“ auf „freigegeben“
+setzen, rendern, committen, dann in den Code übertragen.
+
+Für eine ganze Version erst auf ausdrückliches „freigegeben“ des Owners: Status in `domain-model.md` auf „Freigegeben für
 Version N (Datum)“, „Entwurf“ aus dem Diagrammtitel nehmen, README und `ARCHITECTURE.md` nachziehen,
 committen und – wenn der Owner es sagt – nach `main` mergen. Ab jetzt gilt Grundsatz 1 für jede
 Änderung.

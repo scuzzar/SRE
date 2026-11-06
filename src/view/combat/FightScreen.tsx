@@ -425,10 +425,13 @@ export function EncounterIntro({ sim }: { sim: SimView }) {
         <span className="kicker">Begegnung · Wurf {sim.roll}</span>
         <h2 id="intro-title" className="shop-buy-title">
           {npcs.length} × {sim.name}
-          <span className="muted"> ({sim.quantity}W6)</span>
+          <span className="muted">
+            {' '}
+            ({sim.quantity}W{sim.quantityDie})
+          </span>
         </h2>
         <div className="intro-reaction">
-          <span className="small-label">Reaktion (2W6{sim.reactionDm ? `, Bevölkerung 9+ ${signed(sim.reactionDm)}` : ''})</span>
+          <span className="small-label">Reaktion (2W6{sim.reactionDm ? `, DM ${signed(sim.reactionDm)}` : ''})</span>
           {sim.reactionDice && phase >= 1 ? (
             <DicePairView dice={[sim.reactionDice[0]!, sim.reactionDice[1]!]} seed={sim.reactionDice[0]! * 7 + sim.reactionDice[1]!} landed={landed} size="small" />
           ) : (

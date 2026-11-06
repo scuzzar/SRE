@@ -1,0 +1,195 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Ausschnitt: Begegnung
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne
+  class Character $charakter
+  class Upp <<value>> $charakter
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+  class Hex $sektor
+
+' Verlauf
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Attack <<transient>> $kampf
+  class AttackResult $kampf
+  class Recovery $kampf
+  class Encounter $begegnung {
+    at: datetime
+    quantityDie: number [0..1]
+    reactionDice: number[2]
+    reactionDm: number [0..1]
+    reaction: number
+    ended: boolean
+    /reactionText: string
+    rangeDice: number[2]
+    bandDie: number [0..1]
+    band: number
+    close: boolean
+    /range: Range [0..1]
+    /escaped: boolean
+    round: number
+    acted: string[*]
+    /surprise: Side [0..1]
+    /first: Side
+    /turn: string [0..1]
+  }
+  class SurpriseRoll <<value>> $begegnung {
+    die: number
+    dm: number
+  }
+  enum Side <<value>> $begegnung {
+    pcs
+    npcs
+  }
+  class Terrain <<reference>> $begegnung {
+    name: string
+    dm: number
+  }
+  class EncounterRange <<reference>> $begegnung {
+    roll: number
+    range: Range
+  }
+  class RangeBand <<reference>> $begegnung {
+    range: Range
+    from: number
+    to: number
+  }
+  class Npc $begegnung {
+    name: string
+    leader: boolean
+    skill: number
+    /wounds: Wounds
+    /state: WoundState
+  }
+  class EncounterType <<reference>> $begegnung {
+    roll: number
+    name: string
+    quantity: number
+    tl: number
+    leader: boolean
+    guns: boolean
+    armor: boolean
+    vehicle: boolean
+    military: boolean
+  }
+
+' Referenzdaten
+  class Item <<reference>> $shop
+
+' Kampagne
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+Recovery "*" --> "0..1" Npc : npc
+
+' Probe
+
+' Angriff
+Attack "*" --> "0..1" Npc : by
+Attack "*" --> "0..1" Npc : against
+AttackResult "*" --> "0..1" Npc : by
+AttackResult "*" --> "0..1" Npc : against
+
+' Begegnung
+Campaign "1" *-- "*" Encounter : encounters {ordered}
+Encounter "*" --> "1" EncounterType : of
+Encounter "*" --> "0..1" Terrain : terrain
+Encounter "1" *-- "1" SurpriseRoll : pcSurprise
+Encounter "1" *-- "1" SurpriseRoll : npcSurprise
+Encounter --> Side
+EncounterRange -[hidden]- Terrain
+RangeBand -[hidden]- EncounterRange
+Encounter "*" --> "0..1" Hex : in
+Encounter "1" *-- "1..*" Npc : npcs {ordered}
+Npc "1" *-- "1" Upp : upp
+Npc "*" --> "1" Item : wields
+Npc "*" --> "0..1" Item : wears
+Npc "0..1" --> "0..1" Character : became
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+@enduml

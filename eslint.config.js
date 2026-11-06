@@ -72,7 +72,7 @@ export default tseslint.config(
   },
   {
     // Hilfsskripte laufen mit Node.
-    files: ['scripts/**/*.mjs'],
+    files: ['scripts/**/*.mjs', '.claude/skills/**/*.mjs'],
     languageOptions: { globals: globals.node },
   },
   {
