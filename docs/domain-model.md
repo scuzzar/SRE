@@ -153,7 +153,8 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 
 | Bereich | Ausschnitt |
 |---|---|
-| Kampagne und Charaktere | [views/kampagne.png](views/kampagne.png) |
+| Kampagne | [views/kampagne.png](views/kampagne.png) |
+| Charaktere | [views/charakter.png](views/charakter.png) |
 | Shop, Kasse und Besitz | [views/shop.png](views/shop.png) |
 | Charaktererschaffung und Laufbahnen | [views/erschaffung.png](views/erschaffung.png) |
 | Subsektor und Welten | [views/sektor.png](views/sektor.png) |

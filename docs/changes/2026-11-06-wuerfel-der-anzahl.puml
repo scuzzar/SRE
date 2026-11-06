@@ -77,7 +77,6 @@ hide <<value>> stereotype
     /funds: number
     $new("2026-11-06", "quantityDie: number [0..1]")
   }
-  class Character $kampagne
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -116,8 +115,6 @@ hide <<value>> stereotype
 ' Referenzdaten
 
 ' Kampagne
-Campaign "1" *-- "*" Character : characters
-Campaign "0..1" --> "0..1" Character : focus
 Campaign "*" --> "0..1" Hex : location
 
 ' Charaktererschaffung und Lebenslauf

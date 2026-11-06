@@ -68,7 +68,7 @@ hide <<value>> stereotype
 ' Kampagne und Charaktere
   class Campaign $kampagne
   class Booking $shop
-  class Character $kampagne
+  class Character $charakter
 
 ' Charaktererschaffung und Lebenslauf
   class Career $erschaffung

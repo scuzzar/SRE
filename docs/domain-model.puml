@@ -92,7 +92,7 @@ hide <<value>> stereotype
     purchase
     sale
   }
-  class Character $kampagne {
+  class Character $charakter {
     name: string
     background: string
     equipment: string
@@ -104,7 +104,7 @@ hide <<value>> stereotype
     /wounds: Wounds
     /state: WoundState
   }
-  class Upp <<value>> $kampagne {
+  class Upp <<value>> $charakter {
     str: number
     dex: number
     end: number
@@ -112,7 +112,7 @@ hide <<value>> stereotype
     edu: number
     soc: number
   }
-  class SkillLevel $kampagne {
+  class SkillLevel $charakter {
     level: number
     retired: boolean
   }
@@ -365,7 +365,7 @@ hide <<value>> stereotype
     bonusFrom: number
     malusUpTo: number
   }
-  class Skill <<reference>> $kampagne {
+  class Skill <<reference>> $charakter {
     name: string
     short: string
   }
@@ -589,7 +589,7 @@ hide <<value>> stereotype
     card
     theme
   }
-  enum Characteristic <<value>> $kampagne {
+  enum Characteristic <<value>> $charakter {
     STR
     DEX
     END

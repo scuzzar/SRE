@@ -67,8 +67,8 @@ hide <<value>> stereotype
 
 ' Kampagne und Charaktere
   class Campaign $kampagne
-  class Character $kampagne
-  class SkillLevel $kampagne
+  class Character $charakter
+  class SkillLevel $charakter
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -127,7 +127,7 @@ hide <<value>> stereotype
   }
 
 ' Referenzdaten
-  class Skill <<reference>> $kampagne
+  class Skill <<reference>> $charakter
   class Item <<reference>> $shop
   class Weapon <<reference>> $kampf {
     name: string

@@ -82,7 +82,7 @@ hide <<value>> stereotype
     purchase
     sale
   }
-  class Character $kampagne
+  class Character $charakter
   class Possession $shop {
     count: number
     rounds: number [0..1]
@@ -99,7 +99,7 @@ hide <<value>> stereotype
   class Npc $begegnung
 
 ' Referenzdaten
-  class Skill <<reference>> $kampagne
+  class Skill <<reference>> $charakter
   class Gain <<reference>> $erschaffung
   class Item <<reference>> $shop {
     name: string

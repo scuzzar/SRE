@@ -67,7 +67,7 @@ hide <<value>> stereotype
 
 ' Kampagne und Charaktere
   class Campaign $kampagne
-  class Character $kampagne
+  class Character $charakter
 
 ' Charaktererschaffung und Lebenslauf
   class Generation $erschaffung {
@@ -98,7 +98,7 @@ hide <<value>> stereotype
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
 
 ' Referenzdaten
-  class Skill <<reference>> $kampagne
+  class Skill <<reference>> $charakter
   class Service <<reference>> $erschaffung {
     name: string
     draft: number
@@ -166,7 +166,7 @@ hide <<value>> stereotype
     name
     dead
   }
-  enum Characteristic <<value>> $kampagne
+  enum Characteristic <<value>> $charakter
 
 ' Kampagne
 

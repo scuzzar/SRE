@@ -1,0 +1,203 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Ausschnitt: Charaktere
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne
+  class Booking $shop
+  class Character $charakter {
+    name: string
+    background: string
+    equipment: string
+    credits: number
+    note: string
+    dead: boolean
+    retired: boolean
+    npc: boolean
+    /wounds: Wounds
+    /state: WoundState
+  }
+  class Upp <<value>> $charakter {
+    str: number
+    dex: number
+    end: number
+    int: number
+    edu: number
+    soc: number
+  }
+  class SkillLevel $charakter {
+    level: number
+    retired: boolean
+  }
+  class Possession $shop
+
+' Charaktererschaffung und Lebenslauf
+  class Generation $erschaffung
+  class Career $erschaffung
+  class CareerRoll $erschaffung
+
+' Subsektor und Welten
+  class Hex $sektor
+
+' Verlauf
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Task <<transient>> $probe
+  class TaskResult $probe
+  class Attack <<transient>> $kampf
+  class AttackResult $kampf
+  class Recovery $kampf
+  class Npc $begegnung
+
+' Referenzdaten
+  class Skill <<reference>> $charakter {
+    name: string
+    short: string
+  }
+  class ThrowDm <<value>> $erschaffung
+  class Gain <<reference>> $erschaffung
+  class Item <<reference>> $shop
+  class Weapon <<reference>> $kampf
+  class Cascade <<reference>> $erschaffung
+  class Aging <<reference>> $erschaffung
+  enum Characteristic <<value>> $charakter {
+    STR
+    DEX
+    END
+    INT
+    EDU
+    SOC
+  }
+
+' Kampagne
+Campaign "1" *-- "*" Character : characters
+Campaign "0..1" --> "0..1" Character : focus
+Booking "*" --> "0..1" Character : for
+
+' Charaktererschaffung und Lebenslauf
+Generation ..> Character : on finish
+Character "1" *-- "0..1" Career : career
+Character "*" --> "0..1" Hex : homeworld
+CareerRoll --> "0..1" Characteristic : of
+CareerRoll "*" --> "0..1" Skill : chosen
+
+' Laufbahnen (Referenzdaten)
+ThrowDm --> "1" Characteristic : if
+Gain "*" --> "0..1" Skill : skill
+Gain --> "0..1" Characteristic : changes
+Cascade "*" --> "1..*" Skill : options
+Aging --> "1" Characteristic : of
+
+' Subsektor und Welten
+
+' Charakter
+Character "1" *-- "1" Upp : upp
+Character "1" *-- "*" SkillLevel : skills
+SkillLevel "*" --> "1" Skill : of
+Character "1" *-- "*" Possession : possessions
+Item "0..1" --> "0..1" Skill : /uses
+Character "*" --> "0..1" Weapon : wields
+Character "*" --> "0..1" Weapon : primary
+Character "*" --> "0..1" Weapon : secondary
+
+' Waffen (Referenzdaten)
+Weapon "*" --> "1" Skill : uses
+
+' Verlauf
+Recovery "*" --> "0..1" Character : for
+Recovery "*" --> "0..1" Character : by
+TaskResult "*" --> "1" Character : for
+TaskResult "*" --> "0..1" SkillLevel : uses
+TaskResult --> "0..6" Characteristic : counts
+
+' Probe
+Task "*" --> "1" Character : /for
+Task "*" --> "0..1" SkillLevel : uses
+Task --> "0..6" Characteristic : counts
+
+' Angriff
+Attack "*" --> "0..1" Character : /for
+Attack "*" --> "0..1" Character : /victim
+AttackResult "*" --> "0..1" Character : for
+AttackResult "*" --> "0..1" Character : victim
+AttackResult "*" --> "0..1" SkillLevel : uses
+
+' Begegnung
+Npc "1" *-- "1" Upp : upp
+Npc "0..1" --> "0..1" Character : became
+Character "*" --> "0..1" Item : wears
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+class Campaign #line:d0021b;line.bold
+@enduml

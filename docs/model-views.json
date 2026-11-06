@@ -2,7 +2,11 @@
   "views": [
     {
       "id": "kampagne",
-      "title": "Kampagne und Charaktere"
+      "title": "Kampagne"
+    },
+    {
+      "id": "charakter",
+      "title": "Charaktere"
     },
     {
       "id": "shop",

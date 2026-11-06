@@ -67,8 +67,8 @@ hide <<value>> stereotype
 
 ' Kampagne und Charaktere
   class Campaign $kampagne
-  class Character $kampagne
-  class SkillLevel $kampagne
+  class Character $charakter
+  class SkillLevel $charakter
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -112,7 +112,7 @@ hide <<value>> stereotype
     bonusFrom: number
     malusUpTo: number
   }
-  enum Characteristic <<value>> $kampagne
+  enum Characteristic <<value>> $charakter
 
 ' Kampagne
 Campaign "1" *-- "*" LogEntry : log {ordered}
