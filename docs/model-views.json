@@ -42,7 +42,7 @@
       "id": "2026-11-06",
       "file": "2026-11-06-wuerfel-der-anzahl",
       "title": "Würfel der Anzahl, DM auf die Reaktion",
-      "approved": false,
+      "approved": true,
       "show": [
         "Hex"
       ]

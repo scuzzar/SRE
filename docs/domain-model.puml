@@ -75,7 +75,7 @@ hide <<value>> stereotype
   class Campaign $kampagne {
     name: string
     /funds: number
-    $new("2026-11-06", "quantityDie: number [0..1]")
+    quantityDie: number [0..1]
   }
   class Booking $shop {
     at: datetime
@@ -284,9 +284,9 @@ hide <<value>> stereotype
   }
   class Encounter $begegnung {
     at: datetime
-    $new("2026-11-06", "quantityDie: number [0..1]")
+    quantityDie: number [0..1]
     reactionDice: number[2]
-    $new("2026-11-06", "reactionDm: number [0..1]")
+    reactionDm: number [0..1]
     reaction: number
     ended: boolean
     /reactionText: string

@@ -83,9 +83,9 @@ hide <<value>> stereotype
   class Recovery $kampf
   class Encounter $begegnung {
     at: datetime
-    $new("2026-11-06", "quantityDie: number [0..1]")
+    quantityDie: number [0..1]
     reactionDice: number[2]
-    $new("2026-11-06", "reactionDm: number [0..1]")
+    reactionDm: number [0..1]
     reaction: number
     ended: boolean
     /reactionText: string
@@ -192,6 +192,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Campaign #line:d0021b;line.bold
-class Encounter #line:d0021b;line.bold
 @enduml

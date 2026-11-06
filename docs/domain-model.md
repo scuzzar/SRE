@@ -131,11 +131,13 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `/escaped`; als Referenzdaten `RangeBand`. Der UI-Entwurf dazu (freigegeben am 4. November 2026)
 > liegt unter [`ui-entwurf/range-bands/`](ui-entwurf/range-bands/).
 >
-> **Vorgeschlagen am 6. November 2026, wartet auf Freigabe:** der **Würfel für die Anzahl** einer
+> Am 6. November 2026 freigegeben: der **Würfel für die Anzahl** einer
 > Begegnung, W6 nach den Regeln oder W4 bzw. W3 zum Ausgleichen, statt einer festen Anzahl; dazu der
 > **DM +1 auf die Reaktion** für 5 oder mehr Terms in Army, Navy, Scouts oder Marines (siehe
 > *Begegnung*). Neu im Bild: `Campaign.quantityDie`, `Encounter.quantityDie` und
-> `Encounter.reactionDm`.
+> `Encounter.reactionDm`. Dazu begrenzt die Reaktion wie in der Quelle auf 3 bis 12 statt 3 bis 11.
+> Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-06-wuerfel-der-anzahl.png`](changes/2026-11-06-wuerfel-der-anzahl.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -164,7 +166,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-[2026-11-06: Würfel der Anzahl, DM auf die Reaktion](changes/2026-11-06-wuerfel-der-anzahl.png).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -616,7 +618,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - *Reaktion* (`reaction`): 2W6 (`reactionDice`) plus DM (`reactionDm`): +1, wenn ein lebender
     SC 5 oder mehr Terms in Army, Navy, Scouts oder Marines gedient hat (nach seinem Lebenslauf; SC
     ohne Lebenslauf zählen nicht), −1 auf einer Welt mit Bevölkerung 9+; beides zusammen ±0. Eine
-    echte 2 oder 12 bleibt, sonst begrenzt auf 3 bis 11. Der DM wird beim Würfeln festgehalten,
+    echte 2 oder 12 bleibt, sonst begrenzt auf 3 bis 12 (S. 21). Der DM wird beim Würfeln festgehalten,
     damit ein späterer Tod oder Ausblenden ihn nicht rückwirkend ändert; fehlt er (Begegnungen von
     vorher), gilt der DM der Welt. Der Text (`/reactionText`) kommt aus der Tabelle.
   - *Zeigen*: Nach dem Würfeln zeigt die App die Begegnung, bevor der Kampf beginnt: wer kommt (jeder
