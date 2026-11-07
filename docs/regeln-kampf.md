@@ -45,6 +45,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Entkommen und Ausweichen](#entkommen-und-ausweichen) | SE 5 | ○ |
 | [Moral (einfach)](#moral-einfach) | SE 5 | ○ |
 | [Angriff: Grundwurf und DMs](#angriff-grundwurf-und-erlaubte-dms) | SE 6 | ◐ |
+| [Feuerstoß und Schrot nach Book 1](#feuerstoß-und-schrot-nach-book-1) | B1 | ○ |
 | [Waffen- und Reichweitenmatrix](#waffen--und-reichweitenmatrix) | SE 6 | ✔ (ohne Tierwaffen und Zubehör) |
 | [Waffen und Ausrüstung](#waffen-und-ausrüstung) | SE 4, 23 | ✔ (ohne Zubehör) |
 | [Rüstung](#rüstung) | SE 4 | ✔ |
@@ -385,8 +386,8 @@ Schneller als doppelt laufen geht meist nicht lange.
 | Reichweite | ✔ |
 | Verteidiger weicht aus (Evading) | ○ (Regel in B1) |
 | Verteidiger in Deckung | ○ ([Deckung](#deckung-und-verbergen)) |
-| Gruppentreffer durch Schrotflinte | ○ (Regel in B1, S. 39) |
-| Gruppentreffer durch Autofeuer | ○ ([B4](#feuerregeln-aus-book-4); für SE-Waffen B1) |
+| Gruppentreffer durch Schrotflinte | ○ ([B1](#feuerstoß-und-schrot-nach-book-1), im Modell entworfen) |
+| Gruppentreffer durch Autofeuer | ○ ([B1](#feuerstoß-und-schrot-nach-book-1), [B4](#feuerregeln-aus-book-4), im Modell entworfen) |
 | Geschwächte Schläge | ○ (DM in der [Waffentabelle](#klingen-und-nahkampf), Regel unten) |
 | Waffe ziehen | ○ (Regel in B1) |
 | Geworfene Klinge | ○ (Regel in B1) |
@@ -405,6 +406,32 @@ Schneller als doppelt laufen geht meist nicht lange.
   - *Coup de Grace:* gegen Bewusstlose oder Wehrlose.
 
 > Wie viele volle Schläge die Ausdauer erlaubt, steht in B1, nicht in SE.
+
+### Feuerstoß und Schrot nach Book 1
+
+*B1 (Ausgabe 1981), „Special Considerations“: „Full Automatic Fire“, „Group Hits by Shotgun“.*
+App: ○ (im Modell entworfen, siehe `domain-model.md`, *Feuerstoß und Schrot*)
+
+> B1 liegt nicht als PDF vor. Der Wortlaut unten stammt aus einem Auszug von B1, den eine Websuche am
+> 7. November 2026 fand; die Seite ist nicht bekannt.
+
+- **Full Automatic Fire:** „Submachineguns and automatic rifles fire four round bursts instead of
+  single shots. The higher ammunition usage results in the hit probabilities shown on the table
+  (auto rifle uses the rifle row on the table when firing single shots). In addition, automatic fire
+  allows rolling to hit twice against the same target.“ Also: Feuerstöße zu 4 Schuss, die DMs der
+  Matrix gelten für den Feuerstoß, das Automatic Rifle schießt einzeln mit der Zeile des Rifle, und
+  ein Feuerstoß würfelt **zweimal** auf das Ziel.
+- **Gruppentreffer durch Autofeuer:** „Regardless of the designated target for automatic fire,
+  non-evading individuals adjacent to the target are also attacked by the burst of automatic fire.“
+  Ohne DM und ohne Grenze; Book 4 begrenzt es auf 2 Nachbarn bei 4 Schuss mit DM −3
+  ([Feuerregeln aus Book 4](#feuerregeln-aus-book-4)).
+- **Group Hits by Shotgun:** „Each shot by a shotgun may attack up to three individuals adjacent to
+  the original target, provided they are in a group (herd, pack, band, etc) and are each human-sized
+  or smaller.“ Ein DM für die Nachbarn steht nicht dabei.
+
+> ✱ App (Entwurf): Feuerstoß nach B1 mit der Grenze aus B4 (2 Nachbarn, DM −3); Schrot nach B1
+> (3 Nachbarn, ohne DM). Welche Kämpfer „neben dem Ziel“ stehen, lost die App aus der Partei des
+> Ziels aus, weil die Parteien keine Plätze haben.
 
 ### Waffen- und Reichweitenmatrix
 
@@ -1372,8 +1399,8 @@ fest und schreiben das hier dazu.
 |---|---|---|
 | Parieren mit Klingenfertigkeit | SE 6 | B1 |
 | Ausweichen (Evading), sein DM | SE 6, B4 32, 36–41 | B1 |
-| Gruppentreffer durch Schrotflinte | SE 6, B4 32 | B1 S. 39 |
-| Dauerfeuer von Automatic Rifle und SMG (SE-Waffen) | SE 5, 6 („Switch semi or full auto“) | B1 |
+| Gruppentreffer durch Schrotflinte | SE 6, B4 32 | B1 S. 39; Wortlaut aus einem Auszug unter [Feuerstoß und Schrot](#feuerstoß-und-schrot-nach-book-1) |
+| Dauerfeuer von Automatic Rifle und SMG (SE-Waffen) | SE 5, 6 („Switch semi or full auto“) | B1; Wortlaut aus einem Auszug unter [Feuerstoß und Schrot](#feuerstoß-und-schrot-nach-book-1) |
 | Wie viele volle Schläge die Ausdauer erlaubt | SE 6 | B1 |
 | Waffe ziehen, geworfene Klinge | SE 6 | B1 |
 | Entkommen über 20 Bands | `domain-model.md` | B1 S. 33 |

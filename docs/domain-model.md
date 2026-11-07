@@ -139,6 +139,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-06-wuerfel-der-anzahl.png`](changes/2026-11-06-wuerfel-der-anzahl.png).
 
+> **Wartet auf Freigabe** (Entwurf vom 7. November 2026): **Flächenschaden** mit Feuerstoß
+> (Automatic Rifle, Submachinegun) und Schrotflinte (siehe *Feuerstoß und Schrot*). Neu im Bild:
+> an der Waffe `burst`, `neighbours` und der Verweis `single`; am Angriff in Vorbereitung `burst`;
+> am Angriffsergebnis der Verweis `volley` und abgeleitet `/neighbour`. Der Ausschnitt dazu liegt
+> unter [`changes/2026-11-07-flaechenschaden.png`](changes/2026-11-07-flaechenschaden.png).
+
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
@@ -166,7 +172,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+*Flächenschaden: Feuerstoß und Schrotflinte* (2026-11-07).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -226,6 +232,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Nötiges Attribut | `Weapon.required`, `requiredDm` | Darunter gibt es den DM, z. B. Cutlass unter STR 7: −2 |
 | Vorteilhaftes Attribut | `Weapon.advantageous`, `advantageousDm` | Ab da gibt es den DM, z. B. Cutlass ab STR 11: +2 |
 | Schaden | `Weapon.wounds` | Wie viele W6 ein Treffer verursacht, z. B. Rifle 3W6 |
+| Feuerstoß | `Weapon.burst`, `Attack.burst` | Automatisches Feuer: 4 Schuss auf einmal, zwei Würfe auf das Ziel und Würfe auf Nachbarn (Book 1, Book 4 S. 31) |
+| Einzelschuss | `Weapon.single` | Ein Schuss einer Waffe, die auch Feuerstöße kann; sie nimmt dann die Zeile einer anderen Waffe der Matrix, z. B. Automatic Rifle die des Rifle |
+| Nachbar | `Weapon.neighbours`, `AttackResult./neighbour` | Ein weiterer Kämpfer aus der Partei des Ziels, den ein Feuerstoß (bis 2) oder ein Schrotschuss (bis 3) mit trifft; die App lost ihn aus |
+| Garbe | `AttackResult.volley` | Alle Würfe eines Feuerstoßes oder Schrotschusses; die weiteren Würfe verweisen auf den ersten |
 | Rüstungsklasse | `ArmorClass` | Was das Ziel trägt: Nothing, Jack, Mesh, Cloth, Reflec, Ablat, Combat |
 | Reichweite | `Range` | Close, Short, Medium, Long, Very Long |
 | Waffe in der Hand | `Character.wields` | Die Waffe, die ein Charakter gerade führt: Primär- oder Sekundärwaffe; keine heißt Hände |
@@ -525,8 +535,57 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Datei verweisen, auf den kein anderer verweist, und so viele Würfel haben, wie die Waffe
     `wounds` hat.
   - **Später**: DMs des Verteidigers (Parieren, Ausweichen, Deckung), Zubehör, Dunkelheit,
-    Überraschung, Autofeuer, Schrot, geschwächte Hiebe, die eigene Rüstung eines Charakters, Angriffe
+    Überraschung, geschwächte Hiebe, die eigene Rüstung eines Charakters, Angriffe
     auf Charaktere und Schaden an Attributen verteilen (Bewusstlosigkeit, Tod), Munition.
+- **Feuerstoß und Schrot** (Flächenschaden). Nach Book 1 (*Full Automatic Fire*, *Group Hits by
+  Shotgun*), für den Feuerstoß begrenzt nach Book 4 (S. 31, *Group Hits by Automatic Fire*).
+  - **Waffen** (Referenzdaten): `burst` sagt, wie viele Schuss ein Feuerstoß verbraucht
+    (Automatic Rifle und Submachinegun 4); eine Waffe mit `burst` schießt Feuerstöße. `single`
+    verweist auf die Waffe, deren Zeile ein **Einzelschuss** nimmt (Automatic Rifle → Rifle); ohne
+    `single` gibt es keinen Einzelschuss (die Submachinegun schießt nur Feuerstöße). `neighbours`
+    sagt, wie viele **Nachbarn** ein Schuss bzw. Feuerstoß höchstens mit trifft: Shotgun 3,
+    Automatic Rifle und Submachinegun 2.
+  - **Feuerart wählen**: Bei einer Waffe mit `burst` und `single` wählt man im Angriff in
+    Vorbereitung Feuerstoß oder Einzelschuss (`Attack.burst`, flüchtig; vorgewählt ist der
+    Feuerstoß, auch wenn ein NSC dran ist). Bei einer Waffe nur mit `burst` ist es immer ein
+    Feuerstoß, sonst immer ein Einzelschuss. Wechselt die Waffe in der Hand, gilt wieder die
+    Vorwahl.
+  - **Einzelschuss** mit `single`: DMs gegen Rüstung und nach Reichweite kommen aus der Zeile von
+    `single` (Book 1: „auto rifle uses the rifle row on the table when firing single shots“);
+    Fertigkeit, nötiges und vorteilhaftes Attribut, Schaden und Munition von der Waffe in der Hand.
+    Ein Einzelschuss hat keine Nachbarn und verbraucht einen Schuss.
+  - **Feuerstoß**: zwei Würfe auf das Ziel, jeder mit dem vollen DM; dazu je ein Wurf auf bis zu
+    `neighbours` Nachbarn mit **DM −3**.
+  - **Schrotflinte** (Shotgun): ein Wurf auf das Ziel und je einer auf bis zu `neighbours` Nachbarn,
+    alle mit demselben DM (Book 1 nennt für die Nachbarn keinen Abzug). Auf jede Reichweite, auf die
+    die Shotgun schießt. Ein Schuss.
+  - **Nachbarn** (Hausregel): Kämpfer aus der Partei des Ziels, ohne das Ziel, die nicht tot und
+    nicht übernommen sind; SC wie in der Kampfsimulation (lebend, nicht ausgeblendet, kein
+    dauerhafter NSC). Die App lost beim Würfeln bis zu `neighbours` davon aus, jeden höchstens
+    einmal; sind es weniger, trifft sie alle. Book 1 verlangt, dass sie in einer Gruppe stehen und
+    nicht ausweichen: In der App steht jede Partei zusammen, und Ausweichen gibt es noch nicht.
+    Book 1 verlangt bei der Shotgun außerdem höchstens Menschengröße; das gilt für alle NSC, Tiere
+    gibt es noch nicht. Ohne NSC als Ziel (frei gewählte Rüstung) gibt es keine Nachbarn.
+  - **Garbe**: Jeder Wurf ist ein eigenes `AttackResult` mit eigenem Ziel, Würfeln, DM und
+    Zielwert; Rüstung ist die des jeweiligen Ziels. Der erste Wurf (auf das Ziel) steht für sich,
+    die weiteren verweisen auf ihn (`volley`), in dieser Reihenfolge: der zweite Wurf auf das Ziel,
+    dann die Nachbarn. Ein Wurf ist ein Nachbar (`/neighbour`), wenn er zu einer Garbe gehört und
+    sein Ziel ein anderes ist als das des ersten Wurfs. Ob es ein Feuerstoß war, folgt aus der
+    Waffe (`burst`) und daraus, dass die Garbe mehr als einen Wurf hat; ein Einzelschuss ist immer
+    ein einzelner Wurf.
+  - **Schaden**: Jeder Treffer der Garbe bekommt seinen eigenen Schadenswurf, wie bisher; der
+    Reiter Kampf bietet sie für die Treffer der neuesten Garbe der Reihe nach an. Wunden wirken erst
+    nach dem Würfeln aller Würfe: Wer durch den ersten Treffer bewusstlos wird, bleibt Ziel des
+    zweiten.
+  - **Im Log** steht die Garbe in einem Kasten, die Würfe untereinander, Nachbarn als solche
+    gekennzeichnet. Einen Wurf der Garbe löschen löscht die ganze Garbe mit ihren Schadenswürfen und
+    Deutungen. In der Kampagnendatei muss `volley` auf einen früheren ersten Wurf derselben Datei
+    verweisen, mit demselben Angreifer und derselben Waffe, und eine Garbe darf höchstens
+    2 + `neighbours` Würfe haben.
+  - **Zug**: In der Kampfsimulation endet der Zug, wenn der Schaden aller Treffer der Garbe verteilt
+    ist.
+  - **Später**: Ausweichen (Evading) als Schutz vor Gruppentreffern, Panikfeuer, Feuerstöße mit
+    Gauss-Waffen und Waffen aus Book 4, Flechettes, Splitter von HE-Munition.
 - **Aufenthaltsort.** Die Gruppe, also alle Charaktere der Kampagne, ist immer an höchstens einem
   Ort (`location`): einer fertigen Welt des Subsektors. Man setzt ihn auf der Weltkarte („Gruppe ist
   hier“); die Karte zeigt ihn. Eine neue Kampagne hat keinen. Ohne Aufenthaltsort gibt es keinen
@@ -591,8 +650,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Besitz weg) und setzt `rounds` auf voll; ein angebrochenes Magazin geht dabei verloren. Ohne
     Magazin gibt es kein Nachladen.
   - Der Angriff im Log bleibt, wie er ist; welcher Schuss es war, hält er nicht fest.
-  - **Später**: Automatisches Feuer (mehrere Schuss), angebrochene Magazine aufheben, Recharge der
-    Power Packs.
+  - Ein **Feuerstoß** verbraucht `Weapon.burst` Schuss (4) und geht nur, wenn so viele geladen
+    sind; sonst bleibt der Einzelschuss, wenn die Waffe einen hat (siehe *Feuerstoß und Schrot*).
+  - **Später**: angebrochene Magazine aufheben, Recharge der Power Packs.
 - **Begegnung.** Im Reiter Kampf würfelt man auf dem Aufenthaltsort eine **Begegnung** (`Encounter`),
   ohne weitere Eingabe; man kann die Art auch aus der Liste wählen, die Anzahl wird dann trotzdem
   gewürfelt.
@@ -724,7 +784,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Im Zug wählt man nur das **Ziel** (einen Kämpfer der anderen Partei, der nicht tot ist) und
     würfelt; Rüstung ist die des Ziels, Reichweite die Entfernung. Ist ein NSC dran, schlägt die App
     einen zufälligen wachen SC als Ziel vor; man kann es ändern. Ist ein SC dran, steht er oben.
-  - Der Zug endet mit dem Angriff, sobald sein Schaden verteilt ist (oder er daneben ging), mit
+  - Der Zug endet mit dem Angriff, sobald sein Schaden verteilt ist (oder er daneben ging; bei einer
+    Garbe der Schaden aller ihrer Treffer, siehe *Feuerstoß und Schrot*), mit
     **Nachladen** oder mit **Aussetzen**. Wunden wirken sofort: Wer bewusstlos wird, ist in dieser
     Runde nicht mehr dran.
   - Ist eine Partei ganz außer Gefecht (alle bewusstlos, schwer verwundet oder tot), ist der Kampf
