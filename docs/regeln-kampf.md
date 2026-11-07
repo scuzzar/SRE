@@ -41,7 +41,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Waffen nach TL, Verbote nach Gesetz](#waffen-nach-tl-und-verbote-nach-gesetzesstufe) | SE 21 | ✔ |
 | [Überraschung](#überraschung) | SE 5 | ✔ (ohne Tiere) |
 | [Anfangsentfernung und Gelände](#anfangsentfernung-und-gelände) | SE 5 | ✔ |
-| [Reichweiten, Range Bands, Geschwindigkeiten](#reichweiten-range-bands-und-geschwindigkeiten) | SE 7, 24 | ✔ ✱, Geschwindigkeiten ◐ |
+| [Reichweiten, Range Bands, Geschwindigkeiten](#reichweiten-range-bands-und-geschwindigkeiten) | SE 7, 24 | ✔ ✱, Geschwindigkeiten ◐ ✱ |
 | [Entkommen und Ausweichen](#entkommen-und-ausweichen) | SE 5 | ○ |
 | [Moral (einfach)](#moral-einfach) | SE 5 | ○ |
 | [Angriff: Grundwurf und DMs](#angriff-grundwurf-und-erlaubte-dms) | SE 6 | ◐ |
@@ -327,7 +327,7 @@ Sobald **25 %** einer Partei bewusstlos oder tot sind, würfelt sie **jede Kampf
 ### Reichweiten, Range Bands und Geschwindigkeiten
 
 *SE 7, „Ranges“, „Range Bands“, „Speeds“; gleiche Reichweiten SE 24, „Range Descriptions“.*
-App: Reichweiten und Bands ✔, Geschwindigkeiten ◐ (die Parteien rücken mit ◀ ▶ ohne Zug)
+App: Reichweiten und Bands ✔, Geschwindigkeiten ◐ (je Partei und Runde 1 Band gehend, 2 laufend ohne Angriff; schneller laufen ○)
 
 | Range | Bedeutung |
 |---|---|
@@ -361,6 +361,10 @@ Ein Band sind etwa 17 Felder zu 1,5 m (etwa 25 m).
 
 Schneller als doppelt laufen geht meist nicht lange.
 
+> ✱ App: Bewegung je Partei, nicht je Kämpfer: Die Partei am Zug geht 1 Band je Runde oder läuft 2;
+> wer läuft, greift in dieser Runde nicht an (Book 1, nach einer Zusammenfassung). Langes Drücken setzt
+> das Band frei.
+>
 > ✱ App: Auf Band 0 unterscheidet sie Close (Berührung) und Short. Das Startband innerhalb einer
 > Reichweite ist gleichverteilt gewürfelt (Medium 1W2, Long 1W8, Very Long 1W10).
 

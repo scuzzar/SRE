@@ -255,6 +255,8 @@ export const ExampleCharacterSchema = z.object({
   possessions: z.array(z.object({ of: z.string().min(1), count: z.number().int().min(1) })).default([]),
   /** Die Primärwaffe: die Waffe eines Gegenstands aus seinem Besitz. */
   primary: z.string().min(1).optional(),
+  /** Die getragene Rüstung: ein Gegenstand mit Rüstungsklasse aus seinem Besitz. */
+  wears: z.string().min(1).optional(),
   equipment: z.string(),
   credits: z.number().int(),
   note: z.string(),
@@ -349,6 +351,9 @@ export const ReferenceDataSchema = z
       }
       if (example.primary !== undefined && !example.possessions.some((p) => data.items.find((i) => i.id === p.of)?.weapon === example.primary)) {
         ctx.addIssue({ code: 'custom', message: `Die Primärwaffe ${example.primary} von ${example.name} ist nicht in seinem Besitz` });
+      }
+      if (example.wears !== undefined && (!example.possessions.some((p) => p.of === example.wears) || data.items.find((i) => i.id === example.wears)?.armor === undefined)) {
+        ctx.addIssue({ code: 'custom', message: `Die Rüstung ${example.wears} von ${example.name} ist keine Rüstung in seinem Besitz` });
       }
     }
   });

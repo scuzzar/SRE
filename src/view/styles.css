@@ -5173,3 +5173,236 @@ button:disabled {
 .volley-roll .volley-verdict.negative {
   color: var(--muted);
 }
+
+/* Unter dem Strahl: wie weit die Partei am Zug in dieser Runde gegangen ist, und der Hinweis auf das freie Setzen. */
+.ray-move {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-family: var(--mono);
+}
+
+.ray-move.ran > span:first-child {
+  color: var(--accent-text);
+}
+
+.ray {
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Wer am Zug ist und wer Ziel ist, auf einen Blick: gold am Zug, rot Ziel, gestrichelt rot die Nachbarn eines Feuerstoßes. */
+.role-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: 2px;
+  line-height: 16px;
+  border: 1px solid currentColor;
+}
+
+.role-badge.turn {
+  color: var(--ink);
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.role-badge.target {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.role-badge.neighbour {
+  color: var(--accent-text);
+  border-style: dashed;
+}
+
+.fighter {
+  position: relative;
+}
+
+.fighter.turn {
+  border-width: 2px;
+  box-shadow: 0 0 0 1px var(--gold-deep), 0 0 14px var(--gold-glow);
+}
+
+.fighter.targeted {
+  border-width: 2px;
+  box-shadow: 0 0 12px rgba(198, 47, 53, 0.45);
+}
+
+.fighter.neighbour {
+  border: 1px dashed var(--accent-text);
+}
+
+.strip-card {
+  position: relative;
+}
+
+.strip-card.turn {
+  box-shadow: inset 0 0 0 2px var(--gold), 0 0 14px var(--gold-glow);
+}
+
+.strip-card.targeted {
+  box-shadow: inset 0 0 0 2px var(--accent), 0 0 14px rgba(198, 47, 53, 0.5);
+}
+
+.strip-card.neighbour {
+  box-shadow: inset 0 0 0 1px var(--accent-text);
+}
+
+/* Unten: am Zug → Ziel als zwei farbige Marken. */
+.fight-who {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.who-chip {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 1px 6px;
+  font-size: 14px;
+}
+
+.who-chip.turn {
+  color: var(--ink);
+  background: var(--gold);
+}
+
+.who-chip.target {
+  color: #fff;
+  background: var(--accent);
+}
+
+.who-arrow {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+/* Treffer, Fehlschuss und Schaden: ein Aufblitzen über der Karte und ein aufsteigendes Wort oder eine Zahl. */
+.impact-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  animation: impact-flash 700ms ease-out both;
+}
+
+.impact-flash.damage,
+.impact-flash.hit {
+  background: rgba(198, 47, 53, 0.55);
+}
+
+.impact-flash.miss {
+  background: rgba(236, 234, 228, 0.18);
+}
+
+.fighter:has(> .impact-flash.damage),
+.strip-card:has(> .impact-flash.damage) {
+  animation: impact-shake 420ms ease-in-out;
+}
+
+.impact-float {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  pointer-events: none;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  animation: impact-float 1300ms ease-out both;
+  animation-delay: calc(var(--n, 0) * 250ms);
+  /* Mehrere Würfe auf dieselbe Karte (zwei Würfe eines Feuerstoßes) stehen nebeneinander. */
+  margin-right: calc(var(--n, 0) * 96px);
+}
+
+.impact-float.damage {
+  color: var(--accent-text);
+  font-size: 28px;
+}
+
+.impact-float.hit {
+  color: var(--gold-bright);
+  text-transform: uppercase;
+  font-size: 16px;
+}
+
+.impact-float.miss {
+  color: var(--muted);
+  font-size: 16px;
+  font-style: italic;
+}
+
+@keyframes impact-flash {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes impact-float {
+  0% {
+    opacity: 0;
+    transform: translateY(-20%) scale(0.7);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.15);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-110%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-160%) scale(1);
+  }
+}
+
+@keyframes impact-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(5px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .impact-flash,
+  .impact-float,
+  .fighter:has(> .impact-flash.damage),
+  .strip-card:has(> .impact-flash.damage) {
+    animation-duration: 1ms;
+  }
+}

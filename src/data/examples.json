@@ -15,6 +15,7 @@
       { "of": "vacc-suit-tl12", "count": 1 }
     ],
     "primary": "automatic-pistol",
+    "wears": "jack",
     "equipment": "",
     "credits": 12400,
     "note": "Schuldet Dr. Halvek einen Gefallen"
@@ -35,6 +36,7 @@
       { "of": "hand-computer", "count": 1 }
     ],
     "primary": "blade",
+    "wears": "mesh",
     "equipment": "",
     "credits": 3150,
     "note": "Sucht seinen verschollenen Bruder"

@@ -361,6 +361,26 @@ describe('Kampf', () => {
 describe('Shop und Gruppenkasse', () => {
   const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
 
+  it('die Beispiel-Charaktere tragen ihre Rüstung; nach dem Kauf einer Rüstung fragt die App, ob er sie anlegt', async () => {
+    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina])));
+    expect(game.snapshot().characters.map((c) => c.armor)).toEqual(['Jack', 'Mesh']);
+    game.chooseHex(1, 1);
+    game.stayHere();
+    game.book('income', 1000, 'Belohnung');
+    game.buy('cloth', 1, 'c1');
+    expect(game.snapshot().shop!.wearOffer).toEqual({ character: 'Kira Vant', item: 'Cloth', worn: 'Jack' });
+    game.answerWearOffer(false);
+    expect(game.snapshot().shop!.wearOffer).toBeUndefined();
+    expect(game.snapshot().characters[0]!.armor).toBe('Jack');
+    game.buy('cloth', 1, 'c1');
+    game.answerWearOffer(true);
+    expect(game.snapshot().characters[0]!.armor).toBe('Cloth');
+    // Was er schon trägt, bietet die App nicht noch einmal an; Munition auch nicht.
+    game.buy('cloth', 1, 'c1');
+    game.buy('rifle-ammo', 1, 'c1');
+    expect(game.snapshot().shop!.wearOffer).toBeUndefined();
+  });
+
   it('die Gruppe ist auf Regina, bucht eine Belohnung, kauft eine Rifle mit Magazin, lädt und schießt', async () => {
     const { game, repository } = await started(fixedRandom(6, 6), memoryRepository(setHexes(createCampaign(), [regina])));
     expect(game.snapshot().shop).toMatchObject({ funds: 0, world: undefined, offer: [] });

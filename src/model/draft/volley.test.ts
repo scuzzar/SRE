@@ -37,7 +37,8 @@ const clock = fixedClock();
 
 /** Kira Vant (c1, DEX A) bekommt diese Waffe geladen in die Hand und ein Magazin dazu. */
 function armed(weapon: string, ammo: string, rounds?: number): Campaign {
-  const there = setLocation(setHexes(createCampaign(), [regina]), '0207');
+  // Ohne Rüstung, damit die Zahlen einfach bleiben.
+  const there = setLocation(setHexes({ ...createCampaign(), characters: createCampaign().characters.map((c) => Object.fromEntries(Object.entries(c).filter(([key]) => key !== 'wears')) as typeof c) }, [regina]), '0207');
   const campaign = rollEncounter(there, fixedRandom(1, 5), clock, undefined, 4).campaign;
   return {
     ...campaign,

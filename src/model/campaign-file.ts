@@ -192,6 +192,8 @@ const EncounterSchema = z
     npcSurprise: z.object({ die, dm: z.number().int() }).optional(),
     round: z.number().int().min(1).default(1),
     acted: z.array(z.string()).default([]),
+    pcMoved: z.number().int().min(0).max(2).optional(),
+    npcMoved: z.number().int().min(0).max(2).optional(),
   })
   .transform(({ range, band, close, ...rest }) => ({ ...rest, ...(band === undefined ? firstBand(range ?? 'short') : { band, close: close ?? false }) }))
   .refine((e) => !e.close || e.band === 0, 'In Berührung sind die Parteien nur auf Band 0.');

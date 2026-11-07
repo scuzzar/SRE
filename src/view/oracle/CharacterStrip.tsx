@@ -4,6 +4,11 @@ import { SkillChips, UppRow } from '../characters/CharacterCard';
 import { useGame } from '../game-context';
 import { ChevronDownIcon, PencilIcon } from '../icons';
 import { credits, hex, woundStateText } from '../format';
+import { ImpactMarks, RoleBadge } from '../combat/FightScreen';
+import type { Impact } from '../../controller';
+
+/** Je SC in der Kampfsimulation: am Zug, Ziel, Nachbar und was ihn eben getroffen hat. */
+export type StripFight = Readonly<Record<string, { readonly turn: boolean; readonly targeted: boolean; readonly neighbour: boolean; readonly impacts: readonly Impact[] }>>;
 
 
 /** So lange nach dem letzten Scrollen gilt das Wischen als beendet. */
@@ -24,11 +29,14 @@ export function CharacterStrip({
   weapons = false,
   heal,
   shop = false,
+  fight,
 }: {
   view: Snapshot;
   weapons?: boolean;
   heal?: { readonly name: string; readonly onHeal: () => void } | undefined;
   shop?: boolean;
+  /** In der Kampfsimulation: je SC, ob er am Zug, Ziel oder Nachbar ist, und was ihn eben getroffen hat. */
+  fight?: StripFight | undefined;
 }) {
   const game = useGame();
   const track = useRef<HTMLDivElement>(null);
@@ -79,10 +87,19 @@ export function CharacterStrip({
     <section className={['strip', collapsed ? 'collapsed' : '', weapons || shop ? 'strip-combat' : '', shop ? 'strip-shop' : ''].filter(Boolean).join(' ')} aria-label="Spielercharaktere">
       <div className="strip-track" ref={track} onScroll={onScroll}>
         {characters.map((character, i) => (
-          <article key={character.id} className={character.focus ? 'strip-card focus' : 'strip-card'} aria-label={character.name} aria-hidden={!character.focus}>
+          <article
+            key={character.id}
+            className={['strip-card', character.focus ? 'focus' : '', fight?.[character.id]?.turn ? 'turn' : '', fight?.[character.id]?.targeted ? 'targeted' : '', fight?.[character.id]?.neighbour ? 'neighbour' : ''].filter(Boolean).join(' ')}
+            aria-label={character.name}
+            aria-hidden={!character.focus}
+          >
+            {fight?.[character.id] && <ImpactMarks impacts={fight[character.id]!.impacts} />}
             <div className="strip-head">
               <button type="button" className="strip-title" aria-expanded={!collapsed} onClick={() => game.toggleStrip()} tabIndex={character.focus ? 0 : -1}>
-                <span className="strip-name">{character.name}</span>
+                <span className="strip-name">
+                  {character.name}
+                  {fight?.[character.id] && <RoleBadge fighter={fight[character.id]!} />}
+                </span>
                 {shop ? (
                   <span className="pc-sub">
                     <span className="mono strip-credits">{credits(character.credits)}</span>

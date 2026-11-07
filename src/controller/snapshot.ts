@@ -18,6 +18,9 @@ import {
   damageRollsOf,
   pendingDamage,
   rangeDm,
+  hasRun,
+  moveState,
+  type MoveState,
   rowOf,
   roundsFor,
   neighboursOf,
@@ -123,6 +126,7 @@ import {
   characteristicOptions,
   drawnIn,
   evaluateAttack,
+  neighbourTargets,
   canChooseFire,
   firesBurst,
   evaluateTask,
@@ -414,7 +418,20 @@ export interface FighterView {
   /** Kann Ziel dessen sein, der am Zug ist. */
   readonly targetable: boolean;
   readonly targeted: boolean;
+  /** Ein Feuerstoß auf das gewählte Ziel träfe ihn als Nachbarn mit (darüber oder darunter in der Liste). */
+  readonly neighbour: boolean;
   readonly healing: HealingView;
+}
+
+/**
+ * Was der neueste Eintrag im Log einem Kämpfer getan hat, für eine kurze Animation: ein Treffer oder
+ * Fehlschuss eines Angriffs, oder Schaden. `key` ist je Ereignis eindeutig.
+ */
+export interface Impact {
+  readonly id: string;
+  readonly kind: 'hit' | 'miss' | 'damage';
+  readonly damage: number | undefined;
+  readonly key: string;
 }
 
 /** Die Kampfsimulation einer laufenden Begegnung. */
@@ -461,10 +478,16 @@ export interface SimView {
         readonly ammo: { readonly rounds: number; readonly capacity: number; readonly magazines: number } | undefined;
         /** Feuerstoß oder Schrot der Waffe am Zug. */
         readonly fire: FireView | undefined;
+        /** Seine Partei ist in dieser Runde gelaufen: kein Angriff. */
+        readonly ran: boolean;
       }
     | undefined;
   /** Ist eine Partei außer Gefecht, ist der Kampf entschieden. */
   readonly defeated: Side | undefined;
+  /** Wie weit sich die Partei am Zug in dieser Runde noch bewegen kann; ohne Zug keine Bewegung. */
+  readonly move: MoveState | undefined;
+  /** Was der neueste Eintrag im Log den Kämpfern getan hat. */
+  readonly impacts: readonly Impact[];
   /** Die Range Bands je Reichweite (erstes und letztes Band) und ob die Waffe dessen am Zug hinreicht. */
   readonly bands: readonly { readonly range: Range; readonly from: number; readonly to: number; readonly reaches: boolean }[];
 }
@@ -640,6 +663,8 @@ export interface ShopView {
     }[];
   }[];
   readonly error: string | undefined;
+  /** Gleich nach dem Kauf einer Rüstung: Soll er sie anlegen? Mit dem, was er jetzt trägt. */
+  readonly wearOffer: { readonly character: string; readonly item: string; readonly worn: string | undefined } | undefined;
 }
 
 export interface CardView {
@@ -742,6 +767,8 @@ export interface ControllerState {
   readonly attack: Attack | undefined;
   /** Was im Shop zuletzt nicht ging. */
   readonly shopError: string | undefined;
+  /** Gleich nach dem Kauf einer Rüstung: wer sie gekauft hat, zum Anlegen. */
+  readonly wearOffer: { readonly character: string; readonly item: string } | undefined;
   /** Schaden an einem SC, den der Spieler gerade verteilt. */
   readonly wounding: Wounding | undefined;
   /** Was beim Würfeln einer Begegnung herauskam, wenn es keine gibt, oder was nicht ging. */
@@ -1021,7 +1048,7 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
   };
 }
 
-function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, turn: FightSlot | undefined, target: string | undefined): FighterView {
+function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, turn: FightSlot | undefined, target: string | undefined, neighbours: readonly string[]): FighterView {
   const fighter = fighterOf(campaign, slot.who);
   const npc = 'npc' in slot.who ? npcOf(campaign, slot.who.npc) : undefined;
   const character = 'pc' in slot.who ? characterOf(campaign, slot.who.pc) : undefined;
@@ -1042,6 +1069,7 @@ function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, 
     turn: turn?.id === slot.id,
     targetable: turn !== undefined && turn.side !== slot.side && fighter.state !== 'dead',
     targeted: target === slot.id,
+    neighbour: neighbours.includes(slot.id),
     healing: recoveryOptions(campaign, slot.who),
   };
 }
@@ -1086,6 +1114,7 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
       reaches: range !== undefined && rangeDm(rowOf(attacker.weapon, burst), range) !== undefined,
       ammo: ammo && { rounds: ammo.rounds, capacity: ammo.capacity, magazines: ammo.magazines },
       fire: fireView(attacker.weapon, burst),
+      ran: hasRun(campaign, turn.side),
     };
   }
   return {
@@ -1109,11 +1138,44 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
     first: firstSide(encounter),
     pcSurprise: encounter.pcSurprise,
     npcSurprise: encounter.npcSurprise,
-    fighters: order.map((slot) => fighterView(campaign, slot, encounter, turn, turnView?.target)),
+    fighters: order.map((slot) => fighterView(campaign, slot, encounter, turn, turnView?.target, previewNeighbours(campaign, order, turn, turnView?.target, simBurst))),
     turn: turnView,
     defeated: defeatedSide(campaign, encounter),
+    move: moveState(campaign),
+    impacts: impactsOf(campaign),
     bands: ref.encounters.bands.map((b) => ({ range: b.range, from: b.from, to: b.to, reaches: weapon === undefined || rangeDm(weapon, b.range) !== undefined })),
   };
+}
+
+/** Die Id eines Kämpfers in der Simulation: SC `c…`, NSC `n…`. */
+function slotId(who: Combatant): string {
+  return 'pc' in who ? who.pc : who.npc;
+}
+
+/** Wen ein Feuerstoß auf das gewählte Ziel als Nachbarn mit träfe; die Schrotflinte lost erst beim Würfeln, also keinen. */
+function previewNeighbours(campaign: Campaign, order: readonly FightSlot[], turn: FightSlot | undefined, target: string | undefined, simBurst: boolean | undefined): readonly string[] {
+  const slot = target === undefined ? undefined : order.find((s) => s.id === target);
+  if (!turn || !slot) return [];
+  const weapon = fighterOf(campaign, turn.who).weapon;
+  const burst = firesBurst(weapon, simBurst === undefined ? {} : { burst: simBurst });
+  if (!burst) return [];
+  return neighbourTargets(campaign, slot.who, weapon, true, { int: (min) => min }).map(slotId);
+}
+
+/** Was der neueste Eintrag im Log angerichtet hat: Schaden an einem Kämpfer, oder Treffer und Fehlschüsse der neuesten Garbe. */
+function impactsOf(campaign: Campaign): readonly Impact[] {
+  const last = campaign.log.length - 1;
+  const entry = campaign.log[last];
+  if (entry?.kind === 'damage') {
+    const who = victimOf(campaign.log[entry.of] as AttackResult);
+    return who && entry.to !== undefined ? [{ id: slotId(who), kind: 'damage', damage: damageOf(entry), key: `d${last}` }] : [];
+  }
+  if (entry?.kind !== 'attack') return [];
+  return volleyOf(campaign.log, last).flatMap((i) => {
+    const roll = campaign.log[i] as AttackResult;
+    const who = victimOf(roll);
+    return who ? [{ id: slotId(who), kind: isSuccess(roll) ? ('hit' as const) : ('miss' as const), damage: undefined, key: `a${i}` }] : [];
+  });
 }
 
 /** Der Würfel des Startbands mit seinen Seiten: so viele Bands hat die gewürfelte Reichweite. */
@@ -1139,7 +1201,14 @@ function woundingView(campaign: Campaign, wounding: Wounding): WoundingView {
   };
 }
 
-function shopView(campaign: Campaign, error: string | undefined): ShopView {
+/** Das Angebot, eine eben gekaufte Rüstung anzulegen, solange er sie hat und nicht schon trägt. */
+function wearOfferView(campaign: Campaign, offer: ControllerState['wearOffer']): ShopView['wearOffer'] {
+  const character = offer && campaign.characters.find((c) => c.id === offer.character);
+  if (!offer || !character || character.wears === offer.item || !character.possessions.some((p) => p.of === offer.item)) return undefined;
+  return { character: character.name, item: itemLabel(itemOf(offer.item)), worn: character.wears === undefined ? undefined : itemLabel(itemOf(character.wears)) };
+}
+
+function shopView(campaign: Campaign, error: string | undefined, offerToWear: ControllerState['wearOffer']): ShopView {
   const funds = fundsOf(campaign);
   const world = locationOf(campaign);
   const offer = world ? offerOf(world) : [];
@@ -1220,6 +1289,7 @@ function shopView(campaign: Campaign, error: string | undefined): ShopView {
       }),
     })),
     error,
+    wearOffer: wearOfferView(campaign, offerToWear),
   };
 }
 
@@ -1360,7 +1430,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
     combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.simBurst),
-    shop: shopView(campaign, state.shopError),
+    shop: shopView(campaign, state.shopError, state.wearOffer),
     location: campaign.location,
     result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : undefined,
     editor: state.editor && {

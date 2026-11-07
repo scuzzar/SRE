@@ -123,7 +123,7 @@ export interface CharacterInput {
 /** Eine neue Kampagne, ohne Log, mit der Standardstufe und den angegebenen Charakteren. */
 export function createCampaign(examples: readonly ExampleCharacter[] = ref.examples, name = 'Kampagne', id: CampaignId = 'k1'): Campaign {
   let campaign: Campaign = { id, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [], bookings: [], encounters: [] };
-  for (const { primary, ...example } of examples) campaign = addCharacter(campaign, { ...example, ...(primary === undefined ? {} : { primary }) }).campaign;
+  for (const { primary, wears, ...example } of examples) campaign = addCharacter(campaign, { ...example, ...(primary === undefined ? {} : { primary }), ...(wears === undefined ? {} : { wears }) }).campaign;
   // Bei mehreren Beispielen steht der erste oben, nicht der zuletzt angelegte.
   return withFocus(campaign, livingCharacters(campaign)[0]?.id);
 }

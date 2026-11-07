@@ -25,10 +25,13 @@ import {
   adoptNpc,
   recover,
   turnOf,
+  itemOf,
+  characterOf,
+  setWears,
   fighterOf,
   endTurn,
   setBand,
-  moveBand,
+  moveSide,
   currentEncounter,
   livingCharacters,
   canFight,
@@ -120,7 +123,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, simTarget: undefined, simBurst: undefined, encounterIntro: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, simTarget: undefined, simBurst: undefined, encounterIntro: false, shopError: undefined, wearOffer: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
 
 export interface GameDependencies {
   readonly repository: CampaignRepository;
@@ -165,6 +168,7 @@ export class GameController {
       simBurst: undefined,
       encounterIntro: false,
       shopError: undefined,
+      wearOffer: undefined,
       opened: undefined,
       stripCollapsed: false,
       shopHintHidden: false,
@@ -584,9 +588,9 @@ export class GameController {
     this.inFight(() => this.change(setBand(this.campaign, band, close), { combatNote: undefined }));
   }
 
-  /** Bewegt die Parteien einen Schritt näher (−1) oder weiter weg (+1). */
+  /** Die Partei am Zug geht ein Band näher (−1) oder weiter weg (+1): 1 Band gehend, ein zweites laufend. */
   moveBand(step: -1 | 1): void {
-    this.inFight(() => this.change(moveBand(this.campaign, step), { combatNote: undefined }));
+    this.inFight(() => this.change(moveSide(this.campaign, step), { combatNote: undefined }));
   }
 
   /**
@@ -675,9 +679,18 @@ export class GameController {
     this.inShop(() => sell(this.campaign, item, count, price, character, this.deps.clock));
   }
 
-  /** Kauft auf dem Aufenthaltsort aus der Gruppenkasse für einen Charakter. */
+  /** Kauft auf dem Aufenthaltsort aus der Gruppenkasse für einen Charakter. Bei einer Rüstung, die er nicht trägt, fragt die App, ob er sie anlegt. */
   buy(item: string, count: number, character: string): void {
     this.inShop(() => buy(this.campaign, item, count, character, this.deps.clock));
+    if (this.state.shopError === undefined && itemOf(item).armor !== undefined && characterOf(this.campaign, character).wears !== item) this.update({ wearOffer: { character, item } });
+  }
+
+  /** Nach dem Kauf einer Rüstung: anlegen (`true`) oder lassen, wie es ist. */
+  answerWearOffer(wear: boolean): void {
+    const offer = this.state.wearOffer;
+    if (!offer) return;
+    if (wear) this.inShop(() => setWears(this.campaign, offer.character, offer.item));
+    this.update({ wearOffer: undefined });
   }
 
   /**

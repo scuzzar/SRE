@@ -12,6 +12,7 @@ import {
   encounterRangeOf,
   fighterOf,
   focusOf,
+  hasRun,
   livingCharacters,
   neighboursOf,
   npcOf,
@@ -158,6 +159,7 @@ export function turnAttack(campaign: Campaign, target: string): Attack {
   const turn = turnOf(campaign);
   const encounter = currentEncounter(campaign);
   if (!turn || !encounter) throw new DomainError('Es ist keiner am Zug.');
+  if (hasRun(campaign, turn.side)) throw new DomainError(`Die ${turn.side === 'pcs' ? 'SC' : 'NSC'} sind in dieser Runde gelaufen und greifen nicht an.`);
   const top = attackCharacter(campaign);
   const range = encounterRangeOf(encounter);
   const at = range === undefined ? {} : { range };

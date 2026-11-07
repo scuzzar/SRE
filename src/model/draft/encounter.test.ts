@@ -66,7 +66,11 @@ const regina: Hex = {
   gasGiant: true,
   uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 },
 };
-const there: Campaign = setLocation(setHexes(createCampaign(), [regina]), '0207');
+/** Die Beispiel-Charaktere ohne Rüstung, damit die Zahlen der Tests einfach bleiben. */
+function unarmored(campaign: Campaign): Campaign {
+  return { ...campaign, characters: campaign.characters.map((c) => Object.fromEntries(Object.entries(c).filter(([key]) => key !== 'wears')) as typeof c) };
+}
+const there: Campaign = setLocation(setHexes(unarmored(createCampaign()), [regina]), '0207');
 const clock = fixedClock();
 
 /**
