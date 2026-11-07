@@ -681,7 +681,9 @@ ist „Dagger −1“, eine Sportpistole „Automatic Pistol +1“. Ebenso Rüst
 - Munition von Automatic Pistol und Submachinegun passt ineinander (die Magazine nicht); Rifle und
   Automatic Rifle teilen Munition und Magazine.
 - **Laser:** am Kabel an einem Power Pack; Laser Carbine **50 Schuss**, Laser Rifle **100**. Aufladen
-  laut SR 25 mindestens 8 Stunden an einer starken Quelle, laut SR 26 etwa eine Stunde; im Handel
+  dauert **mindestens 8 Stunden** an einer starken Quelle (SR 25). ✱ SR 26 nennt beim Nachladen
+  „etwa eine Stunde“ (aus der Errata zu Book 1 von 1981); auf Entscheidung des Owners gelten die
+  8 Stunden, wie bei der Waffe beschrieben und in der Community üblich. Im Handel
   200 bzw. 300 Cr, am Kraftwerk eines Schiffs umsonst. Die Packs passen nicht in die jeweils andere
   Waffe.
 - SR nennt bei jeder Schusswaffe auch das Gewicht und den Preis **geladen** (Waffe plus ein Magazin),
