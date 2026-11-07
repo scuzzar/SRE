@@ -46,6 +46,15 @@
       "show": [
         "Hex"
       ]
+    },
+    {
+      "id": "2026-11-07",
+      "file": "2026-11-07-ueberlauf-der-wunden",
+      "title": "Überlauf der Wunden: Schaden in Blöcken",
+      "approved": false,
+      "show": [
+        "AttackResult"
+      ]
     }
   ]
 }

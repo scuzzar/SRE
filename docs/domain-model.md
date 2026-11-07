@@ -138,6 +138,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Encounter.reactionDm`. Dazu begrenzt die Reaktion wie in der Quelle auf 3 bis 12 statt 3 bis 11.
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-06-wuerfel-der-anzahl.png`](changes/2026-11-06-wuerfel-der-anzahl.png).
+>
+> **Wartet auf Freigabe** (7. November 2026): der **Überlauf der Wunden** nach SR 21 (siehe
+> *Wunden*). Was über 0 hinausgeht, verfällt nicht mehr, sondern geht auf die anderen Attribute
+> über, bei jedem Treffer. Im Bild: `DamageRoll.to` hält nicht mehr ein Attribut je Würfel, sondern
+> je **Block** (`to`, dazu die Punkte `points`); `Wounding.to` ebenso. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-07-ueberlauf-der-wunden.png`](changes/2026-11-07-ueberlauf-der-wunden.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -166,7 +172,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+der Überlauf der Wunden (2026-11-07).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -272,6 +278,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Angriff | `Attack` | Ein Angriff, solange er für den Charakter oben vorbereitet wird |
 | Angriffsergebnis | `AttackResult` | Ein gewürfelter Angriff: Treffer oder nicht |
 | Schadenswurf | `DamageRoll` | Der Wurf auf den Schaden eines Treffers, z. B. 3W6 = 11 |
+| Block | `DamageRoll.points`, `DamageRoll.to` | Ein Stück eines Schadenswürfels, das ganz auf ein Attribut geht; ein Würfel ist ein Block oder, wenn er ein Attribut auf 0 bringt, mehrere |
+| Überlauf | (Regel) | Was ein Würfel über 0 hinaus bringt, geht als neuer Block auf ein anderes Attribut über 0 (SR 21) |
 | Kampf | (Reiter „Kampf“) | Der Screen für Angriffe: ohne Begegnung die Waffentabelle, mit Begegnung die Kampfsimulation |
 | Reiter Begegnung | (Reiter „Begegnung“) | Der Screen, in dem man eine Begegnung würfelt oder wählt; läuft eine, zeigt er sie knapp |
 | Bereich der Karte, Themen-Tafel | `Section` | Zufallsereignis, Sinneseindrücke, …; NSC, Welt, … |
@@ -658,15 +666,30 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Das Angriffsergebnis verweist auf Angreifer (`for` = SC oder `by` = NSC, genau einer) und, wenn
     es eines gibt, auf das Ziel (`against` = NSC oder `victim` = SC, höchstens einer); es hält wie
     bisher Rüstung, Reichweite, Würfel, DM und Zielwert fest.
-- **Wunden.** Nach S. 7. Der Schaden eines Treffers wird auf STR, DEX und END verteilt; jeder Würfel
-  ist ein Block, der ganz auf ein Attribut geht und nicht geteilt wird (`DamageRoll.to`, je Würfel
-  das Attribut). Was über 0 hinausgeht, verfällt.
-  - *Erster Treffer* (kritisch): Der erste Schaden, den jemand bekommt, geht ganz auf ein zufällig
-    gewähltes Attribut.
-  - *Weitere Treffer*: Bei einem NSC verteilt die App jeden Würfel zufällig auf ein Attribut über 0;
-    bei einem SC wählt der Spieler für jeden Würfel das Attribut (`Wounding`, flüchtig, bis alle
-    verteilt sind; erst dann steht der Schadenswurf im Log). Ist kein Attribut mehr über 0, verfällt
-    der Würfel.
+- **Wunden.** Nach Charts S. 7 und Regelheft S. 21 (SR 21). Der Schaden eines Treffers wird auf
+  STR, DEX und END verteilt; jeder Würfel geht ganz auf ein Attribut und wird nicht auf mehrere
+  verteilt, **außer** er bringt es auf 0.
+  - *Blöcke und Überlauf* (SR 21): Ein Attribut auf 0 nimmt keine Punkte mehr an. Bringt ein
+    Würfel sein Attribut auf 0, geht der Rest als **neuer Block** auf ein anderes Attribut über 0;
+    bringt auch dieser es auf 0, geht der Rest auf das letzte. Der Schadenswurf hält die Blöcke der
+    Reihe nach fest: je Block das Attribut (`to`) und die Punkte (`points`), beide gleich lang. Die
+    Blöcke eines Würfels stehen hintereinander, die Würfel in ihrer Reihenfolge. Beispiel (UPP
+    777777, erster Treffer, Rifle 6, 3, 4, zufällig STR): Blöcke 6 STR, 1 STR, 2 END, 4 DEX; STR 0,
+    DEX 3, END 5. Erst wenn alle drei Attribute auf 0 sind (tot), verfällt der Rest.
+  - Die Punkte eines Blocks sind, was sein Attribut zu dem Zeitpunkt noch aufnehmen konnte, höchstens
+    der Rest des Würfels. Der Block hält sie selbst fest, damit ein Schadenswurf für sich allein
+    gilt: Löscht man einen früheren Schadenswurf, ändern sich die Blöcke späterer nicht.
+  - *Erster Treffer* (kritisch): Der erste Schaden, den jemand bekommt, geht auf ein zufällig
+    gewähltes Attribut, alle Würfel, bis es auf 0 ist. Läuft er über, gehen die übrigen Blöcke
+    **zufällig** auf die anderen Attribute über 0, auch bei einem SC (SR 21: „first blood may
+    immediately incapacitate or even kill“).
+  - *Weitere Treffer*: Bei einem NSC geht jeder Block zufällig auf ein Attribut über 0. Bei einem SC
+    wählt der Spieler für jeden Block das Attribut, auch für den Rest eines Würfels, der übergelaufen
+    ist (`Wounding`, flüchtig, je gewähltem Block das Attribut, bis alle Würfel verteilt sind; erst
+    dann steht der Schadenswurf im Log). Ein Attribut auf 0 kann er nicht wählen; ist nur noch eins
+    über 0, nimmt die App es von selbst.
+  - Schadenswürfe von vor dem Überlauf haben keine Punkte: Bei ihnen ist jeder Würfel ein Block mit
+    seinem Attribut, und was über 0 hinausging, bleibt verfallen.
   - Die Wunden (`/wounds`) folgen aus den Schadenswürfen im Log, die auf Treffer gegen diesen SC bzw.
     NSC verweisen. Ein Schadenswurf löschen nimmt seine Wunden zurück.
   - Wunden senken STR, DEX und END für alles, was mit ihnen rechnet: Angriffe und Proben.

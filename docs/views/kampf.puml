@@ -105,12 +105,15 @@ hide <<value>> stereotype
   }
   class DamageRoll $kampf {
     dice: number[1..5]
-    to: Characteristic[1..5]
+    $gone("2026-11-07", "to: Characteristic[1..5]")
+    $new("2026-11-07", "points: number[0..7]")
+    $new("2026-11-07", "to: Characteristic[0..7]")
     /damage: number
   }
   class Wounding <<transient>> $kampf {
     dice: number[1..5]
-    to: Characteristic[0..5]
+    $gone("2026-11-07", "to: Characteristic[0..5]")
+    $new("2026-11-07", "to: Characteristic[0..7]")
   }
   class Npc $begegnung
   class Wounds <<value>> $kampf {
@@ -234,4 +237,6 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class DamageRoll #line:d0021b;line.bold
+class Wounding #line:d0021b;line.bold
 @enduml

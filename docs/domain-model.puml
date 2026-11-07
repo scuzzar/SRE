@@ -275,12 +275,15 @@ hide <<value>> stereotype
   }
   class DamageRoll $kampf {
     dice: number[1..5]
-    to: Characteristic[1..5]
+    $gone("2026-11-07", "to: Characteristic[1..5]")
+    $new("2026-11-07", "points: number[0..7]")
+    $new("2026-11-07", "to: Characteristic[0..7]")
     /damage: number
   }
   class Wounding <<transient>> $kampf {
     dice: number[1..5]
-    to: Characteristic[0..5]
+    $gone("2026-11-07", "to: Characteristic[0..5]")
+    $new("2026-11-07", "to: Characteristic[0..7]")
   }
   class Encounter $begegnung {
     at: datetime
