@@ -141,7 +141,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 >
 > **Wartet auf Freigabe** (7. November 2026): **Überraschung bis zum Alarm, Ausdauer und Parade**
 > nach dem Regelheft (SR 20–22; siehe *Kampfsimulation*, *Ausdauer*, *Parade*). Im Bild:
-> `Encounter.alarm` und `/surprising`, `DamageRoll.alarmDice`, `AttackResult.strike` mit `Strike`,
+> `Encounter.alarm` und `/surprising`, `Encounter.pcRuns` und `npcRuns`, `DamageRoll.alarmDice`, `AttackResult.strike` mit `Strike`,
 > `Attack.weakened`, `Weapon.weakened` und `/blows` an `Character` und `Npc`. Der Ausschnitt dazu
 > liegt unter
 > [`changes/2026-11-07-ueberraschung-ausdauer-parade.png`](changes/2026-11-07-ueberraschung-ausdauer-parade.png).
@@ -300,7 +300,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Alarm | `Encounter.alarm` | Die Runde, in der die überraschte Partei Alarm gegeben hat; danach hält die Überraschung nicht mehr (SR 20) |
 | Überraschung hält | `/surprising` | Die Partei mit Überraschung, solange es keinen Alarm gab, einschließlich der Runde des Alarms |
 | Schlagart | `AttackResult.strike`, `Strike` | Wie ein Schlag oder Hieb zählt: Überraschung, Combat, geschwächt oder Special (SR 22) |
-| Combat-Schläge | `/blows` | Wie viele volle Schläge und Hiebe ein Kämpfer in der laufenden Begegnung noch hat: END zu Beginn der Begegnung minus die Combat-Schläge |
+| Combat-Schläge | `/blows` | Wie viele volle Schläge und Hiebe ein Kämpfer in der laufenden Begegnung noch hat: END zu Beginn der Begegnung minus die Combat-Schläge und die Läufe seiner Partei |
+| Lauf | `Encounter.pcRuns`, `npcRuns` | Eine Runde, in der eine Partei 2 Bands gelaufen ist; kostet jeden ihrer Kämpfer einen Combat-Schlag |
 | Geschwächter Schlag | `Strike.weakened`, `Weapon.weakened`, `Attack.weakened` | Ein Schlag oder Hieb ohne volle Kraft, mit dem DM der Waffe; zählt nicht gegen die END |
 | Parade | (Regel) | Wer mit Faust oder Klinge angegriffen wird und selbst Faust, Klinge oder ein Gewehr führt, zieht seine Stufe darin vom Wurf ab (SR 22) |
 | Partei | `Side` | Die SC (`pcs`) oder die NSC der Begegnung (`npcs`) |
@@ -838,7 +839,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - *Gehen*: 1 Band je Runde; danach greifen ihre Kämpfer wie sonst an.
     - *Laufen*: ein zweites Band in derselben Runde, aber nur, solange noch keiner ihrer Kämpfer in
       dieser Runde dran war. Wer läuft, greift nicht an (Book 1: Laufen zählt wie ein Schlag): Hat
-      eine Partei 2 Bands, setzen ihre Kämpfer in dieser Runde aus; Nachladen geht.
+      eine Partei 2 Bands, setzen ihre Kämpfer in dieser Runde aus; Nachladen geht. Laufen kostet
+      jeden Kämpfer der Partei einen Combat-Schlag (SR 20, siehe *Ausdauer*); wie oft eine Partei in
+      der Begegnung gelaufen ist, steht an der Begegnung (`pcRuns`, `npcRuns`; fehlt: 0); das zweite
+      Band zählt sie hoch.
     - Mehr als 2 Bands je Runde gehen nicht.
     - *Frei setzen* (Ermessen der Spielleitung): Langes Drücken auf den Strahl der Entfernung setzt
       das Band frei, jederzeit, ohne Grenze und ohne dass es als Bewegung zählt; z. B. um einen
@@ -893,15 +897,16 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     damit er nicht gegen die END zählt); sonst **Combat** (`combat`). Ein NSC schwächt nie freiwillig.
   - *Combat-Schläge* (`/blows` an SC und NSC): END zu Beginn der Begegnung, also die END mit den
     Wunden, die vor dem ersten Logeintrag der Begegnung (nach `Encounter.at`) bestanden, minus die
-    Angriffe dieses Kämpfers in der Begegnung mit der Schlagart Combat. Wunden in der Begegnung
-    senken die Zahl nicht. Fehlt ohne laufende Begegnung und bei Battle Dress (unbegrenzte Ausdauer,
+    Angriffe dieses Kämpfers in der Begegnung mit der Schlagart Combat und minus die Läufe seiner
+    Partei (`pcRuns` bzw. `npcRuns`), nie unter 0. Wunden in der Begegnung senken die Zahl nicht.
+    Laufen geht auch ohne Combat-Schläge (Hausregel; die Regel sagt dazu nichts). Fehlt ohne laufende Begegnung und bei Battle Dress (unbegrenzte Ausdauer,
     S. 4).
   - *Geschwächt*: DM `Weapon.weakened` aus der Waffentabelle (Charts S. 4, *Weakened Blow or Swing*:
     Hands −2, Club −1, Dagger −2, Blade −2, Foil −2, Cutlass −4, Sword −3, Broadsword −4, Bayonet −2,
     Spear −3, Halberd −3, Pike −3, Cudgel −1). Er steckt im DM des Angriffsergebnisses (`dm`).
   - Ein Schlag oder Hieb je Runde gilt schon: Jeder Kämpfer hat einen Zug je Runde.
   - Eine neue Begegnung beginnt mit der END, die der Kämpfer dann hat; die 30 Minuten Rast der Regel
-    hält die App nicht fest. **Später**: Laufen zählt als Combat-Schlag.
+    hält die App nicht fest.
 - **Parade** (SR 22, *Parrying*). Greift jemand mit einem Schlag oder Hieb an und führt das Ziel selbst
   eine Faust- oder Nahkampfwaffe (`blow` oder `swing`, auch die Hände) oder ein langes Gewehr (Rifle,
   Carbine, Automatic Rifle, Shotgun, als Cudgel; keine Pistole, keine SMG, kein Laser), pariert es:

@@ -146,6 +146,8 @@ hide <<value>> stereotype
     acted: string[*]
     pcMoved: number [0..1]
     npcMoved: number [0..1]
+    $new("2026-11-07d", "pcRuns: number [0..1]")
+    $new("2026-11-07d", "npcRuns: number [0..1]")
     $new("2026-11-07d", "alarm: number [0..1]")
     /surprise: Side [0..1]
     $new("2026-11-07d", "/surprising: Side [0..1]")
