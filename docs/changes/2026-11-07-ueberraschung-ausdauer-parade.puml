@@ -1,0 +1,257 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-07d"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-07d: Überraschung bis zum Alarm, Ausdauer, Parade
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Character $charakter {
+    name: string
+    background: string
+    equipment: string
+    credits: number
+    note: string
+    dead: boolean
+    retired: boolean
+    npc: boolean
+    /wounds: Wounds
+    /state: WoundState
+    $new("2026-11-07d", "/blows: number [0..1]")
+  }
+  class Upp <<value>> $charakter
+  class SkillLevel $charakter
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+
+' Verlauf
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Attack <<transient>> $kampf {
+    armor: ArmorClass [0..1]
+    range: Range [0..1]
+    burst: boolean
+    $new("2026-11-07d", "weakened: boolean")
+    /dm: number
+    /need: number
+    /chance: number
+  }
+  class AttackResult $kampf {
+    armor: ArmorClass
+    range: Range
+    dice: number[2]
+    dm: number
+    target: number
+    $new("2026-11-07d", "strike: Strike [0..1]")
+    /success: boolean
+    /neighbour: boolean
+  }
+  enum Strike <<value>> $kampf $newClass("2026-11-07d") {
+    surprise
+    combat
+    weakened
+    special
+  }
+  class DamageRoll $kampf {
+    dice: number[1..5]
+    points: number[0..7]
+    to: Characteristic[0..7]
+    $new("2026-11-07d", "alarmDice: number[0..2]")
+    /damage: number
+  }
+  class Wounding <<transient>> $kampf
+  class Encounter $begegnung {
+    at: datetime
+    quantityDie: number [0..1]
+    reactionDice: number[2]
+    reactionDm: number [0..1]
+    reaction: number
+    ended: boolean
+    /reactionText: string
+    rangeDice: number[2]
+    bandDie: number [0..1]
+    band: number
+    close: boolean
+    /range: Range [0..1]
+    /escaped: boolean
+    round: number
+    acted: string[*]
+    pcMoved: number [0..1]
+    npcMoved: number [0..1]
+    $new("2026-11-07d", "alarm: number [0..1]")
+    /surprise: Side [0..1]
+    $new("2026-11-07d", "/surprising: Side [0..1]")
+    /first: Side
+    /turn: string [0..1]
+  }
+  class SurpriseRoll <<value>> $begegnung
+  enum Side <<value>> $begegnung
+  class Terrain <<reference>> $begegnung
+  class Npc $begegnung {
+    name: string
+    leader: boolean
+    skill: number
+    /wounds: Wounds
+    /state: WoundState
+    $new("2026-11-07d", "/blows: number [0..1]")
+  }
+  class EncounterType <<reference>> $begegnung
+
+' Referenzdaten
+  class Weapon <<reference>> $kampf {
+    name: string
+    attack: AttackKind
+    required: number
+    requiredDm: number
+    advantageous: number
+    advantageousDm: number
+    wounds: number
+    rounds: number [0..1]
+    law: number [0..1]
+    burst: number [0..1]
+    neighbours: number [0..1]
+    $new("2026-11-07d", "weakened: number [0..1]")
+  }
+  class ArmorDm <<value>> $kampf
+  class RangeDm <<value>> $kampf
+  enum AttackKind <<value>> $kampf
+
+' Kampagne
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+
+' Charakter
+Character "1" *-- "1" Upp : upp
+Character "1" *-- "*" SkillLevel : skills
+Character "*" --> "0..1" Weapon : wields
+Character "*" --> "0..1" Weapon : primary
+Character "*" --> "0..1" Weapon : secondary
+
+' Waffen (Referenzdaten)
+Weapon "*" --> "0..1" Weapon : single
+Weapon --> AttackKind
+Weapon "1" *-- "7" ArmorDm : vsArmor {ordered}
+Weapon "1" *-- "5" RangeDm : atRange {ordered}
+
+' Verlauf
+
+' Probe
+
+' Angriff
+Attack "*" --> "0..1" Character : /for
+Attack "*" --> "0..1" Npc : by
+Attack "*" --> "0..1" Npc : against
+Attack "*" --> "0..1" Character : /victim
+Attack "*" --> "1" Weapon : /with
+Attack ..> AttackResult : on roll
+AttackResult "*" --> "0..1" Character : for
+AttackResult "*" --> "0..1" Npc : by
+AttackResult "*" --> "0..1" Npc : against
+AttackResult "*" --> "0..1" Character : victim
+AttackResult "*" --> "1" Weapon : with
+AttackResult "*" --> "0..1" SkillLevel : uses
+AttackResult "*" --> "0..1" AttackResult : volley
+AttackResult -$newArrow("2026-11-07d")-> Strike
+DamageRoll "0..1" --> "1" AttackResult : of
+Wounding "0..1" --> "1" AttackResult : of
+Wounding ..> DamageRoll : on confirm
+
+' Begegnung
+Encounter "*" --> "1" EncounterType : of
+Encounter "*" --> "0..1" Terrain : terrain
+Encounter "1" *-- "1" SurpriseRoll : pcSurprise
+Encounter "1" *-- "1" SurpriseRoll : npcSurprise
+Encounter --> Side
+Encounter "1" *-- "1..*" Npc : npcs {ordered}
+Npc "1" *-- "1" Upp : upp
+Npc "0..1" --> "0..1" Character : became
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+class Character #line:d0021b;line.bold
+class Attack #line:d0021b;line.bold
+class AttackResult #line:d0021b;line.bold
+class DamageRoll #line:d0021b;line.bold
+class Encounter #line:d0021b;line.bold
+class Npc #line:d0021b;line.bold
+class Weapon #line:d0021b;line.bold
+@enduml

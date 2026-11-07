@@ -139,6 +139,13 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-06-wuerfel-der-anzahl.png`](changes/2026-11-06-wuerfel-der-anzahl.png).
 >
+> **Wartet auf Freigabe** (7. November 2026): **Überraschung bis zum Alarm, Ausdauer und Parade**
+> nach dem Regelheft (SR 20–22; siehe *Kampfsimulation*, *Ausdauer*, *Parade*). Im Bild:
+> `Encounter.alarm` und `/surprising`, `DamageRoll.alarmDice`, `AttackResult.strike` mit `Strike`,
+> `Attack.weakened`, `Weapon.weakened` und `/blows` an `Character` und `Npc`. Der Ausschnitt dazu
+> liegt unter
+> [`changes/2026-11-07-ueberraschung-ausdauer-parade.png`](changes/2026-11-07-ueberraschung-ausdauer-parade.png).
+>
 > Am 7. November 2026 auf ausdrücklichen Wunsch des Owners freigegeben: die **Ausrüstung der NSC**
 > nach SR 50 (siehe *Begegnung*): Ein Anführer trägt immer eine Schusswaffe und Rüstung, Combat Armor
 > und Battle Dress tragen nur Soldaten und Anführer. Das Bild ändert sich dadurch nicht.
@@ -191,7 +198,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+Überraschung bis zum Alarm, Ausdauer und Parade (2026-11-07d).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -290,6 +297,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Entkommen | `Encounter./escaped` | Mehr als 20 Bands Abstand: Die Parteien haben sich verloren (Book 1, S. 33) |
 | Gelände | `Terrain` | Wo die Begegnung stattfindet, mit DM auf die Entfernung (S. 5), z. B. Clear +3, City −4 |
 | Überraschung | `pcSurprise`, `npcSurprise`, `/surprise` | 1W6 je Partei mit DMs (S. 5); wer 3 oder mehr höher liegt, hat Überraschung |
+| Alarm | `Encounter.alarm` | Die Runde, in der die überraschte Partei Alarm gegeben hat; danach hält die Überraschung nicht mehr (SR 20) |
+| Überraschung hält | `/surprising` | Die Partei mit Überraschung, solange es keinen Alarm gab, einschließlich der Runde des Alarms |
+| Schlagart | `AttackResult.strike`, `Strike` | Wie ein Schlag oder Hieb zählt: Überraschung, Combat, geschwächt oder Special (SR 22) |
+| Combat-Schläge | `/blows` | Wie viele volle Schläge und Hiebe ein Kämpfer in der laufenden Begegnung noch hat: END zu Beginn der Begegnung minus die Combat-Schläge |
+| Geschwächter Schlag | `Strike.weakened`, `Weapon.weakened`, `Attack.weakened` | Ein Schlag oder Hieb ohne volle Kraft, mit dem DM der Waffe; zählt nicht gegen die END |
+| Parade | (Regel) | Wer mit Faust oder Klinge angegriffen wird und selbst Faust, Klinge oder ein Gewehr führt, zieht seine Stufe darin vom Wurf ab (SR 22) |
 | Partei | `Side` | Die SC (`pcs`) oder die NSC der Begegnung (`npcs`) |
 | Runde, Zug | `round`, `acted`, `/turn` | Eine Kampfrunde, in der jeder Kämpfer einmal dran ist; wer gerade dran ist |
 | Heilung | `Recovery` | Ein Logeintrag, der Wunden zurücknimmt: Aufwachen, Behandlung oder Ruhe (S. 7) |
@@ -818,8 +831,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - *Bewegen* (Charts S. 7, Book 1: 1 Band je Runde gehend, 2 laufend): Jede Partei bewegt sich als
     Ganzes, um ein Band je Schritt: näher (von Band 0 ohne Berührung in die Berührung, von Band 1 auf
     Band 0) oder weiter weg (aus der Berührung auf Band 0 ohne, dann Band für Band bis 21).
-    - Bewegen darf die Partei, deren Kämpfer gerade am Zug ist (in Runde 1 mit Überraschung also nur
-      diese). Das ist kein Zug: Der Kämpfer am Zug greift danach noch an, lädt nach oder setzt aus.
+    - Bewegen darf die Partei, deren Kämpfer gerade am Zug ist (solange die Überraschung hält, also
+      nur diese). Das ist kein Zug: Der Kämpfer am Zug greift danach noch an, lädt nach oder setzt aus.
     - Wie viele Bands eine Partei in dieser Runde schon gegangen ist, steht an der Begegnung
       (`pcMoved`, `npcMoved`; fehlt: 0). Mit der neuen Runde beginnen beide wieder bei 0.
     - *Gehen*: 1 Band je Runde; danach greifen ihre Kämpfer wie sonst an.
@@ -835,10 +848,26 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Erfahrung (SC aus Army oder Marines, NSC einer militärischen Art: Soldiers, Marines, Security
     Troops, Soldiers on Patrol) +1; Fahrzeug −1 (NSC mit V); 8 oder mehr in der Partei −1. Liegt
     eine Partei 3 oder mehr höher, hat sie Überraschung (`/surprise`).
+  - *Überraschung bis zum Alarm* (SR 20): Die Überraschung hält Runde für Runde, bis die überraschte
+    Partei Alarm gibt (`/surprising`: die Partei mit Überraschung, solange `alarm` fehlt oder die
+    laufende Runde nicht nach der Runde des Alarms liegt). Solange sie hält, zieht nur die Partei mit
+    Überraschung; jeder ihrer Kämpfer greift einmal je Runde an. Alle Angriffe einer Runde sind
+    gleichzeitig: Wer in der Runde des Alarms noch nicht dran war, greift trotzdem noch mit
+    Überraschung an; ab der nächsten Runde ziehen beide Parteien.
+  - *Alarm* (`alarm`, die Runde): Nach jedem Angriff mit Überraschung prüft die App:
+    - Ein **Schuss** gibt Alarm, ob er trifft oder nicht, außer mit einem Laser (Laser Carbine, Laser
+      Rifle). Schalldämpfer und Vakuum gibt es noch nicht.
+    - Ein **Treffer**, nach dessen Schaden das Ziel noch wach ist (unverletzt oder verwundet), gibt
+      Alarm: Es schreit.
+    - Macht der Schaden das Ziel bewusstlos, schwer verwundet oder tot, sieht es vielleicht ein
+      Kamerad fallen: Hat die Partei des Ziels noch einen Kämpfer, der kämpfen kann und in dieser
+      Begegnung noch nicht angegriffen wurde, würfelt die App 2W6 (`DamageRoll.alarmDice`); bei 9+
+      gibt es Alarm.
+    - Ein Schlag oder Hieb, der danebengeht, gibt keinen Alarm.
   - *Reihenfolge* (Hausregel nach der Überraschung): Die Partei mit dem höheren Wurf zieht in jeder
     Runde zuerst (`/first`), bei Gleichstand die SC; erst alle ihre Kämpfer, dann die der anderen.
-    Innerhalb einer Partei SC in der Reihenfolge der Kampagne, NSC in der der Begegnung. In Runde 1
-    zieht nur die Partei mit Überraschung, wenn es eine gibt.
+    Innerhalb einer Partei SC in der Reihenfolge der Kampagne, NSC in der der Begegnung. Solange die
+    Überraschung hält, zieht nur die Partei mit Überraschung.
   - *Zug* (`/turn`): der erste Kämpfer dieser Reihenfolge, der in dieser Runde noch nicht dran war
     (`acted`) und kämpfen kann (nicht bewusstlos, schwer verwundet oder tot). Ist keiner mehr übrig,
     beginnt die nächste Runde (`round` + 1, `acted` leer), auch wenn der Letzte nicht durch seinen Zug
@@ -852,9 +881,36 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Runde nicht mehr dran.
   - Ist eine Partei ganz außer Gefecht (alle bewusstlos, schwer verwundet oder tot), ist der Kampf
     entschieden; die Begegnung läuft weiter, bis man sie beendet.
-  - **Später**: Flucht (S. 5), Moral, Bewegung je Kämpfer statt je Partei (mit Combat Blow beim
-    Laufen, Evade), schneller laufen (3 und 4 Bands), Tiere mit ihrer Geschwindigkeit (S. 19),
-    Deckung, mehrere Gegnergruppen.
+  - **Später**: Flucht (S. 5), Ausweichen mit Überraschung, Moral, Bewegung je Kämpfer statt je
+    Partei (mit Combat Blow beim Laufen, Evade), schneller laufen (3 und 4 Bands), Tiere mit ihrer
+    Geschwindigkeit (S. 19), Deckung, mehrere Gegnergruppen, Schalldämpfer.
+- **Ausdauer** (SR 22, *Endurance*). Gilt für Schläge (Faust, `blow`) und Hiebe (Klingen und
+  Stangenwaffen, `swing`) in der laufenden Begegnung; Schüsse zählen nicht.
+  - *Schlagart* (`AttackResult.strike`, nur bei Schlägen und Hieben): **Überraschung** (`surprise`),
+    solange die Partei des Angreifers Überraschung hat; **Special** (`special`) gegen ein Ziel, das
+    bewusstlos oder schwer verwundet ist (Stärke zählt dort nicht); **geschwächt** (`weakened`), wenn
+    der Angreifer keine Combat-Schläge mehr hat oder ihn freiwillig schwächt (`Attack.weakened`,
+    damit er nicht gegen die END zählt); sonst **Combat** (`combat`). Ein NSC schwächt nie freiwillig.
+  - *Combat-Schläge* (`/blows` an SC und NSC): END zu Beginn der Begegnung, also die END mit den
+    Wunden, die vor dem ersten Logeintrag der Begegnung (nach `Encounter.at`) bestanden, minus die
+    Angriffe dieses Kämpfers in der Begegnung mit der Schlagart Combat. Wunden in der Begegnung
+    senken die Zahl nicht. Fehlt ohne laufende Begegnung und bei Battle Dress (unbegrenzte Ausdauer,
+    S. 4).
+  - *Geschwächt*: DM `Weapon.weakened` aus der Waffentabelle (Charts S. 4, *Weakened Blow or Swing*:
+    Hands −2, Club −1, Dagger −2, Blade −2, Foil −2, Cutlass −4, Sword −3, Broadsword −4, Bayonet −2,
+    Spear −3, Halberd −3, Pike −3, Cudgel −1). Er steckt im DM des Angriffsergebnisses (`dm`).
+  - Ein Schlag oder Hieb je Runde gilt schon: Jeder Kämpfer hat einen Zug je Runde.
+  - Eine neue Begegnung beginnt mit der END, die der Kämpfer dann hat; die 30 Minuten Rast der Regel
+    hält die App nicht fest. **Später**: Laufen zählt als Combat-Schlag.
+- **Parade** (SR 22, *Parrying*). Greift jemand mit einem Schlag oder Hieb an und führt das Ziel selbst
+  eine Faust- oder Nahkampfwaffe (`blow` oder `swing`, auch die Hände) oder ein langes Gewehr (Rifle,
+  Carbine, Automatic Rifle, Shotgun, als Cudgel; keine Pistole, keine SMG, kein Laser), pariert es:
+  Seine Stufe in dieser Waffe (beim Gewehr in Cudgel) geht als negativer DM in den Angriff. Bei einem
+  SC zählt seine Fertigkeit wie beim Angriff (ohne die Fertigkeit Stufe 0), bei einem NSC seine
+  Fertigkeit (`skill`), aber nur in seiner eigenen Nahkampfwaffe (mit einem Gewehr 0). Wer
+  bewusstlos, schwer verwundet oder tot ist, pariert nicht. Angreifen und parieren geht in derselben
+  Runde. Die Parade steckt im DM des Angriffsergebnisses (`dm`); die Anzeige nennt sie als eigenen
+  Posten.
 - **Heilung.** Nach S. 7. Eine Heilung ist ein Logeintrag (`Recovery`) für einen verwundeten SC
   (`for`) oder NSC der laufenden Begegnung (`npc`), nie für einen Toten. Die Wunden (`/wounds`)
   folgen aus Schadenswürfen und Heilungen im Log, der Reihe nach; eine Heilung löschen nimmt sie
