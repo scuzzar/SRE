@@ -429,9 +429,10 @@ App: ○ (im Modell entworfen, siehe `domain-model.md`, *Feuerstoß und Schrot*)
   the original target, provided they are in a group (herd, pack, band, etc) and are each human-sized
   or smaller.“ Ein DM für die Nachbarn steht nicht dabei.
 
-> ✱ App (Entwurf): Feuerstoß nach B1 mit der Grenze aus B4 (2 Nachbarn, DM −3); Schrot nach B1
-> (3 Nachbarn, ohne DM). Welche Kämpfer „neben dem Ziel“ stehen, lost die App aus der Partei des
-> Ziels aus, weil die Parteien keine Plätze haben.
+> ✱ App: Feuerstoß nach B1 mit der Grenze aus B4 (2 Nachbarn, DM −3); Schrot nach B1 (3 Nachbarn,
+> ohne DM). Die Parteien haben keine Plätze, nur eine Liste: Beim Feuerstoß sind die Nachbarn der
+> darüber und der darunter in der Liste, bei der Schrotflinte lost die App sie aus der Partei des
+> Ziels aus.
 
 ### Waffen- und Reichweitenmatrix
 

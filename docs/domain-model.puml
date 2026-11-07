@@ -251,7 +251,7 @@ hide <<value>> stereotype
   class Attack <<transient>> $kampf {
     armor: ArmorClass [0..1]
     range: Range [0..1]
-    $new("2026-11-07", "burst: boolean")
+    burst: boolean
     /dm: number
     /need: number
     /chance: number
@@ -263,7 +263,7 @@ hide <<value>> stereotype
     dm: number
     target: number
     /success: boolean
-    $new("2026-11-07", "/neighbour: boolean")
+    /neighbour: boolean
   }
   class Recovery $kampf {
     kind: RecoveryKind
@@ -428,8 +428,8 @@ hide <<value>> stereotype
     wounds: number
     rounds: number [0..1]
     law: number [0..1]
-    $new("2026-11-07", "burst: number [0..1]")
-    $new("2026-11-07", "neighbours: number [0..1]")
+    burst: number [0..1]
+    neighbours: number [0..1]
   }
   class ArmorDm <<value>> $kampf {
     armor: ArmorClass
@@ -689,7 +689,7 @@ Character "*" --> "0..1" Weapon : secondary
 ' Waffen (Referenzdaten)
 Weapon "*" --> "1" Skill : uses
 Weapon "*" --> "0..1" Item : ammo
-Weapon "*" -$newArrow("2026-11-07")-> "0..1" Weapon : single
+Weapon "*" --> "0..1" Weapon : single
 Hex "*" --> "*" Item : /offer
 Weapon --> AttackKind
 Weapon "1" *-- "7" ArmorDm : vsArmor {ordered}
@@ -740,7 +740,7 @@ AttackResult "*" --> "0..1" Npc : against
 AttackResult "*" --> "0..1" Character : victim
 AttackResult "*" --> "1" Weapon : with
 AttackResult "*" --> "0..1" SkillLevel : uses
-AttackResult "*" -$newArrow("2026-11-07")-> "0..1" AttackResult : volley
+AttackResult "*" --> "0..1" AttackResult : volley
 DamageRoll "0..1" --> "1" AttackResult : of
 Wounding "0..1" --> "1" AttackResult : of
 Wounding ..> DamageRoll : on confirm

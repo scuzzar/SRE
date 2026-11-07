@@ -139,8 +139,9 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-06-wuerfel-der-anzahl.png`](changes/2026-11-06-wuerfel-der-anzahl.png).
 
-> **Wartet auf Freigabe** (Entwurf vom 7. November 2026): **Flächenschaden** mit Feuerstoß
-> (Automatic Rifle, Submachinegun) und Schrotflinte (siehe *Feuerstoß und Schrot*). Neu im Bild:
+> Am 7. November 2026 freigegeben: **Flächenschaden** mit Feuerstoß (Automatic Rifle,
+> Submachinegun) und Schrotflinte (siehe *Feuerstoß und Schrot*); beim Feuerstoß treffen die
+> Nachbarn darüber und darunter in der Liste, die Schrotflinte lost sie aus. Neu im Bild:
 > an der Waffe `burst`, `neighbours` und der Verweis `single`; am Angriff in Vorbereitung `burst`;
 > am Angriffsergebnis der Verweis `volley` und abgeleitet `/neighbour`. Der Ausschnitt dazu liegt
 > unter [`changes/2026-11-07-flaechenschaden.png`](changes/2026-11-07-flaechenschaden.png).
@@ -172,7 +173,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-*Flächenschaden: Feuerstoß und Schrotflinte* (2026-11-07).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -234,7 +235,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Schaden | `Weapon.wounds` | Wie viele W6 ein Treffer verursacht, z. B. Rifle 3W6 |
 | Feuerstoß | `Weapon.burst`, `Attack.burst` | Automatisches Feuer: 4 Schuss auf einmal, zwei Würfe auf das Ziel und Würfe auf Nachbarn (Book 1, Book 4 S. 31) |
 | Einzelschuss | `Weapon.single` | Ein Schuss einer Waffe, die auch Feuerstöße kann; sie nimmt dann die Zeile einer anderen Waffe der Matrix, z. B. Automatic Rifle die des Rifle |
-| Nachbar | `Weapon.neighbours`, `AttackResult./neighbour` | Ein weiterer Kämpfer aus der Partei des Ziels, den ein Feuerstoß (bis 2) oder ein Schrotschuss (bis 3) mit trifft; die App lost ihn aus |
+| Nachbar | `Weapon.neighbours`, `AttackResult./neighbour` | Ein weiterer Kämpfer aus der Partei des Ziels, den ein Feuerstoß (der darüber und der darunter in der Liste) oder ein Schrotschuss (bis 3, ausgelost) mit trifft |
 | Garbe | `AttackResult.volley` | Alle Würfe eines Feuerstoßes oder Schrotschusses; die weiteren Würfe verweisen auf den ersten |
 | Rüstungsklasse | `ArmorClass` | Was das Ziel trägt: Nothing, Jack, Mesh, Cloth, Reflec, Ablat, Combat |
 | Reichweite | `Range` | Close, Short, Medium, Long, Very Long |
@@ -559,13 +560,19 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Schrotflinte** (Shotgun): ein Wurf auf das Ziel und je einer auf bis zu `neighbours` Nachbarn,
     alle mit demselben DM (Book 1 nennt für die Nachbarn keinen Abzug). Auf jede Reichweite, auf die
     die Shotgun schießt. Ein Schuss.
-  - **Nachbarn** (Hausregel): Kämpfer aus der Partei des Ziels, ohne das Ziel, die nicht tot und
-    nicht übernommen sind; SC wie in der Kampfsimulation (lebend, nicht ausgeblendet, kein
-    dauerhafter NSC). Die App lost beim Würfeln bis zu `neighbours` davon aus, jeden höchstens
-    einmal; sind es weniger, trifft sie alle. Book 1 verlangt, dass sie in einer Gruppe stehen und
-    nicht ausweichen: In der App steht jede Partei zusammen, und Ausweichen gibt es noch nicht.
-    Book 1 verlangt bei der Shotgun außerdem höchstens Menschengröße; das gilt für alle NSC, Tiere
-    gibt es noch nicht. Ohne NSC als Ziel (frei gewählte Rüstung) gibt es keine Nachbarn.
+  - **Nachbarn** (Hausregel): Infrage kommen Kämpfer aus der Partei des Ziels, ohne das Ziel, die
+    nicht tot und nicht übernommen sind; SC wie in der Kampfsimulation (lebend, nicht ausgeblendet,
+    kein dauerhafter NSC). Die Partei steht als Liste: NSC in der Reihenfolge der Begegnung, SC in der
+    der Kampagne.
+    - *Feuerstoß*: der nächste davon **über** dem Ziel in der Liste und der nächste **darunter**
+      (Tote und Übernommene dazwischen werden übersprungen). Steht das Ziel oben oder unten in der
+      Liste, ist es nur einer.
+    - *Schrotflinte*: Die App lost beim Würfeln bis zu `neighbours` davon aus, jeden höchstens
+      einmal; sind es weniger, trifft sie alle.
+  - Book 1 verlangt, dass die Nachbarn in einer Gruppe stehen und nicht ausweichen: In der App
+    steht jede Partei zusammen, und Ausweichen gibt es noch nicht. Bei der Shotgun verlangt es
+    außerdem höchstens Menschengröße; das gilt für alle NSC, Tiere gibt es noch nicht. Ohne Ziel
+    (frei gewählte Rüstung) gibt es keine Nachbarn.
   - **Garbe**: Jeder Wurf ist ein eigenes `AttackResult` mit eigenem Ziel, Würfeln, DM und
     Zielwert; Rüstung ist die des jeweiligen Ziels. Der erste Wurf (auf das Ziel) steht für sich,
     die weiteren verweisen auf ihn (`volley`), in dieser Reihenfolge: der zweite Wurf auf das Ziel,
@@ -584,6 +591,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     2 + `neighbours` Würfe haben.
   - **Zug**: In der Kampfsimulation endet der Zug, wenn der Schaden aller Treffer der Garbe verteilt
     ist.
+  - **Status**: freigegeben am 7. November 2026.
   - **Später**: Ausweichen (Evading) als Schutz vor Gruppentreffern, Panikfeuer, Feuerstöße mit
     Gauss-Waffen und Waffen aus Book 4, Flechettes, Splitter von HE-Munition.
 - **Aufenthaltsort.** Die Gruppe, also alle Charaktere der Kampagne, ist immer an höchstens einem
