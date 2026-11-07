@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { appendLog, createCampaign, DEMO_FUNDS, fromCampaignFile, setHexes, type CampaignRepository, type Random } from '../model';
+import { appendLog, createCampaign, DEMO_FUNDS, fromCampaignFile, rollEncounter, setHexes, setLocation, type CampaignRepository, type Random } from '../model';
 import { fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 import { surfaceLines } from './world-view';
@@ -683,6 +683,68 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot().characters.length).toBe(before + 2);
     expect(game.snapshot().combat!.sim!.fighters.filter((f) => f.side === 'npcs')).toEqual([]);
     expect(() => game.adoptNpcs(['n1'], true)).toThrow();
+  });
+});
+
+describe('Flächenschaden in der Kampfsimulation', () => {
+  const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
+
+  /** Vier Thugs auf Regina; Kira hat ein geladenes Automatic Rifle in der Hand. */
+  async function fourThugs() {
+    const queue: number[] = [];
+    const random = { int: (min: number) => queue.shift() ?? min };
+    const there = setLocation(setHexes(createCampaign(), [regina]), '0101');
+    const rolled = rollEncounter(there, fixedRandom(1, 5), fixedClock(), undefined, 4).campaign;
+    const campaign = {
+      ...rolled,
+      characters: rolled.characters.map((c) => (c.id === 'c1' ? { ...c, possessions: [...c.possessions, { of: 'auto-rifle', count: 1 }], primary: 'auto-rifle', wields: 'auto-rifle' } : c)),
+    };
+    const { game } = await started(random, memoryRepository(campaign));
+    // Die Thugs ziehen zuerst; sie setzen aus, bis Kira dran ist.
+    while (game.snapshot().combat!.sim!.turn!.id !== 'c1') game.skipTurn();
+    return { game, queue };
+  }
+
+  it('ein Feuerstoß würfelt vier Würfe; der Zug endet erst, wenn der Schaden aller Treffer gewürfelt ist', async () => {
+    const { game, queue } = await fourThugs();
+    game.chooseFightTarget('n2');
+    expect(game.snapshot().combat!.sim!.turn!.fire).toMatchObject({ burst: true, choosable: true, rounds: 4, rolls: 2, neighbours: 2, pick: 'list' });
+    queue.push(6, 6, 6, 6, 6, 6, 6, 6);
+    game.fightAttack();
+    const result = game.snapshot().result;
+    expect(result).toMatchObject({ kind: 'attack', fire: 'burst', victim: expect.any(String), volleyPending: true });
+    expect(result?.kind === 'attack' && result.rest.map((r) => r.neighbour)).toEqual([false, true, true]);
+    expect(game.snapshot().combat!.ammo).toMatchObject({ rounds: 16 });
+    // Auf Close: Der Nachbar in Mesh (n1) braucht mit DM −7 eine 15 und verfehlt; die drei anderen treffen.
+    expect(game.snapshot().log.flatMap((e) => (e.kind === 'attack' ? [[e.dm, e.success]] : []))).toEqual([
+      [0, true],
+      [0, true],
+      [-7, false],
+      [-3, true],
+    ]);
+    game.closeResult();
+    for (const left of [3, 2]) {
+      expect(game.snapshot().combat!.damage).toMatchObject({ left });
+      game.rollDamage();
+      game.closeResult();
+      expect(game.snapshot().combat!.sim!.turn!.id).toBe('c1');
+    }
+    game.rollDamage();
+    game.closeResult();
+    expect(game.snapshot().combat!.damage).toBeUndefined();
+    expect(game.snapshot().combat!.sim!.turn!.id).toBe('c2');
+  });
+
+  it('Einzelschuss wählen: ein Wurf, ein Schuss, und der Zug endet mit dem Fehlschuss', async () => {
+    const { game } = await fourThugs();
+    game.chooseFightTarget('n2');
+    game.chooseFire(false);
+    expect(game.snapshot().combat!.sim!.turn!.fire).toMatchObject({ burst: false, rounds: 1, neighbours: 0 });
+    game.fightAttack();
+    expect(game.snapshot().result).toMatchObject({ kind: 'attack', success: false, fire: undefined, rest: [] });
+    expect(game.snapshot().combat!.sim!.turn!.id).toBe('c2');
+    game.focusCharacter('c1');
+    expect(game.snapshot().combat!.ammo).toMatchObject({ rounds: 19 });
   });
 });
 

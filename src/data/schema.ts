@@ -117,6 +117,12 @@ export const WeaponSchema = z.object({
   ammo: z.string().min(1).optional(),
   /** Ab dieser Gesetzesstufe ist die Waffe verboten (S. 14); fehlt bei den Händen. */
   law: z.number().int().min(1).max(15).optional(),
+  /** Feuerstoß: so viele Schuss auf einmal (Book 1: 4); fehlt, schießt die Waffe keine Feuerstöße. */
+  burst: z.number().int().min(2).optional(),
+  /** So viele Nachbarn des Ziels trifft ein Schuss bzw. Feuerstoß höchstens mit (Shotgun 3, Feuerstoß 2). */
+  neighbours: z.number().int().min(1).optional(),
+  /** Die Waffe, deren Zeile der Matrix ein Einzelschuss nimmt (Automatic Rifle: Rifle). */
+  single: z.string().min(1).optional(),
   vsArmor: z.preprocess(
     inMatrixOrder(armorClasses, 'armor'),
     z.array(ArmorDmSchema).refine((dms) => dms.length === armorClasses.length && dms.every((d, i) => d.armor === armorClasses[i]), 'Die DMs gegen Rüstung stehen nicht in der Reihenfolge der Matrix'),
@@ -385,6 +391,12 @@ function checkCareerData(data: CareerData, skillIds: ReadonlySet<string>, ctx: z
     if ((weapon.rounds === undefined) !== (weapon.ammo === undefined)) issue(`Die Waffe ${weapon.id}: Magazin und Schuss nur zusammen`);
     if ((weapon.rounds !== undefined) !== (weapon.attack === 'shot')) issue(`Die Waffe ${weapon.id}: genau die Schusswaffen haben ein Magazin`);
     if (weapon.ammo !== undefined && data.items.find((i) => i.id === weapon.ammo)?.kind !== 'ammunition') issue(`Die Waffe ${weapon.id}: ihr Magazin ${weapon.ammo} ist keine Munition`);
+    if (weapon.burst !== undefined && (weapon.rounds === undefined || weapon.burst > weapon.rounds)) issue(`Die Waffe ${weapon.id}: ein Feuerstoß braucht ein Magazin, das ihn fasst`);
+    if (weapon.single !== undefined) {
+      const single = weapons.get(weapon.single);
+      if (weapon.burst === undefined) issue(`Die Waffe ${weapon.id}: einen Einzelschuss mit anderer Zeile gibt es nur neben dem Feuerstoß`);
+      if (!single || single.attack !== 'shot' || single.single !== undefined || single.burst !== undefined) issue(`Die Waffe ${weapon.id}: Einzelschuss mit ${weapon.single}, das ist keine einfache Schusswaffe`);
+    }
   }
   for (const item of data.items) {
     if ((item.kind === 'weapon') !== (item.weapon !== undefined)) issue(`Der Gegenstand ${item.id}: genau die Waffen haben Kampfwerte`);

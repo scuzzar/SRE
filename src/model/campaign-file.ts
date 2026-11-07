@@ -3,7 +3,7 @@ import { keepFocus, validateCharacter, validName, type Campaign, type CampaignId
 import { replay, type Career, type CareerRoll } from './career';
 import { DomainError } from './errors';
 import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, type PathKind } from './card-roll';
-import { checkDamageRoll, ATTACK_TARGET } from './combat';
+import { checkDamageRoll, checkVolley, ATTACK_TARGET } from './combat';
 import { ESCAPED_BAND, firstBand, npcOf, type Encounter, type Npc } from './encounter';
 import { checkInterprets, physical, recoveryKinds, withQuestion, type AttackResult, type CardPick, type DamageRoll, type LogEntry, type Recovery } from './log';
 import { checkRecovery } from './wounds';
@@ -61,6 +61,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     dice,
     dm: z.number().int(),
     target: z.number().int(),
+    volley: z.number().int().optional(),
   }),
   z.object({ kind: z.literal('damage'), at, of: z.number().int(), dice: z.array(die).min(1).max(5), to: z.array(z.enum(physical)).optional() }),
   z.object({
@@ -410,6 +411,7 @@ function validate(campaign: Campaign): void {
           }
         } else if (entry.uses !== undefined) throw new DomainError('Ein Angriff eines NSC verweist auf keine Fertigkeitsstufe.');
         if (entry.target !== ATTACK_TARGET) throw new DomainError(`Ein Angriff hat den Zielwert ${ATTACK_TARGET}.`);
+        checkVolley(campaign.log, entry, index);
         break;
       }
       case 'damage':

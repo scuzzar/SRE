@@ -1,7 +1,7 @@
 import { activeSkills, characterOf, type Campaign, type Character, type SkillLevel, type Upp } from './campaign';
 import { npcOf } from './encounter';
 import { DomainError } from './errors';
-import { damageRollsOf, isSuccess, type AttackResult, type DamageRoll, type LogEntry, type PhysicalCharacteristic } from './log';
+import { damageRollsOf, isSuccess, volleyOf, type AttackResult, type DamageRoll, type LogEntry, type PhysicalCharacteristic } from './log';
 import type { Clock, Random } from './ports';
 import { HANDS, itemOf, itemOfWeapon, weaponOf, type ArmorClass, type Range, type Weapon } from './reference';
 import { valueOf, type Characteristic } from './rules';
@@ -13,6 +13,31 @@ export const ATTACK_TARGET = 8;
 /** Die Waffe in der Hand; ohne sind es die Hände. */
 export function wieldedWeapon(character: Character): Weapon {
   return weaponOf(character.wields ?? HANDS);
+}
+
+/** Ein Feuerstoß würfelt zweimal auf das Ziel (Book 1). */
+export const BURST_ROLLS = 2;
+
+/** Nachbarn eines Feuerstoßes werden mit DM −3 angegriffen (Book 4, S. 31). */
+export const BURST_NEIGHBOUR_DM = -3;
+
+/**
+ * Die Zeile der Matrix, die ein Angriff nimmt: beim Einzelschuss einer Waffe mit `single` die Zeile
+ * dieser Waffe (Automatic Rifle → Rifle), sonst die der Waffe selbst.
+ */
+export function rowOf(weapon: Weapon, burst: boolean): Weapon {
+  return !burst && weapon.single !== undefined ? weaponOf(weapon.single) : weapon;
+}
+
+/** Wie viele Nachbarn ein Angriff mit dieser Waffe höchstens mit trifft: beim Feuerstoß und bei Waffen ohne Feuerstoß (Shotgun) `neighbours`, beim Einzelschuss keinen. */
+export function neighboursOf(weapon: Weapon, burst: boolean): number {
+  if (weapon.burst !== undefined && !burst) return 0;
+  return weapon.neighbours ?? 0;
+}
+
+/** Wie viele Schuss ein Angriff verbraucht: ein Feuerstoß `burst`, sonst einer. */
+export function roundsFor(weapon: Weapon, burst: boolean): number {
+  return burst ? (weapon.burst ?? 1) : 1;
 }
 
 /** Bei Schlägen und Hieben zählt STR, bei Schüssen DEX. */
@@ -79,12 +104,16 @@ export function fighterOf(campaign: Campaign, who: Combatant): Fighter {
   return { who, name: npc.name, upp, weapon: weaponOf(itemOf(npc.wields).weapon!), skill: npc.skill, armor: wornArmor(npc), state };
 }
 
-/** Der DM eines Angriffs; `undefined`, wenn auf diese Reichweite mit der Waffe kein Angriff geht. */
-export function attackDm(attacker: { readonly upp: Upp; readonly skill: number }, weapon: Weapon, armor: ArmorClass, range: Range): AttackDm | undefined {
-  const atRange = rangeDm(weapon, range);
+/**
+ * Der DM eines Angriffs; `undefined`, wenn auf diese Reichweite mit der Waffe kein Angriff geht.
+ * Rüstung und Reichweite kommen aus der Zeile `row` (beim Einzelschuss des Automatic Rifle die des
+ * Rifle), das Attribut aus der Waffe selbst.
+ */
+export function attackDm(attacker: { readonly upp: Upp; readonly skill: number }, weapon: Weapon, armor: ArmorClass, range: Range, row: Weapon = weapon): AttackDm | undefined {
+  const atRange = rangeDm(row, range);
   if (atRange === undefined) return undefined;
   const skill = attacker.skill;
-  const vsArmor = armorDm(weapon, armor);
+  const vsArmor = armorDm(row, armor);
   const characteristic = characteristicAttackDm(weapon, valueOf(attacker.upp, attackCharacteristic(weapon)));
   return {
     skill,
@@ -112,12 +141,27 @@ export function checkDamageRoll(log: readonly LogEntry[], roll: DamageRoll, at: 
   checkWounds(log.slice(0, at), roll, target);
 }
 
-/** Die Stelle des neuesten Treffers im Log, wenn dafür noch kein Schaden gewürfelt ist. */
+/**
+ * Die Stelle des Treffers, für den als Nächstes Schaden ansteht: der erste Treffer ohne Schaden in
+ * der Garbe des neuesten Treffers im Log (ein einzelner Wurf ist eine Garbe für sich).
+ */
 export function pendingDamage(log: readonly LogEntry[]): number | undefined {
   for (let i = log.length - 1; i >= 0; i--) {
-    if (isHit(log[i])) return damageRollsOf(log, i).length === 0 ? i : undefined;
+    if (isHit(log[i])) return volleyOf(log, i).find((j) => isHit(log[j]) && damageRollsOf(log, j).length === 0);
   }
   return undefined;
+}
+
+/** Der Wurf an der Stelle `at` gehört zu einer Garbe: Er verweist auf einen früheren ersten Wurf desselben Angreifers mit derselben Waffe. */
+export function checkVolley(log: readonly LogEntry[], entry: AttackResult, at: number): void {
+  if (entry.volley === undefined) return;
+  const first = log[entry.volley];
+  if (!Number.isInteger(entry.volley) || entry.volley < 0 || entry.volley >= at || first?.kind !== 'attack') throw new DomainError('Ein Wurf einer Garbe verweist auf keinen früheren Angriff.');
+  if (first.volley !== undefined) throw new DomainError('Ein Wurf einer Garbe verweist nicht auf ihren ersten Wurf.');
+  if (first.for !== entry.for || first.by !== entry.by || first.with !== entry.with) throw new DomainError('Die Würfe einer Garbe haben denselben Angreifer und dieselbe Waffe.');
+  const weapon = weaponOf(entry.with);
+  const most = (weapon.burst === undefined ? 1 : BURST_ROLLS) + (weapon.neighbours ?? 0);
+  if (volleyOf(log.slice(0, at + 1), entry.volley).length > most) throw new DomainError(`Eine Garbe mit ${weapon.name} hat höchstens ${most} Würfe.`);
 }
 
 /** Der Treffer an der Stelle `of`; sonst gibt es keinen Schaden. */
@@ -182,14 +226,23 @@ function withCharacter(campaign: Campaign, character: Character): Campaign {
   return { ...campaign, characters: campaign.characters.map((c) => (c.id === character.id ? character : c)) };
 }
 
-/** Ein Angriff mit einer Schusswaffe verbraucht einen Schuss; mit leerem Magazin gibt es keinen. */
-export function spendRound(campaign: Campaign, id: string): Campaign {
+/** Ein Angriff mit einer Schusswaffe verbraucht einen Schuss, ein Feuerstoß `count`; sind nicht so viele geladen, gibt es keinen. */
+export function spendRound(campaign: Campaign, id: string, count = 1): Campaign {
   const character = characterOf(campaign, id);
   const ammo = ammoOf(character);
   if (!ammo) return campaign;
-  if (ammo.rounds === 0) throw new DomainError(`${wieldedWeapon(character).name} ist leer. Erst nachladen.`);
+  checkRounds(character, count);
   const item = itemOfWeapon(wieldedWeapon(character).id)!.id;
-  return withCharacter(campaign, { ...character, possessions: character.possessions.map((p) => (p.of === item ? { ...p, rounds: ammo.rounds - 1 } : p)) });
+  return withCharacter(campaign, { ...character, possessions: character.possessions.map((p) => (p.of === item ? { ...p, rounds: ammo.rounds - count } : p)) });
+}
+
+/** Hat die Waffe in der Hand die Schuss geladen, die der Angriff braucht? Hände und Klingen brauchen keine. */
+export function checkRounds(character: Character, count: number): void {
+  const ammo = ammoOf(character);
+  if (!ammo) return;
+  const name = wieldedWeapon(character).name;
+  if (ammo.rounds === 0) throw new DomainError(`${name} ist leer. Erst nachladen.`);
+  if (ammo.rounds < count) throw new DomainError(`Ein Feuerstoß braucht ${count} Schuss, ${name} hat nur noch ${ammo.rounds}. Erst nachladen.`);
 }
 
 /** Nachladen: ein Magazin aus dem Besitz, die Waffe ist wieder voll; ein angebrochenes Magazin geht verloren. */

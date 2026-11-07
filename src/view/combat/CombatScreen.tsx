@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { DiceRoll } from '../oracle/DiceRoll';
 import type { CombatView, HealingView, Snapshot } from '../../controller';
 import { EncounterIntro, FightScreen } from './FightScreen';
+import { FireToggle } from './FireToggle';
 import { armorText, attackText, characteristicLabel, hex, partLabel, rangeMeters, rangeShort, rangeText, rangeTiny, signed } from '../format';
 import { CloseIcon } from '../icons';
 import { useGame } from '../game-context';
@@ -92,6 +93,7 @@ function WeaponHead({ combat }: { combat: CombatView }) {
           Magazin {combat.ammo.rounds}/{combat.ammo.capacity} Schuss · {combat.ammo.magazines} × {combat.ammo.magazine}
         </p>
       )}
+      {combat.fire && <FireToggle fire={combat.fire} />}
       <p className="weapon-dms">
         {base.map(partLabel).join(' · ')}
         <span className="muted">
@@ -179,7 +181,7 @@ function AttackDock({ combat }: { combat: CombatView }) {
             }}
           >
             <DiceIcon />
-            Schaden würfeln ({combat.damage.wounds}W6)
+            {combat.damage.victim ? `Schaden ${combat.damage.victim.split(' ')[0]}` : 'Schaden würfeln'} ({combat.damage.wounds}W6)
           </button>
         )}
         {combat.ammo && (combat.ammo.rounds < combat.ammo.capacity || combat.ammo.rounds === 0) && (

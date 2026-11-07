@@ -7,6 +7,7 @@ import { haptic } from '../haptics';
 import { CombatIcon, DiceIcon } from '../icons';
 import { DicePairView, THROW_MS, useTimeline } from '../Dice';
 import type { Patient } from './CombatScreen';
+import { FireToggle } from './FireToggle';
 
 /**
  * Die Kampfsimulation einer laufenden Begegnung: oben fest Runde, Reaktion, Überraschung und
@@ -321,7 +322,7 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
   const game = useGame();
   const turn = sim.turn;
   const target = turn?.target === undefined ? undefined : sim.fighters.find((f) => f.id === turn.target);
-  const empty = turn?.ammo?.rounds === 0;
+  const empty = turn?.ammo !== undefined && turn.ammo.rounds < (turn.fire?.rounds ?? 1);
   return (
     <section className="dock" aria-label="Zug">
       {turn ? (
@@ -336,6 +337,7 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
             </span>
             <strong className="fight-need">{!turn.reaches ? 'reicht nicht' : turn.odds ? (turn.odds.chance <= 0 ? 'unmöglich' : `${Math.max(2, turn.odds.need)}+`) : ''}</strong>
           </span>
+          {turn.fire && <FireToggle fire={turn.fire} compact />}
         </div>
       ) : (
         <p className="combat-pick">{sim.defeated ? 'Der Kampf ist entschieden. Heilen, übernehmen (lange drücken) oder die Begegnung beenden.' : 'Keiner ist am Zug.'}</p>
@@ -351,7 +353,7 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
             }}
           >
             <DiceIcon />
-            Schaden ({combat.damage.wounds}W6)
+            {combat.damage.victim ? `Schaden ${combat.damage.victim.split(' ')[0]}` : 'Schaden'} ({combat.damage.wounds}W6){combat.damage.left > 1 ? ` · noch ${combat.damage.left}` : ''}
           </button>
         ) : (
           <>

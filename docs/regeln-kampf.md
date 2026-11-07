@@ -45,7 +45,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Entkommen und Ausweichen](#entkommen-und-ausweichen) | SE 5 | ○ |
 | [Moral (einfach)](#moral-einfach) | SE 5 | ○ |
 | [Angriff: Grundwurf und DMs](#angriff-grundwurf-und-erlaubte-dms) | SE 6 | ◐ |
-| [Feuerstoß und Schrot nach Book 1](#feuerstoß-und-schrot-nach-book-1) | B1 | ○ |
+| [Feuerstoß und Schrot nach Book 1](#feuerstoß-und-schrot-nach-book-1) | B1 | ✔ ✱ |
 | [Waffen- und Reichweitenmatrix](#waffen--und-reichweitenmatrix) | SE 6 | ✔ (ohne Tierwaffen und Zubehör) |
 | [Waffen und Ausrüstung](#waffen-und-ausrüstung) | SE 4, 23 | ✔ (ohne Zubehör) |
 | [Rüstung](#rüstung) | SE 4 | ✔ |
@@ -56,7 +56,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Wunden und Tod](#wunden-und-tod) | SE 7 | ✔ |
 | [Medizinische Versorgung](#medizinische-versorgung) | SE 7 | ✔, Drogen ○ |
 | [Moral nach Book 4](#moral-nach-book-4) | B4 28–31 | ○ |
-| [Feuerregeln aus Book 4](#feuerregeln-aus-book-4) | B4 31–32 | ○ |
+| [Feuerregeln aus Book 4](#feuerregeln-aus-book-4) | B4 31–32 | ◐ (Gruppentreffer durch Autofeuer) |
 | [Waffen aus Book 4](#waffen-aus-book-4) | B4 36–41, 50–52 | ○ |
 | [Fertigkeiten aus Book 4 im Kampf](#fertigkeiten-aus-book-4-im-kampf) | B4 10–16, 26 | ○ |
 | [Abstraktes Schlachtsystem](#abstraktes-schlachtsystem) | B4 32–35 | ○ |
@@ -386,8 +386,8 @@ Schneller als doppelt laufen geht meist nicht lange.
 | Reichweite | ✔ |
 | Verteidiger weicht aus (Evading) | ○ (Regel in B1) |
 | Verteidiger in Deckung | ○ ([Deckung](#deckung-und-verbergen)) |
-| Gruppentreffer durch Schrotflinte | ○ ([B1](#feuerstoß-und-schrot-nach-book-1), im Modell entworfen) |
-| Gruppentreffer durch Autofeuer | ○ ([B1](#feuerstoß-und-schrot-nach-book-1), [B4](#feuerregeln-aus-book-4), im Modell entworfen) |
+| Gruppentreffer durch Schrotflinte | ✔ ✱ ([B1](#feuerstoß-und-schrot-nach-book-1)) |
+| Gruppentreffer durch Autofeuer | ✔ ✱ ([B1](#feuerstoß-und-schrot-nach-book-1), Grenze aus [B4](#feuerregeln-aus-book-4)) |
 | Geschwächte Schläge | ○ (DM in der [Waffentabelle](#klingen-und-nahkampf), Regel unten) |
 | Waffe ziehen | ○ (Regel in B1) |
 | Geworfene Klinge | ○ (Regel in B1) |
@@ -410,7 +410,7 @@ Schneller als doppelt laufen geht meist nicht lange.
 ### Feuerstoß und Schrot nach Book 1
 
 *B1 (Ausgabe 1981), „Special Considerations“: „Full Automatic Fire“, „Group Hits by Shotgun“.*
-App: ○ (im Modell entworfen, siehe `domain-model.md`, *Feuerstoß und Schrot*)
+App: ✔ ✱ (siehe `domain-model.md`, *Feuerstoß und Schrot*)
 
 > B1 liegt nicht als PDF vor. Der Wortlaut unten stammt aus einem Auszug von B1, den eine Websuche am
 > 7. November 2026 fand; die Seite ist nicht bekannt.
@@ -750,7 +750,7 @@ die SC treffen) nutzen diese Moral.
 
 ### Feuerregeln aus Book 4
 
-*B4 31–32, „The Traveller Combat System“.* App: ○
+*B4 31–32, „The Traveller Combat System“.* App: ◐ (Gruppentreffer durch Autofeuer, siehe [Feuerstoß und Schrot](#feuerstoß-und-schrot-nach-book-1))
 
 - **Full Automatic Fire:** Manche Waffen haben in den [Tabellen](#reichweitenmatrix-book-4) zwei DMs,
   getrennt durch „/“: der erste für **halbautomatisch**, der zweite für **Dauerfeuer**. Jeder

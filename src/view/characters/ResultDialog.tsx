@@ -56,7 +56,7 @@ export function ResultDialog({ result }: { result: TaskItem | AttackItem }) {
           skip(VERDICT);
         }}
       >
-        <span className="kicker">{result.kind === 'attack' ? 'Angriff' : 'Probe'}</span>
+        <span className="kicker">{result.kind === 'attack' ? (result.fire === 'burst' ? 'Feuerstoß' : result.fire === 'shotgun' ? 'Schrotschuss' : 'Angriff') : 'Probe'}</span>
         <span style={{ fontSize: 15, fontWeight: 600 }}>{rollTitle(result)}</span>
         {attack && (
           <ol className="roll-parts" aria-hidden="true">
@@ -93,13 +93,14 @@ export function ResultDialog({ result }: { result: TaskItem | AttackItem }) {
         <h2 id="result-title" className={result.success ? 'roll-verdict' : 'roll-verdict negative'}>
           {verdict(result)}
         </h2>
+        {result.kind === 'attack' && result.rest.length > 0 && phase >= VERDICT && <VolleyRolls rest={result.rest} />}
         <div className="roll-after">
           <span id="result-detail" className="mono muted" style={{ fontSize: 14 }}>
             {result.kind === 'attack' ? `2W6: ${a} + ${b} = ${a + b}, braucht ${Math.max(2, result.need)}+` : taskDetail(result)}
           </span>
           {/* Für Screenreader: Die Teile des DM stehen oben schon sichtbar, aber dort nur für das Auge. */}
           <span className="visually-hidden">{result.parts.map(partLabel).join(', ')}</span>
-          {result.kind === 'attack' && result.damagePending ? (
+          {result.kind === 'attack' && (result.damagePending || result.volleyPending) ? (
             <div className="roll-actions">
               <button ref={close} type="button" className="ghost" onClick={() => game.closeResult()}>
                 Weiter
@@ -128,6 +129,28 @@ export function ResultDialog({ result }: { result: TaskItem | AttackItem }) {
   );
 }
 
+/** Die weiteren Würfe einer Garbe: der zweite Wurf auf das Ziel, dann die Nachbarn, jeder mit Würfeln und Urteil. */
+export function VolleyRolls({ rest }: { rest: readonly AttackItem[] }) {
+  return (
+    <ol className="volley-rolls">
+      {rest.map((roll, i) => (
+        <li key={i} className="volley-roll">
+          <span className="volley-who">{roll.neighbour ? `Nachbar ${firstName(roll.victim)}` : `${i + 2}. Wurf ${firstName(roll.victim)}`}</span>
+          <span className="volley-dice">
+            {roll.dice[0]}+{roll.dice[1]}, braucht {Math.max(2, roll.need)}+
+          </span>
+          <span className={roll.success ? 'volley-verdict' : 'volley-verdict negative'}>{roll.success ? 'TREFFER' : 'DANEBEN'}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** Im Popup ist wenig Platz: nur der Vorname. */
+function firstName(name: string | undefined): string {
+  return name?.split(' ')[0] ?? '';
+}
+
 function verdict(result: TaskItem | AttackItem): string {
   if (result.kind === 'attack') return result.success ? 'TREFFER' : 'DANEBEN';
   return result.success ? 'ERFOLG' : 'FEHLSCHLAG';
@@ -142,6 +165,8 @@ function partName(part: DmPart): string {
       return `gegen ${armorText[part.armor]}`;
     case 'range':
       return `auf ${rangeText[part.range]}`;
+    case 'neighbour':
+      return 'Nachbar';
     default:
       return skillTitle([part]);
   }

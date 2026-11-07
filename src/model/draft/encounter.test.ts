@@ -107,7 +107,7 @@ describe('Begegnung', () => {
   it('beenden: ohne Verweis im Log ist sie weg, sonst bleibt sie beendet in der Kampagne', () => {
     expect(endEncounter(thugs()).encounters).toEqual([]);
     const fought = thugs();
-    const attack = rollAttack(chooseTarget(fought, 'mesh', 'close', aimAt(startAttack(fought), fought, 'n1')), fought, fixedRandom(1, 1), clock);
+    const attack = rollAttack(chooseTarget(fought, 'mesh', 'close', aimAt(startAttack(fought), fought, 'n1')), fought, fixedRandom(1, 1), clock)[0]!;
     const ended = endEncounter(appendLog(fought, attack));
     expect(ended.encounters[0]).toMatchObject({ ended: true });
     expect(currentEncounter(ended)).toBeUndefined();
@@ -120,7 +120,7 @@ describe('Angriff in beide Richtungen und Wunden', () => {
     const attack = aimAt(startAttack(campaign), campaign, 'n1');
     expect(attack).toEqual({ against: 'n1', armor: 'mesh' });
     expect(() => chooseTarget(campaign, 'jack', 'close', attack)).toThrow(/trägt mesh/);
-    const result = rollAttack(chooseTarget(campaign, 'mesh', 'close', attack), campaign, fixedRandom(6, 6), clock);
+    const result = rollAttack(chooseTarget(campaign, 'mesh', 'close', attack), campaign, fixedRandom(6, 6), clock)[0]!;
     expect(result).toMatchObject({ for: 'c1', against: 'n1', armor: 'mesh', range: 'close' });
     campaign = appendLog(campaign, result);
     // Hände: 1W6 Schaden; die 4 geht ganz auf DEX (zufällig das zweite Attribut).
@@ -137,7 +137,7 @@ describe('Angriff in beide Richtungen und Wunden', () => {
     let campaign = setWears(thugs(), 'c1', 'jack');
     const attack = attackBy(startAttack(campaign), campaign, 'n2');
     expect(attack).toEqual({ by: 'n2', armor: 'jack' });
-    const hit = () => rollAttack(chooseTarget(campaign, 'jack', 'close', attack), campaign, fixedRandom(6, 6), clock);
+    const hit = () => rollAttack(chooseTarget(campaign, 'jack', 'close', attack), campaign, fixedRandom(6, 6), clock)[0]!;
     const first = hit();
     expect(first).toMatchObject({ by: 'n2', victim: 'c1', with: 'club' });
     expect(first).not.toHaveProperty('for');
@@ -155,7 +155,7 @@ describe('Angriff in beide Richtungen und Wunden', () => {
     expect(woundsOf(campaign, { pc: 'c1' })).toEqual({ str: 5, dex: 6, end: 6 });
     expect(woundStateOf(campaign, { pc: 'c1' })).toBe('wounded');
     // Bewusstlos greift Kira nicht an.
-    const more = (c: Campaign) => appendLog(c, rollAttack(chooseTarget(c, 'jack', 'close', attack), c, fixedRandom(6, 6), clock));
+    const more = (c: Campaign) => appendLog(c, ...rollAttack(chooseTarget(c, 'jack', 'close', attack), c, fixedRandom(6, 6), clock));
     campaign = more(campaign);
     campaign = appendLog(campaign, confirmWounding(assignWound(assignWound(startWounding(campaign, 4, fixedRandom(6, 6)), 'STR'), 'DEX'), campaign, clock));
     expect(woundStateOf(campaign, { pc: 'c1' })).toBe('serious');
@@ -165,7 +165,7 @@ describe('Angriff in beide Richtungen und Wunden', () => {
   it('stirbt ein SC an seinen Wunden, ist er tot, und der nächste steht oben', () => {
     let campaign = thugs();
     const attack = attackBy(startAttack(campaign), campaign, 'n1');
-    const hit = (c: Campaign) => appendLog(c, rollAttack(chooseTarget(c, 'nothing', 'close', attack), c, fixedRandom(6, 6), clock));
+    const hit = (c: Campaign) => appendLog(c, ...rollAttack(chooseTarget(c, 'nothing', 'close', attack), c, fixedRandom(6, 6), clock));
     campaign = hit(campaign);
     // Foil: 1W6; erster Treffer 6 auf STR (7 → 1).
     campaign = appendLog(campaign, rollDamage(campaign, 0, fixedRandom(6, 0), clock));
@@ -204,7 +204,7 @@ describe('Übernehmen', () => {
 describe('Kampagnendatei mit Begegnung', () => {
   it('übernimmt Begegnung, NSC, Angreifer und Ziel und die Verteilung der Wunden unverändert', () => {
     let campaign = setWears(thugs(), 'c1', 'jack');
-    campaign = appendLog(campaign, rollAttack(chooseTarget(campaign, 'jack', 'close', attackBy(startAttack(campaign), campaign, 'n1')), campaign, fixedRandom(6, 6), clock));
+    campaign = appendLog(campaign, ...rollAttack(chooseTarget(campaign, 'jack', 'close', attackBy(startAttack(campaign), campaign, 'n1')), campaign, fixedRandom(6, 6), clock));
     campaign = appendLog(campaign, rollDamage(campaign, 0, fixedRandom(3, 1), clock));
     campaign = adoptNpc(campaign, 'n2', true);
     const back = fromCampaignFile(toCampaignFile(campaign), 'k2');
@@ -215,7 +215,7 @@ describe('Kampagnendatei mit Begegnung', () => {
 
   it('weist einen ersten Treffer zurück, der auf mehrere Attribute geht', () => {
     let campaign = thugs();
-    campaign = appendLog(campaign, rollAttack(chooseTarget(campaign, 'nothing', 'close', attackBy(startAttack(campaign), campaign, 'n2')), campaign, fixedRandom(6, 6), clock));
+    campaign = appendLog(campaign, ...rollAttack(chooseTarget(campaign, 'nothing', 'close', attackBy(startAttack(campaign), campaign, 'n2')), campaign, fixedRandom(6, 6), clock));
     const json = JSON.parse(toCampaignFile(campaign));
     json.campaign.log.push({ kind: 'damage', at: '2026-11-03T10:00:00.000Z', of: 0, dice: [3, 4], to: ['STR', 'DEX'] });
     expect(() => fromCampaignFile(JSON.stringify(json), 'k2')).toThrow(/ganz auf ein Attribut/);
@@ -240,7 +240,7 @@ describe('Heilung', () => {
   function hitJonas(campaign: Campaign, dice: number[], to: ('STR' | 'DEX' | 'END')[]): Campaign {
     const focused = { ...campaign, focus: 'c2' };
     const attack = attackBy(startAttack(focused), focused, 'n2');
-    let after = appendLog(focused, rollAttack(chooseTarget(focused, 'nothing', 'close', attack), focused, fixedRandom(6, 6), clock));
+    let after = appendLog(focused, ...rollAttack(chooseTarget(focused, 'nothing', 'close', attack), focused, fixedRandom(6, 6), clock));
     const of = after.log.length - 1;
     after = appendLog(after, { kind: 'damage', at: clock.now(), of, dice, to });
     return { ...after, focus: 'c1' };
@@ -296,7 +296,7 @@ describe('Heilung', () => {
   it('auch ein NSC der laufenden Begegnung lässt sich wecken und behandeln, ein toter nicht', () => {
     let campaign = medics();
     const attack = aimAt(startAttack(campaign), campaign, 'n2');
-    campaign = appendLog(campaign, rollAttack(chooseTarget(campaign, 'nothing', 'close', attack), campaign, fixedRandom(6, 6), clock));
+    campaign = appendLog(campaign, ...rollAttack(chooseTarget(campaign, 'nothing', 'close', attack), campaign, fixedRandom(6, 6), clock));
     campaign = appendLog(campaign, rollDamage(campaign, 0, fixedRandom(6, 0), clock));
     expect(woundStateOf(campaign, { npc: 'n2' })).toBe('unconscious');
     campaign = appendLog(campaign, recover(campaign, 'wake', { npc: 'n2' }, fixedRandom(), clock));
@@ -422,10 +422,10 @@ describe('Kampfsimulation', () => {
   it('wer bewusstlos ist, kommt nicht dran; ist eine Partei außer Gefecht, ist keiner mehr dran', () => {
     let campaign = thugs();
     // Kira schlägt den Anführer bewusstlos (Hände, 1W6: 4 auf DEX).
-    campaign = appendLog(campaign, rollAttack(chooseTarget(campaign, 'mesh', 'close', aimAt(startAttack(campaign), campaign, 'n1')), campaign, fixedRandom(6, 6), clock));
+    campaign = appendLog(campaign, ...rollAttack(chooseTarget(campaign, 'mesh', 'close', aimAt(startAttack(campaign), campaign, 'n1')), campaign, fixedRandom(6, 6), clock));
     campaign = appendLog(campaign, rollDamage(campaign, 0, fixedRandom(4, 1), clock));
     expect(turnOf(campaign)!.id).toBe('n2');
-    campaign = appendLog(campaign, rollAttack(chooseTarget(campaign, 'nothing', 'close', aimAt(startAttack(campaign), campaign, 'n2')), campaign, fixedRandom(6, 6), clock));
+    campaign = appendLog(campaign, ...rollAttack(chooseTarget(campaign, 'nothing', 'close', aimAt(startAttack(campaign), campaign, 'n2')), campaign, fixedRandom(6, 6), clock));
     campaign = appendLog(campaign, rollDamage(campaign, 2, fixedRandom(6, 0), clock));
     expect(defeatedSide(campaign, currentEncounter(campaign)!)).toBe('npcs');
     expect(turnOf(campaign)).toBeUndefined();
@@ -465,7 +465,7 @@ describe('Fehler, die der Fuzz-Test gefunden hat', () => {
   it('Wunden senken STR, DEX und END auch in Proben', () => {
     // Jonas: DEX 8, eine Wunde von 4 auf DEX → 4, also −1 statt ±0.
     let campaign = setFocus(thugs(), 'c2');
-    campaign = appendLog(campaign, rollAttack(chooseTarget(campaign, 'nothing', 'close', attackBy(startAttack(campaign), campaign, 'n2')), campaign, fixedRandom(6, 6), clock));
+    campaign = appendLog(campaign, ...rollAttack(chooseTarget(campaign, 'nothing', 'close', attackBy(startAttack(campaign), campaign, 'n2')), campaign, fixedRandom(6, 6), clock));
     campaign = appendLog(campaign, { kind: 'damage', at: clock.now(), of: 0, dice: [2, 2], to: ['DEX', 'DEX'] });
     expect(characteristicOptions(undefined, campaign).find((o) => o.characteristic === 'DEX')).toMatchObject({ value: 4, dm: -1 });
   });
