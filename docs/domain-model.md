@@ -1175,7 +1175,8 @@ Diagramm mit diesen Ausnahmen:
   leer, damit man gleich etwas ausprobieren kann: Sie beginnt mit Kira Vant und Jonas Reyl aus der
   README (`src/data/examples.json`) und der festen Startwelt Kessra (0405, A766754-A, Scoutbasis,
   Gasriese, gemäßigt; `src/data/demo-world.json`), einer fertigen Welt, auf der die Gruppe steht
-  (`location`). Das Modell sagt dazu nichts; die Welt prüft das Model wie jedes Hexfeld. Die beiden
+  (`location`), und Cr 5.000 in der Gruppenkasse, gebucht als Einnahme „Startkapital“, damit sich im
+  Shop gleich etwas kaufen lässt. Das Modell sagt dazu nichts; die Welt prüft das Model wie jedes Hexfeld. Die beiden
   Charaktere lassen sich löschen, solange der Log nicht auf sie verweist. Jede weitere Kampagne
   beginnt leer, wie unter *Mehrere Kampagnen*; bestehende Kampagnen bekommen nichts nachgetragen.
   Kira hat die Automatic Pistol, Jonas die Blade als Primärwaffe; in der Hand haben beide zu Beginn

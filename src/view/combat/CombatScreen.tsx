@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { DiceRoll } from '../oracle/DiceRoll';
 import type { CombatView, HealingView, Snapshot } from '../../controller';
 import { EncounterIntro, FightScreen } from './FightScreen';
-import { armorText, attackText, characteristicLabel, hex, partLabel, rangeMeters, rangeShort, rangeText, signed } from '../format';
+import { armorText, attackText, characteristicLabel, hex, partLabel, rangeMeters, rangeShort, rangeText, rangeTiny, signed } from '../format';
 import { CloseIcon } from '../icons';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
@@ -103,7 +103,7 @@ function WeaponHead({ combat }: { combat: CombatView }) {
   );
 }
 
-/** Die Tabelle der Waffe: Köpfe mit den DMs der Matrix, Zellen mit dem nötigen Wurf auf 2W6. */
+/** Die Tabelle der Waffe: Köpfe mit den DMs der Matrix, Zellen mit dem nötigen Wurf auf 2W6. Reichweiten, in die sie nicht reicht, stehen schmal. */
 function AttackTable({ combat }: { combat: CombatView }) {
   const game = useGame();
   return (
@@ -118,7 +118,7 @@ function AttackTable({ combat }: { combat: CombatView }) {
             </th>
             {combat.ranges.map((r) => (
               <th key={r.range} scope="col" className={r.dm === undefined ? 'out' : undefined} title={rangeMeters[r.range]}>
-                <span className="head-name">{rangeShort[r.range]}</span>
+                <span className="head-name">{r.dm === undefined ? rangeTiny[r.range] : rangeShort[r.range]}</span>
                 <span className="head-dm">{r.dm === undefined ? 'no' : signed(r.dm)}</span>
               </th>
             ))}

@@ -160,6 +160,8 @@ export interface Snapshot {
   readonly focus: string | undefined;
   /** Die Leiste mit dem Charakter oben ist eingeklappt. */
   readonly stripCollapsed: boolean;
+  /** Der Hinweis über den Waffen im Shop ist weggeklickt. */
+  readonly shopHintHidden: boolean;
   /** Die dauerhaften NSC unter „NSC“, getrennt von den SC. */
   readonly npcs: readonly { readonly id: string; readonly name: string; readonly background: string; readonly dead: boolean }[];
   /** Die Toten unter „Verstorben“, getrennt von den Lebenden. */
@@ -707,6 +709,8 @@ export interface ControllerState {
   readonly opened: string | undefined;
   /** Die Leiste mit dem Charakter oben ist eingeklappt; das Gerät merkt es sich. */
   readonly stripCollapsed: boolean;
+  /** Der Hinweis über den Waffen im Shop ist weggeklickt; das Gerät merkt es sich. */
+  readonly shopHintHidden: boolean;
   /** Index des Logeintrags, dessen Ergebnis-Popup offen ist. */
   readonly result: number | undefined;
   readonly editor: { readonly id: string | undefined; readonly error: string | undefined } | undefined;
@@ -1238,7 +1242,7 @@ function pickingView(state: ControllerState, campaign: Campaign): { readonly tit
 
 export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
-  const base = { persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, skills, items };
+  const base = { persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, skills, items };
   if (!campaign) {
     return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: [], retired: [], task: undefined, combat: undefined, shop: undefined, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
   }

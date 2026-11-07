@@ -48,7 +48,8 @@ function iOS(): boolean {
   return /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 }
 
-function standalone(): boolean {
+/** Läuft als installierte App vom Startbildschirm, ohne die Leisten des Browsers. */
+export function standalone(): boolean {
   const legacy = (navigator as Navigator & { readonly standalone?: boolean }).standalone === true;
   return legacy || (typeof matchMedia === 'function' && matchMedia('(display-mode: standalone)').matches);
 }

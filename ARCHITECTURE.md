@@ -65,8 +65,9 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
 - **Er wählt, welche View zu sehen ist**: Orakel-, Begegnungs-, Kampf-, Shop-, Charakter- oder Sektor-Screen (`showScreen(screen)`; „Zum Kampf“ im Begegnungs-Screen wechselt so in den Kampf-Screen, „Weiter“ in der Übersicht einer Begegnung, `closeEncounterIntro()`, bleibt im Screen), das gewählte Feld im Subsektor, die Weltkarte eines Feldes, die
   Kampagnenwahl (`showCampaigns()`, `closeCampaigns()`) und das Ergebnis-Popup (`closeResult()`),
   welcher Charakter im Charakter-Screen seine Details zeigt (`toggleDetails(id)`) und ob die Leiste
-  mit dem Charakter oben eingeklappt ist (`toggleStrip()`; das merkt sich das Gerät über das
-  Repository, wie die offene Kampagne). Auch der Ablauf ist seine Sache: Steht nach einer Änderung
+  mit dem Charakter oben eingeklappt ist (`toggleStrip()`) und ob der Hinweis über den Waffen im
+  Shop weggeklickt ist (`hideShopHint()`); beides merkt sich das Gerät über das Repository, wie die
+  offene Kampagne. Auch der Ablauf ist seine Sache: Steht nach einer Änderung
   ein anderer Charakter oben, endet die Probe; nach der Erschaffung geht es zum Orakel-Screen, wo der
   Neue oben steht. Die Inspirationskarte steht im Vordergrund, solange es eine offene
   `Card` gibt; das folgt aus dem Model und braucht keinen eigenen Zustand.
@@ -77,7 +78,7 @@ Compilerfehler.
 **3. Nach oben wird gemeldet, nicht gerufen.** Der Controller kennt keine Komponenten. Er wählt die
 View, indem er seinen Zustand ändert, nicht indem er Komponenten aufruft. Er bietet
 `subscribe(listener)` und `snapshot()` an: den Spielstand aus dem Model und seinen eigenen Zustand
-(welcher Screen, ob das Popup offen ist, wessen Details aufgeklappt sind, ob die Leiste eingeklappt ist, ob die Charaktererschaffung im Vordergrund steht). Die View hängt sich mit `useSyncExternalStore` daran
+(welcher Screen, ob das Popup offen ist, wessen Details aufgeklappt sind, ob die Leiste eingeklappt ist, ob der Hinweis im Shop weggeklickt ist, ob die Charaktererschaffung im Vordergrund steht). Die View hängt sich mit `useSyncExternalStore` daran
 und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von unten nach oben.
 
 **4. Das Model ist frei von Seiteneffekten, die View frei von Regeln und Ablauf.**

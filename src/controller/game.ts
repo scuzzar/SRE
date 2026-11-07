@@ -160,6 +160,7 @@ export class GameController {
       shopError: undefined,
       opened: undefined,
       stripCollapsed: false,
+      shopHintHidden: false,
       result: undefined,
       editor: undefined,
       generating: false,
@@ -198,9 +199,14 @@ export class GameController {
     } catch {
       // Ob die Leiste eingeklappt war, ist nur eine Bequemlichkeit; dann ist sie offen.
     }
+    try {
+      if (this.writable) this.update({ shopHintHidden: await this.deps.repository.loadShopHintHidden() });
+    } catch {
+      // Ob der Hinweis im Shop weggeklickt war, ist nur eine Bequemlichkeit; dann steht er da.
+    }
     const campaign = campaigns.find((c) => c.id === open) ?? byName(campaigns)[0];
     if (campaign) this.update({ campaigns, campaign });
-    else this.addCampaign(createDemoCampaign());
+    else this.addCampaign(createDemoCampaign(this.deps.clock));
   }
 
   // --- Verbindung zur View ---------------------------------------------------------------------
@@ -356,6 +362,13 @@ export class GameController {
     const stripCollapsed = !this.state.stripCollapsed;
     this.update({ stripCollapsed });
     this.persist(() => this.deps.repository.saveStripCollapsed(stripCollapsed));
+  }
+
+  /** Blendet den Hinweis über den Waffen im Shop aus; das Gerät merkt es sich. */
+  hideShopHint(): void {
+    if (this.state.shopHintHidden) return;
+    this.update({ shopHintHidden: true });
+    this.persist(() => this.deps.repository.saveShopHintHidden(true));
   }
 
   /**

@@ -90,7 +90,7 @@ export function ShopScreen({ view }: { view: Snapshot }) {
         ) : !shop.world ? (
           <p className="log-empty">Die Gruppe ist auf keiner Welt. Auf der Sektorkarte eine fertige Welt öffnen und „Gruppe ist hier“ wählen; dann lässt sich hier kaufen und verkaufen.</p>
         ) : area === 'weapons' ? (
-          <WeaponCounter shop={shop} onBuy={buy} />
+          <WeaponCounter shop={shop} hintHidden={view.shopHintHidden} onBuy={buy} />
         ) : area === 'sell' ? (
           <SaleCounter owner={owner} onSell={(item) => owner && setSelling({ member: owner.id, item })} />
         ) : area === 'armor' ? (
@@ -192,9 +192,11 @@ function PriceButton({ item, sub, onBuy }: { item: ShopItem; sub?: string | unde
 
 /**
  * Die Waffentheke: Nahkampf und Schusswaffen, je Zeile Waffe, Schaden, Preis und daneben das Magazin.
- * Fett steht, was der Charakter oben führen kann (er hat die Fertigkeit).
+ * Fett steht, was der Charakter oben führen kann (er hat die Fertigkeit). Der Hinweis darüber lässt
+ * sich wegklicken.
  */
-function WeaponCounter({ shop, onBuy }: { shop: ShopView; onBuy: (item: ShopItem) => void }) {
+function WeaponCounter({ shop, hintHidden, onBuy }: { shop: ShopView; hintHidden: boolean; onBuy: (item: ShopItem) => void }) {
+  const game = useGame();
   const groups = [
     { name: 'Nahkampf', weapons: shop.weapons.filter((w) => w.attack !== 'shot') },
     { name: 'Schusswaffen', weapons: shop.weapons.filter((w) => w.attack === 'shot') },
@@ -202,10 +204,15 @@ function WeaponCounter({ shop, onBuy }: { shop: ShopView; onBuy: (item: ShopItem
   const owner = shop.members.find((m) => m.id === shop.owner);
   return (
     <>
-      {owner && (
-        <p className="muted shop-hint">
-          <b className="shop-skilled-sample">Fett</b>: {owner.name} hat die Fertigkeit. Ein Tipp auf den Preis kauft eins für {owner.name}; die goldene Zahl in der Ecke: so viele sind schon da.
-        </p>
+      {owner && !hintHidden && (
+        <div className="shop-hint-box">
+          <p className="muted shop-hint">
+            <b className="shop-skilled-sample">Fett</b>: {owner.name} hat die Fertigkeit. Ein Tipp auf den Preis kauft eins für {owner.name}; die goldene Zahl in der Ecke: so viele sind schon da.
+          </p>
+          <button type="button" className="icon-button" aria-label="Hinweis ausblenden" onClick={() => game.hideShopHint()}>
+            <CloseIcon />
+          </button>
+        </div>
       )}
       {groups.map((group) => (
         <div key={group.name} className="shop-counter">
