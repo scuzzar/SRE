@@ -300,6 +300,8 @@ hide <<value>> stereotype
     /escaped: boolean
     round: number
     acted: string[*]
+    pcMoved: number [0..1]
+    npcMoved: number [0..1]
     /surprise: Side [0..1]
     /first: Side
     /turn: string [0..1]

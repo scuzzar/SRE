@@ -145,6 +145,14 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > an der Waffe `burst`, `neighbours` und der Verweis `single`; am Angriff in Vorbereitung `burst`;
 > am Angriffsergebnis der Verweis `volley` und abgeleitet `/neighbour`. Der Ausschnitt dazu liegt
 > unter [`changes/2026-11-07-flaechenschaden.png`](changes/2026-11-07-flaechenschaden.png).
+>
+> Ebenfalls am 7. November 2026 auf ausdrücklichen Wunsch des Owners freigegeben, nach seinen
+> Antworten: **Bewegung nach den Regeln**, je Partei und Runde 1 Band gehend oder 2 laufend, Laufen
+> statt Angriff; langes Drücken auf die Entfernung setzt sie frei (siehe *Kampfsimulation*,
+> *Bewegen*). Dazu tragen die Beispiel-Charaktere ihre Rüstung, und nach dem Kauf einer Rüstung
+> fragt die App, ob man sie anlegt (siehe *Getragene Rüstung*, *Kauf einer Rüstung*). Neu im Bild:
+> `Encounter.pcMoved` und `Encounter.npcMoved`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-07-bewegung-und-ruestung.png`](changes/2026-11-07-bewegung-und-ruestung.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -494,6 +502,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 - **Kauf einer Waffe.** Kauft ein Charakter eine Waffe und hat noch keine Primärwaffe, wird sie
   seine Primärwaffe und er nimmt sie in die Hand; hat er schon eine, aber keine Sekundärwaffe, wird
   sie seine Sekundärwaffe. Sonst ändert der Kauf nichts daran.
+- **Kauf einer Rüstung.** Kauft ein Charakter eine Rüstung, die er nicht schon trägt, fragt die App
+  gleich danach, ob er sie anlegt („Mesh anlegen? Trägt jetzt Jack“). Ja: Er trägt sie (`wears`).
+  Nein: Es bleibt, wie es ist; anlegen kann er sie später im Editor.
 - **Angriff.** Es gilt: 2W6 + DM ≥ 8 (*Basic Throw to Hit*, S. 6), mit
   DM = Fertigkeit + Rüstung + Reichweite + Attribut.
   - *Fertigkeit*: die Stufe in der Fertigkeit der Waffe. Ohne diese Fertigkeit zählt Stufe 0, also
@@ -712,8 +723,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   ihm (`Item.armor`): Jack, Mesh, Cloth, Reflec, Ablat, Combat Armor als Combat, Battle Dress als
   Combat (S. 4), Vacc Suit als Cloth (S. 4), Protective Suit (jack) als Jack und Protective Suit
   (cloth) als Cloth. NSC bekommen in Begegnungen nur Rüstungen der Art *armor*. Man legt sie wie
-  Primär- und Sekundärwaffe nur im Editor an; im Kampf steht sie oben in der Leiste neben dem Namen.
-  Geht sie aus dem Besitz, trägt er Nothing.
+  Primär- und Sekundärwaffe im Editor an, oder gleich nach dem Kauf (siehe *Kauf einer Rüstung*);
+  im Kampf steht sie oben in der Leiste neben dem Namen. Geht sie aus dem Besitz, trägt er Nothing.
+  Die Beispiel-Charaktere tragen ihre Rüstung von Anfang an (Kira Jack, Jonas Mesh).
 - **Angriff in beide Richtungen.**
   - *SC gegen NSC*: Der Charakter oben greift einen NSC der laufenden Begegnung an (`against`), der
     weder tot noch übernommen ist. Die Rüstung ist die, die der NSC trägt; man wählt nur die
@@ -772,10 +784,21 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Würfel (`bandDie`) das Band innerhalb der Reichweite: Medium 1W2 (Band 1–2), Long 1W8 (Band
     2 + Würfel, also 3–10), Very Long 1W10 (Band 10 + Würfel, also 11–20). Bei Close und Short gibt
     es keinen Würfel.
-  - *Bewegen*: Der Spieler bewegt die Parteien selbst, um ein Band je Schritt: näher (von Band 0 ohne
-    Berührung in die Berührung, von Band 1 auf Band 0) oder weiter weg (aus der Berührung auf Band 0
-    ohne, dann Band für Band bis 21). Er kann das Band auch direkt setzen. Das ist kein Zug und
-    jederzeit möglich; wer wie weit gelaufen ist, hält das Modell nicht fest.
+  - *Bewegen* (Charts S. 7, Book 1: 1 Band je Runde gehend, 2 laufend): Jede Partei bewegt sich als
+    Ganzes, um ein Band je Schritt: näher (von Band 0 ohne Berührung in die Berührung, von Band 1 auf
+    Band 0) oder weiter weg (aus der Berührung auf Band 0 ohne, dann Band für Band bis 21).
+    - Bewegen darf die Partei, deren Kämpfer gerade am Zug ist (in Runde 1 mit Überraschung also nur
+      diese). Das ist kein Zug: Der Kämpfer am Zug greift danach noch an, lädt nach oder setzt aus.
+    - Wie viele Bands eine Partei in dieser Runde schon gegangen ist, steht an der Begegnung
+      (`pcMoved`, `npcMoved`; fehlt: 0). Mit der neuen Runde beginnen beide wieder bei 0.
+    - *Gehen*: 1 Band je Runde; danach greifen ihre Kämpfer wie sonst an.
+    - *Laufen*: ein zweites Band in derselben Runde, aber nur, solange noch keiner ihrer Kämpfer in
+      dieser Runde dran war. Wer läuft, greift nicht an (Book 1: Laufen zählt wie ein Schlag): Hat
+      eine Partei 2 Bands, setzen ihre Kämpfer in dieser Runde aus; Nachladen geht.
+    - Mehr als 2 Bands je Runde gehen nicht.
+    - *Frei setzen* (Ermessen der Spielleitung): Langes Drücken auf den Strahl der Entfernung setzt
+      das Band frei, jederzeit, ohne Grenze und ohne dass es als Bewegung zählt; z. B. um einen
+      Fehler zu beheben.
   - *Überraschung* (S. 5): beim Anlegen 1W6 je Partei (`pcSurprise`, `npcSurprise`) mit DMs:
     Battle Dress getragen +2; Leader-Fertigkeit +1 (bei NSC: ein Anführer); Tactics +1; militärische
     Erfahrung (SC aus Army oder Marines, NSC einer militärischen Art: Soldiers, Marines, Security
@@ -798,9 +821,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Runde nicht mehr dran.
   - Ist eine Partei ganz außer Gefecht (alle bewusstlos, schwer verwundet oder tot), ist der Kampf
     entschieden; die Begegnung läuft weiter, bis man sie beendet.
-  - **Später**: Flucht (S. 5), Moral, Bewegungsstatus je Runde nach Book 1 (Laufen 2 Bands ohne
-    Angriff und mit einem Combat Blow, Evade), Bewegung je Kämpfer statt je Partei, Tiere mit ihrer
-    Geschwindigkeit (S. 19), Deckung, mehrere Gegnergruppen.
+  - **Später**: Flucht (S. 5), Moral, Bewegung je Kämpfer statt je Partei (mit Combat Blow beim
+    Laufen, Evade), schneller laufen (3 und 4 Bands), Tiere mit ihrer Geschwindigkeit (S. 19),
+    Deckung, mehrere Gegnergruppen.
 - **Heilung.** Nach S. 7. Eine Heilung ist ein Logeintrag (`Recovery`) für einen verwundeten SC
   (`for`) oder NSC der laufenden Begegnung (`npc`), nie für einen Toten. Die Wunden (`/wounds`)
   folgen aus Schadenswürfen und Heilungen im Log, der Reihe nach; eine Heilung löschen nimmt sie
