@@ -218,6 +218,8 @@ export function partLabel(part: DmPart): string {
       return `gegen ${armorText[part.armor]} ${signed(part.dm)}`;
     case 'range':
       return `auf ${rangeText[part.range]} ${signed(part.dm)}`;
+    case 'neighbour':
+      return `Nachbar ${signed(part.dm)}`;
   }
 }
 

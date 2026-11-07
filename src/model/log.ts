@@ -85,6 +85,11 @@ export interface AttackResult extends LogEntryBase {
   readonly dice: Dice;
   readonly dm: number;
   readonly target: number;
+  /**
+   * Garbe: Die weiteren Würfe eines Feuerstoßes oder Schrotschusses verweisen auf den ersten. Im
+   * Code die Stelle des ersten Wurfs im Log; sie liegt immer davor.
+   */
+  readonly volley?: number;
 }
 
 /**
@@ -209,4 +214,25 @@ export function damageOf(roll: DamageRoll): number {
 /** Die Stellen der Schadenswürfe, die auf den Eintrag an der Stelle `index` verweisen; höchstens einer. */
 export function damageRollsOf(log: readonly LogEntry[], index: number): number[] {
   return log.flatMap((entry, i) => (entry.kind === 'damage' && entry.of === index ? [i] : []));
+}
+
+/** Die Stelle des ersten Wurfs der Garbe, zu der der Angriff an der Stelle `index` gehört; allein ist er selbst der erste. */
+export function volleyStart(log: readonly LogEntry[], index: number): number {
+  const entry = log[index];
+  return entry?.kind === 'attack' && entry.volley !== undefined ? entry.volley : index;
+}
+
+/** Die Stellen aller Würfe der Garbe, zu der der Angriff an der Stelle `index` gehört, der erste zuerst. */
+export function volleyOf(log: readonly LogEntry[], index: number): number[] {
+  const first = volleyStart(log, index);
+  return log.flatMap((entry, i) => (i === first || (entry.kind === 'attack' && entry.volley === first) ? [i] : []));
+}
+
+/** `/neighbour`: Der Wurf gehört zu einer Garbe und trifft ein anderes Ziel als der erste. */
+export function isNeighbour(log: readonly LogEntry[], index: number): boolean {
+  const entry = log[index];
+  if (entry?.kind !== 'attack' || entry.volley === undefined) return false;
+  const first = log[entry.volley];
+  if (first?.kind !== 'attack') return false;
+  return entry.against !== first.against || entry.victim !== first.victim;
 }

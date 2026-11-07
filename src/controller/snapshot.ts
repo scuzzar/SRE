@@ -18,6 +18,16 @@ import {
   damageRollsOf,
   pendingDamage,
   rangeDm,
+  hasRun,
+  moveState,
+  type MoveState,
+  rowOf,
+  roundsFor,
+  neighboursOf,
+  volleyOf,
+  isNeighbour,
+  BURST_NEIGHBOUR_DM,
+  BURST_ROLLS,
   ranges,
   weaponOf,
   weaponSkill,
@@ -120,6 +130,9 @@ import {
   characteristicOptions,
   drawnIn,
   evaluateAttack,
+  neighbourTargets,
+  canChooseFire,
+  firesBurst,
   evaluateTask,
   hasSkill,
   pickedCount,
@@ -301,7 +314,29 @@ export type DmPart =
   | { readonly kind: 'unskilled'; readonly dm: number }
   | { readonly kind: 'characteristic'; readonly characteristic: Characteristic; readonly value: number; readonly dm: number }
   | { readonly kind: 'armor'; readonly armor: ArmorClass; readonly dm: number }
-  | { readonly kind: 'range'; readonly range: Range; readonly dm: number };
+  | { readonly kind: 'range'; readonly range: Range; readonly dm: number }
+  /** Ein Nachbar im Feuerstoß: DM −3 (Book 4). */
+  | { readonly kind: 'neighbour'; readonly dm: number };
+
+/** Feuerstoß, Schrot oder Einzelschuss einer Waffe, die einen Feuerstoß kann, mit dem, was er bringt. */
+export interface FireView {
+  /** Feuerstoß (`true`) oder Einzelschuss. */
+  readonly burst: boolean;
+  /** Kann man zwischen Feuerstoß und Einzelschuss wählen (Automatic Rifle)? */
+  readonly choosable: boolean;
+  /** Wie viele Schuss der Angriff verbraucht. */
+  readonly rounds: number;
+  /** Würfe auf das Ziel: Feuerstoß 2, sonst 1. */
+  readonly rolls: number;
+  /** Höchstens so viele Nachbarn trifft er mit. */
+  readonly neighbours: number;
+  /** DM auf die Nachbarn. */
+  readonly neighbourDm: number;
+  /** Feuerstoß: die Nachbarn darüber und darunter in der Liste; Schrot: ausgelost. */
+  readonly pick: 'list' | 'random';
+  /** Die Waffe, deren Zeile der Einzelschuss nimmt (Rifle). */
+  readonly single: string | undefined;
+}
 
 /** Ein gewürfelter Angriff; bei einem Treffer mit seinem Schaden, sobald gewürfelt. */
 export interface AttackItem {
@@ -328,6 +363,16 @@ export interface AttackItem {
   readonly wounds: number;
   /** Für einen Treffer, für den noch kein Schaden gewürfelt ist. */
   readonly damagePending: boolean;
+  /** Bei einem weiteren Wurf einer Garbe: die Stelle ihres ersten Wurfs. */
+  readonly volley: number | undefined;
+  /** Der Wurf trifft einen Nachbarn des Ziels. */
+  readonly neighbour: boolean;
+  /** Beim ersten Wurf einer Garbe: Feuerstoß oder Schrot. */
+  readonly fire: 'burst' | 'shotgun' | undefined;
+  /** Beim ersten Wurf einer Garbe: alle weiteren Würfe, der Reihe nach. */
+  readonly rest: readonly AttackItem[];
+  /** Beim ersten Wurf einer Garbe: Für irgendeinen ihrer Treffer steht der Schaden noch aus. */
+  readonly volleyPending: boolean;
 }
 
 /** Ein Schadenswurf; er steht im Kasten seines Treffers (`of`). */
@@ -377,7 +422,20 @@ export interface FighterView {
   /** Kann Ziel dessen sein, der am Zug ist. */
   readonly targetable: boolean;
   readonly targeted: boolean;
+  /** Ein Feuerstoß auf das gewählte Ziel träfe ihn als Nachbarn mit (darüber oder darunter in der Liste). */
+  readonly neighbour: boolean;
   readonly healing: HealingView;
+}
+
+/**
+ * Was der neueste Eintrag im Log einem Kämpfer getan hat, für eine kurze Animation: ein Treffer oder
+ * Fehlschuss eines Angriffs, oder Schaden. `key` ist je Ereignis eindeutig.
+ */
+export interface Impact {
+  readonly id: string;
+  readonly kind: 'hit' | 'miss' | 'damage';
+  readonly damage: number | undefined;
+  readonly key: string;
 }
 
 /** Die Kampfsimulation einer laufenden Begegnung. */
@@ -422,10 +480,18 @@ export interface SimView {
         readonly reaches: boolean;
         /** Bei einer Schusswaffe eines SC. */
         readonly ammo: { readonly rounds: number; readonly capacity: number; readonly magazines: number } | undefined;
+        /** Feuerstoß oder Schrot der Waffe am Zug. */
+        readonly fire: FireView | undefined;
+        /** Seine Partei ist in dieser Runde gelaufen: kein Angriff. */
+        readonly ran: boolean;
       }
     | undefined;
   /** Ist eine Partei außer Gefecht, ist der Kampf entschieden. */
   readonly defeated: Side | undefined;
+  /** Wie weit sich die Partei am Zug in dieser Runde noch bewegen kann; ohne Zug keine Bewegung. */
+  readonly move: MoveState | undefined;
+  /** Was der neueste Eintrag im Log den Kämpfern getan hat. */
+  readonly impacts: readonly Impact[];
   /** Die Range Bands je Reichweite (erstes und letztes Band) und ob die Waffe dessen am Zug hinreicht. */
   readonly bands: readonly { readonly range: Range; readonly from: number; readonly to: number; readonly reaches: boolean }[];
 }
@@ -500,12 +566,14 @@ export interface CombatView {
   readonly rows: readonly { readonly armor: ArmorClass; readonly dm: number; readonly fixed: boolean; readonly cells: readonly CombatCell[] }[];
   /** Das gewählte Ziel mit DM, nötigem Wurf und Chance; erst dann lässt sich angreifen. */
   readonly target: { readonly armor: ArmorClass; readonly range: Range; readonly dm: number; readonly need: number; readonly chance: number; readonly parts: readonly DmPart[] } | undefined;
-  /** Der neueste Treffer ohne Schaden: dafür lässt sich der Schaden würfeln. */
-  readonly damage: { readonly index: number; readonly weapon: string; readonly wounds: number } | undefined;
+  /** Der neueste Treffer ohne Schaden (bei einer Garbe der nächste): dafür lässt sich der Schaden würfeln, mit wen er trifft. */
+  readonly damage: { readonly index: number; readonly weapon: string; readonly wounds: number; readonly victim: string | undefined; readonly left: number } | undefined;
   /** Bei Schusswaffen: geladene Schuss, Größe des Magazins, wie viele Magazine (mit Namen) im Besitz sind. */
   readonly ammo: { readonly rounds: number; readonly capacity: number; readonly magazine: string; readonly magazines: number } | undefined;
-  /** Kann der Angreifer angreifen (nicht bewusstlos, Ziel nicht tot, Magazin nicht leer)? */
+  /** Kann der Angreifer angreifen (nicht bewusstlos, Ziel nicht tot, genug Schuss geladen)? */
   readonly canAttack: boolean;
+  /** Feuerstoß oder Schrot der Waffe des Angreifers. */
+  readonly fire: FireView | undefined;
   /** Die laufende Begegnung: Mit ihr zeigt der Reiter die Kampfsimulation statt der Waffentabelle. */
   readonly sim: SimView | undefined;
   /** Die Geländearten zum Anlegen einer Begegnung. */
@@ -604,6 +672,8 @@ export interface ShopView {
     }[];
   }[];
   readonly error: string | undefined;
+  /** Gleich nach dem Kauf einer Rüstung: Soll er sie anlegen? Mit dem, was er jetzt trägt. */
+  readonly wearOffer: { readonly character: string; readonly item: string; readonly worn: string | undefined } | undefined;
 }
 
 export interface CardView {
@@ -706,12 +776,16 @@ export interface ControllerState {
   readonly attack: Attack | undefined;
   /** Was im Shop zuletzt nicht ging. */
   readonly shopError: string | undefined;
+  /** Gleich nach dem Kauf einer Rüstung: wer sie gekauft hat, zum Anlegen. */
+  readonly wearOffer: { readonly character: string; readonly item: string } | undefined;
   /** Schaden an einem SC, den der Spieler gerade verteilt. */
   readonly wounding: Wounding | undefined;
   /** Was beim Würfeln einer Begegnung herauskam, wenn es keine gibt, oder was nicht ging. */
   readonly combatNote: string | undefined;
   /** Das Ziel dessen, der in der Kampfsimulation am Zug ist (Id eines SC oder NSC). */
   readonly simTarget: string | undefined;
+  /** Feuerstoß oder Einzelschuss dessen, der in der Kampfsimulation am Zug ist; fehlt: vorgewählt. */
+  readonly simBurst: boolean | undefined;
   /** Die Übersicht einer eben gewürfelten Begegnung steht im Vordergrund. */
   readonly encounterIntro: boolean;
   /** Der Charakter, dessen Details im Charakter-Screen aufgeklappt sind. */
@@ -787,16 +861,39 @@ function taskItem(campaign: Campaign, entry: TaskResult): TaskItem {
 }
 
 /** Die Teile des DM eines Angriffs, nach dem heutigen Stand des Angreifers; Rüstung und Reichweite aus den Referenzdaten. */
-function attackParts(attacker: Fighter, weaponId: string, armor: ArmorClass, range: Range): DmPart[] {
+function attackParts(attacker: Fighter, weaponId: string, armor: ArmorClass, range: Range, burst = true, neighbour = false): DmPart[] {
   const weapon = weaponOf(weaponId);
+  const row = rowOf(weapon, burst);
   const characteristic = attackCharacteristic(weapon);
   const value = valueOf(attacker.upp, characteristic);
   return [
     { kind: 'skill', name: skillOf(weapon.uses).name, level: attacker.skill, dm: attacker.skill },
-    { kind: 'armor', armor, dm: armorDm(weapon, armor) },
-    { kind: 'range', range, dm: rangeDm(weapon, range) ?? 0 },
+    { kind: 'armor', armor, dm: armorDm(row, armor) },
+    { kind: 'range', range, dm: rangeDm(row, range) ?? 0 },
     { kind: 'characteristic', characteristic, value, dm: characteristicAttackDm(weapon, value) },
+    ...(neighbour && burst ? [{ kind: 'neighbour' as const, dm: BURST_NEIGHBOUR_DM }] : []),
   ];
+}
+
+/** Feuerstoß, Schrot oder Einzelschuss einer Waffe; `undefined` für Waffen ohne beides. */
+function fireView(weapon: Weapon, burst: boolean): FireView | undefined {
+  if (weapon.burst === undefined && weapon.neighbours === undefined) return undefined;
+  return {
+    burst,
+    choosable: canChooseFire(weapon),
+    rounds: roundsFor(weapon, burst),
+    rolls: burst ? BURST_ROLLS : 1,
+    neighbours: neighboursOf(weapon, burst),
+    neighbourDm: burst ? BURST_NEIGHBOUR_DM : 0,
+    pick: burst ? 'list' : 'random',
+    single: weapon.single === undefined ? undefined : weaponOf(weapon.single).name,
+  };
+}
+
+/** War der Angriff an der Stelle `index` Teil eines Feuerstoßes? Ein Feuerstoß hat immer mehr als einen Wurf. */
+function wasBurst(log: readonly LogEntry[], index: number): boolean {
+  const entry = log[index] as AttackResult;
+  return weaponOf(entry.with).burst !== undefined && volleyOf(log, index).length > 1;
 }
 
 function attackerOfEntry(entry: AttackResult): Combatant {
@@ -811,7 +908,19 @@ function attackItem(campaign: Campaign, entry: AttackResult, index: number): Att
   const attacker = fighterOf(campaign, attackerOfEntry(entry));
   const victim = victimOf(entry);
   const success = isSuccess(entry);
+  const log = campaign.log;
+  const burst = wasBurst(log, index);
+  const neighbour = isNeighbour(log, index);
+  const group = volleyOf(log, index);
+  const first = entry.volley === undefined;
+  const rest = first ? group.slice(1).map((i) => attackItem(campaign, log[i] as AttackResult, i)) : [];
+  const pendingIn = (i: number) => isSuccess(log[i] as AttackResult) && damageRollsOf(log, i).length === 0;
   return {
+    volley: entry.volley,
+    neighbour,
+    fire: first && group.length > 1 ? (burst ? 'burst' : 'shotgun') : undefined,
+    rest,
+    volleyPending: first && group.some(pendingIn),
     kind: 'attack',
     at: entry.at,
     character: attacker.name,
@@ -825,7 +934,7 @@ function attackItem(campaign: Campaign, entry: AttackResult, index: number): Att
     total: sum(entry.dice) + entry.dm,
     need: entry.target - entry.dm,
     success,
-    parts: attackParts(attacker, entry.with, entry.armor, entry.range),
+    parts: attackParts(attacker, entry.with, entry.armor, entry.range, burst || weaponOf(entry.with).single === undefined, neighbour),
     wounds: weaponOf(entry.with).wounds,
     damagePending: success && damageRollsOf(campaign.log, index).length === 0,
   };
@@ -846,6 +955,13 @@ function damageItem(campaign: Campaign, entry: DamageRoll): DamageItem {
   };
 }
 
+/** Der anstehende Schaden: Waffe, Würfel, Ziel und wie viele Treffer der Garbe noch ohne Schaden sind (mit diesem). */
+function damageView(campaign: Campaign, index: number, hit: AttackResult): NonNullable<CombatView['damage']> {
+  const victim = victimOf(hit);
+  const left = volleyOf(campaign.log, index).filter((i) => isSuccess(campaign.log[i] as AttackResult) && damageRollsOf(campaign.log, i).length === 0).length;
+  return { index, weapon: weaponName(hit.with), wounds: weaponOf(hit.with).wounds, victim: victim && nameOf(campaign, victim), left };
+}
+
 function weaponLabel(character: Character, weaponId: string): WeaponChoice {
   const weapon = weaponOf(weaponId);
   const level = weaponSkill(character, weapon)?.level ?? 0;
@@ -864,16 +980,18 @@ function weaponName(id: string): string {
   return id === HANDS ? 'Hände' : weaponOf(id).name;
 }
 
-function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined, intro: boolean): CombatView | undefined {
+function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined, intro: boolean, simBurst: boolean | undefined): CombatView | undefined {
   const character = focusOf(campaign);
   if (!character) return undefined;
   const current = attack ?? {};
   const attacker = attackerOf(current, campaign);
   const defender = defenderOf(current, campaign);
   const weapon = attacker.weapon;
+  const burst = firesBurst(weapon, current);
+  const row = rowOf(weapon, burst);
   const characteristic = attackCharacteristic(weapon);
   const value = valueOf(attacker.upp, characteristic);
-  const [skill, , , counted] = attackParts(attacker, weapon.id, 'nothing', 'close');
+  const [skill, , , counted] = attackParts(attacker, weapon.id, 'nothing', 'close', burst);
   const table = attackTable(campaign, current);
   const target = attack ? evaluateAttack(attack, campaign) : undefined;
   const pending = pendingDamage(campaign.log);
@@ -903,10 +1021,10 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
       advantageousDm: weapon.advantageousDm,
     },
     base: [skill!, counted!],
-    ranges: ranges.map((range) => ({ range, dm: rangeDm(weapon, range) })),
+    ranges: ranges.map((range) => ({ range, dm: rangeDm(row, range) })),
     rows: armorClasses.map((armor, i) => ({
       armor,
-      dm: armorDm(weapon, armor),
+      dm: armorDm(row, armor),
       fixed: defender?.armor === armor,
       cells: ranges.map((range, j) => {
         const odds = table[i]![j];
@@ -920,12 +1038,13 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
     })),
     target:
       attack?.armor !== undefined && attack.range !== undefined && target
-        ? { armor: attack.armor, range: attack.range, dm: target.dm.total, need: target.need, chance: target.chance, parts: attackParts(attacker, weapon.id, attack.armor, attack.range) }
+        ? { armor: attack.armor, range: attack.range, dm: target.dm.total, need: target.need, chance: target.chance, parts: attackParts(attacker, weapon.id, attack.armor, attack.range, burst) }
         : undefined,
-    canAttack: canFight(attacker.state) && defender?.state !== 'dead' && !(current.by === undefined && ammo?.rounds === 0),
-    damage: pendingHit && pending !== undefined ? { index: pending, weapon: weaponName(pendingHit.with), wounds: weaponOf(pendingHit.with).wounds } : undefined,
+    canAttack: canFight(attacker.state) && defender?.state !== 'dead' && !(current.by === undefined && ammo !== undefined && ammo.rounds < roundsFor(weapon, burst)),
+    fire: fireView(weapon, burst),
+    damage: pendingHit && pending !== undefined ? damageView(campaign, pending, pendingHit) : undefined,
     ammo: current.by === undefined && ammo ? { rounds: ammo.rounds, capacity: ammo.capacity, magazine: itemLabel(itemOf(ammo.ammo)), magazines: ammo.magazines } : undefined,
-    sim: encounter && simView(campaign, encounter, simTarget),
+    sim: encounter && simView(campaign, encounter, simTarget, simBurst),
     terrains: ref.encounters.terrains,
     canEncounter: campaign.location !== undefined,
     location: campaign.location,
@@ -938,7 +1057,7 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
   };
 }
 
-function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, turn: FightSlot | undefined, target: string | undefined): FighterView {
+function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, turn: FightSlot | undefined, target: string | undefined, neighbours: readonly string[]): FighterView {
   const fighter = fighterOf(campaign, slot.who);
   const npc = 'npc' in slot.who ? npcOf(campaign, slot.who.npc) : undefined;
   const character = 'pc' in slot.who ? characterOf(campaign, slot.who.pc) : undefined;
@@ -959,11 +1078,12 @@ function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, 
     turn: turn?.id === slot.id,
     targetable: turn !== undefined && turn.side !== slot.side && fighter.state !== 'dead',
     targeted: target === slot.id,
+    neighbour: neighbours.includes(slot.id),
     healing: recoveryOptions(campaign, slot.who),
   };
 }
 
-function simView(campaign: Campaign, running: Encounter, target: string | undefined): SimView {
+function simView(campaign: Campaign, running: Encounter, target: string | undefined, simBurst: boolean | undefined): SimView {
   const turn = turnOf(campaign);
   const encounter = fightState(campaign, running);
   const order = fightOrder(campaign, encounter);
@@ -974,6 +1094,7 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
   if (turn) {
     const attacker = fighterOf(campaign, turn.who);
     weapon = attacker.weapon;
+    const burst = firesBurst(attacker.weapon, simBurst === undefined ? {} : { burst: simBurst });
     let odds: NonNullable<SimView['turn']>['odds'];
     const valid = target !== undefined && order.some((s) => s.id === target && s.side !== turn.side);
     if (valid) {
@@ -981,10 +1102,10 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
         // Für den Zug steht der SC am Zug bzw. das Ziel des NSC oben; der Controller holt ihn beim Angriff nach oben.
         const top = turn.side === 'pcs' ? turn.id : target;
         const ready = focusOf(campaign)?.id === top ? campaign : { ...campaign, focus: top };
-        const attack = turnAttack(ready, target);
+        const attack = { ...turnAttack(ready, target), burst };
         const evaluated = evaluateAttack(attack, ready);
         if (evaluated && attack.armor !== undefined && attack.range !== undefined) {
-          odds = { dm: evaluated.dm.total, need: evaluated.need, chance: evaluated.chance, parts: attackParts(attacker, attacker.weapon.id, attack.armor, attack.range) };
+          odds = { dm: evaluated.dm.total, need: evaluated.need, chance: evaluated.chance, parts: attackParts(attacker, attacker.weapon.id, attack.armor, attack.range, burst) };
         }
       } catch (error) {
         if (!(error instanceof DomainError)) throw error;
@@ -999,8 +1120,10 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
       weapon: weaponName(attacker.weapon.id),
       target: valid ? target : undefined,
       odds,
-      reaches: range !== undefined && rangeDm(attacker.weapon, range) !== undefined,
+      reaches: range !== undefined && rangeDm(rowOf(attacker.weapon, burst), range) !== undefined,
       ammo: ammo && { rounds: ammo.rounds, capacity: ammo.capacity, magazines: ammo.magazines },
+      fire: fireView(attacker.weapon, burst),
+      ran: hasRun(campaign, turn.side),
     };
   }
   return {
@@ -1024,11 +1147,44 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
     first: firstSide(encounter),
     pcSurprise: encounter.pcSurprise,
     npcSurprise: encounter.npcSurprise,
-    fighters: order.map((slot) => fighterView(campaign, slot, encounter, turn, turnView?.target)),
+    fighters: order.map((slot) => fighterView(campaign, slot, encounter, turn, turnView?.target, previewNeighbours(campaign, order, turn, turnView?.target, simBurst))),
     turn: turnView,
     defeated: defeatedSide(campaign, encounter),
+    move: moveState(campaign),
+    impacts: impactsOf(campaign),
     bands: ref.encounters.bands.map((b) => ({ range: b.range, from: b.from, to: b.to, reaches: weapon === undefined || rangeDm(weapon, b.range) !== undefined })),
   };
+}
+
+/** Die Id eines Kämpfers in der Simulation: SC `c…`, NSC `n…`. */
+function slotId(who: Combatant): string {
+  return 'pc' in who ? who.pc : who.npc;
+}
+
+/** Wen ein Feuerstoß auf das gewählte Ziel als Nachbarn mit träfe; die Schrotflinte lost erst beim Würfeln, also keinen. */
+function previewNeighbours(campaign: Campaign, order: readonly FightSlot[], turn: FightSlot | undefined, target: string | undefined, simBurst: boolean | undefined): readonly string[] {
+  const slot = target === undefined ? undefined : order.find((s) => s.id === target);
+  if (!turn || !slot) return [];
+  const weapon = fighterOf(campaign, turn.who).weapon;
+  const burst = firesBurst(weapon, simBurst === undefined ? {} : { burst: simBurst });
+  if (!burst) return [];
+  return neighbourTargets(campaign, slot.who, weapon, true, { int: (min) => min }).map(slotId);
+}
+
+/** Was der neueste Eintrag im Log angerichtet hat: Schaden an einem Kämpfer, oder Treffer und Fehlschüsse der neuesten Garbe. */
+function impactsOf(campaign: Campaign): readonly Impact[] {
+  const last = campaign.log.length - 1;
+  const entry = campaign.log[last];
+  if (entry?.kind === 'damage') {
+    const who = victimOf(campaign.log[entry.of] as AttackResult);
+    return who && entry.to !== undefined ? [{ id: slotId(who), kind: 'damage', damage: damageOf(entry), key: `d${last}` }] : [];
+  }
+  if (entry?.kind !== 'attack') return [];
+  return volleyOf(campaign.log, last).flatMap((i) => {
+    const roll = campaign.log[i] as AttackResult;
+    const who = victimOf(roll);
+    return who ? [{ id: slotId(who), kind: isSuccess(roll) ? ('hit' as const) : ('miss' as const), damage: undefined, key: `a${i}` }] : [];
+  });
 }
 
 /** Der Würfel des Startbands mit seinen Seiten: so viele Bands hat die gewürfelte Reichweite. */
@@ -1072,7 +1228,14 @@ function woundingView(campaign: Campaign, wounding: Wounding): WoundingView {
   };
 }
 
-function shopView(campaign: Campaign, error: string | undefined): ShopView {
+/** Das Angebot, eine eben gekaufte Rüstung anzulegen, solange er sie hat und nicht schon trägt. */
+function wearOfferView(campaign: Campaign, offer: ControllerState['wearOffer']): ShopView['wearOffer'] {
+  const character = offer && campaign.characters.find((c) => c.id === offer.character);
+  if (!offer || !character || character.wears === offer.item || !character.possessions.some((p) => p.of === offer.item)) return undefined;
+  return { character: character.name, item: itemLabel(itemOf(offer.item)), worn: character.wears === undefined ? undefined : itemLabel(itemOf(character.wears)) };
+}
+
+function shopView(campaign: Campaign, error: string | undefined, offerToWear: ControllerState['wearOffer']): ShopView {
   const funds = fundsOf(campaign);
   const world = locationOf(campaign);
   const offer = world ? offerOf(world) : [];
@@ -1153,6 +1316,7 @@ function shopView(campaign: Campaign, error: string | undefined): ShopView {
       }),
     })),
     error,
+    wearOffer: wearOfferView(campaign, offerToWear),
   };
 }
 
@@ -1292,8 +1456,8 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     npcs: npcCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background, dead: c.dead })),
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
-    combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro),
-    shop: shopView(campaign, state.shopError),
+    combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.simBurst),
+    shop: shopView(campaign, state.shopError, state.wearOffer),
     location: campaign.location,
     result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : undefined,
     editor: state.editor && {

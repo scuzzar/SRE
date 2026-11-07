@@ -49,6 +49,18 @@
     },
     {
       "id": "2026-11-07",
+      "file": "2026-11-07-flaechenschaden",
+      "title": "Flächenschaden: Feuerstoß und Schrotflinte",
+      "approved": true
+    },
+    {
+      "id": "2026-11-07b",
+      "file": "2026-11-07-bewegung-und-ruestung",
+      "title": "Bewegung je Partei und Runde, Rüstung tragen",
+      "approved": true
+    },
+    {
+      "id": "2026-11-07c",
       "file": "2026-11-07-ueberlauf-der-wunden",
       "title": "Überlauf der Wunden: Schaden in Blöcken",
       "approved": true,

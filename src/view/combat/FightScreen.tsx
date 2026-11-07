@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent } from 'react';
-import type { CombatView, FighterView, SimView } from '../../controller';
+import type { CombatView, FighterView, Impact, SimView } from '../../controller';
 import type { Range } from '../../model';
 import { hex, rangeText, signed, woundStateText } from '../format';
 import { useGame } from '../game-context';
@@ -7,14 +7,17 @@ import { haptic } from '../haptics';
 import { CombatIcon, DiceIcon } from '../icons';
 import { DicePairView, THROW_MS, useTimeline } from '../Dice';
 import type { Patient } from './CombatScreen';
+import { FireToggle } from './FireToggle';
 
 /**
  * Die Kampfsimulation einer laufenden Begegnung: oben fest Runde, Reaktion, Überraschung und
  * Entfernung, darunter scrollen die NSC in Zugreihenfolge. Wer am Zug ist, wählt nur ein Ziel und würfelt; Rüstung ist die des
  * Ziels, Reichweite die Entfernung. Nach einem Treffer der Schaden, dann der nächste Zug.
  */
-export function FightScreen({ combat, onHeal }: { combat: CombatView; onHeal: (patient: Patient) => void }) {
+export function FightScreen({ combat, onHeal, quiet }: { combat: CombatView; onHeal: (patient: Patient) => void; quiet: boolean }) {
   const sim = combat.sim!;
+  // Solange ein Popup offen ist, warten die Animationen; sonst liefen sie ungesehen dahinter ab.
+  const impacts = quiet ? [] : sim.impacts;
   // Welche NSC zum Übernehmen angehakt sind; undefined heißt: keine Auswahl offen. Reine Anzeige,
   // übernehmen tut der Controller. Wer nicht mehr übernommen werden kann, fällt heraus.
   const [chosen, setChosen] = useState<readonly string[] | undefined>(undefined);
@@ -38,7 +41,7 @@ export function FightScreen({ combat, onHeal }: { combat: CombatView; onHeal: (p
             {combat.note}
           </p>
         )}
-        <Fighters sim={sim} onHeal={onHeal} selection={selection} />
+        <Fighters sim={sim} onHeal={onHeal} selection={selection} impacts={impacts} />
       </section>
       {picked ? <AdoptDock picked={picked} selection={selection} /> : <FightDock combat={combat} sim={sim} />}
     </>
@@ -165,33 +168,54 @@ export function distanceText(sim: SimView): string {
 
 /**
  * Die Entfernung für alle Angriffe in einer Zeile: links die Reichweite, daneben der Strahl mit
- * einem Punkt je Band und Strichen an den Grenzen, zwischen zwei Pfeilen. ◀ rückt näher, ▶ weiter
- * weg; auf den Strahl tippen setzt das Band. Wohin die Waffe am Zug nicht reicht, ist gestrichelt.
+ * einem Punkt je Band und Strichen an den Grenzen, zwischen zwei Pfeilen. ◀ geht ein Band näher, ▶
+ * weiter weg, nach den Regeln für die Partei am Zug (1 Band gehend, 2 laufend). Langes Drücken auf
+ * den Strahl setzt das Band frei. Wohin die Waffe am Zug nicht reicht, ist gestrichelt.
  */
 function RangeBar({ sim }: { sim: SimView }) {
   const game = useGame();
+  const pointer = useRef(0);
+  const ray = useRef<HTMLDivElement>(null);
+  const free = useLongPress(() => {
+    const box = ray.current?.getBoundingClientRect();
+    if (!box) return;
+    const s = Math.min(LAST_STEP, Math.max(0, Math.round(((pointer.current - box.left - RAY_PAD) / (box.width - 2 * RAY_PAD)) * LAST_STEP)));
+    game.setBand(s === 0 ? 0 : s - 1, s === 0);
+  });
+  const move = sim.move;
   const step = stepOf(sim);
   const reaches = (s: number) => bandOfStep(sim, s).reaches;
   const steps = Array.from({ length: LAST_STEP + 1 }, (_, s) => s);
   const lastReach = steps.filter(reaches).pop() ?? 0;
   const at = (i: number, n?: number) => ({ '--i': String(i), ...(n === undefined ? {} : { '--n': String(n) }) }) as CSSProperties;
   const zones = sim.bands.filter((b) => b.range !== 'close');
-  const tap = (e: MouseEvent<HTMLDivElement>) => {
-    const box = e.currentTarget.getBoundingClientRect();
-    const s = Math.min(LAST_STEP, Math.max(0, Math.round(((e.clientX - box.left - RAY_PAD) / (box.width - 2 * RAY_PAD)) * LAST_STEP)));
+  const moveText = move ? `${sideName[move.side]} ${move.ran ? 'gelaufen, kein Angriff' : move.moved === 1 ? (move.can ? 'gegangen · 1 mehr: laufen' : 'gegangen') : '1 Band gehen, 2 laufen'}` : 'keiner am Zug';
+  const step1 = (dir: -1 | 1) => {
     haptic('pick');
-    game.setBand(s === 0 ? 0 : s - 1, s === 0);
+    game.moveBand(dir);
   };
   return (
+    <>
     <div className="ray-range">
       <div className="ray-now" aria-live="polite">
         <b>{sim.escaped || !sim.range ? 'Entkommen' : rangeText[sim.range]}</b>
         <span>{sim.escaped ? 'über 20 Bands' : sim.close ? 'Berührung' : `Band ${sim.band}`}</span>
       </div>
-      <button type="button" className="ray-arrow" aria-label="Ein Band näher" disabled={step === 0} onClick={() => game.moveBand(-1)}>
+      <button type="button" className="ray-arrow" aria-label="Ein Band näher" disabled={step === 0 || !move?.can} onClick={() => step1(-1)}>
         ◀
       </button>
-      <div className="ray" onClick={tap} role="img" aria-label={`Entfernung: ${distanceText(sim)}`}>
+      <div
+        className="ray"
+        ref={ray}
+        {...free.handlers}
+        onPointerDown={(e) => {
+          pointer.current = e.clientX;
+          free.handlers.onPointerDown(e);
+        }}
+        onClick={() => free.consumed()}
+        role="img"
+        aria-label={`Entfernung: ${distanceText(sim)}. Lange drücken: frei setzen`}
+      >
         <span className="ray-line" style={at(0, lastReach)} />
         {lastReach < LAST_STEP && <span className="ray-line out" style={at(lastReach, LAST_STEP - lastReach)} />}
         {zones.map((b) => {
@@ -221,10 +245,15 @@ function RangeBar({ sim }: { sim: SimView }) {
           </span>
         )}
       </div>
-      <button type="button" className="ray-arrow" aria-label="Ein Band weiter weg" disabled={sim.escaped} onClick={() => game.moveBand(1)}>
+      <button type="button" className="ray-arrow" aria-label="Ein Band weiter weg" disabled={sim.escaped || !move?.can} onClick={() => step1(1)}>
         ▶
       </button>
     </div>
+    <p className={move?.ran ? 'ray-move ran' : 'ray-move'} title={move?.reason}>
+      <span>{moveText}</span>
+      <span className="muted">halten: frei</span>
+    </p>
+    </>
   );
 }
 
@@ -232,7 +261,7 @@ function RangeBar({ sim }: { sim: SimView }) {
  * Die NSC der Begegnung; die SC stehen oben in der Leiste. Wer zum Ziel eines SC am Zug taugt, lässt
  * sich antippen. Langes Drücken auf einen NSC öffnet die Auswahl zum Übernehmen; dann hakt Antippen an.
  */
-function Fighters({ sim, onHeal, selection }: { sim: SimView; onHeal: (patient: Patient) => void; selection: Selection }) {
+function Fighters({ sim, onHeal, selection, impacts }: { sim: SimView; onHeal: (patient: Patient) => void; selection: Selection; impacts: readonly Impact[] }) {
   const fighters = sim.fighters.filter((f) => f.side === 'npcs');
   if (fighters.length === 0) return null;
   return (
@@ -245,21 +274,21 @@ function Fighters({ sim, onHeal, selection }: { sim: SimView; onHeal: (patient: 
       </div>
       <ol className="fighter-list">
         {fighters.map((f) => (
-          <FighterRow key={f.id} fighter={f} onHeal={onHeal} selection={selection} />
+          <FighterRow key={f.id} fighter={f} onHeal={onHeal} selection={selection} impacts={impacts.filter((i) => i.id === f.id)} />
         ))}
       </ol>
     </div>
   );
 }
 
-function FighterRow({ fighter: f, onHeal, selection }: { fighter: FighterView; onHeal: (patient: Patient) => void; selection: Selection }) {
+function FighterRow({ fighter: f, onHeal, selection, impacts }: { fighter: FighterView; onHeal: (patient: Patient) => void; selection: Selection; impacts: readonly Impact[] }) {
   const game = useGame();
   const adoptable = canAdopt(f);
   const choosing = selection.picked !== undefined;
   const checked = selection.picked?.includes(f.id) ?? false;
   const press = useLongPress(() => (choosing ? selection.toggle(f.id) : selection.start(f.id)));
   const physical = (['str', 'dex', 'end'] as const).map((k) => ({ k, value: f.current[k], hurt: f.current[k] < f.upp[k] }));
-  const classes = ['fighter', f.turn ? 'turn' : '', f.targeted && !choosing ? 'targeted' : '', checked ? 'chosen' : '', f.acted ? 'acted' : '', f.state === 'dead' ? 'out' : ''].filter(Boolean).join(' ');
+  const classes = ['fighter', f.turn ? 'turn' : '', f.targeted && !choosing ? 'targeted' : '', f.neighbour && !choosing ? 'neighbour' : '', checked ? 'chosen' : '', f.acted ? 'acted' : '', f.state === 'dead' ? 'out' : ''].filter(Boolean).join(' ');
   // In der Auswahl hakt Antippen an; sonst wählt es das Ziel, wenn der NSC dazu taugt.
   const enabled = choosing ? adoptable : f.targetable;
   const tap = () => {
@@ -285,9 +314,9 @@ function FighterRow({ fighter: f, onHeal, selection }: { fighter: FighterView; o
           {choosing && adoptable && <span className={checked ? 'fighter-check checked' : 'fighter-check'} aria-hidden="true">
               {checked ? '✓' : ''}
             </span>}
-          {f.turn && <span className="fighter-turn">▶ </span>}
           {f.name}
           {f.leader && <span className="npc-leader"> · Anführer</span>}
+          {!choosing && <RoleBadge fighter={f} />}
         </span>
         <span className={`npc-state state-${f.state}`}>
           {woundStateText[f.state]}
@@ -305,6 +334,7 @@ function FighterRow({ fighter: f, onHeal, selection }: { fighter: FighterView; o
           </span>
         </span>
       </button>
+      <ImpactMarks impacts={impacts} />
       {!choosing && (f.healing.wake || f.healing.treatable) && (
         <div className="npc-actions">
           <button type="button" className="ghost compact" onClick={() => onHeal(f.side === 'npcs' ? { npc: f.id, name: f.name } : { npc: undefined, pc: f.id, name: f.name })}>
@@ -316,18 +346,63 @@ function FighterRow({ fighter: f, onHeal, selection }: { fighter: FighterView; o
   );
 }
 
+/** Am Zug, Ziel oder Nachbar als Abzeichen hinter dem Namen; auch in der Leiste der SC. */
+export function RoleBadge({ fighter: f }: { fighter: Pick<FighterView, 'turn' | 'targeted' | 'neighbour'> }) {
+  if (f.turn) return <span className="role-badge turn">▶ am Zug</span>;
+  if (f.targeted) return <span className="role-badge target">⌖ Ziel</span>;
+  if (f.neighbour) return <span className="role-badge neighbour">Nachbar</span>;
+  return null;
+}
+
+/** Bereits gespielte Animationen; auch wenn der Screen neu aufgebaut wird, läuft jede nur einmal. */
+const played = new Set<string>();
+
+/**
+ * Kurze Animationen für Treffer, Fehlschüsse und Schaden: ein Aufblitzen über der Karte und eine
+ * aufsteigende Zahl oder ein Wort. Nur Anzeige; jede läuft einmal.
+ */
+export function ImpactMarks({ impacts }: { impacts: readonly Impact[] }) {
+  // Erst wenn eine Animation durch ist, gilt sie als gespielt; ein Neuzeichnen mittendrin bricht sie nicht ab.
+  const fresh = impacts.filter((i) => !played.has(i.key));
+  if (fresh.length === 0) return null;
+  return (
+    <>
+      {fresh.map((i, n) => (
+        <Fragment key={i.key}>
+          <span className={`impact-flash ${i.kind}`} aria-hidden="true" />
+          <span className={`impact-float ${i.kind}`} style={{ '--n': String(n) } as CSSProperties} aria-hidden="true" onAnimationEnd={() => played.add(i.key)}>
+            {i.kind === 'damage' ? `−${i.damage}` : i.kind === 'hit' ? 'Treffer' : 'daneben'}
+          </span>
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
 /** Unten in zwei Zeilen: wer gegen wen, darunter Waffe mit Magazin und was er braucht; darunter Angreifen, Schaden, Nachladen, Aussetzen. */
 function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
   const game = useGame();
   const turn = sim.turn;
   const target = turn?.target === undefined ? undefined : sim.fighters.find((f) => f.id === turn.target);
-  const empty = turn?.ammo?.rounds === 0;
+  const empty = turn?.ammo !== undefined && turn.ammo.rounds < (turn.fire?.rounds ?? 1);
   return (
     <section className="dock" aria-label="Zug">
       {turn ? (
         <div className="fight-turn fight-turn-two" aria-live="polite">
           <span className="fight-who">
-            {turn.name} {target ? `→ ${target.name}` : '– Ziel antippen'}
+            <span className="who-chip turn" title="am Zug">
+              ▶ {turn.name}
+            </span>
+            <span className="who-arrow" aria-hidden="true">
+              →
+            </span>
+            {target ? (
+              <span className="who-chip target" title="Ziel">
+                ⌖ {target.name}
+              </span>
+            ) : (
+              <span className="muted">Ziel antippen</span>
+            )}
           </span>
           <span className="fight-weapon">
             <span className="muted">
@@ -336,6 +411,7 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
             </span>
             <strong className="fight-need">{!turn.reaches ? 'reicht nicht' : turn.odds ? (turn.odds.chance <= 0 ? 'unmöglich' : `${Math.max(2, turn.odds.need)}+`) : ''}</strong>
           </span>
+          {turn.fire && <FireToggle fire={turn.fire} compact />}
         </div>
       ) : (
         <p className="combat-pick">{sim.defeated ? 'Der Kampf ist entschieden. Heilen, übernehmen (lange drücken) oder die Begegnung beenden.' : 'Keiner ist am Zug.'}</p>
@@ -351,7 +427,7 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
             }}
           >
             <DiceIcon />
-            Schaden ({combat.damage.wounds}W6)
+            {combat.damage.victim ? `Schaden ${combat.damage.victim.split(' ')[0]}` : 'Schaden'} ({combat.damage.wounds}W6){combat.damage.left > 1 ? ` · noch ${combat.damage.left}` : ''}
           </button>
         ) : (
           <>
@@ -368,14 +444,14 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
             <button
               type="button"
               className="action task-roll"
-              disabled={!turn || !target || !turn.reaches || empty}
+              disabled={!turn || !target || !turn.reaches || empty || turn.ran}
               onClick={() => {
                 haptic('land');
                 game.fightAttack();
               }}
             >
               <CombatIcon />
-              Angreifen
+              {turn?.ran ? 'Gelaufen' : 'Angreifen'}
             </button>
           </>
         )}

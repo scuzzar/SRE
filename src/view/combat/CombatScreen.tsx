@@ -2,12 +2,13 @@ import { useCallback, useState } from 'react';
 import { DiceRoll } from '../oracle/DiceRoll';
 import type { CombatView, HealingView, Snapshot } from '../../controller';
 import { EncounterIntro, FightScreen } from './FightScreen';
+import { FireToggle } from './FireToggle';
 import { armorText, attackText, characteristicLabel, hex, partLabel, rangeMeters, rangeShort, rangeText, rangeTiny, signed } from '../format';
 import { CloseIcon } from '../icons';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { CombatIcon, DiceIcon } from '../icons';
-import { CharacterStrip } from '../oracle/CharacterStrip';
+import { CharacterStrip, type StripFight } from '../oracle/CharacterStrip';
 
 /**
  * Der Reiter Kampf, in zwei Modi. Ohne laufende Begegnung die **Waffentabelle**: oben die Leiste mit
@@ -32,13 +33,13 @@ export function CombatScreen({ view }: { view: Snapshot }) {
   return (
     <div className="screen">
       {/* Die SC stehen oben in der Leiste, auch in der Kampfsimulation; die Liste dort zeigt nur die NSC. */}
-      <CharacterStrip view={view} weapons heal={combat && pcHeal(combat, setPatient)} />
+      <CharacterStrip view={view} weapons heal={combat && pcHeal(combat, setPatient)} fight={combat?.sim && pcRoles(combat, view.result !== undefined || combat.wounding !== undefined)} />
       {!combat ? (
         <section className="scroll combat-scroll">
           <p className="log-empty">Ohne lebenden Charakter gibt es keinen Angriff.</p>
         </section>
       ) : combat.sim ? (
-        <FightScreen combat={combat} onHeal={setPatient} />
+        <FightScreen combat={combat} onHeal={setPatient} quiet={view.result !== undefined || combat.wounding !== undefined} />
       ) : (
         <>
           <section className="scroll combat-scroll" aria-label="Waffentabelle">
@@ -64,6 +65,16 @@ function pcHeal(combat: CombatView, onHeal: (patient: Patient) => void): { reado
   const healing = combat.sim ? pc?.healing : combat.healing;
   if (!healing || !(healing.wake || healing.treatable)) return undefined;
   return { name: combat.character, onHeal: () => onHeal({ npc: undefined, ...(pc ? { pc: pc.id } : {}), name: combat.character }) };
+}
+
+/** In der Simulation: für jeden SC, ob er am Zug, Ziel oder Nachbar ist, und was ihn eben getroffen hat. */
+function pcRoles(combat: CombatView, quiet: boolean): StripFight {
+  const sim = combat.sim!;
+  return Object.fromEntries(
+    sim.fighters
+      .filter((f) => f.side === 'pcs')
+      .map((f) => [f.id, { turn: f.turn, targeted: f.targeted, neighbour: f.neighbour, impacts: quiet ? [] : sim.impacts.filter((i) => i.id === f.id) }]),
+  );
 }
 
 function WeaponHead({ combat }: { combat: CombatView }) {
@@ -92,6 +103,7 @@ function WeaponHead({ combat }: { combat: CombatView }) {
           Magazin {combat.ammo.rounds}/{combat.ammo.capacity} Schuss · {combat.ammo.magazines} × {combat.ammo.magazine}
         </p>
       )}
+      {combat.fire && <FireToggle fire={combat.fire} />}
       <p className="weapon-dms">
         {base.map(partLabel).join(' · ')}
         <span className="muted">
@@ -179,7 +191,7 @@ function AttackDock({ combat }: { combat: CombatView }) {
             }}
           >
             <DiceIcon />
-            Schaden würfeln ({combat.damage.wounds}W6)
+            {combat.damage.victim ? `Schaden ${combat.damage.victim.split(' ')[0]}` : 'Schaden würfeln'} ({combat.damage.wounds}W6)
           </button>
         )}
         {combat.ammo && (combat.ammo.rounds < combat.ammo.capacity || combat.ammo.rounds === 0) && (

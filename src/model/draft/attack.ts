@@ -1,30 +1,40 @@
 import {
-  ammoOf,
   armorClasses,
   ATTACK_TARGET,
   attackDm,
+  BURST_NEIGHBOUR_DM,
+  BURST_ROLLS,
   canFight,
   chance2d6,
+  checkRounds,
   currentEncounter,
   DomainError,
   encounterRangeOf,
   fighterOf,
   focusOf,
+  hasRun,
+  livingCharacters,
+  neighboursOf,
   npcOf,
   rangeDm,
   ranges,
   roll2d6,
+  roundsFor,
+  rowOf,
   turnOf,
   weaponSkill,
+  woundStateOf,
   type ArmorClass,
   type AttackDm,
   type AttackResult,
   type Campaign,
   type Character,
   type Clock,
+  type Combatant,
   type Fighter,
   type Random,
   type Range,
+  type Weapon,
 } from '..';
 
 /**
@@ -38,6 +48,20 @@ export interface Attack {
   readonly range?: Range;
   readonly by?: string;
   readonly against?: string;
+  /** Feuerstoß (`true`) oder Einzelschuss; zählt nur bei einer Waffe, die beides kann. Fehlt: Feuerstoß. */
+  readonly burst?: boolean;
+}
+
+/** Schießt die Waffe einen Feuerstoß? Ohne `burst` nie, ohne `single` immer, sonst nach der Wahl (vorgewählt: Feuerstoß). */
+export function firesBurst(weapon: Weapon, attack: Attack): boolean {
+  if (weapon.burst === undefined) return false;
+  if (weapon.single === undefined) return true;
+  return attack.burst ?? true;
+}
+
+/** Kann man mit dieser Waffe zwischen Feuerstoß und Einzelschuss wählen? */
+export function canChooseFire(weapon: Weapon): boolean {
+  return weapon.burst !== undefined && weapon.single !== undefined;
 }
 
 /** Die abgeleiteten Werte eines Angriffs: `/dm`, `/need`, `/chance`, der Zielwert und woraus der DM besteht. */
@@ -84,16 +108,29 @@ export function startAttack(campaign: Campaign): Attack {
   return {};
 }
 
+/** Feuerstoß oder Einzelschuss; nur bei einer Waffe, die beides kann. */
+export function chooseFire(attack: Attack, campaign: Campaign, burst: boolean): Attack {
+  const weapon = attackerOf(attack, campaign).weapon;
+  if (!canChooseFire(weapon)) throw new DomainError(`${weapon.name} hat keine Wahl zwischen Feuerstoß und Einzelschuss.`);
+  return withRange({ ...attack, burst }, campaign);
+}
+
+/** Der Angriff mit der vorgewählten Feuerart, etwa nach einem Wechsel der Waffe. */
+export function withoutFire(attack: Attack): Attack {
+  return Object.fromEntries(Object.entries(attack).filter(([key]) => key !== 'burst'));
+}
+
 /** Behält die Reichweite, wenn die Waffe dorthin reicht. */
 function withRange(attack: Attack, campaign: Campaign): Attack {
   const rest: Attack = Object.fromEntries(Object.entries(attack).filter(([key]) => key !== 'range'));
   const range = attack.range;
-  return range !== undefined && rangeDm(attackerOf(rest, campaign).weapon, range) !== undefined ? { ...rest, range } : rest;
+  const weapon = attackerOf(rest, campaign).weapon;
+  return range !== undefined && rangeDm(rowOf(weapon, firesBurst(weapon, rest)), range) !== undefined ? { ...rest, range } : rest;
 }
 
-/** Der Angriff ohne Ziel und ohne NSC als Angreifer; nur die Reichweite bleibt. */
+/** Der Angriff ohne Ziel und ohne NSC als Angreifer; nur die Reichweite und die Feuerart bleiben. */
 function untargeted(attack: Attack): Attack {
-  return attack.range === undefined ? {} : { range: attack.range };
+  return { ...(attack.range === undefined ? {} : { range: attack.range }), ...(attack.burst === undefined ? {} : { burst: attack.burst }) };
 }
 
 /** Der Charakter oben zielt auf einen NSC der laufenden Begegnung; seine Rüstung steht damit fest. `undefined` hebt das Ziel auf. */
@@ -122,6 +159,7 @@ export function turnAttack(campaign: Campaign, target: string): Attack {
   const turn = turnOf(campaign);
   const encounter = currentEncounter(campaign);
   if (!turn || !encounter) throw new DomainError('Es ist keiner am Zug.');
+  if (hasRun(campaign, turn.side)) throw new DomainError(`Die ${turn.side === 'pcs' ? 'SC' : 'NSC'} sind in dieser Runde gelaufen und greifen nicht an.`);
   const top = attackCharacter(campaign);
   const range = encounterRangeOf(encounter);
   const at = range === undefined ? {} : { range };
@@ -139,7 +177,7 @@ export function chooseTarget(campaign: Campaign, armor: ArmorClass, range: Range
   if (!armorClasses.includes(armor) || !ranges.includes(range)) throw new DomainError('Diese Rüstung oder Reichweite gibt es nicht.');
   const defender = defenderOf(attack, campaign);
   if (defender && defender.armor !== armor) throw new DomainError(`${defender.name} trägt ${defender.armor}, nicht ${armor}.`);
-  if (rangeDm(attacker.weapon, range) === undefined) throw new DomainError(`Mit ${attacker.weapon.name} geht auf diese Reichweite kein Angriff.`);
+  if (rangeDm(rowOf(attacker.weapon, firesBurst(attacker.weapon, attack)), range) === undefined) throw new DomainError(`Mit ${attacker.weapon.name} geht auf diese Reichweite kein Angriff.`);
   return { ...attack, armor, range };
 }
 
@@ -150,8 +188,8 @@ export function keepTarget(attack: Attack, campaign: Campaign): Attack {
   return withRange(fixed, campaign);
 }
 
-function odds(attacker: Fighter, armor: ArmorClass, range: Range): AttackOdds | undefined {
-  const dm = attackDm(attacker, attacker.weapon, armor, range);
+function odds(attacker: Fighter, armor: ArmorClass, range: Range, burst: boolean): AttackOdds | undefined {
+  const dm = attackDm(attacker, attacker.weapon, armor, range, rowOf(attacker.weapon, burst));
   if (!dm) return undefined;
   const need = ATTACK_TARGET - dm.total;
   return { dm, target: ATTACK_TARGET, need, chance: chance2d6(need) };
@@ -160,7 +198,8 @@ function odds(attacker: Fighter, armor: ArmorClass, range: Range): AttackOdds | 
 /** DM, nötiger Wurf und Chance; erst mit Rüstung und Reichweite. */
 export function evaluateAttack(attack: Attack, campaign: Campaign): AttackOdds | undefined {
   if (attack.armor === undefined || attack.range === undefined) return undefined;
-  return odds(attackerOf(attack, campaign), attack.armor, attack.range);
+  const attacker = attackerOf(attack, campaign);
+  return odds(attacker, attack.armor, attack.range, firesBurst(attacker.weapon, attack));
 }
 
 /**
@@ -169,22 +208,101 @@ export function evaluateAttack(attack: Attack, campaign: Campaign): AttackOdds |
  */
 export function attackTable(campaign: Campaign, attack: Attack = {}): readonly (readonly (AttackOdds | undefined)[])[] {
   const attacker = attackerOf(attack, campaign);
-  return armorClasses.map((armor) => ranges.map((range) => odds(attacker, armor, range)));
+  const burst = firesBurst(attacker.weapon, attack);
+  return armorClasses.map((armor) => ranges.map((range) => odds(attacker, armor, range, burst)));
 }
 
-/** Würfelt den Angriff. Auch ein unmöglicher Angriff darf gewürfelt werden; er misslingt und steht trotzdem im Log. */
-export function rollAttack(attack: Attack, campaign: Campaign, random: Random, clock: Clock): AttackResult {
+/** Die Partei des Ziels als Liste: NSC in der Reihenfolge der Begegnung (ohne Übernommene), SC in der der Kampagne. */
+function partyOf(campaign: Campaign, who: Combatant): readonly Combatant[] {
+  if ('pc' in who) return livingCharacters(campaign).map((c) => ({ pc: c.id }));
+  const encounter = campaign.encounters.find((e) => e.npcs.some((n) => n.id === who.npc));
+  return (encounter?.npcs ?? []).filter((n) => n.became === undefined).map((n) => ({ npc: n.id }));
+}
+
+function same(a: Combatant, b: Combatant): boolean {
+  return 'pc' in a ? 'pc' in b && a.pc === b.pc : 'npc' in b && a.npc === b.npc;
+}
+
+/**
+ * Die Nachbarn, die ein Angriff auf `who` mit trifft (Hausregel): Infrage kommen Kämpfer seiner
+ * Partei, die nicht tot sind. Beim Feuerstoß der nächste darüber und der nächste darunter in der
+ * Liste; bei der Shotgun bis zu `neighbours` ausgeloste.
+ */
+export function neighbourTargets(campaign: Campaign, who: Combatant, weapon: Weapon, burst: boolean, random: Random): readonly Combatant[] {
+  const most = neighboursOf(weapon, burst);
+  if (most === 0) return [];
+  const party = partyOf(campaign, who);
+  const at = party.findIndex((c) => same(c, who));
+  const alive = (c: Combatant) => woundStateOf(campaign, c) !== 'dead';
+  if (burst) {
+    const above = party.slice(0, Math.max(0, at)).reverse().find(alive);
+    const below = party.slice(at + 1).find(alive);
+    return [above, below].filter((c): c is Combatant => c !== undefined).slice(0, most);
+  }
+  const pool = party.filter((c) => !same(c, who) && alive(c));
+  const picked: Combatant[] = [];
+  while (picked.length < most && pool.length > 0) picked.push(pool.splice(random.int(0, pool.length - 1), 1)[0]!);
+  return picked;
+}
+
+/** Wie viele Schuss der Angriff verbraucht: ein Feuerstoß `burst`, sonst einer. */
+export function attackRounds(attack: Attack, campaign: Campaign): number {
+  const weapon = attackerOf(attack, campaign).weapon;
+  return roundsFor(weapon, firesBurst(weapon, attack));
+}
+
+/**
+ * Würfelt den Angriff als Garbe: der erste Wurf auf das Ziel, beim Feuerstoß ein zweiter, dann je
+ * einer auf jeden Nachbarn (beim Feuerstoß mit DM −3). Die weiteren Würfe verweisen auf den ersten,
+ * der an die nächste Stelle des Logs kommt. Ein einzelner Schuss, Schlag oder Hieb ist eine Garbe
+ * aus einem Wurf. Auch ein unmöglicher Angriff darf gewürfelt werden; er misslingt und steht
+ * trotzdem im Log.
+ */
+export function rollAttack(attack: Attack, campaign: Campaign, random: Random, clock: Clock): readonly AttackResult[] {
   const attacker = attackerOf(attack, campaign);
   const evaluated = evaluateAttack(attack, campaign);
   if (!evaluated || attack.armor === undefined || attack.range === undefined) throw new DomainError('Erst Rüstung und Reichweite des Ziels wählen.');
   if (!canFight(attacker.state)) throw new DomainError(`${attacker.name} ist ${attacker.state === 'dead' ? 'tot' : 'bewusstlos'} und greift nicht an.`);
   const defender = defenderOf(attack, campaign);
   if (defender?.state === 'dead') throw new DomainError(`${defender.name} ist tot.`);
-  const base = { kind: 'attack' as const, at: clock.now(), with: attacker.weapon.id, armor: attack.armor, range: attack.range, dice: roll2d6(random), dm: evaluated.dm.total, target: evaluated.target };
-  if (attack.by !== undefined) return { ...base, by: attack.by, victim: attackCharacter(campaign).id };
-  const character = attackCharacter(campaign);
-  if (ammoOf(character)?.rounds === 0) throw new DomainError(`${attacker.weapon.name} ist leer. Erst nachladen.`);
-  const skill = weaponSkill(character, attacker.weapon);
-  const result: AttackResult = { ...base, for: character.id, ...(attack.against === undefined ? {} : { against: attack.against }) };
-  return skill ? { ...result, uses: skill.of } : result;
+  const weapon = attacker.weapon;
+  const burst = firesBurst(weapon, attack);
+  const range = attack.range;
+  const at = clock.now();
+  let who: Partial<AttackResult>;
+  if (attack.by !== undefined) who = { by: attack.by };
+  else {
+    const character = attackCharacter(campaign);
+    checkRounds(character, roundsFor(weapon, burst));
+    const skill = weaponSkill(character, weapon);
+    who = { for: character.id, ...(skill ? { uses: skill.of } : {}) };
+  }
+  const roll = (target: Combatant | undefined, armor: ArmorClass, dm: number, volley: number | undefined): AttackResult => ({
+    kind: 'attack',
+    at,
+    ...who,
+    ...(target === undefined ? {} : 'pc' in target ? { victim: target.pc } : { against: target.npc }),
+    with: weapon.id,
+    armor,
+    range,
+    dice: roll2d6(random),
+    dm,
+    target: evaluated.target,
+    ...(volley === undefined ? {} : { volley }),
+  });
+  const first = campaign.log.length;
+  const target = defender?.who;
+  const results = [roll(target, attack.armor, evaluated.dm.total, undefined)];
+  if (burst) results.push(roll(target, attack.armor, evaluated.dm.total, first));
+  if (target) {
+    for (const neighbour of neighbourTargets(campaign, target, weapon, burst, random)) {
+      const fighter = fighterOf(campaign, neighbour);
+      const dm = odds(attacker, fighter.armor, range, burst)!.dm.total + (burst ? BURST_NEIGHBOUR_DM : 0);
+      results.push(roll(neighbour, fighter.armor, dm, first));
+    }
+  }
+  return results;
 }
+
+/** Wie viele Würfe ein Feuerstoß höchstens auf das Ziel hat; für die Anzeige. */
+export const burstRolls = BURST_ROLLS;

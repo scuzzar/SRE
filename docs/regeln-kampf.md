@@ -46,15 +46,16 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Anfangsentfernung und Gelände](#anfangsentfernung-und-gelände) | SE 5, SR 20 | ✔ |
 | [Entkommen und Ausweichen](#entkommen-und-ausweichen) | SE 5, SR 20–21 | ◐ (nur über 20 Bands) |
 | [Moral (einfach)](#moral-einfach) | SE 5, SR 23 | ○ |
-| [Reichweiten, Range Bands, Geschwindigkeiten](#reichweiten-range-bands-und-geschwindigkeiten) | SE 7, 24, SR 20 | ✔ ✱, Geschwindigkeiten ◐ |
-| [Bewegungsstatus](#bewegungsstatus) | SR 20–21 | ○ |
+| [Reichweiten, Range Bands, Geschwindigkeiten](#reichweiten-range-bands-und-geschwindigkeiten) | SE 7, 24, SR 20 | ✔ ✱, Geschwindigkeiten ◐ ✱ |
+| [Bewegungsstatus](#bewegungsstatus) | SR 20–21 | ◐ ✱ (Gehen und Laufen je Partei; Status je Kämpfer ○) |
 | [Angriff: Grundwurf und DMs](#angriff-grundwurf-und-erlaubte-dms) | SE 6, SR 21–22 | ◐ |
 | [Wirkung der Attribute, Ausdauer](#wirkung-der-attribute-und-ausdauer) | SR 21–22 | ◐ (Wunden zählen fälschlich mit; Ausdauer ○) |
 | [Fertigkeit, Parieren, ungeübte Waffen](#fertigkeit-parieren-und-ungeübte-waffen) | SR 22 | ◐ (Angriff ✔) |
+| [Feuerstoß und Schrot](#feuerstoß-und-schrot-nach-book-1) | B1, SR 26 | ✔ ✱ |
 | [Waffen- und Reichweitenmatrix](#waffen--und-reichweitenmatrix) | SE 6 | ✔ (ohne Tierwaffen und Zubehör) |
 | [Waffen und Ausrüstung](#waffen-und-ausrüstung) | SE 4, 23, SR 23–26 | ✔ (ohne Zubehör) |
 | [Rüstung](#rüstung) | SE 4, SR 25–26 | ✔ |
-| [Besondere Fälle](#besondere-fälle) (Ziehen, Werfen, Autofeuer, Schrot, Coup de Grâce, Nachladen) | SR 26 | ◐ (Nachladen) |
+| [Besondere Fälle](#besondere-fälle) (Ziehen, Werfen, Autofeuer, Schrot, Coup de Grâce, Nachladen) | SR 26 | ◐ (Nachladen, Autofeuer, Schrot) |
 | [Deckung, Verbergen, Dunkelheit](#deckung-und-verbergen) | SE 5, SR 26–27 | ○ |
 | [Schwerelosigkeit](#schwerelosigkeit) | SE 5, SR 27, B4 16 | ○ |
 | [Traglast und Schwerkraft](#traglast-und-schwerkraft) | SE 5, SR 22 | ○ |
@@ -62,7 +63,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Wunden und Tod](#wunden-und-tod) | SE 7, SR 21 | ✔ |
 | [Medizinische Versorgung](#medizinische-versorgung) | SE 7, SR 21 | ✔, Drogen ○ |
 | [Moral nach Book 4](#moral-nach-book-4) | B4 28–31 | ○ |
-| [Feuerregeln aus Book 4](#feuerregeln-aus-book-4) | B4 31–32 | ○ |
+| [Feuerregeln aus Book 4](#feuerregeln-aus-book-4) | B4 31–32 | ◐ (Gruppentreffer durch Autofeuer) |
 | [Waffen aus Book 4](#waffen-aus-book-4) | B4 36–41, 50–52 | ○ |
 | [Fertigkeiten aus Book 4 im Kampf](#fertigkeiten-aus-book-4-im-kampf) | B4 10–16, 26 | ○ |
 | [Abstraktes Schlachtsystem](#abstraktes-schlachtsystem) | B4 32–35 | ○ |
@@ -396,7 +397,7 @@ und Tote.
 
 *SE 7, „Ranges“, „Range Bands“, „Speeds“; gleiche Reichweiten SE 24, „Range Descriptions“; SR 20,
 „Movement“.*
-App: Reichweiten und Bands ✔, Geschwindigkeiten ◐ (die Parteien rücken mit ◀ ▶ ohne Zug)
+App: Reichweiten und Bands ✔, Geschwindigkeiten ◐ (je Partei und Runde 1 Band gehend, 2 laufend ohne Angriff; schneller laufen ○)
 
 | Range | Bedeutung |
 |---|---|
@@ -441,12 +442,16 @@ Schneller als doppelt laufen geht meist nicht lange.
   Umrechnung da. Die Regeln fürs Quadratraster (SR 23) sind nicht aufgenommen
   ([Nicht aufgenommen](#nicht-aufgenommen)).
 
+> ✱ App: Bewegung je Partei, nicht je Kämpfer: Die Partei am Zug geht 1 Band je Runde oder läuft 2;
+> wer läuft, greift in dieser Runde nicht an (SR 20). Langes Drücken setzt
+> das Band frei.
+>
 > ✱ App: Auf Band 0 unterscheidet sie Close (Berührung) und Short. Das Startband innerhalb einer
 > Reichweite ist gleichverteilt gewürfelt (Medium 1W2, Long 1W8, Very Long 1W10).
 
 ### Bewegungsstatus
 
-*SR 20–21, „Movement“.* App: ○ (die Parteien rücken als Ganzes mit ◀ ▶, ohne Status)
+*SR 20–21, „Movement“.* App: ◐ ✱ (Gehen 1 Band und Laufen 2 Bands je Partei und Runde, wer läuft, greift nicht an; Status je Kämpfer und Ausweichen ○)
 
 Vor jeder Runde sagt jeder Kämpfer seinen **Bewegungsstatus** an, dazu, ob er **geht** (1 Band),
 **läuft** (2 Bands) oder **fährt**. Alle bewegen sich **gleichzeitig**, jedes Mitglied einer Partei
@@ -485,8 +490,8 @@ Ziel** aus der anderen Partei. Alle DMs werden addiert (SR 21).
 | Reichweite | ✔ |
 | Verteidiger weicht aus (Evading) | ○ ([Bewegungsstatus](#bewegungsstatus), SR 20) |
 | Verteidiger in Deckung oder verborgen | ○ ([Deckung](#deckung-und-verbergen), SR 27) |
-| Gruppentreffer durch Schrotflinte | ○ ([Besondere Fälle](#besondere-fälle), SR 26) |
-| Gruppentreffer durch Autofeuer | ○ ([Besondere Fälle](#besondere-fälle), SR 26; [B4](#feuerregeln-aus-book-4)) |
+| Gruppentreffer durch Schrotflinte | ✔ ✱ ([Feuerstoß und Schrot](#feuerstoß-und-schrot-nach-book-1), SR 26) |
+| Gruppentreffer durch Autofeuer | ✔ ✱ ([Feuerstoß und Schrot](#feuerstoß-und-schrot-nach-book-1), SR 26; [B4](#feuerregeln-aus-book-4)) |
 | Geschwächte Schläge | ○ (DM in der [Waffentabelle](#klingen-und-nahkampf), Regel [SR 22](#wirkung-der-attribute-und-ausdauer)) |
 | Waffe ziehen | ○ ([Besondere Fälle](#besondere-fälle), SR 26) |
 | Geworfene Klinge | ○ ([Besondere Fälle](#besondere-fälle), SR 26) |
@@ -549,6 +554,36 @@ Ausdauer ○)
 - **Ungeübte Waffe:** Ohne Fertigkeit in der Waffe **−5 im Angriff** und **+3 in der Verteidigung**
   (für den Angreifer). **Spielercharaktere haben in allen Waffen des Buchs Stufe 0** (etwa
   Carbine-0); das hebt die Strafe auf, gibt aber keinen Bonus.
+
+### Feuerstoß und Schrot nach Book 1
+
+*B1 (Ausgabe 1981), „Special Considerations“: „Full Automatic Fire“, „Group Hits by Shotgun“.*
+App: ✔ ✱ (siehe `domain-model.md`, *Feuerstoß und Schrot*)
+
+> B1 liegt nicht als PDF vor. Der Wortlaut unten stammt aus einem Auszug von B1, den eine Websuche am
+> 7. November 2026 fand; die Seite ist nicht bekannt. Fast gleich steht er im Regelheft der Starter
+> Edition (SR 26, siehe [Besondere Fälle](#besondere-fälle)); dort ist der Gruppentreffer durch
+> Autofeuer schon auf 2 Nachbarn mit DM −3 begrenzt, und die Schrotflinte hat DM +2 gegen fliegende
+> Ziele.
+
+- **Full Automatic Fire:** „Submachineguns and automatic rifles fire four round bursts instead of
+  single shots. The higher ammunition usage results in the hit probabilities shown on the table
+  (auto rifle uses the rifle row on the table when firing single shots). In addition, automatic fire
+  allows rolling to hit twice against the same target.“ Also: Feuerstöße zu 4 Schuss, die DMs der
+  Matrix gelten für den Feuerstoß, das Automatic Rifle schießt einzeln mit der Zeile des Rifle, und
+  ein Feuerstoß würfelt **zweimal** auf das Ziel.
+- **Gruppentreffer durch Autofeuer:** „Regardless of the designated target for automatic fire,
+  non-evading individuals adjacent to the target are also attacked by the burst of automatic fire.“
+  Ohne DM und ohne Grenze; Book 4 begrenzt es auf 2 Nachbarn bei 4 Schuss mit DM −3
+  ([Feuerregeln aus Book 4](#feuerregeln-aus-book-4)).
+- **Group Hits by Shotgun:** „Each shot by a shotgun may attack up to three individuals adjacent to
+  the original target, provided they are in a group (herd, pack, band, etc) and are each human-sized
+  or smaller.“ Ein DM für die Nachbarn steht nicht dabei.
+
+> ✱ App: Feuerstoß mit der Grenze aus B4 und SR 26 (2 Nachbarn, DM −3); Schrot nach B1 und SR 26
+> (3 Nachbarn, ohne DM; der DM +2 gegen fliegende Ziele fehlt, es gibt noch keine). Die Parteien haben keine Plätze, nur eine Liste: Beim Feuerstoß sind die Nachbarn der
+> darüber und der darunter in der Liste, bei der Schrotflinte lost die App sie aus der Partei des
+> Ziels aus.
 
 ### Waffen- und Reichweitenmatrix
 
@@ -744,7 +779,8 @@ früher als Cloth. SE 21 und SE 23 nennen trotzdem Cloth TL 6 und Mesh TL 7.
 
 ### Besondere Fälle
 
-*SR 26, „Special Considerations“.* App: ◐ (Nachladen als Aktion ✔, ohne Ausweichen; sonst ○)
+*SR 26, „Special Considerations“.* App: ◐ (Nachladen als Aktion ✔, ohne Ausweichen; Autofeuer und
+Schrot ✔ ✱, siehe [Feuerstoß und Schrot](#feuerstoß-und-schrot-nach-book-1); sonst ○)
 
 - **Waffe ziehen:** Ohne andere Ansage sind Waffen im Holster oder umgehängt. Wer in einer Runde
   eine solche Waffe zieht und benutzt, hat **DM −3**. Ziehen zwei oder mehr gegeneinander (ohne
@@ -1010,7 +1046,7 @@ die SC treffen) nutzen diese Moral.
 
 ### Feuerregeln aus Book 4
 
-*B4 31–32, „The Traveller Combat System“.* App: ○
+*B4 31–32, „The Traveller Combat System“.* App: ◐ (Gruppentreffer durch Autofeuer, siehe [Feuerstoß und Schrot](#feuerstoß-und-schrot-nach-book-1))
 
 - **Full Automatic Fire:** Manche Waffen haben in den [Tabellen](#reichweitenmatrix-book-4) zwei DMs,
   getrennt durch „/“: der erste für **halbautomatisch**, der zweite für **Dauerfeuer**. Jeder
