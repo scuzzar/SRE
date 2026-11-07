@@ -42,7 +42,7 @@ const steps: readonly [string, Step][] = [
   ['fight', (g) => { const t = g.snapshot().combat?.sim?.turn; if (t?.target && t.reaches && t.ammo?.rounds !== 0) g.fightAttack(); }],
   ['skip', (g) => g.snapshot().combat?.sim?.turn && g.skipTurn()],
   ['fightReload', (g) => { const t = g.snapshot().combat?.sim?.turn; if (t?.ammo && t.ammo.magazines > 0) g.fightReload(); }],
-  ['wound', (g, p) => { const w = g.snapshot().combat?.wounding; if (!w) return; if (w.to.length < w.dice.length) g.assignWound((['STR', 'DEX', 'END'] as const)[p(3)]!); else g.confirmWounding(); }],
+  ['wound', (g, p) => { const w = g.snapshot().combat?.wounding; if (!w) return; if (w.next) g.assignWound(w.next.open[p(w.next.open.length)]!); else g.confirmWounding(); }],
   ['heal', (g, p) => {
     const c = g.snapshot().combat;
     const pool = c?.sim ? c.sim.fighters : [];

@@ -59,7 +59,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Schwerelosigkeit](#schwerelosigkeit) | SE 5, SR 27, B4 16 | ○ |
 | [Traglast und Schwerkraft](#traglast-und-schwerkraft) | SE 5, SR 22 | ○ |
 | [Typische Aktionen](#typische-aktionen) | SE 5, SR 23 | ◐ |
-| [Wunden und Tod](#wunden-und-tod) | SE 7, SR 21 | ◐ (Überlauf der ersten Wunde fehlt) |
+| [Wunden und Tod](#wunden-und-tod) | SE 7, SR 21 | ✔ |
 | [Medizinische Versorgung](#medizinische-versorgung) | SE 7, SR 21 | ✔, Drogen ○ |
 | [Moral nach Book 4](#moral-nach-book-4) | B4 28–31 | ○ |
 | [Feuerregeln aus Book 4](#feuerregeln-aus-book-4) | B4 31–32 | ○ |
@@ -893,8 +893,7 @@ Spielleitung (SR 23).
 
 ### Wunden und Tod
 
-*SE 7, „Physical Characteristics“, „Wounding and Death“; SR 21, „Wounding and Death“.* App: ◐
-(Überlauf der ersten Wunde fehlt)
+*SE 7, „Physical Characteristics“, „Wounding and Death“; SR 21, „Wounding and Death“.* App: ✔
 
 - Die **physischen Attribute** sind Strength, Dexterity, Endurance. Wunden senken sie vorübergehend.
 - **Jeder Schadenswürfel ist eine Gruppe**, die nicht geteilt wird: Eine 5 auf 1W6 sind 5 Punkte auf
@@ -925,9 +924,9 @@ Spielleitung (SR 23).
 - Bewusstlos 10 Minuten sind **40 Kampfrunden**. Beim Aufwachen wird **gegen den Charakter
   gerundet**.
 
-> **Weicht ab** (`autoWounds` und `apply` in `src/model/wounds.ts`): Bei der ersten Wunde gehen alle
-> Würfel auf ein Attribut; was über 0 hinausgeht, **verfällt**, statt nach SR 21 zufällig auf die
-> anderen Attribute zu gehen.
+> App: Der Überlauf gilt bei **jedem** Treffer, wie SR 21 sagt („further points … must be applied to
+> other characteristics“): beim ersten Treffer und bei NSC zufällig, sonst wählt der Spieler. Der
+> Schadenswurf hält dafür Blöcke fest (`DamageRoll.to`, `points`; siehe `domain-model.md`, *Wunden*).
 
 ### Medizinische Versorgung
 

@@ -256,7 +256,7 @@ export function rollTitle(item: TaskItem | AttackItem): string {
 
 /** Ein Schadenswurf: „3W6: 4 + 2 + 6 = 12“. */
 export function damageDetail(item: DamageItem): string {
-  const to = item.to ? ` (${item.dice.map((d, i) => `${item.to![i]} ${d}`).join(', ')})` : '';
+  const to = item.blocks ? ` (${item.blocks.map((b) => `${b.to} ${b.points}`).join(', ')})` : '';
   return `${item.dice.length}W6: ${item.dice.join(' + ')} = ${item.damage}${to}`;
 }
 

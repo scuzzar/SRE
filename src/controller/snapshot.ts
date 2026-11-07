@@ -103,8 +103,10 @@ import {
   type Side,
   type Weapon,
   recoveryOptions,
+  blocksOf,
   type RecoveryKind,
   type RecoveryOptions,
+  type WoundBlock,
 } from '../model';
 import {
   attackerOf,
@@ -112,6 +114,8 @@ import {
   turnAttack,
   defenderOf,
   type Wounding,
+  unassignWound,
+  woundingState,
   canConfirm,
   characteristicOptions,
   drawnIn,
@@ -335,8 +339,8 @@ export interface DamageItem {
   /** Wen der Schaden trifft, wenn der Treffer ein Ziel hatte. */
   readonly victim: string | undefined;
   readonly dice: readonly number[];
-  /** Je Würfel das Attribut, auf das er ging. */
-  readonly to: readonly PhysicalCharacteristic[] | undefined;
+  /** Die Blöcke auf den Attributen der Reihe nach, wenn der Treffer ein Ziel hatte. */
+  readonly blocks: readonly WoundBlock[] | undefined;
   readonly damage: number;
 }
 
@@ -431,7 +435,12 @@ export interface WoundingView {
   readonly victim: string;
   readonly weapon: string;
   readonly dice: readonly number[];
-  readonly to: readonly PhysicalCharacteristic[];
+  /** Je Würfel seine Blöcke bis jetzt; ein Würfel, der übergelaufen ist, hat mehrere. */
+  readonly blocks: readonly (readonly WoundBlock[])[];
+  /** Der nächste Block: Würfel, Rest und die Attribute über 0; fehlt, wenn alles verteilt ist. */
+  readonly next: { readonly die: number; readonly rest: number; readonly open: readonly PhysicalCharacteristic[] } | undefined;
+  /** Ob der Spieler schon einen Block gewählt hat (Zurück geht). */
+  readonly chosen: boolean;
   /** Die Werte vor diesem Schaden, mit den früheren Wunden. */
   readonly current: Upp;
   readonly full: Upp;
@@ -832,7 +841,7 @@ function damageItem(campaign: Campaign, entry: DamageRoll): DamageItem {
     weapon: weaponName(hit.with),
     victim: victim && nameOf(campaign, victim),
     dice: entry.dice,
-    to: entry.to,
+    blocks: entry.to === undefined ? undefined : blocksOf(entry),
     damage: damageOf(entry),
   };
 }
@@ -1030,16 +1039,34 @@ function bandDieView(encounter: Encounter): SimView['bandDie'] {
   return { die: encounter.bandDie, sides: rolled.to - rolled.from + 1 };
 }
 
+/** Teilt die Blöcke auf die Würfel auf, der Reihe nach: Die Blöcke eines Würfels ergeben ihn (oder weniger, wenn sie ausgehen). */
+function blocksPerDie(dice: readonly number[], blocks: readonly WoundBlock[]): readonly (readonly WoundBlock[])[] {
+  let at = 0;
+  return dice.map((d) => {
+    const own: WoundBlock[] = [];
+    let rest = d;
+    while (rest > 0 && at < blocks.length) {
+      own.push(blocks[at]!);
+      rest -= blocks[at]!.points;
+      at++;
+    }
+    return own;
+  });
+}
+
 function woundingView(campaign: Campaign, wounding: Wounding): WoundingView {
   const hit = campaign.log[wounding.of] as AttackResult;
   const victim = victimOf(hit)!;
   const upp = uppOf(campaign, victim);
   const before = woundsOf(campaign, victim);
+  const state = woundingState(wounding, campaign);
   return {
     victim: nameOf(campaign, victim),
     weapon: weaponName(hit.with),
     dice: wounding.dice,
-    to: wounding.to,
+    blocks: blocksPerDie(wounding.dice, state.blocks),
+    next: state.next,
+    chosen: woundingState(unassignWound(wounding, campaign), campaign).blocks.length < state.blocks.length,
     current: woundedUpp(upp, before),
     full: upp,
   };

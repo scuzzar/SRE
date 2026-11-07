@@ -595,7 +595,7 @@ describe('Begegnung und Kampfsimulation', () => {
         }
         const sim = combat.sim;
         if (combat.wounding) {
-          if (combat.wounding.to.length < combat.wounding.dice.length) game.assignWound((['STR', 'DEX', 'END'] as const)[step % 3]!);
+          if (combat.wounding.next) game.assignWound(combat.wounding.next.open[step % combat.wounding.next.open.length]!);
           else game.confirmWounding();
           continue;
         }
@@ -643,7 +643,7 @@ describe('Begegnung und Kampfsimulation', () => {
     game.assignWound('END');
     game.confirmWounding();
     expect(game.snapshot().combat!.note).toBeUndefined();
-    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'damage', to: ['END', 'END'] });
+    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'damage', blocks: [{ to: 'END', points: 2 }, { to: 'END', points: 3 }] });
     // Die Würfel sind vor dem Verteilen gerollt; danach rollen sie nicht noch einmal.
     expect(game.snapshot().result).toBeUndefined();
     // Den Treffer selbst löschen, während verteilt wird: Das Verteilen endet.

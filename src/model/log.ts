@@ -95,8 +95,13 @@ export interface DamageRoll extends LogEntryBase {
   readonly kind: 'damage';
   readonly of: number;
   readonly dice: readonly number[];
-  /** Bei einem Treffer mit Ziel: je Würfel das Attribut, auf das er geht. */
+  /**
+   * Bei einem Treffer mit Ziel: je Block das Attribut (SR 21). Ein Würfel ist ein Block; bringt er sein
+   * Attribut auf 0, wird der Rest ein weiterer Block. Vor dem Überlauf: je Würfel das Attribut.
+   */
   readonly to?: readonly PhysicalCharacteristic[];
+  /** Je Block die Punkte, so lang wie `to`; fehlt bei Schadenswürfen von vor dem Überlauf. */
+  readonly points?: readonly number[];
 }
 
 /** Aufwachen, Behandlung, Ruhe (S. 7). */

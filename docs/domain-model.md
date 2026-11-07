@@ -139,7 +139,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-06-wuerfel-der-anzahl.png`](changes/2026-11-06-wuerfel-der-anzahl.png).
 >
-> **Wartet auf Freigabe** (7. November 2026): der **Überlauf der Wunden** nach SR 21 (siehe
+> Am 7. November 2026 freigegeben: der **Überlauf der Wunden** nach SR 21 (siehe
 > *Wunden*). Was über 0 hinausgeht, verfällt nicht mehr, sondern geht auf die anderen Attribute
 > über, bei jedem Treffer. Im Bild: `DamageRoll.to` hält nicht mehr ein Attribut je Würfel, sondern
 > je **Block** (`to`, dazu die Punkte `points`); `Wounding.to` ebenso. Der Ausschnitt dazu liegt unter
@@ -172,7 +172,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-der Überlauf der Wunden (2026-11-07).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit

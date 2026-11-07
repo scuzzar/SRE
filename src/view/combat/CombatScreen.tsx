@@ -219,7 +219,7 @@ export function WoundingDialog({ combat }: { combat: CombatView }) {
   const [rolled, setRolled] = useState(false);
   const done = useCallback(() => setRolled(true), []);
   if (!rolled) {
-    const item = { kind: 'damage' as const, at: '', of: -1, weapon: w.weapon, victim: w.victim, dice: w.dice, to: undefined, damage: w.dice.reduce((a, b) => a + b, 0) };
+    const item = { kind: 'damage' as const, at: '', of: -1, weapon: w.weapon, victim: w.victim, dice: w.dice, blocks: undefined, damage: w.dice.reduce((a, b) => a + b, 0) };
     return <DiceRoll item={item} seed={w.dice.reduce((a, b) => a * 7 + b, 1)} onDone={done} />;
   }
   return <WoundingChoice combat={combat} />;
@@ -228,9 +228,10 @@ export function WoundingDialog({ combat }: { combat: CombatView }) {
 function WoundingChoice({ combat }: { combat: CombatView }) {
   const game = useGame();
   const w = combat.wounding!;
-  const next = w.to.length;
-  const taken = (c: 'STR' | 'DEX' | 'END') => w.to.reduce((sum, to, i) => (to === c ? sum + w.dice[i]! : sum), 0);
+  const next = w.next;
+  const taken = (c: 'STR' | 'DEX' | 'END') => w.blocks.flat().reduce((sum, b) => (b.to === c ? sum + b.points : sum), 0);
   const value = (c: 'STR' | 'DEX' | 'END') => w.current[c.toLowerCase() as 'str' | 'dex' | 'end'];
+  const state = (i: number) => (next && i === next.die ? 'next' : !next || i < next.die ? 'done' : undefined);
   return (
     <div className="modal">
       <section className="result wounding" role="dialog" aria-modal="true" aria-labelledby="wounding-title">
@@ -238,31 +239,35 @@ function WoundingChoice({ combat }: { combat: CombatView }) {
         <h2 id="wounding-title" className="shop-buy-title">
           {w.victim} · {w.weapon} · {w.dice.length}W6
         </h2>
-        <p className="muted">Jeder Würfel geht ganz auf ein Attribut; was über 0 hinausgeht, verfällt.</p>
+        <p className="muted">
+          {next && next.rest < w.dice[next.die]!
+            ? `Übergelaufen: Die restlichen ${next.rest} gehen auf ein anderes Attribut.`
+            : 'Jeder Würfel geht ganz auf ein Attribut; bringt er es auf 0, läuft der Rest über.'}
+        </p>
         <ol className="wound-dice mono">
           {w.dice.map((d, i) => (
-            <li key={i} className={i === next ? 'next' : i < next ? 'done' : undefined}>
+            <li key={i} className={state(i)}>
               {d}
-              {i < next ? ` → ${w.to[i]}` : ''}
+              {w.blocks[i]!.length > 0 ? ` → ${w.blocks[i]!.map((b) => (w.blocks[i]!.length > 1 ? `${b.to} ${b.points}` : b.to)).join(', ')}` : ''}
             </li>
           ))}
         </ol>
         <div className="wound-targets">
           {(['STR', 'DEX', 'END'] as const).map((c) => (
-            <button key={c} type="button" className="ghost" disabled={next >= w.dice.length} onClick={() => game.assignWound(c)}>
+            <button key={c} type="button" className="ghost" disabled={!next || !next.open.includes(c)} onClick={() => game.assignWound(c)}>
               {c} {hex(Math.max(0, value(c)))}
               {taken(c) > 0 ? ` −${taken(c)}` : ''}
             </button>
           ))}
         </div>
         <div className="roll-actions">
-          <button type="button" className="ghost" disabled={next === 0} onClick={() => game.unassignWound()}>
+          <button type="button" className="ghost" disabled={!w.chosen} onClick={() => game.unassignWound()}>
             Zurück
           </button>
           <button
             type="button"
             className="primary"
-            disabled={next < w.dice.length}
+            disabled={next !== undefined}
             onClick={() => {
               haptic('land');
               game.confirmWounding();

@@ -33,14 +33,67 @@ export function uppOf(campaign: Campaign, who: Combatant): Upp {
   return 'pc' in who ? characterOf(campaign, who.pc).upp : npcOf(campaign, who.npc).upp;
 }
 
-/** Wendet Würfel auf Wunden an: jeder Würfel ganz auf sein Attribut, was über 0 hinausgeht, verfällt. */
-function apply(upp: Upp, wounds: Wounds, dice: readonly number[], to: readonly PhysicalCharacteristic[]): Wounds {
+/** Ein Block eines Schadenswurfs: so viele Punkte auf dieses Attribut (SR 21). */
+export interface WoundBlock {
+  readonly points: number;
+  readonly to: PhysicalCharacteristic;
+}
+
+/** Die Blöcke eines Schadenswurfs; einer von vor dem Überlauf hat keine Punkte: je Würfel ein Block. */
+export function blocksOf(roll: DamageRoll): readonly WoundBlock[] {
+  if (roll.to === undefined) return [];
+  return roll.to.map((to, i) => ({ to, points: roll.points ? roll.points[i]! : roll.dice[i]! }));
+}
+
+/** Wendet Blöcke auf Wunden an; ein Attribut nimmt höchstens auf, was es bis 0 noch hat. */
+function apply(upp: Upp, wounds: Wounds, blocks: readonly WoundBlock[]): Wounds {
   const taken = { ...wounds };
-  dice.forEach((d, i) => {
-    const k = key[to[i]!];
-    taken[k] += Math.min(d, Math.max(0, upp[k] - taken[k]));
+  blocks.forEach((b) => {
+    const k = key[b.to];
+    taken[k] += Math.min(b.points, Math.max(0, upp[k] - taken[k]));
   });
   return taken;
+}
+
+/** Wie weit die Verteilung ist: die Blöcke bis hierher und, wenn noch etwas offen ist, der nächste. */
+export interface Distribution {
+  readonly blocks: readonly WoundBlock[];
+  /** Der nächste Block: Würfel `die`, Rest `rest`, auf eines der Attribute über 0 (`open`). */
+  readonly next?: { readonly die: number; readonly rest: number; readonly open: readonly PhysicalCharacteristic[] };
+}
+
+/**
+ * Verteilt Würfel nach SR 21 in Blöcken: je gewähltem Attribut (`to`, je Block eins) so viel, wie es
+ * bis 0 aufnimmt; der Rest des Würfels wird der nächste Block. Ist nur ein Attribut über 0, nimmt
+ * es den Block von selbst; sind alle auf 0, verfällt der Rest. Ein Attribut auf 0 lässt sich nicht
+ * wählen.
+ */
+export function distribute(upp: Upp, wounds: Wounds, dice: readonly number[], to: readonly PhysicalCharacteristic[]): Distribution {
+  const taken = { ...wounds };
+  const left = (c: PhysicalCharacteristic) => Math.max(0, upp[key[c]] - taken[key[c]]);
+  const blocks: WoundBlock[] = [];
+  for (let die = 0; die < dice.length; die++) {
+    let rest = dice[die]!;
+    while (rest > 0) {
+      const open = physical.filter((c) => left(c) > 0);
+      if (open.length === 0) break;
+      const choice = to[blocks.length] ?? (open.length === 1 ? open[0] : undefined);
+      if (choice === undefined) return { blocks, next: { die, rest, open } };
+      if (!physical.includes(choice)) throw new DomainError('Wunden gehen nur auf STR, DEX und END.');
+      if (!open.includes(choice)) throw new DomainError(`${choice} steht schon auf 0; der Rest geht auf ein anderes Attribut.`);
+      const points = Math.min(rest, left(choice));
+      taken[key[choice]] += points;
+      rest -= points;
+      blocks.push({ points, to: choice });
+    }
+  }
+  if (to.length > blocks.length) throw new DomainError('Es sind schon alle Würfel verteilt.');
+  return { blocks };
+}
+
+/** Die Verteilung auf diesen SC bzw. NSC mit seinen Wunden bis jetzt. */
+export function distributeOn(campaign: Campaign, who: Combatant, dice: readonly number[], to: readonly PhysicalCharacteristic[]): Distribution {
+  return distribute(uppOf(campaign, who), woundsOf(campaign, who), dice, to);
 }
 
 /** Gilt die Heilung diesem SC bzw. NSC? */
@@ -80,7 +133,7 @@ export function historyOf(log: readonly LogEntry[], upp: Upp, who: Combatant, up
   let fresh = true;
   log.slice(0, upTo).forEach((entry) => {
     if (entry.kind === 'damage' && entry.to !== undefined && hits(log[entry.of], who)) {
-      wounds = apply(upp, wounds, entry.dice, entry.to);
+      wounds = apply(upp, wounds, blocksOf(entry));
       fresh = false;
       if (zerosOf(upp, wounds) >= 2) serious = true;
     } else if (heals(entry, who)) {
@@ -124,7 +177,7 @@ export function canFight(state: WoundState): boolean {
   return state === 'unhurt' || state === 'wounded';
 }
 
-/** Der erste Schaden, den jemand bekommt, geht ganz auf ein zufälliges Attribut (S. 7); nach einer vollen Heilung wieder. */
+/** Der erste Schaden, den jemand bekommt, geht auf ein zufälliges Attribut, bis es auf 0 ist (S. 7, SR 21); nach einer vollen Heilung wieder. */
 export function isFirstHit(log: readonly LogEntry[], who: Combatant): boolean {
   let fresh = true;
   for (const entry of log) {
@@ -142,38 +195,59 @@ export function victimOf(attack: AttackResult): Combatant | undefined {
 }
 
 /**
- * Verteilt die Würfel, wo die App es tut: beim ersten Treffer alles auf ein zufälliges Attribut, bei
- * einem NSC sonst jeden Würfel zufällig auf ein Attribut über 0. Bei einem SC nach dem ersten
- * Treffer wählt der Spieler; dann gibt es `undefined`.
+ * Verteilt die Würfel, wo die App es tut (SR 21): beim ersten Treffer alle Blöcke auf ein zufälliges
+ * Attribut, bis es auf 0 ist, den Rest zufällig auf die anderen; bei einem NSC sonst jeden Block
+ * zufällig auf ein Attribut über 0. Bei einem SC nach dem ersten Treffer wählt der Spieler; dann gibt
+ * es `undefined`.
  */
-export function autoWounds(campaign: Campaign, who: Combatant, dice: readonly number[], random: Random): readonly PhysicalCharacteristic[] | undefined {
-  if (isFirstHit(campaign.log, who)) {
-    const one = physical[random.int(0, 2)]!;
-    return dice.map(() => one);
-  }
-  if ('pc' in who) return undefined;
+export function autoWounds(campaign: Campaign, who: Combatant, dice: readonly number[], random: Random): readonly WoundBlock[] | undefined {
+  const first = isFirstHit(campaign.log, who);
+  if (!first && 'pc' in who) return undefined;
   const upp = uppOf(campaign, who);
-  let wounds = woundsOf(campaign, who);
-  return dice.map((d) => {
-    const current = woundedUpp(upp, wounds);
-    const open = physical.filter((c) => current[key[c]] > 0);
-    const to = (open.length > 0 ? open : physical)[random.int(0, (open.length > 0 ? open : physical).length - 1)]!;
-    wounds = apply(upp, wounds, [d], [to]);
-    return to;
-  });
+  const wounds = woundsOf(campaign, who);
+  const critical = first ? physical[random.int(0, 2)]! : undefined;
+  let to: PhysicalCharacteristic[] = [];
+  for (;;) {
+    const step = distribute(upp, wounds, dice, to);
+    if (!step.next) return step.blocks;
+    const open = step.next.open;
+    const pick = critical !== undefined && open.includes(critical) ? critical : open[random.int(0, open.length - 1)]!;
+    to = [...step.blocks.map((b) => b.to), pick];
+  }
 }
 
-/** Prüft, dass die Verteilung zum Treffer passt: je Würfel ein Attribut, beim ersten Treffer alle gleich. */
+/**
+ * Prüft, dass die Verteilung zum Treffer passt: ohne Ziel keine; mit Ziel je Würfel ein Attribut
+ * (vor dem Überlauf) oder Blöcke, die der Reihe nach genau die Würfel ergeben, beim letzten
+ * Würfel, der einen tötet, auch weniger.
+ */
 export function checkWounds(log: readonly LogEntry[], roll: DamageRoll, attack: AttackResult): void {
   const who = victimOf(attack);
   if (!who) {
-    if (roll.to !== undefined) throw new DomainError('Ein Treffer ohne Ziel verteilt keinen Schaden.');
+    if (roll.to !== undefined || roll.points !== undefined) throw new DomainError('Ein Treffer ohne Ziel verteilt keinen Schaden.');
     return;
   }
-  if (roll.to === undefined || roll.to.length !== roll.dice.length) throw new DomainError('Ein Schaden mit Ziel geht je Würfel auf ein Attribut.');
+  if (roll.to === undefined) throw new DomainError('Ein Schaden mit Ziel geht auf Attribute.');
   if (roll.to.some((c) => !physical.includes(c))) throw new DomainError('Wunden gehen nur auf STR, DEX und END.');
-  const earlier = log.slice(0, log.indexOf(roll) < 0 ? log.length : log.indexOf(roll));
-  if (isFirstHit(earlier, who) && new Set(roll.to).size > 1) throw new DomainError('Der erste Treffer geht ganz auf ein Attribut.');
+  if (roll.points === undefined) {
+    if (roll.to.length !== roll.dice.length) throw new DomainError('Ein Schaden mit Ziel geht je Würfel auf ein Attribut.');
+    const earlier = log.slice(0, log.indexOf(roll) < 0 ? log.length : log.indexOf(roll));
+    if (isFirstHit(earlier, who) && new Set(roll.to).size > 1) throw new DomainError('Der erste Treffer geht ganz auf ein Attribut.');
+    return;
+  }
+  if (roll.points.length !== roll.to.length) throw new DomainError('Ein Schaden hat je Block ein Attribut und Punkte.');
+  if (roll.points.some((p) => !Number.isInteger(p) || p < 1 || p > 6)) throw new DomainError('Ein Block hat 1 bis 6 Punkte.');
+  let block = 0;
+  for (const d of roll.dice) {
+    let rest = d;
+    while (rest > 0 && block < roll.points.length) {
+      const points = roll.points[block]!;
+      if (points > rest) throw new DomainError('Die Blöcke eines Würfels ergeben mehr als den Würfel.');
+      rest -= points;
+      block++;
+    }
+  }
+  if (block < roll.points.length) throw new DomainError('Es gibt mehr Blöcke als Würfel.');
 }
 
 /** Stirbt ein SC an seinen Wunden, ist er tot; der Charakter oben rückt nach. */

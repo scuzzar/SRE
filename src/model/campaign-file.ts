@@ -62,7 +62,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     dm: z.number().int(),
     target: z.number().int(),
   }),
-  z.object({ kind: z.literal('damage'), at, of: z.number().int(), dice: z.array(die).min(1).max(5), to: z.array(z.enum(physical)).optional() }),
+  z.object({ kind: z.literal('damage'), at, of: z.number().int(), dice: z.array(die).min(1).max(5), to: z.array(z.enum(physical)).max(7).optional(), points: z.array(die).max(7).optional() }),
   z.object({
     kind: z.literal('recovery'),
     at,

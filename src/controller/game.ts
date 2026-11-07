@@ -664,14 +664,14 @@ export class GameController {
     this.logDamage(rollDamage(this.campaign, index, this.deps.random, this.deps.clock));
   }
 
-  /** Beim Verteilen: der nächste Würfel geht auf dieses Attribut. */
+  /** Beim Verteilen: der nächste Block (ein Würfel oder sein Rest nach dem Überlauf) geht auf dieses Attribut. */
   assignWound(to: PhysicalCharacteristic): void {
-    this.update({ wounding: assignWound(this.openWounding, to) });
+    this.update({ wounding: assignWound(this.openWounding, this.campaign, to) });
   }
 
-  /** Beim Verteilen: den zuletzt verteilten Würfel zurücknehmen. */
+  /** Beim Verteilen: den zuletzt gewählten Block zurücknehmen. */
   unassignWound(): void {
-    this.update({ wounding: unassignWound(this.openWounding) });
+    this.update({ wounding: unassignWound(this.openWounding, this.campaign) });
   }
 
   /** Sind alle Würfel verteilt, kommt der Schaden in den Log. */

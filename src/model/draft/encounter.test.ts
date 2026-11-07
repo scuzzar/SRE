@@ -52,7 +52,9 @@ import { fixedClock, fixedRandom } from '../testing';
 import { cascadeOptions, chooseCascade, enlist, finishGeneration, muster, reenlist, rollNext, rollSkill, stateOf, tableOptions, type Generation } from '../generation';
 import type { Random } from '../ports';
 import { aimAt, attackBy, chooseTarget, rollAttack, startAttack, turnAttack } from './attack';
-import { assignWound, confirmWounding, startWounding } from './wounding';
+import { assignWound, confirmWounding, startWounding, unassignWound, woundingState } from './wounding';
+import { checkDamageRoll } from '../combat';
+import type { DamageRoll } from '../log';
 import { characteristicOptions } from './task';
 
 // Regina: TL 7, Bevölkerung 5.
@@ -115,7 +117,7 @@ describe('Begegnung', () => {
 });
 
 describe('Angriff in beide Richtungen und Wunden', () => {
-  it('Kira greift den Anführer an: seine Rüstung steht fest, der erste Schaden geht ganz auf ein Attribut', () => {
+  it('Kira greift den Anführer an: seine Rüstung steht fest, der erste Schaden geht auf ein Attribut und läuft über', () => {
     let campaign = thugs();
     const attack = aimAt(startAttack(campaign), campaign, 'n1');
     expect(attack).toEqual({ against: 'n1', armor: 'mesh' });
@@ -123,13 +125,19 @@ describe('Angriff in beide Richtungen und Wunden', () => {
     const result = rollAttack(chooseTarget(campaign, 'mesh', 'close', attack), campaign, fixedRandom(6, 6), clock);
     expect(result).toMatchObject({ for: 'c1', against: 'n1', armor: 'mesh', range: 'close' });
     campaign = appendLog(campaign, result);
-    // Hände: 1W6 Schaden; die 4 geht ganz auf DEX (zufällig das zweite Attribut).
-    const damage = rollDamage(campaign, 0, fixedRandom(4, 1), clock);
-    expect(damage).toMatchObject({ dice: [4], to: ['DEX'] });
+    // Hände: 1W6 Schaden; die 4 geht auf DEX (zufällig das zweite Attribut). DEX 2 nimmt nur 2 auf;
+    // der Rest läuft zufällig über (SR 21), hier auf STR (das erste der beiden übrigen).
+    const damage = rollDamage(campaign, 0, fixedRandom(4, 1, 0), clock);
+    expect(damage).toMatchObject({ dice: [4], to: ['DEX', 'STR'], points: [2, 2] });
+    // Ein Schadenswurf von vor dem Überlauf hat keine Punkte: je Würfel ein Block, der Rest bleibt verfallen.
+    const legacy: DamageRoll = { kind: 'damage', at: damage.at, of: 0, dice: [4], to: ['DEX'] };
+    expect(woundsOf(appendLog(campaign, legacy), { npc: 'n1' })).toEqual({ str: 0, dex: 2, end: 0 });
+    // Blöcke, die mehr als ihren Würfel ergeben, gibt es nicht.
+    const bad: DamageRoll = { ...damage, to: ['DEX'], points: [5] };
+    expect(() => checkDamageRoll([...campaign.log, bad], bad, 1)).toThrow(/mehr als den Würfel/);
     campaign = appendLog(campaign, damage);
-    // DEX 2 kann nur 2 verlieren; der Rest verfällt.
-    expect(woundsOf(campaign, { npc: 'n1' })).toEqual({ str: 0, dex: 2, end: 0 });
-    expect(woundStateOf(campaign, { npc: 'n1' })).toBe('unconscious');
+    expect(woundsOf(campaign, { npc: 'n1' })).toEqual({ str: 2, dex: 2, end: 0 });
+    expect(woundStateOf(campaign, { npc: 'n1' })).toBe('serious');
     expect(fighterOf(campaign, { npc: 'n1' }).upp.dex).toBe(0);
   });
 
@@ -150,14 +158,25 @@ describe('Angriff in beide Richtungen und Wunden', () => {
     expect(needsWounding(campaign, 2)).toBe(true);
     expect(() => rollDamage(campaign, 2, fixedRandom(), clock)).toThrow(/verteilt der Spieler/);
     let wounding = startWounding(campaign, 2, fixedRandom(6, 6));
-    wounding = assignWound(assignWound(wounding, 'DEX'), 'END');
+    wounding = assignWound(assignWound(wounding, campaign, 'DEX'), campaign, 'END');
     campaign = markDeath(appendLog(campaign, confirmWounding(wounding, campaign, clock)), { pc: 'c1' });
     expect(woundsOf(campaign, { pc: 'c1' })).toEqual({ str: 5, dex: 6, end: 6 });
     expect(woundStateOf(campaign, { pc: 'c1' })).toBe('wounded');
     // Bewusstlos greift Kira nicht an.
     const more = (c: Campaign) => appendLog(c, rollAttack(chooseTarget(c, 'jack', 'close', attack), c, fixedRandom(6, 6), clock));
     campaign = more(campaign);
-    campaign = appendLog(campaign, confirmWounding(assignWound(assignWound(startWounding(campaign, 4, fixedRandom(6, 6)), 'STR'), 'DEX'), campaign, clock));
+    // 4 auf STR (noch 2): 2 auf STR, der Rest 2 läuft über, Kira wählt END (noch 2). Die 2 danach
+    // kann nur noch auf DEX gehen; das nimmt die App von selbst.
+    let third = assignWound(startWounding(campaign, 4, fixedRandom(4, 2)), campaign, 'STR');
+    expect(woundingState(third, campaign).next).toEqual({ die: 0, rest: 2, open: ['DEX', 'END'] });
+    expect(() => assignWound(third, campaign, 'STR')).toThrow(/schon auf 0/);
+    third = assignWound(third, campaign, 'END');
+    expect(third.to).toEqual(['STR', 'END', 'DEX']);
+    expect(unassignWound(third, campaign).to).toEqual(['STR']);
+    const roll = confirmWounding(third, campaign, clock);
+    expect(roll).toMatchObject({ dice: [4, 2], to: ['STR', 'END', 'DEX'], points: [2, 2, 2] });
+    campaign = appendLog(campaign, roll);
+    expect(woundsOf(campaign, { pc: 'c1' })).toEqual({ str: 7, dex: 8, end: 8 });
     expect(woundStateOf(campaign, { pc: 'c1' })).toBe('serious');
     expect(() => rollAttack(chooseTarget(campaign, 'mesh', 'close', aimAt(startAttack(campaign), campaign, 'n1')), campaign, fixedRandom(6, 6), clock)).toThrow(/bewusstlos/);
   });
@@ -167,17 +186,20 @@ describe('Angriff in beide Richtungen und Wunden', () => {
     const attack = attackBy(startAttack(campaign), campaign, 'n1');
     const hit = (c: Campaign) => appendLog(c, rollAttack(chooseTarget(c, 'nothing', 'close', attack), c, fixedRandom(6, 6), clock));
     campaign = hit(campaign);
-    // Foil: 1W6; erster Treffer 6 auf STR (7 → 1).
+    // Foil: 1W6; erster Treffer 6 auf STR (7 → 1). Danach je 6: STR 1 und der Rest 5 auf DEX (10 → 5);
+    // DEX 5 und der Rest 1 von selbst auf END (8 → 7). Dann ist nur END über 0, und die App verteilt
+    // von selbst: END 6 (→ 1); END 1, der Rest verfällt: tot.
     campaign = appendLog(campaign, rollDamage(campaign, 0, fixedRandom(6, 0), clock));
-    for (const [i, to] of [
-      [2, 'STR'],
-      [4, 'DEX'],
-      [6, 'DEX'],
-      [8, 'END'],
-      [10, 'END'],
+    for (const [i, choices] of [
+      [2, ['STR', 'DEX']],
+      [4, ['DEX']],
+      [6, []],
+      [8, []],
     ] as const) {
       campaign = hit(campaign);
-      campaign = markDeath(appendLog(campaign, confirmWounding(assignWound(startWounding(campaign, i - 1 + 1, fixedRandom(6)), to), campaign, clock)), { pc: 'c1' });
+      let wounding = startWounding(campaign, i, fixedRandom(6));
+      for (const to of choices) wounding = assignWound(wounding, campaign, to);
+      campaign = markDeath(appendLog(campaign, confirmWounding(wounding, campaign, clock)), { pc: 'c1' });
     }
     expect(woundStateOf(campaign, { pc: 'c1' })).toBe('dead');
     expect(characterOf(campaign, 'c1').dead).toBe(true);
@@ -297,7 +319,7 @@ describe('Heilung', () => {
     let campaign = medics();
     const attack = aimAt(startAttack(campaign), campaign, 'n2');
     campaign = appendLog(campaign, rollAttack(chooseTarget(campaign, 'nothing', 'close', attack), campaign, fixedRandom(6, 6), clock));
-    campaign = appendLog(campaign, rollDamage(campaign, 0, fixedRandom(6, 0), clock));
+    campaign = appendLog(campaign, rollDamage(campaign, 0, fixedRandom(2, 0), clock));
     expect(woundStateOf(campaign, { npc: 'n2' })).toBe('unconscious');
     campaign = appendLog(campaign, recover(campaign, 'wake', { npc: 'n2' }, fixedRandom(), clock));
     campaign = appendLog(campaign, recover(campaign, 'treatment', { npc: 'n2' }, fixedRandom(), clock, 'c1'));

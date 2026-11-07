@@ -1,11 +1,11 @@
 import { activeSkills, characterOf, type Campaign, type Character, type SkillLevel, type Upp } from './campaign';
 import { npcOf } from './encounter';
 import { DomainError } from './errors';
-import { damageRollsOf, isSuccess, type AttackResult, type DamageRoll, type LogEntry, type PhysicalCharacteristic } from './log';
+import { damageRollsOf, isSuccess, type AttackResult, type DamageRoll, type LogEntry } from './log';
 import type { Clock, Random } from './ports';
 import { HANDS, itemOf, itemOfWeapon, weaponOf, type ArmorClass, type Range, type Weapon } from './reference';
 import { valueOf, type Characteristic } from './rules';
-import { autoWounds, checkWounds, isFirstHit, woundStateOf, victimOf, woundedUpp, woundsOf, type Combatant, type WoundState } from './wounds';
+import { autoWounds, checkWounds, isFirstHit, woundStateOf, victimOf, woundedUpp, woundsOf, type Combatant, type WoundBlock, type WoundState } from './wounds';
 
 /** *Basic Throw to Hit* (S. 6): 2W6 + DM ≥ 8. */
 export const ATTACK_TARGET = 8;
@@ -138,9 +138,10 @@ export function needsWounding(campaign: Campaign, of: number): boolean {
   return who !== undefined && 'pc' in who && !isFirstHit(campaign.log, who);
 }
 
-/** Ein Schadenswurf aus Würfeln und, bei einem Treffer mit Ziel, der Verteilung auf Attribute. */
-export function damageRoll(campaign: Campaign, of: number, dice: readonly number[], to: readonly PhysicalCharacteristic[] | undefined, clock: Clock): DamageRoll {
-  const roll: DamageRoll = to === undefined ? { kind: 'damage', at: clock.now(), of, dice } : { kind: 'damage', at: clock.now(), of, dice, to };
+/** Ein Schadenswurf aus Würfeln und, bei einem Treffer mit Ziel, den Blöcken auf den Attributen. */
+export function damageRoll(campaign: Campaign, of: number, dice: readonly number[], blocks: readonly WoundBlock[] | undefined, clock: Clock): DamageRoll {
+  const base = { kind: 'damage' as const, at: clock.now(), of, dice };
+  const roll: DamageRoll = blocks === undefined ? base : { ...base, to: blocks.map((b) => b.to), points: blocks.map((b) => b.points) };
   checkDamageRoll(campaign.log, roll, campaign.log.length);
   return roll;
 }
@@ -154,9 +155,9 @@ export function rollDamage(campaign: Campaign, of: number, random: Random, clock
   const who = victimOf(hitAt(campaign.log, of));
   const dice = damageDice(campaign, of, random);
   if (!who) return damageRoll(campaign, of, dice, undefined, clock);
-  const to = autoWounds(campaign, who, dice, random);
-  if (!to) throw new DomainError('Den Schaden an einem SC verteilt der Spieler.');
-  return damageRoll(campaign, of, dice, to, clock);
+  const blocks = autoWounds(campaign, who, dice, random);
+  if (!blocks) throw new DomainError('Den Schaden an einem SC verteilt der Spieler.');
+  return damageRoll(campaign, of, dice, blocks, clock);
 }
 
 /** Munition der Waffe in der Hand: geladene Schuss, wie viele das Magazin fasst und wie viele Magazine im Besitz sind. */
