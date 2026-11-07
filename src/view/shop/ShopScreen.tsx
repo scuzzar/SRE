@@ -1,28 +1,30 @@
 import { useState } from 'react';
 import type { ShopItem, ShopView, Snapshot } from '../../controller';
+import type { ItemKind } from '../../model';
 import { bookingText, clockTime, credits, kindNames } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { CloseIcon } from '../icons';
 import { Form } from '../Form';
-import { CharacterStrip, type StripInventory } from '../oracle/CharacterStrip';
+import { CharacterStrip } from '../oracle/CharacterStrip';
 
 type FreeKind = 'income' | 'expense' | 'deposit' | 'payout';
 const freeKinds: readonly FreeKind[] = ['income', 'expense', 'deposit', 'payout'];
 
-/** Die Bereiche des Shops: drei Theken und die Kasse. Welcher offen ist, ist reine Darstellung. */
-type Area = 'weapons' | 'armor' | 'gear' | 'funds';
+/** Die Bereiche des Shops: drei Theken, der Verkauf und die Kasse. Welcher offen ist, ist reine Darstellung. */
+type Area = 'weapons' | 'armor' | 'gear' | 'sell' | 'funds';
 const areas: readonly { readonly id: Area; readonly name: string }[] = [
   { id: 'weapons', name: 'Waffen' },
   { id: 'armor', name: 'Rüstung' },
   { id: 'gear', name: 'Sonstiges' },
+  { id: 'sell', name: 'Verkauf' },
   { id: 'funds', name: 'Kasse' },
 ];
 
 /**
  * Der Reiter Shop, gebaut wie der Laden eines Rollenspiels: oben die Leiste mit dem Charakter oben
- * (für ihn kauft man; sein Besitz steht dort zum Verkaufen), darunter Aufenthaltsort und Gruppenkasse
- * und die Bereiche Waffen (mit dem Magazin als eigener Spalte), Rüstung, Sonstiges und Kasse (freie
+ * (für ihn kauft und verkauft man), darunter Aufenthaltsort und Gruppenkasse und die Bereiche Waffen
+ * (mit dem Magazin als eigener Spalte), Rüstung, Sonstiges, Verkauf (sein Besitz) und Kasse (freie
  * Buchungen und Kassenbuch). Gerechnet und geprüft wird im Model; was man gerade eintippt, welcher
  * Bereich offen und welcher Kauf offen ist, hält nur die View.
  */
@@ -37,17 +39,9 @@ export function ShopScreen({ view }: { view: Snapshot }) {
   const area: Area = chosen?.campaign === view.campaign.id ? chosen.area : shop.world ? 'weapons' : 'funds';
   const setArea = (a: Area) => setChosen({ campaign: view.campaign.id, area: a });
   const owner = shop.members.find((m) => m.id === shop.owner);
-  const inventory: StripInventory | undefined = owner && {
-    items: owner.sellable,
-    canSell: shop.world !== undefined,
-    onSell: (id) => {
-      const item = owner.sellable.find((i) => i.id === id);
-      if (item) setSelling({ member: owner.id, item });
-    },
-  };
   return (
     <div className="screen">
-      <CharacterStrip view={view} inventory={inventory} />
+      <CharacterStrip view={view} shop />
       <div className="shop-top">
         <div className="shop-head">
           {shop.world ? (
@@ -85,9 +79,11 @@ export function ShopScreen({ view }: { view: Snapshot }) {
             <Ledger shop={shop} />
           </>
         ) : !shop.world ? (
-          <p className="log-empty">Die Gruppe ist auf keiner Welt. Auf der Sektorkarte eine fertige Welt öffnen und „Gruppe ist hier“ wählen; dann gibt es hier ihr Angebot.</p>
+          <p className="log-empty">Die Gruppe ist auf keiner Welt. Auf der Sektorkarte eine fertige Welt öffnen und „Gruppe ist hier“ wählen; dann lässt sich hier kaufen und verkaufen.</p>
         ) : area === 'weapons' ? (
           <WeaponCounter shop={shop} onBuy={setBuying} />
+        ) : area === 'sell' ? (
+          <SaleCounter owner={owner} onSell={(item) => owner && setSelling({ member: owner.id, item })} />
         ) : area === 'armor' ? (
           <ItemCounter title="Rüstungen" items={shop.armor} onBuy={setBuying} />
         ) : (
@@ -268,6 +264,54 @@ function ItemCounter({ title, items, onBuy }: { title: string; items: readonly S
         ))}
       </div>
     </div>
+  );
+}
+
+/** Der Verkauf: der Besitz des Charakters oben nach Art, mit dem vorgeschlagenen Erlös je Stück als Knopf. */
+function SaleCounter({ owner, onSell }: { owner: Member | undefined; onSell: (item: Sellable) => void }) {
+  if (!owner) return <p className="log-empty">Ohne lebenden Charakter gibt es nichts zu verkaufen.</p>;
+  if (owner.sellable.length === 0) return <p className="log-empty">{owner.name} hat nichts, das sich verkaufen lässt. Oben in der Leiste lässt sich ein anderer Charakter wählen.</p>;
+  // Nach Art in der Reihenfolge der Liste, wie die Theken.
+  const kinds = Object.keys(kindNames) as ItemKind[];
+  const groups = kinds.map((kind) => ({ kind, items: owner.sellable.filter((i) => i.kind === kind) })).filter((g) => g.items.length > 0);
+  return (
+    <>
+      <p className="muted shop-hint">
+        Besitz von <b className="shop-skilled-sample">{owner.name}</b>. Erlös je Stück antippen zum Verkaufen; vorgeschlagen ist der halbe Preis.
+      </p>
+      {groups.map((group) => (
+        <div key={group.kind} className="shop-counter">
+          <h2 className="section-title">{kindNames[group.kind]}</h2>
+          <div className="shop-table shop-items" role="table" aria-label={kindNames[group.kind]}>
+            <div className="shop-row shop-row-head" role="row">
+              <span role="columnheader">Gegenstand</span>
+              <span role="columnheader" className="shop-num">
+                Stk
+              </span>
+              <span role="columnheader" className="shop-num">
+                Cr je
+              </span>
+            </div>
+            {group.items.map((item) => (
+              <div key={item.id} role="row" className="shop-row">
+                <span role="cell" className="shop-name">
+                  <span className="shop-label">{item.label}</span>
+                  <Meta parts={[item.role]} banned={undefined} />
+                </span>
+                <span role="cell" className="shop-num">
+                  {item.count}
+                </span>
+                <span role="cell" className="shop-num">
+                  <button type="button" className="shop-price" aria-label={`${item.label} verkaufen`} onClick={() => onSell(item)}>
+                    <span>{item.price.toLocaleString('de-DE')}</span>
+                  </button>
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </>
   );
 }
 

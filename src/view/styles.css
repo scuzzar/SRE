@@ -4125,7 +4125,7 @@ button:disabled {
   border-bottom: 2px solid transparent;
   background: transparent;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .shop-tabs button[aria-selected='true'] {
@@ -4291,102 +4291,9 @@ button:disabled {
   font-size: 20px;
 }
 
-/* Im Shop zeigt die Leiste oben den Besitz des Charakters oben: eine Zeile zum Wischen. */
+/* Im Shop zeigt die Leiste oben die Credits des Charakters in Gold. */
 .strip-shop .strip-credits {
   color: var(--gold);
-}
-
-.strip-bag {
-  margin: 0;
-  font-size: 13px;
-}
-
-.chips.bag-chips {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.strip .chips.bag-chips button {
-  flex: 0 0 auto;
-  min-height: 32px;
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  padding: 4px 8px;
-  font-family: var(--sans);
-  white-space: nowrap;
-}
-
-.bag-count {
-  margin-right: 3px;
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 12px;
-}
-
-.bag-price {
-  color: var(--gold);
-  font-size: 11px;
-}
-
-.strip .chips.bag-chips button:disabled .bag-price {
-  color: var(--dim);
-}
-
-.shop-buy {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  text-align: left;
-}
-
-.shop-ledger ol {
-  margin: 8px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.shop-booking {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas: 'kind text amount' 'time text amount';
-  column-gap: 8px;
-  padding: 6px 0;
-  border-top: 1px solid var(--rule-soft);
-  font-size: 13px;
-}
-
-.shop-booking .kicker {
-  grid-area: kind;
-}
-
-.shop-booking .entry-time {
-  grid-area: time;
-}
-
-.shop-booking-text {
-  grid-area: text;
-}
-
-.shop-booking .shop-in,
-.shop-booking .shop-out {
-  grid-area: amount;
-  text-align: right;
-}
-
-.shop-in {
-  color: var(--gold);
-}
-
-.shop-out {
-  color: var(--accent-text);
-}
-
-.result .shop-buy-title {
-  margin: 0;
-  font-size: 18px;
-  letter-spacing: 0;
 }
 
 /* --- Begegnung, NSC und Wunden -------------------------------------------------------------- */

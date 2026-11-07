@@ -71,13 +71,16 @@ test('Shop: auf einer Welt einkaufen und die Waffe in die Hand nehmen', async ({
   await page.getByRole('tab', { name: 'Kasse' }).click();
   await expect(page.locator('.shop-booking').first()).toContainText('1 × Spear für Kira Vant auf Regina');
 
-  // Jonas kommt oben in die Leiste und verkauft dort seine Blade; vorgeschlagen ist der halbe Preis, Cr 25.
+  // Jonas kommt oben in die Leiste und verkauft im Bereich Verkauf seine Blade; vorgeschlagen ist der halbe Preis, Cr 25.
   await page.getByRole('button', { name: 'Jonas Reyl nach oben' }).click();
-  await page.getByRole('group', { name: 'Besitz von Jonas Reyl' }).getByRole('button', { name: 'Blade verkaufen' }).click();
+  await page.getByRole('tab', { name: 'Verkauf' }).click();
+  await expect(page.getByRole('row', { name: /Blade/ })).toContainText('Primärwaffe');
+  await page.getByRole('button', { name: 'Blade verkaufen' }).click();
   const sale = page.getByRole('dialog', { name: 'Blade verkaufen' });
   await expect(sale.getByLabel('Erlös je Stück (Cr)')).toHaveValue('25');
   await sale.getByRole('button', { name: 'Verkaufen' }).click();
   await expect(page.locator('.shop-funds')).toContainText('Cr 1.015');
+  await page.getByRole('tab', { name: 'Kasse' }).click();
   await expect(page.locator('.shop-booking').first()).toContainText('1 × Blade von Jonas Reyl auf Regina');
   await page.getByRole('button', { name: 'Kira Vant nach oben' }).click();
 

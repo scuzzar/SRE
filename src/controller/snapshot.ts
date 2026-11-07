@@ -582,7 +582,15 @@ export interface ShopView {
     readonly name: string;
     readonly credits: number;
     /** Gegenstände aus dem Besitz mit Preis, mit dem vorgeschlagenen Erlös je Stück (halber Preis). */
-    readonly sellable: readonly { readonly id: string; readonly label: string; readonly count: number; readonly price: number }[];
+    readonly sellable: readonly {
+      readonly id: string;
+      readonly label: string;
+      readonly kind: ItemKind;
+      readonly count: number;
+      readonly price: number;
+      /** Was der Gegenstand ihm gerade ist: getragen, in der Hand, Primär- oder Sekundärwaffe. */
+      readonly role: string | undefined;
+    }[];
   }[];
   readonly error: string | undefined;
 }
@@ -644,6 +652,8 @@ export interface CharacterView {
   readonly current: Upp;
   /** Die getragene Rüstung; fehlt, wenn er keine trägt. Anlegen lässt sie sich nur im Editor. */
   readonly armor: string | undefined;
+  /** Primärwaffe, Sekundärwaffe und Hände, mit der in der Hand; für die Leiste im Kampf, auch auf den Nachbarkarten. */
+  readonly weapons: readonly WeaponChoice[];
 }
 
 export interface TaskView {
@@ -1097,7 +1107,18 @@ function shopView(campaign: Campaign, error: string | undefined): ShopView {
       sellable: c.possessions.flatMap((p) => {
         const item = itemOf(p.of);
         const price = salePrice(item);
-        return price === undefined ? [] : [{ id: item.id, label: itemLabel(item), count: p.count, price }];
+        if (price === undefined) return [];
+        const role =
+          c.wears === item.id
+            ? 'getragen'
+            : item.weapon !== undefined && wieldedWeapon(c).id === item.weapon
+              ? 'in der Hand'
+              : item.weapon !== undefined && c.primary === item.weapon
+                ? 'Primärwaffe'
+                : item.weapon !== undefined && c.secondary === item.weapon
+                  ? 'Sekundärwaffe'
+                  : undefined;
+        return [{ id: item.id, label: itemLabel(item), kind: item.kind, count: p.count, price, role }];
       }),
     })),
     error,
@@ -1194,6 +1215,7 @@ function characterView(campaign: Campaign, character: Character, state: Controll
     state: woundStateOf(campaign, { pc: character.id }),
     current: woundedUpp(character.upp, woundsOf(campaign, { pc: character.id })),
     armor: character.wears === undefined ? undefined : itemLabel(itemOf(character.wears)),
+    weapons: armedWeaponsOf(character).map((id) => weaponLabel(character, id)),
   };
 }
 
