@@ -395,7 +395,7 @@ und Tote.
 ### Reichweiten, Range Bands und Geschwindigkeiten
 
 *SE 7, „Ranges“, „Range Bands“, „Speeds“; gleiche Reichweiten SE 24, „Range Descriptions“; SR 20,
-„Movement“; SR 23, „Square Grid Activity“.*
+„Movement“.*
 App: Reichweiten und Bands ✔, Geschwindigkeiten ◐ (die Parteien rücken mit ◀ ▶ ohne Zug)
 
 | Range | Bedeutung |
@@ -430,16 +430,16 @@ Ein Band sind etwa 17 Felder zu 1,5 m (etwa 25 m).
 
 Schneller als doppelt laufen geht meist nicht lange.
 
-*Ergänzungen aus SR 20 und 23:*
+*Ergänzungen aus SR 20:*
 - Ein Band ist etwa **25 m**. Man zeichnet die Begegnung auf eine Linie (liniertes Papier); jede
   Zeile ist ein Band. **Close** und **Short** sind kleiner als ein Band: Wer sich berührt, ist auf
   Close, alle anderen im selben Band auf Short.
 - Menschen gehen **1 Band** je Runde oder laufen **2 Bands**; Tiere können schneller sein (Speed der
   [Tiere](#tierverhalten)). SR kennt für Menschen nur Gehen, Laufen und Fahren; die dreifache und
   vierfache Geschwindigkeit aus SE 7 betrifft Tiere und Fahrzeuge.
-- *Quadratraster* (SR 23), Felder zu 1,5 m: Gehen **8 Felder** je Runde, Laufen **16**, schneller in
-  Vielfachen von 8. Das widerspricht SE 7 (17 Felder je Band beim Gehen); SR 23 gilt nur fürs Raster.
-  Eine Tür oder Luke öffnen dauert eine Runde, in der man als **ausweichend** gilt.
+- Die App kennt **kein Raster**, nur Range Bands. Die Felder in der Tabelle oben sind nur zur
+  Umrechnung da. Die Regeln fürs Quadratraster (SR 23) sind nicht aufgenommen
+  ([Nicht aufgenommen](#nicht-aufgenommen)).
 
 > ✱ App: Auf Band 0 unterscheidet sie Close (Berührung) und Short. Das Startband innerhalb einer
 > Reichweite ist gleichverteilt gewürfelt (Medium 1W2, Long 1W8, Very Long 1W10).
@@ -877,7 +877,8 @@ Draw. Swing. Hit.
 
 Wo die Aktionen geregelt sind: Run, Walk, Close Range, Open Range, Stand, Evade unter
 [Bewegungsstatus](#bewegungsstatus); Switch, Reload, Throw, Draw unter [Besondere Fälle](#besondere-fälle)
-und [Schusswaffen](#beschreibungen-und-sonderregeln-sr-2326). Andere Aktionen entscheidet die
+und [Schusswaffen](#beschreibungen-und-sonderregeln-sr-2326). Eine Tür oder Luke öffnen dauert eine
+Runde, in der man als **ausweichend** gilt (SR 23). Andere Aktionen entscheidet die
 Spielleitung (SR 23).
 
 ---
@@ -1728,6 +1729,9 @@ Aus den drei Heften nicht in diesem Dokument, weil sie nicht zum Kampf gehören:
 - **SR:** alles außer den Kapiteln *Personal Combat*, *Animal Encounters* und *Encounters*; aus diesen
   die Begegnungen ohne Kampf (wie bei SE), die *Antique Equivalents* (Vorbilder der Waffen aus den
   1980ern, S. 27), essbare Tiere und Jagd (S. 47) und die Ereignisse ohne Kampf (S. 49–50).
+- **SR 23, „Square Grid Activity“:** Bewegung auf einem Quadratraster mit Feldern zu 1,5 m (Gehen 8
+  Felder je Runde, Laufen 16). Die App kennt kein Raster, nur Range Bands. Der Text widerspricht
+  außerdem SE 7 (ein Band etwa 17 Felder); dazu gibt es keine Errata.
 - **B4:** Erschaffung von Söldnern in Army und Marines (S. 3–9, 16), Fertigkeiten ohne Kampfbezug
   (Instruction, Interrogation, Recruiting, Survival; S. 13–15), Tickets und Anheuern (S. 17–24),
   Anwerben, Ausbildung und Organisation von Einheiten (S. 25–28, außer Erfahrung und Moral), Fahrzeuge
