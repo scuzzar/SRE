@@ -66,12 +66,14 @@ export function rangeDm(weapon: Weapon, range: Range): number | undefined {
   return weapon.atRange.find((r) => r.range === range)!.dm;
 }
 
-/** Woraus der DM eines Angriffs besteht: Fertigkeit, Rüstung, Reichweite, Attribut. */
+/** Woraus der DM eines Angriffs besteht: Fertigkeit, Rüstung, Reichweite, Attribut, geschwächter Schlag, Parade des Ziels. */
 export interface AttackDm {
   readonly skill: number;
   readonly armor: number;
   readonly range: number;
   readonly characteristic: number;
+  readonly weakened: number;
+  readonly parry: number;
   readonly total: number;
 }
 
@@ -109,18 +111,29 @@ export function fighterOf(campaign: Campaign, who: Combatant): Fighter {
  * Rüstung und Reichweite kommen aus der Zeile `row` (beim Einzelschuss des Automatic Rifle die des
  * Rifle), das Attribut aus der Waffe selbst.
  */
-export function attackDm(attacker: { readonly upp: Upp; readonly skill: number }, weapon: Weapon, armor: ArmorClass, range: Range, row: Weapon = weapon): AttackDm | undefined {
+export function attackDm(
+  attacker: { readonly upp: Upp; readonly skill: number },
+  weapon: Weapon,
+  armor: ArmorClass,
+  range: Range,
+  row: Weapon = weapon,
+  extra: { readonly weakened?: number; readonly parry?: number } = {},
+): AttackDm | undefined {
   const atRange = rangeDm(row, range);
   if (atRange === undefined) return undefined;
   const skill = attacker.skill;
   const vsArmor = armorDm(row, armor);
   const characteristic = characteristicAttackDm(weapon, valueOf(attacker.upp, attackCharacteristic(weapon)));
+  const weakened = extra.weakened ?? 0;
+  const parry = extra.parry ?? 0;
   return {
     skill,
     armor: vsArmor,
     range: atRange,
     characteristic,
-    total: skill + vsArmor + atRange + characteristic,
+    weakened,
+    parry,
+    total: skill + vsArmor + atRange + characteristic + weakened + parry,
   };
 }
 

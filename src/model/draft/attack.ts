@@ -16,6 +16,9 @@ import {
   livingCharacters,
   neighboursOf,
   npcOf,
+  parryDm,
+  strikeDm,
+  strikeOf,
   rangeDm,
   ranges,
   roll2d6,
@@ -34,6 +37,7 @@ import {
   type Fighter,
   type Random,
   type Range,
+  type Strike,
   type Weapon,
 } from '..';
 
@@ -50,6 +54,8 @@ export interface Attack {
   readonly against?: string;
   /** Feuerstoß (`true`) oder Einzelschuss; zählt nur bei einer Waffe, die beides kann. Fehlt: Feuerstoß. */
   readonly burst?: boolean;
+  /** Ein SC schwächt seinen Schlag oder Hieb freiwillig, damit er nicht gegen die END zählt (SR 22). */
+  readonly weakened?: boolean;
 }
 
 /** Schießt die Waffe einen Feuerstoß? Ohne `burst` nie, ohne `single` immer, sonst nach der Wahl (vorgewählt: Feuerstoß). */
@@ -128,9 +134,33 @@ function withRange(attack: Attack, campaign: Campaign): Attack {
   return range !== undefined && rangeDm(rowOf(weapon, firesBurst(weapon, rest)), range) !== undefined ? { ...rest, range } : rest;
 }
 
-/** Der Angriff ohne Ziel und ohne NSC als Angreifer; nur die Reichweite und die Feuerart bleiben. */
+/** Der Angriff ohne Ziel und ohne NSC als Angreifer; nur die Reichweite, die Feuerart und das Schwächen bleiben. */
 function untargeted(attack: Attack): Attack {
-  return { ...(attack.range === undefined ? {} : { range: attack.range }), ...(attack.burst === undefined ? {} : { burst: attack.burst }) };
+  return {
+    ...(attack.range === undefined ? {} : { range: attack.range }),
+    ...(attack.burst === undefined ? {} : { burst: attack.burst }),
+    ...(attack.weakened === undefined ? {} : { weakened: attack.weakened }),
+  };
+}
+
+/** Den Schlag oder Hieb schwächen (`true`) oder mit voller Kraft führen. */
+export function chooseWeakened(attack: Attack, weakened: boolean): Attack {
+  return { ...attack, weakened };
+}
+
+/** Was zum DM eines Angriffs neben der Matrix kommt: die Schlagart (geschwächt) und die Parade des Ziels (SR 22). */
+export interface AttackExtras {
+  readonly strike: Strike | undefined;
+  readonly weakened: number;
+  readonly parry: number;
+}
+
+/** Schlagart und Parade dieses Angriffs; ein NSC schwächt nie freiwillig. */
+export function attackExtras(attack: Attack, campaign: Campaign): AttackExtras {
+  const attacker = attackerOf(attack, campaign);
+  const defender = defenderOf(attack, campaign);
+  const strike = strikeOf(campaign, attacker.who, attacker.weapon, defender?.state, attack.weakened === true && attack.by === undefined);
+  return { strike, weakened: strikeDm(attacker.weapon, strike), parry: parryDm(campaign, defender?.who, attacker.weapon) };
 }
 
 /** Der Charakter oben zielt auf einen NSC der laufenden Begegnung; seine Rüstung steht damit fest. `undefined` hebt das Ziel auf. */
@@ -188,8 +218,8 @@ export function keepTarget(attack: Attack, campaign: Campaign): Attack {
   return withRange(fixed, campaign);
 }
 
-function odds(attacker: Fighter, armor: ArmorClass, range: Range, burst: boolean): AttackOdds | undefined {
-  const dm = attackDm(attacker, attacker.weapon, armor, range, rowOf(attacker.weapon, burst));
+function odds(attacker: Fighter, armor: ArmorClass, range: Range, burst: boolean, extras?: AttackExtras): AttackOdds | undefined {
+  const dm = attackDm(attacker, attacker.weapon, armor, range, rowOf(attacker.weapon, burst), extras);
   if (!dm) return undefined;
   const need = ATTACK_TARGET - dm.total;
   return { dm, target: ATTACK_TARGET, need, chance: chance2d6(need) };
@@ -199,7 +229,7 @@ function odds(attacker: Fighter, armor: ArmorClass, range: Range, burst: boolean
 export function evaluateAttack(attack: Attack, campaign: Campaign): AttackOdds | undefined {
   if (attack.armor === undefined || attack.range === undefined) return undefined;
   const attacker = attackerOf(attack, campaign);
-  return odds(attacker, attack.armor, attack.range, firesBurst(attacker.weapon, attack));
+  return odds(attacker, attack.armor, attack.range, firesBurst(attacker.weapon, attack), attackExtras(attack, campaign));
 }
 
 /**
@@ -209,7 +239,8 @@ export function evaluateAttack(attack: Attack, campaign: Campaign): AttackOdds |
 export function attackTable(campaign: Campaign, attack: Attack = {}): readonly (readonly (AttackOdds | undefined)[])[] {
   const attacker = attackerOf(attack, campaign);
   const burst = firesBurst(attacker.weapon, attack);
-  return armorClasses.map((armor) => ranges.map((range) => odds(attacker, armor, range, burst)));
+  const extras = attackExtras(attack, campaign);
+  return armorClasses.map((armor) => ranges.map((range) => odds(attacker, armor, range, burst, extras)));
 }
 
 /** Die Partei des Ziels als Liste: NSC in der Reihenfolge der Begegnung (ohne Übernommene), SC in der der Kampagne. */
@@ -277,6 +308,7 @@ export function rollAttack(attack: Attack, campaign: Campaign, random: Random, c
     const skill = weaponSkill(character, weapon);
     who = { for: character.id, ...(skill ? { uses: skill.of } : {}) };
   }
+  const strike = attackExtras(attack, campaign).strike;
   const roll = (target: Combatant | undefined, armor: ArmorClass, dm: number, volley: number | undefined): AttackResult => ({
     kind: 'attack',
     at,
@@ -289,6 +321,7 @@ export function rollAttack(attack: Attack, campaign: Campaign, random: Random, c
     dm,
     target: evaluated.target,
     ...(volley === undefined ? {} : { volley }),
+    ...(strike === undefined ? {} : { strike }),
   });
   const first = campaign.log.length;
   const target = defender?.who;

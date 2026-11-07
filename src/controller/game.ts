@@ -1,5 +1,7 @@
 import {
   addCharacter,
+  alarmAfterAttack,
+  logDamage as logDamageWithAlarm,
   appendLog,
   askOracle,
   byName,
@@ -100,6 +102,7 @@ import {
   withoutFire,
   type Attack,
   rollAttack,
+  chooseWeakened,
   startAttack,
   turnAttack,
   startWounding,
@@ -123,7 +126,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, simTarget: undefined, simBurst: undefined, encounterIntro: false, shopError: undefined, wearOffer: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, shopError: undefined, wearOffer: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
 
 export interface GameDependencies {
   readonly repository: CampaignRepository;
@@ -166,6 +169,7 @@ export class GameController {
       combatNote: undefined,
       simTarget: undefined,
       simBurst: undefined,
+      simWeakened: undefined,
       encounterIntro: false,
       shopError: undefined,
       wearOffer: undefined,
@@ -463,11 +467,28 @@ export class GameController {
     });
   }
 
+  /**
+   * Schlag oder Hieb voll (`false`) oder freiwillig geschwächt (`true`), damit er nicht gegen die END
+   * zählt (SR 22): in der Kampfsimulation für den SC am Zug, sonst für den Angriff in Vorbereitung.
+   */
+  chooseWeakened(weakened: boolean): void {
+    this.inFight(() => {
+      const turn = turnOf(this.campaign);
+      if (!turn) {
+        this.update({ attack: chooseWeakened(this.state.attack ?? startAttack(this.campaign), weakened), combatNote: undefined });
+        return;
+      }
+      if (turn.side !== 'pcs') throw new DomainError('Ein NSC schwächt seinen Schlag nicht freiwillig.');
+      this.update({ simWeakened: weakened, combatNote: undefined });
+    });
+  }
+
   /** Würfelt den Angriff als Garbe, hängt sie an den Log und zieht die verbrauchten Schuss ab. */
   private logAttack(campaign: Campaign, attack: Attack): Campaign {
     const results = rollAttack(attack, campaign, this.deps.random, this.deps.clock);
     const rounds = attackRounds(attack, campaign);
-    const logged = appendLog(campaign, ...results);
+    // Ein Schuss mit Überraschung gibt Alarm, außer mit einem Laser (SR 20).
+    const logged = alarmAfterAttack(appendLog(campaign, ...results), results);
     const shooter = results[0]!.for;
     return shooter === undefined ? logged : spendRound(logged, shooter, rounds);
   }
@@ -549,7 +570,7 @@ export class GameController {
     // Hat der Zug den Kampf entschieden, ist keiner mehr dran; dann gibt es nichts zu beenden.
     const ended = turnOf(campaign) ? endTurn(campaign) : campaign;
     const prepared = this.prepareTurn(ended, this.state.simTarget);
-    this.change(prepared.campaign, { ...rest, simTarget: prepared.simTarget, simBurst: undefined, combatNote: undefined });
+    this.change(prepared.campaign, { ...rest, simTarget: prepared.simTarget, simBurst: undefined, simWeakened: undefined, combatNote: undefined });
   }
 
   /** Führt eine Eingabe der Kampfsimulation aus; verletzt sie eine Regel, steht das im Kampf. */
@@ -602,7 +623,7 @@ export class GameController {
       const target = this.state.simTarget;
       if (target === undefined) throw new DomainError('Erst ein Ziel wählen.');
       const ready = this.focusedForTurn(this.campaign, target);
-      const attack = { ...turnAttack(ready, target), ...(this.state.simBurst === undefined ? {} : { burst: this.state.simBurst }) };
+      const attack = { ...turnAttack(ready, target), ...(this.state.simBurst === undefined ? {} : { burst: this.state.simBurst }), ...(this.state.simWeakened ? { weakened: true } : {}) };
       const campaign = this.logAttack(ready, attack);
       const index = volleyStart(campaign.log, campaign.log.length - 1);
       if (pendingDamage(campaign.log) !== undefined && volleyStart(campaign.log, pendingDamage(campaign.log)!) === index) this.change(campaign, { result: index, combatNote: undefined });
@@ -731,7 +752,8 @@ export class GameController {
   /** `show`: Der Schadenswurf rollt danach im Vordergrund; beim Verteilen ist er schon vorher gerollt. */
   private logDamage(roll: DamageRoll, show = true): void {
     const hit = this.campaign.log[roll.of] as AttackResult;
-    const logged = appendLog(this.campaign, roll);
+    // Mit dem Schaden prüft das Model den Alarm: das Ziel schreit, oder ein Kamerad sieht es fallen (SR 20).
+    const logged = logDamageWithAlarm(this.campaign, roll, this.deps.random);
     const who = victimOf(hit);
     const campaign = who ? markDeath(logged, who) : logged;
     const turn = turnOf(this.campaign);

@@ -8,6 +8,7 @@ import { CombatIcon, DiceIcon } from '../icons';
 import { DicePairView, THROW_MS, useTimeline } from '../Dice';
 import type { Patient } from './CombatScreen';
 import { FireToggle } from './FireToggle';
+import { StrikeToggle } from './StrikeToggle';
 
 /**
  * Die Kampfsimulation einer laufenden Begegnung: oben fest Runde, Reaktion, Überraschung und
@@ -124,8 +125,11 @@ function FightHead({ sim }: { sim: SimView }) {
   const game = useGame();
   const count = sim.fighters.filter((f) => f.side === 'npcs').length;
   const reaction = sim.reactionText.split('.')[0];
-  const order = sim.pcSurprise && sim.npcSurprise ? (sim.surprise ? `Überraschung ${sideName[sim.surprise]}` : `${sideName[sim.first]} zuerst`) : undefined;
-  const surprise = sim.pcSurprise && sim.npcSurprise ? (sim.surprise ? `Überraschung: ${sideName[sim.surprise]}` : `${sideName[sim.first]} ziehen zuerst`) : undefined;
+  // Die Überraschung hält bis zum Alarm (SR 20); danach zieht die Partei mit dem höheren Wurf zuerst.
+  const known = sim.pcSurprise !== undefined && sim.npcSurprise !== undefined;
+  const alarm = sim.surprise && sim.alarm !== undefined && !sim.surprising ? `Alarm in Runde ${sim.alarm} · ` : '';
+  const order = known ? (sim.surprising ? `Überraschung ${sideName[sim.surprising]}` : `${alarm}${sideName[sim.first]} zuerst`) : undefined;
+  const surprise = known ? (sim.surprising ? `Überraschung: ${sideName[sim.surprising]}, bis zum Alarm` : `${alarm}${sideName[sim.first]} ziehen zuerst`) : undefined;
   return (
     <div className="fight-head">
       <div className="encounter-head fight-head-line">
@@ -331,6 +335,7 @@ function FighterRow({ fighter: f, onHeal, selection, impacts }: { fighter: Fight
           <span className="muted">
             {weaponText(f)}
             {f.armor ? ` · ${f.armor}` : ''}
+            {f.blows !== undefined ? ` · ${f.blows} ${f.blows === 1 ? 'Schlag' : 'Schläge'}` : ''}
           </span>
         </span>
       </button>
@@ -412,6 +417,7 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
             <strong className="fight-need">{!turn.reaches ? 'reicht nicht' : turn.odds ? (turn.odds.chance <= 0 ? 'unmöglich' : `${Math.max(2, turn.odds.need)}+`) : ''}</strong>
           </span>
           {turn.fire && <FireToggle fire={turn.fire} compact />}
+          {turn.melee && <StrikeToggle melee={turn.melee} />}
         </div>
       ) : (
         <p className="combat-pick">{sim.defeated ? 'Der Kampf ist entschieden. Heilen, übernehmen (lange drücken) oder die Begegnung beenden.' : 'Keiner ist am Zug.'}</p>

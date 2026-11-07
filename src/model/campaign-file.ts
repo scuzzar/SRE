@@ -5,7 +5,7 @@ import { DomainError } from './errors';
 import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, type PathKind } from './card-roll';
 import { checkDamageRoll, checkVolley, ATTACK_TARGET } from './combat';
 import { ESCAPED_BAND, firstBand, npcOf, type Encounter, type Npc } from './encounter';
-import { checkInterprets, physical, recoveryKinds, withQuestion, type AttackResult, type CardPick, type DamageRoll, type LogEntry, type Recovery } from './log';
+import { checkInterprets, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type CardPick, type DamageRoll, type LogEntry, type Recovery } from './log';
 import { checkRecovery } from './wounds';
 import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, ranges, ref, slotOfEntry, weaponOf } from './reference';
 import { characteristics } from './rules';
@@ -62,8 +62,9 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     dm: z.number().int(),
     target: z.number().int(),
     volley: z.number().int().optional(),
+    strike: z.enum(strikes).optional(),
   }),
-  z.object({ kind: z.literal('damage'), at, of: z.number().int(), dice: z.array(die).min(1).max(5), to: z.array(z.enum(physical)).max(7).optional(), points: z.array(die).max(7).optional() }),
+  z.object({ kind: z.literal('damage'), at, of: z.number().int(), dice: z.array(die).min(1).max(5), to: z.array(z.enum(physical)).max(7).optional(), points: z.array(die).max(7).optional(), alarmDice: z.tuple([die, die]).optional() }),
   z.object({
     kind: z.literal('recovery'),
     at,
@@ -194,6 +195,9 @@ const EncounterSchema = z
     acted: z.array(z.string()).default([]),
     pcMoved: z.number().int().min(0).max(2).optional(),
     npcMoved: z.number().int().min(0).max(2).optional(),
+    pcRuns: z.number().int().min(0).optional(),
+    npcRuns: z.number().int().min(0).optional(),
+    alarm: z.number().int().min(1).optional(),
   })
   .transform(({ range, band, close, ...rest }) => ({ ...rest, ...(band === undefined ? firstBand(range ?? 'short') : { band, close: close ?? false }) }))
   .refine((e) => !e.close || e.band === 0, 'In Berührung sind die Parteien nur auf Band 0.');

@@ -90,7 +90,13 @@ export interface AttackResult extends LogEntryBase {
    * Code die Stelle des ersten Wurfs im Log; sie liegt immer davor.
    */
   readonly volley?: number;
+  /** Bei Schlägen und Hieben: wie der Schlag zählt (SR 22). Fehlt bei Schüssen und bei Angriffen von vorher. */
+  readonly strike?: Strike;
 }
+
+/** Wie ein Schlag oder Hieb zählt: mit Überraschung, Combat (kostet END), geschwächt oder Special (gegen Wehrlose). */
+export const strikes = ['surprise', 'combat', 'weakened', 'special'] as const;
+export type Strike = (typeof strikes)[number];
 
 /**
  * Der Schadenswurf zu einem Treffer: so viele W6, wie die Waffe `wounds` hat. `of` ist im Code die
@@ -107,6 +113,8 @@ export interface DamageRoll extends LogEntryBase {
   readonly to?: readonly PhysicalCharacteristic[];
   /** Je Block die Punkte, so lang wie `to`; fehlt bei Schadenswürfen von vor dem Überlauf. */
   readonly points?: readonly number[];
+  /** Fiel das Ziel mit Überraschung lautlos: der Wurf, ob ein Kamerad es sieht und Alarm gibt (9+, SR 20). */
+  readonly alarmDice?: readonly [number, number];
 }
 
 /** Aufwachen, Behandlung, Ruhe (S. 7). */

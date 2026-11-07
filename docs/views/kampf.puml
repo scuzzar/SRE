@@ -82,7 +82,7 @@ hide <<value>> stereotype
     armor: ArmorClass [0..1]
     range: Range [0..1]
     burst: boolean
-    $new("2026-11-07d", "weakened: boolean")
+    weakened: boolean
     /dm: number
     /need: number
     /chance: number
@@ -93,11 +93,11 @@ hide <<value>> stereotype
     dice: number[2]
     dm: number
     target: number
-    $new("2026-11-07d", "strike: Strike [0..1]")
+    strike: Strike [0..1]
     /success: boolean
     /neighbour: boolean
   }
-  enum Strike <<value>> $kampf $newClass("2026-11-07d") {
+  enum Strike <<value>> $kampf {
     surprise
     combat
     weakened
@@ -117,7 +117,7 @@ hide <<value>> stereotype
     dice: number[1..5]
     points: number[0..7]
     to: Characteristic[0..7]
-    $new("2026-11-07d", "alarmDice: number[0..2]")
+    alarmDice: number[0..2]
     /damage: number
   }
   class Wounding <<transient>> $kampf {
@@ -153,7 +153,7 @@ hide <<value>> stereotype
     law: number [0..1]
     burst: number [0..1]
     neighbours: number [0..1]
-    $new("2026-11-07d", "weakened: number [0..1]")
+    weakened: number [0..1]
   }
   class ArmorDm <<value>> $kampf {
     armor: ArmorClass
@@ -235,7 +235,7 @@ AttackResult "*" --> "0..1" Character : victim
 AttackResult "*" --> "1" Weapon : with
 AttackResult "*" --> "0..1" SkillLevel : uses
 AttackResult "*" --> "0..1" AttackResult : volley
-AttackResult -$newArrow("2026-11-07d")-> Strike
+AttackResult --> Strike
 DamageRoll "0..1" --> "1" AttackResult : of
 Wounding "0..1" --> "1" AttackResult : of
 Wounding ..> DamageRoll : on confirm
@@ -252,10 +252,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Character #line:d0021b;line.bold
-class Attack #line:d0021b;line.bold
-class AttackResult #line:d0021b;line.bold
-class DamageRoll #line:d0021b;line.bold
-class Npc #line:d0021b;line.bold
-class Weapon #line:d0021b;line.bold
 @enduml

@@ -16,6 +16,16 @@ export function surpriseOf(encounter: Encounter): Side | undefined {
   return undefined;
 }
 
+/**
+ * `/surprising`: die Partei mit Überraschung, solange die Überraschung hält: bis zum Ende der Runde,
+ * in der die andere Partei Alarm gegeben hat (SR 20).
+ */
+export function surprisingOf(encounter: Encounter): Side | undefined {
+  const surprise = surpriseOf(encounter);
+  if (surprise === undefined || (encounter.alarm !== undefined && encounter.round > encounter.alarm)) return undefined;
+  return surprise;
+}
+
 /** `/first`: Die Partei mit dem höheren Überraschungswurf zieht jede Runde zuerst; bei Gleichstand die SC. */
 export function firstSide(encounter: Encounter): Side {
   if (!encounter.pcSurprise || !encounter.npcSurprise) return 'pcs';
@@ -60,9 +70,9 @@ export function defeatedSide(campaign: Campaign, encounter: Encounter): Side | u
   return undefined;
 }
 
-/** Wer in dieser Runde noch dran ist, in Zugreihenfolge; in Runde 1 mit Überraschung nur deren Partei. */
+/** Wer in dieser Runde noch dran ist, in Zugreihenfolge; solange die Überraschung hält, nur deren Partei. */
 function waiting(campaign: Campaign, encounter: Encounter): readonly FightSlot[] {
-  const surprise = encounter.round === 1 ? surpriseOf(encounter) : undefined;
+  const surprise = surprisingOf(encounter);
   return fightOrder(campaign, encounter).filter(
     (s) => (surprise === undefined || s.side === surprise) && !encounter.acted.includes(s.id) && canFight(woundStateOf(campaign, s.who)),
   );
@@ -84,7 +94,7 @@ export function turnOf(campaign: Campaign): FightSlot | undefined {
   return waiting(campaign, fightState(campaign, encounter))[0];
 }
 
-function withEncounter(campaign: Campaign, encounter: Encounter): Campaign {
+export function withEncounter(campaign: Campaign, encounter: Encounter): Campaign {
   return { ...campaign, encounters: campaign.encounters.map((e) => (e.id === encounter.id ? encounter : e)) };
 }
 
@@ -159,7 +169,12 @@ export function moveSide(campaign: Campaign, step: -1 | 1): Campaign {
   const encounter = fightState(campaign, currentEncounter(campaign)!);
   const moved = moveBand(withEncounter(campaign, encounter), step);
   const after = currentEncounter(moved)!;
-  return withEncounter(moved, state.side === 'pcs' ? { ...after, pcMoved: state.moved + 1 } : { ...after, npcMoved: state.moved + 1 });
+  // Das zweite Band ist ein Lauf: Er kostet jeden Kämpfer der Partei einen Combat-Schlag (SR 20).
+  const run = state.moved + 1 >= MAX_MOVE ? 1 : 0;
+  return withEncounter(
+    moved,
+    state.side === 'pcs' ? { ...after, pcMoved: state.moved + 1, pcRuns: (after.pcRuns ?? 0) + run } : { ...after, npcMoved: state.moved + 1, npcRuns: (after.npcRuns ?? 0) + run },
+  );
 }
 
 /** Ist dieser SC bzw. NSC gerade am Zug? */

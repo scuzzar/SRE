@@ -114,8 +114,14 @@ import {
   type Weapon,
   recoveryOptions,
   blocksOf,
+  blowsOf,
+  isMelee,
+  parryDm,
+  strikeDm,
+  surprisingOf,
   type RecoveryKind,
   type RecoveryOptions,
+  type Strike,
   type WoundBlock,
 } from '../model';
 import {
@@ -124,6 +130,7 @@ import {
   turnAttack,
   defenderOf,
   type Wounding,
+  attackExtras,
   unassignWound,
   woundingState,
   canConfirm,
@@ -316,7 +323,11 @@ export type DmPart =
   | { readonly kind: 'armor'; readonly armor: ArmorClass; readonly dm: number }
   | { readonly kind: 'range'; readonly range: Range; readonly dm: number }
   /** Ein Nachbar im Feuerstoß: DM −3 (Book 4). */
-  | { readonly kind: 'neighbour'; readonly dm: number };
+  | { readonly kind: 'neighbour'; readonly dm: number }
+  /** Ein geschwächter Schlag oder Hieb: DM der Waffe (S. 4). */
+  | { readonly kind: 'weakened'; readonly dm: number }
+  /** Die Parade des Ziels mit seiner Stufe (SR 22). */
+  | { readonly kind: 'parry'; readonly dm: number };
 
 /** Feuerstoß, Schrot oder Einzelschuss einer Waffe, die einen Feuerstoß kann, mit dem, was er bringt. */
 export interface FireView {
@@ -342,6 +353,8 @@ export interface FireView {
 export interface AttackItem {
   readonly kind: 'attack';
   readonly at: string;
+  /** Bei Schlägen und Hieben: wie der Schlag zählte. */
+  readonly strike: Strike | undefined;
   /** Wer angreift: SC oder NSC. */
   readonly character: string;
   /** Wer getroffen werden soll, wenn es ein Ziel gibt. */
@@ -425,6 +438,8 @@ export interface FighterView {
   /** Ein Feuerstoß auf das gewählte Ziel träfe ihn als Nachbarn mit (darüber oder darunter in der Liste). */
   readonly neighbour: boolean;
   readonly healing: HealingView;
+  /** Bei einer Faust- oder Nahkampfwaffe: die Combat-Schläge, die er noch hat (fehlt bei Battle Dress). */
+  readonly blows: number | undefined;
 }
 
 /**
@@ -462,6 +477,10 @@ export interface SimView {
   readonly bandDie: { readonly die: number; readonly sides: number } | undefined;
   readonly terrain: { readonly name: string; readonly dm: number } | undefined;
   readonly surprise: Side | undefined;
+  /** Die Partei, deren Überraschung noch hält (bis zum Alarm, SR 20). */
+  readonly surprising: Side | undefined;
+  /** Die Runde, in der Alarm gegeben wurde. */
+  readonly alarm: number | undefined;
   readonly first: Side;
   readonly pcSurprise: { readonly die: number; readonly dm: number } | undefined;
   readonly npcSurprise: { readonly die: number; readonly dm: number } | undefined;
@@ -484,6 +503,8 @@ export interface SimView {
         readonly fire: FireView | undefined;
         /** Seine Partei ist in dieser Runde gelaufen: kein Angriff. */
         readonly ran: boolean;
+        /** Bei einem Schlag oder Hieb: die Schlagart, die Combat-Schläge und ob er ihn schwächen kann (SR 22). */
+        readonly melee: MeleeView | undefined;
       }
     | undefined;
   /** Ist eine Partei außer Gefecht, ist der Kampf entschieden. */
@@ -494,6 +515,20 @@ export interface SimView {
   readonly impacts: readonly Impact[];
   /** Die Range Bands je Reichweite (erstes und letztes Band) und ob die Waffe dessen am Zug hinreicht. */
   readonly bands: readonly { readonly range: Range; readonly from: number; readonly to: number; readonly reaches: boolean }[];
+}
+
+/** Schlag oder Hieb am Zug: wie er zählt und wie viel Ausdauer noch da ist. */
+export interface MeleeView {
+  /** Fehlt, solange kein Ziel gewählt ist. */
+  readonly strike: Strike | undefined;
+  /** Die Combat-Schläge, die noch übrig sind; fehlt bei Battle Dress (unbegrenzt). */
+  readonly blows: number | undefined;
+  readonly end: number;
+  readonly weakenedDm: number;
+  /** Der Spieler schwächt den Schlag freiwillig. */
+  readonly weakened: boolean;
+  /** Ein SC kann wählen, ob er voll oder geschwächt schlägt. */
+  readonly canWeaken: boolean;
 }
 
 /** Schaden an einem SC, den der Spieler auf STR, DEX und END verteilt. */
@@ -786,6 +821,8 @@ export interface ControllerState {
   readonly simTarget: string | undefined;
   /** Feuerstoß oder Einzelschuss dessen, der in der Kampfsimulation am Zug ist; fehlt: vorgewählt. */
   readonly simBurst: boolean | undefined;
+  /** Der SC am Zug schwächt seinen Schlag freiwillig; gilt nur für diesen Zug. */
+  readonly simWeakened: boolean | undefined;
   /** Die Übersicht einer eben gewürfelten Begegnung steht im Vordergrund. */
   readonly encounterIntro: boolean;
   /** Der Charakter, dessen Details im Charakter-Screen aufgeklappt sind. */
@@ -861,7 +898,7 @@ function taskItem(campaign: Campaign, entry: TaskResult): TaskItem {
 }
 
 /** Die Teile des DM eines Angriffs, nach dem heutigen Stand des Angreifers; Rüstung und Reichweite aus den Referenzdaten. */
-function attackParts(attacker: Fighter, weaponId: string, armor: ArmorClass, range: Range, burst = true, neighbour = false): DmPart[] {
+function attackParts(attacker: Fighter, weaponId: string, armor: ArmorClass, range: Range, burst = true, neighbour = false, extras: { readonly weakened: number; readonly parry: number } = { weakened: 0, parry: 0 }): DmPart[] {
   const weapon = weaponOf(weaponId);
   const row = rowOf(weapon, burst);
   const characteristic = attackCharacteristic(weapon);
@@ -872,6 +909,8 @@ function attackParts(attacker: Fighter, weaponId: string, armor: ArmorClass, ran
     { kind: 'range', range, dm: rangeDm(row, range) ?? 0 },
     { kind: 'characteristic', characteristic, value, dm: characteristicAttackDm(weapon, value) },
     ...(neighbour && burst ? [{ kind: 'neighbour' as const, dm: BURST_NEIGHBOUR_DM }] : []),
+    ...(extras.weakened !== 0 ? [{ kind: 'weakened' as const, dm: extras.weakened }] : []),
+    ...(extras.parry !== 0 ? [{ kind: 'parry' as const, dm: extras.parry }] : []),
   ];
 }
 
@@ -934,7 +973,11 @@ function attackItem(campaign: Campaign, entry: AttackResult, index: number): Att
     total: sum(entry.dice) + entry.dm,
     need: entry.target - entry.dm,
     success,
-    parts: attackParts(attacker, entry.with, entry.armor, entry.range, burst || weaponOf(entry.with).single === undefined, neighbour),
+    parts: attackParts(attacker, entry.with, entry.armor, entry.range, burst || weaponOf(entry.with).single === undefined, neighbour, {
+      weakened: strikeDm(weaponOf(entry.with), entry.strike),
+      parry: neighbour ? 0 : parryDm(campaign, victimOf(entry), weaponOf(entry.with)),
+    }),
+    strike: entry.strike,
     wounds: weaponOf(entry.with).wounds,
     damagePending: success && damageRollsOf(campaign.log, index).length === 0,
   };
@@ -980,7 +1023,7 @@ function weaponName(id: string): string {
   return id === HANDS ? 'Hände' : weaponOf(id).name;
 }
 
-function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined, intro: boolean, simBurst: boolean | undefined): CombatView | undefined {
+function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined, intro: boolean, simBurst: boolean | undefined, simWeakened: boolean | undefined): CombatView | undefined {
   const character = focusOf(campaign);
   if (!character) return undefined;
   const current = attack ?? {};
@@ -1038,13 +1081,13 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
     })),
     target:
       attack?.armor !== undefined && attack.range !== undefined && target
-        ? { armor: attack.armor, range: attack.range, dm: target.dm.total, need: target.need, chance: target.chance, parts: attackParts(attacker, weapon.id, attack.armor, attack.range, burst) }
+        ? { armor: attack.armor, range: attack.range, dm: target.dm.total, need: target.need, chance: target.chance, parts: attackParts(attacker, weapon.id, attack.armor, attack.range, burst, false, target.dm) }
         : undefined,
     canAttack: canFight(attacker.state) && defender?.state !== 'dead' && !(current.by === undefined && ammo !== undefined && ammo.rounds < roundsFor(weapon, burst)),
     fire: fireView(weapon, burst),
     damage: pendingHit && pending !== undefined ? damageView(campaign, pending, pendingHit) : undefined,
     ammo: current.by === undefined && ammo ? { rounds: ammo.rounds, capacity: ammo.capacity, magazine: itemLabel(itemOf(ammo.ammo)), magazines: ammo.magazines } : undefined,
-    sim: encounter && simView(campaign, encounter, simTarget, simBurst),
+    sim: encounter && simView(campaign, encounter, simTarget, simBurst, simWeakened),
     terrains: ref.encounters.terrains,
     canEncounter: campaign.location !== undefined,
     location: campaign.location,
@@ -1080,10 +1123,11 @@ function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, 
     targeted: target === slot.id,
     neighbour: neighbours.includes(slot.id),
     healing: recoveryOptions(campaign, slot.who),
+    blows: isMelee(fighter.weapon) ? blowsOf(campaign, slot.who) : undefined,
   };
 }
 
-function simView(campaign: Campaign, running: Encounter, target: string | undefined, simBurst: boolean | undefined): SimView {
+function simView(campaign: Campaign, running: Encounter, target: string | undefined, simBurst: boolean | undefined, simWeakened: boolean | undefined): SimView {
   const turn = turnOf(campaign);
   const encounter = fightState(campaign, running);
   const order = fightOrder(campaign, encounter);
@@ -1096,17 +1140,19 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
     weapon = attacker.weapon;
     const burst = firesBurst(attacker.weapon, simBurst === undefined ? {} : { burst: simBurst });
     let odds: NonNullable<SimView['turn']>['odds'];
+    let strike: Strike | undefined;
     const valid = target !== undefined && order.some((s) => s.id === target && s.side !== turn.side);
     if (valid) {
       try {
         // Für den Zug steht der SC am Zug bzw. das Ziel des NSC oben; der Controller holt ihn beim Angriff nach oben.
         const top = turn.side === 'pcs' ? turn.id : target;
         const ready = focusOf(campaign)?.id === top ? campaign : { ...campaign, focus: top };
-        const attack = { ...turnAttack(ready, target), burst };
+        const attack = { ...turnAttack(ready, target), burst, ...(simWeakened ? { weakened: true } : {}) };
         const evaluated = evaluateAttack(attack, ready);
         if (evaluated && attack.armor !== undefined && attack.range !== undefined) {
-          odds = { dm: evaluated.dm.total, need: evaluated.need, chance: evaluated.chance, parts: attackParts(attacker, attacker.weapon.id, attack.armor, attack.range, burst) };
+          odds = { dm: evaluated.dm.total, need: evaluated.need, chance: evaluated.chance, parts: attackParts(attacker, attacker.weapon.id, attack.armor, attack.range, burst, false, evaluated.dm) };
         }
+        strike = attackExtras(attack, ready).strike;
       } catch (error) {
         if (!(error instanceof DomainError)) throw error;
       }
@@ -1124,6 +1170,16 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
       ammo: ammo && { rounds: ammo.rounds, capacity: ammo.capacity, magazines: ammo.magazines },
       fire: fireView(attacker.weapon, burst),
       ran: hasRun(campaign, turn.side),
+      melee: isMelee(attacker.weapon)
+        ? {
+            strike,
+            blows: blowsOf(campaign, turn.who),
+            end: attacker.upp.end,
+            weakenedDm: attacker.weapon.weakened ?? 0,
+            weakened: simWeakened === true,
+            canWeaken: turn.side === 'pcs' && (strike === 'combat' || (strike === 'weakened' && simWeakened === true)),
+          }
+        : undefined,
     };
   }
   return {
@@ -1144,6 +1200,8 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
     bandDie: bandDieView(encounter),
     terrain: ground && { name: ground.name, dm: ground.dm },
     surprise: surpriseOf(encounter),
+    surprising: surprisingOf(encounter),
+    alarm: encounter.alarm,
     first: firstSide(encounter),
     pcSurprise: encounter.pcSurprise,
     npcSurprise: encounter.npcSurprise,
@@ -1456,7 +1514,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     npcs: npcCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background, dead: c.dead })),
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
-    combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.simBurst),
+    combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.simBurst, state.simWeakened),
     shop: shopView(campaign, state.shopError, state.wearOffer),
     location: campaign.location,
     result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : undefined,

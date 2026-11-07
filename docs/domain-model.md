@@ -139,7 +139,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-06-wuerfel-der-anzahl.png`](changes/2026-11-06-wuerfel-der-anzahl.png).
 >
-> **Wartet auf Freigabe** (7. November 2026): **Überraschung bis zum Alarm, Ausdauer und Parade**
+> Am 7. November 2026 freigegeben: **Überraschung bis zum Alarm, Ausdauer (mit Laufen) und Parade**
 > nach dem Regelheft (SR 20–22; siehe *Kampfsimulation*, *Ausdauer*, *Parade*). Im Bild:
 > `Encounter.alarm` und `/surprising`, `Encounter.pcRuns` und `npcRuns`, `DamageRoll.alarmDice`, `AttackResult.strike` mit `Strike`,
 > `Attack.weakened`, `Weapon.weakened` und `/blows` an `Character` und `Npc`. Der Ausschnitt dazu
@@ -198,7 +198,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-Überraschung bis zum Alarm, Ausdauer und Parade (2026-11-07d).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit

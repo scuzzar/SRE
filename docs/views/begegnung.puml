@@ -99,11 +99,11 @@ hide <<value>> stereotype
     acted: string[*]
     pcMoved: number [0..1]
     npcMoved: number [0..1]
-    $new("2026-11-07d", "pcRuns: number [0..1]")
-    $new("2026-11-07d", "npcRuns: number [0..1]")
-    $new("2026-11-07d", "alarm: number [0..1]")
+    pcRuns: number [0..1]
+    npcRuns: number [0..1]
+    alarm: number [0..1]
     /surprise: Side [0..1]
-    $new("2026-11-07d", "/surprising: Side [0..1]")
+    /surprising: Side [0..1]
     /first: Side
     /turn: string [0..1]
   }
@@ -134,7 +134,7 @@ hide <<value>> stereotype
     skill: number
     /wounds: Wounds
     /state: WoundState
-    $new("2026-11-07d", "/blows: number [0..1]")
+    /blows: number [0..1]
   }
   class EncounterType <<reference>> $begegnung {
     roll: number
@@ -199,9 +199,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Character #line:d0021b;line.bold
-class Attack #line:d0021b;line.bold
-class AttackResult #line:d0021b;line.bold
-class Encounter #line:d0021b;line.bold
-class Npc #line:d0021b;line.bold
 @enduml

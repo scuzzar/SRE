@@ -167,6 +167,10 @@ function partName(part: DmPart): string {
       return `auf ${rangeText[part.range]}`;
     case 'neighbour':
       return 'Nachbar';
+    case 'weakened':
+      return 'geschwächt';
+    case 'parry':
+      return 'Parade';
     default:
       return skillTitle([part]);
   }

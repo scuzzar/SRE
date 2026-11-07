@@ -123,6 +123,8 @@ export const WeaponSchema = z.object({
   neighbours: z.number().int().min(1).optional(),
   /** Die Waffe, deren Zeile der Matrix ein Einzelschuss nimmt (Automatic Rifle: Rifle). */
   single: z.string().min(1).optional(),
+  /** Bei Schlägen und Hieben: der DM eines geschwächten Schlags (S. 4, *Weakened Blow or Swing*). */
+  weakened: z.number().int().max(0).optional(),
   vsArmor: z.preprocess(
     inMatrixOrder(armorClasses, 'armor'),
     z.array(ArmorDmSchema).refine((dms) => dms.length === armorClasses.length && dms.every((d, i) => d.armor === armorClasses[i]), 'Die DMs gegen Rüstung stehen nicht in der Reihenfolge der Matrix'),

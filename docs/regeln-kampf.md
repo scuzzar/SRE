@@ -42,15 +42,15 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Zufallsbegegnungen mit Personen](#zufallsbegegnungen-mit-personen) | SE 21, SR 50 | ✔ ✱ |
 | [Reaktion](#reaktion) | SE 21, SR 51 | ✔ |
 | [Waffen nach TL, Verbote nach Gesetz](#waffen-nach-tl-und-verbote-nach-gesetzesstufe) | SE 21 | ✔ |
-| [Überraschung](#überraschung) | SE 5, SR 19–20 | ◐ (nur Runde 1; ohne Tiere) |
+| [Überraschung](#überraschung) | SE 5, SR 19–20 | ✔ ✱ (bis zum Alarm; ohne Tiere, Ausweichen, Schalldämpfer) |
 | [Anfangsentfernung und Gelände](#anfangsentfernung-und-gelände) | SE 5, SR 20 | ✔ |
 | [Entkommen und Ausweichen](#entkommen-und-ausweichen) | SE 5, SR 20–21 | ◐ (nur über 20 Bands) |
 | [Moral (einfach)](#moral-einfach) | SE 5, SR 23 | ○ |
 | [Reichweiten, Range Bands, Geschwindigkeiten](#reichweiten-range-bands-und-geschwindigkeiten) | SE 7, 24, SR 20 | ✔ ✱, Geschwindigkeiten ◐ ✱ |
 | [Bewegungsstatus](#bewegungsstatus) | SR 20–21 | ◐ ✱ (Gehen und Laufen je Partei; Status je Kämpfer ○) |
 | [Angriff: Grundwurf und DMs](#angriff-grundwurf-und-erlaubte-dms) | SE 6, SR 21–22 | ◐ |
-| [Wirkung der Attribute, Ausdauer](#wirkung-der-attribute-und-ausdauer) | SR 21–22 | ◐ (Wunden zählen fälschlich mit; Ausdauer ○) |
-| [Fertigkeit, Parieren, ungeübte Waffen](#fertigkeit-parieren-und-ungeübte-waffen) | SR 22 | ◐ (Angriff ✔) |
+| [Wirkung der Attribute, Ausdauer](#wirkung-der-attribute-und-ausdauer) | SR 21–22 | ◐ (Ausdauer ✔; Wunden zählen beim DM fälschlich mit) |
+| [Fertigkeit, Parieren, ungeübte Waffen](#fertigkeit-parieren-und-ungeübte-waffen) | SR 22 | ◐ (Angriff und Parade ✔; ungeübt ○) |
 | [Feuerstoß und Schrot](#feuerstoß-und-schrot-nach-book-1) | B1, SR 26 | ✔ ✱ |
 | [Waffen- und Reichweitenmatrix](#waffen--und-reichweitenmatrix) | SE 6 | ✔ (ohne Tierwaffen und Zubehör) |
 | [Waffen und Ausrüstung](#waffen-und-ausrüstung) | SE 4, 23, SR 23–26 | ✔ (ohne Zubehör) |
@@ -263,8 +263,13 @@ Ein Verbot gilt ab dieser Stufe und für alle höheren.
 
 ### Überraschung
 
-*SE 5, „Surprise“; SR 19–20, „Surprise“.* App: ◐ (Wurf und DMs ✔ ohne die beiden Tier-DMs; die
-Überraschung gilt in der App nur in Runde 1, nicht bis zum Alarm)
+*SE 5, „Surprise“; SR 19–20, „Surprise“.* App: ✔ ✱ (Wurf und DMs ohne die beiden Tier-DMs; Überraschung
+bis zum Alarm; Ausweichen mit Überraschung ○)
+
+> ✱ App: Schalldämpfer und Vakuum gibt es noch nicht; still sind also nur die Laser. Als „nicht
+> angegriffener Kamerad“ zählt ein Kämpfer der überraschten Partei, der kämpfen kann und in der
+> Begegnung noch nicht Ziel eines Angriffs war. Der 9+-Wurf steht am Schadenswurf (`alarmDice`), die
+> Runde des Alarms an der Begegnung (`alarm`); siehe `domain-model.md`, *Kampfsimulation*.
 
 Jede Partei würfelt 1W6 mit DMs. Liegt ein Wurf **3 oder mehr** über dem anderen, hat die höhere
 Partei Überraschung.
@@ -513,7 +518,9 @@ Wie viele volle Schläge die Ausdauer erlaubt, steht unter
 ### Wirkung der Attribute und Ausdauer
 
 *SR 21–22, „The Effects of Characteristics“.* App: ◐ (STR und DEX ✔, aber mit dem verwundeten Wert;
-Ausdauer ○)
+Ausdauer ✔ ✱, siehe `domain-model.md`, *Ausdauer*: Laufen kostet jeden Kämpfer der Partei einen
+Combat-Schlag, weil die App je Partei bewegt; die 30 Minuten Rast hält sie nicht fest, jede Begegnung
+beginnt mit der END, die der Kämpfer dann hat)
 
 - **Wunden ändern die Attribute nicht**, soweit sie Schläge, Hiebe und Schüsse beeinflussen: Wer
   wach ist und STR 9 auf 7 verwundet hat, kämpft weiter wie mit STR 9. Erst ein Attribut auf 0 macht
@@ -541,7 +548,9 @@ Ausdauer ○)
 
 ### Fertigkeit, Parieren und ungeübte Waffen
 
-*SR 22, „Expertise“.* App: ◐ (Angriff ✔; Parieren und ungeübt ○)
+*SR 22, „Expertise“.* App: ◐ (Angriff und Parieren ✔ ✱; ungeübt ○). ✱ Als lange Gewehre parieren Rifle,
+Carbine, Automatic Rifle und Shotgun; ein NSC pariert mit einem Gewehr mit Stufe 0, weil er nur eine
+Fertigkeit in seiner Waffe hat. Ausweichen gibt es noch nicht.
 
 - **Angriff:** Die Stufe in der Waffe ist ein positiver DM; wer die Waffe wechselt, nimmt die Stufe der
   neuen.

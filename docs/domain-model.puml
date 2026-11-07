@@ -103,7 +103,7 @@ hide <<value>> stereotype
     npc: boolean
     /wounds: Wounds
     /state: WoundState
-    $new("2026-11-07d", "/blows: number [0..1]")
+    /blows: number [0..1]
   }
   class Upp <<value>> $charakter {
     str: number
@@ -253,7 +253,7 @@ hide <<value>> stereotype
     armor: ArmorClass [0..1]
     range: Range [0..1]
     burst: boolean
-    $new("2026-11-07d", "weakened: boolean")
+    weakened: boolean
     /dm: number
     /need: number
     /chance: number
@@ -264,11 +264,11 @@ hide <<value>> stereotype
     dice: number[2]
     dm: number
     target: number
-    $new("2026-11-07d", "strike: Strike [0..1]")
+    strike: Strike [0..1]
     /success: boolean
     /neighbour: boolean
   }
-  enum Strike <<value>> $kampf $newClass("2026-11-07d") {
+  enum Strike <<value>> $kampf {
     surprise
     combat
     weakened
@@ -288,7 +288,7 @@ hide <<value>> stereotype
     dice: number[1..5]
     points: number[0..7]
     to: Characteristic[0..7]
-    $new("2026-11-07d", "alarmDice: number[0..2]")
+    alarmDice: number[0..2]
     /damage: number
   }
   class Wounding <<transient>> $kampf {
@@ -313,11 +313,11 @@ hide <<value>> stereotype
     acted: string[*]
     pcMoved: number [0..1]
     npcMoved: number [0..1]
-    $new("2026-11-07d", "pcRuns: number [0..1]")
-    $new("2026-11-07d", "npcRuns: number [0..1]")
-    $new("2026-11-07d", "alarm: number [0..1]")
+    pcRuns: number [0..1]
+    npcRuns: number [0..1]
+    alarm: number [0..1]
     /surprise: Side [0..1]
-    $new("2026-11-07d", "/surprising: Side [0..1]")
+    /surprising: Side [0..1]
     /first: Side
     /turn: string [0..1]
   }
@@ -348,7 +348,7 @@ hide <<value>> stereotype
     skill: number
     /wounds: Wounds
     /state: WoundState
-    $new("2026-11-07d", "/blows: number [0..1]")
+    /blows: number [0..1]
   }
   class Wounds <<value>> $kampf {
     str: number
@@ -448,7 +448,7 @@ hide <<value>> stereotype
     law: number [0..1]
     burst: number [0..1]
     neighbours: number [0..1]
-    $new("2026-11-07d", "weakened: number [0..1]")
+    weakened: number [0..1]
   }
   class ArmorDm <<value>> $kampf {
     armor: ArmorClass
@@ -760,7 +760,7 @@ AttackResult "*" --> "0..1" Character : victim
 AttackResult "*" --> "1" Weapon : with
 AttackResult "*" --> "0..1" SkillLevel : uses
 AttackResult "*" --> "0..1" AttackResult : volley
-AttackResult -$newArrow("2026-11-07d")-> Strike
+AttackResult --> Strike
 DamageRoll "0..1" --> "1" AttackResult : of
 Wounding "0..1" --> "1" AttackResult : of
 Wounding ..> DamageRoll : on confirm

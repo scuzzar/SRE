@@ -56,6 +56,11 @@ export interface Encounter {
   /** Wie viele Bands die SC bzw. die NSC in dieser Runde schon gegangen sind (0–2); fehlt: 0. */
   readonly pcMoved?: number;
   readonly npcMoved?: number;
+  /** Wie oft die SC bzw. die NSC in der Begegnung gelaufen sind (2 Bands in einer Runde); fehlt: 0. Kostet je Lauf einen Combat-Schlag. */
+  readonly pcRuns?: number;
+  readonly npcRuns?: number;
+  /** Die Runde, in der die überraschte Partei Alarm gegeben hat (SR 20); danach hält die Überraschung nicht mehr. */
+  readonly alarm?: number;
   /** Die Überraschung je Partei: 1W6 und DM (S. 5). Fehlt bei Begegnungen von vor der Kampfsimulation. */
   readonly pcSurprise?: SurpriseRoll;
   readonly npcSurprise?: SurpriseRoll;

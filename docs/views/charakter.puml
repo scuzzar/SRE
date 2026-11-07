@@ -79,7 +79,7 @@ hide <<value>> stereotype
     npc: boolean
     /wounds: Wounds
     /state: WoundState
-    $new("2026-11-07d", "/blows: number [0..1]")
+    /blows: number [0..1]
   }
   class Upp <<value>> $charakter {
     str: number
@@ -200,9 +200,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Character #line:d0021b;line.bold
-class Attack #line:d0021b;line.bold
-class AttackResult #line:d0021b;line.bold
-class Npc #line:d0021b;line.bold
-class Weapon #line:d0021b;line.bold
 @enduml

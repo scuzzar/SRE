@@ -9,6 +9,7 @@ export * from './combat';
 export * from './encounter';
 export * from './fight';
 export * from './wounds';
+export * from './stamina';
 export * from './log';
 export * from './ports';
 export * from './reference';

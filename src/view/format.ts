@@ -220,6 +220,10 @@ export function partLabel(part: DmPart): string {
       return `auf ${rangeText[part.range]} ${signed(part.dm)}`;
     case 'neighbour':
       return `Nachbar ${signed(part.dm)}`;
+    case 'weakened':
+      return `geschwächt ${signed(part.dm)}`;
+    case 'parry':
+      return `Parade ${signed(part.dm)}`;
   }
 }
 
