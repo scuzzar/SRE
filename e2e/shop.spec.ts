@@ -42,18 +42,11 @@ test('Shop: Die Demo-Kampagne steht auf Kessra; eine neue Kampagne ist auf keine
   await expect(page.locator('.shop-booking').first()).toContainText('Belohnung von Dr. Halvek');
 });
 
-test('Shop: auf einer Welt einkaufen und die Waffe in die Hand nehmen', async ({ page }) => {
+test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, verkaufen und die Waffe in die Hand nehmen', async ({ page }) => {
   await page.goto('/');
-  const world = await makeWorld(page);
-  await world.getByRole('button', { name: 'Gruppe ist hier' }).click();
-  await expect(world.getByRole('button', { name: 'Die Gruppe ist hier' })).toBeVisible();
-  await world.getByRole('button', { name: 'Schließen' }).first().click();
-  await expect(page.locator('.world-list-here')).toBeVisible();
-
   await page.getByRole('navigation').getByRole('button', { name: 'Shop' }).click();
-  await expect(page.locator('.shop-world')).toContainText('Regina');
-  // Auf einer Welt öffnet der Shop an der Waffentheke; eingezahlt wird in der Kasse, vom Charakter oben.
-  await expect(page.getByRole('tab', { name: 'Waffen' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('.shop-world')).toContainText('Kessra');
+  // Eingezahlt wird in der Kasse, vom Charakter oben.
   await page.getByRole('tab', { name: 'Kasse' }).click();
   await page.getByRole('radio', { name: 'Einzahlung' }).click();
   await expect(page.locator('.shop-who')).toContainText('Kira Vant');
@@ -61,15 +54,26 @@ test('Shop: auf einer Welt einkaufen und die Waffe in die Hand nehmen', async ({
   await page.getByRole('button', { name: 'Einzahlung buchen' }).click();
   await expect(page.locator('.shop-funds')).toContainText('Cr 1.000');
 
-  // Den Spear gibt es ab TL 0 auf jeder Welt; ab Gesetz 8 ist er verboten, kaufen geht trotzdem.
+  // Ein Tipp kauft genau eins; das Abzeichen zählt, wie viele Kira hat. Zweimal Munition: zwei Magazine.
   await page.getByRole('tab', { name: 'Waffen' }).click();
+  await expect(page.getByRole('button', { name: 'Automatic Pistol kaufen' }).getByLabel('hat 1')).toBeVisible();
   await page.getByRole('button', { name: 'Spear kaufen' }).click();
-  await expect(page.getByRole('dialog')).toContainText('Für Kira Vant');
-  await page.getByRole('dialog').getByRole('button', { name: /^(Kaufen|Trotzdem kaufen)$/ }).click();
-  await expect(page.locator('.shop-funds')).toContainText('Cr 990');
-  await expect(page.getByRole('row', { name: /Spear/ })).toContainText('1 im Besitz');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Spear kaufen' }).getByLabel('hat 1')).toBeVisible();
+  const ammo = page.getByRole('button', { name: /^Automatic Pistol Ammo.* kaufen$/ });
+  await ammo.click();
+  await ammo.click();
+  await expect(ammo.getByLabel('hat 2')).toBeVisible();
+  await expect(page.locator('.shop-funds')).toContainText('Cr 970');
+
+  // Gesetz 4 verbietet die Submachinegun: erst die Rückfrage, dann eins.
+  await page.getByRole('button', { name: 'Submachinegun kaufen' }).click();
+  const banned = page.getByRole('dialog', { name: 'Submachinegun' });
+  await expect(banned).toContainText('verboten');
+  await banned.getByRole('button', { name: 'Trotzdem kaufen' }).click();
+  await expect(page.locator('.shop-funds')).toContainText('Cr 470');
   await page.getByRole('tab', { name: 'Kasse' }).click();
-  await expect(page.locator('.shop-booking').first()).toContainText('1 × Spear für Kira Vant auf Regina');
+  await expect(page.locator('.shop-booking').first()).toContainText('1 × Submachinegun für Kira Vant auf Kessra');
 
   // Jonas kommt oben in die Leiste und verkauft im Bereich Verkauf seine Blade; vorgeschlagen ist der halbe Preis, Cr 25.
   await page.getByRole('button', { name: 'Jonas Reyl nach oben' }).click();
@@ -79,12 +83,24 @@ test('Shop: auf einer Welt einkaufen und die Waffe in die Hand nehmen', async ({
   const sale = page.getByRole('dialog', { name: 'Blade verkaufen' });
   await expect(sale.getByLabel('Erlös je Stück (Cr)')).toHaveValue('25');
   await sale.getByRole('button', { name: 'Verkaufen' }).click();
-  await expect(page.locator('.shop-funds')).toContainText('Cr 1.015');
+  await expect(page.locator('.shop-funds')).toContainText('Cr 495');
   await page.getByRole('tab', { name: 'Kasse' }).click();
-  await expect(page.locator('.shop-booking').first()).toContainText('1 × Blade von Jonas Reyl auf Regina');
+  await expect(page.locator('.shop-booking').first()).toContainText('1 × Blade von Jonas Reyl auf Kessra');
   await page.getByRole('button', { name: 'Kira Vant nach oben' }).click();
 
+  // Kira hatte schon die Automatic Pistol; der Spear wird ihre Sekundärwaffe.
   await page.getByRole('navigation').getByRole('button', { name: 'Kampf' }).click();
-  await page.getByRole('group', { name: 'Waffe in der Hand' }).getByRole('button', { name: /Spear/ }).click();
+  await page.getByRole('group', { name: 'Waffe in der Hand' }).first().getByRole('button', { name: /Spear/ }).click();
   await expect(page.getByRole('heading', { name: 'Spear' })).toBeVisible();
+});
+
+test('Shop: „Gruppe ist hier“ auf der Weltkarte bringt die Gruppe auf eine andere Welt', async ({ page }) => {
+  await page.goto('/');
+  const world = await makeWorld(page);
+  await world.getByRole('button', { name: 'Gruppe ist hier' }).click();
+  await expect(world.getByRole('button', { name: 'Die Gruppe ist hier' })).toBeVisible();
+  await world.getByRole('button', { name: 'Schließen' }).first().click();
+  await expect(page.locator('.world-list-here')).toBeVisible();
+  await page.getByRole('navigation').getByRole('button', { name: 'Shop' }).click();
+  await expect(page.locator('.shop-world')).toContainText('Regina');
 });
