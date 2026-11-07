@@ -371,6 +371,27 @@ describe('Shop und Gruppenkasse', () => {
     expect(repository.saved?.location).toBe('0101');
   });
 
+  it('zeigt die Waffen mit Magazin daneben und was sie dem Charakter oben taugen', async () => {
+    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina])));
+    game.chooseHex(1, 1);
+    game.stayHere();
+    game.book('income', 1000);
+    game.buy('rifle-ammo', 2, 'c1');
+    let shop = game.snapshot().shop!;
+    expect(shop.owner).toBe('c1');
+    // Kira hat Auto Pistol-1 und DEX 9: Die Automatic Pistol steht fett, mit DEX +1.
+    expect(shop.weapons.find((w) => w.item.id === 'automatic-pistol')).toMatchObject({ attack: 'shot', wounds: 3, skill: 'Auto Pistol-1', ammo: { id: 'automatic-pistol-ammo', rounds: 15, price: 10 } });
+    expect(shop.weapons.find((w) => w.item.id === 'rifle')).toMatchObject({ skill: undefined, ammo: { owned: 2 } });
+    expect(shop.weapons.find((w) => w.item.id === 'dagger')).toMatchObject({ attack: 'swing', ammo: undefined });
+    expect(shop.armor.find((a) => a.id === 'jack')).toMatchObject({ owned: 1 });
+    expect(shop.gear.map((g) => g.kind)).toEqual(['equipment', 'vehicle', 'passage']);
+    // Der Charakter oben wechselt: Die Theke zeigt, was Jonas taugt und hat.
+    game.focusCharacter('c2');
+    shop = game.snapshot().shop!;
+    expect(shop.owner).toBe('c2');
+    expect(shop.weapons.find((w) => w.item.id === 'rifle')!.ammo!.owned).toBe(0);
+  });
+
   it('verkauft aus dem Besitz eines Charakters, mit dem vorgeschlagenen halben Preis', async () => {
     const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina])));
     game.chooseHex(1, 1);

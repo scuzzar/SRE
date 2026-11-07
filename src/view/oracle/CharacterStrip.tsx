@@ -3,7 +3,15 @@ import type { CombatView, Snapshot } from '../../controller';
 import { SkillChips, UppRow } from '../characters/CharacterCard';
 import { useGame } from '../game-context';
 import { ChevronDownIcon, PencilIcon } from '../icons';
-import { hex, woundStateText } from '../format';
+import { credits, hex, woundStateText } from '../format';
+
+/** Im Reiter Shop: der Besitz des Charakters oben, mit dem vorgeschlagenen Erlös; antippen verkauft. */
+export interface StripInventory {
+  readonly items: readonly { readonly id: string; readonly label: string; readonly count: number; readonly price: number }[];
+  /** Verkaufen geht nur auf einer Welt. */
+  readonly canSell: boolean;
+  readonly onSell: (id: string) => void;
+}
 
 /** So lange nach dem letzten Scrollen gilt das Wischen als beendet. */
 const SETTLE_MS = 120;
@@ -14,9 +22,20 @@ const SETTLE_MS = 120;
  * bei welcher Karte das Wischen liegen geblieben ist. Fertigkeit antippen startet eine Probe, danach
  * lassen sich Attribute dazuwählen. Der Kopf klappt die Leiste ein und auf. Im Reiter Kampf zeigt
  * sie statt der Fertigkeiten die Waffen des Charakters oben; antippen nimmt sie in die Hand. Ist er
- * verwundet und lässt sich etwas tun, steht dort im Kopf seiner Karte „Heilen“.
+ * verwundet und lässt sich etwas tun, steht dort im Kopf seiner Karte „Heilen“. Im Reiter Shop zeigt
+ * sie seine Credits und seinen Besitz; für ihn kauft man, aus dem Besitz verkauft man.
  */
-export function CharacterStrip({ view, weapons = false, heal }: { view: Snapshot; weapons?: boolean; heal?: { readonly name: string; readonly onHeal: () => void } | undefined }) {
+export function CharacterStrip({
+  view,
+  weapons = false,
+  heal,
+  inventory,
+}: {
+  view: Snapshot;
+  weapons?: boolean;
+  heal?: { readonly name: string; readonly onHeal: () => void } | undefined;
+  inventory?: StripInventory | undefined;
+}) {
   const game = useGame();
   const track = useRef<HTMLDivElement>(null);
   const settle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -63,14 +82,18 @@ export function CharacterStrip({ view, weapons = false, heal }: { view: Snapshot
 
   const collapsed = view.stripCollapsed;
   return (
-    <section className={['strip', collapsed ? 'collapsed' : '', weapons ? 'strip-combat' : ''].filter(Boolean).join(' ')} aria-label="Spielercharaktere">
+    <section className={['strip', collapsed ? 'collapsed' : '', weapons || inventory ? 'strip-combat' : '', inventory ? 'strip-shop' : ''].filter(Boolean).join(' ')} aria-label="Spielercharaktere">
       <div className="strip-track" ref={track} onScroll={onScroll}>
         {characters.map((character, i) => (
           <article key={character.id} className={character.focus ? 'strip-card focus' : 'strip-card'} aria-label={character.name} aria-hidden={!character.focus}>
             <div className="strip-head">
               <button type="button" className="strip-title" aria-expanded={!collapsed} onClick={() => game.toggleStrip()} tabIndex={character.focus ? 0 : -1}>
                 <span className="strip-name">{character.name}</span>
-                {weapons ? (
+                {inventory ? (
+                  <span className="pc-sub">
+                    <span className="mono strip-credits">{credits(character.credits)}</span>
+                  </span>
+                ) : weapons ? (
                   <span className="pc-sub">
                     {character.state !== 'unhurt' && <span className={`state-${character.state}`}>{woundStateText[character.state]} · </span>}
                     {character.armor ?? 'keine Rüstung'}
@@ -101,12 +124,13 @@ export function CharacterStrip({ view, weapons = false, heal }: { view: Snapshot
                 <ChevronDownIcon />
               </button>
             </div>
-            {!weapons && character.state !== 'unhurt' && (
+            {!weapons && !inventory && character.state !== 'unhurt' && (
               <p className={`strip-state state-${character.state}`}>
                 {woundStateText[character.state]} · STR {hex(Math.max(0, character.current.str))} · DEX {hex(Math.max(0, character.current.dex))} · END {hex(Math.max(0, character.current.end))}
               </p>
             )}
-            {!collapsed && (
+            {!collapsed && inventory && (character.focus ? <Inventory inventory={inventory} name={character.name} /> : <p className="strip-bag muted">…</p>)}
+            {!collapsed && !inventory && (
               <>
                 {weapons ? <UppLine character={character} /> : <UppRow character={character} interactive={character.focus} />}
                 {weapons ? (
@@ -135,6 +159,24 @@ export function CharacterStrip({ view, weapons = false, heal }: { view: Snapshot
         </div>
       )}
     </section>
+  );
+}
+
+/** Der Besitz des Charakters oben als Zeile zum Wischen; antippen öffnet den Verkauf. */
+function Inventory({ inventory, name }: { inventory: StripInventory; name: string }) {
+  if (inventory.items.length === 0) return <p className="strip-bag muted">{name} hat nichts, das sich verkaufen lässt.</p>;
+  return (
+    <div className="chips bag-chips" role="group" aria-label={`Besitz von ${name}`}>
+      {inventory.items.map((item) => (
+        <button key={item.id} type="button" disabled={!inventory.canSell} aria-label={`${item.label} verkaufen`} onClick={() => inventory.onSell(item.id)}>
+          <span className="chip-name">
+            {item.count > 1 && <span className="bag-count">{item.count}×</span>}
+            {item.label}
+          </span>
+          <span className="bag-price mono">{credits(item.price)}</span>
+        </button>
+      ))}
+    </div>
   );
 }
 
