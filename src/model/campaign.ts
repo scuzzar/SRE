@@ -1,7 +1,7 @@
 import type { Career } from './career';
 import { DomainError } from './errors';
 import type { Generation } from './generation';
-import { damageRollsOf, interpretationsOf, type LogEntry } from './log';
+import { damageRollsOf, interpretationsOf, volleyOf, type LogEntry } from './log';
 import { worldOf, type Hex } from './sector';
 import type { Booking } from './shop';
 import type { Encounter, QuantityDie } from './encounter';
@@ -123,7 +123,7 @@ export interface CharacterInput {
 /** Eine neue Kampagne, ohne Log, mit der Standardstufe und den angegebenen Charakteren. */
 export function createCampaign(examples: readonly ExampleCharacter[] = ref.examples, name = 'Kampagne', id: CampaignId = 'k1'): Campaign {
   let campaign: Campaign = { id, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [], bookings: [], encounters: [] };
-  for (const { primary, ...example } of examples) campaign = addCharacter(campaign, { ...example, ...(primary === undefined ? {} : { primary }) }).campaign;
+  for (const { primary, wears, ...example } of examples) campaign = addCharacter(campaign, { ...example, ...(primary === undefined ? {} : { primary }), ...(wears === undefined ? {} : { wears }) }).campaign;
   // Bei mehreren Beispielen steht der erste oben, nicht der zuletzt angelegte.
   return withFocus(campaign, livingCharacters(campaign)[0]?.id);
 }
@@ -161,23 +161,26 @@ export function setOdds(campaign: Campaign, oddsId: string): Campaign {
   return { ...campaign, odds: oddsOf(oddsId).id };
 }
 
-export function appendLog(campaign: Campaign, entry: LogEntry): Campaign {
-  return { ...campaign, log: [...campaign.log, entry] };
+export function appendLog(campaign: Campaign, ...entries: readonly LogEntry[]): Campaign {
+  return { ...campaign, log: [...campaign.log, ...entries] };
 }
 
 /**
  * Löscht einen Logeintrag endgültig, ein Ergebnis mit seinen Deutungen, ein Angriff auch mit seinem
- * Schadenswurf; die übrigen behalten ihre Reihenfolge, und Deutungen und Schadenswürfe verweisen
+ * Schadenswurf und mit der ganzen Garbe, zu der er gehört; die übrigen behalten ihre Reihenfolge, und Deutungen und Schadenswürfe verweisen
  * weiter auf ihr Ergebnis.
  */
 export function removeLogEntry(campaign: Campaign, index: number): Campaign {
   if (!Number.isInteger(index) || index < 0 || index >= campaign.log.length) throw new DomainError('Diesen Logeintrag gibt es nicht.');
-  const damage = damageRollsOf(campaign.log, index);
-  const removed = new Set([index, ...interpretationsOf(campaign.log, index), ...damage, ...damage.flatMap((d) => interpretationsOf(campaign.log, d))]);
+  // Ein Wurf einer Garbe geht nur mit der ganzen Garbe.
+  const roots = campaign.log[index]!.kind === 'attack' ? volleyOf(campaign.log, index) : [index];
+  const damage = roots.flatMap((r) => damageRollsOf(campaign.log, r));
+  const removed = new Set([...roots, ...roots.flatMap((r) => interpretationsOf(campaign.log, r)), ...damage, ...damage.flatMap((d) => interpretationsOf(campaign.log, d))]);
   const shift = (i: number) => i - [...removed].filter((r) => r < i).length;
   const log = campaign.log.flatMap((entry, i): LogEntry[] => {
     if (removed.has(i)) return [];
     if (entry.kind === 'note' && entry.interprets !== undefined) return [{ ...entry, interprets: shift(entry.interprets) }];
+    if (entry.kind === 'attack' && entry.volley !== undefined) return [{ ...entry, volley: shift(entry.volley) }];
     return entry.kind === 'damage' ? [{ ...entry, of: shift(entry.of) }] : [entry];
   });
   return { ...campaign, log };

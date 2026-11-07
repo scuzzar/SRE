@@ -100,6 +100,7 @@ export function ShopScreen({ view }: { view: Snapshot }) {
         )}
       </section>
       {buying && owner && <BannedDialog key={buying.id} item={buying} shop={shop} owner={owner} onClose={() => setBuying(undefined)} />}
+      {shop.wearOffer && <WearDialog offer={shop.wearOffer} />}
       {selling && <SellDialog key={`${selling.member}-${selling.item.id}`} selling={selling} shop={shop} onClose={() => setSelling(undefined)} />}
     </div>
   );
@@ -371,6 +372,38 @@ function BannedDialog({ item, shop, owner, onClose }: { item: ShopItem; shop: Sh
         >
           Trotzdem kaufen
         </button>
+      </section>
+    </div>
+  );
+}
+
+/** Gleich nach dem Kauf einer Rüstung: anlegen oder lassen. */
+function WearDialog({ offer }: { offer: NonNullable<ShopView['wearOffer']> }) {
+  const game = useGame();
+  return (
+    <div className="modal">
+      <section className="result shop-buy" role="dialog" aria-modal="true" aria-labelledby="wear-title">
+        <h2 id="wear-title" className="shop-buy-title">
+          {offer.item} anlegen?
+        </h2>
+        <p>
+          <b>{offer.character}</b> trägt jetzt {offer.worn ? <b>{offer.worn}</b> : 'keine Rüstung'}. Angelegt zählt die neue Rüstung, wenn er angegriffen wird.
+        </p>
+        <div className="roll-actions">
+          <button type="button" className="ghost" onClick={() => game.answerWearOffer(false)}>
+            Nicht jetzt
+          </button>
+          <button
+            type="button"
+            className="primary"
+            onClick={() => {
+              haptic('confirm');
+              game.answerWearOffer(true);
+            }}
+          >
+            Anlegen
+          </button>
+        </div>
       </section>
     </div>
   );

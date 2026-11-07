@@ -47,12 +47,15 @@ export interface Encounter {
   readonly rangeDice?: readonly [number, number];
   /** Der Würfel für das Startband innerhalb der Reichweite; fehlt bei Close und Short. */
   readonly bandDie?: number;
-  /** Die Entfernung in Range Bands, 0 bis 20; 21 heißt mehr als 20: entkommen. Jederzeit änderbar. */
+  /** Die Entfernung in Range Bands, 0 bis 20; 21 heißt mehr als 20: entkommen. Bewegt nach den Regeln, frei gesetzt nach Ermessen. */
   readonly band: number;
   /** Auf Band 0 in Berührung (Close); sonst ist Band 0 Short. Auf anderen Bändern immer falsch. */
   readonly close: boolean;
   /** Verweis auf das Gelände; fehlt es, ±0. */
   readonly terrain?: string;
+  /** Wie viele Bands die SC bzw. die NSC in dieser Runde schon gegangen sind (0–2); fehlt: 0. */
+  readonly pcMoved?: number;
+  readonly npcMoved?: number;
   /** Die Überraschung je Partei: 1W6 und DM (S. 5). Fehlt bei Begegnungen von vor der Kampfsimulation. */
   readonly pcSurprise?: SurpriseRoll;
   readonly npcSurprise?: SurpriseRoll;

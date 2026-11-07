@@ -28,7 +28,7 @@ const rolled: LogEntry[] = [
 ];
 
 function campaign(): Campaign {
-  return log.reduce(appendLog, createCampaign(undefined, 'Spinward Run'));
+  return log.reduce((c, e) => appendLog(c, e), createCampaign(undefined, 'Spinward Run'));
 }
 
 /** Die Datei als JSON, mit einer Änderung an der Kampagne darin. */
@@ -40,14 +40,14 @@ function fileWith(change: (c: Record<string, unknown>) => void): string {
 
 /** Eine Datei mit den Kartenauswahlen mit Wurffeldern, mit einer Änderung daran. */
 function rolledWith(change: (log: { bell?: number; scatter?: string; map?: Record<string, string> }[]) => void): string {
-  const file = JSON.parse(toCampaignFile(rolled.reduce(appendLog, createCampaign(undefined, 'Tief unten')))) as { campaign: { log: [] } };
+  const file = JSON.parse(toCampaignFile(rolled.reduce((c, e) => appendLog(c, e), createCampaign(undefined, 'Tief unten')))) as { campaign: { log: [] } };
   change(file.campaign.log);
   return JSON.stringify(file);
 }
 
 describe('Kampagnendatei', () => {
   it('liest Kartenauswahlen mit Wurffeldern und Namen von der Tafel NSC unverändert zurück', () => {
-    const original = rolled.reduce(appendLog, createCampaign(undefined, 'Tief unten'));
+    const original = rolled.reduce((c, e) => appendLog(c, e), createCampaign(undefined, 'Tief unten'));
     expect(fromCampaignFile(toCampaignFile(original), 'k8')).toEqual({ ...original, id: 'k8' });
   });
 

@@ -31,7 +31,7 @@ describe('Angriff vorbereiten', () => {
   it('gegen Combat Armor auf Medium braucht sie 15+: unmöglich, würfeln geht trotzdem', () => {
     const attack = chooseTarget(kira, 'combat', 'medium');
     expect(evaluateAttack(attack, kira)).toMatchObject({ need: 15, chance: 0 });
-    const result = rollAttack(attack, kira, fixedRandom(6, 6), fixedClock());
+    const result = rollAttack(attack, kira, fixedRandom(6, 6), fixedClock())[0]!;
     expect(result).toMatchObject({
       kind: 'attack',
       for: 'c1',
@@ -67,7 +67,7 @@ describe('Angriff vorbereiten', () => {
       characteristic: 0,
       total: -2,
     });
-    expect(rollAttack(chooseTarget(campaign, 'mesh', 'close'), campaign, fixedRandom(5, 5), fixedClock())).not.toHaveProperty('uses');
+    expect(rollAttack(chooseTarget(campaign, 'mesh', 'close'), campaign, fixedRandom(5, 5), fixedClock())[0]).not.toHaveProperty('uses');
   });
 
   it('das nötige Attribut kostet, das vorteilhafte bringt: Cutlass unter STR 7 −2, ab 11 +2', () => {
@@ -99,7 +99,7 @@ describe('Angriff vorbereiten', () => {
   });
 
   it('ein Angriff im Log ändert sich nicht, wenn sich der Charakter danach ändert', () => {
-    const result = rollAttack(chooseTarget(kira, 'jack', 'short'), kira, fixedRandom(1, 1), fixedClock());
+    const result = rollAttack(chooseTarget(kira, 'jack', 'short'), kira, fixedRandom(1, 1), fixedClock())[0]!;
     const later = setWields(appendLog(kira, result), 'c1', 'hands');
     expect(later.log[0]).toEqual(result);
     expect(isSuccess(result)).toBe(false);

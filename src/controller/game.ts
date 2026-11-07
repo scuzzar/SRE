@@ -25,14 +25,18 @@ import {
   adoptNpc,
   recover,
   turnOf,
+  itemOf,
+  characterOf,
+  setWears,
+  fighterOf,
   endTurn,
   setBand,
-  moveBand,
+  moveSide,
   currentEncounter,
   livingCharacters,
   canFight,
   woundStateOf,
-  isSuccess,
+  volleyStart,
   type RecoveryKind,
   type AttackResult,
   type DamageRoll,
@@ -87,9 +91,14 @@ import {
   type Random,
 } from '../model';
 import {
+  attackRounds,
+  canChooseFire,
+  chooseFire,
   chooseSkill,
   chooseTarget,
   keepTarget,
+  withoutFire,
+  type Attack,
   rollAttack,
   startAttack,
   turnAttack,
@@ -114,7 +123,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, simTarget: undefined, encounterIntro: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, simTarget: undefined, simBurst: undefined, encounterIntro: false, shopError: undefined, wearOffer: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
 
 export interface GameDependencies {
   readonly repository: CampaignRepository;
@@ -156,8 +165,10 @@ export class GameController {
       wounding: undefined,
       combatNote: undefined,
       simTarget: undefined,
+      simBurst: undefined,
       encounterIntro: false,
       shopError: undefined,
+      wearOffer: undefined,
       opened: undefined,
       stripCollapsed: false,
       shopHintHidden: false,
@@ -407,7 +418,7 @@ export class GameController {
     const character = focusOf(this.campaign);
     if (!character) throw new DomainError('Es gibt keinen lebenden Charakter.');
     const campaign = setWields(this.campaign, character.id, weapon);
-    this.change(campaign, { attack: this.state.attack && keepTarget(this.state.attack, campaign) });
+    this.change(campaign, { attack: this.state.attack && keepTarget(withoutFire(this.state.attack), campaign) });
   }
 
   /** Wählt Rüstung und Reichweite des Ziels; dieselbe Zelle noch einmal nimmt die Reichweite zurück. */
@@ -424,12 +435,41 @@ export class GameController {
     this.update({ attack: undefined });
   }
 
-  /** Würfelt den Angriff, schreibt ihn in den Log und zeigt das Ergebnis als Popup; das Ziel bleibt gewählt. Eine Schusswaffe eines SC verbraucht einen Schuss. */
+  /**
+   * Würfelt den Angriff (bei Feuerstoß und Schrot die ganze Garbe), schreibt ihn in den Log und zeigt
+   * das Ergebnis als Popup; das Ziel bleibt gewählt. Eine Schusswaffe eines SC verbraucht einen
+   * Schuss, ein Feuerstoß so viele, wie er braucht.
+   */
   rollAttack(): void {
-    const result = rollAttack(this.state.attack ?? {}, this.campaign, this.deps.random, this.deps.clock);
-    const logged = appendLog(this.campaign, result);
-    const campaign = result.for === undefined ? logged : spendRound(logged, result.for);
-    this.change(campaign, { result: campaign.log.length - 1 });
+    const attack = this.state.attack ?? {};
+    const campaign = this.logAttack(this.campaign, attack);
+    this.change(campaign, { result: volleyStart(campaign.log, campaign.log.length - 1) });
+  }
+
+  /**
+   * Feuerstoß oder Einzelschuss, wenn die Waffe beides kann: in der Kampfsimulation für den, der am
+   * Zug ist, sonst für den Angriff in Vorbereitung.
+   */
+  chooseFire(burst: boolean): void {
+    this.inFight(() => {
+      const turn = turnOf(this.campaign);
+      if (!turn) {
+        this.update({ attack: chooseFire(this.state.attack ?? startAttack(this.campaign), this.campaign, burst), combatNote: undefined });
+        return;
+      }
+      const weapon = fighterOf(this.campaign, turn.who).weapon;
+      if (!canChooseFire(weapon)) throw new DomainError(`${weapon.name} hat keine Wahl zwischen Feuerstoß und Einzelschuss.`);
+      this.update({ simBurst: burst, combatNote: undefined });
+    });
+  }
+
+  /** Würfelt den Angriff als Garbe, hängt sie an den Log und zieht die verbrauchten Schuss ab. */
+  private logAttack(campaign: Campaign, attack: Attack): Campaign {
+    const results = rollAttack(attack, campaign, this.deps.random, this.deps.clock);
+    const rounds = attackRounds(attack, campaign);
+    const logged = appendLog(campaign, ...results);
+    const shooter = results[0]!.for;
+    return shooter === undefined ? logged : spendRound(logged, shooter, rounds);
   }
 
   /**
@@ -509,7 +549,7 @@ export class GameController {
     // Hat der Zug den Kampf entschieden, ist keiner mehr dran; dann gibt es nichts zu beenden.
     const ended = turnOf(campaign) ? endTurn(campaign) : campaign;
     const prepared = this.prepareTurn(ended, this.state.simTarget);
-    this.change(prepared.campaign, { ...rest, simTarget: prepared.simTarget, combatNote: undefined });
+    this.change(prepared.campaign, { ...rest, simTarget: prepared.simTarget, simBurst: undefined, combatNote: undefined });
   }
 
   /** Führt eine Eingabe der Kampfsimulation aus; verletzt sie eine Regel, steht das im Kampf. */
@@ -548,9 +588,9 @@ export class GameController {
     this.inFight(() => this.change(setBand(this.campaign, band, close), { combatNote: undefined }));
   }
 
-  /** Bewegt die Parteien einen Schritt näher (−1) oder weiter weg (+1). */
+  /** Die Partei am Zug geht ein Band näher (−1) oder weiter weg (+1): 1 Band gehend, ein zweites laufend. */
   moveBand(step: -1 | 1): void {
-    this.inFight(() => this.change(moveBand(this.campaign, step), { combatNote: undefined }));
+    this.inFight(() => this.change(moveSide(this.campaign, step), { combatNote: undefined }));
   }
 
   /**
@@ -562,12 +602,10 @@ export class GameController {
       const target = this.state.simTarget;
       if (target === undefined) throw new DomainError('Erst ein Ziel wählen.');
       const ready = this.focusedForTurn(this.campaign, target);
-      const attack = turnAttack(ready, target);
-      const result = rollAttack(attack, ready, this.deps.random, this.deps.clock);
-      const logged = appendLog(ready, result);
-      const campaign = result.for === undefined ? logged : spendRound(logged, result.for);
-      const index = campaign.log.length - 1;
-      if (isSuccess(result)) this.change(campaign, { result: index, combatNote: undefined });
+      const attack = { ...turnAttack(ready, target), ...(this.state.simBurst === undefined ? {} : { burst: this.state.simBurst }) };
+      const campaign = this.logAttack(ready, attack);
+      const index = volleyStart(campaign.log, campaign.log.length - 1);
+      if (pendingDamage(campaign.log) !== undefined && volleyStart(campaign.log, pendingDamage(campaign.log)!) === index) this.change(campaign, { result: index, combatNote: undefined });
       else this.nextTurn(campaign, { result: index });
     });
   }
@@ -641,9 +679,18 @@ export class GameController {
     this.inShop(() => sell(this.campaign, item, count, price, character, this.deps.clock));
   }
 
-  /** Kauft auf dem Aufenthaltsort aus der Gruppenkasse für einen Charakter. */
+  /** Kauft auf dem Aufenthaltsort aus der Gruppenkasse für einen Charakter. Bei einer Rüstung, die er nicht trägt, fragt die App, ob er sie anlegt. */
   buy(item: string, count: number, character: string): void {
     this.inShop(() => buy(this.campaign, item, count, character, this.deps.clock));
+    if (this.state.shopError === undefined && itemOf(item).armor !== undefined && characterOf(this.campaign, character).wears !== item) this.update({ wearOffer: { character, item } });
+  }
+
+  /** Nach dem Kauf einer Rüstung: anlegen (`true`) oder lassen, wie es ist. */
+  answerWearOffer(wear: boolean): void {
+    const offer = this.state.wearOffer;
+    if (!offer) return;
+    if (wear) this.inShop(() => setWears(this.campaign, offer.character, offer.item));
+    this.update({ wearOffer: undefined });
   }
 
   /**
@@ -690,7 +737,10 @@ export class GameController {
     const turn = turnOf(this.campaign);
     const ownTurn = turn !== undefined && (hit.for === turn.id || hit.by === turn.id);
     const rest = { result: show ? campaign.log.length - 1 : undefined, wounding: undefined };
-    if (ownTurn) this.nextTurn(campaign, rest);
+    // Bei einer Garbe endet der Zug erst, wenn der Schaden aller ihrer Treffer verteilt ist.
+    const more = pendingDamage(campaign.log);
+    const volleyDone = more === undefined || volleyStart(campaign.log, more) !== volleyStart(campaign.log, roll.of);
+    if (ownTurn && volleyDone) this.nextTurn(campaign, rest);
     else this.change(campaign, rest);
   }
 

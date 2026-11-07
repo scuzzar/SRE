@@ -65,14 +65,23 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await expect(page.getByRole('img', { name: /^Entfernung: / })).toBeVisible();
   await expect(page.locator('.fight-turn')).toBeVisible();
 
-  // Wer am Zug ist, hat ein Ziel; mit ◀ Band für Band bis in die Berührung, Close reicht für jede Waffe.
-  const closer = page.getByRole('button', { name: 'Ein Band näher' });
-  for (let i = 0; i < 22 && (await closer.isEnabled()); i++) await closer.click();
-  await expect(closer).toBeDisabled();
-  await expect(page.getByRole('img', { name: 'Entfernung: Close, Berührung' })).toBeVisible();
+  // Langes Drücken links auf den Strahl setzt die Entfernung frei auf Berührung; Close reicht für jede Waffe.
+  const ray = page.getByRole('img', { name: /^Entfernung: / });
+  const pressAt = async (x: number) => {
+    const box = (await ray.boundingBox())!;
+    await page.mouse.move(box.x + x, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(800);
+    await page.mouse.up();
+  };
+  await pressAt(4);
+  await expect(page.getByRole('img', { name: /^Entfernung: Close, Berührung/ })).toBeVisible();
+  // Die Partei am Zug geht ein Band (nach den Regeln); ein zweites wäre Laufen ohne Angriff.
   await page.getByRole('button', { name: 'Ein Band weiter weg' }).click();
-  await expect(page.getByRole('img', { name: 'Entfernung: Short, Band 0' })).toBeVisible();
-  await closer.click();
+  await expect(page.getByRole('img', { name: /^Entfernung: Short, Band 0/ })).toBeVisible();
+  await expect(page.locator('.ray-move')).toContainText('gegangen');
+  await pressAt(4);
+  await expect(page.getByRole('img', { name: /^Entfernung: Close, Berührung/ })).toBeVisible();
   await expect(page.locator('.fight-turn')).toContainText('→');
   await page.getByRole('button', { name: 'Angreifen' }).click();
   const dialog = page.getByRole('alertdialog');
