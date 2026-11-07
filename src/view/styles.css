@@ -4149,33 +4149,46 @@ button:disabled {
   gap: 4px;
 }
 
-/* Eine Theke als Tabelle: Name nimmt den Rest, die Zahlen stehen rechts. */
+/*
+ * Eine Theke als Tabelle: Name nimmt den Rest, die Zahlen stehen rechts. Jede Zeile ist ein eigenes
+ * Grid; damit die Spalten über alle Zeilen und Theken gleich breit sind, rechnen sie in `ch` der
+ * Schrift der Zeile (Mono 13px). Ein Preis ist so breit wie der größte im Shop: 2.000.000
+ * (Submersible), neun Zeichen; das „Cr“ steht im Spaltenkopf.
+ */
 .shop-row {
+  --shop-price: calc(9ch + 18px);
   display: grid;
   align-items: center;
   column-gap: 8px;
   min-height: 48px;
   padding: 4px 0;
   border-top: 1px solid var(--rule-soft);
-  font-size: 14px;
+  font-family: var(--mono);
+  font-size: 13px;
 }
 
 .shop-weapons .shop-row {
-  grid-template-columns: minmax(0, 1fr) 2.2em 5.8em 5.8em;
+  grid-template-columns: minmax(0, 1fr) 3ch var(--shop-price) var(--shop-price);
 }
 
 .shop-items .shop-row {
-  grid-template-columns: minmax(0, 1fr) 2em 7em;
+  grid-template-columns: minmax(0, 1fr) 3ch var(--shop-price);
 }
 
 .shop-row-head {
   min-height: 0;
   padding: 2px 0;
   border-top: 0;
+}
+
+/* Die Köpfe in eigener Schrift; die Zeile selbst behält Mono 13px, sonst verrutschen die Spalten. */
+.shop-row-head > span {
   color: var(--dim);
+  font-family: var(--sans);
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .shop-num {
@@ -4192,6 +4205,8 @@ button:disabled {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  font-family: var(--sans);
+  font-size: 14px;
 }
 
 .shop-label {
@@ -4231,7 +4246,9 @@ button:disabled {
   padding: 2px 8px;
   border: 1px solid var(--line-strong);
   background: transparent;
+  font-family: var(--mono);
   font-size: 13px;
+  font-variant-numeric: tabular-nums;
   line-height: 1.2;
   white-space: nowrap;
 }

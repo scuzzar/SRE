@@ -161,11 +161,11 @@ function Meta({ parts, banned }: { parts: readonly (string | false | undefined)[
   );
 }
 
-/** Der Preis als Knopf: antippen öffnet den Kauf. Reicht die Kasse nicht, ist er grau. */
+/** Der Preis in Cr als Knopf, immer gleich breit: antippen öffnet den Kauf. Reicht die Kasse nicht, ist er grau. */
 function PriceButton({ item, sub, onBuy }: { item: ShopItem; sub?: string | undefined; onBuy: (item: ShopItem) => void }) {
   return (
     <button type="button" className="shop-price" disabled={!item.affordable} aria-label={`${item.label} kaufen`} onClick={() => onBuy(item)}>
-      <span className="mono">{credits(item.price)}</span>
+      <span>{item.price.toLocaleString('de-DE')}</span>
       {sub && <span className="shop-price-sub">{sub}</span>}
     </button>
   );
@@ -194,11 +194,11 @@ function WeaponCounter({ shop, onBuy }: { shop: ShopView; onBuy: (item: ShopItem
           <div className="shop-table shop-weapons" role="table" aria-label={group.name}>
             <div className="shop-row shop-row-head" role="row">
               <span role="columnheader">Waffe</span>
-              <span role="columnheader" className="shop-num">
-                Schaden
+              <span role="columnheader" className="shop-num" aria-label="Schaden">
+                W6
               </span>
               <span role="columnheader" className="shop-num">
-                Preis
+                Cr
               </span>
               <span role="columnheader" className="shop-num">
                 Munition
@@ -213,8 +213,8 @@ function WeaponCounter({ shop, onBuy }: { shop: ShopView; onBuy: (item: ShopItem
                     banned={w.item.banned}
                   />
                 </span>
-                <span role="cell" className="shop-num mono">
-                  {w.wounds}W
+                <span role="cell" className="shop-num">
+                  {w.wounds}
                 </span>
                 <span role="cell" className="shop-num">
                   <PriceButton item={w.item} onBuy={onBuy} />
@@ -245,7 +245,7 @@ function ItemCounter({ title, items, onBuy }: { title: string; items: readonly S
             TL
           </span>
           <span role="columnheader" className="shop-num">
-            Preis
+            Cr
           </span>
         </div>
         {items.map((item) => (
@@ -254,7 +254,7 @@ function ItemCounter({ title, items, onBuy }: { title: string; items: readonly S
               <span className="shop-label">{item.label}</span>
               <Meta parts={[item.worn ? 'getragen' : undefined, item.owned > 0 && `${item.owned} im Besitz`]} banned={item.banned} />
             </span>
-            <span role="cell" className="shop-num mono muted">
+            <span role="cell" className="shop-num muted">
               {item.tl ?? '–'}
             </span>
             <span role="cell" className="shop-num">
