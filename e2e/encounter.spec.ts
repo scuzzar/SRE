@@ -5,6 +5,7 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
   const map = page.getByRole('group', { name: 'Karte des Subsektors' });
   let world = undefined as undefined | ReturnType<typeof page.getByRole>;
+  let worldId = '';
   for (const id of ['0101', '0202', '0303', '0404', '0505', '0606', '0707', '0808', '0109', '0210']) {
     await map.getByRole('button', { name: `${id}, nicht erzeugt` }).click();
     const button = page.locator('.sector-dock').getByRole('button', { name: /Vorkommen würfeln/ });
@@ -18,20 +19,21 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
     await dialog.getByLabel('Name der Welt').fill('Regina');
     await dialog.getByRole('button', { name: 'Übernehmen' }).click();
     world = page.getByRole('dialog', { name: `Regina · ${id}` });
+    worldId = id;
     break;
   }
-  // Den Aufenthaltsort wählt man diesmal im Reiter Begegnung selbst.
+  // Die Demo-Kampagne steht auf Kessra; den neuen Aufenthaltsort wählt man im Reiter Begegnung.
   await world!.getByRole('button', { name: 'Schließen' }).first().click();
 
   // Kampf ohne Begegnung: nur die Waffentabelle, keine Begegnungsauswahl.
   await page.getByRole('navigation').getByRole('button', { name: 'Kampf' }).click();
   await expect(page.locator('.combat-table')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Begegnung würfeln' })).toHaveCount(0);
-  // Begegnung: ohne Aufenthaltsort gesperrt, bis man die Welt wählt.
+  // Begegnung: Die Gruppe ist auf Kessra und zieht nach Regina um.
   await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
-  await expect(page.getByRole('button', { name: 'Begegnung würfeln' })).toBeDisabled();
-  await page.getByLabel(/Wo ist die Gruppe/).selectOption({ index: 1 });
-  await expect(page.getByLabel('Die Gruppe ist auf')).toContainText('Regina');
+  await expect(page.getByLabel('Die Gruppe ist auf')).toHaveValue('0405');
+  await page.getByLabel('Die Gruppe ist auf').selectOption(worldId);
+  await expect(page.getByLabel('Die Gruppe ist auf')).toHaveValue(worldId);
   await page.getByLabel('Gelände (DM auf die Entfernung)').selectOption('city');
   // Der Würfel der Anzahl: W3 statt W6, auch in der Liste der Arten.
   await page.getByLabel('Würfel der Anzahl').selectOption('3');

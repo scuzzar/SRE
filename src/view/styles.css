@@ -4033,29 +4033,6 @@ button:disabled {
   gap: 16px;
 }
 
-.shop-head {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.shop-funds {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.shop-funds strong {
-  font-size: 24px;
-  color: var(--gold);
-}
-
-.shop-world {
-  margin: 0;
-  font-size: 14px;
-}
-
 .shop-book {
   display: flex;
   flex-direction: column;
@@ -4092,98 +4069,231 @@ button:disabled {
   gap: 8px;
 }
 
-.shop-group {
-  border-bottom: 1px solid var(--rule);
-}
-
-.shop-group summary {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.shop-group ul {
-  margin: 0 0 8px;
-  padding: 0;
-  list-style: none;
-}
-
-.shop-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-  border-top: 1px solid var(--rule-soft);
-  font-size: 14px;
-}
-
-.shop-item-tl,
-.shop-item-price {
-  font-size: 12px;
-}
-
 .shop-banned {
   color: var(--accent-text);
+}
+
+/* Kopf des Shops: Welt und Kasse in einer Zeile, darunter die Bereiche als Reiter. Bleibt stehen. */
+.shop-top {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 16px 0;
+  border-bottom: 1px solid var(--rule);
+  background: var(--bg);
+}
+
+.shop-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shop-world {
+  min-width: 0;
+  margin: 0;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shop-funds {
+  flex: 0 0 auto;
+  margin: 0;
   font-size: 12px;
 }
 
-.shop-buy {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  text-align: left;
-}
-
-.shop-ledger ol {
-  margin: 8px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.shop-booking {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas: 'kind text amount' 'time text amount';
-  column-gap: 8px;
-  padding: 6px 0;
-  border-top: 1px solid var(--rule-soft);
-  font-size: 13px;
-}
-
-.shop-booking .kicker {
-  grid-area: kind;
-}
-
-.shop-booking .entry-time {
-  grid-area: time;
-}
-
-.shop-booking-text {
-  grid-area: text;
-}
-
-.shop-booking .shop-in,
-.shop-booking .shop-out {
-  grid-area: amount;
-  text-align: right;
-}
-
-.shop-in {
+.shop-funds strong {
+  font-size: 20px;
   color: var(--gold);
 }
 
-.shop-out {
+.shop-tabs {
+  display: flex;
+  gap: 2px;
+}
+
+.shop-tabs button {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 4px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.shop-tabs button[aria-selected='true'] {
+  border-bottom-color: var(--gold);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.shop-hint {
+  margin: 0;
+  font-size: 12px;
+}
+
+.shop-skilled-sample {
+  color: var(--text);
+}
+
+.shop-counter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/*
+ * Eine Theke als Tabelle: Name nimmt den Rest, die Zahlen stehen rechts. Jede Zeile ist ein eigenes
+ * Grid; damit die Spalten über alle Zeilen und Theken gleich breit sind, rechnen sie in `ch` der
+ * Schrift der Zeile (Mono 13px). Ein Preis ist so breit wie der größte im Shop: 2.000.000
+ * (Submersible), neun Zeichen; das „Cr“ steht im Spaltenkopf.
+ */
+.shop-row {
+  --shop-price: calc(9ch + 18px);
+  display: grid;
+  align-items: center;
+  column-gap: 8px;
+  min-height: 48px;
+  padding: 4px 0;
+  border-top: 1px solid var(--rule-soft);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.shop-weapons .shop-row {
+  grid-template-columns: minmax(0, 1fr) 3ch var(--shop-price) var(--shop-price);
+}
+
+.shop-items .shop-row {
+  grid-template-columns: minmax(0, 1fr) 3ch var(--shop-price);
+}
+
+.shop-row-head {
+  min-height: 0;
+  padding: 2px 0;
+  border-top: 0;
+}
+
+/* Die Köpfe in eigener Schrift; die Zeile selbst behält Mono 13px, sonst verrutschen die Spalten. */
+.shop-row-head > span {
+  color: var(--dim);
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.shop-num {
+  justify-self: end;
+  text-align: right;
+}
+
+/* Die Preise füllen ihre Spalte, damit die Knöpfe untereinander bündig stehen. */
+.shop-row > .shop-num:has(.shop-price) {
+  justify-self: stretch;
+}
+
+.shop-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-family: var(--sans);
+  font-size: 14px;
+}
+
+.shop-label {
+  color: var(--muted);
+}
+
+/* Was der Charakter oben führen kann, steht fett und hell. */
+.shop-row.skilled .shop-label,
+.shop-items .shop-label {
+  color: var(--text);
+}
+
+.shop-row.skilled .shop-label {
+  font-weight: 700;
+}
+
+.shop-meta {
+  color: var(--dim);
+  font-size: 12px;
+}
+
+.shop-row.skilled .shop-meta {
+  color: var(--gold);
+}
+
+.shop-row.skilled .shop-meta .shop-banned {
   color: var(--accent-text);
 }
 
-.result .shop-buy-title {
-  margin: 0;
-  font-size: 18px;
-  letter-spacing: 0;
+.shop-price {
+  width: 100%;
+  min-height: 40px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 2px 8px;
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.shop-price:disabled {
+  border-color: var(--rule);
+  color: var(--dim);
+  text-decoration: line-through;
+}
+
+.shop-price-sub {
+  color: var(--dim);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.shop-who {
+  justify-content: flex-end;
+}
+
+.shop-who b {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.shop-stepper {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  gap: 6px;
+}
+
+.shop-stepper input {
+  text-align: center;
+}
+
+.shop-stepper .ghost {
+  min-height: 44px;
+  padding: 0;
+  font-size: 20px;
+}
+
+/* Im Shop zeigt die Leiste oben die Credits des Charakters in Gold. */
+.strip-shop .strip-credits {
+  color: var(--gold);
 }
 
 /* --- Begegnung, NSC und Wunden -------------------------------------------------------------- */

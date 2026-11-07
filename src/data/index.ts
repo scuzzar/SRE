@@ -5,6 +5,7 @@ import houseRules from './house-rules.json';
 import skills from './skills.json';
 import sections from './sections.json';
 import examples from './examples.json';
+import demoWorld from './demo-world.json';
 import mythicTables from './mythic-tables.json';
 import names from './names.json';
 import items from './items.json';
@@ -26,6 +27,7 @@ export const referenceData: ReferenceData = ReferenceDataSchema.parse({
   skills,
   sections: withNames(withMythicTables(z.array(SectionSchema).parse(sections), MythicTablesSchema.parse(mythicTables)), NamesSchema.parse(names)),
   examples,
+  demoWorld,
   items,
   weapons,
   encounters,

@@ -6,7 +6,8 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
   const map = page.getByRole('group', { name: 'Karte des Subsektors' });
-  await expect(map.getByRole('button', { name: /nicht erzeugt/ })).toHaveCount(80);
+  // Die Demo-Kampagne hat schon die Startwelt Kessra auf 0405.
+  await expect(map.getByRole('button', { name: /nicht erzeugt/ })).toHaveCount(79);
 
   // Das Vorkommen wird im Subsektor gewürfelt, nicht auf der Weltkarte.
   let named = false;
@@ -108,7 +109,7 @@ test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis 
     await done.getByLabel('Notiz zur Welt').fill('Halveks Werft am Südpol.\nDer Zoll ist bestechlich.');
     await done.getByRole('button', { name: 'Schließen' }).first().click();
     await expect(done).toBeHidden();
-    await expect(page.locator('.world-list-note')).toHaveText('Halveks Werft am Südpol.');
+    await expect(page.locator('.world-list-note').filter({ hasText: 'Halvek' })).toHaveText('Halveks Werft am Südpol.');
     await page.reload();
     await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
     await page.locator('.world-list').getByRole('button', { name: /Regina/ }).click();

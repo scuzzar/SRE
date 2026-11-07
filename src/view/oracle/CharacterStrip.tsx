@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
-import type { CombatView, Snapshot } from '../../controller';
+import type { Snapshot } from '../../controller';
 import { SkillChips, UppRow } from '../characters/CharacterCard';
 import { useGame } from '../game-context';
 import { ChevronDownIcon, PencilIcon } from '../icons';
-import { hex, woundStateText } from '../format';
+import { credits, hex, woundStateText } from '../format';
+
 
 /** So lange nach dem letzten Scrollen gilt das Wischen als beendet. */
 const SETTLE_MS = 120;
@@ -14,9 +15,21 @@ const SETTLE_MS = 120;
  * bei welcher Karte das Wischen liegen geblieben ist. Fertigkeit antippen startet eine Probe, danach
  * lassen sich Attribute dazuwählen. Der Kopf klappt die Leiste ein und auf. Im Reiter Kampf zeigt
  * sie statt der Fertigkeiten die Waffen des Charakters oben; antippen nimmt sie in die Hand. Ist er
- * verwundet und lässt sich etwas tun, steht dort im Kopf seiner Karte „Heilen“.
+ * verwundet und lässt sich etwas tun, steht dort im Kopf seiner Karte „Heilen“. Im Reiter Shop zeigt
+ * sie seine Credits und Attribute; für ihn kauft und verkauft man. Die Nachbarkarten zeigen schon beim
+ * Wischen ihren Inhalt, nicht erst, wenn sie eingerastet sind.
  */
-export function CharacterStrip({ view, weapons = false, heal }: { view: Snapshot; weapons?: boolean; heal?: { readonly name: string; readonly onHeal: () => void } | undefined }) {
+export function CharacterStrip({
+  view,
+  weapons = false,
+  heal,
+  shop = false,
+}: {
+  view: Snapshot;
+  weapons?: boolean;
+  heal?: { readonly name: string; readonly onHeal: () => void } | undefined;
+  shop?: boolean;
+}) {
   const game = useGame();
   const track = useRef<HTMLDivElement>(null);
   const settle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -63,14 +76,18 @@ export function CharacterStrip({ view, weapons = false, heal }: { view: Snapshot
 
   const collapsed = view.stripCollapsed;
   return (
-    <section className={['strip', collapsed ? 'collapsed' : '', weapons ? 'strip-combat' : ''].filter(Boolean).join(' ')} aria-label="Spielercharaktere">
+    <section className={['strip', collapsed ? 'collapsed' : '', weapons || shop ? 'strip-combat' : '', shop ? 'strip-shop' : ''].filter(Boolean).join(' ')} aria-label="Spielercharaktere">
       <div className="strip-track" ref={track} onScroll={onScroll}>
         {characters.map((character, i) => (
           <article key={character.id} className={character.focus ? 'strip-card focus' : 'strip-card'} aria-label={character.name} aria-hidden={!character.focus}>
             <div className="strip-head">
               <button type="button" className="strip-title" aria-expanded={!collapsed} onClick={() => game.toggleStrip()} tabIndex={character.focus ? 0 : -1}>
                 <span className="strip-name">{character.name}</span>
-                {weapons ? (
+                {shop ? (
+                  <span className="pc-sub">
+                    <span className="mono strip-credits">{credits(character.credits)}</span>
+                  </span>
+                ) : weapons ? (
                   <span className="pc-sub">
                     {character.state !== 'unhurt' && <span className={`state-${character.state}`}>{woundStateText[character.state]} · </span>}
                     {character.armor ?? 'keine Rüstung'}
@@ -101,22 +118,17 @@ export function CharacterStrip({ view, weapons = false, heal }: { view: Snapshot
                 <ChevronDownIcon />
               </button>
             </div>
-            {!weapons && character.state !== 'unhurt' && (
+            {!weapons && !shop && character.state !== 'unhurt' && (
               <p className={`strip-state state-${character.state}`}>
                 {woundStateText[character.state]} · STR {hex(Math.max(0, character.current.str))} · DEX {hex(Math.max(0, character.current.dex))} · END {hex(Math.max(0, character.current.end))}
               </p>
             )}
-            {!collapsed && (
+            {!collapsed && shop && <UppLine character={character} />}
+            {!collapsed && !shop && (
               <>
                 {weapons ? <UppLine character={character} /> : <UppRow character={character} interactive={character.focus} />}
                 {weapons ? (
-                  character.focus && view.combat ? (
-                    <WeaponChips combat={view.combat} />
-                  ) : (
-                    <ul className="chips" aria-hidden="true">
-                      <li className="chip">…</li>
-                    </ul>
-                  )
+                  <WeaponChips character={character} />
                 ) : (
                   <SkillChips character={character} interactive={character.focus} />
                 )}
@@ -143,12 +155,20 @@ export function CharacterStrip({ view, weapons = false, heal }: { view: Snapshot
  * Im Kampf in einer Zeile: Primärwaffe, Sekundärwaffe und Hände. Nur die Waffe in der Hand zeigt
  * ihre Fertigkeit und wird nie gekürzt; wird es eng, kürzt sich der Name der anderen.
  */
-function WeaponChips({ combat }: { combat: CombatView }) {
+function WeaponChips({ character }: { character: Snapshot['characters'][number] }) {
   const game = useGame();
+  // Auf einer Nachbarkarte holt Antippen den Charakter nach oben, statt die Waffe zu wechseln.
   return (
     <div className="chips weapon-chips" role="group" aria-label="Waffe in der Hand">
-      {combat.weapons.map((weapon) => (
-        <button key={weapon.id} type="button" aria-label={`${weapon.name} (${weapon.skill})`} aria-pressed={weapon.wielded} onClick={() => game.wieldWeapon(weapon.id)}>
+      {character.weapons.map((weapon) => (
+        <button
+          key={weapon.id}
+          type="button"
+          aria-label={`${weapon.name} (${weapon.skill})`}
+          aria-pressed={weapon.wielded}
+          tabIndex={character.focus ? 0 : -1}
+          onClick={() => (character.focus ? game.wieldWeapon(weapon.id) : game.focusCharacter(character.id))}
+        >
           <span className="chip-name">{weapon.name}</span>
           <span className="chip-skill">{weapon.short}</span>
         </button>

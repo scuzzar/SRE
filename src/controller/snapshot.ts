@@ -527,6 +527,25 @@ export interface ShopItem {
   readonly once: boolean;
   /** Reicht die Kasse für einen? */
   readonly affordable: boolean;
+  /** Wie viele davon der Charakter oben besitzt. */
+  readonly owned: number;
+  /** Bei Rüstungen: Der Charakter oben trägt sie. */
+  readonly worn: boolean;
+}
+
+/** Eine Waffe im Angebot, mit ihrem Magazin daneben und was sie dem Charakter oben taugt. */
+export interface ShopWeapon {
+  readonly item: ShopItem;
+  /** Schlag, Hieb oder Schuss: Nahkampf oder Schusswaffe. */
+  readonly attack: AttackKind;
+  /** Schaden in W6. */
+  readonly wounds: number;
+  /** Das Magazin bzw. Power Pack, wenn sie eins hat, mit den Schuss je Magazin. */
+  readonly ammo: (ShopItem & { readonly rounds: number }) | undefined;
+  /** Die Fertigkeit des Charakters oben in dieser Waffe (Rifle-1); fehlt, wenn er sie nicht hat. */
+  readonly skill: string | undefined;
+  /** Der DM seines Attributs (STR beim Hieb, DEX beim Schuss), wenn er nicht 0 ist (DEX +1). */
+  readonly characteristic: string | undefined;
 }
 
 export interface BookingItem {
@@ -547,6 +566,14 @@ export interface ShopView {
   readonly world: { readonly id: string; readonly name: string; readonly uwp: string; readonly tech: string; readonly law: string } | undefined;
   /** Das Angebot nach Art des Gegenstands, in der Reihenfolge der Liste. */
   readonly offer: readonly { readonly kind: ItemKind; readonly items: readonly ShopItem[] }[];
+  /** Der Charakter oben: für ihn kauft man, aus seinem Besitz verkauft man. Fehlt ohne Lebenden. */
+  readonly owner: string | undefined;
+  /** Die Waffen des Angebots, je mit Magazin; Magazine stehen nicht noch einmal einzeln. */
+  readonly weapons: readonly ShopWeapon[];
+  /** Die Rüstungen des Angebots. */
+  readonly armor: readonly ShopItem[];
+  /** Alles Übrige: Ausrüstung, Fahrzeuge, Passagen, je als Gruppe. */
+  readonly gear: readonly { readonly kind: ItemKind; readonly items: readonly ShopItem[] }[];
   /** Die Buchungen, die neueste zuerst. */
   readonly bookings: readonly BookingItem[];
   /** Die Lebenden, für Kauf, Verkauf, Einzahlung und Auszahlung, mit ihren Credits und was sie verkaufen könnten. */
@@ -555,7 +582,15 @@ export interface ShopView {
     readonly name: string;
     readonly credits: number;
     /** Gegenstände aus dem Besitz mit Preis, mit dem vorgeschlagenen Erlös je Stück (halber Preis). */
-    readonly sellable: readonly { readonly id: string; readonly label: string; readonly count: number; readonly price: number }[];
+    readonly sellable: readonly {
+      readonly id: string;
+      readonly label: string;
+      readonly kind: ItemKind;
+      readonly count: number;
+      readonly price: number;
+      /** Was der Gegenstand ihm gerade ist: getragen, in der Hand, Primär- oder Sekundärwaffe. */
+      readonly role: string | undefined;
+    }[];
   }[];
   readonly error: string | undefined;
 }
@@ -617,6 +652,8 @@ export interface CharacterView {
   readonly current: Upp;
   /** Die getragene Rüstung; fehlt, wenn er keine trägt. Anlegen lässt sie sich nur im Editor. */
   readonly armor: string | undefined;
+  /** Primärwaffe, Sekundärwaffe und Hände, mit der in der Hand; für die Leiste im Kampf, auch auf den Nachbarkarten. */
+  readonly weapons: readonly WeaponChoice[];
 }
 
 export interface TaskView {
@@ -1010,15 +1047,49 @@ function shopView(campaign: Campaign, error: string | undefined): ShopView {
   const offer = world ? offerOf(world) : [];
   const kinds = itemKinds.filter((kind) => offer.some((o) => o.item.kind === kind));
   const name = (id: string | undefined) => (id === undefined ? undefined : campaign.characters.find((c) => c.id === id)?.name);
+  const owner = focusOf(campaign);
+  const shopItem = (o: (typeof offer)[number]): ShopItem => ({
+    id: o.item.id,
+    label: itemLabel(o.item),
+    kind: o.item.kind,
+    tl: o.item.tl,
+    price: o.price,
+    banned: o.banned,
+    once: o.item.once,
+    affordable: o.price <= funds,
+    owned: owner?.possessions.find((p) => p.of === o.item.id)?.count ?? 0,
+    worn: owner !== undefined && owner.wears === o.item.id,
+  });
+  const weapons = offer.flatMap((o): ShopWeapon[] => {
+    if (o.item.weapon === undefined) return [];
+    const weapon = weaponOf(o.item.weapon);
+    const magazine = weapon.ammo === undefined ? undefined : offer.find((a) => a.item.id === weapon.ammo);
+    const level = owner && weaponSkill(owner, weapon)?.level;
+    const characteristic = attackCharacteristic(weapon);
+    const dm = owner ? characteristicAttackDm(weapon, owner.upp[characteristic.toLowerCase() as keyof Upp]) : 0;
+    return [
+      {
+        item: shopItem(o),
+        attack: weapon.attack,
+        wounds: weapon.wounds,
+        ammo: magazine && weapon.rounds !== undefined ? { ...shopItem(magazine), rounds: weapon.rounds } : undefined,
+        skill: level === undefined ? undefined : `${skillOf(weapon.uses).name}-${level}`,
+        characteristic: dm === 0 ? undefined : `${characteristic} ${dm > 0 ? '+' : '−'}${Math.abs(dm)}`,
+      },
+    ];
+  });
+  const gearKinds: readonly ItemKind[] = ['equipment', 'vehicle', 'passage'];
   return {
     funds,
     world: world && { id: hexId(world.column, world.row), name: world.name, uwp: uwpCode(world.uwp), tech: ehex(world.uwp.tech ?? 0), law: ehex(world.uwp.law ?? 0) },
-    offer: kinds.map((kind) => ({
-      kind,
-      items: offer
-        .filter((o) => o.item.kind === kind)
-        .map((o) => ({ id: o.item.id, label: itemLabel(o.item), kind, tl: o.item.tl, price: o.price, banned: o.banned, once: o.item.once, affordable: o.price <= funds })),
-    })),
+    offer: kinds.map((kind) => ({ kind, items: offer.filter((o) => o.item.kind === kind).map(shopItem) })),
+    owner: owner?.id,
+    weapons,
+    armor: offer.filter((o) => o.item.kind === 'armor').map(shopItem),
+    gear: gearKinds.flatMap((kind) => {
+      const items = offer.filter((o) => o.item.kind === kind).map(shopItem);
+      return items.length ? [{ kind, items }] : [];
+    }),
     bookings: [...campaign.bookings].reverse().map((b) => ({
       at: b.at,
       kind: b.kind,
@@ -1036,7 +1107,18 @@ function shopView(campaign: Campaign, error: string | undefined): ShopView {
       sellable: c.possessions.flatMap((p) => {
         const item = itemOf(p.of);
         const price = salePrice(item);
-        return price === undefined ? [] : [{ id: item.id, label: itemLabel(item), count: p.count, price }];
+        if (price === undefined) return [];
+        const role =
+          c.wears === item.id
+            ? 'getragen'
+            : item.weapon !== undefined && wieldedWeapon(c).id === item.weapon
+              ? 'in der Hand'
+              : item.weapon !== undefined && c.primary === item.weapon
+                ? 'Primärwaffe'
+                : item.weapon !== undefined && c.secondary === item.weapon
+                  ? 'Sekundärwaffe'
+                  : undefined;
+        return [{ id: item.id, label: itemLabel(item), kind: item.kind, count: p.count, price, role }];
       }),
     })),
     error,
@@ -1133,6 +1215,7 @@ function characterView(campaign: Campaign, character: Character, state: Controll
     state: woundStateOf(campaign, { pc: character.id }),
     current: woundedUpp(character.upp, woundsOf(campaign, { pc: character.id })),
     armor: character.wears === undefined ? undefined : itemLabel(itemOf(character.wears)),
+    weapons: armedWeaponsOf(character).map((id) => weaponLabel(character, id)),
   };
 }
 

@@ -1,0 +1,25 @@
+{
+  "column": 4,
+  "row": 5,
+  "empty": false,
+  "name": "Kessra",
+  "navalBase": false,
+  "scoutBase": true,
+  "gasGiant": true,
+  "uwp": { "starport": 10, "size": 7, "atmosphere": 6, "hydrographics": 6, "population": 7, "government": 5, "law": 4, "tech": 10 },
+  "temperature": "temperate",
+  "surface": {
+    "water": 60,
+    "plates": 5,
+    "majorContinents": 2,
+    "minorContinents": 3,
+    "majorIslands": 4,
+    "archipelagos": 2,
+    "majorOceans": 0,
+    "minorOceans": 0,
+    "smallSeas": 0,
+    "scatteredLakes": 0,
+    "life": true
+  },
+  "note": "Startwelt der Demo-Kampagne: Raumhafen A, TL A, Gesetz 4. Hier steht die Gruppe zu Beginn."
+}

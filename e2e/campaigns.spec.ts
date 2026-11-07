@@ -55,7 +55,7 @@ test('Kampagne exportieren kommt als Download, Import legt sie neu an', async ({
   const downloading = page.waitForEvent('download');
   await sheet(page).getByRole('button', { name: 'Kampagne exportieren' }).click();
   const download = await downloading;
-  expect(download.suggestedFilename()).toMatch(/^Kampagne-\d{4}-\d{2}-\d{2}\.json$/);
+  expect(download.suggestedFilename()).toMatch(/^Demo-Kampagne-\d{4}-\d{2}-\d{2}\.json$/);
   const path = await download.path();
 
   await sheet(page).locator('input[type=file]').setInputFiles(path);

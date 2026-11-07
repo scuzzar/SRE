@@ -1171,11 +1171,15 @@ Diagramm mit diesen Ausnahmen:
   einen Angriff, alle immer zur offenen Kampagne; beim Wechsel der Kampagne verfallen sie. Damit ist die Multiplizität erfüllt.
 - **`Recovery.kind`** heißt im Code `how`, weil `kind` bei Logeinträgen schon die Art des Eintrags
   ist (`'recovery'`).
-- **Beispielcharaktere.** Die allererste Kampagne auf einem Gerät beginnt mit Kira Vant und Jonas
-  Reyl aus der README (`src/data/examples.json`), damit man gleich etwas ausprobieren kann. Das
-  Modell sagt dazu nichts; die beiden lassen sich löschen, solange der Log nicht auf sie verweist.
-  Jede weitere Kampagne beginnt leer. Kira hat die Automatic Pistol, Jonas die Blade als
-  Primärwaffe; in der Hand haben beide zu Beginn die Hände.
+- **Demo-Kampagne.** Die allererste Kampagne auf einem Gerät heißt „Demo-Kampagne“ und ist nicht
+  leer, damit man gleich etwas ausprobieren kann: Sie beginnt mit Kira Vant und Jonas Reyl aus der
+  README (`src/data/examples.json`) und der festen Startwelt Kessra (0405, A766754-A, Scoutbasis,
+  Gasriese, gemäßigt; `src/data/demo-world.json`), einer fertigen Welt, auf der die Gruppe steht
+  (`location`). Das Modell sagt dazu nichts; die Welt prüft das Model wie jedes Hexfeld. Die beiden
+  Charaktere lassen sich löschen, solange der Log nicht auf sie verweist. Jede weitere Kampagne
+  beginnt leer, wie unter *Mehrere Kampagnen*; bestehende Kampagnen bekommen nichts nachgetragen.
+  Kira hat die Automatic Pistol, Jonas die Blade als Primärwaffe; in der Hand haben beide zu Beginn
+  die Hände.
 - **`RangeBand` in den Daten** steht in `src/data/encounters.json` als `bands`, je Reichweite mit
   `from` und `to`, wie im Bild. Begegnungen von vor den Range Bands haben nur eine Reichweite
   (`range`); beim Laden bekommen sie deren erstes Band (Close: Band 0 mit Berührung, Short 0,
