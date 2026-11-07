@@ -2,7 +2,7 @@
 
 Dieses Dokument ersetzt beim Entwickeln das Nachschlagen in den PDFs. Es fasst **alle Regeln und
 Tabellen zum Kampf und zu den Systemen drumherum** (Begegnungen, die zum Kampf führen können,
-Überraschung, Entfernung, Entkommen, Moral, Umstände, Wunden, Heilung, Waffen) aus zwei Büchern
+Überraschung, Entfernung, Entkommen, Moral, Umstände, Wunden, Heilung, Waffen) aus drei Heften
 zusammen, jede mit Quelle und Seite, und sagt
 je Regel, wie weit die App sie schon umsetzt. Es ist ein Nachschlagewerk, kein Modell: Was die App
 davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domain-model.md)).
@@ -12,14 +12,17 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | Kürzel | Buch | Seitenangaben |
 |---|---|---|
 | **SE** | *Traveller Starter Edition*, Teil 2: *Charts and Tables* (GDW 1983) | gedruckte Seitenzahl; im PDF ist es die Seite + 2 |
+| **SR** | *Traveller Starter Edition*, Teil 1: *Rules Booklet* (GDW 1983), Kapitel *Personal Combat* (S. 19–27), *Animal Encounters* (S. 46–49), *Encounters* (S. 50–51) | gedruckte Seitenzahl; im PDF ist es die Seite + 2 |
 | **B4** | *Traveller Book 4: Mercenary* (GDW 1978) | gedruckte Seitenzahl; im PDF ist es die Seite + 6 |
-| **B1** | *Traveller Book 1: Characters and Combat* | liegt nicht vor; nur genannt, wo SE oder B4 darauf verweisen |
+| **B1** | *Traveller Book 1: Characters and Combat* | liegt nicht vor; seine Kampfregeln stehen in SR, auf die SE-Tabellen abgestimmt; nur noch genannt, wo B4 auf B1 verweist |
 
+- SE hat die Tabellen, SR den Regeltext dazu. Wo SR eine Tabelle aus SE erklärt oder ergänzt, steht
+  das bei der Tabelle; wo sich beide widersprechen, ist es vermerkt.
 - Regeltexte sind auf Deutsch zusammengefasst, Tabellen vollständig übernommen. Namen aus den
   Tabellen (Waffen, Rüstungen, Reaktionen, Reichweiten) bleiben englisch, wie in der App.
 - „1D“, „2D“ heißt 1W6, 2W6; „8+“ heißt „8 oder mehr auf 2W6“; „DM“ ist ein Würfelmodifikator.
 - Gewichte in Gramm, Längen in Millimetern, Preise in Credits (Cr), wenn nicht anders angegeben.
-- Was eines der Bücher nur erwähnt und in B1 regelt, steht unter [Lücken](#lücken-was-nur-in-book-1-steht).
+- Was B4 nur erwähnt und in B1 regelt, steht unter [Lücken](#lücken-was-nur-in-book-1-steht).
 
 **Stand in der App** je Regel:
 
@@ -34,39 +37,44 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 
 | Regel | Quelle | App |
 |---|---|---|
-| [Ablauf eines Kampfes](#ablauf-eines-kampfes) | SE 6 | ◐ |
-| [Häufigkeit von Begegnungen](#häufigkeit-von-begegnungen) | SE 20 | ○ |
-| [Zufallsbegegnungen mit Personen](#zufallsbegegnungen-mit-personen) | SE 21 | ✔ ✱ |
-| [Reaktion](#reaktion) | SE 21 | ✔ |
+| [Ablauf eines Kampfes](#ablauf-eines-kampfes) | SE 6, SR 19–20 | ◐ |
+| [Häufigkeit von Begegnungen](#häufigkeit-von-begegnungen) | SE 20, SR 47, 50 | ○ |
+| [Zufallsbegegnungen mit Personen](#zufallsbegegnungen-mit-personen) | SE 21, SR 50 | ◐ ✱ (Ausrüstung der NSC weicht ab) |
+| [Reaktion](#reaktion) | SE 21, SR 51 | ✔ |
 | [Waffen nach TL, Verbote nach Gesetz](#waffen-nach-tl-und-verbote-nach-gesetzesstufe) | SE 21 | ✔ |
-| [Überraschung](#überraschung) | SE 5 | ✔ (ohne Tiere) |
-| [Anfangsentfernung und Gelände](#anfangsentfernung-und-gelände) | SE 5 | ✔ |
-| [Reichweiten, Range Bands, Geschwindigkeiten](#reichweiten-range-bands-und-geschwindigkeiten) | SE 7, 24 | ✔ ✱, Geschwindigkeiten ◐ |
-| [Entkommen und Ausweichen](#entkommen-und-ausweichen) | SE 5 | ○ |
-| [Moral (einfach)](#moral-einfach) | SE 5 | ○ |
-| [Angriff: Grundwurf und DMs](#angriff-grundwurf-und-erlaubte-dms) | SE 6 | ◐ |
+| [Überraschung](#überraschung) | SE 5, SR 19–20 | ◐ (nur Runde 1; ohne Tiere) |
+| [Anfangsentfernung und Gelände](#anfangsentfernung-und-gelände) | SE 5, SR 20 | ✔ |
+| [Entkommen und Ausweichen](#entkommen-und-ausweichen) | SE 5, SR 20–21 | ◐ (nur über 20 Bands) |
+| [Moral (einfach)](#moral-einfach) | SE 5, SR 23 | ○ |
+| [Reichweiten, Range Bands, Geschwindigkeiten](#reichweiten-range-bands-und-geschwindigkeiten) | SE 7, 24, SR 20 | ✔ ✱, Geschwindigkeiten ◐ |
+| [Bewegungsstatus](#bewegungsstatus) | SR 20–21 | ○ |
+| [Angriff: Grundwurf und DMs](#angriff-grundwurf-und-erlaubte-dms) | SE 6, SR 21–22 | ◐ |
+| [Wirkung der Attribute, Ausdauer](#wirkung-der-attribute-und-ausdauer) | SR 21–22 | ◐ (Wunden zählen fälschlich mit; Ausdauer ○) |
+| [Fertigkeit, Parieren, ungeübte Waffen](#fertigkeit-parieren-und-ungeübte-waffen) | SR 22 | ◐ (Angriff ✔) |
 | [Waffen- und Reichweitenmatrix](#waffen--und-reichweitenmatrix) | SE 6 | ✔ (ohne Tierwaffen und Zubehör) |
-| [Waffen und Ausrüstung](#waffen-und-ausrüstung) | SE 4, 23 | ✔ (ohne Zubehör) |
-| [Rüstung](#rüstung) | SE 4 | ✔ |
-| [Deckung, Verbergen, Dunkelheit](#deckung-und-verbergen) | SE 5 | ○ |
-| [Schwerelosigkeit](#schwerelosigkeit) | SE 5, B4 16 | ○ |
-| [Traglast und Schwerkraft](#traglast-und-schwerkraft) | SE 5 | ○ |
-| [Typische Aktionen](#typische-aktionen) | SE 5 | ◐ |
-| [Wunden und Tod](#wunden-und-tod) | SE 7 | ✔ |
-| [Medizinische Versorgung](#medizinische-versorgung) | SE 7 | ✔, Drogen ○ |
+| [Waffen und Ausrüstung](#waffen-und-ausrüstung) | SE 4, 23, SR 23–26 | ✔ (ohne Zubehör) |
+| [Rüstung](#rüstung) | SE 4, SR 25–26 | ✔ |
+| [Besondere Fälle](#besondere-fälle) (Ziehen, Werfen, Autofeuer, Schrot, Coup de Grâce, Nachladen) | SR 26 | ◐ (Nachladen) |
+| [Deckung, Verbergen, Dunkelheit](#deckung-und-verbergen) | SE 5, SR 26–27 | ○ |
+| [Schwerelosigkeit](#schwerelosigkeit) | SE 5, SR 27, B4 16 | ○ |
+| [Traglast und Schwerkraft](#traglast-und-schwerkraft) | SE 5, SR 22 | ○ |
+| [Typische Aktionen](#typische-aktionen) | SE 5, SR 23 | ◐ |
+| [Wunden und Tod](#wunden-und-tod) | SE 7, SR 21 | ◐ (Überlauf der ersten Wunde fehlt) |
+| [Medizinische Versorgung](#medizinische-versorgung) | SE 7, SR 21 | ✔, Drogen ○ |
 | [Moral nach Book 4](#moral-nach-book-4) | B4 28–31 | ○ |
 | [Feuerregeln aus Book 4](#feuerregeln-aus-book-4) | B4 31–32 | ○ |
 | [Waffen aus Book 4](#waffen-aus-book-4) | B4 36–41, 50–52 | ○ |
 | [Fertigkeiten aus Book 4 im Kampf](#fertigkeiten-aus-book-4-im-kampf) | B4 10–16, 26 | ○ |
 | [Abstraktes Schlachtsystem](#abstraktes-schlachtsystem) | B4 32–35 | ○ |
 | [Feldartillerie](#feldartillerie) | B4 48–49 | ○ |
-| [Tierbegegnungen](#tierbegegnungen) | SE 18–19 | ○ |
+| [Tierbegegnungen](#tierbegegnungen) | SE 18–19, SR 46–49 | ○ |
 
 ---
 
 ## Ablauf eines Kampfes
 
-*SE 6, „Combat Procedure“.* App: ◐ (1A, 1B, 2B, 2C, 2E; 1C, 2A, 2D offen)
+*SE 6, „Combat Procedure“; SR 19–20, „Combat Procedure“, „Initial Encounter Procedure“, „The Combat
+Round“.* App: ◐ (1A, 1B, 2B, 2C, 2E; 1C, 2A, 2D offen)
 
 1. Die Fakten der Begegnung feststellen:
    - A. Wer hat Überraschung?
@@ -82,6 +90,15 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 
 *Referee's Discretion (SE 6):* Die Spielleitung darf weitere DMs ansagen oder verdeckt anwenden.
 
+*Ergänzungen aus SR 19–20:*
+- Eine **Kampfrunde dauert 15 Sekunden**. Der Kampf läuft, bis eine Partei besiegt ist, flieht,
+  stirbt oder sich ergibt.
+- Überraschung, Anfangsentfernung und Entkommen/Ausweichen werden **nur einmal je Begegnung**
+  bestimmt; danach wiederholt sich nur die Kampfrunde.
+- In einer Runde darf **jeder sich bewegen und angreifen**; jeder kann von einem oder mehreren
+  Gegnern angegriffen werden. Meist bewegen sich erst alle, dann greifen alle an. Alle Angriffe einer
+  Runde gelten als **gleichzeitig**.
+
 > App: Wunden wirken sofort nach dem Treffer, nicht erst am Ende der Runde (siehe
 > `domain-model.md`, *Kampfsimulation*).
 
@@ -91,7 +108,8 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 
 ### Häufigkeit von Begegnungen
 
-*SE 20, „Encounters“ und „Encounter Checklist“.* App: ○ (man würfelt eine Begegnung, wann man will)
+*SE 20, „Encounters“ und „Encounter Checklist“; SR 47, „Using the Encounter Tables“; SR 50, „Random
+Encounters“.* App: ○ (man würfelt eine Begegnung, wann man will)
 
 SE kennt sieben Arten von Begegnungen. Zum Kampf führen können diese beiden:
 
@@ -102,6 +120,13 @@ SE kennt sieben Arten von Begegnungen. Zum Kampf führen können diese beiden:
 
 Die übrigen (Routine, Legal, Patron, Rumor, Adventure) stehen unter
 [Nicht aufgenommen](#nicht-aufgenommen).
+
+*Ergänzungen aus SR:*
+- **Zufallsbegegnungen** gibt es nur, wo eine **Bevölkerung** ist, aus der die Begegneten kommen
+  können (SR 50).
+- **Tierbegegnungen** (SR 47): einmal, während die Gruppe reist, und einmal, während sie rastet, je
+  **5+ auf 1W6** (ein Drittel). Teilt sich die Gruppe, würfelt jeder Teil für sich. Orte, die die
+  Spielleitung schon mit Tieren besetzt hat (etwa eine Ruine), folgen nicht diesen Würfen.
 
 *SE 5, „Encounters“:* Die Spielleitung arbeitet (ohne es zu verraten) mit: Was oder wer? Wie viele?
 Warum? Wie? Wann? Wo?
@@ -156,9 +181,22 @@ W6, wie angegeben.
   Fahrzeug passend zum TL (auch Reittiere).
 - **−N** / **+N**: Der TL der Gruppe ist N niedriger bzw. höher als der der Welt.
 
+**Ergänzungen aus SR 50:**
+- Die Liste ist ein Beispiel; für ein Abenteuer (etwa einen Bürgerkrieg) darf man eigene anlegen.
+- Ohne andere Angabe ist die Gruppe **ohne Rüstung**, nur mit **Klingen**, **zu Fuß** und auf dem
+  **TL der Welt**.
+- Ein **Anführer** trägt **immer eine Schusswaffe** und **Rüstung** passend zum TL, auch wenn die
+  Gruppe kein G oder A hat.
+- **Combat Armor und Battle Dress** tragen **nur Soldaten (military troops) und Anführer**.
+
 > ✱ App: Der Würfel der Anzahl ist einstellbar (W6 nach der Regel, W4 oder W3 zum Ausgleichen).
 > Welche Waffe und Rüstung ein NSC bekommt, legt die App fest: zufällig bis zum TL der Gruppe, der
 > Anführer das Beste. Das Merkmal „militärisch“ (`EncounterType.military`) ist eine Ergänzung der App.
+>
+> **Weicht von SR 50 ab** (`rollEncounter` in `src/model/encounter.ts`):
+> - Ein Anführer einer Gruppe ohne G bekommt die beste **Klinge** statt einer Schusswaffe.
+> - Ein NSC einer Gruppe mit A kann auch dann **Combat Armor oder Battle Dress** bekommen, wenn die
+>   Gruppe nicht militärisch ist (etwa Police Patrol „+1 GA“ auf einer Welt mit TL 12).
 
 ### Reaktion
 
@@ -181,6 +219,7 @@ W6, wie angegeben.
 - Eine echte 2 oder 12 auf den Würfeln gilt ohne DMs. Mit DMs wird unter 3 zu 3 und über 12 zu 12.
 - DM +1, wenn ein Charakter 5 oder mehr Terms in Army, Navy, Scouts oder Marines gedient hat.
 - DM −1, wenn die Bevölkerung der Welt 9 oder mehr ist.
+- Ein Wurf gilt für die **ganze Gruppe**, gewürfelt bei der ersten Begegnung (SR 51).
 
 ### Waffen nach TL und Verbote nach Gesetzesstufe
 
@@ -225,7 +264,8 @@ Ein Verbot gilt ab dieser Stufe und für alle höheren.
 
 ### Überraschung
 
-*SE 5, „Surprise“.* App: ✔ (die beiden Tier-DMs fehlen, es gibt noch keine Tierbegegnungen)
+*SE 5, „Surprise“; SR 19–20, „Surprise“.* App: ◐ (Wurf und DMs ✔ ohne die beiden Tier-DMs; die
+Überraschung gilt in der App nur in Runde 1, nicht bis zum Alarm)
 
 Jede Partei würfelt 1W6 mit DMs. Liegt ein Wurf **3 oder mehr** über dem anderen, hat die höhere
 Partei Überraschung.
@@ -243,6 +283,21 @@ Partei Überraschung.
 
 *Schläge und Hiebe mit Überraschung (SE 6, „Attacks“):* volle Stärke, unbegrenzt, solange die
 Überraschung anhält.
+
+**Wie lange die Überraschung hält (SR 20):**
+- Nur eine Partei kann Überraschung haben, vielleicht auch keine. Ohne Überraschung sehen sich beide
+  auf der Anfangsentfernung.
+- Wer Überraschung hat, darf der Begegnung **ausweichen**, indem er es sagt
+  ([Entkommen](#entkommen-und-ausweichen)).
+- Wer Überraschung hat, greift mit **Überraschungsangriffen** an, **bis die Überraschung verloren
+  ist**. In jeder Runde darf jedes Mitglied **einen** Überraschungsangriff machen; da alle Angriffe
+  gleichzeitig sind, beenden alle ihre Angriffe der Runde, auch wenn einer davon den Alarm auslöst.
+- Die Überraschung geht verloren, sobald jemand aus der anderen Partei **Alarm** gibt:
+  - Jeder **Schuss ohne Schalldämpfer** alarmiert. Still sind Pistolen mit Silencer, Laser und alle
+    Schusswaffen im Vakuum.
+  - Wer getroffen, aber **nicht bewusstlos** wird, schreit und alarmiert.
+  - Sonst sieht bei **9+** ein nicht angegriffener Kamerad jemanden fallen und gibt Alarm.
+- Danach beginnt der gewöhnliche Kampf.
 
 ### Anfangsentfernung und Gelände
 
@@ -285,10 +340,12 @@ Partei Überraschung.
 
 ### Entkommen und Ausweichen
 
-*SE 5, „Escape and Avoidance“.* App: ○
+*SE 5, „Escape and Avoidance“; SR 20–21, „Escape and Avoidance“, „Open Range“.* App: ◐ (nur das
+Entkommen über 20 Bands)
 
-- **Ausweichen:** Eine NSC-Partei, die **in der Unterzahl** ist und **Überraschung** hat, weicht der
-  Begegnung bei **7+** aus.
+- **Ausweichen:** Eine Partei mit **Überraschung** kann der Begegnung **immer** ausweichen, wenn sie
+  es sagt (SR 20). Eine NSC-Partei, die **in der Unterzahl** ist und **Überraschung** hat, weicht der
+  Begegnung bei **7+** aus (ohne DMs).
 - **Tiere** fliehen nach ihren Eigenschaften und den Begegnungstabellen (siehe
   [Tierverhalten](#tierverhalten)).
 - **Entkommen:** Eine Partei **ohne Überraschung** entkommt bei **9+**, mit DM nach Reichweite:
@@ -300,12 +357,18 @@ Partei Überraschung.
 | Long | +2 |
 | Very Long | +3 |
 
-> In der App sind die Parteien außerdem **entkommen**, wenn sie mehr als 20 Bands auseinander sind
-> (B1 S. 33, über `domain-model.md`).
+- Entkommen nach SE 5 geht **sofort**, bevor es zu Kontakt oder Kampf kommt; jede Partei darf es
+  versuchen. Ob eine NSC-Partei es versucht, entscheidet die Spielleitung nach der Lage (SR 20).
+- **Hat der Kontakt oder Kampf begonnen**, verlässt man das Feld **nur noch durch Bewegung**: Wer
+  sich **mehr als 20 Bands** vom nächsten Gegner entfernt, ist außer Reichweite und **entkommen**
+  (SR 21).
+
+> App: Die Parteien sind **entkommen**, wenn sie mehr als 20 Bands auseinander sind (bisher mit
+> B1 S. 33 begründet, steht so in SR 21). Die Würfe nach SE 5 fehlen.
 
 ### Moral (einfach)
 
-*SE 5, „Morale“.* App: ○. Für Zufallsbegegnungen; Book 4 hat eine genauere
+*SE 5, „Morale“; SR 23, „Morale“.* App: ○. Für Zufallsbegegnungen; Book 4 hat eine genauere
 [Moral für Militär](#moral-nach-book-4).
 
 Sobald **25 %** einer Partei bewusstlos oder tot sind, würfelt sie **jede Kampfrunde** auf die Moral:
@@ -319,13 +382,20 @@ Sobald **25 %** einer Partei bewusstlos oder tot sind, würfelt sie **jede Kampf
 | Verluste (bewusstlos oder tot) über 50 % | −2 |
 | Anführer bewusstlos oder tot | −2, nur für 2 Kampfrunden; dann übernimmt ein neuer Anführer |
 
+*SR 23:* Eine Partei mit Verlusten **bricht** am Ende oder flieht, wenn sie nicht siegt. 7+ gilt für
+eine durchschnittliche Partei; für **tapfere Parteien** darf der Wurf anders liegen („valiant parties
+may have a higher throw“, ohne Zahl; Ermessen der Spielleitung). SR nennt beim Anführer nur „getötet“ und den DM −2
+„für mindestens zwei Runden und bis ein neuer Anführer übernimmt“; als Verluste zählen Bewusstlose
+und Tote.
+
 ---
 
 ## Entfernung
 
 ### Reichweiten, Range Bands und Geschwindigkeiten
 
-*SE 7, „Ranges“, „Range Bands“, „Speeds“; gleiche Reichweiten SE 24, „Range Descriptions“.*
+*SE 7, „Ranges“, „Range Bands“, „Speeds“; gleiche Reichweiten SE 24, „Range Descriptions“; SR 20,
+„Movement“; SR 23, „Square Grid Activity“.*
 App: Reichweiten und Bands ✔, Geschwindigkeiten ◐ (die Parteien rücken mit ◀ ▶ ohne Zug)
 
 | Range | Bedeutung |
@@ -360,8 +430,36 @@ Ein Band sind etwa 17 Felder zu 1,5 m (etwa 25 m).
 
 Schneller als doppelt laufen geht meist nicht lange.
 
+*Ergänzungen aus SR 20 und 23:*
+- Ein Band ist etwa **25 m**. Man zeichnet die Begegnung auf eine Linie (liniertes Papier); jede
+  Zeile ist ein Band. **Close** und **Short** sind kleiner als ein Band: Wer sich berührt, ist auf
+  Close, alle anderen im selben Band auf Short.
+- Menschen gehen **1 Band** je Runde oder laufen **2 Bands**; Tiere können schneller sein (Speed der
+  [Tiere](#tierverhalten)). SR kennt für Menschen nur Gehen, Laufen und Fahren; die dreifache und
+  vierfache Geschwindigkeit aus SE 7 betrifft Tiere und Fahrzeuge.
+- *Quadratraster* (SR 23), Felder zu 1,5 m: Gehen **8 Felder** je Runde, Laufen **16**, schneller in
+  Vielfachen von 8. Das widerspricht SE 7 (17 Felder je Band beim Gehen); SR 23 gilt nur fürs Raster.
+  Eine Tür oder Luke öffnen dauert eine Runde, in der man als **ausweichend** gilt.
+
 > ✱ App: Auf Band 0 unterscheidet sie Close (Berührung) und Short. Das Startband innerhalb einer
 > Reichweite ist gleichverteilt gewürfelt (Medium 1W2, Long 1W8, Very Long 1W10).
+
+### Bewegungsstatus
+
+*SR 20–21, „Movement“.* App: ○ (die Parteien rücken als Ganzes mit ◀ ▶, ohne Status)
+
+Vor jeder Runde sagt jeder Kämpfer seinen **Bewegungsstatus** an, dazu, ob er **geht** (1 Band),
+**läuft** (2 Bands) oder **fährt**. Alle bewegen sich **gleichzeitig**, jedes Mitglied einer Partei
+für sich.
+
+| Status | Wirkung |
+|---|---|
+| **Evade** (ausweichen) | Auf jeder Reichweite möglich. **Kein Angriff** in dieser Runde (kein Schlag, Hieb oder Schuss) und **kein Parieren**. Dafür DM für den Verteidiger nach Entfernung zum Angreifer: **−1** auf Close oder Short, **−2** auf Medium, **−4** auf Long oder Very Long. |
+| **Close Range** (näher) | Auf den Gegner zu, gehend 1 Band oder laufend (auch reitend oder fahrend) etwa 2. **Laufen** kostet Kraft: Es zählt als **Combat Blow** (verbraucht einen Punkt der [Ausdauer](#wirkung-der-attribute-und-ausdauer)) und verbietet in dieser Runde Schläge und Hiebe. Von Short auf Close zählt als ein Band. |
+| **Open Range** (weiter weg) | Vom Gegner weg, wie Close Range; aber **aus Close** kommt man ohne Laufen in einem Zug bis ein Band weit weg. |
+| **Stand** | Man bewegt sich nicht. |
+
+Mehr als 20 Bands vom nächsten Gegner: entkommen ([Entkommen](#entkommen-und-ausweichen)).
 
 ---
 
@@ -369,9 +467,10 @@ Schneller als doppelt laufen geht meist nicht lange.
 
 ### Angriff: Grundwurf und erlaubte DMs
 
-*SE 6, „Basic Throw to Hit“, „Allowed Die Modifiers“, „Attacks“.* App: ◐
+*SE 6, „Basic Throw to Hit“, „Allowed Die Modifiers“, „Attacks“; SR 21, „Combat Resolution“.* App: ◐
 
-**Grundwurf: 8+** für jeden Schlag, Hieb oder Schuss.
+**Grundwurf: 8+** für jeden Schlag, Hieb oder Schuss. Jeder Kämpfer wählt in jeder Runde **ein
+Ziel** aus der anderen Partei. Alle DMs werden addiert (SR 21).
 
 | Erlaubter DM | App |
 |---|---|
@@ -380,16 +479,17 @@ Schneller als doppelt laufen geht meist nicht lange.
 | Nötige Stärke (Klingen) | ✔ |
 | Nötige Geschicklichkeit (Schusswaffen) | ✔ |
 | Waffenfertigkeit des Angreifers | ✔ |
-| Klingenfertigkeit des Verteidigers (Parieren) | ○ (Regel in B1) |
+| Klingenfertigkeit des Verteidigers (Parieren) | ○ ([Parieren](#fertigkeit-parieren-und-ungeübte-waffen), SR 22) |
+| Ungeübte Waffe (Angreifer −5, Verteidiger +3) | ○ ([SR 22](#fertigkeit-parieren-und-ungeübte-waffen)) |
 | Rüstung | ✔ |
 | Reichweite | ✔ |
-| Verteidiger weicht aus (Evading) | ○ (Regel in B1) |
-| Verteidiger in Deckung | ○ ([Deckung](#deckung-und-verbergen)) |
-| Gruppentreffer durch Schrotflinte | ○ (Regel in B1, S. 39) |
-| Gruppentreffer durch Autofeuer | ○ ([B4](#feuerregeln-aus-book-4); für SE-Waffen B1) |
-| Geschwächte Schläge | ○ (DM in der [Waffentabelle](#klingen-und-nahkampf), Regel unten) |
-| Waffe ziehen | ○ (Regel in B1) |
-| Geworfene Klinge | ○ (Regel in B1) |
+| Verteidiger weicht aus (Evading) | ○ ([Bewegungsstatus](#bewegungsstatus), SR 20) |
+| Verteidiger in Deckung oder verborgen | ○ ([Deckung](#deckung-und-verbergen), SR 27) |
+| Gruppentreffer durch Schrotflinte | ○ ([Besondere Fälle](#besondere-fälle), SR 26) |
+| Gruppentreffer durch Autofeuer | ○ ([Besondere Fälle](#besondere-fälle), SR 26; [B4](#feuerregeln-aus-book-4)) |
+| Geschwächte Schläge | ○ (DM in der [Waffentabelle](#klingen-und-nahkampf), Regel [SR 22](#wirkung-der-attribute-und-ausdauer)) |
+| Waffe ziehen | ○ ([Besondere Fälle](#besondere-fälle), SR 26) |
+| Geworfene Klinge | ○ ([Besondere Fälle](#besondere-fälle), SR 26) |
 | Schlechte Sicht, Dunkelheit | ○ ([Dunkelheit](#dunkelheit)) |
 
 **Arten von Angriffen (SE 6):**
@@ -404,7 +504,51 @@ Schneller als doppelt laufen geht meist nicht lange.
   - *Combat:* gewöhnliches Feuer.
   - *Coup de Grace:* gegen Bewusstlose oder Wehrlose.
 
-> Wie viele volle Schläge die Ausdauer erlaubt, steht in B1, nicht in SE.
+Wie viele volle Schläge die Ausdauer erlaubt, steht unter
+[Wirkung der Attribute](#wirkung-der-attribute-und-ausdauer) (SR 22).
+
+### Wirkung der Attribute und Ausdauer
+
+*SR 21–22, „The Effects of Characteristics“.* App: ◐ (STR und DEX ✔, aber mit dem verwundeten Wert;
+Ausdauer ○)
+
+- **Wunden ändern die Attribute nicht**, soweit sie Schläge, Hiebe und Schüsse beeinflussen: Wer
+  wach ist und STR 9 auf 7 verwundet hat, kämpft weiter wie mit STR 9. Erst ein Attribut auf 0 macht
+  bewusstlos.
+- **Strength** wirkt auf Schläge und Hiebe (nicht auf Schüsse): unter der nötigen STR der negative
+  DM der Waffe, ab der vorteilhaften der positive ([Waffentabelle](#klingen-und-nahkampf)). Beispiel:
+  Cutlass mit STR 5 −2, mit STR 11 +2.
+- **Dexterity** wirkt ebenso auf Schüsse.
+- **Endurance** begrenzt Schläge und Hiebe; Schüsse gehen, solange Munition da ist. Vier Arten:
+
+| Art | Regel |
+|---|---|
+| **Surprise** | Unbegrenzt, solange man die Überraschung hat (eine je Runde). |
+| **Combat** | Die gewöhnlichen Schläge und Hiebe nach der Überraschung: **höchstens so viele wie END**, z. B. 9 bei END 9. Dann erst wieder nach **30 Minuten Rast**. |
+| **Weakened** | Nach den Combat-Schlägen beliebig viele, je mit dem **Weakened Blow/Swing DM** der Waffe. Man darf einen Schlag auch freiwillig geschwächt führen, damit er nicht von der END abgeht. |
+| **Special** | Wo Stärke nicht zählt, etwa gegen Bewusstlose: nicht geschwächt, zählt nicht gegen die END. |
+
+- Höchstens **ein Schlag oder Hieb je Runde**.
+- Maßgeblich ist die **END zu Beginn der Begegnung**: Wunden in der Begegnung senken die Zahl nicht,
+  Wunden von vorher schon. Die Zahl gilt für Faust und Klinge zusammen.
+- **Laufen** und **Werfen** einer Klinge zählen als Combat-Schlag (SR 20, 26).
+
+> **Weicht ab** (`fighterOf` in `src/model/combat.ts`): Die App nimmt für den DM der STR bzw. DEX den
+> **verwundeten** Wert, nach SR 21 gilt der unverwundete.
+
+### Fertigkeit, Parieren und ungeübte Waffen
+
+*SR 22, „Expertise“.* App: ◐ (Angriff ✔; Parieren und ungeübt ○)
+
+- **Angriff:** Die Stufe in der Waffe ist ein positiver DM; wer die Waffe wechselt, nimmt die Stufe der
+  neuen.
+- **Parieren:** Wer mit Faust oder Klinge gegen einen Gegner mit Faust oder Klinge kämpft, zieht
+  seine Stufe in **seiner** Waffe vom Wurf des Angreifers ab. Nur Schläge und Hiebe lassen sich
+  parieren, keine Schüsse. Ein **Gewehr oder Karabiner** (keine Pistole) pariert als **Cudgel**.
+  Man darf in derselben Runde angreifen und parieren; wer ausweicht, pariert nicht.
+- **Ungeübte Waffe:** Ohne Fertigkeit in der Waffe **−5 im Angriff** und **+3 in der Verteidigung**
+  (für den Angreifer). **Spielercharaktere haben in allen Waffen des Buchs Stufe 0** (etwa
+  Carbine-0); das hebt die Strafe auf, gibt aber keinen Bonus.
 
 ### Waffen- und Reichweitenmatrix
 
@@ -455,7 +599,7 @@ Die Spalte „Combat“ gilt für Combat Armor und Battle Dress; Vacc Suit zähl
 
 ### Waffen und Ausrüstung
 
-*SE 4, „Weapons and Equipment“.* App: ✔ (Zubehör ○)
+*SE 4, „Weapons and Equipment“; SR 23–26, „Weapons Usage“, „Combat Equipment“.* App: ✔ (Zubehör ○)
 
 #### Klingen und Nahkampf
 
@@ -506,9 +650,63 @@ und Zubehör; zusätzlich: **Recharge** eines Power Packs LC 200 Cr (TL 8), LR 3
 **Accessories** kosten 10 % des Waffenpreises. Abweichungen zu S. 4: Club 1 kg ohne Preis, Halberd
 75 Cr, Pike 40 Cr; sonst gleich.
 
+#### Beschreibungen und Sonderregeln (SR 23–26)
+
+*Nicht-Standard-Waffen (SR 23):* Andere Waffen sind wie eine Standardwaffe mit DM: ein Taschenmesser
+ist „Dagger −1“, eine Sportpistole „Automatic Pistol +1“. Ebenso Rüstungen (vor allem bei Tieren).
+
+*Faust- und Nahkampfwaffen:*
+- **Prügelwaffen** (Brawling, SR 23) sind, was am Ort herumliegt: Sie gelten als **Club**, kosten
+  nichts und wiegen 1W6 × 500 g. Eine **Pistole** taugt als Club, eine **Flasche** einmal als Club,
+  danach als Dagger −1. Nur Close und Short.
+- **Klingen** und **Stangenwaffen** wirken nur auf Close und Short.
+- **Dagger:** wird ständig getragen und zählt nicht zur Last.
+- **Broadsword:** braucht beide Hände.
+- **Bayonet:** allein ein Dagger (oder Blade) mit dessen Fertigkeit. Nur auf einem **Rifle** (nicht
+  Carbine oder Automatic Rifle) macht es die Waffe zur Stangenwaffe, 200 mm länger.
+- **Cudgel:** ein Stock, auch ein **ungeladenes Gewehr oder Karabiner**; Laserwaffen sind dafür zu
+  empfindlich.
+
+*Schusswaffen (SR 24–25):*
+- Alle Schusswaffen außer dem Revolver laden selbst nach; nachladen muss man erst, wenn das Magazin
+  leer ist. Ohne andere Angabe sind sie **halbautomatisch** (ein Schuss je Abzug).
+- **Automatic Rifle** und **Submachinegun** schießen **Feuerstöße von 4 Schuss** je Abzug
+  ([Autofeuer](#besondere-fälle)). Das Automatic Rifle lässt sich **am Ende einer Runde**, nach allem
+  Feuer, auf Einzelfeuer umstellen und gilt dann als Rifle. Es gibt Gurte zu 100 Schuss (120 Cr,
+  2500 g, nicht fürs Rifle); einen Gurt einlegen dauert **3 Runden**.
+- **Revolver:** 6 Patronen einzeln laden: **2 Runden**, oder 1 Runde ohne Ausweichen.
+- **Shotgun:** Röhrenmagazin zu 10 Patronen (6 Kugeln zu 7 mm oder 130 Schrotkugeln zu 3 mm); das
+  Wechseln dauert **2 Runden**.
+- **Body Pistol:** nichtmetallisch, entgeht den meisten Waffendetektoren; eigene Munition.
+- Munition von Automatic Pistol und Submachinegun passt ineinander (die Magazine nicht); Rifle und
+  Automatic Rifle teilen Munition und Magazine.
+- **Laser:** am Kabel an einem Power Pack; Laser Carbine **50 Schuss**, Laser Rifle **100**. Aufladen
+  laut SR 25 mindestens 8 Stunden an einer starken Quelle, laut SR 26 etwa eine Stunde; im Handel
+  200 bzw. 300 Cr, am Kraftwerk eines Schiffs umsonst. Die Packs passen nicht in die jeweils andere
+  Waffe.
+- SR nennt bei jeder Schusswaffe auch das Gewicht und den Preis **geladen** (Waffe plus ein Magazin),
+  etwa Automatic Pistol 1000 g, Cr 210; das ergibt sich aus der Tabelle oben.
+
+*Zubehör (SR 25):*
+- **Telescopic Sights** (Rifle und Carbine): **+4 auf Long und Very Long**, zusätzlich zu allen
+  anderen DMs. Empfindlich: Bei jedem harten Stoß (unbeaufsichtigt im fahrenden Lastwagen, Explosion
+  in der Nähe, fallen gelassen) bei **7+ verstellt**. Dann sagt die Spielleitung den Zielwert nicht
+  mehr, und der Schütze **verfehlt immer**.
+- **Electronic Sights:** wie Telescopic, dazu Bildverstärker: sehen und treffen im Dunkeln
+  ([Dunkelheit](#dunkelheit)).
+- **Silencer:** nur für Body Pistol, Revolver und Automatic Pistol, je Modell ein eigener; mit ihm
+  lässt sich die Pistole nicht ins Holster stecken. Macht den Schuss still
+  ([Überraschung](#überraschung)).
+- **Shoulder Stock:** für Pistole oder Revolver; anbringen oder abnehmen dauert **5 Runden**; nicht
+  ins Holster.
+- **Folding Stock:** für Carbine, Rifle, Shotgun; kürzt die Waffe um 300 mm.
+- **Kleinzubehör** (SR 26): Holster, Magazintaschen, Gürtel, Scheiden, Putzzeug für 10 bis 20 % des
+  Waffenpreises, ohne Gewicht. Ein Schulterholster verbirgt eine Pistole in der Öffentlichkeit, sonst
+  trägt man sie offen am Gürtel.
+
 ### Rüstung
 
-*SE 4, „Body Armor“; SE 23.* App: ✔
+*SE 4, „Body Armor“; SE 23; SR 25–26, „Armor and Protection“, „Armor“.* App: ✔
 
 | Body Armor | Weight | Price | Beschreibung | TL |
 |---|---|---|---|---|
@@ -524,8 +722,49 @@ und Zubehör; zusätzlich: **Recharge** eines Power Packs LC 200 Cr (TL 8), LR 3
 
 \* Gehört zur persönlichen Kleidung und hat kein spürbares Gewicht.
 
+*SR 25–26:*
+- Man trägt **nur eine Rüstung**; nur **Reflec** darf man **unter** Kleidung oder einer anderen
+  Rüstung tragen. Wird man dann angegriffen, zählt die **bessere** der beiden.
+- Rüstung und Kleidung zählen nicht zur Last; nur der Vacc Suit zählt (10 kg, je TL über 8 2 kg
+  weniger).
+- Jack hilft etwas gegen Klingen und **gar nicht gegen Schusswaffen**; Mesh hilft nicht gegen Laser;
+  Ablat wird unter Laserfeuer schwächer, ist aber billig zu ersetzen.
+- Combat Armor ist **nur militärisch** und nicht frei zu kaufen.
+- Battle Dress verdoppelt die Stärke und gibt unbegrenzte Ausdauer **fürs Heben, Tragen und
+  Kämpfen**, nicht gegen Wunden.
+
 *B4 43:* Mesh und Cloth sind in der TL-Tabelle (Book 3, S. 10) **vertauscht**; richtig ist Mesh
 früher als Cloth. SE 21 und SE 23 nennen trotzdem Cloth TL 6 und Mesh TL 7.
+
+### Besondere Fälle
+
+*SR 26, „Special Considerations“.* App: ◐ (Nachladen als Aktion ✔, ohne Ausweichen; sonst ○)
+
+- **Waffe ziehen:** Ohne andere Ansage sind Waffen im Holster oder umgehängt. Wer in einer Runde
+  eine solche Waffe zieht und benutzt, hat **DM −3**. Ziehen zwei oder mehr gegeneinander (ohne
+  Überraschung), würfelt jeder **2W6 + DEX**; der Höchste hat Überraschung für den **ersten Schuss**.
+- **Klinge werfen:** Dagger, Blade und Bayonet auf **Short**: **18+**, DM **+DEX**, **+Klingenfertigkeit**,
+  minus den Ausweich-DM des Ziels, wenn es ausweicht. Treffer: **2D** Schaden. Die Klinge zurückholen
+  kostet eine Runde auf Close am Ziel.
+- **Stangenwaffe werfen** (Spear, Pike, Halberd): ebenso, aber die **STR muss mindestens das
+  Dreifache des Gewichts** in kg sein.
+- Werfen zählt als **Combat-Schlag** ([Ausdauer](#wirkung-der-attribute-und-ausdauer)).
+- **Autofeuer** (Submachinegun, Automatic Rifle): Feuerstöße zu 4 Schuss mit der Trefferzeile der
+  Matrix (das Automatic Rifle nimmt für Einzelfeuer die Zeile des Rifle). **Zwei Würfe** gegen
+  dasselbe Ziel. Dazu Gruppentreffer:
+  - **Gruppentreffer durch Autofeuer:** Unabhängig vom Ziel werden auch **nicht ausweichende**
+    Nachbarn des Ziels angegriffen, **höchstens zwei**, je mit eigenem Wurf mit **DM −3** und allen
+    anderen DMs.
+- **Gruppentreffer durch Schrotflinte:** Jeder Schuss darf bis zu **drei Nachbarn** des Ziels
+  angreifen, wenn sie eine Gruppe sind (Herde, Rudel, Bande) und **höchstens menschengroß**. Gegen
+  **fliegende Ziele** (Tiere mit Flügeln, Fluggeräte) in Reichweite **DM +2**.
+- **Coup de Grâce:** Mit jeder Schusswaffe oder Klinge tötet man einen **Bewusstlosen oder Wehrlosen**
+  (Mensch oder Tier) auf **Close** in einer Runde, wenn man es ansagt; **ohne Wurf**, Munition wird
+  verbraucht. Mit Faust oder Prügelwaffe geht es nur mit **Special-Schlägen** und mit Würfen.
+- **Nachladen:** Ist das Magazin leer, ein volles einsetzen: **eine Runde**, in der der Schütze als
+  **ausweichend** gilt. Revolver und Laser siehe [Schusswaffen](#beschreibungen-und-sonderregeln-sr-2326).
+  Leere Magazine neu füllen kostet etwa den halben Preis eines vollen und geht nur in Ruhe (einige
+  Minuten je Magazin), nicht im Kampf.
 
 ---
 
@@ -533,21 +772,25 @@ früher als Cloth. SE 21 und SE 23 nennen trotzdem Cloth TL 6 und Mesh TL 7.
 
 ### Deckung und Verbergen
 
-*SE 5, „Cover“ und „Concealment“.* App: ○
+*SE 5, „Cover“ und „Concealment“; SR 26–27, „Cover and Concealment“.* App: ○
 
 - **Deckung:** Ein Ziel ist in Deckung hinter einem festen Gegenstand, den ein Schuss nicht
-  durchschlägt (Mauer, Fels, schweres Schott).
-  - Wer **aus der Deckung angegriffen hat**, bekommt als Verteidiger **DM −4**.
+  durchschlägt (Mauer, Fels, schweres Schott). Deckung ist oft auch Verbergen, Verbergen aber nicht
+  immer Deckung.
   - Wer in Deckung ist und **nicht angegriffen hat**, ist nicht zu sehen und **kann nicht angegriffen
     werden**.
+  - Wer **aus der Deckung angreift**, wird sichtbar und kann angegriffen werden; er behält teilweise
+    Deckung: als Verteidiger **DM −4**.
 - **Verbergen:** Ein Ziel ist verborgen, wenn der Angreifer es nicht sehen kann.
-  - Ganz verborgen: **kein Angriff**.
-  - Teilweise verborgen: durch Mauern, Gegenstände, Wetter oder Dunkelheit; einen DM nennt SE nicht
-    (Ermessen der Spielleitung).
+  - Ganz verborgen: **kein Angriff**, außer der Angreifer hat Grund, in die Gegend zu schießen (SR 27).
+  - Wer **aus dem Verborgenen angreift**, verrät, dass er da ist, und kann angegriffen werden; er
+    bleibt teilweise verborgen: als Verteidiger **DM −1** (SR 27).
+  - Teilweise verborgen durch Mauern, Gegenstände, Wetter oder Dunkelheit: einen eigenen DM nennt SE
+    nicht (Ermessen der Spielleitung).
 
 ### Dunkelheit
 
-*SE 5, „Darkness“.* App: ○
+*SE 5, „Darkness“; SR 26, „Darkness and Night“.* App: ○
 
 | Licht | Wirkung |
 |---|---|
@@ -556,9 +799,14 @@ früher als Cloth. SE 21 und SE 23 nennen trotzdem Cloth TL 6 und Mesh TL 7.
 
 **Electronic Sights** heben die negativen DMs für Dunkelheit und schlechtes Licht auf.
 
+*SR 26:* Teilweise Dunkelheit ist etwa eine Mondnacht, ferne Beleuchtung oder anderes schwaches Licht.
+SR schreibt dort „Sicht bis Medium, Schusswaffen DM −6“, **ohne „über Medium“**; wörtlich gälte der DM
+also für jeden Schuss, nach SE nur über Medium. Offen; bis zur Klärung gilt SE.
+
 ### Schwerelosigkeit
 
-*SE 5, „Zero Gravity“; B4 16, „Zero-G Combat“; B4 32, „Zero-G Firing“.* App: ○
+*SE 5, „Zero Gravity“; SR 27, „Zero Gravity“ (gleich wie SE 5); B4 16, „Zero-G Combat“; B4 32,
+„Zero-G Firing“.* App: ○
 
 Jede Waffe mit Rückstoß (alle Schusswaffen außer Laser Carbine und Laser Rifle) kann in
 Schwerelosigkeit die Kontrolle kosten.
@@ -585,7 +833,7 @@ Schwerelosigkeit die Kontrolle kosten.
 
 ### Traglast und Schwerkraft
 
-*SE 5, „Weight Limitations“ und „Gravitational Effects“.* App: ○
+*SE 5, „Weight Limitations“ und „Gravitational Effects“; SR 22, „Weight“.* App: ○
 
 | Last | Erlaubt | Wirkung |
 |---|---|---|
@@ -609,12 +857,28 @@ Erlaubte Last je Größe der Welt in Prozent der Normallast:
 | 9 | 87,5 % | 175,0 % | 262,5 % |
 | A | 75,0 % | 150,0 % | 225,0 % |
 
+*SR 22:*
+- Wer belastet ist, hat **vorübergehend niedrigere Attribute**; mit diesen Werten rechnet man **Wunden
+  und Bewusstlosigkeit**. Beispiel: UPP 788953 mit 12 kg Last (doppelt) gilt als 677953, bis
+  mindestens 5 kg abgelegt sind.
+- Zur Last zählen Waffen, Werkzeug, Kommunikatoren, Instrumente, Rationen usw.; **nicht** Kleidung,
+  Rüstung (außer Vacc Suit), Holster, Scheiden, Gürtel und der Dagger.
+- **Schwerkraft:** (8 − Größe der Welt) × 12,5 % ist die zusätzliche Last, die man tragen kann
+  (Größe 4: +50 %; Größe A = 10: −25 %); daraus ist die Tabelle oben gerechnet. Bei einer Welt mit
+  anderer Dichte multipliziert man die Größe mit einer Dichtekonstante K (sonst 1; Spielleitung).
+
 ### Typische Aktionen
 
-*SE 5, „Typical Actions“.* App: ◐ (Schießen, Schlagen, Hauen, Nachladen, Waffe wechseln, Aussetzen)
+*SE 5, „Typical Actions“; SR 23, „Typical Actions“.* App: ◐ (Schießen, Schlagen, Hauen, Nachladen,
+Waffe wechseln, Aussetzen)
 
 Run. Walk. Close Range. Open Range. Stand. Evade. Shoot. Switch (semi or full auto). Reload. Throw.
 Draw. Swing. Hit.
+
+Wo die Aktionen geregelt sind: Run, Walk, Close Range, Open Range, Stand, Evade unter
+[Bewegungsstatus](#bewegungsstatus); Switch, Reload, Throw, Draw unter [Besondere Fälle](#besondere-fälle)
+und [Schusswaffen](#beschreibungen-und-sonderregeln-sr-2326). Andere Aktionen entscheidet die
+Spielleitung (SR 23).
 
 ---
 
@@ -622,7 +886,8 @@ Draw. Swing. Hit.
 
 ### Wunden und Tod
 
-*SE 7, „Physical Characteristics“, „Wounding and Death“.* App: ✔
+*SE 7, „Physical Characteristics“, „Wounding and Death“; SR 21, „Wounding and Death“.* App: ◐
+(Überlauf der ersten Wunde fehlt)
 
 - Die **physischen Attribute** sind Strength, Dexterity, Endurance. Wunden senken sie vorübergehend.
 - **Jeder Schadenswürfel ist eine Gruppe**, die nicht geteilt wird: Eine 5 auf 1W6 sind 5 Punkte auf
@@ -640,9 +905,26 @@ Draw. Swing. Hit.
   Erholung.
 - **Death:** **Drei** Attribute auf 0: Der Charakter ist tot.
 
+*Ergänzungen aus SR 21:*
+- Der Schaden hängt nur von der Waffe ab, nicht von der Stärke des Angreifers oder des Schlags.
+- Nach der ersten Wunde wählt der Verwundete die Attribute, um die Bewusstlosigkeit **so lange wie
+  möglich hinauszuzögern**.
+- **Überlauf bei der ersten Wunde:** Fällt das zufällig bestimmte Attribut auf 0, gehen die
+  **übrigen Punkte zufällig auf die anderen** Attribute. So kann der erste Treffer sofort
+  ausschalten oder töten. Beispiel (Rifle, 3D, UPP 777777): 6, 3, 4 auf STR ergibt STR 0 nach 6 + 1;
+  die restlichen 2 + 4 gehen zufällig, etwa 2 auf END und 4 auf DEX: 054777, bewusstlos. Bei 6, 6, 6
+  auf DEX: DEX 0, dann zufällig STR 0, der Rest auf END: 003777, schwer verwundet.
+- Ein Attribut auf 0 nimmt **keine weiteren Punkte** an; sie gehen auf Attribute über 0.
+- Bewusstlos 10 Minuten sind **40 Kampfrunden**. Beim Aufwachen wird **gegen den Charakter
+  gerundet**.
+
+> **Weicht ab** (`autoWounds` und `apply` in `src/model/wounds.ts`): Bei der ersten Wunde gehen alle
+> Würfel auf ein Attribut; was über 0 hinausgeht, **verfällt**, statt nach SR 21 zufällig auf die
+> anderen Attribute zu gehen.
+
 ### Medizinische Versorgung
 
-*SE 7, „Medical Care“.* App: ✔ (Behandlung, Ruhe, Aufwachen); Drogen ○
+*SE 7, „Medical Care“; SR 21.* App: ✔ (Behandlung, Ruhe, Aufwachen); Drogen ○
 
 | Wunde | Mit Versorgung | Ohne Versorgung |
 |---|---|---|
@@ -1169,8 +1451,9 @@ E = gleich groß, kein DM.
 
 ## Tierbegegnungen
 
-*SE 18–19, „Animal Encounters“.* App: ○. Die Tierwaffen stehen schon in der
-[Waffenmatrix](#waffen--und-reichweitenmatrix).
+*SE 18–19, „Animal Encounters“; SR 46–49.* App: ○. Die Tierwaffen stehen schon in der
+[Waffenmatrix](#waffen--und-reichweitenmatrix). Wie oft Tiere begegnen, steht unter
+[Häufigkeit](#häufigkeit-von-begegnungen).
 
 ### Gelände
 
@@ -1297,6 +1580,18 @@ würfeln.
 „Hits“ steht wie in der Beispieltabelle als zwei Zahlen (etwa 18/11). „Wounds“ ändert den Schaden der
 Waffe (−2D, +1D, ×2 …).
 
+*Was die Spalten im Kampf heißen (SR 47–48):*
+- **Weight:** 1 kg bis 6 t und mehr, je ±20 %; ein Mensch wiegt etwa 100 kg.
+- **Hits** (Tiere haben keine STR, DEX, END): Beim Anlegen zweimal würfeln, etwa 2D/2D. Erreichen die
+  Wunden die **erste Zahl**, ist das Tier **bewusstlos**; erreichen sie **beide zusammen**, ist es
+  **tot**; erreichen sie das **Doppelte** davon, ist es **zerstört** (kein Fleisch, kein Fell).
+- **Wounds:** ändert den Schaden der Tierwaffe aus der Matrix, z. B. Teeth 1D mit −2D heißt 1D − 2D,
+  mit +4D heißt 1D + 4D, mit ×4 heißt 1D × 4. Einfach: **einmal beim Anlegen** würfeln, das Tier macht
+  dann bei jedem Treffer so viel, **mindestens 1**. Wer mag, würfelt bei jedem Treffer neu, dann
+  mindestens 0.
+- **Weapons:** „teeth +1“ ist ein DM auf den Angriff; „as pike“ heißt: wie diese Waffe in der Matrix.
+- **Armor:** „battle +4“ ist ein DM auf den Angriff gegen das Tier (die Rüstung wirkt schwächer).
+
 ### Tierverhalten
 
 *SE 19, „Animal Characteristics“.* Je Tier einmal 1W6 je Spalte; das Ergebnis ist der Wurf auf 2W6,
@@ -1328,6 +1623,38 @@ gewöhnlichen Geschwindigkeit.
   greift bei 6+ an, flieht bei 7+, wenn es nicht schon angegriffen wurde, doppelte Geschwindigkeit.
   Fleischfresser greifen meist zuerst an (A F S), Pflanzenfresser fliehen zuerst (F A S). Wo ein
   Wort statt einer Zahl steht, ist die Zahl 0.
+- *Speed* (SR 47): S0 unbeweglich, S1 gewöhnlich, S2 doppelt, S3 dreifach, S4 vierfach, gemessen am
+  Gehen eines Menschen (1 Band je Runde).
+
+*Verhalten der Arten im Kampf (SR 47–49):*
+- Fleischfresser entscheiden nach der Größe der Gruppe und der Einzelnen; große Pflanzenfresser
+  fliehen seltener und übersehen eine Gruppe, solange sie nicht zu nahe kommt. Jedes Tier kann
+  angreifen, wenn man seine Jungen, sein Nest, sein Revier oder seine Beute bedroht, und fliehen,
+  wenn es erschrickt. Andere Antworten (anpirschen, einrollen, spielen) bestimmt die Spielleitung.
+- **Grazer:** fliehen; daraus kann eine **Stampede** werden. Gezwungen, kämpfen sie, bis sie tot
+  sind oder fliehen.
+- **Intermittent** und **Gatherer:** erstarren meist, fliehen vor größeren Angreifern.
+- **Filter:** saugen auf Close alles in einen Verdauungssack, **automatisch 1D je 50 kg** Masse des
+  Filters (ohne Wound-Änderung), gegen Abenteurer bei **6+**. Sich losreißen: jede Runde ab der
+  folgenden **7+**, kostet 1 END, **DM +2** je Kamerad, der auf Close hilft. Ein Filter fasst ein Tier
+  bis zum Doppelten seines Gewichts.
+- **Eater:** weicht der Gruppe nie aus.
+- **Pouncer:** mit Überraschung greift es auf jeder Entfernung an, ohne manchmal auch; überrascht,
+  flieht es.
+- **Trapper:** Wer auf Close oder Short von ihm überrascht wird, ist bei **5+** gefangen. Sich
+  befreien statt zu schlagen: **9+**, kostet 1 END, **DM +1** je helfendem Kamerad; Helfer können
+  selbst gefangen werden. Die Falle verwundet meist nicht, sie hält fest.
+- **Siren:** Falle wie beim Trapper, dazu ein Köder; nur bei **11+** wirkt er auch auf Menschen.
+- **Killer:** greift wild an und achtet nicht auf die Größe des Gegners.
+- **Hijacker**, **Intimidator**, **Carrion-Eater**, **Reducer:** nehmen Beute weg, drohen, warten oder
+  fressen Reste.
+
+*Ereignisse* (Event in der Tabelle, SR 49–50), soweit sie zum Kampf führen: **Chameleon** (greift
+das Tier an, beginnt die Begegnung auf Close mit seiner Überraschung, sonst gibt es keine);
+**Circling Flyers** (nach etwa 10 Minuten greifen Chaser an); **Stampede** (jeder **8+**, sonst 2D
+Schaden; Lärm oder Laser lenken die Herde ab); **Lair** (fünf junge Pouncer; bleibt die Gruppe
+länger, greift die Mutter sofort an); **Poisonous Pests** (3D, außer man würfelt DEX oder weniger);
+**Psionic Assaulters**. Die übrigen Ereignisse (Wetter, Gelände, Kuriositäten) gehören nicht zum Kampf.
 
 ### Beispieltabelle
 
@@ -1365,26 +1692,32 @@ gewöhnlichen Geschwindigkeit.
 
 ## Lücken: was nur in Book 1 steht
 
-Beide Bücher nennen diese Regeln, beschreiben sie aber nicht. Fehlt B1, legen wir sie als Hausregel
-fest und schreiben das hier dazu.
+B4 nennt diese Regeln, beschreibt sie aber nicht, und auch SR hat sie nicht. Fehlt B1, legen wir
+sie als Hausregel fest und schreiben das hier dazu.
 
 | Regel | Genannt in | Verweis |
 |---|---|---|
-| Parieren mit Klingenfertigkeit | SE 6 | B1 |
-| Ausweichen (Evading), sein DM | SE 6, B4 32, 36–41 | B1 |
-| Gruppentreffer durch Schrotflinte | SE 6, B4 32 | B1 S. 39 |
-| Dauerfeuer von Automatic Rifle und SMG (SE-Waffen) | SE 5, 6 („Switch semi or full auto“) | B1 |
-| Wie viele volle Schläge die Ausdauer erlaubt | SE 6 | B1 |
-| Waffe ziehen, geworfene Klinge | SE 6 | B1 |
-| Entkommen über 20 Bands | `domain-model.md` | B1 S. 33 |
-| Einfache Moral | B4 31 | B1 S. 33 (entspricht SE 5) |
 | Forward Observer, Korrektur des Feuers | B4 12 | B1 |
 | Unfälle mit Fahrzeugen (Air/Raft) | B4 15 | B1 |
 | Leadership-4 beim Anwerben | B4 15 | B1 |
 
+Früher standen hier auch Regeln, die SE nur nennt. Das Regelheft der Starter Edition (SR) regelt sie
+jetzt:
+
+| Regel | Genannt in | Jetzt |
+|---|---|---|
+| Parieren mit Klingenfertigkeit | SE 6 | [SR 22](#fertigkeit-parieren-und-ungeübte-waffen) |
+| Ausweichen (Evading), sein DM | SE 6, B4 32, 36–41 | [SR 20](#bewegungsstatus) |
+| Gruppentreffer durch Schrotflinte | SE 6, B4 32 | [SR 26](#besondere-fälle) |
+| Dauerfeuer von Automatic Rifle und SMG (SE-Waffen) | SE 5, 6 | [SR 24, 26](#besondere-fälle) |
+| Wie viele volle Schläge die Ausdauer erlaubt | SE 6 | [SR 22](#wirkung-der-attribute-und-ausdauer) |
+| Waffe ziehen, geworfene Klinge | SE 6 | [SR 26](#besondere-fälle) |
+| Entkommen über 20 Bands | `domain-model.md` (B1 S. 33) | [SR 21](#entkommen-und-ausweichen) |
+| Einfache Moral | B4 31 (B1 S. 33) | [SR 23](#moral-einfach), entspricht SE 5 |
+
 ## Nicht aufgenommen
 
-Aus beiden Büchern nicht in diesem Dokument, weil sie nicht zum Kampf gehören:
+Aus den drei Heften nicht in diesem Dokument, weil sie nicht zum Kampf gehören:
 
 - **SE, Begegnungen ohne Kampf (S. 20–21):** Routine (bei Bedarf), Legal (täglich Gesetzesstufe oder
   mehr auf 2W6, sonst Verhör), Patron (wöchentlich 5+ auf 1W6, *Patron Encounters Matrix* mit zwei
@@ -1392,6 +1725,9 @@ Aus beiden Büchern nicht in diesem Dokument, weil sie nicht zum Kampf gehören:
   Spielleitung).
 - **SE:** Charaktererschaffung (S. 1–3), Reisen und Schiffe (S. 8–11), Raumkampf (S. 12–13), Welten
   (S. 14–17), Handel (S. 22), sonstige Ausrüstung (S. 23 außer Waffen und Rüstung), Psionik (S. 24).
+- **SR:** alles außer den Kapiteln *Personal Combat*, *Animal Encounters* und *Encounters*; aus diesen
+  die Begegnungen ohne Kampf (wie bei SE), die *Antique Equivalents* (Vorbilder der Waffen aus den
+  1980ern, S. 27), essbare Tiere und Jagd (S. 47) und die Ereignisse ohne Kampf (S. 49–50).
 - **B4:** Erschaffung von Söldnern in Army und Marines (S. 3–9, 16), Fertigkeiten ohne Kampfbezug
   (Instruction, Interrogation, Recruiting, Survival; S. 13–15), Tickets und Anheuern (S. 17–24),
   Anwerben, Ausbildung und Organisation von Einheiten (S. 25–28, außer Erfahrung und Moral), Fahrzeuge
