@@ -76,7 +76,7 @@ const there: Campaign = setLocation(setHexes(unarmored(createCampaign()), [regin
 const clock = fixedClock();
 
 /**
- * Zwei Thugs (15: 2W6 Thugs, L): Der Anführer bekommt das Beste bis TL 7, Foil und Mesh; der zweite
+ * Zwei Thugs (15: 2W6 Thugs, L): Der Anführer bekommt das Beste bis TL 7, Body Pistol und Mesh; der zweite
  * die erste Klinge der Liste, den Club, ohne Rüstung. Alle übrigen Würfe zeigen das Kleinste, also
  * UPP 222222 und die Reaktion 2.
  */
@@ -89,11 +89,23 @@ describe('Begegnung', () => {
     const encounter = currentEncounter(thugs())!;
     expect(encounter).toMatchObject({ id: 'e1', of: 15, in: '0207', reaction: 2, ended: false });
     expect(encounter.npcs.map((n) => [n.id, n.leader, n.skill, n.wields, n.wears])).toEqual([
-      ['n1', true, 2, 'foil', 'mesh'],
+      ['n1', true, 2, 'body-pistol', 'mesh'],
       ['n2', false, 1, 'club', undefined],
     ]);
     expect(encounter.npcs[0]!.upp).toEqual({ str: 2, dex: 2, end: 2, int: 2, edu: 2, soc: 2 });
     expect(encounter.npcs[0]!.name).toMatch(/^\S+ \S+/);
+  });
+
+  it('der Anführer trägt immer Schusswaffe und Rüstung; Combat Armor und Battle Dress nur Soldaten und Anführer (SR 50)', () => {
+    // Thugs haben weder G noch A; ihr Anführer bekommt trotzdem die beste Schusswaffe und Rüstung bis TL 7.
+    expect(currentEncounter(thugs())!.npcs[0]).toMatchObject({ leader: true, wields: 'body-pistol', wears: 'mesh' });
+    // Auf einer Welt mit TL 13 wählt jeder Wurf das Letzte der Liste: die Polizei (23, nicht militärisch)
+    // bekommt höchstens Ablat, die Security Troops (25, militärisch) Battle Dress.
+    const high = setLocation(setHexes(unarmored(createCampaign()), [{ ...regina, uwp: { ...regina.uwp, tech: 13 } }]), '0207');
+    const last: Random = { int: (_min, max) => max };
+    const wears = (roll: number) => currentEncounter(rollEncounter(high, last, clock, roll, 3).campaign)!.npcs.map((n) => n.wears);
+    expect(wears(23)).toEqual(['ablat', 'ablat', 'ablat']);
+    expect(wears(25)).toEqual(['battle-dress', 'battle-dress', 'battle-dress']);
   });
 
   it('die Zeilen 61–66 sind leer; ohne Aufenthaltsort und während einer Begegnung gibt es keine neue', () => {
@@ -190,18 +202,16 @@ describe('Angriff in beide Richtungen und Wunden', () => {
     const attack = attackBy(startAttack(campaign), campaign, 'n1');
     const hit = (c: Campaign) => appendLog(c, ...rollAttack(chooseTarget(c, 'nothing', 'close', attack), c, fixedRandom(6, 6), clock));
     campaign = hit(campaign);
-    // Foil: 1W6; erster Treffer 6 auf STR (7 → 1). Danach je 6: STR 1 und der Rest 5 auf DEX (10 → 5);
-    // DEX 5 und der Rest 1 von selbst auf END (8 → 7). Dann ist nur END über 0, und die App verteilt
-    // von selbst: END 6 (→ 1); END 1, der Rest verfällt: tot.
-    campaign = appendLog(campaign, rollDamage(campaign, 0, fixedRandom(6, 0), clock));
-    for (const [i, choices] of [
-      [2, ['STR', 'DEX']],
-      [4, ['DEX']],
-      [6, []],
-      [8, []],
+    // Body Pistol des Anführers: 3W6; erster Treffer 1, 1, 1 auf STR (7 → 4). Dann 4, 6, 6: 4 auf STR
+    // (→ 0), 6 auf DEX (10 → 4), 6 auf DEX (→ 0) und der Rest 2 von selbst auf END (8 → 6). Dann ist nur
+    // END über 0, und die App verteilt von selbst: 6 auf END (→ 0), der Rest verfällt: tot.
+    campaign = appendLog(campaign, rollDamage(campaign, 0, fixedRandom(1, 1, 1, 0), clock));
+    for (const [i, dice, choices] of [
+      [2, [4, 6, 6], ['STR', 'DEX', 'DEX']],
+      [4, [6, 6, 6], []],
     ] as const) {
       campaign = hit(campaign);
-      let wounding = startWounding(campaign, i, fixedRandom(6));
+      let wounding = startWounding(campaign, i, fixedRandom(...dice));
       for (const to of choices) wounding = assignWound(wounding, campaign, to);
       campaign = markDeath(appendLog(campaign, confirmWounding(wounding, campaign, clock)), { pc: 'c1' });
     }
@@ -215,7 +225,7 @@ describe('Übernehmen', () => {
   it('als SC: mit Waffe und Rüstung in der Hand bzw. angezogen; als NSC unter „NSC“', () => {
     const asPc = adoptNpc(thugs(), 'n1', false);
     const pc = asPc.characters.at(-1)!;
-    expect(pc).toMatchObject({ npc: false, primary: 'foil', wields: 'foil', wears: 'mesh', skills: [{ of: 'foil', level: 2, retired: false }] });
+    expect(pc).toMatchObject({ npc: false, primary: 'body-pistol', wields: 'body-pistol', wears: 'mesh', skills: [{ of: 'body-pistol', level: 2, retired: false }] });
     expect(pc.background).toBe('Thugs · Anführer');
     expect(currentEncounter(asPc)!.npcs[0]!.became).toBe(pc.id);
     expect(() => adoptNpc(asPc, 'n1', true)).toThrow(/schon übernommen/);

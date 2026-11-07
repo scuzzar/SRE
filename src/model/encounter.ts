@@ -145,8 +145,12 @@ function weaponsUpTo(tl: number, guns: boolean): readonly Item[] {
   return guns && shots.length > 0 ? shots : all.filter((i) => attack(i) === 'swing');
 }
 
-function armorsUpTo(tl: number): readonly Item[] {
-  return ref.items.filter((i) => i.kind === 'armor' && (i.tl ?? 0) <= tl);
+/**
+ * Die Rüstungen bis zum TL der Gruppe. Combat Armor und Battle Dress (Rüstungsklasse Combat) tragen
+ * nur Soldaten und Anführer (SR 50); für alle anderen fallen sie weg.
+ */
+function armorsUpTo(tl: number, heavy: boolean): readonly Item[] {
+  return ref.items.filter((i) => i.kind === 'armor' && (i.tl ?? 0) <= tl && (heavy || i.armor !== 'combat'));
 }
 
 function nextNumber(ids: readonly string[], prefix: string): number {
@@ -181,7 +185,9 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
   const tl = Math.max(0, (world.uwp.tech ?? 0) + type.tl);
   const blades = weaponsUpTo(tl, false);
   const weapons = weaponsUpTo(tl, type.guns);
-  const armors = armorsUpTo(tl);
+  const guns = weaponsUpTo(tl, true);
+  const armors = armorsUpTo(tl, type.military === true);
+  const heavyArmors = armorsUpTo(tl, true);
   const first = nextNumber(
     campaign.encounters.flatMap((e) => e.npcs.map((n) => n.id)),
     'n',
@@ -190,8 +196,9 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
     const leader = type.leader && i === 0;
     const upp: Upp = { str: d6(random, 2), dex: d6(random, 2), end: d6(random, 2), int: d6(random, 2), edu: d6(random, 2), soc: d6(random, 2) };
     const name = npcName(random);
-    const weapon = (leader ? best(weapons) : pick(weapons, random)) ?? pick(blades, random)!;
-    const armor = leader ? best(armors) : type.armor ? pick(armors, random) : undefined;
+    // Ein Anführer trägt immer eine Schusswaffe und Rüstung, auch ohne G und A (SR 50).
+    const weapon = (leader ? best(guns) : pick(weapons, random)) ?? pick(blades, random)!;
+    const armor = leader ? best(heavyArmors) : type.armor ? pick(armors, random) : undefined;
     return { id: `n${first + i}`, name, leader, skill: leader ? 2 : 1, upp, wields: weapon.id, ...(armor ? { wears: armor.id } : {}) };
   });
   const reactionDice = [d6(random), d6(random)] as const;

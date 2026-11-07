@@ -39,7 +39,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 |---|---|---|
 | [Ablauf eines Kampfes](#ablauf-eines-kampfes) | SE 6, SR 19–20 | ◐ |
 | [Häufigkeit von Begegnungen](#häufigkeit-von-begegnungen) | SE 20, SR 47, 50 | ○ |
-| [Zufallsbegegnungen mit Personen](#zufallsbegegnungen-mit-personen) | SE 21, SR 50 | ◐ ✱ (Ausrüstung der NSC weicht ab) |
+| [Zufallsbegegnungen mit Personen](#zufallsbegegnungen-mit-personen) | SE 21, SR 50 | ✔ ✱ |
 | [Reaktion](#reaktion) | SE 21, SR 51 | ✔ |
 | [Waffen nach TL, Verbote nach Gesetz](#waffen-nach-tl-und-verbote-nach-gesetzesstufe) | SE 21 | ✔ |
 | [Überraschung](#überraschung) | SE 5, SR 19–20 | ◐ (nur Runde 1; ohne Tiere) |
@@ -134,7 +134,7 @@ Warum? Wie? Wann? Wo?
 
 ### Zufallsbegegnungen mit Personen
 
-*SE 21, „Random Encounters Matrix“ und „Random Encounter List“.* App: ✔
+*SE 21, „Random Encounters Matrix“ und „Random Encounter List“; SR 50.* App: ✔
 
 Gewürfelt wird 1W6 (erste Ziffer) und 1W6 (zweite Ziffer), 11 bis 66. Die Anzahl („Qty“) ist so viele
 W6, wie angegeben.
@@ -193,11 +193,9 @@ W6, wie angegeben.
 > ✱ App: Der Würfel der Anzahl ist einstellbar (W6 nach der Regel, W4 oder W3 zum Ausgleichen).
 > Welche Waffe und Rüstung ein NSC bekommt, legt die App fest: zufällig bis zum TL der Gruppe, der
 > Anführer das Beste. Das Merkmal „militärisch“ (`EncounterType.military`) ist eine Ergänzung der App.
->
-> **Weicht von SR 50 ab** (`rollEncounter` in `src/model/encounter.ts`):
-> - Ein Anführer einer Gruppe ohne G bekommt die beste **Klinge** statt einer Schusswaffe.
-> - Ein NSC einer Gruppe mit A kann auch dann **Combat Armor oder Battle Dress** bekommen, wenn die
->   Gruppe nicht militärisch ist (etwa Police Patrol „+1 GA“ auf einer Welt mit TL 12).
+> Der Anführer bekommt nach SR 50 immer die beste Schusswaffe und die beste Rüstung bis zum TL (gibt es
+> keine Schusswaffe, die beste Klinge); Combat Armor und Battle Dress bekommen nur Anführer und NSC
+> einer militärischen Art.
 
 ### Reaktion
 

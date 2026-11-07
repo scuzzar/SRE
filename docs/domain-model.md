@@ -139,6 +139,10 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-06-wuerfel-der-anzahl.png`](changes/2026-11-06-wuerfel-der-anzahl.png).
 >
+> Am 7. November 2026 auf ausdrücklichen Wunsch des Owners freigegeben: die **Ausrüstung der NSC**
+> nach SR 50 (siehe *Begegnung*): Ein Anführer trägt immer eine Schusswaffe und Rüstung, Combat Armor
+> und Battle Dress tragen nur Soldaten und Anführer. Das Bild ändert sich dadurch nicht.
+>
 > Am 7. November 2026 freigegeben: der **Überlauf der Wunden** nach SR 21 (siehe
 > *Wunden*). Was über 0 hinausgeht, verfällt nicht mehr, sondern geht auf die anderen Attribute
 > über, bei jedem Treffer. Im Bild: `DamageRoll.to` hält nicht mehr ein Attribut je Würfel, sondern
@@ -697,9 +701,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     irdisch oder spacig zufällig), eine Waffe (`wields`) und mit A eine Rüstung (`wears`): Ohne G
     eine zufällige Klinge bis zum TL der Gruppe (Club, Cudgel, Spear, Dagger, Blade …, nach
     *Available Weapons by TL*), mit G eine zufällige Schusswaffe bis zum TL; mit A eine zufällige
-    Rüstung bis zum TL. Die Fertigkeit in seiner Waffe (`skill`) ist 1. Munition zählen NSC nicht.
-  - *Anführer* (L): der erste NSC; er bekommt die beste Ausrüstung bis zum TL (die Waffe mit dem
-    höchsten TL, bei Gleichstand die teuerste, ebenso die Rüstung, auch ohne A) und Fertigkeit 2.
+    Rüstung bis zum TL, aber Combat Armor und Battle Dress nur, wenn die Art militärisch ist
+    (`EncounterType.military`; SR 50: „only military troops and leaders will wear combat armor or
+    battle dress“). Die Fertigkeit in seiner Waffe (`skill`) ist 1. Munition zählen NSC nicht.
+  - *Anführer* (L): der erste NSC; er bekommt die beste Ausrüstung bis zum TL und Fertigkeit 2: die
+    beste **Schusswaffe**, auch ohne G (gibt es bis zum TL keine, die beste Klinge), und die beste
+    Rüstung, auch ohne A und auch Combat Armor oder Battle Dress (SR 50). Das Beste ist das mit dem
+    höchsten TL, bei Gleichstand das teuerste.
   - *Fahrzeug* (V) hält die Art fest; im Kampf zählt es vorerst nicht.
   - *Entfernung und Überraschung* werden beim Anlegen mitgewürfelt (siehe *Kampfsimulation*).
   - *Reaktion* (`reaction`): 2W6 (`reactionDice`) plus DM (`reactionDm`): +1, wenn ein lebender

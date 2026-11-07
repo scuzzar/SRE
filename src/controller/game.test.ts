@@ -511,12 +511,13 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(sim.turn).toMatchObject({ id: 'n1', target: 'c1', reaches: true });
     expect(game.snapshot().focus).toBe('c1');
 
-    // Treffer; der erste Schaden geht ganz auf STR; danach ist der zweite Thug dran und nimmt Jonas.
+    // Treffer mit der Body Pistol des Anführers (3W6, SR 50: ein Anführer trägt immer eine Schusswaffe);
+    // der erste Schaden geht ganz auf STR; danach ist der zweite Thug dran und nimmt Jonas.
     random.queue.push(6, 6);
     game.fightAttack();
     expect(game.snapshot().result).toMatchObject({ kind: 'attack', success: true, victim: 'Kira Vant' });
     expect(game.snapshot().combat!.sim!.turn!.id).toBe('n1');
-    random.queue.push(3, 0, 1);
+    random.queue.push(1, 1, 1, 0, 1);
     game.rollDamage();
     game.closeResult();
     sim = game.snapshot().combat!.sim!;
@@ -648,7 +649,7 @@ describe('Begegnung und Kampfsimulation', () => {
     // Der Anführer trifft Kira (erster Treffer, verteilt sich von selbst), dann der zweite Thug: den verteilt sie.
     random.queue.push(6, 6);
     game.fightAttack();
-    random.queue.push(2, 0);
+    random.queue.push(1, 1, 1, 0);
     game.rollDamage();
     game.closeResult();
     expect(game.snapshot().combat!.sim!.turn).toMatchObject({ id: 'n2', target: 'c1' });
@@ -683,7 +684,7 @@ describe('Begegnung und Kampfsimulation', () => {
     game.rollEncounter(15);
     random.queue.push(6, 6);
     game.fightAttack();
-    random.queue.push(2, 1, 0);
+    random.queue.push(1, 1, 1, 1);
     game.rollDamage();
     game.closeResult();
     expect(game.snapshot().combat!.sim!.fighters.find((f) => f.id === 'c1')!.healing).toMatchObject({ rest: true });
