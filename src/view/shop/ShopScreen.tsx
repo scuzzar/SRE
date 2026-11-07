@@ -33,12 +33,21 @@ export function ShopScreen({ view }: { view: Snapshot }) {
   // Der gewählte Bereich gilt für die Kampagne, in der man ihn gewählt hat; sonst öffnet der Shop auf
   // einer Welt bei den Waffen, ohne Welt bei der Kasse.
   const [chosen, setChosen] = useState<{ readonly campaign: string; readonly area: Area } | undefined>(undefined);
+  const game = useGame();
   const [buying, setBuying] = useState<ShopItem | undefined>(undefined);
   const [selling, setSelling] = useState<Selling | undefined>(undefined);
   if (!shop) return null;
   const area: Area = chosen?.campaign === view.campaign.id ? chosen.area : shop.world ? 'weapons' : 'funds';
   const setArea = (a: Area) => setChosen({ campaign: view.campaign.id, area: a });
   const owner = shop.members.find((m) => m.id === shop.owner);
+  // Ein Tipp kauft ein Stück für den Charakter oben; mehr kauft man mit mehr Tipps. Nur was das
+  // Gesetz der Welt verbietet, fragt erst nach.
+  const buy = (item: ShopItem) => {
+    if (!owner) return;
+    if (item.banned !== undefined) return setBuying(item);
+    haptic('pick');
+    game.buy(item.id, 1, owner.id);
+  };
   return (
     <div className="screen">
       <CharacterStrip view={view} shop />
@@ -81,16 +90,16 @@ export function ShopScreen({ view }: { view: Snapshot }) {
         ) : !shop.world ? (
           <p className="log-empty">Die Gruppe ist auf keiner Welt. Auf der Sektorkarte eine fertige Welt öffnen und „Gruppe ist hier“ wählen; dann lässt sich hier kaufen und verkaufen.</p>
         ) : area === 'weapons' ? (
-          <WeaponCounter shop={shop} onBuy={setBuying} />
+          <WeaponCounter shop={shop} onBuy={buy} />
         ) : area === 'sell' ? (
           <SaleCounter owner={owner} onSell={(item) => owner && setSelling({ member: owner.id, item })} />
         ) : area === 'armor' ? (
-          <ItemCounter title="Rüstungen" items={shop.armor} onBuy={setBuying} />
+          <ItemCounter title="Rüstungen" items={shop.armor} onBuy={buy} />
         ) : (
-          shop.gear.map((group) => <ItemCounter key={group.kind} title={kindNames[group.kind]} items={group.items} onBuy={setBuying} />)
+          shop.gear.map((group) => <ItemCounter key={group.kind} title={kindNames[group.kind]} items={group.items} onBuy={buy} />)
         )}
       </section>
-      {buying && <BuyDialog key={buying.id} item={buying} shop={shop} owner={owner} onClose={() => setBuying(undefined)} />}
+      {buying && owner && <BannedDialog key={buying.id} item={buying} shop={shop} owner={owner} onClose={() => setBuying(undefined)} />}
       {selling && <SellDialog key={`${selling.member}-${selling.item.id}`} selling={selling} shop={shop} onClose={() => setSelling(undefined)} />}
     </div>
   );
@@ -161,12 +170,22 @@ function Meta({ parts, banned }: { parts: readonly (string | false | undefined)[
   );
 }
 
-/** Der Preis in Cr als Knopf, immer gleich breit: antippen öffnet den Kauf. Reicht die Kasse nicht, ist er grau. */
+/**
+ * Der Preis in Cr als Knopf, immer gleich breit: ein Tipp kauft ein Stück für den Charakter oben.
+ * Das Abzeichen in der Ecke sagt, wie viele davon er schon besitzt. Reicht die Kasse nicht, ist er grau; was man
+ * nur einmal haben kann und schon hat, ebenso.
+ */
 function PriceButton({ item, sub, onBuy }: { item: ShopItem; sub?: string | undefined; onBuy: (item: ShopItem) => void }) {
+  const had = item.once && item.owned > 0;
   return (
-    <button type="button" className="shop-price" disabled={!item.affordable} aria-label={`${item.label} kaufen`} onClick={() => onBuy(item)}>
+    <button type="button" className="shop-price" disabled={!item.affordable || had} aria-label={`${item.label} kaufen`} onClick={() => onBuy(item)}>
       <span>{item.price.toLocaleString('de-DE')}</span>
       {sub && <span className="shop-price-sub">{sub}</span>}
+      {item.owned > 0 && (
+        <span key={item.owned} className="shop-owned" aria-label={`hat ${item.owned}`} title={`hat ${item.owned}`}>
+          {item.owned}
+        </span>
+      )}
     </button>
   );
 }
@@ -185,7 +204,7 @@ function WeaponCounter({ shop, onBuy }: { shop: ShopView; onBuy: (item: ShopItem
     <>
       {owner && (
         <p className="muted shop-hint">
-          <b className="shop-skilled-sample">Fett</b>: {owner.name} hat die Fertigkeit. Preis antippen zum Kaufen.
+          <b className="shop-skilled-sample">Fett</b>: {owner.name} hat die Fertigkeit. Ein Tipp auf den Preis kauft eins für {owner.name}; die goldene Zahl in der Ecke: so viele sind schon da.
         </p>
       )}
       {groups.map((group) => (
@@ -209,7 +228,7 @@ function WeaponCounter({ shop, onBuy }: { shop: ShopView; onBuy: (item: ShopItem
                 <span role="cell" className="shop-name">
                   <span className="shop-label">{w.item.label}</span>
                   <Meta
-                    parts={[w.skill, w.characteristic, w.item.owned > 0 && `${w.item.owned} im Besitz`, w.ammo && w.ammo.owned > 0 && `${w.ammo.owned} Magazin${w.ammo.owned > 1 ? 'e' : ''}`]}
+                    parts={[w.skill, w.characteristic]}
                     banned={w.item.banned}
                   />
                 </span>
@@ -252,7 +271,7 @@ function ItemCounter({ title, items, onBuy }: { title: string; items: readonly S
           <div key={item.id} role="row" className="shop-row">
             <span role="cell" className="shop-name">
               <span className="shop-label">{item.label}</span>
-              <Meta parts={[item.worn ? 'getragen' : undefined, item.owned > 0 && `${item.owned} im Besitz`]} banned={item.banned} />
+              <Meta parts={[item.worn ? 'getragen' : undefined]} banned={item.banned} />
             </span>
             <span role="cell" className="shop-num muted">
               {item.tl ?? '–'}
@@ -315,10 +334,9 @@ function SaleCounter({ owner, onSell }: { owner: Member | undefined; onSell: (it
   );
 }
 
-function BuyDialog({ item, shop, owner, onClose }: { item: ShopItem; shop: ShopView; owner: Member | undefined; onClose: () => void }) {
+/** Was das Gesetz der Welt verbietet, kauft man erst nach einer Rückfrage; auch hier genau eins. */
+function BannedDialog({ item, shop, owner, onClose }: { item: ShopItem; shop: ShopView; owner: Member; onClose: () => void }) {
   const game = useGame();
-  const [count, setCount] = useState(1);
-  const total = item.price * count;
   return (
     <div className="modal">
       <section className="result shop-buy" role="dialog" aria-modal="true" aria-labelledby="buy-title">
@@ -328,36 +346,23 @@ function BuyDialog({ item, shop, owner, onClose }: { item: ShopItem; shop: ShopV
             <CloseIcon />
           </button>
         </div>
-        {item.banned !== undefined && (
-          <p className="error" role="alert">
-            Auf {shop.world?.name} verboten (Gesetz {shop.world?.law}, verboten ab {item.banned}). Wer damit erwischt wird, bekommt Ärger.
-          </p>
-        )}
-        <p>{owner ? <>Für <b>{owner.name}</b>{item.owned > 0 ? `, der schon ${item.owned} hat` : ''}.</> : 'Es gibt niemanden, der es bekommen könnte.'}</p>
-        <div className="shop-stepper" role="group" aria-label="Anzahl">
-          <button type="button" className="ghost" aria-label="Eins weniger" disabled={item.once || count <= 1} onClick={() => setCount(count - 1)}>
-            −
-          </button>
-          <input type="number" inputMode="numeric" min={1} aria-label="Anzahl" disabled={item.once} value={count} onChange={(e) => setCount(Math.max(1, Math.floor(Number(e.target.value) || 1)))} />
-          <button type="button" className="ghost" aria-label="Eins mehr" disabled={item.once || item.price * (count + 1) > shop.funds} onClick={() => setCount(count + 1)}>
-            +
-          </button>
-        </div>
-        <p className="mono">
-          {count} × {credits(item.price)} = <b>{credits(total)}</b> <span className="muted">(Kasse {credits(shop.funds)})</span>
+        <p className="error" role="alert">
+          Auf {shop.world?.name} verboten (Gesetz {shop.world?.law}, verboten ab {item.banned}). Wer damit erwischt wird, bekommt Ärger.
+        </p>
+        <p>
+          Eins für <b>{owner.name}</b> für <span className="mono">{credits(item.price)}</span> aus der Kasse
+          {item.owned > 0 ? ` (schon ${item.owned} im Besitz)` : ''}.
         </p>
         <button
           type="button"
           className="primary"
-          disabled={!owner || total > shop.funds}
           onClick={() => {
-            if (!owner) return;
             haptic('pick');
-            game.buy(item.id, count, owner.id);
+            game.buy(item.id, 1, owner.id);
             onClose();
           }}
         >
-          {item.banned !== undefined ? 'Trotzdem kaufen' : 'Kaufen'}
+          Trotzdem kaufen
         </button>
       </section>
     </div>
