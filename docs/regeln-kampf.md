@@ -568,7 +568,7 @@ Reichweite kein Angriff. Rechts der Schaden („Wound Inflicted“) in W6.
 | Stinger | +4 | +3 | 0 | +1 | +2 | 0 | −6 | +4 | +2 | no | no | no | 3D |
 | Thrasher | +7 | +7 | +4 | +4 | +7 | +4 | 0 | +5 | +1 | no | no | no | 2D |
 | Club | 0 | 0 | −2 | −3 | 0 | −2 | −7 | +1 | +2 | no | no | no | 2D |
-| Dagger | 0 | −1 | −4 | −4 | 0 | −2 | −7 | +1 | +2 | no | no | no | 2D |
+| Dagger | 0 | −1 | −4 | −4 | 0 | −2 | −7 | +1 | +2 ✱ | no | no | no | 2D |
 | Blade | +1 | 0 | −4 | −4 | +1 | −3 | −5 | +1 | +1 | no | no | no | 2D |
 | Foil | +2 | 0 | −4 | −3 | +2 | −2 | −8 | −1 | 0 | no | no | no | 1D |
 | Cutlass | +4 | +3 | −2 | −3 | +4 | −2 | −6 | −4 | +2 | no | no | no | 3D |
@@ -596,6 +596,10 @@ Reichweite kein Angriff. Rechts der Schaden („Wound Inflicted“) in W6.
 
 Die Spalte „Combat“ gilt für Combat Armor und Battle Dress; Vacc Suit zählt als Cloth
 ([Rüstung](#rüstung)).
+
+> ✱ **Dagger auf Short:** SE 6 (wie *The Traveller Book*) hat +2, Book 1 von 1977 und 1981 hat −1,
+> und die Errata zum *Traveller Book* (Traveller-Wiki) korrigiert auf −1. Auf Entscheidung des Owners
+> gilt in der App **−1** (`src/data/weapons.json`).
 
 ### Waffen und Ausrüstung
 

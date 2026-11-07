@@ -1,7 +1,7 @@
 [
   {"id": "hands", "name": "Hands", "attack": "blow", "uses": "brawling", "required": 6, "requiredDm": -2, "advantageous": 9, "advantageousDm": 1, "wounds": 1, "vsArmor": [1, -1, -4, -4, 0, -1, -6], "atRange": [2, 1, null, null, null]},
   {"id": "club", "name": "Club", "attack": "swing", "uses": "brawling", "required": 5, "requiredDm": -4, "advantageous": 8, "advantageousDm": 2, "wounds": 2, "vsArmor": [0, 0, -2, -3, 0, -2, -7], "atRange": [1, 2, null, null, null], "law": 9},
-  {"id": "dagger", "name": "Dagger", "attack": "swing", "uses": "dagger", "required": 4, "requiredDm": -2, "advantageous": 8, "advantageousDm": 2, "wounds": 2, "vsArmor": [0, -1, -4, -4, 0, -2, -7], "atRange": [1, 2, null, null, null], "law": 9},
+  {"id": "dagger", "name": "Dagger", "attack": "swing", "uses": "dagger", "required": 4, "requiredDm": -2, "advantageous": 8, "advantageousDm": 2, "wounds": 2, "vsArmor": [0, -1, -4, -4, 0, -2, -7], "atRange": [1, -1, null, null, null], "law": 9},
   {"id": "blade", "name": "Blade", "attack": "swing", "uses": "blade", "required": 5, "requiredDm": -2, "advantageous": 9, "advantageousDm": 2, "wounds": 2, "vsArmor": [1, 0, -4, -4, 1, -3, -5], "atRange": [1, 1, null, null, null], "law": 8},
   {"id": "foil", "name": "Foil", "attack": "swing", "uses": "foil", "required": 5, "requiredDm": -1, "advantageous": 10, "advantageousDm": 1, "wounds": 1, "vsArmor": [2, 0, -4, -3, 2, -2, -8], "atRange": [-1, 0, null, null, null], "law": 8},
   {"id": "cutlass", "name": "Cutlass", "attack": "swing", "uses": "cutlass", "required": 7, "requiredDm": -2, "advantageous": 11, "advantageousDm": 2, "wounds": 3, "vsArmor": [4, 3, -2, -3, 4, -2, -6], "atRange": [-4, 2, null, null, null], "law": 8},
