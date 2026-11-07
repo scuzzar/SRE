@@ -803,7 +803,7 @@ früher als Cloth. SE 21 und SE 23 nennen trotzdem Cloth TL 6 und Mesh TL 7.
 
 *SR 26:* Teilweise Dunkelheit ist etwa eine Mondnacht, ferne Beleuchtung oder anderes schwaches Licht.
 SR schreibt dort „Sicht bis Medium, Schusswaffen DM −6“, **ohne „über Medium“**; wörtlich gälte der DM
-also für jeden Schuss, nach SE nur über Medium. Offen; bis zur Klärung gilt SE.
+also für jeden Schuss. ✱ Auf Entscheidung des Owners gilt die Tabelle aus SE: −6 nur über Medium.
 
 ### Schwerelosigkeit
 
