@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { WorldTablesSchema } from './worlds';
+import { TemperatureIdSchema, WorldTablesSchema } from './worlds';
 
 /** Eine Stufe: die eine Auswahl für Orakel (Chance auf Ja) und Proben (Zielwert). */
 export const OddsSchema = z.object({
@@ -262,6 +262,45 @@ function uniqueIds(ids: readonly string[], what: string, ctx: z.RefinementCtx): 
   }
 }
 
+/**
+ * Die feste Startwelt der Demo-Kampagne, ein fertiges Hexfeld. Hier nur die Form; ob die Werte nach
+ * den Regeln der Weltenerschaffung zusammenpassen, prüft das Model.
+ */
+export const DemoWorldSchema = z.object({
+  column: z.number().int(),
+  row: z.number().int(),
+  empty: z.literal(false),
+  name: z.string().min(1),
+  navalBase: z.boolean(),
+  scoutBase: z.boolean(),
+  gasGiant: z.boolean(),
+  uwp: z.object({
+    starport: z.number().int(),
+    size: z.number().int(),
+    atmosphere: z.number().int(),
+    hydrographics: z.number().int(),
+    population: z.number().int(),
+    government: z.number().int(),
+    law: z.number().int(),
+    tech: z.number().int(),
+  }),
+  temperature: TemperatureIdSchema,
+  surface: z.object({
+    water: z.number().int(),
+    plates: z.number().int(),
+    majorContinents: z.number().int(),
+    minorContinents: z.number().int(),
+    majorIslands: z.number().int(),
+    archipelagos: z.number().int(),
+    majorOceans: z.number().int(),
+    minorOceans: z.number().int(),
+    smallSeas: z.number().int(),
+    scatteredLakes: z.number().int(),
+    life: z.boolean(),
+  }),
+  note: z.string().min(1),
+});
+
 export const ReferenceDataSchema = z
   .object({
     odds: z.array(OddsSchema).min(1),
@@ -269,6 +308,8 @@ export const ReferenceDataSchema = z
     skills: z.array(SkillSchema).min(1),
     sections: z.array(SectionSchema).min(1),
     examples: z.array(ExampleCharacterSchema),
+    /** Die Startwelt der Demo-Kampagne. */
+    demoWorld: DemoWorldSchema,
     items: z.array(ItemSchema).min(1),
     weapons: z.array(WeaponSchema).min(1),
     encounters: EncountersSchema,

@@ -22,6 +22,19 @@ describe('Start', () => {
     expect(repository.saved?.characters).toHaveLength(2);
   });
 
+  it('die erste Kampagne ist die Demo-Kampagne: mit der Startwelt, die Gruppe steht dort', async () => {
+    const { game } = await started();
+    const view = game.snapshot();
+    expect(view.campaign.name).toBe('Demo-Kampagne');
+    expect(view.location).toBe('0405');
+    expect(view.shop!.world).toMatchObject({ name: 'Kessra', tech: 'A', law: '4' });
+    expect(view.combat!.canEncounter).toBe(true);
+    // Jede weitere Kampagne beginnt leer.
+    game.createCampaign('Neu');
+    expect(game.snapshot()).toMatchObject({ location: undefined, characters: [] });
+    expect(game.snapshot().shop!.world).toBeUndefined();
+  });
+
   it('lädt einen gespeicherten Spielstand', async () => {
     const saved = appendLog(createCampaign([]), { kind: 'dice', at: '2026-10-23T13:58:00.000Z', dice: [5, 4] });
     const { game } = await started(fixedRandom(), memoryRepository(saved));
@@ -433,7 +446,7 @@ describe('Begegnung und Kampfsimulation', () => {
   }
 
   it('ohne Begegnung zeigt Kampf die Waffentabelle; ohne Aufenthaltsort gibt es keine Begegnung, 61–66 bringen keine', async () => {
-    const { game } = await started();
+    const { game } = await started(fixedRandom(), memoryRepository(createCampaign()));
     expect(game.snapshot().combat).toMatchObject({ canEncounter: false, sim: undefined });
     const { game: there, random } = await onRegina();
     random.queue.push(6, 3);
@@ -898,7 +911,7 @@ describe('Charaktererschaffung', () => {
     // Other mit 6+6; überlebt; zwei Fertigkeiten; mustert ab; Geld 6.
     const world = [5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 4, 3, 4, 3, 2, 1, 1, 2, 2, 3, 3, 3, 4, 3, 3];
     const random = fixedRandom(3, 4, 5, 5, 4, 4, 4, 5, 3, 4, 2, 3, ...world, 6, 6, 6, 6, 1, 1, 1, 1, 6);
-    const { game, repository } = await started(random);
+    const { game, repository } = await started(random, memoryRepository(createCampaign()));
     game.openGeneration();
     expect(game.snapshot().generation).toMatchObject({ step: 'characteristics', action: { kind: 'roll', label: 'STR würfeln' } });
     for (let i = 0; i < 6; i++) game.rollGeneration();
@@ -988,7 +1001,7 @@ describe('Subsektor und Weltenerschaffung', () => {
   const regina = [5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 4, 3, 4, 3, 2, 1, 1, 2, 2, 3, 3, 3, 4, 3, 3];
 
   it('zeigt 80 Felder, alle nicht erzeugt, im Reiter Sektor', async () => {
-    const { game } = await started();
+    const { game } = await started(fixedRandom(), memoryRepository(createCampaign()));
     game.showScreen('sector');
     const view = game.snapshot();
     expect(view.screen).toBe('sector');
@@ -999,7 +1012,7 @@ describe('Subsektor und Weltenerschaffung', () => {
   });
 
   it('würfelt das Vorkommen im Subsektor und erschafft die Welt dann Wurf für Wurf auf der Weltkarte', async () => {
-    const { game, repository } = await started(fixedRandom(...regina));
+    const { game, repository } = await started(fixedRandom(...regina), memoryRepository(createCampaign()));
     // Ein nicht erzeugtes Feld antippen wählt es nur; die Weltkarte geht nicht auf.
     game.chooseHex(3, 4);
     expect(game.snapshot()).toMatchObject({ world: undefined, selected: { id: '0304', state: 'open', target: 4, occurrence: undefined } });
@@ -1107,7 +1120,7 @@ describe('Subsektor und Weltenerschaffung', () => {
   });
 
   it('nimmt die Hexfelder in die Kampagnendatei mit', async () => {
-    const { game, download } = await started(fixedRandom(2));
+    const { game, download } = await started(fixedRandom(2), memoryRepository(createCampaign()));
     game.chooseHex(5, 5);
     game.rollOccurrence();
     game.exportCampaign(game.snapshot().campaign.id);
@@ -1144,7 +1157,7 @@ describe('Durchlaufen lassen', () => {
   });
 
   it('hält ohne fertige Welt bei der Heimatwelt an', async () => {
-    const { game } = await started(seeded(1));
+    const { game } = await started(seeded(1), memoryRepository(createCampaign()));
     game.openGeneration();
     game.runGeneration();
     expect(game.snapshot().generation).toMatchObject({ step: 'homeworld', action: { kind: 'world', worlds: [] } });

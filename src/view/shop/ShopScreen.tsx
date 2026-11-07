@@ -28,10 +28,14 @@ const areas: readonly { readonly id: Area; readonly name: string }[] = [
  */
 export function ShopScreen({ view }: { view: Snapshot }) {
   const shop = view.shop;
-  const [area, setArea] = useState<Area>(shop?.world ? 'weapons' : 'funds');
+  // Der gewählte Bereich gilt für die Kampagne, in der man ihn gewählt hat; sonst öffnet der Shop auf
+  // einer Welt bei den Waffen, ohne Welt bei der Kasse.
+  const [chosen, setChosen] = useState<{ readonly campaign: string; readonly area: Area } | undefined>(undefined);
   const [buying, setBuying] = useState<ShopItem | undefined>(undefined);
   const [selling, setSelling] = useState<Selling | undefined>(undefined);
   if (!shop) return null;
+  const area: Area = chosen?.campaign === view.campaign.id ? chosen.area : shop.world ? 'weapons' : 'funds';
+  const setArea = (a: Area) => setChosen({ campaign: view.campaign.id, area: a });
   const owner = shop.members.find((m) => m.id === shop.owner);
   const inventory: StripInventory | undefined = owner && {
     items: owner.sellable,

@@ -5,6 +5,7 @@ import {
   byName,
   campaignFileName,
   createCampaign,
+  createDemoCampaign,
   DomainError,
   focusOf,
   fromCampaignFile,
@@ -199,7 +200,7 @@ export class GameController {
     }
     const campaign = campaigns.find((c) => c.id === open) ?? byName(campaigns)[0];
     if (campaign) this.update({ campaigns, campaign });
-    else this.addCampaign(createCampaign());
+    else this.addCampaign(createDemoCampaign());
   }
 
   // --- Verbindung zur View ---------------------------------------------------------------------
