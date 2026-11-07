@@ -15,9 +15,13 @@ export function EncounterScreen({ view }: { view: Snapshot }) {
   const combat = view.combat;
   return (
     <div className="screen">
-      <section className="scroll encounter-scroll" aria-label="Begegnung">
-        {!combat ? <p className="log-empty">Ohne lebenden Charakter gibt es keine Begegnung.</p> : combat.sim ? <RunningEncounter sim={combat.sim} /> : <EncounterStart combat={combat} />}
-      </section>
+      {combat && !combat.sim ? (
+        <EncounterStart combat={combat} />
+      ) : (
+        <section className="scroll encounter-scroll" aria-label="Begegnung">
+          {!combat ? <p className="log-empty">Ohne lebenden Charakter gibt es keine Begegnung.</p> : combat.sim && <RunningEncounter sim={combat.sim} />}
+        </section>
+      )}
       {combat?.intro && combat.sim && <EncounterIntro sim={combat.sim} />}
     </div>
   );
@@ -57,7 +61,8 @@ function RunningEncounter({ sim }: { sim: SimView }) {
 
 /**
  * Eine Begegnung würfeln oder wählen, mit Gelände für die Entfernung und dem Würfel der Anzahl der
- * Kampagne; danach beginnt die Kampfsimulation.
+ * Kampagne; danach beginnt die Kampfsimulation. Die Einstellungen stehen oben, Würfeln und Wählen unten
+ * im Daumenbereich wie im Orakel; darüber steht deutlich, wenn der Wurf keine Begegnung brachte.
  */
 function EncounterStart({ combat }: { combat: CombatView }) {
   const game = useGame();
@@ -65,50 +70,60 @@ function EncounterStart({ combat }: { combat: CombatView }) {
   const [terrain, setTerrain] = useState('');
   const ground = terrain || undefined;
   return (
-    <div className="encounter">
-      <LocationPick combat={combat} />
-      <div className="encounter-start">
-        <button
-          type="button"
-          className="primary"
-          disabled={!combat.canEncounter}
-          onClick={() => {
-            haptic('shake');
-            game.rollEncounter(undefined, ground);
-          }}
-        >
-          Begegnung würfeln
-        </button>
-        <select aria-label="Begegnung wählen" value="" disabled={!combat.canEncounter} onChange={(e) => e.target.value && game.rollEncounter(Number(e.target.value), ground)}>
-          <option value="">oder wählen …</option>
-          {combat.encounterTypes.map((t) => (
-            <option key={t.roll} value={t.roll}>
-              {t.roll} · {t.quantity}W{combat.quantityDie} {t.name}
-            </option>
-          ))}
-        </select>
+    <>
+      <section className="scroll encounter-scroll" aria-label="Begegnung">
+        <div className="encounter">
+          <LocationPick combat={combat} />
+          <label className="field encounter-terrain">
+            <span>Gelände (DM auf die Entfernung)</span>
+            <select value={terrain} disabled={!combat.canEncounter} onChange={(e) => setTerrain(e.target.value)}>
+              <option value="">ohne (±0)</option>
+              {combat.terrains.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name} ({signed(t.dm)})
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field encounter-terrain">
+            <span>Anzahl würfeln mit</span>
+            <select aria-label="Würfel der Anzahl" value={combat.quantityDie} onChange={(e) => game.setQuantityDie(Number(e.target.value))}>
+              <option value={6}>W6 (Regel)</option>
+              <option value={4}>W4</option>
+              <option value={3}>W3</option>
+            </select>
+          </label>
+        </div>
+      </section>
+      <div className="dock encounter-dock">
+        {combat.note && (
+          <p className="encounter-note" role="status">
+            {combat.note}
+          </p>
+        )}
+        <div className="encounter-start">
+          <button
+            type="button"
+            className="primary"
+            disabled={!combat.canEncounter}
+            onClick={() => {
+              haptic('shake');
+              game.rollEncounter(undefined, ground);
+            }}
+          >
+            Begegnung würfeln
+          </button>
+          <select aria-label="Begegnung wählen" value="" disabled={!combat.canEncounter} onChange={(e) => e.target.value && game.rollEncounter(Number(e.target.value), ground)}>
+            <option value="">oder wählen …</option>
+            {combat.encounterTypes.map((t) => (
+              <option key={t.roll} value={t.roll}>
+                {t.roll} · {t.quantity}W{combat.quantityDie} {t.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
-      <label className="field encounter-terrain">
-        <span>Gelände (DM auf die Entfernung)</span>
-        <select value={terrain} disabled={!combat.canEncounter} onChange={(e) => setTerrain(e.target.value)}>
-          <option value="">ohne (±0)</option>
-          {combat.terrains.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name} ({signed(t.dm)})
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="field encounter-terrain">
-        <span>Anzahl würfeln mit</span>
-        <select aria-label="Würfel der Anzahl" value={combat.quantityDie} onChange={(e) => game.setQuantityDie(Number(e.target.value))}>
-          <option value={6}>W6 (Regel)</option>
-          <option value={4}>W4</option>
-          <option value={3}>W3</option>
-        </select>
-      </label>
-      {combat.note && <p className="combat-hint">{combat.note}</p>}
-    </div>
+    </>
   );
 }
 

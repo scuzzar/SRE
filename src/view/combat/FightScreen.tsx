@@ -316,7 +316,7 @@ function FighterRow({ fighter: f, onHeal, selection }: { fighter: FighterView; o
   );
 }
 
-/** Unten in einer Zeile: wer gegen wen (Waffe, Magazin) und was er braucht; darunter Angreifen, Schaden, Nachladen, Aussetzen. */
+/** Unten in zwei Zeilen: wer gegen wen, darunter Waffe mit Magazin und was er braucht; darunter Angreifen, Schaden, Nachladen, Aussetzen. */
 function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
   const game = useGame();
   const turn = sim.turn;
@@ -325,15 +325,17 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
   return (
     <section className="dock" aria-label="Zug">
       {turn ? (
-        <div className="fight-turn" aria-live="polite">
+        <div className="fight-turn fight-turn-two" aria-live="polite">
           <span className="fight-who">
-            {turn.name} {target ? `→ ${target.name}` : '– Ziel antippen'}{' '}
-            <span className="muted">
-              ({turn.weapon}
-              {turn.ammo ? ` ${turn.ammo.rounds}/${turn.ammo.capacity}` : ''})
-            </span>
+            {turn.name} {target ? `→ ${target.name}` : '– Ziel antippen'}
           </span>
-          <strong className="fight-need">{!turn.reaches ? 'reicht nicht' : turn.odds ? (turn.odds.chance <= 0 ? 'unmöglich' : `${Math.max(2, turn.odds.need)}+`) : ''}</strong>
+          <span className="fight-weapon">
+            <span className="muted">
+              {turn.weapon}
+              {turn.ammo ? ` ${turn.ammo.rounds}/${turn.ammo.capacity}` : ''}
+            </span>
+            <strong className="fight-need">{!turn.reaches ? 'reicht nicht' : turn.odds ? (turn.odds.chance <= 0 ? 'unmöglich' : `${Math.max(2, turn.odds.need)}+`) : ''}</strong>
+          </span>
         </div>
       ) : (
         <p className="combat-pick">{sim.defeated ? 'Der Kampf ist entschieden. Heilen, übernehmen (lange drücken) oder die Begegnung beenden.' : 'Keiner ist am Zug.'}</p>

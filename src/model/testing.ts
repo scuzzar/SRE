@@ -36,12 +36,14 @@ export function memoryRepository(...initial: Campaign[]): CampaignRepository & {
   readonly campaigns: Map<string, Campaign>;
   open: string | undefined;
   stripCollapsed: boolean;
+  shopHintHidden: boolean;
 } {
   return {
     saved: initial.at(-1),
     campaigns: new Map(initial.map((c) => [c.id, c])),
     open: undefined,
     stripCollapsed: false,
+    shopHintHidden: false,
     async list() {
       return [...this.campaigns.values()];
     },
@@ -63,6 +65,12 @@ export function memoryRepository(...initial: Campaign[]): CampaignRepository & {
     },
     async saveStripCollapsed(collapsed) {
       this.stripCollapsed = collapsed;
+    },
+    async loadShopHintHidden() {
+      return this.shopHintHidden;
+    },
+    async saveShopHintHidden(hidden) {
+      this.shopHintHidden = hidden;
     },
   };
 }

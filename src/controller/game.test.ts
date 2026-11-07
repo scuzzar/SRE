@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { appendLog, createCampaign, fromCampaignFile, setHexes, type CampaignRepository, type Random } from '../model';
+import { appendLog, createCampaign, DEMO_FUNDS, fromCampaignFile, setHexes, type CampaignRepository, type Random } from '../model';
 import { fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 import { surfaceLines } from './world-view';
@@ -105,8 +105,8 @@ describe('Orakel-Screen', () => {
     game.askOracle();
     await game.whenSaved();
     expect(game.snapshot().log).toEqual([
-      { kind: 'oracle', at: '2026-10-23T14:00:00.000Z', question: 'Ist Halvek ehrlich?', odds: 'Gering', roll: 61, chance: 25, yes: false },
-      { kind: 'oracle', at: '2026-10-23T14:01:00.000Z', question: undefined, odds: 'Gering', roll: 20, chance: 25, yes: true },
+      { kind: 'oracle', at: '2026-10-23T14:01:00.000Z', question: 'Ist Halvek ehrlich?', odds: 'Gering', roll: 61, chance: 25, yes: false },
+      { kind: 'oracle', at: '2026-10-23T14:02:00.000Z', question: undefined, odds: 'Gering', roll: 20, chance: 25, yes: true },
     ]);
     expect(repository.saved?.odds).toBe('low');
   });
@@ -135,7 +135,7 @@ describe('Orakel-Screen', () => {
     expect(game.snapshot().log).toEqual([
       {
         kind: 'card',
-        at: '2026-10-23T14:00:00.000Z',
+        at: '2026-10-23T14:01:00.000Z',
         question: 'Was steckt hinter dem Notsignal?',
         bell: undefined,
         scatter: undefined,
@@ -280,6 +280,18 @@ describe('Charakter oben: Probe im Orakel-Screen', () => {
     expect(again.snapshot().stripCollapsed).toBe(true);
   });
 
+  it('blendet den Hinweis im Shop aus; das Gerät merkt es sich über einen Neustart', async () => {
+    const { game, repository } = await started();
+    expect(game.snapshot().shopHintHidden).toBe(false);
+    game.hideShopHint();
+    await game.whenSaved();
+    expect(game.snapshot().shopHintHidden).toBe(true);
+    expect(repository.shopHintHidden).toBe(true);
+    const again = new GameController({ repository, random: fixedRandom(), clock: fixedClock(), download: memoryDownload() });
+    await again.init();
+    expect(again.snapshot().shopHintHidden).toBe(true);
+  });
+
   it('ein neu erschaffener Charakter steht oben, im Orakel-Screen', async () => {
     const { game } = await started();
     game.newCharacter();
@@ -419,10 +431,10 @@ describe('Shop und Gruppenkasse', () => {
 
   it('meldet im Shop, was nicht geht, und ändert dann nichts', async () => {
     const { game } = await started();
-    game.book('expense', 100);
-    expect(game.snapshot().shop).toMatchObject({ funds: 0, error: expect.stringMatching(/nicht in der Gruppenkasse/) });
+    game.book('expense', DEMO_FUNDS + 100);
+    expect(game.snapshot().shop).toMatchObject({ funds: DEMO_FUNDS, error: expect.stringMatching(/nicht in der Gruppenkasse/) });
     game.book('deposit', 400, undefined, 'c1');
-    expect(game.snapshot().shop).toMatchObject({ funds: 400, error: undefined });
+    expect(game.snapshot().shop).toMatchObject({ funds: DEMO_FUNDS + 400, error: undefined });
     expect(game.snapshot().shop!.members[0]).toMatchObject({ name: 'Kira Vant', credits: 12000 });
   });
 });
@@ -794,10 +806,10 @@ describe('Log', () => {
     game.writeNote('Der Zoll winkt uns durch.', 2);
     game.writeNote('Doch nicht ganz glatt.', 0);
     expect(game.snapshot().log.slice(1)).toEqual([
-      { kind: 'note', at: '2026-10-23T14:01:00.000Z', text: 'Wir landen auf Regina.', interprets: undefined },
+      { kind: 'note', at: '2026-10-23T14:02:00.000Z', text: 'Wir landen auf Regina.', interprets: undefined },
       expect.objectContaining({ kind: 'dice', total: 4 }),
-      { kind: 'note', at: '2026-10-23T14:03:00.000Z', text: 'Der Zoll winkt uns durch.', interprets: 2 },
-      { kind: 'note', at: '2026-10-23T14:04:00.000Z', text: 'Doch nicht ganz glatt.', interprets: 0 },
+      { kind: 'note', at: '2026-10-23T14:04:00.000Z', text: 'Der Zoll winkt uns durch.', interprets: 2 },
+      { kind: 'note', at: '2026-10-23T14:05:00.000Z', text: 'Doch nicht ganz glatt.', interprets: 0 },
     ]);
     expect(() => game.writeNote('Zur Notiz?', 1)).toThrow(/nur ein Ergebnis/);
     game.deleteLogEntry(0);

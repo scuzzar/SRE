@@ -57,6 +57,13 @@ textarea {
   color: inherit;
 }
 
+/* Unter 16px zoomt Safari auf dem iPhone beim Antippen eines Feldes in die Seite; darum nie kleiner. */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
 button {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -110,8 +117,8 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 8px 10px 16px;
-  padding-top: max(10px, env(safe-area-inset-top));
+  padding: 2px 4px 2px 16px;
+  padding-top: max(2px, env(safe-area-inset-top));
   border-bottom: 1px solid var(--rule);
 }
 
@@ -3339,9 +3346,10 @@ button:disabled {
   width: 100%;
 }
 
+/* Unten rechts im Daumenbereich, wo sie keine Feldnummer verdecken. */
 .sector-zoom {
   position: absolute;
-  top: 6px;
+  bottom: 6px;
   right: 6px;
   display: flex;
   gap: 4px;
@@ -3353,7 +3361,7 @@ button:disabled {
   font-size: 20px;
   font-weight: 600;
   line-height: 1;
-  background: rgba(22, 22, 22, 0.85);
+  background: rgba(22, 22, 22, 0.75);
   border: 1px solid var(--line);
   border-radius: 8px;
 }
@@ -3412,7 +3420,6 @@ button:disabled {
   flex: 1 1 auto;
   min-width: 0;
   min-height: 40px;
-  font-size: 14px;
 }
 
 .generation-oracle-answer {
@@ -3933,6 +3940,13 @@ button:disabled {
   color: var(--dim);
 }
 
+/* Wohin die Waffe nicht reicht, bleibt die Spalte stehen, aber schmal; die übrigen bekommen den Platz. */
+.combat-table thead th.out {
+  width: 9%;
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .combat-table .corner {
   font-size: 9px;
   color: var(--muted);
@@ -4137,6 +4151,23 @@ button:disabled {
 .shop-hint {
   margin: 0;
   font-size: 12px;
+}
+
+/* Der Hinweis über den Waffen mit ✕ zum Ausblenden. */
+.shop-hint-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.shop-hint-box .shop-hint {
+  flex: 1 1 auto;
+  padding-top: 4px;
+}
+
+.shop-hint-box .icon-button {
+  flex: 0 0 auto;
+  margin: -8px -12px 0 0;
 }
 
 .shop-skilled-sample {
@@ -4365,7 +4396,18 @@ button:disabled {
 
 .encounter-start .primary,
 .encounter-start select {
-  min-height: 44px;
+  min-height: 52px;
+}
+
+/* Brachte der Wurf keine Begegnung, steht das deutlich über den Knöpfen, nicht als graue Fußnote. */
+.encounter-note {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--accent-text);
+  background: var(--bg);
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .encounter-head {
@@ -4943,6 +4985,32 @@ button:disabled {
 .fight-need {
   flex: 0 0 auto;
   font-family: var(--mono);
+}
+
+/* Am Zug: oben wer gegen wen, darunter die Waffe mit Magazin und rechts der nötige Wurf. */
+.fight-turn-two {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+
+.fight-weapon {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.fight-weapon .muted {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.fight-weapon .fight-need {
+  font-size: 15px;
 }
 
 .fight-actions:has(> :nth-child(3)) {

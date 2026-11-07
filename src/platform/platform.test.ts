@@ -131,4 +131,11 @@ describe('Ältere Spielstände', () => {
     await repository.saveStripCollapsed(true);
     expect(await repository.loadStripCollapsed()).toBe(true);
   });
+
+  it('merken sich, ob der Hinweis im Shop weggeklickt ist', async () => {
+    const repository = await new DexieCampaignRepository(`test-${Math.random()}`).open();
+    expect(await repository.loadShopHintHidden()).toBe(false);
+    await repository.saveShopHintHidden(true);
+    expect(await repository.loadShopHintHidden()).toBe(true);
+  });
 });

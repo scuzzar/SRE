@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { ExpandIcon, ShrinkIcon } from './icons';
+import { standalone } from './install';
 
 // Vollbild ist reine Darstellung: Es bleibt in der View, der Controller entscheidet nichts damit.
 
@@ -10,10 +11,13 @@ function subscribe(listener: () => void): () => void {
 
 const isFullscreen = () => document.fullscreenElement !== null;
 
-/** Schaltet Vollbild an und aus. Wo der Browser kein Vollbild kann (Safari auf dem iPhone), fehlt der Knopf. */
+/**
+ * Schaltet Vollbild an und aus. Wo der Browser kein Vollbild kann (Safari auf dem iPhone), fehlt der
+ * Knopf, ebenso in der installierten App: Die hat keine Leisten des Browsers, die er ausblenden könnte.
+ */
 export function FullscreenButton() {
   const active = useSyncExternalStore(subscribe, isFullscreen);
-  if (!document.fullscreenEnabled) return null;
+  if (!document.fullscreenEnabled || standalone()) return null;
 
   const toggle = () => {
     const change = active ? document.exitFullscreen() : document.documentElement.requestFullscreen();

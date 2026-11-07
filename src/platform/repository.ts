@@ -16,6 +16,7 @@ interface Setting {
 const OPEN = 'open';
 /** Unter diesem Schlüssel steht, ob die Leiste mit dem Charakter oben eingeklappt ist. */
 const STRIP = 'strip-collapsed';
+const SHOP_HINT = 'shop-hint-hidden';
 
 class SreDatabase extends Dexie {
   campaigns!: EntityTable<StoredCampaign, 'key'>;
@@ -69,6 +70,14 @@ export class DexieCampaignRepository implements CampaignRepository {
   async saveStripCollapsed(collapsed: boolean): Promise<void> {
     await this.db.settings.put({ key: STRIP, value: String(collapsed) });
   }
+
+  async loadShopHintHidden(): Promise<boolean> {
+    return (await this.db.settings.get(SHOP_HINT))?.value === 'true';
+  }
+
+  async saveShopHintHidden(hidden: boolean): Promise<void> {
+    await this.db.settings.put({ key: SHOP_HINT, value: String(hidden) });
+  }
 }
 
 /**
@@ -115,6 +124,7 @@ export class MemoryCampaignRepository implements CampaignRepository {
   private readonly campaigns = new Map<CampaignId, Campaign>();
   private open: CampaignId | undefined;
   private collapsed = false;
+  private hintHidden = false;
 
   async list(): Promise<readonly Campaign[]> {
     return [...this.campaigns.values()];
@@ -142,6 +152,14 @@ export class MemoryCampaignRepository implements CampaignRepository {
 
   async saveStripCollapsed(collapsed: boolean): Promise<void> {
     this.collapsed = collapsed;
+  }
+
+  async loadShopHintHidden(): Promise<boolean> {
+    return this.hintHidden;
+  }
+
+  async saveShopHintHidden(hidden: boolean): Promise<void> {
+    this.hintHidden = hidden;
   }
 }
 

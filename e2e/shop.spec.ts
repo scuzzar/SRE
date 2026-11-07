@@ -46,16 +46,20 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Shop' }).click();
   await expect(page.locator('.shop-world')).toContainText('Kessra');
-  // Eingezahlt wird in der Kasse, vom Charakter oben.
+  // Die Demo-Kampagne bringt ein Startkapital mit; eingezahlt wird in der Kasse, vom Charakter oben.
+  await expect(page.locator('.shop-funds')).toContainText('Cr 5.000');
   await page.getByRole('tab', { name: 'Kasse' }).click();
   await page.getByRole('radio', { name: 'Einzahlung' }).click();
   await expect(page.locator('.shop-who')).toContainText('Kira Vant');
   await page.getByRole('spinbutton').first().fill('1000');
   await page.getByRole('button', { name: 'Einzahlung buchen' }).click();
-  await expect(page.locator('.shop-funds')).toContainText('Cr 1.000');
+  await expect(page.locator('.shop-funds')).toContainText('Cr 6.000');
 
   // Ein Tipp kauft genau eins; das Abzeichen zählt, wie viele Kira hat. Zweimal Munition: zwei Magazine.
   await page.getByRole('tab', { name: 'Waffen' }).click();
+  // Der Hinweis über den Waffen lässt sich wegklicken und bleibt weg.
+  await page.getByRole('button', { name: 'Hinweis ausblenden' }).click();
+  await expect(page.locator('.shop-hint-box')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Automatic Pistol kaufen' }).getByLabel('hat 1')).toBeVisible();
   await page.getByRole('button', { name: 'Spear kaufen' }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -64,14 +68,14 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
   await ammo.click();
   await ammo.click();
   await expect(ammo.getByLabel('hat 2')).toBeVisible();
-  await expect(page.locator('.shop-funds')).toContainText('Cr 970');
+  await expect(page.locator('.shop-funds')).toContainText('Cr 5.970');
 
   // Gesetz 4 verbietet die Submachinegun: erst die Rückfrage, dann eins.
   await page.getByRole('button', { name: 'Submachinegun kaufen' }).click();
   const banned = page.getByRole('dialog', { name: 'Submachinegun' });
   await expect(banned).toContainText('verboten');
   await banned.getByRole('button', { name: 'Trotzdem kaufen' }).click();
-  await expect(page.locator('.shop-funds')).toContainText('Cr 470');
+  await expect(page.locator('.shop-funds')).toContainText('Cr 5.470');
   await page.getByRole('tab', { name: 'Kasse' }).click();
   await expect(page.locator('.shop-booking').first()).toContainText('1 × Submachinegun für Kira Vant auf Kessra');
 
@@ -83,7 +87,7 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
   const sale = page.getByRole('dialog', { name: 'Blade verkaufen' });
   await expect(sale.getByLabel('Erlös je Stück (Cr)')).toHaveValue('25');
   await sale.getByRole('button', { name: 'Verkaufen' }).click();
-  await expect(page.locator('.shop-funds')).toContainText('Cr 495');
+  await expect(page.locator('.shop-funds')).toContainText('Cr 5.495');
   await page.getByRole('tab', { name: 'Kasse' }).click();
   await expect(page.locator('.shop-booking').first()).toContainText('1 × Blade von Jonas Reyl auf Kessra');
   await page.getByRole('button', { name: 'Kira Vant nach oben' }).click();

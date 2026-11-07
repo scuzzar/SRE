@@ -28,6 +28,9 @@ export interface CampaignRepository {
   /** Ob die Leiste mit dem Charakter oben eingeklappt ist, merkt sich das Gerät; zum Spielstand gehört es nicht. */
   loadStripCollapsed(): Promise<boolean>;
   saveStripCollapsed(collapsed: boolean): Promise<void>;
+  /** Ob der Hinweis über den Waffen im Shop weggeklickt ist, merkt sich das Gerät; zum Spielstand gehört es nicht. */
+  loadShopHintHidden(): Promise<boolean>;
+  saveShopHintHidden(hidden: boolean): Promise<void>;
 }
 
 /** Gibt dem Spieler eine Datei zum Speichern, als Download. */

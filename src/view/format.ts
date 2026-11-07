@@ -87,6 +87,15 @@ export const rangeShort: Record<Range, string> = {
   veryLong: 'V. Long',
 };
 
+/** Ganz kurz für schmale Spalten, wie auf dem Strahl der Entfernung. */
+export const rangeTiny: Record<Range, string> = {
+  close: 'C',
+  short: 'S',
+  medium: 'M',
+  long: 'L',
+  veryLong: 'VL',
+};
+
 /** Die Reichweiten in Metern (S. 7). */
 export const rangeMeters: Record<Range, string> = {
   close: 'Berührung',
