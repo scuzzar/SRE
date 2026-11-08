@@ -1,4 +1,5 @@
 import {
+  HANDS,
   addCharacter,
   rollSurprise,
   alarmAfterAttack,
@@ -634,16 +635,45 @@ export class GameController {
    * Schaden. Wer für den Zug oben stehen muss, kommt vorher nach oben (auch nach Wischen in der Leiste).
    */
   fightAttack(): void {
+    this.inFight(() => this.attackFrom(this.campaign));
+  }
+
+  /**
+   * Der SC am Zug greift mit dieser Waffe an (Primär, Sekundär oder die Hände): Sie kommt in die Hand,
+   * dann der Angriff wie `fightAttack`. Beim NSC am Zug zählt nur seine Waffe.
+   */
+  fightAttackWith(weapon: string): void {
+    this.inFight(() => this.attackFrom(this.withWeaponInHand(weapon)));
+  }
+
+  /** Der SC am Zug lädt diese Waffe nach; sie kommt dabei in die Hand. Das ist sein Zug. */
+  fightReloadWith(weapon: string): void {
     this.inFight(() => {
-      const target = this.state.simTarget;
-      if (target === undefined) throw new DomainError('Erst ein Ziel wählen.');
-      const ready = this.focusedForTurn(this.campaign, target);
-      const attack = { ...turnAttack(ready, target), ...(this.state.simBurst === undefined ? {} : { burst: this.state.simBurst }), ...(this.state.simWeakened ? { weakened: true } : {}) };
-      const campaign = this.logAttack(ready, attack);
-      const index = volleyStart(campaign.log, campaign.log.length - 1);
-      if (pendingDamage(campaign.log) !== undefined && volleyStart(campaign.log, pendingDamage(campaign.log)!) === index) this.change(campaign, { result: index, combatNote: undefined });
-      else this.nextTurn(campaign, { result: index });
+      const turn = turnOf(this.campaign);
+      if (!turn || turn.side !== 'pcs') throw new DomainError('Nachladen kann nur ein SC am Zug.');
+      this.nextTurn(reload(this.withWeaponInHand(weapon), turn.id));
     });
+  }
+
+  /** Die Kampagne, in der der SC am Zug diese Waffe in der Hand hat. */
+  private withWeaponInHand(weapon: string): Campaign {
+    const turn = turnOf(this.campaign);
+    if (!turn) throw new DomainError('Es ist keiner am Zug.');
+    if (turn.side !== 'pcs') return this.campaign;
+    const character = characterOf(this.campaign, turn.id);
+    return (character.wields ?? HANDS) === weapon ? this.campaign : setWields(this.campaign, turn.id, weapon);
+  }
+
+  /** Der Kämpfer am Zug greift sein Ziel an. Daneben beendet den Zug gleich; ein Treffer erst mit dem Schaden. */
+  private attackFrom(base: Campaign): void {
+    const target = this.state.simTarget;
+    if (target === undefined) throw new DomainError('Erst ein Ziel wählen.');
+    const ready = this.focusedForTurn(base, target);
+    const attack = { ...turnAttack(ready, target), ...(this.state.simBurst === undefined ? {} : { burst: this.state.simBurst }), ...(this.state.simWeakened ? { weakened: true } : {}) };
+    const campaign = this.logAttack(ready, attack);
+    const index = volleyStart(campaign.log, campaign.log.length - 1);
+    if (pendingDamage(campaign.log) !== undefined && volleyStart(campaign.log, pendingDamage(campaign.log)!) === index) this.change(campaign, { result: index, combatNote: undefined });
+    else this.nextTurn(campaign, { result: index });
   }
 
   /** Der SC am Zug lädt nach; das ist sein Zug. */

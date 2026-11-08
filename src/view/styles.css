@@ -5521,3 +5521,563 @@ button:disabled {
     animation-duration: 1ms;
   }
 }
+
+/* ---------------------------------------------------------------------------------------------
+   Kampfsimulation in zwei Spalten: SC links, NSC rechts, die Entfernung als senkrechte Leiste
+   dazwischen; Pfeile über allem zeigen, wer wen angreift. */
+.arena {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 46px minmax(0, 1fr);
+  align-items: start;
+  padding: 6px 0 10px;
+  min-height: 100%;
+}
+
+.arena-side {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.arena-label {
+  padding: 0 2px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arena-side.npcs .arena-label {
+  text-align: right;
+}
+
+.fcard {
+  position: relative;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  /* Eigene Ebene: Blitz und Schüttelbewegung bleiben auf der Karte, ohne die Nachbarn neu zu malen. */
+  contain: layout;
+}
+
+.fcard-main {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  padding: 3px 7px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  line-height: 1.25;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+.fcard.npcs .fcard-main {
+  text-align: right;
+}
+
+.fcard-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.fcard.npcs .fcard-name {
+  justify-content: flex-end;
+}
+
+.fcard-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.fcard-marker {
+  flex: none;
+  font-weight: 700;
+}
+
+.fcard-marker.turn {
+  color: var(--gold);
+  font-size: 11px;
+}
+
+.fcard-marker.target {
+  color: var(--accent-text);
+  font-size: 19px;
+  line-height: 0.8;
+  font-weight: 400;
+}
+
+.fcard-leader {
+  flex: none;
+  color: var(--gold);
+  font-size: 12px;
+}
+
+.state-icon {
+  flex: none;
+  width: 13px;
+  height: 13px;
+}
+
+.state-icon.wounded path {
+  fill: var(--accent-text);
+}
+
+.state-icon.unconscious circle,
+.state-icon.serious circle {
+  stroke-width: 1.3;
+}
+
+.state-icon.unconscious circle {
+  fill: none;
+  stroke: var(--text);
+}
+
+.state-icon.unconscious path {
+  stroke: var(--text);
+}
+
+.state-icon.serious circle {
+  fill: var(--accent);
+  stroke: var(--accent-text);
+}
+
+.state-icon.serious path {
+  stroke: #fff;
+}
+
+.state-icon path {
+  fill: none;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+}
+
+.state-icon.wounded path {
+  stroke: none;
+}
+
+.state-icon.dead {
+  width: 10px;
+}
+
+.state-icon.dead path {
+  stroke: var(--muted);
+  stroke-width: 2;
+  stroke-linecap: square;
+}
+
+.fcard-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 6px;
+  font-size: 12px;
+}
+
+.fcard.npcs .fcard-stats {
+  justify-content: flex-end;
+}
+
+.fcard-stats .stat {
+  position: relative;
+}
+
+.fcard-stats .hurt {
+  color: var(--accent-text);
+}
+
+.fcard-gear {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--dim);
+}
+
+.fcard.turn {
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 0 1px var(--gold-deep), 0 0 14px var(--gold-glow);
+}
+
+.fcard.targeted {
+  border: 2px solid var(--accent-text);
+  background: var(--accent-wash);
+  box-shadow: 0 0 12px rgba(198, 47, 53, 0.45);
+}
+
+.fcard.neighbour {
+  border: 2px dashed var(--accent-text);
+}
+
+.fcard.chosen {
+  border-color: var(--accent-text);
+  background: var(--accent-wash);
+}
+
+.fcard.out {
+  opacity: 0.45;
+}
+
+.fcard:has(> .impact-flash.damage) {
+  animation: impact-shake 420ms ease-in-out;
+}
+
+.fcard-heal {
+  display: block;
+  width: 100%;
+  padding: 2px 0 3px;
+  border: 0;
+  border-top: 1px solid var(--rule);
+  background: transparent;
+  color: var(--gold-bright);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Die Entfernung als senkrechte Leiste zwischen den Spalten. */
+.rail {
+  position: sticky;
+  top: 0;
+  display: grid;
+  grid-template-rows: auto auto minmax(150px, 1fr) auto;
+  justify-items: center;
+  gap: 4px;
+  height: min(100%, 420px);
+  min-height: 260px;
+  padding-top: 2px;
+}
+
+.rail-now {
+  display: grid;
+  justify-items: center;
+  line-height: 1.1;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.rail-now b {
+  font-size: 13px;
+  color: var(--gold);
+}
+
+.rail-step {
+  width: 34px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: var(--raised, var(--panel));
+  color: var(--text);
+  font-size: 12px;
+  touch-action: manipulation;
+}
+
+.rail-step:disabled {
+  opacity: 0.35;
+}
+
+.rail-track {
+  --pad: 8px;
+  position: relative;
+  width: 100%;
+  touch-action: none;
+}
+
+.rail-line,
+.rail-span {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--pad) + var(--y) * (100% - 2 * var(--pad)));
+  height: calc(var(--h) * (100% - 2 * var(--pad)));
+  transform: translateX(-50%);
+}
+
+.rail-line {
+  width: 0;
+  border-left: 1px solid var(--line);
+}
+
+.rail-line.out {
+  border-left-style: dashed;
+  opacity: 0.6;
+}
+
+.rail-span {
+  width: 3px;
+  background: var(--gold);
+  box-shadow: 0 0 8px var(--gold-glow);
+  transition: height 0.25s ease;
+}
+
+.rail-tick {
+  position: absolute;
+  right: calc(50% + 5px);
+  top: calc(var(--pad) + var(--y) * (100% - 2 * var(--pad)));
+  transform: translateY(-50%);
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--dim);
+}
+
+.rail-tick.out {
+  opacity: 0.5;
+}
+
+.rail-pc,
+.rail-npc {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--pad) + var(--y) * (100% - 2 * var(--pad)));
+  transform: translate(-50%, -50%);
+  transition: top 0.25s ease;
+}
+
+.rail-pc {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--text);
+}
+
+.rail-npc {
+  color: var(--gold-bright);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.rail-npc.close {
+  transform: translate(-50%, 15%);
+}
+
+.rail-npc.escaped {
+  color: var(--muted);
+}
+
+/* Pfeile: gold gestrichelt gewählt, rot ein Treffer, grau gestrichelt daneben; der letzte bleibt blass. */
+.arena-arrows {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.arrow {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.arrow.plan {
+  stroke: var(--gold);
+  stroke-dasharray: 7 5;
+  animation: arrow-march 0.8s linear infinite;
+}
+
+.arrow.neighbour {
+  stroke: var(--accent-text);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+}
+
+.arrow.hit {
+  stroke: var(--accent-text);
+}
+
+.arrow.miss {
+  stroke: #77736c;
+  stroke-dasharray: 2 5;
+}
+
+.arrow.fresh {
+  stroke-dasharray: 100;
+  animation: arrow-fly 0.38s ease-out both;
+}
+
+.arrow.past {
+  opacity: 0.35;
+  transition: opacity 0.4s;
+}
+
+.arrow-head path {
+  stroke: none;
+}
+
+.arrow-head.plan path {
+  fill: var(--gold);
+}
+
+.arrow-head.hit path {
+  fill: var(--accent-text);
+}
+
+.arrow-head.miss path {
+  fill: #77736c;
+}
+
+@keyframes arrow-march {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+
+@keyframes arrow-fly {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrow.plan,
+  .arrow.fresh {
+    animation: none;
+  }
+
+  .arrow.fresh {
+    stroke-dasharray: none;
+  }
+}
+
+/* Unten kompakt: wer gegen wen mit Aussetzen, darunter je Waffe ein Angriff. */
+.fight-dock {
+  gap: 6px;
+  padding: 8px 12px 10px;
+}
+
+.fight-who-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-weight: 700;
+}
+
+.fight-who-row .fight-skip {
+  margin-left: auto;
+  flex: none;
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.attack-buttons {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px;
+}
+
+.attack-buttons.single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.atk {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'slot need' 'name need';
+  align-items: center;
+  column-gap: 6px;
+  min-height: 52px;
+  min-width: 0;
+  padding: 5px 9px;
+  border: 1px solid var(--gold);
+  background: transparent;
+  color: var(--gold-bright);
+  text-align: left;
+  touch-action: manipulation;
+  transition:
+    transform 0.08s ease,
+    opacity 0.2s;
+}
+
+.atk:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.atk.primary {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+.atk:disabled {
+  opacity: 0.4;
+}
+
+.atk-slot {
+  grid-area: slot;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.atk-name {
+  grid-area: name;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.atk-need {
+  grid-area: need;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.atk-need.small {
+  max-width: 5.5em;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: right;
+  white-space: normal;
+}
+
+.fight-dock .fire-toggle,
+.fight-dock .fire-toggle.compact {
+  margin: 0;
+  gap: 4px;
+}
+
+.fight-dock .fire-chips button {
+  min-height: 30px;
+  padding: 2px 8px;
+  font-size: 13px;
+}
+
+.fight-dock .fire-text {
+  margin: 0;
+  font-size: 12px;
+}
+
+/* Die Pfeile laufen hinter den Knöpfen der Leiste durch. */
+.rail-step {
+  position: relative;
+  z-index: 3;
+}

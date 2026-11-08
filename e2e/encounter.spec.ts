@@ -54,9 +54,10 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await expect(page.locator('.encounter-running')).toContainText('Thugs');
   await page.locator('.encounter-running').getByRole('button', { name: 'Zum Kampf' }).click();
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Kampf' })).toHaveAttribute('aria-current', 'page');
-  // Die SC stehen oben in der Leiste; die Liste zeigt nur die NSC.
-  await expect(page.locator('.strip')).toBeVisible();
-  await expect(page.locator('.fighter')).toHaveCount(npcs);
+  // Zwei Spalten: links die SC, rechts die NSC; die Leiste oben gibt es im Kampf nicht.
+  await expect(page.locator('.strip')).toHaveCount(0);
+  await expect(page.locator('.fcard.pcs')).toHaveCount(2);
+  await expect(page.locator('.fcard.npcs')).toHaveCount(npcs);
 
   // Kampfsimulation: Runde, Entfernung, Kämpfer; die Tabelle ist weg.
   await expect(page.locator('.fight-head')).toContainText('Runde 1');
@@ -64,20 +65,20 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await expect(page.locator('.combat-table')).toHaveCount(0);
   await expect(page.getByRole('img', { name: /^Entfernung: / })).toBeVisible();
   // Der erste Wurf im Kampf ist die Überraschung: zwei Würfel, SC weiß, NSC schwarz, mit DMs.
-  await expect(page.locator('.fight-turn')).toHaveCount(0);
+  await expect(page.locator('.fight-who-row')).toHaveCount(0);
   await page.getByRole('button', { name: 'Überraschung würfeln' }).click();
   const surprise = page.getByRole('dialog', { name: 'Überraschung' });
   await expect(surprise.locator('.die-white')).toHaveCount(1);
   await expect(surprise.locator('.die-black')).toHaveCount(1);
   await expect(surprise).toContainText('Anführer +1');
   await surprise.getByRole('button', { name: 'Kampf beginnen' }).click();
-  await expect(page.locator('.fight-turn')).toBeVisible();
+  await expect(page.locator('.fight-who-row')).toBeVisible();
 
-  // Langes Drücken links auf den Strahl setzt die Entfernung frei auf Berührung; Close reicht für jede Waffe.
+  // Langes Drücken oben auf die senkrechte Leiste setzt die Entfernung frei auf Berührung; Close reicht für jede Waffe.
   const ray = page.getByRole('img', { name: /^Entfernung: / });
-  const pressAt = async (x: number) => {
+  const pressAt = async (y: number) => {
     const box = (await ray.boundingBox())!;
-    await page.mouse.move(box.x + x, box.y + box.height / 2);
+    await page.mouse.move(box.x + box.width / 2, box.y + y);
     await page.mouse.down();
     await page.waitForTimeout(800);
     await page.mouse.up();
@@ -90,8 +91,9 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await expect(page.locator('.ray-move')).toContainText('gegangen');
   await pressAt(4);
   await expect(page.getByRole('img', { name: /^Entfernung: Close, Berührung/ })).toBeVisible();
-  await expect(page.locator('.fight-turn')).toContainText('→');
-  await page.getByRole('button', { name: 'Angreifen' }).click();
+  await expect(page.locator('.fight-who-row')).toContainText('→');
+  // Angegriffen wird mit dem Knopf der Waffe (beim SC Primär oder Sekundär, beim NSC seine Waffe).
+  await page.locator('.fight-dock .atk:not(:disabled)').first().click();
   const dialog = page.getByRole('alertdialog');
   await dialog.click();
   const hit = (await dialog.getByRole('heading').textContent()) === 'TREFFER';
@@ -106,8 +108,8 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
 
   // Übernehmen: Langes Drücken auf einen NSC öffnet die Auswahl mit Haken; unten stehen dann
   // „Als SC“ und „Als NSC“ statt der Zugknöpfe. Antippen hakt weitere an.
-  const alive = page.locator('.fighter:not(.out) .fighter-main');
-  const before = await page.locator('.fighter').count();
+  const alive = page.locator('.fcard.npcs:not(.out) .fcard-main');
+  const before = await page.locator('.fcard.npcs').count();
   const box = (await alive.first().boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
@@ -115,13 +117,13 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await page.mouse.up();
   const adopt = page.getByRole('region', { name: 'Übernehmen' });
   await expect(adopt).toContainText('1 NSC übernehmen');
-  await expect(page.getByRole('button', { name: 'Angreifen' })).toHaveCount(0);
+  await expect(page.locator('.atk')).toHaveCount(0);
   await expect(alive.first()).toHaveAttribute('aria-checked', 'true');
   const chosen = (await alive.count()) > 1 ? 2 : 1;
   if (chosen === 2) await alive.nth(1).click();
   await expect(adopt).toContainText(`${chosen} NSC übernehmen`);
   await adopt.getByRole('button', { name: 'Als NSC' }).click();
-  await expect(page.locator('.fighter')).toHaveCount(before - chosen);
+  await expect(page.locator('.fcard.npcs')).toHaveCount(before - chosen);
   await expect(page.getByRole('region', { name: 'Übernehmen' })).toHaveCount(0);
 
   // Im Reiter Begegnung steht die laufende Begegnung knapp; „Zum Kampf“ führt zurück.

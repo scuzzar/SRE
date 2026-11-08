@@ -905,7 +905,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     beginnt die nächste Runde (`round` + 1, `acted` leer), auch wenn der Letzte nicht durch seinen Zug
     wegfiel, sondern etwa übernommen oder ausgeblendet wurde.
   - Im Zug wählt man nur das **Ziel** (einen Kämpfer der anderen Partei, der nicht tot ist) und
-    würfelt; Rüstung ist die des Ziels, Reichweite die Entfernung. Ist ein NSC dran, schlägt die App
+    würfelt, ein SC mit seiner **Primär- oder Sekundärwaffe** (ohne zweite Waffe mit den Händen): Der
+    Angriff nimmt diese Waffe in die Hand (`wields`) und würfelt; ist sie leer, lädt er sie stattdessen
+    nach. Die Anzeige dazu (zwei Spalten, Entfernung als senkrechte Leiste, Pfeile) ist reine Anzeige,
+    siehe README; Rüstung ist die des Ziels, Reichweite die Entfernung. Ist ein NSC dran, schlägt die App
     einen zufälligen wachen SC als Ziel vor; man kann es ändern. Ist ein SC dran, steht er oben.
   - Der Zug endet mit dem Angriff, sobald sein Schaden verteilt ist (oder er daneben ging; bei einer
     Garbe der Schaden aller ihrer Treffer, siehe *Feuerstoß und Schrot*), mit

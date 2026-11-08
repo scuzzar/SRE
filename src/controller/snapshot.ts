@@ -120,6 +120,7 @@ import {
   parryDm,
   strikeDm,
   surprisingOf,
+  encounterStart,
   needsSurprise,
   surpriseParts,
   type SurpriseDmPart,
@@ -515,6 +516,11 @@ export interface SimView {
         readonly ran: boolean;
         /** Bei einem Schlag oder Hieb: die Schlagart, die Combat-Schläge und ob er ihn schwächen kann (SR 22). */
         readonly melee: MeleeView | undefined;
+        /**
+         * Je Waffe ein Angriff: beim SC Primär- und Sekundärwaffe (ohne die zweite die Hände), beim NSC
+         * seine Waffe. Ein Tipp wählt die Waffe und greift an.
+         */
+        readonly attacks: readonly AttackOption[];
       }
     | undefined;
   /** Ist eine Partei außer Gefecht, ist der Kampf entschieden. */
@@ -523,8 +529,39 @@ export interface SimView {
   readonly move: MoveState | undefined;
   /** Was der neueste Eintrag im Log den Kämpfern getan hat. */
   readonly impacts: readonly Impact[];
+  /** Die Pfeile des letzten Angriffs in der Begegnung (eine Garbe hat mehrere). */
+  readonly arrows: readonly AttackArrow[];
   /** Die Range Bands je Reichweite (erstes und letztes Band) und ob die Waffe dessen am Zug hinreicht. */
   readonly bands: readonly { readonly range: Range; readonly from: number; readonly to: number; readonly reaches: boolean }[];
+}
+
+/** Ein möglicher Angriff dessen, der am Zug ist, mit einer seiner Waffen. */
+export interface AttackOption {
+  /** Primärwaffe, Sekundärwaffe, die Hände oder die Waffe eines NSC. */
+  readonly slot: 'primary' | 'secondary' | 'hands' | 'npc';
+  readonly weapon: string;
+  readonly name: string;
+  /** Mit Ziel: der nötige Wurf und die Chance; ohne Ziel fehlt beides. */
+  readonly odds: { readonly need: number; readonly chance: number } | undefined;
+  readonly reaches: boolean;
+  /** Bei einer Schusswaffe eines SC: Schuss im Magazin und Magazine im Besitz. */
+  readonly ammo: { readonly rounds: number; readonly capacity: number; readonly magazines: number } | undefined;
+  /** Zu wenig Schuss geladen für den Angriff; dann bietet der Knopf das Nachladen an. */
+  readonly empty: boolean;
+  /** Die Waffe ist gerade in der Hand. */
+  readonly wielded: boolean;
+  /** Feuerstoß, Schrot oder Einzelschuss der Waffe. */
+  readonly fire: FireView | undefined;
+  /** Ein Schlag oder Hieb (Faust, Klinge, Stangenwaffe). */
+  readonly melee: boolean;
+}
+
+/** Ein Pfeil des letzten Angriffs in der Begegnung: von wem zu wem, ob er traf. */
+export interface AttackArrow {
+  readonly from: string;
+  readonly to: string;
+  readonly hit: boolean;
+  readonly key: string;
 }
 
 /** Schlag oder Hieb am Zug: wie er zählt und wie viel Ausdauer noch da ist. */
@@ -1174,6 +1211,7 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
     }
     const character = 'pc' in turn.who ? characterOf(campaign, turn.who.pc) : undefined;
     const ammo = character && ammoOf(character);
+    const options = turnAttacks(campaign, turn, valid ? target : undefined, simBurst, simWeakened);
     turnView = {
       id: turn.id,
       side: turn.side,
@@ -1194,7 +1232,8 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
             weakened: simWeakened === true,
             canWeaken: turn.side === 'pcs' && (strike === 'combat' || (strike === 'weakened' && simWeakened === true)),
           }
-        : undefined,
+        : options.melee,
+      attacks: options.attacks,
     };
   }
   return {
@@ -1227,8 +1266,100 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
     defeated: defeatedSide(campaign, encounter),
     move: moveState(campaign),
     impacts: impactsOf(campaign),
+    arrows: arrowsOf(campaign, running),
     bands: ref.encounters.bands.map((b) => ({ range: b.range, from: b.from, to: b.to, reaches: weapon === undefined || rangeDm(weapon, b.range) !== undefined })),
   };
+}
+
+/** Der SC bzw. NSC mit dieser Waffe in der Hand, nur für die Berechnung; gespeichert wird nichts. */
+function wielding(campaign: Campaign, id: string, weapon: string): Campaign {
+  return {
+    ...campaign,
+    characters: campaign.characters.map((c) => {
+      if (c.id !== id) return c;
+      const rest = Object.fromEntries(Object.entries(c).filter(([key]) => key !== 'wields')) as Omit<Character, 'wields'>;
+      return weapon === HANDS ? (rest as Character) : { ...rest, wields: weapon };
+    }),
+  };
+}
+
+/** Die Waffen, mit denen der SC am Zug angreifen kann: Primär und Sekundär, ohne zweite Waffe die Hände. */
+function slotsOf(character: Character): readonly { readonly weapon: string; readonly slot: AttackOption['slot'] }[] {
+  const armed = armedWeaponsOf(character).filter((w) => w !== HANDS).slice(0, 2);
+  const weapons = armed.length < 2 ? [...armed, HANDS] : armed;
+  return weapons.map((weapon) => ({ weapon, slot: weapon === HANDS ? 'hands' : weapon === character.primary ? 'primary' : 'secondary' }));
+}
+
+/** Je Waffe des Kämpfers am Zug ein Angriff auf das Ziel, und die Ausdauer, wenn eine davon schlägt oder haut. */
+function turnAttacks(campaign: Campaign, turn: FightSlot, target: string | undefined, simBurst: boolean | undefined, simWeakened: boolean | undefined): { attacks: readonly AttackOption[]; melee: MeleeView | undefined } {
+  const encounter = currentEncounter(campaign);
+  const range = encounter && encounterRangeOf(fightState(campaign, encounter));
+  const character = 'pc' in turn.who ? characterOf(campaign, turn.who.pc) : undefined;
+  const slots = character ? slotsOf(character) : [{ weapon: fighterOf(campaign, turn.who).weapon.id, slot: 'npc' as const }];
+  let melee: MeleeView | undefined;
+  const attacks = slots.map(({ weapon, slot }) => {
+    const temp = character ? wielding(campaign, character.id, weapon) : campaign;
+    const attacker = fighterOf(temp, turn.who);
+    const burst = firesBurst(attacker.weapon, simBurst === undefined ? {} : { burst: simBurst });
+    let odds: AttackOption['odds'];
+    let strike: Strike | undefined;
+    if (target !== undefined) {
+      try {
+        const top = turn.side === 'pcs' ? turn.id : target;
+        const ready = focusOf(temp)?.id === top ? temp : { ...temp, focus: top };
+        const attack = { ...turnAttack(ready, target), burst, ...(simWeakened ? { weakened: true } : {}) };
+        const evaluated = evaluateAttack(attack, ready);
+        if (evaluated) odds = { need: evaluated.need, chance: evaluated.chance };
+        strike = attackExtras(attack, ready).strike;
+      } catch (error) {
+        if (!(error instanceof DomainError)) throw error;
+      }
+    }
+    if (isMelee(attacker.weapon) && !melee) {
+      melee = {
+        strike,
+        blows: blowsOf(temp, turn.who),
+        end: attacker.fighting.end,
+        weakenedDm: attacker.weapon.weakened ?? 0,
+        weakened: simWeakened === true,
+        canWeaken: turn.side === 'pcs' && (strike === 'combat' || (strike === 'weakened' && simWeakened === true)),
+      };
+    }
+    const ammo = character && ammoOf(characterOf(temp, character.id));
+    return {
+      slot,
+      weapon,
+      name: weaponName(weapon),
+      odds,
+      reaches: range !== undefined && rangeDm(rowOf(attacker.weapon, burst), range) !== undefined,
+      ammo: ammo && { rounds: ammo.rounds, capacity: ammo.capacity, magazines: ammo.magazines },
+      empty: ammo !== undefined && ammo.rounds < roundsFor(attacker.weapon, burst),
+      wielded: character ? (character.wields ?? HANDS) === weapon : true,
+      fire: fireView(attacker.weapon, burst),
+      melee: isMelee(attacker.weapon),
+    };
+  });
+  return { attacks, melee };
+}
+
+/** Die Pfeile des letzten Angriffs der laufenden Begegnung: von wem zu wem, je Wurf der Garbe. */
+function arrowsOf(campaign: Campaign, encounter: Encounter): readonly AttackArrow[] {
+  const log = campaign.log;
+  const start = encounterStart(log, encounter);
+  let last = -1;
+  for (let i = log.length - 1; i >= start; i--) {
+    if (log[i]!.kind === 'attack') {
+      last = i;
+      break;
+    }
+  }
+  if (last < 0) return [];
+  return volleyOf(log, last).flatMap((i) => {
+    const roll = log[i] as AttackResult;
+    const to = victimOf(roll);
+    const from = roll.by ?? roll.for;
+    return to && from !== undefined ? [{ from, to: slotId(to), hit: isSuccess(roll), key: `a${i}` }] : [];
+  });
 }
 
 /** Die Id eines Kämpfers in der Simulation: SC `c…`, NSC `n…`. */

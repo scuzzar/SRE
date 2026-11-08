@@ -8,7 +8,7 @@ import { CloseIcon } from '../icons';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { CombatIcon, DiceIcon } from '../icons';
-import { CharacterStrip, type StripFight } from '../oracle/CharacterStrip';
+import { CharacterStrip } from '../oracle/CharacterStrip';
 
 /**
  * Der Reiter Kampf, in zwei Modi. Ohne laufende Begegnung die **Waffentabelle**: oben die Leiste mit
@@ -32,8 +32,8 @@ export function CombatScreen({ view }: { view: Snapshot }) {
   const healing = patient && combat && (patient.npc === undefined && !combat.sim ? combat.healing : combat.sim?.fighters.find((f) => f.id === (patient.npc ?? patient.pc))?.healing);
   return (
     <div className="screen">
-      {/* Die SC stehen oben in der Leiste, auch in der Kampfsimulation; die Liste dort zeigt nur die NSC. */}
-      <CharacterStrip view={view} weapons heal={combat && pcHeal(combat, setPatient)} fight={combat?.sim && pcRoles(combat, view.result !== undefined || combat.wounding !== undefined)} />
+      {/* Ohne Begegnung steht der Charakter oben in der Leiste; in der Kampfsimulation stehen die SC links in der Arena. */}
+      {!combat?.sim && <CharacterStrip view={view} weapons heal={combat && pcHeal(combat, setPatient)} />}
       {!combat ? (
         <section className="scroll combat-scroll">
           <p className="log-empty">Ohne lebenden Charakter gibt es keinen Angriff.</p>
@@ -68,15 +68,6 @@ function pcHeal(combat: CombatView, onHeal: (patient: Patient) => void): { reado
   return { name: combat.character, onHeal: () => onHeal({ npc: undefined, ...(pc ? { pc: pc.id } : {}), name: combat.character }) };
 }
 
-/** In der Simulation: für jeden SC, ob er am Zug, Ziel oder Nachbar ist, und was ihn eben getroffen hat. */
-function pcRoles(combat: CombatView, quiet: boolean): StripFight {
-  const sim = combat.sim!;
-  return Object.fromEntries(
-    sim.fighters
-      .filter((f) => f.side === 'pcs')
-      .map((f) => [f.id, { turn: f.turn, targeted: f.targeted, neighbour: f.neighbour, impacts: quiet ? [] : sim.impacts.filter((i) => i.id === f.id) }]),
-  );
-}
 
 function WeaponHead({ combat }: { combat: CombatView }) {
   const { weapon, base } = combat;
