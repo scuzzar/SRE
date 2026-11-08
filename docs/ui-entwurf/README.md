@@ -84,3 +84,18 @@ mit dem Charakter oben im Reiter *Kampf* (siehe *Primär- und Sekundärwaffe* im
 | Datei | Inhalt |
 |---|---|
 | `waffen-leiste/Entwurf.html` | Die Attribute als schmale Zeile wie bei den NSC statt der sechs Kästen; darunter in einer Zeile höchstens drei Waffen: Primärwaffe, Sekundärwaffe, Hände. Die Waffe in der Hand zeigt ihre Fertigkeit und wird nie gekürzt, die anderen nur ihren Namen; antippen wechselt. Im Kampf ist die Kopfzeile der Karte nur so hoch wie die Schrift (30 px statt 40 px), mit weniger Abstand zwischen den Zeilen. Die Leiste ist etwa 140 px statt 235 px hoch |
+
+## Kampf in zwei Spalten (Entwurf vom 8. November 2026)
+
+Im Ordner [`zwei-spalten/`](zwei-spalten/) liegt ein Entwurf zum Ausprobieren, noch nicht
+freigegeben: Die Kampfsimulation ohne Charakter-Leiste und NSC-Liste, stattdessen **SC links** und
+**NSC rechts**, getrennt von der **Entfernung als senkrechte Leiste**. **Pfeile** zeigen, wer wen
+angreift: gold gestrichelt, solange das Ziel gewählt ist, rot nach einem Treffer, grau gestrichelt
+nach einem Fehlschuss; der letzte Angriff bleibt blass stehen.
+
+| Datei | Inhalt |
+|---|---|
+| `zwei-spalten/Entwurf.html` | Klickbarer Entwurf mit vier Thugs, Kira und Jonas: Ziel antippen, angreifen (vereinfachte Würfe), Entfernung mit ▲ ▼, Waffen des SC am Zug unten im Zug; daneben Notizen und offene Fragen |
+
+Die Datei hat keinen eigenen HTML-Rahmen (für die Veröffentlichung als Seite); im Browser öffnet sie
+sich trotzdem.

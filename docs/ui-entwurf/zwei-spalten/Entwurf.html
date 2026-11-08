@@ -1,0 +1,807 @@
+<title>Kampf in zwei Spalten</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+<style>
+/* Entwurf: Kampfsimulation in zwei Spalten (SC links, NSC rechts), getrennt von der Entfernung als
+   senkrechte Leiste; Pfeile zeigen, wer wen angreift. Farben und Schrift aus der App (src/view/styles.css).
+   Die App ist nur dunkel; der Entwurf bleibt es auch. */
+:root {
+  --bg: #111111;
+  --panel: #161616;
+  --raised: #1a1a1a;
+  --deep: #0b0b0b;
+  --rule: #2a2a2a;
+  --line: #3a3a3a;
+  --text: #eceae4;
+  --muted: #a3a09a;
+  --dim: #8c8a85;
+  --ink: #111111;
+  --accent: #c62f35;
+  --accent-text: #ef5a5f;
+  --accent-wash: #2a1415;
+  --gold: #d9b45f;
+  --gold-bright: #f5dc96;
+  --gold-deep: #8a6a2a;
+  --gold-glow: rgba(233, 190, 92, 0.5);
+  --miss: #6f6c66;
+  --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--deep);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.4;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px 32px;
+}
+
+.page {
+  display: grid;
+  gap: 20px;
+  justify-content: center;
+  grid-template-columns: minmax(0, 430px);
+}
+
+@media (min-width: 900px) {
+  .page { grid-template-columns: 430px minmax(0, 380px); align-items: start; gap: 32px; }
+}
+
+/* --- das Telefon ---------------------------------------------------------------------------- */
+.phone {
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.app-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--rule);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.app-head::before {
+  content: "";
+  width: 4px;
+  height: 22px;
+  background: var(--accent);
+}
+
+.fight-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.fight-head b { font-size: 16px; }
+
+.fight-head .sub {
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ghost {
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+/* --- die Arena: SC | Entfernung | NSC --------------------------------------------------------- */
+.arena {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 54px minmax(0, 1fr);
+  gap: 0;
+  padding: 10px 10px 12px;
+  min-height: 380px;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.side-label {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  padding: 0 2px 2px;
+}
+
+.side.npcs .side-label { text-align: right; }
+
+.card {
+  position: relative;
+  display: grid;
+  gap: 1px;
+  width: 100%;
+  padding: 6px 8px 7px;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.side.npcs .card { text-align: right; }
+
+.card:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+
+.card .name {
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card .leader { color: var(--gold); font-weight: 600; font-size: 11px; }
+
+.card .state { font-size: 11px; color: var(--muted); }
+.card .state.hurt { color: var(--accent-text); }
+
+.card .stats {
+  font-family: var(--mono);
+  font-size: 12px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.side.npcs .card .stats { justify-content: flex-end; }
+
+.card .stats span { position: relative; }
+.card .stats .low { color: var(--accent-text); }
+
+.card .weapon {
+  font-size: 11px;
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card.turn {
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 0 1px var(--gold-deep), 0 0 14px var(--gold-glow);
+}
+
+.card.target {
+  border: 2px solid var(--accent-text);
+  background: var(--accent-wash);
+  box-shadow: 0 0 12px rgba(198, 47, 53, 0.45);
+}
+
+.card.neighbour { border: 2px dashed var(--accent-text); }
+
+.card.out { opacity: 0.45; }
+
+.card .tag {
+  justify-self: start;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 1px 5px;
+  text-transform: uppercase;
+}
+
+.side.npcs .card .tag { justify-self: end; }
+.card.turn .tag { background: var(--gold); color: var(--ink); }
+.card.target .tag { background: var(--accent); color: #fff; }
+
+.flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: flash 700ms ease-out both;
+}
+
+.flash.hit { background: rgba(198, 47, 53, 0.5); }
+.flash.miss { background: rgba(236, 234, 228, 0.16); }
+
+@keyframes flash { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
+
+.loss {
+  position: absolute;
+  left: 50%;
+  bottom: 60%;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 18px;
+  color: #fff;
+  text-shadow: 0 0 6px rgba(198, 47, 53, 0.95), 0 2px 8px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+  animation: loss 1400ms ease-out both;
+  z-index: 3;
+}
+
+@keyframes loss {
+  0% { opacity: 0; transform: translate(-50%, 20%) scale(0.7); }
+  15% { opacity: 1; transform: translate(-50%, -10%) scale(1.2); }
+  70% { opacity: 1; transform: translate(-50%, -70%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -110%) scale(1); }
+}
+
+/* --- die Entfernung als senkrechte Leiste ------------------------------------------------------- */
+.rail {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto auto;
+  justify-items: center;
+  gap: 4px;
+  padding-top: 18px;
+  min-width: 0;
+}
+
+.rail .range {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold);
+  text-align: center;
+  line-height: 1.15;
+}
+
+.rail .band { font-size: 10px; color: var(--muted); font-family: var(--mono); }
+
+.rail button {
+  width: 36px;
+  height: 30px;
+  font-size: 13px;
+  background: var(--raised);
+  color: var(--text);
+  border: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.rail button:disabled { opacity: 0.35; cursor: default; }
+
+.track {
+  position: relative;
+  width: 100%;
+  min-height: 180px;
+}
+
+.track .axis {
+  position: absolute;
+  left: 50%;
+  top: 4px;
+  bottom: 4px;
+  width: 0;
+  border-left: 1px dashed var(--line);
+}
+
+.track .span {
+  position: absolute;
+  left: calc(50% - 1px);
+  width: 3px;
+  background: var(--gold);
+  box-shadow: 0 0 8px var(--gold-glow);
+}
+
+.track .tick {
+  position: absolute;
+  right: calc(50% + 6px);
+  font-size: 9px;
+  font-family: var(--mono);
+  color: var(--dim);
+  transform: translateY(-50%);
+}
+
+.track .tick::after {
+  content: "";
+  position: absolute;
+  left: calc(100% + 2px);
+  top: 50%;
+  width: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.track .mark {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.track .mark.pc { color: var(--text); }
+.track .mark.npc { color: var(--gold-bright); }
+
+/* --- die Pfeile ----------------------------------------------------------------------------- */
+.arrows {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 2;
+}
+
+.arrows path { fill: none; stroke-width: 2.5; }
+.arrows .plan { stroke: var(--gold); stroke-dasharray: 6 5; animation: march 600ms linear infinite; }
+.arrows .plan-neighbour { stroke: var(--accent-text); stroke-width: 1.5; stroke-dasharray: 3 4; }
+.arrows .hit { stroke: var(--accent-text); }
+.arrows .miss { stroke: var(--miss); stroke-dasharray: 2 5; }
+.arrows .past { opacity: 0.35; }
+.arrows .shot { animation: draw 380ms ease-out both; }
+
+@keyframes march { to { stroke-dashoffset: -11; } }
+@keyframes draw { from { stroke-dashoffset: var(--len); } to { stroke-dashoffset: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .arrows .plan, .arrows .shot, .flash, .loss { animation: none; }
+  .loss { opacity: 1; transform: translate(-50%, -70%); }
+}
+
+/* --- unten: Zug ------------------------------------------------------------------------------ */
+.dock {
+  border-top: 1px solid var(--rule);
+  padding: 10px 12px 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.chip-turn { background: var(--gold); color: var(--ink); padding: 2px 8px; }
+.chip-target { background: var(--accent); color: #fff; padding: 2px 8px; }
+.who .muted { color: var(--muted); font-weight: 400; }
+
+.weapons {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.weapons button {
+  font: inherit;
+  font-size: 13px;
+  padding: 4px 10px;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.weapons button[aria-pressed="true"] { background: var(--text); color: var(--ink); font-weight: 600; }
+
+.need {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 8px;
+}
+
+.actions button {
+  font: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 12px;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+}
+
+.actions .primary { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.actions button:disabled { opacity: 0.4; cursor: default; }
+
+.result {
+  min-height: 1.4em;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.result b { color: var(--text); }
+
+/* --- Notizen neben dem Telefon ----------------------------------------------------------------- */
+.notes {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.notes h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: 20px;
+  text-wrap: balance;
+}
+
+.notes h2 {
+  margin: 8px 0 0;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.notes p, .notes ul { margin: 0; }
+.notes ul { padding-left: 18px; display: grid; gap: 4px; }
+.notes b { color: var(--text); }
+
+.legend { display: grid; gap: 6px; }
+.legend div { display: flex; align-items: center; gap: 8px; }
+.legend svg { flex: none; }
+</style>
+
+<div class="page">
+  <main class="phone" aria-label="Entwurf: Kampfsimulation in zwei Spalten">
+    <div class="app-head">Demo-Kampagne</div>
+    <div class="fight-head">
+      <b id="round">Runde 1 · 4 × Thugs</b>
+      <span class="sub" id="order">Hostile · SC zuerst</span>
+      <button class="ghost" type="button" id="reset">Neu</button>
+    </div>
+
+    <section class="arena" id="arena">
+      <div class="side pcs" id="pcs"><div class="side-label">SC</div></div>
+      <div class="rail" aria-label="Entfernung">
+        <div class="range" id="range-label">Short</div>
+        <button type="button" id="nearer" aria-label="Ein Band näher">▲</button>
+        <div class="track" id="track" role="img"></div>
+        <button type="button" id="farther" aria-label="Ein Band weiter weg">▼</button>
+        <div class="band" id="band-label">Band 0</div>
+      </div>
+      <div class="side npcs" id="npcs"><div class="side-label">NSC</div></div>
+      <svg class="arrows" id="arrows" aria-hidden="true">
+        <defs>
+          <marker id="head-plan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d9b45f"></path></marker>
+          <marker id="head-hit" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ef5a5f"></path></marker>
+          <marker id="head-miss" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6f6c66"></path></marker>
+        </defs>
+      </svg>
+    </section>
+
+    <section class="dock" aria-label="Zug">
+      <div class="who" id="who"></div>
+      <div class="weapons" id="weapons"></div>
+      <div class="result" id="result" aria-live="polite"></div>
+      <div class="actions">
+        <button type="button" id="skip">Aussetzen</button>
+        <button type="button" class="primary" id="attack">Angreifen</button>
+      </div>
+    </section>
+  </main>
+
+  <aside class="notes">
+    <h1>Kampf in zwei Spalten</h1>
+    <p>Statt der Charakter-Leiste oben und der NSC-Liste darunter stehen die <b>SC links</b> und die
+      <b>NSC rechts</b>. Dazwischen steht die <b>Entfernung</b> als senkrechte Leiste: ● die SC oben,
+      ▲ die NSC so weit unten, wie sie weg sind; ▲ und ▼ bewegen um ein Band.</p>
+
+    <h2>Ausprobieren</h2>
+    <ul>
+      <li>Ein NSC antippen: Er wird das Ziel, ein <b>goldener Pfeil</b> zeigt vom SC am Zug zu ihm.</li>
+      <li><b>Angreifen</b>: Der Pfeil wird rot (Treffer) oder grau gestrichelt (daneben), die Karte blitzt,
+        der Schaden steigt an STR, DEX und END auf.</li>
+      <li>Beim NSC-Zug zeigt der Pfeil von rechts nach links; einen anderen SC antippen ändert das Ziel.</li>
+      <li>Der letzte Angriff bleibt blass stehen, bis der nächste kommt.</li>
+      <li>Mit ▼ weiter weg: Die Blade reicht dann nicht mehr, Jonas’ Pfeil fehlt und „reicht nicht“ steht unten.</li>
+    </ul>
+
+    <h2>Pfeile</h2>
+    <div class="legend">
+      <div><svg width="44" height="10"><path d="M2,5 H38" stroke="#d9b45f" stroke-width="2.5" stroke-dasharray="6 5" fill="none"></path><path d="M36,1 L44,5 L36,9 z" fill="#d9b45f"></path></svg> gewählt, noch nicht gewürfelt</div>
+      <div><svg width="44" height="10"><path d="M2,5 H38" stroke="#ef5a5f" stroke-width="2.5" fill="none"></path><path d="M36,1 L44,5 L36,9 z" fill="#ef5a5f"></path></svg> Treffer</div>
+      <div><svg width="44" height="10"><path d="M2,5 H38" stroke="#6f6c66" stroke-width="2.5" stroke-dasharray="2 5" fill="none"></path><path d="M36,1 L44,5 L36,9 z" fill="#6f6c66"></path></svg> daneben</div>
+      <div><svg width="44" height="10"><path d="M2,5 H38" stroke="#ef5a5f" stroke-width="1.5" stroke-dasharray="3 4" fill="none"></path></svg> Feuerstoß: Nachbar, den er mit träfe</div>
+    </div>
+
+    <h2>Was sich ändert</h2>
+    <ul>
+      <li>Die <b>Waffen</b> des SC am Zug stehen unten im Zug statt oben in der Leiste.</li>
+      <li>Je Kämpfer nur Name, Zustand, STR/DEX/END und Waffe; INT, EDU, SOC und die Fertigkeiten fehlen im Kampf.</li>
+      <li><b>Heilen</b> und <b>Übernehmen</b>: lange auf eine Karte drücken (im Entwurf nicht gebaut).</li>
+      <li>Bei mehr als etwa sechs Kämpfern je Seite scrollen beide Spalten gemeinsam; die Pfeile wandern mit.</li>
+    </ul>
+
+    <h2>Offene Fragen</h2>
+    <ul>
+      <li>Reicht die halbe Breite für lange Namen und Waffen (Automatic Rifle)? Im Entwurf kürzen sie mit „…“.</li>
+      <li>Soll die Entfernung oben ● und unten ▲ zeigen, oder beide Parteien an den Enden und der Abstand dazwischen?</li>
+    </ul>
+    <p>Die Würfe sind im Entwurf vereinfacht (fester nötiger Wurf, Schaden zufällig auf die Attribute).</p>
+  </aside>
+</div>
+
+<script>
+(function () {
+  const hex = (n) => (n >= 10 ? 'ABCDEFGHJ'[n - 10] || String(n) : String(Math.max(0, n)));
+  const bands = [
+    { label: 'C/S', from: 0, to: 0, range: 'Short' },
+    { label: 'M', from: 1, to: 2, range: 'Medium' },
+    { label: 'L', from: 3, to: 10, range: 'Long' },
+    { label: 'VL', from: 11, to: 20, range: 'Very Long' },
+  ];
+  const start = () => ({
+    round: 1,
+    band: 0,
+    turn: 0,
+    target: undefined,
+    last: undefined,
+    fighters: [
+      { id: 'c1', side: 'pcs', name: 'Kira Vant', armor: 'Jack', str: 7, dex: 10, end: 8, weapons: [['Automatic Pistol', 6, 10, 3], ['Hände', 7, 0, 1]], wield: 0 },
+      { id: 'c2', side: 'pcs', name: 'Jonas Reyl', armor: 'Mesh', str: 6, dex: 8, end: 7, weapons: [['Blade', 7, 0, 2], ['Hände', 8, 0, 1]], wield: 0 },
+      { id: 'n1', side: 'npcs', name: 'Zhiirani Giirshal', leader: true, armor: 'Mesh', str: 8, dex: 7, end: 10, weapons: [['Body Pistol', 8, 2, 3]], wield: 0 },
+      { id: 'n2', side: 'npcs', name: 'Tobias Svoboda', armor: '', str: 7, dex: 8, end: 8, weapons: [['Dagger', 8, 0, 2]], wield: 0 },
+      { id: 'n3', side: 'npcs', name: 'Iir Ruugimar', armor: '', str: 4, dex: 10, end: 3, weapons: [['Cudgel', 8, 0, 2]], wield: 0 },
+      { id: 'n4', side: 'npcs', name: 'Daalika Ilikuun', armor: '', str: 12, dex: 11, end: 11, weapons: [['Cudgel', 8, 0, 2]], wield: 0 },
+    ].map((f) => ({ ...f, full: { str: f.str, dex: f.dex, end: f.end } })),
+  });
+  let s = start();
+
+  const $ = (id) => document.getElementById(id);
+  const zeros = (f) => ['str', 'dex', 'end'].filter((k) => f[k] <= 0).length;
+  const state = (f) => {
+    const z = zeros(f);
+    if (z) return ['', 'bewusstlos', 'schwer verwundet', 'tot'][z];
+    return f.str + f.dex + f.end < f.full.str + f.full.dex + f.full.end ? 'verwundet' : 'unverletzt';
+  };
+  const canFight = (f) => zeros(f) === 0;
+  const order = () => s.fighters.filter(canFight);
+  const actor = () => order()[s.turn % Math.max(1, order().length)];
+  const weapon = (f) => f.weapons[f.wield];
+  const reaches = (f) => s.band <= weapon(f)[2];
+  const rangeOf = (band) => bands.find((b) => band >= b.from && band <= b.to);
+
+  function suggest() {
+    const a = actor();
+    if (!a) return;
+    const foes = s.fighters.filter((f) => f.side !== a.side && zeros(f) < 3);
+    if (!foes.some((f) => f.id === s.target)) s.target = (foes.find(canFight) || foes[0] || {}).id;
+  }
+
+  function card(f) {
+    const a = actor();
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'card';
+    el.id = 'card-' + f.id;
+    if (a && a.id === f.id) el.classList.add('turn');
+    if (s.target === f.id) el.classList.add('target');
+    if (zeros(f) >= 3) el.classList.add('out');
+    const tag = a && a.id === f.id ? '▶ am Zug' : s.target === f.id ? '⌖ Ziel' : '';
+    const st = state(f);
+    el.innerHTML =
+      (tag ? `<span class="tag">${tag}</span>` : '') +
+      `<span class="name">${f.name}</span>` +
+      `<span class="state ${st === 'unverletzt' ? '' : 'hurt'}">${f.leader ? '<span class="leader">Anführer · </span>' : ''}${st}${f.armor ? ' · ' + f.armor : ''}</span>` +
+      `<span class="stats">${['str', 'dex', 'end'].map((k) => `<span id="${f.id}-${k}" class="${f[k] < f.full[k] ? 'low' : ''}">${k.toUpperCase()} ${hex(f[k])}</span>`).join('')}</span>` +
+      `<span class="weapon">${weapon(f)[0]}</span>`;
+    el.setAttribute('aria-label', `${f.name}, ${st}${tag ? ', ' + tag.slice(2) : ''}`);
+    el.addEventListener('click', () => {
+      const act = actor();
+      if (!act || f.side === act.side || zeros(f) >= 3) return;
+      s.target = f.id;
+      render();
+    });
+    return el;
+  }
+
+  function renderTrack() {
+    const track = $('track');
+    track.innerHTML = '<div class="axis"></div><div class="span" id="span"></div>';
+    const h = track.clientHeight || 200;
+    const y = (band) => 6 + (Math.min(band, 20) / 20) * (h - 12);
+    for (const b of bands) {
+      const t = document.createElement('span');
+      t.className = 'tick';
+      t.textContent = b.label;
+      t.style.top = y(b.from) + 'px';
+      track.appendChild(t);
+    }
+    const span = $('span');
+    span.style.top = y(0) + 'px';
+    span.style.height = Math.max(2, y(s.band) - y(0)) + 'px';
+    const pc = document.createElement('span');
+    pc.className = 'mark pc';
+    pc.textContent = '●';
+    pc.style.top = y(0) + 'px';
+    const npc = document.createElement('span');
+    npc.className = 'mark npc';
+    npc.textContent = '▲';
+    npc.style.top = (s.band === 0 ? y(0) + 12 : y(s.band)) + 'px';
+    track.append(pc, npc);
+    const r = rangeOf(s.band);
+    $('range-label').textContent = r.range;
+    $('band-label').textContent = 'Band ' + s.band;
+    track.setAttribute('aria-label', `Entfernung: ${r.range}, Band ${s.band}`);
+    $('nearer').disabled = s.band === 0;
+    $('farther').disabled = s.band >= 20;
+  }
+
+  function edge(id, toward) {
+    const arena = $('arena').getBoundingClientRect();
+    const r = $('card-' + id).getBoundingClientRect();
+    const right = toward === 'right';
+    return { x: (right ? r.right : r.left) - arena.left, y: r.top + r.height / 2 - arena.top };
+  }
+
+  function arrow(from, to, cls, marker) {
+    const a = s.fighters.find((f) => f.id === from);
+    const goingRight = a.side === 'pcs';
+    const p = edge(from, goingRight ? 'right' : 'left');
+    const q = edge(to, goingRight ? 'left' : 'right');
+    const dx = (q.x - p.x) * 0.45;
+    const d = `M${p.x},${p.y} C${p.x + dx},${p.y} ${q.x - dx},${q.y} ${q.x + (goingRight ? -4 : 4)},${q.y}`;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('class', cls);
+    if (marker) path.setAttribute('marker-end', `url(#${marker})`);
+    return path;
+  }
+
+  function renderArrows(fresh) {
+    const svg = $('arrows');
+    svg.querySelectorAll('path:not(marker path)').forEach((p) => p.remove());
+    if (s.last) {
+      const p = arrow(s.last.from, s.last.to, `${s.last.hit ? 'hit' : 'miss'} ${fresh ? 'shot' : 'past'}`, s.last.hit ? 'head-hit' : 'head-miss');
+      svg.appendChild(p);
+      if (fresh) {
+        const len = p.getTotalLength();
+        p.style.setProperty('--len', len);
+        p.style.strokeDasharray = s.last.hit ? `${len}` : '';
+      }
+    }
+    const a = actor();
+    if (a && s.target && reaches(a) && !fresh) svg.appendChild(arrow(a.id, s.target, 'plan', 'head-plan'));
+  }
+
+  function render(fresh) {
+    suggest();
+    const a = actor();
+    const pcs = $('pcs');
+    const npcs = $('npcs');
+    pcs.querySelectorAll('.card').forEach((c) => c.remove());
+    npcs.querySelectorAll('.card').forEach((c) => c.remove());
+    for (const f of s.fighters) (f.side === 'pcs' ? pcs : npcs).appendChild(card(f));
+    renderTrack();
+    $('round').textContent = `Runde ${s.round} · 4 × Thugs`;
+    const target = s.fighters.find((f) => f.id === s.target);
+    $('who').innerHTML = a
+      ? `<span class="chip-turn">▶ ${a.name.split(' ')[0]}</span><span class="muted">→</span>${target ? `<span class="chip-target">⌖ ${target.name.split(' ')[0]}</span>` : '<span class="muted">Ziel antippen</span>'}`
+      : '<span class="muted">Der Kampf ist entschieden.</span>';
+    const w = $('weapons');
+    w.innerHTML = '';
+    if (a) {
+      if (a.side === 'pcs') {
+        a.weapons.forEach((wp, i) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = wp[0];
+          b.setAttribute('aria-pressed', String(i === a.wield));
+          b.addEventListener('click', () => { a.wield = i; render(); });
+          w.appendChild(b);
+        });
+      } else {
+        const span = document.createElement('span');
+        span.className = 'muted';
+        span.textContent = weapon(a)[0];
+        w.appendChild(span);
+      }
+      const need = document.createElement('span');
+      need.className = 'need';
+      need.textContent = reaches(a) ? weapon(a)[1] + '+' : 'reicht nicht';
+      w.appendChild(need);
+    }
+    $('attack').disabled = !a || !target || !reaches(a);
+    $('attack').textContent = a && a.side === 'npcs' ? `${a.name.split(' ')[0]} greift an` : 'Angreifen';
+    $('skip').disabled = !a;
+    requestAnimationFrame(() => renderArrows(fresh));
+  }
+
+  function nextTurn() {
+    s.turn += 1;
+    if (s.turn >= order().length) { s.turn = 0; s.round += 1; }
+    s.target = undefined;
+  }
+
+  function d6() { return 1 + Math.floor(Math.random() * 6); }
+
+  function attack() {
+    const a = actor();
+    const t = s.fighters.find((f) => f.id === s.target);
+    if (!a || !t) return;
+    const dice = [d6(), d6()];
+    const need = weapon(a)[1];
+    const hit = dice[0] + dice[1] >= need;
+    s.last = { from: a.id, to: t.id, hit };
+    const lost = { str: 0, dex: 0, end: 0 };
+    let text = `${a.name.split(' ')[0]} würfelt ${dice[0]} + ${dice[1]} gegen ${need}+: <b>${hit ? 'Treffer' : 'daneben'}</b>`;
+    if (hit) {
+      const keys = ['str', 'dex', 'end'];
+      let total = 0;
+      for (let i = 0; i < weapon(a)[3]; i++) {
+        let rest = d6();
+        total += rest;
+        while (rest > 0) {
+          const open = keys.filter((k) => t[k] > 0);
+          if (!open.length) break;
+          const k = open[Math.floor(Math.random() * open.length)];
+          const take = Math.min(rest, t[k]);
+          t[k] -= take; lost[k] += take; rest -= take;
+        }
+      }
+      text += `, Schaden ${total}: ${state(t)}`;
+    }
+    $('result').innerHTML = text;
+    const before = s.turn;
+    nextTurn();
+    render(true);
+    requestAnimationFrame(() => {
+      const c = $('card-' + t.id);
+      if (c) {
+        const fl = document.createElement('span');
+        fl.className = 'flash ' + (hit ? 'hit' : 'miss');
+        c.appendChild(fl);
+        for (const k of ['str', 'dex', 'end']) {
+          if (!lost[k]) continue;
+          const at = $(`${t.id}-${k}`);
+          const m = document.createElement('span');
+          m.className = 'loss';
+          m.textContent = '−' + lost[k];
+          at && at.appendChild(m);
+        }
+      }
+      setTimeout(() => render(false), 1100);
+    });
+    return before;
+  }
+
+  $('attack').addEventListener('click', attack);
+  $('skip').addEventListener('click', () => { nextTurn(); $('result').textContent = ''; render(); });
+  $('nearer').addEventListener('click', () => { s.band = Math.max(0, s.band - 1); render(); });
+  $('farther').addEventListener('click', () => { s.band = Math.min(20, s.band + 1); render(); });
+  $('reset').addEventListener('click', () => { s = start(); $('result').textContent = ''; render(); });
+  addEventListener('resize', () => render());
+  // Startzustand: Kira am Zug, Ziel gewählt, ein früherer Fehlschuss des Anführers steht blass.
+  s.last = { from: 'n1', to: 'c2', hit: false };
+  render();
+})();
+</script>
