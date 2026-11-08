@@ -74,23 +74,26 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await surprise.getByRole('button', { name: 'Kampf beginnen' }).click();
   await expect(page.locator('.fight-who-row')).toBeVisible();
 
-  // Langes Drücken links auf den Strahl unten im Zug setzt die Entfernung frei auf Berührung; Close reicht für jede Waffe.
+  // Langes Drücken rechts auf die Leiste (an den NSC) setzt den vorgewählten SC frei in die Berührung; Close reicht für jede Waffe.
   const ray = page.getByRole('img', { name: /^Entfernung: / });
-  const pressAt = async (x: number) => {
+  const now = page.locator('.ray-now');
+  const pressAt = async (fromRight: number) => {
     const box = (await ray.boundingBox())!;
-    await page.mouse.move(box.x + x, box.y + box.height / 2);
+    await page.mouse.move(box.x + box.width - fromRight, box.y + box.height / 2);
     await page.mouse.down();
     await page.waitForTimeout(800);
     await page.mouse.up();
   };
   await pressAt(4);
-  await expect(page.getByRole('img', { name: /^Entfernung: Close, Berührung/ })).toBeVisible();
-  // Die Partei am Zug geht ein Band (nach den Regeln); ein zweites wäre Laufen ohne Angriff.
-  await page.getByRole('button', { name: 'Ein Band weiter weg' }).click();
-  await expect(page.getByRole('img', { name: /^Entfernung: Short, Band 0/ })).toBeVisible();
+  await expect(now).toContainText('Close');
+  await expect(now).toContainText('Berührung');
+  // Wer am Zug ist, geht ein Band (nach den Regeln): ein SC für sich, die NSC als Gruppe; ein zweites wäre Laufen ohne Angriff.
+  await page.getByRole('button', { name: /ein Band weiter weg$/i }).click();
+  await expect(now).toContainText('Short');
+  await expect(now).toContainText('Band 0');
   await expect(page.locator('.ray-move')).toContainText('gegangen');
   await pressAt(4);
-  await expect(page.getByRole('img', { name: /^Entfernung: Close, Berührung/ })).toBeVisible();
+  await expect(now).toContainText('Berührung');
   await expect(page.locator('.fight-who-row')).toContainText('→');
   // Angegriffen wird mit dem Knopf der Waffe (beim SC Primär oder Sekundär, beim NSC seine Waffe).
   await page.locator('.fight-dock .atk:not(:disabled)').first().click();

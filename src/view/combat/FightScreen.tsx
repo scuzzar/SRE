@@ -183,8 +183,8 @@ const bandOfStep = (sim: SimView, step: number) => (step <= 1 ? sim.bands.find((
  * Die Entfernung unten im Zug, über den Angriffsknöpfen: eine Leiste für alle. Rechts fest die NSC
  * (▲) auf Band 0, links davon jeder SC mit seiner Marke, je weiter weg, desto weiter links; ganz links
  * Band 20, dahinter „weg“ (entkommen). Gold gefüllt ist der vorgewählte SC (am Zug, beim NSC-Zug das
- * Ziel); über der Leiste seine Reichweite. ▶ geht ein Band näher, ◀ weiter weg: am SC-Zug der SC, am
- * NSC-Zug rücken alle SC. Langes Drücken setzt das Band des vorgewählten SC frei. Wohin die Waffe am
+ * Ziel); über der Leiste seine Reichweite. Am SC-Zug geht der SC mit ▶ ein Band näher, mit ◀ weiter
+ * weg; am NSC-Zug gehen die NSC mit ◀ näher, mit ▶ weiter weg, und alle SC rücken. Langes Drücken setzt das Band des vorgewählten SC frei. Wohin die Waffe am
  * Zug nicht reicht, ist die Leiste gestrichelt.
  */
 function RangeBar({ sim }: { sim: SimView }) {
@@ -227,6 +227,11 @@ function RangeBar({ sim }: { sim: SimView }) {
     haptic('pick');
     game.moveBand(dir);
   };
+  // Die Pfeile zeigen, wohin sich bewegt, wer am Zug ist: ein SC von links auf die NSC zu (▶ näher),
+  // die NSC von rechts auf die SC zu (◀ näher).
+  const npcsMove = move !== undefined && move.pc === undefined;
+  const left = npcsMove ? { label: 'Die NSC gehen ein Band näher', can: canCloser, step: -1 as const } : { label: 'Ein Band weiter weg', can: canFarther, step: 1 as const };
+  const right = npcsMove ? { label: 'Die NSC gehen ein Band weiter weg', can: canFarther, step: 1 as const } : { label: 'Ein Band näher', can: canCloser, step: -1 as const };
   return (
     <>
       <p className="ray-now" aria-live="polite">
@@ -238,7 +243,7 @@ function RangeBar({ sim }: { sim: SimView }) {
         <span className="muted">halten: frei</span>
       </p>
       <div className="ray-range">
-        <button type="button" className="ray-arrow" aria-label="Ein Band weiter weg" disabled={!canFarther} onClick={() => step1(1)}>
+        <button type="button" className="ray-arrow" aria-label={left.label} disabled={!left.can} onClick={() => step1(left.step)}>
           ◀
         </button>
         <div
@@ -285,7 +290,7 @@ function RangeBar({ sim }: { sim: SimView }) {
             </span>
           ))}
         </div>
-        <button type="button" className="ray-arrow" aria-label="Ein Band näher" disabled={!canCloser} onClick={() => step1(-1)}>
+        <button type="button" className="ray-arrow" aria-label={right.label} disabled={!right.can} onClick={() => step1(right.step)}>
           ▶
         </button>
       </div>
