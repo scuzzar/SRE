@@ -6,14 +6,11 @@ Code ([CLAUDE.md](CLAUDE.md)). Die Regeln stehen in [`docs/regeln-kampf.md`](doc
 
 ## Arbeitsweise
 
-- [ ] **Commits ohne Rückfrage** (Owner, weil es Claudes eigene Regeln und Rechte betrifft): Mit Name
-  und E-Mail im Befehl (`git -c user.email=…`) fragt das System bei jedem Commit nach; mit
-  `git config` einmal je Sitzung nicht.
-  - `CLAUDE.md`: Punkt „Commits laufen unter dem Namen des Owners“ ändern: zu Beginn jeder Sitzung
-    einmal `git config user.name Scuzzar` und `git config user.email scuzzarGalaxy@googlemail.com`,
-    dann einfach `git commit …` (ebenso Merges nach `main`); kein `git -c …` mehr.
-  - `.claude/settings.json`, in `allow` ergänzen: `"Bash(git commit:*)"`, `"Bash(git merge:*)"`,
-    `"Bash(git config user.name Scuzzar)"`, `"Bash(git config user.email scuzzarGalaxy@googlemail.com)"`.
+- [ ] **Freigaberegeln für Commits aufräumen** (Owner, weil es Claudes eigene Rechte betrifft): Die
+  E-Mail steht nicht mehr im Befehl (`.gitconfig-owner`, siehe `CLAUDE.md`). In
+  `.claude/settings.json` stehen unter `allow` noch die alten Regeln mit `git -c user.name=… -c
+  user.email=…`; sie durch `"Bash(git commit:*)"`, `"Bash(git merge:*)"`, `"Bash(git revert:*)"`
+  und `"Bash(git config include.path ../.gitconfig-owner)"` ersetzen.
 
 ## Kampf
 

@@ -170,6 +170,11 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > *Wunden*): Im laufenden Kampf zählen für die DMs STR und DEX ohne dessen Wunden, und die Regel für
 > den ersten Treffer gilt in jeder Begegnung neu. Das Bild ändert sich dadurch nicht.
 >
+> Am 8. November 2026 auf ausdrücklichen Wunsch des Owners freigegeben: Nach dem **Laufen** zieht
+> die Partei von selbst weiter (siehe *Kampfsimulation*, *Bewegen*): Ihre Kämpfer setzen aus, ein
+> NSC mit leerer Waffe und Magazin lädt nach; nur ein SC, der nachladen könnte, bleibt am Zug. Das
+> Bild ändert sich dadurch nicht.
+>
 > Am 7. November 2026 auf ausdrücklichen Wunsch des Owners freigegeben: die **Ausrüstung der NSC**
 > nach SR 50 (siehe *Begegnung*): Ein Anführer trägt immer eine Schusswaffe und Rüstung, Combat Armor
 > und Battle Dress tragen nur Soldaten und Anführer. Das Bild ändert sich dadurch nicht.
@@ -896,7 +901,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - *Gehen*: 1 Band je Runde; danach greifen ihre Kämpfer wie sonst an.
     - *Laufen*: ein zweites Band in derselben Runde, aber nur, solange noch keiner ihrer Kämpfer in
       dieser Runde dran war. Wer läuft, greift nicht an (Book 1: Laufen zählt wie ein Schlag): Hat
-      eine Partei 2 Bands, setzen ihre Kämpfer in dieser Runde aus; Nachladen geht. Laufen kostet
+      eine Partei 2 Bands, setzen ihre Kämpfer in dieser Runde aus; Nachladen geht. Das geschieht
+      **von selbst**, gleich nach dem zweiten Band und für jeden weiteren ihrer Kämpfer, sobald er
+      dran wäre: Ein NSC mit einer leeren Waffe (Primär, dann Sekundär; 0 Schuss geladen), für die
+      er noch ein Magazin hat, lädt sie nach; jeder andere setzt aus. Ein SC, der so nachladen
+      könnte, bleibt am Zug und wählt selbst: nachladen oder aussetzen. Laufen kostet
       jeden Kämpfer der Partei einen Combat-Schlag (SR 20, siehe *Ausdauer*); wie oft eine Partei in
       der Begegnung gelaufen ist, steht an der Begegnung (`pcRuns`, `npcRuns`; fehlt: 0); das zweite
       Band zählt sie hoch.

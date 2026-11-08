@@ -450,8 +450,9 @@ Schneller als doppelt laufen geht meist nicht lange.
   ([Nicht aufgenommen](#nicht-aufgenommen)).
 
 > ✱ App: Bewegung je Partei, nicht je Kämpfer: Die Partei am Zug geht 1 Band je Runde oder läuft 2;
-> wer läuft, greift in dieser Runde nicht an (SR 20). Langes Drücken setzt
-> das Band frei.
+> wer läuft, greift in dieser Runde nicht an (SR 20). Ihre Kämpfer setzen dann von selbst aus, ein
+> NSC mit leerer Waffe und Magazin lädt nach; ein SC, der nachladen könnte, wählt selbst. Langes
+> Drücken setzt das Band frei.
 >
 > ✱ App: Auf Band 0 unterscheidet sie Close (Berührung) und Short. Das Startband innerhalb einer
 > Reichweite ist gleichverteilt gewürfelt (Medium 1W2, Long 1W8, Very Long 1W10).
@@ -805,10 +806,16 @@ Schrot ✔ ✱, siehe [Feuerstoß und Schrot](#feuerstoß-und-schrot-nach-book-1
 - Werfen zählt als **Combat-Schlag** ([Ausdauer](#wirkung-der-attribute-und-ausdauer)).
 - **Autofeuer** (Submachinegun, Automatic Rifle): Feuerstöße zu 4 Schuss mit der Trefferzeile der
   Matrix (das Automatic Rifle nimmt für Einzelfeuer die Zeile des Rifle). **Zwei Würfe** gegen
-  dasselbe Ziel. Dazu Gruppentreffer:
+  dasselbe Ziel. Dazu Gruppentreffer, und zwar **gegen die Gefährten des Ziels** („the group hit
+  rule applies against companions of the target“):
   - **Gruppentreffer durch Autofeuer:** Unabhängig vom Ziel werden auch **nicht ausweichende**
     Nachbarn des Ziels angegriffen, **höchstens zwei**, je mit eigenem Wurf mit **DM −3** und allen
     anderen DMs.
+  - **Friendly Fire** gibt es damit nicht: Ein Gruppentreffer trifft nur die Partei des Ziels, nie
+    die des Schützen. Auch sonst kennt das Regelheft keine Regel dafür, dass ein Fehlschuss einen
+    Verbündeten trifft.
+
+  > App: ✔ Die Nachbarn eines Feuerstoßes und die der Schrotflinte kommen nur aus der Partei des Ziels.
 - **Gruppentreffer durch Schrotflinte:** Jeder Schuss darf bis zu **drei Nachbarn** des Ziels
   angreifen, wenn sie eine Gruppe sind (Herde, Rudel, Bande) und **höchstens menschengroß**. Gegen
   **fliegende Ziele** (Tiere mit Flügeln, Fluggeräte) in Reichweite **DM +2**.

@@ -22,9 +22,12 @@
 - Die README beschreibt, was die App können soll; das Domänenmodell, wie es im Modell aussieht.
   Widersprechen sie sich, nachfragen statt raten.
 - **Commits laufen unter dem Namen des Owners**: Autor und Committer
-  `Scuzzar <scuzzarGalaxy@googlemail.com>`, nie Claude. Je Befehl setzen
-  (`git -c user.name=Scuzzar -c user.email=scuzzarGalaxy@googlemail.com commit …`), ebenso für
-  Merges nach `main`.
+  `Scuzzar <scuzzarGalaxy@googlemail.com>`, nie Claude. **Nie Name oder E-Mail in den Befehl
+  schreiben** (kein `-c user.email=…`), sonst muss der Owner den Befehl eigens freigeben. Stattdessen
+  einmal je Sitzung `git config include.path ../.gitconfig-owner` (die Datei liegt im Repository und
+  enthält Name und E-Mail), mit `git var GIT_AUTHOR_IDENT` prüfen, dass Scuzzar drinsteht, und dann
+  schlicht `git commit …`, ebenso für Merges nach `main`. Den Commit als eigenen Befehl abschicken,
+  nicht mit anderen verkettet, die Nachricht per `-F` aus einer Datei im Scratchpad.
 - **Nach jeder Änderung an der App eine Vorschau schicken**: mit `npm run build:single` die ganze
   App als eine HTML-Datei bauen (`dist-single/index.html`), in den Scratchpad kopieren und dem
   Owner zum direkten Öffnen schicken. Dazu kurz sagen, was man zum Ausprobieren antippen muss.

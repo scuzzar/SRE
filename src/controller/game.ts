@@ -628,7 +628,16 @@ export class GameController {
 
   /** Die Partei am Zug geht ein Band näher (−1) oder weiter weg (+1): 1 Band gehend, ein zweites laufend. */
   moveBand(step: -1 | 1): void {
-    this.inFight(() => this.change(moveSide(this.campaign, step), { combatNote: undefined }));
+    this.inFight(() => {
+      const before = turnOf(this.campaign)?.id;
+      const moved = moveSide(this.campaign, step);
+      // Nach dem Laufen ziehen die Kämpfer der Partei von selbst; ist danach ein anderer dran, wie nach einem Zug.
+      if (turnOf(moved)?.id === before) this.change(moved, { combatNote: undefined });
+      else {
+        const prepared = this.prepareTurn(moved, this.state.simTarget);
+        this.change(prepared.campaign, { simTarget: prepared.simTarget, simBurst: undefined, simWeakened: undefined, combatNote: undefined });
+      }
+    });
   }
 
   /**
