@@ -161,7 +161,8 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > **Wartet auf Freigabe** (Kennzeichen 2026-11-08d): **Entfernung je SC, NSC als Gruppe,
 > Ausweichen** nach SR 20 (siehe *Kampfsimulation*, *Range Bands*, *Bewegen*, *Ausweichen*). Jeder SC
 > hat seine eigene Entfernung zur NSC-Gruppe und bewegt sich in seinem Zug für sich; die NSC bleiben
-> zusammen, und ein Schritt der Gruppe bringt sie allen SC zugleich näher oder weiter weg. Wer am Zug
+> zusammen als fester Bezugspunkt auf Band 0, bewegt werden nur die SC: Ein Schritt der Gruppe
+> verschiebt alle SC zugleich um ein Band. Wer am Zug
 > ist, kann statt anzugreifen ausweichen. Im Bild: neu `Distance` (je SC `band`, `close`, `moved`,
 > `runs`, `/range`, `/escaped`) mit `Encounter.distances` und `Distance.of`, neu `Encounter.evading`;
 > an der `Encounter` werden `band` und `close` zum Startband (`startBand`, `startClose`), und
@@ -893,8 +894,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     6 Medium, 7 Medium, 8 Long, 9 Medium, 10 Very Long, 11 Long, 12 Very Long; unter 1 gilt 1, über
     12 gilt 12. Die Würfel (`rangeDice`) bleiben.
   - *Range Bands* (Book 1, S. 32–33; Charts S. 7): Die Entfernung wird in Bands von etwa 25 m
-    gehalten, gedacht auf einer Linie (SR 20). Die NSC stehen zusammen als **NSC-Gruppe**, jeder SC
-    steht für sich, alle SC auf derselben Seite der Gruppe. Jeder SC, der kämpft, hat seine eigene
+    gehalten, gedacht auf einer Linie (SR 20). Die NSC stehen zusammen als **NSC-Gruppe**; sie ist
+    der feste Bezugspunkt und steht immer auf Band 0. Jeder SC steht für sich, alle auf derselben
+    Seite der Gruppe; bewegt werden nur die SC. Jeder SC, der kämpft, hat seine eigene
     **Entfernung** zur NSC-Gruppe (`Encounter.distances`: ein `Distance` je SC, `of`; höchstens eine
     je SC, nie eine für einen NSC) mit dem Band (`band`, 0–21). Welche Reichweite ein Band ist, sagt
     `RangeBand`: Close und Short 0, Medium 1–2, Long 3–10, Very Long 11–20. Auf Band 0 unterscheidet
@@ -921,9 +923,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Band für Band bis 21).
     - *Ein SC* bewegt sich nur in seinem eigenen Zug; der Schritt ändert nur seine Entfernung. Wie
       viele Bands er in dieser Runde gegangen ist, steht an seiner Entfernung (`moved`; fehlt: 0).
-    - *Die NSC-Gruppe* bewegt sich, wenn einer ihrer Kämpfer am Zug ist. Jeder Schritt ändert die
-      Entfernung jedes SC, der kämpft, um ein Band, in dieselbe Richtung (alle SC stehen auf derselben
-      Seite). Wer schon in Berührung ist, bleibt es, wenn die NSC näher kommen; wer auf Band 21 ist,
+    - *Die NSC-Gruppe* bewegt sich, wenn einer ihrer Kämpfer am Zug ist. Da sie selbst auf Band 0
+      bleibt, verschiebt jeder ihrer Schritte stattdessen alle SC, die kämpfen, um ein Band in
+      dieselbe Richtung (alle SC stehen auf derselben Seite). Wer schon in Berührung ist, bleibt es, wenn die NSC näher kommen; wer auf Band 21 ist,
       bleibt dort, wenn sie weiter weg gehen. Wie viele Bands die Gruppe in dieser Runde gegangen
       ist, steht an der Begegnung (`npcMoved`; fehlt: 0).
     - Bewegen ist kein Zug: Der Kämpfer am Zug greift danach noch an, lädt nach, weicht aus oder
@@ -945,8 +947,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
         Gruppe in der Begegnung gelaufen ist, steht an der Begegnung (`npcRuns`; fehlt: 0); der Lauf
         kostet jeden NSC einen Combat-Schlag.
     - Mehr als 2 Bands je Runde gehen nicht.
-    - *Frei setzen* (Ermessen der Spielleitung): Langes Drücken auf die Entfernung eines SC setzt
-      sein Band frei, jederzeit, ohne Grenze und ohne dass es als Bewegung zählt; z. B. um einen
+    - *Frei setzen* (Ermessen der Spielleitung): Langes Drücken auf den Strahl setzt das Band des
+      gewählten SC frei (siehe README, *Kampfsimulation*), jederzeit, ohne Grenze und ohne dass es als Bewegung zählt; z. B. um einen
       Fehler zu beheben.
   - *Ausweichen* (SR 20, *Evade*): Statt anzugreifen kann der Kämpfer am Zug ausweichen, SC wie NSC,
     auf jeder Reichweite. Das ist sein Zug, wie Aussetzen. Er steht dann unter `Encounter.evading`,

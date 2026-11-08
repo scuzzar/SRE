@@ -99,3 +99,14 @@ nach einem Fehlschuss; der letzte Angriff bleibt blass stehen.
 
 Die Datei hat keinen eigenen HTML-Rahmen (für die Veröffentlichung als Seite); im Browser öffnet sie
 sich trotzdem.
+
+## Entfernung je SC (Entwurf vom 8. November 2026)
+
+Im Ordner [`entfernung-je-sc/`](entfernung-je-sc/) liegt der Entwurf zur Änderung 2026-11-08d
+(siehe *Range Bands* und *Bewegen* im [Domänenmodell](../domain-model.md)): der gedrehte Strahl,
+rechts fest die NSC, links die SC mit ihrem Anfangsbuchstaben, ganz links Band 20 und dahinter
+„weg“ für entkommene SC. Gold gefüllt ist der vorgewählte SC (am Zug, beim NSC-Zug das Ziel).
+
+| Datei | Inhalt |
+|---|---|
+| `entfernung-je-sc/Entwurf.html` | Drei Zustände: SC-Zug, NSC-Zug mit Ziel, Berührung und entkommen. Gewöhnliche HTML-Datei, direkt im Browser zu öffnen |
