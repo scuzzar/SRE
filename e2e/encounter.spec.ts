@@ -74,11 +74,11 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await surprise.getByRole('button', { name: 'Kampf beginnen' }).click();
   await expect(page.locator('.fight-who-row')).toBeVisible();
 
-  // Langes Drücken oben auf die senkrechte Leiste setzt die Entfernung frei auf Berührung; Close reicht für jede Waffe.
+  // Langes Drücken links auf den Strahl unten im Zug setzt die Entfernung frei auf Berührung; Close reicht für jede Waffe.
   const ray = page.getByRole('img', { name: /^Entfernung: / });
-  const pressAt = async (y: number) => {
+  const pressAt = async (x: number) => {
     const box = (await ray.boundingBox())!;
-    await page.mouse.move(box.x + box.width / 2, box.y + y);
+    await page.mouse.move(box.x + x, box.y + box.height / 2);
     await page.mouse.down();
     await page.waitForTimeout(800);
     await page.mouse.up();

@@ -5531,7 +5531,7 @@ button:disabled {
 .arena {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 46px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr);
   align-items: start;
   padding: 6px 0 10px;
   min-height: 100%;
@@ -5749,123 +5749,6 @@ button:disabled {
   color: var(--gold-bright);
   font-size: 12px;
   font-weight: 600;
-}
-
-/* Die Entfernung als senkrechte Leiste zwischen den Spalten. */
-.rail {
-  position: sticky;
-  top: 0;
-  display: grid;
-  grid-template-rows: auto auto minmax(150px, 1fr) auto;
-  justify-items: center;
-  gap: 4px;
-  height: min(100%, 420px);
-  min-height: 260px;
-  padding-top: 2px;
-}
-
-.rail-now {
-  display: grid;
-  justify-items: center;
-  line-height: 1.1;
-  font-size: 10px;
-  color: var(--muted);
-}
-
-.rail-now b {
-  font-size: 13px;
-  color: var(--gold);
-}
-
-.rail-step {
-  width: 34px;
-  height: 30px;
-  padding: 0;
-  border: 1px solid var(--line);
-  background: var(--raised, var(--panel));
-  color: var(--text);
-  font-size: 12px;
-  touch-action: manipulation;
-}
-
-.rail-step:disabled {
-  opacity: 0.35;
-}
-
-.rail-track {
-  --pad: 8px;
-  position: relative;
-  width: 100%;
-  touch-action: none;
-}
-
-.rail-line,
-.rail-span {
-  position: absolute;
-  left: 50%;
-  top: calc(var(--pad) + var(--y) * (100% - 2 * var(--pad)));
-  height: calc(var(--h) * (100% - 2 * var(--pad)));
-  transform: translateX(-50%);
-}
-
-.rail-line {
-  width: 0;
-  border-left: 1px solid var(--line);
-}
-
-.rail-line.out {
-  border-left-style: dashed;
-  opacity: 0.6;
-}
-
-.rail-span {
-  width: 3px;
-  background: var(--muted);
-  transition: height 0.25s ease;
-}
-
-.rail-tick {
-  position: absolute;
-  right: calc(50% + 5px);
-  top: calc(var(--pad) + var(--y) * (100% - 2 * var(--pad)));
-  transform: translateY(-50%);
-  font-family: var(--mono);
-  font-size: 9px;
-  color: var(--dim);
-}
-
-.rail-tick.out {
-  opacity: 0.5;
-}
-
-.rail-pc,
-.rail-npc {
-  position: absolute;
-  left: 50%;
-  top: calc(var(--pad) + var(--y) * (100% - 2 * var(--pad)));
-  transform: translate(-50%, -50%);
-  transition: top 0.25s ease;
-}
-
-.rail-pc {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--text);
-}
-
-.rail-npc {
-  color: var(--text);
-  font-size: 12px;
-  line-height: 1;
-}
-
-.rail-npc.close {
-  transform: translate(-50%, 15%);
-}
-
-.rail-npc.escaped {
-  color: var(--muted);
 }
 
 /* Pfeile: gold gestrichelt gewählt, rot ein Treffer, grau gestrichelt daneben; der letzte bleibt blass. */
@@ -6100,8 +5983,16 @@ button:disabled {
   font-size: 12px;
 }
 
-/* Die Pfeile laufen hinter den Knöpfen der Leiste durch. */
-.rail-step {
-  position: relative;
-  z-index: 3;
+/* Die Entfernung unten im Zug, über den Angriffsknöpfen. */
+.fight-dock .ray-range {
+  margin: 0;
+}
+
+.fight-dock .ray-range {
+  height: 36px;
+}
+
+.fight-dock .ray-move {
+  margin: -2px 0 0;
+  font-size: 11px;
 }

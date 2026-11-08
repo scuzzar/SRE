@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent } from 'react';
 import type { AttackOption, CombatView, FighterView, Impact, SimView } from '../../controller';
+import type { Range } from '../../model';
 import { hex, rangeText, signed } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
@@ -34,7 +35,6 @@ export function FightScreen({ combat, onHeal, quiet }: { combat: CombatView; onH
     <>
       <header className="fight-top">
         <FightHead sim={sim} />
-        <MoveLine sim={sim} />
       </header>
       <section className="scroll combat-scroll fight" aria-label="Kampfsimulation">
         {combat.note && (
@@ -149,15 +149,102 @@ export function distanceText(sim: SimView): string {
   return `${rangeText[sim.range]}, ${sim.close ? 'Berührung' : `Band ${sim.band}`}`;
 }
 
-/** Unter dem Kopf in einer Zeile: wie weit die Partei am Zug in dieser Runde gegangen ist. */
-function MoveLine({ sim }: { sim: SimView }) {
+/** Schritte auf dem Strahl: 0 Berührung, 1 Band 0, 2–21 Band 1–20, 22 entkommen. */
+const LAST_STEP = 21;
+/** Abstand des Strahls zu seinem Rand in px, damit die Marken an den Enden ganz zu sehen sind (wie `--pad` im CSS). */
+const RAY_PAD = 6;
+const rangeAbbr: Record<Range, string> = { close: 'C', short: 'C/S', medium: 'M', long: 'L', veryLong: 'VL' };
+const stepOf = (sim: SimView) => (sim.close ? 0 : sim.band + 1);
+const bandOfStep = (sim: SimView, step: number) => (step === 0 ? sim.bands.find((b) => b.range === 'close')! : step === 1 ? sim.bands.find((b) => b.range === 'short')! : sim.bands.find((b) => b.from > 0 && b.from <= step - 1 && step - 1 <= b.to)!);
+
+/**
+ * Die Entfernung unten im Zug, über den Angriffsknöpfen: links die Reichweite, daneben der Strahl
+ * mit einem Punkt je Band und Strichen an den Grenzen, zwischen zwei Pfeilen. ◀ geht ein Band
+ * näher, ▶ weiter weg, nach den Regeln für die Partei am Zug (1 Band gehend, 2 laufend). Langes
+ * Drücken auf den Strahl setzt das Band frei. Wohin die Waffe am Zug nicht reicht, ist gestrichelt.
+ */
+function RangeBar({ sim }: { sim: SimView }) {
+  const game = useGame();
+  const pointer = useRef(0);
+  const ray = useRef<HTMLDivElement>(null);
+  const free = useLongPress(() => {
+    const box = ray.current?.getBoundingClientRect();
+    if (!box) return;
+    const s = Math.min(LAST_STEP, Math.max(0, Math.round(((pointer.current - box.left - RAY_PAD) / (box.width - 2 * RAY_PAD)) * LAST_STEP)));
+    game.setBand(s === 0 ? 0 : s - 1, s === 0);
+  });
   const move = sim.move;
-  const text = move ? `${sideName[move.side]} ${move.ran ? 'gelaufen, kein Angriff' : move.moved === 1 ? (move.can ? 'gegangen · 1 mehr: laufen' : 'gegangen') : '1 Band gehen, 2 laufen'}` : 'keiner am Zug';
+  const step = stepOf(sim);
+  const reaches = (s: number) => bandOfStep(sim, s).reaches;
+  const steps = Array.from({ length: LAST_STEP + 1 }, (_, s) => s);
+  const lastReach = steps.filter(reaches).pop() ?? 0;
+  const at = (i: number, n?: number) => ({ '--i': String(i), ...(n === undefined ? {} : { '--n': String(n) }) }) as CSSProperties;
+  const zones = sim.bands.filter((b) => b.range !== 'close');
+  const moveText = move ? `${sideName[move.side]} ${move.ran ? 'gelaufen, kein Angriff' : move.moved === 1 ? (move.can ? 'gegangen · 1 mehr: laufen' : 'gegangen') : '1 Band gehen, 2 laufen'}` : 'keiner am Zug';
+  const step1 = (dir: -1 | 1) => {
+    haptic('pick');
+    game.moveBand(dir);
+  };
   return (
+    <>
+    <div className="ray-range">
+      <div className="ray-now" aria-live="polite">
+        <b>{sim.escaped || !sim.range ? 'Entkommen' : rangeText[sim.range]}</b>
+        <span>{sim.escaped ? 'über 20 Bands' : sim.close ? 'Berührung' : `Band ${sim.band}`}</span>
+      </div>
+      <button type="button" className="ray-arrow" aria-label="Ein Band näher" disabled={step === 0 || !move?.can} onClick={() => step1(-1)}>
+        ◀
+      </button>
+      <div
+        className="ray"
+        ref={ray}
+        {...free.handlers}
+        onPointerDown={(e) => {
+          pointer.current = e.clientX;
+          free.handlers.onPointerDown(e);
+        }}
+        onClick={() => free.consumed()}
+        role="img"
+        aria-label={`Entfernung: ${distanceText(sim)}. Lange drücken: frei setzen`}
+      >
+        <span className="ray-line" style={at(0, lastReach)} />
+        {lastReach < LAST_STEP && <span className="ray-line out" style={at(lastReach, LAST_STEP - lastReach)} />}
+        {zones.map((b) => {
+          const first = b.range === 'short' ? 0 : b.from + 1;
+          const tick = b.range === 'short' ? 0 : b.from + 0.5;
+          return (
+            <Fragment key={b.range}>
+              {tick > 0 && <span className="ray-tick" style={at(tick)} />}
+              <span className={b.reaches ? (first === 0 ? 'ray-label first' : 'ray-label') : 'ray-label out'} style={at(tick)}>
+                {rangeAbbr[b.range]}
+              </span>
+            </Fragment>
+          );
+        })}
+        {steps.slice(1).map((s) => (
+          <span key={s} className={reaches(s) ? 'ray-dot' : 'ray-dot out'} style={at(s)} />
+        ))}
+        {!sim.escaped && step > 0 && <span className="ray-line span" style={at(0, step)} />}
+        <span className="ray-pc" style={at(0)} />
+        {sim.escaped ? (
+          <span className="ray-escaped" style={at(LAST_STEP)}>
+            entkommen ▲
+          </span>
+        ) : (
+          <span className={sim.close ? 'ray-npc close' : 'ray-npc'} style={at(step)}>
+            ▲
+          </span>
+        )}
+      </div>
+      <button type="button" className="ray-arrow" aria-label="Ein Band weiter weg" disabled={sim.escaped || !move?.can} onClick={() => step1(1)}>
+        ▶
+      </button>
+    </div>
     <p className={move?.ran ? 'ray-move ran' : 'ray-move'} title={move?.reason}>
-      <span>{text}</span>
+      <span>{moveText}</span>
       <span className="muted">halten: frei</span>
     </p>
+    </>
   );
 }
 
@@ -238,6 +325,7 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
   const fire = turn?.attacks.find((a) => a.fire?.choosable)?.fire;
   return (
     <section className="dock fight-dock" aria-label="Zug">
+      <RangeBar sim={sim} />
       {sim.needsSurprise ? (
         <>
           <p className="combat-pick">Der erste Wurf im Kampf: Hat eine Partei Überraschung?</p>

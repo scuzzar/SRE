@@ -1,15 +1,15 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { AttackArrow, FighterView, Impact, SimView } from '../../controller';
-import type { Range, WoundState } from '../../model';
-import { hex, rangeText, woundStateText } from '../format';
+import type { WoundState } from '../../model';
+import { hex, woundStateText } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import type { Patient } from './CombatScreen';
 import { ImpactMarks, LossFloat, useLongPress } from './FightScreen';
 
 /**
- * Die Kampfsimulation in zwei Spalten: links die SC, rechts die NSC, dazwischen die Entfernung als
- * senkrechte Leiste. Pfeile (rechtwinklig: auf der Seite des Angreifers bis zur Höhe des Ziels, dann
+ * Die Kampfsimulation in zwei Spalten: links die SC, rechts die NSC, dazwischen eine schmale Lücke
+ * für die Pfeile; die Entfernung steht unten im Zug. Pfeile (rechtwinklig: auf der Seite des Angreifers bis zur Höhe des Ziels, dann
  * hinüber) zeigen, wer wen angreift: gold gestrichelt das gewählte Ziel, rot ein
  * Treffer, grau ein Fehlschuss; der letzte Angriff bleibt blass stehen. Nur Anzeige; gerechnet wird im Model.
  */
@@ -40,7 +40,7 @@ export function Arena({ sim, impacts, selection, onHeal, quiet }: { sim: SimView
           <FighterCard key={f.id} fighter={f} selection={selection} onHeal={onHeal} impacts={impacts.filter((i) => i.id === f.id)} />
         ))}
       </div>
-      <RangeRail sim={sim} />
+      <div className="arena-gap" aria-hidden="true" />
       <div className="arena-side npcs" aria-label="NSC">
         <span className="arena-label">{selection.picked ? 'Übernehmen' : 'NSC'}</span>
         {npcs.map((f) => (
@@ -157,79 +157,6 @@ function FighterCard({ fighter: f, selection, onHeal, impacts }: { fighter: Figh
           Heilen
         </button>
       )}
-    </div>
-  );
-}
-
-/** Schritte auf der Leiste: 0 Berührung, 1 Band 0, 2–21 Band 1–20; 22 heißt entkommen. */
-const LAST_STEP = 21;
-const rangeAbbr: Record<Range, string> = { close: 'C', short: 'C/S', medium: 'M', long: 'L', veryLong: 'VL' };
-const stepOf = (sim: SimView) => (sim.close ? 0 : sim.band + 1);
-
-/**
- * Die Entfernung als senkrechte Leiste: oben ● die SC, ▲ die NSC so weit unten, wie sie weg sind.
- * ▲ geht ein Band näher, ▼ weiter weg, nach den Regeln für die Partei am Zug; langes Drücken auf
- * die Leiste setzt das Band frei. Wohin die Waffe am Zug nicht reicht, ist sie gestrichelt.
- */
-function RangeRail({ sim }: { sim: SimView }) {
-  const game = useGame();
-  const track = useRef<HTMLDivElement>(null);
-  const pointer = useRef(0);
-  const free = useLongPress(() => {
-    const box = track.current?.getBoundingClientRect();
-    if (!box) return;
-    const s = Math.min(LAST_STEP, Math.max(0, Math.round(((pointer.current - box.top) / box.height) * LAST_STEP)));
-    game.setBand(s === 0 ? 0 : s - 1, s === 0);
-  });
-  const move = sim.move;
-  const step = stepOf(sim);
-  const at = (s: number) => ({ '--y': String(s / LAST_STEP) }) as CSSProperties;
-  const span = (from: number, to: number) => ({ '--y': String(from / LAST_STEP), '--h': String((to - from) / LAST_STEP) }) as CSSProperties;
-  const reachTo = Math.max(0, ...sim.bands.filter((b) => b.reaches).map((b) => (b.range === 'close' ? 0 : b.to + 1)));
-  const go = (dir: -1 | 1) => {
-    haptic('pick');
-    game.moveBand(dir);
-  };
-  const where = sim.escaped || !sim.range ? 'entkommen' : `${rangeText[sim.range]}, ${sim.close ? 'Berührung' : `Band ${sim.band}`}`;
-  return (
-    <div className="rail" aria-label="Entfernung">
-      <span className="rail-now" aria-live="polite">
-        <b>{sim.escaped || !sim.range ? 'Entk.' : rangeAbbr[sim.range]}</b>
-        <span>{sim.escaped ? '>20' : sim.close ? 'Berühr.' : `Band ${sim.band}`}</span>
-      </span>
-      <button type="button" className="rail-step" aria-label="Ein Band näher" title={move?.reason} disabled={step === 0 || !move?.can} onClick={() => go(-1)}>
-        ▲
-      </button>
-      <div
-        className="rail-track"
-        ref={track}
-        role="img"
-        aria-label={`Entfernung: ${where}. Lange drücken: frei setzen`}
-        {...free.handlers}
-        onPointerDown={(e) => {
-          pointer.current = e.clientY;
-          free.handlers.onPointerDown(e);
-        }}
-        onClick={() => free.consumed()}
-      >
-        <span className="rail-line" style={span(0, Math.min(LAST_STEP, reachTo))} />
-        {reachTo < LAST_STEP && <span className="rail-line out" style={span(reachTo, LAST_STEP)} />}
-        {sim.bands
-          .filter((b) => b.range !== 'close')
-          .map((b) => (
-            <span key={b.range} className={b.reaches ? 'rail-tick' : 'rail-tick out'} style={at(b.range === 'short' ? 0 : b.from + 0.5)}>
-              {rangeAbbr[b.range]}
-            </span>
-          ))}
-        {!sim.escaped && step > 0 && <span className="rail-span" style={span(0, step)} />}
-        <span className="rail-pc" style={at(0)} />
-        <span className={sim.escaped ? 'rail-npc escaped' : sim.close ? 'rail-npc close' : 'rail-npc'} style={at(sim.escaped ? LAST_STEP : step)}>
-          ▲
-        </span>
-      </div>
-      <button type="button" className="rail-step" aria-label="Ein Band weiter weg" title={move?.reason} disabled={sim.escaped || !move?.can} onClick={() => go(1)}>
-        ▼
-      </button>
     </div>
   );
 }
