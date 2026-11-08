@@ -24,6 +24,7 @@
   --gold-bright: #f5dc96;
   --gold-deep: #8a6a2a;
   --gold-glow: rgba(233, 190, 92, 0.5);
+  --gold-wash: #241e10;
   --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   color-scheme: dark;
@@ -4876,14 +4877,14 @@ button:disabled {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: var(--text);
+  background: var(--gold);
   box-shadow: 0 0 0 2px var(--bg);
 }
 
 .ray-npc {
   font-size: 13px;
-  color: var(--gold-bright);
-  text-shadow: 0 0 6px var(--gold-glow);
+  color: var(--accent-text);
+  text-shadow: 0 0 6px rgba(198, 47, 53, 0.5);
 }
 
 /* Close: Die NSC berühren die SC. */
@@ -5352,14 +5353,9 @@ button:disabled {
   font-size: 14px;
 }
 
-.who-chip.turn {
-  color: var(--ink);
-  background: var(--gold);
-}
-
-.who-chip.target {
-  color: #fff;
-  background: var(--accent);
+.who-chip {
+  color: var(--side-ink);
+  background: var(--side);
 }
 
 .who-arrow {
@@ -5555,6 +5551,29 @@ button:disabled {
   text-overflow: ellipsis;
 }
 
+/* Jede Seite hat ihre Farbe, gleich welche Rolle sie gerade hat: SC gold, NSC rot. */
+.arena-side.pcs,
+.fight-dock .pcs {
+  --side: var(--gold);
+  --side-text: var(--gold);
+  --side-ink: var(--ink);
+  --side-wash: var(--gold-wash);
+  --side-glow: var(--gold-glow);
+}
+
+.arena-side.npcs,
+.fight-dock .npcs {
+  --side: var(--accent);
+  --side-text: var(--accent-text);
+  --side-ink: #fff;
+  --side-wash: var(--accent-wash);
+  --side-glow: rgba(198, 47, 53, 0.5);
+}
+
+.arena-label {
+  color: var(--side-text);
+}
+
 .arena-side.npcs .arena-label {
   text-align: right;
 }
@@ -5565,6 +5584,23 @@ button:disabled {
   background: var(--panel);
   /* Eigene Ebene: Blitz und Schüttelbewegung bleiben auf der Karte, ohne die Nachbarn neu zu malen. */
   contain: layout;
+}
+
+/* Ein Streifen in der Farbe der Seite an der Außenkante: SC links, NSC rechts. */
+.fcard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  background: var(--side);
+  pointer-events: none;
+}
+
+.fcard.npcs::before {
+  left: auto;
+  right: 0;
 }
 
 .fcard-main {
@@ -5613,12 +5649,12 @@ button:disabled {
 }
 
 .fcard-marker.turn {
-  color: var(--gold);
+  color: var(--side-text);
   font-size: 11px;
 }
 
 .fcard-marker.target {
-  color: var(--accent-text);
+  color: var(--side-text);
   font-size: 19px;
   line-height: 0.8;
   font-weight: 400;
@@ -5711,19 +5747,20 @@ button:disabled {
   color: var(--dim);
 }
 
+/* Die Rolle zeigt die Form, die Farbe bleibt die der Seite: am Zug ein leuchtender Rahmen, Ziel ein
+   getönter Grund, Nachbar gestrichelt. */
 .fcard.turn {
-  border: 2px solid var(--gold);
-  box-shadow: 0 0 0 1px var(--gold-deep), 0 0 14px var(--gold-glow);
+  border: 2px solid var(--side);
+  box-shadow: 0 0 14px var(--side-glow);
 }
 
 .fcard.targeted {
-  border: 2px solid var(--accent-text);
-  background: var(--accent-wash);
-  box-shadow: 0 0 12px rgba(198, 47, 53, 0.45);
+  border: 2px solid var(--side-text);
+  background: var(--side-wash);
 }
 
 .fcard.neighbour {
-  border: 2px dashed var(--accent-text);
+  border: 2px dashed var(--side-text);
 }
 
 .fcard.chosen {
@@ -5751,7 +5788,8 @@ button:disabled {
   font-weight: 600;
 }
 
-/* Pfeile: gold gestrichelt gewählt, rot ein Treffer, grau gestrichelt daneben; der letzte bleibt blass. */
+/* Pfeile in der Farbe des Angreifers (SC gold, NSC rot): gestrichelt gewählt, durchgezogen ein Treffer,
+   grau gepunktet daneben. */
 .arena-arrows {
   position: absolute;
   inset: 0;
@@ -5787,20 +5825,22 @@ button:disabled {
 
 
 
-.arrow.plan {
+.arrow.pcs {
   stroke: var(--gold);
+}
+
+.arrow.npcs {
+  stroke: var(--accent-text);
+}
+
+.arrow.plan {
   stroke-dasharray: 7 5;
   animation: arrow-march 0.8s linear infinite;
 }
 
 .arrow.neighbour {
-  stroke: var(--accent-text);
   stroke-width: 1.5;
   stroke-dasharray: 3 4;
-}
-
-.arrow.hit {
-  stroke: var(--accent-text);
 }
 
 .arrow.miss {
@@ -5826,11 +5866,11 @@ button:disabled {
   stroke: none;
 }
 
-.arrow-head.plan path {
+.arrow-head.pcs path {
   fill: var(--gold);
 }
 
-.arrow-head.hit path {
+.arrow-head.npcs path {
   fill: var(--accent-text);
 }
 

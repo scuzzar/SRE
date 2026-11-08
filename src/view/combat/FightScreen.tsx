@@ -355,14 +355,14 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
       ) : turn ? (
         <>
           <div className="fight-who-row" aria-live="polite">
-            <span className="who-chip turn" title="am Zug">
+            <span className={`who-chip turn ${turn.side}`} title="am Zug">
               ▶ {turn.name.split(' ')[0]}
             </span>
             <span className="who-arrow" aria-hidden="true">
               →
             </span>
             {target ? (
-              <span className="who-chip target" title="Ziel">
+              <span className={`who-chip target ${target.side}`} title="Ziel">
                 ⌖ {target.name.split(' ')[0]}
               </span>
             ) : (

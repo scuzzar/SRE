@@ -10,8 +10,9 @@ import { ImpactMarks, LossFloat, useLongPress } from './FightScreen';
 /**
  * Die Kampfsimulation in zwei Spalten: links die SC, rechts die NSC, dazwischen eine schmale Lücke
  * für die Pfeile; die Entfernung steht unten im Zug. Pfeile (rechtwinklig: auf der Seite des Angreifers bis zur Höhe des Ziels, dann
- * hinüber) zeigen, wer wen angreift: gold gestrichelt das gewählte Ziel, rot ein
- * Treffer, grau ein Fehlschuss; ein Angriff fliegt, steht kurz und blendet aus. Nur Anzeige; gerechnet wird im Model.
+ * hinüber) zeigen, wer wen angreift, in der Farbe des Angreifers (SC gold, NSC rot): gestrichelt das gewählte
+ * Ziel, durchgezogen ein Treffer, grau ein Fehlschuss; ein Angriff fliegt, steht kurz und blendet aus. Jede Seite
+ * hat ihre Farbe, gleich ob am Zug oder Ziel. Nur Anzeige; gerechnet wird im Model.
  */
 
 /** Die Auswahl der NSC zum Übernehmen: `picked` ist offen, solange es sie gibt. */
@@ -165,6 +166,8 @@ interface Drawn {
   readonly key: string;
   readonly d: string;
   readonly kind: 'plan' | 'neighbour' | 'hit' | 'miss';
+  /** Die Seite des Angreifers; sie gibt dem Pfeil die Farbe. */
+  readonly side: 'pcs' | 'npcs';
   readonly fresh: boolean;
 }
 
@@ -177,10 +180,15 @@ function anchor(root: HTMLElement, id: string, base: DOMRect): { x: number; y: n
   return { x: (side === 'pcs' ? r.right : r.left) - base.left, y: r.top + r.height / 2 - base.top, side };
 }
 
-function route(root: HTMLElement, from: string, to: string, base: DOMRect): string | undefined {
+function route(root: HTMLElement, from: string, to: string, base: DOMRect): { d: string; side: 'pcs' | 'npcs' } | undefined {
   const p = anchor(root, from, base);
   const q = anchor(root, to, base);
   if (!p || !q || p.side === q.side) return undefined;
+  return { d: path(p, q), side: p.side };
+}
+
+/** Der Weg eines Pfeils von der Innenkante des Angreifers zu der des Ziels. */
+function path(p: { x: number; y: number; side: 'pcs' | 'npcs' }, q: { x: number; y: number }): string {
   // Rechtwinklig: auf der eigenen Seite der Lücke senkrecht bis auf die Höhe des Gegners, dann waagrecht
   // hinüber. So läuft der Pfeil neben der Leiste und kreuzt sie nur einmal, quer.
   const dir = p.side === 'pcs' ? 1 : -1;
@@ -229,15 +237,15 @@ function Arrows({ sim, arena, quiet }: { sim: SimView; arena: React.RefObject<HT
         const fresh = true;
         // Solange ein Popup offen ist, wartet ein neuer Pfeil; sonst flöge er ungesehen dahinter.
         if (quiet) continue;
-        const d = route(root, s.from, s.to, base);
-        if (d) next.push({ key: s.key, d, kind: s.hit ? 'hit' : 'miss', fresh });
+        const r = route(root, s.from, s.to, base);
+        if (r) next.push({ key: s.key, ...r, kind: s.hit ? 'hit' : 'miss', fresh });
       }
       if (plan) {
-        const d = route(root, plan.from, plan.to, base);
-        if (d) next.push({ key: `plan-${plan.from}-${plan.to}`, d, kind: 'plan', fresh: false });
+        const r = route(root, plan.from, plan.to, base);
+        if (r) next.push({ key: `plan-${plan.from}-${plan.to}`, ...r, kind: 'plan', fresh: false });
         for (const n of neighbours) {
-          const nd = route(root, plan.from, n, base);
-          if (nd) next.push({ key: `n-${n}`, d: nd, kind: 'neighbour', fresh: false });
+          const nr = route(root, plan.from, n, base);
+          if (nr) next.push({ key: `n-${n}`, ...nr, kind: 'neighbour', fresh: false });
         }
       }
       setDrawn((now) => (JSON.stringify(now) === JSON.stringify(next) ? now : next));
@@ -252,7 +260,7 @@ function Arrows({ sim, arena, quiet }: { sim: SimView; arena: React.RefObject<HT
   return (
     <svg className="arena-arrows" aria-hidden="true">
       <defs>
-        {(['plan', 'hit', 'miss'] as const).map((k) => (
+        {(['pcs', 'npcs', 'miss'] as const).map((k) => (
           <marker key={k} id={`arrow-${k}`} className={`arrow-head ${k}`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" />
           </marker>
@@ -271,8 +279,8 @@ function Arrows({ sim, arena, quiet }: { sim: SimView; arena: React.RefObject<HT
           key={a.key}
           d={a.d}
           {...(a.fresh ? { pathLength: 100 } : {})}
-          className={`arrow ${a.kind}${a.fresh ? ' fresh' : a.kind === 'hit' || a.kind === 'miss' ? ' past' : ''}`}
-          markerEnd={a.kind === 'neighbour' ? undefined : `url(#arrow-${a.kind})`}
+          className={`arrow ${a.kind}${a.kind === 'miss' ? '' : ` ${a.side}`}${a.fresh ? ' fresh' : a.kind === 'hit' || a.kind === 'miss' ? ' past' : ''}`}
+          markerEnd={a.kind === 'neighbour' ? undefined : `url(#arrow-${a.kind === 'miss' ? 'miss' : a.side})`}
           onAnimationEnd={(e) => {
             // Erst wenn er ausgeblendet ist, ist der Pfeil geflogen; dann fällt er weg.
             if (!a.fresh || e.animationName !== 'arrow-fade') return;
