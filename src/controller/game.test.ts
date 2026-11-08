@@ -540,16 +540,17 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot().combat!.sim!.turn).toMatchObject({ target: 'n2', odds: { parts: expect.arrayContaining([{ kind: 'range', range: 'short', dm: 1 }]) } });
     game.setBand(1);
     expect(game.snapshot().combat!.sim).toMatchObject({ range: 'medium', band: 1, turn: { reaches: false } });
+    // Zwei Bands sind Laufen: Kira und Jonas setzen von selbst aus, Runde 2 beginnt mit den NSC.
     game.moveBand(-1);
     game.moveBand(-1);
-    expect(game.snapshot().combat!.sim).toMatchObject({ range: 'close', band: 0, close: true, turn: { reaches: true } });
+    expect(game.snapshot().combat!.sim).toMatchObject({ range: 'close', band: 0, close: true, round: 2, turn: { id: 'n1', target: expect.stringMatching(/^c[12]$/), reaches: true } });
     game.setBand(21);
     expect(game.snapshot().combat!.sim).toMatchObject({ range: undefined, escaped: true, turn: { reaches: false, odds: undefined } });
     game.setBand(0, true);
     game.skipTurn();
-    expect(game.snapshot().combat!.sim!.turn!.id).toBe('c2');
+    expect(game.snapshot().combat!.sim!.turn!.id).toBe('n2');
     game.skipTurn();
-    expect(game.snapshot().combat!.sim).toMatchObject({ round: 2, turn: { id: 'n1' } });
+    expect(game.snapshot().combat!.sim).toMatchObject({ round: 2, turn: { id: 'c1' } });
 
     game.endEncounter();
     expect(game.snapshot().combat!.sim).toBeUndefined();

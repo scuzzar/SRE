@@ -1,4 +1,5 @@
-import { isCampaignCharacter, livingCharacters, type Campaign, type CharacterId } from './campaign';
+import { anyCharacterOf, armedWeaponsOf, isCampaignCharacter, livingCharacters, setWields, type Campaign, type CharacterId } from './campaign';
+import { ammoOf, reload } from './combat';
 import { DomainError } from './errors';
 import { currentEncounter, moveBand, needsSurprise, type Encounter } from './encounter';
 import { canFight, woundStateOf } from './wounds';
@@ -106,9 +107,15 @@ export function withEncounter(campaign: Campaign, encounter: Encounter): Campaig
 
 /**
  * Beendet den Zug dessen, der dran ist (nach dem Angriff, Nachladen oder Aussetzen). Ist danach in
- * dieser Runde keiner mehr dran, beginnt die nächste.
+ * dieser Runde keiner mehr dran, beginnt die nächste. Ist der Nächste aus einer Partei, die gelaufen
+ * ist, zieht er von selbst (siehe `passRunners`).
  */
 export function endTurn(campaign: Campaign): Campaign {
+  return passRunners(finishTurn(campaign));
+}
+
+/** Beendet nur den Zug dessen, der dran ist, ohne die Läufer weiterzuziehen. */
+function finishTurn(campaign: Campaign): Campaign {
   const running = currentEncounter(campaign);
   const turn = turnOf(campaign);
   if (!running || !turn) throw new DomainError('Es ist keiner am Zug.');
@@ -116,6 +123,35 @@ export function endTurn(campaign: Campaign): Campaign {
   let after: Encounter = { ...encounter, acted: [...encounter.acted, turn.id] };
   if (waiting(campaign, after).length === 0) after = nextRound(after);
   return withEncounter(campaign, after);
+}
+
+/**
+ * Die leere Waffe (Primär, dann Sekundär; 0 Schuss geladen), die dieser Kämpfer mit einem Magazin
+ * aus seinem Besitz nachladen kann; sonst `undefined`.
+ */
+export function reloadableWeapon(campaign: Campaign, id: CharacterId): string | undefined {
+  const character = anyCharacterOf(campaign, id);
+  return armedWeaponsOf(character).find((weapon) => {
+    const ammo = ammoOf({ ...character, wields: weapon });
+    return ammo !== undefined && ammo.rounds === 0 && ammo.magazines > 0;
+  });
+}
+
+/**
+ * Wer läuft, greift nicht an: Ist der Kämpfer am Zug aus einer Partei, die in dieser Runde gelaufen
+ * ist, zieht er von selbst. Ein NSC mit leerer Waffe und Magazin lädt nach, jeder andere setzt aus;
+ * so weiter, bis einer der anderen Partei dran ist oder die Runde endet. Nur ein SC, der nachladen
+ * könnte, bleibt am Zug und wählt selbst.
+ */
+function passRunners(campaign: Campaign): Campaign {
+  let current = campaign;
+  for (let turn = turnOf(current); turn && hasRun(current, turn.side); turn = turnOf(current)) {
+    const weapon = reloadableWeapon(current, turn.id);
+    if (weapon !== undefined && turn.side === 'pcs') return current;
+    if (weapon !== undefined) current = reload(setWields(current, turn.id, weapon), turn.id);
+    current = finishTurn(current);
+  }
+  return current;
 }
 
 /** Wie weit sich eine Partei in der Runde, die gerade gilt, bewegen kann. */
@@ -166,7 +202,8 @@ export function moveState(campaign: Campaign): MoveState | undefined {
 
 /**
  * Die Partei dessen, der am Zug ist, geht ein Band näher (−1) oder weiter weg (+1). Das ist kein
- * Zug; das zweite Band in einer Runde ist Laufen, danach greift die Partei in dieser Runde nicht an.
+ * Zug; das zweite Band in einer Runde ist Laufen, danach greift die Partei in dieser Runde nicht an:
+ * Ihre Kämpfer ziehen von selbst (siehe `passRunners`).
  */
 export function moveSide(campaign: Campaign, step: -1 | 1): Campaign {
   const state = moveState(campaign);
@@ -177,9 +214,11 @@ export function moveSide(campaign: Campaign, step: -1 | 1): Campaign {
   const after = currentEncounter(moved)!;
   // Das zweite Band ist ein Lauf: Er kostet jeden Kämpfer der Partei einen Combat-Schlag (SR 20).
   const run = state.moved + 1 >= MAX_MOVE ? 1 : 0;
-  return withEncounter(
-    moved,
-    state.side === 'pcs' ? { ...after, pcMoved: state.moved + 1, pcRuns: (after.pcRuns ?? 0) + run } : { ...after, npcMoved: state.moved + 1, npcRuns: (after.npcRuns ?? 0) + run },
+  return passRunners(
+    withEncounter(
+      moved,
+      state.side === 'pcs' ? { ...after, pcMoved: state.moved + 1, pcRuns: (after.pcRuns ?? 0) + run } : { ...after, npcMoved: state.moved + 1, npcRuns: (after.npcRuns ?? 0) + run },
+    ),
   );
 }
 
