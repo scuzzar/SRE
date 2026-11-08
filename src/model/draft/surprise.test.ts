@@ -54,7 +54,7 @@ function thugs(side?: Side): Campaign {
   let campaign = rollEncounter(there, fixedRandom(1, 5), clock, undefined, 2).campaign;
   campaign = { ...campaign, characters: campaign.characters.map((c) => (c.id === 'c2' ? { ...c, wields: 'blade' } : c)) };
   const surprise = side === 'pcs' ? { pcSurprise: { die: 6, dm: 0 }, npcSurprise: { die: 1, dm: 0 } } : side === 'npcs' ? { pcSurprise: { die: 1, dm: 0 }, npcSurprise: { die: 6, dm: 0 } } : { pcSurprise: { die: 3, dm: 0 }, npcSurprise: { die: 3, dm: 0 } };
-  return patch(campaign, { ...surprise, band: 0, close: true });
+  return patch(campaign, { ...surprise, startBand: 0, startClose: true });
 }
 
 /** Wer für den Zug oben stehen muss, steht oben: der SC am Zug bzw. das Ziel des NSC. */
@@ -155,11 +155,11 @@ describe('Ausdauer (SR 20, 22)', () => {
     campaign = attack(campaign, 'n2', [1, 1]);
     expect(campaign.log.at(-1)).toMatchObject({ strike: 'combat' });
     expect(blowsOf(campaign, 'c2')).toBe(6);
-    // Jeder Lauf kostet jeden Kämpfer der Partei einen Combat-Schlag.
-    campaign = patch(campaign, { pcRuns: 2 });
+    // Jeder Lauf kostet den SC, der gelaufen ist, einen Combat-Schlag.
+    campaign = patch(campaign, { distances: [{ of: 'c2', band: 0, close: true, runs: 2 }] });
     expect(blowsOf(campaign, 'c2')).toBe(4);
     // Ohne Combat-Schläge ist jeder Schlag geschwächt: Blade −2.
-    campaign = patch(campaign, { pcRuns: 20, round: 2, acted: ['c1'] });
+    campaign = patch(campaign, { distances: [{ of: 'c2', band: 0, close: true, runs: 20 }], round: 2, acted: ['c1'] });
     expect(blowsOf(campaign, 'c2')).toBe(0);
     expect(attackExtras(turn(campaign, 'n2'), ready(campaign, 'n2')).strike).toBe('weakened');
     expect(evaluateAttack(turn(campaign, 'n2'), ready(campaign, 'n2'))!.dm.total).toBe(full.dm.total - 2);
@@ -236,7 +236,7 @@ describe('Wunden im laufenden Kampf (SR 21, Errata zu The Traveller Book S. 35�
     expect(needsWounding(campaign, campaign.log.length - 1)).toBe(true);
     // In einer neuen Begegnung ist er wieder ein erster und geht von selbst auf ein Attribut.
     campaign = rollEncounter(endEncounter(campaign), fixedRandom(1, 5), clock, undefined, 2).campaign;
-    campaign = patch(campaign, { band: 0, close: true, pcSurprise: { die: 3, dm: 0 }, npcSurprise: { die: 3, dm: 0 } });
+    campaign = patch(campaign, { startBand: 0, startClose: true, pcSurprise: { die: 3, dm: 0 }, npcSurprise: { die: 3, dm: 0 } });
     campaign = appendLog(campaign, ...clubOn(campaign, currentEncounter(campaign)!.npcs[1]!.id));
     expect(needsWounding(campaign, campaign.log.length - 1)).toBe(false);
   });

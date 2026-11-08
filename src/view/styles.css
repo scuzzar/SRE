@@ -4755,29 +4755,34 @@ button:disabled {
 /* Die Entfernung in einer Zeile: links die Reichweite, daneben der Strahl zwischen zwei Pfeilen. */
 .ray-range {
   display: grid;
-  grid-template-columns: 62px 44px minmax(0, 1fr) 44px;
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
   align-items: stretch;
   gap: 4px;
-  height: 40px;
+  height: 46px;
 }
 
+/* Über der Leiste: Reichweite, Name und Band des vorgewählten SC, rechts der Hinweis auf das freie Setzen. */
 .ray-now {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  line-height: 1.15;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
 }
 
 .ray-now b {
+  margin-right: 6px;
   font-size: 13px;
   color: var(--gold);
 }
 
-.ray-now span {
-  font-size: 10.5px;
-  color: var(--muted);
+.ray-now .muted {
+  font-size: 11px;
+  color: var(--dim);
 }
 
 .ray-arrow {
@@ -4800,9 +4805,12 @@ button:disabled {
   background: var(--highlight);
 }
 
-/* Der Strahl: Schritt i (0 Berührung, 1 Band 0, 2–21 Band 1–20) liegt bei --i von 21. */
+/*
+ * Die Leiste, von rechts nach links: Schritt i (0 Berührung, 1 Band 0, 2–21 Band 1–20, 22 entkommen)
+ * liegt bei (22 − i) von 22; rechts fest die NSC, ganz links „weg“.
+ */
 .ray {
-  --pad: 6px;
+  --pad: 10px;
   position: relative;
   min-width: 0;
   cursor: pointer;
@@ -4810,13 +4818,13 @@ button:disabled {
 
 .ray > * {
   position: absolute;
-  left: calc(var(--pad) + (100% - 2 * var(--pad)) * var(--i) / 21);
+  left: calc(var(--pad) + (100% - 2 * var(--pad)) * (22 - var(--i)) / 22);
 }
 
 .ray-line {
-  top: 23px;
+  top: 31px;
   height: 2px;
-  width: calc((100% - 2 * var(--pad)) * var(--n) / 21);
+  width: calc((100% - 2 * var(--pad)) * var(--n) / 22);
   background: var(--line-strong);
 }
 
@@ -4824,12 +4832,16 @@ button:disabled {
   background: repeating-linear-gradient(90deg, var(--line) 0 3px, transparent 3px 6px);
 }
 
+.ray-line.gone {
+  background: repeating-linear-gradient(90deg, var(--rule) 0 2px, transparent 2px 4px);
+}
+
 .ray-line.span {
   background: var(--gold-deep);
 }
 
 .ray-dot {
-  top: 22px;
+  top: 30px;
   width: 4px;
   height: 4px;
   margin-left: -2px;
@@ -4842,23 +4854,19 @@ button:disabled {
 }
 
 .ray-tick {
-  top: 4px;
+  top: 10px;
   width: 1px;
-  height: 25px;
+  height: 30px;
   background: var(--line-strong);
 }
 
 .ray-label {
-  top: 1px;
-  margin-left: 3px;
+  top: 0;
+  transform: translateX(-50%);
   font-size: 9px;
   letter-spacing: 0.04em;
   color: var(--muted);
   white-space: nowrap;
-}
-
-.ray-label.first {
-  margin-left: -6px;
 }
 
 .ray-label.out {
@@ -4866,39 +4874,49 @@ button:disabled {
   text-decoration: line-through;
 }
 
-.ray-pc,
+.ray-gone-label {
+  top: 36px;
+  transform: translateX(-50%);
+  font-size: 8.5px;
+  color: var(--dim);
+  white-space: nowrap;
+}
+
 .ray-npc {
-  top: 24px;
+  top: 32px;
   transform: translate(-50%, -50%);
+  margin-left: 7px;
+  font-size: 14px;
   line-height: 1;
-}
-
-.ray-pc {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--gold);
-  box-shadow: 0 0 0 2px var(--bg);
-}
-
-.ray-npc {
-  font-size: 13px;
   color: var(--accent-text);
   text-shadow: 0 0 6px rgba(198, 47, 53, 0.5);
 }
 
-/* Close: Die NSC berühren die SC. */
-.ray-npc.close {
-  margin-left: 8px;
+/* Ein SC: goldener Kreis mit Anfangsbuchstaben; zu nahe Marken stehen übereinander (--level). */
+.ray-pc {
+  top: calc(32px - var(--level, 0) * 15px);
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--gold);
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--gold);
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1;
 }
 
-.ray-escaped {
-  top: 2px;
-  transform: translateX(-100%);
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--gold);
-  white-space: nowrap;
+/* Der vorgewählte SC: gold gefüllt und leuchtend. */
+.ray-pc.focus {
+  z-index: 1;
+  background: var(--gold);
+  color: #1a1408;
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 8px 2px var(--gold-glow);
 }
 
 .fighters {
@@ -5666,6 +5684,20 @@ button:disabled {
   font-size: 12px;
 }
 
+/* Weicht aus (SR 20) bzw. ist entkommen: knapp hinter dem Namen. */
+.fcard-evade {
+  flex: none;
+  color: var(--gold-bright);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fcard-escaped {
+  flex: none;
+  color: var(--muted);
+  font-size: 10px;
+}
+
 .state-icon {
   flex: none;
   width: 13px;
@@ -6042,7 +6074,7 @@ button:disabled {
 }
 
 .fight-dock .ray-range {
-  height: 36px;
+  height: 44px;
 }
 
 .fight-dock .ray-move {

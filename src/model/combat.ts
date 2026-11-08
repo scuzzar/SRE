@@ -65,7 +65,7 @@ export function rangeDm(weapon: Weapon, range: Range): number | undefined {
   return weapon.atRange.find((r) => r.range === range)!.dm;
 }
 
-/** Woraus der DM eines Angriffs besteht: Fertigkeit, Rüstung, Reichweite, Attribut, geschwächter Schlag, Parade des Ziels. */
+/** Woraus der DM eines Angriffs besteht: Fertigkeit, Rüstung, Reichweite, Attribut, geschwächter Schlag, Parade und Ausweichen des Ziels. */
 export interface AttackDm {
   readonly skill: number;
   readonly armor: number;
@@ -73,6 +73,7 @@ export interface AttackDm {
   readonly characteristic: number;
   readonly weakened: number;
   readonly parry: number;
+  readonly evade: number;
   readonly total: number;
 }
 
@@ -116,7 +117,7 @@ export function attackDm(
   armor: ArmorClass,
   range: Range,
   row: Weapon = weapon,
-  extra: { readonly weakened?: number; readonly parry?: number } = {},
+  extra: { readonly weakened?: number; readonly parry?: number; readonly evade?: number } = {},
 ): AttackDm | undefined {
   const atRange = rangeDm(row, range);
   if (atRange === undefined) return undefined;
@@ -125,6 +126,7 @@ export function attackDm(
   const characteristic = characteristicAttackDm(weapon, valueOf(attacker.upp, attackCharacteristic(weapon)));
   const weakened = extra.weakened ?? 0;
   const parry = extra.parry ?? 0;
+  const evade = extra.evade ?? 0;
   return {
     skill,
     armor: vsArmor,
@@ -132,7 +134,8 @@ export function attackDm(
     characteristic,
     weakened,
     parry,
-    total: skill + vsArmor + atRange + characteristic + weakened + parry,
+    evade,
+    total: skill + vsArmor + atRange + characteristic + weakened + parry + evade,
   };
 }
 

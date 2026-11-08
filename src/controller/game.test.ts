@@ -538,19 +538,33 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot().focus).toBe('c1');
     game.chooseFightTarget('n2');
     expect(game.snapshot().combat!.sim!.turn).toMatchObject({ target: 'n2', odds: { parts: expect.arrayContaining([{ kind: 'range', range: 'short', dm: 1 }]) } });
-    game.setBand(1);
-    expect(game.snapshot().combat!.sim).toMatchObject({ range: 'medium', band: 1, turn: { reaches: false } });
-    // Zwei Bands sind Laufen: Kira und Jonas setzen von selbst aus, Runde 2 beginnt mit den NSC.
+    game.setBand('c1', 1);
+    expect(game.snapshot().combat!.sim).toMatchObject({ focus: 'c1', range: 'medium', band: 1, turn: { reaches: false } });
+    // Zwei Bands sind Laufen: Kira setzt von selbst aus; Jonas ist dran und steht noch auf Short.
     game.moveBand(-1);
     game.moveBand(-1);
-    expect(game.snapshot().combat!.sim).toMatchObject({ range: 'close', band: 0, close: true, round: 2, turn: { id: 'n1', target: expect.stringMatching(/^c[12]$/), reaches: true } });
-    game.setBand(21);
-    expect(game.snapshot().combat!.sim).toMatchObject({ range: undefined, escaped: true, turn: { reaches: false, odds: undefined } });
-    game.setBand(0, true);
+    expect(game.snapshot().combat!.sim).toMatchObject({
+      focus: 'c2',
+      range: 'short',
+      round: 1,
+      turn: { id: 'c2' },
+      positions: [
+        { id: 'c1', initial: 'K', band: 0, close: true, focus: false },
+        { id: 'c2', initial: 'J', band: 0, close: false, focus: true },
+      ],
+    });
+    game.setBand('c2', 21);
+    expect(game.snapshot().combat!.sim).toMatchObject({ focus: 'c2', range: undefined, escaped: true, turn: { reaches: false, odds: undefined } });
+    game.setBand('c2', 0, true);
     game.skipTurn();
-    expect(game.snapshot().combat!.sim!.turn!.id).toBe('n2');
+    expect(game.snapshot().combat!.sim).toMatchObject({ round: 2, turn: { id: 'n1', target: expect.stringMatching(/^c[12]$/), reaches: true } });
+    game.skipTurn();
     game.skipTurn();
     expect(game.snapshot().combat!.sim).toMatchObject({ round: 2, turn: { id: 'c1' } });
+    // Kira weicht aus: Das ist ihr Zug; ihre Karte zeigt es, bis sie wieder dran ist.
+    game.evade();
+    expect(game.snapshot().combat!.sim).toMatchObject({ turn: { id: 'c2' } });
+    expect(game.snapshot().combat!.sim!.fighters.find((f) => f.id === 'c1')).toMatchObject({ evading: true });
 
     game.endEncounter();
     expect(game.snapshot().combat!.sim).toBeUndefined();
@@ -669,7 +683,7 @@ describe('Begegnung und Kampfsimulation', () => {
           game.skipTurn();
           continue;
         }
-        if (!turn.reaches) game.setBand(0, true);
+        if (!turn.reaches) game.setBand(sim.focus!, 0, true);
         else if (turn.target === undefined) game.chooseFightTarget(sim.fighters.find((f) => f.targetable)!.id);
         else game.fightAttack();
       }

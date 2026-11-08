@@ -3,7 +3,7 @@ import type { CombatView, SimView, Snapshot } from '../../controller';
 import { signed } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
-import { distanceText, EncounterIntro } from './FightScreen';
+import { distancesText, EncounterIntro } from './FightScreen';
 
 /**
  * Der Reiter Begegnung. Ohne laufende Begegnung: wo die Gruppe ist, das Gelände und Begegnung würfeln
@@ -41,7 +41,7 @@ function RunningEncounter({ sim }: { sim: SimView }) {
       <p className="encounter-running-facts">
         Runde {sim.round} · Reaktion {sim.reaction}: {sim.reactionText}
         <br />
-        Entfernung: {distanceText(sim)} · {standing} von {npcs.length} NSC kampffähig
+        Entfernung: {distancesText(sim)} · {standing} von {npcs.length} NSC kampffähig
         {sim.defeated ? ` · entschieden, die ${sim.defeated === 'pcs' ? 'SC' : 'NSC'} sind außer Gefecht` : ''}
       </p>
       <div className="encounter-running-actions">

@@ -47,7 +47,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Entkommen und Ausweichen](#entkommen-und-ausweichen) | SE 5, SR 20–21 | ◐ (nur über 20 Bands) |
 | [Moral (einfach)](#moral-einfach) | SE 5, SR 23 | ○ |
 | [Reichweiten, Range Bands, Geschwindigkeiten](#reichweiten-range-bands-und-geschwindigkeiten) | SE 7, 24, SR 20 | ✔ ✱, Geschwindigkeiten ◐ ✱ |
-| [Bewegungsstatus](#bewegungsstatus) | SR 20–21 | ◐ ✱ (Gehen und Laufen je Partei; Status je Kämpfer ○) |
+| [Bewegungsstatus](#bewegungsstatus) | SR 20–21 | ◐ ✱ (Gehen, Laufen und Ausweichen je SC, die NSC als Gruppe; Ansage vor der Runde ○) |
 | [Angriff: Grundwurf und DMs](#angriff-grundwurf-und-erlaubte-dms) | SE 6, SR 21–22 | ◐ |
 | [Wirkung der Attribute, Ausdauer](#wirkung-der-attribute-und-ausdauer) | SR 21–22 | ✔ ✱ |
 | [Fertigkeit, Parieren, ungeübte Waffen](#fertigkeit-parieren-und-ungeübte-waffen) | SR 22 | ◐ (Angriff und Parade ✔; ungeübt ○) |
@@ -404,7 +404,7 @@ und Tote.
 
 *SE 7, „Ranges“, „Range Bands“, „Speeds“; gleiche Reichweiten SE 24, „Range Descriptions“; SR 20,
 „Movement“.*
-App: Reichweiten und Bands ✔, Geschwindigkeiten ◐ (je Partei und Runde 1 Band gehend, 2 laufend ohne Angriff; schneller laufen ○)
+App: Reichweiten und Bands ✔, Geschwindigkeiten ◐ (je SC bzw. NSC-Gruppe und Runde 1 Band gehend, 2 laufend ohne Angriff; schneller laufen ○)
 
 | Range | Bedeutung |
 |---|---|
@@ -449,17 +449,19 @@ Schneller als doppelt laufen geht meist nicht lange.
   Umrechnung da. Die Regeln fürs Quadratraster (SR 23) sind nicht aufgenommen
   ([Nicht aufgenommen](#nicht-aufgenommen)).
 
-> ✱ App: Bewegung je Partei, nicht je Kämpfer: Die Partei am Zug geht 1 Band je Runde oder läuft 2;
-> wer läuft, greift in dieser Runde nicht an (SR 20). Ihre Kämpfer setzen dann von selbst aus, ein
-> NSC mit leerer Waffe und Magazin lädt nach; ein SC, der nachladen könnte, wählt selbst. Langes
-> Drücken setzt das Band frei.
+> ✱ App: Die NSC stehen als Gruppe fest auf Band 0; jeder SC hat seine eigene Entfernung zu ihnen.
+> Ein SC geht in seinem Zug 1 Band oder läuft 2; die NSC-Gruppe ebenso, wenn einer von ihr am Zug ist,
+> laufen aber nur, bevor einer von ihr dran war, und dann rücken alle SC mit. Wer läuft, greift in
+> dieser Runde nicht an (Book 1; SR 20 verbietet nur Schläge und Hiebe): Er setzt von selbst aus, ein
+> NSC mit leerer Waffe und Magazin lädt nach, ein SC, der nachladen könnte, wählt selbst. Langes
+> Drücken setzt das Band des vorgewählten SC frei.
 >
 > ✱ App: Auf Band 0 unterscheidet sie Close (Berührung) und Short. Das Startband innerhalb einer
 > Reichweite ist gleichverteilt gewürfelt (Medium 1W2, Long 1W8, Very Long 1W10).
 
 ### Bewegungsstatus
 
-*SR 20–21, „Movement“.* App: ◐ ✱ (Gehen 1 Band und Laufen 2 Bands je Partei und Runde, wer läuft, greift nicht an; Status je Kämpfer und Ausweichen ○)
+*SR 20–21, „Movement“.* App: ◐ ✱ (Gehen 1 Band und Laufen 2 Bands je SC bzw. NSC-Gruppe und Runde, wer läuft, greift nicht an; Ausweichen ✔ ✱; Ansage vor der Runde und gleichzeitige Bewegung ○)
 
 Vor jeder Runde sagt jeder Kämpfer seinen **Bewegungsstatus** an, dazu, ob er **geht** (1 Band),
 **läuft** (2 Bands) oder **fährt**. Alle bewegen sich **gleichzeitig**, jedes Mitglied einer Partei
@@ -471,6 +473,12 @@ für sich.
 | **Close Range** (näher) | Auf den Gegner zu, gehend 1 Band oder laufend (auch reitend oder fahrend) etwa 2. **Laufen** kostet Kraft: Es zählt als **Combat Blow** (verbraucht einen Punkt der [Ausdauer](#wirkung-der-attribute-und-ausdauer)) und verbietet in dieser Runde Schläge und Hiebe. Von Short auf Close zählt als ein Band. |
 | **Open Range** (weiter weg) | Vom Gegner weg, wie Close Range; aber **aus Close** kommt man ohne Laufen in einem Zug bis ein Band weit weg. |
 | **Stand** | Man bewegt sich nicht. |
+
+> ✱ App: Ausweichen ist ein Zug statt eines angesagten Status: Wer am Zug ist, SC oder NSC, weicht
+> statt anzugreifen aus und gilt bis zu seinem nächsten Zug als ausweichend (↯ auf der Karte). Gehen
+> darf er vorher im selben Zug (Hausregel). Wer ausweicht, ist kein Nachbar eines Feuerstoßes oder
+> einer Schrotflinte. Die Stufen „näher“, „weiter weg“ und „Stand“ ergeben sich aus den Pfeilen der
+> Leiste.
 
 Mehr als 20 Bands vom nächsten Gegner: entkommen ([Entkommen](#entkommen-und-ausweichen)).
 
@@ -496,7 +504,7 @@ Ziel** aus der anderen Partei. Alle DMs werden addiert (SR 21).
 | Ungeübte Waffe (Angreifer −5, Verteidiger +3) | ○ ([SR 22](#fertigkeit-parieren-und-ungeübte-waffen)) |
 | Rüstung | ✔ |
 | Reichweite | ✔ |
-| Verteidiger weicht aus (Evading) | ○ ([Bewegungsstatus](#bewegungsstatus), SR 20) |
+| Verteidiger weicht aus (Evading) | ✔ ✱ ([Bewegungsstatus](#bewegungsstatus), SR 20) |
 | Verteidiger in Deckung oder verborgen | ○ ([Deckung](#deckung-und-verbergen), SR 27) |
 | Gruppentreffer durch Schrotflinte | ✔ ✱ ([Feuerstoß und Schrot](#feuerstoß-und-schrot-nach-book-1), SR 26) |
 | Gruppentreffer durch Autofeuer | ✔ ✱ ([Feuerstoß und Schrot](#feuerstoß-und-schrot-nach-book-1), SR 26; [B4](#feuerregeln-aus-book-4)) |
@@ -523,8 +531,8 @@ Wie viele volle Schläge die Ausdauer erlaubt, steht unter
 ### Wirkung der Attribute und Ausdauer
 
 *SR 21–22, „The Effects of Characteristics“.* App: ✔ (STR und DEX ohne die Wunden des laufenden
-Kampfs, nach der Errata unten); Ausdauer ✔ ✱, siehe `domain-model.md`, *Ausdauer*: Laufen kostet jeden Kämpfer der Partei einen
-Combat-Schlag, weil die App je Partei bewegt; die 30 Minuten Rast hält sie nicht fest, jede Begegnung
+Kampfs, nach der Errata unten); Ausdauer ✔ ✱, siehe `domain-model.md`, *Ausdauer*: Laufen kostet den SC, der
+läuft, einen Combat-Schlag, bei der NSC-Gruppe jeden NSC, weil die NSC als Gruppe gehen; die 30 Minuten Rast hält sie nicht fest, jede Begegnung
 beginnt mit der END, die der Kämpfer dann hat)
 
 - **Wunden ändern die Attribute nicht**, soweit sie Schläge, Hiebe und Schüsse beeinflussen: Wer
@@ -556,7 +564,7 @@ beginnt mit der END, die der Kämpfer dann hat)
 
 *SR 22, „Expertise“.* App: ◐ (Angriff und Parieren ✔ ✱; ungeübt ○). ✱ Als lange Gewehre parieren Rifle,
 Carbine, Automatic Rifle und Shotgun; ein NSC pariert mit einem Gewehr mit Stufe 0, weil er nur eine
-Fertigkeit in seiner Waffe hat. Ausweichen gibt es noch nicht.
+Fertigkeit in seiner Waffe hat. Wer ausweicht, pariert nicht.
 
 - **Angriff:** Die Stufe in der Waffe ist ein positiver DM; wer die Waffe wechselt, nimmt die Stufe der
   neuen.

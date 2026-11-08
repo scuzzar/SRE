@@ -132,6 +132,16 @@ function FighterCard({ fighter: f, selection, onHeal, impacts }: { fighter: Figh
           )}
           <span className="fcard-title">{f.name}</span>
           <StateIcon state={f.state} />
+          {f.evading && (
+            <span className="fcard-evade" title="weicht aus" aria-label="weicht aus">
+              ↯
+            </span>
+          )}
+          {f.escaped && (
+            <span className="fcard-escaped" title="entkommen, über 20 Bands">
+              weg
+            </span>
+          )}
           {f.leader && (
             <span className="fcard-leader" aria-hidden="true">
               ★

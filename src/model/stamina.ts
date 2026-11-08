@@ -1,10 +1,10 @@
 import { anyCharacterOf, appendLog, type Campaign, type CharacterId } from './campaign';
 import { fighterOf, weaponSkill } from './combat';
-import { currentEncounter, encounterStart, type Encounter } from './encounter';
-import { fightOrder, fightState, sideOf, surprisingOf, withEncounter } from './fight';
+import { currentEncounter, distanceOf, encounterStart, type Encounter } from './encounter';
+import { fightOrder, fightState, isEvading, sideOf, surprisingOf, withEncounter } from './fight';
 import type { AttackResult, DamageRoll, Strike } from './log';
 import type { Random } from './ports';
-import { weaponOf, type Weapon } from './reference';
+import { weaponOf, type Range, type Weapon } from './reference';
 import { canFight, historyOf, uppOf, victimOf, woundStateOf, type WoundState } from './wounds';
 
 /** Battle Dress gibt unbegrenzte Ausdauer (S. 4). */
@@ -28,7 +28,7 @@ function encounterAttacks(campaign: Campaign, encounter: Encounter): readonly At
 /**
  * `/blows`: wie viele Combat-Schläge der Kämpfer in der laufenden Begegnung noch hat (SR 20, 22):
  * END zu Beginn der Begegnung (mit den Wunden von vorher) minus seine Angriffe mit der Schlagart
- * Combat und minus die Läufe seiner Partei, nie unter 0. `undefined` ohne laufende Begegnung und
+ * Combat und minus die Läufe (beim SC seine, beim NSC die seiner Gruppe), nie unter 0. `undefined` ohne laufende Begegnung und
  * mit Battle Dress (unbegrenzt).
  */
 export function blowsOf(campaign: Campaign, who: CharacterId): number | undefined {
@@ -37,7 +37,7 @@ export function blowsOf(campaign: Campaign, who: CharacterId): number | undefine
   const upp = uppOf(campaign, who);
   const start = historyOf(campaign.log, upp, who, encounterStart(campaign.log, encounter)).wounds;
   const used = encounterAttacks(campaign, encounter).filter((e) => e.strike === 'combat' && e.for === who).length;
-  const runs = (sideOf(campaign, who) === 'pcs' ? encounter.pcRuns : encounter.npcRuns) ?? 0;
+  const runs = (sideOf(campaign, who) === 'pcs' ? distanceOf(encounter, who).runs : encounter.npcRuns) ?? 0;
   return Math.max(0, upp.end - start.end - used - runs);
 }
 
@@ -68,15 +68,36 @@ export function strikeDm(weapon: Weapon, strike: Strike | undefined): number {
 /**
  * Die Parade des Ziels gegen einen Schlag oder Hieb (SR 22), als negativer DM: seine Stufe in seiner
  * Faust- oder Nahkampfwaffe; ein langes Gewehr pariert als Cudgel. Wer nicht kämpfen kann, pariert
- * nicht; gegen Schüsse gibt es keine Parade.
+ * nicht, wer ausweicht, auch nicht; gegen Schüsse gibt es keine Parade.
  */
 export function parryDm(campaign: Campaign, defender: CharacterId | undefined, weapon: Weapon): number {
   if (!defender || !isMelee(weapon)) return 0;
   const fighter = fighterOf(campaign, defender);
-  if (!canFight(fighter.state)) return 0;
+  if (!canFight(fighter.state) || isEvading(campaign, defender)) return 0;
   if (isMelee(fighter.weapon)) return 0 - fighter.skill || 0;
   if (!LONG_GUNS.includes(fighter.weapon.id)) return 0;
   return 0 - (weaponSkill(anyCharacterOf(campaign, defender), weaponOf('cudgel'))?.level ?? 0) || 0;
+}
+
+/** Der DM auf Angriffe gegen einen, der ausweicht, nach der Reichweite (SR 20). */
+const EVADE_DM: Record<Range, number> = { close: -1, short: -1, medium: -2, long: -4, veryLong: -4 };
+
+/**
+ * Weicht das Ziel aus und kann kämpfen, bekommt jeder Angriff auf es einen DM nach der Reichweite
+ * (SR 20): −1 auf Close oder Short, −2 auf Medium, −4 auf Long oder Very Long.
+ */
+export function evadeDm(campaign: Campaign, defender: CharacterId | undefined, range: Range): number {
+  return evadesNow(campaign, defender) ? evadeDmAt(range) : 0;
+}
+
+/** Weicht dieser Kämpfer aus und kann kämpfen? Nur dann zählt das Ausweichen. */
+export function evadesNow(campaign: Campaign, defender: CharacterId | undefined): boolean {
+  return defender !== undefined && isEvading(campaign, defender) && canFight(woundStateOf(campaign, defender));
+}
+
+/** Der DM des Ausweichens auf diese Reichweite. */
+export function evadeDmAt(range: Range): number {
+  return EVADE_DM[range];
 }
 
 /** Setzt den Alarm auf die laufende Runde, wenn die Überraschung noch hält und es noch keinen gab. */
