@@ -198,7 +198,7 @@ W6, wie angegeben.
 > einer militärischen Art.
 > Wie viel Munition die NSC haben, sagt die Regel nicht. Bisher zählen sie keine; mit dem Umbau der
 > NSC zu vollständigen Charakteren (2026-11-08c, noch nicht umgesetzt) bekommt jede Schusswaffe
-> geladen und zwei Magazine dazu (Hausregel), und NSC laden nach wie SC.
+> geladen und 1W4 Magazine dazu (Hausregel), und NSC laden nach wie SC.
 
 ### Reaktion
 

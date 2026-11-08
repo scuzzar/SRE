@@ -156,7 +156,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Verweise auf `Character`; Angriff und Angriffsergebnis verweisen nur noch auf Angreifer (`for`,
 > immer einer) und Ziel (`against`) statt auf vier Arten; die Heilung nur noch auf einen Charakter
 > (`for`); `became` entfällt, Übernehmen heißt Umhängen. NSC zählen jetzt Munition wie SC (geladen
-> und zwei Magazine); dafür ändert sich das Bild nicht. Der Ausschnitt dazu liegt unter
+> und 1W4 Magazine); dafür ändert sich das Bild nicht. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-08-nsc-als-charaktere.png`](changes/2026-11-08-nsc-als-charaktere.png).
 >
 > Am 8. November 2026 freigegeben: **Überraschung als erster Wurf im Kampf** (siehe
@@ -433,7 +433,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - *Dateien und Spielstände von vor 2026-11-08c* (NSC der Begegnung als Charaktere) werden beim
     Laden umgeschrieben: Jeder NSC wird ein Charakter der Begegnung mit derselben Id, wie unter
     *Begegnung* beschrieben (Fertigkeit als Stufe, Waffe und Rüstung im Besitz, eine Schusswaffe
-    voll geladen mit zwei Magazinen), der Anführer zum
+    voll geladen mit zwei Magazinen, fest, damit das Laden nicht würfelt), der Anführer zum
     Verweis `leader`. Ein schon übernommener NSC (`became`) fällt aus der Begegnung, und alle
     Verweise des Logs auf ihn zeigen auf den Charakter, der er wurde; dieser hat damit die Wunden
     aus dem Kampf, wie es jetzt beim Übernehmen ist. Im Angriffsergebnis wird `by` zu `for` und
@@ -759,7 +759,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (`EncounterType.military`; SR 50: „only military troops and leaders will wear combat armor or
     battle dress“). Die Fertigkeit, die seine Waffe benutzt, hat er als echte Stufe (`skills`) 1.
     NSC zählen **Munition** wie SC (siehe *Munition*): Eine Schusswaffe bekommt er geladen und dazu
-    zwei Magazine (`Weapon.ammo`) im Besitz (Hausregel; SR 50 sagt nichts zur Menge).
+    **1W4 Magazine** (`Weapon.ammo`) im Besitz (Hausregel; SR 50 sagt nichts zur Menge). Der Wurf
+    gehört zum Erzeugen wie die Attribute und steht nicht im Log; was bleibt, ist die Anzahl im Besitz.
   - *Anführer* (L): der erste NSC; die Begegnung verweist auf ihn (`leader`). Er bekommt die beste
     Ausrüstung bis zum TL und Fertigkeit 2: die
     beste **Schusswaffe**, auch ohne G (gibt es bis zum TL keine, die beste Klinge), und die beste

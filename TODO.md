@@ -39,7 +39,7 @@ werden vollständig als `Character` erzeugt und hängen an der Begegnung, nicht 
   verschwinden, wo sie nur wegen der zwei Klassen da war.
 - [ ] Kampagnendatei: alte Spielstände beim Laden umschreiben (NSC zu Charakteren, die vier Verweise
   des Angriffs zu zwei, der Patient der Heilung). Die Ids bleiben, damit der Log weiter stimmt.
-- [ ] NSC zählen Munition wie SC (entschieden am 8. November 2026): Schusswaffe geladen, zwei
+- [ ] NSC zählen Munition wie SC (entschieden am 8. November 2026): Schusswaffe geladen, 1W4
   Magazine im Besitz; leer lädt der NSC nach, ohne Magazin greift er mit den Händen an.
 
 ### 2. Ausweichen (Evade), nach dem Umbau
