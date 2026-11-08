@@ -4,7 +4,22 @@
       "Bash(git add:*)",
       "Bash(git -c user.name=Scuzzar -c user.email=scuzzarGalaxy@googlemail.com commit:*)",
       "Bash(git -c user.name=Scuzzar -c user.email=scuzzarGalaxy@googlemail.com merge:*)",
-      "Bash(git push -u origin:*)"
+      "Bash(git -c user.name=Scuzzar -c user.email=scuzzarGalaxy@googlemail.com revert:*)",
+      "Bash(git push -u origin:*)",
+      "Bash(git push -q origin:*)",
+      "Bash(git push origin:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git show:*)",
+      "Bash(git merge-base:*)",
+      "Bash(npm run:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npx playwright test:*)",
+      "Bash(bash .claude/skills/domain-model/scripts/render.sh:*)"
     ]
   }
 }
