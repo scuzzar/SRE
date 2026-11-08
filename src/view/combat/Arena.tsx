@@ -9,7 +9,8 @@ import { ImpactMarks, LossFloat, useLongPress } from './FightScreen';
 
 /**
  * Die Kampfsimulation in zwei Spalten: links die SC, rechts die NSC, dazwischen die Entfernung als
- * senkrechte Leiste. Pfeile zeigen, wer wen angreift: gold gestrichelt das gewählte Ziel, rot ein
+ * senkrechte Leiste. Pfeile (rechtwinklig: auf der Seite des Angreifers bis zur Höhe des Ziels, dann
+ * hinüber) zeigen, wer wen angreift: gold gestrichelt das gewählte Ziel, rot ein
  * Treffer, grau ein Fehlschuss; der letzte Angriff bleibt blass stehen. Nur Anzeige; gerechnet wird im Model.
  */
 
@@ -249,14 +250,34 @@ function anchor(root: HTMLElement, id: string, base: DOMRect): { x: number; y: n
   return { x: (side === 'pcs' ? r.right : r.left) - base.left, y: r.top + r.height / 2 - base.top, side };
 }
 
-function curve(root: HTMLElement, from: string, to: string, base: DOMRect): string | undefined {
+function route(root: HTMLElement, from: string, to: string, base: DOMRect): string | undefined {
   const p = anchor(root, from, base);
   const q = anchor(root, to, base);
   if (!p || !q || p.side === q.side) return undefined;
-  // Gerade von Kante zu Kante: So kreuzt der Pfeil die Leiste einmal schräg, statt an ihr entlangzulaufen.
-  const end = q.x + (p.side === 'pcs' ? -3 : 3);
-  return `M${p.x.toFixed(1)},${p.y.toFixed(1)} L${end.toFixed(1)},${q.y.toFixed(1)}`;
+  // Rechtwinklig: auf der eigenen Seite der Lücke senkrecht bis auf die Höhe des Gegners, dann waagrecht
+  // hinüber. So läuft der Pfeil neben der Leiste und kreuzt sie nur einmal, quer.
+  const dir = p.side === 'pcs' ? 1 : -1;
+  const lane = p.x + dir * LANE_PX;
+  const end = q.x - dir * 3;
+  const dy = q.y - p.y;
+  const f = (n: number) => n.toFixed(1);
+  if (Math.abs(dy) < 2) return `M${f(p.x)},${f(p.y)} H${f(end)}`;
+  const sy = Math.sign(dy);
+  const r = Math.min(CORNER_PX, Math.abs(dy) / 2, LANE_PX);
+  return [
+    `M${f(p.x)},${f(p.y)}`,
+    `H${f(lane - dir * r)}`,
+    `Q${f(lane)},${f(p.y)} ${f(lane)},${f(p.y + sy * r)}`,
+    `V${f(q.y - sy * r)}`,
+    `Q${f(lane)},${f(q.y)} ${f(lane + dir * r)},${f(q.y)}`,
+    `H${f(end)}`,
+  ].join(' ');
 }
+
+/** Wie weit der senkrechte Teil eines Pfeils von der Kante des Angreifers in der Lücke läuft. */
+const LANE_PX = 9;
+/** Rundung der Ecken eines Pfeils. */
+const CORNER_PX = 5;
 
 /**
  * Die Pfeile über der Arena. Die Lage kommt aus den Karten selbst; sie wird nach jedem Zeichnen und
@@ -279,14 +300,14 @@ function Arrows({ sim, arena, quiet }: { sim: SimView; arena: React.RefObject<HT
         const fresh = !flown.has(s.key);
         // Solange ein Popup offen ist, wartet ein neuer Pfeil; sonst flöge er ungesehen dahinter.
         if (fresh && quiet) continue;
-        const d = curve(root, s.from, s.to, base);
+        const d = route(root, s.from, s.to, base);
         if (d) next.push({ key: s.key, d, kind: s.hit ? 'hit' : 'miss', fresh });
       }
       if (plan) {
-        const d = curve(root, plan.from, plan.to, base);
+        const d = route(root, plan.from, plan.to, base);
         if (d) next.push({ key: `plan-${plan.from}-${plan.to}`, d, kind: 'plan', fresh: false });
         for (const n of neighbours) {
-          const nd = curve(root, plan.from, n, base);
+          const nd = route(root, plan.from, n, base);
           if (nd) next.push({ key: `n-${n}`, d: nd, kind: 'neighbour', fresh: false });
         }
       }
