@@ -96,6 +96,8 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await page.locator('.fight-dock .atk:not(:disabled)').first().click();
   const dialog = page.getByRole('alertdialog');
   await dialog.click();
+  // Erst das Urteil abwarten; vorher steht in der Überschrift noch nichts Entscheidendes.
+  await expect(dialog.getByRole('heading')).toHaveText(/TREFFER|DANEBEN/);
   const hit = (await dialog.getByRole('heading').textContent()) === 'TREFFER';
   await dialog.getByRole('button', { name: 'Weiter' }).click();
   if (hit) {

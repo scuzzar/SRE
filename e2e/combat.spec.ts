@@ -21,6 +21,7 @@ test('Kampf: Kira zieht die Pistole, wählt das Ziel in der Tabelle und greift a
   const dialog = page.getByRole('alertdialog');
   await expect(dialog).toContainText('Angriff');
   await dialog.click();
+  await expect(dialog.getByRole('heading')).toHaveText(/TREFFER|DANEBEN/);
   const verdict = await dialog.getByRole('heading').textContent();
   if (verdict === 'TREFFER') {
     await dialog.getByRole('button', { name: 'Schaden würfeln (3W6)' }).click();

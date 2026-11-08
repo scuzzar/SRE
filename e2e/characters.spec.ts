@@ -126,7 +126,9 @@ test('Wer im Log vorkommt, wird ausgeblendet statt gelöscht und lässt sich wie
   await strip(page).getByRole('button', { name: 'Jonas Reyl nach oben' }).click();
   await top(page, 'Jonas Reyl').getByRole('button', { name: 'Steward-1' }).click();
   await dock(page).getByRole('button', { name: 'Probe würfeln' }).click();
+  await expect(page.getByRole('alertdialog').getByRole('heading')).toHaveText(/ERFOLG|FEHLSCHLAG/);
   await page.getByRole('alertdialog').getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByRole('alertdialog')).toBeHidden();
   await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
 
   const jonas = card(page, 'Jonas Reyl');
@@ -157,7 +159,11 @@ test('Logeintrag löschen: lange drücken, dann bestätigen; danach lässt sich 
   await strip(page).getByRole('button', { name: 'Jonas Reyl nach oben' }).click();
   await top(page, 'Jonas Reyl').getByRole('button', { name: 'Steward-1' }).click();
   await dock(page).getByRole('button', { name: 'Probe würfeln' }).click();
-  await page.getByRole('alertdialog').getByRole('button', { name: 'Weiter' }).click();
+  // Erst das Urteil abwarten: Solange die Würfel rollen, überspringt ein Tippen nur die Animation.
+  const result = page.getByRole('alertdialog');
+  await expect(result.getByRole('heading')).toHaveText(/ERFOLG|FEHLSCHLAG/);
+  await result.getByRole('button', { name: 'Weiter' }).click();
+  await expect(result).toBeHidden();
   await dock(page).getByRole('button', { name: 'Probe abbrechen' }).click();
   await page.getByRole('button', { name: '2W6' }).click();
   await expect(page.locator('.entry')).toHaveCount(2);
