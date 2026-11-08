@@ -9,7 +9,6 @@ import {
   checkRounds,
   currentEncounter,
   DomainError,
-  encounterRangeOf,
   anyCharacterOf,
   fightOrder,
   fighterOf,
@@ -18,6 +17,12 @@ import {
   livingCharacters,
   neighboursOf,
   parryDm,
+  evadesNow,
+  evadeDmAt,
+  isEscaped,
+  isEvading,
+  rangeBetween,
+  distanceOf,
   sideOf,
   strikeDm,
   strikeOf,
@@ -151,11 +156,13 @@ export function chooseWeakened(attack: Attack, weakened: boolean): Attack {
   return { ...attack, weakened };
 }
 
-/** Was zum DM eines Angriffs neben der Matrix kommt: die Schlagart (geschwächt) und die Parade des Ziels (SR 22). */
+/** Was zum DM eines Angriffs neben der Matrix kommt: die Schlagart (geschwächt), die Parade des Ziels (SR 22) und ob es ausweicht (SR 20). */
 export interface AttackExtras {
   readonly strike: Strike | undefined;
   readonly weakened: number;
   readonly parry: number;
+  /** Das Ziel weicht aus: Der DM dazu hängt von der Reichweite ab. */
+  readonly evading: boolean;
 }
 
 /** Schlagart und Parade dieses Angriffs; ein NSC schwächt nie freiwillig. */
@@ -163,7 +170,7 @@ export function attackExtras(attack: Attack, campaign: Campaign): AttackExtras {
   const attacker = attackerOf(attack, campaign);
   const defender = defenderOf(attack, campaign);
   const strike = strikeOf(campaign, attacker.who, attacker.weapon, defender?.state, attack.weakened === true && sideOf(campaign, attacker.who) === 'pcs');
-  return { strike, weakened: strikeDm(attacker.weapon, strike), parry: parryDm(campaign, defender?.who, attacker.weapon) };
+  return { strike, weakened: strikeDm(attacker.weapon, strike), parry: parryDm(campaign, defender?.who, attacker.weapon), evading: evadesNow(campaign, defender?.who) };
 }
 
 /**
@@ -176,19 +183,21 @@ export function aimAt(attack: Attack, campaign: Campaign, target: CharacterId | 
   const defender = fighterOf(campaign, encounterFighter(campaign, target));
   if (sideOf(campaign, target) === sideOf(campaign, attackerIdOf(campaign))) throw new DomainError(`${defender.name} gehört zur eigenen Partei.`);
   if (defender.state === 'dead') throw new DomainError(`${defender.name} ist tot.`);
+  if (isEscaped(campaign, target)) throw new DomainError(`${defender.name} ist entkommen.`);
   return withRange({ ...rest, against: target, armor: defender.armor }, campaign);
 }
 
 /**
  * Der Angriff dessen, der in der Kampfsimulation am Zug ist, auf dieses Ziel, mit der Reichweite
- * aus dem Band der Begegnung; sind die Parteien entkommen, hat er keine.
+ * aus der Entfernung des SC (Angreifer oder Ziel); ist er entkommen, gibt es keinen Angriff.
  */
 export function turnAttack(campaign: Campaign, target: CharacterId): Attack {
   const turn = turnOf(campaign);
   const encounter = currentEncounter(campaign);
   if (!turn || !encounter) throw new DomainError('Es ist keiner am Zug.');
-  if (hasRun(campaign, turn.side)) throw new DomainError(`Die ${turn.side === 'pcs' ? 'SC' : 'NSC'} sind in dieser Runde gelaufen und greifen nicht an.`);
-  const range = encounterRangeOf(encounter);
+  if (hasRun(campaign, turn)) throw new DomainError(turn.side === 'pcs' ? `${anyCharacterOf(campaign, turn.id).name} ist in dieser Runde gelaufen und greift nicht an.` : 'Die NSC sind in dieser Runde gelaufen und greifen nicht an.');
+  if (isEscaped(campaign, turn.id)) throw new DomainError(`${anyCharacterOf(campaign, turn.id).name} ist entkommen und greift nicht an.`);
+  const range = rangeBetween(campaign, encounter, turn.id, target);
   return { ...aimAt({}, campaign, target), ...(range === undefined ? {} : { range }) };
 }
 
@@ -211,7 +220,8 @@ export function keepTarget(attack: Attack, campaign: Campaign): Attack {
 
 function odds(attacker: Fighter, armor: ArmorClass, range: Range, burst: boolean, extras?: AttackExtras): AttackOdds | undefined {
   // STR und DEX zählen ohne die Wunden aus dem laufenden Kampf (SR 21).
-  const dm = attackDm({ upp: attacker.fighting, skill: attacker.skill }, attacker.weapon, armor, range, rowOf(attacker.weapon, burst), extras);
+  const extra = extras && { weakened: extras.weakened, parry: extras.parry, evade: extras.evading ? evadeDmAt(range) : 0 };
+  const dm = attackDm({ upp: attacker.fighting, skill: attacker.skill }, attacker.weapon, armor, range, rowOf(attacker.weapon, burst), extra);
   if (!dm) return undefined;
   const need = ATTACK_TARGET - dm.total;
   return { dm, target: ATTACK_TARGET, need, chance: chance2d6(need) };
@@ -244,15 +254,22 @@ function partyOf(campaign: Campaign, who: CharacterId): readonly CharacterId[] {
 
 /**
  * Die Nachbarn, die ein Angriff auf `who` mit trifft (Hausregel): Infrage kommen Kämpfer seiner
- * Partei, die nicht tot sind. Beim Feuerstoß der nächste darüber und der nächste darunter in der
- * Liste; bei der Shotgun bis zu `neighbours` ausgeloste.
+ * Partei, die nicht tot sind und nicht ausweichen (Book 1), bei einem SC als Ziel nur SC mit
+ * derselben Entfernung. Beim Feuerstoß der nächste darüber und der nächste darunter in der Liste;
+ * bei der Shotgun bis zu `neighbours` ausgeloste.
  */
 export function neighbourTargets(campaign: Campaign, who: CharacterId, weapon: Weapon, burst: boolean, random: Random): readonly CharacterId[] {
   const most = neighboursOf(weapon, burst);
   if (most === 0) return [];
   const party = partyOf(campaign, who);
   const at = party.indexOf(who);
-  const alive = (c: CharacterId) => woundStateOf(campaign, c) !== 'dead';
+  const encounter = currentEncounter(campaign);
+  const place = (c: CharacterId) => {
+    if (!encounter || sideOf(campaign, c) !== 'pcs') return '';
+    const d = distanceOf(encounter, c);
+    return `${d.band}${d.close ? 'c' : ''}`;
+  };
+  const alive = (c: CharacterId) => woundStateOf(campaign, c) !== 'dead' && !isEvading(campaign, c) && place(c) === place(who);
   if (burst) {
     const above = party.slice(0, Math.max(0, at)).reverse().find(alive);
     const below = party.slice(at + 1).find(alive);

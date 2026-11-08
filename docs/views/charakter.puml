@@ -119,6 +119,7 @@ hide <<value>> stereotype
   class AttackResult $kampf
   class Recovery $kampf
   class Encounter $begegnung
+  class Distance $begegnung
 
 ' Referenzdaten
   class Skill <<reference>> $charakter {
@@ -198,6 +199,8 @@ Encounter "1" *-- "*" Character : npcs {ordered}
 Encounter "*" --> "0..1" Character : leader
 Encounter "*" --> "*" Character : acted
 Encounter "*" --> "0..1" Character : /turn
+Distance "*" --> "1" Character : of
+Encounter "*" --> "*" Character : evading
 Character "*" --> "0..1" Item : wears
 
 ' Karte

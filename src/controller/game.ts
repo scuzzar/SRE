@@ -35,8 +35,10 @@ import {
   setWears,
   fighterOf,
   endTurn,
-  setBand,
+  setDistance,
   moveSide,
+  evadeTurn,
+  isEscaped,
   currentEncounter,
   livingCharacters,
   canFight,
@@ -575,17 +577,19 @@ export class GameController {
       const keep = npcs.some((n) => n.id === target) ? target : npcs[0]?.id;
       return { campaign: focusOf(campaign)?.id === turn.id ? campaign : setFocus(campaign, turn.id), simTarget: keep };
     }
+    // Ein entkommener SC ist kein Ziel; vorgeschlagen wird ein wacher SC in Reichweite, sonst irgendeiner.
     const pcs = livingCharacters(campaign);
-    const awake = pcs.filter((c) => canFight(woundStateOf(campaign, c.id)));
-    const pool = awake.length > 0 ? awake : pcs;
+    const near = pcs.filter((c) => !isEscaped(campaign, c.id));
+    const awake = near.filter((c) => canFight(woundStateOf(campaign, c.id)));
+    const pool = awake.length > 0 ? awake : near.length > 0 ? near : pcs;
     const pick = pool[this.deps.random.int(0, pool.length - 1)]!;
     return { campaign: focusOf(campaign)?.id === pick.id ? campaign : setFocus(campaign, pick.id), simTarget: pick.id };
   }
 
-  /** Beendet den Zug und bereitet den nächsten vor. */
-  private nextTurn(campaign: Campaign, rest: Partial<ControllerState> = {}): void {
+  /** Beendet den Zug (mit `evade` als Ausweichen) und bereitet den nächsten vor. */
+  private nextTurn(campaign: Campaign, rest: Partial<ControllerState> = {}, evade = false): void {
     // Hat der Zug den Kampf entschieden, ist keiner mehr dran; dann gibt es nichts zu beenden.
-    const ended = turnOf(campaign) ? endTurn(campaign) : campaign;
+    const ended = turnOf(campaign) ? (evade ? evadeTurn(campaign) : endTurn(campaign)) : campaign;
     const prepared = this.prepareTurn(ended, this.state.simTarget);
     this.change(prepared.campaign, { ...rest, simTarget: prepared.simTarget, simBurst: undefined, simWeakened: undefined, combatNote: undefined });
   }
@@ -621,12 +625,12 @@ export class GameController {
     });
   }
 
-  /** Setzt die Entfernung der laufenden Begegnung auf ein Band (21: entkommen); Berührung nur auf Band 0. */
-  setBand(band: number, close = false): void {
-    this.inFight(() => this.change(setBand(this.campaign, band, close), { combatNote: undefined }));
+  /** Setzt die Entfernung eines SC frei auf ein Band (21: entkommen); Berührung nur auf Band 0. */
+  setBand(pc: string, band: number, close = false): void {
+    this.inFight(() => this.change(setDistance(this.campaign, pc, band, close), { combatNote: undefined }));
   }
 
-  /** Die Partei am Zug geht ein Band näher (−1) oder weiter weg (+1): 1 Band gehend, ein zweites laufend. */
+  /** Wer am Zug ist, geht ein Band näher (−1) oder weiter weg (+1), ein SC für sich, ein NSC mit der Gruppe: 1 Band gehend, ein zweites laufend. */
   moveBand(step: -1 | 1): void {
     this.inFight(() => {
       const before = turnOf(this.campaign)?.id;
@@ -697,6 +701,11 @@ export class GameController {
   /** Der Kämpfer am Zug setzt aus. */
   skipTurn(): void {
     this.inFight(() => this.nextTurn(this.campaign));
+  }
+
+  /** Der Kämpfer am Zug weicht aus (SR 20): kein Angriff, dafür DM auf Angriffe gegen ihn bis zu seinem nächsten Zug. */
+  evade(): void {
+    this.inFight(() => this.nextTurn(this.campaign, {}, true));
   }
 
   /**

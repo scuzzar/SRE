@@ -143,25 +143,49 @@ function FightHead({ sim }: { sim: SimView }) {
   );
 }
 
-/** Die Entfernung als Text: „Long, Band 4“, „Close, Berührung“ oder „entkommen“. */
+/** Die Entfernung des vorgewählten SC als Text: „Long, Band 4“, „Close, Berührung“ oder „entkommen“. */
 export function distanceText(sim: SimView): string {
   if (sim.escaped || !sim.range) return 'entkommen, über 20 Bands';
   return `${rangeText[sim.range]}, ${sim.close ? 'Berührung' : `Band ${sim.band}`}`;
 }
 
-/** Schritte auf dem Strahl: 0 Berührung, 1 Band 0, 2–21 Band 1–20, 22 entkommen. */
-const LAST_STEP = 21;
-/** Abstand des Strahls zu seinem Rand in px, damit die Marken an den Enden ganz zu sehen sind (wie `--pad` im CSS). */
-const RAY_PAD = 6;
+/** Die Entfernungen aller SC knapp: stehen alle gleich, wie `distanceText`, sonst je SC das Band. */
+export function distancesText(sim: SimView): string {
+  const first = sim.positions[0];
+  if (!first || sim.positions.every((p) => p.band === first.band && p.close === first.close)) return first ? positionText(sim, first) : startText(sim);
+  return sim.positions.map((p) => `${p.name.split(' ')[0]} ${p.escaped ? 'weg' : p.close ? 'Berührung' : `Band ${p.band}`}`).join(', ');
+}
+
+function positionText(sim: SimView, p: SimView['positions'][number]): string {
+  if (p.escaped) return 'entkommen, über 20 Bands';
+  if (p.close) return 'Close, Berührung';
+  const range = sim.bands.find((b) => b.range !== 'close' && b.from <= p.band && p.band <= b.to)!.range;
+  return `${rangeText[range]}, Band ${p.band}`;
+}
+
+/** Das Startband als Text, für die Übersicht der Begegnung. */
+export function startText(sim: SimView): string {
+  const { range, band, close } = sim.start;
+  return range ? `${rangeText[range]}, ${close ? 'Berührung' : `Band ${band}`}` : 'über 20 Bands';
+}
+
+/** Schritte auf der Leiste, von rechts nach links: 0 Berührung, 1 Band 0, 2–21 Band 1–20, 22 entkommen. */
+const LAST_STEP = 22;
+/** Abstand der Leiste zu ihrem Rand in px, damit die Marken an den Enden ganz zu sehen sind (wie `--pad` im CSS). */
+const RAY_PAD = 10;
+/** Marken, die näher als so viele Schritte beieinander stehen, kommen übereinander. */
+const STACK_STEPS = 1.5;
 const rangeAbbr: Record<Range, string> = { close: 'C', short: 'C/S', medium: 'M', long: 'L', veryLong: 'VL' };
-const stepOf = (sim: SimView) => (sim.close ? 0 : sim.band + 1);
-const bandOfStep = (sim: SimView, step: number) => (step === 0 ? sim.bands.find((b) => b.range === 'close')! : step === 1 ? sim.bands.find((b) => b.range === 'short')! : sim.bands.find((b) => b.from > 0 && b.from <= step - 1 && step - 1 <= b.to)!);
+const stepOfBand = (band: number, close: boolean) => (close ? 0 : Math.min(band + 1, LAST_STEP));
+const bandOfStep = (sim: SimView, step: number) => (step <= 1 ? sim.bands.find((b) => b.range === (step === 0 ? 'close' : 'short'))! : sim.bands.find((b) => b.from > 0 && b.from <= step - 1 && step - 1 <= b.to));
 
 /**
- * Die Entfernung unten im Zug, über den Angriffsknöpfen: links die Reichweite, daneben der Strahl
- * mit einem Punkt je Band und Strichen an den Grenzen, zwischen zwei Pfeilen. ◀ geht ein Band
- * näher, ▶ weiter weg, nach den Regeln für die Partei am Zug (1 Band gehend, 2 laufend). Langes
- * Drücken auf den Strahl setzt das Band frei. Wohin die Waffe am Zug nicht reicht, ist gestrichelt.
+ * Die Entfernung unten im Zug, über den Angriffsknöpfen: eine Leiste für alle. Rechts fest die NSC
+ * (▲) auf Band 0, links davon jeder SC mit seiner Marke, je weiter weg, desto weiter links; ganz links
+ * Band 20, dahinter „weg“ (entkommen). Gold gefüllt ist der vorgewählte SC (am Zug, beim NSC-Zug das
+ * Ziel); über der Leiste seine Reichweite. ▶ geht ein Band näher, ◀ weiter weg: am SC-Zug der SC, am
+ * NSC-Zug rücken alle SC. Langes Drücken setzt das Band des vorgewählten SC frei. Wohin die Waffe am
+ * Zug nicht reicht, ist die Leiste gestrichelt.
  */
 function RangeBar({ sim }: { sim: SimView }) {
   const game = useGame();
@@ -169,81 +193,105 @@ function RangeBar({ sim }: { sim: SimView }) {
   const ray = useRef<HTMLDivElement>(null);
   const free = useLongPress(() => {
     const box = ray.current?.getBoundingClientRect();
-    if (!box) return;
-    const s = Math.min(LAST_STEP, Math.max(0, Math.round(((pointer.current - box.left - RAY_PAD) / (box.width - 2 * RAY_PAD)) * LAST_STEP)));
-    game.setBand(s === 0 ? 0 : s - 1, s === 0);
+    if (!box || sim.focus === undefined) return;
+    const share = (pointer.current - box.left - RAY_PAD) / (box.width - 2 * RAY_PAD);
+    const s = Math.min(LAST_STEP, Math.max(0, Math.round((1 - share) * LAST_STEP)));
+    game.setBand(sim.focus, s === 0 ? 0 : s - 1, s === 0);
   });
   const move = sim.move;
-  const step = stepOf(sim);
-  const reaches = (s: number) => bandOfStep(sim, s).reaches;
-  const steps = Array.from({ length: LAST_STEP + 1 }, (_, s) => s);
-  const lastReach = steps.filter(reaches).pop() ?? 0;
   const at = (i: number, n?: number) => ({ '--i': String(i), ...(n === undefined ? {} : { '--n': String(n) }) }) as CSSProperties;
+  const reaches = (s: number) => bandOfStep(sim, s)?.reaches ?? false;
+  const steps = Array.from({ length: LAST_STEP }, (_, s) => s);
+  const lastReach = steps.filter(reaches).pop() ?? 0;
   const zones = sim.bands.filter((b) => b.range !== 'close');
-  const moveText = move ? `${sideName[move.side]} ${move.ran ? 'gelaufen, kein Angriff' : move.moved === 1 ? (move.can ? 'gegangen · 1 mehr: laufen' : 'gegangen') : '1 Band gehen, 2 laufen'}` : 'keiner am Zug';
+  const focusStep = stepOfBand(sim.band, sim.close);
+  // Wer sich bewegt: am SC-Zug der SC, am NSC-Zug alle SC; danach richten sich die Pfeile.
+  const moving = move?.pc !== undefined ? sim.positions.filter((p) => p.id === move.pc) : sim.positions;
+  const canCloser = move?.can === true && moving.some((p) => !p.close);
+  const canFarther = move?.can === true && moving.some((p) => !p.escaped);
+  const mover = move === undefined ? undefined : move.pc === undefined ? 'NSC' : (sim.positions.find((p) => p.id === move.pc)?.name.split(' ')[0] ?? 'SC');
+  const moveText = move ? `${mover} ${move.ran ? 'gelaufen, kein Angriff' : move.moved === 1 ? (move.can ? 'gegangen · 1 mehr: laufen' : 'gegangen') : '1 Band gehen, 2 laufen'}` : 'keiner am Zug';
+  const focusName = sim.positions.find((p) => p.focus)?.name.split(' ')[0];
+  // Marken übereinander, wenn sie zu nah beieinander stehen; die vorgewählte zuunterst.
+  const placed: { x: number; level: number }[] = [];
+  const marks = [...sim.positions]
+    .sort((a, b) => Number(b.focus) - Number(a.focus))
+    .map((p) => {
+      const x = stepOfBand(p.band, p.close);
+      let level = 0;
+      while (placed.some((q) => q.level === level && Math.abs(q.x - x) < STACK_STEPS)) level++;
+      placed.push({ x, level });
+      return { p, x, level };
+    });
   const step1 = (dir: -1 | 1) => {
     haptic('pick');
     game.moveBand(dir);
   };
   return (
     <>
-    <div className="ray-range">
-      <div className="ray-now" aria-live="polite">
-        <b>{sim.escaped || !sim.range ? 'Entkommen' : rangeText[sim.range]}</b>
-        <span>{sim.escaped ? 'über 20 Bands' : sim.close ? 'Berührung' : `Band ${sim.band}`}</span>
-      </div>
-      <button type="button" className="ray-arrow" aria-label="Ein Band näher" disabled={step === 0 || !move?.can} onClick={() => step1(-1)}>
-        ◀
-      </button>
-      <div
-        className="ray"
-        ref={ray}
-        {...free.handlers}
-        onPointerDown={(e) => {
-          pointer.current = e.clientX;
-          free.handlers.onPointerDown(e);
-        }}
-        onClick={() => free.consumed()}
-        role="img"
-        aria-label={`Entfernung: ${distanceText(sim)}. Lange drücken: frei setzen`}
-      >
-        <span className="ray-line" style={at(0, lastReach)} />
-        {lastReach < LAST_STEP && <span className="ray-line out" style={at(lastReach, LAST_STEP - lastReach)} />}
-        {zones.map((b) => {
-          const first = b.range === 'short' ? 0 : b.from + 1;
-          const tick = b.range === 'short' ? 0 : b.from + 0.5;
-          return (
-            <Fragment key={b.range}>
-              {tick > 0 && <span className="ray-tick" style={at(tick)} />}
-              <span className={b.reaches ? (first === 0 ? 'ray-label first' : 'ray-label') : 'ray-label out'} style={at(tick)}>
-                {rangeAbbr[b.range]}
-              </span>
-            </Fragment>
-          );
-        })}
-        {steps.slice(1).map((s) => (
-          <span key={s} className={reaches(s) ? 'ray-dot' : 'ray-dot out'} style={at(s)} />
-        ))}
-        {!sim.escaped && step > 0 && <span className="ray-line span" style={at(0, step)} />}
-        <span className="ray-pc" style={at(0)} />
-        {sim.escaped ? (
-          <span className="ray-escaped" style={at(LAST_STEP)}>
-            entkommen ▲
+      <p className="ray-now" aria-live="polite">
+        <span>
+          <b>{sim.escaped || !sim.range ? 'Entkommen' : rangeText[sim.range]}</b>
+          {focusName ? `${focusName} · ` : ''}
+          {sim.escaped ? 'über 20 Bands' : sim.close ? 'Berührung' : `Band ${sim.band}`}
+        </span>
+        <span className="muted">halten: frei</span>
+      </p>
+      <div className="ray-range">
+        <button type="button" className="ray-arrow" aria-label="Ein Band weiter weg" disabled={!canFarther} onClick={() => step1(1)}>
+          ◀
+        </button>
+        <div
+          className="ray"
+          ref={ray}
+          {...free.handlers}
+          onPointerDown={(e) => {
+            pointer.current = e.clientX;
+            free.handlers.onPointerDown(e);
+          }}
+          onClick={() => free.consumed()}
+          role="img"
+          aria-label={`Entfernung: ${sim.positions.map((p) => `${p.name} ${p.escaped ? 'entkommen' : p.close ? 'in Berührung' : `Band ${p.band}`}`).join(', ')}. Lange drücken: ${focusName ?? 'SC'} frei setzen`}
+        >
+          <span className="ray-line" style={at(lastReach, lastReach)} />
+          {lastReach < LAST_STEP - 1 && <span className="ray-line out" style={at(LAST_STEP - 1, LAST_STEP - 1 - lastReach)} />}
+          <span className="ray-line gone" style={at(LAST_STEP, 1)} />
+          {zones.map((b) => {
+            const out = !b.reaches;
+            const center = b.range === 'short' ? 0.4 : (b.from + b.to) / 2 + 1;
+            return (
+              <Fragment key={b.range}>
+                {b.range !== 'short' && <span className="ray-tick" style={at(b.from + 0.5)} />}
+                <span className={out ? 'ray-label out' : 'ray-label'} style={at(center)}>
+                  {rangeAbbr[b.range]}
+                </span>
+              </Fragment>
+            );
+          })}
+          <span className="ray-tick" style={at(LAST_STEP - 0.5)} />
+          <span className="ray-gone-label" style={at(LAST_STEP - 0.1)}>
+            weg
           </span>
-        ) : (
-          <span className={sim.close ? 'ray-npc close' : 'ray-npc'} style={at(step)}>
+          {steps.slice(1).map((s) => (
+            <span key={s} className={reaches(s) ? 'ray-dot' : 'ray-dot out'} style={at(s)} />
+          ))}
+          {!sim.escaped && focusStep > 0 && sim.focus !== undefined && <span className="ray-line span" style={at(focusStep, focusStep)} />}
+          <span className="ray-npc" style={at(0)}>
             ▲
           </span>
-        )}
+          {marks.map(({ p, x, level }) => (
+            <span key={p.id} className={p.focus ? 'ray-pc focus' : 'ray-pc'} style={{ ...at(x), '--level': String(level) } as CSSProperties} title={p.name}>
+              {p.initial}
+            </span>
+          ))}
+        </div>
+        <button type="button" className="ray-arrow" aria-label="Ein Band näher" disabled={!canCloser} onClick={() => step1(-1)}>
+          ▶
+        </button>
       </div>
-      <button type="button" className="ray-arrow" aria-label="Ein Band weiter weg" disabled={sim.escaped || !move?.can} onClick={() => step1(1)}>
-        ▶
-      </button>
-    </div>
-    <p className={move?.ran ? 'ray-move ran' : 'ray-move'} title={move?.reason}>
-      <span>{moveText}</span>
-      <span className="muted">halten: frei</span>
-    </p>
+      <p className={move?.ran ? 'ray-move ran' : 'ray-move'} title={move?.reason}>
+        <span>{moveText}</span>
+      </p>
     </>
   );
 }
@@ -312,7 +360,7 @@ function slotLabel(attack: AttackOption): string {
 }
 
 /**
- * Unten kompakt: in einer Zeile wer gegen wen, mit Aussetzen rechts; darunter je Waffe ein Knopf
+ * Unten kompakt: in einer Zeile wer gegen wen, mit Ausweichen und Aussetzen rechts; darunter je Waffe ein Knopf
  * (Primär gefüllt, Sekundär umrandet) mit dem nötigen Wurf, der die Waffe nimmt und angreift. Ist
  * eine Schusswaffe leer, lädt ihr Knopf nach. Nach einem Treffer steht dort der Schaden.
  */
@@ -368,6 +416,18 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
             ) : (
               <span className="muted">Ziel antippen</span>
             )}
+            <button
+              type="button"
+              className="ghost compact fight-skip"
+              title="Kein Angriff; bis zum nächsten Zug DM −1/−2/−4 auf Angriffe gegen ihn"
+              disabled={turn.ran}
+              onClick={() => {
+                haptic('pick');
+                game.evade();
+              }}
+            >
+              Ausweichen
+            </button>
             <button type="button" className="ghost compact fight-skip" onClick={() => game.skipTurn()}>
               Aussetzen
             </button>
@@ -547,7 +607,7 @@ export function EncounterIntro({ sim }: { sim: SimView }) {
           </p>
         </div>
         <p className="intro-line">
-          Entfernung: <b>{distanceText(sim)}</b>
+          Entfernung: <b>{startText(sim)}</b>
           {sim.rangeDice
             ? ` (2W6: ${sim.rangeDice[0]} + ${sim.rangeDice[1]}${sim.terrain ? `, ${sim.terrain.name} ${signed(sim.terrain.dm)}` : ''}${sim.bandDie ? `; 1W${sim.bandDie.sides}: ${sim.bandDie.die}` : ''})`
             : ''}

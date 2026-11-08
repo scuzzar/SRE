@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import { firstBand, hexFromRolls, keepFocus, upgradeNpcs, type Campaign, type CampaignId, type CampaignRepository, type Encounter, type Hex, type LegacyWorldRoll, type Range } from '../model';
+import { hexFromRolls, keepFocus, upgradeDistances, upgradeNpcs, type Campaign, type CampaignId, type CampaignRepository, type Encounter, type Hex, type LegacyWorldRoll } from '../model';
 
 /** Eine Kampagne liegt unter ihrer Id. */
 interface StoredCampaign {
@@ -111,12 +111,9 @@ export function upgraded(campaign: Campaign): Campaign {
     const old = hex as Hex & { readonly rolls?: readonly LegacyWorldRoll[] };
     return old.rolls ? hexFromRolls({ column: old.column, row: old.row, ...(old.name === undefined ? {} : { name: old.name }), rolls: old.rolls }) : hex;
   });
-  // Begegnungen von vor den Range Bands haben nur eine Reichweite: Sie bekommen deren erstes Band.
-  const encounters = (campaign.encounters ?? []).map((e): Encounter => {
-    const { range, ...rest } = e as Encounter & { readonly range?: Range };
-    return { ...rest, ...(rest.band === undefined ? firstBand(range ?? 'short') : {}), round: e.round ?? 1, acted: e.acted ?? [] };
-  });
-  const upgraded = upgradeNpcs({ ...campaign, characters, log, hexes, bookings: campaign.bookings ?? [], encounters });
+  // Begegnungen von vor den Range Bands bzw. von vor 2026-11-08d macht upgradeDistances zu solchen mit Startband.
+  const encounters = (campaign.encounters ?? []).map((e): Encounter => ({ ...e, round: e.round ?? 1, acted: e.acted ?? [] }));
+  const upgraded = upgradeDistances(upgradeNpcs({ ...campaign, characters, log, hexes, bookings: campaign.bookings ?? [], encounters }));
   return keepFocus(upgraded, upgraded);
 }
 

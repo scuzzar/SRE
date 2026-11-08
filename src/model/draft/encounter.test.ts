@@ -22,13 +22,14 @@ import {
   surpriseOf,
   turnOf,
   defeatedSide,
-  setBand,
-  moveBand,
+  setDistance,
+  distanceOf,
+  rangeOfDistance,
+  steppedPosition,
+  upgradeDistances,
   startBand,
   firstBand,
   rangeOfBand,
-  encounterRangeOf,
-  isEscaped,
   ESCAPED_BAND,
   setFocus,
   book,
@@ -52,7 +53,7 @@ import {
   type Campaign,
   type Hex,
 } from '..';
-import { fixedClock, fixedRandom, onTurn } from '../testing';
+import { allPcsAt, fixedClock, fixedRandom, onTurn } from '../testing';
 import { cascadeOptions, chooseCascade, enlist, finishGeneration, muster, reenlist, rollNext, rollSkill, stateOf, tableOptions, type Generation } from '../generation';
 import type { Random } from '../ports';
 import { aimAt, chooseTarget, rollAttack, startAttack, turnAttack } from './attack';
@@ -427,14 +428,20 @@ describe('Kampfsimulation', () => {
   it('würfelt Entfernung (2W6 + Gelände) und, als ersten Wurf im Kampf, Überraschung je Partei mit DMs', () => {
     const encounter = currentEncounter(thugs())!;
     // Alle Würfe zeigen das Kleinste: Entfernung 1 + 1 = 2 → Close; Überraschung SC 1 ± 0, Thugs 1 + 1 (Anführer).
-    expect(encounter).toMatchObject({ rangeDice: [1, 1], band: 0, close: true, pcSurprise: { die: 1, dm: 0 }, npcSurprise: { die: 1, dm: 1 }, round: 1, acted: [] });
+    expect(encounter).toMatchObject({ rangeDice: [1, 1], startBand: 0, startClose: true, pcSurprise: { die: 1, dm: 0 }, npcSurprise: { die: 1, dm: 1 }, round: 1, acted: [] });
     expect(encounter.bandDie).toBeUndefined();
-    expect(encounterRangeOf(encounter)).toBe('close');
+    // Mit dem Wurf auf die Überraschung bekommt jeder SC seine Entfernung: das Startband.
+    expect(encounter.distances).toEqual([
+      { of: 'c1', band: 0, close: true },
+      { of: 'c2', band: 0, close: true },
+    ]);
+    expect(rangeOfDistance(distanceOf(encounter, 'c1'))).toBe('close');
     expect(surpriseOf(encounter)).toBeUndefined();
     expect(firstSide(encounter)).toBe('npcs');
     const inside = rollEncounter(there, fixedRandom(), clock, 15, 2, 'interior').campaign.encounters[0]!;
-    expect(inside).toMatchObject({ terrain: 'interior', band: 0, close: false });
-    expect(encounterRangeOf(inside)).toBe('short');
+    expect(inside).toMatchObject({ terrain: 'interior', startBand: 0, startClose: false });
+    expect(inside.distances).toBeUndefined();
+    expect(rangeOfDistance(distanceOf(inside, 'c1'))).toBe('short');
     expect([2, 4, 7, 8, 10, 12].map((n) => encounterRange([1, n - 1] as const, 0))).toEqual(['close', 'medium', 'medium', 'long', 'veryLong', 'veryLong']);
     expect(encounterRange([6, 6], 4)).toBe('veryLong');
   });
@@ -453,8 +460,8 @@ describe('Kampfsimulation', () => {
     const twoOnD2 = { int: (min: number, max: number) => (min === 1 && max === 2 ? 2 : min) };
     const rolled = rollEncounter(there, twoOnD2, clock, 15, 2, 'desert').campaign.encounters[0]!;
     expect(rolled.rangeDice).toEqual([1, 1]);
-    expect(rolled).toMatchObject({ band: 2, close: false, bandDie: 2 });
-    expect(encounterRangeOf(rolled)).toBe('medium');
+    expect(rolled).toMatchObject({ startBand: 2, startClose: false, bandDie: 2 });
+    expect(rangeOfDistance(distanceOf(rolled, 'c2'))).toBe('medium');
   });
 
   it('die Reichweite folgt aus dem Band; über 20 sind die Parteien entkommen', () => {
@@ -465,51 +472,66 @@ describe('Kampfsimulation', () => {
     expect(firstBand('close')).toEqual({ band: 0, close: true });
   });
 
-  it('bewegt die Parteien Schritt für Schritt: Berührung, Band 0, Band 1 … 20, entkommen', () => {
-    let campaign = thugs();
-    expect(() => moveBand(campaign, -1)).toThrow(/Näher als in Berührung/);
-    const steps: string[] = [];
-    for (let i = 0; i < 4; i++) {
-      campaign = moveBand(campaign, 1);
-      const e = currentEncounter(campaign)!;
-      steps.push(`${e.band}${e.close ? 'c' : ''}`);
-    }
-    expect(steps).toEqual(['0', '1', '2', '3']);
-    campaign = moveBand(moveBand(campaign, -1), -1);
-    campaign = moveBand(campaign, -1);
-    expect(currentEncounter(campaign)).toMatchObject({ band: 0, close: false });
-    campaign = moveBand(campaign, -1);
-    expect(currentEncounter(campaign)).toMatchObject({ band: 0, close: true });
-    campaign = setBand(campaign, 20);
-    campaign = moveBand(campaign, 1);
-    expect(isEscaped(currentEncounter(campaign)!)).toBe(true);
-    expect(encounterRangeOf(currentEncounter(campaign)!)).toBeUndefined();
-    expect(() => moveBand(campaign, 1)).toThrow(/schon entkommen/);
-    expect(currentEncounter(moveBand(campaign, -1))).toMatchObject({ band: 20 });
-    expect(() => setBand(campaign, 3, true)).toThrow(/nur auf Band 0/);
-    expect(() => setBand(campaign, 22)).toThrow(/gibt es nicht/);
+  it('ein Schritt: Berührung, Band 0, Band 1 … 20, entkommen', () => {
+    expect(steppedPosition(0, true, -1)).toBeUndefined();
+    expect(steppedPosition(0, true, 1)).toEqual({ band: 0, close: false });
+    expect(steppedPosition(0, false, -1)).toEqual({ band: 0, close: true });
+    expect(steppedPosition(1, false, -1)).toEqual({ band: 0, close: false });
+    expect(steppedPosition(20, false, 1)).toEqual({ band: ESCAPED_BAND, close: false });
+    expect(steppedPosition(ESCAPED_BAND, false, 1)).toBeUndefined();
   });
 
-  it('nimmt das Band in die Kampagnendatei mit; ältere Dateien mit Reichweite bekommen deren erstes Band', () => {
-    const campaign = setBand(thugs(), 4);
-    expect(currentEncounter(fromCampaignFile(toCampaignFile(campaign), 'k2'))).toMatchObject({ band: 4, close: false });
+  it('setzt die Entfernung eines SC frei; jeder SC hat seine eigene', () => {
+    let campaign = setDistance(thugs(), 'c2', 20);
+    expect(distanceOf(currentEncounter(campaign)!, 'c2')).toMatchObject({ band: 20, close: false });
+    expect(distanceOf(currentEncounter(campaign)!, 'c1')).toMatchObject({ band: 0, close: true });
+    campaign = setDistance(campaign, 'c2', ESCAPED_BAND);
+    expect(rangeOfDistance(distanceOf(currentEncounter(campaign)!, 'c2'))).toBeUndefined();
+    expect(() => setDistance(campaign, 'c2', 3, true)).toThrow(/nur auf Band 0/);
+    expect(() => setDistance(campaign, 'c2', 22)).toThrow(/gibt es nicht/);
+    expect(() => setDistance(campaign, 'n1', 2)).toThrow(/nur ein SC/);
+  });
+
+  it('nimmt die Entfernungen in die Kampagnendatei mit; ältere Dateien bekommen ein Startband', () => {
+    const campaign = setDistance(thugs(), 'c1', 4);
+    const back = currentEncounter(fromCampaignFile(toCampaignFile(campaign), 'k2'))!;
+    expect(back).toMatchObject({ startBand: 0, startClose: true });
+    expect(distanceOf(back, 'c1')).toMatchObject({ band: 4, close: false });
     const old = (range?: string, extra: Record<string, unknown> = {}) => {
       const json = JSON.parse(toCampaignFile(thugs())) as { campaign: { encounters: Record<string, unknown>[] } };
-      const rest = Object.fromEntries(Object.entries(json.campaign.encounters[0]!).filter(([key]) => key !== 'band' && key !== 'close'));
+      const rest = Object.fromEntries(Object.entries(json.campaign.encounters[0]!).filter(([key]) => !['startBand', 'startClose', 'distances'].includes(key)));
       json.campaign.encounters[0] = { ...rest, ...(range === undefined ? {} : { range }), ...extra };
       return currentEncounter(fromCampaignFile(JSON.stringify(json), 'k3'))!;
     };
-    expect(old('long')).toMatchObject({ band: 3, close: false });
-    expect(old('veryLong')).toMatchObject({ band: 11, close: false });
-    expect(old('close')).toMatchObject({ band: 0, close: true });
-    expect(old(undefined)).toMatchObject({ band: 0, close: false });
-    expect(() => old(undefined, { band: 3, close: true })).toThrow(/keine gültige Kampagnendatei \(campaign\.encounters\.0\)/);
+    expect(old('long')).toMatchObject({ startBand: 3, startClose: false });
+    expect(old('veryLong')).toMatchObject({ startBand: 11, startClose: false });
+    expect(old('close')).toMatchObject({ startBand: 0, startClose: true });
+    expect(old(undefined)).toMatchObject({ startBand: 0, startClose: false });
+    // Vor 2026-11-08d: ein Band für alle; Bewegung und Läufe der SC gehen an jeden SC.
+    const legacy = old(undefined, { band: 5, close: false, pcMoved: 1, pcRuns: 2 });
+    expect(legacy).toMatchObject({ startBand: 5, startClose: false });
+    expect(legacy).not.toHaveProperty('band');
+    expect(legacy).not.toHaveProperty('pcRuns');
+    expect(legacy.distances).toEqual([
+      { of: 'c1', band: 5, close: false, moved: 1, runs: 2 },
+      { of: 'c2', band: 5, close: false, moved: 1, runs: 2 },
+    ]);
+    expect(() => old(undefined, { startBand: 3, startClose: true })).toThrow(/keine gültige Kampagnendatei \(campaign\.encounters\.0\)/);
+    expect(() => old(undefined, { startBand: 3, startClose: false, distances: [{ of: 'n1', band: 3, close: false }] })).toThrow(/kein SC/);
   });
 
-  it('entkommen: Der Zug hat keine Reichweite, ein Angriff geht nicht', () => {
-    let campaign = setBand(thugs(), ESCAPED_BAND);
+  it('upgradeDistances lässt eine heutige Begegnung, wie sie ist', () => {
+    const campaign = thugs();
+    expect(upgradeDistances(campaign)).toEqual(campaign);
+  });
+
+  it('entkommen: Ein entkommener SC greift nicht an und ist kein Ziel', () => {
+    let campaign = setDistance(thugs(), 'c1', ESCAPED_BAND);
+    expect(() => turnAttack(campaign, 'c1')).toThrow(/entkommen/);
+    expect(turnAttack(campaign, 'c2')).toMatchObject({ against: 'c2', range: 'close' });
     campaign = endTurn(endTurn(campaign));
-    expect(turnAttack(campaign, 'n1')).toEqual({ against: 'n1', armor: 'mesh' });
+    expect(turnOf(campaign)!.id).toBe('c1');
+    expect(() => turnAttack(campaign, 'n1')).toThrow(/entkommen und greift nicht an/);
   });
 
   it('zieht Partei für Partei, die mit dem höheren Wurf zuerst; nach allen beginnt die nächste Runde', () => {
@@ -554,7 +576,7 @@ describe('Kampfsimulation', () => {
   });
 
   it('im Zug: nur das Ziel wählen, Rüstung und Entfernung stehen fest', () => {
-    let campaign = setBand(thugs(), 0);
+    let campaign = allPcsAt(thugs(), 0);
     expect(turnOf(campaign)!.id).toBe('n1');
     // Der Anführer greift an, wie ein SC: nur das Ziel, eines aus der anderen Partei.
     expect(turnAttack(campaign, 'c1')).toEqual({ against: 'c1', armor: 'nothing', range: 'short' });

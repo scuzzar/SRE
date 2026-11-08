@@ -35,17 +35,19 @@ export interface Encounter {
   readonly rangeDice?: readonly [number, number];
   /** Der Würfel für das Startband innerhalb der Reichweite; fehlt bei Close und Short. */
   readonly bandDie?: number;
-  /** Die Entfernung in Range Bands, 0 bis 20; 21 heißt mehr als 20: entkommen. Bewegt nach den Regeln, frei gesetzt nach Ermessen. */
-  readonly band: number;
-  /** Auf Band 0 in Berührung (Close); sonst ist Band 0 Short. Auf anderen Bändern immer falsch. */
-  readonly close: boolean;
+  /** Das Startband: wo alle SC zu Beginn stehen, 0 bis 20; ändert sich nach dem Würfeln nicht mehr. */
+  readonly startBand: number;
+  /** Auf dem Startband 0 in Berührung (Close); sonst ist Band 0 Short. */
+  readonly startClose: boolean;
+  /** Die Entfernung je SC zur NSC-Gruppe; fehlt sie einem SC, steht er auf dem Startband. */
+  readonly distances?: readonly Distance[];
+  /** Wer gerade ausweicht (SR 20): bis zu seinem nächsten Zug. */
+  readonly evading?: readonly CharacterId[];
   /** Verweis auf das Gelände; fehlt es, ±0. */
   readonly terrain?: string;
-  /** Wie viele Bands die SC bzw. die NSC in dieser Runde schon gegangen sind (0–2); fehlt: 0. */
-  readonly pcMoved?: number;
+  /** Wie viele Bands die NSC-Gruppe in dieser Runde schon gegangen ist (0–2); fehlt: 0. */
   readonly npcMoved?: number;
-  /** Wie oft die SC bzw. die NSC in der Begegnung gelaufen sind (2 Bands in einer Runde); fehlt: 0. Kostet je Lauf einen Combat-Schlag. */
-  readonly pcRuns?: number;
+  /** Wie oft die NSC-Gruppe in der Begegnung gelaufen ist (2 Bands in einer Runde); fehlt: 0. Kostet je Lauf jeden NSC einen Combat-Schlag. */
   readonly npcRuns?: number;
   /** Die Runde, in der die überraschte Partei Alarm gegeben hat (SR 20); danach hält die Überraschung nicht mehr. */
   readonly alarm?: number;
@@ -55,6 +57,21 @@ export interface Encounter {
   /** Die Kampfrunde, ab 1, und wer in ihr schon dran war (Verweise auf SC und NSC). */
   readonly round: number;
   readonly acted: readonly CharacterId[];
+}
+
+/**
+ * Die Entfernung eines SC zur NSC-Gruppe, die immer auf Band 0 steht: das Band (0 bis 20; 21 heißt
+ * mehr als 20, entkommen) und auf Band 0 die Berührung. Dazu, wie viele Bands er in dieser Runde
+ * gegangen ist und wie oft er in der Begegnung gelaufen ist.
+ */
+export interface Distance {
+  readonly of: CharacterId;
+  readonly band: number;
+  readonly close: boolean;
+  /** Bands in dieser Runde (0–2); fehlt: 0. */
+  readonly moved?: number;
+  /** Läufe in der Begegnung; fehlt: 0. Kostet je Lauf einen Combat-Schlag. */
+  readonly runs?: number;
 }
 
 export interface SurpriseRoll {
@@ -271,7 +288,9 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
     npcs,
     ...(type.leader ? { leader: npcs[0]!.id } : {}),
     rangeDice,
-    ...start,
+    startBand: start.band,
+    startClose: start.close,
+    ...(start.bandDie === undefined ? {} : { bandDie: start.bandDie }),
     ...(ground ? { terrain: ground.id } : {}),
     round: 1,
     acted: [],
@@ -320,35 +339,93 @@ export function rangeOfBand(band: number, close: boolean): Range | undefined {
   return ref.encounters.bands.find((b) => b.from <= band && band <= b.to)!.range;
 }
 
-/** Die Reichweite der Begegnung; fehlt, wenn die Parteien entkommen sind. */
-export function encounterRangeOf(encounter: Encounter): Range | undefined {
-  return rangeOfBand(encounter.band, encounter.close);
+/** Die Entfernung dieses SC in der Begegnung; ohne eigene steht er auf dem Startband. */
+export function distanceOf(encounter: Encounter, pc: CharacterId): Distance {
+  return encounter.distances?.find((d) => d.of === pc) ?? { of: pc, band: encounter.startBand, close: encounter.startClose };
 }
 
-export function isEscaped(encounter: Encounter): boolean {
-  return encounter.band >= ESCAPED_BAND;
+/** `/range` einer Entfernung; fehlt, wenn der SC entkommen ist. */
+export function rangeOfDistance(distance: Distance): Range | undefined {
+  return rangeOfBand(distance.band, distance.close);
 }
 
-/** Setzt die Entfernung der laufenden Begegnung auf ein Band; Berührung gibt es nur auf Band 0. */
-export function setBand(campaign: Campaign, band: number, close = false): Campaign {
-  const encounter = currentEncounter(campaign);
-  if (!encounter) throw new DomainError('Es läuft keine Begegnung.');
-  if (!Number.isInteger(band) || band < 0 || band > ESCAPED_BAND) throw new DomainError(`Ein Band ${band} gibt es nicht.`);
-  if (close && band !== 0) throw new DomainError('In Berührung sind die Parteien nur auf Band 0.');
-  return { ...campaign, encounters: campaign.encounters.map((e) => (e.id === encounter.id ? { ...e, band, close } : e)) };
+/** `/escaped`: mehr als 20 Bands, der SC hat die NSC verloren. */
+export function isEscapedDistance(distance: Distance): boolean {
+  return distance.band >= ESCAPED_BAND;
+}
+
+/** Die Begegnung mit dieser Entfernung (ersetzt die alte des SC). */
+export function withDistance(encounter: Encounter, distance: Distance): Encounter {
+  const others = (encounter.distances ?? []).filter((d) => d.of !== distance.of);
+  return { ...encounter, distances: [...others, distance] };
+}
+
+/** Der SC eines Paars aus SC und NSC: Angriffe gibt es nur zwischen den Parteien. */
+function pcOfPair(campaign: Campaign, a: CharacterId, b: CharacterId): CharacterId | undefined {
+  const isPc = (id: CharacterId) => campaign.characters.some((c) => c.id === id);
+  if (isPc(a) === isPc(b)) return undefined;
+  return isPc(a) ? a : b;
+}
+
+/** Die Reichweite zwischen einem SC und einem NSC: die Entfernung des SC; fehlt, wenn er entkommen ist. */
+export function rangeBetween(campaign: Campaign, encounter: Encounter, a: CharacterId, b: CharacterId): Range | undefined {
+  const pc = pcOfPair(campaign, a, b);
+  return pc === undefined ? undefined : rangeOfDistance(distanceOf(encounter, pc));
 }
 
 /**
- * Bewegt die Parteien um einen Schritt näher (−1) oder weiter weg (+1). Die Schritte sind:
- * Berührung, Band 0, Band 1 … 20, entkommen.
+ * Ein Schritt näher (−1) oder weiter weg (+1). Die Schritte sind: Berührung, Band 0, Band 1 … 20,
+ * entkommen. `undefined`, wenn es in diese Richtung nicht weitergeht.
  */
-export function moveBand(campaign: Campaign, step: -1 | 1): Campaign {
+export function steppedPosition(band: number, close: boolean, step: -1 | 1): { readonly band: number; readonly close: boolean } | undefined {
+  const at = (close ? 0 : band + 1) + step;
+  if (at < 0 || at > ESCAPED_BAND + 1) return undefined;
+  return at === 0 ? { band: 0, close: true } : { band: at - 1, close: false };
+}
+
+/** Prüft ein Band: 0 bis 21, Berührung nur auf Band 0. */
+function checkBand(band: number, close: boolean): void {
+  if (!Number.isInteger(band) || band < 0 || band > ESCAPED_BAND) throw new DomainError(`Ein Band ${band} gibt es nicht.`);
+  if (close && band !== 0) throw new DomainError('In Berührung ist ein SC nur auf Band 0.');
+}
+
+/** Setzt die Entfernung eines SC frei (Ermessen der Spielleitung); das zählt nicht als Bewegung. */
+export function setDistance(campaign: Campaign, pc: CharacterId, band: number, close = false): Campaign {
   const encounter = currentEncounter(campaign);
   if (!encounter) throw new DomainError('Es läuft keine Begegnung.');
-  const at = (encounter.close ? 0 : encounter.band + 1) + step;
-  if (at < 0) throw new DomainError('Näher als in Berührung geht nicht.');
-  if (at > ESCAPED_BAND + 1) throw new DomainError('Die Parteien sind schon entkommen.');
-  return at === 0 ? setBand(campaign, 0, true) : setBand(campaign, at - 1);
+  checkBand(band, close);
+  if (!livingCharacters(campaign).some((c) => c.id === pc)) throw new DomainError('Eine Entfernung hat nur ein SC, der kämpft.');
+  const distance = { ...distanceOf(encounter, pc), band, close };
+  return { ...campaign, encounters: campaign.encounters.map((e) => (e.id === encounter.id ? withDistance(e, distance) : e)) };
+}
+
+/** Ein Spielstand von vor 2026-11-08d: ein Band für alle, Bewegung und Läufe je Partei. */
+interface LegacyBands {
+  readonly band?: number;
+  readonly close?: boolean;
+  readonly range?: Range;
+  readonly pcMoved?: number;
+  readonly pcRuns?: number;
+}
+
+/**
+ * Schreibt Begegnungen von vor 2026-11-08d um: Das eine Band wird das Startband (bei Begegnungen von
+ * vor den Range Bands das erste Band ihrer Reichweite). Sind die SC in der laufenden Begegnung schon
+ * gegangen oder gelaufen, bekommt jeder SC, der kämpft, seine Entfernung mit dem Band und diesen
+ * Zahlen. Eine heutige Begegnung bleibt, wie sie ist.
+ */
+export function upgradeDistances(campaign: Campaign): Campaign {
+  const encounters = campaign.encounters.map((encounter): Encounter => {
+    const old = encounter as Encounter & LegacyBands;
+    if (old.band === undefined && old.range === undefined && old.pcMoved === undefined && old.pcRuns === undefined && encounter.startBand !== undefined) return encounter;
+    const { band, close, range, pcMoved, pcRuns, ...rest } = old;
+    const start = encounter.startBand !== undefined ? { band: encounter.startBand, close: encounter.startClose } : band !== undefined ? { band, close: close ?? false } : firstBand(range ?? 'short');
+    const upgraded: Encounter = { ...rest, startBand: start.band, startClose: start.close };
+    if (encounter.ended || (!pcMoved && !pcRuns)) return upgraded;
+    const distances = livingCharacters(campaign).map((c): Distance => ({ of: c.id, band: start.band, close: start.close, ...(pcMoved ? { moved: pcMoved } : {}), ...(pcRuns ? { runs: pcRuns } : {}) }));
+    return { ...upgraded, distances };
+  });
+  return { ...campaign, encounters };
 }
 
 const BATTLE_DRESS = 'battle-dress';
@@ -422,7 +499,9 @@ export function rollSurprise(campaign: Campaign, random: Random): Campaign {
   if (!needsSurprise(encounter)) throw new DomainError('Die Überraschung ist schon gewürfelt.');
   const pcSurprise = { die: d6(random), dm: pcSurpriseDm(campaign) };
   const npcSurprise = { die: d6(random), dm: npcSurpriseDm(encounter) };
-  return { ...campaign, encounters: campaign.encounters.map((e) => (e.id === encounter.id ? { ...e, pcSurprise, npcSurprise } : e)) };
+  // Mit dem ersten Wurf im Kampf bekommt jeder SC, der kämpft, seine Entfernung: das Startband.
+  const distances = livingCharacters(campaign).map((c) => distanceOf(encounter, c.id));
+  return { ...campaign, encounters: campaign.encounters.map((e) => (e.id === encounter.id ? { ...e, pcSurprise, npcSurprise, distances } : e)) };
 }
 
 /** Verweist ein Angriff im Log auf einen NSC dieser Begegnung? */

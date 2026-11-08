@@ -224,6 +224,8 @@ export function partLabel(part: DmPart): string {
       return `geschwächt ${signed(part.dm)}`;
     case 'parry':
       return `Parade ${signed(part.dm)}`;
+    case 'evade':
+      return `weicht aus ${signed(part.dm)}`;
   }
 }
 

@@ -158,6 +158,18 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > und 1W4 Magazine); dafür ändert sich das Bild nicht. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-08-nsc-als-charaktere.png`](changes/2026-11-08-nsc-als-charaktere.png).
 >
+> Am 8. November 2026 freigegeben (Kennzeichen 2026-11-08d), mit dem UI-Entwurf unter
+> [`ui-entwurf/entfernung-je-sc/`](ui-entwurf/entfernung-je-sc/): **Entfernung je SC, NSC als Gruppe,
+> Ausweichen** nach SR 20 (siehe *Kampfsimulation*, *Range Bands*, *Bewegen*, *Ausweichen*). Jeder SC
+> hat seine eigene Entfernung zur NSC-Gruppe und bewegt sich in seinem Zug für sich; die NSC bleiben
+> zusammen als fester Bezugspunkt auf Band 0, bewegt werden nur die SC: Ein Schritt der Gruppe
+> verschiebt alle SC zugleich um ein Band. Wer am Zug
+> ist, kann statt anzugreifen ausweichen. Im Bild: neu `Distance` (je SC `band`, `close`, `moved`,
+> `runs`, `/range`, `/escaped`) mit `Encounter.distances` und `Distance.of`, neu `Encounter.evading`;
+> an der `Encounter` werden `band` und `close` zum Startband (`startBand`, `startClose`), und
+> `/range`, `/escaped`, `pcMoved` und `pcRuns` entfallen. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-08-abstand-je-sc.png`](changes/2026-11-08-abstand-je-sc.png).
+>
 > Am 8. November 2026 freigegeben: **Überraschung als erster Wurf im Kampf** (siehe
 > *Kampfsimulation*, *Überraschung*). Sie wird nicht mehr beim Anlegen der Begegnung gewürfelt,
 > sondern zu Beginn des Kampfs, als eigener Wurf mit zwei Würfeln (SC weiß, NSC schwarz) und ihren
@@ -319,18 +331,20 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Zustand | `/state`, `WoundState` | unverletzt, verwundet, bewusstlos (ein Attribut auf 0), schwer verwundet (zwei), tot (drei) |
 | Waffentabelle | (Modus des Reiters Kampf) | Die Tabelle der Waffe in der Hand mit frei gewählter Rüstung und Reichweite, ohne Begegnung |
 | Kampfsimulation | (Modus des Reiters Kampf) | Der Kampf einer laufenden Begegnung: Entfernung, Überraschung, Runden und Züge |
-| Entfernung | `Encounter.band`, `close`, `/range` | Wie weit die Parteien auseinander sind, in Range Bands; gilt für jeden Angriff der Begegnung |
-| Range Band | `RangeBand`, `Encounter.band` | Ein Abschnitt von etwa 25 m (Book 1, S. 32; Charts S. 7): Close und Short Band 0, Medium 1–2, Long 3–10, Very Long 11–20 |
-| Berührung | `Encounter.close` | Close: Die Parteien sind auf Band 0 in Berührung; sonst ist Band 0 Short |
-| Startband | `Encounter.bandDie` | Der Würfel, der das Band innerhalb der gewürfelten Reichweite bestimmt: Medium 1W2, Long 1W8, Very Long 1W10 |
-| Entkommen | `Encounter./escaped` | Mehr als 20 Bands Abstand: Die Parteien haben sich verloren (Book 1, S. 33) |
+| Entfernung | `Distance`, `Encounter.distances` | Wie weit ein SC von der NSC-Gruppe weg ist, in Range Bands; gilt für jeden Angriff zwischen ihm und einem NSC |
+| NSC-Gruppe | `Encounter.npcs`, `npcMoved`, `npcRuns` | Die NSC einer Begegnung; sie stehen zusammen und bewegen sich als Ganzes |
+| Range Band | `RangeBand`, `Distance.band` | Ein Abschnitt von etwa 25 m (Book 1, S. 32; Charts S. 7): Close und Short Band 0, Medium 1–2, Long 3–10, Very Long 11–20 |
+| Berührung | `Distance.close` | Close: Der SC ist auf Band 0 mit den NSC in Berührung; sonst ist Band 0 Short |
+| Startband | `Encounter.startBand`, `startClose`, `bandDie` | Wo alle SC zu Beginn der Begegnung stehen; der Würfel bestimmt das Band innerhalb der gewürfelten Reichweite: Medium 1W2, Long 1W8, Very Long 1W10 |
+| Entkommen | `Distance./escaped` | Mehr als 20 Bands: Der SC hat die NSC verloren (Book 1, S. 33) |
+| Ausweichen | `Encounter.evading` | Ein Kämpfer greift in seinem Zug nicht an, sondern weicht aus; bis zu seinem nächsten Zug bekommt jeder Angriff auf ihn DM −1, −2 oder −4 (SR 20) |
 | Gelände | `Terrain` | Wo die Begegnung stattfindet, mit DM auf die Entfernung (S. 5), z. B. Clear +3, City −4 |
 | Überraschung | `pcSurprise`, `npcSurprise`, `/surprise` | 1W6 je Partei mit DMs (S. 5); wer 3 oder mehr höher liegt, hat Überraschung |
 | Alarm | `Encounter.alarm` | Die Runde, in der die überraschte Partei Alarm gegeben hat; danach hält die Überraschung nicht mehr (SR 20) |
 | Überraschung hält | `/surprising` | Die Partei mit Überraschung, solange es keinen Alarm gab, einschließlich der Runde des Alarms |
 | Schlagart | `AttackResult.strike`, `Strike` | Wie ein Schlag oder Hieb zählt: Überraschung, Combat, geschwächt oder Special (SR 22) |
-| Combat-Schläge | `/blows` | Wie viele volle Schläge und Hiebe ein Kämpfer in der laufenden Begegnung noch hat: END zu Beginn der Begegnung minus die Combat-Schläge und die Läufe seiner Partei |
-| Lauf | `Encounter.pcRuns`, `npcRuns` | Eine Runde, in der eine Partei 2 Bands gelaufen ist; kostet jeden ihrer Kämpfer einen Combat-Schlag |
+| Combat-Schläge | `/blows` | Wie viele volle Schläge und Hiebe ein Kämpfer in der laufenden Begegnung noch hat: END zu Beginn der Begegnung minus die Combat-Schläge und die Läufe (beim SC seine, beim NSC die der Gruppe) |
+| Lauf | `Distance.runs`, `Encounter.npcRuns` | Eine Runde, in der ein SC bzw. die NSC-Gruppe 2 Bands gelaufen ist; kostet den SC bzw. jeden NSC einen Combat-Schlag |
 | Geschwächter Schlag | `Strike.weakened`, `Weapon.weakened`, `Attack.weakened` | Ein Schlag oder Hieb ohne volle Kraft, mit dem DM der Waffe; zählt nicht gegen die END |
 | Parade | (Regel) | Wer mit Faust oder Klinge angegriffen wird und selbst Faust, Klinge oder ein Gewehr führt, zieht seine Stufe darin vom Wurf ab (SR 22) |
 | Partei | `Side` | Die SC (`pcs`) oder die NSC der Begegnung (`npcs`) |
@@ -644,8 +658,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       Liste, ist es nur einer.
     - *Schrotflinte*: Die App lost beim Würfeln bis zu `neighbours` davon aus, jeden höchstens
       einmal; sind es weniger, trifft sie alle.
-  - Book 1 verlangt, dass die Nachbarn in einer Gruppe stehen und nicht ausweichen: In der App
-    steht jede Partei zusammen, und Ausweichen gibt es noch nicht. Bei der Shotgun verlangt es
+  - Book 1 verlangt, dass die Nachbarn in einer Gruppe stehen und nicht ausweichen: Wer ausweicht
+    (`Encounter.evading`, siehe *Kampfsimulation*), ist kein Nachbar. Die NSC stehen immer zusammen;
+    ist das Ziel ein SC, kommen nur SC mit derselben Entfernung infrage (gleiches Band, gleiche
+    Berührung). Bei der Shotgun verlangt es
     außerdem höchstens Menschengröße; das gilt für alle NSC, Tiere gibt es noch nicht. Ohne Ziel
     (frei gewählte Rüstung) gibt es keine Nachbarn.
   - **Garbe**: Jeder Wurf ist ein eigenes `AttackResult` mit eigenem Ziel, Würfeln, DM und
@@ -667,7 +683,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Zug**: In der Kampfsimulation endet der Zug, wenn der Schaden aller Treffer der Garbe verteilt
     ist.
   - **Status**: freigegeben am 7. November 2026.
-  - **Später**: Ausweichen (Evading) als Schutz vor Gruppentreffern, Panikfeuer, Feuerstöße mit
+  - **Später**: Panikfeuer, Feuerstöße mit
     Gauss-Waffen und Waffen aus Book 4, Flechettes, Splitter von HE-Munition.
 - **Aufenthaltsort.** Die Gruppe, also alle Charaktere der Kampagne, ist immer an höchstens einem
   Ort (`location`): einer fertigen Welt des Subsektors. Man setzt ihn auf der Weltkarte („Gruppe ist
@@ -879,42 +895,77 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     6 Medium, 7 Medium, 8 Long, 9 Medium, 10 Very Long, 11 Long, 12 Very Long; unter 1 gilt 1, über
     12 gilt 12. Die Würfel (`rangeDice`) bleiben.
   - *Range Bands* (Book 1, S. 32–33; Charts S. 7): Die Entfernung wird in Bands von etwa 25 m
-    gehalten. Alle SC stehen zusammen, alle NSC auch; es gibt nur einen Abstand (`band`, 0–21).
-    Welche Reichweite ein Band ist, sagt `RangeBand`: Close und Short 0, Medium 1–2, Long 3–10,
-    Very Long 11–20. Auf Band 0 unterscheidet `close`, ob die Parteien in Berührung sind (Close)
-    oder nicht (Short); auf jedem anderen Band ist `close` falsch. Daraus folgt die Reichweite
-    (`/range`), die für jeden Angriff der Begegnung gilt. Band 21 heißt mehr als 20 Bands: Die
-    Parteien sind entkommen (`/escaped`), es gibt keine Reichweite und keinen Angriff; die
-    Begegnung läuft weiter, bis man sie beendet oder wieder näher rückt.
-  - *Startband* (Hausregel, gleichverteilt): Ergibt der Wurf Close, beginnt die Begegnung auf Band 0
-    mit Berührung, bei Short auf Band 0 ohne. Bei Medium, Long und Very Long bestimmt ein weiterer
+    gehalten, gedacht auf einer Linie (SR 20). Die NSC stehen zusammen als **NSC-Gruppe**; sie ist
+    der feste Bezugspunkt und steht immer auf Band 0. Jeder SC steht für sich, alle auf derselben
+    Seite der Gruppe; bewegt werden nur die SC. Jeder SC, der kämpft, hat seine eigene
+    **Entfernung** zur NSC-Gruppe (`Encounter.distances`: ein `Distance` je SC, `of`; höchstens eine
+    je SC, nie eine für einen NSC) mit dem Band (`band`, 0–21). Welche Reichweite ein Band ist, sagt
+    `RangeBand`: Close und Short 0, Medium 1–2, Long 3–10, Very Long 11–20. Auf Band 0 unterscheidet
+    `close`, ob der SC mit den NSC in Berührung ist (Close) oder nicht (Short); auf jedem anderen
+    Band ist `close` falsch. Daraus folgt die Reichweite (`/range`). Angriffe gibt es nur zwischen
+    einem SC und einem NSC, also gehört zu jedem Angriff genau eine Entfernung: die des SC, ob er
+    angreift oder angegriffen wird. Band 21 heißt mehr als 20 Bands: Dieser SC ist entkommen
+    (`/escaped`), er hat keine Reichweite, greift nicht an und wird nicht angegriffen. Sind alle SC
+    entkommen, greift keiner mehr an; die Begegnung läuft weiter, bis man sie beendet oder wieder
+    näher rückt.
+  - *Startband* (Hausregel, gleichverteilt): Alle SC beginnen auf demselben Band, dem Startband
+    (`startBand`, `startClose`); es ändert sich nach dem Würfeln nicht mehr. Ergibt der Wurf Close,
+    ist es Band 0 mit Berührung, bei Short Band 0 ohne. Bei Medium, Long und Very Long bestimmt ein weiterer
     Würfel (`bandDie`) das Band innerhalb der Reichweite: Medium 1W2 (Band 1–2), Long 1W8 (Band
     2 + Würfel, also 3–10), Very Long 1W10 (Band 10 + Würfel, also 11–20). Bei Close und Short gibt
     es keinen Würfel.
-  - *Bewegen* (Charts S. 7, Book 1: 1 Band je Runde gehend, 2 laufend): Jede Partei bewegt sich als
-    Ganzes, um ein Band je Schritt: näher (von Band 0 ohne Berührung in die Berührung, von Band 1 auf
-    Band 0) oder weiter weg (aus der Berührung auf Band 0 ohne, dann Band für Band bis 21).
-    - Bewegen darf die Partei, deren Kämpfer gerade am Zug ist (solange die Überraschung hält, also
-      nur diese). Das ist kein Zug: Der Kämpfer am Zug greift danach noch an, lädt nach oder setzt aus.
-    - Wie viele Bands eine Partei in dieser Runde schon gegangen ist, steht an der Begegnung
-      (`pcMoved`, `npcMoved`; fehlt: 0). Mit der neuen Runde beginnen beide wieder bei 0.
-    - *Gehen*: 1 Band je Runde; danach greifen ihre Kämpfer wie sonst an.
-    - *Laufen*: ein zweites Band in derselben Runde, aber nur, solange noch keiner ihrer Kämpfer in
-      dieser Runde dran war. Wer läuft, greift nicht an (Book 1: Laufen zählt wie ein Schlag): Hat
-      eine Partei 2 Bands, setzen ihre Kämpfer in dieser Runde aus; Nachladen geht. Das geschieht
-      **von selbst**, gleich nach dem zweiten Band und für jeden weiteren ihrer Kämpfer, sobald er
-      dran wäre: Ein NSC mit einer leeren Waffe (Primär, dann Sekundär; 0 Schuss geladen), für die
-      er noch ein Magazin hat, lädt sie nach; jeder andere setzt aus. Ein SC, der so nachladen
-      könnte, bleibt am Zug und wählt selbst: nachladen oder aussetzen. Laufen kostet
-      jeden Kämpfer der Partei einen Combat-Schlag (SR 20, siehe *Ausdauer*); wie oft eine Partei in
-      der Begegnung gelaufen ist, steht an der Begegnung (`pcRuns`, `npcRuns`; fehlt: 0); das zweite
-      Band zählt sie hoch.
+    - Mit „Überraschung würfeln“ bekommt jeder SC, der kämpft, seine Entfernung mit dem Startband.
+      Fehlt einem SC, der kämpft, die Entfernung (er kam später dazu, oder die Begegnung ist von vor
+      dieser Regel), steht er auf dem Startband, bis er sich bewegt, die NSC-Gruppe sich bewegt oder
+      man sein Band frei setzt; dann bekommt er sie.
+  - *Bewegen* (Charts S. 7; SR 20, *Movement*: 1 Band je Runde gehend, 2 laufend): Jeder SC bewegt
+    sich für sich, die NSC als Gruppe. Ein Schritt ist ein Band: näher (von Band 0 ohne Berührung in
+    die Berührung, von Band 1 auf Band 0) oder weiter weg (aus der Berührung auf Band 0 ohne, dann
+    Band für Band bis 21).
+    - *Ein SC* bewegt sich nur in seinem eigenen Zug; der Schritt ändert nur seine Entfernung. Wie
+      viele Bands er in dieser Runde gegangen ist, steht an seiner Entfernung (`moved`; fehlt: 0).
+    - *Die NSC-Gruppe* bewegt sich, wenn einer ihrer Kämpfer am Zug ist. Da sie selbst auf Band 0
+      bleibt, verschiebt jeder ihrer Schritte stattdessen alle SC, die kämpfen, um ein Band in
+      dieselbe Richtung (alle SC stehen auf derselben Seite). Wer schon in Berührung ist, bleibt es, wenn die NSC näher kommen; wer auf Band 21 ist,
+      bleibt dort, wenn sie weiter weg gehen. Wie viele Bands die Gruppe in dieser Runde gegangen
+      ist, steht an der Begegnung (`npcMoved`; fehlt: 0).
+    - Bewegen ist kein Zug: Der Kämpfer am Zug greift danach noch an, lädt nach, weicht aus oder
+      setzt aus. Solange die Überraschung hält, bewegt sich nur die Partei mit Überraschung. Mit der
+      neuen Runde beginnen alle SC und die NSC-Gruppe wieder bei 0.
+    - *Gehen*: 1 Band je Runde; danach greift man wie sonst an.
+    - *Laufen*: ein zweites Band in derselben Runde. Wer läuft, greift in dieser Runde nicht an
+      (Book 1: Laufen zählt wie ein Schlag); Nachladen geht. Laufen kostet einen Combat-Schlag
+      (SR 20, siehe *Ausdauer*).
+      - *Ein SC* läuft in seinem Zug. Danach greift er nicht an: Hat er eine leere Waffe (Primär oder
+        Sekundär), für die er noch ein Magazin hat, bleibt er am Zug und wählt selbst: nachladen oder
+        aussetzen; sonst setzt er **von selbst** aus. Wie oft er in der Begegnung gelaufen ist, steht
+        an seiner Entfernung (`runs`; fehlt: 0); das zweite Band zählt es hoch. Der Lauf kostet nur
+        ihn einen Combat-Schlag.
+      - *Die NSC-Gruppe* läuft nur, solange noch keiner ihrer Kämpfer in dieser Runde dran war. Dann
+        setzen ihre Kämpfer in dieser Runde **von selbst** aus, gleich nach dem zweiten Band und für
+        jeden weiteren, sobald er dran wäre; ein NSC mit einer leeren Waffe (Primär, dann Sekundär;
+        0 Schuss geladen), für die er noch ein Magazin hat, lädt sie stattdessen nach. Wie oft die
+        Gruppe in der Begegnung gelaufen ist, steht an der Begegnung (`npcRuns`; fehlt: 0); der Lauf
+        kostet jeden NSC einen Combat-Schlag.
     - Mehr als 2 Bands je Runde gehen nicht.
-    - *Frei setzen* (Ermessen der Spielleitung): Langes Drücken auf den Strahl der Entfernung setzt
-      das Band frei, jederzeit, ohne Grenze und ohne dass es als Bewegung zählt; z. B. um einen
+    - *Frei setzen* (Ermessen der Spielleitung): Langes Drücken auf den Strahl setzt das Band des
+      gewählten SC frei (siehe README, *Kampfsimulation*), jederzeit, ohne Grenze und ohne dass es als Bewegung zählt; z. B. um einen
       Fehler zu beheben.
+  - *Ausweichen* (SR 20, *Evade*): Statt anzugreifen kann der Kämpfer am Zug ausweichen, SC wie NSC,
+    auf jeder Reichweite. Das ist sein Zug, wie Aussetzen. Er steht dann unter `Encounter.evading`,
+    bis er wieder dran ist: Sein nächster Zug nimmt ihn heraus, gleich was er dann tut (er kann
+    wieder ausweichen); mit dem Ende der Begegnung ist es vorbei.
+    - Solange er ausweicht und kämpfen kann (nicht bewusstlos, schwer verwundet oder tot), bekommt
+      jeder Angriff auf ihn einen DM nach der Reichweite: −1 auf Close oder Short, −2 auf Medium,
+      −4 auf Long oder Very Long. Er steckt im DM des Angriffsergebnisses (`dm`); die Anzeige nennt
+      ihn als eigenen Posten.
+    - Wer ausweicht, pariert nicht (siehe *Parade*) und ist kein Nachbar eines Feuerstoßes oder einer
+      Schrotflinte (siehe *Feuerstoß und Schrot*).
+    - Bewegen darf er in demselben Zug vorher wie sonst (Hausregel; SR 20 führt Evade als eigenen
+      Status neben näher, weiter weg und Stand). Nach dem Laufen gibt es kein Ausweichen, weil man
+      dann nur noch nachlädt oder aussetzt.
   - *Überraschung* (S. 5): der **erste Wurf im Kampf**, eigens gewürfelt, bevor jemand dran ist. Bis
-    dahin fehlen `pcSurprise` und `npcSurprise`, keiner ist am Zug, und keine Partei bewegt sich; die
+    dahin fehlen `pcSurprise` und `npcSurprise`, keiner ist am Zug, und keiner bewegt sich; die
     Kampfsimulation bietet nur „Überraschung würfeln“. Der Wurf ist 1W6 je Partei mit DMs, die beim
     Würfeln aus den Parteien bestimmt und festgehalten werden (`dm`):
     Battle Dress getragen +2; Leader-Fertigkeit +1 (bei NSC: ein Anführer); Tactics +1; militärische
@@ -957,16 +1008,17 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Angriff nimmt diese Waffe in die Hand (`wields`) und würfelt; ist sie leer, lädt er sie stattdessen
     nach. Für einen NSC am Zug gilt dasselbe (meist Primärwaffe und die Hände); hat er kein Magazin
     mehr, bleiben ihm die Hände. Die Anzeige dazu (zwei Spalten, Pfeile, die Entfernung unten im Zug) ist reine Anzeige,
-    siehe README; Rüstung ist die des Ziels, Reichweite die Entfernung. Ist ein NSC dran, schlägt die App
+    siehe README; Rüstung ist die des Ziels, Reichweite die Entfernung des SC (Angreifer oder Ziel); ein
+    entkommener SC ist kein Ziel. Ist ein NSC dran, schlägt die App
     einen zufälligen wachen SC als Ziel vor; man kann es ändern. Ist ein SC dran, steht er oben.
   - Der Zug endet mit dem Angriff, sobald sein Schaden verteilt ist (oder er daneben ging; bei einer
-    Garbe der Schaden aller ihrer Treffer, siehe *Feuerstoß und Schrot*), mit
-    **Nachladen** oder mit **Aussetzen**. Wunden wirken sofort: Wer bewusstlos wird, ist in dieser
+    Garbe der Schaden aller ihrer Treffer, siehe *Feuerstoß und Schrot*), mit **Nachladen**, mit
+    **Ausweichen** oder mit **Aussetzen**. Wunden wirken sofort: Wer bewusstlos wird, ist in dieser
     Runde nicht mehr dran.
   - Ist eine Partei ganz außer Gefecht (alle bewusstlos, schwer verwundet oder tot), ist der Kampf
     entschieden; die Begegnung läuft weiter, bis man sie beendet.
-  - **Später**: Flucht (S. 5), Ausweichen mit Überraschung, Moral, Bewegung je Kämpfer statt je
-    Partei (mit Combat Blow beim Laufen, Evade), schneller laufen (3 und 4 Bands), Tiere mit ihrer
+  - **Später**: Flucht (S. 5), Ausweichen mit Überraschung, Moral, Bewegung je NSC statt als
+    Gruppe, SC auf beiden Seiten der NSC, schneller laufen (3 und 4 Bands), Tiere mit ihrer
     Geschwindigkeit (S. 19), Deckung, mehrere Gegnergruppen, Schalldämpfer.
 - **Ausdauer** (SR 22, *Endurance*). Gilt für Schläge (Faust, `blow`) und Hiebe (Klingen und
   Stangenwaffen, `swing`) in der laufenden Begegnung; Schüsse zählen nicht.
@@ -977,8 +1029,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     damit er nicht gegen die END zählt); sonst **Combat** (`combat`). Ein NSC schwächt nie freiwillig.
   - *Combat-Schläge* (`/blows` an SC und NSC): END zu Beginn der Begegnung, also die END mit den
     Wunden, die vor dem ersten Logeintrag der Begegnung (nach `Encounter.at`) bestanden, minus die
-    Angriffe dieses Kämpfers in der Begegnung mit der Schlagart Combat und minus die Läufe seiner
-    Partei (`pcRuns` bzw. `npcRuns`), nie unter 0. Wunden in der Begegnung senken die Zahl nicht.
+    Angriffe dieses Kämpfers in der Begegnung mit der Schlagart Combat und minus die Läufe (beim SC
+    seine, `Distance.runs`; beim NSC die der Gruppe, `npcRuns`), nie unter 0. Wunden in der Begegnung senken die Zahl nicht.
     Laufen geht auch ohne Combat-Schläge (Hausregel; die Regel sagt dazu nichts). Fehlt ohne laufende Begegnung und bei Battle Dress (unbegrenzte Ausdauer,
     S. 4).
   - *Geschwächt*: DM `Weapon.weakened` aus der Waffentabelle (Charts S. 4, *Weakened Blow or Swing*:
@@ -993,7 +1045,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Seine Stufe in dieser Waffe (beim Gewehr in Cudgel) geht als negativer DM in den Angriff; sie zählt
   wie beim Angriff (ohne die Fertigkeit Stufe 0), bei SC und NSC gleich. Ein NSC mit Gewehr hat
   Cudgel nicht und pariert damit also mit 0. Wer
-  bewusstlos, schwer verwundet oder tot ist, pariert nicht. Angreifen und parieren geht in derselben
+  bewusstlos, schwer verwundet oder tot ist oder ausweicht (`Encounter.evading`), pariert nicht. Angreifen und parieren geht in derselben
   Runde. Die Parade steckt im DM des Angriffsergebnisses (`dm`); die Anzeige nennt sie als eigenen
   Posten.
 - **Heilung.** Nach S. 7. Eine Heilung ist ein Logeintrag (`Recovery`) für einen verwundeten Charakter

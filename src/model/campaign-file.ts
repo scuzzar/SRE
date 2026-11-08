@@ -4,7 +4,7 @@ import { replay, type Career, type CareerRoll } from './career';
 import { DomainError } from './errors';
 import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, type PathKind } from './card-roll';
 import { checkDamageRoll, checkVolley, ATTACK_TARGET } from './combat';
-import { ESCAPED_BAND, firstBand, upgradeNpcs, type Encounter } from './encounter';
+import { ESCAPED_BAND, upgradeDistances, upgradeNpcs, type Encounter } from './encounter';
 import { checkInterprets, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type CardPick, type DamageRoll, type LogEntry, type Recovery } from './log';
 import { checkRecovery } from './wounds';
 import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, ranges, ref, slotOfEntry, weaponOf } from './reference';
@@ -188,10 +188,24 @@ const EncounterSchema = z
     /** Fehlen bei Begegnungen von vor der Kampfsimulation. */
     rangeDice: z.tuple([die, die]).optional(),
     bandDie: z.number().int().min(1).max(10).optional(),
-    /** Fehlen bei Begegnungen von vor den Range Bands; dann gilt das erste Band ihrer Reichweite (`range`). */
+    /** Das Startband; fehlt bei Begegnungen von vor 2026-11-08d, dann gilt `band` (davor das erste Band der Reichweite `range`). */
+    startBand: z.number().int().min(0).max(ESCAPED_BAND - 1).optional(),
+    startClose: z.boolean().optional(),
     band: z.number().int().min(0).max(ESCAPED_BAND).optional(),
     close: z.boolean().optional(),
     range: z.enum(ranges).optional(),
+    distances: z
+      .array(
+        z.object({
+          of: z.string().min(1),
+          band: z.number().int().min(0).max(ESCAPED_BAND),
+          close: z.boolean(),
+          moved: z.number().int().min(0).max(2).optional(),
+          runs: z.number().int().min(0).optional(),
+        }),
+      )
+      .optional(),
+    evading: z.array(z.string()).optional(),
     terrain: z.string().optional(),
     pcSurprise: z.object({ die, dm: z.number().int() }).optional(),
     npcSurprise: z.object({ die, dm: z.number().int() }).optional(),
@@ -203,8 +217,8 @@ const EncounterSchema = z
     npcRuns: z.number().int().min(0).optional(),
     alarm: z.number().int().min(1).optional(),
   })
-  .transform(({ range, band, close, ...rest }) => ({ ...rest, ...(band === undefined ? firstBand(range ?? 'short') : { band, close: close ?? false }) }))
-  .refine((e) => !e.close || e.band === 0, 'In Berührung sind die Parteien nur auf Band 0.');
+  .refine((e) => !e.startClose || e.startBand === 0, 'In Berührung beginnt eine Begegnung nur auf Band 0.')
+  .refine((e) => (e.distances ?? []).every((d) => !d.close || d.band === 0), 'In Berührung ist ein SC nur auf Band 0.');
 
 const CampaignFileSchema = z.object({
   format: z.literal(campaignFileFormat),
@@ -285,10 +299,13 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
       ...(file.location === undefined ? {} : { location: file.location }),
       bookings: file.bookings.map((b) => stripped(b) as Booking),
       // NSC aus Dateien von vor 2026-11-08c bleiben, wie sie sind; upgradeNpcs macht Charaktere aus ihnen.
-      encounters: file.encounters.map((e) => ({ ...stripped(e), npcs: e.npcs.map((n) => ('skill' in n ? stripped(n) : characterFromFile(n))) }) as unknown as Encounter),
+      encounters: file.encounters.map(
+        (e) => ({ ...stripped(e), ...(e.distances ? { distances: e.distances.map((d) => stripped(d)) } : {}), npcs: e.npcs.map((n) => ('skill' in n ? stripped(n) : characterFromFile(n))) }) as unknown as Encounter,
+      ),
       ...(file.quantityDie === undefined || file.quantityDie === 6 ? {} : { quantityDie: file.quantityDie }),
     };
-    const campaign = upgradeNpcs(read);
+    // Begegnungen von vor 2026-11-08d haben ein Band für alle; upgradeDistances macht das Startband daraus.
+    const campaign = upgradeDistances(upgradeNpcs(read));
     validate(campaign);
     return keepFocus(campaign, campaign);
   } catch (error) {
@@ -478,5 +495,11 @@ function validateEncounters(campaign: Campaign): void {
     if (encounter.terrain !== undefined && !ref.encounters.terrains.some((t) => t.id === encounter.terrain)) throw new DomainError(`Das Gelände ${encounter.terrain} gibt es nicht.`);
     if (encounter.in !== undefined && !hexById(campaign.hexes, encounter.in)) throw new DomainError(`Eine Begegnung verweist auf das Feld ${encounter.in}, das es nicht gibt.`);
     if (encounter.leader !== undefined && !encounter.npcs.some((n) => n.id === encounter.leader)) throw new DomainError(`Der Anführer ${encounter.leader} ist keiner der NSC seiner Begegnung.`);
+    const distances = encounter.distances ?? [];
+    for (const d of distances) if (!campaign.characters.some((c) => c.id === d.of)) throw new DomainError(`Eine Entfernung verweist auf ${d.of}, der kein SC ist.`);
+    if (new Set(distances.map((d) => d.of)).size !== distances.length) throw new DomainError('Ein SC hat in einer Begegnung zwei Entfernungen.');
+    for (const id of encounter.evading ?? []) {
+      if (!campaign.characters.some((c) => c.id === id) && !encounter.npcs.some((n) => n.id === id)) throw new DomainError(`Ausweichen verweist auf ${id}, den es nicht gibt.`);
+    }
   }
 }

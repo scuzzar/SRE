@@ -94,6 +94,15 @@
         "Possession",
         "Weapon"
       ]
+    },
+    {
+      "id": "2026-11-08d",
+      "file": "2026-11-08-abstand-je-sc",
+      "title": "Abstand je SC, NSC als Gruppe, Ausweichen",
+      "approved": true,
+      "show": [
+        "Character"
+      ]
     }
   ]
 }

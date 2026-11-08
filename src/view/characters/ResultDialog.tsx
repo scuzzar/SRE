@@ -171,6 +171,8 @@ function partName(part: DmPart): string {
       return 'geschwächt';
     case 'parry':
       return 'Parade';
+    case 'evade':
+      return 'weicht aus';
     default:
       return skillTitle([part]);
   }

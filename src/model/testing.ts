@@ -1,5 +1,5 @@
-import type { Campaign } from './campaign';
-import { currentEncounter } from './encounter';
+import { livingCharacters, type Campaign } from './campaign';
+import { currentEncounter, setDistance } from './encounter';
 import { fightOrder, turnOf, withEncounter } from './fight';
 import type { CampaignRepository, Clock, Download, Random } from './ports';
 
@@ -100,4 +100,9 @@ export function onTurn(campaign: Campaign, id: string): Campaign {
   const after = withEncounter(campaign, { ...encounter, acted: order.slice(0, at).map((s) => s.id) });
   if (turnOf(after)?.id !== id) throw new Error(`onTurn: ${id} kommt nicht an den Zug (Überraschung, bewusstlos?).`);
   return after;
+}
+
+/** Setzt die Entfernung aller SC, die kämpfen, frei auf ein Band; für Tests. */
+export function allPcsAt(campaign: Campaign, band: number, close = false): Campaign {
+  return livingCharacters(campaign).reduce((c, pc) => setDistance(c, pc.id, band, close), campaign);
 }

@@ -94,19 +94,23 @@ hide <<value>> stereotype
     /reactionText: string
     rangeDice: number[2]
     bandDie: number [0..1]
-    band: number
-    close: boolean
-    /range: Range [0..1]
-    /escaped: boolean
+    startBand: number
+    startClose: boolean
     round: number
-    pcMoved: number [0..1]
     npcMoved: number [0..1]
-    pcRuns: number [0..1]
     npcRuns: number [0..1]
     alarm: number [0..1]
     /surprise: Side [0..1]
     /surprising: Side [0..1]
     /first: Side
+  }
+  class Distance $begegnung {
+    band: number
+    close: boolean
+    moved: number [0..1]
+    runs: number [0..1]
+    /range: Range [0..1]
+    /escaped: boolean
   }
   class SurpriseRoll <<value>> $begegnung {
     die: number
@@ -175,6 +179,9 @@ Encounter "1" *-- "*" Character : npcs {ordered}
 Encounter "*" --> "0..1" Character : leader
 Encounter "*" --> "*" Character : acted
 Encounter "*" --> "0..1" Character : /turn
+Encounter "1" *-- "*" Distance : distances
+Distance "*" --> "1" Character : of
+Encounter "*" --> "*" Character : evading
 
 ' Karte
 

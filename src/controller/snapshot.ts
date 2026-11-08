@@ -85,8 +85,13 @@ import {
   canFight,
   currentEncounter,
   encounterRange,
-  encounterRangeOf,
+  distanceOf,
+  rangeOfBand,
+  rangeOfDistance,
+  ESCAPED_BAND,
   isEscaped,
+  isEvading,
+  evadeDmAt,
   encounterTypeOfEncounter,
   fighterOf,
   npcCharacters,
@@ -333,7 +338,9 @@ export type DmPart =
   /** Ein geschwächter Schlag oder Hieb: DM der Waffe (S. 4). */
   | { readonly kind: 'weakened'; readonly dm: number }
   /** Die Parade des Ziels mit seiner Stufe (SR 22). */
-  | { readonly kind: 'parry'; readonly dm: number };
+  | { readonly kind: 'parry'; readonly dm: number }
+  /** Das Ziel weicht aus: DM nach der Reichweite (SR 20). */
+  | { readonly kind: 'evade'; readonly dm: number };
 
 /** Feuerstoß, Schrot oder Einzelschuss einer Waffe, die einen Feuerstoß kann, mit dem, was er bringt. */
 export interface FireView {
@@ -446,6 +453,10 @@ export interface FighterView {
   readonly healing: HealingView;
   /** Bei einer Faust- oder Nahkampfwaffe: die Combat-Schläge, die er noch hat (fehlt bei Battle Dress). */
   readonly blows: number | undefined;
+  /** Er weicht aus (SR 20), bis zu seinem nächsten Zug. */
+  readonly evading: boolean;
+  /** Ein SC über 20 Bands weg: kein Ziel, kein Angriff. */
+  readonly escaped: boolean;
 }
 
 /**
@@ -474,12 +485,21 @@ export interface SimView {
   readonly quantity: number;
   readonly quantityDie: number;
   readonly round: number;
-  /** Die Reichweite aus dem Band; fehlt, wenn die Parteien entkommen sind. */
+  /**
+   * Der vorgewählte SC: der SC am Zug, beim NSC-Zug sein Ziel (vor dem Wurf auf die Überraschung und
+   * ohne Ziel der erste SC). Um seine Entfernung geht es im Zug.
+   */
+  readonly focus: string | undefined;
+  /** Die Reichweite des vorgewählten SC; fehlt, wenn er entkommen ist. */
   readonly range: Range | undefined;
-  /** Die Entfernung in Range Bands: 0 bis 20, 21 entkommen; auf Band 0 in Berührung oder nicht. */
+  /** Seine Entfernung in Range Bands: 0 bis 20, 21 entkommen; auf Band 0 in Berührung oder nicht. */
   readonly band: number;
   readonly close: boolean;
   readonly escaped: boolean;
+  /** Das Startband: wo alle SC zu Beginn standen, und seine Reichweite. */
+  readonly start: { readonly band: number; readonly close: boolean; readonly range: Range | undefined };
+  /** Jeder SC, der kämpft, auf der Leiste: Band, Berührung, entkommen. Die NSC stehen immer auf Band 0. */
+  readonly positions: readonly PcPosition[];
   readonly rangeDice: readonly number[] | undefined;
   /** Der Würfel des Startbands und wie viele Seiten er hatte (Medium 2, Long 8, Very Long 10). */
   readonly bandDie: { readonly die: number; readonly sides: number } | undefined;
@@ -534,6 +554,19 @@ export interface SimView {
   readonly arrows: readonly AttackArrow[];
   /** Die Range Bands je Reichweite (erstes und letztes Band) und ob die Waffe dessen am Zug hinreicht. */
   readonly bands: readonly { readonly range: Range; readonly from: number; readonly to: number; readonly reaches: boolean }[];
+}
+
+/** Ein SC auf der Leiste der Entfernung. */
+export interface PcPosition {
+  readonly id: string;
+  readonly name: string;
+  /** Der Anfangsbuchstabe für die Marke. */
+  readonly initial: string;
+  readonly band: number;
+  readonly close: boolean;
+  readonly escaped: boolean;
+  /** Er ist der vorgewählte SC. */
+  readonly focus: boolean;
 }
 
 /** Ein möglicher Angriff dessen, der am Zug ist, mit einer seiner Waffen. */
@@ -949,7 +982,15 @@ function taskItem(campaign: Campaign, entry: TaskResult): TaskItem {
 }
 
 /** Die Teile des DM eines Angriffs, nach dem heutigen Stand des Angreifers; Rüstung und Reichweite aus den Referenzdaten. */
-function attackParts(attacker: Fighter, weaponId: string, armor: ArmorClass, range: Range, burst = true, neighbour = false, extras: { readonly weakened: number; readonly parry: number } = { weakened: 0, parry: 0 }): DmPart[] {
+function attackParts(
+  attacker: Fighter,
+  weaponId: string,
+  armor: ArmorClass,
+  range: Range,
+  burst = true,
+  neighbour = false,
+  extras: { readonly weakened: number; readonly parry: number; readonly evade?: number } = { weakened: 0, parry: 0 },
+): DmPart[] {
   const weapon = weaponOf(weaponId);
   const row = rowOf(weapon, burst);
   const characteristic = attackCharacteristic(weapon);
@@ -962,6 +1003,7 @@ function attackParts(attacker: Fighter, weaponId: string, armor: ArmorClass, ran
     ...(neighbour && burst ? [{ kind: 'neighbour' as const, dm: BURST_NEIGHBOUR_DM }] : []),
     ...(extras.weakened !== 0 ? [{ kind: 'weakened' as const, dm: extras.weakened }] : []),
     ...(extras.parry !== 0 ? [{ kind: 'parry' as const, dm: extras.parry }] : []),
+    ...(extras.evade ? [{ kind: 'evade' as const, dm: extras.evade }] : []),
   ];
 }
 
@@ -1020,14 +1062,23 @@ function attackItem(campaign: Campaign, entry: AttackResult, index: number): Att
     total: sum(entry.dice) + entry.dm,
     need: entry.target - entry.dm,
     success,
-    parts: attackParts(attacker, entry.with, entry.armor, entry.range, burst || weaponOf(entry.with).single === undefined, neighbour, {
-      weakened: strikeDm(weaponOf(entry.with), entry.strike),
-      parry: neighbour ? 0 : parryDm(campaign, victimOf(entry), weaponOf(entry.with)),
-    }),
+    parts: loggedParts(campaign, entry, attacker, burst || weaponOf(entry.with).single === undefined, neighbour),
     strike: entry.strike,
     wounds: weaponOf(entry.with).wounds,
     damagePending: success && damageRollsOf(campaign.log, index).length === 0,
   };
+}
+
+/**
+ * Woraus der DM eines Angriffs im Log besteht. Das Ausweichen hält der Log nicht einzeln fest: Bleibt
+ * zwischen dem gespeicherten DM und den übrigen Posten genau der DM des Ausweichens auf diese
+ * Reichweite, steht er als eigener Posten da.
+ */
+function loggedParts(campaign: Campaign, entry: AttackResult, attacker: Fighter, burst: boolean, neighbour: boolean): DmPart[] {
+  const extras = { weakened: strikeDm(weaponOf(entry.with), entry.strike), parry: neighbour ? 0 : parryDm(campaign, victimOf(entry), weaponOf(entry.with)) };
+  const parts = attackParts(attacker, entry.with, entry.armor, entry.range, burst, neighbour, extras);
+  const rest = entry.dm - parts.reduce((total, p) => total + p.dm, 0);
+  return !neighbour && rest !== 0 && rest === evadeDmAt(entry.range) ? [...parts, { kind: 'evade', dm: rest }] : parts;
 }
 
 function damageItem(campaign: Campaign, entry: DamageRoll): DamageItem {
@@ -1165,11 +1216,13 @@ function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, 
     state: fighter.state,
     acted: encounter.acted.includes(slot.id),
     turn: turn?.id === slot.id,
-    targetable: turn !== undefined && turn.side !== slot.side && fighter.state !== 'dead',
+    targetable: turn !== undefined && turn.side !== slot.side && fighter.state !== 'dead' && !isEscaped(campaign, slot.id),
     targeted: target === slot.id,
     neighbour: neighbours.includes(slot.id),
     healing: recoveryOptions(campaign, slot.id),
     blows: isMelee(fighter.weapon) ? blowsOf(campaign, slot.id) : undefined,
+    evading: isEvading(campaign, slot.id),
+    escaped: isEscaped(campaign, slot.id),
   };
 }
 
@@ -1178,7 +1231,11 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
   const encounter = fightState(campaign, running);
   const order = fightOrder(campaign, encounter);
   const ground = encounter.terrain === undefined ? undefined : ref.encounters.terrains.find((t) => t.id === encounter.terrain);
-  const range = encounterRangeOf(encounter);
+  const pcs = order.filter((s) => s.side === 'pcs');
+  const validTarget = turn !== undefined && target !== undefined && order.some((s) => s.id === target && s.side !== turn.side);
+  const focus = turn?.side === 'pcs' ? turn.id : validTarget ? target : pcs[0]?.id;
+  const focusDistance = focus === undefined ? { band: encounter.startBand, close: encounter.startClose } : distanceOf(encounter, focus);
+  const range = rangeOfBand(focusDistance.band, focusDistance.close);
   let turnView: SimView['turn'];
   let weapon: Weapon | undefined;
   if (turn) {
@@ -1187,7 +1244,7 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
     const burst = firesBurst(attacker.weapon, simBurst === undefined ? {} : { burst: simBurst });
     let odds: NonNullable<SimView['turn']>['odds'];
     let strike: Strike | undefined;
-    const valid = target !== undefined && order.some((s) => s.id === target && s.side !== turn.side);
+    const valid = validTarget;
     if (valid) {
       try {
         const attack = { ...turnAttack(campaign, target), burst, ...(simWeakened ? { weakened: true } : {}) };
@@ -1212,7 +1269,7 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
       reaches: range !== undefined && rangeDm(rowOf(attacker.weapon, burst), range) !== undefined,
       ammo: ammo && { rounds: ammo.rounds, capacity: ammo.capacity, magazines: ammo.magazines },
       fire: fireView(attacker.weapon, burst),
-      ran: hasRun(campaign, turn.side),
+      ran: hasRun(campaign, turn),
       melee: isMelee(attacker.weapon)
         ? {
             strike,
@@ -1236,10 +1293,17 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
     quantity: encounterTypeOfEncounter(encounter).quantity,
     quantityDie: encounter.quantityDie ?? 6,
     round: encounter.round,
+    focus,
     range,
-    band: encounter.band,
-    close: encounter.close,
-    escaped: isEscaped(encounter),
+    band: focusDistance.band,
+    close: focusDistance.close,
+    escaped: focusDistance.band >= ESCAPED_BAND,
+    start: { band: encounter.startBand, close: encounter.startClose, range: rangeOfBand(encounter.startBand, encounter.startClose) },
+    positions: pcs.map((s) => {
+      const d = distanceOf(encounter, s.id);
+      const name = anyCharacterOf(campaign, s.id).name;
+      return { id: s.id, name, initial: name.trim().charAt(0).toUpperCase(), band: d.band, close: d.close, escaped: d.band >= ESCAPED_BAND, focus: s.id === focus };
+    }),
     rangeDice: encounter.rangeDice,
     bandDie: bandDieView(encounter),
     terrain: ground && { name: ground.name, dm: ground.dm },
@@ -1276,8 +1340,11 @@ function slotsOf(character: Character): readonly { readonly weapon: string; read
 
 /** Je Waffe des Kämpfers am Zug ein Angriff auf das Ziel, und die Ausdauer, wenn eine davon schlägt oder haut. */
 function turnAttacks(campaign: Campaign, turn: FightSlot, target: string | undefined, simBurst: boolean | undefined, simWeakened: boolean | undefined): { attacks: readonly AttackOption[]; melee: MeleeView | undefined } {
-  const encounter = currentEncounter(campaign);
-  const range = encounter && encounterRangeOf(fightState(campaign, encounter));
+  const running = currentEncounter(campaign);
+  const encounter = running && fightState(campaign, running);
+  // Die Reichweite gilt zwischen dem SC und dem NSC: am SC-Zug seine, am NSC-Zug die des Ziels.
+  const pc = turn.side === 'pcs' ? turn.id : target;
+  const range = encounter && pc !== undefined ? rangeOfDistance(distanceOf(encounter, pc)) : undefined;
   const character = anyCharacterOf(campaign, turn.id);
   let melee: MeleeView | undefined;
   const attacks = slotsOf(character).map(({ weapon, slot }) => {

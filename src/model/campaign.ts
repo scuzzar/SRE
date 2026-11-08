@@ -497,8 +497,16 @@ export function updateCharacter(campaign: Campaign, id: CharacterId, input: Char
 /** Löscht den Charakter, wenn der Log nicht auf ihn verweist; sonst wird er ausgeblendet. */
 export function removeCharacter(campaign: Campaign, id: CharacterId): Campaign {
   characterOf(campaign, id);
-  if (!isInLog(campaign, id)) return keepFocus(campaign, { ...campaign, characters: campaign.characters.filter((c) => c.id !== id) });
+  if (!isInLog(campaign, id)) return keepFocus(campaign, { ...campaign, characters: campaign.characters.filter((c) => c.id !== id), encounters: campaign.encounters.map((e) => withoutFighter(e, id)) });
   return keepFocus(campaign, { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? { ...c, retired: true } : c)) });
+}
+
+/** Eine Begegnung ohne die Entfernung und das Ausweichen eines gelöschten Charakters. */
+function withoutFighter(encounter: Encounter, id: CharacterId): Encounter {
+  if (!encounter.distances?.some((d) => d.of === id) && !encounter.evading?.includes(id)) return encounter;
+  const evading = encounter.evading?.filter((e) => e !== id);
+  const rest = Object.fromEntries(Object.entries(encounter).filter(([key]) => key !== 'evading')) as unknown as Encounter;
+  return { ...rest, ...(encounter.distances ? { distances: encounter.distances.filter((d) => d.of !== id) } : {}), ...(evading && evading.length > 0 ? { evading } : {}) };
 }
 
 /** Blendet einen ausgeblendeten Charakter wieder ein. */

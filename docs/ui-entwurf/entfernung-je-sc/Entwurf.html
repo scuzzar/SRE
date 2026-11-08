@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entfernung je SC</title>
+<style>
+  :root {
+    --bg: #111111; --card: #0e0e0e; --raised: #1c1c1c; --line: #3a3a3a; --line-strong: #555555;
+    --rule: #2a2a2a; --text: #eceae4; --muted: #a3a09a; --dim: #6b6862; --disabled: #4a4844;
+    --gold: #d9b45f; --gold-bright: #f5dc96; --gold-deep: #8a6a2a; --gold-glow: rgba(233, 190, 92, 0.5);
+    --red: #e0555b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, sans-serif; }
+  main { max-width: 430px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 17px; margin: 0 0 4px; }
+  p.lead { color: var(--muted); margin: 0 0 16px; font-size: 13px; }
+  section { border: 1px solid var(--line); background: var(--card); padding: 12px 10px 10px; margin-bottom: 18px; }
+  h2 { font-size: 13px; margin: 0 0 2px; color: var(--gold); }
+  .who { font-size: 12px; color: var(--muted); margin: 0 0 10px; }
+  .who b { color: var(--text); }
+
+  .ray-now { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; font-size: 12px; color: var(--muted); }
+  .ray-now b { font-size: 13px; color: var(--gold); margin-right: 6px; }
+  .ray-now .muted { color: var(--dim); font-size: 11.5px; }
+  .ray-range { display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px; gap: 4px; height: 58px; align-items: stretch; }
+  .ray-arrow { display: grid; place-items: center; border: 1px solid var(--line-strong); background: var(--raised); color: var(--text); font-size: 15px; }
+  .ray-arrow:disabled { border-color: var(--rule); background: transparent; color: var(--disabled); }
+
+  /* Schritt i: 0 Berührung (ganz rechts, an den NSC), 1 Band 0, 2–21 Band 1–20, 22 entkommen (ganz links). */
+  .ray { --pad: 10px; position: relative; min-width: 0; }
+  .ray > * { position: absolute; left: calc(var(--pad) + (100% - 2 * var(--pad)) * (22 - var(--i)) / 22); }
+  .line { top: 41px; height: 2px; width: calc((100% - 2 * var(--pad)) * var(--n) / 22); background: var(--line-strong); }
+  .line.out { background: repeating-linear-gradient(90deg, var(--line) 0 3px, transparent 3px 6px); }
+  .line.span { background: var(--gold-deep); }
+  .dot { top: 40px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--dim); }
+  .dot.out { background: var(--line); }
+  .tick { top: 12px; width: 1px; height: 34px; background: var(--line-strong); }
+  .label { top: 0; transform: translateX(-50%); font-size: 9px; letter-spacing: .04em; color: var(--muted); white-space: nowrap; }
+  .label.out { color: var(--dim); text-decoration: line-through; }
+  .npc { top: 42px; transform: translate(-50%, -50%); margin-left: 7px; font-size: 14px; color: var(--red); text-shadow: 0 0 6px rgba(198,47,53,.5); }
+  .pc { top: calc(42px - var(--s, 0) * 15px); transform: translate(-50%, -50%); width: 16px; height: 16px; border-radius: 50%;
+        border: 1.5px solid var(--gold); background: var(--bg); color: var(--gold); font-size: 9.5px; font-weight: 700;
+        display: grid; place-items: center; line-height: 1; }
+  .pc.sel { background: var(--gold); color: #1a1408; box-shadow: 0 0 0 2px var(--bg), 0 0 8px 2px var(--gold-glow); z-index: 1; }
+  .esc { top: 50px; transform: translateX(-50%); font-size: 8.5px; color: var(--dim); white-space: nowrap; }
+  .esc-zone { top: 41px; height: 2px; width: calc((100% - 2 * var(--pad)) / 22); background: repeating-linear-gradient(90deg, var(--rule) 0 2px, transparent 2px 4px); }
+  .ray-move { display: flex; justify-content: space-between; margin: 6px 0 0; font-size: 11.5px; }
+  .ray-move .muted { color: var(--dim); }
+
+  ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 12.5px; }
+  li { margin: 2px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Entfernung je SC: der gedrehte Strahl</h1>
+  <p class="lead">Entwurf zur Änderung 2026-11-08d. Rechts fest die NSC (▲), links die SC; je weiter links, desto weiter weg, ganz links Band 20. Gold gefüllt ist der vorgewählte SC.</p>
+  <div id="states"></div>
+</main>
+<script>
+// Ein Zustand: SC mit Band (null = Berührung, 21 = entkommen), wer vorgewählt ist, was die Waffe am Zug erreicht.
+const states = [
+  { title: 'SC-Zug: Kira ist dran', who: '▶ <b>Kira</b> (Automatic Pistol, reicht bis Medium)', sel: 'K',
+    pcs: [{ n: 'K', band: 4 }, { n: 'J', band: 2 }, { n: 'M', band: 4 }], reach: 3, left: 'K', move: 'Kira: 1 Band gehen, 2 laufen',
+    notes: ['◀ und ▶ bewegen nur Kira.', 'Kira und Mira stehen beide auf Band 4: übereinander.', 'Wohin Kiras Pistole nicht reicht (Long, Very Long), ist der Strahl gestrichelt.'] },
+  { title: 'NSC-Zug: Rashid greift Jonas an', who: '▶ <b>Rashid</b> → ⌖ <b>Jonas</b> (Rifle, reicht bis Very Long)', sel: 'J',
+    pcs: [{ n: 'K', band: 3 }, { n: 'J', band: 1 }, { n: 'M', band: 4 }], reach: 21, left: 'J', move: 'NSC gegangen · 1 mehr: laufen',
+    notes: ['Vorgewählt ist das Ziel, Jonas; über dem Strahl stehen seine Reichweite und sein Band.', 'Die NSC sind ein Band näher gekommen: Alle SC sind um eins nach rechts gerückt.'] },
+  { title: 'Jonas in Berührung, Kira entkommen', who: '▶ <b>Jonas</b> (Blade, nur Close und Short)', sel: 'J',
+    pcs: [{ n: 'K', band: 21 }, { n: 'J', band: null }, { n: 'M', band: 0 }], reach: 1, left: 'J', move: 'Jonas gegangen',
+    notes: ['Jonas berührt die NSC (Close), Mira steht auf Band 0 ohne Berührung (Short).', 'Kira ist über 20 Bands weg: ganz links hinter Band 20 („weg“), kein Ziel und kein Angriff.'] },
+];
+const zones = [['VL', 11, 20], ['L', 3, 10], ['M', 1, 2], ['C/S', 0, 0]];
+const rangeOf = (b) => b === null ? 'Close' : b === 0 ? 'Short' : b <= 2 ? 'Medium' : b <= 10 ? 'Long' : b <= 20 ? 'Very Long' : 'Entkommen';
+const stepOf = (b) => b === null ? 0 : b + 1;
+const at = (i, n) => `--i:${i};${n === undefined ? '' : `--n:${n};`}`;
+const posOf = (b) => b === 21 ? 22 : stepOf(b);
+document.getElementById('states').innerHTML = states.map((st) => {
+  const selPc = st.pcs.find((p) => p.n === st.sel);
+  const reachStep = st.reach; // weiteste Stelle, die die Waffe erreicht (Schritt)
+  let h = '';
+  // Linie: von rechts (Schritt 0) bis zur Reichweite durchgezogen, dahinter gestrichelt. Die Linie liegt von links nach rechts,
+  // also beginnt das durchgezogene Stück bei Schritt reachStep und reicht reachStep Schritte nach rechts.
+  h += `<span class="line" style="${at(reachStep, reachStep)}"></span>`;
+  if (reachStep < 21) h += `<span class="line out" style="${at(21, 21 - reachStep)}"></span>`;
+  for (const [l, from, to] of zones) {
+    if (l !== 'C/S') h += `<span class="tick" style="${at(from + 0.5)}"></span>`;
+    const out = from + 1 > reachStep;
+    h += `<span class="label${out ? ' out' : ''}" style="${at(l === 'C/S' ? 0.4 : (from + to) / 2 + 1)}">${l}</span>`;
+  }
+  h += `<span class="tick" style="${at(21.5)}"></span><span class="esc-zone" style="${at(22)}"></span><span class="esc" style="${at(21.9)}">weg</span>`;
+  for (let s = 1; s <= 21; s++) h += `<span class="dot${s > reachStep ? ' out' : ''}" style="${at(s)}"></span>`;
+  if (selPc.band !== 21 && stepOf(selPc.band) > 0) h += `<span class="line span" style="${at(stepOf(selPc.band), stepOf(selPc.band))}"></span>`;
+  h += `<span class="npc" style="${at(0)}">▲</span>`;
+  // Marken, die näher als 1,5 Schritte beieinander stehen, kommen übereinander; die vorgewählte zuunterst.
+  const placed = [];
+  for (const p of [...st.pcs].sort((a, b) => (b.n === st.sel) - (a.n === st.sel))) {
+    const x = posOf(p.band);
+    let s = 0;
+    while (placed.some((q) => q.s === s && Math.abs(q.x - x) < 1.5)) s++;
+    placed.push({ x, s });
+    h += `<span class="pc${p.n === st.sel ? ' sel' : ''}" style="${at(x)}--s:${s}">${p.n}</span>`;
+  }
+  const b = selPc.band;
+  return `<section><h2>${st.title}</h2><p class="who">${st.who}</p>
+    <div class="ray-now"><span><b>${rangeOf(b)}</b>${{ K: 'Kira', J: 'Jonas', M: 'Mira' }[st.sel]} · ${b === null ? 'Berührung' : b === 21 ? 'über 20 Bands' : 'Band ' + b}</span><span class="muted">halten: frei</span></div>
+    <div class="ray-range">
+      <button class="ray-arrow" aria-label="Ein Band weiter weg" ${b === 21 ? 'disabled' : ''}>◀</button>
+      <div class="ray" role="img" aria-label="Entfernung">${h}</div>
+      <button class="ray-arrow" aria-label="Ein Band näher" ${b === null ? 'disabled' : ''}>▶</button>
+    </div>
+    <p class="ray-move"><span>${st.move}</span></p>
+    <ul>${st.notes.map((n) => `<li>${n}</li>`).join('')}</ul></section>`;
+}).join('');
+</script>
+</body>
+</html>

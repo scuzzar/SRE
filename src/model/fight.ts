@@ -1,7 +1,7 @@
 import { anyCharacterOf, armedWeaponsOf, isCampaignCharacter, livingCharacters, setWields, type Campaign, type CharacterId } from './campaign';
 import { ammoOf, reload } from './combat';
 import { DomainError } from './errors';
-import { currentEncounter, moveBand, needsSurprise, type Encounter } from './encounter';
+import { currentEncounter, distanceOf, ESCAPED_BAND, isEscapedDistance, needsSurprise, steppedPosition, withDistance, type Encounter } from './encounter';
 import { canFight, woundStateOf } from './wounds';
 
 /** Die beiden Parteien eines Kampfs: die SC und die NSC der Begegnung. */
@@ -51,18 +51,23 @@ export function fightOrder(campaign: Campaign, encounter: Encounter): readonly F
   return firstSide(encounter) === 'pcs' ? [...pcs, ...npcs] : [...npcs, ...pcs];
 }
 
-/** Höchstens so viele Bands bewegt sich eine Partei je Runde: 1 gehend, 2 laufend (Charts S. 7, Book 1). */
+/** Höchstens so viele Bands bewegt sich ein SC bzw. die NSC-Gruppe je Runde: 1 gehend, 2 laufend (Charts S. 7, SR 20). */
 export const MAX_MOVE = 2;
 
-/** Wie viele Bands die Partei in der gespeicherten Runde schon gegangen ist. */
-function movedIn(encounter: Encounter, side: Side): number {
-  return (side === 'pcs' ? encounter.pcMoved : encounter.npcMoved) ?? 0;
+/** Wie viele Bands der SC bzw. die NSC-Gruppe in der gespeicherten Runde schon gegangen ist. */
+function movedIn(encounter: Encounter, slot: FightSlot): number {
+  return (slot.side === 'pcs' ? distanceOf(encounter, slot.id).moved : encounter.npcMoved) ?? 0;
+}
+
+/** Ein Objekt ohne dieses Feld. */
+function without<T extends object>(value: T, key: string): T {
+  return Object.fromEntries(Object.entries(value).filter(([k]) => k !== key)) as T;
 }
 
 /** Die Begegnung in der nächsten Runde: Runde + 1, keiner war dran, keiner ist gegangen. */
 function nextRound(encounter: Encounter): Encounter {
-  const rest = Object.fromEntries(Object.entries(encounter).filter(([key]) => key !== 'pcMoved' && key !== 'npcMoved')) as unknown as Encounter;
-  return { ...rest, round: encounter.round + 1, acted: [] };
+  const rest = without(encounter, 'npcMoved');
+  return { ...rest, ...(encounter.distances ? { distances: encounter.distances.map((d) => without(d, 'moved')) } : {}), round: encounter.round + 1, acted: [] };
 }
 
 /** Ist eine Partei ganz außer Gefecht (alle bewusstlos, schwer verwundet oder tot)? Dann die unterlegene. */
@@ -106,21 +111,38 @@ export function withEncounter(campaign: Campaign, encounter: Encounter): Campaig
 }
 
 /**
- * Beendet den Zug dessen, der dran ist (nach dem Angriff, Nachladen oder Aussetzen). Ist danach in
- * dieser Runde keiner mehr dran, beginnt die nächste. Ist der Nächste aus einer Partei, die gelaufen
- * ist, zieht er von selbst (siehe `passRunners`).
+ * Beendet den Zug dessen, der dran ist (nach dem Angriff, Nachladen, Ausweichen oder Aussetzen). Ist
+ * danach in dieser Runde keiner mehr dran, beginnt die nächste. Ist der Nächste einer, der gelaufen
+ * ist (oder aus der NSC-Gruppe, die gelaufen ist), zieht er von selbst (siehe `passRunners`).
  */
 export function endTurn(campaign: Campaign): Campaign {
   return passRunners(finishTurn(campaign));
 }
 
-/** Beendet nur den Zug dessen, der dran ist, ohne die Läufer weiterzuziehen. */
-function finishTurn(campaign: Campaign): Campaign {
+/**
+ * Der Kämpfer am Zug weicht aus (SR 20): Er greift nicht an, das ist sein Zug. Bis zu seinem nächsten
+ * Zug bekommt jeder Angriff auf ihn einen DM nach der Reichweite (siehe `evadeDm`).
+ */
+export function evadeTurn(campaign: Campaign): Campaign {
+  return passRunners(finishTurn(campaign, true));
+}
+
+/** Weicht dieser Kämpfer in der laufenden Begegnung gerade aus? */
+export function isEvading(campaign: Campaign, who: CharacterId): boolean {
+  return currentEncounter(campaign)?.evading?.includes(who) ?? false;
+}
+
+/**
+ * Beendet nur den Zug dessen, der dran ist, ohne die Läufer weiterzuziehen. Sein Zug nimmt ihn aus
+ * dem Ausweichen; weicht er (wieder) aus, kommt er hinein.
+ */
+function finishTurn(campaign: Campaign, evade = false): Campaign {
   const running = currentEncounter(campaign);
   const turn = turnOf(campaign);
   if (!running || !turn) throw new DomainError('Es ist keiner am Zug.');
   const encounter = fightState(campaign, running);
-  let after: Encounter = { ...encounter, acted: [...encounter.acted, turn.id] };
+  const evading = [...(encounter.evading ?? []).filter((id) => id !== turn.id), ...(evade ? [turn.id] : [])];
+  let after: Encounter = { ...without(encounter, 'evading'), ...(evading.length > 0 ? { evading } : {}), acted: [...encounter.acted, turn.id] };
   if (waiting(campaign, after).length === 0) after = nextRound(after);
   return withEncounter(campaign, after);
 }
@@ -138,14 +160,14 @@ export function reloadableWeapon(campaign: Campaign, id: CharacterId): string | 
 }
 
 /**
- * Wer läuft, greift nicht an: Ist der Kämpfer am Zug aus einer Partei, die in dieser Runde gelaufen
- * ist, zieht er von selbst. Ein NSC mit leerer Waffe und Magazin lädt nach, jeder andere setzt aus;
- * so weiter, bis einer der anderen Partei dran ist oder die Runde endet. Nur ein SC, der nachladen
- * könnte, bleibt am Zug und wählt selbst.
+ * Wer läuft, greift nicht an: Ist der Kämpfer am Zug ein SC, der in dieser Runde gelaufen ist, oder
+ * einer aus der NSC-Gruppe, die gelaufen ist, zieht er von selbst. Ein NSC mit leerer Waffe und
+ * Magazin lädt nach, jeder andere setzt aus; so weiter, bis einer dran ist, der nicht gelaufen ist,
+ * oder die Runde endet. Nur ein SC, der nachladen könnte, bleibt am Zug und wählt selbst.
  */
 function passRunners(campaign: Campaign): Campaign {
   let current = campaign;
-  for (let turn = turnOf(current); turn && hasRun(current, turn.side); turn = turnOf(current)) {
+  for (let turn = turnOf(current); turn && hasRun(current, turn); turn = turnOf(current)) {
     const weapon = reloadableWeapon(current, turn.id);
     if (weapon !== undefined && turn.side === 'pcs') return current;
     if (weapon !== undefined) current = reload(setWields(current, turn.id, weapon), turn.id);
@@ -154,72 +176,88 @@ function passRunners(campaign: Campaign): Campaign {
   return current;
 }
 
-/** Wie weit sich eine Partei in der Runde, die gerade gilt, bewegen kann. */
+/** Wie weit sich der SC am Zug bzw. die NSC-Gruppe in der Runde, die gerade gilt, bewegen kann. */
 export interface MoveState {
   readonly side: Side;
+  /** Wer sich bewegt: der SC am Zug; bei der NSC-Gruppe `undefined`. */
+  readonly pc: CharacterId | undefined;
   /** Schon gegangene Bands in dieser Runde. */
   readonly moved: number;
   /** Geht noch ein Band? Sonst steht in `reason`, warum nicht. */
   readonly can: boolean;
   readonly reason: string | undefined;
-  /** Die Partei ist gelaufen (2 Bands): Ihre Kämpfer greifen in dieser Runde nicht an. */
+  /** Gelaufen (2 Bands): kein Angriff in dieser Runde. */
   readonly ran: boolean;
 }
 
-const sideLabel = { pcs: 'SC', npcs: 'NSC' } as const;
-
-/** Bands, die eine Partei in der Runde, die gerade gilt, gegangen ist. */
-export function movedOf(campaign: Campaign, side: Side): number {
+/** Bands, die der SC bzw. die NSC-Gruppe in der Runde, die gerade gilt, gegangen ist. */
+export function movedOf(campaign: Campaign, slot: FightSlot): number {
   const encounter = currentEncounter(campaign);
-  return encounter ? movedIn(fightState(campaign, encounter), side) : 0;
+  return encounter ? movedIn(fightState(campaign, encounter), slot) : 0;
 }
 
-/** Ist die Partei in dieser Runde gelaufen? Dann greifen ihre Kämpfer nicht an. */
-export function hasRun(campaign: Campaign, side: Side): boolean {
-  return movedOf(campaign, side) >= MAX_MOVE;
+/** Ist dieser Kämpfer in dieser Runde gelaufen (der SC selbst, beim NSC seine Gruppe)? Dann greift er nicht an. */
+export function hasRun(campaign: Campaign, slot: FightSlot): boolean {
+  return movedOf(campaign, slot) >= MAX_MOVE;
 }
 
 /**
- * Wie weit sich die Partei dessen bewegen kann, der am Zug ist: gehen 1 Band, laufen ein zweites,
- * solange noch keiner von ihr in dieser Runde dran war. `undefined`, wenn keiner am Zug ist.
+ * Wie weit sich bewegen kann, wer am Zug ist: ein SC für sich, ein NSC mit der ganzen Gruppe. Gehen
+ * 1 Band, laufen ein zweites; die NSC-Gruppe nur, solange noch keiner von ihr in dieser Runde dran
+ * war. `undefined`, wenn keiner am Zug ist.
  */
 export function moveState(campaign: Campaign): MoveState | undefined {
   const running = currentEncounter(campaign);
   const turn = turnOf(campaign);
   if (!running || !turn) return undefined;
   const encounter = fightState(campaign, running);
-  const moved = movedIn(encounter, turn.side);
-  const someoneActed = fightOrder(campaign, encounter).some((s) => s.side === turn.side && encounter.acted.includes(s.id));
-  const who = `Die ${sideLabel[turn.side]}`;
+  const moved = movedIn(encounter, turn);
+  const pc = turn.side === 'pcs' ? turn.id : undefined;
+  const someoneActed = pc === undefined && fightOrder(campaign, encounter).some((s) => s.side === 'npcs' && encounter.acted.includes(s.id));
+  const who = pc === undefined ? 'Die NSC sind' : `${anyCharacterOf(campaign, pc).name} ist`;
   const reason =
     moved >= MAX_MOVE
-      ? `${who} sind in dieser Runde schon gelaufen (2 Bands).`
+      ? `${who} in dieser Runde schon gelaufen (2 Bands).`
       : moved === 1 && someoneActed
-        ? `${who} sind schon gegangen; laufen (ein zweites Band) geht nur, bevor einer von ihnen dran war.`
+        ? 'Die NSC sind schon gegangen; laufen (ein zweites Band) geht nur, bevor einer von ihnen dran war.'
         : undefined;
-  return { side: turn.side, moved, can: reason === undefined, reason, ran: moved >= MAX_MOVE };
+  return { side: turn.side, pc, moved, can: reason === undefined, reason, ran: moved >= MAX_MOVE };
 }
 
 /**
- * Die Partei dessen, der am Zug ist, geht ein Band näher (−1) oder weiter weg (+1). Das ist kein
- * Zug; das zweite Band in einer Runde ist Laufen, danach greift die Partei in dieser Runde nicht an:
- * Ihre Kämpfer ziehen von selbst (siehe `passRunners`).
+ * Wer am Zug ist, geht ein Band näher (−1) oder weiter weg (+1): ein SC für sich; ein NSC mit der
+ * ganzen Gruppe, die auf Band 0 bleibt, also rücken alle SC, die kämpfen, um ein Band (wer in
+ * Berührung ist bzw. entkommen, bleibt es). Das ist kein Zug; das zweite Band in einer Runde ist
+ * Laufen und kostet einen Combat-Schlag, danach greift, wer gelaufen ist, in dieser Runde nicht an
+ * (siehe `passRunners`).
  */
 export function moveSide(campaign: Campaign, step: -1 | 1): Campaign {
   const state = moveState(campaign);
-  if (!state) throw new DomainError('Bewegen kann nur die Partei, die am Zug ist.');
+  if (!state) throw new DomainError('Bewegen kann nur, wer am Zug ist.');
   if (!state.can) throw new DomainError(state.reason!);
   const encounter = fightState(campaign, currentEncounter(campaign)!);
-  const moved = moveBand(withEncounter(campaign, encounter), step);
-  const after = currentEncounter(moved)!;
-  // Das zweite Band ist ein Lauf: Er kostet jeden Kämpfer der Partei einen Combat-Schlag (SR 20).
   const run = state.moved + 1 >= MAX_MOVE ? 1 : 0;
-  return passRunners(
-    withEncounter(
-      moved,
-      state.side === 'pcs' ? { ...after, pcMoved: state.moved + 1, pcRuns: (after.pcRuns ?? 0) + run } : { ...after, npcMoved: state.moved + 1, npcRuns: (after.npcRuns ?? 0) + run },
-    ),
-  );
+  let after: Encounter;
+  if (state.pc !== undefined) {
+    const distance = distanceOf(encounter, state.pc);
+    const next = steppedPosition(distance.band, distance.close, step);
+    if (!next) throw new DomainError(step < 0 ? 'Näher als in Berührung geht nicht.' : `${anyCharacterOf(campaign, state.pc).name} ist schon entkommen.`);
+    after = withDistance(encounter, { ...distance, ...next, moved: state.moved + 1, ...(run || distance.runs ? { runs: (distance.runs ?? 0) + run } : {}) });
+  } else {
+    const pcs = livingCharacters(campaign).map((c) => distanceOf(encounter, c.id));
+    const moved = pcs.map((d) => ({ ...d, ...(steppedPosition(d.band, d.close, step) ?? {}) }));
+    if (moved.every((d, i) => d.band === pcs[i]!.band && d.close === pcs[i]!.close)) {
+      throw new DomainError(step < 0 ? 'Alle SC sind schon in Berührung.' : `Alle SC sind schon über ${ESCAPED_BAND - 1} Bands weg.`);
+    }
+    after = moved.reduce(withDistance, { ...encounter, npcMoved: state.moved + 1, ...(run || encounter.npcRuns ? { npcRuns: (encounter.npcRuns ?? 0) + run } : {}) });
+  }
+  return passRunners(withEncounter(campaign, after));
+}
+
+/** Ist dieser SC entkommen? Dann greift er nicht an und wird nicht angegriffen. NSC entkommen nie. */
+export function isEscaped(campaign: Campaign, who: CharacterId): boolean {
+  const encounter = currentEncounter(campaign);
+  return encounter !== undefined && sideOf(campaign, who) === 'pcs' && isEscapedDistance(distanceOf(encounter, who));
 }
 
 /** Ist dieser SC bzw. NSC gerade am Zug? */
