@@ -1,5 +1,6 @@
 # Autor und Committer aller Commits in diesem Repository (siehe CLAUDE.md).
-# Einbinden mit: git config include.path ../.gitconfig-owner
+# Einbinden (siehe CLAUDE.md): cp .gitconfig-owner .git/owner.gitconfig
+# und git config include.path owner.gitconfig
 [user]
 	name = Scuzzar
 	email = scuzzarGalaxy@googlemail.com

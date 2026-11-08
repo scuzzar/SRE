@@ -10,7 +10,7 @@ Code ([CLAUDE.md](CLAUDE.md)). Die Regeln stehen in [`docs/regeln-kampf.md`](doc
   E-Mail steht nicht mehr im Befehl (`.gitconfig-owner`, siehe `CLAUDE.md`). In
   `.claude/settings.json` stehen unter `allow` noch die alten Regeln mit `git -c user.name=… -c
   user.email=…`; sie durch `"Bash(git commit:*)"`, `"Bash(git merge:*)"`, `"Bash(git revert:*)"`
-  und `"Bash(git config include.path ../.gitconfig-owner)"` ersetzen.
+  und `"Bash(cp .gitconfig-owner .git/owner.gitconfig)"`, `"Bash(git config include.path owner.gitconfig)"` ersetzen.
 
 ## Kampf
 
