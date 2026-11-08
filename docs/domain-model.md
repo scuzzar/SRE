@@ -146,13 +146,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > liegt unter
 > [`changes/2026-11-07-ueberraschung-ausdauer-parade.png`](changes/2026-11-07-ueberraschung-ausdauer-parade.png).
 >
-> **Offen, wartet auf Freigabe: NSC der Begegnung als vollständige Charaktere** (Kennzeichen
+> Am 8. November 2026 freigegeben: **NSC der Begegnung als vollständige Charaktere** (Kennzeichen
 > 2026-11-08c; siehe *Begegnung*, *NSC*, *Angriff in beide Richtungen*, *Heilung*). Es gibt nur noch
 > eine Klasse für alle, die kämpfen: Die NSC einer Begegnung werden beim Würfeln als vollständige
 > `Character` erzeugt (UPP, Fertigkeit als echte Stufe, Waffe und Rüstung im Besitz, Primärwaffe,
 > Waffe in der Hand, getragene Rüstung) und hängen an der Begegnung (`Encounter.npcs`), nicht an der
-> Kampagne. Im Bild: `Npc` entfällt mit allen Pfeilen (er bleibt bis zur Freigabe stehen, Felder
-> durchgestrichen, Pfeile rot gestrichelt); neu `Encounter.npcs`, `leader`, `acted` und `/turn` als
+> Kampagne. Im Bild: `Npc` entfällt mit allen Pfeilen; neu `Encounter.npcs`, `leader`, `acted` und `/turn` als
 > Verweise auf `Character`; Angriff und Angriffsergebnis verweisen nur noch auf Angreifer (`for`,
 > immer einer) und Ziel (`against`) statt auf vier Arten; die Heilung nur noch auf einen Charakter
 > (`for`); `became` entfällt, Übernehmen heißt Umhängen. NSC zählen jetzt Munition wie SC (geladen
@@ -223,8 +222,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-2026-11-08c (NSC der Begegnung als vollständige Charaktere). Entfallende Pfeile sind dort rot
-gestrichelt.
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit

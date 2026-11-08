@@ -317,7 +317,6 @@ hide <<value>> stereotype
     /range: Range [0..1]
     /escaped: boolean
     round: number
-    $gone("2026-11-08c", "acted: string[*]")
     pcMoved: number [0..1]
     npcMoved: number [0..1]
     pcRuns: number [0..1]
@@ -326,7 +325,6 @@ hide <<value>> stereotype
     /surprise: Side [0..1]
     /surprising: Side [0..1]
     /first: Side
-    $gone("2026-11-08c", "/turn: string [0..1]")
   }
   class SurpriseRoll <<value>> $begegnung {
     die: number
@@ -348,14 +346,6 @@ hide <<value>> stereotype
     range: Range
     from: number
     to: number
-  }
-  class Npc $begegnung {
-    $gone("2026-11-08c", "name: string")
-    $gone("2026-11-08c", "leader: boolean")
-    $gone("2026-11-08c", "skill: number")
-    $gone("2026-11-08c", "/wounds: Wounds")
-    $gone("2026-11-08c", "/state: WoundState")
-    $gone("2026-11-08c", "/blows: number [0..1]")
   }
   class Wounds <<value>> $kampf {
     str: number
@@ -731,9 +721,7 @@ LogEntry <|-- TaskResult
 LogEntry <|-- AttackResult
 LogEntry <|-- DamageRoll
 LogEntry <|-- Recovery
-Recovery "*" -$goneArrow("2026-11-08c")-> "0..1" Character : for
-Recovery "*" -$newArrow("2026-11-08c")-> "1" Character : for
-Recovery "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : npc
+Recovery "*" --> "1" Character : for
 Recovery "*" --> "0..1" Character : by
 Recovery --> RecoveryKind
 LogEntry <|-- Note
@@ -755,20 +743,12 @@ Task ..> TaskResult : on roll
 
 ' Angriff
 Attack "0..1" --> "1" Campaign : in
-Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Character : /for
-Attack "*" -$newArrow("2026-11-08c")-> "1" Character : /for
-Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : by
-Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : against
-Attack "*" -$newArrow("2026-11-08c")-> "0..1" Character : against
-Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Character : /victim
+Attack "*" --> "1" Character : /for
+Attack "*" --> "0..1" Character : against
 Attack "*" --> "1" Weapon : /with
 Attack ..> AttackResult : on roll
-AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Character : for
-AttackResult "*" -$newArrow("2026-11-08c")-> "1" Character : for
-AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : by
-AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : against
-AttackResult "*" -$newArrow("2026-11-08c")-> "0..1" Character : against
-AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Character : victim
+AttackResult "*" --> "1" Character : for
+AttackResult "*" --> "0..1" Character : against
 AttackResult "*" --> "1" Weapon : with
 AttackResult "*" --> "0..1" SkillLevel : uses
 AttackResult "*" --> "0..1" AttackResult : volley
@@ -787,15 +767,10 @@ Encounter --> Side
 EncounterRange -[hidden]- Terrain
 RangeBand -[hidden]- EncounterRange
 Encounter "*" --> "0..1" Hex : in
-Encounter "1" *-$goneArrow("2026-11-08c")- "1..*" Npc : npcs {ordered}
-Encounter "1" *-$newArrow("2026-11-08c")- "*" Character : npcs {ordered}
-Encounter "*" -$newArrow("2026-11-08c")-> "0..1" Character : leader
-Encounter "*" -$newArrow("2026-11-08c")-> "*" Character : acted
-Encounter "*" -$newArrow("2026-11-08c")-> "0..1" Character : /turn
-Npc "1" *-- "1" Upp : upp
-Npc "*" --> "1" Item : wields
-Npc "*" --> "0..1" Item : wears
-Npc "0..1" -$goneArrow("2026-11-08c")-> "0..1" Character : became
+Encounter "1" *-- "*" Character : npcs {ordered}
+Encounter "*" --> "0..1" Character : leader
+Encounter "*" --> "*" Character : acted
+Encounter "*" --> "0..1" Character : /turn
 Character "*" --> "0..1" Item : wears
 WoundState -[hidden]- Wounds
 

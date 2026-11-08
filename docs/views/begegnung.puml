@@ -75,7 +75,6 @@ hide <<value>> stereotype
 ' Kampagne und Charaktere
   class Campaign $kampagne
   class Character $charakter
-  class Upp <<value>> $charakter
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -85,9 +84,6 @@ hide <<value>> stereotype
 ' Verlauf
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
-  class Attack <<transient>> $kampf
-  class AttackResult $kampf
-  class Recovery $kampf
   class Encounter $begegnung {
     at: datetime
     quantityDie: number [0..1]
@@ -103,7 +99,6 @@ hide <<value>> stereotype
     /range: Range [0..1]
     /escaped: boolean
     round: number
-    $gone("2026-11-08c", "acted: string[*]")
     pcMoved: number [0..1]
     npcMoved: number [0..1]
     pcRuns: number [0..1]
@@ -112,7 +107,6 @@ hide <<value>> stereotype
     /surprise: Side [0..1]
     /surprising: Side [0..1]
     /first: Side
-    $gone("2026-11-08c", "/turn: string [0..1]")
   }
   class SurpriseRoll <<value>> $begegnung {
     die: number
@@ -135,14 +129,6 @@ hide <<value>> stereotype
     from: number
     to: number
   }
-  class Npc $begegnung {
-    $gone("2026-11-08c", "name: string")
-    $gone("2026-11-08c", "leader: boolean")
-    $gone("2026-11-08c", "skill: number")
-    $gone("2026-11-08c", "/wounds: Wounds")
-    $gone("2026-11-08c", "/state: WoundState")
-    $gone("2026-11-08c", "/blows: number [0..1]")
-  }
   class EncounterType <<reference>> $begegnung {
     roll: number
     name: string
@@ -156,7 +142,6 @@ hide <<value>> stereotype
   }
 
 ' Referenzdaten
-  class Item <<reference>> $shop
 
 ' Kampagne
 
@@ -171,15 +156,10 @@ hide <<value>> stereotype
 ' Waffen (Referenzdaten)
 
 ' Verlauf
-Recovery "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : npc
 
 ' Probe
 
 ' Angriff
-Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : by
-Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : against
-AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : by
-AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : against
 
 ' Begegnung
 Campaign "1" *-- "*" Encounter : encounters {ordered}
@@ -191,15 +171,10 @@ Encounter --> Side
 EncounterRange -[hidden]- Terrain
 RangeBand -[hidden]- EncounterRange
 Encounter "*" --> "0..1" Hex : in
-Encounter "1" *-$goneArrow("2026-11-08c")- "1..*" Npc : npcs {ordered}
-Encounter "1" *-$newArrow("2026-11-08c")- "*" Character : npcs {ordered}
-Encounter "*" -$newArrow("2026-11-08c")-> "0..1" Character : leader
-Encounter "*" -$newArrow("2026-11-08c")-> "*" Character : acted
-Encounter "*" -$newArrow("2026-11-08c")-> "0..1" Character : /turn
-Npc "1" *-- "1" Upp : upp
-Npc "*" --> "1" Item : wields
-Npc "*" --> "0..1" Item : wears
-Npc "0..1" -$goneArrow("2026-11-08c")-> "0..1" Character : became
+Encounter "1" *-- "*" Character : npcs {ordered}
+Encounter "*" --> "0..1" Character : leader
+Encounter "*" --> "*" Character : acted
+Encounter "*" --> "0..1" Character : /turn
 
 ' Karte
 
@@ -210,6 +185,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Encounter #line:d0021b;line.bold
-class Npc #line:d0021b;line.bold
 @enduml

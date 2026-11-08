@@ -131,7 +131,6 @@ hide <<value>> stereotype
     dice: number[1..5]
     to: Characteristic[0..7]
   }
-  class Npc $begegnung
   class Wounds <<value>> $kampf {
     str: number
     dex: number
@@ -220,9 +219,7 @@ RangeDm -[hidden]- Range
 LogEntry <|-- AttackResult
 LogEntry <|-- DamageRoll
 LogEntry <|-- Recovery
-Recovery "*" -$goneArrow("2026-11-08c")-> "0..1" Character : for
-Recovery "*" -$newArrow("2026-11-08c")-> "1" Character : for
-Recovery "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : npc
+Recovery "*" --> "1" Character : for
 Recovery "*" --> "0..1" Character : by
 Recovery --> RecoveryKind
 
@@ -230,20 +227,12 @@ Recovery --> RecoveryKind
 
 ' Angriff
 Attack "0..1" --> "1" Campaign : in
-Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Character : /for
-Attack "*" -$newArrow("2026-11-08c")-> "1" Character : /for
-Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : by
-Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : against
-Attack "*" -$newArrow("2026-11-08c")-> "0..1" Character : against
-Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Character : /victim
+Attack "*" --> "1" Character : /for
+Attack "*" --> "0..1" Character : against
 Attack "*" --> "1" Weapon : /with
 Attack ..> AttackResult : on roll
-AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Character : for
-AttackResult "*" -$newArrow("2026-11-08c")-> "1" Character : for
-AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : by
-AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : against
-AttackResult "*" -$newArrow("2026-11-08c")-> "0..1" Character : against
-AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Character : victim
+AttackResult "*" --> "1" Character : for
+AttackResult "*" --> "0..1" Character : against
 AttackResult "*" --> "1" Weapon : with
 AttackResult "*" --> "0..1" SkillLevel : uses
 AttackResult "*" --> "0..1" AttackResult : volley
@@ -264,5 +253,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Npc #line:d0021b;line.bold
 @enduml

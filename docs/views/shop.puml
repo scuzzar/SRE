@@ -103,7 +103,6 @@ hide <<value>> stereotype
 ' Verlauf
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
-  class Npc $begegnung
 
 ' Referenzdaten
   class Skill <<reference>> $charakter
@@ -162,8 +161,6 @@ Hex "*" --> "*" Item : /offer
 ' Angriff
 
 ' Begegnung
-Npc "*" --> "1" Item : wields
-Npc "*" --> "0..1" Item : wears
 Character "*" --> "0..1" Item : wears
 
 ' Karte
@@ -175,5 +172,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Npc #line:d0021b;line.bold
 @enduml
