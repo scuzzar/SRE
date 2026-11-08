@@ -450,8 +450,9 @@ Schneller als doppelt laufen geht meist nicht lange.
   ([Nicht aufgenommen](#nicht-aufgenommen)).
 
 > ✱ App: Bewegung je Partei, nicht je Kämpfer: Die Partei am Zug geht 1 Band je Runde oder läuft 2;
-> wer läuft, greift in dieser Runde nicht an (SR 20). Langes Drücken setzt
-> das Band frei.
+> wer läuft, greift in dieser Runde nicht an (SR 20). Ihre Kämpfer setzen dann von selbst aus, ein
+> NSC mit leerer Waffe und Magazin lädt nach; ein SC, der nachladen könnte, wählt selbst. Langes
+> Drücken setzt das Band frei.
 >
 > ✱ App: Auf Band 0 unterscheidet sie Close (Berührung) und Short. Das Startband innerhalb einer
 > Reichweite ist gleichverteilt gewürfelt (Medium 1W2, Long 1W8, Very Long 1W10).
