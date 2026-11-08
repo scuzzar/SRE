@@ -155,7 +155,8 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > durchgestrichen, Pfeile rot gestrichelt); neu `Encounter.npcs`, `leader`, `acted` und `/turn` als
 > Verweise auf `Character`; Angriff und Angriffsergebnis verweisen nur noch auf Angreifer (`for`,
 > immer einer) und Ziel (`against`) statt auf vier Arten; die Heilung nur noch auf einen Charakter
-> (`for`); `became` entfällt, Übernehmen heißt Umhängen. Der Ausschnitt dazu liegt unter
+> (`for`); `became` entfällt, Übernehmen heißt Umhängen. NSC zählen jetzt Munition wie SC (geladen
+> und zwei Magazine); dafür ändert sich das Bild nicht. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-08-nsc-als-charaktere.png`](changes/2026-11-08-nsc-als-charaktere.png).
 >
 > Am 8. November 2026 freigegeben: **Überraschung als erster Wurf im Kampf** (siehe
@@ -431,7 +432,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Kampagne an, auch wenn es dieselbe schon gibt, und überschreibt nie eine bestehende.
   - *Dateien und Spielstände von vor 2026-11-08c* (NSC der Begegnung als Charaktere) werden beim
     Laden umgeschrieben: Jeder NSC wird ein Charakter der Begegnung mit derselben Id, wie unter
-    *Begegnung* beschrieben (Fertigkeit als Stufe, Waffe und Rüstung im Besitz), der Anführer zum
+    *Begegnung* beschrieben (Fertigkeit als Stufe, Waffe und Rüstung im Besitz, eine Schusswaffe
+    voll geladen mit zwei Magazinen), der Anführer zum
     Verweis `leader`. Ein schon übernommener NSC (`became`) fällt aus der Begegnung, und alle
     Verweise des Logs auf ihn zeigen auf den Charakter, der er wurde; dieser hat damit die Wunden
     aus dem Kampf, wie es jetzt beim Übernehmen ist. Im Angriffsergebnis wird `by` zu `for` und
@@ -756,8 +758,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Rüstung bis zum TL, aber Combat Armor und Battle Dress nur, wenn die Art militärisch ist
     (`EncounterType.military`; SR 50: „only military troops and leaders will wear combat armor or
     battle dress“). Die Fertigkeit, die seine Waffe benutzt, hat er als echte Stufe (`skills`) 1.
-    Munition zählen NSC der Begegnung weiterhin nicht (Hausregel): Ihre Schusswaffe gilt immer als
-    voll (`rounds` fehlt) und verbraucht nichts.
+    NSC zählen **Munition** wie SC (siehe *Munition*): Eine Schusswaffe bekommt er geladen und dazu
+    zwei Magazine (`Weapon.ammo`) im Besitz (Hausregel; SR 50 sagt nichts zur Menge).
   - *Anführer* (L): der erste NSC; die Begegnung verweist auf ihn (`leader`). Er bekommt die beste
     Ausrüstung bis zum TL und Fertigkeit 2: die
     beste **Schusswaffe**, auch ohne G (gibt es bis zum TL keine, die beste Klinge), und die beste
@@ -857,7 +859,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     im Editor zurücknehmen.
   - Ein Treffer ohne Ziel (frei gewählte Rüstung) würfelt seinen Schaden wie bisher, verteilt ihn
     aber nicht (`to` fehlt).
-  - **Später**: Medical Drugs, Wunden mit Zeit, Munition der NSC, Fahrzeuge, Überraschung, Entfernung,
+  - **Später**: Medical Drugs, Wunden mit Zeit, Fahrzeuge, Überraschung, Entfernung,
     Moral und Kampfrunden.
 - **Reiter Begegnung und zwei Modi im Reiter Kampf.** Begegnungen würfelt oder wählt man im eigenen
   Reiter **Begegnung**; die Übersicht danach führt zurück in den Reiter Begegnung, denn nicht jede
@@ -945,7 +947,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Im Zug wählt man nur das **Ziel** (einen Kämpfer der anderen Partei, der nicht tot ist) und
     würfelt, ein SC mit seiner **Primär- oder Sekundärwaffe** (ohne zweite Waffe mit den Händen): Der
     Angriff nimmt diese Waffe in die Hand (`wields`) und würfelt; ist sie leer, lädt er sie stattdessen
-    nach. Die Anzeige dazu (zwei Spalten, Pfeile, die Entfernung unten im Zug) ist reine Anzeige,
+    nach. Ein NSC am Zug greift ebenso mit seiner Primärwaffe an; ist sie leer, lädt er nach, hat er
+    kein Magazin mehr, greift er mit den Händen an. Die Anzeige dazu (zwei Spalten, Pfeile, die Entfernung unten im Zug) ist reine Anzeige,
     siehe README; Rüstung ist die des Ziels, Reichweite die Entfernung. Ist ein NSC dran, schlägt die App
     einen zufälligen wachen SC als Ziel vor; man kann es ändern. Ist ein SC dran, steht er oben.
   - Der Zug endet mit dem Angriff, sobald sein Schaden verteilt ist (oder er daneben ging; bei einer

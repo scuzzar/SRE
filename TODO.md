@@ -33,14 +33,14 @@ werden vollständig als `Character` erzeugt und hängen an der Begegnung, nicht 
   - Übernehmen heißt Umhängen von der Begegnung in die Kampagne (als SC oder dauerhafter NSC);
     `became` entfällt.
 - [ ] NSC beim Würfeln vollständig erzeugen: UPP, Fertigkeit in ihrer Waffe als echte Stufe, Besitz
-  mit Waffe, Rüstung (und Munition), Primärwaffe, getragene Rüstung.
+  mit Waffe, Rüstung und Magazinen, Primärwaffe, getragene Rüstung.
 - [ ] Code umstellen: Begegnung, Kampfsimulation, Angriff, Wunden, Heilung, Ausdauer, Parade,
   Alarm, Übernehmen, Snapshot, Ansicht. Die Unterscheidung „SC oder NSC“ (`Combatant`) soll dabei
   verschwinden, wo sie nur wegen der zwei Klassen da war.
 - [ ] Kampagnendatei: alte Spielstände beim Laden umschreiben (NSC zu Charakteren, die vier Verweise
   des Angriffs zu zwei, der Patient der Heilung). Die Ids bleiben, damit der Log weiter stimmt.
-- [ ] Später entscheiden: Zählen NSC künftig Munition? Vorerst nicht (Hausregel bleibt); mit echtem
-  Besitz ginge es.
+- [ ] NSC zählen Munition wie SC (entschieden am 8. November 2026): Schusswaffe geladen, zwei
+  Magazine im Besitz; leer lädt der NSC nach, ohne Magazin greift er mit den Händen an.
 
 ### 2. Ausweichen (Evade), nach dem Umbau
 

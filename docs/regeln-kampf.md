@@ -196,6 +196,9 @@ W6, wie angegeben.
 > Der Anführer bekommt nach SR 50 immer die beste Schusswaffe und die beste Rüstung bis zum TL (gibt es
 > keine Schusswaffe, die beste Klinge); Combat Armor und Battle Dress bekommen nur Anführer und NSC
 > einer militärischen Art.
+> Wie viel Munition die NSC haben, sagt die Regel nicht. Bisher zählen sie keine; mit dem Umbau der
+> NSC zu vollständigen Charakteren (2026-11-08c, noch nicht umgesetzt) bekommt jede Schusswaffe
+> geladen und zwei Magazine dazu (Hausregel), und NSC laden nach wie SC.
 
 ### Reaktion
 
