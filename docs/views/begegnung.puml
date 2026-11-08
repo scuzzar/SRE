@@ -97,6 +97,7 @@ hide <<value>> stereotype
     /escaped: boolean
     round: number
     acted: string[*]
+    $new("2026-11-08b", "evading: string[*]")
     pcMoved: number [0..1]
     npcMoved: number [0..1]
     pcRuns: number [0..1]
@@ -178,8 +179,8 @@ AttackResult "*" --> "0..1" Npc : against
 Campaign "1" *-- "*" Encounter : encounters {ordered}
 Encounter "*" --> "1" EncounterType : of
 Encounter "*" --> "0..1" Terrain : terrain
-Encounter "1" *-$newArrow("2026-11-08")- "0..1" SurpriseRoll : pcSurprise
-Encounter "1" *-$newArrow("2026-11-08")- "0..1" SurpriseRoll : npcSurprise
+Encounter "1" *-- "0..1" SurpriseRoll : pcSurprise
+Encounter "1" *-- "0..1" SurpriseRoll : npcSurprise
 Encounter --> Side
 EncounterRange -[hidden]- Terrain
 RangeBand -[hidden]- EncounterRange
@@ -199,4 +200,5 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class Encounter #line:d0021b;line.bold
 @enduml
