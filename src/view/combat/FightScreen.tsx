@@ -328,8 +328,9 @@ function FighterRow({ fighter: f, onHeal, selection, impacts }: { fighter: Fight
         </span>
         <span className="npc-stats mono">
           {physical.map((p) => (
-            <span key={p.k} className={p.hurt ? 'hurt' : undefined}>
+            <span key={p.k} className={p.hurt ? 'stat hurt' : 'stat'}>
               {p.k.toUpperCase()} {hex(Math.max(0, p.value))}
+              <LossFloat impacts={impacts} attr={p.k} />
             </span>
           ))}
           <span className="muted">
@@ -339,7 +340,7 @@ function FighterRow({ fighter: f, onHeal, selection, impacts }: { fighter: Fight
           </span>
         </span>
       </button>
-      <ImpactMarks impacts={impacts} />
+      <ImpactMarks impacts={impacts} atStats />
       {!choosing && (f.healing.wake || f.healing.treatable) && (
         <div className="npc-actions">
           <button type="button" className="ghost compact" onClick={() => onHeal(f.side === 'npcs' ? { npc: f.id, name: f.name } : { npc: undefined, pc: f.id, name: f.name })}>
@@ -366,7 +367,11 @@ const played = new Set<string>();
  * Kurze Animationen für Treffer, Fehlschüsse und Schaden: ein Aufblitzen über der Karte und eine
  * aufsteigende Zahl oder ein Wort. Nur Anzeige; jede läuft einmal.
  */
-export function ImpactMarks({ impacts }: { impacts: readonly Impact[] }) {
+/**
+ * Das Aufblitzen der Karte und die Zahl dazu. Mit `atStats` stehen die Attribute auf der Karte: Dann
+ * zeigt `LossFloat` den Schaden an STR, DEX und END, und hier blitzt die Karte nur.
+ */
+export function ImpactMarks({ impacts, atStats = false }: { impacts: readonly Impact[]; atStats?: boolean }) {
   // Erst wenn eine Animation durch ist, gilt sie als gespielt; ein Neuzeichnen mittendrin bricht sie nicht ab.
   const fresh = impacts.filter((i) => !played.has(i.key));
   if (fresh.length === 0) return null;
@@ -374,11 +379,32 @@ export function ImpactMarks({ impacts }: { impacts: readonly Impact[] }) {
     <>
       {fresh.map((i, n) => (
         <Fragment key={i.key}>
-          <span className={`impact-flash ${i.kind}`} aria-hidden="true" />
-          <span className={`impact-float ${i.kind}`} style={{ '--n': String(n) } as CSSProperties} aria-hidden="true" onAnimationEnd={() => played.add(i.key)}>
-            {i.kind === 'damage' ? `−${i.damage}` : i.kind === 'hit' ? 'Treffer' : 'daneben'}
-          </span>
+          {atStats && i.kind === 'damage' && i.lost ? (
+            <span className={`impact-flash ${i.kind}`} aria-hidden="true" onAnimationEnd={() => played.add(i.key)} />
+          ) : (
+            <>
+              <span className={`impact-flash ${i.kind}`} aria-hidden="true" />
+              <span className={`impact-float ${i.kind}`} style={{ '--n': String(n) } as CSSProperties} aria-hidden="true" onAnimationEnd={() => played.add(i.key)}>
+                {i.kind === 'damage' ? `−${i.damage}` : i.kind === 'hit' ? 'Treffer' : 'daneben'}
+              </span>
+            </>
+          )}
         </Fragment>
+      ))}
+    </>
+  );
+}
+
+/** Der Schaden an einem Attribut (STR, DEX oder END): die verlorenen Punkte steigen über dem Wert auf. */
+export function LossFloat({ impacts, attr }: { impacts: readonly Impact[]; attr: 'str' | 'dex' | 'end' }) {
+  const fresh = impacts.filter((i) => i.kind === 'damage' && (i.lost?.[attr] ?? 0) > 0 && !played.has(`${i.key}:${attr}`));
+  if (fresh.length === 0) return null;
+  return (
+    <>
+      {fresh.map((i) => (
+        <span key={i.key} className="loss-float" aria-hidden="true" onAnimationEnd={() => played.add(`${i.key}:${attr}`)}>
+          −{i.lost![attr]}
+        </span>
       ))}
     </>
   );

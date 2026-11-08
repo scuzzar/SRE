@@ -96,6 +96,7 @@ import {
   quantityDieOf,
   reactionDm,
   uppOf,
+  historyOf,
   victimOf,
   woundedUpp,
   woundsOf,
@@ -450,6 +451,8 @@ export interface Impact {
   readonly id: string;
   readonly kind: 'hit' | 'miss' | 'damage';
   readonly damage: number | undefined;
+  /** Beim Schaden: was STR, DEX und END dadurch verloren haben (nach Überlauf und Kappung bei 0). */
+  readonly lost: { readonly str: number; readonly dex: number; readonly end: number } | undefined;
   readonly key: string;
 }
 
@@ -1235,13 +1238,18 @@ function impactsOf(campaign: Campaign): readonly Impact[] {
   const entry = campaign.log[last];
   if (entry?.kind === 'damage') {
     const who = victimOf(campaign.log[entry.of] as AttackResult);
-    return who && entry.to !== undefined ? [{ id: slotId(who), kind: 'damage', damage: damageOf(entry), key: `d${last}` }] : [];
+    if (!who || entry.to === undefined) return [];
+    const upp = uppOf(campaign, who);
+    const before = historyOf(campaign.log, upp, who, last).wounds;
+    const after = historyOf(campaign.log, upp, who, last + 1).wounds;
+    const lost = { str: after.str - before.str, dex: after.dex - before.dex, end: after.end - before.end };
+    return [{ id: slotId(who), kind: 'damage', damage: damageOf(entry), lost, key: `d${last}` }];
   }
   if (entry?.kind !== 'attack') return [];
   return volleyOf(campaign.log, last).flatMap((i) => {
     const roll = campaign.log[i] as AttackResult;
     const who = victimOf(roll);
-    return who ? [{ id: slotId(who), kind: isSuccess(roll) ? ('hit' as const) : ('miss' as const), damage: undefined, key: `a${i}` }] : [];
+    return who ? [{ id: slotId(who), kind: isSuccess(roll) ? ('hit' as const) : ('miss' as const), damage: undefined, lost: undefined, key: `a${i}` }] : [];
   });
 }
 

@@ -3812,7 +3812,8 @@ button:disabled {
   margin: 0;
   font-size: 13px;
   white-space: nowrap;
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .strip-upp .hurt {
@@ -4921,7 +4922,9 @@ button:disabled {
   grid-column: 1 / -1;
   flex-wrap: nowrap;
   gap: 8px;
-  overflow: hidden;
+  /* Waagrecht abschneiden, senkrecht nicht: Der Schaden steigt über den Attributen auf. */
+  overflow-x: clip;
+  overflow-y: visible;
   white-space: nowrap;
 }
 
@@ -5334,6 +5337,48 @@ button:disabled {
 .impact-float.damage {
   color: var(--accent-text);
   font-size: 28px;
+}
+
+/* Der Schaden an einem Attribut steigt über dessen Wert auf (STR, DEX, END). */
+.npc-stats .stat,
+.strip-upp .stat {
+  position: relative;
+}
+
+.loss-float {
+  position: absolute;
+  left: 50%;
+  bottom: 60%;
+  pointer-events: none;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1;
+  white-space: nowrap;
+  color: #fff;
+  text-shadow: 0 0 6px rgba(198, 47, 53, 0.95), 0 0 2px rgba(198, 47, 53, 1), 0 2px 8px rgba(0, 0, 0, 0.85);
+  opacity: 0;
+  animation: loss-float 1400ms ease-out both;
+  z-index: 2;
+}
+
+@keyframes loss-float {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 20%) scale(0.7);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -10%) scale(1.2);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -70%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -110%) scale(1);
+  }
 }
 
 .impact-float.hit {

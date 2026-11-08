@@ -4,7 +4,7 @@ import { SkillChips, UppRow } from '../characters/CharacterCard';
 import { useGame } from '../game-context';
 import { ChevronDownIcon, PencilIcon } from '../icons';
 import { credits, hex, woundStateText } from '../format';
-import { ImpactMarks, RoleBadge } from '../combat/FightScreen';
+import { ImpactMarks, LossFloat, RoleBadge } from '../combat/FightScreen';
 import type { Impact } from '../../controller';
 
 /** Je SC in der Kampfsimulation: am Zug, Ziel, Nachbar und was ihn eben getroffen hat. */
@@ -93,7 +93,7 @@ export function CharacterStrip({
             aria-label={character.name}
             aria-hidden={!character.focus}
           >
-            {fight?.[character.id] && <ImpactMarks impacts={fight[character.id]!.impacts} />}
+            {fight?.[character.id] && <ImpactMarks impacts={fight[character.id]!.impacts} atStats={!collapsed && weapons} />}
             <div className="strip-head">
               <button type="button" className="strip-title" aria-expanded={!collapsed} onClick={() => game.toggleStrip()} tabIndex={character.focus ? 0 : -1}>
                 <span className="strip-name">
@@ -143,7 +143,7 @@ export function CharacterStrip({
             {!collapsed && shop && <UppLine character={character} />}
             {!collapsed && !shop && (
               <>
-                {weapons ? <UppLine character={character} /> : <UppRow character={character} interactive={character.focus} />}
+                {weapons ? <UppLine character={character} impacts={fight?.[character.id]?.impacts ?? []} /> : <UppRow character={character} interactive={character.focus} />}
                 {weapons ? (
                   <WeaponChips character={character} />
                 ) : (
@@ -197,12 +197,13 @@ function WeaponChips({ character }: { character: Snapshot['characters'][number] 
 const uppKeys = ['str', 'dex', 'end', 'int', 'edu', 'soc'] as const;
 
 /** Im Kampf die Attribute als schmale Zeile wie bei den NSC; verwundete Werte rot. */
-function UppLine({ character }: { character: Snapshot['characters'][number] }) {
+function UppLine({ character, impacts = [] }: { character: Snapshot['characters'][number]; impacts?: readonly Impact[] }) {
   return (
     <p className="strip-upp mono" aria-label="Attribute">
       {uppKeys.map((k) => (
-        <span key={k} className={character.current[k] < character.upp[k] ? 'hurt' : undefined}>
+        <span key={k} className={character.current[k] < character.upp[k] ? 'stat hurt' : 'stat'}>
           {k.toUpperCase()} {hex(Math.max(0, character.current[k]))}
+          {(k === 'str' || k === 'dex' || k === 'end') && <LossFloat impacts={impacts} attr={k} />}
         </span>
       ))}
     </p>
