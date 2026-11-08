@@ -75,3 +75,11 @@ Aus [`docs/regeln-kampf.md`](docs/regeln-kampf.md), noch offen:
   Verhalten, Fallen, Ereignisse; dazu die zwei Tier-DMs bei der Überraschung.
 - [ ] **Book 4** (später): Moral für Militär, weitere Waffen, Kampffertigkeiten, abstraktes
   Schlachtsystem, Feldartillerie.
+
+### Ideen, noch nicht entschieden
+
+- [ ] Wunden wirken laut Regel erst am Ende der Runde (SE 6); die App lässt sie sofort wirken
+  (Hausregel). Bleibt das so?
+- [ ] Pfeil zu einem Ziel außerhalb des Bildschirms (bei vielen NSC scrollt die Spalte): ein Hinweis
+  am Rand?
+- [ ] Das Fadenkreuz ⌖ in der roten Marke unten im Zug größer, wie auf den Karten?
