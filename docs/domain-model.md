@@ -158,7 +158,8 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > und 1W4 Magazine); dafür ändert sich das Bild nicht. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-08-nsc-als-charaktere.png`](changes/2026-11-08-nsc-als-charaktere.png).
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-08d): **Entfernung je SC, NSC als Gruppe,
+> Am 8. November 2026 freigegeben (Kennzeichen 2026-11-08d), mit dem UI-Entwurf unter
+> [`ui-entwurf/entfernung-je-sc/`](ui-entwurf/entfernung-je-sc/): **Entfernung je SC, NSC als Gruppe,
 > Ausweichen** nach SR 20 (siehe *Kampfsimulation*, *Range Bands*, *Bewegen*, *Ausweichen*). Jeder SC
 > hat seine eigene Entfernung zur NSC-Gruppe und bewegt sich in seinem Zug für sich; die NSC bleiben
 > zusammen als fester Bezugspunkt auf Band 0, bewegt werden nur die SC: Ein Schritt der Gruppe

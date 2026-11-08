@@ -94,23 +94,17 @@ hide <<value>> stereotype
     /reactionText: string
     rangeDice: number[2]
     bandDie: number [0..1]
-    $gone("2026-11-08d", "band: number")
-    $new("2026-11-08d", "startBand: number")
-    $gone("2026-11-08d", "close: boolean")
-    $new("2026-11-08d", "startClose: boolean")
-    $gone("2026-11-08d", "/range: Range [0..1]")
-    $gone("2026-11-08d", "/escaped: boolean")
+    startBand: number
+    startClose: boolean
     round: number
-    $gone("2026-11-08d", "pcMoved: number [0..1]")
     npcMoved: number [0..1]
-    $gone("2026-11-08d", "pcRuns: number [0..1]")
     npcRuns: number [0..1]
     alarm: number [0..1]
     /surprise: Side [0..1]
     /surprising: Side [0..1]
     /first: Side
   }
-  class Distance $begegnung $newClass("2026-11-08d") {
+  class Distance $begegnung {
     band: number
     close: boolean
     moved: number [0..1]
@@ -185,9 +179,9 @@ Encounter "1" *-- "*" Character : npcs {ordered}
 Encounter "*" --> "0..1" Character : leader
 Encounter "*" --> "*" Character : acted
 Encounter "*" --> "0..1" Character : /turn
-Encounter "1" *-$newArrow("2026-11-08d")- "*" Distance : distances
-Distance "*" -$newArrow("2026-11-08d")-> "1" Character : of
-Encounter "*" -$newArrow("2026-11-08d")-> "*" Character : evading
+Encounter "1" *-- "*" Distance : distances
+Distance "*" --> "1" Character : of
+Encounter "*" --> "*" Character : evading
 
 ' Karte
 
@@ -198,5 +192,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Encounter #line:d0021b;line.bold
 @enduml
