@@ -33,6 +33,13 @@
 !endif
 !return ""
 !endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
 !pragma layout smetana
 title Ausschnitt: Charaktere
 hide empty members
@@ -111,6 +118,7 @@ hide <<value>> stereotype
   class Attack <<transient>> $kampf
   class AttackResult $kampf
   class Recovery $kampf
+  class Encounter $begegnung
   class Npc $begegnung
 
 ' Referenzdaten
@@ -168,7 +176,8 @@ Character "*" --> "0..1" Weapon : secondary
 Weapon "*" --> "1" Skill : uses
 
 ' Verlauf
-Recovery "*" --> "0..1" Character : for
+Recovery "*" -$goneArrow("2026-11-08c")-> "0..1" Character : for
+Recovery "*" -$newArrow("2026-11-08c")-> "1" Character : for
 Recovery "*" --> "0..1" Character : by
 TaskResult "*" --> "1" Character : for
 TaskResult "*" --> "0..1" SkillLevel : uses
@@ -180,15 +189,23 @@ Task "*" --> "0..1" SkillLevel : uses
 Task --> "0..6" Characteristic : counts
 
 ' Angriff
-Attack "*" --> "0..1" Character : /for
-Attack "*" --> "0..1" Character : /victim
-AttackResult "*" --> "0..1" Character : for
-AttackResult "*" --> "0..1" Character : victim
+Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Character : /for
+Attack "*" -$newArrow("2026-11-08c")-> "1" Character : /for
+Attack "*" -$newArrow("2026-11-08c")-> "0..1" Character : against
+Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Character : /victim
+AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Character : for
+AttackResult "*" -$newArrow("2026-11-08c")-> "1" Character : for
+AttackResult "*" -$newArrow("2026-11-08c")-> "0..1" Character : against
+AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Character : victim
 AttackResult "*" --> "0..1" SkillLevel : uses
 
 ' Begegnung
+Encounter "1" *-$newArrow("2026-11-08c")- "*" Character : npcs {ordered}
+Encounter "*" -$newArrow("2026-11-08c")-> "0..1" Character : leader
+Encounter "*" -$newArrow("2026-11-08c")-> "*" Character : acted
+Encounter "*" -$newArrow("2026-11-08c")-> "0..1" Character : /turn
 Npc "1" *-- "1" Upp : upp
-Npc "0..1" --> "0..1" Character : became
+Npc "0..1" -$goneArrow("2026-11-08c")-> "0..1" Character : became
 Character "*" --> "0..1" Item : wears
 
 ' Karte
@@ -200,4 +217,6 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class Encounter #line:d0021b;line.bold
+class Npc #line:d0021b;line.bold
 @enduml

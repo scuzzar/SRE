@@ -39,6 +39,13 @@
 !endif
 !return ""
 !endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
 !pragma layout smetana
 title Solo RPG Engine – Domänenmodell (Version 1)
 hide empty members
@@ -310,7 +317,7 @@ hide <<value>> stereotype
     /range: Range [0..1]
     /escaped: boolean
     round: number
-    acted: string[*]
+    $gone("2026-11-08c", "acted: string[*]")
     pcMoved: number [0..1]
     npcMoved: number [0..1]
     pcRuns: number [0..1]
@@ -319,7 +326,7 @@ hide <<value>> stereotype
     /surprise: Side [0..1]
     /surprising: Side [0..1]
     /first: Side
-    /turn: string [0..1]
+    $gone("2026-11-08c", "/turn: string [0..1]")
   }
   class SurpriseRoll <<value>> $begegnung {
     die: number
@@ -343,12 +350,12 @@ hide <<value>> stereotype
     to: number
   }
   class Npc $begegnung {
-    name: string
-    leader: boolean
-    skill: number
-    /wounds: Wounds
-    /state: WoundState
-    /blows: number [0..1]
+    $gone("2026-11-08c", "name: string")
+    $gone("2026-11-08c", "leader: boolean")
+    $gone("2026-11-08c", "skill: number")
+    $gone("2026-11-08c", "/wounds: Wounds")
+    $gone("2026-11-08c", "/state: WoundState")
+    $gone("2026-11-08c", "/blows: number [0..1]")
   }
   class Wounds <<value>> $kampf {
     str: number
@@ -724,8 +731,9 @@ LogEntry <|-- TaskResult
 LogEntry <|-- AttackResult
 LogEntry <|-- DamageRoll
 LogEntry <|-- Recovery
-Recovery "*" --> "0..1" Character : for
-Recovery "*" --> "0..1" Npc : npc
+Recovery "*" -$goneArrow("2026-11-08c")-> "0..1" Character : for
+Recovery "*" -$newArrow("2026-11-08c")-> "1" Character : for
+Recovery "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : npc
 Recovery "*" --> "0..1" Character : by
 Recovery --> RecoveryKind
 LogEntry <|-- Note
@@ -747,16 +755,20 @@ Task ..> TaskResult : on roll
 
 ' Angriff
 Attack "0..1" --> "1" Campaign : in
-Attack "*" --> "0..1" Character : /for
-Attack "*" --> "0..1" Npc : by
-Attack "*" --> "0..1" Npc : against
-Attack "*" --> "0..1" Character : /victim
+Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Character : /for
+Attack "*" -$newArrow("2026-11-08c")-> "1" Character : /for
+Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : by
+Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : against
+Attack "*" -$newArrow("2026-11-08c")-> "0..1" Character : against
+Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Character : /victim
 Attack "*" --> "1" Weapon : /with
 Attack ..> AttackResult : on roll
-AttackResult "*" --> "0..1" Character : for
-AttackResult "*" --> "0..1" Npc : by
-AttackResult "*" --> "0..1" Npc : against
-AttackResult "*" --> "0..1" Character : victim
+AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Character : for
+AttackResult "*" -$newArrow("2026-11-08c")-> "1" Character : for
+AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : by
+AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : against
+AttackResult "*" -$newArrow("2026-11-08c")-> "0..1" Character : against
+AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Character : victim
 AttackResult "*" --> "1" Weapon : with
 AttackResult "*" --> "0..1" SkillLevel : uses
 AttackResult "*" --> "0..1" AttackResult : volley
@@ -775,11 +787,15 @@ Encounter --> Side
 EncounterRange -[hidden]- Terrain
 RangeBand -[hidden]- EncounterRange
 Encounter "*" --> "0..1" Hex : in
-Encounter "1" *-- "1..*" Npc : npcs {ordered}
+Encounter "1" *-$goneArrow("2026-11-08c")- "1..*" Npc : npcs {ordered}
+Encounter "1" *-$newArrow("2026-11-08c")- "*" Character : npcs {ordered}
+Encounter "*" -$newArrow("2026-11-08c")-> "0..1" Character : leader
+Encounter "*" -$newArrow("2026-11-08c")-> "*" Character : acted
+Encounter "*" -$newArrow("2026-11-08c")-> "0..1" Character : /turn
 Npc "1" *-- "1" Upp : upp
 Npc "*" --> "1" Item : wields
 Npc "*" --> "0..1" Item : wears
-Npc "0..1" --> "0..1" Character : became
+Npc "0..1" -$goneArrow("2026-11-08c")-> "0..1" Character : became
 Character "*" --> "0..1" Item : wears
 WoundState -[hidden]- Wounds
 

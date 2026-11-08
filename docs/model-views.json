@@ -84,6 +84,17 @@
       "file": "2026-11-08-ueberraschung-als-erster-wurf",
       "title": "Überraschung als erster Wurf im Kampf",
       "approved": true
+    },
+    {
+      "id": "2026-11-08c",
+      "file": "2026-11-08-nsc-als-charaktere",
+      "title": "NSC der Begegnung als vollständige Charaktere",
+      "approved": false,
+      "show": [
+        "Campaign",
+        "Possession",
+        "Weapon"
+      ]
     }
   ]
 }

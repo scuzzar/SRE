@@ -146,6 +146,18 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > liegt unter
 > [`changes/2026-11-07-ueberraschung-ausdauer-parade.png`](changes/2026-11-07-ueberraschung-ausdauer-parade.png).
 >
+> **Offen, wartet auf Freigabe: NSC der Begegnung als vollständige Charaktere** (Kennzeichen
+> 2026-11-08c; siehe *Begegnung*, *NSC*, *Angriff in beide Richtungen*, *Heilung*). Es gibt nur noch
+> eine Klasse für alle, die kämpfen: Die NSC einer Begegnung werden beim Würfeln als vollständige
+> `Character` erzeugt (UPP, Fertigkeit als echte Stufe, Waffe und Rüstung im Besitz, Primärwaffe,
+> Waffe in der Hand, getragene Rüstung) und hängen an der Begegnung (`Encounter.npcs`), nicht an der
+> Kampagne. Im Bild: `Npc` entfällt mit allen Pfeilen (er bleibt bis zur Freigabe stehen, Felder
+> durchgestrichen, Pfeile rot gestrichelt); neu `Encounter.npcs`, `leader`, `acted` und `/turn` als
+> Verweise auf `Character`; Angriff und Angriffsergebnis verweisen nur noch auf Angreifer (`for`,
+> immer einer) und Ziel (`against`) statt auf vier Arten; die Heilung nur noch auf einen Charakter
+> (`for`); `became` entfällt, Übernehmen heißt Umhängen. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-08-nsc-als-charaktere.png`](changes/2026-11-08-nsc-als-charaktere.png).
+>
 > Am 8. November 2026 freigegeben: **Überraschung als erster Wurf im Kampf** (siehe
 > *Kampfsimulation*, *Überraschung*). Sie wird nicht mehr beim Anlegen der Begegnung gewürfelt,
 > sondern zu Beginn des Kampfs, als eigener Wurf mit zwei Würfeln (SC weiß, NSC schwarz) und ihren
@@ -193,7 +205,7 @@ Argument); das Skript lädt PlantUML bei Bedarf selbst und braucht nur Java, kei
 die aus dem Modell erzeugt werden, nie von Hand gezeichnet: je Bereich einer, mit den Klassen des
 Bereichs vollständig und ihren Nachbarn aus anderen Bereichen zugeklappt, und je offener Änderung
 einer, mit dem, was sie ändert. **Rot** ist, was noch nicht freigegeben ist: neue Felder rot und
-fett, entfallende rot durchgestrichen, neue Pfeile rot und dick, betroffene Klassen rot gerahmt.
+fett, entfallende rot durchgestrichen, neue Pfeile rot und dick, entfallende rot gestrichelt, betroffene Klassen rot gerahmt.
 Welche Klasse zu welchem Bereich gehört, sagt ihr Tag im Modell (`class Encounter $begegnung`); die
 Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 
@@ -210,7 +222,8 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+2026-11-08c (NSC der Begegnung als vollständige Charaktere). Entfallende Pfeile sind dort rot
+gestrichelt.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -292,11 +305,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Art der Begegnung | `EncounterType` | Eine Zeile der Random Encounter List: Anzahl in Würfeln, Name, TL-Abweichung, Anführer (L), Schusswaffen (G), Rüstung (A), Fahrzeug (V) |
 | Würfel der Anzahl | `Campaign.quantityDie`, `Encounter.quantityDie` | Der Würfel, mit dem die Anzahl der NSC gewürfelt wird: W6 nach den Regeln, W4 oder W3 zum Ausgleichen |
 | Reaktion | `Encounter.reaction` | 2W6 auf die Reactions-Tabelle (S. 21): 2 sofortiger Angriff … 12 freundlich |
-| NSC der Begegnung | `Npc` | Ein Gegner oder Fremder in einer Begegnung, mit UPP, Waffe, Rüstung, Fertigkeit und Wunden |
-| Anführer | `Npc.leader` | Der NSC mit der besten Ausrüstung, wenn die Begegnung einen hat (L) |
-| Übernehmen | `Npc.became` | Ein NSC wird zum Charakter der Kampagne, als SC oder als dauerhafter NSC |
+| NSC der Begegnung | `Encounter.npcs` (`Character`) | Ein Gegner oder Fremder in einer Begegnung: ein vollständiger Charakter, der an der Begegnung hängt, nicht an der Kampagne |
+| Anführer | `Encounter.leader` | Der NSC mit der besten Ausrüstung, wenn die Begegnung einen hat (L) |
+| Übernehmen | (von `Encounter.npcs` nach `Campaign.characters`) | Ein NSC der Begegnung wird in die Kampagne umgehängt, als SC oder als dauerhafter NSC |
 | Dauerhafter NSC | `Character` mit `npc` | Ein Charakter, der kein SC ist; er steht im Charakter-Screen unter „NSC“ |
-| Getragene Rüstung | `Character.wears`, `Npc.wears` | Die Rüstung, die jemand gerade anhat; sie zählt, wenn er angegriffen wird |
+| Getragene Rüstung | `Character.wears` | Die Rüstung, die jemand gerade anhat; sie zählt, wenn er angegriffen wird |
 | Rüstungsklasse einer Rüstung | `Item.armor` | Wie eine Rüstung in der Matrix zählt, z. B. Vacc Suit als Cloth, Battle Dress als Combat |
 | Wunden | `/wounds`, `Wounds` | Wie viel STR, DEX und END jemand durch Treffer verloren hat |
 | Zustand | `/state`, `WoundState` | unverletzt, verwundet, bewusstlos (ein Attribut auf 0), schwer verwundet (zwei), tot (drei) |
@@ -318,6 +331,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Parade | (Regel) | Wer mit Faust oder Klinge angegriffen wird und selbst Faust, Klinge oder ein Gewehr führt, zieht seine Stufe darin vom Wurf ab (SR 22) |
 | Partei | `Side` | Die SC (`pcs`) oder die NSC der Begegnung (`npcs`) |
 | Runde, Zug | `round`, `acted`, `/turn` | Eine Kampfrunde, in der jeder Kämpfer einmal dran ist; wer gerade dran ist |
+| Angreifer, Ziel | `AttackResult.for`, `AttackResult.against` | Wer angreift (immer einer) und wen er angreift (höchstens einer), SC oder NSC, beides ein Charakter |
 | Heilung | `Recovery` | Ein Logeintrag, der Wunden zurücknimmt: Aufwachen, Behandlung oder Ruhe (S. 7) |
 | Aufwachen | `RecoveryKind.wake` | Ein Bewusstloser kommt zu sich; die Wunden gehen zur Hälfte zurück, bei einer schweren Wunde nur auf mindestens 1 |
 | Behandlung | `RecoveryKind.treatment` | Ein SC mit Medical heilt die Wunden ganz: leichte mit Medical-1 und Medical Kit in 30 Minuten, schwere mit Medical-3 in einer medizinischen Einrichtung in 5W6 Tagen |
@@ -415,6 +429,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   gegen die Regeln dieses Modells geprüft, auch jeder Verweis in die Referenzdaten und auf die
   eigenen Charaktere; ist etwas falsch, wird nichts importiert. Ein Import legt immer eine neue
   Kampagne an, auch wenn es dieselbe schon gibt, und überschreibt nie eine bestehende.
+  - *Dateien und Spielstände von vor 2026-11-08c* (NSC der Begegnung als Charaktere) werden beim
+    Laden umgeschrieben: Jeder NSC wird ein Charakter der Begegnung mit derselben Id, wie unter
+    *Begegnung* beschrieben (Fertigkeit als Stufe, Waffe und Rüstung im Besitz), der Anführer zum
+    Verweis `leader`. Ein schon übernommener NSC (`became`) fällt aus der Begegnung, und alle
+    Verweise des Logs auf ihn zeigen auf den Charakter, der er wurde; dieser hat damit die Wunden
+    aus dem Kampf, wie es jetzt beim Übernehmen ist. Im Angriffsergebnis wird `by` zu `for` und
+    `victim` zu `against`, in der Heilung `npc` zu `for`.
 - **Nicht in Version 1.** Szenen (der Log läuft ohne Gliederung durch; Szenen kommen mit Mythics
   Szenenstruktur), die Feinjustierung des Zielwerts um ±1, eigene Fertigkeiten und
   Hausregeln, die man in der App einstellt.
@@ -567,7 +588,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Die Ansicht zeigt dazu die klassische Tabelle der Waffe: Rüstung × Reichweite, in jeder Zelle
     der nötige Wurf mit allen DMs des Charakters; eine Zelle antippen wählt Rüstung und Reichweite.
   - Gewürfelt wird ein Angriff als `AttackResult` in den Log übernommen. Es verweist auf
-    Charakter, Waffe und, wenn er sie hat, seine Fertigkeitsstufe darin; es hält Rüstung,
+    Charakter (`for`), Waffe und, wenn er sie hat, seine Fertigkeitsstufe darin; es hält Rüstung,
     Reichweite, die zwei Würfel sowie DM und Zielwert fest. Der Erfolg (`/success`: Würfel + `dm` ≥
     `target`) folgt allein daraus. Der Angriff bleibt danach offen, sodass man gleich noch einmal
     angreifen kann.
@@ -610,7 +631,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     alle mit demselben DM (Book 1 nennt für die Nachbarn keinen Abzug). Auf jede Reichweite, auf die
     die Shotgun schießt. Ein Schuss.
   - **Nachbarn** (Hausregel): Infrage kommen Kämpfer aus der Partei des Ziels, ohne das Ziel, die
-    nicht tot und nicht übernommen sind; SC wie in der Kampfsimulation (lebend, nicht ausgeblendet,
+    nicht tot sind; SC wie in der Kampfsimulation (lebend, nicht ausgeblendet,
     kein dauerhafter NSC). Die Partei steht als Liste: NSC in der Reihenfolge der Begegnung, SC in der
     der Kampagne.
     - *Feuerstoß*: der nächste davon **über** dem Ziel in der Liste und der nächste **darunter**
@@ -723,14 +744,22 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (`Encounter.quantityDie`), damit die Übersicht z. B. „3W3“ zeigt; fehlt er (Begegnungen von
     vorher), war es W6.
   - *TL der Gruppe*: TL der Welt plus die Abweichung der Art (z. B. +1 bei Soldiers), mindestens 0.
-  - *Jeder NSC* (`Npc`) bekommt 2W6 je Attribut, einen Namen von der Tafel NSC (Vor- und Nachname,
-    irdisch oder spacig zufällig), eine Waffe (`wields`) und mit A eine Rüstung (`wears`): Ohne G
+  - *Jeder NSC* ist ein vollständiger Charakter (`Character`), der an der Begegnung hängt
+    (`Encounter.npcs`, in der gewürfelten Reihenfolge; siehe *NSC*). Er bekommt 2W6 je Attribut
+    (`upp`), einen Namen von der Tafel NSC (Vor- und Nachname, irdisch oder spacig zufällig), als
+    Herkunft (`background`) die Art der Begegnung, beim Anführer mit „· Anführer“, `npc` (er ist kein
+    SC), keine Credits, keinen Lebenslauf, leere Ausrüstung und Notiz. Dazu eine Waffe und mit A eine
+    Rüstung, beide im Besitz (`possessions`, je 1); die Waffe ist seine Primärwaffe (`primary`) und
+    in der Hand (`wields`), die Rüstung trägt er (`wears`). Ohne G
     eine zufällige Klinge bis zum TL der Gruppe (Club, Cudgel, Spear, Dagger, Blade …, nach
     *Available Weapons by TL*), mit G eine zufällige Schusswaffe bis zum TL; mit A eine zufällige
     Rüstung bis zum TL, aber Combat Armor und Battle Dress nur, wenn die Art militärisch ist
     (`EncounterType.military`; SR 50: „only military troops and leaders will wear combat armor or
-    battle dress“). Die Fertigkeit in seiner Waffe (`skill`) ist 1. Munition zählen NSC nicht.
-  - *Anführer* (L): der erste NSC; er bekommt die beste Ausrüstung bis zum TL und Fertigkeit 2: die
+    battle dress“). Die Fertigkeit, die seine Waffe benutzt, hat er als echte Stufe (`skills`) 1.
+    Munition zählen NSC der Begegnung weiterhin nicht (Hausregel): Ihre Schusswaffe gilt immer als
+    voll (`rounds` fehlt) und verbraucht nichts.
+  - *Anführer* (L): der erste NSC; die Begegnung verweist auf ihn (`leader`). Er bekommt die beste
+    Ausrüstung bis zum TL und Fertigkeit 2: die
     beste **Schusswaffe**, auch ohne G (gibt es bis zum TL keine, die beste Klinge), und die beste
     Rüstung, auch ohne A und auch Combat Armor oder Battle Dress (SR 50). Das Beste ist das mit dem
     höchsten TL, bei Gleichstand das teuerste.
@@ -750,14 +779,20 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (`ended`); beendete Begegnungen bleiben in der Kampagne, weil der Log auf ihre NSC verweist,
     und werden nicht mehr gezeigt. Eine Begegnung, auf die der Log nicht verweist, wird beim Beenden
     gelöscht.
-- **NSC.** Ein NSC lebt in seiner Begegnung, getrennt von den Charakteren.
-  - **Übernehmen**: Man kann einen NSC als SC oder als dauerhaften NSC in die Kampagne übernehmen.
-    Er wird ein Charakter mit seinem Namen, seinem UPP (die vollen Werte, ohne Wunden), seiner
-    Fertigkeit in der Waffe, Waffe und Rüstung im Besitz, der Waffe als Primärwaffe und in der Hand
-    und getragener Rüstung,
-    Herkunft = Art der Begegnung. Als dauerhafter NSC hat er `npc`. Der NSC der Begegnung verweist
-    danach auf ihn (`became`), kämpft nicht mehr in der Begegnung und lässt sich nicht noch einmal
-    übernehmen.
+- **NSC.** Ein NSC der Begegnung ist ein vollständiger Charakter, derselben Klasse wie die SC.
+  Er hängt an seiner Begegnung (`Encounter.npcs`), nicht an der Kampagne: Jeder Charakter gehört
+  genau einer Kampagne (`characters`) oder genau einer Begegnung (`npcs`), nie beiden. Die NSC einer
+  Begegnung stehen nicht im Charakter-Screen, nicht in der Leiste oben, nicht im Shop, und der
+  Charakter oben (`focus`) ist nie einer von ihnen. Für Angriff, Wunden, Heilung, Ausdauer, Parade
+  und Zug gelten für SC und NSC dieselben Regeln; wo eine Regel sie unterscheidet, sagt sie es (SC
+  heißt: Charakter der Kampagne; NSC: Charakter der Begegnung).
+  - **Übernehmen**: Man kann einen NSC der Begegnung als SC oder als dauerhaften NSC in die Kampagne
+    übernehmen. Er wird von der Begegnung in die Kampagne **umgehängt** (aus `npcs` in
+    `characters`), mit allem, was er hat; als SC verliert er `npc`. Verweist die Begegnung auf ihn
+    als Anführer, fällt der Verweis weg. Er ist danach nicht mehr NSC der Begegnung, kämpft also
+    nicht mehr auf ihrer Seite. Weil er derselbe Charakter bleibt, verweist der Log weiter auf ihn,
+    und er behält seine **Wunden** aus dem Kampf (bisher kam der Übernommene unverwundet); heilen
+    lässt er sich wie jeder Charakter.
   - **Dauerhafte NSC** (`Character` mit `npc`) stehen im Charakter-Screen unter „NSC“, nicht in der
     Leiste oben, nicht unter den SC im Shop, und lassen sich im Editor zum SC machen und umgekehrt.
     Proben und Angriffe würfelt man für SC.
@@ -770,19 +805,22 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   im Kampf steht sie oben in der Leiste neben dem Namen. Geht sie aus dem Besitz, trägt er Nothing.
   Die Beispiel-Charaktere tragen ihre Rüstung von Anfang an (Kira Jack, Jonas Mesh).
 - **Angriff in beide Richtungen.**
-  - *SC gegen NSC*: Der Charakter oben greift einen NSC der laufenden Begegnung an (`against`), der
-    weder tot noch übernommen ist. Die Rüstung ist die, die der NSC trägt; man wählt nur die
+  - Angreifer (`for`) und Ziel (`against`) sind Charaktere, SC oder NSC. Im Angriff in Vorbereitung
+    ist der Angreifer (`/for`) in der Kampfsimulation der Kämpfer am Zug, sonst der Charakter oben.
+  - *SC gegen NSC*: Ein SC greift einen NSC der laufenden Begegnung an (`against`), der nicht tot
+    ist. Die Rüstung ist die, die der NSC trägt; man wählt nur die
     Reichweite. Wie bisher geht auch ein Ziel ohne NSC, mit frei gewählter Rüstung.
-  - *NSC gegen SC*: Ein NSC der Begegnung, der nicht bewusstlos oder tot ist, greift den Charakter
-    oben an (`by`, `victim`). Es zählen die Fertigkeit des NSC (`skill`), seine Waffe, seine
+  - *NSC gegen SC*: Ein NSC der Begegnung, der nicht bewusstlos oder tot ist, greift einen SC
+    an (`for` der NSC, `against` der SC). Es zählen seine Stufe in der Waffe (`skills`), seine Waffe in
+    der Hand, seine
     STR/DEX (siehe unten), die getragene Rüstung des SC und die Reichweite.
   - Angreifer mit Wunden (SR 21; Errata zu *The Traveller Book*, S. 36): In der laufenden Begegnung
     zählen STR und DEX für die DMs ohne die Wunden aus dieser Begegnung, also mit den Wunden, die vor
     ihrem ersten Logeintrag bestanden (Heilungen seitdem zählen mit). Ohne laufende Begegnung und in
     jeder späteren zählen sie mit allen Wunden. Bewusstlose und Tote greifen nicht an.
-  - Das Angriffsergebnis verweist auf Angreifer (`for` = SC oder `by` = NSC, genau einer) und, wenn
-    es eines gibt, auf das Ziel (`against` = NSC oder `victim` = SC, höchstens einer); es hält wie
-    bisher Rüstung, Reichweite, Würfel, DM und Zielwert fest.
+  - Das Angriffsergebnis verweist auf den Angreifer (`for`, immer einer) und, wenn es eines gibt,
+    auf das Ziel (`against`, höchstens einer); es hält wie bisher Rüstung, Reichweite, Würfel, DM und
+    Zielwert fest.
 - **Wunden.** Nach Charts S. 7 und Regelheft S. 21 (SR 21). Der Schaden eines Treffers wird auf
   STR, DEX und END verteilt; jeder Würfel geht ganz auf ein Attribut und wird nicht auf mehrere
   verteilt, **außer** er bringt es auf 0.
@@ -809,8 +847,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     über 0, nimmt die App es von selbst.
   - Schadenswürfe von vor dem Überlauf haben keine Punkte: Bei ihnen ist jeder Würfel ein Block mit
     seinem Attribut, und was über 0 hinausging, bleibt verfallen.
-  - Die Wunden (`/wounds`) folgen aus den Schadenswürfen im Log, die auf Treffer gegen diesen SC bzw.
-    NSC verweisen. Ein Schadenswurf löschen nimmt seine Wunden zurück.
+  - Die Wunden (`/wounds`) folgen aus den Schadenswürfen im Log, die auf Treffer gegen diesen
+    Charakter (`against`) verweisen. Ein Schadenswurf löschen nimmt seine Wunden zurück.
   - Wunden senken STR, DEX und END für Proben und den Zustand; für die DMs eines Angriffs gilt die
     Ausnahme oben (in der laufenden Begegnung zählen ihre Wunden nicht).
   - *Zustand* (`/state`): kein Attribut auf 0 und keine Wunde: unverletzt; Wunden, aber keins auf 0:
@@ -829,7 +867,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   (siehe *Angriff*); mit laufender Begegnung die **Kampfsimulation**; beendet man sie, zeigt er
   wieder die Waffentabelle. Das alles ist nur Anzeige; gespeichert wird die Begegnung.
 - **Kampfsimulation.** Gilt für die laufende Begegnung. Es kämpfen die SC (die Lebenden, nicht
-  ausgeblendet, ohne dauerhafte NSC) gegen die NSC der Begegnung, die nicht übernommen sind.
+  ausgeblendet, ohne dauerhafte NSC) gegen die NSC der Begegnung (`npcs`).
   - *Entfernung*: Beim Anlegen der Begegnung 2W6 plus DM des Geländes (`terrain`, wählbar, ohne
     Gelände ±0) auf die Encounter Ranges (S. 5): 1 Short, 2 Close, 3 Short, 4 Medium, 5 Short,
     6 Medium, 7 Medium, 8 Long, 9 Medium, 10 Very Long, 11 Long, 12 Very Long; unter 1 gilt 1, über
@@ -941,14 +979,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 - **Parade** (SR 22, *Parrying*). Greift jemand mit einem Schlag oder Hieb an und führt das Ziel selbst
   eine Faust- oder Nahkampfwaffe (`blow` oder `swing`, auch die Hände) oder ein langes Gewehr (Rifle,
   Carbine, Automatic Rifle, Shotgun, als Cudgel; keine Pistole, keine SMG, kein Laser), pariert es:
-  Seine Stufe in dieser Waffe (beim Gewehr in Cudgel) geht als negativer DM in den Angriff. Bei einem
-  SC zählt seine Fertigkeit wie beim Angriff (ohne die Fertigkeit Stufe 0), bei einem NSC seine
-  Fertigkeit (`skill`), aber nur in seiner eigenen Nahkampfwaffe (mit einem Gewehr 0). Wer
+  Seine Stufe in dieser Waffe (beim Gewehr in Cudgel) geht als negativer DM in den Angriff; sie zählt
+  wie beim Angriff (ohne die Fertigkeit Stufe 0), bei SC und NSC gleich. Ein NSC mit Gewehr hat
+  Cudgel nicht und pariert damit also mit 0. Wer
   bewusstlos, schwer verwundet oder tot ist, pariert nicht. Angreifen und parieren geht in derselben
   Runde. Die Parade steckt im DM des Angriffsergebnisses (`dm`); die Anzeige nennt sie als eigenen
   Posten.
-- **Heilung.** Nach S. 7. Eine Heilung ist ein Logeintrag (`Recovery`) für einen verwundeten SC
-  (`for`) oder NSC der laufenden Begegnung (`npc`), nie für einen Toten. Die Wunden (`/wounds`)
+- **Heilung.** Nach S. 7. Eine Heilung ist ein Logeintrag (`Recovery`) für einen verwundeten Charakter
+  (`for`), einen SC oder einen NSC der laufenden Begegnung, nie für einen Toten. Die Wunden (`/wounds`)
   folgen aus Schadenswürfen und Heilungen im Log, der Reihe nach; eine Heilung löschen nimmt sie
   zurück.
   - **Leicht oder schwer** (`/severity`): Eine Wunde ist *schwer*, wenn seit der letzten vollen
@@ -1018,7 +1056,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Gegenstand; Schiffskarten kommen später. Alles, was nicht in der Liste steht, bleibt freier Text
     in der Ausrüstung (`equipment`).
 - **Löschen und Ausblenden.** Ein Charakter oder eine Fertigkeitsstufe, auf die kein Logeintrag
-  verweist (bei einem Charakter auch keine Buchung der Gruppenkasse und kein übernommener NSC),
+  verweist (bei einem Charakter auch keine Buchung der Gruppenkasse),
   wird wirklich gelöscht. Verweist der Verlauf darauf, wird sie stattdessen ausgeblendet
   (`retired`): Sie verschwindet aus dem Charakter-Screen und aus der Leiste oben und lässt sich nicht mehr für Proben wählen,
   bleibt aber gespeichert, und der Log zeigt sie weiter. Ein ausgeblendeter Charakter lässt sich

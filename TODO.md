@@ -22,13 +22,14 @@ Code ([CLAUDE.md](CLAUDE.md)). Die Regeln stehen in [`docs/regeln-kampf.md`](doc
 Entschieden am 8. November 2026: Es gibt nur noch eine Klasse für Kämpfer. Die NSC einer Begegnung
 werden vollständig als `Character` erzeugt und hängen an der Begegnung, nicht an der Kampagne.
 
-- [ ] Modelländerung zeichnen und freigeben:
+- [ ] Modelländerung freigeben (gezeichnet als 2026-11-08c,
+  [`docs/changes/2026-11-08-nsc-als-charaktere.png`](docs/changes/2026-11-08-nsc-als-charaktere.png)):
   - `Npc` entfällt; `Encounter "1" *-- "*" Character : npcs {ordered}`.
   - Anführer als Verweis der Begegnung: `Encounter --> "0..1" Character : leader`.
-  - Angriffsergebnis: `attacker` → `Character`, `target` → `Character [0..1]` statt `for`/`by`
-    und `victim`/`against`.
-  - Heilung: ein Patient (`Character`) statt `for`/`npc`.
-  - `acted` → `Character [*]` statt Ids.
+  - Angriff und Angriffsergebnis: Angreifer `for` → `Character [1]`, Ziel `against` →
+    `Character [0..1]`; `by` und `victim` entfallen.
+  - Heilung: `for` → `Character [1]`; `npc` entfällt.
+  - `acted` → `Character [*]` und `/turn` → `Character [0..1]` statt Ids.
   - Übernehmen heißt Umhängen von der Begegnung in die Kampagne (als SC oder dauerhafter NSC);
     `became` entfällt.
 - [ ] NSC beim Würfeln vollständig erzeugen: UPP, Fertigkeit in ihrer Waffe als echte Stufe, Besitz
@@ -38,8 +39,8 @@ werden vollständig als `Character` erzeugt und hängen an der Begegnung, nicht 
   verschwinden, wo sie nur wegen der zwei Klassen da war.
 - [ ] Kampagnendatei: alte Spielstände beim Laden umschreiben (NSC zu Charakteren, die vier Verweise
   des Angriffs zu zwei, der Patient der Heilung). Die Ids bleiben, damit der Log weiter stimmt.
-- [ ] Offene Frage: Zählen NSC künftig Munition? Bisher nicht (Hausregel); mit echtem Besitz ginge
-  es.
+- [ ] Später entscheiden: Zählen NSC künftig Munition? Vorerst nicht (Hausregel bleibt); mit echtem
+  Besitz ginge es.
 
 ### 2. Ausweichen (Evade), nach dem Umbau
 

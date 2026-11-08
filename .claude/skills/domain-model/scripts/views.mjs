@@ -9,7 +9,7 @@
 //
 // Die Bereiche und Änderungen stehen in <docs>/model-views.json. Jede Klasse im Modell trägt genau
 // einen Bereich als Tag (`class Encounter $begegnung {`). Offene Änderungen sind im Modell mit
-// $new, $gone, $newClass und $newArrow markiert (siehe Kopf von domain-model.puml).
+// $new, $gone, $newClass, $newArrow und $goneArrow markiert (siehe Kopf von domain-model.puml).
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -21,7 +21,7 @@ const changeIds = new Set(config.changes.map((c) => c.id));
 
 const declaration = /^\s*(?:abstract\s+class|class|enum)\s+(\w+)(.*)$/;
 const relation = /^\s*([A-Z]\w*)\s+(?:"[^"]*"\s+)?(\S*[-.]\S*)\s+(?:"[^"]*"\s+)?([A-Z]\w*)\s*(?::.*)?$/;
-const marker = /\$(new|gone|newClass|newArrow)\(\s*"([^"]+)"/g;
+const marker = /\$(new|gone|newClass|newArrow|goneArrow)\(\s*"([^"]+)"/g;
 
 // Die Quelle in Stücke: Klassen (mit ihrem Block), Pfeile und alles andere.
 const parts = [];

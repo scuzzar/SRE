@@ -103,18 +103,20 @@ gezeichnet; die erzeugten `.puml` nie bearbeiten.
   | Entfallendes Feld | `$gone("2026-11-06", "count: number")` | rot, durchgestrichen |
   | Neue Klasse | `class Foo $bereich $newClass("2026-11-06") {` | roter Rahmen |
   | Neuer Pfeil | `A "1" -$newArrow("2026-11-06")-> "*" B : name` | rot, dick |
+  | Entfallender Pfeil | `A "1" -$goneArrow("2026-11-06")-> "*" B : name` | rot, gestrichelt |
 
   Ein geändertes Feld: die alte Fassung mit `$gone`, die neue mit `$new` direkt darunter, wie bei
   Änderungsverfolgung. Klassen mit markierten Feldern rahmt `views.mjs` selbst rot. Ein entfallender
-  Pfeil oder eine entfallende Klasse bleibt bis zur Freigabe stehen; das in der Notiz zur Änderung
-  sagen.
+  Pfeil oder eine entfallende Klasse bleibt bis zur Freigabe stehen: der Pfeil mit `$goneArrow`, bei
+  der Klasse alle Felder mit `$gone`; das in der Notiz zur Änderung sagen. Ein Pfeil, der nur mit
+  seiner entfallenden Klasse geht, braucht keine Markierung, wenn sie den Ausschnitt nur voller macht.
 - **Änderung eintragen.** Unter `changes` in `docs/model-views.json`: `id` (das Kennzeichen),
   `file` (z. B. `2026-11-06-wuerfel-der-anzahl`), `title`, `approved: false`, optional `show` mit
   Klassen aus anderen Bereichen, die zum Verständnis daneben stehen sollen. Der Ausschnitt einer
   Änderung zeigt, was sie markiert, und die Nachbarn aus demselben Bereich; nur diese Änderung ist
   dort rot.
-- **Nach der Freigabe** die Kennzeichen aus dem Modell nehmen (`$new("…", "x")` wird `x`, `$gone`-Zeilen
-  und Entfallenes löschen, `$newClass`/`$newArrow` entfernen), `approved: true` setzen und neu
+- **Nach der Freigabe** die Kennzeichen aus dem Modell nehmen (`$new("…", "x")` wird `x`, `$gone`-Zeilen,
+  `$goneArrow`-Pfeile und Entfallenes löschen, `$newClass`/`$newArrow` entfernen), `approved: true` setzen und neu
   rendern. Freigegebene Änderungen erzeugt `views.mjs` nicht mehr neu; ihr Bild bleibt als Nachweis.
   Stehen Kennzeichen einer freigegebenen Änderung noch im Modell, bricht `views.mjs` ab.
 

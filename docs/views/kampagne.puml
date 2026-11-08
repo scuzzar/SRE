@@ -33,6 +33,13 @@
 !endif
 !return ""
 !endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
 !pragma layout smetana
 title Ausschnitt: Kampagne
 hide empty members
@@ -133,4 +140,5 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class Encounter #line:d0021b;line.bold
 @enduml

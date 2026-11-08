@@ -1,0 +1,255 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-08c"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-08c: NSC der Begegnung als vollständige Charaktere
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne
+  class Character $charakter {
+    name: string
+    background: string
+    equipment: string
+    credits: number
+    note: string
+    dead: boolean
+    retired: boolean
+    npc: boolean
+    /wounds: Wounds
+    /state: WoundState
+    /blows: number [0..1]
+  }
+  class Upp <<value>> $charakter
+  class SkillLevel $charakter
+  class Possession $shop
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+
+' Verlauf
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Attack <<transient>> $kampf {
+    armor: ArmorClass [0..1]
+    range: Range [0..1]
+    burst: boolean
+    weakened: boolean
+    /dm: number
+    /need: number
+    /chance: number
+  }
+  class AttackResult $kampf {
+    armor: ArmorClass
+    range: Range
+    dice: number[2]
+    dm: number
+    target: number
+    strike: Strike [0..1]
+    /success: boolean
+    /neighbour: boolean
+  }
+  enum Strike <<value>> $kampf
+  class Recovery $kampf {
+    kind: RecoveryKind
+    dice: number[0..5]
+    /days: number [0..1]
+  }
+  enum RecoveryKind <<value>> $kampf
+  class DamageRoll $kampf
+  class Wounding <<transient>> $kampf
+  class Encounter $begegnung {
+    at: datetime
+    quantityDie: number [0..1]
+    reactionDice: number[2]
+    reactionDm: number [0..1]
+    reaction: number
+    ended: boolean
+    /reactionText: string
+    rangeDice: number[2]
+    bandDie: number [0..1]
+    band: number
+    close: boolean
+    /range: Range [0..1]
+    /escaped: boolean
+    round: number
+    $gone("2026-11-08c", "acted: string[*]")
+    pcMoved: number [0..1]
+    npcMoved: number [0..1]
+    pcRuns: number [0..1]
+    npcRuns: number [0..1]
+    alarm: number [0..1]
+    /surprise: Side [0..1]
+    /surprising: Side [0..1]
+    /first: Side
+    $gone("2026-11-08c", "/turn: string [0..1]")
+  }
+  class SurpriseRoll <<value>> $begegnung
+  enum Side <<value>> $begegnung
+  class Terrain <<reference>> $begegnung
+  class Npc $begegnung {
+    $gone("2026-11-08c", "name: string")
+    $gone("2026-11-08c", "leader: boolean")
+    $gone("2026-11-08c", "skill: number")
+    $gone("2026-11-08c", "/wounds: Wounds")
+    $gone("2026-11-08c", "/state: WoundState")
+    $gone("2026-11-08c", "/blows: number [0..1]")
+  }
+  class EncounterType <<reference>> $begegnung
+
+' Referenzdaten
+  class Weapon <<reference>> $kampf
+
+' Kampagne
+Campaign "1" *-- "*" Character : characters
+Campaign "0..1" --> "0..1" Character : focus
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+
+' Charakter
+Character "1" *-- "1" Upp : upp
+Character "1" *-- "*" SkillLevel : skills
+Character "1" *-- "*" Possession : possessions
+Character "*" --> "0..1" Weapon : wields
+Character "*" --> "0..1" Weapon : primary
+Character "*" --> "0..1" Weapon : secondary
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+Recovery "*" -$goneArrow("2026-11-08c")-> "0..1" Character : for
+Recovery "*" -$newArrow("2026-11-08c")-> "1" Character : for
+Recovery "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : npc
+Recovery "*" --> "0..1" Character : by
+Recovery --> RecoveryKind
+
+' Probe
+
+' Angriff
+Attack "0..1" --> "1" Campaign : in
+Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Character : /for
+Attack "*" -$newArrow("2026-11-08c")-> "1" Character : /for
+Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : by
+Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : against
+Attack "*" -$newArrow("2026-11-08c")-> "0..1" Character : against
+Attack "*" -$goneArrow("2026-11-08c")-> "0..1" Character : /victim
+Attack "*" --> "1" Weapon : /with
+Attack ..> AttackResult : on roll
+AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Character : for
+AttackResult "*" -$newArrow("2026-11-08c")-> "1" Character : for
+AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : by
+AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Npc : against
+AttackResult "*" -$newArrow("2026-11-08c")-> "0..1" Character : against
+AttackResult "*" -$goneArrow("2026-11-08c")-> "0..1" Character : victim
+AttackResult "*" --> "1" Weapon : with
+AttackResult "*" --> "0..1" SkillLevel : uses
+AttackResult "*" --> "0..1" AttackResult : volley
+AttackResult --> Strike
+DamageRoll "0..1" --> "1" AttackResult : of
+Wounding "0..1" --> "1" AttackResult : of
+
+' Begegnung
+Campaign "1" *-- "*" Encounter : encounters {ordered}
+Encounter "*" --> "1" EncounterType : of
+Encounter "*" --> "0..1" Terrain : terrain
+Encounter "1" *-- "0..1" SurpriseRoll : pcSurprise
+Encounter "1" *-- "0..1" SurpriseRoll : npcSurprise
+Encounter --> Side
+Encounter "1" *-$goneArrow("2026-11-08c")- "1..*" Npc : npcs {ordered}
+Encounter "1" *-$newArrow("2026-11-08c")- "*" Character : npcs {ordered}
+Encounter "*" -$newArrow("2026-11-08c")-> "0..1" Character : leader
+Encounter "*" -$newArrow("2026-11-08c")-> "*" Character : acted
+Encounter "*" -$newArrow("2026-11-08c")-> "0..1" Character : /turn
+Npc "1" *-- "1" Upp : upp
+Npc "0..1" -$goneArrow("2026-11-08c")-> "0..1" Character : became
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+class Encounter #line:d0021b;line.bold
+class Npc #line:d0021b;line.bold
+@enduml
