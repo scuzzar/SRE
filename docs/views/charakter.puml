@@ -119,6 +119,7 @@ hide <<value>> stereotype
   class AttackResult $kampf
   class Recovery $kampf
   class Encounter $begegnung
+  class Distance $begegnung $newClass("2026-11-08d")
 
 ' Referenzdaten
   class Skill <<reference>> $charakter {
@@ -198,6 +199,8 @@ Encounter "1" *-- "*" Character : npcs {ordered}
 Encounter "*" --> "0..1" Character : leader
 Encounter "*" --> "*" Character : acted
 Encounter "*" --> "0..1" Character : /turn
+Distance "*" -$newArrow("2026-11-08d")-> "1" Character : of
+Encounter "*" -$newArrow("2026-11-08d")-> "*" Character : evading
 Character "*" --> "0..1" Item : wears
 
 ' Karte
@@ -209,4 +212,5 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class Encounter #line:d0021b;line.bold
 @enduml
