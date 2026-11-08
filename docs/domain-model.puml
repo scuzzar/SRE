@@ -311,7 +311,6 @@ hide <<value>> stereotype
     /escaped: boolean
     round: number
     acted: string[*]
-    $new("2026-11-08b", "evading: string[*]")
     pcMoved: number [0..1]
     npcMoved: number [0..1]
     pcRuns: number [0..1]

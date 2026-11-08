@@ -146,10 +146,6 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > liegt unter
 > [`changes/2026-11-07-ueberraschung-ausdauer-parade.png`](changes/2026-11-07-ueberraschung-ausdauer-parade.png).
 >
-> **Wartet auf Freigabe** (8. November 2026): **Ausweichen** (Evade, SR 20; siehe *Ausweichen*). Im
-> Bild: `Encounter.evading`, wer gerade ausweicht. Der Ausschnitt dazu liegt unter
-> [`changes/2026-11-08-ausweichen.png`](changes/2026-11-08-ausweichen.png).
->
 > Am 8. November 2026 freigegeben: **Überraschung als erster Wurf im Kampf** (siehe
 > *Kampfsimulation*, *Überraschung*). Sie wird nicht mehr beim Anlegen der Begegnung gewürfelt,
 > sondern zu Beginn des Kampfs, als eigener Wurf mit zwei Würfeln (SC weiß, NSC schwarz) und ihren
@@ -214,7 +210,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-Ausweichen (2026-11-08b).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -316,7 +312,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Alarm | `Encounter.alarm` | Die Runde, in der die überraschte Partei Alarm gegeben hat; danach hält die Überraschung nicht mehr (SR 20) |
 | Überraschung hält | `/surprising` | Die Partei mit Überraschung, solange es keinen Alarm gab, einschließlich der Runde des Alarms |
 | Schlagart | `AttackResult.strike`, `Strike` | Wie ein Schlag oder Hieb zählt: Überraschung, Combat, geschwächt oder Special (SR 22) |
-| Ausweichen | `Encounter.evading` | Ein Kämpfer greift in seinem Zug nicht an und ist dafür schwerer zu treffen, bis er wieder dran ist (SR 20); Nachladen zählt ebenso |
 | Combat-Schläge | `/blows` | Wie viele volle Schläge und Hiebe ein Kämpfer in der laufenden Begegnung noch hat: END zu Beginn der Begegnung minus die Combat-Schläge und die Läufe seiner Partei |
 | Lauf | `Encounter.pcRuns`, `npcRuns` | Eine Runde, in der eine Partei 2 Bands gelaufen ist; kostet jeden ihrer Kämpfer einen Combat-Schlag |
 | Geschwächter Schlag | `Strike.weakened`, `Weapon.weakened`, `Attack.weakened` | Ein Schlag oder Hieb ohne volle Kraft, mit dem DM der Waffe; zählt nicht gegen die END |
@@ -924,18 +919,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Später**: Flucht (S. 5), Ausweichen mit Überraschung, Moral, Bewegung je Kämpfer statt je
     Partei (mit Combat Blow beim Laufen, Evade), schneller laufen (3 und 4 Bands), Tiere mit ihrer
     Geschwindigkeit (S. 19), Deckung, mehrere Gegnergruppen, Schalldämpfer.
-- **Ausweichen** (SR 20, *Evade*; SR 26, *Reloading*).
-  - *Wann*: Statt anzugreifen weicht der Kämpfer am Zug aus; das ist sein Zug. Auch wer **nachlädt**,
-    gilt als ausweichend (SR 26). Wer angreift oder aussetzt, weicht nicht aus.
-  - *Wie lange* (Hausregel, weil die App keine Ansage vor der Runde kennt): ab seinem Zug **bis zu
-    seinem nächsten Zug**. Die Begegnung hält fest, wer gerade ausweicht (`evading`, die Ids); endet
-    sein nächster Zug, gilt, was er dann tut. Eine neue Begegnung beginnt ohne.
-  - *Wirkung*: Wer ausweicht, ist schwerer zu treffen; der Angreifer bekommt einen DM nach der
-    Reichweite: Close oder Short −1, Medium −2, Long oder Very Long −4. Wer ausweicht, **pariert
-    nicht**. Beim **Feuerstoß** werden nur Nachbarn mitgetroffen, die nicht ausweichen (SR 26).
-  - Der DM steckt im DM des Angriffsergebnisses (`dm`); die Anzeige nennt ihn als eigenen Posten.
-  - Bewusstlose weichen nicht aus; wer bewusstlos wird, verliert das Ausweichen nicht, es zählt aber
-    nichts mehr.
 - **Ausdauer** (SR 22, *Endurance*). Gilt für Schläge (Faust, `blow`) und Hiebe (Klingen und
   Stangenwaffen, `swing`) in der laufenden Begegnung; Schüsse zählen nicht.
   - *Schlagart* (`AttackResult.strike`, nur bei Schlägen und Hieben): **Überraschung** (`surprise`),
