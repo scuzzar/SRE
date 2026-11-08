@@ -806,10 +806,16 @@ Schrot ✔ ✱, siehe [Feuerstoß und Schrot](#feuerstoß-und-schrot-nach-book-1
 - Werfen zählt als **Combat-Schlag** ([Ausdauer](#wirkung-der-attribute-und-ausdauer)).
 - **Autofeuer** (Submachinegun, Automatic Rifle): Feuerstöße zu 4 Schuss mit der Trefferzeile der
   Matrix (das Automatic Rifle nimmt für Einzelfeuer die Zeile des Rifle). **Zwei Würfe** gegen
-  dasselbe Ziel. Dazu Gruppentreffer:
+  dasselbe Ziel. Dazu Gruppentreffer, und zwar **gegen die Gefährten des Ziels** („the group hit
+  rule applies against companions of the target“):
   - **Gruppentreffer durch Autofeuer:** Unabhängig vom Ziel werden auch **nicht ausweichende**
     Nachbarn des Ziels angegriffen, **höchstens zwei**, je mit eigenem Wurf mit **DM −3** und allen
     anderen DMs.
+  - **Friendly Fire** gibt es damit nicht: Ein Gruppentreffer trifft nur die Partei des Ziels, nie
+    die des Schützen. Auch sonst kennt das Regelheft keine Regel dafür, dass ein Fehlschuss einen
+    Verbündeten trifft.
+
+  > App: ✔ Die Nachbarn eines Feuerstoßes und die der Schrotflinte kommen nur aus der Partei des Ziels.
 - **Gruppentreffer durch Schrotflinte:** Jeder Schuss darf bis zu **drei Nachbarn** des Ziels
   angreifen, wenn sie eine Gruppe sind (Herde, Rudel, Bande) und **höchstens menschengroß**. Gegen
   **fliegende Ziele** (Tiere mit Flügeln, Fluggeräte) in Reichweite **DM +2**.
