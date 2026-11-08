@@ -74,12 +74,7 @@ function WeaponHead({ combat }: { combat: CombatView }) {
   const characteristic = characteristicLabel[weapon.characteristic];
   return (
     <div className="weapon-head">
-      {combat.npcAttacks && combat.defender && (
-        <p className="combat-who">
-          <b>{combat.attacker}</b> greift <b>{combat.defender.name}</b> an ({armorText[combat.defender.armor]})
-        </p>
-      )}
-      {!combat.npcAttacks && combat.defender && (
+      {combat.defender && (
         <p className="combat-who">
           Ziel: <b>{combat.defender.name}</b> ({armorText[combat.defender.armor]})
         </p>
@@ -209,7 +204,7 @@ function AttackDock({ combat }: { combat: CombatView }) {
           }}
         >
           <CombatIcon />
-          {combat.npcAttacks ? `${combat.attacker.split(' ')[0]} greift an` : 'Angreifen'}
+          Angreifen
         </button>
       </div>
     </section>

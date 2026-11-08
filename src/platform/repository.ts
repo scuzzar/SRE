@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import { firstBand, hexFromRolls, keepFocus, type Campaign, type CampaignId, type CampaignRepository, type Encounter, type Hex, type LegacyWorldRoll, type Range } from '../model';
+import { firstBand, hexFromRolls, keepFocus, upgradeNpcs, type Campaign, type CampaignId, type CampaignRepository, type Encounter, type Hex, type LegacyWorldRoll, type Range } from '../model';
 
 /** Eine Kampagne liegt unter ihrer Id. */
 interface StoredCampaign {
@@ -88,6 +88,7 @@ export class DexieCampaignRepository implements CampaignRepository {
  * Subsektor hatte eine Kampagne keine Hexfelder; danach hielt ein Hexfeld eine Zeit lang seine Würfe
  * (`rolls`), heute seine Werte: Die Würfe werden nachgespielt. Vor dem Charakter oben hatte eine
  * Kampagne keinen; sie bekommt den ersten Lebenden. Vor dem Shop hatte sie keine Buchungen, vor den NSC keine Begegnungen, und ein Charakter war immer ein SC.
+ * Vor 2026-11-08c waren die NSC einer Begegnung eine eigene Art; heute sind sie Charaktere (`upgradeNpcs`).
  */
 export function upgraded(campaign: Campaign): Campaign {
   const log = campaign.log.map((entry) => {
@@ -115,7 +116,7 @@ export function upgraded(campaign: Campaign): Campaign {
     const { range, ...rest } = e as Encounter & { readonly range?: Range };
     return { ...rest, ...(rest.band === undefined ? firstBand(range ?? 'short') : {}), round: e.round ?? 1, acted: e.acted ?? [] };
   });
-  const upgraded = { ...campaign, characters, log, hexes, bookings: campaign.bookings ?? [], encounters };
+  const upgraded = upgradeNpcs({ ...campaign, characters, log, hexes, bookings: campaign.bookings ?? [], encounters });
   return keepFocus(upgraded, upgraded);
 }
 

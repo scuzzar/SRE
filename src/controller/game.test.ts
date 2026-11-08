@@ -555,6 +555,34 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot().combat!.sim).toBeUndefined();
   });
 
+  it('NSC zählen Munition wie SC: jeder Schuss zählt, Nachladen ist ihr Zug, die Hände gehen immer', async () => {
+    const { game, random } = await onRegina();
+    game.rollEncounter(15, 'clear');
+    game.rollSurprise();
+    game.closeSurprise();
+    let turn = game.snapshot().combat!.sim!.turn!;
+    // Der Anführer hat die Body Pistol geladen und 1W4 Magazine, hier 1; ohne zweite Waffe die Hände.
+    expect(turn.id).toBe('n1');
+    expect(turn.attacks.map((a) => [a.slot, a.weapon, a.ammo])).toEqual([
+      ['primary', 'body-pistol', { rounds: 6, capacity: 6, magazines: 1 }],
+      ['hands', 'hands', undefined],
+    ]);
+    random.queue.push(1, 1);
+    game.fightAttack();
+    game.closeResult();
+    game.skipTurn();
+    game.skipTurn();
+    game.skipTurn();
+    turn = game.snapshot().combat!.sim!.turn!;
+    expect(turn).toMatchObject({ id: 'n1', attacks: [{ ammo: { rounds: 5, capacity: 6, magazines: 1 } }, {}] });
+    game.fightReloadWith('body-pistol');
+    expect(game.snapshot().combat!.sim!.turn!.id).toBe('n2');
+    game.skipTurn();
+    game.skipTurn();
+    game.skipTurn();
+    expect(game.snapshot().combat!.sim!.turn).toMatchObject({ id: 'n1', attacks: [{ ammo: { rounds: 6, capacity: 6, magazines: 0 } }, {}] });
+  });
+
   it('ein Schaden, der den Kampf entscheidet, kommt an; danach ist keiner mehr dran', async () => {
     const { game, random } = await onRegina();
     // 1W6 Peasants: ein einziger NSC; die SC ziehen zuerst.

@@ -67,15 +67,13 @@ export interface TaskResult extends LogEntryBase {
 
 /**
  * Ein gewürfelter Angriff: Treffer oder nicht. Rüstung und Reichweite sind die des Ziels. Der
- * Angreifer ist ein SC (`for`) oder ein NSC einer Begegnung (`by`), genau einer; das Ziel, wenn es
- * eines gibt, ein NSC (`against`) oder ein SC (`victim`). `target` ist der Zielwert.
+ * Angreifer (`for`) und das Ziel, wenn es eines gibt (`against`), sind Charaktere: SC oder NSC einer
+ * Begegnung. `target` ist der Zielwert.
  */
 export interface AttackResult extends LogEntryBase {
   readonly kind: 'attack';
-  readonly for?: CharacterId;
-  readonly by?: string;
-  readonly against?: string;
-  readonly victim?: CharacterId;
+  readonly for: CharacterId;
+  readonly against?: CharacterId;
   /** Verweis auf die Waffe. */
   readonly with: string;
   /** Die Fertigkeit der Waffe, wenn der Charakter eine Stufe darin hat; sonst zählte Stufe 0. */
@@ -122,15 +120,14 @@ export const recoveryKinds = ['wake', 'treatment', 'rest'] as const;
 export type RecoveryKind = (typeof recoveryKinds)[number];
 
 /**
- * Eine Heilung: nimmt Wunden eines SC (`for`) oder NSC (`npc`) zurück, genau eines. Bei der
+ * Eine Heilung: nimmt Wunden eines Charakters (`for`, SC oder NSC einer Begegnung) zurück. Bei der
  * Behandlung der Behandelnde (`by`), bei einer schweren Wunde die 5W6 Tage (`dice`). `how` ist im
  * Modell `kind`.
  */
 export interface Recovery extends LogEntryBase {
   readonly kind: 'recovery';
   readonly how: RecoveryKind;
-  readonly for?: CharacterId;
-  readonly npc?: string;
+  readonly for: CharacterId;
   readonly by?: CharacterId;
   readonly dice?: readonly number[];
 }
@@ -242,5 +239,5 @@ export function isNeighbour(log: readonly LogEntry[], index: number): boolean {
   if (entry?.kind !== 'attack' || entry.volley === undefined) return false;
   const first = log[entry.volley];
   if (first?.kind !== 'attack') return false;
-  return entry.against !== first.against || entry.victim !== first.victim;
+  return entry.against !== first.against;
 }

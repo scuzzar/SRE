@@ -1,11 +1,10 @@
-import { activeSkills, characterOf, type Campaign, type Character, type SkillLevel, type Upp } from './campaign';
-import { npcOf } from './encounter';
+import { activeSkills, anyCharacterOf, isCampaignCharacter, replaceCharacter, type Campaign, type Character, type CharacterId, type SkillLevel, type Upp } from './campaign';
 import { DomainError } from './errors';
 import { damageRollsOf, isSuccess, volleyOf, type AttackResult, type DamageRoll, type LogEntry } from './log';
 import type { Clock, Random } from './ports';
 import { HANDS, itemOf, itemOfWeapon, weaponOf, type ArmorClass, type Range, type Weapon } from './reference';
 import { valueOf, type Characteristic } from './rules';
-import { autoWounds, checkWounds, fightingWounds, isFirstHitNow, woundStateOf, victimOf, woundedUpp, woundsOf, type Combatant, type WoundBlock, type WoundState } from './wounds';
+import { autoWounds, checkWounds, fightingWounds, isFirstHitNow, woundStateOf, victimOf, woundedUpp, woundsOf, type WoundBlock, type WoundState } from './wounds';
 
 /** *Basic Throw to Hit* (S. 6): 2W6 + DM ≥ 8. */
 export const ATTACK_TARGET = 8;
@@ -84,7 +83,7 @@ export function wornArmor(character: { readonly wears?: string }): ArmorClass {
 
 /** Wer kämpft, mit allem, was ein Angriff von ihm und auf ihn braucht. */
 export interface Fighter {
-  readonly who: Combatant;
+  readonly who: CharacterId;
   readonly name: string;
   /** Das UPP mit allen Wunden, wie es angezeigt wird und über den Zustand entscheidet. */
   readonly upp: Upp;
@@ -97,18 +96,13 @@ export interface Fighter {
   readonly state: WoundState;
 }
 
-export function fighterOf(campaign: Campaign, who: Combatant): Fighter {
-  const base = 'pc' in who ? characterOf(campaign, who.pc).upp : npcOf(campaign, who.npc).upp;
-  const upp = woundedUpp(base, woundsOf(campaign, who));
-  const fighting = woundedUpp(base, fightingWounds(campaign, who));
-  const state = woundStateOf(campaign, who);
-  if ('pc' in who) {
-    const character = characterOf(campaign, who.pc);
-    const weapon = wieldedWeapon(character);
-    return { who, name: character.name, upp, fighting, weapon, skill: weaponSkill(character, weapon)?.level ?? 0, armor: wornArmor(character), state };
-  }
-  const npc = npcOf(campaign, who.npc);
-  return { who, name: npc.name, upp, fighting, weapon: weaponOf(itemOf(npc.wields).weapon!), skill: npc.skill, armor: wornArmor(npc), state };
+/** Ein Kämpfer, SC oder NSC einer Begegnung: beide sind Charaktere und kämpfen nach denselben Regeln. */
+export function fighterOf(campaign: Campaign, who: CharacterId): Fighter {
+  const character = anyCharacterOf(campaign, who);
+  const upp = woundedUpp(character.upp, woundsOf(campaign, who));
+  const fighting = woundedUpp(character.upp, fightingWounds(campaign, who));
+  const weapon = wieldedWeapon(character);
+  return { who, name: character.name, upp, fighting, weapon, skill: weaponSkill(character, weapon)?.level ?? 0, armor: wornArmor(character), state: woundStateOf(campaign, who) };
 }
 
 /**
@@ -176,7 +170,7 @@ export function checkVolley(log: readonly LogEntry[], entry: AttackResult, at: n
   const first = log[entry.volley];
   if (!Number.isInteger(entry.volley) || entry.volley < 0 || entry.volley >= at || first?.kind !== 'attack') throw new DomainError('Ein Wurf einer Garbe verweist auf keinen früheren Angriff.');
   if (first.volley !== undefined) throw new DomainError('Ein Wurf einer Garbe verweist nicht auf ihren ersten Wurf.');
-  if (first.for !== entry.for || first.by !== entry.by || first.with !== entry.with) throw new DomainError('Die Würfe einer Garbe haben denselben Angreifer und dieselbe Waffe.');
+  if (first.for !== entry.for || first.with !== entry.with) throw new DomainError('Die Würfe einer Garbe haben denselben Angreifer und dieselbe Waffe.');
   const weapon = weaponOf(entry.with);
   const most = (weapon.burst === undefined ? 1 : BURST_ROLLS) + (weapon.neighbours ?? 0);
   if (volleyOf(log.slice(0, at + 1), entry.volley).length > most) throw new DomainError(`Eine Garbe mit ${weapon.name} hat höchstens ${most} Würfe.`);
@@ -194,10 +188,10 @@ export function damageDice(campaign: Campaign, of: number, random: Random): read
   return Array.from({ length: weaponOf(hitAt(campaign.log, of).with).wounds }, () => random.int(1, 6));
 }
 
-/** Muss der Spieler den Schaden dieses Treffers selbst verteilen? Bei einem SC nach seinem ersten Treffer. */
+/** Muss der Spieler den Schaden dieses Treffers selbst verteilen? Bei einem SC (Charakter der Kampagne) nach seinem ersten Treffer. */
 export function needsWounding(campaign: Campaign, of: number): boolean {
   const who = victimOf(hitAt(campaign.log, of));
-  return who !== undefined && 'pc' in who && !isFirstHitNow(campaign, who);
+  return who !== undefined && isCampaignCharacter(campaign, who) && !isFirstHitNow(campaign, who);
 }
 
 /** Ein Schadenswurf aus Würfeln und, bei einem Treffer mit Ziel, den Blöcken auf den Attributen. */
@@ -241,18 +235,14 @@ export function ammoOf(character: Character): Ammo | undefined {
   return { rounds, capacity: weapon.rounds, ammo: weapon.ammo, magazines };
 }
 
-function withCharacter(campaign: Campaign, character: Character): Campaign {
-  return { ...campaign, characters: campaign.characters.map((c) => (c.id === character.id ? character : c)) };
-}
-
 /** Ein Angriff mit einer Schusswaffe verbraucht einen Schuss, ein Feuerstoß `count`; sind nicht so viele geladen, gibt es keinen. */
 export function spendRound(campaign: Campaign, id: string, count = 1): Campaign {
-  const character = characterOf(campaign, id);
+  const character = anyCharacterOf(campaign, id);
   const ammo = ammoOf(character);
   if (!ammo) return campaign;
   checkRounds(character, count);
   const item = itemOfWeapon(wieldedWeapon(character).id)!.id;
-  return withCharacter(campaign, { ...character, possessions: character.possessions.map((p) => (p.of === item ? { ...p, rounds: ammo.rounds - count } : p)) });
+  return replaceCharacter(campaign, { ...character, possessions: character.possessions.map((p) => (p.of === item ? { ...p, rounds: ammo.rounds - count } : p)) });
 }
 
 /** Hat die Waffe in der Hand die Schuss geladen, die der Angriff braucht? Hände und Klingen brauchen keine. */
@@ -266,7 +256,7 @@ export function checkRounds(character: Character, count: number): void {
 
 /** Nachladen: ein Magazin aus dem Besitz, die Waffe ist wieder voll; ein angebrochenes Magazin geht verloren. */
 export function reload(campaign: Campaign, id: string): Campaign {
-  const character = characterOf(campaign, id);
+  const character = anyCharacterOf(campaign, id);
   const ammo = ammoOf(character);
   if (!ammo) throw new DomainError(`${wieldedWeapon(character).name} lädt man nicht nach.`);
   if (ammo.magazines === 0) throw new DomainError(`${character.name} hat kein ${itemOf(ammo.ammo).name} mehr.`);
@@ -276,5 +266,5 @@ export function reload(campaign: Campaign, id: string): Campaign {
     if (p.of === ammo.ammo) return p.count > 1 ? [{ ...p, count: p.count - 1 }] : [];
     return [p];
   });
-  return withCharacter(campaign, { ...character, possessions });
+  return replaceCharacter(campaign, { ...character, possessions });
 }

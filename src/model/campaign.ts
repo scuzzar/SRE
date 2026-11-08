@@ -88,7 +88,7 @@ export interface Campaign {
   readonly location?: string;
   /** Die Buchungen der Gruppenkasse, in der Reihenfolge, in der sie entstanden sind. */
   readonly bookings: readonly Booking[];
-  /** Die Begegnungen, die laufende zuletzt; beendete bleiben, wenn der Log auf ihre NSC verweist. */
+  /** Die Begegnungen, die laufende zuletzt; beendete bleiben, wenn der Log auf ihre NSC verweist. Ihre NSC sind Charaktere, die an der Begegnung hängen, nicht hier. */
   readonly encounters: readonly Encounter[];
   /** Der Würfel der Anzahl für kommende Begegnungen: 3, 4 oder 6; fehlt er, W6 nach den Regeln. */
   readonly quantityDie?: QuantityDie;
@@ -192,6 +192,38 @@ export function characterOf(campaign: Campaign, id: CharacterId): Character {
   return character;
 }
 
+/**
+ * Ein Charakter der Kampagne oder ein NSC einer ihrer Begegnungen: Jeder Charakter gehört genau
+ * einer Kampagne oder genau einer Begegnung.
+ */
+export function anyCharacterOf(campaign: Campaign, id: CharacterId): Character {
+  const character = campaign.characters.find((c) => c.id === id) ?? campaign.encounters.flatMap((e) => e.npcs).find((n) => n.id === id);
+  if (!character) throw new DomainError(`Den Charakter ${id} gibt es nicht`);
+  return character;
+}
+
+/** Gehört der Charakter zur Kampagne (SC oder dauerhafter NSC), nicht zu einer Begegnung? */
+export function isCampaignCharacter(campaign: Campaign, id: CharacterId): boolean {
+  return campaign.characters.some((c) => c.id === id);
+}
+
+/** Ersetzt einen Charakter dort, wo er hängt: in der Kampagne oder in seiner Begegnung. */
+export function replaceCharacter(campaign: Campaign, character: Character): Campaign {
+  if (isCampaignCharacter(campaign, character.id)) return { ...campaign, characters: campaign.characters.map((c) => (c.id === character.id ? character : c)) };
+  anyCharacterOf(campaign, character.id);
+  return {
+    ...campaign,
+    encounters: campaign.encounters.map((e) => (e.npcs.some((n) => n.id === character.id) ? { ...e, npcs: e.npcs.map((n) => (n.id === character.id ? character : n)) } : e)),
+  };
+}
+
+/** Hängt einen Charakter in die Kampagne; lebt er und ist ein SC, steht er oben. */
+export function adoptCharacter(campaign: Campaign, character: Character): Campaign {
+  if (isCampaignCharacter(campaign, character.id)) throw new DomainError(`${character.name} gehört schon zur Kampagne.`);
+  const added = { ...campaign, characters: [...campaign.characters, character] };
+  return canFocus(character) ? withFocus(added, character.id) : keepFocus(campaign, added);
+}
+
 /** Die nicht ausgeblendeten SC, lebend oder tot; dauerhafte NSC zählen nicht dazu. */
 export function activeCharacters(campaign: Campaign): readonly Character[] {
   return campaign.characters.filter((c) => !c.retired && !c.npc);
@@ -262,14 +294,13 @@ export function activeSkills(character: Character): readonly SkillLevel[] {
 }
 
 /**
- * Verweist der Verlauf auf den Charakter: ein Logeintrag, eine Buchung der Gruppenkasse oder ein
- * übernommener NSC? Dann wird er nie gelöscht, nur ausgeblendet.
+ * Verweist der Verlauf auf den Charakter: ein Logeintrag oder eine Buchung der Gruppenkasse? Dann
+ * wird er nie gelöscht, nur ausgeblendet.
  */
 export function isInLog(campaign: Campaign, id: CharacterId): boolean {
   if (campaign.bookings.some((b) => b.for === id)) return true;
-  if (campaign.encounters.some((e) => e.npcs.some((n) => n.became === id))) return true;
   return campaign.log.some(
-    (e) => (e.kind === 'task' && e.for === id) || (e.kind === 'attack' && (e.for === id || e.victim === id)) || (e.kind === 'recovery' && (e.for === id || e.by === id)),
+    (e) => (e.kind === 'task' && e.for === id) || (e.kind === 'attack' && (e.for === id || e.against === id)) || (e.kind === 'recovery' && (e.for === id || e.by === id)),
   );
 }
 
@@ -328,22 +359,22 @@ function wearsOf(input: CharacterInput): { wears?: string } {
 
 /** Zieht eine Rüstung aus dem Besitz an; `undefined` heißt: keine (Nothing). */
 export function setWears(campaign: Campaign, id: CharacterId, item: string | undefined): Campaign {
-  const character = characterOf(campaign, id);
+  const character = anyCharacterOf(campaign, id);
   if (item !== undefined && !armorsOf(character).includes(item)) throw new DomainError(`${character.name} hat kein ${itemOf(item).name} zum Anziehen.`);
   const rest = Object.fromEntries(Object.entries(character).filter(([key]) => key !== 'wears')) as Omit<Character, 'wears'>;
   const after: Character = item === undefined ? rest : { ...rest, wears: item };
-  return { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? after : c)) };
+  return replaceCharacter(campaign, after);
 }
 
 /** Wechselt die Waffe in der Hand: Primärwaffe, Sekundärwaffe oder die Hände. */
 export function setWields(campaign: Campaign, id: CharacterId, weapon: string): Campaign {
-  const character = characterOf(campaign, id);
+  const character = anyCharacterOf(campaign, id);
   const name = weaponOf(weapon).name;
   if (!weaponsOf(character).includes(weapon)) throw new DomainError(`${character.name} hat kein${itemOfWeapon(weapon) ? 'e' : ''} ${name}.`);
   if (!armedWeaponsOf(character).includes(weapon)) throw new DomainError(`${name} ist weder Primär- noch Sekundärwaffe von ${character.name}; das legt man im Editor fest.`);
   const rest = Object.fromEntries(Object.entries(character).filter(([key]) => key !== 'wields')) as Omit<Character, 'wields'>;
   const after: Character = weapon === HANDS ? rest : { ...rest, wields: weapon };
-  return { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? after : c)) };
+  return replaceCharacter(campaign, after);
 }
 
 export function validateCharacter(input: CharacterInput): void {

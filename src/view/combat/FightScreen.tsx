@@ -306,9 +306,8 @@ export function LossFloat({ impacts, attr }: { impacts: readonly Impact[]; attr:
   );
 }
 
-/** Was auf dem Knopf über der Waffe steht: Primär, Sekundär, Hände oder wer angreift. */
-function slotLabel(attack: AttackOption, turnName: string): string {
-  if (attack.slot === 'npc') return `${turnName.split(' ')[0]} greift an`;
+/** Was auf dem Knopf über der Waffe steht: Primär, Sekundär oder Hände. */
+function slotLabel(attack: AttackOption): string {
   return attack.slot === 'primary' ? 'Primär' : attack.slot === 'secondary' ? 'Sekundär' : 'Hände';
 }
 
@@ -375,7 +374,7 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
           </div>
           <div className={turn.attacks.length > 1 ? 'attack-buttons' : 'attack-buttons single'}>
             {turn.attacks.map((a, i) => (
-              <AttackButton key={a.weapon} attack={a} first={i === 0} label={slotLabel(a, turn.name)} hasTarget={target !== undefined} ran={turn.ran} />
+              <AttackButton key={a.weapon} attack={a} first={i === 0} label={slotLabel(a)} hasTarget={target !== undefined} ran={turn.ran} />
             ))}
           </div>
           {fire && <FireToggle fire={fire} compact />}

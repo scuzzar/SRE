@@ -1,10 +1,15 @@
-import { livingCharacters, type Campaign } from './campaign';
+import { isCampaignCharacter, livingCharacters, type Campaign, type CharacterId } from './campaign';
 import { DomainError } from './errors';
 import { currentEncounter, moveBand, needsSurprise, type Encounter } from './encounter';
-import { canFight, woundStateOf, type Combatant } from './wounds';
+import { canFight, woundStateOf } from './wounds';
 
 /** Die beiden Parteien eines Kampfs: die SC und die NSC der Begegnung. */
 export type Side = 'pcs' | 'npcs';
+
+/** Die Partei eines Kämpfers: SC, wer zur Kampagne gehört; NSC, wer an einer Begegnung hängt. */
+export function sideOf(campaign: Campaign, who: CharacterId): Side {
+  return isCampaignCharacter(campaign, who) ? 'pcs' : 'npcs';
+}
 
 /** `/surprise`: Wer 3 oder mehr über der anderen Partei liegt, hat Überraschung (S. 5). */
 export function surpriseOf(encounter: Encounter): Side | undefined {
@@ -32,17 +37,16 @@ export function firstSide(encounter: Encounter): Side {
   return encounter.npcSurprise.die + encounter.npcSurprise.dm > encounter.pcSurprise.die + encounter.pcSurprise.dm ? 'npcs' : 'pcs';
 }
 
-/** Ein Kämpfer der Simulation mit seiner Id (SC `c…`, NSC `n…`) und Partei. */
+/** Ein Kämpfer der Simulation: der Charakter und seine Partei. */
 export interface FightSlot {
-  readonly id: string;
+  readonly id: CharacterId;
   readonly side: Side;
-  readonly who: Combatant;
 }
 
 /** Alle Kämpfer in Zugreihenfolge: erst die Partei, die zuerst zieht, dann die andere. */
 export function fightOrder(campaign: Campaign, encounter: Encounter): readonly FightSlot[] {
-  const pcs: FightSlot[] = livingCharacters(campaign).map((c) => ({ id: c.id, side: 'pcs', who: { pc: c.id } }));
-  const npcs: FightSlot[] = encounter.npcs.filter((n) => n.became === undefined).map((n) => ({ id: n.id, side: 'npcs', who: { npc: n.id } }));
+  const pcs: FightSlot[] = livingCharacters(campaign).map((c) => ({ id: c.id, side: 'pcs' }));
+  const npcs: FightSlot[] = encounter.npcs.map((n) => ({ id: n.id, side: 'npcs' }));
   return firstSide(encounter) === 'pcs' ? [...pcs, ...npcs] : [...npcs, ...pcs];
 }
 
@@ -65,7 +69,7 @@ export function defeatedSide(campaign: Campaign, encounter: Encounter): Side | u
   const order = fightOrder(campaign, encounter);
   for (const side of ['pcs', 'npcs'] as const) {
     const members = order.filter((s) => s.side === side);
-    if (members.length === 0 || members.every((s) => !canFight(woundStateOf(campaign, s.who)))) return side;
+    if (members.length === 0 || members.every((s) => !canFight(woundStateOf(campaign, s.id)))) return side;
   }
   return undefined;
 }
@@ -76,7 +80,7 @@ function waiting(campaign: Campaign, encounter: Encounter): readonly FightSlot[]
   if (needsSurprise(encounter)) return [];
   const surprise = surprisingOf(encounter);
   return fightOrder(campaign, encounter).filter(
-    (s) => (surprise === undefined || s.side === surprise) && !encounter.acted.includes(s.id) && canFight(woundStateOf(campaign, s.who)),
+    (s) => (surprise === undefined || s.side === surprise) && !encounter.acted.includes(s.id) && canFight(woundStateOf(campaign, s.id)),
   );
 }
 

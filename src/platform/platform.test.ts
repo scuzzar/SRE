@@ -118,6 +118,16 @@ describe('Ältere Spielstände', () => {
     expect((await repository.list()).map((c) => [c.id, c.name])).toEqual([['current', 'Spinward']]);
   });
 
+  it('machen aus NSC von vor 2026-11-08c Charaktere der Begegnung', () => {
+    const upp = { str: 7, dex: 7, end: 7, int: 7, edu: 7, soc: 7 };
+    const encounter = { id: 'e1', at: '2026-11-01T10:00:00.000Z', of: 14, reaction: 7, ended: false, band: 1, close: false, round: 1, acted: [], npcs: [{ id: 'n1', name: 'Ada Abara', leader: true, skill: 2, upp, wields: 'dagger' }] };
+    const old = { ...createCampaign(), encounters: [encounter], log: [{ kind: 'attack', at: '2026-11-01T10:01:00.000Z', by: 'n1', victim: 'c1', with: 'dagger', armor: 'nothing', range: 'close', dice: [6, 6], dm: 0, target: 8 }] } as unknown as Campaign;
+    const now = upgraded(old);
+    expect(now.encounters[0]).toMatchObject({ leader: 'n1', npcs: [{ id: 'n1', name: 'Ada Abara', npc: true, wields: 'dagger', possessions: [{ of: 'dagger', count: 1 }] }] });
+    expect(now.log[0]).toMatchObject({ for: 'n1', against: 'c1' });
+    expect(now.log[0]).not.toHaveProperty('by');
+  });
+
   it('geben Kampagnen von vor dem Charakter oben den ersten Lebenden', () => {
     const { focus, ...old } = createCampaign();
     expect(focus).toBe('c1');

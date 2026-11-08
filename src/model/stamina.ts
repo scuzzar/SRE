@@ -1,11 +1,11 @@
-import { appendLog, characterOf, type Campaign } from './campaign';
+import { anyCharacterOf, appendLog, type Campaign, type CharacterId } from './campaign';
 import { fighterOf, weaponSkill } from './combat';
 import { currentEncounter, encounterStart, type Encounter } from './encounter';
-import { fightOrder, fightState, surprisingOf, withEncounter, type Side } from './fight';
+import { fightOrder, fightState, sideOf, surprisingOf, withEncounter } from './fight';
 import type { AttackResult, DamageRoll, Strike } from './log';
 import type { Random } from './ports';
 import { weaponOf, type Weapon } from './reference';
-import { canFight, historyOf, uppOf, victimOf, woundStateOf, type Combatant, type WoundState } from './wounds';
+import { canFight, historyOf, uppOf, victimOf, woundStateOf, type WoundState } from './wounds';
 
 /** Battle Dress gibt unbegrenzte Ausdauer (S. 4). */
 const BATTLE_DRESS = 'battle-dress';
@@ -19,31 +19,11 @@ const LONG_GUNS = ['rifle', 'carbine', 'auto-rifle', 'shotgun'];
 /** Ab 9 auf 2W6 sieht ein Kamerad jemanden fallen und gibt Alarm (SR 20). */
 export const ALARM_TARGET = 9;
 
-/** Die Partei eines Kämpfers. */
-export function sideOf(who: Combatant): Side {
-  return 'pc' in who ? 'pcs' : 'npcs';
-}
-
 /** Die Angriffsergebnisse der Begegnung mit ihrer Stelle im Log. */
 function encounterAttacks(campaign: Campaign, encounter: Encounter): readonly AttackResult[] {
   return campaign.log.slice(encounterStart(campaign.log, encounter)).filter((e): e is AttackResult => e.kind === 'attack');
 }
 
-function attackerOf(entry: AttackResult): Combatant | undefined {
-  if (entry.by !== undefined) return { npc: entry.by };
-  if (entry.for !== undefined) return { pc: entry.for };
-  return undefined;
-}
-
-function same(a: Combatant | undefined, b: Combatant): boolean {
-  if (!a) return false;
-  return 'pc' in a ? 'pc' in b && a.pc === b.pc : 'npc' in b && a.npc === b.npc;
-}
-
-function wears(campaign: Campaign, who: Combatant): string | undefined {
-  if ('pc' in who) return characterOf(campaign, who.pc).wears;
-  return campaign.encounters.flatMap((e) => e.npcs).find((n) => n.id === who.npc)?.wears;
-}
 
 /**
  * `/blows`: wie viele Combat-Schläge der Kämpfer in der laufenden Begegnung noch hat (SR 20, 22):
@@ -51,13 +31,13 @@ function wears(campaign: Campaign, who: Combatant): string | undefined {
  * Combat und minus die Läufe seiner Partei, nie unter 0. `undefined` ohne laufende Begegnung und
  * mit Battle Dress (unbegrenzt).
  */
-export function blowsOf(campaign: Campaign, who: Combatant): number | undefined {
+export function blowsOf(campaign: Campaign, who: CharacterId): number | undefined {
   const encounter = currentEncounter(campaign);
-  if (!encounter || wears(campaign, who) === BATTLE_DRESS) return undefined;
+  if (!encounter || anyCharacterOf(campaign, who).wears === BATTLE_DRESS) return undefined;
   const upp = uppOf(campaign, who);
   const start = historyOf(campaign.log, upp, who, encounterStart(campaign.log, encounter)).wounds;
-  const used = encounterAttacks(campaign, encounter).filter((e) => e.strike === 'combat' && same(attackerOf(e), who)).length;
-  const runs = (sideOf(who) === 'pcs' ? encounter.pcRuns : encounter.npcRuns) ?? 0;
+  const used = encounterAttacks(campaign, encounter).filter((e) => e.strike === 'combat' && e.for === who).length;
+  const runs = (sideOf(campaign, who) === 'pcs' ? encounter.pcRuns : encounter.npcRuns) ?? 0;
   return Math.max(0, upp.end - start.end - used - runs);
 }
 
@@ -71,10 +51,10 @@ export function isMelee(weapon: Weapon): boolean {
  * hat; Special gegen ein bewusstloses oder schwer verwundetes Ziel; geschwächt, wenn keine
  * Combat-Schläge mehr übrig sind oder der Angreifer es will; sonst Combat. Schüsse: `undefined`.
  */
-export function strikeOf(campaign: Campaign, attacker: Combatant, weapon: Weapon, target: WoundState | undefined, weakened: boolean): Strike | undefined {
+export function strikeOf(campaign: Campaign, attacker: CharacterId, weapon: Weapon, target: WoundState | undefined, weakened: boolean): Strike | undefined {
   if (!isMelee(weapon)) return undefined;
   const encounter = currentEncounter(campaign);
-  if (encounter && surprisingOf(fightState(campaign, encounter)) === sideOf(attacker)) return 'surprise';
+  if (encounter && surprisingOf(fightState(campaign, encounter)) === sideOf(campaign, attacker)) return 'surprise';
   if (target === 'unconscious' || target === 'serious') return 'special';
   if (weakened || blowsOf(campaign, attacker) === 0) return 'weakened';
   return 'combat';
@@ -87,16 +67,16 @@ export function strikeDm(weapon: Weapon, strike: Strike | undefined): number {
 
 /**
  * Die Parade des Ziels gegen einen Schlag oder Hieb (SR 22), als negativer DM: seine Stufe in seiner
- * Faust- oder Nahkampfwaffe; ein langes Gewehr pariert als Cudgel (ein NSC dann mit 0). Wer nicht
- * kämpfen kann, pariert nicht; gegen Schüsse gibt es keine Parade.
+ * Faust- oder Nahkampfwaffe; ein langes Gewehr pariert als Cudgel. Wer nicht kämpfen kann, pariert
+ * nicht; gegen Schüsse gibt es keine Parade.
  */
-export function parryDm(campaign: Campaign, defender: Combatant | undefined, weapon: Weapon): number {
+export function parryDm(campaign: Campaign, defender: CharacterId | undefined, weapon: Weapon): number {
   if (!defender || !isMelee(weapon)) return 0;
   const fighter = fighterOf(campaign, defender);
   if (!canFight(fighter.state)) return 0;
   if (isMelee(fighter.weapon)) return 0 - fighter.skill || 0;
-  if (!LONG_GUNS.includes(fighter.weapon.id) || !('pc' in defender)) return 0;
-  return 0 - (weaponSkill(characterOf(campaign, defender.pc), weaponOf('cudgel'))?.level ?? 0) || 0;
+  if (!LONG_GUNS.includes(fighter.weapon.id)) return 0;
+  return 0 - (weaponSkill(anyCharacterOf(campaign, defender), weaponOf('cudgel'))?.level ?? 0) || 0;
 }
 
 /** Setzt den Alarm auf die laufende Runde, wenn die Überraschung noch hält und es noch keinen gab. */
@@ -109,15 +89,15 @@ function raiseAlarm(campaign: Campaign): Campaign {
 }
 
 /** Greift jemand mit Überraschung an? Nur dann kann es Alarm geben. */
-function withSurprise(campaign: Campaign, attacker: Combatant | undefined): boolean {
+function withSurprise(campaign: Campaign, attacker: CharacterId): boolean {
   const encounter = currentEncounter(campaign);
-  return attacker !== undefined && encounter !== undefined && surprisingOf(fightState(campaign, encounter)) === sideOf(attacker);
+  return encounter !== undefined && surprisingOf(fightState(campaign, encounter)) === sideOf(campaign, attacker);
 }
 
 /** Nach einem Angriff mit Überraschung: Jeder Schuss außer mit einem Laser gibt Alarm (SR 20). */
 export function alarmAfterAttack(campaign: Campaign, results: readonly AttackResult[]): Campaign {
   const first = results[0];
-  if (!first || !withSurprise(campaign, attackerOf(first))) return campaign;
+  if (!first || !withSurprise(campaign, first.for)) return campaign;
   const weapon = weaponOf(first.with);
   return weapon.attack === 'shot' && !SILENT_GUNS.includes(weapon.id) ? raiseAlarm(campaign) : campaign;
 }
@@ -130,17 +110,17 @@ export function alarmAfterAttack(campaign: Campaign, results: readonly AttackRes
 export function logDamage(campaign: Campaign, roll: DamageRoll, random: Random): Campaign {
   const hit = campaign.log[roll.of] as AttackResult;
   const victim = victimOf(hit);
-  if (!victim || !withSurprise(campaign, attackerOf(hit))) return appendLog(campaign, roll);
+  if (!victim || !withSurprise(campaign, hit.for)) return appendLog(campaign, roll);
   const after = appendLog(campaign, roll);
   if (canFight(woundStateOf(after, victim))) return raiseAlarm(after);
   const encounter = currentEncounter(after)!;
   const attacked = encounterAttacks(after, encounter);
   const witness = fightOrder(after, fightState(after, encounter)).some(
     (s) =>
-      s.side === sideOf(victim) &&
-      !same(s.who, victim) &&
-      canFight(woundStateOf(after, s.who)) &&
-      !attacked.some((a) => same(victimOf(a), s.who)),
+      s.side === sideOf(after, victim) &&
+      s.id !== victim &&
+      canFight(woundStateOf(after, s.id)) &&
+      !attacked.some((a) => victimOf(a) === s.id),
   );
   if (!witness) return after;
   const alarmDice = [random.int(1, 6), random.int(1, 6)] as const;

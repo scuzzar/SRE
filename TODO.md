@@ -17,32 +17,7 @@ Code ([CLAUDE.md](CLAUDE.md)). Die Regeln stehen in [`docs/regeln-kampf.md`](doc
 
 ## Kampf
 
-### 1. Umbau: NSC der Begegnung als vollständige Charaktere
-
-Entschieden am 8. November 2026: Es gibt nur noch eine Klasse für Kämpfer. Die NSC einer Begegnung
-werden vollständig als `Character` erzeugt und hängen an der Begegnung, nicht an der Kampagne.
-
-- [ ] Modelländerung freigeben (gezeichnet als 2026-11-08c,
-  [`docs/changes/2026-11-08-nsc-als-charaktere.png`](docs/changes/2026-11-08-nsc-als-charaktere.png)):
-  - `Npc` entfällt; `Encounter "1" *-- "*" Character : npcs {ordered}`.
-  - Anführer als Verweis der Begegnung: `Encounter --> "0..1" Character : leader`.
-  - Angriff und Angriffsergebnis: Angreifer `for` → `Character [1]`, Ziel `against` →
-    `Character [0..1]`; `by` und `victim` entfallen.
-  - Heilung: `for` → `Character [1]`; `npc` entfällt.
-  - `acted` → `Character [*]` und `/turn` → `Character [0..1]` statt Ids.
-  - Übernehmen heißt Umhängen von der Begegnung in die Kampagne (als SC oder dauerhafter NSC);
-    `became` entfällt.
-- [ ] NSC beim Würfeln vollständig erzeugen: UPP, Fertigkeit in ihrer Waffe als echte Stufe, Besitz
-  mit Waffe, Rüstung und Magazinen, Primärwaffe, getragene Rüstung.
-- [ ] Code umstellen: Begegnung, Kampfsimulation, Angriff, Wunden, Heilung, Ausdauer, Parade,
-  Alarm, Übernehmen, Snapshot, Ansicht. Die Unterscheidung „SC oder NSC“ (`Combatant`) soll dabei
-  verschwinden, wo sie nur wegen der zwei Klassen da war.
-- [ ] Kampagnendatei: alte Spielstände beim Laden umschreiben (NSC zu Charakteren, die vier Verweise
-  des Angriffs zu zwei, der Patient der Heilung). Die Ids bleiben, damit der Log weiter stimmt.
-- [ ] NSC zählen Munition wie SC (entschieden am 8. November 2026): Schusswaffe geladen, 1W4
-  Magazine im Besitz; leer lädt der NSC nach, ohne Magazin greift er mit den Händen an.
-
-### 2. Ausweichen (Evade), nach dem Umbau
+### 1. Ausweichen (Evade)
 
 SR 20 (*Evade*), SR 26 (*Reloading*). Ein erster Ausschnitt (2026-11-08b) ist zurückgenommen; er
 kommt neu mit `Encounter "*" --> "*" Character : evading`.
@@ -56,7 +31,7 @@ kommt neu mit `Encounter "*" --> "*" Character : evading`.
 - [ ] Anzeige: Knopf „Ausweichen“ neben Aussetzen, ein Zeichen hinter dem Namen, im Angriff der
   Posten „weicht aus −2“.
 
-### 3. Weitere Regeln aus der Starter Edition
+### 2. Weitere Regeln aus der Starter Edition
 
 Aus [`docs/regeln-kampf.md`](docs/regeln-kampf.md), noch offen:
 
@@ -79,7 +54,7 @@ Aus [`docs/regeln-kampf.md`](docs/regeln-kampf.md), noch offen:
 - [ ] **Schwerelosigkeit** (SE 5, SR 27): jede Runde 10+, sonst Kontrolle verloren.
 - [ ] **Traglast und Schwerkraft** (SE 5, SR 22): doppelte und dreifache Last, je nach Größe der Welt.
 
-### 4. Rund um den Kampf
+### 3. Rund um den Kampf
 
 - [ ] **Häufigkeit von Begegnungen** (SE 20, SR 47, 50): täglich 5+ auf 1W6 für Personen, zweimal
   täglich für Tiere.

@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { keepFocus, validateCharacter, validName, type Campaign, type CampaignId, type Character, type Possession } from './campaign';
+import { anyCharacterOf, keepFocus, validateCharacter, validName, type Campaign, type CampaignId, type Character, type Possession } from './campaign';
 import { replay, type Career, type CareerRoll } from './career';
 import { DomainError } from './errors';
 import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, type PathKind } from './card-roll';
 import { checkDamageRoll, checkVolley, ATTACK_TARGET } from './combat';
-import { ESCAPED_BAND, firstBand, npcOf, type Encounter, type Npc } from './encounter';
+import { ESCAPED_BAND, firstBand, upgradeNpcs, type Encounter } from './encounter';
 import { checkInterprets, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type CardPick, type DamageRoll, type LogEntry, type Recovery } from './log';
 import { checkRecovery } from './wounds';
 import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, ranges, ref, slotOfEntry, weaponOf } from './reference';
@@ -50,6 +50,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('attack'),
     at,
+    /** Fehlt in Dateien von vor 2026-11-08c, wenn ein NSC angriff (`by`); `victim` war dort ein SC als Ziel. */
     for: z.string().optional(),
     by: z.string().optional(),
     against: z.string().optional(),
@@ -69,6 +70,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     kind: z.literal('recovery'),
     at,
     how: z.enum(recoveryKinds),
+    /** Fehlt in Dateien von vor 2026-11-08c, wenn ein NSC geheilt wurde (`npc`). */
     for: z.string().optional(),
     npc: z.string().optional(),
     by: z.string().optional(),
@@ -157,7 +159,8 @@ const CharacterSchema = z.object({
   npc: z.boolean().default(false),
 });
 
-const NpcSchema = z.object({
+/** Ein NSC aus Dateien von vor 2026-11-08c; heute ist ein NSC der Begegnung ein Charakter. */
+const LegacyNpcSchema = z.object({
   id: z.string().min(1),
   name: z.string().trim().min(1),
   leader: z.boolean(),
@@ -180,7 +183,8 @@ const EncounterSchema = z
     reactionDm: z.number().int().optional(),
     quantityDie: z.union([z.literal(3), z.literal(4), z.literal(6)]).optional(),
     ended: z.boolean(),
-    npcs: z.array(NpcSchema).min(1),
+    npcs: z.array(z.union([CharacterSchema, LegacyNpcSchema])),
+    leader: z.string().optional(),
     /** Fehlen bei Begegnungen von vor der Kampfsimulation. */
     rangeDice: z.tuple([die, die]).optional(),
     bandDie: z.number().int().min(1).max(10).optional(),
@@ -268,16 +272,8 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
   }
   try {
     const file = parsed.data.campaign;
-    const characters: Character[] = file.characters.map(({ career, homeworld, primary, secondary, wields, wears, ...c }) => ({
-      ...c,
-      skills: c.skills.map((s) => ({ ...s })),
-      possessions: c.possessions.map((p) => stripped(p) as Possession),
-      ...(career ? { career: careerOf(career) } : {}),
-      ...(homeworld === undefined ? {} : { homeworld }),
-      ...armsFromFile(primary, secondary, wields),
-      ...(wears === undefined ? {} : { wears }),
-    }));
-    const campaign: Campaign = {
+    const characters: Character[] = file.characters.map(characterFromFile);
+    const read: Campaign = {
       id,
       name: validName(file.name),
       odds: oddsOf(file.odds).id,
@@ -288,15 +284,30 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
       ...(file.focus === undefined ? {} : { focus: file.focus }),
       ...(file.location === undefined ? {} : { location: file.location }),
       bookings: file.bookings.map((b) => stripped(b) as Booking),
-      encounters: file.encounters.map((e) => ({ ...stripped(e), npcs: e.npcs.map((n) => stripped(n) as Npc) }) as Encounter),
+      // NSC aus Dateien von vor 2026-11-08c bleiben, wie sie sind; upgradeNpcs macht Charaktere aus ihnen.
+      encounters: file.encounters.map((e) => ({ ...stripped(e), npcs: e.npcs.map((n) => ('skill' in n ? stripped(n) : characterFromFile(n))) }) as unknown as Encounter),
       ...(file.quantityDie === undefined || file.quantityDie === 6 ? {} : { quantityDie: file.quantityDie }),
     };
+    const campaign = upgradeNpcs(read);
     validate(campaign);
     return keepFocus(campaign, campaign);
   } catch (error) {
     if (error instanceof DomainError) throw new DomainError(`Die Kampagne in der Datei verletzt eine Regel: ${error.message}`);
     throw error;
   }
+}
+
+/** Ein Charakter aus der Datei, ohne leere optionale Felder. */
+function characterFromFile({ career, homeworld, primary, secondary, wields, wears, ...c }: z.infer<typeof CharacterSchema>): Character {
+  return {
+    ...c,
+    skills: c.skills.map((s) => ({ ...s })),
+    possessions: c.possessions.map((p) => stripped(p) as Possession),
+    ...(career ? { career: careerOf(career) } : {}),
+    ...(homeworld === undefined ? {} : { homeworld }),
+    ...armsFromFile(primary, secondary, wields),
+    ...(wears === undefined ? {} : { wears }),
+  };
 }
 
 /** Ein Lebenslauf ohne leere optionale Felder, wie er im Spielstand steht. */
@@ -358,24 +369,30 @@ function armsFromFile(primary: string | undefined, secondary: string | undefined
   return { ...(first === undefined ? {} : { primary: first }), ...(secondary === undefined ? {} : { secondary }), ...(wields === undefined ? {} : { wields }) };
 }
 
+/** Ein Charakter, SC oder NSC einer Begegnung: Werte, Waffen und Rüstung aus seinem Besitz, Lebenslauf abgeschlossen. */
+function validateRecord(character: Character): void {
+  validateCharacter({ ...character, skills: character.skills });
+  for (const weapon of [character.primary, character.secondary, character.wields]) {
+    if (weapon !== undefined && !character.possessions.some((p) => weaponOfItem(p.of) === weapon)) throw new DomainError(`${character.name} führt eine Waffe, die nicht im Besitz ist.`);
+  }
+  if (character.secondary !== undefined && character.secondary === character.primary) throw new DomainError(`${character.name} hat dieselbe Waffe als Primär- und Sekundärwaffe.`);
+  if (character.wields !== undefined && character.wields !== character.primary && character.wields !== character.secondary) {
+    throw new DomainError(`${character.name} hat eine Waffe in der Hand, die weder Primär- noch Sekundärwaffe ist.`);
+  }
+  if (character.wears !== undefined && !character.possessions.some((p) => p.of === character.wears)) {
+    throw new DomainError(`${character.name} trägt eine Rüstung, die nicht im Besitz ist.`);
+  }
+  // Ein Lebenslauf wird von vorn nachgespielt; am Charakter ist er abgeschlossen.
+  if (character.career && replay(character.career).step !== 'name') throw new DomainError(`Der Lebenslauf von ${character.name} ist nicht abgeschlossen.`);
+}
+
 function validate(campaign: Campaign): void {
+  // Jeder Charakter gehört genau einer Kampagne oder einer Begegnung; die Ids sind über beide eindeutig.
   const ids = new Set<string>();
-  for (const character of campaign.characters) {
+  for (const character of [...campaign.characters, ...campaign.encounters.flatMap((e) => e.npcs)]) {
     if (ids.has(character.id)) throw new DomainError(`Die Id ${character.id} kommt doppelt vor.`);
     ids.add(character.id);
-    validateCharacter({ ...character, skills: character.skills });
-    for (const weapon of [character.primary, character.secondary, character.wields]) {
-      if (weapon !== undefined && !character.possessions.some((p) => weaponOfItem(p.of) === weapon)) throw new DomainError(`${character.name} führt eine Waffe, die nicht im Besitz ist.`);
-    }
-    if (character.secondary !== undefined && character.secondary === character.primary) throw new DomainError(`${character.name} hat dieselbe Waffe als Primär- und Sekundärwaffe.`);
-    if (character.wields !== undefined && character.wields !== character.primary && character.wields !== character.secondary) {
-      throw new DomainError(`${character.name} hat eine Waffe in der Hand, die weder Primär- noch Sekundärwaffe ist.`);
-    }
-    if (character.wears !== undefined && !character.possessions.some((p) => p.of === character.wears)) {
-      throw new DomainError(`${character.name} trägt eine Rüstung, die nicht im Besitz ist.`);
-    }
-    // Ein Lebenslauf wird von vorn nachgespielt; am Charakter ist er abgeschlossen.
-    if (character.career && replay(character.career).step !== 'name') throw new DomainError(`Der Lebenslauf von ${character.name} ist nicht abgeschlossen.`);
+    validateRecord(character);
   }
   if (campaign.generation) replay(campaign.generation.career);
   if (campaign.focus !== undefined) {
@@ -404,18 +421,12 @@ function validate(campaign: Campaign): void {
         break;
       case 'attack': {
         const weapon = weaponOf(entry.with);
-        if ((entry.for === undefined) === (entry.by === undefined)) throw new DomainError('Ein Angriff hat genau einen Angreifer, einen SC oder einen NSC.');
-        if (entry.against !== undefined && entry.victim !== undefined) throw new DomainError('Ein Angriff hat höchstens ein Ziel.');
-        if (entry.by !== undefined) npcOf(campaign, entry.by);
-        if (entry.against !== undefined) npcOf(campaign, entry.against);
-        if (entry.victim !== undefined && !campaign.characters.some((c) => c.id === entry.victim)) throw new DomainError(`Ein Angriff verweist auf den Charakter ${entry.victim}, den es nicht gibt.`);
-        if (entry.for !== undefined) {
-          const character = campaign.characters.find((c) => c.id === entry.for);
-          if (!character) throw new DomainError(`Ein Angriff verweist auf den Charakter ${entry.for}, den es nicht gibt.`);
-          if (entry.uses !== undefined && (entry.uses !== weapon.uses || !character.skills.some((s) => s.of === entry.uses))) {
-            throw new DomainError(`Ein Angriff von ${character.name} verweist auf eine Fertigkeit, die nicht zur Waffe passt oder die der Charakter nicht hat.`);
-          }
-        } else if (entry.uses !== undefined) throw new DomainError('Ein Angriff eines NSC verweist auf keine Fertigkeitsstufe.');
+        if (entry.for === undefined) throw new DomainError('Ein Angriff hat einen Angreifer.');
+        const character = anyCharacterOf(campaign, entry.for);
+        if (entry.against !== undefined) anyCharacterOf(campaign, entry.against);
+        if (entry.uses !== undefined && (entry.uses !== weapon.uses || !character.skills.some((s) => s.of === entry.uses))) {
+          throw new DomainError(`Ein Angriff von ${character.name} verweist auf eine Fertigkeit, die nicht zur Waffe passt oder die der Charakter nicht hat.`);
+        }
         if (entry.target !== ATTACK_TARGET) throw new DomainError(`Ein Angriff hat den Zielwert ${ATTACK_TARGET}.`);
         checkVolley(campaign.log, entry, index);
         break;
@@ -424,6 +435,7 @@ function validate(campaign: Campaign): void {
         checkDamageRoll(campaign.log, entry, index);
         break;
       case 'recovery':
+        if (entry.for === undefined) throw new DomainError('Eine Heilung gilt einem Charakter.');
         checkRecovery(campaign, entry, index);
         break;
       case 'card':
@@ -458,21 +470,13 @@ function weaponOfItem(item: string): string | undefined {
   return itemOf(item).weapon;
 }
 
-/** Die Begegnungen: höchstens eine läuft, jede Art gibt es, NSC-Ids kommen nur einmal vor, Verweise gibt es. */
+/** Die Begegnungen: höchstens eine läuft, jede Art gibt es, der Anführer ist einer ihrer NSC, Verweise gibt es. */
 function validateEncounters(campaign: Campaign): void {
   if (campaign.encounters.filter((e) => !e.ended).length > 1) throw new DomainError('Es läuft mehr als eine Begegnung.');
-  const ids = new Set<string>();
   for (const encounter of campaign.encounters) {
     if (!encounterTypeOf(encounter.of)) throw new DomainError(`Eine Begegnung ${encounter.of} gibt es nicht.`);
     if (encounter.terrain !== undefined && !ref.encounters.terrains.some((t) => t.id === encounter.terrain)) throw new DomainError(`Das Gelände ${encounter.terrain} gibt es nicht.`);
     if (encounter.in !== undefined && !hexById(campaign.hexes, encounter.in)) throw new DomainError(`Eine Begegnung verweist auf das Feld ${encounter.in}, das es nicht gibt.`);
-    for (const npc of encounter.npcs) {
-      if (ids.has(npc.id)) throw new DomainError(`Der NSC ${npc.id} kommt doppelt vor.`);
-      ids.add(npc.id);
-      if (itemOf(npc.wields).weapon === undefined) throw new DomainError(`${npc.name} kämpft mit etwas, das keine Waffe ist.`);
-      if (npc.wears !== undefined && itemOf(npc.wears).armor === undefined) throw new DomainError(`${npc.name} trägt etwas, das keine Rüstung ist.`);
-      if (npc.became !== undefined && !campaign.characters.some((c) => c.id === npc.became)) throw new DomainError(`${npc.name} ist als ein Charakter übernommen, den es nicht gibt.`);
-      for (const [k, v] of Object.entries(npc.upp)) if (!Number.isInteger(v) || v < 0 || v > 15) throw new DomainError(`Attributwerte liegen zwischen 0 und 15 (${k.toUpperCase()}: ${v}).`);
-    }
+    if (encounter.leader !== undefined && !encounter.npcs.some((n) => n.id === encounter.leader)) throw new DomainError(`Der Anführer ${encounter.leader} ist keiner der NSC seiner Begegnung.`);
   }
 }

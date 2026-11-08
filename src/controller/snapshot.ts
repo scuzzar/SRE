@@ -79,7 +79,6 @@ import {
   type Skill,
   type TaskResult,
   type Upp,
-  type Combatant,
   type Fighter,
   type PhysicalCharacteristic,
   type WoundState,
@@ -91,7 +90,9 @@ import {
   encounterTypeOfEncounter,
   fighterOf,
   npcCharacters,
-  npcOf,
+  anyCharacterOf,
+  replaceCharacter,
+  type CharacterId,
   reactionText,
   quantityDieOf,
   reactionDm,
@@ -538,7 +539,7 @@ export interface SimView {
 /** Ein möglicher Angriff dessen, der am Zug ist, mit einer seiner Waffen. */
 export interface AttackOption {
   /** Primärwaffe, Sekundärwaffe, die Hände oder die Waffe eines NSC. */
-  readonly slot: 'primary' | 'secondary' | 'hands' | 'npc';
+  readonly slot: 'primary' | 'secondary' | 'hands';
   readonly weapon: string;
   readonly name: string;
   /** Mit Ziel: der nötige Wurf und die Chance; ohne Ziel fehlt beides. */
@@ -617,9 +618,8 @@ export interface CombatCell {
 export interface CombatView {
   /** Der Charakter oben. */
   readonly character: string;
-  /** Wer angreift: der Charakter oben oder ein NSC. */
+  /** Wer angreift: der Charakter oben. */
   readonly attacker: string;
-  readonly npcAttacks: boolean;
   /** Wer angegriffen wird, wenn das Ziel feststeht, mit seiner Rüstung. */
   readonly defender: { readonly name: string; readonly armor: ArmorClass } | undefined;
   readonly weapons: readonly WeaponChoice[];
@@ -918,7 +918,7 @@ const emptyInput: CharacterInput = {
 
 function dmParts(campaign: Campaign, character: Character, uses: string | undefined, unskilled: boolean, counts: readonly Characteristic[]): DmPart[] {
   // Wunden senken STR, DEX und END auch für Proben.
-  const upp = woundedUpp(character.upp, woundsOf(campaign, { pc: character.id }));
+  const upp = woundedUpp(character.upp, woundsOf(campaign, character.id));
   const parts: DmPart[] = [];
   if (uses !== undefined) {
     const skill = character.skills.find((s) => s.of === uses);
@@ -986,16 +986,12 @@ function wasBurst(log: readonly LogEntry[], index: number): boolean {
   return weaponOf(entry.with).burst !== undefined && volleyOf(log, index).length > 1;
 }
 
-function attackerOfEntry(entry: AttackResult): Combatant {
-  return entry.by !== undefined ? { npc: entry.by } : { pc: entry.for! };
-}
-
-function nameOf(campaign: Campaign, who: Combatant): string {
-  return 'pc' in who ? characterOf(campaign, who.pc).name : npcOf(campaign, who.npc).name;
+function nameOf(campaign: Campaign, who: CharacterId): string {
+  return anyCharacterOf(campaign, who).name;
 }
 
 function attackItem(campaign: Campaign, entry: AttackResult, index: number): AttackItem {
-  const attacker = fighterOf(campaign, attackerOfEntry(entry));
+  const attacker = fighterOf(campaign, entry.for);
   const victim = victimOf(entry);
   const success = isSuccess(entry);
   const log = campaign.log;
@@ -1091,17 +1087,16 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
   const pending = pendingDamage(campaign.log);
   const pendingHit = pending === undefined ? undefined : (campaign.log[pending] as AttackResult);
   const encounter = currentEncounter(campaign);
-  const pc = fighterOf(campaign, { pc: character.id });
+  const pc = fighterOf(campaign, character.id);
   const ammo = ammoOf(character);
   return {
     character: character.name,
     attacker: attacker.name,
-    npcAttacks: current.by !== undefined,
     defender: defender && { name: defender.name, armor: defender.armor },
     weapons: armedWeaponsOf(character).map((id) => weaponLabel(character, id)),
     state: pc.state,
     current: pc.upp,
-    healing: recoveryOptions(campaign, { pc: character.id }),
+    healing: recoveryOptions(campaign, character.id),
     weapon: {
       id: weapon.id,
       name: weaponName(weapon.id),
@@ -1134,10 +1129,10 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
       attack?.armor !== undefined && attack.range !== undefined && target
         ? { armor: attack.armor, range: attack.range, dm: target.dm.total, need: target.need, chance: target.chance, parts: attackParts(attacker, weapon.id, attack.armor, attack.range, burst, false, target.dm) }
         : undefined,
-    canAttack: canFight(attacker.state) && defender?.state !== 'dead' && !(current.by === undefined && ammo !== undefined && ammo.rounds < roundsFor(weapon, burst)),
+    canAttack: canFight(attacker.state) && defender?.state !== 'dead' && !(ammo !== undefined && ammo.rounds < roundsFor(weapon, burst)),
     fire: fireView(weapon, burst),
     damage: pendingHit && pending !== undefined ? damageView(campaign, pending, pendingHit) : undefined,
-    ammo: current.by === undefined && ammo ? { rounds: ammo.rounds, capacity: ammo.capacity, magazine: itemLabel(itemOf(ammo.ammo)), magazines: ammo.magazines } : undefined,
+    ammo: ammo ? { rounds: ammo.rounds, capacity: ammo.capacity, magazine: itemLabel(itemOf(ammo.ammo)), magazines: ammo.magazines } : undefined,
     sim: encounter && simView(campaign, encounter, simTarget, simBurst, simWeakened),
     terrains: ref.encounters.terrains,
     canEncounter: campaign.location !== undefined,
@@ -1153,20 +1148,19 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
 }
 
 function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, turn: FightSlot | undefined, target: string | undefined, neighbours: readonly string[]): FighterView {
-  const fighter = fighterOf(campaign, slot.who);
-  const npc = 'npc' in slot.who ? npcOf(campaign, slot.who.npc) : undefined;
-  const character = 'pc' in slot.who ? characterOf(campaign, slot.who.pc) : undefined;
-  const wears = npc?.wears ?? character?.wears;
+  const fighter = fighterOf(campaign, slot.id);
+  const character = anyCharacterOf(campaign, slot.id);
+  const wears = character.wears;
   return {
     id: slot.id,
     side: slot.side,
     name: fighter.name,
-    leader: npc?.leader ?? false,
+    leader: encounter.leader === slot.id,
     weapon: weaponName(fighter.weapon.id),
     skill: `${skillOf(fighter.weapon.uses).name}-${fighter.skill}`,
     armor: wears === undefined ? undefined : itemLabel(itemOf(wears)),
     armorClass: fighter.armor,
-    upp: npc?.upp ?? character!.upp,
+    upp: character.upp,
     current: fighter.upp,
     state: fighter.state,
     acted: encounter.acted.includes(slot.id),
@@ -1174,8 +1168,8 @@ function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, 
     targetable: turn !== undefined && turn.side !== slot.side && fighter.state !== 'dead',
     targeted: target === slot.id,
     neighbour: neighbours.includes(slot.id),
-    healing: recoveryOptions(campaign, slot.who),
-    blows: isMelee(fighter.weapon) ? blowsOf(campaign, slot.who) : undefined,
+    healing: recoveryOptions(campaign, slot.id),
+    blows: isMelee(fighter.weapon) ? blowsOf(campaign, slot.id) : undefined,
   };
 }
 
@@ -1188,7 +1182,7 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
   let turnView: SimView['turn'];
   let weapon: Weapon | undefined;
   if (turn) {
-    const attacker = fighterOf(campaign, turn.who);
+    const attacker = fighterOf(campaign, turn.id);
     weapon = attacker.weapon;
     const burst = firesBurst(attacker.weapon, simBurst === undefined ? {} : { burst: simBurst });
     let odds: NonNullable<SimView['turn']>['odds'];
@@ -1196,21 +1190,17 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
     const valid = target !== undefined && order.some((s) => s.id === target && s.side !== turn.side);
     if (valid) {
       try {
-        // Für den Zug steht der SC am Zug bzw. das Ziel des NSC oben; der Controller holt ihn beim Angriff nach oben.
-        const top = turn.side === 'pcs' ? turn.id : target;
-        const ready = focusOf(campaign)?.id === top ? campaign : { ...campaign, focus: top };
-        const attack = { ...turnAttack(ready, target), burst, ...(simWeakened ? { weakened: true } : {}) };
-        const evaluated = evaluateAttack(attack, ready);
+        const attack = { ...turnAttack(campaign, target), burst, ...(simWeakened ? { weakened: true } : {}) };
+        const evaluated = evaluateAttack(attack, campaign);
         if (evaluated && attack.armor !== undefined && attack.range !== undefined) {
           odds = { dm: evaluated.dm.total, need: evaluated.need, chance: evaluated.chance, parts: attackParts(attacker, attacker.weapon.id, attack.armor, attack.range, burst, false, evaluated.dm) };
         }
-        strike = attackExtras(attack, ready).strike;
+        strike = attackExtras(attack, campaign).strike;
       } catch (error) {
         if (!(error instanceof DomainError)) throw error;
       }
     }
-    const character = 'pc' in turn.who ? characterOf(campaign, turn.who.pc) : undefined;
-    const ammo = character && ammoOf(character);
+    const ammo = ammoOf(anyCharacterOf(campaign, turn.id));
     const options = turnAttacks(campaign, turn, valid ? target : undefined, simBurst, simWeakened);
     turnView = {
       id: turn.id,
@@ -1226,7 +1216,7 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
       melee: isMelee(attacker.weapon)
         ? {
             strike,
-            blows: blowsOf(campaign, turn.who),
+            blows: blowsOf(campaign, turn.id),
             end: attacker.fighting.end,
             weakenedDm: attacker.weapon.weakened ?? 0,
             weakened: simWeakened === true,
@@ -1273,17 +1263,11 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
 
 /** Der SC bzw. NSC mit dieser Waffe in der Hand, nur für die Berechnung; gespeichert wird nichts. */
 function wielding(campaign: Campaign, id: string, weapon: string): Campaign {
-  return {
-    ...campaign,
-    characters: campaign.characters.map((c) => {
-      if (c.id !== id) return c;
-      const rest = Object.fromEntries(Object.entries(c).filter(([key]) => key !== 'wields')) as Omit<Character, 'wields'>;
-      return weapon === HANDS ? (rest as Character) : { ...rest, wields: weapon };
-    }),
-  };
+  const rest = Object.fromEntries(Object.entries(anyCharacterOf(campaign, id)).filter(([key]) => key !== 'wields')) as Omit<Character, 'wields'>;
+  return replaceCharacter(campaign, weapon === HANDS ? (rest as Character) : { ...rest, wields: weapon });
 }
 
-/** Die Waffen, mit denen der SC am Zug angreifen kann: Primär und Sekundär, ohne zweite Waffe die Hände. */
+/** Die Waffen, mit denen der Kämpfer am Zug (SC oder NSC) angreifen kann: Primär und Sekundär, ohne zweite Waffe die Hände. */
 function slotsOf(character: Character): readonly { readonly weapon: string; readonly slot: AttackOption['slot'] }[] {
   const armed = armedWeaponsOf(character).filter((w) => w !== HANDS).slice(0, 2);
   const weapons = armed.length < 2 ? [...armed, HANDS] : armed;
@@ -1294,23 +1278,20 @@ function slotsOf(character: Character): readonly { readonly weapon: string; read
 function turnAttacks(campaign: Campaign, turn: FightSlot, target: string | undefined, simBurst: boolean | undefined, simWeakened: boolean | undefined): { attacks: readonly AttackOption[]; melee: MeleeView | undefined } {
   const encounter = currentEncounter(campaign);
   const range = encounter && encounterRangeOf(fightState(campaign, encounter));
-  const character = 'pc' in turn.who ? characterOf(campaign, turn.who.pc) : undefined;
-  const slots = character ? slotsOf(character) : [{ weapon: fighterOf(campaign, turn.who).weapon.id, slot: 'npc' as const }];
+  const character = anyCharacterOf(campaign, turn.id);
   let melee: MeleeView | undefined;
-  const attacks = slots.map(({ weapon, slot }) => {
-    const temp = character ? wielding(campaign, character.id, weapon) : campaign;
-    const attacker = fighterOf(temp, turn.who);
+  const attacks = slotsOf(character).map(({ weapon, slot }) => {
+    const temp = wielding(campaign, character.id, weapon);
+    const attacker = fighterOf(temp, turn.id);
     const burst = firesBurst(attacker.weapon, simBurst === undefined ? {} : { burst: simBurst });
     let odds: AttackOption['odds'];
     let strike: Strike | undefined;
     if (target !== undefined) {
       try {
-        const top = turn.side === 'pcs' ? turn.id : target;
-        const ready = focusOf(temp)?.id === top ? temp : { ...temp, focus: top };
-        const attack = { ...turnAttack(ready, target), burst, ...(simWeakened ? { weakened: true } : {}) };
-        const evaluated = evaluateAttack(attack, ready);
+        const attack = { ...turnAttack(temp, target), burst, ...(simWeakened ? { weakened: true } : {}) };
+        const evaluated = evaluateAttack(attack, temp);
         if (evaluated) odds = { need: evaluated.need, chance: evaluated.chance };
-        strike = attackExtras(attack, ready).strike;
+        strike = attackExtras(attack, temp).strike;
       } catch (error) {
         if (!(error instanceof DomainError)) throw error;
       }
@@ -1318,14 +1299,14 @@ function turnAttacks(campaign: Campaign, turn: FightSlot, target: string | undef
     if (isMelee(attacker.weapon) && !melee) {
       melee = {
         strike,
-        blows: blowsOf(temp, turn.who),
+        blows: blowsOf(temp, turn.id),
         end: attacker.fighting.end,
         weakenedDm: attacker.weapon.weakened ?? 0,
         weakened: simWeakened === true,
         canWeaken: turn.side === 'pcs' && (strike === 'combat' || (strike === 'weakened' && simWeakened === true)),
       };
     }
-    const ammo = character && ammoOf(characterOf(temp, character.id));
+    const ammo = ammoOf(anyCharacterOf(temp, character.id));
     return {
       slot,
       weapon,
@@ -1334,7 +1315,7 @@ function turnAttacks(campaign: Campaign, turn: FightSlot, target: string | undef
       reaches: range !== undefined && rangeDm(rowOf(attacker.weapon, burst), range) !== undefined,
       ammo: ammo && { rounds: ammo.rounds, capacity: ammo.capacity, magazines: ammo.magazines },
       empty: ammo !== undefined && ammo.rounds < roundsFor(attacker.weapon, burst),
-      wielded: character ? (character.wields ?? HANDS) === weapon : true,
+      wielded: (character.wields ?? HANDS) === weapon,
       fire: fireView(attacker.weapon, burst),
       melee: isMelee(attacker.weapon),
     };
@@ -1357,24 +1338,18 @@ function arrowsOf(campaign: Campaign, encounter: Encounter): readonly AttackArro
   return volleyOf(log, last).flatMap((i) => {
     const roll = log[i] as AttackResult;
     const to = victimOf(roll);
-    const from = roll.by ?? roll.for;
-    return to && from !== undefined ? [{ from, to: slotId(to), hit: isSuccess(roll), key: `a${i}` }] : [];
+    return to ? [{ from: roll.for, to, hit: isSuccess(roll), key: `a${i}` }] : [];
   });
-}
-
-/** Die Id eines Kämpfers in der Simulation: SC `c…`, NSC `n…`. */
-function slotId(who: Combatant): string {
-  return 'pc' in who ? who.pc : who.npc;
 }
 
 /** Wen ein Feuerstoß auf das gewählte Ziel als Nachbarn mit träfe; die Schrotflinte lost erst beim Würfeln, also keinen. */
 function previewNeighbours(campaign: Campaign, order: readonly FightSlot[], turn: FightSlot | undefined, target: string | undefined, simBurst: boolean | undefined): readonly string[] {
   const slot = target === undefined ? undefined : order.find((s) => s.id === target);
   if (!turn || !slot) return [];
-  const weapon = fighterOf(campaign, turn.who).weapon;
+  const weapon = fighterOf(campaign, turn.id).weapon;
   const burst = firesBurst(weapon, simBurst === undefined ? {} : { burst: simBurst });
   if (!burst) return [];
-  return neighbourTargets(campaign, slot.who, weapon, true, { int: (min) => min }).map(slotId);
+  return neighbourTargets(campaign, slot.id, weapon, true, { int: (min) => min });
 }
 
 /** Was der neueste Eintrag im Log angerichtet hat: Schaden an einem Kämpfer, oder Treffer und Fehlschüsse der neuesten Garbe. */
@@ -1388,13 +1363,13 @@ function impactsOf(campaign: Campaign): readonly Impact[] {
     const before = historyOf(campaign.log, upp, who, last).wounds;
     const after = historyOf(campaign.log, upp, who, last + 1).wounds;
     const lost = { str: after.str - before.str, dex: after.dex - before.dex, end: after.end - before.end };
-    return [{ id: slotId(who), kind: 'damage', damage: damageOf(entry), lost, key: `d${last}` }];
+    return [{ id: who, kind: 'damage', damage: damageOf(entry), lost, key: `d${last}` }];
   }
   if (entry?.kind !== 'attack') return [];
   return volleyOf(campaign.log, last).flatMap((i) => {
     const roll = campaign.log[i] as AttackResult;
     const who = victimOf(roll);
-    return who ? [{ id: slotId(who), kind: isSuccess(roll) ? ('hit' as const) : ('miss' as const), damage: undefined, lost: undefined, key: `a${i}` }] : [];
+    return who ? [{ id: who, kind: isSuccess(roll) ? ('hit' as const) : ('miss' as const), damage: undefined, lost: undefined, key: `a${i}` }] : [];
   });
 }
 
@@ -1558,8 +1533,7 @@ function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
     case 'damage':
       return damageItem(campaign, entry);
     case 'recovery': {
-      const patient: Combatant = entry.for !== undefined ? { pc: entry.for } : { npc: entry.npc! };
-      return { kind: 'recovery', at: entry.at, how: entry.how, patient: nameOf(campaign, patient), healer: entry.by === undefined ? undefined : characterOf(campaign, entry.by).name, days: daysOf(entry) };
+      return { kind: 'recovery', at: entry.at, how: entry.how, patient: nameOf(campaign, entry.for), healer: entry.by === undefined ? undefined : characterOf(campaign, entry.by).name, days: daysOf(entry) };
     }
     case 'note':
       return { kind: 'note', at: entry.at, text: entry.text, interprets: entry.interprets };
@@ -1618,8 +1592,8 @@ function characterView(campaign: Campaign, character: Character, state: Controll
     unskilled: canGoUnskilled(character.skills) ? { dm: ref.houseRules.unskilledDm, chosen: own?.unskilled ?? false } : undefined,
     characteristics: characteristicOptions(own, campaign, character),
     inLog: isInLog(campaign, character.id),
-    state: woundStateOf(campaign, { pc: character.id }),
-    current: woundedUpp(character.upp, woundsOf(campaign, { pc: character.id })),
+    state: woundStateOf(campaign, character.id),
+    current: woundedUpp(character.upp, woundsOf(campaign, character.id)),
     armor: character.wears === undefined ? undefined : itemLabel(itemOf(character.wears)),
     weapons: armedWeaponsOf(character).map((id) => weaponLabel(character, id)),
   };

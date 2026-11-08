@@ -1,11 +1,8 @@
-import { activeSkills, characterOf, keepFocus, livingCharacters, type Campaign, type CharacterId, type Upp } from './campaign';
+import { activeSkills, anyCharacterOf, characterOf, isCampaignCharacter, keepFocus, livingCharacters, type Campaign, type CharacterId, type Upp } from './campaign';
 import { DomainError } from './errors';
 import { physical, type AttackResult, type DamageRoll, type LogEntry, type PhysicalCharacteristic, type Recovery, type RecoveryKind } from './log';
 import type { Clock, Random } from './ports';
-import { currentEncounter, encounterStart, npcOf } from './encounter';
-
-/** Wer kämpft: ein Charakter der Kampagne (SC) oder ein NSC einer Begegnung. */
-export type Combatant = { readonly pc: CharacterId } | { readonly npc: string };
+import { currentEncounter, encounterStart } from './encounter';
 
 /** Wie viel STR, DEX und END jemand durch Treffer verloren hat. */
 export interface Wounds {
@@ -18,19 +15,18 @@ export type WoundState = 'unhurt' | 'wounded' | 'unconscious' | 'serious' | 'dea
 
 const key = { STR: 'str', DEX: 'dex', END: 'end' } as const;
 
-/** Trifft der Angriff diesen SC bzw. NSC? */
-function hits(attack: LogEntry | undefined, who: Combatant): attack is AttackResult {
-  if (attack?.kind !== 'attack') return false;
-  return 'pc' in who ? attack.victim === who.pc : attack.against === who.npc;
+/** Trifft der Angriff diesen Charakter? */
+function hits(attack: LogEntry | undefined, who: CharacterId): attack is AttackResult {
+  return attack?.kind === 'attack' && attack.against === who;
 }
 
-/** Die Schadenswürfe gegen diesen SC bzw. NSC, in der Reihenfolge des Logs. */
-export function damageAgainst(log: readonly LogEntry[], who: Combatant): readonly DamageRoll[] {
+/** Die Schadenswürfe gegen diesen Charakter, in der Reihenfolge des Logs. */
+export function damageAgainst(log: readonly LogEntry[], who: CharacterId): readonly DamageRoll[] {
   return log.flatMap((e) => (e.kind === 'damage' && e.to !== undefined && hits(log[e.of], who) ? [e] : []));
 }
 
-export function uppOf(campaign: Campaign, who: Combatant): Upp {
-  return 'pc' in who ? characterOf(campaign, who.pc).upp : npcOf(campaign, who.npc).upp;
+export function uppOf(campaign: Campaign, who: CharacterId): Upp {
+  return anyCharacterOf(campaign, who).upp;
 }
 
 /** Ein Block eines Schadenswurfs: so viele Punkte auf dieses Attribut (SR 21). */
@@ -91,14 +87,14 @@ export function distribute(upp: Upp, wounds: Wounds, dice: readonly number[], to
   return { blocks };
 }
 
-/** Die Verteilung auf diesen SC bzw. NSC mit seinen Wunden bis jetzt. */
-export function distributeOn(campaign: Campaign, who: Combatant, dice: readonly number[], to: readonly PhysicalCharacteristic[]): Distribution {
+/** Die Verteilung auf diesen Charakter mit seinen Wunden bis jetzt. */
+export function distributeOn(campaign: Campaign, who: CharacterId, dice: readonly number[], to: readonly PhysicalCharacteristic[]): Distribution {
   return distribute(uppOf(campaign, who), woundsOf(campaign, who), dice, to);
 }
 
-/** Gilt die Heilung diesem SC bzw. NSC? */
-function heals(entry: LogEntry, who: Combatant): entry is Recovery {
-  return entry.kind === 'recovery' && ('pc' in who ? entry.for === who.pc : entry.npc === who.npc);
+/** Gilt die Heilung diesem Charakter? */
+function heals(entry: LogEntry, who: CharacterId): entry is Recovery {
+  return entry.kind === 'recovery' && entry.for === who;
 }
 
 /** Was Schaden und Heilung bis hierher ergeben haben. */
@@ -127,7 +123,7 @@ function woken(upp: Upp, wounds: Wounds): Wounds {
 }
 
 /** Schaden und Heilung im Log der Reihe nach, bis vor die Stelle `upTo`. */
-export function historyOf(log: readonly LogEntry[], upp: Upp, who: Combatant, upTo = log.length): History {
+export function historyOf(log: readonly LogEntry[], upp: Upp, who: CharacterId, upTo = log.length): History {
   let wounds: Wounds = { str: 0, dex: 0, end: 0 };
   let serious = false;
   let fresh = true;
@@ -148,8 +144,8 @@ export function historyOf(log: readonly LogEntry[], upp: Upp, who: Combatant, up
   return { wounds, serious, fresh };
 }
 
-/** `/wounds`: was Schadenswürfe und Heilungen im Log diesem SC bzw. NSC genommen bzw. gegeben haben. */
-export function woundsOf(campaign: Campaign, who: Combatant): Wounds {
+/** `/wounds`: was Schadenswürfe und Heilungen im Log diesem Charakter genommen bzw. gegeben haben. */
+export function woundsOf(campaign: Campaign, who: CharacterId): Wounds {
   return historyOf(campaign.log, uppOf(campaign, who), who).wounds;
 }
 
@@ -168,7 +164,7 @@ export function woundState(upp: Upp, wounds: Wounds): WoundState {
   return wounds.str + wounds.dex + wounds.end > 0 ? 'wounded' : 'unhurt';
 }
 
-export function woundStateOf(campaign: Campaign, who: Combatant): WoundState {
+export function woundStateOf(campaign: Campaign, who: CharacterId): WoundState {
   return woundState(uppOf(campaign, who), woundsOf(campaign, who));
 }
 
@@ -182,7 +178,7 @@ export function canFight(state: WoundState): boolean {
  * SR 21); nach einer vollen Heilung wieder. Mit `since` (der erste Logeintrag eines Kampfs) gilt er
  * in jedem Kampf neu (Errata zu *The Traveller Book*, S. 35: „first wound … in each combat“).
  */
-export function isFirstHit(log: readonly LogEntry[], who: Combatant, since?: number): boolean {
+export function isFirstHit(log: readonly LogEntry[], who: CharacterId, since?: number): boolean {
   let fresh = true;
   log.forEach((entry, i) => {
     if (i === since) fresh = true;
@@ -192,8 +188,8 @@ export function isFirstHit(log: readonly LogEntry[], who: Combatant, since?: num
   return fresh;
 }
 
-/** Ist der nächste Treffer gegen diesen SC bzw. NSC ein erster? In einer laufenden Begegnung zählt nur sie. */
-export function isFirstHitNow(campaign: Campaign, who: Combatant): boolean {
+/** Ist der nächste Treffer gegen diesen Charakter ein erster? In einer laufenden Begegnung zählt nur sie. */
+export function isFirstHitNow(campaign: Campaign, who: CharacterId): boolean {
   const encounter = currentEncounter(campaign);
   return isFirstHit(campaign.log, who, encounter ? encounterStart(campaign.log, encounter) : undefined);
 }
@@ -203,7 +199,7 @@ export function isFirstHitNow(campaign: Campaign, who: Combatant): boolean {
  * laufenden Begegnung senken nur die Wunden von vor ihr STR und DEX für die DMs (Heilungen seitdem
  * zählen mit), ohne Begegnung alle.
  */
-export function fightingWounds(campaign: Campaign, who: Combatant): Wounds {
+export function fightingWounds(campaign: Campaign, who: CharacterId): Wounds {
   const now = woundsOf(campaign, who);
   const encounter = currentEncounter(campaign);
   if (!encounter) return now;
@@ -212,10 +208,8 @@ export function fightingWounds(campaign: Campaign, who: Combatant): Wounds {
 }
 
 /** Wen der Treffer an dieser Stelle trifft, wenn er ein Ziel hat. */
-export function victimOf(attack: AttackResult): Combatant | undefined {
-  if (attack.against !== undefined) return { npc: attack.against };
-  if (attack.victim !== undefined) return { pc: attack.victim };
-  return undefined;
+export function victimOf(attack: AttackResult): CharacterId | undefined {
+  return attack.against;
 }
 
 /**
@@ -224,9 +218,9 @@ export function victimOf(attack: AttackResult): Combatant | undefined {
  * zufällig auf ein Attribut über 0. Bei einem SC nach dem ersten Treffer wählt der Spieler; dann gibt
  * es `undefined`.
  */
-export function autoWounds(campaign: Campaign, who: Combatant, dice: readonly number[], random: Random): readonly WoundBlock[] | undefined {
+export function autoWounds(campaign: Campaign, who: CharacterId, dice: readonly number[], random: Random): readonly WoundBlock[] | undefined {
   const first = isFirstHitNow(campaign, who);
-  if (!first && 'pc' in who) return undefined;
+  if (!first && isCampaignCharacter(campaign, who)) return undefined;
   const upp = uppOf(campaign, who);
   const wounds = woundsOf(campaign, who);
   const critical = first ? physical[random.int(0, 2)]! : undefined;
@@ -275,9 +269,9 @@ export function checkWounds(log: readonly LogEntry[], roll: DamageRoll, attack: 
 }
 
 /** Stirbt ein SC an seinen Wunden, ist er tot; der Charakter oben rückt nach. */
-export function markDeath(campaign: Campaign, who: Combatant): Campaign {
-  if (!('pc' in who) || woundStateOf(campaign, who) !== 'dead') return campaign;
-  const after = { ...campaign, characters: campaign.characters.map((c) => (c.id === who.pc ? { ...c, dead: true } : c)) };
+export function markDeath(campaign: Campaign, who: CharacterId): Campaign {
+  if (!isCampaignCharacter(campaign, who) || woundStateOf(campaign, who) !== 'dead') return campaign;
+  const after = { ...campaign, characters: campaign.characters.map((c) => (c.id === who ? { ...c, dead: true } : c)) };
   return keepFocus(campaign, after);
 }
 
@@ -302,15 +296,15 @@ function medicalLevel(campaign: Campaign, id: CharacterId): number {
   return activeSkills(characterOf(campaign, id)).find((s) => s.of === 'medical')?.level ?? 0;
 }
 
-/** Was für diesen SC bzw. NSC an Heilung geht. */
-export function recoveryOptions(campaign: Campaign, who: Combatant): RecoveryOptions {
+/** Was für diesen Charakter an Heilung geht. */
+export function recoveryOptions(campaign: Campaign, who: CharacterId): RecoveryOptions {
   const history = historyOf(campaign.log, uppOf(campaign, who), who);
   const state = woundStateOf(campaign, who);
   const hurt = history.wounds.str + history.wounds.dex + history.wounds.end > 0;
   const treatable = hurt && state !== 'dead';
   const healers = livingCharacters(campaign).map((c) => {
     const level = medicalLevel(campaign, c.id);
-    const awake = canFight(woundStateOf(campaign, { pc: c.id }));
+    const awake = canFight(woundStateOf(campaign, c.id));
     const needs = history.serious ? 3 : 1;
     const kit = history.serious || c.possessions.some((p) => p.of === MEDICAL_KIT);
     const why = !awake ? 'ist bewusstlos' : level < needs ? `braucht Medical-${needs}` : !kit ? 'braucht ein Medical Kit' : undefined;
@@ -323,14 +317,13 @@ export function recoveryOptions(campaign: Campaign, who: Combatant): RecoveryOpt
  * Heilt einen SC oder NSC der laufenden Begegnung: Aufwachen, Behandlung durch einen SC (bei einer
  * schweren Wunde nur in einer medizinischen Einrichtung, 5W6 Tage) oder Ruhe (nur leichte Wunden).
  */
-export function recover(campaign: Campaign, how: RecoveryKind, who: Combatant, random: Random, clock: Clock, healer?: CharacterId, facility = false): Recovery {
-  if (!('pc' in who) && !currentEncounter(campaign)?.npcs.some((n) => n.id === who.npc && n.became === undefined)) {
+export function recover(campaign: Campaign, how: RecoveryKind, who: CharacterId, random: Random, clock: Clock, healer?: CharacterId, facility = false): Recovery {
+  if (!isCampaignCharacter(campaign, who) && !currentEncounter(campaign)?.npcs.some((n) => n.id === who)) {
     throw new DomainError('Heilen lassen sich NSC nur in der laufenden Begegnung.');
   }
   const options = recoveryOptions(campaign, who);
-  const name = 'pc' in who ? characterOf(campaign, who.pc).name : npcOf(campaign, who.npc).name;
-  const patient = 'pc' in who ? { for: who.pc } : { npc: who.npc };
-  const base = { kind: 'recovery' as const, at: clock.now(), how, ...patient };
+  const name = anyCharacterOf(campaign, who).name;
+  const base = { kind: 'recovery' as const, at: clock.now(), how, for: who };
   if (how === 'wake') {
     if (!options.wake) throw new DomainError(`${name} ist nicht bewusstlos.`);
     return base;
@@ -344,7 +337,7 @@ export function recover(campaign: Campaign, how: RecoveryKind, who: Combatant, r
   const by = options.healers.find((h) => h.id === healer);
   if (!by) throw new DomainError('Behandeln kann nur ein lebender SC.');
   if (!by.able) throw new DomainError(`${by.name} ${by.why}.`);
-  if (healer === ('pc' in who ? who.pc : undefined) && !canFight(woundStateOf(campaign, who))) throw new DomainError(`${name} ist bewusstlos und behandelt sich nicht selbst.`);
+  if (healer === who && !canFight(woundStateOf(campaign, who))) throw new DomainError(`${name} ist bewusstlos und behandelt sich nicht selbst.`);
   if (!options.serious) return { ...base, by: healer };
   if (!facility) throw new DomainError('Eine schwere Wunde behandelt man nur in einer medizinischen Einrichtung.');
   return { ...base, by: healer, dice: Array.from({ length: 5 }, () => random.int(1, 6)) };
@@ -355,12 +348,10 @@ export function daysOf(recovery: Recovery): number | undefined {
   return recovery.dice?.reduce((sum, d) => sum + d, 0);
 }
 
-/** Prüft eine Heilung aus der Kampagnendatei: Patient genau einer, Behandlung mit Behandelndem, Tage nur bei schweren Wunden. */
+/** Prüft eine Heilung aus der Kampagnendatei: Patient ein Charakter, Behandlung mit Behandelndem, Tage nur bei schweren Wunden. */
 export function checkRecovery(campaign: Campaign, entry: Recovery, at: number): void {
-  if ((entry.for === undefined) === (entry.npc === undefined)) throw new DomainError('Eine Heilung gilt genau einem SC oder NSC.');
-  const who: Combatant = entry.for !== undefined ? { pc: entry.for } : { npc: entry.npc! };
-  if ('pc' in who) characterOf(campaign, who.pc);
-  else npcOf(campaign, who.npc);
+  const who = entry.for;
+  anyCharacterOf(campaign, who);
   if ((entry.how === 'treatment') !== (entry.by !== undefined)) throw new DomainError('Nur eine Behandlung hat einen Behandelnden.');
   if (entry.by !== undefined) characterOf(campaign, entry.by);
   const history = historyOf(campaign.log, uppOf(campaign, who), who, at);

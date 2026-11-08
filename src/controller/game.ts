@@ -31,6 +31,7 @@ import {
   turnOf,
   itemOf,
   characterOf,
+  anyCharacterOf,
   setWears,
   fighterOf,
   endTurn,
@@ -433,7 +434,7 @@ export class GameController {
     const attack = this.state.attack ?? startAttack(this.campaign);
     if (attack.armor === armor && attack.range === range) {
       const rest = Object.fromEntries(Object.entries(attack).filter(([key]) => key !== 'range'));
-      this.update({ attack: attack.against === undefined && attack.by === undefined ? undefined : rest });
+      this.update({ attack: attack.against === undefined ? undefined : rest });
     } else this.update({ attack: chooseTarget(this.campaign, armor, range, attack) });
   }
 
@@ -444,8 +445,8 @@ export class GameController {
 
   /**
    * Würfelt den Angriff (bei Feuerstoß und Schrot die ganze Garbe), schreibt ihn in den Log und zeigt
-   * das Ergebnis als Popup; das Ziel bleibt gewählt. Eine Schusswaffe eines SC verbraucht einen
-   * Schuss, ein Feuerstoß so viele, wie er braucht.
+   * das Ergebnis als Popup; das Ziel bleibt gewählt. Eine Schusswaffe verbraucht einen Schuss, ein
+   * Feuerstoß so viele, wie er braucht.
    */
   rollAttack(): void {
     const attack = this.state.attack ?? {};
@@ -464,7 +465,7 @@ export class GameController {
         this.update({ attack: chooseFire(this.state.attack ?? startAttack(this.campaign), this.campaign, burst), combatNote: undefined });
         return;
       }
-      const weapon = fighterOf(this.campaign, turn.who).weapon;
+      const weapon = fighterOf(this.campaign, turn.id).weapon;
       if (!canChooseFire(weapon)) throw new DomainError(`${weapon.name} hat keine Wahl zwischen Feuerstoß und Einzelschuss.`);
       this.update({ simBurst: burst, combatNote: undefined });
     });
@@ -492,8 +493,8 @@ export class GameController {
     const rounds = attackRounds(attack, campaign);
     // Ein Schuss mit Überraschung gibt Alarm, außer mit einem Laser (SR 20).
     const logged = alarmAfterAttack(appendLog(campaign, ...results), results);
-    const shooter = results[0]!.for;
-    return shooter === undefined ? logged : spendRound(logged, shooter, rounds);
+    // SC wie NSC verbrauchen ihre Munition.
+    return spendRound(logged, results[0]!.for, rounds);
   }
 
   /**
@@ -570,12 +571,12 @@ export class GameController {
     const encounter = currentEncounter(campaign);
     if (!turn || !encounter) return { campaign, simTarget: undefined };
     if (turn.side === 'pcs') {
-      const npcs = encounter.npcs.filter((n) => n.became === undefined && woundStateOf(campaign, { npc: n.id }) !== 'dead');
+      const npcs = encounter.npcs.filter((n) => woundStateOf(campaign, n.id) !== 'dead');
       const keep = npcs.some((n) => n.id === target) ? target : npcs[0]?.id;
       return { campaign: focusOf(campaign)?.id === turn.id ? campaign : setFocus(campaign, turn.id), simTarget: keep };
     }
     const pcs = livingCharacters(campaign);
-    const awake = pcs.filter((c) => canFight(woundStateOf(campaign, { pc: c.id })));
+    const awake = pcs.filter((c) => canFight(woundStateOf(campaign, c.id)));
     const pool = awake.length > 0 ? awake : pcs;
     const pick = pool[this.deps.random.int(0, pool.length - 1)]!;
     return { campaign: focusOf(campaign)?.id === pick.id ? campaign : setFocus(campaign, pick.id), simTarget: pick.id };
@@ -639,28 +640,27 @@ export class GameController {
   }
 
   /**
-   * Der SC am Zug greift mit dieser Waffe an (Primär, Sekundär oder die Hände): Sie kommt in die Hand,
-   * dann der Angriff wie `fightAttack`. Beim NSC am Zug zählt nur seine Waffe.
+   * Der Kämpfer am Zug greift mit dieser Waffe an (Primär, Sekundär oder die Hände): Sie kommt in die
+   * Hand, dann der Angriff wie `fightAttack`. SC und NSC gleich.
    */
   fightAttackWith(weapon: string): void {
     this.inFight(() => this.attackFrom(this.withWeaponInHand(weapon)));
   }
 
-  /** Der SC am Zug lädt diese Waffe nach; sie kommt dabei in die Hand. Das ist sein Zug. */
+  /** Der Kämpfer am Zug lädt diese Waffe nach; sie kommt dabei in die Hand. Das ist sein Zug. */
   fightReloadWith(weapon: string): void {
     this.inFight(() => {
       const turn = turnOf(this.campaign);
-      if (!turn || turn.side !== 'pcs') throw new DomainError('Nachladen kann nur ein SC am Zug.');
+      if (!turn) throw new DomainError('Es ist keiner am Zug.');
       this.nextTurn(reload(this.withWeaponInHand(weapon), turn.id));
     });
   }
 
-  /** Die Kampagne, in der der SC am Zug diese Waffe in der Hand hat. */
+  /** Die Kampagne, in der der Kämpfer am Zug diese Waffe in der Hand hat. */
   private withWeaponInHand(weapon: string): Campaign {
     const turn = turnOf(this.campaign);
     if (!turn) throw new DomainError('Es ist keiner am Zug.');
-    if (turn.side !== 'pcs') return this.campaign;
-    const character = characterOf(this.campaign, turn.id);
+    const character = anyCharacterOf(this.campaign, turn.id);
     return (character.wields ?? HANDS) === weapon ? this.campaign : setWields(this.campaign, turn.id, weapon);
   }
 
@@ -676,11 +676,11 @@ export class GameController {
     else this.nextTurn(campaign, { result: index });
   }
 
-  /** Der SC am Zug lädt nach; das ist sein Zug. */
+  /** Der Kämpfer am Zug lädt nach; das ist sein Zug. */
   fightReload(): void {
     this.inFight(() => {
       const turn = turnOf(this.campaign);
-      if (!turn || turn.side !== 'pcs') throw new DomainError('Nachladen kann nur ein SC am Zug.');
+      if (!turn) throw new DomainError('Es ist keiner am Zug.');
       this.nextTurn(reload(this.campaign, turn.id));
     });
   }
@@ -698,7 +698,7 @@ export class GameController {
     try {
       const character = pc ?? focusOf(this.campaign)?.id;
       if (npc === undefined && character === undefined) throw new DomainError('Es gibt keinen lebenden Charakter.');
-      const who = npc === undefined ? { pc: character! } : { npc };
+      const who = npc ?? character!;
       this.change(appendLog(this.campaign, recover(this.campaign, how, who, this.deps.random, this.deps.clock, healer, facility)), { combatNote: undefined });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
@@ -711,7 +711,7 @@ export class GameController {
     if (npcs.length === 0) return;
     const attack = this.state.attack;
     const involved = (id: string | undefined) => id !== undefined && npcs.includes(id);
-    const keep = attack && !involved(attack.against) && !involved(attack.by) ? attack : undefined;
+    const keep = attack && !involved(attack.against) ? attack : undefined;
     this.change(
       npcs.reduce((campaign, npc) => adoptNpc(campaign, npc, asNpc), this.campaign),
       { attack: keep },
@@ -802,7 +802,7 @@ export class GameController {
     const who = victimOf(hit);
     const campaign = who ? markDeath(logged, who) : logged;
     const turn = turnOf(this.campaign);
-    const ownTurn = turn !== undefined && (hit.for === turn.id || hit.by === turn.id);
+    const ownTurn = turn !== undefined && hit.for === turn.id;
     const rest = { result: show ? campaign.log.length - 1 : undefined, wounding: undefined };
     // Bei einer Garbe endet der Zug erst, wenn der Schaden aller ihrer Treffer verteilt ist.
     const more = pendingDamage(campaign.log);

@@ -10,13 +10,15 @@ import {
   currentEncounter,
   DomainError,
   encounterRangeOf,
+  anyCharacterOf,
+  fightOrder,
   fighterOf,
   focusOf,
   hasRun,
   livingCharacters,
   neighboursOf,
-  npcOf,
   parryDm,
+  sideOf,
   strikeDm,
   strikeOf,
   rangeDm,
@@ -32,8 +34,8 @@ import {
   type AttackResult,
   type Campaign,
   type Character,
+  type CharacterId,
   type Clock,
-  type Combatant,
   type Fighter,
   type Random,
   type Range,
@@ -43,15 +45,15 @@ import {
 
 /**
  * Ein Angriff, solange er vorbereitet wird. Flüchtig: wird beim Würfeln zum `AttackResult`, nie
- * gespeichert. Ohne `by` greift der Charakter oben an (`/for`) mit seiner Waffe in der Hand (`/with`);
- * mit `by` greift ein NSC der laufenden Begegnung den Charakter oben an (`/victim`). Mit `against` ist
- * das Ziel ein NSC. Rüstung und Reichweite sind die des Ziels; bei einem Ziel steht die Rüstung fest.
+ * gespeichert. Der Angreifer (`/for`) ist in der Kampfsimulation der Kämpfer am Zug, sonst der
+ * Charakter oben; er greift mit seiner Waffe in der Hand an (`/with`). Mit `against` ist das Ziel ein
+ * Kämpfer der anderen Partei der laufenden Begegnung, SC oder NSC. Rüstung und Reichweite sind die
+ * des Ziels; bei einem Ziel steht die Rüstung fest.
  */
 export interface Attack {
   readonly armor?: ArmorClass;
   readonly range?: Range;
-  readonly by?: string;
-  readonly against?: string;
+  readonly against?: CharacterId;
   /** Feuerstoß (`true`) oder Einzelschuss; zählt nur bei einer Waffe, die beides kann. Fehlt: Feuerstoß. */
   readonly burst?: boolean;
   /** Ein SC schwächt seinen Schlag oder Hieb freiwillig, damit er nicht gegen die END zählt (SR 22). */
@@ -87,25 +89,26 @@ export function attackCharacter(campaign: Campaign): Character {
   return character;
 }
 
-/** Ein NSC der laufenden Begegnung, der nicht übernommen ist. */
-function encounterNpc(campaign: Campaign, id: string) {
-  const npc = npcOf(campaign, id);
-  if (!currentEncounter(campaign)?.npcs.some((n) => n.id === id)) throw new DomainError(`${npc.name} ist in keiner laufenden Begegnung.`);
-  if (npc.became !== undefined) throw new DomainError(`${npc.name} ist übernommen und kämpft nicht mehr in der Begegnung.`);
-  return npc;
+/** `/for`: Wer angreift: in der Kampfsimulation der Kämpfer am Zug, sonst der Charakter oben. */
+export function attackerIdOf(campaign: Campaign): CharacterId {
+  return turnOf(campaign)?.id ?? attackCharacter(campaign).id;
 }
 
-/** Wer angreift: der NSC (`by`) oder der Charakter oben. */
-export function attackerOf(attack: Attack, campaign: Campaign): Fighter {
-  if (attack.by !== undefined) return fighterOf(campaign, { npc: encounterNpc(campaign, attack.by).id });
-  return fighterOf(campaign, { pc: attackCharacter(campaign).id });
+/** Wer angreift, mit allem, was der Angriff von ihm braucht. */
+export function attackerOf(_attack: Attack, campaign: Campaign): Fighter {
+  return fighterOf(campaign, attackerIdOf(campaign));
 }
 
-/** Wer angegriffen wird, wenn es ein Ziel gibt: der NSC (`against`) oder, wenn ein NSC angreift, der Charakter oben. */
+/** Ein Kämpfer der laufenden Begegnung: ein SC, der lebt, oder einer ihrer NSC. */
+function encounterFighter(campaign: Campaign, id: CharacterId): CharacterId {
+  const encounter = currentEncounter(campaign);
+  if (!encounter || !fightOrder(campaign, encounter).some((s) => s.id === id)) throw new DomainError(`${anyCharacterOf(campaign, id).name} kämpft in keiner laufenden Begegnung.`);
+  return id;
+}
+
+/** Wer angegriffen wird, wenn es ein Ziel gibt. */
 export function defenderOf(attack: Attack, campaign: Campaign): Fighter | undefined {
-  if (attack.against !== undefined) return fighterOf(campaign, { npc: encounterNpc(campaign, attack.against).id });
-  if (attack.by !== undefined) return fighterOf(campaign, { pc: attackCharacter(campaign).id });
-  return undefined;
+  return attack.against === undefined ? undefined : fighterOf(campaign, encounterFighter(campaign, attack.against));
 }
 
 /** Ein neuer Angriff des Charakters oben, noch ohne Ziel. */
@@ -134,7 +137,7 @@ function withRange(attack: Attack, campaign: Campaign): Attack {
   return range !== undefined && rangeDm(rowOf(weapon, firesBurst(weapon, rest)), range) !== undefined ? { ...rest, range } : rest;
 }
 
-/** Der Angriff ohne Ziel und ohne NSC als Angreifer; nur die Reichweite, die Feuerart und das Schwächen bleiben. */
+/** Der Angriff ohne Ziel; nur die Reichweite, die Feuerart und das Schwächen bleiben. */
 function untargeted(attack: Attack): Attack {
   return {
     ...(attack.range === undefined ? {} : { range: attack.range }),
@@ -159,46 +162,34 @@ export interface AttackExtras {
 export function attackExtras(attack: Attack, campaign: Campaign): AttackExtras {
   const attacker = attackerOf(attack, campaign);
   const defender = defenderOf(attack, campaign);
-  const strike = strikeOf(campaign, attacker.who, attacker.weapon, defender?.state, attack.weakened === true && attack.by === undefined);
+  const strike = strikeOf(campaign, attacker.who, attacker.weapon, defender?.state, attack.weakened === true && sideOf(campaign, attacker.who) === 'pcs');
   return { strike, weakened: strikeDm(attacker.weapon, strike), parry: parryDm(campaign, defender?.who, attacker.weapon) };
 }
 
-/** Der Charakter oben zielt auf einen NSC der laufenden Begegnung; seine Rüstung steht damit fest. `undefined` hebt das Ziel auf. */
-export function aimAt(attack: Attack, campaign: Campaign, npc: string | undefined): Attack {
+/**
+ * Der Angreifer zielt auf einen Kämpfer der anderen Partei der laufenden Begegnung; dessen Rüstung
+ * steht damit fest. `undefined` hebt das Ziel auf.
+ */
+export function aimAt(attack: Attack, campaign: Campaign, target: CharacterId | undefined): Attack {
   const rest = untargeted(attack);
-  if (npc === undefined) return withRange(rest, campaign);
-  const defender = fighterOf(campaign, { npc: encounterNpc(campaign, npc).id });
+  if (target === undefined) return withRange(rest, campaign);
+  const defender = fighterOf(campaign, encounterFighter(campaign, target));
+  if (sideOf(campaign, target) === sideOf(campaign, attackerIdOf(campaign))) throw new DomainError(`${defender.name} gehört zur eigenen Partei.`);
   if (defender.state === 'dead') throw new DomainError(`${defender.name} ist tot.`);
-  return withRange({ ...rest, against: npc, armor: defender.armor }, campaign);
-}
-
-/** Ein NSC der laufenden Begegnung greift den Charakter oben an; dessen getragene Rüstung steht fest. `undefined`: wieder der SC. */
-export function attackBy(attack: Attack, campaign: Campaign, npc: string | undefined): Attack {
-  const rest = untargeted(attack);
-  if (npc === undefined) return withRange(rest, campaign);
-  encounterNpc(campaign, npc);
-  return withRange({ ...rest, by: npc, armor: fighterOf(campaign, { pc: attackCharacter(campaign).id }).armor }, campaign);
+  return withRange({ ...rest, against: target, armor: defender.armor }, campaign);
 }
 
 /**
  * Der Angriff dessen, der in der Kampfsimulation am Zug ist, auf dieses Ziel, mit der Reichweite
- * aus dem Band der Begegnung; sind die Parteien entkommen, hat er keine. Ist ein SC am Zug, muss er
- * oben stehen; greift ein NSC an, steht sein Ziel oben.
+ * aus dem Band der Begegnung; sind die Parteien entkommen, hat er keine.
  */
-export function turnAttack(campaign: Campaign, target: string): Attack {
+export function turnAttack(campaign: Campaign, target: CharacterId): Attack {
   const turn = turnOf(campaign);
   const encounter = currentEncounter(campaign);
   if (!turn || !encounter) throw new DomainError('Es ist keiner am Zug.');
   if (hasRun(campaign, turn.side)) throw new DomainError(`Die ${turn.side === 'pcs' ? 'SC' : 'NSC'} sind in dieser Runde gelaufen und greifen nicht an.`);
-  const top = attackCharacter(campaign);
   const range = encounterRangeOf(encounter);
-  const at = range === undefined ? {} : { range };
-  if (turn.side === 'pcs') {
-    if (top.id !== turn.id) throw new DomainError('Der SC am Zug steht nicht oben.');
-    return { ...aimAt({}, campaign, target), ...at };
-  }
-  if (top.id !== target) throw new DomainError('Das Ziel des NSC steht nicht oben.');
-  return { ...attackBy({}, campaign, turn.id), ...at };
+  return { ...aimAt({}, campaign, target), ...(range === undefined ? {} : { range }) };
 }
 
 /** Wählt Rüstung und Reichweite des Ziels. Steht das Ziel fest, ist seine Rüstung die einzige. */
@@ -244,15 +235,11 @@ export function attackTable(campaign: Campaign, attack: Attack = {}): readonly (
   return armorClasses.map((armor) => ranges.map((range) => odds(attacker, armor, range, burst, extras)));
 }
 
-/** Die Partei des Ziels als Liste: NSC in der Reihenfolge der Begegnung (ohne Übernommene), SC in der der Kampagne. */
-function partyOf(campaign: Campaign, who: Combatant): readonly Combatant[] {
-  if ('pc' in who) return livingCharacters(campaign).map((c) => ({ pc: c.id }));
-  const encounter = campaign.encounters.find((e) => e.npcs.some((n) => n.id === who.npc));
-  return (encounter?.npcs ?? []).filter((n) => n.became === undefined).map((n) => ({ npc: n.id }));
-}
-
-function same(a: Combatant, b: Combatant): boolean {
-  return 'pc' in a ? 'pc' in b && a.pc === b.pc : 'npc' in b && a.npc === b.npc;
+/** Die Partei des Ziels als Liste: NSC in der Reihenfolge der Begegnung, SC in der der Kampagne. */
+function partyOf(campaign: Campaign, who: CharacterId): readonly CharacterId[] {
+  if (sideOf(campaign, who) === 'pcs') return livingCharacters(campaign).map((c) => c.id);
+  const encounter = campaign.encounters.find((e) => e.npcs.some((n) => n.id === who));
+  return (encounter?.npcs ?? []).map((n) => n.id);
 }
 
 /**
@@ -260,19 +247,19 @@ function same(a: Combatant, b: Combatant): boolean {
  * Partei, die nicht tot sind. Beim Feuerstoß der nächste darüber und der nächste darunter in der
  * Liste; bei der Shotgun bis zu `neighbours` ausgeloste.
  */
-export function neighbourTargets(campaign: Campaign, who: Combatant, weapon: Weapon, burst: boolean, random: Random): readonly Combatant[] {
+export function neighbourTargets(campaign: Campaign, who: CharacterId, weapon: Weapon, burst: boolean, random: Random): readonly CharacterId[] {
   const most = neighboursOf(weapon, burst);
   if (most === 0) return [];
   const party = partyOf(campaign, who);
-  const at = party.findIndex((c) => same(c, who));
-  const alive = (c: Combatant) => woundStateOf(campaign, c) !== 'dead';
+  const at = party.indexOf(who);
+  const alive = (c: CharacterId) => woundStateOf(campaign, c) !== 'dead';
   if (burst) {
     const above = party.slice(0, Math.max(0, at)).reverse().find(alive);
     const below = party.slice(at + 1).find(alive);
-    return [above, below].filter((c): c is Combatant => c !== undefined).slice(0, most);
+    return [above, below].filter((c): c is CharacterId => c !== undefined).slice(0, most);
   }
-  const pool = party.filter((c) => !same(c, who) && alive(c));
-  const picked: Combatant[] = [];
+  const pool = party.filter((c) => c !== who && alive(c));
+  const picked: CharacterId[] = [];
   while (picked.length < most && pool.length > 0) picked.push(pool.splice(random.int(0, pool.length - 1), 1)[0]!);
   return picked;
 }
@@ -301,20 +288,16 @@ export function rollAttack(attack: Attack, campaign: Campaign, random: Random, c
   const burst = firesBurst(weapon, attack);
   const range = attack.range;
   const at = clock.now();
-  let who: Partial<AttackResult>;
-  if (attack.by !== undefined) who = { by: attack.by };
-  else {
-    const character = attackCharacter(campaign);
-    checkRounds(character, roundsFor(weapon, burst));
-    const skill = weaponSkill(character, weapon);
-    who = { for: character.id, ...(skill ? { uses: skill.of } : {}) };
-  }
+  const character = anyCharacterOf(campaign, attacker.who);
+  checkRounds(character, roundsFor(weapon, burst));
+  const skill = weaponSkill(character, weapon);
   const strike = attackExtras(attack, campaign).strike;
-  const roll = (target: Combatant | undefined, armor: ArmorClass, dm: number, volley: number | undefined): AttackResult => ({
+  const roll = (target: CharacterId | undefined, armor: ArmorClass, dm: number, volley: number | undefined): AttackResult => ({
     kind: 'attack',
     at,
-    ...who,
-    ...(target === undefined ? {} : 'pc' in target ? { victim: target.pc } : { against: target.npc }),
+    for: character.id,
+    ...(skill ? { uses: skill.of } : {}),
+    ...(target === undefined ? {} : { against: target }),
     with: weapon.id,
     armor,
     range,

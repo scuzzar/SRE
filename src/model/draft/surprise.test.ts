@@ -23,8 +23,8 @@ import {
   type Hex,
   type Side,
 } from '..';
-import { fixedClock, fixedRandom } from '../testing';
-import { attackBy, attackExtras, chooseTarget, chooseWeakened, evaluateAttack, rollAttack, turnAttack, type Attack } from './attack';
+import { fixedClock, fixedRandom, onTurn } from '../testing';
+import { aimAt, attackExtras, chooseTarget, chooseWeakened, evaluateAttack, rollAttack, turnAttack, type Attack } from './attack';
 
 // Regina: TL 7. Zwei Thugs: n1 Anführer mit Body Pistol und Mesh, n2 mit Club; beide UPP 222222.
 const regina: Hex = {
@@ -94,7 +94,7 @@ describe('Überraschung bis zum Alarm (SR 20)', () => {
     expect(surprisingOf(state(campaign))).toBe('pcs');
     expect(turnOf(campaign)?.id).toBe('c1');
     // Schläge mit Überraschung kosten keine Ausdauer: Kira hat END 8.
-    expect(blowsOf(campaign, { pc: 'c1' })).toBe(8);
+    expect(blowsOf(campaign, 'c1')).toBe(8);
   });
 
   it('ein Schuss gibt Alarm; wer in der Runde noch dran ist, greift noch mit Überraschung an, danach ziehen beide', () => {
@@ -149,18 +149,18 @@ describe('Ausdauer (SR 20, 22)', () => {
     expect(turnOf(campaign)?.id).toBe('c1');
     campaign = endTurn(campaign);
     // Jonas: END 7, Blade.
-    expect(blowsOf(campaign, { pc: 'c2' })).toBe(7);
+    expect(blowsOf(campaign, 'c2')).toBe(7);
     const full = evaluateAttack(turn(campaign, 'n2'), ready(campaign, 'n2'))!;
     expect(attackExtras(turn(campaign, 'n2'), ready(campaign, 'n2')).strike).toBe('combat');
     campaign = attack(campaign, 'n2', [1, 1]);
     expect(campaign.log.at(-1)).toMatchObject({ strike: 'combat' });
-    expect(blowsOf(campaign, { pc: 'c2' })).toBe(6);
+    expect(blowsOf(campaign, 'c2')).toBe(6);
     // Jeder Lauf kostet jeden Kämpfer der Partei einen Combat-Schlag.
     campaign = patch(campaign, { pcRuns: 2 });
-    expect(blowsOf(campaign, { pc: 'c2' })).toBe(4);
+    expect(blowsOf(campaign, 'c2')).toBe(4);
     // Ohne Combat-Schläge ist jeder Schlag geschwächt: Blade −2.
     campaign = patch(campaign, { pcRuns: 20, round: 2, acted: ['c1'] });
-    expect(blowsOf(campaign, { pc: 'c2' })).toBe(0);
+    expect(blowsOf(campaign, 'c2')).toBe(0);
     expect(attackExtras(turn(campaign, 'n2'), ready(campaign, 'n2')).strike).toBe('weakened');
     expect(evaluateAttack(turn(campaign, 'n2'), ready(campaign, 'n2'))!.dm.total).toBe(full.dm.total - 2);
   });
@@ -171,7 +171,7 @@ describe('Ausdauer (SR 20, 22)', () => {
     expect(attackExtras(weakened, ready(campaign, 'n2'))).toMatchObject({ strike: 'weakened', weakened: -2 });
     campaign = attack(campaign, 'n2', [1, 1], { weakened: true });
     expect(campaign.log.at(-1)).toMatchObject({ strike: 'weakened' });
-    expect(blowsOf(campaign, { pc: 'c2' })).toBe(7);
+    expect(blowsOf(campaign, 'c2')).toBe(7);
     // n2 bewusstlos (STR 2 → 0), dann ist ein Hieb auf ihn Special.
     campaign = patch(campaign, { round: 2, acted: ['c1', 'n1', 'n2'] });
     campaign = attack(campaign, 'n2', [6, 6]);
@@ -185,16 +185,17 @@ describe('Ausdauer (SR 20, 22)', () => {
 describe('Parade (SR 22)', () => {
   it('wer mit Faust oder Klinge angegriffen wird und selbst eine führt, zieht seine Stufe ab; gegen Schüsse nicht', () => {
     let campaign = thugs();
-    // n2 (Club, Fertigkeit 1) greift Jonas an, der mit der Blade (Blade-1) pariert.
-    campaign = { ...campaign, focus: 'c2' };
-    expect(attackExtras(attackBy({}, campaign, 'n2'), campaign).parry).toBe(-1);
+    // n2 (Club, Brawling-1) greift Jonas an, der mit der Blade (Blade-1) pariert.
+    const byN2 = onTurn(campaign, 'n2');
+    expect(attackExtras(aimAt({}, byN2, 'c2'), byN2).parry).toBe(-1);
     // Gegen die Body Pistol des Anführers gibt es keine Parade.
-    expect(attackExtras(attackBy({}, campaign, 'n1'), campaign).parry).toBe(0);
+    const byN1 = onTurn(campaign, 'n1');
+    expect(attackExtras(aimAt({}, byN1, 'c2'), byN1).parry).toBe(0);
     // Kira mit den Händen hat kein Brawling: Stufe 0, keine Parade.
-    expect(attackExtras(attackBy({}, { ...campaign, focus: 'c1' }, 'n2'), { ...campaign, focus: 'c1' }).parry).toBe(0);
+    expect(attackExtras(aimAt({}, byN2, 'c1'), byN2).parry).toBe(0);
     // Ein Gewehr pariert als Cudgel: mit Cudgel-2 −2.
-    const rifle = { ...campaign, focus: 'c1', characters: campaign.characters.map((c) => (c.id === 'c1' ? { ...c, wields: 'rifle', skills: [...c.skills, { of: 'cudgel', level: 2, retired: false }] } : c)) };
-    expect(attackExtras(attackBy({}, rifle, 'n2'), rifle).parry).toBe(-2);
+    const rifle = onTurn({ ...campaign, characters: campaign.characters.map((c) => (c.id === 'c1' ? { ...c, wields: 'rifle', skills: [...c.skills, { of: 'cudgel', level: 2, retired: false }] } : c)) }, 'n2');
+    expect(attackExtras(aimAt({}, rifle, 'c1'), rifle).parry).toBe(-2);
     // Jonas greift n2 an: der pariert mit seinem Club (Fertigkeit 1).
     campaign = endTurn(campaign);
     expect(attackExtras(turn(campaign, 'n2'), ready(campaign, 'n2')).parry).toBe(-1);
@@ -204,8 +205,8 @@ describe('Parade (SR 22)', () => {
 describe('Wunden im laufenden Kampf (SR 21, Errata zu The Traveller Book S. 35–36)', () => {
   /** Ein NSC trifft Kira (ohne Rüstung) auf Close. */
   function clubOn(campaign: Campaign, npc: string) {
-    const top = { ...campaign, focus: 'c1' };
-    return rollAttack(chooseTarget(top, 'nothing', 'close', attackBy({}, top, npc)), top, fixedRandom(6, 6), clock);
+    const top = onTurn(campaign, npc);
+    return rollAttack(chooseTarget(top, 'nothing', 'close', aimAt({}, top, 'c1')), top, fixedRandom(6, 6), clock);
   }
 
   /** n2 trifft Kira mit dem Club; der Schaden geht wie angegeben auf ihre Attribute. */
@@ -219,13 +220,13 @@ describe('Wunden im laufenden Kampf (SR 21, Errata zu The Traveller Book S. 35�
   it('Wunden aus dem laufenden Kampf senken STR und DEX für die DMs nicht, im nächsten Kampf schon', () => {
     // Kira: STR 7, mit den Händen (nötig 6, darunter −2).
     let campaign = hitKira(thugs(), 'STR', 1);
-    expect(fighterOf(campaign, { pc: 'c1' })).toMatchObject({ upp: { str: 5 }, fighting: { str: 7 } });
+    expect(fighterOf(campaign, 'c1')).toMatchObject({ upp: { str: 5 }, fighting: { str: 7 } });
     // Nach dem Kampf zählen die Wunden: Ohne Begegnung ist STR 5 auch der Wert für die DMs.
     campaign = endEncounter(campaign);
-    expect(fighterOf(campaign, { pc: 'c1' }).fighting.str).toBe(5);
+    expect(fighterOf(campaign, 'c1').fighting.str).toBe(5);
     // In der nächsten Begegnung zählen die Wunden von vorher.
     campaign = rollEncounter(campaign, fixedRandom(1, 5), clock, undefined, 2).campaign;
-    expect(fighterOf(campaign, { pc: 'c1' }).fighting.str).toBe(5);
+    expect(fighterOf(campaign, 'c1').fighting.str).toBe(5);
   });
 
   it('die Regel für die erste Wunde gilt in jedem Kampf neu', () => {
@@ -235,7 +236,7 @@ describe('Wunden im laufenden Kampf (SR 21, Errata zu The Traveller Book S. 35�
     expect(needsWounding(campaign, campaign.log.length - 1)).toBe(true);
     // In einer neuen Begegnung ist er wieder ein erster und geht von selbst auf ein Attribut.
     campaign = rollEncounter(endEncounter(campaign), fixedRandom(1, 5), clock, undefined, 2).campaign;
-    campaign = patch(campaign, { band: 0, close: true });
+    campaign = patch(campaign, { band: 0, close: true, pcSurprise: { die: 3, dm: 0 }, npcSurprise: { die: 3, dm: 0 } });
     campaign = appendLog(campaign, ...clubOn(campaign, currentEncounter(campaign)!.npcs[1]!.id));
     expect(needsWounding(campaign, campaign.log.length - 1)).toBe(false);
   });

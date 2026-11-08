@@ -1,4 +1,6 @@
 import type { Campaign } from './campaign';
+import { currentEncounter } from './encounter';
+import { fightOrder, turnOf, withEncounter } from './fight';
 import type { CampaignRepository, Clock, Download, Random } from './ports';
 
 /** Eine Zufallsquelle für Tests: liefert die vorgegebenen Zahlen der Reihe nach, danach immer `min`. */
@@ -83,4 +85,19 @@ export function memoryDownload(): Download & { readonly files: { fileName: strin
       this.files.push({ fileName, content, type });
     },
   };
+}
+
+/**
+ * Die Kampagne, in der dieser Kämpfer der laufenden Begegnung am Zug ist: Alle vor ihm in der
+ * Zugreihenfolge waren in dieser Runde schon dran. Nur für Tests; die Überraschung muss gewürfelt sein.
+ */
+export function onTurn(campaign: Campaign, id: string): Campaign {
+  const encounter = currentEncounter(campaign);
+  if (!encounter) throw new Error('onTurn: Es läuft keine Begegnung.');
+  const order = fightOrder(campaign, encounter);
+  const at = order.findIndex((s) => s.id === id);
+  if (at < 0) throw new Error(`onTurn: ${id} kämpft nicht in der Begegnung.`);
+  const after = withEncounter(campaign, { ...encounter, acted: order.slice(0, at).map((s) => s.id) });
+  if (turnOf(after)?.id !== id) throw new Error(`onTurn: ${id} kommt nicht an den Zug (Überraschung, bewusstlos?).`);
+  return after;
 }

@@ -946,8 +946,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Im Zug wählt man nur das **Ziel** (einen Kämpfer der anderen Partei, der nicht tot ist) und
     würfelt, ein SC mit seiner **Primär- oder Sekundärwaffe** (ohne zweite Waffe mit den Händen): Der
     Angriff nimmt diese Waffe in die Hand (`wields`) und würfelt; ist sie leer, lädt er sie stattdessen
-    nach. Ein NSC am Zug greift ebenso mit seiner Primärwaffe an; ist sie leer, lädt er nach, hat er
-    kein Magazin mehr, greift er mit den Händen an. Die Anzeige dazu (zwei Spalten, Pfeile, die Entfernung unten im Zug) ist reine Anzeige,
+    nach. Für einen NSC am Zug gilt dasselbe (meist Primärwaffe und die Hände); hat er kein Magazin
+    mehr, bleiben ihm die Hände. Die Anzeige dazu (zwei Spalten, Pfeile, die Entfernung unten im Zug) ist reine Anzeige,
     siehe README; Rüstung ist die des Ziels, Reichweite die Entfernung. Ist ein NSC dran, schlägt die App
     einen zufälligen wachen SC als Ziel vor; man kann es ändern. Ist ein SC dran, steht er oben.
   - Der Zug endet mit dem Angriff, sobald sein Schaden verteilt ist (oder er daneben ging; bei einer

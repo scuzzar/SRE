@@ -10,6 +10,7 @@ import {
   removeLogEntry,
   rollDamage,
   rollEncounter,
+  rollSurprise,
   setHexes,
   setLocation,
   spendRound,
@@ -19,8 +20,8 @@ import {
   type Campaign,
   type Hex,
 } from '..';
-import { fixedClock, fixedRandom } from '../testing';
-import { aimAt, attackBy, attackRounds, chooseFire, chooseTarget, evaluateAttack, firesBurst, neighbourTargets, rollAttack, startAttack } from './attack';
+import { fixedClock, fixedRandom, onTurn } from '../testing';
+import { aimAt, attackRounds, chooseFire, chooseTarget, evaluateAttack, firesBurst, neighbourTargets, rollAttack, startAttack } from './attack';
 
 // Regina: TL 7. Vier Thugs (15, L): n1 Anführer mit Foil und Mesh, n2 bis n4 mit Club ohne Rüstung.
 const regina: Hex = {
@@ -71,10 +72,10 @@ describe('Feuerstoß', () => {
 
   it('am Ende der Liste trifft er nur einen Nachbarn; Tote dazwischen überspringt er', () => {
     const campaign = autoRifle();
-    expect(neighbourTargets(campaign, { npc: 'n4' }, weaponOf('auto-rifle'), true, fixedRandom())).toEqual([{ npc: 'n3' }]);
+    expect(neighbourTargets(campaign, 'n4', weaponOf('auto-rifle'), true, fixedRandom())).toEqual(['n3']);
     // n3 stirbt: Für n4 ist dann n2 der Nachbar darüber.
     const dead = { ...campaign, encounters: campaign.encounters.map((e) => ({ ...e, npcs: e.npcs.map((n) => (n.id === 'n3' ? { ...n, upp: { ...n.upp, str: 0, dex: 0, end: 0 } } : n)) })) };
-    expect(neighbourTargets(dead, { npc: 'n4' }, weaponOf('auto-rifle'), true, fixedRandom())).toEqual([{ npc: 'n2' }]);
+    expect(neighbourTargets(dead, 'n4', weaponOf('auto-rifle'), true, fixedRandom())).toEqual(['n2']);
   });
 
   it('braucht 4 Schuss; mit weniger geht nur der Einzelschuss', () => {
@@ -107,10 +108,17 @@ describe('Feuerstoß', () => {
 
   it('ein NSC mit Feuerstoß trifft neben dem SC oben die SC darüber und darunter in der Kampagne', () => {
     const campaign = autoRifle();
-    const soldier = { ...campaign, encounters: campaign.encounters.map((e) => ({ ...e, npcs: e.npcs.map((n) => (n.id === 'n2' ? { ...n, wields: 'submachinegun' } : n)) })) };
-    const attack = chooseTarget(soldier, 'nothing', 'short', attackBy(startAttack(soldier), soldier, 'n2'));
+    const armedNpc = {
+      ...campaign,
+      encounters: campaign.encounters.map((e) => ({
+        ...e,
+        npcs: e.npcs.map((n) => (n.id === 'n2' ? { ...n, possessions: [{ of: 'submachinegun', count: 1 }], primary: 'submachinegun', wields: 'submachinegun' } : n)),
+      })),
+    };
+    const soldier = onTurn(rollSurprise(armedNpc, fixedRandom()), 'n2');
+    const attack = chooseTarget(soldier, 'nothing', 'short', aimAt(startAttack(soldier), soldier, 'c1'));
     const results = rollAttack(attack, soldier, fixedRandom(), clock);
-    expect(results.map((r) => [r.by, r.victim])).toEqual([
+    expect(results.map((r) => [r.for, r.against])).toEqual([
       ['n2', 'c1'],
       ['n2', 'c1'],
       ['n2', 'c2'],

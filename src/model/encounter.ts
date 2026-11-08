@@ -1,26 +1,10 @@
-import { activeSkills, addCharacter, characterOf, livingCharacters, type Campaign, type CharacterId, type Upp } from './campaign';
+import { activeSkills, adoptCharacter, livingCharacters, type Campaign, type Character, type CharacterId, type Possession, type Upp } from './campaign';
 import { replay } from './career';
 import { DomainError } from './errors';
 import type { LogEntry } from './log';
 import type { Clock, Random } from './ports';
-import { encounterTypeOf, nameSlotIds, ref, slotWithId, type EncounterType, type Item, type Range } from './reference';
+import { encounterTypeOf, itemOf, nameSlotIds, ref, slotWithId, weaponOf, type EncounterType, type Item, type Range } from './reference';
 import { locationOf } from './shop';
-
-/** Ein NSC einer Begegnung: Gegner oder Fremder, getrennt von den Charakteren der Kampagne. */
-export interface Npc {
-  readonly id: string;
-  readonly name: string;
-  readonly leader: boolean;
-  /** Die Stufe in der Fertigkeit seiner Waffe. */
-  readonly skill: number;
-  readonly upp: Upp;
-  /** Verweis auf den Gegenstand, mit dem er kämpft (eine Waffe). */
-  readonly wields: string;
-  /** Verweis auf die getragene Rüstung; fehlt sie, Nothing. */
-  readonly wears?: string;
-  /** Übernommen als dieser Charakter; dann kämpft er nicht mehr in der Begegnung. */
-  readonly became?: CharacterId;
-}
 
 /** Der Würfel der Anzahl: W6 nach den Regeln, W4 oder W3 zum Ausgleichen. */
 export const quantityDice = [6, 4, 3] as const;
@@ -43,7 +27,10 @@ export interface Encounter {
   /** Der DM auf die Reaktion, beim Würfeln festgehalten; fehlt bei Begegnungen von vorher: der DM der Welt. */
   readonly reactionDm?: number;
   readonly ended: boolean;
-  readonly npcs: readonly Npc[];
+  /** Die NSC der Begegnung: vollständige Charaktere, die an ihr hängen, nicht an der Kampagne. */
+  readonly npcs: readonly Character[];
+  /** Der Anführer: einer der NSC; fehlt, wenn die Begegnung keinen hat oder er übernommen ist. */
+  readonly leader?: CharacterId;
   /** Der Wurf auf die Encounter Ranges (mit dem DM des Geländes); fehlt bei Begegnungen von vorher. */
   readonly rangeDice?: readonly [number, number];
   /** Der Würfel für das Startband innerhalb der Reichweite; fehlt bei Close und Short. */
@@ -65,9 +52,9 @@ export interface Encounter {
   /** Die Überraschung je Partei: 1W6 und DM (S. 5). Fehlt, bis sie zu Beginn des Kampfs gewürfelt ist. */
   readonly pcSurprise?: SurpriseRoll;
   readonly npcSurprise?: SurpriseRoll;
-  /** Die Kampfrunde, ab 1, und wer in ihr schon dran war (Ids von SC und NSC). */
+  /** Die Kampfrunde, ab 1, und wer in ihr schon dran war (Verweise auf SC und NSC). */
   readonly round: number;
-  readonly acted: readonly string[];
+  readonly acted: readonly CharacterId[];
 }
 
 export interface SurpriseRoll {
@@ -93,7 +80,7 @@ export function currentEncounter(campaign: Campaign): Encounter | undefined {
 }
 
 /** Der NSC zu einer Id, in welcher Begegnung auch immer. */
-export function npcOf(campaign: Campaign, id: string): Npc {
+export function npcOf(campaign: Campaign, id: string): Character {
   for (const encounter of campaign.encounters) {
     const npc = encounter.npcs.find((n) => n.id === id);
     if (npc) return npc;
@@ -166,8 +153,57 @@ function armorsUpTo(tl: number, heavy: boolean): readonly Item[] {
 }
 
 function nextNumber(ids: readonly string[], prefix: string): number {
-  const numbers = ids.map((id) => Number(id.slice(prefix.length))).filter(Number.isFinite);
+  const numbers = ids.filter((id) => id.startsWith(prefix)).map((id) => Number(id.slice(prefix.length))).filter(Number.isFinite);
   return Math.max(0, ...numbers) + 1;
+}
+
+/** So viele Magazine bekommt ein NSC zu seiner Schusswaffe: 1W4 (Hausregel; SR 50 sagt nichts). */
+const NPC_MAGAZINE_DIE = 4;
+
+/** Was einen NSC der Begegnung ausmacht, bevor er ein Charakter wird. */
+interface NpcSetup {
+  readonly id: CharacterId;
+  readonly name: string;
+  readonly type: EncounterType;
+  readonly leader: boolean;
+  readonly skill: number;
+  readonly upp: Upp;
+  /** Der Gegenstand seiner Waffe. */
+  readonly weapon: string;
+  readonly armor?: string;
+  /** Wie viele Magazine er zu einer Schusswaffe hat. */
+  readonly magazines: number;
+}
+
+/**
+ * Ein NSC der Begegnung als vollständiger Charakter: Herkunft die Art der Begegnung, kein SC, die
+ * Fertigkeit seiner Waffe als Stufe, Waffe, Magazine und Rüstung im Besitz, die Waffe als
+ * Primärwaffe in der Hand, die Rüstung angezogen.
+ */
+function npcCharacter(setup: NpcSetup): Character {
+  const weapon = weaponOf(itemOf(setup.weapon).weapon!);
+  const possessions: Possession[] = [
+    { of: setup.weapon, count: 1 },
+    ...(weapon.ammo !== undefined && setup.magazines > 0 ? [{ of: weapon.ammo, count: setup.magazines }] : []),
+    ...(setup.armor === undefined ? [] : [{ of: setup.armor, count: 1 }]),
+  ];
+  return {
+    id: setup.id,
+    name: setup.name,
+    background: `${setup.type.name}${setup.leader ? ' · Anführer' : ''}`,
+    equipment: '',
+    credits: 0,
+    note: '',
+    dead: false,
+    retired: false,
+    npc: true,
+    upp: setup.upp,
+    skills: [{ of: weapon.uses, level: setup.skill, retired: false }],
+    possessions,
+    primary: weapon.id,
+    wields: weapon.id,
+    ...(setup.armor === undefined ? {} : { wears: setup.armor }),
+  };
 }
 
 /** Was eine Begegnung würfelt: die Art (11–66) und, wenn es eine gibt, die Kampagne mit der neuen Begegnung. */
@@ -200,18 +236,17 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
   const guns = weaponsUpTo(tl, true);
   const armors = armorsUpTo(tl, type.military === true);
   const heavyArmors = armorsUpTo(tl, true);
-  const first = nextNumber(
-    campaign.encounters.flatMap((e) => e.npcs.map((n) => n.id)),
-    'n',
-  );
-  const npcs: Npc[] = Array.from({ length: size }, (_, i) => {
+  // Die Ids der NSC bleiben über alle Begegnungen eindeutig, auch wenn einer übernommen ist.
+  const first = nextNumber([...campaign.characters.map((c) => c.id), ...campaign.encounters.flatMap((e) => e.npcs.map((n) => n.id))], 'n');
+  const npcs: Character[] = Array.from({ length: size }, (_, i) => {
     const leader = type.leader && i === 0;
     const upp: Upp = { str: d6(random, 2), dex: d6(random, 2), end: d6(random, 2), int: d6(random, 2), edu: d6(random, 2), soc: d6(random, 2) };
     const name = npcName(random);
     // Ein Anführer trägt immer eine Schusswaffe und Rüstung, auch ohne G und A (SR 50).
     const weapon = (leader ? best(guns) : pick(weapons, random)) ?? pick(blades, random)!;
     const armor = leader ? best(heavyArmors) : type.armor ? pick(armors, random) : undefined;
-    return { id: `n${first + i}`, name, leader, skill: leader ? 2 : 1, upp, wields: weapon.id, ...(armor ? { wears: armor.id } : {}) };
+    const magazines = weaponOf(weapon.weapon!).ammo === undefined ? 0 : random.int(1, NPC_MAGAZINE_DIE);
+    return npcCharacter({ id: `n${first + i}`, name, type, leader, skill: leader ? 2 : 1, upp, weapon: weapon.id, ...(armor ? { armor: armor.id } : {}), magazines });
   });
   const reactionDice = [d6(random), d6(random)] as const;
   const dm = populationDm(world.uwp.population) + veteranDm(campaign);
@@ -234,6 +269,7 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
     reactionDm: dm,
     ended: false,
     npcs,
+    ...(type.leader ? { leader: npcs[0]!.id } : {}),
     rangeDice,
     ...start,
     ...(ground ? { terrain: ground.id } : {}),
@@ -342,10 +378,12 @@ export function pcSurpriseParts(campaign: Campaign): readonly SurpriseDmPart[] {
 }
 
 /** Die DMs der NSC auf die Überraschung: Battle Dress +2, Anführer +1, militärische Art +1, Fahrzeug −1, 8 oder mehr −1. */
-export function npcSurpriseParts(type: EncounterType, npcs: readonly Npc[]): readonly SurpriseDmPart[] {
+export function npcSurpriseParts(encounter: Encounter): readonly SurpriseDmPart[] {
+  const type = encounterTypeOfEncounter(encounter);
+  const npcs = encounter.npcs;
   return partsWith([
     [npcs.some((n) => n.wears === BATTLE_DRESS), 'Battle Dress', 2],
-    [type.leader, 'Anführer', 1],
+    [encounter.leader !== undefined, 'Anführer', 1],
     [type.military === true, 'militärisch', 1],
     [type.vehicle, 'Fahrzeug', -1],
     [npcs.length >= 8, '8 oder mehr', -1],
@@ -360,18 +398,13 @@ export function pcSurpriseDm(campaign: Campaign): number {
 }
 
 /** DM der NSC auf die Überraschung. */
-export function npcSurpriseDm(type: EncounterType, npcs: readonly Npc[]): number {
-  return sumOf(npcSurpriseParts(type, npcs));
-}
-
-/** Die NSC, die in der Begegnung noch kämpfen (nicht übernommen). */
-function fightingNpcs(encounter: Encounter): readonly Npc[] {
-  return encounter.npcs.filter((n) => n.became === undefined);
+export function npcSurpriseDm(encounter: Encounter): number {
+  return sumOf(npcSurpriseParts(encounter));
 }
 
 /** Die DMs auf die Überraschung je Partei, nach dem heutigen Stand der Parteien. */
 export function surpriseParts(campaign: Campaign, encounter: Encounter): { readonly pcs: readonly SurpriseDmPart[]; readonly npcs: readonly SurpriseDmPart[] } {
-  return { pcs: pcSurpriseParts(campaign), npcs: npcSurpriseParts(encounterTypeOfEncounter(encounter), fightingNpcs(encounter)) };
+  return { pcs: pcSurpriseParts(campaign), npcs: npcSurpriseParts(encounter) };
 }
 
 /** Ist die Überraschung der laufenden Begegnung noch nicht gewürfelt? Dann ist sie der erste Wurf im Kampf. */
@@ -388,16 +421,14 @@ export function rollSurprise(campaign: Campaign, random: Random): Campaign {
   if (!encounter) throw new DomainError('Es läuft keine Begegnung.');
   if (!needsSurprise(encounter)) throw new DomainError('Die Überraschung ist schon gewürfelt.');
   const pcSurprise = { die: d6(random), dm: pcSurpriseDm(campaign) };
-  const npcSurprise = { die: d6(random), dm: npcSurpriseDm(encounterTypeOfEncounter(encounter), fightingNpcs(encounter)) };
+  const npcSurprise = { die: d6(random), dm: npcSurpriseDm(encounter) };
   return { ...campaign, encounters: campaign.encounters.map((e) => (e.id === encounter.id ? { ...e, pcSurprise, npcSurprise } : e)) };
 }
 
 /** Verweist ein Angriff im Log auf einen NSC dieser Begegnung? */
 function isEncounterInLog(campaign: Campaign, encounter: Encounter): boolean {
   const ids = new Set(encounter.npcs.map((n) => n.id));
-  return campaign.log.some(
-    (e) => (e.kind === 'attack' && ((e.by !== undefined && ids.has(e.by)) || (e.against !== undefined && ids.has(e.against)))) || (e.kind === 'recovery' && e.npc !== undefined && ids.has(e.npc)),
-  );
+  return campaign.log.some((e) => (e.kind === 'attack' && (ids.has(e.for) || (e.against !== undefined && ids.has(e.against)))) || (e.kind === 'recovery' && ids.has(e.for)));
 }
 
 /** Beendet die laufende Begegnung; verweist der Log nicht auf sie, ist sie danach weg. */
@@ -409,34 +440,80 @@ export function endEncounter(campaign: Campaign): Campaign {
 }
 
 /**
- * Übernimmt einen NSC als Charakter: als SC oder als dauerhaften NSC, mit vollem UPP, seiner Waffe
- * und Rüstung im Besitz, in der Hand und angezogen, und seiner Fertigkeit.
+ * Übernimmt einen NSC der Begegnung in die Kampagne, als SC oder als dauerhaften NSC: Er wird
+ * umgehängt, mit allem, was er hat, auch seinen Wunden. Er bleibt derselbe Charakter, der Log
+ * verweist also weiter auf ihn. War er der Anführer, hat die Begegnung keinen mehr.
  */
 export function adoptNpc(campaign: Campaign, id: string, asNpc: boolean): Campaign {
   const npc = npcOf(campaign, id);
-  if (npc.became !== undefined) throw new DomainError(`${npc.name} ist schon übernommen.`);
   const encounter = encounterOfNpc(campaign, id);
-  const weapon = ref.items.find((i) => i.id === npc.wields)!;
-  const skill = ref.weapons.find((w) => w.id === weapon.weapon)!.uses;
-  const { campaign: added, id: character } = addCharacter(campaign, {
-    name: npc.name,
-    background: `${encounterTypeOfEncounter(encounter).name}${npc.leader ? ' · Anführer' : ''}`,
-    equipment: '',
-    credits: 0,
-    note: '',
-    npc: asNpc,
-    upp: npc.upp,
-    skills: [{ of: skill, level: npc.skill }],
-    possessions: [{ of: npc.wields, count: 1 }, ...(npc.wears ? [{ of: npc.wears, count: 1 }] : [])],
-    primary: weapon.weapon!,
-    wields: weapon.weapon!,
-    ...(npc.wears ? { wears: npc.wears } : {}),
+  const rest = Object.fromEntries(Object.entries(encounter).filter(([key]) => key !== 'leader' || encounter.leader !== id)) as unknown as Encounter;
+  const without: Encounter = { ...rest, npcs: encounter.npcs.filter((n) => n.id !== id) };
+  return adoptCharacter({ ...campaign, encounters: campaign.encounters.map((e) => (e.id === encounter.id ? without : e)) }, { ...npc, npc: asNpc });
+}
+
+/** Ein NSC aus Spielständen von vor 2026-11-08c: kein Charakter, sondern eine eigene Art. */
+interface LegacyNpc {
+  readonly id: string;
+  readonly name: string;
+  readonly leader: boolean;
+  readonly skill: number;
+  readonly upp: Upp;
+  /** Der Gegenstand seiner Waffe. */
+  readonly wields: string;
+  readonly wears?: string;
+  readonly became?: CharacterId;
+}
+
+/** So viele Magazine bekommt ein NSC aus einem alten Spielstand: fest, damit das Laden nicht würfelt. */
+const LEGACY_MAGAZINES = 2;
+
+function isLegacyNpc(npc: unknown): npc is LegacyNpc {
+  return typeof npc === 'object' && npc !== null && 'skill' in npc && !('skills' in npc);
+}
+
+/**
+ * Schreibt einen Spielstand von vor 2026-11-08c um: Jeder NSC wird ein Charakter der Begegnung mit
+ * derselben Id (Fertigkeit als Stufe, Waffe, zwei Magazine und Rüstung im Besitz), der Anführer zum
+ * Verweis der Begegnung. Ein schon übernommener NSC fällt aus der Begegnung; der Log verweist dann
+ * auf den Charakter, der er wurde. Im Angriff wird `by` zu `for` und `victim` zu `against`, in der
+ * Heilung `npc` zu `for`. Ein heutiger Spielstand bleibt, wie er ist.
+ */
+export function upgradeNpcs(campaign: Campaign): Campaign {
+  const became = new Map<string, CharacterId>();
+  const encounters = campaign.encounters.map((encounter): Encounter => {
+    const npcs: readonly unknown[] = encounter.npcs;
+    if (!npcs.some(isLegacyNpc)) return encounter;
+    const type = encounterTypeOfEncounter(encounter);
+    let leader: CharacterId | undefined;
+    const characters = npcs.flatMap((npc): Character[] => {
+      if (!isLegacyNpc(npc)) return [npc as Character];
+      if (npc.became !== undefined) {
+        became.set(npc.id, npc.became);
+        return [];
+      }
+      if (npc.leader) leader = npc.id;
+      const magazines = weaponOf(itemOf(npc.wields).weapon!).ammo === undefined ? 0 : LEGACY_MAGAZINES;
+      return [npcCharacter({ id: npc.id, name: npc.name, type, leader: npc.leader, skill: npc.skill, upp: npc.upp, weapon: npc.wields, ...(npc.wears === undefined ? {} : { armor: npc.wears }), magazines })];
+    });
+    return { ...encounter, npcs: characters, ...(leader === undefined ? {} : { leader }) };
   });
-  characterOf(added, character);
-  return {
-    ...added,
-    encounters: added.encounters.map((e) => (e.id !== encounter.id ? e : { ...e, npcs: e.npcs.map((n) => (n.id === id ? { ...n, became: character } : n)) })),
-  };
+  const to = (id: string) => became.get(id) ?? id;
+  const log = campaign.log.map((entry): LogEntry => {
+    const old = entry as LogEntry & { readonly by?: string; readonly victim?: string; readonly npc?: string };
+    if (entry.kind === 'attack' && (old.by !== undefined || old.victim !== undefined || became.size > 0)) {
+      const { by, victim, ...rest } = old as typeof old & { readonly kind: 'attack' };
+      const attacker = to(by ?? rest.for);
+      const target = victim ?? rest.against;
+      return { ...rest, for: attacker, ...(target === undefined ? {} : { against: to(target) }) };
+    }
+    if (entry.kind === 'recovery' && (old.npc !== undefined || became.size > 0)) {
+      const { npc, ...rest } = old as typeof old & { readonly kind: 'recovery' };
+      return { ...rest, for: to(npc ?? rest.for) };
+    }
+    return entry;
+  });
+  return { ...campaign, encounters, log };
 }
 
 /** Die Reaktion aus 2W6 und DM (S. 21): Eine echte 2 oder 12 gilt ohne DM, sonst 3 bis 12. */
