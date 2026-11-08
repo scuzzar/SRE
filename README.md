@@ -5,7 +5,7 @@ Eine App für **Solo-Rollenspiel mit Classic Traveller**. Sie soll zwei Dinge in
 1. **Die Regeln von Classic Traveller** – vollständig implementiert, damit Würfe, Tabellen und Abläufe nicht mehr von Hand nachgeschlagen werden müssen.
 2. **Ein Orakel**, das die Spielleitung ersetzt – angelehnt teils an **Mythic** (Mythic Game Master Emulator) und teils an den **Game Master's Apprentice (GMA)**.
 
-> Status: **Version 1 in Arbeit.** Wir fangen klein an, mit einer **mobilen Version 1** (siehe [Version 1](#version-1-mobil)). Gebaut wird domänengetrieben: Das [Domänenmodell](docs/domain-model.md) für Version 1 ist freigegeben, Orakel-Screen (mit dem Charakter oben und den Proben), Charakter-Screen und Sektor-Screen sind umgesetzt. Technik, MVC-Aufbau und Befehle stehen in [ARCHITECTURE.md](ARCHITECTURE.md), was als Nächstes ansteht in [TODO.md](TODO.md).
+> Status: **Version 1 in Arbeit.** Wir fangen klein an, mit einer **mobilen Version 1** (siehe [Version 1](#version-1-mobil)). Gebaut wird domänengetrieben: Das [Domänenmodell](docs/domain-model.md) für Version 1 ist freigegeben, Orakel-Screen (mit dem Charakter oben und den Proben), Charakter-Screen und Sektor-Screen sind umgesetzt. Technik, MVC-Aufbau und Befehle stehen in [ARCHITECTURE.md](ARCHITECTURE.md), was als Nächstes ansteht in [TODO.md](TODO.md), die Kampfregeln in [docs/regeln-kampf.md](docs/regeln-kampf.md).
 
 ---
 
