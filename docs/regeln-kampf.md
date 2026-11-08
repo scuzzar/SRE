@@ -49,7 +49,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Reichweiten, Range Bands, Geschwindigkeiten](#reichweiten-range-bands-und-geschwindigkeiten) | SE 7, 24, SR 20 | ✔ ✱, Geschwindigkeiten ◐ ✱ |
 | [Bewegungsstatus](#bewegungsstatus) | SR 20–21 | ◐ ✱ (Gehen und Laufen je Partei; Status je Kämpfer ○) |
 | [Angriff: Grundwurf und DMs](#angriff-grundwurf-und-erlaubte-dms) | SE 6, SR 21–22 | ◐ |
-| [Wirkung der Attribute, Ausdauer](#wirkung-der-attribute-und-ausdauer) | SR 21–22 | ◐ (Ausdauer ✔; Wunden zählen beim DM fälschlich mit) |
+| [Wirkung der Attribute, Ausdauer](#wirkung-der-attribute-und-ausdauer) | SR 21–22 | ✔ ✱ |
 | [Fertigkeit, Parieren, ungeübte Waffen](#fertigkeit-parieren-und-ungeübte-waffen) | SR 22 | ◐ (Angriff und Parade ✔; ungeübt ○) |
 | [Feuerstoß und Schrot](#feuerstoß-und-schrot-nach-book-1) | B1, SR 26 | ✔ ✱ |
 | [Waffen- und Reichweitenmatrix](#waffen--und-reichweitenmatrix) | SE 6 | ✔ (ohne Tierwaffen und Zubehör) |
@@ -517,8 +517,8 @@ Wie viele volle Schläge die Ausdauer erlaubt, steht unter
 
 ### Wirkung der Attribute und Ausdauer
 
-*SR 21–22, „The Effects of Characteristics“.* App: ◐ (STR und DEX ✔, aber mit dem verwundeten Wert;
-Ausdauer ✔ ✱, siehe `domain-model.md`, *Ausdauer*: Laufen kostet jeden Kämpfer der Partei einen
+*SR 21–22, „The Effects of Characteristics“.* App: ✔ (STR und DEX ohne die Wunden des laufenden
+Kampfs, nach der Errata unten); Ausdauer ✔ ✱, siehe `domain-model.md`, *Ausdauer*: Laufen kostet jeden Kämpfer der Partei einen
 Combat-Schlag, weil die App je Partei bewegt; die 30 Minuten Rast hält sie nicht fest, jede Begegnung
 beginnt mit der END, die der Kämpfer dann hat)
 
@@ -543,8 +543,9 @@ beginnt mit der END, die der Kämpfer dann hat)
   Wunden von vorher schon. Die Zahl gilt für Faust und Klinge zusammen.
 - **Laufen** und **Werfen** einer Klinge zählen als Combat-Schlag (SR 20, 26).
 
-> **Weicht ab** (`fighterOf` in `src/model/combat.ts`): Die App nimmt für den DM der STR bzw. DEX den
-> **verwundeten** Wert, nach SR 21 gilt der unverwundete.
+> *Errata zu The Traveller Book, S. 36 (Traveller-Wiki):* „Wounds do not affect characteristics“ gilt
+> nur innerhalb eines Kampfs; in späteren Kämpfen zählen die verwundeten Werte. So macht es die App:
+> In der laufenden Begegnung zählen die Wunden von vor ihr, ohne Begegnung alle.
 
 ### Fertigkeit, Parieren und ungeübte Waffen
 
@@ -970,6 +971,10 @@ Spielleitung (SR 23).
 > App: Der Überlauf gilt bei **jedem** Treffer, wie SR 21 sagt („further points … must be applied to
 > other characteristics“): beim ersten Treffer und bei NSC zufällig, sonst wählt der Spieler. Der
 > Schadenswurf hält dafür Blöcke fest (`DamageRoll.to`, `points`; siehe `domain-model.md`, *Wunden*).
+>
+> *Errata zu The Traveller Book, S. 35 (Traveller-Wiki):* Die Regel für die erste Wunde („first
+> blood“) gilt für die erste Wunde in **jedem Kampf**. In der App: die erste in der laufenden
+> Begegnung, ohne Begegnung die erste seit der letzten vollen Heilung.
 
 ### Medizinische Versorgung
 

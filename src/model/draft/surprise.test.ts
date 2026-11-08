@@ -5,7 +5,10 @@ import {
   blowsOf,
   createCampaign,
   currentEncounter,
+  endEncounter,
   endTurn,
+  fighterOf,
+  needsWounding,
   fightState,
   logDamage,
   rollDamage,
@@ -21,7 +24,7 @@ import {
   type Side,
 } from '..';
 import { fixedClock, fixedRandom } from '../testing';
-import { attackBy, attackExtras, chooseWeakened, evaluateAttack, rollAttack, turnAttack, type Attack } from './attack';
+import { attackBy, attackExtras, chooseTarget, chooseWeakened, evaluateAttack, rollAttack, turnAttack, type Attack } from './attack';
 
 // Regina: TL 7. Zwei Thugs: n1 Anführer mit Body Pistol und Mesh, n2 mit Club; beide UPP 222222.
 const regina: Hex = {
@@ -195,5 +198,45 @@ describe('Parade (SR 22)', () => {
     // Jonas greift n2 an: der pariert mit seinem Club (Fertigkeit 1).
     campaign = endTurn(campaign);
     expect(attackExtras(turn(campaign, 'n2'), ready(campaign, 'n2')).parry).toBe(-1);
+  });
+});
+
+describe('Wunden im laufenden Kampf (SR 21, Errata zu The Traveller Book S. 35–36)', () => {
+  /** Ein NSC trifft Kira (ohne Rüstung) auf Close. */
+  function clubOn(campaign: Campaign, npc: string) {
+    const top = { ...campaign, focus: 'c1' };
+    return rollAttack(chooseTarget(top, 'nothing', 'close', attackBy({}, top, npc)), top, fixedRandom(6, 6), clock);
+  }
+
+  /** n2 trifft Kira mit dem Club; der Schaden geht wie angegeben auf ihre Attribute. */
+  function hitKira(campaign: Campaign, to: 'STR' | 'DEX' | 'END', points: number): Campaign {
+    const at = campaign.log.length;
+    const hit = clubOn(campaign, 'n2');
+    const after = appendLog(campaign, ...hit);
+    return appendLog(after, { kind: 'damage', at: clock.now(), of: at, dice: [points, 1], to: [to, to], points: [points, 1] });
+  }
+
+  it('Wunden aus dem laufenden Kampf senken STR und DEX für die DMs nicht, im nächsten Kampf schon', () => {
+    // Kira: STR 7, mit den Händen (nötig 6, darunter −2).
+    let campaign = hitKira(thugs(), 'STR', 1);
+    expect(fighterOf(campaign, { pc: 'c1' })).toMatchObject({ upp: { str: 5 }, fighting: { str: 7 } });
+    // Nach dem Kampf zählen die Wunden: Ohne Begegnung ist STR 5 auch der Wert für die DMs.
+    campaign = endEncounter(campaign);
+    expect(fighterOf(campaign, { pc: 'c1' }).fighting.str).toBe(5);
+    // In der nächsten Begegnung zählen die Wunden von vorher.
+    campaign = rollEncounter(campaign, fixedRandom(1, 5), clock, undefined, 2).campaign;
+    expect(fighterOf(campaign, { pc: 'c1' }).fighting.str).toBe(5);
+  });
+
+  it('die Regel für die erste Wunde gilt in jedem Kampf neu', () => {
+    let campaign = hitKira(thugs(), 'DEX', 1);
+    // Der nächste Treffer in derselben Begegnung ist kein erster: Kira verteilt selbst.
+    campaign = appendLog(campaign, ...clubOn(campaign, 'n2'));
+    expect(needsWounding(campaign, campaign.log.length - 1)).toBe(true);
+    // In einer neuen Begegnung ist er wieder ein erster und geht von selbst auf ein Attribut.
+    campaign = rollEncounter(endEncounter(campaign), fixedRandom(1, 5), clock, undefined, 2).campaign;
+    campaign = patch(campaign, { band: 0, close: true });
+    campaign = appendLog(campaign, ...clubOn(campaign, currentEncounter(campaign)!.npcs[1]!.id));
+    expect(needsWounding(campaign, campaign.log.length - 1)).toBe(false);
   });
 });

@@ -905,7 +905,7 @@ function attackParts(attacker: Fighter, weaponId: string, armor: ArmorClass, ran
   const weapon = weaponOf(weaponId);
   const row = rowOf(weapon, burst);
   const characteristic = attackCharacteristic(weapon);
-  const value = valueOf(attacker.upp, characteristic);
+  const value = valueOf(attacker.fighting, characteristic);
   return [
     { kind: 'skill', name: skillOf(weapon.uses).name, level: attacker.skill, dm: attacker.skill },
     { kind: 'armor', armor, dm: armorDm(row, armor) },
@@ -1036,7 +1036,7 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
   const burst = firesBurst(weapon, current);
   const row = rowOf(weapon, burst);
   const characteristic = attackCharacteristic(weapon);
-  const value = valueOf(attacker.upp, characteristic);
+  const value = valueOf(attacker.fighting, characteristic);
   const [skill, , , counted] = attackParts(attacker, weapon.id, 'nothing', 'close', burst);
   const table = attackTable(campaign, current);
   const target = attack ? evaluateAttack(attack, campaign) : undefined;
@@ -1177,7 +1177,7 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
         ? {
             strike,
             blows: blowsOf(campaign, turn.who),
-            end: attacker.upp.end,
+            end: attacker.fighting.end,
             weakenedDm: attacker.weapon.weakened ?? 0,
             weakened: simWeakened === true,
             canWeaken: turn.side === 'pcs' && (strike === 'combat' || (strike === 'weakened' && simWeakened === true)),

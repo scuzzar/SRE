@@ -146,6 +146,11 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > liegt unter
 > [`changes/2026-11-07-ueberraschung-ausdauer-parade.png`](changes/2026-11-07-ueberraschung-ausdauer-parade.png).
 >
+> Am 8. November 2026 auf ausdrücklichen Wunsch des Owners freigegeben: zwei Korrekturen nach dem
+> Regelheft und der Errata zu *The Traveller Book* (siehe *Angriff in beide Richtungen* und
+> *Wunden*): Im laufenden Kampf zählen für die DMs STR und DEX ohne dessen Wunden, und die Regel für
+> den ersten Treffer gilt in jeder Begegnung neu. Das Bild ändert sich dadurch nicht.
+>
 > Am 7. November 2026 auf ausdrücklichen Wunsch des Owners freigegeben: die **Ausrüstung der NSC**
 > nach SR 50 (siehe *Begegnung*): Ein Anführer trägt immer eine Schusswaffe und Rüstung, Combat Armor
 > und Battle Dress tragen nur Soldaten und Anführer. Das Bild ändert sich dadurch nicht.
@@ -762,9 +767,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Reichweite. Wie bisher geht auch ein Ziel ohne NSC, mit frei gewählter Rüstung.
   - *NSC gegen SC*: Ein NSC der Begegnung, der nicht bewusstlos oder tot ist, greift den Charakter
     oben an (`by`, `victim`). Es zählen die Fertigkeit des NSC (`skill`), seine Waffe, seine
-    STR/DEX mit Wunden, die getragene Rüstung des SC und die Reichweite.
-  - Angreifer mit Wunden: STR bzw. DEX zählen mit ihrem verwundeten Wert. Bewusstlose und Tote
-    greifen nicht an.
+    STR/DEX (siehe unten), die getragene Rüstung des SC und die Reichweite.
+  - Angreifer mit Wunden (SR 21; Errata zu *The Traveller Book*, S. 36): In der laufenden Begegnung
+    zählen STR und DEX für die DMs ohne die Wunden aus dieser Begegnung, also mit den Wunden, die vor
+    ihrem ersten Logeintrag bestanden (Heilungen seitdem zählen mit). Ohne laufende Begegnung und in
+    jeder späteren zählen sie mit allen Wunden. Bewusstlose und Tote greifen nicht an.
   - Das Angriffsergebnis verweist auf Angreifer (`for` = SC oder `by` = NSC, genau einer) und, wenn
     es eines gibt, auf das Ziel (`against` = NSC oder `victim` = SC, höchstens einer); es hält wie
     bisher Rüstung, Reichweite, Würfel, DM und Zielwert fest.
@@ -781,7 +788,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Die Punkte eines Blocks sind, was sein Attribut zu dem Zeitpunkt noch aufnehmen konnte, höchstens
     der Rest des Würfels. Der Block hält sie selbst fest, damit ein Schadenswurf für sich allein
     gilt: Löscht man einen früheren Schadenswurf, ändern sich die Blöcke späterer nicht.
-  - *Erster Treffer* (kritisch): Der erste Schaden, den jemand bekommt, geht auf ein zufällig
+  - *Erster Treffer* (kritisch): Der erste Schaden, den jemand in einer Begegnung bekommt (Errata
+    zu *The Traveller Book*, S. 35: „in each combat“; ohne Begegnung der erste seit der letzten
+    vollen Heilung), geht auf ein zufällig
     gewähltes Attribut, alle Würfel, bis es auf 0 ist. Läuft er über, gehen die übrigen Blöcke
     **zufällig** auf die anderen Attribute über 0, auch bei einem SC (SR 21: „first blood may
     immediately incapacitate or even kill“).
@@ -794,7 +803,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     seinem Attribut, und was über 0 hinausging, bleibt verfallen.
   - Die Wunden (`/wounds`) folgen aus den Schadenswürfen im Log, die auf Treffer gegen diesen SC bzw.
     NSC verweisen. Ein Schadenswurf löschen nimmt seine Wunden zurück.
-  - Wunden senken STR, DEX und END für alles, was mit ihnen rechnet: Angriffe und Proben.
+  - Wunden senken STR, DEX und END für Proben und den Zustand; für die DMs eines Angriffs gilt die
+    Ausnahme oben (in der laufenden Begegnung zählen ihre Wunden nicht).
   - *Zustand* (`/state`): kein Attribut auf 0 und keine Wunde: unverletzt; Wunden, aber keins auf 0:
     verwundet; eins auf 0: bewusstlos (10 Minuten); zwei: schwer verwundet (3 Stunden
     bewusstlos); drei: tot. Stirbt ein SC so, markiert ihn die App als tot (`dead`); das lässt sich

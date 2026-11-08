@@ -1,6 +1,7 @@
 import { activeSkills, addCharacter, characterOf, livingCharacters, type Campaign, type CharacterId, type Upp } from './campaign';
 import { replay } from './career';
 import { DomainError } from './errors';
+import type { LogEntry } from './log';
 import type { Clock, Random } from './ports';
 import { encounterTypeOf, nameSlotIds, ref, slotWithId, type EncounterType, type Item, type Range } from './reference';
 import { locationOf } from './shop';
@@ -78,6 +79,12 @@ export function encounterTypeOfEncounter(encounter: Encounter): EncounterType {
   const type = encounterTypeOf(encounter.of);
   if (!type) throw new DomainError(`Eine Begegnung ${encounter.of} gibt es nicht.`);
   return type;
+}
+
+/** Die Stelle des ersten Logeintrags der Begegnung: der erste, der nicht vor ihr liegt. */
+export function encounterStart(log: readonly LogEntry[], encounter: Encounter): number {
+  const at = log.findIndex((e) => e.at >= encounter.at);
+  return at < 0 ? log.length : at;
 }
 
 /** Die laufende Begegnung; es gibt höchstens eine. */

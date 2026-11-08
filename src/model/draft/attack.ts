@@ -219,7 +219,8 @@ export function keepTarget(attack: Attack, campaign: Campaign): Attack {
 }
 
 function odds(attacker: Fighter, armor: ArmorClass, range: Range, burst: boolean, extras?: AttackExtras): AttackOdds | undefined {
-  const dm = attackDm(attacker, attacker.weapon, armor, range, rowOf(attacker.weapon, burst), extras);
+  // STR und DEX zählen ohne die Wunden aus dem laufenden Kampf (SR 21).
+  const dm = attackDm({ upp: attacker.fighting, skill: attacker.skill }, attacker.weapon, armor, range, rowOf(attacker.weapon, burst), extras);
   if (!dm) return undefined;
   const need = ATTACK_TARGET - dm.total;
   return { dm, target: ATTACK_TARGET, need, chance: chance2d6(need) };

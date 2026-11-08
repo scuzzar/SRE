@@ -1,8 +1,8 @@
 import { appendLog, characterOf, type Campaign } from './campaign';
 import { fighterOf, weaponSkill } from './combat';
-import { currentEncounter, type Encounter } from './encounter';
+import { currentEncounter, encounterStart, type Encounter } from './encounter';
 import { fightOrder, fightState, surprisingOf, withEncounter, type Side } from './fight';
-import type { AttackResult, DamageRoll, LogEntry, Strike } from './log';
+import type { AttackResult, DamageRoll, Strike } from './log';
 import type { Random } from './ports';
 import { weaponOf, type Weapon } from './reference';
 import { canFight, historyOf, uppOf, victimOf, woundStateOf, type Combatant, type WoundState } from './wounds';
@@ -22,12 +22,6 @@ export const ALARM_TARGET = 9;
 /** Die Partei eines Kämpfers. */
 export function sideOf(who: Combatant): Side {
   return 'pc' in who ? 'pcs' : 'npcs';
-}
-
-/** Die Stelle des ersten Logeintrags der Begegnung: der erste, der nicht vor ihr liegt. */
-export function encounterStart(log: readonly LogEntry[], encounter: Encounter): number {
-  const at = log.findIndex((e) => e.at >= encounter.at);
-  return at < 0 ? log.length : at;
 }
 
 /** Die Angriffsergebnisse der Begegnung mit ihrer Stelle im Log. */

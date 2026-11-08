@@ -5,7 +5,7 @@ import { damageRollsOf, isSuccess, volleyOf, type AttackResult, type DamageRoll,
 import type { Clock, Random } from './ports';
 import { HANDS, itemOf, itemOfWeapon, weaponOf, type ArmorClass, type Range, type Weapon } from './reference';
 import { valueOf, type Characteristic } from './rules';
-import { autoWounds, checkWounds, isFirstHit, woundStateOf, victimOf, woundedUpp, woundsOf, type Combatant, type WoundBlock, type WoundState } from './wounds';
+import { autoWounds, checkWounds, fightingWounds, isFirstHitNow, woundStateOf, victimOf, woundedUpp, woundsOf, type Combatant, type WoundBlock, type WoundState } from './wounds';
 
 /** *Basic Throw to Hit* (S. 6): 2W6 + DM ≥ 8. */
 export const ATTACK_TARGET = 8;
@@ -82,11 +82,14 @@ export function wornArmor(character: { readonly wears?: string }): ArmorClass {
   return character.wears === undefined ? 'nothing' : (itemOf(character.wears).armor ?? 'nothing');
 }
 
-/** Wer kämpft, mit allem, was ein Angriff von ihm und auf ihn braucht. STR und DEX mit Wunden. */
+/** Wer kämpft, mit allem, was ein Angriff von ihm und auf ihn braucht. */
 export interface Fighter {
   readonly who: Combatant;
   readonly name: string;
+  /** Das UPP mit allen Wunden, wie es angezeigt wird und über den Zustand entscheidet. */
   readonly upp: Upp;
+  /** Das UPP, mit dem er kämpft (DMs aus STR und DEX): in der laufenden Begegnung ohne deren Wunden (SR 21). */
+  readonly fighting: Upp;
   readonly weapon: Weapon;
   /** Die Stufe in der Fertigkeit der Waffe; ohne 0. */
   readonly skill: number;
@@ -95,15 +98,17 @@ export interface Fighter {
 }
 
 export function fighterOf(campaign: Campaign, who: Combatant): Fighter {
-  const upp = woundedUpp('pc' in who ? characterOf(campaign, who.pc).upp : npcOf(campaign, who.npc).upp, woundsOf(campaign, who));
+  const base = 'pc' in who ? characterOf(campaign, who.pc).upp : npcOf(campaign, who.npc).upp;
+  const upp = woundedUpp(base, woundsOf(campaign, who));
+  const fighting = woundedUpp(base, fightingWounds(campaign, who));
   const state = woundStateOf(campaign, who);
   if ('pc' in who) {
     const character = characterOf(campaign, who.pc);
     const weapon = wieldedWeapon(character);
-    return { who, name: character.name, upp, weapon, skill: weaponSkill(character, weapon)?.level ?? 0, armor: wornArmor(character), state };
+    return { who, name: character.name, upp, fighting, weapon, skill: weaponSkill(character, weapon)?.level ?? 0, armor: wornArmor(character), state };
   }
   const npc = npcOf(campaign, who.npc);
-  return { who, name: npc.name, upp, weapon: weaponOf(itemOf(npc.wields).weapon!), skill: npc.skill, armor: wornArmor(npc), state };
+  return { who, name: npc.name, upp, fighting, weapon: weaponOf(itemOf(npc.wields).weapon!), skill: npc.skill, armor: wornArmor(npc), state };
 }
 
 /**
@@ -192,7 +197,7 @@ export function damageDice(campaign: Campaign, of: number, random: Random): read
 /** Muss der Spieler den Schaden dieses Treffers selbst verteilen? Bei einem SC nach seinem ersten Treffer. */
 export function needsWounding(campaign: Campaign, of: number): boolean {
   const who = victimOf(hitAt(campaign.log, of));
-  return who !== undefined && 'pc' in who && !isFirstHit(campaign.log, who);
+  return who !== undefined && 'pc' in who && !isFirstHitNow(campaign, who);
 }
 
 /** Ein Schadenswurf aus Würfeln und, bei einem Treffer mit Ziel, den Blöcken auf den Attributen. */

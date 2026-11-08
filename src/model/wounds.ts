@@ -2,7 +2,7 @@ import { activeSkills, characterOf, keepFocus, livingCharacters, type Campaign, 
 import { DomainError } from './errors';
 import { physical, type AttackResult, type DamageRoll, type LogEntry, type PhysicalCharacteristic, type Recovery, type RecoveryKind } from './log';
 import type { Clock, Random } from './ports';
-import { currentEncounter, npcOf } from './encounter';
+import { currentEncounter, encounterStart, npcOf } from './encounter';
 
 /** Wer kämpft: ein Charakter der Kampagne (SC) oder ein NSC einer Begegnung. */
 export type Combatant = { readonly pc: CharacterId } | { readonly npc: string };
@@ -177,14 +177,38 @@ export function canFight(state: WoundState): boolean {
   return state === 'unhurt' || state === 'wounded';
 }
 
-/** Der erste Schaden, den jemand bekommt, geht auf ein zufälliges Attribut, bis es auf 0 ist (S. 7, SR 21); nach einer vollen Heilung wieder. */
-export function isFirstHit(log: readonly LogEntry[], who: Combatant): boolean {
+/**
+ * Der erste Schaden, den jemand bekommt, geht auf ein zufälliges Attribut, bis es auf 0 ist (S. 7,
+ * SR 21); nach einer vollen Heilung wieder. Mit `since` (der erste Logeintrag eines Kampfs) gilt er
+ * in jedem Kampf neu (Errata zu *The Traveller Book*, S. 35: „first wound … in each combat“).
+ */
+export function isFirstHit(log: readonly LogEntry[], who: Combatant, since?: number): boolean {
   let fresh = true;
-  for (const entry of log) {
+  log.forEach((entry, i) => {
+    if (i === since) fresh = true;
     if (entry.kind === 'damage' && entry.to !== undefined && hits(log[entry.of], who)) fresh = false;
     else if (heals(entry, who) && entry.how !== 'wake') fresh = true;
-  }
+  });
   return fresh;
+}
+
+/** Ist der nächste Treffer gegen diesen SC bzw. NSC ein erster? In einer laufenden Begegnung zählt nur sie. */
+export function isFirstHitNow(campaign: Campaign, who: Combatant): boolean {
+  const encounter = currentEncounter(campaign);
+  return isFirstHit(campaign.log, who, encounter ? encounterStart(campaign.log, encounter) : undefined);
+}
+
+/**
+ * Die Wunden, die beim Kämpfen zählen (SR 21; Errata zu *The Traveller Book*, S. 36): In der
+ * laufenden Begegnung senken nur die Wunden von vor ihr STR und DEX für die DMs (Heilungen seitdem
+ * zählen mit), ohne Begegnung alle.
+ */
+export function fightingWounds(campaign: Campaign, who: Combatant): Wounds {
+  const now = woundsOf(campaign, who);
+  const encounter = currentEncounter(campaign);
+  if (!encounter) return now;
+  const start = historyOf(campaign.log, uppOf(campaign, who), who, encounterStart(campaign.log, encounter)).wounds;
+  return { str: Math.min(now.str, start.str), dex: Math.min(now.dex, start.dex), end: Math.min(now.end, start.end) };
 }
 
 /** Wen der Treffer an dieser Stelle trifft, wenn er ein Ziel hat. */
@@ -201,7 +225,7 @@ export function victimOf(attack: AttackResult): Combatant | undefined {
  * es `undefined`.
  */
 export function autoWounds(campaign: Campaign, who: Combatant, dice: readonly number[], random: Random): readonly WoundBlock[] | undefined {
-  const first = isFirstHit(campaign.log, who);
+  const first = isFirstHitNow(campaign, who);
   if (!first && 'pc' in who) return undefined;
   const upp = uppOf(campaign, who);
   const wounds = woundsOf(campaign, who);
