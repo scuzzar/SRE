@@ -5785,10 +5785,7 @@ button:disabled {
   opacity: 0.4;
 }
 
-.arrow-halo.fresh {
-  stroke-dasharray: 100;
-  animation: arrow-fly 0.38s ease-out both;
-}
+
 
 .arrow.plan {
   stroke: var(--gold);
@@ -5811,9 +5808,13 @@ button:disabled {
   stroke-dasharray: 2 5;
 }
 
-.arrow.fresh {
+.arrow.fresh,
+.arrow-halo.fresh {
   stroke-dasharray: 100;
-  animation: arrow-fly 0.38s ease-out both;
+  /* Fliegen, kurz stehen, ausblenden. */
+  animation:
+    arrow-fly 0.38s ease-out both,
+    arrow-fade 0.5s ease-in 1.6s forwards;
 }
 
 .arrow.past {
@@ -5843,6 +5844,12 @@ button:disabled {
   }
 }
 
+@keyframes arrow-fade {
+  to {
+    opacity: 0;
+  }
+}
+
 @keyframes arrow-fly {
   from {
     stroke-dashoffset: 100;
@@ -5853,13 +5860,19 @@ button:disabled {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .arrow.plan,
-  .arrow.fresh {
+  .arrow.plan {
     animation: none;
   }
 
-  .arrow.fresh {
+  /* Ohne Bewegung: der Pfeil steht gleich da und verschwindet nach zwei Sekunden. */
+  .arrow.fresh,
+  .arrow-halo.fresh {
     stroke-dasharray: none;
+    animation: arrow-fade 0.01s linear 2s forwards;
+  }
+
+  .arrow.miss.fresh {
+    stroke-dasharray: 2 5;
   }
 }
 

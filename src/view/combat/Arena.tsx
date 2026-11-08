@@ -11,7 +11,7 @@ import { ImpactMarks, LossFloat, useLongPress } from './FightScreen';
  * Die Kampfsimulation in zwei Spalten: links die SC, rechts die NSC, dazwischen eine schmale Lücke
  * für die Pfeile; die Entfernung steht unten im Zug. Pfeile (rechtwinklig: auf der Seite des Angreifers bis zur Höhe des Ziels, dann
  * hinüber) zeigen, wer wen angreift: gold gestrichelt das gewählte Ziel, rot ein
- * Treffer, grau ein Fehlschuss; der letzte Angriff bleibt blass stehen. Nur Anzeige; gerechnet wird im Model.
+ * Treffer, grau ein Fehlschuss; ein Angriff fliegt, steht kurz und blendet aus. Nur Anzeige; gerechnet wird im Model.
  */
 
 /** Die Auswahl der NSC zum Übernehmen: `picked` ist offen, solange es sie gibt. */
@@ -224,9 +224,11 @@ function Arrows({ sim, arena, quiet }: { sim: SimView; arena: React.RefObject<HT
       const base = root.getBoundingClientRect();
       const next: Drawn[] = [];
       for (const s of shots) {
-        const fresh = !flown.has(s.key);
+        // Ein Angriff fliegt einmal, steht kurz und blendet aus; danach bleibt kein Pfeil hängen.
+        if (flown.has(s.key)) continue;
+        const fresh = true;
         // Solange ein Popup offen ist, wartet ein neuer Pfeil; sonst flöge er ungesehen dahinter.
-        if (fresh && quiet) continue;
+        if (quiet) continue;
         const d = route(root, s.from, s.to, base);
         if (d) next.push({ key: s.key, d, kind: s.hit ? 'hit' : 'miss', fresh });
       }
@@ -271,10 +273,11 @@ function Arrows({ sim, arena, quiet }: { sim: SimView; arena: React.RefObject<HT
           {...(a.fresh ? { pathLength: 100 } : {})}
           className={`arrow ${a.kind}${a.fresh ? ' fresh' : a.kind === 'hit' || a.kind === 'miss' ? ' past' : ''}`}
           markerEnd={a.kind === 'neighbour' ? undefined : `url(#arrow-${a.kind})`}
-          onAnimationEnd={() => {
-            if (!a.fresh) return;
+          onAnimationEnd={(e) => {
+            // Erst wenn er ausgeblendet ist, ist der Pfeil geflogen; dann fällt er weg.
+            if (!a.fresh || e.animationName !== 'arrow-fade') return;
             flown.add(a.key);
-            setDrawn((now) => now.map((x) => (x.key === a.key ? { ...x, fresh: false } : x)));
+            setDrawn((now) => now.filter((x) => x.key !== a.key));
           }}
         />
       ))}
