@@ -140,9 +140,10 @@ body {
 .card {
   position: relative;
   display: grid;
-  gap: 1px;
+  gap: 0;
   width: 100%;
-  padding: 6px 8px 7px;
+  padding: 4px 7px 5px;
+  line-height: 1.25;
   border: 1px solid var(--rule);
   background: var(--panel);
   color: var(--text);
@@ -156,15 +157,31 @@ body {
 
 .card:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
 
+.card .name-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.side.npcs .card .name-row { justify-content: flex-end; }
+
 .card .name {
   font-weight: 700;
   font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
-.card .leader { color: var(--gold); font-weight: 600; font-size: 11px; }
+.card .st { flex: none; width: 13px; height: 13px; }
+
+.card .marker { flex: none; font-size: 11px; font-weight: 700; }
+.card .marker.turn { color: var(--gold); }
+.card .marker.target { color: var(--accent-text); font-size: 13px; }
+
+.card .leader { flex: none; color: var(--gold); font-size: 12px; }
 
 .card .state { font-size: 11px; color: var(--muted); }
 .card .state.hurt { color: var(--accent-text); }
@@ -525,6 +542,15 @@ body {
       <li>Mit ▼ weiter weg: Die Blade reicht dann nicht mehr, Jonas’ Pfeil fehlt und „reicht nicht“ steht unten.</li>
     </ul>
 
+    <h2>Zeichen hinter dem Namen</h2>
+    <div class="legend">
+      <div><svg width="13" height="14" viewBox="0 0 12 14"><path d="M6 1 C6 1 1.5 6.5 1.5 9 a4.5 4.5 0 0 0 9 0 C10.5 6.5 6 1 6 1 z" fill="#ef5a5f"></path></svg> verwundet</div>
+      <div><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="#eceae4" stroke-width="1.3"></circle><path d="M3.6 4.4 l2 2 m0 -2 l-2 2 M8.4 4.4 l2 2 m0 -2 l-2 2 M4.5 10 h5" stroke="#eceae4" stroke-width="1.2" stroke-linecap="round"></path></svg> bewusstlos (ein Attribut auf 0)</div>
+      <div><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="#c62f35" stroke="#ef5a5f" stroke-width="1.3"></circle><path d="M3.6 4.4 l2 2 m0 -2 l-2 2 M8.4 4.4 l2 2 m0 -2 l-2 2 M4.5 10 h5" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round"></path></svg> schwer verwundet (zwei auf 0, auch bewusstlos)</div>
+      <div><svg width="10" height="14" viewBox="0 0 10 14"><path d="M5 1 V13 M1.5 4.5 H8.5" stroke="#a3a09a" stroke-width="2"></path></svg> tot</div>
+      <div><span style="color: var(--gold)">★</span> Anführer · <span style="color: var(--gold)">▶</span> am Zug · <span style="color: var(--accent-text)">⌖</span> Ziel</div>
+    </div>
+
     <h2>Pfeile</h2>
     <div class="legend">
       <div><svg width="44" height="10"><path d="M2,5 H38" stroke="#d9b45f" stroke-width="2.5" stroke-dasharray="6 5" fill="none"></path><path d="M36,1 L44,5 L36,9 z" fill="#d9b45f"></path></svg> gewählt, noch nicht gewürfelt</div>
@@ -536,7 +562,7 @@ body {
     <h2>Was sich ändert</h2>
     <ul>
       <li>Die <b>Waffen</b> des SC am Zug stehen unten im Zug statt oben in der Leiste.</li>
-      <li>Je Kämpfer nur Name, Zustand, STR/DEX/END und Waffe; INT, EDU, SOC und die Fertigkeiten fehlen im Kampf.</li>
+      <li>Je Kämpfer drei Zeilen: Name mit Zeichen für Zustand, Anführer, am Zug oder Ziel; STR/DEX/END; Waffe und Rüstung. INT, EDU, SOC und die Fertigkeiten fehlen im Kampf.</li>
       <li><b>Heilen</b> und <b>Übernehmen</b>: lange auf eine Karte drücken (im Entwurf nicht gebaut).</li>
       <li>Bei mehr als etwa sechs Kämpfern je Seite scrollen beide Spalten gemeinsam; die Pfeile wandern mit.</li>
     </ul>
@@ -572,7 +598,12 @@ body {
       { id: 'n2', side: 'npcs', name: 'Tobias Svoboda', armor: '', str: 7, dex: 8, end: 8, weapons: [['Dagger', 8, 0, 2]], wield: 0 },
       { id: 'n3', side: 'npcs', name: 'Iir Ruugimar', armor: '', str: 4, dex: 10, end: 3, weapons: [['Cudgel', 8, 0, 2]], wield: 0 },
       { id: 'n4', side: 'npcs', name: 'Daalika Ilikuun', armor: '', str: 12, dex: 11, end: 11, weapons: [['Cudgel', 8, 0, 2]], wield: 0 },
-    ].map((f) => ({ ...f, full: { str: f.str, dex: f.dex, end: f.end } })),
+      { id: 'n5', side: 'npcs', name: 'Rashid Almeida', armor: 'Jack', str: 9, dex: 6, end: 7, weapons: [['Club', 8, 0, 2]], wield: 0 },
+      { id: 'n6', side: 'npcs', name: 'Mara Ilsevic', armor: '', str: 6, dex: 9, end: 5, weapons: [['Dagger', 8, 0, 2]], wield: 0 },
+    ]
+      .map((f) => ({ ...f, full: { str: f.str, dex: f.dex, end: f.end } }))
+      // Für den Entwurf schon angeschlagen, damit alle Zeichen zu sehen sind.
+      .map((f) => ({ ...f, ...({ c2: { dex: 5 }, n2: { str: 3 }, n3: { end: 0 }, n5: { str: 0, dex: 0, end: 0 }, n6: { str: 0, end: 0 } }[f.id] || {}) })),
   });
   let s = start();
 
@@ -597,6 +628,14 @@ body {
     if (!foes.some((f) => f.id === s.target)) s.target = (foes.find(canFight) || foes[0] || {}).id;
   }
 
+  // Der Zustand als ein Zeichen hinter dem Namen: Blutstropfen, Gesicht mit X-Augen (schwer verwundet: rot gefüllt), Kreuz.
+  const stateIcon = {
+    verwundet: '<svg class="st" viewBox="0 0 12 14" role="img" aria-label="verwundet"><title>verwundet</title><path d="M6 1 C6 1 1.5 6.5 1.5 9 a4.5 4.5 0 0 0 9 0 C10.5 6.5 6 1 6 1 z" fill="#ef5a5f"></path></svg>',
+    bewusstlos: '<svg class="st" viewBox="0 0 14 14" role="img" aria-label="bewusstlos"><title>bewusstlos</title><circle cx="7" cy="7" r="6" fill="none" stroke="#eceae4" stroke-width="1.3"></circle><path d="M3.6 4.4 l2 2 m0 -2 l-2 2 M8.4 4.4 l2 2 m0 -2 l-2 2 M4.5 10 h5" stroke="#eceae4" stroke-width="1.2" stroke-linecap="round"></path></svg>',
+    'schwer verwundet': '<svg class="st" viewBox="0 0 14 14" role="img" aria-label="schwer verwundet"><title>schwer verwundet</title><circle cx="7" cy="7" r="6" fill="#c62f35" stroke="#ef5a5f" stroke-width="1.3"></circle><path d="M3.6 4.4 l2 2 m0 -2 l-2 2 M8.4 4.4 l2 2 m0 -2 l-2 2 M4.5 10 h5" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round"></path></svg>',
+    tot: '<svg class="st" viewBox="0 0 10 14" role="img" aria-label="tot"><title>tot</title><path d="M5 1 V13 M1.5 4.5 H8.5" stroke="#a3a09a" stroke-width="2" stroke-linecap="square"></path></svg>',
+  };
+
   function card(f) {
     const a = actor();
     const el = document.createElement('button');
@@ -606,15 +645,15 @@ body {
     if (a && a.id === f.id) el.classList.add('turn');
     if (s.target === f.id) el.classList.add('target');
     if (zeros(f) >= 3) el.classList.add('out');
-    const tag = a && a.id === f.id ? '▶ am Zug' : s.target === f.id ? '⌖ Ziel' : '';
+    const tag = a && a.id === f.id ? 'am Zug' : s.target === f.id ? 'Ziel' : '';
+    const marker = a && a.id === f.id ? '<span class="marker turn" title="am Zug">▶</span>' : s.target === f.id ? '<span class="marker target" title="Ziel">⌖</span>' : '';
     const st = state(f);
+    const icon = stateIcon[st] || '';
     el.innerHTML =
-      (tag ? `<span class="tag">${tag}</span>` : '') +
-      `<span class="name">${f.name}</span>` +
-      `<span class="state ${st === 'unverletzt' ? '' : 'hurt'}">${f.leader ? '<span class="leader">Anführer · </span>' : ''}${st}${f.armor ? ' · ' + f.armor : ''}</span>` +
+      `<span class="name-row">${marker}<span class="name">${f.name}</span>${icon}${f.leader ? '<span class="leader" title="Anführer">★</span>' : ''}</span>` +
       `<span class="stats">${['str', 'dex', 'end'].map((k) => `<span id="${f.id}-${k}" class="${f[k] < f.full[k] ? 'low' : ''}">${k.toUpperCase()} ${hex(f[k])}</span>`).join('')}</span>` +
-      `<span class="weapon">${weapon(f)[0]}</span>`;
-    el.setAttribute('aria-label', `${f.name}, ${st}${tag ? ', ' + tag.slice(2) : ''}`);
+      `<span class="weapon">${weapon(f)[0]}${f.armor ? ' · ' + f.armor : ''}</span>`;
+    el.setAttribute('aria-label', `${f.name}${f.leader ? ', Anführer' : ''}, ${st}${tag ? ', ' + tag : ''}`);
     el.addEventListener('click', () => {
       const act = actor();
       if (!act || f.side === act.side || zeros(f) >= 3) return;
@@ -702,7 +741,7 @@ body {
     npcs.querySelectorAll('.card').forEach((c) => c.remove());
     for (const f of s.fighters) (f.side === 'pcs' ? pcs : npcs).appendChild(card(f));
     renderTrack();
-    $('round').textContent = `Runde ${s.round} · 4 × Thugs`;
+    $('round').textContent = `Runde ${s.round} · ${s.fighters.filter((f) => f.side === 'npcs').length} × Thugs`;
     const target = s.fighters.find((f) => f.id === s.target);
     $('who').innerHTML = a
       ? `<span class="chip-turn">▶ ${a.name.split(' ')[0]}</span><span class="muted">→</span>${target ? `<span class="chip-target">⌖ ${target.name.split(' ')[0]}</span>` : '<span class="muted">Ziel antippen</span>'}`

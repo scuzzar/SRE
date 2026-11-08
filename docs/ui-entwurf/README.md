@@ -95,7 +95,7 @@ nach einem Fehlschuss; der letzte Angriff bleibt blass stehen.
 
 | Datei | Inhalt |
 |---|---|
-| `zwei-spalten/Entwurf.html` | Klickbarer Entwurf mit vier Thugs, Kira und Jonas: Ziel antippen, angreifen (vereinfachte Würfe), Entfernung mit ▲ ▼, Waffen des SC am Zug unten im Zug; daneben Notizen und offene Fragen |
+| `zwei-spalten/Entwurf.html` | Klickbarer Entwurf mit sechs Thugs, Kira und Jonas; je Kämpfer drei Zeilen, der Zustand als ein Zeichen hinter dem Namen (Blutstropfen, Gesicht mit X-Augen, rot gefüllt schwer verwundet, Kreuz). Ziel antippen, angreifen (vereinfachte Würfe), Entfernung mit ▲ ▼, Waffen des SC am Zug unten im Zug; daneben Notizen und offene Fragen |
 
 Die Datei hat keinen eigenen HTML-Rahmen (für die Veröffentlichung als Seite); im Browser öffnet sie
 sich trotzdem.
