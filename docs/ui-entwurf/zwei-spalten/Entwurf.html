@@ -400,54 +400,60 @@ body {
 .chip-target { background: var(--accent); color: #fff; padding: 2px 8px; }
 .who .muted { color: var(--muted); font-weight: 400; }
 
-.weapons {
-  display: flex;
+/* Unten: wer gegen wen mit Aussetzen rechts, darunter je Waffe ein Angriff (Primär gefüllt, Sekundär umrandet). */
+.actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 6px;
-  align-items: center;
-  flex-wrap: wrap;
 }
 
-.weapons button {
+.actions.single { grid-template-columns: minmax(0, 1fr); }
+
+.who .skip {
+  margin-left: auto;
   font: inherit;
   font-size: 13px;
-  padding: 4px 10px;
+  font-weight: 400;
+  padding: 3px 10px;
+  border: 1px solid var(--line);
   background: transparent;
   color: var(--text);
-  border: 1px solid var(--line);
   cursor: pointer;
 }
 
-.weapons button[aria-pressed="true"] { background: var(--text); color: var(--ink); font-weight: 600; }
-
-.need {
-  margin-left: auto;
-  font-family: var(--mono);
-  font-weight: 700;
-  font-size: 18px;
-}
-
-.actions {
-  display: grid;
-  grid-template-columns: 1fr 1.6fr;
-  gap: 8px;
-}
+.who .skip:disabled { opacity: 0.4; cursor: default; }
+.result:empty { display: none; }
 
 .actions button {
   font: inherit;
-  font-weight: 700;
-  font-size: 16px;
-  padding: 12px;
   cursor: pointer;
   border: 1px solid var(--line);
   background: transparent;
   color: var(--text);
+  min-width: 0;
 }
 
-.actions .primary { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.atk {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "slot need" "name need";
+  align-items: center;
+  column-gap: 6px;
+  padding: 5px 8px;
+  text-align: left;
+}
+
+.atk .slot { grid-area: slot; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.75; }
+.atk .wname { grid-area: name; font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.atk .need { grid-area: need; font-family: var(--mono); font-weight: 700; font-size: 17px; }
+.atk .need.no { font-family: var(--sans); font-size: 11px; font-weight: 600; }
+
+.actions .atk.primary { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.actions .atk.secondary { border-color: var(--gold); color: var(--gold-bright); }
 .actions button:disabled { opacity: 0.4; cursor: default; }
+.actions button:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
 
 .result {
-  min-height: 1.4em;
   font-size: 13px;
   color: var(--muted);
 }
@@ -517,12 +523,8 @@ body {
 
     <section class="dock" aria-label="Zug">
       <div class="who" id="who"></div>
-      <div class="weapons" id="weapons"></div>
       <div class="result" id="result" aria-live="polite"></div>
-      <div class="actions">
-        <button type="button" id="skip">Aussetzen</button>
-        <button type="button" class="primary" id="attack">Angreifen</button>
-      </div>
+      <div class="actions" id="actions"></div>
     </section>
   </main>
 
@@ -535,7 +537,7 @@ body {
     <h2>Ausprobieren</h2>
     <ul>
       <li>Ein NSC antippen: Er wird das Ziel, ein <b>goldener Pfeil</b> zeigt vom SC am Zug zu ihm.</li>
-      <li><b>Angreifen</b>: Der Pfeil wird rot (Treffer) oder grau gestrichelt (daneben), die Karte blitzt,
+      <li><b>Primär</b> oder <b>Sekundär</b> antippen: Der Pfeil wird rot (Treffer) oder grau gestrichelt (daneben), die Karte blitzt,
         der Schaden steigt an STR, DEX und END auf.</li>
       <li>Beim NSC-Zug zeigt der Pfeil von rechts nach links; einen anderen SC antippen ändert das Ziel.</li>
       <li>Der letzte Angriff bleibt blass stehen, bis der nächste kommt.</li>
@@ -561,7 +563,7 @@ body {
 
     <h2>Was sich ändert</h2>
     <ul>
-      <li>Die <b>Waffen</b> des SC am Zug stehen unten im Zug statt oben in der Leiste.</li>
+      <li>Unten zwei Zeilen: wer gegen wen mit <b>Aussetzen</b> rechts daneben, darunter <b>Primär</b> und <b>Sekundär</b> als je ein Angriffsknopf mit Waffe und nötigem Wurf; ein Tipp wählt die Waffe und greift an. Ohne Sekundärwaffe stehen dort die Hände (Jonas). Reicht eine Waffe nicht, ist ihr Knopf aus und sagt „reicht nicht“.</li>
       <li>Je Kämpfer drei Zeilen: Name mit Zeichen für Zustand, Anführer, am Zug oder Ziel; STR/DEX/END; Waffe und Rüstung. INT, EDU, SOC und die Fertigkeiten fehlen im Kampf.</li>
       <li><b>Heilen</b> und <b>Übernehmen</b>: lange auf eine Karte drücken (im Entwurf nicht gebaut).</li>
       <li>Bei mehr als etwa sechs Kämpfern je Seite scrollen beide Spalten gemeinsam; die Pfeile wandern mit.</li>
@@ -592,7 +594,7 @@ body {
     target: undefined,
     last: undefined,
     fighters: [
-      { id: 'c1', side: 'pcs', name: 'Kira Vant', armor: 'Jack', str: 7, dex: 10, end: 8, weapons: [['Automatic Pistol', 6, 10, 3], ['Hände', 7, 0, 1]], wield: 0 },
+      { id: 'c1', side: 'pcs', name: 'Kira Vant', armor: 'Jack', str: 7, dex: 10, end: 8, weapons: [['Automatic Pistol', 6, 10, 3], ['Dagger', 7, 0, 2]], wield: 0 },
       { id: 'c2', side: 'pcs', name: 'Jonas Reyl', armor: 'Mesh', str: 6, dex: 8, end: 7, weapons: [['Blade', 7, 0, 2], ['Hände', 8, 0, 1]], wield: 0 },
       { id: 'n1', side: 'npcs', name: 'Zhiirani Giirshal', leader: true, armor: 'Mesh', str: 8, dex: 7, end: 10, weapons: [['Body Pistol', 8, 2, 3]], wield: 0 },
       { id: 'n2', side: 'npcs', name: 'Tobias Svoboda', armor: '', str: 7, dex: 8, end: 8, weapons: [['Dagger', 8, 0, 2]], wield: 0 },
@@ -618,7 +620,8 @@ body {
   const order = () => s.fighters.filter(canFight);
   const actor = () => order()[s.turn % Math.max(1, order().length)];
   const weapon = (f) => f.weapons[f.wield];
-  const reaches = (f) => s.band <= weapon(f)[2];
+  // Reicht irgendeine seiner Waffen? Dann zeigt der Pfeil schon, wen er angreifen würde.
+  const reaches = (f) => f.weapons.some((wp) => s.band <= wp[2]);
   const rangeOf = (band) => bands.find((b) => band >= b.from && band <= b.to);
 
   function suggest() {
@@ -746,32 +749,30 @@ body {
     $('who').innerHTML = a
       ? `<span class="chip-turn">▶ ${a.name.split(' ')[0]}</span><span class="muted">→</span>${target ? `<span class="chip-target">⌖ ${target.name.split(' ')[0]}</span>` : '<span class="muted">Ziel antippen</span>'}`
       : '<span class="muted">Der Kampf ist entschieden.</span>';
-    const w = $('weapons');
-    w.innerHTML = '';
-    if (a) {
-      if (a.side === 'pcs') {
-        a.weapons.forEach((wp, i) => {
-          const b = document.createElement('button');
-          b.type = 'button';
-          b.textContent = wp[0];
-          b.setAttribute('aria-pressed', String(i === a.wield));
-          b.addEventListener('click', () => { a.wield = i; render(); });
-          w.appendChild(b);
-        });
-      } else {
-        const span = document.createElement('span');
-        span.className = 'muted';
-        span.textContent = weapon(a)[0];
-        w.appendChild(span);
-      }
-      const need = document.createElement('span');
-      need.className = 'need';
-      need.textContent = reaches(a) ? weapon(a)[1] + '+' : 'reicht nicht';
-      w.appendChild(need);
+    // Je Waffe ein Angriffsknopf: beim SC Primär und Sekundär (ohne Sekundärwaffe die Hände), beim NSC seine Waffe.
+    const row = $('actions');
+    row.innerHTML = '';
+    const skip = document.createElement('button');
+    skip.type = 'button';
+    skip.className = 'skip';
+    skip.textContent = 'Aussetzen';
+    skip.disabled = !a;
+    skip.addEventListener('click', () => { nextTurn(); $('result').textContent = ''; render(); });
+    $('who').appendChild(skip);
+    const slots = a ? (a.side === 'pcs' ? a.weapons.map((wp, i) => [i, i === 0 ? 'Primär' : 'Sekundär']) : [[0, a.name.split(' ')[0] + ' greift an']]) : [];
+    row.className = slots.length > 1 ? 'actions' : 'actions single';
+    for (const [i, slot] of slots) {
+      const wp = a.weapons[i];
+      const ok = s.band <= wp[2];
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'atk ' + (i === 0 ? 'primary' : 'secondary');
+      b.disabled = !target || !ok;
+      b.innerHTML = `<span class="slot">${slot}</span><span class="wname">${wp[0]}</span><span class="need ${ok ? '' : 'no'}">${ok ? wp[1] + '+' : 'reicht<br>nicht'}</span>`;
+      b.setAttribute('aria-label', `Mit ${wp[0]} angreifen${ok ? ', braucht ' + wp[1] + '+' : ', reicht nicht'}`);
+      b.addEventListener('click', () => { a.wield = i; attack(); });
+      row.appendChild(b);
     }
-    $('attack').disabled = !a || !target || !reaches(a);
-    $('attack').textContent = a && a.side === 'npcs' ? `${a.name.split(' ')[0]} greift an` : 'Angreifen';
-    $('skip').disabled = !a;
     requestAnimationFrame(() => renderArrows(fresh));
   }
 
@@ -833,8 +834,6 @@ body {
     return before;
   }
 
-  $('attack').addEventListener('click', attack);
-  $('skip').addEventListener('click', () => { nextTurn(); $('result').textContent = ''; render(); });
   $('nearer').addEventListener('click', () => { s.band = Math.max(0, s.band - 1); render(); });
   $('farther').addEventListener('click', () => { s.band = Math.min(20, s.band + 1); render(); });
   $('reset').addEventListener('click', () => { s = start(); $('result').textContent = ''; render(); });
