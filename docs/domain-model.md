@@ -146,6 +146,13 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > liegt unter
 > [`changes/2026-11-07-ueberraschung-ausdauer-parade.png`](changes/2026-11-07-ueberraschung-ausdauer-parade.png).
 >
+> **Wartet auf Freigabe** (8. November 2026): **Überraschung als erster Wurf im Kampf** (siehe
+> *Kampfsimulation*, *Überraschung*). Sie wird nicht mehr beim Anlegen der Begegnung gewürfelt,
+> sondern zu Beginn des Kampfs, als eigener Wurf mit zwei Würfeln (SC weiß, NSC schwarz) und ihren
+> DMs. Im Bild: `pcSurprise` und `npcSurprise` sind `0..1` (fehlen, bis gewürfelt ist). Der
+> Ausschnitt dazu liegt unter
+> [`changes/2026-11-08-ueberraschung-als-erster-wurf.png`](changes/2026-11-08-ueberraschung-als-erster-wurf.png).
+>
 > Am 8. November 2026 auf ausdrücklichen Wunsch des Owners freigegeben: zwei Korrekturen nach dem
 > Regelheft und der Errata zu *The Traveller Book* (siehe *Angriff in beide Richtungen* und
 > *Wunden*): Im laufenden Kampf zählen für die DMs STR und DEX ohne dessen Wunden, und die Regel für
@@ -203,7 +210,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+Überraschung als erster Wurf im Kampf (2026-11-08).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -728,7 +735,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Rüstung, auch ohne A und auch Combat Armor oder Battle Dress (SR 50). Das Beste ist das mit dem
     höchsten TL, bei Gleichstand das teuerste.
   - *Fahrzeug* (V) hält die Art fest; im Kampf zählt es vorerst nicht.
-  - *Entfernung und Überraschung* werden beim Anlegen mitgewürfelt (siehe *Kampfsimulation*).
+  - *Entfernung* wird beim Anlegen mitgewürfelt, die *Überraschung* erst zu Beginn des Kampfs (siehe
+    *Kampfsimulation*).
   - *Reaktion* (`reaction`): 2W6 (`reactionDice`) plus DM (`reactionDm`): +1, wenn ein lebender
     SC 5 oder mehr Terms in Army, Navy, Scouts oder Marines gedient hat (nach seinem Lebenslauf; SC
     ohne Lebenslauf zählen nicht), −1 auf einer Welt mit Bevölkerung 9+; beides zusammen ±0. Eine
@@ -736,8 +744,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     damit ein späterer Tod oder Ausblenden ihn nicht rückwirkend ändert; fehlt er (Begegnungen von
     vorher), gilt der DM der Welt. Der Text (`/reactionText`) kommt aus der Tabelle.
   - *Zeigen*: Nach dem Würfeln zeigt die App die Begegnung, bevor der Kampf beginnt: wer kommt (jeder
-    NSC mit Waffe, Rüstung, Anführer), und die Würfe für Reaktion, Entfernung und Überraschung, jeder
-    mit Würfeln, DM und Ergebnis. Das ist Anzeige; gespeichert ist es schon.
+    NSC mit Waffe, Rüstung, Anführer), und die Würfe für Reaktion und Entfernung, jeder mit Würfeln,
+    DM und Ergebnis. Das ist Anzeige; gespeichert ist es schon.
   - Es gibt höchstens **eine laufende Begegnung**. Sie bleibt gespeichert, bis man sie beendet
     (`ended`); beendete Begegnungen bleiben in der Kampagne, weil der Log auf ihre NSC verweist,
     und werden nicht mehr gezeigt. Eine Begegnung, auf die der Log nicht verweist, wird beim Beenden
@@ -857,11 +865,21 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - *Frei setzen* (Ermessen der Spielleitung): Langes Drücken auf den Strahl der Entfernung setzt
       das Band frei, jederzeit, ohne Grenze und ohne dass es als Bewegung zählt; z. B. um einen
       Fehler zu beheben.
-  - *Überraschung* (S. 5): beim Anlegen 1W6 je Partei (`pcSurprise`, `npcSurprise`) mit DMs:
+  - *Überraschung* (S. 5): der **erste Wurf im Kampf**, eigens gewürfelt, bevor jemand dran ist. Bis
+    dahin fehlen `pcSurprise` und `npcSurprise`, keiner ist am Zug, und keine Partei bewegt sich; die
+    Kampfsimulation bietet nur „Überraschung würfeln“. Der Wurf ist 1W6 je Partei mit DMs, die beim
+    Würfeln aus den Parteien bestimmt und festgehalten werden (`dm`):
     Battle Dress getragen +2; Leader-Fertigkeit +1 (bei NSC: ein Anführer); Tactics +1; militärische
     Erfahrung (SC aus Army oder Marines, NSC einer militärischen Art: Soldiers, Marines, Security
     Troops, Soldiers on Patrol) +1; Fahrzeug −1 (NSC mit V); 8 oder mehr in der Partei −1. Liegt
     eine Partei 3 oder mehr höher, hat sie Überraschung (`/surprise`).
+    - *Zeigen*: zwei Würfel nebeneinander, der der SC **weiß** (mit schwarzen Augen), der der NSC
+      **schwarz** (mit weißen Augen), darunter je Partei die DMs einzeln und die Summe, dann das
+      Ergebnis („Überraschung: SC“ oder „keine; die NSC ziehen zuerst“). Schwarz und Weiß statt Rot
+      und Grün, weil Rot und Grün für Farbenblinde kaum zu unterscheiden sind und Rot in der App
+      schon das Ziel meint. Danach beginnt Runde 1. Das ist Anzeige; gespeichert sind Würfel und DM.
+    - Begegnungen, die schon gewürfelte Überraschung haben, bleiben, wie sie sind; solche ohne
+      (von vor der Kampfsimulation) würfeln sie beim nächsten Kampf.
   - *Überraschung bis zum Alarm* (SR 20): Die Überraschung hält Runde für Runde, bis die überraschte
     Partei Alarm gibt (`/surprising`: die Partei mit Überraschung, solange `alarm` fehlt oder die
     laufende Runde nicht nach der Runde des Alarms liegt). Solange sie hält, zieht nur die Partei mit
