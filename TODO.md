@@ -4,6 +4,17 @@ Was als Nächstes ansteht, der Reihe nach. Erledigtes fliegt raus (der Verlauf s
 immer gilt: Was das Modell berührt, geht zuerst ins Domänenmodell und wird freigegeben, dann in den
 Code ([CLAUDE.md](CLAUDE.md)). Die Regeln stehen in [`docs/regeln-kampf.md`](docs/regeln-kampf.md).
 
+## Arbeitsweise
+
+- [ ] **Commits ohne Rückfrage** (Owner, weil es Claudes eigene Regeln und Rechte betrifft): Mit Name
+  und E-Mail im Befehl (`git -c user.email=…`) fragt das System bei jedem Commit nach; mit
+  `git config` einmal je Sitzung nicht.
+  - `CLAUDE.md`: Punkt „Commits laufen unter dem Namen des Owners“ ändern: zu Beginn jeder Sitzung
+    einmal `git config user.name Scuzzar` und `git config user.email scuzzarGalaxy@googlemail.com`,
+    dann einfach `git commit …` (ebenso Merges nach `main`); kein `git -c …` mehr.
+  - `.claude/settings.json`, in `allow` ergänzen: `"Bash(git commit:*)"`, `"Bash(git merge:*)"`,
+    `"Bash(git config user.name Scuzzar)"`, `"Bash(git config user.email scuzzarGalaxy@googlemail.com)"`.
+
 ## Kampf
 
 ### 1. Umbau: NSC der Begegnung als vollständige Charaktere
