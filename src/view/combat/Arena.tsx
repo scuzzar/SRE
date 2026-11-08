@@ -253,9 +253,9 @@ function curve(root: HTMLElement, from: string, to: string, base: DOMRect): stri
   const p = anchor(root, from, base);
   const q = anchor(root, to, base);
   if (!p || !q || p.side === q.side) return undefined;
-  const dx = (q.x - p.x) * 0.45;
+  // Gerade von Kante zu Kante: So kreuzt der Pfeil die Leiste einmal schräg, statt an ihr entlangzulaufen.
   const end = q.x + (p.side === 'pcs' ? -3 : 3);
-  return `M${p.x.toFixed(1)},${p.y.toFixed(1)} C${(p.x + dx).toFixed(1)},${p.y.toFixed(1)} ${(q.x - dx).toFixed(1)},${q.y.toFixed(1)} ${end.toFixed(1)},${q.y.toFixed(1)}`;
+  return `M${p.x.toFixed(1)},${p.y.toFixed(1)} L${end.toFixed(1)},${q.y.toFixed(1)}`;
 }
 
 /**
@@ -308,6 +308,14 @@ function Arrows({ sim, arena, quiet }: { sim: SimView; arena: React.RefObject<HT
           </marker>
         ))}
       </defs>
+      {drawn.map((a) => (
+        <path
+          key={`halo-${a.key}`}
+          d={a.d}
+          {...(a.fresh ? { pathLength: 100 } : {})}
+          className={`arrow-halo${a.kind === 'neighbour' ? ' thin' : ''}${a.fresh ? ' fresh' : a.kind === 'hit' || a.kind === 'miss' ? ' past' : ''}`}
+        />
+      ))}
       {drawn.map((a) => (
         <path
           key={a.key}
