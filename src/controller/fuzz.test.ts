@@ -35,6 +35,7 @@ const steps: readonly [string, Step][] = [
   ['buy', (g, p) => { const s = g.snapshot().shop; const items = s?.offer.flatMap((o) => o.items) ?? []; if (s && items.length && s.members.length) g.buy(items[p(items.length)]!.id, 1 + p(2), s.members[p(s.members.length)]!.id); }],
   ['sell', (g, p) => { const s = g.snapshot().shop; const m = s?.members.filter((x) => x.sellable.length) ?? []; if (s?.world && m.length) { const who = m[p(m.length)]!; const it = who.sellable[p(who.sellable.length)]!; g.sell(it.id, 1, it.price, who.id); } }],
   ['encounter', (g, p) => { if (!g.snapshot().combat?.sim) g.rollEncounter(11 + p(6) * 10 + p(6), p(2) ? 'clear' : undefined); }],
+  ['surprise', (g) => { if (g.snapshot().combat?.sim?.needsSurprise) g.rollSurprise(); else g.closeSurprise(); }],
   ['end', (g) => g.snapshot().combat?.sim && g.endEncounter()],
   ['target', (g, p) => { const f = g.snapshot().combat?.sim?.fighters.filter((x) => x.targetable) ?? []; if (f.length) g.chooseFightTarget(f[p(f.length)]!.id); }],
   ['band', (g, p) => g.snapshot().combat?.sim && g.setBand(p(22), false)],
@@ -96,7 +97,7 @@ function check(campaign: Campaign, game: GameController, trail: readonly string[
   if (sim) {
     if (sim.turn && !sim.fighters.some((f) => f.id === sim.turn!.id && f.turn)) fail('Wer am Zug ist, steht nicht unter den Kämpfern');
     if (sim.turn && sim.defeated) fail('Am Zug, obwohl der Kampf entschieden ist');
-    if (!sim.turn && !sim.defeated) fail('Keiner am Zug, aber der Kampf ist nicht entschieden');
+    if (!sim.turn && !sim.defeated && !sim.needsSurprise) fail('Keiner am Zug, aber der Kampf ist nicht entschieden');
     for (const f of sim.fighters) for (const k of ['str', 'dex', 'end'] as const) if (f.current[k] < 0 || f.current[k] > f.upp[k]) fail(`Unmögliche Wunden bei ${f.name}`);
   }
   if (view.shop && view.shop.funds < 0) fail('Kasse negativ');

@@ -35,6 +35,9 @@ import {
   removeCharacter,
   rollDamage,
   rollEncounter,
+  rollSurprise,
+  needsSurprise,
+  surpriseParts,
   reactionOf,
   setGeneration,
   setQuantityDie,
@@ -81,7 +84,7 @@ const clock = fixedClock();
  * UPP 222222 und die Reaktion 2.
  */
 function thugs(campaign: Campaign = there): Campaign {
-  return rollEncounter(campaign, fixedRandom(1, 5), clock, undefined, 2).campaign;
+  return rollSurprise(rollEncounter(campaign, fixedRandom(1, 5), clock, undefined, 2).campaign, fixedRandom());
 }
 
 describe('Begegnung', () => {
@@ -342,7 +345,20 @@ describe('Heilung', () => {
 });
 
 describe('Kampfsimulation', () => {
-  it('würfelt beim Anlegen Entfernung (2W6 + Gelände) und Überraschung je Partei mit DMs', () => {
+  it('beim Anlegen nur die Entfernung; die Überraschung ist der erste Wurf im Kampf, vorher ist keiner am Zug', () => {
+    const fresh = rollEncounter(there, fixedRandom(1, 5), clock, undefined, 2).campaign;
+    expect(currentEncounter(fresh)).not.toHaveProperty('pcSurprise');
+    expect(needsSurprise(currentEncounter(fresh)!)).toBe(true);
+    expect(turnOf(fresh)).toBeUndefined();
+    const rolled = rollSurprise(fresh, fixedRandom(5, 2));
+    // Thugs mit Anführer: NSC +1; die SC haben keine DMs. 5 gegen 2 + 1: keine Überraschung, die SC zuerst.
+    expect(currentEncounter(rolled)).toMatchObject({ pcSurprise: { die: 5, dm: 0 }, npcSurprise: { die: 2, dm: 1 } });
+    expect(surpriseParts(rolled, currentEncounter(rolled)!)).toEqual({ pcs: [], npcs: [{ label: 'Anführer', dm: 1 }] });
+    expect(turnOf(rolled)?.id).toBe('c1');
+    expect(() => rollSurprise(rolled, fixedRandom())).toThrow(/schon gewürfelt/);
+  });
+
+  it('würfelt Entfernung (2W6 + Gelände) und, als ersten Wurf im Kampf, Überraschung je Partei mit DMs', () => {
     const encounter = currentEncounter(thugs())!;
     // Alle Würfe zeigen das Kleinste: Entfernung 1 + 1 = 2 → Close; Überraschung SC 1 ± 0, Thugs 1 + 1 (Anführer).
     expect(encounter).toMatchObject({ rangeDice: [1, 1], band: 0, close: true, pcSurprise: { die: 1, dm: 0 }, npcSurprise: { die: 1, dm: 1 }, round: 1, acted: [] });

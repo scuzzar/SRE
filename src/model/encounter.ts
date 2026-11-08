@@ -62,7 +62,7 @@ export interface Encounter {
   readonly npcRuns?: number;
   /** Die Runde, in der die überraschte Partei Alarm gegeben hat (SR 20); danach hält die Überraschung nicht mehr. */
   readonly alarm?: number;
-  /** Die Überraschung je Partei: 1W6 und DM (S. 5). Fehlt bei Begegnungen von vor der Kampfsimulation. */
+  /** Die Überraschung je Partei: 1W6 und DM (S. 5). Fehlt, bis sie zu Beginn des Kampfs gewürfelt ist. */
   readonly pcSurprise?: SurpriseRoll;
   readonly npcSurprise?: SurpriseRoll;
   /** Die Kampfrunde, ab 1, und wer in ihr schon dran war (Ids von SC und NSC). */
@@ -219,8 +219,6 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
   const ground = terrain === undefined ? undefined : ref.encounters.terrains.find((t) => t.id === terrain);
   if (terrain !== undefined && !ground) throw new DomainError(`Das Gelände ${terrain} gibt es nicht.`);
   const rangeDice = [d6(random), d6(random)] as const;
-  const pcSurprise = { die: d6(random), dm: pcSurpriseDm(campaign) };
-  const npcSurprise = { die: d6(random), dm: npcSurpriseDm(type, npcs) };
   const start = startBand(encounterRange(rangeDice, ground?.dm ?? 0), random);
   const encounter: Encounter = {
     id: `e${nextNumber(
@@ -239,8 +237,6 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
     rangeDice,
     ...start,
     ...(ground ? { terrain: ground.id } : {}),
-    pcSurprise,
-    npcSurprise,
     round: 1,
     acted: [],
   };
@@ -321,17 +317,79 @@ export function moveBand(campaign: Campaign, step: -1 | 1): Campaign {
 
 const BATTLE_DRESS = 'battle-dress';
 
-/** DM der SC auf die Überraschung (S. 5): Battle Dress +2, Leader +1, Tactics +1, Army oder Marines +1, 8 oder mehr −1. */
-export function pcSurpriseDm(campaign: Campaign): number {
+/** Ein DM auf die Überraschung mit seinem Grund, für die Anzeige. */
+export interface SurpriseDmPart {
+  readonly label: string;
+  readonly dm: number;
+}
+
+function partsWith(entries: readonly (readonly [boolean, string, number])[]): readonly SurpriseDmPart[] {
+  return entries.filter(([applies]) => applies).map(([, label, dm]) => ({ label, dm }));
+}
+
+/** Die DMs der SC auf die Überraschung (S. 5): Battle Dress +2, Leader +1, Tactics +1, Army oder Marines +1, 8 oder mehr −1. */
+export function pcSurpriseParts(campaign: Campaign): readonly SurpriseDmPart[] {
   const pcs = livingCharacters(campaign);
   const skill = (id: string) => pcs.some((c) => activeSkills(c).some((s) => s.of === id && s.level >= 1));
   const military = pcs.some((c) => c.career !== undefined && ['army', 'marines'].includes(replay(c.career).service?.id ?? ''));
-  return (pcs.some((c) => c.wears === BATTLE_DRESS) ? 2 : 0) + (skill('leader') ? 1 : 0) + (skill('tactics') ? 1 : 0) + (military ? 1 : 0) - (pcs.length >= 8 ? 1 : 0);
+  return partsWith([
+    [pcs.some((c) => c.wears === BATTLE_DRESS), 'Battle Dress', 2],
+    [skill('leader'), 'Leader', 1],
+    [skill('tactics'), 'Tactics', 1],
+    [military, 'Army/Marines', 1],
+    [pcs.length >= 8, '8 oder mehr', -1],
+  ]);
 }
 
-/** DM der NSC auf die Überraschung: Battle Dress +2, Anführer +1, militärische Art +1, Fahrzeug −1, 8 oder mehr −1. */
+/** Die DMs der NSC auf die Überraschung: Battle Dress +2, Anführer +1, militärische Art +1, Fahrzeug −1, 8 oder mehr −1. */
+export function npcSurpriseParts(type: EncounterType, npcs: readonly Npc[]): readonly SurpriseDmPart[] {
+  return partsWith([
+    [npcs.some((n) => n.wears === BATTLE_DRESS), 'Battle Dress', 2],
+    [type.leader, 'Anführer', 1],
+    [type.military === true, 'militärisch', 1],
+    [type.vehicle, 'Fahrzeug', -1],
+    [npcs.length >= 8, '8 oder mehr', -1],
+  ]);
+}
+
+const sumOf = (parts: readonly SurpriseDmPart[]) => parts.reduce((total, p) => total + p.dm, 0);
+
+/** DM der SC auf die Überraschung. */
+export function pcSurpriseDm(campaign: Campaign): number {
+  return sumOf(pcSurpriseParts(campaign));
+}
+
+/** DM der NSC auf die Überraschung. */
 export function npcSurpriseDm(type: EncounterType, npcs: readonly Npc[]): number {
-  return (npcs.some((n) => n.wears === BATTLE_DRESS) ? 2 : 0) + (type.leader ? 1 : 0) + (type.military ? 1 : 0) - (type.vehicle ? 1 : 0) - (npcs.length >= 8 ? 1 : 0);
+  return sumOf(npcSurpriseParts(type, npcs));
+}
+
+/** Die NSC, die in der Begegnung noch kämpfen (nicht übernommen). */
+function fightingNpcs(encounter: Encounter): readonly Npc[] {
+  return encounter.npcs.filter((n) => n.became === undefined);
+}
+
+/** Die DMs auf die Überraschung je Partei, nach dem heutigen Stand der Parteien. */
+export function surpriseParts(campaign: Campaign, encounter: Encounter): { readonly pcs: readonly SurpriseDmPart[]; readonly npcs: readonly SurpriseDmPart[] } {
+  return { pcs: pcSurpriseParts(campaign), npcs: npcSurpriseParts(encounterTypeOfEncounter(encounter), fightingNpcs(encounter)) };
+}
+
+/** Ist die Überraschung der laufenden Begegnung noch nicht gewürfelt? Dann ist sie der erste Wurf im Kampf. */
+export function needsSurprise(encounter: Encounter): boolean {
+  return encounter.pcSurprise === undefined || encounter.npcSurprise === undefined;
+}
+
+/**
+ * Der erste Wurf im Kampf (S. 5): 1W6 je Partei, mit den DMs, die die Parteien jetzt haben; beides
+ * bleibt an der Begegnung. Erst danach ist jemand am Zug.
+ */
+export function rollSurprise(campaign: Campaign, random: Random): Campaign {
+  const encounter = currentEncounter(campaign);
+  if (!encounter) throw new DomainError('Es läuft keine Begegnung.');
+  if (!needsSurprise(encounter)) throw new DomainError('Die Überraschung ist schon gewürfelt.');
+  const pcSurprise = { die: d6(random), dm: pcSurpriseDm(campaign) };
+  const npcSurprise = { die: d6(random), dm: npcSurpriseDm(encounterTypeOfEncounter(encounter), fightingNpcs(encounter)) };
+  return { ...campaign, encounters: campaign.encounters.map((e) => (e.id === encounter.id ? { ...e, pcSurprise, npcSurprise } : e)) };
 }
 
 /** Verweist ein Angriff im Log auf einen NSC dieser Begegnung? */

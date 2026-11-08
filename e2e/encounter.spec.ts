@@ -40,12 +40,12 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await expect(page.getByLabel('Begegnung wählen')).toContainText('15 · 2W3 Thugs');
   await page.getByLabel('Begegnung wählen').selectOption('15');
 
-  // Erst die Übersicht: wer kommt, und die Würfe für Reaktion, Entfernung und Überraschung.
+  // Erst die Übersicht: wer kommt, und die Würfe für Reaktion und Entfernung; die Überraschung kommt erst im Kampf.
   const intro = page.getByRole('dialog', { name: /Thugs/ });
   await expect(intro).toContainText('(2W3)');
   await expect(intro).toContainText('Reaktion (2W6');
   await expect(intro).toContainText(/Entfernung: \S.*\(2W6: \d \+ \d, City −4/);
-  await expect(intro).toContainText('Überraschung:');
+  await expect(intro).not.toContainText('Überraschung:');
   await expect(intro.locator('.intro-npcs li').first()).toContainText('Anführer');
   const npcs = await intro.locator('.intro-npcs li').count();
   await intro.getByRole('button', { name: 'Weiter' }).click();
@@ -63,6 +63,14 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await expect(page.locator('.fight-head')).toContainText('Thugs');
   await expect(page.locator('.combat-table')).toHaveCount(0);
   await expect(page.getByRole('img', { name: /^Entfernung: / })).toBeVisible();
+  // Der erste Wurf im Kampf ist die Überraschung: zwei Würfel, SC weiß, NSC schwarz, mit DMs.
+  await expect(page.locator('.fight-turn')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Überraschung würfeln' }).click();
+  const surprise = page.getByRole('dialog', { name: 'Überraschung' });
+  await expect(surprise.locator('.die-white')).toHaveCount(1);
+  await expect(surprise.locator('.die-black')).toHaveCount(1);
+  await expect(surprise).toContainText('Anführer +1');
+  await surprise.getByRole('button', { name: 'Kampf beginnen' }).click();
   await expect(page.locator('.fight-turn')).toBeVisible();
 
   // Langes Drücken links auf den Strahl setzt die Entfernung frei auf Berührung; Close reicht für jede Waffe.

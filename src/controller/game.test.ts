@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { appendLog, createCampaign, DEMO_FUNDS, fromCampaignFile, rollEncounter, setHexes, setLocation, type CampaignRepository, type Random } from '../model';
+import { appendLog, createCampaign, DEMO_FUNDS, fromCampaignFile, rollEncounter, rollSurprise, setHexes, setLocation, type CampaignRepository, type Random } from '../model';
 import { fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 import { surfaceLines } from './world-view';
@@ -490,6 +490,8 @@ describe('Begegnung und Kampfsimulation', () => {
     const { game } = await onRegina();
     game.showScreen('encounter');
     game.rollEncounter(15, 'clear');
+    game.rollSurprise();
+    game.closeSurprise();
     expect(game.snapshot()).toMatchObject({ screen: 'encounter', combat: { intro: true } });
     game.closeEncounterIntro();
     expect(game.snapshot()).toMatchObject({ screen: 'encounter', combat: { intro: false } });
@@ -503,6 +505,8 @@ describe('Begegnung und Kampfsimulation', () => {
   it('mit der Begegnung beginnt die Simulation: Entfernung und Überraschung gewürfelt, Partei für Partei, nur Ziel wählen und würfeln', async () => {
     const { game, random } = await onRegina();
     game.rollEncounter(15, 'clear');
+    game.rollSurprise();
+    game.closeSurprise();
     let sim = game.snapshot().combat!.sim!;
     // Entfernung 1 + 1 + 3 (Clear) = 5 → Short; Überraschung SC 1, Thugs 1 + 1 (Anführer): die NSC ziehen zuerst.
     expect(sim).toMatchObject({ round: 1, range: 'short', band: 0, close: false, escaped: false, bandDie: undefined, rangeDice: [1, 1], terrain: { name: 'Clear, Road, Open', dm: 3 }, surprise: undefined, first: 'npcs' });
@@ -555,6 +559,8 @@ describe('Begegnung und Kampfsimulation', () => {
     const { game, random } = await onRegina();
     // 1W6 Peasants: ein einziger NSC; die SC ziehen zuerst.
     game.rollEncounter(11);
+    game.rollSurprise();
+    game.closeSurprise();
     expect(game.snapshot().combat!.sim!.turn).toMatchObject({ id: 'c1', target: 'n1' });
     random.queue.push(6, 6);
     game.fightAttack();
@@ -572,6 +578,8 @@ describe('Begegnung und Kampfsimulation', () => {
   it('Wischen in der Leiste: im NSC-Zug wird der SC das Ziel; im SC-Zug greift trotzdem der SC am Zug an', async () => {
     const { game, random } = await onRegina();
     game.rollEncounter(15);
+    game.rollSurprise();
+    game.closeSurprise();
     expect(game.snapshot().combat!.sim!.turn).toMatchObject({ id: 'n1', target: 'c1' });
     game.focusCharacter('c2');
     expect(game.snapshot().combat!.sim!.turn).toMatchObject({ target: 'c2', odds: expect.anything() });
@@ -604,6 +612,8 @@ describe('Begegnung und Kampfsimulation', () => {
       game.stayHere();
       game.closeWorld();
       game.rollEncounter(11 + (seed % 5) * 10 + (seed % 6));
+      if (game.snapshot().combat?.sim?.needsSurprise) game.rollSurprise();
+      game.closeSurprise();
       if (!game.snapshot().combat!.sim) continue;
       for (let step = 0; step < 400; step++) {
         const view = game.snapshot();
@@ -646,6 +656,8 @@ describe('Begegnung und Kampfsimulation', () => {
     const { game, random } = await onRegina();
     game.askOracle('Vorher?');
     game.rollEncounter(15);
+    game.rollSurprise();
+    game.closeSurprise();
     // Der Anführer trifft Kira (erster Treffer, verteilt sich von selbst), dann der zweite Thug: den verteilt sie.
     random.queue.push(6, 6);
     game.fightAttack();
@@ -682,6 +694,8 @@ describe('Begegnung und Kampfsimulation', () => {
   it('heilt einen SC in der Simulation und übernimmt einen NSC; er kämpft dann nicht mehr mit', async () => {
     const { game, random } = await onRegina();
     game.rollEncounter(15);
+    game.rollSurprise();
+    game.closeSurprise();
     random.queue.push(6, 6);
     game.fightAttack();
     random.queue.push(1, 1, 1, 1);
@@ -699,6 +713,8 @@ describe('Begegnung und Kampfsimulation', () => {
   it('übernimmt mehrere NSC auf einmal; die Begegnung hat danach keine NSC mehr', async () => {
     const { game } = await onRegina();
     game.rollEncounter(15);
+    game.rollSurprise();
+    game.closeSurprise();
     const before = game.snapshot().characters.length;
     game.adoptNpcs(['n1', 'n2'], false);
     expect(game.snapshot().characters.length).toBe(before + 2);
@@ -715,7 +731,7 @@ describe('Flächenschaden in der Kampfsimulation', () => {
     const queue: number[] = [];
     const random = { int: (min: number) => queue.shift() ?? min };
     const there = setLocation(setHexes(createCampaign(), [regina]), '0101');
-    const rolled = rollEncounter(there, fixedRandom(1, 5), fixedClock(), undefined, 4).campaign;
+    const rolled = rollSurprise(rollEncounter(there, fixedRandom(1, 5), fixedClock(), undefined, 4).campaign, fixedRandom());
     const campaign = {
       ...rolled,
       characters: rolled.characters.map((c) => (c.id === 'c1' ? { ...c, possessions: [...c.possessions, { of: 'auto-rifle', count: 1 }], primary: 'auto-rifle', wields: 'auto-rifle' } : c)),

@@ -5,7 +5,7 @@ import { hex, rangeText, signed, woundStateText } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { CombatIcon, DiceIcon } from '../icons';
-import { DicePairView, THROW_MS, useTimeline } from '../Dice';
+import { DicePairView, DiceView, THROW_MS, useTimeline } from '../Dice';
 import type { Patient } from './CombatScreen';
 import { FireToggle } from './FireToggle';
 import { StrikeToggle } from './StrikeToggle';
@@ -128,7 +128,7 @@ function FightHead({ sim }: { sim: SimView }) {
   // Die Überraschung hält bis zum Alarm (SR 20); danach zieht die Partei mit dem höheren Wurf zuerst.
   const known = sim.pcSurprise !== undefined && sim.npcSurprise !== undefined;
   const alarm = sim.surprise && sim.alarm !== undefined && !sim.surprising ? `Alarm in Runde ${sim.alarm} · ` : '';
-  const order = known ? (sim.surprising ? `Überraschung ${sideName[sim.surprising]}` : `${alarm}${sideName[sim.first]} zuerst`) : undefined;
+  const order = known ? (sim.surprising ? `Überraschung ${sideName[sim.surprising]}` : `${alarm}${sideName[sim.first]} zuerst`) : sim.needsSurprise ? 'Überraschung würfeln' : undefined;
   const surprise = known ? (sim.surprising ? `Überraschung: ${sideName[sim.surprising]}, bis zum Alarm` : `${alarm}${sideName[sim.first]} ziehen zuerst`) : undefined;
   return (
     <div className="fight-head">
@@ -418,7 +418,9 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
   const empty = turn?.ammo !== undefined && turn.ammo.rounds < (turn.fire?.rounds ?? 1);
   return (
     <section className="dock" aria-label="Zug">
-      {turn ? (
+      {sim.needsSurprise ? (
+        <p className="combat-pick">Der erste Wurf im Kampf: Hat eine Partei Überraschung?</p>
+      ) : turn ? (
         <div className="fight-turn fight-turn-two" aria-live="polite">
           <span className="fight-who">
             <span className="who-chip turn" title="am Zug">
@@ -449,7 +451,19 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
         <p className="combat-pick">{sim.defeated ? 'Der Kampf ist entschieden. Heilen, übernehmen (lange drücken) oder die Begegnung beenden.' : 'Keiner ist am Zug.'}</p>
       )}
       <div className="actions fight-actions">
-        {combat.damage ? (
+        {sim.needsSurprise ? (
+          <button
+            type="button"
+            className="action task-roll"
+            onClick={() => {
+              haptic('shake');
+              game.rollSurprise();
+            }}
+          >
+            <DiceIcon />
+            Überraschung würfeln
+          </button>
+        ) : combat.damage ? (
           <button
             type="button"
             className="action draw"
@@ -517,6 +531,63 @@ function AdoptDock({ picked, selection }: { picked: readonly string[]; selection
         </button>
       </div>
     </section>
+  );
+}
+
+/** Die DMs einer Partei in einer Zeile: „Leader +1 · Army/Marines +1“, ohne: „keine DMs“. */
+function partsText(parts: SimView['surpriseParts']['pcs']): string {
+  return parts.length === 0 ? 'keine DMs' : parts.map((p) => `${p.label} ${signed(p.dm)}`).join(' · ');
+}
+
+/**
+ * Der erste Wurf im Kampf: die Überraschung (S. 5). Zwei Würfel, der der SC weiß, der der NSC
+ * schwarz; darunter je Partei die DMs und die Summe, dann wer Überraschung hat. Ein Tippen überspringt.
+ */
+export function SurpriseDialog({ sim }: { sim: SimView }) {
+  const game = useGame();
+  const [phase, skip] = useTimeline([200, THROW_MS, 250]);
+  const landed = phase >= 2;
+  const pc = sim.pcSurprise!;
+  const npc = sim.npcSurprise!;
+  const pcTotal = pc.die + pc.dm;
+  const npcTotal = npc.die + npc.dm;
+  const side = (label: string, roll: { die: number; dm: number }, total: number, parts: SimView['surpriseParts']['pcs'], won: boolean) => (
+    <div className={won && landed ? 'surprise-side won' : 'surprise-side'}>
+      <span className="small-label">{label}</span>
+      <span className="surprise-total">{landed ? total : '–'}</span>
+      <span className="surprise-parts">
+        1W6 {landed ? roll.die : '?'} {signed(roll.dm)}
+        <br />
+        {partsText(parts)}
+      </span>
+    </div>
+  );
+  return (
+    <div className="modal">
+      <section className="result surprise-roll" role="dialog" aria-modal="true" aria-labelledby="surprise-title" onClick={() => phase < 3 && skip(3)}>
+        <span className="kicker">Erster Wurf im Kampf · S. 5</span>
+        <h2 id="surprise-title" className="shop-buy-title">
+          Überraschung
+        </h2>
+        {phase >= 1 ? (
+          <DiceView dice={[pc.die, npc.die]} seed={pc.die * 7 + npc.die} landed={landed} tones={['white', 'black']} />
+        ) : (
+          <div className="dice-stage large" aria-hidden="true" />
+        )}
+        <div className="surprise-sides">
+          {side('SC · weiß', pc, pcTotal, sim.surpriseParts.pcs, sim.surprise === 'pcs')}
+          {side('NSC · schwarz', npc, npcTotal, sim.surpriseParts.npcs, sim.surprise === 'npcs')}
+        </div>
+        <p className={landed ? 'surprise-verdict shown' : 'surprise-verdict'} aria-live="polite">
+          {sim.surprise
+            ? `Überraschung: die ${sideName[sim.surprise]}! Sie ziehen allein, bis zum Alarm.`
+            : `Keine Überraschung (3 oder mehr Unterschied nötig) – die ${sideName[sim.first]} ziehen zuerst.`}
+        </p>
+        <button type="button" className="primary" onClick={() => game.closeSurprise()}>
+          Kampf beginnen
+        </button>
+      </section>
+    </div>
   );
 }
 

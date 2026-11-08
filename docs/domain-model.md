@@ -146,7 +146,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > liegt unter
 > [`changes/2026-11-07-ueberraschung-ausdauer-parade.png`](changes/2026-11-07-ueberraschung-ausdauer-parade.png).
 >
-> **Wartet auf Freigabe** (8. November 2026): **Überraschung als erster Wurf im Kampf** (siehe
+> Am 8. November 2026 freigegeben: **Überraschung als erster Wurf im Kampf** (siehe
 > *Kampfsimulation*, *Überraschung*). Sie wird nicht mehr beim Anlegen der Begegnung gewürfelt,
 > sondern zu Beginn des Kampfs, als eigener Wurf mit zwei Würfeln (SC weiß, NSC schwarz) und ihren
 > DMs. Im Bild: `pcSurprise` und `npcSurprise` sind `0..1` (fehlen, bis gewürfelt ist). Der
@@ -210,7 +210,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-Überraschung als erster Wurf im Kampf (2026-11-08).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit

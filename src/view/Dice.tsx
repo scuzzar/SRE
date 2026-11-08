@@ -45,7 +45,10 @@ function wobble(seed: number, range: number): number {
   return Math.round((n - Math.floor(n)) * range * 2 - range);
 }
 
-function Die({ value, index, count, seed }: { value: number; index: number; count: number; seed: number }) {
+/** Ein weißer Würfel mit schwarzen Augen oder ein schwarzer mit weißen; ohne Angabe der goldene. */
+export type DieTone = 'white' | 'black';
+
+function Die({ value, index, count, seed, tone }: { value: number; index: number; count: number; seed: number; tone?: DieTone | undefined }) {
   const end = rest[value] ?? { x: 0, y: 0 };
   const s = seed * 2 + index;
   const tilt = wobble(s + 1, 14);
@@ -62,7 +65,7 @@ function Die({ value, index, count, seed }: { value: number; index: number; coun
   } as CSSProperties;
 
   return (
-    <div className="die" style={style}>
+    <div className={tone ? `die die-${tone}` : 'die'} style={style}>
       <div className="die-throw">
         <div className="die-cube">
           {[1, 2, 3, 4, 5, 6].map((face) => (
@@ -83,11 +86,11 @@ function Die({ value, index, count, seed }: { value: number; index: number; coun
  * Geworfene Würfel, einer oder mehrere; ab vier werden sie kleiner, damit sie nebeneinander passen. `landed` lässt sie sofort liegen (übersprungen) und leuchtet
  * auf; `seed` unterscheidet die Würfe.
  */
-export function DiceView({ dice, seed, landed, size = 'large' }: { dice: readonly number[]; seed: number; landed: boolean; size?: 'large' | 'small' }) {
+export function DiceView({ dice, seed, landed, size = 'large', tones }: { dice: readonly number[]; seed: number; landed: boolean; size?: 'large' | 'small'; tones?: readonly DieTone[] }) {
   return (
     <div className={`dice-stage ${dice.length > 3 ? 'small' : size}${landed ? ' landed' : ''}`} aria-hidden="true">
       {dice.map((value, i) => (
-        <Die key={i} value={value} index={i} count={dice.length} seed={seed} />
+        <Die key={i} value={value} index={i} count={dice.length} seed={seed} tone={tones?.[i]} />
       ))}
       <div className="dice-flash" />
     </div>

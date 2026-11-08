@@ -120,6 +120,9 @@ import {
   parryDm,
   strikeDm,
   surprisingOf,
+  needsSurprise,
+  surpriseParts,
+  type SurpriseDmPart,
   type RecoveryKind,
   type RecoveryOptions,
   type Strike,
@@ -480,6 +483,10 @@ export interface SimView {
   readonly bandDie: { readonly die: number; readonly sides: number } | undefined;
   readonly terrain: { readonly name: string; readonly dm: number } | undefined;
   readonly surprise: Side | undefined;
+  /** Die Überraschung ist noch nicht gewürfelt: Sie ist der erste Wurf im Kampf, vorher ist keiner am Zug. */
+  readonly needsSurprise: boolean;
+  /** Die DMs auf die Überraschung je Partei, einzeln, nach dem heutigen Stand. */
+  readonly surpriseParts: { readonly pcs: readonly SurpriseDmPart[]; readonly npcs: readonly SurpriseDmPart[] };
   /** Die Partei, deren Überraschung noch hält (bis zum Alarm, SR 20). */
   readonly surprising: Side | undefined;
   /** Die Runde, in der Alarm gegeben wurde. */
@@ -623,6 +630,8 @@ export interface CombatView {
   readonly worlds: readonly WorldChoice[];
   /** Die Übersicht der eben gewürfelten Begegnung steht im Vordergrund. */
   readonly intro: boolean;
+  /** Der eben gewürfelte Wurf auf die Überraschung steht im Vordergrund. */
+  readonly surpriseShown: boolean;
   /** Der Würfel der Anzahl für die nächste Begegnung: 6, 4 oder 3. */
   readonly quantityDie: number;
   /** Die Arten der Random Encounter List, zum Wählen. */
@@ -828,6 +837,8 @@ export interface ControllerState {
   readonly simWeakened: boolean | undefined;
   /** Die Übersicht einer eben gewürfelten Begegnung steht im Vordergrund. */
   readonly encounterIntro: boolean;
+  /** Der Wurf auf die Überraschung steht im Vordergrund. */
+  readonly surpriseShown: boolean;
   /** Der Charakter, dessen Details im Charakter-Screen aufgeklappt sind. */
   readonly opened: string | undefined;
   /** Die Leiste mit dem Charakter oben ist eingeklappt; das Gerät merkt es sich. */
@@ -1026,7 +1037,7 @@ function weaponName(id: string): string {
   return id === HANDS ? 'Hände' : weaponOf(id).name;
 }
 
-function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined, intro: boolean, simBurst: boolean | undefined, simWeakened: boolean | undefined): CombatView | undefined {
+function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined, intro: boolean, simBurst: boolean | undefined, simWeakened: boolean | undefined, surpriseShown = false): CombatView | undefined {
   const character = focusOf(campaign);
   if (!character) return undefined;
   const current = attack ?? {};
@@ -1096,6 +1107,7 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
     location: campaign.location,
     worlds: worldChoices(campaign.hexes),
     intro: intro && encounter !== undefined,
+    surpriseShown: surpriseShown && encounter !== undefined && !needsSurprise(encounter),
     quantityDie: quantityDieOf(campaign),
     encounterTypes: ref.encounters.types.map((t) => ({ roll: t.roll, name: t.name, quantity: t.quantity })),
     wounding: wounding && woundingView(campaign, wounding),
@@ -1203,6 +1215,8 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
     bandDie: bandDieView(encounter),
     terrain: ground && { name: ground.name, dm: ground.dm },
     surprise: surpriseOf(encounter),
+    needsSurprise: needsSurprise(encounter),
+    surpriseParts: surpriseParts(campaign, encounter),
     surprising: surprisingOf(encounter),
     alarm: encounter.alarm,
     first: firstSide(encounter),
@@ -1522,7 +1536,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     npcs: npcCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background, dead: c.dead })),
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
-    combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.simBurst, state.simWeakened),
+    combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.simBurst, state.simWeakened, state.surpriseShown),
     shop: shopView(campaign, state.shopError, state.wearOffer),
     location: campaign.location,
     result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : undefined,

@@ -266,7 +266,8 @@ Ein Verbot gilt ab dieser Stufe und für alle höheren.
 *SE 5, „Surprise“; SR 19–20, „Surprise“.* App: ✔ ✱ (Wurf und DMs ohne die beiden Tier-DMs; Überraschung
 bis zum Alarm; Ausweichen mit Überraschung ○)
 
-> ✱ App: Schalldämpfer und Vakuum gibt es noch nicht; still sind also nur die Laser. Als „nicht
+> ✱ App: Die Überraschung ist der erste Wurf im Kampf, eigens gewürfelt nach der Übersicht der
+> Begegnung (zwei Würfel, SC weiß, NSC schwarz, mit den DMs einzeln). Schalldämpfer und Vakuum gibt es noch nicht; still sind also nur die Laser. Als „nicht
 > angegriffener Kamerad“ zählt ein Kämpfer der überraschten Partei, der kämpfen kann und in der
 > Begegnung noch nicht Ziel eines Angriffs war. Der 9+-Wurf steht am Schadenswurf (`alarmDice`), die
 > Runde des Alarms an der Begegnung (`alarm`); siehe `domain-model.md`, *Kampfsimulation*.

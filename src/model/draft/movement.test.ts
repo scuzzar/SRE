@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createCampaign, currentEncounter, endTurn, fromCampaignFile, hasRun, moveSide, moveState, rollEncounter, setBand, setHexes, setLocation, toCampaignFile, turnOf, type Campaign, type Hex } from '..';
+import { createCampaign, currentEncounter, endTurn, fromCampaignFile, hasRun, moveSide, moveState, rollEncounter, rollSurprise, setBand, setHexes, setLocation, toCampaignFile, turnOf, type Campaign, type Hex } from '..';
 import { fixedClock, fixedRandom } from '../testing';
 import { turnAttack } from './attack';
 
@@ -18,7 +18,7 @@ const regina: Hex = {
 /** Zwei Thugs auf Band 5; die NSC sind zuerst dran. */
 function thugs(): Campaign {
   const there = setLocation(setHexes(createCampaign(), [regina]), '0207');
-  return setBand(rollEncounter(there, fixedRandom(1, 5), fixedClock(), undefined, 2).campaign, 5);
+  return setBand(rollSurprise(rollEncounter(there, fixedRandom(1, 5), fixedClock(), undefined, 2).campaign, fixedRandom()), 5);
 }
 
 const band = (c: Campaign) => currentEncounter(c)!.band;

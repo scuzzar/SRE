@@ -1,5 +1,6 @@
 import {
   addCharacter,
+  rollSurprise,
   alarmAfterAttack,
   logDamage as logDamageWithAlarm,
   appendLog,
@@ -126,7 +127,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, shopError: undefined, wearOffer: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, wearOffer: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
 
 export interface GameDependencies {
   readonly repository: CampaignRepository;
@@ -171,6 +172,7 @@ export class GameController {
       simBurst: undefined,
       simWeakened: undefined,
       encounterIntro: false,
+      surpriseShown: false,
       shopError: undefined,
       wearOffer: undefined,
       opened: undefined,
@@ -518,6 +520,19 @@ export class GameController {
    * Schließt die Übersicht der Begegnung; der Reiter bleibt. Nach dem Würfeln ist das der Reiter
    * Begegnung: Nicht jede Begegnung wird ein Kampf, dorthin geht es erst mit „Zum Kampf“.
    */
+  /** Der erste Wurf im Kampf: die Überraschung (S. 5). Danach ist der Erste am Zug; der Wurf steht im Vordergrund. */
+  rollSurprise(): void {
+    this.inFight(() => {
+      const prepared = this.prepareTurn(rollSurprise(this.campaign, this.deps.random), undefined);
+      this.change(prepared.campaign, { simTarget: prepared.simTarget, surpriseShown: true, combatNote: undefined });
+    });
+  }
+
+  /** Schließt den Wurf auf die Überraschung; der Kampf beginnt. */
+  closeSurprise(): void {
+    this.update({ surpriseShown: false });
+  }
+
   closeEncounterIntro(): void {
     this.update({ encounterIntro: false });
   }

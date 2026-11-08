@@ -1,6 +1,6 @@
 import { livingCharacters, type Campaign } from './campaign';
 import { DomainError } from './errors';
-import { currentEncounter, moveBand, type Encounter } from './encounter';
+import { currentEncounter, moveBand, needsSurprise, type Encounter } from './encounter';
 import { canFight, woundStateOf, type Combatant } from './wounds';
 
 /** Die beiden Parteien eines Kampfs: die SC und die NSC der Begegnung. */
@@ -72,6 +72,8 @@ export function defeatedSide(campaign: Campaign, encounter: Encounter): Side | u
 
 /** Wer in dieser Runde noch dran ist, in Zugreihenfolge; solange die Überraschung hält, nur deren Partei. */
 function waiting(campaign: Campaign, encounter: Encounter): readonly FightSlot[] {
+  // Vor dem Wurf auf die Überraschung ist keiner am Zug: Er ist der erste Wurf im Kampf.
+  if (needsSurprise(encounter)) return [];
   const surprise = surprisingOf(encounter);
   return fightOrder(campaign, encounter).filter(
     (s) => (surprise === undefined || s.side === surprise) && !encounter.acted.includes(s.id) && canFight(woundStateOf(campaign, s.who)),
@@ -83,7 +85,7 @@ function waiting(campaign: Campaign, encounter: Encounter): readonly FightSlot[]
  * weil der Letzte außerhalb seines Zugs übernommen oder ausgeblendet wurde), gilt schon die nächste.
  */
 export function fightState(campaign: Campaign, encounter: Encounter): Encounter {
-  if (defeatedSide(campaign, encounter) || waiting(campaign, encounter).length > 0) return encounter;
+  if (needsSurprise(encounter) || defeatedSide(campaign, encounter) || waiting(campaign, encounter).length > 0) return encounter;
   return nextRound(encounter);
 }
 

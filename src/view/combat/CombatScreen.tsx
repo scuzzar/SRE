@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { DiceRoll } from '../oracle/DiceRoll';
 import type { CombatView, HealingView, Snapshot } from '../../controller';
-import { EncounterIntro, FightScreen } from './FightScreen';
+import { EncounterIntro, FightScreen, SurpriseDialog } from './FightScreen';
 import { FireToggle } from './FireToggle';
 import { armorText, attackText, characteristicLabel, hex, partLabel, rangeMeters, rangeShort, rangeText, rangeTiny, signed } from '../format';
 import { CloseIcon } from '../icons';
@@ -50,6 +50,7 @@ export function CombatScreen({ view }: { view: Snapshot }) {
         </>
       )}
       {combat?.intro && combat.sim && <EncounterIntro sim={combat.sim} />}
+      {combat?.surpriseShown && combat.sim && !combat.intro && <SurpriseDialog sim={combat.sim} />}
       {combat?.wounding && <WoundingDialog key={`${combat.wounding.victim}-${combat.wounding.dice.join('-')}-${view.log.length}`} combat={combat} />}
       {combat && patient && healing && <HealDialog key={patient.npc ?? patient.pc ?? 'pc'} patient={patient} healing={healing} note={combat.note} onClose={() => setPatient(undefined)} />}
     </div>

@@ -769,8 +769,8 @@ Wounding ..> DamageRoll : on confirm
 Campaign "1" *-- "*" Encounter : encounters {ordered}
 Encounter "*" --> "1" EncounterType : of
 Encounter "*" --> "0..1" Terrain : terrain
-Encounter "1" *-$newArrow("2026-11-08")- "0..1" SurpriseRoll : pcSurprise
-Encounter "1" *-$newArrow("2026-11-08")- "0..1" SurpriseRoll : npcSurprise
+Encounter "1" *-- "0..1" SurpriseRoll : pcSurprise
+Encounter "1" *-- "0..1" SurpriseRoll : npcSurprise
 Encounter --> Side
 EncounterRange -[hidden]- Terrain
 RangeBand -[hidden]- EncounterRange
