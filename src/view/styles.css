@@ -1960,6 +1960,10 @@ button:disabled {
   color: var(--dim);
 }
 
+.odds-lines .now {
+  color: var(--text);
+}
+
 .generation-main .odds-lines {
   flex-direction: row;
   flex-wrap: wrap;

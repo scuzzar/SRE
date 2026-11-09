@@ -124,6 +124,11 @@ describe('Charaktererschaffung', () => {
     g = rollSkill(g, 'navy.service', fixedRandom(5)); // Blade Cbt
     expect(stateOf(g)).toMatchObject({ step: 'cascade', skillsLeft: 2 });
     expect(cascadeOptions(g).map((o) => o.skill)).toContain('cutlass');
+    // STR 7: Cutlass braucht 7 (sonst −2), ab 11 +2; Dagger ab 8 +2, Broadsword braucht 8 (sonst −4).
+    const fit = (skill: string) => cascadeOptions(g).find((o) => o.skill === skill)!.characteristic;
+    expect(fit('cutlass')).toEqual({ characteristic: 'STR', value: 7, required: 7, requiredDm: -2, advantageous: 11, advantageousDm: 2, dm: 0 });
+    expect(fit('dagger')).toMatchObject({ advantageous: 8, dm: 0 });
+    expect(fit('broadsword')).toMatchObject({ required: 8, dm: -4 });
     expect(() => rollSkill(g, 'navy.service', fixedRandom(1))).toThrow();
     g = chooseCascade(g, 'cutlass');
     expect(g.career.rolls.at(-1)).toMatchObject({ kind: 'skill', gained: 'navy.service.5', chosen: 'cutlass' });
@@ -268,6 +273,7 @@ describe('Charaktererschaffung', () => {
     const back = fromCampaignFile(toCampaignFile(campaign), 'k9');
     expect(back.generation).toEqual(g);
     expect(stateOf(back.generation!).step).toBe('cascade');
+    expect(cascadeOptions(g).every((o) => o.characteristic === undefined)).toBe(true); // Fahrzeuge haben kein Attribut
     const broken = toCampaignFile(campaign).replace('"other.service.1"', '"other.service.2"');
     expect(() => fromCampaignFile(broken, 'k9')).toThrow(/Zeile passt nicht/);
   });

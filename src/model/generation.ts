@@ -14,6 +14,7 @@ import {
   type CareerState,
   type ThrowCondition,
 } from './career';
+import { weaponCharacteristic, type WeaponCharacteristic } from './combat';
 import { DomainError } from './errors';
 import type { Random } from './ports';
 import { cascadeOf, ref, serviceOf, skillOf, weaponFor, type Service, type Table, type Throw } from './reference';
@@ -78,18 +79,34 @@ export function tableOptions(state: CareerState): readonly { readonly table: Tab
   return (state.service?.skills ?? []).map((table) => ({ table, available: table.minEdu === undefined || state.upp.edu >= table.minEdu }));
 }
 
+/** Eine Wahl aus der offenen Kaskade. */
+export interface CascadeOption {
+  readonly skill: string;
+  /** Bei einer Waffe aus der Abmusterung der Gegenstand; `undefined`, wenn es die Fertigkeit +1 gibt. */
+  readonly item: string | undefined;
+  /** Nutzt eine Waffe die Fertigkeit (Blade und Gun Combat): ihr nötiges und vorteilhaftes Attribut, gemessen am UPP jetzt. */
+  readonly characteristic: WeaponCharacteristic | undefined;
+}
+
 /**
  * Was die offene Kaskade anbietet. Bei einer Waffe aus der Abmusterung: der Gegenstand, oder +1 in
  * der Fertigkeit, wenn man diese Waffe schon aus der Abmusterung hat.
  */
-export function cascadeOptions(generation: Generation): readonly { readonly skill: string; readonly item: string | undefined }[] {
+export function cascadeOptions(generation: Generation): readonly CascadeOption[] {
   const state = stateOf(generation);
   if (!state.cascade) return [];
   const { cascade, weapon } = state.cascade;
   const earlier = new Set(
     generation.career.rolls.flatMap((r) => (r.kind === 'benefit' && r.chosen !== undefined ? [r.chosen] : [])),
   );
-  return cascade.options.map((skill) => ({ skill, item: weapon && !earlier.has(skill) ? weaponFor(skill).id : undefined }));
+  return cascade.options.map((skill) => {
+    const used = ref.weapons.find((w) => w.uses === skill);
+    return {
+      skill,
+      item: weapon && !earlier.has(skill) ? weaponFor(skill).id : undefined,
+      characteristic: used && weaponCharacteristic(used, state.upp),
+    };
+  });
 }
 
 /** DM auf Geld (Gambling) und auf Sachwerte (ab Rang 5). */
