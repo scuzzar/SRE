@@ -51,6 +51,25 @@ export function characteristicAttackDm(weapon: Weapon, value: number): number {
   return 0;
 }
 
+/** Das Attribut zu einer Waffe: nötiger und vorteilhafter Wert mit ihren DMs, der jetzige Wert und der DM, den er gibt. */
+export interface WeaponCharacteristic {
+  readonly characteristic: Characteristic;
+  readonly value: number;
+  readonly required: number;
+  readonly requiredDm: number;
+  readonly advantageous: number;
+  readonly advantageousDm: number;
+  readonly dm: number;
+}
+
+/** Wie ein UPP zu einer Waffe steht: STR bei Schlägen und Hieben, DEX bei Schüssen. */
+export function weaponCharacteristic(weapon: Weapon, upp: Upp): WeaponCharacteristic {
+  const characteristic = attackCharacteristic(weapon);
+  const value = valueOf(upp, characteristic);
+  const { required, requiredDm, advantageous, advantageousDm } = weapon;
+  return { characteristic, value, required, requiredDm, advantageous, advantageousDm, dm: characteristicAttackDm(weapon, value) };
+}
+
 /** Die Fertigkeitsstufe des Charakters in der Fertigkeit der Waffe; ohne zählt Stufe 0. */
 export function weaponSkill(character: Character, weapon: Weapon): SkillLevel | undefined {
   return activeSkills(character).find((s) => s.of === weapon.uses);

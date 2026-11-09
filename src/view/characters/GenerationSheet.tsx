@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import type { CareerLine, GenerationAction, GenerationView, LogItem, OddsChoice } from '../../controller';
-import type { RollKind, ThrowOdds } from '../../model';
+import type { RollKind, ThrowOdds, WeaponCharacteristic } from '../../model';
 import { DicePairView, DiceView, THROW_MS, useTimeline } from '../Dice';
 import { characteristicLabel, credits, hex, resultLine, signed, withLevel } from '../format';
 import { useGame } from '../game-context';
@@ -433,7 +433,29 @@ function OddsLines({ odds }: { odds: ThrowOdds }) {
   );
 }
 
-/** Die Knöpfe für den nächsten Schritt. */
+/**
+ * Wie das Attribut zu einer Waffe steht: ab dem nötigen Wert kein Malus mehr, ab dem vorteilhaften
+ * der Bonus (hervorgehoben, wenn erreicht), zuletzt der DM mit dem Wert jetzt.
+ */
+function WeaponLines({ fit }: { fit: WeaponCharacteristic }) {
+  const { characteristic: c, value } = fit;
+  return (
+    <span className="odds-lines">
+      <span className={value >= fit.required ? 'met' : 'unmet'}>
+        {c} {fit.required}+ sonst {signed(fit.requiredDm)}
+        {value >= fit.required ? ' ✓' : ''}
+      </span>
+      <span className={value >= fit.advantageous ? 'met' : 'unmet'}>
+        {c} {fit.advantageous}+ → {signed(fit.advantageousDm)}
+        {value >= fit.advantageous ? ' ✓' : ''}
+      </span>
+      <span className="now">
+        {c} {value}: {signed(fit.dm)}
+      </span>
+    </span>
+  );
+}
+
 /**
  * Die Knöpfe für den nächsten Schritt. Während ein Wurf rollt, sind sie nicht gesperrt: Ein Tippen
  * überspringt dann die Animation (das fängt die Erschaffung ab). Lange drücken auf einen Würfelknopf
@@ -496,6 +518,7 @@ function Actions({ action, disabled, onRun }: { action: GenerationAction; disabl
             <button key={o.skill} type="button" aria-disabled={disabled || undefined} onClick={() => game.chooseCascade(o.skill)}>
               <strong>{o.item ?? o.name}</strong>
               <span className="small-label">{o.item ? 'Waffe' : '+1'}</span>
+              {o.characteristic && <WeaponLines fit={o.characteristic} />}
             </button>
           ))}
         </div>

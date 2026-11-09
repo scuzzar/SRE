@@ -39,6 +39,7 @@ import {
   type Hex,
   type Item,
   type ThrowOdds,
+  type WeaponCharacteristic,
 } from '../model';
 
 /** Eine Zeile im Lebenslauf: ein Wurf mit dem, was er bewirkt hat. */
@@ -69,7 +70,12 @@ export type GenerationAction =
       /** Die Tabellen der Laufbahn mit ihren Zeilen, je Zeile was sie bringt („+1 STR“, „Blade Combat“). */
       readonly options: readonly { readonly id: string; readonly name: string; readonly available: boolean; readonly rows: readonly string[] }[];
     }
-  | { readonly kind: 'cascade'; readonly name: string; readonly options: readonly { readonly skill: string; readonly name: string; readonly item: string | undefined }[] }
+  | {
+      readonly kind: 'cascade';
+      readonly name: string;
+      /** Bei Blade und Gun Combat je Waffe das nötige und vorteilhafte Attribut, gemessen am UPP jetzt. */
+      readonly options: readonly { readonly skill: string; readonly name: string; readonly item: string | undefined; readonly characteristic: WeaponCharacteristic | undefined }[];
+    }
   | { readonly kind: 'reenlist'; readonly odds: ThrowOdds; readonly last: boolean }
   | {
       readonly kind: 'muster';
@@ -368,7 +374,12 @@ export function generationView(generation: Generation, hexes: readonly Hex[], er
       action = {
         kind: 'cascade',
         name: cascade.cascade.name,
-        options: cascadeOptions(generation).map((o) => ({ skill: o.skill, name: skillOf(o.skill).name, item: o.item && itemLabel(itemOf(o.item)) })),
+        options: cascadeOptions(generation).map((o) => ({
+          skill: o.skill,
+          name: skillOf(o.skill).name,
+          item: o.item && itemLabel(itemOf(o.item)),
+          characteristic: o.characteristic,
+        })),
       };
       break;
     }

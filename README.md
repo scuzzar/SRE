@@ -77,7 +77,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. Eine Des
   1. Die sechs Attribute, jedes mit eigenem 2W6-Wurf.
   2. **Heimatwelt:** eine fertige Welt aus der Liste, oder „Auf der Karte wählen“: Dort wählt man eine Welt oder ein freies Feld, würfelt das Vorkommen und erschafft die Welt; ist sie benannt, ist sie die Heimatwelt.
   3. **Welche Laufbahn?** Navy, Marines, Army, Scouts, Merchants oder Other, jede mit Zielwert und DM; misslingt die Musterung, bestimmt die Einberufung (1W6) die Laufbahn.
-  4. Je Term zuerst **auf welcher Welt?** (gleiche Wahl wie bei der Heimatwelt, dazu „Wie zuletzt“), dann Überleben (misslingt es, ist der Charakter tot), Offizierspatent und Beförderung, dann je Fertigkeit **welche Tabelle?** (Personal Development, Service Skills, Advanced Education, mit EDU 8+ auch die vierte). Blade Combat, Gun Combat und Vehicle fragen nach der genauen Fertigkeit.
+  4. Je Term zuerst **auf welcher Welt?** (gleiche Wahl wie bei der Heimatwelt, dazu „Wie zuletzt“), dann Überleben (misslingt es, ist der Charakter tot), Offizierspatent und Beförderung, dann je Fertigkeit **welche Tabelle?** (Personal Development, Service Skills, Advanced Education, mit EDU 8+ auch die vierte). Blade Combat, Gun Combat und Vehicle fragen nach der genauen Fertigkeit; bei Blade und Gun Combat zeigt jede Waffe, ab welcher STR bzw. DEX ihr Malus wegfällt (Cutlass: STR 7+, sonst −2), ab welcher es ihren Bonus gibt (STR 11+ → +2) und welchen DM der Charakter jetzt damit hätte.
   5. Ab dem 4. Term das Altern.
   6. **Weiterverpflichten?** Gewürfelt wird immer; eine 12 heißt bleiben, nach 7 Terms geht es nur mit 12 weiter.
   7. Abmusterung: je Wurf **Geld oder Sachwerte**; Waffen wählt man, eine zweite gleiche wird zur Fertigkeit.
