@@ -68,6 +68,7 @@ import {
   muster,
   reenlist,
   rollDice,
+  rollPatron,
   writeNote,
   rollNext,
   rollSkill,
@@ -312,6 +313,11 @@ export class GameController {
 
   rollDice(): void {
     this.change(appendLog(this.campaign, rollDice(this.deps.random, this.deps.clock)));
+  }
+
+  /** Ein Patron-Wurf auf Liste 1 oder 2 (SE, Charts S. 20), mit den DMs der lebenden SC; er kommt in den Log. */
+  rollPatron(list: number): void {
+    this.change(appendLog(this.campaign, rollPatron(this.campaign, list, this.deps.random, this.deps.clock)));
   }
 
   /** Eine Notiz, oder mit `interprets` (Stelle eines Ergebnisses im Log) eine Deutung dazu. */

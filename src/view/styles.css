@@ -4475,6 +4475,37 @@ button:disabled {
   min-height: 52px;
 }
 
+/* Der kleine Bereich Patron unter der Begegnung: eigene Linie, knapp. */
+.patron {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+}
+
+.patron-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.patron-lists {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.patron-dms,
+.patron-last {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.patron-last strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
 /* Brachte der Wurf keine Begegnung, steht das deutlich über den Knöpfen, nicht als graue Fußnote. */
 .encounter-note {
   margin: 0;

@@ -57,6 +57,10 @@ import {
   stateOf,
   sum,
   totalOf,
+  patronDmParts,
+  patronLists,
+  patronOfRoll,
+  patronRollOf,
   valueOf,
   entryOf,
   itemOf,
@@ -205,6 +209,8 @@ export interface Snapshot {
   readonly task: TaskView | undefined;
   /** Der Reiter Kampf für den Charakter oben; fehlt, wenn es keinen Lebenden gibt. */
   readonly combat: CombatView | undefined;
+  /** Der Bereich Patron im Reiter Begegnung; fehlt nur ohne Kampagne. */
+  readonly patron: PatronView | undefined;
   /** Der Reiter Shop: Kasse und Angebot auf dem Aufenthaltsort. */
   readonly shop: ShopView | undefined;
   /** Der Aufenthaltsort der Gruppe, als Feld (0304). */
@@ -273,7 +279,26 @@ export interface OddsChoice {
   readonly selected: boolean;
 }
 
-export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | NoteItem;
+export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | NoteItem;
+
+/** Ein Patron-Wurf: Liste, Würfel mit DMs, der Wurf 11–66 und die Zeile der Liste. */
+export interface PatronItem {
+  readonly kind: 'patron';
+  readonly at: string;
+  readonly list: number;
+  readonly dice: Dice;
+  readonly dms: readonly [number, number];
+  readonly roll: number;
+  readonly name: string;
+  /** Kein Patron, sondern ein Gerücht. */
+  readonly rumor: boolean;
+}
+
+/** Der Bereich Patron im Reiter Begegnung: je Liste die DMs der lebenden SC, dazu der letzte Patron-Wurf im Log. */
+export interface PatronView {
+  readonly lists: readonly { readonly list: number; readonly parts: readonly { readonly die: 0 | 1; readonly label: string; readonly dm: number }[] }[];
+  readonly last: PatronItem | undefined;
+}
 
 /** Eine Notiz, oder mit `interprets` eine Deutung zum Ergebnis an dieser Stelle des Logs. */
 export interface NoteItem {
@@ -1602,6 +1627,10 @@ function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
     case 'recovery': {
       return { kind: 'recovery', at: entry.at, how: entry.how, patient: nameOf(campaign, entry.for), healer: entry.by === undefined ? undefined : characterOf(campaign, entry.by).name, days: daysOf(entry) };
     }
+    case 'patron': {
+      const patron = patronOfRoll(entry);
+      return { kind: 'patron', at: entry.at, list: entry.list, dice: entry.dice, dms: entry.dms, roll: patronRollOf(entry), name: patron.name, rumor: patron.rumor };
+    }
     case 'note':
       return { kind: 'note', at: entry.at, text: entry.text, interprets: entry.interprets };
   }
@@ -1687,7 +1716,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: [], retired: [], task: undefined, combat: undefined, shop: undefined, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: [], retired: [], task: undefined, combat: undefined, patron: undefined, shop: undefined, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -1709,6 +1738,10 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
     combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.simBurst, state.simWeakened, state.surpriseShown),
+    patron: {
+      lists: patronLists.map((list) => ({ list, parts: patronDmParts(campaign, list) })),
+      last: log.findLast((item): item is PatronItem => item.kind === 'patron'),
+    },
     shop: shopView(campaign, state.shopError, state.wearOffer),
     location: campaign.location,
     result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : undefined,

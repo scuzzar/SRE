@@ -142,3 +142,17 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
   await expect(page.getByRole('button', { name: 'Begegnung würfeln' })).toBeVisible();
 });
+
+test('Patron: im Reiter Begegnung unter der Begegnung Liste wählen und würfeln; der Wurf steht im Log', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
+  const patron = page.getByRole('region', { name: 'Patron' });
+  // Jonas Reyl hat Admin-1: Auf Liste 2 gibt das +1 auf den zweiten Würfel.
+  await patron.getByRole('radio', { name: 'Liste 2' }).click();
+  await expect(patron).toContainText('2. Würfel Admin +1');
+  await patron.getByRole('button', { name: 'Patron würfeln' }).click();
+  await expect(patron.getByRole('status')).toContainText(/Liste 2 · \d \+ \d \(DM ±0, \+1\) → \d\d/);
+  // Der Wurf liegt im Log als Ergebnis.
+  await page.getByRole('navigation').getByRole('button', { name: 'Orakel' }).click();
+  await expect(page.getByText('Patron · Liste 2')).toBeVisible();
+});

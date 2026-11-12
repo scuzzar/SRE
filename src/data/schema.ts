@@ -150,6 +150,14 @@ export const EncounterTypeSchema = z.object({
   military: z.boolean(),
 });
 
+/** Eine Zeile einer der beiden Patron-Listen (SE, Charts S. 20); `rumor`: kein Patron, sondern ein Gerücht. */
+export const PatronSchema = z.object({
+  list: z.union([z.literal(1), z.literal(2)]),
+  roll: z.number().int().min(11).max(66),
+  name: z.string().min(1),
+  rumor: z.boolean(),
+});
+
 /** Die Begegnungen und die Reactions-Tabelle (S. 21). */
 export const EncountersSchema = z.object({
   types: z.array(EncounterTypeSchema).min(1),
@@ -162,6 +170,10 @@ export const EncountersSchema = z.object({
   bands: z
     .array(z.object({ range: RangeSchema, from: z.number().int().min(0).max(20), to: z.number().int().min(0).max(20) }))
     .refine((bands) => bands.length === ranges.length && bands.every((b, i) => b.range === ranges[i] && b.from <= b.to), 'Die Range Bands stehen nicht je Reichweite in der Reihenfolge der Matrix'),
+  /** Die beiden Patron-Listen der Patron Encounters Matrix: je 36 Zeilen, 11 bis 66. */
+  patrons: z
+    .array(PatronSchema)
+    .refine((patrons) => [1, 2].every((list) => [1, 2, 3, 4, 5, 6].every((a) => [1, 2, 3, 4, 5, 6].every((b) => patrons.filter((p) => p.list === list && p.roll === a * 10 + b).length === 1))) && patrons.length === 72, 'Jede Patron-Liste hat genau eine Zeile je Wurf 11 bis 66'),
 });
 
 /** Ein Sammelbegriff, aus dem man eine Fertigkeit wählt: Blade Combat, Gun Combat, Vehicle. */
@@ -466,6 +478,7 @@ export type Range = z.infer<typeof RangeSchema>;
 export type AttackKind = z.infer<typeof AttackKindSchema>;
 export type Weapon = z.infer<typeof WeaponSchema>;
 export type EncounterType = z.infer<typeof EncounterTypeSchema>;
+export type Patron = z.infer<typeof PatronSchema>;
 export type ArmorDm = z.infer<typeof ArmorDmSchema>;
 export type RangeDm = z.infer<typeof RangeDmSchema>;
 export type Cascade = z.infer<typeof CascadeSchema>;

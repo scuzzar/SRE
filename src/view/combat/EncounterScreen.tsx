@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { CombatView, SimView, Snapshot } from '../../controller';
-import { signed } from '../format';
+import type { CombatView, PatronView, SimView, Snapshot } from '../../controller';
+import { patronDetail, patronName, signed } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { distancesText, EncounterIntro } from './FightScreen';
@@ -9,17 +9,18 @@ import { distancesText, EncounterIntro } from './FightScreen';
  * Der Reiter Begegnung. Ohne laufende Begegnung: wo die Gruppe ist, das Gelände und Begegnung würfeln
  * oder wählen; danach zeigt die Übersicht, wer kommt, und „Weiter“ führt zurück hierher. Läuft eine
  * Begegnung, zeigt er sie knapp, mit Zum Kampf, Übersicht und Beenden: Nicht jede Begegnung wird ein
- * Kampf, man kann sie auch anders lösen und beenden.
+ * Kampf, man kann sie auch anders lösen und beenden. Darunter steht immer der kleine Bereich Patron.
  */
 export function EncounterScreen({ view }: { view: Snapshot }) {
   const combat = view.combat;
   return (
     <div className="screen">
       {combat && !combat.sim ? (
-        <EncounterStart combat={combat} />
+        <EncounterStart combat={combat} patron={view.patron} />
       ) : (
         <section className="scroll encounter-scroll" aria-label="Begegnung">
           {!combat ? <p className="log-empty">Ohne lebenden Charakter gibt es keine Begegnung.</p> : combat.sim && <RunningEncounter sim={combat.sim} />}
+          {view.patron && <PatronBox patron={view.patron} />}
         </section>
       )}
       {combat?.intro && combat.sim && <EncounterIntro sim={combat.sim} />}
@@ -64,7 +65,7 @@ function RunningEncounter({ sim }: { sim: SimView }) {
  * Kampagne; danach beginnt die Kampfsimulation. Die Einstellungen stehen oben, Würfeln und Wählen unten
  * im Daumenbereich wie im Orakel; darüber steht deutlich, wenn der Wurf keine Begegnung brachte.
  */
-function EncounterStart({ combat }: { combat: CombatView }) {
+function EncounterStart({ combat, patron }: { combat: CombatView; patron: PatronView | undefined }) {
   const game = useGame();
   // Das Gelände gilt erst beim Würfeln; bis dahin hält es nur die View.
   const [terrain, setTerrain] = useState('');
@@ -122,8 +123,51 @@ function EncounterStart({ combat }: { combat: CombatView }) {
             ))}
           </select>
         </div>
+        {patron && <PatronBox patron={patron} />}
       </div>
     </>
+  );
+}
+
+/**
+ * Der Bereich Patron (SE, Charts S. 20): Liste 1 oder 2 wählen und würfeln; die DMs der lebenden SC
+ * stehen dabei, der Wurf kommt in den Log und der letzte steht hier. Unabhängig von der Begegnung.
+ */
+function PatronBox({ patron }: { patron: PatronView }) {
+  const game = useGame();
+  // Die Liste gilt erst beim Würfeln; bis dahin hält sie nur die View.
+  const [list, setList] = useState(1);
+  const parts = patron.lists.find((l) => l.list === list)?.parts ?? [];
+  const last = patron.last;
+  return (
+    <section className="patron" aria-label="Patron">
+      <span className="kicker">Patron</span>
+      <div className="patron-row">
+        <div className="segmented patron-lists" role="radiogroup" aria-label="Patron-Liste">
+          {patron.lists.map((l) => (
+            <button key={l.list} type="button" role="radio" aria-checked={list === l.list} onClick={() => setList(l.list)}>
+              Liste {l.list}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="ghost"
+          onClick={() => {
+            haptic('shake');
+            game.rollPatron(list);
+          }}
+        >
+          Patron würfeln
+        </button>
+      </div>
+      <p className="patron-dms">{parts.length === 0 ? 'Keine DMs' : parts.map((p) => `${p.die === 0 ? '1.' : '2.'} Würfel ${p.label} ${signed(p.dm)}`).join(' · ')}</p>
+      {last && (
+        <p className="patron-last" role="status">
+          <strong>{patronName(last)}</strong> <span>{patronDetail(last)}</span>
+        </p>
+      )}
+    </section>
   );
 }
 
