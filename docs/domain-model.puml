@@ -208,6 +208,9 @@ hide <<value>> stereotype
     dice: number[2]
     dms: number[2]
   }
+  class RumorRoll $begegnung $newClass("2026-11-12b") {
+    dice: number[2]
+  }
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Card <<transient>> $karte {
@@ -383,6 +386,12 @@ hide <<value>> stereotype
     roll: number
     name: string
     rumor: boolean
+  }
+  class Rumor <<reference>> $begegnung $newClass("2026-11-12b") {
+    letter: string
+    text: string
+    general: boolean
+    rolls: number[1..*]
   }
 
 ' Referenzdaten
@@ -741,6 +750,8 @@ Recovery --> RecoveryKind
 LogEntry <|-- Note
 LogEntry <|-- PatronRoll
 PatronRoll "*" --> "1" Patron : of
+LogEntry <|-$newArrow("2026-11-12b")- RumorRoll
+RumorRoll "*" -$newArrow("2026-11-12b")-> "1" Rumor : /of
 Note "*" --> "0..1" LogEntry : interprets
 CardPick "1" *-- "*" PickedItem : items {ordered}
 CardPick "1" *-- "0..1" MapIcon : map

@@ -19,11 +19,11 @@ export function EncounterScreen({ view }: { view: Snapshot }) {
     <div className="screen">
       <section className="scroll encounter-scroll" aria-label="Begegnung">
         {combat && <LocationPick combat={combat} />}
-        <EncounterKind title="Zufallsbegegnung" rule="Personen nach der Random Encounter List (S. 21)">
+        <EncounterKind title="Zufallsbegegnung" rule="Personen nach der Random Encounter List (S. 21) · täglich, Test 5+ auf 1W6">
           {!combat ? <p className="log-empty">Ohne lebenden Charakter gibt es keine Begegnung.</p> : combat.sim ? <RunningEncounter sim={combat.sim} /> : <EncounterStart combat={combat} />}
         </EncounterKind>
         {view.patron && (
-          <EncounterKind title="Patron" rule="Auftraggeber nach der Patron Encounters Matrix (S. 20)">
+          <EncounterKind title="Patron" rule="Auftraggeber nach der Patron Encounters Matrix (S. 20) · wöchentlich, Test 5+ auf 1W6, die Liste wählt ein Würfel">
             <PatronBox patron={view.patron} />
           </EncounterKind>
         )}
@@ -142,43 +142,39 @@ function EncounterStart({ combat }: { combat: CombatView }) {
 }
 
 /**
- * Die Begegnungsart Patron (SE, Charts S. 20): Liste 1 oder 2 wählen und würfeln; die DMs der lebenden
- * SC stehen dabei, der Wurf kommt in den Log und der letzte steht hier. Unabhängig von der
- * Zufallsbegegnung.
+ * Die Begegnungsart Patron (SE, Charts S. 20): Würfeln testet erst, ob es einen gibt, wählt dann die
+ * Liste und würfelt den Patron. Die DMs der lebenden SC stehen dabei, der Wurf kommt in den Log und
+ * der letzte steht hier. Unabhängig von der Zufallsbegegnung.
  */
 function PatronBox({ patron }: { patron: PatronView }) {
   const game = useGame();
-  // Die Liste gilt erst beim Würfeln; bis dahin hält sie nur die View.
-  const [list, setList] = useState(1);
-  const parts = patron.lists.find((l) => l.list === list)?.parts ?? [];
   const last = patron.last;
+  const dms = patron.lists.filter((l) => l.parts.length > 0);
   return (
     <>
-      <div className="patron-row">
-        <div className="segmented patron-lists" role="radiogroup" aria-label="Patron-Liste">
-          {patron.lists.map((l) => (
-            <button key={l.list} type="button" role="radio" aria-checked={list === l.list} onClick={() => setList(l.list)}>
-              Liste {l.list}
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          className="ghost"
-          onClick={() => {
-            haptic('shake');
-            game.rollPatron(list);
-          }}
-        >
-          Patron würfeln
-        </button>
-      </div>
-      <p className="patron-dms">{parts.length === 0 ? 'Keine DMs' : parts.map((p) => `${p.die === 0 ? '1.' : '2.'} Würfel ${p.label} ${signed(p.dm)}`).join(' · ')}</p>
-      {last && (
-        <p className="patron-last" role="status">
-          <strong>{patronName(last)}</strong> <span>{patronDetail(last)}</span>
+      <p className="patron-dms">
+        {dms.length === 0 ? 'Keine DMs' : dms.map((l) => `Liste ${l.list}: ${l.parts.map((p) => `${p.die === 0 ? '1.' : '2.'} Würfel ${p.label} ${signed(p.dm)}`).join(', ')}`).join(' · ')}
+      </p>
+      {patron.note && (
+        <p className="encounter-note" role="status">
+          {patron.note}
         </p>
       )}
+      {last && (
+        <p className="patron-last">
+          Zuletzt: <strong>{patronName(last)}</strong> <span>{patronDetail(last)}</span>
+        </p>
+      )}
+      <button
+        type="button"
+        className="primary encounter-roll"
+        onClick={() => {
+          haptic('shake');
+          game.rollPatron();
+        }}
+      >
+        Patron würfeln
+      </button>
     </>
   );
 }
@@ -210,4 +206,3 @@ function LocationPick({ combat }: { combat: CombatView }) {
     </label>
   );
 }
-

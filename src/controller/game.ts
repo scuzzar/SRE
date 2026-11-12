@@ -69,6 +69,10 @@ import {
   reenlist,
   rollDice,
   rollPatron,
+  rollEncounterCheck,
+  rollPatronList,
+  patronOfRoll,
+  type EncounterCheck,
   writeNote,
   rollNext,
   rollSkill,
@@ -132,7 +136,13 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, wearOffer: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, patronNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, wearOffer: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+
+/** Ein Test in Worten: „Test 3 (5+ nötig)“, bei zwei Würfeln „Test 3 + 4 = 7 (7+ nötig)“. */
+function checkText(check: EncounterCheck): string {
+  const thrown = check.dice.length === 1 ? String(check.total) : `${check.dice.join(' + ')} = ${check.total}`;
+  return `Test ${thrown} (${check.target}+ nötig)`;
+}
 
 export interface GameDependencies {
   readonly repository: CampaignRepository;
@@ -173,6 +183,7 @@ export class GameController {
       attack: undefined,
       wounding: undefined,
       combatNote: undefined,
+      patronNote: undefined,
       simTarget: undefined,
       simBurst: undefined,
       simWeakened: undefined,
@@ -315,9 +326,19 @@ export class GameController {
     this.change(appendLog(this.campaign, rollDice(this.deps.random, this.deps.clock)));
   }
 
-  /** Ein Patron-Wurf auf Liste 1 oder 2 (SE, Charts S. 20), mit den DMs der lebenden SC; er kommt in den Log. */
-  rollPatron(list: number): void {
-    this.change(appendLog(this.campaign, rollPatron(this.campaign, list, this.deps.random, this.deps.clock)));
+  /**
+   * Der Patron (SE, Charts S. 20): erst der Test der Woche (5+ auf 1W6). Besteht er, wählt ein Würfel
+   * die Liste, dann kommt der Patron-Wurf mit den DMs der lebenden SC in den Log. Der Test steht nur
+   * in der Karte, er wird nicht gespeichert.
+   */
+  rollPatron(): void {
+    const check = rollEncounterCheck('patron', this.deps.random);
+    if (!check.passed) {
+      this.update({ patronNote: `${checkText(check)}: diese Woche kein Patron.` });
+      return;
+    }
+    const entry = rollPatron(this.campaign, rollPatronList(this.deps.random), this.deps.random, this.deps.clock);
+    this.change(appendLog(this.campaign, entry), { patronNote: `${checkText(check)}: ${patronOfRoll(entry).rumor ? 'ein Gerücht statt eines Patrons' : 'ein Patron'}.` });
   }
 
   /** Eine Notiz, oder mit `interprets` (Stelle eines Ergebnisses im Log) eine Deutung dazu. */
@@ -512,13 +533,19 @@ export class GameController {
    */
   rollEncounter(roll?: number, terrain?: string): void {
     try {
+      // Erst der Test des Tages (5+ auf 1W6); wer die Art wählt, überspringt ihn.
+      const check = roll === undefined && this.campaign.location !== undefined && !currentEncounter(this.campaign) ? rollEncounterCheck('random', this.deps.random) : undefined;
+      if (check && !check.passed) {
+        this.update({ combatNote: `${checkText(check)}: heute keine Begegnung.` });
+        return;
+      }
       const rolled = rollEncounter(this.campaign, this.deps.random, this.deps.clock, roll, undefined, terrain);
       const prepared = rolled.encounter ? this.prepareTurn(rolled.campaign, undefined) : { campaign: rolled.campaign, simTarget: undefined };
       this.change(prepared.campaign, {
         attack: undefined,
         simTarget: prepared.simTarget,
         encounterIntro: rolled.encounter !== undefined,
-        combatNote: rolled.encounter ? undefined : `Wurf ${rolled.roll}: keine Begegnung.`,
+        combatNote: rolled.encounter ? undefined : `${check ? `${checkText(check)}, ` : ''}Wurf ${rolled.roll}: keine Begegnung.`,
       });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;

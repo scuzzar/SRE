@@ -481,9 +481,39 @@ describe('Begegnung und Kampfsimulation', () => {
     const { game } = await started(fixedRandom(), memoryRepository(createCampaign()));
     expect(game.snapshot().combat).toMatchObject({ canEncounter: false, sim: undefined });
     const { game: there, random } = await onRegina();
-    random.queue.push(6, 3);
+    random.queue.push(5, 6, 3);
     there.rollEncounter();
-    expect(there.snapshot().combat).toMatchObject({ sim: undefined, note: 'Wurf 63: keine Begegnung.' });
+    expect(there.snapshot().combat).toMatchObject({ sim: undefined, note: 'Test 5 (5+ nötig), Wurf 63: keine Begegnung.' });
+  });
+
+  it('vor der Zufallsbegegnung steht der Test des Tages: unter 5 auf 1W6 gibt es keine; wer die Art wählt, überspringt ihn', async () => {
+    const { game, random } = await onRegina();
+    random.queue.push(4);
+    game.rollEncounter();
+    expect(game.snapshot().combat).toMatchObject({ sim: undefined, note: 'Test 4 (5+ nötig): heute keine Begegnung.' });
+    random.queue.push(6, 1, 5);
+    game.rollEncounter();
+    expect(game.snapshot().combat?.sim).toMatchObject({ roll: 15, name: 'Thugs' });
+    game.endEncounter();
+    game.rollEncounter(15);
+    expect(game.snapshot().combat?.sim).toMatchObject({ roll: 15 });
+  });
+
+  it('Patron: erst der Test der Woche, dann wählt ein Würfel die Liste, dann der Wurf; nur der Wurf steht im Log', async () => {
+    const { game, random } = await onRegina();
+    random.queue.push(4);
+    game.rollPatron();
+    expect(game.snapshot().patron).toMatchObject({ last: undefined, note: 'Test 4 (5+ nötig): diese Woche kein Patron.' });
+    expect(game.snapshot().log).toHaveLength(0);
+    // Test 5, Listenwürfel 4 (Liste zwei), dann 3 und 6; Jonas' Admin-1 gibt +1 auf den zweiten Würfel.
+    random.queue.push(5, 4, 3, 6);
+    game.rollPatron();
+    expect(game.snapshot().patron).toMatchObject({ last: { list: 2, dice: [3, 6], dms: [0, 1], roll: 36, name: 'Professor' }, note: 'Test 5 (5+ nötig): ein Patron.' });
+    // Test 6, Listenwürfel 1 (Liste eins), 2 und 3: Zeile 23 ist ein Gerücht.
+    random.queue.push(6, 1, 2, 3);
+    game.rollPatron();
+    expect(game.snapshot().patron).toMatchObject({ last: { list: 1, roll: 23, rumor: true }, note: 'Test 6 (5+ nötig): ein Gerücht statt eines Patrons.' });
+    expect(game.snapshot().log.map((e) => e.kind)).toEqual(['patron', 'patron']);
   });
 
   it('im Reiter Begegnung gewürfelt, zeigt erst die Übersicht; danach bleibt der Reiter Begegnung, zum Kampf geht es erst auf Wunsch', async () => {

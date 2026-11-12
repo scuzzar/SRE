@@ -87,6 +87,9 @@ hide <<value>> stereotype
     dice: number[2]
     dms: number[2]
   }
+  class RumorRoll $begegnung $newClass("2026-11-12b") {
+    dice: number[2]
+  }
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Encounter $begegnung {
@@ -155,6 +158,12 @@ hide <<value>> stereotype
     name: string
     rumor: boolean
   }
+  class Rumor <<reference>> $begegnung $newClass("2026-11-12b") {
+    letter: string
+    text: string
+    general: boolean
+    rolls: number[1..*]
+  }
 
 ' Referenzdaten
 
@@ -173,6 +182,8 @@ hide <<value>> stereotype
 ' Verlauf
 LogEntry <|-- PatronRoll
 PatronRoll "*" --> "1" Patron : of
+LogEntry <|-$newArrow("2026-11-12b")- RumorRoll
+RumorRoll "*" -$newArrow("2026-11-12b")-> "1" Rumor : /of
 
 ' Probe
 

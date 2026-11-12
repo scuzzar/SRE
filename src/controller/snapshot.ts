@@ -298,6 +298,8 @@ export interface PatronItem {
 export interface PatronView {
   readonly lists: readonly { readonly list: number; readonly parts: readonly { readonly die: 0 | 1; readonly label: string; readonly dm: number }[] }[];
   readonly last: PatronItem | undefined;
+  /** Der Test des letzten Wurfs und was er brachte; fehlt, bis gewürfelt ist. */
+  readonly note: string | undefined;
 }
 
 /** Eine Notiz, oder mit `interprets` eine Deutung zum Ergebnis an dieser Stelle des Logs. */
@@ -924,6 +926,8 @@ export interface ControllerState {
   readonly wounding: Wounding | undefined;
   /** Was beim Würfeln einer Begegnung herauskam, wenn es keine gibt, oder was nicht ging. */
   readonly combatNote: string | undefined;
+  /** Der Test des letzten Patron-Wurfs und was er brachte. */
+  readonly patronNote: string | undefined;
   /** Das Ziel dessen, der in der Kampfsimulation am Zug ist (Id eines SC oder NSC). */
   readonly simTarget: string | undefined;
   /** Feuerstoß oder Einzelschuss dessen, der in der Kampfsimulation am Zug ist; fehlt: vorgewählt. */
@@ -1741,6 +1745,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     patron: {
       lists: patronLists.map((list) => ({ list, parts: patronDmParts(campaign, list) })),
       last: log.findLast((item): item is PatronItem => item.kind === 'patron'),
+      note: state.patronNote,
     },
     shop: shopView(campaign, state.shopError, state.wearOffer),
     location: campaign.location,

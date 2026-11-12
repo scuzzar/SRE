@@ -245,7 +245,12 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+eine:
+
+- **2026-11-12b, wartet auf Freigabe: Gerücht** (siehe *Gerücht*). Eine weitere Begegnungsart im
+  Reiter Begegnung: der Wurf auf die Rumors Matrix (SE, Charts S. 21). Neu im Bild: der Logeintrag
+  `RumorRoll` und als Referenzdaten `Rumor`. Der Ausschnitt dazu liegt unter
+  [`changes/2026-11-12-geruecht.png`](changes/2026-11-12-geruecht.png).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -374,6 +379,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Patron | `Patron` | Ein Auftraggeber nach seinem Beruf, z. B. „Smuggler“: eine Zeile einer der beiden Patron-Listen (SE, Charts S. 20) |
 | Patron-Liste | `Patron.list` | Liste eins oder Liste zwei der Patron Encounters Matrix, je 36 Zeilen von 11 bis 66 |
 | Patron-Wurf | `PatronRoll` | Ein Wurf auf eine Patron-Liste: zwei Würfel nacheinander, jeder mit seinem DM |
+| Test | (Regel, nicht gespeichert) | Der Wurf, ob es überhaupt zu einer Begegnung kommt (Encounter Checklist, SE Charts S. 20): Zufallsbegegnung täglich 5+ auf 1W6, Patron wöchentlich 5+ auf 1W6, Gerücht wöchentlich 7+ auf 2W6 |
+| Gerücht | `Rumor` | Eine Art von Gerücht nach der Rumor List (SE, Charts S. 21), Buchstabe A bis Z, z. B. „F · Information leading to trap“; A bis T sind bestimmte, U bis Z allgemeine Gerüchte |
+| Gerüchte-Wurf | `RumorRoll` | Ein Wurf auf die Rumors Matrix: zwei Würfel nacheinander |
 | Bereich der Karte, Themen-Tafel | `Section` | Zufallsereignis, Sinneseindrücke, …; NSC, Welt, … |
 | Feld der Karte | `Slot` | Aktion, Hören, Aussehen, Name, Auslöser, … |
 | Spalte | `Column` | Eine Liste von Einträgen in einem Feld; ein Feld hat eine oder zwei |
@@ -812,8 +820,15 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (`ended`); beendete Begegnungen bleiben in der Kampagne, weil der Log auf ihre NSC verweist,
     und werden nicht mehr gezeigt. Eine Begegnung, auf die der Log nicht verweist, wird beim Beenden
     gelöscht.
-- **Patron.** Im Reiter Begegnung ist der **Patron** eine eigene Begegnungsart: Man wählt Liste eins
-  oder zwei und würfelt. Das Ergebnis ist ein Logeintrag
+- **Test.** Jede Begegnungsart beginnt mit ihrem **Test** nach der Encounter Checklist (SE, Charts
+  S. 20): Zufallsbegegnung täglich 5+ auf 1W6, Patron wöchentlich 5+ auf 1W6, Gerücht wöchentlich
+  7+ auf 2W6. Besteht er nicht, gibt es nichts, und die Karte sagt das („Test 3 (5+ nötig): diese
+  Woche kein Patron.“); besteht er, folgt der Wurf der Art. Der Test wird nicht gespeichert und steht
+  nicht im Log; wann ein Tag oder eine Woche um ist, entscheidet man selbst. Wer bei der
+  Zufallsbegegnung die Art aus der Liste wählt, überspringt den Test.
+- **Patron.** Im Reiter Begegnung ist der **Patron** eine eigene Begegnungsart. Nach dem Test wählt
+  ein Würfel die Liste (Hausregel; die Regeln lassen die Spielleitung wählen): 1W6, 1 bis 3 Liste
+  eins, 4 bis 6 Liste zwei; der Würfel wird nicht gespeichert, die Liste schon. Das Ergebnis ist ein Logeintrag
   (`PatronRoll`), kein Teil einer Begegnung; es braucht weder Aufenthaltsort noch lebenden Charakter
   und geht auch, während eine Begegnung läuft.
   - *Wurf*: zwei Würfel nacheinander (`dice`), der erste die Zehner-, der zweite die Einerstelle,
@@ -827,11 +842,22 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Eintrag hält die DMs fest, damit ein späterer Tod oder eine neue Stufe ihn nicht rückwirkend
     ändert.
   - *Rumor*: Drei Zeilen der Liste eins (23, 36, 66) sind kein Patron, sondern ein Gerücht
-    (`Patron.rumor`); die App zeigt das an. Die Rumors Matrix gibt es in der App noch nicht.
+    (`Patron.rumor`); die App zeigt das an. Nach den Regeln folgt dann ein Wurf auf die Rumors
+    Matrix (siehe *Gerücht*).
   - *Deuten*: Der Patron-Wurf ist ein Ergebnis und lässt sich deuten, z. B. mit dem Auftrag, den
     der Patron vergibt. Die Regeln geben keine Tabelle für Aufträge; die legt die Spielleitung fest.
-  - *Nicht in der App*: der wöchentliche Wurf, ob man überhaupt einen Patron trifft (5+ auf 1W6).
-    Wann man würfelt, entscheidet man selbst.
+- **Gerücht** (wartet auf Freigabe, 2026-11-12b). Eine weitere Begegnungsart im Reiter Begegnung.
+  Nach dem Test (7+ auf 2W6) zwei Würfel nacheinander (`RumorRoll.dice`), der erste die Zehner-, der
+  zweite die Einerstelle; die Rumors Matrix (SE, Charts S. 21) führt von 11 bis 66 auf eine Art von
+  Gerücht (`Rumor`, Buchstabe A bis Z; `rolls` sind die Würfe, die auf sie führen). DMs gibt es
+  keine: Die Regeln überlassen sie der Spielleitung. Der Verweis `/of` folgt allein aus den Würfeln.
+  - *Bestimmt und allgemein*: A bis T sind bestimmte Gerüchte (z. B. „G · Location data“), U bis Z
+    allgemeine (`general`, z. B. „U · Broad background information“). Die Liste sagt nur die Art; was
+    das Gerücht besagt, legt man selbst fest.
+  - *Deuten*: Der Gerüchte-Wurf ist ein Ergebnis und lässt sich deuten, z. B. mit dem Inhalt des
+    Gerüchts.
+  - *Gerücht statt Patron*: Fällt ein Patron-Wurf auf eine Rumor-Zeile, würfelt die App gleich
+    danach ein Gerücht, ohne Test; im Log stehen dann beide Einträge hintereinander.
 - **NSC.** Ein NSC der Begegnung ist ein vollständiger Charakter, derselben Klasse wie die SC.
   Er hängt an seiner Begegnung (`Encounter.npcs`), nicht an der Kampagne: Jeder Charakter gehört
   genau einer Kampagne (`characters`) oder genau einer Begegnung (`npcs`), nie beiden. Die NSC einer
