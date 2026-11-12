@@ -252,7 +252,17 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+eine:
+
+- **2026-11-12c, wartet auf Freigabe: Tiere** (siehe *Tiere*). Tiertabellen je Welt und Gelände,
+  bei Bedarf erzeugt; die Tierbegegnung würfelt auf ihnen und wird eine Begegnung mit
+  Kampfsimulation. Neu im Bild: `AnimalTable`, `AnimalRow`, `AnimalAttack`, `AnimalTrait`,
+  `AnimalCategory`, `Behavior`, als Referenzdaten `AnimalTerrain`, `AnimalType`, `AnimalTypeRow`,
+  `AnimalTraitRow`, `AnimalSizeRow`; dazu `Hex.animals`, `Character.animal` und `/hurt`,
+  `Encounter.animal`, `tableDice`, `attackDice`, `fleeDice`, `/behavior`, `DamageRoll.fixed`.
+  `Encounter.of`, `reaction`, `reactionDice` und `DamageRoll.dice` dürfen nun fehlen. Der Ausschnitt
+  dazu liegt unter [`changes/2026-11-12-tiere.png`](changes/2026-11-12-tiere.png). Der Code folgt
+  erst nach der Freigabe.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -384,6 +394,16 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Test | (Regel, nicht gespeichert) | Der Wurf, ob es überhaupt zu einer Begegnung kommt (Encounter Checklist, SE Charts S. 20): Zufallsbegegnung täglich 5+ auf 1W6, Patron wöchentlich 5+ auf 1W6, Gerücht wöchentlich 7+ auf 2W6 |
 | Gerücht | `Rumor` | Eine Art von Gerücht nach der Rumor List (SE, Charts S. 21), Buchstabe A bis Z, z. B. „F · Information leading to trap“; A bis T sind bestimmte, U bis Z allgemeine Gerüchte |
 | Gerüchte-Wurf | `RumorRoll` | Ein Wurf auf die Rumors Matrix: zwei Würfel nacheinander |
+| Tiertabelle | `AnimalTable` | Die Begegnungstabelle der Tiere eines Geländes einer Welt (SE 18–19): elf Zeilen, 2 bis 12 |
+| Zeile der Tiertabelle | `AnimalRow` | Ein Tier mit allen Werten, z. B. „6 Chasers, 25 kg, 6/11, jack, 9 teeth+1, A0 F5 S2“, oder ein Ereignis |
+| Tiergelände | `AnimalTerrain` | Eine der 22 Geländearten der Tiertabellen (Clear, Forest, Swamp, Depths …) mit DM auf Tierart und Größe; nicht das Gelände der Entfernung (`Terrain`), auf das es verweist |
+| Tierart | `AnimalType` | Grazer, Chaser, Pouncer, Hijacker …; gehört zu einer Kategorie |
+| Kategorie | `AnimalCategory` | Herbivore, Omnivore, Carnivore oder Scavenger |
+| Besonderheit | `AnimalTrait` | Amphibian, Flyer, Swimmer oder Triphibian |
+| Hits | `AnimalRow.hits` | Zwei Zahlen statt STR, DEX, END: Erreichen die Wunden die erste, ist das Tier bewusstlos, erreichen sie beide zusammen, ist es tot |
+| Tierangriff | `AnimalAttack` | Eine Tierwaffe der Zeile (Claws, Teeth, Horns …) mit DM auf den Angriff und festem Schaden je Treffer |
+| Verhalten | `AnimalRow.attack`, `flee`, `speed`; `Encounter./behavior` | A, F und S einer Zeile (greift bei A+ an, flieht bei F+, S-fache Geschwindigkeit); in der Begegnung, was die Tiere nach den Würfen tun |
+| Ereignis | `AnimalRow.event` | Die Zeile der Tiertabelle ohne Tier (Wurf 10); was geschieht, legt man selbst fest |
 | Bereich der Karte, Themen-Tafel | `Section` | Zufallsereignis, Sinneseindrücke, …; NSC, Welt, … |
 | Feld der Karte | `Slot` | Aktion, Hören, Aussehen, Name, Auslöser, … |
 | Spalte | `Column` | Eine Liste von Einträgen in einem Feld; ein Feld hat eine oder zwei |
@@ -848,6 +868,52 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Matrix (siehe *Gerücht*).
   - *Deuten*: Der Patron-Wurf ist ein Ergebnis und lässt sich deuten, z. B. mit dem Auftrag, den
     der Patron vergibt. Die Regeln geben keine Tabelle für Aufträge; die legt die Spielleitung fest.
+- **Tiere** (wartet auf Freigabe, 2026-11-12c). Regeln und Tabellen stehen in
+  `regeln-kampf.md` unter *Tierbegegnungen* (SE 18–19, SR 46–49).
+  - *Tiertabelle*: Jede Welt hat je Tiergelände höchstens eine Tiertabelle (`Hex.animals`). Sie
+    entsteht nicht beim Erschaffen der Welt, sondern **bei Bedarf**: beim ersten Tierwurf auf dieser
+    Welt in diesem Gelände, ohne weitere Eingabe, und bleibt dann an der Welt. Das gilt auch für
+    Welten, die es schon gibt. Die Tabelle speichert die Werte ihrer Tiere, nicht die Würfe (wie die
+    Welt selbst). Eine Welt, deren Oberfläche kein Leben hat (`Surface.life`), hat keine Tiere.
+  - *Erzeugen* (Checklist SE 19): elf Zeilen 2 bis 12 nach der 2W6-Aufteilung der Encounter Columns
+    (Zeile 10 ist das Ereignis). Je Zeile: Tierart und Anzahl (2W6 + Type DM des Geländes auf die
+    Spalte der Kategorie), Besonderheit (2W6 mit den DMs aus Größe und Atmosphäre der Welt, Spalte
+    nach dem Gelände), Gewicht und Hits (2W6 + Size DMs; die Hits werden ausgewürfelt und stehen als
+    zwei Zahlen), Waffe (2W6 + DM der Kategorie), Rüstung (2W6 + DM der Kategorie; Flieger und
+    Triphibien nie) und Verhalten (je 1W6 für A, F und S). „(+6)“ würfelt noch einmal mit +6.
+  - *Schaden* (SR 48, die einfache Art): Der Schaden je Treffer wird beim Erzeugen einmal gewürfelt
+    (die Würfel der Tierwaffe, geändert um die Wounds der Größe, mindestens 1) und steht fest im
+    Tierangriff (`AnimalAttack.damage`), z. B. „11 teeth“. Hat die Zeile zwei Waffen („claws and
+    teeth“), hat sie zwei Tierangriffe, jeden mit eigenem Schaden.
+  - *Tierbegegnung*: eine Begegnungsart im Reiter Begegnung, mit dem Tiergelände als Einstellung.
+    Test 5+ auf 1W6 (SR 47), dann 2W6 auf die Tiertabelle (`Encounter.tableDice`). Ein Ereignis
+    legt nichts an; die Karte sagt es. Sonst entsteht eine **Begegnung** (`Encounter`), die statt auf
+    eine Art (`of`) auf ihre Zeile verweist (`animal`); genau eins von beiden ist gesetzt. Die Anzahl
+    wird mit dem Würfel der Anzahl gewürfelt; die Entfernung wie sonst, mit dem DM des Geländes, auf
+    das das Tiergelände verweist (`AnimalTerrain.range`). Eine Reaktion gibt es nicht.
+  - *Verhalten*: Beim Anlegen 2W6 für den Angriff und 2W6 für die Flucht (`attackDice`,
+    `fleeDice`). `/behavior`: Greift die Tierart zuerst an, gilt der Angriffswurf gegen A, sonst der
+    Fluchtwurf gegen F; Pflanzenfresser prüfen umgekehrt (`AnimalType.fleesFirst`); trifft keiner,
+    tun die Tiere nichts. Steht bei der Tierart ein Wort statt einer Zahl („if possible“, „if
+    surprise“, „if surprised“, „if more“), zeigt die App das Wort; ob es zutrifft, entscheidet man
+    selbst. Das Verhalten ist wie die Reaktion eine Auskunft: Die App erzwingt es nicht.
+  - *Tiere im Kampf*: Jedes Tier der Begegnung ist ein Charakter (`Encounter.npcs`) wie jeder NSC,
+    mit dem Namen der Tierart und einer Nummer, und verweist auf seine Zeile (`Character.animal`).
+    Sein UPP ist leer (alle Werte 0) und zählt nicht; Fertigkeiten, Besitz und Rüstung hat es nicht.
+    - Es greift mit den Tierangriffen seiner Zeile an (der erste ist die Primär-, der zweite die
+      Sekundärwaffe): 2W6 + DM des Tierangriffs + Rüstung und Reichweite aus der Zeile der Tierwaffe
+      in der Waffenmatrix ≥ 8. Fertigkeit und Attribut zählen nicht, Ausdauer hat es unbegrenzt.
+    - Trifft es, ist der Schaden fest (`DamageRoll.fixed`, ohne Würfel) und geht als **ein Block**
+      auf ein Attribut des Ziels; bringt er es auf 0, läuft der Rest über wie bei jedem Würfel.
+    - Wer ein Tier angreift, rechnet mit dessen Rüstungsklasse und zusätzlich dessen `armorDm`.
+      Der Schaden wird nicht verteilt: Er zählt als Summe (`/hurt`). Erreicht sie die erste Zahl
+      der Hits, ist das Tier bewusstlos, erreicht sie beide zusammen, ist es tot.
+    - Überraschung der Tiere: nur der DM „8 oder mehr −1“. Heilen und Übernehmen gibt es für Tiere
+      nicht.
+  - *Später*: Geschwindigkeit S in der Bewegung (die Tiere bewegen sich vorerst wie jede
+    NSC-Gruppe), Gewicht ±20 %, Flieger und Schwimmer im Kampf, die besonderen Angriffe (Filter,
+    Trapper, Siren), Stampede, die Ereignisliste (SR 49–50), zerstörte Tiere (doppelte Hits), die
+    1W6-Aufteilung der Tabelle, eigene Tabellen.
 - **Gerücht.** Eine weitere Begegnungsart im Reiter Begegnung.
   Nach dem Test (7+ auf 2W6) zwei Würfel nacheinander (`RumorRoll.dice`), der erste die Zehner-, der
   zweite die Einerstelle; die Rumors Matrix (SE, Charts S. 21) führt von 11 bis 66 auf eine Art von

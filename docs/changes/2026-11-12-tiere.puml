@@ -1,0 +1,356 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-12c"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-12c: Tiere: Tiertabellen je Welt und Gelände, Tierbegegnung mit Kampf
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Character $charakter {
+    name: string
+    background: string
+    equipment: string
+    credits: number
+    note: string
+    dead: boolean
+    retired: boolean
+    npc: boolean
+    /wounds: Wounds
+    $new("2026-11-12c", "/hurt: number [0..1]")
+    /state: WoundState
+    /blows: number [0..1]
+  }
+  class Upp <<value>> $charakter
+  class SkillLevel $charakter
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+  class Hex $sektor {
+    column: number
+    row: number
+    empty: boolean
+    name: string [0..1]
+    navalBase: boolean [0..1]
+    scoutBase: boolean [0..1]
+    gasGiant: boolean [0..1]
+    note: string [0..1]
+    /step: WorldStep
+  }
+  class Uwp <<value>> $sektor
+  class WorldRoll <<transient>> $sektor
+
+' Verlauf
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Attack <<transient>> $kampf
+  class AttackResult $kampf
+  class DamageRoll $kampf {
+    $gone("2026-11-12c", "dice: number[1..5]")
+    $new("2026-11-12c", "dice: number[0..5]")
+    $new("2026-11-12c", "fixed: number [0..1]")
+    points: number[0..7]
+    to: Characteristic[0..7]
+    alarmDice: number[0..2]
+    /damage: number
+  }
+  class Wounding <<transient>> $kampf
+  class Encounter $begegnung {
+    at: datetime
+    quantityDie: number [0..1]
+    $gone("2026-11-12c", "reactionDice: number[2]")
+    $new("2026-11-12c", "reactionDice: number[0..2]")
+    reactionDm: number [0..1]
+    $gone("2026-11-12c", "reaction: number")
+    $new("2026-11-12c", "reaction: number [0..1]")
+    ended: boolean
+    $gone("2026-11-12c", "/reactionText: string")
+    $new("2026-11-12c", "/reactionText: string [0..1]")
+    $new("2026-11-12c", "tableDice: number[0..2]")
+    $new("2026-11-12c", "attackDice: number[0..2]")
+    $new("2026-11-12c", "fleeDice: number[0..2]")
+    $new("2026-11-12c", "/behavior: Behavior [0..1]")
+    rangeDice: number[2]
+    bandDie: number [0..1]
+    startBand: number
+    startClose: boolean
+    round: number
+    npcMoved: number [0..1]
+    npcRuns: number [0..1]
+    alarm: number [0..1]
+    /surprise: Side [0..1]
+    /surprising: Side [0..1]
+    /first: Side
+  }
+  class Distance $begegnung
+  class SurpriseRoll <<value>> $begegnung
+  enum Side <<value>> $begegnung
+  class Terrain <<reference>> $begegnung {
+    name: string
+    dm: number
+  }
+  class EncounterType <<reference>> $begegnung {
+    roll: number
+    name: string
+    quantity: number
+    tl: number
+    leader: boolean
+    guns: boolean
+    armor: boolean
+    vehicle: boolean
+    military: boolean
+  }
+  class AnimalTable $begegnung $newClass("2026-11-12c") {
+  }
+  class AnimalRow $begegnung $newClass("2026-11-12c") {
+    roll: number
+    event: boolean
+    quantity: number [0..1]
+    trait: AnimalTrait [0..1]
+    traitSizeDm: number [0..1]
+    weight: number [0..1]
+    hits: number[0..2]
+    armor: ArmorClass [0..1]
+    armorDm: number [0..1]
+    attack: number [0..1]
+    flee: number [0..1]
+    speed: number [0..1]
+  }
+  class AnimalAttack <<value>> $begegnung $newClass("2026-11-12c") {
+    dm: number
+    damage: number
+  }
+  enum AnimalTrait <<value>> $begegnung $newClass("2026-11-12c") {
+    amphibian
+    flyer
+    swimmer
+    triphibian
+  }
+  enum Behavior <<value>> $begegnung $newClass("2026-11-12c") {
+    attacks
+    flees
+    nothing
+  }
+  enum AnimalCategory <<value>> $begegnung $newClass("2026-11-12c") {
+    herbivore
+    omnivore
+    carnivore
+    scavenger
+  }
+  class AnimalTerrain <<reference>> $begegnung $newClass("2026-11-12c") {
+    name: string
+    equivalent: string
+    typeDm: number
+    sizeDm: number
+    traits: string
+  }
+  class AnimalType <<reference>> $begegnung $newClass("2026-11-12c") {
+    name: string
+    category: AnimalCategory
+    attack: string
+    flee: string
+    speed: DiceExpr
+    fleesFirst: boolean
+  }
+  class AnimalTypeRow <<reference>> $begegnung $newClass("2026-11-12c") {
+    roll: number
+    category: AnimalCategory
+    quantity: number [0..1]
+  }
+  class AnimalTraitRow <<reference>> $begegnung $newClass("2026-11-12c") {
+    roll: number
+    traits: string
+    trait: AnimalTrait [0..1]
+    sizeDm: number [0..1]
+  }
+  class AnimalSizeRow <<reference>> $begegnung $newClass("2026-11-12c") {
+    roll: number
+    weight: number [0..1]
+    hits: DiceExpr[2]
+    wounds: string
+    weapons: string
+    armor: string
+  }
+
+' Referenzdaten
+  class Weapon <<reference>> $kampf {
+    name: string
+    attack: AttackKind
+    required: number
+    requiredDm: number
+    advantageous: number
+    advantageousDm: number
+    wounds: number
+    rounds: number [0..1]
+    law: number [0..1]
+    burst: number [0..1]
+    neighbours: number [0..1]
+    weakened: number [0..1]
+  }
+  class ArmorDm <<value>> $kampf
+  class RangeDm <<value>> $kampf
+  enum AttackKind <<value>> $kampf
+  class Surface <<value>> $sektor
+  class Temperature <<reference>> $sektor
+  class TradeCode <<reference>> $sektor
+  enum WorldStep <<value>> $sektor
+
+' Kampagne
+
+' Charaktererschaffung und Lebenslauf
+Character "*" --> "0..1" Hex : homeworld
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+Hex "1" *-- "1" Uwp : uwp
+Hex --> WorldStep
+WorldRoll "*" --> "1" Hex : for
+WorldRoll ..> Hex : on roll
+Hex "*" --> "*" TradeCode : /trade
+Hex "*" --> "0..1" Temperature : temperature
+Hex "1" *-- "0..1" Surface : surface
+
+' Charakter
+Character "1" *-- "1" Upp : upp
+Character "1" *-- "*" SkillLevel : skills
+Character "*" --> "0..1" Weapon : wields
+Character "*" --> "0..1" Weapon : primary
+Character "*" --> "0..1" Weapon : secondary
+
+' Waffen (Referenzdaten)
+Weapon "*" --> "0..1" Weapon : single
+Weapon --> AttackKind
+Weapon "1" *-- "7" ArmorDm : vsArmor {ordered}
+Weapon "1" *-- "5" RangeDm : atRange {ordered}
+
+' Verlauf
+
+' Probe
+
+' Angriff
+Attack "*" --> "1" Character : /for
+Attack "*" --> "0..1" Character : against
+Attack "*" --> "1" Weapon : /with
+AttackResult "*" --> "1" Character : for
+AttackResult "*" --> "0..1" Character : against
+AttackResult "*" --> "1" Weapon : with
+DamageRoll "0..1" --> "1" AttackResult : of
+Wounding ..> DamageRoll : on confirm
+
+' Begegnung
+Encounter "*" -$goneArrow("2026-11-12c")-> "1" EncounterType : of
+Encounter "*" -$newArrow("2026-11-12c")-> "0..1" EncounterType : of
+Encounter "*" -$newArrow("2026-11-12c")-> "0..1" AnimalRow : animal
+Hex "1" *-$newArrow("2026-11-12c")- "*" AnimalTable : animals
+AnimalTable "*" -$newArrow("2026-11-12c")-> "1" AnimalTerrain : terrain
+AnimalTable "1" *-$newArrow("2026-11-12c")- "11" AnimalRow : rows {ordered}
+AnimalRow "*" -$newArrow("2026-11-12c")-> "0..1" AnimalType : type
+AnimalRow "1" *-$newArrow("2026-11-12c")- "0..2" AnimalAttack : attacks {ordered}
+AnimalAttack "*" -$newArrow("2026-11-12c")-> "1" Weapon : with
+AnimalRow --> AnimalTrait
+Encounter --> Behavior
+AnimalType --> AnimalCategory
+AnimalTerrain "*" -$newArrow("2026-11-12c")-> "0..1" Terrain : range
+AnimalTypeRow "*" -$newArrow("2026-11-12c")-> "1" AnimalType : type
+Character "*" -$newArrow("2026-11-12c")-> "0..1" AnimalRow : animal
+AnimalSizeRow -[hidden]- AnimalTraitRow
+Encounter "*" --> "0..1" Terrain : terrain
+Encounter "1" *-- "0..1" SurpriseRoll : pcSurprise
+Encounter "1" *-- "0..1" SurpriseRoll : npcSurprise
+Encounter --> Side
+Encounter "*" --> "0..1" Hex : in
+Encounter "1" *-- "*" Character : npcs {ordered}
+Encounter "*" --> "0..1" Character : leader
+Encounter "*" --> "*" Character : acted
+Encounter "*" --> "0..1" Character : /turn
+Encounter "1" *-- "*" Distance : distances
+Distance "*" --> "1" Character : of
+Encounter "*" --> "*" Character : evading
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+class Character #line:d0021b;line.bold
+class DamageRoll #line:d0021b;line.bold
+class Encounter #line:d0021b;line.bold
+@enduml

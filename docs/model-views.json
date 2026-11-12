@@ -123,6 +123,18 @@
         "LogEntry",
         "PatronRoll"
       ]
+    },
+    {
+      "id": "2026-11-12c",
+      "file": "2026-11-12-tiere",
+      "title": "Tiere: Tiertabellen je Welt und Gelände, Tierbegegnung mit Kampf",
+      "approved": false,
+      "show": [
+        "Hex",
+        "Character",
+        "Weapon",
+        "DamageRoll"
+      ]
     }
   ]
 }

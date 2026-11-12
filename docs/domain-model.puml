@@ -109,6 +109,7 @@ hide <<value>> stereotype
     retired: boolean
     npc: boolean
     /wounds: Wounds
+    $new("2026-11-12c", "/hurt: number [0..1]")
     /state: WoundState
     /blows: number [0..1]
   }
@@ -299,7 +300,9 @@ hide <<value>> stereotype
     rest
   }
   class DamageRoll $kampf {
-    dice: number[1..5]
+    $gone("2026-11-12c", "dice: number[1..5]")
+    $new("2026-11-12c", "dice: number[0..5]")
+    $new("2026-11-12c", "fixed: number [0..1]")
     points: number[0..7]
     to: Characteristic[0..7]
     alarmDice: number[0..2]
@@ -312,11 +315,18 @@ hide <<value>> stereotype
   class Encounter $begegnung {
     at: datetime
     quantityDie: number [0..1]
-    reactionDice: number[2]
+    $gone("2026-11-12c", "reactionDice: number[2]")
+    $new("2026-11-12c", "reactionDice: number[0..2]")
     reactionDm: number [0..1]
-    reaction: number
+    $gone("2026-11-12c", "reaction: number")
+    $new("2026-11-12c", "reaction: number [0..1]")
     ended: boolean
-    /reactionText: string
+    $gone("2026-11-12c", "/reactionText: string")
+    $new("2026-11-12c", "/reactionText: string [0..1]")
+    $new("2026-11-12c", "tableDice: number[0..2]")
+    $new("2026-11-12c", "attackDice: number[0..2]")
+    $new("2026-11-12c", "fleeDice: number[0..2]")
+    $new("2026-11-12c", "/behavior: Behavior [0..1]")
     rangeDice: number[2]
     bandDie: number [0..1]
     startBand: number
@@ -386,6 +396,77 @@ hide <<value>> stereotype
     roll: number
     name: string
     rumor: boolean
+  }
+  class AnimalTable $begegnung $newClass("2026-11-12c") {
+  }
+  class AnimalRow $begegnung $newClass("2026-11-12c") {
+    roll: number
+    event: boolean
+    quantity: number [0..1]
+    trait: AnimalTrait [0..1]
+    traitSizeDm: number [0..1]
+    weight: number [0..1]
+    hits: number[0..2]
+    armor: ArmorClass [0..1]
+    armorDm: number [0..1]
+    attack: number [0..1]
+    flee: number [0..1]
+    speed: number [0..1]
+  }
+  class AnimalAttack <<value>> $begegnung $newClass("2026-11-12c") {
+    dm: number
+    damage: number
+  }
+  enum AnimalTrait <<value>> $begegnung $newClass("2026-11-12c") {
+    amphibian
+    flyer
+    swimmer
+    triphibian
+  }
+  enum Behavior <<value>> $begegnung $newClass("2026-11-12c") {
+    attacks
+    flees
+    nothing
+  }
+  enum AnimalCategory <<value>> $begegnung $newClass("2026-11-12c") {
+    herbivore
+    omnivore
+    carnivore
+    scavenger
+  }
+  class AnimalTerrain <<reference>> $begegnung $newClass("2026-11-12c") {
+    name: string
+    equivalent: string
+    typeDm: number
+    sizeDm: number
+    traits: string
+  }
+  class AnimalType <<reference>> $begegnung $newClass("2026-11-12c") {
+    name: string
+    category: AnimalCategory
+    attack: string
+    flee: string
+    speed: DiceExpr
+    fleesFirst: boolean
+  }
+  class AnimalTypeRow <<reference>> $begegnung $newClass("2026-11-12c") {
+    roll: number
+    category: AnimalCategory
+    quantity: number [0..1]
+  }
+  class AnimalTraitRow <<reference>> $begegnung $newClass("2026-11-12c") {
+    roll: number
+    traits: string
+    trait: AnimalTrait [0..1]
+    sizeDm: number [0..1]
+  }
+  class AnimalSizeRow <<reference>> $begegnung $newClass("2026-11-12c") {
+    roll: number
+    weight: number [0..1]
+    hits: DiceExpr[2]
+    wounds: string
+    weapons: string
+    armor: string
   }
   class Rumor <<reference>> $begegnung {
     letter: string
@@ -786,7 +867,22 @@ Wounding ..> DamageRoll : on confirm
 
 ' Begegnung
 Campaign "1" *-- "*" Encounter : encounters {ordered}
-Encounter "*" --> "1" EncounterType : of
+Encounter "*" -$goneArrow("2026-11-12c")-> "1" EncounterType : of
+Encounter "*" -$newArrow("2026-11-12c")-> "0..1" EncounterType : of
+Encounter "*" -$newArrow("2026-11-12c")-> "0..1" AnimalRow : animal
+Hex "1" *-$newArrow("2026-11-12c")- "*" AnimalTable : animals
+AnimalTable "*" -$newArrow("2026-11-12c")-> "1" AnimalTerrain : terrain
+AnimalTable "1" *-$newArrow("2026-11-12c")- "11" AnimalRow : rows {ordered}
+AnimalRow "*" -$newArrow("2026-11-12c")-> "0..1" AnimalType : type
+AnimalRow "1" *-$newArrow("2026-11-12c")- "0..2" AnimalAttack : attacks {ordered}
+AnimalAttack "*" -$newArrow("2026-11-12c")-> "1" Weapon : with
+AnimalRow --> AnimalTrait
+Encounter --> Behavior
+AnimalType --> AnimalCategory
+AnimalTerrain "*" -$newArrow("2026-11-12c")-> "0..1" Terrain : range
+AnimalTypeRow "*" -$newArrow("2026-11-12c")-> "1" AnimalType : type
+Character "*" -$newArrow("2026-11-12c")-> "0..1" AnimalRow : animal
+AnimalSizeRow -[hidden]- AnimalTraitRow
 Encounter "*" --> "0..1" Terrain : terrain
 Encounter "1" *-- "0..1" SurpriseRoll : pcSurprise
 Encounter "1" *-- "0..1" SurpriseRoll : npcSurprise

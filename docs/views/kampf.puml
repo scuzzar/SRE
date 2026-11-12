@@ -121,7 +121,9 @@ hide <<value>> stereotype
     rest
   }
   class DamageRoll $kampf {
-    dice: number[1..5]
+    $gone("2026-11-12c", "dice: number[1..5]")
+    $new("2026-11-12c", "dice: number[0..5]")
+    $new("2026-11-12c", "fixed: number [0..1]")
     points: number[0..7]
     to: Characteristic[0..7]
     alarmDice: number[0..2]
@@ -143,6 +145,7 @@ hide <<value>> stereotype
     serious
     dead
   }
+  class AnimalAttack <<value>> $begegnung $newClass("2026-11-12c")
 
 ' Referenzdaten
   class Skill <<reference>> $charakter
@@ -242,6 +245,7 @@ Wounding "0..1" --> "1" AttackResult : of
 Wounding ..> DamageRoll : on confirm
 
 ' Begegnung
+AnimalAttack "*" -$newArrow("2026-11-12c")-> "1" Weapon : with
 WoundState -[hidden]- Wounds
 
 ' Karte
@@ -253,4 +257,6 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class Character #line:d0021b;line.bold
+class DamageRoll #line:d0021b;line.bold
 @enduml

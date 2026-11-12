@@ -115,6 +115,7 @@ hide <<value>> stereotype
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Encounter $begegnung
+  class AnimalTable $begegnung $newClass("2026-11-12c")
 
 ' Referenzdaten
   class Item <<reference>> $shop
@@ -239,6 +240,7 @@ Hex "*" --> "*" Item : /offer
 ' Angriff
 
 ' Begegnung
+Hex "1" *-$newArrow("2026-11-12c")- "*" AnimalTable : animals
 Encounter "*" --> "0..1" Hex : in
 
 ' Karte
@@ -250,4 +252,6 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class Character #line:d0021b;line.bold
+class Encounter #line:d0021b;line.bold
 @enduml
