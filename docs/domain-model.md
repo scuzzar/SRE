@@ -257,10 +257,12 @@ eine:
 - **2026-11-12c, wartet auf Freigabe: Tiere** (siehe *Tiere*). Tiertabellen je Welt und Gelände,
   bei Bedarf erzeugt; die Tierbegegnung würfelt auf ihnen und wird eine Begegnung mit
   Kampfsimulation. Neu im Bild: `AnimalTable`, `AnimalRow`, `AnimalAttack`, `AnimalTrait`,
-  `AnimalCategory`, `Behavior`, als Referenzdaten `AnimalTerrain`, `AnimalType`, `AnimalTypeRow`,
-  `AnimalTraitRow`, `AnimalSizeRow`; dazu `Hex.animals`, `Character.animal` und `/hurt`,
-  `Encounter.animal`, `tableDice`, `attackDice`, `fleeDice`, `/behavior`, `DamageRoll.fixed`.
-  `Encounter.of`, `reaction`, `reactionDice` und `DamageRoll.dice` dürfen nun fehlen. Der Ausschnitt
+  `AnimalCategory`, `AnimalSpecial`, `Behavior`, die Logeinträge `EventResult` und `SaveRoll`, als
+  Referenzdaten `AnimalTerrain`, `AnimalType`, `AnimalTypeRow`, `AnimalTraitRow`, `AnimalSizeRow`,
+  `AnimalEvent`; dazu `Hex.animals`, `Character.animal` und `/hurt`, `Encounter.animal`,
+  `tableDice`, `attackDice`, `fleeDice`, `lureDice`, `/behavior`, `Distance.trapDice`, `held`,
+  `struggles`, `DamageRoll.fixed` und `after`. `Encounter.of`, `reaction`, `reactionDice`,
+  `DamageRoll.dice` und `DamageRoll.of` dürfen nun fehlen. Der Ausschnitt
   dazu liegt unter [`changes/2026-11-12-tiere.png`](changes/2026-11-12-tiere.png). Der Code folgt
   erst nach der Freigabe.
 
@@ -403,7 +405,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Hits | `AnimalRow.hits` | Zwei Zahlen statt STR, DEX, END: Erreichen die Wunden die erste, ist das Tier bewusstlos, erreichen sie beide zusammen, ist es tot |
 | Tierangriff | `AnimalAttack` | Eine Tierwaffe der Zeile (Claws, Teeth, Horns …) mit DM auf den Angriff und festem Schaden je Treffer |
 | Verhalten | `AnimalRow.attack`, `flee`, `speed`; `Encounter./behavior` | A, F und S einer Zeile (greift bei A+ an, flieht bei F+, S-fache Geschwindigkeit); in der Begegnung, was die Tiere nach den Würfen tun |
-| Ereignis | `AnimalRow.event` | Die Zeile der Tiertabelle ohne Tier (Wurf 10); was geschieht, legt man selbst fest |
+| Ereignis | `AnimalEvent`, `AnimalRow.event` | Eine Zeile der Tiertabelle ohne Tier (Wurf 10; auf Welten ohne Leben fast alle), mit einem Ereignis aus der Liste (SR 49–50), z. B. Stampede, Sandstorm, Dust Pool |
+| Ereignis-Eintrag | `EventResult` | Ein Tierwurf, der auf ein Ereignis fiel, im Log |
+| Rettungswurf | `SaveRoll` | Der Wurf eines SC gegen ein Ereignis (z. B. Stampede 8+); misslingt er, folgt der Schaden des Ereignisses |
+| Festgehalten | `Distance.held` | Ein SC, den ein Trapper oder eine Siren gefangen oder ein Filter eingesaugt hat; er schlägt nicht, bis er sich losreißt |
 | Bereich der Karte, Themen-Tafel | `Section` | Zufallsereignis, Sinneseindrücke, …; NSC, Welt, … |
 | Feld der Karte | `Slot` | Aktion, Hören, Aussehen, Name, Auslöser, … |
 | Spalte | `Column` | Eine Liste von Einträgen in einem Feld; ein Feld hat eine oder zwei |
@@ -874,9 +879,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     entsteht nicht beim Erschaffen der Welt, sondern **bei Bedarf**: beim ersten Tierwurf auf dieser
     Welt in diesem Gelände, ohne weitere Eingabe, und bleibt dann an der Welt. Das gilt auch für
     Welten, die es schon gibt. Die Tabelle speichert die Werte ihrer Tiere, nicht die Würfe (wie die
-    Welt selbst). Eine Welt, deren Oberfläche kein Leben hat (`Surface.life`), hat keine Tiere.
+    Welt selbst). Auf einer Welt, deren Oberfläche kein Leben hat (`Surface.life`), sind alle Zeilen
+    Ereignisse aus der Gruppe *Vacuum Worlds* (SR 50, `AnimalEvent.lifeless`).
   - *Erzeugen* (Checklist SE 19): elf Zeilen 2 bis 12 nach der 2W6-Aufteilung der Encounter Columns
-    (Zeile 10 ist das Ereignis). Je Zeile: Tierart und Anzahl (2W6 + Type DM des Geländes auf die
+    (Zeile 10 ist ein Ereignis, zufällig aus der Liste ohne die Gruppe *Vacuum Worlds*; `AnimalRow.event`). Je Zeile: Tierart und Anzahl (2W6 + Type DM des Geländes auf die
     Spalte der Kategorie), Besonderheit (2W6 mit den DMs aus Größe und Atmosphäre der Welt, Spalte
     nach dem Gelände), Gewicht und Hits (2W6 + Size DMs; die Hits werden ausgewürfelt und stehen als
     zwei Zahlen), Waffe (2W6 + DM der Kategorie), Rüstung (2W6 + DM der Kategorie; Flieger und
@@ -886,8 +892,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Tierangriff (`AnimalAttack.damage`), z. B. „11 teeth“. Hat die Zeile zwei Waffen („claws and
     teeth“), hat sie zwei Tierangriffe, jeden mit eigenem Schaden.
   - *Tierbegegnung*: eine Begegnungsart im Reiter Begegnung, mit dem Tiergelände als Einstellung.
-    Test 5+ auf 1W6 (SR 47), dann 2W6 auf die Tiertabelle (`Encounter.tableDice`). Ein Ereignis
-    legt nichts an; die Karte sagt es. Sonst entsteht eine **Begegnung** (`Encounter`), die statt auf
+    Test 5+ auf 1W6 (SR 47), dann 2W6 auf die Tiertabelle (`Encounter.tableDice`); man kann die
+    Zeile auch wählen, dann ohne Test. Fällt der Wurf auf ein Ereignis, entsteht keine Begegnung,
+    sondern ein Ereignis-Eintrag im Log (`EventResult`, siehe *Ereignisse*). Sonst entsteht eine **Begegnung** (`Encounter`), die statt auf
     eine Art (`of`) auf ihre Zeile verweist (`animal`); genau eins von beiden ist gesetzt. Die Anzahl
     wird mit dem Würfel der Anzahl gewürfelt; die Entfernung wie sonst, mit dem DM des Geländes, auf
     das das Tiergelände verweist (`AnimalTerrain.range`). Eine Reaktion gibt es nicht.
@@ -910,10 +917,36 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       der Hits, ist das Tier bewusstlos, erreicht sie beide zusammen, ist es tot.
     - Überraschung der Tiere: nur der DM „8 oder mehr −1“. Heilen und Übernehmen gibt es für Tiere
       nicht.
-  - *Später*: Geschwindigkeit S in der Bewegung (die Tiere bewegen sich vorerst wie jede
-    NSC-Gruppe), Gewicht ±20 %, Flieger und Schwimmer im Kampf, die besonderen Angriffe (Filter,
-    Trapper, Siren), Stampede, die Ereignisliste (SR 49–50), zerstörte Tiere (doppelte Hits), die
-    1W6-Aufteilung der Tabelle, eigene Tabellen.
+  - *Geschwindigkeit* (SR 47): Die Tiere bewegen sich als Gruppe je Runde bis zu S Bands
+    (`AnimalRow.speed`), S0 gar nicht. Laufen und dessen Kosten gibt es für sie nicht.
+  - *Besonderheit*: Flieger, Schwimmer, Amphibien und Triphibien haben in den Regeln keine eigene
+    Kampfregel; die Besonderheit steht im Namen („Flying Grazer“) und hat die Größe verschoben.
+  - *Besondere Angriffe* (SR 48), nach `AnimalType.special`:
+    - **Trapper** (`trap`): Haben die Tiere Überraschung, würfelt jeder SC auf Close oder Short
+      2W6 (`Distance.trapDice`); bei 5+ ist er **festgehalten** (`held`). Statt zu schlagen, reißt
+      er sich in seinem Zug los: 2W6 + 1 je helfendem Kameraden ≥ 9. Jeder Versuch kostet einen
+      Combat-Schlag (`struggles`, zählt in `/blows`). Helfer sind die SC auf Close, die kämpfen
+      können und nicht selbst festgehalten sind. Die Falle verwundet nicht.
+    - **Siren** (`lure`): wie der Trapper, dazu der Köder: Beim Anlegen 2W6
+      (`Encounter.lureDice`); bei 11+ wirkt er auch auf Menschen, dann beginnt die Begegnung auf
+      Close in Berührung.
+    - **Filter** (`filter`): In seinem Zug saugt er einen SC auf Close ein statt anzugreifen: 2W6
+      ≥ 6, ohne DMs (ein Angriffsergebnis mit Zielwert 6). Gelingt es, ist der SC festgehalten und
+      nimmt 1W6 je angefangene 50 kg des Filters als Schaden, ohne Wundänderung; solange er
+      festgehalten ist, nimmt er das in jedem Zug des Filters von selbst wieder. Losreißen: ab der
+      folgenden Runde 2W6 + 2 je Helfer ≥ 7, kostet einen Combat-Schlag.
+    - **Pouncer** greifen mit Überraschung auf jeder Entfernung an; das steht beim Verhalten.
+    - Wer festgehalten ist, greift nicht an, bewegt sich nicht und weicht nicht aus.
+  - *Ereignisse* (SR 49–50): Der Ereignis-Eintrag zeigt Namen und Text des Ereignisses und lässt
+    sich deuten. Hat das Ereignis einen Rettungswurf mit Schaden (`AnimalEvent.save`, `damage`:
+    Stampede 8+ sonst 2W6, Poisonous Pests DEX oder weniger sonst 3W6, Flash Flood 9+ sonst 3W6,
+    Seismic Quake STR oder weniger sonst 1W6), würfelt die App ihn auf Wunsch für jeden lebenden SC
+    (`SaveRoll`, mit dem Zielwert von damals); wer ihn nicht schafft, bekommt den Schaden
+    (`DamageRoll.after`, statt `of`), verteilt wie jeder andere. Alles Übrige am Ereignis
+    (Fahrzeuge, Umwege, ein Kampf aus Chameleon, Circling Flyers oder Lair) spielt man selbst;
+    einen Kampf beginnt man, indem man die Zeile der Tiertabelle wählt.
+  - *Später*: Gewicht ±20 %, zerstörte Tiere (doppelte Hits), Jagd und Fleisch, Psionik, die
+    1W6-Aufteilung der Tabelle, eigene Tabellen und Ereignisse.
 - **Gerücht.** Eine weitere Begegnungsart im Reiter Begegnung.
   Nach dem Test (7+ auf 2W6) zwei Würfel nacheinander (`RumorRoll.dice`), der erste die Zehner-, der
   zweite die Einerstelle; die Rumors Matrix (SE, Charts S. 21) führt von 11 bis 66 auf eine Art von

@@ -112,6 +112,7 @@ hide <<value>> stereotype
   class Hex $sektor
 
 ' Verlauf
+  class SaveRoll $begegnung $newClass("2026-11-12c")
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Task <<transient>> $probe
@@ -197,6 +198,7 @@ AttackResult "*" --> "0..1" Character : against
 AttackResult "*" --> "0..1" SkillLevel : uses
 
 ' Begegnung
+SaveRoll "*" -$newArrow("2026-11-12c")-> "1" Character : for
 Character "*" -$newArrow("2026-11-12c")-> "0..1" AnimalRow : animal
 Encounter "1" *-- "*" Character : npcs {ordered}
 Encounter "*" --> "0..1" Character : leader
@@ -217,4 +219,5 @@ legend right
 endlegend
 class Character #line:d0021b;line.bold
 class Encounter #line:d0021b;line.bold
+class Distance #line:d0021b;line.bold
 @enduml

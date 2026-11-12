@@ -1696,6 +1696,7 @@ gewöhnlichen Geschwindigkeit.
   greift bei 6+ an, flieht bei 7+, wenn es nicht schon angegriffen wurde, doppelte Geschwindigkeit.
   Fleischfresser greifen meist zuerst an (A F S), Pflanzenfresser fliehen zuerst (F A S). Wo ein
   Wort statt einer Zahl steht, ist die Zahl 0.
+- **Pouncer mit Überraschung** greifen auf jeder Entfernung an (SR 48).
 - *Speed* (SR 47): S0 unbeweglich, S1 gewöhnlich, S2 doppelt, S3 dreifach, S4 vierfach, gemessen am
   Gehen eines Menschen (1 Band je Runde).
 
@@ -1728,6 +1729,52 @@ das Tier an, beginnt die Begegnung auf Close mit seiner Überraschung, sonst gib
 Schaden; Lärm oder Laser lenken die Herde ab); **Lair** (fünf junge Pouncer; bleibt die Gruppe
 länger, greift die Mutter sofort an); **Poisonous Pests** (3D, außer man würfelt DEX oder weniger);
 **Psionic Assaulters**. Die übrigen Ereignisse (Wetter, Gelände, Kuriositäten) gehören nicht zum Kampf.
+
+### Ereignisse
+
+*SR 49–50, „Events“.* Ein Ereignis steht in der Tiertabelle statt eines Tiers (in der 2W6-Aufteilung
+Zeile 10). Die Liste ist ein Vorschlag; die Spielleitung passt Ereignisse an Gelände, Gruppe und
+Fahrzeuge an. **Tabellen für Vakuumwelten und alle Welten ohne Leben bestehen weitgehend aus
+Ereignissen** (SR 50). App: ○.
+
+| Gruppe | Ereignis | Was geschieht | Wurf und Schaden |
+|---|---|---|---|
+| Animals | Chameleon | Sehr gut getarnte Tiere. Greift das Tier an, beginnt die Begegnung auf Close und es hat Überraschung; sonst gibt es keine | — |
+| Animals | Psionic Assaulters | Telepathische Fleischfresser greifen psionisch an und bleiben bis 50 m entfernt verborgen, bis die Gruppe großteils außer Gefecht ist | Psionik-Regeln |
+| Animals | Circling Flyers | Flieger kreisen über der Gruppe; nach etwa 10 Minuten greifen Chaser an (Symbiose: die Flieger spähen, die Chaser teilen) | — |
+| Animals | Poisonous Pests | Winzige giftige Tiere (1 g) sind in die Ausrüstung gekrochen und greifen an, wenn man hineinfasst | 3D, außer man würfelt DEX oder weniger |
+| Animals | Stampede | Eine Herde Grazer, von Fleischfressern aufgescheucht, rennt in die Gruppe. Lärm (Schüsse, Explosionen) oder Laser lenken sie ab | jeder 8+, sonst 2D |
+| Animals | Rutting Season | Ein großer, sonst harmloser Pflanzenfresser hält das ATV für einen Rivalen und greift es an | je Runde 10+ (DM + Fahrerfertigkeit), sonst Kollision; ATV beschädigt, bis es bei 9+ je Kollision repariert ist |
+| Animals | Lair | Ein großer Bau mit fünf jungen Pouncern; bleibt die Gruppe länger als ein paar Minuten, kommt die Mutter und greift sofort an | — |
+| Plants | Hallucinogenic Pollen | Ein Blumenfeld; die Pollen lösen bedrohliche Halluzinationen aus, bis etwa 20 Minuten nach Verlassen | — |
+| Plants | Carnivorous Plants | Der Boden bricht unter dem Vordersten ein: eine 4 m tiefe Grube mit Stacheln und 1 m Verdauungsflüssigkeit | wer nicht in wenigen Minuten gerettet wird, wird verdaut |
+| Weather | Dense Fog | Sicht nur auf Medium, sicheres Reisen mit halber Geschwindigkeit | — |
+| Weather | Sandstorm | 12 Stunden kein Vorankommen; Einzelne werden verschüttet, Scheiben blind | — |
+| Weather | Rainstorm | Schlechte Sicht, tiefer Schlamm; Reisen für den Tag mit Viertelgeschwindigkeit | — |
+| Natural Disasters | Prairie Fire | Feuerfront, 20 km breit; Umweg 4 Stunden, dabei 3 Begegnungen würfeln. Fliehende Tiere beachten die Gruppe nicht, solange ihr Weg frei ist | — |
+| Natural Disasters | Flash Flood | Eine Wasserwand im Flussbett; die Gruppe muss auf höheren Grund | Fahrzeuge 10+, sonst zerstört; Einzelne 9+, sonst mitgerissen und 3D |
+| Natural Disasters | Seismic Quake | Der Boden bebt | jeder STR oder weniger, sonst 1D |
+| Terrain Features | Broken Ground | Sehr rauer Boden; ein ATV fährt Viertelgeschwindigkeit oder riskiert einen Kettenbruch | 6+ je Stunde, um ihn zu vermeiden |
+| Terrain Features | Oasis | Ein Teich in dichtem Bewuchs | 8+, dann ist das Wasser trinkbar |
+| Terrain Features | Crevasse | Eine tiefe Spalte versperrt den Weg; Umweg 2D Stunden | — |
+| Terrain Features | Ford | Sandbänke machen den Fluss für Fahrzeuge passierbar | — |
+| Curiosities | Statues | Eine halb vergrabene Steinstatue: Menschenleib, Kopf eines örtlichen Fleischfressers | — |
+| Curiosities | Jungle Drums | Nachts ferne Trommeln mit Antwort aus anderer Richtung: Paarungsrufe eines großen Omnivoren | — |
+| Curiosities | Marsh Gas | Wandernde Lichter in der Ferne, leicht mit einem Air/Raft zu verwechseln | — |
+| Vacuum Worlds | Dust Pool | Ein Krater voll feinem Staub | 10+, dann fällt der Vacc Suit aus; im Fahrzeug jede Stunde 10+ für einen Ausfall der Elektronik |
+| Vacuum Worlds | Solar Storm | Funk für mehrere Tage unmöglich | — |
+| Vacuum Worlds | Magnetic Anomaly | Der Kompass weicht bis zu 60 Grad ab; wer es nicht merkt, kommt vom Kurs ab | — |
+| Vacuum Worlds | Tracks | ATV-Spuren; in der richtigen Richtung führen sie zur Zivilisation | — |
+| Vacuum Worlds | Pressure Tent | Ein kleines aufblasbares Zelt mit Atemluft, ohne Strom; der Besitzer liegt einige hundert Meter weiter unter einem Steinschlag | — |
+
+„Würfelt DEX (STR) oder weniger“ heißt: 2W6 höchstens so hoch wie das Attribut.
+
+### Jagd und Fleisch
+
+*SR 48, „Special Effects“.* Führer geben DM +2 oder mehr auf den Begegnungswurf für eine bestimmte
+Tierart. Ein Tier ist bei **5+** essbar (DM −3 bei verdorbener Atmosphäre), wenn die Atmosphäre 2
+bis 9 ist und es keine Giftwaffe hat; essbar sind 1W6 × 5 % seines Gewichts. Ein Mensch braucht
+1 kg Fleisch am Tag. App: ○.
 
 ### Beispieltabelle
 

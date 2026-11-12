@@ -90,8 +90,17 @@ hide <<value>> stereotype
   class RumorRoll $begegnung {
     dice: number[2]
   }
+  class EventResult $begegnung $newClass("2026-11-12c") {
+    tableDice: number[2]
+  }
+  class SaveRoll $begegnung $newClass("2026-11-12c") {
+    dice: number[2]
+    target: number
+    /success: boolean
+  }
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class DamageRoll $kampf
   class Encounter $begegnung {
     at: datetime
     quantityDie: number [0..1]
@@ -106,6 +115,7 @@ hide <<value>> stereotype
     $new("2026-11-12c", "tableDice: number[0..2]")
     $new("2026-11-12c", "attackDice: number[0..2]")
     $new("2026-11-12c", "fleeDice: number[0..2]")
+    $new("2026-11-12c", "lureDice: number[0..2]")
     $new("2026-11-12c", "/behavior: Behavior [0..1]")
     rangeDice: number[2]
     bandDie: number [0..1]
@@ -124,6 +134,9 @@ hide <<value>> stereotype
     close: boolean
     moved: number [0..1]
     runs: number [0..1]
+    $new("2026-11-12c", "trapDice: number[0..2]")
+    $new("2026-11-12c", "held: boolean [0..1]")
+    $new("2026-11-12c", "struggles: number [0..1]")
     /range: Range [0..1]
     /escaped: boolean
   }
@@ -169,7 +182,6 @@ hide <<value>> stereotype
   }
   class AnimalRow $begegnung $newClass("2026-11-12c") {
     roll: number
-    event: boolean
     quantity: number [0..1]
     trait: AnimalTrait [0..1]
     traitSizeDm: number [0..1]
@@ -216,6 +228,20 @@ hide <<value>> stereotype
     flee: string
     speed: DiceExpr
     fleesFirst: boolean
+    special: AnimalSpecial [0..1]
+  }
+  enum AnimalSpecial <<value>> $begegnung $newClass("2026-11-12c") {
+    filter
+    trap
+    lure
+  }
+  class AnimalEvent <<reference>> $begegnung $newClass("2026-11-12c") {
+    name: string
+    group: string
+    text: string
+    lifeless: boolean
+    save: string [0..1]
+    damage: number [0..1]
   }
   class AnimalTypeRow <<reference>> $begegnung $newClass("2026-11-12c") {
     roll: number
@@ -277,6 +303,14 @@ Hex "1" *-$newArrow("2026-11-12c")- "*" AnimalTable : animals
 AnimalTable "*" -$newArrow("2026-11-12c")-> "1" AnimalTerrain : terrain
 AnimalTable "1" *-$newArrow("2026-11-12c")- "11" AnimalRow : rows {ordered}
 AnimalRow "*" -$newArrow("2026-11-12c")-> "0..1" AnimalType : type
+AnimalRow "*" -$newArrow("2026-11-12c")-> "0..1" AnimalEvent : event
+AnimalType --> AnimalSpecial
+LogEntry <|-$newArrow("2026-11-12c")- EventResult
+EventResult "*" -$newArrow("2026-11-12c")-> "1" AnimalRow : of
+LogEntry <|-$newArrow("2026-11-12c")- SaveRoll
+SaveRoll "*" -$newArrow("2026-11-12c")-> "1" Character : for
+SaveRoll "*" -$newArrow("2026-11-12c")-> "1" EventResult : of
+DamageRoll "0..1" -$newArrow("2026-11-12c")-> "0..1" SaveRoll : after
 AnimalRow "1" *-$newArrow("2026-11-12c")- "0..2" AnimalAttack : attacks {ordered}
 AnimalAttack "*" -$newArrow("2026-11-12c")-> "1" Weapon : with
 AnimalRow --> AnimalTrait
@@ -311,5 +345,7 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
 class Character #line:d0021b;line.bold
+class DamageRoll #line:d0021b;line.bold
 class Encounter #line:d0021b;line.bold
+class Distance #line:d0021b;line.bold
 @enduml
