@@ -204,7 +204,7 @@ hide <<value>> stereotype
   class Note $probe {
     text: string
   }
-  class PatronRoll $begegnung $newClass("2026-11-12") {
+  class PatronRoll $begegnung {
     dice: number[2]
     dms: number[2]
   }
@@ -378,7 +378,7 @@ hide <<value>> stereotype
     vehicle: boolean
     military: boolean
   }
-  class Patron <<reference>> $begegnung $newClass("2026-11-12") {
+  class Patron <<reference>> $begegnung {
     list: number
     roll: number
     name: string
@@ -739,8 +739,8 @@ Recovery "*" --> "1" Character : for
 Recovery "*" --> "0..1" Character : by
 Recovery --> RecoveryKind
 LogEntry <|-- Note
-LogEntry <|-$newArrow("2026-11-12")- PatronRoll
-PatronRoll "*" -$newArrow("2026-11-12")-> "1" Patron : of
+LogEntry <|-- PatronRoll
+PatronRoll "*" --> "1" Patron : of
 Note "*" --> "0..1" LogEntry : interprets
 CardPick "1" *-- "*" PickedItem : items {ordered}
 CardPick "1" *-- "0..1" MapIcon : map

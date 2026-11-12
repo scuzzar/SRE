@@ -146,6 +146,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > liegt unter
 > [`changes/2026-11-07-ueberraschung-ausdauer-parade.png`](changes/2026-11-07-ueberraschung-ausdauer-parade.png).
 >
+> Am 12. November 2026 freigegeben: der **Patron** (Kennzeichen 2026-11-12; siehe *Patron*). Im
+> Reiter Begegnung würfelt man in einem eigenen kleinen Bereich unter dem für NSC-Begegnungen einen
+> Patron nach der Patron Encounters Matrix (SE, Charts S. 20). Neu im Bild: der Logeintrag
+> `PatronRoll` und als Referenzdaten `Patron`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-12-patron.png`](changes/2026-11-12-patron.png).
+>
 > Am 8. November 2026 freigegeben: **NSC der Begegnung als vollständige Charaktere** (Kennzeichen
 > 2026-11-08c; siehe *Begegnung*, *NSC*, *Angriff in beide Richtungen*, *Heilung*). Es gibt nur noch
 > eine Klasse für alle, die kämpfen: Die NSC einer Begegnung werden beim Würfeln als vollständige
@@ -239,13 +245,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-eine:
-
-- **2026-11-12, wartet auf Freigabe: Patron** (siehe *Patron*). Im Reiter Begegnung würfelt man in
-  einem eigenen kleinen Bereich unter dem für NSC-Begegnungen einen Patron nach der Patron
-  Encounters Matrix (SE, Charts S. 20). Neu im Bild: der Logeintrag `PatronRoll` und als
-  Referenzdaten `Patron`. Der Ausschnitt dazu liegt unter
-  [`changes/2026-11-12-patron.png`](changes/2026-11-12-patron.png).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
