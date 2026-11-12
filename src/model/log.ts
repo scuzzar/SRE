@@ -10,7 +10,7 @@ import { roll2d6, sum, type Characteristic, type Dice } from './rules';
  * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei Probe und Angriff DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | Note;
+export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | Note;
 
 /** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
 export type LogResult = Exclude<LogEntry, Note>;
@@ -130,6 +130,18 @@ export interface Recovery extends LogEntryBase {
   readonly for: CharacterId;
   readonly by?: CharacterId;
   readonly dice?: readonly number[];
+}
+
+/**
+ * Ein Wurf auf eine Patron-Liste (SE, Charts S. 20): zwei Würfel nacheinander, jeder mit seinem DM,
+ * die DMs beim Würfeln festgehalten. `list` ist im Code der Verweis `of` auf die Liste; die Zeile
+ * folgt aus Würfeln und DMs (siehe `patronOfRoll`).
+ */
+export interface PatronRoll extends LogEntryBase {
+  readonly kind: 'patron';
+  readonly list: 1 | 2;
+  readonly dice: Dice;
+  readonly dms: readonly [number, number];
 }
 
 /** Die körperlichen Attribute, die Wunden nehmen (S. 7). */

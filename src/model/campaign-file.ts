@@ -76,6 +76,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     by: z.string().optional(),
     dice: z.array(die).length(5).optional(),
   }),
+  z.object({ kind: z.literal('patron'), at, list: z.union([z.literal(1), z.literal(2)]), dice, dms: z.tuple([z.number().int(), z.number().int()]) }),
   z.object({ kind: z.literal('note'), at, text: z.string().trim().min(1), interprets: z.number().int().optional() }),
 ]);
 
@@ -372,6 +373,7 @@ function logEntry(entry: z.infer<typeof LogEntrySchema>): LogEntry {
     case 'recovery':
       return stripped(entry) as Recovery;
     case 'dice':
+    case 'patron':
       return entry;
     case 'note': {
       const { interprets, ...rest } = entry;
@@ -435,6 +437,7 @@ function validate(campaign: Campaign): void {
         oddsOf(entry.odds);
         break;
       case 'dice':
+      case 'patron':
         break;
       case 'attack': {
         const weapon = weaponOf(entry.with);

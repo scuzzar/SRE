@@ -11,6 +11,7 @@ export * from './fight';
 export * from './wounds';
 export * from './stamina';
 export * from './log';
+export * from './patron';
 export * from './ports';
 export * from './reference';
 export * from './rules';

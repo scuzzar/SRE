@@ -1,4 +1,4 @@
-import type { AttackItem, CardItem, DamageItem, DmPart, LogItem, RecoveryItem, TaskItem } from '../controller';
+import type { AttackItem, CardItem, DamageItem, DmPart, LogItem, PatronItem, RecoveryItem, TaskItem } from '../controller';
 import type { ArmorClass, AttackKind, BookingKind, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
@@ -285,9 +285,22 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
       return { head: `Schaden ${item.damage}`, rest: `${item.weapon} · ${item.dice.join(' + ')}` };
     case 'recovery':
       return { head: 'Heilung', rest: recoveryLine(item) };
+    case 'patron':
+      return { head: patronName(item), rest: patronDetail(item) };
     case 'note':
       return { head: item.interprets === undefined ? 'Notiz' : 'Deutung', rest: item.text };
   }
+}
+
+/** Der Patron eines Wurfs, oder „Gerücht“ bei den Rumor-Zeilen. */
+export function patronName(item: PatronItem): string {
+  return item.rumor ? 'Gerücht statt Patron' : item.name;
+}
+
+/** Ein Patron-Wurf in Zahlen: „Liste 1 · 3 + 4 (DM −1, +0) → 26“. */
+export function patronDetail(item: PatronItem): string {
+  const dms = item.dms[0] === 0 && item.dms[1] === 0 ? '' : ` (DM ${signed(item.dms[0])}, ${signed(item.dms[1])})`;
+  return `Liste ${item.list} · ${item.dice[0]} + ${item.dice[1]}${dms} → ${item.roll}`;
 }
 
 export function taskDetail(item: TaskItem | AttackItem): string {

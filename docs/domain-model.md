@@ -1515,6 +1515,9 @@ Diagramm mit diesen Ausnahmen:
 - **`Card → Campaign : in`, `Task → Campaign : in` und `Attack → Campaign : in`** sind im Code
   kein Feld. Der Controller hält höchstens eine offene Karte, höchstens eine Probe und höchstens
   einen Angriff, alle immer zur offenen Kampagne; beim Wechsel der Kampagne verfallen sie. Damit ist die Multiplizität erfüllt.
+- **`PatronRoll → Patron : of`** ist im Code die Liste (`list`, 1 oder 2); die Zeile der Liste folgt
+  aus Würfeln und DMs (`patronOfRoll`). Damit ist der Verweis erfüllt, ohne den Wurf doppelt zu
+  speichern. Die Listen stehen in `src/data/encounters.json` als `patrons`.
 - **`Recovery.kind`** heißt im Code `how`, weil `kind` bei Logeinträgen schon die Art des Eintrags
   ist (`'recovery'`).
 - **Demo-Kampagne.** Die allererste Kampagne auf einem Gerät heißt „Demo-Kampagne“ und ist nicht

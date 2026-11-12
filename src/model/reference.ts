@@ -1,4 +1,4 @@
-import { referenceData, type Cascade, type Entry, type Gain, type Item, type Odds, type Section, type Service, type Skill, type Slot, type Table, type Weapon, type EncounterType } from '../data';
+import { referenceData, type Cascade, type Entry, type Gain, type Item, type Odds, type Section, type Service, type Skill, type Slot, type Table, type Weapon, type EncounterType, type Patron } from '../data';
 import { DomainError } from './errors';
 
 export { nameSlotIds, nameSounds, type NameSound } from '../data';
@@ -11,6 +11,7 @@ export type {
   Column,
   EncounterType,
   Entry,
+  Patron,
   ExampleCharacter,
   Gain,
   HouseRules,
@@ -144,6 +145,11 @@ const encounterTypeByRoll = new Map(ref.encounters.types.map((t) => [t.roll, t])
 /** Die Art einer Begegnung zu einem Wurf 11–66; die Zeilen 61–66 sind leer. */
 export function encounterTypeOf(roll: number): EncounterType | undefined {
   return encounterTypeByRoll.get(roll);
+}
+
+/** Die Zeile einer Patron-Liste (1 oder 2) zu einem Wurf 11–66. */
+export function patronOf(list: number, roll: number): Patron {
+  return found(ref.encounters.patrons.find((p) => p.list === list && p.roll === roll), 'Der Patron', `${list}-${roll}`);
 }
 
 /** Der Text der Reactions-Tabelle zu 2 bis 12. */
