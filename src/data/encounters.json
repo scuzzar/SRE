@@ -155,5 +155,33 @@
     {"list": 2, "roll": 64, "name": "Belter", "rumor": false},
     {"list": 2, "roll": 65, "name": "Bureaucrat", "rumor": false},
     {"list": 2, "roll": 66, "name": "Diplomat", "rumor": false}
+  ],
+  "rumors": [
+    {"letter": "A", "text": "Background information", "general": false, "rolls": [11]},
+    {"letter": "B", "text": "Minor fact", "general": false, "rolls": [21]},
+    {"letter": "C", "text": "Major fact", "general": false, "rolls": [31]},
+    {"letter": "D", "text": "Partial (potentially misleading) fact", "general": false, "rolls": [41]},
+    {"letter": "E", "text": "Veiled clue", "general": false, "rolls": [51]},
+    {"letter": "F", "text": "Information leading to trap", "general": false, "rolls": [61]},
+    {"letter": "G", "text": "Location data", "general": false, "rolls": [12]},
+    {"letter": "H", "text": "Important fact", "general": false, "rolls": [62]},
+    {"letter": "I", "text": "Obvious clue", "general": false, "rolls": [13]},
+    {"letter": "J", "text": "Completely false information", "general": false, "rolls": [63]},
+    {"letter": "K", "text": "Terminology", "general": false, "rolls": [14]},
+    {"letter": "L", "text": "Library data reference", "general": false, "rolls": [64]},
+    {"letter": "M", "text": "Helpful data", "general": false, "rolls": [15]},
+    {"letter": "N", "text": "Location data", "general": false, "rolls": [65]},
+    {"letter": "O", "text": "Reliable recommendation to action", "general": false, "rolls": [16]},
+    {"letter": "P", "text": "Major fact", "general": false, "rolls": [26]},
+    {"letter": "Q", "text": "Background information", "general": false, "rolls": [36]},
+    {"letter": "R", "text": "Minor fact", "general": false, "rolls": [46]},
+    {"letter": "S", "text": "Veiled clue", "general": false, "rolls": [56]},
+    {"letter": "T", "text": "Misleading clue", "general": false, "rolls": [66]},
+    {"letter": "U", "text": "Broad background information", "general": true, "rolls": [22, 23, 32]},
+    {"letter": "V", "text": "Misleading background information", "general": true, "rolls": [45, 54, 55]},
+    {"letter": "W", "text": "Reference to library data", "general": true, "rolls": [42, 52, 53]},
+    {"letter": "X", "text": "General location data", "general": true, "rolls": [24, 25, 35]},
+    {"letter": "Y", "text": "Specific background data", "general": true, "rolls": [33, 43]},
+    {"letter": "Z", "text": "Misleading background data", "general": true, "rolls": [34, 44]}
   ]
 }

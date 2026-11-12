@@ -1,4 +1,4 @@
-import type { AttackItem, CardItem, DamageItem, DmPart, LogItem, PatronItem, RecoveryItem, TaskItem } from '../controller';
+import type { AttackItem, CardItem, DamageItem, DmPart, LogItem, PatronItem, RecoveryItem, RumorItem, TaskItem } from '../controller';
 import type { ArmorClass, AttackKind, BookingKind, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
@@ -287,6 +287,8 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
       return { head: 'Heilung', rest: recoveryLine(item) };
     case 'patron':
       return { head: patronName(item), rest: patronDetail(item) };
+    case 'rumor':
+      return { head: rumorName(item), rest: rumorDetail(item) };
     case 'note':
       return { head: item.interprets === undefined ? 'Notiz' : 'Deutung', rest: item.text };
   }
@@ -297,10 +299,20 @@ export function patronName(item: PatronItem): string {
   return item.rumor ? 'Gerücht statt Patron' : item.name;
 }
 
-/** Ein Patron-Wurf in Zahlen: „Liste 1 · 3 + 4 (DM −1, +0) → 26“. */
+/** Ein Patron-Wurf in Zahlen: „Liste 1 · 3 und 4 (DM −1, ±0) → 24“. */
 export function patronDetail(item: PatronItem): string {
   const dms = item.dms[0] === 0 && item.dms[1] === 0 ? '' : ` (DM ${signed(item.dms[0])}, ${signed(item.dms[1])})`;
-  return `Liste ${item.list} · ${item.dice[0]} + ${item.dice[1]}${dms} → ${item.roll}`;
+  return `Liste ${item.list} · ${item.dice[0]} und ${item.dice[1]}${dms} → ${item.roll}`;
+}
+
+/** Ein Gerücht mit seinem Buchstaben: „F · Information leading to trap“. */
+export function rumorName(item: RumorItem): string {
+  return `${item.letter} · ${item.text}`;
+}
+
+/** Ein Gerüchte-Wurf in Zahlen: „allgemein · 2 und 3 → 23“. */
+export function rumorDetail(item: RumorItem): string {
+  return `${item.general ? 'allgemein' : 'bestimmt'} · ${item.dice[0]} und ${item.dice[1]} → ${item.roll}`;
 }
 
 export function taskDetail(item: TaskItem | AttackItem): string {

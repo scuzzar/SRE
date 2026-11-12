@@ -158,6 +158,15 @@ export const PatronSchema = z.object({
   rumor: z.boolean(),
 });
 
+/** Eine Art von Gerücht der Rumor List (SE, Charts S. 21) mit den Würfen 11–66 der Rumors Matrix, die auf sie führen. */
+export const RumorSchema = z.object({
+  letter: z.string().regex(/^[A-Z]$/),
+  text: z.string().min(1),
+  /** U bis Z: allgemeine Gerüchte; A bis T bestimmte. */
+  general: z.boolean(),
+  rolls: z.array(z.number().int().min(11).max(66)).min(1),
+});
+
 /** Die Begegnungen und die Reactions-Tabelle (S. 21). */
 export const EncountersSchema = z.object({
   types: z.array(EncounterTypeSchema).min(1),
@@ -174,6 +183,10 @@ export const EncountersSchema = z.object({
   patrons: z
     .array(PatronSchema)
     .refine((patrons) => [1, 2].every((list) => [1, 2, 3, 4, 5, 6].every((a) => [1, 2, 3, 4, 5, 6].every((b) => patrons.filter((p) => p.list === list && p.roll === a * 10 + b).length === 1))) && patrons.length === 72, 'Jede Patron-Liste hat genau eine Zeile je Wurf 11 bis 66'),
+  /** Die Rumor List mit der Rumors Matrix: jeder Wurf 11 bis 66 führt auf genau ein Gerücht. */
+  rumors: z
+    .array(RumorSchema)
+    .refine((rumors) => [1, 2, 3, 4, 5, 6].every((a) => [1, 2, 3, 4, 5, 6].every((b) => rumors.filter((r) => r.rolls.includes(a * 10 + b)).length === 1)), 'Jeder Wurf 11 bis 66 der Rumors Matrix führt auf genau ein Gerücht'),
 });
 
 /** Ein Sammelbegriff, aus dem man eine Fertigkeit wählt: Blade Combat, Gun Combat, Vehicle. */
@@ -479,6 +492,7 @@ export type AttackKind = z.infer<typeof AttackKindSchema>;
 export type Weapon = z.infer<typeof WeaponSchema>;
 export type EncounterType = z.infer<typeof EncounterTypeSchema>;
 export type Patron = z.infer<typeof PatronSchema>;
+export type Rumor = z.infer<typeof RumorSchema>;
 export type ArmorDm = z.infer<typeof ArmorDmSchema>;
 export type RangeDm = z.infer<typeof RangeDmSchema>;
 export type Cascade = z.infer<typeof CascadeSchema>;

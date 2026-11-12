@@ -69,6 +69,7 @@ import {
   reenlist,
   rollDice,
   rollPatron,
+  rollRumor,
   rollEncounterCheck,
   rollPatronList,
   patronOfRoll,
@@ -136,7 +137,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, patronNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, wearOffer: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, patronNote: undefined, rumorNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, wearOffer: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
 
 /** Ein Test in Worten: „Test 3 (5+ nötig)“, bei zwei Würfeln „Test 3 + 4 = 7 (7+ nötig)“. */
 function checkText(check: EncounterCheck): string {
@@ -184,6 +185,7 @@ export class GameController {
       wounding: undefined,
       combatNote: undefined,
       patronNote: undefined,
+      rumorNote: undefined,
       simTarget: undefined,
       simBurst: undefined,
       simWeakened: undefined,
@@ -338,7 +340,26 @@ export class GameController {
       return;
     }
     const entry = rollPatron(this.campaign, rollPatronList(this.deps.random), this.deps.random, this.deps.clock);
-    this.change(appendLog(this.campaign, entry), { patronNote: `${checkText(check)}: ${patronOfRoll(entry).rumor ? 'ein Gerücht statt eines Patrons' : 'ein Patron'}.` });
+    // Eine Rumor-Zeile der Liste: gleich danach ein Gerücht, ohne Test (Charts S. 21).
+    const rumor = patronOfRoll(entry).rumor;
+    const entries = rumor ? [entry, rollRumor(this.deps.random, this.deps.clock)] : [entry];
+    this.change(appendLog(this.campaign, ...entries), {
+      patronNote: `${checkText(check)}: ${rumor ? 'ein Gerücht statt eines Patrons' : 'ein Patron'}.`,
+      ...(rumor ? { rumorNote: 'Ohne Test: Gerücht statt eines Patrons.' } : {}),
+    });
+  }
+
+  /**
+   * Das Gerücht (SE, Charts S. 21): erst der Test der Woche (7+ auf 2W6), dann der Wurf auf die
+   * Rumors Matrix; er kommt in den Log. Der Test steht nur in der Karte.
+   */
+  rollRumor(): void {
+    const check = rollEncounterCheck('rumor', this.deps.random);
+    if (!check.passed) {
+      this.update({ rumorNote: `${checkText(check)}: diese Woche kein Gerücht.` });
+      return;
+    }
+    this.change(appendLog(this.campaign, rollRumor(this.deps.random, this.deps.clock)), { rumorNote: `${checkText(check)}: ein Gerücht.` });
   }
 
   /** Eine Notiz, oder mit `interprets` (Stelle eines Ergebnisses im Log) eine Deutung dazu. */

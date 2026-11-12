@@ -143,7 +143,7 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await expect(page.getByRole('button', { name: 'Begegnung würfeln' })).toBeVisible();
 });
 
-test('Patron: eine eigene Karte im Reiter Begegnung; erst der Test, dann wählt ein Würfel die Liste; der Wurf steht im Log', async ({ page }) => {
+test('Patron und Gerücht: eigene Karten im Reiter Begegnung; erst der Test, beim Patron wählt ein Würfel die Liste; die Würfe stehen im Log', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
   await expect(page.getByRole('region', { name: 'Zufallsbegegnung' }).getByRole('button', { name: 'Begegnung würfeln' })).toBeVisible();
@@ -155,8 +155,16 @@ test('Patron: eine eigene Karte im Reiter Begegnung; erst der Test, dann wählt 
     await patron.getByRole('button', { name: 'Patron würfeln' }).click();
     await expect(patron.getByRole('status')).toContainText(/Test \d \(5\+ nötig\): /);
   }
-  await expect(patron.locator('.patron-last')).toContainText(/Liste [12] · \d \+ \d.* → \d\d/);
+  await expect(patron.locator('.patron-last')).toContainText(/Liste [12] · \d und \d.* → \d\d/);
+  // Gerücht: Test 7+ auf 2W6, dann die Art nach der Rumors Matrix.
+  const rumor = page.getByRole('region', { name: 'Gerücht' });
+  for (let i = 0; i < 60 && !(await rumor.locator('.patron-last').isVisible()); i++) {
+    await rumor.getByRole('button', { name: 'Gerücht würfeln' }).click();
+    await expect(rumor.getByRole('status')).toBeVisible();
+  }
+  await expect(rumor.locator('.patron-last')).toContainText(/[A-Z] · .+ (allgemein|bestimmt) · \d und \d → \d\d/);
   // Der Wurf liegt im Log als Ergebnis.
   await page.getByRole('navigation').getByRole('button', { name: 'Orakel' }).click();
   await expect(page.getByText(/Patron · Liste [12]/).first()).toBeVisible();
+  await expect(page.locator('.kicker', { hasText: /^Gerücht$/ }).first()).toBeVisible();
 });

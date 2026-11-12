@@ -1,9 +1,9 @@
 import { activeSkills, livingCharacters, type Campaign, type Character } from './campaign';
 import { replay } from './career';
 import { DomainError } from './errors';
-import type { PatronRoll } from './log';
+import type { PatronRoll, RumorRoll } from './log';
 import type { Clock, Random } from './ports';
-import { patronOf, type Patron } from './reference';
+import { patronOf, rumorOf, type Patron, type Rumor } from './reference';
 
 /** Die beiden Patron-Listen der Patron Encounters Matrix (SE, Charts S. 20). */
 export const patronLists = [1, 2] as const;
@@ -79,4 +79,19 @@ export function patronOfRoll(entry: PatronRoll): Patron {
 export function rollPatron(campaign: Campaign, list: number, random: Random, clock: Clock): PatronRoll {
   if (!patronLists.includes(list as PatronList)) throw new DomainError(`Eine Patron-Liste ${list} gibt es nicht; 1 oder 2.`);
   return { kind: 'patron', at: clock.now(), list: list as PatronList, dice: [random.int(1, 6), random.int(1, 6)], dms: patronDms(campaign, list as PatronList) };
+}
+
+/** Der Wurf 11–66 eines Gerüchts: der erste Würfel die Zehner-, der zweite die Einerstelle. */
+export function rumorRollOf(entry: RumorRoll): number {
+  return entry.dice[0] * 10 + entry.dice[1];
+}
+
+/** `/of`: das Gerücht, auf das die Rumors Matrix führt. */
+export function rumorOfRoll(entry: RumorRoll): Rumor {
+  return rumorOf(rumorRollOf(entry));
+}
+
+/** Würfelt ein Gerücht auf der Rumors Matrix (SE, Charts S. 21); das Ergebnis kommt in den Log. */
+export function rollRumor(random: Random, clock: Clock): RumorRoll {
+  return { kind: 'rumor', at: clock.now(), dice: [random.int(1, 6), random.int(1, 6)] };
 }

@@ -152,6 +152,13 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `PatronRoll` und als Referenzdaten `Patron`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-12-patron.png`](changes/2026-11-12-patron.png).
 >
+> Ebenfalls am 12. November 2026 freigegeben: das **Gerücht** (Kennzeichen 2026-11-12b; siehe
+> *Gerücht*, *Test*), eine weitere Begegnungsart im Reiter Begegnung: der Wurf auf die Rumors Matrix
+> (SE, Charts S. 21). Neu im Bild: der Logeintrag `RumorRoll` und als Referenzdaten `Rumor`. Der
+> Ausschnitt dazu liegt unter [`changes/2026-11-12-geruecht.png`](changes/2026-11-12-geruecht.png).
+> Dazu, ohne Änderung am Bild: der **Test** vor jeder Begegnungsart und die Liste des Patrons per
+> Würfel.
+>
 > Am 8. November 2026 freigegeben: **NSC der Begegnung als vollständige Charaktere** (Kennzeichen
 > 2026-11-08c; siehe *Begegnung*, *NSC*, *Angriff in beide Richtungen*, *Heilung*). Es gibt nur noch
 > eine Klasse für alle, die kämpfen: Die NSC einer Begegnung werden beim Würfeln als vollständige
@@ -245,12 +252,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-eine:
-
-- **2026-11-12b, wartet auf Freigabe: Gerücht** (siehe *Gerücht*). Eine weitere Begegnungsart im
-  Reiter Begegnung: der Wurf auf die Rumors Matrix (SE, Charts S. 21). Neu im Bild: der Logeintrag
-  `RumorRoll` und als Referenzdaten `Rumor`. Der Ausschnitt dazu liegt unter
-  [`changes/2026-11-12-geruecht.png`](changes/2026-11-12-geruecht.png).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -289,7 +291,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Orakelantwort | `OracleAnswer` | Ja oder Nein auf eine Frage |
 | Notiz | `Note` ohne `interprets` | Freier Text im Log, z. B. „Wir landen auf Regina.“ |
 | Deutung | `Note` mit `interprets` | Was man aus einem Ergebnis macht, z. B. „Die Tür ist offen, aber jemand war schon hier.“ |
-| Ergebnis | `OracleAnswer`, `DiceRoll`, `CardPick`, `TaskResult`, `AttackResult`, `DamageRoll`, `PatronRoll` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
+| Ergebnis | `OracleAnswer`, `DiceRoll`, `CardPick`, `TaskResult`, `AttackResult`, `DamageRoll`, `PatronRoll`, `RumorRoll` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
 | Schreibzeile | (Fragefeld) | Das eine Textfeld über den Knöpfen; was der Text wird, entscheidet der Knopf |
 | Würfelwurf (2W6) | `DiceRoll` | Ein einfacher Wurf mit zwei Würfeln |
 | Inspirationskarte | `Card` | Eine gezogene Karte, solange sie offen ist |
@@ -374,7 +376,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Überlauf | (Regel) | Was ein Würfel über 0 hinaus bringt, geht als neuer Block auf ein anderes Attribut über 0 (SR 21) |
 | Kampf | (Reiter „Kampf“) | Der Screen für Angriffe: ohne Begegnung die Waffentabelle, mit Begegnung die Kampfsimulation |
 | Reiter Begegnung | (Reiter „Begegnung“) | Der Screen mit der Liste der Begegnungsarten, darüber der Aufenthaltsort |
-| Begegnungsart | (Karte im Reiter Begegnung) | Eine Art von Begegnungen nach SE S. 20 mit ihren Einstellungen und ihrem Wurf: Zufallsbegegnung, Patron, später Gerücht, Gesetz, Tiere. Nicht zu verwechseln mit der *Art der Begegnung* (`EncounterType`), einer Zeile der Random Encounter List |
+| Begegnungsart | (Karte im Reiter Begegnung) | Eine Art von Begegnungen nach SE S. 20 mit ihren Einstellungen und ihrem Wurf: Zufallsbegegnung, Patron, Gerücht, später Gesetz, Tiere. Nicht zu verwechseln mit der *Art der Begegnung* (`EncounterType`), einer Zeile der Random Encounter List |
 | Zufallsbegegnung | (Begegnungsart) | Personen nach der Random Encounter List (S. 21); ergibt eine Begegnung (`Encounter`) |
 | Patron | `Patron` | Ein Auftraggeber nach seinem Beruf, z. B. „Smuggler“: eine Zeile einer der beiden Patron-Listen (SE, Charts S. 20) |
 | Patron-Liste | `Patron.list` | Liste eins oder Liste zwei der Patron Encounters Matrix, je 36 Zeilen von 11 bis 66 |
@@ -846,7 +848,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Matrix (siehe *Gerücht*).
   - *Deuten*: Der Patron-Wurf ist ein Ergebnis und lässt sich deuten, z. B. mit dem Auftrag, den
     der Patron vergibt. Die Regeln geben keine Tabelle für Aufträge; die legt die Spielleitung fest.
-- **Gerücht** (wartet auf Freigabe, 2026-11-12b). Eine weitere Begegnungsart im Reiter Begegnung.
+- **Gerücht.** Eine weitere Begegnungsart im Reiter Begegnung.
   Nach dem Test (7+ auf 2W6) zwei Würfel nacheinander (`RumorRoll.dice`), der erste die Zehner-, der
   zweite die Einerstelle; die Rumors Matrix (SE, Charts S. 21) führt von 11 bis 66 auf eine Art von
   Gerücht (`Rumor`, Buchstabe A bis Z; `rolls` sind die Würfe, die auf sie führen). DMs gibt es

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import type { CombatView, PatronView, SimView, Snapshot } from '../../controller';
-import { patronDetail, patronName, signed } from '../format';
+import type { CombatView, PatronView, RumorView, SimView, Snapshot } from '../../controller';
+import { patronDetail, patronName, rumorDetail, rumorName, signed } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { distancesText, EncounterIntro } from './FightScreen';
@@ -25,6 +25,11 @@ export function EncounterScreen({ view }: { view: Snapshot }) {
         {view.patron && (
           <EncounterKind title="Patron" rule="Auftraggeber nach der Patron Encounters Matrix (S. 20) · wöchentlich, Test 5+ auf 1W6, die Liste wählt ein Würfel">
             <PatronBox patron={view.patron} />
+          </EncounterKind>
+        )}
+        {view.rumor && (
+          <EncounterKind title="Gerücht" rule="Art des Gerüchts nach der Rumors Matrix (S. 21) · wöchentlich, Test 7+ auf 2W6">
+            <RumorBox rumor={view.rumor} />
           </EncounterKind>
         )}
       </section>
@@ -174,6 +179,36 @@ function PatronBox({ patron }: { patron: PatronView }) {
         }}
       >
         Patron würfeln
+      </button>
+    </>
+  );
+}
+
+/** Die Begegnungsart Gerücht (SE, Charts S. 21): Würfeln testet erst, ob es eines gibt, und würfelt dann die Art; sie kommt in den Log. */
+function RumorBox({ rumor }: { rumor: RumorView }) {
+  const game = useGame();
+  const last = rumor.last;
+  return (
+    <>
+      {rumor.note && (
+        <p className="encounter-note" role="status">
+          {rumor.note}
+        </p>
+      )}
+      {last && (
+        <p className="patron-last">
+          Zuletzt: <strong>{rumorName(last)}</strong> <span>{rumorDetail(last)}</span>
+        </p>
+      )}
+      <button
+        type="button"
+        className="primary encounter-roll"
+        onClick={() => {
+          haptic('shake');
+          game.rollRumor();
+        }}
+      >
+        Gerücht würfeln
       </button>
     </>
   );

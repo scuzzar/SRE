@@ -208,7 +208,7 @@ hide <<value>> stereotype
     dice: number[2]
     dms: number[2]
   }
-  class RumorRoll $begegnung $newClass("2026-11-12b") {
+  class RumorRoll $begegnung {
     dice: number[2]
   }
 
@@ -387,7 +387,7 @@ hide <<value>> stereotype
     name: string
     rumor: boolean
   }
-  class Rumor <<reference>> $begegnung $newClass("2026-11-12b") {
+  class Rumor <<reference>> $begegnung {
     letter: string
     text: string
     general: boolean
@@ -750,8 +750,8 @@ Recovery --> RecoveryKind
 LogEntry <|-- Note
 LogEntry <|-- PatronRoll
 PatronRoll "*" --> "1" Patron : of
-LogEntry <|-$newArrow("2026-11-12b")- RumorRoll
-RumorRoll "*" -$newArrow("2026-11-12b")-> "1" Rumor : /of
+LogEntry <|-- RumorRoll
+RumorRoll "*" --> "1" Rumor : /of
 Note "*" --> "0..1" LogEntry : interprets
 CardPick "1" *-- "*" PickedItem : items {ordered}
 CardPick "1" *-- "0..1" MapIcon : map

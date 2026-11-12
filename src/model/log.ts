@@ -10,7 +10,7 @@ import { roll2d6, sum, type Characteristic, type Dice } from './rules';
  * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei Probe und Angriff DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | Note;
+export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | Note;
 
 /** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
 export type LogResult = Exclude<LogEntry, Note>;
@@ -142,6 +142,12 @@ export interface PatronRoll extends LogEntryBase {
   readonly list: 1 | 2;
   readonly dice: Dice;
   readonly dms: readonly [number, number];
+}
+
+/** Ein Wurf auf die Rumors Matrix (SE, Charts S. 21): zwei Würfel nacheinander, ohne DMs; das Gerücht folgt allein aus ihnen. */
+export interface RumorRoll extends LogEntryBase {
+  readonly kind: 'rumor';
+  readonly dice: Dice;
 }
 
 /** Die körperlichen Attribute, die Wunden nehmen (S. 7). */

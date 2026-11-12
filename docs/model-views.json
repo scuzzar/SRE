@@ -118,7 +118,7 @@
       "id": "2026-11-12b",
       "file": "2026-11-12-geruecht",
       "title": "Gerücht: Wurf auf die Rumors Matrix",
-      "approved": false,
+      "approved": true,
       "show": [
         "LogEntry",
         "PatronRoll"

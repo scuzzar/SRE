@@ -61,6 +61,8 @@ import {
   patronLists,
   patronOfRoll,
   patronRollOf,
+  rumorOfRoll,
+  rumorRollOf,
   valueOf,
   entryOf,
   itemOf,
@@ -211,6 +213,8 @@ export interface Snapshot {
   readonly combat: CombatView | undefined;
   /** Der Bereich Patron im Reiter Begegnung; fehlt nur ohne Kampagne. */
   readonly patron: PatronView | undefined;
+  /** Die Begegnungsart Gerücht im Reiter Begegnung; fehlt nur ohne Kampagne. */
+  readonly rumor: RumorView | undefined;
   /** Der Reiter Shop: Kasse und Angebot auf dem Aufenthaltsort. */
   readonly shop: ShopView | undefined;
   /** Der Aufenthaltsort der Gruppe, als Feld (0304). */
@@ -279,7 +283,7 @@ export interface OddsChoice {
   readonly selected: boolean;
 }
 
-export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | NoteItem;
+export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | NoteItem;
 
 /** Ein Patron-Wurf: Liste, Würfel mit DMs, der Wurf 11–66 und die Zeile der Liste. */
 export interface PatronItem {
@@ -292,6 +296,24 @@ export interface PatronItem {
   readonly name: string;
   /** Kein Patron, sondern ein Gerücht. */
   readonly rumor: boolean;
+}
+
+/** Ein Gerüchte-Wurf: die Würfel, der Wurf 11–66 und das Gerücht der Rumor List. */
+export interface RumorItem {
+  readonly kind: 'rumor';
+  readonly at: string;
+  readonly dice: Dice;
+  readonly roll: number;
+  readonly letter: string;
+  readonly text: string;
+  /** Ein allgemeines Gerücht (U bis Z); sonst ein bestimmtes. */
+  readonly general: boolean;
+}
+
+/** Die Begegnungsart Gerücht im Reiter Begegnung: der letzte Gerüchte-Wurf im Log und der Test des letzten Wurfs. */
+export interface RumorView {
+  readonly last: RumorItem | undefined;
+  readonly note: string | undefined;
 }
 
 /** Der Bereich Patron im Reiter Begegnung: je Liste die DMs der lebenden SC, dazu der letzte Patron-Wurf im Log. */
@@ -928,6 +950,8 @@ export interface ControllerState {
   readonly combatNote: string | undefined;
   /** Der Test des letzten Patron-Wurfs und was er brachte. */
   readonly patronNote: string | undefined;
+  /** Der Test des letzten Gerüchte-Wurfs und was er brachte. */
+  readonly rumorNote: string | undefined;
   /** Das Ziel dessen, der in der Kampfsimulation am Zug ist (Id eines SC oder NSC). */
   readonly simTarget: string | undefined;
   /** Feuerstoß oder Einzelschuss dessen, der in der Kampfsimulation am Zug ist; fehlt: vorgewählt. */
@@ -1635,6 +1659,10 @@ function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
       const patron = patronOfRoll(entry);
       return { kind: 'patron', at: entry.at, list: entry.list, dice: entry.dice, dms: entry.dms, roll: patronRollOf(entry), name: patron.name, rumor: patron.rumor };
     }
+    case 'rumor': {
+      const rumor = rumorOfRoll(entry);
+      return { kind: 'rumor', at: entry.at, dice: entry.dice, roll: rumorRollOf(entry), letter: rumor.letter, text: rumor.text, general: rumor.general };
+    }
     case 'note':
       return { kind: 'note', at: entry.at, text: entry.text, interprets: entry.interprets };
   }
@@ -1720,7 +1748,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: [], retired: [], task: undefined, combat: undefined, patron: undefined, shop: undefined, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: [], retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -1747,6 +1775,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
       last: log.findLast((item): item is PatronItem => item.kind === 'patron'),
       note: state.patronNote,
     },
+    rumor: { last: log.findLast((item): item is RumorItem => item.kind === 'rumor'), note: state.rumorNote },
     shop: shopView(campaign, state.shopError, state.wearOffer),
     location: campaign.location,
     result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : undefined,

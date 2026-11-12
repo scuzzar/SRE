@@ -509,11 +509,25 @@ describe('Begegnung und Kampfsimulation', () => {
     random.queue.push(5, 4, 3, 6);
     game.rollPatron();
     expect(game.snapshot().patron).toMatchObject({ last: { list: 2, dice: [3, 6], dms: [0, 1], roll: 36, name: 'Professor' }, note: 'Test 5 (5+ nötig): ein Patron.' });
-    // Test 6, Listenwürfel 1 (Liste eins), 2 und 3: Zeile 23 ist ein Gerücht.
-    random.queue.push(6, 1, 2, 3);
+    // Test 6, Listenwürfel 1 (Liste eins), 2 und 3: Zeile 23 ist ein Gerücht; gleich danach fällt es ohne Test (6 und 1: F).
+    random.queue.push(6, 1, 2, 3, 6, 1);
     game.rollPatron();
     expect(game.snapshot().patron).toMatchObject({ last: { list: 1, roll: 23, rumor: true }, note: 'Test 6 (5+ nötig): ein Gerücht statt eines Patrons.' });
-    expect(game.snapshot().log.map((e) => e.kind)).toEqual(['patron', 'patron']);
+    expect(game.snapshot().rumor).toMatchObject({ last: { roll: 61, letter: 'F', text: 'Information leading to trap', general: false }, note: 'Ohne Test: Gerücht statt eines Patrons.' });
+    expect(game.snapshot().log.map((e) => e.kind)).toEqual(['patron', 'patron', 'rumor']);
+  });
+
+  it('Gerücht: erst der Test der Woche (7+ auf 2W6), dann der Wurf auf die Rumors Matrix; nur der Wurf steht im Log', async () => {
+    const { game, random } = await onRegina();
+    random.queue.push(3, 3);
+    game.rollRumor();
+    expect(game.snapshot().rumor).toMatchObject({ last: undefined, note: 'Test 3 + 3 = 6 (7+ nötig): diese Woche kein Gerücht.' });
+    expect(game.snapshot().log).toHaveLength(0);
+    // Test 4 + 3, dann 2 und 3: Die Matrix führt bei 23 auf U, ein allgemeines Gerücht.
+    random.queue.push(4, 3, 2, 3);
+    game.rollRumor();
+    expect(game.snapshot().rumor).toMatchObject({ last: { dice: [2, 3], roll: 23, letter: 'U', text: 'Broad background information', general: true }, note: 'Test 4 + 3 = 7 (7+ nötig): ein Gerücht.' });
+    expect(game.snapshot().log.map((e) => e.kind)).toEqual(['rumor']);
   });
 
   it('im Reiter Begegnung gewürfelt, zeigt erst die Übersicht; danach bleibt der Reiter Begegnung, zum Kampf geht es erst auf Wunsch', async () => {
