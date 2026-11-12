@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import type { CombatView, PatronView, SimView, Snapshot } from '../../controller';
 import { patronDetail, patronName, signed } from '../format';
 import { useGame } from '../game-context';
@@ -6,25 +7,42 @@ import { haptic } from '../haptics';
 import { distancesText, EncounterIntro } from './FightScreen';
 
 /**
- * Der Reiter Begegnung. Ohne laufende Begegnung: wo die Gruppe ist, das Gelände und Begegnung würfeln
- * oder wählen; danach zeigt die Übersicht, wer kommt, und „Weiter“ führt zurück hierher. Läuft eine
- * Begegnung, zeigt er sie knapp, mit Zum Kampf, Übersicht und Beenden: Nicht jede Begegnung wird ein
- * Kampf, man kann sie auch anders lösen und beenden. Darunter steht immer der kleine Bereich Patron.
+ * Der Reiter Begegnung: oben, wo die Gruppe ist, darunter eine Liste der Begegnungsarten. Jede Art ist
+ * eine Karte mit ihren Einstellungen und ihrem Wurf; weitere Arten kommen als weitere Karten dazu.
+ * Bei der Zufallsbegegnung zeigt die Übersicht nach dem Würfeln, wer kommt, und „Weiter“ führt zurück
+ * hierher. Läuft eine, zeigt ihre Karte sie knapp, mit Zum Kampf, Übersicht und Beenden: Nicht jede
+ * Begegnung wird ein Kampf, man kann sie auch anders lösen und beenden.
  */
 export function EncounterScreen({ view }: { view: Snapshot }) {
   const combat = view.combat;
   return (
     <div className="screen">
-      {combat && !combat.sim ? (
-        <EncounterStart combat={combat} patron={view.patron} />
-      ) : (
-        <section className="scroll encounter-scroll" aria-label="Begegnung">
-          {!combat ? <p className="log-empty">Ohne lebenden Charakter gibt es keine Begegnung.</p> : combat.sim && <RunningEncounter sim={combat.sim} />}
-          {view.patron && <PatronBox patron={view.patron} />}
-        </section>
-      )}
+      <section className="scroll encounter-scroll" aria-label="Begegnung">
+        {combat && <LocationPick combat={combat} />}
+        <EncounterKind title="Zufallsbegegnung" rule="Personen nach der Random Encounter List (S. 21)">
+          {!combat ? <p className="log-empty">Ohne lebenden Charakter gibt es keine Begegnung.</p> : combat.sim ? <RunningEncounter sim={combat.sim} /> : <EncounterStart combat={combat} />}
+        </EncounterKind>
+        {view.patron && (
+          <EncounterKind title="Patron" rule="Auftraggeber nach der Patron Encounters Matrix (S. 20)">
+            <PatronBox patron={view.patron} />
+          </EncounterKind>
+        )}
+      </section>
       {combat?.intro && combat.sim && <EncounterIntro sim={combat.sim} />}
     </div>
+  );
+}
+
+/** Eine Begegnungsart als Karte: Name, woher die Regel kommt, darunter ihre Einstellungen und ihr Wurf. */
+function EncounterKind({ title, rule, children }: { title: string; rule: string; children: ReactNode }) {
+  return (
+    <section className="encounter-kind" aria-label={title}>
+      <header className="encounter-kind-head">
+        <h2>{title}</h2>
+        <span>{rule}</span>
+      </header>
+      {children}
+    </section>
   );
 }
 
@@ -61,77 +79,72 @@ function RunningEncounter({ sim }: { sim: SimView }) {
 }
 
 /**
- * Eine Begegnung würfeln oder wählen, mit Gelände für die Entfernung und dem Würfel der Anzahl der
- * Kampagne; danach beginnt die Kampfsimulation. Die Einstellungen stehen oben, Würfeln und Wählen unten
- * im Daumenbereich wie im Orakel; darüber steht deutlich, wenn der Wurf keine Begegnung brachte.
+ * Die Zufallsbegegnung würfeln oder wählen, mit Gelände für die Entfernung und dem Würfel der Anzahl
+ * der Kampagne. Die Einstellungen stehen oben, Würfeln und Wählen darunter; dazwischen steht deutlich,
+ * wenn der Wurf keine Begegnung brachte.
  */
-function EncounterStart({ combat, patron }: { combat: CombatView; patron: PatronView | undefined }) {
+function EncounterStart({ combat }: { combat: CombatView }) {
   const game = useGame();
   // Das Gelände gilt erst beim Würfeln; bis dahin hält es nur die View.
   const [terrain, setTerrain] = useState('');
   const ground = terrain || undefined;
   return (
     <>
-      <section className="scroll encounter-scroll" aria-label="Begegnung">
-        <div className="encounter">
-          <LocationPick combat={combat} />
-          <label className="field encounter-terrain">
-            <span>Gelände (DM auf die Entfernung)</span>
-            <select value={terrain} disabled={!combat.canEncounter} onChange={(e) => setTerrain(e.target.value)}>
-              <option value="">ohne (±0)</option>
-              {combat.terrains.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} ({signed(t.dm)})
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field encounter-terrain">
-            <span>Anzahl würfeln mit</span>
-            <select aria-label="Würfel der Anzahl" value={combat.quantityDie} onChange={(e) => game.setQuantityDie(Number(e.target.value))}>
-              <option value={6}>W6 (Regel)</option>
-              <option value={4}>W4</option>
-              <option value={3}>W3</option>
-            </select>
-          </label>
-        </div>
-      </section>
-      <div className="dock encounter-dock">
-        {combat.note && (
-          <p className="encounter-note" role="status">
-            {combat.note}
-          </p>
-        )}
-        <div className="encounter-start">
-          <button
-            type="button"
-            className="primary"
-            disabled={!combat.canEncounter}
-            onClick={() => {
-              haptic('shake');
-              game.rollEncounter(undefined, ground);
-            }}
-          >
-            Begegnung würfeln
-          </button>
-          <select aria-label="Begegnung wählen" value="" disabled={!combat.canEncounter} onChange={(e) => e.target.value && game.rollEncounter(Number(e.target.value), ground)}>
-            <option value="">oder wählen …</option>
-            {combat.encounterTypes.map((t) => (
-              <option key={t.roll} value={t.roll}>
-                {t.roll} · {t.quantity}W{combat.quantityDie} {t.name}
+      <div className="encounter-settings">
+        <label className="field encounter-terrain">
+          <span>Gelände (DM auf die Entfernung)</span>
+          <select value={terrain} disabled={!combat.canEncounter} onChange={(e) => setTerrain(e.target.value)}>
+            <option value="">ohne (±0)</option>
+            {combat.terrains.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name} ({signed(t.dm)})
               </option>
             ))}
           </select>
-        </div>
-        {patron && <PatronBox patron={patron} />}
+        </label>
+        <label className="field encounter-terrain">
+          <span>Anzahl würfeln mit</span>
+          <select aria-label="Würfel der Anzahl" value={combat.quantityDie} onChange={(e) => game.setQuantityDie(Number(e.target.value))}>
+            <option value={6}>W6 (Regel)</option>
+            <option value={4}>W4</option>
+            <option value={3}>W3</option>
+          </select>
+        </label>
+      </div>
+      {combat.note && (
+        <p className="encounter-note" role="status">
+          {combat.note}
+        </p>
+      )}
+      <div className="encounter-start">
+        <button
+          type="button"
+          className="primary"
+          disabled={!combat.canEncounter}
+          onClick={() => {
+            haptic('shake');
+            game.rollEncounter(undefined, ground);
+          }}
+        >
+          Begegnung würfeln
+        </button>
+        <select aria-label="Begegnung wählen" value="" disabled={!combat.canEncounter} onChange={(e) => e.target.value && game.rollEncounter(Number(e.target.value), ground)}>
+          <option value="">oder wählen …</option>
+          {combat.encounterTypes.map((t) => (
+            <option key={t.roll} value={t.roll}>
+              {t.roll} · {t.quantity}W{combat.quantityDie} {t.name}
+            </option>
+          ))}
+        </select>
       </div>
     </>
   );
 }
 
 /**
- * Der Bereich Patron (SE, Charts S. 20): Liste 1 oder 2 wählen und würfeln; die DMs der lebenden SC
- * stehen dabei, der Wurf kommt in den Log und der letzte steht hier. Unabhängig von der Begegnung.
+ * Die Begegnungsart Patron (SE, Charts S. 20): Liste 1 oder 2 wählen und würfeln; die DMs der lebenden
+ * SC stehen dabei, der Wurf kommt in den Log und der letzte steht hier. Unabhängig von der
+ * Zufallsbegegnung.
  */
 function PatronBox({ patron }: { patron: PatronView }) {
   const game = useGame();
@@ -140,8 +153,7 @@ function PatronBox({ patron }: { patron: PatronView }) {
   const parts = patron.lists.find((l) => l.list === list)?.parts ?? [];
   const last = patron.last;
   return (
-    <section className="patron" aria-label="Patron">
-      <span className="kicker">Patron</span>
+    <>
       <div className="patron-row">
         <div className="segmented patron-lists" role="radiogroup" aria-label="Patron-Liste">
           {patron.lists.map((l) => (
@@ -167,7 +179,7 @@ function PatronBox({ patron }: { patron: PatronView }) {
           <strong>{patronName(last)}</strong> <span>{patronDetail(last)}</span>
         </p>
       )}
-    </section>
+    </>
   );
 }
 

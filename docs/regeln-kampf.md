@@ -1796,7 +1796,7 @@ Aus den drei Heften nicht in diesem Dokument, weil sie nicht zum Kampf gehören:
   mehr auf 2W6, sonst Verhör), Patron (wöchentlich 5+ auf 1W6, *Patron Encounters Matrix* mit zwei
   Listen), Rumor (wöchentlich 7+ auf 2W6, *Rumors Matrix* und *Rumor List*), Adventure (führt die
   Spielleitung). **Stand in der App:** Die *Patron Encounters Matrix* mit beiden Listen und ihren DMs
-  ist im Reiter Begegnung (Bereich *Patron*; Regeln in `domain-model.md` unter *Patron*, Listen in
+  ist im Reiter Begegnung (Begegnungsart *Patron*; Regeln in `domain-model.md` unter *Patron*, Listen in
   `src/data/encounters.json`); der wöchentliche Wurf 5+ nicht. Die vier ausgearbeiteten Aufträge des
   Regelhefts (SR S. 65–66: *The Newlyweds*, *The Nervous Merchant*, *The Lady in White Robes*,
   *The Raggedy Old Man*) sind nicht in der App.

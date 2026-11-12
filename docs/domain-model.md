@@ -368,7 +368,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Block | `DamageRoll.points`, `DamageRoll.to` | Ein Stück eines Schadenswürfels, das ganz auf ein Attribut geht; ein Würfel ist ein Block oder, wenn er ein Attribut auf 0 bringt, mehrere |
 | Überlauf | (Regel) | Was ein Würfel über 0 hinaus bringt, geht als neuer Block auf ein anderes Attribut über 0 (SR 21) |
 | Kampf | (Reiter „Kampf“) | Der Screen für Angriffe: ohne Begegnung die Waffentabelle, mit Begegnung die Kampfsimulation |
-| Reiter Begegnung | (Reiter „Begegnung“) | Der Screen, in dem man eine Begegnung würfelt oder wählt; läuft eine, zeigt er sie knapp |
+| Reiter Begegnung | (Reiter „Begegnung“) | Der Screen mit der Liste der Begegnungsarten, darüber der Aufenthaltsort |
+| Begegnungsart | (Karte im Reiter Begegnung) | Eine Art von Begegnungen nach SE S. 20 mit ihren Einstellungen und ihrem Wurf: Zufallsbegegnung, Patron, später Gerücht, Gesetz, Tiere. Nicht zu verwechseln mit der *Art der Begegnung* (`EncounterType`), einer Zeile der Random Encounter List |
+| Zufallsbegegnung | (Begegnungsart) | Personen nach der Random Encounter List (S. 21); ergibt eine Begegnung (`Encounter`) |
 | Patron | `Patron` | Ein Auftraggeber nach seinem Beruf, z. B. „Smuggler“: eine Zeile einer der beiden Patron-Listen (SE, Charts S. 20) |
 | Patron-Liste | `Patron.list` | Liste eins oder Liste zwei der Patron Encounters Matrix, je 36 Zeilen von 11 bis 66 |
 | Patron-Wurf | `PatronRoll` | Ein Wurf auf eine Patron-Liste: zwei Würfel nacheinander, jeder mit seinem DM |
@@ -810,8 +812,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (`ended`); beendete Begegnungen bleiben in der Kampagne, weil der Log auf ihre NSC verweist,
     und werden nicht mehr gezeigt. Eine Begegnung, auf die der Log nicht verweist, wird beim Beenden
     gelöscht.
-- **Patron.** Im Reiter Begegnung steht unter dem Bereich für NSC-Begegnungen ein eigener kleiner
-  Bereich **Patron**: Man wählt Liste eins oder zwei und würfelt. Das Ergebnis ist ein Logeintrag
+- **Patron.** Im Reiter Begegnung ist der **Patron** eine eigene Begegnungsart: Man wählt Liste eins
+  oder zwei und würfelt. Das Ergebnis ist ein Logeintrag
   (`PatronRoll`), kein Teil einer Begegnung; es braucht weder Aufenthaltsort noch lebenden Charakter
   und geht auch, während eine Begegnung läuft.
   - *Wurf*: zwei Würfel nacheinander (`dice`), der erste die Zehner-, der zweite die Einerstelle,
@@ -910,10 +912,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     aber nicht (`to` fehlt).
   - **Später**: Medical Drugs, Wunden mit Zeit, Fahrzeuge, Überraschung, Entfernung,
     Moral und Kampfrunden.
-- **Reiter Begegnung und zwei Modi im Reiter Kampf.** Begegnungen würfelt oder wählt man im eigenen
-  Reiter **Begegnung**; die Übersicht danach führt zurück in den Reiter Begegnung, denn nicht jede
+- **Reiter Begegnung und zwei Modi im Reiter Kampf.** Der Reiter **Begegnung** zeigt oben den
+  Aufenthaltsort und darunter eine Liste der **Begegnungsarten**, je Art eine Karte mit ihren
+  Einstellungen und ihrem Wurf: zurzeit die Zufallsbegegnung und der Patron (siehe *Patron*); weitere
+  Arten kommen als weitere Karten dazu. Die Zufallsbegegnung würfelt oder wählt man in ihrer Karte;
+  die Übersicht danach führt zurück in den Reiter Begegnung, denn nicht jede
   Begegnung wird ein Kampf; erst „Zum Kampf“ dort wechselt in den Reiter Kampf. Läuft eine
-  Begegnung, zeigt der Reiter Begegnung sie knapp. Ohne laufende Begegnung zeigt der Reiter Kampf die
+  Begegnung, zeigt ihre Karte sie knapp. Ohne laufende Begegnung zeigt der Reiter Kampf die
   **Waffentabelle**: die Waffe in der Hand des Charakters oben, Rüstung und Reichweite frei gewählt
   (siehe *Angriff*); mit laufender Begegnung die **Kampfsimulation**; beendet man sie, zeigt er
   wieder die Waffentabelle. Das alles ist nur Anzeige; gespeichert wird die Begegnung.
