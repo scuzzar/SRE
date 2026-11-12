@@ -103,6 +103,16 @@
       "show": [
         "Character"
       ]
+    },
+    {
+      "id": "2026-11-12",
+      "file": "2026-11-12-patron",
+      "title": "Patron: Wurf auf die Patron Encounters Matrix",
+      "approved": false,
+      "show": [
+        "LogEntry",
+        "Note"
+      ]
     }
   ]
 }

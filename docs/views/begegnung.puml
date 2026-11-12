@@ -82,6 +82,11 @@ hide <<value>> stereotype
   class Hex $sektor
 
 ' Verlauf
+  abstract class LogEntry $probe
+  class PatronRoll $begegnung $newClass("2026-11-12") {
+    dice: number[2]
+    dms: number[2]
+  }
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Encounter $begegnung {
@@ -144,6 +149,12 @@ hide <<value>> stereotype
     vehicle: boolean
     military: boolean
   }
+  class Patron <<reference>> $begegnung $newClass("2026-11-12") {
+    list: number
+    roll: number
+    name: string
+    rumor: boolean
+  }
 
 ' Referenzdaten
 
@@ -160,6 +171,8 @@ hide <<value>> stereotype
 ' Waffen (Referenzdaten)
 
 ' Verlauf
+LogEntry <|-$newArrow("2026-11-12")- PatronRoll
+PatronRoll "*" -$newArrow("2026-11-12")-> "1" Patron : of
 
 ' Probe
 

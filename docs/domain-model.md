@@ -239,7 +239,13 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+eine:
+
+- **2026-11-12, wartet auf Freigabe: Patron** (siehe *Patron*). Im Reiter Begegnung würfelt man in
+  einem eigenen kleinen Bereich unter dem für NSC-Begegnungen einen Patron nach der Patron
+  Encounters Matrix (SE, Charts S. 20). Neu im Bild: der Logeintrag `PatronRoll` und als
+  Referenzdaten `Patron`. Der Ausschnitt dazu liegt unter
+  [`changes/2026-11-12-patron.png`](changes/2026-11-12-patron.png).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -278,7 +284,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Orakelantwort | `OracleAnswer` | Ja oder Nein auf eine Frage |
 | Notiz | `Note` ohne `interprets` | Freier Text im Log, z. B. „Wir landen auf Regina.“ |
 | Deutung | `Note` mit `interprets` | Was man aus einem Ergebnis macht, z. B. „Die Tür ist offen, aber jemand war schon hier.“ |
-| Ergebnis | `OracleAnswer`, `DiceRoll`, `CardPick`, `TaskResult`, `AttackResult`, `DamageRoll` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
+| Ergebnis | `OracleAnswer`, `DiceRoll`, `CardPick`, `TaskResult`, `AttackResult`, `DamageRoll`, `PatronRoll` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
 | Schreibzeile | (Fragefeld) | Das eine Textfeld über den Knöpfen; was der Text wird, entscheidet der Knopf |
 | Würfelwurf (2W6) | `DiceRoll` | Ein einfacher Wurf mit zwei Würfeln |
 | Inspirationskarte | `Card` | Eine gezogene Karte, solange sie offen ist |
@@ -363,6 +369,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Überlauf | (Regel) | Was ein Würfel über 0 hinaus bringt, geht als neuer Block auf ein anderes Attribut über 0 (SR 21) |
 | Kampf | (Reiter „Kampf“) | Der Screen für Angriffe: ohne Begegnung die Waffentabelle, mit Begegnung die Kampfsimulation |
 | Reiter Begegnung | (Reiter „Begegnung“) | Der Screen, in dem man eine Begegnung würfelt oder wählt; läuft eine, zeigt er sie knapp |
+| Patron | `Patron` | Ein Auftraggeber nach seinem Beruf, z. B. „Smuggler“: eine Zeile einer der beiden Patron-Listen (SE, Charts S. 20) |
+| Patron-Liste | `Patron.list` | Liste eins oder Liste zwei der Patron Encounters Matrix, je 36 Zeilen von 11 bis 66 |
+| Patron-Wurf | `PatronRoll` | Ein Wurf auf eine Patron-Liste: zwei Würfel nacheinander, jeder mit seinem DM |
 | Bereich der Karte, Themen-Tafel | `Section` | Zufallsereignis, Sinneseindrücke, …; NSC, Welt, … |
 | Feld der Karte | `Slot` | Aktion, Hören, Aussehen, Name, Auslöser, … |
 | Spalte | `Column` | Eine Liste von Einträgen in einem Feld; ein Feld hat eine oder zwei |
@@ -801,6 +810,26 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (`ended`); beendete Begegnungen bleiben in der Kampagne, weil der Log auf ihre NSC verweist,
     und werden nicht mehr gezeigt. Eine Begegnung, auf die der Log nicht verweist, wird beim Beenden
     gelöscht.
+- **Patron.** Im Reiter Begegnung steht unter dem Bereich für NSC-Begegnungen ein eigener kleiner
+  Bereich **Patron**: Man wählt Liste eins oder zwei und würfelt. Das Ergebnis ist ein Logeintrag
+  (`PatronRoll`), kein Teil einer Begegnung; es braucht weder Aufenthaltsort noch lebenden Charakter
+  und geht auch, während eine Begegnung läuft.
+  - *Wurf*: zwei Würfel nacheinander (`dice`), der erste die Zehner-, der zweite die Einerstelle,
+    jeder mit seinem DM (`dms`) und danach auf 1 bis 6 begrenzt. Das ergibt die Zeile 11 bis 66 der
+    gewählten Liste; der Eintrag verweist auf sie (`of`).
+  - *DMs* (SE, Charts S. 20), nach den lebenden SC zum Zeitpunkt des Wurfs; ein DM gilt, sobald ein
+    SC ihn erfüllt, mehrere zählen zusammen. Liste eins: 1. Würfel Merchant −1, Noble (SOC 11 oder
+    mehr) +1; 2. Würfel Other −1, Army oder Marines +1. Liste zwei: 1. Würfel Navy −1, Merchant +1;
+    2. Würfel Streetwise-1 oder mehr −1, Admin-1 oder mehr +1. Die Laufbahn kommt aus dem
+    Lebenslauf; ein Charakter ohne Lebenslauf bringt nur die DMs aus SOC und Fertigkeiten. Der
+    Eintrag hält die DMs fest, damit ein späterer Tod oder eine neue Stufe ihn nicht rückwirkend
+    ändert.
+  - *Rumor*: Drei Zeilen der Liste eins (23, 36, 66) sind kein Patron, sondern ein Gerücht
+    (`Patron.rumor`); die App zeigt das an. Die Rumors Matrix gibt es in der App noch nicht.
+  - *Deuten*: Der Patron-Wurf ist ein Ergebnis und lässt sich deuten, z. B. mit dem Auftrag, den
+    der Patron vergibt. Die Regeln geben keine Tabelle für Aufträge; die legt die Spielleitung fest.
+  - *Nicht in der App*: der wöchentliche Wurf, ob man überhaupt einen Patron trifft (5+ auf 1W6).
+    Wann man würfelt, entscheidet man selbst.
 - **NSC.** Ein NSC der Begegnung ist ein vollständiger Charakter, derselben Klasse wie die SC.
   Er hängt an seiner Begegnung (`Encounter.npcs`), nicht an der Kampagne: Jeder Charakter gehört
   genau einer Kampagne (`characters`) oder genau einer Begegnung (`npcs`), nie beiden. Die NSC einer
