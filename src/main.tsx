@@ -5,7 +5,7 @@ import type { Cloud } from './model';
 import { systemClock } from './platform/clock';
 import { browserDownload } from './platform/download';
 import { cryptoKeys } from './platform/keys';
-import { oneDriveAuthority, oneDriveClientId } from './platform/onedrive-config';
+import { oneDriveAuthority, oneDriveClientId, oneDriveRedirectUri } from './platform/onedrive-config';
 import { probeCloud } from './platform/probe-cloud';
 import { cryptoRandom } from './platform/random';
 import { openRepository, requestDurable } from './platform/repository';
@@ -21,14 +21,14 @@ const probe = query.has('probe-wolke');
 const device = probe ? query.get('geraet') : null;
 const { repository, persistent } = await openRepository(device ? `solo-rpg-engine-${device}` : undefined);
 
-/** OneDrive gibt es nur mit Client-ID und nur unter einer Web-Adresse (die Einzeldatei hat keine). */
+/** OneDrive gibt es nur mit Client-ID und nur unter der registrierten Adresse (auch dort unter index.html). */
 async function openCloud(): Promise<Cloud | undefined> {
   if (probe) return probeCloud();
-  if (!oneDriveClientId || !location.protocol.startsWith('http')) return undefined;
+  if (!oneDriveClientId || !(location.origin + location.pathname).startsWith(oneDriveRedirectUri)) return undefined;
   try {
     // Erst hier laden: Ohne Client-ID braucht die App die Anmeldebibliothek nicht.
     const { openOneDrive } = await import('./platform/onedrive');
-    return await openOneDrive(oneDriveClientId, oneDriveAuthority, location.origin + location.pathname);
+    return await openOneDrive(oneDriveClientId, oneDriveAuthority, oneDriveRedirectUri);
   } catch (error) {
     console.warn('OneDrive ließ sich nicht einrichten, die App läuft ohne Abgleich.', error);
     return undefined;
