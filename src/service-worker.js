@@ -15,11 +15,13 @@ const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 // So lange wartet der Start auf eine neue Version, dann nimmt er die abgelegte (schlechtes Netz).
 const NAVIGATION_TIMEOUT_MS = 3000;
 
+// Abgelegt wird an der Ablage des Browsers vorbei (`reload`): GitHub Pages erlaubt, Dateien zehn
+// Minuten zwischenzuspeichern, und eine alte index.html passt nicht zu den Skripten der neuen Version.
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(APP_CACHE)
-      .then((cache) => cache.addAll(PRECACHE))
+      .then((cache) => cache.addAll(PRECACHE.map((url) => new Request(url, { cache: 'reload' }))))
       .then(() => self.skipWaiting()),
   );
 });
@@ -48,10 +50,12 @@ self.addEventListener('fetch', (event) => {
 });
 
 // Start der App: neue Version aus dem Netz, wenn es schnell genug antwortet, sonst die abgelegte.
+// `no-cache` fragt immer beim Server nach: Eine alte index.html aus der Ablage des Browsers verwiese
+// auf Skripte, die es nach einem Update nicht mehr gibt, und die App bliebe weiß.
 async function navigation(request) {
   const cache = await caches.open(APP_CACHE);
   try {
-    const response = await withTimeout(fetch(request), NAVIGATION_TIMEOUT_MS);
+    const response = await withTimeout(fetch(request.url, { cache: 'no-cache', credentials: 'same-origin' }), NAVIGATION_TIMEOUT_MS);
     if (response.ok) await cache.put('./', response.clone());
     return response;
   } catch {

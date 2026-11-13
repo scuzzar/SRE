@@ -16,6 +16,25 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap"
     />
+    <script>
+      // Lädt das Skript der App nicht (etwa eine alte Seite nach einem Update, deren Skript es nicht
+      // mehr gibt), lädt die Seite einmal neu, statt weiß zu bleiben; einmal je Sitzung, nie im Kreis.
+      addEventListener(
+        'error',
+        function (event) {
+          var el = event.target;
+          if (!el || el.tagName !== 'SCRIPT' || el.type !== 'module') return;
+          try {
+            if (sessionStorage.getItem('sre-reloaded')) return;
+            sessionStorage.setItem('sre-reloaded', '1');
+          } catch (e) {
+            return;
+          }
+          location.reload();
+        },
+        true,
+      );
+    </script>
   </head>
   <body>
     <div id="root"></div>
