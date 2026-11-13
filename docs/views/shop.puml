@@ -147,7 +147,7 @@ Gain "*" --> "0..1" Item : item
 
 ' Charakter
 Character "1" *-- "*" Possession : possessions
-Campaign "1" *-$newArrow("2026-11-13b")- "*" Possession : stash
+Campaign "1" *-- "*" Possession : stash
 Possession "*" --> "1" Item : of
 Item --> ItemKind
 Item "0..1" --> "0..1" Skill : /uses
@@ -176,5 +176,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Campaign #line:d0021b;line.bold
 @enduml

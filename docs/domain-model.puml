@@ -83,9 +83,9 @@ hide <<value>> stereotype
     name: string
     /funds: number
     quantityDie: number [0..1]
-    $new("2026-11-13b", "/load: number")
-    $new("2026-11-13b", "/capacity: number")
-    $new("2026-11-13b", "/burden: number")
+    /load: number
+    /capacity: number
+    /burden: number
   }
   class Booking $shop {
     at: datetime
@@ -835,7 +835,7 @@ Character "1" *-- "1" Upp : upp
 Character "1" *-- "*" SkillLevel : skills
 SkillLevel "*" --> "1" Skill : of
 Character "1" *-- "*" Possession : possessions
-Campaign "1" *-$newArrow("2026-11-13b")- "*" Possession : stash
+Campaign "1" *-- "*" Possession : stash
 Possession "*" --> "1" Item : of
 Item --> ItemKind
 Item "0..1" --> "0..1" Skill : /uses
@@ -872,7 +872,6 @@ PatronRoll "*" --> "1" Patron : of
 LogEntry <|-- RumorRoll
 LogEntry <|-- Butchering
 Butchering "*" --> "1" Character : of
-Butchering "*" -$goneArrow("2026-11-13b")-> "1" Character : for
 Possession "*" --> "0..1" AnimalRow : from
 RumorRoll "*" --> "1" Rumor : /of
 Note "*" --> "0..1" LogEntry : interprets
