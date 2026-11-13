@@ -395,14 +395,16 @@ export function daysOf(recovery: Recovery): number | undefined {
   return recovery.dice?.reduce((sum, d) => sum + d, 0);
 }
 
-/** Prüft eine Heilung aus der Kampagnendatei: Patient ein Charakter, Behandlung mit Behandelndem, Tage nur bei schweren Wunden. */
-export function checkRecovery(campaign: Campaign, entry: Recovery, at: number): void {
-  const who = entry.for;
-  anyCharacterOf(campaign, who);
+/**
+ * Prüft eine Heilung aus der Kampagnendatei: Patient ein Charakter, Behandlung mit Behandelndem, Tage
+ * nur bei einer Behandlung und dann 5W6. Ob die Wunde schwer war, prüft sie nicht nach: Das hat beim
+ * Heilen entschieden und steht in der Heilung (Tage oder nicht). Ein später gelöschter Schadenswurf
+ * oder geänderte Attribute ändern es rückwirkend, und die Datei muss sich trotzdem einlesen lassen.
+ */
+export function checkRecovery(campaign: Campaign, entry: Recovery): void {
+  anyCharacterOf(campaign, entry.for);
   if ((entry.how === 'treatment') !== (entry.by !== undefined)) throw new DomainError('Nur eine Behandlung hat einen Behandelnden.');
   if (entry.by !== undefined) characterOf(campaign, entry.by);
-  const history = historyOf(campaign.log, uppOf(campaign, who), who, at);
-  if (entry.how === 'treatment' && (entry.dice !== undefined) !== history.serious) throw new DomainError('Nur die Behandlung einer schweren Wunde dauert 5W6 Tage.');
+  if (entry.dice !== undefined && entry.how !== 'treatment') throw new DomainError('Nur eine Behandlung dauert 5W6 Tage.');
   if (entry.dice !== undefined && (entry.dice.length !== 5 || entry.dice.some((d) => !Number.isInteger(d) || d < 1 || d > 6))) throw new DomainError('Die Behandlung einer schweren Wunde dauert 5W6 Tage.');
-  if (entry.how === 'rest' && history.serious) throw new DomainError('Eine schwere Wunde heilt ohne Behandlung nicht.');
 }

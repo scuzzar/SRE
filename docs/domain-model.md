@@ -1439,6 +1439,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Nach einer vollen Heilung (Behandlung oder Ruhe) zählt der nächste Treffer wieder als erster
     (er geht ganz auf ein zufälliges Attribut).
   - Die App führt keine Spielzeit; Dauern stehen nur im Log.
+  - Ob eine Wunde leicht oder schwer war, entscheidet beim Heilen und steht in der Heilung: Eine
+    Behandlung mit Tagen (`dice`) war die einer schweren Wunde. Die Kampagnendatei prüft das nicht
+    nach, denn ein später gelöschter Schadenswurf oder geänderte Attribute ändern rückwirkend, was
+    der Log ergibt; sie prüft nur, dass Tage zu einer Behandlung gehören und 5W6 sind.
 - **Charakter oben.** Oben im Orakel-Screen steht ein Charakter der Kampagne, der **Charakter oben**
   (`focus`); für ihn würfelt man Proben, ohne den Screen zu wechseln. Wischen zeigt den nächsten
   bzw. vorigen. Infrage kommen nur Lebende, die nicht ausgeblendet sind, in der Reihenfolge der

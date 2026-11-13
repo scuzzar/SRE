@@ -567,7 +567,7 @@ function validate(campaign: Campaign): void {
         break;
       case 'recovery':
         if (entry.for === undefined) throw new DomainError('Eine Heilung gilt einem Charakter.');
-        checkRecovery(campaign, entry, index);
+        checkRecovery(campaign, entry);
         break;
       case 'card':
         if (entry.items.length === 0 && entry.bell === undefined && entry.scatter === undefined && entry.map === undefined) {

@@ -121,9 +121,10 @@ function check(campaign: Campaign, game: GameController, trail: readonly string[
 
 describe('Fuzz: zufällige Eingaben', () => {
   it('jeder Zustand ergibt eine gültige Kampagnendatei, und die View bricht nie ab', async () => {
-    // Ausgiebig: FUZZ_SEEDS=200 npx vitest run src/controller/fuzz.test.ts
+    // Ausgiebig: FUZZ_SEEDS=200 FUZZ_TIMEOUT=600000 npx vitest run src/controller/fuzz.test.ts (FUZZ_FROM: erster Seed)
     const seeds = Number(process.env.FUZZ_SEEDS ?? 30);
-    for (let seed = 1; seed <= seeds; seed++) {
+    const from = Number(process.env.FUZZ_FROM ?? 1);
+    for (let seed = from; seed < from + seeds; seed++) {
       const random = seeded(seed);
       const repository = memoryRepository(setHexes(createCampaign(), [regina]));
       const game = new GameController({ repository, random, clock: fixedClock(), download: memoryDownload(), keys: countingKeys() });
@@ -146,5 +147,5 @@ describe('Fuzz: zufällige Eingaben', () => {
         check(repository.saved!, game, trail);
       }
     }
-  }, 120_000);
+  }, Number(process.env.FUZZ_TIMEOUT ?? 120_000));
 });

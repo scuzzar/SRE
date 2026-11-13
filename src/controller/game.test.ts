@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { appendLog, createCampaign, DEMO_FUNDS, fromCampaignFile, ref, rollEncounter, rollSurprise, setHexes, setLocation, type CampaignRepository, type Random } from '../model';
+import { appendLog, createCampaign, DEMO_FUNDS, fromCampaignFile, ref, rollEncounter, rollSurprise, setHexes, setLocation, toCampaignFile, type CampaignRepository, type Random } from '../model';
 import { countingKeys, fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 import { surfaceLines } from './world-view';
@@ -501,11 +501,11 @@ describe('Begegnung und Kampfsimulation', () => {
 
   async function onRegina() {
     const random = queued();
-    const { game } = await started(random, memoryRepository(setHexes(createCampaign(), [regina])));
+    const { game, repository } = await started(random, memoryRepository(setHexes(createCampaign(), [regina])));
     game.chooseHex(1, 1);
     game.stayHere();
     game.closeWorld();
-    return { game, random };
+    return { game, random, repository };
   }
 
   it('ohne Begegnung zeigt Kampf die Waffentabelle; ohne Aufenthaltsort gibt es keine Begegnung, 61–66 bringen keine', async () => {
@@ -828,6 +828,64 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot().npcs).toHaveLength(1);
     expect(game.snapshot().combat!.sim!.fighters.map((f) => f.id)).toEqual(['n2', 'c1', 'c2']);
   });
+  /** Kira wird von einem NSC getroffen (Schaden 6 je Würfel); gibt zurück, wie schwer. */
+  async function kiraHit() {
+    const { game, random, repository } = await onRegina();
+    game.newCharacter();
+    game.saveCharacter({ name: 'Doc', background: '', equipment: '', credits: 0, note: '', upp: { str: 7, dex: 7, end: 7, int: 7, edu: 7, soc: 7 }, skills: [{ of: 'medical', level: 3 }], possessions: [{ of: 'medical-kit', count: 1 }] });
+    game.rollEncounter(15);
+    game.rollSurprise();
+    game.closeSurprise();
+    while (game.snapshot().combat!.sim!.turn?.side !== 'npcs') game.skipTurn();
+    game.chooseFightTarget('c1');
+    random.queue.push(6, 6);
+    game.fightAttack();
+    random.queue.push(6, 6, 6, 6, 6, 6);
+    game.rollDamage();
+    game.closeResult();
+    const doc = game.snapshot().characters.find((c) => c.name === 'Doc')!.id;
+    // Was die App erzeugt, muss sich als Kampagnendatei wieder einlesen lassen.
+    const roundTrip = async () => {
+      await game.whenSaved();
+      return fromCampaignFile(toCampaignFile(repository.saved!), 'k9');
+    };
+    return { game, random, doc, roundTrip, damage: game.snapshot().log.length - 1 };
+  }
+
+  it('eine Behandlung bleibt gültig, wenn der Schadenswurf davor gelöscht wird', async () => {
+    const { game, random, doc, damage, roundTrip } = await kiraHit();
+    expect(game.snapshot().log[damage]).toMatchObject({ kind: 'damage' });
+    random.queue.push(1, 1, 1, 1, 1);
+    game.recover('treatment', undefined, doc, true, 'c1');
+    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'recovery', how: 'treatment' });
+    game.deleteLogEntry(damage);
+    await roundTrip();
+  });
+
+  it('Ruhe und Behandlung bleiben gültig, wenn eine spätere Änderung am Charakter die Wunde rückwirkend schwer oder leicht macht', async () => {
+    const { game, random, doc, roundTrip } = await kiraHit();
+    random.queue.push(1, 1, 1, 1, 1);
+    game.recover('treatment', undefined, doc, true, 'c1');
+    // Kira bekommt nachträglich viel mehr STR, DEX und END: Der Treffer war damit keine schwere Wunde.
+    game.editCharacter('c1');
+    const input = game.snapshot().editor!.input;
+    game.saveCharacter({ ...input, upp: { ...input.upp, str: 15, dex: 15, end: 15 } });
+    await roundTrip();
+    // Ein leichter Treffer, Ruhe; danach sinken die Werte, und der Treffer war rückwirkend schwer.
+    while (game.snapshot().combat!.sim!.turn?.side !== 'npcs') game.skipTurn();
+    game.chooseFightTarget('c1');
+    random.queue.push(6, 6);
+    game.fightAttack();
+    random.queue.push(1, 1, 1, 1, 1, 1);
+    game.rollDamage();
+    game.closeResult();
+    game.recover('rest', undefined, undefined, false, 'c1');
+    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'recovery', how: 'rest' });
+    game.editCharacter('c1');
+    game.saveCharacter({ ...game.snapshot().editor!.input, upp: { ...input.upp, str: 1, dex: 1, end: 1 } });
+    await roundTrip();
+  });
+
   it('übernimmt mehrere NSC auf einmal; die Begegnung hat danach keine NSC mehr', async () => {
     const { game } = await onRegina();
     game.rollEncounter(15);
