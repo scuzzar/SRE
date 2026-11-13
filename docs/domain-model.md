@@ -913,7 +913,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     nicht, geht die Reise nicht.
   - *Dauer*: Jede Reise dauert **eine Woche** (`days` = 7), egal wie weit (SE S. 8). Der Logeintrag
     `Journey` steht am Abflugtag; danach ist `Campaign.day` 7 Tage weiter und der Aufenthaltsort das
-    Ziel (`to`). Die Woche im Sprung zählt nicht als Erinnerung für Tests.
+    Ziel (`to`). Die Zeit vergeht dabei ganz normal: 7 Tage, der Wochentag bei der Ankunft ist der
+    der Abreise, und ein Sonntag dazwischen beendet die Woche wie sonst auch (die Zähler der Tests
+    beginnen neu). Nur gibt es **keine Pflicht-Begegnungen**: Die Reise erinnert nicht an fehlende
+    Tests, weder vor der Abreise noch für die Tage im Sprung, und würfelt keine. Wer unterwegs eine
+    Begegnung will, würfelt sie wie sonst von Hand.
   - Gepäckgrenzen (High 1000 kg, Middle 100 kg, Low 10 kg), Bumping der Middle Passage, Hijacking
     und Working Passage kommen später.
 - **Low Passage** (2026-11-13d, offen). Jeder Low-Passagier würfelt beim Aufwachen **5+ auf 2W6**
