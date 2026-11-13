@@ -88,6 +88,7 @@ hide <<value>> stereotype
     payout
     purchase
     sale
+    lottery
   }
   class Character $charakter
   class Possession $shop {
@@ -101,6 +102,10 @@ hide <<value>> stereotype
   class Hex $sektor
 
 ' Verlauf
+
+' Zeit und Reisen
+  class Journey $reise
+  class Passenger <<value>> $reise
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class AnimalRow $begegnung
@@ -137,6 +142,10 @@ Booking "*" --> "0..1" Item : bought
 Booking "*" --> "0..1" Item : sold
 Booking "*" --> "0..1" Hex : in
 Booking --> BookingKind
+
+' Zeit und Reisen
+Passenger "*" --> "1" Item : passage
+Booking "*" --> "0..1" Journey : won
 
 ' Charaktererschaffung und Lebenslauf
 

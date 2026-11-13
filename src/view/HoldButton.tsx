@@ -16,6 +16,8 @@ export function HoldButton({
   className = '',
   busy = false,
   label,
+  hint = 'Lange drücken: alles durchlaufen lassen',
+  disabled = false,
   children,
 }: {
   onPress: () => void;
@@ -25,6 +27,9 @@ export function HoldButton({
   busy?: boolean;
   /** Für Screenreader, mit dem Hinweis auf den langen Druck. */
   label?: string;
+  /** Was der lange Druck tut, für Screenreader. */
+  hint?: string;
+  disabled?: boolean;
   children: ReactNode;
 }) {
   const [holding, setHolding] = useState(false);
@@ -46,7 +51,8 @@ export function HoldButton({
       className={`${className} hold-button${holding ? ' holding' : ''}`}
       aria-disabled={busy || undefined}
       aria-label={label}
-      aria-description="Lange drücken: alles durchlaufen lassen"
+      aria-description={hint}
+      disabled={disabled}
       style={{ '--hold-ms': `${HOLD_MS}ms` } as CSSProperties}
       onPointerDown={(e) => {
         if (e.button !== 0) return;

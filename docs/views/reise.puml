@@ -1,0 +1,172 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Ausschnitt: Zeit und Reisen
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Booking $shop
+  class Character $charakter
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+  class Hex $sektor
+
+' Verlauf
+  abstract class LogEntry $probe
+
+' Zeit und Reisen
+  class TimePassed $reise {
+    days: number
+    week: boolean
+  }
+  class CheckRoll $reise {
+    kind: CheckKind
+    dice: number[1..2]
+    target: number
+    /passed: boolean
+    reactionDice: number[2] [0..1]
+    reactionDm: number [0..1]
+    /reaction: number [0..1]
+  }
+  enum CheckKind <<value>> $reise {
+    random
+    animal
+    patron
+    rumor
+    legal
+  }
+  class Journey $reise {
+    days: number
+    npcDie: number [0..1]
+    lot: number [0..1]
+    /pot: number
+  }
+  class Passenger <<value>> $reise {
+  }
+  class LowBerth <<value>> $reise {
+    revive: number[2]
+    dm: number
+    guess: number
+    /survived: boolean
+  }
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+
+' Referenzdaten
+  class Item <<reference>> $shop
+
+' Kampagne
+
+' Zeit und Reisen
+LogEntry <|-- TimePassed
+LogEntry <|-- CheckRoll
+CheckRoll --> CheckKind
+LogEntry <|-- Journey
+Journey "*" --> "1" Hex : from
+Journey "*" --> "1" Hex : to
+Journey "1" *-- "1..*" Passenger : passengers
+Passenger "*" --> "1" Character : for
+Passenger "*" --> "1" Item : passage
+Journey "1" *-- "*" LowBerth : berths {ordered}
+LowBerth "*" --> "0..1" Character : for
+Journey "*" --> "0..1" LowBerth : /winner
+Booking "*" --> "0..1" Journey : won
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+@enduml

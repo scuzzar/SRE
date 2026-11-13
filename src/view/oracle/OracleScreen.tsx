@@ -84,7 +84,7 @@ export function OracleScreen({
   return (
     <div className="screen">
       {strip && <CharacterStrip view={view} />}
-      <LogList log={view.log} target={target} marked={marked} onPick={onPick} />
+      <LogList log={view.log} days={view.logDays} target={target} marked={marked} onPick={onPick} />
       <section className="dock" aria-label="Orakel und Proben">
         {task && (
           <div className="task-bar" aria-live="polite">

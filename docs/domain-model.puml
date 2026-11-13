@@ -88,6 +88,9 @@ hide <<value>> stereotype
     /load: number
     /capacity: number
     /burden: number
+    day: number
+    /date: string
+    /weekday: number [0..1]
   }
   class Booking $shop {
     at: datetime
@@ -103,6 +106,7 @@ hide <<value>> stereotype
     payout
     purchase
     sale
+    lottery
   }
   class Character $charakter {
     name: string
@@ -190,6 +194,7 @@ hide <<value>> stereotype
 ' Verlauf
   abstract class LogEntry $probe {
     at: datetime
+    day: number [0..1]
   }
   class OracleAnswer $karte {
     question: string [0..1]
@@ -232,6 +237,42 @@ hide <<value>> stereotype
     dice: number[2]
     target: number
     /success: boolean
+  }
+
+' Zeit und Reisen
+  class TimePassed $reise {
+    days: number
+    week: boolean
+  }
+  class CheckRoll $reise {
+    kind: CheckKind
+    dice: number[1..2]
+    target: number
+    /passed: boolean
+    reactionDice: number[2] [0..1]
+    reactionDm: number [0..1]
+    /reaction: number [0..1]
+  }
+  enum CheckKind <<value>> $reise {
+    random
+    animal
+    patron
+    rumor
+    legal
+  }
+  class Journey $reise {
+    days: number
+    npcDie: number [0..1]
+    lot: number [0..1]
+    /pot: number
+  }
+  class Passenger <<value>> $reise {
+  }
+  class LowBerth <<value>> $reise {
+    revive: number[2]
+    dm: number
+    guess: number
+    /survived: boolean
   }
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
@@ -781,6 +822,21 @@ Booking "*" --> "0..1" Item : bought
 Booking "*" --> "0..1" Item : sold
 Booking "*" --> "0..1" Hex : in
 Booking --> BookingKind
+
+' Zeit und Reisen
+LogEntry <|-- TimePassed
+LogEntry <|-- CheckRoll
+CheckRoll --> CheckKind
+LogEntry <|-- Journey
+Journey "*" --> "1" Hex : from
+Journey "*" --> "1" Hex : to
+Journey "1" *-- "1..*" Passenger : passengers
+Passenger "*" --> "1" Character : for
+Passenger "*" --> "1" Item : passage
+Journey "1" *-- "*" LowBerth : berths {ordered}
+LowBerth "*" --> "0..1" Character : for
+Journey "*" --> "0..1" LowBerth : /winner
+Booking "*" --> "0..1" Journey : won
 
 ' Charaktererschaffung und Lebenslauf
 Campaign "1" *-- "0..1" Generation : generation

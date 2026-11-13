@@ -84,6 +84,7 @@ hide <<value>> stereotype
 ' Verlauf
   abstract class LogEntry $probe {
     at: datetime
+    day: number [0..1]
   }
   class OracleAnswer $karte
   class DiceRoll $probe {
@@ -99,6 +100,11 @@ hide <<value>> stereotype
   class RumorRoll $begegnung
   class EventResult $begegnung
   class SaveRoll $begegnung
+
+' Zeit und Reisen
+  class TimePassed $reise
+  class CheckRoll $reise
+  class Journey $reise
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Task <<transient>> $probe {
@@ -128,6 +134,11 @@ hide <<value>> stereotype
 
 ' Kampagne
 Campaign "1" *-- "*" LogEntry : log {ordered}
+
+' Zeit und Reisen
+LogEntry <|-- TimePassed
+LogEntry <|-- CheckRoll
+LogEntry <|-- Journey
 
 ' Charaktererschaffung und Lebenslauf
 

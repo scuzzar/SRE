@@ -115,6 +115,10 @@ hide <<value>> stereotype
   class Butchering $begegnung
   class SaveRoll $begegnung
 
+' Zeit und Reisen
+  class Passenger <<value>> $reise
+  class LowBerth <<value>> $reise
+
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Task <<transient>> $probe
   class TaskResult $probe
@@ -149,6 +153,10 @@ hide <<value>> stereotype
 Campaign "1" *-- "*" Character : characters
 Campaign "0..1" --> "0..1" Character : focus
 Booking "*" --> "0..1" Character : for
+
+' Zeit und Reisen
+Passenger "*" --> "1" Character : for
+LowBerth "*" --> "0..1" Character : for
 
 ' Charaktererschaffung und Lebenslauf
 Generation ..> Character : on finish

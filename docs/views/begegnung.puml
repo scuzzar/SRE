@@ -108,6 +108,8 @@ hide <<value>> stereotype
     /success: boolean
   }
 
+' Zeit und Reisen
+
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class DamageRoll $kampf
   class Encounter $begegnung {
@@ -282,6 +284,8 @@ hide <<value>> stereotype
   class Weapon <<reference>> $kampf
 
 ' Kampagne
+
+' Zeit und Reisen
 
 ' Charaktererschaffung und Lebenslauf
 

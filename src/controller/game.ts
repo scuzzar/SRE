@@ -84,8 +84,26 @@ import {
   setTerrain,
   animalName,
   animalEventOf,
-  rollEncounterCheck,
+  rollCheck,
+  checkOf,
+  checksMet,
+  checksLabel,
+  checkNames,
+  missingChecks,
+  passTime,
+  setStartDate,
+  travel,
+  journeyBlocker,
+  rollNpcLow,
+  travellersOf,
+  hasAnimals,
+  terrainOf,
+  locationOf,
+  type CheckKind,
+  type CheckRoll,
+  type PassageId,
   rollPatronList,
+  stampDays,
   patronOfRoll,
   type EncounterCheck,
   writeNote,
@@ -168,7 +186,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -236,6 +254,9 @@ export class GameController {
       patronNote: undefined,
       rumorNote: undefined,
       animalNote: undefined,
+      legalNote: undefined,
+      timeNote: undefined,
+      journey: undefined,
       simTarget: undefined,
       simBurst: undefined,
       simWeakened: undefined,
@@ -649,16 +670,18 @@ export class GameController {
    * die Liste, dann kommt der Patron-Wurf mit den DMs der lebenden SC in den Log. Der Test steht nur
    * in der Karte, er wird nicht gespeichert.
    */
-  rollPatron(): void {
-    const check = rollEncounterCheck('patron', this.deps.random);
+  rollPatron(force = false): void {
+    const tested = this.test('patron', force, (note) => this.update({ patronNote: note }));
+    if (!tested) return;
+    const { entry: test, check } = tested;
     if (!check.passed) {
-      this.update({ patronNote: `${checkText(check)}: diese Woche kein Patron.` });
+      this.change(appendLog(this.campaign, test), { patronNote: `${checkText(check)}: diese Woche kein Patron.` });
       return;
     }
     const entry = rollPatron(this.campaign, rollPatronList(this.deps.random), this.deps.random, this.deps.clock);
     // Eine Rumor-Zeile der Liste: gleich danach ein Gerücht, ohne Test (Charts S. 21).
     const rumor = patronOfRoll(entry).rumor;
-    const entries = rumor ? [entry, rollRumor(this.deps.random, this.deps.clock)] : [entry];
+    const entries = rumor ? [test, entry, rollRumor(this.deps.random, this.deps.clock)] : [test, entry];
     this.change(appendLog(this.campaign, ...entries), {
       patronNote: `${checkText(check)}: ${rumor ? 'ein Gerücht statt eines Patrons' : 'ein Patron'}.`,
       ...(rumor ? { rumorNote: 'Ohne Test: Gerücht statt eines Patrons.' } : {}),
@@ -669,13 +692,136 @@ export class GameController {
    * Das Gerücht (SE, Charts S. 21): erst der Test der Woche (7+ auf 2W6), dann der Wurf auf die
    * Rumors Matrix; er kommt in den Log. Der Test steht nur in der Karte.
    */
-  rollRumor(): void {
-    const check = rollEncounterCheck('rumor', this.deps.random);
+  rollRumor(force = false): void {
+    const tested = this.test('rumor', force, (note) => this.update({ rumorNote: note }));
+    if (!tested) return;
+    const { entry: test, check } = tested;
     if (!check.passed) {
-      this.update({ rumorNote: `${checkText(check)}: diese Woche kein Gerücht.` });
+      this.change(appendLog(this.campaign, test), { rumorNote: `${checkText(check)}: diese Woche kein Gerücht.` });
       return;
     }
-    this.change(appendLog(this.campaign, rollRumor(this.deps.random, this.deps.clock)), { rumorNote: `${checkText(check)}: ein Gerücht.` });
+    this.change(appendLog(this.campaign, test, rollRumor(this.deps.random, this.deps.clock)), { rumorNote: `${checkText(check)}: ein Gerücht.` });
+  }
+
+  /**
+   * Die Polizei (SE S. 20; einmal je Woche nach Wunsch des Owners): 2W6 gleich oder über der
+   * Gesetzesstufe heißt Ruhe; sonst hält ein Polizist die Gruppe an, mit Reaktion. Der Test kommt in den Log.
+   */
+  rollLegal(force = false): void {
+    try {
+      const tested = this.test('legal', force, (note) => this.update({ legalNote: note }));
+      if (!tested) return;
+      const { entry, check } = tested;
+      const reaction = entry.reactionDice === undefined ? '' : ` Reaktion ${entry.reactionDice[0]} + ${entry.reactionDice[1]}${entry.reactionDm ? ` ${entry.reactionDm > 0 ? '+' : '−'}${Math.abs(entry.reactionDm)}` : ''}.`;
+      this.change(appendLog(this.campaign, entry), { legalNote: `${checkText(check)}: ${check.passed ? 'die Polizei lässt die Gruppe in Ruhe.' : `die Polizei hält die Gruppe an.${reaction}`}` });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ legalNote: error.message });
+    }
+  }
+
+  /**
+   * Würfelt den Test einer Art als Logeintrag, noch nicht gespeichert. Ist die Regel für den
+   * Zeitraum schon erfüllt, nur mit `force` (langes Drücken); sonst sagt `blocked`, warum nicht.
+   */
+  private test(kind: CheckKind, force: boolean, blocked: (note: string) => void): { readonly entry: CheckRoll; readonly check: EncounterCheck } | undefined {
+    if (!force && checksMet(this.campaign, kind)) {
+      blocked(`${checkNames[kind]}: ${checksLabel(this.campaign, kind)} getestet. Lange drücken für einen weiteren Test.`);
+      return undefined;
+    }
+    const entry = rollCheck(this.campaign, kind, this.deps.random, this.deps.clock);
+    return { entry, check: checkOf(entry) };
+  }
+
+  // --- Zeit und Reisen ---------------------------------------------------------------------------
+
+  /**
+   * Lässt 1 bis 6 Tage vergehen. Fehlen heute Tests (Zufallsbegegnung, Tiere), erinnert die App erst
+   * daran; mit `force` (langes Drücken) vergeht die Zeit trotzdem, ohne Begegnung.
+   */
+  passDays(days: number, force = false): void {
+    this.passTime({ days }, force);
+  }
+
+  /** Beendet die Woche: bis zum nächsten Sonntag; erinnert wie `passDays`, dazu an Patron, Gerücht und Polizei. */
+  endWeek(force = false): void {
+    this.passTime('week', force);
+  }
+
+  private passTime(how: { readonly days: number } | 'week', force: boolean): void {
+    try {
+      const missing = missingChecks(this.campaign, how === 'week', this.animalsPossible());
+      if (!force && missing.length > 0) {
+        this.update({ timeNote: `Noch nicht getestet: ${missing.map((k) => checkNames[k]).join(', ')}. Lange drücken, um ohne Begegnung weiterzumachen.` });
+        return;
+      }
+      this.change(passTime(this.campaign, how, this.deps.clock), { timeNote: undefined, combatNote: undefined, animalNote: undefined, patronNote: undefined, rumorNote: undefined, legalNote: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ timeNote: error.message });
+    }
+  }
+
+  /** Ob es auf dem Aufenthaltsort im Gelände Tiere geben kann. */
+  private animalsPossible(): boolean {
+    const terrain = this.campaign.terrain === undefined ? undefined : terrainOf(this.campaign.terrain);
+    return locationOf(this.campaign) !== undefined && terrain !== undefined && hasAnimals(terrain);
+  }
+
+  /** Setzt das Startdatum, solange der Log keinen Tag hat. */
+  setStartDate(dayOfYear: number, year: number): void {
+    try {
+      this.change(setStartDate(this.campaign, dayOfYear, year), { timeNote: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ timeNote: error.message });
+    }
+  }
+
+  /** Öffnet die Reise zur Welt auf der offenen Weltkarte; die Zahl der NSC in Low Passage (1W6) steht damit fest. */
+  openJourney(): void {
+    const at = this.state.world;
+    if (!at) throw new DomainError('Es ist keine Weltkarte offen.');
+    const to = hexId(at.column, at.row);
+    const blocker = journeyBlocker(this.campaign, to);
+    if (blocker) throw new DomainError(blocker);
+    this.update({ journey: { to, npcDie: rollNpcLow(this.deps.random), choice: {}, guesses: {}, error: undefined, done: undefined }, world: undefined, worldError: undefined });
+  }
+
+  /** Wählt die Passage eines Reisenden. */
+  choosePassage(character: string, passage: PassageId): void {
+    const journey = this.state.journey;
+    if (!journey || journey.done !== undefined) return;
+    this.update({ journey: { ...journey, choice: { ...journey.choice, [character]: passage }, error: undefined } });
+  }
+
+  /** Der Tipp eines SC in Low Passage für die Lotterie. */
+  guessSurvivors(character: string, guess: number): void {
+    const journey = this.state.journey;
+    if (!journey || journey.done !== undefined) return;
+    this.update({ journey: { ...journey, guesses: { ...journey.guesses, [character]: guess }, error: undefined } });
+  }
+
+  /** Die Gruppe reist: Passagen, Kälteschlaf, Lotterie; danach zeigt der Dialog das Ergebnis. */
+  travel(): void {
+    const journey = this.state.journey;
+    if (!journey || journey.done !== undefined) return;
+    try {
+      const view = this.current.journey;
+      const choice = Object.fromEntries(travellersOf(this.campaign).map((c) => [c.id, journey.choice[c.id] ?? view?.travellers.find((t) => t.id === c.id)?.passage ?? 'middle-passage'])) as Record<string, PassageId>;
+      const guesses = Object.fromEntries((view?.travellers ?? []).filter((t) => t.guess !== undefined).map((t) => [t.id, journey.guesses[t.id] ?? t.guess!]));
+      const index = this.campaign.log.length;
+      const after = travel(this.campaign, journey.to, choice, guesses, journey.npcDie, this.deps.random, this.deps.clock);
+      this.change(after, { journey: { ...journey, choice, guesses, done: index, error: undefined }, combatNote: undefined, animalNote: undefined, patronNote: undefined, rumorNote: undefined, legalNote: undefined, timeNote: undefined, shopError: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ journey: { ...journey, error: error.message } });
+    }
+  }
+
+  /** Schließt den Dialog der Reise, vorher oder nach dem Ergebnis. */
+  closeJourney(): void {
+    this.update({ journey: undefined });
   }
 
   /** Eine Notiz, oder mit `interprets` (Stelle eines Ergebnisses im Log) eine Deutung dazu. */
@@ -878,15 +1024,19 @@ export class GameController {
    * Entfernung; die Zeilen 61–66 sind leer. Mit der Begegnung beginnt die Kampfsimulation; erst
    * zeigt die Übersicht, wer kommt.
    */
-  rollEncounter(roll?: number, terrain?: string): void {
+  rollEncounter(roll?: number, terrain?: string, force = false): void {
     try {
       // Erst der Test des Tages (5+ auf 1W6); wer die Art wählt, überspringt ihn.
-      const check = roll === undefined && this.campaign.location !== undefined && !currentEncounter(this.campaign) ? rollEncounterCheck('random', this.deps.random) : undefined;
+      const testing = roll === undefined && this.campaign.location !== undefined && !currentEncounter(this.campaign);
+      const tested = testing ? this.test('random', force, (note) => this.update({ combatNote: note })) : undefined;
+      if (testing && !tested) return;
+      const check = tested?.check;
+      const base = tested ? appendLog(this.campaign, tested.entry) : this.campaign;
       if (check && !check.passed) {
-        this.update({ combatNote: `${checkText(check)}: heute keine Begegnung.` });
+        this.change(base, { combatNote: `${checkText(check)}: heute keine Begegnung.` });
         return;
       }
-      const rolled = rollEncounter(this.campaign, this.deps.random, this.deps.clock, roll, undefined, terrain);
+      const rolled = rollEncounter(base, this.deps.random, this.deps.clock, roll, undefined, terrain);
       const prepared = rolled.encounter ? this.prepareTurn(rolled.campaign, undefined) : { campaign: rolled.campaign, simTarget: undefined };
       this.change(prepared.campaign, {
         attack: undefined,
@@ -905,14 +1055,21 @@ export class GameController {
    * Gelände; sie entsteht beim ersten Wurf. Ein Ereignis kommt in den Log, ein Tier wird eine
    * Begegnung mit Übersicht. Wer die Zeile wählt, überspringt den Test.
    */
-  rollAnimals(row?: number): void {
+  rollAnimals(row?: number, force = false): void {
     try {
-      const check = row === undefined ? rollEncounterCheck('animal', this.deps.random) : undefined;
+      // Erst prüfen, ob es hier Tiere geben kann; der Test zählt nur, wenn er auch gewürfelt werden kann.
+      if (row === undefined && !this.animalsPossible()) {
+        rollAnimalEncounter(this.campaign, this.deps.random, this.deps.clock, row);
+      }
+      const tested = row === undefined ? this.test('animal', force, (note) => this.update({ animalNote: note })) : undefined;
+      if (row === undefined && !tested) return;
+      const check = tested?.check;
+      const base = tested ? appendLog(this.campaign, tested.entry) : this.campaign;
       if (check && !check.passed) {
-        this.update({ animalNote: `${checkText(check)}: keine Tiere.` });
+        this.change(base, { animalNote: `${checkText(check)}: keine Tiere.` });
         return;
       }
-      const rolled = rollAnimalEncounter(this.campaign, this.deps.random, this.deps.clock, row);
+      const rolled = rollAnimalEncounter(base, this.deps.random, this.deps.clock, row);
       const prefix = check ? `${checkText(check)}, ` : '';
       if (!rolled.encounter) {
         this.change(rolled.campaign, { animalNote: `${prefix}Wurf ${rolled.roll}: Ereignis ${animalEventOf(rolled.row.event!).name}.` });
@@ -1219,7 +1376,7 @@ export class GameController {
   }
 
   /** Bucht Geld: Einnahme oder Ausgabe frei, Einzahlung oder Auszahlung mit einem Charakter. */
-  book(kind: Exclude<BookingKind, 'purchase' | 'sale'>, amount: number, text?: string, character?: string): void {
+  book(kind: Exclude<BookingKind, 'purchase' | 'sale' | 'lottery'>, amount: number, text?: string, character?: string): void {
     this.inShop(() => book(this.campaign, kind, amount, this.deps.clock, text, character));
   }
 
@@ -1609,7 +1766,7 @@ export class GameController {
   private change(campaign: Campaign, rest: Partial<ControllerState> = {}): void {
     if (this.state.campaign && focusOf(this.state.campaign)?.id !== focusOf(campaign)?.id) rest = { ...rest, task: undefined, attack: undefined };
     // Jede Änderung am gespeicherten Stand setzt die Änderungszeit; daran merkt der Abgleich, dass hier etwas neu ist.
-    campaign = touched(campaign, this.deps.clock);
+    campaign = touched(stampDays(this.state.campaign?.log, campaign), this.deps.clock);
     const campaigns = this.state.campaigns.map((c) => (c.id === campaign.id ? campaign : c));
     this.update({ ...rest, campaigns, campaign });
     this.persist(() => this.deps.repository.save(campaign), true);

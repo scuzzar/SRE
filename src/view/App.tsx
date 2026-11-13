@@ -21,6 +21,7 @@ import { DiceRoll } from './oracle/DiceRoll';
 import { OracleScreen } from './oracle/OracleScreen';
 import { SectorPicker, SectorScreen } from './sector/SectorScreen';
 import { WorldSheet } from './sector/WorldSheet';
+import { JourneySheet } from './sector/JourneySheet';
 
 /** Die Bereiche der Leiste unten bzw. der Reiterzeile oben, in dieser Reihenfolge. */
 const areas: readonly { readonly id: Screen; readonly label: string; readonly Icon: () => ReactElement }[] = [
@@ -131,7 +132,8 @@ export function App() {
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
       {view.generation && <GenerationSheet generation={view.generation} odds={view.odds} log={view.log} />}
       {view.picking && <SectorPicker view={view} title={view.picking.title} />}
-      {view.world && <WorldSheet key={view.world.id} world={view.world} here={view.location === view.world.id} />}
+      {view.world && <WorldSheet key={view.world.id} world={view.world} here={view.location === view.world.id} travel={view.travel} />}
+      {view.journey && <JourneySheet journey={view.journey} />}
       {view.card && <CardSheet card={view.card} onConfirmed={() => setQuestion('')} />}
       {view.result?.kind === 'damage' ? (
         <DiceRoll key={view.result.at} item={view.result} seed={view.result.of} onDone={closeResult} />

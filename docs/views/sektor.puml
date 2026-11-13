@@ -113,6 +113,9 @@ hide <<value>> stereotype
 
 ' Verlauf
 
+' Zeit und Reisen
+  class Journey $reise
+
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Encounter $begegnung
   class AnimalTable $begegnung
@@ -202,6 +205,10 @@ hide <<value>> stereotype
 ' Kampagne
 Campaign "*" --> "0..1" Hex : location
 Booking "*" --> "0..1" Hex : in
+
+' Zeit und Reisen
+Journey "*" --> "1" Hex : from
+Journey "*" --> "1" Hex : to
 
 ' Charaktererschaffung und Lebenslauf
 Career "*" --> "0..1" Hex : homeworld

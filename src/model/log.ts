@@ -10,7 +10,7 @@ import { roll2d6, sum, type Characteristic, type Dice } from './rules';
  * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei Probe und Angriff DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | Note;
+export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | CheckRoll | Journey | Note;
 
 /** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
 export type LogResult = Exclude<LogEntry, Note>;
@@ -18,6 +18,64 @@ export type LogResult = Exclude<LogEntry, Note>;
 interface LogEntryBase {
   /** Zeitpunkt als ISO-8601-Zeitstempel. */
   readonly at: string;
+  /** Der Spieltag, an dem der Eintrag entstand (siehe `time.ts`); fehlt bei Einträgen von vor der Spielzeit. */
+  readonly day?: number;
+}
+
+/**
+ * Die Gruppe lässt Tage vergehen oder beendet die Woche. `day` ist der Tag, an dem die Zeit zu
+ * vergehen beginnt; danach ist die Kampagne `days` Tage weiter.
+ */
+export interface TimePassed extends LogEntryBase {
+  readonly kind: 'time';
+  readonly days: number;
+  readonly week: boolean;
+}
+
+/** Die Arten der Tests: Zufallsbegegnung, Tiere, Patron, Gerücht, Polizei. `check` ist im Modell `kind`. */
+export const checkKinds = ['random', 'animal', 'patron', 'rumor', 'legal'] as const;
+export type CheckKind = (typeof checkKinds)[number];
+
+/**
+ * Ein gewürfelter Test einer Begegnungsart (Encounter Checklist, SE Charts S. 20). Bei der Polizei
+ * dazu die Reaktion des Polizisten, wenn die Gruppe den Test nicht schafft.
+ */
+export interface CheckRoll extends LogEntryBase {
+  readonly kind: 'check';
+  readonly check: CheckKind;
+  readonly dice: readonly number[];
+  readonly target: number;
+  readonly reactionDice?: Dice;
+  readonly reactionDm?: number;
+}
+
+/** Ein Charakter auf der Reise mit seiner Passage (Verweis auf den Gegenstand). */
+export interface Passenger {
+  readonly for: CharacterId;
+  readonly passage: string;
+}
+
+/** Ein Low-Passagier: SC (`for`) oder NSC (ohne), mit Wurf zum Aufwachen, DM und Tipp der Lotterie. */
+export interface LowBerth {
+  readonly for?: CharacterId;
+  readonly revive: Dice;
+  readonly dm: number;
+  readonly guess: number;
+}
+
+/**
+ * Eine Reise mit Passagen von `from` nach `to` (Felder wie 0304), am Abflugtag. `lot` ist bei
+ * Gleichstand in der Lotterie die Stelle der Koje, die das Los gewann.
+ */
+export interface Journey extends LogEntryBase {
+  readonly kind: 'journey';
+  readonly from: string;
+  readonly to: string;
+  readonly days: number;
+  readonly passengers: readonly Passenger[];
+  readonly berths: readonly LowBerth[];
+  readonly npcDie?: number;
+  readonly lot?: number;
 }
 
 export interface OracleAnswer extends LogEntryBase {

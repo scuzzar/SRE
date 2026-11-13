@@ -261,6 +261,16 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Ausschnitt dazu liegt unter
 > [`changes/2026-11-13-abgleich-onedrive.png`](changes/2026-11-13-abgleich-onedrive.png).
 
+> Am 13. November 2026 freigegeben (Kennzeichen 2026-11-13d): **Zeit und Reisen** (siehe *Spielzeit*, *Zeit
+> vergehen lassen*, *Test*, *Reise*, *Low Passage*, *Low Lottery*). Nach den Antworten des Owners:
+> Imperialer Kalender mit Wochentagen, „Woche beenden“ springt zum nächsten Sonntag; Reise mit
+> High, Middle oder Low Passage bis Sprung 2, immer eine Woche; Low Lottery mit 1W6 NSC; Zeit und
+> Begegnungen getrennt, aber die Tests stehen im Log, damit die Knöpfe zählen können. Neu im Bild:
+> `Campaign.day`, `/date`, `/weekday`, `LogEntry.day`, die Logeinträge `TimePassed`, `CheckRoll`
+> (mit `CheckKind`, auch dem neuen Test **Polizei** `legal`) und `Journey` (mit `Passenger` und `LowBerth`), die Buchungsart `lottery` und
+> der Verweis `Booking.won`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-13-zeit-und-reisen.png`](changes/2026-11-13-zeit-und-reisen.png).
+
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
@@ -286,6 +296,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Probe und Verlauf | [views/probe.png](views/probe.png) |
 | Kampf: Waffen, Angriff, Wunden, Heilung | [views/kampf.png](views/kampf.png) |
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
+| Zeit und Reisen | [views/reise.png](views/reise.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
 keine.
@@ -370,9 +381,22 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Primärwaffe | `Character.primary` | Die Hauptwaffe eines Charakters, im Editor festgelegt, z. B. Automatic Pistol |
 | Sekundärwaffe | `Character.secondary` | Die zweite Waffe eines Charakters, im Editor festgelegt, z. B. Blade |
 | Aufenthaltsort | `Campaign.location` | Die Welt, auf der die Gruppe gerade ist; dort kauft sie ein |
+| Spielzeit, Tag | `Campaign.day` | Der heutige Tag im Spiel, gezählt als Tage seit 001-0 im Imperialen Kalender |
+| Datum | `Campaign./date` | Der Tag als Imperiales Datum „Tag des Jahres-Jahr“, z. B. 123-1105 |
+| Wochentag | `Campaign./weekday` | Montag bis Sonntag (1–7); Tag 001 jedes Jahres ist Feiertag ohne Wochentag |
+| Woche | (Regel) | Sonntag bis Samstag; „Woche beenden“ springt zum Sonntag, der die neue Woche beginnt; die erste Woche des Jahres beginnt mit dem Feiertag |
+| Zeit vergeht | `TimePassed` | Logeintrag: Die Gruppe lässt Tage vergehen oder beendet die Woche |
+| Woche beenden | `TimePassed.week` | Springt zum nächsten Sonntag (am Sonntag eine Woche weiter) |
+| Tag im Log | `LogEntry.day` | An welchem Spieltag ein Logeintrag entstand; fehlt bei Einträgen von vor der Spielzeit |
+| Test (im Log) | `CheckRoll`, `CheckKind` | Ein gewürfelter Test einer Begegnungsart: random, animal, patron, rumor, legal |
+| Polizei, Legal Encounter | `CheckKind.legal` | Einmal je Woche 2W6 gleich oder über der Gesetzesstufe des Aufenthaltsorts, sonst hält die Polizei die Gruppe an (SE S. 20) |
+| Reise | `Journey` | Logeintrag: Die Gruppe reist mit Passagen von einer Welt zur anderen, eine Woche im Sprung |
+| Passagier | `Passenger` | Ein Charakter auf der Reise mit seiner Passage (High, Middle oder Low Passage) |
+| Kälteschlafkoje | `LowBerth` | Ein Low-Passagier der Reise, SC oder NSC, mit Wurf zum Aufwachen und Tipp der Lotterie |
+| Low Lottery | `Journey./pot`, `/winner`, `lot` | Cr 10 je Low Passage; wer die Zahl der Überlebenden am besten tippt und selbst überlebt, gewinnt |
 | Gruppenkasse | `Campaign./funds` | Das gemeinsame Geld der Gruppe in Cr, die Summe aller Buchungen |
 | Buchung | `Booking` | Eine Bewegung der Gruppenkasse: Einnahme, Ausgabe, Einzahlung, Auszahlung oder Kauf |
-| Art der Buchung | `BookingKind` | income (Einnahme, z. B. Belohnung), expense (Ausgabe), deposit (Einzahlung eines Charakters), payout (Auszahlung an einen Charakter), purchase (Kauf), sale (Verkauf) |
+| Art der Buchung | `BookingKind` | income (Einnahme, z. B. Belohnung), expense (Ausgabe), deposit (Einzahlung eines Charakters), payout (Auszahlung an einen Charakter), purchase (Kauf), sale (Verkauf), lottery (Gewinn der Low Lottery) |
 | Angebot | `Hex./offer` | Was man auf der Welt kaufen kann: nach TL und Gesetz der Welt |
 | Shop | (Reiter „Shop“) | Der Screen für Kasse und Einkauf auf dem Aufenthaltsort |
 | Magazin | `Weapon.ammo` | Der Gegenstand, der eine Schusswaffe lädt, z. B. Rifle Ammo (20 rds) oder LC Power Pack |
@@ -856,6 +880,76 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Ort (`location`): einer fertigen Welt des Subsektors. Man setzt ihn auf der Weltkarte („Gruppe ist
   hier“); die Karte zeigt ihn. Eine neue Kampagne hat keinen. Ohne Aufenthaltsort gibt es keinen
   Einkauf. Wird die Welt verworfen (das geht heute nicht), fällt er weg.
+- **Spielzeit** (2026-11-13d). Die Kampagne hat einen heutigen Tag (`day`), gezählt im
+  Imperialen Kalender: 365 Tage im Jahr, `day` = Jahr × 365 + Tag des Jahres − 1. Angezeigt wird das
+  Datum `/date` als „Tag-Jahr“ mit drei Stellen für den Tag (123-1105) und dem Wochentag. Eine neue
+  Kampagne beginnt am 001-1105; Spielstände und Dateien von vorher ebenso. Das Startdatum lässt sich
+  ändern, solange kein Logeintrag einen Tag hat; danach geht die Zeit nur vorwärts.
+  - *Wochentage* (Hausregel nach dem Imperialen Kalender): Tag 001 ist der Feiertag, er hat keinen
+    Wochentag. Ab Tag 002 folgen die Wochentage Montag bis Sonntag; Tag 008 ist der erste
+    Sonntag, Tag 365 der 52. Sonntag. Eine **Woche** (für die wöchentlichen Tests) beginnt mit dem
+    Sonntag, auf den „Woche beenden“ springt, und reicht bis zum Samstag; die erste Woche des
+    Jahres beginnt mit dem Feiertag (Tag 001 bis 007). Bei der Umsetzung am 13. November 2026
+    korrigiert: vorher endete die Woche mit dem Sonntag, dann hätte „Woche beenden“ keine neue Woche
+    begonnen.
+  - *Tag im Log*: Jeder neue Logeintrag hält den Spieltag fest, an dem er entsteht (`LogEntry.day`).
+    Der Log zeigt beim ersten Eintrag eines neuen Tages das Datum als Trenner.
+- **Zeit vergehen lassen** (2026-11-13d). Oben im Reiter Begegnung stehen das Datum und zwei
+  Knöpfe: **Tage** (man wählt 1 bis 6 Tage) und **Woche beenden** (springt zum nächsten Sonntag; am
+  Sonntag sieben Tage weiter). Beides ist ein Logeintrag `TimePassed` mit der Zahl der Tage und ob
+  es die Woche beendet hat; `Campaign.day` wächst um die Tage. Während einer laufenden Begegnung
+  vergeht keine Zeit.
+  - *Erinnerung*: Fehlen im ablaufenden Zeitraum Tests, sagt der Knopf das, statt gleich
+    weiterzuschalten: bei Tagen die Zufallsbegegnung (heute nicht getestet) und, wenn das Gelände
+    Tiere hat, die Tiere (heute weniger als 2×); bei Woche beenden dazu Patron, Gerücht und, bei Gesetz 1 oder
+    mehr, Polizei (diese Woche nicht getestet). **Langes Drücken** schaltet trotzdem weiter, ohne Begegnung: je nach
+    Lage will man mehr oder weniger Begegnungen. Die Tests würfelt die Zeit nie selbst.
+- **Reise** (2026-11-13d). Reisen geht zurzeit nur mit Passagen (High, Middle, Low; SE S. 8
+  f.), noch nicht mit eigenem Schiff.
+  - *Wohin*: Auf der Weltkarte einer anderen fertigen Welt steht **Hierher reisen**, wenn die Gruppe
+    einen Aufenthaltsort hat, beide Welten einen Raumhafen A bis E haben und das Ziel höchstens
+    **2 Parsec** entfernt ist (Sprung 2). Weiter geht es nur über Zwischenhalte, je Halt eine Reise.
+    Während einer laufenden Begegnung reist man nicht.
+  - *Wer*: Es reisen alle lebenden, nicht ausgeblendeten Charaktere der Kampagne, je mit einer
+    Passage (`Passenger`): man wählt je Charakter High, Middle oder Low Passage, vorgeschlagen ist
+    die letzte Wahl. Die Passage kommt aus dem Gruppengepäck (ein Stück weniger); fehlt sie dort,
+    kauft die App sie zum Preis der Charts (Buchung `purchase` auf dem Abflugort). Reicht die Kasse
+    nicht, geht die Reise nicht.
+  - *Dauer*: Jede Reise dauert **eine Woche** (`days` = 7), egal wie weit (SE S. 8). Der Logeintrag
+    `Journey` steht am Abflugtag; danach ist `Campaign.day` 7 Tage weiter und der Aufenthaltsort das
+    Ziel (`to`). Die Zeit vergeht dabei ganz normal: 7 Tage, der Wochentag bei der Ankunft ist der
+    der Abreise, und ein Sonntag dazwischen beendet die Woche wie sonst auch (die Zähler der Tests
+    beginnen neu). Nur gibt es **keine Pflicht-Begegnungen**: Die Reise erinnert nicht an fehlende
+    Tests, weder vor der Abreise noch für die Tage im Sprung, und würfelt keine. Wer unterwegs eine
+    Begegnung will, würfelt sie wie sonst von Hand.
+  - *Ohne Reise*: „Gruppe ist hier“ auf der Weltkarte und die Wahl im Reiter Begegnung setzen den
+    Aufenthaltsort weiter ohne Reise und ohne Zeit, etwa zu Beginn einer Kampagne oder für eine
+    Reise außerhalb der Regeln.
+  - *Log*: Vergangene Zeit und Reisen lassen sich nicht löschen, weil sie den Stand geändert haben
+    (Tag, Aufenthaltsort, Tote, Lotterie). Ein Lotteriegewinn verweist im Code auf die Stelle der
+    Reise im Log; wird davor etwas gelöscht, rückt der Verweis nach.
+  - Gepäckgrenzen (High 1000 kg, Middle 100 kg, Low 10 kg), Bumping der Middle Passage, Hijacking
+    und Working Passage kommen später.
+- **Low Passage** (2026-11-13d). Jeder Low-Passagier würfelt beim Aufwachen **5+ auf 2W6**
+  (SE S. 9). DMs: +1, wenn ein mitreisender Charakter in High oder Middle Passage Medical-2 oder
+  besser hat (er hilft dem Schiffsmedic; Hausregel, die Regeln sagen „attending medic“); −1 bei END 6
+  oder weniger. Wer es nicht schafft, stirbt (`dead`). Jede Koje (`LowBerth`) hält Würfel und DM fest
+  (`revive`, `dm`); `/survived` ist Summe + DM ≥ 5. Low-Passagiere altern nicht; die App führt
+  zurzeit kein Alter im Spiel.
+- **Low Lottery** (2026-11-13d; SE S. 9). Reist mindestens ein SC in Low Passage, gibt es
+  die Lotterie.
+  - *Mitreisende* (Hausregel, die Passagiertabelle fehlt noch): 1W6 weitere Low-Passagiere als NSC
+    (`npcDie`); jeder hat eine Koje ohne Charakter, würfelt 5+ ohne DM zum Aufwachen und tippt
+    zufällig eine Zahl von 0 bis zur Zahl aller Low-Passagiere. Den Würfel würfelt die App schon
+    beim Öffnen der Reise, damit die SC wissen, wie viele mitreisen, wenn sie tippen; bis zur
+    Abreise hält ihn der Controller.
+  - *Tipp*: Vor dem Aufwachen tippt jeder SC in Low Passage, wie viele Low-Passagiere überleben
+    (`guess`, 0 bis zur Zahl aller Low-Passagiere).
+  - *Topf* (`/pot`): Cr 10 je Low-Passagier, vom Kapitän.
+  - *Gewinner* (`/winner`): der Tipp, der der Zahl der Überlebenden am nächsten ist; bei Gleichstand
+    lost die App unter den Gleichauf (`lot`, die Nummer in der Reihenfolge der Kojen). Hat der
+    Gewinner nicht überlebt, behält der Kapitän den Topf. Gewinnt ein SC, kommt der Topf als Buchung
+    `lottery` in die Gruppenkasse, mit `for` (der SC) und `won` (die Reise).
 - **Gruppenkasse.** Die Gruppe hat ein gemeinsames Konto. Sein Stand (`/funds`) ist die Summe aller
   Buchungen (`bookings`), in der Reihenfolge, in der sie entstanden sind; eine neue Kampagne beginnt
   mit Cr 0 und ohne Buchung.
@@ -975,9 +1069,23 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 - **Test.** Jede Begegnungsart beginnt mit ihrem **Test** nach der Encounter Checklist (SE, Charts
   S. 20): Zufallsbegegnung täglich 5+ auf 1W6, Patron wöchentlich 5+ auf 1W6, Gerücht wöchentlich
   7+ auf 2W6. Besteht er nicht, gibt es nichts, und die Karte sagt das („Test 3 (5+ nötig): diese
-  Woche kein Patron.“); besteht er, folgt der Wurf der Art. Der Test wird nicht gespeichert und steht
-  nicht im Log; wann ein Tag oder eine Woche um ist, entscheidet man selbst. Wer bei der
+  Woche kein Patron.“); besteht er, folgt der Wurf der Art. Wer bei der
   Zufallsbegegnung die Art aus der Liste wählt, überspringt den Test.
+  - *Im Log* (2026-11-13d): Jeder Test ist ein Logeintrag `CheckRoll` mit Art, Würfeln und
+    Zielwert, am heutigen Spieltag. Die Tiere testen 5+ auf 1W6 (SR 47) ebenso.
+  - *Polizei* (`legal`, 2026-11-13d): eine neue Begegnungsart im Reiter Begegnung, nur mit
+    Aufenthaltsort. Einmal je Woche (Wunsch des Owners; die SE sagt „once per day“) würfelt man 2W6;
+    gleich oder über der Gesetzesstufe der Welt (`target`) hat die Gruppe Ruhe. Darunter hält ein
+    Polizist die Gruppe an und verlangt Ausweise; die App würfelt gleich seine Reaktion
+    (`reactionDice`, `reactionDm` wie bei der Begegnung: +1 für 5 oder mehr Terms in Army, Navy,
+    Scouts oder Marines, −1 bei Bevölkerung 9 oder mehr; `/reaction` 2 bis 12). Eine schlechte
+    Reaktion heißt mehr Ärger, eine gute vielleicht ein Gerücht, Helfer oder Patron (SE S. 20); was
+    folgt, entscheidet der Spieler. Bei Gesetz 0 gibt es keine Polizei-Begegnung, der Test entfällt.
+  - *Wie oft schon*: Der Knopf jeder Art sagt, wie oft ihr Test in seinem Zeitraum schon gewürfelt
+    ist: Zufallsbegegnung „heute 1×“, Tiere „heute 1×“, Patron, Gerücht und Polizei „diese Woche
+    1×“. Ist die Regel schon erfüllt (Zufallsbegegnung 1× am Tag, Tiere 2× am Tag, Patron, Gerücht
+    und Polizei 1× in der Woche), würfelt der Knopf erst auf **langes Drücken**: Mehr Begegnungen gehen, aber mit
+    Absicht. Die Zeit vergeht dadurch nicht; Zeit und Begegnungen bleiben getrennt.
 - **Patron.** Im Reiter Begegnung ist der **Patron** eine eigene Begegnungsart. Nach dem Test wählt
   ein Würfel die Liste (Hausregel; die Regeln lassen die Spielleitung wählen): 1W6, 1 bis 3 Liste
   eins, 4 bis 6 Liste zwei; der Würfel wird nicht gespeichert, die Liste schon. Das Ergebnis ist ein Logeintrag
