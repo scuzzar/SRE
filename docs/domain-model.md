@@ -1029,6 +1029,18 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       Rechenbeispiel über 4000 Tabellen: typisch rund 90 Cr Fell und 80 Cr Fleisch je Begegnung
       (Listenpreis), große Herden mehrere tausend; wie viel die Gruppe mitnehmen kann, entscheidet
       man selbst.
+  - *Zeigen*: Ausweiden ist wie Angriff und Überraschung ein Ereignis mit Würfelanimation im
+    Vordergrund, Schritt für Schritt:
+    1. Das Tier mit Gewicht und ob die Art essbar ist (bei „ungenießbar“ gleich der Grund:
+       Atmosphäre, Giftwaffe oder Wurf).
+    2. Der Fleischwürfel rollt; daneben der DM mit dem, der ihn gibt („Jonas · Steward-1 +1“),
+       dann die Summe (höchstens 6) und die Menge in kg.
+    3. Das Fell: wer abzieht und mit welcher Klinge („Kira · Dagger-0: halbes Fell“), die Menge in kg.
+    4. Der Wert: Marktwurf, Jagd-DM des Geländes, Gefahr-DM und Seltenheit je einzeln mit Namen
+       („Mountain +2“, „Carnivore +3“, „Zeile 11 +2“), Fell- und Fleischwert, Preis je kg und der
+       Gesamtwert der Beute in Cr (Listenpreis, dazu der Verkaufspreis).
+    Ein Tippen überspringt die Animation. Ebenso zeigt „Beute nehmen“ bei einem NSC, was er bei sich
+    hat (Gegenstände mit Verkaufspreis, Kredite), bevor man es nimmt.
   - *Tierbeute in älteren Tabellen*: Zeilen ohne Marktwurf oder ohne `edible` bekommen beides
     beim ersten Ausweiden einer Tierart dieser Zeile, gewürfelt wie beim Erzeugen.
 - **Gerücht.** Eine weitere Begegnungsart im Reiter Begegnung.
