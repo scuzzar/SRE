@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { ReactNode } from 'react';
 import type { CombatView, PatronView, RumorView, SimView, Snapshot } from '../../controller';
 import { patronDetail, patronName, rumorDetail, rumorName, signed } from '../format';
@@ -18,10 +17,26 @@ export function EncounterScreen({ view }: { view: Snapshot }) {
   return (
     <div className="screen">
       <section className="scroll encounter-scroll" aria-label="Begegnung">
-        {combat && <LocationPick combat={combat} />}
+        {combat && (
+          <div className="encounter-settings">
+            <LocationPick combat={combat} />
+            <TerrainPick combat={combat} />
+          </div>
+        )}
         <EncounterKind title="Zufallsbegegnung" rule="Personen nach der Random Encounter List (S. 21) · täglich, Test 5+ auf 1W6">
-          {!combat ? <p className="log-empty">Ohne lebenden Charakter gibt es keine Begegnung.</p> : combat.sim ? <RunningEncounter sim={combat.sim} /> : <EncounterStart combat={combat} />}
+          {!combat ? (
+            <p className="log-empty">Ohne lebenden Charakter gibt es keine Begegnung.</p>
+          ) : combat.sim && !combat.sim.animal ? (
+            <RunningEncounter sim={combat.sim} />
+          ) : (
+            <EncounterStart combat={combat} />
+          )}
         </EncounterKind>
+        {combat && (
+          <EncounterKind title="Tiere" rule="Tiertabelle der Welt im Gelände (S. 18–19) · zweimal täglich, Test 5+ auf 1W6">
+            {combat.sim?.animal ? <RunningEncounter sim={combat.sim} /> : <AnimalsBox combat={combat} />}
+          </EncounterKind>
+        )}
         {view.patron && (
           <EncounterKind title="Patron" rule="Auftraggeber nach der Patron Encounters Matrix (S. 20) · wöchentlich, Test 5+ auf 1W6, die Liste wählt ein Würfel">
             <PatronBox patron={view.patron} />
@@ -90,32 +105,16 @@ function RunningEncounter({ sim }: { sim: SimView }) {
  */
 function EncounterStart({ combat }: { combat: CombatView }) {
   const game = useGame();
-  // Das Gelände gilt erst beim Würfeln; bis dahin hält es nur die View.
-  const [terrain, setTerrain] = useState('');
-  const ground = terrain || undefined;
   return (
     <>
-      <div className="encounter-settings">
-        <label className="field encounter-terrain">
-          <span>Gelände (DM auf die Entfernung)</span>
-          <select value={terrain} disabled={!combat.canEncounter} onChange={(e) => setTerrain(e.target.value)}>
-            <option value="">ohne (±0)</option>
-            {combat.terrains.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name} ({signed(t.dm)})
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field encounter-terrain">
-          <span>Anzahl würfeln mit</span>
-          <select aria-label="Würfel der Anzahl" value={combat.quantityDie} onChange={(e) => game.setQuantityDie(Number(e.target.value))}>
-            <option value={6}>W6 (Regel)</option>
-            <option value={4}>W4</option>
-            <option value={3}>W3</option>
-          </select>
-        </label>
-      </div>
+      <label className="field encounter-terrain">
+        <span>Anzahl würfeln mit (für Personen und Tiere)</span>
+        <select aria-label="Würfel der Anzahl" value={combat.quantityDie} onChange={(e) => game.setQuantityDie(Number(e.target.value))}>
+          <option value={6}>W6 (Regel)</option>
+          <option value={4}>W4</option>
+          <option value={3}>W3</option>
+        </select>
+      </label>
       {combat.note && (
         <p className="encounter-note" role="status">
           {combat.note}
@@ -125,15 +124,15 @@ function EncounterStart({ combat }: { combat: CombatView }) {
         <button
           type="button"
           className="primary"
-          disabled={!combat.canEncounter}
+          disabled={!combat.canEncounter || combat.sim !== undefined}
           onClick={() => {
             haptic('shake');
-            game.rollEncounter(undefined, ground);
+            game.rollEncounter();
           }}
         >
           Begegnung würfeln
         </button>
-        <select aria-label="Begegnung wählen" value="" disabled={!combat.canEncounter} onChange={(e) => e.target.value && game.rollEncounter(Number(e.target.value), ground)}>
+        <select aria-label="Begegnung wählen" value="" disabled={!combat.canEncounter || combat.sim !== undefined} onChange={(e) => e.target.value && game.rollEncounter(Number(e.target.value))}>
           <option value="">oder wählen …</option>
           {combat.encounterTypes.map((t) => (
             <option key={t.roll} value={t.roll}>
@@ -143,6 +142,71 @@ function EncounterStart({ combat }: { combat: CombatView }) {
         </select>
       </div>
     </>
+  );
+}
+
+/**
+ * Die Begegnungsart Tiere (SE 18–19): Würfeln testet erst, ob Tiere kommen, und würfelt dann auf die
+ * Tiertabelle von Welt und Gelände; sie entsteht beim ersten Wurf. Ein Tier wird eine Begegnung mit
+ * Übersicht, ein Ereignis steht im Log und hier. Gibt es die Tabelle schon, kann man die Zeile wählen.
+ */
+function AnimalsBox({ combat }: { combat: CombatView }) {
+  const game = useGame();
+  const animals = combat.animals;
+  const event = animals.lastEvent;
+  return (
+    <>
+      {animals.blocked && <p className="combat-hint">{animals.blocked}</p>}
+      {animals.note && (
+        <p className="encounter-note" role="status">
+          {animals.note}
+        </p>
+      )}
+      {event && (
+        <p className="patron-last">
+          Zuletzt: <strong>{event.name}</strong> <span>{event.text}</span>
+        </p>
+      )}
+      <div className="encounter-start">
+        <button
+          type="button"
+          className="primary"
+          disabled={animals.blocked !== undefined}
+          onClick={() => {
+            haptic('shake');
+            game.rollAnimals();
+          }}
+        >
+          Tiere würfeln
+        </button>
+        <select aria-label="Tiere wählen" value="" disabled={animals.blocked !== undefined || animals.rows.length === 0} onChange={(e) => e.target.value && game.rollAnimals(Number(e.target.value))}>
+          <option value="">{animals.rows.length === 0 ? 'Tabelle beim 1. Wurf' : 'oder wählen …'}</option>
+          {animals.rows.map((r) => (
+            <option key={r.roll} value={r.roll}>
+              {r.roll} · {r.quantity === 0 ? '1' : `${r.quantity}W${combat.quantityDie}`} {r.name}
+            </option>
+          ))}
+        </select>
+      </div>
+    </>
+  );
+}
+
+/** Das Gelände der Kampagne, für alle Begegnungsarten: DM auf die Entfernung, und ob es dort Tiere gibt. */
+function TerrainPick({ combat }: { combat: CombatView }) {
+  const game = useGame();
+  return (
+    <label className="field">
+      <span>Gelände</span>
+      <select aria-label="Gelände" value={combat.terrain ?? ''} onChange={(e) => game.setTerrain(e.target.value || undefined)}>
+        <option value="">ohne (±0)</option>
+        {combat.terrains.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.name} ({signed(t.dm)}){t.animals ? '' : ', keine Tiere'}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 

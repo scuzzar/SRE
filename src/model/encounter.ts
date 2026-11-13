@@ -1,8 +1,9 @@
 import { activeSkills, adoptCharacter, livingCharacters, type Campaign, type Character, type CharacterId, type Possession, type Upp } from './campaign';
 import { replay } from './career';
 import { DomainError } from './errors';
-import type { LogEntry } from './log';
+import type { EventResult, LogEntry } from './log';
 import type { Clock, Random } from './ports';
+import { animalName, animalRowOf, animalTypeOf, hasAnimals, terrainOf, withAnimalTable, type AnimalRef, type AnimalRow } from './animals';
 import { encounterTypeOf, itemOf, nameSlotIds, ref, slotWithId, weaponOf, type EncounterType, type Item, type Range } from './reference';
 import { locationOf } from './shop';
 
@@ -17,12 +18,21 @@ export interface Encounter {
   readonly at: string;
   /** Der Würfel, mit dem die Anzahl gewürfelt wurde; fehlt bei Begegnungen von vorher: W6. */
   readonly quantityDie?: QuantityDie;
-  /** Die Art: der Wurf 11–56 auf der Liste. */
-  readonly of: number;
+  /** Die Art: der Wurf 11–56 auf der Liste; fehlt bei einer Tierbegegnung. */
+  readonly of?: number;
+  /** Bei einer Tierbegegnung: der Wurf 2–12 auf die Tiertabelle der Welt (`in`) im Gelände (`terrain`); im Code der Verweis auf die Zeile. */
+  readonly animal?: number;
+  /** Die 2W6 auf die Tiertabelle; fehlen, wenn man die Zeile gewählt hat. */
+  readonly tableDice?: readonly [number, number];
+  /** Bei einer Tierbegegnung: 2W6 gegen A und 2W6 gegen F der Zeile (SE 19). */
+  readonly attackDice?: readonly [number, number];
+  readonly fleeDice?: readonly [number, number];
+  /** Bei einer Siren: 2W6 für den Köder; bei 11+ wirkt er auch auf Menschen (SR 48). */
+  readonly lureDice?: readonly [number, number];
   /** Die Welt, auf der sie stattfindet, als Spalte und Zeile (0304). */
   readonly in?: string;
-  /** Der Wurf auf die Reactions-Tabelle, 2 bis 12, mit DMs; die Würfel fehlen bei Begegnungen von vorher. */
-  readonly reaction: number;
+  /** Der Wurf auf die Reactions-Tabelle, 2 bis 12, mit DMs; die Würfel fehlen bei Begegnungen von vorher. Tiere haben keine Reaktion. */
+  readonly reaction?: number;
   readonly reactionDice?: readonly [number, number];
   /** Der DM auf die Reaktion, beim Würfeln festgehalten; fehlt bei Begegnungen von vorher: der DM der Welt. */
   readonly reactionDm?: number;
@@ -80,7 +90,7 @@ export interface SurpriseRoll {
 }
 
 export function encounterTypeOfEncounter(encounter: Encounter): EncounterType {
-  const type = encounterTypeOf(encounter.of);
+  const type = encounter.of === undefined ? undefined : encounterTypeOf(encounter.of);
   if (!type) throw new DomainError(`Eine Begegnung ${encounter.of} gibt es nicht.`);
   return type;
 }
@@ -128,6 +138,15 @@ export function setQuantityDie(campaign: Campaign, die: number): Campaign {
   if (!quantityDice.includes(die as QuantityDie)) throw new DomainError(`Einen Würfel W${die} für die Anzahl gibt es nicht; W6, W4 oder W3.`);
   const rest = Object.fromEntries(Object.entries(campaign).filter(([key]) => key !== 'quantityDie')) as Omit<Campaign, 'quantityDie'>;
   return die === 6 ? rest : { ...rest, quantityDie: die as QuantityDie };
+}
+
+/** Stellt das Gelände der Kampagne ein, für alle Begegnungsarten; ohne Gelände ±0 und keine Tiere. */
+export function setTerrain(campaign: Campaign, terrain: string | undefined): Campaign {
+  if (terrain === undefined) {
+    const rest = Object.fromEntries(Object.entries(campaign).filter(([key]) => key !== 'terrain')) as Omit<Campaign, 'terrain'>;
+    return rest;
+  }
+  return { ...campaign, terrain: terrainOf(terrain).id };
 }
 
 /** Ein Name von der Tafel NSC: ein Namensfeld zufällig, daraus Vor- und Nachname. */
@@ -236,7 +255,7 @@ export interface EncounterRoll {
  * Rüstung nach dem TL der Gruppe, dazu die Reaktion. Die Zeilen 61–66 sind leer: dann gibt es keine.
  * `count` gibt die Anzahl fest vor; das nutzen nur Tests.
  */
-export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, chosen?: number, count?: number, terrain?: string): EncounterRoll {
+export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, chosen?: number, count?: number, terrain: string | undefined = campaign.terrain): EncounterRoll {
   if (currentEncounter(campaign)) throw new DomainError('Es läuft schon eine Begegnung; erst sie beenden.');
   const world = locationOf(campaign);
   if (!world || campaign.location === undefined) throw new DomainError('Die Gruppe ist auf keiner Welt; erst auf der Sektorkarte den Aufenthaltsort wählen.');
@@ -296,6 +315,179 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
     acted: [],
   };
   return { roll, campaign: { ...campaign, encounters: [...campaign.encounters, encounter] }, encounter };
+}
+
+/** Eine Tierbegegnung verweist auf eine Zeile der Tiertabelle statt auf eine Art der Random Encounter List. */
+export function isAnimalEncounter(encounter: Encounter): boolean {
+  return encounter.animal !== undefined;
+}
+
+/** Der Verweis einer Tierbegegnung auf ihre Zeile: Welt, Gelände und Wurf. */
+export function animalRefOf(encounter: Encounter): AnimalRef {
+  if (encounter.animal === undefined || encounter.in === undefined || encounter.terrain === undefined) throw new DomainError('Das ist keine Tierbegegnung.');
+  return { in: encounter.in, terrain: encounter.terrain, roll: encounter.animal };
+}
+
+/** Die Zeile der Tiertabelle einer Tierbegegnung. */
+export function encounterAnimalRow(campaign: Campaign, encounter: Encounter): AnimalRow {
+  return animalRowOf(campaign.hexes, animalRefOf(encounter));
+}
+
+/** Der Name einer Begegnung: die Art der Random Encounter List oder das Tier. */
+export function encounterNameOf(campaign: Campaign, encounter: Encounter): string {
+  return isAnimalEncounter(encounter) ? animalName(encounterAnimalRow(campaign, encounter)) : encounterTypeOfEncounter(encounter).name;
+}
+
+/** Wie viele Würfel die Anzahl hat; bei einem einzelnen Tier 0. */
+export function encounterQuantityOf(campaign: Campaign, encounter: Encounter): number {
+  return isAnimalEncounter(encounter) ? (encounterAnimalRow(campaign, encounter).quantity ?? 0) : encounterTypeOfEncounter(encounter).quantity;
+}
+
+/** Was eine Tierbegegnung würfelt: der Wurf 2–12 und die Kampagne mit Tiertabelle; mit Begegnung oder, bei einem Ereignis, ohne. */
+export interface AnimalRoll {
+  readonly roll: number;
+  /** Die Kampagne mit Tiertabelle und neuer Begegnung bzw., bei einem Ereignis, mit dem Ereignis im Log. */
+  readonly campaign: Campaign;
+  readonly encounter: Encounter | undefined;
+  readonly event: EventResult | undefined;
+  /** Die Zeile, auf die der Wurf fiel. */
+  readonly row: AnimalRow;
+}
+
+const EMPTY_UPP: Upp = { str: 0, dex: 0, end: 0, int: 0, edu: 0, soc: 0 };
+
+/** Ein Tier der Begegnung als Charakter: ohne UPP, Fertigkeiten und Besitz; die Tierangriffe als Primär- und Sekundärwaffe. */
+function animalCharacter(id: CharacterId, name: string, at: AnimalRef, row: AnimalRow): Character {
+  const [first, second] = row.attacks!;
+  return {
+    id,
+    name,
+    background: `${animalName(row)} · Tier`,
+    equipment: '',
+    credits: 0,
+    note: '',
+    dead: false,
+    retired: false,
+    npc: true,
+    upp: EMPTY_UPP,
+    skills: [],
+    possessions: [],
+    primary: first!.with,
+    ...(second === undefined || second.with === first!.with ? {} : { secondary: second.with }),
+    wields: first!.with,
+    animal: at,
+  };
+}
+
+/**
+ * Würfelt eine Tierbegegnung im Gelände der Kampagne (SE 18–19): legt die Tiertabelle der Welt in
+ * diesem Gelände an, wenn es sie noch nicht gibt, und würfelt 2W6 auf sie (oder nimmt die gewählte
+ * Zeile). Ein Ereignis legt keine Begegnung an. Sonst die Anzahl mit dem Würfel der Anzahl, die
+ * Entfernung mit dem DM des Geländes, je 2W6 gegen A und F, bei einer Siren der Köder.
+ */
+export function rollAnimalEncounter(campaign: Campaign, random: Random, clock: Clock, chosen?: number, count?: number): AnimalRoll {
+  if (currentEncounter(campaign)) throw new DomainError('Es läuft schon eine Begegnung; erst sie beenden.');
+  const world = locationOf(campaign);
+  if (!world || campaign.location === undefined) throw new DomainError('Die Gruppe ist auf keiner Welt; erst auf der Sektorkarte den Aufenthaltsort wählen.');
+  if (campaign.terrain === undefined) throw new DomainError('Erst ein Gelände wählen: Tiere gibt es je Gelände.');
+  const ground = terrainOf(campaign.terrain);
+  if (!hasAnimals(ground)) throw new DomainError(`Im Gelände ${ground.name} gibt es keine Tiere.`);
+  if (chosen !== undefined && (!Number.isInteger(chosen) || chosen < 2 || chosen > 12)) throw new DomainError(`Eine Tierzeile ${chosen} gibt es nicht; 2 bis 12.`);
+  const hex = withAnimalTable(world, ground.id, random);
+  const withTable: Campaign = hex === world ? campaign : { ...campaign, hexes: campaign.hexes.map((h) => (h === world ? hex : h)) };
+  const tableDice = chosen === undefined ? ([d6(random), d6(random)] as const) : undefined;
+  const roll = chosen ?? tableDice![0] + tableDice![1];
+  const at: AnimalRef = { in: campaign.location, terrain: ground.id, roll };
+  const row = animalRowOf(withTable.hexes, at);
+  if (row.event !== undefined) {
+    if (!tableDice) throw new DomainError('Ein Ereignis wählt man nicht; man würfelt es.');
+    const event: EventResult = { kind: 'event', at: clock.now(), in: campaign.location, terrain: ground.id, tableDice };
+    return { roll, campaign: { ...withTable, log: [...withTable.log, event] }, encounter: undefined, event, row };
+  }
+  if (count !== undefined && (!Number.isInteger(count) || count < 1)) throw new DomainError('Eine Begegnung hat mindestens ein Tier.');
+  const quantityDie = quantityDieOf(campaign);
+  const size = count ?? (row.quantity === undefined ? 1 : Math.max(1, d6(random, row.quantity, quantityDie)));
+  const first = nextNumber([...campaign.characters.map((c) => c.id), ...campaign.encounters.flatMap((e) => e.npcs.map((n) => n.id))], 'n');
+  const name = animalName(row);
+  const npcs = Array.from({ length: size }, (_, i) => animalCharacter(`n${first + i}`, size === 1 ? name : `${name} ${i + 1}`, at, row));
+  const rangeDice = [d6(random), d6(random)] as const;
+  const attackDice = [d6(random), d6(random)] as const;
+  const fleeDice = [d6(random), d6(random)] as const;
+  const lure = animalTypeOf(row.type!).special === 'lure';
+  const lureDice = lure ? ([d6(random), d6(random)] as const) : undefined;
+  // Wirkt der Köder einer Siren auch auf Menschen (11+), beginnt die Begegnung in Berührung (SR 48).
+  const start = lureDice && lureDice[0] + lureDice[1] >= LURE_TARGET ? { band: 0, close: true } : startBand(encounterRange(rangeDice, ground.dm), random);
+  const encounter: Encounter = {
+    id: `e${nextNumber(
+      campaign.encounters.map((e) => e.id),
+      'e',
+    )}`,
+    at: clock.now(),
+    quantityDie,
+    animal: roll,
+    ...(tableDice ? { tableDice } : {}),
+    in: campaign.location,
+    attackDice,
+    fleeDice,
+    ...(lureDice ? { lureDice } : {}),
+    ended: false,
+    npcs,
+    rangeDice,
+    startBand: start.band,
+    startClose: start.close,
+    ...('bandDie' in start && start.bandDie !== undefined ? { bandDie: start.bandDie } : {}),
+    terrain: ground.id,
+    round: 1,
+    acted: [],
+  };
+  return { roll, campaign: { ...withTable, encounters: [...withTable.encounters, encounter] }, encounter, event: undefined, row };
+}
+
+/** Der Köder einer Siren wirkt bei 11+ auch auf Menschen (SR 48). */
+export const LURE_TARGET = 11;
+
+/** Was die Tiere nach A und F tun; fehlt, wenn ein Wort statt einer Zahl entscheidet. */
+export type Behavior = 'attacks' | 'flees' | 'nothing';
+
+/** Ein Wurf gegen A oder F: die Würfel und der nötige Wurf, oder das Wort der Tierart. */
+export interface BehaviorCheck {
+  readonly dice: readonly [number, number];
+  readonly need: number | undefined;
+  readonly word: string | undefined;
+}
+
+export interface BehaviorView {
+  readonly attack: BehaviorCheck;
+  readonly flee: BehaviorCheck;
+  readonly fleesFirst: boolean;
+  readonly behavior: Behavior | undefined;
+}
+
+/**
+ * `/behavior` (SE 19): Fleischfresser und die meisten prüfen erst den Angriff, Pflanzenfresser erst
+ * die Flucht; der erste Wurf, der seinen Wert erreicht, entscheidet, sonst tun sie nichts. Steht ein
+ * Wort statt einer Zahl, entscheidet man selbst: Das Verhalten fehlt.
+ */
+export function behaviorOf(campaign: Campaign, encounter: Encounter): BehaviorView | undefined {
+  if (!isAnimalEncounter(encounter) || !encounter.attackDice || !encounter.fleeDice) return undefined;
+  const row = encounterAnimalRow(campaign, encounter);
+  const type = animalTypeOf(row.type!);
+  const word = (text: string) => (/^1D/.test(text) ? undefined : text);
+  const attack: BehaviorCheck = { dice: encounter.attackDice, need: word(type.attack) ? undefined : row.attack, word: word(type.attack) };
+  const flee: BehaviorCheck = { dice: encounter.fleeDice, need: word(type.flee) ? undefined : row.flee, word: word(type.flee) };
+  const order: readonly (readonly [BehaviorCheck, Behavior])[] = type.fleesFirst ? [[flee, 'flees'], [attack, 'attacks']] : [[attack, 'attacks'], [flee, 'flees']];
+  let behavior: Behavior | undefined = 'nothing';
+  for (const [check, result] of order) {
+    if (check.word !== undefined) {
+      behavior = undefined;
+      break;
+    }
+    if (check.dice[0] + check.dice[1] >= check.need!) {
+      behavior = result;
+      break;
+    }
+  }
+  return { attack, flee, fleesFirst: type.fleesFirst, behavior };
 }
 
 /** Die Entfernung nach den Encounter Ranges (S. 5): 2W6 plus DM des Geländes, auf 1 bis 12 begrenzt. */
@@ -456,8 +648,10 @@ export function pcSurpriseParts(campaign: Campaign): readonly SurpriseDmPart[] {
 
 /** Die DMs der NSC auf die Überraschung: Battle Dress +2, Anführer +1, militärische Art +1, Fahrzeug −1, 8 oder mehr −1. */
 export function npcSurpriseParts(encounter: Encounter): readonly SurpriseDmPart[] {
-  const type = encounterTypeOfEncounter(encounter);
   const npcs = encounter.npcs;
+  // Tiere haben nur den DM für die Gruppengröße.
+  if (isAnimalEncounter(encounter)) return partsWith([[npcs.length >= 8, '8 oder mehr', -1]]);
+  const type = encounterTypeOfEncounter(encounter);
   return partsWith([
     [npcs.some((n) => n.wears === BATTLE_DRESS), 'Battle Dress', 2],
     [encounter.leader !== undefined, 'Anführer', 1],

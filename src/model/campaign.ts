@@ -1,3 +1,4 @@
+import type { AnimalRef } from './animals';
 import type { Career } from './career';
 import { DomainError } from './errors';
 import type { Generation } from './generation';
@@ -62,6 +63,8 @@ export interface Character {
   readonly wears?: string;
   /** Ein dauerhafter NSC, kein SC: nicht in der Leiste oben, nicht im Shop. */
   readonly npc: boolean;
+  /** Ein Tier einer Begegnung: Verweis auf seine Zeile der Tiertabelle. Es kämpft mit deren Werten statt mit UPP und Besitz. */
+  readonly animal?: AnimalRef;
 }
 
 export type CampaignId = string;
@@ -92,6 +95,8 @@ export interface Campaign {
   readonly encounters: readonly Encounter[];
   /** Der Würfel der Anzahl für kommende Begegnungen: 3, 4 oder 6; fehlt er, W6 nach den Regeln. */
   readonly quantityDie?: QuantityDie;
+  /** Das Gelände für alle Begegnungsarten; fehlt es, ±0 und keine Tiere. */
+  readonly terrain?: string;
 }
 
 /** Was man beim Anlegen und Bearbeiten eines Charakters eingibt. */

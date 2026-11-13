@@ -4,7 +4,9 @@ import { replay, type Career, type CareerRoll } from './career';
 import { DomainError } from './errors';
 import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, type PathKind } from './card-roll';
 import { checkDamageRoll, checkVolley, ATTACK_TARGET } from './combat';
-import { ESCAPED_BAND, upgradeDistances, upgradeNpcs, type Encounter } from './encounter';
+import { encounterAnimalRow, ESCAPED_BAND, upgradeDistances, upgradeNpcs, type Encounter } from './encounter';
+import { animalRowOf, checkAnimalTable, eventRowOf, terrainOf } from './animals';
+import { animalTraits } from '../data';
 import { checkInterprets, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type CardPick, type DamageRoll, type LogEntry, type Recovery } from './log';
 import { checkRecovery } from './wounds';
 import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, ranges, ref, slotOfEntry, weaponOf } from './reference';
@@ -77,6 +79,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     dice: z.array(die).length(5).optional(),
   }),
   z.object({ kind: z.literal('rumor'), at, dice }),
+  z.object({ kind: z.literal('event'), at, in: z.string().min(1), terrain: z.string().min(1), tableDice: dice }),
   z.object({ kind: z.literal('patron'), at, list: z.union([z.literal(1), z.literal(2)]), dice, dms: z.tuple([z.number().int(), z.number().int()]) }),
   z.object({ kind: z.literal('note'), at, text: z.string().trim().min(1), interprets: z.number().int().optional() }),
 ]);
@@ -122,6 +125,31 @@ const HexSchema = z.union([
         life: z.boolean(),
       })
       .optional(),
+    animals: z
+      .array(
+        z.object({
+          terrain: z.string().min(1),
+          rows: z.array(
+            z.object({
+              roll: z.number().int().min(2).max(12),
+              event: z.string().optional(),
+              type: z.string().optional(),
+              quantity: z.number().int().min(1).max(5).optional(),
+              trait: z.enum(animalTraits).optional(),
+              traitSizeDm: z.number().int().optional(),
+              weight: z.number().int().min(1).optional(),
+              hits: z.tuple([z.number().int().min(0), z.number().int().min(0)]).optional(),
+              armor: z.enum(armorClasses).optional(),
+              armorDm: z.number().int().optional(),
+              attacks: z.array(z.object({ with: z.string().min(1), dm: z.number().int(), damage: z.number().int().min(1) })).min(1).max(2).optional(),
+              attack: z.number().int().min(0).optional(),
+              flee: z.number().int().min(0).optional(),
+              speed: z.number().int().min(0).optional(),
+            }),
+          ),
+        }),
+      )
+      .optional(),
   }),
   /** Aus der Zeit, als ein Hexfeld seine Würfe hielt; wird nachgespielt und als Werte übernommen. */
   z.object({
@@ -159,6 +187,7 @@ const CharacterSchema = z.object({
   wears: z.string().optional(),
   /** Fehlt in Dateien von vor den NSC: ein SC. */
   npc: z.boolean().default(false),
+  animal: z.object({ in: z.string().min(1), terrain: z.string().min(1), roll: z.number().int().min(2).max(12) }).optional(),
 });
 
 /** Ein NSC aus Dateien von vor 2026-11-08c; heute ist ein NSC der Begegnung ein Charakter. */
@@ -177,9 +206,14 @@ const EncounterSchema = z
   .object({
     id: z.string().min(1),
     at,
-    of: z.number().int(),
+    of: z.number().int().optional(),
+    animal: z.number().int().min(2).max(12).optional(),
+    tableDice: z.tuple([die, die]).optional(),
+    attackDice: z.tuple([die, die]).optional(),
+    fleeDice: z.tuple([die, die]).optional(),
+    lureDice: z.tuple([die, die]).optional(),
     in: z.string().optional(),
-    reaction: z.number().int().min(2).max(12),
+    reaction: z.number().int().min(2).max(12).optional(),
     reactionDice: z.tuple([die, die]).optional(),
     /** Fehlen bei Begegnungen von vor dem Würfel der Anzahl bzw. dem festgehaltenen DM. */
     reactionDm: z.number().int().optional(),
@@ -219,6 +253,8 @@ const EncounterSchema = z
     npcRuns: z.number().int().min(0).optional(),
     alarm: z.number().int().min(1).optional(),
   })
+  .refine((e) => (e.of === undefined) !== (e.animal === undefined), 'Eine Begegnung hat eine Art oder eine Tierzeile.')
+  .refine((e) => e.animal !== undefined || e.reaction !== undefined, 'Eine Begegnung mit Personen hat eine Reaktion.')
   .refine((e) => !e.startClose || e.startBand === 0, 'In Berührung beginnt eine Begegnung nur auf Band 0.')
   .refine((e) => (e.distances ?? []).every((d) => !d.close || d.band === 0), 'In Berührung ist ein SC nur auf Band 0.');
 
@@ -240,6 +276,8 @@ const CampaignFileSchema = z.object({
     encounters: z.array(EncounterSchema).default([]),
     /** Fehlt in Dateien von vor dem Würfel der Anzahl: W6. */
     quantityDie: z.union([z.literal(3), z.literal(4), z.literal(6)]).optional(),
+    /** Das Gelände für alle Begegnungsarten; fehlt in Dateien von vorher. */
+    terrain: z.string().optional(),
     bookings: z
       .array(
         z.object({
@@ -260,8 +298,8 @@ const CampaignFileSchema = z.object({
 
 /** Die Kampagne als Inhalt einer Kampagnendatei. */
 export function toCampaignFile(campaign: Campaign): string {
-  const { name, odds, characters, log, generation, hexes, focus, location, bookings, encounters, quantityDie } = campaign;
-  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { name, odds, characters, log, generation, hexes, focus, location, bookings, encounters, quantityDie } }, null, 2);
+  const { name, odds, characters, log, generation, hexes, focus, location, bookings, encounters, quantityDie, terrain } = campaign;
+  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { name, odds, characters, log, generation, hexes, focus, location, bookings, encounters, quantityDie, terrain } }, null, 2);
 }
 
 /** Ein Dateiname aus dem Namen der Kampagne und dem Tag, z. B. „Spinward-Run-2026-10-25.json“. */
@@ -305,6 +343,7 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
         (e) => ({ ...stripped(e), ...(e.distances ? { distances: e.distances.map((d) => stripped(d)) } : {}), npcs: e.npcs.map((n) => ('skill' in n ? stripped(n) : characterFromFile(n))) }) as unknown as Encounter,
       ),
       ...(file.quantityDie === undefined || file.quantityDie === 6 ? {} : { quantityDie: file.quantityDie }),
+      ...(file.terrain === undefined ? {} : { terrain: file.terrain }),
     };
     // Begegnungen von vor 2026-11-08d haben ein Band für alle; upgradeDistances macht das Startband daraus.
     const campaign = upgradeDistances(upgradeNpcs(read));
@@ -317,9 +356,10 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
 }
 
 /** Ein Charakter aus der Datei, ohne leere optionale Felder. */
-function characterFromFile({ career, homeworld, primary, secondary, wields, wears, ...c }: z.infer<typeof CharacterSchema>): Character {
+function characterFromFile({ career, homeworld, primary, secondary, wields, wears, animal, ...c }: z.infer<typeof CharacterSchema>): Character {
   return {
     ...c,
+    ...(animal ? { animal: { ...animal } } : {}),
     skills: c.skills.map((s) => ({ ...s })),
     possessions: c.possessions.map((p) => stripped(p) as Possession),
     ...(career ? { career: careerOf(career) } : {}),
@@ -344,7 +384,8 @@ function hexOf(hex: z.infer<typeof HexSchema>): Hex {
     const rolls = hex.rolls.map((r) => stripped(r) as LegacyWorldRoll);
     return hexFromRolls(hex.name === undefined ? { column: hex.column, row: hex.row, rolls } : { column: hex.column, row: hex.row, name: hex.name, rolls });
   }
-  return { ...stripped(hex), uwp: stripped(hex.uwp) } as Hex;
+  const { animals, ...rest } = hex;
+  return { ...stripped(rest), uwp: stripped(hex.uwp), ...(animals ? { animals: animals.map((t) => ({ terrain: t.terrain, rows: t.rows.map((r) => stripped({ ...r, ...(r.attacks ? { attacks: r.attacks.map((a) => ({ ...a })) } : {}) })) })) } : {}) } as Hex;
 }
 
 /** Ein Objekt ohne Felder, die `undefined` sind. */
@@ -376,6 +417,7 @@ function logEntry(entry: z.infer<typeof LogEntrySchema>): LogEntry {
     case 'dice':
     case 'patron':
     case 'rumor':
+    case 'event':
       return entry;
     case 'note': {
       const { interprets, ...rest } = entry;
@@ -393,6 +435,8 @@ function armsFromFile(primary: string | undefined, secondary: string | undefined
 /** Ein Charakter, SC oder NSC einer Begegnung: Werte, Waffen und Rüstung aus seinem Besitz, Lebenslauf abgeschlossen. */
 function validateRecord(character: Character): void {
   validateCharacter({ ...character, skills: character.skills });
+  // Ein Tier hat keinen Besitz; seine Waffen sind die Tierangriffe seiner Zeile.
+  if (character.animal !== undefined) return;
   for (const weapon of [character.primary, character.secondary, character.wields]) {
     if (weapon !== undefined && !character.possessions.some((p) => weaponOfItem(p.of) === weapon)) throw new DomainError(`${character.name} führt eine Waffe, die nicht im Besitz ist.`);
   }
@@ -425,6 +469,8 @@ function validate(campaign: Campaign): void {
   if (campaign.location !== undefined) worldOf(campaign.hexes, campaign.location);
   validateBookings(campaign);
   validateEncounters(campaign);
+  if (campaign.terrain !== undefined) terrainOf(campaign.terrain);
+  for (const hex of campaign.hexes) for (const table of hex.animals ?? []) checkAnimalTable(table);
   // Heimatwelten und Welten der Terms verweisen auf fertige Welten des Subsektors.
   const careers = [...campaign.characters.flatMap((c) => (c.career ? [c.career] : [])), ...(campaign.generation ? [campaign.generation.career] : [])];
   for (const id of [...campaign.characters.flatMap((c) => (c.homeworld === undefined ? [] : [c.homeworld])), ...careers.flatMap((c) => [...(c.homeworld === undefined ? [] : [c.homeworld]), ...(c.worlds ?? [])])]) {
@@ -441,6 +487,9 @@ function validate(campaign: Campaign): void {
       case 'dice':
       case 'patron':
       case 'rumor':
+        break;
+      case 'event':
+        if (eventRowOf(campaign.hexes, entry).event === undefined) throw new DomainError('Ein Ereignis-Eintrag verweist auf eine Zeile mit Tier.');
         break;
       case 'attack': {
         const weapon = weaponOf(entry.with);
@@ -497,7 +546,13 @@ function weaponOfItem(item: string): string | undefined {
 function validateEncounters(campaign: Campaign): void {
   if (campaign.encounters.filter((e) => !e.ended).length > 1) throw new DomainError('Es läuft mehr als eine Begegnung.');
   for (const encounter of campaign.encounters) {
-    if (!encounterTypeOf(encounter.of)) throw new DomainError(`Eine Begegnung ${encounter.of} gibt es nicht.`);
+    if (encounter.of !== undefined && !encounterTypeOf(encounter.of)) throw new DomainError(`Eine Begegnung ${encounter.of} gibt es nicht.`);
+    if (encounter.animal !== undefined) {
+      const row = encounterAnimalRow(campaign, encounter);
+      if (row.event !== undefined) throw new DomainError('Eine Tierbegegnung verweist auf ein Ereignis.');
+      for (const npc of encounter.npcs) if (npc.animal === undefined) throw new DomainError(`${npc.name} ist kein Tier, steht aber in einer Tierbegegnung.`);
+    }
+    for (const npc of encounter.npcs) if (npc.animal !== undefined) animalRowOf(campaign.hexes, npc.animal);
     if (encounter.terrain !== undefined && !ref.encounters.terrains.some((t) => t.id === encounter.terrain)) throw new DomainError(`Das Gelände ${encounter.terrain} gibt es nicht.`);
     if (encounter.in !== undefined && !hexById(campaign.hexes, encounter.in)) throw new DomainError(`Eine Begegnung verweist auf das Feld ${encounter.in}, das es nicht gibt.`);
     if (encounter.leader !== undefined && !encounter.npcs.some((n) => n.id === encounter.leader)) throw new DomainError(`Der Anführer ${encounter.leader} ist keiner der NSC seiner Begegnung.`);

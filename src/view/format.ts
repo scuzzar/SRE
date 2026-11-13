@@ -1,4 +1,4 @@
-import type { AttackItem, CardItem, DamageItem, DmPart, LogItem, PatronItem, RecoveryItem, RumorItem, TaskItem } from '../controller';
+import type { AttackItem, CardItem, DamageItem, DmPart, EventItem, LogItem, PatronItem, RecoveryItem, RumorItem, TaskItem } from '../controller';
 import type { ArmorClass, AttackKind, BookingKind, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
@@ -289,6 +289,8 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
       return { head: patronName(item), rest: patronDetail(item) };
     case 'rumor':
       return { head: rumorName(item), rest: rumorDetail(item) };
+    case 'event':
+      return { head: item.name, rest: eventDetail(item) };
     case 'note':
       return { head: item.interprets === undefined ? 'Notiz' : 'Deutung', rest: item.text };
   }
@@ -303,6 +305,11 @@ export function patronName(item: PatronItem): string {
 export function patronDetail(item: PatronItem): string {
   const dms = item.dms[0] === 0 && item.dms[1] === 0 ? '' : ` (DM ${signed(item.dms[0])}, ${signed(item.dms[1])})`;
   return `Liste ${item.list} · ${item.dice[0]} und ${item.dice[1]}${dms} → ${item.roll}`;
+}
+
+/** Ein Ereignis aus der Tiertabelle in Zahlen: „Clear · 6 und 4 → 10 · Animals“. */
+export function eventDetail(item: EventItem): string {
+  return `${item.terrain.split(',')[0]} · ${item.dice[0]} und ${item.dice[1]} → ${item.roll} · ${item.group}`;
 }
 
 /** Ein Gerücht mit seinem Buchstaben: „F · Information leading to trap“. */

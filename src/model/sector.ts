@@ -1,3 +1,4 @@
+import type { AnimalTable } from './animals';
 import { EHEX, uwpKinds, type DiceExpr, type SurfaceRow, type SystemContents, type Temperature, type TemperatureId, type TradeCode, type UwpDigit, type UwpKind } from '../data';
 import { DomainError } from './errors';
 import type { Random } from './ports';
@@ -62,6 +63,8 @@ export interface Hex {
   readonly surface?: Surface;
   /** Freier Text zu einer fertigen Welt; nie leer, lässt sich jederzeit ändern. */
   readonly note?: string;
+  /** Die Tiertabellen der Welt, je Gelände höchstens eine; entstehen beim ersten Tierwurf. */
+  readonly animals?: readonly AnimalTable[];
 }
 
 /** Woraus der DM eines Wurfs besteht, mit Namen: „Größe 7 +7“; ohne Namen der feste Teil der Formel (−7). */

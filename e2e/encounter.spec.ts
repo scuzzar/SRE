@@ -34,7 +34,7 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await expect(page.getByLabel('Die Gruppe ist auf')).toHaveValue('0405');
   await page.getByLabel('Die Gruppe ist auf').selectOption(worldId);
   await expect(page.getByLabel('Die Gruppe ist auf')).toHaveValue(worldId);
-  await page.getByLabel('Gelände (DM auf die Entfernung)').selectOption('city');
+  await page.getByLabel('Gelände', { exact: true }).selectOption('city');
   // Der Würfel der Anzahl: W3 statt W6, auch in der Liste der Arten.
   await page.getByLabel('Würfel der Anzahl').selectOption('3');
   await expect(page.getByLabel('Begegnung wählen')).toContainText('15 · 2W3 Thugs');
@@ -167,4 +167,30 @@ test('Patron und Gerücht: eigene Karten im Reiter Begegnung; erst der Test, bei
   await page.getByRole('navigation').getByRole('button', { name: 'Orakel' }).click();
   await expect(page.getByText(/Patron · Liste [12]/).first()).toBeVisible();
   await expect(page.locator('.kicker', { hasText: /^Gerücht$/ }).first()).toBeVisible();
+});
+
+test('Tiere: Gelände oben für alle Begegnungen; die Tiertabelle entsteht beim ersten Wurf, danach kann man die Zeile wählen', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
+  const animals = page.getByRole('region', { name: 'Tiere' });
+  await expect(animals).toContainText('Erst oben ein Gelände wählen');
+  await page.getByLabel('Gelände', { exact: true }).selectOption('city');
+  await expect(animals).toContainText('gibt es keine Tiere');
+  await page.getByLabel('Gelände', { exact: true }).selectOption('clear');
+  await expect(animals.getByLabel('Tiere wählen')).toBeDisabled();
+  // Würfeln, bis der Test besteht; dann gibt es die Tabelle (Tier mit Übersicht oder Ereignis).
+  for (let i = 0; i < 60 && !(await animals.getByLabel('Tiere wählen').isEnabled()); i++) {
+    await animals.getByRole('button', { name: 'Tiere würfeln' }).click();
+    const intro = page.getByRole('dialog');
+    if (await intro.isVisible()) {
+      await expect(intro).toContainText('Tiere · Clear');
+      await expect(intro).toContainText(/Hits \d+\/\d+/);
+      await intro.getByRole('button', { name: 'Weiter' }).click();
+      await animals.getByRole('button', { name: 'Beenden' }).click();
+    }
+  }
+  // Eine Zeile wählen: ohne Test eine Begegnung mit Übersicht.
+  const option = await animals.getByLabel('Tiere wählen').locator('option').nth(1).getAttribute('value');
+  await animals.getByLabel('Tiere wählen').selectOption(option!);
+  await expect(page.getByRole('dialog')).toContainText(`Wurf ${option}`);
 });

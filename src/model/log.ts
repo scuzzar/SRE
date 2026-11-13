@@ -10,7 +10,7 @@ import { roll2d6, sum, type Characteristic, type Dice } from './rules';
  * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei Probe und Angriff DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | Note;
+export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | Note;
 
 /** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
 export type LogResult = Exclude<LogEntry, Note>;
@@ -148,6 +148,17 @@ export interface PatronRoll extends LogEntryBase {
 export interface RumorRoll extends LogEntryBase {
   readonly kind: 'rumor';
   readonly dice: Dice;
+}
+
+/**
+ * Ein Tierwurf, der auf ein Ereignis fiel (SR 49–50). Im Code ist der Verweis auf die Zeile Welt
+ * (`in`), Gelände und die Summe der Würfel.
+ */
+export interface EventResult extends LogEntryBase {
+  readonly kind: 'event';
+  readonly in: string;
+  readonly terrain: string;
+  readonly tableDice: Dice;
 }
 
 /** Die körperlichen Attribute, die Wunden nehmen (S. 7). */

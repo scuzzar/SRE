@@ -70,6 +70,10 @@ import {
   rollDice,
   rollPatron,
   rollRumor,
+  rollAnimalEncounter,
+  setTerrain,
+  animalName,
+  animalEventOf,
   rollEncounterCheck,
   rollPatronList,
   patronOfRoll,
@@ -137,7 +141,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, patronNote: undefined, rumorNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, wearOffer: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, wearOffer: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
 
 /** Ein Test in Worten: „Test 3 (5+ nötig)“, bei zwei Würfeln „Test 3 + 4 = 7 (7+ nötig)“. */
 function checkText(check: EncounterCheck): string {
@@ -186,6 +190,7 @@ export class GameController {
       combatNote: undefined,
       patronNote: undefined,
       rumorNote: undefined,
+      animalNote: undefined,
       simTarget: undefined,
       simBurst: undefined,
       simWeakened: undefined,
@@ -572,6 +577,37 @@ export class GameController {
       if (!(error instanceof DomainError)) throw error;
       this.update({ combatNote: error.message });
     }
+  }
+
+  /**
+   * Tiere (SE 18–19, SR 47): erst der Test (5+ auf 1W6), dann 2W6 auf die Tiertabelle von Welt und
+   * Gelände; sie entsteht beim ersten Wurf. Ein Ereignis kommt in den Log, ein Tier wird eine
+   * Begegnung mit Übersicht. Wer die Zeile wählt, überspringt den Test.
+   */
+  rollAnimals(row?: number): void {
+    try {
+      const check = row === undefined ? rollEncounterCheck('animal', this.deps.random) : undefined;
+      if (check && !check.passed) {
+        this.update({ animalNote: `${checkText(check)}: keine Tiere.` });
+        return;
+      }
+      const rolled = rollAnimalEncounter(this.campaign, this.deps.random, this.deps.clock, row);
+      const prefix = check ? `${checkText(check)}, ` : '';
+      if (!rolled.encounter) {
+        this.change(rolled.campaign, { animalNote: `${prefix}Wurf ${rolled.roll}: Ereignis ${animalEventOf(rolled.row.event!).name}.` });
+        return;
+      }
+      const prepared = this.prepareTurn(rolled.campaign, undefined);
+      this.change(prepared.campaign, { attack: undefined, simTarget: prepared.simTarget, encounterIntro: true, animalNote: `${prefix}Wurf ${rolled.roll}: ${animalName(rolled.row)}.`, combatNote: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ animalNote: error.message });
+    }
+  }
+
+  /** Stellt das Gelände der Kampagne ein, für alle Begegnungsarten; leer heißt: ohne Gelände. */
+  setTerrain(terrain: string | undefined): void {
+    this.inFight(() => this.change(setTerrain(this.campaign, terrain), { combatNote: undefined, animalNote: undefined }));
   }
 
   /**
