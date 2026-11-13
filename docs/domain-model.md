@@ -159,6 +159,13 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Dazu, ohne Änderung am Bild: der **Test** vor jeder Begegnungsart und die Liste des Patrons per
 > Würfel.
 >
+> Ebenfalls am 13. November 2026 freigegeben: die **Beute** (Kennzeichen 2026-11-13; siehe *Beute*):
+> Überlebensausrüstung und Kredite der NSC, Beute nehmen, zerstörte Tiere, Ausweiden mit Fleisch und
+> Fell als Jagdbeute, Preise aus Marktwurf und DMs. Neu im Bild: der Logeintrag `Butchering`,
+> `EncounterType.credits`, `Terrain.huntDm`, `AnimalRow.market`, `edible`, `/furValue`, `/meatValue`,
+> `WoundState.destroyed`, `ItemKind.game` und `Possession.from`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-13-beute.png`](changes/2026-11-13-beute.png).
+>
 > Am 13. November 2026 freigegeben: die **Tiere** (Kennzeichen 2026-11-12c; siehe *Tiere*,
 > *Gelände*): Tiertabellen je Welt und Gelände, bei Bedarf erzeugt; die Tierbegegnung würfelt auf
 > ihnen und wird eine Begegnung mit Kampfsimulation, mit besonderen Angriffen, Geschwindigkeit und
@@ -265,13 +272,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-eine:
-
-- **2026-11-13, wartet auf Freigabe: Beute** (siehe *Beute*). Ausrüstung und Kredite der NSC,
-  Fleisch und Fell der Tiere. Neu im Bild: der Logeintrag `Butchering`, `EncounterType.credits`,
-  `Terrain.huntDm`, `AnimalRow.market`, `edible`, `/furValue`, `/meatValue`, `WoundState.destroyed`,
-  `ItemKind.game` und `Possession.from`. Der Ausschnitt dazu liegt unter
-  [`changes/2026-11-13-beute.png`](changes/2026-11-13-beute.png).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -974,7 +975,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     einen Kampf beginnt man, indem man die Zeile der Tiertabelle wählt.
   - *Später*: Gewicht ±20 %, zerstörte Tiere (doppelte Hits), Jagd und Fleisch, Psionik, die
     1W6-Aufteilung der Tabelle, eigene Tabellen und Ereignisse.
-- **Beute** (wartet auf Freigabe, 2026-11-13). Die Regeln geben nur Fleisch vor (SR 48); alles
+- **Beute.** Die Regeln geben nur Fleisch vor (SR 48); alles
   Übrige ist Hausregel nach Absprache mit dem Owner.
   - *Überlebensausrüstung der NSC* (Charts S. 21: „necessary survival equipment“): Beim Anlegen
     einer Begegnung mit Personen bekommt jeder NSC, was die Welt verlangt, als Gegenstand in seinen

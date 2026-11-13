@@ -88,7 +88,7 @@ hide <<value>> stereotype
     dice: number[2]
     dms: number[2]
   }
-  class Butchering $begegnung $newClass("2026-11-13") {
+  class Butchering $begegnung {
     meatDie: number [0..1]
     meatSkill: number
     furSkill: number
@@ -160,7 +160,7 @@ hide <<value>> stereotype
     typeDm: number [0..1]
     sizeDm: number [0..1]
     traits: string [0..1]
-    $new("2026-11-13", "huntDm: number [0..1]")
+    huntDm: number [0..1]
     /animals: boolean
   }
   class EncounterRange <<reference>> $begegnung {
@@ -176,7 +176,7 @@ hide <<value>> stereotype
     roll: number
     name: string
     quantity: number
-    $new("2026-11-13", "credits: number")
+    credits: number
     tl: number
     leader: boolean
     guns: boolean
@@ -204,10 +204,10 @@ hide <<value>> stereotype
     attack: number [0..1]
     flee: number [0..1]
     speed: number [0..1]
-    $new("2026-11-13", "market: number [0..1]")
-    $new("2026-11-13", "edible: boolean [0..1]")
-    $new("2026-11-13", "/furValue: number [0..1]")
-    $new("2026-11-13", "/meatValue: number [0..1]")
+    market: number [0..1]
+    edible: boolean [0..1]
+    /furValue: number [0..1]
+    /meatValue: number [0..1]
   }
   class AnimalAttack <<value>> $begegnung {
     dm: number
@@ -297,10 +297,10 @@ hide <<value>> stereotype
 LogEntry <|-- PatronRoll
 PatronRoll "*" --> "1" Patron : of
 LogEntry <|-- RumorRoll
-LogEntry <|-$newArrow("2026-11-13")- Butchering
-Butchering "*" -$newArrow("2026-11-13")-> "1" Character : of
-Butchering "*" -$newArrow("2026-11-13")-> "1" Character : for
-Possession "*" -$newArrow("2026-11-13")-> "0..1" AnimalRow : from
+LogEntry <|-- Butchering
+Butchering "*" --> "1" Character : of
+Butchering "*" --> "1" Character : for
+Possession "*" --> "0..1" AnimalRow : from
 RumorRoll "*" --> "1" Rumor : /of
 
 ' Probe
@@ -356,7 +356,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Terrain #line:d0021b;line.bold
-class EncounterType #line:d0021b;line.bold
-class AnimalRow #line:d0021b;line.bold
 @enduml
