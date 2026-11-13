@@ -3,7 +3,7 @@ import { anyCharacterOf, keepFocus, validateCharacter, validName, type Campaign,
 import { replay, type Career, type CareerRoll } from './career';
 import { DomainError } from './errors';
 import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, type PathKind } from './card-roll';
-import { checkDamageRoll, checkVolley, ATTACK_TARGET } from './combat';
+import { animalIds, checkDamageRoll, checkVolley, ATTACK_TARGET } from './combat';
 import { encounterAnimalRow, ESCAPED_BAND, upgradeDistances, upgradeNpcs, type Encounter } from './encounter';
 import { animalRowOf, checkAnimalTable, eventRowOf, terrainOf } from './animals';
 import { animalTraits } from '../data';
@@ -67,7 +67,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     volley: z.number().int().optional(),
     strike: z.enum(strikes).optional(),
   }),
-  z.object({ kind: z.literal('damage'), at, of: z.number().int(), dice: z.array(die).min(1).max(5), to: z.array(z.enum(physical)).max(7).optional(), points: z.array(die).max(7).optional(), alarmDice: z.tuple([die, die]).optional() }),
+  z.object({ kind: z.literal('damage'), at, of: z.number().int(), dice: z.array(die).max(5), fixed: z.number().int().min(1).optional(), to: z.array(z.enum(physical)).max(40).optional(), points: z.array(z.number().int().min(1)).max(40).optional(), alarmDice: z.tuple([die, die]).optional() }),
   z.object({
     kind: z.literal('recovery'),
     at,
@@ -248,7 +248,7 @@ const EncounterSchema = z
     round: z.number().int().min(1).default(1),
     acted: z.array(z.string()).default([]),
     pcMoved: z.number().int().min(0).max(2).optional(),
-    npcMoved: z.number().int().min(0).max(2).optional(),
+    npcMoved: z.number().int().min(0).max(6).optional(),
     pcRuns: z.number().int().min(0).optional(),
     npcRuns: z.number().int().min(0).optional(),
     alarm: z.number().int().min(1).optional(),
@@ -504,7 +504,7 @@ function validate(campaign: Campaign): void {
         break;
       }
       case 'damage':
-        checkDamageRoll(campaign.log, entry, index);
+        checkDamageRoll(campaign.log, entry, index, animalIds(campaign));
         break;
       case 'recovery':
         if (entry.for === undefined) throw new DomainError('Eine Heilung gilt einem Charakter.');

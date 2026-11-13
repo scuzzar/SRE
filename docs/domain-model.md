@@ -1661,9 +1661,19 @@ Diagramm mit diesen Ausnahmen:
 - **`Card → Campaign : in`, `Task → Campaign : in` und `Attack → Campaign : in`** sind im Code
   kein Feld. Der Controller hält höchstens eine offene Karte, höchstens eine Probe und höchstens
   einen Angriff, alle immer zur offenen Kampagne; beim Wechsel der Kampagne verfallen sie. Damit ist die Multiplizität erfüllt.
-- **Tiere (2026-11-12c)** sind freigegeben, aber noch nicht vollständig im Code. Was fehlt, steht
-  hier, bis es gebaut ist: Tiertabellen, Tierbegegnung, Tiere im Kampf, besondere Angriffe,
-  Ereignisse und `Campaign.terrain` (das Gelände gilt im Code noch nur für den nächsten Wurf).
+- **Tiere (2026-11-12c)** sind freigegeben und zum Teil gebaut: Tiertabellen, Tierbegegnung,
+  Gelände an der Kampagne und Tiere im Kampf. Noch nicht im Code: die besonderen Angriffe (Trapper,
+  Siren, Filter, `Distance.trapDice`, `held`, `struggles`) und Rettungswürfe bei Ereignissen
+  (`SaveRoll`, `DamageRoll.after`; `DamageRoll.of` ist im Code noch Pflicht).
+- **Verweise der Tiere** sind im Code Schlüssel statt Objektverweise: `Encounter.animal` ist der
+  Wurf 2–12 in der Tiertabelle der Welt `in` im Gelände `terrain`; `Character.animal` ist Welt,
+  Gelände und Wurf; `EventResult → AnimalRow : of` ist Welt, Gelände und die Summe von `tableDice`.
+  Tiertabellen werden nie neu erzeugt, also bleiben die Verweise gültig. `AnimalRow.event` und
+  `type` sind die Ids von Ereignis und Tierart.
+- **`AnimalType.speed`** hat im Code dazu `speedMin`: die Geschwindigkeit ist mindestens so hoch (SE
+  19, „mindestens 0/1/2“), was `DiceExpr` nicht ausdrückt.
+- **Tierwaffen** stehen in `src/data/weapons.json` wie jede Waffe, ohne Gegenstand im Shop; Fertigkeit
+  und Attribut (`required` 0, `advantageous` 99) wirken bei ihnen nie.
 - **`PatronRoll → Patron : of`** ist im Code die Liste (`list`, 1 oder 2); die Zeile der Liste folgt
   aus Würfeln und DMs (`patronOfRoll`). Damit ist der Verweis erfüllt, ohne den Wurf doppelt zu
   speichern. Die Listen stehen in `src/data/encounters.json` als `patrons`.

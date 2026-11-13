@@ -25,6 +25,8 @@ describe('Angriff vorbereiten', () => {
       weakened: 0,
       parry: 0,
       evade: 0,
+      natural: 0,
+      hide: 0,
       total: 5,
     });
     expect(odds).toMatchObject({ target: 8, need: 3 });
@@ -71,6 +73,8 @@ describe('Angriff vorbereiten', () => {
       weakened: 0,
       parry: 0,
       evade: 0,
+      natural: 0,
+      hide: 0,
       total: -2,
     });
     expect(rollAttack(chooseTarget(campaign, 'mesh', 'close'), campaign, fixedRandom(5, 5), fixedClock())[0]).not.toHaveProperty('uses');

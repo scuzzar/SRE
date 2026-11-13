@@ -1,6 +1,7 @@
 import { activeSkills, anyCharacterOf, characterOf, isCampaignCharacter, keepFocus, livingCharacters, type Campaign, type CharacterId, type Upp } from './campaign';
 import { DomainError } from './errors';
-import { physical, type AttackResult, type DamageRoll, type LogEntry, type PhysicalCharacteristic, type Recovery, type RecoveryKind } from './log';
+import { damageDiceOf, damageOf, physical, type AttackResult, type DamageRoll, type LogEntry, type PhysicalCharacteristic, type Recovery, type RecoveryKind } from './log';
+import { animalRowOf } from './animals';
 import type { Clock, Random } from './ports';
 import { currentEncounter, encounterStart } from './encounter';
 
@@ -38,7 +39,8 @@ export interface WoundBlock {
 /** Die Blöcke eines Schadenswurfs; einer von vor dem Überlauf hat keine Punkte: je Würfel ein Block. */
 export function blocksOf(roll: DamageRoll): readonly WoundBlock[] {
   if (roll.to === undefined) return [];
-  return roll.to.map((to, i) => ({ to, points: roll.points ? roll.points[i]! : roll.dice[i]! }));
+  const dice = damageDiceOf(roll);
+  return roll.to.map((to, i) => ({ to, points: roll.points ? roll.points[i]! : dice[i]! }));
 }
 
 /** Wendet Blöcke auf Wunden an; ein Attribut nimmt höchstens auf, was es bis 0 noch hat. */
@@ -165,7 +167,27 @@ export function woundState(upp: Upp, wounds: Wounds): WoundState {
 }
 
 export function woundStateOf(campaign: Campaign, who: CharacterId): WoundState {
+  const character = anyCharacterOf(campaign, who);
+  if (character.animal) return animalState(animalRowOf(campaign.hexes, character.animal).hits!, hurtOf(campaign, who));
   return woundState(uppOf(campaign, who), woundsOf(campaign, who));
+}
+
+/** `/hurt`: die Summe des Schadens, den ein Tier genommen hat (SR 47); Tiere haben keine Attribute. */
+export function hurtOf(campaign: Campaign, who: CharacterId): number {
+  const log = campaign.log;
+  return log.reduce((sum, e) => (e.kind === 'damage' && hits(log[e.of], who) ? sum + damageOf(e) : sum), 0);
+}
+
+/** Der Zustand eines Tiers nach seinen Hits: die erste Zahl erreicht bewusstlos, beide zusammen tot (SR 47). */
+export function animalState(hits: readonly [number, number], hurt: number): WoundState {
+  if (hurt >= hits[0] + hits[1]) return 'dead';
+  if (hurt >= hits[0]) return 'unconscious';
+  return hurt > 0 ? 'wounded' : 'unhurt';
+}
+
+/** Ist das ein Tier? */
+export function isAnimal(campaign: Campaign, who: CharacterId): boolean {
+  return anyCharacterOf(campaign, who).animal !== undefined;
 }
 
 /** Wer bewusstlos, schwer verwundet oder tot ist, greift nicht an. */
@@ -239,24 +261,29 @@ export function autoWounds(campaign: Campaign, who: CharacterId, dice: readonly 
  * (vor dem Überlauf) oder Blöcke, die der Reihe nach genau die Würfel ergeben, beim letzten
  * Würfel, der einen tötet, auch weniger.
  */
-export function checkWounds(log: readonly LogEntry[], roll: DamageRoll, attack: AttackResult): void {
+export function checkWounds(log: readonly LogEntry[], roll: DamageRoll, attack: AttackResult, animals?: ReadonlySet<CharacterId>): void {
   const who = victimOf(attack);
   if (!who) {
     if (roll.to !== undefined || roll.points !== undefined) throw new DomainError('Ein Treffer ohne Ziel verteilt keinen Schaden.');
     return;
   }
+  if (animals?.has(who)) {
+    if (roll.to !== undefined || roll.points !== undefined) throw new DomainError('Schaden an einem Tier geht nicht auf Attribute, er zählt gegen seine Hits.');
+    return;
+  }
   if (roll.to === undefined) throw new DomainError('Ein Schaden mit Ziel geht auf Attribute.');
   if (roll.to.some((c) => !physical.includes(c))) throw new DomainError('Wunden gehen nur auf STR, DEX und END.');
   if (roll.points === undefined) {
-    if (roll.to.length !== roll.dice.length) throw new DomainError('Ein Schaden mit Ziel geht je Würfel auf ein Attribut.');
+    if (roll.to.length !== damageDiceOf(roll).length) throw new DomainError('Ein Schaden mit Ziel geht je Würfel auf ein Attribut.');
     const earlier = log.slice(0, log.indexOf(roll) < 0 ? log.length : log.indexOf(roll));
     if (isFirstHit(earlier, who) && new Set(roll.to).size > 1) throw new DomainError('Der erste Treffer geht ganz auf ein Attribut.');
     return;
   }
   if (roll.points.length !== roll.to.length) throw new DomainError('Ein Schaden hat je Block ein Attribut und Punkte.');
-  if (roll.points.some((p) => !Number.isInteger(p) || p < 1 || p > 6)) throw new DomainError('Ein Block hat 1 bis 6 Punkte.');
+  const dice = damageDiceOf(roll);
+  if (roll.points.some((p) => !Number.isInteger(p) || p < 1 || p > Math.max(6, ...dice))) throw new DomainError('Ein Block hat mindestens einen Punkt und höchstens so viele wie sein Würfel.');
   let block = 0;
-  for (const d of roll.dice) {
+  for (const d of dice) {
     let rest = d;
     while (rest > 0 && block < roll.points.length) {
       const points = roll.points[block]!;
@@ -298,6 +325,8 @@ function medicalLevel(campaign: Campaign, id: CharacterId): number {
 
 /** Was für diesen Charakter an Heilung geht. */
 export function recoveryOptions(campaign: Campaign, who: CharacterId): RecoveryOptions {
+  // Tiere heilt man nicht.
+  if (isAnimal(campaign, who)) return { wake: false, rest: false, serious: false, treatable: false, healers: [] };
   const history = historyOf(campaign.log, uppOf(campaign, who), who);
   const state = woundStateOf(campaign, who);
   const hurt = history.wounds.str + history.wounds.dex + history.wounds.end > 0;

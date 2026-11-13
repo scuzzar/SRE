@@ -163,6 +163,9 @@ export interface AttackExtras {
   readonly parry: number;
   /** Das Ziel weicht aus: Der DM dazu hängt von der Reichweite ab. */
   readonly evading: boolean;
+  /** Der DM des Tierangriffs des Angreifers und der Tierrüstung des Ziels. */
+  readonly natural: number;
+  readonly hide: number;
 }
 
 /** Schlagart und Parade dieses Angriffs; ein NSC schwächt nie freiwillig. */
@@ -170,7 +173,7 @@ export function attackExtras(attack: Attack, campaign: Campaign): AttackExtras {
   const attacker = attackerOf(attack, campaign);
   const defender = defenderOf(attack, campaign);
   const strike = strikeOf(campaign, attacker.who, attacker.weapon, defender?.state, attack.weakened === true && sideOf(campaign, attacker.who) === 'pcs');
-  return { strike, weakened: strikeDm(attacker.weapon, strike), parry: parryDm(campaign, defender?.who, attacker.weapon), evading: evadesNow(campaign, defender?.who) };
+  return { strike, weakened: strikeDm(attacker.weapon, strike), parry: parryDm(campaign, defender?.who, attacker.weapon), evading: evadesNow(campaign, defender?.who), natural: attacker.natural, hide: defender?.hide ?? 0 };
 }
 
 /**
@@ -220,7 +223,7 @@ export function keepTarget(attack: Attack, campaign: Campaign): Attack {
 
 function odds(attacker: Fighter, armor: ArmorClass, range: Range, burst: boolean, extras?: AttackExtras): AttackOdds | undefined {
   // STR und DEX zählen ohne die Wunden aus dem laufenden Kampf (SR 21).
-  const extra = extras && { weakened: extras.weakened, parry: extras.parry, evade: extras.evading ? evadeDmAt(range) : 0 };
+  const extra = extras ? { weakened: extras.weakened, parry: extras.parry, evade: extras.evading ? evadeDmAt(range) : 0, natural: extras.natural, hide: extras.hide } : { natural: attacker.natural };
   const dm = attackDm({ upp: attacker.fighting, skill: attacker.skill }, attacker.weapon, armor, range, rowOf(attacker.weapon, burst), extra);
   if (!dm) return undefined;
   const need = ATTACK_TARGET - dm.total;

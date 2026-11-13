@@ -24,7 +24,7 @@ export interface Selection {
 }
 
 /** Übernehmen lässt sich jeder NSC, der noch lebt; Übernommene stehen nicht mehr in der Liste. */
-export const canAdopt = (f: FighterView) => f.side === 'npcs' && f.state !== 'dead';
+export const canAdopt = (f: FighterView) => f.side === 'npcs' && f.state !== 'dead' && f.animal === undefined;
 
 /** Bereits gezeichnete Pfeile eines Angriffs; jeder fliegt nur einmal. */
 const flown = new Set<string>();
@@ -149,15 +149,21 @@ function FighterCard({ fighter: f, selection, onHeal, impacts }: { fighter: Figh
           )}
         </span>
         <span className="fcard-stats mono">
-          {(['str', 'dex', 'end'] as const).map((k) => (
-            <span key={k} className={f.current[k] < f.upp[k] ? 'stat hurt' : 'stat'}>
-              {k.toUpperCase()} {hex(Math.max(0, f.current[k]))}
-              <LossFloat impacts={impacts} attr={k} />
+          {f.animal ? (
+            <span className={f.animal.hurt > 0 ? 'stat hurt' : 'stat'} title="Hits: bewusstlos ab der ersten Zahl, tot ab beiden zusammen">
+              Hits {f.animal.hits[0]}/{f.animal.hits[1]} · Schaden {f.animal.hurt} · S{f.animal.speed}
             </span>
-          ))}
+          ) : (
+            (['str', 'dex', 'end'] as const).map((k) => (
+              <span key={k} className={f.current[k] < f.upp[k] ? 'stat hurt' : 'stat'}>
+                {k.toUpperCase()} {hex(Math.max(0, f.current[k]))}
+                <LossFloat impacts={impacts} attr={k} />
+              </span>
+            ))
+          )}
         </span>
         <span className="fcard-gear">
-          {f.weapon}
+          {f.weapon}{f.animal ? ` (${f.skill})` : ''}
           {f.armor ? ` · ${f.armor}` : ''}
           {f.blows !== undefined ? ` · ${f.blows} ${f.blows === 1 ? 'Schlag' : 'Schläge'}` : ''}
         </span>

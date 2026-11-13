@@ -99,6 +99,9 @@ import {
   isEvading,
   evadeDmAt,
   encounterNameOf,
+  fixedDamageOf,
+  animalRowOf,
+  hurtOf,
   hasAnimals,
   animalTableOf,
   animalName,
@@ -402,7 +405,11 @@ export type DmPart =
   /** Die Parade des Ziels mit seiner Stufe (SR 22). */
   | { readonly kind: 'parry'; readonly dm: number }
   /** Das Ziel weicht aus: DM nach der Reichweite (SR 20). */
-  | { readonly kind: 'evade'; readonly dm: number };
+  | { readonly kind: 'evade'; readonly dm: number }
+  /** Der DM eines Tierangriffs („claws +1“, SE 18). */
+  | { readonly kind: 'natural'; readonly dm: number }
+  /** Die Tierrüstung des Ziels („combat +4“): DM für den Angreifer (SE 18). */
+  | { readonly kind: 'hide'; readonly dm: number };
 
 /** Feuerstoß, Schrot oder Einzelschuss einer Waffe, die einen Feuerstoß kann, mit dem, was er bringt. */
 export interface FireView {
@@ -472,6 +479,8 @@ export interface DamageItem {
   /** Wen der Schaden trifft, wenn der Treffer ein Ziel hatte. */
   readonly victim: string | undefined;
   readonly dice: readonly number[];
+  /** Der feste Schaden eines Tiers; dann gibt es keine Würfel. */
+  readonly fixed: number | undefined;
   /** Die Blöcke auf den Attributen der Reihe nach, wenn der Treffer ein Ziel hatte. */
   readonly blocks: readonly WoundBlock[] | undefined;
   readonly damage: number;
@@ -503,6 +512,8 @@ export interface FighterView {
   readonly armorClass: ArmorClass;
   readonly upp: Upp;
   readonly current: Upp;
+  /** Ein Tier: seine Hits, der Schaden, den es genommen hat, und seine Geschwindigkeit; statt STR, DEX und END. */
+  readonly animal: { readonly hits: readonly [number, number]; readonly hurt: number; readonly speed: number } | undefined;
   readonly state: WoundState;
   /** In dieser Runde schon dran gewesen. */
   readonly acted: boolean;
@@ -791,7 +802,7 @@ export interface CombatView {
   /** Das gewählte Ziel mit DM, nötigem Wurf und Chance; erst dann lässt sich angreifen. */
   readonly target: { readonly armor: ArmorClass; readonly range: Range; readonly dm: number; readonly need: number; readonly chance: number; readonly parts: readonly DmPart[] } | undefined;
   /** Der neueste Treffer ohne Schaden (bei einer Garbe der nächste): dafür lässt sich der Schaden würfeln, mit wen er trifft. */
-  readonly damage: { readonly index: number; readonly weapon: string; readonly wounds: number; readonly victim: string | undefined; readonly left: number } | undefined;
+  readonly damage: { readonly index: number; readonly weapon: string; readonly wounds: number; readonly victim: string | undefined; readonly left: number; readonly label: string } | undefined;
   /** Bei Schusswaffen: geladene Schuss, Größe des Magazins, wie viele Magazine (mit Namen) im Besitz sind. */
   readonly ammo: { readonly rounds: number; readonly capacity: number; readonly magazine: string; readonly magazines: number } | undefined;
   /** Kann der Angreifer angreifen (nicht bewusstlos, Ziel nicht tot, genug Schuss geladen)? */
@@ -1108,12 +1119,24 @@ function attackParts(
   range: Range,
   burst = true,
   neighbour = false,
-  extras: { readonly weakened: number; readonly parry: number; readonly evade?: number } = { weakened: 0, parry: 0 },
+  extras: { readonly weakened: number; readonly parry: number; readonly evade?: number; readonly hide?: number } = { weakened: 0, parry: 0 },
 ): DmPart[] {
   const weapon = weaponOf(weaponId);
   const row = rowOf(weapon, burst);
   const characteristic = attackCharacteristic(weapon);
   const value = valueOf(attacker.fighting, characteristic);
+  // Ein Tier greift ohne Fertigkeit und Attribut an, mit dem DM seines Tierangriffs.
+  const hide = extras.hide ?? 0;
+  if (attacker.animal) {
+    return [
+      { kind: 'natural', dm: attacker.natural },
+      { kind: 'armor', armor, dm: armorDm(row, armor) },
+      { kind: 'range', range, dm: rangeDm(row, range) ?? 0 },
+      ...(hide !== 0 ? [{ kind: 'hide' as const, dm: hide }] : []),
+      ...(extras.parry !== 0 ? [{ kind: 'parry' as const, dm: extras.parry }] : []),
+      ...(extras.evade ? [{ kind: 'evade' as const, dm: extras.evade }] : []),
+    ];
+  }
   return [
     { kind: 'skill', name: skillOf(weapon.uses).name, level: attacker.skill, dm: attacker.skill },
     { kind: 'armor', armor, dm: armorDm(row, armor) },
@@ -1123,6 +1146,7 @@ function attackParts(
     ...(extras.weakened !== 0 ? [{ kind: 'weakened' as const, dm: extras.weakened }] : []),
     ...(extras.parry !== 0 ? [{ kind: 'parry' as const, dm: extras.parry }] : []),
     ...(extras.evade ? [{ kind: 'evade' as const, dm: extras.evade }] : []),
+    ...(hide !== 0 ? [{ kind: 'hide' as const, dm: hide }] : []),
   ];
 }
 
@@ -1210,6 +1234,7 @@ function damageItem(campaign: Campaign, entry: DamageRoll): DamageItem {
     weapon: weaponName(hit.with),
     victim: victim && nameOf(campaign, victim),
     dice: entry.dice,
+    fixed: entry.fixed,
     blocks: entry.to === undefined ? undefined : blocksOf(entry),
     damage: damageOf(entry),
   };
@@ -1219,7 +1244,9 @@ function damageItem(campaign: Campaign, entry: DamageRoll): DamageItem {
 function damageView(campaign: Campaign, index: number, hit: AttackResult): NonNullable<CombatView['damage']> {
   const victim = victimOf(hit);
   const left = volleyOf(campaign.log, index).filter((i) => isSuccess(campaign.log[i] as AttackResult) && damageRollsOf(campaign.log, i).length === 0).length;
-  return { index, weapon: weaponName(hit.with), wounds: weaponOf(hit.with).wounds, victim: victim && nameOf(campaign, victim), left };
+  const fixed = fixedDamageOf(campaign, index);
+  const wounds = weaponOf(hit.with).wounds;
+  return { index, weapon: weaponName(hit.with), wounds, victim: victim && nameOf(campaign, victim), left, label: fixed === undefined ? `${wounds}W6` : `fest ${fixed}` };
 }
 
 function weaponLabel(character: Character, weaponId: string): WeaponChoice {
@@ -1336,6 +1363,11 @@ function animalsView(campaign: Campaign, note: string | undefined, log: readonly
   return { blocked, rows, note, lastEvent: log.findLast((item): item is EventItem => item.kind === 'event') };
 }
 
+/** Ein DM mit Vorzeichen: „+1“, „−2“, „±0“. */
+function signedText(n: number): string {
+  return n > 0 ? `+${n}` : n < 0 ? `−${-n}` : '±0';
+}
+
 const behaviorWords: Record<string, string> = {
   possible: 'Greift an, wenn es kann.',
   surprise: 'Greift an, wenn es Überraschung hat.',
@@ -1386,11 +1418,12 @@ function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, 
     name: fighter.name,
     leader: encounter.leader === slot.id,
     weapon: weaponName(fighter.weapon.id),
-    skill: `${skillOf(fighter.weapon.uses).name}-${fighter.skill}`,
-    armor: wears === undefined ? undefined : itemLabel(itemOf(wears)),
+    skill: fighter.animal ? `Tier ${signedText(fighter.natural)}` : `${skillOf(fighter.weapon.uses).name}-${fighter.skill}`,
+    armor: fighter.animal ? (fighter.armor === 'nothing' ? undefined : `${fighter.armor.charAt(0).toUpperCase()}${fighter.armor.slice(1)}${fighter.hide ? ` ${signedText(fighter.hide)}` : ''}`) : wears === undefined ? undefined : itemLabel(itemOf(wears)),
     armorClass: fighter.armor,
     upp: character.upp,
     current: fighter.upp,
+    animal: character.animal ? { hits: animalRowOf(campaign.hexes, character.animal).hits!, hurt: hurtOf(campaign, slot.id), speed: animalRowOf(campaign.hexes, character.animal).speed ?? 0 } : undefined,
     state: fighter.state,
     acted: encounter.acted.includes(slot.id),
     turn: turn?.id === slot.id,
@@ -1513,7 +1546,7 @@ function wielding(campaign: Campaign, id: string, weapon: string): Campaign {
 /** Die Waffen, mit denen der Kämpfer am Zug (SC oder NSC) angreifen kann: Primär und Sekundär, ohne zweite Waffe die Hände. */
 function slotsOf(character: Character): readonly { readonly weapon: string; readonly slot: AttackOption['slot'] }[] {
   const armed = armedWeaponsOf(character).filter((w) => w !== HANDS).slice(0, 2);
-  const weapons = armed.length < 2 ? [...armed, HANDS] : armed;
+  const weapons = armed.length < 2 && !character.animal ? [...armed, HANDS] : armed;
   return weapons.map((weapon) => ({ weapon, slot: weapon === HANDS ? 'hands' : weapon === character.primary ? 'primary' : 'secondary' }));
 }
 

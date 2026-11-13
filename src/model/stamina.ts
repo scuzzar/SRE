@@ -33,7 +33,9 @@ function encounterAttacks(campaign: Campaign, encounter: Encounter): readonly At
  */
 export function blowsOf(campaign: Campaign, who: CharacterId): number | undefined {
   const encounter = currentEncounter(campaign);
-  if (!encounter || anyCharacterOf(campaign, who).wears === BATTLE_DRESS) return undefined;
+  // Tiere und Battle Dress: unbegrenzte Ausdauer.
+  const character = anyCharacterOf(campaign, who);
+  if (!encounter || character.wears === BATTLE_DRESS || character.animal !== undefined) return undefined;
   const upp = uppOf(campaign, who);
   const start = historyOf(campaign.log, upp, who, encounterStart(campaign.log, encounter)).wounds;
   const used = encounterAttacks(campaign, encounter).filter((e) => e.strike === 'combat' && e.for === who).length;

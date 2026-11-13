@@ -349,7 +349,8 @@ export function withArms<T extends Arms>(character: T): T {
 
 /** Die Waffen, zwischen denen ein Charakter im Kampf wechselt: Primärwaffe, Sekundärwaffe und die Hände. */
 export function armedWeaponsOf(character: Character): readonly string[] {
-  return [...(character.primary === undefined ? [] : [character.primary]), ...(character.secondary === undefined ? [] : [character.secondary]), HANDS];
+  // Ein Tier kämpft nur mit seinen Tierangriffen, nicht mit Händen.
+  return [...(character.primary === undefined ? [] : [character.primary]), ...(character.secondary === undefined ? [] : [character.secondary]), ...(character.animal ? [] : [HANDS])];
 }
 
 /** Was ein Charakter tragen kann: die Gegenstände mit Rüstungsklasse aus seinem Besitz, in dessen Reihenfolge. */

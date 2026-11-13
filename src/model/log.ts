@@ -103,7 +103,10 @@ export type Strike = (typeof strikes)[number];
 export interface DamageRoll extends LogEntryBase {
   readonly kind: 'damage';
   readonly of: number;
+  /** Die Schadenswürfel; leer, wenn ein Tier traf: dann gilt `fixed`. */
   readonly dice: readonly number[];
+  /** Der feste Schaden eines Tiers je Treffer (SR 48); er geht als ein Block auf ein Attribut. */
+  readonly fixed?: number;
   /**
    * Bei einem Treffer mit Ziel: je Block das Attribut (SR 21). Ein Würfel ist ein Block; bringt er sein
    * Attribut auf 0, wird der Rest ein weiterer Block. Vor dem Überlauf: je Würfel das Attribut.
@@ -240,8 +243,14 @@ export function isSuccess(result: TaskResult | AttackResult): boolean {
   return sum(result.dice) + result.dm >= result.target;
 }
 
-/** `/damage`: die Summe der Schadenswürfel. */
+/** Die Würfel eines Schadens, wie sie verteilt werden: fester Schaden (Tier) zählt wie ein Würfel. */
+export function damageDiceOf(roll: DamageRoll): readonly number[] {
+  return roll.fixed === undefined ? roll.dice : [roll.fixed];
+}
+
+/** `/damage`: die Summe der Schadenswürfel, bei einem Tier der feste Schaden. */
 export function damageOf(roll: DamageRoll): number {
+  if (roll.fixed !== undefined) return roll.fixed;
   return roll.dice.reduce((total, d) => total + d, 0);
 }
 

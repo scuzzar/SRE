@@ -403,7 +403,7 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
           }}
         >
           <DiceIcon />
-          {combat.damage.victim ? `Schaden ${combat.damage.victim.split(' ')[0]}` : 'Schaden'} ({combat.damage.wounds}W6){combat.damage.left > 1 ? ` · noch ${combat.damage.left}` : ''}
+          {combat.damage.victim ? `Schaden ${combat.damage.victim.split(' ')[0]}` : 'Schaden'} ({combat.damage.label}){combat.damage.left > 1 ? ` · noch ${combat.damage.left}` : ''}
         </button>
       ) : turn ? (
         <>

@@ -609,7 +609,7 @@ App: ✔ ✱ (siehe `domain-model.md`, *Feuerstoß und Schrot*)
 ### Waffen- und Reichweitenmatrix
 
 *SE 6, „Weapons and Range Matrix“.* App: ✔ für die 23 Waffen (`src/data/weapons.json`, abgeglichen);
-Tierwaffen und Zubehör ○
+Tierwaffen ✔, Zubehör ○
 
 DM des Angreifers gegen die **Rüstung des Verteidigers** und nach **Reichweite**; „no“ heißt: auf diese
 Reichweite kein Angriff. Rechts der Schaden („Wound Inflicted“) in W6.
@@ -1524,7 +1524,7 @@ E = gleich groß, kein DM.
 
 ## Tierbegegnungen
 
-*SE 18–19, „Animal Encounters“; SR 46–49.* App: ○. Die Tierwaffen stehen schon in der
+*SE 18–19, „Animal Encounters“; SR 46–49.* App: ✔ Tiertabellen je Welt und Gelände, Tierbegegnung, Tiere im Kampf (Hits, fester Schaden, Tierrüstung, Geschwindigkeit; Regeln in `domain-model.md` unter *Tiere*); ○ besondere Angriffe (Filter, Trapper, Siren) und Rettungswürfe bei Ereignissen. Die Tierwaffen stehen schon in der
 [Waffenmatrix](#waffen--und-reichweitenmatrix). Wie oft Tiere begegnen, steht unter
 [Häufigkeit](#häufigkeit-von-begegnungen).
 

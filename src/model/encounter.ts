@@ -719,6 +719,7 @@ export function endEncounter(campaign: Campaign): Campaign {
  */
 export function adoptNpc(campaign: Campaign, id: string, asNpc: boolean): Campaign {
   const npc = npcOf(campaign, id);
+  if (npc.animal) throw new DomainError(`${npc.name} ist ein Tier; Tiere übernimmt man nicht.`);
   const encounter = encounterOfNpc(campaign, id);
   const rest = Object.fromEntries(Object.entries(encounter).filter(([key]) => key !== 'leader' || encounter.leader !== id)) as unknown as Encounter;
   const without: Encounter = { ...rest, npcs: encounter.npcs.filter((n) => n.id !== id) };

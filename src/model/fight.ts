@@ -1,7 +1,7 @@
 import { anyCharacterOf, armedWeaponsOf, isCampaignCharacter, livingCharacters, setWields, type Campaign, type CharacterId } from './campaign';
 import { ammoOf, reload } from './combat';
 import { DomainError } from './errors';
-import { currentEncounter, distanceOf, ESCAPED_BAND, isEscapedDistance, needsSurprise, steppedPosition, withDistance, type Encounter } from './encounter';
+import { currentEncounter, distanceOf, encounterAnimalRow, ESCAPED_BAND, isAnimalEncounter, isEscapedDistance, needsSurprise, steppedPosition, withDistance, type Encounter } from './encounter';
 import { canFight, woundStateOf } from './wounds';
 
 /** Die beiden Parteien eines Kampfs: die SC und die NSC der Begegnung. */
@@ -196,9 +196,16 @@ export function movedOf(campaign: Campaign, slot: FightSlot): number {
   return encounter ? movedIn(fightState(campaign, encounter), slot) : 0;
 }
 
-/** Ist dieser Kämpfer in dieser Runde gelaufen (der SC selbst, beim NSC seine Gruppe)? Dann greift er nicht an. */
+/** Ist dieser Kämpfer in dieser Runde gelaufen (der SC selbst, beim NSC seine Gruppe)? Dann greift er nicht an. Tiere laufen nicht. */
 export function hasRun(campaign: Campaign, slot: FightSlot): boolean {
+  if (slot.side === 'npcs' && animalSpeedOf(campaign) !== undefined) return false;
   return movedOf(campaign, slot) >= MAX_MOVE;
+}
+
+/** Die Geschwindigkeit der Tiere der laufenden Begegnung: so viele Bands je Runde (SR 47); fehlt ohne Tiere. */
+export function animalSpeedOf(campaign: Campaign): number | undefined {
+  const encounter = currentEncounter(campaign);
+  return encounter && isAnimalEncounter(encounter) ? (encounterAnimalRow(campaign, encounter).speed ?? 0) : undefined;
 }
 
 /**
@@ -215,6 +222,12 @@ export function moveState(campaign: Campaign): MoveState | undefined {
   const pc = turn.side === 'pcs' ? turn.id : undefined;
   const someoneActed = pc === undefined && fightOrder(campaign, encounter).some((s) => s.side === 'npcs' && encounter.acted.includes(s.id));
   const who = pc === undefined ? 'Die NSC sind' : `${anyCharacterOf(campaign, pc).name} ist`;
+  // Tiere gehen je Runde bis zu ihrer Geschwindigkeit S, ohne zu laufen (SR 47).
+  const speed = pc === undefined ? animalSpeedOf(campaign) : undefined;
+  if (speed !== undefined) {
+    const reason = speed === 0 ? 'Die Tiere sind unbeweglich (S0).' : moved >= speed ? `Die Tiere sind in dieser Runde schon ${speed} ${speed === 1 ? 'Band' : 'Bands'} gegangen (S${speed}).` : undefined;
+    return { side: turn.side, pc, moved, can: reason === undefined, reason, ran: false };
+  }
   const reason =
     moved >= MAX_MOVE
       ? `${who} in dieser Runde schon gelaufen (2 Bands).`
@@ -236,7 +249,7 @@ export function moveSide(campaign: Campaign, step: -1 | 1): Campaign {
   if (!state) throw new DomainError('Bewegen kann nur, wer am Zug ist.');
   if (!state.can) throw new DomainError(state.reason!);
   const encounter = fightState(campaign, currentEncounter(campaign)!);
-  const run = state.moved + 1 >= MAX_MOVE ? 1 : 0;
+  const run = state.pc === undefined && animalSpeedOf(campaign) !== undefined ? 0 : state.moved + 1 >= MAX_MOVE ? 1 : 0;
   let after: Encounter;
   if (state.pc !== undefined) {
     const distance = distanceOf(encounter, state.pc);

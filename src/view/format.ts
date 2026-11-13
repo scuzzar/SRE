@@ -226,6 +226,10 @@ export function partLabel(part: DmPart): string {
       return `Parade ${signed(part.dm)}`;
     case 'evade':
       return `weicht aus ${signed(part.dm)}`;
+    case 'natural':
+      return `Tierangriff ${signed(part.dm)}`;
+    case 'hide':
+      return `Tierrüstung ${signed(part.dm)}`;
   }
 }
 
@@ -265,6 +269,7 @@ export function rollTitle(item: TaskItem | AttackItem): string {
 /** Ein Schadenswurf: „3W6: 4 + 2 + 6 = 12“. */
 export function damageDetail(item: DamageItem): string {
   const to = item.blocks ? ` (${item.blocks.map((b) => `${b.to} ${b.points}`).join(', ')})` : '';
+  if (item.fixed !== undefined) return `fester Schaden ${item.fixed}${to}`;
   return `${item.dice.length}W6: ${item.dice.join(' + ')} = ${item.damage}${to}`;
 }
 

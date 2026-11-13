@@ -178,7 +178,7 @@ function AttackDock({ combat }: { combat: CombatView }) {
             }}
           >
             <DiceIcon />
-            {combat.damage.victim ? `Schaden ${combat.damage.victim.split(' ')[0]}` : 'Schaden würfeln'} ({combat.damage.wounds}W6)
+            {combat.damage.victim ? `Schaden ${combat.damage.victim.split(' ')[0]}` : 'Schaden würfeln'} ({combat.damage.label})
           </button>
         )}
         {combat.ammo && (combat.ammo.rounds < combat.ammo.capacity || combat.ammo.rounds === 0) && (
@@ -218,7 +218,7 @@ export function WoundingDialog({ combat }: { combat: CombatView }) {
   const [rolled, setRolled] = useState(false);
   const done = useCallback(() => setRolled(true), []);
   if (!rolled) {
-    const item = { kind: 'damage' as const, at: '', of: -1, weapon: w.weapon, victim: w.victim, dice: w.dice, blocks: undefined, damage: w.dice.reduce((a, b) => a + b, 0) };
+    const item = { kind: 'damage' as const, at: '', of: -1, weapon: w.weapon, victim: w.victim, dice: w.dice, fixed: undefined, blocks: undefined, damage: w.dice.reduce((a, b) => a + b, 0) };
     return <DiceRoll item={item} seed={w.dice.reduce((a, b) => a * 7 + b, 1)} onDone={done} />;
   }
   return <WoundingChoice combat={combat} />;
