@@ -265,7 +265,13 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+eine:
+
+- **2026-11-13, wartet auf Freigabe: Beute** (siehe *Beute*). Ausrüstung und Kredite der NSC,
+  Fleisch und Fell der Tiere. Neu im Bild: der Logeintrag `Butchering`, `EncounterType.credits`,
+  `Terrain.huntDm`, `AnimalRow.market`, `/furValue`, `/meatValue`, `WoundState.destroyed`,
+  `ItemKind.game` und `Possession.from`. Der Ausschnitt dazu liegt unter
+  [`changes/2026-11-13-beute.png`](changes/2026-11-13-beute.png).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -397,6 +403,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Test | (Regel, nicht gespeichert) | Der Wurf, ob es überhaupt zu einer Begegnung kommt (Encounter Checklist, SE Charts S. 20): Zufallsbegegnung täglich 5+ auf 1W6, Patron wöchentlich 5+ auf 1W6, Gerücht wöchentlich 7+ auf 2W6 |
 | Gerücht | `Rumor` | Eine Art von Gerücht nach der Rumor List (SE, Charts S. 21), Buchstabe A bis Z, z. B. „F · Information leading to trap“; A bis T sind bestimmte, U bis Z allgemeine Gerüchte |
 | Gerüchte-Wurf | `RumorRoll` | Ein Wurf auf die Rumors Matrix: zwei Würfel nacheinander |
+| Beute | (Aktion „Beute nehmen“, `Butchering`) | Was die SC nach einem Kampf bekommen: Ausrüstung und Kredite eines NSC, Fleisch und Fell eines Tiers |
+| Ausweiden | `Butchering` | Ein Tier nach dem Kampf zerlegen: Wurf auf essbar, Menge Fleisch, Fell |
+| Marktwurf | `AnimalRow.market` | 3W6 je Tierart, beim Erzeugen der Tiertabelle gewürfelt; daraus mit DMs Fell- und Fleischwert |
+| Jagd-DM | `Terrain.huntDm` | Wie schwer im Gelände zu jagen ist: offen ±0, mittel +1, schwer +2; erhöht Fell- und Fleischwert |
+| Jagdbeute | `ItemKind.game`, `Possession.from` | Fleisch oder Fell im Besitz eines SC, in kg, mit Verweis auf die Tierart, aus der es stammt |
+| Zerstört | `WoundState.destroyed` | Ein Tier, dessen Wunden das Doppelte seiner Hits erreichen: kein Fleisch, kein Fell |
 | Tiertabelle | `AnimalTable` | Die Begegnungstabelle der Tiere eines Geländes einer Welt (SE 18–19): elf Zeilen, 2 bis 12 |
 | Zeile der Tiertabelle | `AnimalRow` | Ein Tier mit allen Werten, z. B. „6 Chasers, 25 kg, 6/11, jack, 9 teeth+1, A0 F5 S2“, oder ein Ereignis |
 | Tierart | `AnimalType` | Grazer, Chaser, Pouncer, Hijacker …; gehört zu einer Kategorie |
@@ -961,6 +973,52 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     einen Kampf beginnt man, indem man die Zeile der Tiertabelle wählt.
   - *Später*: Gewicht ±20 %, zerstörte Tiere (doppelte Hits), Jagd und Fleisch, Psionik, die
     1W6-Aufteilung der Tabelle, eigene Tabellen und Ereignisse.
+- **Beute** (wartet auf Freigabe, 2026-11-13). Die Regeln geben nur Fleisch vor (SR 48); alles
+  Übrige ist Hausregel nach Absprache mit dem Owner.
+  - *Überlebensausrüstung der NSC* (Charts S. 21: „necessary survival equipment“): Beim Anlegen
+    einer Begegnung mit Personen bekommt jeder NSC, was die Welt verlangt, als Gegenstand in seinen
+    Besitz: bei Atmosphäre 0, 1, B oder C einen Vacc Suit (der beste bis zum TL der Gruppe), bei 2 und
+    3 ein Atemgerät (Respirator), bei 2, 4, 7 und 9 eine Filtermaske (bei 2 beides), bei A
+    Sauerstoffflaschen. Sonst nichts.
+  - *Kredite der NSC* (Hausregel): Beim Anlegen bekommt jeder NSC 1W6 × `EncounterType.credits`
+    Cr (`Character.credits`), der Anführer das Zehnfache. Die Stufen: Arm 1 (Peasants, Workers,
+    Riotous Mob, Beggars, Pilgrims, Fugitives), Wenig 10 (Rowdies, Thugs, Religious Group,
+    Vigilantes), Sold 20 (Soldiers, Soldiers on Patrol, Marines, Security Troops, Police Patrol,
+    Guards), Beute 50 (Bandits, Ambushing Brigands, Hunters and Guides), Reisende 100 (Adventurers,
+    Tourists, Researchers, Traders), Reich 200 (Merchants, Noble with Retinue).
+  - *Beute nehmen*: Einem NSC, der tot, bewusstlos oder schwer verwundet ist, nimmt man Gegenstände
+    und Kredite ab: Sie wandern aus seinem Besitz in den eines gewählten lebenden SC (Kredite zu
+    dessen `credits`). Eine Waffe, die so weggeht, entfällt beim NSC als Primär- oder
+    Sekundärwaffe. Das geht während und nach der Begegnung; ein Logeintrag entsteht nicht.
+  - *Zerstört* (SR 47): Erreicht der Schaden eines Tiers das Doppelte seiner Hits (beide Zahlen
+    zusammen), ist es zerstört (`destroyed`): tot, ohne Fleisch und Fell.
+  - *Ausweiden* (`Butchering`): Ein Tier, das tot oder bewusstlos ist und nicht zerstört, kann man
+    einmal ausweiden; die Beute geht an einen gewählten lebenden SC (`for`).
+    - *Essbar* (SR 48): 2W6 (`dice`) ≥ 5, DM −3 bei verdorbener Atmosphäre (2, 4, 7, 9); nur bei
+      Atmosphäre 2 bis 9 und ohne Giftwaffe (Hausregel: der Stinger ist eine Giftwaffe). `/edible`.
+    - *Fleisch*: Ist es essbar, 1W6 (`meatDie`) × 5 % seines Gewichts, abgerundet, mindestens 1 kg
+      (`/meat`). Ein Mensch braucht 1 kg am Tag.
+    - *Fell* (Hausregel): jedes kg Tier gibt 1 kg Fell (`/fur`), nur bei Tieren ohne Rüstung oder
+      mit Jack; sonst 0.
+    - Fleisch und Fell kommen als Jagdbeute in den Besitz des SC: die Gegenstände Fleisch bzw. Fell
+      (Art `game`), Anzahl in kg, mit Verweis auf die Zeile der Tiertabelle (`Possession.from`).
+      Jagdbeute derselben Tierart zählt zusammen.
+  - *Preise* (Hausregel): Beim Erzeugen der Tiertabelle bekommt jede Tierzeile einen Marktwurf
+    (`market`, 3W6). Daraus:
+    - `/furValue` = Marktwurf + Jagd-DM des Geländes der Tabelle + Gefahr-DM (Herbivore ±0,
+      Omnivore und Scavenger +1, Carnivore +3) + Seltenheit; Preis Fell = Fellwert × 0,1 Cr je kg.
+    - `/meatValue` = Marktwurf + Jagd-DM + Seltenheit; Preis Fleisch = Fleischwert × 0,5 Cr je kg.
+    - *Jagd-DM* (`Terrain.huntDm`, das Gelände, in dem gejagt wurde, nicht wo man verkauft): schwer
+      +2 (Mountain, Chasm, Cave, Sea Cave, Depths, Sea Bottom, Jungle, Swamp), mittel +1 (Rough,
+      Broken, Forest, Marsh, Crater, Ruins, Sargasso, Desert), offen ±0 (Clear, Prairie, River,
+      Beach, Shallows, Maritime Surface).
+    - *Seltenheit*: nach der Zeile der Tiertabelle, Zeile 2 oder 12 +3, 3 oder 11 +2, 4 oder 10 +1,
+      sonst ±0.
+    - Verkauft wird Jagdbeute im Shop wie alles zum halben Preis, abgerundet, mindestens 1 Cr je kg.
+      Rechenbeispiel über 4000 Tabellen: typisch rund 90 Cr Fell und 80 Cr Fleisch je Begegnung
+      (Listenpreis), große Herden mehrere tausend; wie viel die Gruppe mitnehmen kann, entscheidet
+      man selbst.
+  - *Tierbeute in älteren Tabellen*: Zeilen ohne Marktwurf bekommen ihn beim ersten Ausweiden.
 - **Gerücht.** Eine weitere Begegnungsart im Reiter Begegnung.
   Nach dem Test (7+ auf 2W6) zwei Würfel nacheinander (`RumorRoll.dice`), der erste die Zehner-, der
   zweite die Einerstelle; die Rumors Matrix (SE, Charts S. 21) führt von 11 bis 66 auf eine Art von

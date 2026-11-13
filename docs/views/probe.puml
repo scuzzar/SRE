@@ -95,6 +95,7 @@ hide <<value>> stereotype
     text: string
   }
   class PatronRoll $begegnung
+  class Butchering $begegnung $newClass("2026-11-13")
   class RumorRoll $begegnung
   class EventResult $begegnung
   class SaveRoll $begegnung
@@ -149,6 +150,7 @@ LogEntry <|-- Recovery
 LogEntry <|-- Note
 LogEntry <|-- PatronRoll
 LogEntry <|-- RumorRoll
+LogEntry <|-$newArrow("2026-11-13")- Butchering
 Note "*" --> "0..1" LogEntry : interprets
 TaskResult "*" --> "1" Character : for
 TaskResult "*" --> "0..1" SkillLevel : uses

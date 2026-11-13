@@ -209,6 +209,13 @@ hide <<value>> stereotype
     dice: number[2]
     dms: number[2]
   }
+  class Butchering $begegnung $newClass("2026-11-13") {
+    dice: number[2]
+    meatDie: number [0..1]
+    /edible: boolean
+    /meat: number
+    /fur: number
+  }
   class RumorRoll $begegnung {
     dice: number[2]
   }
@@ -369,6 +376,7 @@ hide <<value>> stereotype
     typeDm: number [0..1]
     sizeDm: number [0..1]
     traits: string [0..1]
+    $new("2026-11-13", "huntDm: number [0..1]")
     /animals: boolean
   }
   class EncounterRange <<reference>> $begegnung {
@@ -391,11 +399,13 @@ hide <<value>> stereotype
     unconscious
     serious
     dead
+    $new("2026-11-13", "destroyed")
   }
   class EncounterType <<reference>> $begegnung {
     roll: number
     name: string
     quantity: number
+    $new("2026-11-13", "credits: number")
     tl: number
     leader: boolean
     guns: boolean
@@ -423,6 +433,9 @@ hide <<value>> stereotype
     attack: number [0..1]
     flee: number [0..1]
     speed: number [0..1]
+    $new("2026-11-13", "market: number [0..1]")
+    $new("2026-11-13", "/furValue: number [0..1]")
+    $new("2026-11-13", "/meatValue: number [0..1]")
   }
   class AnimalAttack <<value>> $begegnung {
     dm: number
@@ -607,6 +620,7 @@ hide <<value>> stereotype
     ship
     passage
     membership
+    $new("2026-11-13", "game")
   }
   class Cascade <<reference>> $erschaffung {
     name: string
@@ -850,6 +864,10 @@ LogEntry <|-- Note
 LogEntry <|-- PatronRoll
 PatronRoll "*" --> "1" Patron : of
 LogEntry <|-- RumorRoll
+LogEntry <|-$newArrow("2026-11-13")- Butchering
+Butchering "*" -$newArrow("2026-11-13")-> "1" Character : of
+Butchering "*" -$newArrow("2026-11-13")-> "1" Character : for
+Possession "*" -$newArrow("2026-11-13")-> "0..1" AnimalRow : from
 RumorRoll "*" --> "1" Rumor : /of
 Note "*" --> "0..1" LogEntry : interprets
 CardPick "1" *-- "*" PickedItem : items {ordered}

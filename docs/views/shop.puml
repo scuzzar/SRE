@@ -103,6 +103,7 @@ hide <<value>> stereotype
 ' Verlauf
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class AnimalRow $begegnung
 
 ' Referenzdaten
   class Skill <<reference>> $charakter
@@ -126,6 +127,7 @@ hide <<value>> stereotype
     ship
     passage
     membership
+    $new("2026-11-13", "game")
   }
 
 ' Kampagne
@@ -155,6 +157,7 @@ Weapon "*" --> "0..1" Item : ammo
 Hex "*" --> "*" Item : /offer
 
 ' Verlauf
+Possession "*" -$newArrow("2026-11-13")-> "0..1" AnimalRow : from
 
 ' Probe
 
@@ -172,4 +175,6 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class AnimalRow #line:d0021b;line.bold
+class ItemKind #line:d0021b;line.bold
 @enduml
