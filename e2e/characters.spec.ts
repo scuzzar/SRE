@@ -49,10 +49,15 @@ test('Probe oben im Orakel: Fertigkeit, dann Attribute, Stufe unten, Ergebnis al
   await expect(dock(page).getByRole('button', { name: '2W6' })).toBeVisible();
 });
 
-test('Wischen stellt den nächsten Charakter nach oben; eine Probe ohne Fertigkeit ist unmöglich, aber würfelbar', async ({ page }) => {
+test('Wischen stellt den nächsten Charakter nach oben; eine Probe ohne Fertigkeit ist unmöglich, aber würfelbar', async ({ page }, testInfo) => {
   await page.goto('/');
   await top(page, 'Kira Vant').getByRole('button', { name: 'Pilot-2' }).click();
-  await page.locator('.strip-track').evaluate((el) => el.scrollTo({ left: el.scrollWidth }));
+  if (testInfo.project.name === 'desktop') {
+    // Auf dem Desktop stehen die Karten nebeneinander: der Punkt stellt den nächsten nach oben.
+    await strip(page).getByRole('button', { name: 'Jonas Reyl nach oben' }).click();
+  } else {
+    await page.locator('.strip-track').evaluate((el) => el.scrollTo({ left: el.scrollWidth }));
+  }
   const jonas = top(page, 'Jonas Reyl');
   await expect(jonas).toBeVisible();
   await expect(top(page, 'Kira Vant')).toHaveCount(0);

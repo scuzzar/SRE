@@ -45,3 +45,25 @@ test('Deuten über den Log links: das angetippte Ergebnis wird zum Ziel der Deut
   await page.getByRole('button', { name: 'Deuten' }).click();
   await expect(page.locator('.log-panel .entry', { hasText: 'Orakel' }).locator('.interpretation')).toContainText('Der Wurf ist gut.');
 });
+
+test('Die Sektor-Karte lässt sich mit dem Mausrad zoomen und mit der Maus verschieben', async ({ page }, testInfo) => {
+  onlyDesktop(testInfo);
+  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Sektor', exact: true }).click();
+  const map = page.locator('.sector-viewport');
+  const before = await map.evaluate((el) => el.scrollWidth);
+  await map.hover();
+  await page.mouse.wheel(0, -240);
+  await expect.poll(() => map.evaluate((el) => el.scrollWidth)).toBeGreaterThan(before);
+  // Verschieben: Maustaste halten und ziehen; dabei darf kein Feld ausgewählt werden.
+  const leftBefore = await map.evaluate((el) => el.scrollLeft);
+  const box = (await map.boundingBox())!;
+  await page.mouse.move(box.x + 100, box.y + 100);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 40, box.y + 80, { steps: 5 });
+  await page.mouse.up();
+  await expect.poll(() => map.evaluate((el) => el.scrollLeft)).toBeGreaterThan(leftBefore);
+  await expect(page.locator('.hex-selected')).toHaveCount(0);
+  // Die Auswahl funktioniert weiterhin, auch direkt nach dem Verschieben.
+  await map.getByRole('button', { name: '0101, nicht erzeugt' }).click();
+  await expect(page.locator('.sector-dock')).toContainText('Feld 0101');
+});
