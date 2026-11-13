@@ -50,7 +50,7 @@ function useDrag(): DragState {
 }
 
 /**
- * Ziehen zwischen den Anziehpuppen der Charakterkacheln und dem Gepäck, mit Maus und Finger gleich:
+ * Ziehen zwischen den Ausrüstungsstellen der Charakterkacheln und dem Gepäck, mit Maus und Finger gleich:
  * Die Maus zieht nach ein paar Pixeln, der Finger nach kurzem Halten (wischt er gleich, scrollt die
  * Seite). Ein Schild mit dem Namen folgt dem Zeiger; passende Ziele leuchten. Losgelassen auf einer
  * passenden Stelle rüstet aus, auf dem Gepäck legt ab. Was erlaubt ist, entscheidet der Controller.
@@ -134,7 +134,7 @@ export function StashDrag({ children }: { children: ReactNode }) {
     <DragContext.Provider value={{ dragged, over, bind }}>
       {children}
       {dragged && ghost && (
-        <div className={accepts(dragged, over) ? 'drag-ghost ok' : 'drag-ghost'} style={{ left: ghost.x, top: ghost.y }} aria-hidden="true">
+        <div className={accepts(dragged, over) ? 'drag-ghost ok' : 'drag-ghost'} style={{ left: Math.min(Math.max(ghost.x, 90), window.innerWidth - 90), top: ghost.y }} aria-hidden="true">
           {dragged.label}
         </div>
       )}
@@ -142,8 +142,8 @@ export function StashDrag({ children }: { children: ReactNode }) {
   );
 }
 
-/** Eine Stelle der Anziehpuppe: Name der Stelle, was dort ist, ✕ zum Ablegen; zieht und nimmt auf. */
-function SlotBox({ member, name, slot }: { member: string; name: string; slot: EquipSlotView }) {
+/** Eine Stelle eines SC: Name der Stelle, was dort ist, ✕ zum Ablegen; lässt sich ziehen und nimmt auf. */
+function SlotRow({ member, name, slot }: { member: string; name: string; slot: EquipSlotView }) {
   const game = useGame();
   const { dragged, over, bind } = useDrag();
   const id = `${member}:${slot.slot}`;
@@ -151,21 +151,19 @@ function SlotBox({ member, name, slot }: { member: string; name: string; slot: E
   const fitsOf: readonly Slot[] = slot.slot === 'wears' ? ['wears'] : ['primary', 'secondary'];
   return (
     <div
-      className={['doll-slot', `doll-${slot.slot}`, slot.item ? 'filled' : 'empty', dragged ? (fits ? 'droppable' : 'blocked') : '', over === id && fits ? 'over' : ''].filter(Boolean).join(' ')}
+      className={['equip-slot', slot.item ? 'filled' : 'empty', dragged ? (fits ? 'droppable' : 'blocked') : '', over === id && fits ? 'over' : ''].filter(Boolean).join(' ')}
       aria-label={`${name}, ${slotNames[slot.slot]}: ${slot.label ?? 'leer'}`}
       data-drop={id}
       {...(slot.item && slot.label ? bind({ from: member, fromSlot: slot.slot, fits: fitsOf, label: slot.label }) : {})}
     >
-      <span className="doll-slot-name">{slotNames[slot.slot]}</span>
-      <span className="doll-slot-item">{slot.label ?? <span className="muted">{slot.slot === 'wears' ? 'keine' : 'Hände'}</span>}</span>
-      {(slot.inHand || slot.rounds) && (
-        <span className="doll-slot-meta">
-          {slot.inHand && <span className="doll-hand">in der Hand</span>}
-          {slot.rounds && <span className="mono">{slot.rounds}</span>}
-        </span>
-      )}
+      <span className="equip-slot-name">{slotNames[slot.slot]}</span>
+      <span className="equip-slot-item">
+        {slot.label ?? <span className="muted">{slot.slot === 'wears' ? 'keine' : 'Hände'}</span>}
+        {slot.inHand && <span className="equip-hand"> · in der Hand</span>}
+        {slot.rounds && <span className="mono stash-rounds"> {slot.rounds}</span>}
+      </span>
       {slot.item && (
-        <button type="button" className="icon-button doll-off" aria-label={`${slot.label} ablegen`} title="Ins Gepäck legen" onClick={() => game.unequip(member, slot.slot)}>
+        <button type="button" className="icon-button equip-off" aria-label={`${slot.label} ablegen`} title="Ins Gepäck legen" onClick={() => game.unequip(member, slot.slot)}>
           <CloseIcon />
         </button>
       )}
@@ -174,37 +172,22 @@ function SlotBox({ member, name, slot }: { member: string; name: string; slot: E
 }
 
 /**
- * Die Anziehpuppe eines SC in seiner Charakterkachel: eine schlichte Figur, in ihrer rechten Hand
- * (vom Betrachter links) die Primärwaffe, in der linken die Sekundärwaffe, am Körper die Rüstung. Die
- * Hand mit der Waffe, die er führt, leuchtet. Auf eine Stelle zieht man aus dem Gepäck oder von einem
- * anderen SC; ✕ legt ab.
+ * Die Ausrüstung eines SC in seiner Charakterkachel: Primärwaffe, Sekundärwaffe, Rüstung. Auf eine
+ * Stelle zieht man aus dem Gepäck oder von einem anderen SC; ✕ legt ab.
  */
 export function EquipSlots({ member, name, slots }: { member: string; name: string; slots: readonly EquipSlotView[] }) {
-  const at = (s: Slot) => slots.find((x) => x.slot === s)!;
-  const primary = at('primary');
-  const secondary = at('secondary');
-  const armor = at('wears');
   return (
-    <div className="doll" role="group" aria-label={`Ausrüstung von ${name}`}>
-      <SlotBox member={member} name={name} slot={primary} />
-      <div className="doll-figure">
-        <svg viewBox="0 0 100 150" aria-hidden="true">
-          <circle cx="50" cy="16" r="11" />
-          <path className={armor.item ? 'doll-body worn' : 'doll-body'} d="M34 34 h32 l4 8 v44 h-40 v-44 z" />
-          <path d="M34 38 L12 82 M66 38 L88 82 M40 86 L36 142 M60 86 L64 142" />
-          <circle className={primary.inHand ? 'doll-grip held' : 'doll-grip'} cx="12" cy="84" r="4" />
-          <circle className={secondary.inHand ? 'doll-grip held' : 'doll-grip'} cx="88" cy="84" r="4" />
-        </svg>
-        <SlotBox member={member} name={name} slot={armor} />
-      </div>
-      <SlotBox member={member} name={name} slot={secondary} />
+    <div className="equip-slots" role="group" aria-label={`Ausrüstung von ${name}`}>
+      {slots.map((slot) => (
+        <SlotRow key={slot.slot} member={member} name={name} slot={slot} />
+      ))}
     </div>
   );
 }
 
 /**
  * Das Gruppengepäck unter den Charakterkacheln: Last gegen Traglast als Balken, darunter, was drin
- * ist, mit Gewicht. Ausrüstbares zieht man auf eine Stelle einer Anziehpuppe oder wählt es mit
+ * ist, mit Gewicht. Ausrüstbares zieht man auf eine Stelle in einer Charakterkachel oder wählt es mit
  * „Ausrüsten …“; was man von einer Stelle hierher zieht, wird abgelegt.
  */
 export function StashPack({ stash }: { stash: StashView }) {
