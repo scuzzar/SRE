@@ -77,9 +77,13 @@ hide <<value>> stereotype
     name: string
     /funds: number
     quantityDie: number [0..1]
+    $new("2026-11-13b", "/load: number")
+    $new("2026-11-13b", "/capacity: number")
+    $new("2026-11-13b", "/burden: number")
   }
   class Booking $shop
   class Character $charakter
+  class Possession $shop
 
 ' Charaktererschaffung und Lebenslauf
   class Generation $erschaffung
@@ -117,6 +121,7 @@ Campaign "1" *-- "0..1" Generation : generation
 Campaign "1" *-- "*" Hex : hexes
 
 ' Charakter
+Campaign "1" *-$newArrow("2026-11-13b")- "*" Possession : stash
 
 ' Waffen (Referenzdaten)
 
@@ -142,4 +147,5 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class Campaign #line:d0021b;line.bold
 @enduml

@@ -183,7 +183,7 @@ Weapon "*" --> "1" Skill : uses
 Recovery "*" --> "1" Character : for
 Recovery "*" --> "0..1" Character : by
 Butchering "*" --> "1" Character : of
-Butchering "*" --> "1" Character : for
+Butchering "*" -$goneArrow("2026-11-13b")-> "1" Character : for
 TaskResult "*" --> "1" Character : for
 TaskResult "*" --> "0..1" SkillLevel : uses
 TaskResult --> "0..6" Characteristic : counts
@@ -220,4 +220,5 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class Campaign #line:d0021b;line.bold
 @enduml

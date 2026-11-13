@@ -149,6 +149,17 @@
         "Hex",
         "Weapon"
       ]
+    },
+    {
+      "id": "2026-11-13b",
+      "file": "2026-11-13-gruppengepaeck",
+      "title": "Gruppengepäck: Besitz der Gruppe, am SC nur Ausgerüstetes; Last und Traglast",
+      "approved": false,
+      "show": [
+        "Campaign",
+        "Character",
+        "Booking"
+      ]
     }
   ]
 }
