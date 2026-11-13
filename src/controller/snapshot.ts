@@ -99,6 +99,20 @@ import {
   isEvading,
   evadeDmAt,
   encounterNameOf,
+  gamePricePerKg,
+  possessionKey,
+  cannotButcher,
+  cannotLoot,
+  butchers,
+  butcheringResult,
+  lootValueOf,
+  gameSaleTotal,
+  FUR,
+  MEAT,
+  FUR_RATE,
+  MEAT_RATE,
+  type Butchering,
+  isDead,
   damageVictim,
   eventOf,
   eventEntryAt,
@@ -308,7 +322,7 @@ export interface OddsChoice {
   readonly selected: boolean;
 }
 
-export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | SaveItem | NoteItem;
+export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | SaveItem | ButcheringItem | NoteItem;
 
 /** Ein Patron-Wurf: Liste, Würfel mit DMs, der Wurf 11–66 und die Zeile der Liste. */
 export interface PatronItem {
@@ -539,6 +553,8 @@ export interface FighterView {
   readonly evading: boolean;
   /** Festgehalten von Falle, Köder oder Filter. */
   readonly held: boolean;
+  /** Bei einem NSC, der am Boden ist: „Beute“ (Person) oder „Ausweiden“ (Tier), und warum es nicht geht. */
+  readonly loot: { readonly action: 'take' | 'butcher'; readonly blocked: string | undefined } | undefined;
   /** Ein SC über 20 Bands weg: kein Ziel, kein Angriff. */
   readonly escaped: boolean;
 }
@@ -583,6 +599,55 @@ export interface EventItem {
   /** Die Stelle im Log und ob man die Rettungswürfe noch würfeln kann. */
   readonly index: number;
   readonly canSave: boolean;
+}
+
+/** Ein DM mit Grund in der Anzeige der Beute. */
+export interface LootPart {
+  readonly label: string;
+  readonly dm: number;
+}
+
+/** Ein Ausweiden: Tier, essbar, Fleischwürfel mit DM, Fleisch und Fell in kg, die Werte mit allen DMs und was die Beute wert ist. */
+export interface ButcheringItem {
+  readonly kind: 'butchering';
+  readonly at: string;
+  readonly animal: string;
+  readonly receiver: string;
+  readonly weight: number;
+  readonly edible: boolean;
+  readonly reason: string | undefined;
+  readonly meatDie: number | undefined;
+  readonly meatSkill: number;
+  readonly furSkill: number;
+  readonly meat: number;
+  readonly fur: number;
+  readonly furHalf: boolean;
+  readonly hasFur: boolean;
+  readonly market: number;
+  readonly furParts: readonly LootPart[];
+  readonly meatParts: readonly LootPart[];
+  readonly furValue: number;
+  readonly meatValue: number;
+  readonly furPerKg: number;
+  readonly meatPerKg: number;
+  /** Listenpreis von Fleisch und Fell zusammen und der vorgeschlagene Erlös beim Verkauf. */
+  readonly list: number;
+  readonly sale: number;
+}
+
+/** Der Dialog „Beute nehmen“ bzw. „Ausweiden“: was es gibt, wer arbeitet, wer die Beute bekommen kann. */
+export interface LootView {
+  readonly id: string;
+  readonly name: string;
+  readonly animal: boolean;
+  /** Bei einem NSC: seine Gegenstände mit Verkaufspreis und seine Kredite. */
+  readonly items: readonly { readonly label: string; readonly count: number; readonly sale: number | undefined }[];
+  readonly credits: number;
+  /** Bei einem Tier: wer das Fleisch macht und wer das Fell abzieht, mit Fertigkeit und Stufe. */
+  readonly meatWorker: string | undefined;
+  readonly furWorker: string | undefined;
+  readonly receivers: readonly { readonly id: string; readonly name: string }[];
+  readonly blocked: string | undefined;
 }
 
 /** Ein Rettungswurf gegen ein Ereignis: wer, gegen welches, Würfel, Zielwert und Ergebnis. */
@@ -847,6 +912,10 @@ export interface CombatView {
   readonly terrain: string | undefined;
   /** Die Begegnungsart Tiere. */
   readonly animals: AnimalsView;
+  /** Der offene Dialog „Beute nehmen“ bzw. „Ausweiden“. */
+  readonly loot: LootView | undefined;
+  /** Das eben gewürfelte Ausweiden im Vordergrund, mit den Namen derer, die gearbeitet haben. */
+  readonly butchered: (ButcheringItem & { readonly meatWorker: string | undefined; readonly furWorker: string | undefined }) | undefined;
   /** Eine Begegnung braucht einen Aufenthaltsort. */
   readonly canEncounter: boolean;
   /** Der Aufenthaltsort als Feld (0304), und welche fertigen Welten es dafür gibt. */
@@ -940,6 +1009,8 @@ export interface ShopView {
       readonly price: number;
       /** Was der Gegenstand ihm gerade ist: getragen, in der Hand, Primär- oder Sekundärwaffe. */
       readonly role: string | undefined;
+      /** Bei Jagdbeute: der Listenpreis je kg; `price` ist dann der Erlös für alles, `id` der Schlüssel des Besitzes. */
+      readonly perKg: number | undefined;
     }[];
   }[];
   readonly error: string | undefined;
@@ -1053,6 +1124,10 @@ export interface ControllerState {
   readonly wounding: Wounding | undefined;
   /** Was beim Würfeln einer Begegnung herauskam, wenn es keine gibt, oder was nicht ging. */
   readonly combatNote: string | undefined;
+  /** Der Dialog „Beute nehmen“ bzw. „Ausweiden“ ist für diesen NSC bzw. dieses Tier offen. */
+  readonly lootOpen: string | undefined;
+  /** Das eben gewürfelte Ausweiden steht im Vordergrund: Stelle im Log und wer gearbeitet hat (nur Anzeige). */
+  readonly butchered: { readonly index: number; readonly meat: string | undefined; readonly fur: string | undefined } | undefined;
   /** Der Test des letzten Patron-Wurfs und was er brachte. */
   readonly patronNote: string | undefined;
   /** Der Test des letzten Tierwurfs und was er brachte. */
@@ -1298,7 +1373,7 @@ function weaponName(id: string): string {
   return id === HANDS ? 'Hände' : weaponOf(id).name;
 }
 
-function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined, intro: boolean, simBurst: boolean | undefined, simWeakened: boolean | undefined, surpriseShown = false, animalNote: string | undefined = undefined, log: readonly LogItem[] = []): CombatView | undefined {
+function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined, intro: boolean, simBurst: boolean | undefined, simWeakened: boolean | undefined, surpriseShown = false, animalNote: string | undefined = undefined, log: readonly LogItem[] = [], lootOpen: string | undefined = undefined, butchered: ControllerState['butchered'] = undefined): CombatView | undefined {
   const character = focusOf(campaign);
   if (!character) return undefined;
   const current = attack ?? {};
@@ -1357,7 +1432,7 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
       attack?.armor !== undefined && attack.range !== undefined && target
         ? { armor: attack.armor, range: attack.range, dm: target.dm.total, need: target.need, chance: target.chance, parts: attackParts(attacker, weapon.id, attack.armor, attack.range, burst, false, target.dm) }
         : undefined,
-    canAttack: canFight(attacker.state) && defender?.state !== 'dead' && !(ammo !== undefined && ammo.rounds < roundsFor(weapon, burst)),
+    canAttack: canFight(attacker.state) && !(defender && isDead(defender.state)) && !(ammo !== undefined && ammo.rounds < roundsFor(weapon, burst)),
     fire: fireView(weapon, burst),
     damage: pendingHit && pending !== undefined ? damageView(campaign, pending, pendingHit) : undefined,
     ammo: ammo ? { rounds: ammo.rounds, capacity: ammo.capacity, magazine: itemLabel(itemOf(ammo.ammo)), magazines: ammo.magazines } : undefined,
@@ -1365,6 +1440,8 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
     terrains: ref.encounters.terrains.map((t) => ({ id: t.id, name: t.name, dm: t.dm, animals: hasAnimals(t) })),
     terrain: campaign.terrain,
     animals: animalsView(campaign, animalNote, log),
+    loot: lootView(campaign, lootOpen),
+    butchered: butcheredView(campaign, butchered),
     canEncounter: campaign.location !== undefined,
     location: campaign.location,
     worlds: worldChoices(campaign.hexes),
@@ -1374,6 +1451,84 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
     encounterTypes: ref.encounters.types.map((t) => ({ roll: t.roll, name: t.name, quantity: t.quantity })),
     wounding: wounding && woundingView(campaign, wounding),
     note,
+  };
+}
+
+function butcheredView(campaign: Campaign, butchered: ControllerState['butchered']): CombatView['butchered'] {
+  const entry = butchered === undefined ? undefined : campaign.log[butchered.index];
+  if (!butchered || entry?.kind !== 'butchering') return undefined;
+  return { ...butcheringItem(campaign, entry), meatWorker: butchered.meat, furWorker: butchered.fur };
+}
+
+function lootAction(campaign: Campaign, slot: FightSlot, state: WoundState): FighterView['loot'] {
+  if (slot.side !== 'npcs' || state === 'unhurt' || state === 'wounded') return undefined;
+  const npc = anyCharacterOf(campaign, slot.id);
+  if (npc.animal !== undefined) return state === 'serious' ? undefined : { action: 'butcher', blocked: cannotButcher(campaign, slot.id) };
+  // Den Zustand kennt der Aufrufer schon; hier bleibt nur, ob er noch etwas hat.
+  return { action: 'take', blocked: npc.possessions.length === 0 && npc.credits === 0 ? `${npc.name} hat nichts mehr bei sich.` : undefined };
+}
+
+function butcheringItem(campaign: Campaign, entry: Butchering): ButcheringItem {
+  const animal = anyCharacterOf(campaign, entry.of);
+  const at = animal.animal!;
+  const row = animalRowOf(campaign.hexes, at);
+  const result = butcheringResult(campaign, entry);
+  const value = lootValueOf(row, at)!;
+  const furPerKg = value.furValue * FUR_RATE;
+  const meatPerKg = value.meatValue * MEAT_RATE;
+  const list = result.meat * meatPerKg + result.fur * furPerKg;
+  const sale = (result.meat > 0 ? gameSaleTotal(campaign.hexes, MEAT, at, result.meat) : 0) + (result.fur > 0 ? gameSaleTotal(campaign.hexes, FUR, at, result.fur) : 0);
+  return {
+    kind: 'butchering',
+    at: entry.at,
+    animal: animal.name,
+    receiver: nameOf(campaign, entry.for),
+    weight: row.weight ?? 0,
+    edible: result.edible,
+    reason: result.reason,
+    meatDie: entry.meatDie,
+    meatSkill: entry.meatSkill,
+    furSkill: entry.furSkill,
+    meat: result.meat,
+    fur: result.fur,
+    furHalf: result.furHalf,
+    hasFur: result.hasFur,
+    market: value.market,
+    furParts: value.fur,
+    meatParts: value.meat,
+    furValue: value.furValue,
+    meatValue: value.meatValue,
+    furPerKg,
+    meatPerKg,
+    list: Math.floor(list),
+    sale,
+  };
+}
+
+/** Wer arbeitet: „Jonas · Steward-1“; ohne Fertigkeit „Kira · ohne Fertigkeit“. */
+function workerText(worker: { readonly name: string | undefined; readonly skill: string | undefined; readonly level: number }): string | undefined {
+  if (worker.name === undefined) return undefined;
+  return `${worker.name.split(' ')[0]} · ${worker.skill === undefined ? 'ohne Fertigkeit' : `${skillOf(worker.skill).name}-${worker.level}`}`;
+}
+
+function lootView(campaign: Campaign, id: string | undefined): LootView | undefined {
+  if (id === undefined || !campaign.encounters.some((e) => e.npcs.some((n) => n.id === id))) return undefined;
+  const npc = anyCharacterOf(campaign, id);
+  const animal = npc.animal !== undefined;
+  const workers = butchers(campaign);
+  return {
+    id,
+    name: npc.name,
+    animal,
+    items: npc.possessions.map((p) => {
+      const item = itemOf(p.of);
+      return { label: itemLabel(item), count: p.count, sale: salePrice(item) };
+    }),
+    credits: npc.credits,
+    meatWorker: workerText(workers.meat),
+    furWorker: workerText(workers.fur),
+    receivers: livingCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
+    blocked: animal ? cannotButcher(campaign, id) : cannotLoot(campaign, id),
   };
 }
 
@@ -1458,13 +1613,14 @@ function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, 
     state: fighter.state,
     acted: encounter.acted.includes(slot.id),
     turn: turn?.id === slot.id,
-    targetable: turn !== undefined && turn.side !== slot.side && fighter.state !== 'dead' && !isEscaped(campaign, slot.id),
+    targetable: turn !== undefined && turn.side !== slot.side && !isDead(fighter.state) && !isEscaped(campaign, slot.id),
     targeted: target === slot.id,
     neighbour: neighbours.includes(slot.id),
     healing: recoveryOptions(campaign, slot.id),
     blows: isMelee(fighter.weapon) ? blowsOf(campaign, slot.id) : undefined,
     evading: isEvading(campaign, slot.id),
     held: slot.side === 'pcs' && isHeld(campaign, slot.id),
+    loot: lootAction(campaign, slot, fighter.state),
     escaped: isEscaped(campaign, slot.id),
   };
 }
@@ -1796,8 +1952,14 @@ function shopView(campaign: Campaign, error: string | undefined, offerToWear: Co
       id: c.id,
       name: c.name,
       credits: c.credits,
-      sellable: c.possessions.flatMap((p) => {
+      sellable: c.possessions.flatMap((p): ShopView['members'][number]['sellable'][number][] => {
         const item = itemOf(p.of);
+        // Jagdbeute: Preis je kg aus der Tierart; verkauft wird nach kg, der Erlös für alle zusammen.
+        if (p.from !== undefined) {
+          const perKg = gamePricePerKg(campaign.hexes, p.of, p.from);
+          const label = `${itemLabel(item)} · ${animalName(animalRowOf(campaign.hexes, p.from))}`;
+          return [{ id: possessionKey(p), label, kind: item.kind, count: p.count, price: Math.max(1, Math.floor((perKg * p.count) / 2)), role: `Liste ${perKg.toLocaleString('de-DE', { maximumFractionDigits: 1 })} Cr/kg`, perKg }];
+        }
         const price = salePrice(item);
         if (price === undefined) return [];
         const role =
@@ -1810,7 +1972,7 @@ function shopView(campaign: Campaign, error: string | undefined, offerToWear: Co
                 : item.weapon !== undefined && c.secondary === item.weapon
                   ? 'Sekundärwaffe'
                   : undefined;
-        return [{ id: item.id, label: itemLabel(item), kind: item.kind, count: p.count, price, role }];
+        return [{ id: item.id, label: itemLabel(item), kind: item.kind, count: p.count, price, role, perKg: undefined }];
       }),
     })),
     error,
@@ -1856,6 +2018,8 @@ function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
       const canSave = event.save !== undefined && savesOf(campaign.log, index).length === 0 && livingCharacters(campaign).length > 0;
       return { kind: 'event', at: entry.at, dice: entry.tableDice, roll: entry.tableDice[0] + entry.tableDice[1], terrain: terrainOf(entry.terrain).name, name: event.name, group: event.group, text: event.text, save: event.save, damage: event.damage, index, canSave };
     }
+    case 'butchering':
+      return butcheringItem(campaign, entry);
     case 'save': {
       const event = eventOf(campaign, eventEntryAt(campaign.log, entry.of));
       const under = savesUnder(event);
@@ -1971,7 +2135,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     npcs: npcCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background, dead: c.dead })),
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
-    combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.simBurst, state.simWeakened, state.surpriseShown, state.animalNote, log),
+    combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.simBurst, state.simWeakened, state.surpriseShown, state.animalNote, log, state.lootOpen, state.butchered),
     patron: {
       lists: patronLists.map((list) => ({ list, parts: patronDmParts(campaign, list) })),
       last: log.findLast((item): item is PatronItem => item.kind === 'patron'),

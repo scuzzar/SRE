@@ -75,6 +75,7 @@ hide <<value>> stereotype
 ' Kampagne und Charaktere
   class Campaign $kampagne
   class Character $charakter
+  class Possession $shop
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -86,6 +87,14 @@ hide <<value>> stereotype
   class PatronRoll $begegnung {
     dice: number[2]
     dms: number[2]
+  }
+  class Butchering $begegnung {
+    meatDie: number [0..1]
+    meatSkill: number
+    furSkill: number
+    /edible: boolean
+    /meat: number
+    /fur: number
   }
   class RumorRoll $begegnung {
     dice: number[2]
@@ -151,6 +160,7 @@ hide <<value>> stereotype
     typeDm: number [0..1]
     sizeDm: number [0..1]
     traits: string [0..1]
+    huntDm: number [0..1]
     /animals: boolean
   }
   class EncounterRange <<reference>> $begegnung {
@@ -166,6 +176,7 @@ hide <<value>> stereotype
     roll: number
     name: string
     quantity: number
+    credits: number
     tl: number
     leader: boolean
     guns: boolean
@@ -193,6 +204,10 @@ hide <<value>> stereotype
     attack: number [0..1]
     flee: number [0..1]
     speed: number [0..1]
+    market: number [0..1]
+    edible: boolean [0..1]
+    /furValue: number [0..1]
+    /meatValue: number [0..1]
   }
   class AnimalAttack <<value>> $begegnung {
     dm: number
@@ -282,6 +297,10 @@ hide <<value>> stereotype
 LogEntry <|-- PatronRoll
 PatronRoll "*" --> "1" Patron : of
 LogEntry <|-- RumorRoll
+LogEntry <|-- Butchering
+Butchering "*" --> "1" Character : of
+Butchering "*" --> "1" Character : for
+Possession "*" --> "0..1" AnimalRow : from
 RumorRoll "*" --> "1" Rumor : /of
 
 ' Probe

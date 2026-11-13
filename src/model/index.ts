@@ -10,6 +10,7 @@ export * from './encounter';
 export * from './animals';
 export * from './hold';
 export * from './events';
+export * from './loot';
 export * from './encounter-check';
 export * from './fight';
 export * from './wounds';

@@ -144,6 +144,7 @@ hide <<value>> stereotype
     unconscious
     serious
     dead
+    destroyed
   }
   class AnimalAttack <<value>> $begegnung
 

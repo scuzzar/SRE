@@ -103,6 +103,7 @@ hide <<value>> stereotype
 ' Verlauf
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class AnimalRow $begegnung
 
 ' Referenzdaten
   class Skill <<reference>> $charakter
@@ -126,6 +127,7 @@ hide <<value>> stereotype
     ship
     passage
     membership
+    game
   }
 
 ' Kampagne
@@ -155,6 +157,7 @@ Weapon "*" --> "0..1" Item : ammo
 Hex "*" --> "*" Item : /offer
 
 ' Verlauf
+Possession "*" --> "0..1" AnimalRow : from
 
 ' Probe
 

@@ -135,6 +135,20 @@
         "Weapon",
         "DamageRoll"
       ]
+    },
+    {
+      "id": "2026-11-13",
+      "file": "2026-11-13-beute",
+      "title": "Beute: Ausrüstung und Kredite der NSC, Fleisch und Fell der Tiere",
+      "approved": true,
+      "show": [
+        "LogEntry",
+        "Character",
+        "Possession",
+        "Item",
+        "Hex",
+        "Weapon"
+      ]
     }
   ]
 }

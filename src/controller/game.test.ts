@@ -737,7 +737,7 @@ describe('Begegnung und Kampfsimulation', () => {
     }
     // Die meisten Kämpfe kommen in 400 Schritten zur Entscheidung.
     expect(decided).toBeGreaterThan(20);
-  });
+  }, 30_000); // 40 ganze Kämpfe: auf langsamen Rechnern (CI) über 5 s, deshalb ein eigenes Zeitlimit wie beim Fuzz-Test.
 
   it('ein Logeintrag löschen, während Schaden verteilt wird, bricht nicht ab: die Stelle rückt mit, oder das Verteilen endet', async () => {
     const { game, random } = await onRegina();
@@ -1446,7 +1446,43 @@ describe('Tiere im Kampf', () => {
     }
     const after = game.snapshot().combat!.sim!.fighters.find((f) => f.id === animal.id)!;
     expect(after.animal!.hurt).toBeGreaterThanOrEqual(after.animal!.hits[0]);
-    expect(['unconscious', 'dead']).toContain(after.state);
+    expect(['unconscious', 'dead', 'destroyed']).toContain(after.state);
+  });
+
+  it('Ausweiden: der Knopf am Tier öffnet den Dialog, das Ergebnis steht im Vordergrund und im Log, die Beute im Besitz', async () => {
+    const { game, random } = await withAnimals();
+    game.rollSurprise();
+    game.closeSurprise();
+    const animal = game.snapshot().combat!.sim!.fighters.find((f) => f.side === 'npcs')!;
+    for (let i = 0; i < 40; i++) {
+      const sim = game.snapshot().combat!.sim!;
+      const now = sim.fighters.find((f) => f.id === animal.id)!;
+      if (now.state === 'dead' || now.state === 'unconscious' || now.state === 'destroyed' || !sim.turn) break;
+      if (sim.turn.side === 'pcs') {
+        game.chooseFightTarget(animal.id);
+        random.queue.push(6, 6);
+        game.fightAttack();
+        random.queue.push(2, 2, 2, 2, 2);
+        if (game.snapshot().combat!.damage) game.rollDamage();
+      } else game.skipTurn();
+    }
+    const down = game.snapshot().combat!.sim!.fighters.find((f) => f.id === animal.id)!;
+    if (down.state === 'destroyed') {
+      expect(down.loot).toMatchObject({ action: 'butcher' });
+      expect(down.loot!.blocked).toMatch(/zerstört/);
+      return;
+    }
+    expect(down.loot).toEqual({ action: 'butcher', blocked: undefined });
+    game.openLoot(animal.id);
+    expect(game.snapshot().combat!.loot).toMatchObject({ animal: true, meatWorker: 'Jonas · Steward-1', furWorker: 'Jonas · Blade-1' });
+    random.queue.push(3);
+    game.butcher(animal.id, 'c1');
+    const shown = game.snapshot().combat!.butchered!;
+    expect(shown).toMatchObject({ receiver: 'Kira Vant', meatWorker: 'Jonas · Steward-1', furWorker: 'Jonas · Blade-1' });
+    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'butchering' });
+    game.closeButchered();
+    expect(game.snapshot().combat!.butchered).toBeUndefined();
+    expect(game.snapshot().combat!.sim!.fighters.find((f) => f.id === animal.id)!.loot!.blocked).toMatch(/schon ausgeweidet/);
   });
 
   it('trifft ein Tier einen SC, ist der Schaden fest, ohne Würfel; er geht als ein Block auf ein Attribut', async () => {

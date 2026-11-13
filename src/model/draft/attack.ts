@@ -22,6 +22,7 @@ import {
   isEscaped,
   isEvading,
   isHeld,
+  isDead,
   FILTER_HELD_TARGET,
   FILTER_TARGET,
   rangeBetween,
@@ -190,7 +191,7 @@ export function aimAt(attack: Attack, campaign: Campaign, target: CharacterId | 
   if (target === undefined) return withRange(rest, campaign);
   const defender = fighterOf(campaign, encounterFighter(campaign, target));
   if (sideOf(campaign, target) === sideOf(campaign, attackerIdOf(campaign))) throw new DomainError(`${defender.name} gehört zur eigenen Partei.`);
-  if (defender.state === 'dead') throw new DomainError(`${defender.name} ist tot.`);
+  if (isDead(defender.state)) throw new DomainError(`${defender.name} ist tot.`);
   if (isEscaped(campaign, target)) throw new DomainError(`${defender.name} ist entkommen.`);
   return withRange({ ...rest, against: target, armor: defender.armor }, campaign);
 }
@@ -286,7 +287,7 @@ export function neighbourTargets(campaign: Campaign, who: CharacterId, weapon: W
     const d = distanceOf(encounter, c);
     return `${d.band}${d.close ? 'c' : ''}`;
   };
-  const alive = (c: CharacterId) => woundStateOf(campaign, c) !== 'dead' && !isEvading(campaign, c) && place(c) === place(who);
+  const alive = (c: CharacterId) => !isDead(woundStateOf(campaign, c)) && !isEvading(campaign, c) && place(c) === place(who);
   if (burst) {
     const above = party.slice(0, Math.max(0, at)).reverse().find(alive);
     const below = party.slice(at + 1).find(alive);
@@ -315,9 +316,9 @@ export function rollAttack(attack: Attack, campaign: Campaign, random: Random, c
   const attacker = attackerOf(attack, campaign);
   const evaluated = evaluateAttack(attack, campaign);
   if (!evaluated || attack.armor === undefined || attack.range === undefined) throw new DomainError('Erst Rüstung und Reichweite des Ziels wählen.');
-  if (!canFight(attacker.state)) throw new DomainError(`${attacker.name} ist ${attacker.state === 'dead' ? 'tot' : 'bewusstlos'} und greift nicht an.`);
+  if (!canFight(attacker.state)) throw new DomainError(`${attacker.name} ist ${isDead(attacker.state) ? 'tot' : 'bewusstlos'} und greift nicht an.`);
   const defender = defenderOf(attack, campaign);
-  if (defender?.state === 'dead') throw new DomainError(`${defender.name} ist tot.`);
+  if (defender && isDead(defender.state)) throw new DomainError(`${defender.name} ist tot.`);
   const weapon = attacker.weapon;
   const burst = firesBurst(weapon, attack);
   const range = attack.range;

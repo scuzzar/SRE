@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 import type { DamageItem, LogItem, NoteItem } from '../../controller';
-import { attackTitle, clockTime, damageDetail, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, pickText, quoted, scatterText, taskDetail, taskTitle } from '../format';
+import { attackTitle, clockTime, damageDetail, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, scatterText, taskDetail, taskTitle } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { MapIconSvg, ScatterRose } from './CardRollIcons';
@@ -309,6 +309,8 @@ function kicker(item: LogItem, volley = false): string {
       return 'Tiere · Ereignis';
     case 'save':
       return 'Rettungswurf';
+    case 'butchering':
+      return 'Ausweiden';
     case 'note':
       return item.interprets === undefined ? 'Notiz' : 'Deutung';
   }
@@ -420,6 +422,16 @@ function EntryBody({ item }: { item: LogItem }) {
           </span>
           <p className="note-text">{item.text}</p>
           <span className="entry-detail">{eventDetail(item)}</span>
+        </>
+      );
+    case 'butchering':
+      return (
+        <>
+          <span className="verdict" style={{ fontSize: 20 }}>
+            {item.meat} kg Fleisch · {item.fur} kg Fell
+          </span>
+          <span className="entry-detail">{butcheringDetail(item)}</span>
+          {!item.edible && <span className="entry-question">{item.reason}</span>}
         </>
       );
     case 'save':

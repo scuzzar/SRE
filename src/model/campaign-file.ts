@@ -6,10 +6,11 @@ import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, typ
 import { animalIds, checkDamageRoll, checkVolley, filterDiceOf, ATTACK_TARGET } from './combat';
 import { FILTER_HELD_TARGET, FILTER_TARGET } from './hold';
 import { checkEventDamage, checkSave } from './events';
+import { checkButchering } from './loot';
 import { encounterAnimalRow, ESCAPED_BAND, upgradeDistances, upgradeNpcs, type Encounter } from './encounter';
 import { animalRowOf, animalTypeOf, checkAnimalTable, eventRowOf, terrainOf } from './animals';
 import { animalTraits } from '../data';
-import { checkInterprets, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type CardPick, type DamageRoll, type LogEntry, type Recovery } from './log';
+import { checkInterprets, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type DamageRoll, type LogEntry, type Recovery } from './log';
 import { checkRecovery } from './wounds';
 import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, ranges, ref, slotOfEntry, weaponOf } from './reference';
 import { characteristics } from './rules';
@@ -82,6 +83,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     dice: z.array(die).length(5).optional(),
   }),
   z.object({ kind: z.literal('rumor'), at, dice }),
+  z.object({ kind: z.literal('butchering'), at, for: z.string().min(1), of: z.string().min(1), meatDie: die.optional(), meatSkill: z.number().int().min(0), furSkill: z.number().int().min(0) }),
   z.object({ kind: z.literal('event'), at, in: z.string().min(1), terrain: z.string().min(1), tableDice: dice }),
   z.object({ kind: z.literal('patron'), at, list: z.union([z.literal(1), z.literal(2)]), dice, dms: z.tuple([z.number().int(), z.number().int()]) }),
   z.object({ kind: z.literal('note'), at, text: z.string().trim().min(1), interprets: z.number().int().optional() }),
@@ -148,6 +150,8 @@ const HexSchema = z.union([
               attack: z.number().int().min(0).optional(),
               flee: z.number().int().min(0).optional(),
               speed: z.number().int().min(0).optional(),
+              market: z.number().int().min(3).max(18).optional(),
+              edible: z.boolean().optional(),
             }),
           ),
         }),
@@ -180,7 +184,7 @@ const CharacterSchema = z.object({
   retired: z.boolean(),
   upp: z.object({ str: value, dex: value, end: value, int: value, edu: value, soc: value }),
   skills: z.array(z.object({ of: z.string(), level: z.number(), retired: z.boolean() })),
-  possessions: z.array(z.object({ of: z.string(), count: z.number(), rounds: z.number().optional() })).default([]),
+  possessions: z.array(z.object({ of: z.string(), count: z.number(), rounds: z.number().optional(), from: z.object({ in: z.string().min(1), terrain: z.string().min(1), roll: z.number().int().min(2).max(12) }).optional() })).default([]),
   career: CareerSchema.optional(),
   homeworld: z.string().optional(),
   /** Fehlen in Dateien von vor der Primär- und Sekundärwaffe; dann ist die Waffe in der Hand die Primärwaffe. */
@@ -426,6 +430,8 @@ function logEntry(entry: z.infer<typeof LogEntrySchema>): LogEntry {
     case 'event':
     case 'save':
       return entry;
+    case 'butchering':
+      return stripped(entry) as Butchering;
     case 'note': {
       const { interprets, ...rest } = entry;
       return interprets === undefined ? rest : { ...rest, interprets };
@@ -478,6 +484,10 @@ function validate(campaign: Campaign): void {
   validateEncounters(campaign);
   if (campaign.terrain !== undefined) terrainOf(campaign.terrain);
   for (const hex of campaign.hexes) for (const table of hex.animals ?? []) checkAnimalTable(table);
+  // Jagdbeute verweist auf eine Zeile der Tiertabelle mit Marktwert.
+  for (const character of [...campaign.characters, ...campaign.encounters.flatMap((e) => e.npcs)]) {
+    for (const p of character.possessions) if (p.from !== undefined && animalRowOf(campaign.hexes, p.from).market === undefined) throw new DomainError(`Die Jagdbeute von ${character.name} stammt von einer Tierart ohne Marktwert.`);
+  }
   // Heimatwelten und Welten der Terms verweisen auf fertige Welten des Subsektors.
   const careers = [...campaign.characters.flatMap((c) => (c.career ? [c.career] : [])), ...(campaign.generation ? [campaign.generation.career] : [])];
   for (const id of [...campaign.characters.flatMap((c) => (c.homeworld === undefined ? [] : [c.homeworld])), ...careers.flatMap((c) => [...(c.homeworld === undefined ? [] : [c.homeworld]), ...(c.worlds ?? [])])]) {
@@ -518,6 +528,9 @@ function validate(campaign: Campaign): void {
         break;
       case 'save':
         checkSave(campaign, entry, index);
+        break;
+      case 'butchering':
+        checkButchering(campaign, entry, index);
         break;
       case 'recovery':
         if (entry.for === undefined) throw new DomainError('Eine Heilung gilt einem Charakter.');

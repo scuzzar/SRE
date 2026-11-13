@@ -38,6 +38,16 @@ const steps: readonly [string, Step][] = [
   ['animals', (g, p) => { if (g.snapshot().combat?.sim) return; const t = ['clear', 'forest', 'swamp', 'maritime-surface', 'city'][p(5)]!; g.setTerrain(t); g.rollAnimals(p(2) ? undefined : 2 + p(11)); }],
   ['saves', (g) => { const e = g.snapshot().combat?.animals.lastEvent; if (e?.canSave) g.rollEventSaves(e.index); }],
   ['struggle', (g) => g.snapshot().combat?.sim?.turn?.held && g.struggle()],
+  ['loot', (g, p) => {
+    const f = g.snapshot().combat?.sim?.fighters.filter((x) => x.loot && !x.loot.blocked) ?? [];
+    const pcs = g.snapshot().characters;
+    if (!f.length || !pcs.length) return;
+    const target = f[p(f.length)]!;
+    g.openLoot(target.id);
+    const pc = pcs[p(pcs.length)]!.id;
+    if (target.loot!.action === 'butcher') { g.butcher(target.id, pc); g.closeButchered(); } else g.takeLoot(target.id, pc);
+  }],
+  ['sellGame', (g, p) => { const s = g.snapshot().shop; const m = s?.members.filter((x) => x.sellable.some((i) => i.perKg !== undefined)) ?? []; if (s?.world && m.length) { const who = m[p(m.length)]!; const it = who.sellable.find((i) => i.perKg !== undefined)!; g.sellGame(it.id, 1 + p(it.count), 1 + p(50), who.id); } }],
   ['surprise', (g) => { if (g.snapshot().combat?.sim?.needsSurprise) g.rollSurprise(); else g.closeSurprise(); }],
   ['end', (g) => g.snapshot().combat?.sim && g.endEncounter()],
   ['target', (g, p) => { const f = g.snapshot().combat?.sim?.fighters.filter((x) => x.targetable) ?? []; if (f.length) g.chooseFightTarget(f[p(f.length)]!.id); }],

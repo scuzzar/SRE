@@ -24,7 +24,7 @@ export interface Selection {
 }
 
 /** Übernehmen lässt sich jeder NSC, der noch lebt; Übernommene stehen nicht mehr in der Liste. */
-export const canAdopt = (f: FighterView) => f.side === 'npcs' && f.state !== 'dead' && f.animal === undefined;
+export const canAdopt = (f: FighterView) => f.side === 'npcs' && f.state !== 'dead' && f.state !== 'destroyed' && f.animal === undefined;
 
 /** Bereits gezeichnete Pfeile eines Angriffs; jeder fliegt nur einmal. */
 const flown = new Set<string>();
@@ -72,6 +72,7 @@ function StateIcon({ state }: { state: WoundState }) {
         </svg>
       );
     case 'dead':
+    case 'destroyed':
       return (
         <svg className="state-icon dead" viewBox="0 0 10 14" role="img" aria-label={label}>
           <path d="M5 1 V13 M1.5 4.5 H8.5" />
@@ -92,7 +93,7 @@ function FighterCard({ fighter: f, selection, onHeal, impacts }: { fighter: Figh
   const choosing = selection.picked !== undefined;
   const checked = selection.picked?.includes(f.id) ?? false;
   const press = useLongPress(() => (choosing ? selection.toggle(f.id) : selection.start(f.id)));
-  const classes = ['fcard', f.side, f.turn ? 'turn' : '', f.targeted && !choosing ? 'targeted' : '', f.neighbour && !choosing ? 'neighbour' : '', checked ? 'chosen' : '', f.acted ? 'acted' : '', f.state === 'dead' ? 'out' : ''].filter(Boolean).join(' ');
+  const classes = ['fcard', f.side, f.turn ? 'turn' : '', f.targeted && !choosing ? 'targeted' : '', f.neighbour && !choosing ? 'neighbour' : '', checked ? 'chosen' : '', f.acted ? 'acted' : '', f.state === 'dead' || f.state === 'destroyed' ? 'out' : ''].filter(Boolean).join(' ');
   const enabled = choosing ? adoptable : f.targetable;
   const tap = () => {
     if (press.consumed() || !enabled) return;
@@ -177,6 +178,12 @@ function FighterCard({ fighter: f, selection, onHeal, impacts }: { fighter: Figh
       {healable && (
         <button type="button" className="fcard-heal" onClick={() => onHeal(f.side === 'npcs' ? { npc: f.id, name: f.name } : { npc: undefined, pc: f.id, name: f.name })}>
           Heilen
+        </button>
+      )}
+      {!choosing && f.loot && (
+        <button type="button" className="fcard-heal fcard-loot" disabled={f.loot.blocked !== undefined} title={f.loot.blocked} onClick={() => game.openLoot(f.id)}>
+          {f.loot.action === 'butcher' ? 'Ausweiden' : 'Beute'}
+          {f.loot.blocked ? ` · ${f.loot.blocked.replace(`${f.name} `, '')}` : ''}
         </button>
       )}
     </div>

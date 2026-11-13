@@ -52,7 +52,7 @@ export const SectionSchema = z.object({
 
 export const CharacteristicSchema = z.enum(['STR', 'DEX', 'END', 'INT', 'EDU', 'SOC']);
 
-export const itemKinds = ['weapon', 'ammunition', 'armor', 'equipment', 'vehicle', 'ship', 'passage', 'membership'] as const;
+export const itemKinds = ['weapon', 'ammunition', 'armor', 'equipment', 'vehicle', 'ship', 'passage', 'membership', 'game'] as const;
 export const ItemKindSchema = z.enum(itemKinds);
 
 /** Die Rüstungsklassen, in der Reihenfolge der Spalten der Weapons and Range Matrix (S. 6). */
@@ -148,6 +148,8 @@ export const EncounterTypeSchema = z.object({
   vehicle: z.boolean(),
   /** Militärische Erfahrung (Army oder Marines) für die Überraschung (S. 5). */
   military: z.boolean(),
+  /** Kredite je NSC: 1W6 × so viel Cr, der Anführer das Zehnfache (Hausregel). */
+  credits: z.number().int().min(1),
 });
 
 /** Eine Zeile einer der beiden Patron-Listen (SE, Charts S. 20); `rumor`: kein Patron, sondern ein Gerücht. */
@@ -182,8 +184,10 @@ export const TerrainSchema = z
     typeDm: z.number().int().optional(),
     sizeDm: z.number().int().optional(),
     traits: z.enum(traitColumns).optional(),
+    /** Wie schwer im Gelände zu jagen ist: DM auf Fell- und Fleischwert (Hausregel). */
+    huntDm: z.number().int().min(0).optional(),
   })
-  .refine((t) => (t.typeDm === undefined) === (t.sizeDm === undefined) && (t.typeDm === undefined) === (t.traits === undefined), 'Ein Gelände mit Tieren hat Type DM, Size DM und Spalte der Besonderheiten');
+  .refine((t) => (t.typeDm === undefined) === (t.sizeDm === undefined) && (t.typeDm === undefined) === (t.traits === undefined) && (t.typeDm === undefined) === (t.huntDm === undefined), 'Ein Gelände mit Tieren hat Type DM, Size DM, Spalte der Besonderheiten und Jagd-DM');
 
 const DiceExprSchema = z.object({ dice: z.number().int().min(0), dm: z.number().int() });
 

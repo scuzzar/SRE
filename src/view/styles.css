@@ -6145,3 +6145,36 @@ button:disabled {
   margin: -2px 0 0;
   font-size: 11px;
 }
+
+/* --- Beute: Beute nehmen und Ausweiden --------------------------------------------------------- */
+
+.fcard-loot:disabled {
+  color: var(--dim);
+  font-weight: 400;
+}
+
+.loot-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+/* Die Schritte des Ausweidens erscheinen nacheinander. */
+.loot-step {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.loot-step.shown {
+  opacity: 1;
+  transform: none;
+}
+
+.loot-total strong {
+  color: var(--gold-bright);
+  font-size: 22px;
+}

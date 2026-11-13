@@ -98,7 +98,9 @@ describe('Begegnung', () => {
       ['n2', ['brawling-1'], 'club', 'club', undefined],
     ]);
     // Jeder NSC ist ein vollständiger Charakter: kein SC, Herkunft die Art, Waffe (mit 1W4 Magazinen) und Rüstung im Besitz.
-    expect(encounter.npcs[0]).toMatchObject({ npc: true, background: 'Thugs · Anführer', credits: 0, dead: false, retired: false });
+    // Kredite (Hausregel): Thugs 1W6 × 10 Cr, der Anführer das Zehnfache; hier 1 × 10 × 10.
+    expect(encounter.npcs[0]).toMatchObject({ npc: true, background: 'Thugs · Anführer', credits: 100, dead: false, retired: false });
+    expect(encounter.npcs[1]).toMatchObject({ credits: 10 });
     expect(encounter.npcs[0]!.possessions).toEqual([
       { of: 'body-pistol', count: 1 },
       { of: 'body-pistol-ammo', count: 1 },
