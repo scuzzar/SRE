@@ -14,9 +14,34 @@ import { LogList } from './LogList';
  * Ist eine Fertigkeit gewählt, steht die Probe über den Knöpfen, und aus „2W6“ wird „Probe würfeln“.
  * Die Schreibzeile hat einen Text; was er wird, entscheidet der Knopf: Ja/Nein und Karte nehmen ihn
  * als Frage, „Deuten“ als Deutung zum markierten Ergebnis, „Notiz“ als Notiz. Der Text während des
- * Tippens und welches Ergebnis angetippt ist, sind reine Darstellung; übergeben wird beim Absenden.
+ * Tippens ist reine Darstellung; übergeben wird beim Absenden.
+ * Das Ziel der Deutung (welches Ergebnis angetippt ist) hält die App, damit im Desktop-Modus auch
+ * der Log links ein Ergebnis als Ziel wählen kann; der Screen zeigt es in der Zielzeile an.
  */
-export function OracleScreen({ view, question, onQuestion }: { view: Snapshot; question: string; onQuestion: (q: string) => void }) {
+export function OracleScreen({
+  view,
+  question,
+  onQuestion,
+  inlineLog,
+  target,
+  picked,
+  marked,
+  onPick,
+  onClearTarget,
+}: {
+  view: Snapshot;
+  question: string;
+  onQuestion: (q: string) => void;
+  /** Im Desktop-Modus steht der Log links in der App, nicht hier im Screen. */
+  inlineLog: boolean;
+  /** Das Ergebnis, auf das sich eine Deutung bezieht: das angetippte, sonst das neueste. */
+  target: number | undefined;
+  /** Das angetippte Ergebnis, falls eines; die Zielzeile bietet an, zu dem neuesten zurückzugehen. */
+  picked: number | undefined;
+  marked: boolean;
+  onPick: (index: number) => void;
+  onClearTarget: () => void;
+}) {
   const game = useGame();
   // Welcher Logeintrag gerade als Wurf im Vordergrund rollt; reine Anzeige, im Log steht er schon.
   const [rolling, setRolling] = useState<number | undefined>(undefined);
@@ -24,25 +49,19 @@ export function OracleScreen({ view, question, onQuestion }: { view: Snapshot; q
   const done = useCallback(() => setRolling(undefined), []);
 
   const task = view.task?.ready ? view.task : undefined;
-
-  // Das Ziel einer Deutung: das angetippte Ergebnis, solange der Log gleich lang ist, sonst das neueste.
-  const [chosen, setChosen] = useState<{ index: number; length: number } | undefined>(undefined);
-  const picked = chosen?.length === view.log.length && view.log[chosen.index]?.kind !== 'note' ? chosen.index : undefined;
-  const newest = view.log.findLastIndex((item) => item.kind !== 'note');
-  const target = picked ?? (newest < 0 ? undefined : newest);
   const text = question.trim();
   const targetLine = target === undefined ? undefined : resultLine(view.log[target]!);
   const write = (interprets: number | undefined) => {
     haptic('pick');
     game.writeNote(text, interprets);
     onQuestion('');
-    setChosen(undefined);
+    onClearTarget();
   };
 
   return (
     <div className="screen">
       <CharacterStrip view={view} />
-      <LogList log={view.log} target={target} marked={text !== ''} onPick={(index) => setChosen({ index, length: view.log.length })} />
+      {inlineLog && <LogList log={view.log} target={target} marked={marked} onPick={onPick} />}
       <section className="dock" aria-label="Orakel und Proben">
         {task && (
           <div className="task-bar" aria-live="polite">
@@ -64,7 +83,7 @@ export function OracleScreen({ view, question, onQuestion }: { view: Snapshot; q
               Deutung zu <b>{targetLine.head}</b> · {targetLine.rest}
             </span>
             {picked !== undefined && (
-              <button type="button" className="icon-button" aria-label="Zurück zum neuesten Ergebnis" onClick={() => setChosen(undefined)}>
+              <button type="button" className="icon-button" aria-label="Zurück zum neuesten Ergebnis" onClick={onClearTarget}>
                 <CloseIcon />
               </button>
             )}

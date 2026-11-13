@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
+import { useEffect, useId, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 import type { DamageItem, LogItem, NoteItem } from '../../controller';
 import { attackTitle, clockTime, damageDetail, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, scatterText, taskDetail, taskTitle } from '../format';
 import { useGame } from '../game-context';
@@ -29,6 +29,9 @@ interface LogListProps {
  */
 export function LogList({ log, target, marked, onPick }: LogListProps) {
   const game = useGame();
+  // Der Log steht auf dem Smartphone im Orakel-Screen und im Desktop-Modus links; beide Instanzen
+  // dürfen nicht dieselbe Überschrift-ID tragen.
+  const titleId = useId();
   // Welcher Eintrag gerade gelöscht werden will, zu welcher Länge des Logs: Ändert sich der Log,
   // kann es ein anderer sein, dann bietet die View nichts mehr an.
   const [pending, setPending] = useState<{ index: number; length: number } | undefined>(undefined);
@@ -133,10 +136,10 @@ export function LogList({ log, target, marked, onPick }: LogListProps) {
   const last = log.length - 1;
 
   return (
-    <section className="scroll log-scroll" aria-labelledby="log-title">
+    <section className="scroll log-scroll" aria-labelledby={titleId}>
       <div className="log">
         <div className="log-head">
-          <h2 id="log-title" className="section-title">
+          <h2 id={titleId} className="section-title">
             Log
           </h2>
           {log.length > 0 && <span className="log-hint">Ergebnis antippen zum Deuten · lange drücken zum Löschen</span>}

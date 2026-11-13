@@ -222,6 +222,12 @@ button:disabled {
   background: var(--panel);
 }
 
+/* Im Orakel-Screen füllt der Log den Screen; im Desktop-Modus füllt nichts, dann hält das
+   automatische Margin das Dock unten. */
+.screen > .dock {
+  margin-top: auto;
+}
+
 .section-title {
   margin: 0;
   font-size: 12px;
@@ -239,8 +245,11 @@ button:disabled {
   font-weight: 600;
 }
 
+/* Die Leiste steht unten auf dem Smartphone und im Desktop-Modus als Reiterzeile unter der
+   Kopfzeile; die Reihenfolge regelt der @media-Block am Ende der Datei. */
 .nav {
   flex: 0 0 auto;
+  order: 3;
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   border-top: 1px solid var(--rule);
@@ -266,6 +275,27 @@ button:disabled {
   border-top-color: var(--accent-text);
   color: var(--text);
   font-weight: 600;
+}
+
+/* Der Spielbereich unter den Reitern: auf dem Smartphone nur der Screen, im Desktop-Modus
+   daneben der Log links. */
+.stage {
+  order: 2;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.log-panel {
+  display: none;
+}
+
+.screen-host {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* --- Stufenauswahl -------------------------------------------------------------------------- */
@@ -6177,4 +6207,71 @@ button:disabled {
 .loot-total strong {
   color: var(--gold-bright);
   font-size: 22px;
+}
+
+/* --- Desktop-Modus (ab 1024 px) ------------------------------------------------------------- */
+/* Dieselbe Grenze wie DESKTOP_QUERY in media.ts: Die View zeichnet dann den Log links, die
+   Reiterzeile steht unter der Kopfzeile, und die Screens behalten ihre Knöpfe und Komponenten. */
+@media (min-width: 1024px) {
+  .app {
+    max-width: none;
+  }
+
+  .nav {
+    order: 2;
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    border-top: 0;
+    border-bottom: 1px solid var(--rule);
+    padding: 0 16px;
+  }
+
+  .nav button {
+    flex-direction: row;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 14px;
+    border-top: 0;
+    border-bottom: 2px solid transparent;
+    font-size: 14px;
+  }
+
+  .nav button[aria-current='page'] {
+    border-bottom-color: var(--accent-text);
+  }
+
+  .stage {
+    order: 3;
+    display: grid;
+    grid-template-columns: clamp(320px, 25vw, 420px) 1fr;
+  }
+
+  .log-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-right: 1px solid var(--rule);
+  }
+
+  .log-panel .log-scroll {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  /* Blätter und Popups stehen mittig, statt über die volle Breite zu laufen. */
+  .overlay {
+    align-items: center;
+    padding: 24px;
+  }
+
+  .sheet {
+    width: min(100%, 720px);
+    border-radius: 16px;
+    border-bottom: 1px solid var(--line-strong);
+  }
+
+  .result {
+    max-width: 560px;
+  }
 }

@@ -10,10 +10,12 @@ import { GenerationSheet } from './characters/GenerationSheet';
 import { FullscreenButton } from './FullscreenButton';
 import { ResultDialog } from './characters/ResultDialog';
 import { useGame, useSnapshot } from './game-context';
+import { useIsDesktop } from './media';
 import { CombatIcon, EncounterIcon, MenuIcon, OracleIcon, PersonIcon, SectorIcon, ShopIcon } from './icons';
 import { Menu } from './Menu';
 import { CardSheet } from './oracle/CardSheet';
 import { DiceRoll } from './oracle/DiceRoll';
+import { LogList } from './oracle/LogList';
 import { OracleScreen } from './oracle/OracleScreen';
 import { SectorPicker, SectorScreen } from './sector/SectorScreen';
 import { WorldSheet } from './sector/WorldSheet';
@@ -21,13 +23,24 @@ import { WorldSheet } from './sector/WorldSheet';
 export function App() {
   const game = useGame();
   const view = useSnapshot();
+  // Desktop-Modus (ab 1024 px): Reiterzeile unter der Kopfzeile, der Log links auf jedem Screen.
+  const desktop = useIsDesktop();
   // Der Text im Fragefeld gilt für Orakel und Karte; nach dem Bestätigen der Karte ist er verbraucht.
   const [question, setQuestion] = useState('');
   // Ob das Menü offen ist, ist reine Darstellung; was man darin wählt, entscheidet der Controller.
   const [menu, setMenu] = useState(false);
+  // Das Ziel der Deutung: das angetippte Ergebnis, solange der Log gleich lang ist. Hält es die App
+  // und nicht der Orakel-Screen, kann im Desktop-Modus auch der Log links ein Ziel wählen.
+  const [chosen, setChosen] = useState<{ index: number; length: number } | undefined>(undefined);
 
   if (!view.ready) return <div className="app" aria-busy="true" />;
   const closeResult = () => game.closeResult();
+  const picked = chosen !== undefined && chosen.length === view.log.length && view.log[chosen.index]?.kind !== 'note' ? chosen.index : undefined;
+  const newest = view.log.findLastIndex((item) => item.kind !== 'note');
+  const target = picked ?? (newest < 0 ? undefined : newest);
+  const marked = question.trim() !== '';
+  const onPick = (index: number) => setChosen({ index, length: view.log.length });
+  const onClearTarget = () => setChosen(undefined);
 
   return (
     <div className="app">
@@ -52,14 +65,6 @@ export function App() {
           Dieser Browser speichert hier nichts dauerhaft: Kampagnen, Charaktere und Sektor sind beim Schließen weg. Zum Sichern über die Kampagnenwahl exportieren.
         </p>
       )}
-
-      {view.screen === 'oracle' && <OracleScreen view={view} question={question} onQuestion={setQuestion} />}
-      {view.screen === 'encounter' && <EncounterScreen view={view} />}
-      {view.screen === 'combat' && <CombatScreen view={view} />}
-      {view.screen === 'shop' && <ShopScreen view={view} />}
-      {view.screen === 'characters' && <CharactersScreen view={view} />}
-      {view.screen === 'sector' && <SectorScreen view={view} />}
-      {view.screen === 'about' && <AboutScreen persistent={view.persistent} durable={view.durable} />}
 
       <nav className="nav" aria-label="Bereiche">
         <button type="button" aria-current={view.screen === 'oracle' ? 'page' : undefined} onClick={() => game.showScreen('oracle')}>
@@ -87,6 +92,30 @@ export function App() {
           Sektor
         </button>
       </nav>
+
+      <div className="stage">
+        {desktop && (
+          <aside className="log-panel" aria-label="Log">
+            <LogList
+              log={view.log}
+              target={view.screen === 'oracle' ? target : undefined}
+              marked={view.screen === 'oracle' && marked}
+              onPick={view.screen === 'oracle' ? onPick : () => undefined}
+            />
+          </aside>
+        )}
+        <div className="screen-host">
+          {view.screen === 'oracle' && (
+            <OracleScreen view={view} question={question} onQuestion={setQuestion} inlineLog={!desktop} target={target} picked={picked} marked={marked} onPick={onPick} onClearTarget={onClearTarget} />
+          )}
+          {view.screen === 'encounter' && <EncounterScreen view={view} />}
+          {view.screen === 'combat' && <CombatScreen view={view} />}
+          {view.screen === 'shop' && <ShopScreen view={view} />}
+          {view.screen === 'characters' && <CharactersScreen view={view} />}
+          {view.screen === 'sector' && <SectorScreen view={view} />}
+          {view.screen === 'about' && <AboutScreen persistent={view.persistent} durable={view.durable} />}
+        </div>
+      </div>
 
       {menu && <Menu view={view} onClose={() => setMenu(false)} />}
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
