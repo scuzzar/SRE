@@ -1,18 +1,19 @@
-import { expect, test, type TestInfo } from '@playwright/test';
+import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
-// Der Desktop-Modus (ab 1024 px): die Bereiche stehen als Reiterzeile unter der Kopfzeile, und
-// das Orakel steht als Spalte rechts neben jedem Bereich – mit Charakteren, Log, Orakel und Proben.
+// Der Desktop-Modus (ab 1024 px): die Bereiche stehen als Reiterzeile unter der Kopfzeile, darunter
+// drei Spalten: links das Orakel mit Log, daneben die Charakterspalte, rechts der gewählte Bereich.
 // Diese Tests prüfen genau das und laufen nur im Projekt „desktop“; im Projekt „mobil“ werden sie
 // übersprungen.
 
 const onlyDesktop = (testInfo: TestInfo) => testInfo.skip(testInfo.project.name !== 'desktop', 'nur im Desktop-Modus');
 const areas = ['Begegnung', 'Kampf', 'Shop', 'Charaktere', 'Sektor'];
+const column = (page: Page) => page.getByRole('complementary', { name: 'Charakterspalte' }).getByRole('region', { name: 'Spielercharaktere' });
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-test('Die Bereiche stehen oben als Reiter, das Orakel steht rechts – auf jedem Screen', async ({ page }, testInfo) => {
+test('Reiter oben; darunter links Orakel, daneben die Charaktere, rechts der Bereich – auf jedem Screen', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
   const nav = page.getByRole('navigation', { name: 'Bereiche' });
   const viewport = page.viewportSize()!;
@@ -21,18 +22,21 @@ test('Die Bereiche stehen oben als Reiter, das Orakel steht rechts – auf jedem
   // Das Orakel ist kein Reiter mehr; beim Start steht der Bereich Sektor offen.
   await expect(nav.getByRole('button', { name: 'Orakel', exact: true })).toHaveCount(0);
   await expect(nav.getByRole('button', { name: 'Sektor', exact: true })).toHaveAttribute('aria-current', 'page');
-  const panel = page.getByRole('complementary', { name: 'Orakel' });
+  const oracle = page.getByRole('complementary', { name: 'Orakel' });
+  const chars = page.getByRole('complementary', { name: 'Charakterspalte' });
   for (const name of areas) {
     await nav.getByRole('button', { name, exact: true }).click();
-    await expect(panel).toBeVisible();
-    const box = (await panel.boundingBox())!;
-    const host = (await page.locator('.screen-host').boundingBox())!;
-    expect(box.x).toBeGreaterThanOrEqual(host.x + host.width - 1);
-    expect(box.width).toBeGreaterThanOrEqual(400);
-    // Charaktere, Log und die Knöpfe des Orakels stehen in der Spalte.
-    await expect(panel.getByRole('region', { name: 'Spielercharaktere' })).toBeVisible();
-    await expect(panel.getByRole('button', { name: 'Karte ziehen' })).toBeVisible();
-    await expect(panel.getByRole('button', { name: '2W6' })).toBeVisible();
+    const o = (await oracle.boundingBox())!;
+    const c = (await chars.boundingBox())!;
+    const h = (await page.locator('.screen-host').boundingBox())!;
+    expect(c.x).toBeGreaterThanOrEqual(o.x + o.width - 1);
+    expect(h.x).toBeGreaterThanOrEqual(c.x + c.width - 1);
+    // Log und Knöpfe im Orakel, die Charaktere nur in ihrer Spalte, keine Leiste im Bereich.
+    await expect(oracle.getByRole('button', { name: 'Karte ziehen' })).toBeVisible();
+    await expect(oracle.getByRole('button', { name: '2W6' })).toBeVisible();
+    await expect(oracle.locator('.strip')).toHaveCount(0);
+    await expect(column(page).getByRole('article')).toHaveCount(2);
+    await expect(page.locator('.screen-host .strip')).toHaveCount(0);
   }
 });
 
@@ -60,11 +64,11 @@ test('Deuten geht in jedem Bereich: das angetippte Ergebnis wird zum Ziel der De
   await expect(panel.locator('.entry', { hasText: 'Orakel' }).locator('.interpretation')).toContainText('Der Wurf ist gut.');
 });
 
-test('Eine Probe aus der Orakel-Spalte lässt sich in jedem Bereich würfeln', async ({ page }, testInfo) => {
+test('Eine Probe aus der Charakterspalte lässt sich in jedem Bereich würfeln', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
   const panel = page.getByRole('complementary', { name: 'Orakel' });
   await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Begegnung', exact: true }).click();
-  await panel.getByRole('article', { name: 'Kira Vant' }).getByRole('button', { name: 'Pilot-2' }).click();
+  await column(page).getByRole('article', { name: 'Kira Vant' }).getByRole('button', { name: 'Pilot-2' }).click();
   await panel.getByRole('button', { name: 'Probe würfeln' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Weiter' }).click();
   await expect(panel.locator('.entry').last()).toContainText('Kira Vant · Pilot-2');
@@ -106,26 +110,33 @@ test('Die Sektor-Karte passt ganz in den Screen, und der Screen wird nicht breit
   expect(host.width).toBeLessThanOrEqual(960);
 });
 
-test('Die Leisten zeigen alle Charaktere offen; ein Klick auf eine Karte holt sie nach oben, links wie rechts', async ({ page }, testInfo) => {
+test('Die Charakterspalte blendet ein, was der Bereich braucht; ein Klick auf eine Karte holt sie nach oben', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
-  const panel = page.getByRole('complementary', { name: 'Orakel' });
-  const strip = panel.getByRole('region', { name: 'Spielercharaktere' });
-  // Beide Karten untereinander, beide mit Fertigkeiten; Punkte und Einklappen gibt es nicht.
-  await expect(strip.getByRole('article')).toHaveCount(2);
-  const kira = (await strip.getByRole('article', { name: 'Kira Vant' }).boundingBox())!;
-  const jonas = (await strip.getByRole('article', { name: 'Jonas Reyl' }).boundingBox())!;
-  expect(jonas.y).toBeGreaterThan(kira.y + kira.height - 1);
-  await expect(strip.getByRole('article', { name: 'Jonas Reyl' })).toContainText('Ste-1');
-  await expect(strip.getByRole('group', { name: 'Charakter oben wählen' })).toHaveCount(0);
-  await expect(strip.getByRole('button', { name: 'Leiste einklappen' })).toHaveCount(0);
+  const nav = page.getByRole('navigation', { name: 'Bereiche' });
+  const kira = column(page).getByRole('article', { name: 'Kira Vant' });
+  const jonas = column(page).getByRole('article', { name: 'Jonas Reyl' });
+  // Immer: beide untereinander mit Attributen und Fertigkeiten; Punkte und Einklappen gibt es nicht.
+  const k = (await kira.boundingBox())!;
+  expect((await jonas.boundingBox())!.y).toBeGreaterThan(k.y + k.height - 1);
+  await expect(jonas).toContainText('Ste-1');
+  await expect(column(page).getByRole('button', { name: 'Leiste einklappen' })).toHaveCount(0);
+  await expect(kira.getByRole('group', { name: 'Waffe in der Hand' })).toHaveCount(0);
 
-  // Im Shop: links kompakt nebeneinander; Jonas per Klick auf seine Karte nach oben – auch rechts.
-  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Shop', exact: true }).click();
-  const left = page.locator('.screen-host').getByRole('region', { name: 'Spielercharaktere' });
-  await left.getByRole('article', { name: 'Jonas Reyl' }).locator('.strip-upp').click();
-  await expect(left.getByRole('article', { name: 'Jonas Reyl' })).toHaveClass(/focus/);
-  await expect(strip.getByRole('article', { name: 'Jonas Reyl' })).toHaveClass(/focus/);
-  await expect(strip.getByRole('article', { name: 'Kira Vant' })).not.toHaveClass(/focus/);
+  // Im Kampf: Rüstung und Waffen; antippen nimmt die Waffe in die Hand.
+  await nav.getByRole('button', { name: 'Kampf', exact: true }).click();
+  await expect(kira).toContainText('Jack');
+  await kira.getByRole('button', { name: /Automatic Pistol/ }).click();
+  await expect(page.getByRole('heading', { name: 'Automatic Pistol' })).toBeVisible();
+
+  // Im Shop: Credits und Besitz; Jonas per Klick auf seine Karte nach oben, dann kauft man für ihn.
+  await nav.getByRole('button', { name: 'Shop', exact: true }).click();
+  await expect(kira).toContainText('Cr 12.400');
+  await expect(kira).toContainText('Besitz');
+  await expect(jonas).toContainText('Blade');
+  await jonas.locator('.upp').click();
+  await expect(jonas).toHaveClass(/focus/);
+  await expect(kira).not.toHaveClass(/focus/);
+  await expect(page.locator('.screen-host')).toContainText('Jonas Reyl hat die Fertigkeit');
 });
 
 test('Die Ziffern wählen die Bereiche der Reiterzeile', async ({ page }, testInfo) => {

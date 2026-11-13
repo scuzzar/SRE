@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { host } from './layout';
+import { characters } from './layout';
 
 /** Eine fertige Welt im Subsektor, lange gedrückt durchgewürfelt und Regina genannt; ihre Weltkarte bleibt offen. */
 async function makeWorld(page: Page) {
@@ -81,7 +81,7 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
   await expect(page.locator('.shop-booking').first()).toContainText('1 × Submachinegun für Kira Vant auf Kessra');
 
   // Jonas kommt oben in die Leiste und verkauft im Bereich Verkauf seine Blade; vorgeschlagen ist der halbe Preis, Cr 25.
-  await host(page).getByRole('button', { name: 'Jonas Reyl nach oben' }).click();
+  await characters(page).getByRole('button', { name: 'Jonas Reyl nach oben' }).click();
   await page.getByRole('tab', { name: 'Verkauf' }).click();
   await expect(page.getByRole('row', { name: /Blade/ })).toContainText('Primärwaffe');
   await page.getByRole('button', { name: 'Blade verkaufen' }).click();
@@ -91,7 +91,7 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
   await expect(page.locator('.shop-funds')).toContainText('Cr 5.495');
   await page.getByRole('tab', { name: 'Kasse' }).click();
   await expect(page.locator('.shop-booking').first()).toContainText('1 × Blade von Jonas Reyl auf Kessra');
-  await host(page).getByRole('button', { name: 'Kira Vant nach oben' }).click();
+  await characters(page).getByRole('button', { name: 'Kira Vant nach oben' }).click();
 
   // Kira hatte schon die Automatic Pistol; der Spear wird ihre Sekundärwaffe.
   await page.getByRole('navigation').getByRole('button', { name: 'Kampf' }).click();

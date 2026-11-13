@@ -6251,22 +6251,61 @@ button:disabled {
     border-bottom-color: var(--accent-text);
   }
 
-  /* Screen und Orakel-Spalte stehen als ein Block in der Mitte; der Screen wird nie breiter als
-     960 px, damit Knöpfe, Listen und Tabellen auf großen Bildschirmen nicht auseinanderlaufen. */
+  /* Drei Spalten als ein Block in der Mitte: links Orakel mit Log, daneben die Charaktere, rechts der
+     gewählte Bereich. Der Bereich wird nie breiter als 960 px, damit Knöpfe, Listen und Tabellen
+     auf großen Bildschirmen nicht auseinanderlaufen. */
   .stage {
     order: 3;
     display: grid;
-    grid-template-columns: minmax(0, 960px) clamp(400px, 32vw, 480px);
+    grid-template-columns: clamp(300px, 24vw, 420px) clamp(290px, 22vw, 380px) minmax(0, 960px);
     grid-template-rows: minmax(0, 1fr);
     justify-content: center;
   }
 
-  /* Die Orakel-Spalte ist der Orakel-Screen des Smartphones: Charaktere, Log, Orakel und Proben. */
+  /* Die Orakel-Spalte ist der Orakel-Screen des Smartphones ohne die Leiste: Log, Orakel und Proben. */
   .oracle-panel {
     display: flex;
     flex-direction: column;
     min-height: 0;
-    border-right: 1px solid var(--rule);
+    border-left: 1px solid var(--rule);
+  }
+
+  /* Die Charakterspalte scrollt in sich, wenn die Karten nicht in die Höhe passen. */
+  .character-panel {
+    min-height: 0;
+    overflow-y: auto;
+    border-left: 1px solid var(--rule);
+    background: var(--deep);
+  }
+
+  .char-column {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 0;
+    box-shadow: none;
+  }
+
+  .char-column.strip-empty {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .char-column .strip-card {
+    flex: 0 0 auto;
+  }
+
+  .char-column .strip-card:not(.focus) {
+    cursor: pointer;
+    background: var(--panel);
+    border-top-color: var(--line-strong);
+  }
+
+  .char-column-possessions {
+    margin: 2px 0 0;
+    font-size: 13px;
+    line-height: 1.4;
   }
 
   /* Der Screen ist ein Container, damit die Sektor-Karte sich an seiner Höhe ausrichten kann. */
@@ -6302,6 +6341,25 @@ button:disabled {
     max-width: 60cqw;
   }
 
+  /* Ist der Bereich schmal (bei drei Spalten unter etwa 1280 px Fensterbreite), stehen Legende und
+     Welten unter der Karte statt daneben. */
+  @container (max-width: 620px) {
+    .screen-host .sector {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .screen-host .sector > *,
+    .screen-host .sector > .sector-zoom-frame {
+      grid-column: 1;
+      grid-row: auto;
+    }
+
+    .screen-host .sector > .sector-zoom-frame {
+      width: min(100%, calc((100cqh - 190px) * var(--map-ratio)));
+      max-width: none;
+    }
+  }
+
   /* Blätter und Popups stehen mittig, statt über die volle Breite zu laufen. */
   .overlay {
     align-items: center;
@@ -6316,36 +6374,6 @@ button:disabled {
 
   .result {
     max-width: 560px;
-  }
-
-  /* Die Leiste zeigt alle Charaktere aufgeklappt: in der Orakel-Spalte untereinander (scrollt in
-     sich, wenn es mehr werden, als in die obere Hälfte passen), in Kampf und Shop kompakt
-     nebeneinander. Die Karte oben trägt die rote Kante, die anderen holt ein Klick nach oben. */
-  .strip-list .strip-track {
-    flex-direction: column;
-    max-height: 45vh;
-    overflow-x: hidden;
-    overflow-y: auto;
-    scroll-snap-type: none;
-    scrollbar-width: thin;
-  }
-
-  .strip-list .strip-card,
-  .strip-list .strip-card:only-child {
-    flex: 0 0 auto;
-  }
-
-  .strip-list .strip-card:not(.focus) {
-    cursor: pointer;
-    background: var(--panel);
-    border-top-color: var(--line-strong);
-  }
-
-  .strip-list.strip-combat .strip-track {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
-    max-height: none;
-    overflow: visible;
   }
 
   .char-grid {
@@ -6377,7 +6405,7 @@ button:disabled {
     border-color: var(--line-strong);
   }
 
-  .strip-list .strip-card:not(.focus):hover {
+  .char-column .strip-card:not(.focus):hover {
     border-color: var(--accent-text);
   }
 

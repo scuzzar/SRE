@@ -7,6 +7,7 @@ import { haptic } from '../haptics';
 import { CloseIcon } from '../icons';
 import { Form } from '../Form';
 import { CharacterStrip } from '../oracle/CharacterStrip';
+import { useIsDesktop } from '../media';
 
 type FreeKind = 'income' | 'expense' | 'deposit' | 'payout';
 const freeKinds: readonly FreeKind[] = ['income', 'expense', 'deposit', 'payout'];
@@ -30,6 +31,7 @@ const areas: readonly { readonly id: Area; readonly name: string }[] = [
  */
 export function ShopScreen({ view }: { view: Snapshot }) {
   const shop = view.shop;
+  const desktop = useIsDesktop();
   // Der gewählte Bereich gilt für die Kampagne, in der man ihn gewählt hat; sonst öffnet der Shop auf
   // einer Welt bei den Waffen, ohne Welt bei der Kasse.
   const [chosen, setChosen] = useState<{ readonly campaign: string; readonly area: Area } | undefined>(undefined);
@@ -50,7 +52,8 @@ export function ShopScreen({ view }: { view: Snapshot }) {
   };
   return (
     <div className="screen">
-      <CharacterStrip view={view} shop />
+      {/* Im Desktop-Modus stehen Credits und Besitz in der Charakterspalte neben dem Shop. */}
+      {!desktop && <CharacterStrip view={view} shop />}
       <div className="shop-top">
         <div className="shop-head">
           {shop.world ? (

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { host, openOracle, oracle } from './layout';
+import { characters, host, openOracle, oracle } from './layout';
 
 async function openCharacters(page: Page) {
   await page.goto('/');
@@ -7,7 +7,7 @@ async function openCharacters(page: Page) {
 }
 
 /** Die Leiste oben im Orakel-Screen; nur der Charakter oben ist für Screenreader und Tests sichtbar. */
-const strip = (page: Page) => oracle(page).getByRole('region', { name: 'Spielercharaktere' });
+const strip = (page: Page) => characters(page).getByRole('region', { name: 'Spielercharaktere' });
 const top = (page: Page, name: string) => strip(page).getByRole('article', { name });
 const dock = (page: Page) => oracle(page).getByRole('region', { name: 'Orakel und Proben' });
 const card = (page: Page, name: string) => host(page).getByRole('article', { name });

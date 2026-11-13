@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useIsDesktop } from '../media';
 import { DiceRoll } from '../oracle/DiceRoll';
 import type { CombatView, HealingView, Snapshot } from '../../controller';
 import { EncounterIntro, FightScreen, SurpriseDialog } from './FightScreen';
@@ -27,14 +28,19 @@ export interface Patient {
   readonly name: string;
 }
 
-export function CombatScreen({ view }: { view: Snapshot }) {
+/**
+ * Wen der Heilen-Dialog zeigt, hält die App: Im Desktop-Modus öffnet ihn auch „Heilen“ in der
+ * Charakterspalte neben dem Screen.
+ */
+export function CombatScreen({ view, patient, onPatient: setPatient }: { view: Snapshot; patient: Patient | undefined; onPatient: (patient: Patient | undefined) => void }) {
   const combat = view.combat;
-  const [patient, setPatient] = useState<Patient | undefined>(undefined);
+  // Im Desktop-Modus stehen die Charaktere mit ihren Waffen in der Charakterspalte.
+  const desktop = useIsDesktop();
   const healing = patient && combat && (patient.npc === undefined && !combat.sim ? combat.healing : combat.sim?.fighters.find((f) => f.id === (patient.npc ?? patient.pc))?.healing);
   return (
     <div className="screen">
       {/* Ohne Begegnung steht der Charakter oben in der Leiste; in der Kampfsimulation stehen die SC links in der Arena. */}
-      {!combat?.sim && <CharacterStrip view={view} weapons heal={combat && pcHeal(combat, setPatient)} />}
+      {!desktop && !combat?.sim && <CharacterStrip view={view} weapons heal={combat && pcHeal(combat, setPatient)} />}
       {!combat ? (
         <section className="scroll combat-scroll">
           <p className="log-empty">Ohne lebenden Charakter gibt es keinen Angriff.</p>
@@ -64,7 +70,7 @@ export function CombatScreen({ view }: { view: Snapshot }) {
  * Heilen für den Charakter oben, wenn er verwundet ist und sich etwas tun lässt: in der Simulation als
  * Kämpfer, sonst mit den Werten der Waffentabelle. Der Knopf steht in der Leiste oben auf seiner Karte.
  */
-function pcHeal(combat: CombatView, onHeal: (patient: Patient) => void): { readonly name: string; readonly onHeal: () => void } | undefined {
+export function pcHeal(combat: CombatView, onHeal: (patient: Patient) => void): { readonly name: string; readonly onHeal: () => void } | undefined {
   const pc = combat.sim?.fighters.find((f) => f.side === 'pcs' && f.name === combat.character);
   const healing = combat.sim ? pc?.healing : combat.healing;
   if (!healing || !(healing.wake || healing.treatable)) return undefined;

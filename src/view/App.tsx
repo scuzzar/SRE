@@ -3,7 +3,8 @@ import type { Screen } from '../controller';
 import { AboutScreen } from './AboutScreen';
 import { CampaignSheet } from './CampaignSheet';
 import { CharacterEditor } from './characters/CharacterEditor';
-import { CombatScreen } from './combat/CombatScreen';
+import { CombatScreen, pcHeal, type Patient } from './combat/CombatScreen';
+import { CharacterColumn } from './characters/CharacterColumn';
 import { EncounterScreen } from './combat/EncounterScreen';
 import { ShopScreen } from './shop/ShopScreen';
 import { CharactersScreen } from './characters/CharactersScreen';
@@ -34,7 +35,8 @@ const areas: readonly { readonly id: Screen; readonly label: string; readonly Ic
 export function App() {
   const game = useGame();
   const view = useSnapshot();
-  // Desktop-Modus (ab 1024 px): Reiterzeile unter der Kopfzeile, das Orakel rechts auf jedem Screen.
+  // Desktop-Modus (ab 1024 px): Reiterzeile unter der Kopfzeile, darunter drei Spalten: Orakel mit
+  // Log, die Charaktere, der gewählte Bereich.
   const desktop = useIsDesktop();
   // Der Text im Fragefeld gilt für Orakel und Karte; nach dem Bestätigen der Karte ist er verbraucht.
   const [question, setQuestion] = useState('');
@@ -43,6 +45,9 @@ export function App() {
   // Das Ziel der Deutung: das angetippte Ergebnis, solange der Log gleich lang ist. Die App hält es
   // zusammen mit dem Fragefeld, damit es den Wechsel zwischen den Bereichen übersteht.
   const [chosen, setChosen] = useState<{ index: number; length: number } | undefined>(undefined);
+  // Wen der Heilen-Dialog im Kampf zeigt; die App hält es, weil ihn im Desktop-Modus auch die
+  // Charakterspalte öffnet.
+  const [patient, setPatient] = useState<Patient | undefined>(undefined);
   // Die Bereiche in der Reihenfolge der Leiste; im Desktop-Modus ohne das Orakel, das rechts steht.
   const shown = desktop ? areas.filter((a) => a.id !== 'oracle') : areas;
   // Esc schließt das oberste Popup; die Ziffern wählen den Bereich an dieser Stelle der Leiste.
@@ -58,10 +63,11 @@ export function App() {
   const onPick = (index: number) => setChosen({ index, length: view.log.length });
   const onClearTarget = () => setChosen(undefined);
 
-  // Im Desktop-Modus ist das Orakel kein eigener Bereich, sondern die Spalte rechts; wer dort noch
+  // Im Desktop-Modus ist das Orakel kein eigener Bereich, sondern die Spalte links; wer dort noch
   // auf „Orakel“ steht (frisch gestartet oder das Fenster breit gezogen), sieht den Sektor.
   const screen = desktop && view.screen === 'oracle' ? 'sector' : view.screen;
-  const oracle = <OracleScreen view={view} question={question} onQuestion={setQuestion} target={target} picked={picked} marked={marked} onPick={onPick} onClearTarget={onClearTarget} />;
+  const oracle = <OracleScreen view={view} question={question} onQuestion={setQuestion} target={target} picked={picked} marked={marked} onPick={onPick} onClearTarget={onClearTarget} strip={!desktop} />;
+  const heal = screen === 'combat' && view.combat && !view.combat.sim ? pcHeal(view.combat, setPatient) : undefined;
 
   return (
     <div className="app">
@@ -97,20 +103,25 @@ export function App() {
       </nav>
 
       <div className="stage">
-        <div className="screen-host">
-          {screen === 'oracle' && oracle}
-          {screen === 'encounter' && <EncounterScreen view={view} />}
-          {screen === 'combat' && <CombatScreen view={view} />}
-          {screen === 'shop' && <ShopScreen view={view} />}
-          {screen === 'characters' && <CharactersScreen view={view} />}
-          {screen === 'sector' && <SectorScreen view={view} />}
-          {screen === 'about' && <AboutScreen persistent={view.persistent} durable={view.durable} />}
-        </div>
         {desktop && (
           <aside className="oracle-panel" aria-label="Orakel">
             {oracle}
           </aside>
         )}
+        {desktop && (
+          <aside className="character-panel" aria-label="Charakterspalte">
+            <CharacterColumn view={view} screen={screen} heal={heal} />
+          </aside>
+        )}
+        <div className="screen-host">
+          {screen === 'oracle' && oracle}
+          {screen === 'encounter' && <EncounterScreen view={view} />}
+          {screen === 'combat' && <CombatScreen view={view} patient={patient} onPatient={setPatient} />}
+          {screen === 'shop' && <ShopScreen view={view} />}
+          {screen === 'characters' && <CharactersScreen view={view} />}
+          {screen === 'sector' && <SectorScreen view={view} />}
+          {screen === 'about' && <AboutScreen persistent={view.persistent} durable={view.durable} />}
+        </div>
       </div>
 
       {menu && <Menu view={view} onClose={() => setMenu(false)} />}

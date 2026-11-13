@@ -17,7 +17,7 @@ import { useShortcuts } from '../keyboard';
  * als Frage, „Deuten“ als Deutung zum markierten Ergebnis, „Notiz“ als Notiz. Der Text während des
  * Tippens ist reine Darstellung; übergeben wird beim Absenden.
  * Das Ziel der Deutung (welches Ergebnis angetippt ist) hält die App; der Screen zeigt es in der
- * Zielzeile an. Im Desktop-Modus steht dieser Screen als Orakel-Spalte rechts neben jedem Bereich.
+ * Zielzeile an. Im Desktop-Modus steht dieser Screen ohne die Leiste als Orakel-Spalte links.
  */
 export function OracleScreen({
   view,
@@ -28,6 +28,7 @@ export function OracleScreen({
   marked,
   onPick,
   onClearTarget,
+  strip = true,
 }: {
   view: Snapshot;
   question: string;
@@ -39,6 +40,8 @@ export function OracleScreen({
   marked: boolean;
   onPick: (index: number) => void;
   onClearTarget: () => void;
+  /** Im Desktop-Modus stehen die Charaktere in der eigenen Charakterspalte, nicht hier. */
+  strip?: boolean;
 }) {
   const game = useGame();
   // Welcher Logeintrag gerade als Wurf im Vordergrund rollt; reine Anzeige, im Log steht er schon.
@@ -80,7 +83,7 @@ export function OracleScreen({
 
   return (
     <div className="screen">
-      <CharacterStrip view={view} />
+      {strip && <CharacterStrip view={view} />}
       <LogList log={view.log} target={target} marked={marked} onPick={onPick} />
       <section className="dock" aria-label="Orakel und Proben">
         {task && (

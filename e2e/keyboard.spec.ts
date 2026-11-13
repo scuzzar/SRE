@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openOracle, oracle } from './layout';
+import { characters, openOracle, oracle } from './layout';
 
 // Tastatur: K zieht eine Karte, W würfelt 2W6, J fragt das Orakel; Esc schließt das oberste Popup.
 // Gilt in beiden Layouts, auf dem Smartphone im Orakel-Screen.
@@ -39,7 +39,7 @@ test('K zieht eine Karte, Esc verwirft sie; Esc schließt auch den Editor', asyn
   }).toPass();
   await expect(oracle(page).locator('.entry')).toHaveCount(0);
 
-  await oracle(page).getByRole('button', { name: 'Kira Vant bearbeiten' }).click();
+  await characters(page).getByRole('button', { name: 'Kira Vant bearbeiten' }).click();
   const editor = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
   await expect(editor).toBeVisible();
   await page.keyboard.press('Escape');
@@ -47,7 +47,7 @@ test('K zieht eine Karte, Esc verwirft sie; Esc schließt auch den Editor', asyn
 });
 
 test('Esc schließt das Ergebnis einer Probe wie „Weiter“', async ({ page }) => {
-  await oracle(page).getByRole('region', { name: 'Spielercharaktere' }).getByRole('article', { name: 'Kira Vant' }).getByRole('button', { name: 'Pilot-2' }).click();
+  await characters(page).getByRole('region', { name: 'Spielercharaktere' }).getByRole('article', { name: 'Kira Vant' }).getByRole('button', { name: 'Pilot-2' }).click();
   await page.keyboard.press('w');
   const result = page.getByRole('alertdialog');
   await expect(result.getByRole('button', { name: 'Weiter' })).toBeVisible();
