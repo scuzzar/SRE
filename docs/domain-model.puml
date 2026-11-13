@@ -81,8 +81,8 @@ hide <<value>> stereotype
 ' Kampagne und Charaktere
   class Campaign $kampagne {
     name: string
-    $new("2026-11-13c", "key: string")
-    $new("2026-11-13c", "changedAt: datetime")
+    key: string
+    changedAt: datetime
     /funds: number
     quantityDie: number [0..1]
     /load: number
@@ -235,7 +235,7 @@ hide <<value>> stereotype
   }
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
-  class Conflict <<transient>> $kampagne $newClass("2026-11-13c") {
+  class Conflict <<transient>> $kampagne {
     /localChangedAt: datetime [0..1]
     /remoteChangedAt: datetime [0..1]
     /localLogCount: number [0..1]
@@ -774,8 +774,8 @@ Campaign "0..1" --> "0..1" Character : focus
 Campaign "1" *-- "*" LogEntry : log {ordered}
 Campaign "*" --> "0..1" Hex : location
 Campaign "1" *-- "*" Booking : bookings {ordered}
-Conflict "*" -$newArrow("2026-11-13c")-> "0..1" Campaign : local
-Conflict "*" -$newArrow("2026-11-13c")-> "0..1" Campaign : remote
+Conflict "*" --> "0..1" Campaign : local
+Conflict "*" --> "0..1" Campaign : remote
 Booking "*" --> "0..1" Character : for
 Booking "*" --> "0..1" Item : bought
 Booking "*" --> "0..1" Item : sold

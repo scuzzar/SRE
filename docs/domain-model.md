@@ -255,7 +255,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Gepäck). Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-13-gruppengepaeck.png`](changes/2026-11-13-gruppengepaeck.png).
 >
-> **Wartet auf Freigabe** (13. November 2026): **Abgleich mit OneDrive** (siehe *Abgleich mit
+> Am 13. November 2026 freigegeben: **Abgleich mit OneDrive** (siehe *Abgleich mit
 > OneDrive*). Nach den Antworten des Owners: automatisch, im App-Ordner, bei einem Konflikt fragt
 > die App, auf Wunsch bleiben beide Stände. Neu im Bild: `Campaign.key`, `Campaign.changedAt` und der flüchtige `Conflict`. Der
 > Ausschnitt dazu liegt unter
@@ -288,7 +288,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-[Abgleich mit OneDrive](changes/2026-11-13-abgleich-onedrive.png).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -535,7 +535,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   gegen die Regeln dieses Modells geprüft, auch jeder Verweis in die Referenzdaten und auf die
   eigenen Charaktere; ist etwas falsch, wird nichts importiert. Ein Import legt immer eine neue
   Kampagne an, auch wenn es dieselbe schon gibt, und überschreibt nie eine bestehende.
-- **Abgleich mit OneDrive** (2026-11-13c, wartet auf Freigabe). Wer sich in der Kampagnenwahl bei
+- **Abgleich mit OneDrive** (2026-11-13c). Wer sich in der Kampagnenwahl bei
   Microsoft anmeldet, hat seine Kampagnen auf jedem Gerät, auf dem er das auch tut. Ohne Anmeldung
   bleibt alles wie bisher: nur auf dem Gerät.
   - *Wo.* Im App-Ordner des OneDrive (`Apps/Solo RPG Engine`), je Kampagne eine Kampagnendatei, die
