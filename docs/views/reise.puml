@@ -94,12 +94,16 @@ hide <<value>> stereotype
     dice: number[1..2]
     target: number
     /passed: boolean
+    reactionDice: number[2] [0..1]
+    reactionDm: number [0..1]
+    /reaction: number [0..1]
   }
   enum CheckKind <<value>> $reise $newClass("2026-11-13d") {
     random
     animal
     patron
     rumor
+    legal
   }
   class Journey $reise $newClass("2026-11-13d") {
     days: number

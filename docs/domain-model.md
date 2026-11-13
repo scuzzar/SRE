@@ -267,7 +267,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > High, Middle oder Low Passage bis Sprung 2, immer eine Woche; Low Lottery mit 1W6 NSC; Zeit und
 > Begegnungen getrennt, aber die Tests stehen im Log, damit die Knöpfe zählen können. Neu im Bild:
 > `Campaign.day`, `/date`, `/weekday`, `LogEntry.day`, die Logeinträge `TimePassed`, `CheckRoll`
-> (mit `CheckKind`) und `Journey` (mit `Passenger` und `LowBerth`), die Buchungsart `lottery` und
+> (mit `CheckKind`, auch dem neuen Test **Polizei** `legal`) und `Journey` (mit `Passenger` und `LowBerth`), die Buchungsart `lottery` und
 > der Verweis `Booking.won`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-13-zeit-und-reisen.png`](changes/2026-11-13-zeit-und-reisen.png).
 
@@ -388,7 +388,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Zeit vergeht | `TimePassed` | Logeintrag: Die Gruppe lässt Tage vergehen oder beendet die Woche |
 | Woche beenden | `TimePassed.week` | Springt zum nächsten Sonntag (am Sonntag eine Woche weiter) |
 | Tag im Log | `LogEntry.day` | An welchem Spieltag ein Logeintrag entstand; fehlt bei Einträgen von vor der Spielzeit |
-| Test (im Log) | `CheckRoll`, `CheckKind` | Ein gewürfelter Test einer Begegnungsart: random, animal, patron, rumor |
+| Test (im Log) | `CheckRoll`, `CheckKind` | Ein gewürfelter Test einer Begegnungsart: random, animal, patron, rumor, legal |
+| Polizei, Legal Encounter | `CheckKind.legal` | Einmal je Woche 2W6 gleich oder über der Gesetzesstufe des Aufenthaltsorts, sonst hält die Polizei die Gruppe an (SE S. 20) |
 | Reise | `Journey` | Logeintrag: Die Gruppe reist mit Passagen von einer Welt zur anderen, eine Woche im Sprung |
 | Passagier | `Passenger` | Ein Charakter auf der Reise mit seiner Passage (High, Middle oder Low Passage) |
 | Kälteschlafkoje | `LowBerth` | Ein Low-Passagier der Reise, SC oder NSC, mit Wurf zum Aufwachen und Tipp der Lotterie |
@@ -897,8 +898,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   vergeht keine Zeit.
   - *Erinnerung*: Fehlen im ablaufenden Zeitraum Tests, sagt der Knopf das, statt gleich
     weiterzuschalten: bei Tagen die Zufallsbegegnung (heute nicht getestet) und, wenn das Gelände
-    Tiere hat, die Tiere (heute weniger als 2×); bei Woche beenden dazu Patron und Gerücht (diese
-    Woche nicht getestet). **Langes Drücken** schaltet trotzdem weiter, ohne Begegnung: je nach
+    Tiere hat, die Tiere (heute weniger als 2×); bei Woche beenden dazu Patron, Gerücht und, bei Gesetz 1 oder
+    mehr, Polizei (diese Woche nicht getestet). **Langes Drücken** schaltet trotzdem weiter, ohne Begegnung: je nach
     Lage will man mehr oder weniger Begegnungen. Die Tests würfelt die Zeit nie selbst.
 - **Reise** (2026-11-13d, offen). Reisen geht zurzeit nur mit Passagen (High, Middle, Low; SE S. 8
   f.), noch nicht mit eigenem Schiff.
@@ -1061,10 +1062,18 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Zufallsbegegnung die Art aus der Liste wählt, überspringt den Test.
   - *Im Log* (2026-11-13d, offen): Jeder Test ist ein Logeintrag `CheckRoll` mit Art, Würfeln und
     Zielwert, am heutigen Spieltag. Die Tiere testen 5+ auf 1W6 (SR 47) ebenso.
+  - *Polizei* (`legal`, 2026-11-13d, offen): eine neue Begegnungsart im Reiter Begegnung, nur mit
+    Aufenthaltsort. Einmal je Woche (Wunsch des Owners; die SE sagt „once per day“) würfelt man 2W6;
+    gleich oder über der Gesetzesstufe der Welt (`target`) hat die Gruppe Ruhe. Darunter hält ein
+    Polizist die Gruppe an und verlangt Ausweise; die App würfelt gleich seine Reaktion
+    (`reactionDice`, `reactionDm` wie bei der Begegnung: +1 für 5 oder mehr Terms in Army, Navy,
+    Scouts oder Marines, −1 bei Bevölkerung 9 oder mehr; `/reaction` 2 bis 12). Eine schlechte
+    Reaktion heißt mehr Ärger, eine gute vielleicht ein Gerücht, Helfer oder Patron (SE S. 20); was
+    folgt, entscheidet der Spieler. Bei Gesetz 0 gibt es keine Polizei-Begegnung, der Test entfällt.
   - *Wie oft schon*: Der Knopf jeder Art sagt, wie oft ihr Test in seinem Zeitraum schon gewürfelt
-    ist: Zufallsbegegnung „heute 1×“, Tiere „heute 1×“, Patron und Gerücht „diese Woche 1×“. Ist
-    die Regel schon erfüllt (Zufallsbegegnung 1× am Tag, Tiere 2× am Tag, Patron und Gerücht 1× in
-    der Woche), würfelt der Knopf erst auf **langes Drücken**: Mehr Begegnungen gehen, aber mit
+    ist: Zufallsbegegnung „heute 1×“, Tiere „heute 1×“, Patron, Gerücht und Polizei „diese Woche
+    1×“. Ist die Regel schon erfüllt (Zufallsbegegnung 1× am Tag, Tiere 2× am Tag, Patron, Gerücht
+    und Polizei 1× in der Woche), würfelt der Knopf erst auf **langes Drücken**: Mehr Begegnungen gehen, aber mit
     Absicht. Die Zeit vergeht dadurch nicht; Zeit und Begegnungen bleiben getrennt.
 - **Patron.** Im Reiter Begegnung ist der **Patron** eine eigene Begegnungsart. Nach dem Test wählt
   ein Würfel die Liste (Hausregel; die Regeln lassen die Spielleitung wählen): 1W6, 1 bis 3 Liste
