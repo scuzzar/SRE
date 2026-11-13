@@ -1148,6 +1148,12 @@ button:disabled {
   gap: 12px;
 }
 
+.char-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .pc {
   display: flex;
   flex-direction: column;
@@ -3441,6 +3447,13 @@ button:disabled {
   border: 1px solid var(--rule);
   border-radius: 6px;
   background: var(--deep);
+  /* Die Karte verschiebt man mit der Maus: greifende Hand, und kein Text soll sich mitwählen. */
+  cursor: grab;
+  user-select: none;
+}
+
+.sector-viewport:active {
+  cursor: grabbing;
 }
 
 .sector-canvas {
@@ -6273,5 +6286,17 @@ button:disabled {
 
   .result {
     max-width: 560px;
+  }
+
+  /* Die Charakter-Karten behalten ihre Smartphone-Größe statt über die ganze Spalte zu laufen. */
+  .strip-card,
+  .strip-card:only-child {
+    flex-basis: min(420px, 100%);
+  }
+
+  .char-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(400px, 100%), 1fr));
+    gap: 12px;
   }
 }

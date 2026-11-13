@@ -16,9 +16,11 @@ export function CharactersScreen({ view }: { view: Snapshot }) {
         <h2 id="characters-title" className="section-title">
           Spielercharaktere
         </h2>
-        {view.characters.map((character) => (
-          <CharacterCard key={character.id} character={character} />
-        ))}
+        <div className="char-grid">
+          {view.characters.map((character) => (
+            <CharacterCard key={character.id} character={character} />
+          ))}
+        </div>
         <div className="add-characters">
           <button type="button" className="add-character" onClick={() => game.newCharacter()}>
             + Neuer Charakter

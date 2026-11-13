@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react';
 import type { HexView, SelectedHexView, Snapshot } from '../../controller';
 import { useGame } from '../game-context';
 import { animated } from '../haptics';
@@ -234,9 +234,9 @@ function distance(e: TouchEvent): number {
 }
 
 /**
- * Die Karte im Ausschnitt: mit zwei Fingern oder mit + und − zoomen, mit einem Finger verschieben.
- * Beim Zoomen bleibt der Punkt zwischen den Fingern (bei den Knöpfen die Mitte) an seiner Stelle.
- * Reine Darstellung: Der Zoom gehört der Ansicht.
+ * Die Karte im Ausschnitt: mit zwei Fingern, dem Mausrad oder mit + und − zoomen, mit einem Finger
+ * oder der gehaltenen Maustaste verschieben. Beim Zoomen bleibt der Punkt unter den Fingern bzw.
+ * dem Cursor (bei den Knöpfen die Mitte) an seiner Stelle. Reine Darstellung: Der Zoom gehört der Ansicht.
  */
 function ZoomableMap({ children }: { children: (pixelsPerUnit: number) => ReactNode }) {
   const viewport = useRef<HTMLDivElement>(null);
@@ -274,6 +274,28 @@ function ZoomableMap({ children }: { children: (pixelsPerUnit: number) => ReactN
     anchor.current = undefined;
   }, [zoom]);
 
+  // Das Mausrad zoomt am Cursor; ein eigener Listener, weil React das Rad passiv registriert und es
+  // ohne preventDefault an die Seite durchreichen würde.
+  const zoomBy = useRef<(factor: number, x?: number, y?: number) => void>(() => undefined);
+  useEffect(() => {
+    zoomBy.current = (factor, x, y) => zoomTo(zoom * factor, x, y);
+  });
+  useEffect(() => {
+    const el = viewport.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const box = el.getBoundingClientRect();
+      zoomBy.current(e.deltaY < 0 ? 1.2 : 1 / 1.2, e.clientX - box.left, e.clientY - box.top);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
+  // Die gehaltene Maustaste verschiebt die Karte; erst nach ein paar Pixeln zählt es als Verschieben,
+  // damit ein kurzes Tippen auf ein Feld es weiterhin wählen kann.
+  const pan = useRef<{ x: number; y: number; left: number; top: number } | undefined>(undefined);
+  const panned = useRef(false);
+
   return (
     <div className="sector-zoom-frame">
       <div
@@ -293,6 +315,36 @@ function ZoomableMap({ children }: { children: (pixelsPerUnit: number) => ReactN
         }}
         onTouchEnd={(e) => {
           if (e.touches.length < 2) pinch.current = undefined;
+        }}
+        onMouseDown={(e) => {
+          if (e.button !== 0) return;
+          const el = viewport.current;
+          if (!el) return;
+          pan.current = { x: e.clientX, y: e.clientY, left: el.scrollLeft, top: el.scrollTop };
+          panned.current = false;
+        }}
+        onMouseMove={(e) => {
+          const p = pan.current;
+          const el = viewport.current;
+          if (!p || !el) return;
+          const dx = e.clientX - p.x;
+          const dy = e.clientY - p.y;
+          if (!panned.current && Math.hypot(dx, dy) < 4) return;
+          panned.current = true;
+          el.scrollLeft = p.left - dx;
+          el.scrollTop = p.top - dy;
+        }}
+        onMouseUp={() => {
+          pan.current = undefined;
+        }}
+        onMouseLeave={() => {
+          pan.current = undefined;
+        }}
+        onClickCapture={(e) => {
+          if (!panned.current) return;
+          panned.current = false;
+          e.preventDefault();
+          e.stopPropagation();
         }}
       >
         <div className="sector-canvas" style={{ width: `${zoom * 100}%` }}>
