@@ -2,7 +2,7 @@
 
 > **Stand: Konzept, nicht abgestimmt** (2. November 2026). Noch nichts davon steht im
 > [Domänenmodell](domain-model.md) oder im Code. Bevor etwas gebaut wird, kommt es nach den Regeln
-> in `CLAUDE.md` erst ins Modell und wird freigegeben.
+> in `AGENTS.md` erst ins Modell und wird freigegeben.
 
 Die **Oberflächenkarte** zeigt die Oberfläche einer Welt: Wasser, Land, Gebirge, Wüsten, Wälder,
 Eis und Städte auf einem Hexraster. Sie ist nicht die *Weltkarte*, also die Karte der App mit dem

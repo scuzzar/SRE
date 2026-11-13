@@ -55,7 +55,7 @@ Skinparams entfernen.
 | `docs/domain-model.puml` | Quelle des Diagramms. Vorlage: `assets/domain-model.puml` |
 | `docs/domain-model.png` | Gerendertes Bild, wird mit eingecheckt |
 | `docs/domain-model.md` | Status, Bild, Farblegende, Begriffe, Regeln, die das Bild nicht zeigt, offene Fragen, „Wo der Code noch nicht folgt“. Vorlage: `assets/domain-model.md` |
-| `CLAUDE.md` | Die Regel „das Modell führt“. Baustein: `assets/claude-md-snippet.md` |
+| `AGENTS.md` | Die Regel „das Modell führt“. Baustein: `assets/claude-md-snippet.md` |
 | `docs/model-views.json` | Die Bereiche (`views`) und die Änderungen (`changes`) für die Ausschnitte |
 | `docs/views/*.puml`, `.png` | Je Bereich ein Ausschnitt, erzeugt, nie von Hand ändern |
 | `docs/changes/*.puml`, `.png` | Je Änderung ein Ausschnitt mit roter Markierung; nach der Freigabe der Nachweis |
@@ -125,7 +125,7 @@ gezeichnet; die erzeugten `.puml` nie bearbeiten.
 ### 1. Erster Entwurf
 
 - Anforderungen lesen (README, UI-Entwurf, bestehender Code). Gibt der Owner ein Vorbildprojekt an,
-  dessen `domain-model.md` und `CLAUDE.md` lesen und Aufbau und Ton übernehmen.
+  dessen `domain-model.md` und `AGENTS.md` lesen und Aufbau und Ton übernehmen.
 - Klein anfangen: nur was die erste Version speichert. Lieber eine Klasse zu wenig als eine
   Hilfsklasse, die nur der Bequemlichkeit des Codes dient.
 - Alle Dateien anlegen, rendern, zeigen. Status „Entwurf, noch nicht abgestimmt“. Offene Fragen
@@ -183,7 +183,7 @@ committen und – wenn der Owner es sagt – nach `main` mergen. Ab jetzt gilt G
 
 - Mehrere Textstellen per Skript ersetzen, aber jede Ersetzung mit `assert s.count(alt) == 1`
   absichern; sonst trifft man die falsche Stelle oder gar keine.
-- Commit-Autor nach der Regel in `CLAUDE.md` setzen (z. B. per `git -c user.name=… -c
+- Commit-Autor nach der Regel in `AGENTS.md` setzen (z. B. per `git -c user.name=… -c
   user.email=… commit`), falls der Owner das festgelegt hat.
 - Kleine, beschreibende Commits je Modelländerung; der Verlauf erzählt dann, wie das Modell
   entstanden ist.

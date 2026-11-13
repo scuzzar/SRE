@@ -2,12 +2,12 @@
 
 Was als Nächstes ansteht, der Reihe nach. Erledigtes fliegt raus (der Verlauf steht in Git). Wie
 immer gilt: Was das Modell berührt, geht zuerst ins Domänenmodell und wird freigegeben, dann in den
-Code ([CLAUDE.md](CLAUDE.md)). Die Regeln stehen in [`docs/regeln-kampf.md`](docs/regeln-kampf.md).
+Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in [`docs/regeln-kampf.md`](docs/regeln-kampf.md).
 
 ## Arbeitsweise
 
 - [ ] **Freigaberegeln für Commits aufräumen** (Owner, weil es Claudes eigene Rechte betrifft): Die
-  E-Mail steht nicht mehr im Befehl (`.gitconfig-owner`, siehe `CLAUDE.md`). In
+  E-Mail steht nicht mehr im Befehl (`.gitconfig-owner`, siehe `AGENTS.md`). In
   `.claude/settings.json` stehen unter `allow` noch die alten Regeln mit `git -c user.name=… -c
   user.email=…`; sie durch `"Bash(git commit:*)"`, `"Bash(git merge:*)"`, `"Bash(git revert:*)"`
   und `"Bash(cp .gitconfig-owner .git/owner.gitconfig)"`, `"Bash(git config include.path owner.gitconfig)"` ersetzen.

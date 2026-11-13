@@ -1,5 +1,5 @@
-# Autor und Committer aller Commits in diesem Repository (siehe CLAUDE.md).
-# Einbinden (siehe CLAUDE.md): cp .gitconfig-owner .git/owner.gitconfig
+# Autor und Committer aller Commits in diesem Repository (siehe AGENTS.md).
+# Einbinden (siehe AGENTS.md): cp .gitconfig-owner .git/owner.gitconfig
 # und git config include.path owner.gitconfig
 [user]
 	name = Scuzzar
