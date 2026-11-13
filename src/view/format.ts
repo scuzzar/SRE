@@ -1,4 +1,4 @@
-import type { AttackItem, CardItem, DamageItem, DmPart, ButcheringItem, EventItem, LogItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem } from '../controller';
+import type { AttackItem, CardItem, CheckItem, DamageItem, DmPart, ButcheringItem, EventItem, JourneyItem, LogItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem } from '../controller';
 import type { ArmorClass, AttackKind, BookingKind, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
@@ -58,6 +58,7 @@ export const bookingText: Record<BookingKind, string> = {
   payout: 'Auszahlung',
   purchase: 'Kauf',
   sale: 'Verkauf',
+  lottery: 'Low Lottery',
 };
 
 /** Die Rüstungsklassen, wie die Matrix sie schreibt. */
@@ -307,9 +308,30 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
       return { head: item.success ? 'GESCHAFFT' : 'MISSLUNGEN', rest: saveDetail(item) };
     case 'butchering':
       return { head: `${item.meat} kg Fleisch, ${item.fur} kg Fell`, rest: butcheringDetail(item) };
+    case 'check':
+      return { head: `Test ${item.name}: ${item.passed ? 'JA' : 'NEIN'}`, rest: checkDetail(item) };
+    case 'time':
+      return { head: item.week ? 'Woche beendet' : `${item.days} ${item.days === 1 ? 'Tag' : 'Tage'} vergangen`, rest: `bis ${item.to}` };
+    case 'journey':
+      return { head: `Reise nach ${item.to}`, rest: journeyDetail(item) };
     case 'note':
       return { head: item.interprets === undefined ? 'Notiz' : 'Deutung', rest: item.text };
   }
+}
+
+/** Ein Test in Zahlen: „3 (5+ nötig): heute keine Begegnung“, bei der Polizei mit Gesetz und Reaktion. */
+export function checkDetail(item: CheckItem): string {
+  const thrown = item.dice.length === 1 ? String(item.total) : `${item.dice.join(' + ')} = ${item.total}`;
+  const need = item.check === 'legal' ? `Gesetz ${item.target}, ${item.target}+ für Ruhe` : `${item.target}+ nötig`;
+  const reaction = item.reaction === undefined ? '' : ` · Reaktion ${item.reaction}: ${item.reactionText}`;
+  return `${thrown} (${need}): ${item.text}${reaction}`;
+}
+
+/** Eine Reise in einer Zeile: „von Regina, 7 Tage, bis Montag, 016-1105 · Lotterie Cr 40: Kira Vant“. */
+export function journeyDetail(item: JourneyItem): string {
+  const lottery = item.winner === undefined ? '' : ` · Lotterie Cr ${item.pot}: ${item.paid ? item.winner : `${item.winner} (überlebte nicht, der Kapitän behält den Topf)`}`;
+  const dead = item.berths.filter((b) => b.name !== undefined && !b.survived).map((b) => b.name);
+  return `von ${item.from} bis ${item.toDate}${dead.length > 0 ? ` · nicht aufgewacht: ${dead.join(', ')}` : ''}${lottery}`;
 }
 
 /** Der Patron eines Wurfs, oder „Gerücht“ bei den Rumor-Zeilen. */

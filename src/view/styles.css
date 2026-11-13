@@ -6768,3 +6768,141 @@ button:disabled {
     fill: var(--highlight);
   }
 }
+
+/* --- Zeit und Reisen --------------------------------------------------------------------- */
+
+/* Oben im Reiter Begegnung: Datum mit Wochentag, Tage vergehen lassen, Woche beenden. */
+.time-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+}
+
+.time-date {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.time-date strong {
+  font-size: 17px;
+}
+
+.time-date .compact {
+  margin-left: auto;
+}
+
+.time-actions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.time-actions > * {
+  min-height: 44px;
+}
+
+.time-start {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: end;
+}
+
+/* Ein Test: der Name, darunter wie oft er im Zeitraum schon gewürfelt ist. */
+.test-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  line-height: 1.15;
+}
+
+.test-count {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+/* Im Log: eine Trennzeile beim ersten Eintrag eines neuen Spieltags. */
+.log-day {
+  list-style: none;
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  text-align: center;
+}
+
+.journey-berths {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+}
+
+.journey-berths .negative {
+  color: var(--danger, #c0392b);
+}
+
+.travel-here {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.journey-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.journey-facts {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.journey-travellers {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.journey-travellers li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.journey-name {
+  font-weight: 600;
+}
+
+.journey-guess {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.result h2.journey-title {
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+/* Im Dialog wiederholt der Kasten der Reise die Überschrift nicht groß. */
+.journey-sheet .verdict {
+  font-size: 16px !important;
+}

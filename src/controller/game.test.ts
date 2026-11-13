@@ -522,43 +522,110 @@ describe('Begegnung und Kampfsimulation', () => {
     random.queue.push(4);
     game.rollEncounter();
     expect(game.snapshot().combat).toMatchObject({ sim: undefined, note: 'Test 4 (5+ nötig): heute keine Begegnung.' });
-    random.queue.push(6, 1, 5);
+    expect(game.snapshot().checks?.random).toMatchObject({ label: 'heute 1×', met: true });
+    // Der zweite Test am Tag geht nur mit langem Drücken.
     game.rollEncounter();
+    expect(game.snapshot().combat?.note).toBe('Zufallsbegegnung: heute 1× getestet. Lange drücken für einen weiteren Test.');
+    random.queue.push(6, 1, 5);
+    game.rollEncounter(undefined, undefined, true);
     expect(game.snapshot().combat?.sim).toMatchObject({ roll: 15, name: 'Thugs' });
     game.endEncounter();
     game.rollEncounter(15);
     expect(game.snapshot().combat?.sim).toMatchObject({ roll: 15 });
   });
 
-  it('Patron: erst der Test der Woche, dann wählt ein Würfel die Liste, dann der Wurf; nur der Wurf steht im Log', async () => {
+  it('Patron: erst der Test der Woche, dann wählt ein Würfel die Liste, dann der Wurf; Test und Wurf stehen im Log', async () => {
     const { game, random } = await onRegina();
     random.queue.push(4);
     game.rollPatron();
     expect(game.snapshot().patron).toMatchObject({ last: undefined, note: 'Test 4 (5+ nötig): diese Woche kein Patron.' });
-    expect(game.snapshot().log).toHaveLength(0);
+    expect(game.snapshot().log.map((e) => e.kind)).toEqual(['check']);
+    expect(game.snapshot().checks?.patron).toMatchObject({ label: 'diese Woche 1×', met: true });
     // Test 5, Listenwürfel 4 (Liste zwei), dann 3 und 6; Jonas' Admin-1 gibt +1 auf den zweiten Würfel.
     random.queue.push(5, 4, 3, 6);
-    game.rollPatron();
+    game.rollPatron(true);
     expect(game.snapshot().patron).toMatchObject({ last: { list: 2, dice: [3, 6], dms: [0, 1], roll: 36, name: 'Professor' }, note: 'Test 5 (5+ nötig): ein Patron.' });
     // Test 6, Listenwürfel 1 (Liste eins), 2 und 3: Zeile 23 ist ein Gerücht; gleich danach fällt es ohne Test (6 und 1: F).
     random.queue.push(6, 1, 2, 3, 6, 1);
-    game.rollPatron();
+    game.rollPatron(true);
     expect(game.snapshot().patron).toMatchObject({ last: { list: 1, roll: 23, rumor: true }, note: 'Test 6 (5+ nötig): ein Gerücht statt eines Patrons.' });
     expect(game.snapshot().rumor).toMatchObject({ last: { roll: 61, letter: 'F', text: 'Information leading to trap', general: false }, note: 'Ohne Test: Gerücht statt eines Patrons.' });
-    expect(game.snapshot().log.map((e) => e.kind)).toEqual(['patron', 'patron', 'rumor']);
+    expect(game.snapshot().log.map((e) => e.kind)).toEqual(['check', 'check', 'patron', 'check', 'patron', 'rumor']);
   });
 
-  it('Gerücht: erst der Test der Woche (7+ auf 2W6), dann der Wurf auf die Rumors Matrix; nur der Wurf steht im Log', async () => {
+  it('Gerücht: erst der Test der Woche (7+ auf 2W6), dann der Wurf auf die Rumors Matrix; Test und Wurf stehen im Log', async () => {
     const { game, random } = await onRegina();
     random.queue.push(3, 3);
     game.rollRumor();
     expect(game.snapshot().rumor).toMatchObject({ last: undefined, note: 'Test 3 + 3 = 6 (7+ nötig): diese Woche kein Gerücht.' });
-    expect(game.snapshot().log).toHaveLength(0);
+    expect(game.snapshot().log.map((e) => e.kind)).toEqual(['check']);
+    // Nach dem Ende der Woche zählt der Test neu.
+    game.endWeek(true);
+    expect(game.snapshot().checks?.rumor).toMatchObject({ label: 'diese Woche 0×', met: false });
     // Test 4 + 3, dann 2 und 3: Die Matrix führt bei 23 auf U, ein allgemeines Gerücht.
     random.queue.push(4, 3, 2, 3);
     game.rollRumor();
     expect(game.snapshot().rumor).toMatchObject({ last: { dice: [2, 3], roll: 23, letter: 'U', text: 'Broad background information', general: true }, note: 'Test 4 + 3 = 7 (7+ nötig): ein Gerücht.' });
-    expect(game.snapshot().log.map((e) => e.kind)).toEqual(['rumor']);
+    expect(game.snapshot().log.map((e) => e.kind)).toEqual(['check', 'time', 'check', 'rumor']);
+  });
+
+  it('Zeit: Tage und Woche erinnern an fehlende Tests, langes Drücken macht ohne Begegnung weiter; neue Einträge tragen den Tag', async () => {
+    const { game, random } = await onRegina();
+    expect(game.snapshot().time).toMatchObject({ label: 'Feiertag, 001-1105', toSunday: 7, missingDay: ['Zufallsbegegnung'] });
+    game.passDays(2);
+    expect(game.snapshot().time?.note).toBe('Noch nicht getestet: Zufallsbegegnung. Lange drücken, um ohne Begegnung weiterzumachen.');
+    expect(game.snapshot().log).toHaveLength(0);
+    random.queue.push(2);
+    game.rollEncounter();
+    game.passDays(2);
+    expect(game.snapshot().time).toMatchObject({ label: 'Dienstag, 003-1105', note: undefined });
+    game.endWeek();
+    expect(game.snapshot().time?.note).toContain('Zufallsbegegnung, Patron, Gerücht, Polizei');
+    game.endWeek(true);
+    expect(game.snapshot().time?.label).toBe('Sonntag, 008-1105');
+    expect(game.snapshot().logDays).toEqual(['Feiertag, 001-1105', 'Feiertag, 001-1105', 'Dienstag, 003-1105']);
+  });
+
+  it('Polizei: einmal je Woche nach Gesetz; der zweite Test nur mit langem Drücken', async () => {
+    const { game, random } = await onRegina();
+    random.queue.push(3, 4);
+    game.rollLegal();
+    expect(game.snapshot().legal).toMatchObject({ available: true, law: 5, last: { passed: true }, note: 'Test 3 + 4 = 7 (5+ nötig): die Polizei lässt die Gruppe in Ruhe.' });
+    game.rollLegal();
+    expect(game.snapshot().legal?.note).toContain('Lange drücken');
+    random.queue.push(1, 1, 6, 5);
+    game.rollLegal(true);
+    expect(game.snapshot().legal?.last).toMatchObject({ passed: false, reaction: 11 });
+  });
+
+  it('Reise: von der Weltkarte zum Dialog, Passagen wählen, eine Woche später am Ziel', async () => {
+    const random = queued();
+    const nahe = { ...regina, column: 2, row: 1, name: 'Nahe' };
+    const { game } = await started(random, memoryRepository(setHexes(createCampaign(), [regina, nahe])));
+    game.chooseHex(1, 1);
+    game.stayHere();
+    game.closeWorld();
+    game.chooseHex(2, 1);
+    expect(game.snapshot().travel).toEqual({ blocker: undefined });
+    random.queue.push(3);
+    game.openJourney();
+    const kira = game.snapshot().characters[0]!.id;
+    const jonas = game.snapshot().characters[1]!.id;
+    expect(game.snapshot()).toMatchObject({ world: undefined, journey: { toName: 'Nahe', fromName: 'Regina', parsecs: 1, npcs: 0, cost: 16000 } });
+    game.choosePassage(kira, 'low-passage');
+    game.choosePassage(jonas, 'low-passage');
+    expect(game.snapshot().journey).toMatchObject({ npcs: 3, lowTotal: 5, pot: 50, cost: 2000 });
+    game.travel();
+    expect(game.snapshot().journey?.error).toContain('kosten');
+    game.book('income', 2000);
+    game.guessSurvivors(kira, 4);
+    // Kira 6 + 6, Jonas 6 + 6, drei NSC je 6 + 6 mit Tipp 5.
+    random.queue.push(6, 6, 6, 6, 6, 6, 5, 6, 6, 5, 6, 6, 5, 0);
+    game.travel();
+    expect(game.snapshot().journey?.result).toMatchObject({ survivors: 5, pot: 50, paid: true });
+    expect(game.snapshot()).toMatchObject({ location: '0201', time: { label: 'Sonntag, 008-1105' } });
+    game.closeJourney();
+    expect(game.snapshot().journey).toBeUndefined();
   });
 
   it('im Reiter Begegnung gewürfelt, zeigt erst die Übersicht; danach bleibt der Reiter Begegnung, zum Kampf geht es erst auf Wunsch', async () => {

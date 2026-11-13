@@ -384,7 +384,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Spielzeit, Tag | `Campaign.day` | Der heutige Tag im Spiel, gezählt als Tage seit 001-0 im Imperialen Kalender |
 | Datum | `Campaign./date` | Der Tag als Imperiales Datum „Tag des Jahres-Jahr“, z. B. 123-1105 |
 | Wochentag | `Campaign./weekday` | Montag bis Sonntag (1–7); Tag 001 jedes Jahres ist Feiertag ohne Wochentag |
-| Woche | (Regel) | Die Tage nach einem Sonntag bis zum nächsten Sonntag; der Feiertag gehört zur ersten Woche des Jahres |
+| Woche | (Regel) | Sonntag bis Samstag; „Woche beenden“ springt zum Sonntag, der die neue Woche beginnt; die erste Woche des Jahres beginnt mit dem Feiertag |
 | Zeit vergeht | `TimePassed` | Logeintrag: Die Gruppe lässt Tage vergehen oder beendet die Woche |
 | Woche beenden | `TimePassed.week` | Springt zum nächsten Sonntag (am Sonntag eine Woche weiter) |
 | Tag im Log | `LogEntry.day` | An welchem Spieltag ein Logeintrag entstand; fehlt bei Einträgen von vor der Spielzeit |
@@ -886,9 +886,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Kampagne beginnt am 001-1105; Spielstände und Dateien von vorher ebenso. Das Startdatum lässt sich
   ändern, solange kein Logeintrag einen Tag hat; danach geht die Zeit nur vorwärts.
   - *Wochentage* (Hausregel nach dem Imperialen Kalender): Tag 001 ist der Feiertag, er hat keinen
-    Wochentag. Ab Tag 002 folgen Wochen zu 7 Tagen, Montag bis Sonntag; Tag 008 ist der erste
-    Sonntag, Tag 365 der 52. Sonntag. Eine **Woche** sind die Tage nach einem Sonntag bis
-    einschließlich zum nächsten Sonntag; der Feiertag gehört zur ersten Woche des Jahres.
+    Wochentag. Ab Tag 002 folgen die Wochentage Montag bis Sonntag; Tag 008 ist der erste
+    Sonntag, Tag 365 der 52. Sonntag. Eine **Woche** (für die wöchentlichen Tests) beginnt mit dem
+    Sonntag, auf den „Woche beenden“ springt, und reicht bis zum Samstag; die erste Woche des
+    Jahres beginnt mit dem Feiertag (Tag 001 bis 007). Bei der Umsetzung am 13. November 2026
+    korrigiert: vorher endete die Woche mit dem Sonntag, dann hätte „Woche beenden“ keine neue Woche
+    begonnen.
   - *Tag im Log*: Jeder neue Logeintrag hält den Spieltag fest, an dem er entsteht (`LogEntry.day`).
     Der Log zeigt beim ersten Eintrag eines neuen Tages das Datum als Trenner.
 - **Zeit vergehen lassen** (2026-11-13d). Oben im Reiter Begegnung stehen das Datum und zwei
@@ -919,6 +922,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     beginnen neu). Nur gibt es **keine Pflicht-Begegnungen**: Die Reise erinnert nicht an fehlende
     Tests, weder vor der Abreise noch für die Tage im Sprung, und würfelt keine. Wer unterwegs eine
     Begegnung will, würfelt sie wie sonst von Hand.
+  - *Ohne Reise*: „Gruppe ist hier“ auf der Weltkarte und die Wahl im Reiter Begegnung setzen den
+    Aufenthaltsort weiter ohne Reise und ohne Zeit, etwa zu Beginn einer Kampagne oder für eine
+    Reise außerhalb der Regeln.
+  - *Log*: Vergangene Zeit und Reisen lassen sich nicht löschen, weil sie den Stand geändert haben
+    (Tag, Aufenthaltsort, Tote, Lotterie). Ein Lotteriegewinn verweist im Code auf die Stelle der
+    Reise im Log; wird davor etwas gelöscht, rückt der Verweis nach.
   - Gepäckgrenzen (High 1000 kg, Middle 100 kg, Low 10 kg), Bumping der Middle Passage, Hijacking
     und Working Passage kommen später.
 - **Low Passage** (2026-11-13d). Jeder Low-Passagier würfelt beim Aufwachen **5+ auf 2W6**
@@ -931,7 +940,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   die Lotterie.
   - *Mitreisende* (Hausregel, die Passagiertabelle fehlt noch): 1W6 weitere Low-Passagiere als NSC
     (`npcDie`); jeder hat eine Koje ohne Charakter, würfelt 5+ ohne DM zum Aufwachen und tippt
-    zufällig eine Zahl von 0 bis zur Zahl aller Low-Passagiere.
+    zufällig eine Zahl von 0 bis zur Zahl aller Low-Passagiere. Den Würfel würfelt die App schon
+    beim Öffnen der Reise, damit die SC wissen, wie viele mitreisen, wenn sie tippen; bis zur
+    Abreise hält ihn der Controller.
   - *Tipp*: Vor dem Aufwachen tippt jeder SC in Low Passage, wie viele Low-Passagiere überleben
     (`guess`, 0 bis zur Zahl aller Low-Passagiere).
   - *Topf* (`/pot`): Cr 10 je Low-Passagier, vom Kapitän.
@@ -1942,9 +1953,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
-
-- **Zeit und Reisen** (2026-11-13d): freigegeben; der Code folgt in diesem Schritt (Spielzeit,
-  Tests im Log, Reise). Diese Zeile kommt heraus, sobald er folgt.
 
 - **`Conflict → Campaign : local`** ist im Code kein eigenes Feld: Der Stand von hier ist die
   Kampagne des Geräts mit dem Schlüssel des Konflikts (`localOf`), damit man in ihr weiterspielen

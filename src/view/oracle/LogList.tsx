@@ -1,6 +1,6 @@
-import { useEffect, useId, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
-import type { DamageItem, LogItem, NoteItem } from '../../controller';
-import { attackTitle, clockTime, damageDetail, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, scatterText, taskDetail, taskTitle } from '../format';
+import { Fragment, useEffect, useId, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
+import type { DamageItem, JourneyItem, LogItem, NoteItem } from '../../controller';
+import { attackTitle, checkDetail, clockTime, damageDetail, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, scatterText, taskDetail, taskTitle } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { MapIconSvg, ScatterRose } from './CardRollIcons';
@@ -12,6 +12,8 @@ const SLOP_PX = 10;
 
 interface LogListProps {
   log: readonly LogItem[];
+  /** Je Eintrag das Datum seines Spieltags; ein neuer Tag bekommt eine Trennzeile. */
+  days: readonly (string | undefined)[];
   /** Das Ergebnis, auf das sich eine Deutung gerade bezöge; nur markiert, wenn `marked`. */
   target: number | undefined;
   marked: boolean;
@@ -27,7 +29,7 @@ interface LogListProps {
  * ein Rechtsklick) bietet an, ihn zu löschen; welcher Eintrag das gerade ist, hält die View, das
  * Löschen der Controller.
  */
-export function LogList({ log, target, marked, onPick }: LogListProps) {
+export function LogList({ log, days, target, marked, onPick }: LogListProps) {
   const game = useGame();
   // Der Log steht auf dem Smartphone im Orakel-Screen und im Desktop-Modus links; beide Instanzen
   // dürfen nicht dieselbe Überschrift-ID tragen.
@@ -59,7 +61,7 @@ export function LogList({ log, target, marked, onPick }: LogListProps) {
     onPointerDown: (e: PointerEvent) => {
       e.stopPropagation();
       offered.current = false;
-      if (e.button !== 0 || confirm === index) return;
+      if (e.button !== 0 || confirm === index || !deletable(log[index])) return;
       cancelPress();
       press.current = { timer: setTimeout(() => offer(index), LONG_PRESS_MS), x: e.clientX, y: e.clientY };
     },
@@ -72,7 +74,7 @@ export function LogList({ log, target, marked, onPick }: LogListProps) {
     onContextMenu: (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      offer(index);
+      if (deletable(log[index])) offer(index);
     },
   });
 
@@ -148,7 +150,9 @@ export function LogList({ log, target, marked, onPick }: LogListProps) {
           <p className="log-empty">Noch nichts im Log. Stell eine Frage, zieh eine Karte oder würfle.</p>
         ) : (
           <ol aria-live="polite">
-            {groups.map(({ item, index, notes, damage, volley }) => {
+            {groups.map(({ item, index, notes, damage, volley }, g) => {
+              const day = days[index];
+              const newDay = day !== undefined && (g === 0 || days[groups[g - 1]!.index] !== day);
               const result = item.kind !== 'note';
               const touches = (d: ReturnType<typeof damageAt>) => d !== undefined && (d.index === last || d.notes.some((n) => n.index === last));
               const classes = [
@@ -161,8 +165,13 @@ export function LogList({ log, target, marked, onPick }: LogListProps) {
                 .filter(Boolean)
                 .join(' ');
               return (
+                <Fragment key={index}>
+                {newDay && (
+                  <li className="log-day" aria-label={`Spieltag ${day}`}>
+                    {day}
+                  </li>
+                )}
                 <li
-                  key={index}
                   className={classes}
                   {...pressHandlers(index)}
                   onClick={
@@ -226,6 +235,7 @@ export function LogList({ log, target, marked, onPick }: LogListProps) {
                   ))}
                   <DeleteBar {...deletion(index, notes.length + (damage ? 1 + damage.notes.length : 0))} what={volley.length > 0 ? 'Die ganze Garbe' : 'Eintrag'} />
                 </li>
+                </Fragment>
               );
             })}
           </ol>
@@ -314,9 +324,20 @@ function kicker(item: LogItem, volley = false): string {
       return 'Rettungswurf';
     case 'butchering':
       return 'Ausweiden';
+    case 'check':
+      return `Test · ${item.name}`;
+    case 'time':
+      return item.week ? 'Zeit · Woche beendet' : 'Zeit';
+    case 'journey':
+      return 'Reise';
     case 'note':
       return item.interprets === undefined ? 'Notiz' : 'Deutung';
   }
+}
+
+/** Zeit und Reisen haben den Stand geändert; sie lassen sich nicht löschen. */
+function deletable(item: LogItem | undefined): boolean {
+  return item !== undefined && item.kind !== 'time' && item.kind !== 'journey';
 }
 
 function EntryBody({ item }: { item: LogItem }) {
@@ -455,7 +476,63 @@ function EntryBody({ item }: { item: LogItem }) {
           <span className="entry-detail">{rumorDetail(item)}</span>
         </>
       );
+    case 'check':
+      return (
+        <>
+          <span className={item.passed === (item.check !== 'legal') ? 'verdict' : 'verdict negative'} style={{ fontSize: 20 }}>
+            {item.check === 'legal' ? (item.passed ? 'Ruhe' : 'Angehalten') : item.passed ? 'JA' : 'NEIN'}
+          </span>
+          <span className="entry-detail">{checkDetail(item)}</span>
+        </>
+      );
+    case 'time':
+      return (
+        <>
+          <span className="verdict" style={{ fontSize: 20 }}>
+            {item.week ? 'Woche beendet' : `${item.days} ${item.days === 1 ? 'Tag' : 'Tage'} vergangen`}
+          </span>
+          <span className="entry-detail">
+            {item.from} → {item.to}
+          </span>
+        </>
+      );
+    case 'journey':
+      return <JourneyBody item={item} />;
     case 'note':
       return <p className="note-text">{item.text}</p>;
   }
+}
+
+/** Eine Reise im Log: wohin, wer mit welcher Passage, der Kälteschlaf und die Lotterie. */
+export function JourneyBody({ item }: { item: JourneyItem }) {
+  return (
+    <>
+      <span className="verdict" style={{ fontSize: 20 }}>
+        {item.from} → {item.to}
+      </span>
+      <span className="entry-detail">
+        {item.fromDate} → {item.toDate}
+      </span>
+      <span className="entry-question" style={{ fontSize: 12 }}>
+        {item.passengers.map((p) => `${p.name}: ${p.passage}`).join(' · ')}
+      </span>
+      {item.berths.length > 0 && (
+        <ul className="journey-berths">
+          {item.berths.map((b, i) => (
+            <li key={i} className={b.survived ? '' : 'negative'}>
+              {b.name ?? `NSC ${i + 1 - item.berths.filter((x) => x.name !== undefined).length}`}: {b.dice[0]} + {b.dice[1]}
+              {b.dm === 0 ? '' : ` ${b.dm > 0 ? '+' : '−'}${Math.abs(b.dm)}`} = {b.total} ({item.reviveTarget}+) {b.survived ? 'wach' : 'tot'} · Tipp {b.guess}
+              {b.winner ? ' · gewinnt' : ''}
+            </li>
+          ))}
+        </ul>
+      )}
+      {item.winner !== undefined && (
+        <span className="entry-detail">
+          {item.survivors} von {item.berths.length} überlebt · Lotterie Cr {item.pot}
+          {item.lot ? ' (Los)' : ''}: {item.paid ? `${item.winner} gewinnt` : `${item.winner} überlebte nicht, der Kapitän behält den Topf`}
+        </span>
+      )}
+    </>
+  );
 }

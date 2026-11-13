@@ -1840,7 +1840,9 @@ jetzt:
 Aus den drei Heften nicht in diesem Dokument, weil sie nicht zum Kampf gehören:
 
 - **SE, Begegnungen ohne Kampf (S. 20–21):** Routine (bei Bedarf), Legal (täglich Gesetzesstufe oder
-  mehr auf 2W6, sonst Verhör), Patron (wöchentlich 5+ auf 1W6, *Patron Encounters Matrix* mit zwei
+  mehr auf 2W6, sonst Verhör; **Stand in der App:** Begegnungsart *Polizei* im Reiter Begegnung,
+  auf Wunsch des Owners einmal je Woche, mit Reaktion des Polizisten; Regeln in `domain-model.md`
+  unter *Test*), Patron (wöchentlich 5+ auf 1W6, *Patron Encounters Matrix* mit zwei
   Listen), Rumor (wöchentlich 7+ auf 2W6, *Rumors Matrix* und *Rumor List*), Adventure (führt die
   Spielleitung). **Stand in der App:** Die *Patron Encounters Matrix* mit beiden Listen und ihren DMs
   ist im Reiter Begegnung (Begegnungsart *Patron*; Regeln in `domain-model.md` unter *Patron*, Listen in

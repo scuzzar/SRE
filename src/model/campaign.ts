@@ -8,6 +8,7 @@ import { worldOf, type Hex } from './sector';
 import type { Booking } from './shop';
 import type { Encounter, QuantityDie } from './encounter';
 import { isPc, settleStash } from './stash';
+import { START_DAY } from './time';
 import { defaultOdds, HANDS, itemOf, itemOfWeapon, oddsOf, ref, skillOf, weaponOf, type ExampleCharacter } from './reference';
 
 /** Die sechs Attributwerte, je 0 bis 15. */
@@ -113,6 +114,8 @@ export interface Campaign {
   readonly quantityDie?: QuantityDie;
   /** Das Gelände für alle Begegnungsarten; fehlt es, ±0 und keine Tiere. */
   readonly terrain?: string;
+  /** Der heutige Tag im Spiel, gezählt im Imperialen Kalender (siehe `time.ts`). */
+  readonly day: number;
 }
 
 /** Was man beim Anlegen und Bearbeiten eines Charakters eingibt. */
@@ -148,7 +151,7 @@ export function createCampaign(
   id: CampaignId = 'k1',
   stamp: Stamp = { key: `key-${id}`, changedAt: EPOCH },
 ): Campaign {
-  let campaign: Campaign = { id, key: stamp.key, changedAt: stamp.changedAt, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [], bookings: [], encounters: [], stash: [] };
+  let campaign: Campaign = { id, key: stamp.key, changedAt: stamp.changedAt, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [], bookings: [], encounters: [], stash: [], day: START_DAY };
   for (const { primary, wears, ...example } of examples) campaign = addCharacter(campaign, { ...example, ...(primary === undefined ? {} : { primary }), ...(wears === undefined ? {} : { wears }) }).campaign;
   // Bei mehreren Beispielen steht der erste oben, nicht der zuletzt angelegte.
   return withFocus(campaign, livingCharacters(campaign)[0]?.id);
@@ -223,6 +226,9 @@ export function appendLog(campaign: Campaign, ...entries: readonly LogEntry[]): 
  */
 export function removeLogEntry(campaign: Campaign, index: number): Campaign {
   if (!Number.isInteger(index) || index < 0 || index >= campaign.log.length) throw new DomainError('Diesen Logeintrag gibt es nicht.');
+  // Zeit und Reisen haben den Stand geändert (Tag, Aufenthaltsort, Tote, Lotterie); sie bleiben.
+  const kind = campaign.log[index]!.kind;
+  if (kind === 'time' || kind === 'journey') throw new DomainError(kind === 'time' ? 'Vergangene Zeit lässt sich nicht löschen.' : 'Eine Reise lässt sich nicht löschen.');
   // Ein Wurf einer Garbe geht nur mit der ganzen Garbe.
   const roots = campaign.log[index]!.kind === 'attack' ? volleyOf(campaign.log, index) : [index];
   // Ein Ereignis geht mit seinen Rettungswürfen, ein Rettungswurf mit seinem Schaden.
@@ -238,7 +244,9 @@ export function removeLogEntry(campaign: Campaign, index: number): Campaign {
     if (entry.kind === 'damage') return [entry.of === undefined ? { ...entry, after: shift(entry.after!) } : { ...entry, of: shift(entry.of) }];
     return [entry];
   });
-  return { ...campaign, log };
+  // Ein Lotteriegewinn verweist auf seine Reise; sie bleibt, aber ihre Stelle rückt nach.
+  const bookings = campaign.bookings.map((b) => (b.won === undefined ? b : { ...b, won: shift(b.won) }));
+  return { ...campaign, log, bookings };
 }
 
 export function characterOf(campaign: Campaign, id: CharacterId): Character {
@@ -355,7 +363,11 @@ export function activeSkills(character: Character): readonly SkillLevel[] {
 export function isInLog(campaign: Campaign, id: CharacterId): boolean {
   if (campaign.bookings.some((b) => b.for === id)) return true;
   return campaign.log.some(
-    (e) => (e.kind === 'task' && e.for === id) || (e.kind === 'attack' && (e.for === id || e.against === id)) || (e.kind === 'recovery' && (e.for === id || e.by === id)),
+    (e) =>
+      (e.kind === 'task' && e.for === id) ||
+      (e.kind === 'attack' && (e.for === id || e.against === id)) ||
+      (e.kind === 'recovery' && (e.for === id || e.by === id)) ||
+      (e.kind === 'journey' && (e.passengers.some((p) => p.for === id) || e.berths.some((b) => b.for === id))),
   );
 }
 

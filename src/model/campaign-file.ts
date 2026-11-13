@@ -10,7 +10,10 @@ import { checkButchering } from './loot';
 import { encounterAnimalRow, ESCAPED_BAND, upgradeDistances, upgradeNpcs, type Encounter } from './encounter';
 import { animalRowOf, animalTypeOf, checkAnimalTable, eventRowOf, terrainOf } from './animals';
 import { animalTraits } from '../data';
-import { checkInterprets, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type DamageRoll, type LogEntry, type Recovery } from './log';
+import { checkJourney } from './travel';
+import { START_DAY } from './time';
+import { checkOf, encounterChecks } from './encounter-check';
+import { checkInterprets, checkKinds, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type Journey, type DamageRoll, type LogEntry, type Recovery } from './log';
 import { checkRecovery } from './wounds';
 import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, ranges, ref, slotOfEntry, weaponOf } from './reference';
 import { characteristics } from './rules';
@@ -29,13 +32,16 @@ const die = z.number().int().min(1).max(6);
 const dice = z.tuple([die, die]);
 const at = z.string().refine((s) => !Number.isNaN(Date.parse(s)), 'kein Zeitpunkt');
 const question = z.string().trim().min(1).optional();
+/** Der Spieltag eines Eintrags; fehlt bei Einträgen von vor der Spielzeit. */
+const day = z.number().int().min(0).optional();
 
 const LogEntrySchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('oracle'), at, question, roll: z.number().int().min(1).max(100), chance: z.number().int().min(0).max(100), odds: z.string() }),
-  z.object({ kind: z.literal('dice'), at, dice }),
+  z.object({ kind: z.literal('oracle'), at, day, question, roll: z.number().int().min(1).max(100), chance: z.number().int().min(0).max(100), odds: z.string() }),
+  z.object({ kind: z.literal('dice'), at, day, dice }),
   z.object({
     kind: z.literal('card'),
     at,
+    day,
     question,
     bell: z.number().int().min(1).max(10).optional(),
     scatter: z.enum(scatters).optional(),
@@ -45,6 +51,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('task'),
     at,
+    day,
     for: z.string(),
     uses: z.string().optional(),
     counts: z.array(z.enum(characteristics)),
@@ -56,6 +63,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('attack'),
     at,
+    day,
     /** Fehlt in Dateien von vor 2026-11-08c, wenn ein NSC angriff (`by`); `victim` war dort ein SC als Ziel. */
     for: z.string().optional(),
     by: z.string().optional(),
@@ -71,11 +79,12 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     volley: z.number().int().optional(),
     strike: z.enum(strikes).optional(),
   }),
-  z.object({ kind: z.literal('save'), at, for: z.string().min(1), of: z.number().int(), dice, target: z.number().int() }),
-  z.object({ kind: z.literal('damage'), at, of: z.number().int().optional(), after: z.number().int().optional(), dice: z.array(die).max(40), fixed: z.number().int().min(1).optional(), to: z.array(z.enum(physical)).max(40).optional(), points: z.array(z.number().int().min(1)).max(40).optional(), alarmDice: z.tuple([die, die]).optional() }),
+  z.object({ kind: z.literal('save'), at, day, for: z.string().min(1), of: z.number().int(), dice, target: z.number().int() }),
+  z.object({ kind: z.literal('damage'), at, day, of: z.number().int().optional(), after: z.number().int().optional(), dice: z.array(die).max(40), fixed: z.number().int().min(1).optional(), to: z.array(z.enum(physical)).max(40).optional(), points: z.array(z.number().int().min(1)).max(40).optional(), alarmDice: z.tuple([die, die]).optional() }),
   z.object({
     kind: z.literal('recovery'),
     at,
+    day,
     how: z.enum(recoveryKinds),
     /** Fehlt in Dateien von vor 2026-11-08c, wenn ein NSC geheilt wurde (`npc`). */
     for: z.string().optional(),
@@ -83,11 +92,25 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     by: z.string().optional(),
     dice: z.array(die).length(5).optional(),
   }),
-  z.object({ kind: z.literal('rumor'), at, dice }),
-  z.object({ kind: z.literal('butchering'), at, /** Wer die Beute bekam; in Dateien von vor dem Gruppengepäck, wird nicht übernommen. */ for: z.string().min(1).optional(), of: z.string().min(1), meatDie: die.optional(), meatSkill: z.number().int().min(0), furSkill: z.number().int().min(0) }),
-  z.object({ kind: z.literal('event'), at, in: z.string().min(1), terrain: z.string().min(1), tableDice: dice }),
-  z.object({ kind: z.literal('patron'), at, list: z.union([z.literal(1), z.literal(2)]), dice, dms: z.tuple([z.number().int(), z.number().int()]) }),
-  z.object({ kind: z.literal('note'), at, text: z.string().trim().min(1), interprets: z.number().int().optional() }),
+  z.object({ kind: z.literal('rumor'), at, day, dice }),
+  z.object({ kind: z.literal('butchering'), at, day, /** Wer die Beute bekam; in Dateien von vor dem Gruppengepäck, wird nicht übernommen. */ for: z.string().min(1).optional(), of: z.string().min(1), meatDie: die.optional(), meatSkill: z.number().int().min(0), furSkill: z.number().int().min(0) }),
+  z.object({ kind: z.literal('event'), at, day, in: z.string().min(1), terrain: z.string().min(1), tableDice: dice }),
+  z.object({ kind: z.literal('patron'), at, day, list: z.union([z.literal(1), z.literal(2)]), dice, dms: z.tuple([z.number().int(), z.number().int()]) }),
+  z.object({ kind: z.literal('note'), at, day, text: z.string().trim().min(1), interprets: z.number().int().optional() }),
+  z.object({ kind: z.literal('time'), at, day, days: z.number().int().min(1).max(7), week: z.boolean() }),
+  z.object({ kind: z.literal('check'), at, day, check: z.enum(checkKinds), dice: z.array(die).min(1).max(2), target: z.number().int().min(0).max(20), reactionDice: dice.optional(), reactionDm: z.number().int().optional() }),
+  z.object({
+    kind: z.literal('journey'),
+    at,
+    day,
+    from: z.string().min(1),
+    to: z.string().min(1),
+    days: z.number().int(),
+    passengers: z.array(z.object({ for: z.string().min(1), passage: z.string().min(1) })),
+    berths: z.array(z.object({ for: z.string().min(1).optional(), revive: dice, dm: z.number().int(), guess: z.number().int() })).max(60),
+    npcDie: die.optional(),
+    lot: z.number().int().optional(),
+  }),
 ]);
 
 const CareerRollSchema = z.object({
@@ -293,6 +316,8 @@ const CampaignFileSchema = z.object({
     quantityDie: z.union([z.literal(3), z.literal(4), z.literal(6)]).optional(),
     /** Das Gelände für alle Begegnungsarten; fehlt in Dateien von vorher. */
     terrain: z.string().optional(),
+    /** Der heutige Tag im Spiel; fehlt in Dateien von vor der Spielzeit: 001-1105. */
+    day: z.number().int().min(0).default(START_DAY),
     /** Das Gruppengepäck; fehlt in Dateien von vorher, dann ordnet settleStash den Besitz der SC ein. */
     stash: z.array(PossessionSchema).default([]),
     bookings: z
@@ -307,6 +332,7 @@ const CampaignFileSchema = z.object({
           sold: z.string().optional(),
           count: z.number().int().min(1).optional(),
           in: z.string().optional(),
+          won: z.number().int().optional(),
         }),
       )
       .default([]),
@@ -315,8 +341,8 @@ const CampaignFileSchema = z.object({
 
 /** Die Kampagne als Inhalt einer Kampagnendatei. */
 export function toCampaignFile(campaign: Campaign): string {
-  const { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, stash, encounters, quantityDie, terrain } = campaign;
-  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, stash, encounters, quantityDie, terrain } }, null, 2);
+  const { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, stash, encounters, quantityDie, terrain, day } = campaign;
+  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, stash, encounters, quantityDie, terrain, day } }, null, 2);
 }
 
 /** Ein Dateiname aus dem Namen der Kampagne und dem Tag, z. B. „Spinward-Run-2026-10-25.json“. */
@@ -379,6 +405,7 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       ),
       ...(file.quantityDie === undefined || file.quantityDie === 6 ? {} : { quantityDie: file.quantityDie }),
       ...(file.terrain === undefined ? {} : { terrain: file.terrain }),
+      day: file.day,
     };
     // Begegnungen von vor 2026-11-08d haben ein Band für alle; upgradeDistances macht das Startband daraus.
     // Erst prüfen, dann ordnen: Dateien von vor dem Gruppengepäck halten allen Besitz am SC; was er
@@ -432,8 +459,17 @@ function stripped<T extends object>(value: T): T {
   return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as T;
 }
 
-/** Ohne leere optionale Felder, wie sie im Spielstand stehen. */
-function logEntry(entry: z.infer<typeof LogEntrySchema>): LogEntry {
+type FileEntry = z.infer<typeof LogEntrySchema>;
+type WithoutDay<T> = T extends unknown ? Omit<T, 'day'> : never;
+
+/** Ohne leere optionale Felder, wie sie im Spielstand stehen; den Spieltag nur, wenn es einen gibt. */
+function logEntry(input: FileEntry): LogEntry {
+  const { day, ...entry } = input;
+  const read = fileEntryOf(entry as WithoutDay<FileEntry>);
+  return day === undefined ? read : { ...read, day };
+}
+
+function fileEntryOf(entry: WithoutDay<FileEntry>): LogEntry {
   switch (entry.kind) {
     case 'oracle': {
       const { question, ...rest } = entry;
@@ -458,7 +494,12 @@ function logEntry(entry: z.infer<typeof LogEntrySchema>): LogEntry {
     case 'rumor':
     case 'event':
     case 'save':
+    case 'time':
       return entry;
+    case 'check':
+      return stripped(entry) as CheckRoll;
+    case 'journey':
+      return stripped({ ...entry, passengers: entry.passengers.map((p) => ({ ...p })), berths: entry.berths.map((b) => stripped(b)) }) as Journey;
     case 'butchering':
       // Wer die Beute bekam, steht in Dateien von vor dem Gruppengepäck; die Beute liegt heute im Gepäck.
       return stripped(Object.fromEntries(Object.entries(entry).filter(([key]) => key !== 'for'))) as unknown as Butchering;
@@ -537,6 +578,14 @@ function validate(campaign: Campaign): void {
       case 'dice':
       case 'patron':
       case 'rumor':
+      case 'time':
+        break;
+      case 'check':
+        if (entry.dice.length !== encounterChecks[entry.check].dice) throw new DomainError('Ein Test hat zu viele oder zu wenige Würfel.');
+        if ((entry.reactionDice !== undefined) !== (entry.check === 'legal' && !checkOf(entry).passed)) throw new DomainError('Nur eine Polizei-Begegnung hat eine Reaktion.');
+        break;
+      case 'journey':
+        checkJourney(campaign, entry);
         break;
       case 'event':
         if (eventRowOf(campaign.hexes, entry).event === undefined) throw new DomainError('Ein Ereignis-Eintrag verweist auf eine Zeile mit Tier.');

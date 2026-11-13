@@ -1,4 +1,6 @@
 import {
+  dateLabel,
+  journeyBlocker,
   activeSkills,
   ammoOf,
   fundsOf,
@@ -220,6 +222,7 @@ import {
 } from '../model/draft';
 import { careerLines, generationView, itemLabel, worldChoices, worldName, type CareerLine, type GenerationView, type WorldChoice } from './generation-view';
 import { sectorView, selectedView, worldList, worldView, type HexView, type SelectedHexView, type WorldListItem, type WorldView } from './world-view';
+import { checkItem, checksView, journeyItem, journeyView, legalView, timeItem, timeView, type CheckItem, type ChecksView, type JourneyDraft, type JourneyItem, type JourneyView, type LegalView, type TimeItem, type TimeView } from './time-view';
 
 /**
  * Was die View zu sehen bekommt: den Spielstand aus dem Model, schon ausgewertet, und den Zustand des
@@ -246,6 +249,18 @@ export interface Snapshot {
   readonly odds: readonly OddsChoice[];
   /** In der Reihenfolge der Ereignisse; dass das Neueste unten steht, ist Sache der Anzeige. */
   readonly log: readonly LogItem[];
+  /** Je Logeintrag das Datum seines Spieltags („Montag, 002-1105“); fehlt bei Einträgen von vor der Spielzeit. */
+  readonly logDays: readonly (string | undefined)[];
+  /** Die Spielzeit oben im Reiter Begegnung; fehlt nur ohne Kampagne. */
+  readonly time: TimeView | undefined;
+  /** Je Test, wie oft er in seinem Zeitraum schon gewürfelt ist. */
+  readonly checks: ChecksView | undefined;
+  /** Die Begegnungsart Polizei. */
+  readonly legal: LegalView | undefined;
+  /** Der Dialog der Reise, solange er offen ist. */
+  readonly journey: JourneyView | undefined;
+  /** Auf der offenen Weltkarte: warum die Gruppe nicht hierher reisen kann; `undefined`, wenn sie kann. Fehlt ohne Weltkarte. */
+  readonly travel: { readonly blocker: string | undefined } | undefined;
   /** Die offene Inspirationskarte; solange es sie gibt, steht sie im Vordergrund. */
   readonly card: CardView | undefined;
   /** Die offene Namenswahl (Name von der Karte); solange es sie gibt, steht sie im Vordergrund. */
@@ -296,6 +311,23 @@ export interface Snapshot {
   readonly selected: SelectedHexView | undefined;
   /** Die Karte steht im Vordergrund, um für die Charaktererschaffung eine Welt zu wählen oder zu erschaffen. */
   readonly picking: { readonly title: string } | undefined;
+}
+
+
+/** Ob es auf dem Aufenthaltsort im Gelände Tiere geben kann; dann gehören die Tiere zu den täglichen Tests. */
+function animalsPossible(campaign: Campaign): boolean {
+  const terrain = campaign.terrain === undefined ? undefined : terrainOf(campaign.terrain);
+  return locationOf(campaign) !== undefined && terrain !== undefined && hasAnimals(terrain);
+}
+
+/** Warum die Gruppe nicht dorthin reisen kann; ohne Aufenthaltsort oder auf dem Aufenthaltsort selbst kein Hinweis. */
+function travelBlocker(campaign: Campaign, to: string): string | undefined {
+  try {
+    return journeyBlocker(campaign, to);
+  } catch (error) {
+    if (error instanceof DomainError) return error.message;
+    throw error;
+  }
 }
 
 export interface SkillChoice extends Skill {
@@ -376,7 +408,7 @@ export interface OddsChoice {
   readonly selected: boolean;
 }
 
-export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | SaveItem | ButcheringItem | NoteItem;
+export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | SaveItem | ButcheringItem | CheckItem | TimeItem | JourneyItem | NoteItem;
 
 /** Ein Patron-Wurf: Liste, Würfel mit DMs, der Wurf 11–66 und die Zeile der Liste. */
 export interface PatronItem {
@@ -1223,6 +1255,12 @@ export interface ControllerState {
   readonly animalNote: string | undefined;
   /** Der Test des letzten Gerüchte-Wurfs und was er brachte. */
   readonly rumorNote: string | undefined;
+  /** Der letzte Polizei-Test und was er brachte, oder was nicht ging. */
+  readonly legalNote: string | undefined;
+  /** Die Erinnerung an fehlende Tests oder was beim Vergehen der Zeit nicht ging. */
+  readonly timeNote: string | undefined;
+  /** Die Reise in Vorbereitung bzw. ihr Ergebnis. */
+  readonly journey: JourneyDraft | undefined;
   /** Das Ziel dessen, der in der Kampfsimulation am Zug ist (Id eines SC oder NSC). */
   readonly simTarget: string | undefined;
   /** Feuerstoß oder Einzelschuss dessen, der in der Kampfsimulation am Zug ist; fehlt: vorgewählt. */
@@ -2165,6 +2203,12 @@ function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
       const rumor = rumorOfRoll(entry);
       return { kind: 'rumor', at: entry.at, dice: entry.dice, roll: rumorRollOf(entry), letter: rumor.letter, text: rumor.text, general: rumor.general };
     }
+    case 'check':
+      return checkItem(entry);
+    case 'time':
+      return timeItem(entry);
+    case 'journey':
+      return journeyItem(campaign, entry, index);
     case 'note':
       return { kind: 'note', at: entry.at, text: entry.text, interprets: entry.interprets };
   }
@@ -2250,7 +2294,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: [], retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: [], retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -2263,6 +2307,16 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     campaignSheet: state.campaignSheet && { error: state.campaignSheet.error, canDelete: state.campaigns.length > 1 },
     odds: ref.odds.map((o) => ({ id: o.id, name: o.name, chance: o.chance, target: o.target, selected: o.id === campaign.odds })),
     log,
+    logDays: campaign.log.map((e) => (e.day === undefined ? undefined : dateLabel(e.day))),
+    time: timeView(campaign, state.timeNote, animalsPossible(campaign)),
+    checks: checksView(campaign),
+    legal: legalView(
+      campaign,
+      log.findLast((item): item is CheckItem => item.kind === 'check' && item.check === 'legal'),
+      state.legalNote,
+    ),
+    journey: state.journey && journeyView(campaign, state.journey),
+    travel: state.world && { blocker: travelBlocker(campaign, hexId(state.world.column, state.world.row)) },
     card: state.card && cardView(state.card),
     names: state.names,
     characters: livingCharacters(campaign).map((c) => characterView(campaign, c, state)),

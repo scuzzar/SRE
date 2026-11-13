@@ -32,7 +32,7 @@ function dmText(line: WorldLine): string {
  * Charaktererschaffung. Eingetragen ist der Wurf schon, bevor die Würfel rollen; die Karte zeigt den neuen Stand erst, wenn das Ergebnis unten feststeht. Ein Tippen
  * irgendwo beendet die Animation.
  */
-export function WorldSheet({ world, here }: { world: WorldView; here: boolean }) {
+export function WorldSheet({ world, here, travel }: { world: WorldView; here: boolean; travel: { readonly blocker: string | undefined } | undefined }) {
   const game = useGame();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   // Was schon da war, als die Weltkarte aufging, rollt nicht noch einmal.
@@ -95,6 +95,14 @@ export function WorldSheet({ world, here }: { world: WorldView; here: boolean })
             <button type="button" className={here ? 'primary stay-here' : 'ghost stay-here'} aria-pressed={here} onClick={() => game.stayHere()}>
               {here ? 'Die Gruppe ist hier' : 'Gruppe ist hier'}
             </button>
+          )}
+          {world.canNote && !here && travel && (
+            <div className="travel-here">
+              <button type="button" className="primary" disabled={travel.blocker !== undefined} onClick={() => game.openJourney()}>
+                Hierher reisen (1 Woche)
+              </button>
+              {travel.blocker && <p className="combat-hint">{travel.blocker}</p>}
+            </div>
           )}
           {world.canNote && <NoteSection note={world.note} />}
         </div>
