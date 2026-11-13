@@ -1661,10 +1661,10 @@ Diagramm mit diesen Ausnahmen:
 - **`Card → Campaign : in`, `Task → Campaign : in` und `Attack → Campaign : in`** sind im Code
   kein Feld. Der Controller hält höchstens eine offene Karte, höchstens eine Probe und höchstens
   einen Angriff, alle immer zur offenen Kampagne; beim Wechsel der Kampagne verfallen sie. Damit ist die Multiplizität erfüllt.
-- **Tiere (2026-11-12c)** sind freigegeben und zum Teil gebaut: Tiertabellen, Tierbegegnung,
-  Gelände an der Kampagne, Tiere im Kampf und die besonderen Angriffe. Noch nicht im Code:
-  Rettungswürfe bei Ereignissen (`SaveRoll`, `DamageRoll.after`; `DamageRoll.of` ist im Code noch
-  Pflicht).
+- **Schaden aus einem Ereignis** verteilt im Code immer die App (beim ersten Treffer auf ein
+  zufälliges Attribut, sonst jeden Block zufällig), auch bei einem SC nach seinem ersten Treffer;
+  das Verteilen von Hand gibt es nur für Treffer. `SaveRoll./success` folgt aus Würfeln, Zielwert und
+  der Art des Rettungswurfs des Ereignisses (Zahl: mindestens, Attribut: höchstens).
 - **Festgehalten** gilt im Code nur, solange eines der Tiere der Begegnung noch kämpfen kann; sind
   alle außer Gefecht, ist jeder frei, auch wenn `held` noch gesetzt ist. Das Einsaugen des Filters
   ist ein Angriffsergebnis mit Zielwert 6, der Schaden danach eines mit Zielwert 2 (von selbst).

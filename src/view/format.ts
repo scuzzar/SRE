@@ -1,4 +1,4 @@
-import type { AttackItem, CardItem, DamageItem, DmPart, EventItem, LogItem, PatronItem, RecoveryItem, RumorItem, TaskItem } from '../controller';
+import type { AttackItem, CardItem, DamageItem, DmPart, EventItem, LogItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem } from '../controller';
 import type { ArmorClass, AttackKind, BookingKind, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
@@ -296,6 +296,8 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
       return { head: rumorName(item), rest: rumorDetail(item) };
     case 'event':
       return { head: item.name, rest: eventDetail(item) };
+    case 'save':
+      return { head: item.success ? 'GESCHAFFT' : 'MISSLUNGEN', rest: saveDetail(item) };
     case 'note':
       return { head: item.interprets === undefined ? 'Notiz' : 'Deutung', rest: item.text };
   }
@@ -315,6 +317,13 @@ export function patronDetail(item: PatronItem): string {
 /** Ein Ereignis aus der Tiertabelle in Zahlen: „Clear · 6 und 4 → 10 · Animals“. */
 export function eventDetail(item: EventItem): string {
   return `${item.terrain.split(',')[0]} · ${item.dice[0]} und ${item.dice[1]} → ${item.roll} · ${item.group}`;
+}
+
+/** Ein Rettungswurf in Zahlen: „Kira · Stampede · 5 + 4 = 9 gegen 8+“ bzw. „… gegen DEX 7 oder weniger“. */
+export function saveDetail(item: SaveItem): string {
+  const total = item.dice[0] + item.dice[1];
+  const need = item.under ? `${item.attribute} ${item.target} oder weniger` : `${item.target}+`;
+  return `${item.name.split(' ')[0]} · ${item.event} · ${item.dice[0]} + ${item.dice[1]} = ${total} gegen ${need}`;
 }
 
 /** Ein Gerücht mit seinem Buchstaben: „F · Information leading to trap“. */

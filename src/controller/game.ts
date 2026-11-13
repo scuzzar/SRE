@@ -71,6 +71,7 @@ import {
   rollPatron,
   rollRumor,
   rollAnimalEncounter,
+  rollEventSaves,
   holdAfterAttack,
   isHeld,
   struggle,
@@ -608,6 +609,19 @@ export class GameController {
     }
   }
 
+  /** Würfelt die Rettungswürfe aller lebenden SC gegen das Ereignis an der Stelle `index`; wer scheitert, bekommt den Schaden. */
+  rollEventSaves(index: number): void {
+    try {
+      const campaign = rollEventSaves(this.campaign, index, this.deps.random, this.deps.clock);
+      const saves = campaign.log.slice(this.campaign.log.length).filter((e) => e.kind === 'save').length;
+      const hurt = campaign.log.slice(this.campaign.log.length).filter((e) => e.kind === 'damage').length;
+      this.change(campaign, { animalNote: `${saves} Rettungswürfe: ${hurt === 0 ? 'alle geschafft.' : `${hurt} ${hurt === 1 ? 'misslungen' : 'misslungen'}, Schaden im Log.`}` });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ animalNote: error.message });
+    }
+  }
+
   /** Stellt das Gelände der Kampagne ein, für alle Begegnungsarten; leer heißt: ohne Gelände. */
   setTerrain(terrain: string | undefined): void {
     this.inFight(() => this.change(setTerrain(this.campaign, terrain), { combatNote: undefined, animalNote: undefined }));
@@ -924,7 +938,9 @@ export class GameController {
   /** Schreibt den Schaden in den Log. War es der Treffer dessen, der in der Simulation am Zug ist, endet sein Zug. */
   /** `show`: Der Schadenswurf rollt danach im Vordergrund; beim Verteilen ist er schon vorher gerollt. */
   private logDamage(roll: DamageRoll, show = true): void {
-    const hit = this.campaign.log[roll.of] as AttackResult;
+    if (roll.of === undefined) throw new DomainError('Schaden aus einem Ereignis würfelt man mit dem Rettungswurf.');
+    const of = roll.of;
+    const hit = this.campaign.log[of] as AttackResult;
     // Mit dem Schaden prüft das Model den Alarm: das Ziel schreit, oder ein Kamerad sieht es fallen (SR 20).
     const logged = logDamageWithAlarm(this.campaign, roll, this.deps.random);
     const who = victimOf(hit);
@@ -934,7 +950,7 @@ export class GameController {
     const rest = { result: show ? campaign.log.length - 1 : undefined, wounding: undefined };
     // Bei einer Garbe endet der Zug erst, wenn der Schaden aller ihrer Treffer verteilt ist.
     const more = pendingDamage(campaign.log);
-    const volleyDone = more === undefined || volleyStart(campaign.log, more) !== volleyStart(campaign.log, roll.of);
+    const volleyDone = more === undefined || volleyStart(campaign.log, more) !== volleyStart(campaign.log, of);
     if (ownTurn && volleyDone) this.nextTurn(campaign, rest);
     else this.change(campaign, rest);
   }

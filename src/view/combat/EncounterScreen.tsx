@@ -167,6 +167,18 @@ function AnimalsBox({ combat }: { combat: CombatView }) {
           Zuletzt: <strong>{event.name}</strong> <span>{event.text}</span>
         </p>
       )}
+      {event?.canSave && (
+        <button
+          type="button"
+          className="ghost"
+          onClick={() => {
+            haptic('shake');
+            game.rollEventSaves(event.index);
+          }}
+        >
+          Rettungswürfe würfeln ({/^\d/.test(event.save!) ? event.save : `${event.save} oder weniger`}, sonst {event.damage}W6)
+        </button>
+      )}
       <div className="encounter-start">
         <button
           type="button"

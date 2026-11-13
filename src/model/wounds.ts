@@ -1,6 +1,6 @@
 import { activeSkills, anyCharacterOf, characterOf, isCampaignCharacter, keepFocus, livingCharacters, type Campaign, type CharacterId, type Upp } from './campaign';
 import { DomainError } from './errors';
-import { damageDiceOf, damageOf, physical, type AttackResult, type DamageRoll, type LogEntry, type PhysicalCharacteristic, type Recovery, type RecoveryKind } from './log';
+import { damageDiceOf, damageOf, damageVictim, physical, type AttackResult, type DamageRoll, type LogEntry, type PhysicalCharacteristic, type Recovery, type RecoveryKind } from './log';
 import { animalRowOf } from './animals';
 import type { Clock, Random } from './ports';
 import { currentEncounter, encounterStart } from './encounter';
@@ -16,14 +16,10 @@ export type WoundState = 'unhurt' | 'wounded' | 'unconscious' | 'serious' | 'dea
 
 const key = { STR: 'str', DEX: 'dex', END: 'end' } as const;
 
-/** Trifft der Angriff diesen Charakter? */
-function hits(attack: LogEntry | undefined, who: CharacterId): attack is AttackResult {
-  return attack?.kind === 'attack' && attack.against === who;
-}
 
 /** Die Schadenswürfe gegen diesen Charakter, in der Reihenfolge des Logs. */
 export function damageAgainst(log: readonly LogEntry[], who: CharacterId): readonly DamageRoll[] {
-  return log.flatMap((e) => (e.kind === 'damage' && e.to !== undefined && hits(log[e.of], who) ? [e] : []));
+  return log.flatMap((e) => (e.kind === 'damage' && e.to !== undefined && damageVictim(log, e) === who ? [e] : []));
 }
 
 export function uppOf(campaign: Campaign, who: CharacterId): Upp {
@@ -130,7 +126,7 @@ export function historyOf(log: readonly LogEntry[], upp: Upp, who: CharacterId, 
   let serious = false;
   let fresh = true;
   log.slice(0, upTo).forEach((entry) => {
-    if (entry.kind === 'damage' && entry.to !== undefined && hits(log[entry.of], who)) {
+    if (entry.kind === 'damage' && entry.to !== undefined && damageVictim(log, entry) === who) {
       wounds = apply(upp, wounds, blocksOf(entry));
       fresh = false;
       if (zerosOf(upp, wounds) >= 2) serious = true;
@@ -175,7 +171,7 @@ export function woundStateOf(campaign: Campaign, who: CharacterId): WoundState {
 /** `/hurt`: die Summe des Schadens, den ein Tier genommen hat (SR 47); Tiere haben keine Attribute. */
 export function hurtOf(campaign: Campaign, who: CharacterId): number {
   const log = campaign.log;
-  return log.reduce((sum, e) => (e.kind === 'damage' && hits(log[e.of], who) ? sum + damageOf(e) : sum), 0);
+  return log.reduce((sum, e) => (e.kind === 'damage' && damageVictim(log, e) === who ? sum + damageOf(e) : sum), 0);
 }
 
 /** Der Zustand eines Tiers nach seinen Hits: die erste Zahl erreicht bewusstlos, beide zusammen tot (SR 47). */
@@ -204,7 +200,7 @@ export function isFirstHit(log: readonly LogEntry[], who: CharacterId, since?: n
   let fresh = true;
   log.forEach((entry, i) => {
     if (i === since) fresh = true;
-    if (entry.kind === 'damage' && entry.to !== undefined && hits(log[entry.of], who)) fresh = false;
+    if (entry.kind === 'damage' && entry.to !== undefined && damageVictim(log, entry) === who) fresh = false;
     else if (heals(entry, who) && entry.how !== 'wake') fresh = true;
   });
   return fresh;
@@ -240,9 +236,9 @@ export function victimOf(attack: AttackResult): CharacterId | undefined {
  * zufällig auf ein Attribut über 0. Bei einem SC nach dem ersten Treffer wählt der Spieler; dann gibt
  * es `undefined`.
  */
-export function autoWounds(campaign: Campaign, who: CharacterId, dice: readonly number[], random: Random): readonly WoundBlock[] | undefined {
+export function autoWounds(campaign: Campaign, who: CharacterId, dice: readonly number[], random: Random, always = false): readonly WoundBlock[] | undefined {
   const first = isFirstHitNow(campaign, who);
-  if (!first && isCampaignCharacter(campaign, who)) return undefined;
+  if (!first && !always && isCampaignCharacter(campaign, who)) return undefined;
   const upp = uppOf(campaign, who);
   const wounds = woundsOf(campaign, who);
   const critical = first ? physical[random.int(0, 2)]! : undefined;
@@ -262,7 +258,11 @@ export function autoWounds(campaign: Campaign, who: CharacterId, dice: readonly 
  * Würfel, der einen tötet, auch weniger.
  */
 export function checkWounds(log: readonly LogEntry[], roll: DamageRoll, attack: AttackResult, animals?: ReadonlySet<CharacterId>): void {
-  const who = victimOf(attack);
+  checkWoundsOn(log, roll, victimOf(attack), animals);
+}
+
+/** Prüft die Verteilung eines Schadens auf diesen Charakter (ohne Ziel: keine). */
+export function checkWoundsOn(log: readonly LogEntry[], roll: DamageRoll, who: CharacterId | undefined, animals?: ReadonlySet<CharacterId>): void {
   if (!who) {
     if (roll.to !== undefined || roll.points !== undefined) throw new DomainError('Ein Treffer ohne Ziel verteilt keinen Schaden.');
     return;

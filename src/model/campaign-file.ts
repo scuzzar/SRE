@@ -5,6 +5,7 @@ import { DomainError } from './errors';
 import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, type PathKind } from './card-roll';
 import { animalIds, checkDamageRoll, checkVolley, filterDiceOf, ATTACK_TARGET } from './combat';
 import { FILTER_HELD_TARGET, FILTER_TARGET } from './hold';
+import { checkEventDamage, checkSave } from './events';
 import { encounterAnimalRow, ESCAPED_BAND, upgradeDistances, upgradeNpcs, type Encounter } from './encounter';
 import { animalRowOf, animalTypeOf, checkAnimalTable, eventRowOf, terrainOf } from './animals';
 import { animalTraits } from '../data';
@@ -68,7 +69,8 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     volley: z.number().int().optional(),
     strike: z.enum(strikes).optional(),
   }),
-  z.object({ kind: z.literal('damage'), at, of: z.number().int(), dice: z.array(die).max(5), fixed: z.number().int().min(1).optional(), to: z.array(z.enum(physical)).max(40).optional(), points: z.array(z.number().int().min(1)).max(40).optional(), alarmDice: z.tuple([die, die]).optional() }),
+  z.object({ kind: z.literal('save'), at, for: z.string().min(1), of: z.number().int(), dice, target: z.number().int() }),
+  z.object({ kind: z.literal('damage'), at, of: z.number().int().optional(), after: z.number().int().optional(), dice: z.array(die).max(40), fixed: z.number().int().min(1).optional(), to: z.array(z.enum(physical)).max(40).optional(), points: z.array(z.number().int().min(1)).max(40).optional(), alarmDice: z.tuple([die, die]).optional() }),
   z.object({
     kind: z.literal('recovery'),
     at,
@@ -422,6 +424,7 @@ function logEntry(entry: z.infer<typeof LogEntrySchema>): LogEntry {
     case 'patron':
     case 'rumor':
     case 'event':
+    case 'save':
       return entry;
     case 'note': {
       const { interprets, ...rest } = entry;
@@ -509,7 +512,12 @@ function validate(campaign: Campaign): void {
         break;
       }
       case 'damage':
-        checkDamageRoll(campaign.log, entry, index, animalIds(campaign), filterDiceOf(campaign, entry.of));
+        if ((entry.of === undefined) === (entry.after === undefined)) throw new DomainError('Ein Schadenswurf folgt einem Treffer oder einem Rettungswurf.');
+        if (entry.of === undefined) checkEventDamage(campaign, entry, index);
+        else checkDamageRoll(campaign.log, entry, index, animalIds(campaign), filterDiceOf(campaign, entry.of));
+        break;
+      case 'save':
+        checkSave(campaign, entry, index);
         break;
       case 'recovery':
         if (entry.for === undefined) throw new DomainError('Eine Heilung gilt einem Charakter.');

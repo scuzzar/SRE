@@ -99,6 +99,13 @@ import {
   isEvading,
   evadeDmAt,
   encounterNameOf,
+  damageVictim,
+  eventOf,
+  eventEntryAt,
+  savesOf,
+  savesUnder,
+  saveSucceeds,
+  type SaveRoll,
   isHeld,
   struggleNeed,
   fixedDamageOf,
@@ -301,7 +308,7 @@ export interface OddsChoice {
   readonly selected: boolean;
 }
 
-export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | NoteItem;
+export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | SaveItem | NoteItem;
 
 /** Ein Patron-Wurf: Liste, Würfel mit DMs, der Wurf 11–66 und die Zeile der Liste. */
 export interface PatronItem {
@@ -573,6 +580,23 @@ export interface EventItem {
   readonly text: string;
   readonly save: string | undefined;
   readonly damage: number | undefined;
+  /** Die Stelle im Log und ob man die Rettungswürfe noch würfeln kann. */
+  readonly index: number;
+  readonly canSave: boolean;
+}
+
+/** Ein Rettungswurf gegen ein Ereignis: wer, gegen welches, Würfel, Zielwert und Ergebnis. */
+export interface SaveItem {
+  readonly kind: 'save';
+  readonly at: string;
+  readonly name: string;
+  readonly event: string;
+  readonly dice: Dice;
+  readonly target: number;
+  /** Höchstens ein Attribut („DEX oder weniger“); sonst mindestens der Zielwert. */
+  readonly under: boolean;
+  readonly attribute: string | undefined;
+  readonly success: boolean;
 }
 
 /** Die Werte der Tiere einer Tierbegegnung, ihr Verhalten und die Würfe dazu. */
@@ -1231,13 +1255,14 @@ function loggedParts(campaign: Campaign, entry: AttackResult, attacker: Fighter,
 }
 
 function damageItem(campaign: Campaign, entry: DamageRoll): DamageItem {
-  const hit = campaign.log[entry.of] as AttackResult;
-  const victim = victimOf(hit);
+  const victim = damageVictim(campaign.log, entry);
+  // Schaden aus einem Ereignis steht im Kasten seines Rettungswurfs, mit dem Namen des Ereignisses.
+  const source = entry.of !== undefined ? weaponName((campaign.log[entry.of] as AttackResult).with) : eventOf(campaign, eventEntryAt(campaign.log, (campaign.log[entry.after!] as SaveRoll).of)).name;
   return {
     kind: 'damage',
     at: entry.at,
-    of: entry.of,
-    weapon: weaponName(hit.with),
+    of: entry.of ?? entry.after!,
+    weapon: source,
     victim: victim && nameOf(campaign, victim),
     dice: entry.dice,
     fixed: entry.fixed,
@@ -1644,7 +1669,7 @@ function impactsOf(campaign: Campaign): readonly Impact[] {
   const last = campaign.log.length - 1;
   const entry = campaign.log[last];
   if (entry?.kind === 'damage') {
-    const who = victimOf(campaign.log[entry.of] as AttackResult);
+    const who = damageVictim(campaign.log, entry);
     if (!who || entry.to === undefined) return [];
     const upp = uppOf(campaign, who);
     const before = historyOf(campaign.log, upp, who, last).wounds;
@@ -1828,7 +1853,13 @@ function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
     }
     case 'event': {
       const event = animalEventOf(eventRowOf(campaign.hexes, entry).event!);
-      return { kind: 'event', at: entry.at, dice: entry.tableDice, roll: entry.tableDice[0] + entry.tableDice[1], terrain: terrainOf(entry.terrain).name, name: event.name, group: event.group, text: event.text, save: event.save, damage: event.damage };
+      const canSave = event.save !== undefined && savesOf(campaign.log, index).length === 0 && livingCharacters(campaign).length > 0;
+      return { kind: 'event', at: entry.at, dice: entry.tableDice, roll: entry.tableDice[0] + entry.tableDice[1], terrain: terrainOf(entry.terrain).name, name: event.name, group: event.group, text: event.text, save: event.save, damage: event.damage, index, canSave };
+    }
+    case 'save': {
+      const event = eventOf(campaign, eventEntryAt(campaign.log, entry.of));
+      const under = savesUnder(event);
+      return { kind: 'save', at: entry.at, name: nameOf(campaign, entry.for), event: event.name, dice: entry.dice, target: entry.target, under, attribute: under ? event.save : undefined, success: saveSucceeds(campaign, entry) };
     }
     case 'rumor': {
       const rumor = rumorOfRoll(entry);

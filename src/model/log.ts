@@ -10,7 +10,7 @@ import { roll2d6, sum, type Characteristic, type Dice } from './rules';
  * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei Probe und Angriff DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | Note;
+export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Note;
 
 /** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
 export type LogResult = Exclude<LogEntry, Note>;
@@ -102,7 +102,10 @@ export type Strike = (typeof strikes)[number];
  */
 export interface DamageRoll extends LogEntryBase {
   readonly kind: 'damage';
-  readonly of: number;
+  /** Die Stelle des Treffers; fehlt bei Schaden aus einem Ereignis, dann gilt `after`. */
+  readonly of?: number;
+  /** Die Stelle des misslungenen Rettungswurfs, nach dem der Schaden eines Ereignisses kommt. */
+  readonly after?: number;
   /** Die Schadenswürfel; leer, wenn ein Tier traf: dann gilt `fixed`. */
   readonly dice: readonly number[];
   /** Der feste Schaden eines Tiers je Treffer (SR 48); er geht als ein Block auf ein Attribut. */
@@ -162,6 +165,38 @@ export interface EventResult extends LogEntryBase {
   readonly in: string;
   readonly terrain: string;
   readonly tableDice: Dice;
+}
+
+/**
+ * Der Rettungswurf eines SC gegen ein Ereignis (SR 49): 2W6 gegen den Zielwert von damals, bei
+ * „8+“ mindestens, bei einem Attribut höchstens so hoch. `of` ist die Stelle des Ereignis-Eintrags.
+ */
+export interface SaveRoll extends LogEntryBase {
+  readonly kind: 'save';
+  readonly for: CharacterId;
+  readonly of: number;
+  readonly dice: Dice;
+  readonly target: number;
+}
+
+/** Wen ein Schaden trifft: das Ziel des Treffers bzw. wer den Rettungswurf nicht geschafft hat. */
+export function damageVictim(log: readonly LogEntry[], roll: DamageRoll): CharacterId | undefined {
+  if (roll.of !== undefined) {
+    const hit = log[roll.of];
+    return hit?.kind === 'attack' ? hit.against : undefined;
+  }
+  const save = roll.after === undefined ? undefined : log[roll.after];
+  return save?.kind === 'save' ? save.for : undefined;
+}
+
+/** Die Rettungswürfe zum Ereignis an der Stelle `index`. */
+export function savesOf(log: readonly LogEntry[], index: number): readonly number[] {
+  return log.flatMap((entry, i) => (entry.kind === 'save' && entry.of === index ? [i] : []));
+}
+
+/** Die Schadenswürfe nach dem Rettungswurf an der Stelle `index`. */
+export function damageAfterOf(log: readonly LogEntry[], index: number): readonly number[] {
+  return log.flatMap((entry, i) => (entry.kind === 'damage' && entry.after === index ? [i] : []));
 }
 
 /** Die körperlichen Attribute, die Wunden nehmen (S. 7). */

@@ -133,6 +133,7 @@ export function alarmAfterAttack(campaign: Campaign, results: readonly AttackRes
  * kämpfen kann und in der Begegnung noch nicht angegriffen wurde; der Wurf steht am Schadenswurf.
  */
 export function logDamage(campaign: Campaign, roll: DamageRoll, random: Random): Campaign {
+  if (roll.of === undefined) return appendLog(campaign, roll);
   const hit = campaign.log[roll.of] as AttackResult;
   const victim = victimOf(hit);
   if (!victim || !withSurprise(campaign, hit.for)) return appendLog(campaign, roll);

@@ -186,6 +186,7 @@ function isHit(entry: LogEntry | undefined): entry is AttackResult {
 
 /** Der Schadenswurf an der Stelle `at` verweist auf einen früheren Treffer, auf den kein anderer verweist. */
 export function checkDamageRoll(log: readonly LogEntry[], roll: DamageRoll, at: number, animals?: ReadonlySet<CharacterId>, diceCount?: number): void {
+  if (roll.of === undefined) throw new DomainError('Ein Schadenswurf ohne Treffer kommt nach einem Rettungswurf.');
   const target = log[roll.of];
   if (!Number.isInteger(roll.of) || roll.of < 0 || roll.of >= at || !target) throw new DomainError('Ein Schadenswurf verweist auf einen Eintrag, den es davor nicht gibt.');
   if (!isHit(target)) throw new DomainError('Schaden gibt es nur für einen Treffer.');
