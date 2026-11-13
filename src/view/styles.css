@@ -1676,49 +1676,127 @@ button:disabled {
   margin-top: 8px;
 }
 
-/* In der Charakterkachel unter den Fertigkeiten. */
-.stash-slots {
+/* Die Anziehpuppe in der Charakterkachel: Primärwaffe in der rechten Hand der Figur (vom Betrachter
+   links), Sekundärwaffe in der linken, Rüstung auf dem Körper. */
+.doll {
   display: grid;
-  gap: 4px;
-  margin-top: 4px;
+  grid-template-columns: minmax(0, 1fr) minmax(84px, 150px) minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
 }
 
-.stash-slot {
+.doll-figure {
   position: relative;
-  display: grid;
-  grid-template-columns: 5.5em minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 0 4px 0 8px;
+}
+
+.doll-figure svg {
+  width: 100%;
+  max-width: 150px;
+  height: auto;
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.doll-figure .doll-body.worn {
+  fill: var(--highlight);
+  stroke: var(--muted);
+}
+
+.doll-figure .doll-grip {
+  fill: var(--panel);
+}
+
+.doll-figure .doll-grip.held {
+  fill: var(--gold);
+  stroke: var(--gold);
+}
+
+/* Die Rüstung liegt auf dem Körper der Figur; Arme und Hände bleiben frei. */
+.doll-figure .doll-wears {
+  position: absolute;
+  top: 24%;
+  left: 50%;
+  width: 62%;
+  transform: translateX(-50%);
+  min-height: 0;
+  /* Links wie rechts Platz für das ✕, damit der Name der Stelle mittig frei bleibt. */
+  padding: 4px 22px 6px;
+  align-items: center;
+  text-align: center;
+}
+
+.doll-figure .doll-wears .doll-slot-item {
+  font-size: 12px;
+}
+
+.doll-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 64px;
+  padding: 6px 8px;
   border: 1px dashed var(--line);
   background: var(--deep);
+  /* Ziehen mit dem Finger: kein Textmarkieren, kein Kontextmenü beim Halten. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
-.stash-slot.filled {
+.doll-slot.filled {
   border-style: solid;
   border-color: var(--line-strong);
   background: var(--highlight);
   cursor: grab;
 }
 
-.stash-slot-name {
-  font-size: 11px;
+.doll-slot-name {
+  font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
-.stash-slot-item {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* Lange Namen brechen an Leerzeichen um („Automatic / Pistol“), nicht mitten im Wort. */
+.doll-slot-item {
+  font-size: 14px;
+  line-height: 1.25;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
-.stash-hand {
+.doll-slot-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.doll-hand {
   color: var(--gold);
-  font-size: 13px;
+}
+
+/* Das ✕ sitzt oben rechts in der Zeile mit dem Namen der Stelle, nicht neben dem Gegenstand. */
+.doll-off {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 26px;
+  height: 26px;
+}
+
+.doll-off svg {
+  width: 14px;
+  height: 14px;
 }
 
 .stash-rounds {
@@ -1726,25 +1804,39 @@ button:disabled {
   font-size: 12px;
 }
 
-.stash-off {
-  width: 32px;
-  height: 32px;
-}
-
-/* Beim Ziehen: passende Stellen leuchten, unpassende treten zurück. */
-.stash-slot.droppable,
+/* Beim Ziehen: passende Ziele leuchten, unpassende treten zurück. */
+.doll-slot.droppable,
 .stash-pack.droppable {
   border-color: var(--gold);
 }
 
-.stash-slot.blocked {
+.doll-slot.blocked {
   opacity: 0.45;
 }
 
-.stash-slot.over,
+.doll-slot.over,
 .stash-pack.over {
   background: var(--gold-wash);
   border-style: solid;
+}
+
+/* Das Schild, das beim Ziehen dem Zeiger folgt. */
+.drag-ghost {
+  position: fixed;
+  z-index: 50;
+  transform: translate(-50%, calc(-100% - 14px));
+  padding: 4px 10px;
+  border: 1px solid var(--line-strong);
+  background: var(--raised);
+  color: var(--text);
+  font-size: 14px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+}
+
+.drag-ghost.ok {
+  border-color: var(--gold);
 }
 
 .stash-pack {
@@ -1824,6 +1916,9 @@ button:disabled {
 
 .stash-item.equipable {
   cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .stash-item-name {

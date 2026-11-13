@@ -649,7 +649,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Sekundärwaffe eines SC, eine Rüstung seine getragene Rüstung. Sie wandert dabei an ihn (Anzahl im
     Gepäck − 1); was er an dieser Stelle vorher hatte, kommt ins Gepäck. Ablegen legt sie ins Gepäck.
     Für die Waffe in der Hand gilt die Regel unter *Waffe in der Hand*. In der Ansicht geht das per
-    Ziehen auf die Stelle (Desktop) oder per Antippen und Auswählen (Smartphone).
+    Ziehen auf die Stelle einer Anziehpuppe (Maus oder Finger) oder per Auswählen.
   - **Schuss**: Eine Schusswaffe nimmt ihre Schuss mit (`rounds`). Liegt dieselbe Schusswaffe
     mehrfach im Gepäck, gilt die Zahl für die zuletzt abgelegte; rüstet man eine aus, hat sie diese
     Zahl.
