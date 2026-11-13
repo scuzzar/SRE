@@ -33,3 +33,14 @@
 - **Nach jeder Änderung an der App eine Vorschau schicken**: mit `npm run build:single` die ganze
   App als eine HTML-Datei bauen (`dist-single/index.html`), in den Scratchpad kopieren und dem
   Owner zum direkten Öffnen schicken. Dazu kurz sagen, was man zum Ausprobieren antippen muss.
+
+## Bauen, Testen, Anschauen
+
+- **Nach jeder Änderung an Code:** `npm run check` (Typecheck, Lint mit den
+  Schichtenregeln, Unit-Tests). GUI-Tests: `npm run test:e2e` (Playwright,
+  headless, baut und startet den Server selbst).
+- **App headless anschauen/bedienen:** Playwright-Chromium ist installiert
+  (`~/.cache/ms-playwright`). Kurzes Skript: `npm run build`, dann
+  `npx vite preview --port 4173` im Hintergrund, Seite öffnen, Screenshot in
+  den Scratchpad legen und den Screenshot ansehen.
+- Alle Befehle mit Erklärungen: `ARCHITECTURE.md` unter „Befehle“.
