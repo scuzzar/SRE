@@ -48,7 +48,7 @@ function rolledWith(change: (log: { bell?: number; scatter?: string; map?: Recor
 describe('Kampagnendatei', () => {
   it('liest Kartenauswahlen mit Wurffeldern und Namen von der Tafel NSC unverändert zurück', () => {
     const original = rolled.reduce((c, e) => appendLog(c, e), createCampaign(undefined, 'Tief unten'));
-    expect(fromCampaignFile(toCampaignFile(original), 'k8')).toEqual({ ...original, id: 'k8' });
+    expect(fromCampaignFile(toCampaignFile(original), 'k8')).toEqual({ ...original, id: 'k8', key: 'key-k8' });
   });
 
   it('enthält alles, was an der Kampagne hängt, ohne Id, und liest sich unverändert zurück', () => {
@@ -56,7 +56,7 @@ describe('Kampagnendatei', () => {
     const text = toCampaignFile(original);
     expect(JSON.parse(text)).toMatchObject({ format: 'solo-rpg-engine/kampagne', version: 1, campaign: { name: 'Spinward Run' } });
     expect(JSON.parse(text).campaign.id).toBeUndefined();
-    expect(fromCampaignFile(text, 'k7')).toEqual({ ...original, id: 'k7' });
+    expect(fromCampaignFile(text, 'k7')).toEqual({ ...original, id: 'k7', key: 'key-k7' });
   });
 
   it('bekommt einen Dateinamen aus Name und Tag', () => {

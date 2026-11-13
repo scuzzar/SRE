@@ -138,7 +138,7 @@ export function App() {
       ) : (
         view.result && <ResultDialog result={view.result} />
       )}
-      {view.campaignSheet && <CampaignSheet key={view.campaign.id} sheet={view.campaignSheet} campaigns={view.campaigns} open={view.campaign} />}
+      {view.campaignSheet && <CampaignSheet key={view.campaign.id} sheet={view.campaignSheet} campaigns={view.campaigns} open={view.campaign} sync={view.sync} conflicts={view.conflicts} />}
     </div>
   );
 }

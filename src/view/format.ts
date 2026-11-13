@@ -195,6 +195,11 @@ export function clockTime(iso: string): string {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
+/** Tag und Uhrzeit mit Sekunden, für die Stände im Konflikt: „13.11.2026, 14:05:12“; oft liegen beide in derselben Minute. */
+export function dayTime(iso: string): string {
+  return new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
 export function credits(amount: number): string {
   return `Cr ${amount.toLocaleString('de-DE')}`;
 }

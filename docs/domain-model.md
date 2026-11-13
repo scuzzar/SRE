@@ -1842,8 +1842,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
-- **Abgleich mit OneDrive** (2026-11-13c) ist noch nicht umgesetzt: `Campaign.key`,
-  `Campaign.changedAt`, `Conflict`, Abgleichsmarke und der Abgleich selbst fehlen im Code.
+- **`Conflict → Campaign : local`** ist im Code kein eigenes Feld: Der Stand von hier ist die
+  Kampagne des Geräts mit dem Schlüssel des Konflikts (`localOf`), damit man in ihr weiterspielen
+  kann, ohne dass der Konflikt einen veralteten Stand hält. Die abgeleiteten Felder
+  (`/localChangedAt`, `/localLogCount`, …) rechnet der Snapshot (`ConflictView`).
 
 - **`Gain` in den Daten.** Im Bild bringt eine Zeile ein Attribut über einen Verweis (`changes`);
   in `src/data/services.json` steht das Attribut als Feld `characteristic` neben `change`, weil

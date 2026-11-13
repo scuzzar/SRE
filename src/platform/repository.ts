@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import { hexFromRolls, keepFocus, settleStash, upgradeDistances, upgradeNpcs, type Campaign, type CampaignId, type CampaignRepository, type Encounter, type Hex, type LegacyWorldRoll } from '../model';
+import { hexFromRolls, keepFocus, settleStash, upgradeDistances, upgradeNpcs, type Campaign, type CampaignId, type CampaignRepository, type Encounter, type Hex, type LegacyWorldRoll, type SyncMark } from '../model';
 
 /** Eine Kampagne liegt unter ihrer Id. */
 interface StoredCampaign {
@@ -21,12 +21,15 @@ const SHOP_HINT = 'shop-hint-hidden';
 class SreDatabase extends Dexie {
   campaigns!: EntityTable<StoredCampaign, 'key'>;
   settings!: EntityTable<Setting, 'key'>;
+  marks!: EntityTable<SyncMark, 'key'>;
 
   constructor(name: string) {
     super(name);
     // Version 1 hatte genau eine Kampagne unter dem Schlüssel „current“; sie behält ihn als Id.
     this.version(1).stores({ campaigns: 'key' });
     this.version(2).stores({ campaigns: 'key', settings: 'key' });
+    // Version 3: die Abgleichsmarken, je Kampagne eine unter ihrem Schlüssel.
+    this.version(3).stores({ campaigns: 'key', settings: 'key', marks: 'key' });
   }
 }
 
@@ -78,6 +81,22 @@ export class DexieCampaignRepository implements CampaignRepository {
   async saveShopHintHidden(hidden: boolean): Promise<void> {
     await this.db.settings.put({ key: SHOP_HINT, value: String(hidden) });
   }
+
+  async loadMarks(): Promise<readonly SyncMark[]> {
+    return this.db.marks.toArray();
+  }
+
+  async saveMark(mark: SyncMark): Promise<void> {
+    await this.db.marks.put(mark);
+  }
+
+  async removeMark(key: string): Promise<void> {
+    await this.db.marks.delete(key);
+  }
+
+  async clearMarks(): Promise<void> {
+    await this.db.marks.clear();
+  }
 }
 
 /**
@@ -124,6 +143,7 @@ export class MemoryCampaignRepository implements CampaignRepository {
   private open: CampaignId | undefined;
   private collapsed = false;
   private hintHidden = false;
+  private readonly marks = new Map<string, SyncMark>();
 
   async list(): Promise<readonly Campaign[]> {
     return [...this.campaigns.values()];
@@ -160,6 +180,22 @@ export class MemoryCampaignRepository implements CampaignRepository {
   async saveShopHintHidden(hidden: boolean): Promise<void> {
     this.hintHidden = hidden;
   }
+
+  async loadMarks(): Promise<readonly SyncMark[]> {
+    return [...this.marks.values()];
+  }
+
+  async saveMark(mark: SyncMark): Promise<void> {
+    this.marks.set(mark.key, mark);
+  }
+
+  async removeMark(key: string): Promise<void> {
+    this.marks.delete(key);
+  }
+
+  async clearMarks(): Promise<void> {
+    this.marks.clear();
+  }
 }
 
 /**
@@ -181,11 +217,12 @@ export async function requestDurable(
 
 /**
  * Öffnet den Speicher. Ist IndexedDB nicht verfügbar (privates Fenster, eingebettete Vorschau),
- * läuft die App mit einem Speicher im Arbeitsspeicher weiter.
+ * läuft die App mit einem Speicher im Arbeitsspeicher weiter. `name` wählt einen anderen Speicher als
+ * den üblichen (für die Probe-Wolke: ein zweites „Gerät“ im selben Browser).
  */
-export async function openRepository(): Promise<{ repository: CampaignRepository; persistent: boolean }> {
+export async function openRepository(name?: string): Promise<{ repository: CampaignRepository; persistent: boolean }> {
   try {
-    return { repository: await new DexieCampaignRepository().open(), persistent: true };
+    return { repository: await new DexieCampaignRepository(name).open(), persistent: true };
   } catch {
     return { repository: new MemoryCampaignRepository(), persistent: false };
   }

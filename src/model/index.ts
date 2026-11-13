@@ -24,3 +24,4 @@ export * from './sector';
 export * from './shop';
 export * from './demo';
 export * from './stash';
+export * from './sync';

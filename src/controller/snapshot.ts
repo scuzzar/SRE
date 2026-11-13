@@ -213,6 +213,10 @@ import {
   type NameChoices,
   type Task,
   type WorldRoll,
+  choicesOf,
+  localOf,
+  type Conflict,
+  type ConflictChoice,
 } from '../model/draft';
 import { careerLines, generationView, itemLabel, worldChoices, worldName, type CareerLine, type GenerationView, type WorldChoice } from './generation-view';
 import { sectorView, selectedView, worldList, worldView, type HexView, type SelectedHexView, type WorldListItem, type WorldView } from './world-view';
@@ -229,6 +233,10 @@ export interface Snapshot {
   readonly campaigns: readonly CampaignChoice[];
   /** Die Kampagnenwahl ist offen. */
   readonly campaignSheet: CampaignSheetView | undefined;
+  /** Der Abgleich mit OneDrive: ob er eingerichtet ist, wer angemeldet ist, wie er steht. */
+  readonly sync: SyncView;
+  /** Kampagnen, die hier und in OneDrive geändert wurden; der Spieler wählt je eine Seite. */
+  readonly conflicts: readonly ConflictView[];
   /** Ob der Spielstand das Schließen der App übersteht. */
   readonly persistent: boolean;
   /** Ob der Browser zusagt, den Spielstand nicht zu löschen; `undefined`, solange er nicht geantwortet hat oder das nicht kennt. */
@@ -315,6 +323,43 @@ export interface CampaignChoice {
   readonly open: boolean;
   readonly characters: number;
   readonly entries: number;
+}
+
+/**
+ * Wie der Abgleich steht: `off` nicht eingerichtet (die App hat keine Wolke), `signedOut` nicht
+ * angemeldet, `syncing` läuft, `synced` fertig, `offline` kein Netz, `expired` die Anmeldung ist
+ * abgelaufen, `error` etwas anderes ging schief (`error` sagt was).
+ */
+export type SyncStatus = 'off' | 'signedOut' | 'syncing' | 'synced' | 'offline' | 'expired' | 'error';
+
+export interface SyncView {
+  readonly status: SyncStatus;
+  readonly account: string | undefined;
+  /** Wann zuletzt abgeglichen wurde. */
+  readonly at: string | undefined;
+  readonly error: string | undefined;
+}
+
+/** Ein Stand im Konflikt: wann zuletzt geändert, wie viele Logeinträge. */
+export interface StandView {
+  readonly changedAt: string;
+  readonly entries: number;
+}
+
+export interface ConflictView {
+  readonly key: string;
+  readonly name: string;
+  /** Fehlt, wenn die Kampagne hier gelöscht ist. */
+  readonly local: StandView | undefined;
+  /** Fehlt, wenn die Kampagne in OneDrive gelöscht ist. */
+  readonly remote: StandView | undefined;
+  readonly choices: readonly ConflictChoice[];
+}
+
+function conflictView(conflict: Conflict, campaigns: readonly Campaign[]): ConflictView {
+  const local = localOf(conflict, campaigns);
+  const stand = (c: Campaign | undefined): StandView | undefined => c && { changedAt: c.changedAt, entries: c.log.length };
+  return { key: conflict.key, name: (local ?? conflict.remote)?.name ?? '', local: stand(local), remote: stand(conflict.remote), choices: choicesOf(conflict, campaigns) };
 }
 
 export interface CampaignSheetView {
@@ -1148,6 +1193,10 @@ export interface ControllerState {
   /** Die offene Kampagne. */
   readonly campaign: Campaign | undefined;
   readonly campaignSheet: { readonly error: string | undefined } | undefined;
+  /** Der Abgleich mit OneDrive. */
+  readonly sync: SyncView;
+  /** Die offenen Konflikte des Abgleichs. */
+  readonly conflicts: readonly Conflict[];
   readonly persistent: boolean;
   readonly durable: boolean | undefined;
   readonly storageError: string | undefined;
@@ -2199,7 +2248,7 @@ function pickingView(state: ControllerState, campaign: Campaign): { readonly tit
 
 export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
-  const base = { persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, skills, items };
+  const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, skills, items };
   if (!campaign) {
     return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: [], retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
   }

@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { appendLog, createCampaign, DEMO_FUNDS, fromCampaignFile, ref, rollEncounter, rollSurprise, setHexes, setLocation, type CampaignRepository, type Random } from '../model';
-import { fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
+import { countingKeys, fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 import { surfaceLines } from './world-view';
 
 async function started(random: Random = fixedRandom(), repository = memoryRepository(), download = memoryDownload()) {
-  const game = new GameController({ repository, random, clock: fixedClock(), download });
+  const game = new GameController({ repository, random, clock: fixedClock(), download, keys: countingKeys() });
   await game.init();
   return { game, repository, download };
 }
@@ -43,7 +43,7 @@ describe('Start', () => {
 
   it('meldet, wenn sich nicht speichern lässt', async () => {
     const broken: CampaignRepository = { ...memoryRepository(), save: async () => Promise.reject(new Error('voll')) };
-    const game = new GameController({ repository: broken, random: fixedRandom(), clock: fixedClock(), download: memoryDownload() });
+    const game = new GameController({ repository: broken, random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), keys: countingKeys() });
     await game.init();
     await game.whenSaved();
     expect(game.snapshot().storageError).toMatch(/nicht speichern: Error: voll/);
@@ -52,7 +52,7 @@ describe('Start', () => {
   it('meldet, ob der Browser den Speicher dauerhaft hält, ohne den Start aufzuhalten', async () => {
     let answer: (durable: boolean) => void = () => undefined;
     const durable = new Promise<boolean | undefined>((resolve) => (answer = resolve));
-    const game = new GameController({ repository: memoryRepository(), random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), durable });
+    const game = new GameController({ repository: memoryRepository(), random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), keys: countingKeys(), durable });
     await game.init();
     expect(game.snapshot()).toMatchObject({ ready: true, durable: undefined });
     answer(true);
@@ -64,7 +64,7 @@ describe('Start', () => {
     const stored = createCampaign([], 'Spinward', 'k1');
     const repository = memoryRepository(stored);
     const broken: CampaignRepository = { ...repository, list: async () => Promise.reject(new Error('kaputt')) };
-    const game = new GameController({ repository: broken, random: fixedRandom(), clock: fixedClock(), download: memoryDownload() });
+    const game = new GameController({ repository: broken, random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), keys: countingKeys() });
     await game.init();
     game.rollDice();
     await game.whenSaved();
@@ -105,8 +105,8 @@ describe('Orakel-Screen', () => {
     game.askOracle();
     await game.whenSaved();
     expect(game.snapshot().log).toEqual([
-      { kind: 'oracle', at: '2026-10-23T14:01:00.000Z', question: 'Ist Halvek ehrlich?', odds: 'Gering', roll: 61, chance: 25, yes: false },
-      { kind: 'oracle', at: '2026-10-23T14:02:00.000Z', question: undefined, odds: 'Gering', roll: 20, chance: 25, yes: true },
+      { kind: 'oracle', at: '2026-10-23T14:02:00.000Z', question: 'Ist Halvek ehrlich?', odds: 'Gering', roll: 61, chance: 25, yes: false },
+      { kind: 'oracle', at: '2026-10-23T14:04:00.000Z', question: undefined, odds: 'Gering', roll: 20, chance: 25, yes: true },
     ]);
     expect(repository.saved?.odds).toBe('low');
   });
@@ -289,7 +289,7 @@ describe('Charakter oben: Probe im Orakel-Screen', () => {
     await game.whenSaved();
     expect(game.snapshot().stripCollapsed).toBe(true);
     expect(repository.stripCollapsed).toBe(true);
-    const again = new GameController({ repository, random: fixedRandom(), clock: fixedClock(), download: memoryDownload() });
+    const again = new GameController({ repository, random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), keys: countingKeys() });
     await again.init();
     expect(again.snapshot().stripCollapsed).toBe(true);
   });
@@ -301,7 +301,7 @@ describe('Charakter oben: Probe im Orakel-Screen', () => {
     await game.whenSaved();
     expect(game.snapshot().shopHintHidden).toBe(true);
     expect(repository.shopHintHidden).toBe(true);
-    const again = new GameController({ repository, random: fixedRandom(), clock: fixedClock(), download: memoryDownload() });
+    const again = new GameController({ repository, random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), keys: countingKeys() });
     await again.init();
     expect(again.snapshot().shopHintHidden).toBe(true);
   });
@@ -1023,10 +1023,10 @@ describe('Log', () => {
     game.writeNote('Der Zoll winkt uns durch.', 2);
     game.writeNote('Doch nicht ganz glatt.', 0);
     expect(game.snapshot().log.slice(1)).toEqual([
-      { kind: 'note', at: '2026-10-23T14:02:00.000Z', text: 'Wir landen auf Regina.', interprets: undefined },
+      { kind: 'note', at: '2026-10-23T14:03:00.000Z', text: 'Wir landen auf Regina.', interprets: undefined },
       expect.objectContaining({ kind: 'dice', total: 4 }),
-      { kind: 'note', at: '2026-10-23T14:04:00.000Z', text: 'Der Zoll winkt uns durch.', interprets: 2 },
-      { kind: 'note', at: '2026-10-23T14:05:00.000Z', text: 'Doch nicht ganz glatt.', interprets: 0 },
+      { kind: 'note', at: '2026-10-23T14:07:00.000Z', text: 'Der Zoll winkt uns durch.', interprets: 2 },
+      { kind: 'note', at: '2026-10-23T14:09:00.000Z', text: 'Doch nicht ganz glatt.', interprets: 0 },
     ]);
     expect(() => game.writeNote('Zur Notiz?', 1)).toThrow(/nur ein Ergebnis/);
     game.deleteLogEntry(0);

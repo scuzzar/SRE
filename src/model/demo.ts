@@ -10,12 +10,14 @@ import { book, setLocation } from './shop';
  * Referenzdaten; die Gruppe steht dort. In der Gruppenkasse liegt ein Startkapital, damit sich im Shop
  * gleich etwas kaufen lässt. Jede weitere Kampagne beginnt leer (`createCampaign`).
  */
-export function createDemoCampaign(clock: Clock): Campaign {
+export function createDemoCampaign(clock: Clock, key = 'key-k1'): Campaign {
   const world: Hex = ref.demoWorld;
   validateHex(world);
   const campaign = createCampaign(ref.examples, 'Demo-Kampagne');
   const there = setLocation({ ...campaign, hexes: [world] }, hexId(world.column, world.row));
-  return book(there, 'income', DEMO_FUNDS, clock, 'Startkapital');
+  const funded = book(there, 'income', DEMO_FUNDS, clock, 'Startkapital');
+  // Die Änderungszeit ist die der Buchung; die Uhr wird dafür nicht noch einmal gefragt.
+  return { ...funded, key, changedAt: funded.bookings.at(-1)?.at ?? funded.changedAt };
 }
 
 /** Das Startkapital der Demo-Kampagne in der Gruppenkasse. */

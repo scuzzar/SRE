@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { anyCharacterOf, keepFocus, validateCharacter, validName, type Campaign, type CampaignId, type Character, type Possession } from './campaign';
+import { anyCharacterOf, EPOCH, keepFocus, validateCharacter, validName, type Stamp, type Campaign, type CampaignId, type Character, type Possession } from './campaign';
 import { replay, type Career, type CareerRoll } from './career';
 import { DomainError } from './errors';
 import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, type PathKind } from './card-roll';
@@ -275,6 +275,9 @@ const CampaignFileSchema = z.object({
   version: z.literal(campaignFileVersion),
   campaign: z.object({
     name: z.string(),
+    /** Schlüssel und Änderungszeit, für den Abgleich; fehlen in Dateien von vorher. Ein Import vergibt sie neu. */
+    key: z.string().trim().min(1).optional(),
+    changedAt: at.optional(),
     odds: z.string(),
     characters: z.array(CharacterSchema),
     log: z.array(LogEntrySchema),
@@ -312,8 +315,8 @@ const CampaignFileSchema = z.object({
 
 /** Die Kampagne als Inhalt einer Kampagnendatei. */
 export function toCampaignFile(campaign: Campaign): string {
-  const { name, odds, characters, log, generation, hexes, focus, location, bookings, stash, encounters, quantityDie, terrain } = campaign;
-  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { name, odds, characters, log, generation, hexes, focus, location, bookings, stash, encounters, quantityDie, terrain } }, null, 2);
+  const { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, stash, encounters, quantityDie, terrain } = campaign;
+  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, stash, encounters, quantityDie, terrain } }, null, 2);
 }
 
 /** Ein Dateiname aus dem Namen der Kampagne und dem Tag, z. B. „Spinward-Run-2026-10-25.json“. */
@@ -324,9 +327,25 @@ export function campaignFileName(campaign: Campaign, now: string): string {
 
 /**
  * Liest eine Kampagnendatei und prüft sie gegen die Regeln des Modells, auch jeden Verweis. Ist
- * etwas falsch, gibt es einen DomainError und keine Kampagne. Die Kampagne bekommt die Id `id`.
+ * etwas falsch, gibt es einen DomainError und keine Kampagne. Die Kampagne bekommt die Id `id` und
+ * als neue Kampagne Schlüssel und Änderungszeit aus `stamp`, nicht die der Datei.
  */
-export function fromCampaignFile(text: string, id: CampaignId): Campaign {
+export function fromCampaignFile(text: string, id: CampaignId, stamp: Stamp = { key: `key-${id}`, changedAt: EPOCH }): Campaign {
+  return readCampaignFile(text, id, () => stamp);
+}
+
+/**
+ * Liest eine Kampagnendatei aus der Wolke: wie `fromCampaignFile`, aber die Kampagne behält Schlüssel
+ * und Änderungszeit der Datei. Der Schlüssel muss der sein, unter dem die Datei liegt.
+ */
+export function fromCloudFile(text: string, id: CampaignId, key: string): Campaign {
+  return readCampaignFile(text, id, (file) => {
+    if (file.key !== key || file.changedAt === undefined) throw new DomainError('Die Datei gehört nicht zu dieser Kampagne (Schlüssel oder Änderungszeit fehlen).');
+    return { key, changedAt: file.changedAt };
+  });
+}
+
+function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readonly key?: string | undefined; readonly changedAt?: string | undefined }) => Stamp): Campaign {
   let json: unknown;
   try {
     json = JSON.parse(text);
@@ -343,6 +362,7 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
     const characters: Character[] = file.characters.map(characterFromFile);
     const read: Campaign = {
       id,
+      ...stampOf(file),
       name: validName(file.name),
       odds: oddsOf(file.odds).id,
       characters,

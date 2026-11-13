@@ -1,6 +1,6 @@
 import { describe, it } from 'vitest';
 import { createCampaign, DomainError, fromCampaignFile, setHexes, toCampaignFile, type Campaign } from '../model';
-import { fixedClock, memoryDownload, memoryRepository } from '../model/testing';
+import { countingKeys, fixedClock, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 
 // Zufällige Folgen von Eingaben über alle Reiter. Nach jedem Schritt muss der Spielstand eine gültige
@@ -126,7 +126,7 @@ describe('Fuzz: zufällige Eingaben', () => {
     for (let seed = 1; seed <= seeds; seed++) {
       const random = seeded(seed);
       const repository = memoryRepository(setHexes(createCampaign(), [regina]));
-      const game = new GameController({ repository, random, clock: fixedClock(), download: memoryDownload() });
+      const game = new GameController({ repository, random, clock: fixedClock(), download: memoryDownload(), keys: countingKeys() });
       await game.init();
       game.chooseHex(1, 1);
       game.stayHere();

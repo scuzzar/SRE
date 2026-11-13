@@ -2,6 +2,7 @@ import type { AnimalRef } from './animals';
 import type { Career } from './career';
 import { DomainError } from './errors';
 import type { Generation } from './generation';
+import type { Clock, Keys } from './ports';
 import { damageAfterOf, damageRollsOf, interpretationsOf, savesOf, volleyOf, type LogEntry } from './log';
 import { worldOf, type Hex } from './sector';
 import type { Booking } from './shop';
@@ -79,7 +80,12 @@ export type CampaignId = string;
 
 /** Alles, was zu einem Spiel gehört; die oberste Ebene. Kampagnen wissen nichts voneinander. */
 export interface Campaign {
+  /** Gilt nur auf diesem Gerät. */
   readonly id: CampaignId;
+  /** Woran der Abgleich die Kampagne auf jedem Gerät wiedererkennt: zufällig, weltweit eindeutig. */
+  readonly key: string;
+  /** Wann der gespeicherte Stand zuletzt geändert wurde. */
+  readonly changedAt: string;
   readonly name: string;
   readonly characters: readonly Character[];
   /** Die eine gewählte Stufe für Orakel und Proben. */
@@ -136,11 +142,41 @@ export interface CharacterInput {
 }
 
 /** Eine neue Kampagne, ohne Log, mit der Standardstufe und den angegebenen Charakteren. */
-export function createCampaign(examples: readonly ExampleCharacter[] = ref.examples, name = 'Kampagne', id: CampaignId = 'k1'): Campaign {
-  let campaign: Campaign = { id, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [], bookings: [], encounters: [], stash: [] };
+export function createCampaign(
+  examples: readonly ExampleCharacter[] = ref.examples,
+  name = 'Kampagne',
+  id: CampaignId = 'k1',
+  stamp: Stamp = { key: `key-${id}`, changedAt: EPOCH },
+): Campaign {
+  let campaign: Campaign = { id, key: stamp.key, changedAt: stamp.changedAt, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [], bookings: [], encounters: [], stash: [] };
   for (const { primary, wears, ...example } of examples) campaign = addCharacter(campaign, { ...example, ...(primary === undefined ? {} : { primary }), ...(wears === undefined ? {} : { wears }) }).campaign;
   // Bei mehreren Beispielen steht der erste oben, nicht der zuletzt angelegte.
   return withFocus(campaign, livingCharacters(campaign)[0]?.id);
+}
+
+/** Schlüssel und Änderungszeit einer Kampagne: was der Abgleich von ihr wissen muss. */
+export interface Stamp {
+  readonly key: string;
+  readonly changedAt: string;
+}
+
+/** Die Änderungszeit einer Kampagne, die noch niemand geändert hat (in Tests und als Vorgabe). */
+export const EPOCH = '1970-01-01T00:00:00.000Z';
+
+/** Die Kampagne nach einer Änderung an ihrem gespeicherten Stand: mit der Änderungszeit von jetzt. */
+export function touched(campaign: Campaign, clock: Clock): Campaign {
+  return { ...campaign, changedAt: clock.now() };
+}
+
+/**
+ * Kampagnen von vor dem Abgleich haben weder Schlüssel noch Änderungszeit. Sie bekommen einen neuen
+ * Schlüssel und die Zeit ihres letzten Logeintrags, ohne Log die von jetzt. Wer beides hat, bleibt,
+ * wie er ist (dieselbe Kampagne zurück).
+ */
+export function stamped(campaign: Campaign, keys: Keys, clock: Clock): Campaign {
+  const old: Partial<Stamp> = campaign;
+  if (old.key && old.changedAt) return campaign;
+  return { ...campaign, key: old.key || keys.next(), changedAt: old.changedAt || campaign.log.at(-1)?.at || clock.now() };
 }
 
 /** Eine Id für eine weitere Kampagne. Ids gelten nur auf dem Gerät; eine Kampagnendatei hat keine. */

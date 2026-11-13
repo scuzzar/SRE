@@ -1,7 +1,8 @@
 import { livingCharacters, type Campaign } from './campaign';
 import { currentEncounter, setDistance } from './encounter';
 import { fightOrder, turnOf, withEncounter } from './fight';
-import type { CampaignRepository, Clock, Download, Random } from './ports';
+import { CloudChanged, CloudOffline, type CampaignRepository, type Clock, type Cloud, type Download, type Keys, type Random } from './ports';
+import type { SyncMark } from './sync';
 
 /** Eine Zufallsquelle für Tests: liefert die vorgegebenen Zahlen der Reihe nach, danach immer `min`. */
 export function fixedRandom(...values: number[]): Random & { readonly calls: number } {
@@ -18,6 +19,61 @@ export function fixedRandom(...values: number[]): Random & { readonly calls: num
       return value;
     },
   };
+}
+
+/** Schlüssel für Tests: `key-1`, `key-2`, …, mit `prefix` davor unterscheidbar je Gerät. */
+export function countingKeys(prefix = 'key'): Keys {
+  let n = 0;
+  return { next: () => `${prefix}-${++n}` };
+}
+
+/**
+ * Eine Wolke im Arbeitsspeicher für Tests. Zwei Controller mit derselben Wolke sind zwei Geräte.
+ * `offline` lässt jeden Zugriff scheitern; mit `signedIn = false` ist anfangs niemand angemeldet.
+ */
+export function memoryCloud(signedIn = true): Cloud & { readonly files: Map<string, { text: string; revision: string }>; offline: boolean; user: string | undefined } {
+  let counter = 0;
+  const files = new Map<string, { text: string; revision: string }>();
+  const cloud = {
+    files,
+    offline: false,
+    user: signedIn ? 'kira@example.com' : (undefined as string | undefined),
+    check() {
+      if (cloud.offline) throw new CloudOffline('offline');
+    },
+    async account() {
+      return cloud.user;
+    },
+    async signIn() {
+      cloud.user = 'kira@example.com';
+    },
+    async signOut() {
+      cloud.user = undefined;
+    },
+    async list() {
+      cloud.check();
+      return [...files].map(([key, file]) => ({ key, revision: file.revision }));
+    },
+    async read(key: string) {
+      cloud.check();
+      const file = files.get(key);
+      return file && { ...file };
+    },
+    async write(key: string, text: string, revision?: string) {
+      cloud.check();
+      if (files.get(key)?.revision !== revision) throw new CloudChanged();
+      const next = `r${++counter}`;
+      files.set(key, { text, revision: next });
+      return next;
+    },
+    async remove(key: string, revision: string) {
+      cloud.check();
+      const file = files.get(key);
+      if (file && file.revision !== revision) throw new CloudChanged();
+      files.delete(key);
+    },
+  };
+  return cloud;
 }
 
 /** Eine Uhr für Tests, die bei jedem Aufruf eine Minute weiterläuft. */
@@ -39,8 +95,22 @@ export function memoryRepository(...initial: Campaign[]): CampaignRepository & {
   open: string | undefined;
   stripCollapsed: boolean;
   shopHintHidden: boolean;
+  readonly marks: Map<string, SyncMark>;
 } {
   return {
+    marks: new Map(),
+    async loadMarks() {
+      return [...this.marks.values()];
+    },
+    async saveMark(mark) {
+      this.marks.set(mark.key, mark);
+    },
+    async removeMark(key) {
+      this.marks.delete(key);
+    },
+    async clearMarks() {
+      this.marks.clear();
+    },
     saved: initial.at(-1),
     campaigns: new Map(initial.map((c) => [c.id, c])),
     open: undefined,

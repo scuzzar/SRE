@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { CampaignChoice, CampaignSheetView } from '../controller';
+import type { CampaignChoice, CampaignSheetView, ConflictView, StandView, SyncView } from '../controller';
+import { clockTime, dayTime } from './format';
 import { useGame } from './game-context';
 import { CloseIcon, DownloadIcon, TrashIcon, UploadIcon } from './icons';
 import { Form } from './Form';
@@ -9,7 +10,19 @@ import { Form } from './Form';
  * während des Tippens und welches Löschen gerade bestätigt werden will, hält die View; prüfen und
  * speichern tut der Controller.
  */
-export function CampaignSheet({ sheet, campaigns, open }: { sheet: CampaignSheetView; campaigns: readonly CampaignChoice[]; open: { id: string; name: string } }) {
+export function CampaignSheet({
+  sheet,
+  campaigns,
+  open,
+  sync,
+  conflicts,
+}: {
+  sheet: CampaignSheetView;
+  campaigns: readonly CampaignChoice[];
+  open: { id: string; name: string };
+  sync: SyncView;
+  conflicts: readonly ConflictView[];
+}) {
   const game = useGame();
   const [name, setName] = useState(open.name);
   const [newName, setNewName] = useState('');
@@ -30,6 +43,10 @@ export function CampaignSheet({ sheet, campaigns, open }: { sheet: CampaignSheet
               {sheet.error}
             </p>
           )}
+
+          {conflicts.map((c) => (
+            <ConflictCard key={c.key} conflict={c} />
+          ))}
 
           <Form
             className="inline-form"
@@ -118,8 +135,104 @@ export function CampaignSheet({ sheet, campaigns, open }: { sheet: CampaignSheet
             />
           </label>
           <span className="small-label">Der Import legt immer eine neue Kampagne an und überschreibt keine.</span>
+
+          <SyncPanel sync={sync} />
         </div>
       </section>
     </div>
+  );
+}
+
+/** Ein Stand im Konflikt in Worten: wann zuletzt geändert und wie viele Logeinträge, oder dass er gelöscht ist. */
+function standText(stand: StandView | undefined): string {
+  if (!stand) return 'gelöscht';
+  return `geändert ${dayTime(stand.changedAt)} · ${stand.entries === 1 ? '1 Logeintrag' : `${stand.entries} Logeinträge`}`;
+}
+
+/** Ein Konflikt des Abgleichs: beide Stände nebeneinander, darunter die Wahl. Was sie bewirkt, entscheidet der Controller. */
+function ConflictCard({ conflict }: { conflict: ConflictView }) {
+  const game = useGame();
+  const choose = (choice: ConflictView['choices'][number]) => void game.resolveConflict(conflict.key, choice);
+  return (
+    <section className="conflict" role="group" aria-label={`Konflikt: ${conflict.name}`}>
+      <strong>„{conflict.name}“ wurde hier und in OneDrive geändert</strong>
+      <dl className="conflict-stands">
+        <dt>Dieses Gerät</dt>
+        <dd>{standText(conflict.local)}</dd>
+        <dt>OneDrive</dt>
+        <dd>{standText(conflict.remote)}</dd>
+      </dl>
+      <span className="small-label">Welcher Stand soll gelten? Bis du wählst, wird diese Kampagne nicht abgeglichen.</span>
+      <div className="conflict-choices">
+        <button type="button" className="ghost" onClick={() => choose('local')}>
+          Dieses Gerät
+        </button>
+        <button type="button" className="ghost" onClick={() => choose('remote')}>
+          OneDrive
+        </button>
+        {conflict.choices.includes('both') && (
+          <button type="button" className="ghost" onClick={() => choose('both')}>
+            Beide behalten
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/** Wie der Abgleich steht, in einem Satz. */
+function syncText(sync: SyncView): string {
+  switch (sync.status) {
+    case 'off':
+      return 'Der Abgleich ist in dieser Fassung der App nicht eingerichtet. Die Kampagnen liegen nur auf diesem Gerät.';
+    case 'signedOut':
+      return 'Nicht angemeldet. Die Kampagnen liegen nur auf diesem Gerät.';
+    case 'syncing':
+      return 'Gleicht ab …';
+    case 'synced':
+      return sync.at ? `Abgeglichen um ${clockTime(sync.at)}.` : 'Angemeldet.';
+    case 'offline':
+      return 'Kein Netz. Du spielst weiter, der nächste Abgleich holt nach.';
+    case 'expired':
+      return 'Die Anmeldung ist abgelaufen. Melde dich neu an, damit wieder abgeglichen wird.';
+    case 'error':
+      return sync.error ?? 'Der Abgleich ist gescheitert.';
+  }
+}
+
+/** Der Abgleich mit OneDrive in der Kampagnenwahl: anmelden, abmelden und wie es steht. */
+function SyncPanel({ sync }: { sync: SyncView }) {
+  const game = useGame();
+  const signedIn = sync.account !== undefined;
+  return (
+    <section className="sync" aria-label="Abgleich mit OneDrive">
+      <strong>Abgleich mit OneDrive</strong>
+      {signedIn && <span className="small-label">Angemeldet als {sync.account}</span>}
+      <span className={sync.status === 'error' || sync.status === 'expired' ? 'small-label error' : 'small-label'} role="status">
+        {syncText(sync)}
+      </span>
+      {sync.status !== 'off' && (
+        <div className="conflict-choices">
+          {(!signedIn || sync.status === 'expired') && (
+            <button type="button" className="ghost" onClick={() => void game.signIn()}>
+              {signedIn ? 'Neu anmelden' : 'Bei OneDrive anmelden'}
+            </button>
+          )}
+          {signedIn && (sync.status === 'error' || sync.status === 'offline') && (
+            <button type="button" className="ghost" onClick={() => void game.sync()}>
+              Noch einmal versuchen
+            </button>
+          )}
+          {signedIn && (
+            <button type="button" className="ghost" onClick={() => void game.signOut()}>
+              Abmelden
+            </button>
+          )}
+        </div>
+      )}
+      {!signedIn && sync.status !== 'off' && (
+        <span className="small-label">Angemeldet hast du deine Kampagnen auf jedem Gerät, auf dem du dich auch anmeldest. Sie liegen im Ordner „Apps“ deines OneDrive.</span>
+      )}
+    </section>
   );
 }

@@ -18,15 +18,17 @@ sagt nur, wo die Teile liegen und wie sie miteinander reden.
 | 0 | `src/data/` | Referenzdaten: Tabellen als JSON, Schemas | — |
 | 1 | `src/model/` | **Model**: der gespeicherte Stand des Domänenmodells und seine Regeln | `data` |
 | 1a | `src/model/draft/` | **Model, Entwürfe**: `Card`, `Task`, `Attack`, `Wounding`, `WorldRoll`; flüchtig, nie gespeichert | `data`, `model` |
-| 2 | `src/platform/` | Was das Model von außen braucht: Speicher (Dexie), Zufall, Uhr, Download | `model` ohne `draft` |
+| 2 | `src/platform/` | Was das Model von außen braucht: Speicher (Dexie), Zufall, Uhr, Schlüssel, Download, OneDrive (MSAL und Microsoft Graph) | `model` ohne `draft` |
 | 3 | `src/controller/` | **Controller**: eine Methode pro Absicht des Spielers | `model` mit `draft` |
 | 4 | `src/view/` | **View**: React-Komponenten | `controller`, `model` mit `draft` (nur Typen) |
 | 5 | `src/main.tsx` | Verdrahtung | alles |
 | — | `src/service-worker.js` | Service Worker: legt die Dateien der App für offline ab, läuft im eigenen Kontext | nichts |
 
 Plattform und Controller kennen sich nicht. Das Model definiert die Schnittstellen
-(`CampaignRepository`, `Random`, `Clock`, `Download`), `platform/` setzt sie um (Dexie,
-`crypto.getRandomValues`, `Date`, ein Link mit `download`), und `main.tsx` reicht die Umsetzungen in den Controller. Physische Würfel (später) sind eine
+(`CampaignRepository`, `Random`, `Clock`, `Keys`, `Download`, `Cloud`), `platform/` setzt sie um (Dexie,
+`crypto.getRandomValues`, `Date`, `crypto.randomUUID`, ein Link mit `download`, OneDrive über MSAL
+und Microsoft Graph in `platform/onedrive.ts`, die Client-ID in `platform/onedrive-config.ts`, zum
+Ausprobieren die Probe-Wolke in `platform/probe-cloud.ts`), und `main.tsx` reicht die Umsetzungen in den Controller. Physische Würfel (später) sind eine
 zweite Umsetzung von `Random`, die das Ergebnis vom Spieler erfragt.
 
 Innerhalb des Models gilt dieselbe Richtung: `model/draft/` darf den gespeicherten Stand kennen, der
@@ -49,7 +51,11 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   Weltkarte), `book(kind, amount, text, character)`, `buy(item, count, character)` und
   `sell(item, count, price, character)`; für Kampagnen
   `openCampaign(id)`, `createCampaign(name)`, `renameCampaign(name)`, `deleteCampaign(id)`,
-  `exportCampaign(id)` und `importCampaign(text)`; für die Charaktererschaffung `openGeneration()`,
+  `exportCampaign(id)` und `importCampaign(text)`; für den Abgleich mit OneDrive `signIn()`, `signOut()`,
+  `sync()` und `resolveConflict(key, choice)`: Was je Kampagne zu tun ist, sagt das Model (`planSync` in
+  `model/sync.ts`), der Controller tut es über `Cloud` und `CampaignRepository` und hält offene Konflikte
+  (`model/draft/conflict.ts`) in seinem Zustand; die Abgleichsmarken merkt sich das Gerät über das
+  Repository; `main.tsx` stößt den Abgleich an, wenn die App wieder sichtbar wird oder das Netz zurück ist; für die Charaktererschaffung `openGeneration()`,
   `rollGeneration()`, `chooseService(id)`, `chooseSkillTable(id)`, `chooseCascade(skill)`,
   `reenlist(wants)`, `musterOut(kind)`, `chooseGenerationWorld(id)`, `pickGenerationWorld()`,
   `closePicker()`, `runGeneration()`, `finishGeneration(name)`, `discardGeneration()` und

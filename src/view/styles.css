@@ -1626,6 +1626,54 @@ button:disabled {
   opacity: 0.35;
 }
 
+/* Abgleich mit OneDrive und seine Konflikte, in der Kampagnenwahl */
+.sync,
+.conflict {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+}
+
+.conflict {
+  border-color: var(--accent);
+  border-left-width: 4px;
+  background: var(--accent-wash);
+}
+
+.conflict-stands {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  font-size: 14px;
+}
+
+.conflict-stands dt {
+  font-weight: 600;
+}
+
+.conflict-stands dd {
+  margin: 0;
+}
+
+.conflict-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.conflict-choices .ghost {
+  flex: 1 1 auto;
+  min-height: 44px;
+}
+
+.small-label.error {
+  color: var(--accent-text);
+}
+
 .import {
   display: flex;
   align-items: center;

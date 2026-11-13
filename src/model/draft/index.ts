@@ -4,3 +4,4 @@ export * from './task';
 export * from './attack';
 export * from './wounding';
 export * from './world-roll';
+export * from './conflict';

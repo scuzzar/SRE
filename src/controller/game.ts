@@ -106,6 +106,20 @@ import {
   type Campaign,
   type CampaignId,
   type CampaignRepository,
+  type Cloud,
+  type CloudFile,
+  type Keys,
+  type SyncMark,
+  type SyncStep,
+  CloudChanged,
+  CloudExpired,
+  CloudOffline,
+  copyOf,
+  fromCloudFile,
+  markOf,
+  planSync,
+  stamped,
+  touched,
   type CharacterInput,
   type Characteristic,
   type Clock,
@@ -147,11 +161,18 @@ import {
   rollSurfaceAt,
   rollWorld,
   runWorld,
+  choicesOf,
+  type Conflict,
+  type ConflictChoice,
 } from '../model/draft';
-import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
+import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
 const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+
+function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
 
 /** Ein Test in Worten: „Test 3 (5+ nötig)“, bei zwei Würfeln „Test 3 + 4 = 7 (7+ nötig)“. */
 function checkText(check: EncounterCheck): string {
@@ -164,6 +185,11 @@ export interface GameDependencies {
   readonly random: Random;
   readonly clock: Clock;
   readonly download: Download;
+  readonly keys: Keys;
+  /** Wo die Kampagnen für den Abgleich liegen (OneDrive); fehlt sie, gibt es keinen Abgleich. */
+  readonly cloud?: Cloud;
+  /** Ruft `run` kurz nach einer Änderung auf, für den Abgleich; fehlt es, gleicht nur `sync()` ab. */
+  readonly later?: (run: () => void) => void;
   /** Ob der Speicher das Schließen der App übersteht. */
   readonly persistent?: boolean;
   /** Ob der Browser zusagt, den Speicher nicht zu löschen; `undefined`, wo er das nicht kennt. */
@@ -182,12 +208,19 @@ export class GameController {
   private saving: Promise<void> = Promise.resolve();
   /** Nach einem Fehler beim Laden schreibt die App nichts mehr, damit sie den alten Spielstand nicht überschreibt. */
   private writable = true;
+  /** Die Abgleichsmarken des Geräts, je Schlüssel. */
+  private readonly marks = new Map<string, SyncMark>();
+  /** Der laufende Abgleich; ein zweiter Wunsch währenddessen hängt einen weiteren Durchgang an. */
+  private syncing: Promise<void> | undefined;
+  private again = false;
 
   constructor(private readonly deps: GameDependencies) {
     this.state = {
       campaigns: [],
       campaign: undefined,
       campaignSheet: undefined,
+      sync: { status: 'off', account: undefined, at: undefined, error: undefined },
+      conflicts: [],
       persistent: deps.persistent ?? true,
       durable: undefined,
       storageError: undefined,
@@ -255,9 +288,16 @@ export class GameController {
     } catch {
       // Ob der Hinweis im Shop weggeklickt war, ist nur eine Bequemlichkeit; dann steht er da.
     }
+    // Kampagnen von vor dem Abgleich bekommen Schlüssel und Änderungszeit, einmal und für immer.
+    const loaded = campaigns;
+    campaigns = loaded.map((c) => stamped(c, this.deps.keys, this.deps.clock));
+    campaigns.forEach((c, i) => {
+      if (c !== loaded[i]) this.persist(() => this.deps.repository.save(c), true);
+    });
     const campaign = campaigns.find((c) => c.id === open) ?? byName(campaigns)[0];
     if (campaign) this.update({ campaigns, campaign });
-    else this.addCampaign(createDemoCampaign(this.deps.clock));
+    else this.addCampaign(createDemoCampaign(this.deps.clock, this.deps.keys.next()));
+    await this.initSync();
   }
 
   // --- Verbindung zur View ---------------------------------------------------------------------
@@ -295,7 +335,7 @@ export class GameController {
 
   /** Legt eine leere Kampagne an und öffnet sie. */
   createCampaign(name: string): void {
-    this.inCampaignSheet(() => this.addCampaign(createCampaign([], name, nextCampaignId(this.state.campaigns))));
+    this.inCampaignSheet(() => this.addCampaign(createCampaign([], name, nextCampaignId(this.state.campaigns), this.newStamp())));
   }
 
   /** Benennt die offene Kampagne um. */
@@ -307,6 +347,10 @@ export class GameController {
   deleteCampaign(id: CampaignId): void {
     this.inCampaignSheet(() => {
       const campaigns = removeCampaign(this.state.campaigns, id);
+      // War sie abgeglichen, merkt sich das Gerät, dass sie hier gelöscht ist; der Abgleich löscht sie dann dort.
+      const mark = this.marks.get(this.state.campaigns.find((c) => c.id === id)?.key ?? '');
+      if (mark) this.setMark({ ...mark, deleted: true });
+      this.requestSync();
       if (this.campaign.id !== id) {
         this.update({ campaigns });
       } else {
@@ -327,7 +371,263 @@ export class GameController {
 
   /** Liest eine Kampagnendatei als neue Kampagne ein und öffnet sie; ist die Datei falsch, passiert nichts. */
   importCampaign(text: string): void {
-    this.inCampaignSheet(() => this.addCampaign(fromCampaignFile(text, nextCampaignId(this.state.campaigns))));
+    this.inCampaignSheet(() => this.addCampaign(fromCampaignFile(text, nextCampaignId(this.state.campaigns), this.newStamp())));
+  }
+
+  // --- Abgleich mit OneDrive -------------------------------------------------------------------
+
+  /** Meldet bei OneDrive an und gleicht ab. Verlässt die App dafür die Seite, geht es beim nächsten Start weiter. */
+  async signIn(): Promise<void> {
+    const cloud = this.deps.cloud;
+    if (!cloud) return;
+    try {
+      await cloud.signIn();
+      const account = await cloud.account();
+      this.setSync({ account, status: account ? 'synced' : 'signedOut', error: undefined });
+    } catch (error) {
+      this.setSync({ status: 'error', error: `Die Anmeldung ist gescheitert: ${messageOf(error)}` });
+      return;
+    }
+    await this.sync();
+  }
+
+  /** Meldet ab. Die Kampagnen bleiben hier und in OneDrive, wie sie sind; die Abgleichsmarken sind weg. */
+  async signOut(): Promise<void> {
+    const cloud = this.deps.cloud;
+    if (!cloud) return;
+    await this.syncing;
+    try {
+      await cloud.signOut();
+    } catch {
+      // Auch wenn das Abmelden dort scheitert: Hier wird nicht mehr abgeglichen.
+    }
+    this.marks.clear();
+    this.persist(() => this.deps.repository.clearMarks());
+    this.update({ conflicts: [], sync: { status: 'signedOut', account: undefined, at: undefined, error: undefined } });
+  }
+
+  /**
+   * Gleicht die Kampagnen mit OneDrive ab: beim Start, wenn die App wieder in den Vordergrund
+   * kommt, und kurz nach jeder Änderung. Läuft schon ein Abgleich, folgt ihm ein weiterer.
+   */
+  sync(): Promise<void> {
+    if (!this.deps.cloud || !this.state.sync.account || !this.writable) return Promise.resolve();
+    if (this.syncing) {
+      this.again = true;
+      return this.syncing;
+    }
+    this.syncing = (async () => {
+      // Höchstens ein paar Durchgänge am Stück, damit ein Fehler dort keine Schleife wird.
+      for (let round = 0; round < 4; round++) {
+        this.again = false;
+        await this.syncOnce();
+        if (!this.again) break;
+      }
+    })().finally(() => {
+      this.syncing = undefined;
+    });
+    return this.syncing;
+  }
+
+  /** Löst einen Konflikt: Der Stand von hier gilt (`local`), der aus OneDrive (`remote`), oder beide bleiben (`both`). */
+  async resolveConflict(key: string, choice: ConflictChoice): Promise<void> {
+    const cloud = this.deps.cloud;
+    const conflict = this.state.conflicts.find((c) => c.key === key);
+    if (!cloud || !conflict) return;
+    await this.syncing;
+    const local = this.state.campaigns.find((c) => c.key === key);
+    const { remote, revision } = conflict;
+    try {
+      if (!choicesOf(conflict, this.state.campaigns).includes(choice)) throw new DomainError('Diese Wahl gibt es in diesem Konflikt nicht.');
+      // Die letzte Kampagne des Geräts wird nie gelöscht; sie bleibt und wird wieder hochgeladen.
+      const keepLast = choice === 'remote' && !remote && this.state.campaigns.length === 1;
+      if (choice === 'local' || keepLast) {
+        if (local) await this.upload(local, revision);
+        else if (revision !== undefined) {
+          await cloud.remove(key, revision);
+          this.dropMark(key);
+        }
+      } else if (choice === 'remote') {
+        if (remote && revision !== undefined) {
+          this.put({ ...remote, id: local?.id ?? nextCampaignId(this.state.campaigns) });
+          this.setMark(markOf(remote, revision));
+        } else if (local) {
+          this.drop(local.id);
+          this.dropMark(key);
+        }
+      } else if (local && remote && revision !== undefined) {
+        // Beide behalten: Der Stand von hier wird die Kopie mit neuem Schlüssel, der von dort kommt daneben.
+        this.put(copyOf(local, this.deps.keys, this.deps.clock));
+        this.put({ ...remote, id: nextCampaignId(this.state.campaigns) });
+        this.setMark(markOf(remote, revision));
+      }
+    } catch (error) {
+      // Hat sich OneDrive inzwischen noch einmal geändert, findet der nächste Abgleich den Konflikt neu.
+      if (!(error instanceof CloudChanged)) {
+        this.failSync(error);
+        return;
+      }
+    }
+    this.update({ conflicts: this.state.conflicts.filter((c) => c.key !== key) });
+    await this.sync();
+  }
+
+  /** Beim Start: die Marken laden und, wenn jemand angemeldet ist, abgleichen (ohne darauf zu warten). */
+  private async initSync(): Promise<void> {
+    const cloud = this.deps.cloud;
+    if (!cloud || !this.writable) return;
+    try {
+      for (const mark of await this.deps.repository.loadMarks()) this.marks.set(mark.key, mark);
+      const account = await cloud.account();
+      this.setSync({ account, status: account ? 'synced' : 'signedOut' });
+    } catch (error) {
+      this.setSync({ status: 'error', error: `Die Anmeldung ließ sich nicht prüfen: ${messageOf(error)}` });
+      return;
+    }
+    void this.sync();
+  }
+
+  private async syncOnce(): Promise<void> {
+    const cloud = this.deps.cloud!;
+    this.setSync({ status: 'syncing', error: undefined });
+    try {
+      await this.saving;
+      const remote = await cloud.list();
+      const steps = planSync(this.state.campaigns, [...this.marks.values()], remote, this.state.conflicts.map((c) => c.key));
+      const problems: string[] = [];
+      for (const step of steps) {
+        try {
+          await this.syncStep(step, remote.find((f) => f.key === step.key));
+        } catch (error) {
+          // Dort inzwischen geändert: Der nächste Durchgang sieht es. Eine kaputte Datei hält die übrigen nicht auf.
+          if (error instanceof CloudChanged) this.again = true;
+          else if (error instanceof DomainError) problems.push(error.message);
+          else throw error;
+        }
+      }
+      this.setSync({ status: problems.length ? 'error' : 'synced', at: this.deps.clock.now(), error: problems[0] });
+    } catch (error) {
+      this.again = false;
+      this.failSync(error);
+    }
+  }
+
+  private async syncStep(step: SyncStep, file: CloudFile | undefined): Promise<void> {
+    const cloud = this.deps.cloud!;
+    const { key } = step;
+    const local = this.state.campaigns.find((c) => c.key === key);
+    const mark = this.marks.get(key);
+    const readRemote = async (): Promise<{ campaign: Campaign; revision: string } | undefined> => {
+      const got = file && (await cloud.read(key));
+      return got && { campaign: fromCloudFile(got.text, local?.id ?? nextCampaignId(this.state.campaigns), key), revision: got.revision };
+    };
+    // Wurde hier gespielt, während der Abgleich auf das Netz wartete, gilt der Schritt nicht mehr.
+    const stale = (): boolean => {
+      const now = this.state.campaigns.find((c) => c.key === key);
+      if (now?.changedAt === local?.changedAt) return false;
+      this.again = true;
+      return true;
+    };
+    switch (step.kind) {
+      case 'upload':
+        if (local) await this.upload(local, mark?.revision);
+        return;
+      case 'download': {
+        const got = await readRemote();
+        if (!got || stale()) return;
+        this.put(got.campaign);
+        this.setMark(markOf(got.campaign, got.revision));
+        return;
+      }
+      case 'removeRemote':
+        if (mark) await cloud.remove(key, mark.revision);
+        this.dropMark(key);
+        return;
+      case 'removeLocal':
+        this.dropMark(key);
+        // Die letzte Kampagne des Geräts wird nie gelöscht; sie bleibt und wird wieder hochgeladen.
+        if (local && this.state.campaigns.length === 1) await this.upload(local, undefined);
+        else if (local) this.drop(local.id);
+        return;
+      case 'forget':
+        this.dropMark(key);
+        return;
+      case 'conflict': {
+        const got = await readRemote();
+        if (stale()) return;
+        if (!local && !got) {
+          this.dropMark(key);
+          return;
+        }
+        // Gleich alt heißt gleich: kein Konflikt, nur die Marke fehlte (etwa nach erneutem Anmelden).
+        if (local && got && local.changedAt === got.campaign.changedAt) {
+          this.setMark(markOf(local, got.revision));
+          return;
+        }
+        const conflict: Conflict = { key, ...(got ? { remote: got.campaign, revision: got.revision } : {}) };
+        // Der Abgleich fragt: Die Kampagnenwahl geht auf, dort steht der Konflikt.
+        this.update({ conflicts: [...this.state.conflicts, conflict], campaignSheet: this.state.campaignSheet ?? { error: undefined } });
+        return;
+      }
+    }
+  }
+
+  /** Lädt eine Kampagne hoch; `revision` ist die Fassung, die dort ersetzt wird, ohne sie darf es dort keine geben. */
+  private async upload(campaign: Campaign, revision: string | undefined): Promise<void> {
+    const next = await this.deps.cloud!.write(campaign.key, toCampaignFile(campaign), revision);
+    this.setMark(markOf(campaign, next));
+  }
+
+  /** Nimmt einen Stand aus OneDrive auf: ersetzt die Kampagne mit derselben Id oder kommt als weitere dazu. */
+  private put(campaign: Campaign): void {
+    const known = this.state.campaigns.some((c) => c.id === campaign.id);
+    const campaigns = known ? this.state.campaigns.map((c) => (c.id === campaign.id ? campaign : c)) : [...this.state.campaigns, campaign];
+    // Wird die offene Kampagne ersetzt, sind die Entwürfe weg, wie beim Wechseln.
+    if (this.state.campaign?.id === campaign.id) this.update({ ...closedDrafts, campaigns, campaign });
+    else this.update({ campaigns });
+    this.persist(() => this.deps.repository.save(campaign), true);
+  }
+
+  /** Nimmt eine Kampagne vom Gerät, weil sie in OneDrive gelöscht ist. War sie offen, öffnet sich die erste nach Namen. */
+  private drop(id: CampaignId): void {
+    const campaigns = this.state.campaigns.filter((c) => c.id !== id);
+    if (this.state.campaign?.id !== id) {
+      this.update({ campaigns });
+    } else {
+      const campaign = byName(campaigns)[0]!;
+      this.update({ ...closedDrafts, campaigns, campaign });
+      this.persist(() => this.deps.repository.saveOpen(campaign.id));
+    }
+    this.persist(() => this.deps.repository.remove(id));
+  }
+
+  private setMark(mark: SyncMark): void {
+    this.marks.set(mark.key, mark);
+    this.persist(() => this.deps.repository.saveMark(mark));
+  }
+
+  private dropMark(key: string): void {
+    if (!this.marks.delete(key)) return;
+    this.persist(() => this.deps.repository.removeMark(key));
+  }
+
+  private setSync(patch: Partial<SyncView>): void {
+    this.update({ sync: { ...this.state.sync, ...patch } });
+  }
+
+  private failSync(error: unknown): void {
+    if (error instanceof CloudOffline) this.setSync({ status: 'offline', error: undefined });
+    else if (error instanceof CloudExpired) this.setSync({ status: 'expired', error: undefined });
+    else this.setSync({ status: 'error', error: `Der Abgleich ist gescheitert: ${messageOf(error)}` });
+  }
+
+  /** Stößt den Abgleich kurz nach einer Änderung an. */
+  private requestSync(): void {
+    if (this.state.sync.account) this.deps.later?.(() => void this.sync());
+  }
+
+  private newStamp(): { key: string; changedAt: string } {
+    return { key: this.deps.keys.next(), changedAt: this.deps.clock.now() };
   }
 
   // --- Orakel-Screen ---------------------------------------------------------------------------
@@ -1308,9 +1608,12 @@ export class GameController {
   /** Ändert die offene Kampagne und speichert sie. Steht danach ein anderer Charakter oben, enden Probe und Angriff. */
   private change(campaign: Campaign, rest: Partial<ControllerState> = {}): void {
     if (this.state.campaign && focusOf(this.state.campaign)?.id !== focusOf(campaign)?.id) rest = { ...rest, task: undefined, attack: undefined };
+    // Jede Änderung am gespeicherten Stand setzt die Änderungszeit; daran merkt der Abgleich, dass hier etwas neu ist.
+    campaign = touched(campaign, this.deps.clock);
     const campaigns = this.state.campaigns.map((c) => (c.id === campaign.id ? campaign : c));
     this.update({ ...rest, campaigns, campaign });
     this.persist(() => this.deps.repository.save(campaign), true);
+    this.requestSync();
   }
 
   /** Nimmt eine neue Kampagne auf, öffnet und speichert sie. */
@@ -1318,6 +1621,7 @@ export class GameController {
     this.update({ ...closedDrafts, campaigns: [...this.state.campaigns, campaign], campaign, campaignSheet: undefined });
     this.persist(() => this.deps.repository.save(campaign), true);
     this.persist(() => this.deps.repository.saveOpen(campaign.id));
+    this.requestSync();
   }
 
   /** Führt eine Eingabe aus der Kampagnenwahl aus; verletzt sie eine Regel, steht das in der Kampagnenwahl. */
