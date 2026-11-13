@@ -6262,12 +6262,28 @@ button:disabled {
     justify-content: center;
   }
 
+  /* Ohne Charakterspalte (Bereich Charaktere, Kampfsimulation) bekommt der Bereich ihren Platz. */
+  .stage.without-characters {
+    grid-template-columns: clamp(300px, 24vw, 420px) minmax(0, 1340px);
+  }
+
   /* Die Orakel-Spalte ist der Orakel-Screen des Smartphones ohne die Leiste: Log, Orakel und Proben. */
   .oracle-panel {
     display: flex;
     flex-direction: column;
     min-height: 0;
     border-left: 1px solid var(--rule);
+  }
+
+  /* „75 % · 6+“ passt nicht in eine Zeile der Orakel-Spalte: Chance und Zielwert untereinander. */
+  .oracle-panel .odds-sub {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+  }
+
+  .oracle-panel .odds-dot {
+    display: none;
   }
 
   /* Die Charakterspalte scrollt in sich, wenn die Karten nicht in die Höhe passen. */
@@ -6383,12 +6399,83 @@ button:disabled {
   }
 }
 
+/* --- Desktop-Modus, schmal (1024 bis 1279 px) ----------------------------------------------- */
+/* Drei Spalten sind hier eng: Orakel- und Charakterspalte werden schmaler, „Deuten“ und „Notiz“
+   zeigen nur ihr Symbol (der Name bleibt für Screenreader und als Tooltip), Attribute und
+   Fertigkeiten rücken enger zusammen. So bleiben dem Bereich rund 480 px. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .stage {
+    grid-template-columns: 270px 270px minmax(0, 1fr);
+  }
+
+  .stage.without-characters {
+    grid-template-columns: 270px minmax(0, 1fr);
+  }
+
+  .oracle-panel .write-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .char-column {
+    padding: 8px;
+  }
+
+  .char-column .strip-card {
+    padding: 4px 6px 8px 8px;
+  }
+
+  .char-column .upp {
+    gap: 3px;
+  }
+
+  .char-column .chips {
+    gap: 4px;
+  }
+
+  .char-column .chips button,
+  .char-column .chips .chip {
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+}
+
 /* --- Maus: Hover-Zustände ------------------------------------------------------------------- */
 /* Nur für Geräte mit Zeiger, der schweben kann; auf dem Touchscreen bliebe der Zustand kleben. */
 @media (hover: hover) {
   button:not(:disabled):hover,
   select:not(:disabled):hover {
     filter: brightness(1.2);
+  }
+
+  /* Helle Knöpfe lassen sich nicht heller machen: Sie werden unter der Maus etwas dunkler. */
+  .primary:not(:disabled):hover,
+  .action.oracle:not(:disabled):hover,
+  .odds button[aria-checked='true']:hover,
+  .chips button[aria-pressed='true']:not(:disabled):hover {
+    filter: brightness(0.85);
+  }
+
+  /* „2W6“ hat schon einen hellen Rahmen: Er bekommt einen hellen Grund. */
+  .action.dice:not(:disabled):hover {
+    background: var(--highlight);
+  }
+
+  /* Dunkle Knöpfe mit Rahmen: Aufhellen sähe man kaum, darum wird der Rahmen hell. */
+  .write-button:not(:disabled):hover,
+  .ghost:not(:disabled):hover,
+  .add-character:not(:disabled):hover,
+  .chips button:not(:disabled):not([aria-pressed='true']):hover,
+  .upp button:not(:disabled):hover {
+    border-color: var(--text);
+  }
+
+  .odds button[aria-checked='false']:hover {
+    background: var(--highlight);
   }
 
   .nav button:hover,
@@ -6402,7 +6489,7 @@ button:disabled {
   }
 
   .entry.outcome:hover {
-    border-color: var(--line-strong);
+    border-color: var(--muted);
   }
 
   .char-column .strip-card:not(.focus):hover {

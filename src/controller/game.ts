@@ -465,6 +465,16 @@ export class GameController {
     this.update({ task: chooseSkill(this.state.task ?? startTask(this.campaign), this.campaign, skill) });
   }
 
+  /**
+   * In der Charakterspalte: Eine Fertigkeit auf der Karte eines anderen Charakters antippen holt ihn
+   * nach oben und beginnt die Probe mit dieser Fertigkeit, mit einem Klick. Steht er schon oben, ist
+   * es dasselbe wie `chooseSkill`.
+   */
+  chooseSkillOf(id: string, skill: string | null): void {
+    this.focusCharacter(id);
+    this.chooseSkill(skill);
+  }
+
   /** Beendet die vorbereitete Probe, ohne zu würfeln. */
   endTask(): void {
     this.update({ task: undefined });

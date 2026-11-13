@@ -68,6 +68,9 @@ export function App() {
   const screen = desktop && view.screen === 'oracle' ? 'sector' : view.screen;
   const oracle = <OracleScreen view={view} question={question} onQuestion={setQuestion} target={target} picked={picked} marked={marked} onPick={onPick} onClearTarget={onClearTarget} strip={!desktop} />;
   const heal = screen === 'combat' && view.combat && !view.combat.sim ? pcHeal(view.combat, setPatient) : undefined;
+  // Die Charakterspalte entfällt, wo der Bereich die SC selbst zeigt: im Bereich Charaktere und in der
+  // Kampfsimulation, deren Arena die SC mit Wunden, Waffen und Zug führt.
+  const characterColumn = desktop && screen !== 'characters' && !(screen === 'combat' && view.combat?.sim);
 
   return (
     <div className="app">
@@ -102,13 +105,13 @@ export function App() {
         ))}
       </nav>
 
-      <div className="stage">
+      <div className={desktop && !characterColumn ? 'stage without-characters' : 'stage'}>
         {desktop && (
           <aside className="oracle-panel" aria-label="Orakel">
             {oracle}
           </aside>
         )}
-        {desktop && (
+        {characterColumn && (
           <aside className="character-panel" aria-label="Charakterspalte">
             <CharacterColumn view={view} screen={screen} heal={heal} />
           </aside>

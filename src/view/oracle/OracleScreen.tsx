@@ -129,13 +129,13 @@ export function OracleScreen({
               if (e.key === 'Enter') ask();
             }}
           />
-          <button type="button" className="write-button interpret" disabled={!text || target === undefined} onClick={() => write(target)}>
+          <button type="button" className="write-button interpret" title="Deuten" disabled={!text || target === undefined} onClick={() => write(target)}>
             <LightbulbIcon />
-            Deuten
+            <span className="write-label">Deuten</span>
           </button>
-          <button type="button" className="write-button" disabled={!text} onClick={() => write(undefined)}>
+          <button type="button" className="write-button" title="Notiz" disabled={!text} onClick={() => write(undefined)}>
             <PencilIcon />
-            Notiz
+            <span className="write-label">Notiz</span>
           </button>
         </div>
         <div className="actions">

@@ -253,6 +253,20 @@ describe('Charakter oben: Probe im Orakel-Screen', () => {
     expect(game.snapshot().characters[0]!.characteristics.some((c) => c.selectable)).toBe(false);
   });
 
+  it('holt mit einer Fertigkeit auf einer anderen Karte den Charakter nach oben und beginnt die Probe', async () => {
+    const { game } = await started();
+    game.chooseSkill('pilot');
+    game.chooseSkillOf('c2', null);
+    const [kira, jonas] = game.snapshot().characters;
+    expect(jonas!.focus).toBe(true);
+    expect(kira!.focus).toBe(false);
+    expect(jonas!.unskilled).toEqual({ dm: -3, chosen: true });
+    expect(game.snapshot().task?.character).toBe(jonas!.name);
+    // Steht er schon oben, nimmt dieselbe Fertigkeit die Wahl zurück wie chooseSkill.
+    game.chooseSkillOf('c2', null);
+    expect(game.snapshot().characters[1]!.unskilled).toEqual({ dm: -3, chosen: false });
+  });
+
   it('bietet mit Jack-of-all-Trades kein „ohne Fertigkeit“ an; JoT gibt ±0', async () => {
     const { game } = await started();
     const jonas = game.snapshot().characters[1]!;

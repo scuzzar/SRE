@@ -10,7 +10,9 @@ export function OddsBar({ odds }: { odds: readonly OddsChoice[] }) {
         <button key={o.id} type="button" role="radio" aria-checked={o.selected} aria-label={`${o.name}, ${o.chance} %, ${o.target}+`} onClick={() => game.setOdds(o.id)}>
           <span className="odds-name">{o.name}</span>
           <span className="odds-sub">
-            {o.chance} % · {o.target}+
+            <span>{o.chance} %</span>
+            <span className="odds-dot"> · </span>
+            <span>{o.target}+</span>
           </span>
         </button>
       ))}

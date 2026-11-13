@@ -24,7 +24,7 @@ test('Reiter oben; darunter links Orakel, daneben die Charaktere, rechts der Ber
   await expect(nav.getByRole('button', { name: 'Sektor', exact: true })).toHaveAttribute('aria-current', 'page');
   const oracle = page.getByRole('complementary', { name: 'Orakel' });
   const chars = page.getByRole('complementary', { name: 'Charakterspalte' });
-  for (const name of areas) {
+  for (const name of areas.filter((a) => a !== 'Charaktere')) {
     await nav.getByRole('button', { name, exact: true }).click();
     const o = (await oracle.boundingBox())!;
     const c = (await chars.boundingBox())!;
@@ -38,6 +38,11 @@ test('Reiter oben; darunter links Orakel, daneben die Charaktere, rechts der Ber
     await expect(column(page).getByRole('article')).toHaveCount(2);
     await expect(page.locator('.screen-host .strip')).toHaveCount(0);
   }
+  // Der Bereich Charaktere zeigt die SC selbst: Dort entfällt die Charakterspalte.
+  await nav.getByRole('button', { name: 'Charaktere', exact: true }).click();
+  await expect(chars).toHaveCount(0);
+  const h = (await page.locator('.screen-host').boundingBox())!;
+  expect(h.x).toBeGreaterThanOrEqual((await oracle.boundingBox())!.width - 1);
 });
 
 test('Ein Wurf landet im Log der Orakel-Spalte und bleibt beim Wechsel der Bereiche sichtbar', async ({ page }, testInfo) => {
@@ -153,3 +158,35 @@ test('Die Ziffern wählen die Bereiche der Reiterzeile', async ({ page }, testIn
   await expect(nav.getByRole('button', { name: 'Sektor', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByPlaceholder(/Frage, Deutung, Notiz/)).toHaveValue('2');
 });
+
+test('Eine Fertigkeit auf einer anderen Karte holt den Charakter nach oben und beginnt die Probe, mit einem Klick', async ({ page }, testInfo) => {
+  onlyDesktop(testInfo);
+  const jonas = column(page).getByRole('article', { name: 'Jonas Reyl' });
+  await jonas.getByRole('button', { name: 'Steward-1' }).click();
+  await expect(jonas).toHaveClass(/focus/);
+  await expect(column(page).getByRole('article', { name: 'Kira Vant' })).not.toHaveClass(/focus/);
+  const oracle = page.getByRole('complementary', { name: 'Orakel' });
+  await expect(oracle.locator('.task-bar')).toContainText('Steward-1');
+  await oracle.getByRole('button', { name: 'Probe würfeln' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Weiter' }).click();
+  await expect(oracle.locator('.entry').last()).toContainText('Jonas Reyl · Steward-1');
+});
+
+test('In der Kampfsimulation entfällt die Charakterspalte; die Arena führt die SC', async ({ page }, testInfo) => {
+  onlyDesktop(testInfo);
+  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Begegnung', exact: true }).click();
+  await page.locator('select').filter({ hasText: 'oder wählen' }).selectOption({ index: 1 });
+  // Die Vorstellung der Begegnung schließt Esc; dann geht es zum Kampf.
+  await expect(async () => {
+    if ((await page.getByRole('dialog').count()) > 0) await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0, { timeout: 500 });
+  }).toPass();
+  await page.getByRole('button', { name: 'Zum Kampf' }).click();
+  await expect(page.locator('.fcard.pcs')).toHaveCount(2);
+  await expect(page.getByRole('complementary', { name: 'Charakterspalte' })).toHaveCount(0);
+  await expect(page.getByRole('complementary', { name: 'Orakel' })).toBeVisible();
+  // Ohne Simulation (Waffentabelle) ist die Spalte wieder da.
+  await page.getByRole('button', { name: 'Beenden' }).first().click();
+  await expect(page.getByRole('complementary', { name: 'Charakterspalte' })).toBeVisible();
+});
+

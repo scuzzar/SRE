@@ -64,8 +64,13 @@ export function UppRow({ character, interactive }: { character: CharacterView; i
  * Die Fertigkeiten mit Kürzel. Beim Charakter oben startet ein Tippen die Probe; im Charakter-Screen
  * sind sie nur Anzeige, aufgeklappt mit vollem Namen.
  */
+/**
+ * Die Fertigkeiten als Kürzel. Antippbar starten sie eine Probe; auf der Karte eines Charakters, der
+ * nicht oben steht (nur in der Charakterspalte antippbar), holt das Antippen ihn zugleich nach oben.
+ */
 export function SkillChips({ character, interactive, full = false }: { character: CharacterView; interactive: boolean; full?: boolean }) {
   const game = useGame();
+  const choose = (skill: string | null) => (character.focus ? game.chooseSkill(skill) : game.chooseSkillOf(character.id, skill));
   if (!interactive) {
     return (
       <ul className="chips" aria-label="Fertigkeiten">
@@ -80,12 +85,12 @@ export function SkillChips({ character, interactive, full = false }: { character
   return (
     <div className="chips" role="group" aria-label="Fertigkeit für die Probe">
       {character.skills.map((skill) => (
-        <button key={skill.of} type="button" aria-label={withLevel(skill.name, skill.level)} aria-pressed={skill.chosen} onClick={() => game.chooseSkill(skill.of)}>
+        <button key={skill.of} type="button" aria-label={withLevel(skill.name, skill.level)} aria-pressed={skill.chosen} onClick={() => choose(skill.of)}>
           {withLevel(skill.short, skill.level)}
         </button>
       ))}
       {character.unskilled && (
-        <button type="button" className="unskilled" aria-pressed={character.unskilled.chosen} onClick={() => game.chooseSkill(null)}>
+        <button type="button" className="unskilled" aria-pressed={character.unskilled.chosen} onClick={() => choose(null)}>
           Ohne ({signed(character.unskilled.dm)})
         </button>
       )}

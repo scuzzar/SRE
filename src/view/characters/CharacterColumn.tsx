@@ -17,8 +17,9 @@ export interface ColumnHeal {
  * Die Charakterspalte im Desktop-Modus, zwischen Orakel und Bereich: alle Lebenden untereinander,
  * immer mit Attributen und Fertigkeiten, damit Proben in jedem Bereich gehen. Dazu blendet sie ein,
  * was der Bereich daneben braucht: im Kampf Zustand, Rüstung und Waffen (antippen nimmt die Waffe in
- * die Hand) und „Heilen“, im Shop Credits und Besitz. Die Karte oben trägt die rote Kante; nur auf
- * ihr wählt man Proben und Waffen, ein Klick auf eine andere Karte holt diesen Charakter nach oben.
+ * die Hand) und „Heilen“, im Shop Credits und Besitz. Die Karte oben trägt die rote Kante. Eine
+ * Fertigkeit lässt sich auf jeder Karte antippen und holt den Charakter dabei nach oben; Attribute und
+ * Waffen wählt man auf der Karte oben, ein Klick auf eine andere Karte holt diesen Charakter nach oben.
  * Welcher oben steht, entscheidet der Controller; die Spalte zeigt es nur.
  */
 export function CharacterColumn({ view, screen, heal }: { view: Snapshot; screen: Screen; heal: ColumnHeal | undefined }) {
@@ -83,7 +84,8 @@ export function CharacterColumn({ view, screen, heal }: { view: Snapshot; screen
             </p>
           )}
           <UppRow character={character} interactive={character.focus} />
-          <SkillChips character={character} interactive={character.focus} />
+          {/* Fertigkeiten gehen auf jeder Karte: Antippen holt den Charakter nach oben und beginnt die Probe. */}
+          <SkillChips character={character} interactive />
           {weapons && <WeaponChips character={character} />}
           {shop && <Possessions character={character} />}
         </article>

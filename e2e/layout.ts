@@ -13,11 +13,17 @@ export const oracle = (page: Page) => page.locator('.oracle-panel, .app:not(:has
 /** Wo die Charaktere stehen: die Charakterspalte, sonst die Leiste im Screen. */
 export const characters = (page: Page) => page.locator('.character-panel, .app:not(:has(.character-panel)) .screen-host');
 
-/** Zum Orakel wechseln; im Desktop-Modus steht es schon da, dort gibt es den Reiter nicht. */
+/**
+ * Zum Orakel mit den Charakteren wechseln. Im Desktop-Modus gibt es den Reiter nicht: Orakel und
+ * Charakterspalte stehen neben jedem Bereich, nur nicht neben dem Bereich Charaktere; von dort geht
+ * es zur Begegnung.
+ */
 export async function openOracle(page: Page) {
   const nav = page.getByRole('navigation', { name: 'Bereiche' });
   // Erst wenn die App geladen ist, steht die Leiste da; vorher lässt sich der Reiter nicht zählen.
   await nav.waitFor();
   const tab = nav.getByRole('button', { name: 'Orakel', exact: true });
-  if ((await tab.count()) > 0) await tab.click();
+  if ((await tab.count()) > 0) return tab.click();
+  const characters = nav.getByRole('button', { name: 'Charaktere', exact: true });
+  if ((await characters.getAttribute('aria-current')) === 'page') await nav.getByRole('button', { name: 'Begegnung', exact: true }).click();
 }

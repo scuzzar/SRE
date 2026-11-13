@@ -39,7 +39,7 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
 - **Er ändert das Model**, als Einziger, und speichert den Spielstand über das Repository:
   `askOracle(question)`, `rollDice()`, `drawCard(question)`, `togglePick(slot)`, `toggleRoll(roll)`
   (Wurffeld), `confirmCard()`, `discardCard()`, `drawNames()` und `closeNames()` (Name von der Karte), `writeNote(text, interprets)`, `deleteLogEntry(index)`, `setOdds(odds)`; für den Charakter oben und die Probe
-  `focusCharacter(id)` (Wischen), `chooseSkill(skill)`, `toggleCharacteristic(c)`, `rollTask()`,
+  `focusCharacter(id)` (Wischen), `chooseSkill(skill)`, `chooseSkillOf(id, skill)` (Fertigkeit auf einer anderen Karte der Charakterspalte), `toggleCharacteristic(c)`, `rollTask()`,
   `endTask()`; für den Kampf `wieldWeapon(weapon)`, `chooseTarget(armor, range)`, `endAttack()`,
   `rollAttack()`, `rollDamage()`, `reload()`, für Begegnungen `rollEncounter(roll)`,
   `endEncounter()`, `rollPatron()`, `rollRumor()`, `setTerrain(terrain)`, `rollAnimals(row)`, `rollEventSaves(index)`, `struggle()`, `openLoot(id)`, `takeLoot(npc, pc)`, `butcher(animal, pc)`, `closeButchered()`, `sellGame(key, kg, total, pc)`, `adoptNpcs(npcs, asNpc)`, in der Kampfsimulation `chooseFightTarget(id)`,
