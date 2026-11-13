@@ -71,6 +71,9 @@ import {
   rollPatron,
   rollRumor,
   rollAnimalEncounter,
+  holdAfterAttack,
+  isHeld,
+  struggle,
   setTerrain,
   animalName,
   animalEventOf,
@@ -547,7 +550,7 @@ export class GameController {
     const results = rollAttack(attack, campaign, this.deps.random, this.deps.clock);
     const rounds = attackRounds(attack, campaign);
     // Ein Schuss mit Überraschung gibt Alarm, außer mit einem Laser (SR 20).
-    const logged = alarmAfterAttack(appendLog(campaign, ...results), results);
+    const logged = holdAfterAttack(alarmAfterAttack(appendLog(campaign, ...results), results), results);
     // SC wie NSC verbrauchen ihre Munition.
     return spendRound(logged, results[0]!.for, rounds);
   }
@@ -795,7 +798,24 @@ export class GameController {
 
   /** Der Kämpfer am Zug weicht aus (SR 20): kein Angriff, dafür DM auf Angriffe gegen ihn bis zu seinem nächsten Zug. */
   evade(): void {
-    this.inFight(() => this.nextTurn(this.campaign, {}, true));
+    this.inFight(() => {
+      const turn = turnOf(this.campaign);
+      if (turn && isHeld(this.campaign, turn.id)) throw new DomainError(`${anyCharacterOf(this.campaign, turn.id).name} ist festgehalten und kann nicht ausweichen.`);
+      this.nextTurn(this.campaign, {}, true);
+    });
+  }
+
+  /** Der SC am Zug ist festgehalten und reißt sich statt zu schlagen los (SR 48); das ist sein Zug. */
+  struggle(): void {
+    this.inFight(() => {
+      const turn = turnOf(this.campaign);
+      if (!turn) throw new DomainError('Es ist keiner am Zug.');
+      const result = struggle(this.campaign, turn.id, this.deps.random);
+      const name = anyCharacterOf(this.campaign, turn.id).name.split(' ')[0];
+      const thrown = `${result.dice[0]} + ${result.dice[1]}${result.dm ? ` +${result.dm}` : ''} gegen ${result.target}+`;
+      this.nextTurn(result.campaign);
+      this.update({ combatNote: `${name} reißt sich los (${thrown}): ${result.freed ? 'frei!' : 'noch festgehalten.'}` });
+    });
   }
 
   /**

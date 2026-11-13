@@ -99,6 +99,8 @@ import {
   isEvading,
   evadeDmAt,
   encounterNameOf,
+  isHeld,
+  struggleNeed,
   fixedDamageOf,
   animalRowOf,
   hurtOf,
@@ -528,6 +530,8 @@ export interface FighterView {
   readonly blows: number | undefined;
   /** Er weicht aus (SR 20), bis zu seinem nächsten Zug. */
   readonly evading: boolean;
+  /** Festgehalten von Falle, Köder oder Filter. */
+  readonly held: boolean;
   /** Ein SC über 20 Bands weg: kein Ziel, kein Angriff. */
   readonly escaped: boolean;
 }
@@ -655,6 +659,8 @@ export interface SimView {
         readonly fire: FireView | undefined;
         /** Seine Partei ist in dieser Runde gelaufen: kein Angriff. */
         readonly ran: boolean;
+        /** Er ist festgehalten (Falle, Köder, Filter): statt anzugreifen reißt er sich los, mit Zielwert und DM der Helfer. */
+        readonly held: { readonly target: number; readonly dm: number; readonly helpers: number } | undefined;
         /** Bei einem Schlag oder Hieb: die Schlagart, die Combat-Schläge und ob er ihn schwächen kann (SR 22). */
         readonly melee: MeleeView | undefined;
         /**
@@ -1433,6 +1439,7 @@ function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, 
     healing: recoveryOptions(campaign, slot.id),
     blows: isMelee(fighter.weapon) ? blowsOf(campaign, slot.id) : undefined,
     evading: isEvading(campaign, slot.id),
+    held: slot.side === 'pcs' && isHeld(campaign, slot.id),
     escaped: isEscaped(campaign, slot.id),
   };
 }
@@ -1481,6 +1488,7 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
       ammo: ammo && { rounds: ammo.rounds, capacity: ammo.capacity, magazines: ammo.magazines },
       fire: fireView(attacker.weapon, burst),
       ran: hasRun(campaign, turn),
+      held: turn.side === 'pcs' && isHeld(campaign, turn.id) ? struggleNeed(campaign, turn.id) : undefined,
       melee: isMelee(attacker.weapon)
         ? {
             strike,

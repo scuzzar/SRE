@@ -3,9 +3,10 @@ import { anyCharacterOf, keepFocus, validateCharacter, validName, type Campaign,
 import { replay, type Career, type CareerRoll } from './career';
 import { DomainError } from './errors';
 import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, type PathKind } from './card-roll';
-import { animalIds, checkDamageRoll, checkVolley, ATTACK_TARGET } from './combat';
+import { animalIds, checkDamageRoll, checkVolley, filterDiceOf, ATTACK_TARGET } from './combat';
+import { FILTER_HELD_TARGET, FILTER_TARGET } from './hold';
 import { encounterAnimalRow, ESCAPED_BAND, upgradeDistances, upgradeNpcs, type Encounter } from './encounter';
-import { animalRowOf, checkAnimalTable, eventRowOf, terrainOf } from './animals';
+import { animalRowOf, animalTypeOf, checkAnimalTable, eventRowOf, terrainOf } from './animals';
 import { animalTraits } from '../data';
 import { checkInterprets, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type CardPick, type DamageRoll, type LogEntry, type Recovery } from './log';
 import { checkRecovery } from './wounds';
@@ -238,6 +239,9 @@ const EncounterSchema = z
           close: z.boolean(),
           moved: z.number().int().min(0).max(2).optional(),
           runs: z.number().int().min(0).optional(),
+          trapDice: z.tuple([die, die]).optional(),
+          held: z.boolean().optional(),
+          struggles: z.number().int().min(0).optional(),
         }),
       )
       .optional(),
@@ -499,12 +503,13 @@ function validate(campaign: Campaign): void {
         if (entry.uses !== undefined && (entry.uses !== weapon.uses || !character.skills.some((s) => s.of === entry.uses))) {
           throw new DomainError(`Ein Angriff von ${character.name} verweist auf eine Fertigkeit, die nicht zur Waffe passt oder die der Charakter nicht hat.`);
         }
-        if (entry.target !== ATTACK_TARGET) throw new DomainError(`Ein Angriff hat den Zielwert ${ATTACK_TARGET}.`);
+        const filter = character.animal !== undefined && animalTypeOf(animalRowOf(campaign.hexes, character.animal).type!).special === 'filter';
+        if (entry.target !== ATTACK_TARGET && !(filter && (entry.target === FILTER_TARGET || entry.target === FILTER_HELD_TARGET))) throw new DomainError(`Ein Angriff hat den Zielwert ${ATTACK_TARGET}.`);
         checkVolley(campaign.log, entry, index);
         break;
       }
       case 'damage':
-        checkDamageRoll(campaign.log, entry, index, animalIds(campaign));
+        checkDamageRoll(campaign.log, entry, index, animalIds(campaign), filterDiceOf(campaign, entry.of));
         break;
       case 'recovery':
         if (entry.for === undefined) throw new DomainError('Eine Heilung gilt einem Charakter.');

@@ -40,7 +40,9 @@ export function blowsOf(campaign: Campaign, who: CharacterId): number | undefine
   const start = historyOf(campaign.log, upp, who, encounterStart(campaign.log, encounter)).wounds;
   const used = encounterAttacks(campaign, encounter).filter((e) => e.strike === 'combat' && e.for === who).length;
   const runs = (sideOf(campaign, who) === 'pcs' ? distanceOf(encounter, who).runs : encounter.npcRuns) ?? 0;
-  return Math.max(0, upp.end - start.end - used - runs);
+  // Jeder Versuch, sich aus Falle oder Filter loszureißen, kostet einen Combat-Schlag (SR 48).
+  const struggles = sideOf(campaign, who) === 'pcs' ? (distanceOf(encounter, who).struggles ?? 0) : 0;
+  return Math.max(0, upp.end - start.end - used - runs - struggles);
 }
 
 /** Ist das ein Schlag oder Hieb (Faust, Klinge, Stangenwaffe)? */

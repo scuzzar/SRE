@@ -2,10 +2,11 @@ import { activeSkills, anyCharacterOf, isCampaignCharacter, replaceCharacter, ty
 import { DomainError } from './errors';
 import { damageRollsOf, isSuccess, volleyOf, type AttackResult, type DamageRoll, type LogEntry } from './log';
 import type { Clock, Random } from './ports';
-import { HANDS, itemOf, itemOfWeapon, weaponOf, type ArmorClass, type Range, type Weapon } from './reference';
+import { HANDS, itemOf, itemOfWeapon, weaponOf, type AnimalSpecial, type ArmorClass, type Range, type Weapon } from './reference';
 import { valueOf, type Characteristic } from './rules';
 import { autoWounds, checkWounds, fightingWounds, isAnimal, isFirstHitNow, woundStateOf, victimOf, woundedUpp, woundsOf, type WoundBlock, type WoundState } from './wounds';
-import { animalRowOf } from './animals';
+import { animalRowOf, animalTypeOf } from './animals';
+import { filterDice } from './hold';
 
 /** *Basic Throw to Hit* (S. 6): 2W6 + DM ≥ 8. */
 export const ATTACK_TARGET = 8;
@@ -122,6 +123,8 @@ export interface Fighter {
   readonly animal: boolean;
   readonly natural: number;
   readonly hide: number;
+  /** Die besondere Angriffsart eines Tiers (Filter, Falle, Köder). */
+  readonly special: AnimalSpecial | undefined;
 }
 
 /** Ein Kämpfer, SC oder NSC einer Begegnung: beide sind Charaktere und kämpfen nach denselben Regeln; ein Tier mit den Werten seiner Zeile. */
@@ -131,12 +134,12 @@ export function fighterOf(campaign: Campaign, who: CharacterId): Fighter {
     const row = animalRowOf(campaign.hexes, character.animal);
     const weapon = wieldedWeapon(character);
     const natural = row.attacks!.find((a) => a.with === weapon.id)?.dm ?? 0;
-    return { who, name: character.name, upp: character.upp, fighting: character.upp, weapon, skill: 0, armor: row.armor ?? 'nothing', state: woundStateOf(campaign, who), animal: true, natural, hide: row.armorDm ?? 0 };
+    return { who, name: character.name, upp: character.upp, fighting: character.upp, weapon, skill: 0, armor: row.armor ?? 'nothing', state: woundStateOf(campaign, who), animal: true, natural, hide: row.armorDm ?? 0, special: animalTypeOf(row.type!).special };
   }
   const upp = woundedUpp(character.upp, woundsOf(campaign, who));
   const fighting = woundedUpp(character.upp, fightingWounds(campaign, who));
   const weapon = wieldedWeapon(character);
-  return { who, name: character.name, upp, fighting, weapon, skill: weaponSkill(character, weapon)?.level ?? 0, armor: wornArmor(character), state: woundStateOf(campaign, who), animal: false, natural: 0, hide: 0 };
+  return { who, name: character.name, upp, fighting, weapon, skill: weaponSkill(character, weapon)?.level ?? 0, armor: wornArmor(character), state: woundStateOf(campaign, who), animal: false, natural: 0, hide: 0, special: undefined };
 }
 
 /**
@@ -182,12 +185,12 @@ function isHit(entry: LogEntry | undefined): entry is AttackResult {
 }
 
 /** Der Schadenswurf an der Stelle `at` verweist auf einen früheren Treffer, auf den kein anderer verweist. */
-export function checkDamageRoll(log: readonly LogEntry[], roll: DamageRoll, at: number, animals?: ReadonlySet<CharacterId>): void {
+export function checkDamageRoll(log: readonly LogEntry[], roll: DamageRoll, at: number, animals?: ReadonlySet<CharacterId>, diceCount?: number): void {
   const target = log[roll.of];
   if (!Number.isInteger(roll.of) || roll.of < 0 || roll.of >= at || !target) throw new DomainError('Ein Schadenswurf verweist auf einen Eintrag, den es davor nicht gibt.');
   if (!isHit(target)) throw new DomainError('Schaden gibt es nur für einen Treffer.');
   if (damageRollsOf(log, roll.of).some((i) => i !== at)) throw new DomainError('Für diesen Treffer ist der Schaden schon gewürfelt.');
-  const wounds = weaponOf(target.with).wounds;
+  const wounds = diceCount ?? weaponOf(target.with).wounds;
   if (roll.fixed !== undefined) {
     if (roll.dice.length > 0 || !Number.isInteger(roll.fixed) || roll.fixed < 1) throw new DomainError('Fester Schaden hat keine Würfel und ist mindestens 1.');
   } else if (roll.dice.length !== wounds) throw new DomainError(`Der Schaden mit ${weaponOf(target.with).name} sind ${wounds}W6.`);
@@ -229,17 +232,27 @@ export function hitAt(log: readonly LogEntry[], of: number): AttackResult {
 export function fixedDamageOf(campaign: Campaign, of: number): number | undefined {
   const hit = hitAt(campaign.log, of);
   const attacker = anyCharacterOf(campaign, hit.for);
-  if (!attacker.animal) return undefined;
+  if (!attacker.animal || filterDiceOf(campaign, of) !== undefined) return undefined;
   const attack = animalRowOf(campaign.hexes, attacker.animal).attacks!.find((a) => a.with === hit.with);
   if (!attack) throw new DomainError(`${attacker.name} hat keinen Angriff mit ${weaponOf(hit.with).name}.`);
   return attack.damage;
 }
 
-/** Die Schadenswürfel des Treffers an der Stelle `of`: so viele W6, wie die Waffe `wounds` hat; bei einem Tier sein fester Schaden als ein Würfel. */
+/** Beim Einsaugen eines Filters (Zielwert nicht 8): so viele W6 wie angefangene 50 kg seiner Masse (SR 48). */
+export function filterDiceOf(campaign: Campaign, of: number): number | undefined {
+  const hit = hitAt(campaign.log, of);
+  const attacker = anyCharacterOf(campaign, hit.for);
+  if (!attacker.animal || hit.target === ATTACK_TARGET) return undefined;
+  const row = animalRowOf(campaign.hexes, attacker.animal);
+  return animalTypeOf(row.type!).special === 'filter' ? filterDice(row.weight!) : undefined;
+}
+
+/** Die Schadenswürfel des Treffers an der Stelle `of`: so viele W6, wie die Waffe `wounds` hat; bei einem Tier sein fester Schaden als ein Würfel, beim Filter 1W6 je 50 kg. */
 export function damageDice(campaign: Campaign, of: number, random: Random): readonly number[] {
   const fixed = fixedDamageOf(campaign, of);
   if (fixed !== undefined) return [fixed];
-  return Array.from({ length: weaponOf(hitAt(campaign.log, of).with).wounds }, () => random.int(1, 6));
+  const count = filterDiceOf(campaign, of) ?? weaponOf(hitAt(campaign.log, of).with).wounds;
+  return Array.from({ length: count }, () => random.int(1, 6));
 }
 
 /** Die Tiere der Kampagne: Schaden an ihnen geht nicht auf Attribute. */
@@ -258,7 +271,7 @@ export function damageRoll(campaign: Campaign, of: number, dice: readonly number
   const fixed = fixedDamageOf(campaign, of);
   const base = fixed === undefined ? { kind: 'damage' as const, at: clock.now(), of, dice } : { kind: 'damage' as const, at: clock.now(), of, dice: [], fixed: dice[0]! };
   const roll: DamageRoll = blocks === undefined ? base : { ...base, to: blocks.map((b) => b.to), points: blocks.map((b) => b.points) };
-  checkDamageRoll(campaign.log, roll, campaign.log.length, animalIds(campaign));
+  checkDamageRoll(campaign.log, roll, campaign.log.length, animalIds(campaign), filterDiceOf(campaign, of));
   return roll;
 }
 

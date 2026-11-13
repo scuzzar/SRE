@@ -947,8 +947,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - **Filter** (`filter`): In seinem Zug saugt er einen SC auf Close ein statt anzugreifen: 2W6
       ≥ 6, ohne DMs (ein Angriffsergebnis mit Zielwert 6). Gelingt es, ist der SC festgehalten und
       nimmt 1W6 je angefangene 50 kg des Filters als Schaden, ohne Wundänderung; solange er
-      festgehalten ist, nimmt er das in jedem Zug des Filters von selbst wieder. Losreißen: ab der
-      folgenden Runde 2W6 + 2 je Helfer ≥ 7, kostet einen Combat-Schlag.
+      festgehalten ist, nimmt er das in jedem Zug des Filters von selbst wieder. Losreißen: in seinem nächsten Zug
+      2W6 + 2 je Helfer ≥ 7, kostet einen Combat-Schlag.
     - **Pouncer** greifen mit Überraschung auf jeder Entfernung an; das steht beim Verhalten.
     - Wer festgehalten ist, greift nicht an, bewegt sich nicht und weicht nicht aus.
   - *Ereignisse* (SR 49–50): Der Ereignis-Eintrag zeigt Namen und Text des Ereignisses und lässt
@@ -1662,9 +1662,12 @@ Diagramm mit diesen Ausnahmen:
   kein Feld. Der Controller hält höchstens eine offene Karte, höchstens eine Probe und höchstens
   einen Angriff, alle immer zur offenen Kampagne; beim Wechsel der Kampagne verfallen sie. Damit ist die Multiplizität erfüllt.
 - **Tiere (2026-11-12c)** sind freigegeben und zum Teil gebaut: Tiertabellen, Tierbegegnung,
-  Gelände an der Kampagne und Tiere im Kampf. Noch nicht im Code: die besonderen Angriffe (Trapper,
-  Siren, Filter, `Distance.trapDice`, `held`, `struggles`) und Rettungswürfe bei Ereignissen
-  (`SaveRoll`, `DamageRoll.after`; `DamageRoll.of` ist im Code noch Pflicht).
+  Gelände an der Kampagne, Tiere im Kampf und die besonderen Angriffe. Noch nicht im Code:
+  Rettungswürfe bei Ereignissen (`SaveRoll`, `DamageRoll.after`; `DamageRoll.of` ist im Code noch
+  Pflicht).
+- **Festgehalten** gilt im Code nur, solange eines der Tiere der Begegnung noch kämpfen kann; sind
+  alle außer Gefecht, ist jeder frei, auch wenn `held` noch gesetzt ist. Das Einsaugen des Filters
+  ist ein Angriffsergebnis mit Zielwert 6, der Schaden danach eines mit Zielwert 2 (von selbst).
 - **Verweise der Tiere** sind im Code Schlüssel statt Objektverweise: `Encounter.animal` ist der
   Wurf 2–12 in der Tiertabelle der Welt `in` im Gelände `terrain`; `Character.animal` ist Welt,
   Gelände und Wurf; `EventResult → AnimalRow : of` ist Welt, Gelände und die Summe von `tableDice`.

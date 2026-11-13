@@ -137,6 +137,11 @@ function FighterCard({ fighter: f, selection, onHeal, impacts }: { fighter: Figh
               ↯
             </span>
           )}
+          {f.held && (
+            <span className="fcard-escaped" title="festgehalten von Falle, Köder oder Filter">
+              gefangen
+            </span>
+          )}
           {f.escaped && (
             <span className="fcard-escaped" title="entkommen, über 20 Bands">
               weg

@@ -425,7 +425,7 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
               type="button"
               className="ghost compact fight-skip"
               title="Kein Angriff; bis zum nächsten Zug DM −1/−2/−4 auf Angriffe gegen ihn"
-              disabled={turn.ran}
+              disabled={turn.ran || turn.held !== undefined}
               onClick={() => {
                 haptic('pick');
                 game.evade();
@@ -437,11 +437,28 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
               Aussetzen
             </button>
           </div>
-          <div className={turn.attacks.length > 1 ? 'attack-buttons' : 'attack-buttons single'}>
-            {turn.attacks.map((a, i) => (
-              <AttackButton key={a.weapon} attack={a} first={i === 0} label={slotLabel(a)} hasTarget={target !== undefined} ran={turn.ran} />
-            ))}
-          </div>
+          {turn.held ? (
+            <button
+              type="button"
+              className="atk primary"
+              onClick={() => {
+                haptic('shake');
+                game.struggle();
+              }}
+            >
+              <span className="atk-slot">Festgehalten</span>
+              <span className="atk-name">Losreißen</span>
+              <span className="atk-need">
+                {turn.held.target}+{turn.held.dm ? ` (+${turn.held.dm} durch ${turn.held.helpers} ${turn.held.helpers === 1 ? 'Helfer' : 'Helfer'})` : ''}
+              </span>
+            </button>
+          ) : (
+            <div className={turn.attacks.length > 1 ? 'attack-buttons' : 'attack-buttons single'}>
+              {turn.attacks.map((a, i) => (
+                <AttackButton key={a.weapon} attack={a} first={i === 0} label={slotLabel(a)} hasTarget={target !== undefined} ran={turn.ran} />
+              ))}
+            </div>
+          )}
           {fire && <FireToggle fire={fire} compact />}
           {/* Voll oder geschwächt nur, wenn ein Schlag oder Hieb auch reicht. */}
           {turn.melee && turn.side === 'pcs' && turn.attacks.some((a) => a.reaches && a.melee) && <StrikeToggle melee={turn.melee} />}

@@ -3,6 +3,7 @@ import { ammoOf, reload } from './combat';
 import { DomainError } from './errors';
 import { currentEncounter, distanceOf, encounterAnimalRow, ESCAPED_BAND, isAnimalEncounter, isEscapedDistance, needsSurprise, steppedPosition, withDistance, type Encounter } from './encounter';
 import { canFight, woundStateOf } from './wounds';
+import { isHeld } from './hold';
 
 /** Die beiden Parteien eines Kampfs: die SC und die NSC der Begegnung. */
 export type Side = 'pcs' | 'npcs';
@@ -222,6 +223,7 @@ export function moveState(campaign: Campaign): MoveState | undefined {
   const pc = turn.side === 'pcs' ? turn.id : undefined;
   const someoneActed = pc === undefined && fightOrder(campaign, encounter).some((s) => s.side === 'npcs' && encounter.acted.includes(s.id));
   const who = pc === undefined ? 'Die NSC sind' : `${anyCharacterOf(campaign, pc).name} ist`;
+  if (pc !== undefined && isHeld(campaign, pc)) return { side: turn.side, pc, moved, can: false, reason: `${anyCharacterOf(campaign, pc).name} ist festgehalten; erst losreißen.`, ran: false };
   // Tiere gehen je Runde bis zu ihrer Geschwindigkeit S, ohne zu laufen (SR 47).
   const speed = pc === undefined ? animalSpeedOf(campaign) : undefined;
   if (speed !== undefined) {
@@ -258,7 +260,8 @@ export function moveSide(campaign: Campaign, step: -1 | 1): Campaign {
     after = withDistance(encounter, { ...distance, ...next, moved: state.moved + 1, ...(run || distance.runs ? { runs: (distance.runs ?? 0) + run } : {}) });
   } else {
     const pcs = livingCharacters(campaign).map((c) => distanceOf(encounter, c.id));
-    const moved = pcs.map((d) => ({ ...d, ...(steppedPosition(d.band, d.close, step) ?? {}) }));
+    // Wer festgehalten ist, bleibt, wo er ist.
+    const moved = pcs.map((d) => (isHeld(campaign, d.of) ? d : { ...d, ...(steppedPosition(d.band, d.close, step) ?? {}) }));
     if (moved.every((d, i) => d.band === pcs[i]!.band && d.close === pcs[i]!.close)) {
       throw new DomainError(step < 0 ? 'Alle SC sind schon in Berührung.' : `Alle SC sind schon über ${ESCAPED_BAND - 1} Bands weg.`);
     }

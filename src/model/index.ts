@@ -8,6 +8,7 @@ export * from './card-roll';
 export * from './combat';
 export * from './encounter';
 export * from './animals';
+export * from './hold';
 export * from './encounter-check';
 export * from './fight';
 export * from './wounds';

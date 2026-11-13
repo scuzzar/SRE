@@ -4,6 +4,7 @@ import { DomainError } from './errors';
 import type { EventResult, LogEntry } from './log';
 import type { Clock, Random } from './ports';
 import { animalName, animalRowOf, animalTypeOf, hasAnimals, terrainOf, withAnimalTable, type AnimalRef, type AnimalRow } from './animals';
+import { springTrap } from './hold';
 import { encounterTypeOf, itemOf, nameSlotIds, ref, slotWithId, weaponOf, type EncounterType, type Item, type Range } from './reference';
 import { locationOf } from './shop';
 
@@ -82,6 +83,12 @@ export interface Distance {
   readonly moved?: number;
   /** Läufe in der Begegnung; fehlt: 0. Kostet je Lauf einen Combat-Schlag. */
   readonly runs?: number;
+  /** Die 2W6, ob die Falle eines Trappers oder einer Siren ihn fängt (5+, SR 48). */
+  readonly trapDice?: readonly [number, number];
+  /** Festgehalten von Falle, Köder oder Filter, bis er sich losreißt. */
+  readonly held?: boolean;
+  /** Wie oft er versucht hat, sich loszureißen; kostet je Versuch einen Combat-Schlag. */
+  readonly struggles?: number;
 }
 
 export interface SurpriseRoll {
@@ -695,7 +702,11 @@ export function rollSurprise(campaign: Campaign, random: Random): Campaign {
   const npcSurprise = { die: d6(random), dm: npcSurpriseDm(encounter) };
   // Mit dem ersten Wurf im Kampf bekommt jeder SC, der kämpft, seine Entfernung: das Startband.
   const distances = livingCharacters(campaign).map((c) => distanceOf(encounter, c.id));
-  return { ...campaign, encounters: campaign.encounters.map((e) => (e.id === encounter.id ? { ...e, pcSurprise, npcSurprise, distances } : e)) };
+  const rolled: Encounter = { ...encounter, pcSurprise, npcSurprise, distances };
+  // Haben Tiere mit Falle Überraschung, schnappt sie bei jedem SC auf Close oder Short zu (SR 48).
+  const surprised = npcSurprise.die + npcSurprise.dm - (pcSurprise.die + pcSurprise.dm) >= 3;
+  const trapped = springTrap(campaign, rolled, surprised, random);
+  return { ...campaign, encounters: campaign.encounters.map((e) => (e.id === encounter.id ? trapped : e)) };
 }
 
 /** Verweist ein Angriff im Log auf einen NSC dieser Begegnung? */
