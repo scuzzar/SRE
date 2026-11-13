@@ -128,7 +128,7 @@
       "id": "2026-11-12c",
       "file": "2026-11-12-tiere",
       "title": "Tiere: Tiertabellen je Welt und Gelände, Tierbegegnung mit Kampf",
-      "approved": false,
+      "approved": true,
       "show": [
         "Hex",
         "Character",

@@ -159,6 +159,19 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Dazu, ohne Änderung am Bild: der **Test** vor jeder Begegnungsart und die Liste des Patrons per
 > Würfel.
 >
+> Am 13. November 2026 freigegeben: die **Tiere** (Kennzeichen 2026-11-12c; siehe *Tiere*,
+> *Gelände*): Tiertabellen je Welt und Gelände, bei Bedarf erzeugt; die Tierbegegnung würfelt auf
+> ihnen und wird eine Begegnung mit Kampfsimulation, mit besonderen Angriffen, Geschwindigkeit und
+> Ereignissen mit Rettungswurf. Ein Gelände für alle Begegnungsarten, gespeichert an der Kampagne.
+> Neu im Bild: `AnimalTable`, `AnimalRow`, `AnimalAttack`, `AnimalTrait`, `AnimalCategory`,
+> `AnimalSpecial`, `Behavior`, die Logeinträge `EventResult` und `SaveRoll`, als Referenzdaten
+> `AnimalType`, `AnimalTypeRow`, `AnimalTraitRow`, `AnimalSizeRow`, `AnimalEvent`; dazu
+> `Campaign.terrain`, `Terrain.typeDm`, `sizeDm`, `traits`, `/animals`, `Hex.animals`,
+> `Character.animal` und `/hurt`, `Encounter.animal`, `tableDice`, `attackDice`, `fleeDice`,
+> `lureDice`, `/behavior`, `Distance.trapDice`, `held`, `struggles`, `DamageRoll.fixed` und `after`.
+> `Encounter.of`, `reaction`, `reactionDice`, `DamageRoll.dice` und `DamageRoll.of` dürfen fehlen.
+> Der Ausschnitt dazu liegt unter [`changes/2026-11-12-tiere.png`](changes/2026-11-12-tiere.png).
+>
 > Am 8. November 2026 freigegeben: **NSC der Begegnung als vollständige Charaktere** (Kennzeichen
 > 2026-11-08c; siehe *Begegnung*, *NSC*, *Angriff in beide Richtungen*, *Heilung*). Es gibt nur noch
 > eine Klasse für alle, die kämpfen: Die NSC einer Begegnung werden beim Würfeln als vollständige
@@ -252,19 +265,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-eine:
-
-- **2026-11-12c, wartet auf Freigabe: Tiere** (siehe *Tiere*). Tiertabellen je Welt und Gelände,
-  bei Bedarf erzeugt; die Tierbegegnung würfelt auf ihnen und wird eine Begegnung mit
-  Kampfsimulation. Neu im Bild: `AnimalTable`, `AnimalRow`, `AnimalAttack`, `AnimalTrait`,
-  `AnimalCategory`, `AnimalSpecial`, `Behavior`, die Logeinträge `EventResult` und `SaveRoll`, als
-  Referenzdaten `AnimalTerrain`, `AnimalType`, `AnimalTypeRow`, `AnimalTraitRow`, `AnimalSizeRow`,
-  `AnimalEvent`; dazu `Hex.animals`, `Character.animal` und `/hurt`, `Encounter.animal`,
-  `tableDice`, `attackDice`, `fleeDice`, `lureDice`, `/behavior`, `Distance.trapDice`, `held`,
-  `struggles`, `DamageRoll.fixed` und `after`. `Encounter.of`, `reaction`, `reactionDice`,
-  `DamageRoll.dice` und `DamageRoll.of` dürfen nun fehlen. Der Ausschnitt
-  dazu liegt unter [`changes/2026-11-12-tiere.png`](changes/2026-11-12-tiere.png). Der Code folgt
-  erst nach der Freigabe.
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -363,7 +364,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Startband | `Encounter.startBand`, `startClose`, `bandDie` | Wo alle SC zu Beginn der Begegnung stehen; der Würfel bestimmt das Band innerhalb der gewürfelten Reichweite: Medium 1W2, Long 1W8, Very Long 1W10 |
 | Entkommen | `Distance./escaped` | Mehr als 20 Bands: Der SC hat die NSC verloren (Book 1, S. 33) |
 | Ausweichen | `Encounter.evading` | Ein Kämpfer greift in seinem Zug nicht an, sondern weicht aus; bis zu seinem nächsten Zug bekommt jeder Angriff auf ihn DM −1, −2 oder −4 (SR 20) |
-| Gelände | `Terrain` | Wo die Begegnung stattfindet, mit DM auf die Entfernung (S. 5), z. B. Clear +3, City −4 |
+| Gelände | `Terrain`, `Campaign.terrain` | Wo die Gruppe ist und die Begegnungen stattfinden, für alle Begegnungsarten gleich: DM auf die Entfernung (S. 5), z. B. Clear +3, City −4, und wo es Tiere gibt die DMs auf Tierart und Größe (S. 18) |
 | Überraschung | `pcSurprise`, `npcSurprise`, `/surprise` | 1W6 je Partei mit DMs (S. 5); wer 3 oder mehr höher liegt, hat Überraschung |
 | Alarm | `Encounter.alarm` | Die Runde, in der die überraschte Partei Alarm gegeben hat; danach hält die Überraschung nicht mehr (SR 20) |
 | Überraschung hält | `/surprising` | Die Partei mit Überraschung, solange es keinen Alarm gab, einschließlich der Runde des Alarms |
@@ -398,7 +399,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Gerüchte-Wurf | `RumorRoll` | Ein Wurf auf die Rumors Matrix: zwei Würfel nacheinander |
 | Tiertabelle | `AnimalTable` | Die Begegnungstabelle der Tiere eines Geländes einer Welt (SE 18–19): elf Zeilen, 2 bis 12 |
 | Zeile der Tiertabelle | `AnimalRow` | Ein Tier mit allen Werten, z. B. „6 Chasers, 25 kg, 6/11, jack, 9 teeth+1, A0 F5 S2“, oder ein Ereignis |
-| Tiergelände | `AnimalTerrain` | Eine der 22 Geländearten der Tiertabellen (Clear, Forest, Swamp, Depths …) mit DM auf Tierart und Größe; nicht das Gelände der Entfernung (`Terrain`), auf das es verweist |
 | Tierart | `AnimalType` | Grazer, Chaser, Pouncer, Hijacker …; gehört zu einer Kategorie |
 | Kategorie | `AnimalCategory` | Herbivore, Omnivore, Carnivore oder Scavenger |
 | Besonderheit | `AnimalTrait` | Amphibian, Flyer, Swimmer oder Triphibian |
@@ -873,9 +873,23 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Matrix (siehe *Gerücht*).
   - *Deuten*: Der Patron-Wurf ist ein Ergebnis und lässt sich deuten, z. B. mit dem Auftrag, den
     der Patron vergibt. Die Regeln geben keine Tabelle für Aufträge; die legt die Spielleitung fest.
-- **Tiere** (wartet auf Freigabe, 2026-11-12c). Regeln und Tabellen stehen in
+- **Gelände.** Es gibt ein Gelände für alle Begegnungsarten: Man wählt es oben im Reiter Begegnung
+  neben dem Aufenthaltsort, und es bleibt an der Kampagne (`Campaign.terrain`), bis man es ändert;
+  fehlt es, gilt ±0 und es gibt keine Tiere. Jede Begegnung hält das Gelände fest, mit dem sie
+  gewürfelt wurde (`Encounter.terrain`).
+  - Die Liste vereint die Geländearten der Entfernung (SE 5) mit denen der Tiere (SE 18): jedes
+    Gelände hat seinen DM auf die Entfernung (`dm`), und wo es Tiere gibt (`/animals`), die DMs auf
+    Tierart und Größe (`typeDm`, `sizeDm`) und die Spalte der Besonderheiten (`traits`: Beach, Marsh,
+    River, Sea, Swamp oder Other).
+  - Keine Tiere gibt es in City, Building Interior und Arctic (Hausregel für Arctic und Interior;
+    in Städten nach SR 47).
+  - Gelände der Tiere ohne eigenen DM auf die Entfernung bekommen den des ähnlichsten (Hausregel): Marsh
+    wie Swamp, Beach wie Clear, Ruins wie City, Cave und Sea Cave wie Interior, Chasm wie Broken,
+    Crater wie Rough, Sargasso wie Maritime Surface, Shallows und Bottom wie Maritime Subsurface.
+    Maritime Surface hat die Tier-DMs von Surface, Maritime Subsurface die von Depths.
+- **Tiere.** Regeln und Tabellen stehen in
   `regeln-kampf.md` unter *Tierbegegnungen* (SE 18–19, SR 46–49).
-  - *Tiertabelle*: Jede Welt hat je Tiergelände höchstens eine Tiertabelle (`Hex.animals`). Sie
+  - *Tiertabelle*: Jede Welt hat je Gelände höchstens eine Tiertabelle (`Hex.animals`). Sie
     entsteht nicht beim Erschaffen der Welt, sondern **bei Bedarf**: beim ersten Tierwurf auf dieser
     Welt in diesem Gelände, ohne weitere Eingabe, und bleibt dann an der Welt. Das gilt auch für
     Welten, die es schon gibt. Die Tabelle speichert die Werte ihrer Tiere, nicht die Würfe (wie die
@@ -891,13 +905,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (die Würfel der Tierwaffe, geändert um die Wounds der Größe, mindestens 1) und steht fest im
     Tierangriff (`AnimalAttack.damage`), z. B. „11 teeth“. Hat die Zeile zwei Waffen („claws and
     teeth“), hat sie zwei Tierangriffe, jeden mit eigenem Schaden.
-  - *Tierbegegnung*: eine Begegnungsart im Reiter Begegnung, mit dem Tiergelände als Einstellung.
+  - *Tierbegegnung*: eine Begegnungsart im Reiter Begegnung; sie würfelt im Gelände der Kampagne.
     Test 5+ auf 1W6 (SR 47), dann 2W6 auf die Tiertabelle (`Encounter.tableDice`); man kann die
     Zeile auch wählen, dann ohne Test. Fällt der Wurf auf ein Ereignis, entsteht keine Begegnung,
     sondern ein Ereignis-Eintrag im Log (`EventResult`, siehe *Ereignisse*). Sonst entsteht eine **Begegnung** (`Encounter`), die statt auf
     eine Art (`of`) auf ihre Zeile verweist (`animal`); genau eins von beiden ist gesetzt. Die Anzahl
     wird mit dem Würfel der Anzahl gewürfelt; die Entfernung wie sonst, mit dem DM des Geländes, auf
-    das das Tiergelände verweist (`AnimalTerrain.range`). Eine Reaktion gibt es nicht.
+    dem Gelände. Eine Reaktion gibt es nicht.
   - *Verhalten*: Beim Anlegen 2W6 für den Angriff und 2W6 für die Flucht (`attackDice`,
     `fleeDice`). `/behavior`: Greift die Tierart zuerst an, gilt der Angriffswurf gegen A, sonst der
     Fluchtwurf gegen F; Pflanzenfresser prüfen umgekehrt (`AnimalType.fleesFirst`); trifft keiner,
@@ -1647,6 +1661,9 @@ Diagramm mit diesen Ausnahmen:
 - **`Card → Campaign : in`, `Task → Campaign : in` und `Attack → Campaign : in`** sind im Code
   kein Feld. Der Controller hält höchstens eine offene Karte, höchstens eine Probe und höchstens
   einen Angriff, alle immer zur offenen Kampagne; beim Wechsel der Kampagne verfallen sie. Damit ist die Multiplizität erfüllt.
+- **Tiere (2026-11-12c)** sind freigegeben, aber noch nicht vollständig im Code. Was fehlt, steht
+  hier, bis es gebaut ist: Tiertabellen, Tierbegegnung, Tiere im Kampf, besondere Angriffe,
+  Ereignisse und `Campaign.terrain` (das Gelände gilt im Code noch nur für den nächsten Wurf).
 - **`PatronRoll → Patron : of`** ist im Code die Liste (`list`, 1 oder 2); die Zeile der Liste folgt
   aus Würfeln und DMs (`patronOfRoll`). Damit ist der Verweis erfüllt, ohne den Wurf doppelt zu
   speichern. Die Listen stehen in `src/data/encounters.json` als `patrons`.

@@ -79,6 +79,11 @@ hide <<reference>> stereotype
 hide <<value>> stereotype
 
 ' Kampagne und Charaktere
+  class Campaign $kampagne {
+    name: string
+    /funds: number
+    quantityDie: number [0..1]
+  }
   class Character $charakter {
     name: string
     background: string
@@ -196,6 +201,10 @@ hide <<value>> stereotype
   class Terrain <<reference>> $begegnung {
     name: string
     dm: number
+    $new("2026-11-12c", "typeDm: number [0..1]")
+    $new("2026-11-12c", "sizeDm: number [0..1]")
+    $new("2026-11-12c", "traits: string [0..1]")
+    $new("2026-11-12c", "/animals: boolean")
   }
   class EncounterType <<reference>> $begegnung {
     roll: number
@@ -243,13 +252,6 @@ hide <<value>> stereotype
     omnivore
     carnivore
     scavenger
-  }
-  class AnimalTerrain <<reference>> $begegnung $newClass("2026-11-12c") {
-    name: string
-    equivalent: string
-    typeDm: number
-    sizeDm: number
-    traits: string
   }
   class AnimalType <<reference>> $begegnung $newClass("2026-11-12c") {
     name: string
@@ -317,6 +319,10 @@ hide <<value>> stereotype
   enum WorldStep <<value>> $sektor
 
 ' Kampagne
+Campaign "1" *-- "*" Character : characters
+Campaign "0..1" --> "0..1" Character : focus
+Campaign "1" *-- "*" LogEntry : log {ordered}
+Campaign "*" --> "0..1" Hex : location
 
 ' Charaktererschaffung und Lebenslauf
 Character "*" --> "0..1" Hex : homeworld
@@ -324,6 +330,7 @@ Character "*" --> "0..1" Hex : homeworld
 ' Laufbahnen (Referenzdaten)
 
 ' Subsektor und Welten
+Campaign "1" *-- "*" Hex : hexes
 Hex "1" *-- "1" Uwp : uwp
 Hex --> WorldStep
 WorldRoll "*" --> "1" Hex : for
@@ -357,6 +364,7 @@ TaskResult "*" --> "1" Character : for
 ' Probe
 
 ' Angriff
+Attack "0..1" --> "1" Campaign : in
 Attack "*" --> "1" Character : /for
 Attack "*" --> "0..1" Character : against
 Attack "*" --> "1" Weapon : /with
@@ -373,11 +381,12 @@ Wounding "0..1" --> "1" AttackResult : of
 Wounding ..> DamageRoll : on confirm
 
 ' Begegnung
+Campaign "1" *-- "*" Encounter : encounters {ordered}
 Encounter "*" -$goneArrow("2026-11-12c")-> "1" EncounterType : of
 Encounter "*" -$newArrow("2026-11-12c")-> "0..1" EncounterType : of
 Encounter "*" -$newArrow("2026-11-12c")-> "0..1" AnimalRow : animal
 Hex "1" *-$newArrow("2026-11-12c")- "*" AnimalTable : animals
-AnimalTable "*" -$newArrow("2026-11-12c")-> "1" AnimalTerrain : terrain
+AnimalTable "*" -$newArrow("2026-11-12c")-> "1" Terrain : terrain
 AnimalTable "1" *-$newArrow("2026-11-12c")- "11" AnimalRow : rows {ordered}
 AnimalRow "*" -$newArrow("2026-11-12c")-> "0..1" AnimalType : type
 AnimalRow "*" -$newArrow("2026-11-12c")-> "0..1" AnimalEvent : event
@@ -393,7 +402,7 @@ AnimalAttack "*" -$newArrow("2026-11-12c")-> "1" Weapon : with
 AnimalRow --> AnimalTrait
 Encounter --> Behavior
 AnimalType --> AnimalCategory
-AnimalTerrain "*" -$newArrow("2026-11-12c")-> "0..1" Terrain : range
+Campaign "*" -$newArrow("2026-11-12c")-> "0..1" Terrain : terrain
 AnimalTypeRow "*" -$newArrow("2026-11-12c")-> "1" AnimalType : type
 Character "*" -$newArrow("2026-11-12c")-> "0..1" AnimalRow : animal
 AnimalSizeRow -[hidden]- AnimalTraitRow
@@ -423,4 +432,5 @@ class Character #line:d0021b;line.bold
 class DamageRoll #line:d0021b;line.bold
 class Encounter #line:d0021b;line.bold
 class Distance #line:d0021b;line.bold
+class Terrain #line:d0021b;line.bold
 @enduml

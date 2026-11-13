@@ -83,7 +83,7 @@ hide <<value>> stereotype
 
 ' Verlauf
   abstract class LogEntry $probe
-  class SaveRoll $begegnung $newClass("2026-11-12c")
+  class SaveRoll $begegnung
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Attack <<transient>> $kampf {
@@ -122,9 +122,8 @@ hide <<value>> stereotype
     rest
   }
   class DamageRoll $kampf {
-    $gone("2026-11-12c", "dice: number[1..5]")
-    $new("2026-11-12c", "dice: number[0..*]")
-    $new("2026-11-12c", "fixed: number [0..1]")
+    dice: number[0..*]
+    fixed: number [0..1]
     points: number[0..7]
     to: Characteristic[0..7]
     alarmDice: number[0..2]
@@ -146,7 +145,7 @@ hide <<value>> stereotype
     serious
     dead
   }
-  class AnimalAttack <<value>> $begegnung $newClass("2026-11-12c")
+  class AnimalAttack <<value>> $begegnung
 
 ' Referenzdaten
   class Skill <<reference>> $charakter
@@ -241,14 +240,13 @@ AttackResult "*" --> "1" Weapon : with
 AttackResult "*" --> "0..1" SkillLevel : uses
 AttackResult "*" --> "0..1" AttackResult : volley
 AttackResult --> Strike
-DamageRoll "0..1" -$goneArrow("2026-11-12c")-> "1" AttackResult : of
-DamageRoll "0..1" -$newArrow("2026-11-12c")-> "0..1" AttackResult : of
+DamageRoll "0..1" --> "0..1" AttackResult : of
 Wounding "0..1" --> "1" AttackResult : of
 Wounding ..> DamageRoll : on confirm
 
 ' Begegnung
-DamageRoll "0..1" -$newArrow("2026-11-12c")-> "0..1" SaveRoll : after
-AnimalAttack "*" -$newArrow("2026-11-12c")-> "1" Weapon : with
+DamageRoll "0..1" --> "0..1" SaveRoll : after
+AnimalAttack "*" --> "1" Weapon : with
 WoundState -[hidden]- Wounds
 
 ' Karte
@@ -260,6 +258,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Character #line:d0021b;line.bold
-class DamageRoll #line:d0021b;line.bold
 @enduml

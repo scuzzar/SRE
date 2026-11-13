@@ -96,8 +96,8 @@ hide <<value>> stereotype
   }
   class PatronRoll $begegnung
   class RumorRoll $begegnung
-  class EventResult $begegnung $newClass("2026-11-12c")
-  class SaveRoll $begegnung $newClass("2026-11-12c")
+  class EventResult $begegnung
+  class SaveRoll $begegnung
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Task <<transient>> $probe {
@@ -165,8 +165,8 @@ Task ..> TaskResult : on roll
 ' Angriff
 
 ' Begegnung
-LogEntry <|-$newArrow("2026-11-12c")- EventResult
-LogEntry <|-$newArrow("2026-11-12c")- SaveRoll
+LogEntry <|-- EventResult
+LogEntry <|-- SaveRoll
 
 ' Karte
 
@@ -177,6 +177,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Character #line:d0021b;line.bold
-class DamageRoll #line:d0021b;line.bold
 @enduml

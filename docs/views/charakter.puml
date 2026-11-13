@@ -85,7 +85,7 @@ hide <<value>> stereotype
     retired: boolean
     npc: boolean
     /wounds: Wounds
-    $new("2026-11-12c", "/hurt: number [0..1]")
+    /hurt: number [0..1]
     /state: WoundState
     /blows: number [0..1]
   }
@@ -112,7 +112,7 @@ hide <<value>> stereotype
   class Hex $sektor
 
 ' Verlauf
-  class SaveRoll $begegnung $newClass("2026-11-12c")
+  class SaveRoll $begegnung
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Task <<transient>> $probe
@@ -122,7 +122,7 @@ hide <<value>> stereotype
   class Recovery $kampf
   class Encounter $begegnung
   class Distance $begegnung
-  class AnimalRow $begegnung $newClass("2026-11-12c")
+  class AnimalRow $begegnung
 
 ' Referenzdaten
   class Skill <<reference>> $charakter {
@@ -198,8 +198,8 @@ AttackResult "*" --> "0..1" Character : against
 AttackResult "*" --> "0..1" SkillLevel : uses
 
 ' Begegnung
-SaveRoll "*" -$newArrow("2026-11-12c")-> "1" Character : for
-Character "*" -$newArrow("2026-11-12c")-> "0..1" AnimalRow : animal
+SaveRoll "*" --> "1" Character : for
+Character "*" --> "0..1" AnimalRow : animal
 Encounter "1" *-- "*" Character : npcs {ordered}
 Encounter "*" --> "0..1" Character : leader
 Encounter "*" --> "*" Character : acted
@@ -217,7 +217,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Character #line:d0021b;line.bold
-class Encounter #line:d0021b;line.bold
-class Distance #line:d0021b;line.bold
 @enduml

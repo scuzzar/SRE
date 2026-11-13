@@ -109,7 +109,7 @@ hide <<value>> stereotype
     retired: boolean
     npc: boolean
     /wounds: Wounds
-    $new("2026-11-12c", "/hurt: number [0..1]")
+    /hurt: number [0..1]
     /state: WoundState
     /blows: number [0..1]
   }
@@ -212,10 +212,10 @@ hide <<value>> stereotype
   class RumorRoll $begegnung {
     dice: number[2]
   }
-  class EventResult $begegnung $newClass("2026-11-12c") {
+  class EventResult $begegnung {
     tableDice: number[2]
   }
-  class SaveRoll $begegnung $newClass("2026-11-12c") {
+  class SaveRoll $begegnung {
     dice: number[2]
     target: number
     /success: boolean
@@ -308,9 +308,8 @@ hide <<value>> stereotype
     rest
   }
   class DamageRoll $kampf {
-    $gone("2026-11-12c", "dice: number[1..5]")
-    $new("2026-11-12c", "dice: number[0..*]")
-    $new("2026-11-12c", "fixed: number [0..1]")
+    dice: number[0..*]
+    fixed: number [0..1]
     points: number[0..7]
     to: Characteristic[0..7]
     alarmDice: number[0..2]
@@ -323,19 +322,16 @@ hide <<value>> stereotype
   class Encounter $begegnung {
     at: datetime
     quantityDie: number [0..1]
-    $gone("2026-11-12c", "reactionDice: number[2]")
-    $new("2026-11-12c", "reactionDice: number[0..2]")
+    reactionDice: number[0..2]
     reactionDm: number [0..1]
-    $gone("2026-11-12c", "reaction: number")
-    $new("2026-11-12c", "reaction: number [0..1]")
+    reaction: number [0..1]
     ended: boolean
-    $gone("2026-11-12c", "/reactionText: string")
-    $new("2026-11-12c", "/reactionText: string [0..1]")
-    $new("2026-11-12c", "tableDice: number[0..2]")
-    $new("2026-11-12c", "attackDice: number[0..2]")
-    $new("2026-11-12c", "fleeDice: number[0..2]")
-    $new("2026-11-12c", "lureDice: number[0..2]")
-    $new("2026-11-12c", "/behavior: Behavior [0..1]")
+    /reactionText: string [0..1]
+    tableDice: number[0..2]
+    attackDice: number[0..2]
+    fleeDice: number[0..2]
+    lureDice: number[0..2]
+    /behavior: Behavior [0..1]
     rangeDice: number[2]
     bandDie: number [0..1]
     startBand: number
@@ -353,9 +349,9 @@ hide <<value>> stereotype
     close: boolean
     moved: number [0..1]
     runs: number [0..1]
-    $new("2026-11-12c", "trapDice: number[0..2]")
-    $new("2026-11-12c", "held: boolean [0..1]")
-    $new("2026-11-12c", "struggles: number [0..1]")
+    trapDice: number[0..2]
+    held: boolean [0..1]
+    struggles: number [0..1]
     /range: Range [0..1]
     /escaped: boolean
   }
@@ -370,6 +366,10 @@ hide <<value>> stereotype
   class Terrain <<reference>> $begegnung {
     name: string
     dm: number
+    typeDm: number [0..1]
+    sizeDm: number [0..1]
+    traits: string [0..1]
+    /animals: boolean
   }
   class EncounterRange <<reference>> $begegnung {
     roll: number
@@ -409,9 +409,9 @@ hide <<value>> stereotype
     name: string
     rumor: boolean
   }
-  class AnimalTable $begegnung $newClass("2026-11-12c") {
+  class AnimalTable $begegnung {
   }
-  class AnimalRow $begegnung $newClass("2026-11-12c") {
+  class AnimalRow $begegnung {
     roll: number
     quantity: number [0..1]
     trait: AnimalTrait [0..1]
@@ -424,35 +424,28 @@ hide <<value>> stereotype
     flee: number [0..1]
     speed: number [0..1]
   }
-  class AnimalAttack <<value>> $begegnung $newClass("2026-11-12c") {
+  class AnimalAttack <<value>> $begegnung {
     dm: number
     damage: number
   }
-  enum AnimalTrait <<value>> $begegnung $newClass("2026-11-12c") {
+  enum AnimalTrait <<value>> $begegnung {
     amphibian
     flyer
     swimmer
     triphibian
   }
-  enum Behavior <<value>> $begegnung $newClass("2026-11-12c") {
+  enum Behavior <<value>> $begegnung {
     attacks
     flees
     nothing
   }
-  enum AnimalCategory <<value>> $begegnung $newClass("2026-11-12c") {
+  enum AnimalCategory <<value>> $begegnung {
     herbivore
     omnivore
     carnivore
     scavenger
   }
-  class AnimalTerrain <<reference>> $begegnung $newClass("2026-11-12c") {
-    name: string
-    equivalent: string
-    typeDm: number
-    sizeDm: number
-    traits: string
-  }
-  class AnimalType <<reference>> $begegnung $newClass("2026-11-12c") {
+  class AnimalType <<reference>> $begegnung {
     name: string
     category: AnimalCategory
     attack: string
@@ -461,12 +454,12 @@ hide <<value>> stereotype
     fleesFirst: boolean
     special: AnimalSpecial [0..1]
   }
-  enum AnimalSpecial <<value>> $begegnung $newClass("2026-11-12c") {
+  enum AnimalSpecial <<value>> $begegnung {
     filter
     trap
     lure
   }
-  class AnimalEvent <<reference>> $begegnung $newClass("2026-11-12c") {
+  class AnimalEvent <<reference>> $begegnung {
     name: string
     group: string
     text: string
@@ -474,18 +467,18 @@ hide <<value>> stereotype
     save: string [0..1]
     damage: number [0..1]
   }
-  class AnimalTypeRow <<reference>> $begegnung $newClass("2026-11-12c") {
+  class AnimalTypeRow <<reference>> $begegnung {
     roll: number
     category: AnimalCategory
     quantity: number [0..1]
   }
-  class AnimalTraitRow <<reference>> $begegnung $newClass("2026-11-12c") {
+  class AnimalTraitRow <<reference>> $begegnung {
     roll: number
     traits: string
     trait: AnimalTrait [0..1]
     sizeDm: number [0..1]
   }
-  class AnimalSizeRow <<reference>> $begegnung $newClass("2026-11-12c") {
+  class AnimalSizeRow <<reference>> $begegnung {
     roll: number
     weight: number [0..1]
     hits: DiceExpr[2]
@@ -886,36 +879,34 @@ AttackResult "*" --> "1" Weapon : with
 AttackResult "*" --> "0..1" SkillLevel : uses
 AttackResult "*" --> "0..1" AttackResult : volley
 AttackResult --> Strike
-DamageRoll "0..1" -$goneArrow("2026-11-12c")-> "1" AttackResult : of
-DamageRoll "0..1" -$newArrow("2026-11-12c")-> "0..1" AttackResult : of
+DamageRoll "0..1" --> "0..1" AttackResult : of
 Wounding "0..1" --> "1" AttackResult : of
 Wounding ..> DamageRoll : on confirm
 
 ' Begegnung
 Campaign "1" *-- "*" Encounter : encounters {ordered}
-Encounter "*" -$goneArrow("2026-11-12c")-> "1" EncounterType : of
-Encounter "*" -$newArrow("2026-11-12c")-> "0..1" EncounterType : of
-Encounter "*" -$newArrow("2026-11-12c")-> "0..1" AnimalRow : animal
-Hex "1" *-$newArrow("2026-11-12c")- "*" AnimalTable : animals
-AnimalTable "*" -$newArrow("2026-11-12c")-> "1" AnimalTerrain : terrain
-AnimalTable "1" *-$newArrow("2026-11-12c")- "11" AnimalRow : rows {ordered}
-AnimalRow "*" -$newArrow("2026-11-12c")-> "0..1" AnimalType : type
-AnimalRow "*" -$newArrow("2026-11-12c")-> "0..1" AnimalEvent : event
+Encounter "*" --> "0..1" EncounterType : of
+Encounter "*" --> "0..1" AnimalRow : animal
+Hex "1" *-- "*" AnimalTable : animals
+AnimalTable "*" --> "1" Terrain : terrain
+AnimalTable "1" *-- "11" AnimalRow : rows {ordered}
+AnimalRow "*" --> "0..1" AnimalType : type
+AnimalRow "*" --> "0..1" AnimalEvent : event
 AnimalType --> AnimalSpecial
-LogEntry <|-$newArrow("2026-11-12c")- EventResult
-EventResult "*" -$newArrow("2026-11-12c")-> "1" AnimalRow : of
-LogEntry <|-$newArrow("2026-11-12c")- SaveRoll
-SaveRoll "*" -$newArrow("2026-11-12c")-> "1" Character : for
-SaveRoll "*" -$newArrow("2026-11-12c")-> "1" EventResult : of
-DamageRoll "0..1" -$newArrow("2026-11-12c")-> "0..1" SaveRoll : after
-AnimalRow "1" *-$newArrow("2026-11-12c")- "0..2" AnimalAttack : attacks {ordered}
-AnimalAttack "*" -$newArrow("2026-11-12c")-> "1" Weapon : with
+LogEntry <|-- EventResult
+EventResult "*" --> "1" AnimalRow : of
+LogEntry <|-- SaveRoll
+SaveRoll "*" --> "1" Character : for
+SaveRoll "*" --> "1" EventResult : of
+DamageRoll "0..1" --> "0..1" SaveRoll : after
+AnimalRow "1" *-- "0..2" AnimalAttack : attacks {ordered}
+AnimalAttack "*" --> "1" Weapon : with
 AnimalRow --> AnimalTrait
 Encounter --> Behavior
 AnimalType --> AnimalCategory
-AnimalTerrain "*" -$newArrow("2026-11-12c")-> "0..1" Terrain : range
-AnimalTypeRow "*" -$newArrow("2026-11-12c")-> "1" AnimalType : type
-Character "*" -$newArrow("2026-11-12c")-> "0..1" AnimalRow : animal
+Campaign "*" --> "0..1" Terrain : terrain
+AnimalTypeRow "*" --> "1" AnimalType : type
+Character "*" --> "0..1" AnimalRow : animal
 AnimalSizeRow -[hidden]- AnimalTraitRow
 Encounter "*" --> "0..1" Terrain : terrain
 Encounter "1" *-- "0..1" SurpriseRoll : pcSurprise

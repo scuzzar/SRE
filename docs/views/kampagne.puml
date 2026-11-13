@@ -95,6 +95,7 @@ hide <<value>> stereotype
   class Task <<transient>> $probe
   class Attack <<transient>> $kampf
   class Encounter $begegnung
+  class Terrain <<reference>> $begegnung
 
 ' Referenzdaten
   class Odds <<reference>> $karte
@@ -129,6 +130,7 @@ Attack "0..1" --> "1" Campaign : in
 
 ' Begegnung
 Campaign "1" *-- "*" Encounter : encounters {ordered}
+Campaign "*" --> "0..1" Terrain : terrain
 
 ' Karte
 Card "0..1" --> "1" Campaign : in
@@ -140,6 +142,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Character #line:d0021b;line.bold
-class Encounter #line:d0021b;line.bold
 @enduml
