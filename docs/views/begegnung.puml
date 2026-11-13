@@ -108,6 +108,8 @@ hide <<value>> stereotype
     /success: boolean
   }
 
+' Zeit und Reisen
+
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class DamageRoll $kampf
   class Encounter $begegnung {
@@ -283,6 +285,8 @@ hide <<value>> stereotype
 
 ' Kampagne
 
+' Zeit und Reisen
+
 ' Charaktererschaffung und Lebenslauf
 
 ' Laufbahnen (Referenzdaten)
@@ -355,4 +359,6 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class Campaign #line:d0021b;line.bold
+class LogEntry #line:d0021b;line.bold
 @enduml

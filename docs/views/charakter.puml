@@ -115,6 +115,10 @@ hide <<value>> stereotype
   class Butchering $begegnung
   class SaveRoll $begegnung
 
+' Zeit und Reisen
+  class Passenger <<value>> $reise $newClass("2026-11-13d")
+  class LowBerth <<value>> $reise $newClass("2026-11-13d")
+
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Task <<transient>> $probe
   class TaskResult $probe
@@ -149,6 +153,10 @@ hide <<value>> stereotype
 Campaign "1" *-- "*" Character : characters
 Campaign "0..1" --> "0..1" Character : focus
 Booking "*" --> "0..1" Character : for
+
+' Zeit und Reisen
+Passenger "*" -$newArrow("2026-11-13d")-> "1" Character : for
+LowBerth "*" -$newArrow("2026-11-13d")-> "0..1" Character : for
 
 ' Charaktererschaffung und Lebenslauf
 Generation ..> Character : on finish
@@ -219,4 +227,5 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class Campaign #line:d0021b;line.bold
 @enduml

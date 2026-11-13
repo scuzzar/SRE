@@ -88,6 +88,7 @@ hide <<value>> stereotype
     payout
     purchase
     sale
+    $new("2026-11-13d", "lottery")
   }
   class Character $charakter
   class Possession $shop {
@@ -101,6 +102,10 @@ hide <<value>> stereotype
   class Hex $sektor
 
 ' Verlauf
+
+' Zeit und Reisen
+  class Journey $reise $newClass("2026-11-13d")
+  class Passenger <<value>> $reise $newClass("2026-11-13d")
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class AnimalRow $begegnung
@@ -137,6 +142,10 @@ Booking "*" --> "0..1" Item : bought
 Booking "*" --> "0..1" Item : sold
 Booking "*" --> "0..1" Hex : in
 Booking --> BookingKind
+
+' Zeit und Reisen
+Passenger "*" -$newArrow("2026-11-13d")-> "1" Item : passage
+Booking "*" -$newArrow("2026-11-13d")-> "0..1" Journey : won
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -176,4 +185,6 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class Campaign #line:d0021b;line.bold
+class BookingKind #line:d0021b;line.bold
 @enduml

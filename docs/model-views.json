@@ -35,6 +35,10 @@
     {
       "id": "begegnung",
       "title": "Begegnung"
+    },
+    {
+      "id": "reise",
+      "title": "Zeit und Reisen"
     }
   ],
   "changes": [
@@ -166,6 +170,21 @@
       "file": "2026-11-13-abgleich-onedrive",
       "title": "Abgleich mit OneDrive: Schlüssel und Änderungszeit der Kampagne, Konflikt",
       "approved": true
+    },
+    {
+      "id": "2026-11-13d",
+      "file": "2026-11-13-zeit-und-reisen",
+      "title": "Zeit (Imperialer Kalender, Tage und Wochen), Tests im Log, Reise mit Passage, Low Lottery",
+      "approved": false,
+      "show": [
+        "Campaign",
+        "LogEntry",
+        "Booking",
+        "BookingKind",
+        "Hex",
+        "Character",
+        "Item"
+      ]
     }
   ]
 }
