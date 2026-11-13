@@ -21,6 +21,7 @@ export function EncounterScreen({ view }: { view: Snapshot }) {
           <div className="encounter-settings">
             <LocationPick combat={combat} />
             <TerrainPick combat={combat} />
+            <QuantityPick combat={combat} />
           </div>
         )}
         <EncounterKind title="Zufallsbegegnung" rule="Personen nach der Random Encounter List (S. 21) · täglich, Test 5+ auf 1W6">
@@ -107,14 +108,6 @@ function EncounterStart({ combat }: { combat: CombatView }) {
   const game = useGame();
   return (
     <>
-      <label className="field encounter-terrain">
-        <span>Anzahl würfeln mit (für Personen und Tiere)</span>
-        <select aria-label="Würfel der Anzahl" value={combat.quantityDie} onChange={(e) => game.setQuantityDie(Number(e.target.value))}>
-          <option value={6}>W6 (Regel)</option>
-          <option value={4}>W4</option>
-          <option value={3}>W3</option>
-        </select>
-      </label>
       {combat.note && (
         <p className="encounter-note" role="status">
           {combat.note}
@@ -201,6 +194,21 @@ function AnimalsBox({ combat }: { combat: CombatView }) {
         </select>
       </div>
     </>
+  );
+}
+
+/** Der Würfel der Anzahl der Kampagne, für alle Begegnungen mit Personen und Tieren: W6 nach den Regeln, W4 oder W3 zum Ausgleichen. */
+function QuantityPick({ combat }: { combat: CombatView }) {
+  const game = useGame();
+  return (
+    <label className="field">
+      <span>Anzahl würfeln mit</span>
+      <select aria-label="Würfel der Anzahl" value={combat.quantityDie} onChange={(e) => game.setQuantityDie(Number(e.target.value))}>
+        <option value={6}>W6 (Regel)</option>
+        <option value={4}>W4</option>
+        <option value={3}>W3</option>
+      </select>
+    </label>
   );
 }
 
