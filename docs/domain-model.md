@@ -257,7 +257,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 >
 > **Wartet auf Freigabe** (13. November 2026): **Abgleich mit OneDrive** (siehe *Abgleich mit
 > OneDrive*). Nach den Antworten des Owners: automatisch, im App-Ordner, bei einem Konflikt fragt
-> die App. Neu im Bild: `Campaign.key`, `Campaign.changedAt` und der flüchtige `Conflict`. Der
+> die App, auf Wunsch bleiben beide Stände. Neu im Bild: `Campaign.key`, `Campaign.changedAt` und der flüchtige `Conflict`. Der
 > Ausschnitt dazu liegt unter
 > [`changes/2026-11-13-abgleich-onedrive.png`](changes/2026-11-13-abgleich-onedrive.png).
 
@@ -577,7 +577,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Stände (`local`, `remote`; einer fehlt, wenn die Kampagne auf der Seite gelöscht ist) und zeigt
     je Stand Änderungszeit und Zahl der Logeinträge. Der Spieler wählt **„Dieses Gerät“** (der
     Stand hier gilt und wird hochgeladen) oder **„OneDrive“** (der Stand dort gilt und ersetzt den
-    hier). Solange er nicht wählt, spielt er hier weiter, und die Kampagne wird nicht abgeglichen.
+    hier). Sind beide Stände da, gibt es als Drittes **„Beide behalten“**: Der Stand aus OneDrive
+    kommt unter dem bisherigen Schlüssel herunter, und der Stand hier wird eine eigene Kampagne
+    mit neuem Schlüssel und dem Namen „<Name> (Kopie)“, die hochgeladen wird. So sehen andere
+    Geräte, die mit OneDrive gleich waren, keine Änderung an ihrer Kampagne, nur eine neue daneben.
+    War die Kampagne offen, bleibt der Stand von hier offen, also die Kopie. Solange er nicht wählt, spielt er hier weiter, und die Kampagne wird nicht abgeglichen.
     Der Konflikt ist flüchtig: Nach einem Neustart findet ihn der Abgleich wieder.
   - *Abmelden* lässt die Kampagnen auf dem Gerät und in OneDrive, wie sie sind, und löscht die
     Abgleichsmarken.
