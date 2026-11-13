@@ -244,6 +244,16 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > fragt die App, ob man sie anlegt (siehe *Getragene Rüstung*, *Kauf einer Rüstung*). Neu im Bild:
 > `Encounter.pcMoved` und `Encounter.npcMoved`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-07-bewegung-und-ruestung.png`](changes/2026-11-07-bewegung-und-ruestung.png).
+>
+> **Entwurf, wartet auf Freigabe** (13. November 2026, nach den Antworten des Owners):
+> **Gruppengepäck** (siehe *Gruppengepäck und Traglast*). Die Gegenstände der SC liegen im Gepäck
+> der Gruppe; am SC bleibt nur, was er ausgerüstet hat (Primärwaffe, Sekundärwaffe, Rüstung). Die
+> Traglast ist die Summe der STR der lebenden SC; ist das Gepäck schwerer, sind alle SC belastet
+> (Hausregel). Im Shop rüstet der gewählte SC eine gekaufte Waffe oder Rüstung gleich aus, was er
+> vorher hatte, kommt ins Gepäck. Neu im Bild: `Campaign.stash`, `Campaign./load`,
+> `Campaign./capacity`, `Campaign./burden`; entfällt: `Butchering.for` (die Jagdbeute geht ins
+> Gepäck). Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-13-gruppengepaeck.png`](changes/2026-11-13-gruppengepaeck.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -304,7 +314,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Gegenstand | `Item` | Etwas aus der festen Liste, das man besitzen kann, mit TL, Gewicht und Preis aus den Charts |
 | Art des Gegenstands | `ItemKind` | weapon, ammunition, armor, equipment, vehicle, ship, passage, membership |
 | TL | `Item.tl` | Tech Level, ab dem es den Gegenstand gibt |
-| Besitz | `Possession` | Ein Gegenstand, den ein Charakter hat, mit Anzahl, z. B. 2 × Low Passage |
+| Besitz | `Possession` | Ein Gegenstand mit Anzahl, z. B. 2 × Low Passage: im Gruppengepäck, an einem SC (nur Ausgerüstetes) oder bei einem NSC |
+| Gruppengepäck | `Campaign.stash` | Was die Gruppe besitzt und nicht ausgerüstet hat: Magazine, Werkzeug, Beute, Jagdbeute, abgelegte Waffen und Rüstungen; wer es trägt, zählt nicht |
+| Ausgerüstet | `Character.possessions` eines SC | Primärwaffe, Sekundärwaffe und getragene Rüstung eines SC; mehr hat er nicht am Körper |
+| Last | `Campaign./load` | Was die Gruppe trägt, in kg: das Gepäck und die ausgerüsteten Waffen, ohne Rüstung (außer Vacc Suit) und Fahrzeuge |
+| Traglast | `Campaign./capacity` | Wie viel die Gruppe ohne Belastung trägt: die Summe der STR der lebenden SC in kg, nach der Schwerkraft des Aufenthaltsorts |
+| Belastung | `Campaign./burden` | 0, 1 oder 2: um so viel zählen STR, DEX und END aller SC niedriger, wenn die Last über der Traglast bzw. ihrem Doppelten liegt (Hausregel) |
 | Stufe (Hoch/Mittel/Gering) | `Odds` | Die eine Auswahl für Orakel und Proben |
 | Hausregeln | `HouseRules` | Die Zahlen, nach denen Proben gerechnet werden |
 | Log | `LogEntry` | Ein Eintrag im Verlauf |
@@ -411,7 +426,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Essbar | `AnimalRow.edible` | Ob das Fleisch einer Tierart genießbar ist; einmal je Zeile der Tiertabelle gewürfelt |
 | Marktwurf | `AnimalRow.market` | 3W6 je Tierart, beim Erzeugen der Tiertabelle gewürfelt; daraus mit DMs Fell- und Fleischwert |
 | Jagd-DM | `Terrain.huntDm` | Wie schwer im Gelände zu jagen ist: offen ±0, mittel +1, schwer +2; erhöht Fell- und Fleischwert |
-| Jagdbeute | `ItemKind.game`, `Possession.from` | Fleisch oder Fell im Besitz eines SC, in kg, mit Verweis auf die Tierart, aus der es stammt |
+| Jagdbeute | `ItemKind.game`, `Possession.from` | Fleisch oder Fell im Gruppengepäck, in kg, mit Verweis auf die Tierart, aus der es stammt |
 | Zerstört | `WoundState.destroyed` | Ein Tier, dessen Wunden das Doppelte seiner Hits erreichen: kein Fleisch, kein Fell |
 | Tiertabelle | `AnimalTable` | Die Begegnungstabelle der Tiere eines Geländes einer Welt (SE 18–19): elf Zeilen, 2 bis 12 |
 | Zeile der Tiertabelle | `AnimalRow` | Ein Tier mit allen Werten, z. B. „6 Chasers, 25 kg, 6/11, jack, 9 teeth+1, A0 F5 S2“, oder ein Ereignis |
@@ -623,6 +638,34 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Blade oder Gun Combat.
   - Tierwaffen (Claws, Teeth, Horns, …), Zubehör (Sights, Stocks, Silencer), Länge und Munition
     kommen später.
+- **Gruppengepäck und Traglast** (Entwurf 2026-11-13b). Die Gruppe hat ein gemeinsames Gepäck
+  (`Campaign.stash`), Besitz wie bisher am Charakter: je Gegenstand höchstens ein Eintrag mit
+  Anzahl.
+  - **Am SC bleibt nur, was er ausgerüstet hat**: seine Primärwaffe, seine Sekundärwaffe und die
+    Rüstung, die er trägt, je mit Anzahl 1. Alles andere liegt im Gepäck: Magazine, Werkzeug,
+    Medical Kit, Passagen, Fahrzeuge, Beute, Jagdbeute, abgelegte Waffen und Rüstungen. NSC behalten
+    ihren eigenen Besitz (man nimmt ihn als Beute).
+  - **Ausrüsten und ablegen**: Eine Waffe aus dem Gepäck oder von einem anderen SC wird Primär- oder
+    Sekundärwaffe eines SC, eine Rüstung seine getragene Rüstung. Sie wandert dabei an ihn (Anzahl im
+    Gepäck − 1); was er an dieser Stelle vorher hatte, kommt ins Gepäck. Ablegen legt sie ins Gepäck.
+    Für die Waffe in der Hand gilt die Regel unter *Waffe in der Hand*. In der Ansicht geht das per
+    Ziehen auf die Stelle (Desktop) oder per Antippen und Auswählen (Smartphone).
+  - **Schuss**: Eine Schusswaffe nimmt ihre Schuss mit (`rounds`). Liegt dieselbe Schusswaffe
+    mehrfach im Gepäck, gilt die Zahl für die zuletzt abgelegte; rüstet man eine aus, hat sie diese
+    Zahl.
+  - **Last** (`/load`, kg): das Gewicht von allem im Gepäck und aller ausgerüsteten Waffen der
+    lebenden SC. Nicht dazu zählen Rüstungen (außer dem Vacc Suit, getragen oder im Gepäck), der
+    Dagger, Fahrzeuge, Small Craft, Schiffe, Passagen und Mitgliedschaften (SR 22, SE 5); Gegenstände
+    ohne Gewicht zählen 0.
+  - **Traglast** (`/capacity`, kg): die Summe der STR (UPP, ohne Wunden) aller lebenden SC, mal dem
+    Anteil für die Größe des Aufenthaltsorts (SE 5: Größe 8 = 100 %, je Stufe darunter +12,5 %,
+    darüber −12,5 %); ohne Aufenthaltsort oder ohne Welt 100 %.
+  - **Belastung** (`/burden`, Hausregel nach SE 5 und SR 22, für die ganze Gruppe statt je Person):
+    0 bis zur Traglast; 1 bis zum Doppelten; 2 darüber. Belastete SC zählen STR, DEX und END um die
+    Belastung niedriger, wie verwundete Werte, für Wunden und Bewusstlosigkeit; die Ansicht zeigt
+    Last und Traglast als Balken. Wer tot ist oder ausgeschieden, trägt nichts.
+  - **Ältere Spielstände**: Alles, was ein SC besitzt und nicht ausgerüstet hat, kommt ins Gepäck;
+    gleiche Gegenstände zählen zusammen.
 - **Rüstungsklasse und Reichweite.** Die sieben Rüstungsklassen (`ArmorClass`) sind die Spalten der
   Matrix: Nothing, Jack, Mesh, Cloth, Reflec, Ablat, Combat. Vacc Suit zählt als Cloth, Battle
   Dress als Combat (S. 4). Die fünf Reichweiten (`Range`) sind Close (Berührung), Short (1–5 m),
@@ -639,12 +682,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Primärwaffe, Sekundärwaffe und Händen. Ist die Waffe in der Hand nach einer Änderung im Editor
   oder einem Verkauf keine der beiden mehr, nimmt der Charakter seine Primärwaffe in die Hand; hat
   er keine, die Hände.
-- **Kauf einer Waffe.** Kauft ein Charakter eine Waffe und hat noch keine Primärwaffe, wird sie
-  seine Primärwaffe und er nimmt sie in die Hand; hat er schon eine, aber keine Sekundärwaffe, wird
-  sie seine Sekundärwaffe. Sonst ändert der Kauf nichts daran.
-- **Kauf einer Rüstung.** Kauft ein Charakter eine Rüstung, die er nicht schon trägt, fragt die App
-  gleich danach, ob er sie anlegt („Mesh anlegen? Trägt jetzt Jack“). Ja: Er trägt sie (`wears`).
-  Nein: Es bleibt, wie es ist; anlegen kann er sie später im Editor.
+- **Kauf einer Waffe** (Entwurf 2026-11-13b). Kauft man eine Waffe für einen SC, wird sie seine
+  Primärwaffe und er nimmt sie in die Hand; seine bisherige Primärwaffe kommt ins Gepäck, die
+  Sekundärwaffe bleibt. Weitere Stück derselben Waffe gehen ins Gepäck.
+- **Kauf einer Rüstung** (Entwurf 2026-11-13b). Kauft man eine Rüstung für einen SC, trägt er sie
+  gleich (`wears`); seine bisherige Rüstung kommt ins Gepäck. Die Frage „anlegen?“ entfällt.
+  Weitere Stück gehen ins Gepäck.
 - **Angriff.** Es gilt: 2W6 + DM ≥ 8 (*Basic Throw to Hit*, S. 6), mit
   DM = Fertigkeit + Rüstung + Reichweite + Attribut.
   - *Fertigkeit*: die Stufe in der Fertigkeit der Waffe. Ohne diese Fertigkeit zählt Stufe 0, also
@@ -786,13 +829,16 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Charakter, der ihn bekommt (einen Lebenden). Der Kauf ist eine Buchung `purchase` mit
     `amount` = −Preis × Anzahl, `bought` (Gegenstand), `count` (Anzahl), `for` (Charakter) und
     `in` (die Welt); der Gegenstand kommt in seinen Besitz. Er geht nur, wenn die Kasse reicht.
+    *Entwurf 2026-11-13b*: Waffen und Rüstungen rüstet der gewählte SC aus (siehe *Kauf einer
+    Waffe*, *Kauf einer Rüstung*), `for` ist er; alles andere kommt ins Gepäck, `for` fehlt.
   - **Verkaufen**: Auf dem Aufenthaltsort verkauft ein Lebender Gegenstände aus seinem Besitz, die
     einen Preis haben (ohne Schiffe und Mitgliedschaften), auch verbotene und solche über dem TL der
     Welt. Man wählt Charakter, Gegenstand und Anzahl (höchstens, was er hat) und den Erlös je Stück:
     vorgeschlagen ist der halbe Preis der Charts, abgerundet auf ganze Cr; man kann ihn ändern
     (ganze Cr, mindestens 1). Der Verkauf ist eine Buchung `sale` mit `amount` = +Erlös × Anzahl,
     `sold`, `count`, `for` und `in`; der Gegenstand geht aus dem Besitz (beim letzten Stück ist der
-    Besitz weg). Verkauft er eine Waffe ganz, entfällt sie als Primär- bzw. Sekundärwaffe; war sie
+    Besitz weg). *Entwurf 2026-11-13b*: verkauft wird aus dem Gepäck (`for` fehlt) oder was ein SC
+    ausgerüstet hat (`for` ist er). Verkauft er eine Waffe ganz, entfällt sie als Primär- bzw. Sekundärwaffe; war sie
     in der Hand, gilt die Regel unter *Waffe in der Hand*. Eine geladene Schusswaffe geht mit ihren
     Schuss.
   - **Später**: Preisänderungen nach Hausregel, die Industrie einer Welt, Schiffe kaufen,
@@ -807,7 +853,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Eine gekaufte Schusswaffe kommt leer (`rounds` 0), wenn der Charakter sie noch nicht hatte;
     Magazine kauft man dazu. Waffen aus der Abmusterung kommen geladen.
   - Jeder Angriff mit einer Schusswaffe verbraucht einen Schuss. Mit 0 Schuss gibt es keinen Angriff.
-  - **Nachladen** im Reiter Kampf nimmt ein Magazin aus dem Besitz (Anzahl − 1, beim letzten ist der
+  - **Nachladen** im Reiter Kampf nimmt ein Magazin aus dem Besitz, bei SC aus dem Gruppengepäck
+    (Entwurf 2026-11-13b) (Anzahl − 1, beim letzten ist der
     Besitz weg) und setzt `rounds` auf voll; ein angebrochenes Magazin geht dabei verloren. Ohne
     Magazin gibt es kein Nachladen.
   - Der Angriff im Log bleibt, wie er ist; welcher Schuss es war, hält er nicht fest.
@@ -992,12 +1039,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Tourists, Researchers, Traders), Reich 200 (Merchants, Noble with Retinue).
   - *Beute nehmen*: Einem NSC, der tot, bewusstlos oder schwer verwundet ist, nimmt man Gegenstände
     und Kredite ab: Sie wandern aus seinem Besitz in den eines gewählten lebenden SC (Kredite zu
-    dessen `credits`). Eine Waffe, die so weggeht, entfällt beim NSC als Primär- oder
+    dessen `credits`). *Entwurf 2026-11-13b*: Gegenstände kommen ins Gruppengepäck, Kredite weiter
+    zum gewählten SC. Eine Waffe, die so weggeht, entfällt beim NSC als Primär- oder
     Sekundärwaffe. Das geht während und nach der Begegnung; ein Logeintrag entsteht nicht.
   - *Zerstört* (SR 47): Erreicht der Schaden eines Tiers das Doppelte seiner Hits (beide Zahlen
     zusammen), ist es zerstört (`destroyed`): tot, ohne Fleisch und Fell.
   - *Ausweiden* (`Butchering`): Ein Tier, das tot oder bewusstlos ist und nicht zerstört, kann man
-    einmal ausweiden; die Beute geht an einen gewählten lebenden SC (`for`). Die Arbeit macht immer,
+    einmal ausweiden; die Beute geht an einen gewählten lebenden SC (`for`; *Entwurf 2026-11-13b*:
+    entfällt, die Beute geht ins Gruppengepäck). Die Arbeit macht immer,
     wer es am besten kann (Hausregel): unter den lebenden SC, die nicht bewusstlos sind, beim Fleisch
     der mit der besten Stufe in Steward oder Medical (`meatSkill`), beim Fell der mit der besten Stufe
     in einer Klinge (Dagger, Blade, Foil, Sword, Cutlass, Broadsword, Bayonet; `furSkill`); das können
@@ -1014,7 +1063,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - *Fell* (Hausregel): jedes kg Tier gibt 1 kg Fell (`/fur`), nur bei Tieren ohne Rüstung oder
       mit Jack; sonst 0. Mit `furSkill` 0 nur die Hälfte (abgerundet), weil es beim Abziehen leidet;
       ab Stufe 1 die volle Menge.
-    - Fleisch und Fell kommen als Jagdbeute in den Besitz des SC: die Gegenstände Fleisch bzw. Fell
+    - Fleisch und Fell kommen als Jagdbeute in den Besitz des SC (*Entwurf 2026-11-13b*: ins
+      Gruppengepäck): die Gegenstände Fleisch bzw. Fell
       (Art `game`), Anzahl in kg, mit Verweis auf die Zeile der Tiertabelle (`Possession.from`).
       Jagdbeute derselben Tierart zählt zusammen.
   - *Preise* (Hausregel): Beim Erzeugen der Tiertabelle bekommt jede Tierzeile einen Marktwurf
@@ -1322,7 +1372,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     mindestens 1.
   - **Behandlung** (`treatment`): Ein lebender SC, der nicht bewusstlos ist (`by`, auch der Patient
     selbst, wenn er wach ist), heilt alle Wunden ganz. Bei einer leichten Wunde braucht er Medical-1
-    und ein Medical Kit im Besitz; es dauert 30 Minuten. Bei einer schweren Wunde braucht er
+    und ein Medical Kit im Besitz (*Entwurf 2026-11-13b*: im Gruppengepäck); es dauert 30 Minuten. Bei einer schweren Wunde braucht er
     Medical-3 und eine medizinische Einrichtung (Krankenstation, Sick Bay eines Schiffs); ob es eine
     gibt, bestätigt der Spieler. Die Dauer sind 5W6 Tage (`dice`, `/days`).
   - **Ruhe** (`rest`): heilt eine leichte Wunde ganz nach 3 Tagen, ohne Behandelnden. Eine schwere
