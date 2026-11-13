@@ -175,7 +175,7 @@
       "id": "2026-11-13d",
       "file": "2026-11-13-zeit-und-reisen",
       "title": "Zeit (Imperialer Kalender, Tage und Wochen), Tests im Log, Reise mit Passage, Low Lottery",
-      "approved": false,
+      "approved": true,
       "show": [
         "Campaign",
         "LogEntry",

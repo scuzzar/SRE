@@ -261,7 +261,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Ausschnitt dazu liegt unter
 > [`changes/2026-11-13-abgleich-onedrive.png`](changes/2026-11-13-abgleich-onedrive.png).
 
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-13d): **Zeit und Reisen** (siehe *Spielzeit*, *Zeit
+> Am 13. November 2026 freigegeben (Kennzeichen 2026-11-13d): **Zeit und Reisen** (siehe *Spielzeit*, *Zeit
 > vergehen lassen*, *Test*, *Reise*, *Low Passage*, *Low Lottery*). Nach den Antworten des Owners:
 > Imperialer Kalender mit Wochentagen, „Woche beenden“ springt zum nächsten Sonntag; Reise mit
 > High, Middle oder Low Passage bis Sprung 2, immer eine Woche; Low Lottery mit 1W6 NSC; Zeit und
@@ -299,7 +299,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-*Zeit und Reisen* (2026-11-13d).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -880,7 +880,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Ort (`location`): einer fertigen Welt des Subsektors. Man setzt ihn auf der Weltkarte („Gruppe ist
   hier“); die Karte zeigt ihn. Eine neue Kampagne hat keinen. Ohne Aufenthaltsort gibt es keinen
   Einkauf. Wird die Welt verworfen (das geht heute nicht), fällt er weg.
-- **Spielzeit** (2026-11-13d, offen). Die Kampagne hat einen heutigen Tag (`day`), gezählt im
+- **Spielzeit** (2026-11-13d). Die Kampagne hat einen heutigen Tag (`day`), gezählt im
   Imperialen Kalender: 365 Tage im Jahr, `day` = Jahr × 365 + Tag des Jahres − 1. Angezeigt wird das
   Datum `/date` als „Tag-Jahr“ mit drei Stellen für den Tag (123-1105) und dem Wochentag. Eine neue
   Kampagne beginnt am 001-1105; Spielstände und Dateien von vorher ebenso. Das Startdatum lässt sich
@@ -891,7 +891,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     einschließlich zum nächsten Sonntag; der Feiertag gehört zur ersten Woche des Jahres.
   - *Tag im Log*: Jeder neue Logeintrag hält den Spieltag fest, an dem er entsteht (`LogEntry.day`).
     Der Log zeigt beim ersten Eintrag eines neuen Tages das Datum als Trenner.
-- **Zeit vergehen lassen** (2026-11-13d, offen). Oben im Reiter Begegnung stehen das Datum und zwei
+- **Zeit vergehen lassen** (2026-11-13d). Oben im Reiter Begegnung stehen das Datum und zwei
   Knöpfe: **Tage** (man wählt 1 bis 6 Tage) und **Woche beenden** (springt zum nächsten Sonntag; am
   Sonntag sieben Tage weiter). Beides ist ein Logeintrag `TimePassed` mit der Zahl der Tage und ob
   es die Woche beendet hat; `Campaign.day` wächst um die Tage. Während einer laufenden Begegnung
@@ -901,7 +901,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Tiere hat, die Tiere (heute weniger als 2×); bei Woche beenden dazu Patron, Gerücht und, bei Gesetz 1 oder
     mehr, Polizei (diese Woche nicht getestet). **Langes Drücken** schaltet trotzdem weiter, ohne Begegnung: je nach
     Lage will man mehr oder weniger Begegnungen. Die Tests würfelt die Zeit nie selbst.
-- **Reise** (2026-11-13d, offen). Reisen geht zurzeit nur mit Passagen (High, Middle, Low; SE S. 8
+- **Reise** (2026-11-13d). Reisen geht zurzeit nur mit Passagen (High, Middle, Low; SE S. 8
   f.), noch nicht mit eigenem Schiff.
   - *Wohin*: Auf der Weltkarte einer anderen fertigen Welt steht **Hierher reisen**, wenn die Gruppe
     einen Aufenthaltsort hat, beide Welten einen Raumhafen A bis E haben und das Ziel höchstens
@@ -921,13 +921,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Begegnung will, würfelt sie wie sonst von Hand.
   - Gepäckgrenzen (High 1000 kg, Middle 100 kg, Low 10 kg), Bumping der Middle Passage, Hijacking
     und Working Passage kommen später.
-- **Low Passage** (2026-11-13d, offen). Jeder Low-Passagier würfelt beim Aufwachen **5+ auf 2W6**
+- **Low Passage** (2026-11-13d). Jeder Low-Passagier würfelt beim Aufwachen **5+ auf 2W6**
   (SE S. 9). DMs: +1, wenn ein mitreisender Charakter in High oder Middle Passage Medical-2 oder
   besser hat (er hilft dem Schiffsmedic; Hausregel, die Regeln sagen „attending medic“); −1 bei END 6
   oder weniger. Wer es nicht schafft, stirbt (`dead`). Jede Koje (`LowBerth`) hält Würfel und DM fest
   (`revive`, `dm`); `/survived` ist Summe + DM ≥ 5. Low-Passagiere altern nicht; die App führt
   zurzeit kein Alter im Spiel.
-- **Low Lottery** (2026-11-13d, offen; SE S. 9). Reist mindestens ein SC in Low Passage, gibt es
+- **Low Lottery** (2026-11-13d; SE S. 9). Reist mindestens ein SC in Low Passage, gibt es
   die Lotterie.
   - *Mitreisende* (Hausregel, die Passagiertabelle fehlt noch): 1W6 weitere Low-Passagiere als NSC
     (`npcDie`); jeder hat eine Koje ohne Charakter, würfelt 5+ ohne DM zum Aufwachen und tippt
@@ -1060,9 +1060,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   7+ auf 2W6. Besteht er nicht, gibt es nichts, und die Karte sagt das („Test 3 (5+ nötig): diese
   Woche kein Patron.“); besteht er, folgt der Wurf der Art. Wer bei der
   Zufallsbegegnung die Art aus der Liste wählt, überspringt den Test.
-  - *Im Log* (2026-11-13d, offen): Jeder Test ist ein Logeintrag `CheckRoll` mit Art, Würfeln und
+  - *Im Log* (2026-11-13d): Jeder Test ist ein Logeintrag `CheckRoll` mit Art, Würfeln und
     Zielwert, am heutigen Spieltag. Die Tiere testen 5+ auf 1W6 (SR 47) ebenso.
-  - *Polizei* (`legal`, 2026-11-13d, offen): eine neue Begegnungsart im Reiter Begegnung, nur mit
+  - *Polizei* (`legal`, 2026-11-13d): eine neue Begegnungsart im Reiter Begegnung, nur mit
     Aufenthaltsort. Einmal je Woche (Wunsch des Owners; die SE sagt „once per day“) würfelt man 2W6;
     gleich oder über der Gesetzesstufe der Welt (`target`) hat die Gruppe Ruhe. Darunter hält ein
     Polizist die Gruppe an und verlangt Ausweise; die App würfelt gleich seine Reaktion
@@ -1943,8 +1943,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
-- **Zeit und Reisen** (2026-11-13d): wartet auf Freigabe; der Code hat noch keine Spielzeit, keine
-  Tests im Log und keine Reise.
+- **Zeit und Reisen** (2026-11-13d): freigegeben; der Code folgt in diesem Schritt (Spielzeit,
+  Tests im Log, Reise). Diese Zeile kommt heraus, sobald er folgt.
 
 - **`Conflict → Campaign : local`** ist im Code kein eigenes Feld: Der Stand von hier ist die
   Kampagne des Geräts mit dem Schlüssel des Konflikts (`localOf`), damit man in ihr weiterspielen

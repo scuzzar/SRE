@@ -85,11 +85,11 @@ hide <<value>> stereotype
   abstract class LogEntry $probe
 
 ' Zeit und Reisen
-  class TimePassed $reise $newClass("2026-11-13d") {
+  class TimePassed $reise {
     days: number
     week: boolean
   }
-  class CheckRoll $reise $newClass("2026-11-13d") {
+  class CheckRoll $reise {
     kind: CheckKind
     dice: number[1..2]
     target: number
@@ -98,22 +98,22 @@ hide <<value>> stereotype
     reactionDm: number [0..1]
     /reaction: number [0..1]
   }
-  enum CheckKind <<value>> $reise $newClass("2026-11-13d") {
+  enum CheckKind <<value>> $reise {
     random
     animal
     patron
     rumor
     legal
   }
-  class Journey $reise $newClass("2026-11-13d") {
+  class Journey $reise {
     days: number
     npcDie: number [0..1]
     lot: number [0..1]
     /pot: number
   }
-  class Passenger <<value>> $reise $newClass("2026-11-13d") {
+  class Passenger <<value>> $reise {
   }
-  class LowBerth <<value>> $reise $newClass("2026-11-13d") {
+  class LowBerth <<value>> $reise {
     revive: number[2]
     dm: number
     guess: number
@@ -128,19 +128,19 @@ hide <<value>> stereotype
 ' Kampagne
 
 ' Zeit und Reisen
-LogEntry <|-$newArrow("2026-11-13d")- TimePassed
-LogEntry <|-$newArrow("2026-11-13d")- CheckRoll
+LogEntry <|-- TimePassed
+LogEntry <|-- CheckRoll
 CheckRoll --> CheckKind
-LogEntry <|-$newArrow("2026-11-13d")- Journey
-Journey "*" -$newArrow("2026-11-13d")-> "1" Hex : from
-Journey "*" -$newArrow("2026-11-13d")-> "1" Hex : to
-Journey "1" *-$newArrow("2026-11-13d")- "1..*" Passenger : passengers
-Passenger "*" -$newArrow("2026-11-13d")-> "1" Character : for
-Passenger "*" -$newArrow("2026-11-13d")-> "1" Item : passage
-Journey "1" *-$newArrow("2026-11-13d")- "*" LowBerth : berths {ordered}
-LowBerth "*" -$newArrow("2026-11-13d")-> "0..1" Character : for
-Journey "*" -$newArrow("2026-11-13d")-> "0..1" LowBerth : /winner
-Booking "*" -$newArrow("2026-11-13d")-> "0..1" Journey : won
+LogEntry <|-- Journey
+Journey "*" --> "1" Hex : from
+Journey "*" --> "1" Hex : to
+Journey "1" *-- "1..*" Passenger : passengers
+Passenger "*" --> "1" Character : for
+Passenger "*" --> "1" Item : passage
+Journey "1" *-- "*" LowBerth : berths {ordered}
+LowBerth "*" --> "0..1" Character : for
+Journey "*" --> "0..1" LowBerth : /winner
+Booking "*" --> "0..1" Journey : won
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -169,5 +169,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class LogEntry #line:d0021b;line.bold
 @enduml

@@ -114,7 +114,7 @@ hide <<value>> stereotype
 ' Verlauf
 
 ' Zeit und Reisen
-  class Journey $reise $newClass("2026-11-13d")
+  class Journey $reise
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Encounter $begegnung
@@ -207,8 +207,8 @@ Campaign "*" --> "0..1" Hex : location
 Booking "*" --> "0..1" Hex : in
 
 ' Zeit und Reisen
-Journey "*" -$newArrow("2026-11-13d")-> "1" Hex : from
-Journey "*" -$newArrow("2026-11-13d")-> "1" Hex : to
+Journey "*" --> "1" Hex : from
+Journey "*" --> "1" Hex : to
 
 ' Charaktererschaffung und Lebenslauf
 Career "*" --> "0..1" Hex : homeworld
@@ -259,5 +259,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Campaign #line:d0021b;line.bold
 @enduml

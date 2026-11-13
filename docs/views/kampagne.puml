@@ -82,9 +82,9 @@ hide <<value>> stereotype
     /load: number
     /capacity: number
     /burden: number
-    $new("2026-11-13d", "day: number")
-    $new("2026-11-13d", "/date: string")
-    $new("2026-11-13d", "/weekday: number [0..1]")
+    day: number
+    /date: string
+    /weekday: number [0..1]
   }
   class Booking $shop
   class Character $charakter
@@ -164,6 +164,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Campaign #line:d0021b;line.bold
-class LogEntry #line:d0021b;line.bold
 @enduml
