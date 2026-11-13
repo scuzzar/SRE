@@ -404,7 +404,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Gerücht | `Rumor` | Eine Art von Gerücht nach der Rumor List (SE, Charts S. 21), Buchstabe A bis Z, z. B. „F · Information leading to trap“; A bis T sind bestimmte, U bis Z allgemeine Gerüchte |
 | Gerüchte-Wurf | `RumorRoll` | Ein Wurf auf die Rumors Matrix: zwei Würfel nacheinander |
 | Beute | (Aktion „Beute nehmen“, `Butchering`) | Was die SC nach einem Kampf bekommen: Ausrüstung und Kredite eines NSC, Fleisch und Fell eines Tiers |
-| Ausweiden | `Butchering` | Ein Tier nach dem Kampf zerlegen: Menge Fleisch (wenn die Art essbar ist) und Fell |
+| Ausweiden | `Butchering` | Ein Tier nach dem Kampf zerlegen: Menge Fleisch (wenn die Art essbar ist) und Fell; Steward oder Medical helfen beim Fleisch, eine Klinge beim Fell |
 | Essbar | `AnimalRow.edible` | Ob das Fleisch einer Tierart genießbar ist; einmal je Zeile der Tiertabelle gewürfelt |
 | Marktwurf | `AnimalRow.market` | 3W6 je Tierart, beim Erzeugen der Tiertabelle gewürfelt; daraus mit DMs Fell- und Fleischwert |
 | Jagd-DM | `Terrain.huntDm` | Wie schwer im Gelände zu jagen ist: offen ±0, mittel +1, schwer +2; erhöht Fell- und Fleischwert |
@@ -994,16 +994,22 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - *Zerstört* (SR 47): Erreicht der Schaden eines Tiers das Doppelte seiner Hits (beide Zahlen
     zusammen), ist es zerstört (`destroyed`): tot, ohne Fleisch und Fell.
   - *Ausweiden* (`Butchering`): Ein Tier, das tot oder bewusstlos ist und nicht zerstört, kann man
-    einmal ausweiden; die Beute geht an einen gewählten lebenden SC (`for`).
+    einmal ausweiden. Das tut ein gewählter lebender SC (`for`), und er bekommt die Beute. Seine
+    Fertigkeiten helfen (Hausregel): beim Fleisch die bessere Stufe in Steward oder Medical
+    (`meatSkill`), beim Fell die beste Stufe in einer Klinge (Dagger, Blade, Foil, Sword, Cutlass,
+    Broadsword, Bayonet; `furSkill`). Ohne die Fertigkeit zählt Stufe 0 (Jack-of-all-Trades wie bei
+    Proben). Der Eintrag hält die Stufen von damals fest, damit eine spätere neue Stufe die Beute
+    nicht ändert.
     - *Essbar* (SR 48) ist eine Eigenschaft der Tierart, nicht des einzelnen Ausweidens: Beim
       Erzeugen der Tiertabelle würfelt jede Tierzeile einmal 2W6 ≥ 5, DM −3 bei verdorbener
       Atmosphäre (2, 4, 7, 9); essbar nur bei Atmosphäre 2 bis 9 und ohne Giftwaffe (Hausregel: der
       Stinger ist eine Giftwaffe). Gespeichert wird das Ergebnis (`AnimalRow.edible`), nicht der
       Wurf, wie bei allen Werten der Tabelle. `Butchering./edible` folgt aus der Zeile des Tiers.
-    - *Fleisch*: Ist die Art essbar, 1W6 (`meatDie`) × 5 % seines Gewichts, abgerundet, mindestens 1 kg
-      (`/meat`). Ein Mensch braucht 1 kg am Tag.
+    - *Fleisch*: Ist die Art essbar, (1W6 (`meatDie`) + `meatSkill`, höchstens 6) × 5 % seines
+      Gewichts, abgerundet, mindestens 1 kg (`/meat`). Ein Mensch braucht 1 kg am Tag.
     - *Fell* (Hausregel): jedes kg Tier gibt 1 kg Fell (`/fur`), nur bei Tieren ohne Rüstung oder
-      mit Jack; sonst 0.
+      mit Jack; sonst 0. Mit `furSkill` 0 nur die Hälfte (abgerundet), weil es beim Abziehen leidet;
+      ab Stufe 1 die volle Menge.
     - Fleisch und Fell kommen als Jagdbeute in den Besitz des SC: die Gegenstände Fleisch bzw. Fell
       (Art `game`), Anzahl in kg, mit Verweis auf die Zeile der Tiertabelle (`Possession.from`).
       Jagdbeute derselben Tierart zählt zusammen.

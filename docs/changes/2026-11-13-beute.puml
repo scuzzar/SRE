@@ -113,6 +113,8 @@ hide <<value>> stereotype
   class Note $probe
   class Butchering $begegnung $newClass("2026-11-13") {
     meatDie: number [0..1]
+    meatSkill: number
+    furSkill: number
     /edible: boolean
     /meat: number
     /fur: number
