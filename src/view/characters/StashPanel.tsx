@@ -1,4 +1,4 @@
-import { useState, type DragEvent } from 'react';
+import { createContext, useContext, useState, type DragEvent, type ReactNode } from 'react';
 import type { EquipSlotView, StashView } from '../../controller';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
@@ -15,18 +15,32 @@ function kg(value: number): string {
   return value.toLocaleString('de-DE', { maximumFractionDigits: 2 });
 }
 
+/** Das Ziehen ist geteilt zwischen den Stellen in den Charakterkacheln und dem Gepäck darunter. */
+interface DragState {
+  readonly dragged: Dragged | undefined;
+  readonly over: string | undefined;
+  readonly start: (event: DragEvent, what: Dragged) => void;
+  readonly end: () => void;
+  readonly setOver: (id: string | undefined | ((o: string | undefined) => string | undefined)) => void;
+}
+
+const DragContext = createContext<DragState | undefined>(undefined);
+
+function useDrag(): DragState {
+  const state = useContext(DragContext);
+  if (!state) throw new Error('StashDrag fehlt um Ausrüstung und Gepäck.');
+  return state;
+}
+
 /**
- * Das Gruppengepäck und wer was ausgerüstet hat. Je SC drei Stellen (Primär, Sekundär, Rüstung);
- * darunter das Gepäck mit Last und Traglast. Auf dem Desktop zieht man ein Stück aus dem Gepäck auf
- * eine Stelle, von Stelle zu Stelle (auch zu einem anderen SC) oder zurück ins Gepäck. Ohne Ziehen
- * (Smartphone, Tastatur) rüstet „Ausrüsten …“ an einem Stück aus, und ✕ an einer Stelle legt ab.
- * Was erlaubt ist, entscheidet der Controller; die Ansicht hebt nur passende Stellen hervor.
+ * Hält fest, was gerade gezogen wird, für die Stellen in den Charakterkacheln und das Gepäck: Auf dem
+ * Desktop zieht man ein Stück aus dem Gepäck auf eine Stelle, von Stelle zu Stelle (auch zu einem
+ * anderen SC) oder zurück ins Gepäck. Was erlaubt ist, entscheidet der Controller; die Ansicht hebt
+ * nur passende Stellen hervor. Reine Anzeige.
  */
-export function StashPanel({ stash }: { stash: StashView }) {
-  const game = useGame();
+export function StashDrag({ children }: { children: ReactNode }) {
   const [dragged, setDragged] = useState<Dragged | undefined>(undefined);
   const [over, setOver] = useState<string | undefined>(undefined);
-
   const start = (event: DragEvent, what: Dragged) => {
     event.dataTransfer.effectAllowed = 'move';
     // Firefox zieht nur mit Daten; was gezogen wird, hält der Zustand.
@@ -37,77 +51,84 @@ export function StashPanel({ stash }: { stash: StashView }) {
     setDragged(undefined);
     setOver(undefined);
   };
-  const dropOnSlot = (member: string, slot: Slot) => {
+  return <DragContext.Provider value={{ dragged, over, start, end, setOver }}>{children}</DragContext.Provider>;
+}
+
+/**
+ * Die drei Stellen eines SC in seiner Charakterkachel: Primärwaffe, Sekundärwaffe, Rüstung. Gefüllte
+ * Stellen lassen sich ziehen, passende nehmen ein gezogenes Stück auf; ✕ legt ins Gepäck (auch ohne
+ * Ziehen, etwa auf dem Smartphone).
+ */
+export function EquipSlots({ member, name, slots }: { member: string; name: string; slots: readonly EquipSlotView[] }) {
+  const game = useGame();
+  const { dragged, over, start, end, setOver } = useDrag();
+  const drop = (slot: Slot) => {
     if (!dragged || !dragged.fits.includes(slot)) return;
     haptic('pick');
     game.equip(member, slot, 'key' in dragged ? { key: dragged.key } : { from: dragged.from, fromSlot: dragged.fromSlot });
     end();
   };
-  const dropOnStash = () => {
-    if (dragged && 'from' in dragged) {
-      haptic('pick');
-      game.unequip(dragged.from, dragged.fromSlot);
-    }
-    end();
-  };
-  const ratio = stash.capacity > 0 ? stash.load / stash.capacity : stash.load > 0 ? 3 : 0;
+  return (
+    <div className="stash-slots" role="group" aria-label={`Ausrüstung von ${name}`}>
+      {slots.map((s) => {
+        const id = `${member}:${s.slot}`;
+        const fits = dragged?.fits.includes(s.slot) ?? false;
+        return (
+          <div
+            key={s.slot}
+            className={['stash-slot', s.item ? 'filled' : 'empty', dragged ? (fits ? 'droppable' : 'blocked') : '', over === id && fits ? 'over' : ''].filter(Boolean).join(' ')}
+            aria-label={`${name}, ${slotNames[s.slot]}: ${s.label ?? 'leer'}`}
+            draggable={s.item !== undefined}
+            onDragStart={(e) => s.item && start(e, { from: member, fromSlot: s.slot, fits: s.slot === 'wears' ? ['wears'] : ['primary', 'secondary'] })}
+            onDragEnd={end}
+            onDragOver={(e) => {
+              if (!fits) return;
+              e.preventDefault();
+              setOver(id);
+            }}
+            onDragLeave={() => setOver((o) => (o === id ? undefined : o))}
+            onDrop={(e) => {
+              e.preventDefault();
+              drop(s.slot);
+            }}
+          >
+            <span className="stash-slot-name">{slotNames[s.slot]}</span>
+            <span className="stash-slot-item">
+              {s.label ?? <span className="muted">{s.slot === 'wears' ? 'keine' : 'Hände'}</span>}
+              {s.inHand && <span className="stash-hand"> · in der Hand</span>}
+              {s.rounds && <span className="mono stash-rounds"> {s.rounds}</span>}
+            </span>
+            {s.item && (
+              <button type="button" className="icon-button stash-off" aria-label={`${s.label} ablegen`} title="Ins Gepäck legen" onClick={() => game.unequip(member, s.slot)}>
+                <CloseIcon />
+              </button>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
+/**
+ * Das Gruppengepäck unter den Charakterkacheln: Last gegen Traglast als Balken, darunter, was drin
+ * ist, mit Gewicht. Ausrüstbares lässt sich auf eine Stelle ziehen oder mit „Ausrüsten …“ wählen;
+ * eine Stelle, die man hierher zieht, wird abgelegt.
+ */
+export function StashPack({ stash }: { stash: StashView }) {
+  const game = useGame();
+  const { dragged, over, start, end, setOver } = useDrag();
+  const ratio = stash.capacity > 0 ? stash.load / stash.capacity : stash.load > 0 ? 3 : 0;
   return (
     <section className="stash" aria-labelledby="stash-title">
       <h2 id="stash-title" className="section-title">
-        Ausrüstung und Gepäck
+        Gepäck
       </h2>
       {stash.error && (
         <p className="error" role="alert">
           {stash.error}
         </p>
       )}
-      <div className="stash-members">
-        {stash.members.map((member) => (
-          <div key={member.id} className="stash-member" role="group" aria-label={`Ausrüstung von ${member.name}`}>
-            <span className="stash-member-name">{member.name}</span>
-            <div className="stash-slots">
-              {member.slots.map((s) => {
-                const id = `${member.id}:${s.slot}`;
-                const fits = dragged?.fits.includes(s.slot) ?? false;
-                return (
-                  <div
-                    key={s.slot}
-                    className={['stash-slot', s.item ? 'filled' : 'empty', dragged ? (fits ? 'droppable' : 'blocked') : '', over === id && fits ? 'over' : ''].filter(Boolean).join(' ')}
-                    aria-label={`${member.name}, ${slotNames[s.slot]}: ${s.label ?? 'leer'}`}
-                    draggable={s.item !== undefined}
-                    onDragStart={(e) => s.item && start(e, { from: member.id, fromSlot: s.slot, fits: s.slot === 'wears' ? ['wears'] : ['primary', 'secondary'] })}
-                    onDragEnd={end}
-                    onDragOver={(e) => {
-                      if (!fits) return;
-                      e.preventDefault();
-                      setOver(id);
-                    }}
-                    onDragLeave={() => setOver((o) => (o === id ? undefined : o))}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      dropOnSlot(member.id, s.slot);
-                    }}
-                  >
-                    <span className="stash-slot-name">{slotNames[s.slot]}</span>
-                    <span className="stash-slot-item">
-                      {s.label ?? <span className="muted">{s.slot === 'wears' ? 'keine' : 'Hände'}</span>}
-                      {s.inHand && <span className="stash-hand"> · in der Hand</span>}
-                      {s.rounds && <span className="mono stash-rounds"> {s.rounds}</span>}
-                    </span>
-                    {s.item && (
-                      <button type="button" className="icon-button stash-off" aria-label={`${s.label} ablegen`} title="Ins Gepäck legen" onClick={() => game.unequip(member.id, s.slot)}>
-                        <CloseIcon />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-
       <div
         className={['stash-pack', dragged && 'from' in dragged ? 'droppable' : '', over === 'stash' ? 'over' : ''].filter(Boolean).join(' ')}
         onDragOver={(e) => {
@@ -118,12 +139,16 @@ export function StashPanel({ stash }: { stash: StashView }) {
         onDragLeave={() => setOver((o) => (o === 'stash' ? undefined : o))}
         onDrop={(e) => {
           e.preventDefault();
-          dropOnStash();
+          if (dragged && 'from' in dragged) {
+            haptic('pick');
+            game.unequip(dragged.from, dragged.fromSlot);
+          }
+          end();
         }}
       >
         <div className="stash-load" aria-label={`Last ${kg(stash.load)} von ${kg(stash.capacity)} kg`}>
           <span className="stash-load-text">
-            Gepäck · Last <b>{kg(stash.load)}</b> / {kg(stash.capacity)} kg
+            Last <b>{kg(stash.load)}</b> / {kg(stash.capacity)} kg
           </span>
           <span className={['stash-bar', stash.burden > 0 ? `burden-${stash.burden}` : ''].filter(Boolean).join(' ')} aria-hidden="true">
             <span style={{ width: `${Math.min(100, (ratio / 2) * 100)}%` }} />

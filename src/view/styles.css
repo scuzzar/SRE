@@ -1676,28 +1676,11 @@ button:disabled {
   margin-top: 8px;
 }
 
-.stash-members {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
-  gap: 8px;
-}
-
-.stash-member {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 10px 10px;
-  background: var(--panel);
-  border: 1px solid var(--rule-soft);
-}
-
-.stash-member-name {
-  font-weight: 600;
-}
-
+/* In der Charakterkachel unter den Fertigkeiten. */
 .stash-slots {
   display: grid;
   gap: 4px;
+  margin-top: 4px;
 }
 
 .stash-slot {

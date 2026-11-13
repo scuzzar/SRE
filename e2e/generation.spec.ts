@@ -120,8 +120,11 @@ test('Besitz: Gegenstand aus der Liste mit Anzahl; was der SC nicht ausrüstet, 
   await editor.getByLabel('Anzahl Low Passage').fill('2');
   await editor.getByRole('button', { name: 'Speichern' }).click();
   await kira.getByRole('button', { name: /Kira Vant/ }).click();
-  // Am SC bleibt, was er ausgerüstet hat; die Passagen kommen zum Vacc Suit ins Gruppengepäck.
-  await expect(kira).toContainText('Automatic Pistol, Jack');
+  // Am SC bleibt, was er ausgerüstet hat (die Stellen in seiner Kachel); die Passagen kommen zum
+  // Vacc Suit ins Gruppengepäck.
+  const slots = kira.getByRole('group', { name: 'Ausrüstung von Kira Vant' });
+  await expect(slots.getByLabel(/Primär/)).toContainText('Automatic Pistol');
+  await expect(slots.getByLabel(/Rüstung/)).toContainText('Jack');
   const pack = page.getByRole('list', { name: 'Gepäck' });
   await expect(pack).toContainText('2 × Low Passage');
   await expect(pack).toContainText('Vacc Suit (TL 12)');

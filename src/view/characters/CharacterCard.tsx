@@ -1,8 +1,9 @@
-import type { CharacterView } from '../../controller';
+import type { EquipSlotView, CharacterView } from '../../controller';
 import { characteristicLabel, credits, hex, signed, withLevel } from '../format';
 import { useGame } from '../game-context';
 import { PencilIcon } from '../icons';
 import { CareerList } from './GenerationSheet';
+import { EquipSlots } from './StashPanel';
 
 /**
  * Das UPP. Beim Charakter oben sind die Attribute Knöpfe: Nach der Fertigkeit lassen sie sich zur
@@ -100,11 +101,12 @@ export function SkillChips({ character, interactive, full = false }: { character
 
 /**
  * Eine Charakterkarte im Charakter-Screen, zum Verwalten: oben das UPP, darunter die Fertigkeiten mit
- * Kürzel. Der Kopf klappt die Details auf: volle Namen, Besitz, Ausrüstung, Notiz und Lebenslauf. Der
- * Stift öffnet den Editor, dort lässt sich der Charakter auch löschen. Proben würfelt man oben im
- * Orakel-Screen.
+ * Kürzel, dann bei einem lebenden SC seine Ausrüstung (Primär, Sekundär, Rüstung; siehe
+ * `EquipSlots`). Der Kopf klappt die Details auf: volle Namen, Ausrüstung als Text, Notiz und
+ * Lebenslauf. Der Stift öffnet den Editor, dort lässt sich der Charakter auch löschen. Proben
+ * würfelt man oben im Orakel-Screen.
  */
-export function CharacterCard({ character }: { character: CharacterView }) {
+export function CharacterCard({ character, slots }: { character: CharacterView; slots?: readonly EquipSlotView[] | undefined }) {
   const game = useGame();
 
   return (
@@ -121,6 +123,7 @@ export function CharacterCard({ character }: { character: CharacterView }) {
 
       <UppRow character={character} interactive={false} />
       <SkillChips character={character} interactive={false} full={character.open} />
+      {slots && <EquipSlots member={character.id} name={character.name} slots={slots} />}
 
       {character.open && (
         <dl className="facts">
@@ -128,12 +131,6 @@ export function CharacterCard({ character }: { character: CharacterView }) {
             <>
               <dt>Heimatwelt</dt>
               <dd>{character.homeworld}</dd>
-            </>
-          )}
-          {character.possessions.length > 0 && (
-            <>
-              <dt>Besitz</dt>
-              <dd>{character.possessions.map((p) => (p.count > 1 ? `${p.count} × ${p.name}` : p.name)).join(', ')}</dd>
             </>
           )}
           <dt>Ausrüstung</dt>
