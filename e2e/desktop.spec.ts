@@ -67,3 +67,18 @@ test('Die Sektor-Karte lässt sich mit dem Mausrad zoomen und mit der Maus versc
   await map.getByRole('button', { name: '0101, nicht erzeugt' }).click();
   await expect(page.locator('.sector-dock')).toContainText('Feld 0101');
 });
+
+test('Die Sektor-Karte passt ganz in den Screen, und der Screen wird nicht breiter als 960 px', async ({ page }, testInfo) => {
+  onlyDesktop(testInfo);
+  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Sektor', exact: true }).click();
+  const viewport = page.viewportSize()!;
+  const map = (await page.locator('.sector-viewport').boundingBox())!;
+  expect(map.y + map.height).toBeLessThanOrEqual(viewport.height);
+  // Auch mit dem Dock des gewählten Feldes bleibt die unterste Reihe sichtbar.
+  await page.locator('.sector-viewport').getByRole('button', { name: '0110, nicht erzeugt' }).click();
+  const dock = (await page.locator('.sector-dock').boundingBox())!;
+  expect(map.y + map.height).toBeLessThanOrEqual(dock.y);
+  const host = (await page.locator('.screen-host').boundingBox())!;
+  expect(host.width).toBeLessThanOrEqual(960);
+});
+

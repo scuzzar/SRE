@@ -95,7 +95,7 @@ export function App() {
 
       <div className="stage">
         {desktop && (
-          <aside className="log-panel" aria-label="Log">
+          <aside className={view.screen === 'oracle' ? 'log-panel pickable' : 'log-panel'} aria-label="Log">
             <LogList
               log={view.log}
               target={view.screen === 'oracle' ? target : undefined}

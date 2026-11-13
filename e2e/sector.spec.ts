@@ -119,7 +119,7 @@ test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis 
   throw new Error('Kein Feld mit Welt gefunden');
 });
 
-test('Sektor: UWP und Handelscodes erscheinen auf der Karte, sobald sie beim Zoomen lesbar sind', async ({ page }, testInfo) => {
+test('Sektor: UWP und Handelscodes erscheinen auf der Karte, sobald sie beim Zoomen lesbar sind', async ({ page }) => {
   await page.goto('/');
   const efate = { column: 2, row: 1, empty: false, name: 'Efate', navalBase: false, scoutBase: false, gasGiant: true, uwp: { starport: 10, size: 6, atmosphere: 4, hydrographics: 6, population: 6, government: 2, law: 4, tech: 12 } };
   const file = { format: 'solo-rpg-engine/kampagne', version: 1, campaign: { name: 'Karte', odds: 'medium', characters: [], log: [], hexes: [efate] } };
@@ -129,16 +129,13 @@ test('Sektor: UWP und Handelscodes erscheinen auf der Karte, sobald sie beim Zoo
   await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
   const world = page.getByRole('button', { name: '0201, Efate: Weltkarte öffnen' });
   await expect(world).toBeVisible();
-  // Ganz herausgezoomt: nur Zeichen und Name – auf der schmalen Karte. Auf der breiten Desktop-Karte
-  // ist das UWP, bei noch mehr Breite auch der Handelscode, beim Minimum schon lesbar.
-  const mobil = testInfo.project.name === 'mobil';
-  if (mobil) await expect(world.locator('.hex-uwp')).toHaveCount(0);
+  // Ganz herausgezoomt: nur Zeichen und Name. Das gilt auch im Desktop-Modus, seit die Karte dort
+  // in die Höhe des Screens eingepasst ist statt die volle Breite zu füllen.
+  await expect(world.locator('.hex-uwp')).toHaveCount(0);
   await page.getByRole('button', { name: 'Vergrößern' }).click();
   await expect(world.locator('.hex-uwp')).toHaveText('A646624-C');
-  if (mobil) {
-    await expect(world.locator('.hex-trade')).toHaveCount(0);
-    await page.getByRole('button', { name: 'Vergrößern' }).click();
-  }
+  await expect(world.locator('.hex-trade')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Vergrößern' }).click();
   await expect(world.locator('.hex-trade')).toHaveText('Ag Ni');
 });
 

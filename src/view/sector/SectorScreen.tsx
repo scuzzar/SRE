@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type TouchEvent } from 'react';
 import type { HexView, SelectedHexView, Snapshot } from '../../controller';
 import { useGame } from '../game-context';
 import { animated } from '../haptics';
@@ -297,7 +297,7 @@ function ZoomableMap({ children }: { children: (pixelsPerUnit: number) => ReactN
   const panned = useRef(false);
 
   return (
-    <div className="sector-zoom-frame">
+    <div className="sector-zoom-frame" style={{ '--map-ratio': (WIDTH / HEIGHT).toFixed(4) } as CSSProperties}>
       <div
         ref={viewport}
         className="sector-viewport"
