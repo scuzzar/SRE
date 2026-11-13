@@ -39,10 +39,11 @@ test('Kampf: Kira zieht die Pistole, wählt das Ziel in der Tabelle und greift a
   await expect(page.locator('.entry').last()).toContainText('Kira Vant · Automatic Pistol · Jack, Short');
 });
 
-test('Kampf: die Tabelle passt auf ein Handy, ohne seitlich zu scrollen', async ({ page }) => {
+test('Kampf: die Tabelle passt ohne seitliches Scrollen, der Knopf bleibt im Sichtfeld', async ({ page }) => {
+  const viewport = page.viewportSize()!;
   const table = (await page.locator('.combat-table').boundingBox())!;
   expect(table.x).toBeGreaterThanOrEqual(0);
-  expect(table.x + table.width).toBeLessThanOrEqual(390);
+  expect(table.x + table.width).toBeLessThanOrEqual(viewport.width);
   const attack = (await page.getByRole('button', { name: 'Angreifen' }).boundingBox())!;
-  expect(attack.y + attack.height).toBeLessThanOrEqual(844);
+  expect(attack.y + attack.height).toBeLessThanOrEqual(viewport.height);
 });

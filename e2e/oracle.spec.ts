@@ -9,13 +9,14 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-test('Hauptscreen: leerer Log, Knöpfe im Daumenbereich, Stufe Mittel', async ({ page }) => {
+test('Hauptscreen: leerer Log, Knöpfe unten, Stufe Mittel', async ({ page }) => {
   await expect(page.getByText('Noch nichts im Log.')).toBeVisible();
   await expect(page.getByRole('radio', { name: /Mittel/ })).toHaveAttribute('aria-checked', 'true');
+  const viewport = page.viewportSize()!;
   for (const name of [/Ja\/Nein/, /Karte ziehen/, /2W6/]) {
     const box = (await page.getByRole('button', { name }).boundingBox())!;
-    expect(box.y).toBeGreaterThan(844 / 2);
-    expect(box.y + box.height).toBeLessThanOrEqual(844);
+    expect(box.y).toBeGreaterThan(viewport.height / 2);
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
   }
 });
 
