@@ -150,12 +150,12 @@ function finishTurn(campaign: Campaign, evade = false): Campaign {
 
 /**
  * Die leere Waffe (Primär, dann Sekundär; 0 Schuss geladen), die dieser Kämpfer mit einem Magazin
- * aus seinem Besitz nachladen kann; sonst `undefined`.
+ * aus dem Gruppengepäck (NSC: aus seinem Besitz) nachladen kann; sonst `undefined`.
  */
 export function reloadableWeapon(campaign: Campaign, id: CharacterId): string | undefined {
   const character = anyCharacterOf(campaign, id);
   return armedWeaponsOf(character).find((weapon) => {
-    const ammo = ammoOf({ ...character, wields: weapon });
+    const ammo = ammoOf({ ...character, wields: weapon }, campaign.stash);
     return ammo !== undefined && ammo.rounds === 0 && ammo.magazines > 0;
   });
 }

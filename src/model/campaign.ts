@@ -6,6 +6,7 @@ import { damageAfterOf, damageRollsOf, interpretationsOf, savesOf, volleyOf, typ
 import { worldOf, type Hex } from './sector';
 import type { Booking } from './shop';
 import type { Encounter, QuantityDie } from './encounter';
+import { isPc, settleStash } from './stash';
 import { defaultOdds, HANDS, itemOf, itemOfWeapon, oddsOf, ref, skillOf, weaponOf, type ExampleCharacter } from './reference';
 
 /** Die sechs Attributwerte, je 0 bis 15. */
@@ -61,7 +62,7 @@ export interface Character {
   readonly career?: Career;
   /** Die Heimatwelt: ein Hexfeld mit fertiger Welt, als Spalte und Zeile (0304). */
   readonly homeworld?: string;
-  /** Primär- und Sekundärwaffe: Waffen von Gegenständen aus seinem Besitz, verschieden, nicht die Hände. */
+  /** Primär- und Sekundärwaffe: Waffen von Gegenständen aus seinem Besitz, verschieden, nicht die Hände. Ein SC besitzt nur, was er ausgerüstet hat; der Rest liegt im Gruppengepäck. */
   readonly primary?: string;
   readonly secondary?: string;
   /** Die Waffe in der Hand: Primär- oder Sekundärwaffe; fehlt sie, sind es die Hände. */
@@ -98,6 +99,8 @@ export interface Campaign {
   readonly location?: string;
   /** Die Buchungen der Gruppenkasse, in der Reihenfolge, in der sie entstanden sind. */
   readonly bookings: readonly Booking[];
+  /** Das Gruppengepäck: was die Gruppe besitzt und kein SC ausgerüstet hat (siehe `stash.ts`). */
+  readonly stash: readonly Possession[];
   /** Die Begegnungen, die laufende zuletzt; beendete bleiben, wenn der Log auf ihre NSC verweist. Ihre NSC sind Charaktere, die an der Begegnung hängen, nicht hier. */
   readonly encounters: readonly Encounter[];
   /** Der Würfel der Anzahl für kommende Begegnungen: 3, 4 oder 6; fehlt er, W6 nach den Regeln. */
@@ -134,7 +137,7 @@ export interface CharacterInput {
 
 /** Eine neue Kampagne, ohne Log, mit der Standardstufe und den angegebenen Charakteren. */
 export function createCampaign(examples: readonly ExampleCharacter[] = ref.examples, name = 'Kampagne', id: CampaignId = 'k1'): Campaign {
-  let campaign: Campaign = { id, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [], bookings: [], encounters: [] };
+  let campaign: Campaign = { id, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [], bookings: [], encounters: [], stash: [] };
   for (const { primary, wears, ...example } of examples) campaign = addCharacter(campaign, { ...example, ...(primary === undefined ? {} : { primary }), ...(wears === undefined ? {} : { wears }) }).campaign;
   // Bei mehreren Beispielen steht der erste oben, nicht der zuletzt angelegte.
   return withFocus(campaign, livingCharacters(campaign)[0]?.id);
@@ -237,7 +240,7 @@ export function replaceCharacter(campaign: Campaign, character: Character): Camp
 export function adoptCharacter(campaign: Campaign, character: Character): Campaign {
   if (isCampaignCharacter(campaign, character.id)) throw new DomainError(`${character.name} gehört schon zur Kampagne.`);
   const added = { ...campaign, characters: [...campaign.characters, character] };
-  return canFocus(character) ? withFocus(added, character.id) : keepFocus(campaign, added);
+  return settleStash(canFocus(character) ? withFocus(added, character.id) : keepFocus(campaign, added));
 }
 
 /** Die nicht ausgeblendeten SC, lebend oder tot; dauerhafte NSC zählen nicht dazu. */
@@ -466,8 +469,8 @@ export function addCharacter(campaign: Campaign, input: CharacterInput, career?:
     ...wearsOf(input),
   };
   const added = { ...campaign, characters: [...campaign.characters, character] };
-  // Ein neuer Charakter steht oben, wenn er lebt.
-  return { campaign: canFocus(character) ? withFocus(added, id) : keepFocus(campaign, added), id };
+  // Ein neuer Charakter steht oben, wenn er lebt; was ein SC nicht ausgerüstet hat, kommt ins Gepäck.
+  return { campaign: settleStash(canFocus(character) ? withFocus(added, id) : keepFocus(campaign, added)), id };
 }
 
 /**
@@ -496,8 +499,13 @@ export function updateCharacter(campaign: Campaign, id: CharacterId, input: Char
   >;
   // Was eine Schusswaffe geladen hat, bleibt, wenn die Eingabe nichts dazu sagt.
   const loaded = new Map(before.possessions.flatMap((p) => (p.rounds === undefined ? [] : [[p.of, p.rounds] as const])));
-  const possessions =
+  const given =
     input.possessions === undefined ? before.possessions : fields(input).possessions.map((p) => (p.rounds !== undefined || !loaded.has(p.of) ? p : { ...p, rounds: loaded.get(p.of)! }));
+  // Ein SC kann im Editor auch eine Waffe oder Rüstung aus dem Gruppengepäck ausrüsten: Ein Stück
+  // wandert aus dem Gepäck an ihn (settleStash legt später ins Gepäck, was er nicht ausrüstet).
+  const fromStash = isPc(before) ? pullFromStash(campaign.stash, given, input) : { stash: campaign.stash, possessions: given };
+  const possessions = fromStash.possessions;
+  campaign = { ...campaign, stash: fromStash.stash };
   const after: Character = {
     ...rest,
     ...fields(input),
@@ -509,7 +517,22 @@ export function updateCharacter(campaign: Campaign, id: CharacterId, input: Char
     ...armsOf({ ...input, possessions }),
     ...wearsOf({ ...input, possessions }),
   };
-  return keepFocus(campaign, { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? after : c)) });
+  return settleStash(keepFocus(campaign, { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? after : c)) }));
+}
+
+/** Nimmt für Primär-, Sekundärwaffe und Rüstung der Eingabe je ein Stück aus dem Gepäck, wenn es im Besitz fehlt. */
+function pullFromStash(stash: readonly Possession[], possessions: readonly Possession[], input: CharacterInput): { stash: readonly Possession[]; possessions: readonly Possession[] } {
+  let pack = stash;
+  let own = possessions;
+  const wanted = [input.primary, input.secondary].flatMap((w) => (w === undefined ? [] : [itemOfWeapon(w)?.id ?? ''])).concat(input.wears === undefined ? [] : [input.wears]);
+  for (const item of wanted) {
+    if (own.some((p) => p.of === item)) continue;
+    const had = pack.find((p) => p.of === item && p.from === undefined);
+    if (!had) continue;
+    pack = pack.flatMap((p) => (p !== had ? [p] : p.count > 1 ? [{ ...p, count: p.count - 1 }] : []));
+    own = [...own, { ...had, count: 1 }];
+  }
+  return { stash: pack, possessions: own };
 }
 
 /** Löscht den Charakter, wenn der Log nicht auf ihn verweist; sonst wird er ausgeblendet. */

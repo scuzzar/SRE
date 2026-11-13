@@ -186,7 +186,6 @@ export interface SaveRoll extends LogEntryBase {
  */
 export interface Butchering extends LogEntryBase {
   readonly kind: 'butchering';
-  readonly for: CharacterId;
   readonly of: CharacterId;
   readonly meatDie?: number;
   readonly meatSkill: number;

@@ -1667,6 +1667,204 @@ button:disabled {
   gap: 8px;
 }
 
+/* --- Ausrüstung und Gruppengepäck ------------------------------------------------------------ */
+
+.stash {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.stash-members {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+  gap: 8px;
+}
+
+.stash-member {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px 10px;
+  background: var(--panel);
+  border: 1px solid var(--rule-soft);
+}
+
+.stash-member-name {
+  font-weight: 600;
+}
+
+.stash-slots {
+  display: grid;
+  gap: 4px;
+}
+
+.stash-slot {
+  position: relative;
+  display: grid;
+  grid-template-columns: 5.5em minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 4px 0 8px;
+  border: 1px dashed var(--line);
+  background: var(--deep);
+}
+
+.stash-slot.filled {
+  border-style: solid;
+  border-color: var(--line-strong);
+  background: var(--highlight);
+  cursor: grab;
+}
+
+.stash-slot-name {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stash-slot-item {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stash-hand {
+  color: var(--gold);
+  font-size: 13px;
+}
+
+.stash-rounds {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.stash-off {
+  width: 32px;
+  height: 32px;
+}
+
+/* Beim Ziehen: passende Stellen leuchten, unpassende treten zurück. */
+.stash-slot.droppable,
+.stash-pack.droppable {
+  border-color: var(--gold);
+}
+
+.stash-slot.blocked {
+  opacity: 0.45;
+}
+
+.stash-slot.over,
+.stash-pack.over {
+  background: var(--gold-wash);
+  border-style: solid;
+}
+
+.stash-pack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--rule-soft);
+  background: var(--panel);
+}
+
+.stash-load {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.stash-load-text {
+  font-size: 14px;
+}
+
+/* Der Balken reicht bis zur doppelten Traglast; der Strich in der Mitte ist die Traglast. */
+.stash-bar {
+  position: relative;
+  flex: 1 1 140px;
+  height: 8px;
+  background: var(--deep);
+  border: 1px solid var(--line);
+}
+
+.stash-bar > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--muted);
+}
+
+.stash-bar.burden-1 > span {
+  background: var(--gold);
+}
+
+.stash-bar.burden-2 > span {
+  background: var(--accent);
+}
+
+.stash-bar > i {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: var(--text);
+}
+
+.stash-burden {
+  width: 100%;
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stash-items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.stash-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  border-top: 1px solid var(--rule);
+}
+
+.stash-item.equipable {
+  cursor: grab;
+}
+
+.stash-item-name {
+  min-width: 0;
+}
+
+.stash-weight {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.stash-equip {
+  max-width: 9.5em;
+  min-height: 34px;
+  font-size: 14px;
+  background: var(--deep);
+  border: 1px solid var(--line);
+  color: var(--text);
+}
+
+.stash-empty {
+  margin: 0;
+}
+
 .ghost.compact {
   min-height: 36px;
   padding: 4px 10px;

@@ -48,26 +48,26 @@ describe('Werte der Tierbeute', () => {
 });
 
 describe('Ausweiden', () => {
-  it('der Beste, der wach ist, arbeitet: Fleisch Steward/Medical, Fell eine Klinge; die Beute geht an den gewählten SC', () => {
+  it('der Beste, der wach ist, arbeitet: Fleisch Steward/Medical, Fell eine Klinge; die Beute kommt ins Gepäck', () => {
     const { campaign, animal } = deadAnimal(grazer());
     expect(woundStateOf(campaign, animal)).toBe('dead');
     // Jonas hat Steward-1 und Blade-1: Er macht beides.
     expect(butchers(campaign).meat).toMatchObject({ name: 'Jonas Reyl', skill: 'steward', level: 1 });
     expect(butchers(campaign).fur).toMatchObject({ name: 'Jonas Reyl', skill: 'blade', level: 1 });
-    const done = butcher(campaign, animal, 'c1', fixedRandom(4), fixedClock('2026-10-23T16:00:00.000Z'));
+    const done = butcher(campaign, animal, fixedRandom(4), fixedClock('2026-10-23T16:00:00.000Z'));
     const entry = done.log.at(-1) as Butchering;
-    expect(entry).toMatchObject({ kind: 'butchering', for: 'c1', of: animal, meatDie: 4, meatSkill: 1, furSkill: 1 });
+    expect(entry).toMatchObject({ kind: 'butchering', of: animal, meatDie: 4, meatSkill: 1, furSkill: 1 });
+    expect(entry).not.toHaveProperty('for');
     // Fleisch: (4 + 1) × 5 % von 400 kg = 100 kg; Fell: jedes kg Tier 1 kg Fell.
     expect(butcheringResult(done, entry)).toMatchObject({ edible: true, meat: 100, fur: 400, furHalf: false });
-    const kira = done.characters.find((c) => c.id === 'c1')!;
-    expect(kira.possessions.filter((p) => p.from).map((p) => [p.of, p.count])).toEqual([
+    expect(done.stash.filter((p) => p.from).map((p) => [p.of, p.count])).toEqual([
       ['meat', 100],
       ['fur', 400],
     ]);
     expect(cannotButcher(done, animal)).toMatch(/schon ausgeweidet/);
     // Ohne Klinge-1 gibt es nur halbes Fell.
     const noBlade = { ...campaign, characters: campaign.characters.map((c) => ({ ...c, skills: c.skills.filter((k) => k.of !== 'blade') })) };
-    const half = butcher(noBlade, animal, 'c1', fixedRandom(4), fixedClock('2026-10-23T16:00:00.000Z'));
+    const half = butcher(noBlade, animal, fixedRandom(4), fixedClock('2026-10-23T16:00:00.000Z'));
     expect(butcheringResult(half, half.log.at(-1) as Butchering)).toMatchObject({ fur: 200, furHalf: true });
     // Preise: Fell (10 + 2 + 0 + 2) × 0,1 = 1,4 Cr/kg, Fleisch (10 + 2 + 2) × 0,5 = 7 Cr/kg.
     const at = { in: '0101', terrain: 'mountain', roll: 11 };
@@ -75,15 +75,15 @@ describe('Ausweiden', () => {
     expect(gamePricePerKg(done.hexes, 'meat', at)).toBe(7);
     expect(gameSaleTotal(done.hexes, 'meat', at, 100)).toBe(350);
     // Übersteht die Kampagnendatei, und Jagdbeute lässt sich verkaufen.
-    expect(fromCampaignFile(toCampaignFile(done), 'k1').characters).toEqual(done.characters);
-    const sold = sellGame(done, 'meat|0101|mountain|11', 40, 140, 'c1', fixedClock());
-    expect(sold.characters.find((c) => c.id === 'c1')!.possessions.find((p) => p.of === 'meat')!.count).toBe(60);
+    expect(fromCampaignFile(toCampaignFile(done), 'k1').stash).toEqual(done.stash);
+    const sold = sellGame(done, 'meat|0101|mountain|11', 40, 140, fixedClock());
+    expect(sold.stash.find((p) => p.of === 'meat')!.count).toBe(60);
     expect(sold.bookings.at(-1)).toMatchObject({ kind: 'sale', amount: 140, sold: 'meat', count: 40 });
   });
 
   it('ungenießbar: kein Fleischwürfel, kein Fleisch; gepanzerte Tiere haben kein Fell; zerstörte gar nichts', () => {
     const { campaign, animal } = deadAnimal(grazer({ edible: false, armor: 'mesh' }));
-    const done = butcher(campaign, animal, 'c1', fixedRandom(), fixedClock('2026-10-23T16:00:00.000Z'));
+    const done = butcher(campaign, animal, fixedRandom(), fixedClock('2026-10-23T16:00:00.000Z'));
     const entry = done.log.at(-1) as Butchering;
     expect(entry.meatDie).toBeUndefined();
     expect(butcheringResult(done, entry)).toMatchObject({ edible: false, meat: 0, fur: 0, hasFur: false, reason: 'Wurf: ungenießbar' });
@@ -106,7 +106,7 @@ describe('Beute der NSC', () => {
     expect(survivalGear(6, 8)).toEqual([]);
   });
 
-  it('NSC haben Kredite und Überlebensausrüstung; einem Bewusstlosen nimmt man alles ab', () => {
+  it('NSC haben Kredite und Überlebensausrüstung; einem Bewusstlosen nimmt man alles ab: die Gegenstände ins Gepäck, die Kredite an einen SC', () => {
     const there = setLocation(setHexes(createCampaign(), [vacuum]), '0202');
     const rolled = rollEncounter(there, fixedRandom(), fixedClock(), 15, 2).campaign;
     const npc = currentEncounter(rolled)!.npcs[1]!;
@@ -122,7 +122,9 @@ describe('Beute der NSC', () => {
     const looted = takeLoot(down, npc.id, 'c1');
     const kira = looted.characters.find((c) => c.id === 'c1')!;
     expect(kira.credits).toBe(kiraBefore.credits + 10);
-    expect(kira.possessions.length).toBeGreaterThan(kiraBefore.possessions.length);
+    expect(kira.possessions).toEqual(kiraBefore.possessions);
+    expect(looted.stash.length).toBeGreaterThan(down.stash.length);
+    expect(looted.stash.find((p) => p.of.startsWith('vacc-suit-'))!.count).toBe(2);
     const after = currentEncounter(looted)!.npcs[1]!;
     expect(after).toMatchObject({ credits: 0, possessions: [] });
     expect(after.wields).toBeUndefined();

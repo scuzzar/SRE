@@ -48,10 +48,12 @@ export function LootDialog({ combat }: { combat: CombatView }) {
         )}
         {loot.blocked ? (
           <p className="error">{loot.blocked}</p>
+        ) : loot.animal || loot.credits === 0 ? (
+          <p className="muted">{loot.animal ? 'Fleisch und Fell kommen ins Gepäck der Gruppe.' : 'Die Gegenstände kommen ins Gepäck der Gruppe.'}</p>
         ) : (
           <label className="field">
-            <span>{loot.animal ? 'Die Beute bekommt' : 'Alles nimmt'}</span>
-            <select aria-label="Wer die Beute bekommt" value={receiver} onChange={(e) => setReceiver(e.target.value)}>
+            <span>Die Gegenstände kommen ins Gepäck; die Kredite bekommt</span>
+            <select aria-label="Wer die Kredite bekommt" value={receiver} onChange={(e) => setReceiver(e.target.value)}>
               {loot.receivers.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.name}
@@ -64,10 +66,10 @@ export function LootDialog({ combat }: { combat: CombatView }) {
           <button
             type="button"
             className="primary"
-            disabled={loot.blocked !== undefined || receiver === ''}
+            disabled={loot.blocked !== undefined || (!loot.animal && receiver === '')}
             onClick={() => {
               haptic('shake');
-              if (loot.animal) game.butcher(loot.id, receiver);
+              if (loot.animal) game.butcher(loot.id);
               else game.takeLoot(loot.id, receiver);
             }}
           >
@@ -101,7 +103,7 @@ export function ButcheredDialog({ combat }: { combat: CombatView }) {
   return (
     <div className="modal">
       <section className="result butcher-dialog" role="dialog" aria-modal="true" aria-labelledby="butcher-title" onClick={() => phase < 5 && skip(5)}>
-        <span className="kicker">Ausweiden · {b.receiver.split(' ')[0]} bekommt die Beute</span>
+        <span className="kicker">Ausweiden · die Beute kommt ins Gepäck</span>
         <h2 id="butcher-title" className="shop-buy-title">
           {b.animal} <span className="muted">({b.weight} kg)</span>
         </h2>

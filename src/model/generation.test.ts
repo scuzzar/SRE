@@ -248,8 +248,10 @@ describe('Charaktererschaffung', () => {
       background: 'Ex-Merchants · 1 Term · 22 Jahre',
       upp: { str: 7, dex: 10, end: 8, int: 9, edu: 7, soc: 5 },
       credits: 0,
-      possessions: [{ of: 'low-passage', count: 1 }],
+      possessions: [],
     });
+    // Die Low Passage aus der Abmusterung rüstet niemand aus: Sie kommt ins Gruppengepäck.
+    expect(done.stash).toEqual([{ of: 'low-passage', count: 1 }]);
     expect(character.skills.map((s) => [s.of, s.level])).toEqual([
       ['bribery', 1],
       ['vacc-suit', 1],

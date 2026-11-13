@@ -1,4 +1,5 @@
-import { activeSkills, anyCharacterOf, isCampaignCharacter, replaceCharacter, type Campaign, type Character, type CharacterId, type SkillLevel, type Upp } from './campaign';
+import { activeSkills, anyCharacterOf, isCampaignCharacter, replaceCharacter, type Campaign, type Character, type CharacterId, type Possession, type SkillLevel, type Upp } from './campaign';
+import { isPc } from './stash';
 import { DomainError } from './errors';
 import { damageRollsOf, isSuccess, volleyOf, type AttackResult, type DamageRoll, type LogEntry } from './log';
 import type { Clock, Random } from './ports';
@@ -300,13 +301,16 @@ export interface Ammo {
   readonly magazines: number;
 }
 
-/** Die Munition der Waffe in der Hand; `undefined` bei Händen und Klingen. */
-export function ammoOf(character: Character): Ammo | undefined {
+/**
+ * Die Munition der Waffe in der Hand; `undefined` bei Händen und Klingen. Magazine nimmt ein SC aus
+ * dem Gruppengepäck (`stash`), ein NSC aus seinem Besitz.
+ */
+export function ammoOf(character: Character, stash: readonly Possession[] = []): Ammo | undefined {
   const weapon = wieldedWeapon(character);
   if (weapon.rounds === undefined || weapon.ammo === undefined) return undefined;
   const item = itemOfWeapon(weapon.id)!;
   const rounds = character.possessions.find((p) => p.of === item.id)?.rounds ?? weapon.rounds;
-  const magazines = character.possessions.find((p) => p.of === weapon.ammo)?.count ?? 0;
+  const magazines = (isPc(character) ? stash : character.possessions).find((p) => p.of === weapon.ammo)?.count ?? 0;
   return { rounds, capacity: weapon.rounds, ammo: weapon.ammo, magazines };
 }
 
@@ -329,17 +333,18 @@ export function checkRounds(character: Character, count: number): void {
   if (ammo.rounds < count) throw new DomainError(`Ein Feuerstoß braucht ${count} Schuss, ${name} hat nur noch ${ammo.rounds}. Erst nachladen.`);
 }
 
-/** Nachladen: ein Magazin aus dem Besitz, die Waffe ist wieder voll; ein angebrochenes Magazin geht verloren. */
+/**
+ * Nachladen: ein Magazin, bei SC aus dem Gruppengepäck, bei NSC aus ihrem Besitz; die Waffe ist
+ * wieder voll, ein angebrochenes Magazin geht verloren.
+ */
 export function reload(campaign: Campaign, id: string): Campaign {
   const character = anyCharacterOf(campaign, id);
-  const ammo = ammoOf(character);
+  const ammo = ammoOf(character, campaign.stash);
   if (!ammo) throw new DomainError(`${wieldedWeapon(character).name} lädt man nicht nach.`);
-  if (ammo.magazines === 0) throw new DomainError(`${character.name} hat kein ${itemOf(ammo.ammo).name} mehr.`);
+  if (ammo.magazines === 0) throw new DomainError(`${isPc(character) ? 'Im Gepäck ist' : `${character.name} hat`} kein ${itemOf(ammo.ammo).name} mehr.`);
   const item = itemOfWeapon(wieldedWeapon(character).id)!.id;
-  const possessions = character.possessions.flatMap((p) => {
-    if (p.of === item) return [{ ...p, rounds: ammo.capacity }];
-    if (p.of === ammo.ammo) return p.count > 1 ? [{ ...p, count: p.count - 1 }] : [];
-    return [p];
-  });
-  return replaceCharacter(campaign, { ...character, possessions });
+  const spend = (possessions: readonly Possession[]) => possessions.flatMap((p) => (p.of !== ammo.ammo ? [p] : p.count > 1 ? [{ ...p, count: p.count - 1 }] : []));
+  const loaded = character.possessions.map((p) => (p.of === item ? { ...p, rounds: ammo.capacity } : p));
+  if (isPc(character)) return { ...replaceCharacter(campaign, { ...character, possessions: loaded }), stash: spend(campaign.stash) };
+  return replaceCharacter(campaign, { ...character, possessions: spend(loaded) });
 }

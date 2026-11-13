@@ -15,6 +15,7 @@ import { checkRecovery } from './wounds';
 import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, ranges, ref, slotOfEntry, weaponOf } from './reference';
 import { characteristics } from './rules';
 import { bookingKinds, validateBookings, type Booking } from './shop';
+import { settleStash } from './stash';
 import { hexById, hexFromRolls, temperatureIds, uwpKinds, validateHexes, worldOf, type Hex, type LegacyWorldRoll } from './sector';
 
 /**
@@ -83,7 +84,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     dice: z.array(die).length(5).optional(),
   }),
   z.object({ kind: z.literal('rumor'), at, dice }),
-  z.object({ kind: z.literal('butchering'), at, for: z.string().min(1), of: z.string().min(1), meatDie: die.optional(), meatSkill: z.number().int().min(0), furSkill: z.number().int().min(0) }),
+  z.object({ kind: z.literal('butchering'), at, /** Wer die Beute bekam; in Dateien von vor dem Gruppengepäck, wird nicht übernommen. */ for: z.string().min(1).optional(), of: z.string().min(1), meatDie: die.optional(), meatSkill: z.number().int().min(0), furSkill: z.number().int().min(0) }),
   z.object({ kind: z.literal('event'), at, in: z.string().min(1), terrain: z.string().min(1), tableDice: dice }),
   z.object({ kind: z.literal('patron'), at, list: z.union([z.literal(1), z.literal(2)]), dice, dms: z.tuple([z.number().int(), z.number().int()]) }),
   z.object({ kind: z.literal('note'), at, text: z.string().trim().min(1), interprets: z.number().int().optional() }),
@@ -173,6 +174,7 @@ const HexSchema = z.union([
 ]);
 
 const value = z.number();
+const PossessionSchema = z.object({ of: z.string(), count: z.number(), rounds: z.number().optional(), from: z.object({ in: z.string().min(1), terrain: z.string().min(1), roll: z.number().int().min(2).max(12) }).optional() });
 const CharacterSchema = z.object({
   id: z.string().min(1),
   name: z.string(),
@@ -184,7 +186,7 @@ const CharacterSchema = z.object({
   retired: z.boolean(),
   upp: z.object({ str: value, dex: value, end: value, int: value, edu: value, soc: value }),
   skills: z.array(z.object({ of: z.string(), level: z.number(), retired: z.boolean() })),
-  possessions: z.array(z.object({ of: z.string(), count: z.number(), rounds: z.number().optional(), from: z.object({ in: z.string().min(1), terrain: z.string().min(1), roll: z.number().int().min(2).max(12) }).optional() })).default([]),
+  possessions: z.array(PossessionSchema).default([]),
   career: CareerSchema.optional(),
   homeworld: z.string().optional(),
   /** Fehlen in Dateien von vor der Primär- und Sekundärwaffe; dann ist die Waffe in der Hand die Primärwaffe. */
@@ -288,6 +290,8 @@ const CampaignFileSchema = z.object({
     quantityDie: z.union([z.literal(3), z.literal(4), z.literal(6)]).optional(),
     /** Das Gelände für alle Begegnungsarten; fehlt in Dateien von vorher. */
     terrain: z.string().optional(),
+    /** Das Gruppengepäck; fehlt in Dateien von vorher, dann ordnet settleStash den Besitz der SC ein. */
+    stash: z.array(PossessionSchema).default([]),
     bookings: z
       .array(
         z.object({
@@ -308,8 +312,8 @@ const CampaignFileSchema = z.object({
 
 /** Die Kampagne als Inhalt einer Kampagnendatei. */
 export function toCampaignFile(campaign: Campaign): string {
-  const { name, odds, characters, log, generation, hexes, focus, location, bookings, encounters, quantityDie, terrain } = campaign;
-  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { name, odds, characters, log, generation, hexes, focus, location, bookings, encounters, quantityDie, terrain } }, null, 2);
+  const { name, odds, characters, log, generation, hexes, focus, location, bookings, stash, encounters, quantityDie, terrain } = campaign;
+  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { name, odds, characters, log, generation, hexes, focus, location, bookings, stash, encounters, quantityDie, terrain } }, null, 2);
 }
 
 /** Ein Dateiname aus dem Namen der Kampagne und dem Tag, z. B. „Spinward-Run-2026-10-25.json“. */
@@ -348,6 +352,7 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
       ...(file.focus === undefined ? {} : { focus: file.focus }),
       ...(file.location === undefined ? {} : { location: file.location }),
       bookings: file.bookings.map((b) => stripped(b) as Booking),
+      stash: file.stash.map((p) => stripped(p) as Possession),
       // NSC aus Dateien von vor 2026-11-08c bleiben, wie sie sind; upgradeNpcs macht Charaktere aus ihnen.
       encounters: file.encounters.map(
         (e) => ({ ...stripped(e), ...(e.distances ? { distances: e.distances.map((d) => stripped(d)) } : {}), npcs: e.npcs.map((n) => ('skill' in n ? stripped(n) : characterFromFile(n))) }) as unknown as Encounter,
@@ -356,8 +361,12 @@ export function fromCampaignFile(text: string, id: CampaignId): Campaign {
       ...(file.terrain === undefined ? {} : { terrain: file.terrain }),
     };
     // Begegnungen von vor 2026-11-08d haben ein Band für alle; upgradeDistances macht das Startband daraus.
-    const campaign = upgradeDistances(upgradeNpcs(read));
-    validate(campaign);
+    // Erst prüfen, dann ordnen: Dateien von vor dem Gruppengepäck halten allen Besitz am SC; was er
+    // nicht ausgerüstet hat, kommt danach ins Gepäck. So weist die Prüfung auch eine Waffe in der
+    // Hand zurück, die nicht im Besitz ist, statt dass das Ordnen sie stillschweigend wegnimmt.
+    const upgraded = upgradeDistances(upgradeNpcs(read));
+    validate(upgraded);
+    const campaign = settleStash(upgraded);
     return keepFocus(campaign, campaign);
   } catch (error) {
     if (error instanceof DomainError) throw new DomainError(`Die Kampagne in der Datei verletzt eine Regel: ${error.message}`);
@@ -431,7 +440,8 @@ function logEntry(entry: z.infer<typeof LogEntrySchema>): LogEntry {
     case 'save':
       return entry;
     case 'butchering':
-      return stripped(entry) as Butchering;
+      // Wer die Beute bekam, steht in Dateien von vor dem Gruppengepäck; die Beute liegt heute im Gepäck.
+      return stripped(Object.fromEntries(Object.entries(entry).filter(([key]) => key !== 'for'))) as unknown as Butchering;
     case 'note': {
       const { interprets, ...rest } = entry;
       return interprets === undefined ? rest : { ...rest, interprets };
@@ -484,10 +494,13 @@ function validate(campaign: Campaign): void {
   validateEncounters(campaign);
   if (campaign.terrain !== undefined) terrainOf(campaign.terrain);
   for (const hex of campaign.hexes) for (const table of hex.animals ?? []) checkAnimalTable(table);
+  // Das Gepäck hält Besitz nach denselben Regeln wie ein Charakter.
+  validateCharacter({ name: 'Gepäck', background: '', equipment: '', credits: 0, note: '', upp: { str: 0, dex: 0, end: 0, int: 0, edu: 0, soc: 0 }, skills: [], possessions: campaign.stash });
   // Jagdbeute verweist auf eine Zeile der Tiertabelle mit Marktwert.
   for (const character of [...campaign.characters, ...campaign.encounters.flatMap((e) => e.npcs)]) {
     for (const p of character.possessions) if (p.from !== undefined && animalRowOf(campaign.hexes, p.from).market === undefined) throw new DomainError(`Die Jagdbeute von ${character.name} stammt von einer Tierart ohne Marktwert.`);
   }
+  for (const p of campaign.stash) if (p.from !== undefined && animalRowOf(campaign.hexes, p.from).market === undefined) throw new DomainError('Jagdbeute im Gepäck stammt von einer Tierart ohne Marktwert.');
   // Heimatwelten und Welten der Terms verweisen auf fertige Welten des Subsektors.
   const careers = [...campaign.characters.flatMap((c) => (c.career ? [c.career] : [])), ...(campaign.generation ? [campaign.generation.career] : [])];
   for (const id of [...campaign.characters.flatMap((c) => (c.homeworld === undefined ? [] : [c.homeworld])), ...careers.flatMap((c) => [...(c.homeworld === undefined ? [] : [c.homeworld]), ...(c.worlds ?? [])])]) {

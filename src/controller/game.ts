@@ -29,10 +29,10 @@ import {
   adoptNpc,
   recover,
   turnOf,
-  itemOf,
-  characterOf,
   anyCharacterOf,
-  setWears,
+  equip,
+  unequip,
+  type EquipSlot,
   fighterOf,
   endTurn,
   setDistance,
@@ -151,7 +151,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, wearOffer: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
 
 /** Ein Test in Worten: „Test 3 (5+ nötig)“, bei zwei Würfeln „Test 3 + 4 = 7 (7+ nötig)“. */
 function checkText(check: EncounterCheck): string {
@@ -209,7 +209,6 @@ export class GameController {
       encounterIntro: false,
       surpriseShown: false,
       shopError: undefined,
-      wearOffer: undefined,
       opened: undefined,
       stripCollapsed: false,
       shopHintHidden: false,
@@ -667,16 +666,16 @@ export class GameController {
     this.update({ lootOpen: id, combatNote: undefined });
   }
 
-  /** Nimmt einem NSC alles ab, was er hat; es geht an diesen SC. */
+  /** Nimmt einem NSC alles ab, was er hat: die Gegenstände ins Gepäck, die Kredite an diesen SC. */
   takeLoot(npc: string, pc: string): void {
     this.inFight(() => this.change(takeLoot(this.campaign, npc, pc), { lootOpen: undefined }));
   }
 
-  /** Weidet ein Tier aus; die Beute geht an diesen SC. Das Ergebnis rollt im Vordergrund. */
-  butcher(animal: string, pc: string): void {
+  /** Weidet ein Tier aus; die Beute kommt ins Gepäck. Das Ergebnis rollt im Vordergrund. */
+  butcher(animal: string): void {
     this.inFight(() => {
       const workers = butchers(this.campaign);
-      const campaign = butcher(this.campaign, animal, pc, this.deps.random, this.deps.clock);
+      const campaign = butcher(this.campaign, animal, this.deps.random, this.deps.clock);
       const label = (w: typeof workers.meat) => (w.name === undefined ? undefined : `${w.name.split(' ')[0]} · ${w.skill === undefined ? 'ohne Fertigkeit' : `${skillOf(w.skill).name}-${w.level}`}`);
       this.change(campaign, { lootOpen: undefined, butchered: { index: campaign.log.length - 1, meat: label(workers.meat), fur: label(workers.fur) } });
     });
@@ -924,28 +923,32 @@ export class GameController {
     this.inShop(() => book(this.campaign, kind, amount, this.deps.clock, text, character));
   }
 
-  /** Verkauft auf dem Aufenthaltsort aus dem Besitz eines Charakters, zu diesem Erlös je Stück. */
-  sell(item: string, count: number, price: number, character: string): void {
+  /** Verkauft auf dem Aufenthaltsort aus dem Gruppengepäck (ohne Charakter) oder was ein SC ausgerüstet hat, zu diesem Erlös je Stück. */
+  sell(item: string, count: number, price: number, character: string | undefined): void {
     this.inShop(() => sell(this.campaign, item, count, price, character, this.deps.clock));
   }
 
-  /** Verkauft so viele kg Jagdbeute (Schlüssel des Besitzes) zum Erlös für alle zusammen. */
-  sellGame(key: string, kg: number, total: number, character: string): void {
-    this.inShop(() => sellGame(this.campaign, key, kg, total, character, this.deps.clock));
+  /** Verkauft so viele kg Jagdbeute aus dem Gepäck (Schlüssel des Besitzes) zum Erlös für alle zusammen. */
+  sellGame(key: string, kg: number, total: number): void {
+    this.inShop(() => sellGame(this.campaign, key, kg, total, this.deps.clock));
   }
 
-  /** Kauft auf dem Aufenthaltsort aus der Gruppenkasse für einen Charakter. Bei einer Rüstung, die er nicht trägt, fragt die App, ob er sie anlegt. */
+  /** Kauft auf dem Aufenthaltsort aus der Gruppenkasse. Waffe und Rüstung rüstet der SC `character` gleich aus, alles andere kommt ins Gepäck. */
   buy(item: string, count: number, character: string): void {
     this.inShop(() => buy(this.campaign, item, count, character, this.deps.clock));
-    if (this.state.shopError === undefined && itemOf(item).armor !== undefined && characterOf(this.campaign, character).wears !== item) this.update({ wearOffer: { character, item } });
   }
 
-  /** Nach dem Kauf einer Rüstung: anlegen (`true`) oder lassen, wie es ist. */
-  answerWearOffer(wear: boolean): void {
-    const offer = this.state.wearOffer;
-    if (!offer) return;
-    if (wear) this.inShop(() => setWears(this.campaign, offer.character, offer.item));
-    this.update({ wearOffer: undefined });
+  /**
+   * Rüstet einen SC an einer Stelle aus: mit einem Stück aus dem Gepäck (Schlüssel des Besitzes) oder
+   * mit dem, was ein SC an einer Stelle hat. Was dort vorher war, kommt ins Gepäck.
+   */
+  equip(character: string, slot: EquipSlot, source: { readonly key: string } | { readonly from: string; readonly fromSlot: EquipSlot }): void {
+    this.inShop(() => equip(this.campaign, character, slot, source));
+  }
+
+  /** Legt ab, was ein SC an einer Stelle ausgerüstet hat: Es kommt ins Gepäck. */
+  unequip(character: string, slot: EquipSlot): void {
+    this.inShop(() => unequip(this.campaign, character, slot));
   }
 
   /**

@@ -5,6 +5,7 @@ import {
   buy,
   characterOf,
   createCampaign,
+  equip,
   fromCampaignFile,
   fundsOf,
   itemOf,
@@ -15,8 +16,6 @@ import {
   setHexes,
   setLocation,
   setWields,
-  inputOf,
-  updateCharacter,
   setWears,
   spendRound,
   toCampaignFile,
@@ -85,13 +84,20 @@ describe('Shop', () => {
     expect(of('club')).toBeUndefined(); // ohne Preis
   });
 
-  it('kauft aus der Kasse; die Schusswaffe kommt leer, Magazine kommen dazu', () => {
+  it('kauft aus der Kasse; die Schusswaffe kommt leer in die Hand, Magazine kommen ins Gepäck', () => {
     let campaign = book(there, 'income', 1000, clock, 'Fund');
     campaign = buy(campaign, 'rifle', 1, 'c2', clock);
     campaign = buy(campaign, 'rifle-ammo', 2, 'c2', clock);
     expect(fundsOf(campaign)).toBe(1000 - 200 - 40);
     expect(campaign.bookings[1]).toMatchObject({ kind: 'purchase', amount: -200, for: 'c2', bought: 'rifle', count: 1, in: '0207' });
-    expect(characterOf(campaign, 'c2').possessions).toEqual(expect.arrayContaining([{ of: 'rifle', count: 1, rounds: 0 }, { of: 'rifle-ammo', count: 2 }]));
+    // Was niemand ausrüstet, kommt ins Gepäck: die Buchung hat keinen Charakter.
+    expect(campaign.bookings[2]).toMatchObject({ kind: 'purchase', bought: 'rifle-ammo', count: 2 });
+    expect(campaign.bookings[2]).not.toHaveProperty('for');
+    const jonas = characterOf(campaign, 'c2');
+    expect(jonas).toMatchObject({ primary: 'rifle', wields: 'rifle' });
+    expect(jonas.possessions).toContainEqual({ of: 'rifle', count: 1, rounds: 0 });
+    // Seine bisherige Primärwaffe liegt jetzt im Gepäck, neben den Magazinen.
+    expect(campaign.stash).toEqual(expect.arrayContaining([{ of: 'blade', count: 1 }, { of: 'rifle-ammo', count: 2 }]));
     expect(() => buy(campaign, 'cutlass', 10, 'c2', clock)).toThrow(/nicht in der Gruppenkasse/);
     expect(() => buy(campaign, 'laser-rifle', 1, 'c2', clock)).toThrow(/gibt es auf Regina nicht/);
     expect(() => buy(createCampaign(), 'rifle', 1, 'c2', clock)).toThrow(/auf keiner Welt/);
@@ -118,39 +124,52 @@ describe('Verkaufen', () => {
     // Wer seine getragene Rüstung verkauft, trägt danach keine mehr.
     const worn = sell(setWears(there, 'c1', 'jack'), 'jack', 1, 25, 'c1', clock);
     expect(characterOf(worn, 'c1')).not.toHaveProperty('wears');
-    // Auch ein verbotener Gegenstand oder einer über dem TL der Welt lässt sich verkaufen.
-    expect(fundsOf(sell(there, 'vacc-suit-tl12', 1, 5000, 'c1', clock))).toBe(5000);
+    // Aus dem Gepäck verkauft man ohne Charakter; auch was über dem TL der Welt liegt.
+    const fromStash = sell(there, 'vacc-suit-tl12', 1, 5000, undefined, clock);
+    expect(fundsOf(fromStash)).toBe(5000);
+    expect(fromStash.bookings[0]).not.toHaveProperty('for');
+    expect(fromStash.stash.some((p) => p.of === 'vacc-suit-tl12')).toBe(false);
   });
 
-  it('eine gekaufte Waffe wird Primärwaffe (in der Hand), sonst Sekundärwaffe, wenn noch keine da ist', () => {
+  it('eine gekaufte Waffe wird Primärwaffe in der Hand, die alte kommt ins Gepäck; eine Rüstung trägt er gleich', () => {
     const rich = book(there, 'income', 5000, clock);
-    // Jonas hat Blade als Primärwaffe: Die Rifle wird Sekundärwaffe, der Revolver danach nichts.
+    // Jonas hat Blade als Primärwaffe: Die Rifle wird Primärwaffe, Blade kommt ins Gepäck.
     const rifle = buy(rich, 'rifle', 1, 'c2', clock);
-    expect(characterOf(rifle, 'c2')).toMatchObject({ primary: 'blade', secondary: 'rifle' });
-    expect(characterOf(rifle, 'c2')).not.toHaveProperty('wields');
-    const revolver = buy(rifle, 'revolver', 1, 'c2', clock);
-    expect(characterOf(revolver, 'c2')).toMatchObject({ primary: 'blade', secondary: 'rifle' });
-    // Ohne Primärwaffe wird die gekaufte Waffe Primärwaffe und kommt in die Hand.
-    const bare = updateCharacter(rich, 'c1', { ...inputOf(characterOf(rich, 'c1')), possessions: [] });
-    expect(characterOf(buy(bare, 'rifle', 1, 'c1', clock), 'c1')).toMatchObject({ primary: 'rifle', wields: 'rifle' });
+    expect(characterOf(rifle, 'c2')).toMatchObject({ primary: 'rifle', wields: 'rifle' });
+    expect(rifle.stash).toContainEqual({ of: 'blade', count: 1 });
+    // Zwei Revolver, beide leer (die Gruppe hatte keinen): einer wird Primärwaffe, der zweite und die leere Rifle kommen ins Gepäck.
+    const revolver = buy(rifle, 'revolver', 2, 'c2', clock);
+    expect(characterOf(revolver, 'c2')).toMatchObject({ primary: 'revolver', wields: 'revolver' });
+    expect(revolver.stash).toEqual(expect.arrayContaining([{ of: 'rifle', count: 1, rounds: 0 }, { of: 'revolver', count: 1, rounds: 0 }]));
+    // Hat er dieselbe Waffe schon in der Hand, geht die gekaufte ins Gepäck; eine Waffe, die die
+    // Gruppe schon hat, kommt nicht leer.
+    const again = buy(revolver, 'revolver', 1, 'c2', clock);
+    expect(again.stash).toContainEqual({ of: 'revolver', count: 2 });
+    // Eine Rüstung trägt er gleich; die alte kommt ins Gepäck. Die Frage „anlegen?“ gibt es nicht mehr.
+    const cloth = buy(rich, 'cloth', 1, 'c1', clock);
+    expect(characterOf(cloth, 'c1')).toMatchObject({ wears: 'cloth' });
+    expect(cloth.stash).toContainEqual({ of: 'jack', count: 1 });
+    // Eine Waffe ohne SC, der sie ausrüstet, gibt es nicht.
+    expect(() => buy(rich, 'rifle', 1, undefined, clock)).toThrow(/fehlt der SC/);
   });
 
   it('verkauft er die Sekundärwaffe in der Hand, nimmt er die Primärwaffe; ohne Primärwaffe die Hände', () => {
     const rich = book(there, 'income', 5000, clock);
-    const holding = setWields(buy(rich, 'rifle', 1, 'c2', clock), 'c2', 'rifle');
-    expect(characterOf(sell(holding, 'rifle', 1, 100, 'c2', clock), 'c2')).toMatchObject({ primary: 'blade', wields: 'blade' });
-    expect(characterOf(sell(holding, 'blade', 1, 20, 'c2', clock), 'c2')).toMatchObject({ secondary: 'rifle', wields: 'rifle' });
+    // Jonas kauft eine Rifle (Primärwaffe), nimmt Blade aus dem Gepäck als Sekundärwaffe in die Hand.
+    const holding = setWields(equip(buy(rich, 'rifle', 1, 'c2', clock), 'c2', 'secondary', { key: 'blade' }), 'c2', 'blade');
+    expect(characterOf(sell(holding, 'blade', 1, 20, 'c2', clock), 'c2')).toMatchObject({ primary: 'rifle', wields: 'rifle' });
+    expect(characterOf(sell(holding, 'rifle', 1, 100, 'c2', clock), 'c2')).toMatchObject({ secondary: 'blade', wields: 'blade' });
     const onlyBlade = setWields(rich, 'c2', 'blade');
     const sold = characterOf(sell(onlyBlade, 'blade', 1, 20, 'c2', clock), 'c2');
     expect(sold).not.toHaveProperty('primary');
     expect(sold).not.toHaveProperty('wields');
   });
 
-  it('verkauft nicht mehr, als der Charakter hat, nicht für 0 Cr und nicht ohne Aufenthaltsort', () => {
+  it('verkauft nicht mehr, als Gepäck oder SC haben, nicht für 0 Cr und nicht ohne Aufenthaltsort', () => {
     const two = buy(book(there, 'income', 100, clock), 'rifle-ammo', 2, 'c2', clock);
-    expect(characterOf(sell(two, 'rifle-ammo', 1, 10, 'c2', clock), 'c2').possessions).toContainEqual({ of: 'rifle-ammo', count: 1 });
-    expect(() => sell(two, 'rifle-ammo', 3, 10, 'c2', clock)).toThrow(/hat 2 × Rifle Ammo/);
-    expect(() => sell(two, 'rifle-ammo', 1, 0, 'c2', clock)).toThrow(/über 0/);
+    expect(sell(two, 'rifle-ammo', 1, 10, undefined, clock).stash).toContainEqual({ of: 'rifle-ammo', count: 1 });
+    expect(() => sell(two, 'rifle-ammo', 3, 10, undefined, clock)).toThrow(/Im Gepäck sind 2 × Rifle Ammo/);
+    expect(() => sell(two, 'rifle-ammo', 1, 0, undefined, clock)).toThrow(/über 0/);
     expect(() => sell(two, 'rifle', 1, 10, 'c2', clock)).toThrow(/hat kein Rifle/);
     expect(() => sell(createCampaign(), 'blade', 1, 10, 'c2', clock)).toThrow(/auf keiner Welt/);
   });
@@ -169,14 +188,14 @@ describe('Munition', () => {
     return setWields(campaign, 'c2', 'rifle');
   })();
 
-  it('eine leere Waffe schießt nicht; Nachladen nimmt ein Magazin und füllt sie', () => {
-    expect(ammoOf(characterOf(bought, 'c2'))).toEqual({ rounds: 0, capacity: 20, ammo: 'rifle-ammo', magazines: 1 });
+  it('eine leere Waffe schießt nicht; Nachladen nimmt ein Magazin aus dem Gepäck und füllt sie', () => {
+    expect(ammoOf(characterOf(bought, 'c2'), bought.stash)).toEqual({ rounds: 0, capacity: 20, ammo: 'rifle-ammo', magazines: 1 });
     expect(() => spendRound(bought, 'c2')).toThrow(/leer/);
     const loaded = reload(bought, 'c2');
-    expect(ammoOf(characterOf(loaded, 'c2'))).toMatchObject({ rounds: 20, magazines: 0 });
-    expect(characterOf(loaded, 'c2').possessions.some((p) => p.of === 'rifle-ammo')).toBe(false);
+    expect(ammoOf(characterOf(loaded, 'c2'), loaded.stash)).toMatchObject({ rounds: 20, magazines: 0 });
+    expect(loaded.stash.some((p) => p.of === 'rifle-ammo')).toBe(false);
     expect(ammoOf(characterOf(spendRound(loaded, 'c2'), 'c2'))?.rounds).toBe(19);
-    expect(() => reload(loaded, 'c2')).toThrow(/kein Rifle Ammo \(20 rds\) mehr/);
+    expect(() => reload(loaded, 'c2')).toThrow(/Im Gepäck ist kein Rifle Ammo \(20 rds\) mehr/);
   });
 
   it('eine Waffe ohne Zählung ist voll; Hände und Klingen verbrauchen nichts', () => {
@@ -194,6 +213,7 @@ describe('Kampagnendatei mit Kasse', () => {
     expect(back.location).toBe('0207');
     expect(back.bookings).toEqual(campaign.bookings);
     expect(characterOf(back, 'c2').possessions).toEqual(characterOf(campaign, 'c2').possessions);
+    expect(back.stash).toEqual(campaign.stash);
   });
 
   it('weist eine Kasse zurück, die negativ würde, und Buchungen, die nicht zu ihrer Art passen', () => {

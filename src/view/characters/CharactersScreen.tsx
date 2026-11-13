@@ -2,10 +2,11 @@ import type { Snapshot } from '../../controller';
 import { useGame } from '../game-context';
 import { PencilIcon } from '../icons';
 import { CharacterCard } from './CharacterCard';
+import { StashPanel } from './StashPanel';
 
 /**
  * Der Charakter-Screen zum Verwalten: anlegen, nach Regeln erschaffen, bearbeiten, Details mit
- * Lebenslauf, dauerhafte NSC, Verstorbene und Ausgeblendete. Proben würfelt man oben im Orakel-Screen.
+ * Lebenslauf, Ausrüstung und Gruppengepäck, dauerhafte NSC, Verstorbene und Ausgeblendete. Proben würfelt man oben im Orakel-Screen.
  */
 export function CharactersScreen({ view }: { view: Snapshot }) {
   const game = useGame();
@@ -29,6 +30,7 @@ export function CharactersScreen({ view }: { view: Snapshot }) {
             {view.generationRunning ? 'Erschaffung fortsetzen' : '+ Nach Regeln erschaffen'}
           </button>
         </div>
+        <StashPanel stash={view.stash} />
         {view.dead.length > 0 && (
           <div className="fallen">
             <h3 className="section-title" style={{ fontSize: 11 }}>

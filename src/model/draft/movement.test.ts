@@ -28,11 +28,15 @@ const at = (c: Campaign, pc: string) => {
 };
 
 /** Gibt einem Kämpfer eine Body Pistol als Primärwaffe mit so vielen Schuss und Magazinen. */
+/** Gibt einem Kämpfer eine Body Pistol mit so vielen Schuss; die Magazine liegen bei SC im Gepäck, bei NSC an ihm. */
 function pistol(campaign: Campaign, id: string, rounds: number, magazines: number): Campaign {
   const character = anyCharacterOf(campaign, id);
+  const pc = campaign.characters.some((c) => c.id === id);
+  const ammo = magazines > 0 ? [{ of: 'body-pistol-ammo', count: magazines }] : [];
   const rest = character.possessions.filter((p) => p.of !== 'body-pistol' && p.of !== 'body-pistol-ammo');
-  const possessions = [...rest, { of: 'body-pistol', count: 1, rounds }, ...(magazines > 0 ? [{ of: 'body-pistol-ammo', count: magazines }] : [])];
-  return replaceCharacter(campaign, { ...character, possessions, primary: 'body-pistol', wields: 'body-pistol' });
+  const possessions = [...rest, { of: 'body-pistol', count: 1, rounds }, ...(pc ? [] : ammo)];
+  const armed = replaceCharacter(campaign, { ...character, possessions, primary: 'body-pistol', wields: 'body-pistol' });
+  return pc ? { ...armed, stash: [...armed.stash.filter((p) => p.of !== 'body-pistol-ammo'), ...ammo] } : armed;
 }
 
 describe('Bewegung: jeder SC für sich, die NSC als Gruppe auf Band 0', () => {

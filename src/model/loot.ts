@@ -6,6 +6,7 @@ import type { Clock, Random } from './ports';
 import { itemOf, ref, type AnimalCategory, type Item } from './reference';
 import { hexById, type Hex } from './sector';
 import { canFight, isDead, woundStateOf } from './wounds';
+import { addToStash } from './stash';
 
 export const MEAT = 'meat';
 export const FUR = 'fur';
@@ -148,12 +149,9 @@ function inedible(hex: Hex, row: AnimalRow): string | undefined {
   return undefined;
 }
 
-/** Legt Jagdbeute in den Besitz: derselbe Gegenstand derselben Herkunft zählt zusammen. */
-function addGame(possessions: readonly Possession[], item: string, kg: number, from: AnimalRef): readonly Possession[] {
-  if (kg <= 0) return possessions;
-  const key = possessionKey({ of: item, from });
-  const had = possessions.find((p) => possessionKey(p) === key);
-  return had ? possessions.map((p) => (p === had ? { ...p, count: p.count + kg } : p)) : [...possessions, { of: item, count: kg, from }];
+/** Legt Jagdbeute ins Gepäck: derselbe Gegenstand derselben Herkunft zählt zusammen. */
+function addGame(stash: readonly Possession[], item: string, kg: number, from: AnimalRef): readonly Possession[] {
+  return kg <= 0 ? stash : addToStash(stash, { of: item, count: kg, from });
 }
 
 /** Die Zeile mit Marktwurf und essbar; ältere Tabellen würfeln beides beim ersten Ausweiden nach. */
@@ -171,12 +169,11 @@ function withLootValues(campaign: Campaign, at: AnimalRef, random: Random): Camp
 /**
  * Weidet ein Tier aus (Hausregel nach SR 48): Fleisch macht der wache SC, der Steward oder Medical
  * am besten kann, das Fell der mit der besten Klinge. Ist die Art essbar, rollt der Fleischwürfel.
- * Fleisch und Fell kommen als Jagdbeute in den Besitz von `receiver`; der Eintrag kommt in den Log.
+ * Fleisch und Fell kommen als Jagdbeute ins Gruppengepäck; der Eintrag kommt in den Log.
  */
-export function butcher(campaign: Campaign, animal: CharacterId, receiver: CharacterId, random: Random, clock: Clock): Campaign {
+export function butcher(campaign: Campaign, animal: CharacterId, random: Random, clock: Clock): Campaign {
   const reason = cannotButcher(campaign, animal);
   if (reason) throw new DomainError(reason);
-  if (!livingCharacters(campaign).some((c) => c.id === receiver)) throw new DomainError('Die Beute bekommt ein lebender SC.');
   const at = anyCharacterOf(campaign, animal).animal!;
   const valued = withLootValues(campaign, at, random);
   const row = animalRowOf(valued.hexes, at);
@@ -184,7 +181,6 @@ export function butcher(campaign: Campaign, animal: CharacterId, receiver: Chara
   const entry: Butchering = {
     kind: 'butchering',
     at: clock.now(),
-    for: receiver,
     of: animal,
     ...(row.edible ? { meatDie: random.int(1, 6) } : {}),
     meatSkill: workers.meat.level,
@@ -192,17 +188,13 @@ export function butcher(campaign: Campaign, animal: CharacterId, receiver: Chara
   };
   const logged: Campaign = { ...valued, log: [...valued.log, entry] };
   const result = butcheringResult(logged, entry);
-  return {
-    ...logged,
-    characters: logged.characters.map((c) => (c.id !== receiver ? c : { ...c, possessions: addGame(addGame(c.possessions, MEAT, result.meat, at), FUR, result.fur, at) })),
-  };
+  return { ...logged, stash: addGame(addGame(logged.stash, MEAT, result.meat, at), FUR, result.fur, at) };
 }
 
-/** Prüft ein Ausweiden: ein Tier, das es gibt, einmal; ein SC bekommt die Beute; Würfel und Stufen passen. */
+/** Prüft ein Ausweiden: ein Tier, das es gibt, einmal; Würfel und Stufen passen. */
 export function checkButchering(campaign: Campaign, entry: Butchering, at: number): void {
   const animal = anyCharacterOf(campaign, entry.of);
   if (!animal.animal) throw new DomainError(`${animal.name} ist kein Tier und lässt sich nicht ausweiden.`);
-  if (!campaign.characters.some((c) => c.id === entry.for)) throw new DomainError('Die Beute eines Ausweidens bekommt ein SC.');
   if (campaign.log.some((e, i) => i !== at && e.kind === 'butchering' && e.of === entry.of)) throw new DomainError(`${animal.name} ist zweimal ausgeweidet.`);
   if (entry.meatDie !== undefined && (!Number.isInteger(entry.meatDie) || entry.meatDie < 1 || entry.meatDie > 6)) throw new DomainError('Der Fleischwürfel zeigt 1 bis 6.');
   if (!Number.isInteger(entry.meatSkill) || entry.meatSkill < 0 || !Number.isInteger(entry.furSkill) || entry.furSkill < 0) throw new DomainError('Die Stufen beim Ausweiden sind 0 oder mehr.');
@@ -220,30 +212,28 @@ export function cannotLoot(campaign: Campaign, npc: CharacterId): string | undef
 }
 
 /**
- * Nimmt einem NSC alles ab, was er hat (Hausregel): Gegenstände und Kredite gehen an einen lebenden
- * SC. Der NSC hat danach keine Waffe und keine Rüstung mehr. Gegenstände, die man nur einmal haben
- * kann und die der SC schon hat, bleiben beim NSC.
+ * Nimmt einem NSC alles ab, was er hat (Hausregel): Die Gegenstände kommen ins Gruppengepäck, die
+ * Kredite zu einem lebenden SC. Der NSC hat danach keine Waffe und keine Rüstung mehr. Gegenstände,
+ * die man nur einmal haben kann und die die Gruppe schon hat, bleiben beim NSC.
  */
 export function takeLoot(campaign: Campaign, npc: CharacterId, receiver: CharacterId): Campaign {
   const reason = cannotLoot(campaign, npc);
   if (reason) throw new DomainError(reason);
-  const pc = campaign.characters.find((c) => c.id === receiver);
-  if (!pc || !livingCharacters(campaign).some((c) => c.id === receiver)) throw new DomainError('Die Beute bekommt ein lebender SC.');
+  if (!livingCharacters(campaign).some((c) => c.id === receiver)) throw new DomainError('Die Kredite bekommt ein lebender SC.');
   const from = anyCharacterOf(campaign, npc);
   const keep: Possession[] = [];
-  let possessions = pc.possessions;
+  const owned = (p: Possession) => campaign.stash.some((q) => possessionKey(q) === possessionKey(p)) || campaign.characters.some((c) => c.possessions.some((q) => possessionKey(q) === possessionKey(p)));
+  let stash = campaign.stash;
   for (const p of from.possessions) {
-    const item = itemOf(p.of);
-    const had = possessions.find((q) => possessionKey(q) === possessionKey(p));
-    if (had && item.once) {
+    if (itemOf(p.of).once && owned(p)) {
       keep.push(p);
       continue;
     }
-    possessions = had ? possessions.map((q) => (q === had ? { ...q, count: q.count + p.count } : q)) : [...possessions, p];
+    stash = addToStash(stash, p);
   }
   const stripped: Character = Object.fromEntries(Object.entries({ ...from, possessions: keep, credits: 0 }).filter(([key]) => !['primary', 'secondary', 'wields', 'wears'].includes(key))) as unknown as Character;
   const encounters = campaign.encounters.map((e) => ({ ...e, npcs: e.npcs.map((n) => (n.id === npc ? stripped : n)) }));
-  return { ...campaign, encounters, characters: campaign.characters.map((c) => (c.id === receiver ? { ...c, possessions, credits: c.credits + from.credits } : c)) };
+  return { ...campaign, encounters, stash, characters: campaign.characters.map((c) => (c.id === receiver ? { ...c, credits: c.credits + from.credits } : c)) };
 }
 
 /** Die Überlebensausrüstung, die die Welt verlangt (Charts S. 21), als Gegenstände; der beste Vacc Suit bis zum TL. */

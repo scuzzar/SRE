@@ -75,6 +75,7 @@ import {
   type ItemKind,
   type Range,
   type Character,
+  type Possession,
   type CharacterInput,
   type Characteristic,
   type Dice,
@@ -101,6 +102,13 @@ import {
   encounterNameOf,
   gamePricePerKg,
   possessionKey,
+  itemAt,
+  fits,
+  isPc,
+  loadOf,
+  capacityOf,
+  burdenOf,
+  type EquipSlot,
   cannotButcher,
   cannotLoot,
   butchers,
@@ -256,6 +264,7 @@ export interface Snapshot {
   readonly rumor: RumorView | undefined;
   /** Der Reiter Shop: Kasse und Angebot auf dem Aufenthaltsort. */
   readonly shop: ShopView | undefined;
+  readonly stash: StashView;
   /** Der Aufenthaltsort der Gruppe, als Feld (0304). */
   readonly location: string | undefined;
   /** Das Ergebnis-Popup nach einer Probe oder einem Angriff, bzw. der Schadenswurf im Vordergrund. */
@@ -612,7 +621,6 @@ export interface ButcheringItem {
   readonly kind: 'butchering';
   readonly at: string;
   readonly animal: string;
-  readonly receiver: string;
   readonly weight: number;
   readonly edible: boolean;
   readonly reason: string | undefined;
@@ -1013,9 +1021,43 @@ export interface ShopView {
       readonly perKg: number | undefined;
     }[];
   }[];
+  /** Was im Gruppengepäck verkäuflich ist, wie bei `members`; verkauft wird ohne Charakter. */
+  readonly stash: readonly ShopView['members'][number]['sellable'][number][];
   readonly error: string | undefined;
-  /** Gleich nach dem Kauf einer Rüstung: Soll er sie anlegen? Mit dem, was er jetzt trägt. */
-  readonly wearOffer: { readonly character: string; readonly item: string; readonly worn: string | undefined } | undefined;
+}
+
+/** Wo ein SC etwas ausgerüstet hat, für die Ansicht: Primärwaffe, Sekundärwaffe, getragene Rüstung. */
+export interface EquipSlotView {
+  readonly slot: EquipSlot;
+  /** Der Gegenstand dort; fehlt, wenn die Stelle leer ist. */
+  readonly item: string | undefined;
+  readonly label: string | undefined;
+  readonly inHand: boolean;
+  /** Bei einer Schusswaffe: geladene Schuss von wie vielen. */
+  readonly rounds: string | undefined;
+}
+
+/** Das Gruppengepäck: was drin ist, wer was ausgerüstet hat, Last und Traglast. */
+export interface StashView {
+  readonly items: readonly {
+    /** Der Schlüssel des Besitzes (bei Jagdbeute mit Herkunft). */
+    readonly key: string;
+    readonly item: string;
+    readonly label: string;
+    readonly kind: ItemKind;
+    readonly count: number;
+    /** Gewicht aller Stück in kg, wenn es zur Last zählt; sonst `undefined`. */
+    readonly weight: number | undefined;
+    /** Wohin es passt: Waffe auf Primär oder Sekundär, Rüstung auf Rüstung; sonst nirgends. */
+    readonly fits: readonly EquipSlot[];
+    readonly rounds: string | undefined;
+  }[];
+  readonly members: readonly { readonly id: string; readonly name: string; readonly slots: readonly EquipSlotView[] }[];
+  readonly load: number;
+  readonly capacity: number;
+  /** 0, 1 oder 2: um so viel zählen STR, DEX und END der SC niedriger. */
+  readonly burden: number;
+  readonly error: string | undefined;
 }
 
 export interface CardView {
@@ -1118,8 +1160,6 @@ export interface ControllerState {
   readonly attack: Attack | undefined;
   /** Was im Shop zuletzt nicht ging. */
   readonly shopError: string | undefined;
-  /** Gleich nach dem Kauf einer Rüstung: wer sie gekauft hat, zum Anlegen. */
-  readonly wearOffer: { readonly character: string; readonly item: string } | undefined;
   /** Schaden an einem SC, den der Spieler gerade verteilt. */
   readonly wounding: Wounding | undefined;
   /** Was beim Würfeln einer Begegnung herauskam, wenn es keine gibt, oder was nicht ging. */
@@ -1482,7 +1522,6 @@ function butcheringItem(campaign: Campaign, entry: Butchering): ButcheringItem {
     kind: 'butchering',
     at: entry.at,
     animal: animal.name,
-    receiver: nameOf(campaign, entry.for),
     weight: row.weight ?? 0,
     edible: result.edible,
     reason: result.reason,
@@ -1882,14 +1921,54 @@ function woundingView(campaign: Campaign, wounding: Wounding): WoundingView {
   };
 }
 
-/** Das Angebot, eine eben gekaufte Rüstung anzulegen, solange er sie hat und nicht schon trägt. */
-function wearOfferView(campaign: Campaign, offer: ControllerState['wearOffer']): ShopView['wearOffer'] {
-  const character = offer && campaign.characters.find((c) => c.id === offer.character);
-  if (!offer || !character || character.wears === offer.item || !character.possessions.some((p) => p.of === offer.item)) return undefined;
-  return { character: character.name, item: itemLabel(itemOf(offer.item)), worn: character.wears === undefined ? undefined : itemLabel(itemOf(character.wears)) };
+/** Geladene Schuss eines Besitzes von wie vielen, bei Schusswaffen; ohne Angabe ist sie voll. */
+function roundsOf(p: Possession): string | undefined {
+  const weapon = itemOf(p.of).weapon;
+  const capacity = weapon === undefined ? undefined : weaponOf(weapon).rounds;
+  return capacity === undefined ? undefined : `${p.rounds ?? capacity}/${capacity}`;
 }
 
-function shopView(campaign: Campaign, error: string | undefined, offerToWear: ControllerState['wearOffer']): ShopView {
+/** Was eine Stelle eines SC hält, für die Ansicht. */
+function slotView(c: Character, slot: EquipSlot): EquipSlotView {
+  const item = itemAt(c, slot);
+  const possession = item === undefined ? undefined : c.possessions.find((p) => p.of === item);
+  return {
+    slot,
+    item,
+    label: item === undefined ? undefined : itemLabel(itemOf(item)),
+    inHand: slot !== 'wears' && c[slot] !== undefined && c.wields === c[slot],
+    rounds: possession && roundsOf(possession),
+  };
+}
+
+function stashView(campaign: Campaign, error: string | undefined): StashView {
+  return {
+    items: campaign.stash.map((p) => {
+      const item = itemOf(p.of);
+      const weight = loadOf({ ...campaign, stash: [p], characters: [] });
+      const label = p.from === undefined ? itemLabel(item) : `${itemLabel(item)} · ${animalName(animalRowOf(campaign.hexes, p.from))}`;
+      return {
+        key: possessionKey(p),
+        item: p.of,
+        label,
+        kind: item.kind,
+        count: p.count,
+        weight: weight > 0 ? weight : undefined,
+        fits: (['primary', 'secondary', 'wears'] as const).filter((slot) => fits(p.of, slot)),
+        rounds: roundsOf(p),
+      };
+    }),
+    members: livingCharacters(campaign)
+      .filter(isPc)
+      .map((c) => ({ id: c.id, name: c.name, slots: (['primary', 'secondary', 'wears'] as const).map((slot) => slotView(c, slot)) })),
+    load: loadOf(campaign),
+    capacity: capacityOf(campaign),
+    burden: burdenOf(campaign),
+    error,
+  };
+}
+
+function shopView(campaign: Campaign, error: string | undefined): ShopView {
   const funds = fundsOf(campaign);
   const world = locationOf(campaign);
   const offer = world ? offerOf(world) : [];
@@ -1905,7 +1984,8 @@ function shopView(campaign: Campaign, error: string | undefined, offerToWear: Co
     banned: o.banned,
     once: o.item.once,
     affordable: o.price <= funds,
-    owned: owner?.possessions.find((p) => p.of === o.item.id)?.count ?? 0,
+    // Wie viele die Gruppe schon hat: im Gepäck und ausgerüstet.
+    owned: [...campaign.stash, ...campaign.characters.filter(isPc).flatMap((c) => c.possessions)].filter((p) => p.of === o.item.id).reduce((sum, p) => sum + p.count, 0),
     worn: owner !== undefined && owner.wears === o.item.id,
   });
   const weapons = offer.flatMap((o): ShopWeapon[] => {
@@ -1952,7 +2032,16 @@ function shopView(campaign: Campaign, error: string | undefined, offerToWear: Co
       id: c.id,
       name: c.name,
       credits: c.credits,
-      sellable: c.possessions.flatMap((p): ShopView['members'][number]['sellable'][number][] => {
+      sellable: sellables(campaign, c),
+    })),
+    stash: sellables(campaign, undefined),
+    error,
+  };
+}
+
+/** Was sich verkaufen lässt: aus dem Gepäck (`c` fehlt) oder was ein SC ausgerüstet hat. */
+function sellables(campaign: Campaign, c: Character | undefined): ShopView['members'][number]['sellable'] {
+  return (c ? c.possessions : campaign.stash).flatMap((p): ShopView['members'][number]['sellable'][number][] => {
         const item = itemOf(p.of);
         // Jagdbeute: Preis je kg aus der Tierart; verkauft wird nach kg, der Erlös für alle zusammen.
         if (p.from !== undefined) {
@@ -1963,21 +2052,19 @@ function shopView(campaign: Campaign, error: string | undefined, offerToWear: Co
         const price = salePrice(item);
         if (price === undefined) return [];
         const role =
-          c.wears === item.id
-            ? 'getragen'
-            : item.weapon !== undefined && wieldedWeapon(c).id === item.weapon
-              ? 'in der Hand'
-              : item.weapon !== undefined && c.primary === item.weapon
-                ? 'Primärwaffe'
-                : item.weapon !== undefined && c.secondary === item.weapon
-                  ? 'Sekundärwaffe'
-                  : undefined;
+          c === undefined
+            ? undefined
+            : c.wears === item.id
+              ? 'getragen'
+              : item.weapon !== undefined && wieldedWeapon(c).id === item.weapon
+                ? 'in der Hand'
+                : item.weapon !== undefined && c.primary === item.weapon
+                  ? 'Primärwaffe'
+                  : item.weapon !== undefined && c.secondary === item.weapon
+                    ? 'Sekundärwaffe'
+                    : undefined;
         return [{ id: item.id, label: itemLabel(item), kind: item.kind, count: p.count, price, role, perKg: undefined }];
-      }),
-    })),
-    error,
-    wearOffer: wearOfferView(campaign, offerToWear),
-  };
+      });
 }
 
 function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
@@ -2114,7 +2201,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: [], retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: [], retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -2142,7 +2229,8 @@ export function buildSnapshot(state: ControllerState): Snapshot {
       note: state.patronNote,
     },
     rumor: { last: log.findLast((item): item is RumorItem => item.kind === 'rumor'), note: state.rumorNote },
-    shop: shopView(campaign, state.shopError, state.wearOffer),
+    shop: shopView(campaign, state.shopError),
+    stash: stashView(campaign, state.shopError),
     location: campaign.location,
     result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : undefined,
     editor: state.editor && {

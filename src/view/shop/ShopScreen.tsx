@@ -95,7 +95,7 @@ export function ShopScreen({ view }: { view: Snapshot }) {
         ) : area === 'weapons' ? (
           <WeaponCounter shop={shop} hintHidden={view.shopHintHidden} onBuy={buy} />
         ) : area === 'sell' ? (
-          <SaleCounter owner={owner} onSell={(item) => owner && setSelling({ member: owner.id, item })} />
+          <SaleCounter stash={shop.stash} owner={owner} onSell={(member, item) => setSelling({ member, item })} />
         ) : area === 'armor' ? (
           <ItemCounter title="Rüstungen" items={shop.armor} onBuy={buy} />
         ) : (
@@ -103,7 +103,6 @@ export function ShopScreen({ view }: { view: Snapshot }) {
         )}
       </section>
       {buying && owner && <BannedDialog key={buying.id} item={buying} shop={shop} owner={owner} onClose={() => setBuying(undefined)} />}
-      {shop.wearOffer && <WearDialog offer={shop.wearOffer} />}
       {selling && <SellDialog key={`${selling.member}-${selling.item.id}`} selling={selling} shop={shop} onClose={() => setSelling(undefined)} />}
     </div>
   );
@@ -298,21 +297,28 @@ function ItemCounter({ title, items, onBuy }: { title: string; items: readonly S
 }
 
 /** Der Verkauf: der Besitz des Charakters oben nach Art, mit dem vorgeschlagenen Erlös je Stück als Knopf. */
-function SaleCounter({ owner, onSell }: { owner: Member | undefined; onSell: (item: Sellable) => void }) {
-  if (!owner) return <p className="log-empty">Ohne lebenden Charakter gibt es nichts zu verkaufen.</p>;
-  if (owner.sellable.length === 0) return <p className="log-empty">{owner.name} hat nichts, das sich verkaufen lässt. Oben in der Leiste lässt sich ein anderer Charakter wählen.</p>;
-  // Nach Art in der Reihenfolge der Liste, wie die Theken.
-  const kinds = Object.keys(kindNames) as ItemKind[];
-  const groups = kinds.map((kind) => ({ kind, items: owner.sellable.filter((i) => i.kind === kind) })).filter((g) => g.items.length > 0);
+function SaleCounter({ stash, owner, onSell }: { stash: readonly Sellable[]; owner: Member | undefined; onSell: (member: string | undefined, item: Sellable) => void }) {
+  if (stash.length === 0 && (!owner || owner.sellable.length === 0)) return <p className="log-empty">Im Gepäck und an {owner?.name ?? 'den SC'} ist nichts, das sich verkaufen lässt.</p>;
   return (
     <>
-      <p className="muted shop-hint">
-        Besitz von <b className="shop-skilled-sample">{owner.name}</b>. Erlös je Stück antippen zum Verkaufen; vorgeschlagen ist der halbe Preis.
-      </p>
+      <p className="muted shop-hint">Erlös je Stück antippen zum Verkaufen; vorgeschlagen ist der halbe Preis. Oben in der Leiste lässt sich ein anderer Charakter wählen.</p>
+      {stash.length > 0 && <SaleGroups title="Gepäck" items={stash} onSell={(item) => onSell(undefined, item)} />}
+      {owner && owner.sellable.length > 0 && <SaleGroups title={`Ausgerüstet von ${owner.name}`} items={owner.sellable} onSell={(item) => onSell(owner.id, item)} />}
+    </>
+  );
+}
+
+/** Verkäufliches nach Art, in der Reihenfolge der Liste, wie die Theken. */
+function SaleGroups({ title, items, onSell }: { title: string; items: readonly Sellable[]; onSell: (item: Sellable) => void }) {
+  const kinds = Object.keys(kindNames) as ItemKind[];
+  const groups = kinds.map((kind) => ({ kind, items: items.filter((i) => i.kind === kind) })).filter((g) => g.items.length > 0);
+  return (
+    <>
+      <h2 className="section-title shop-sale-title">{title}</h2>
       {groups.map((group) => (
         <div key={group.kind} className="shop-counter">
-          <h2 className="section-title">{kindNames[group.kind]}</h2>
-          <div className="shop-table shop-items" role="table" aria-label={kindNames[group.kind]}>
+          <h3 className="section-title">{kindNames[group.kind]}</h3>
+          <div className="shop-table shop-items" role="table" aria-label={`${title}: ${kindNames[group.kind]}`}>
             <div className="shop-row shop-row-head" role="row">
               <span role="columnheader">Gegenstand</span>
               <span role="columnheader" className="shop-num">
@@ -380,43 +386,11 @@ function BannedDialog({ item, shop, owner, onClose }: { item: ShopItem; shop: Sh
   );
 }
 
-/** Gleich nach dem Kauf einer Rüstung: anlegen oder lassen. */
-function WearDialog({ offer }: { offer: NonNullable<ShopView['wearOffer']> }) {
-  const game = useGame();
-  return (
-    <div className="modal">
-      <section className="result shop-buy" role="dialog" aria-modal="true" aria-labelledby="wear-title">
-        <h2 id="wear-title" className="shop-buy-title">
-          {offer.item} anlegen?
-        </h2>
-        <p>
-          <b>{offer.character}</b> trägt jetzt {offer.worn ? <b>{offer.worn}</b> : 'keine Rüstung'}. Angelegt zählt die neue Rüstung, wenn er angegriffen wird.
-        </p>
-        <div className="roll-actions">
-          <button data-escape type="button" className="ghost" onClick={() => game.answerWearOffer(false)}>
-            Nicht jetzt
-          </button>
-          <button
-            type="button"
-            className="primary"
-            onClick={() => {
-              haptic('confirm');
-              game.answerWearOffer(true);
-            }}
-          >
-            Anlegen
-          </button>
-        </div>
-      </section>
-    </div>
-  );
-}
-
 type Sellable = Member['sellable'][number];
 
-/** Was gerade verkauft werden soll: von wem welcher Gegenstand. Reine Anzeige, bis man bestätigt. */
+/** Was gerade verkauft werden soll: aus dem Gepäck (`member` fehlt) oder von wem welcher Gegenstand. Reine Anzeige, bis man bestätigt. */
 interface Selling {
-  readonly member: string;
+  readonly member: string | undefined;
   readonly item: Sellable;
 }
 
@@ -428,7 +402,7 @@ function SellDialog({ selling, shop, onClose }: { selling: Selling; shop: ShopVi
   const [price, setPrice] = useState(String(item.price));
   const each = Number(price);
   const valid = Number.isInteger(each) && each >= 1;
-  const name = shop.members.find((m) => m.id === selling.member)?.name;
+  const name = selling.member === undefined ? 'Das Gepäck' : shop.members.find((m) => m.id === selling.member)?.name;
   if (game_) {
     // Jagdbeute: verkauft nach kg; vorgeschlagen ist der halbe Listenpreis für die gewählte Menge.
     const suggest = (kg: number) => String(Math.max(1, Math.floor((kg * item.perKg!) / 2)));
@@ -473,7 +447,7 @@ function SellDialog({ selling, shop, onClose }: { selling: Selling; shop: ShopVi
             disabled={!valid}
             onClick={() => {
               haptic('pick');
-              game.sellGame(item.id, count, each, selling.member);
+              game.sellGame(item.id, count, each);
               onClose();
             }}
           >

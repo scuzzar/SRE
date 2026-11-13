@@ -17,7 +17,7 @@ export interface ColumnHeal {
  * Die Charakterspalte im Desktop-Modus, zwischen Orakel und Bereich: alle Lebenden untereinander,
  * immer mit Attributen und Fertigkeiten, damit Proben in jedem Bereich gehen. Dazu blendet sie ein,
  * was der Bereich daneben braucht: im Kampf Zustand, Rüstung und Waffen (antippen nimmt die Waffe in
- * die Hand) und „Heilen“, im Shop Credits und Besitz. Die Karte oben trägt die rote Kante. Eine
+ * die Hand) und „Heilen“, im Shop Credits und was er ausgerüstet hat. Die Karte oben trägt die rote Kante. Eine
  * Fertigkeit lässt sich auf jeder Karte antippen und holt den Charakter dabei nach oben; Attribute und
  * Waffen wählt man auf der Karte oben, ein Klick auf eine andere Karte holt diesen Charakter nach oben.
  * Welcher oben steht, entscheidet der Controller; die Spalte zeigt es nur.
@@ -107,11 +107,11 @@ function Sub({ character, weapons, shop }: { character: CharacterView; weapons: 
   return character.background ? <span className="pc-sub">{character.background}</span> : null;
 }
 
-/** Im Shop: was der Charakter besitzt, mit Anzahl; daraus verkauft er. */
+/** Im Shop: was der SC ausgerüstet hat; alles andere liegt im Gruppengepäck. */
 function Possessions({ character }: { character: CharacterView }) {
   return (
     <p className="char-column-possessions">
-      <span className="small-label">Besitz</span>{' '}
+      <span className="small-label">Ausgerüstet</span>{' '}
       {character.possessions.length === 0 ? <span className="muted">nichts</span> : character.possessions.map((p) => (p.count > 1 ? `${p.count} × ${p.name}` : p.name)).join(', ')}
     </p>
   );

@@ -325,7 +325,7 @@ export function eventDetail(item: EventItem): string {
 
 /** Ein Ausweiden knapp: „Grazer · 12 kg Fleisch, 200 kg Fell · Wert Cr 230 (Verkauf 115)“. */
 export function butcheringDetail(item: ButcheringItem): string {
-  return `${item.animal} → ${item.receiver.split(' ')[0]} · Wert ${credits(item.list)} (Verkauf ${credits(item.sale)})`;
+  return `${item.animal} → Gepäck · Wert ${credits(item.list)} (Verkauf ${credits(item.sale)})`;
 }
 
 /** Ein Preis je kg mit einer Nachkommastelle: „Cr 1,3/kg“. */

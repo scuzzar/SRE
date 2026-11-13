@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import { hexFromRolls, keepFocus, upgradeDistances, upgradeNpcs, type Campaign, type CampaignId, type CampaignRepository, type Encounter, type Hex, type LegacyWorldRoll } from '../model';
+import { hexFromRolls, keepFocus, settleStash, upgradeDistances, upgradeNpcs, type Campaign, type CampaignId, type CampaignRepository, type Encounter, type Hex, type LegacyWorldRoll } from '../model';
 
 /** Eine Kampagne liegt unter ihrer Id. */
 interface StoredCampaign {
@@ -113,7 +113,8 @@ export function upgraded(campaign: Campaign): Campaign {
   });
   // Begegnungen von vor den Range Bands bzw. von vor 2026-11-08d macht upgradeDistances zu solchen mit Startband.
   const encounters = (campaign.encounters ?? []).map((e): Encounter => ({ ...e, round: e.round ?? 1, acted: e.acted ?? [] }));
-  const upgraded = upgradeDistances(upgradeNpcs({ ...campaign, characters, log, hexes, bookings: campaign.bookings ?? [], encounters }));
+  // Spielstände von vor dem Gruppengepäck: Was ein SC nicht ausgerüstet hat, kommt ins Gepäck (settleStash).
+  const upgraded = settleStash(upgradeDistances(upgradeNpcs({ ...campaign, characters, log, hexes, bookings: campaign.bookings ?? [], encounters, stash: campaign.stash ?? [] })));
   return keepFocus(upgraded, upgraded);
 }
 

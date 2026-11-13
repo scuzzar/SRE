@@ -4,6 +4,7 @@ import { damageDiceOf, damageOf, damageVictim, physical, type AttackResult, type
 import { animalRowOf } from './animals';
 import type { Clock, Random } from './ports';
 import { currentEncounter, encounterStart } from './encounter';
+import { burdenOf, isPc } from './stash';
 
 /** Wie viel STR, DEX und END jemand durch Treffer verloren hat. */
 export interface Wounds {
@@ -22,8 +23,17 @@ export function damageAgainst(log: readonly LogEntry[], who: CharacterId): reado
   return log.flatMap((e) => (e.kind === 'damage' && e.to !== undefined && damageVictim(log, e) === who ? [e] : []));
 }
 
+/**
+ * Das UPP, mit dem Wunden und Bewusstlosigkeit rechnen. Ist die Gruppe belastet (Hausregel, siehe
+ * `burdenOf`), zählen STR, DEX und END eines lebenden SC um die Belastung niedriger, mindestens 1.
+ */
 export function uppOf(campaign: Campaign, who: CharacterId): Upp {
-  return anyCharacterOf(campaign, who).upp;
+  const character = anyCharacterOf(campaign, who);
+  if (!isCampaignCharacter(campaign, who) || !isPc(character) || character.dead || character.retired) return character.upp;
+  const burden = burdenOf(campaign);
+  if (burden === 0) return character.upp;
+  const lower = (value: number) => Math.max(1, value - burden);
+  return { ...character.upp, str: lower(character.upp.str), dex: lower(character.upp.dex), end: lower(character.upp.end) };
 }
 
 /** Ein Block eines Schadenswurfs: so viele Punkte auf dieses Attribut (SR 21). */
@@ -342,7 +352,8 @@ export function recoveryOptions(campaign: Campaign, who: CharacterId): RecoveryO
     const level = medicalLevel(campaign, c.id);
     const awake = canFight(woundStateOf(campaign, c.id));
     const needs = history.serious ? 3 : 1;
-    const kit = history.serious || c.possessions.some((p) => p.of === MEDICAL_KIT);
+    // Das Medical Kit liegt im Gruppengepäck (oder hat ein SC noch bei sich, in Spielständen von vorher).
+    const kit = history.serious || campaign.stash.some((p) => p.of === MEDICAL_KIT) || c.possessions.some((p) => p.of === MEDICAL_KIT);
     const why = !awake ? 'ist bewusstlos' : level < needs ? `braucht Medical-${needs}` : !kit ? 'braucht ein Medical Kit' : undefined;
     return { id: c.id, name: c.name, able: why === undefined, ...(why === undefined ? {} : { why }) };
   });

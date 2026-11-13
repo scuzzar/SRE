@@ -80,7 +80,8 @@ describe('Primär- und Sekundärwaffe', () => {
     expect(jonas).toMatchObject({ primary: 'blade', secondary: 'cutlass' });
     expect(armedWeaponsOf(jonas)).toEqual(['blade', 'cutlass', 'hands']);
     expect(characterOf(setWields(campaign, 'c2', 'cutlass'), 'c2').wields).toBe('cutlass');
-    expect(() => setWields(campaign, 'c2', 'rifle')).toThrow(/weder Primär- noch Sekundärwaffe von Jonas Reyl/);
+    // Die Rifle liegt im Gepäck: Führen kann er sie erst, wenn er sie ausrüstet.
+    expect(() => setWields(campaign, 'c2', 'rifle')).toThrow(/Jonas Reyl hat keine Rifle/);
   });
 
   it('nur Waffen aus dem Besitz, verschieden; sonst fallen sie weg', () => {

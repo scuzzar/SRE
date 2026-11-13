@@ -662,7 +662,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     darüber −12,5 %); ohne Aufenthaltsort oder ohne Welt 100 %.
   - **Belastung** (`/burden`, Hausregel nach SE 5 und SR 22, für die ganze Gruppe statt je Person):
     0 bis zur Traglast; 1 bis zum Doppelten; 2 darüber. Belastete SC zählen STR, DEX und END um die
-    Belastung niedriger, wie verwundete Werte, für Wunden und Bewusstlosigkeit; die Ansicht zeigt
+    Belastung niedriger (mindestens 1), wie verwundete Werte, für Wunden und Bewusstlosigkeit; die Ansicht zeigt
     Last und Traglast als Balken. Wer tot ist oder ausgeschieden, trägt nichts.
   - **Ältere Spielstände**: Alles, was ein SC besitzt und nicht ausgerüstet hat, kommt ins Gepäck;
     gleiche Gegenstände zählen zusammen.

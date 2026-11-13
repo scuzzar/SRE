@@ -375,24 +375,41 @@ describe('Kampf', () => {
 describe('Shop und Gruppenkasse', () => {
   const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
 
-  it('die Beispiel-Charaktere tragen ihre Rüstung; nach dem Kauf einer Rüstung fragt die App, ob er sie anlegt', async () => {
+  it('die Beispiel-Charaktere tragen ihre Rüstung; eine gekaufte Rüstung trägt er gleich, die alte kommt ins Gepäck', async () => {
     const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina])));
     expect(game.snapshot().characters.map((c) => c.armor)).toEqual(['Jack', 'Mesh']);
     game.chooseHex(1, 1);
     game.stayHere();
     game.book('income', 1000, 'Belohnung');
     game.buy('cloth', 1, 'c1');
-    expect(game.snapshot().shop!.wearOffer).toEqual({ character: 'Kira Vant', item: 'Cloth', worn: 'Jack' });
-    game.answerWearOffer(false);
-    expect(game.snapshot().shop!.wearOffer).toBeUndefined();
-    expect(game.snapshot().characters[0]!.armor).toBe('Jack');
-    game.buy('cloth', 1, 'c1');
-    game.answerWearOffer(true);
     expect(game.snapshot().characters[0]!.armor).toBe('Cloth');
-    // Was er schon trägt, bietet die App nicht noch einmal an; Munition auch nicht.
-    game.buy('cloth', 1, 'c1');
-    game.buy('rifle-ammo', 1, 'c1');
-    expect(game.snapshot().shop!.wearOffer).toBeUndefined();
+    expect(game.snapshot().stash.items.map((i) => i.label)).toContain('Jack');
+    // Im Gepäck-Bereich legt man sie wieder an; Cloth kommt dafür ins Gepäck.
+    game.equip('c1', 'wears', { key: 'jack' });
+    expect(game.snapshot().characters[0]!.armor).toBe('Jack');
+    expect(game.snapshot().stash.items.map((i) => i.label)).toContain('Cloth');
+    expect(game.snapshot().stash.members[0]!.slots.find((s) => s.slot === 'wears')).toMatchObject({ label: 'Jack' });
+  });
+
+  it('Gepäck: ausrüsten, zwischen SC tauschen, ablegen; Last und Traglast', async () => {
+    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina])));
+    // Kira (STR 7) und Jonas (STR 6) tragen zusammen 13 kg auf Größe 8; Regina hat Größe 7: 112,5 %.
+    expect(game.snapshot().stash.capacity).toBe(13);
+    game.chooseHex(1, 1);
+    game.stayHere();
+    expect(game.snapshot().stash.capacity).toBeCloseTo(14.63, 2);
+    // Kira gibt ihre Automatic Pistol an Jonas: Sie wird seine Primärwaffe, seine Blade kommt ins Gepäck.
+    game.equip('c2', 'primary', { from: 'c1', fromSlot: 'primary' });
+    const [kira, jonas] = game.snapshot().stash.members;
+    expect(kira!.slots[0]).toMatchObject({ label: undefined });
+    expect(jonas!.slots[0]).toMatchObject({ label: 'Automatic Pistol' });
+    expect(game.snapshot().stash.items.map((i) => i.label)).toContain('Blade');
+    // Jonas legt sie ab: Sie kommt ins Gepäck.
+    game.unequip('c2', 'primary');
+    expect(game.snapshot().stash.items.map((i) => i.label)).toEqual(expect.arrayContaining(['Automatic Pistol', 'Blade']));
+    // Eine Rüstung passt nicht auf Primär: Der Fehler steht im Gepäck, nichts ändert sich.
+    game.equip('c2', 'primary', { key: 'vacc-suit-tl12' });
+    expect(game.snapshot().stash.error).toMatch(/passt nicht/);
   });
 
   it('die Gruppe ist auf Regina, bucht eine Belohnung, kauft eine Rifle mit Magazin, lädt und schießt', async () => {
