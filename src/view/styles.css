@@ -4130,7 +4130,9 @@ button:disabled {
   stroke-width: 2.5;
 }
 
+/* Eine eigene Zeile über die ganze Breite, sonst landet der Hinweis in der schmalen Spalte der Basen. */
 .world-list-here {
+  grid-column: 1 / -1;
   color: var(--gold);
   font-size: 12px;
 }
@@ -6316,10 +6318,34 @@ button:disabled {
     max-width: 560px;
   }
 
-  /* Die Charakter-Karten behalten ihre Smartphone-Größe statt über die ganze Spalte zu laufen. */
-  .strip-card,
-  .strip-card:only-child {
-    flex-basis: min(420px, 100%);
+  /* Die Leiste zeigt alle Charaktere aufgeklappt: in der Orakel-Spalte untereinander (scrollt in
+     sich, wenn es mehr werden, als in die obere Hälfte passen), in Kampf und Shop kompakt
+     nebeneinander. Die Karte oben trägt die rote Kante, die anderen holt ein Klick nach oben. */
+  .strip-list .strip-track {
+    flex-direction: column;
+    max-height: 45vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scroll-snap-type: none;
+    scrollbar-width: thin;
+  }
+
+  .strip-list .strip-card,
+  .strip-list .strip-card:only-child {
+    flex: 0 0 auto;
+  }
+
+  .strip-list .strip-card:not(.focus) {
+    cursor: pointer;
+    background: var(--panel);
+    border-top-color: var(--line-strong);
+  }
+
+  .strip-list.strip-combat .strip-track {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+    max-height: none;
+    overflow: visible;
   }
 
   .char-grid {
@@ -6349,6 +6375,10 @@ button:disabled {
 
   .entry.outcome:hover {
     border-color: var(--line-strong);
+  }
+
+  .strip-list .strip-card:not(.focus):hover {
+    border-color: var(--accent-text);
   }
 
   .hex[role='button']:hover polygon:first-child {

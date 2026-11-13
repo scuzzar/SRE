@@ -18,9 +18,9 @@ test('Die Bereiche stehen oben als Reiter, das Orakel steht rechts – auf jedem
   const viewport = page.viewportSize()!;
   const navBox = (await nav.boundingBox())!;
   expect(navBox.y).toBeLessThan(viewport.height / 2);
-  // Das Orakel ist kein Reiter mehr; beim Start steht der Bereich Charaktere offen.
+  // Das Orakel ist kein Reiter mehr; beim Start steht der Bereich Sektor offen.
   await expect(nav.getByRole('button', { name: 'Orakel', exact: true })).toHaveCount(0);
-  await expect(nav.getByRole('button', { name: 'Charaktere', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(nav.getByRole('button', { name: 'Sektor', exact: true })).toHaveAttribute('aria-current', 'page');
   const panel = page.getByRole('complementary', { name: 'Orakel' });
   for (const name of areas) {
     await nav.getByRole('button', { name, exact: true }).click();
@@ -106,3 +106,39 @@ test('Die Sektor-Karte passt ganz in den Screen, und der Screen wird nicht breit
   expect(host.width).toBeLessThanOrEqual(960);
 });
 
+test('Die Leisten zeigen alle Charaktere offen; ein Klick auf eine Karte holt sie nach oben, links wie rechts', async ({ page }, testInfo) => {
+  onlyDesktop(testInfo);
+  const panel = page.getByRole('complementary', { name: 'Orakel' });
+  const strip = panel.getByRole('region', { name: 'Spielercharaktere' });
+  // Beide Karten untereinander, beide mit Fertigkeiten; Punkte und Einklappen gibt es nicht.
+  await expect(strip.getByRole('article')).toHaveCount(2);
+  const kira = (await strip.getByRole('article', { name: 'Kira Vant' }).boundingBox())!;
+  const jonas = (await strip.getByRole('article', { name: 'Jonas Reyl' }).boundingBox())!;
+  expect(jonas.y).toBeGreaterThan(kira.y + kira.height - 1);
+  await expect(strip.getByRole('article', { name: 'Jonas Reyl' })).toContainText('Ste-1');
+  await expect(strip.getByRole('group', { name: 'Charakter oben wählen' })).toHaveCount(0);
+  await expect(strip.getByRole('button', { name: 'Leiste einklappen' })).toHaveCount(0);
+
+  // Im Shop: links kompakt nebeneinander; Jonas per Klick auf seine Karte nach oben – auch rechts.
+  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Shop', exact: true }).click();
+  const left = page.locator('.screen-host').getByRole('region', { name: 'Spielercharaktere' });
+  await left.getByRole('article', { name: 'Jonas Reyl' }).locator('.strip-upp').click();
+  await expect(left.getByRole('article', { name: 'Jonas Reyl' })).toHaveClass(/focus/);
+  await expect(strip.getByRole('article', { name: 'Jonas Reyl' })).toHaveClass(/focus/);
+  await expect(strip.getByRole('article', { name: 'Kira Vant' })).not.toHaveClass(/focus/);
+});
+
+test('Die Ziffern wählen die Bereiche der Reiterzeile', async ({ page }, testInfo) => {
+  onlyDesktop(testInfo);
+  const nav = page.getByRole('navigation', { name: 'Bereiche' });
+  await expect(nav).toBeVisible();
+  for (const [key, name] of [['1', 'Begegnung'], ['2', 'Kampf'], ['3', 'Shop'], ['4', 'Charaktere'], ['5', 'Sektor']]) {
+    await page.keyboard.press(key!);
+    await expect(nav.getByRole('button', { name: name!, exact: true })).toHaveAttribute('aria-current', 'page');
+  }
+  // Im Fragefeld gehören die Ziffern dem Text.
+  await page.getByPlaceholder(/Frage, Deutung, Notiz/).fill('');
+  await page.getByPlaceholder(/Frage, Deutung, Notiz/).press('2');
+  await expect(nav.getByRole('button', { name: 'Sektor', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByPlaceholder(/Frage, Deutung, Notiz/)).toHaveValue('2');
+});

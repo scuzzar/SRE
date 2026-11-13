@@ -301,7 +301,7 @@ export function HealDialog({ patient, healing, note, onClose }: { patient: Patie
           <h2 id="heal-title" className="shop-buy-title">
             {patient.name} heilen
           </h2>
-          <button type="button" className="icon-button" aria-label="Schließen" onClick={onClose}>
+          <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={onClose}>
             <CloseIcon />
           </button>
         </div>

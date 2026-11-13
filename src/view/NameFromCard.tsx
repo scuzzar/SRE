@@ -59,7 +59,7 @@ export function NameFromCard({ onPick, disabled = false }: { onPick: (name: stri
               {name || <span className="muted">Noch kein Name gewählt</span>}
             </div>
             <div className="name-picker-foot">
-              <button type="button" className="ghost" onClick={close}>
+              <button data-escape type="button" className="ghost" onClick={close}>
                 Abbrechen
               </button>
               <button

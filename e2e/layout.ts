@@ -11,6 +11,9 @@ export const oracle = (page: Page) => page.locator('.oracle-panel, .app:not(:has
 
 /** Zum Orakel wechseln; im Desktop-Modus steht es schon da, dort gibt es den Reiter nicht. */
 export async function openOracle(page: Page) {
-  const tab = page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Orakel', exact: true });
+  const nav = page.getByRole('navigation', { name: 'Bereiche' });
+  // Erst wenn die App geladen ist, steht die Leiste da; vorher lässt sich der Reiter nicht zählen.
+  await nav.waitFor();
+  const tab = nav.getByRole('button', { name: 'Orakel', exact: true });
   if ((await tab.count()) > 0) await tab.click();
 }

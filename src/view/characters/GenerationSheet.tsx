@@ -73,7 +73,7 @@ export function GenerationSheet({ generation, odds, log }: { generation: Generat
                 Verwerfen
               </button>
             )}
-            <button type="button" className="icon-button" aria-label="Später weiter" onClick={() => game.closeGeneration()}>
+            <button data-escape type="button" className="icon-button" aria-label="Später weiter" onClick={() => game.closeGeneration()}>
               <CloseIcon />
             </button>
           </span>
@@ -202,7 +202,7 @@ function ThrowDialog({ line, skips, onSettled, onClose }: { line: CareerLine; sk
             {line.result}
           </strong>
           <div className="roll-actions single">
-            <button ref={close} type="button" className="primary" onClick={onClose}>
+            <button data-escape ref={close} type="button" className="primary" onClick={onClose}>
               Weiter
             </button>
           </div>

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, type ReactElement } from 'react';
+import type { Screen } from '../controller';
 import { AboutScreen } from './AboutScreen';
 import { CampaignSheet } from './CampaignSheet';
 import { CharacterEditor } from './characters/CharacterEditor';
@@ -10,6 +11,7 @@ import { GenerationSheet } from './characters/GenerationSheet';
 import { FullscreenButton } from './FullscreenButton';
 import { ResultDialog } from './characters/ResultDialog';
 import { useGame, useSnapshot } from './game-context';
+import { useEscapeCloses, useShortcuts } from './keyboard';
 import { useIsDesktop } from './media';
 import { CombatIcon, EncounterIcon, MenuIcon, OracleIcon, PersonIcon, SectorIcon, ShopIcon } from './icons';
 import { Menu } from './Menu';
@@ -18,6 +20,16 @@ import { DiceRoll } from './oracle/DiceRoll';
 import { OracleScreen } from './oracle/OracleScreen';
 import { SectorPicker, SectorScreen } from './sector/SectorScreen';
 import { WorldSheet } from './sector/WorldSheet';
+
+/** Die Bereiche der Leiste unten bzw. der Reiterzeile oben, in dieser Reihenfolge. */
+const areas: readonly { readonly id: Screen; readonly label: string; readonly Icon: () => ReactElement }[] = [
+  { id: 'oracle', label: 'Orakel', Icon: OracleIcon },
+  { id: 'encounter', label: 'Begegnung', Icon: EncounterIcon },
+  { id: 'combat', label: 'Kampf', Icon: CombatIcon },
+  { id: 'shop', label: 'Shop', Icon: ShopIcon },
+  { id: 'characters', label: 'Charaktere', Icon: PersonIcon },
+  { id: 'sector', label: 'Sektor', Icon: SectorIcon },
+];
 
 export function App() {
   const game = useGame();
@@ -31,6 +43,11 @@ export function App() {
   // Das Ziel der Deutung: das angetippte Ergebnis, solange der Log gleich lang ist. Die App hält es
   // zusammen mit dem Fragefeld, damit es den Wechsel zwischen den Bereichen übersteht.
   const [chosen, setChosen] = useState<{ index: number; length: number } | undefined>(undefined);
+  // Die Bereiche in der Reihenfolge der Leiste; im Desktop-Modus ohne das Orakel, das rechts steht.
+  const shown = desktop ? areas.filter((a) => a.id !== 'oracle') : areas;
+  // Esc schließt das oberste Popup; die Ziffern wählen den Bereich an dieser Stelle der Leiste.
+  useEscapeCloses(menu);
+  useShortcuts(Object.fromEntries(shown.map((a, i) => [String(i + 1), () => game.showScreen(a.id)])));
 
   if (!view.ready) return <div className="app" aria-busy="true" />;
   const closeResult = () => game.closeResult();
@@ -42,8 +59,8 @@ export function App() {
   const onClearTarget = () => setChosen(undefined);
 
   // Im Desktop-Modus ist das Orakel kein eigener Bereich, sondern die Spalte rechts; wer dort noch
-  // auf „Orakel“ steht (frisch gestartet oder das Fenster breit gezogen), sieht die Charaktere.
-  const screen = desktop && view.screen === 'oracle' ? 'characters' : view.screen;
+  // auf „Orakel“ steht (frisch gestartet oder das Fenster breit gezogen), sieht den Sektor.
+  const screen = desktop && view.screen === 'oracle' ? 'sector' : view.screen;
   const oracle = <OracleScreen view={view} question={question} onQuestion={setQuestion} target={target} picked={picked} marked={marked} onPick={onPick} onClearTarget={onClearTarget} />;
 
   return (
@@ -71,32 +88,12 @@ export function App() {
       )}
 
       <nav className="nav" aria-label="Bereiche">
-        {!desktop && (
-          <button type="button" aria-current={screen === 'oracle' ? 'page' : undefined} onClick={() => game.showScreen('oracle')}>
-            <OracleIcon />
-            Orakel
+        {shown.map(({ id, label, Icon }, i) => (
+          <button key={id} type="button" aria-current={screen === id ? 'page' : undefined} title={`${label} (${i + 1})`} aria-keyshortcuts={String(i + 1)} onClick={() => game.showScreen(id)}>
+            <Icon />
+            {label}
           </button>
-        )}
-        <button type="button" aria-current={screen === 'encounter' ? 'page' : undefined} onClick={() => game.showScreen('encounter')}>
-          <EncounterIcon />
-          Begegnung
-        </button>
-        <button type="button" aria-current={screen === 'combat' ? 'page' : undefined} onClick={() => game.showScreen('combat')}>
-          <CombatIcon />
-          Kampf
-        </button>
-        <button type="button" aria-current={screen === 'shop' ? 'page' : undefined} onClick={() => game.showScreen('shop')}>
-          <ShopIcon />
-          Shop
-        </button>
-        <button type="button" aria-current={screen === 'characters' ? 'page' : undefined} onClick={() => game.showScreen('characters')}>
-          <PersonIcon />
-          Charaktere
-        </button>
-        <button type="button" aria-current={screen === 'sector' ? 'page' : undefined} onClick={() => game.showScreen('sector')}>
-          <SectorIcon />
-          Sektor
-        </button>
+        ))}
       </nav>
 
       <div className="stage">

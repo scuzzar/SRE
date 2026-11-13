@@ -20,7 +20,7 @@ export function CampaignSheet({ sheet, campaigns, open }: { sheet: CampaignSheet
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="campaigns-title">
         <div className="sheet-head" style={{ alignItems: 'center' }}>
           <h2 id="campaigns-title">Kampagnen</h2>
-          <button type="button" className="icon-button" aria-label="Schließen" onClick={() => game.closeCampaigns()}>
+          <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={() => game.closeCampaigns()}>
             <CloseIcon />
           </button>
         </div>

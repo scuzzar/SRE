@@ -8,6 +8,7 @@ import { OddsBar } from '../OddsBar';
 import { CharacterStrip } from './CharacterStrip';
 import { DiceRoll } from './DiceRoll';
 import { LogList } from './LogList';
+import { useShortcuts } from '../keyboard';
 
 /**
  * Orakel und Proben auf einem Screen: oben der Charakter oben, darunter der Log, unten die Knöpfe.
@@ -55,6 +56,28 @@ export function OracleScreen({
     onClearTarget();
   };
 
+  // Knöpfe und Kürzel lösen dasselbe aus: K zieht eine Karte, W würfelt 2W6 (oder die vorbereitete
+  // Probe), J fragt das Orakel.
+  const draw = () => {
+    haptic('draw');
+    game.drawCard(question);
+  };
+  const roll = () => {
+    if (task) {
+      haptic('land');
+      game.rollTask();
+      return;
+    }
+    haptic('shake');
+    game.rollDice();
+    if (animated()) setRolling(view.log.length);
+  };
+  const ask = () => {
+    game.askOracle(question);
+    onQuestion('');
+  };
+  useShortcuts({ k: draw, w: roll, j: ask });
+
   return (
     <div className="screen">
       <CharacterStrip view={view} />
@@ -100,10 +123,7 @@ export function OracleScreen({
             autoComplete="off"
             enterKeyHint="send"
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                game.askOracle(question);
-                onQuestion('');
-              }
+              if (e.key === 'Enter') ask();
             }}
           />
           <button type="button" className="write-button interpret" disabled={!text || target === undefined} onClick={() => write(target)}>
@@ -116,39 +136,17 @@ export function OracleScreen({
           </button>
         </div>
         <div className="actions">
-          <button
-            type="button"
-            className="action draw"
-            onClick={() => {
-              haptic('draw');
-              game.drawCard(question);
-            }}
-          >
+          <button type="button" className="action draw" title="Karte ziehen (K)" aria-keyshortcuts="K" onClick={draw}>
             <CardIcon />
             Karte ziehen
           </button>
           {task ? (
-            <button
-              type="button"
-              className="action task-roll"
-              onClick={() => {
-                haptic('land');
-                game.rollTask();
-              }}
-            >
+            <button type="button" className="action task-roll" title="Probe würfeln (W)" aria-keyshortcuts="W" onClick={roll}>
               <DiceIcon />
               Probe würfeln
             </button>
           ) : (
-            <button
-              type="button"
-              className="action dice"
-              onClick={() => {
-                haptic('shake');
-                game.rollDice();
-                if (animated()) setRolling(view.log.length);
-              }}
-            >
+            <button type="button" className="action dice" title="2W6 würfeln (W)" aria-keyshortcuts="W" onClick={roll}>
               <DiceIcon />
               2W6
             </button>
@@ -156,14 +154,7 @@ export function OracleScreen({
         </div>
         <div className="odds-row">
           <OddsBar odds={view.odds} />
-          <button
-            type="button"
-            className="action oracle"
-            onClick={() => {
-              game.askOracle(question);
-              onQuestion('');
-            }}
-          >
+          <button type="button" className="action oracle" title="Orakel fragen (J)" aria-keyshortcuts="J" onClick={ask}>
             Ja/Nein
           </button>
         </div>

@@ -82,7 +82,7 @@ export function WorldSheet({ world, here }: { world: WorldView; here: boolean })
                   Verwerfen
                 </button>
               ))}
-            <button type="button" className="icon-button" aria-label={running ? 'Später weiter' : 'Schließen'} onClick={() => game.closeWorld()}>
+            <button data-escape type="button" className="icon-button" aria-label={running ? 'Später weiter' : 'Schließen'} onClick={() => game.closeWorld()}>
               <CloseIcon />
             </button>
           </span>

@@ -102,7 +102,7 @@ export function ResultDialog({ result }: { result: TaskItem | AttackItem }) {
           <span className="visually-hidden">{result.parts.map(partLabel).join(', ')}</span>
           {result.kind === 'attack' && (result.damagePending || result.volleyPending) ? (
             <div className="roll-actions">
-              <button ref={close} type="button" className="ghost" onClick={() => game.closeResult()}>
+              <button data-escape ref={close} type="button" className="ghost" onClick={() => game.closeResult()}>
                 Weiter
               </button>
               <button
@@ -118,7 +118,7 @@ export function ResultDialog({ result }: { result: TaskItem | AttackItem }) {
             </div>
           ) : (
             <div className="roll-actions single">
-              <button ref={close} type="button" className="primary" onClick={() => game.closeResult()}>
+              <button data-escape ref={close} type="button" className="primary" onClick={() => game.closeResult()}>
                 Weiter
               </button>
             </div>

@@ -68,7 +68,7 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="editor-title">
         <div className="sheet-head" style={{ alignItems: 'center' }}>
           <h2 id="editor-title">{isNew ? 'Neuer Charakter' : 'Charakter bearbeiten'}</h2>
-          <button type="button" className="icon-button" aria-label="Schließen" onClick={() => game.cancelEdit()}>
+          <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={() => game.cancelEdit()}>
             <CloseIcon />
           </button>
         </div>

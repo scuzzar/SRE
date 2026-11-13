@@ -686,7 +686,7 @@ export function EncounterIntro({ sim }: { sim: SimView }) {
             </li>
           ))}
         </ol>
-        <button type="button" className="primary" onClick={() => game.closeEncounterIntro()}>
+        <button data-escape type="button" className="primary" onClick={() => game.closeEncounterIntro()}>
           Weiter
         </button>
       </section>

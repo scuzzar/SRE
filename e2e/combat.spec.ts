@@ -7,7 +7,8 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('Kampf: Kira zieht die Pistole, wählt das Ziel in der Tabelle und greift an', async ({ page }) => {
-  const weapons = page.getByRole('group', { name: 'Waffe in der Hand' });
+  // Die Waffen des Charakters oben; im Desktop-Modus stehen auch die anderen Karten offen da.
+  const weapons = page.locator('.strip-card.focus').getByRole('group', { name: 'Waffe in der Hand' });
   await expect(weapons.getByRole('button', { name: /Hände/ })).toHaveAttribute('aria-pressed', 'true');
   await weapons.getByRole('button', { name: /Automatic Pistol/ }).click();
   await expect(page.getByRole('heading', { name: 'Automatic Pistol' })).toBeVisible();

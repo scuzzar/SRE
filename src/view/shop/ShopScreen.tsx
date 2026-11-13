@@ -350,7 +350,7 @@ function BannedDialog({ item, shop, owner, onClose }: { item: ShopItem; shop: Sh
       <section className="result shop-buy" role="dialog" aria-modal="true" aria-labelledby="buy-title">
         <div className="sheet-head" style={{ alignItems: 'center' }}>
           <h2 id="buy-title" className="shop-buy-title">{item.label}</h2>
-          <button type="button" className="icon-button" aria-label="Schließen" onClick={onClose}>
+          <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={onClose}>
             <CloseIcon />
           </button>
         </div>
@@ -390,7 +390,7 @@ function WearDialog({ offer }: { offer: NonNullable<ShopView['wearOffer']> }) {
           <b>{offer.character}</b> trägt jetzt {offer.worn ? <b>{offer.worn}</b> : 'keine Rüstung'}. Angelegt zählt die neue Rüstung, wenn er angegriffen wird.
         </p>
         <div className="roll-actions">
-          <button type="button" className="ghost" onClick={() => game.answerWearOffer(false)}>
+          <button data-escape type="button" className="ghost" onClick={() => game.answerWearOffer(false)}>
             Nicht jetzt
           </button>
           <button
@@ -436,7 +436,7 @@ function SellDialog({ selling, shop, onClose }: { selling: Selling; shop: ShopVi
             <h2 id="sell-title" className="shop-buy-title">
               {item.label} verkaufen
             </h2>
-            <button type="button" className="icon-button" aria-label="Schließen" onClick={onClose}>
+            <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={onClose}>
               <CloseIcon />
             </button>
           </div>
@@ -487,7 +487,7 @@ function SellDialog({ selling, shop, onClose }: { selling: Selling; shop: ShopVi
           <h2 id="sell-title" className="shop-buy-title">
             {item.label} verkaufen
           </h2>
-          <button type="button" className="icon-button" aria-label="Schließen" onClick={onClose}>
+          <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={onClose}>
             <CloseIcon />
           </button>
         </div>

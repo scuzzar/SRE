@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { Snapshot } from '../../controller';
 import { SkillChips, UppRow } from '../characters/CharacterCard';
 import { useGame } from '../game-context';
+import { useIsDesktop } from '../media';
 import { ChevronDownIcon, PencilIcon } from '../icons';
 import { credits, hex, woundStateText } from '../format';
 import { ImpactMarks, LossFloat, RoleBadge } from '../combat/FightScreen';
@@ -23,6 +24,11 @@ const SETTLE_MS = 120;
  * verwundet und lässt sich etwas tun, steht dort im Kopf seiner Karte „Heilen“. Im Reiter Shop zeigt
  * sie seine Credits und Attribute; für ihn kauft und verkauft man. Die Nachbarkarten zeigen schon beim
  * Wischen ihren Inhalt, nicht erst, wenn sie eingerastet sind.
+ *
+ * Im Desktop-Modus ist Platz für alle: Die Leiste zeigt jeden Charakter aufgeklappt (in der
+ * Orakel-Spalte untereinander, in Kampf und Shop kompakt nebeneinander), ohne Punkte, Position und
+ * Einklappen. Ein Klick auf eine andere Karte holt diesen Charakter nach oben; die Karte oben ist
+ * hervorgehoben, und nur auf ihr lassen sich Proben und Waffen wählen.
  */
 export function CharacterStrip({
   view,
@@ -39,6 +45,7 @@ export function CharacterStrip({
   fight?: StripFight | undefined;
 }) {
   const game = useGame();
+  const list = useIsDesktop();
   const track = useRef<HTMLDivElement>(null);
   const settle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const characters = view.characters;
@@ -82,20 +89,37 @@ export function CharacterStrip({
     }, SETTLE_MS);
   };
 
-  const collapsed = view.stripCollapsed;
+  // Eingeklappt gibt es nur auf dem Smartphone; im Desktop-Modus stehen die Karten immer offen.
+  const collapsed = !list && view.stripCollapsed;
   return (
-    <section className={['strip', collapsed ? 'collapsed' : '', weapons || shop ? 'strip-combat' : '', shop ? 'strip-shop' : ''].filter(Boolean).join(' ')} aria-label="Spielercharaktere">
-      <div className="strip-track" ref={track} onScroll={onScroll}>
+    <section className={['strip', list ? 'strip-list' : '', collapsed ? 'collapsed' : '', weapons || shop ? 'strip-combat' : '', shop ? 'strip-shop' : ''].filter(Boolean).join(' ')} aria-label="Spielercharaktere">
+      <div className="strip-track" ref={track} onScroll={list ? undefined : onScroll}>
         {characters.map((character, i) => (
           <article
             key={character.id}
             className={['strip-card', character.focus ? 'focus' : '', fight?.[character.id]?.turn ? 'turn' : '', fight?.[character.id]?.targeted ? 'targeted' : '', fight?.[character.id]?.neighbour ? 'neighbour' : ''].filter(Boolean).join(' ')}
             aria-label={character.name}
-            aria-hidden={!character.focus}
+            aria-hidden={list ? undefined : !character.focus}
+            onClick={
+              list && !character.focus
+                ? (e) => {
+                    // Knöpfe auf der Karte (Bearbeiten, Waffen) tun ihr Eigenes; ein Klick daneben holt sie nach oben.
+                    if (!(e.target instanceof Element && e.target.closest('button'))) game.focusCharacter(character.id);
+                  }
+                : undefined
+            }
           >
             {fight?.[character.id] && <ImpactMarks impacts={fight[character.id]!.impacts} atStats={!collapsed && weapons} />}
             <div className="strip-head">
-              <button type="button" className="strip-title" aria-expanded={!collapsed} onClick={() => game.toggleStrip()} tabIndex={character.focus ? 0 : -1}>
+              <button
+                type="button"
+                className="strip-title"
+                aria-expanded={list ? undefined : !collapsed}
+                aria-label={list && !character.focus ? `${character.name} nach oben` : undefined}
+                aria-current={list ? character.focus : undefined}
+                onClick={() => (!list ? game.toggleStrip() : character.focus ? undefined : game.focusCharacter(character.id))}
+                tabIndex={list || character.focus ? 0 : -1}
+              >
                 <span className="strip-name">
                   {character.name}
                   {fight?.[character.id] && <RoleBadge fighter={fight[character.id]!} />}
@@ -118,22 +142,26 @@ export function CharacterStrip({
                   Heilen
                 </button>
               )}
-              <span className="strip-position" aria-hidden="true">
-                {i + 1}/{characters.length}
-              </span>
-              <button type="button" className="icon-button" aria-label={`${character.name} bearbeiten`} onClick={() => game.editCharacter(character.id)} tabIndex={character.focus ? 0 : -1}>
+              {!list && (
+                <span className="strip-position" aria-hidden="true">
+                  {i + 1}/{characters.length}
+                </span>
+              )}
+              <button type="button" className="icon-button" aria-label={`${character.name} bearbeiten`} onClick={() => game.editCharacter(character.id)} tabIndex={list || character.focus ? 0 : -1}>
                 <PencilIcon />
               </button>
-              <button
-                type="button"
-                className="icon-button strip-toggle"
-                aria-label={collapsed ? 'Leiste aufklappen' : 'Leiste einklappen'}
-                aria-expanded={!collapsed}
-                onClick={() => game.toggleStrip()}
-                tabIndex={character.focus ? 0 : -1}
-              >
-                <ChevronDownIcon />
-              </button>
+              {!list && (
+                <button
+                  type="button"
+                  className="icon-button strip-toggle"
+                  aria-label={collapsed ? 'Leiste aufklappen' : 'Leiste einklappen'}
+                  aria-expanded={!collapsed}
+                  onClick={() => game.toggleStrip()}
+                  tabIndex={character.focus ? 0 : -1}
+                >
+                  <ChevronDownIcon />
+                </button>
+              )}
             </div>
             {!weapons && !shop && character.state !== 'unhurt' && (
               <p className={`strip-state state-${character.state}`}>
@@ -154,7 +182,7 @@ export function CharacterStrip({
           </article>
         ))}
       </div>
-      {characters.length > 1 && (
+      {!list && characters.length > 1 && (
         <div className="strip-dots" role="group" aria-label="Charakter oben wählen">
           {characters.map((character) => (
             <button key={character.id} type="button" aria-label={`${character.name} nach oben`} aria-current={character.focus} onClick={() => game.focusCharacter(character.id)}>

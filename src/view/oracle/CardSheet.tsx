@@ -129,6 +129,7 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
           <button
             type="button"
             className="ghost square"
+            data-escape
             aria-label="Karte verwerfen"
             onClick={() => {
               haptic('discard');

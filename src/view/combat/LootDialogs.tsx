@@ -73,7 +73,7 @@ export function LootDialog({ combat }: { combat: CombatView }) {
           >
             {loot.animal ? 'Ausweiden' : 'Nehmen'}
           </button>
-          <button type="button" className="ghost" onClick={() => game.openLoot(undefined)}>
+          <button data-escape type="button" className="ghost" onClick={() => game.openLoot(undefined)}>
             Abbrechen
           </button>
         </div>
@@ -143,6 +143,7 @@ export function ButcheredDialog({ combat }: { combat: CombatView }) {
         </p>
         <button
           type="button"
+          data-escape
           className="primary"
           onClick={(e) => {
             e.stopPropagation();

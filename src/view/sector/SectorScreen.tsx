@@ -457,7 +457,7 @@ export function SectorPicker({ view, title }: { view: Snapshot; title: string })
       <section className="sheet sector-picker" role="dialog" aria-modal="true" aria-labelledby="picker-title">
         <div className="sheet-head" style={{ alignItems: 'center' }}>
           <h2 id="picker-title">{title}</h2>
-          <button type="button" className="icon-button" aria-label="Zurück zur Erschaffung" onClick={() => game.closePicker()}>
+          <button data-escape type="button" className="icon-button" aria-label="Zurück zur Erschaffung" onClick={() => game.closePicker()}>
             <CloseIcon />
           </button>
         </div>
