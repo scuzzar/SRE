@@ -216,3 +216,29 @@ describe('Referenzdaten', () => {
     expect(() => ReferenceDataSchema.parse(broken)).toThrow(/navy.cash.1 bringt mehr als eins/);
   });
 });
+
+describe('Tiere', () => {
+  const animals = referenceData.encounters.animals;
+  it('die Spalten der Tiertabelle: 2W6, Wurf 10 ist das Ereignis', () => {
+    expect(animals.columns.map((c) => c[0]!.toUpperCase()).join('')).toBe('SOSOHHHCECC');
+  });
+  it('jede Zeile der Animal Types verweist auf eine Tierart ihrer Kategorie, je Kategorie 0 bis 13', () => {
+    for (const row of animals.typeRows) expect(animals.types.find((t) => t.id === row.type)?.category).toBe(row.category);
+    for (const category of ['herbivore', 'omnivore', 'carnivore', 'scavenger']) expect(animals.typeRows.filter((r) => r.category === category).map((r) => r.roll)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+  });
+  it('Gelände: Tiere überall außer in Stadt, Gebäude und Arktis; die alten Geländearten bleiben', () => {
+    const terrains = referenceData.encounters.terrains;
+    expect(terrains.filter((t) => t.typeDm === undefined).map((t) => t.id)).toEqual(['arctic', 'city', 'interior']);
+    expect(terrains.find((t) => t.id === 'depths' || t.id === 'maritime-subsurface')).toMatchObject({ dm: -1, typeDm: 2, sizeDm: 4, traits: 'sea' });
+  });
+  it('die Tierwaffen stehen in der Matrix, ohne Gegenstand im Shop', () => {
+    const weapon = (id: string) => referenceData.weapons.find((w) => w.id === id)!;
+    expect(weapon('claws')).toMatchObject({ wounds: 2 });
+    expect(weapon('stinger').atRange.map((r) => r.dm)).toEqual([4, 2, undefined, undefined, undefined]);
+    expect(referenceData.items.some((i) => ['claws', 'teeth', 'horns', 'hooves', 'stinger', 'thrasher'].includes(i.weapon ?? ''))).toBe(false);
+  });
+  it('Ereignisse: vier mit Rettungswurf, fünf für Welten ohne Leben', () => {
+    expect(animals.events.filter((e) => e.save).map((e) => `${e.id} ${e.save} ${e.damage}`)).toEqual(['poisonous-pests DEX 3', 'stampede 8+ 2', 'flash-flood 9+ 3', 'seismic-quake STR 1']);
+    expect(animals.events.filter((e) => e.lifeless)).toHaveLength(5);
+  });
+});
