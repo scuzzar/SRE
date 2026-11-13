@@ -254,6 +254,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Campaign./capacity`, `Campaign./burden`; entfallen: `Butchering.for` (die Jagdbeute geht ins
 > Gepäck). Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-13-gruppengepaeck.png`](changes/2026-11-13-gruppengepaeck.png).
+>
+> **Wartet auf Freigabe** (13. November 2026): **Abgleich mit OneDrive** (siehe *Abgleich mit
+> OneDrive*). Nach den Antworten des Owners: automatisch, im App-Ordner, bei einem Konflikt fragt
+> die App. Neu im Bild: `Campaign.key`, `Campaign.changedAt` und der flüchtige `Conflict`. Der
+> Ausschnitt dazu liegt unter
+> [`changes/2026-11-13-abgleich-onedrive.png`](changes/2026-11-13-abgleich-onedrive.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -282,7 +288,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+[Abgleich mit OneDrive](changes/2026-11-13-abgleich-onedrive.png).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -303,6 +309,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Kampagne | `Campaign` | Alles, was zu einem Spiel gehört; die oberste Ebene |
 | Offene Kampagne | (Zustand des Controllers) | Die Kampagne, in der man gerade spielt |
 | Kampagnendatei | `CampaignFile` | Eine Kampagne als JSON-Datei, zum Sichern und Weitergeben |
+| Abgleich | (Ablauf im Controller) | Die Kampagnen dieses Geräts und die in OneDrive auf denselben Stand bringen |
+| Schlüssel | `Campaign.key` | Woran der Abgleich eine Kampagne auf jedem Gerät wiedererkennt; zufällig, weltweit eindeutig |
+| Änderungszeit | `Campaign.changedAt` | Wann der gespeicherte Stand der Kampagne zuletzt geändert wurde |
+| Abgleichsmarke | (merkt sich das Gerät) | Je Kampagne: mit welcher Änderungszeit und welcher Fassung in OneDrive dieses Gerät zuletzt gleich war |
+| Konflikt | `Conflict` | Dieselbe Kampagne wurde seit dem letzten Abgleich hier und in OneDrive geändert; der Spieler wählt |
 | Charakter | `Character` | Ein Spielercharakter mit seiner Charakterkarte |
 | Charakter oben | `Campaign.focus` | Der Charakter, der oben im Orakel-Screen steht; für ihn würfelt man Proben |
 | Tot | `Character.dead` | Der Charakter ist in der Geschichte gestorben; er bleibt in der Kampagne |
@@ -524,6 +535,53 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   gegen die Regeln dieses Modells geprüft, auch jeder Verweis in die Referenzdaten und auf die
   eigenen Charaktere; ist etwas falsch, wird nichts importiert. Ein Import legt immer eine neue
   Kampagne an, auch wenn es dieselbe schon gibt, und überschreibt nie eine bestehende.
+- **Abgleich mit OneDrive** (2026-11-13c, wartet auf Freigabe). Wer sich in der Kampagnenwahl bei
+  Microsoft anmeldet, hat seine Kampagnen auf jedem Gerät, auf dem er das auch tut. Ohne Anmeldung
+  bleibt alles wie bisher: nur auf dem Gerät.
+  - *Wo.* Im App-Ordner des OneDrive (`Apps/Solo RPG Engine`), je Kampagne eine Kampagnendatei, die
+    nach dem Schlüssel heißt (`<key>.json`). Die App darf nur diesen Ordner lesen und schreiben.
+    Die Datei dort enthält zusätzlich Schlüssel und Änderungszeit.
+  - *Schlüssel.* Jede Kampagne bekommt beim Anlegen einen zufälligen, weltweit eindeutigen
+    `key`. Die Id einer Kampagne (`k1`, `k2`, …) gilt nur auf dem Gerät und taugt dafür nicht: Zwei
+    Geräte haben beide eine `k1`. Ein Import legt weiter eine neue Kampagne an, mit neuem Schlüssel.
+    Kampagnen von vor dieser Regel bekommen beim Laden einen Schlüssel; die Demo-Kampagne zweier
+    Geräte sind danach zwei Kampagnen.
+  - *Änderungszeit.* Jede Änderung am gespeicherten Stand der Kampagne setzt `changedAt` auf jetzt
+    (auch Umbenennen und der Charakter oben; Entwürfe und was sich nur das Gerät merkt nicht).
+    Kampagnen von vor dieser Regel bekommen die Zeit ihres letzten Logeintrags, ohne Log die des
+    Ladens. Die Änderungszeit entscheidet nie, welcher Stand gewinnt (Uhren gehen verschieden); sie
+    sagt nur, ob sich hier etwas geändert hat, und der Spieler liest sie im Konflikt.
+  - *Abgleichsmarke.* Je Kampagne merkt sich das Gerät, mit welcher Änderungszeit und welcher
+    Fassung der Datei in OneDrive es zuletzt gleich war, und ob die Kampagne seither hier gelöscht
+    wurde. Zum Spielstand gehört das nicht, wie die offene Kampagne; es steht nicht im Bild. *Hier
+    geändert* heißt: Die Änderungszeit ist eine andere als in der Marke. *Dort geändert* heißt:
+    OneDrive hat eine andere Fassung als in der Marke.
+  - *Wann.* Beim Start der App, wenn sie wieder in den Vordergrund kommt, und kurz nach jeder
+    Änderung. Ohne Netz spielt man weiter; der nächste Abgleich holt nach.
+  - *Was der Abgleich je Kampagne tut:*
+
+    | Hier | In OneDrive | Folge |
+    |---|---|---|
+    | neu, ohne Marke | fehlt | hochladen |
+    | fehlt, ohne Marke | neu | herunterladen |
+    | geändert | unverändert | hochladen |
+    | unverändert | geändert | herunterladen; der Stand hier wird ersetzt |
+    | gelöscht | unverändert | in OneDrive löschen |
+    | unverändert | gelöscht | hier löschen |
+    | geändert oder gelöscht | geändert oder gelöscht, und nicht beide gelöscht | **Konflikt** |
+
+    Wird die offene Kampagne ersetzt, sind offene Karte, Probe und Angriff in Vorbereitung weg, wie
+    beim Wechseln. Wird sie gelöscht, öffnet sich die erste nach Namen. Die letzte Kampagne des
+    Geräts wird nie gelöscht; sie bleibt und wird wieder hochgeladen.
+  - *Konflikt.* Der Abgleich ändert an dieser Kampagne nichts und fragt. Der `Conflict` hält beide
+    Stände (`local`, `remote`; einer fehlt, wenn die Kampagne auf der Seite gelöscht ist) und zeigt
+    je Stand Änderungszeit und Zahl der Logeinträge. Der Spieler wählt **„Dieses Gerät“** (der
+    Stand hier gilt und wird hochgeladen) oder **„OneDrive“** (der Stand dort gilt und ersetzt den
+    hier). Solange er nicht wählt, spielt er hier weiter, und die Kampagne wird nicht abgeglichen.
+    Der Konflikt ist flüchtig: Nach einem Neustart findet ihn der Abgleich wieder.
+  - *Abmelden* lässt die Kampagnen auf dem Gerät und in OneDrive, wie sie sind, und löscht die
+    Abgleichsmarken.
+- **Kampagnendatei, ältere Fassungen.**
   - *Dateien und Spielstände von vor 2026-11-08c* (NSC der Begegnung als Charaktere) werden beim
     Laden umgeschrieben: Jeder NSC wird ein Charakter der Begegnung mit derselben Id, wie unter
     *Begegnung* beschrieben (Fertigkeit als Stufe, Waffe und Rüstung im Besitz, eine Schusswaffe
@@ -1780,6 +1838,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
+- **Abgleich mit OneDrive** (2026-11-13c) ist noch nicht umgesetzt: `Campaign.key`,
+  `Campaign.changedAt`, `Conflict`, Abgleichsmarke und der Abgleich selbst fehlen im Code.
 
 - **`Gain` in den Daten.** Im Bild bringt eine Zeile ein Attribut über einen Verweis (`changes`);
   in `src/data/services.json` steht das Attribut als Feld `characteristic` neben `change`, weil
