@@ -1054,7 +1054,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Später**: Medical Drugs, Wunden mit Zeit, Fahrzeuge, Überraschung, Entfernung,
     Moral und Kampfrunden.
 - **Reiter Begegnung und zwei Modi im Reiter Kampf.** Der Reiter **Begegnung** zeigt oben den
-  Aufenthaltsort und darunter eine Liste der **Begegnungsarten**, je Art eine Karte mit ihren
+  Aufenthaltsort, das Gelände und den Würfel der Anzahl als allgemeine Einstellungen für alle Arten und
+  darunter eine Liste der **Begegnungsarten**, je Art eine Karte mit ihren
   Einstellungen und ihrem Wurf: zurzeit die Zufallsbegegnung und der Patron (siehe *Patron*); weitere
   Arten kommen als weitere Karten dazu. Die Zufallsbegegnung würfelt oder wählt man in ihrer Karte;
   die Übersicht danach führt zurück in den Reiter Begegnung, denn nicht jede

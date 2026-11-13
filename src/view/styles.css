@@ -4507,6 +4507,11 @@ button:disabled {
   gap: 8px;
 }
 
+/* Oben im Reiter Begegnung: der Aufenthaltsort über die ganze Breite, darunter Gelände und Würfel der Anzahl. */
+.encounter-settings > .location-pick {
+  grid-column: 1 / -1;
+}
+
 /* Die laufende Zufallsbegegnung steht in ihrer Karte, ohne eigenen Rahmen. */
 .encounter-kind .encounter-running {
   padding: 0;
