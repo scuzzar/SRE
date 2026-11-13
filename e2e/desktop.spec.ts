@@ -133,10 +133,10 @@ test('Die Charakterspalte blendet ein, was der Bereich braucht; ein Klick auf ei
   await kira.getByRole('button', { name: /Automatic Pistol/ }).click();
   await expect(page.getByRole('heading', { name: 'Automatic Pistol' })).toBeVisible();
 
-  // Im Shop: Credits und Besitz; Jonas per Klick auf seine Karte nach oben, dann kauft man für ihn.
+  // Im Shop: Credits und was er ausgerüstet hat; Jonas per Klick auf seine Karte nach oben, dann kauft man für ihn.
   await nav.getByRole('button', { name: 'Shop', exact: true }).click();
   await expect(kira).toContainText('Cr 12.400');
-  await expect(kira).toContainText('Besitz');
+  await expect(kira).toContainText('Ausgerüstet');
   await expect(jonas).toContainText('Blade');
   await jonas.locator('.upp').click();
   await expect(jonas).toHaveClass(/focus/);
@@ -190,3 +190,21 @@ test('In der Kampfsimulation entfällt die Charakterspalte; die Arena führt die
   await expect(page.getByRole('complementary', { name: 'Charakterspalte' })).toBeVisible();
 });
 
+
+test('Ausrüstung und Gepäck: per Ziehen von SC zu SC und zurück ins Gepäck', async ({ page }, testInfo) => {
+  onlyDesktop(testInfo);
+  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Charaktere', exact: true }).click();
+  const kira = page.getByRole('group', { name: 'Ausrüstung von Kira Vant' });
+  const jonas = page.getByRole('group', { name: 'Ausrüstung von Jonas Reyl' });
+  const pack = page.getByRole('list', { name: 'Gepäck' });
+  // Kiras Automatic Pistol auf Jonas' Primärwaffe: Seine Blade kommt ins Gepäck.
+  await kira.getByLabel(/Kira Vant, Primär: Automatic Pistol/).dragTo(jonas.getByLabel(/Jonas Reyl, Primär/));
+  await expect(jonas.getByLabel(/Jonas Reyl, Primär/)).toContainText('Automatic Pistol');
+  await expect(kira.getByLabel(/Kira Vant, Primär/)).toContainText('Hände');
+  await expect(pack).toContainText('Blade');
+  // Zurück ins Gepäck ziehen legt sie ab.
+  await jonas.getByLabel(/Jonas Reyl, Primär: Automatic Pistol/).dragTo(pack);
+  await expect(pack).toContainText('Automatic Pistol');
+  // Die Last steht als Balken über dem Gepäck.
+  await expect(page.locator(".stash-load")).toContainText(/Last [\d,]+ \/ [\d,]+ kg/);
+});

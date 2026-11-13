@@ -329,7 +329,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Ergebnis | `OracleAnswer`, `DiceRoll`, `CardPick`, `TaskResult`, `AttackResult`, `DamageRoll`, `PatronRoll`, `RumorRoll` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
 | Schreibzeile | (Fragefeld) | Das eine Textfeld über den Knöpfen; was der Text wird, entscheidet der Knopf |
 | Desktop-Modus | (View, media query) | Das Layout ab 1024 px Bildschirmbreite: Unter der Reiterzeile mit den fünf Bereichen (ohne Orakel, beim Start Sektor) stehen drei Spalten: links das Orakel mit Log, Schreibzeile und Knöpfen, daneben die Charakterspalte, rechts der gewählte Bereich, höchstens 960 px breit, die Sektor-Karte in die Höhe eingepasst; darunter gilt das mobile Layout. Gleiche Screens, gleiche Komponenten |
-| Charakterspalte | (View, Desktop-Modus) | Die Spalte mit allen lebenden Charakteren untereinander, immer mit Attributen und Fertigkeiten für Proben; dazu, was der Bereich daneben braucht: im Kampf Rüstung, Waffen und Heilen, im Shop Credits und Besitz. Die Karte des Charakters oben ist hervorgehoben, ein Klick auf eine andere holt sie nach oben, eine Fertigkeit darauf zugleich mit Probe. Entfällt im Bereich Charaktere und in der Kampfsimulation |
+| Charakterspalte | (View, Desktop-Modus) | Die Spalte mit allen lebenden Charakteren untereinander, immer mit Attributen und Fertigkeiten für Proben; dazu, was der Bereich daneben braucht: im Kampf Rüstung, Waffen und Heilen, im Shop Credits und was er ausgerüstet hat. Die Karte des Charakters oben ist hervorgehoben, ein Klick auf eine andere holt sie nach oben, eine Fertigkeit darauf zugleich mit Probe. Entfällt im Bereich Charaktere und in der Kampfsimulation |
 | Würfelwurf (2W6) | `DiceRoll` | Ein einfacher Wurf mit zwei Würfeln |
 | Inspirationskarte | `Card` | Eine gezogene Karte, solange sie offen ist |
 | Kartenauswahl | `CardPick` | Was man von einer Karte in den Log übernimmt, mit der Frage |
@@ -1780,10 +1780,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
-- **Gruppengepäck** (freigegeben am 13. November 2026): Der Code hat noch kein Gepäck; die
-  Gegenstände liegen weiter am Charakter, Last, Traglast und Belastung fehlen, der Shop fragt noch
-  nach dem Anlegen, Beute und Jagdbeute gehen an einen gewählten SC (`Butchering.for`). Wird gerade
-  umgesetzt.
 
 - **`Gain` in den Daten.** Im Bild bringt eine Zeile ein Attribut über einen Verweis (`changes`);
   in `src/data/services.json` steht das Attribut als Feld `characteristic` neben `change`, weil

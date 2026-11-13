@@ -1431,7 +1431,7 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
   const pendingHit = pending === undefined ? undefined : (campaign.log[pending] as AttackResult);
   const encounter = currentEncounter(campaign);
   const pc = fighterOf(campaign, character.id);
-  const ammo = ammoOf(character);
+  const ammo = ammoOf(character, campaign.stash);
   return {
     character: character.name,
     attacker: attacker.name,
@@ -1695,7 +1695,7 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
         if (!(error instanceof DomainError)) throw error;
       }
     }
-    const ammo = ammoOf(anyCharacterOf(campaign, turn.id));
+    const ammo = ammoOf(anyCharacterOf(campaign, turn.id), campaign.stash);
     const options = turnAttacks(campaign, turn, valid ? target : undefined, simBurst, simWeakened);
     turnView = {
       id: turn.id,
@@ -1813,7 +1813,7 @@ function turnAttacks(campaign: Campaign, turn: FightSlot, target: string | undef
         canWeaken: turn.side === 'pcs' && (strike === 'combat' || (strike === 'weakened' && simWeakened === true)),
       };
     }
-    const ammo = ammoOf(anyCharacterOf(temp, character.id));
+    const ammo = ammoOf(anyCharacterOf(temp, character.id), temp.stash);
     return {
       slot,
       weapon,

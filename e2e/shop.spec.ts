@@ -56,7 +56,7 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
   await page.getByRole('button', { name: 'Einzahlung buchen' }).click();
   await expect(page.locator('.shop-funds')).toContainText('Cr 6.000');
 
-  // Ein Tipp kauft genau eins; das Abzeichen zählt, wie viele Kira hat. Zweimal Munition: zwei Magazine.
+  // Ein Tipp kauft genau eins; das Abzeichen zählt, wie viele die Gruppe hat. Zweimal Munition: zwei Magazine.
   await page.getByRole('tab', { name: 'Waffen' }).click();
   // Der Hinweis über den Waffen lässt sich wegklicken und bleibt weg.
   await page.getByRole('button', { name: 'Hinweis ausblenden' }).click();
@@ -93,7 +93,16 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
   await expect(page.locator('.shop-booking').first()).toContainText('1 × Blade von Jonas Reyl auf Kessra');
   await characters(page).getByRole('button', { name: 'Kira Vant nach oben' }).click();
 
-  // Kira hatte schon die Automatic Pistol; der Spear wird ihre Sekundärwaffe.
+  // Jede gekaufte Waffe wurde Kiras Primärwaffe: zuletzt die Submachinegun, in der Hand. Spear und
+  // Automatic Pistol liegen im Gepäck; die Spear rüstet sie dort als Sekundärwaffe aus.
+  await page.getByRole('navigation').getByRole('button', { name: 'Kampf' }).click();
+  await expect(page.getByRole('heading', { name: 'Submachinegun' })).toBeVisible();
+  await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
+  const pack = page.getByRole('list', { name: 'Gepäck' });
+  await expect(pack).toContainText('Automatic Pistol');
+  await page.getByLabel('Spear ausrüsten').selectOption({ label: 'Kira · Sekundär' });
+  await expect(page.getByRole('group', { name: 'Ausrüstung von Kira Vant' })).toContainText('Spear');
+  await expect(pack).not.toContainText('Spear');
   await page.getByRole('navigation').getByRole('button', { name: 'Kampf' }).click();
   await page.getByRole('group', { name: 'Waffe in der Hand' }).first().getByRole('button', { name: /Spear/ }).click();
   await expect(page.getByRole('heading', { name: 'Spear' })).toBeVisible();

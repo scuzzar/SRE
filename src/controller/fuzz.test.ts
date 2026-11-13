@@ -45,9 +45,11 @@ const steps: readonly [string, Step][] = [
     const target = f[p(f.length)]!;
     g.openLoot(target.id);
     const pc = pcs[p(pcs.length)]!.id;
-    if (target.loot!.action === 'butcher') { g.butcher(target.id, pc); g.closeButchered(); } else g.takeLoot(target.id, pc);
+    if (target.loot!.action === 'butcher') { g.butcher(target.id); g.closeButchered(); } else g.takeLoot(target.id, pc);
   }],
-  ['sellGame', (g, p) => { const s = g.snapshot().shop; const m = s?.members.filter((x) => x.sellable.some((i) => i.perKg !== undefined)) ?? []; if (s?.world && m.length) { const who = m[p(m.length)]!; const it = who.sellable.find((i) => i.perKg !== undefined)!; g.sellGame(it.id, 1 + p(it.count), 1 + p(50), who.id); } }],
+  ['sellGame', (g, p) => { const s = g.snapshot().shop; const game = s?.stash.filter((i) => i.perKg !== undefined) ?? []; if (s?.world && game.length) { const it = game[p(game.length)]!; g.sellGame(it.id, 1 + p(it.count), 1 + p(50)); } }],
+  ['equip', (g, p) => { const st = g.snapshot().stash; const items = st.items.filter((i) => i.fits.length > 0); if (!items.length || !st.members.length) return; const it = items[p(items.length)]!; g.equip(st.members[p(st.members.length)]!.id, it.fits[p(it.fits.length)]!, { key: it.key }); }],
+  ['unequip', (g, p) => { const st = g.snapshot().stash; if (!st.members.length) return; const m = st.members[p(st.members.length)]!; const full = m.slots.filter((x) => x.item !== undefined); if (full.length) g.unequip(m.id, full[p(full.length)]!.slot); }],
   ['surprise', (g) => { if (g.snapshot().combat?.sim?.needsSurprise) g.rollSurprise(); else g.closeSurprise(); }],
   ['end', (g) => g.snapshot().combat?.sim && g.endEncounter()],
   ['target', (g, p) => { const f = g.snapshot().combat?.sim?.fighters.filter((x) => x.targetable) ?? []; if (f.length) g.chooseFightTarget(f[p(f.length)]!.id); }],

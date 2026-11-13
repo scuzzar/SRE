@@ -461,11 +461,11 @@ describe('Shop und Gruppenkasse', () => {
     expect(shop.weapons.find((w) => w.item.id === 'dagger')).toMatchObject({ attack: 'swing', ammo: undefined });
     expect(shop.armor.find((a) => a.id === 'jack')).toMatchObject({ owned: 1 });
     expect(shop.gear.map((g) => g.kind)).toEqual(['equipment', 'vehicle', 'passage']);
-    // Der Charakter oben wechselt: Die Theke zeigt, was Jonas taugt und hat.
+    // Der Charakter oben wechselt: Die Theke zeigt, was Jonas taugt; vorhanden ist, was die Gruppe hat.
     game.focusCharacter('c2');
     shop = game.snapshot().shop!;
     expect(shop.owner).toBe('c2');
-    expect(shop.weapons.find((w) => w.item.id === 'rifle')!.ammo!.owned).toBe(0);
+    expect(shop.weapons.find((w) => w.item.id === 'rifle')!.ammo!.owned).toBe(2);
   });
 
   it('verkauft aus dem Besitz eines Charakters, mit dem vorgeschlagenen halben Preis', async () => {
@@ -1480,7 +1480,7 @@ describe('Tiere im Kampf', () => {
     expect(['unconscious', 'dead', 'destroyed']).toContain(after.state);
   });
 
-  it('Ausweiden: der Knopf am Tier öffnet den Dialog, das Ergebnis steht im Vordergrund und im Log, die Beute im Besitz', async () => {
+  it('Ausweiden: der Knopf am Tier öffnet den Dialog, das Ergebnis steht im Vordergrund und im Log, die Beute im Gepäck', async () => {
     const { game, random } = await withAnimals();
     game.rollSurprise();
     game.closeSurprise();
@@ -1507,9 +1507,11 @@ describe('Tiere im Kampf', () => {
     game.openLoot(animal.id);
     expect(game.snapshot().combat!.loot).toMatchObject({ animal: true, meatWorker: 'Jonas · Steward-1', furWorker: 'Jonas · Blade-1' });
     random.queue.push(3);
-    game.butcher(animal.id, 'c1');
+    game.butcher(animal.id);
     const shown = game.snapshot().combat!.butchered!;
-    expect(shown).toMatchObject({ receiver: 'Kira Vant', meatWorker: 'Jonas · Steward-1', furWorker: 'Jonas · Blade-1' });
+    expect(shown).toMatchObject({ meatWorker: 'Jonas · Steward-1', furWorker: 'Jonas · Blade-1' });
+    // Die Jagdbeute liegt im Gepäck der Gruppe.
+    expect(game.snapshot().stash.items.some((i) => i.kind === 'game')).toBe(true);
     expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'butchering' });
     game.closeButchered();
     expect(game.snapshot().combat!.butchered).toBeUndefined();

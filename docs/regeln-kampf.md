@@ -58,7 +58,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Besondere Fälle](#besondere-fälle) (Ziehen, Werfen, Autofeuer, Schrot, Coup de Grâce, Nachladen) | SR 26 | ◐ (Nachladen, Autofeuer, Schrot) |
 | [Deckung, Verbergen, Dunkelheit](#deckung-und-verbergen) | SE 5, SR 26–27 | ○ |
 | [Schwerelosigkeit](#schwerelosigkeit) | SE 5, SR 27, B4 16 | ○ |
-| [Traglast und Schwerkraft](#traglast-und-schwerkraft) | SE 5, SR 22 | ○ |
+| [Traglast und Schwerkraft](#traglast-und-schwerkraft) | SE 5, SR 22 | ◐ |
 | [Typische Aktionen](#typische-aktionen) | SE 5, SR 23 | ◐ |
 | [Wunden und Tod](#wunden-und-tod) | SE 7, SR 21 | ✔ |
 | [Medizinische Versorgung](#medizinische-versorgung) | SE 7, SR 21 | ✔, Drogen ○ |
@@ -902,7 +902,7 @@ Schwerelosigkeit die Kontrolle kosten.
 
 ### Traglast und Schwerkraft
 
-*SE 5, „Weight Limitations“ und „Gravitational Effects“; SR 22, „Weight“.* App: ○
+*SE 5, „Weight Limitations“ und „Gravitational Effects“; SR 22, „Weight“.* App: ◐ – als Hausregel für die ganze Gruppe statt je Person (Gruppengepäck, siehe Domänenmodell *Gruppengepäck und Traglast*): Traglast = Summe der STR der lebenden SC nach der Schwerkraft der Welt; darüber STR, DEX, END aller SC −1, über dem Doppelten −2 (mindestens 1), für Wunden und Bewusstlosigkeit. Triple Load (nur militärische Einheiten) und die Dichtekonstante fehlen.
 
 | Last | Erlaubt | Wirkung |
 |---|---|---|

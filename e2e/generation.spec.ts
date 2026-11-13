@@ -111,7 +111,7 @@ test('Charaktererschaffung: Attribute einzeln, Laufbahn, Terms, Abmusterung, Nam
   await expect(mara).toContainText('Heimatwelt');
 });
 
-test('Besitz: Gegenstand aus der Liste mit Anzahl, in den Details', async ({ page }) => {
+test('Besitz: Gegenstand aus der Liste mit Anzahl; was der SC nicht ausrüstet, kommt ins Gepäck', async ({ page }) => {
   await openCharacters(page);
   const kira = host(page).getByRole('article', { name: 'Kira Vant' });
   await kira.getByRole('button', { name: 'Bearbeiten' }).click();
@@ -120,8 +120,11 @@ test('Besitz: Gegenstand aus der Liste mit Anzahl, in den Details', async ({ pag
   await editor.getByLabel('Anzahl Low Passage').fill('2');
   await editor.getByRole('button', { name: 'Speichern' }).click();
   await kira.getByRole('button', { name: /Kira Vant/ }).click();
-  // Was sie schon als Beispielcharakter besitzt, steht davor.
-  await expect(kira).toContainText('Automatic Pistol, Jack, Vacc Suit (TL 12), 2 × Low Passage');
+  // Am SC bleibt, was er ausgerüstet hat; die Passagen kommen zum Vacc Suit ins Gruppengepäck.
+  await expect(kira).toContainText('Automatic Pistol, Jack');
+  const pack = page.getByRole('list', { name: 'Gepäck' });
+  await expect(pack).toContainText('2 × Low Passage');
+  await expect(pack).toContainText('Vacc Suit (TL 12)');
 });
 
 /** Drückt lange auf einen Knopf, bis er sich gefüllt hat. */
