@@ -1524,7 +1524,7 @@ E = gleich groß, kein DM.
 
 ## Tierbegegnungen
 
-*SE 18–19, „Animal Encounters“; SR 46–49.* App: ✔ Tiertabellen je Welt und Gelände, Tierbegegnung, Tiere im Kampf (Hits, fester Schaden, Tierrüstung, Geschwindigkeit; Regeln in `domain-model.md` unter *Tiere*); ✔ besondere Angriffe (Filter, Trapper, Siren mit Köder, Losreißen); ✔ Ereignisse im Log, Rettungswürfe mit Schaden (Stampede, Poisonous Pests, Flash Flood, Seismic Quake). ○ Gewicht ±20 %, zerstörte Tiere, Jagd und Fleisch, Psionik. Die Tierwaffen stehen schon in der
+*SE 18–19, „Animal Encounters“; SR 46–49.* App: ✔ Tiertabellen je Welt und Gelände, Tierbegegnung, Tiere im Kampf (Hits, fester Schaden, Tierrüstung, Geschwindigkeit; Regeln in `domain-model.md` unter *Tiere*); ✔ besondere Angriffe (Filter, Trapper, Siren mit Köder, Losreißen); ✔ Ereignisse im Log, Rettungswürfe mit Schaden (Stampede, Poisonous Pests, Flash Flood, Seismic Quake). ✔ zerstörte Tiere, essbar und Fleisch (dazu Fell und Preise als Hausregel, siehe `domain-model.md` unter *Beute*). ○ Gewicht ±20 %, Führer, Psionik. Die Tierwaffen stehen schon in der
 [Waffenmatrix](#waffen--und-reichweitenmatrix). Wie oft Tiere begegnen, steht unter
 [Häufigkeit](#häufigkeit-von-begegnungen).
 

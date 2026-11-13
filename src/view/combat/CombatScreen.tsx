@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { DiceRoll } from '../oracle/DiceRoll';
 import type { CombatView, HealingView, Snapshot } from '../../controller';
 import { EncounterIntro, FightScreen, SurpriseDialog } from './FightScreen';
+import { ButcheredDialog, LootDialog } from './LootDialogs';
 import { FireToggle } from './FireToggle';
 import { armorText, attackText, characteristicLabel, hex, partLabel, rangeMeters, rangeShort, rangeText, rangeTiny, signed } from '../format';
 import { CloseIcon } from '../icons';
@@ -39,7 +40,7 @@ export function CombatScreen({ view }: { view: Snapshot }) {
           <p className="log-empty">Ohne lebenden Charakter gibt es keinen Angriff.</p>
         </section>
       ) : combat.sim ? (
-        <FightScreen combat={combat} onHeal={setPatient} quiet={view.result !== undefined || combat.wounding !== undefined} />
+        <FightScreen combat={combat} onHeal={setPatient} quiet={view.result !== undefined || combat.wounding !== undefined || combat.butchered !== undefined} />
       ) : (
         <>
           <section className="scroll combat-scroll" aria-label="Waffentabelle">
@@ -51,6 +52,8 @@ export function CombatScreen({ view }: { view: Snapshot }) {
       )}
       {combat?.intro && combat.sim && <EncounterIntro sim={combat.sim} />}
       {combat?.surpriseShown && combat.sim && !combat.intro && <SurpriseDialog sim={combat.sim} />}
+      {combat?.loot && <LootDialog key={combat.loot.id} combat={combat} />}
+      {combat?.butchered && <ButcheredDialog key={combat.butchered.at} combat={combat} />}
       {combat?.wounding && <WoundingDialog key={`${combat.wounding.victim}-${combat.wounding.dice.join('-')}-${view.log.length}`} combat={combat} />}
       {combat && patient && healing && <HealDialog key={patient.npc ?? patient.pc ?? 'pc'} patient={patient} healing={healing} note={combat.note} onClose={() => setPatient(undefined)} />}
     </div>

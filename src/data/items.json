@@ -1138,5 +1138,17 @@
     "name": "Travellers' Aid Society",
     "kind": "membership",
     "once": true
+  },
+  {
+    "id": "meat",
+    "name": "Fleisch (kg)",
+    "kind": "game",
+    "weight": 1
+  },
+  {
+    "id": "fur",
+    "name": "Fell (kg)",
+    "kind": "game",
+    "weight": 1
   }
 ]

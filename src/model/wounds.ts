@@ -12,7 +12,7 @@ export interface Wounds {
   readonly end: number;
 }
 
-export type WoundState = 'unhurt' | 'wounded' | 'unconscious' | 'serious' | 'dead';
+export type WoundState = 'unhurt' | 'wounded' | 'unconscious' | 'serious' | 'dead' | 'destroyed';
 
 const key = { STR: 'str', DEX: 'dex', END: 'end' } as const;
 
@@ -176,6 +176,8 @@ export function hurtOf(campaign: Campaign, who: CharacterId): number {
 
 /** Der Zustand eines Tiers nach seinen Hits: die erste Zahl erreicht bewusstlos, beide zusammen tot (SR 47). */
 export function animalState(hits: readonly [number, number], hurt: number): WoundState {
+  // Das Doppelte der Hits zerstört das Tier: kein Fleisch, kein Fell (SR 47).
+  if (hurt >= 2 * (hits[0] + hits[1])) return 'destroyed';
   if (hurt >= hits[0] + hits[1]) return 'dead';
   if (hurt >= hits[0]) return 'unconscious';
   return hurt > 0 ? 'wounded' : 'unhurt';
@@ -184,6 +186,11 @@ export function animalState(hits: readonly [number, number], hurt: number): Woun
 /** Ist das ein Tier? */
 export function isAnimal(campaign: Campaign, who: CharacterId): boolean {
   return anyCharacterOf(campaign, who).animal !== undefined;
+}
+
+/** Tot oder (ein Tier) zerstört. */
+export function isDead(state: WoundState): boolean {
+  return state === 'dead' || state === 'destroyed';
 }
 
 /** Wer bewusstlos, schwer verwundet oder tot ist, greift nicht an. */
@@ -330,7 +337,7 @@ export function recoveryOptions(campaign: Campaign, who: CharacterId): RecoveryO
   const history = historyOf(campaign.log, uppOf(campaign, who), who);
   const state = woundStateOf(campaign, who);
   const hurt = history.wounds.str + history.wounds.dex + history.wounds.end > 0;
-  const treatable = hurt && state !== 'dead';
+  const treatable = hurt && !isDead(state);
   const healers = livingCharacters(campaign).map((c) => {
     const level = medicalLevel(campaign, c.id);
     const awake = canFight(woundStateOf(campaign, c.id));
@@ -357,7 +364,7 @@ export function recover(campaign: Campaign, how: RecoveryKind, who: CharacterId,
     if (!options.wake) throw new DomainError(`${name} ist nicht bewusstlos.`);
     return base;
   }
-  if (!options.treatable) throw new DomainError(woundStateOf(campaign, who) === 'dead' ? `${name} ist tot.` : `${name} ist nicht verwundet.`);
+  if (!options.treatable) throw new DomainError(isDead(woundStateOf(campaign, who)) ? `${name} ist tot.` : `${name} ist nicht verwundet.`);
   if (how === 'rest') {
     if (!options.rest) throw new DomainError('Eine schwere Wunde heilt ohne Behandlung nicht.');
     return base;

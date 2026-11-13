@@ -5,6 +5,7 @@ import type { EventResult, LogEntry } from './log';
 import type { Clock, Random } from './ports';
 import { animalName, animalRowOf, animalTypeOf, hasAnimals, terrainOf, withAnimalTable, type AnimalRef, type AnimalRow } from './animals';
 import { springTrap } from './hold';
+import { survivalGear } from './loot';
 import { encounterTypeOf, itemOf, nameSlotIds, ref, slotWithId, weaponOf, type EncounterType, type Item, type Range } from './reference';
 import { locationOf } from './shop';
 
@@ -216,6 +217,9 @@ interface NpcSetup {
   readonly armor?: string;
   /** Wie viele Magazine er zu einer Schusswaffe hat. */
   readonly magazines: number;
+  /** Seine Kredite (Hausregel) und die Überlebensausrüstung, die die Welt verlangt. */
+  readonly credits?: number;
+  readonly gear?: readonly string[];
 }
 
 /**
@@ -229,13 +233,14 @@ function npcCharacter(setup: NpcSetup): Character {
     { of: setup.weapon, count: 1 },
     ...(weapon.ammo !== undefined && setup.magazines > 0 ? [{ of: weapon.ammo, count: setup.magazines }] : []),
     ...(setup.armor === undefined ? [] : [{ of: setup.armor, count: 1 }]),
+    ...(setup.gear ?? []).filter((g) => g !== setup.armor).map((of) => ({ of, count: 1 })),
   ];
   return {
     id: setup.id,
     name: setup.name,
     background: `${setup.type.name}${setup.leader ? ' · Anführer' : ''}`,
     equipment: '',
-    credits: 0,
+    credits: setup.credits ?? 0,
     note: '',
     dead: false,
     retired: false,
@@ -279,6 +284,8 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
   const guns = weaponsUpTo(tl, true);
   const armors = armorsUpTo(tl, type.military === true);
   const heavyArmors = armorsUpTo(tl, true);
+  // Die Überlebensausrüstung, die die Welt verlangt (Charts S. 21).
+  const gear = survivalGear(world.uwp.atmosphere ?? 0, tl);
   // Die Ids der NSC bleiben über alle Begegnungen eindeutig, auch wenn einer übernommen ist.
   const first = nextNumber([...campaign.characters.map((c) => c.id), ...campaign.encounters.flatMap((e) => e.npcs.map((n) => n.id))], 'n');
   const npcs: Character[] = Array.from({ length: size }, (_, i) => {
@@ -289,7 +296,9 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
     const weapon = (leader ? best(guns) : pick(weapons, random)) ?? pick(blades, random)!;
     const armor = leader ? best(heavyArmors) : type.armor ? pick(armors, random) : undefined;
     const magazines = weaponOf(weapon.weapon!).ammo === undefined ? 0 : random.int(1, NPC_MAGAZINE_DIE);
-    return npcCharacter({ id: `n${first + i}`, name, type, leader, skill: leader ? 2 : 1, upp, weapon: weapon.id, ...(armor ? { armor: armor.id } : {}), magazines });
+    // Kredite nach der Art (Hausregel): 1W6 × Stufe, der Anführer das Zehnfache.
+    const credits = d6(random) * type.credits * (leader ? 10 : 1);
+    return npcCharacter({ id: `n${first + i}`, name, type, leader, skill: leader ? 2 : 1, upp, weapon: weapon.id, ...(armor ? { armor: armor.id } : {}), magazines, credits, gear });
   });
   const reactionDice = [d6(random), d6(random)] as const;
   const dm = populationDm(world.uwp.population) + veteranDm(campaign);

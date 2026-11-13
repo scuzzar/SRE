@@ -1745,6 +1745,12 @@ Diagramm mit diesen Ausnahmen:
 - **`Card → Campaign : in`, `Task → Campaign : in` und `Attack → Campaign : in`** sind im Code
   kein Feld. Der Controller hält höchstens eine offene Karte, höchstens eine Probe und höchstens
   einen Angriff, alle immer zur offenen Kampagne; beim Wechsel der Kampagne verfallen sie. Damit ist die Multiplizität erfüllt.
+- **Beute**: `Butchering.of` und `for` sind Ids von Tier bzw. SC; die Arbeiter (wer das Fleisch
+  macht, wer das Fell abzieht) hält nur die Anzeige gleich nach dem Ausweiden fest, der Log nur ihre
+  Stufen. Jagdbeute verkauft man im Shop nach kg mit einem Erlös für die ganze Menge (`sellGame`);
+  vorgeschlagen ist der halbe Listenpreis, abgerundet, mindestens 1 Cr. Beute nehmen nimmt dem NSC
+  alles auf einmal ab; Gegenstände, die man nur einmal haben kann und die der SC schon hat, bleiben
+  beim NSC. Erbeutete Waffen werden nicht von selbst Primär- oder Sekundärwaffe.
 - **Schaden aus einem Ereignis** verteilt im Code immer die App (beim ersten Treffer auf ein
   zufälliges Attribut, sonst jeden Block zufällig), auch bei einem SC nach seinem ersten Treffer;
   das Verteilen von Hand gibt es nur für Treffer. `SaveRoll./success` folgt aus Würfeln, Zielwert und

@@ -420,11 +420,66 @@ interface Selling {
 function SellDialog({ selling, shop, onClose }: { selling: Selling; shop: ShopView; onClose: () => void }) {
   const game = useGame();
   const { item } = selling;
-  const [count, setCount] = useState(1);
+  const game_ = item.perKg !== undefined;
+  const [count, setCount] = useState(game_ ? item.count : 1);
   const [price, setPrice] = useState(String(item.price));
   const each = Number(price);
   const valid = Number.isInteger(each) && each >= 1;
   const name = shop.members.find((m) => m.id === selling.member)?.name;
+  if (game_) {
+    // Jagdbeute: verkauft nach kg; vorgeschlagen ist der halbe Listenpreis für die gewählte Menge.
+    const suggest = (kg: number) => String(Math.max(1, Math.floor((kg * item.perKg!) / 2)));
+    return (
+      <div className="modal">
+        <section className="result shop-buy" role="dialog" aria-modal="true" aria-labelledby="sell-title">
+          <div className="sheet-head" style={{ alignItems: 'center' }}>
+            <h2 id="sell-title" className="shop-buy-title">
+              {item.label} verkaufen
+            </h2>
+            <button type="button" className="icon-button" aria-label="Schließen" onClick={onClose}>
+              <CloseIcon />
+            </button>
+          </div>
+          <p className="muted">
+            {name} hat {item.count} kg, {item.role}. Vorgeschlagen ist der halbe Listenpreis; nach Verhandlung lässt er sich ändern.
+          </p>
+          <div className="shop-book-row">
+            <label className="field">
+              <span>kg</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={item.count}
+                value={count}
+                onChange={(e) => {
+                  const kg = Math.min(item.count, Math.max(1, Math.floor(Number(e.target.value) || 1)));
+                  setCount(kg);
+                  setPrice(suggest(kg));
+                }}
+              />
+            </label>
+            <label className="field">
+              <span>Erlös gesamt (Cr)</span>
+              <input type="number" inputMode="numeric" min={1} value={price} onChange={(e) => setPrice(e.target.value)} />
+            </label>
+          </div>
+          <button
+            type="button"
+            className="primary"
+            disabled={!valid}
+            onClick={() => {
+              haptic('pick');
+              game.sellGame(item.id, count, each, selling.member);
+              onClose();
+            }}
+          >
+            {count} kg für {credits(valid ? each : 0)} verkaufen
+          </button>
+        </section>
+      </div>
+    );
+  }
   return (
     <div className="modal">
       <section className="result shop-buy" role="dialog" aria-modal="true" aria-labelledby="sell-title">

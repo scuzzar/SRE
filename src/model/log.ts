@@ -10,7 +10,7 @@ import { roll2d6, sum, type Characteristic, type Dice } from './rules';
  * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei Probe und Angriff DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Note;
+export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | Note;
 
 /** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
 export type LogResult = Exclude<LogEntry, Note>;
@@ -177,6 +177,20 @@ export interface SaveRoll extends LogEntryBase {
   readonly of: number;
   readonly dice: Dice;
   readonly target: number;
+}
+
+/**
+ * Das Ausweiden eines Tiers (Hausregel nach SR 48): wer die Beute bekommt (`for`), welches Tier
+ * (`of`), der Fleischwürfel, wenn die Art essbar ist, und die Stufen von damals in Steward/Medical
+ * (Fleisch) und Klinge (Fell).
+ */
+export interface Butchering extends LogEntryBase {
+  readonly kind: 'butchering';
+  readonly for: CharacterId;
+  readonly of: CharacterId;
+  readonly meatDie?: number;
+  readonly meatSkill: number;
+  readonly furSkill: number;
 }
 
 /** Wen ein Schaden trifft: das Ziel des Treffers bzw. wer den Rettungswurf nicht geschafft hat. */

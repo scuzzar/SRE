@@ -35,6 +35,13 @@ export interface Possession {
   readonly count: number;
   /** Bei Schusswaffen: so viele Schuss sind geladen; fehlt das Feld, ist sie voll. */
   readonly rounds?: number;
+  /** Bei Jagdbeute (Fleisch, Fell): die Zeile der Tiertabelle, aus der sie stammt; sie bestimmt den Preis. */
+  readonly from?: AnimalRef;
+}
+
+/** Ein Besitz ist eindeutig nach Gegenstand und, bei Jagdbeute, Herkunft. */
+export function possessionKey(p: { readonly of: string; readonly from?: AnimalRef }): string {
+  return p.from === undefined ? p.of : `${p.of}|${p.from.in}|${p.from.terrain}|${p.from.roll}`;
 }
 
 export interface Character {
@@ -407,8 +414,9 @@ export function validateCharacter(input: CharacterInput): void {
   const owned = new Set<string>();
   for (const possession of input.possessions ?? []) {
     const item = itemOf(possession.of);
-    if (owned.has(possession.of)) throw new DomainError(`${item.name} kommt doppelt vor.`);
-    owned.add(possession.of);
+    if (owned.has(possessionKey(possession))) throw new DomainError(`${item.name} kommt doppelt vor.`);
+    owned.add(possessionKey(possession));
+    if ((item.kind === 'game') !== (possession.from !== undefined)) throw new DomainError(`${item.name}: Nur Jagdbeute hat eine Herkunft, und Jagdbeute hat immer eine.`);
     if (!Number.isInteger(possession.count) || possession.count < 1) throw new DomainError(`Die Anzahl von ${item.name} ist 1 oder mehr.`);
     if (item.once && possession.count > 1) throw new DomainError(`${item.name} kann man nur einmal haben.`);
     const capacity = item.weapon === undefined ? undefined : weaponOf(item.weapon).rounds;

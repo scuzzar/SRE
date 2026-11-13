@@ -71,6 +71,12 @@ import {
   rollPatron,
   rollRumor,
   rollAnimalEncounter,
+  skillOf,
+  sellGame,
+  takeLoot,
+  butcher,
+  butchers,
+  isDead,
   rollEventSaves,
   holdAfterAttack,
   isHeld,
@@ -145,7 +151,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, wearOffer: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, wearOffer: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
 
 /** Ein Test in Worten: „Test 3 (5+ nötig)“, bei zwei Würfeln „Test 3 + 4 = 7 (7+ nötig)“. */
 function checkText(check: EncounterCheck): string {
@@ -192,6 +198,8 @@ export class GameController {
       attack: undefined,
       wounding: undefined,
       combatNote: undefined,
+      lootOpen: undefined,
+      butchered: undefined,
       patronNote: undefined,
       rumorNote: undefined,
       animalNote: undefined,
@@ -644,6 +652,30 @@ export class GameController {
     this.update({ surpriseShown: false });
   }
 
+  /** Öffnet „Beute nehmen“ (NSC) bzw. „Ausweiden“ (Tier); schließt mit `undefined`. */
+  openLoot(id: string | undefined): void {
+    this.update({ lootOpen: id, combatNote: undefined });
+  }
+
+  /** Nimmt einem NSC alles ab, was er hat; es geht an diesen SC. */
+  takeLoot(npc: string, pc: string): void {
+    this.inFight(() => this.change(takeLoot(this.campaign, npc, pc), { lootOpen: undefined }));
+  }
+
+  /** Weidet ein Tier aus; die Beute geht an diesen SC. Das Ergebnis rollt im Vordergrund. */
+  butcher(animal: string, pc: string): void {
+    this.inFight(() => {
+      const workers = butchers(this.campaign);
+      const campaign = butcher(this.campaign, animal, pc, this.deps.random, this.deps.clock);
+      const label = (w: typeof workers.meat) => (w.name === undefined ? undefined : `${w.name.split(' ')[0]} · ${w.skill === undefined ? 'ohne Fertigkeit' : `${skillOf(w.skill).name}-${w.level}`}`);
+      this.change(campaign, { lootOpen: undefined, butchered: { index: campaign.log.length - 1, meat: label(workers.meat), fur: label(workers.fur) } });
+    });
+  }
+
+  closeButchered(): void {
+    this.update({ butchered: undefined });
+  }
+
   closeEncounterIntro(): void {
     this.update({ encounterIntro: false });
   }
@@ -680,7 +712,7 @@ export class GameController {
     const encounter = currentEncounter(campaign);
     if (!turn || !encounter) return { campaign, simTarget: undefined };
     if (turn.side === 'pcs') {
-      const npcs = encounter.npcs.filter((n) => woundStateOf(campaign, n.id) !== 'dead');
+      const npcs = encounter.npcs.filter((n) => !isDead(woundStateOf(campaign, n.id)));
       const keep = npcs.some((n) => n.id === target) ? target : npcs[0]?.id;
       return { campaign: focusOf(campaign)?.id === turn.id ? campaign : setFocus(campaign, turn.id), simTarget: keep };
     }
@@ -885,6 +917,11 @@ export class GameController {
   /** Verkauft auf dem Aufenthaltsort aus dem Besitz eines Charakters, zu diesem Erlös je Stück. */
   sell(item: string, count: number, price: number, character: string): void {
     this.inShop(() => sell(this.campaign, item, count, price, character, this.deps.clock));
+  }
+
+  /** Verkauft so viele kg Jagdbeute (Schlüssel des Besitzes) zum Erlös für alle zusammen. */
+  sellGame(key: string, kg: number, total: number, character: string): void {
+    this.inShop(() => sellGame(this.campaign, key, kg, total, character, this.deps.clock));
   }
 
   /** Kauft auf dem Aufenthaltsort aus der Gruppenkasse für einen Charakter. Bei einer Rüstung, die er nicht trägt, fragt die App, ob er sie anlegt. */

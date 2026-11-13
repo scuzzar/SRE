@@ -1,4 +1,4 @@
-import { characterOf, livingCharacters, withArms, type Campaign, type CharacterId, type Possession } from './campaign';
+import { characterOf, livingCharacters, possessionKey, withArms, type Campaign, type CharacterId, type Possession } from './campaign';
 import { DomainError } from './errors';
 import type { Clock } from './ports';
 import { itemOf, ref, weaponOf, type Item } from './reference';
@@ -164,6 +164,24 @@ export function sell(campaign: Campaign, itemId: string, count: number, price: n
   const gone = !possessions.some((p) => p.of === itemId);
   const rest = Object.fromEntries(Object.entries(who).filter(([key]) => !(gone && key === 'wears' && itemId === who.wears))) as typeof who;
   return { ...booked, characters: booked.characters.map((c) => (c.id === character ? withArms({ ...rest, possessions }) : c)) };
+}
+
+/**
+ * Verkauft Jagdbeute (Fleisch, Fell) aus dem Besitz eines Lebenden: so viele kg der Beute mit dieser
+ * Herkunft (`key`, siehe `possessionKey`) zum Erlös `total` für alle zusammen; er geht in die Kasse.
+ */
+export function sellGame(campaign: Campaign, key: string, kg: number, total: number, character: CharacterId, clock: Clock): Campaign {
+  const world = locationOf(campaign);
+  if (!world || campaign.location === undefined) throw new DomainError('Die Gruppe ist auf keiner Welt; erst auf der Sektorkarte den Aufenthaltsort wählen.');
+  checkAmount(total);
+  const who = characterOf(campaign, character);
+  if (!livingCharacters(campaign).some((c) => c.id === character)) throw new DomainError(`${who.name} kann nichts verkaufen.`);
+  const had = who.possessions.find((p) => possessionKey(p) === key);
+  if (!had || itemOf(had.of).kind !== 'game') throw new DomainError(`${who.name} hat diese Jagdbeute nicht.`);
+  if (!Number.isInteger(kg) || kg < 1 || kg > had.count) throw new DomainError(`${who.name} hat ${had.count} kg.`);
+  const booked = withBooking(campaign, { at: clock.now(), kind: 'sale', amount: total, for: character, sold: had.of, count: kg, in: campaign.location });
+  const possessions = who.possessions.flatMap((p) => (p !== had ? [p] : p.count > kg ? [{ ...p, count: p.count - kg }] : []));
+  return { ...booked, characters: booked.characters.map((c) => (c.id === character ? { ...c, possessions } : c)) };
 }
 
 /** Prüft die Buchungen einer Kampagnendatei: jede passt zu ihrer Art, und die Kasse ist nach keiner negativ. */

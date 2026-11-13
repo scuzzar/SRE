@@ -31,6 +31,10 @@ export interface AnimalRow {
   readonly attack?: number;
   readonly flee?: number;
   readonly speed?: number;
+  /** Der Marktwurf (3W6) der Tierart für Fell- und Fleischwert (Hausregel); fehlt in älteren Tabellen. */
+  readonly market?: number;
+  /** Ist das Fleisch der Art genießbar (SR 48)? Fehlt in älteren Tabellen. */
+  readonly edible?: boolean;
 }
 
 /** Die Tiertabelle eines Geländes einer Welt: elf Zeilen, 2 bis 12. */
@@ -208,6 +212,7 @@ function animalRow(roll: number, category: AnimalCategory, hex: Hex, terrain: Te
   const attack = rollBehavior(random, type.attack);
   const flee = rollBehavior(random, type.flee);
   const speed = Math.max(type.speedMin, d6(random) + type.speed.dm);
+  const loot = rollLootValues(hex, attacks, random);
   return {
     roll,
     type: type.id,
@@ -220,7 +225,34 @@ function animalRow(roll: number, category: AnimalCategory, hex: Hex, terrain: Te
     attack,
     flee,
     speed,
+    ...loot,
   };
+}
+
+/** Atmosphären, deren Luft verdorben ist (tainted): DM −3 auf essbar (SR 48). */
+const TAINTED = [2, 4, 7, 9];
+
+/** Giftwaffen machen ein Tier ungenießbar (SR 48); der Stinger zählt als Giftwaffe (Hausregel). */
+const POISON_WEAPONS = ['stinger'];
+
+/** Warum eine Tierart nicht essbar sein kann, unabhängig vom Wurf; sonst `undefined`. */
+export function inedibleReason(hex: Hex, attacks: readonly AnimalAttack[]): string | undefined {
+  const atmosphere = hex.uwp.atmosphere ?? 0;
+  if (atmosphere < 2 || atmosphere > 9) return `Atmosphäre ${atmosphere}: ungenießbar`;
+  if (attacks.some((a) => POISON_WEAPONS.includes(a.with))) return 'Giftwaffe: ungenießbar';
+  return undefined;
+}
+
+/** Der DM auf essbar: −3 bei verdorbener Atmosphäre. */
+export function edibleDm(hex: Hex): number {
+  return TAINTED.includes(hex.uwp.atmosphere ?? 0) ? -3 : 0;
+}
+
+/** Marktwurf (3W6) und essbar (2W6 + DM ≥ 5, nur bei Atmosphäre 2–9 ohne Giftwaffe) einer Tierart. */
+export function rollLootValues(hex: Hex, attacks: readonly AnimalAttack[], random: Random): { readonly market: number; readonly edible: boolean } {
+  const market = d6(random, 3);
+  const roll = d6(random, 2) + edibleDm(hex);
+  return { market, edible: inedibleReason(hex, attacks) === undefined && roll >= 5 };
 }
 
 /**
