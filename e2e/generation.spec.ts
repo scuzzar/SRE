@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { host, oracle } from './layout';
 
 async function openCharacters(page: Page) {
   await page.goto('/');
@@ -21,7 +22,7 @@ async function campaignWithWorld(page: Page) {
 
 test('Charaktererschaffung: Attribute einzeln, Laufbahn, Terms, Abmusterung, Name', async ({ page }) => {
   await openCharacters(page);
-  await page.getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
+  await host(page).getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
   const dialog = page.getByRole('dialog', { name: 'Charaktererschaffung' });
   const prompt = dialog.locator('.generation-prompt');
 
@@ -98,9 +99,9 @@ test('Charaktererschaffung: Attribute einzeln, Laufbahn, Terms, Abmusterung, Nam
   await expect(dialog).toBeHidden();
 
   // Der neue Charakter steht oben im Orakel-Screen; die Details stehen im Charakter-Screen.
-  await expect(page.getByRole('region', { name: 'Spielercharaktere' }).getByRole('article', { name: 'Mara Quell' })).toBeVisible();
+  await expect(oracle(page).getByRole('region', { name: 'Spielercharaktere' }).getByRole('article', { name: 'Mara Quell' })).toBeVisible();
   await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
-  const mara = page.getByRole('article', { name: 'Mara Quell' });
+  const mara = host(page).getByRole('article', { name: 'Mara Quell' });
   // Bei einer 2 misslingt auch die Musterung für Other; dann wird man eingezogen.
   await expect(mara).toContainText(/Ex-\w+ · (.+ · )?\d+ Terms? · \d+ Jahre/);
   await mara.getByRole('button', { name: /Mara Quell/ }).click();
@@ -112,7 +113,7 @@ test('Charaktererschaffung: Attribute einzeln, Laufbahn, Terms, Abmusterung, Nam
 
 test('Besitz: Gegenstand aus der Liste mit Anzahl, in den Details', async ({ page }) => {
   await openCharacters(page);
-  const kira = page.getByRole('article', { name: 'Kira Vant' });
+  const kira = host(page).getByRole('article', { name: 'Kira Vant' });
   await kira.getByRole('button', { name: 'Bearbeiten' }).click();
   const editor = page.getByRole('dialog');
   await editor.getByLabel('Gegenstand hinzufügen').selectOption({ label: 'Low Passage' });
@@ -135,7 +136,7 @@ async function hold(page: Page, button: ReturnType<Page['getByRole']>) {
 
 test('Lange drücken lässt die ganze Erschaffung durchlaufen, mit zufälligen Entscheidungen', async ({ page }) => {
   await campaignWithWorld(page);
-  await page.getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
+  await host(page).getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
   const dialog = page.getByRole('dialog', { name: 'Charaktererschaffung' });
   await hold(page, dialog.getByRole('button', { name: /STR würfeln/ }));
   await expect(dialog.locator('.generation-prompt')).toHaveText(/^(Fertig:|Gestorben)/);
@@ -149,7 +150,7 @@ test.describe('mit Animation', () => {
 
   test('der gewürfelte Wert erscheint oben erst, wenn er unten feststeht', async ({ page }) => {
     await openCharacters(page);
-    await page.getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
+    await host(page).getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
     const dialog = page.getByRole('dialog', { name: 'Charaktererschaffung' });
     const str = dialog.locator('.upp-cell').first().locator('.upp-code');
     await dialog.getByRole('button', { name: 'STR würfeln' }).click();
@@ -162,7 +163,7 @@ test.describe('mit Animation', () => {
 
   test('noch einmal auf den Würfelknopf tippen überspringt die Animation', async ({ page }) => {
     await openCharacters(page);
-    await page.getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
+    await host(page).getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
     const dialog = page.getByRole('dialog', { name: 'Charaktererschaffung' });
     const str = dialog.locator('.upp-cell').first().locator('.upp-code');
     const button = dialog.getByRole('button', { name: 'STR würfeln' });
@@ -177,7 +178,7 @@ test.describe('mit Animation', () => {
 
   test('Würfe mit Zielwert laufen groß als Popup; Tippen springt zum Urteil, noch ein Tippen schließt', async ({ page }) => {
     await campaignWithWorld(page);
-    await page.getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
+    await host(page).getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
     const dialog = page.getByRole('dialog', { name: 'Charaktererschaffung' });
     for (const c of ['STR', 'DEX', 'END', 'INT', 'EDU', 'SOC']) {
       await dialog.getByRole('button', { name: `${c} würfeln` }).click();

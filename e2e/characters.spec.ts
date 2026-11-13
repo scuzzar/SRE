@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { host, openOracle, oracle } from './layout';
 
 async function openCharacters(page: Page) {
   await page.goto('/');
@@ -6,10 +7,10 @@ async function openCharacters(page: Page) {
 }
 
 /** Die Leiste oben im Orakel-Screen; nur der Charakter oben ist für Screenreader und Tests sichtbar. */
-const strip = (page: Page) => page.getByRole('region', { name: 'Spielercharaktere' });
+const strip = (page: Page) => oracle(page).getByRole('region', { name: 'Spielercharaktere' });
 const top = (page: Page, name: string) => strip(page).getByRole('article', { name });
-const dock = (page: Page) => page.getByRole('region', { name: 'Orakel und Proben' });
-const card = (page: Page, name: string) => page.getByRole('article', { name });
+const dock = (page: Page) => oracle(page).getByRole('region', { name: 'Orakel und Proben' });
+const card = (page: Page, name: string) => host(page).getByRole('article', { name });
 
 test('Probe oben im Orakel: Fertigkeit, dann Attribute, Stufe unten, Ergebnis als Popup, danach im Log', async ({ page }) => {
   await page.goto('/');
@@ -122,7 +123,7 @@ test('Charakter anlegen: Fehler im Editor, dann gespeichert; der Neue steht oben
   await expect(mara.getByLabel(/^INT B/)).toBeVisible();
   await expect(mara).toContainText('Cr 800');
 
-  await page.getByRole('navigation').getByRole('button', { name: 'Orakel' }).click();
+  await openOracle(page);
   await expect(top(page, 'Mara Quell').getByRole('button', { name: 'Medical-2' })).toBeVisible();
 });
 
@@ -209,7 +210,7 @@ test('Tot: im Editor markieren, steht unter „Verstorben“, rückt oben weiter
   const fallen = page.getByRole('listitem', { name: 'Kira Vant, tot' });
   await expect(fallen).toContainText('† Kira Vant');
 
-  await page.getByRole('navigation').getByRole('button', { name: 'Orakel' }).click();
+  await openOracle(page);
   await expect(top(page, 'Jonas Reyl')).toBeVisible();
   await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
 
@@ -228,7 +229,7 @@ test('Ohne lebenden Charakter bietet die Leiste an, einen anzulegen', async ({ p
     await editor.getByRole('button', { name: 'Löschen' }).click();
     await editor.getByRole('button', { name: 'Wirklich löschen?' }).click();
   }
-  await page.getByRole('navigation').getByRole('button', { name: 'Orakel' }).click();
+  await openOracle(page);
   await strip(page).getByRole('button', { name: '+ Charakter anlegen' }).click();
   await expect(page.getByRole('dialog', { name: 'Neuer Charakter' })).toBeVisible();
 });

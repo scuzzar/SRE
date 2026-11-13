@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openOracle } from './layout';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -35,7 +36,7 @@ test('Kampf: Kira zieht die Pistole, wählt das Ziel in der Tabelle und greift a
     await dialog.getByRole('button', { name: 'Weiter' }).click();
   }
 
-  await page.getByRole('navigation').getByRole('button', { name: 'Orakel' }).click();
+  await openOracle(page);
   await expect(page.locator('.entry').last()).toContainText('Kira Vant · Automatic Pistol · Jack, Short');
 });
 

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { host, openOracle } from './layout';
 
 test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Begegnung die Simulation mit Runde, Entfernung und Zügen', async ({ page }) => {
   await page.goto('/');
@@ -55,7 +56,7 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await page.locator('.encounter-running').getByRole('button', { name: 'Zum Kampf' }).click();
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Kampf' })).toHaveAttribute('aria-current', 'page');
   // Zwei Spalten: links die SC, rechts die NSC; die Leiste oben gibt es im Kampf nicht.
-  await expect(page.locator('.strip')).toHaveCount(0);
+  await expect(host(page).locator('.strip')).toHaveCount(0);
   await expect(page.locator('.fcard.pcs')).toHaveCount(2);
   await expect(page.locator('.fcard.npcs')).toHaveCount(npcs);
 
@@ -164,7 +165,7 @@ test('Patron und Gerücht: eigene Karten im Reiter Begegnung; erst der Test, bei
   }
   await expect(rumor.locator('.patron-last')).toContainText(/[A-Z] · .+ (allgemein|bestimmt) · \d und \d → \d\d/);
   // Der Wurf liegt im Log als Ergebnis.
-  await page.getByRole('navigation').getByRole('button', { name: 'Orakel' }).click();
+  await openOracle(page);
   await expect(page.getByText(/Patron · Liste [12]/).first()).toBeVisible();
   await expect(page.locator('.kicker', { hasText: /^Gerücht$/ }).first()).toBeVisible();
 });

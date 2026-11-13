@@ -222,8 +222,7 @@ button:disabled {
   background: var(--panel);
 }
 
-/* Im Orakel-Screen füllt der Log den Screen; im Desktop-Modus füllt nichts, dann hält das
-   automatische Margin das Dock unten. */
+/* Füllt nichts den Screen, hält das automatische Margin das Dock unten. */
 .screen > .dock {
   margin-top: auto;
 }
@@ -278,17 +277,13 @@ button:disabled {
 }
 
 /* Der Spielbereich unter den Reitern: auf dem Smartphone nur der Screen, im Desktop-Modus
-   daneben der Log links. */
+   daneben rechts die Orakel-Spalte. */
 .stage {
   order: 2;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-}
-
-.log-panel {
-  display: none;
 }
 
 .screen-host {
@@ -6223,7 +6218,7 @@ button:disabled {
 }
 
 /* --- Desktop-Modus (ab 1024 px) ------------------------------------------------------------- */
-/* Dieselbe Grenze wie DESKTOP_QUERY in media.ts: Die View zeichnet dann den Log links, die
+/* Dieselbe Grenze wie DESKTOP_QUERY in media.ts: Die View zeichnet dann das Orakel rechts, die
    Reiterzeile steht unter der Kopfzeile, und die Screens behalten ihre Knöpfe und Komponenten. */
 @media (min-width: 1024px) {
   .app {
@@ -6254,27 +6249,28 @@ button:disabled {
     border-bottom-color: var(--accent-text);
   }
 
-  /* Log und Screen stehen als ein Block in der Mitte; der Screen wird nie breiter als 960 px,
-     damit Knöpfe, Listen und Tabellen auf großen Bildschirmen nicht auseinanderlaufen. */
+  /* Screen und Orakel-Spalte stehen als ein Block in der Mitte; der Screen wird nie breiter als
+     960 px, damit Knöpfe, Listen und Tabellen auf großen Bildschirmen nicht auseinanderlaufen. */
   .stage {
     order: 3;
     display: grid;
-    grid-template-columns: clamp(320px, 25vw, 420px) minmax(0, 960px);
+    grid-template-columns: minmax(0, 960px) clamp(400px, 32vw, 480px);
     grid-template-rows: minmax(0, 1fr);
     justify-content: center;
   }
 
-  .log-panel {
+  /* Die Orakel-Spalte ist der Orakel-Screen des Smartphones: Charaktere, Log, Orakel und Proben. */
+  .oracle-panel {
     display: flex;
     flex-direction: column;
     min-height: 0;
-    border-left: 1px solid var(--rule);
     border-right: 1px solid var(--rule);
   }
 
   /* Der Screen ist ein Container, damit die Sektor-Karte sich an seiner Höhe ausrichten kann. */
   .screen-host {
     container-type: size;
+    border-left: 1px solid var(--rule);
     border-right: 1px solid var(--rule);
   }
 
@@ -6302,11 +6298,6 @@ button:disabled {
     align-self: start;
     width: max(280px, calc((100cqh - 190px) * var(--map-ratio)));
     max-width: 60cqw;
-  }
-
-  .log-panel .log-scroll {
-    -webkit-mask-image: none;
-    mask-image: none;
   }
 
   /* Blätter und Popups stehen mittig, statt über die volle Breite zu laufen. */
@@ -6356,7 +6347,7 @@ button:disabled {
     background: var(--highlight);
   }
 
-  .log-panel.pickable .entry.outcome:hover {
+  .entry.outcome:hover {
     border-color: var(--line-strong);
   }
 

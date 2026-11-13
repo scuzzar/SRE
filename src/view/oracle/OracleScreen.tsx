@@ -15,14 +15,13 @@ import { LogList } from './LogList';
  * Die Schreibzeile hat einen Text; was er wird, entscheidet der Knopf: Ja/Nein und Karte nehmen ihn
  * als Frage, „Deuten“ als Deutung zum markierten Ergebnis, „Notiz“ als Notiz. Der Text während des
  * Tippens ist reine Darstellung; übergeben wird beim Absenden.
- * Das Ziel der Deutung (welches Ergebnis angetippt ist) hält die App, damit im Desktop-Modus auch
- * der Log links ein Ergebnis als Ziel wählen kann; der Screen zeigt es in der Zielzeile an.
+ * Das Ziel der Deutung (welches Ergebnis angetippt ist) hält die App; der Screen zeigt es in der
+ * Zielzeile an. Im Desktop-Modus steht dieser Screen als Orakel-Spalte rechts neben jedem Bereich.
  */
 export function OracleScreen({
   view,
   question,
   onQuestion,
-  inlineLog,
   target,
   picked,
   marked,
@@ -32,8 +31,6 @@ export function OracleScreen({
   view: Snapshot;
   question: string;
   onQuestion: (q: string) => void;
-  /** Im Desktop-Modus steht der Log links in der App, nicht hier im Screen. */
-  inlineLog: boolean;
   /** Das Ergebnis, auf das sich eine Deutung bezieht: das angetippte, sonst das neueste. */
   target: number | undefined;
   /** Das angetippte Ergebnis, falls eines; die Zielzeile bietet an, zu dem neuesten zurückzugehen. */
@@ -61,7 +58,7 @@ export function OracleScreen({
   return (
     <div className="screen">
       <CharacterStrip view={view} />
-      {inlineLog && <LogList log={view.log} target={target} marked={marked} onPick={onPick} />}
+      <LogList log={view.log} target={target} marked={marked} onPick={onPick} />
       <section className="dock" aria-label="Orakel und Proben">
         {task && (
           <div className="task-bar" aria-live="polite">

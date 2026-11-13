@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { host } from './layout';
 
 const header = (page: Page) => page.getByRole('banner');
 const sheet = (page: Page) => page.getByRole('dialog', { name: 'Kampagnen' });
@@ -26,12 +27,12 @@ test('Kampagnen: anlegen, wechseln, umbenennen, löschen; jede hat ihren eigenen
   await expect(header(page)).toContainText('Spinward Run');
   await expect(page.getByText('Noch nichts im Log.')).toBeVisible();
   await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
-  await expect(page.getByRole('article')).toHaveCount(0);
+  await expect(host(page).getByRole('article')).toHaveCount(0);
 
   await openCampaigns(page);
   await pick(page, 'Kampagne').click();
   await expect(header(page)).toContainText('Kampagne');
-  await expect(page.getByRole('article')).toHaveCount(2);
+  await expect(host(page).getByRole('article')).toHaveCount(2);
 
   await openCampaigns(page);
   await sheet(page).getByLabel('Name der offenen Kampagne').fill('Aramis');

@@ -15,7 +15,6 @@ import { CombatIcon, EncounterIcon, MenuIcon, OracleIcon, PersonIcon, SectorIcon
 import { Menu } from './Menu';
 import { CardSheet } from './oracle/CardSheet';
 import { DiceRoll } from './oracle/DiceRoll';
-import { LogList } from './oracle/LogList';
 import { OracleScreen } from './oracle/OracleScreen';
 import { SectorPicker, SectorScreen } from './sector/SectorScreen';
 import { WorldSheet } from './sector/WorldSheet';
@@ -23,14 +22,14 @@ import { WorldSheet } from './sector/WorldSheet';
 export function App() {
   const game = useGame();
   const view = useSnapshot();
-  // Desktop-Modus (ab 1024 px): Reiterzeile unter der Kopfzeile, der Log links auf jedem Screen.
+  // Desktop-Modus (ab 1024 px): Reiterzeile unter der Kopfzeile, das Orakel rechts auf jedem Screen.
   const desktop = useIsDesktop();
   // Der Text im Fragefeld gilt für Orakel und Karte; nach dem Bestätigen der Karte ist er verbraucht.
   const [question, setQuestion] = useState('');
   // Ob das Menü offen ist, ist reine Darstellung; was man darin wählt, entscheidet der Controller.
   const [menu, setMenu] = useState(false);
-  // Das Ziel der Deutung: das angetippte Ergebnis, solange der Log gleich lang ist. Hält es die App
-  // und nicht der Orakel-Screen, kann im Desktop-Modus auch der Log links ein Ziel wählen.
+  // Das Ziel der Deutung: das angetippte Ergebnis, solange der Log gleich lang ist. Die App hält es
+  // zusammen mit dem Fragefeld, damit es den Wechsel zwischen den Bereichen übersteht.
   const [chosen, setChosen] = useState<{ index: number; length: number } | undefined>(undefined);
 
   if (!view.ready) return <div className="app" aria-busy="true" />;
@@ -41,6 +40,11 @@ export function App() {
   const marked = question.trim() !== '';
   const onPick = (index: number) => setChosen({ index, length: view.log.length });
   const onClearTarget = () => setChosen(undefined);
+
+  // Im Desktop-Modus ist das Orakel kein eigener Bereich, sondern die Spalte rechts; wer dort noch
+  // auf „Orakel“ steht (frisch gestartet oder das Fenster breit gezogen), sieht die Charaktere.
+  const screen = desktop && view.screen === 'oracle' ? 'characters' : view.screen;
+  const oracle = <OracleScreen view={view} question={question} onQuestion={setQuestion} target={target} picked={picked} marked={marked} onPick={onPick} onClearTarget={onClearTarget} />;
 
   return (
     <div className="app">
@@ -67,54 +71,49 @@ export function App() {
       )}
 
       <nav className="nav" aria-label="Bereiche">
-        <button type="button" aria-current={view.screen === 'oracle' ? 'page' : undefined} onClick={() => game.showScreen('oracle')}>
-          <OracleIcon />
-          Orakel
-        </button>
-        <button type="button" aria-current={view.screen === 'encounter' ? 'page' : undefined} onClick={() => game.showScreen('encounter')}>
+        {!desktop && (
+          <button type="button" aria-current={screen === 'oracle' ? 'page' : undefined} onClick={() => game.showScreen('oracle')}>
+            <OracleIcon />
+            Orakel
+          </button>
+        )}
+        <button type="button" aria-current={screen === 'encounter' ? 'page' : undefined} onClick={() => game.showScreen('encounter')}>
           <EncounterIcon />
           Begegnung
         </button>
-        <button type="button" aria-current={view.screen === 'combat' ? 'page' : undefined} onClick={() => game.showScreen('combat')}>
+        <button type="button" aria-current={screen === 'combat' ? 'page' : undefined} onClick={() => game.showScreen('combat')}>
           <CombatIcon />
           Kampf
         </button>
-        <button type="button" aria-current={view.screen === 'shop' ? 'page' : undefined} onClick={() => game.showScreen('shop')}>
+        <button type="button" aria-current={screen === 'shop' ? 'page' : undefined} onClick={() => game.showScreen('shop')}>
           <ShopIcon />
           Shop
         </button>
-        <button type="button" aria-current={view.screen === 'characters' ? 'page' : undefined} onClick={() => game.showScreen('characters')}>
+        <button type="button" aria-current={screen === 'characters' ? 'page' : undefined} onClick={() => game.showScreen('characters')}>
           <PersonIcon />
           Charaktere
         </button>
-        <button type="button" aria-current={view.screen === 'sector' ? 'page' : undefined} onClick={() => game.showScreen('sector')}>
+        <button type="button" aria-current={screen === 'sector' ? 'page' : undefined} onClick={() => game.showScreen('sector')}>
           <SectorIcon />
           Sektor
         </button>
       </nav>
 
       <div className="stage">
+        <div className="screen-host">
+          {screen === 'oracle' && oracle}
+          {screen === 'encounter' && <EncounterScreen view={view} />}
+          {screen === 'combat' && <CombatScreen view={view} />}
+          {screen === 'shop' && <ShopScreen view={view} />}
+          {screen === 'characters' && <CharactersScreen view={view} />}
+          {screen === 'sector' && <SectorScreen view={view} />}
+          {screen === 'about' && <AboutScreen persistent={view.persistent} durable={view.durable} />}
+        </div>
         {desktop && (
-          <aside className={view.screen === 'oracle' ? 'log-panel pickable' : 'log-panel'} aria-label="Log">
-            <LogList
-              log={view.log}
-              target={view.screen === 'oracle' ? target : undefined}
-              marked={view.screen === 'oracle' && marked}
-              onPick={view.screen === 'oracle' ? onPick : () => undefined}
-            />
+          <aside className="oracle-panel" aria-label="Orakel">
+            {oracle}
           </aside>
         )}
-        <div className="screen-host">
-          {view.screen === 'oracle' && (
-            <OracleScreen view={view} question={question} onQuestion={setQuestion} inlineLog={!desktop} target={target} picked={picked} marked={marked} onPick={onPick} onClearTarget={onClearTarget} />
-          )}
-          {view.screen === 'encounter' && <EncounterScreen view={view} />}
-          {view.screen === 'combat' && <CombatScreen view={view} />}
-          {view.screen === 'shop' && <ShopScreen view={view} />}
-          {view.screen === 'characters' && <CharactersScreen view={view} />}
-          {view.screen === 'sector' && <SectorScreen view={view} />}
-          {view.screen === 'about' && <AboutScreen persistent={view.persistent} durable={view.durable} />}
-        </div>
       </div>
 
       {menu && <Menu view={view} onClose={() => setMenu(false)} />}
