@@ -5521,8 +5521,21 @@ button:disabled {
   opacity: 0;
   animation: impact-float 1300ms ease-out both;
   animation-delay: calc(var(--n, 0) * 250ms);
-  /* Mehrere Würfe auf dieselbe Karte (zwei Würfe eines Feuerstoßes) stehen nebeneinander. */
-  margin-right: calc(var(--n, 0) * 96px);
+  /* Mehrere Würfe auf dieselbe Karte (zwei Würfe eines Feuerstoßes) stehen untereinander, der
+     nächste eine Zeile tiefer; nebeneinander liefen sie auf schmalen Karten über den Rand. */
+  margin-top: calc(var(--n, 0) * 1.4em);
+  /* Ein dunkler Grund hält das Wort lesbar, auch wo es über Name und Werten steht. */
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: rgba(10, 10, 10, 0.82);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* Bei den NSC steht der Text rechts: Das Wort steigt links auf, wo die Karte frei ist. */
+.fcard.npcs > .impact-float {
+  right: auto;
+  left: 12px;
 }
 
 .impact-float.damage {
