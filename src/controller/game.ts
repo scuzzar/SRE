@@ -69,6 +69,19 @@ import {
   reenlist,
   rollDice,
   rollPatron,
+  rollRumor,
+  rollAnimalEncounter,
+  rollEventSaves,
+  holdAfterAttack,
+  isHeld,
+  struggle,
+  setTerrain,
+  animalName,
+  animalEventOf,
+  rollEncounterCheck,
+  rollPatronList,
+  patronOfRoll,
+  type EncounterCheck,
   writeNote,
   rollNext,
   rollSkill,
@@ -132,7 +145,13 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, wearOffer: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, wearOffer: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+
+/** Ein Test in Worten: „Test 3 (5+ nötig)“, bei zwei Würfeln „Test 3 + 4 = 7 (7+ nötig)“. */
+function checkText(check: EncounterCheck): string {
+  const thrown = check.dice.length === 1 ? String(check.total) : `${check.dice.join(' + ')} = ${check.total}`;
+  return `Test ${thrown} (${check.target}+ nötig)`;
+}
 
 export interface GameDependencies {
   readonly repository: CampaignRepository;
@@ -173,6 +192,9 @@ export class GameController {
       attack: undefined,
       wounding: undefined,
       combatNote: undefined,
+      patronNote: undefined,
+      rumorNote: undefined,
+      animalNote: undefined,
       simTarget: undefined,
       simBurst: undefined,
       simWeakened: undefined,
@@ -315,9 +337,38 @@ export class GameController {
     this.change(appendLog(this.campaign, rollDice(this.deps.random, this.deps.clock)));
   }
 
-  /** Ein Patron-Wurf auf Liste 1 oder 2 (SE, Charts S. 20), mit den DMs der lebenden SC; er kommt in den Log. */
-  rollPatron(list: number): void {
-    this.change(appendLog(this.campaign, rollPatron(this.campaign, list, this.deps.random, this.deps.clock)));
+  /**
+   * Der Patron (SE, Charts S. 20): erst der Test der Woche (5+ auf 1W6). Besteht er, wählt ein Würfel
+   * die Liste, dann kommt der Patron-Wurf mit den DMs der lebenden SC in den Log. Der Test steht nur
+   * in der Karte, er wird nicht gespeichert.
+   */
+  rollPatron(): void {
+    const check = rollEncounterCheck('patron', this.deps.random);
+    if (!check.passed) {
+      this.update({ patronNote: `${checkText(check)}: diese Woche kein Patron.` });
+      return;
+    }
+    const entry = rollPatron(this.campaign, rollPatronList(this.deps.random), this.deps.random, this.deps.clock);
+    // Eine Rumor-Zeile der Liste: gleich danach ein Gerücht, ohne Test (Charts S. 21).
+    const rumor = patronOfRoll(entry).rumor;
+    const entries = rumor ? [entry, rollRumor(this.deps.random, this.deps.clock)] : [entry];
+    this.change(appendLog(this.campaign, ...entries), {
+      patronNote: `${checkText(check)}: ${rumor ? 'ein Gerücht statt eines Patrons' : 'ein Patron'}.`,
+      ...(rumor ? { rumorNote: 'Ohne Test: Gerücht statt eines Patrons.' } : {}),
+    });
+  }
+
+  /**
+   * Das Gerücht (SE, Charts S. 21): erst der Test der Woche (7+ auf 2W6), dann der Wurf auf die
+   * Rumors Matrix; er kommt in den Log. Der Test steht nur in der Karte.
+   */
+  rollRumor(): void {
+    const check = rollEncounterCheck('rumor', this.deps.random);
+    if (!check.passed) {
+      this.update({ rumorNote: `${checkText(check)}: diese Woche kein Gerücht.` });
+      return;
+    }
+    this.change(appendLog(this.campaign, rollRumor(this.deps.random, this.deps.clock)), { rumorNote: `${checkText(check)}: ein Gerücht.` });
   }
 
   /** Eine Notiz, oder mit `interprets` (Stelle eines Ergebnisses im Log) eine Deutung dazu. */
@@ -500,7 +551,7 @@ export class GameController {
     const results = rollAttack(attack, campaign, this.deps.random, this.deps.clock);
     const rounds = attackRounds(attack, campaign);
     // Ein Schuss mit Überraschung gibt Alarm, außer mit einem Laser (SR 20).
-    const logged = alarmAfterAttack(appendLog(campaign, ...results), results);
+    const logged = holdAfterAttack(alarmAfterAttack(appendLog(campaign, ...results), results), results);
     // SC wie NSC verbrauchen ihre Munition.
     return spendRound(logged, results[0]!.for, rounds);
   }
@@ -512,18 +563,68 @@ export class GameController {
    */
   rollEncounter(roll?: number, terrain?: string): void {
     try {
+      // Erst der Test des Tages (5+ auf 1W6); wer die Art wählt, überspringt ihn.
+      const check = roll === undefined && this.campaign.location !== undefined && !currentEncounter(this.campaign) ? rollEncounterCheck('random', this.deps.random) : undefined;
+      if (check && !check.passed) {
+        this.update({ combatNote: `${checkText(check)}: heute keine Begegnung.` });
+        return;
+      }
       const rolled = rollEncounter(this.campaign, this.deps.random, this.deps.clock, roll, undefined, terrain);
       const prepared = rolled.encounter ? this.prepareTurn(rolled.campaign, undefined) : { campaign: rolled.campaign, simTarget: undefined };
       this.change(prepared.campaign, {
         attack: undefined,
         simTarget: prepared.simTarget,
         encounterIntro: rolled.encounter !== undefined,
-        combatNote: rolled.encounter ? undefined : `Wurf ${rolled.roll}: keine Begegnung.`,
+        combatNote: rolled.encounter ? undefined : `${check ? `${checkText(check)}, ` : ''}Wurf ${rolled.roll}: keine Begegnung.`,
       });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ combatNote: error.message });
     }
+  }
+
+  /**
+   * Tiere (SE 18–19, SR 47): erst der Test (5+ auf 1W6), dann 2W6 auf die Tiertabelle von Welt und
+   * Gelände; sie entsteht beim ersten Wurf. Ein Ereignis kommt in den Log, ein Tier wird eine
+   * Begegnung mit Übersicht. Wer die Zeile wählt, überspringt den Test.
+   */
+  rollAnimals(row?: number): void {
+    try {
+      const check = row === undefined ? rollEncounterCheck('animal', this.deps.random) : undefined;
+      if (check && !check.passed) {
+        this.update({ animalNote: `${checkText(check)}: keine Tiere.` });
+        return;
+      }
+      const rolled = rollAnimalEncounter(this.campaign, this.deps.random, this.deps.clock, row);
+      const prefix = check ? `${checkText(check)}, ` : '';
+      if (!rolled.encounter) {
+        this.change(rolled.campaign, { animalNote: `${prefix}Wurf ${rolled.roll}: Ereignis ${animalEventOf(rolled.row.event!).name}.` });
+        return;
+      }
+      const prepared = this.prepareTurn(rolled.campaign, undefined);
+      this.change(prepared.campaign, { attack: undefined, simTarget: prepared.simTarget, encounterIntro: true, animalNote: `${prefix}Wurf ${rolled.roll}: ${animalName(rolled.row)}.`, combatNote: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ animalNote: error.message });
+    }
+  }
+
+  /** Würfelt die Rettungswürfe aller lebenden SC gegen das Ereignis an der Stelle `index`; wer scheitert, bekommt den Schaden. */
+  rollEventSaves(index: number): void {
+    try {
+      const campaign = rollEventSaves(this.campaign, index, this.deps.random, this.deps.clock);
+      const saves = campaign.log.slice(this.campaign.log.length).filter((e) => e.kind === 'save').length;
+      const hurt = campaign.log.slice(this.campaign.log.length).filter((e) => e.kind === 'damage').length;
+      this.change(campaign, { animalNote: `${saves} Rettungswürfe: ${hurt === 0 ? 'alle geschafft.' : `${hurt} ${hurt === 1 ? 'misslungen' : 'misslungen'}, Schaden im Log.`}` });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ animalNote: error.message });
+    }
+  }
+
+  /** Stellt das Gelände der Kampagne ein, für alle Begegnungsarten; leer heißt: ohne Gelände. */
+  setTerrain(terrain: string | undefined): void {
+    this.inFight(() => this.change(setTerrain(this.campaign, terrain), { combatNote: undefined, animalNote: undefined }));
   }
 
   /**
@@ -711,7 +812,24 @@ export class GameController {
 
   /** Der Kämpfer am Zug weicht aus (SR 20): kein Angriff, dafür DM auf Angriffe gegen ihn bis zu seinem nächsten Zug. */
   evade(): void {
-    this.inFight(() => this.nextTurn(this.campaign, {}, true));
+    this.inFight(() => {
+      const turn = turnOf(this.campaign);
+      if (turn && isHeld(this.campaign, turn.id)) throw new DomainError(`${anyCharacterOf(this.campaign, turn.id).name} ist festgehalten und kann nicht ausweichen.`);
+      this.nextTurn(this.campaign, {}, true);
+    });
+  }
+
+  /** Der SC am Zug ist festgehalten und reißt sich statt zu schlagen los (SR 48); das ist sein Zug. */
+  struggle(): void {
+    this.inFight(() => {
+      const turn = turnOf(this.campaign);
+      if (!turn) throw new DomainError('Es ist keiner am Zug.');
+      const result = struggle(this.campaign, turn.id, this.deps.random);
+      const name = anyCharacterOf(this.campaign, turn.id).name.split(' ')[0];
+      const thrown = `${result.dice[0]} + ${result.dice[1]}${result.dm ? ` +${result.dm}` : ''} gegen ${result.target}+`;
+      this.nextTurn(result.campaign);
+      this.update({ combatNote: `${name} reißt sich los (${thrown}): ${result.freed ? 'frei!' : 'noch festgehalten.'}` });
+    });
   }
 
   /**
@@ -820,7 +938,9 @@ export class GameController {
   /** Schreibt den Schaden in den Log. War es der Treffer dessen, der in der Simulation am Zug ist, endet sein Zug. */
   /** `show`: Der Schadenswurf rollt danach im Vordergrund; beim Verteilen ist er schon vorher gerollt. */
   private logDamage(roll: DamageRoll, show = true): void {
-    const hit = this.campaign.log[roll.of] as AttackResult;
+    if (roll.of === undefined) throw new DomainError('Schaden aus einem Ereignis würfelt man mit dem Rettungswurf.');
+    const of = roll.of;
+    const hit = this.campaign.log[of] as AttackResult;
     // Mit dem Schaden prüft das Model den Alarm: das Ziel schreit, oder ein Kamerad sieht es fallen (SR 20).
     const logged = logDamageWithAlarm(this.campaign, roll, this.deps.random);
     const who = victimOf(hit);
@@ -830,7 +950,7 @@ export class GameController {
     const rest = { result: show ? campaign.log.length - 1 : undefined, wounding: undefined };
     // Bei einer Garbe endet der Zug erst, wenn der Schaden aller ihrer Treffer verteilt ist.
     const more = pendingDamage(campaign.log);
-    const volleyDone = more === undefined || volleyStart(campaign.log, more) !== volleyStart(campaign.log, roll.of);
+    const volleyDone = more === undefined || volleyStart(campaign.log, more) !== volleyStart(campaign.log, of);
     if (ownTurn && volleyDone) this.nextTurn(campaign, rest);
     else this.change(campaign, rest);
   }

@@ -95,6 +95,7 @@ hide <<value>> stereotype
   class Task <<transient>> $probe
   class Attack <<transient>> $kampf
   class Encounter $begegnung
+  class Terrain <<reference>> $begegnung
 
 ' Referenzdaten
   class Odds <<reference>> $karte
@@ -129,6 +130,7 @@ Attack "0..1" --> "1" Campaign : in
 
 ' Begegnung
 Campaign "1" *-- "*" Encounter : encounters {ordered}
+Campaign "*" --> "0..1" Terrain : terrain
 
 ' Karte
 Card "0..1" --> "1" Campaign : in

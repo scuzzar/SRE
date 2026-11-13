@@ -83,6 +83,7 @@ hide <<value>> stereotype
 
 ' Verlauf
   abstract class LogEntry $probe
+  class SaveRoll $begegnung
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Attack <<transient>> $kampf {
@@ -121,7 +122,8 @@ hide <<value>> stereotype
     rest
   }
   class DamageRoll $kampf {
-    dice: number[1..5]
+    dice: number[0..*]
+    fixed: number [0..1]
     points: number[0..7]
     to: Characteristic[0..7]
     alarmDice: number[0..2]
@@ -143,6 +145,7 @@ hide <<value>> stereotype
     serious
     dead
   }
+  class AnimalAttack <<value>> $begegnung
 
 ' Referenzdaten
   class Skill <<reference>> $charakter
@@ -237,11 +240,13 @@ AttackResult "*" --> "1" Weapon : with
 AttackResult "*" --> "0..1" SkillLevel : uses
 AttackResult "*" --> "0..1" AttackResult : volley
 AttackResult --> Strike
-DamageRoll "0..1" --> "1" AttackResult : of
+DamageRoll "0..1" --> "0..1" AttackResult : of
 Wounding "0..1" --> "1" AttackResult : of
 Wounding ..> DamageRoll : on confirm
 
 ' Begegnung
+DamageRoll "0..1" --> "0..1" SaveRoll : after
+AnimalAttack "*" --> "1" Weapon : with
 WoundState -[hidden]- Wounds
 
 ' Karte

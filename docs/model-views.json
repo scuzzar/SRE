@@ -113,6 +113,28 @@
         "LogEntry",
         "Note"
       ]
+    },
+    {
+      "id": "2026-11-12b",
+      "file": "2026-11-12-geruecht",
+      "title": "Gerücht: Wurf auf die Rumors Matrix",
+      "approved": true,
+      "show": [
+        "LogEntry",
+        "PatronRoll"
+      ]
+    },
+    {
+      "id": "2026-11-12c",
+      "file": "2026-11-12-tiere",
+      "title": "Tiere: Tiertabellen je Welt und Gelände, Tierbegegnung mit Kampf",
+      "approved": true,
+      "show": [
+        "Hex",
+        "Character",
+        "Weapon",
+        "DamageRoll"
+      ]
     }
   ]
 }

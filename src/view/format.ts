@@ -1,4 +1,4 @@
-import type { AttackItem, CardItem, DamageItem, DmPart, LogItem, PatronItem, RecoveryItem, TaskItem } from '../controller';
+import type { AttackItem, CardItem, DamageItem, DmPart, EventItem, LogItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem } from '../controller';
 import type { ArmorClass, AttackKind, BookingKind, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
@@ -226,6 +226,10 @@ export function partLabel(part: DmPart): string {
       return `Parade ${signed(part.dm)}`;
     case 'evade':
       return `weicht aus ${signed(part.dm)}`;
+    case 'natural':
+      return `Tierangriff ${signed(part.dm)}`;
+    case 'hide':
+      return `Tierrüstung ${signed(part.dm)}`;
   }
 }
 
@@ -265,6 +269,7 @@ export function rollTitle(item: TaskItem | AttackItem): string {
 /** Ein Schadenswurf: „3W6: 4 + 2 + 6 = 12“. */
 export function damageDetail(item: DamageItem): string {
   const to = item.blocks ? ` (${item.blocks.map((b) => `${b.to} ${b.points}`).join(', ')})` : '';
+  if (item.fixed !== undefined) return `fester Schaden ${item.fixed}${to}`;
   return `${item.dice.length}W6: ${item.dice.join(' + ')} = ${item.damage}${to}`;
 }
 
@@ -287,6 +292,12 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
       return { head: 'Heilung', rest: recoveryLine(item) };
     case 'patron':
       return { head: patronName(item), rest: patronDetail(item) };
+    case 'rumor':
+      return { head: rumorName(item), rest: rumorDetail(item) };
+    case 'event':
+      return { head: item.name, rest: eventDetail(item) };
+    case 'save':
+      return { head: item.success ? 'GESCHAFFT' : 'MISSLUNGEN', rest: saveDetail(item) };
     case 'note':
       return { head: item.interprets === undefined ? 'Notiz' : 'Deutung', rest: item.text };
   }
@@ -297,10 +308,32 @@ export function patronName(item: PatronItem): string {
   return item.rumor ? 'Gerücht statt Patron' : item.name;
 }
 
-/** Ein Patron-Wurf in Zahlen: „Liste 1 · 3 + 4 (DM −1, +0) → 26“. */
+/** Ein Patron-Wurf in Zahlen: „Liste 1 · 3 und 4 (DM −1, ±0) → 24“. */
 export function patronDetail(item: PatronItem): string {
   const dms = item.dms[0] === 0 && item.dms[1] === 0 ? '' : ` (DM ${signed(item.dms[0])}, ${signed(item.dms[1])})`;
-  return `Liste ${item.list} · ${item.dice[0]} + ${item.dice[1]}${dms} → ${item.roll}`;
+  return `Liste ${item.list} · ${item.dice[0]} und ${item.dice[1]}${dms} → ${item.roll}`;
+}
+
+/** Ein Ereignis aus der Tiertabelle in Zahlen: „Clear · 6 und 4 → 10 · Animals“. */
+export function eventDetail(item: EventItem): string {
+  return `${item.terrain.split(',')[0]} · ${item.dice[0]} und ${item.dice[1]} → ${item.roll} · ${item.group}`;
+}
+
+/** Ein Rettungswurf in Zahlen: „Kira · Stampede · 5 + 4 = 9 gegen 8+“ bzw. „… gegen DEX 7 oder weniger“. */
+export function saveDetail(item: SaveItem): string {
+  const total = item.dice[0] + item.dice[1];
+  const need = item.under ? `${item.attribute} ${item.target} oder weniger` : `${item.target}+`;
+  return `${item.name.split(' ')[0]} · ${item.event} · ${item.dice[0]} + ${item.dice[1]} = ${total} gegen ${need}`;
+}
+
+/** Ein Gerücht mit seinem Buchstaben: „F · Information leading to trap“. */
+export function rumorName(item: RumorItem): string {
+  return `${item.letter} · ${item.text}`;
+}
+
+/** Ein Gerüchte-Wurf in Zahlen: „allgemein · 2 und 3 → 23“. */
+export function rumorDetail(item: RumorItem): string {
+  return `${item.general ? 'allgemein' : 'bestimmt'} · ${item.dice[0]} und ${item.dice[1]} → ${item.roll}`;
 }
 
 export function taskDetail(item: TaskItem | AttackItem): string {

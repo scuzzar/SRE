@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 import type { DamageItem, LogItem, NoteItem } from '../../controller';
-import { attackTitle, clockTime, damageDetail, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, pickText, quoted, scatterText, taskDetail, taskTitle } from '../format';
+import { attackTitle, clockTime, damageDetail, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, pickText, quoted, scatterText, taskDetail, taskTitle } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { MapIconSvg, ScatterRose } from './CardRollIcons';
@@ -303,6 +303,12 @@ function kicker(item: LogItem, volley = false): string {
       return `Heilung · ${recoveryText[item.how]}`;
     case 'patron':
       return `Patron · Liste ${item.list}`;
+    case 'rumor':
+      return 'Gerücht';
+    case 'event':
+      return 'Tiere · Ereignis';
+    case 'save':
+      return 'Rettungswurf';
     case 'note':
       return item.interprets === undefined ? 'Notiz' : 'Deutung';
   }
@@ -404,6 +410,34 @@ function EntryBody({ item }: { item: LogItem }) {
             {patronName(item)}
           </span>
           <span className="entry-detail">{patronDetail(item)}</span>
+        </>
+      );
+    case 'event':
+      return (
+        <>
+          <span className="verdict" style={{ fontSize: 20 }}>
+            {item.name}
+          </span>
+          <p className="note-text">{item.text}</p>
+          <span className="entry-detail">{eventDetail(item)}</span>
+        </>
+      );
+    case 'save':
+      return (
+        <>
+          <span className={item.success ? 'verdict' : 'verdict negative'} style={{ fontSize: 22 }}>
+            {item.success ? 'GESCHAFFT' : 'MISSLUNGEN'}
+          </span>
+          <span className="entry-detail">{saveDetail(item)}</span>
+        </>
+      );
+    case 'rumor':
+      return (
+        <>
+          <span className="verdict" style={{ fontSize: 20 }}>
+            {rumorName(item)}
+          </span>
+          <span className="entry-detail">{rumorDetail(item)}</span>
         </>
       );
     case 'note':

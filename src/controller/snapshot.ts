@@ -61,6 +61,8 @@ import {
   patronLists,
   patronOfRoll,
   patronRollOf,
+  rumorOfRoll,
+  rumorRollOf,
   valueOf,
   entryOf,
   itemOf,
@@ -96,7 +98,32 @@ import {
   isEscaped,
   isEvading,
   evadeDmAt,
-  encounterTypeOfEncounter,
+  encounterNameOf,
+  damageVictim,
+  eventOf,
+  eventEntryAt,
+  savesOf,
+  savesUnder,
+  saveSucceeds,
+  type SaveRoll,
+  isHeld,
+  struggleNeed,
+  fixedDamageOf,
+  animalRowOf,
+  hurtOf,
+  hasAnimals,
+  animalTableOf,
+  animalName,
+  animalEventOf,
+  eventRowOf,
+  encounterQuantityOf,
+  encounterAnimalRow,
+  isAnimalEncounter,
+  behaviorOf,
+  animalTypeOf,
+  terrainOf,
+  LURE_TARGET,
+  type BehaviorView,
   fighterOf,
   npcCharacters,
   anyCharacterOf,
@@ -211,6 +238,8 @@ export interface Snapshot {
   readonly combat: CombatView | undefined;
   /** Der Bereich Patron im Reiter Begegnung; fehlt nur ohne Kampagne. */
   readonly patron: PatronView | undefined;
+  /** Die Begegnungsart Gerücht im Reiter Begegnung; fehlt nur ohne Kampagne. */
+  readonly rumor: RumorView | undefined;
   /** Der Reiter Shop: Kasse und Angebot auf dem Aufenthaltsort. */
   readonly shop: ShopView | undefined;
   /** Der Aufenthaltsort der Gruppe, als Feld (0304). */
@@ -279,7 +308,7 @@ export interface OddsChoice {
   readonly selected: boolean;
 }
 
-export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | NoteItem;
+export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | SaveItem | NoteItem;
 
 /** Ein Patron-Wurf: Liste, Würfel mit DMs, der Wurf 11–66 und die Zeile der Liste. */
 export interface PatronItem {
@@ -294,10 +323,30 @@ export interface PatronItem {
   readonly rumor: boolean;
 }
 
+/** Ein Gerüchte-Wurf: die Würfel, der Wurf 11–66 und das Gerücht der Rumor List. */
+export interface RumorItem {
+  readonly kind: 'rumor';
+  readonly at: string;
+  readonly dice: Dice;
+  readonly roll: number;
+  readonly letter: string;
+  readonly text: string;
+  /** Ein allgemeines Gerücht (U bis Z); sonst ein bestimmtes. */
+  readonly general: boolean;
+}
+
+/** Die Begegnungsart Gerücht im Reiter Begegnung: der letzte Gerüchte-Wurf im Log und der Test des letzten Wurfs. */
+export interface RumorView {
+  readonly last: RumorItem | undefined;
+  readonly note: string | undefined;
+}
+
 /** Der Bereich Patron im Reiter Begegnung: je Liste die DMs der lebenden SC, dazu der letzte Patron-Wurf im Log. */
 export interface PatronView {
   readonly lists: readonly { readonly list: number; readonly parts: readonly { readonly die: 0 | 1; readonly label: string; readonly dm: number }[] }[];
   readonly last: PatronItem | undefined;
+  /** Der Test des letzten Wurfs und was er brachte; fehlt, bis gewürfelt ist. */
+  readonly note: string | undefined;
 }
 
 /** Eine Notiz, oder mit `interprets` eine Deutung zum Ergebnis an dieser Stelle des Logs. */
@@ -365,7 +414,11 @@ export type DmPart =
   /** Die Parade des Ziels mit seiner Stufe (SR 22). */
   | { readonly kind: 'parry'; readonly dm: number }
   /** Das Ziel weicht aus: DM nach der Reichweite (SR 20). */
-  | { readonly kind: 'evade'; readonly dm: number };
+  | { readonly kind: 'evade'; readonly dm: number }
+  /** Der DM eines Tierangriffs („claws +1“, SE 18). */
+  | { readonly kind: 'natural'; readonly dm: number }
+  /** Die Tierrüstung des Ziels („combat +4“): DM für den Angreifer (SE 18). */
+  | { readonly kind: 'hide'; readonly dm: number };
 
 /** Feuerstoß, Schrot oder Einzelschuss einer Waffe, die einen Feuerstoß kann, mit dem, was er bringt. */
 export interface FireView {
@@ -435,6 +488,8 @@ export interface DamageItem {
   /** Wen der Schaden trifft, wenn der Treffer ein Ziel hatte. */
   readonly victim: string | undefined;
   readonly dice: readonly number[];
+  /** Der feste Schaden eines Tiers; dann gibt es keine Würfel. */
+  readonly fixed: number | undefined;
   /** Die Blöcke auf den Attributen der Reihe nach, wenn der Treffer ein Ziel hatte. */
   readonly blocks: readonly WoundBlock[] | undefined;
   readonly damage: number;
@@ -466,6 +521,8 @@ export interface FighterView {
   readonly armorClass: ArmorClass;
   readonly upp: Upp;
   readonly current: Upp;
+  /** Ein Tier: seine Hits, der Schaden, den es genommen hat, und seine Geschwindigkeit; statt STR, DEX und END. */
+  readonly animal: { readonly hits: readonly [number, number]; readonly hurt: number; readonly speed: number } | undefined;
   readonly state: WoundState;
   /** In dieser Runde schon dran gewesen. */
   readonly acted: boolean;
@@ -480,6 +537,8 @@ export interface FighterView {
   readonly blows: number | undefined;
   /** Er weicht aus (SR 20), bis zu seinem nächsten Zug. */
   readonly evading: boolean;
+  /** Festgehalten von Falle, Köder oder Filter. */
+  readonly held: boolean;
   /** Ein SC über 20 Bands weg: kein Ziel, kein Angriff. */
   readonly escaped: boolean;
 }
@@ -498,14 +557,78 @@ export interface Impact {
 }
 
 /** Die Kampfsimulation einer laufenden Begegnung. */
+/** Die Begegnungsart Tiere: ob man würfeln kann (und warum nicht), die Zeilen der Tiertabelle zum Wählen, der letzte Wurf. */
+export interface AnimalsView {
+  /** Warum man keine Tiere würfeln kann; fehlt, wenn es geht. */
+  readonly blocked: string | undefined;
+  /** Die Tierzeilen der Tiertabelle von Welt und Gelände, wenn es sie schon gibt; Ereignisse wählt man nicht. */
+  readonly rows: readonly { readonly roll: number; readonly name: string; readonly quantity: number }[];
+  readonly note: string | undefined;
+  /** Der letzte Ereignis-Eintrag im Log. */
+  readonly lastEvent: EventItem | undefined;
+}
+
+/** Ein Ereignis aus der Tiertabelle: Würfel, Name, Gruppe, Text und, wenn es einen gibt, der Rettungswurf mit Schaden. */
+export interface EventItem {
+  readonly kind: 'event';
+  readonly at: string;
+  readonly dice: Dice;
+  readonly roll: number;
+  readonly terrain: string;
+  readonly name: string;
+  readonly group: string;
+  readonly text: string;
+  readonly save: string | undefined;
+  readonly damage: number | undefined;
+  /** Die Stelle im Log und ob man die Rettungswürfe noch würfeln kann. */
+  readonly index: number;
+  readonly canSave: boolean;
+}
+
+/** Ein Rettungswurf gegen ein Ereignis: wer, gegen welches, Würfel, Zielwert und Ergebnis. */
+export interface SaveItem {
+  readonly kind: 'save';
+  readonly at: string;
+  readonly name: string;
+  readonly event: string;
+  readonly dice: Dice;
+  readonly target: number;
+  /** Höchstens ein Attribut („DEX oder weniger“); sonst mindestens der Zielwert. */
+  readonly under: boolean;
+  readonly attribute: string | undefined;
+  readonly success: boolean;
+}
+
+/** Die Werte der Tiere einer Tierbegegnung, ihr Verhalten und die Würfe dazu. */
+export interface AnimalSimView {
+  readonly weight: number;
+  readonly hits: readonly [number, number];
+  readonly armor: ArmorClass;
+  readonly armorDm: number;
+  readonly attacks: readonly { readonly name: string; readonly dm: number; readonly damage: number }[];
+  readonly speed: number;
+  readonly attack: { readonly dice: readonly [number, number]; readonly need: number | undefined; readonly word: string | undefined };
+  readonly flee: { readonly dice: readonly [number, number]; readonly need: number | undefined; readonly word: string | undefined };
+  readonly fleesFirst: boolean;
+  readonly behavior: 'attacks' | 'flees' | 'nothing' | undefined;
+  readonly special: 'filter' | 'trap' | 'lure' | undefined;
+  /** Der Köder einer Siren: die Würfel und ob er auf Menschen wirkt. */
+  readonly lure: { readonly dice: readonly [number, number]; readonly works: boolean } | undefined;
+  readonly tableDice: readonly [number, number] | undefined;
+  readonly terrain: string;
+}
+
 export interface SimView {
   readonly name: string;
-  readonly reaction: number;
+  /** Die Reaktion; fehlt bei Tieren, dann steht ihr Verhalten in `reactionText`. */
+  readonly reaction: number | undefined;
   readonly reactionText: string;
+  /** Bei einer Tierbegegnung die Werte der Tiere; sonst fehlt es. */
+  readonly animal: AnimalSimView | undefined;
   /** Die Würfel der Reaktion und ihr DM; fehlen bei Begegnungen von vorher. */
   readonly reactionDice: readonly number[] | undefined;
   readonly reactionDm: number;
-  /** Die Zeile der Random Encounter List (11–56), wie viele Würfel die Anzahl hat und welcher (W6, W4, W3). */
+  /** Die Zeile der Random Encounter List (11–56) bzw. der Tiertabelle (2–12), wie viele Würfel die Anzahl hat (0: ein Tier) und welcher (W6, W4, W3). */
   readonly roll: number;
   readonly quantity: number;
   readonly quantityDie: number;
@@ -560,6 +683,8 @@ export interface SimView {
         readonly fire: FireView | undefined;
         /** Seine Partei ist in dieser Runde gelaufen: kein Angriff. */
         readonly ran: boolean;
+        /** Er ist festgehalten (Falle, Köder, Filter): statt anzugreifen reißt er sich los, mit Zielwert und DM der Helfer. */
+        readonly held: { readonly target: number; readonly dm: number; readonly helpers: number } | undefined;
         /** Bei einem Schlag oder Hieb: die Schlagart, die Combat-Schläge und ob er ihn schwächen kann (SR 22). */
         readonly melee: MeleeView | undefined;
         /**
@@ -707,7 +832,7 @@ export interface CombatView {
   /** Das gewählte Ziel mit DM, nötigem Wurf und Chance; erst dann lässt sich angreifen. */
   readonly target: { readonly armor: ArmorClass; readonly range: Range; readonly dm: number; readonly need: number; readonly chance: number; readonly parts: readonly DmPart[] } | undefined;
   /** Der neueste Treffer ohne Schaden (bei einer Garbe der nächste): dafür lässt sich der Schaden würfeln, mit wen er trifft. */
-  readonly damage: { readonly index: number; readonly weapon: string; readonly wounds: number; readonly victim: string | undefined; readonly left: number } | undefined;
+  readonly damage: { readonly index: number; readonly weapon: string; readonly wounds: number; readonly victim: string | undefined; readonly left: number; readonly label: string } | undefined;
   /** Bei Schusswaffen: geladene Schuss, Größe des Magazins, wie viele Magazine (mit Namen) im Besitz sind. */
   readonly ammo: { readonly rounds: number; readonly capacity: number; readonly magazine: string; readonly magazines: number } | undefined;
   /** Kann der Angreifer angreifen (nicht bewusstlos, Ziel nicht tot, genug Schuss geladen)? */
@@ -716,8 +841,12 @@ export interface CombatView {
   readonly fire: FireView | undefined;
   /** Die laufende Begegnung: Mit ihr zeigt der Reiter die Kampfsimulation statt der Waffentabelle. */
   readonly sim: SimView | undefined;
-  /** Die Geländearten zum Anlegen einer Begegnung. */
-  readonly terrains: readonly { readonly id: string; readonly name: string; readonly dm: number }[];
+  /** Die Geländearten; `animals`: Gibt es dort Tiere? */
+  readonly terrains: readonly { readonly id: string; readonly name: string; readonly dm: number; readonly animals: boolean }[];
+  /** Das Gelände der Kampagne, für alle Begegnungsarten. */
+  readonly terrain: string | undefined;
+  /** Die Begegnungsart Tiere. */
+  readonly animals: AnimalsView;
   /** Eine Begegnung braucht einen Aufenthaltsort. */
   readonly canEncounter: boolean;
   /** Der Aufenthaltsort als Feld (0304), und welche fertigen Welten es dafür gibt. */
@@ -924,6 +1053,12 @@ export interface ControllerState {
   readonly wounding: Wounding | undefined;
   /** Was beim Würfeln einer Begegnung herauskam, wenn es keine gibt, oder was nicht ging. */
   readonly combatNote: string | undefined;
+  /** Der Test des letzten Patron-Wurfs und was er brachte. */
+  readonly patronNote: string | undefined;
+  /** Der Test des letzten Tierwurfs und was er brachte. */
+  readonly animalNote: string | undefined;
+  /** Der Test des letzten Gerüchte-Wurfs und was er brachte. */
+  readonly rumorNote: string | undefined;
   /** Das Ziel dessen, der in der Kampfsimulation am Zug ist (Id eines SC oder NSC). */
   readonly simTarget: string | undefined;
   /** Feuerstoß oder Einzelschuss dessen, der in der Kampfsimulation am Zug ist; fehlt: vorgewählt. */
@@ -1014,12 +1149,24 @@ function attackParts(
   range: Range,
   burst = true,
   neighbour = false,
-  extras: { readonly weakened: number; readonly parry: number; readonly evade?: number } = { weakened: 0, parry: 0 },
+  extras: { readonly weakened: number; readonly parry: number; readonly evade?: number; readonly hide?: number } = { weakened: 0, parry: 0 },
 ): DmPart[] {
   const weapon = weaponOf(weaponId);
   const row = rowOf(weapon, burst);
   const characteristic = attackCharacteristic(weapon);
   const value = valueOf(attacker.fighting, characteristic);
+  // Ein Tier greift ohne Fertigkeit und Attribut an, mit dem DM seines Tierangriffs.
+  const hide = extras.hide ?? 0;
+  if (attacker.animal) {
+    return [
+      { kind: 'natural', dm: attacker.natural },
+      { kind: 'armor', armor, dm: armorDm(row, armor) },
+      { kind: 'range', range, dm: rangeDm(row, range) ?? 0 },
+      ...(hide !== 0 ? [{ kind: 'hide' as const, dm: hide }] : []),
+      ...(extras.parry !== 0 ? [{ kind: 'parry' as const, dm: extras.parry }] : []),
+      ...(extras.evade ? [{ kind: 'evade' as const, dm: extras.evade }] : []),
+    ];
+  }
   return [
     { kind: 'skill', name: skillOf(weapon.uses).name, level: attacker.skill, dm: attacker.skill },
     { kind: 'armor', armor, dm: armorDm(row, armor) },
@@ -1029,6 +1176,7 @@ function attackParts(
     ...(extras.weakened !== 0 ? [{ kind: 'weakened' as const, dm: extras.weakened }] : []),
     ...(extras.parry !== 0 ? [{ kind: 'parry' as const, dm: extras.parry }] : []),
     ...(extras.evade ? [{ kind: 'evade' as const, dm: extras.evade }] : []),
+    ...(hide !== 0 ? [{ kind: 'hide' as const, dm: hide }] : []),
   ];
 }
 
@@ -1107,15 +1255,17 @@ function loggedParts(campaign: Campaign, entry: AttackResult, attacker: Fighter,
 }
 
 function damageItem(campaign: Campaign, entry: DamageRoll): DamageItem {
-  const hit = campaign.log[entry.of] as AttackResult;
-  const victim = victimOf(hit);
+  const victim = damageVictim(campaign.log, entry);
+  // Schaden aus einem Ereignis steht im Kasten seines Rettungswurfs, mit dem Namen des Ereignisses.
+  const source = entry.of !== undefined ? weaponName((campaign.log[entry.of] as AttackResult).with) : eventOf(campaign, eventEntryAt(campaign.log, (campaign.log[entry.after!] as SaveRoll).of)).name;
   return {
     kind: 'damage',
     at: entry.at,
-    of: entry.of,
-    weapon: weaponName(hit.with),
+    of: entry.of ?? entry.after!,
+    weapon: source,
     victim: victim && nameOf(campaign, victim),
     dice: entry.dice,
+    fixed: entry.fixed,
     blocks: entry.to === undefined ? undefined : blocksOf(entry),
     damage: damageOf(entry),
   };
@@ -1125,7 +1275,9 @@ function damageItem(campaign: Campaign, entry: DamageRoll): DamageItem {
 function damageView(campaign: Campaign, index: number, hit: AttackResult): NonNullable<CombatView['damage']> {
   const victim = victimOf(hit);
   const left = volleyOf(campaign.log, index).filter((i) => isSuccess(campaign.log[i] as AttackResult) && damageRollsOf(campaign.log, i).length === 0).length;
-  return { index, weapon: weaponName(hit.with), wounds: weaponOf(hit.with).wounds, victim: victim && nameOf(campaign, victim), left };
+  const fixed = fixedDamageOf(campaign, index);
+  const wounds = weaponOf(hit.with).wounds;
+  return { index, weapon: weaponName(hit.with), wounds, victim: victim && nameOf(campaign, victim), left, label: fixed === undefined ? `${wounds}W6` : `fest ${fixed}` };
 }
 
 function weaponLabel(character: Character, weaponId: string): WeaponChoice {
@@ -1146,7 +1298,7 @@ function weaponName(id: string): string {
   return id === HANDS ? 'Hände' : weaponOf(id).name;
 }
 
-function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined, intro: boolean, simBurst: boolean | undefined, simWeakened: boolean | undefined, surpriseShown = false): CombatView | undefined {
+function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined, intro: boolean, simBurst: boolean | undefined, simWeakened: boolean | undefined, surpriseShown = false, animalNote: string | undefined = undefined, log: readonly LogItem[] = []): CombatView | undefined {
   const character = focusOf(campaign);
   if (!character) return undefined;
   const current = attack ?? {};
@@ -1210,7 +1362,9 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
     damage: pendingHit && pending !== undefined ? damageView(campaign, pending, pendingHit) : undefined,
     ammo: ammo ? { rounds: ammo.rounds, capacity: ammo.capacity, magazine: itemLabel(itemOf(ammo.ammo)), magazines: ammo.magazines } : undefined,
     sim: encounter && simView(campaign, encounter, simTarget, simBurst, simWeakened),
-    terrains: ref.encounters.terrains,
+    terrains: ref.encounters.terrains.map((t) => ({ id: t.id, name: t.name, dm: t.dm, animals: hasAnimals(t) })),
+    terrain: campaign.terrain,
+    animals: animalsView(campaign, animalNote, log),
     canEncounter: campaign.location !== undefined,
     location: campaign.location,
     worlds: worldChoices(campaign.hexes),
@@ -1220,6 +1374,68 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
     encounterTypes: ref.encounters.types.map((t) => ({ roll: t.roll, name: t.name, quantity: t.quantity })),
     wounding: wounding && woundingView(campaign, wounding),
     note,
+  };
+}
+
+function animalsView(campaign: Campaign, note: string | undefined, log: readonly LogItem[]): AnimalsView {
+  const world = locationOf(campaign);
+  const terrain = campaign.terrain === undefined ? undefined : terrainOf(campaign.terrain);
+  const blocked = !world
+    ? 'Erst den Aufenthaltsort wählen.'
+    : !terrain
+      ? 'Erst oben ein Gelände wählen: Tiere gibt es je Gelände.'
+      : !hasAnimals(terrain)
+        ? `Im Gelände ${terrain.name} gibt es keine Tiere.`
+        : currentEncounter(campaign)
+          ? 'Es läuft schon eine Begegnung.'
+          : undefined;
+  const table = world && terrain ? animalTableOf(world, terrain.id) : undefined;
+  const rows = (table?.rows ?? []).filter((r) => r.event === undefined).map((r) => ({ roll: r.roll, name: animalName(r), quantity: r.quantity ?? 0 }));
+  return { blocked, rows, note, lastEvent: log.findLast((item): item is EventItem => item.kind === 'event') };
+}
+
+/** Ein DM mit Vorzeichen: „+1“, „−2“, „±0“. */
+function signedText(n: number): string {
+  return n > 0 ? `+${n}` : n < 0 ? `−${-n}` : '±0';
+}
+
+const behaviorWords: Record<string, string> = {
+  possible: 'Greift an, wenn es kann.',
+  surprise: 'Greift an, wenn es Überraschung hat.',
+  surprised: 'Flieht, wenn es überrascht wird.',
+  more: 'Greift an, wenn es mehr sind als Beute.',
+};
+
+/** Das Verhalten der Tiere in Worten: „Greift an.“, „Flieht.“, „Tut nichts.“ oder die Bedingung der Tierart. */
+function behaviorText(view: BehaviorView | undefined): string {
+  if (!view) return '';
+  if (view.behavior === 'attacks') return 'Greift an.';
+  if (view.behavior === 'flees') return 'Flieht.';
+  if (view.behavior === 'nothing') return 'Tut nichts.';
+  const word = (view.fleesFirst ? [view.flee, view.attack] : [view.attack, view.flee]).find((c) => c.word !== undefined)?.word;
+  return behaviorWords[word ?? ''] ?? '';
+}
+
+function animalSimView(campaign: Campaign, encounter: Encounter): AnimalSimView | undefined {
+  if (!isAnimalEncounter(encounter)) return undefined;
+  const row = encounterAnimalRow(campaign, encounter);
+  const behavior = behaviorOf(campaign, encounter)!;
+  const lure = encounter.lureDice;
+  return {
+    weight: row.weight!,
+    hits: row.hits!,
+    armor: row.armor ?? 'nothing',
+    armorDm: row.armorDm ?? 0,
+    attacks: row.attacks!.map((a) => ({ name: weaponName(a.with), dm: a.dm, damage: a.damage })),
+    speed: row.speed ?? 0,
+    attack: behavior.attack,
+    flee: behavior.flee,
+    fleesFirst: behavior.fleesFirst,
+    behavior: behavior.behavior,
+    special: animalTypeOf(row.type!).special,
+    lure: lure && { dice: lure, works: lure[0] + lure[1] >= LURE_TARGET },
+    tableDice: encounter.tableDice,
+    terrain: terrainOf(encounter.terrain!).name,
   };
 }
 
@@ -1233,11 +1449,12 @@ function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, 
     name: fighter.name,
     leader: encounter.leader === slot.id,
     weapon: weaponName(fighter.weapon.id),
-    skill: `${skillOf(fighter.weapon.uses).name}-${fighter.skill}`,
-    armor: wears === undefined ? undefined : itemLabel(itemOf(wears)),
+    skill: fighter.animal ? `Tier ${signedText(fighter.natural)}` : `${skillOf(fighter.weapon.uses).name}-${fighter.skill}`,
+    armor: fighter.animal ? (fighter.armor === 'nothing' ? undefined : `${fighter.armor.charAt(0).toUpperCase()}${fighter.armor.slice(1)}${fighter.hide ? ` ${signedText(fighter.hide)}` : ''}`) : wears === undefined ? undefined : itemLabel(itemOf(wears)),
     armorClass: fighter.armor,
     upp: character.upp,
     current: fighter.upp,
+    animal: character.animal ? { hits: animalRowOf(campaign.hexes, character.animal).hits!, hurt: hurtOf(campaign, slot.id), speed: animalRowOf(campaign.hexes, character.animal).speed ?? 0 } : undefined,
     state: fighter.state,
     acted: encounter.acted.includes(slot.id),
     turn: turn?.id === slot.id,
@@ -1247,6 +1464,7 @@ function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, 
     healing: recoveryOptions(campaign, slot.id),
     blows: isMelee(fighter.weapon) ? blowsOf(campaign, slot.id) : undefined,
     evading: isEvading(campaign, slot.id),
+    held: slot.side === 'pcs' && isHeld(campaign, slot.id),
     escaped: isEscaped(campaign, slot.id),
   };
 }
@@ -1295,6 +1513,7 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
       ammo: ammo && { rounds: ammo.rounds, capacity: ammo.capacity, magazines: ammo.magazines },
       fire: fireView(attacker.weapon, burst),
       ran: hasRun(campaign, turn),
+      held: turn.side === 'pcs' && isHeld(campaign, turn.id) ? struggleNeed(campaign, turn.id) : undefined,
       melee: isMelee(attacker.weapon)
         ? {
             strike,
@@ -1309,13 +1528,14 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
     };
   }
   return {
-    name: encounterTypeOfEncounter(encounter).name,
+    name: encounterNameOf(campaign, encounter),
     reaction: encounter.reaction,
-    reactionText: reactionText(encounter.reaction),
+    reactionText: encounter.reaction === undefined ? behaviorText(behaviorOf(campaign, encounter)) : reactionText(encounter.reaction),
+    animal: animalSimView(campaign, encounter),
     reactionDice: encounter.reactionDice,
     reactionDm: reactionDm(campaign, encounter),
-    roll: encounter.of,
-    quantity: encounterTypeOfEncounter(encounter).quantity,
+    roll: encounter.of ?? encounter.animal!,
+    quantity: encounterQuantityOf(campaign, encounter),
     quantityDie: encounter.quantityDie ?? 6,
     round: encounter.round,
     focus,
@@ -1359,7 +1579,7 @@ function wielding(campaign: Campaign, id: string, weapon: string): Campaign {
 /** Die Waffen, mit denen der Kämpfer am Zug (SC oder NSC) angreifen kann: Primär und Sekundär, ohne zweite Waffe die Hände. */
 function slotsOf(character: Character): readonly { readonly weapon: string; readonly slot: AttackOption['slot'] }[] {
   const armed = armedWeaponsOf(character).filter((w) => w !== HANDS).slice(0, 2);
-  const weapons = armed.length < 2 ? [...armed, HANDS] : armed;
+  const weapons = armed.length < 2 && !character.animal ? [...armed, HANDS] : armed;
   return weapons.map((weapon) => ({ weapon, slot: weapon === HANDS ? 'hands' : weapon === character.primary ? 'primary' : 'secondary' }));
 }
 
@@ -1449,7 +1669,7 @@ function impactsOf(campaign: Campaign): readonly Impact[] {
   const last = campaign.log.length - 1;
   const entry = campaign.log[last];
   if (entry?.kind === 'damage') {
-    const who = victimOf(campaign.log[entry.of] as AttackResult);
+    const who = damageVictim(campaign.log, entry);
     if (!who || entry.to === undefined) return [];
     const upp = uppOf(campaign, who);
     const before = historyOf(campaign.log, upp, who, last).wounds;
@@ -1631,6 +1851,20 @@ function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
       const patron = patronOfRoll(entry);
       return { kind: 'patron', at: entry.at, list: entry.list, dice: entry.dice, dms: entry.dms, roll: patronRollOf(entry), name: patron.name, rumor: patron.rumor };
     }
+    case 'event': {
+      const event = animalEventOf(eventRowOf(campaign.hexes, entry).event!);
+      const canSave = event.save !== undefined && savesOf(campaign.log, index).length === 0 && livingCharacters(campaign).length > 0;
+      return { kind: 'event', at: entry.at, dice: entry.tableDice, roll: entry.tableDice[0] + entry.tableDice[1], terrain: terrainOf(entry.terrain).name, name: event.name, group: event.group, text: event.text, save: event.save, damage: event.damage, index, canSave };
+    }
+    case 'save': {
+      const event = eventOf(campaign, eventEntryAt(campaign.log, entry.of));
+      const under = savesUnder(event);
+      return { kind: 'save', at: entry.at, name: nameOf(campaign, entry.for), event: event.name, dice: entry.dice, target: entry.target, under, attribute: under ? event.save : undefined, success: saveSucceeds(campaign, entry) };
+    }
+    case 'rumor': {
+      const rumor = rumorOfRoll(entry);
+      return { kind: 'rumor', at: entry.at, dice: entry.dice, roll: rumorRollOf(entry), letter: rumor.letter, text: rumor.text, general: rumor.general };
+    }
     case 'note':
       return { kind: 'note', at: entry.at, text: entry.text, interprets: entry.interprets };
   }
@@ -1716,7 +1950,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: [], retired: [], task: undefined, combat: undefined, patron: undefined, shop: undefined, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: [], retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -1737,11 +1971,13 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     npcs: npcCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background, dead: c.dead })),
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
-    combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.simBurst, state.simWeakened, state.surpriseShown),
+    combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.simBurst, state.simWeakened, state.surpriseShown, state.animalNote, log),
     patron: {
       lists: patronLists.map((list) => ({ list, parts: patronDmParts(campaign, list) })),
       last: log.findLast((item): item is PatronItem => item.kind === 'patron'),
+      note: state.patronNote,
     },
+    rumor: { last: log.findLast((item): item is RumorItem => item.kind === 'rumor'), note: state.rumorNote },
     shop: shopView(campaign, state.shopError, state.wearOffer),
     location: campaign.location,
     result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : undefined,

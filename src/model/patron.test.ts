@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { appendLog, createCampaign, type Campaign } from './campaign';
 import { fromCampaignFile, toCampaignFile } from './campaign-file';
-import { patronDmParts, patronDms, patronOfRoll, patronRollOf, rollPatron } from './patron';
+import { patronDmParts, patronDms, patronOfRoll, patronRollOf, rollPatron, rollRumor, rumorOfRoll, rumorRollOf } from './patron';
 import { ref } from './reference';
 import { fixedClock, fixedRandom } from './testing';
 
@@ -49,8 +49,17 @@ describe('Patron', () => {
     expect(() => rollPatron(createCampaign([]), 3, fixedRandom(), fixedClock())).toThrow(/Liste 3 gibt es nicht/);
   });
 
+  it('Gerücht: die Rumors Matrix führt jeden Wurf 11 bis 66 auf ein Gerücht A bis Z, der erste Würfel ist die Spalte', () => {
+    expect(ref.encounters.rumors.map((r) => r.letter).join('')).toBe('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    expect(ref.encounters.rumors.filter((r) => r.general).map((r) => r.letter).join('')).toBe('UVWXYZ');
+    const at = (first: number, second: number) => rumorOfRoll(rollRumor(fixedRandom(first, second), fixedClock())).letter;
+    // Die Zeilen der Matrix (2. Würfel 1 bis 6), je von links nach rechts (1. Würfel 1 bis 6).
+    expect([1, 2, 3, 4, 5, 6].map((second) => [1, 2, 3, 4, 5, 6].map((first) => at(first, second)).join(''))).toEqual(['ABCDEF', 'GUUWWH', 'IUYYWJ', 'KXZZVL', 'MXXVVN', 'OPQRST']);
+    expect(rumorRollOf(rollRumor(fixedRandom(6, 2), fixedClock()))).toBe(62);
+  });
+
   it('übersteht die Kampagnendatei', () => {
-    const campaign = appendLog(createCampaign(), rollPatron(createCampaign(), 2, fixedRandom(4, 2), fixedClock()));
+    const campaign = appendLog(createCampaign(), rollPatron(createCampaign(), 2, fixedRandom(4, 2), fixedClock()), rollRumor(fixedRandom(3, 3), fixedClock('2026-10-23T15:00:00.000Z')));
     const loaded = fromCampaignFile(toCampaignFile(campaign), campaign.id);
     expect(loaded.log).toEqual(campaign.log);
   });

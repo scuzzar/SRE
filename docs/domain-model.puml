@@ -109,6 +109,7 @@ hide <<value>> stereotype
     retired: boolean
     npc: boolean
     /wounds: Wounds
+    /hurt: number [0..1]
     /state: WoundState
     /blows: number [0..1]
   }
@@ -208,6 +209,17 @@ hide <<value>> stereotype
     dice: number[2]
     dms: number[2]
   }
+  class RumorRoll $begegnung {
+    dice: number[2]
+  }
+  class EventResult $begegnung {
+    tableDice: number[2]
+  }
+  class SaveRoll $begegnung {
+    dice: number[2]
+    target: number
+    /success: boolean
+  }
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Card <<transient>> $karte {
@@ -296,7 +308,8 @@ hide <<value>> stereotype
     rest
   }
   class DamageRoll $kampf {
-    dice: number[1..5]
+    dice: number[0..*]
+    fixed: number [0..1]
     points: number[0..7]
     to: Characteristic[0..7]
     alarmDice: number[0..2]
@@ -309,11 +322,16 @@ hide <<value>> stereotype
   class Encounter $begegnung {
     at: datetime
     quantityDie: number [0..1]
-    reactionDice: number[2]
+    reactionDice: number[0..2]
     reactionDm: number [0..1]
-    reaction: number
+    reaction: number [0..1]
     ended: boolean
-    /reactionText: string
+    /reactionText: string [0..1]
+    tableDice: number[0..2]
+    attackDice: number[0..2]
+    fleeDice: number[0..2]
+    lureDice: number[0..2]
+    /behavior: Behavior [0..1]
     rangeDice: number[2]
     bandDie: number [0..1]
     startBand: number
@@ -331,6 +349,9 @@ hide <<value>> stereotype
     close: boolean
     moved: number [0..1]
     runs: number [0..1]
+    trapDice: number[0..2]
+    held: boolean [0..1]
+    struggles: number [0..1]
     /range: Range [0..1]
     /escaped: boolean
   }
@@ -345,6 +366,10 @@ hide <<value>> stereotype
   class Terrain <<reference>> $begegnung {
     name: string
     dm: number
+    typeDm: number [0..1]
+    sizeDm: number [0..1]
+    traits: string [0..1]
+    /animals: boolean
   }
   class EncounterRange <<reference>> $begegnung {
     roll: number
@@ -383,6 +408,89 @@ hide <<value>> stereotype
     roll: number
     name: string
     rumor: boolean
+  }
+  class AnimalTable $begegnung {
+  }
+  class AnimalRow $begegnung {
+    roll: number
+    quantity: number [0..1]
+    trait: AnimalTrait [0..1]
+    traitSizeDm: number [0..1]
+    weight: number [0..1]
+    hits: number[0..2]
+    armor: ArmorClass [0..1]
+    armorDm: number [0..1]
+    attack: number [0..1]
+    flee: number [0..1]
+    speed: number [0..1]
+  }
+  class AnimalAttack <<value>> $begegnung {
+    dm: number
+    damage: number
+  }
+  enum AnimalTrait <<value>> $begegnung {
+    amphibian
+    flyer
+    swimmer
+    triphibian
+  }
+  enum Behavior <<value>> $begegnung {
+    attacks
+    flees
+    nothing
+  }
+  enum AnimalCategory <<value>> $begegnung {
+    herbivore
+    omnivore
+    carnivore
+    scavenger
+  }
+  class AnimalType <<reference>> $begegnung {
+    name: string
+    category: AnimalCategory
+    attack: string
+    flee: string
+    speed: DiceExpr
+    fleesFirst: boolean
+    special: AnimalSpecial [0..1]
+  }
+  enum AnimalSpecial <<value>> $begegnung {
+    filter
+    trap
+    lure
+  }
+  class AnimalEvent <<reference>> $begegnung {
+    name: string
+    group: string
+    text: string
+    lifeless: boolean
+    save: string [0..1]
+    damage: number [0..1]
+  }
+  class AnimalTypeRow <<reference>> $begegnung {
+    roll: number
+    category: AnimalCategory
+    quantity: number [0..1]
+  }
+  class AnimalTraitRow <<reference>> $begegnung {
+    roll: number
+    traits: string
+    trait: AnimalTrait [0..1]
+    sizeDm: number [0..1]
+  }
+  class AnimalSizeRow <<reference>> $begegnung {
+    roll: number
+    weight: number [0..1]
+    hits: DiceExpr[2]
+    wounds: string
+    weapons: string
+    armor: string
+  }
+  class Rumor <<reference>> $begegnung {
+    letter: string
+    text: string
+    general: boolean
+    rolls: number[1..*]
   }
 
 ' Referenzdaten
@@ -741,6 +849,8 @@ Recovery --> RecoveryKind
 LogEntry <|-- Note
 LogEntry <|-- PatronRoll
 PatronRoll "*" --> "1" Patron : of
+LogEntry <|-- RumorRoll
+RumorRoll "*" --> "1" Rumor : /of
 Note "*" --> "0..1" LogEntry : interprets
 CardPick "1" *-- "*" PickedItem : items {ordered}
 CardPick "1" *-- "0..1" MapIcon : map
@@ -769,13 +879,35 @@ AttackResult "*" --> "1" Weapon : with
 AttackResult "*" --> "0..1" SkillLevel : uses
 AttackResult "*" --> "0..1" AttackResult : volley
 AttackResult --> Strike
-DamageRoll "0..1" --> "1" AttackResult : of
+DamageRoll "0..1" --> "0..1" AttackResult : of
 Wounding "0..1" --> "1" AttackResult : of
 Wounding ..> DamageRoll : on confirm
 
 ' Begegnung
 Campaign "1" *-- "*" Encounter : encounters {ordered}
-Encounter "*" --> "1" EncounterType : of
+Encounter "*" --> "0..1" EncounterType : of
+Encounter "*" --> "0..1" AnimalRow : animal
+Hex "1" *-- "*" AnimalTable : animals
+AnimalTable "*" --> "1" Terrain : terrain
+AnimalTable "1" *-- "11" AnimalRow : rows {ordered}
+AnimalRow "*" --> "0..1" AnimalType : type
+AnimalRow "*" --> "0..1" AnimalEvent : event
+AnimalType --> AnimalSpecial
+LogEntry <|-- EventResult
+EventResult "*" --> "1" AnimalRow : of
+LogEntry <|-- SaveRoll
+SaveRoll "*" --> "1" Character : for
+SaveRoll "*" --> "1" EventResult : of
+DamageRoll "0..1" --> "0..1" SaveRoll : after
+AnimalRow "1" *-- "0..2" AnimalAttack : attacks {ordered}
+AnimalAttack "*" --> "1" Weapon : with
+AnimalRow --> AnimalTrait
+Encounter --> Behavior
+AnimalType --> AnimalCategory
+Campaign "*" --> "0..1" Terrain : terrain
+AnimalTypeRow "*" --> "1" AnimalType : type
+Character "*" --> "0..1" AnimalRow : animal
+AnimalSizeRow -[hidden]- AnimalTraitRow
 Encounter "*" --> "0..1" Terrain : terrain
 Encounter "1" *-- "0..1" SurpriseRoll : pcSurprise
 Encounter "1" *-- "0..1" SurpriseRoll : npcSurprise

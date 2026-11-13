@@ -21,6 +21,9 @@ import {
   evadeDmAt,
   isEscaped,
   isEvading,
+  isHeld,
+  FILTER_HELD_TARGET,
+  FILTER_TARGET,
   rangeBetween,
   distanceOf,
   sideOf,
@@ -163,6 +166,11 @@ export interface AttackExtras {
   readonly parry: number;
   /** Das Ziel weicht aus: Der DM dazu hängt von der Reichweite ab. */
   readonly evading: boolean;
+  /** Der DM des Tierangriffs des Angreifers und der Tierrüstung des Ziels. */
+  readonly natural: number;
+  readonly hide: number;
+  /** Das Ziel ist schon festgehalten (beim Filter: der Schaden kommt von selbst). */
+  readonly held: boolean;
 }
 
 /** Schlagart und Parade dieses Angriffs; ein NSC schwächt nie freiwillig. */
@@ -170,7 +178,7 @@ export function attackExtras(attack: Attack, campaign: Campaign): AttackExtras {
   const attacker = attackerOf(attack, campaign);
   const defender = defenderOf(attack, campaign);
   const strike = strikeOf(campaign, attacker.who, attacker.weapon, defender?.state, attack.weakened === true && sideOf(campaign, attacker.who) === 'pcs');
-  return { strike, weakened: strikeDm(attacker.weapon, strike), parry: parryDm(campaign, defender?.who, attacker.weapon), evading: evadesNow(campaign, defender?.who) };
+  return { strike, weakened: strikeDm(attacker.weapon, strike), parry: parryDm(campaign, defender?.who, attacker.weapon), evading: evadesNow(campaign, defender?.who), natural: attacker.natural, hide: defender?.hide ?? 0, held: defender !== undefined && isHeld(campaign, defender.who) };
 }
 
 /**
@@ -197,6 +205,7 @@ export function turnAttack(campaign: Campaign, target: CharacterId): Attack {
   if (!turn || !encounter) throw new DomainError('Es ist keiner am Zug.');
   if (hasRun(campaign, turn)) throw new DomainError(turn.side === 'pcs' ? `${anyCharacterOf(campaign, turn.id).name} ist in dieser Runde gelaufen und greift nicht an.` : 'Die NSC sind in dieser Runde gelaufen und greifen nicht an.');
   if (isEscaped(campaign, turn.id)) throw new DomainError(`${anyCharacterOf(campaign, turn.id).name} ist entkommen und greift nicht an.`);
+  if (isHeld(campaign, turn.id)) throw new DomainError(`${anyCharacterOf(campaign, turn.id).name} ist festgehalten und greift nicht an; erst losreißen.`);
   const range = rangeBetween(campaign, encounter, turn.id, target);
   return { ...aimAt({}, campaign, target), ...(range === undefined ? {} : { range }) };
 }
@@ -218,9 +227,17 @@ export function keepTarget(attack: Attack, campaign: Campaign): Attack {
   return withRange(fixed, campaign);
 }
 
+const NO_DM: AttackDm = { skill: 0, armor: 0, range: 0, characteristic: 0, weakened: 0, parry: 0, evade: 0, natural: 0, hide: 0, total: 0 };
+
 function odds(attacker: Fighter, armor: ArmorClass, range: Range, burst: boolean, extras?: AttackExtras): AttackOdds | undefined {
+  // Der Filter saugt nur auf Close ein: 6+ ohne DMs; wer schon drin ist, nimmt den Schaden von selbst (SR 48).
+  if (attacker.special === 'filter') {
+    if (range !== 'close') return undefined;
+    const target = extras?.held ? FILTER_HELD_TARGET : FILTER_TARGET;
+    return { dm: NO_DM, target, need: target, chance: chance2d6(target) };
+  }
   // STR und DEX zählen ohne die Wunden aus dem laufenden Kampf (SR 21).
-  const extra = extras && { weakened: extras.weakened, parry: extras.parry, evade: extras.evading ? evadeDmAt(range) : 0 };
+  const extra = extras ? { weakened: extras.weakened, parry: extras.parry, evade: extras.evading ? evadeDmAt(range) : 0, natural: extras.natural, hide: extras.hide } : { natural: attacker.natural };
   const dm = attackDm({ upp: attacker.fighting, skill: attacker.skill }, attacker.weapon, armor, range, rowOf(attacker.weapon, burst), extra);
   if (!dm) return undefined;
   const need = ATTACK_TARGET - dm.total;

@@ -1,7 +1,8 @@
+import type { AnimalRef } from './animals';
 import type { Career } from './career';
 import { DomainError } from './errors';
 import type { Generation } from './generation';
-import { damageRollsOf, interpretationsOf, volleyOf, type LogEntry } from './log';
+import { damageAfterOf, damageRollsOf, interpretationsOf, savesOf, volleyOf, type LogEntry } from './log';
 import { worldOf, type Hex } from './sector';
 import type { Booking } from './shop';
 import type { Encounter, QuantityDie } from './encounter';
@@ -62,6 +63,8 @@ export interface Character {
   readonly wears?: string;
   /** Ein dauerhafter NSC, kein SC: nicht in der Leiste oben, nicht im Shop. */
   readonly npc: boolean;
+  /** Ein Tier einer Begegnung: Verweis auf seine Zeile der Tiertabelle. Es kämpft mit deren Werten statt mit UPP und Besitz. */
+  readonly animal?: AnimalRef;
 }
 
 export type CampaignId = string;
@@ -92,6 +95,8 @@ export interface Campaign {
   readonly encounters: readonly Encounter[];
   /** Der Würfel der Anzahl für kommende Begegnungen: 3, 4 oder 6; fehlt er, W6 nach den Regeln. */
   readonly quantityDie?: QuantityDie;
+  /** Das Gelände für alle Begegnungsarten; fehlt es, ±0 und keine Tiere. */
+  readonly terrain?: string;
 }
 
 /** Was man beim Anlegen und Bearbeiten eines Charakters eingibt. */
@@ -174,14 +179,18 @@ export function removeLogEntry(campaign: Campaign, index: number): Campaign {
   if (!Number.isInteger(index) || index < 0 || index >= campaign.log.length) throw new DomainError('Diesen Logeintrag gibt es nicht.');
   // Ein Wurf einer Garbe geht nur mit der ganzen Garbe.
   const roots = campaign.log[index]!.kind === 'attack' ? volleyOf(campaign.log, index) : [index];
-  const damage = roots.flatMap((r) => damageRollsOf(campaign.log, r));
-  const removed = new Set([...roots, ...roots.flatMap((r) => interpretationsOf(campaign.log, r)), ...damage, ...damage.flatMap((d) => interpretationsOf(campaign.log, d))]);
+  // Ein Ereignis geht mit seinen Rettungswürfen, ein Rettungswurf mit seinem Schaden.
+  const saves = roots.flatMap((r) => savesOf(campaign.log, r));
+  const damage = [...roots, ...saves].flatMap((r) => [...damageRollsOf(campaign.log, r), ...damageAfterOf(campaign.log, r)]);
+  const removed = new Set([...roots, ...roots.flatMap((r) => interpretationsOf(campaign.log, r)), ...saves, ...saves.flatMap((s) => interpretationsOf(campaign.log, s)), ...damage, ...damage.flatMap((d) => interpretationsOf(campaign.log, d))]);
   const shift = (i: number) => i - [...removed].filter((r) => r < i).length;
   const log = campaign.log.flatMap((entry, i): LogEntry[] => {
     if (removed.has(i)) return [];
     if (entry.kind === 'note' && entry.interprets !== undefined) return [{ ...entry, interprets: shift(entry.interprets) }];
     if (entry.kind === 'attack' && entry.volley !== undefined) return [{ ...entry, volley: shift(entry.volley) }];
-    return entry.kind === 'damage' ? [{ ...entry, of: shift(entry.of) }] : [entry];
+    if (entry.kind === 'save') return [{ ...entry, of: shift(entry.of) }];
+    if (entry.kind === 'damage') return [entry.of === undefined ? { ...entry, after: shift(entry.after!) } : { ...entry, of: shift(entry.of) }];
+    return [entry];
   });
   return { ...campaign, log };
 }
@@ -344,7 +353,8 @@ export function withArms<T extends Arms>(character: T): T {
 
 /** Die Waffen, zwischen denen ein Charakter im Kampf wechselt: Primärwaffe, Sekundärwaffe und die Hände. */
 export function armedWeaponsOf(character: Character): readonly string[] {
-  return [...(character.primary === undefined ? [] : [character.primary]), ...(character.secondary === undefined ? [] : [character.secondary]), HANDS];
+  // Ein Tier kämpft nur mit seinen Tierangriffen, nicht mit Händen.
+  return [...(character.primary === undefined ? [] : [character.primary]), ...(character.secondary === undefined ? [] : [character.secondary]), ...(character.animal ? [] : [HANDS])];
 }
 
 /** Was ein Charakter tragen kann: die Gegenstände mit Rüstungsklasse aus seinem Besitz, in dessen Reihenfolge. */

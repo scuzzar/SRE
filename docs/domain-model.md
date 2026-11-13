@@ -152,6 +152,26 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `PatronRoll` und als Referenzdaten `Patron`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-12-patron.png`](changes/2026-11-12-patron.png).
 >
+> Ebenfalls am 12. November 2026 freigegeben: das **Gerücht** (Kennzeichen 2026-11-12b; siehe
+> *Gerücht*, *Test*), eine weitere Begegnungsart im Reiter Begegnung: der Wurf auf die Rumors Matrix
+> (SE, Charts S. 21). Neu im Bild: der Logeintrag `RumorRoll` und als Referenzdaten `Rumor`. Der
+> Ausschnitt dazu liegt unter [`changes/2026-11-12-geruecht.png`](changes/2026-11-12-geruecht.png).
+> Dazu, ohne Änderung am Bild: der **Test** vor jeder Begegnungsart und die Liste des Patrons per
+> Würfel.
+>
+> Am 13. November 2026 freigegeben: die **Tiere** (Kennzeichen 2026-11-12c; siehe *Tiere*,
+> *Gelände*): Tiertabellen je Welt und Gelände, bei Bedarf erzeugt; die Tierbegegnung würfelt auf
+> ihnen und wird eine Begegnung mit Kampfsimulation, mit besonderen Angriffen, Geschwindigkeit und
+> Ereignissen mit Rettungswurf. Ein Gelände für alle Begegnungsarten, gespeichert an der Kampagne.
+> Neu im Bild: `AnimalTable`, `AnimalRow`, `AnimalAttack`, `AnimalTrait`, `AnimalCategory`,
+> `AnimalSpecial`, `Behavior`, die Logeinträge `EventResult` und `SaveRoll`, als Referenzdaten
+> `AnimalType`, `AnimalTypeRow`, `AnimalTraitRow`, `AnimalSizeRow`, `AnimalEvent`; dazu
+> `Campaign.terrain`, `Terrain.typeDm`, `sizeDm`, `traits`, `/animals`, `Hex.animals`,
+> `Character.animal` und `/hurt`, `Encounter.animal`, `tableDice`, `attackDice`, `fleeDice`,
+> `lureDice`, `/behavior`, `Distance.trapDice`, `held`, `struggles`, `DamageRoll.fixed` und `after`.
+> `Encounter.of`, `reaction`, `reactionDice`, `DamageRoll.dice` und `DamageRoll.of` dürfen fehlen.
+> Der Ausschnitt dazu liegt unter [`changes/2026-11-12-tiere.png`](changes/2026-11-12-tiere.png).
+>
 > Am 8. November 2026 freigegeben: **NSC der Begegnung als vollständige Charaktere** (Kennzeichen
 > 2026-11-08c; siehe *Begegnung*, *NSC*, *Angriff in beide Richtungen*, *Heilung*). Es gibt nur noch
 > eine Klasse für alle, die kämpfen: Die NSC einer Begegnung werden beim Würfeln als vollständige
@@ -284,7 +304,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Orakelantwort | `OracleAnswer` | Ja oder Nein auf eine Frage |
 | Notiz | `Note` ohne `interprets` | Freier Text im Log, z. B. „Wir landen auf Regina.“ |
 | Deutung | `Note` mit `interprets` | Was man aus einem Ergebnis macht, z. B. „Die Tür ist offen, aber jemand war schon hier.“ |
-| Ergebnis | `OracleAnswer`, `DiceRoll`, `CardPick`, `TaskResult`, `AttackResult`, `DamageRoll`, `PatronRoll` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
+| Ergebnis | `OracleAnswer`, `DiceRoll`, `CardPick`, `TaskResult`, `AttackResult`, `DamageRoll`, `PatronRoll`, `RumorRoll` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
 | Schreibzeile | (Fragefeld) | Das eine Textfeld über den Knöpfen; was der Text wird, entscheidet der Knopf |
 | Würfelwurf (2W6) | `DiceRoll` | Ein einfacher Wurf mit zwei Würfeln |
 | Inspirationskarte | `Card` | Eine gezogene Karte, solange sie offen ist |
@@ -344,7 +364,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Startband | `Encounter.startBand`, `startClose`, `bandDie` | Wo alle SC zu Beginn der Begegnung stehen; der Würfel bestimmt das Band innerhalb der gewürfelten Reichweite: Medium 1W2, Long 1W8, Very Long 1W10 |
 | Entkommen | `Distance./escaped` | Mehr als 20 Bands: Der SC hat die NSC verloren (Book 1, S. 33) |
 | Ausweichen | `Encounter.evading` | Ein Kämpfer greift in seinem Zug nicht an, sondern weicht aus; bis zu seinem nächsten Zug bekommt jeder Angriff auf ihn DM −1, −2 oder −4 (SR 20) |
-| Gelände | `Terrain` | Wo die Begegnung stattfindet, mit DM auf die Entfernung (S. 5), z. B. Clear +3, City −4 |
+| Gelände | `Terrain`, `Campaign.terrain` | Wo die Gruppe ist und die Begegnungen stattfinden, für alle Begegnungsarten gleich: DM auf die Entfernung (S. 5), z. B. Clear +3, City −4, und wo es Tiere gibt die DMs auf Tierart und Größe (S. 18) |
 | Überraschung | `pcSurprise`, `npcSurprise`, `/surprise` | 1W6 je Partei mit DMs (S. 5); wer 3 oder mehr höher liegt, hat Überraschung |
 | Alarm | `Encounter.alarm` | Die Runde, in der die überraschte Partei Alarm gegeben hat; danach hält die Überraschung nicht mehr (SR 20) |
 | Überraschung hält | `/surprising` | Die Partei mit Überraschung, solange es keinen Alarm gab, einschließlich der Runde des Alarms |
@@ -368,10 +388,27 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Block | `DamageRoll.points`, `DamageRoll.to` | Ein Stück eines Schadenswürfels, das ganz auf ein Attribut geht; ein Würfel ist ein Block oder, wenn er ein Attribut auf 0 bringt, mehrere |
 | Überlauf | (Regel) | Was ein Würfel über 0 hinaus bringt, geht als neuer Block auf ein anderes Attribut über 0 (SR 21) |
 | Kampf | (Reiter „Kampf“) | Der Screen für Angriffe: ohne Begegnung die Waffentabelle, mit Begegnung die Kampfsimulation |
-| Reiter Begegnung | (Reiter „Begegnung“) | Der Screen, in dem man eine Begegnung würfelt oder wählt; läuft eine, zeigt er sie knapp |
+| Reiter Begegnung | (Reiter „Begegnung“) | Der Screen mit der Liste der Begegnungsarten, darüber der Aufenthaltsort |
+| Begegnungsart | (Karte im Reiter Begegnung) | Eine Art von Begegnungen nach SE S. 20 mit ihren Einstellungen und ihrem Wurf: Zufallsbegegnung, Patron, Gerücht, später Gesetz, Tiere. Nicht zu verwechseln mit der *Art der Begegnung* (`EncounterType`), einer Zeile der Random Encounter List |
+| Zufallsbegegnung | (Begegnungsart) | Personen nach der Random Encounter List (S. 21); ergibt eine Begegnung (`Encounter`) |
 | Patron | `Patron` | Ein Auftraggeber nach seinem Beruf, z. B. „Smuggler“: eine Zeile einer der beiden Patron-Listen (SE, Charts S. 20) |
 | Patron-Liste | `Patron.list` | Liste eins oder Liste zwei der Patron Encounters Matrix, je 36 Zeilen von 11 bis 66 |
 | Patron-Wurf | `PatronRoll` | Ein Wurf auf eine Patron-Liste: zwei Würfel nacheinander, jeder mit seinem DM |
+| Test | (Regel, nicht gespeichert) | Der Wurf, ob es überhaupt zu einer Begegnung kommt (Encounter Checklist, SE Charts S. 20): Zufallsbegegnung täglich 5+ auf 1W6, Patron wöchentlich 5+ auf 1W6, Gerücht wöchentlich 7+ auf 2W6 |
+| Gerücht | `Rumor` | Eine Art von Gerücht nach der Rumor List (SE, Charts S. 21), Buchstabe A bis Z, z. B. „F · Information leading to trap“; A bis T sind bestimmte, U bis Z allgemeine Gerüchte |
+| Gerüchte-Wurf | `RumorRoll` | Ein Wurf auf die Rumors Matrix: zwei Würfel nacheinander |
+| Tiertabelle | `AnimalTable` | Die Begegnungstabelle der Tiere eines Geländes einer Welt (SE 18–19): elf Zeilen, 2 bis 12 |
+| Zeile der Tiertabelle | `AnimalRow` | Ein Tier mit allen Werten, z. B. „6 Chasers, 25 kg, 6/11, jack, 9 teeth+1, A0 F5 S2“, oder ein Ereignis |
+| Tierart | `AnimalType` | Grazer, Chaser, Pouncer, Hijacker …; gehört zu einer Kategorie |
+| Kategorie | `AnimalCategory` | Herbivore, Omnivore, Carnivore oder Scavenger |
+| Besonderheit | `AnimalTrait` | Amphibian, Flyer, Swimmer oder Triphibian |
+| Hits | `AnimalRow.hits` | Zwei Zahlen statt STR, DEX, END: Erreichen die Wunden die erste, ist das Tier bewusstlos, erreichen sie beide zusammen, ist es tot |
+| Tierangriff | `AnimalAttack` | Eine Tierwaffe der Zeile (Claws, Teeth, Horns …) mit DM auf den Angriff und festem Schaden je Treffer |
+| Verhalten | `AnimalRow.attack`, `flee`, `speed`; `Encounter./behavior` | A, F und S einer Zeile (greift bei A+ an, flieht bei F+, S-fache Geschwindigkeit); in der Begegnung, was die Tiere nach den Würfen tun |
+| Ereignis | `AnimalEvent`, `AnimalRow.event` | Eine Zeile der Tiertabelle ohne Tier (Wurf 10; auf Welten ohne Leben fast alle), mit einem Ereignis aus der Liste (SR 49–50), z. B. Stampede, Sandstorm, Dust Pool |
+| Ereignis-Eintrag | `EventResult` | Ein Tierwurf, der auf ein Ereignis fiel, im Log |
+| Rettungswurf | `SaveRoll` | Der Wurf eines SC gegen ein Ereignis (z. B. Stampede 8+); misslingt er, folgt der Schaden des Ereignisses |
+| Festgehalten | `Distance.held` | Ein SC, den ein Trapper oder eine Siren gefangen oder ein Filter eingesaugt hat; er schlägt nicht, bis er sich losreißt |
 | Bereich der Karte, Themen-Tafel | `Section` | Zufallsereignis, Sinneseindrücke, …; NSC, Welt, … |
 | Feld der Karte | `Slot` | Aktion, Hören, Aussehen, Name, Auslöser, … |
 | Spalte | `Column` | Eine Liste von Einträgen in einem Feld; ein Feld hat eine oder zwei |
@@ -810,8 +847,15 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (`ended`); beendete Begegnungen bleiben in der Kampagne, weil der Log auf ihre NSC verweist,
     und werden nicht mehr gezeigt. Eine Begegnung, auf die der Log nicht verweist, wird beim Beenden
     gelöscht.
-- **Patron.** Im Reiter Begegnung steht unter dem Bereich für NSC-Begegnungen ein eigener kleiner
-  Bereich **Patron**: Man wählt Liste eins oder zwei und würfelt. Das Ergebnis ist ein Logeintrag
+- **Test.** Jede Begegnungsart beginnt mit ihrem **Test** nach der Encounter Checklist (SE, Charts
+  S. 20): Zufallsbegegnung täglich 5+ auf 1W6, Patron wöchentlich 5+ auf 1W6, Gerücht wöchentlich
+  7+ auf 2W6. Besteht er nicht, gibt es nichts, und die Karte sagt das („Test 3 (5+ nötig): diese
+  Woche kein Patron.“); besteht er, folgt der Wurf der Art. Der Test wird nicht gespeichert und steht
+  nicht im Log; wann ein Tag oder eine Woche um ist, entscheidet man selbst. Wer bei der
+  Zufallsbegegnung die Art aus der Liste wählt, überspringt den Test.
+- **Patron.** Im Reiter Begegnung ist der **Patron** eine eigene Begegnungsart. Nach dem Test wählt
+  ein Würfel die Liste (Hausregel; die Regeln lassen die Spielleitung wählen): 1W6, 1 bis 3 Liste
+  eins, 4 bis 6 Liste zwei; der Würfel wird nicht gespeichert, die Liste schon. Das Ergebnis ist ein Logeintrag
   (`PatronRoll`), kein Teil einer Begegnung; es braucht weder Aufenthaltsort noch lebenden Charakter
   und geht auch, während eine Begegnung läuft.
   - *Wurf*: zwei Würfel nacheinander (`dice`), der erste die Zehner-, der zweite die Einerstelle,
@@ -825,11 +869,110 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Eintrag hält die DMs fest, damit ein späterer Tod oder eine neue Stufe ihn nicht rückwirkend
     ändert.
   - *Rumor*: Drei Zeilen der Liste eins (23, 36, 66) sind kein Patron, sondern ein Gerücht
-    (`Patron.rumor`); die App zeigt das an. Die Rumors Matrix gibt es in der App noch nicht.
+    (`Patron.rumor`); die App zeigt das an. Nach den Regeln folgt dann ein Wurf auf die Rumors
+    Matrix (siehe *Gerücht*).
   - *Deuten*: Der Patron-Wurf ist ein Ergebnis und lässt sich deuten, z. B. mit dem Auftrag, den
     der Patron vergibt. Die Regeln geben keine Tabelle für Aufträge; die legt die Spielleitung fest.
-  - *Nicht in der App*: der wöchentliche Wurf, ob man überhaupt einen Patron trifft (5+ auf 1W6).
-    Wann man würfelt, entscheidet man selbst.
+- **Gelände.** Es gibt ein Gelände für alle Begegnungsarten: Man wählt es oben im Reiter Begegnung
+  neben dem Aufenthaltsort, und es bleibt an der Kampagne (`Campaign.terrain`), bis man es ändert;
+  fehlt es, gilt ±0 und es gibt keine Tiere. Jede Begegnung hält das Gelände fest, mit dem sie
+  gewürfelt wurde (`Encounter.terrain`).
+  - Die Liste vereint die Geländearten der Entfernung (SE 5) mit denen der Tiere (SE 18): jedes
+    Gelände hat seinen DM auf die Entfernung (`dm`), und wo es Tiere gibt (`/animals`), die DMs auf
+    Tierart und Größe (`typeDm`, `sizeDm`) und die Spalte der Besonderheiten (`traits`: Beach, Marsh,
+    River, Sea, Swamp oder Other).
+  - Keine Tiere gibt es in City, Building Interior und Arctic (Hausregel für Arctic und Interior;
+    in Städten nach SR 47).
+  - Gelände der Tiere ohne eigenen DM auf die Entfernung bekommen den des ähnlichsten (Hausregel): Marsh
+    wie Swamp, Beach wie Clear, Ruins wie City, Cave und Sea Cave wie Interior, Chasm wie Broken,
+    Crater wie Rough, Sargasso wie Maritime Surface, Shallows und Bottom wie Maritime Subsurface.
+    Maritime Surface hat die Tier-DMs von Surface, Maritime Subsurface die von Depths.
+- **Tiere.** Regeln und Tabellen stehen in
+  `regeln-kampf.md` unter *Tierbegegnungen* (SE 18–19, SR 46–49).
+  - *Tiertabelle*: Jede Welt hat je Gelände höchstens eine Tiertabelle (`Hex.animals`). Sie
+    entsteht nicht beim Erschaffen der Welt, sondern **bei Bedarf**: beim ersten Tierwurf auf dieser
+    Welt in diesem Gelände, ohne weitere Eingabe, und bleibt dann an der Welt. Das gilt auch für
+    Welten, die es schon gibt. Die Tabelle speichert die Werte ihrer Tiere, nicht die Würfe (wie die
+    Welt selbst). Auf einer Welt, deren Oberfläche kein Leben hat (`Surface.life`), sind alle Zeilen
+    Ereignisse aus der Gruppe *Vacuum Worlds* (SR 50, `AnimalEvent.lifeless`).
+  - *Erzeugen* (Checklist SE 19): elf Zeilen 2 bis 12 nach der 2W6-Aufteilung der Encounter Columns
+    (Zeile 10 ist ein Ereignis, zufällig aus der Liste ohne die Gruppe *Vacuum Worlds*; `AnimalRow.event`). Je Zeile: Tierart und Anzahl (2W6 + Type DM des Geländes auf die
+    Spalte der Kategorie), Besonderheit (2W6 mit den DMs aus Größe und Atmosphäre der Welt, Spalte
+    nach dem Gelände), Gewicht und Hits (2W6 + Size DMs; die Hits werden ausgewürfelt und stehen als
+    zwei Zahlen), Waffe (2W6 + DM der Kategorie), Rüstung (2W6 + DM der Kategorie; Flieger und
+    Triphibien nie) und Verhalten (je 1W6 für A, F und S). „(+6)“ würfelt noch einmal mit +6.
+  - *Schaden* (SR 48, die einfache Art): Der Schaden je Treffer wird beim Erzeugen einmal gewürfelt
+    (die Würfel der Tierwaffe, geändert um die Wounds der Größe, mindestens 1) und steht fest im
+    Tierangriff (`AnimalAttack.damage`), z. B. „11 teeth“. Hat die Zeile zwei Waffen („claws and
+    teeth“), hat sie zwei Tierangriffe, jeden mit eigenem Schaden.
+  - *Tierbegegnung*: eine Begegnungsart im Reiter Begegnung; sie würfelt im Gelände der Kampagne.
+    Test 5+ auf 1W6 (SR 47), dann 2W6 auf die Tiertabelle (`Encounter.tableDice`); man kann die
+    Zeile auch wählen, dann ohne Test. Fällt der Wurf auf ein Ereignis, entsteht keine Begegnung,
+    sondern ein Ereignis-Eintrag im Log (`EventResult`, siehe *Ereignisse*). Sonst entsteht eine **Begegnung** (`Encounter`), die statt auf
+    eine Art (`of`) auf ihre Zeile verweist (`animal`); genau eins von beiden ist gesetzt. Die Anzahl
+    wird mit dem Würfel der Anzahl gewürfelt; die Entfernung wie sonst, mit dem DM des Geländes, auf
+    dem Gelände. Eine Reaktion gibt es nicht.
+  - *Verhalten*: Beim Anlegen 2W6 für den Angriff und 2W6 für die Flucht (`attackDice`,
+    `fleeDice`). `/behavior`: Greift die Tierart zuerst an, gilt der Angriffswurf gegen A, sonst der
+    Fluchtwurf gegen F; Pflanzenfresser prüfen umgekehrt (`AnimalType.fleesFirst`); trifft keiner,
+    tun die Tiere nichts. Steht bei der Tierart ein Wort statt einer Zahl („if possible“, „if
+    surprise“, „if surprised“, „if more“), zeigt die App das Wort; ob es zutrifft, entscheidet man
+    selbst. Das Verhalten ist wie die Reaktion eine Auskunft: Die App erzwingt es nicht.
+  - *Tiere im Kampf*: Jedes Tier der Begegnung ist ein Charakter (`Encounter.npcs`) wie jeder NSC,
+    mit dem Namen der Tierart und einer Nummer, und verweist auf seine Zeile (`Character.animal`).
+    Sein UPP ist leer (alle Werte 0) und zählt nicht; Fertigkeiten, Besitz und Rüstung hat es nicht.
+    - Es greift mit den Tierangriffen seiner Zeile an (der erste ist die Primär-, der zweite die
+      Sekundärwaffe): 2W6 + DM des Tierangriffs + Rüstung und Reichweite aus der Zeile der Tierwaffe
+      in der Waffenmatrix ≥ 8. Fertigkeit und Attribut zählen nicht, Ausdauer hat es unbegrenzt.
+    - Trifft es, ist der Schaden fest (`DamageRoll.fixed`, ohne Würfel) und geht als **ein Block**
+      auf ein Attribut des Ziels; bringt er es auf 0, läuft der Rest über wie bei jedem Würfel.
+    - Wer ein Tier angreift, rechnet mit dessen Rüstungsklasse und zusätzlich dessen `armorDm`.
+      Der Schaden wird nicht verteilt: Er zählt als Summe (`/hurt`). Erreicht sie die erste Zahl
+      der Hits, ist das Tier bewusstlos, erreicht sie beide zusammen, ist es tot.
+    - Überraschung der Tiere: nur der DM „8 oder mehr −1“. Heilen und Übernehmen gibt es für Tiere
+      nicht.
+  - *Geschwindigkeit* (SR 47): Die Tiere bewegen sich als Gruppe je Runde bis zu S Bands
+    (`AnimalRow.speed`), S0 gar nicht. Laufen und dessen Kosten gibt es für sie nicht.
+  - *Besonderheit*: Flieger, Schwimmer, Amphibien und Triphibien haben in den Regeln keine eigene
+    Kampfregel; die Besonderheit steht im Namen („Flying Grazer“) und hat die Größe verschoben.
+  - *Besondere Angriffe* (SR 48), nach `AnimalType.special`:
+    - **Trapper** (`trap`): Haben die Tiere Überraschung, würfelt jeder SC auf Close oder Short
+      2W6 (`Distance.trapDice`); bei 5+ ist er **festgehalten** (`held`). Statt zu schlagen, reißt
+      er sich in seinem Zug los: 2W6 + 1 je helfendem Kameraden ≥ 9. Jeder Versuch kostet einen
+      Combat-Schlag (`struggles`, zählt in `/blows`). Helfer sind die SC auf Close, die kämpfen
+      können und nicht selbst festgehalten sind. Die Falle verwundet nicht.
+    - **Siren** (`lure`): wie der Trapper, dazu der Köder: Beim Anlegen 2W6
+      (`Encounter.lureDice`); bei 11+ wirkt er auch auf Menschen, dann beginnt die Begegnung auf
+      Close in Berührung.
+    - **Filter** (`filter`): In seinem Zug saugt er einen SC auf Close ein statt anzugreifen: 2W6
+      ≥ 6, ohne DMs (ein Angriffsergebnis mit Zielwert 6). Gelingt es, ist der SC festgehalten und
+      nimmt 1W6 je angefangene 50 kg des Filters als Schaden, ohne Wundänderung; solange er
+      festgehalten ist, nimmt er das in jedem Zug des Filters von selbst wieder. Losreißen: in seinem nächsten Zug
+      2W6 + 2 je Helfer ≥ 7, kostet einen Combat-Schlag.
+    - **Pouncer** greifen mit Überraschung auf jeder Entfernung an; das steht beim Verhalten.
+    - Wer festgehalten ist, greift nicht an, bewegt sich nicht und weicht nicht aus.
+  - *Ereignisse* (SR 49–50): Der Ereignis-Eintrag zeigt Namen und Text des Ereignisses und lässt
+    sich deuten. Hat das Ereignis einen Rettungswurf mit Schaden (`AnimalEvent.save`, `damage`:
+    Stampede 8+ sonst 2W6, Poisonous Pests DEX oder weniger sonst 3W6, Flash Flood 9+ sonst 3W6,
+    Seismic Quake STR oder weniger sonst 1W6), würfelt die App ihn auf Wunsch für jeden lebenden SC
+    (`SaveRoll`, mit dem Zielwert von damals); wer ihn nicht schafft, bekommt den Schaden
+    (`DamageRoll.after`, statt `of`), verteilt wie jeder andere. Alles Übrige am Ereignis
+    (Fahrzeuge, Umwege, ein Kampf aus Chameleon, Circling Flyers oder Lair) spielt man selbst;
+    einen Kampf beginnt man, indem man die Zeile der Tiertabelle wählt.
+  - *Später*: Gewicht ±20 %, zerstörte Tiere (doppelte Hits), Jagd und Fleisch, Psionik, die
+    1W6-Aufteilung der Tabelle, eigene Tabellen und Ereignisse.
+- **Gerücht.** Eine weitere Begegnungsart im Reiter Begegnung.
+  Nach dem Test (7+ auf 2W6) zwei Würfel nacheinander (`RumorRoll.dice`), der erste die Zehner-, der
+  zweite die Einerstelle; die Rumors Matrix (SE, Charts S. 21) führt von 11 bis 66 auf eine Art von
+  Gerücht (`Rumor`, Buchstabe A bis Z; `rolls` sind die Würfe, die auf sie führen). DMs gibt es
+  keine: Die Regeln überlassen sie der Spielleitung. Der Verweis `/of` folgt allein aus den Würfeln.
+  - *Bestimmt und allgemein*: A bis T sind bestimmte Gerüchte (z. B. „G · Location data“), U bis Z
+    allgemeine (`general`, z. B. „U · Broad background information“). Die Liste sagt nur die Art; was
+    das Gerücht besagt, legt man selbst fest.
+  - *Deuten*: Der Gerüchte-Wurf ist ein Ergebnis und lässt sich deuten, z. B. mit dem Inhalt des
+    Gerüchts.
+  - *Gerücht statt Patron*: Fällt ein Patron-Wurf auf eine Rumor-Zeile, würfelt die App gleich
+    danach ein Gerücht, ohne Test; im Log stehen dann beide Einträge hintereinander.
 - **NSC.** Ein NSC der Begegnung ist ein vollständiger Charakter, derselben Klasse wie die SC.
   Er hängt an seiner Begegnung (`Encounter.npcs`), nicht an der Kampagne: Jeder Charakter gehört
   genau einer Kampagne (`characters`) oder genau einer Begegnung (`npcs`), nie beiden. Die NSC einer
@@ -910,10 +1053,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     aber nicht (`to` fehlt).
   - **Später**: Medical Drugs, Wunden mit Zeit, Fahrzeuge, Überraschung, Entfernung,
     Moral und Kampfrunden.
-- **Reiter Begegnung und zwei Modi im Reiter Kampf.** Begegnungen würfelt oder wählt man im eigenen
-  Reiter **Begegnung**; die Übersicht danach führt zurück in den Reiter Begegnung, denn nicht jede
+- **Reiter Begegnung und zwei Modi im Reiter Kampf.** Der Reiter **Begegnung** zeigt oben den
+  Aufenthaltsort und darunter eine Liste der **Begegnungsarten**, je Art eine Karte mit ihren
+  Einstellungen und ihrem Wurf: zurzeit die Zufallsbegegnung und der Patron (siehe *Patron*); weitere
+  Arten kommen als weitere Karten dazu. Die Zufallsbegegnung würfelt oder wählt man in ihrer Karte;
+  die Übersicht danach führt zurück in den Reiter Begegnung, denn nicht jede
   Begegnung wird ein Kampf; erst „Zum Kampf“ dort wechselt in den Reiter Kampf. Läuft eine
-  Begegnung, zeigt der Reiter Begegnung sie knapp. Ohne laufende Begegnung zeigt der Reiter Kampf die
+  Begegnung, zeigt ihre Karte sie knapp. Ohne laufende Begegnung zeigt der Reiter Kampf die
   **Waffentabelle**: die Waffe in der Hand des Charakters oben, Rüstung und Reichweite frei gewählt
   (siehe *Angriff*); mit laufender Begegnung die **Kampfsimulation**; beendet man sie, zeigt er
   wieder die Waffentabelle. Das alles ist nur Anzeige; gespeichert wird die Begegnung.
@@ -1515,6 +1661,22 @@ Diagramm mit diesen Ausnahmen:
 - **`Card → Campaign : in`, `Task → Campaign : in` und `Attack → Campaign : in`** sind im Code
   kein Feld. Der Controller hält höchstens eine offene Karte, höchstens eine Probe und höchstens
   einen Angriff, alle immer zur offenen Kampagne; beim Wechsel der Kampagne verfallen sie. Damit ist die Multiplizität erfüllt.
+- **Schaden aus einem Ereignis** verteilt im Code immer die App (beim ersten Treffer auf ein
+  zufälliges Attribut, sonst jeden Block zufällig), auch bei einem SC nach seinem ersten Treffer;
+  das Verteilen von Hand gibt es nur für Treffer. `SaveRoll./success` folgt aus Würfeln, Zielwert und
+  der Art des Rettungswurfs des Ereignisses (Zahl: mindestens, Attribut: höchstens).
+- **Festgehalten** gilt im Code nur, solange eines der Tiere der Begegnung noch kämpfen kann; sind
+  alle außer Gefecht, ist jeder frei, auch wenn `held` noch gesetzt ist. Das Einsaugen des Filters
+  ist ein Angriffsergebnis mit Zielwert 6, der Schaden danach eines mit Zielwert 2 (von selbst).
+- **Verweise der Tiere** sind im Code Schlüssel statt Objektverweise: `Encounter.animal` ist der
+  Wurf 2–12 in der Tiertabelle der Welt `in` im Gelände `terrain`; `Character.animal` ist Welt,
+  Gelände und Wurf; `EventResult → AnimalRow : of` ist Welt, Gelände und die Summe von `tableDice`.
+  Tiertabellen werden nie neu erzeugt, also bleiben die Verweise gültig. `AnimalRow.event` und
+  `type` sind die Ids von Ereignis und Tierart.
+- **`AnimalType.speed`** hat im Code dazu `speedMin`: die Geschwindigkeit ist mindestens so hoch (SE
+  19, „mindestens 0/1/2“), was `DiceExpr` nicht ausdrückt.
+- **Tierwaffen** stehen in `src/data/weapons.json` wie jede Waffe, ohne Gegenstand im Shop; Fertigkeit
+  und Attribut (`required` 0, `advantageous` 99) wirken bei ihnen nie.
 - **`PatronRoll → Patron : of`** ist im Code die Liste (`list`, 1 oder 2); die Zeile der Liste folgt
   aus Würfeln und DMs (`patronOfRoll`). Damit ist der Verweis erfüllt, ohne den Wurf doppelt zu
   speichern. Die Listen stehen in `src/data/encounters.json` als `patrons`.

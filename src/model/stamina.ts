@@ -33,12 +33,16 @@ function encounterAttacks(campaign: Campaign, encounter: Encounter): readonly At
  */
 export function blowsOf(campaign: Campaign, who: CharacterId): number | undefined {
   const encounter = currentEncounter(campaign);
-  if (!encounter || anyCharacterOf(campaign, who).wears === BATTLE_DRESS) return undefined;
+  // Tiere und Battle Dress: unbegrenzte Ausdauer.
+  const character = anyCharacterOf(campaign, who);
+  if (!encounter || character.wears === BATTLE_DRESS || character.animal !== undefined) return undefined;
   const upp = uppOf(campaign, who);
   const start = historyOf(campaign.log, upp, who, encounterStart(campaign.log, encounter)).wounds;
   const used = encounterAttacks(campaign, encounter).filter((e) => e.strike === 'combat' && e.for === who).length;
   const runs = (sideOf(campaign, who) === 'pcs' ? distanceOf(encounter, who).runs : encounter.npcRuns) ?? 0;
-  return Math.max(0, upp.end - start.end - used - runs);
+  // Jeder Versuch, sich aus Falle oder Filter loszureißen, kostet einen Combat-Schlag (SR 48).
+  const struggles = sideOf(campaign, who) === 'pcs' ? (distanceOf(encounter, who).struggles ?? 0) : 0;
+  return Math.max(0, upp.end - start.end - used - runs - struggles);
 }
 
 /** Ist das ein Schlag oder Hieb (Faust, Klinge, Stangenwaffe)? */
@@ -129,6 +133,7 @@ export function alarmAfterAttack(campaign: Campaign, results: readonly AttackRes
  * kämpfen kann und in der Begegnung noch nicht angegriffen wurde; der Wurf steht am Schadenswurf.
  */
 export function logDamage(campaign: Campaign, roll: DamageRoll, random: Random): Campaign {
+  if (roll.of === undefined) return appendLog(campaign, roll);
   const hit = campaign.log[roll.of] as AttackResult;
   const victim = victimOf(hit);
   if (!victim || !withSurprise(campaign, hit.for)) return appendLog(campaign, roll);

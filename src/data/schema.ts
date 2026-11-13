@@ -158,12 +158,74 @@ export const PatronSchema = z.object({
   rumor: z.boolean(),
 });
 
+/** Eine Art von Gerücht der Rumor List (SE, Charts S. 21) mit den Würfen 11–66 der Rumors Matrix, die auf sie führen. */
+export const RumorSchema = z.object({
+  letter: z.string().regex(/^[A-Z]$/),
+  text: z.string().min(1),
+  /** U bis Z: allgemeine Gerüchte; A bis T bestimmte. */
+  general: z.boolean(),
+  rolls: z.array(z.number().int().min(11).max(66)).min(1),
+});
+
+/** Die Spalte der Besonderheiten der Tiere (Animal Attributes, S. 18). */
+export const traitColumns = ['beach', 'marsh', 'river', 'sea', 'swamp', 'other'] as const;
+export const animalCategories = ['herbivore', 'omnivore', 'carnivore', 'scavenger'] as const;
+export const animalTraits = ['amphibian', 'flyer', 'swimmer', 'triphibian'] as const;
+export const animalSpecials = ['filter', 'trap', 'lure'] as const;
+
+/** Ein Gelände: DM auf die Entfernung; mit Tieren dazu Type DM, Size DM und Spalte der Besonderheiten. */
+export const TerrainSchema = z
+  .object({
+    id: z.string().min(1),
+    name: z.string().min(1),
+    dm: z.number().int(),
+    typeDm: z.number().int().optional(),
+    sizeDm: z.number().int().optional(),
+    traits: z.enum(traitColumns).optional(),
+  })
+  .refine((t) => (t.typeDm === undefined) === (t.sizeDm === undefined) && (t.typeDm === undefined) === (t.traits === undefined), 'Ein Gelände mit Tieren hat Type DM, Size DM und Spalte der Besonderheiten');
+
+const DiceExprSchema = z.object({ dice: z.number().int().min(0), dm: z.number().int() });
+
+/** Die Tabellen der Tierbegegnungen (SE 18–19, SR 46–50). */
+export const AnimalsSchema = z.object({
+  /** Die Encounter Columns, 2W6: je Wurf 2 bis 12 die Kategorie oder das Ereignis. */
+  columns: z.array(z.enum([...animalCategories, 'event'])).length(11),
+  /** Die Tierarten mit ihrem Verhalten (Animal Characteristics, SE 19). A und F: „1D+3“ oder ein Wort. */
+  types: z.array(
+    z.object({
+      id: z.string().min(1),
+      name: z.string().min(1),
+      category: z.enum(animalCategories),
+      attack: z.string().regex(/^(1D[+-]\d|possible|surprise|more)$/),
+      flee: z.string().regex(/^(1D[+-]\d|surprised)$/),
+      speed: DiceExprSchema,
+      /** Die Geschwindigkeit ist mindestens so hoch (Code-Zusatz zu `speed`). */
+      speedMin: z.number().int().min(0),
+      fleesFirst: z.boolean(),
+      special: z.enum(animalSpecials).optional(),
+    }),
+  ),
+  /** Die Animal Types, 2W6 + Type DM (0 bis 13) je Kategorie: Tierart und Anzahl in W6; ohne Anzahl ein Tier. */
+  typeRows: z.array(z.object({ roll: z.number().int().min(0).max(13), category: z.enum(animalCategories), type: z.string().min(1), quantity: z.number().int().min(1).max(5).optional() })).length(56),
+  /** Die Animal Attributes, 2W6 je Spalte: Besonderheit und Size DM. */
+  traitRows: z.array(z.object({ roll: z.number().int().min(2).max(12), traits: z.enum(traitColumns), trait: z.enum(animalTraits).optional(), sizeDm: z.number().int().optional() })).length(66),
+  /** Animal Sizes and Weaponry, 1 bis 20: ohne Gewicht „(+6)“. */
+  sizeRows: z
+    .array(z.object({ roll: z.number().int().min(1).max(20), weight: z.number().int().min(1).optional(), hits: z.tuple([DiceExprSchema, DiceExprSchema]), wounds: z.string().min(1), weapons: z.string().min(1), armor: z.string().min(1) }))
+    .length(20),
+  /** Die Ereignisse (SR 49–50); `lifeless`: für Welten ohne Leben. `save`: „8+“ oder ein Attribut (würfelt man höchstens). */
+  events: z
+    .array(z.object({ id: z.string().min(1), name: z.string().min(1), group: z.string().min(1), text: z.string().min(1), lifeless: z.boolean(), save: z.string().regex(/^(\d+\+|STR|DEX|END)$/).optional(), damage: z.number().int().min(1).optional() }))
+    .refine((events) => events.every((e) => (e.save === undefined) === (e.damage === undefined)), 'Ein Ereignis mit Rettungswurf hat Schaden und umgekehrt'),
+});
+
 /** Die Begegnungen und die Reactions-Tabelle (S. 21). */
 export const EncountersSchema = z.object({
   types: z.array(EncounterTypeSchema).min(1),
   reactions: z.array(z.object({ roll: z.number().int().min(2).max(12), text: z.string().min(1) })).length(11),
-  /** Die Geländearten mit ihrem DM auf die Entfernung (S. 5). */
-  terrains: z.array(z.object({ id: z.string().min(1), name: z.string().min(1), dm: z.number().int() })).min(1),
+  /** Die Geländearten mit ihrem DM auf die Entfernung (S. 5) und, wo es Tiere gibt, den DMs auf Tierart und Größe (S. 18). */
+  terrains: z.array(TerrainSchema).min(1),
   /** Die Encounter Ranges (S. 5): 1 bis 12 und ihre Entfernung. */
   ranges: z.array(z.object({ roll: z.number().int().min(1).max(12), range: RangeSchema })).length(12),
   /** Die Range Bands (Book 1, S. 32; Charts S. 7): je Reichweite das erste und letzte Band. */
@@ -174,6 +236,11 @@ export const EncountersSchema = z.object({
   patrons: z
     .array(PatronSchema)
     .refine((patrons) => [1, 2].every((list) => [1, 2, 3, 4, 5, 6].every((a) => [1, 2, 3, 4, 5, 6].every((b) => patrons.filter((p) => p.list === list && p.roll === a * 10 + b).length === 1))) && patrons.length === 72, 'Jede Patron-Liste hat genau eine Zeile je Wurf 11 bis 66'),
+  animals: AnimalsSchema,
+  /** Die Rumor List mit der Rumors Matrix: jeder Wurf 11 bis 66 führt auf genau ein Gerücht. */
+  rumors: z
+    .array(RumorSchema)
+    .refine((rumors) => [1, 2, 3, 4, 5, 6].every((a) => [1, 2, 3, 4, 5, 6].every((b) => rumors.filter((r) => r.rolls.includes(a * 10 + b)).length === 1)), 'Jeder Wurf 11 bis 66 der Rumors Matrix führt auf genau ein Gerücht'),
 });
 
 /** Ein Sammelbegriff, aus dem man eine Fertigkeit wählt: Blade Combat, Gun Combat, Vehicle. */
@@ -479,6 +546,15 @@ export type AttackKind = z.infer<typeof AttackKindSchema>;
 export type Weapon = z.infer<typeof WeaponSchema>;
 export type EncounterType = z.infer<typeof EncounterTypeSchema>;
 export type Patron = z.infer<typeof PatronSchema>;
+export type Rumor = z.infer<typeof RumorSchema>;
+export type Terrain = z.infer<typeof TerrainSchema>;
+export type Animals = z.infer<typeof AnimalsSchema>;
+export type AnimalType = Animals['types'][number];
+export type AnimalEvent = Animals['events'][number];
+export type AnimalCategory = (typeof animalCategories)[number];
+export type AnimalTrait = (typeof animalTraits)[number];
+export type AnimalSpecial = (typeof animalSpecials)[number];
+export type TraitColumn = (typeof traitColumns)[number];
 export type ArmorDm = z.infer<typeof ArmorDmSchema>;
 export type RangeDm = z.infer<typeof RangeDmSchema>;
 export type Cascade = z.infer<typeof CascadeSchema>;

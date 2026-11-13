@@ -115,6 +115,7 @@ hide <<value>> stereotype
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Encounter $begegnung
+  class AnimalTable $begegnung
 
 ' Referenzdaten
   class Item <<reference>> $shop
@@ -239,6 +240,7 @@ Hex "*" --> "*" Item : /offer
 ' Angriff
 
 ' Begegnung
+Hex "1" *-- "*" AnimalTable : animals
 Encounter "*" --> "0..1" Hex : in
 
 ' Karte

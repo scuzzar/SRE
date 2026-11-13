@@ -85,6 +85,7 @@ hide <<value>> stereotype
     retired: boolean
     npc: boolean
     /wounds: Wounds
+    /hurt: number [0..1]
     /state: WoundState
     /blows: number [0..1]
   }
@@ -111,6 +112,7 @@ hide <<value>> stereotype
   class Hex $sektor
 
 ' Verlauf
+  class SaveRoll $begegnung
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Task <<transient>> $probe
@@ -120,6 +122,7 @@ hide <<value>> stereotype
   class Recovery $kampf
   class Encounter $begegnung
   class Distance $begegnung
+  class AnimalRow $begegnung
 
 ' Referenzdaten
   class Skill <<reference>> $charakter {
@@ -195,6 +198,8 @@ AttackResult "*" --> "0..1" Character : against
 AttackResult "*" --> "0..1" SkillLevel : uses
 
 ' Begegnung
+SaveRoll "*" --> "1" Character : for
+Character "*" --> "0..1" AnimalRow : animal
 Encounter "1" *-- "*" Character : npcs {ordered}
 Encounter "*" --> "0..1" Character : leader
 Encounter "*" --> "*" Character : acted

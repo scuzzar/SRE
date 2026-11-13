@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { appendLog, createCampaign, DEMO_FUNDS, fromCampaignFile, rollEncounter, rollSurprise, setHexes, setLocation, type CampaignRepository, type Random } from '../model';
+import { appendLog, createCampaign, DEMO_FUNDS, fromCampaignFile, ref, rollEncounter, rollSurprise, setHexes, setLocation, type CampaignRepository, type Random } from '../model';
 import { fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 import { surfaceLines } from './world-view';
@@ -481,9 +481,53 @@ describe('Begegnung und Kampfsimulation', () => {
     const { game } = await started(fixedRandom(), memoryRepository(createCampaign()));
     expect(game.snapshot().combat).toMatchObject({ canEncounter: false, sim: undefined });
     const { game: there, random } = await onRegina();
-    random.queue.push(6, 3);
+    random.queue.push(5, 6, 3);
     there.rollEncounter();
-    expect(there.snapshot().combat).toMatchObject({ sim: undefined, note: 'Wurf 63: keine Begegnung.' });
+    expect(there.snapshot().combat).toMatchObject({ sim: undefined, note: 'Test 5 (5+ nötig), Wurf 63: keine Begegnung.' });
+  });
+
+  it('vor der Zufallsbegegnung steht der Test des Tages: unter 5 auf 1W6 gibt es keine; wer die Art wählt, überspringt ihn', async () => {
+    const { game, random } = await onRegina();
+    random.queue.push(4);
+    game.rollEncounter();
+    expect(game.snapshot().combat).toMatchObject({ sim: undefined, note: 'Test 4 (5+ nötig): heute keine Begegnung.' });
+    random.queue.push(6, 1, 5);
+    game.rollEncounter();
+    expect(game.snapshot().combat?.sim).toMatchObject({ roll: 15, name: 'Thugs' });
+    game.endEncounter();
+    game.rollEncounter(15);
+    expect(game.snapshot().combat?.sim).toMatchObject({ roll: 15 });
+  });
+
+  it('Patron: erst der Test der Woche, dann wählt ein Würfel die Liste, dann der Wurf; nur der Wurf steht im Log', async () => {
+    const { game, random } = await onRegina();
+    random.queue.push(4);
+    game.rollPatron();
+    expect(game.snapshot().patron).toMatchObject({ last: undefined, note: 'Test 4 (5+ nötig): diese Woche kein Patron.' });
+    expect(game.snapshot().log).toHaveLength(0);
+    // Test 5, Listenwürfel 4 (Liste zwei), dann 3 und 6; Jonas' Admin-1 gibt +1 auf den zweiten Würfel.
+    random.queue.push(5, 4, 3, 6);
+    game.rollPatron();
+    expect(game.snapshot().patron).toMatchObject({ last: { list: 2, dice: [3, 6], dms: [0, 1], roll: 36, name: 'Professor' }, note: 'Test 5 (5+ nötig): ein Patron.' });
+    // Test 6, Listenwürfel 1 (Liste eins), 2 und 3: Zeile 23 ist ein Gerücht; gleich danach fällt es ohne Test (6 und 1: F).
+    random.queue.push(6, 1, 2, 3, 6, 1);
+    game.rollPatron();
+    expect(game.snapshot().patron).toMatchObject({ last: { list: 1, roll: 23, rumor: true }, note: 'Test 6 (5+ nötig): ein Gerücht statt eines Patrons.' });
+    expect(game.snapshot().rumor).toMatchObject({ last: { roll: 61, letter: 'F', text: 'Information leading to trap', general: false }, note: 'Ohne Test: Gerücht statt eines Patrons.' });
+    expect(game.snapshot().log.map((e) => e.kind)).toEqual(['patron', 'patron', 'rumor']);
+  });
+
+  it('Gerücht: erst der Test der Woche (7+ auf 2W6), dann der Wurf auf die Rumors Matrix; nur der Wurf steht im Log', async () => {
+    const { game, random } = await onRegina();
+    random.queue.push(3, 3);
+    game.rollRumor();
+    expect(game.snapshot().rumor).toMatchObject({ last: undefined, note: 'Test 3 + 3 = 6 (7+ nötig): diese Woche kein Gerücht.' });
+    expect(game.snapshot().log).toHaveLength(0);
+    // Test 4 + 3, dann 2 und 3: Die Matrix führt bei 23 auf U, ein allgemeines Gerücht.
+    random.queue.push(4, 3, 2, 3);
+    game.rollRumor();
+    expect(game.snapshot().rumor).toMatchObject({ last: { dice: [2, 3], roll: 23, letter: 'U', text: 'Broad background information', general: true }, note: 'Test 4 + 3 = 7 (7+ nötig): ein Gerücht.' });
+    expect(game.snapshot().log.map((e) => e.kind)).toEqual(['rumor']);
   });
 
   it('im Reiter Begegnung gewürfelt, zeigt erst die Übersicht; danach bleibt der Reiter Begegnung, zum Kampf geht es erst auf Wunsch', async () => {
@@ -1343,5 +1387,86 @@ describe('Durchlaufen lassen', () => {
     game.runWorld();
     expect(game.snapshot().world).toMatchObject({ step: 'name', uwp: 'C788545-7' });
     expect(game.snapshot().world?.lines).toHaveLength(11);
+  });
+});
+
+describe('Tiere im Kampf', () => {
+  const regina = { ...ref.demoWorld, column: 1, row: 1, name: 'Regina' };
+
+  /** Eine Zufallsquelle, der man vor jedem Wurf die nächsten Zahlen gibt; sonst das Kleinste. */
+  function queued() {
+    const queue: number[] = [];
+    return { queue, int: (min: number) => queue.shift() ?? min };
+  }
+
+  async function withAnimals() {
+    const random = queued();
+    const { game } = await started(random, memoryRepository(setHexes(createCampaign(), [regina])));
+    game.chooseHex(1, 1);
+    game.stayHere();
+    game.closeWorld();
+    game.setTerrain('clear');
+    // Zeile 7 wählen: ohne Test, die Tabelle entsteht dabei.
+    game.rollAnimals(7);
+    game.closeEncounterIntro();
+    return { game, random };
+  }
+
+  it('die Tiere stehen mit Hits statt Attributen in der Kampfsimulation, ohne Hände und ohne Heilen', async () => {
+    const { game } = await withAnimals();
+    const sim = game.snapshot().combat!.sim!;
+    expect(sim.animal).toBeDefined();
+    expect(sim.reaction).toBeUndefined();
+    const animal = sim.fighters.find((f) => f.side === 'npcs')!;
+    expect(animal.animal).toMatchObject({ hurt: 0 });
+    expect(animal.healing).toMatchObject({ wake: false, treatable: false });
+    expect(animal.state).toBe('unhurt');
+  });
+
+  it('ein Treffer auf ein Tier zählt gegen seine Hits; erreicht der Schaden die erste Zahl, ist es bewusstlos', async () => {
+    const { game, random } = await withAnimals();
+    game.rollSurprise();
+    game.closeSurprise();
+    let sim = game.snapshot().combat!.sim!;
+    const animal = sim.fighters.find((f) => f.side === 'npcs')!;
+    // Solange die SC dran sind: Kira greift das Tier an, bis es außer Gefecht ist.
+    for (let i = 0; i < 30 && game.snapshot().combat!.sim!.fighters.find((f) => f.id === animal.id)!.state !== 'unconscious' && game.snapshot().combat!.sim!.fighters.find((f) => f.id === animal.id)!.state !== 'dead'; i++) {
+      sim = game.snapshot().combat!.sim!;
+      if (!sim.turn) break;
+      if (sim.turn.side === 'pcs') {
+        game.chooseFightTarget(animal.id);
+        random.queue.push(6, 6);
+        game.fightAttack();
+        random.queue.push(6, 6, 6, 6, 6);
+        if (game.snapshot().combat!.damage) game.rollDamage();
+      } else {
+        random.queue.push(1, 1);
+        game.fightAttack();
+      }
+    }
+    const after = game.snapshot().combat!.sim!.fighters.find((f) => f.id === animal.id)!;
+    expect(after.animal!.hurt).toBeGreaterThanOrEqual(after.animal!.hits[0]);
+    expect(['unconscious', 'dead']).toContain(after.state);
+  });
+
+  it('trifft ein Tier einen SC, ist der Schaden fest, ohne Würfel; er geht als ein Block auf ein Attribut', async () => {
+    const { game, random } = await withAnimals();
+    game.rollSurprise();
+    game.closeSurprise();
+    for (let i = 0; i < 20; i++) {
+      const sim = game.snapshot().combat!.sim!;
+      if (!sim.turn) break;
+      if (sim.turn.side === 'npcs') {
+        game.chooseFightTarget('c1');
+        random.queue.push(6, 6);
+        game.fightAttack();
+        if (game.snapshot().combat!.damage) game.rollDamage();
+        break;
+      }
+      game.skipTurn();
+    }
+    const damage = game.snapshot().log.find((e) => e.kind === 'damage');
+    expect(damage).toMatchObject({ kind: 'damage', dice: [], victim: 'Kira Vant' });
+    expect(damage && damage.kind === 'damage' ? damage.fixed : undefined).toBeGreaterThanOrEqual(1);
   });
 });

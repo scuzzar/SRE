@@ -95,6 +95,9 @@ hide <<value>> stereotype
     text: string
   }
   class PatronRoll $begegnung
+  class RumorRoll $begegnung
+  class EventResult $begegnung
+  class SaveRoll $begegnung
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Task <<transient>> $probe {
@@ -145,6 +148,7 @@ LogEntry <|-- DamageRoll
 LogEntry <|-- Recovery
 LogEntry <|-- Note
 LogEntry <|-- PatronRoll
+LogEntry <|-- RumorRoll
 Note "*" --> "0..1" LogEntry : interprets
 TaskResult "*" --> "1" Character : for
 TaskResult "*" --> "0..1" SkillLevel : uses
@@ -161,6 +165,8 @@ Task ..> TaskResult : on roll
 ' Angriff
 
 ' Begegnung
+LogEntry <|-- EventResult
+LogEntry <|-- SaveRoll
 
 ' Karte
 

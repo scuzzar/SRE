@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent } from 'react';
-import type { AttackOption, CombatView, FighterView, Impact, SimView } from '../../controller';
+import type { AnimalSimView, AttackOption, CombatView, FighterView, Impact, SimView } from '../../controller';
 import type { Range } from '../../model';
 import { hex, rangeText, signed } from '../format';
 import { useGame } from '../game-context';
@@ -124,7 +124,7 @@ function FightHead({ sim }: { sim: SimView }) {
           type="button"
           className="fight-head-main"
           onClick={() => game.showEncounterIntro()}
-          aria-label={`Runde ${sim.round}, ${count} × ${sim.name}, Reaktion ${sim.reaction}: ${sim.reactionText}${surprise ? `, ${surprise}` : ''}. Übersicht zeigen`}
+          aria-label={`Runde ${sim.round}, ${count} × ${sim.name}, ${sim.reaction === undefined ? 'Verhalten' : `Reaktion ${sim.reaction}`}: ${sim.reactionText}${surprise ? `, ${surprise}` : ''}. Übersicht zeigen`}
         >
           <span className="fight-head-title">
             Runde {sim.round} · {count} × {sim.name}
@@ -403,7 +403,7 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
           }}
         >
           <DiceIcon />
-          {combat.damage.victim ? `Schaden ${combat.damage.victim.split(' ')[0]}` : 'Schaden'} ({combat.damage.wounds}W6){combat.damage.left > 1 ? ` · noch ${combat.damage.left}` : ''}
+          {combat.damage.victim ? `Schaden ${combat.damage.victim.split(' ')[0]}` : 'Schaden'} ({combat.damage.label}){combat.damage.left > 1 ? ` · noch ${combat.damage.left}` : ''}
         </button>
       ) : turn ? (
         <>
@@ -425,7 +425,7 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
               type="button"
               className="ghost compact fight-skip"
               title="Kein Angriff; bis zum nächsten Zug DM −1/−2/−4 auf Angriffe gegen ihn"
-              disabled={turn.ran}
+              disabled={turn.ran || turn.held !== undefined}
               onClick={() => {
                 haptic('pick');
                 game.evade();
@@ -437,11 +437,28 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
               Aussetzen
             </button>
           </div>
-          <div className={turn.attacks.length > 1 ? 'attack-buttons' : 'attack-buttons single'}>
-            {turn.attacks.map((a, i) => (
-              <AttackButton key={a.weapon} attack={a} first={i === 0} label={slotLabel(a)} hasTarget={target !== undefined} ran={turn.ran} />
-            ))}
-          </div>
+          {turn.held ? (
+            <button
+              type="button"
+              className="atk primary"
+              onClick={() => {
+                haptic('shake');
+                game.struggle();
+              }}
+            >
+              <span className="atk-slot">Festgehalten</span>
+              <span className="atk-name">Losreißen</span>
+              <span className="atk-need">
+                {turn.held.target}+{turn.held.dm ? ` (+${turn.held.dm} durch ${turn.held.helpers} ${turn.held.helpers === 1 ? 'Helfer' : 'Helfer'})` : ''}
+              </span>
+            </button>
+          ) : (
+            <div className={turn.attacks.length > 1 ? 'attack-buttons' : 'attack-buttons single'}>
+              {turn.attacks.map((a, i) => (
+                <AttackButton key={a.weapon} attack={a} first={i === 0} label={slotLabel(a)} hasTarget={target !== undefined} ran={turn.ran} />
+              ))}
+            </div>
+          )}
           {fire && <FireToggle fire={fire} compact />}
           {/* Voll oder geschwächt nur, wenn ein Schlag oder Hieb auch reicht. */}
           {turn.melee && turn.side === 'pcs' && turn.attacks.some((a) => a.reaches && a.melee) && <StrikeToggle melee={turn.melee} />}
@@ -580,6 +597,32 @@ export function SurpriseDialog({ sim }: { sim: SimView }) {
   );
 }
 
+/** Ein Wurf gegen A oder F: „8 gegen A6“, oder das Wort der Tierart. */
+function checkText(label: string, check: AnimalSimView['attack']): string {
+  const total = check.dice[0] + check.dice[1];
+  return check.need === undefined ? `${label}: ${wordText[check.word ?? ''] ?? check.word}` : `${label} 2W6: ${check.dice[0]} + ${check.dice[1]} = ${total} gegen ${label[0]}${check.need}`;
+}
+
+const wordText: Record<string, string> = { possible: 'wenn es kann', surprise: 'mit Überraschung', surprised: 'wenn überrascht', more: 'wenn mehr als Beute' };
+
+/** In der Übersicht einer Tierbegegnung: die Werte der Tiere, die Würfe gegen A und F und was sie tun. */
+function AnimalIntro({ animal, text, landed }: { animal: AnimalSimView; text: string; landed: boolean }) {
+  const armor = animal.armor === 'nothing' ? 'keine Rüstung' : `${animal.armor}${animal.armorDm ? ` ${signed(animal.armorDm)}` : ''}`;
+  const checks = animal.fleesFirst ? [checkText('Flucht', animal.flee), checkText('Angriff', animal.attack)] : [checkText('Angriff', animal.attack), checkText('Flucht', animal.flee)];
+  return (
+    <div className="intro-reaction">
+      <span className="small-label">
+        {animal.weight} kg · Hits {animal.hits[0]}/{animal.hits[1]} · {armor} · {animal.attacks.map((a) => `${a.damage} ${a.name}${a.dm ? ` ${signed(a.dm)}` : ''}`).join(', ')} · S{animal.speed}
+      </span>
+      <p className="intro-line">{checks.join(' · ')}</p>
+      {animal.lure && <p className="intro-line">Köder 2W6: {animal.lure.dice[0]} + {animal.lure.dice[1]} {animal.lure.works ? '– wirkt auf Menschen: Die Begegnung beginnt in Berührung.' : '– wirkt nicht auf Menschen.'}</p>}
+      <p className={landed ? 'intro-verdict shown' : 'intro-verdict'}>
+        <strong>{text}</strong>
+      </p>
+    </div>
+  );
+}
+
 /**
  * Die Übersicht einer eben gewürfelten Begegnung: wer kommt, und die Würfe für Reaktion, Entfernung
  * und Überraschung. Die Reaktion rollt; ein Tippen überspringt. Gespeichert ist schon alles.
@@ -592,14 +635,19 @@ export function EncounterIntro({ sim }: { sim: SimView }) {
   return (
     <div className="modal">
       <section className="result encounter-intro" role="dialog" aria-modal="true" aria-labelledby="intro-title" onClick={() => phase < 3 && skip(3)}>
-        <span className="kicker">Begegnung · Wurf {sim.roll}</span>
+        <span className="kicker">
+          {sim.animal ? `Tiere · ${sim.animal.terrain.split(',')[0]} · Wurf ${sim.roll}${sim.animal.tableDice ? ` (${sim.animal.tableDice[0]} + ${sim.animal.tableDice[1]})` : ''}` : `Begegnung · Wurf ${sim.roll}`}
+        </span>
         <h2 id="intro-title" className="shop-buy-title">
           {npcs.length} × {sim.name}
           <span className="muted">
             {' '}
-            ({sim.quantity}W{sim.quantityDie})
+            ({sim.quantity === 0 ? 'ein Tier' : `${sim.quantity}W${sim.quantityDie}`})
           </span>
         </h2>
+        {sim.animal ? (
+          <AnimalIntro animal={sim.animal} text={sim.reactionText} landed={landed} />
+        ) : (
         <div className="intro-reaction">
           <span className="small-label">Reaktion (2W6{sim.reactionDm ? `, DM ${signed(sim.reactionDm)}` : ''})</span>
           {sim.reactionDice && phase >= 1 ? (
@@ -611,6 +659,7 @@ export function EncounterIntro({ sim }: { sim: SimView }) {
             <strong>{sim.reaction}</strong> {sim.reactionText}
           </p>
         </div>
+        )}
         <p className="intro-line">
           Entfernung: <b>{startText(sim)}</b>
           {sim.rangeDice
@@ -628,10 +677,12 @@ export function EncounterIntro({ sim }: { sim: SimView }) {
             <li key={n.id}>
               <b>{n.name}</b>
               {n.leader && <span className="npc-leader"> · Anführer</span>}
-              <span className="muted mono">
-                {' '}
-                STR {hex(n.upp.str)} DEX {hex(n.upp.dex)} END {hex(n.upp.end)} · {n.weapon} ({n.skill}) · {n.armor ?? 'keine Rüstung'}
-              </span>
+              {!sim.animal && (
+                <span className="muted mono">
+                  {' '}
+                  STR {hex(n.upp.str)} DEX {hex(n.upp.dex)} END {hex(n.upp.end)} · {n.weapon} ({n.skill}) · {n.armor ?? 'keine Rüstung'}
+                </span>
+              )}
             </li>
           ))}
         </ol>
