@@ -112,7 +112,6 @@ hide <<value>> stereotype
   class DiceRoll $probe
   class Note $probe
   class Butchering $begegnung $newClass("2026-11-13") {
-    dice: number[2]
     meatDie: number [0..1]
     /edible: boolean
     /meat: number
@@ -166,6 +165,7 @@ hide <<value>> stereotype
     flee: number [0..1]
     speed: number [0..1]
     $new("2026-11-13", "market: number [0..1]")
+    $new("2026-11-13", "edible: boolean [0..1]")
     $new("2026-11-13", "/furValue: number [0..1]")
     $new("2026-11-13", "/meatValue: number [0..1]")
   }

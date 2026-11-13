@@ -269,7 +269,7 @@ eine:
 
 - **2026-11-13, wartet auf Freigabe: Beute** (siehe *Beute*). Ausrüstung und Kredite der NSC,
   Fleisch und Fell der Tiere. Neu im Bild: der Logeintrag `Butchering`, `EncounterType.credits`,
-  `Terrain.huntDm`, `AnimalRow.market`, `/furValue`, `/meatValue`, `WoundState.destroyed`,
+  `Terrain.huntDm`, `AnimalRow.market`, `edible`, `/furValue`, `/meatValue`, `WoundState.destroyed`,
   `ItemKind.game` und `Possession.from`. Der Ausschnitt dazu liegt unter
   [`changes/2026-11-13-beute.png`](changes/2026-11-13-beute.png).
 
@@ -404,7 +404,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Gerücht | `Rumor` | Eine Art von Gerücht nach der Rumor List (SE, Charts S. 21), Buchstabe A bis Z, z. B. „F · Information leading to trap“; A bis T sind bestimmte, U bis Z allgemeine Gerüchte |
 | Gerüchte-Wurf | `RumorRoll` | Ein Wurf auf die Rumors Matrix: zwei Würfel nacheinander |
 | Beute | (Aktion „Beute nehmen“, `Butchering`) | Was die SC nach einem Kampf bekommen: Ausrüstung und Kredite eines NSC, Fleisch und Fell eines Tiers |
-| Ausweiden | `Butchering` | Ein Tier nach dem Kampf zerlegen: Wurf auf essbar, Menge Fleisch, Fell |
+| Ausweiden | `Butchering` | Ein Tier nach dem Kampf zerlegen: Menge Fleisch (wenn die Art essbar ist) und Fell |
+| Essbar | `AnimalRow.edible` | Ob das Fleisch einer Tierart genießbar ist; einmal je Zeile der Tiertabelle gewürfelt |
 | Marktwurf | `AnimalRow.market` | 3W6 je Tierart, beim Erzeugen der Tiertabelle gewürfelt; daraus mit DMs Fell- und Fleischwert |
 | Jagd-DM | `Terrain.huntDm` | Wie schwer im Gelände zu jagen ist: offen ±0, mittel +1, schwer +2; erhöht Fell- und Fleischwert |
 | Jagdbeute | `ItemKind.game`, `Possession.from` | Fleisch oder Fell im Besitz eines SC, in kg, mit Verweis auf die Tierart, aus der es stammt |
@@ -994,9 +995,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     zusammen), ist es zerstört (`destroyed`): tot, ohne Fleisch und Fell.
   - *Ausweiden* (`Butchering`): Ein Tier, das tot oder bewusstlos ist und nicht zerstört, kann man
     einmal ausweiden; die Beute geht an einen gewählten lebenden SC (`for`).
-    - *Essbar* (SR 48): 2W6 (`dice`) ≥ 5, DM −3 bei verdorbener Atmosphäre (2, 4, 7, 9); nur bei
-      Atmosphäre 2 bis 9 und ohne Giftwaffe (Hausregel: der Stinger ist eine Giftwaffe). `/edible`.
-    - *Fleisch*: Ist es essbar, 1W6 (`meatDie`) × 5 % seines Gewichts, abgerundet, mindestens 1 kg
+    - *Essbar* (SR 48) ist eine Eigenschaft der Tierart, nicht des einzelnen Ausweidens: Beim
+      Erzeugen der Tiertabelle würfelt jede Tierzeile einmal 2W6 ≥ 5, DM −3 bei verdorbener
+      Atmosphäre (2, 4, 7, 9); essbar nur bei Atmosphäre 2 bis 9 und ohne Giftwaffe (Hausregel: der
+      Stinger ist eine Giftwaffe). Gespeichert wird das Ergebnis (`AnimalRow.edible`), nicht der
+      Wurf, wie bei allen Werten der Tabelle. `Butchering./edible` folgt aus der Zeile des Tiers.
+    - *Fleisch*: Ist die Art essbar, 1W6 (`meatDie`) × 5 % seines Gewichts, abgerundet, mindestens 1 kg
       (`/meat`). Ein Mensch braucht 1 kg am Tag.
     - *Fell* (Hausregel): jedes kg Tier gibt 1 kg Fell (`/fur`), nur bei Tieren ohne Rüstung oder
       mit Jack; sonst 0.
@@ -1018,7 +1022,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       Rechenbeispiel über 4000 Tabellen: typisch rund 90 Cr Fell und 80 Cr Fleisch je Begegnung
       (Listenpreis), große Herden mehrere tausend; wie viel die Gruppe mitnehmen kann, entscheidet
       man selbst.
-  - *Tierbeute in älteren Tabellen*: Zeilen ohne Marktwurf bekommen ihn beim ersten Ausweiden.
+  - *Tierbeute in älteren Tabellen*: Zeilen ohne Marktwurf oder ohne `edible` bekommen beides
+    beim ersten Ausweiden einer Tierart dieser Zeile, gewürfelt wie beim Erzeugen.
 - **Gerücht.** Eine weitere Begegnungsart im Reiter Begegnung.
   Nach dem Test (7+ auf 2W6) zwei Würfel nacheinander (`RumorRoll.dice`), der erste die Zehner-, der
   zweite die Einerstelle; die Rumors Matrix (SE, Charts S. 21) führt von 11 bis 66 auf eine Art von
