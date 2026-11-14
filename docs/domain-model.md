@@ -901,10 +901,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   vergeht keine Zeit.
   - *Erinnerung* (am 14. November 2026 auf Wunsch des Owners geändert): **Tage** vergehen ohne
     Erinnerung. Nur **Woche beenden** sagt einmal, was diese Woche fehlt, statt gleich
-    weiterzuschalten: Patron, Gerücht und, bei Gesetz 1 oder mehr, Polizei, wenn sie diese Woche nicht
-    getestet sind; die Zufallsbegegnung und, wenn das Gelände Tiere hat, die Tiere, wenn sie diese
+    weiterzuschalten: bei Gesetz 1 oder mehr die Polizei, wenn sie diese Woche nicht getestet ist;
+    die Zufallsbegegnung und, wenn das Gelände Tiere hat, die Tiere, wenn sie diese
     Woche gar nicht getestet sind. **Langes Drücken** schaltet trotzdem weiter, ohne Begegnung: je
-    nach Lage will man mehr oder weniger Begegnungen. Die Tests würfelt die Zeit nie selbst. Die
+    nach Lage will man mehr oder weniger Begegnungen. An Patron und Gerücht erinnert nichts: Die
+    will man haben, man würfelt sie von selbst. Die Tests würfelt die Zeit nie selbst. Die
     Testknöpfe zählen weiter je Tag bzw. Woche (siehe *Test*).
 - **Reise** (2026-11-13d). Reisen geht zurzeit nur mit Passagen (High, Middle, Low; SE S. 8
   f.), noch nicht mit eigenem Schiff.

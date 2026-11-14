@@ -571,19 +571,19 @@ describe('Begegnung und Kampfsimulation', () => {
 
   it('Zeit: Tage vergehen ohne Erinnerung; Woche beenden erinnert einmal an fehlende Tests, langes Drücken macht ohne Begegnung weiter; neue Einträge tragen den Tag', async () => {
     const { game, random } = await onRegina();
-    expect(game.snapshot().time).toMatchObject({ label: 'Feiertag, 001-1105', toSunday: 7, missingWeek: ['Zufallsbegegnung', 'Patron', 'Gerücht', 'Polizei'] });
+    expect(game.snapshot().time).toMatchObject({ label: 'Feiertag, 001-1105', toSunday: 7, missingWeek: ['Zufallsbegegnung', 'Polizei'] });
     random.queue.push(2);
     game.rollEncounter();
     game.passDays(2);
     expect(game.snapshot().time).toMatchObject({ label: 'Dienstag, 003-1105', note: undefined });
-    // Die Zufallsbegegnung ist diese Woche schon getestet (am Feiertag); es fehlen die Wochen-Tests.
+    // Die Zufallsbegegnung ist diese Woche schon getestet (am Feiertag); es fehlt die Polizei, an Patron und Gerücht erinnert nichts.
     game.endWeek();
-    expect(game.snapshot().time?.note).toBe('Noch nicht getestet: Patron, Gerücht, Polizei. Lange drücken, um ohne Begegnung weiterzumachen.');
+    expect(game.snapshot().time?.note).toBe('Noch nicht getestet: Polizei. Lange drücken, um ohne Begegnung weiterzumachen.');
     game.endWeek(true);
     expect(game.snapshot().time?.label).toBe('Sonntag, 008-1105');
     expect(game.snapshot().logDays).toEqual(['Feiertag, 001-1105', 'Feiertag, 001-1105', 'Dienstag, 003-1105']);
     // In der neuen Woche fehlt alles wieder, auch die Zufallsbegegnung.
-    expect(game.snapshot().time?.missingWeek).toEqual(['Zufallsbegegnung', 'Patron', 'Gerücht', 'Polizei']);
+    expect(game.snapshot().time?.missingWeek).toEqual(['Zufallsbegegnung', 'Polizei']);
   });
 
   it('Polizei: einmal je Woche nach Gesetz; der zweite Test nur mit langem Drücken', async () => {
