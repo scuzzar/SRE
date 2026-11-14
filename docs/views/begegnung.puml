@@ -288,6 +288,7 @@ hide <<value>> stereotype
 ' Zeit und Reisen
 
 ' Charaktererschaffung und Lebenslauf
+Character "*" -$newArrow("2026-11-14")-> "0..1" Patron : patron
 
 ' Laufbahnen (Referenzdaten)
 

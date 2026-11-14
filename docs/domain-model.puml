@@ -849,6 +849,8 @@ Career "*" --> "0..1" Service : /in
 Career "*" --> "0..1" Hex : homeworld
 Career "*" --> "*" Hex : worlds {ordered}
 Character "*" --> "0..1" Hex : homeworld
+Character "*" -$newArrow("2026-11-14")-> "0..1" Hex : place
+Character "*" -$newArrow("2026-11-14")-> "0..1" Patron : patron
 CareerRoll --> RollKind
 CareerRoll --> "0..1" Characteristic : of
 CareerRoll "*" --> "0..1" Service : for

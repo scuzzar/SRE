@@ -127,6 +127,7 @@ hide <<value>> stereotype
   class Recovery $kampf
   class Encounter $begegnung
   class Distance $begegnung
+  class Patron <<reference>> $begegnung
   class AnimalRow $begegnung
 
 ' Referenzdaten
@@ -162,6 +163,8 @@ LowBerth "*" --> "0..1" Character : for
 Generation ..> Character : on finish
 Character "1" *-- "0..1" Career : career
 Character "*" --> "0..1" Hex : homeworld
+Character "*" -$newArrow("2026-11-14")-> "0..1" Hex : place
+Character "*" -$newArrow("2026-11-14")-> "0..1" Patron : patron
 CareerRoll --> "0..1" Characteristic : of
 CareerRoll "*" --> "0..1" Skill : chosen
 

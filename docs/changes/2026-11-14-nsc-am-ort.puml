@@ -1,0 +1,184 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-14"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-14: NSC am Ort: Patron als NSC, Ort der dauerhaften NSC, Reiter NSC
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne
+  class Character $charakter {
+    name: string
+    background: string
+    equipment: string
+    credits: number
+    note: string
+    dead: boolean
+    retired: boolean
+    npc: boolean
+    /wounds: Wounds
+    /hurt: number [0..1]
+    /state: WoundState
+    /blows: number [0..1]
+  }
+  class Upp <<value>> $charakter
+  class SkillLevel $charakter
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+  class Hex $sektor {
+    column: number
+    row: number
+    empty: boolean
+    name: string [0..1]
+    navalBase: boolean [0..1]
+    scoutBase: boolean [0..1]
+    gasGiant: boolean [0..1]
+    note: string [0..1]
+    /step: WorldStep
+  }
+  class Uwp <<value>> $sektor
+  class WorldRoll <<transient>> $sektor
+
+' Verlauf
+  class PatronRoll $begegnung
+
+' Zeit und Reisen
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Patron <<reference>> $begegnung {
+    list: number
+    roll: number
+    name: string
+    rumor: boolean
+  }
+
+' Referenzdaten
+  class Surface <<value>> $sektor
+  class Temperature <<reference>> $sektor
+  class TradeCode <<reference>> $sektor
+  enum WorldStep <<value>> $sektor
+
+' Kampagne
+Campaign "1" *-- "*" Character : characters
+Campaign "0..1" --> "0..1" Character : focus
+Campaign "*" --> "0..1" Hex : location
+
+' Zeit und Reisen
+
+' Charaktererschaffung und Lebenslauf
+Character "*" --> "0..1" Hex : homeworld
+Character "*" -$newArrow("2026-11-14")-> "0..1" Hex : place
+Character "*" -$newArrow("2026-11-14")-> "0..1" Patron : patron
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+Campaign "1" *-- "*" Hex : hexes
+Hex "1" *-- "1" Uwp : uwp
+Hex --> WorldStep
+WorldRoll "*" --> "1" Hex : for
+WorldRoll ..> Hex : on roll
+Hex "*" --> "*" TradeCode : /trade
+Hex "*" --> "0..1" Temperature : temperature
+Hex "1" *-- "0..1" Surface : surface
+
+' Charakter
+Character "1" *-- "1" Upp : upp
+Character "1" *-- "*" SkillLevel : skills
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+PatronRoll "*" --> "1" Patron : of
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+@enduml
