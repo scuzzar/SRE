@@ -24,9 +24,11 @@ export function OracleScreen({ view, strip = true }: { view: Snapshot; /** Im De
   const [rolling, setRolling] = useState<number | undefined>(undefined);
   const rolled = rolling === undefined ? undefined : view.log[rolling];
   const done = useCallback(() => setRolling(undefined), []);
-  // Das offene Blatt: Notiz, oder Deutung zum Ergebnis an dieser Stelle des Logs.
-  const [sheet, setSheet] = useState<{ readonly reading?: number } | undefined>(undefined);
+  // Das offene Blatt: Notiz, Deutung zum Ergebnis an dieser Stelle des Logs, oder den Text der Notiz
+  // bzw. Deutung an dieser Stelle ändern.
+  const [sheet, setSheet] = useState<{ readonly reading?: number; readonly edit?: number } | undefined>(undefined);
   const reading = sheet?.reading === undefined ? undefined : view.log[sheet.reading];
+  const edited = sheet?.edit === undefined ? undefined : view.log[sheet.edit];
 
   const task = view.task?.ready ? view.task : undefined;
 
@@ -52,7 +54,7 @@ export function OracleScreen({ view, strip = true }: { view: Snapshot; /** Im De
   return (
     <div className="screen">
       {strip && <CharacterStrip view={view} />}
-      <LogList log={view.log} days={view.logDays} onInterpret={(index) => setSheet({ reading: index })} />
+      <LogList log={view.log} days={view.logDays} onInterpret={(index) => setSheet({ reading: index })} onEdit={(index) => setSheet({ edit: index })} />
       <section className="dock" aria-label="Orakel und Proben">
         {task && (
           <div className="task-bar" aria-live="polite">
@@ -94,7 +96,13 @@ export function OracleScreen({ view, strip = true }: { view: Snapshot; /** Im De
         </div>
       </section>
       {rolled?.kind === 'dice' && <DiceRoll key={rolling} item={rolled} seed={rolling ?? 0} onDone={done} />}
-      {sheet && <NoteSheet target={sheet.reading !== undefined && reading ? { index: sheet.reading, ...resultLine(reading) } : undefined} onClose={() => setSheet(undefined)} />}
+      {sheet && (
+        <NoteSheet
+          target={sheet.reading !== undefined && reading ? { index: sheet.reading, ...resultLine(reading) } : undefined}
+          edit={sheet.edit !== undefined && edited?.kind === 'note' ? { index: sheet.edit, text: edited.text } : undefined}
+          onClose={() => setSheet(undefined)}
+        />
+      )}
     </div>
   );
 }

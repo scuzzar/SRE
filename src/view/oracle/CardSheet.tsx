@@ -71,6 +71,14 @@ export function CardSheet({ card }: { card: CardView }) {
   const cardSections = card.sections.filter((s) => s.kind === 'card');
   const themes = card.sections.filter((s) => s.kind === 'theme');
   const boxCount = boxed(themes).length;
+  // Erscheint das Band des Zufallsereignisses, wird die Karte höher und wird neu eingepasst.
+  // Angepasst beim Zeichnen, wie React es für abgeleiteten Zustand empfiehlt, nicht in einem Effekt.
+  const event = card.oracle.event !== undefined;
+  const [shownEvent, setShownEvent] = useState(event);
+  if (shownEvent !== event) {
+    setShownEvent(event);
+    setCollapsed([]);
+  }
 
   // Passt die Karte nicht, wird die unterste offene Tafel zum Knopf, bis sie passt oder keine mehr
   // übrig ist; die zuletzt aufgeklappte bleibt offen. Ändert sich das Fenster, wird neu eingepasst.
@@ -123,8 +131,14 @@ export function CardSheet({ card }: { card: CardView }) {
           <div key={draw} className="card-flip">
             <div className="card-front">
               <article className="card" aria-label="Karte">
+                {card.oracle.event && (
+                  <p className="card-event" role="status">
+                    <b>Zufallsereignis: {card.oracle.event.name}</b>
+                    <span>{card.oracle.event.text}</span>
+                  </p>
+                )}
                 <Oracle card={card} />
-                <Stack section={section('event')} />
+                <Stack section={section('event')} variant={card.oracle.event ? 'event' : undefined} />
                 <Senses section={section('senses')} />
                 <Rolls card={card} />
                 <Stack section={section('scene')} />
@@ -345,12 +359,14 @@ function Senses({ section }: { section: CardSectionView | undefined }) {
   );
 }
 
-function Stack({ section, variant, hideLabels }: { section: CardSectionView | undefined; variant?: 'flavor'; hideLabels?: boolean }) {
+function Stack({ section, variant, hideLabels }: { section: CardSectionView | undefined; variant?: 'flavor' | 'event' | undefined; hideLabels?: boolean }) {
   if (!section) return null;
+  // Beim Zufallsereignis leuchtet das Feld Zufallsereignis; die Felder selbst bleiben gewöhnlich.
+  const tileVariant = variant === 'flavor' ? { variant } : {};
   return (
-    <div className={layout(section.slots)} role="group" aria-label={section.name}>
+    <div className={variant === 'event' ? `${layout(section.slots)} event-hit` : layout(section.slots)} role="group" aria-label={section.name}>
       {section.slots.map((slot) => (
-        <Tile key={slot.id} slot={slot} {...(variant ? { variant } : {})} hideLabel={hideLabels ?? false} />
+        <Tile key={slot.id} slot={slot} {...tileVariant} hideLabel={hideLabels ?? false} />
       ))}
     </div>
   );

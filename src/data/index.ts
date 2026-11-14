@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ReferenceDataSchema, SectionSchema, type ReferenceData } from './schema';
 import odds from './odds.json';
+import eventFocus from './event-focus.json';
 import houseRules from './house-rules.json';
 import skills from './skills.json';
 import sections from './sections.json';
@@ -23,6 +24,7 @@ export { nameSlotIds, nameSounds, type NameSound } from './names';
 /** Die Referenzdaten, beim Start gegen die Schemas geprüft. Ein Fehler hier bricht den Start ab. */
 export const referenceData: ReferenceData = ReferenceDataSchema.parse({
   odds,
+  eventFocus,
   houseRules,
   skills,
   sections: withNames(withMythicTables(z.array(SectionSchema).parse(sections), MythicTablesSchema.parse(mythicTables)), NamesSchema.parse(names)),

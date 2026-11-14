@@ -3,7 +3,7 @@ import type { Career } from './career';
 import { DomainError } from './errors';
 import type { Generation } from './generation';
 import type { Clock, Keys } from './ports';
-import { damageAfterOf, damageRollsOf, interpretationsOf, savesOf, volleyOf, type LogEntry } from './log';
+import { damageAfterOf, damageRollsOf, editNote, interpretationsOf, savesOf, volleyOf, type LogEntry } from './log';
 import { worldOf, type Hex } from './sector';
 import type { Booking } from './shop';
 import type { Encounter, QuantityDie } from './encounter';
@@ -246,6 +246,12 @@ export function appendLog(campaign: Campaign, ...entries: readonly LogEntry[]): 
  * Schadenswurf und mit der ganzen Garbe, zu der er gehört; die übrigen behalten ihre Reihenfolge, und Deutungen und Schadenswürfe verweisen
  * weiter auf ihr Ergebnis.
  */
+/** Ersetzt den Text der Notiz oder Deutung an der Stelle `index`; alles andere im Log bleibt. */
+export function editLogNote(campaign: Campaign, index: number, text: string, clock: Clock): Campaign {
+  const note = editNote(campaign.log, index, text, clock);
+  return note === campaign.log[index] ? campaign : { ...campaign, log: campaign.log.map((entry, i) => (i === index ? note : entry)) };
+}
+
 export function removeLogEntry(campaign: Campaign, index: number): Campaign {
   if (!Number.isInteger(index) || index < 0 || index >= campaign.log.length) throw new DomainError('Diesen Logeintrag gibt es nicht.');
   // Zeit und Reisen haben den Stand geändert (Tag, Aufenthaltsort, Tote, Lotterie); sie bleiben.

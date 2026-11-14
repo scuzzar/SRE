@@ -243,3 +243,36 @@ test('Notiz und Deutung im eigenen Blatt; Deuten am Ergebnis, ältere klappt man
   await expect(page.getByText('Halvek lügt.')).toHaveCount(0);
   await expect(page.getByText('Glück gehabt.')).toBeVisible();
 });
+
+test('Notiz ändern: der Stift öffnet das Blatt mit dem alten Text, der Log zeigt „geändert“', async ({ page }) => {
+  await oracle(page).getByRole('button', { name: 'Notiz', exact: true }).click();
+  await page.getByPlaceholder(/Was passiert/).fill('Wir landen auf Regina.');
+  await page.getByRole('button', { name: 'Notieren' }).click();
+  await oracle(page).getByRole('button', { name: 'Notiz ändern' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Notiz ändern' });
+  await expect(sheet.getByPlaceholder(/Was passiert/)).toHaveValue('Wir landen auf Regina.');
+  await sheet.getByPlaceholder(/Was passiert/).fill('Wir landen auf Mora.');
+  await sheet.getByRole('button', { name: 'Speichern' }).click();
+  await expect(entries(page)).toHaveCount(1);
+  await expect(entries(page).last()).toContainText('Wir landen auf Mora.');
+  await expect(entries(page).last()).toContainText(/geändert \d\d:\d\d/);
+});
+
+test('Zufallsereignis: bei einem Pasch bis 55 erst nach der Wahl der Stufe ein Band auf der Karte, dann im Log', async ({ page }) => {
+  await page.getByRole('button', { name: 'Karte ziehen' }).click();
+  const card = page.getByRole('dialog', { name: 'Inspirationskarte' });
+  const field = card.getByRole('group', { name: /^Orakel, W100/ });
+  // Neu ziehen, bis der Orakelwurf ein Pasch ist (je Karte 5 %; 400 Versuche verfehlen fast nie).
+  for (let i = 0; i < 400; i++) {
+    const roll = Number((await field.getAttribute('aria-label'))!.match(/\d+$/)![0]);
+    if (roll % 11 === 0 && roll <= 55) break;
+    await card.getByRole('button', { name: 'Neu ziehen' }).click();
+  }
+  await expect(field).toHaveAttribute('aria-label', /W100 (11|22|33|44|55)$/);
+  await revealed(card);
+  await expect(card.locator('.card-event')).toHaveCount(0);
+  await field.getByRole('button').first().click();
+  await expect(card.locator('.card-event')).toContainText(/Zufallsereignis: \S/);
+  await card.getByRole('button', { name: /in den Log übernehmen/ }).click();
+  await expect(entries(page).last()).toContainText(/Zufallsereignis: \S/);
+});

@@ -3,7 +3,7 @@ import type { DamageItem, JourneyItem, LogItem, NoteItem } from '../../controlle
 import { answerText, attackTitle, checkDetail, clockTime, damageDetail, isYesAnswer, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, resultLine, scatterText, taskDetail, taskTitle } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
-import { LightbulbIcon, TrashIcon } from '../icons';
+import { LightbulbIcon, PencilIcon, TrashIcon } from '../icons';
 import { MapIconSvg, ScatterRose } from './CardRollIcons';
 
 interface LogListProps {
@@ -12,6 +12,8 @@ interface LogListProps {
   days: readonly (string | undefined)[];
   /** „Deuten“ am Ergebnis an dieser Stelle des Logs: öffnet das Blatt der Deutung. */
   onInterpret: (index: number) => void;
+  /** Der Stift an einer Notiz oder Deutung: öffnet das Blatt mit ihrem Text zum Ändern. */
+  onEdit: (index: number) => void;
 }
 
 /**
@@ -22,7 +24,7 @@ interface LogListProps {
  * seines Treffers; das ist nur Anzeige. Welche Zeile offen ist und welcher Eintrag gerade gelöscht
  * werden will, hält die View, das Löschen der Controller.
  */
-export function LogList({ log, days, onInterpret }: LogListProps) {
+export function LogList({ log, days, onInterpret, onEdit }: LogListProps) {
   const game = useGame();
   // Der Log steht auf dem Smartphone im Orakel-Screen und im Desktop-Modus links; beide Instanzen
   // dürfen nicht dieselbe Überschrift-ID tragen.
@@ -54,9 +56,14 @@ export function LogList({ log, days, onInterpret }: LogListProps) {
     haptic('pick');
     onInterpret(index);
   };
-  /** Kleine Knöpfe in der Kopfzeile eines Teils: Deuten und Löschen. */
+  /** Kleine Knöpfe in der Kopfzeile eines Teils: Deuten oder Ändern, und Löschen. */
   const tools = (index: number, what: string, canRead: boolean) => (
     <span className="entry-tools">
+      {log[index]?.kind === 'note' && (
+        <button type="button" className="icon-button small" aria-label={`${what} ändern`} onClick={() => onEdit(index)}>
+          <PencilIcon />
+        </button>
+      )}
       {canRead && (
         <button type="button" className="icon-button small interpret" aria-label={`${what} deuten`} onClick={() => interpret(index)}>
           <LightbulbIcon />
@@ -93,9 +100,7 @@ export function LogList({ log, days, onInterpret }: LogListProps) {
         <div className="entry-head">
           <span className="kicker">Deutung</span>
           <span className="entry-head-end">
-            <time className="entry-time" dateTime={note.item.at}>
-              {clockTime(note.item.at)}
-            </time>
+            <Edited at={note.item.at} editedAt={note.item.editedAt} />
             {tools(note.index, 'Deutung', false)}
           </span>
         </div>
@@ -172,9 +177,13 @@ export function LogList({ log, days, onInterpret }: LogListProps) {
                     <div className="entry-head">
                       <span className="kicker">{kicker(item, volley.length > 0)}</span>
                       <span className="entry-head-end">
-                        <time className="entry-time" dateTime={item.at}>
-                          {clockTime(item.at)}
-                        </time>
+                        {item.kind === 'note' ? (
+                          <Edited at={item.at} editedAt={item.editedAt} />
+                        ) : (
+                          <time className="entry-time" dateTime={item.at}>
+                            {clockTime(item.at)}
+                          </time>
+                        )}
                         {!latest && (
                           <button type="button" className="icon-button small" aria-label="Zuklappen" aria-expanded={true} onClick={() => setOpened(undefined)}>
                             <span aria-hidden="true">−</span>
@@ -210,11 +219,18 @@ export function LogList({ log, days, onInterpret }: LogListProps) {
                             Deuten
                           </button>
                         )}
-                        {deletable(item) && (
-                          <button type="button" className="icon-button" aria-label={`${what} löschen`} onClick={() => setConfirm(index)}>
-                            <TrashIcon />
-                          </button>
-                        )}
+                        <span className="entry-actions-end">
+                          {item.kind === 'note' && (
+                            <button type="button" className="icon-button" aria-label="Notiz ändern" onClick={() => onEdit(index)}>
+                              <PencilIcon />
+                            </button>
+                          )}
+                          {deletable(item) && (
+                            <button type="button" className="icon-button" aria-label={`${what} löschen`} onClick={() => setConfirm(index)}>
+                              <TrashIcon />
+                            </button>
+                          )}
+                        </span>
                       </div>
                     )}
                     <DeleteBar {...deletion(index, notes.length + (damage ? 1 + damage.notes.length : 0))} what={volley.length > 0 ? 'Die ganze Garbe' : result ? 'Eintrag' : 'Notiz'} />
@@ -226,6 +242,19 @@ export function LogList({ log, days, onInterpret }: LogListProps) {
         )}
       </div>
     </section>
+  );
+}
+
+/** Die Uhrzeit einer Notiz oder Deutung; nach einer Änderung mit „geändert“ und deren Uhrzeit. */
+function Edited({ at, editedAt }: { at: string; editedAt: string | undefined }) {
+  return editedAt === undefined ? (
+    <time className="entry-time" dateTime={at}>
+      {clockTime(at)}
+    </time>
+  ) : (
+    <time className="entry-time" dateTime={editedAt} title={`geschrieben ${clockTime(at)}`}>
+      geändert {clockTime(editedAt)}
+    </time>
   );
 }
 
@@ -246,6 +275,7 @@ function CompactRow({ item, notes, extra }: { item: LogItem; notes: readonly str
           ))}
         </span>
       )}
+      {item.kind === 'card' && item.answer?.event && <span className="row-extra event">Zufallsereignis: {item.answer.event.name}</span>}
       {extra.map((e, i) => (
         <span key={`x${i}`} className="row-extra">
           {e}
@@ -374,6 +404,11 @@ function EntryBody({ item }: { item: LogItem }) {
               <span className="entry-detail">
                 W100: {item.answer.roll} · Ja bis {item.answer.chance}
               </span>
+              {item.answer.event && (
+                <span className="log-event">
+                  <b>Zufallsereignis: {item.answer.event.name}</b> · {item.answer.event.text}
+                </span>
+              )}
             </>
           )}
           <dl className="picks">

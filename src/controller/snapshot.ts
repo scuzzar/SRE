@@ -55,6 +55,7 @@ import {
   isSuccess,
   answerOf,
   answerOfPick,
+  eventFocusOf,
   type Answer,
   inputOf,
   oddsOf,
@@ -496,6 +497,15 @@ export interface NoteItem {
   readonly at: string;
   readonly text: string;
   readonly interprets: number | undefined;
+  /** Wann der Text zuletzt geändert wurde; fehlt, solange er so ist, wie er geschrieben wurde. */
+  readonly editedAt: string | undefined;
+}
+
+/** Ein Zufallsereignis: der Ereignisfokus mit seinem Text. */
+export interface RandomEventView {
+  readonly roll: number;
+  readonly name: string;
+  readonly text: string;
 }
 
 /** Die Antwort des Orakels in einer Kartenauswahl: Stufe, Wurf, Chance von damals und die Antwort. */
@@ -504,6 +514,8 @@ export interface AnswerView {
   readonly roll: number;
   readonly chance: number;
   readonly answer: Answer;
+  /** Das Zufallsereignis, falls der Orakelwurf eins war. */
+  readonly event: RandomEventView | undefined;
 }
 
 export interface DiceItem {
@@ -1185,7 +1197,11 @@ export interface CardView {
   readonly scatter: { readonly value: Scatter; readonly picked: boolean };
   readonly map: { readonly value: MapIcon; readonly picked: boolean };
   /** Das Orakelfeld: der Wurf und je Stufe die Antwort; höchstens eine Stufe ist gewählt. */
-  readonly oracle: { readonly roll: number; readonly choices: readonly { readonly id: string; readonly name: string; readonly chance: number; readonly answer: Answer; readonly picked: boolean }[] };
+  readonly oracle: {
+    readonly roll: number;
+    /** Das Zufallsereignis; erst sichtbar, wenn eine Stufe gewählt ist. */
+    readonly event: RandomEventView | undefined;
+    readonly choices: readonly { readonly id: string; readonly name: string; readonly chance: number; readonly answer: Answer; readonly picked: boolean }[] };
   readonly sections: readonly CardSectionView[];
   readonly pickedCount: number;
   readonly canConfirm: boolean;
@@ -2238,7 +2254,7 @@ function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
         bell: entry.bell,
         scatter: entry.scatter,
         map: entry.map,
-        answer: entry.odds === undefined || entry.oracle === undefined || entry.chance === undefined ? undefined : { odds: oddsOf(entry.odds).name, roll: entry.oracle, chance: entry.chance, answer: answerOfPick(entry)! },
+        answer: entry.odds === undefined || entry.oracle === undefined || entry.chance === undefined ? undefined : { odds: oddsOf(entry.odds).name, roll: entry.oracle, chance: entry.chance, answer: answerOfPick(entry)!, event: randomEvent(entry.eventFocus) },
         items: entry.items.map((item) => {
           const slot = slotOf(item);
           const section = sectionOfSlot(slot.id);
@@ -2281,8 +2297,15 @@ function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
     case 'journey':
       return journeyItem(campaign, entry, index);
     case 'note':
-      return { kind: 'note', at: entry.at, text: entry.text, interprets: entry.interprets };
+      return { kind: 'note', at: entry.at, text: entry.text, interprets: entry.interprets, editedAt: entry.editedAt };
   }
+}
+
+/** Ein Zufallsereignis aus dem Wurf auf den Ereignisfokus; ohne Wurf keins. */
+function randomEvent(roll: number | undefined): RandomEventView | undefined {
+  if (roll === undefined) return undefined;
+  const focus = eventFocusOf(roll);
+  return { roll, name: focus.name, text: focus.text };
 }
 
 /** Ein Namensfeld: die sechs auf der Tafel NSC und die drei des früheren Bereichs *Namen*. */
@@ -2296,7 +2319,7 @@ function cardView(card: Card): CardView {
     bell: { value: card.bell, picked: card.pickedRolls.includes('bell'), weights: bellWeights },
     scatter: { value: card.scatter, picked: card.pickedRolls.includes('scatter') },
     map: { value: card.map, picked: card.pickedRolls.includes('map') },
-    oracle: { roll: card.oracle, choices: ref.odds.map((o) => ({ id: o.id, name: o.name, chance: o.chance, answer: answerOf(card.oracle, o.chance), picked: card.pickedOdds === o.id })) },
+    oracle: { roll: card.oracle, event: card.pickedOdds === undefined ? undefined : randomEvent(card.eventFocus), choices: ref.odds.map((o) => ({ id: o.id, name: o.name, chance: o.chance, answer: answerOf(card.oracle, o.chance), picked: card.pickedOdds === o.id })) },
     // Ausgeblendete Felder hat die Karte nicht gezogen; sie fehlen, ebenso Bereiche ohne gezogenes Feld.
     sections: ref.sections
       .map((section) => ({

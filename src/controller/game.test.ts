@@ -117,8 +117,41 @@ describe('Orakel-Screen', () => {
     game.confirmCard('  Ist Halvek ehrlich?  ');
     expect(game.snapshot().card).toBeUndefined();
     expect(game.snapshot().log).toEqual([
-      { kind: 'card', at: expect.any(String), question: 'Ist Halvek ehrlich?', bell: undefined, scatter: undefined, map: undefined, answer: { odds: 'Gering', roll: 1, chance: 25, answer: 'yesStrong' }, items: [] },
+      { kind: 'card', at: expect.any(String), question: 'Ist Halvek ehrlich?', bell: undefined, scatter: undefined, map: undefined, answer: { odds: 'Gering', roll: 1, chance: 25, answer: 'yesStrong', event: undefined }, items: [] },
     ]);
+  });
+
+  it('zeigt das Zufallsereignis auf der Karte erst mit gewählter Stufe und legt es mit der Antwort ab', async () => {
+    // Ein Zufall, der immer das Kleinste liefert, nur der Orakelwurf ist 33 (Pasch) und der Fokus 27.
+    const plan: number[] = [];
+    let calls = 0;
+    const random: Random = {
+      int(min) {
+        calls++;
+        return plan[calls] ?? min;
+      },
+    };
+    const { game } = await started(random);
+    const before = calls;
+    game.drawCard();
+    const drawCalls = calls - before;
+    game.discardCard();
+    // Der Orakelwurf ist der letzte Wurf des Ziehens, der Fokus kommt danach.
+    plan[calls + drawCalls] = 33;
+    plan[calls + drawCalls + 1] = 27;
+    game.drawCard();
+    expect(game.snapshot().card?.oracle).toMatchObject({ roll: 33, event: undefined });
+    game.toggleOdds('medium');
+    expect(game.snapshot().card?.oracle.event).toEqual({ roll: 27, name: 'NSC handelt', text: 'Ein NSC tut etwas, das die Lage verändert.' });
+    game.confirmCard();
+    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'card', answer: { roll: 33, answer: 'yes', event: { name: 'NSC handelt' } } });
+  });
+
+  it('ändert den Text einer Notiz; der Log zeigt, wann', async () => {
+    const { game } = await started(fixedRandom());
+    game.writeNote('Wir landen auf Regina.');
+    game.editNote(0, 'Wir landen auf Mora.');
+    expect(game.snapshot().log).toEqual([{ kind: 'note', at: expect.any(String), text: 'Wir landen auf Mora.', interprets: undefined, editedAt: expect.any(String) }]);
   });
 
   it('die Stufe der Proben bleibt stehen und wird gespeichert', async () => {

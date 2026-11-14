@@ -9,6 +9,14 @@ export const OddsSchema = z.object({
   target: z.number().int(),
 });
 
+/** Ein Ereignisfokus nach Mythic GME 2e: worum es bei einem Zufallsereignis geht, für einen Bereich des W100. */
+export const EventFocusSchema = z.object({
+  from: z.number().int().min(1).max(100),
+  to: z.number().int().min(1).max(100),
+  name: z.string().min(1),
+  text: z.string().min(1),
+});
+
 export const HouseRulesSchema = z.object({
   unskilledDm: z.number().int(),
   bonusFrom: z.number().int(),
@@ -403,6 +411,11 @@ export const DemoWorldSchema = z.object({
 export const ReferenceDataSchema = z
   .object({
     odds: z.array(OddsSchema).min(1),
+    /** Der Ereignisfokus, lückenlos von 1 bis 100. */
+    eventFocus: z
+      .array(EventFocusSchema)
+      .min(1)
+      .refine((rows) => rows[0]!.from === 1 && rows.at(-1)!.to === 100 && rows.every((r, i) => r.from <= r.to && (i === 0 || r.from === rows[i - 1]!.to + 1)), 'Der Ereignisfokus deckt 1–100 nicht lückenlos ab'),
     houseRules: HouseRulesSchema,
     skills: z.array(SkillSchema).min(1),
     sections: z.array(SectionSchema).min(1),
@@ -546,6 +559,7 @@ function checkCareerData(data: CareerData, skillIds: ReadonlySet<string>, ctx: z
 }
 
 export type Odds = z.infer<typeof OddsSchema>;
+export type EventFocus = z.infer<typeof EventFocusSchema>;
 export type HouseRules = z.infer<typeof HouseRulesSchema>;
 export type Skill = z.infer<typeof SkillSchema>;
 export type Entry = z.infer<typeof EntrySchema>;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { answerOf, answerOfPick, isSuccess, isYesAnswer, rollDice, slotOf, totalOf, upgradeOracle, writeNote, type CardPick, type LogEntry, type TaskResult } from './log';
+import { answerOf, answerOfPick, editNote, isRandomEvent, isSuccess, isYesAnswer, rollDice, slotOf, totalOf, upgradeOracle, writeNote, type CardPick, type LogEntry, type TaskResult } from './log';
 import { fixedClock, fixedRandom } from './testing';
 
 describe('Orakel', () => {
@@ -32,6 +32,12 @@ describe('Orakel', () => {
   });
 });
 
+describe('Zufallsereignis', () => {
+  it('ist ein Pasch im Orakelwurf bis zum Chaosfaktor 5: 11, 22, 33, 44, 55', () => {
+    expect(Array.from({ length: 100 }, (_, i) => i + 1).filter(isRandomEvent)).toEqual([11, 22, 33, 44, 55]);
+  });
+});
+
 describe('Deutungen und Notizen', () => {
   const log: LogEntry[] = [
     { kind: 'card', at: '2026-10-23T14:00:00.000Z', oracle: 61, odds: 'low', chance: 25, items: [] },
@@ -40,6 +46,14 @@ describe('Deutungen und Notizen', () => {
 
   it('schreibt eine Notiz ohne Verweis; Leerraum am Rand fällt weg', () => {
     expect(writeNote(log, '  Fracht an Bord.  ', fixedClock())).toEqual({ kind: 'note', at: '2026-10-23T14:00:00.000Z', text: 'Fracht an Bord.' });
+  });
+
+  it('ändert den Text einer Notiz; Zeitpunkt und Verweis bleiben, editedAt kommt dazu', () => {
+    const withReading: LogEntry[] = [...log, { kind: 'note', at: '2026-10-23T14:02:00.000Z', text: 'Halvek lügt.', interprets: 0 }];
+    expect(editNote(withReading, 2, '  Halvek lügt nicht.  ', fixedClock())).toEqual({ kind: 'note', at: '2026-10-23T14:02:00.000Z', text: 'Halvek lügt nicht.', interprets: 0, editedAt: '2026-10-23T14:00:00.000Z' });
+    expect(editNote(withReading, 2, 'Halvek lügt.', fixedClock())).toBe(withReading[2]);
+    expect(() => editNote(withReading, 2, '   ', fixedClock())).toThrow(/braucht Text/);
+    expect(() => editNote(withReading, 0, 'Text', fixedClock())).toThrow(/nur der Text einer Notiz/);
   });
 
   it('schreibt eine Deutung zu einem früheren Ergebnis', () => {

@@ -1,5 +1,6 @@
 import {
   DomainError,
+  isRandomEvent,
   oddsOf,
   nameSlotIds,
   nameSounds,
@@ -42,6 +43,8 @@ export interface Card {
   readonly oracle: number;
   /** Die Stufe, die man im Orakelfeld angetippt hat; höchstens eine. */
   readonly pickedOdds?: string;
+  /** Der Wurf 1–100 auf den Ereignisfokus; nur, wenn der Orakelwurf ein Zufallsereignis ist. */
+  readonly eventFocus?: number;
 }
 
 /** Die Einträge einer Spalte, die gezogen werden können: alle, die nicht ausgeblendet sind. */
@@ -72,7 +75,10 @@ export function drawCard(random: Random, question?: string): Card {
   const bell = rollBell(random);
   const scatter = rollScatter(random);
   const map = rollMap(random);
-  return withQuestion({ drawn, picked: [], bell, scatter, map, pickedRolls: [], oracle: random.int(1, 100) }, question);
+  const oracle = random.int(1, 100);
+  // Bei einem Zufallsereignis gleich danach der Ereignisfokus; sonst würfelt die Karte nichts weiter.
+  const event = isRandomEvent(oracle) ? { eventFocus: random.int(1, 100) } : {};
+  return withQuestion({ drawn, picked: [], bell, scatter, map, pickedRolls: [], oracle, ...event }, question);
 }
 
 /** Neu ziehen: eine neue Karte, die Auswahl geht verloren, die Frage bleibt. */
@@ -133,6 +139,8 @@ export function confirmCard(card: Card, clock: Clock): CardPick {
     ...(rolled.includes('scatter') ? { scatter: card.scatter } : {}),
     ...(rolled.includes('map') ? { map: card.map } : {}),
     ...(card.pickedOdds === undefined ? {} : { oracle: card.oracle, odds: card.pickedOdds, chance: oddsOf(card.pickedOdds).chance }),
+    // Das Zufallsereignis gilt nur für eine Frage: ohne gewählte Stufe kommt es nicht in den Log.
+    ...(card.pickedOdds !== undefined && card.eventFocus !== undefined ? { eventFocus: card.eventFocus } : {}),
     items,
   };
   return withQuestion(pick, card.question);

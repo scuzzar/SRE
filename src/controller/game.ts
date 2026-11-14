@@ -16,6 +16,7 @@ import {
   removeCampaign,
   removeCharacter,
   removeLogEntry,
+  editLogNote,
   renameCampaign,
   pendingDamage,
   rollDamage,
@@ -872,6 +873,11 @@ export class GameController {
     const card = question === undefined ? this.openCard : askCard(this.openCard, question);
     const pick = confirmCard(card, this.deps.clock);
     this.change(appendLog(this.campaign, pick), { card: undefined });
+  }
+
+  /** Ändert den Text der Notiz oder Deutung an der Stelle `index`. */
+  editNote(index: number, text: string): void {
+    this.change(editLogNote(this.campaign, index, text, this.deps.clock));
   }
 
   /** Löscht einen Logeintrag endgültig, ein Ergebnis mit seinen Deutungen. */

@@ -112,6 +112,8 @@ export interface CardPick extends LogEntryBase {
   readonly oracle?: number;
   readonly odds?: string;
   readonly chance?: number;
+  /** Der Wurf 1–100 auf den Ereignisfokus, nur bei einem Zufallsereignis mit gewählter Stufe. */
+  readonly eventFocus?: number;
   /** In der Reihenfolge der Karte. Zusammen mit Wurffeldern und Antwort mindestens eins. */
   readonly items: readonly PickedItem[];
 }
@@ -293,6 +295,8 @@ export interface Note extends LogEntryBase {
   readonly kind: 'note';
   readonly text: string;
   readonly interprets?: number;
+  /** Wann der Text zuletzt geändert wurde; fehlt, solange er so ist, wie er geschrieben wurde. */
+  readonly editedAt?: string;
 }
 
 export function isResult(entry: LogEntry): entry is LogResult {
@@ -316,6 +320,18 @@ export function checkInterprets(log: readonly LogEntry[], interprets: number, at
   const target = log[interprets];
   if (!Number.isInteger(interprets) || interprets < 0 || interprets >= at || !target) throw new DomainError('Eine Deutung verweist auf einen Eintrag, den es davor nicht gibt.');
   if (!isResult(target)) throw new DomainError('Deuten lässt sich nur ein Ergebnis, keine Notiz oder Deutung.');
+}
+
+/**
+ * Ändert den Text der Notiz oder Deutung an der Stelle `index`: Zeitpunkt, Stelle und das gedeutete
+ * Ergebnis bleiben, `editedAt` ist jetzt. Der Text darf nicht leer sein; Leerraum am Rand fällt weg.
+ */
+export function editNote(log: readonly LogEntry[], index: number, text: string, clock: Clock): Note {
+  const note = log[index];
+  if (!note || note.kind !== 'note') throw new DomainError('Ändern lässt sich nur der Text einer Notiz oder Deutung.');
+  const trimmed = text.trim();
+  if (!trimmed) throw new DomainError('Eine Notiz braucht Text; zum Entfernen gibt es Löschen.');
+  return trimmed === note.text ? note : { ...note, text: trimmed, editedAt: clock.now() };
 }
 
 /** Die Stellen der Deutungen, die das Ergebnis an der Stelle `index` hat. */
@@ -344,6 +360,14 @@ export function answerOf(roll: number, chance: number): Answer {
   if (roll <= chance + no) return 'noWeak';
   if (roll <= 100 - no) return 'no';
   return 'noStrong';
+}
+
+/** Höchster Chaosfaktor, bis zu dem ein Pasch ein Zufallsereignis ist; die App führt ihn fest auf 5. */
+export const CHAOS_FACTOR = 5;
+
+/** `/randomEvent`: Der Orakelwurf ist ein Pasch bis zum Chaosfaktor (11, 22, 33, 44, 55), nach Mythic. */
+export function isRandomEvent(roll: number): boolean {
+  return roll % 11 === 0 && roll / 11 <= CHAOS_FACTOR;
 }
 
 /** Ob eine Antwort Ja ist (Ja!, Ja oder Ja?). */

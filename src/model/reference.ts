@@ -1,4 +1,4 @@
-import { referenceData, type Cascade, type Entry, type Gain, type Item, type Odds, type Section, type Service, type Skill, type Slot, type Table, type Weapon, type EncounterType, type Patron, type Rumor } from '../data';
+import { referenceData, type Cascade, type Entry, type EventFocus, type Gain, type Item, type Odds, type Section, type Service, type Skill, type Slot, type Table, type Weapon, type EncounterType, type Patron, type Rumor } from '../data';
 import { DomainError } from './errors';
 
 export { nameSlotIds, nameSounds, type NameSound } from '../data';
@@ -24,6 +24,7 @@ export type {
   HouseRules,
   Item,
   ItemKind,
+  EventFocus,
   Odds,
   Range,
   Rank,
@@ -78,6 +79,11 @@ function found<T>(value: T | undefined, what: string, id: string): T {
 
 export function oddsOf(id: string): Odds {
   return found(oddsById.get(id), 'Die Stufe', id);
+}
+
+/** Der Ereignisfokus zu einem Wurf 1–100. */
+export function eventFocusOf(roll: number): EventFocus {
+  return found(ref.eventFocus.find((f) => roll >= f.from && roll <= f.to), 'Der Ereignisfokus zum Wurf', String(roll));
 }
 
 export function skillOf(id: string): Skill {
