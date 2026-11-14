@@ -123,7 +123,7 @@ test('Sektor: UWP und Handelscodes erscheinen auf der Karte, sobald sie beim Zoo
   await page.goto('/');
   const efate = { column: 2, row: 1, empty: false, name: 'Efate', navalBase: false, scoutBase: false, gasGiant: true, uwp: { starport: 10, size: 6, atmosphere: 4, hydrographics: 6, population: 6, government: 2, law: 4, tech: 12 } };
   const file = { format: 'solo-rpg-engine/kampagne', version: 1, campaign: { name: 'Karte', odds: 'medium', characters: [], log: [], hexes: [efate] } };
-  await page.getByRole('banner').getByRole('button', { name: /^Kampagne / }).click();
+  await page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true }).click();
   await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Kampagnen wechseln und verwalten' }).click();
   await page.getByRole('dialog', { name: 'Kampagnen' }).locator('input[type=file]').setInputFiles({ name: 'k.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
   await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
@@ -143,7 +143,7 @@ test('Sektor: Eine ältere Welt ohne Temperatur würfelt sie auf der Weltkarte n
   await page.goto('/');
   const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
   const file = { format: 'solo-rpg-engine/kampagne', version: 1, campaign: { name: 'Alte Welt', odds: 'medium', characters: [], log: [], hexes: [regina] } };
-  await page.getByRole('banner').getByRole('button', { name: /^Kampagne / }).click();
+  await page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true }).click();
   await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Kampagnen wechseln und verwalten' }).click();
   await page.getByRole('dialog', { name: 'Kampagnen' }).locator('input[type=file]').setInputFiles({ name: 'welt.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
   await expect(page.getByRole('dialog', { name: 'Kampagnen' })).toBeHidden();

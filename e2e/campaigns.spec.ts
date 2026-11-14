@@ -6,9 +6,16 @@ const sheet = (page: Page) => page.getByRole('dialog', { name: 'Kampagnen' });
 const pick = (page: Page, name: string) => sheet(page).locator('.campaign-pick', { hasText: name });
 
 async function openCampaigns(page: Page) {
-  await header(page).getByRole('button', { name: /^Kampagne / }).click();
+  await header(page).getByRole('button', { name: 'Menü', exact: true }).click();
   await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Kampagnen wechseln und verwalten' }).click();
   await expect(sheet(page)).toBeVisible();
+}
+
+/** Der Name der offenen Kampagne steht oben im Menü. */
+async function expectCampaign(page: Page, name: string) {
+  await header(page).getByRole('button', { name: 'Menü', exact: true }).click();
+  await expect(page.locator('.menu-campaign')).toContainText(name);
+  await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Menü schließen' }).click();
 }
 
 test.beforeEach(async ({ page }) => {
@@ -16,7 +23,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('Kampagnen: anlegen, wechseln, umbenennen, löschen; jede hat ihren eigenen Log', async ({ page }) => {
-  await expect(header(page)).toContainText('Kampagne');
+  await expectCampaign(page, 'Kampagne');
   await page.getByRole('button', { name: '2W6' }).click();
   await expect(page.locator('.entry')).toHaveCount(1);
 
@@ -24,24 +31,25 @@ test('Kampagnen: anlegen, wechseln, umbenennen, löschen; jede hat ihren eigenen
   await sheet(page).getByLabel('Neue Kampagne').fill('Spinward Run');
   await sheet(page).getByRole('button', { name: 'Anlegen' }).click();
   await expect(sheet(page)).toBeHidden();
-  await expect(header(page)).toContainText('Spinward Run');
+  await expectCampaign(page, 'Spinward Run');
   await expect(page.getByText('Noch nichts im Log.')).toBeVisible();
   await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
   await expect(host(page).getByRole('article')).toHaveCount(0);
 
   await openCampaigns(page);
   await pick(page, 'Kampagne').click();
-  await expect(header(page)).toContainText('Kampagne');
+  await expectCampaign(page, 'Kampagne');
   await expect(host(page).getByRole('article')).toHaveCount(2);
 
   await openCampaigns(page);
   await sheet(page).getByLabel('Name der offenen Kampagne').fill('Aramis');
   await sheet(page).getByRole('button', { name: 'Umbenennen' }).click();
-  await expect(header(page)).toContainText('Aramis');
+  await sheet(page).getByRole('button', { name: 'Schließen' }).click();
+  await expectCampaign(page, 'Aramis');
 
   // Nach dem Neuladen ist dieselbe Kampagne offen.
   await page.reload();
-  await expect(header(page)).toContainText('Aramis');
+  await expectCampaign(page, 'Aramis');
 
   await openCampaigns(page);
   await sheet(page).getByRole('button', { name: 'Spinward Run löschen' }).click();

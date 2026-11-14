@@ -80,14 +80,13 @@ export function App() {
   return (
     <div className="app">
       <header className="header">
-        <button type="button" className="brand campaign-switch" aria-label={`Kampagne ${view.campaign.name}, Menü öffnen`} onClick={() => setMenu(true)}>
-          <span className="campaign-name">{view.campaign.name}</span>
-        </button>
-        {here && (
-          <button type="button" className="header-world" aria-label={`Aufenthaltsort ${here.name}, UWP ${here.uwp}, Weltkarte öffnen`} title="Weltkarte des Aufenthaltsorts" onClick={() => game.chooseHex(here.column, here.row)}>
+        {here ? (
+          <button type="button" className="brand header-world" aria-label={`Aufenthaltsort ${here.name}, UWP ${here.uwp}, Weltkarte öffnen`} title="Weltkarte des Aufenthaltsorts" onClick={() => game.chooseHex(here.column, here.row)}>
             <span className="header-world-name">{here.name}</span>
             <span className="mono header-world-uwp">{here.uwp}</span>
           </button>
+        ) : (
+          <span className="brand header-world header-world-none">Auf keiner Welt</span>
         )}
         <span className="header-right">
           <FullscreenButton />

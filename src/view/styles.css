@@ -140,8 +140,8 @@ button:disabled {
   background: var(--accent);
 }
 
-/* Die Kopfzeile trägt den Namen der offenen Kampagne; ein Tippen öffnet die Kampagnenwahl. */
-.campaign-switch {
+/* Die Kopfzeile trägt den Aufenthaltsort mit UWP; ein Tippen öffnet seine Weltkarte. */
+.header-world {
   min-width: 0;
   min-height: 44px;
   padding: 0 6px 0 0;
@@ -150,38 +150,16 @@ button:disabled {
   color: var(--text);
   letter-spacing: 0.02em;
   font-size: 15px;
-}
-
-.campaign-switch svg {
-  flex: 0 0 auto;
-  margin-left: -4px;
-  color: var(--muted);
-}
-
-.campaign-name {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-/* Der Aufenthaltsort mit UWP; ein Tippen öffnet seine Weltkarte. */
-.header-world {
-  flex: 0 0 auto;
-  min-height: 44px;
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 8px;
-  background: transparent;
-  border: 0;
-  color: var(--text);
-  font-size: 14px;
   cursor: pointer;
 }
 
+.header-world-none {
+  color: var(--muted);
+  font-weight: 400;
+  cursor: default;
+}
+
 .header-world-name {
-  max-width: 34vw;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -190,7 +168,7 @@ button:disabled {
 .header-world-uwp {
   flex: 0 0 auto;
   color: var(--accent);
-  font-size: 13px;
+  font-weight: 400;
   letter-spacing: 0.04em;
 }
 
