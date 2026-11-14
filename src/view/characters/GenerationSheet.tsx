@@ -1,14 +1,15 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
-import type { CareerLine, GenerationAction, GenerationView, LogItem, OddsChoice } from '../../controller';
+import type { CareerLine, GenerationAction, GenerationView, LogItem } from '../../controller';
 import type { RollKind, ThrowOdds, WeaponCharacteristic } from '../../model';
 import { DicePairView, DiceView, THROW_MS, useTimeline } from '../Dice';
-import { characteristicLabel, credits, hex, resultLine, signed, withLevel } from '../format';
+import { answerText, characteristicLabel, credits, hex, isYesAnswer, resultLine, signed, withLevel } from '../format';
 import { useGame } from '../game-context';
 import { HoldButton } from '../HoldButton';
 import { animated, haptic, stopHaptics } from '../haptics';
 import { CardIcon, CloseIcon, DiceIcon, LightbulbIcon, PencilIcon, SectorIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
 import { Form } from '../Form';
+import { NoteSheet } from '../oracle/NoteSheet';
 
 /** Wie lange das Ergebnis nach dem Landen braucht, bis es feststeht und die Knöpfe wieder gehen. */
 const SETTLE_MS = 350;
@@ -22,7 +23,7 @@ const SETTLE_MS = 350;
  * Würfe mit Zielwert (Musterung, Überleben, Patent, Beförderung, Altern, Krise) laufen groß als Popup
  * wie die Probe. Ein Tippen irgendwo beendet eine Animation und zeigt sofort das Ergebnis.
  */
-export function GenerationSheet({ generation, odds, log }: { generation: GenerationView; odds: readonly OddsChoice[]; log: readonly LogItem[] }) {
+export function GenerationSheet({ generation, log }: { generation: GenerationView; log: readonly LogItem[] }) {
   const game = useGame();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   // Was schon da war, als die Erschaffung aufging, rollt nicht noch einmal; ebenso, was ein
@@ -79,7 +80,7 @@ export function GenerationSheet({ generation, odds, log }: { generation: Generat
           </span>
         </div>
 
-        <OracleBar odds={odds} log={log} />
+        <OracleBar log={log} />
 
         <div className="sheet-body" ref={body}>
           <CharacterSheet generation={view} />
@@ -626,77 +627,47 @@ function Actions({ action, disabled, onRun }: { action: GenerationAction; disabl
 }
 
 /**
- * Orakel und Inspirationskarte mitten in der Erschaffung: eine Frage (freiwillig), Ja/Nein mit der
- * eingestellten Stufe und die Karte; dazu Deuten (immer zum neuesten Ergebnis, den Log sieht man hier
- * nicht) und Notiz. Alles steht wie sonst im Log; hier zeigt eine Zeile das Letzte, was man in dieser
- * Erschaffung gefragt oder geschrieben hat. Die Karte öffnet sich über der Erschaffung.
+ * Orakel und Inspirationskarte mitten in der Erschaffung: die Karte (mit dem Orakelfeld, die Frage
+ * schreibt man auf die Karte), Deuten (immer zum neuesten Ergebnis, den Log sieht man hier nicht) und
+ * Notiz, beide im eigenen Blatt. Alles steht wie sonst im Log; hier zeigt eine Zeile das Letzte, was
+ * man in dieser Erschaffung gefragt oder geschrieben hat. Die Karte öffnet sich über der Erschaffung.
  */
-function OracleBar({ odds, log }: { odds: readonly OddsChoice[]; log: readonly LogItem[] }) {
+function OracleBar({ log }: { log: readonly LogItem[] }) {
   const game = useGame();
-  const [question, setQuestion] = useState('');
   // Was schon im Log stand, als die Erschaffung aufging, zeigt die Leiste nicht.
   const [seen] = useState(log.length);
   const latest = log.length > seen ? log.at(-1) : undefined;
-  const selected = odds.find((o) => o.selected);
-  const text = question.trim();
   const target = log.findLastIndex((item) => item.kind !== 'note');
-  const targetLine = target < 0 ? undefined : resultLine(log[target]!);
-  const write = (interprets: number | undefined) => {
-    haptic('pick');
-    game.writeNote(text, interprets);
-    setQuestion('');
-  };
+  const [sheet, setSheet] = useState<'note' | 'reading' | undefined>(undefined);
   return (
     <div className="generation-oracle">
       <div className="generation-oracle-row">
-        <label htmlFor="generation-question" className="visually-hidden">
-          Frage an das Orakel
-        </label>
-        <input
-          id="generation-question"
-          className="question-input"
-          placeholder="Frage, Deutung, Notiz"
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          autoComplete="off"
-        />
-        <button type="button" className="ghost compact" onClick={() => {
-            game.askOracle(question.trim() || undefined);
-            setQuestion('');
-          }} aria-label={`Ja/Nein fragen, ${selected?.name ?? ''}`}>
-          Ja/Nein
-        </button>
         <button
           type="button"
-          className="icon-button"
-          aria-label="Karte ziehen"
+          className="ghost compact"
           onClick={() => {
-            game.drawCard(question.trim() || undefined);
-            setQuestion('');
+            haptic('draw');
+            game.drawCard();
           }}
         >
           <CardIcon />
+          Karte
         </button>
-        <button type="button" className="icon-button interpret" aria-label="Deuten" title="Deuten" disabled={!text || !targetLine} onClick={() => write(target)}>
+        <button type="button" className="ghost compact interpret" disabled={target < 0} onClick={() => setSheet('reading')}>
           <LightbulbIcon />
+          Deuten
         </button>
-        <button type="button" className="icon-button" aria-label="Notiz" title="Notiz" disabled={!text} onClick={() => write(undefined)}>
+        <button type="button" className="ghost compact" onClick={() => setSheet('note')}>
           <PencilIcon />
+          Notiz
         </button>
       </div>
-      {text && targetLine && (
-        <p className="target-line generation-target">
-          <span className="target-text">
-            Deuten zu <b>{targetLine.head}</b> · {targetLine.rest}
-          </span>
-        </p>
-      )}
-      {latest?.kind === 'oracle' && (
+      {latest?.kind === 'card' && latest.answer && (
         <p className="generation-oracle-answer" aria-live="polite">
-          <strong className={latest.yes ? 'verdict' : 'verdict negative'}>{latest.yes ? 'JA' : 'NEIN'}</strong>
+          <strong className={isYesAnswer(latest.answer.answer) ? 'verdict' : 'verdict negative'}>{answerText[latest.answer.answer]}</strong>
           <span className="small-label">
             {latest.question ? `„${latest.question}“ · ` : ''}
-            {latest.odds} · W100: {latest.roll} · Ja bis {latest.chance}
+            {latest.answer.odds} · W100: {latest.answer.roll} · Ja bis {latest.answer.chance}
           </span>
         </p>
       )}
@@ -706,6 +677,7 @@ function OracleBar({ odds, log }: { odds: readonly OddsChoice[]; log: readonly L
           <span className="small-label">{latest.text}</span>
         </p>
       )}
+      {sheet && <NoteSheet target={sheet === 'reading' && target >= 0 ? { index: target, ...resultLine(log[target]!) } : undefined} onClose={() => setSheet(undefined)} />}
     </div>
   );
 }

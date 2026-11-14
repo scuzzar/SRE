@@ -53,7 +53,9 @@ import {
   isInLog,
   livingCharacters,
   isSuccess,
-  isYes,
+  answerOf,
+  answerOfPick,
+  type Answer,
   inputOf,
   oddsOf,
   bellWeights,
@@ -445,7 +447,7 @@ export interface OddsChoice {
   readonly selected: boolean;
 }
 
-export type LogItem = OracleItem | DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | SaveItem | ButcheringItem | CheckItem | TimeItem | JourneyItem | NoteItem;
+export type LogItem = DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | SaveItem | ButcheringItem | CheckItem | TimeItem | JourneyItem | NoteItem;
 
 /** Ein Patron-Wurf: Liste, Würfel mit DMs, der Wurf 11–66 und die Zeile der Liste. */
 export interface PatronItem {
@@ -496,14 +498,12 @@ export interface NoteItem {
   readonly interprets: number | undefined;
 }
 
-export interface OracleItem {
-  readonly kind: 'oracle';
-  readonly at: string;
-  readonly question: string | undefined;
+/** Die Antwort des Orakels in einer Kartenauswahl: Stufe, Wurf, Chance von damals und die Antwort. */
+export interface AnswerView {
   readonly odds: string;
   readonly roll: number;
   readonly chance: number;
-  readonly yes: boolean;
+  readonly answer: Answer;
 }
 
 export interface DiceItem {
@@ -521,6 +521,8 @@ export interface CardItem {
   readonly bell: number | undefined;
   readonly scatter: Scatter | undefined;
   readonly map: MapIcon | undefined;
+  /** Die Antwort des Orakels, falls auf der Karte eine Stufe gewählt war. */
+  readonly answer: AnswerView | undefined;
   /** Je übernommenem Feld seine Texte: einer, beim Paar zwei; ein Name aus Vor- und Nachname. */
   readonly items: readonly { readonly section: string; readonly slot: string; readonly texts: readonly string[]; readonly name: boolean }[];
 }
@@ -1182,6 +1184,8 @@ export interface CardView {
   readonly bell: { readonly value: number; readonly picked: boolean; readonly weights: readonly number[] };
   readonly scatter: { readonly value: Scatter; readonly picked: boolean };
   readonly map: { readonly value: MapIcon; readonly picked: boolean };
+  /** Das Orakelfeld: der Wurf und je Stufe die Antwort; höchstens eine Stufe ist gewählt. */
+  readonly oracle: { readonly roll: number; readonly choices: readonly { readonly id: string; readonly name: string; readonly chance: number; readonly answer: Answer; readonly picked: boolean }[] };
   readonly sections: readonly CardSectionView[];
   readonly pickedCount: number;
   readonly canConfirm: boolean;
@@ -2224,8 +2228,6 @@ function sellables(campaign: Campaign, c: Character | undefined): ShopView['memb
 
 function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
   switch (entry.kind) {
-    case 'oracle':
-      return { kind: 'oracle', at: entry.at, question: entry.question, odds: oddsOf(entry.odds).name, roll: entry.roll, chance: entry.chance, yes: isYes(entry) };
     case 'dice':
       return { kind: 'dice', at: entry.at, dice: entry.dice, total: totalOf(entry) };
     case 'card':
@@ -2236,6 +2238,7 @@ function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
         bell: entry.bell,
         scatter: entry.scatter,
         map: entry.map,
+        answer: entry.odds === undefined || entry.oracle === undefined || entry.chance === undefined ? undefined : { odds: oddsOf(entry.odds).name, roll: entry.oracle, chance: entry.chance, answer: answerOfPick(entry)! },
         items: entry.items.map((item) => {
           const slot = slotOf(item);
           const section = sectionOfSlot(slot.id);
@@ -2293,6 +2296,7 @@ function cardView(card: Card): CardView {
     bell: { value: card.bell, picked: card.pickedRolls.includes('bell'), weights: bellWeights },
     scatter: { value: card.scatter, picked: card.pickedRolls.includes('scatter') },
     map: { value: card.map, picked: card.pickedRolls.includes('map') },
+    oracle: { roll: card.oracle, choices: ref.odds.map((o) => ({ id: o.id, name: o.name, chance: o.chance, answer: answerOf(card.oracle, o.chance), picked: card.pickedOdds === o.id })) },
     // Ausgeblendete Felder hat die Karte nicht gezogen; sie fehlen, ebenso Bereiche ohne gezogenes Feld.
     sections: ref.sections
       .map((section) => ({

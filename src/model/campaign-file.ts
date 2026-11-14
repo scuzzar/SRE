@@ -36,6 +36,7 @@ const question = z.string().trim().min(1).optional();
 const day = z.number().int().min(0).optional();
 
 const LogEntrySchema = z.discriminatedUnion('kind', [
+  // Orakelantworten von vor 2026-11-14d; beim Lesen werden sie zu Kartenauswahlen (upgradeOracle).
   z.object({ kind: z.literal('oracle'), at, day, question, roll: z.number().int().min(1).max(100), chance: z.number().int().min(0).max(100), odds: z.string() }),
   z.object({ kind: z.literal('dice'), at, day, dice }),
   z.object({
@@ -46,6 +47,9 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     bell: z.number().int().min(1).max(10).optional(),
     scatter: z.enum(scatters).optional(),
     map: z.object(Object.fromEntries(mapDirections.map((d) => [d, z.enum(pathKinds)])) as Record<MapDirection, z.ZodEnum<{ [K in PathKind]: K }>>).optional(),
+    oracle: z.number().int().min(1).max(100).optional(),
+    odds: z.string().optional(),
+    chance: z.number().int().min(0).max(100).optional(),
     items: z.array(z.object({ picked: z.array(z.string()).min(1).max(2) })),
   }),
   z.object({
@@ -479,8 +483,8 @@ function logEntry(input: FileEntry): LogEntry {
 function fileEntryOf(entry: WithoutDay<FileEntry>): LogEntry {
   switch (entry.kind) {
     case 'oracle': {
-      const { question, ...rest } = entry;
-      return withQuestion(rest, question);
+      const { question, roll, ...rest } = entry;
+      return withQuestion({ ...rest, kind: 'card', oracle: roll, items: [] } satisfies CardPick, question);
     }
     case 'card': {
       const { question, ...rest } = entry;
@@ -585,9 +589,6 @@ function validate(campaign: Campaign): void {
       case 'note':
         if (entry.interprets !== undefined) checkInterprets(campaign.log, entry.interprets, index);
         break;
-      case 'oracle':
-        oddsOf(entry.odds);
-        break;
       case 'dice':
       case 'patron':
       case 'rumor':
@@ -632,9 +633,11 @@ function validate(campaign: Campaign): void {
         checkRecovery(campaign, entry);
         break;
       case 'card':
-        if (entry.items.length === 0 && entry.bell === undefined && entry.scatter === undefined && entry.map === undefined) {
-          throw new DomainError('Eine Kartenauswahl ohne Feld und ohne Wurffeld gibt es nicht.');
+        if (entry.items.length === 0 && entry.bell === undefined && entry.scatter === undefined && entry.map === undefined && entry.oracle === undefined) {
+          throw new DomainError('Eine Kartenauswahl ohne Feld, Wurffeld und Antwort gibt es nicht.');
         }
+        if ([entry.oracle, entry.odds, entry.chance].filter((v) => v === undefined).length % 3 !== 0) throw new DomainError('Eine Antwort des Orakels braucht Wurf, Stufe und Chance.');
+        if (entry.odds !== undefined) oddsOf(entry.odds);
         if (entry.map && mapDirections.filter((d) => entry.map![d] !== 'none').length < minMapPaths) throw new DomainError('Ein Kartensymbol hat mindestens zwei Wege.');
         for (const item of entry.items) {
           const slot = slotOfEntry(item.picked[0]!);

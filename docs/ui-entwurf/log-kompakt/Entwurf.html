@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Log kompakt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+<style>
+/* Farben und Schrift der App (src/view/styles.css). */
+:root {
+  --bg: #111111;
+  --panel: #161616;
+  --highlight: #1f1f1f;
+  --deep: #0b0b0b;
+  --rule: #2a2a2a;
+  --rule-soft: #2e2e2e;
+  --line-strong: #555555;
+  --text: #eceae4;
+  --muted: #a3a09a;
+  --dim: #8c8a85;
+  --ink: #111111;
+  --ink-muted: #3a3833;
+  --accent: #c62f35;
+  --accent-text: #ef5a5f;
+  --disabled: #333333;
+  --gold: #d9b45f;
+  --gold-bright: #f5dc96;
+  --gold-deep: #8a6a2a;
+  --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--deep); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.45; -webkit-text-size-adjust: 100%; }
+button, input { font: inherit; color: inherit; }
+input { font-size: 16px; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+/* --- Rahmen des Entwurfs: zwei Smartphones nebeneinander, schmal eines mit Umschalter --------- */
+.page { height: 100%; display: flex; flex-direction: column; }
+.switch { flex: none; display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--rule); }
+.switch button { min-height: 44px; background: transparent; border: 0; font-weight: 600; color: var(--muted); }
+.switch button[aria-pressed='true'] { background: var(--text); color: var(--ink); }
+.phones { flex: 1 1 auto; min-height: 0; display: flex; justify-content: center; gap: 28px; }
+.phone-wrap { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.phone-title { display: none; }
+.phone { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; background: var(--bg); overflow: hidden; }
+.page[data-show='heute'] .phone-wrap.kompakt, .page[data-show='kompakt'] .phone-wrap.heute { display: none; }
+@media (min-width: 820px) {
+  .switch { display: none; }
+  .phones { padding: 20px; align-items: flex-start; }
+  .phone-wrap { flex: 0 0 390px; }
+  .phone-wrap.heute, .phone-wrap.kompakt { display: flex !important; }
+  .phone-title { display: block; margin: 0 0 8px; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .phone { flex: none; height: 844px; border: 1px solid var(--rule); }
+}
+
+/* --- Kopfzeile, Leiste, Bereiche: wie in der App, nur als Bild -------------------------------- */
+.header { flex: none; display: flex; align-items: center; gap: 10px; height: 49px; padding: 0 16px; border-bottom: 1px solid var(--rule); font-weight: 700; }
+.header::before { content: ''; width: 5px; height: 22px; background: var(--accent); }
+.header .uwp { font-family: var(--mono); font-weight: 400; color: var(--accent-text); letter-spacing: 0.06em; }
+.strip { flex: none; padding: 10px 16px 12px; border-bottom: 1px solid var(--rule); }
+.strip-card { padding: 10px 12px 12px; background: var(--highlight); border: 1px solid var(--line-strong); border-top: 3px solid var(--accent); }
+.strip-head { display: flex; align-items: baseline; gap: 8px; }
+.strip-name { font-size: 17px; font-weight: 700; }
+.strip-sub { flex: 1 1 auto; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.upp { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 10px; }
+.upp div { padding: 4px 0 6px; background: var(--deep); border: 1px solid var(--rule-soft); text-align: center; font-family: var(--mono); }
+.upp small { display: block; font-size: 10px; color: var(--muted); }
+.upp b { font-size: 20px; line-height: 1.1; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.chips span { padding: 6px 9px; border: 1px solid var(--line-strong); font-family: var(--mono); font-weight: 600; font-size: 14px; }
+.nav { flex: none; display: grid; grid-template-columns: repeat(7, 1fr); height: 56px; align-items: center; background: var(--deep); border-top: 1px solid var(--rule); font-size: 11px; text-align: center; color: var(--muted); }
+.nav b { color: var(--text); }
+
+/* --- Log ------------------------------------------------------------------------------------- */
+.log-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column-reverse; padding: 12px 16px; }
+.log { display: flex; flex-direction: column; gap: 10px; }
+.log-day { text-align: center; font-size: 12px; font-weight: 600; color: var(--muted); }
+.kicker { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-text); font-weight: 600; }
+.time { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+.negative { color: var(--accent-text); }
+
+/* Heute: jeder Eintrag ein Kasten. */
+.entry { display: flex; flex-direction: column; gap: 6px; padding: 14px; background: var(--panel); border: 1px solid var(--rule-soft); }
+.entry.latest { background: var(--highlight); border-color: #666666; }
+.entry.note { background: transparent; border-style: dashed; }
+.entry.note .kicker { color: var(--muted); }
+.entry-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.entry-question { font-size: 14px; color: var(--muted); }
+.entry-detail { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+.verdict { font-size: 30px; font-weight: 700; letter-spacing: 0.06em; line-height: 1.15; }
+.dice-total { display: flex; align-items: baseline; gap: 12px; font-family: var(--mono); }
+.dice-total strong { font-size: 30px; }
+.picks { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; }
+.picks dt { font-size: 13px; color: var(--muted); }
+.picks dd { margin: 0; font-weight: 600; }
+.interpretation { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; padding: 8px 0 0 10px; border-top: 1px solid var(--rule); border-left: 2px solid var(--gold-deep); }
+.interpretation .kicker { color: var(--gold); }
+.note-text { margin: 0; font-size: 15px; }
+
+/* Vorschlag: ältere Einträge als Zeile, links was, rechts das Ergebnis; das Neueste bleibt groß. */
+.log.compact { gap: 0; }
+.log.compact .log-day { padding: 2px 0 8px; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 2px 12px; padding: 8px 2px; border-top: 1px solid var(--rule); background: transparent; border-left: 0; border-right: 0; border-bottom: 0; width: 100%; text-align: left; }
+.row .what { font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.row .what.plain { color: var(--muted); font-family: var(--mono); font-size: 13px; }
+.row .res { font-family: var(--mono); font-weight: 700; font-size: 15px; letter-spacing: 0.05em; }
+.row .res.gold { color: var(--gold-bright); }
+.row .res.kind { font-family: var(--sans); font-size: 11px; letter-spacing: 0.1em; color: var(--accent-text); }
+.row .under { grid-column: 1 / -1; }
+.row .reading { margin-top: 2px; padding-left: 8px; border-left: 2px solid var(--gold-deep); font-size: 13.5px; }
+.row.note { border-top-style: dashed; }
+.row.note .what { padding-left: 8px; border-left: 2px dashed var(--line-strong); }
+.pick-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.pick-chips span { padding: 1px 7px; border: 1px solid var(--rule-soft); background: var(--panel); font-size: 13px; font-weight: 600; }
+.pick-chips .num { font-family: var(--mono); color: var(--gold-bright); }
+/* Aufgeklappt: die Einzelheiten und was man mit dem Eintrag tun kann. */
+.row .more { display: none; }
+.row[aria-expanded='true'] { background: var(--panel); padding-left: 10px; padding-right: 10px; box-shadow: inset 3px 0 0 var(--gold); }
+.row[aria-expanded='true'] .more { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.row[aria-expanded='true'] .what { -webkit-line-clamp: unset; }
+.more .entry-detail { flex: 1 1 auto; }
+.more span.do { padding: 5px 10px; border: 1px solid var(--line-strong); font-size: 13px; font-weight: 600; }
+.more span.do.gold { border-color: var(--gold-deep); color: var(--gold); }
+.more span.do.danger { border-color: var(--accent); color: var(--accent-text); }
+.log.compact .entry.latest { margin-top: 10px; }
+.count { margin: 0 0 6px; font-size: 11px; color: var(--dim); text-align: center; }
+
+/* --- Knöpfe unten ---------------------------------------------------------------------------- */
+.dock { flex: none; display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--rule); background: var(--panel); }
+.write-row { display: flex; gap: 6px; }
+.question-input { flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 8px 12px; background: var(--bg); border: 1px solid var(--line-strong); }
+.question-input::placeholder { color: var(--dim); }
+.write-button { flex: none; min-height: 44px; padding: 0 10px; background: transparent; border: 1px solid var(--line-strong); font-size: 13px; font-weight: 600; }
+.write-button.interpret { border-color: var(--gold-deep); color: var(--gold); }
+.write-button:disabled { border-color: var(--disabled); color: var(--dim); }
+/* Vorschlag: Deuten und Notiz stehen erst da, wenn Text im Feld ist. */
+.dock.compact .write-row:not(.has-text) .write-button { display: none; }
+.actions { display: grid; grid-template-columns: 1.5fr 1fr; gap: 6px; }
+.action { min-height: 56px; border: 1px solid var(--text); background: transparent; font-weight: 700; }
+.action.draw { background: var(--accent); border-color: var(--accent); }
+.action.oracle { background: var(--text); color: var(--ink); padding: 0 16px; }
+.odds-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; }
+.odds { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line-strong); }
+.odds div { min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; }
+.odds small { font-family: var(--mono); font-weight: 400; font-size: 11px; color: var(--muted); }
+.odds .on { background: var(--text); color: var(--ink); }
+.odds .on small { color: var(--ink-muted); }
+</style>
+</head>
+<body>
+<div class="page" data-show="kompakt">
+  <div class="switch" role="group" aria-label="Ansicht">
+    <button type="button" data-show="heute" aria-pressed="false">Heute</button>
+    <button type="button" data-show="kompakt" aria-pressed="true">Vorschlag</button>
+  </div>
+  <div class="phones">
+    <div class="phone-wrap heute"><p class="phone-title">Heute</p><div class="phone" id="heute"></div></div>
+    <div class="phone-wrap kompakt"><p class="phone-title">Vorschlag: Log kompakt</p><div class="phone" id="kompakt"></div></div>
+  </div>
+</div>
+
+<script>
+// Derselbe Log in beiden Ansichten, das Älteste zuerst.
+const log = [
+  { kind: 'oracle', odds: 'Mittel', question: 'Ist der Hafenmeister bestechlich?', yes: false, roll: 83, chance: 50, at: '11:38', reading: 'Nicht mit Geld. Er will einen Gefallen.' },
+  { kind: 'dice', total: 7, dice: [4, 3], at: '11:39' },
+  { kind: 'note', text: 'Kira bleibt misstrauisch und lässt Jonas das Reden.', at: '11:40' },
+  { kind: 'card', question: 'Was steckt hinter dem Notsignal?', at: '11:41', picks: [['1–10', '4'], ['Zufallsereignis · Aktion', 'loben · Vertreter'], ['Sinneseindrücke · Riechen', 'penetrant · geheimnisvoll'], ['NSC · Neutral, irdisch', 'Flint Achebe']] },
+  { kind: 'task', title: 'Kira Vant · Pilot-2 · 8+', success: true, detail: '2W6: 5 + 3 = 8, DM +2 → 10', at: '11:43' },
+  { kind: 'oracle', odds: 'Gering', question: 'Antwortet jemand auf dem Wrack?', yes: false, roll: 61, chance: 25, at: '11:44' },
+  { kind: 'oracle', odds: 'Hoch', question: 'Ist das Wrack noch unter Druck?', yes: true, roll: 41, chance: 75, at: '11:45' },
+];
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+const q = (s) => `„${esc(s)}“`;
+const kicker = (e) => ({ oracle: `Orakel · ${e.odds}`, dice: 'Würfel · 2W6', note: 'Notiz', card: 'Karte', task: 'Probe' })[e.kind];
+const detail = (e) => ({ oracle: `W100: ${e.roll} · Ja bis ${e.chance}`, dice: `${e.dice?.join(' + ')}`, task: e.detail, card: '', note: '' })[e.kind];
+
+// Heute: der Kasten wie in der App.
+function box(e, latest) {
+  const body = {
+    oracle: () => `<span class="entry-question">${q(e.question)}</span><span class="verdict ${e.yes ? '' : 'negative'}">${e.yes ? 'JA' : 'NEIN'}</span><span class="entry-detail">${detail(e)}</span>`,
+    dice: () => `<div class="dice-total"><strong>${e.total}</strong><span class="entry-detail" style="font-size:15px">${detail(e)}</span></div>`,
+    note: () => `<p class="note-text">${esc(e.text)}</p>`,
+    card: () => `<span class="entry-question">${q(e.question)}</span><dl class="picks">${e.picks.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`,
+    task: () => `<span style="font-size:14px;font-weight:600">${esc(e.title)}</span><span class="verdict" style="font-size:26px">${e.success ? 'ERFOLG' : 'FEHLSCHLAG'}</span><span class="entry-detail">${detail(e)}</span>`,
+  }[e.kind]();
+  const reading = e.reading ? `<div class="interpretation"><div class="entry-head"><span class="kicker">Deutung</span><span class="time">${e.at}</span></div><p class="note-text">${esc(e.reading)}</p></div>` : '';
+  return `<div class="entry ${e.kind === 'note' ? 'note' : ''} ${latest ? 'latest' : ''}"><div class="entry-head"><span class="kicker">${kicker(e)}</span><span class="time">${e.at}</span></div>${body}${reading}</div>`;
+}
+
+// Vorschlag: eine Zeile, links was, rechts das Ergebnis; antippen klappt auf.
+function row(e) {
+  const what = {
+    oracle: () => `<span class="what">${q(e.question)}</span><span class="res ${e.yes ? '' : 'negative'}">${e.yes ? 'JA' : 'NEIN'}</span>`,
+    dice: () => `<span class="what plain">2W6 · ${detail(e)}</span><span class="res gold">${e.total}</span>`,
+    note: () => `<span class="what under">${esc(e.text)}</span>`,
+    card: () => `<span class="what">${q(e.question)}</span><span class="res kind">Karte</span><span class="under pick-chips">${e.picks.map(([k, v]) => `<span class="${k === '1–10' ? 'num' : ''}" title="${esc(k)}">${esc(v)}</span>`).join('')}</span>`,
+    task: () => `<span class="what">${esc(e.title)}</span><span class="res ${e.success ? '' : 'negative'}">${e.success ? 'ERFOLG' : 'FEHLSCHLAG'}</span>`,
+  }[e.kind]();
+  const reading = e.reading ? `<span class="under reading">${esc(e.reading)}</span>` : '';
+  const interpret = e.kind === 'note' ? '' : '<span class="do gold">Deuten</span>';
+  const more = `<span class="under more"><span class="entry-detail">${[kicker(e), detail(e), e.at].filter(Boolean).join(' · ')}</span>${interpret}<span class="do danger">Löschen</span></span>`;
+  return `<button type="button" class="row ${e.kind === 'note' ? 'note' : ''}" aria-expanded="false">${what}${reading}${more}</button>`;
+}
+
+const frame = (compact) => `
+  <div class="header">Kessra <span class="uwp">A766754-A</span></div>
+  <div class="strip"><div class="strip-card">
+    <div class="strip-head"><span class="strip-name">Kira Vant</span><span class="strip-sub">Ex-Scout · 4 Terms · 34 Jahre</span><span class="time">1/2</span></div>
+    <div class="upp">${[['STR', 7], ['DEX', 'A'], ['END', 8], ['INT', 9], ['EDU', 7], ['SOC', 5]].map(([k, v]) => `<div><small>${k}</small><b>${v}</b></div>`).join('')}</div>
+    <div class="chips"><span>Pil-2</span><span>Nav-1</span><span>APi-1</span><span>Vac-1</span><span style="border-style:dashed">Ohne (−3)</span></div>
+  </div></div>
+  <div class="log-scroll"><div class="log ${compact ? 'compact' : ''}">
+    <div class="log-day">Feiertag, 001-1105</div>
+    ${log.map((e, i) => (compact && i < log.length - 1 ? row(e) : box(e, i === log.length - 1))).join('')}
+  </div></div>
+  <div class="dock ${compact ? 'compact' : ''}">
+    <div class="write-row">
+      <input class="question-input" type="text" placeholder="Frage, Deutung, Notiz" autocomplete="off">
+      <button type="button" class="write-button interpret" ${compact ? '' : 'disabled'}>Deuten</button>
+      <button type="button" class="write-button" ${compact ? '' : 'disabled'}>Notiz</button>
+    </div>
+    <div class="actions"><button type="button" class="action draw">Karte ziehen</button><button type="button" class="action">2W6</button></div>
+    <div class="odds-row">
+      <div class="odds"><div>Hoch<small>75 % · 6+</small></div><div class="on">Mittel<small>50 % · 8+</small></div><div>Gering<small>25 % · 10+</small></div></div>
+      <button type="button" class="action oracle">Ja/Nein</button>
+    </div>
+  </div>
+  <div class="nav"><b>Orakel</b><span>Begegnung</span><span>Kampf</span><span>Shop</span><span>Charaktere</span><span>NSC</span><span>Sektor</span></div>`;
+
+document.getElementById('heute').innerHTML = frame(false);
+document.getElementById('kompakt').innerHTML = frame(true);
+
+// Antippen klappt eine Zeile auf und die vorige zu.
+document.getElementById('kompakt').addEventListener('click', (ev) => {
+  const hit = ev.target.closest('.row');
+  if (!hit) return;
+  const open = hit.getAttribute('aria-expanded') === 'true';
+  document.querySelectorAll('.row[aria-expanded="true"]').forEach((r) => r.setAttribute('aria-expanded', 'false'));
+  hit.setAttribute('aria-expanded', String(!open));
+});
+// Im Vorschlag erscheinen Deuten und Notiz erst mit dem Text.
+document.querySelector('#kompakt .question-input').addEventListener('input', (ev) => {
+  ev.target.closest('.write-row').classList.toggle('has-text', ev.target.value.trim() !== '');
+});
+// Auf schmalen Bildschirmen zeigt der Umschalter oben eine der beiden Ansichten.
+document.querySelector('.switch').addEventListener('click', (ev) => {
+  const show = ev.target.dataset.show;
+  if (!show) return;
+  document.querySelector('.page').dataset.show = show;
+  document.querySelectorAll('.switch button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.show === show)));
+});
+</script>
+</body>
+</html>

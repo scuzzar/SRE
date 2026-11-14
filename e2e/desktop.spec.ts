@@ -57,16 +57,18 @@ test('Ein Wurf landet im Log der Orakel-Spalte und bleibt beim Wechsel der Berei
   await expect(page.locator('.entry')).toHaveCount(1);
 });
 
-test('Deuten geht in jedem Bereich: das angetippte Ergebnis wird zum Ziel der Deutung', async ({ page }, testInfo) => {
+test('Deuten geht in jedem Bereich: der Knopf am Ergebnis öffnet das Blatt der Deutung', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
   const panel = page.getByRole('complementary', { name: 'Orakel' });
   await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Sektor', exact: true }).click();
-  await panel.getByRole('button', { name: /Ja\/Nein/ }).click();
-  await panel.getByPlaceholder(/Frage, Deutung, Notiz/).fill('Der Wurf ist gut.');
-  await panel.locator('.entry', { hasText: 'Orakel' }).click();
-  await expect(panel.locator('.target-line')).toContainText(/Deutung zu (JA|NEIN)/);
+  await panel.getByRole('button', { name: '2W6' }).click();
+  await expect(page.locator('.dice-roll')).toBeHidden();
   await panel.getByRole('button', { name: 'Deuten' }).click();
-  await expect(panel.locator('.entry', { hasText: 'Orakel' }).locator('.interpretation')).toContainText('Der Wurf ist gut.');
+  const reading = page.getByRole('dialog', { name: 'Deutung' });
+  await reading.getByPlaceholder(/Was bedeutet das/).fill('Der Wurf ist gut.');
+  await reading.getByRole('button', { name: 'Deuten' }).click();
+  await expect(panel.locator('.entry', { hasText: 'Würfel · 2W6' }).locator('.interpretation')).toContainText('Der Wurf ist gut.');
+  await expect(page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Sektor', exact: true })).toHaveAttribute('aria-current', 'page');
 });
 
 test('Eine Probe aus der Charakterspalte lässt sich in jedem Bereich würfeln', async ({ page }, testInfo) => {
@@ -152,11 +154,12 @@ test('Die Ziffern wählen die Bereiche der Reiterzeile', async ({ page }, testIn
     await page.keyboard.press(key!);
     await expect(nav.getByRole('button', { name: name!, exact: true })).toHaveAttribute('aria-current', 'page');
   }
-  // Im Fragefeld gehören die Ziffern dem Text.
-  await page.getByPlaceholder(/Frage, Deutung, Notiz/).fill('');
-  await page.getByPlaceholder(/Frage, Deutung, Notiz/).press('2');
+  // In der Notiz gehören die Ziffern dem Text.
+  await page.keyboard.press('n');
+  const note = page.getByPlaceholder(/Was passiert/);
+  await note.press('2');
   await expect(nav.getByRole('button', { name: 'Sektor', exact: true })).toHaveAttribute('aria-current', 'page');
-  await expect(page.getByPlaceholder(/Frage, Deutung, Notiz/)).toHaveValue('2');
+  await expect(note).toHaveValue('2');
 });
 
 test('Eine Fertigkeit auf einer anderen Karte holt den Charakter nach oben und beginnt die Probe, mit einem Klick', async ({ page }, testInfo) => {

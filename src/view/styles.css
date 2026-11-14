@@ -367,17 +367,7 @@ button:disabled {
   gap: 10px;
 }
 
-.log-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
 
-.log-hint {
-  font-size: 11px;
-  color: var(--muted);
-}
 
 .log ol {
   list-style: none;
@@ -517,52 +507,11 @@ button:disabled {
   color: var(--gold-bright);
 }
 
-.question-input {
-  min-height: 44px;
-  width: 100%;
-  padding: 8px 12px;
-  background: var(--bg);
-  border: 1px solid var(--line-strong);
-}
 
-.question-input::placeholder {
-  color: var(--dim);
-}
 
-/* Die Schreibzeile: ein Textfeld, der Knopf entscheidet, ob es Frage, Deutung oder Notiz wird. */
-.write-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 6px;
-}
 
-.write-button {
-  min-height: 44px;
-  padding: 0 10px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  border: 1px solid var(--line-strong);
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 600;
-}
 
-.write-button svg {
-  width: 16px;
-  height: 16px;
-}
 
-.write-button.interpret {
-  border-color: var(--gold-deep);
-  color: var(--gold);
-}
-
-.write-button:disabled {
-  border-color: var(--disabled);
-  color: var(--dim);
-}
 
 /* Worauf sich eine Deutung bezöge; steht nur da, solange Text im Feld ist. */
 .target-line {
@@ -601,10 +550,6 @@ button:disabled {
   cursor: pointer;
 }
 
-.entry.target {
-  border-color: var(--gold);
-  box-shadow: inset 3px 0 0 var(--gold);
-}
 
 .interpretation {
   display: flex;
@@ -646,16 +591,30 @@ button:disabled {
   color: var(--muted);
 }
 
+/* Die eine Reihe im Orakel-Screen: Notiz, Würfeln, Karte; gleich breit, Symbol über dem Namen. */
+.oracle-actions .action {
+  min-height: 54px;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: 6px;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+}
+
+.oracle-actions .action svg {
+  width: 22px;
+  height: 22px;
+}
+
+.action.note {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+}
+
 .actions {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-  gap: 6px;
-}
-
-/* Der Knopf für Orakel bzw. Probe steht in einer Zeile mit der Stufenauswahl. */
-.odds-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
   gap: 6px;
 }
 
@@ -670,12 +629,6 @@ button:disabled {
   font-size: 15px;
 }
 
-.action.oracle {
-  min-height: 48px;
-  padding: 0 18px;
-  background: var(--text);
-  color: var(--ink);
-}
 
 .action.draw {
   background: var(--accent);
@@ -755,14 +708,23 @@ button:disabled {
   background: var(--panel);
 }
 
+/* Das Fragefeld oben auf der Karte, statt einer Titelzeile. */
 .card-question {
   margin: 0 12px 6px;
-  padding: 4px 8px;
+}
+
+.card-question input {
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 10px;
   background: var(--bg);
-  border: 1px solid #2c2c2c;
+  border: 1px solid #3a3a3a;
   border-left: 3px solid var(--accent);
   border-radius: 6px;
-  font-size: 13px;
+}
+
+.card-question input::placeholder {
+  color: var(--dim);
 }
 
 .card {
@@ -1129,7 +1091,7 @@ button:disabled {
 }
 
 .card-sheet .card-question {
-  margin-bottom: 4px;
+  margin: 10px 12px 4px;
 }
 
 .card-sheet .sheet-foot {
@@ -3901,11 +3863,6 @@ button:disabled {
   gap: 6px;
 }
 
-.generation-oracle-row .question-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 40px;
-}
 
 .generation-oracle-answer {
   margin: 0;
@@ -4110,13 +4067,28 @@ button:disabled {
 }
 
 /* Die vorbereitete Probe steht über den Knöpfen; aus „2W6“ wird „Probe würfeln“. */
+/* Die vorbereitete Probe mit der Stufe: erst wenn eine Fertigkeit gewählt ist, steht die Auswahl da. */
 .task-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 6px 8px 12px;
+  border: 1px solid var(--gold-deep);
+  border-radius: 6px;
+  background: var(--gold-wash);
+}
+
+.task-bar .task-top {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 0 4px 12px;
-  border: 1px solid var(--line-strong);
-  background: var(--raised);
+}
+
+.task-bar .odds button {
+  min-height: 40px;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
 }
 
 .task-bar .task-info {
@@ -4215,15 +4187,6 @@ button:disabled {
   color: var(--muted);
 }
 
-/* --- Deuten und Notiz in der Leiste der Charaktererschaffung -------------------------------- */
-
-.generation-oracle-row .icon-button.interpret {
-  color: var(--gold);
-}
-
-.generation-oracle-row .icon-button:disabled {
-  color: var(--disabled);
-}
 
 .generation-target {
   margin: 0;
@@ -6785,8 +6748,7 @@ button:disabled {
 }
 
 /* --- Desktop-Modus, schmal (1024 bis 1279 px) ----------------------------------------------- */
-/* Drei Spalten sind hier eng: Orakel- und Charakterspalte werden schmaler, „Deuten“ und „Notiz“
-   zeigen nur ihr Symbol (der Name bleibt für Screenreader und als Tooltip), Attribute und
+/* Drei Spalten sind hier eng: Orakel- und Charakterspalte werden schmaler, Attribute und
    Fertigkeiten rücken enger zusammen. So bleiben dem Bereich rund 480 px. */
 @media (min-width: 1024px) and (max-width: 1279px) {
   .stage {
@@ -6795,15 +6757,6 @@ button:disabled {
 
   .stage.without-characters {
     grid-template-columns: 270px minmax(0, 1fr);
-  }
-
-  .oracle-panel .write-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
   }
 
   .char-column {
@@ -6851,7 +6804,6 @@ button:disabled {
   }
 
   /* Dunkle Knöpfe mit Rahmen: Aufhellen sähe man kaum, darum wird der Rahmen hell. */
-  .write-button:not(:disabled):hover,
   .ghost:not(:disabled):hover,
   .add-character:not(:disabled):hover,
   .chips button:not(:disabled):not([aria-pressed='true']):hover,
@@ -7022,4 +6974,294 @@ button:disabled {
 /* Im Dialog wiederholt der Kasten der Reise die Überschrift nicht groß. */
 .journey-sheet .verdict {
   font-size: 16px !important;
+}
+
+/* --- Orakel-Screen: kompakter Log, Blatt für Notiz und Deutung, Orakelfeld --------------------- */
+
+/* Ältere Einträge als Zeile: links was, rechts das Ergebnis; Antippen klappt sie auf. */
+.log-row {
+  border-top: 1px solid var(--rule);
+}
+
+.log-row.note {
+  border-top-style: dashed;
+}
+
+.log-row-button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  padding: 8px 2px;
+  background: transparent;
+  border: 0;
+  text-align: left;
+}
+
+.row-what {
+  font-size: 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.row-what.plain {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.row-note {
+  grid-column: 1 / -1;
+  padding-left: 8px;
+  border-left: 2px dashed var(--line-strong);
+}
+
+.row-result {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-align: right;
+}
+
+.row-result.negative {
+  color: var(--accent-text);
+}
+
+.row-result.gold {
+  color: var(--gold-bright);
+}
+
+.row-result.kind {
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.row-picks {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.row-picks span {
+  padding: 1px 7px;
+  border: 1px solid var(--rule-soft);
+  background: var(--panel);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.row-extra {
+  grid-column: 1 / -1;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.row-reading {
+  grid-column: 1 / -1;
+  padding-left: 8px;
+  border-left: 2px solid var(--gold-deep);
+  font-size: 13.5px;
+}
+
+.log ol > .entry {
+  margin-top: 6px;
+}
+
+.entry.open {
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+
+.entry-head-end {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.entry-tools {
+  display: inline-flex;
+  gap: 2px;
+  vertical-align: middle;
+}
+
+.icon-button.small {
+  width: 30px;
+  height: 30px;
+  color: var(--muted);
+}
+
+.icon-button.small svg {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-button.small.interpret {
+  color: var(--gold);
+}
+
+.note-text .entry-tools {
+  float: right;
+}
+
+/* Unter dem neuesten Ergebnis: Deuten und Löschen. */
+.entry-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.entry-actions .icon-button {
+  color: var(--muted);
+}
+
+.entry-actions .icon-button:only-child {
+  margin-left: auto;
+}
+
+.ghost.compact.interpret {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-color: var(--gold-deep);
+  color: var(--gold);
+}
+
+/* Das Blatt für Notiz und Deutung: unten, so hoch wie nötig. */
+.sheet.note-sheet {
+  flex: 0 0 auto;
+  margin-top: auto;
+  gap: 8px;
+}
+
+.note-sheet .note-target {
+  margin: 0 16px;
+}
+
+.note-input {
+  margin: 0 16px;
+  min-height: 110px;
+  padding: 8px 12px;
+  resize: none;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+}
+
+.note-sheet .sheet-foot .grow {
+  flex: 1 1 auto;
+}
+
+.note-sheet .primary {
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 8px;
+}
+
+.note-sheet .primary:disabled {
+  background: var(--disabled);
+  color: var(--dim);
+}
+
+/* Das Orakelfeld der Karte: je Stufe die Antwort. */
+.card-oracle .tile.oracle-choice {
+  align-items: center;
+  text-align: center;
+}
+
+.card-oracle .oracle-answer {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1.15;
+  color: var(--gold-bright);
+}
+
+.card-oracle .oracle-answer.negative {
+  color: var(--accent-text);
+}
+
+/* Eine Themen-Tafel, die nicht mehr auf den Bildschirm passt: ein ganzzeiliger Knopf. */
+.theme-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  background: linear-gradient(180deg, #131313, #0e0e0e);
+  border: 1px solid #333333;
+  border-radius: 10px;
+  text-align: left;
+}
+
+.theme-button::before {
+  content: '';
+  flex: none;
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.theme-button-title {
+  flex: 1 1 auto;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.theme-button-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-text);
+}
+
+.theme-button svg {
+  color: var(--muted);
+}
+
+.generation-oracle-row .ghost.compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+}
+
+/* Attribute: der Wert oben mit dem DM daneben, der Name klein darunter. */
+.upp .upp-value {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.upp .upp-value .upp-state {
+  min-height: 0;
+}
+
+.strip .upp button,
+.strip .upp .cell {
+  min-height: 42px;
+  padding: 2px 0;
+  line-height: 1.05;
+}
+
+.strip .upp .upp-label {
+  margin-top: 1px;
+  font-size: 9px;
+}
+
+.strip .upp .upp-code {
+  font-size: 17px;
 }

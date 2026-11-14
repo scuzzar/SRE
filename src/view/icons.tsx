@@ -124,6 +124,15 @@ export function CloseIcon() {
   );
 }
 
+/** Plus: eine zugeklappte Tafel der Karte aufklappen. */
+export function PlusIcon() {
+  return (
+    <svg {...base} width={18} height={18} strokeLinecap="round">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
 export function CheckIcon() {
   return (
     <svg {...base} width={30} height={30} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">

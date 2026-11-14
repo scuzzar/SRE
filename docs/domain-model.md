@@ -294,6 +294,13 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Weapon.minSoc` und `Patron.criminal`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-nsc-aus-laufbahn-und-waffen.png`](changes/2026-11-14-nsc-aus-laufbahn-und-waffen.png).
 
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14d): **Orakel auf der Karte** (siehe *Orakel auf
+> der Karte*). Die Inspirationskarte trägt die Antwort für alle drei Stufen, mit Ja!, Ja?, Nein?
+> und Nein!; den Knopf „Ja/Nein“ gibt es nicht mehr, die Antwort steht in der Kartenauswahl. Neu
+> im Bild: `Card.oracle`, `Card → Odds : pickedOdds`, `Answer`, `CardPick.oracle`, `.chance`,
+> `./answer` und `CardPick → Odds : odds`; `OracleAnswer` entfällt. Der Ausschnitt dazu
+> liegt unter [`changes/2026-11-14-orakel-auf-der-karte.png`](changes/2026-11-14-orakel-auf-der-karte.png).
+
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
@@ -368,12 +375,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Stufe (Hoch/Mittel/Gering) | `Odds` | Die eine Auswahl für Orakel und Proben |
 | Hausregeln | `HouseRules` | Die Zahlen, nach denen Proben gerechnet werden |
 | Log | `LogEntry` | Ein Eintrag im Verlauf |
-| Orakelantwort | `OracleAnswer` | Ja oder Nein auf eine Frage |
+| Orakelantwort | `CardPick./answer` | Die Antwort des Orakels auf eine Frage; sie steht in der Kartenauswahl |
+| Antwort | `Answer` | Die sechs Antworten des Orakels: Ja!, Ja, Ja?, Nein?, Nein, Nein! |
+| Orakelfeld | `Card.oracle` | Das Feld der Karte mit der Antwort für Hoch, Mittel und Gering; man tippt die Stufe an, die zur Frage passt |
 | Notiz | `Note` ohne `interprets` | Freier Text im Log, z. B. „Wir landen auf Regina.“ |
 | Deutung | `Note` mit `interprets` | Was man aus einem Ergebnis macht, z. B. „Die Tür ist offen, aber jemand war schon hier.“ |
-| Ergebnis | `OracleAnswer`, `DiceRoll`, `CardPick`, `TaskResult`, `AttackResult`, `DamageRoll`, `PatronRoll`, `RumorRoll` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
-| Schreibzeile | (Fragefeld) | Das eine Textfeld über den Knöpfen; was der Text wird, entscheidet der Knopf |
-| Desktop-Modus | (View, media query) | Das Layout ab 1024 px Bildschirmbreite: Unter der Reiterzeile mit den fünf Bereichen (ohne Orakel, beim Start Sektor) stehen drei Spalten: links das Orakel mit Log, Schreibzeile und Knöpfen, daneben die Charakterspalte, rechts der gewählte Bereich, höchstens 960 px breit, die Sektor-Karte in die Höhe eingepasst; darunter gilt das mobile Layout. Gleiche Screens, gleiche Komponenten |
+| Ergebnis | `DiceRoll`, `CardPick`, `TaskResult`, `AttackResult`, `DamageRoll`, `PatronRoll`, `RumorRoll` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
+| Desktop-Modus | (View, media query) | Das Layout ab 1024 px Bildschirmbreite: Unter der Reiterzeile mit den fünf Bereichen (ohne Orakel, beim Start Sektor) stehen drei Spalten: links das Orakel mit Log und Knöpfen, daneben die Charakterspalte, rechts der gewählte Bereich, höchstens 960 px breit, die Sektor-Karte in die Höhe eingepasst; darunter gilt das mobile Layout. Gleiche Screens, gleiche Komponenten |
 | Charakterspalte | (View, Desktop-Modus) | Die Spalte mit allen lebenden Charakteren untereinander, immer mit Attributen und Fertigkeiten für Proben; dazu, was der Bereich daneben braucht: im Kampf Rüstung, Waffen und Heilen, im Shop Credits und was er ausgerüstet hat. Die Karte des Charakters oben ist hervorgehoben, ein Klick auf eine andere holt sie nach oben, eine Fertigkeit darauf zugleich mit Probe. Entfällt im Bereich Charaktere und in der Kampfsimulation |
 | Würfelwurf (2W6) | `DiceRoll` | Ein einfacher Wurf mit zwei Würfeln |
 | Inspirationskarte | `Card` | Eine gezogene Karte, solange sie offen ist |
@@ -567,7 +575,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Ergebnis-Popup zu sehen ist und welche Weltkarte offen ist. Ob die Leiste mit dem Charakter oben
   eingeklappt ist, merkt sich das Gerät über einen Neustart hinweg, wie die offene Kampagne; zum
   Spielstand gehört das nicht. Reine Darstellung bleibt in der View: wie Felder und Tafeln angeordnet sind, ob das Menü offen ist, der
-  Text im Fragefeld während des Tippens, Farben, die Hex-Schreibweise der UPP und das Format der
+  Text in einem Feld während des Tippens, Farben, die Hex-Schreibweise der UPP und das Format der
   Uhrzeit.
 - **Entwürfe.** Im Paket `draft` liegen die Entwürfe eines Logeintrags: die offene Karte (`Card`,
   wird beim Bestätigen zum `CardPick`) die Probe in Vorbereitung (`Task`, wird beim Würfeln zum
@@ -652,13 +660,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 - **Nicht in Version 1.** Szenen (der Log läuft ohne Gliederung durch; Szenen kommen mit Mythics
   Szenenstruktur), die Feinjustierung des Zielwerts um ±1, eigene Fertigkeiten und
   Hausregeln, die man in der App einstellt.
-- **Eine Auswahl für Orakel und Proben.** Die Kampagne hat immer genau eine gewählte Stufe (`odds`).
-  Die drei Stufen sind Referenzdaten: Hoch (75 %, 6+), Mittel (50 %, 8+), Gering (25 %, 10+), in
-  dieser Reihenfolge, leicht links. Die Auswahl bleibt stehen, bis man sie ändert, auch über einen
-  Neustart der App hinweg. Orakel und Probe lesen sie, keiner von beiden hat eine eigene.
+- **Die Stufe der Proben.** Die Kampagne hat immer genau eine gewählte Stufe (`odds`). Die drei
+  Stufen sind Referenzdaten: Hoch (75 %, 6+), Mittel (50 %, 8+), Gering (25 %, 10+), in dieser
+  Reihenfolge, leicht links. Die Auswahl bleibt stehen, bis man sie ändert, auch über einen Neustart
+  der App hinweg. Seit 2026-11-14d gilt sie nur für Proben; das Orakel steht auf der Karte, wo man
+  die Stufe je Frage antippt (siehe *Orakel auf der Karte*).
 - **Der Log verweist, er kopiert nicht.** Ein Logeintrag hält nur fest, was allein ihm gehört: Frage,
-  Text einer Notiz oder Deutung, Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei einer Probe DM und Zielwert (siehe
-  *Orakel* und *Probe*). Alles andere ist ein
+  Text einer Notiz oder Deutung, Zeitpunkt und Würfel, bei der Antwort des Orakels dazu die Chance, bei einer Probe DM und Zielwert (siehe
+  *Orakel auf der Karte* und *Probe*). Alles andere ist ein
   Verweis: auf die Stufe, den Charakter, die Fertigkeitsstufe, die Attribute, auf Feld und Eintrag
   der Karte. Die Werte der Wurffelder hält die Kartenauswahl selbst (siehe *Wurffelder der Karte*). Logeinträge werden angehängt und nie geändert. Ein einzelner Eintrag lässt sich löschen,
   dann ist er endgültig weg; die übrigen behalten ihre Reihenfolge. Die Reihenfolge ist die
@@ -669,19 +678,49 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Pilot-3), zeigen auch alte Logeinträge den neuen Stand. Das Ergebnis einer Orakelfrage oder Probe
   ändert sich dadurch nicht, weil Chance bzw. DM und Zielwert festgehalten sind.
 - **Würfe stehen im Log, nicht nur ihr Ergebnis.** Gespeichert werden die einzelnen Würfel (`dice`,
-  `roll`); Summe, Ja/Nein und Erfolg (`/total`, `/yes`, `/success`) folgen daraus.
-- **Orakel.** Ein Wurf von 1 bis 100; Ja, wenn er höchstens die Chance der gewählten Stufe ist. Die
-  `OracleAnswer` verweist auf die Stufe und hält die Chance zum Zeitpunkt des Wurfs fest (`chance`);
-  Ja oder Nein (`/yes`: `roll` ≤ `chance`) folgt allein daraus, nie aus dem heutigen Stand der Stufe.
-  Die Frage ist freiwillig. „Außergewöhnlich Ja/Nein“, Chaosfaktor und Zufallsereignisse nach Mythic
-  kommen erst nach Version 1.
-- **Deutungen und Notizen.** Was in der Schreibzeile steht, wird je nach Knopf eine Frage (Ja/Nein,
-  Karte ziehen), eine Deutung oder eine Notiz; einen Modus gibt es nicht. Beide sind ein `Note` mit
-  Text, der nicht leer ist (Leerraum am Rand fällt weg).
+  `oracle`); Summe, Antwort und Erfolg (`/total`, `/answer`, `/success`) folgen daraus.
+- **Orakel auf der Karte** (2026-11-14d). Ersetzt den Knopf „Ja/Nein“ mit der Stufe der Kampagne.
+  - Jede `Card` würfelt beim Ziehen einmal 1 bis 100 (`oracle`). Das **Orakelfeld** der Karte zeigt
+    daraus die Antwort für alle drei Stufen nebeneinander, wie die *Likely Odds* des GMA. Weil es
+    ein Wurf ist, widersprechen sich die Stufen nie: Sagt Gering Ja, sagen es auch Mittel und Hoch.
+  - Man tippt die Stufe an, die zur Frage passt (`pickedOdds`), höchstens eine. Beim Bestätigen
+    steht die Antwort **in der Kartenauswahl** (`CardPick`): der Wurf (`oracle`), die Stufe
+    (`odds`) und ihre Chance von damals (`chance`). Eine Frage, ein Logeintrag, eine Deutung:
+    Antwort und gewählte Felder stehen im selben Kasten. Eine Kartenauswahl braucht mindestens
+    eines: ein Feld, ein Wurffeld oder die Antwort. Die Antwort folgt allein aus Wurf und
+    festgehaltener Chance, nie aus dem heutigen Stand der Stufe.
+  - **Sechs Antworten** (`/answer`), allein aus `roll` und `chance`: Ja, wenn `roll` ≤ `chance`.
+    **Ja!** (ja, und mehr als erhofft) und **Nein!** (nein, und schlimmer) folgen der Fate Chart von
+    Mythic bei Chaosfaktor 5: Hoch entspricht *Very Likely* (15/75/96), Mittel *50/50* (10/50/91),
+    Gering *Very Unlikely* (5/25/86). Das ist je ein Fünftel der Ja- bzw. Nein-Spanne, am äußeren
+    Rand. **Ja?** (ja, aber mit Haken) und **Nein?** (nein, aber nicht ganz) kennt Mythic nicht; sie
+    sind das Fünftel am inneren Rand, also gespiegelt (Hausregel). Einen Chaosfaktor führt die App
+    weiterhin nicht, er steht fest auf 5.
+
+    | Stufe | Ja! | Ja | Ja? | Nein? | Nein | Nein! |
+    |---|---|---|---|---|---|---|
+    | Hoch (75 %) | 1–15 | 16–60 | 61–75 | 76–80 | 81–95 | 96–100 |
+    | Mittel (50 %) | 1–10 | 11–40 | 41–50 | 51–60 | 61–90 | 91–100 |
+    | Gering (25 %) | 1–5 | 6–20 | 21–25 | 26–40 | 41–85 | 86–100 |
+
+  - **Den Knopf „Ja/Nein“ gibt es nicht mehr**, auch nicht in der Leiste der Charaktererschaffung:
+    Wer das Orakel fragt, zieht eine Karte. Die Frage schreibt man oben auf die offene Karte
+    (`Card.question`, freiwillig, wie bisher).
+  - **Die gewählte Stufe der Kampagne (`Campaign.odds`) gilt nur noch für Proben.** Die App zeigt
+    die Auswahl erst, wenn am Charakter oben eine Fertigkeit gewählt ist. Sie bleibt stehen wie
+    bisher.
+  - **Alte Antworten** (die frühere `OracleAnswer`, vor 2026-11-14d) werden beim Laden und beim
+    Import zu Kartenauswahlen ohne Felder: Frage, Wurf, Stufe und Chance bleiben, ihre Stelle im Log
+    auch, also auch ihre Deutungen. Ja bleibt Ja, Nein bleibt Nein; weil `/answer` aus Wurf und
+    Chance folgt, zeigen sie nun auch das Ausrufe- oder Fragezeichen (Entscheidung des Owners).
+  - Ein Chaosfaktor, Szenen und Zufallsereignisse nach Mythic kommen erst nach Version 1.
+- **Deutungen und Notizen.** Beide sind ein `Note` mit Text, der nicht leer ist (Leerraum am Rand
+  fällt weg). Seit 2026-11-14d schreibt man sie in einem eigenen Blatt: *Deuten* sitzt am Ergebnis,
+  *Notiz* unten in der Knopfreihe; die Frage schreibt man auf die Karte.
   - Eine **Deutung** verweist auf genau ein Ergebnis (`interprets`): eine Orakelantwort, einen Wurf,
     eine Kartenauswahl, eine Probe, einen Angriff oder einen Schadenswurf, nie auf eine Notiz oder Deutung, und immer auf einen
-    früheren Eintrag. Vorgeschlagen ist das neueste Ergebnis; Antippen eines anderen Ergebnisses im
-    Log macht es zum Ziel. Ein Ergebnis kann mehrere Deutungen haben.
+    früheren Eintrag. Man deutet das Ergebnis, an dem man auf *Deuten* tippt: am neuesten steht der
+    Knopf immer, ein älteres klappt man dafür im Log auf. Ein Ergebnis kann mehrere Deutungen haben.
   - Eine **Notiz** verweist auf nichts; sie steht für sich im Log.
   - Wie jeder Logeintrag wird ein `Note` angehängt und nie geändert. Wer sich verschrieben hat,
     löscht ihn und schreibt neu.
@@ -707,8 +746,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   in die Auswahl (`picked`) auf oder wieder heraus, mit allem, was es gezogen hat: Ein Paar nimmt
   man immer ganz, nie einen Begriff allein. Ausgewählt sein kann nur ein Feld, das gezogen wurde. *Verwerfen* schließt die Karte ohne Logeintrag. *Neu ziehen* ersetzt sie durch eine neue;
   die Auswahl geht verloren, die Frage bleibt.
-- **Bestätigen** geht erst, wenn mindestens ein Feld ausgewählt ist; ohne Auswahl bleibt nur
-  Verwerfen. Es legt einen `CardPick` mit der Frage der Karte an und darin je ausgewähltem Feld
+- **Bestätigen** geht erst, wenn mindestens ein Feld oder eine Stufe im Orakelfeld ausgewählt ist;
+  ohne Auswahl bleibt nur Verwerfen. Es legt einen `CardPick` mit der Frage der Karte an, mit der
+  Antwort, falls eine Stufe gewählt ist, und darin je ausgewähltem Feld
   ein `PickedItem`, in der Reihenfolge der Karte; danach ist die Karte zu. Das `PickedItem` verweist
   auf die gezogenen Einträge des Feldes, beim Paar auf beide in der Reihenfolge der Spalten; das
   Feld (`/in`) folgt daraus, weil jeder Eintrag zu genau einer Spalte und jede Spalte zu genau

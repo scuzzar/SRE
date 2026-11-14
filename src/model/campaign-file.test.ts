@@ -4,7 +4,7 @@ import { campaignFileName, fromCampaignFile, toCampaignFile } from './campaign-f
 import type { LogEntry } from './log';
 
 const log: LogEntry[] = [
-  { kind: 'oracle', at: '2026-10-23T14:00:00.000Z', question: 'Ist Halvek ehrlich?', roll: 61, chance: 25, odds: 'low' },
+  { kind: 'card', at: '2026-10-23T14:00:00.000Z', question: 'Ist Halvek ehrlich?', oracle: 61, odds: 'low', chance: 25, items: [] },
   { kind: 'dice', at: '2026-10-23T14:01:00.000Z', dice: [5, 4] },
   { kind: 'card', at: '2026-10-23T14:02:00.000Z', items: [{ picked: ['event.action.1.mythic.1', 'event.action.2.mythic.1'] }] },
   { kind: 'task', at: '2026-10-23T14:03:00.000Z', for: 'c1', uses: 'pilot', counts: ['DEX'], odds: 'low', dice: [4, 5], dm: 3, target: 10 },
@@ -78,7 +78,9 @@ describe('Kampagnendatei', () => {
     ['mit einer Deutung einer Deutung', () => fileWith((c) => ((c.log as { interprets?: number }[])[6]!.interprets = 5)), /nur ein Ergebnis/],
     ['mit einer Deutung ins Leere', () => fileWith((c) => ((c.log as { interprets?: number }[])[5]!.interprets = 9)), /Eintrag, den es davor nicht gibt/],
     ['mit einem Würfel über 6', () => fileWith((c) => ((c.log as { dice?: number[] }[])[1]!.dice = [7, 1])), /keine gültige/],
-    ['mit einer Kartenauswahl ohne alles', () => rolledWith((log) => delete log[1]!.bell), /ohne Feld und ohne Wurffeld/],
+    ['mit einer Kartenauswahl ohne alles', () => rolledWith((log) => delete log[1]!.bell), /ohne Feld, Wurffeld und Antwort/],
+    ['mit einer Antwort ohne Stufe', () => fileWith((c) => delete (c.log as { odds?: string }[])[0]!.odds), /Wurf, Stufe und Chance/],
+    ['mit einer Antwort einer unbekannten Stufe', () => fileWith((c) => ((c.log as { odds?: string }[])[0]!.odds = 'sicher')), /Stufe sicher/],
     ['mit einer Glockenzahl über 10', () => rolledWith((log) => (log[1]!.bell = 11)), /keine gültige/],
     ['mit einem unbekannten Streuwürfel', () => rolledWith((log) => (log[0]!.scatter = 'up')), /keine gültige/],
     [
@@ -112,10 +114,19 @@ describe('Kampagnendatei mit Charakter oben', () => {
   });
 });
 
+describe('Kampagnendatei von vor 2026-11-14d', () => {
+  it('macht aus einer alten Orakelantwort eine Kartenauswahl mit der Antwort; ihre Deutung bleibt', () => {
+    const text = fileWith((c) => ((c.log as unknown[])[0] = { kind: 'oracle', at: '2026-10-23T14:00:00.000Z', question: 'Ist Halvek ehrlich?', roll: 61, chance: 25, odds: 'low' }));
+    const read = fromCampaignFile(text, 'k9');
+    expect(read.log[0]).toEqual({ kind: 'card', at: '2026-10-23T14:00:00.000Z', question: 'Ist Halvek ehrlich?', oracle: 61, odds: 'low', chance: 25, items: [] });
+    expect(read.log[5]).toMatchObject({ kind: 'note', interprets: 0 });
+  });
+});
+
 describe('Logeintrag löschen', () => {
   it('nimmt genau den Eintrag heraus', () => {
     const after = removeLogEntry(campaign(), 1);
-    expect(after.log.map((e) => e.kind)).toEqual(['oracle', 'card', 'task', 'task', 'note', 'note']);
+    expect(after.log.map((e) => e.kind)).toEqual(['card', 'card', 'task', 'task', 'note', 'note']);
     expect(() => removeLogEntry(campaign(), 7)).toThrow(/gibt es nicht/);
   });
 
@@ -129,7 +140,7 @@ describe('Logeintrag löschen', () => {
 
   it('löscht eine Deutung allein; ihr Ergebnis bleibt', () => {
     const after = removeLogEntry(campaign(), 5);
-    expect(after.log.map((e) => e.kind)).toEqual(['oracle', 'dice', 'card', 'task', 'task', 'note']);
+    expect(after.log.map((e) => e.kind)).toEqual(['card', 'dice', 'card', 'task', 'task', 'note']);
   });
 });
 

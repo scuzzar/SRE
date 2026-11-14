@@ -1,33 +1,40 @@
 import { describe, expect, it } from 'vitest';
-import { askOracle, isSuccess, isYes, rollDice, slotOf, totalOf, writeNote, type LogEntry, type TaskResult } from './log';
+import { answerOf, answerOfPick, isSuccess, isYesAnswer, rollDice, slotOf, totalOf, upgradeOracle, writeNote, type CardPick, type LogEntry, type TaskResult } from './log';
 import { fixedClock, fixedRandom } from './testing';
 
 describe('Orakel', () => {
-  it('sagt Ja, wenn der Wurf höchstens die Chance der Stufe ist', () => {
-    const yes = askOracle('medium', fixedRandom(50), fixedClock());
-    const no = askOracle('medium', fixedRandom(51), fixedClock());
-    expect([yes.chance, isYes(yes)]).toEqual([50, true]);
-    expect([no.chance, isYes(no)]).toEqual([50, false]);
+  // Die Grenzen je Stufe: Ja! und Nein! nach Mythic (Chaosfaktor 5), Ja? und Nein? gespiegelt.
+  const bands = (chance: number) => Array.from({ length: 100 }, (_, i) => answerOf(i + 1, chance)).reduce<Record<string, [number, number]>>((acc, a, i) => ({ ...acc, [a]: [acc[a]?.[0] ?? i + 1, i + 1] }), {});
+
+  it('sagt Ja, wenn der Wurf höchstens die Chance ist', () => {
+    expect(isYesAnswer(answerOf(50, 50))).toBe(true);
+    expect(isYesAnswer(answerOf(51, 50))).toBe(false);
   });
 
-  it('hält Stufe und Chance zum Zeitpunkt des Wurfs fest', () => {
-    const answer = askOracle('low', fixedRandom(61), fixedClock());
-    expect(answer).toEqual({ kind: 'oracle', at: '2026-10-23T14:00:00.000Z', roll: 61, chance: 25, odds: 'low' });
+  it('teilt jede Stufe in sechs Antworten wie in der Tabelle des Modells', () => {
+    expect(bands(75)).toEqual({ yesStrong: [1, 15], yes: [16, 60], yesWeak: [61, 75], noWeak: [76, 80], no: [81, 95], noStrong: [96, 100] });
+    expect(bands(50)).toEqual({ yesStrong: [1, 10], yes: [11, 40], yesWeak: [41, 50], noWeak: [51, 60], no: [61, 90], noStrong: [91, 100] });
+    expect(bands(25)).toEqual({ yesStrong: [1, 5], yes: [6, 20], yesWeak: [21, 25], noWeak: [26, 40], no: [41, 85], noStrong: [86, 100] });
   });
 
-  it('nimmt eine Frage auf; eine leere Frage gibt es nicht', () => {
-    expect(askOracle('high', fixedRandom(1), fixedClock(), '  Ist Halvek ehrlich?  ').question).toBe('Ist Halvek ehrlich?');
-    expect('question' in askOracle('high', fixedRandom(1), fixedClock(), '   ')).toBe(false);
+  it('liest die Antwort einer Kartenauswahl aus Wurf und festgehaltener Chance; ohne Stufe keine', () => {
+    const pick: CardPick = { kind: 'card', at: '2026-10-23T14:00:00.000Z', oracle: 61, odds: 'low', chance: 25, items: [] };
+    expect(answerOfPick(pick)).toBe('no');
+    expect(answerOfPick({ kind: 'card', at: '2026-10-23T14:00:00.000Z', items: [] })).toBeUndefined();
   });
 
-  it('kennt keine unbekannte Stufe', () => {
-    expect(() => askOracle('certain', fixedRandom(1), fixedClock())).toThrow(/gibt es nicht/);
+  it('macht aus einer alten Orakelantwort eine Kartenauswahl an derselben Stelle, mit Frage, Wurf, Stufe und Chance', () => {
+    const old = { kind: 'oracle', at: '2026-10-23T14:00:00.000Z', day: 3, question: 'Ist Halvek ehrlich?', roll: 61, chance: 25, odds: 'low' } as unknown as LogEntry;
+    const note: LogEntry = { kind: 'note', at: '2026-10-23T14:01:00.000Z', text: 'Er lügt.', interprets: 0 };
+    expect(upgradeOracle({ log: [old, note] }).log).toEqual([{ kind: 'card', at: '2026-10-23T14:00:00.000Z', day: 3, question: 'Ist Halvek ehrlich?', oracle: 61, odds: 'low', chance: 25, items: [] }, note]);
+    const today = { log: [note] };
+    expect(upgradeOracle(today)).toBe(today);
   });
 });
 
 describe('Deutungen und Notizen', () => {
   const log: LogEntry[] = [
-    { kind: 'oracle', at: '2026-10-23T14:00:00.000Z', roll: 61, chance: 25, odds: 'low' },
+    { kind: 'card', at: '2026-10-23T14:00:00.000Z', oracle: 61, odds: 'low', chance: 25, items: [] },
     { kind: 'note', at: '2026-10-23T14:01:00.000Z', text: 'Wir landen auf Regina.' },
   ];
 

@@ -1,82 +1,45 @@
-import { Fragment, useEffect, useId, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
+import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import type { DamageItem, JourneyItem, LogItem, NoteItem } from '../../controller';
-import { attackTitle, checkDetail, clockTime, damageDetail, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, scatterText, taskDetail, taskTitle } from '../format';
+import { answerText, attackTitle, checkDetail, clockTime, damageDetail, isYesAnswer, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, resultLine, scatterText, taskDetail, taskTitle } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
+import { LightbulbIcon, TrashIcon } from '../icons';
 import { MapIconSvg, ScatterRose } from './CardRollIcons';
-
-/** So lange muss man auf einen Eintrag drücken, damit er sich löschen lässt. */
-const LONG_PRESS_MS = 550;
-/** Bewegt sich der Finger weiter, scrollt man und drückt nicht. */
-const SLOP_PX = 10;
 
 interface LogListProps {
   log: readonly LogItem[];
   /** Je Eintrag das Datum seines Spieltags; ein neuer Tag bekommt eine Trennzeile. */
   days: readonly (string | undefined)[];
-  /** Das Ergebnis, auf das sich eine Deutung gerade bezöge; nur markiert, wenn `marked`. */
-  target: number | undefined;
-  marked: boolean;
-  /** Antippen eines Ergebnisses macht es zum Ziel der Deutung. */
-  onPick: (index: number) => void;
+  /** „Deuten“ am Ergebnis an dieser Stelle des Logs: öffnet das Blatt der Deutung. */
+  onInterpret: (index: number) => void;
 }
 
 /**
- * Der Log wie ein Chat: das Älteste oben, das Neueste unten, direkt über den Knöpfen. Eine Deutung
- * steht im Kasten ihres Ergebnisses, auch wenn sie später geschrieben wurde, ebenso der Schadenswurf im
- * Kasten seines Treffers; das ist nur Anzeige.
- * Antippen eines Ergebnisses wählt es als Ziel der Deutung. Langes Drücken auf einen Eintrag (oder
- * ein Rechtsklick) bietet an, ihn zu löschen; welcher Eintrag das gerade ist, hält die View, das
- * Löschen der Controller.
+ * Der Log wie ein Chat: das Älteste oben, das Neueste unten, direkt über den Knöpfen. Das neueste
+ * Ergebnis steht groß da, mit „Deuten“; alles Ältere ist eine Zeile (links was, rechts das Ergebnis),
+ * die beim Antippen aufklappt, mit den Einzelheiten, „Deuten“ und „Löschen“. Eine Deutung steht im
+ * Kasten ihres Ergebnisses, auch wenn sie später geschrieben wurde, ebenso der Schadenswurf im Kasten
+ * seines Treffers; das ist nur Anzeige. Welche Zeile offen ist und welcher Eintrag gerade gelöscht
+ * werden will, hält die View, das Löschen der Controller.
  */
-export function LogList({ log, days, target, marked, onPick }: LogListProps) {
+export function LogList({ log, days, onInterpret }: LogListProps) {
   const game = useGame();
   // Der Log steht auf dem Smartphone im Orakel-Screen und im Desktop-Modus links; beide Instanzen
   // dürfen nicht dieselbe Überschrift-ID tragen.
   const titleId = useId();
-  // Welcher Eintrag gerade gelöscht werden will, zu welcher Länge des Logs: Ändert sich der Log,
-  // kann es ein anderer sein, dann bietet die View nichts mehr an.
+  // Offene Zeile und Rückfrage gelten zu einer Länge des Logs: Ändert er sich, kann es ein anderer
+  // Eintrag sein, dann ist beides zu.
   const [pending, setPending] = useState<{ index: number; length: number } | undefined>(undefined);
   const confirm = pending?.length === log.length ? pending.index : undefined;
   const setConfirm = (index: number | undefined) => setPending(index === undefined ? undefined : { index, length: log.length });
-  const press = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | undefined>(undefined);
-  // Ein langes Drücken endet mit einem Klick; der soll nicht zusätzlich das Ziel wählen.
-  const offered = useRef(false);
-
-  const cancelPress = () => {
-    if (press.current) clearTimeout(press.current.timer);
-    press.current = undefined;
-  };
-  useEffect(() => cancelPress, []);
-
-  const offer = (index: number) => {
-    cancelPress();
-    offered.current = true;
-    haptic('pick');
-    setConfirm(index);
-  };
-
-  // Eine Deutung liegt im Kasten ihres Ergebnisses; ihr Drücken gilt nur ihr, nicht dem Kasten.
-  const pressHandlers = (index: number) => ({
-    onPointerDown: (e: PointerEvent) => {
-      e.stopPropagation();
-      offered.current = false;
-      if (e.button !== 0 || confirm === index || !deletable(log[index])) return;
-      cancelPress();
-      press.current = { timer: setTimeout(() => offer(index), LONG_PRESS_MS), x: e.clientX, y: e.clientY };
-    },
-    onPointerMove: (e: PointerEvent) => {
-      if (press.current && Math.hypot(e.clientX - press.current.x, e.clientY - press.current.y) > SLOP_PX) cancelPress();
-    },
-    onPointerUp: cancelPress,
-    onPointerCancel: cancelPress,
-    onPointerLeave: cancelPress,
-    onContextMenu: (e: MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (deletable(log[index])) offer(index);
-    },
-  });
+  const [opened, setOpened] = useState<{ index: number; length: number } | undefined>(undefined);
+  const open = opened?.length === log.length ? opened.index : undefined;
+  // Ein neuer Eintrag holt das Neueste ins Bild, auch wenn man hochgescrollt hat. Der Log läuft von
+  // unten nach oben (column-reverse); ganz unten ist dort die Scrollposition 0.
+  const scroller = useRef<HTMLElement>(null);
+  useEffect(() => {
+    scroller.current?.scrollTo({ top: 0 });
+  }, [log.length]);
 
   const deletion = (index: number, interpretations: number) => ({
     confirming: confirm === index,
@@ -87,6 +50,25 @@ export function LogList({ log, days, target, marked, onPick }: LogListProps) {
       game.deleteLogEntry(index);
     },
   });
+  const interpret = (index: number) => {
+    haptic('pick');
+    onInterpret(index);
+  };
+  /** Kleine Knöpfe in der Kopfzeile eines Teils: Deuten und Löschen. */
+  const tools = (index: number, what: string, canRead: boolean) => (
+    <span className="entry-tools">
+      {canRead && (
+        <button type="button" className="icon-button small interpret" aria-label={`${what} deuten`} onClick={() => interpret(index)}>
+          <LightbulbIcon />
+        </button>
+      )}
+      {deletable(log[index]) && (
+        <button type="button" className="icon-button small" aria-label={`${what} löschen`} onClick={() => setConfirm(index)}>
+          <TrashIcon />
+        </button>
+      )}
+    </span>
+  );
 
   // Die Kästen: jedes Ergebnis und jede Notiz, mit den Deutungen, die zum Ergebnis gehören, und beim
   // Treffer mit seinem Schadenswurf und dessen Deutungen.
@@ -105,49 +87,56 @@ export function LogList({ log, days, target, marked, onPick }: LogListProps) {
         ],
   );
 
+  const noteBlock = (note: { item: NoteItem; index: number }, className: string, head: boolean) => (
+    <div key={note.index} className={confirm === note.index ? `${className} confirming` : className}>
+      {head && (
+        <div className="entry-head">
+          <span className="kicker">Deutung</span>
+          <span className="entry-head-end">
+            <time className="entry-time" dateTime={note.item.at}>
+              {clockTime(note.item.at)}
+            </time>
+            {tools(note.index, 'Deutung', false)}
+          </span>
+        </div>
+      )}
+      <p className="note-text">
+        {note.item.text}
+        {!head && tools(note.index, 'Deutung', false)}
+      </p>
+      <DeleteBar {...deletion(note.index, 0)} what="Deutung" />
+    </div>
+  );
+
   const damageBlock = (damage: NonNullable<ReturnType<typeof damageAt>>) => (
-    <div
-      className={confirm === damage.index ? 'interpretation damage confirming' : marked && damage.index === target ? 'interpretation damage target' : 'interpretation damage'}
-      {...pressHandlers(damage.index)}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (offered.current) return;
-        haptic('pick');
-        onPick(damage.index);
-      }}
-    >
+    <div className={confirm === damage.index ? 'interpretation damage confirming' : 'interpretation damage'}>
       <div className="entry-head">
         <span className="kicker">Schaden{damage.item.victim ? ` · ${damage.item.victim}` : ''}</span>
-        <time className="entry-time" dateTime={damage.item.at}>
-          {clockTime(damage.item.at)}
-        </time>
+        <span className="entry-head-end">
+          <time className="entry-time" dateTime={damage.item.at}>
+            {clockTime(damage.item.at)}
+          </time>
+          {tools(damage.index, 'Schadenswurf', true)}
+        </span>
       </div>
       <div className="dice-total">
         <strong>{damage.item.damage}</strong>
         <span className="muted">{damageDetail(damage.item)}</span>
       </div>
-      {damage.notes.map((note) => (
-        <div key={note.index} className={confirm === note.index ? 'damage-note confirming' : 'damage-note'} {...pressHandlers(note.index)}>
-          <p className="note-text">{note.item.text}</p>
-          <DeleteBar {...deletion(note.index, 0)} what="Deutung" />
-        </div>
-      ))}
+      {damage.notes.map((note) => noteBlock(note, 'damage-note', false))}
       <DeleteBar {...deletion(damage.index, damage.notes.length)} what="Schadenswurf" />
     </div>
   );
   const last = log.length - 1;
 
   return (
-    <section className="scroll log-scroll" aria-labelledby={titleId}>
+    <section className="scroll log-scroll" aria-labelledby={titleId} ref={scroller}>
       <div className="log">
-        <div className="log-head">
-          <h2 id={titleId} className="section-title">
-            Log
-          </h2>
-          {log.length > 0 && <span className="log-hint">Ergebnis antippen zum Deuten · lange drücken zum Löschen</span>}
-        </div>
+        <h2 id={titleId} className="visually-hidden">
+          Log
+        </h2>
         {log.length === 0 ? (
-          <p className="log-empty">Noch nichts im Log. Stell eine Frage, zieh eine Karte oder würfle.</p>
+          <p className="log-empty">Noch nichts im Log. Zieh eine Karte oder würfle.</p>
         ) : (
           <ol aria-live="polite">
             {groups.map(({ item, index, notes, damage, volley }, g) => {
@@ -155,86 +144,81 @@ export function LogList({ log, days, target, marked, onPick }: LogListProps) {
               const newDay = day !== undefined && (g === 0 || days[groups[g - 1]!.index] !== day);
               const result = item.kind !== 'note';
               const touches = (d: ReturnType<typeof damageAt>) => d !== undefined && (d.index === last || d.notes.some((n) => n.index === last));
-              const classes = [
-                'entry',
-                result ? 'outcome' : 'note',
-                index === last || notes.some((n) => n.index === last) || touches(damage) || volley.some((v) => v.index === last || touches(v.damage) || v.notes.some((n) => n.index === last)) ? 'latest' : '',
-                marked && index === target ? 'target' : '',
-                confirm === index ? 'confirming' : '',
-              ]
-                .filter(Boolean)
-                .join(' ');
+              const latest = g === groups.length - 1 || index === last || notes.some((n) => n.index === last) || touches(damage) || volley.some((v) => v.index === last || touches(v.damage) || v.notes.some((n) => n.index === last));
+              const full = latest || open === index;
+              const what = volley.length > 0 ? 'Die ganze Garbe' : result ? 'Ergebnis' : 'Notiz';
+              const dayLine = newDay && (
+                <li className="log-day" aria-label={`Spieltag ${day}`}>
+                  {day}
+                </li>
+              );
+              if (!full) {
+                return (
+                  <Fragment key={index}>
+                    {dayLine}
+                    <li className={result ? 'log-row' : 'log-row note'}>
+                      <button type="button" className="log-row-button" aria-expanded={false} onClick={() => setOpened({ index, length: log.length })}>
+                        <CompactRow item={item} notes={notes.map((n) => n.item.text)} extra={[...(damage ? [resultLine(damage.item).head] : []), ...volley.map((v) => `${resultLine(v.item).head}${v.damage ? ` · ${resultLine(v.damage.item).head}` : ''}`)]} />
+                      </button>
+                    </li>
+                  </Fragment>
+                );
+              }
+              const classes = ['entry', result ? 'outcome' : 'note', latest ? 'latest' : 'open', confirm === index ? 'confirming' : ''].filter(Boolean).join(' ');
               return (
                 <Fragment key={index}>
-                {newDay && (
-                  <li className="log-day" aria-label={`Spieltag ${day}`}>
-                    {day}
-                  </li>
-                )}
-                <li
-                  className={classes}
-                  {...pressHandlers(index)}
-                  onClick={
-                    result
-                      ? () => {
-                          if (offered.current) return;
-                          haptic('pick');
-                          onPick(index);
-                        }
-                      : undefined
-                  }
-                >
-                  <div className="entry-head">
-                    <span className="kicker">{kicker(item, volley.length > 0)}</span>
-                    <time className="entry-time" dateTime={item.at}>
-                      {clockTime(item.at)}
-                    </time>
-                  </div>
-                  <EntryBody item={item} />
-                  {notes.map((note) => (
-                    <div key={note.index} className={confirm === note.index ? 'interpretation confirming' : 'interpretation'} {...pressHandlers(note.index)} onClick={(e) => e.stopPropagation()}>
-                      <div className="entry-head">
-                        <span className="kicker">Deutung</span>
-                        <time className="entry-time" dateTime={note.item.at}>
-                          {clockTime(note.item.at)}
+                  {dayLine}
+                  <li className={classes}>
+                    <div className="entry-head">
+                      <span className="kicker">{kicker(item, volley.length > 0)}</span>
+                      <span className="entry-head-end">
+                        <time className="entry-time" dateTime={item.at}>
+                          {clockTime(item.at)}
                         </time>
-                      </div>
-                      <p className="note-text">{note.item.text}</p>
-                      <DeleteBar {...deletion(note.index, 0)} what="Deutung" />
+                        {!latest && (
+                          <button type="button" className="icon-button small" aria-label="Zuklappen" aria-expanded={true} onClick={() => setOpened(undefined)}>
+                            <span aria-hidden="true">−</span>
+                          </button>
+                        )}
+                      </span>
                     </div>
-                  ))}
-                  {damage && damageBlock(damage)}
-                  {volley.map((v, i) => (
-                    <div
-                      key={v.index}
-                      className={confirm === v.index ? 'interpretation volley-entry confirming' : marked && v.index === target ? 'interpretation volley-entry target' : 'interpretation volley-entry'}
-                      {...pressHandlers(v.index)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (offered.current) return;
-                        haptic('pick');
-                        onPick(v.index);
-                      }}
-                    >
-                      <div className="entry-head">
-                        <span className="kicker">{v.item.neighbour ? 'Nachbar' : `${i + 2}. Wurf`}</span>
-                        <time className="entry-time" dateTime={v.item.at}>
-                          {clockTime(v.item.at)}
-                        </time>
-                      </div>
-                      <EntryBody item={v.item} />
-                      {v.notes.map((note) => (
-                        <div key={note.index} className={confirm === note.index ? 'damage-note confirming' : 'damage-note'} {...pressHandlers(note.index)}>
-                          <p className="note-text">{note.item.text}</p>
-                          <DeleteBar {...deletion(note.index, 0)} what="Deutung" />
+                    <EntryBody item={item} />
+                    {notes.map((note) => noteBlock(note, 'interpretation', true))}
+                    {damage && damageBlock(damage)}
+                    {volley.map((v, i) => (
+                      <div key={v.index} className={confirm === v.index ? 'interpretation volley-entry confirming' : 'interpretation volley-entry'}>
+                        <div className="entry-head">
+                          <span className="kicker">{v.item.neighbour ? 'Nachbar' : `${i + 2}. Wurf`}</span>
+                          <span className="entry-head-end">
+                            <time className="entry-time" dateTime={v.item.at}>
+                              {clockTime(v.item.at)}
+                            </time>
+                            {tools(v.index, 'Wurf', true)}
+                          </span>
                         </div>
-                      ))}
-                      {v.damage && damageBlock(v.damage)}
-                      <DeleteBar {...deletion(v.index, 0)} what="Die ganze Garbe" />
-                    </div>
-                  ))}
-                  <DeleteBar {...deletion(index, notes.length + (damage ? 1 + damage.notes.length : 0))} what={volley.length > 0 ? 'Die ganze Garbe' : 'Eintrag'} />
-                </li>
+                        <EntryBody item={v.item} />
+                        {v.notes.map((note) => noteBlock(note, 'damage-note', false))}
+                        {v.damage && damageBlock(v.damage)}
+                        <DeleteBar {...deletion(v.index, 0)} what="Die ganze Garbe" />
+                      </div>
+                    ))}
+                    {confirm !== index && (result || deletable(item)) && (
+                      <div className="entry-actions">
+                        {result && (
+                          <button type="button" className="ghost compact interpret" onClick={() => interpret(index)}>
+                            <LightbulbIcon />
+                            Deuten
+                          </button>
+                        )}
+                        {deletable(item) && (
+                          <button type="button" className="icon-button" aria-label={`${what} löschen`} onClick={() => setConfirm(index)}>
+                            <TrashIcon />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    <DeleteBar {...deletion(index, notes.length + (damage ? 1 + damage.notes.length : 0))} what={volley.length > 0 ? 'Die ganze Garbe' : result ? 'Eintrag' : 'Notiz'} />
+                  </li>
                 </Fragment>
               );
             })}
@@ -242,6 +226,37 @@ export function LogList({ log, days, target, marked, onPick }: LogListProps) {
         )}
       </div>
     </section>
+  );
+}
+
+/** Ein älterer Eintrag als Zeile: links was (Frage, Probe, Wurf), rechts das Ergebnis; darunter Kartenfelder und Deutungen. */
+function CompactRow({ item, notes, extra }: { item: LogItem; notes: readonly string[]; extra: readonly string[] }): ReactNode {
+  if (item.kind === 'note') return <span className="row-what row-note">{item.text}</span>;
+  const line = resultLine(item);
+  const negative = (item.kind === 'card' && item.answer !== undefined && !isYesAnswer(item.answer.answer)) || ((item.kind === 'task' || item.kind === 'attack' || item.kind === 'save') && !item.success);
+  const picks = item.kind === 'card' ? [...(item.bell === undefined ? [] : [String(item.bell)]), ...(item.scatter === undefined ? [] : [scatterText[item.scatter]]), ...(item.map === undefined ? [] : [mapText(item.map)]), ...item.items.map((i) => pickText(i.name, i.texts))] : [];
+  return (
+    <>
+      <span className={item.kind === 'dice' ? 'row-what plain' : 'row-what'}>{item.kind === 'dice' ? `2W6 · ${line.rest}` : line.rest}</span>
+      <span className={['row-result', negative ? 'negative' : '', item.kind === 'dice' ? 'gold' : '', item.kind === 'card' && !item.answer ? 'kind' : ''].filter(Boolean).join(' ')}>{item.kind === 'dice' ? item.total : line.head}</span>
+      {picks.length > 0 && (
+        <span className="row-picks">
+          {picks.map((p, i) => (
+            <span key={i}>{p}</span>
+          ))}
+        </span>
+      )}
+      {extra.map((e, i) => (
+        <span key={`x${i}`} className="row-extra">
+          {e}
+        </span>
+      ))}
+      {notes.map((n, i) => (
+        <span key={i} className="row-reading">
+          {n}
+        </span>
+      ))}
+    </>
   );
 }
 
@@ -300,12 +315,10 @@ function DeleteBar({ confirming, what, interpretations, onCancel, onDelete }: De
 
 function kicker(item: LogItem, volley = false): string {
   switch (item.kind) {
-    case 'oracle':
-      return `Orakel · ${item.odds}`;
     case 'dice':
       return 'Würfel · 2W6';
     case 'card':
-      return 'Karte';
+      return item.answer ? `Orakel · ${item.answer.odds}` : 'Karte';
     case 'task':
       return 'Probe';
     case 'attack':
@@ -342,16 +355,6 @@ function deletable(item: LogItem | undefined): boolean {
 
 function EntryBody({ item }: { item: LogItem }) {
   switch (item.kind) {
-    case 'oracle':
-      return (
-        <>
-          <span className="entry-question">{item.question ? quoted(item.question) : 'Ohne Frage'}</span>
-          <span className={item.yes ? 'verdict' : 'verdict negative'}>{item.yes ? 'JA' : 'NEIN'}</span>
-          <span className="entry-detail">
-            W100: {item.roll} · Ja bis {item.chance}
-          </span>
-        </>
-      );
     case 'dice':
       return (
         <div className="dice-total">
@@ -364,7 +367,15 @@ function EntryBody({ item }: { item: LogItem }) {
     case 'card':
       return (
         <>
-          {item.question && <span className="entry-question">{quoted(item.question)}</span>}
+          {item.question ? <span className="entry-question">{quoted(item.question)}</span> : item.answer && <span className="entry-question">Ohne Frage</span>}
+          {item.answer && (
+            <>
+              <span className={isYesAnswer(item.answer.answer) ? 'verdict' : 'verdict negative'}>{answerText[item.answer.answer]}</span>
+              <span className="entry-detail">
+                W100: {item.answer.roll} · Ja bis {item.answer.chance}
+              </span>
+            </>
+          )}
           <dl className="picks">
             {item.bell !== undefined && (
               <div style={{ display: 'contents' }}>

@@ -2,15 +2,15 @@ import type { CharacterId } from './campaign';
 import { DomainError } from './errors';
 import type { MapIcon, Scatter } from './card-roll';
 import type { Clock, Random } from './ports';
-import { oddsOf, slotOfEntry, type ArmorClass, type Range, type Slot } from './reference';
+import { slotOfEntry, type ArmorClass, type Range, type Slot } from './reference';
 import { roll2d6, sum, type Characteristic, type Dice } from './rules';
 
 /**
  * Der Log verweist, er kopiert nicht. Ein Eintrag hält nur fest, was allein ihm gehört: Frage,
- * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, beim Orakel dazu die Chance, bei Probe und Angriff DM und Zielwert.
+ * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, bei der Antwort des Orakels dazu die Chance, bei Probe und Angriff DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = OracleAnswer | DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | CheckRoll | Journey | Note;
+export type LogEntry = DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | CheckRoll | Journey | Note;
 
 /** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
 export type LogResult = Exclude<LogEntry, Note>;
@@ -78,16 +78,20 @@ export interface Journey extends LogEntryBase {
   readonly lot?: number;
 }
 
-export interface OracleAnswer extends LogEntryBase {
+/**
+ * Eine Orakelantwort von vor 2026-11-14d, als sie ein eigener Logeintrag war. Gibt es nur noch beim
+ * Laden alter Spielstände und Dateien; `upgradeOracle` macht eine Kartenauswahl daraus.
+ */
+export interface LegacyOracleAnswer extends LogEntryBase {
   readonly kind: 'oracle';
   readonly question?: string;
-  /** Wurf von 1 bis 100. */
   readonly roll: number;
-  /** Die Chance der Stufe zum Zeitpunkt des Wurfs. */
   readonly chance: number;
-  /** Verweis auf die Stufe. */
   readonly odds: string;
 }
+
+/** Die sechs Antworten des Orakels: Ja!, Ja, Ja?, Nein?, Nein, Nein!. */
+export type Answer = 'yesStrong' | 'yes' | 'yesWeak' | 'noWeak' | 'no' | 'noStrong';
 
 export interface DiceRoll extends LogEntryBase {
   readonly kind: 'dice';
@@ -101,7 +105,14 @@ export interface CardPick extends LogEntryBase {
   readonly bell?: number;
   readonly scatter?: Scatter;
   readonly map?: MapIcon;
-  /** In der Reihenfolge der Karte. Zusammen mit den Wurffeldern mindestens einer. */
+  /**
+   * Die Antwort des Orakels, falls auf der Karte eine Stufe gewählt war: der Wurf 1–100 der Karte,
+   * der Verweis auf die Stufe und ihre Chance zum Zeitpunkt des Wurfs. Alle drei oder keins.
+   */
+  readonly oracle?: number;
+  readonly odds?: string;
+  readonly chance?: number;
+  /** In der Reihenfolge der Karte. Zusammen mit Wurffeldern und Antwort mindestens eins. */
   readonly items: readonly PickedItem[];
 }
 
@@ -318,16 +329,46 @@ export function withQuestion<T extends object>(value: T, question: string | unde
   return trimmed ? { ...value, question: trimmed } : value;
 }
 
-/** Fragt das Orakel: ein Wurf von 1 bis 100, Ja bis zur Chance der Stufe. */
-export function askOracle(oddsId: string, random: Random, clock: Clock, question?: string): OracleAnswer {
-  const odds = oddsOf(oddsId);
-  const answer: OracleAnswer = { kind: 'oracle', at: clock.now(), roll: random.int(1, 100), chance: odds.chance, odds: odds.id };
-  return withQuestion(answer, question);
+/**
+ * Die Antwort aus einem Wurf 1–100 und einer Chance: Ja bis zur Chance. Ja! und Nein! nach der Fate
+ * Chart von Mythic bei Chaosfaktor 5, also je ein Fünftel der Ja- bzw. Nein-Spanne am äußeren Rand;
+ * Ja? und Nein? gespiegelt am inneren Rand (Hausregel). Allein aus Wurf und festgehaltener Chance,
+ * nie aus dem heutigen Stand der Stufe.
+ */
+export function answerOf(roll: number, chance: number): Answer {
+  const yes = Math.floor(chance / 5);
+  const no = Math.floor((100 - chance) / 5);
+  if (roll <= yes) return 'yesStrong';
+  if (roll <= chance - yes) return 'yes';
+  if (roll <= chance) return 'yesWeak';
+  if (roll <= chance + no) return 'noWeak';
+  if (roll <= 100 - no) return 'no';
+  return 'noStrong';
 }
 
-/** `/yes`: allein aus Wurf und festgehaltener Chance, nie aus dem heutigen Stand der Stufe. */
-export function isYes(answer: OracleAnswer): boolean {
-  return answer.roll <= answer.chance;
+/** Ob eine Antwort Ja ist (Ja!, Ja oder Ja?). */
+export function isYesAnswer(answer: Answer): boolean {
+  return answer === 'yesStrong' || answer === 'yes' || answer === 'yesWeak';
+}
+
+/** `/answer` einer Kartenauswahl; ohne gewählte Stufe keine. */
+export function answerOfPick(pick: CardPick): Answer | undefined {
+  return pick.oracle === undefined || pick.chance === undefined ? undefined : answerOf(pick.oracle, pick.chance);
+}
+
+/**
+ * Macht aus einer Orakelantwort von vor 2026-11-14d eine Kartenauswahl ohne Felder: Frage, Wurf,
+ * Stufe und Chance bleiben, ebenso die Stelle im Log und damit die Deutungen.
+ */
+export function upgradeOracle<T extends { readonly log: readonly LogEntry[] }>(campaign: T): T {
+  const old = (entry: LogEntry): boolean => (entry as { readonly kind: string }).kind === 'oracle';
+  if (!campaign.log.some(old)) return campaign;
+  const log = campaign.log.map((entry): LogEntry => {
+    if (!old(entry)) return entry;
+    const { roll, question, ...rest } = entry as unknown as LegacyOracleAnswer;
+    return withQuestion({ ...rest, kind: 'card', oracle: roll, items: [] } as CardPick, question);
+  });
+  return { ...campaign, log };
 }
 
 export function rollDice(random: Random, clock: Clock): DiceRoll {

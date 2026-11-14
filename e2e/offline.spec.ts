@@ -22,7 +22,7 @@ test('Manifest und Icons: alle Icons sind da, eines davon maskierbar', async ({ 
 test('Offline: nach dem ersten Start lädt die App ohne Netz, mit ihrem Spielstand', async ({ page, context }) => {
   await page.goto('/');
   await page.getByRole('button', { name: '2W6' }).click();
-  await expect(page.locator('.entry')).toHaveCount(1);
+  await expect(page.locator('.log ol > li:not(.log-day)')).toHaveCount(1);
   // Warten, bis der Service Worker die App abgelegt hat und die Seite steuert.
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
@@ -34,7 +34,7 @@ test('Offline: nach dem ersten Start lädt die App ohne Netz, mit ihrem Spielsta
   await context.setOffline(true);
   await page.reload();
   await expect(page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true })).toBeVisible();
-  await expect(page.locator('.entry')).toHaveCount(1);
+  await expect(page.locator('.log ol > li:not(.log-day)')).toHaveCount(1);
   await page.getByRole('button', { name: '2W6' }).click();
-  await expect(page.locator('.entry')).toHaveCount(2);
+  await expect(page.locator('.log ol > li:not(.log-day)')).toHaveCount(2);
 });

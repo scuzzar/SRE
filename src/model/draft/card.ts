@@ -1,5 +1,6 @@
 import {
   DomainError,
+  oddsOf,
   nameSlotIds,
   nameSounds,
   ref,
@@ -37,6 +38,10 @@ export interface Card {
   readonly map: MapIcon;
   /** Die ausgewählten Wurffelder. */
   readonly pickedRolls: readonly CardRoll[];
+  /** Der Wurf 1–100 fürs Orakelfeld; daraus folgt die Antwort für jede Stufe. */
+  readonly oracle: number;
+  /** Die Stufe, die man im Orakelfeld angetippt hat; höchstens eine. */
+  readonly pickedOdds?: string;
 }
 
 /** Die Einträge einer Spalte, die gezogen werden können: alle, die nicht ausgeblendet sind. */
@@ -62,8 +67,12 @@ export function drawCard(random: Random, question?: string): Card {
       }),
     ),
   );
-  // Die Wurffelder nach den Feldern, damit die Einträge immer mit denselben Würfen gezogen werden.
-  return withQuestion({ drawn, picked: [], bell: rollBell(random), scatter: rollScatter(random), map: rollMap(random), pickedRolls: [] }, question);
+  // Die Wurffelder nach den Feldern und der Orakelwurf zuletzt, damit die Einträge immer mit denselben
+  // Würfen gezogen werden.
+  const bell = rollBell(random);
+  const scatter = rollScatter(random);
+  const map = rollMap(random);
+  return withQuestion({ drawn, picked: [], bell, scatter, map, pickedRolls: [], oracle: random.int(1, 100) }, question);
 }
 
 /** Neu ziehen: eine neue Karte, die Auswahl geht verloren, die Frage bleibt. */
@@ -89,9 +98,22 @@ export function toggleRoll(card: Card, roll: CardRoll): Card {
   return { ...card, pickedRolls };
 }
 
-/** Wie viel ausgewählt ist: Felder und Wurffelder. */
+/** Wählt im Orakelfeld eine Stufe oder nimmt sie wieder heraus; eine andere ersetzt die gewählte. */
+export function toggleOdds(card: Card, oddsId: string): Card {
+  const odds = oddsOf(oddsId);
+  const { pickedOdds, ...rest } = card;
+  return pickedOdds === odds.id ? rest : { ...rest, pickedOdds: odds.id };
+}
+
+/** Die Frage auf der offenen Karte; eine leere gibt es nicht. */
+export function askCard(card: Card, question: string | undefined): Card {
+  const { question: old, ...rest } = card;
+  return old === question ? card : withQuestion(rest, question);
+}
+
+/** Wie viel ausgewählt ist: Felder, Wurffelder und die Stufe im Orakelfeld. */
 export function pickedCount(card: Card): number {
-  return card.picked.length + card.pickedRolls.length;
+  return card.picked.length + card.pickedRolls.length + (card.pickedOdds === undefined ? 0 : 1);
 }
 
 export function canConfirm(card: Card): boolean {
@@ -100,7 +122,7 @@ export function canConfirm(card: Card): boolean {
 
 /** Bestätigen: ein `CardPick` mit der Frage der Karte und je ausgewähltem Feld seinen Einträgen, in der Reihenfolge der Karte. */
 export function confirmCard(card: Card, clock: Clock): CardPick {
-  if (!canConfirm(card)) throw new DomainError('Bestätigen geht erst, wenn mindestens ein Feld ausgewählt ist.');
+  if (!canConfirm(card)) throw new DomainError('Bestätigen geht erst, wenn mindestens ein Feld oder eine Stufe ausgewählt ist.');
   const slots = [...new Set(card.drawn.map((e) => slotOfEntry(e).id))].filter((s) => card.picked.includes(s));
   const items = slots.map((slot) => ({ picked: drawnIn(card, slot) }));
   const rolled = card.pickedRolls;
@@ -110,6 +132,7 @@ export function confirmCard(card: Card, clock: Clock): CardPick {
     ...(rolled.includes('bell') ? { bell: card.bell } : {}),
     ...(rolled.includes('scatter') ? { scatter: card.scatter } : {}),
     ...(rolled.includes('map') ? { map: card.map } : {}),
+    ...(card.pickedOdds === undefined ? {} : { oracle: card.oracle, odds: card.pickedOdds, chance: oddsOf(card.pickedOdds).chance }),
     items,
   };
   return withQuestion(pick, card.question);

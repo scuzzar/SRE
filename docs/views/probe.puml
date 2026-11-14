@@ -86,7 +86,6 @@ hide <<value>> stereotype
     at: datetime
     day: number [0..1]
   }
-  class OracleAnswer $karte
   class DiceRoll $probe {
     dice: number[2]
     /total: number
@@ -151,7 +150,6 @@ LogEntry <|-- Journey
 ' Waffen (Referenzdaten)
 
 ' Verlauf
-LogEntry <|-- OracleAnswer
 LogEntry <|-- DiceRoll
 LogEntry <|-- CardPick
 LogEntry <|-- TaskResult

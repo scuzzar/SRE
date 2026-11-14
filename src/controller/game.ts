@@ -5,7 +5,6 @@ import {
   alarmAfterAttack,
   logDamage as logDamageWithAlarm,
   appendLog,
-  askOracle,
   byName,
   campaignFileName,
   createCampaign,
@@ -177,6 +176,8 @@ import {
   toggleCharacteristic,
   togglePick,
   toggleRoll,
+  toggleOdds,
+  askCard,
   drawNames,
   rollOccurrence,
   rollSurfaceAt,
@@ -661,10 +662,6 @@ export class GameController {
     this.change(setOdds(this.campaign, odds));
   }
 
-  askOracle(question?: string): void {
-    this.change(appendLog(this.campaign, askOracle(this.campaign.odds, this.deps.random, this.deps.clock, question)));
-  }
-
   rollDice(): void {
     this.change(appendLog(this.campaign, rollDice(this.deps.random, this.deps.clock)));
   }
@@ -834,8 +831,14 @@ export class GameController {
     this.change(appendLog(this.campaign, writeNote(this.campaign.log, text, this.deps.clock, interprets)));
   }
 
+  /** Zieht eine Karte; die Frage schreibt man auf die offene Karte und gibt sie beim Bestätigen mit. */
   drawCard(question?: string): void {
     this.update({ card: drawCard(this.deps.random, question) });
+  }
+
+  /** Wählt im Orakelfeld der offenen Karte eine Stufe oder nimmt sie wieder heraus. */
+  toggleOdds(odds: string): void {
+    this.update({ card: toggleOdds(this.openCard, odds) });
   }
 
   togglePick(slot: string): void {
@@ -864,8 +867,10 @@ export class GameController {
     this.update({ card: undefined });
   }
 
-  confirmCard(): void {
-    const pick = confirmCard(this.openCard, this.deps.clock);
+  /** Bestätigt die Karte; `question` ist der Text im Fragefeld der Karte, falls einer übergeben wird. */
+  confirmCard(question?: string): void {
+    const card = question === undefined ? this.openCard : askCard(this.openCard, question);
+    const pick = confirmCard(card, this.deps.clock);
     this.change(appendLog(this.campaign, pick), { card: undefined });
   }
 

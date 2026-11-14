@@ -212,12 +212,6 @@ hide <<value>> stereotype
     at: datetime
     day: number [0..1]
   }
-  class OracleAnswer $karte {
-    question: string [0..1]
-    roll: number
-    chance: number
-    /yes: boolean
-  }
   class DiceRoll $probe {
     dice: number[2]
     /total: number
@@ -226,6 +220,9 @@ hide <<value>> stereotype
     question: string [0..1]
     bell: number [0..1]
     scatter: Scatter [0..1]
+    oracle: number [0..1]
+    chance: number [0..1]
+    /answer: Answer [0..1]
   }
   class PickedItem $karte
   class Note $probe {
@@ -303,6 +300,7 @@ hide <<value>> stereotype
     bell: number
     scatter: Scatter
     pickedRolls: CardRoll [*]
+    oracle: number
   }
   class MapIcon <<value>> $karte {
     north: PathKind
@@ -330,6 +328,14 @@ hide <<value>> stereotype
     nw
     hit
     miss
+  }
+  enum Answer <<value>> $karte {
+    yesStrong
+    yes
+    yesWeak
+    noWeak
+    no
+    noStrong
   }
   enum CardRoll <<value>> $karte {
     bell
@@ -943,7 +949,6 @@ ArmorDm -[hidden]- ArmorClass
 RangeDm -[hidden]- Range
 
 ' Verlauf
-LogEntry <|-- OracleAnswer
 LogEntry <|-- DiceRoll
 LogEntry <|-- CardPick
 LogEntry <|-- TaskResult
@@ -965,7 +970,6 @@ RumorRoll "*" --> "1" Rumor : /of
 Note "*" --> "0..1" LogEntry : interprets
 CardPick "1" *-- "*" PickedItem : items {ordered}
 CardPick "1" *-- "0..1" MapIcon : map
-OracleAnswer "*" --> "1" Odds : odds
 TaskResult "*" --> "1" Character : for
 TaskResult "*" --> "0..1" SkillLevel : uses
 TaskResult --> "0..6" Characteristic : counts
@@ -1041,6 +1045,8 @@ Card "0..1" --> "1" Campaign : in
 Card "*" --> "1..*" Entry : drawn {ordered}
 Card "*" --> "*" Slot : picked
 Card ..> CardPick : on confirm
+CardPick "*" --> "0..1" Odds : odds
+Card "*" --> "0..1" Odds : pickedOdds
 Card "1" *-- "1" MapIcon : map
 PickedItem "*" --> "1" Slot : /in
 PickedItem "*" --> "1..2" Entry : picked {ordered}

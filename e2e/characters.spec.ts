@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { characters, host, openOracle, oracle } from './layout';
+import { characters, entries, host, openOracle, oracle } from './layout';
 
 async function openCharacters(page: Page) {
   await page.goto('/');
@@ -67,8 +67,8 @@ test('Wischen stellt den nächsten Charakter nach oben; eine Probe ohne Fertigke
   // Mit dem Wechsel endet die Probe für Kira.
   await expect(dock(page).getByRole('button', { name: '2W6' })).toBeVisible();
 
+  await jonas.getByRole('button', { name: 'Ohne −3' }).click();
   await dock(page).getByRole('radio', { name: /Gering/ }).click();
-  await jonas.getByRole('button', { name: 'Ohne (−3)' }).click();
   await expect(dock(page)).toContainText('Ohne Fertigkeit · 10+');
   await expect(dock(page)).toContainText('2W6 −3 · Unmöglich');
   await dock(page).getByRole('button', { name: 'Probe würfeln' }).click();
@@ -175,24 +175,22 @@ test('Logeintrag löschen: lange drücken, dann bestätigen; danach lässt sich 
   await expect(result).toBeHidden();
   await dock(page).getByRole('button', { name: 'Probe abbrechen' }).click();
   await page.getByRole('button', { name: '2W6' }).click();
-  await expect(page.locator('.entry')).toHaveCount(2);
+  await expect(entries(page)).toHaveCount(2);
   await expect(page.locator('.dice-roll')).toBeHidden();
 
-  const entry = page.locator('.entry').first();
-  const box = (await entry.boundingBox())!;
-  await page.mouse.move(box.x + 40, box.y + 30);
-  await page.mouse.down();
-  await page.waitForTimeout(800);
-  await page.mouse.up();
+  // Die Probe ist jetzt eine Zeile: aufklappen, Löschen, erst behalten, dann wirklich löschen.
+  const entry = entries(page).first();
+  await entry.getByRole('button', { name: /Jonas Reyl/ }).click();
+  await entry.getByRole('button', { name: 'Ergebnis löschen' }).click();
   const ask = entry.getByRole('group', { name: 'Eintrag löschen?' });
   await ask.getByRole('button', { name: 'Behalten' }).click();
   await expect(ask).toBeHidden();
-  await expect(page.locator('.entry')).toHaveCount(2);
+  await expect(entries(page)).toHaveCount(2);
 
-  await entry.dispatchEvent('contextmenu');
+  await entry.getByRole('button', { name: 'Ergebnis löschen' }).click();
   await ask.getByRole('button', { name: 'Löschen' }).click();
-  await expect(page.locator('.entry')).toHaveCount(1);
-  await expect(page.locator('.entry')).toContainText('Würfel · 2W6');
+  await expect(entries(page)).toHaveCount(1);
+  await expect(entries(page)).toContainText('Würfel · 2W6');
 
   await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
   const jonas = card(page, 'Jonas Reyl');

@@ -16,11 +16,11 @@ export function UppRow({ character, interactive }: { character: CharacterView; i
       <div className="upp" role="group" aria-label="Attribute">
         {character.characteristics.map((c) => (
           <span key={c.characteristic} className="cell" aria-label={`${characteristicLabel[c.characteristic]} ${hex(c.value)}`}>
-            <span className="upp-label" aria-hidden="true">
-              {characteristicLabel[c.characteristic]}
-            </span>
             <span className="upp-code" aria-hidden="true">
               {hex(c.value)}
+            </span>
+            <span className="upp-label" aria-hidden="true">
+              {characteristicLabel[c.characteristic]}
             </span>
           </span>
         ))}
@@ -51,9 +51,11 @@ export function UppRow({ character, interactive }: { character: CharacterView; i
             disabled={!c.selectable}
             onClick={() => game.toggleCharacteristic(c.characteristic)}
           >
+            <span className="upp-value">
+              <span className="upp-code">{hex(c.value)}</span>
+              {(c.counted || offer) && <span className="upp-state">{signed(c.dm)}</span>}
+            </span>
             <span className="upp-label">{label}</span>
-            <span className="upp-code">{hex(c.value)}</span>
-            <span className="upp-state">{c.counted ? `DM ${signed(c.dm)}` : offer ? signed(c.dm) : ''}</span>
           </button>
         );
       })}
@@ -92,7 +94,7 @@ export function SkillChips({ character, interactive, full = false }: { character
       ))}
       {character.unskilled && (
         <button type="button" className="unskilled" aria-pressed={character.unskilled.chosen} onClick={() => choose(null)}>
-          Ohne ({signed(character.unskilled.dm)})
+          Ohne {signed(character.unskilled.dm)}
         </button>
       )}
     </div>
