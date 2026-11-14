@@ -13,7 +13,7 @@ import { animalTraits } from '../data';
 import { checkJourney } from './travel';
 import { START_DAY } from './time';
 import { checkOf, encounterChecks } from './encounter-check';
-import { checkInterprets, checkKinds, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type Journey, type DamageRoll, type LogEntry, type Recovery } from './log';
+import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type Journey, type DamageRoll, type LogEntry, type Note, type Recovery } from './log';
 import { checkRecovery } from './wounds';
 import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, patronOf, ranges, ref, slotOfEntry, weaponOf } from './reference';
 import { characteristics } from './rules';
@@ -50,6 +50,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     oracle: z.number().int().min(1).max(100).optional(),
     odds: z.string().optional(),
     chance: z.number().int().min(0).max(100).optional(),
+    eventFocus: z.number().int().min(1).max(100).optional(),
     items: z.array(z.object({ picked: z.array(z.string()).min(1).max(2) })),
   }),
   z.object({
@@ -100,7 +101,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('butchering'), at, day, /** Wer die Beute bekam; in Dateien von vor dem Gruppengepäck, wird nicht übernommen. */ for: z.string().min(1).optional(), of: z.string().min(1), meatDie: die.optional(), meatSkill: z.number().int().min(0), furSkill: z.number().int().min(0) }),
   z.object({ kind: z.literal('event'), at, day, in: z.string().min(1), terrain: z.string().min(1), tableDice: dice }),
   z.object({ kind: z.literal('patron'), at, day, list: z.union([z.literal(1), z.literal(2)]), dice, dms: z.tuple([z.number().int(), z.number().int()]) }),
-  z.object({ kind: z.literal('note'), at, day, text: z.string().trim().min(1), interprets: z.number().int().optional() }),
+  z.object({ kind: z.literal('note'), at, day, text: z.string().trim().min(1), interprets: z.number().int().optional(), editedAt: at.optional() }),
   z.object({ kind: z.literal('time'), at, day, days: z.number().int().min(1).max(7), week: z.boolean() }),
   z.object({ kind: z.literal('check'), at, day, check: z.enum(checkKinds), dice: z.array(die).min(1).max(2), target: z.number().int().min(0).max(20), reactionDice: dice.optional(), reactionDm: z.number().int().optional() }),
   z.object({
@@ -514,10 +515,8 @@ function fileEntryOf(entry: WithoutDay<FileEntry>): LogEntry {
     case 'butchering':
       // Wer die Beute bekam, steht in Dateien von vor dem Gruppengepäck; die Beute liegt heute im Gepäck.
       return stripped(Object.fromEntries(Object.entries(entry).filter(([key]) => key !== 'for'))) as unknown as Butchering;
-    case 'note': {
-      const { interprets, ...rest } = entry;
-      return interprets === undefined ? rest : { ...rest, interprets };
-    }
+    case 'note':
+      return stripped(entry) as Note;
   }
 }
 
@@ -638,6 +637,7 @@ function validate(campaign: Campaign): void {
         }
         if ([entry.oracle, entry.odds, entry.chance].filter((v) => v === undefined).length % 3 !== 0) throw new DomainError('Eine Antwort des Orakels braucht Wurf, Stufe und Chance.');
         if (entry.odds !== undefined) oddsOf(entry.odds);
+        if (entry.eventFocus !== undefined && (entry.oracle === undefined || !isRandomEvent(entry.oracle))) throw new DomainError('Einen Ereignisfokus gibt es nur bei einem Zufallsereignis mit Antwort.');
         if (entry.map && mapDirections.filter((d) => entry.map![d] !== 'none').length < minMapPaths) throw new DomainError('Ein Kartensymbol hat mindestens zwei Wege.');
         for (const item of entry.items) {
           const slot = slotOfEntry(item.picked[0]!);

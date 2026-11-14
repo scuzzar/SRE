@@ -668,6 +668,7 @@ function OracleBar({ log }: { log: readonly LogItem[] }) {
           <span className="small-label">
             {latest.question ? `„${latest.question}“ · ` : ''}
             {latest.answer.odds} · W100: {latest.answer.roll} · Ja bis {latest.answer.chance}
+            {latest.answer.event ? ` · Zufallsereignis: ${latest.answer.event.name}` : ''}
           </span>
         </p>
       )}

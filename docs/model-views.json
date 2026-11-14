@@ -234,6 +234,24 @@
         "Campaign",
         "LogEntry"
       ]
+    },
+    {
+      "id": "2026-11-14e",
+      "file": "2026-11-14-notiz-aendern",
+      "title": "Notiz und Deutung: den Text ändern",
+      "approved": true,
+      "show": [
+        "LogEntry"
+      ]
+    },
+    {
+      "id": "2026-11-14f",
+      "file": "2026-11-14-zufallsereignis",
+      "title": "Zufallsereignis: Pasch im Orakelwurf bis zum Chaosfaktor 5, mit Ereignisfokus nach Mythic",
+      "approved": true,
+      "show": [
+        "Odds"
+      ]
     }
   ]
 }

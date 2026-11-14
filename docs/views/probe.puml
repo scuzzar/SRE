@@ -93,6 +93,7 @@ hide <<value>> stereotype
   class CardPick $karte
   class Note $probe {
     text: string
+    editedAt: datetime [0..1]
   }
   class PatronRoll $begegnung
   class Butchering $begegnung

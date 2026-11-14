@@ -82,58 +82,21 @@ Aus [`docs/regeln-kampf.md`](docs/regeln-kampf.md), noch offen:
 
 ## Orakel-Screen
 
-Durchsicht vom 2026-11-14 (die App headless bedient, 390×844, 360×640, 844×390 quer, 1024×768,
-1440×900). Der neue Aufbau (2026-11-14d: Orakel auf der Karte, eine Reihe Knöpfe, Notiz und Deutung
-im Blatt, kompakter Log, Charakter kompakt) ist umgesetzt; offen ist noch:
+Durchsicht vom 2026-11-14. Umgesetzt: der neue Aufbau (2026-11-14d), Notiz und Deutung ändern
+(2026-11-14e), Zufallsereignis (2026-11-14f), Karteneintrag in schmaler Spalte, Karte auf 360×640,
+Tippziele, Tempo bei langem Log, gleiche Würfe zusammengefasst. Querformat gibt es nicht (Entscheidung
+des Owners, die installierte App steht im Hochformat). Offen ist noch:
 
-### 1. Fehler
-
-- [ ] **Querformat und sehr niedrige Bildschirme:** Leiste und Knöpfe geben nicht nach
-  (`flex: 0 0 auto`), die App scrollt nicht. Im Querformat (844×390) bleibt für den Log kaum Platz.
-  Mögliche Lösung: Die Leiste mit dem Charakter oben klappt von selbst ein, wenn die Höhe nicht
-  reicht; quer zwei Spalten.
-- [ ] **Karteneintrag im Log läuft aus dem Kasten**, wenn die Orakel-Spalte schmal ist (1024 px):
-  `.picks` gibt der Beschriftung die volle Breite (`auto`), der Wert bricht lange Wörter nicht um.
-- [ ] **Karte auf 360×640:** Die Tafel NSC allein ist höher als der freie Platz; aufgeklappt muss
-  man dort etwas scrollen. Kleiner geht es nur mit kleineren Feldern.
-
-### 2. Bedienung
-
-- [ ] **Notiz und Deutung lassen sich nicht ändern**, nur löschen und neu schreiben. Ändern wäre
-  eine neue Eingabe an den Controller; vorher prüfen, ob es das Domänenmodell berührt.
-- [ ] **Ja/Nein auf der Karte vibriert nicht eigens** beim Antippen der Stufe (nur wie ein Feld).
+- [ ] **Ereignisfokus mit Mythic GME 2e abgleichen:** Die Bereiche in `src/data/event-focus.json`
+  sind aus dem Gedächtnis übernommen; mit dem Buch prüfen.
 - [ ] **Am Gerät prüfen** (headless nicht zu sehen): Bleibt das Blatt für Notiz und Deutung über
   der Bildschirmtastatur sichtbar?
 
-### 3. Tippziele
+### Ideen, noch nicht entschieden
 
-- [ ] Unter 44 px: die Punkte unter der Leiste (28×22), Stift und Pfeil nebeneinander (32×36), die
-  Fertigkeiten (36 hoch), die kleinen Knöpfe Deuten und Löschen an Deutung, Schaden und Garbe
-  (30×30).
-
-### 4. Tempo
-
-- [ ] **Ein langer Log ist langsam.** Gemessen vor dem Umbau: mit 1500 Einträgen kostete jeder
-  Tastendruck im Fragefeld 80 ms, ein Wurf 173 ms. Das Fragefeld ist weg, ein Wurf zeichnet aber
-  weiter den ganzen Log: `LogList` ist nicht mit `memo` geschützt; die Gruppen suchen je Eintrag den
-  ganzen Log ab (`interpretationsAt`, `damageAt`, Garbe: O(n²)). Lösung: Deutungen und Schaden einmal
-  je Log indizieren, nur die letzten Einträge zeichnen und „Ältere zeigen“ anbieten.
-
-### 5. Aufräumen
-
-- [ ] Schriftgrößen stehen in `EntryBody` als `style` im Code (12, 14, 20, 22, 26); das Urteil ist
-  je Art des Eintrags verschieden groß. In Klassen in `styles.css` überführen und vereinheitlichen.
-- [ ] `WeaponChips` in `CharacterStrip.tsx` hat zwei Kommentarblöcke hintereinander; der erste ist
-  überholt.
-
-### 6. Ideen, noch nicht entschieden
-
-- [ ] **Zufallsereignis nach Mythic:** Ein Pasch im Orakelwurf bis zum Chaosfaktor (11, 22, 33, 44,
-  55) könnte das Feld *Zufallsereignis* der Karte hervorheben. Berührt das Modell.
 - [ ] **Leiste als eine Zeile:** eingeklappt Name und UPP als Traveller-Zeile (`Kira Vant 7A8975`),
   aufgeklappt wie heute für die Probe. Dann sieht man die Attribute, ohne dass die Leiste 250 px
   kostet.
 - [ ] **Filter „Nur Geschichte“:** Fragen mit Antwort, Deutungen und Notizen; einfache Würfe,
   Angriffe und Schaden ausgeblendet. Zum Nachlesen, was passiert ist.
-- [ ] **Gleiche Würfe in Folge zusammenfassen:** drei 2W6 hintereinander als eine Zeile
-  (`2W6 · 7 · 4 · 10`), ebenso die Angriffe einer Kampfrunde.
+- [ ] **Angriffe einer Kampfrunde zusammenfassen** wie schon die 2W6 in Folge.

@@ -1,0 +1,14 @@
+[
+  { "from": 1, "to": 5, "name": "Fernes Ereignis", "text": "Etwas geschieht anderswo, ohne die SC; sie erfahren davon." },
+  { "from": 6, "to": 10, "name": "Unklares Ereignis", "text": "Etwas Rätselhaftes passiert; was es bedeutet, ist noch offen." },
+  { "from": 11, "to": 20, "name": "Neuer NSC", "text": "Eine neue Person tritt auf." },
+  { "from": 21, "to": 40, "name": "NSC handelt", "text": "Ein NSC tut etwas, das die Lage verändert." },
+  { "from": 41, "to": 45, "name": "NSC: Nachteil", "text": "Einem NSC widerfährt etwas Schlechtes." },
+  { "from": 46, "to": 50, "name": "NSC: Vorteil", "text": "Einem NSC widerfährt etwas Gutes." },
+  { "from": 51, "to": 55, "name": "Auf einen Handlungsfaden zu", "text": "Etwas bringt ein offenes Ziel näher." },
+  { "from": 56, "to": 65, "name": "Von einem Handlungsfaden weg", "text": "Etwas wirft ein offenes Ziel zurück." },
+  { "from": 66, "to": 70, "name": "Ein Handlungsfaden endet", "text": "Ein offenes Ziel erledigt sich, so oder so." },
+  { "from": 71, "to": 80, "name": "SC: Nachteil", "text": "Den SC widerfährt etwas Schlechtes." },
+  { "from": 81, "to": 85, "name": "SC: Vorteil", "text": "Den SC widerfährt etwas Gutes." },
+  { "from": 86, "to": 100, "name": "Aktuelle Lage", "text": "Die laufende Szene nimmt eine unerwartete Wendung." }
+]

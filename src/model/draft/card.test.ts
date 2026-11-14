@@ -145,6 +145,13 @@ describe('Orakelfeld der Karte', () => {
     expect(() => toggleOdds(card, 'certain')).toThrow(/gibt es nicht/);
   });
 
+  it('würfelt bei einem Pasch bis 55 gleich den Ereignisfokus; ins Log kommt er nur mit gewählter Stufe', () => {
+    const event = { ...drawCard(fixedRandom()), oracle: 33, eventFocus: 27 };
+    expect(confirmCard(toggleOdds(event, 'low'), fixedClock())).toMatchObject({ oracle: 33, odds: 'low', eventFocus: 27 });
+    expect('eventFocus' in confirmCard(togglePick(event, 'mythic.event.action'), fixedClock())).toBe(false);
+    expect(drawCard(fixedRandom()).eventFocus).toBeUndefined();
+  });
+
   it('bestätigt die Antwort mit Wurf, Stufe und ihrer Chance, auch ohne Feld', () => {
     const card = askCard(toggleOdds(drawCard(fixedRandom()), 'medium'), '  Ist das Wrack unter Druck?  ');
     expect(confirmCard(card, fixedClock())).toEqual({ kind: 'card', at: '2026-10-23T14:00:00.000Z', question: 'Ist das Wrack unter Druck?', oracle: 1, odds: 'medium', chance: 50, items: [] });

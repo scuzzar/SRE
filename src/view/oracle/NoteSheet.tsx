@@ -4,26 +4,36 @@ import { haptic } from '../haptics';
 
 /**
  * Das Blatt für eine Notiz oder eine Deutung. Mit `target` (Stelle eines Ergebnisses im Log und seine
- * Zeile) wird der Text eine Deutung zu diesem Ergebnis, sonst eine Notiz. Der Text während des Tippens
- * ist reine Darstellung; übergeben wird beim Absenden.
+ * Zeile) wird der Text eine Deutung zu diesem Ergebnis, sonst eine Notiz. Mit `edit` (Stelle der
+ * Notiz oder Deutung und ihr Text) ändert es deren Text. Der Text während des Tippens ist reine
+ * Darstellung; übergeben wird beim Absenden.
  */
-export function NoteSheet({ target, onClose }: { target?: { readonly index: number; readonly head: string; readonly rest: string } | undefined; onClose: () => void }) {
+export function NoteSheet({
+  target,
+  edit,
+  onClose,
+}: {
+  target?: { readonly index: number; readonly head: string; readonly rest: string } | undefined;
+  edit?: { readonly index: number; readonly text: string } | undefined;
+  onClose: () => void;
+}) {
   const game = useGame();
-  const [text, setText] = useState('');
+  const [text, setText] = useState(edit?.text ?? '');
   const field = useRef<HTMLTextAreaElement>(null);
   useEffect(() => field.current?.focus(), []);
   const reading = target !== undefined;
   const save = () => {
     if (!text.trim()) return;
     haptic('pick');
-    game.writeNote(text, target?.index);
+    if (edit) game.editNote(edit.index, text);
+    else game.writeNote(text, target?.index);
     onClose();
   };
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <section className="sheet note-sheet" role="dialog" aria-modal="true" aria-labelledby="note-sheet-title">
         <div className="sheet-head">
-          <h2 id="note-sheet-title">{reading ? 'Deutung' : 'Notiz'}</h2>
+          <h2 id="note-sheet-title">{reading ? 'Deutung' : 'Notiz'}{edit ? ' ändern' : ''}</h2>
         </div>
         {target && (
           <p className="target-line note-target">
@@ -53,7 +63,7 @@ export function NoteSheet({ target, onClose }: { target?: { readonly index: numb
           </button>
           <span className="grow" />
           <button type="button" className="primary" disabled={!text.trim()} onClick={save}>
-            {reading ? 'Deuten' : 'Notieren'}
+            {edit ? 'Speichern' : reading ? 'Deuten' : 'Notieren'}
           </button>
         </div>
       </section>

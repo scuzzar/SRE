@@ -470,21 +470,27 @@ button:disabled {
   font-size: 30px;
 }
 
+/* Beschriftung höchstens 45 % breit, damit der Wert auch in der schmalen Orakel-Spalte Platz hat;
+   lange Wörter brechen um statt aus dem Kasten zu laufen. */
 .picks {
   margin: 0;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: fit-content(45%) minmax(0, 1fr);
   gap: 4px 12px;
 }
 
 .picks dt {
   font-size: 13px;
   color: var(--muted);
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .picks dd {
   margin: 0;
   font-weight: 600;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 /* Wurffelder im Log: Windrose und Kartensymbol als kleines Bild neben dem Text. */
@@ -7128,6 +7134,12 @@ button:disabled {
   margin-left: auto;
 }
 
+.entry-actions-end {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
 .ghost.compact.interpret {
   display: inline-flex;
   align-items: center;
@@ -7264,4 +7276,158 @@ button:disabled {
 
 .strip .upp .upp-code {
   font-size: 17px;
+}
+
+/* Zufallsereignis: das rote Band auf der Karte, das leuchtende Feld und die Zeile im Log. */
+.card-event {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: var(--accent-wash);
+  border: 1px solid var(--accent);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.card-event b {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.event-hit .tile {
+  border-color: var(--accent);
+  box-shadow: 0 0 10px rgba(198, 47, 53, 0.35);
+}
+
+.log-event {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.log-event b,
+.row-extra.event {
+  color: var(--accent-text);
+}
+
+.card-sheet .sheet-foot .ghost {
+  white-space: nowrap;
+}
+
+/* Niedrige Bildschirme (etwa 360×640): die Karte rückt enger zusammen, damit die Tafel NSC passt. */
+@media (max-height: 700px) {
+  .card-sheet .card-question {
+    margin-top: 6px;
+  }
+
+  .card-question input {
+    min-height: 34px;
+    padding: 4px 10px;
+  }
+
+  .card-grid .tile {
+    padding: 2px 6px 3px;
+    font-size: 11px;
+    line-height: 1.15;
+  }
+
+  .card-grid .tile .tile-label {
+    font-size: 8px;
+  }
+
+  .card-grid .tile.sense {
+    min-height: 0;
+    font-size: 11px;
+  }
+
+  .card-oracle .oracle-answer {
+    font-size: 15px;
+  }
+
+  .card-grid .tile.card-roll .roll-svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .card-grid .tile.card-roll .bell-number {
+    font-size: 22px;
+    line-height: 30px;
+  }
+
+  .card-grid .tile.card-roll .bell-curve {
+    width: 40px;
+  }
+
+  .theme-title {
+    margin: 0 0 2px;
+  }
+
+  .theme-button {
+    min-height: 34px;
+  }
+}
+
+/* Tippziele: Wo ein Knopf kleiner als 44 px aussieht, wächst seine Trefferfläche unsichtbar mit; das
+   Aussehen und die Abstände bleiben. Nebeneinanderliegende Knöpfe wachsen nur in die Höhe, damit sich
+   ihre Flächen nicht überdecken. */
+.strip-dots button,
+.strip-head .icon-button,
+.icon-button.small,
+.strip .chips button,
+.theme-button {
+  position: relative;
+}
+
+.strip-dots button::after,
+.strip-head .icon-button::after,
+.icon-button.small::after,
+.strip .chips button::after {
+  content: '';
+  position: absolute;
+}
+
+.strip-dots button {
+  width: 44px;
+}
+
+.strip-dots button::after {
+  inset: -11px 0;
+}
+
+.strip-head .icon-button::after {
+  inset: -4px;
+}
+
+.icon-button.small::after {
+  inset: -7px -1px;
+}
+
+.strip .chips button::after {
+  inset: -4px 0;
+}
+
+/* Einträge im Log: Titel, kleinere Urteile und Zeilen der Kartenauswahl, statt Schriftgrößen im Code. */
+.entry-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.verdict.medium {
+  font-size: 26px;
+}
+
+.verdict.small {
+  font-size: 20px;
+}
+
+.entry-question.small {
+  font-size: 12px;
+}
+
+.pick-row {
+  display: contents;
 }
