@@ -223,10 +223,13 @@ hide <<value>> stereotype
     oracle: number [0..1]
     chance: number [0..1]
     /answer: Answer [0..1]
+    $new("2026-11-14f", "eventFocus: number [0..1]")
+    $new("2026-11-14f", "/randomEvent: boolean")
   }
   class PickedItem $karte
   class Note $probe {
     text: string
+    $new("2026-11-14e", "editedAt: datetime [0..1]")
   }
   class PatronRoll $begegnung {
     dice: number[2]
@@ -301,6 +304,8 @@ hide <<value>> stereotype
     scatter: Scatter
     pickedRolls: CardRoll [*]
     oracle: number
+    $new("2026-11-14f", "eventFocus: number [0..1]")
+    $new("2026-11-14f", "/randomEvent: boolean")
   }
   class MapIcon <<value>> $karte {
     north: PathKind
@@ -588,6 +593,12 @@ hide <<value>> stereotype
     name: string
     chance: number
     target: number
+  }
+  class EventFocus <<reference>> $karte $newClass("2026-11-14f") {
+    from: number
+    to: number
+    name: string
+    text: string
   }
   class HouseRules <<reference>> $probe {
     unskilledDm: number
@@ -1047,6 +1058,8 @@ Card "*" --> "*" Slot : picked
 Card ..> CardPick : on confirm
 CardPick "*" --> "0..1" Odds : odds
 Card "*" --> "0..1" Odds : pickedOdds
+Card "*" -$newArrow("2026-11-14f")-> "0..1" EventFocus : /focus
+CardPick "*" -$newArrow("2026-11-14f")-> "0..1" EventFocus : /focus
 Card "1" *-- "1" MapIcon : map
 PickedItem "*" --> "1" Slot : /in
 PickedItem "*" --> "1..2" Entry : picked {ordered}

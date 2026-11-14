@@ -88,6 +88,8 @@ hide <<value>> stereotype
     oracle: number [0..1]
     chance: number [0..1]
     /answer: Answer [0..1]
+    $new("2026-11-14f", "eventFocus: number [0..1]")
+    $new("2026-11-14f", "/randomEvent: boolean")
   }
   class PickedItem $karte
 
@@ -100,6 +102,8 @@ hide <<value>> stereotype
     scatter: Scatter
     pickedRolls: CardRoll [*]
     oracle: number
+    $new("2026-11-14f", "eventFocus: number [0..1]")
+    $new("2026-11-14f", "/randomEvent: boolean")
   }
   class MapIcon <<value>> $karte {
     north: PathKind
@@ -148,6 +152,12 @@ hide <<value>> stereotype
     name: string
     chance: number
     target: number
+  }
+  class EventFocus <<reference>> $karte $newClass("2026-11-14f") {
+    from: number
+    to: number
+    name: string
+    text: string
   }
   class Section <<reference>> $karte {
     name: string
@@ -200,6 +210,8 @@ Card "*" --> "*" Slot : picked
 Card ..> CardPick : on confirm
 CardPick "*" --> "0..1" Odds : odds
 Card "*" --> "0..1" Odds : pickedOdds
+Card "*" -$newArrow("2026-11-14f")-> "0..1" EventFocus : /focus
+CardPick "*" -$newArrow("2026-11-14f")-> "0..1" EventFocus : /focus
 Card "1" *-- "1" MapIcon : map
 PickedItem "*" --> "1" Slot : /in
 PickedItem "*" --> "1..2" Entry : picked {ordered}
@@ -215,4 +227,6 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class CardPick #line:d0021b;line.bold
+class Card #line:d0021b;line.bold
 @enduml

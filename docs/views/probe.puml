@@ -93,6 +93,7 @@ hide <<value>> stereotype
   class CardPick $karte
   class Note $probe {
     text: string
+    $new("2026-11-14e", "editedAt: datetime [0..1]")
   }
   class PatronRoll $begegnung
   class Butchering $begegnung
@@ -188,4 +189,6 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class CardPick #line:d0021b;line.bold
+class Note #line:d0021b;line.bold
 @enduml
