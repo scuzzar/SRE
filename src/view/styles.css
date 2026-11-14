@@ -7370,3 +7370,42 @@ button:disabled {
     min-height: 34px;
   }
 }
+
+/* Tippziele: Wo ein Knopf kleiner als 44 px aussieht, wächst seine Trefferfläche unsichtbar mit; das
+   Aussehen und die Abstände bleiben. Nebeneinanderliegende Knöpfe wachsen nur in die Höhe, damit sich
+   ihre Flächen nicht überdecken. */
+.strip-dots button,
+.strip-head .icon-button,
+.icon-button.small,
+.strip .chips button,
+.theme-button {
+  position: relative;
+}
+
+.strip-dots button::after,
+.strip-head .icon-button::after,
+.icon-button.small::after,
+.strip .chips button::after {
+  content: '';
+  position: absolute;
+}
+
+.strip-dots button {
+  width: 44px;
+}
+
+.strip-dots button::after {
+  inset: -11px 0;
+}
+
+.strip-head .icon-button::after {
+  inset: -4px;
+}
+
+.icon-button.small::after {
+  inset: -7px -1px;
+}
+
+.strip .chips button::after {
+  inset: -4px 0;
+}
