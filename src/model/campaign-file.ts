@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { anyCharacterOf, EPOCH, keepFocus, validateCharacter, validName, type Stamp, type Campaign, type CampaignId, type Character, type Possession } from './campaign';
+import { anyCharacterOf, EPOCH, keepFocus, npcRoles, validateCharacter, validName, type Stamp, type Campaign, type CampaignId, type Character, type Possession } from './campaign';
 import { replay, type Career, type CareerRoll } from './career';
 import { DomainError } from './errors';
 import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, type PathKind } from './card-roll';
@@ -15,7 +15,7 @@ import { START_DAY } from './time';
 import { checkOf, encounterChecks } from './encounter-check';
 import { checkInterprets, checkKinds, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type Journey, type DamageRoll, type LogEntry, type Recovery } from './log';
 import { checkRecovery } from './wounds';
-import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, ranges, ref, slotOfEntry, weaponOf } from './reference';
+import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, patronOf, ranges, ref, slotOfEntry, weaponOf } from './reference';
 import { characteristics } from './rules';
 import { bookingKinds, validateBookings, type Booking } from './shop';
 import { settleStash } from './stash';
@@ -219,6 +219,10 @@ const CharacterSchema = z.object({
   wears: z.string().optional(),
   /** Fehlt in Dateien von vor den NSC: ein SC. */
   npc: z.boolean().default(false),
+  /** Fehlen in Dateien von vor 2026-11-14; ein NSC ohne Rolle ist Sonstige. */
+  role: z.enum(npcRoles).optional(),
+  place: z.string().optional(),
+  patron: z.object({ list: z.number().int(), roll: z.number().int() }).optional(),
   animal: z.object({ in: z.string().min(1), terrain: z.string().min(1), roll: z.number().int().min(2).max(12) }).optional(),
 });
 
@@ -422,9 +426,12 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
 }
 
 /** Ein Charakter aus der Datei, ohne leere optionale Felder. */
-function characterFromFile({ career, homeworld, primary, secondary, wields, wears, animal, ...c }: z.infer<typeof CharacterSchema>): Character {
+function characterFromFile({ career, homeworld, primary, secondary, wields, wears, animal, role, place, patron, ...c }: z.infer<typeof CharacterSchema>): Character {
   return {
     ...c,
+    ...(role === undefined ? {} : { role }),
+    ...(place === undefined ? {} : { place }),
+    ...(patron === undefined ? {} : { patron: { list: patron.list, roll: patron.roll } }),
     ...(animal ? { animal: { ...animal } } : {}),
     skills: c.skills.map((s) => ({ ...s })),
     possessions: c.possessions.map((p) => stripped(p) as Possession),
@@ -566,6 +573,12 @@ function validate(campaign: Campaign): void {
   const careers = [...campaign.characters.flatMap((c) => (c.career ? [c.career] : [])), ...(campaign.generation ? [campaign.generation.career] : [])];
   for (const id of [...campaign.characters.flatMap((c) => (c.homeworld === undefined ? [] : [c.homeworld])), ...careers.flatMap((c) => [...(c.homeworld === undefined ? [] : [c.homeworld]), ...(c.worlds ?? [])])]) {
     worldOf(campaign.hexes, id);
+  }
+  // Rolle und Ort hat nur ein dauerhafter NSC; der Ort ist eine fertige Welt, der Patron eine Patron-Zeile.
+  for (const character of campaign.characters) {
+    if (!character.npc && (character.role !== undefined || character.place !== undefined)) throw new DomainError(`${character.name} ist kein NSC und hat doch Rolle oder Ort.`);
+    if (character.place !== undefined) worldOf(campaign.hexes, character.place);
+    if (character.patron !== undefined && patronOf(character.patron.list, character.patron.roll).rumor) throw new DomainError(`${character.name} verweist auf ein Gerücht statt auf einen Patron.`);
   }
   for (const [index, entry] of campaign.log.entries()) {
     switch (entry.kind) {

@@ -1,5 +1,5 @@
 import type { AttackItem, CardItem, CheckItem, DamageItem, DmPart, ButcheringItem, EventItem, JourneyItem, LogItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem } from '../controller';
-import type { ArmorClass, AttackKind, BookingKind, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
+import type { ArmorClass, AttackKind, BookingKind, NpcRole, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
 
@@ -40,6 +40,23 @@ export const woundStateText: Record<WoundState, string> = {
   serious: 'schwer verwundet',
   dead: 'tot',
   destroyed: 'zerstört',
+};
+
+/** Die Rollen eines NSC, wie sie in der Tabelle „Begriffe“ heißen. */
+export const roleText: Record<NpcRole, string> = {
+  patron: 'Patron',
+  encounter: 'Begegnung',
+  enemy: 'Feind',
+  rival: 'Rivale',
+  ally: 'Verbündeter',
+  contact: 'Kontakt',
+  official: 'Behörde',
+  merchant: 'Händler',
+  broker: 'Makler',
+  captain: 'Captain',
+  crew: 'Crew',
+  passenger: 'Passagier',
+  other: 'Sonstige',
 };
 
 export const recoveryText: Record<RecoveryKind, string> = { wake: 'Aufwachen', treatment: 'Behandlung', rest: 'Ruhe' };

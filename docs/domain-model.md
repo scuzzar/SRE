@@ -271,6 +271,24 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > der Verweis `Booking.won`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-13-zeit-und-reisen.png`](changes/2026-11-13-zeit-und-reisen.png).
 
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14): **NSC am Ort** (siehe *Patron als NSC*, *Ort
+> eines NSC*, *Reiter NSC*). Zu einem gewürfelten Patron entsteht auf Knopfdruck ein zufälliger
+> dauerhafter NSC; jeder dauerhafte NSC hat eine Welt, auf der er lebt, und ein eigener Reiter
+> **NSC** zeigt die NSC des Aufenthaltsorts, nach Rolle gruppiert. Neu im Bild: das Feld
+> `Character.role` mit der Werteliste `NpcRole`, die Verweise `Character.place` (auf `Hex`) und
+> `Character.patron` (auf `Patron`), als Referenzdaten Fertigkeiten und Ausrüstung je Patron
+> (`Patron.skills` mit `PatronSkill`, `Patron.gear`; Inhalt als Hausregel in
+> [`patron-nsc.md`](patron-nsc.md); feste Werte als Startpunkt, später ein richtiger NSC-Generator). Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-14-nsc-am-ort.png`](changes/2026-11-14-nsc-am-ort.png).
+
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14b): **Patron-NSC mit Laufbahn** (siehe *Patron als
+> NSC*). Statt fester Fertigkeiten und Ausrüstung je Beruf verweist jeder Patron auf eine Laufbahn
+> (`Patron.career`), und der Patron-NSC entsteht durch eine zufällig durchlaufene
+> Charaktererschaffung in dieser Laufbahn. Im Bild entfallen `PatronSkill`, `Patron.skills` und
+> `Patron.gear`; neu ist `Patron → Service : career`. Die Zuordnung der Patrons zu den sechs
+> Laufbahnen steht in [`patron-nsc.md`](patron-nsc.md). Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-14-patron-mit-laufbahn.png`](changes/2026-11-14-patron-mit-laufbahn.png).
+
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
@@ -409,7 +427,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | NSC der Begegnung | `Encounter.npcs` (`Character`) | Ein Gegner oder Fremder in einer Begegnung: ein vollständiger Charakter, der an der Begegnung hängt, nicht an der Kampagne |
 | Anführer | `Encounter.leader` | Der NSC mit der besten Ausrüstung, wenn die Begegnung einen hat (L) |
 | Übernehmen | (von `Encounter.npcs` nach `Campaign.characters`) | Ein NSC der Begegnung wird in die Kampagne umgehängt, als SC oder als dauerhafter NSC |
-| Dauerhafter NSC | `Character` mit `npc` | Ein Charakter, der kein SC ist; er steht im Charakter-Screen unter „NSC“ |
+| Dauerhafter NSC | `Character` mit `npc` | Ein Charakter, der kein SC ist; er steht im Reiter NSC |
+| Ort eines NSC | `Character.place` | Die Welt, auf der ein dauerhafter NSC lebt; man trifft ihn nur dort |
+| Patron-NSC | `Character` mit `patron` | Ein dauerhafter NSC, der als Patron entstanden ist, z. B. „Mara Voss, Smuggler“ |
+| Laufbahn eines Patrons | `Patron.career` | Die Laufbahn, in der ein Patron-NSC seine Charaktererschaffung durchläuft, z. B. Smuggler: Merchants (Hausregel) |
+| Rolle eines NSC | `Character.role`, `NpcRole` | Wozu ein dauerhafter NSC da ist, aus einer festen Liste: Patron, Begegnung, Feind, Rivale, Verbündeter, Kontakt, Behörde, Händler, Makler, Captain, Crew, Passagier, Sonstige |
+| Reiter NSC | (Reiter „NSC“) | Der Screen mit den dauerhaften NSC des Aufenthaltsorts, nach Rolle gruppiert; mit „Alle zeigen“ alle, nach Welt und darin nach Rolle |
 | Getragene Rüstung | `Character.wears` | Die Rüstung, die jemand gerade anhat; sie zählt, wenn er angegriffen wird |
 | Rüstungsklasse einer Rüstung | `Item.armor` | Wie eine Rüstung in der Matrix zählt, z. B. Vacc Suit als Cloth, Battle Dress als Combat |
 | Wunden | `/wounds`, `Wounds` | Wie viel STR, DEX und END jemand durch Treffer verloren hat |
@@ -1292,9 +1315,58 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     nicht mehr auf ihrer Seite. Weil er derselbe Charakter bleibt, verweist der Log weiter auf ihn,
     und er behält seine **Wunden** aus dem Kampf (bisher kam der Übernommene unverwundet); heilen
     lässt er sich wie jeder Charakter.
-  - **Dauerhafte NSC** (`Character` mit `npc`) stehen im Charakter-Screen unter „NSC“, nicht in der
-    Leiste oben, nicht unter den SC im Shop, und lassen sich im Editor zum SC machen und umgekehrt.
-    Proben und Angriffe würfelt man für SC.
+  - **Dauerhafte NSC** (`Character` mit `npc`) stehen nur im eigenen Reiter **NSC** (2026-11-14;
+    bisher im Charakter-Screen unter „NSC“, dort stehen sie nicht mehr), nicht in der Leiste oben, nicht unter den SC im Shop, und lassen
+    sich im Editor zum SC machen und umgekehrt. Proben und Angriffe würfelt man für SC.
+  - **Ort eines NSC** (2026-11-14). Ein dauerhafter NSC lebt auf höchstens einer Welt (`place`),
+    einer fertigen Welt des Subsektors. Er bekommt den Aufenthaltsort, wenn er entsteht oder
+    übernommen wird (dann mit der Rolle „Begegnung“); im Editor lässt er sich ändern oder leeren (ein NSC, der mit der Gruppe reist,
+    hat keinen Ort). Ein SC hat keinen Ort, ihm gilt der Aufenthaltsort der Gruppe; wird ein NSC zum
+    SC, fällt `place` weg. NSC von früher haben keinen Ort.
+  - **Rolle eines NSC** (2026-11-14). Jeder dauerhafte NSC hat genau eine Rolle (`role`) aus einer
+    festen Liste (`NpcRole`), in dieser Reihenfolge: **Patron** (`patron`), **Begegnung**
+    (`encounter`), **Feind** (`enemy`), **Rivale** (`rival`), **Verbündeter** (`ally`),
+    **Kontakt** (`contact`), **Behörde** (`official`: Polizei, Zoll, Hafenmeister, Beamte),
+    **Händler** (`merchant`), **Makler** (`broker`), **Captain** (`captain`), **Crew** (`crew`),
+    **Passagier** (`passenger`), **Sonstige** (`other`). Feind, Rivale, Verbündeter und Kontakt
+    folgen den Verbindungen aus Mongoose Traveller 2e (Enemy, Rival, Ally, Contact). Vorgegeben ist
+    *Patron* für einen Patron-NSC, *Begegnung* für einen aus einer Begegnung übernommenen NSC und
+    *Sonstige* für einen, der im Editor zum NSC gemacht wird, und für NSC von früher; im Editor
+    wählt man jede andere. Ein SC hat keine Rolle; wird ein NSC zum SC, fällt sie weg, wird ein SC
+    zum NSC, bekommt er *Sonstige*.
+  - **Reiter NSC** (2026-11-14). Ein eigener Reiter neben *Charaktere*, in der Leiste unten wie in
+    der Reiterzeile des Desktops, **vorgegeben nach dem Aufenthaltsort
+    gefiltert**: Er zeigt die dauerhaften NSC, deren Ort der Aufenthaltsort ist, dazu die NSC ohne
+    Ort, **immer nach Rolle gruppiert** (Gruppen in der Reihenfolge der Liste, leere weggelassen) und
+    in jeder Gruppe nach Namen. **„Alle zeigen“** hebt den Filter auf: Dann stehen alle dauerhaften
+    NSC **nach Welt gruppiert** (nach dem Namen der Welt, die NSC ohne Ort als eigene Gruppe am
+    Ende), darin **nach Rolle** und darin **nach Namen**. Ohne Aufenthaltsort zeigt er alle so.
+    Die Wahl ist Anzeige und wird nicht gespeichert; beim Öffnen gilt wieder der Filter. Antippen
+    öffnet den Editor wie im Charakter-Screen. Tote und Ausgeschiedene stehen eingeklappt darunter.
+  - **Patron als NSC** (2026-11-14, Laufbahn 2026-11-14b). Zu einem Patron-Wurf, der einen Patron
+    ergibt (keine Rumor-Zeile), erzeugt **„Als NSC“** einen zufälligen dauerhaften NSC **in der
+    Laufbahn seines Patrons** (`Patron.career`): Die Charaktererschaffung läuft für ihn zufällig
+    durch wie beim *Durchlaufen*, mit diesen Abweichungen:
+    - *Laufbahn*: Er meldet sich immer bei der Laufbahn seines Patrons. Wird er dort nicht
+      genommen (er würde eingezogen), oder stirbt er in einem Term, beginnt der Lauf von vorn, mit
+      neuen Attributen (Hausregel), bis er in seiner Laufbahn gedient und überlebt hat.
+    - *Welten*: wie beim *Durchlaufen*, Heimatwelt eine zufällige fertige Welt des Subsektors, die
+      Terms „wie zuletzt“.
+    - *Name*: von der Tafel NSC, wie bei den NSC der Begegnung.
+    - Er läuft für sich, neben einer offenen Charaktererschaffung der Kampagne, ohne sie zu
+      berühren; gespeichert wird nur der fertige Charakter mit seinem Lebenslauf.
+    Er bekommt, was die Erschaffung ergibt: UPP, Fertigkeiten, Besitz und Credits aus der
+    Abmusterung, Pension in der Notiz, den Lebenslauf. Die Herkunft beginnt mit dem Beruf des
+    Patrons („Smuggler · Ex-Merchants · 3 Terms · 30 Jahre“). Eine Waffe aus der Abmusterung ist
+    seine Primärwaffe und in der Hand. Er verweist auf seinen Patron (`patron`), bekommt die Rolle
+    „Patron“ und den Aufenthaltsort als Ort.
+    - *Laufbahn je Patron* ist eine Hausregel (Referenzdaten an den Zeilen der Patron-Listen,
+      Zuordnung in [`patron-nsc.md`](patron-nsc.md)); ein Beruf, der mehrfach vorkommt, hat
+      überall dieselbe. Die Rumor-Zeilen haben keine. Es gibt heute nur die sechs Laufbahnen des
+      Regelwerks; weitere, die besser passen, kommen später dazu.
+    Ohne Aufenthaltsort geht es nicht. Der Patron-Wurf selbst bleibt, wie er ist; der neue NSC
+    kommt in den Reiter NSC. Ein Patron-NSC ist ein gewöhnlicher dauerhafter NSC: Man kann ihn
+    bearbeiten, zum SC machen oder ausscheiden lassen; der Verweis auf den Patron bleibt.
 - **Getragene Rüstung.** Jeder Charakter trägt höchstens eine Rüstung (`wears`), einen Gegenstand
   mit Rüstungsklasse aus seinem Besitz; keine heißt Nothing. Wie er in der Matrix zählt, steht an
   ihm (`Item.armor`): Jack, Mesh, Cloth, Reflec, Ablat, Combat Armor als Combat, Battle Dress als

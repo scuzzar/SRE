@@ -1,9 +1,11 @@
-import { activeSkills, livingCharacters, type Campaign, type Character } from './campaign';
+import { activeSkills, addCharacter, livingCharacters, type Campaign, type Character, type CharacterId } from './campaign';
 import { replay } from './career';
 import { DomainError } from './errors';
 import type { PatronRoll, RumorRoll } from './log';
 import type { Clock, Random } from './ports';
-import { patronOf, rumorOf, type Patron, type Rumor } from './reference';
+import { itemOf, patronOf, rumorOf, type Patron, type Rumor } from './reference';
+import { npcName } from './encounter';
+import { careerInput, runCareerIn, stateOf } from './generation';
 
 /** Die beiden Patron-Listen der Patron Encounters Matrix (SE, Charts S. 20). */
 export const patronLists = [1, 2] as const;
@@ -94,4 +96,41 @@ export function rumorOfRoll(entry: RumorRoll): Rumor {
 /** Würfelt ein Gerücht auf der Rumors Matrix (SE, Charts S. 21); das Ergebnis kommt in den Log. */
 export function rollRumor(random: Random, clock: Clock): RumorRoll {
   return { kind: 'rumor', at: clock.now(), dice: [random.int(1, 6), random.int(1, 6)] };
+}
+
+/** Warum sich zu diesem Patron-Wurf kein NSC erzeugen lässt; `undefined`, wenn es geht. */
+export function patronNpcBlocker(campaign: Campaign, entry: PatronRoll): string | undefined {
+  if (patronOfRoll(entry).rumor) return 'Ein Gerücht, kein Patron.';
+  if (campaign.location === undefined) return 'Erst den Aufenthaltsort wählen.';
+  return undefined;
+}
+
+/**
+ * Erzeugt zum Patron-Wurf an dieser Stelle des Logs einen dauerhaften NSC (siehe domain-model.md,
+ * *Patron als NSC*): Die Charaktererschaffung läuft zufällig in der Laufbahn des Patrons durch, der
+ * Name kommt von der Tafel NSC. Er hat die Rolle Patron, lebt auf dem Aufenthaltsort und verweist
+ * auf seinen Patron; eine Waffe aus der Abmusterung ist seine Primärwaffe und in der Hand.
+ */
+export function createPatronNpc(campaign: Campaign, index: number, random: Random): { campaign: Campaign; id: CharacterId } {
+  const entry = campaign.log[index];
+  if (entry?.kind !== 'patron') throw new DomainError('An dieser Stelle des Logs steht kein Patron-Wurf.');
+  const blocker = patronNpcBlocker(campaign, entry);
+  if (blocker) throw new DomainError(blocker);
+  const patron = patronOfRoll(entry);
+  const generation = runCareerIn(campaign.hexes, patron.career!, random);
+  const input = careerInput(stateOf(generation), npcName(random));
+  const weapon = input.possessions?.map((p) => itemOf(p.of).weapon).find((w) => w !== undefined);
+  return addCharacter(
+    campaign,
+    {
+      ...input,
+      background: `${patron.name} · ${input.background}`,
+      npc: true,
+      role: 'patron',
+      place: campaign.location!,
+      patron: { list: entry.list, roll: patronRollOf(entry) },
+      ...(weapon === undefined ? {} : { primary: weapon, wields: weapon }),
+    },
+    generation.career,
+  );
 }

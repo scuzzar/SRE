@@ -158,6 +158,8 @@ export const PatronSchema = z.object({
   roll: z.number().int().min(11).max(66),
   name: z.string().min(1),
   rumor: z.boolean(),
+  /** Die Laufbahn, in der ein Patron-NSC die Charaktererschaffung durchläuft (Hausregel, docs/patron-nsc.md); Gerüchte haben keine. */
+  career: z.string().min(1).optional(),
 });
 
 /** Eine Art von Gerücht der Rumor List (SE, Charts S. 21) mit den Würfen 11–66 der Rumors Matrix, die auf sie führen. */
@@ -425,6 +427,13 @@ export const ReferenceDataSchema = z
     }
     const skillIds = new Set(data.skills.map((s) => s.id));
     checkCareerData(data, skillIds, ctx);
+    for (const patron of data.encounters.patrons) {
+      const label = `${patron.name} (Patron-Liste ${patron.list}, ${patron.roll})`;
+      if (patron.rumor !== (patron.career === undefined)) ctx.addIssue({ code: 'custom', message: `${label}: Ein Patron hat eine Laufbahn, ein Gerücht keine` });
+      if (patron.career !== undefined && !data.services.some((s) => s.id === patron.career)) ctx.addIssue({ code: 'custom', message: `Unbekannte Laufbahn ${patron.career} bei ${label}` });
+      const same = data.encounters.patrons.find((p) => p.name === patron.name);
+      if (same && same.career !== patron.career) ctx.addIssue({ code: 'custom', message: `${label} hat eine andere Laufbahn als derselbe Beruf an anderer Stelle` });
+    }
     for (const example of data.examples) {
       uniqueIds(example.skills.map((s) => s.of), `Fertigkeit bei ${example.name}:`, ctx);
       for (const s of example.skills) {

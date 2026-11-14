@@ -6,7 +6,7 @@ import { expect, test, type Page, type TestInfo } from '@playwright/test';
 // übersprungen.
 
 const onlyDesktop = (testInfo: TestInfo) => testInfo.skip(testInfo.project.name !== 'desktop', 'nur im Desktop-Modus');
-const areas = ['Begegnung', 'Kampf', 'Shop', 'Charaktere', 'Sektor'];
+const areas = ['Begegnung', 'Kampf', 'Shop', 'Charaktere', 'NSC', 'Sektor'];
 const column = (page: Page) => page.getByRole('complementary', { name: 'Charakterspalte' }).getByRole('region', { name: 'Spielercharaktere' });
 
 test.beforeEach(async ({ page }) => {
@@ -148,7 +148,7 @@ test('Die Ziffern wählen die Bereiche der Reiterzeile', async ({ page }, testIn
   onlyDesktop(testInfo);
   const nav = page.getByRole('navigation', { name: 'Bereiche' });
   await expect(nav).toBeVisible();
-  for (const [key, name] of [['1', 'Begegnung'], ['2', 'Kampf'], ['3', 'Shop'], ['4', 'Charaktere'], ['5', 'Sektor']]) {
+  for (const [key, name] of [['1', 'Begegnung'], ['2', 'Kampf'], ['3', 'Shop'], ['4', 'Charaktere'], ['5', 'NSC'], ['6', 'Sektor']]) {
     await page.keyboard.press(key!);
     await expect(nav.getByRole('button', { name: name!, exact: true })).toHaveAttribute('aria-current', 'page');
   }

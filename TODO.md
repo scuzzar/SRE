@@ -60,6 +60,12 @@ Aus [`docs/regeln-kampf.md`](docs/regeln-kampf.md), noch offen:
 - [ ] **Book 4** (später): Moral für Militär, weitere Waffen, Kampffertigkeiten, abstraktes
   Schlachtsystem, Feldartillerie.
 
+### 4. NSC
+
+- [ ] **Weitere Laufbahnen** für Patron-NSC, die besser zu den Berufen passen als die sechs des
+  Regelwerks (heute stehen viele unter Other, siehe `docs/patron-nsc.md`), z. B. aus anderen
+  Traveller-Büchern; erst nachsehen, welche Bücher Laufbahnen oder NSC-Tabellen haben.
+
 ### Ideen, noch nicht entschieden
 
 - [ ] Wunden wirken laut Regel erst am Ende der Runde (SE 6); die App lässt sie sofort wirken

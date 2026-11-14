@@ -117,10 +117,26 @@ hide <<value>> stereotype
     dead: boolean
     retired: boolean
     npc: boolean
+    role: NpcRole [0..1]
     /wounds: Wounds
     /hurt: number [0..1]
     /state: WoundState
     /blows: number [0..1]
+  }
+  enum NpcRole <<value>> $charakter {
+    patron
+    encounter
+    enemy
+    rival
+    ally
+    contact
+    official
+    merchant
+    broker
+    captain
+    crew
+    passenger
+    other
   }
   class Upp <<value>> $charakter {
     str: number
@@ -849,6 +865,9 @@ Career "*" --> "0..1" Service : /in
 Career "*" --> "0..1" Hex : homeworld
 Career "*" --> "*" Hex : worlds {ordered}
 Character "*" --> "0..1" Hex : homeworld
+Character "*" --> "0..1" Hex : place
+Character "*" --> "0..1" Patron : patron
+Character --> NpcRole
 CareerRoll --> RollKind
 CareerRoll --> "0..1" Characteristic : of
 CareerRoll "*" --> "0..1" Service : for
@@ -935,6 +954,7 @@ Recovery --> RecoveryKind
 LogEntry <|-- Note
 LogEntry <|-- PatronRoll
 PatronRoll "*" --> "1" Patron : of
+Patron "*" --> "0..1" Service : career
 LogEntry <|-- RumorRoll
 LogEntry <|-- Butchering
 Butchering "*" --> "1" Character : of

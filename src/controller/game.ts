@@ -69,6 +69,7 @@ import {
   reenlist,
   rollDice,
   rollPatron,
+  createPatronNpc,
   rollRumor,
   rollAnimalEncounter,
   skillOf,
@@ -243,6 +244,7 @@ export class GameController {
       durable: undefined,
       storageError: undefined,
       screen: 'oracle',
+      npcAll: false,
       card: undefined,
       names: undefined,
       task: undefined,
@@ -878,7 +880,29 @@ export class GameController {
   // --- Charakter oben und Proben ---------------------------------------------------------------
 
   showScreen(screen: Screen): void {
-    this.update({ screen });
+    // Der Reiter NSC zeigt beim Öffnen wieder nur die NSC des Aufenthaltsorts.
+    this.update(screen === 'npcs' && this.state.screen !== 'npcs' ? { screen, npcAll: false } : { screen });
+  }
+
+  /** „Alle zeigen“ im Reiter NSC an oder aus; nur Anzeige, nicht gespeichert. */
+  showAllNpcs(all: boolean): void {
+    this.update({ npcAll: all });
+  }
+
+  /**
+   * „Als NSC“ zum letzten Patron-Wurf (siehe domain-model.md, *Patron als NSC*): Die Erschaffung läuft
+   * in der Laufbahn des Patrons durch, der neue dauerhafte NSC kommt in den Reiter NSC.
+   */
+  createPatronNpc(): void {
+    const index = this.campaign.log.findLastIndex((e) => e.kind === 'patron');
+    try {
+      const { campaign, id } = createPatronNpc(this.campaign, index, this.deps.random);
+      const npc = campaign.characters.find((c) => c.id === id)!;
+      this.change(campaign, { patronNote: `${npc.name} (${npc.background}) steht jetzt im Reiter NSC.` });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ patronNote: error.message });
+    }
   }
 
   /** Wischen: Ein anderer Charakter steht oben; eine vorbereitete Probe und ein vorbereiteter Angriff enden. */
@@ -1475,8 +1499,9 @@ export class GameController {
 
   // --- Charaktere anlegen und bearbeiten -------------------------------------------------------
 
-  newCharacter(): void {
-    this.update({ editor: { id: undefined, error: undefined } });
+  /** Öffnet den Editor für einen neuen Charakter; mit `npc` als dauerhafter NSC auf dem Aufenthaltsort. */
+  newCharacter(npc = false): void {
+    this.update({ editor: { id: undefined, error: undefined, ...(npc ? { npc } : {}) } });
   }
 
   editCharacter(id: string): void {

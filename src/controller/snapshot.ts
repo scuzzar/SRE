@@ -1,4 +1,12 @@
 import {
+  deadNpcs,
+  hexById,
+  npcGroups,
+  npcRoles,
+  patronNpcBlocker,
+  roleOf,
+  type NpcRole,
+  type PatronRoll,
   dateLabel,
   journeyBlocker,
   activeSkills,
@@ -273,8 +281,8 @@ export interface Snapshot {
   readonly stripCollapsed: boolean;
   /** Der Hinweis über den Waffen im Shop ist weggeklickt. */
   readonly shopHintHidden: boolean;
-  /** Die dauerhaften NSC unter „NSC“, getrennt von den SC. */
-  readonly npcs: readonly { readonly id: string; readonly name: string; readonly background: string; readonly dead: boolean }[];
+  /** Der Reiter NSC: die dauerhaften NSC, nach Welt und Rolle gruppiert. */
+  readonly npcs: NpcScreenView;
   /** Die Toten unter „Verstorben“, getrennt von den Lebenden. */
   readonly dead: readonly { readonly id: string; readonly name: string; readonly background: string }[];
   readonly retired: readonly { readonly id: string; readonly name: string }[];
@@ -347,7 +355,28 @@ export interface ItemChoice {
   readonly armor: boolean;
 }
 
-export type Screen = 'oracle' | 'encounter' | 'combat' | 'shop' | 'characters' | 'sector' | 'about';
+export type Screen = 'oracle' | 'encounter' | 'combat' | 'shop' | 'characters' | 'npcs' | 'sector' | 'about';
+
+/** Ein dauerhafter NSC im Reiter NSC. */
+export interface NpcItem {
+  readonly id: string;
+  readonly name: string;
+  readonly background: string;
+  readonly role: NpcRole;
+}
+
+/** Der Reiter NSC (siehe domain-model.md, *Reiter NSC*). */
+export interface NpcScreenView {
+  /** „Alle zeigen“ ist an; beim Öffnen des Reiters ist es aus. */
+  readonly all: boolean;
+  /** Der Name des Aufenthaltsorts; fehlt er, zeigt der Reiter immer alle. */
+  readonly here: string | undefined;
+  /** Je Welt (ohne Ort: `name` fehlt) die NSC nach Rolle; ohne „Alle zeigen“ nur eine Gruppe. */
+  readonly worlds: readonly { readonly key: string; readonly name: string | undefined; readonly roles: readonly { readonly role: NpcRole; readonly npcs: readonly NpcItem[] }[] }[];
+  readonly dead: readonly NpcItem[];
+  /** Wie viele lebende NSC es insgesamt gibt, auch auf anderen Welten. */
+  readonly total: number;
+}
 
 export interface CampaignChoice {
   readonly id: string;
@@ -447,6 +476,8 @@ export interface PatronView {
   readonly last: PatronItem | undefined;
   /** Der Test des letzten Wurfs und was er brachte; fehlt, bis gewürfelt ist. */
   readonly note: string | undefined;
+  /** Zum letzten Patron-Wurf einen NSC erzeugen: warum es nicht geht, oder `undefined`; fehlt ohne Patron-Wurf. */
+  readonly npc: { readonly blocker: string | undefined } | undefined;
 }
 
 /** Eine Notiz, oder mit `interprets` eine Deutung zum Ergebnis an dieser Stelle des Logs. */
@@ -1215,8 +1246,10 @@ export interface EditorView {
   readonly input: CharacterInput;
   readonly error: string | undefined;
   readonly inLog: boolean;
-  /** Die fertigen Welten des Subsektors, für die Heimatwelt. */
+  /** Die fertigen Welten des Subsektors, für die Heimatwelt und den Ort eines NSC. */
   readonly worlds: readonly WorldChoice[];
+  /** Die Rollen eines NSC, in ihrer Reihenfolge. */
+  readonly roles: readonly NpcRole[];
 }
 
 export interface ControllerState {
@@ -1279,7 +1312,9 @@ export interface ControllerState {
   readonly shopHintHidden: boolean;
   /** Index des Logeintrags, dessen Ergebnis-Popup offen ist. */
   readonly result: number | undefined;
-  readonly editor: { readonly id: string | undefined; readonly error: string | undefined } | undefined;
+  readonly editor: { readonly id: string | undefined; readonly error: string | undefined; readonly npc?: boolean } | undefined;
+  /** Der Reiter NSC zeigt alle NSC statt nur die des Aufenthaltsorts. */
+  readonly npcAll: boolean;
   /** Die Charaktererschaffung steht im Vordergrund. */
   readonly generating: boolean;
   readonly generationError: string | undefined;
@@ -1297,6 +1332,27 @@ export interface OpenWorld {
   readonly column: number;
   readonly row: number;
   readonly rolls: readonly WorldRoll[];
+}
+
+function npcItem(c: Character): NpcItem {
+  return { id: c.id, name: c.name, background: c.background, role: roleOf(c) };
+}
+
+function npcScreenView(campaign: Campaign, all: boolean): NpcScreenView {
+  const here = campaign.location === undefined ? undefined : hexById(campaign.hexes, campaign.location)?.name;
+  return {
+    all,
+    here,
+    worlds: npcGroups(campaign, all).map((w) => ({ key: w.place ?? '-', name: w.name, roles: w.roles.map((r) => ({ role: r.role, npcs: r.npcs.map(npcItem) })) })),
+    dead: deadNpcs(campaign).map(npcItem),
+    total: npcCharacters(campaign).filter((c) => !c.dead).length,
+  };
+}
+
+/** Der letzte Patron-Wurf im Log und ob sich dazu ein NSC erzeugen lässt. */
+function patronNpcView(campaign: Campaign): PatronView['npc'] {
+  const entry = campaign.log.findLast((e): e is PatronRoll => e.kind === 'patron');
+  return entry && { blocker: patronNpcBlocker(campaign, entry) };
 }
 
 const emptyInput: CharacterInput = {
@@ -2294,7 +2350,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: [], retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0 }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -2322,7 +2378,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     characters: livingCharacters(campaign).map((c) => characterView(campaign, c, state)),
     focus: focusOf(campaign)?.id,
     dead: deadCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background })),
-    npcs: npcCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background, dead: c.dead })),
+    npcs: npcScreenView(campaign, state.npcAll),
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
     combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.simBurst, state.simWeakened, state.surpriseShown, state.animalNote, log, state.lootOpen, state.butchered),
@@ -2330,6 +2386,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
       lists: patronLists.map((list) => ({ list, parts: patronDmParts(campaign, list) })),
       last: log.findLast((item): item is PatronItem => item.kind === 'patron'),
       note: state.patronNote,
+      npc: patronNpcView(campaign),
     },
     rumor: { last: log.findLast((item): item is RumorItem => item.kind === 'rumor'), note: state.rumorNote },
     shop: shopView(campaign, state.shopError),
@@ -2338,10 +2395,11 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : undefined,
     editor: state.editor && {
       id: state.editor.id,
-      input: editing ? inputOf(editing) : emptyInput,
+      input: editing ? inputOf(editing) : state.editor.npc ? { ...emptyInput, npc: true, role: 'other', ...(campaign.location === undefined ? {} : { place: campaign.location }) } : emptyInput,
       error: state.editor.error,
       inLog: editing ? isInLog(campaign, editing.id) : false,
       worlds: worldChoices(campaign.hexes),
+      roles: npcRoles,
     },
     generation: state.generating && campaign.generation ? generationView(campaign.generation, campaign.hexes, state.generationError) : undefined,
     generationRunning: campaign.generation !== undefined,

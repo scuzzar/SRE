@@ -105,6 +105,7 @@ hide <<value>> stereotype
 ' Zeit und Reisen
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Patron <<reference>> $begegnung
 
 ' Referenzdaten
   class Skill <<reference>> $charakter
@@ -227,6 +228,7 @@ Aging --> "1" Characteristic : of
 ' Waffen (Referenzdaten)
 
 ' Verlauf
+Patron "*" --> "0..1" Service : career
 
 ' Probe
 

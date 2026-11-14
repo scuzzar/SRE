@@ -1,4 +1,4 @@
-import { addCharacter, setGeneration, type Campaign, type CharacterId } from './campaign';
+import { addCharacter, setGeneration, type Campaign, type CharacterId, type CharacterInput } from './campaign';
 import { hexId, isWorld, worldOf } from './sector';
 import {
   ageOf,
@@ -259,23 +259,24 @@ export function finishGeneration(campaign: Campaign, name: string): { campaign: 
   if (!generation) throw new DomainError('Es läuft keine Charaktererschaffung.');
   const state = stateOf(generation);
   expectStep(state, 'name');
-  const pension = pensionOf(state.terms, state.dead);
-  const { campaign: added, id } = addCharacter(
-    campaign,
-    {
-      name,
-      background: backgroundOf(state),
-      equipment: '',
-      credits: state.credits,
-      note: pension > 0 ? `Pension Cr ${thousands(pension)} im Jahr` : '',
-      upp: state.upp,
-      skills: state.skills,
-      possessions: state.possessions,
-      ...(state.homeworld === undefined ? {} : { homeworld: state.homeworld }),
-    },
-    generation.career,
-  );
+  const { campaign: added, id } = addCharacter(campaign, careerInput(state, name), generation.career);
   return { campaign: setGeneration(added, undefined), id };
+}
+
+/** Was eine abgeschlossene Erschaffung einem Charakter gibt: UPP, Fertigkeiten, Besitz, Credits, Herkunft, Pension in der Notiz, Heimatwelt. */
+export function careerInput(state: CareerState, name: string): CharacterInput {
+  const pension = pensionOf(state.terms, state.dead);
+  return {
+    name,
+    background: backgroundOf(state),
+    equipment: '',
+    credits: state.credits,
+    note: pension > 0 ? `Pension Cr ${thousands(pension)} im Jahr` : '',
+    upp: state.upp,
+    skills: state.skills,
+    possessions: state.possessions,
+    ...(state.homeworld === undefined ? {} : { homeworld: state.homeworld }),
+  };
 }
 
 function pick<T>(items: readonly T[], random: Random): T {
@@ -296,53 +297,87 @@ function pickService(state: CareerState, random: Random): string {
 /** Wie viele Schritte ein Durchlauf höchstens macht; eine Erschaffung braucht weit weniger. */
 const MAX_RUN_STEPS = 1000;
 
+/** Setzt im Schritt `homeworld` die Heimatwelt, im Schritt `world` die Welt des Terms, ohne Prüfung der Welt. */
+function withWorld(generation: Generation, state: CareerState, id: string): Generation {
+  const career = state.step === 'homeworld' ? { ...generation.career, homeworld: id } : { ...generation.career, worlds: [...(generation.career.worlds ?? []), id] };
+  replay(career);
+  return { career };
+}
+
+/**
+ * Ein Schritt des Durchlaufs: würfelt oder entscheidet zufällig (siehe domain-model.md,
+ * *Durchlaufen*). `undefined`, wenn der Lauf hier anhält: beim Namen, beim Tod oder ohne Welt.
+ * `service` gibt die Laufbahn vor, sonst fällt sie zufällig nach der Chance der Musterung.
+ */
+function runStep(generation: Generation, hexes: Campaign['hexes'], random: Random, service?: string): Generation | undefined {
+  const state = stateOf(generation);
+  switch (state.step) {
+    case 'name':
+    case 'dead':
+      return undefined;
+    case 'homeworld': {
+      const worlds = hexes.filter(isWorld);
+      if (worlds.length === 0) return undefined;
+      const world = pick(worlds, random);
+      return withWorld(generation, state, hexId(world.column, world.row));
+    }
+    case 'world': {
+      const previous = previousWorld(state);
+      return previous === undefined ? undefined : withWorld(generation, state, previous);
+    }
+    case 'service':
+      return enlist(generation, service ?? pickService(state, random), random);
+    case 'skill':
+      return rollSkill(generation, pick(tableOptions(state).filter((o) => o.available), random).table.id, random);
+    case 'cascade':
+      return chooseCascade(generation, pick(cascadeOptions(generation), random).skill);
+    case 'reenlist':
+      return reenlist(generation, random.int(0, 1) === 1, random);
+    case 'muster':
+      return muster(generation, canTakeCash(state) && random.int(0, 1) === 1 ? 'cash' : 'benefit', random);
+    default:
+      return rollNext(generation, random);
+  }
+}
+
 /**
  * Lässt die Erschaffung durchlaufen: würfelt jeden Schritt und trifft jede Entscheidung zufällig,
  * bis zum Namen oder zum Tod (siehe domain-model.md, *Durchlaufen*). Gibt es für die Heimatwelt
  * keine fertige Welt, hält der Lauf dort an.
  */
 export function runGeneration(campaign: Campaign, random: Random): Campaign {
-  let current = campaign;
+  let generation = campaign.generation;
+  if (!generation) throw new DomainError('Es läuft keine Charaktererschaffung.');
   for (let i = 0; i < MAX_RUN_STEPS; i++) {
-    const generation = current.generation;
-    if (!generation) throw new DomainError('Es läuft keine Charaktererschaffung.');
-    const state = stateOf(generation);
-    const step = (next: Generation) => (current = setGeneration(current, next));
-    switch (state.step) {
-      case 'name':
-      case 'dead':
-        return current;
-      case 'homeworld': {
-        const worlds = current.hexes.filter(isWorld);
-        if (worlds.length === 0) return current;
-        const world = pick(worlds, random);
-        current = chooseGenerationWorld(current, hexId(world.column, world.row));
-        break;
-      }
-      case 'world': {
-        const previous = previousWorld(state);
-        if (previous === undefined) return current;
-        current = chooseGenerationWorld(current, previous);
-        break;
-      }
-      case 'service':
-        step(enlist(generation, pickService(state, random), random));
-        break;
-      case 'skill':
-        step(rollSkill(generation, pick(tableOptions(state).filter((o) => o.available), random).table.id, random));
-        break;
-      case 'cascade':
-        step(chooseCascade(generation, pick(cascadeOptions(generation), random).skill));
-        break;
-      case 'reenlist':
-        step(reenlist(generation, random.int(0, 1) === 1, random));
-        break;
-      case 'muster':
-        step(muster(generation, canTakeCash(state) && random.int(0, 1) === 1 ? 'cash' : 'benefit', random));
-        break;
-      default:
-        step(rollNext(generation, random));
-    }
+    const next = runStep(generation, campaign.hexes, random);
+    if (!next) return setGeneration(campaign, generation);
+    generation = next;
   }
   throw new DomainError('Die Erschaffung kommt beim Durchlaufen nicht zum Ende.');
+}
+
+/** Wie oft der Lauf eines Patron-NSC höchstens von vorn beginnt; bei jeder Laufbahn reicht das weit. */
+const MAX_PATRON_RUNS = 1000;
+
+/**
+ * Der Lebenslauf eines Patron-NSC (siehe domain-model.md, *Patron als NSC*): ein Durchlauf in der
+ * vorgegebenen Laufbahn, bis zum Namen. Wird er dort nicht genommen oder stirbt er, beginnt der Lauf
+ * von vorn (Hausregel). Läuft für sich, ohne die Erschaffung der Kampagne zu berühren.
+ */
+export function runCareerIn(hexes: Campaign['hexes'], service: string, random: Random): Generation {
+  serviceOf(service);
+  if (!hexes.some(isWorld)) throw new DomainError('Ohne fertige Welt im Subsektor gibt es keine Heimatwelt.');
+  for (let run = 0; run < MAX_PATRON_RUNS; run++) {
+    let generation = startGeneration();
+    for (let i = 0; i < MAX_RUN_STEPS; i++) {
+      const next = runStep(generation, hexes, random, service);
+      if (!next) break;
+      generation = next;
+      // Abgelehnt: Er würde eingezogen, also nicht in seiner Laufbahn; von vorn.
+      if (stateOf(generation).step === 'draft') break;
+    }
+    const state = stateOf(generation);
+    if (state.step === 'name' && state.service?.id === service) return generation;
+  }
+  throw new DomainError('Der Lauf des Patron-NSC kommt nicht zum Ende.');
 }

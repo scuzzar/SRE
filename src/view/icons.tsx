@@ -43,6 +43,18 @@ export function PersonIcon() {
   );
 }
 
+/** Eine Visitenkarte mit Person, für die NSC (Kontakte der Gruppe). */
+export function PeopleIcon() {
+  return (
+    <svg {...base} width={22} height={22} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <circle cx="9" cy="10.5" r="2.2" />
+      <path d="M5.8 16c.5-1.7 1.7-2.6 3.2-2.6s2.7.9 3.2 2.6" />
+      <path d="M14.5 10h3.5M14.5 13.5h3.5" />
+    </svg>
+  );
+}
+
 /** Eine Einkaufstasche, für den Shop. */
 export function ShopIcon() {
   return (

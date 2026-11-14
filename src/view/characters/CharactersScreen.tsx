@@ -6,7 +6,7 @@ import { StashDrag, StashPack } from "./StashPanel";
 
 /**
  * Der Charakter-Screen zum Verwalten: anlegen, nach Regeln erschaffen, bearbeiten, Details mit
- * Lebenslauf, Ausrüstung und Gruppengepäck, dauerhafte NSC, Verstorbene und Ausgeblendete. Proben würfelt man oben im Orakel-Screen.
+ * Lebenslauf, Ausrüstung und Gruppengepäck, Verstorbene und Ausgeblendete (die dauerhaften NSC stehen im Reiter NSC). Proben würfelt man oben im Orakel-Screen.
  */
 export function CharactersScreen({ view }: { view: Snapshot }) {
   const game = useGame();
@@ -70,39 +70,6 @@ export function CharactersScreen({ view }: { view: Snapshot }) {
                       type="button"
                       className="icon-button"
                       aria-label="Bearbeiten"
-                      onClick={() => game.editCharacter(c.id)}
-                    >
-                      <PencilIcon />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {view.npcs.length > 0 && (
-            <div className="fallen npcs">
-              <h3 className="section-title" style={{ fontSize: 11 }}>
-                NSC
-              </h3>
-              <ul>
-                {view.npcs.map((c) => (
-                  <li
-                    key={c.id}
-                    aria-label={
-                      c.dead ? `${c.name}, NSC, tot` : `${c.name}, NSC`
-                    }
-                  >
-                    <span className="fallen-name">
-                      {c.dead && <span aria-hidden="true">† </span>}
-                      {c.name}
-                      {c.background && (
-                        <span className="pc-sub"> {c.background}</span>
-                      )}
-                    </span>
-                    <button
-                      type="button"
-                      className="icon-button"
-                      aria-label={`${c.name} bearbeiten`}
                       onClick={() => game.editCharacter(c.id)}
                     >
                       <PencilIcon />

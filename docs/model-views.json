@@ -185,6 +185,33 @@
         "Character",
         "Item"
       ]
+    },
+    {
+      "id": "2026-11-14",
+      "file": "2026-11-14-nsc-am-ort",
+      "title": "NSC am Ort: Patron als NSC, Ort der dauerhaften NSC, Reiter NSC",
+      "approved": true,
+      "show": [
+        "Hex",
+        "Patron",
+        "PatronRoll",
+        "Campaign",
+        "Skill",
+        "Item"
+      ]
+    },
+    {
+      "id": "2026-11-14b",
+      "file": "2026-11-14-patron-mit-laufbahn",
+      "title": "Patron-NSC mit Laufbahn: zufällig durchlaufene Charaktererschaffung statt fester Werte",
+      "approved": true,
+      "show": [
+        "PatronRoll",
+        "Character",
+        "Career",
+        "Skill",
+        "Item"
+      ]
     }
   ]
 }

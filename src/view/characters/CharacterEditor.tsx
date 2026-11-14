@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { EditorView, ItemChoice, SkillChoice } from '../../controller';
 import type { ItemKind, Upp } from '../../model';
-import { characteristicLabel, hex, kindNames } from '../format';
+import { characteristicLabel, hex, kindNames, roleText } from '../format';
 import { useGame } from '../game-context';
 import { CloseIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
@@ -33,6 +33,9 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
     wields: editor.input.wields ?? '',
     // Leer heißt: keine Rüstung.
     wears: editor.input.wears ?? '',
+    // Nur bei NSC: leer heißt kein Ort (reist mit der Gruppe).
+    place: editor.input.place ?? '',
+    role: editor.input.role ?? 'other',
   }));
   const [confirmRemove, setConfirmRemove] = useState(false);
   const isNew = editor.id === undefined;
@@ -49,9 +52,10 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
 
   /** Speichert; der Knopf unten steht außerhalb des Formulars und ruft es direkt auf. */
   const save = () => {
-    const { homeworld, primary, secondary, wields, wears, ...rest } = form;
+    const { homeworld, primary, secondary, wields, wears, place, role, ...rest } = form;
     game.saveCharacter({
       ...rest,
+      ...(form.npc ? { role, ...(place ? { place } : {}) } : {}),
       credits: Number(form.credits === '' ? 0 : form.credits),
       skills: form.skills.map((s) => ({ of: s.of, level: Number(s.level) })),
       possessions: form.possessions.map((p) => ({ of: p.of, count: Number(p.count) })),
@@ -67,7 +71,7 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
     <div className="overlay">
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="editor-title">
         <div className="sheet-head" style={{ alignItems: 'center' }}>
-          <h2 id="editor-title">{isNew ? 'Neuer Charakter' : 'Charakter bearbeiten'}</h2>
+          <h2 id="editor-title">{isNew ? (editor.input.npc ? 'Neuer NSC' : 'Neuer Charakter') : 'Charakter bearbeiten'}</h2>
           <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={() => game.cancelEdit()}>
             <CloseIcon />
           </button>
@@ -269,9 +273,34 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
             <input type="checkbox" checked={form.npc ?? false} onChange={(e) => setForm({ ...form, npc: e.target.checked })} />
             <span>
               NSC
-              <span className="small-label">Kein Spielercharakter: steht unter „NSC“, nicht in der Leiste oben und nicht im Shop.</span>
+              <span className="small-label">Kein Spielercharakter: steht im Reiter NSC, nicht in der Leiste oben und nicht im Shop.</span>
             </span>
           </label>
+          {form.npc && (
+            <>
+              <label className="field">
+                <span>Rolle</span>
+                <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as typeof form.role })}>
+                  {editor.roles.map((r) => (
+                    <option key={r} value={r}>
+                      {roleText[r]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>Ort</span>
+                <select value={form.place} onChange={(e) => setForm({ ...form, place: e.target.value })}>
+                  <option value="">keiner (reist mit der Gruppe)</option>
+                  {editor.worlds.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.name} ({w.id} · {w.uwp})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
+          )}
           {!isNew && (
             <label className="toggle">
               <input type="checkbox" checked={form.dead ?? false} onChange={(e) => setForm({ ...form, dead: e.target.checked })} />

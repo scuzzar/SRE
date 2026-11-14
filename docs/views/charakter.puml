@@ -84,10 +84,26 @@ hide <<value>> stereotype
     dead: boolean
     retired: boolean
     npc: boolean
+    role: NpcRole [0..1]
     /wounds: Wounds
     /hurt: number [0..1]
     /state: WoundState
     /blows: number [0..1]
+  }
+  enum NpcRole <<value>> $charakter {
+    patron
+    encounter
+    enemy
+    rival
+    ally
+    contact
+    official
+    merchant
+    broker
+    captain
+    crew
+    passenger
+    other
   }
   class Upp <<value>> $charakter {
     str: number
@@ -127,6 +143,7 @@ hide <<value>> stereotype
   class Recovery $kampf
   class Encounter $begegnung
   class Distance $begegnung
+  class Patron <<reference>> $begegnung
   class AnimalRow $begegnung
 
 ' Referenzdaten
@@ -162,6 +179,9 @@ LowBerth "*" --> "0..1" Character : for
 Generation ..> Character : on finish
 Character "1" *-- "0..1" Career : career
 Character "*" --> "0..1" Hex : homeworld
+Character "*" --> "0..1" Hex : place
+Character "*" --> "0..1" Patron : patron
+Character --> NpcRole
 CareerRoll --> "0..1" Characteristic : of
 CareerRoll "*" --> "0..1" Skill : chosen
 

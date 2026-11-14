@@ -158,7 +158,7 @@ export function setTerrain(campaign: Campaign, terrain: string | undefined): Cam
 }
 
 /** Ein Name von der Tafel NSC: ein Namensfeld zufällig, daraus Vor- und Nachname. */
-function npcName(random: Random): string {
+export function npcName(random: Random): string {
   const slot = slotWithId(nameSlotIds[random.int(0, nameSlotIds.length - 1)]!);
   return slot.columns
     .map((column) => {
@@ -743,7 +743,9 @@ export function adoptNpc(campaign: Campaign, id: string, asNpc: boolean): Campai
   const encounter = encounterOfNpc(campaign, id);
   const rest = Object.fromEntries(Object.entries(encounter).filter(([key]) => key !== 'leader' || encounter.leader !== id)) as unknown as Encounter;
   const without: Encounter = { ...rest, npcs: encounter.npcs.filter((n) => n.id !== id) };
-  return adoptCharacter({ ...campaign, encounters: campaign.encounters.map((e) => (e.id === encounter.id ? without : e)) }, { ...npc, npc: asNpc });
+  // Als dauerhafter NSC hat er die Rolle Begegnung und lebt auf dem Aufenthaltsort (2026-11-14).
+  const adopted: Character = asNpc ? { ...npc, npc: true, role: 'encounter', ...(campaign.location === undefined ? {} : { place: campaign.location }) } : { ...npc, npc: false };
+  return adoptCharacter({ ...campaign, encounters: campaign.encounters.map((e) => (e.id === encounter.id ? without : e)) }, adopted);
 }
 
 /** Ein NSC aus Spielständen von vor 2026-11-08c: kein Charakter, sondern eine eigene Art. */
