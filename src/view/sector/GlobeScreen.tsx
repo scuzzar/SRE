@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { GlobeView, LogItem } from '../../controller';
 import { useGame } from '../game-context';
-import { CloseIcon } from '../icons';
+import { CloseIcon, PencilIcon } from '../icons';
 import { cellAt, radiusOf, renderGlobe, screenOf, type Camera, type Viewport } from './globe-render';
 import { HappenedList } from './HappenedList';
 
@@ -42,6 +42,8 @@ export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; 
   const [panel, setPanel] = useState<Panel>(undefined);
   const [confirmReroll, setConfirmReroll] = useState(false);
   const [npcToMove, setNpcToMove] = useState('');
+  const [renaming, setRenaming] = useState<number | undefined>(undefined);
+  const [newName, setNewName] = useState('');
 
   // Die Karte füllt den Platz.
   useLayoutEffect(() => {
@@ -339,7 +341,38 @@ export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; 
           <>
             <div className="globe-sheet-head">
               <span className="globe-handle" aria-hidden />
-              <h3>{picked.cities.length > 0 ? picked.cities[0]!.split(':')[0] : picked.landform}</h3>
+              {picked.cities[0] && renaming === picked.cities[0].index ? (
+                <form
+                  className="globe-rename"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    game.renameCity(renaming, newName);
+                    setRenaming(undefined);
+                  }}
+                >
+                  <input aria-label="Name der Stadt" value={newName} autoFocus onChange={(e) => setNewName(e.target.value)} />
+                  <button type="submit" className="primary compact" disabled={!newName.trim()}>
+                    OK
+                  </button>
+                </form>
+              ) : (
+                <h3>
+                  {picked.cities[0]?.name ?? picked.landform}
+                  {picked.cities[0] && (
+                    <button
+                      type="button"
+                      className="icon-button globe-pencil"
+                      aria-label="Stadt umbenennen"
+                      onClick={() => {
+                        setRenaming(picked.cities[0]!.index);
+                        setNewName(picked.cities[0]!.name);
+                      }}
+                    >
+                      <PencilIcon />
+                    </button>
+                  )}
+                </h3>
+              )}
               <button type="button" className="icon-button" aria-label="Feld schließen" onClick={() => game.pickCell(undefined)}>
                 <CloseIcon />
               </button>
@@ -348,8 +381,8 @@ export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; 
               {picked.landform} · {picked.position} · {picked.temperature}
             </p>
             <ul className="globe-facts">
-              {picked.cities.map((c) => (
-                <li key={c}>{c}</li>
+              {picked.cities.map((c, i) => (
+                <li key={c.index}>{i === 0 ? c.detail : `${c.name}: ${c.detail}`}</li>
               ))}
               {picked.towns > 0 && <li>{picked.towns === 1 ? '1 Kleinstadt' : `${picked.towns} Kleinstädte`}</li>}
               {picked.volcano && <li>{picked.volcano}</li>}
@@ -443,6 +476,24 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
     ctx.lineWidth = scale;
     ctx.fill();
     ctx.stroke();
+  }
+  // Namen wie auf einer Karte: ab etwas Zoom die Hauptstädte, weiter hinein alle Städte.
+  if (camera.zoom >= 1.8) {
+    ctx.font = `600 ${Math.round(11 * scale)}px system-ui, sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    for (const c of globe.cities) {
+      if (c.cell === undefined || (c.rank !== 'primary' && camera.zoom < 3)) continue;
+      const p = at(c.cell);
+      if (!p) continue;
+      const x = p.x + 13 * scale;
+      ctx.lineWidth = 3 * scale;
+      ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+      ctx.strokeText(c.label, x, p.y);
+      ctx.fillStyle = 'rgba(255,248,225,0.98)';
+      ctx.fillText(c.label, x, p.y);
+    }
   }
   for (const e of globe.events) badge(e.cell, 8, -8, 'rgba(255,170,60,0.95)', e.count > 9 ? '9+' : String(e.count));
   const npcCells = new Map<number, number>();

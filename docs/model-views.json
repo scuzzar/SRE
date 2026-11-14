@@ -292,7 +292,7 @@
       "id": "2026-11-14k",
       "file": "2026-11-14-staedtenamen",
       "title": "Städtenamen: jede Haupt- und Nebenstadt hat einen Namen",
-      "approved": false,
+      "approved": true,
       "show": [
         "SurfaceMap"
       ]

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Random } from './ports';
 import { adjacent, cellCount, nearestCell, surfaceGrid } from './surface-grid';
-import { bookRow, cellTemperature, checkSurfaceMap, generateSurfaceMap, isWaterLandform, landformAt, rollDigit19, type MapWorld } from './surface-map';
+import { bookRow, cellTemperature, checkSurfaceMap, cityName, generateSurfaceMap, isWaterLandform, landformAt, rollDigit19, type MapWorld } from './surface-map';
 
 /** Ein kleiner Zufallsgenerator mit festem Startwert, damit die Tests gleich ausgehen. */
 function seeded(seed: number): Random {
@@ -153,6 +153,19 @@ describe('Erzeugen der Oberflächenkarte', () => {
     const { map } = generateSurfaceMap(terra, seeded(5));
     expect(checkSurfaceMap({ ...map, landforms: map.landforms.slice(1) }, 8, 9)).toMatch(/Felder/);
     expect(checkSurfaceMap({ ...map, rivers: [[0, 5000]] }, 8, 9)).toMatch(/springt/);
-    expect(checkSurfaceMap({ ...map, cities: [{ population: 3, multiplier: 0, rank: 'primary' }] }, 8, 9)).toMatch(/ungültige/);
+    expect(checkSurfaceMap({ ...map, cities: [{ name: 'X', population: 3, multiplier: 0, rank: 'primary' }] }, 8, 9)).toMatch(/ungültige/);
+  });
+});
+
+describe('Städtenamen (2026-11-14k)', () => {
+  it('nimmt keinen Namen doppelt und setzt zusammen, wenn die Liste ausgeht', () => {
+    const random = seeded(8);
+    const used = new Set<string>();
+    for (let k = 0; k < 2000; k++) {
+      const name = cityName(k % 2 ? 'alien' : 'earthly', random, used);
+      expect(used.has(name)).toBe(false);
+      used.add(name);
+    }
+    expect(used.size).toBe(2000);
   });
 });

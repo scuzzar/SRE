@@ -176,7 +176,7 @@ test('Globus: aus der Kopfzeile öffnen, Feld antippen, zur Weltkarte zurück', 
   await globe.getByRole('button', { name: /^Orte/ }).click();
   const places = globe.getByRole('region', { name: 'Orte' });
   await expect(places).toContainText('1 Feld ≈ 251 km');
-  await places.getByRole('button', { name: /Hauptstadt 1/ }).click();
+  await places.getByRole('button', { name: /Hauptstadt ·/ }).click();
   await expect(places).toHaveCount(0);
   await expect(globe.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('°C im Jahresmittel');
   // Die Liste der Felder mit Einträgen; noch ist nichts geschehen.

@@ -3,6 +3,7 @@
 // dort sind hier als „Abschnitt n“ genannt. Die Karte entsteht in einem Zug und wird nur als Werte
 // gespeichert, gepackt: die Geländeart als ein Zeichen je Feld in der Reihenfolge des Rasters.
 
+import { cityNames } from '../data';
 import type { Random } from './ports';
 import { adjacent, BOOK_CELLS_PER_EDGE, cellCount, DEGREES_PER_ROW, distances, surfaceGrid, type SurfaceGrid } from './surface-grid';
 
@@ -32,6 +33,8 @@ export const ports: readonly Port[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 /** Eine Haupt- oder Nebenstadt. Ohne Feld liegt sie im Orbit. */
 export interface City {
   readonly cell?: number;
+  /** Der Name der Stadt (2026-11-14k); nie leer. */
+  readonly name: string;
   /** Bevölkerungsziffer: die Stadt hat multiplier × 10^population Einwohner. */
   readonly population: number;
   readonly multiplier: number;
@@ -79,6 +82,39 @@ export interface MapWorld {
     readonly life: boolean;
   };
   readonly populationMultiplier?: number;
+  /** Der Name der Welt; die Hauptstadt kann ihn tragen. */
+  readonly name?: string;
+}
+
+/**
+ * Ein Städtename, der noch nicht in `used` steht: zuerst aus der fertigen Liste der Klangart, dann aus
+ * Bausteinen zusammengesetzt, zuletzt mit einer Nummer.
+ */
+export function cityName(style: 'earthly' | 'alien', random: Random, used: ReadonlySet<string>): string {
+  const list = cityNames[style];
+  for (let tries = 0; tries < 40; tries++) {
+    const name = list[random.int(0, list.length - 1)]!;
+    if (!used.has(name)) return name;
+  }
+  const free = list.filter((n) => !used.has(n));
+  if (free.length) return free[random.int(0, free.length - 1)]!;
+  const { roots, patterns, onsets, nuclei, codas } = cityNames.parts;
+  const pick = <T>(items: readonly T[]) => items[random.int(0, items.length - 1)]!;
+  for (let tries = 0; tries < 200; tries++) {
+    let name: string;
+    if (style === 'earthly') name = pick(patterns).replace('{r}', pick(roots));
+    else {
+      const syllables = 2 + random.int(0, 1);
+      name = '';
+      for (let k = 0; k < syllables; k++) name += pick(onsets) + pick(nuclei);
+      name += pick(codas);
+      name = name[0]!.toUpperCase() + name.slice(1);
+    }
+    if (!used.has(name)) return name;
+  }
+  let n = 2;
+  while (used.has(`${list[0]} ${n}`)) n++;
+  return `${list[0]} ${n}`;
 }
 
 export function landformAt(map: SurfaceMap, cell: number): Landform {
@@ -174,8 +210,8 @@ export interface GeneratedMap {
 }
 
 /** Erzeugt die Oberflächenkarte einer Welt ab Größe 1 in einem Zug (Reihenfolge wie im Konzept). */
-export function generateSurfaceMap(world: MapWorld, random: Random): GeneratedMap {
-  return new Generator(world, random).run();
+export function generateSurfaceMap(world: MapWorld, random: Random, taken: ReadonlySet<string> = new Set()): GeneratedMap {
+  return new Generator(world, random, taken).run();
 }
 
 interface Mass {
@@ -206,6 +242,7 @@ class Generator {
   constructor(
     private readonly world: MapWorld,
     private readonly random: Random,
+    private readonly taken: ReadonlySet<string> = new Set(),
   ) {
     this.grid = surfaceGrid(world.size);
     this.n = this.grid.n;
@@ -1096,7 +1133,24 @@ class Generator {
     listed.push(...primaries.slice(0, MAX_PRIMARY), ...secondaries.slice(0, MAX_SECONDARY));
     this.assignPorts(listed);
     this.orbitalCities(listed, P, multiplier);
-    return this.placeCities(listed, townCount, townDigit);
+    const placed = this.placeCities(listed, townCount, townDigit);
+    return { cities: this.nameCities(placed.cities), towns: placed.towns };
+  }
+
+  /**
+   * Städtenamen (2026-11-14k): je Welt eine Klangart (1–4 auf 1W6 irdisch, sonst fremdartig), auf der
+   * ganzen Kampagne ohne Doppel (`taken`). Die Hauptstadt trägt bei 1–2 auf 1W6 den Namen der Welt.
+   */
+  private nameCities(cities: readonly City[]): City[] {
+    const used = new Set(this.taken);
+    const style = this.d6() <= 4 ? 'earthly' : 'alien';
+    return cities.map((city, i) => {
+      let name: string;
+      if (i === 0 && this.world.name && !used.has(this.world.name) && this.d6() <= 2) name = this.world.name;
+      else name = cityName(style, this.random, used);
+      used.add(name);
+      return { ...city, name };
+    });
   }
 
   /** Zahl und Größe der Städte (Buch S. 72–73, Schritte 2 und 3). */
@@ -1232,7 +1286,7 @@ class Generator {
     let fallback = -1;
     for (const city of listed) {
       if (city.orbit) {
-        cities.push({ population: city.population, multiplier: city.multiplier, rank: city.rank, ...(city.port ? { port: city.port } : {}) });
+        cities.push({ name: '', population: city.population, multiplier: city.multiplier, rank: city.rank, ...(city.port ? { port: city.port } : {}) });
         continue;
       }
       let best = -1;
@@ -1280,7 +1334,7 @@ class Generator {
         const near = distances(this.grid, [best], () => true, this.length(4));
         for (let c = 0; c < cells; c++) if (near[c]! >= 0) penalty[c]! += 2;
       }
-      cities.push({ cell: best, population: city.population, multiplier: city.multiplier, rank: city.rank, ...(city.port ? { port: city.port } : {}) });
+      cities.push({ cell: best, name: '', population: city.population, multiplier: city.multiplier, rank: city.rank, ...(city.port ? { port: city.port } : {}) });
     }
     // Kleinstädte: zufällig auf erlaubte Felder, gewichtet mit der Wertung und der Nähe zu Städten.
     const towns = new Map<number, number>();
@@ -1409,6 +1463,7 @@ export function checkSurfaceMap(map: SurfaceMap, size: number, population: numbe
   }
   for (const city of map.cities ?? []) {
     if (city.cell !== undefined && !inGrid(city.cell)) return 'Eine Stadt der Oberflächenkarte liegt außerhalb des Rasters.';
+    if (typeof city.name !== 'string' || !city.name.trim()) return 'Eine Stadt der Oberflächenkarte hat keinen Namen.';
     if (!Number.isInteger(city.population) || city.population < 0 || !Number.isInteger(city.multiplier) || city.multiplier < 1 || city.multiplier > 9) return 'Eine Stadt der Oberflächenkarte hat ungültige Werte.';
   }
   if (population < 1 && ((map.cities?.length ?? 0) > 0 || (map.towns?.length ?? 0) > 0)) return 'Eine Welt ohne Bevölkerung hat keine Städte.';

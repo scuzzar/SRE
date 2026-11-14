@@ -119,6 +119,8 @@ import {
   nameWorld,
   canHaveMap,
   withSurfaceMap,
+  cityNamesTaken,
+  renameCity,
   mapLocked,
   moveParty,
   moveNpc,
@@ -1744,7 +1746,7 @@ export class GameController {
     this.inWorld((hexes, at) => {
       const hex = hexAt(hexes, at.column, at.row);
       if (!hex || !canHaveMap(hex)) throw new DomainError('Diese Welt hat keine Oberfläche für einen Globus.');
-      return { hexes: hex.map ? hexes : hexes.map((h) => (h === hex ? withSurfaceMap(h, this.deps.random) : h)), world: at };
+      return { hexes: hex.map ? hexes : hexes.map((h) => (h === hex ? withSurfaceMap(h, this.deps.random, cityNamesTaken(hexes)) : h)), world: at };
     });
     if (!this.state.worldError) this.update({ globe: { picked: undefined } });
   }
@@ -1773,9 +1775,14 @@ export class GameController {
   rerollMap(): void {
     this.inWorld((hexes, at) => {
       if (mapLocked(this.campaign, at.column, at.row)) throw new DomainError('Gruppe, NSC oder Logeinträge stehen auf dieser Karte; neu würfeln geht nicht mehr.');
-      return { hexes: hexes.map((h) => (h.column === at.column && h.row === at.row ? withSurfaceMap(h, this.deps.random) : h)), world: at };
+      return { hexes: hexes.map((h) => (h.column === at.column && h.row === at.row ? withSurfaceMap(h, this.deps.random, cityNamesTaken(hexes, h)) : h)), world: at };
     });
     if (this.state.globe) this.update({ globe: { picked: undefined } });
+  }
+
+  /** Benennt eine Stadt der offenen Welt um. */
+  renameCity(index: number, name: string): void {
+    this.inWorld((hexes, at) => ({ hexes: renameCity(hexes, at.column, at.row, index, name), world: at }));
   }
 
   /** Der Ort des angetippten Feldes auf dem Globus: die erste Stadt darauf, sonst das Feld. */

@@ -330,7 +330,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > und `Character.place` zeigen auf einen `Place` statt direkt auf ein `Hex`. Der Ausschnitt dazu
 > liegt unter [`changes/2026-11-14-orte.png`](changes/2026-11-14-orte.png).
 
-> **Offen, noch nicht freigegeben** (Kennzeichen 2026-11-14k): **Städtenamen** (siehe
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14k): **Städtenamen** (siehe
 > *Oberflächenkarte*). Jede Haupt- und Nebenstadt hat einen Namen. Neu im Bild: `City.name`. Der
 > Ausschnitt dazu liegt unter [`changes/2026-11-14-staedtenamen.png`](changes/2026-11-14-staedtenamen.png).
 
@@ -363,7 +363,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-die Änderung Städtenamen (2026-11-14k).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -2200,7 +2200,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     es nur in der Anzeige. Bei Größe 8 sind das etwa 10 KB je Karte.
   - Eine Stadt ist ein eigener Gegenstand (blau): Sie hat einen Namen, und Orte verweisen auf sie
     (siehe *Orte*).
-  - **Städtenamen** (offen, 2026-11-14k): Jede Haupt- und Nebenstadt bekommt beim Erzeugen der
+  - **Städtenamen** (freigegeben am 14. November 2026, 2026-11-14k): Jede Haupt- und Nebenstadt bekommt beim Erzeugen der
     Karte einen Namen aus den Referenzdaten *Städtenamen*, auf der ganzen Kampagne ohne Doppel. Die
     Hauptstadt (die erste Stadt) trägt bei 1–2 auf 1W6 den Namen der Welt. Den Namen kann man im
     Feld unten auf dem Globus ändern; ein leerer Name geht nicht. Karten von vor dieser Änderung

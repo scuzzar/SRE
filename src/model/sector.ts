@@ -423,7 +423,7 @@ export function canHaveMap(hex: Hex): boolean {
  * Erzeugt die Oberflächenkarte einer Welt (neu oder als Ersatz) und gibt das Hexfeld mit Karte
  * zurück; den Bevölkerungsmultiplikator würfelt sie nur, wenn die Welt noch keinen hat.
  */
-export function withSurfaceMap(hex: Hex, random: Random): Hex {
+export function withSurfaceMap(hex: Hex, random: Random, taken: ReadonlySet<string> = new Set()): Hex {
   if (!canHaveMap(hex)) throw new DomainError(`Die Welt im Feld ${hexId(hex.column, hex.row)} kann keine Oberflächenkarte haben.`);
   const u = hex.uwp;
   const { map, populationMultiplier } = generateSurfaceMap(
@@ -437,10 +437,30 @@ export function withSurfaceMap(hex: Hex, random: Random): Hex {
       temperature: hex.temperature!,
       surface: hex.surface!,
       ...(hex.populationMultiplier === undefined ? {} : { populationMultiplier: hex.populationMultiplier }),
+      ...(hex.name === undefined ? {} : { name: hex.name }),
     },
     random,
+    taken,
   );
   return { ...hex, map, ...(populationMultiplier === undefined ? {} : { populationMultiplier }) };
+}
+
+/** Die Namen aller Städte auf allen Oberflächenkarten, außer der des Feldes `except` (für ihr Neuwürfeln). */
+export function cityNamesTaken(hexes: readonly Hex[], except?: Hex): ReadonlySet<string> {
+  const names = new Set<string>();
+  for (const h of hexes) if (h !== except) for (const c of h.map?.cities ?? []) names.add(c.name);
+  return names;
+}
+
+/** Benennt die Stadt an der Stelle `index` der Karte dieses Feldes um; ein leerer Name geht nicht. */
+export function renameCity(hexes: readonly Hex[], column: number, row: number, index: number, name: string): readonly Hex[] {
+  const hex = hexAt(hexes, column, row);
+  const city = hex?.map?.cities?.[index];
+  if (!hex?.map || !city) throw new DomainError('Diese Stadt gibt es nicht.');
+  const trimmed = name.trim();
+  if (!trimmed) throw new DomainError('Eine Stadt braucht einen Namen.');
+  const cities = hex.map.cities!.map((c, i) => (i === index ? { ...c, name: trimmed } : c));
+  return hexes.map((h) => (h === hex ? { ...hex, map: { ...hex.map!, cities } } : h));
 }
 
 /** Die Handelscodes einer Welt, sobald das UWP vollständig ist: jeder, dessen Bedingungen alle erfüllt sind. */

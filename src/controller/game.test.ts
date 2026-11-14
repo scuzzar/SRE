@@ -1815,6 +1815,25 @@ describe('Globus (Oberflächenkarte)', () => {
   });
 });
 
+describe('Städtenamen (2026-11-14k)', () => {
+  it('jede Stadt hat einen Namen, ohne Doppel; umbenennen; alte Karten heißen Stadt 1, 2 …', async () => {
+    const { game } = await started();
+    game.openGlobeAt(4, 5);
+    const cities = game['campaign'].hexes[0]!.map!.cities!;
+    expect(cities.length).toBeGreaterThan(0);
+    expect(cities.every((c) => c.name.trim().length > 0)).toBe(true);
+    expect(new Set(cities.map((c) => c.name)).size).toBe(cities.length);
+    game.renameCity(0, '  Neu-Kessra ');
+    expect(game['campaign'].hexes[0]!.map!.cities![0]!.name).toBe('Neu-Kessra');
+    expect(game.snapshot().globe?.cities[0]?.label).toBe('Neu-Kessra');
+    game.renameCity(0, '   ');
+    expect(game.snapshot().world?.error).toMatch(/braucht einen Namen/);
+    const file = JSON.parse(toCampaignFile(game['campaign']));
+    for (const c of file.campaign.hexes[0].map.cities) delete c.name;
+    expect(fromCampaignFile(JSON.stringify(file), 'c2').hexes[0]!.map!.cities![1]!.name).toBe('Stadt 2');
+  });
+});
+
 describe('Orte (2026-11-14j)', () => {
   it('neue Logeinträge bekommen den Aufenthaltsort, die Gruppe lässt sich auf dem Globus versetzen', async () => {
     const { game, repository } = await started();
@@ -1834,7 +1853,7 @@ describe('Orte (2026-11-14j)', () => {
     expect(game['campaign'].log[last]?.place).toEqual({ world: '0405', city: 0 });
     expect(game.snapshot().globe?.picked?.happened).toEqual([last]);
     expect(game.snapshot().world?.happened).toEqual([last - 1, last]);
-    expect(game.snapshot().globe?.events).toEqual([{ cell: capital.cell, count: 1, latest: last, label: 'Hauptstadt 1' }]);
+    expect(game.snapshot().globe?.events).toEqual([{ cell: capital.cell, count: 1, latest: last, label: capital.label }]);
     // Jetzt zeigen Orte auf die Karte: neu würfeln ist gesperrt.
     expect(game.snapshot().globe?.rerollBlocker).toMatch(/geht nicht mehr/);
     const before = game.snapshot().globe!.map;

@@ -556,6 +556,19 @@ Eine Stadt mit **Bevölkerungsziffer d** und **Multiplikator m** hat m × 10^d E
 Beispiel des Buchs (P = A, M = 8, also 80 Milliarden): 3a: 3W6 = 9 < 10, Multiplikatoren 2 und dann
 5 (gewürfelt 9, gekappt auf den Rest), also eine Stadt mit 20 und eine mit 50 Milliarden.
 
+### Städtenamen (2026-11-14k)
+
+- Jede Haupt- und Nebenstadt bekommt beim Erzeugen einen Namen, auf der ganzen Kampagne ohne Doppel.
+- Je Welt eine Klangart: bei 1–4 auf 1W6 **irdisch** (wie Kolonisten sie vergeben: *New Hallstatt*,
+  *Port Tamsin*, *Draycott Station*), sonst **fremdartig** (*Tolmira*, *Ys Serqam*, *Sia-Tho*).
+- Die Hauptstadt trägt bei 1–2 auf 1W6 den Namen der Welt.
+- Die Namen stehen in `src/data/city-names.json`: 780 irdische und 780 fremdartige, erzeugt mit
+  einem Skript aus handgeschriebenen Bausteinen (339 Wortstämme, 25 Muster wie *New …*, *Port …*,
+  *… Landing*, *… Downport*, und Silben). Gehen die fertigen Namen aus, setzt die App aus denselben
+  Bausteinen weitere zusammen.
+- Umbenennen geht im Feld unten auf dem Globus (Stift neben dem Namen). Auf der Karte stehen die
+  Namen der Hauptstädte ab etwas Zoom, weiter hinein alle.
+
 ### 10b. Rang der Städte (S. 74)
 
 - **Hauptstädte** (*primary*): die Städte mit der höchsten Bevölkerungsziffer. Man darf mehrere
@@ -696,7 +709,7 @@ So steht es im Domänenmodell (Änderung 2026-11-14i, siehe dort *Oberflächenka
 | Oberflächenfelder (`SurfaceCell`) | je Feld die Geländeart (Wasser, Eis auf Wasser, Eis auf Land, Tundra, Gebirge, zerklüftet, Wüste, Dschungel, Sumpf, offen/Wald, besiedelt), die Zahl der Kleinstädte und ob ein großer Vulkan oder ein Vulkanfeld darauf liegt |
 | Flüsse (`River`) | die Felder von der Quelle zur Mündung |
 | Straßen (`Road`) | die Felder der Straße |
-| Städte (`City`) | je Haupt- und Nebenstadt: Feld (keins heißt Orbit), Bevölkerungsziffer, Multiplikator, Rang, Hafen; später ein Name |
+| Städte (`City`) | je Haupt- und Nebenstadt: Name, Feld (keins heißt Orbit), Bevölkerungsziffer, Multiplikator, Rang, Hafen |
 
 - **Gepackt:** Im Spielstand steht die Geländeart als Text mit einem Zeichen je Feld in der
   Reihenfolge des Rasters; Kleinstädte und Vulkane nur für Felder, die welche haben; Flüsse,
@@ -774,6 +787,4 @@ Als eigener Bildschirm über der Weltkarte:
 
 1. **Geschwindigkeiten der Fahrzeuge** für den Maßstab „ein Feld ist eine Tagesreise“ aus den
    Regeln prüfen.
-2. **Namen der Städte:** Die Hauptstadt könnte den Namen der Welt tragen, die übrigen später aus
-   den Namenstabellen.
 3. **Alle Hausregeln (⚑)** prüft der Owner bei der Freigabe im Domänenmodell.

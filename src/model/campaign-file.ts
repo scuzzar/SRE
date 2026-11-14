@@ -161,6 +161,7 @@ const MapSchema = z
       .array(
         z.object({
           cell: z.number().int().optional(),
+          name: z.string().optional(),
           population: z.number().int(),
           multiplier: z.number().int(),
           rank: z.enum(['primary', 'secondary']),
@@ -505,7 +506,8 @@ function mapOf(map: z.infer<typeof MapSchema>): SurfaceMap {
     ...(map.volcanoes ? { volcanoes: map.volcanoes.map(([c, k]) => [c, k] as const) } : {}),
     ...(map.rivers ? { rivers: map.rivers.map((r) => [...r]) } : {}),
     ...(map.roads ? { roads: map.roads.map((r) => [...r]) } : {}),
-    ...(map.cities ? { cities: map.cities.map((c) => stripped(c) as City) } : {}),
+    // Karten von vor den Städtenamen (2026-11-14k): „Stadt 1“, „Stadt 2“ …
+    ...(map.cities ? { cities: map.cities.map((c, i) => ({ ...(stripped(c) as City), name: c.name ?? `Stadt ${i + 1}` })) } : {}),
   };
 }
 

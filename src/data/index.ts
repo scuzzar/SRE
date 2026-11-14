@@ -20,6 +20,7 @@ import worlds from './worlds.json';
 export * from './schema';
 export * from './worlds';
 export { nameSlotIds, nameSounds, type NameSound } from './names';
+export { cityNames, type CityNames } from './city-names';
 
 /** Die Referenzdaten, beim Start gegen die Schemas geprüft. Ein Fehler hier bricht den Start ab. */
 export const referenceData: ReferenceData = ReferenceDataSchema.parse({

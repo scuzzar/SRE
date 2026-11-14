@@ -7801,3 +7801,26 @@ button:disabled {
 .globe-panel > p {
   margin: 8px 14px;
 }
+
+.globe-sheet-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.globe-pencil {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+}
+
+.globe-rename {
+  display: flex;
+  gap: 8px;
+  flex: 1 1 auto;
+}
+
+.globe-rename input {
+  flex: 1 1 auto;
+  min-width: 0;
+}

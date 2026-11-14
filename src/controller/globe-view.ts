@@ -53,7 +53,8 @@ export interface PickedCell {
   readonly landform: string;
   readonly temperature: string;
   readonly position: string;
-  readonly cities: readonly string[];
+  /** Die Städte auf dem Feld, mit Nummer (zum Umbenennen), Name und Beschreibung. */
+  readonly cities: readonly { readonly index: number; readonly name: string; readonly detail: string }[];
   readonly towns: number;
   readonly volcano: string | undefined;
   readonly river: boolean;
@@ -118,9 +119,8 @@ function portText(port: City['port']): string {
   return port <= 'E' ? `Raumhafen ${port}` : `Landeplatz ${port}`;
 }
 
-function cityLabel(city: City, index: number): string {
-  const kind = city.cell === undefined ? 'Orbitalstadt' : city.rank === 'primary' ? (index === 0 ? 'Hauptstadt' : 'Großstadt') : 'Stadt';
-  return `${kind} ${index + 1}`;
+function cityKind(city: City, index: number): string {
+  return city.cell === undefined ? 'Orbitalstadt' : city.rank === 'primary' ? (index === 0 ? 'Hauptstadt' : 'Großstadt') : 'Stadt';
 }
 
 function position(grid: SurfaceGrid, cell: number): string {
@@ -142,8 +142,8 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
       index,
       cell: city.cell,
       rank: city.rank,
-      label: cityLabel(city, index),
-      detail: `${peopleText(city.multiplier, city.population)} Einwohner · ${portText(city.port)}`,
+      label: city.name,
+      detail: `${cityKind(city, index)} · ${peopleText(city.multiplier, city.population)} Einwohner · ${portText(city.port)}`,
     }),
   );
   const volcanoes = (map.volcanoes ?? []).map(([cell, kind]): GlobeVolcano => ({ cell, label: kind === 'major' ? 'Großer Vulkan' : 'Vulkanfeld' }));
@@ -164,7 +164,7 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
       landform: LANDFORM_NAMES[landformAt(map, picked)],
       temperature: `${Math.round(cellTemperature(size, hex.temperature, grid.lat[picked]!))} °C im Jahresmittel`,
       position: position(grid, picked),
-      cities: cities.filter((c) => c.cell === picked).map((c) => `${c.label}: ${c.detail}`),
+      cities: cities.filter((c) => c.cell === picked).map((c) => ({ index: c.index, name: c.label, detail: c.detail })),
       towns: map.towns?.find(([c]) => c === picked)?.[1] ?? 0,
       volcano: volcano?.label,
       river: (map.rivers ?? []).some((r) => r.includes(picked)),
