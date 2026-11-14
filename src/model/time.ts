@@ -103,6 +103,19 @@ export function canSetStartDate(campaign: Campaign): boolean {
  * Neue Logeinträge bekommen den heutigen Spieltag, wenn sie noch keinen haben. Neu ist, was nicht
  * schon im Log von vorher stand.
  */
+/**
+ * Gibt neuen Logeinträgen (die in `before` noch nicht standen) den Aufenthaltsort der Gruppe, falls
+ * sie keinen eigenen Ort haben (2026-11-14j, *Orte*). Eine Reise bekommt so ihr Ziel: Die Gruppe ist
+ * nach ihr dort.
+ */
+export function stampPlaces(before: readonly LogEntry[] | undefined, campaign: Campaign): Campaign {
+  const here = campaign.location;
+  if (!here) return campaign;
+  const old = new Set(before ?? []);
+  if (campaign.log.every((e) => old.has(e) || e.place !== undefined)) return campaign;
+  return { ...campaign, log: campaign.log.map((e) => (old.has(e) || e.place !== undefined ? e : { ...e, place: here })) };
+}
+
 export function stampDays(before: readonly LogEntry[] | undefined, campaign: Campaign): Campaign {
   const old = new Set(before ?? []);
   if (campaign.log.every((e) => old.has(e) || e.day !== undefined)) return campaign;

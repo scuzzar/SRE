@@ -110,6 +110,7 @@ import {
   type PassageId,
   rollPatronList,
   stampDays,
+  stampPlaces,
   patronOfRoll,
   type EncounterCheck,
   writeNote,
@@ -118,6 +119,10 @@ import {
   nameWorld,
   canHaveMap,
   withSurfaceMap,
+  mapLocked,
+  moveParty,
+  moveNpc,
+  type Place,
   noteWorld,
   discardWorld,
   hexAt,
@@ -1432,7 +1437,7 @@ export class GameController {
     const at = this.state.world;
     if (!at) throw new DomainError('Es ist keine Weltkarte offen.');
     const id = hexId(at.column, at.row);
-    this.change(setLocation(this.campaign, this.campaign.location === id ? undefined : id));
+    this.change(setLocation(this.campaign, this.campaign.location?.world === id ? undefined : id));
   }
 
   /** Bucht Geld: Einnahme oder Ausgabe frei, Einzahlung oder Auszahlung mit einem Charakter. */
@@ -1764,10 +1769,43 @@ export class GameController {
     this.update({ globe: { picked: cell } });
   }
 
-  /** Ersetzt die Oberflächenkarte der offenen Welt durch eine neu gewürfelte. */
+  /** Ersetzt die Oberflächenkarte der offenen Welt durch eine neu gewürfelte; gesperrt, sobald ein Ort darauf zeigt. */
   rerollMap(): void {
-    this.inWorld((hexes, at) => ({ hexes: hexes.map((h) => (h.column === at.column && h.row === at.row ? withSurfaceMap(h, this.deps.random) : h)), world: at }));
+    this.inWorld((hexes, at) => {
+      if (mapLocked(this.campaign, at.column, at.row)) throw new DomainError('Gruppe, NSC oder Logeinträge stehen auf dieser Karte; neu würfeln geht nicht mehr.');
+      return { hexes: hexes.map((h) => (h.column === at.column && h.row === at.row ? withSurfaceMap(h, this.deps.random) : h)), world: at };
+    });
     if (this.state.globe) this.update({ globe: { picked: undefined } });
+  }
+
+  /** Der Ort des angetippten Feldes auf dem Globus: die erste Stadt darauf, sonst das Feld. */
+  private pickedPlace(): Place {
+    const at = this.state.world;
+    const cell = this.state.globe?.picked;
+    if (!at || cell === undefined) throw new DomainError('Erst ein Feld auf dem Globus antippen.');
+    const world = hexId(at.column, at.row);
+    const city = hexAt(this.campaign.hexes, at.column, at.row)?.map?.cities?.findIndex((c) => c.cell === cell) ?? -1;
+    return city >= 0 ? { world, city } : { world, cell };
+  }
+
+  /** Versetzt die Gruppe auf das angetippte Feld (bzw. in die Stadt darauf); nur auf der Welt, auf der sie ist. */
+  moveParty(): void {
+    this.onGlobe(() => moveParty(this.campaign, this.pickedPlace()));
+  }
+
+  /** Versetzt einen dauerhaften NSC auf das angetippte Feld (bzw. in die Stadt darauf). */
+  moveNpc(id: string): void {
+    this.onGlobe(() => moveNpc(this.campaign, id, this.pickedPlace()));
+  }
+
+  /** Führt eine Änderung auf dem Globus aus; verletzt sie eine Regel, steht das auf der Weltkarte. */
+  private onGlobe(step: () => Campaign): void {
+    try {
+      this.change(step(), { worldError: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ worldError: error.message });
+    }
   }
 
   /** Würfelt den nächsten Wurf der offenen Welt; braucht sie nur noch die Oberfläche, diese. */
@@ -1880,7 +1918,7 @@ export class GameController {
   private change(campaign: Campaign, rest: Partial<ControllerState> = {}): void {
     if (this.state.campaign && focusOf(this.state.campaign)?.id !== focusOf(campaign)?.id) rest = { ...rest, task: undefined, attack: undefined };
     // Jede Änderung am gespeicherten Stand setzt die Änderungszeit; daran merkt der Abgleich, dass hier etwas neu ist.
-    campaign = touched(stampDays(this.state.campaign?.log, campaign), this.deps.clock);
+    campaign = touched(stampPlaces(this.state.campaign?.log, stampDays(this.state.campaign?.log, campaign)), this.deps.clock);
     const campaigns = this.state.campaigns.map((c) => (c.id === campaign.id ? campaign : c));
     this.update({ ...rest, campaigns, campaign });
     this.persist(() => this.deps.repository.save(campaign), true);

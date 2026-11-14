@@ -1,0 +1,88 @@
+// Ein Ort (Domänenmodell: Place, siehe docs/domain-model.md, *Orte*): immer eine Welt, wahlweise
+// genauer ein Oberflächenfeld oder eine Stadt auf ihrer Oberflächenkarte, nie beides.
+
+import { DomainError } from './errors';
+import type { Campaign } from './campaign';
+import { hexById, hexId, worldOf, type Hex } from './sector';
+
+export interface Place {
+  /** Das Hexfeld der Welt, als Spalte und Zeile (0304). */
+  readonly world: string;
+  /** Ein Oberflächenfeld der Karte dieser Welt. */
+  readonly cell?: number;
+  /** Eine Stadt der Karte dieser Welt (Stelle in ihrer Liste). */
+  readonly city?: number;
+}
+
+/** Ein Ort, der nur die Welt nennt. */
+export function worldPlace(world: string): Place {
+  return { world };
+}
+
+/** Die Welt eines Ortes; ohne Ort keine. */
+export function placeWorld(place: Place | undefined): string | undefined {
+  return place?.world;
+}
+
+/** Das Oberflächenfeld eines Ortes: das genannte Feld oder das Feld der Stadt (eine Orbitalstadt hat keins). */
+export function placeCell(hexes: readonly Hex[], place: Place | undefined): number | undefined {
+  if (!place) return undefined;
+  if (place.cell !== undefined) return place.cell;
+  if (place.city === undefined) return undefined;
+  return hexById(hexes, place.world)?.map?.cities?.[place.city]?.cell;
+}
+
+/** Ob zwei Orte gleich sind. */
+export function samePlace(a: Place | undefined, b: Place | undefined): boolean {
+  return a?.world === b?.world && a?.cell === b?.cell && a?.city === b?.city;
+}
+
+/** Prüft einen Ort: eine fertige Welt; Feld bzw. Stadt gibt es auf ihrer Oberflächenkarte; nicht beides. */
+export function checkPlace(hexes: readonly Hex[], place: Place): void {
+  const world = worldOf(hexes, place.world);
+  if (place.cell !== undefined && place.city !== undefined) throw new DomainError('Ein Ort ist ein Feld oder eine Stadt, nicht beides.');
+  if (place.cell === undefined && place.city === undefined) return;
+  const map = world.map;
+  if (!map) throw new DomainError(`Die Welt ${world.name} hat keine Oberflächenkarte für diesen Ort.`);
+  if (place.cell !== undefined && (!Number.isInteger(place.cell) || place.cell < 0 || place.cell >= map.landforms.length)) throw new DomainError(`Das Feld ${place.cell} gibt es auf ${world.name} nicht.`);
+  if (place.city !== undefined && map.cities?.[place.city] === undefined) throw new DomainError(`Die Stadt ${place.city + 1} gibt es auf ${world.name} nicht.`);
+}
+
+/** Ob ein Ort auf ein Feld oder eine Stadt der Oberflächenkarte dieses Hexfelds zeigt. */
+export function pointsIntoMap(place: Place | undefined, column: number, row: number): boolean {
+  return place !== undefined && place.world === hexId(column, row) && (place.cell !== undefined || place.city !== undefined);
+}
+
+/** Ob die Oberflächenkarte dieses Hexfelds gesperrt ist: Gruppe, ein NSC oder ein Logeintrag zeigt auf ein Feld oder eine Stadt darauf. */
+export function mapLocked(campaign: Campaign, column: number, row: number): boolean {
+  return (
+    pointsIntoMap(campaign.location, column, row) ||
+    campaign.characters.some((c) => pointsIntoMap(c.place, column, row)) ||
+    campaign.log.some((e) => pointsIntoMap(e.place, column, row))
+  );
+}
+
+/** Versetzt die Gruppe auf der Welt, auf der sie ist, auf ein Feld oder in eine Stadt. */
+export function moveParty(campaign: Campaign, place: Place): Campaign {
+  if (campaign.location?.world !== place.world) throw new DomainError('Die Gruppe ist nicht auf dieser Welt; erst hinreisen.');
+  checkPlace(campaign.hexes, place);
+  return { ...campaign, location: place };
+}
+
+/** Versetzt einen dauerhaften NSC an einen Ort; er lebt dann dort. */
+export function moveNpc(campaign: Campaign, id: string, place: Place): Campaign {
+  const npc = campaign.characters.find((c) => c.id === id);
+  if (!npc?.npc) throw new DomainError('Nur einen dauerhaften NSC kann man versetzen.');
+  checkPlace(campaign.hexes, place);
+  return { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? { ...c, place } : c)) };
+}
+
+/** Die Stellen der Logeinträge, die auf dieser Welt geschahen, und, mit `cell`, auf diesem Feld (auch in einer Stadt darauf). */
+export function happenedAt(campaign: Campaign, world: string, cell?: number): readonly number[] {
+  const result: number[] = [];
+  campaign.log.forEach((e, i) => {
+    if (e.place?.world !== world) return;
+    if (cell === undefined || placeCell(campaign.hexes, e.place) === cell) result.push(i);
+  });
+  return result;
+}

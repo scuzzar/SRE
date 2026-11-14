@@ -494,7 +494,7 @@ describe('Shop und Gruppenkasse', () => {
     expect(game.snapshot().combat!.ammo).toMatchObject({ rounds: 19, magazines: 0 });
     await game.whenSaved();
     expect(repository.saved?.bookings).toHaveLength(3);
-    expect(repository.saved?.location).toBe('0101');
+    expect(repository.saved?.location).toEqual({ world: '0101' });
   });
 
   it('zeigt die Waffen mit Magazin daneben und was sie dem Charakter oben taugen', async () => {
@@ -1812,5 +1812,63 @@ describe('Globus (Oberflächenkarte)', () => {
     const file = JSON.parse(toCampaignFile(game['campaign']));
     file.campaign.hexes[0].map.landforms = 'w';
     expect(() => fromCampaignFile(JSON.stringify(file), 'c2')).toThrow(/Felder/);
+  });
+});
+
+describe('Orte (2026-11-14j)', () => {
+  it('neue Logeinträge bekommen den Aufenthaltsort, die Gruppe lässt sich auf dem Globus versetzen', async () => {
+    const { game, repository } = await started();
+    game.rollDice();
+    expect(game['campaign'].log.at(-1)?.place).toEqual({ world: '0405' });
+    game.openGlobeAt(4, 5);
+    const globe = game.snapshot().globe!;
+    const capital = globe.cities[0]!;
+    game.pickCell(capital.cell);
+    expect(game.snapshot().globe?.picked?.city).toBe(0);
+    game.moveParty();
+    expect(game['campaign'].location).toEqual({ world: '0405', city: 0 });
+    expect(game.snapshot().globe?.partyCell).toBe(capital.cell);
+    // Der nächste Eintrag geschieht in der Stadt; „Was hier geschah“ zeigt ihn auf ihrem Feld.
+    game.rollDice();
+    const last = game['campaign'].log.length - 1;
+    expect(game['campaign'].log[last]?.place).toEqual({ world: '0405', city: 0 });
+    expect(game.snapshot().globe?.picked?.happened).toEqual([last]);
+    expect(game.snapshot().world?.happened).toEqual([last - 1, last]);
+    expect(game.snapshot().globe?.events).toEqual([{ cell: capital.cell, count: 1 }]);
+    // Jetzt zeigen Orte auf die Karte: neu würfeln ist gesperrt.
+    expect(game.snapshot().globe?.rerollBlocker).toMatch(/geht nicht mehr/);
+    const before = game.snapshot().globe!.map;
+    game.rerollMap();
+    expect(game.snapshot().globe!.map).toBe(before);
+    expect(game.snapshot().world?.error).toMatch(/geht nicht mehr/);
+    // Alles übersteht die Kampagnendatei.
+    await game.whenSaved();
+    const back = fromCampaignFile(toCampaignFile(repository.saved!), 'c2');
+    expect(back.location).toEqual({ world: '0405', city: 0 });
+    expect(back.log.at(-1)?.place).toEqual({ world: '0405', city: 0 });
+  });
+
+  it('versetzt einen dauerhaften NSC; die Sektorkarte zeigt die Welt mit Zeichen', async () => {
+    const { game } = await started();
+    game.newCharacter(true, 'contact');
+    game.saveCharacter({ ...game.snapshot().editor!.input, name: 'Tenzin' } as never);
+    const tenzin = game['campaign'].characters.find((c) => c.name === 'Tenzin')!;
+    expect(tenzin.place).toEqual({ world: '0405' });
+    game.openGlobeAt(4, 5);
+    game.pickCell(100);
+    game.moveNpc(tenzin.id);
+    const moved = game['campaign'].characters.find((c) => c.id === tenzin.id)!;
+    expect(moved.place?.world).toBe('0405');
+    expect(game.snapshot().globe?.npcs.find((n) => n.id === tenzin.id)?.cell).toBe(100);
+    expect(game.snapshot().sector.find((h) => h.id === '0405')?.marked).toBe(true);
+  });
+
+  it('liest Kampagnendateien von vor den Orten: der Aufenthaltsort als Text wird ein Ort', async () => {
+    const { game } = await started();
+    const file = JSON.parse(toCampaignFile(game['campaign']));
+    file.campaign.location = '0405';
+    expect(fromCampaignFile(JSON.stringify(file), 'c2').location).toEqual({ world: '0405' });
+    file.campaign.location = { world: '0405', cell: 99999 };
+    expect(() => fromCampaignFile(JSON.stringify(file), 'c2')).toThrow(/keine Oberflächenkarte|gibt es/);
   });
 });

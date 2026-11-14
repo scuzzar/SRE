@@ -36,16 +36,16 @@ export function byRole(npcs: readonly Character[]): readonly NpcRoleGroup[] {
  */
 export function npcGroups(campaign: Campaign, all: boolean): readonly NpcWorldGroup[] {
   const living = npcCharacters(campaign).filter((n) => !n.dead);
-  const here = campaign.location;
+  const here = campaign.location?.world;
   if (!all && here !== undefined) {
-    const roles = byRole(living.filter((n) => n.place === undefined || n.place === here));
+    const roles = byRole(living.filter((n) => n.place === undefined || n.place.world === here));
     return roles.length === 0 ? [] : [{ place: here, name: hexById(campaign.hexes, here)?.name, roles }];
   }
-  const places = [...new Set(living.flatMap((n) => (n.place === undefined ? [] : [n.place])))];
+  const places = [...new Set(living.flatMap((n) => (n.place === undefined ? [] : [n.place.world])))];
   const worlds = places
     .map((place) => ({ place, name: hexById(campaign.hexes, place)?.name ?? place }))
     .sort((a, b) => a.name.localeCompare(b.name, 'de'))
-    .map(({ place, name }) => ({ place, name, roles: byRole(living.filter((n) => n.place === place)) }));
+    .map(({ place, name }) => ({ place, name, roles: byRole(living.filter((n) => n.place?.world === place)) }));
   const nowhere = byRole(living.filter((n) => n.place === undefined));
   return [...worlds, ...(nowhere.length === 0 ? [] : [{ place: undefined, name: undefined, roles: nowhere }])];
 }
@@ -69,7 +69,7 @@ export interface NpcTemplate {
 
 /** Warum sich kein NSC erzeugen lässt; `undefined`, wenn es geht. */
 export function generateNpcBlocker(campaign: Campaign): string | undefined {
-  return campaign.location === undefined ? 'Erst den Aufenthaltsort wählen.' : undefined;
+  return campaign.location?.world === undefined ? 'Erst den Aufenthaltsort wählen.' : undefined;
 }
 
 /**
@@ -81,7 +81,7 @@ export function generateNpc(campaign: Campaign, template: NpcTemplate, random: R
   const blocker = generateNpcBlocker(campaign);
   if (blocker) throw new DomainError(blocker);
   serviceOf(template.service);
-  const place = campaign.location!;
+  const place = campaign.location!.world;
   const generation = runCareerIn(campaign.hexes, template.service, random);
   const input = careerInput(stateOf(generation), npcName(random));
   const criminal = template.criminal === true || template.role === 'enemy';

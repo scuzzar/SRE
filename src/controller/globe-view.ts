@@ -1,11 +1,14 @@
 import {
   cellTemperature,
+  happenedAt,
   hexAt,
   hexId,
   landformAt,
+  mapLocked,
+  placeCell,
   surfaceGrid,
+  type Campaign,
   type City,
-  type Hex,
   type Landform,
   type SurfaceGrid,
   type SurfaceMap,
@@ -55,6 +58,19 @@ export interface PickedCell {
   readonly volcano: string | undefined;
   readonly river: boolean;
   readonly road: boolean;
+  /** Die Stadt, in die „hierher“ versetzt: die erste Stadt auf dem Feld. */
+  readonly city: number | undefined;
+  /** Die dauerhaften NSC, die hier leben. */
+  readonly npcs: readonly string[];
+  /** Die Stellen der Logeinträge, die hier geschahen (Was hier geschah). */
+  readonly happened: readonly number[];
+}
+
+/** Ein dauerhafter NSC dieser Welt, mit seinem Feld, wenn er eins hat. */
+export interface GlobeNpc {
+  readonly id: string;
+  readonly name: string;
+  readonly cell: number | undefined;
 }
 
 /** Der Globus einer Welt: Raster und gepackte Karte zum Zeichnen, dazu die Listen in Worten. */
@@ -69,6 +85,15 @@ export interface GlobeView {
   readonly cities: readonly GlobeCity[];
   readonly volcanoes: readonly GlobeVolcano[];
   readonly picked: PickedCell | undefined;
+  /** Die Gruppe ist auf dieser Welt; `partyCell` ist ihr Feld, wenn sie eins hat. */
+  readonly partyHere: boolean;
+  readonly partyCell: number | undefined;
+  /** Die dauerhaften NSC dieser Welt (lebend). */
+  readonly npcs: readonly GlobeNpc[];
+  /** Felder mit Logeinträgen und wie viele. */
+  readonly events: readonly { readonly cell: number; readonly count: number }[];
+  /** Warum die Karte nicht neu gewürfelt werden kann; sonst `undefined`. */
+  readonly rerollBlocker: string | undefined;
 }
 
 /** Einwohner in Worten: 3 × 10^9 → „3 Mrd.“ */
@@ -105,7 +130,8 @@ function position(grid: SurfaceGrid, cell: number): string {
 }
 
 /** Der Globus der Welt in diesem Feld; `undefined`, solange sie keine Oberflächenkarte hat. */
-export function globeView(hexes: readonly Hex[], column: number, row: number, picked: number | undefined): GlobeView | undefined {
+export function globeView(campaign: Campaign, column: number, row: number, picked: number | undefined): GlobeView | undefined {
+  const hexes = campaign.hexes;
   const hex = hexAt(hexes, column, row);
   if (!hex?.map || !hex.name || hex.uwp.size === undefined || hex.temperature === undefined) return undefined;
   const map = hex.map;
@@ -121,6 +147,14 @@ export function globeView(hexes: readonly Hex[], column: number, row: number, pi
     }),
   );
   const volcanoes = (map.volcanoes ?? []).map(([cell, kind]): GlobeVolcano => ({ cell, label: kind === 'major' ? 'Großer Vulkan' : 'Vulkanfeld' }));
+  const id = hexId(column, row);
+  const npcs = campaign.characters.filter((c) => c.npc && !c.dead && c.place?.world === id).map((c): GlobeNpc => ({ id: c.id, name: c.name, cell: placeCell(hexes, c.place) }));
+  const counts = new Map<number, number>();
+  for (const i of happenedAt(campaign, id)) {
+    const cell = placeCell(hexes, campaign.log[i]!.place);
+    if (cell !== undefined) counts.set(cell, (counts.get(cell) ?? 0) + 1);
+  }
+  const partyHere = campaign.location?.world === id;
   let pickedCell: PickedCell | undefined;
   if (picked !== undefined && picked >= 0 && picked < grid.cells) {
     const volcano = volcanoes.find((v) => v.cell === picked);
@@ -134,6 +168,9 @@ export function globeView(hexes: readonly Hex[], column: number, row: number, pi
       volcano: volcano?.label,
       river: (map.rivers ?? []).some((r) => r.includes(picked)),
       road: (map.roads ?? []).some((r) => r.includes(picked)),
+      city: cities.find((c) => c.cell === picked)?.index,
+      npcs: npcs.filter((n) => n.cell === picked).map((n) => n.name),
+      happened: happenedAt(campaign, id, picked),
     };
   }
   return {
@@ -146,5 +183,10 @@ export function globeView(hexes: readonly Hex[], column: number, row: number, pi
     cities,
     volcanoes,
     picked: pickedCell,
+    partyHere,
+    partyCell: partyHere ? placeCell(hexes, campaign.location) : undefined,
+    npcs,
+    events: [...counts.entries()].map(([cell, count]) => ({ cell, count })),
+    rerollBlocker: mapLocked(campaign, column, row) ? 'Gruppe, NSC oder Logeinträge stehen auf dieser Karte; neu würfeln geht nicht mehr.' : undefined,
   };
 }

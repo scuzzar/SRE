@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { GlobeView } from '../../controller';
+import type { GlobeView, LogItem } from '../../controller';
+import { HappenedList } from './HappenedList';
 import { useGame } from '../game-context';
 import { CloseIcon } from '../icons';
 import { cellAt, radiusOf, renderGlobe, screenOf, type Camera } from './globe-render';
@@ -17,18 +18,19 @@ const DEG = Math.PI / 180;
  * Tippen dreht den Globus dorthin. Wohin er schaut, ist reine Darstellung; welches Feld angetippt
  * ist, hält der Controller.
  */
-export function GlobeScreen({ globe }: { globe: GlobeView }) {
+export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; log: readonly LogItem[]; logDays: readonly (string | undefined)[]; error: string | undefined }) {
   const game = useGame();
   const canvas = useRef<HTMLCanvasElement>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(320);
   const [camera, setCamera] = useState<Camera>(() => {
-    const capital = globe.cities.find((c) => c.cell !== undefined)?.cell;
+    const capital = globe.partyCell ?? globe.cities.find((c) => c.cell !== undefined)?.cell;
     return capital === undefined ? { lat: 15 * DEG, lon: 0, zoom: 1 } : { lat: globe.grid.lat[capital]! * DEG, lon: globe.grid.lon[capital]! * DEG, zoom: 1 };
   });
   const [moving, setMoving] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
   const [confirmReroll, setConfirmReroll] = useState(false);
+  const [npcToMove, setNpcToMove] = useState('');
 
   // Die Größe des Canvas folgt dem Platz (quadratisch).
   useLayoutEffect(() => {
@@ -170,7 +172,39 @@ export function GlobeScreen({ globe }: { globe: GlobeView }) {
                   {picked.volcano && <li>{picked.volcano}</li>}
                   {picked.river && <li>Fluss</li>}
                   {picked.road && <li>Straße</li>}
+                  {globe.partyCell === picked.cell && <li>Die Gruppe ist hier</li>}
+                  {picked.npcs.map((n) => (
+                    <li key={n}>NSC: {n}</li>
+                  ))}
                 </ul>
+                <div className="globe-actions">
+                  {globe.partyHere && globe.partyCell !== picked.cell && (
+                    <button type="button" className="primary compact" onClick={() => game.moveParty()}>
+                      {picked.city === undefined ? 'Gruppe hierher' : 'Gruppe in diese Stadt'}
+                    </button>
+                  )}
+                  {globe.npcs.length > 0 && (
+                    <span className="globe-move-npc">
+                      <select aria-label="NSC wählen" value={npcToMove} onChange={(e) => setNpcToMove(e.target.value)}>
+                        <option value="">NSC …</option>
+                        {globe.npcs.map((n) => (
+                          <option key={n.id} value={n.id}>
+                            {n.name}
+                          </option>
+                        ))}
+                      </select>
+                      <button type="button" className="ghost compact" disabled={!npcToMove} onClick={() => game.moveNpc(npcToMove)}>
+                        hierher
+                      </button>
+                    </span>
+                  )}
+                </div>
+                {error && (
+                  <p className="error" role="alert">
+                    {error}
+                  </p>
+                )}
+                {picked.happened.length > 0 && <HappenedList title="Was hier geschah" indices={picked.happened} log={log} logDays={logDays} />}
               </div>
             </section>
           )}
@@ -231,6 +265,8 @@ export function GlobeScreen({ globe }: { globe: GlobeView }) {
                 Abbrechen
               </button>
             </>
+          ) : globe.rerollBlocker ? (
+            <span className="combat-hint">{globe.rerollBlocker}</span>
           ) : (
             <button type="button" className="ghost compact" onClick={() => setConfirmReroll(true)}>
               Neu würfeln
@@ -242,9 +278,28 @@ export function GlobeScreen({ globe }: { globe: GlobeView }) {
   );
 }
 
-/** Zeichen auf dem Globus: Städte als Lichtpunkte, Vulkane als Dreiecke, das angetippte Feld als Ring. */
+/** Zeichen auf dem Globus: Städte als Lichtpunkte, Vulkane als Dreiecke, Ereignisse, NSC, die Gruppe, das angetippte Feld als Ring. */
 function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Camera, px: number): void {
   const scale = px / 320;
+  const badge = (cell: number, dx: number, dy: number, fill: string, text: string) => {
+    const at = screenOf(globe, camera, px, cell);
+    if (!at) return;
+    const r = 6 * scale;
+    const x = at.x + dx * scale;
+    const y = at.y + dy * scale;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = 'rgba(15,15,15,0.9)';
+    ctx.lineWidth = scale;
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#111';
+    ctx.font = `bold ${Math.round(8 * scale)}px system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, x, y + 0.5 * scale);
+  };
   for (const v of globe.volcanoes) {
     const at = screenOf(globe, camera, px, v.cell);
     if (!at) continue;
@@ -273,6 +328,11 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
     ctx.fill();
     ctx.stroke();
   }
+  for (const e of globe.events) badge(e.cell, 7, -7, 'rgba(255,170,60,0.95)', e.count > 9 ? '9+' : String(e.count));
+  const npcCells = new Map<number, number>();
+  for (const n of globe.npcs) if (n.cell !== undefined) npcCells.set(n.cell, (npcCells.get(n.cell) ?? 0) + 1);
+  for (const [cell, count] of npcCells) badge(cell, -7, -7, 'rgba(190,150,255,0.95)', count > 1 ? String(count) : 'N');
+  if (globe.partyCell !== undefined) badge(globe.partyCell, 0, 9, 'rgba(110,200,255,1)', 'G');
   const picked = globe.picked?.cell;
   if (picked !== undefined) {
     const at = screenOf(globe, camera, px, picked);

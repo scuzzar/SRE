@@ -63,7 +63,9 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   `runOccurrence()`, `rollWorld()`, `runWorld()`, `nameWorld(name)`, `noteWorld(note)`, `discardWorld()` und
   `closeWorld()`; für den Globus `openGlobe()` (auf der Weltkarte; erzeugt beim ersten Mal die
   Oberflächenkarte, `model/surface-map.ts` auf dem Raster aus `model/surface-grid.ts`), `openGlobeAt(column, row)`
-  (aus der Kopfzeile), `pickCell(cell)`, `rerollMap()` und `closeGlobe()`; gezeichnet wird er in
+  (aus der Kopfzeile), `pickCell(cell)`, `rerollMap()` (gesperrt, sobald ein Ort auf die Karte zeigt),
+  `moveParty()` und `moveNpc(id)` (auf das angetippte Feld bzw. in die Stadt darauf, `model/place.ts`) und
+  `closeGlobe()`; neue Logeinträge bekommen in `change` den Aufenthaltsort als Ort (`stampPlaces`); gezeichnet wird er in
   `view/sector/globe-render.ts` aus Raster und gepackter Karte im Snapshot (`controller/globe-view.ts`). Ein Hexfeld (`model/sector.ts`) hält die Werte seiner Welt;
   ein Wurf der Weltenerschaffung (`model/draft/world-roll.ts`) trägt sein Ergebnis ein und lebt nur,
   solange Weltkarte oder Feldwahl offen sind (im Zustand des Controllers). Die Erschaffung ist gespeicherter Stand (`model/generation.ts`,

@@ -1,3 +1,4 @@
+import { worldPlace, type Place } from './place';
 import type { AnimalRef } from './animals';
 import type { Career } from './career';
 import { DomainError } from './errors';
@@ -85,8 +86,8 @@ export interface Character {
   readonly npc: boolean;
   /** Nur bei dauerhaften NSC: seine Rolle; fehlt sie (NSC von früher), gilt Sonstige. */
   readonly role?: NpcRole;
-  /** Nur bei dauerhaften NSC: die Welt, auf der er lebt (Spalte und Zeile, 0304); fehlt sie, reist er mit der Gruppe. */
-  readonly place?: string;
+  /** Nur bei dauerhaften NSC: der Ort, an dem er lebt (Welt, wahlweise Feld oder Stadt); fehlt er, reist er mit der Gruppe. */
+  readonly place?: Place;
   /** Der Patron, als der er entstanden ist; bleibt, auch wenn er später SC wird. */
   readonly patron?: PatronRef;
   /** Ein Tier einer Begegnung: Verweis auf seine Zeile der Tiertabelle. Es kämpft mit deren Werten statt mit UPP und Besitz. */
@@ -118,8 +119,8 @@ export interface Campaign {
    * fehlt nur, wenn es keinen solchen Charakter gibt.
    */
   readonly focus?: CharacterId;
-  /** Der Aufenthaltsort der Gruppe: eine fertige Welt des Subsektors, als Spalte und Zeile (0304). */
-  readonly location?: string;
+  /** Der Aufenthaltsort der Gruppe: eine fertige Welt des Subsektors, wahlweise genauer ein Feld oder eine Stadt. */
+  readonly location?: Place;
   /** Die Buchungen der Gruppenkasse, in der Reihenfolge, in der sie entstanden sind. */
   readonly bookings: readonly Booking[];
   /** Das Gruppengepäck: was die Gruppe besitzt und kein SC ausgerüstet hat (siehe `stash.ts`). */
@@ -531,7 +532,9 @@ function npcFields(input: CharacterInput, before?: Character): Pick<Character, '
   const kept = patron === undefined ? {} : { patron: { list: patron.list, roll: patron.roll } };
   if (!(input.npc ?? before?.npc ?? false)) return kept;
   const role = input.role ?? (before?.npc ? before.role : undefined) ?? 'other';
-  return { role, ...(input.place === undefined ? {} : { place: input.place }), ...kept };
+  // Bleibt die Welt dieselbe, bleibt auch Feld oder Stadt.
+  const place = input.place === undefined ? undefined : before?.place?.world === input.place ? before.place : worldPlace(input.place);
+  return { role, ...(place === undefined ? {} : { place }), ...kept };
 }
 
 /** Die Rolle eines dauerhaften NSC; NSC von früher ohne Rolle sind Sonstige. */
@@ -680,7 +683,7 @@ export function inputOf(character: Character): CharacterInput {
   return {
     ...input,
     ...(npc ? { role: role ?? 'other' } : {}),
-    ...(place === undefined ? {} : { place }),
+    ...(place === undefined ? {} : { place: place.world }),
     ...(patron === undefined ? {} : { patron }),
     ...(homeworld === undefined ? {} : { homeworld }),
     ...(primary === undefined ? {} : { primary }),

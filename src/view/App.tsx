@@ -134,8 +134,8 @@ export function App() {
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
       {view.generation && <GenerationSheet generation={view.generation} log={view.log} />}
       {view.picking && <SectorPicker view={view} title={view.picking.title} />}
-      {view.world && <WorldSheet key={view.world.id} world={view.world} here={view.location === view.world.id} travel={view.travel} />}
-      {view.globe && <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} />}
+      {view.world && <WorldSheet key={view.world.id} world={view.world} here={view.location === view.world.id} travel={view.travel} log={view.log} logDays={view.logDays} />}
+      {view.globe && <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} log={view.log} logDays={view.logDays} error={view.world?.error} />}
       {view.journey && <JourneySheet journey={view.journey} />}
       {view.card && <CardSheet card={view.card} />}
       {view.result?.kind === 'damage' ? (

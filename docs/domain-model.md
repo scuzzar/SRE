@@ -2258,10 +2258,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
-- **Orte** (2026-11-14j) sind freigegeben, aber noch nicht gebaut: Es fehlen `Place` und
-  `LogEntry.place`; `Campaign.location` und `Character.place` zeigen im Code noch direkt auf ein
-  Hexfeld, und „Neu würfeln“ der Oberflächenkarte ist noch nicht gesperrt. Entsteht auf dem Zweig
-  `hex-world-map`. Die Oberflächenkarte (2026-11-14i) ist gebaut (`model/surface-map.ts`).
+- **Ort eines Logeintrags von Hand ändern** (*Orte*, 2026-11-14j): Im Code bekommt ein Eintrag
+  seinen Ort nur beim Anlegen; ändern oder entfernen lässt er sich noch nicht. Alles Übrige an
+  Oberflächenkarte und Orten ist gebaut (`model/surface-map.ts`, `model/place.ts`).
 
 - **`Conflict → Campaign : local`** ist im Code kein eigenes Feld: Der Stand von hier ist die
   Kampagne des Geräts mit dem Schlüssel des Konflikts (`localOf`), damit man in ihr weiterspielen

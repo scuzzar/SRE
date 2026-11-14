@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import type { WorldDmPart } from '../../model';
-import type { WorldAction, WorldLine, WorldView } from '../../controller';
+import type { LogItem, WorldAction, WorldLine, WorldView } from '../../controller';
+import { HappenedList } from './HappenedList';
 import { DiceView, THROW_MS, useTimeline } from '../Dice';
 import { signed } from '../format';
 import { useGame } from '../game-context';
@@ -33,7 +34,7 @@ function dmText(line: WorldLine): string {
  * Charaktererschaffung. Eingetragen ist der Wurf schon, bevor die Würfel rollen; die Karte zeigt den neuen Stand erst, wenn das Ergebnis unten feststeht. Ein Tippen
  * irgendwo beendet die Animation.
  */
-export function WorldSheet({ world, here, travel }: { world: WorldView; here: boolean; travel: { readonly blocker: string | undefined } | undefined }) {
+export function WorldSheet({ world, here, travel, log, logDays }: { world: WorldView; here: boolean; travel: { readonly blocker: string | undefined } | undefined; log: readonly LogItem[]; logDays: readonly (string | undefined)[] }) {
   const game = useGame();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   // Was schon da war, als die Weltkarte aufging, rollt nicht noch einmal.
@@ -106,6 +107,7 @@ export function WorldSheet({ world, here, travel }: { world: WorldView; here: bo
             </div>
           )}
           {world.canNote && <NoteSection note={world.note} />}
+          {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
         </div>
 
         {(hasRoll || fresh) && (

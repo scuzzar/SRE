@@ -25,7 +25,7 @@ describe('Demo-Kampagne', () => {
     const demo = createDemoCampaign(fixedClock());
     const back = fromCampaignFile(toCampaignFile(demo), 'k9');
     expect(back.hexes).toEqual(demo.hexes);
-    expect(back.location).toBe('0405');
+    expect(back.location).toEqual({ world: '0405' });
     expect(back.bookings).toEqual(demo.bookings);
   });
 });

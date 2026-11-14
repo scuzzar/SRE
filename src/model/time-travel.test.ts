@@ -148,7 +148,7 @@ describe('Reise mit Passagen', () => {
     const rich = book(there, 'income', 30000, clock);
     const after = travel(rich, '0201', { [kira]: 'high-passage', [jonas]: 'middle-passage' }, {}, undefined, fixedRandom(), clock);
     expect(fundsOf(after)).toBe(30000 - 10000 - 8000);
-    expect(after.location).toBe('0201');
+    expect(after.location).toEqual({ world: '0201' });
     expect(after.day).toBe(START_DAY + 7);
     expect(after.log.at(-1)).toMatchObject({ kind: 'journey', from: '0101', to: '0201', days: 7, day: START_DAY, berths: [] });
   });

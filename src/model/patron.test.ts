@@ -96,7 +96,7 @@ describe('Patron als NSC (2026-11-14, Laufbahn 2026-11-14b)', () => {
     // Liste eins, 15: Smuggler, Laufbahn Merchants.
     const { campaign, id } = createPatronNpc(withPatron(1, 1, 5), 0, seeded(7));
     const npc = campaign.characters.find((c) => c.id === id)!;
-    expect(npc).toMatchObject({ npc: true, role: 'patron', place: '0101', patron: { list: 1, roll: 15 } });
+    expect(npc).toMatchObject({ npc: true, role: 'patron', place: { world: '0101' }, patron: { list: 1, roll: 15 } });
     expect(npc.background).toMatch(/^Smuggler · Ex-Merchants · /);
     expect(npc.name).not.toBe('');
     const state = replay(npc.career!);
@@ -177,7 +177,7 @@ describe('Rolle und Ort eines NSC', () => {
     const [first, second] = currentEncounter(rolled.campaign)!.npcs;
     let campaign = adoptNpc(rolled.campaign, first!.id, true);
     campaign = adoptNpc(campaign, second!.id, false);
-    expect(campaign.characters.find((c) => c.id === first!.id)).toMatchObject({ npc: true, role: 'encounter', place: '0101' });
+    expect(campaign.characters.find((c) => c.id === first!.id)).toMatchObject({ npc: true, role: 'encounter', place: { world: '0101' } });
     const pc = campaign.characters.find((c) => c.id === second!.id)!;
     expect(pc.npc).toBe(false);
     expect(pc.role).toBeUndefined();
@@ -256,7 +256,7 @@ describe('Waffen erzeugter NSC (2026-11-14c)', () => {
     const base = setLocation(setHexes(createCampaign([]), hexes), '0101');
     const { campaign, id } = generateNpc(base, { service: 'army', role: 'enemy' }, seeded(9));
     const made = campaign.characters.find((c) => c.id === id)!;
-    expect(made).toMatchObject({ npc: true, role: 'enemy', place: '0101' });
+    expect(made).toMatchObject({ npc: true, role: 'enemy', place: { world: '0101' } });
     expect(made.patron).toBeUndefined();
     expect(made.background).toMatch(/^Ex-Army/);
     expect(replay(made.career!).service?.id).toBe('army');

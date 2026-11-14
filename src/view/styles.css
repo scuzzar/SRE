@@ -7546,3 +7546,32 @@ button:disabled {
   justify-content: space-between;
   gap: 8px;
 }
+
+.globe-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.globe-move-npc {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.happened ul {
+  margin: 0;
+}
+
+.happened-day {
+  color: var(--muted, #9a9a9a);
+}
+
+/* Auf der Welt ist etwas geschehen oder es leben dort NSC. */
+.hex-marked {
+  fill: #ffaa3c;
+  stroke: #1a1a1a;
+  stroke-width: 0.8;
+}

@@ -109,6 +109,8 @@ export interface HexView {
   readonly trade: readonly string[];
   /** Das Weltsymbol einer fertigen Welt. */
   readonly look: WorldLook | undefined;
+  /** Auf der Welt ist etwas geschehen (Logeinträge mit Ort) oder es leben dort dauerhafte NSC. */
+  readonly marked: boolean;
 }
 
 /** Das gewählte Feld auf der Karte: noch nicht erzeugt, oder mit seinem Vorkommen. */
@@ -212,6 +214,8 @@ export interface WorldView {
   readonly canGlobe: boolean;
   /** Die Oberflächenkarte gibt es schon. */
   readonly hasMap: boolean;
+  /** Die Stellen der Logeinträge, die auf dieser Welt geschahen (Was hier geschah), das Neueste zuletzt. */
+  readonly happened: readonly number[];
 }
 
 function yesNo(value: boolean | undefined): string {
@@ -264,7 +268,7 @@ function hexState(hex: Hex | undefined): HexView['state'] {
 }
 
 /** Alle 80 Felder des Subsektors, spaltenweise. */
-export function sectorView(hexes: readonly Hex[]): readonly HexView[] {
+export function sectorView(hexes: readonly Hex[], marked: ReadonlySet<string> = new Set()): readonly HexView[] {
   const cells: HexView[] = [];
   for (let column = 1; column <= SECTOR_COLUMNS; column++) {
     for (let row = 1; row <= SECTOR_ROWS; row++) {
@@ -285,6 +289,7 @@ export function sectorView(hexes: readonly Hex[]): readonly HexView[] {
         uwp: hex && hexState(hex) === 'world' ? uwpCode(hex.uwp) : undefined,
         trade: hex && hexState(hex) === 'world' ? tradeCodesOf(hex).map((t) => t.id) : [],
         look: lookOf(hex),
+        marked: marked.has(hexId(column, row)),
       });
     }
   }
@@ -398,7 +403,7 @@ function temperatureViewOf(hex: Hex): TemperatureView {
 }
 
 /** Die Weltkarte eines Feldes mit den Würfen, die man gemacht hat, seit sie offen ist. */
-export function worldView(hexes: readonly Hex[], column: number, row: number, rolls: readonly WorldRoll[], error: string | undefined): WorldView {
+export function worldView(hexes: readonly Hex[], column: number, row: number, rolls: readonly WorldRoll[], error: string | undefined, happened: readonly number[] = []): WorldView {
   const hex: Hex = hexAt(hexes, column, row) ?? { column, row, empty: false, uwp: {} };
   const step = stepOf(hex);
   const next = nextWorldRoll(hex);
@@ -443,6 +448,7 @@ export function worldView(hexes: readonly Hex[], column: number, row: number, ro
     canNote: isWorld(hex),
     canGlobe: canHaveMap(hex),
     hasMap: hex.map !== undefined,
+    happened,
     error,
   };
 }
