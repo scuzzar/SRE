@@ -419,7 +419,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Dauerhafter NSC | `Character` mit `npc` | Ein Charakter, der kein SC ist; er steht im Reiter NSC |
 | Ort eines NSC | `Character.place` | Die Welt, auf der ein dauerhafter NSC lebt; man trifft ihn nur dort |
 | Patron-NSC | `Character` mit `patron` | Ein dauerhafter NSC, der als Patron entstanden ist, z. B. „Mara Voss, Smuggler“ |
-| Reiter NSC | (Reiter „NSC“) | Der Screen mit den dauerhaften NSC des Aufenthaltsorts; auf Wunsch alle |
+| Reiter NSC | (Reiter „NSC“) | Der Screen mit den dauerhaften NSC des Aufenthaltsorts, nach Namen; mit „Alle zeigen“ alle, nach Welt gruppiert |
 | Getragene Rüstung | `Character.wears` | Die Rüstung, die jemand gerade anhat; sie zählt, wenn er angegriffen wird |
 | Rüstungsklasse einer Rüstung | `Item.armor` | Wie eine Rüstung in der Matrix zählt, z. B. Vacc Suit als Cloth, Battle Dress als Combat |
 | Wunden | `/wounds`, `Wounds` | Wie viel STR, DEX und END jemand durch Treffer verloren hat |
@@ -1310,10 +1310,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     übernommen wird; im Editor lässt er sich ändern oder leeren (ein NSC, der mit der Gruppe reist,
     hat keinen Ort). Ein SC hat keinen Ort, ihm gilt der Aufenthaltsort der Gruppe; wird ein NSC zum
     SC, fällt `place` weg. NSC von früher haben keinen Ort.
-  - **Reiter NSC** (2026-11-14). Ein eigener Reiter zeigt die dauerhaften NSC des Aufenthaltsorts,
-    dazu die NSC ohne Ort; ein Schalter zeigt alle, nach Welt gruppiert. Ohne Aufenthaltsort zeigt er
-    alle. Antippen öffnet den Editor wie im Charakter-Screen. Tote und Ausgeschiedene stehen
-    eingeklappt darunter.
+  - **Reiter NSC** (2026-11-14). Ein eigener Reiter, **vorgegeben nach dem Aufenthaltsort
+    gefiltert**: Er zeigt die dauerhaften NSC, deren Ort der Aufenthaltsort ist, dazu die NSC ohne
+    Ort, nach Namen sortiert. **„Alle zeigen“** hebt den Filter auf: Dann stehen alle dauerhaften
+    NSC **nach Welt gruppiert** (Gruppen nach dem Namen der Welt, die NSC ohne Ort als eigene Gruppe
+    am Ende), **innerhalb jeder Gruppe nach Namen**. Ohne Aufenthaltsort zeigt er alle so gruppiert.
+    Die Wahl ist Anzeige und wird nicht gespeichert; beim Öffnen gilt wieder der Filter. Antippen
+    öffnet den Editor wie im Charakter-Screen. Tote und Ausgeschiedene stehen eingeklappt darunter.
   - **Patron als NSC** (2026-11-14). Zu einem Patron-Wurf, der einen Patron ergibt (keine
     Rumor-Zeile), erzeugt **„Als NSC“** einen zufälligen dauerhaften NSC: Name von der Tafel NSC,
     2W6 je Attribut, keine Fertigkeiten, kein Besitz (Vorschlag, siehe *Offene Fragen*); er
