@@ -199,6 +199,19 @@
         "Skill",
         "Item"
       ]
+    },
+    {
+      "id": "2026-11-14b",
+      "file": "2026-11-14-patron-mit-laufbahn",
+      "title": "Patron-NSC mit Laufbahn: zufällig durchlaufene Charaktererschaffung statt fester Werte",
+      "approved": false,
+      "show": [
+        "PatronRoll",
+        "Character",
+        "Career",
+        "Skill",
+        "Item"
+      ]
     }
   ]
 }

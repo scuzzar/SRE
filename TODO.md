@@ -62,9 +62,9 @@ Aus [`docs/regeln-kampf.md`](docs/regeln-kampf.md), noch offen:
 
 ### 4. NSC
 
-- [ ] **Richtiger NSC-Generator** statt der festen Werte je Beruf (`docs/patron-nsc.md`, Startpunkt
-  vom 14. November 2026): Fertigkeiten und Ausrüstung gewürfelt, nach Tabellen aus den Regeln, wo es
-  welche gibt (erst nachsehen, welche Bücher NSC-Tabellen haben).
+- [ ] **Weitere Laufbahnen** für Patron-NSC, die besser zu den Berufen passen als die sechs des
+  Regelwerks (heute stehen viele unter Other, siehe `docs/patron-nsc.md`), z. B. aus anderen
+  Traveller-Büchern; erst nachsehen, welche Bücher Laufbahnen oder NSC-Tabellen haben.
 
 ### Ideen, noch nicht entschieden
 

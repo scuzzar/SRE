@@ -489,7 +489,7 @@ hide <<value>> stereotype
     rumor: boolean
   }
   class PatronSkill <<reference>> $begegnung {
-    level: number
+    $gone("2026-11-14b", "level: number")
   }
   class AnimalTable $begegnung {
   }
@@ -957,9 +957,10 @@ Recovery --> RecoveryKind
 LogEntry <|-- Note
 LogEntry <|-- PatronRoll
 PatronRoll "*" --> "1" Patron : of
-Patron "1" *-- "*" PatronSkill : skills
+Patron "1" *-$goneArrow("2026-11-14b")- "*" PatronSkill : skills
 PatronSkill "*" --> "1" Skill : of
-Patron "*" --> "*" Item : gear {ordered}
+Patron "*" -$goneArrow("2026-11-14b")-> "*" Item : gear {ordered}
+Patron "*" -$newArrow("2026-11-14b")-> "0..1" Service : career
 LogEntry <|-- RumorRoll
 LogEntry <|-- Butchering
 Butchering "*" --> "1" Character : of
