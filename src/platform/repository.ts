@@ -110,6 +110,9 @@ export class DexieCampaignRepository implements CampaignRepository {
  * Vor der Spielzeit hatte eine Kampagne keinen Tag; sie beginnt am 001-1105.
  * Vor 2026-11-08c waren die NSC einer Begegnung eine eigene Art; heute sind sie Charaktere (`upgradeNpcs`).
  * Vor 2026-11-14d war eine Orakelantwort ein eigener Eintrag; heute steht sie in der Kartenauswahl (`upgradeOracle`).
+ * Vor den Orten (2026-11-14j) waren Aufenthaltsort und Ort eines NSC nur die Welt als Text (0304);
+ * heute sind sie ein Ort. Vor den Städtenamen (2026-11-14k) hatten Städte keinen Namen; sie heißen
+ * „Stadt 1“, „Stadt 2“ usw.
  */
 export function upgraded(campaign: Campaign): Campaign {
   const log = campaign.log.map((entry) => {
@@ -123,6 +126,7 @@ export function upgraded(campaign: Campaign): Campaign {
   // Charaktere von vor der Primär- und Sekundärwaffe: Die Waffe in der Hand wird die Primärwaffe.
   const characters = campaign.characters.map((c) => ({
     ...c,
+    ...(typeof (c.place as unknown) === 'string' ? { place: { world: c.place as unknown as string } } : {}),
     dead: c.dead ?? false,
     npc: c.npc ?? false,
     possessions: c.possessions ?? [],
@@ -130,12 +134,16 @@ export function upgraded(campaign: Campaign): Campaign {
   }));
   const hexes = (campaign.hexes ?? []).map((hex): Hex => {
     const old = hex as Hex & { readonly rolls?: readonly LegacyWorldRoll[] };
-    return old.rolls ? hexFromRolls({ column: old.column, row: old.row, ...(old.name === undefined ? {} : { name: old.name }), rolls: old.rolls }) : hex;
+    if (old.rolls) return hexFromRolls({ column: old.column, row: old.row, ...(old.name === undefined ? {} : { name: old.name }), rolls: old.rolls });
+    const cities = hex.map?.cities;
+    if (cities?.some((c) => !c.name)) return { ...hex, map: { ...hex.map!, cities: cities.map((c, i) => (c.name ? c : { ...c, name: `Stadt ${i + 1}` })) } };
+    return hex;
   });
+  const location = typeof (campaign.location as unknown) === 'string' ? { location: { world: campaign.location as unknown as string } } : {};
   // Begegnungen von vor den Range Bands bzw. von vor 2026-11-08d macht upgradeDistances zu solchen mit Startband.
   const encounters = (campaign.encounters ?? []).map((e): Encounter => ({ ...e, round: e.round ?? 1, acted: e.acted ?? [] }));
   // Spielstände von vor dem Gruppengepäck: Was ein SC nicht ausgerüstet hat, kommt ins Gepäck (settleStash).
-  const upgraded = settleStash(upgradeDistances(upgradeNpcs(upgradeOracle({ ...campaign, characters, log, hexes, bookings: campaign.bookings ?? [], encounters, stash: campaign.stash ?? [], day: (campaign as Partial<Campaign>).day ?? START_DAY }))));
+  const upgraded = settleStash(upgradeDistances(upgradeNpcs(upgradeOracle({ ...campaign, ...location, characters, log, hexes, bookings: campaign.bookings ?? [], encounters, stash: campaign.stash ?? [], day: (campaign as Partial<Campaign>).day ?? START_DAY }))));
   return keepFocus(upgraded, upgraded);
 }
 

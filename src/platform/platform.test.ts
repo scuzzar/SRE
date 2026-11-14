@@ -1,7 +1,8 @@
 import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { describe, expect, it } from 'vitest';
-import { appendLog, createCampaign, type Campaign, type Character, type LogEntry } from '../model';
+import { appendLog, createCampaign, createDemoCampaign, type Campaign, type Character, type LogEntry } from '../model';
+import { fixedClock } from '../model/testing';
 import { systemClock } from './clock';
 import { cryptoRandom } from './random';
 import { DexieCampaignRepository, MemoryCampaignRepository, requestDurable, upgraded } from './repository';
@@ -80,6 +81,22 @@ describe.each([
 });
 
 describe('Ältere Spielstände', () => {
+  it('machen aus dem Aufenthaltsort und dem Ort eines NSC als Text einen Ort (2026-11-14j)', async () => {
+    const demo = createDemoCampaign(fixedClock());
+    const old = {
+      ...demo,
+      location: '0405',
+      characters: demo.characters.map((c, i) => (i === 0 ? { ...c, npc: true, role: 'other', place: '0405' } : c)),
+    } as unknown as Campaign;
+    const back = upgraded(old);
+    expect(back.location).toEqual({ world: '0405' });
+    expect(back.characters[0]?.place).toEqual({ world: '0405' });
+    // Auch über den Speicher, wie beim Start der App.
+    const repository = await new DexieCampaignRepository(`test-${Math.random()}`).open();
+    await repository.save(old);
+    expect((await repository.list())[0]?.location).toEqual({ world: '0405' });
+  });
+
   it('lesen eine Kartenauswahl mit einem Eintrag als Text noch ein', async () => {
     const old = { kind: 'card', at: '2026-10-23T14:00:00.000Z', items: [{ picked: 'event.verb.3' }] } as unknown as LogEntry;
     const campaign = appendLog(createCampaign(), old);
