@@ -237,16 +237,22 @@ function basisOf(camera: Camera): Basis {
   return { e: [-so, co, 0], n: [-sl * co, -sl * so, cl], f: [cl * co, cl * so, sl] };
 }
 
-/** Radius der Kugel in Pixeln. */
-export function radiusOf(size: number, camera: Camera): number {
-  return size * 0.46 * camera.zoom;
+/** Die Fläche, auf die gezeichnet wird, in Pixeln. */
+export interface Viewport {
+  readonly width: number;
+  readonly height: number;
+}
+
+/** Radius der Kugel in Pixeln: ganz herausgezoomt füllt sie die kürzere Seite fast ganz. */
+export function radiusOf(view: Viewport, camera: Camera): number {
+  return Math.min(view.width, view.height) * 0.46 * camera.zoom;
 }
 
 /** Das Feld unter einem Punkt des Canvas (in Pixeln) oder `undefined` neben der Kugel. */
-export function cellAt(globe: GlobeView, camera: Camera, size: number, px: number, py: number): number | undefined {
-  const R = radiusOf(size, camera);
-  const sx = (px - size / 2) / R;
-  const sy = (py - size / 2) / R;
+export function cellAt(globe: GlobeView, camera: Camera, view: Viewport, px: number, py: number): number | undefined {
+  const R = radiusOf(view, camera);
+  const sx = (px - view.width / 2) / R;
+  const sy = (py - view.height / 2) / R;
   const d2 = sx * sx + sy * sy;
   if (d2 > 1) return undefined;
   const sz = Math.sqrt(1 - d2);
@@ -258,8 +264,8 @@ export function cellAt(globe: GlobeView, camera: Camera, size: number, px: numbe
 }
 
 /** Wo ein Feld auf dem Canvas liegt; `undefined` auf der Rückseite. */
-export function screenOf(globe: GlobeView, camera: Camera, size: number, cell: number): { x: number; y: number; depth: number } | undefined {
-  const R = radiusOf(size, camera);
+export function screenOf(globe: GlobeView, camera: Camera, view: Viewport, cell: number): { x: number; y: number; depth: number } | undefined {
+  const R = radiusOf(view, camera);
   const { e, n, f } = basisOf(camera);
   const p = globe.grid.xyz;
   const bx = p[cell * 3]!;
@@ -267,7 +273,7 @@ export function screenOf(globe: GlobeView, camera: Camera, size: number, cell: n
   const bz = p[cell * 3 + 2]!;
   const depth = bx * f[0] + by * f[1] + bz * f[2];
   if (depth <= 0.02) return undefined;
-  return { x: size / 2 + (bx * e[0] + by * e[1] + bz * e[2]) * R, y: size / 2 - (bx * n[0] + by * n[1] + bz * n[2]) * R, depth };
+  return { x: view.width / 2 + (bx * e[0] + by * e[1] + bz * e[2]) * R, y: view.height / 2 - (bx * n[0] + by * n[1] + bz * n[2]) * R, depth };
 }
 
 const ATMOSPHERE_GLOW: readonly (string | undefined)[] = [undefined, '#8fb4ff', '#9be35a', '#7fb0ff', '#a6e24a', '#6fa8ff', '#5c9cff', '#9fe03c', '#6aa6ff', '#a8dc3a', '#b56cff', '#c46cff', '#ff4fd8', '#9cc4ff', '#6fa8ff', '#d08cff'];
@@ -284,26 +290,26 @@ const LIGHT = (() => {
   return [v[0]! / l, v[1]! / l, v[2]! / l] as const;
 })();
 
-/** Zeichnet den Globus in ein ImageData der Kantenlänge `size`. */
+/** Zeichnet den Globus in ein ImageData; die Kugel steht in der Mitte. */
 export function renderGlobe(img: ImageData, globe: GlobeView, camera: Camera, showGrid: boolean): void {
-  const size = img.width;
+  const W = img.width;
+  const H = img.height;
   const data = img.data;
   const tex = textureOf(globe);
   const src = showGrid ? tex.gridColor : tex.color;
-  const R = radiusOf(size, camera);
+  const R = radiusOf({ width: W, height: H }, camera);
   const { e, n, f } = basisOf(camera);
   const glowHex = ATMOSPHERE_GLOW[globe.look.atmosphere ?? 0];
   const glow = glowHex ? rgbOf(glowHex) : undefined;
   const halo = glow ? R * 0.06 : 0;
-  const half = size / 2;
   const tw = tex.width;
   const th = tex.height;
-  for (let py = 0; py < size; py++) {
-    const sy = (py + 0.5 - half) / R;
-    for (let px = 0; px < size; px++) {
-      const sx = (px + 0.5 - half) / R;
+  for (let py = 0; py < H; py++) {
+    const sy = (py + 0.5 - H / 2) / R;
+    for (let px = 0; px < W; px++) {
+      const sx = (px + 0.5 - W / 2) / R;
       const d2 = sx * sx + sy * sy;
-      const i = (py * size + px) * 4;
+      const i = (py * W + px) * 4;
       if (d2 > 1) {
         if (glow && halo > 0) {
           const dist = (Math.sqrt(d2) - 1) * R;

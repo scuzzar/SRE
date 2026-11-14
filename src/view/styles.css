@@ -7465,57 +7465,269 @@ button:disabled {
   display: contents;
 }
 
-/* Globus der Oberflächenkarte (siehe docs/konzept-oberflaechenkarte.md, Ansichten). */
-.globe-overlay {
+/* Globus der Oberflächenkarte wie eine Karten-App: die Karte über den ganzen Bildschirm, oben eine
+   Leiste mit aufklappbaren Listen, unten das Feld mit den Infos (docs/konzept-oberflaechenkarte.md). */
+.globe-full {
+  position: absolute;
+  inset: 0;
   z-index: 12;
-}
-
-.globe-body {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  background: #04060b;
+  overflow: hidden;
 }
 
 .globe-stage {
-  position: relative;
-  width: 100%;
-  height: min(70vh, calc(100vw - 24px));
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: absolute;
+  inset: 0;
 }
 
 .globe-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
   touch-action: none;
   cursor: grab;
-  display: block;
 }
 
-.globe-zoom {
+.globe-top {
   position: absolute;
-  right: 4px;
-  bottom: 4px;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: max(10px, env(safe-area-inset-top)) 12px 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  pointer-events: none;
 }
 
-.globe-zoom button {
-  min-width: 44px;
+.globe-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.globe-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 8px 12px;
+  border-radius: 22px;
+  background: rgba(20, 22, 28, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.globe-round {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
   min-height: 44px;
-  font-size: 20px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(20, 22, 28, 0.88);
+  color: inherit;
+  font-size: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.globe-chip {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(20, 22, 28, 0.88);
+  color: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.globe-chip.on {
+  background: var(--gold, #d8b45a);
+  color: #111;
+}
+
+.globe-panel {
+  pointer-events: auto;
+  max-height: min(55vh, 460px);
+  overflow-y: auto;
+  border-radius: 14px;
+  background: rgba(20, 22, 28, 0.95);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  padding: 6px 0;
+}
+
+.globe-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  font-size: 14px;
+}
+
+.globe-row + .globe-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.globe-row.static {
+  color: var(--muted, #9a9a9a);
+}
+
+.globe-dot {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #111;
+}
+
+.globe-dot.party {
+  background: #6ec8ff;
+}
+.globe-dot.npc {
+  background: #be96ff;
+}
+.globe-dot.event {
+  background: #ffaa3c;
+}
+.globe-dot.capital {
+  color: #ffd65a;
+}
+.globe-dot.city {
+  color: #fff0c8;
+}
+.globe-dot.volcano {
+  color: #d64024;
+}
+.globe-dot.orbit {
+  color: #9cc4ff;
+}
+
+.globe-panel-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 14px 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.globe-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
 }
 
 .globe-scale {
-  margin: 0;
-  text-align: center;
   color: var(--muted, #9a9a9a);
   font-size: 12px;
 }
 
-.globe-list ul,
-.globe-picked ul {
+.globe-zoom {
+  position: absolute;
+  right: 12px;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: bottom 0.25s ease;
+}
+
+.globe-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 46vh;
+  overflow-y: auto;
+  padding: 6px 16px max(14px, env(safe-area-inset-bottom));
+  border-radius: 16px 16px 0 0;
+  background: var(--raised, #1b1d22);
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.55);
+  transform: translateY(105%);
+  transition: transform 0.25s ease;
+}
+
+.globe-sheet.open {
+  transform: translateY(0);
+}
+
+.globe-full:has(.globe-sheet.open) .globe-zoom {
+  bottom: calc(46vh + 12px);
+}
+
+.globe-sheet-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 10px;
+}
+
+.globe-sheet-head h3 {
   margin: 0;
+  font-size: 17px;
+}
+
+.globe-handle {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 36px;
+  height: 4px;
+  margin-left: -18px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.globe-sheet-sub {
+  margin: 2px 0 8px;
+  color: var(--muted, #9a9a9a);
+  font-size: 13px;
+}
+
+.globe-facts {
+  margin: 0 0 8px;
+  padding-left: 18px;
+  font-size: 14px;
+}
+
+.globe-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 8px;
+}
+
+.globe-move-npc {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
 }
 
 .link-button {
@@ -7547,19 +7759,6 @@ button:disabled {
   gap: 8px;
 }
 
-.globe-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.globe-move-npc {
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-}
 
 .happened ul {
   margin: 0;
@@ -7574,4 +7773,19 @@ button:disabled {
   fill: #ffaa3c;
   stroke: #1a1a1a;
   stroke-width: 0.8;
+}
+
+.globe-row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.globe-row-text small {
+  color: var(--muted, #9a9a9a);
+  font-size: 12px;
+}
+
+.globe-panel > p {
+  margin: 8px 14px;
 }

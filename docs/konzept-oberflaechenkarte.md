@@ -718,20 +718,22 @@ Karte.
 
 ### Globus
 
-- Die Oberflächenfelder auf einer Kugel, mit dem Finger drehbar, mit zwei Fingern (am Rechner mit
-  dem Mausrad) zoombar. Ganz herausgezoomt sieht man die ganze Halbkugel, ganz hineingezoomt etwa
-  10 Felder über die Breite des Bildschirms.
-- Gerechnet wie das Weltsymbol heute (`src/view/sector/world-icon.ts`): Pixel für Pixel, Licht von
-  links, Atmosphärenleuchten, Wolken, Stadtlichter auf der Nachtseite. Statt Zufallsrauschen
-  schlägt jeder Pixel nach, welches Feld unter ihm liegt (vorberechnete Nachschlagetabelle nach
-  Breiten- und Längengrad).
-- Feldgrenzen weich gezeichnet, damit es nach Planet aussieht und nicht nach Waben; Küsten mit
-  Rauschen ausgefranst, Gebirge schattiert, Flüsse und Straßen als Linien, Städte als Lichter,
-  Vulkane als Zeichen. Das Hexgitter lässt sich einblenden.
-- Orbitalstädte als Lichter auf einer Umlaufbahn.
-- **Antippen** eines Feldes zeigt Gelände, Temperatur, Stadt, Hafen, Vulkan, Fluss.
-- **Liste** neben bzw. unter dem Globus: Städte (Haupt- und Nebenstädte mit Hafen), Orbitalstädte
-  und Vulkane. Antippen eines Eintrags dreht den Globus dorthin und markiert das Feld.
+Wie eine Karten-App (Owner, 14. November 2026):
+- **Die Karte füllt den ganzen Bildschirm.** Drehen mit dem Finger, zoomen mit zwei Fingern, dem
+  Mausrad oder den Knöpfen + und − rechts unten. Ganz herausgezoomt sieht man die ganze Halbkugel,
+  ganz hineingezoomt etwa 10 Felder über die kürzere Seite.
+- **Oben eine Leiste:** Zurück zur Weltkarte, der Name der Welt und zwei aufklappbare Listen:
+  - **Orte:** die Gruppe, NSC mit Feld, Städte (mit Einwohnern und Hafen), Orbitalstädte, Vulkane.
+    Darunter Hexgitter ein/aus, der Maßstab und „Karte neu würfeln“ (oder warum es nicht geht).
+  - **Einträge:** alle Felder mit Logeinträgen, das jüngste zuerst, mit Zahl und Tag des neuesten.
+  - Ein Tippen auf eine Zeile dreht die Karte dorthin, zoomt hinein und wählt das Feld.
+- **Unten fährt ein Feld herein**, sobald ein Feld angetippt ist: Gelände, Lage, Temperatur, Städte,
+  Kleinstädte, Vulkan, Fluss, Straße, Gruppe und NSC dort, die Knöpfe „Gruppe hierher“ und „NSC
+  hierher“ und „Was hier geschah“. Schließen mit dem X oder erneutem Antippen des Feldes.
+- Gerechnet wie das Weltsymbol (`src/view/sector/world-icon.ts`) Pixel für Pixel aus einer Textur
+  nach Breiten- und Längengrad; Feldgrenzen weich, Küsten ausgefranst, Flüsse und Straßen als
+  Linien. Zeichen: Städte als Punkte, Vulkane als Dreiecke, Einträge orange mit Zahl, NSC violett,
+  die Gruppe blau.
 - ⚑ Läuft das auf dem Handy nicht flüssig, wird es mit WebGL gerechnet, ohne zusätzliche
   Bibliothek.
 
@@ -743,6 +745,7 @@ die echten Felder statt Zufallsrauschen. So sieht das Symbol aus wie die Welt.
 ### Wo der Globus erscheint
 
 Als eigener Bildschirm über der Weltkarte:
+- Das Symbol des Aufenthaltsorts in der Kopfzeile öffnet den Globus direkt.
 - Auf der **Weltkarte** einer fertigen Welt lässt sich das große Weltsymbol oben rechts antippen.
 - Im Abschnitt **Oberfläche** der Weltkarte steht ein Knopf „Globus“.
 - Hat die Welt noch keine Oberflächenkarte, entsteht sie beim ersten Öffnen.

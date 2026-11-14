@@ -90,8 +90,8 @@ export interface GlobeView {
   readonly partyCell: number | undefined;
   /** Die dauerhaften NSC dieser Welt (lebend). */
   readonly npcs: readonly GlobeNpc[];
-  /** Felder mit Logeinträgen und wie viele. */
-  readonly events: readonly { readonly cell: number; readonly count: number }[];
+  /** Felder mit Logeinträgen: wie viele, ein Name für die Liste und der neueste Eintrag; das jüngste Feld zuerst. */
+  readonly events: readonly { readonly cell: number; readonly count: number; readonly label: string; readonly latest: number }[];
   /** Warum die Karte nicht neu gewürfelt werden kann; sonst `undefined`. */
   readonly rerollBlocker: string | undefined;
 }
@@ -149,11 +149,12 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
   const volcanoes = (map.volcanoes ?? []).map(([cell, kind]): GlobeVolcano => ({ cell, label: kind === 'major' ? 'Großer Vulkan' : 'Vulkanfeld' }));
   const id = hexId(column, row);
   const npcs = campaign.characters.filter((c) => c.npc && !c.dead && c.place?.world === id).map((c): GlobeNpc => ({ id: c.id, name: c.name, cell: placeCell(hexes, c.place) }));
-  const counts = new Map<number, number>();
+  const counts = new Map<number, { count: number; latest: number }>();
   for (const i of happenedAt(campaign, id)) {
     const cell = placeCell(hexes, campaign.log[i]!.place);
-    if (cell !== undefined) counts.set(cell, (counts.get(cell) ?? 0) + 1);
+    if (cell !== undefined) counts.set(cell, { count: (counts.get(cell)?.count ?? 0) + 1, latest: i });
   }
+  const cellName = (cell: number) => cities.find((c) => c.cell === cell)?.label ?? `${LANDFORM_NAMES[landformAt(map, cell)]} · ${position(grid, cell)}`;
   const partyHere = campaign.location?.world === id;
   let pickedCell: PickedCell | undefined;
   if (picked !== undefined && picked >= 0 && picked < grid.cells) {
@@ -186,7 +187,7 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
     partyHere,
     partyCell: partyHere ? placeCell(hexes, campaign.location) : undefined,
     npcs,
-    events: [...counts.entries()].map(([cell, count]) => ({ cell, count })),
+    events: [...counts.entries()].map(([cell, { count, latest }]) => ({ cell, count, latest, label: cellName(cell) })).sort((a, b) => b.latest - a.latest),
     rerollBlocker: mapLocked(campaign, column, row) ? 'Gruppe, NSC oder Logeinträge stehen auf dieser Karte; neu würfeln geht nicht mehr.' : undefined,
   };
 }

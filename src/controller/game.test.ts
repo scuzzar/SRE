@@ -1834,7 +1834,7 @@ describe('Orte (2026-11-14j)', () => {
     expect(game['campaign'].log[last]?.place).toEqual({ world: '0405', city: 0 });
     expect(game.snapshot().globe?.picked?.happened).toEqual([last]);
     expect(game.snapshot().world?.happened).toEqual([last - 1, last]);
-    expect(game.snapshot().globe?.events).toEqual([{ cell: capital.cell, count: 1 }]);
+    expect(game.snapshot().globe?.events).toEqual([{ cell: capital.cell, count: 1, latest: last, label: 'Hauptstadt 1' }]);
     // Jetzt zeigen Orte auf die Karte: neu würfeln ist gesperrt.
     expect(game.snapshot().globe?.rerollBlocker).toMatch(/geht nicht mehr/);
     const before = game.snapshot().globe!.map;
