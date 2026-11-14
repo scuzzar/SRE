@@ -191,4 +191,5 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
 class OracleAnswer #line:d0021b;line.bold
+class CardPick #line:d0021b;line.bold
 @enduml

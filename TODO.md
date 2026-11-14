@@ -158,7 +158,31 @@ darunter, was besser ginge.
 - [ ] `WeaponChips` in `CharacterStrip.tsx` hat zwei Kommentarblöcke hintereinander; der erste ist
   überholt.
 
-### 7. Ideen zur Bedienung, noch nicht entschieden
+### 7. Neuer Aufbau (2026-11-14d, wartet auf Freigabe)
+
+Wunsch des Owners vom 2026-11-14. Entwurf zum Anfassen:
+[`docs/ui-entwurf/orakel-neu/Entwurf.html`](docs/ui-entwurf/orakel-neu/Entwurf.html); die Änderung am
+Modell steht in `docs/domain-model.md` unter *Orakel auf der Karte*, der Ausschnitt in
+[`docs/changes/2026-11-14-orakel-auf-der-karte.png`](docs/changes/2026-11-14-orakel-auf-der-karte.png).
+Erst nach der Freigabe in den Code.
+
+- [ ] **Orakel auf der Karte:** Orakelfeld mit der Antwort je Stufe, sechs Antworten (Ja!, Ja,
+  Ja?, Nein?, Nein, Nein!); die Antwort steht in der Kartenauswahl, `OracleAnswer` entfällt, alte
+  Antworten werden beim Laden und beim Import umgestellt. Der Knopf „Ja/Nein“ entfällt, auch in
+  der Leiste der Charaktererschaffung; die Frage schreibt man oben auf die Karte.
+- [ ] **Eine Reihe Knöpfe mit Symbolen:** Notiz, Würfeln, Karte. Die Schreibzeile entfällt.
+- [ ] **Deuten und Notiz als Blatt:** „Deuten“ ist ein Knopf am Ergebnis (am neuesten immer, bei
+  älteren nach dem Antippen), „Notiz“ der Knopf unten.
+- [ ] **Stufe nur mit der Probe:** Die Auswahl 6+ / 8+ / 10+ erscheint erst, wenn am Charakter oben
+  eine Fertigkeit gewählt ist.
+- [ ] **Charakter oben kompakt:** Attribute und Fertigkeiten je eine Zeile (138 statt 248 px); mit
+  gewählter Fertigkeit steht der DM hinter dem Wert.
+- [ ] README, `ARCHITECTURE.md`, Tests und die Tastenkürzel nachziehen (J entfällt).
+- Mit dem neuen Aufbau erledigt sich aus der Durchsicht: das schmale Textfeld, die Zielzeile, die
+  Umbrüche in der Stufenzeile, mehrzeilige Notizen; der Log bekommt bei 390×844 rund 516 statt
+  295 px.
+
+### 8. Ideen zur Bedienung, noch nicht entschieden
 
 Entwurf zum Anfassen: [`docs/ui-entwurf/log-kompakt/Entwurf.html`](docs/ui-entwurf/log-kompakt/Entwurf.html)
 (Heute und Vorschlag mit demselben Log). Alles hier ist reine Darstellung, das Domänenmodell bleibt,

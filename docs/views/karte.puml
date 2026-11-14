@@ -82,16 +82,18 @@ hide <<value>> stereotype
 ' Verlauf
   abstract class LogEntry $probe
   class OracleAnswer $karte {
-    question: string [0..1]
-    roll: number
-    chance: number
+    $gone("2026-11-14d", "question: string [0..1]")
+    $gone("2026-11-14d", "roll: number")
+    $gone("2026-11-14d", "chance: number")
     $gone("2026-11-14d", "/yes: boolean")
-    $new("2026-11-14d", "/answer: Answer")
   }
   class CardPick $karte {
     question: string [0..1]
     bell: number [0..1]
     scatter: Scatter [0..1]
+    $new("2026-11-14d", "oracle: number [0..1]")
+    $new("2026-11-14d", "chance: number [0..1]")
+    $new("2026-11-14d", "/answer: Answer [0..1]")
   }
   class PickedItem $karte
 
@@ -190,7 +192,7 @@ LogEntry <|-- OracleAnswer
 LogEntry <|-- CardPick
 CardPick "1" *-- "*" PickedItem : items {ordered}
 CardPick "1" *-- "0..1" MapIcon : map
-OracleAnswer "*" --> "1" Odds : odds
+OracleAnswer "*" -$goneArrow("2026-11-14d")-> "1" Odds : odds
 TaskResult "*" --> "1" Odds : odds
 
 ' Probe
@@ -204,7 +206,7 @@ Card "0..1" --> "1" Campaign : in
 Card "*" --> "1..*" Entry : drawn {ordered}
 Card "*" --> "*" Slot : picked
 Card ..> CardPick : on confirm
-Card .$newArrow("2026-11-14d").> OracleAnswer : on confirm
+CardPick "*" -$newArrow("2026-11-14d")-> "0..1" Odds : odds
 Card "*" -$newArrow("2026-11-14d")-> "0..1" Odds : pickedOdds
 Card "1" *-- "1" MapIcon : map
 PickedItem "*" --> "1" Slot : /in
@@ -222,5 +224,6 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
 class OracleAnswer #line:d0021b;line.bold
+class CardPick #line:d0021b;line.bold
 class Card #line:d0021b;line.bold
 @enduml

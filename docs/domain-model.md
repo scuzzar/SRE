@@ -296,8 +296,9 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 
 > **Wartet auf Freigabe** (Kennzeichen 2026-11-14d): **Orakel auf der Karte** (siehe *Orakel auf
 > der Karte*). Die Inspirationskarte trägt die Antwort für alle drei Stufen, mit Ja!, Ja?, Nein?
-> und Nein!; den Knopf „Ja/Nein“ gibt es nicht mehr. Neu im Bild: `Card.oracle`,
-> `Card → Odds : pickedOdds`, `Answer` und `OracleAnswer./answer` statt `/yes`. Der Ausschnitt dazu
+> und Nein!; den Knopf „Ja/Nein“ gibt es nicht mehr, die Antwort steht in der Kartenauswahl. Neu
+> im Bild: `Card.oracle`, `Card → Odds : pickedOdds`, `Answer`, `CardPick.oracle`, `.chance`,
+> `./answer` und `CardPick → Odds : odds`; `OracleAnswer` entfällt. Der Ausschnitt dazu
 > liegt unter [`changes/2026-11-14-orakel-auf-der-karte.png`](changes/2026-11-14-orakel-auf-der-karte.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
@@ -374,7 +375,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Stufe (Hoch/Mittel/Gering) | `Odds` | Die eine Auswahl für Orakel und Proben |
 | Hausregeln | `HouseRules` | Die Zahlen, nach denen Proben gerechnet werden |
 | Log | `LogEntry` | Ein Eintrag im Verlauf |
-| Orakelantwort | `OracleAnswer` | Ja oder Nein auf eine Frage |
+| Orakelantwort | `OracleAnswer` | Ja oder Nein auf eine Frage (2026-11-14d: steht dann in der Kartenauswahl, `CardPick./answer`) |
 | Antwort (2026-11-14d) | `Answer` | Die sechs Antworten des Orakels: Ja!, Ja, Ja?, Nein?, Nein, Nein! |
 | Orakelfeld (2026-11-14d) | `Card.oracle` | Das Feld der Karte mit der Antwort für Hoch, Mittel und Gering; man tippt die Stufe an, die zur Frage passt |
 | Notiz | `Note` ohne `interprets` | Freier Text im Log, z. B. „Wir landen auf Regina.“ |
@@ -689,9 +690,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     daraus die Antwort für alle drei Stufen nebeneinander, wie die *Likely Odds* des GMA. Weil es
     ein Wurf ist, widersprechen sich die Stufen nie: Sagt Gering Ja, sagen es auch Mittel und Hoch.
   - Man tippt die Stufe an, die zur Frage passt (`pickedOdds`), höchstens eine. Beim Bestätigen
-    entsteht daraus eine `OracleAnswer` mit der Frage der Karte, dem Wurf, der Stufe und ihrer
-    Chance. Hat man außerdem Felder gewählt, entsteht daneben wie bisher die Kartenauswahl
-    (`CardPick`); erst die Antwort, dann die Auswahl.
+    steht die Antwort **in der Kartenauswahl** (`CardPick`): der Wurf (`oracle`), die Stufe
+    (`odds`) und ihre Chance von damals (`chance`). Eine Frage, ein Logeintrag, eine Deutung:
+    Antwort und gewählte Felder stehen im selben Kasten. Eine Kartenauswahl braucht mindestens
+    eines: ein Feld, ein Wurffeld oder die Antwort.
   - **Sechs Antworten** (`/answer`), allein aus `roll` und `chance`: Ja, wenn `roll` ≤ `chance`.
     Das unterste Fünftel der Ja-Spanne ist **Ja!** (ja, und mehr als erhofft), das oberste **Ja?**
     (ja, aber mit Haken). Das unterste Fünftel der Nein-Spanne ist **Nein?** (nein, aber nicht
@@ -709,11 +711,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Die gewählte Stufe der Kampagne (`Campaign.odds`) gilt nur noch für Proben.** Die App zeigt
     die Auswahl erst, wenn am Charakter oben eine Fertigkeit gewählt ist. Sie bleibt stehen wie
     bisher.
-  - **Alte Antworten** im Log bleiben, was sie sind: Ja bleibt Ja, Nein bleibt Nein. Weil `/answer`
-    aus Wurf und Chance folgt, zeigen sie nun auch das Ausrufe- oder Fragezeichen.
+  - **`OracleAnswer` entfällt.** Alte Antworten im Log werden beim Laden und beim Import zu
+    Kartenauswahlen ohne Felder: Frage, Wurf, Stufe und Chance bleiben, ihre Stelle im Log auch,
+    also auch ihre Deutungen. Ja bleibt Ja, Nein bleibt Nein; weil `/answer` aus Wurf und Chance
+    folgt, zeigen sie nun auch das Ausrufe- oder Fragezeichen.
   - *Offene Fragen zu 2026-11-14d*: (1) Stimmen die Fünftel, oder sollen ! und ? seltener sein?
-    (2) Antwort und Kartenauswahl als zwei Logeinträge, oder die Antwort als Teil der
-    Kartenauswahl? (3) Sollen alte Antworten das Zeichen bekommen, oder schlicht bleiben?
+    (2) Die Antwort als Teil der Kartenauswahl (so gezeichnet), oder als eigener Logeintrag neben
+    ihr? Dann bliebe `OracleAnswer`, aber eine Frage ergäbe zwei Einträge, und die Deutung hinge
+    nur an einem. (3) Sollen alte Antworten das Zeichen bekommen, oder schlicht bleiben?
 - **Deutungen und Notizen.** Was in der Schreibzeile steht, wird je nach Knopf eine Frage (Ja/Nein,
   Karte ziehen), eine Deutung oder eine Notiz; einen Modus gibt es nicht. Beide sind ein `Note` mit
   Text, der nicht leer ist (Leerraum am Rand fällt weg).

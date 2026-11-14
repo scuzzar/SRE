@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Orakel-Screen neu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+<style>
+/* Farben und Schrift der App (src/view/styles.css). */
+:root {
+  --bg: #111111;
+  --panel: #161616;
+  --highlight: #1f1f1f;
+  --deep: #0b0b0b;
+  --card: #0e0e0e;
+  --rule: #2a2a2a;
+  --rule-soft: #2e2e2e;
+  --line-strong: #555555;
+  --text: #eceae4;
+  --muted: #a3a09a;
+  --dim: #8c8a85;
+  --ink: #111111;
+  --accent: #c62f35;
+  --accent-text: #ef5a5f;
+  --gold: #d9b45f;
+  --gold-bright: #f5dc96;
+  --gold-deep: #8a6a2a;
+  --gold-wash: #241e10;
+  --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--deep); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.45; -webkit-text-size-adjust: 100%; }
+button, input, textarea { font: inherit; color: inherit; }
+input, textarea { font-size: 16px; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; background: transparent; border: 0; padding: 0; }
+svg { display: block; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.mono { font-family: var(--mono); }
+.negative { color: var(--accent-text); }
+.kicker { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-text); font-weight: 600; }
+.detail { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+.app { position: relative; display: flex; flex-direction: column; width: 100%; max-width: 420px; height: 100%; margin: 0 auto; overflow: hidden; background: var(--bg); }
+@media (min-width: 700px) { body { display: flex; align-items: center; } .app { height: 844px; max-width: 390px; border: 1px solid var(--rule); } }
+
+.header { flex: none; display: flex; align-items: center; gap: 10px; height: 49px; padding: 0 16px; border-bottom: 1px solid var(--rule); font-weight: 700; }
+.header::before { content: ''; width: 5px; height: 22px; background: var(--accent); }
+.header .uwp { font-family: var(--mono); font-weight: 400; color: var(--accent-text); letter-spacing: 0.06em; }
+.nav { flex: none; display: grid; grid-template-columns: repeat(7, 1fr); height: 56px; align-items: center; background: var(--deep); border-top: 1px solid var(--rule); font-size: 11px; text-align: center; color: var(--muted); }
+.nav b { color: var(--text); }
+
+/* --- Charakter oben, kompakt: Kopf, Attribute in einer Zeile, Fertigkeiten in einer Zeile ----- */
+.strip { flex: none; padding: 8px 16px; border-bottom: 1px solid var(--rule); }
+.strip-card { padding: 7px 10px 9px; background: var(--highlight); border: 1px solid var(--line-strong); border-top: 3px solid var(--accent); }
+.strip-head { display: flex; align-items: baseline; gap: 8px; }
+.strip-name { font-size: 16px; font-weight: 700; }
+.strip-sub { flex: 1 1 auto; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.upp { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; margin-top: 6px; }
+.upp button { min-height: 34px; display: flex; align-items: baseline; justify-content: center; gap: 4px; background: var(--deep); border: 1px solid var(--rule-soft); font-family: var(--mono); }
+.upp small { font-size: 9px; color: var(--muted); }
+.upp b { font-size: 16px; }
+.upp .dm { font-size: 11px; font-weight: 700; }
+/* Ist eine Fertigkeit gewählt, steht der DM hinter dem Wert; was nichts brächte, tritt zurück. */
+.upp button.offers { border: 1px dashed var(--gold); }
+.upp button.offers .dm { color: var(--gold); }
+.upp button.offers.minus { border-color: var(--accent-text); }
+.upp button.offers.minus .dm { color: var(--accent-text); }
+.upp button.neutral { opacity: 0.45; }
+.upp button[aria-pressed='true'] { background: var(--gold); border: 1px solid var(--gold); color: var(--ink); }
+.upp button[aria-pressed='true'] small, .upp button[aria-pressed='true'] .dm { color: var(--ink); }
+.chips { display: flex; gap: 3px; margin-top: 4px; overflow-x: auto; scrollbar-width: none; }
+.chips button { flex: none; min-height: 34px; padding: 0 9px; border: 1px solid var(--line-strong); font-family: var(--mono); font-weight: 600; font-size: 13px; }
+.chips button.none { border-style: dashed; }
+.chips button[aria-pressed='true'] { background: var(--text); color: var(--ink); border-color: var(--text); }
+
+/* --- Log: das Neueste groß, Älteres als Zeile ------------------------------------------------- */
+.log-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column-reverse; padding: 10px 16px; }
+.log { display: flex; flex-direction: column; }
+.log-day { padding: 2px 0 8px; text-align: center; font-size: 12px; font-weight: 600; color: var(--muted); }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 2px 12px; padding: 8px 2px; border-top: 1px solid var(--rule); width: 100%; text-align: left; }
+.row .what { font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.row .what.plain { color: var(--muted); font-family: var(--mono); font-size: 13px; }
+.row .res { font-family: var(--mono); font-weight: 700; font-size: 15px; letter-spacing: 0.05em; }
+.row .res.gold { color: var(--gold-bright); }
+.row .res.kind { font-family: var(--sans); font-size: 11px; letter-spacing: 0.1em; color: var(--accent-text); }
+.under { grid-column: 1 / -1; }
+.reading { display: block; margin-top: 2px; padding-left: 8px; border-left: 2px solid var(--gold-deep); font-size: 13.5px; }
+.row.note { border-top-style: dashed; }
+.row.note .what { padding-left: 8px; border-left: 2px dashed var(--line-strong); }
+.pick-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.pick-chips span { padding: 1px 7px; border: 1px solid var(--rule-soft); background: var(--panel); font-size: 13px; font-weight: 600; }
+.pick-chips .num { font-family: var(--mono); color: var(--gold-bright); }
+.row .more { display: none; }
+.row[aria-expanded='true'] { background: var(--panel); padding-left: 10px; padding-right: 10px; box-shadow: inset 3px 0 0 var(--gold); }
+.row[aria-expanded='true'] .more { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.row[aria-expanded='true'] .what { -webkit-line-clamp: unset; }
+.more .detail { flex: 1 1 auto; }
+.do { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 10px; border: 1px solid var(--line-strong); font-size: 13px; font-weight: 600; }
+.do svg { width: 16px; height: 16px; }
+.do.gold { border-color: var(--gold-deep); color: var(--gold); }
+.do.danger { border-color: var(--accent); color: var(--accent-text); }
+.entry { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; padding: 12px 14px; background: var(--highlight); border: 1px solid #666666; }
+.entry.note { background: transparent; border-style: dashed; }
+.entry-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.entry-question { font-size: 14px; color: var(--muted); }
+.entry-main { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.verdict { font-family: var(--mono); font-size: 30px; font-weight: 700; letter-spacing: 0.06em; line-height: 1.15; }
+.verdict.gold { color: var(--gold-bright); }
+.note-text { margin: 0; font-size: 15px; white-space: pre-wrap; }
+.log-empty { padding: 24px 8px; text-align: center; color: var(--muted); font-size: 14px; }
+
+/* --- Unten: nur noch eine Reihe, drei Symbole; darüber die Probe, sobald eine gewählt ist ------ */
+.dock { flex: none; display: flex; flex-direction: column; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--rule); background: var(--panel); }
+.task { display: flex; flex-direction: column; gap: 6px; padding: 8px 4px 8px 10px; border: 1px solid var(--gold-deep); background: var(--gold-wash); }
+.task-top { display: flex; align-items: center; gap: 8px; }
+.task-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.task-info strong { font-size: 15px; }
+.task-top .close { width: 40px; height: 40px; display: grid; place-items: center; color: var(--muted); }
+.task-top .close svg { width: 20px; height: 20px; }
+.odds { display: grid; grid-template-columns: repeat(3, 1fr); margin-right: 6px; border: 1px solid var(--line-strong); }
+.odds button { min-height: 40px; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: 13px; }
+.odds button small { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.odds button[aria-checked='true'] { background: var(--text); color: var(--ink); }
+.odds button[aria-checked='true'] small { color: var(--ink); }
+.actions { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 6px; }
+.action { min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 1px solid var(--line-strong); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--muted); }
+.action svg { width: 28px; height: 28px; color: var(--text); }
+.action.draw { background: var(--accent); border-color: var(--accent); color: var(--text); }
+.action.task-roll { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+.action.task-roll svg { color: var(--ink); }
+
+/* --- Blätter im Vordergrund: Karte, Deutung, Notiz -------------------------------------------- */
+.overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; background: rgba(0, 0, 0, 0.72); }
+.sheet { display: flex; flex-direction: column; gap: 10px; max-height: 96%; padding: 14px 14px 12px; background: var(--panel); border-top: 1px solid var(--line-strong); }
+.sheet h2 { margin: 0; font-size: 17px; }
+.sheet textarea, .sheet input { width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--line-strong); }
+.sheet textarea { min-height: 96px; resize: none; }
+.sheet-foot { display: flex; align-items: center; gap: 8px; }
+.sheet-foot .grow { flex: 1 1 auto; font-size: 13px; color: var(--muted); text-align: right; }
+.ghost { min-height: 44px; padding: 0 14px; border: 1px solid var(--line-strong); font-weight: 600; }
+.primary { min-height: 44px; padding: 0 18px; background: var(--text); color: var(--ink); font-weight: 700; }
+.primary:disabled { background: #333333; color: var(--dim); }
+.round { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--gold); color: var(--ink); }
+.round:disabled { background: #333333; color: var(--dim); }
+.round svg { width: 28px; height: 28px; stroke-width: 2.6; }
+.target { padding: 6px 10px; border-left: 3px solid var(--gold); background: #18150e; font-size: 13px; color: var(--muted); }
+.target b { color: var(--gold); }
+.sheet-body { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.band { margin-top: 4px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.grid { display: grid; gap: 4px; }
+.grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.tile { min-height: 48px; display: flex; flex-direction: column; justify-content: center; padding: 5px 9px; text-align: left; background: var(--card); border: 1px solid var(--rule-soft); font-weight: 600; font-size: 14px; line-height: 1.25; }
+.tile small { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.tile[aria-pressed='true'] { background: var(--gold-wash); border-color: var(--gold); box-shadow: inset 3px 0 0 var(--gold); }
+/* Das Orakelfeld: die Antwort je Stufe, eine davon tippt man an. */
+.tile.answer { align-items: center; text-align: center; min-height: 62px; }
+.tile.answer .verdict { font-size: 22px; }
+.rest { padding: 8px; border: 1px dashed var(--rule-soft); font-size: 12px; color: var(--dim); text-align: center; }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+// ---- Symbole der App (src/view/icons.tsx) --------------------------------------------------------
+const icon = {
+  dice: '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>',
+  card: '<svg viewBox="0 0 24 24"><rect x="6" y="3" width="13" height="17" rx="1.5"/><path d="M4 7v12.5A1.5 1.5 0 0 0 5.5 21H15"/></svg>',
+  pencil: '<svg viewBox="0 0 24 24"><path d="M4 20l1-4.5L15.5 5a2.1 2.1 0 0 1 3 3L8 18.5 4 20z"/><path d="M13.5 7l3 3"/></svg>',
+  bulb: '<svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>',
+  close: '<svg viewBox="0 0 24 24" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  check: '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+};
+
+// ---- Regeln ------------------------------------------------------------------------------------
+const oddsList = [{ name: 'Hoch', chance: 75, target: 6 }, { name: 'Mittel', chance: 50, target: 8 }, { name: 'Gering', chance: 25, target: 10 }];
+/** Die sechs Antworten aus einem Wurf: je ein Fünftel der Ja- und der Nein-Spanne für ! und ?. */
+function answer(roll, chance) {
+  const yes = Math.floor(chance / 5);
+  const no = Math.floor((100 - chance) / 5);
+  if (roll <= yes) return 'JA!';
+  if (roll <= chance - yes) return 'JA';
+  if (roll <= chance) return 'JA?';
+  if (roll <= chance + no) return 'NEIN?';
+  if (roll <= 100 - no) return 'NEIN';
+  return 'NEIN!';
+}
+const d = (n) => 1 + Math.floor(Math.random() * n);
+const pick = (list) => list[Math.floor(Math.random() * list.length)];
+const hex = (v) => (v > 9 ? String.fromCharCode(55 + v) : String(v));
+const signed = (n) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : '±0');
+const attrDm = (v) => (v >= 9 ? 1 : v <= 5 ? -1 : 0);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const q = (s) => `„${esc(s)}“`;
+const clock = () => new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+// ---- Stand des Entwurfs --------------------------------------------------------------------------
+const character = { name: 'Kira Vant', sub: 'Ex-Scout · 4 Terms · 34 Jahre', upp: [['STR', 7], ['DEX', 10], ['END', 8], ['INT', 9], ['EDU', 7], ['SOC', 5]], skills: [['Pil-2', 'Pilot-2', 2], ['Nav-1', 'Navigation-1', 1], ['APi-1', 'Auto Pistol-1', 1], ['Vac-1', 'Vacc Suit-1', 1], ['Ohne', 'Ohne Fertigkeit', -3]] };
+const state = {
+  odds: 1,
+  task: undefined, // { skill: Index, attrs: Set }
+  open: undefined, // welche Zeile des Logs aufgeklappt ist
+  sheet: undefined, // { kind: 'card' | 'note' | 'reading', ... }
+  log: [
+    { kind: 'oracle', odds: 'Mittel', question: 'Ist der Hafenmeister bestechlich?', roll: 83, chance: 50, at: '11:38', readings: ['Nicht mit Geld. Er will einen Gefallen.'] },
+    { kind: 'dice', dice: [4, 3], at: '11:39', readings: [] },
+    { kind: 'note', text: 'Kira bleibt misstrauisch und lässt Jonas das Reden.', at: '11:40' },
+    { kind: 'card', question: 'Was steckt hinter dem Notsignal?', at: '11:41', picks: [['1–10', '4'], ['Aktion', 'loben · Vertreter'], ['Riechen', 'penetrant · geheimnisvoll']], readings: [] },
+    { kind: 'task', title: 'Kira Vant · Pilot-2 · 8+', success: true, detail: '2W6: 5 + 3 = 8, DM +2 → 10', at: '11:43', readings: [] },
+    { kind: 'oracle', odds: 'Hoch', question: 'Ist das Wrack noch unter Druck?', roll: 68, chance: 75, at: '11:45', readings: [] },
+  ],
+};
+
+// ---- Log -----------------------------------------------------------------------------------------
+const kicker = (e) => ({ oracle: `Orakel · ${e.odds}`, dice: 'Würfel · 2W6', note: 'Notiz', card: 'Karte', task: 'Probe' })[e.kind];
+const detail = (e) => ({ oracle: `W100: ${e.roll} · Ja bis ${e.chance}`, dice: `${e.dice?.join(' + ')}`, task: e.detail, card: '', note: '' })[e.kind];
+const verdict = (e) => (e.kind === 'oracle' ? answer(e.roll, e.chance) : e.kind === 'dice' ? String(e.dice[0] + e.dice[1]) : e.kind === 'task' ? (e.success ? 'ERFOLG' : 'FEHLSCHLAG') : 'Karte');
+const bad = (e) => (e.kind === 'oracle' && answer(e.roll, e.chance).startsWith('NEIN')) || (e.kind === 'task' && !e.success);
+const title = (e) => (e.kind === 'oracle' || e.kind === 'card' ? (e.question ? q(e.question) : 'Ohne Frage') : e.kind === 'dice' ? `2W6 · ${detail(e)}` : e.kind === 'task' ? esc(e.title) : esc(e.text));
+const chips = (e) => (e.picks?.length ? `<span class="under pick-chips">${e.picks.map(([k, v]) => `<span class="${k === '1–10' ? 'num' : ''}">${esc(v)}</span>`).join('')}</span>` : '');
+const readings = (e) => (e.readings ?? []).map((t) => `<span class="under reading">${esc(t)}</span>`).join('');
+
+function row(e, i) {
+  if (e.kind === 'note') return `<button type="button" class="row note" data-row="${i}" aria-expanded="${state.open === i}"><span class="what under">${esc(e.text)}</span><span class="under more"><span class="detail">Notiz · ${e.at}</span><span class="do danger" data-delete="${i}">Löschen</span></span></button>`;
+  const res = `<span class="res ${bad(e) ? 'negative' : ''} ${e.kind === 'dice' ? 'gold' : ''} ${e.kind === 'card' ? 'kind' : ''}">${verdict(e)}</span>`;
+  return `<button type="button" class="row" data-row="${i}" aria-expanded="${state.open === i}"><span class="what ${e.kind === 'dice' ? 'plain' : ''}">${title(e)}</span>${res}${chips(e)}${readings(e)}<span class="under more"><span class="detail">${[kicker(e), detail(e), e.at].filter(Boolean).join(' · ')}</span><span class="do gold" data-read="${i}">${icon.bulb}Deuten</span><span class="do danger" data-delete="${i}">Löschen</span></span></button>`;
+}
+function box(e, i) {
+  if (e.kind === 'note') return `<div class="entry note"><div class="entry-head"><span class="kicker" style="color:var(--muted)">Notiz</span><span class="detail">${e.at}</span></div><p class="note-text">${esc(e.text)}</p></div>`;
+  const main = e.kind === 'card' ? `<span class="entry-question">${title(e)}</span>` : `<span class="verdict ${bad(e) ? 'negative' : ''} ${e.kind === 'dice' ? 'gold' : ''}">${verdict(e)}</span>`;
+  const head = e.kind === 'oracle' ? `<span class="entry-question">${title(e)}</span>` : e.kind === 'task' ? `<span style="font-size:14px;font-weight:600">${title(e)}</span>` : '';
+  return `<div class="entry"><div class="entry-head"><span class="kicker">${kicker(e)}</span><span class="detail">${e.at}</span></div>${head}<div class="entry-main">${main}<button type="button" class="do gold" data-read="${i}">${icon.bulb}Deuten</button></div>${chips(e).replace('under ', '')}${detail(e) ? `<span class="detail">${detail(e)}</span>` : ''}${readings(e)}</div>`;
+}
+
+// ---- Screen --------------------------------------------------------------------------------------
+function strip() {
+  const t = state.task;
+  const upp = character.upp.map(([k, v], i) => {
+    const dm = attrDm(v);
+    const cls = !t ? '' : dm === 0 ? 'neutral' : dm > 0 ? 'offers' : 'offers minus';
+    return `<button type="button" class="${cls}" data-attr="${i}" aria-pressed="${!!t && t.attrs.has(i)}" ${!t || dm === 0 ? 'disabled' : ''}><small>${k}</small><b>${hex(v)}</b>${t && dm !== 0 ? `<span class="dm">${signed(dm)}</span>` : ''}</button>`;
+  }).join('');
+  const skills = character.skills.map(([short], i) => `<button type="button" class="${i === 4 ? 'none' : ''}" data-skill="${i}" aria-pressed="${t?.skill === i}">${short}${i === 4 ? ' −3' : ''}</button>`).join('');
+  return `<section class="strip"><div class="strip-card"><div class="strip-head"><span class="strip-name">${character.name}</span><span class="strip-sub">${character.sub}</span><span class="detail">1/2</span></div><div class="upp">${upp}</div><div class="chips">${skills}</div></div></section>`;
+}
+function taskNumbers() {
+  const t = state.task;
+  const [, name, level] = character.skills[t.skill];
+  const parts = [...t.attrs].map((i) => `${character.upp[i][0]} ${signed(attrDm(character.upp[i][1]))}`);
+  const dm = level + [...t.attrs].reduce((sum, i) => sum + attrDm(character.upp[i][1]), 0);
+  const target = oddsList[state.odds].target;
+  return { name, dm, target, need: target - dm, parts };
+}
+function dock() {
+  let task = '';
+  if (state.task) {
+    const n = taskNumbers();
+    task = `<div class="task"><div class="task-top"><div class="task-info"><strong>${n.name} · ${n.target}+</strong><span class="detail">2W6 ${signed(n.dm)}${n.parts.length ? ` (${n.parts.join(', ')})` : ''} · Braucht ${n.need}+</span></div><button type="button" class="close" data-end-task aria-label="Probe abbrechen">${icon.close}</button></div>
+      <div class="odds" role="radiogroup" aria-label="Stufe der Probe">${oddsList.map((o, i) => `<button type="button" role="radio" aria-checked="${i === state.odds}" data-odds="${i}">${o.name}<small>${o.target}+</small></button>`).join('')}</div></div>`;
+  }
+  return `<section class="dock">${task}<div class="actions">
+    <button type="button" class="action" data-note>${icon.pencil}Notiz</button>
+    <button type="button" class="action ${state.task ? 'task-roll' : ''}" data-roll>${icon.dice}${state.task ? 'Probe' : '2W6'}</button>
+    <button type="button" class="action draw" data-draw>${icon.card}Karte</button></div></section>`;
+}
+function sheet() {
+  const s = state.sheet;
+  if (!s) return '';
+  if (s.kind === 'note' || s.kind === 'reading') {
+    const e = s.kind === 'reading' ? state.log[s.of] : undefined;
+    return `<div class="overlay"><section class="sheet" role="dialog" aria-modal="true"><h2>${e ? 'Deutung' : 'Notiz'}</h2>
+      ${e ? `<div class="target">zu <b>${verdict(e)}</b> · ${title(e)}</div>` : ''}
+      <textarea id="text" placeholder="${e ? 'Was bedeutet das für die Geschichte?' : 'Was passiert?'}"></textarea>
+      <div class="sheet-foot"><button type="button" class="ghost" data-close>Abbrechen</button><span class="grow"></span><button type="button" class="primary" data-save disabled>${e ? 'Deuten' : 'Notieren'}</button></div></section></div>`;
+  }
+  const c = s.card;
+  const tile = (id, label, text) => `<button type="button" class="tile" data-tile="${id}" aria-pressed="${s.picked.has(id)}"><small>${label}</small>${esc(text)}</button>`;
+  const count = s.picked.size + (s.odds === undefined ? 0 : 1);
+  return `<div class="overlay"><section class="sheet" role="dialog" aria-modal="true"><h2>Inspirationskarte</h2>
+    <input id="question" type="text" placeholder="Frage (freiwillig)" autocomplete="off" value="${esc(s.question)}">
+    <div class="sheet-body">
+      <div class="band">Orakel · Stufe antippen</div>
+      <div class="grid c3" role="radiogroup" aria-label="Orakel">${oddsList.map((o, i) => { const a = answer(c.oracle, o.chance); return `<button type="button" class="tile answer" role="radio" data-answer="${i}" aria-pressed="${s.odds === i}"><small>${o.name} · ${o.chance} %</small><span class="verdict ${a.startsWith('NEIN') ? 'negative' : ''}">${a}</span></button>`; }).join('')}</div>
+      <div class="band">Zufallsereignis</div>
+      <div class="grid c2">${tile('Aktion', 'Aktion', c.action)}${tile('Beschreibung', 'Beschreibung', c.description)}</div>
+      <div class="band">Sinne</div>
+      <div class="grid c2">${tile('Hören', 'Hören', c.hear)}${tile('Riechen', 'Riechen', c.smell)}</div>
+      <div class="band">Wurffelder</div>
+      <div class="grid c3">${tile('1–10', '1–10', c.bell)}${tile('Streuwürfel', 'Streuwürfel', c.scatter)}${tile('Wege', 'Wege', c.map)}</div>
+      <div class="rest">Szene, Besitz, Situation, Merkmale und die Themen-Tafeln (NSC, Welt, Wesen, Handlung) wie heute</div>
+    </div>
+    <div class="sheet-foot"><button type="button" class="ghost" data-close aria-label="Karte verwerfen" style="padding:0 12px"><span style="display:block;width:20px;height:20px">${icon.close}</span></button><button type="button" class="ghost" data-redraw>Neu ziehen</button><span class="grow">${count === 0 ? 'Nichts ausgewählt' : `${count} ausgewählt`}</span><button type="button" class="round" data-confirm ${count === 0 ? 'disabled' : ''} aria-label="In den Log übernehmen">${icon.check}</button></div></section></div>`;
+}
+function render() {
+  const last = state.log.length - 1;
+  const log = state.log.length === 0 ? '<p class="log-empty">Noch nichts im Log. Zieh eine Karte oder würfle.</p>' : state.log.map((e, i) => (i === last ? box(e, i) : row(e, i))).join('');
+  document.getElementById('app').innerHTML = `<header class="header">Kessra <span class="uwp">A766754-A</span></header>${strip()}
+    <section class="log-scroll"><div class="log"><div class="log-day">Feiertag, 001-1105</div>${log}</div></section>${dock()}
+    <nav class="nav"><b>Orakel</b><span>Begegnung</span><span>Kampf</span><span>Shop</span><span>Charaktere</span><span>NSC</span><span>Sektor</span></nav>${sheet()}`;
+  document.getElementById('text')?.focus();
+}
+
+// ---- Eingaben ------------------------------------------------------------------------------------
+const pairs = [['verraten', 'Technologie'], ['öffnen', 'Gefahr'], ['loben', 'Vertreter'], ['verbergen', 'Schuld'], ['jagen', 'Reichtümer'], ['warnen', 'Fremde']];
+const looks = [['hoffnungslos', 'hart'], ['kalt', 'verlassen'], ['geschäftig', 'laut'], ['alt', 'kostbar']];
+const draw = () => ({ oracle: d(100), action: pick(pairs).join(' · '), description: pick(looks).join(' · '), hear: pick(['Stille · vertraut', 'Summen · fern', 'Schritte · eilig']), smell: pick(['penetrant · geheimnisvoll', 'erdig · vertraut', 'Ozon · scharf']), bell: String(pick([3, 4, 4, 5, 5, 5, 6, 6, 7, 8])), scatter: pick(['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW', 'Volltreffer']), map: pick(['N O ↑', 'S W', 'N S', 'O ↓']) });
+const add = (e) => { state.log.push({ at: clock(), readings: [], ...e }); state.open = undefined; };
+
+document.getElementById('app').addEventListener('click', (ev) => {
+  const hit = (name) => ev.target.closest(`[data-${name}]`);
+  const s = state.sheet;
+  let el;
+  if ((el = hit('read'))) state.sheet = { kind: 'reading', of: Number(el.dataset.read) };
+  else if ((el = hit('delete'))) { state.log.splice(Number(el.dataset.delete), 1); state.open = undefined; }
+  else if ((el = hit('row'))) state.open = state.open === Number(el.dataset.row) ? undefined : Number(el.dataset.row);
+  else if ((el = hit('skill'))) { const i = Number(el.dataset.skill); state.task = state.task?.skill === i ? undefined : { skill: i, attrs: new Set() }; }
+  else if ((el = hit('attr'))) { const i = Number(el.dataset.attr); if (state.task.attrs.has(i)) state.task.attrs.delete(i); else state.task.attrs.add(i); }
+  else if ((el = hit('odds'))) state.odds = Number(el.dataset.odds);
+  else if (hit('end-task')) state.task = undefined;
+  else if (hit('note')) state.sheet = { kind: 'note' };
+  else if (hit('draw')) state.sheet = { kind: 'card', card: draw(), picked: new Set(), odds: undefined, question: '' };
+  else if (hit('roll')) {
+    const dice = [d(6), d(6)];
+    if (state.task) { const n = taskNumbers(); const total = dice[0] + dice[1] + n.dm; add({ kind: 'task', title: `${character.name} · ${n.name} · ${n.target}+`, success: total >= n.target, detail: `2W6: ${dice[0]} + ${dice[1]} = ${dice[0] + dice[1]}, DM ${signed(n.dm)} → ${total}` }); }
+    else add({ kind: 'dice', dice });
+  }
+  else if (hit('close')) state.sheet = undefined;
+  else if (hit('redraw')) state.sheet = { ...s, card: draw(), picked: new Set(), odds: undefined };
+  else if ((el = hit('answer'))) { const i = Number(el.dataset.answer); s.odds = s.odds === i ? undefined : i; }
+  else if ((el = hit('tile'))) { const id = el.dataset.tile; if (s.picked.has(id)) s.picked.delete(id); else s.picked.add(id); }
+  else if (hit('confirm')) {
+    // Ein Eintrag: die Antwort (falls eine Stufe gewählt ist) und die gewählten Felder, mit der Frage.
+    const texts = { Aktion: s.card.action, Beschreibung: s.card.description, Hören: s.card.hear, Riechen: s.card.smell, '1–10': s.card.bell, Streuwürfel: s.card.scatter, Wege: s.card.map };
+    const picks = [...s.picked].map((id) => [id, texts[id]]);
+    if (s.odds !== undefined) add({ kind: 'oracle', odds: oddsList[s.odds].name, question: s.question.trim(), roll: s.card.oracle, chance: oddsList[s.odds].chance, picks });
+    else add({ kind: 'card', question: s.question.trim(), picks });
+    state.sheet = undefined;
+  }
+  else if (hit('save')) {
+    const text = document.getElementById('text').value.trim();
+    if (s.kind === 'reading') state.log[s.of].readings.push(text); else add({ kind: 'note', text });
+    state.sheet = undefined;
+  }
+  else return;
+  render();
+});
+// Text in den Blättern: ohne neu zu zeichnen, damit das Feld den Fokus behält.
+document.getElementById('app').addEventListener('input', (ev) => {
+  if (ev.target.id === 'question') state.sheet.question = ev.target.value;
+  if (ev.target.id === 'text') document.querySelector('[data-save]').disabled = ev.target.value.trim() === '';
+});
+render();
+</script>
+</body>
+</html>

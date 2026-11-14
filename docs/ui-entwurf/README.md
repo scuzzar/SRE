@@ -121,3 +121,15 @@ Orakel-Screen (siehe *Orakel-Screen* in der [To-do](../../TODO.md)).
 | `log-kompakt/Entwurf.html` | Heute und Vorschlag mit demselben Log: Das neueste Ergebnis bleibt groß, ältere Einträge sind eine Zeile (links was, rechts das Ergebnis). Antippen klappt eine Zeile auf, mit Einzelheiten, „Deuten“ und „Löschen“; „Deuten“ und „Notiz“ in der Schreibzeile erscheinen erst mit dem Text. Breit stehen beide Smartphones nebeneinander, schmal schaltet man oben um |
 
 Eine gewöhnliche HTML-Datei, die sich direkt im Browser öffnen lässt.
+
+## Orakel-Screen neu (Entwurf vom 14. November 2026, wartet auf Freigabe)
+
+Im Ordner [`orakel-neu/`](orakel-neu/) liegt der Entwurf für den neuen Aufbau des Orakel-Screens
+(siehe *Orakel auf der Karte* im [Domänenmodell](../domain-model.md), Kennzeichen 2026-11-14d).
+
+| Datei | Inhalt |
+|---|---|
+| `orakel-neu/Entwurf.html` | Der ganze Screen zum Anfassen: Charakter oben kompakt (Attribute und Fertigkeiten je eine Zeile; ist eine Fertigkeit gewählt, steht der DM hinter dem Wert). Unten nur noch eine Reihe mit drei Symbolen: Notiz, Würfeln, Karte. Die Stufe (6+, 8+, 10+) erscheint erst mit der Probe. Die Karte trägt oben die Frage und das Orakelfeld mit der Antwort je Stufe (Ja!, Ja, Ja?, Nein?, Nein, Nein!); Antwort und gewählte Felder werden ein Logeintrag. „Deuten“ ist ein Knopf am Ergebnis und öffnet ein Blatt, „Notiz“ ebenso. Der Log ist kompakt wie in `log-kompakt/` |
+
+Eine gewöhnliche HTML-Datei, die sich direkt im Browser öffnen lässt. Die Karte ist gekürzt: Szene,
+Besitz, Situation, Merkmale und die Themen-Tafeln bleiben wie heute.
