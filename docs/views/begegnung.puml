@@ -192,9 +192,6 @@ hide <<value>> stereotype
     name: string
     rumor: boolean
   }
-  class PatronSkill <<reference>> $begegnung {
-    $gone("2026-11-14b", "level: number")
-  }
   class AnimalTable $begegnung {
   }
   class AnimalRow $begegnung {
@@ -284,9 +281,7 @@ hide <<value>> stereotype
   }
 
 ' Referenzdaten
-  class Skill <<reference>> $charakter
   class Service <<reference>> $erschaffung
-  class Item <<reference>> $shop
   class Weapon <<reference>> $kampf
 
 ' Kampagne
@@ -307,10 +302,7 @@ Character "*" --> "0..1" Patron : patron
 ' Verlauf
 LogEntry <|-- PatronRoll
 PatronRoll "*" --> "1" Patron : of
-Patron "1" *-$goneArrow("2026-11-14b")- "*" PatronSkill : skills
-PatronSkill "*" --> "1" Skill : of
-Patron "*" -$goneArrow("2026-11-14b")-> "*" Item : gear {ordered}
-Patron "*" -$newArrow("2026-11-14b")-> "0..1" Service : career
+Patron "*" --> "0..1" Service : career
 LogEntry <|-- RumorRoll
 LogEntry <|-- Butchering
 Butchering "*" --> "1" Character : of
@@ -370,5 +362,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class PatronSkill #line:d0021b;line.bold
 @enduml

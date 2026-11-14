@@ -108,7 +108,6 @@ hide <<value>> stereotype
   class Passenger <<value>> $reise
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
-  class Patron <<reference>> $begegnung
   class AnimalRow $begegnung
 
 ' Referenzdaten
@@ -168,7 +167,6 @@ Weapon "*" --> "0..1" Item : ammo
 Hex "*" --> "*" Item : /offer
 
 ' Verlauf
-Patron "*" -$goneArrow("2026-11-14b")-> "*" Item : gear {ordered}
 Possession "*" --> "0..1" AnimalRow : from
 
 ' Probe

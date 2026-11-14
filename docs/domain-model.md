@@ -281,7 +281,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > [`patron-nsc.md`](patron-nsc.md); feste Werte als Startpunkt, später ein richtiger NSC-Generator). Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-nsc-am-ort.png`](changes/2026-11-14-nsc-am-ort.png).
 
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-14b): **Patron-NSC mit Laufbahn** (siehe *Patron als
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14b): **Patron-NSC mit Laufbahn** (siehe *Patron als
 > NSC*). Statt fester Fertigkeiten und Ausrüstung je Beruf verweist jeder Patron auf eine Laufbahn
 > (`Patron.career`), und der Patron-NSC entsteht durch eine zufällig durchlaufene
 > Charaktererschaffung in dieser Laufbahn. Im Bild entfallen `PatronSkill`, `Patron.skills` und
@@ -1350,7 +1350,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - *Laufbahn*: Er meldet sich immer bei der Laufbahn seines Patrons. Wird er dort nicht
       genommen (er würde eingezogen), oder stirbt er in einem Term, beginnt der Lauf von vorn, mit
       neuen Attributen (Hausregel), bis er in seiner Laufbahn gedient und überlebt hat.
-    - *Welten*: Heimatwelt und die Welt jedes Terms ist der Aufenthaltsort.
+    - *Welten*: wie beim *Durchlaufen*, Heimatwelt eine zufällige fertige Welt des Subsektors, die
+      Terms „wie zuletzt“.
     - *Name*: von der Tafel NSC, wie bei den NSC der Begegnung.
     - Er läuft für sich, neben einer offenen Charaktererschaffung der Kampagne, ohne sie zu
       berühren; gespeichert wird nur der fertige Charakter mit seinem Lebenslauf.

@@ -228,7 +228,7 @@ Aging --> "1" Characteristic : of
 ' Waffen (Referenzdaten)
 
 ' Verlauf
-Patron "*" -$newArrow("2026-11-14b")-> "0..1" Service : career
+Patron "*" --> "0..1" Service : career
 
 ' Probe
 

@@ -1,6 +1,6 @@
 # Patron-NSC: Laufbahn je Beruf
 
-**Hausregel, Vorschlag vom 14. November 2026, wartet auf Freigabe** (Kennzeichen 2026-11-14b im
+**Hausregel, am 14. November 2026 freigegeben** (Kennzeichen 2026-11-14b im
 [Domänenmodell](domain-model.md), siehe dort *Patron als NSC*). Die Regeln geben den Patrons der
 Patron Encounters Matrix (SE, Charts S. 20) keine Werte. Jeder Patron verweist deshalb auf eine
 Laufbahn (`Patron.career`); ein Patron-NSC durchläuft in ihr zufällig die Charaktererschaffung und

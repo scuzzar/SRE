@@ -144,7 +144,6 @@ hide <<value>> stereotype
   class Encounter $begegnung
   class Distance $begegnung
   class Patron <<reference>> $begegnung
-  class PatronSkill <<reference>> $begegnung
   class AnimalRow $begegnung
 
 ' Referenzdaten
@@ -211,7 +210,6 @@ Weapon "*" --> "1" Skill : uses
 ' Verlauf
 Recovery "*" --> "1" Character : for
 Recovery "*" --> "0..1" Character : by
-PatronSkill "*" --> "1" Skill : of
 Butchering "*" --> "1" Character : of
 TaskResult "*" --> "1" Character : for
 TaskResult "*" --> "0..1" SkillLevel : uses
@@ -249,5 +247,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class PatronSkill #line:d0021b;line.bold
 @enduml
