@@ -33,7 +33,7 @@ test('Offline: nach dem ersten Start lädt die App ohne Netz, mit ihrem Spielsta
 
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByRole('banner')).toContainText('Kampagne');
+  await expect(page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true })).toBeVisible();
   await expect(page.locator('.entry')).toHaveCount(1);
   await page.getByRole('button', { name: '2W6' }).click();
   await expect(page.locator('.entry')).toHaveCount(2);

@@ -4,6 +4,7 @@ import type { WorldAction, WorldLine, WorldView } from '../../controller';
 import { DiceView, THROW_MS, useTimeline } from '../Dice';
 import { signed } from '../format';
 import { useGame } from '../game-context';
+import { WorldIcon } from './WorldIcon';
 import { animated, haptic, stopHaptics } from '../haptics';
 import { HoldButton } from '../HoldButton';
 import { CloseIcon, DiceIcon } from '../icons';
@@ -138,28 +139,16 @@ export function WorldSheet({ world, here, travel }: { world: WorldView; here: bo
 /** Die Welt, wie sie gerade steht: UWP, jede Stelle im Klartext, Temperatur, Basen, Gasriese, Handelscodes. */
 function WorldCard({ world }: { world: WorldView }) {
   const yes = (value: boolean | undefined) => (value === undefined ? '–' : value ? 'ja' : 'nein');
-  return (
-    <article className="pc generation-card world-card" aria-label="Welt">
-      <div className="pc-head static">
-        <span className="pc-name">{world.name ?? 'Neue Welt'}</span>
-        <span className="pc-sub mono">
-          {world.id} · {world.uwp}
-        </span>
-      </div>
-      <dl className="facts world-profile" lang="en">
-        {world.profile.map((p) => (
-          <Fragment key={p.kind}>
-            <div className={p.code === undefined ? 'pending' : undefined}>
-              <dt lang="de">{p.label}</dt>
-              <dd>
-                <span className="mono world-digit">{p.code ?? '–'}</span>
-                {p.text && <span className="world-text">{p.text}</span>}
-              </dd>
-            </div>
-            {p.kind === 'atmosphere' && <TemperatureRow temperature={world.temperature} />}
-          </Fragment>
-        ))}
-      </dl>
+  const head = (
+    <div className="pc-head static">
+      <span className="pc-name">{world.name ?? 'Neue Welt'}</span>
+      <span className="pc-sub mono">
+        {world.id} · {world.uwp}
+      </span>
+    </div>
+  );
+  const extras = (
+    <>
       <p className="world-extras">
         <span>Marinebasis {yes(world.navalBase)}</span>
         <span>Scoutbasis {yes(world.scoutBase)}</span>
@@ -174,6 +163,45 @@ function WorldCard({ world }: { world: WorldView }) {
           ))}
         </ul>
       )}
+    </>
+  );
+  const profile = (
+    <dl className="facts world-profile" lang="en">
+      {world.profile.map((p) => (
+        <Fragment key={p.kind}>
+          <div className={p.code === undefined ? 'pending' : undefined}>
+            <dt lang="de">{p.label}</dt>
+            <dd>
+              <span className="mono world-digit">{p.code ?? '–'}</span>
+              {p.text && <span className="world-text">{p.text}</span>}
+            </dd>
+          </div>
+          {p.kind === 'atmosphere' && <TemperatureRow temperature={world.temperature} />}
+        </Fragment>
+      ))}
+    </dl>
+  );
+  // Oben steht das Weltsymbol, halb so breit wie der Block, die Tabelle darunter. In der Erschaffung
+  // erscheint es mit der Größe; was noch fehlt, ist grau und kommt Wurf für Wurf dazu.
+  if (world.look) {
+    return (
+      <article className="pc generation-card world-card" aria-label="Welt">
+        <div className="world-top">
+          <div className="world-top-text">
+            {head}
+            {extras}
+          </div>
+          <WorldIcon look={world.look} className="world-top-icon" label={`Weltsymbol von ${world.name ?? world.id}`} />
+        </div>
+        {profile}
+      </article>
+    );
+  }
+  return (
+    <article className="pc generation-card world-card" aria-label="Welt">
+      {head}
+      {profile}
+      {extras}
     </article>
   );
 }

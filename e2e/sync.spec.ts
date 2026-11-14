@@ -9,9 +9,17 @@ const pick = (page: Page, name: string) => sheet(page).locator('.campaign-pick',
 const syncPanel = (page: Page) => sheet(page).locator('.sync');
 
 async function openCampaigns(page: Page) {
-  await header(page).getByRole('button', { name: /^Kampagne / }).click();
+  await header(page).getByRole('button', { name: 'Menü', exact: true }).click();
   await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Kampagnen wechseln und verwalten' }).click();
   await expect(sheet(page)).toBeVisible();
+}
+
+/** Der Name der offenen Kampagne steht oben im Menü. */
+async function expectCampaign(page: Page, name: string) {
+  await expect(sheet(page)).toBeHidden();
+  await header(page).getByRole('button', { name: 'Menü', exact: true }).click();
+  await expect(page.locator('.menu-campaign')).toContainText(name);
+  await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Menü schließen' }).click();
 }
 
 /** Wie oft die Probe-Wolke schon geschrieben wurde. */
@@ -39,7 +47,7 @@ test('Abgleich: anmelden, zweites Gerät bekommt die Kampagne, Konflikt mit „B
   await expect(syncPanel(page)).toContainText('Abgeglichen um');
   await sheet(page).getByLabel('Neue Kampagne').fill('Spinward Run');
   await sheet(page).getByRole('button', { name: 'Anlegen' }).click();
-  await expect(header(page)).toContainText('Spinward Run');
+  await expectCampaign(page, 'Spinward Run');
   await expect.poll(() => page.evaluate(() => localStorage.getItem('sre-probe-wolke') ?? '')).toContain('Spinward Run');
 
   // Tablet: ist schon angemeldet und bekommt die Kampagnen beim Start.
@@ -49,7 +57,7 @@ test('Abgleich: anmelden, zweites Gerät bekommt die Kampagne, Konflikt mit „B
   await expect(pick(tablet, 'Spinward Run')).toBeVisible();
   await expect(sheet(tablet).locator('.campaign-pick')).toHaveCount(3);
   await pick(tablet, 'Spinward Run').click();
-  await expect(header(tablet)).toContainText('Spinward Run');
+  await expectCampaign(tablet, 'Spinward Run');
 
   // Eine Änderung am Handy kommt beim nächsten Start aufs Tablet.
   await rollAndWaitForSync(page);
@@ -66,7 +74,7 @@ test('Abgleich: anmelden, zweites Gerät bekommt die Kampagne, Konflikt mit „B
   await expect(conflict).toBeHidden();
   await expect(pick(tablet, 'Spinward Run (Kopie)')).toBeVisible();
   await expect(sheet(tablet).locator('.campaign-pick')).toHaveCount(4);
-  await expect(header(tablet)).toContainText('Spinward Run (Kopie)');
+  await expect(sheet(tablet).locator('.campaign-pick[aria-current="true"]')).toContainText('Spinward Run (Kopie)');
 
   // Das Handy bekommt die Kopie daneben, ohne Konflikt.
   await expect.poll(() => tablet.evaluate(() => localStorage.getItem('sre-probe-wolke') ?? '')).toContain('Spinward Run (Kopie)');
