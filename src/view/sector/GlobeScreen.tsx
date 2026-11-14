@@ -6,6 +6,13 @@ import { cellAt, radiusOf, renderGlobe, screenOf, type Camera, type Viewport } f
 import { HappenedList } from './HappenedList';
 
 const DEG = Math.PI / 180;
+/** So lange wartet ein Tippen auf ein zweites (Doppeltippen zoomt statt zu wählen). */
+const DOUBLE_TAP_MS = 260;
+
+/** Der kürzere Weg um die Kugel für einen Unterschied der Länge (Bogenmaß). */
+function shortest(delta: number): number {
+  return ((((delta + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) - Math.PI;
+}
 
 /** Wie weit man hineinzoomen kann: etwa 10 Felder über die kürzere Seite. */
 function maxZoom(globe: GlobeView): number {
@@ -67,7 +74,7 @@ export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; 
 
   // Drehen, Zoomen, Antippen.
   const pointers = useRef(new Map<number, { x: number; y: number }>());
-  const gesture = useRef<{ moved: number; pinch?: number; zoom?: number }>({ moved: 0 });
+  const gesture = useRef<{ moved: number; pinch?: number; zoom?: number; double?: boolean; startY?: number }>({ moved: 0 });
   const clampZoom = useCallback((z: number) => Math.min(maxZoom(globe), Math.max(1, z)), [globe]);
   const zoomBy = useCallback((factor: number) => setCamera((c) => ({ ...c, zoom: clampZoom(c.zoom * factor) })), [clampZoom]);
   // Die Knöpfe gleiten: Ziel merken und in wenigen Bildern hinzoomen, solange in grober Auflösung.
@@ -104,13 +111,37 @@ export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; 
     observer.observe(el);
     return () => observer.disconnect();
   }, [globe.picked]);
+  // Gesten wie in einer Karten-App: ziehen dreht, zwei Finger zoomen, Doppeltippen zoomt auf die
+  // Stelle hinein, Doppeltippen und Ziehen zoomt einhändig (nach unten hinein, nach oben heraus).
+  // Ein einfaches Tippen wählt das Feld erst, wenn kein zweites Tippen folgt.
+  const lastTap = useRef<{ x: number; y: number; at: number } | undefined>(undefined);
+  const pendingTap = useRef<number | undefined>(undefined);
+  const cancelPendingTap = () => {
+    if (pendingTap.current !== undefined) window.clearTimeout(pendingTap.current);
+    pendingTap.current = undefined;
+  };
+  useEffect(() => cancelPendingTap, []);
+  const pointAt = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  };
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     gesture.current = { moved: 0 };
     if (pointers.current.size === 2) {
+      cancelPendingTap();
+      lastTap.current = undefined;
       const [a, b] = [...pointers.current.values()] as [{ x: number; y: number }, { x: number; y: number }];
       gesture.current = { moved: 99, pinch: Math.hypot(a.x - b.x, a.y - b.y), zoom: camera.zoom };
+      return;
+    }
+    const before = lastTap.current;
+    if (before && e.timeStamp - before.at < DOUBLE_TAP_MS && Math.hypot(e.clientX - before.x, e.clientY - before.y) < 30) {
+      // Zweites Tippen: das erste wählt kein Feld mehr.
+      cancelPendingTap();
+      lastTap.current = undefined;
+      gesture.current = { moved: 0, double: true, startY: e.clientY, zoom: camera.zoom };
     }
   };
   const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -129,18 +160,40 @@ export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; 
     if (gesture.current.moved < 6) return;
     setMoving(true);
     setPanel(undefined);
+    if (gesture.current.double) {
+      const start = gesture.current.zoom ?? camera.zoom;
+      const travel = e.clientY - (gesture.current.startY ?? e.clientY);
+      setCamera((c) => ({ ...c, zoom: clampZoom(start * Math.exp(travel / 160)) }));
+      return;
+    }
     const R = radiusOf(view, camera);
     setCamera((c) => ({ ...c, lon: c.lon - dx / R / Math.max(0.2, Math.cos(c.lat)), lat: Math.max(-85 * DEG, Math.min(85 * DEG, c.lat + dy / R)) }));
   };
   const onPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const tap = gesture.current.moved < 6 && pointers.current.size === 1;
+    const double = gesture.current.double === true;
     pointers.current.delete(e.pointerId);
     if (pointers.current.size === 0) setMoving(false);
     if (!tap) return;
     setPanel(undefined);
-    const rect = e.currentTarget.getBoundingClientRect();
-    const cell = cellAt(globe, camera, view, e.clientX - rect.left, e.clientY - rect.top);
-    game.pickCell(cell === globe.picked?.cell ? undefined : cell);
+    const point = pointAt(e);
+    const cell = cellAt(globe, camera, view, point.x, point.y);
+    if (double) {
+      // Doppeltippen: auf die Stelle zu drehen und eine Stufe hineinzoomen.
+      if (cell !== undefined) {
+        const lat = globe.grid.lat[cell]! * DEG;
+        const lon = globe.grid.lon[cell]! * DEG;
+        setCamera((c) => ({ lat: c.lat + (lat - c.lat) * 0.5, lon: c.lon + shortest(lon - c.lon) * 0.5, zoom: c.zoom }));
+      }
+      glideZoom(2);
+      return;
+    }
+    lastTap.current = { x: e.clientX, y: e.clientY, at: e.timeStamp };
+    cancelPendingTap();
+    pendingTap.current = window.setTimeout(() => {
+      pendingTap.current = undefined;
+      game.pickCell(cell === globe.picked?.cell ? undefined : cell);
+    }, DOUBLE_TAP_MS);
   };
   useEffect(() => {
     const el = canvas.current;

@@ -719,8 +719,12 @@ Karte.
 ### Globus
 
 Wie eine Karten-App (Owner, 14. November 2026):
-- **Die Karte füllt den ganzen Bildschirm.** Drehen mit dem Finger, zoomen mit zwei Fingern, dem
-  Mausrad oder den Knöpfen + und − rechts unten. Ganz herausgezoomt sieht man die ganze Halbkugel,
+- **Die Karte füllt den ganzen Bildschirm.** Drehen mit dem Finger. Zoomen wie in einer Karten-App:
+  zwei Finger, **Doppeltippen** (eine Stufe hinein, auf die Stelle zu) oder **Doppeltippen und
+  Ziehen** (einhändig: nach unten hinein, nach oben heraus). Ein einfaches Tippen wählt das Feld
+  erst nach einer kurzen Pause (etwa eine Viertelsekunde), damit es sich nicht mit dem Doppeltippen
+  beißt. Mit Maus oder Touchpad zusätzlich Mausrad und die Knöpfe + und − rechts unten; auf
+  Touch-Geräten gibt es die Knöpfe nicht. Ganz herausgezoomt sieht man die ganze Halbkugel,
   ganz hineingezoomt etwa 10 Felder über die kürzere Seite.
 - **Oben eine Leiste:** Zurück zur Weltkarte, der Name der Welt und zwei aufklappbare Listen:
   - **Orte:** die Gruppe, NSC mit Feld, Städte (mit Einwohnern und Hafen), Orbitalstädte, Vulkane.
