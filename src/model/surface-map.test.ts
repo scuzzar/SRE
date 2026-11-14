@@ -169,3 +169,18 @@ describe('Städtenamen (2026-11-14k)', () => {
     expect(used.size).toBe(2000);
   });
 });
+
+describe('Höchstens eine Siedlung je Feld', () => {
+  it('kein Feld hat zwei Städte, keine Kleinstadt liegt auf einer Stadt, jede Kleinstadt zählt 1', () => {
+    const big: MapWorld = { ...terra, population: 10, tech: 15 };
+    for (const seed of [1, 2, 3]) {
+      const { map } = generateSurfaceMap(big, seeded(seed));
+      const cityCells = (map.cities ?? []).filter((c) => c.cell !== undefined).map((c) => c.cell!);
+      expect(new Set(cityCells).size).toBe(cityCells.length);
+      for (const [cell, count] of map.towns ?? []) {
+        expect(count).toBe(1);
+        expect(cityCells.includes(cell)).toBe(false);
+      }
+    }
+  });
+});

@@ -610,7 +610,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Hauptstadt, Nebenstadt | `CityRank` | Die Städte mit den höchsten Bevölkerungsziffern (höchstens 10) bzw. eine Ziffer darunter |
 | Orbitalstadt | `City` ohne `cell` | Eine Stadt dauerhaft im Orbit |
 | Hafen einer Stadt | `City.port`, `Port` | Raumhafen A–E oder Landeplatz F–H der Stadt; Y (keiner) heißt: kein Wert |
-| Kleinstädte | `SurfaceCell.towns` | Wie viele kleinere Städte auf einem Oberflächenfeld liegen; einzeln gibt es sie nicht |
+| Kleinstadt | `SurfaceCell.towns` | Ob auf einem Oberflächenfeld ohne Stadt eine Kleinstadt liegt (1) oder nicht (0); höchstens eine je Feld, ohne Namen |
 | Bevölkerungsmultiplikator | `Hex.populationMultiplier` | Die erste Ziffer der Einwohnerzahl, 1–9: Die Welt hat Multiplikator × 10^Bevölkerung Einwohner |
 | Globus | (View, aus `SurfaceMap`) | Die drehbare Kugel mit der Oberflächenkarte; nur Darstellung |
 | Wasseranteil | `Surface.water` | Wie viel Prozent der Oberfläche Wasser ist, 0 bis 100 |
@@ -2204,8 +2204,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Karte einen Namen aus den Referenzdaten *Städtenamen*, auf der ganzen Kampagne ohne Doppel. Die
     Hauptstadt (die erste Stadt) trägt bei 1–2 auf 1W6 den Namen der Welt. Den Namen kann man im
     Feld unten auf dem Globus ändern; ein leerer Name geht nicht. Karten von vor dieser Änderung
-    bekommen beim Laden „Stadt 1“, „Stadt 2“ usw. Ein Feld kann ab TL 10 mehrere Städte haben; deshalb verweist die Stadt auf ihr Feld, nicht
-    das Feld auf seine Städte. Eine Stadt ohne Feld (`cell`) ist eine Orbitalstadt. `population` ist ihre Bevölkerungsziffer,
+    bekommen beim Laden „Stadt 1“, „Stadt 2“ usw. Die Stadt verweist auf ihr Feld, nicht das Feld
+    auf seine Stadt.
+  - **Höchstens eine Siedlung je Feld** (Owner, 14. November 2026): auf jedem Oberflächenfeld
+    entweder eine Stadt oder eine Kleinstadt (`towns` ist dann 1), nie mehr. Das Buch erlaubt ab TL 10
+    mehrere Städte auf einem Hex; auf 250-km-Feldern ist eine je Feld übersichtlicher. Kleinstädte,
+    für die kein Feld mehr frei ist, leben auf dem Land. Karten von davor dürfen mehr haben. Eine Stadt ohne Feld (`cell`) ist eine Orbitalstadt. `population` ist ihre Bevölkerungsziffer,
     `multiplier` die erste Ziffer ihrer Einwohnerzahl (Einwohner = multiplier × 10^population).
   - Der Bevölkerungsmultiplikator (`populationMultiplier`) wird beim Erzeugen der Karte gewürfelt,
     falls die Welt noch keinen hat, und bleibt beim Neu würfeln der Karte erhalten. Bei

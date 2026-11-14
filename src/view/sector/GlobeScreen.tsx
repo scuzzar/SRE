@@ -384,7 +384,7 @@ export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; 
               {picked.cities.map((c, i) => (
                 <li key={c.index}>{i === 0 ? c.detail : `${c.name}: ${c.detail}`}</li>
               ))}
-              {picked.towns > 0 && <li>{picked.towns === 1 ? '1 Kleinstadt' : `${picked.towns} Kleinstädte`}</li>}
+              {picked.towns > 0 && <li>Kleinstadt</li>}
               {picked.volcano && <li>{picked.volcano}</li>}
               {picked.river && <li>Fluss</li>}
               {picked.road && <li>Straße</li>}
