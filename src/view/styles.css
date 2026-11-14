@@ -159,6 +159,11 @@ button:disabled {
   cursor: default;
 }
 
+.header-world .world-icon {
+  flex: 0 0 auto;
+  margin-left: -4px;
+}
+
 .header-world-name {
   overflow: hidden;
   white-space: nowrap;
@@ -3569,18 +3574,8 @@ button:disabled {
   fill: var(--gold) !important;
 }
 
-.hex-world.wet {
-  fill: var(--text);
-}
-
-.hex-world.dry {
-  fill: none;
-  stroke: var(--text);
-  stroke-width: 1.6;
-}
-
-.hex-belt circle {
-  fill: var(--text);
+.hex-icon {
+  pointer-events: none;
 }
 
 .hex-base,
@@ -3706,6 +3701,27 @@ button:disabled {
 .world-word {
   font-weight: 700;
   margin-right: 0.4em;
+}
+
+.world-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.world-top-text {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-width: 0;
+}
+
+.world-top-icon {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 100%;
 }
 
 .world-extras {

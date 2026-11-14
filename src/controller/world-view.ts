@@ -25,6 +25,42 @@ import {
 } from '../model';
 import { nextWorldRoll, totalOf, type WorldRoll } from '../model/draft';
 
+/**
+ * Was das Weltsymbol braucht: die Stellen des UWP, die man sieht, Wasseranteil, Temperatur und
+ * Leben. `seed` (das Feld) legt fest, wo Kontinente und Städte liegen, damit jede Welt anders aussieht.
+ */
+export interface WorldLook {
+  readonly seed: string;
+  readonly size: number;
+  readonly atmosphere: number;
+  readonly hydrographics: number;
+  /** Wasseranteil 0 bis 1: aus der Oberfläche, sonst aus der Hydrographie. */
+  readonly water: number;
+  readonly population: number;
+  readonly tech: number;
+  readonly temperature: 'frozen' | 'cold' | 'temperate' | 'hot' | 'boiling';
+  readonly life: boolean;
+}
+
+/** Das Weltsymbol einer fertigen Welt; sonst `undefined`. */
+export function lookOf(hex: Hex | undefined): WorldLook | undefined {
+  if (!hex || hexState(hex) !== 'world') return undefined;
+  const { size = 0, atmosphere = 0, hydrographics = 0, population = 0, tech = 0 } = hex.uwp;
+  return {
+    seed: hexId(hex.column, hex.row),
+    size,
+    atmosphere,
+    hydrographics,
+    water: hex.surface ? hex.surface.water / 100 : hydrographics >= 10 ? 0.985 : hydrographics / 10,
+    population,
+    tech,
+    // Welten von vor der Temperatur gelten als gemäßigt, Welten von vor der Oberfläche als belebt,
+    // wenn Luft und Wasser es erlauben.
+    temperature: hex.temperature ?? 'temperate',
+    life: hex.surface?.life ?? (atmosphere >= 2 && atmosphere <= 9 && hydrographics > 0),
+  };
+}
+
 /** Ein Feld der Karte. */
 export interface HexView {
   /** Spalte und Zeile, z. B. 0304. */
@@ -46,6 +82,8 @@ export interface HexView {
   readonly uwp: string | undefined;
   /** Die Handelscodes einer fertigen Welt, z. B. Ag Ni. */
   readonly trade: readonly string[];
+  /** Das Weltsymbol einer fertigen Welt. */
+  readonly look: WorldLook | undefined;
 }
 
 /** Das gewählte Feld auf der Karte: noch nicht erzeugt, oder mit seinem Vorkommen. */
@@ -74,6 +112,7 @@ export interface WorldListItem {
   readonly gasGiant: boolean;
   /** Die erste Zeile der Notiz zur Welt, falls es eine gibt. */
   readonly note: string | undefined;
+  readonly look: WorldLook;
 }
 
 /** Eine Zeile im Verlauf der Weltenerschaffung: ein Wurf mit dem, was er ergeben hat. */
@@ -142,6 +181,8 @@ export interface WorldView {
   readonly note: string | undefined;
   /** Nur eine fertige Welt hat eine Notiz. */
   readonly canNote: boolean;
+  /** Das Weltsymbol, sobald die Welt fertig ist. */
+  readonly look: WorldLook | undefined;
 }
 
 function yesNo(value: boolean | undefined): string {
@@ -214,6 +255,7 @@ export function sectorView(hexes: readonly Hex[]): readonly HexView[] {
         population: hex?.uwp.population,
         uwp: hex && hexState(hex) === 'world' ? uwpCode(hex.uwp) : undefined,
         trade: hex && hexState(hex) === 'world' ? tradeCodesOf(hex).map((t) => t.id) : [],
+        look: lookOf(hex),
       });
     }
   }
@@ -237,6 +279,7 @@ export function worldList(hexes: readonly Hex[]): readonly WorldListItem[] {
           trade: tradeCodesOf(hex).map((t) => t.id),
           gasGiant: hex.gasGiant ?? false,
           note: hex.note?.split('\n')[0],
+          look: lookOf(hex)!,
         },
       ];
     });
@@ -367,6 +410,7 @@ export function worldView(hexes: readonly Hex[], column: number, row: number, ro
     lines: rolls.map(worldLine),
     action,
     note: hex.note,
+    look: lookOf(hex),
     canNote: isWorld(hex),
     error,
   };

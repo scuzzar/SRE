@@ -1436,7 +1436,10 @@ describe('Subsektor und Weltenerschaffung', () => {
     const after = game.snapshot();
     expect(after.world).toMatchObject({ name: 'Regina', step: 'done', action: { kind: 'done' }, trade: [{ code: 'Ag' }, { code: 'Ni' }] });
     expect(after.sector.find((h) => h.id === '0304')).toMatchObject({ state: 'world', name: 'Regina', starport: 'C', scoutBase: true, gasGiant: true, hydrographics: 8 });
-    expect(after.worlds).toEqual([{ id: '0304', column: 3, row: 4, name: 'Regina', uwp: 'C788545-7', bases: 'S', trade: ['Ag', 'Ni'], gasGiant: true, note: undefined }]);
+    expect(after.worlds).toEqual([{ id: '0304', column: 3, row: 4, name: 'Regina', uwp: 'C788545-7', bases: 'S', trade: ['Ag', 'Ni'], gasGiant: true, note: undefined, look: { seed: '0304', size: 7, atmosphere: 8, hydrographics: 8, water: 0.8, population: 5, tech: 7, temperature: 'temperate', life: true } }]);
+    // Das Weltsymbol: dieselben Werte auf der Karte und auf der Weltkarte.
+    expect(after.sector.find((h) => h.id === '0304')?.look).toEqual(after.worlds[0]?.look);
+    expect(after.world?.look).toEqual(after.worlds[0]?.look);
   });
 
   it('schreibt einer fertigen Welt eine Notiz, ändert und entfernt sie; die Liste zeigt ihre erste Zeile', async () => {

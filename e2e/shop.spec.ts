@@ -121,6 +121,10 @@ test('Shop: „Gruppe ist hier“ auf der Weltkarte bringt die Gruppe auf eine a
   // Der Aufenthaltsort steht mit UWP in der Kopfzeile; ein Tippen öffnet seine Weltkarte.
   const header = page.locator('.header').getByRole('button', { name: /^Aufenthaltsort Regina, UWP / });
   await expect(header).toBeVisible();
+  await expect(header.locator('canvas.world-icon')).toBeVisible();
   await header.click();
-  await expect(page.getByRole('dialog', { name: /^Regina · / })).toBeVisible();
+  const sheet = page.getByRole('dialog', { name: /^Regina · / });
+  await expect(sheet).toBeVisible();
+  // Oben auf der Weltkarte steht das Weltsymbol.
+  await expect(sheet.getByRole('img', { name: /^Weltsymbol von Regina/ })).toBeVisible();
 });

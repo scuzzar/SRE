@@ -129,6 +129,9 @@ test('Sektor: UWP und Handelscodes erscheinen auf der Karte, sobald sie beim Zoo
   await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
   const world = page.getByRole('button', { name: '0201, Efate: Weltkarte öffnen' });
   await expect(world).toBeVisible();
+  // In der Mitte des Feldes steht das Weltsymbol.
+  await expect(world.locator('.hex-icon')).toHaveCount(1);
+  await expect(world.locator('.hex-icon')).toHaveAttribute('href', /^data:image\/png/);
   // Ganz herausgezoomt: nur Zeichen und Name. Das gilt auch im Desktop-Modus, seit die Karte dort
   // in die Höhe des Screens eingepasst ist statt die volle Breite zu füllen.
   await expect(world.locator('.hex-uwp')).toHaveCount(0);

@@ -22,6 +22,7 @@ import { DiceRoll } from './oracle/DiceRoll';
 import { OracleScreen } from './oracle/OracleScreen';
 import { SectorPicker, SectorScreen } from './sector/SectorScreen';
 import { WorldSheet } from './sector/WorldSheet';
+import { WorldIcon } from './sector/WorldIcon';
 import { JourneySheet } from './sector/JourneySheet';
 
 /** Die Bereiche der Leiste unten bzw. der Reiterzeile oben, in dieser Reihenfolge. */
@@ -82,6 +83,7 @@ export function App() {
       <header className="header">
         {here ? (
           <button type="button" className="brand header-world" aria-label={`Aufenthaltsort ${here.name}, UWP ${here.uwp}, Weltkarte öffnen`} title="Weltkarte des Aufenthaltsorts" onClick={() => game.chooseHex(here.column, here.row)}>
+            <WorldIcon look={here.look} size={26} />
             <span className="header-world-name">{here.name}</span>
             <span className="mono header-world-uwp">{here.uwp}</span>
           </button>
