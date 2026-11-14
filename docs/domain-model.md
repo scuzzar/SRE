@@ -274,8 +274,8 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > **Wartet auf Freigabe** (Kennzeichen 2026-11-14): **NSC am Ort** (siehe *Patron als NSC*, *Ort
 > eines NSC*, *Reiter NSC*). Zu einem gewürfelten Patron entsteht auf Knopfdruck ein zufälliger
 > dauerhafter NSC; jeder dauerhafte NSC hat eine Welt, auf der er lebt, und ein eigener Reiter
-> **NSC** zeigt die NSC des Aufenthaltsorts. Neu im Bild: die Verweise `Character.place` (auf
-> `Hex`) und `Character.patron` (auf `Patron`). Der Ausschnitt dazu liegt unter
+> **NSC** zeigt die NSC des Aufenthaltsorts, nach Rolle gruppiert. Neu im Bild: das Feld
+> `Character.role` und die Verweise `Character.place` (auf `Hex`) und `Character.patron` (auf `Patron`). Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-nsc-am-ort.png`](changes/2026-11-14-nsc-am-ort.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
@@ -419,7 +419,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Dauerhafter NSC | `Character` mit `npc` | Ein Charakter, der kein SC ist; er steht im Reiter NSC |
 | Ort eines NSC | `Character.place` | Die Welt, auf der ein dauerhafter NSC lebt; man trifft ihn nur dort |
 | Patron-NSC | `Character` mit `patron` | Ein dauerhafter NSC, der als Patron entstanden ist, z. B. „Mara Voss, Smuggler“ |
-| Reiter NSC | (Reiter „NSC“) | Der Screen mit den dauerhaften NSC des Aufenthaltsorts, nach Namen; mit „Alle zeigen“ alle, nach Welt gruppiert |
+| Rolle eines NSC | `Character.role` | Wozu ein dauerhafter NSC da ist, frei änderbar; vorgegeben „Patron“ oder „Begegnung“, je nachdem, wie er entstand |
+| Reiter NSC | (Reiter „NSC“) | Der Screen mit den dauerhaften NSC des Aufenthaltsorts, nach Rolle gruppiert; mit „Alle zeigen“ alle, nach Welt und darin nach Rolle |
 | Getragene Rüstung | `Character.wears` | Die Rüstung, die jemand gerade anhat; sie zählt, wenn er angegriffen wird |
 | Rüstungsklasse einer Rüstung | `Item.armor` | Wie eine Rüstung in der Matrix zählt, z. B. Vacc Suit als Cloth, Battle Dress als Combat |
 | Wunden | `/wounds`, `Wounds` | Wie viel STR, DEX und END jemand durch Treffer verloren hat |
@@ -1307,20 +1308,27 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     sich im Editor zum SC machen und umgekehrt. Proben und Angriffe würfelt man für SC.
   - **Ort eines NSC** (2026-11-14). Ein dauerhafter NSC lebt auf höchstens einer Welt (`place`),
     einer fertigen Welt des Subsektors. Er bekommt den Aufenthaltsort, wenn er entsteht oder
-    übernommen wird; im Editor lässt er sich ändern oder leeren (ein NSC, der mit der Gruppe reist,
+    übernommen wird (dann mit der Rolle „Begegnung“); im Editor lässt er sich ändern oder leeren (ein NSC, der mit der Gruppe reist,
     hat keinen Ort). Ein SC hat keinen Ort, ihm gilt der Aufenthaltsort der Gruppe; wird ein NSC zum
     SC, fällt `place` weg. NSC von früher haben keinen Ort.
+  - **Rolle eines NSC** (2026-11-14). Jeder dauerhafte NSC hat eine Rolle (`role`), einen freien
+    Text. Vorgegeben ist **„Patron“** für einen Patron-NSC und **„Begegnung“** für einen aus einer
+    Begegnung übernommenen NSC; im Editor lässt sie sich beliebig ändern (z. B. „Händler“,
+    „Kontakt“). Ein NSC, der im Editor zum NSC gemacht wird, und NSC von früher haben keine Rolle;
+    ein SC hat keine, wird ein NSC zum SC, fällt sie weg.
   - **Reiter NSC** (2026-11-14). Ein eigener Reiter, **vorgegeben nach dem Aufenthaltsort
     gefiltert**: Er zeigt die dauerhaften NSC, deren Ort der Aufenthaltsort ist, dazu die NSC ohne
-    Ort, nach Namen sortiert. **„Alle zeigen“** hebt den Filter auf: Dann stehen alle dauerhaften
-    NSC **nach Welt gruppiert** (Gruppen nach dem Namen der Welt, die NSC ohne Ort als eigene Gruppe
-    am Ende), **innerhalb jeder Gruppe nach Namen**. Ohne Aufenthaltsort zeigt er alle so gruppiert.
+    Ort, **immer nach Rolle gruppiert** (Gruppen nach der Rolle sortiert, ohne Rolle am Ende) und
+    in jeder Gruppe nach Namen. **„Alle zeigen“** hebt den Filter auf: Dann stehen alle dauerhaften
+    NSC **nach Welt gruppiert** (nach dem Namen der Welt, die NSC ohne Ort als eigene Gruppe am
+    Ende), darin **nach Rolle** und darin **nach Namen**. Ohne Aufenthaltsort zeigt er alle so.
     Die Wahl ist Anzeige und wird nicht gespeichert; beim Öffnen gilt wieder der Filter. Antippen
     öffnet den Editor wie im Charakter-Screen. Tote und Ausgeschiedene stehen eingeklappt darunter.
   - **Patron als NSC** (2026-11-14). Zu einem Patron-Wurf, der einen Patron ergibt (keine
     Rumor-Zeile), erzeugt **„Als NSC“** einen zufälligen dauerhaften NSC: Name von der Tafel NSC,
     2W6 je Attribut, keine Fertigkeiten, kein Besitz (Vorschlag, siehe *Offene Fragen*); er
-    verweist auf seinen Patron (`patron`), etwa „Smuggler“, und bekommt den Aufenthaltsort als Ort.
+    verweist auf seinen Patron (`patron`), etwa „Smuggler“, bekommt die Rolle „Patron“ und den
+    Aufenthaltsort als Ort.
     Ohne Aufenthaltsort geht es nicht. Der Patron-Wurf selbst bleibt, wie er ist; der neue NSC
     kommt in den Reiter NSC. Ein Patron-NSC ist ein gewöhnlicher dauerhafter NSC: Man kann ihn
     bearbeiten, zum SC machen oder ausscheiden lassen; der Verweis auf den Patron bleibt.

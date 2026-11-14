@@ -117,6 +117,7 @@ hide <<value>> stereotype
     dead: boolean
     retired: boolean
     npc: boolean
+    $new("2026-11-14", "role: string [0..1]")
     /wounds: Wounds
     /hurt: number [0..1]
     /state: WoundState

@@ -84,6 +84,7 @@ hide <<value>> stereotype
     dead: boolean
     retired: boolean
     npc: boolean
+    $new("2026-11-14", "role: string [0..1]")
     /wounds: Wounds
     /hurt: number [0..1]
     /state: WoundState
@@ -230,4 +231,5 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class Character #line:d0021b;line.bold
 @enduml
