@@ -117,11 +117,26 @@ hide <<value>> stereotype
     dead: boolean
     retired: boolean
     npc: boolean
-    $new("2026-11-14", "role: string [0..1]")
+    $new("2026-11-14", "role: NpcRole [0..1]")
     /wounds: Wounds
     /hurt: number [0..1]
     /state: WoundState
     /blows: number [0..1]
+  }
+  enum NpcRole <<value>> $charakter $newClass("2026-11-14") {
+    patron
+    encounter
+    enemy
+    rival
+    ally
+    contact
+    official
+    merchant
+    broker
+    captain
+    crew
+    passenger
+    other
   }
   class Upp <<value>> $charakter {
     str: number
@@ -852,6 +867,7 @@ Career "*" --> "*" Hex : worlds {ordered}
 Character "*" --> "0..1" Hex : homeworld
 Character "*" -$newArrow("2026-11-14")-> "0..1" Hex : place
 Character "*" -$newArrow("2026-11-14")-> "0..1" Patron : patron
+Character -$newArrow("2026-11-14")-> NpcRole
 CareerRoll --> RollKind
 CareerRoll --> "0..1" Characteristic : of
 CareerRoll "*" --> "0..1" Service : for

@@ -275,7 +275,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > eines NSC*, *Reiter NSC*). Zu einem gewürfelten Patron entsteht auf Knopfdruck ein zufälliger
 > dauerhafter NSC; jeder dauerhafte NSC hat eine Welt, auf der er lebt, und ein eigener Reiter
 > **NSC** zeigt die NSC des Aufenthaltsorts, nach Rolle gruppiert. Neu im Bild: das Feld
-> `Character.role` und die Verweise `Character.place` (auf `Hex`) und `Character.patron` (auf `Patron`). Der Ausschnitt dazu liegt unter
+> `Character.role` mit der Werteliste `NpcRole` und die Verweise `Character.place` (auf `Hex`) und `Character.patron` (auf `Patron`). Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-nsc-am-ort.png`](changes/2026-11-14-nsc-am-ort.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
@@ -419,7 +419,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Dauerhafter NSC | `Character` mit `npc` | Ein Charakter, der kein SC ist; er steht im Reiter NSC |
 | Ort eines NSC | `Character.place` | Die Welt, auf der ein dauerhafter NSC lebt; man trifft ihn nur dort |
 | Patron-NSC | `Character` mit `patron` | Ein dauerhafter NSC, der als Patron entstanden ist, z. B. „Mara Voss, Smuggler“ |
-| Rolle eines NSC | `Character.role` | Wozu ein dauerhafter NSC da ist, frei änderbar; vorgegeben „Patron“ oder „Begegnung“, je nachdem, wie er entstand |
+| Rolle eines NSC | `Character.role`, `NpcRole` | Wozu ein dauerhafter NSC da ist, aus einer festen Liste: Patron, Begegnung, Feind, Rivale, Verbündeter, Kontakt, Behörde, Händler, Makler, Captain, Crew, Passagier, Sonstige |
 | Reiter NSC | (Reiter „NSC“) | Der Screen mit den dauerhaften NSC des Aufenthaltsorts, nach Rolle gruppiert; mit „Alle zeigen“ alle, nach Welt und darin nach Rolle |
 | Getragene Rüstung | `Character.wears` | Die Rüstung, die jemand gerade anhat; sie zählt, wenn er angegriffen wird |
 | Rüstungsklasse einer Rüstung | `Item.armor` | Wie eine Rüstung in der Matrix zählt, z. B. Vacc Suit als Cloth, Battle Dress als Combat |
@@ -1311,14 +1311,20 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     übernommen wird (dann mit der Rolle „Begegnung“); im Editor lässt er sich ändern oder leeren (ein NSC, der mit der Gruppe reist,
     hat keinen Ort). Ein SC hat keinen Ort, ihm gilt der Aufenthaltsort der Gruppe; wird ein NSC zum
     SC, fällt `place` weg. NSC von früher haben keinen Ort.
-  - **Rolle eines NSC** (2026-11-14). Jeder dauerhafte NSC hat eine Rolle (`role`), einen freien
-    Text. Vorgegeben ist **„Patron“** für einen Patron-NSC und **„Begegnung“** für einen aus einer
-    Begegnung übernommenen NSC; im Editor lässt sie sich beliebig ändern (z. B. „Händler“,
-    „Kontakt“). Ein NSC, der im Editor zum NSC gemacht wird, und NSC von früher haben keine Rolle;
-    ein SC hat keine, wird ein NSC zum SC, fällt sie weg.
+  - **Rolle eines NSC** (2026-11-14). Jeder dauerhafte NSC hat genau eine Rolle (`role`) aus einer
+    festen Liste (`NpcRole`), in dieser Reihenfolge: **Patron** (`patron`), **Begegnung**
+    (`encounter`), **Feind** (`enemy`), **Rivale** (`rival`), **Verbündeter** (`ally`),
+    **Kontakt** (`contact`), **Behörde** (`official`: Polizei, Zoll, Hafenmeister, Beamte),
+    **Händler** (`merchant`), **Makler** (`broker`), **Captain** (`captain`), **Crew** (`crew`),
+    **Passagier** (`passenger`), **Sonstige** (`other`). Feind, Rivale, Verbündeter und Kontakt
+    folgen den Verbindungen aus Mongoose Traveller 2e (Enemy, Rival, Ally, Contact). Vorgegeben ist
+    *Patron* für einen Patron-NSC, *Begegnung* für einen aus einer Begegnung übernommenen NSC und
+    *Sonstige* für einen, der im Editor zum NSC gemacht wird, und für NSC von früher; im Editor
+    wählt man jede andere. Ein SC hat keine Rolle; wird ein NSC zum SC, fällt sie weg, wird ein SC
+    zum NSC, bekommt er *Sonstige*.
   - **Reiter NSC** (2026-11-14). Ein eigener Reiter, **vorgegeben nach dem Aufenthaltsort
     gefiltert**: Er zeigt die dauerhaften NSC, deren Ort der Aufenthaltsort ist, dazu die NSC ohne
-    Ort, **immer nach Rolle gruppiert** (Gruppen nach der Rolle sortiert, ohne Rolle am Ende) und
+    Ort, **immer nach Rolle gruppiert** (Gruppen in der Reihenfolge der Liste, leere weggelassen) und
     in jeder Gruppe nach Namen. **„Alle zeigen“** hebt den Filter auf: Dann stehen alle dauerhaften
     NSC **nach Welt gruppiert** (nach dem Namen der Welt, die NSC ohne Ort als eigene Gruppe am
     Ende), darin **nach Rolle** und darin **nach Namen**. Ohne Aufenthaltsort zeigt er alle so.
