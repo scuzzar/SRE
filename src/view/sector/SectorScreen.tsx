@@ -128,6 +128,7 @@ function HexCell({ hex, selected, disabled, detail, here = false }: { hex: HexVi
       {shown && hex.navalBase && <polygon className="hex-base" points={star(x - S * 0.45, y - S * 0.12, 5.5)} />}
       {shown && hex.scoutBase && <polygon className="hex-base" points={`${x - S * 0.45},${y + S * 0.1} ${x - S * 0.45 - 5},${y + S * 0.1 + 8.5} ${x - S * 0.45 + 5},${y + S * 0.1 + 8.5}`} />}
       {shown && hex.gasGiant && <circle className="hex-giant" cx={x + S * 0.45} cy={y - S * 0.12} r={3.2} />}
+      {hex.marked && <circle className="hex-marked" cx={x + S * 0.45} cy={y + S * 0.18} r={2.8} />}
       {hex.state === 'world' && hex.name && (
         <text className={detailed ? 'hex-name small' : 'hex-name'} x={x} y={detailed ? middle + 9 : y + S * 0.62}>
           {shortName(hex.name, (hex.population ?? 0) >= 9)}

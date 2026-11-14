@@ -211,8 +211,8 @@ export function loadOf(campaign: Campaign): number {
 
 /** Der Anteil der Normallast je Größe der Welt (SE 5): Größe 8 = 100 %, je Stufe 12,5 %. */
 export function gravityFactor(campaign: Campaign): number {
-  if (campaign.location === undefined) return 1;
-  const size = worldOf(campaign.hexes, campaign.location).uwp.size;
+  if (campaign.location?.world === undefined) return 1;
+  const size = worldOf(campaign.hexes, campaign.location?.world).uwp.size;
   return size === undefined ? 1 : 1 + (8 - size) * 0.125;
 }
 

@@ -24,6 +24,7 @@ import { SectorPicker, SectorScreen } from './sector/SectorScreen';
 import { WorldSheet } from './sector/WorldSheet';
 import { WorldIcon } from './sector/WorldIcon';
 import { JourneySheet } from './sector/JourneySheet';
+import { GlobeScreen } from './sector/GlobeScreen';
 
 /** Die Bereiche der Leiste unten bzw. der Reiterzeile oben, in dieser Reihenfolge. */
 const areas: readonly { readonly id: Screen; readonly label: string; readonly Icon: () => ReactElement }[] = [
@@ -71,7 +72,7 @@ export function App() {
     <div className="app">
       <header className="header">
         {here ? (
-          <button type="button" className="brand header-world" aria-label={`Aufenthaltsort ${here.name}, UWP ${here.uwp}, Weltkarte öffnen`} title="Weltkarte des Aufenthaltsorts" onClick={() => game.chooseHex(here.column, here.row)}>
+          <button type="button" className="brand header-world" aria-label={`Aufenthaltsort ${here.name}, UWP ${here.uwp}, Globus öffnen`} title="Globus des Aufenthaltsorts" onClick={() => game.openGlobeAt(here.column, here.row)}>
             <WorldIcon look={here.look} size={26} />
             <span className="header-world-name">{here.name}</span>
             <span className="mono header-world-uwp">{here.uwp}</span>
@@ -133,7 +134,8 @@ export function App() {
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
       {view.generation && <GenerationSheet generation={view.generation} log={view.log} />}
       {view.picking && <SectorPicker view={view} title={view.picking.title} />}
-      {view.world && <WorldSheet key={view.world.id} world={view.world} here={view.location === view.world.id} travel={view.travel} />}
+      {view.world && <WorldSheet key={view.world.id} world={view.world} here={view.location === view.world.id} travel={view.travel} log={view.log} logDays={view.logDays} />}
+      {view.globe && <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} log={view.log} logDays={view.logDays} error={view.world?.error} />}
       {view.journey && <JourneySheet journey={view.journey} />}
       {view.card && <CardSheet card={view.card} />}
       {view.result?.kind === 'damage' ? (

@@ -42,7 +42,7 @@ const clock = fixedClock();
 
 describe('Aufenthaltsort', () => {
   it('ist eine fertige Welt des Subsektors oder keiner', () => {
-    expect(there.location).toBe('0207');
+    expect(there.location).toEqual({ world: '0207' });
     expect(setLocation(there, undefined)).not.toHaveProperty('location');
     expect(() => setLocation(there, '0101')).toThrow(/keine fertige Welt/);
   });
@@ -210,7 +210,7 @@ describe('Kampagnendatei mit Kasse', () => {
   it('übernimmt Aufenthaltsort, Buchungen und geladene Schuss', () => {
     const campaign = spendRound(reload(setWields(buy(buy(book(there, 'income', 1000, clock, 'Fund'), 'rifle', 1, 'c2', clock), 'rifle-ammo', 1, 'c2', clock), 'c2', 'rifle'), 'c2'), 'c2');
     const back = fromCampaignFile(toCampaignFile(campaign), 'k2');
-    expect(back.location).toBe('0207');
+    expect(back.location).toEqual({ world: '0207' });
     expect(back.bookings).toEqual(campaign.bookings);
     expect(characterOf(back, 'c2').possessions).toEqual(characterOf(campaign, 'c2').possessions);
     expect(back.stash).toEqual(campaign.stash);

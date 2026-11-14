@@ -1,3 +1,4 @@
+import type { Place } from './place';
 import type { CharacterId } from './campaign';
 import { DomainError } from './errors';
 import type { MapIcon, Scatter } from './card-roll';
@@ -20,6 +21,8 @@ interface LogEntryBase {
   readonly at: string;
   /** Der Spieltag, an dem der Eintrag entstand (siehe `time.ts`); fehlt bei Einträgen von vor der Spielzeit. */
   readonly day?: number;
+  /** Wo es geschah (2026-11-14j); bekommt beim Anlegen den Aufenthaltsort der Gruppe, falls es einen gibt. */
+  readonly place?: Place;
 }
 
 /**

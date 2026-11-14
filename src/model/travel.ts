@@ -1,3 +1,4 @@
+import { worldPlace } from './place';
 import { keepFocus, livingCharacters, type Campaign, type Character, type CharacterId, type Possession } from './campaign';
 import { DomainError } from './errors';
 import type { Journey, LowBerth, Passenger } from './log';
@@ -53,8 +54,8 @@ export function travellersOf(campaign: Campaign): readonly Character[] {
 /** Warum die Gruppe nicht dorthin reisen kann; `undefined`, wenn sie kann. */
 export function journeyBlocker(campaign: Campaign, to: string): string | undefined {
   const from = locationOf(campaign);
-  if (!from || campaign.location === undefined) return 'Die Gruppe ist auf keiner Welt; erst den Aufenthaltsort wählen.';
-  if (campaign.location === to) return 'Die Gruppe ist schon hier.';
+  if (!from || campaign.location?.world === undefined) return 'Die Gruppe ist auf keiner Welt; erst den Aufenthaltsort wählen.';
+  if (campaign.location?.world === to) return 'Die Gruppe ist schon hier.';
   const target = hexById(campaign.hexes, to);
   if (!target || target.empty) return 'Hier gibt es keine Welt.';
   worldOf(campaign.hexes, to);
@@ -170,7 +171,7 @@ export function travel(
 ): Campaign {
   const blocker = journeyBlocker(campaign, to);
   if (blocker) throw new DomainError(blocker);
-  const from = campaign.location!;
+  const from = campaign.location!.world;
   const travellers = travellersOf(campaign);
   for (const c of travellers) if (!passages.includes(choice[c.id] as PassageId)) throw new DomainError(`Für ${c.name} fehlt die Passage.`);
   if (Object.keys(choice).some((id) => !travellers.some((c) => c.id === id))) throw new DomainError('Eine Passage gehört niemandem, der reist.');
@@ -229,7 +230,7 @@ export function travel(
     characters: campaign.characters.map((c) => (dead.has(c.id) ? { ...c, dead: true } : c)),
     log: [...campaign.log, journey],
     day: today + JOURNEY_DAYS,
-    location: to,
+    location: worldPlace(to),
   };
   return keepFocus(campaign, after);
 }

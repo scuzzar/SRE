@@ -494,7 +494,7 @@ describe('Shop und Gruppenkasse', () => {
     expect(game.snapshot().combat!.ammo).toMatchObject({ rounds: 19, magazines: 0 });
     await game.whenSaved();
     expect(repository.saved?.bookings).toHaveLength(3);
-    expect(repository.saved?.location).toBe('0101');
+    expect(repository.saved?.location).toEqual({ world: '0101' });
   });
 
   it('zeigt die Waffen mit Magazin daneben und was sie dem Charakter oben taugen', async () => {
@@ -1769,5 +1769,125 @@ describe('Tiere im Kampf', () => {
     const damage = game.snapshot().log.find((e) => e.kind === 'damage');
     expect(damage).toMatchObject({ kind: 'damage', dice: [], victim: 'Kira Vant' });
     expect(damage && damage.kind === 'damage' ? damage.fixed : undefined).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('Globus (Oberflächenkarte)', () => {
+  it('erzeugt die Karte beim ersten Öffnen, speichert sie und zeigt das angetippte Feld', async () => {
+    const { game, repository } = await started();
+    game.openGlobeAt(4, 5);
+    const view = game.snapshot();
+    expect(view.world?.name).toBe('Kessra');
+    expect(view.globe?.name).toBe('Kessra');
+    // Größe 7: n = 28, 10 × 28² + 2 Felder.
+    expect(view.globe?.map.landforms).toHaveLength(7842);
+    await game.whenSaved();
+    const saved = repository.saved!.hexes.find((h) => h.column === 4 && h.row === 5)!;
+    expect(saved.map?.landforms).toBe(view.globe?.map.landforms);
+    expect(saved.populationMultiplier).toBeGreaterThanOrEqual(1);
+    game.pickCell(0);
+    expect(game.snapshot().globe?.picked).toMatchObject({ cell: 0, position: '90° N, 0° O' });
+    // Geschlossen und wieder geöffnet: dieselbe Karte, kein neuer Wurf.
+    game.closeGlobe();
+    expect(game.snapshot().globe).toBeUndefined();
+    expect(game.snapshot().world?.hasMap).toBe(true);
+    game.openGlobe();
+    expect(game.snapshot().globe?.map).toBe(view.globe?.map);
+  });
+
+  it('übersteht die Kampagnendatei und lässt sich neu würfeln', async () => {
+    const { game } = await started();
+    game.openGlobeAt(4, 5);
+    const before = game.snapshot().globe!.map;
+    const campaign = fromCampaignFile(toCampaignFile(game['campaign']), 'c2');
+    const hex = campaign.hexes.find((h) => h.column === 4 && h.row === 5)!;
+    expect(hex.map).toEqual(before);
+    game.rerollMap();
+    expect(game.snapshot().globe!.map).not.toBe(before);
+  });
+
+  it('weist eine beschädigte Karte beim Import zurück', async () => {
+    const { game } = await started();
+    game.openGlobeAt(4, 5);
+    const file = JSON.parse(toCampaignFile(game['campaign']));
+    file.campaign.hexes[0].map.landforms = 'w';
+    expect(() => fromCampaignFile(JSON.stringify(file), 'c2')).toThrow(/Felder/);
+  });
+});
+
+describe('Städtenamen (2026-11-14k)', () => {
+  it('jede Stadt hat einen Namen, ohne Doppel; umbenennen; alte Karten heißen Stadt 1, 2 …', async () => {
+    const { game } = await started();
+    game.openGlobeAt(4, 5);
+    const cities = game['campaign'].hexes[0]!.map!.cities!;
+    expect(cities.length).toBeGreaterThan(0);
+    expect(cities.every((c) => c.name.trim().length > 0)).toBe(true);
+    expect(new Set(cities.map((c) => c.name)).size).toBe(cities.length);
+    game.renameCity(0, '  Neu-Kessra ');
+    expect(game['campaign'].hexes[0]!.map!.cities![0]!.name).toBe('Neu-Kessra');
+    expect(game.snapshot().globe?.cities[0]?.label).toBe('Neu-Kessra');
+    game.renameCity(0, '   ');
+    expect(game.snapshot().world?.error).toMatch(/braucht einen Namen/);
+    const file = JSON.parse(toCampaignFile(game['campaign']));
+    for (const c of file.campaign.hexes[0].map.cities) delete c.name;
+    expect(fromCampaignFile(JSON.stringify(file), 'c2').hexes[0]!.map!.cities![1]!.name).toBe('Stadt 2');
+  });
+});
+
+describe('Orte (2026-11-14j)', () => {
+  it('neue Logeinträge bekommen den Aufenthaltsort, die Gruppe lässt sich auf dem Globus versetzen', async () => {
+    const { game, repository } = await started();
+    game.rollDice();
+    expect(game['campaign'].log.at(-1)?.place).toEqual({ world: '0405' });
+    game.openGlobeAt(4, 5);
+    const globe = game.snapshot().globe!;
+    const capital = globe.cities[0]!;
+    game.pickCell(capital.cell);
+    expect(game.snapshot().globe?.picked?.city).toBe(0);
+    game.moveParty();
+    expect(game['campaign'].location).toEqual({ world: '0405', city: 0 });
+    expect(game.snapshot().globe?.partyCell).toBe(capital.cell);
+    // Der nächste Eintrag geschieht in der Stadt; „Was hier geschah“ zeigt ihn auf ihrem Feld.
+    game.rollDice();
+    const last = game['campaign'].log.length - 1;
+    expect(game['campaign'].log[last]?.place).toEqual({ world: '0405', city: 0 });
+    expect(game.snapshot().globe?.picked?.happened).toEqual([last]);
+    expect(game.snapshot().world?.happened).toEqual([last - 1, last]);
+    expect(game.snapshot().globe?.events).toEqual([{ cell: capital.cell, count: 1, latest: last, label: capital.label }]);
+    // Jetzt zeigen Orte auf die Karte: neu würfeln ist gesperrt.
+    expect(game.snapshot().globe?.rerollBlocker).toMatch(/geht nicht mehr/);
+    const before = game.snapshot().globe!.map;
+    game.rerollMap();
+    expect(game.snapshot().globe!.map).toBe(before);
+    expect(game.snapshot().world?.error).toMatch(/geht nicht mehr/);
+    // Alles übersteht die Kampagnendatei.
+    await game.whenSaved();
+    const back = fromCampaignFile(toCampaignFile(repository.saved!), 'c2');
+    expect(back.location).toEqual({ world: '0405', city: 0 });
+    expect(back.log.at(-1)?.place).toEqual({ world: '0405', city: 0 });
+  });
+
+  it('versetzt einen dauerhaften NSC; die Sektorkarte zeigt die Welt mit Zeichen', async () => {
+    const { game } = await started();
+    game.newCharacter(true, 'contact');
+    game.saveCharacter({ ...game.snapshot().editor!.input, name: 'Tenzin' } as never);
+    const tenzin = game['campaign'].characters.find((c) => c.name === 'Tenzin')!;
+    expect(tenzin.place).toEqual({ world: '0405' });
+    game.openGlobeAt(4, 5);
+    game.pickCell(100);
+    game.moveNpc(tenzin.id);
+    const moved = game['campaign'].characters.find((c) => c.id === tenzin.id)!;
+    expect(moved.place?.world).toBe('0405');
+    expect(game.snapshot().globe?.npcs.find((n) => n.id === tenzin.id)?.cell).toBe(100);
+    expect(game.snapshot().sector.find((h) => h.id === '0405')?.marked).toBe(true);
+  });
+
+  it('liest Kampagnendateien von vor den Orten: der Aufenthaltsort als Text wird ein Ort', async () => {
+    const { game } = await started();
+    const file = JSON.parse(toCampaignFile(game['campaign']));
+    file.campaign.location = '0405';
+    expect(fromCampaignFile(JSON.stringify(file), 'c2').location).toEqual({ world: '0405' });
+    file.campaign.location = { world: '0405', cell: 99999 };
+    expect(() => fromCampaignFile(JSON.stringify(file), 'c2')).toThrow(/keine Oberflächenkarte|gibt es/);
   });
 });

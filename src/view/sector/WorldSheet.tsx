@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import type { WorldDmPart } from '../../model';
-import type { WorldAction, WorldLine, WorldView } from '../../controller';
+import type { LogItem, WorldAction, WorldLine, WorldView } from '../../controller';
+import { HappenedList } from './HappenedList';
 import { DiceView, THROW_MS, useTimeline } from '../Dice';
 import { signed } from '../format';
 import { useGame } from '../game-context';
@@ -33,7 +34,7 @@ function dmText(line: WorldLine): string {
  * Charaktererschaffung. Eingetragen ist der Wurf schon, bevor die Würfel rollen; die Karte zeigt den neuen Stand erst, wenn das Ergebnis unten feststeht. Ein Tippen
  * irgendwo beendet die Animation.
  */
-export function WorldSheet({ world, here, travel }: { world: WorldView; here: boolean; travel: { readonly blocker: string | undefined } | undefined }) {
+export function WorldSheet({ world, here, travel, log, logDays }: { world: WorldView; here: boolean; travel: { readonly blocker: string | undefined } | undefined; log: readonly LogItem[]; logDays: readonly (string | undefined)[] }) {
   const game = useGame();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   // Was schon da war, als die Weltkarte aufging, rollt nicht noch einmal.
@@ -91,7 +92,7 @@ export function WorldSheet({ world, here, travel }: { world: WorldView; here: bo
 
         <div className="sheet-body" ref={body}>
           {!view.empty && <WorldCard world={view} />}
-          {view.surface && <SurfaceSection lines={view.surface} />}
+          {view.surface && <SurfaceSection lines={view.surface} globe={view.canGlobe ? (view.hasMap ? 'Globus' : 'Globus erzeugen') : undefined} />}
           {world.canNote && (
             <button type="button" className={here ? 'primary stay-here' : 'ghost stay-here'} aria-pressed={here} onClick={() => game.stayHere()}>
               {here ? 'Die Gruppe ist hier' : 'Gruppe ist hier'}
@@ -106,6 +107,7 @@ export function WorldSheet({ world, here, travel }: { world: WorldView; here: bo
             </div>
           )}
           {world.canNote && <NoteSection note={world.note} />}
+          {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
         </div>
 
         {(hasRoll || fresh) && (
@@ -138,6 +140,7 @@ export function WorldSheet({ world, here, travel }: { world: WorldView; here: bo
 
 /** Die Welt, wie sie gerade steht: UWP, jede Stelle im Klartext, Temperatur, Basen, Gasriese, Handelscodes. */
 function WorldCard({ world }: { world: WorldView }) {
+  const game = useGame();
   const yes = (value: boolean | undefined) => (value === undefined ? '–' : value ? 'ja' : 'nein');
   const head = (
     <div className="pc-head static">
@@ -191,7 +194,13 @@ function WorldCard({ world }: { world: WorldView }) {
             {head}
             {extras}
           </div>
-          <WorldIcon look={world.look} className="world-top-icon" label={`Weltsymbol von ${world.name ?? world.id}`} />
+          {world.canGlobe ? (
+            <button type="button" className="world-top-globe" aria-label={`Globus von ${world.name ?? world.id} öffnen`} onClick={() => game.openGlobe()}>
+              <WorldIcon look={world.look} className="world-top-icon" />
+            </button>
+          ) : (
+            <WorldIcon look={world.look} className="world-top-icon" label={`Weltsymbol von ${world.name ?? world.id}`} />
+          )}
         </div>
         {profile}
       </article>
@@ -230,11 +239,19 @@ function TemperatureRow({ temperature }: { temperature: WorldView['temperature']
 }
 
 /** Die Oberfläche nach dem World Builder's Handbook, an der Stelle der früheren Liste der Würfe. */
-function SurfaceSection({ lines }: { lines: readonly string[] }) {
+function SurfaceSection({ lines, globe }: { lines: readonly string[]; globe: string | undefined }) {
+  const game = useGame();
   return (
     <section className="career world-surface" aria-label="Oberfläche">
       <div className="career-term">
-        <h4>Oberfläche</h4>
+        <h4 className="world-surface-head">
+          Oberfläche
+          {globe && (
+            <button type="button" className="ghost compact" onClick={() => game.openGlobe()}>
+              {globe}
+            </button>
+          )}
+        </h4>
         <ul>
           {lines.map((line) => (
             <li key={line}>{line}</li>

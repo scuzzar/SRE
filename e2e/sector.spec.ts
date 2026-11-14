@@ -165,3 +165,30 @@ test('Sektor: Eine ältere Welt ohne Temperatur würfelt sie auf der Weltkarte n
   await expect(dialog.getByRole('region', { name: 'Oberfläche' })).toContainText('% Wasser');
   await expect(dialog.locator('.generation-main')).toHaveCount(0);
 });
+
+test('Globus: aus der Kopfzeile öffnen, Feld antippen, zur Weltkarte zurück', async ({ page }) => {
+  await page.goto('/');
+  // Die Demo-Kampagne steht auf Kessra; ihr Symbol in der Kopfzeile öffnet den Globus.
+  await page.getByRole('button', { name: /Aufenthaltsort Kessra.*Globus öffnen/ }).click();
+  const globe = page.getByRole('dialog', { name: 'Globus · Kessra' });
+  await expect(globe).toBeVisible();
+  // Oben klappt die Liste der Orte auf, mit Maßstab und Städten; ein Tippen fliegt hin und zeigt unten das Feld.
+  await globe.getByRole('button', { name: /^Orte/ }).click();
+  const places = globe.getByRole('region', { name: 'Orte' });
+  await expect(places).toContainText('1 Feld ≈ 251 km');
+  await places.getByRole('button', { name: /Hauptstadt ·/ }).click();
+  await expect(places).toHaveCount(0);
+  await expect(globe.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('°C im Jahresmittel');
+  // Die Liste der Felder mit Einträgen; noch ist nichts geschehen.
+  await globe.getByRole('button', { name: /^Einträge/ }).click();
+  await expect(globe.getByRole('region', { name: 'Felder mit Einträgen' })).toContainText('noch nichts');
+  // Antippen der Karte wählt ein anderes Feld (die Mitte ist die Hauptstadt; nochmal antippen hebt die Wahl auf).
+  const canvas = globe.getByRole('img', { name: /Globus von Kessra/ });
+  const box = (await canvas.boundingBox())!;
+  await canvas.click({ position: { x: box.width * 0.35, y: box.height * 0.4 } });
+  await expect(globe.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('°C im Jahresmittel');
+  await globe.getByRole('button', { name: 'Zur Weltkarte' }).click();
+  await expect(globe).toHaveCount(0);
+  const sheet = page.getByRole('dialog', { name: /Kessra · 0405/ });
+  await expect(sheet.getByRole('region', { name: 'Oberfläche', exact: true }).getByRole('button', { name: 'Globus', exact: true })).toHaveCount(1);
+});

@@ -14,6 +14,7 @@ import {
   ammoOf,
   fundsOf,
   hexId,
+  happenedAt,
   itemKinds,
   locationOf,
   offerOf,
@@ -236,6 +237,7 @@ import {
 } from '../model/draft';
 import { careerLines, generationView, itemLabel, worldChoices, worldName, type CareerLine, type GenerationView, type WorldChoice } from './generation-view';
 import { sectorView, selectedView, worldList, worldView, type HexView, type SelectedHexView, type WorldListItem, type WorldView } from './world-view';
+import { globeView, type GlobeView } from './globe-view';
 import { checkItem, checksView, journeyItem, journeyView, legalView, timeItem, timeView, type CheckItem, type ChecksView, type JourneyDraft, type JourneyItem, type JourneyView, type LegalView, type TimeItem, type TimeView } from './time-view';
 
 /**
@@ -321,6 +323,8 @@ export interface Snapshot {
   readonly worlds: readonly WorldListItem[];
   /** Die Weltkarte im Vordergrund: eine Welt, die entsteht oder fertig ist. */
   readonly world: WorldView | undefined;
+  /** Der Globus der offenen Welt, wenn er im Vordergrund steht und die Welt eine Oberflächenkarte hat. */
+  readonly globe: GlobeView | undefined;
   /** Das gewählte Feld auf der Karte, mit seinem Vorkommen, sobald gewürfelt. */
   readonly selected: SelectedHexView | undefined;
   /** Die Karte steht im Vordergrund, um für die Charaktererschaffung eine Welt zu wählen oder zu erschaffen. */
@@ -1360,6 +1364,8 @@ export interface ControllerState {
   /** Das Feld, dessen Weltkarte offen ist, mit den Würfen, seit sie offen ist. */
   readonly world: OpenWorld | undefined;
   readonly worldError: string | undefined;
+  /** Der Globus der offenen Welt steht im Vordergrund, mit dem angetippten Oberflächenfeld. */
+  readonly globe: { readonly picked: number | undefined } | undefined;
   /** Das gewählte Feld auf der Karte, nicht erzeugt oder leer; mit dem Vorkommen, wenn es gerade hier gewürfelt wurde. */
   readonly selected: { readonly column: number; readonly row: number; readonly occurrence?: WorldRoll } | undefined;
   /** Die Karte steht über der Charaktererschaffung, um eine Welt zu wählen. */
@@ -1379,7 +1385,7 @@ function npcItem(c: Character): NpcItem {
 }
 
 function npcScreenView(campaign: Campaign, all: boolean): NpcScreenView {
-  const here = campaign.location === undefined ? undefined : hexById(campaign.hexes, campaign.location)?.name;
+  const here = campaign.location === undefined ? undefined : hexById(campaign.hexes, campaign.location.world)?.name;
   return {
     all,
     here,
@@ -1669,7 +1675,7 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
     loot: lootView(campaign, lootOpen),
     butchered: butcheredView(campaign, butchered),
     canEncounter: campaign.location !== undefined,
-    location: campaign.location,
+    location: campaign.location?.world,
     worlds: worldChoices(campaign.hexes),
     intro: intro && encounter !== undefined,
     surpriseShown: surpriseShown && encounter !== undefined && !needsSurprise(encounter),
@@ -2260,6 +2266,14 @@ function sellables(campaign: Campaign, c: Character | undefined): ShopView['memb
       });
 }
 
+/** Die Welten, auf denen etwas geschehen ist oder dauerhafte NSC leben (Zeichen auf der Sektorkarte). */
+function markedWorlds(campaign: Campaign): ReadonlySet<string> {
+  const marked = new Set<string>();
+  for (const e of campaign.log) if (e.place) marked.add(e.place.world);
+  for (const c of campaign.characters) if (c.npc && !c.dead && c.place) marked.add(c.place.world);
+  return marked;
+}
+
 function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
   switch (entry.kind) {
     case 'dice':
@@ -2407,7 +2421,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -2448,11 +2462,11 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     rumor: { last: log.findLast((item): item is RumorItem => item.kind === 'rumor'), note: state.rumorNote },
     shop: shopView(campaign, state.shopError),
     stash: stashView(campaign, state.shopError),
-    location: campaign.location,
+    location: campaign.location?.world,
     result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : undefined,
     editor: state.editor && {
       id: state.editor.id,
-      input: editing ? inputOf(editing) : state.editor.npc ? { ...emptyInput, npc: true, role: state.editor.role ?? 'other', ...(campaign.location === undefined ? {} : { place: campaign.location }) } : emptyInput,
+      input: editing ? inputOf(editing) : state.editor.npc ? { ...emptyInput, npc: true, role: state.editor.role ?? 'other', ...(campaign.location === undefined ? {} : { place: campaign.location.world }) } : emptyInput,
       error: state.editor.error,
       inLog: editing ? isInLog(campaign, editing.id) : false,
       worlds: worldChoices(campaign.hexes),
@@ -2460,9 +2474,10 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     },
     generation: state.generating && campaign.generation ? generationView(campaign.generation, campaign.hexes, state.generationError) : undefined,
     generationRunning: campaign.generation !== undefined,
-    sector: sectorView(campaign.hexes),
+    sector: sectorView(campaign.hexes, markedWorlds(campaign)),
     worlds: worldList(campaign.hexes),
-    world: state.world && worldView(campaign.hexes, state.world.column, state.world.row, state.world.rolls, state.worldError),
+    world: state.world && worldView(campaign.hexes, state.world.column, state.world.row, state.world.rolls, state.worldError, happenedAt(campaign, hexId(state.world.column, state.world.row))),
+    globe: state.world && state.globe ? globeView(campaign, state.world.column, state.world.row, state.globe.picked) : undefined,
     picking: pickingView(state, campaign),
     selected: state.selected && selectedView(campaign.hexes, state.selected.column, state.selected.row, state.selected.occurrence, state.world ? undefined : state.worldError),
   };

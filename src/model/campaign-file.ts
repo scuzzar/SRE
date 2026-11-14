@@ -19,6 +19,8 @@ import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, patronOf, range
 import { characteristics } from './rules';
 import { bookingKinds, validateBookings, type Booking } from './shop';
 import { settleStash } from './stash';
+import type { City, SurfaceMap } from './surface-map';
+import { checkPlace, type Place } from './place';
 import { hexById, hexFromRolls, temperatureIds, uwpKinds, validateHexes, worldOf, type Hex, type LegacyWorldRoll } from './sector';
 
 /**
@@ -35,14 +37,25 @@ const question = z.string().trim().min(1).optional();
 /** Der Spieltag eines Eintrags; fehlt bei Einträgen von vor der Spielzeit. */
 const day = z.number().int().min(0).optional();
 
+/** Ein Ort (2026-11-14j); Dateien von davor nennen nur die Welt als Text (0304). */
+const PlaceSchema = z.union([z.string().min(1), z.object({ world: z.string().min(1), cell: z.number().int().optional(), city: z.number().int().optional() })]);
+
+function placeFromFile(place: z.infer<typeof PlaceSchema>): Place {
+  return typeof place === 'string' ? { world: place } : (stripped(place) as Place);
+}
+
+/** Wo ein Logeintrag geschah (2026-11-14j); fehlt bei Einträgen ohne Ort. */
+const place = PlaceSchema.optional();
+
 const LogEntrySchema = z.discriminatedUnion('kind', [
   // Orakelantworten von vor 2026-11-14d; beim Lesen werden sie zu Kartenauswahlen (upgradeOracle).
-  z.object({ kind: z.literal('oracle'), at, day, question, roll: z.number().int().min(1).max(100), chance: z.number().int().min(0).max(100), odds: z.string() }),
-  z.object({ kind: z.literal('dice'), at, day, dice }),
+  z.object({ kind: z.literal('oracle'), at, day, place, question, roll: z.number().int().min(1).max(100), chance: z.number().int().min(0).max(100), odds: z.string() }),
+  z.object({ kind: z.literal('dice'), at, day, place, dice }),
   z.object({
     kind: z.literal('card'),
     at,
     day,
+    place,
     question,
     bell: z.number().int().min(1).max(10).optional(),
     scatter: z.enum(scatters).optional(),
@@ -57,6 +70,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     kind: z.literal('task'),
     at,
     day,
+    place,
     for: z.string(),
     uses: z.string().optional(),
     counts: z.array(z.enum(characteristics)),
@@ -69,6 +83,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     kind: z.literal('attack'),
     at,
     day,
+    place,
     /** Fehlt in Dateien von vor 2026-11-08c, wenn ein NSC angriff (`by`); `victim` war dort ein SC als Ziel. */
     for: z.string().optional(),
     by: z.string().optional(),
@@ -84,12 +99,13 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     volley: z.number().int().optional(),
     strike: z.enum(strikes).optional(),
   }),
-  z.object({ kind: z.literal('save'), at, day, for: z.string().min(1), of: z.number().int(), dice, target: z.number().int() }),
-  z.object({ kind: z.literal('damage'), at, day, of: z.number().int().optional(), after: z.number().int().optional(), dice: z.array(die).max(40), fixed: z.number().int().min(1).optional(), to: z.array(z.enum(physical)).max(40).optional(), points: z.array(z.number().int().min(1)).max(40).optional(), alarmDice: z.tuple([die, die]).optional() }),
+  z.object({ kind: z.literal('save'), at, day, place, for: z.string().min(1), of: z.number().int(), dice, target: z.number().int() }),
+  z.object({ kind: z.literal('damage'), at, day, place, of: z.number().int().optional(), after: z.number().int().optional(), dice: z.array(die).max(40), fixed: z.number().int().min(1).optional(), to: z.array(z.enum(physical)).max(40).optional(), points: z.array(z.number().int().min(1)).max(40).optional(), alarmDice: z.tuple([die, die]).optional() }),
   z.object({
     kind: z.literal('recovery'),
     at,
     day,
+    place,
     how: z.enum(recoveryKinds),
     /** Fehlt in Dateien von vor 2026-11-08c, wenn ein NSC geheilt wurde (`npc`). */
     for: z.string().optional(),
@@ -97,17 +113,18 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     by: z.string().optional(),
     dice: z.array(die).length(5).optional(),
   }),
-  z.object({ kind: z.literal('rumor'), at, day, dice }),
-  z.object({ kind: z.literal('butchering'), at, day, /** Wer die Beute bekam; in Dateien von vor dem Gruppengepäck, wird nicht übernommen. */ for: z.string().min(1).optional(), of: z.string().min(1), meatDie: die.optional(), meatSkill: z.number().int().min(0), furSkill: z.number().int().min(0) }),
-  z.object({ kind: z.literal('event'), at, day, in: z.string().min(1), terrain: z.string().min(1), tableDice: dice }),
-  z.object({ kind: z.literal('patron'), at, day, list: z.union([z.literal(1), z.literal(2)]), dice, dms: z.tuple([z.number().int(), z.number().int()]) }),
-  z.object({ kind: z.literal('note'), at, day, text: z.string().trim().min(1), interprets: z.number().int().optional(), editedAt: at.optional() }),
-  z.object({ kind: z.literal('time'), at, day, days: z.number().int().min(1).max(7), week: z.boolean() }),
-  z.object({ kind: z.literal('check'), at, day, check: z.enum(checkKinds), dice: z.array(die).min(1).max(2), target: z.number().int().min(0).max(20), reactionDice: dice.optional(), reactionDm: z.number().int().optional() }),
+  z.object({ kind: z.literal('rumor'), at, day, place, dice }),
+  z.object({ kind: z.literal('butchering'), at, day, place, /** Wer die Beute bekam; in Dateien von vor dem Gruppengepäck, wird nicht übernommen. */ for: z.string().min(1).optional(), of: z.string().min(1), meatDie: die.optional(), meatSkill: z.number().int().min(0), furSkill: z.number().int().min(0) }),
+  z.object({ kind: z.literal('event'), at, day, place, in: z.string().min(1), terrain: z.string().min(1), tableDice: dice }),
+  z.object({ kind: z.literal('patron'), at, day, place, list: z.union([z.literal(1), z.literal(2)]), dice, dms: z.tuple([z.number().int(), z.number().int()]) }),
+  z.object({ kind: z.literal('note'), at, day, place, text: z.string().trim().min(1), interprets: z.number().int().optional(), editedAt: at.optional() }),
+  z.object({ kind: z.literal('time'), at, day, place, days: z.number().int().min(1).max(7), week: z.boolean() }),
+  z.object({ kind: z.literal('check'), at, day, place, check: z.enum(checkKinds), dice: z.array(die).min(1).max(2), target: z.number().int().min(0).max(20), reactionDice: dice.optional(), reactionDm: z.number().int().optional() }),
   z.object({
     kind: z.literal('journey'),
     at,
     day,
+    place,
     from: z.string().min(1),
     to: z.string().min(1),
     days: z.number().int(),
@@ -133,6 +150,27 @@ const CareerRollSchema = z.object({
 });
 const CareerSchema = z.object({ rolls: z.array(CareerRollSchema), homeworld: z.string().optional(), worlds: z.array(z.string()).optional() });
 
+const MapSchema = z
+  .object({
+    landforms: z.string(),
+    towns: z.array(z.tuple([z.number().int(), z.number().int()])).optional(),
+    volcanoes: z.array(z.tuple([z.number().int(), z.enum(['major', 'field'])])).optional(),
+    rivers: z.array(z.array(z.number().int())).optional(),
+    roads: z.array(z.array(z.number().int())).optional(),
+    cities: z
+      .array(
+        z.object({
+          cell: z.number().int().optional(),
+          name: z.string().optional(),
+          population: z.number().int(),
+          multiplier: z.number().int(),
+          rank: z.enum(['primary', 'secondary']),
+          port: z.enum(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']).optional(),
+        }),
+      )
+      .optional(),
+  });
+
 const position = { column: z.number().int(), row: z.number().int(), name: z.string().optional() };
 const HexSchema = z.union([
   z.object({
@@ -144,6 +182,8 @@ const HexSchema = z.union([
     uwp: z.object(Object.fromEntries(uwpKinds.map((k) => [k, z.number().int().optional()])) as Record<(typeof uwpKinds)[number], z.ZodOptional<z.ZodNumber>>),
     temperature: z.enum(temperatureIds).optional(),
     note: z.string().optional(),
+    populationMultiplier: z.number().int().optional(),
+    map: MapSchema.optional(),
     surface: z
       .object({
         water: z.number().int(),
@@ -226,7 +266,7 @@ const CharacterSchema = z.object({
   npc: z.boolean().default(false),
   /** Fehlen in Dateien von vor 2026-11-14; ein NSC ohne Rolle ist Sonstige. */
   role: z.enum(npcRoles).optional(),
-  place: z.string().optional(),
+  place: PlaceSchema.optional(),
   patron: z.object({ list: z.number().int(), roll: z.number().int() }).optional(),
   animal: z.object({ in: z.string().min(1), terrain: z.string().min(1), roll: z.number().int().min(2).max(12) }).optional(),
 });
@@ -321,7 +361,7 @@ const CampaignFileSchema = z.object({
     /** Der Charakter oben; fehlt in Dateien von vor dieser Regel, dann wird es der erste Lebende. */
     focus: z.string().optional(),
     /** Fehlen in Dateien von vor dem Shop bzw. den Begegnungen. */
-    location: z.string().optional(),
+    location: PlaceSchema.optional(),
     encounters: z.array(EncounterSchema).default([]),
     /** Fehlt in Dateien von vor dem Würfel der Anzahl: W6. */
     quantityDie: z.union([z.literal(3), z.literal(4), z.literal(6)]).optional(),
@@ -407,7 +447,7 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       hexes: file.hexes.map(hexOf),
       ...(file.generation ? { generation: { career: careerOf(file.generation.career) } } : {}),
       ...(file.focus === undefined ? {} : { focus: file.focus }),
-      ...(file.location === undefined ? {} : { location: file.location }),
+      ...(file.location === undefined ? {} : { location: placeFromFile(file.location) }),
       bookings: file.bookings.map((b) => stripped(b) as Booking),
       stash: file.stash.map((p) => stripped(p) as Possession),
       // NSC aus Dateien von vor 2026-11-08c bleiben, wie sie sind; upgradeNpcs macht Charaktere aus ihnen.
@@ -437,7 +477,7 @@ function characterFromFile({ career, homeworld, primary, secondary, wields, wear
   return {
     ...c,
     ...(role === undefined ? {} : { role }),
-    ...(place === undefined ? {} : { place }),
+    ...(place === undefined ? {} : { place: placeFromFile(place) }),
     ...(patron === undefined ? {} : { patron: { list: patron.list, roll: patron.roll } }),
     ...(animal ? { animal: { ...animal } } : {}),
     skills: c.skills.map((s) => ({ ...s })),
@@ -458,14 +498,27 @@ function careerOf(career: z.infer<typeof CareerSchema>): Career {
   };
 }
 
+/** Eine Oberflächenkarte ohne leere optionale Felder; Städte ohne Feld bleiben im Orbit. */
+function mapOf(map: z.infer<typeof MapSchema>): SurfaceMap {
+  return {
+    landforms: map.landforms,
+    ...(map.towns ? { towns: map.towns.map(([c, n]) => [c, n] as const) } : {}),
+    ...(map.volcanoes ? { volcanoes: map.volcanoes.map(([c, k]) => [c, k] as const) } : {}),
+    ...(map.rivers ? { rivers: map.rivers.map((r) => [...r]) } : {}),
+    ...(map.roads ? { roads: map.roads.map((r) => [...r]) } : {}),
+    // Karten von vor den Städtenamen (2026-11-14k): „Stadt 1“, „Stadt 2“ …
+    ...(map.cities ? { cities: map.cities.map((c, i) => ({ ...(stripped(c) as City), name: c.name ?? `Stadt ${i + 1}` })) } : {}),
+  };
+}
+
 /** Ein Hexfeld ohne leere optionale Felder, wie es im Spielstand steht. */
 function hexOf(hex: z.infer<typeof HexSchema>): Hex {
   if ('rolls' in hex) {
     const rolls = hex.rolls.map((r) => stripped(r) as LegacyWorldRoll);
     return hexFromRolls(hex.name === undefined ? { column: hex.column, row: hex.row, rolls } : { column: hex.column, row: hex.row, name: hex.name, rolls });
   }
-  const { animals, ...rest } = hex;
-  return { ...stripped(rest), uwp: stripped(hex.uwp), ...(animals ? { animals: animals.map((t) => ({ terrain: t.terrain, rows: t.rows.map((r) => stripped({ ...r, ...(r.attacks ? { attacks: r.attacks.map((a) => ({ ...a })) } : {}) })) })) } : {}) } as Hex;
+  const { animals, map, ...rest } = hex;
+  return { ...stripped(rest), uwp: stripped(hex.uwp), ...(map ? { map: mapOf(map) } : {}), ...(animals ? { animals: animals.map((t) => ({ terrain: t.terrain, rows: t.rows.map((r) => stripped({ ...r, ...(r.attacks ? { attacks: r.attacks.map((a) => ({ ...a })) } : {}) })) })) } : {}) } as Hex;
 }
 
 /** Ein Objekt ohne Felder, die `undefined` sind. */
@@ -474,13 +527,13 @@ function stripped<T extends object>(value: T): T {
 }
 
 type FileEntry = z.infer<typeof LogEntrySchema>;
-type WithoutDay<T> = T extends unknown ? Omit<T, 'day'> : never;
+type WithoutDay<T> = T extends unknown ? Omit<T, 'day' | 'place'> : never;
 
 /** Ohne leere optionale Felder, wie sie im Spielstand stehen; den Spieltag nur, wenn es einen gibt. */
 function logEntry(input: FileEntry): LogEntry {
-  const { day, ...entry } = input;
+  const { day, place, ...entry } = input;
   const read = fileEntryOf(entry as WithoutDay<FileEntry>);
-  return day === undefined ? read : { ...read, day };
+  return { ...read, ...(day === undefined ? {} : { day }), ...(place === undefined ? {} : { place: placeFromFile(place) }) };
 }
 
 function fileEntryOf(entry: WithoutDay<FileEntry>): LogEntry {
@@ -530,7 +583,8 @@ function armsFromFile(primary: string | undefined, secondary: string | undefined
 
 /** Ein Charakter, SC oder NSC einer Begegnung: Werte, Waffen und Rüstung aus seinem Besitz, Lebenslauf abgeschlossen. */
 function validateRecord(character: Character): void {
-  validateCharacter({ ...character, skills: character.skills });
+  const { place, ...rest } = character;
+  validateCharacter({ ...rest, skills: character.skills, ...(place === undefined ? {} : { place: place.world }) });
   // Ein Tier hat keinen Besitz; seine Waffen sind die Tierangriffe seiner Zeile.
   if (character.animal !== undefined) return;
   for (const weapon of [character.primary, character.secondary, character.wields]) {
@@ -562,7 +616,7 @@ function validate(campaign: Campaign): void {
     if (focus.dead || focus.retired) throw new DomainError(`Der Charakter oben (${focus.name}) lebt nicht oder ist ausgeblendet.`);
   }
   validateHexes(campaign.hexes);
-  if (campaign.location !== undefined) worldOf(campaign.hexes, campaign.location);
+  if (campaign.location !== undefined) checkPlace(campaign.hexes, campaign.location);
   validateBookings(campaign);
   validateEncounters(campaign);
   if (campaign.terrain !== undefined) terrainOf(campaign.terrain);
@@ -582,10 +636,11 @@ function validate(campaign: Campaign): void {
   // Rolle und Ort hat nur ein dauerhafter NSC; der Ort ist eine fertige Welt, der Patron eine Patron-Zeile.
   for (const character of campaign.characters) {
     if (!character.npc && (character.role !== undefined || character.place !== undefined)) throw new DomainError(`${character.name} ist kein NSC und hat doch Rolle oder Ort.`);
-    if (character.place !== undefined) worldOf(campaign.hexes, character.place);
+    if (character.place !== undefined) checkPlace(campaign.hexes, character.place);
     if (character.patron !== undefined && patronOf(character.patron.list, character.patron.roll).rumor) throw new DomainError(`${character.name} verweist auf ein Gerücht statt auf einen Patron.`);
   }
   for (const [index, entry] of campaign.log.entries()) {
+    if (entry.place !== undefined) checkPlace(campaign.hexes, entry.place);
     switch (entry.kind) {
       case 'note':
         if (entry.interprets !== undefined) checkInterprets(campaign.log, entry.interprets, index);

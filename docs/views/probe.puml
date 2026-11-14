@@ -130,6 +130,7 @@ hide <<value>> stereotype
     bonusFrom: number
     malusUpTo: number
   }
+  class Place <<value>> $oberflaeche
   enum Characteristic <<value>> $charakter
 
 ' Kampagne
@@ -145,6 +146,7 @@ LogEntry <|-- Journey
 ' Laufbahnen (Referenzdaten)
 
 ' Subsektor und Welten
+LogEntry "1" *-- "0..1" Place : place
 
 ' Charakter
 

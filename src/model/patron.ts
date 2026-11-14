@@ -100,7 +100,7 @@ export function rollRumor(random: Random, clock: Clock): RumorRoll {
 /** Warum sich zu diesem Patron-Wurf kein NSC erzeugen lässt; `undefined`, wenn es geht. */
 export function patronNpcBlocker(campaign: Campaign, entry: PatronRoll): string | undefined {
   if (patronOfRoll(entry).rumor) return 'Ein Gerücht, kein Patron.';
-  if (campaign.location === undefined) return 'Erst den Aufenthaltsort wählen.';
+  if (campaign.location?.world === undefined) return 'Erst den Aufenthaltsort wählen.';
   return undefined;
 }
 

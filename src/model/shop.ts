@@ -1,3 +1,4 @@
+import { worldPlace } from './place';
 import { characterOf, livingCharacters, possessionKey, withArms, type Campaign, type CharacterId, type Possession } from './campaign';
 import { addToStash, equipNew, isPc, type EquipSlot } from './stash';
 import { DomainError } from './errors';
@@ -37,7 +38,7 @@ export function fundsOf(campaign: Campaign): number {
 
 /** Der Aufenthaltsort der Gruppe, wenn sie auf einer fertigen Welt ist. */
 export function locationOf(campaign: Campaign): (Hex & { readonly name: string }) | undefined {
-  return campaign.location === undefined ? undefined : worldOf(campaign.hexes, campaign.location);
+  return campaign.location === undefined ? undefined : worldOf(campaign.hexes, campaign.location.world);
 }
 
 /** Setzt den Aufenthaltsort auf eine fertige Welt des Subsektors; `undefined` heißt: nirgends. */
@@ -45,7 +46,7 @@ export function setLocation(campaign: Campaign, id: string | undefined): Campaig
   const rest = Object.fromEntries(Object.entries(campaign).filter(([key]) => key !== 'location')) as Omit<Campaign, 'location'>;
   if (id === undefined) return rest;
   worldOf(campaign.hexes, id);
-  return { ...rest, location: id };
+  return { ...rest, location: worldPlace(id) };
 }
 
 /** Ab welcher Gesetzesstufe ein Gegenstand verboten ist: eine Waffe nach S. 14, ein Magazin wie seine Waffe. */
@@ -137,7 +138,7 @@ export function buy(campaign: Campaign, itemId: string, count: number, character
   const who = slot === undefined || character === undefined ? undefined : characterOf(campaign, character);
   if (who && (!isPc(who) || !livingCharacters(campaign).some((c) => c.id === who.id))) throw new DomainError(`${who.name} kann nichts ausrüsten.`);
   if (slot !== undefined && !who) throw new DomainError(`Für ${offer.item.name} fehlt der SC, der es ausrüstet.`);
-  const booked = withBooking(campaign, { at: clock.now(), kind: 'purchase', amount: -offer.price * count, ...(who ? { for: who.id } : {}), bought: itemId, count, in: campaign.location });
+  const booked = withBooking(campaign, { at: clock.now(), kind: 'purchase', amount: -offer.price * count, ...(who ? { for: who.id } : {}), bought: itemId, count, in: campaign.location!.world });
   const empty = offer.item.weapon !== undefined && weaponOf(offer.item.weapon).rounds !== undefined && !had;
   const piece: Possession = { of: itemId, count: 1, ...(empty ? { rounds: 0 } : {}) };
   // Hat er sie schon ausgerüstet (als Primär- oder Sekundärwaffe bzw. getragen), geht alles ins Gepäck.
@@ -168,7 +169,7 @@ export function sell(campaign: Campaign, itemId: string, count: number, price: n
     const inStash = campaign.stash.find((p) => p.of === itemId && p.from === undefined);
     if (!inStash) throw new DomainError(`Im Gepäck ist kein ${item.name}.`);
     if (!Number.isInteger(count) || count < 1 || count > inStash.count) throw new DomainError(`Im Gepäck sind ${inStash.count} × ${item.name}.`);
-    const booked = withBooking(campaign, { at: clock.now(), kind: 'sale', amount: price * count, sold: itemId, count, in: campaign.location });
+    const booked = withBooking(campaign, { at: clock.now(), kind: 'sale', amount: price * count, sold: itemId, count, in: campaign.location!.world });
     return { ...booked, stash: booked.stash.flatMap((p) => (p !== inStash ? [p] : p.count > count ? [{ ...p, count: p.count - count }] : [])) };
   }
   const who = characterOf(campaign, character);
@@ -176,7 +177,7 @@ export function sell(campaign: Campaign, itemId: string, count: number, price: n
   const had = who.possessions.find((p) => p.of === itemId);
   if (!had) throw new DomainError(`${who.name} hat kein ${item.name}.`);
   if (!Number.isInteger(count) || count < 1 || count > had.count) throw new DomainError(`${who.name} hat ${had.count} × ${item.name}.`);
-  const booked = withBooking(campaign, { at: clock.now(), kind: 'sale', amount: price * count, for: character, sold: itemId, count, in: campaign.location });
+  const booked = withBooking(campaign, { at: clock.now(), kind: 'sale', amount: price * count, for: character, sold: itemId, count, in: campaign.location!.world });
   const possessions = who.possessions.flatMap((p) => (p.of !== itemId ? [p] : p.count > count ? [{ ...p, count: p.count - count }] : []));
   // Geht der Gegenstand ganz weg, wird er ausgezogen; als Waffe entfällt er als Primär- bzw.
   // Sekundärwaffe, und war er in der Hand, nimmt der Charakter seine Primärwaffe (siehe `withArms`).
@@ -196,7 +197,7 @@ export function sellGame(campaign: Campaign, key: string, kg: number, total: num
   const had = campaign.stash.find((p) => possessionKey(p) === key);
   if (!had || itemOf(had.of).kind !== 'game') throw new DomainError('Diese Jagdbeute ist nicht im Gepäck.');
   if (!Number.isInteger(kg) || kg < 1 || kg > had.count) throw new DomainError(`Im Gepäck sind ${had.count} kg.`);
-  const booked = withBooking(campaign, { at: clock.now(), kind: 'sale', amount: total, sold: had.of, count: kg, in: campaign.location });
+  const booked = withBooking(campaign, { at: clock.now(), kind: 'sale', amount: total, sold: had.of, count: kg, in: campaign.location!.world });
   return { ...booked, stash: booked.stash.flatMap((p) => (p !== had ? [p] : p.count > kg ? [{ ...p, count: p.count - kg }] : [])) };
 }
 

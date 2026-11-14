@@ -1,16 +1,16 @@
 # Konzept: Oberflächenkarte
 
-> **Stand: Konzept, Eckpunkte mit dem Owner abgestimmt** (14. November 2026). Noch nichts davon
-> steht im [Domänenmodell](domain-model.md) oder im Code. Bevor etwas gebaut wird, kommt es nach
-> den Regeln in `AGENTS.md` erst ins Modell und wird freigegeben.
+> **Stand: freigegeben** (14. November 2026) mit den Änderungen 2026-11-14i (Oberflächenkarte) und
+> 2026-11-14j (Orte) im [Domänenmodell](domain-model.md). Die Regeln hier gelten als Teil des
+> Modells, einschließlich der Hausregeln (⚑).
 >
 > Abgestimmt: feste Feldgröße von etwa 250 km (Abschnitt 1), Flüsse, Vulkane und alle Städte in der
-> ersten Fassung, ein drehbarer Globus als zweite Ansicht neben der flachen Karte, das Gelände
+> ersten Fassung, ein drehbarer Globus als einzige Ansicht (keine flache Karte), das Gelände
 > jedes Feldes wird gespeichert, kein Nachbessern von Hand (nur neu würfeln), eigener Bildschirm
 > von der Weltkarte aus.
 
 Die **Oberflächenkarte** zeigt die Oberfläche einer Welt: Wasser, Land, Gebirge, Wüsten, Wälder,
-Eis, Flüsse, Vulkane und Städte auf einem Hexraster. Sie ist nicht die *Weltkarte*, also die Karte
+Eis, Flüsse, Vulkane und Städte auf einem Hexraster, gezeigt als drehbarer Globus. Sie ist nicht die *Weltkarte*, also die Karte
 der App mit dem UWP im Klartext (siehe Begriffe im Domänenmodell).
 
 Dieses Konzept enthält **alle Regeln, die man zum Bauen braucht**, mit allen Tabellen. Das PDF muss
@@ -85,7 +85,8 @@ auf der Weltkarte nach.
 
 ### ⚑ Unser Raster: feste Feldgröße von etwa 250 km
 
-Statt fester 500 Hexe hat bei uns **jedes Feld etwa 250 km** Durchmesser. Kleine Welten haben
+Statt fester 500 Hexe hat bei uns **jedes Feld etwa 250 km** Durchmesser. („Feld“ heißt in diesem
+Konzept immer *Oberflächenfeld*, siehe Begriffe im Domänenmodell, nie das Hexfeld des Subsektors.) Kleine Welten haben
 weniger Felder, große mehr.
 
 - Der Durchmesser einer Welt ist Größe × 1600 km (Classic Traveller).
@@ -367,11 +368,15 @@ Das Buch teilt das Gelände in drei Arten: durch Oberflächenformen (dieser Absc
 
 ### Frostlinie, Eis und Tundra
 
-- Die **Frostlinie** liegt auf jeder Halbkugel dort, wo die Temperatur unter 0 °C fällt.
-- **Eis:** Jedes Feld (Land und Wasser) mit Temperatur unter 0 °C wird Eis. Wasser bleibt
+- Die **Frostlinie** liegt auf jeder Halbkugel dort, wo die Temperatur das ganze Jahr unter 0 °C
+  bleibt. ⚑ Wir haben nur ein Jahresmittel je Feld, keine Jahreszeiten. Bleibt es auch im Sommer
+  unter 0 °C, liegt das Jahresmittel etwa unter −10 °C (Grönland, Antarktis; Tundra mit Dauerfrost
+  liegt bei −5 bis −10 °C). Deshalb gilt bei uns: **Frostlinie bei −10 °C Jahresmittel.** Mit 0 °C
+  läge auf einer gemäßigten erdgroßen Welt schon ab 46° Breite Eis.
+- **Eis:** Jedes Feld (Land und Wasser) mit einem Jahresmittel unter −10 °C wird Eis. Wasser bleibt
   darunter Wasser (für die Zählung des Wasseranteils), wird aber als Eis gezeichnet.
 - **Tundra:** Jedes offene Landfeld, das an ein Eisfeld grenzt und selbst kein Eis ist.
-- Ist die ganze Welt unter 0 °C (z. B. *Gefroren*), ist alles Eis, ohne Tundra.
+- Ist die ganze Welt unter −10 °C (z. B. *Gefroren*), ist alles Eis, ohne Tundra.
 
 ### Vergletscherung
 
@@ -379,7 +384,7 @@ Das Buch teilt das Gelände in drei Arten: durch Oberflächenformen (dieser Absc
   8,2° Breite) von der Frostlinie Richtung Äquator reichten die Polkappen früher. Das ist die
   **Vergletscherungszone**, auf beiden Halbkugeln gleich breit.
 - Land in dieser Zone hat eher Gebirge (siehe unten).
-- Ist keine Frostlinie auf der Welt (überall über 0 °C), gibt es keine Vergletscherung.
+- Ist keine Frostlinie auf der Welt (überall über −10 °C), gibt es keine Vergletscherung.
 
 ### Gebirge
 
@@ -397,7 +402,9 @@ Das Buch teilt das Gelände in drei Arten: durch Oberflächenformen (dieser Absc
 - **Zusätzlich in der Vergletscherungszone:** Jedes Kartendreieck darf zwischen der
   Vergletscherungsgrenze und dem Pol **1W6 × f** weitere zerklüftete Felder und ebenso viele
   Gebirgsfelder haben, solange es dort offene Landfelder gibt. ⚑ Wir würfeln das für jedes
-  Kartendreieck, das Land in der Zone hat.
+  Kartendreieck, das Land in der Zone hat. ⚑ Zusammen höchstens die Hälfte der offenen Landfelder
+  der Zone in diesem Dreieck (je ein Viertel zerklüftet und Gebirge); sonst wird bei breiter Zone
+  fast alles Land dort Gebirge.
 
 ### Vulkane
 
@@ -549,6 +556,19 @@ Eine Stadt mit **Bevölkerungsziffer d** und **Multiplikator m** hat m × 10^d E
 Beispiel des Buchs (P = A, M = 8, also 80 Milliarden): 3a: 3W6 = 9 < 10, Multiplikatoren 2 und dann
 5 (gewürfelt 9, gekappt auf den Rest), also eine Stadt mit 20 und eine mit 50 Milliarden.
 
+### Städtenamen (2026-11-14k)
+
+- Jede Haupt- und Nebenstadt bekommt beim Erzeugen einen Namen, auf der ganzen Kampagne ohne Doppel.
+- Je Welt eine Klangart: bei 1–4 auf 1W6 **irdisch** (wie Kolonisten sie vergeben: *New Hallstatt*,
+  *Port Tamsin*, *Draycott Station*), sonst **fremdartig** (*Tolmira*, *Ys Serqam*, *Sia-Tho*).
+- Die Hauptstadt trägt bei 1–2 auf 1W6 den Namen der Welt.
+- Die Namen stehen in `src/data/city-names.json`: 780 irdische und 780 fremdartige, erzeugt mit
+  einem Skript aus handgeschriebenen Bausteinen (339 Wortstämme, 25 Muster wie *New …*, *Port …*,
+  *… Landing*, *… Downport*, und Silben). Gehen die fertigen Namen aus, setzt die App aus denselben
+  Bausteinen weitere zusammen.
+- Umbenennen geht im Feld unten auf dem Globus (Stift neben dem Namen). Auf der Karte stehen die
+  Namen der Hauptstädte ab etwas Zoom, weiter hinein alle.
+
 ### 10b. Rang der Städte (S. 74)
 
 - **Hauptstädte** (*primary*): die Städte mit der höchsten Bevölkerungsziffer. Man darf mehrere
@@ -598,7 +618,7 @@ Beispiel des Buchs (P = A, M = 8, also 80 Milliarden): 3a: 3W6 = 9 < 10, Multipl
 - In jedem Fall leben höchstens 10^(TL − 6) Menschen im Orbit.
 - Welten mit Regierung C oder höher haben eher weniger Menschen im Orbit. ⚑ Ohne eigene Regel.
 - ⚑ Orbitalstädte liegen nicht auf der Oberfläche. Der Globus zeigt sie als Lichter auf einer
-  Umlaufbahn, die flache Karte listet sie unter der Karte. Ihre Einwohner kommen aus den Städten
+  Umlaufbahn und in der Liste neben dem Globus. Ihre Einwohner kommen aus den Städten
   der Schritte 3a bis 3e: ⚑ Wir verlegen dafür die passende Zahl Nebenstädte (bzw. bei
   Raumhafen B Kleinstädte) in den Orbit, bis die Bedingungen erfüllt sind.
 
@@ -619,7 +639,9 @@ Die Lage ist im Buch frei, mit Leitlinien nach TL. Wo eine Stadt liegen darf:
 
 ⚑ **Was als einzelne Stadt auf der Karte steht:** Haupt- und Nebenstädte sind einzelne Städte mit
 Feld, Ziffer, Multiplikator und Hafen. Kleinstädte gibt es zu Hunderten; sie stehen als **Zahl je
-Feld** auf der Karte (auf dem Globus als Lichter, auf der flachen Karte als Punktdichte).
+Feld** auf der Karte (auf dem Globus als Lichter). ⚑ Einzeln stehen höchstens **10 Hauptstädte
+und 20 Nebenstädte** auf der Karte (die größten); weitere zählen als Kleinstädte. Bei kleiner Bevölkerung ergeben die
+Formeln sonst Hunderte von Nebenstädten mit wenigen hundert Einwohnern.
 
 ⚑ **Verfahren:**
 1. Jedes erlaubte Feld bekommt eine Wertung: +3 an der Küste, +2 an einem Fluss, +2 bei 0 bis
@@ -679,47 +701,56 @@ pflegen.
 
 ## Was gespeichert wird
 
-⚑ Vorschlag für das Domänenmodell (dort erst einzutragen und freizugeben):
+So steht es im Domänenmodell (Änderung 2026-11-14i, siehe dort *Oberflächenkarte*):
 
 | Wert | Inhalt |
 |---|---|
-| Bevölkerungsmultiplikator | 1–9, an der Welt (wird Teil des erweiterten UWP) |
-| Gelände je Feld | eine Geländeart je Feld, in der Reihenfolge der Felder des Gitters: Wasser, Eis auf Wasser, Eis auf Land, Tundra, Gebirge, zerklüftet, Wüste, Dschungel, Sumpf, offen/Wald, besiedelt |
-| Flüsse | je Fluss die Felder von der Quelle zur Mündung |
-| Straßen | je Straße die Felder |
-| Vulkane | je Vulkan das Feld und ob es ein großer Vulkan oder ein Vulkanfeld ist |
-| Städte | je Haupt- und Nebenstadt: Feld (oder Orbit), Bevölkerungsziffer, Multiplikator, Rang, Hafen; später ein Name |
-| Kleinstädte | Zahl je Feld |
+| Bevölkerungsmultiplikator | 1–9, an der Welt (`Hex.populationMultiplier`) |
+| Oberflächenfelder (`SurfaceCell`) | je Feld die Geländeart (Wasser, Eis auf Wasser, Eis auf Land, Tundra, Gebirge, zerklüftet, Wüste, Dschungel, Sumpf, offen/Wald, besiedelt), die Zahl der Kleinstädte und ob ein großer Vulkan oder ein Vulkanfeld darauf liegt |
+| Flüsse (`River`) | die Felder von der Quelle zur Mündung |
+| Straßen (`Road`) | die Felder der Straße |
+| Städte (`City`) | je Haupt- und Nebenstadt: Name, Feld (keins heißt Orbit), Bevölkerungsziffer, Multiplikator, Rang, Hafen |
 
+- **Gepackt:** Im Spielstand steht die Geländeart als Text mit einem Zeichen je Feld in der
+  Reihenfolge des Rasters; Kleinstädte und Vulkane nur für Felder, die welche haben; Flüsse,
+  Straßen und Städte mit Feldnummern. Objekte je Feld gibt es nur in der Anzeige.
 - Die Zahl der Felder folgt aus der Größe und wird nicht gespeichert.
-- Platten, Grenzen und Rauschwert werden nicht gespeichert. Sie dienen nur dem Erzeugen.
-- Größe: Bei Terra sind es 10 242 Felder, also etwa 10 KB je Welt als ein Zeichen je Feld. Karten
-  entstehen nur für Welten, die man öffnet.
+- Platten, Grenzen, Rauschwert und der Startwert des Zufalls werden nicht gespeichert. Sie dienen
+  nur dem Erzeugen. Ein gespeicherter Startwert statt der Werte wäre kleiner, aber dann hinge jede
+  Karte am Programm: Jede Änderung am Erzeugen, auch eine Fehlerkorrektur, würde bestehende Karten
+  verschieben, und Rechenunterschiede zwischen Browsern könnten auf zwei Geräten verschiedene Karten
+  ergeben.
+- Größe: Bei Terra sind es 10 242 Felder, also etwa 10 KB je Welt. Karten entstehen nur für Welten,
+  deren Globus man öffnet.
 
 ## Ansichten
 
-Alle Ansichten sind reine Darstellung aus den gespeicherten Werten.
-
-### Flache Karte
-
-- Die 20 Kartendreiecke flach nebeneinander wie auf IS Form 21: fünf Spitzen oben, fünf unten,
-  zehn im Band.
-- Wegen bis zu 16 002 Feldern auf ein Canvas gerechnet, nicht als SVG.
-- Zoom und Verschieben wie auf dem Sektor-Screen.
-- Antippen eines Feldes zeigt Gelände, Temperatur, Stadt, Hafen, Vulkan, Fluss.
+Alle Ansichten sind reine Darstellung aus den gespeicherten Werten. Abgestimmt (14. November 2026):
+**Es gibt nur den Globus**, keine flache Karte. Nah herangezoomt wirkt er ohnehin wie eine flache
+Karte.
 
 ### Globus
 
-- Die Felder auf einer Kugel, mit dem Finger drehbar, mit zwei Fingern zoombar.
-- Gerechnet wie das Weltsymbol heute (`src/view/sector/world-icon.ts`): Pixel für Pixel, Licht von
-  links, Atmosphärenleuchten, Wolken, Stadtlichter auf der Nachtseite. Statt Zufallsrauschen
-  schlägt jeder Pixel nach, welches Feld unter ihm liegt (vorberechnete Nachschlagetabelle nach
-  Breiten- und Längengrad).
-- Feldgrenzen weich gezeichnet, damit es nach Planet aussieht und nicht nach Waben; Küsten mit
-  Rauschen ausgefranst, Gebirge schattiert, Flüsse als Linien, Städte als Lichter. Das Hexgitter
-  lässt sich einblenden.
-- Orbitalstädte als Lichter auf einer Umlaufbahn.
-- Antippen wie bei der flachen Karte.
+Wie eine Karten-App (Owner, 14. November 2026):
+- **Die Karte füllt den ganzen Bildschirm.** Drehen mit dem Finger. Zoomen wie in einer Karten-App:
+  zwei Finger, **Doppeltippen** (eine Stufe hinein, auf die Stelle zu) oder **Doppeltippen und
+  Ziehen** (einhändig: nach unten hinein, nach oben heraus). Ein einfaches Tippen wählt das Feld
+  erst nach einer kurzen Pause (etwa eine Viertelsekunde), damit es sich nicht mit dem Doppeltippen
+  beißt. Mit Maus oder Touchpad zusätzlich Mausrad und die Knöpfe + und − rechts unten; auf
+  Touch-Geräten gibt es die Knöpfe nicht. Ganz herausgezoomt sieht man die ganze Halbkugel,
+  ganz hineingezoomt etwa 10 Felder über die kürzere Seite.
+- **Oben eine Leiste:** Zurück zur Weltkarte, der Name der Welt und zwei aufklappbare Listen:
+  - **Orte:** die Gruppe, NSC mit Feld, Städte (mit Einwohnern und Hafen), Orbitalstädte, Vulkane.
+    Darunter Hexgitter ein/aus, der Maßstab und „Karte neu würfeln“ (oder warum es nicht geht).
+  - **Einträge:** alle Felder mit Logeinträgen, das jüngste zuerst, mit Zahl und Tag des neuesten.
+  - Ein Tippen auf eine Zeile dreht die Karte dorthin, zoomt hinein und wählt das Feld.
+- **Unten fährt ein Feld herein**, sobald ein Feld angetippt ist: Gelände, Lage, Temperatur, Städte,
+  Kleinstädte, Vulkan, Fluss, Straße, Gruppe und NSC dort, die Knöpfe „Gruppe hierher“ und „NSC
+  hierher“ und „Was hier geschah“. Schließen mit dem X oder erneutem Antippen des Feldes.
+- Gerechnet wie das Weltsymbol (`src/view/sector/world-icon.ts`) Pixel für Pixel aus einer Textur
+  nach Breiten- und Längengrad; Feldgrenzen weich, Küsten ausgefranst, Flüsse und Straßen als
+  Linien. Zeichen: Städte als Punkte, Vulkane als Dreiecke, Einträge orange mit Zahl, NSC violett,
+  die Gruppe blau.
 - ⚑ Läuft das auf dem Handy nicht flüssig, wird es mit WebGL gerechnet, ohne zusätzliche
   Bibliothek.
 
@@ -728,10 +759,15 @@ Alle Ansichten sind reine Darstellung aus den gespeicherten Werten.
 Hat eine Welt eine Oberflächenkarte, zeichnet das Weltsymbol (Sektorkarte, Kopfzeile, Weltkarte)
 die echten Felder statt Zufallsrauschen. So sieht das Symbol aus wie die Welt.
 
-### Wo die Karte erscheint
+### Wo der Globus erscheint
 
-Als eigener Bildschirm, von der Weltkarte aus geöffnet. Umschalter zwischen flacher Karte und Globus.
-Ein Knopf „Neu würfeln“ ersetzt die ganze Karte (nach Rückfrage).
+Als eigener Bildschirm über der Weltkarte:
+- Das Symbol des Aufenthaltsorts in der Kopfzeile öffnet den Globus direkt.
+- Auf der **Weltkarte** einer fertigen Welt lässt sich das große Weltsymbol oben rechts antippen.
+- Im Abschnitt **Oberfläche** der Weltkarte steht ein Knopf „Globus“.
+- Hat die Welt noch keine Oberflächenkarte, entsteht sie beim ersten Öffnen.
+- Ein Knopf „Neu würfeln“ ersetzt die ganze Karte (nach Rückfrage).
+- Bei Größe 0 gibt es weder Knopf noch antippbares Symbol.
 
 ## Was wir bewusst weglassen
 
@@ -745,11 +781,10 @@ Ein Knopf „Neu würfeln“ ersetzt die ganze Karte (nach Rückfrage).
 | Terraforming | Beiwerk | später |
 | Gesellschaft, Bräuche, Ressourcen (*Population Related Details* ab Schritt 7, *Natural Resources*) | gehört nicht zur Karte | eigenes Thema |
 | Von Hand nachbessern | erste Fassung nur „Neu würfeln“ | später |
+| Flache Karte (20 Kartendreiecke wie IS Form 21) | auf dem Handy schwer lesbar, der Globus reicht | später als Export zum Ausdrucken, aus denselben Daten |
 
 ## Offene Punkte
 
 1. **Geschwindigkeiten der Fahrzeuge** für den Maßstab „ein Feld ist eine Tagesreise“ aus den
    Regeln prüfen.
-2. **Namen der Städte:** Die Hauptstadt könnte den Namen der Welt tragen, die übrigen später aus
-   den Namenstabellen.
 3. **Alle Hausregeln (⚑)** prüft der Owner bei der Freigabe im Domänenmodell.

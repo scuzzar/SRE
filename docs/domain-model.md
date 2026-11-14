@@ -317,6 +317,22 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Verweis `Encounter.joined` (geordnet) auf `Character`; die dazugenommenen NSC bleiben in der
 > Kampagne, die Begegnung verweist nur auf sie. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-kampf-mit-dauerhaften-nsc.png`](changes/2026-11-14-kampf-mit-dauerhaften-nsc.png).
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14i): die **Oberflächenkarte** einer Welt
+> mit Gelände, Flüssen, Straßen, Vulkanen und Städten, gezeigt als drehbarer Globus (siehe
+> *Oberflächenkarte*). Neu im Bild: `Hex.populationMultiplier`, `Hex.map`, `SurfaceMap`, `SurfaceCell`,
+> `Landform`, `Volcano`, `River`, `Road`, `City`, `CityRank`, `Port` und der Bereich *Oberflächenkarte*.
+> Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-14-oberflaechenkarte.png`](changes/2026-11-14-oberflaechenkarte.png).
+
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14j, baut auf 2026-11-14i auf): **Orte**
+> (siehe *Orte*). Logeinträge, die Gruppe und NSC stehen auf einer Welt, wahlweise genauer auf
+> einem Oberflächenfeld oder in einer Stadt. Neu im Bild: `Place`, `LogEntry.place`; `Campaign.location`
+> und `Character.place` zeigen auf einen `Place` statt direkt auf ein `Hex`. Der Ausschnitt dazu
+> liegt unter [`changes/2026-11-14-orte.png`](changes/2026-11-14-orte.png).
+
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14k): **Städtenamen** (siehe
+> *Oberflächenkarte*). Jede Haupt- und Nebenstadt hat einen Namen. Neu im Bild: `City.name`. Der
+> Ausschnitt dazu liegt unter [`changes/2026-11-14-staedtenamen.png`](changes/2026-11-14-staedtenamen.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -339,6 +355,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Shop, Kasse und Besitz | [views/shop.png](views/shop.png) |
 | Charaktererschaffung und Laufbahnen | [views/erschaffung.png](views/erschaffung.png) |
 | Subsektor und Welten | [views/sektor.png](views/sektor.png) |
+| Oberflächenkarte | [views/oberflaeche.png](views/oberflaeche.png) |
 | Karte und Orakel | [views/karte.png](views/karte.png) |
 | Probe und Verlauf | [views/probe.png](views/probe.png) |
 | Kampf: Waffen, Angriff, Wunden, Heilung | [views/kampf.png](views/kampf.png) |
@@ -430,7 +447,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Waffe in der Hand | `Character.wields` | Die Waffe, die ein Charakter gerade führt: Primär- oder Sekundärwaffe; keine heißt Hände |
 | Primärwaffe | `Character.primary` | Die Hauptwaffe eines Charakters, im Editor festgelegt, z. B. Automatic Pistol |
 | Sekundärwaffe | `Character.secondary` | Die zweite Waffe eines Charakters, im Editor festgelegt, z. B. Blade |
-| Aufenthaltsort | `Campaign.location` | Die Welt, auf der die Gruppe gerade ist; dort kauft sie ein |
+| Aufenthaltsort | `Campaign.location` | Der Ort, an dem die Gruppe gerade ist: die Welt, wahlweise genauer ein Oberflächenfeld oder eine Stadt; auf der Welt kauft sie ein |
 | Spielzeit, Tag | `Campaign.day` | Der heutige Tag im Spiel, gezählt als Tage seit 001-0 im Imperialen Kalender |
 | Datum | `Campaign./date` | Der Tag als Imperiales Datum „Tag des Jahres-Jahr“, z. B. 123-1105 |
 | Wochentag | `Campaign./weekday` | Montag bis Sonntag (1–7); Tag 001 jedes Jahres ist Feiertag ohne Wochentag |
@@ -461,7 +478,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Dazugenommener NSC | `Encounter.joined` (`Character`) | Ein dauerhafter NSC vom Aufenthaltsort, der in einer Begegnung auf der Seite der NSC mitkämpft; er bleibt in der Kampagne |
 | Übernehmen | (von `Encounter.npcs` nach `Campaign.characters`) | Ein NSC der Begegnung wird in die Kampagne umgehängt, als SC oder als dauerhafter NSC |
 | Dauerhafter NSC | `Character` mit `npc` | Ein Charakter, der kein SC ist; er steht im Reiter NSC |
-| Ort eines NSC | `Character.place` | Die Welt, auf der ein dauerhafter NSC lebt; man trifft ihn nur dort |
+| Ort eines NSC | `Character.place` | Der Ort, an dem ein dauerhafter NSC lebt: die Welt, wahlweise genauer ein Oberflächenfeld oder eine Stadt; man trifft ihn nur auf dieser Welt |
+| Ort | `Place` | Eine Welt (`world`), wahlweise genauer ein Oberflächenfeld (`cell`) oder eine Stadt (`city`) darauf |
+| Ort eines Logeintrags | `LogEntry.place` | Wo etwas passiert ist; bleibt, auch wenn sich Gruppe und NSC weiterbewegen |
+| Was hier geschah | (abgeleitet) | Alle Logeinträge, deren Ort auf dieser Welt, diesem Feld oder in dieser Stadt liegt |
 | Patron-NSC | `Character` mit `patron` | Ein dauerhafter NSC, der als Patron entstanden ist, z. B. „Mara Voss, Smuggler“ |
 | Mindest-SOC | `Weapon.minSoc` | Ab welchem SOC ein erzeugter NSC eine Waffe bekommt: billige Nahkampfwaffen 0, Pistolen und Klingen 6, Gewehre und Laser 10 (Hausregel) |
 | Verbrecherisch | `Patron.criminal`, Rolle Feind | Ein NSC, für den das Gesetz eher nicht gilt: DM +2 auf den Wurf, das Gesetz zu ignorieren |
@@ -577,7 +597,22 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Temperatur-DM | `UwpDigit.temperatureDm` | Der DM einer Atmosphäre auf den Temperaturwurf, z. B. −2 bei Atmosphäre 2 oder 3 |
 | Wasser-DM | `Temperature.hydroDm` | Der DM einer Temperatur auf die Hydrographie: −2 bei Heiß, −6 bei Kochend, nicht bei Atmosphäre D |
 | Oberfläche | `Surface` | Was eine spätere Oberflächenkarte braucht, nach dem *World Builder's Handbook*: Wasseranteil, Platten, Land- und Wassermassen, Leben; ohne Karte |
-| Oberflächenkarte | (noch nicht im Modell) | Die Karte der Oberfläche einer Welt aus 20 Dreiecken mit Hexen; kommt später, siehe [Konzept](konzept-oberflaechenkarte.md). Nicht zu verwechseln mit der *Weltkarte* (der Karte mit UWP und Klartext) |
+| Oberflächenkarte | `SurfaceMap`, `Hex.map` | Die Oberfläche einer Welt als Raster aus Oberflächenfeldern, mit Gelände, Flüssen, Straßen, Vulkanen und Städten; gezeigt als Globus. Nicht zu verwechseln mit der *Weltkarte* (der Karte mit UWP und Klartext) |
+| Oberflächenfeld | `SurfaceCell`, `SurfaceMap.cells` | Ein Feld der Oberflächenkarte, etwa 250 km breit, mit Geländeart, Kleinstädten und Vulkan; die Felder stehen in der festen Reihenfolge des Rasters. Nicht zu verwechseln mit dem *Hexfeld* des Subsektors |
+| Zahl der Felder | `SurfaceMap./cells` | 10 × n² + 2 mit n = 4 × Größe, z. B. 10 242 bei Größe 8 |
+| Kartendreieck | (kein Feld) | Eines der 20 großen Dreiecke des Ikosaeders, aus dem das Raster entsteht; manche Regeln zählen je Kartendreieck |
+| Geländeart | `Landform`, `SurfaceCell.landform` | Was ein Oberflächenfeld ist: Wasser, Eis auf Wasser, Eis auf Land, Tundra, Gebirge, zerklüftet, Wüste, Dschungel, Sumpf, offen/Wald, besiedelt. Nicht dasselbe wie das *Gelände* der Begegnungen (`Terrain`) |
+| Fluss | `River` | Die Oberflächenfelder eines großen Flusses von der Quelle bis zur Mündung |
+| Straße | `Road` | Die Oberflächenfelder einer wichtigen Straße zwischen zwei Städten (nur bei TL 5–10) |
+| Vulkan, Vulkanfeld | `SurfaceCell.volcano`, `Volcano` | Ein großer Vulkan bzw. ein Feld mit vielen kleinen Vulkanen; liegt auf einem Oberflächenfeld, ohne dessen Geländeart zu ändern |
+| Stadt | `City` | Eine Haupt- oder Nebenstadt mit Name, Bevölkerungsziffer, Multiplikator und Hafen; auf einem Oberflächenfeld oder im Orbit (ohne Feld) |
+| Städtenamen | (Referenzdaten) | Die große Liste, aus der neue Städte ihren Namen bekommen |
+| Hauptstadt, Nebenstadt | `CityRank` | Die Städte mit den höchsten Bevölkerungsziffern (höchstens 10) bzw. eine Ziffer darunter |
+| Orbitalstadt | `City` ohne `cell` | Eine Stadt dauerhaft im Orbit |
+| Hafen einer Stadt | `City.port`, `Port` | Raumhafen A–E oder Landeplatz F–H der Stadt; Y (keiner) heißt: kein Wert |
+| Kleinstädte | `SurfaceCell.towns` | Wie viele kleinere Städte auf einem Oberflächenfeld liegen; einzeln gibt es sie nicht |
+| Bevölkerungsmultiplikator | `Hex.populationMultiplier` | Die erste Ziffer der Einwohnerzahl, 1–9: Die Welt hat Multiplikator × 10^Bevölkerung Einwohner |
+| Globus | (View, aus `SurfaceMap`) | Die drehbare Kugel mit der Oberflächenkarte; nur Darstellung |
 | Wasseranteil | `Surface.water` | Wie viel Prozent der Oberfläche Wasser ist, 0 bis 100 |
 | Tektonische Platten | `Surface.plates` | Wie viele große Platten die Kruste hat; an ihren Grenzen entstehen später Gebirge |
 | Große und kleine Kontinente | `Surface.majorContinents`, `Surface.minorContinents` | Landmassen mit mindestens bzw. unter 15 % der Landfläche |
@@ -2143,6 +2178,70 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Land Archipel bzw. alles Wasser verstreuter See (die Zahl ist die ganze Fläche in halben Hexen,
   und es gibt keine anderen Land- bzw. Wassermassen), schreibt sie „Land nur als Archipele“ bzw.
   „Wasser nur als verstreute Seen“ statt einer Zahl wie 150.
+- **Oberflächenkarte** (freigegeben am 14. November 2026, 2026-11-14i). Die Regeln stehen vollständig, mit allen Tabellen und
+  Hausregeln, im [Konzept Oberflächenkarte](konzept-oberflaechenkarte.md); sie gelten als Teil
+  dieses Modells. Das Wichtigste für das Bild:
+  - Eine fertige Welt ab Größe 1 mit Oberfläche (`Surface`) kann eine Oberflächenkarte haben
+    (`map`). Sie entsteht in einem Zug, wenn man den Globus zum ersten Mal öffnet, und ersetzt sich
+    nur ganz („Neu würfeln“). Von Hand ändern lässt sie sich nicht. Größe 0 hat keine.
+  - Das Raster folgt aus der Größe und wird nicht gespeichert: ein Ikosaeder, jede Kante in
+    n = 4 × Größe Abschnitte geteilt, jeder Eckpunkt ein Oberflächenfeld (`/cells` = 10 × n² + 2).
+    Die Felder (`cells`) stehen in einer festen Reihenfolge, jedes hat eine Nummer ab 0.
+  - Gespeichert werden nur Ergebnisse: je Feld Geländeart, Kleinstädte und Vulkan, dazu Flüsse und
+    Straßen als Folgen benachbarter Felder und die Haupt- und Nebenstädte (`cities`). Platten, ihre
+    Grenzen, die Temperatur je Feld und das Rauschen dienen nur dem Erzeugen bzw. werden aus Größe
+    und Temperatur der Welt gerechnet. Der Startwert des Zufalls beim Erzeugen wird nicht
+    gespeichert: Die Karte hängt nur an ihren Werten, nicht am Programm, das sie erzeugt hat.
+  - **Gepackt gespeichert.** Eine Karte hat bis zu 16 002 Felder; als einzelne Objekte würde sie
+    jede Speicherung, jede Exportdatei und jeden Abgleich etwa 30-mal größer machen. Deshalb stehen
+    die Felder im Spielstand gepackt: die Geländeart als Text mit einem Zeichen je Feld in der
+    Reihenfolge des Rasters, Kleinstädte und Vulkane nur für die Felder, die welche haben (Nummer und
+    Wert), Flüsse, Straßen und Städte mit Feldnummern statt Verweisen. Die Felder als Objekte gibt
+    es nur in der Anzeige. Bei Größe 8 sind das etwa 10 KB je Karte.
+  - Eine Stadt ist ein eigener Gegenstand (blau): Sie hat einen Namen, und Orte verweisen auf sie
+    (siehe *Orte*).
+  - **Städtenamen** (freigegeben am 14. November 2026, 2026-11-14k): Jede Haupt- und Nebenstadt bekommt beim Erzeugen der
+    Karte einen Namen aus den Referenzdaten *Städtenamen*, auf der ganzen Kampagne ohne Doppel. Die
+    Hauptstadt (die erste Stadt) trägt bei 1–2 auf 1W6 den Namen der Welt. Den Namen kann man im
+    Feld unten auf dem Globus ändern; ein leerer Name geht nicht. Karten von vor dieser Änderung
+    bekommen beim Laden „Stadt 1“, „Stadt 2“ usw. Ein Feld kann ab TL 10 mehrere Städte haben; deshalb verweist die Stadt auf ihr Feld, nicht
+    das Feld auf seine Städte. Eine Stadt ohne Feld (`cell`) ist eine Orbitalstadt. `population` ist ihre Bevölkerungsziffer,
+    `multiplier` die erste Ziffer ihrer Einwohnerzahl (Einwohner = multiplier × 10^population).
+  - Der Bevölkerungsmultiplikator (`populationMultiplier`) wird beim Erzeugen der Karte gewürfelt,
+    falls die Welt noch keinen hat, und bleibt beim Neu würfeln der Karte erhalten. Bei
+    Bevölkerung 0 gibt es keinen.
+  - Beim Import wird geprüft: die Zahl der Felder passt zur Größe, alle Feldnummern liegen im
+    Raster, Flüsse und Straßen bestehen aus benachbarten Feldern, Städte und Kleinstädte nur bei
+    Bevölkerung ab 1.
+- **Orte** (freigegeben am 14. November 2026, 2026-11-14j). Ein Ort (`Place`) ist immer eine Welt (`world`, ein Hexfeld mit
+  Welt, nicht leer). Genauer kann er ein Oberflächenfeld (`cell`) oder eine Stadt (`city`) sein, nie
+  beides: Das Feld einer Stadt ist ihr Feld (`City.cell`) und wird nicht noch einmal gespeichert.
+  Feld und Stadt gehören zur Oberflächenkarte derselben Welt; eine Orbitalstadt hat kein Feld.
+  - **Wer einen Ort hat:** die Gruppe (`Campaign.location`, ihr Aufenthaltsort), jeder dauerhafte NSC
+    (`Character.place`) und wahlweise jeder Logeintrag (`LogEntry.place`). Spielercharaktere sind
+    immer bei der Gruppe und haben keinen eigenen Ort.
+  - **Logeinträge bewegen sich nicht.** Der Ort eines Logeintrags hält fest, wo es damals passiert
+    ist. Gruppe und NSC wechseln ihren Ort, alte Einträge bleiben, wo sie waren. Den Ort eines
+    Eintrags kann man von Hand ändern oder entfernen, wie man eine Notiz ändert.
+  - **Neue Logeinträge bekommen den Aufenthaltsort.** Jeder neu angelegte Logeintrag bekommt den
+    Aufenthaltsort der Gruppe, falls sie einen hat. Eine Reise (`Journey`) bekommt das Ziel. Einträge
+    von vor dieser Änderung haben keinen Ort.
+  - **Bewegen:** Auf dem Globus wählt man ein Feld oder eine Stadt und dann „Gruppe hierher“ bzw.
+    „NSC hierher“. Das kostet keine Zeit und steht nicht im Log; eine Reise über die Oberfläche mit
+    Tagen je Feld kommt später. Zwischen Welten reist die Gruppe weiter mit `Journey`; danach ist
+    ihr Ort die neue Welt ohne Feld.
+  - **Was hier geschah** ist abgeleitet: die Logeinträge mit diesem Ort, auf einer Welt alle mit
+    dieser Welt, auf einem Feld alle mit diesem Feld oder einer Stadt darauf.
+  - **Karte gesperrt:** Zeigt ein Ort auf ein Feld oder eine Stadt der Oberflächenkarte, lässt sie
+    sich nicht mehr neu würfeln. Sonst stünde, was in einer Stadt passiert ist, plötzlich im Ozean.
+  - **Städte haben eine Nummer** in der Reihenfolge ihrer Liste; darüber verweist ein Ort auf sie.
+    Gespeichert wird ein Ort gepackt: das Hexfeld, dazu die Feldnummer oder die Nummer der Stadt.
+  - **Anzeige:** Der Globus zeigt ein Symbol für die Gruppe, eines je NSC und für Felder mit
+    Logeinträgen eines mit ihrer Zahl; Antippen listet Einträge und NSC dort. Die Weltkarte hat
+    einen Abschnitt „Was hier geschah“. Die Sektorkarte zeigt ein kleines Zeichen an Welten, auf
+    denen etwas geschehen ist oder NSC leben.
+  - **Bestehende Kampagnen:** Ein bisheriger Aufenthaltsort bzw. Ort eines NSC wird ein Ort mit
+    dieser Welt, ohne Feld und Stadt.
 - **Notiz zur Welt.** Eine fertige Welt (mit Namen, nicht leer) kann eine Notiz haben (`note`):
   freier Text, auch über mehrere Zeilen. Anders als ein Logeintrag lässt sie sich jederzeit ändern,
   wie die Notiz eines Charakters; Leerraum am Rand fällt weg, eine leere Notiz gibt es nicht (dann
@@ -2168,6 +2267,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
+
+- **Ort eines Logeintrags von Hand ändern** (*Orte*, 2026-11-14j): Im Code bekommt ein Eintrag
+  seinen Ort nur beim Anlegen; ändern oder entfernen lässt er sich noch nicht. Alles Übrige an
+  Oberflächenkarte und Orten ist gebaut (`model/surface-map.ts`, `model/place.ts`).
 
 - **`Conflict → Campaign : local`** ist im Code kein eigenes Feld: Der Stand von hier ist die
   Kampagne des Geräts mit dem Schlüssel des Konflikts (`localOf`), damit man in ihr weiterspielen

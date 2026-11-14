@@ -138,8 +138,8 @@ export function isJoined(campaign: Campaign, id: CharacterId): boolean {
  * Aufenthaltsort, lebend, nicht ausgeschieden, kein Tier; ohne Aufenthaltsort keine.
  */
 export function joinableNpcs(campaign: Campaign): readonly Character[] {
-  if (campaign.location === undefined) return [];
-  return campaign.characters.filter((c) => c.npc && !c.dead && !c.retired && c.animal === undefined && c.place === campaign.location);
+  if (campaign.location?.world === undefined) return [];
+  return campaign.characters.filter((c) => c.npc && !c.dead && !c.retired && c.animal === undefined && c.place?.world === campaign.location?.world);
 }
 
 /** Die Stelle des ersten Logeintrags der Begegnung: der erste, der nicht vor ihr liegt. */
@@ -314,7 +314,7 @@ export type EncounterChoice = number | 'none';
 export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, chosen?: EncounterChoice, count?: number, terrain: string | undefined = campaign.terrain, joined: readonly CharacterId[] = []): EncounterRoll {
   if (currentEncounter(campaign)) throw new DomainError('Es läuft schon eine Begegnung; erst sie beenden.');
   const world = locationOf(campaign);
-  if (!world || campaign.location === undefined) throw new DomainError('Die Gruppe ist auf keiner Welt; erst auf der Sektorkarte den Aufenthaltsort wählen.');
+  if (!world || campaign.location?.world === undefined) throw new DomainError('Die Gruppe ist auf keiner Welt; erst auf der Sektorkarte den Aufenthaltsort wählen.');
   const joinable = joinableNpcs(campaign);
   if (new Set(joined).size !== joined.length) throw new DomainError('Ein NSC kommt nur einmal dazu.');
   for (const id of joined) {
@@ -366,7 +366,7 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
     )}`,
     at: clock.now(),
     ...(type ? { quantityDie, of: roll } : {}),
-    in: campaign.location,
+    in: campaign.location?.world,
     reaction,
     reactionDice,
     reactionDm: dm,
@@ -457,7 +457,7 @@ function animalCharacter(id: CharacterId, name: string, at: AnimalRef, row: Anim
 export function rollAnimalEncounter(campaign: Campaign, random: Random, clock: Clock, chosen?: number, count?: number): AnimalRoll {
   if (currentEncounter(campaign)) throw new DomainError('Es läuft schon eine Begegnung; erst sie beenden.');
   const world = locationOf(campaign);
-  if (!world || campaign.location === undefined) throw new DomainError('Die Gruppe ist auf keiner Welt; erst auf der Sektorkarte den Aufenthaltsort wählen.');
+  if (!world || campaign.location?.world === undefined) throw new DomainError('Die Gruppe ist auf keiner Welt; erst auf der Sektorkarte den Aufenthaltsort wählen.');
   if (campaign.terrain === undefined) throw new DomainError('Erst ein Gelände wählen: Tiere gibt es je Gelände.');
   const ground = terrainOf(campaign.terrain);
   if (!hasAnimals(ground)) throw new DomainError(`Im Gelände ${ground.name} gibt es keine Tiere.`);
@@ -466,11 +466,11 @@ export function rollAnimalEncounter(campaign: Campaign, random: Random, clock: C
   const withTable: Campaign = hex === world ? campaign : { ...campaign, hexes: campaign.hexes.map((h) => (h === world ? hex : h)) };
   const tableDice = chosen === undefined ? ([d6(random), d6(random)] as const) : undefined;
   const roll = chosen ?? tableDice![0] + tableDice![1];
-  const at: AnimalRef = { in: campaign.location, terrain: ground.id, roll };
+  const at: AnimalRef = { in: campaign.location?.world, terrain: ground.id, roll };
   const row = animalRowOf(withTable.hexes, at);
   if (row.event !== undefined) {
     if (!tableDice) throw new DomainError('Ein Ereignis wählt man nicht; man würfelt es.');
-    const event: EventResult = { kind: 'event', at: clock.now(), in: campaign.location, terrain: ground.id, tableDice };
+    const event: EventResult = { kind: 'event', at: clock.now(), in: campaign.location?.world, terrain: ground.id, tableDice };
     return { roll, campaign: { ...withTable, log: [...withTable.log, event] }, encounter: undefined, event, row };
   }
   if (count !== undefined && (!Number.isInteger(count) || count < 1)) throw new DomainError('Eine Begegnung hat mindestens ein Tier.');
@@ -495,7 +495,7 @@ export function rollAnimalEncounter(campaign: Campaign, random: Random, clock: C
     quantityDie,
     animal: roll,
     ...(tableDice ? { tableDice } : {}),
-    in: campaign.location,
+    in: campaign.location?.world,
     attackDice,
     fleeDice,
     ...(lureDice ? { lureDice } : {}),

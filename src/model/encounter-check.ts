@@ -115,7 +115,7 @@ export function checksThisWeek(campaign: Campaign, kind: CheckKind): number {
  * es keine Begegnungen und also nichts zu erinnern.
  */
 export function missingChecks(campaign: Campaign, week: boolean, animals: boolean): readonly CheckKind[] {
-  if (!week || campaign.location === undefined) return [];
+  if (!week || campaign.location?.world === undefined) return [];
   const kinds: CheckKind[] = ['random'];
   if (hasAnimals(campaign, animals)) kinds.push('animal');
   if (hasPolice(campaign)) kinds.push('legal');
