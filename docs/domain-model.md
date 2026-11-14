@@ -312,8 +312,8 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 
 > **Offen, noch nicht freigegeben** (Kennzeichen 2026-11-14g): die **Oberflächenkarte** einer Welt
 > mit Gelände, Flüssen, Straßen, Vulkanen und Städten, gezeigt als drehbarer Globus (siehe
-> *Oberflächenkarte*). Neu im Bild: `Hex.populationMultiplier`, `Hex.map`, `SurfaceMap`, `Landform`,
-> `River`, `Road`, `Volcano`, `City`, `CityRank`, `Port`, `Towns` und der Bereich *Oberflächenkarte*.
+> *Oberflächenkarte*). Neu im Bild: `Hex.populationMultiplier`, `Hex.map`, `SurfaceMap`, `SurfaceCell`,
+> `Landform`, `Volcano`, `River`, `Road`, `City`, `CityRank`, `Port` und der Bereich *Oberflächenkarte*.
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-oberflaechenkarte.png`](changes/2026-11-14-oberflaechenkarte.png).
 
@@ -577,18 +577,18 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Wasser-DM | `Temperature.hydroDm` | Der DM einer Temperatur auf die Hydrographie: −2 bei Heiß, −6 bei Kochend, nicht bei Atmosphäre D |
 | Oberfläche | `Surface` | Was eine spätere Oberflächenkarte braucht, nach dem *World Builder's Handbook*: Wasseranteil, Platten, Land- und Wassermassen, Leben; ohne Karte |
 | Oberflächenkarte | `SurfaceMap`, `Hex.map` | Die Oberfläche einer Welt als Raster aus Oberflächenfeldern, mit Gelände, Flüssen, Straßen, Vulkanen und Städten; gezeigt als Globus. Nicht zu verwechseln mit der *Weltkarte* (der Karte mit UWP und Klartext) |
-| Oberflächenfeld | (Nummer in `SurfaceMap`) | Ein Feld der Oberflächenkarte, etwa 250 km breit; die Felder sind durchnummeriert. Nicht zu verwechseln mit dem *Hexfeld* des Subsektors |
+| Oberflächenfeld | `SurfaceCell`, `SurfaceMap.cells` | Ein Feld der Oberflächenkarte, etwa 250 km breit, mit Geländeart, Kleinstädten und Vulkan; die Felder stehen in der festen Reihenfolge des Rasters. Nicht zu verwechseln mit dem *Hexfeld* des Subsektors |
 | Zahl der Felder | `SurfaceMap./cells` | 10 × n² + 2 mit n = 4 × Größe, z. B. 10 242 bei Größe 8 |
 | Kartendreieck | (kein Feld) | Eines der 20 großen Dreiecke des Ikosaeders, aus dem das Raster entsteht; manche Regeln zählen je Kartendreieck |
-| Geländeart | `Landform`, `SurfaceMap.landforms` | Was ein Oberflächenfeld ist: Wasser, Eis auf Wasser, Eis auf Land, Tundra, Gebirge, zerklüftet, Wüste, Dschungel, Sumpf, offen/Wald, besiedelt. Nicht dasselbe wie das *Gelände* der Begegnungen (`Terrain`) |
+| Geländeart | `Landform`, `SurfaceCell.landform` | Was ein Oberflächenfeld ist: Wasser, Eis auf Wasser, Eis auf Land, Tundra, Gebirge, zerklüftet, Wüste, Dschungel, Sumpf, offen/Wald, besiedelt. Nicht dasselbe wie das *Gelände* der Begegnungen (`Terrain`) |
 | Fluss | `River` | Die Oberflächenfelder eines großen Flusses von der Quelle bis zur Mündung |
 | Straße | `Road` | Die Oberflächenfelder einer wichtigen Straße zwischen zwei Städten (nur bei TL 5–10) |
-| Vulkan, Vulkanfeld | `Volcano`, `Volcano.field` | Ein großer Vulkan bzw. ein Feld mit vielen kleinen Vulkanen; liegt auf einem Oberflächenfeld, ohne dessen Geländeart zu ändern |
+| Vulkan, Vulkanfeld | `SurfaceCell.volcano`, `Volcano` | Ein großer Vulkan bzw. ein Feld mit vielen kleinen Vulkanen; liegt auf einem Oberflächenfeld, ohne dessen Geländeart zu ändern |
 | Stadt | `City` | Eine Haupt- oder Nebenstadt mit Bevölkerungsziffer, Multiplikator und Hafen; auf einem Oberflächenfeld oder im Orbit (ohne Feld) |
 | Hauptstadt, Nebenstadt | `CityRank` | Die Städte mit den höchsten Bevölkerungsziffern (höchstens 10) bzw. eine Ziffer darunter |
 | Orbitalstadt | `City` ohne `cell` | Eine Stadt dauerhaft im Orbit |
 | Hafen einer Stadt | `City.port`, `Port` | Raumhafen A–E oder Landeplatz F–H der Stadt; Y (keiner) heißt: kein Wert |
-| Kleinstädte | `Towns` | Wie viele kleinere Städte auf einem Oberflächenfeld liegen; einzeln gibt es sie nicht |
+| Kleinstädte | `SurfaceCell.towns` | Wie viele kleinere Städte auf einem Oberflächenfeld liegen; einzeln gibt es sie nicht |
 | Bevölkerungsmultiplikator | `Hex.populationMultiplier` | Die erste Ziffer der Einwohnerzahl, 1–9: Die Welt hat Multiplikator × 10^Bevölkerung Einwohner |
 | Globus | (View, aus `SurfaceMap`) | Die drehbare Kugel mit der Oberflächenkarte; nur Darstellung |
 | Wasseranteil | `Surface.water` | Wie viel Prozent der Oberfläche Wasser ist, 0 bis 100 |
@@ -2138,18 +2138,25 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     nur ganz („Neu würfeln“). Von Hand ändern lässt sie sich nicht. Größe 0 hat keine.
   - Das Raster folgt aus der Größe und wird nicht gespeichert: ein Ikosaeder, jede Kante in
     n = 4 × Größe Abschnitte geteilt, jeder Eckpunkt ein Oberflächenfeld (`/cells` = 10 × n² + 2).
-    Die Felder sind in einer festen Reihenfolge durchnummeriert; `landforms` hat genau einen Wert je
-    Feld, alle übrigen Werte nennen Felder über ihre Nummer.
-  - Gespeichert werden nur Ergebnisse: Geländeart je Feld, Flüsse und Straßen als Folgen
-    benachbarter Felder, Vulkane, Haupt- und Nebenstädte (`cities`) und Kleinstädte je Feld
-    (`towns`, nur Felder mit mindestens einer). Platten, ihre Grenzen, die Temperatur je Feld und
-    das Rauschen dienen nur dem Erzeugen bzw. werden aus Größe und Temperatur der Welt gerechnet.
-  - Eine Stadt ohne Feld (`cell`) ist eine Orbitalstadt. `population` ist ihre Bevölkerungsziffer,
+    Die Felder (`cells`) stehen in einer festen Reihenfolge, jedes hat eine Nummer ab 0.
+  - Gespeichert werden nur Ergebnisse: je Feld Geländeart, Kleinstädte und Vulkan, dazu Flüsse und
+    Straßen als Folgen benachbarter Felder und die Haupt- und Nebenstädte (`cities`). Platten, ihre
+    Grenzen, die Temperatur je Feld und das Rauschen dienen nur dem Erzeugen bzw. werden aus Größe
+    und Temperatur der Welt gerechnet. Der Startwert des Zufalls beim Erzeugen wird nicht
+    gespeichert: Die Karte hängt nur an ihren Werten, nicht am Programm, das sie erzeugt hat.
+  - **Gepackt gespeichert.** Eine Karte hat bis zu 16 002 Felder; als einzelne Objekte würde sie
+    jede Speicherung, jede Exportdatei und jeden Abgleich etwa 30-mal größer machen. Deshalb stehen
+    die Felder im Spielstand gepackt: die Geländeart als Text mit einem Zeichen je Feld in der
+    Reihenfolge des Rasters, Kleinstädte und Vulkane nur für die Felder, die welche haben (Nummer und
+    Wert), Flüsse, Straßen und Städte mit Feldnummern statt Verweisen. Die Felder als Objekte gibt
+    es nur in der Anzeige. Bei Größe 8 sind das etwa 10 KB je Karte.
+  - Ein Feld kann ab TL 10 mehrere Städte haben; deshalb verweist die Stadt auf ihr Feld, nicht
+    das Feld auf seine Städte. Eine Stadt ohne Feld (`cell`) ist eine Orbitalstadt. `population` ist ihre Bevölkerungsziffer,
     `multiplier` die erste Ziffer ihrer Einwohnerzahl (Einwohner = multiplier × 10^population).
   - Der Bevölkerungsmultiplikator (`populationMultiplier`) wird beim Erzeugen der Karte gewürfelt,
     falls die Welt noch keinen hat, und bleibt beim Neu würfeln der Karte erhalten. Bei
     Bevölkerung 0 gibt es keinen.
-  - Beim Import wird geprüft: Länge von `landforms` passt zur Größe, alle Feldnummern liegen im
+  - Beim Import wird geprüft: die Zahl der Felder passt zur Größe, alle Feldnummern liegen im
     Raster, Flüsse und Straßen bestehen aus benachbarten Feldern, Städte und Kleinstädte nur bei
     Bevölkerung ab 1.
 - **Notiz zur Welt.** Eine fertige Welt (mit Namen, nicht leer) kann eine Notiz haben (`note`):

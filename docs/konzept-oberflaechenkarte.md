@@ -680,22 +680,27 @@ pflegen.
 
 ## Was gespeichert wird
 
-⚑ Vorschlag für das Domänenmodell (dort erst einzutragen und freizugeben):
+So steht es im Domänenmodell (Änderung 2026-11-14g, siehe dort *Oberflächenkarte*):
 
 | Wert | Inhalt |
 |---|---|
-| Bevölkerungsmultiplikator | 1–9, an der Welt (wird Teil des erweiterten UWP) |
-| Gelände je Feld | eine Geländeart je Feld, in der Reihenfolge der Felder des Gitters: Wasser, Eis auf Wasser, Eis auf Land, Tundra, Gebirge, zerklüftet, Wüste, Dschungel, Sumpf, offen/Wald, besiedelt |
-| Flüsse | je Fluss die Felder von der Quelle zur Mündung |
-| Straßen | je Straße die Felder |
-| Vulkane | je Vulkan das Feld und ob es ein großer Vulkan oder ein Vulkanfeld ist |
-| Städte | je Haupt- und Nebenstadt: Feld (oder Orbit), Bevölkerungsziffer, Multiplikator, Rang, Hafen; später ein Name |
-| Kleinstädte | Zahl je Feld |
+| Bevölkerungsmultiplikator | 1–9, an der Welt (`Hex.populationMultiplier`) |
+| Oberflächenfelder (`SurfaceCell`) | je Feld die Geländeart (Wasser, Eis auf Wasser, Eis auf Land, Tundra, Gebirge, zerklüftet, Wüste, Dschungel, Sumpf, offen/Wald, besiedelt), die Zahl der Kleinstädte und ob ein großer Vulkan oder ein Vulkanfeld darauf liegt |
+| Flüsse (`River`) | die Felder von der Quelle zur Mündung |
+| Straßen (`Road`) | die Felder der Straße |
+| Städte (`City`) | je Haupt- und Nebenstadt: Feld (keins heißt Orbit), Bevölkerungsziffer, Multiplikator, Rang, Hafen; später ein Name |
 
+- **Gepackt:** Im Spielstand steht die Geländeart als Text mit einem Zeichen je Feld in der
+  Reihenfolge des Rasters; Kleinstädte und Vulkane nur für Felder, die welche haben; Flüsse,
+  Straßen und Städte mit Feldnummern. Objekte je Feld gibt es nur in der Anzeige.
 - Die Zahl der Felder folgt aus der Größe und wird nicht gespeichert.
-- Platten, Grenzen und Rauschwert werden nicht gespeichert. Sie dienen nur dem Erzeugen.
-- Größe: Bei Terra sind es 10 242 Felder, also etwa 10 KB je Welt als ein Zeichen je Feld. Karten
-  entstehen nur für Welten, die man öffnet.
+- Platten, Grenzen, Rauschwert und der Startwert des Zufalls werden nicht gespeichert. Sie dienen
+  nur dem Erzeugen. Ein gespeicherter Startwert statt der Werte wäre kleiner, aber dann hinge jede
+  Karte am Programm: Jede Änderung am Erzeugen, auch eine Fehlerkorrektur, würde bestehende Karten
+  verschieben, und Rechenunterschiede zwischen Browsern könnten auf zwei Geräten verschiedene Karten
+  ergeben.
+- Größe: Bei Terra sind es 10 242 Felder, also etwa 10 KB je Welt. Karten entstehen nur für Welten,
+  deren Globus man öffnet.
 
 ## Ansichten
 

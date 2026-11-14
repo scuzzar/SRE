@@ -742,8 +742,10 @@ hide <<value>> stereotype
     life: boolean
   }
   class SurfaceMap $oberflaeche $newClass("2026-11-14g") {
-    landforms: Landform[]
     /cells: number
+  }
+  class SurfaceCell <<value>> $oberflaeche $newClass("2026-11-14g") {
+    towns: number
   }
   enum Landform <<value>> $oberflaeche $newClass("2026-11-14g") {
     water
@@ -759,17 +761,14 @@ hide <<value>> stereotype
     settled
   }
   class River <<value>> $oberflaeche $newClass("2026-11-14g") {
-    cells: number[2..*]
   }
   class Road <<value>> $oberflaeche $newClass("2026-11-14g") {
-    cells: number[2..*]
   }
-  class Volcano <<value>> $oberflaeche $newClass("2026-11-14g") {
-    cell: number
-    field: boolean
+  enum Volcano <<value>> $oberflaeche $newClass("2026-11-14g") {
+    major
+    field
   }
   class City <<value>> $oberflaeche $newClass("2026-11-14g") {
-    cell: number [0..1]
     population: number
     multiplier: number
     rank: CityRank
@@ -788,10 +787,6 @@ hide <<value>> stereotype
     F
     G
     H
-  }
-  class Towns <<value>> $oberflaeche $newClass("2026-11-14g") {
-    cell: number
-    count: number
   }
   class SurfaceRow <<reference>> $sektor {
     table: SurfaceTable
@@ -980,12 +975,15 @@ Hex "*" --> "0..1" Temperature : temperature
 Hex "1" *-- "0..1" Surface : surface
 Surface "*" --> "0..1" SurfaceRow : /row
 Hex "1" *-$newArrow("2026-11-14g")- "0..1" SurfaceMap : map
-SurfaceMap --> Landform
+SurfaceMap "1" *-$newArrow("2026-11-14g")- "/cells" SurfaceCell : cells {ordered}
+SurfaceCell "*" --> "1" Landform : landform
+SurfaceCell "*" --> "0..1" Volcano : volcano
 SurfaceMap "1" *-$newArrow("2026-11-14g")- "*" River : rivers
 SurfaceMap "1" *-$newArrow("2026-11-14g")- "*" Road : roads
-SurfaceMap "1" *-$newArrow("2026-11-14g")- "*" Volcano : volcanoes
 SurfaceMap "1" *-$newArrow("2026-11-14g")- "*" City : cities
-SurfaceMap "1" *-$newArrow("2026-11-14g")- "*" Towns : towns
+River "*" -$newArrow("2026-11-14g")-> "2..*" SurfaceCell : cells {ordered}
+Road "*" -$newArrow("2026-11-14g")-> "2..*" SurfaceCell : cells {ordered}
+City "*" -$newArrow("2026-11-14g")-> "0..1" SurfaceCell : cell
 City --> CityRank
 City --> Port
 SurfaceRow --> SurfaceTable
