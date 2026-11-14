@@ -266,6 +266,18 @@
         "Hex",
         "Surface"
       ]
+    },
+    {
+      "id": "2026-11-14h",
+      "file": "2026-11-14-orte",
+      "title": "Orte: Logeinträge, Gruppe und NSC auf einer Welt, einem Oberflächenfeld oder in einer Stadt",
+      "approved": false,
+      "show": [
+        "Campaign",
+        "Character",
+        "LogEntry",
+        "Hex"
+      ]
     }
   ]
 }

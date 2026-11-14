@@ -150,6 +150,7 @@ hide <<value>> stereotype
     life: boolean
   }
   class SurfaceMap $oberflaeche $newClass("2026-11-14g")
+  class Place <<value>> $oberflaeche $newClass("2026-11-14h")
   class SurfaceRow <<reference>> $sektor {
     table: SurfaceTable
     roll: number
@@ -205,7 +206,7 @@ hide <<value>> stereotype
   }
 
 ' Kampagne
-Campaign "*" --> "0..1" Hex : location
+Campaign "*" -$goneArrow("2026-11-14h")-> "0..1" Hex : location
 Booking "*" --> "0..1" Hex : in
 
 ' Zeit und Reisen
@@ -216,7 +217,7 @@ Journey "*" --> "1" Hex : to
 Career "*" --> "0..1" Hex : homeworld
 Career "*" --> "*" Hex : worlds {ordered}
 Character "*" --> "0..1" Hex : homeworld
-Character "*" --> "0..1" Hex : place
+Character "*" -$goneArrow("2026-11-14h")-> "0..1" Hex : place
 
 ' Laufbahnen (Referenzdaten)
 
@@ -231,6 +232,7 @@ Hex "*" --> "0..1" Temperature : temperature
 Hex "1" *-- "0..1" Surface : surface
 Surface "*" --> "0..1" SurfaceRow : /row
 Hex "1" *-$newArrow("2026-11-14g")- "0..1" SurfaceMap : map
+Place "*" -$newArrow("2026-11-14h")-> "1" Hex : world
 SurfaceRow --> SurfaceTable
 SurfaceRow -[hidden]- DiceExpr
 WorldRoll --> WorldRollKind

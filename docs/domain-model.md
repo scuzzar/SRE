@@ -317,6 +317,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-oberflaechenkarte.png`](changes/2026-11-14-oberflaechenkarte.png).
 
+> **Offen, noch nicht freigegeben** (Kennzeichen 2026-11-14h, baut auf 2026-11-14g auf): **Orte**
+> (siehe *Orte*). Logeinträge, die Gruppe und NSC stehen auf einer Welt, wahlweise genauer auf
+> einem Oberflächenfeld oder in einer Stadt. Neu im Bild: `Place`, `LogEntry.place`; `Campaign.location`
+> und `Character.place` zeigen auf einen `Place` statt direkt auf ein `Hex`. Der Ausschnitt dazu
+> liegt unter [`changes/2026-11-14-orte.png`](changes/2026-11-14-orte.png).
+
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
@@ -346,7 +352,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-die Oberflächenkarte (2026-11-14g).
+die Oberflächenkarte (2026-11-14g) und die Orte (2026-11-14h).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -430,7 +436,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Waffe in der Hand | `Character.wields` | Die Waffe, die ein Charakter gerade führt: Primär- oder Sekundärwaffe; keine heißt Hände |
 | Primärwaffe | `Character.primary` | Die Hauptwaffe eines Charakters, im Editor festgelegt, z. B. Automatic Pistol |
 | Sekundärwaffe | `Character.secondary` | Die zweite Waffe eines Charakters, im Editor festgelegt, z. B. Blade |
-| Aufenthaltsort | `Campaign.location` | Die Welt, auf der die Gruppe gerade ist; dort kauft sie ein |
+| Aufenthaltsort | `Campaign.location` | Der Ort, an dem die Gruppe gerade ist: die Welt, wahlweise genauer ein Oberflächenfeld oder eine Stadt; auf der Welt kauft sie ein |
 | Spielzeit, Tag | `Campaign.day` | Der heutige Tag im Spiel, gezählt als Tage seit 001-0 im Imperialen Kalender |
 | Datum | `Campaign./date` | Der Tag als Imperiales Datum „Tag des Jahres-Jahr“, z. B. 123-1105 |
 | Wochentag | `Campaign./weekday` | Montag bis Sonntag (1–7); Tag 001 jedes Jahres ist Feiertag ohne Wochentag |
@@ -460,7 +466,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Anführer | `Encounter.leader` | Der NSC mit der besten Ausrüstung, wenn die Begegnung einen hat (L) |
 | Übernehmen | (von `Encounter.npcs` nach `Campaign.characters`) | Ein NSC der Begegnung wird in die Kampagne umgehängt, als SC oder als dauerhafter NSC |
 | Dauerhafter NSC | `Character` mit `npc` | Ein Charakter, der kein SC ist; er steht im Reiter NSC |
-| Ort eines NSC | `Character.place` | Die Welt, auf der ein dauerhafter NSC lebt; man trifft ihn nur dort |
+| Ort eines NSC | `Character.place` | Der Ort, an dem ein dauerhafter NSC lebt: die Welt, wahlweise genauer ein Oberflächenfeld oder eine Stadt; man trifft ihn nur auf dieser Welt |
+| Ort | `Place` | Eine Welt (`world`), wahlweise genauer ein Oberflächenfeld (`cell`) oder eine Stadt (`city`) darauf |
+| Ort eines Logeintrags | `LogEntry.place` | Wo etwas passiert ist; bleibt, auch wenn sich Gruppe und NSC weiterbewegen |
+| Was hier geschah | (abgeleitet) | Alle Logeinträge, deren Ort auf dieser Welt, diesem Feld oder in dieser Stadt liegt |
 | Patron-NSC | `Character` mit `patron` | Ein dauerhafter NSC, der als Patron entstanden ist, z. B. „Mara Voss, Smuggler“ |
 | Mindest-SOC | `Weapon.minSoc` | Ab welchem SOC ein erzeugter NSC eine Waffe bekommt: billige Nahkampfwaffen 0, Pistolen und Klingen 6, Gewehre und Laser 10 (Hausregel) |
 | Verbrecherisch | `Patron.criminal`, Rolle Feind | Ein NSC, für den das Gesetz eher nicht gilt: DM +2 auf den Wurf, das Gesetz zu ignorieren |
@@ -2150,7 +2159,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Reihenfolge des Rasters, Kleinstädte und Vulkane nur für die Felder, die welche haben (Nummer und
     Wert), Flüsse, Straßen und Städte mit Feldnummern statt Verweisen. Die Felder als Objekte gibt
     es nur in der Anzeige. Bei Größe 8 sind das etwa 10 KB je Karte.
-  - Ein Feld kann ab TL 10 mehrere Städte haben; deshalb verweist die Stadt auf ihr Feld, nicht
+  - Eine Stadt ist ein eigener Gegenstand (blau): Sie bekommt später einen Namen, und Orte
+    verweisen auf sie (siehe *Orte*). Ein Feld kann ab TL 10 mehrere Städte haben; deshalb verweist die Stadt auf ihr Feld, nicht
     das Feld auf seine Städte. Eine Stadt ohne Feld (`cell`) ist eine Orbitalstadt. `population` ist ihre Bevölkerungsziffer,
     `multiplier` die erste Ziffer ihrer Einwohnerzahl (Einwohner = multiplier × 10^population).
   - Der Bevölkerungsmultiplikator (`populationMultiplier`) wird beim Erzeugen der Karte gewürfelt,
@@ -2159,6 +2169,35 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Beim Import wird geprüft: die Zahl der Felder passt zur Größe, alle Feldnummern liegen im
     Raster, Flüsse und Straßen bestehen aus benachbarten Feldern, Städte und Kleinstädte nur bei
     Bevölkerung ab 1.
+- **Orte** (offen, 2026-11-14h). Ein Ort (`Place`) ist immer eine Welt (`world`, ein Hexfeld mit
+  Welt, nicht leer). Genauer kann er ein Oberflächenfeld (`cell`) oder eine Stadt (`city`) sein, nie
+  beides: Das Feld einer Stadt ist ihr Feld (`City.cell`) und wird nicht noch einmal gespeichert.
+  Feld und Stadt gehören zur Oberflächenkarte derselben Welt; eine Orbitalstadt hat kein Feld.
+  - **Wer einen Ort hat:** die Gruppe (`Campaign.location`, ihr Aufenthaltsort), jeder dauerhafte NSC
+    (`Character.place`) und wahlweise jeder Logeintrag (`LogEntry.place`). Spielercharaktere sind
+    immer bei der Gruppe und haben keinen eigenen Ort.
+  - **Logeinträge bewegen sich nicht.** Der Ort eines Logeintrags hält fest, wo es damals passiert
+    ist. Gruppe und NSC wechseln ihren Ort, alte Einträge bleiben, wo sie waren. Den Ort eines
+    Eintrags kann man von Hand ändern oder entfernen, wie man eine Notiz ändert.
+  - **Neue Logeinträge bekommen den Aufenthaltsort.** Jeder neu angelegte Logeintrag bekommt den
+    Aufenthaltsort der Gruppe, falls sie einen hat. Eine Reise (`Journey`) bekommt das Ziel. Einträge
+    von vor dieser Änderung haben keinen Ort.
+  - **Bewegen:** Auf dem Globus wählt man ein Feld oder eine Stadt und dann „Gruppe hierher“ bzw.
+    „NSC hierher“. Das kostet keine Zeit und steht nicht im Log; eine Reise über die Oberfläche mit
+    Tagen je Feld kommt später. Zwischen Welten reist die Gruppe weiter mit `Journey`; danach ist
+    ihr Ort die neue Welt ohne Feld.
+  - **Was hier geschah** ist abgeleitet: die Logeinträge mit diesem Ort, auf einer Welt alle mit
+    dieser Welt, auf einem Feld alle mit diesem Feld oder einer Stadt darauf.
+  - **Karte gesperrt:** Zeigt ein Ort auf ein Feld oder eine Stadt der Oberflächenkarte, lässt sie
+    sich nicht mehr neu würfeln. Sonst stünde, was in einer Stadt passiert ist, plötzlich im Ozean.
+  - **Städte haben eine Nummer** in der Reihenfolge ihrer Liste; darüber verweist ein Ort auf sie.
+    Gespeichert wird ein Ort gepackt: das Hexfeld, dazu die Feldnummer oder die Nummer der Stadt.
+  - **Anzeige:** Der Globus zeigt ein Symbol für die Gruppe, eines je NSC und für Felder mit
+    Logeinträgen eines mit ihrer Zahl; Antippen listet Einträge und NSC dort. Die Weltkarte hat
+    einen Abschnitt „Was hier geschah“. Die Sektorkarte zeigt ein kleines Zeichen an Welten, auf
+    denen etwas geschehen ist oder NSC leben.
+  - **Bestehende Kampagnen:** Ein bisheriger Aufenthaltsort bzw. Ort eines NSC wird ein Ort mit
+    dieser Welt, ohne Feld und Stadt.
 - **Notiz zur Welt.** Eine fertige Welt (mit Namen, nicht leer) kann eine Notiz haben (`note`):
   freier Text, auch über mehrere Zeilen. Anders als ein Logeintrag lässt sie sich jederzeit ändern,
   wie die Notiz eines Charakters; Leerraum am Rand fällt weg, eine leere Notiz gibt es nicht (dann

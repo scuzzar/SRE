@@ -1,0 +1,241 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-14h"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-14h: Orte: Logeinträge, Gruppe und NSC auf einer Welt, einem Oberflächenfeld oder in einer Stadt
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne {
+    name: string
+    key: string
+    changedAt: datetime
+    /funds: number
+    quantityDie: number [0..1]
+    /load: number
+    /capacity: number
+    /burden: number
+    day: number
+    /date: string
+    /weekday: number [0..1]
+  }
+  class Character $charakter {
+    name: string
+    background: string
+    equipment: string
+    credits: number
+    note: string
+    dead: boolean
+    retired: boolean
+    npc: boolean
+    role: NpcRole [0..1]
+    /wounds: Wounds
+    /hurt: number [0..1]
+    /state: WoundState
+    /blows: number [0..1]
+  }
+  enum NpcRole <<value>> $charakter
+  class Upp <<value>> $charakter
+  class SkillLevel $charakter
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+  class Hex $sektor {
+    column: number
+    row: number
+    empty: boolean
+    name: string [0..1]
+    navalBase: boolean [0..1]
+    scoutBase: boolean [0..1]
+    gasGiant: boolean [0..1]
+    note: string [0..1]
+    $new("2026-11-14g", "populationMultiplier: number [0..1]")
+    /step: WorldStep
+  }
+  class Uwp <<value>> $sektor
+  class WorldRoll <<transient>> $sektor
+
+' Verlauf
+  abstract class LogEntry $probe {
+    at: datetime
+    day: number [0..1]
+  }
+  class DiceRoll $probe
+  class Note $probe
+
+' Zeit und Reisen
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Conflict <<transient>> $kampagne
+  class TaskResult $probe
+
+' Referenzdaten
+  class Surface <<value>> $sektor
+  class SurfaceMap $oberflaeche $newClass("2026-11-14g")
+  class SurfaceCell <<value>> $oberflaeche $newClass("2026-11-14g") {
+    towns: number
+  }
+  enum Landform <<value>> $oberflaeche $newClass("2026-11-14g")
+  class River <<value>> $oberflaeche $newClass("2026-11-14g")
+  class Road <<value>> $oberflaeche $newClass("2026-11-14g")
+  enum Volcano <<value>> $oberflaeche $newClass("2026-11-14g")
+  class City $oberflaeche $newClass("2026-11-14g") {
+    population: number
+    multiplier: number
+    rank: CityRank
+    port: Port [0..1]
+  }
+  enum CityRank <<value>> $oberflaeche $newClass("2026-11-14g")
+  enum Port <<value>> $oberflaeche $newClass("2026-11-14g")
+  class Place <<value>> $oberflaeche $newClass("2026-11-14h") {
+  }
+  class Temperature <<reference>> $sektor
+  class TradeCode <<reference>> $sektor
+  enum WorldStep <<value>> $sektor
+
+' Kampagne
+Campaign "1" *-- "*" Character : characters
+Campaign "0..1" --> "0..1" Character : focus
+Campaign "1" *-- "*" LogEntry : log {ordered}
+Campaign "*" -$goneArrow("2026-11-14h")-> "0..1" Hex : location
+Campaign "1" *-$newArrow("2026-11-14h")- "0..1" Place : location
+Conflict "*" --> "0..1" Campaign : local
+Conflict "*" --> "0..1" Campaign : remote
+
+' Zeit und Reisen
+
+' Charaktererschaffung und Lebenslauf
+Character "*" --> "0..1" Hex : homeworld
+Character "*" -$goneArrow("2026-11-14h")-> "0..1" Hex : place
+Character "1" *-$newArrow("2026-11-14h")- "0..1" Place : place
+Character --> NpcRole
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+Campaign "1" *-- "*" Hex : hexes
+Hex "1" *-- "1" Uwp : uwp
+Hex --> WorldStep
+WorldRoll "*" --> "1" Hex : for
+WorldRoll ..> Hex : on roll
+Hex "*" --> "*" TradeCode : /trade
+Hex "*" --> "0..1" Temperature : temperature
+Hex "1" *-- "0..1" Surface : surface
+Hex "1" *-$newArrow("2026-11-14g")- "0..1" SurfaceMap : map
+SurfaceMap "1" *-$newArrow("2026-11-14g")- "/cells" SurfaceCell : cells {ordered}
+SurfaceCell "*" --> "1" Landform : landform
+SurfaceCell "*" --> "0..1" Volcano : volcano
+SurfaceMap "1" *-$newArrow("2026-11-14g")- "*" City : cities
+River "*" -$newArrow("2026-11-14g")-> "2..*" SurfaceCell : cells {ordered}
+Road "*" -$newArrow("2026-11-14g")-> "2..*" SurfaceCell : cells {ordered}
+City "*" -$newArrow("2026-11-14g")-> "0..1" SurfaceCell : cell
+LogEntry "1" *-$newArrow("2026-11-14h")- "0..1" Place : place
+Place "*" -$newArrow("2026-11-14h")-> "1" Hex : world
+Place "*" -$newArrow("2026-11-14h")-> "0..1" SurfaceCell : cell
+Place "*" -$newArrow("2026-11-14h")-> "0..1" City : city
+City --> CityRank
+City --> Port
+
+' Charakter
+Character "1" *-- "1" Upp : upp
+Character "1" *-- "*" SkillLevel : skills
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+LogEntry <|-- DiceRoll
+LogEntry <|-- TaskResult
+LogEntry <|-- Note
+Note "*" --> "0..1" LogEntry : interprets
+TaskResult "*" --> "1" Character : for
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+@enduml

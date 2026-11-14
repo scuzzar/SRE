@@ -768,7 +768,7 @@ hide <<value>> stereotype
     major
     field
   }
-  class City <<value>> $oberflaeche $newClass("2026-11-14g") {
+  class City $oberflaeche $newClass("2026-11-14g") {
     population: number
     multiplier: number
     rank: CityRank
@@ -787,6 +787,8 @@ hide <<value>> stereotype
     F
     G
     H
+  }
+  class Place <<value>> $oberflaeche $newClass("2026-11-14h") {
   }
   class SurfaceRow <<reference>> $sektor {
     table: SurfaceTable
@@ -896,7 +898,8 @@ Campaign "1" *-- "*" Character : characters
 Campaign "*" --> "1" Odds : odds
 Campaign "0..1" --> "0..1" Character : focus
 Campaign "1" *-- "*" LogEntry : log {ordered}
-Campaign "*" --> "0..1" Hex : location
+Campaign "*" -$goneArrow("2026-11-14h")-> "0..1" Hex : location
+Campaign "1" *-$newArrow("2026-11-14h")- "0..1" Place : location
 Campaign "1" *-- "*" Booking : bookings {ordered}
 Conflict "*" --> "0..1" Campaign : local
 Conflict "*" --> "0..1" Campaign : remote
@@ -932,7 +935,8 @@ Career "*" --> "0..1" Service : /in
 Career "*" --> "0..1" Hex : homeworld
 Career "*" --> "*" Hex : worlds {ordered}
 Character "*" --> "0..1" Hex : homeworld
-Character "*" --> "0..1" Hex : place
+Character "*" -$goneArrow("2026-11-14h")-> "0..1" Hex : place
+Character "1" *-$newArrow("2026-11-14h")- "0..1" Place : place
 Character "*" --> "0..1" Patron : patron
 Character --> NpcRole
 CareerRoll --> RollKind
@@ -984,6 +988,10 @@ SurfaceMap "1" *-$newArrow("2026-11-14g")- "*" City : cities
 River "*" -$newArrow("2026-11-14g")-> "2..*" SurfaceCell : cells {ordered}
 Road "*" -$newArrow("2026-11-14g")-> "2..*" SurfaceCell : cells {ordered}
 City "*" -$newArrow("2026-11-14g")-> "0..1" SurfaceCell : cell
+LogEntry "1" *-$newArrow("2026-11-14h")- "0..1" Place : place
+Place "*" -$newArrow("2026-11-14h")-> "1" Hex : world
+Place "*" -$newArrow("2026-11-14h")-> "0..1" SurfaceCell : cell
+Place "*" -$newArrow("2026-11-14h")-> "0..1" City : city
 City --> CityRank
 City --> Port
 SurfaceRow --> SurfaceTable

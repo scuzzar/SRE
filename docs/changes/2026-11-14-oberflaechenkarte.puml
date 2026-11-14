@@ -133,7 +133,7 @@ hide <<value>> stereotype
     major
     field
   }
-  class City <<value>> $oberflaeche $newClass("2026-11-14g") {
+  class City $oberflaeche $newClass("2026-11-14g") {
     population: number
     multiplier: number
     rank: CityRank
@@ -153,6 +153,7 @@ hide <<value>> stereotype
     G
     H
   }
+  class Place <<value>> $oberflaeche $newClass("2026-11-14h")
   class Temperature <<reference>> $sektor
   class TradeCode <<reference>> $sektor
   enum WorldStep <<value>> $sektor
@@ -183,6 +184,9 @@ SurfaceMap "1" *-$newArrow("2026-11-14g")- "*" City : cities
 River "*" -$newArrow("2026-11-14g")-> "2..*" SurfaceCell : cells {ordered}
 Road "*" -$newArrow("2026-11-14g")-> "2..*" SurfaceCell : cells {ordered}
 City "*" -$newArrow("2026-11-14g")-> "0..1" SurfaceCell : cell
+Place "*" -$newArrow("2026-11-14h")-> "1" Hex : world
+Place "*" -$newArrow("2026-11-14h")-> "0..1" SurfaceCell : cell
+Place "*" -$newArrow("2026-11-14h")-> "0..1" City : city
 City --> CityRank
 City --> Port
 

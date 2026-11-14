@@ -116,13 +116,15 @@ hide <<value>> stereotype
 
 ' Referenzdaten
   class Odds <<reference>> $karte
+  class Place <<value>> $oberflaeche $newClass("2026-11-14h")
 
 ' Kampagne
 Campaign "1" *-- "*" Character : characters
 Campaign "*" --> "1" Odds : odds
 Campaign "0..1" --> "0..1" Character : focus
 Campaign "1" *-- "*" LogEntry : log {ordered}
-Campaign "*" --> "0..1" Hex : location
+Campaign "*" -$goneArrow("2026-11-14h")-> "0..1" Hex : location
+Campaign "1" *-$newArrow("2026-11-14h")- "0..1" Place : location
 Campaign "1" *-- "*" Booking : bookings {ordered}
 Conflict "*" --> "0..1" Campaign : local
 Conflict "*" --> "0..1" Campaign : remote

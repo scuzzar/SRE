@@ -156,6 +156,7 @@ hide <<value>> stereotype
   class Item <<reference>> $shop
   class Weapon <<reference>> $kampf
   class Cascade <<reference>> $erschaffung
+  class Place <<value>> $oberflaeche $newClass("2026-11-14h")
   class Aging <<reference>> $erschaffung
   enum Characteristic <<value>> $charakter {
     STR
@@ -179,7 +180,8 @@ LowBerth "*" --> "0..1" Character : for
 Generation ..> Character : on finish
 Character "1" *-- "0..1" Career : career
 Character "*" --> "0..1" Hex : homeworld
-Character "*" --> "0..1" Hex : place
+Character "*" -$goneArrow("2026-11-14h")-> "0..1" Hex : place
+Character "1" *-$newArrow("2026-11-14h")- "0..1" Place : place
 Character "*" --> "0..1" Patron : patron
 Character --> NpcRole
 CareerRoll --> "0..1" Characteristic : of

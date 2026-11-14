@@ -130,6 +130,7 @@ hide <<value>> stereotype
     bonusFrom: number
     malusUpTo: number
   }
+  class Place <<value>> $oberflaeche $newClass("2026-11-14h")
   enum Characteristic <<value>> $charakter
 
 ' Kampagne
@@ -145,6 +146,7 @@ LogEntry <|-- Journey
 ' Laufbahnen (Referenzdaten)
 
 ' Subsektor und Welten
+LogEntry "1" *-$newArrow("2026-11-14h")- "0..1" Place : place
 
 ' Charakter
 
