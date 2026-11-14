@@ -192,6 +192,9 @@ hide <<value>> stereotype
     name: string
     rumor: boolean
   }
+  class PatronSkill <<reference>> $begegnung $newClass("2026-11-14") {
+    level: number
+  }
   class AnimalTable $begegnung {
   }
   class AnimalRow $begegnung {
@@ -281,6 +284,8 @@ hide <<value>> stereotype
   }
 
 ' Referenzdaten
+  class Skill <<reference>> $charakter
+  class Item <<reference>> $shop
   class Weapon <<reference>> $kampf
 
 ' Kampagne
@@ -301,6 +306,9 @@ Character "*" -$newArrow("2026-11-14")-> "0..1" Patron : patron
 ' Verlauf
 LogEntry <|-- PatronRoll
 PatronRoll "*" --> "1" Patron : of
+Patron "1" *-$newArrow("2026-11-14")- "*" PatronSkill : skills
+PatronSkill "*" -$newArrow("2026-11-14")-> "1" Skill : of
+Patron "*" -$newArrow("2026-11-14")-> "*" Item : gear {ordered}
 LogEntry <|-- RumorRoll
 LogEntry <|-- Butchering
 Butchering "*" --> "1" Character : of

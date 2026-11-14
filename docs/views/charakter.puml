@@ -144,6 +144,7 @@ hide <<value>> stereotype
   class Encounter $begegnung
   class Distance $begegnung
   class Patron <<reference>> $begegnung
+  class PatronSkill <<reference>> $begegnung $newClass("2026-11-14")
   class AnimalRow $begegnung
 
 ' Referenzdaten
@@ -210,6 +211,7 @@ Weapon "*" --> "1" Skill : uses
 ' Verlauf
 Recovery "*" --> "1" Character : for
 Recovery "*" --> "0..1" Character : by
+PatronSkill "*" -$newArrow("2026-11-14")-> "1" Skill : of
 Butchering "*" --> "1" Character : of
 TaskResult "*" --> "1" Character : for
 TaskResult "*" --> "0..1" SkillLevel : uses

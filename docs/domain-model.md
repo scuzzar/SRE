@@ -275,7 +275,10 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > eines NSC*, *Reiter NSC*). Zu einem gewürfelten Patron entsteht auf Knopfdruck ein zufälliger
 > dauerhafter NSC; jeder dauerhafte NSC hat eine Welt, auf der er lebt, und ein eigener Reiter
 > **NSC** zeigt die NSC des Aufenthaltsorts, nach Rolle gruppiert. Neu im Bild: das Feld
-> `Character.role` mit der Werteliste `NpcRole` und die Verweise `Character.place` (auf `Hex`) und `Character.patron` (auf `Patron`). Der Ausschnitt dazu liegt unter
+> `Character.role` mit der Werteliste `NpcRole`, die Verweise `Character.place` (auf `Hex`) und
+> `Character.patron` (auf `Patron`), als Referenzdaten Fertigkeiten und Ausrüstung je Patron
+> (`Patron.skills` mit `PatronSkill`, `Patron.gear`; Inhalt als Hausregel in
+> [`patron-nsc.md`](patron-nsc.md)). Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-nsc-am-ort.png`](changes/2026-11-14-nsc-am-ort.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
@@ -419,6 +422,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Dauerhafter NSC | `Character` mit `npc` | Ein Charakter, der kein SC ist; er steht im Reiter NSC |
 | Ort eines NSC | `Character.place` | Die Welt, auf der ein dauerhafter NSC lebt; man trifft ihn nur dort |
 | Patron-NSC | `Character` mit `patron` | Ein dauerhafter NSC, der als Patron entstanden ist, z. B. „Mara Voss, Smuggler“ |
+| Ausrüstung eines Patrons | `Patron.skills`, `PatronSkill`, `Patron.gear` | Fertigkeiten und Gegenstände, die ein Patron-NSC nach seinem Beruf bekommt (Hausregel) |
 | Rolle eines NSC | `Character.role`, `NpcRole` | Wozu ein dauerhafter NSC da ist, aus einer festen Liste: Patron, Begegnung, Feind, Rivale, Verbündeter, Kontakt, Behörde, Händler, Makler, Captain, Crew, Passagier, Sonstige |
 | Reiter NSC | (Reiter „NSC“) | Der Screen mit den dauerhaften NSC des Aufenthaltsorts, nach Rolle gruppiert; mit „Alle zeigen“ alle, nach Welt und darin nach Rolle |
 | Getragene Rüstung | `Character.wears` | Die Rüstung, die jemand gerade anhat; sie zählt, wenn er angegriffen wird |
@@ -1303,8 +1307,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     nicht mehr auf ihrer Seite. Weil er derselbe Charakter bleibt, verweist der Log weiter auf ihn,
     und er behält seine **Wunden** aus dem Kampf (bisher kam der Übernommene unverwundet); heilen
     lässt er sich wie jeder Charakter.
-  - **Dauerhafte NSC** (`Character` mit `npc`) stehen im Reiter **NSC** (2026-11-14; bisher im
-    Charakter-Screen unter „NSC“), nicht in der Leiste oben, nicht unter den SC im Shop, und lassen
+  - **Dauerhafte NSC** (`Character` mit `npc`) stehen nur im eigenen Reiter **NSC** (2026-11-14;
+    bisher im Charakter-Screen unter „NSC“, dort stehen sie nicht mehr), nicht in der Leiste oben, nicht unter den SC im Shop, und lassen
     sich im Editor zum SC machen und umgekehrt. Proben und Angriffe würfelt man für SC.
   - **Ort eines NSC** (2026-11-14). Ein dauerhafter NSC lebt auf höchstens einer Welt (`place`),
     einer fertigen Welt des Subsektors. Er bekommt den Aufenthaltsort, wenn er entsteht oder
@@ -1322,7 +1326,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     *Sonstige* für einen, der im Editor zum NSC gemacht wird, und für NSC von früher; im Editor
     wählt man jede andere. Ein SC hat keine Rolle; wird ein NSC zum SC, fällt sie weg, wird ein SC
     zum NSC, bekommt er *Sonstige*.
-  - **Reiter NSC** (2026-11-14). Ein eigener Reiter, **vorgegeben nach dem Aufenthaltsort
+  - **Reiter NSC** (2026-11-14). Ein eigener Reiter neben *Charaktere*, in der Leiste unten wie in
+    der Reiterzeile des Desktops, **vorgegeben nach dem Aufenthaltsort
     gefiltert**: Er zeigt die dauerhaften NSC, deren Ort der Aufenthaltsort ist, dazu die NSC ohne
     Ort, **immer nach Rolle gruppiert** (Gruppen in der Reihenfolge der Liste, leere weggelassen) und
     in jeder Gruppe nach Namen. **„Alle zeigen“** hebt den Filter auf: Dann stehen alle dauerhaften
@@ -1331,18 +1336,19 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Die Wahl ist Anzeige und wird nicht gespeichert; beim Öffnen gilt wieder der Filter. Antippen
     öffnet den Editor wie im Charakter-Screen. Tote und Ausgeschiedene stehen eingeklappt darunter.
   - **Patron als NSC** (2026-11-14). Zu einem Patron-Wurf, der einen Patron ergibt (keine
-    Rumor-Zeile), erzeugt **„Als NSC“** einen zufälligen dauerhaften NSC: Name von der Tafel NSC,
-    2W6 je Attribut, keine Fertigkeiten, kein Besitz (Vorschlag, siehe *Offene Fragen*); er
-    verweist auf seinen Patron (`patron`), etwa „Smuggler“, bekommt die Rolle „Patron“ und den
-    Aufenthaltsort als Ort.
+    Rumor-Zeile), erzeugt **„Als NSC“** einen zufälligen dauerhaften NSC **passend zum Beruf**: Name
+    von der Tafel NSC, 2W6 je Attribut, dazu die Fertigkeiten (`Patron.skills`) und die Ausrüstung
+    (`Patron.gear`) seines Patrons. Er verweist auf seinen Patron (`patron`), etwa „Smuggler“,
+    bekommt die Rolle „Patron“ und den Aufenthaltsort als Ort.
+    - *Fertigkeiten und Ausrüstung je Patron* sind Referenzdaten an den Zeilen der Patron-Listen,
+      als Hausregel festgelegt in [`patron-nsc.md`](patron-nsc.md); ein Beruf, der mehrfach
+      vorkommt, hat überall dasselbe. Die Ausrüstung kommt in seinen Besitz. Gibt es einen
+      Gegenstand in mehreren TL-Stufen, bekommt er den besten bis zum TL seines Orts; was über
+      dem TL liegt, fehlt ihm. Die erste Waffe ist Primärwaffe und in der Hand, eine Rüstung trägt
+      er; jede Schusswaffe ist geladen und hat 1W4 Magazine dazu, wie bei den NSC der Begegnung.
     Ohne Aufenthaltsort geht es nicht. Der Patron-Wurf selbst bleibt, wie er ist; der neue NSC
     kommt in den Reiter NSC. Ein Patron-NSC ist ein gewöhnlicher dauerhafter NSC: Man kann ihn
     bearbeiten, zum SC machen oder ausscheiden lassen; der Verweis auf den Patron bleibt.
-  - *Offene Fragen zu 2026-11-14*: (1) Was bekommt der Patron-NSC mit: nur Name und Attribute, oder
-    auch eine Fertigkeit und Ausrüstung passend zum Beruf (eine eigene Tabelle, Hausregel)?
-    (2) Soll der Charakter-Screen die NSC gar nicht mehr zeigen (nur noch im Reiter NSC)?
-    (3) Sieben Reiter in der Leiste unten: passt das auf dem Handy, oder soll NSC einen anderen
-    Reiter ersetzen bzw. im Charakter-Screen als zweite Seite stehen?
 - **Getragene Rüstung.** Jeder Charakter trägt höchstens eine Rüstung (`wears`), einen Gegenstand
   mit Rüstungsklasse aus seinem Besitz; keine heißt Nothing. Wie er in der Matrix zählt, steht an
   ihm (`Item.armor`): Jack, Mesh, Cloth, Reflec, Ablat, Combat Armor als Combat, Battle Dress als
