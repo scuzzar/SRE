@@ -212,6 +212,18 @@
         "Skill",
         "Item"
       ]
+    },
+    {
+      "id": "2026-11-14c",
+      "file": "2026-11-14-nsc-aus-laufbahn-und-waffen",
+      "title": "NSC aus einer Laufbahn erzeugen; Waffen erzeugter NSC nach Fertigkeit, SOC, TL und Gesetz",
+      "approved": true,
+      "show": [
+        "Character",
+        "Item",
+        "Service",
+        "NpcRole"
+      ]
     }
   ]
 }

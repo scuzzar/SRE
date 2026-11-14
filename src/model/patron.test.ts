@@ -7,7 +7,7 @@ import type { PatronRoll } from './log';
 import type { Random } from './ports';
 import { setLocation } from './shop';
 import { fromCampaignFile, toCampaignFile } from './campaign-file';
-import { npcGroups } from './npcs';
+import { allowedWeapons, armGenerated, generateNpc, npcGroups } from './npcs';
 import { createPatronNpc, patronDmParts, patronDms, patronNpcBlocker, patronOfRoll, patronRollOf, rollPatron, rollRumor, rumorOfRoll, rumorRollOf } from './patron';
 import { ref } from './reference';
 import { fixedClock, fixedRandom } from './testing';
@@ -207,5 +207,59 @@ describe('Reiter NSC: Filter und Gruppen', () => {
     expect(names(npcGroups(campaign, true))).toEqual(all);
     const nowhere = Object.fromEntries(Object.entries(campaign).filter(([key]) => key !== 'location')) as unknown as typeof campaign;
     expect(names(npcGroups(nowhere, false))).toEqual(all);
+  });
+});
+
+describe('Waffen erzeugter NSC (2026-11-14c)', () => {
+  // Demo-Welt mit TL 12 und Gesetz 0 als Grundlage.
+  const world = (tech: number, law: number) => ({ ...ref.demoWorld, column: 1, row: 1, name: 'Regina', uwp: { ...ref.demoWorld.uwp, tech, law } });
+  const npc = (soc: number, skills: { of: string; level: number }[] = []) => ({ name: 'Ilse', background: '', equipment: '', credits: 0, note: '', upp: { str: 7, dex: 7, end: 7, int: 7, edu: 7, soc }, skills });
+  const ids = (soc: number, tech = 12, law = 0, ignore = false) => allowedWeapons(soc, world(tech, law), ignore).map((w) => w.id);
+
+  it('erlaubt nach SOC: bis 5 billige Nahkampfwaffen, ab 6 Pistolen und Klingen, ab 10 Gewehre und Laser', () => {
+    expect(ids(5)).toEqual(['club', 'dagger', 'blade', 'spear', 'pike', 'cudgel']);
+    expect(ids(6)).toEqual(expect.arrayContaining(['automatic-pistol', 'revolver', 'shotgun', 'cutlass']));
+    expect(ids(6)).not.toContain('rifle');
+    expect(ids(10)).toEqual(expect.arrayContaining(['rifle', 'auto-rifle', 'laser-rifle']));
+  });
+
+  it('schränkt nach TL und Gesetz der Welt ein; wer das Gesetz ignoriert, hat wieder alles', () => {
+    expect(ids(12, 7)).not.toContain('laser-carbine');
+    expect(ids(12, 12, 5)).not.toContain('automatic-pistol');
+    expect(ids(12, 12, 5)).toContain('shotgun');
+    expect(ids(12, 12, 9)).toEqual([]);
+    expect(ids(12, 12, 9, true)).toContain('laser-rifle');
+  });
+
+  it('nimmt die Waffe der höchsten erlaubten Waffenfertigkeit, mit 1W4 Magazinen, als Primärwaffe in der Hand', () => {
+    // Gesetzwurf 1 (gilt), dann Magazine 3. Rifle-2 geht mit SOC 7 nicht, also Auto Pistol-1.
+    const armed = armGenerated(npc(7, [{ of: 'rifle', level: 2 }, { of: 'auto-pistol', level: 1 }]), world(12, 0), false, fixedRandom(1, 3));
+    expect(armed).toMatchObject({ primary: 'automatic-pistol', wields: 'automatic-pistol' });
+    expect(armed.possessions).toEqual([{ of: 'automatic-pistol', count: 1 }, { of: 'automatic-pistol-ammo', count: 3 }]);
+  });
+
+  it('ohne passende Fertigkeit die teuerste erlaubte Waffe der höchsten SOC-Stufe; ist keine erlaubt, keine', () => {
+    expect(armGenerated(npc(4), world(12, 0), false, fixedRandom(1)).primary).toBe('blade');
+    expect(armGenerated(npc(11), world(12, 0), false, fixedRandom(1, 1)).primary).toBe('laser-rifle');
+    expect(armGenerated(npc(11), world(12, 9), false, fixedRandom(1)).primary).toBeUndefined();
+  });
+
+  it('ignoriert das Gesetz bei 6+ auf 1W6: Streetwise +2, verbrecherisch +2', () => {
+    // Gesetz 9 verbietet alles. Wurf 2 + Streetwise 2 + verbrecherisch 2 = 6: Das Gesetz gilt nicht.
+    const outlaw = armGenerated(npc(7, [{ of: 'streetwise', level: 0 }]), world(12, 9), true, fixedRandom(2, 1));
+    expect(outlaw.primary).toBe('body-pistol');
+    expect(armGenerated(npc(7, [{ of: 'streetwise', level: 0 }]), world(12, 9), false, fixedRandom(3, 1)).primary).toBeUndefined();
+  });
+
+  it('erzeugt einen NSC aus einer Laufbahn mit der gewählten Rolle, ohne Patron; ein Feind gilt als verbrecherisch', () => {
+    const hexes = [{ ...ref.demoWorld, column: 1, row: 1, name: 'Regina' }];
+    const base = setLocation(setHexes(createCampaign([]), hexes), '0101');
+    const { campaign, id } = generateNpc(base, { service: 'army', role: 'enemy' }, seeded(9));
+    const made = campaign.characters.find((c) => c.id === id)!;
+    expect(made).toMatchObject({ npc: true, role: 'enemy', place: '0101' });
+    expect(made.patron).toBeUndefined();
+    expect(made.background).toMatch(/^Ex-Army/);
+    expect(replay(made.career!).service?.id).toBe('army');
+    expect(() => generateNpc(setHexes(createCampaign([]), hexes), { service: 'army', role: 'enemy' }, seeded(9))).toThrow(/Aufenthaltsort/);
   });
 });

@@ -1,7 +1,9 @@
-import type { NpcItem, Snapshot } from '../../controller';
-import { roleText } from '../format';
+import { useState } from 'react';
+import type { NpcItem, NpcScreenView, Snapshot } from '../../controller';
+import type { NpcRole } from '../../model';
+import { hex, roleText } from '../format';
 import { useGame } from '../game-context';
-import { PencilIcon } from '../icons';
+import { CloseIcon, PencilIcon } from '../icons';
 
 /**
  * Der Reiter NSC: die dauerhaften NSC, vorgegeben die des Aufenthaltsorts (und die ohne Ort) nach
@@ -10,6 +12,8 @@ import { PencilIcon } from '../icons';
 export function NpcScreen({ view }: { view: Snapshot }) {
   const game = useGame();
   const npcs = view.npcs;
+  // Ob das Fenster „Neuer NSC“ offen ist, ist reine Darstellung.
+  const [adding, setAdding] = useState(false);
   const filtered = !npcs.all && npcs.here !== undefined;
   const shown = npcs.worlds.reduce((sum, w) => sum + w.roles.reduce((n, r) => n + r.npcs.length, 0), 0);
 
@@ -50,7 +54,7 @@ export function NpcScreen({ view }: { view: Snapshot }) {
           </div>
         ))}
         <div className="add-characters">
-          <button type="button" className="add-character" onClick={() => game.newCharacter(true)}>
+          <button type="button" className="add-character" onClick={() => setAdding(true)}>
             + Neuer NSC
           </button>
         </div>
@@ -65,6 +69,68 @@ export function NpcScreen({ view }: { view: Snapshot }) {
           </details>
         )}
       </section>
+      {adding && <NewNpcSheet npcs={npcs} onClose={() => setAdding(false)} />}
+    </div>
+  );
+}
+
+/** „+ Neuer NSC“: erst die Rolle, dann leer anlegen oder aus einer Laufbahn erzeugen (ohne Animation). */
+function NewNpcSheet({ npcs, onClose }: { npcs: NpcScreenView; onClose: () => void }) {
+  const game = useGame();
+  const [role, setRole] = useState<NpcRole>('other');
+  return (
+    <div className="overlay">
+      <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="new-npc-title">
+        <div className="sheet-head" style={{ alignItems: 'center' }}>
+          <h2 id="new-npc-title">Neuer NSC</h2>
+          <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={onClose}>
+            <CloseIcon />
+          </button>
+        </div>
+        <div className="sheet-body form">
+          <label className="field">
+            <span>Rolle</span>
+            <select value={role} onChange={(e) => setRole(e.target.value as NpcRole)}>
+              {npcs.roles.map((r) => (
+                <option key={r} value={r}>
+                  {roleText[r]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <fieldset>
+            <legend>Aus einer Laufbahn erzeugen</legend>
+            <p className="small-label">Die Charaktererschaffung läuft zufällig durch; danach lässt er sich im Editor nachbessern.</p>
+            {npcs.generateBlocker && <p className="small-label">{npcs.generateBlocker}</p>}
+            <div className="npc-services">
+              {npcs.services.map((sv) => (
+                <button
+                  key={sv.id}
+                  type="button"
+                  className="ghost"
+                  disabled={npcs.generateBlocker !== undefined}
+                  onClick={() => {
+                    onClose();
+                    game.generateNpc(sv.id, role);
+                  }}
+                >
+                  {sv.name}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+          <button
+            type="button"
+            className="add-character"
+            onClick={() => {
+              onClose();
+              game.newCharacter(true, role);
+            }}
+          >
+            Leer anlegen
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
@@ -78,6 +144,10 @@ function NpcRow({ npc, dead = false }: { npc: NpcItem; dead?: boolean }) {
           {dead && <span aria-hidden="true">† </span>}
           {npc.name}
           {npc.background && <span className="pc-sub"> {npc.background}</span>}
+        </span>
+        <span className="npc-stats">
+          STR {hex(npc.upp.str)} DEX {hex(npc.upp.dex)} END {hex(npc.upp.end)} INT {hex(npc.upp.int)} EDU {hex(npc.upp.edu)} SOC {hex(npc.upp.soc)}
+          {npc.weapon && ` · ${npc.weapon}`}
         </span>
       </button>
       <button type="button" className="icon-button" aria-label={`${npc.name} bearbeiten`} onClick={() => game.editCharacter(npc.id)}>

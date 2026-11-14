@@ -1428,6 +1428,19 @@ button:disabled {
   color: var(--muted);
 }
 
+.npc-stats {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.npc-services {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .npc-empty {
   color: var(--muted);
   font-size: 14px;

@@ -487,6 +487,7 @@ hide <<value>> stereotype
     roll: number
     name: string
     rumor: boolean
+    criminal: boolean
   }
   class AnimalTable $begegnung {
   }
@@ -648,6 +649,7 @@ hide <<value>> stereotype
     wounds: number
     rounds: number [0..1]
     law: number [0..1]
+    minSoc: number [0..1]
     burst: number [0..1]
     neighbours: number [0..1]
     weakened: number [0..1]

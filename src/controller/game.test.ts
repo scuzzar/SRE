@@ -580,9 +580,18 @@ describe('Begegnung und Kampfsimulation', () => {
     game.showScreen('oracle');
     game.showScreen('npcs');
     expect(game.snapshot().npcs.all).toBe(false);
-    // Ein neuer NSC aus dem Reiter: Rolle Sonstige, Ort der Aufenthaltsort.
-    game.newCharacter(true);
-    expect(game.snapshot().editor?.input).toMatchObject({ npc: true, role: 'other', place: '0101' });
+    // Ein neuer NSC aus dem Reiter: mit der gewählten Rolle, Ort der Aufenthaltsort.
+    game.newCharacter(true, 'contact');
+    expect(game.snapshot().editor?.input).toMatchObject({ npc: true, role: 'contact', place: '0101' });
+    game.cancelEdit();
+    // Aus einer Laufbahn erzeugt: er steht danach im Editor, mit Attributen im Reiter.
+    game.generateNpc('scouts', 'ally');
+    const editor = game.snapshot().editor!;
+    expect(editor.input).toMatchObject({ npc: true, role: 'ally', place: '0101' });
+    expect(editor.input.background).toMatch(/^Ex-Scouts/);
+    const ally = game.snapshot().npcs.worlds[0]!.roles.find((r) => r.role === 'ally')!.npcs[0]!;
+    expect(ally.id).toBe(editor.id);
+    expect(ally.upp.str).toBeGreaterThan(0);
   });
 
   it('Gerücht: erst der Test der Woche (7+ auf 2W6), dann der Wurf auf die Rumors Matrix; Test und Wurf stehen im Log', async () => {

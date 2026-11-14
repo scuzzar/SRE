@@ -70,6 +70,8 @@ import {
   rollDice,
   rollPatron,
   createPatronNpc,
+  generateNpc,
+  type NpcRole,
   rollRumor,
   rollAnimalEncounter,
   skillOf,
@@ -1499,9 +1501,23 @@ export class GameController {
 
   // --- Charaktere anlegen und bearbeiten -------------------------------------------------------
 
-  /** Öffnet den Editor für einen neuen Charakter; mit `npc` als dauerhafter NSC auf dem Aufenthaltsort. */
-  newCharacter(npc = false): void {
-    this.update({ editor: { id: undefined, error: undefined, ...(npc ? { npc } : {}) } });
+  /** Öffnet den Editor für einen neuen Charakter; mit `npc` als dauerhafter NSC mit dieser Rolle auf dem Aufenthaltsort. */
+  newCharacter(npc = false, role?: NpcRole): void {
+    this.update({ editor: { id: undefined, error: undefined, ...(npc ? { npc, ...(role ? { role } : {}) } : {}) } });
+  }
+
+  /**
+   * „+ Neuer NSC“ aus einer Laufbahn (siehe domain-model.md, *NSC aus einer Laufbahn*): Die
+   * Erschaffung läuft ohne Animation durch, danach steht der neue NSC im Editor zum Nachbessern.
+   */
+  generateNpc(service: string, role: NpcRole): void {
+    try {
+      const { campaign, id } = generateNpc(this.campaign, { service, role }, this.deps.random);
+      this.change(campaign, { editor: { id, error: undefined } });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ editor: undefined });
+    }
   }
 
   editCharacter(id: string): void {
