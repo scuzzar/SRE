@@ -1042,6 +1042,7 @@ EncounterRange -[hidden]- Terrain
 RangeBand -[hidden]- EncounterRange
 Encounter "*" --> "0..1" Hex : in
 Encounter "1" *-- "*" Character : npcs {ordered}
+Encounter "*" -$newArrow("2026-11-14g")-> "*" Character : joined {ordered}
 Encounter "*" --> "0..1" Character : leader
 Encounter "*" --> "*" Character : acted
 Encounter "*" --> "0..1" Character : /turn
