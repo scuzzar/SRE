@@ -769,6 +769,7 @@ hide <<value>> stereotype
     field
   }
   class City $oberflaeche {
+    $new("2026-11-14k", "name: string")
     population: number
     multiplier: number
     rank: CityRank

@@ -330,6 +330,10 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > und `Character.place` zeigen auf einen `Place` statt direkt auf ein `Hex`. Der Ausschnitt dazu
 > liegt unter [`changes/2026-11-14-orte.png`](changes/2026-11-14-orte.png).
 
+> **Offen, noch nicht freigegeben** (Kennzeichen 2026-11-14k): **Städtenamen** (siehe
+> *Oberflächenkarte*). Jede Haupt- und Nebenstadt hat einen Namen. Neu im Bild: `City.name`. Der
+> Ausschnitt dazu liegt unter [`changes/2026-11-14-staedtenamen.png`](changes/2026-11-14-staedtenamen.png).
+
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
@@ -359,7 +363,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+die Änderung Städtenamen (2026-11-14k).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -601,7 +605,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Fluss | `River` | Die Oberflächenfelder eines großen Flusses von der Quelle bis zur Mündung |
 | Straße | `Road` | Die Oberflächenfelder einer wichtigen Straße zwischen zwei Städten (nur bei TL 5–10) |
 | Vulkan, Vulkanfeld | `SurfaceCell.volcano`, `Volcano` | Ein großer Vulkan bzw. ein Feld mit vielen kleinen Vulkanen; liegt auf einem Oberflächenfeld, ohne dessen Geländeart zu ändern |
-| Stadt | `City` | Eine Haupt- oder Nebenstadt mit Bevölkerungsziffer, Multiplikator und Hafen; auf einem Oberflächenfeld oder im Orbit (ohne Feld) |
+| Stadt | `City` | Eine Haupt- oder Nebenstadt mit Name, Bevölkerungsziffer, Multiplikator und Hafen; auf einem Oberflächenfeld oder im Orbit (ohne Feld) |
+| Städtenamen | (Referenzdaten) | Die große Liste, aus der neue Städte ihren Namen bekommen |
 | Hauptstadt, Nebenstadt | `CityRank` | Die Städte mit den höchsten Bevölkerungsziffern (höchstens 10) bzw. eine Ziffer darunter |
 | Orbitalstadt | `City` ohne `cell` | Eine Stadt dauerhaft im Orbit |
 | Hafen einer Stadt | `City.port`, `Port` | Raumhafen A–E oder Landeplatz F–H der Stadt; Y (keiner) heißt: kein Wert |
@@ -2193,8 +2198,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Reihenfolge des Rasters, Kleinstädte und Vulkane nur für die Felder, die welche haben (Nummer und
     Wert), Flüsse, Straßen und Städte mit Feldnummern statt Verweisen. Die Felder als Objekte gibt
     es nur in der Anzeige. Bei Größe 8 sind das etwa 10 KB je Karte.
-  - Eine Stadt ist ein eigener Gegenstand (blau): Sie bekommt später einen Namen, und Orte
-    verweisen auf sie (siehe *Orte*). Ein Feld kann ab TL 10 mehrere Städte haben; deshalb verweist die Stadt auf ihr Feld, nicht
+  - Eine Stadt ist ein eigener Gegenstand (blau): Sie hat einen Namen, und Orte verweisen auf sie
+    (siehe *Orte*).
+  - **Städtenamen** (offen, 2026-11-14k): Jede Haupt- und Nebenstadt bekommt beim Erzeugen der
+    Karte einen Namen aus den Referenzdaten *Städtenamen*, auf der ganzen Kampagne ohne Doppel. Die
+    Hauptstadt (die erste Stadt) trägt bei 1–2 auf 1W6 den Namen der Welt. Den Namen kann man im
+    Feld unten auf dem Globus ändern; ein leerer Name geht nicht. Karten von vor dieser Änderung
+    bekommen beim Laden „Stadt 1“, „Stadt 2“ usw. Ein Feld kann ab TL 10 mehrere Städte haben; deshalb verweist die Stadt auf ihr Feld, nicht
     das Feld auf seine Städte. Eine Stadt ohne Feld (`cell`) ist eine Orbitalstadt. `population` ist ihre Bevölkerungsziffer,
     `multiplier` die erste Ziffer ihrer Einwohnerzahl (Einwohner = multiplier × 10^population).
   - Der Bevölkerungsmultiplikator (`populationMultiplier`) wird beim Erzeugen der Karte gewürfelt,
