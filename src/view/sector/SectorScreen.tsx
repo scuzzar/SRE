@@ -5,6 +5,7 @@ import { animated } from '../haptics';
 import { HoldButton } from '../HoldButton';
 import { CloseIcon, DiceIcon } from '../icons';
 import { RollStage } from './WorldSheet';
+import { worldImageUrl } from './world-icon';
 
 // Reine Darstellung: die Karte eines Subsektors wie TAS Form 6, mit den Zeichen, die in Classic
 // Traveller üblich sind. Welche Felder es gibt und was in ihnen steht, kommt aus dem Snapshot.
@@ -61,7 +62,6 @@ function label(hex: HexView): string {
   }
 }
 
-/** Die Welt in der Mitte: Punkte für einen Asteroidengürtel, gefüllter Kreis mit Wasser, leerer ohne. */
 /**
  * Wie viel ein Feld zeigt, je nachdem, wie groß es gerade auf dem Bildschirm ist: 0 nur die Zeichen
  * und der Name, 1 dazu das UWP, 2 dazu die Handelscodes.
@@ -76,25 +76,14 @@ function detailAt(pixelsPerUnit: number): Detail {
   return pixelsPerUnit >= TRADE_FROM ? 2 : pixelsPerUnit >= UWP_FROM ? 1 : 0;
 }
 
-function WorldSymbol({ hex, x, y }: { hex: HexView; x: number; y: number }) {
-  if (hex.size === 0) {
-    return (
-      <g className="hex-belt">
-        {[
-          [-7, -2],
-          [-2, 3],
-          [3, -4],
-          [7, 2],
-          [0, -1],
-          [-4, 6],
-          [5, 6],
-        ].map(([dx, dy], i) => (
-          <circle key={i} cx={x + dx!} cy={y + dy!} r={1.6} />
-        ))}
-      </g>
-    );
-  }
-  return <circle className={hex.hydrographics !== undefined && hex.hydrographics > 0 ? 'hex-world wet' : 'hex-world dry'} cx={x} cy={y} r={7} />;
+/** Kantenlänge des Weltsymbols in Einheiten der Zeichnung, und wie fein es dafür gerechnet wird. */
+const ICON = 26;
+const ICON_PX = 104;
+
+/** Die Welt in der Mitte: das Weltsymbol (Größe, Atmosphäre, Wasser, Lichter, Umlaufbahnen). */
+function WorldSymbol({ hex, x, y, size }: { hex: HexView; x: number; y: number; size: number }) {
+  if (!hex.look) return null;
+  return <image className="hex-icon" href={worldImageUrl(hex.look, ICON_PX)} x={x - size / 2} y={y - size / 2} width={size} height={size} />;
 }
 
 function HexCell({ hex, selected, disabled, detail, here = false }: { hex: HexView; selected: boolean; disabled: boolean; detail: Detail; here?: boolean }) {
@@ -130,7 +119,7 @@ function HexCell({ hex, selected, disabled, detail, here = false }: { hex: HexVi
           {hex.starport}
         </text>
       )}
-      {hex.state === 'world' && <WorldSymbol hex={hex} x={x} y={y + S * 0.12} />}
+      {hex.state === 'world' && <WorldSymbol hex={hex} x={x} y={detailed ? y + S * 0.06 : y + S * 0.12} size={detailed ? ICON * 0.72 : ICON} />}
       {hex.state === 'pending' && (
         <text className="hex-pending" x={x} y={y + S * 0.22}>
           …
@@ -399,7 +388,7 @@ export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; 
           )}
         </ZoomableMap>
         <p className="sector-legend small-label">
-          Dunkle Felder sind nicht erzeugt: antippen, dann unten das Vorkommen würfeln. Helle ohne Zeichen sind leer. ● mit Wasser, ○ ohne, ★ Marinebasis, ▲ Scoutbasis, • rechts oben Gasriese.
+          Dunkle Felder sind nicht erzeugt: antippen, dann unten das Vorkommen würfeln. Helle ohne Zeichen sind leer. Das Bild zeigt die Welt: Größe, Atmosphäre als Leuchten, Wasser und Land, Lichter der Städte, ab TL 8 Umlaufbahnen. ★ Marinebasis, ▲ Scoutbasis, • rechts oben Gasriese.
         </p>
         {view.worlds.length > 0 && (
           <>

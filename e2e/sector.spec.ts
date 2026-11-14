@@ -28,10 +28,13 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     await dialog.getByRole('button', { name: 'Später weiter' }).click();
     await map.getByRole('button', { name: `${id}, in Erschaffung: fortsetzen` }).click();
     await expect(dialog.getByRole('button', { name: 'Verwerfen' })).toBeVisible();
+    // Das Weltsymbol erscheint erst mit der Größe.
+    await expect(dialog.getByRole('img', { name: /^Weltsymbol von / })).toHaveCount(0);
     for (let i = 0; i < 14 && (await dialog.locator('.generation-main').count()) > 0; i++) await dialog.locator('.generation-main').click();
     // Nach dem TL steht die Oberfläche da, wo früher die Würfe standen; eine Liste der Würfe gibt es nicht.
     await expect(dialog.getByRole('region', { name: 'Oberfläche' })).toContainText('% Wasser');
     await expect(dialog.getByRole('region', { name: 'Würfe' })).toHaveCount(0);
+    await expect(dialog.getByRole('img', { name: `Weltsymbol von ${id}` })).toBeVisible();
     await dialog.getByLabel('Name der Welt').fill('Regina');
     await dialog.getByRole('button', { name: 'Übernehmen' }).click();
     const done = page.getByRole('dialog', { name: `Regina · ${id}` });
@@ -123,12 +126,15 @@ test('Sektor: UWP und Handelscodes erscheinen auf der Karte, sobald sie beim Zoo
   await page.goto('/');
   const efate = { column: 2, row: 1, empty: false, name: 'Efate', navalBase: false, scoutBase: false, gasGiant: true, uwp: { starport: 10, size: 6, atmosphere: 4, hydrographics: 6, population: 6, government: 2, law: 4, tech: 12 } };
   const file = { format: 'solo-rpg-engine/kampagne', version: 1, campaign: { name: 'Karte', odds: 'medium', characters: [], log: [], hexes: [efate] } };
-  await page.getByRole('banner').getByRole('button', { name: /^Kampagne / }).click();
+  await page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true }).click();
   await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Kampagnen wechseln und verwalten' }).click();
   await page.getByRole('dialog', { name: 'Kampagnen' }).locator('input[type=file]').setInputFiles({ name: 'k.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
   await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
   const world = page.getByRole('button', { name: '0201, Efate: Weltkarte öffnen' });
   await expect(world).toBeVisible();
+  // In der Mitte des Feldes steht das Weltsymbol.
+  await expect(world.locator('.hex-icon')).toHaveCount(1);
+  await expect(world.locator('.hex-icon')).toHaveAttribute('href', /^data:image\/png/);
   // Ganz herausgezoomt: nur Zeichen und Name. Das gilt auch im Desktop-Modus, seit die Karte dort
   // in die Höhe des Screens eingepasst ist statt die volle Breite zu füllen.
   await expect(world.locator('.hex-uwp')).toHaveCount(0);
@@ -143,7 +149,7 @@ test('Sektor: Eine ältere Welt ohne Temperatur würfelt sie auf der Weltkarte n
   await page.goto('/');
   const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
   const file = { format: 'solo-rpg-engine/kampagne', version: 1, campaign: { name: 'Alte Welt', odds: 'medium', characters: [], log: [], hexes: [regina] } };
-  await page.getByRole('banner').getByRole('button', { name: /^Kampagne / }).click();
+  await page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true }).click();
   await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Kampagnen wechseln und verwalten' }).click();
   await page.getByRole('dialog', { name: 'Kampagnen' }).locator('input[type=file]').setInputFiles({ name: 'welt.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
   await expect(page.getByRole('dialog', { name: 'Kampagnen' })).toBeHidden();

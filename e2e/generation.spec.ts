@@ -13,7 +13,7 @@ async function campaignWithWorld(page: Page) {
   await page.goto('/');
   const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
   const file = { format: 'solo-rpg-engine/kampagne', version: 1, campaign: { name: 'Mit Welt', odds: 'medium', characters: [], log: [], hexes: [regina] } };
-  await page.getByRole('banner').getByRole('button', { name: /^Kampagne / }).click();
+  await page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true }).click();
   await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Kampagnen wechseln und verwalten' }).click();
   await page.getByRole('dialog', { name: 'Kampagnen' }).locator('input[type=file]').setInputFiles({ name: 'welt.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
   await expect(page.getByRole('dialog', { name: 'Kampagnen' })).toBeHidden();

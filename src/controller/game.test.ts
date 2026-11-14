@@ -1422,8 +1422,21 @@ describe('Subsektor und Weltenerschaffung', () => {
     game.chooseHex(3, 4);
     expect(game.snapshot().world?.step).toBe('starport');
 
-    for (let i = 0; i < 11; i++) game.rollWorld();
+    // Das Weltsymbol erscheint mit der Größe; was noch nicht gewürfelt ist, fehlt ihm.
+    let sized = false;
+    for (let i = 0; i < 11; i++) {
+      game.rollWorld();
+      const now = game.snapshot().world!;
+      const size = now.profile.find((p) => p.kind === 'size')?.code;
+      if (size === undefined) expect(now.look).toBeUndefined();
+      else if (!sized) {
+        sized = true;
+        expect(now.look).toEqual({ seed: '0304', size: 7, atmosphere: undefined, hydrographics: undefined, water: undefined, population: undefined, tech: undefined, temperature: undefined, life: undefined });
+      }
+    }
+    expect(sized).toBe(true);
     const before = game.snapshot().world!;
+    expect(before.look).toEqual({ seed: '0304', size: 7, atmosphere: 8, hydrographics: 8, water: 0.8, population: 5, tech: 7, temperature: 'temperate', life: true });
     expect(before).toMatchObject({ step: 'name', uwp: 'C788545-7', navalBase: false, scoutBase: true, gasGiant: true, action: { kind: 'name' } });
     expect(before.profile.find((p) => p.kind === 'atmosphere')).toEqual({ kind: 'atmosphere', label: 'Atmosphäre', code: '8', text: 'Dense' });
     // Mit dem TL kam die Oberfläche, ohne eigenen Knopf.
@@ -1436,7 +1449,10 @@ describe('Subsektor und Weltenerschaffung', () => {
     const after = game.snapshot();
     expect(after.world).toMatchObject({ name: 'Regina', step: 'done', action: { kind: 'done' }, trade: [{ code: 'Ag' }, { code: 'Ni' }] });
     expect(after.sector.find((h) => h.id === '0304')).toMatchObject({ state: 'world', name: 'Regina', starport: 'C', scoutBase: true, gasGiant: true, hydrographics: 8 });
-    expect(after.worlds).toEqual([{ id: '0304', column: 3, row: 4, name: 'Regina', uwp: 'C788545-7', bases: 'S', trade: ['Ag', 'Ni'], gasGiant: true, note: undefined }]);
+    expect(after.worlds).toEqual([{ id: '0304', column: 3, row: 4, name: 'Regina', uwp: 'C788545-7', bases: 'S', trade: ['Ag', 'Ni'], gasGiant: true, note: undefined, look: { seed: '0304', size: 7, atmosphere: 8, hydrographics: 8, water: 0.8, population: 5, tech: 7, temperature: 'temperate', life: true } }]);
+    // Das Weltsymbol: dieselben Werte auf der Karte und auf der Weltkarte.
+    expect(after.sector.find((h) => h.id === '0304')?.look).toEqual(after.worlds[0]?.look);
+    expect(after.world?.look).toEqual(after.worlds[0]?.look);
   });
 
   it('schreibt einer fertigen Welt eine Notiz, ändert und entfernt sie; die Liste zeigt ihre erste Zeile', async () => {

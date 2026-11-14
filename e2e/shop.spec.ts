@@ -28,13 +28,14 @@ test('Shop: Die Demo-Kampagne steht auf Kessra; eine neue Kampagne ist auf keine
   await expect(page.locator('.shop-world')).toContainText('Kessra');
   await expect(page.getByRole('tab', { name: 'Waffen' })).toHaveAttribute('aria-selected', 'true');
 
-  await page.getByRole('banner').getByRole('button', { name: /^Kampagne / }).click();
+  await page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true }).click();
   await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Kampagnen wechseln und verwalten' }).click();
   const sheet = page.getByRole('dialog', { name: 'Kampagnen' });
   await sheet.getByLabel('Neue Kampagne').fill('Leer');
   await sheet.getByRole('button', { name: 'Anlegen' }).click();
   await page.getByRole('navigation').getByRole('button', { name: 'Shop' }).click();
-  await expect(page.getByText('Auf keiner Welt', { exact: true })).toBeVisible();
+  await expect(page.locator('.shop-world')).toHaveText('Auf keiner Welt');
+  await expect(page.getByRole('banner')).toContainText('Auf keiner Welt');
   await expect(page.getByRole('tab', { name: 'Kasse' })).toHaveAttribute('aria-selected', 'true');
   await page.getByRole('spinbutton').first().fill('5000');
   await page.getByPlaceholder(/Belohnung/).fill('Belohnung von Dr. Halvek');
@@ -117,4 +118,13 @@ test('Shop: „Gruppe ist hier“ auf der Weltkarte bringt die Gruppe auf eine a
   await expect(page.locator('.world-list-here')).toBeVisible();
   await page.getByRole('navigation').getByRole('button', { name: 'Shop' }).click();
   await expect(page.locator('.shop-world')).toContainText('Regina');
+  // Der Aufenthaltsort steht mit UWP in der Kopfzeile; ein Tippen öffnet seine Weltkarte.
+  const header = page.locator('.header').getByRole('button', { name: /^Aufenthaltsort Regina, UWP / });
+  await expect(header).toBeVisible();
+  await expect(header.locator('canvas.world-icon')).toBeVisible();
+  await header.click();
+  const sheet = page.getByRole('dialog', { name: /^Regina · / });
+  await expect(sheet).toBeVisible();
+  // Oben auf der Weltkarte steht das Weltsymbol.
+  await expect(sheet.getByRole('img', { name: /^Weltsymbol von Regina/ })).toBeVisible();
 });
