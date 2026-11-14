@@ -74,6 +74,8 @@ export function App() {
   // Die Charakterspalte entfällt, wo der Bereich die SC selbst zeigt: im Bereich Charaktere und in der
   // Kampfsimulation, deren Arena die SC mit Wunden, Waffen und Zug führt.
   const characterColumn = desktop && screen !== 'characters' && !(screen === 'combat' && view.combat?.sim);
+  // Der Aufenthaltsort steht mit UWP in der Kopfzeile; ein Tippen öffnet seine Weltkarte.
+  const here = view.worlds.find((w) => w.id === view.location);
 
   return (
     <div className="app">
@@ -81,6 +83,12 @@ export function App() {
         <button type="button" className="brand campaign-switch" aria-label={`Kampagne ${view.campaign.name}, Menü öffnen`} onClick={() => setMenu(true)}>
           <span className="campaign-name">{view.campaign.name}</span>
         </button>
+        {here && (
+          <button type="button" className="header-world" aria-label={`Aufenthaltsort ${here.name}, UWP ${here.uwp}, Weltkarte öffnen`} title="Weltkarte des Aufenthaltsorts" onClick={() => game.chooseHex(here.column, here.row)}>
+            <span className="header-world-name">{here.name}</span>
+            <span className="mono header-world-uwp">{here.uwp}</span>
+          </button>
+        )}
         <span className="header-right">
           <FullscreenButton />
           <button type="button" className="icon-button menu-button" aria-label="Menü" aria-expanded={menu} onClick={() => setMenu(true)}>

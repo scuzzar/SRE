@@ -117,4 +117,9 @@ test('Shop: „Gruppe ist hier“ auf der Weltkarte bringt die Gruppe auf eine a
   await expect(page.locator('.world-list-here')).toBeVisible();
   await page.getByRole('navigation').getByRole('button', { name: 'Shop' }).click();
   await expect(page.locator('.shop-world')).toContainText('Regina');
+  // Der Aufenthaltsort steht mit UWP in der Kopfzeile; ein Tippen öffnet seine Weltkarte.
+  const header = page.locator('.header').getByRole('button', { name: /^Aufenthaltsort Regina, UWP / });
+  await expect(header).toBeVisible();
+  await header.click();
+  await expect(page.getByRole('dialog', { name: /^Regina · / })).toBeVisible();
 });

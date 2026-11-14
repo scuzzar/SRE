@@ -164,6 +164,36 @@ button:disabled {
   text-overflow: ellipsis;
 }
 
+/* Der Aufenthaltsort mit UWP; ein Tippen öffnet seine Weltkarte. */
+.header-world {
+  flex: 0 0 auto;
+  min-height: 44px;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.header-world-name {
+  max-width: 34vw;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.header-world-uwp {
+  flex: 0 0 auto;
+  color: var(--accent);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
 .header-right {
   flex: 0 0 auto;
   display: flex;
