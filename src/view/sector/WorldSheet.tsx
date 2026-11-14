@@ -181,7 +181,8 @@ function WorldCard({ world }: { world: WorldView }) {
       ))}
     </dl>
   );
-  // Eine fertige Welt zeigt oben ihr Weltsymbol, halb so breit wie der Block; die Tabelle steht darunter.
+  // Oben steht das Weltsymbol, halb so breit wie der Block, die Tabelle darunter. In der Erschaffung
+  // erscheint es mit der Größe; was noch fehlt, ist grau und kommt Wurf für Wurf dazu.
   if (world.look) {
     return (
       <article className="pc generation-card world-card" aria-label="Welt">

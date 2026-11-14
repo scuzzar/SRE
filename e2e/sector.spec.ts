@@ -28,10 +28,13 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     await dialog.getByRole('button', { name: 'Später weiter' }).click();
     await map.getByRole('button', { name: `${id}, in Erschaffung: fortsetzen` }).click();
     await expect(dialog.getByRole('button', { name: 'Verwerfen' })).toBeVisible();
+    // Das Weltsymbol erscheint erst mit der Größe.
+    await expect(dialog.getByRole('img', { name: /^Weltsymbol von / })).toHaveCount(0);
     for (let i = 0; i < 14 && (await dialog.locator('.generation-main').count()) > 0; i++) await dialog.locator('.generation-main').click();
     // Nach dem TL steht die Oberfläche da, wo früher die Würfe standen; eine Liste der Würfe gibt es nicht.
     await expect(dialog.getByRole('region', { name: 'Oberfläche' })).toContainText('% Wasser');
     await expect(dialog.getByRole('region', { name: 'Würfe' })).toHaveCount(0);
+    await expect(dialog.getByRole('img', { name: `Weltsymbol von ${id}` })).toBeVisible();
     await dialog.getByLabel('Name der Welt').fill('Regina');
     await dialog.getByRole('button', { name: 'Übernehmen' }).click();
     const done = page.getByRole('dialog', { name: `Regina · ${id}` });

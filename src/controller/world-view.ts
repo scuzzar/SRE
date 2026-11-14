@@ -28,23 +28,41 @@ import { nextWorldRoll, totalOf, type WorldRoll } from '../model/draft';
 /**
  * Was das Weltsymbol braucht: die Stellen des UWP, die man sieht, Wasseranteil, Temperatur und
  * Leben. `seed` (das Feld) legt fest, wo Kontinente und Städte liegen, damit jede Welt anders aussieht.
+ * In der Weltenerschaffung fehlt, was noch nicht gewürfelt ist; das Symbol zeigt es grau.
  */
 export interface WorldLook {
   readonly seed: string;
   readonly size: number;
-  readonly atmosphere: number;
-  readonly hydrographics: number;
+  readonly atmosphere: number | undefined;
+  readonly hydrographics: number | undefined;
   /** Wasseranteil 0 bis 1: aus der Oberfläche, sonst aus der Hydrographie. */
-  readonly water: number;
-  readonly population: number;
-  readonly tech: number;
-  readonly temperature: 'frozen' | 'cold' | 'temperate' | 'hot' | 'boiling';
-  readonly life: boolean;
+  readonly water: number | undefined;
+  readonly population: number | undefined;
+  readonly tech: number | undefined;
+  readonly temperature: 'frozen' | 'cold' | 'temperate' | 'hot' | 'boiling' | undefined;
+  readonly life: boolean | undefined;
 }
 
-/** Das Weltsymbol einer fertigen Welt; sonst `undefined`. */
+/**
+ * Das Weltsymbol: für eine fertige Welt vollständig, für eine Welt in Erschaffung ab der Größe mit
+ * dem, was schon gewürfelt ist; sonst `undefined`.
+ */
 export function lookOf(hex: Hex | undefined): WorldLook | undefined {
-  if (!hex || hexState(hex) !== 'world') return undefined;
+  if (!hex || hex.empty || hex.uwp.size === undefined) return undefined;
+  if (hexState(hex) !== 'world') {
+    const { size, atmosphere, hydrographics, population, tech } = hex.uwp;
+    return {
+      seed: hexId(hex.column, hex.row),
+      size,
+      atmosphere,
+      hydrographics,
+      water: hex.surface ? hex.surface.water / 100 : undefined,
+      population,
+      tech,
+      temperature: hex.temperature,
+      life: hex.surface?.life,
+    };
+  }
   const { size = 0, atmosphere = 0, hydrographics = 0, population = 0, tech = 0 } = hex.uwp;
   return {
     seed: hexId(hex.column, hex.row),

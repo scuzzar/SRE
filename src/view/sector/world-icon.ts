@@ -1,7 +1,7 @@
 import type { WorldLook } from '../../controller';
 
 // Reine Darstellung: das Weltsymbol, ein kleines 3D-Bild einer Welt, Pixel für Pixel auf ein Canvas
-// gerechnet. Größe als Durchmesser (0 ist ein Asteroidengürtel), Atmosphäre als Leuchten am Rand,
+// gerechnet. In der Weltenerschaffung zeigt es ab der Größe, was schon gewürfelt ist; der Rest bleibt grau. Größe als Durchmesser (0 ist ein Asteroidengürtel), Atmosphäre als Leuchten am Rand,
 // Wasser und Land nach dem Wasseranteil, Städte als Lichter auf der Nachtseite, Umlaufbahnen ab
 // hohem TL. Das Licht kommt von links, die Welt steht halb im Licht.
 
@@ -52,13 +52,15 @@ interface Climate {
   readonly tint: Rgb;
 }
 
-const CLIMATES: Record<WorldLook['temperature'], Climate> = {
+const CLIMATES: Record<NonNullable<WorldLook['temperature']>, Climate> = {
   frozen: { cap: 0, ice: true, tint: [0.85, 0.9, 1] },
   cold: { cap: 0.72, ice: false, tint: [0.92, 0.95, 1] },
   temperate: { cap: 0.93, ice: false, tint: [1, 1, 1] },
   hot: { cap: 0.99, ice: false, tint: [1.06, 0.98, 0.9] },
   boiling: { cap: 2, ice: false, tint: [1.1, 0.92, 0.82] },
 };
+/** Noch keine Temperatur: kein Eis, keine Tönung. */
+const NO_CLIMATE: Climate = { cap: 2, ice: false, tint: [1, 1, 1] };
 
 // --- Rauschen ---------------------------------------------------------------------------------
 
@@ -199,22 +201,34 @@ const C = {
   taintedSea: [0.12, 0.3, 0.25] as Rgb,
   steam: [0.35, 0.4, 0.42] as Rgb,
   rubble: [0.55, 0.47, 0.4] as Rgb,
+  unknown: rgb('#55575a'),
+  unknown2: rgb('#8a8c90'),
 };
 
 const tainted = (atmosphere: number) => atmosphere === 2 || atmosphere === 4 || atmosphere === 7 || atmosphere === 9;
 
 function surfaceColor(look: WorldLook, x: number, y: number, z: number, lv: number, threshold: number, seed: number): Rgb {
-  const vacuum = look.atmosphere <= 1;
-  const climate = CLIMATES[look.temperature];
-  const lat = Math.abs(y);
   const det = detailField(x, y, z, seed);
+  // In der Erschaffung, solange Atmosphäre oder Hydrographie fehlen: nur grauer Fels.
+  if (look.atmosphere === undefined || look.hydrographics === undefined) {
+    const e = clamp((lv - 0.35) / 0.4, 0, 1);
+    const grey = mix(C.unknown, C.unknown2, det * 0.7 + e * 0.3);
+    // Steht die Temperatur schon fest, tönt sie das Grau.
+    const tint = look.temperature ? CLIMATES[look.temperature].tint : NO_CLIMATE.tint;
+    return [grey[0] * tint[0], grey[1] * tint[1], grey[2] * tint[2]];
+  }
+  const atmosphere = look.atmosphere;
+  const hydrographics = look.hydrographics;
+  const vacuum = atmosphere <= 1;
+  const climate = look.temperature ? CLIMATES[look.temperature] : NO_CLIMATE;
+  const lat = Math.abs(y);
   const capEdge = climate.cap + (det - 0.5) * 0.12;
   if (lv < threshold) {
     const depth = clamp((threshold - lv) / 0.12, 0, 1);
     if (climate.ice || vacuum) return mix(C.iceBlue, C.ice, det * 0.6 + depth * 0.2);
     if (lat > capEdge) return mix(C.ice, C.snow, det);
     let col = mix(C.shallow, C.deep, Math.pow(depth, 0.6));
-    if (tainted(look.atmosphere)) col = mix(col, C.taintedSea, 0.35);
+    if (tainted(atmosphere)) col = mix(col, C.taintedSea, 0.35);
     if (look.temperature === 'boiling') col = mix(col, C.steam, 0.4);
     return col;
   }
@@ -228,8 +242,8 @@ function surfaceColor(look: WorldLook, x: number, y: number, z: number, lv: numb
   } else if (look.temperature === 'boiling') {
     col = mix(C.basalt, C.rust, det * 0.5 + e * 0.3);
   } else {
-    const dry = clamp(1 - look.hydrographics / 5, 0, 1);
-    const green = look.life && ((look.atmosphere >= 2 && look.atmosphere <= 9) || look.atmosphere >= 13);
+    const dry = clamp(1 - hydrographics / 5, 0, 1);
+    const green = look.life === true && ((atmosphere >= 2 && atmosphere <= 9) || atmosphere >= 13);
     const low = green ? mix(C.lowGreen, C.midGreen, det * 0.7) : mix(C.rust, C.ochre, det * 0.8);
     col = mix(low, green ? C.ochre : C.sand, dry * 0.85);
     if (look.temperature === 'hot') col = mix(col, C.ochre, 0.35);
@@ -274,13 +288,17 @@ export function drawWorld(look: WorldLook, px: number): HTMLCanvasElement {
     beltLights(ctx, S, look, seed);
     return canvas;
   }
-  const atm = ATMOSPHERES[look.atmosphere] ?? ATMOSPHERES[0]!;
+  const atm = (look.atmosphere === undefined ? undefined : ATMOSPHERES[look.atmosphere]) ?? ATMOSPHERES[0]!;
+  const hydrographics = look.hydrographics ?? 0;
+  const exotic = (look.atmosphere ?? 0) >= 10;
   const R = (S / 2) * (0.3 + Math.min(10, look.size) * 0.052);
   const glow = atm.glow ? rgb(atm.glow) : undefined;
   const G = glow ? R * atm.width * 1.8 : 0;
   const samples = samplesOf(seed);
-  const threshold = quantile(samples.land, look.water);
-  let cover = atm.clouds * (0.4 + 0.6 * Math.min(1, look.hydrographics / 4 + (look.atmosphere >= 10 ? 0.6 : 0)));
+  // Ohne Hydrographie noch kein Wasser; ohne Oberfläche nach der Hydrographie.
+  const water = look.water ?? (look.hydrographics === undefined ? 0 : look.hydrographics >= 10 ? 0.985 : look.hydrographics / 10);
+  const threshold = quantile(samples.land, water);
+  let cover = atm.clouds * (0.4 + 0.6 * Math.min(1, hydrographics / 4 + (exotic ? 0.6 : 0)));
   if (look.temperature === 'hot') cover = Math.min(0.9, cover * 1.3);
   if (look.temperature === 'boiling') cover = Math.min(0.95, cover * 1.5 + 0.1);
   if (look.temperature === 'frozen' || look.temperature === 'cold') cover *= 0.6;
@@ -321,7 +339,7 @@ export function drawWorld(look: WorldLook, px: number): HTMLCanvasElement {
         if (glow) {
           const fresnel = Math.pow(1 - z, 2.4) * atm.density;
           col = mix(col, glow, clamp(fresnel * (0.15 + 0.85 * smooth(-0.25, 0.3, lit)), 0, 0.9));
-          col = mix(col, glow, atm.density * (look.atmosphere >= 10 ? 0.05 : 0.07) * day);
+          col = mix(col, glow, atm.density * (exotic ? 0.05 : 0.07) * day);
         }
         const edge = clamp((1 - Math.sqrt(d2)) * R, 0, 1);
         [r, g, b] = col;
@@ -361,9 +379,10 @@ const cityCount = (population: number) => (population <= 0 ? 0 : Math.round(Math
 
 /** Wie die Lichter aussehen; unter dem Mindest-TL oder ohne Bewohner keine. */
 function lightStyle(look: WorldLook): { alpha: number; color: string } | undefined {
-  if (look.population <= 0 || look.tech < LIGHTS_FROM_TL) return undefined;
-  const alpha = clamp(0.45 + (look.tech - LIGHTS_FROM_TL) * 0.07, 0.45, 1);
-  const color = look.tech >= 12 ? '232,240,255' : look.tech >= 9 ? '255,228,170' : '255,196,110';
+  const { population = 0, tech } = look;
+  if (population <= 0 || tech === undefined || tech < LIGHTS_FROM_TL) return undefined;
+  const alpha = clamp(0.45 + (tech - LIGHTS_FROM_TL) * 0.07, 0.45, 1);
+  const color = tech >= 12 ? '232,240,255' : tech >= 9 ? '255,228,170' : '255,196,110';
   return { alpha, color };
 }
 
@@ -382,7 +401,7 @@ function cityLights(ctx: CanvasRenderingContext2D, S: number, R: number, look: W
   const onLand = samples.points.filter((p) => p.land >= threshold);
   // Ohne nennenswertes Land schwimmen die Städte; sonst Küsten und Tiefland zuerst.
   const candidates = (onLand.length < 30 ? samples.points : onLand).slice().sort((a, b) => Math.abs(a.land - threshold) - Math.abs(b.land - threshold));
-  const n = Math.min(candidates.length, cityCount(look.population));
+  const n = Math.min(candidates.length, cityCount(look.population ?? 0));
   const r = seeded(seed ^ 0xc17);
   const base = Math.max(0.6, R * 0.012);
   ctx.save();
@@ -409,8 +428,9 @@ function cityLights(ctx: CanvasRenderingContext2D, S: number, R: number, look: W
 
 /** Umlaufbahnen: feine, schräge Linien, deren hintere Hälfte hinter der Welt verschwindet. Im Kleinen kräftiger. */
 function orbits(ctx: CanvasRenderingContext2D, S: number, R: number, look: WorldLook, seed: number): void {
-  if (look.population <= 0 || look.tech < ORBITS_FROM_TL) return;
-  const over = look.tech - ORBITS_FROM_TL;
+  const { population = 0, tech } = look;
+  if (population <= 0 || tech === undefined || tech < ORBITS_FROM_TL) return;
+  const over = tech - ORBITS_FROM_TL;
   const count = Math.min(4, 1 + Math.floor(over / 2));
   const small = S < 140;
   const alpha = clamp(0.2 + over * 0.035, 0.2, 0.45) * (small ? 1.9 : 1);
@@ -498,7 +518,7 @@ function beltLights(ctx: CanvasRenderingContext2D, S: number, look: WorldLook, s
   if (!style) return;
   const rocks = beltRocks(S, seed);
   const r = seeded(seed ^ 0x5151);
-  const n = Math.min(60, Math.ceil(cityCount(look.population) / 6));
+  const n = Math.min(60, Math.ceil(cityCount(look.population ?? 0) / 6));
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   for (let k = 0; k < n; k++) {

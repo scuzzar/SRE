@@ -1422,8 +1422,21 @@ describe('Subsektor und Weltenerschaffung', () => {
     game.chooseHex(3, 4);
     expect(game.snapshot().world?.step).toBe('starport');
 
-    for (let i = 0; i < 11; i++) game.rollWorld();
+    // Das Weltsymbol erscheint mit der Größe; was noch nicht gewürfelt ist, fehlt ihm.
+    let sized = false;
+    for (let i = 0; i < 11; i++) {
+      game.rollWorld();
+      const now = game.snapshot().world!;
+      const size = now.profile.find((p) => p.kind === 'size')?.code;
+      if (size === undefined) expect(now.look).toBeUndefined();
+      else if (!sized) {
+        sized = true;
+        expect(now.look).toEqual({ seed: '0304', size: 7, atmosphere: undefined, hydrographics: undefined, water: undefined, population: undefined, tech: undefined, temperature: undefined, life: undefined });
+      }
+    }
+    expect(sized).toBe(true);
     const before = game.snapshot().world!;
+    expect(before.look).toEqual({ seed: '0304', size: 7, atmosphere: 8, hydrographics: 8, water: 0.8, population: 5, tech: 7, temperature: 'temperate', life: true });
     expect(before).toMatchObject({ step: 'name', uwp: 'C788545-7', navalBase: false, scoutBase: true, gasGiant: true, action: { kind: 'name' } });
     expect(before.profile.find((p) => p.kind === 'atmosphere')).toEqual({ kind: 'atmosphere', label: 'Atmosphäre', code: '8', text: 'Dense' });
     // Mit dem TL kam die Oberfläche, ohne eigenen Knopf.
