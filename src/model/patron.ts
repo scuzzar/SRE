@@ -1,11 +1,10 @@
-import { activeSkills, addCharacter, livingCharacters, type Campaign, type Character, type CharacterId } from './campaign';
+import { activeSkills, livingCharacters, type Campaign, type Character, type CharacterId } from './campaign';
 import { replay } from './career';
 import { DomainError } from './errors';
 import type { PatronRoll, RumorRoll } from './log';
 import type { Clock, Random } from './ports';
-import { itemOf, patronOf, rumorOf, type Patron, type Rumor } from './reference';
-import { npcName } from './encounter';
-import { careerInput, runCareerIn, stateOf } from './generation';
+import { patronOf, rumorOf, type Patron, type Rumor } from './reference';
+import { generateNpc } from './npcs';
 
 /** Die beiden Patron-Listen der Patron Encounters Matrix (SE, Charts S. 20). */
 export const patronLists = [1, 2] as const;
@@ -107,9 +106,8 @@ export function patronNpcBlocker(campaign: Campaign, entry: PatronRoll): string 
 
 /**
  * Erzeugt zum Patron-Wurf an dieser Stelle des Logs einen dauerhaften NSC (siehe domain-model.md,
- * *Patron als NSC*): Die Charaktererschaffung läuft zufällig in der Laufbahn des Patrons durch, der
- * Name kommt von der Tafel NSC. Er hat die Rolle Patron, lebt auf dem Aufenthaltsort und verweist
- * auf seinen Patron; eine Waffe aus der Abmusterung ist seine Primärwaffe und in der Hand.
+ * *Patron als NSC*): ein erzeugter NSC in der Laufbahn des Patrons, mit der Rolle Patron und dem
+ * Verweis auf seinen Patron; die Herkunft beginnt mit dem Beruf.
  */
 export function createPatronNpc(campaign: Campaign, index: number, random: Random): { campaign: Campaign; id: CharacterId } {
   const entry = campaign.log[index];
@@ -117,20 +115,5 @@ export function createPatronNpc(campaign: Campaign, index: number, random: Rando
   const blocker = patronNpcBlocker(campaign, entry);
   if (blocker) throw new DomainError(blocker);
   const patron = patronOfRoll(entry);
-  const generation = runCareerIn(campaign.hexes, patron.career!, random);
-  const input = careerInput(stateOf(generation), npcName(random));
-  const weapon = input.possessions?.map((p) => itemOf(p.of).weapon).find((w) => w !== undefined);
-  return addCharacter(
-    campaign,
-    {
-      ...input,
-      background: `${patron.name} · ${input.background}`,
-      npc: true,
-      role: 'patron',
-      place: campaign.location!,
-      patron: { list: entry.list, roll: patronRollOf(entry) },
-      ...(weapon === undefined ? {} : { primary: weapon, wields: weapon }),
-    },
-    generation.career,
-  );
+  return generateNpc(campaign, { service: patron.career!, role: 'patron', patron: { list: entry.list, roll: patronRollOf(entry) }, title: patron.name, criminal: patron.criminal }, random);
 }

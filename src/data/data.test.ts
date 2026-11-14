@@ -162,6 +162,17 @@ describe('Referenzdaten', () => {
     expect(() => ReferenceDataSchema.parse({ ...referenceData, encounters: { ...referenceData.encounters, patrons: broken } })).toThrow(/Unbekannte Laufbahn jedi/);
   });
 
+  it('geben jeder Waffe mit Gegenstand ein Mindest-SOC (0, 6, 10) und kennzeichnen die verbrecherischen Patrons (2026-11-14c)', () => {
+    const shopWeapons = referenceData.weapons.filter((w) => referenceData.items.some((i) => i.weapon === w.id));
+    for (const w of shopWeapons) expect(w.minSoc === undefined).toBe(w.id === 'hands' || false);
+    expect(referenceData.weapons.find((w) => w.id === 'dagger')!.minSoc).toBe(0);
+    expect(referenceData.weapons.find((w) => w.id === 'automatic-pistol')!.minSoc).toBe(6);
+    expect(referenceData.weapons.find((w) => w.id === 'laser-rifle')!.minSoc).toBe(10);
+    expect(referenceData.weapons.find((w) => w.id === 'teeth')!.minSoc).toBeUndefined();
+    const criminal = [...new Set(referenceData.encounters.patrons.filter((p) => p.criminal).map((p) => p.name))].sort();
+    expect(criminal).toEqual(['Arsonist', 'Assassin', 'Cutthroat', 'Embezzler', 'Hijacker', 'Pirate', 'Rogue', 'Smuggler', 'Swindler', 'Terrorist', 'Underworld Leader']);
+  });
+
   it('haben die sechs Laufbahnen des Regelwerks mit den Würfen der Prior Service Table', () => {
     const [navy, marines, army, scouts, merchants, other] = referenceData.services;
     expect(referenceData.services.map((s) => `${s.draft}:${s.name}`)).toEqual(['1:Navy', '2:Marines', '3:Army', '4:Scouts', '5:Merchants', '6:Other']);

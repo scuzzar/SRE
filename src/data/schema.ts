@@ -117,6 +117,8 @@ export const WeaponSchema = z.object({
   ammo: z.string().min(1).optional(),
   /** Ab dieser Gesetzesstufe ist die Waffe verboten (S. 14); fehlt bei den Händen. */
   law: z.number().int().min(1).max(15).optional(),
+  /** Ab diesem SOC bekommt ein erzeugter NSC die Waffe (Hausregel 2026-11-14c); fehlt bei Händen und Tierwaffen. */
+  minSoc: z.number().int().min(0).max(15).optional(),
   /** Feuerstoß: so viele Schuss auf einmal (Book 1: 4); fehlt, schießt die Waffe keine Feuerstöße. */
   burst: z.number().int().min(2).optional(),
   /** So viele Nachbarn des Ziels trifft ein Schuss bzw. Feuerstoß höchstens mit (Shotgun 3, Feuerstoß 2). */
@@ -160,6 +162,8 @@ export const PatronSchema = z.object({
   rumor: z.boolean(),
   /** Die Laufbahn, in der ein Patron-NSC die Charaktererschaffung durchläuft (Hausregel, docs/patron-nsc.md); Gerüchte haben keine. */
   career: z.string().min(1).optional(),
+  /** Verbrecherisch: DM +2 auf den Wurf, das Gesetz zu ignorieren, wenn ein erzeugter NSC eine Waffe bekommt (Hausregel 2026-11-14c). */
+  criminal: z.boolean().default(false),
 });
 
 /** Eine Art von Gerücht der Rumor List (SE, Charts S. 21) mit den Würfen 11–66 der Rumors Matrix, die auf sie führen. */

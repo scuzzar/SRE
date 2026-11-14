@@ -1,5 +1,10 @@
-import { npcCharacters, npcRoles, roleOf, type Campaign, type Character, type NpcRole } from './campaign';
-import { hexById } from './sector';
+import { addCharacter, npcCharacters, npcRoles, roleOf, type Campaign, type Character, type CharacterId, type CharacterInput, type NpcRole, type PatronRef, type Possession } from './campaign';
+import { npcName } from './encounter';
+import { DomainError } from './errors';
+import { careerInput, runCareerIn, stateOf } from './generation';
+import type { Random } from './ports';
+import { itemOf, itemOfWeapon, ref, serviceOf, type Weapon } from './reference';
+import { hexById, worldOf, type Hex } from './sector';
 
 /** Die NSC einer Rolle, nach Namen. */
 export interface NpcRoleGroup {
@@ -48,4 +53,92 @@ export function npcGroups(campaign: Campaign, all: boolean): readonly NpcWorldGr
 /** Die toten dauerhaften NSC, nach Namen; sie stehen eingeklappt unter den Lebenden. */
 export function deadNpcs(campaign: Campaign): readonly Character[] {
   return npcCharacters(campaign).filter((n) => n.dead).sort(byName);
+}
+
+/** Was einen erzeugten NSC ausmacht, bevor die Erschaffung läuft. */
+export interface NpcTemplate {
+  readonly service: string;
+  readonly role: NpcRole;
+  /** Der Patron, als der er entsteht; fehlt beim NSC aus einer Laufbahn. */
+  readonly patron?: PatronRef;
+  /** Steht vor der Herkunft, z. B. der Beruf des Patrons. */
+  readonly title?: string;
+  /** Ein verbrecherischer Patron-Beruf (`Patron.criminal`). */
+  readonly criminal?: boolean;
+}
+
+/** Warum sich kein NSC erzeugen lässt; `undefined`, wenn es geht. */
+export function generateNpcBlocker(campaign: Campaign): string | undefined {
+  return campaign.location === undefined ? 'Erst den Aufenthaltsort wählen.' : undefined;
+}
+
+/**
+ * Ein erzeugter NSC (siehe domain-model.md, *Patron als NSC*, *NSC aus einer Laufbahn*): Die
+ * Charaktererschaffung läuft zufällig in der Laufbahn durch, der Name kommt von der Tafel NSC, er
+ * lebt auf dem Aufenthaltsort und bekommt eine Waffe nach *Waffen erzeugter NSC*.
+ */
+export function generateNpc(campaign: Campaign, template: NpcTemplate, random: Random): { campaign: Campaign; id: CharacterId } {
+  const blocker = generateNpcBlocker(campaign);
+  if (blocker) throw new DomainError(blocker);
+  serviceOf(template.service);
+  const place = campaign.location!;
+  const generation = runCareerIn(campaign.hexes, template.service, random);
+  const input = careerInput(stateOf(generation), npcName(random));
+  const criminal = template.criminal === true || template.role === 'enemy';
+  const armed = armGenerated(input, worldOf(campaign.hexes, place), criminal, random);
+  return addCharacter(
+    campaign,
+    {
+      ...armed,
+      background: template.title === undefined ? input.background : `${template.title} · ${input.background}`,
+      npc: true,
+      role: template.role,
+      place,
+      ...(template.patron ? { patron: template.patron } : {}),
+    },
+    generation.career,
+  );
+}
+
+/** So viele Magazine bekommt ein erzeugter NSC zu seiner Schusswaffe: 1W4, wie die NSC der Begegnung. */
+const MAGAZINE_DIE = 4;
+
+/** Ab diesem Wurf (1W6 + DMs) gilt das Gesetz für einen erzeugten NSC nicht. */
+const IGNORE_LAW_TARGET = 6;
+
+/**
+ * Die Waffen, die ein erzeugter NSC bekommen kann: mit Mindest-SOC bis zu seinem SOC, mit TL bis
+ * zum TL seiner Welt, und vom Gesetz seiner Welt nicht verboten, außer es gilt für ihn nicht.
+ */
+export function allowedWeapons(soc: number, world: Hex, ignoreLaw: boolean): readonly Weapon[] {
+  const tech = world.uwp.tech ?? 0;
+  const law = world.uwp.law ?? 0;
+  return ref.weapons.filter((w) => {
+    const item = itemOfWeapon(w.id);
+    return w.minSoc !== undefined && item !== undefined && soc >= w.minSoc && (item.tl ?? 0) <= tech && (ignoreLaw || w.law === undefined || law < w.law);
+  });
+}
+
+/**
+ * Die Waffe eines erzeugten NSC (siehe domain-model.md, *Waffen erzeugter NSC*): erst der Wurf, ob
+ * das Gesetz für ihn gilt (1W6, +2 mit Streetwise, +2 verbrecherisch, 6+), dann die Waffe seiner
+ * höchsten Waffenfertigkeit, die erlaubt ist, sonst die teuerste erlaubte der höchsten SOC-Stufe.
+ * Sie kommt mit 1W4 Magazinen in seinen Besitz und ist Primärwaffe und in der Hand.
+ */
+export function armGenerated(input: CharacterInput, world: Hex, criminal: boolean, random: Random): CharacterInput {
+  const streetwise = input.skills.some((s) => s.of === 'streetwise');
+  const ignoreLaw = random.int(1, 6) + (streetwise ? 2 : 0) + (criminal ? 2 : 0) >= IGNORE_LAW_TARGET;
+  const allowed = allowedWeapons(input.upp.soc, world, ignoreLaw);
+  if (allowed.length === 0) return input;
+  const bySkill = [...input.skills].sort((a, b) => b.level - a.level).flatMap((s) => allowed.filter((w) => w.uses === s.of));
+  const price = (w: Weapon) => itemOfWeapon(w.id)?.price ?? 0;
+  const weapon = bySkill[0] ?? [...allowed].sort((a, b) => b.minSoc! - a.minSoc! || price(b) - price(a))[0]!;
+  const item = itemOfWeapon(weapon.id)!;
+  let possessions: readonly Possession[] = input.possessions ?? [];
+  const add = (of: string, count: number) => {
+    possessions = possessions.some((p) => p.of === of) ? possessions.map((p) => (p.of === of ? { ...p, count: itemOf(of).once ? 1 : p.count + count } : p)) : [...possessions, { of, count }];
+  };
+  if (!possessions.some((p) => p.of === item.id)) add(item.id, 1);
+  if (weapon.ammo !== undefined) add(weapon.ammo, random.int(1, MAGAZINE_DIE));
+  return { ...input, possessions, primary: weapon.id, wields: weapon.id };
 }
