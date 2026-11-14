@@ -224,6 +224,16 @@
         "Service",
         "NpcRole"
       ]
+    },
+    {
+      "id": "2026-11-14d",
+      "file": "2026-11-14-orakel-auf-der-karte",
+      "title": "Orakel auf der Karte: Ja/Nein für alle drei Stufen, mit Ja!, Ja?, Nein? und Nein!",
+      "approved": false,
+      "show": [
+        "Campaign",
+        "LogEntry"
+      ]
     }
   ]
 }

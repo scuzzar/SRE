@@ -294,6 +294,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Weapon.minSoc` und `Patron.criminal`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-nsc-aus-laufbahn-und-waffen.png`](changes/2026-11-14-nsc-aus-laufbahn-und-waffen.png).
 
+> **Wartet auf Freigabe** (Kennzeichen 2026-11-14d): **Orakel auf der Karte** (siehe *Orakel auf
+> der Karte*). Die Inspirationskarte trägt die Antwort für alle drei Stufen, mit Ja!, Ja?, Nein?
+> und Nein!; den Knopf „Ja/Nein“ gibt es nicht mehr. Neu im Bild: `Card.oracle`,
+> `Card → Odds : pickedOdds`, `Answer` und `OracleAnswer./answer` statt `/yes`. Der Ausschnitt dazu
+> liegt unter [`changes/2026-11-14-orakel-auf-der-karte.png`](changes/2026-11-14-orakel-auf-der-karte.png).
+
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
@@ -369,6 +375,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Hausregeln | `HouseRules` | Die Zahlen, nach denen Proben gerechnet werden |
 | Log | `LogEntry` | Ein Eintrag im Verlauf |
 | Orakelantwort | `OracleAnswer` | Ja oder Nein auf eine Frage |
+| Antwort (2026-11-14d) | `Answer` | Die sechs Antworten des Orakels: Ja!, Ja, Ja?, Nein?, Nein, Nein! |
+| Orakelfeld (2026-11-14d) | `Card.oracle` | Das Feld der Karte mit der Antwort für Hoch, Mittel und Gering; man tippt die Stufe an, die zur Frage passt |
 | Notiz | `Note` ohne `interprets` | Freier Text im Log, z. B. „Wir landen auf Regina.“ |
 | Deutung | `Note` mit `interprets` | Was man aus einem Ergebnis macht, z. B. „Die Tür ist offen, aber jemand war schon hier.“ |
 | Ergebnis | `OracleAnswer`, `DiceRoll`, `CardPick`, `TaskResult`, `AttackResult`, `DamageRoll`, `PatronRoll`, `RumorRoll` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
@@ -675,6 +683,37 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Ja oder Nein (`/yes`: `roll` ≤ `chance`) folgt allein daraus, nie aus dem heutigen Stand der Stufe.
   Die Frage ist freiwillig. „Außergewöhnlich Ja/Nein“, Chaosfaktor und Zufallsereignisse nach Mythic
   kommen erst nach Version 1.
+- **Orakel auf der Karte** (2026-11-14d, wartet auf Freigabe; ersetzt dann die Regel *Orakel* und
+  ändert *Eine Auswahl für Orakel und Proben*).
+  - Jede `Card` würfelt beim Ziehen einmal 1 bis 100 (`oracle`). Das **Orakelfeld** der Karte zeigt
+    daraus die Antwort für alle drei Stufen nebeneinander, wie die *Likely Odds* des GMA. Weil es
+    ein Wurf ist, widersprechen sich die Stufen nie: Sagt Gering Ja, sagen es auch Mittel und Hoch.
+  - Man tippt die Stufe an, die zur Frage passt (`pickedOdds`), höchstens eine. Beim Bestätigen
+    entsteht daraus eine `OracleAnswer` mit der Frage der Karte, dem Wurf, der Stufe und ihrer
+    Chance. Hat man außerdem Felder gewählt, entsteht daneben wie bisher die Kartenauswahl
+    (`CardPick`); erst die Antwort, dann die Auswahl.
+  - **Sechs Antworten** (`/answer`), allein aus `roll` und `chance`: Ja, wenn `roll` ≤ `chance`.
+    Das unterste Fünftel der Ja-Spanne ist **Ja!** (ja, und mehr als erhofft), das oberste **Ja?**
+    (ja, aber mit Haken). Das unterste Fünftel der Nein-Spanne ist **Nein?** (nein, aber nicht
+    ganz), das oberste **Nein!** (nein, und schlimmer).
+
+    | Stufe | Ja! | Ja | Ja? | Nein? | Nein | Nein! |
+    |---|---|---|---|---|---|---|
+    | Hoch (75 %) | 1–15 | 16–60 | 61–75 | 76–80 | 81–95 | 96–100 |
+    | Mittel (50 %) | 1–10 | 11–40 | 41–50 | 51–60 | 61–90 | 91–100 |
+    | Gering (25 %) | 1–5 | 6–20 | 21–25 | 26–40 | 41–85 | 86–100 |
+
+  - **Den Knopf „Ja/Nein“ gibt es nicht mehr**, auch nicht in der Leiste der Charaktererschaffung:
+    Wer das Orakel fragt, zieht eine Karte. Die Frage schreibt man oben auf die offene Karte
+    (`Card.question`, freiwillig, wie bisher).
+  - **Die gewählte Stufe der Kampagne (`Campaign.odds`) gilt nur noch für Proben.** Die App zeigt
+    die Auswahl erst, wenn am Charakter oben eine Fertigkeit gewählt ist. Sie bleibt stehen wie
+    bisher.
+  - **Alte Antworten** im Log bleiben, was sie sind: Ja bleibt Ja, Nein bleibt Nein. Weil `/answer`
+    aus Wurf und Chance folgt, zeigen sie nun auch das Ausrufe- oder Fragezeichen.
+  - *Offene Fragen zu 2026-11-14d*: (1) Stimmen die Fünftel, oder sollen ! und ? seltener sein?
+    (2) Antwort und Kartenauswahl als zwei Logeinträge, oder die Antwort als Teil der
+    Kartenauswahl? (3) Sollen alte Antworten das Zeichen bekommen, oder schlicht bleiben?
 - **Deutungen und Notizen.** Was in der Schreibzeile steht, wird je nach Knopf eine Frage (Ja/Nein,
   Karte ziehen), eine Deutung oder eine Notiz; einen Modus gibt es nicht. Beide sind ein `Note` mit
   Text, der nicht leer ist (Leerraum am Rand fällt weg).

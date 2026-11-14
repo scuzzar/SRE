@@ -216,7 +216,8 @@ hide <<value>> stereotype
     question: string [0..1]
     roll: number
     chance: number
-    /yes: boolean
+    $gone("2026-11-14d", "/yes: boolean")
+    $new("2026-11-14d", "/answer: Answer")
   }
   class DiceRoll $probe {
     dice: number[2]
@@ -303,6 +304,7 @@ hide <<value>> stereotype
     bell: number
     scatter: Scatter
     pickedRolls: CardRoll [*]
+    $new("2026-11-14d", "oracle: number")
   }
   class MapIcon <<value>> $karte {
     north: PathKind
@@ -330,6 +332,14 @@ hide <<value>> stereotype
     nw
     hit
     miss
+  }
+  enum Answer <<value>> $karte $newClass("2026-11-14d") {
+    yesStrong
+    yes
+    yesWeak
+    noWeak
+    no
+    noStrong
   }
   enum CardRoll <<value>> $karte {
     bell
@@ -1041,6 +1051,8 @@ Card "0..1" --> "1" Campaign : in
 Card "*" --> "1..*" Entry : drawn {ordered}
 Card "*" --> "*" Slot : picked
 Card ..> CardPick : on confirm
+Card .$newArrow("2026-11-14d").> OracleAnswer : on confirm
+Card "*" -$newArrow("2026-11-14d")-> "0..1" Odds : pickedOdds
 Card "1" *-- "1" MapIcon : map
 PickedItem "*" --> "1" Slot : /in
 PickedItem "*" --> "1..2" Entry : picked {ordered}

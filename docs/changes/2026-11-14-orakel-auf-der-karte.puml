@@ -1,0 +1,171 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-14d"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-14d: Orakel auf der Karte: Ja/Nein für alle drei Stufen, mit Ja!, Ja?, Nein? und Nein!
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+
+' Verlauf
+  abstract class LogEntry $probe
+  class OracleAnswer $karte {
+    question: string [0..1]
+    roll: number
+    chance: number
+    $gone("2026-11-14d", "/yes: boolean")
+    $new("2026-11-14d", "/answer: Answer")
+  }
+  class CardPick $karte
+
+' Zeit und Reisen
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Card <<transient>> $karte {
+    question: string [0..1]
+    bell: number
+    scatter: Scatter
+    pickedRolls: CardRoll [*]
+    $new("2026-11-14d", "oracle: number")
+  }
+  class MapIcon <<value>> $karte
+  enum Answer <<value>> $karte $newClass("2026-11-14d") {
+    yesStrong
+    yes
+    yesWeak
+    noWeak
+    no
+    noStrong
+  }
+
+' Referenzdaten
+  class Odds <<reference>> $karte {
+    name: string
+    chance: number
+    target: number
+  }
+  class Slot <<reference>> $karte
+  class Entry <<reference>> $karte
+
+' Kampagne
+Campaign "*" --> "1" Odds : odds
+
+' Zeit und Reisen
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+LogEntry <|-- OracleAnswer
+OracleAnswer "*" --> "1" Odds : odds
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+Card "0..1" --> "1" Campaign : in
+Card "*" --> "1..*" Entry : drawn {ordered}
+Card "*" --> "*" Slot : picked
+Card ..> CardPick : on confirm
+Card .$newArrow("2026-11-14d").> OracleAnswer : on confirm
+Card "*" -$newArrow("2026-11-14d")-> "0..1" Odds : pickedOdds
+Card "1" *-- "1" MapIcon : map
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+class OracleAnswer #line:d0021b;line.bold
+class Card #line:d0021b;line.bold
+@enduml
