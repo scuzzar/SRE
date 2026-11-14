@@ -21,6 +21,10 @@
       "title": "Subsektor und Welten"
     },
     {
+      "id": "oberflaeche",
+      "title": "Oberflächenkarte"
+    },
+    {
       "id": "karte",
       "title": "Karte und Orakel"
     },
@@ -251,6 +255,16 @@
       "approved": true,
       "show": [
         "Odds"
+      ]
+    },
+    {
+      "id": "2026-11-14g",
+      "file": "2026-11-14-oberflaechenkarte",
+      "title": "Oberflächenkarte: Gelände, Flüsse, Straßen, Vulkane und Städte je Welt, Bevölkerungsmultiplikator",
+      "approved": false,
+      "show": [
+        "Hex",
+        "Surface"
       ]
     }
   ]

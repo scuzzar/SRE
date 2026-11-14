@@ -90,6 +90,7 @@ hide <<value>> stereotype
     scoutBase: boolean [0..1]
     gasGiant: boolean [0..1]
     note: string [0..1]
+    $new("2026-11-14g", "populationMultiplier: number [0..1]")
     /step: WorldStep
   }
   class Uwp <<value>> $sektor {
@@ -148,6 +149,7 @@ hide <<value>> stereotype
     scatteredLakes: number
     life: boolean
   }
+  class SurfaceMap $oberflaeche $newClass("2026-11-14g")
   class SurfaceRow <<reference>> $sektor {
     table: SurfaceTable
     roll: number
@@ -228,6 +230,7 @@ Hex "*" --> "*" TradeCode : /trade
 Hex "*" --> "0..1" Temperature : temperature
 Hex "1" *-- "0..1" Surface : surface
 Surface "*" --> "0..1" SurfaceRow : /row
+Hex "1" *-$newArrow("2026-11-14g")- "0..1" SurfaceMap : map
 SurfaceRow --> SurfaceTable
 SurfaceRow -[hidden]- DiceExpr
 WorldRoll --> WorldRollKind
@@ -260,4 +263,5 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class Hex #line:d0021b;line.bold
 @enduml

@@ -310,6 +310,13 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `/randomEvent` und `/focus`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-zufallsereignis.png`](changes/2026-11-14-zufallsereignis.png).
 
+> **Offen, noch nicht freigegeben** (Kennzeichen 2026-11-14g): die **Oberflächenkarte** einer Welt
+> mit Gelände, Flüssen, Straßen, Vulkanen und Städten, gezeigt als drehbarer Globus (siehe
+> *Oberflächenkarte*). Neu im Bild: `Hex.populationMultiplier`, `Hex.map`, `SurfaceMap`, `Landform`,
+> `River`, `Road`, `Volcano`, `City`, `CityRank`, `Port`, `Towns` und der Bereich *Oberflächenkarte*.
+> Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-14-oberflaechenkarte.png`](changes/2026-11-14-oberflaechenkarte.png).
+
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
@@ -331,6 +338,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Shop, Kasse und Besitz | [views/shop.png](views/shop.png) |
 | Charaktererschaffung und Laufbahnen | [views/erschaffung.png](views/erschaffung.png) |
 | Subsektor und Welten | [views/sektor.png](views/sektor.png) |
+| Oberflächenkarte | [views/oberflaeche.png](views/oberflaeche.png) |
 | Karte und Orakel | [views/karte.png](views/karte.png) |
 | Probe und Verlauf | [views/probe.png](views/probe.png) |
 | Kampf: Waffen, Angriff, Wunden, Heilung | [views/kampf.png](views/kampf.png) |
@@ -338,7 +346,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+die Oberflächenkarte (2026-11-14g).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -568,7 +576,21 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Temperatur-DM | `UwpDigit.temperatureDm` | Der DM einer Atmosphäre auf den Temperaturwurf, z. B. −2 bei Atmosphäre 2 oder 3 |
 | Wasser-DM | `Temperature.hydroDm` | Der DM einer Temperatur auf die Hydrographie: −2 bei Heiß, −6 bei Kochend, nicht bei Atmosphäre D |
 | Oberfläche | `Surface` | Was eine spätere Oberflächenkarte braucht, nach dem *World Builder's Handbook*: Wasseranteil, Platten, Land- und Wassermassen, Leben; ohne Karte |
-| Oberflächenkarte | (noch nicht im Modell) | Die Karte der Oberfläche einer Welt aus 20 Dreiecken mit Hexen; kommt später, siehe [Konzept](konzept-oberflaechenkarte.md). Nicht zu verwechseln mit der *Weltkarte* (der Karte mit UWP und Klartext) |
+| Oberflächenkarte | `SurfaceMap`, `Hex.map` | Die Oberfläche einer Welt als Raster aus Oberflächenfeldern, mit Gelände, Flüssen, Straßen, Vulkanen und Städten; gezeigt als Globus. Nicht zu verwechseln mit der *Weltkarte* (der Karte mit UWP und Klartext) |
+| Oberflächenfeld | (Nummer in `SurfaceMap`) | Ein Feld der Oberflächenkarte, etwa 250 km breit; die Felder sind durchnummeriert. Nicht zu verwechseln mit dem *Hexfeld* des Subsektors |
+| Zahl der Felder | `SurfaceMap./cells` | 10 × n² + 2 mit n = 4 × Größe, z. B. 10 242 bei Größe 8 |
+| Kartendreieck | (kein Feld) | Eines der 20 großen Dreiecke des Ikosaeders, aus dem das Raster entsteht; manche Regeln zählen je Kartendreieck |
+| Geländeart | `Landform`, `SurfaceMap.landforms` | Was ein Oberflächenfeld ist: Wasser, Eis auf Wasser, Eis auf Land, Tundra, Gebirge, zerklüftet, Wüste, Dschungel, Sumpf, offen/Wald, besiedelt. Nicht dasselbe wie das *Gelände* der Begegnungen (`Terrain`) |
+| Fluss | `River` | Die Oberflächenfelder eines großen Flusses von der Quelle bis zur Mündung |
+| Straße | `Road` | Die Oberflächenfelder einer wichtigen Straße zwischen zwei Städten (nur bei TL 5–10) |
+| Vulkan, Vulkanfeld | `Volcano`, `Volcano.field` | Ein großer Vulkan bzw. ein Feld mit vielen kleinen Vulkanen; liegt auf einem Oberflächenfeld, ohne dessen Geländeart zu ändern |
+| Stadt | `City` | Eine Haupt- oder Nebenstadt mit Bevölkerungsziffer, Multiplikator und Hafen; auf einem Oberflächenfeld oder im Orbit (ohne Feld) |
+| Hauptstadt, Nebenstadt | `CityRank` | Die Städte mit den höchsten Bevölkerungsziffern (höchstens 10) bzw. eine Ziffer darunter |
+| Orbitalstadt | `City` ohne `cell` | Eine Stadt dauerhaft im Orbit |
+| Hafen einer Stadt | `City.port`, `Port` | Raumhafen A–E oder Landeplatz F–H der Stadt; Y (keiner) heißt: kein Wert |
+| Kleinstädte | `Towns` | Wie viele kleinere Städte auf einem Oberflächenfeld liegen; einzeln gibt es sie nicht |
+| Bevölkerungsmultiplikator | `Hex.populationMultiplier` | Die erste Ziffer der Einwohnerzahl, 1–9: Die Welt hat Multiplikator × 10^Bevölkerung Einwohner |
+| Globus | (View, aus `SurfaceMap`) | Die drehbare Kugel mit der Oberflächenkarte; nur Darstellung |
 | Wasseranteil | `Surface.water` | Wie viel Prozent der Oberfläche Wasser ist, 0 bis 100 |
 | Tektonische Platten | `Surface.plates` | Wie viele große Platten die Kruste hat; an ihren Grenzen entstehen später Gebirge |
 | Große und kleine Kontinente | `Surface.majorContinents`, `Surface.minorContinents` | Landmassen mit mindestens bzw. unter 15 % der Landfläche |
@@ -2108,6 +2130,28 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Land Archipel bzw. alles Wasser verstreuter See (die Zahl ist die ganze Fläche in halben Hexen,
   und es gibt keine anderen Land- bzw. Wassermassen), schreibt sie „Land nur als Archipele“ bzw.
   „Wasser nur als verstreute Seen“ statt einer Zahl wie 150.
+- **Oberflächenkarte** (offen, 2026-11-14g). Die Regeln stehen vollständig, mit allen Tabellen und
+  Hausregeln, im [Konzept Oberflächenkarte](konzept-oberflaechenkarte.md); mit der Freigabe gelten
+  sie als Teil dieses Modells. Das Wichtigste für das Bild:
+  - Eine fertige Welt ab Größe 1 mit Oberfläche (`Surface`) kann eine Oberflächenkarte haben
+    (`map`). Sie entsteht in einem Zug, wenn man den Globus zum ersten Mal öffnet, und ersetzt sich
+    nur ganz („Neu würfeln“). Von Hand ändern lässt sie sich nicht. Größe 0 hat keine.
+  - Das Raster folgt aus der Größe und wird nicht gespeichert: ein Ikosaeder, jede Kante in
+    n = 4 × Größe Abschnitte geteilt, jeder Eckpunkt ein Oberflächenfeld (`/cells` = 10 × n² + 2).
+    Die Felder sind in einer festen Reihenfolge durchnummeriert; `landforms` hat genau einen Wert je
+    Feld, alle übrigen Werte nennen Felder über ihre Nummer.
+  - Gespeichert werden nur Ergebnisse: Geländeart je Feld, Flüsse und Straßen als Folgen
+    benachbarter Felder, Vulkane, Haupt- und Nebenstädte (`cities`) und Kleinstädte je Feld
+    (`towns`, nur Felder mit mindestens einer). Platten, ihre Grenzen, die Temperatur je Feld und
+    das Rauschen dienen nur dem Erzeugen bzw. werden aus Größe und Temperatur der Welt gerechnet.
+  - Eine Stadt ohne Feld (`cell`) ist eine Orbitalstadt. `population` ist ihre Bevölkerungsziffer,
+    `multiplier` die erste Ziffer ihrer Einwohnerzahl (Einwohner = multiplier × 10^population).
+  - Der Bevölkerungsmultiplikator (`populationMultiplier`) wird beim Erzeugen der Karte gewürfelt,
+    falls die Welt noch keinen hat, und bleibt beim Neu würfeln der Karte erhalten. Bei
+    Bevölkerung 0 gibt es keinen.
+  - Beim Import wird geprüft: Länge von `landforms` passt zur Größe, alle Feldnummern liegen im
+    Raster, Flüsse und Straßen bestehen aus benachbarten Feldern, Städte und Kleinstädte nur bei
+    Bevölkerung ab 1.
 - **Notiz zur Welt.** Eine fertige Welt (mit Namen, nicht leer) kann eine Notiz haben (`note`):
   freier Text, auch über mehrere Zeilen. Anders als ein Logeintrag lässt sie sich jederzeit ändern,
   wie die Notiz eines Charakters; Leerraum am Rand fällt weg, eine leere Notiz gibt es nicht (dann

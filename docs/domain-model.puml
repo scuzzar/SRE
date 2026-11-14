@@ -186,6 +186,7 @@ hide <<value>> stereotype
     scoutBase: boolean [0..1]
     gasGiant: boolean [0..1]
     note: string [0..1]
+    $new("2026-11-14g", "populationMultiplier: number [0..1]")
     /step: WorldStep
   }
   class Uwp <<value>> $sektor {
@@ -740,6 +741,58 @@ hide <<value>> stereotype
     scatteredLakes: number
     life: boolean
   }
+  class SurfaceMap $oberflaeche $newClass("2026-11-14g") {
+    landforms: Landform[]
+    /cells: number
+  }
+  enum Landform <<value>> $oberflaeche $newClass("2026-11-14g") {
+    water
+    waterIce
+    landIce
+    tundra
+    mountain
+    rugged
+    desert
+    jungle
+    swamp
+    open
+    settled
+  }
+  class River <<value>> $oberflaeche $newClass("2026-11-14g") {
+    cells: number[2..*]
+  }
+  class Road <<value>> $oberflaeche $newClass("2026-11-14g") {
+    cells: number[2..*]
+  }
+  class Volcano <<value>> $oberflaeche $newClass("2026-11-14g") {
+    cell: number
+    field: boolean
+  }
+  class City <<value>> $oberflaeche $newClass("2026-11-14g") {
+    cell: number [0..1]
+    population: number
+    multiplier: number
+    rank: CityRank
+    port: Port [0..1]
+  }
+  enum CityRank <<value>> $oberflaeche $newClass("2026-11-14g") {
+    primary
+    secondary
+  }
+  enum Port <<value>> $oberflaeche $newClass("2026-11-14g") {
+    A
+    B
+    C
+    D
+    E
+    F
+    G
+    H
+  }
+  class Towns <<value>> $oberflaeche $newClass("2026-11-14g") {
+    cell: number
+    count: number
+  }
   class SurfaceRow <<reference>> $sektor {
     table: SurfaceTable
     roll: number
@@ -926,6 +979,15 @@ Hex "*" --> "*" TradeCode : /trade
 Hex "*" --> "0..1" Temperature : temperature
 Hex "1" *-- "0..1" Surface : surface
 Surface "*" --> "0..1" SurfaceRow : /row
+Hex "1" *-$newArrow("2026-11-14g")- "0..1" SurfaceMap : map
+SurfaceMap --> Landform
+SurfaceMap "1" *-$newArrow("2026-11-14g")- "*" River : rivers
+SurfaceMap "1" *-$newArrow("2026-11-14g")- "*" Road : roads
+SurfaceMap "1" *-$newArrow("2026-11-14g")- "*" Volcano : volcanoes
+SurfaceMap "1" *-$newArrow("2026-11-14g")- "*" City : cities
+SurfaceMap "1" *-$newArrow("2026-11-14g")- "*" Towns : towns
+City --> CityRank
+City --> Port
 SurfaceRow --> SurfaceTable
 SurfaceRow -[hidden]- DiceExpr
 WorldRoll --> WorldRollKind

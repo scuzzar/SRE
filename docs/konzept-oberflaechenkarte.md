@@ -5,12 +5,12 @@
 > den Regeln in `AGENTS.md` erst ins Modell und wird freigegeben.
 >
 > Abgestimmt: feste Feldgröße von etwa 250 km (Abschnitt 1), Flüsse, Vulkane und alle Städte in der
-> ersten Fassung, ein drehbarer Globus als zweite Ansicht neben der flachen Karte, das Gelände
+> ersten Fassung, ein drehbarer Globus als einzige Ansicht (keine flache Karte), das Gelände
 > jedes Feldes wird gespeichert, kein Nachbessern von Hand (nur neu würfeln), eigener Bildschirm
 > von der Weltkarte aus.
 
 Die **Oberflächenkarte** zeigt die Oberfläche einer Welt: Wasser, Land, Gebirge, Wüsten, Wälder,
-Eis, Flüsse, Vulkane und Städte auf einem Hexraster. Sie ist nicht die *Weltkarte*, also die Karte
+Eis, Flüsse, Vulkane und Städte auf einem Hexraster, gezeigt als drehbarer Globus. Sie ist nicht die *Weltkarte*, also die Karte
 der App mit dem UWP im Klartext (siehe Begriffe im Domänenmodell).
 
 Dieses Konzept enthält **alle Regeln, die man zum Bauen braucht**, mit allen Tabellen. Das PDF muss
@@ -85,7 +85,8 @@ auf der Weltkarte nach.
 
 ### ⚑ Unser Raster: feste Feldgröße von etwa 250 km
 
-Statt fester 500 Hexe hat bei uns **jedes Feld etwa 250 km** Durchmesser. Kleine Welten haben
+Statt fester 500 Hexe hat bei uns **jedes Feld etwa 250 km** Durchmesser. („Feld“ heißt in diesem
+Konzept immer *Oberflächenfeld*, siehe Begriffe im Domänenmodell, nie das Hexfeld des Subsektors.) Kleine Welten haben
 weniger Felder, große mehr.
 
 - Der Durchmesser einer Welt ist Größe × 1600 km (Classic Traveller).
@@ -598,7 +599,7 @@ Beispiel des Buchs (P = A, M = 8, also 80 Milliarden): 3a: 3W6 = 9 < 10, Multipl
 - In jedem Fall leben höchstens 10^(TL − 6) Menschen im Orbit.
 - Welten mit Regierung C oder höher haben eher weniger Menschen im Orbit. ⚑ Ohne eigene Regel.
 - ⚑ Orbitalstädte liegen nicht auf der Oberfläche. Der Globus zeigt sie als Lichter auf einer
-  Umlaufbahn, die flache Karte listet sie unter der Karte. Ihre Einwohner kommen aus den Städten
+  Umlaufbahn und in der Liste neben dem Globus. Ihre Einwohner kommen aus den Städten
   der Schritte 3a bis 3e: ⚑ Wir verlegen dafür die passende Zahl Nebenstädte (bzw. bei
   Raumhafen B Kleinstädte) in den Orbit, bis die Bedingungen erfüllt sind.
 
@@ -698,28 +699,26 @@ pflegen.
 
 ## Ansichten
 
-Alle Ansichten sind reine Darstellung aus den gespeicherten Werten.
-
-### Flache Karte
-
-- Die 20 Kartendreiecke flach nebeneinander wie auf IS Form 21: fünf Spitzen oben, fünf unten,
-  zehn im Band.
-- Wegen bis zu 16 002 Feldern auf ein Canvas gerechnet, nicht als SVG.
-- Zoom und Verschieben wie auf dem Sektor-Screen.
-- Antippen eines Feldes zeigt Gelände, Temperatur, Stadt, Hafen, Vulkan, Fluss.
+Alle Ansichten sind reine Darstellung aus den gespeicherten Werten. Abgestimmt (14. November 2026):
+**Es gibt nur den Globus**, keine flache Karte. Nah herangezoomt wirkt er ohnehin wie eine flache
+Karte.
 
 ### Globus
 
-- Die Felder auf einer Kugel, mit dem Finger drehbar, mit zwei Fingern zoombar.
+- Die Oberflächenfelder auf einer Kugel, mit dem Finger drehbar, mit zwei Fingern (am Rechner mit
+  dem Mausrad) zoombar. Ganz herausgezoomt sieht man die ganze Halbkugel, ganz hineingezoomt etwa
+  10 Felder über die Breite des Bildschirms.
 - Gerechnet wie das Weltsymbol heute (`src/view/sector/world-icon.ts`): Pixel für Pixel, Licht von
   links, Atmosphärenleuchten, Wolken, Stadtlichter auf der Nachtseite. Statt Zufallsrauschen
   schlägt jeder Pixel nach, welches Feld unter ihm liegt (vorberechnete Nachschlagetabelle nach
   Breiten- und Längengrad).
 - Feldgrenzen weich gezeichnet, damit es nach Planet aussieht und nicht nach Waben; Küsten mit
-  Rauschen ausgefranst, Gebirge schattiert, Flüsse als Linien, Städte als Lichter. Das Hexgitter
-  lässt sich einblenden.
+  Rauschen ausgefranst, Gebirge schattiert, Flüsse und Straßen als Linien, Städte als Lichter,
+  Vulkane als Zeichen. Das Hexgitter lässt sich einblenden.
 - Orbitalstädte als Lichter auf einer Umlaufbahn.
-- Antippen wie bei der flachen Karte.
+- **Antippen** eines Feldes zeigt Gelände, Temperatur, Stadt, Hafen, Vulkan, Fluss.
+- **Liste** neben bzw. unter dem Globus: Städte (Haupt- und Nebenstädte mit Hafen), Orbitalstädte
+  und Vulkane. Antippen eines Eintrags dreht den Globus dorthin und markiert das Feld.
 - ⚑ Läuft das auf dem Handy nicht flüssig, wird es mit WebGL gerechnet, ohne zusätzliche
   Bibliothek.
 
@@ -728,10 +727,14 @@ Alle Ansichten sind reine Darstellung aus den gespeicherten Werten.
 Hat eine Welt eine Oberflächenkarte, zeichnet das Weltsymbol (Sektorkarte, Kopfzeile, Weltkarte)
 die echten Felder statt Zufallsrauschen. So sieht das Symbol aus wie die Welt.
 
-### Wo die Karte erscheint
+### Wo der Globus erscheint
 
-Als eigener Bildschirm, von der Weltkarte aus geöffnet. Umschalter zwischen flacher Karte und Globus.
-Ein Knopf „Neu würfeln“ ersetzt die ganze Karte (nach Rückfrage).
+Als eigener Bildschirm über der Weltkarte:
+- Auf der **Weltkarte** einer fertigen Welt lässt sich das große Weltsymbol oben rechts antippen.
+- Im Abschnitt **Oberfläche** der Weltkarte steht ein Knopf „Globus“.
+- Hat die Welt noch keine Oberflächenkarte, entsteht sie beim ersten Öffnen.
+- Ein Knopf „Neu würfeln“ ersetzt die ganze Karte (nach Rückfrage).
+- Bei Größe 0 gibt es weder Knopf noch antippbares Symbol.
 
 ## Was wir bewusst weglassen
 
@@ -745,6 +748,7 @@ Ein Knopf „Neu würfeln“ ersetzt die ganze Karte (nach Rückfrage).
 | Terraforming | Beiwerk | später |
 | Gesellschaft, Bräuche, Ressourcen (*Population Related Details* ab Schritt 7, *Natural Resources*) | gehört nicht zur Karte | eigenes Thema |
 | Von Hand nachbessern | erste Fassung nur „Neu würfeln“ | später |
+| Flache Karte (20 Kartendreiecke wie IS Form 21) | auf dem Handy schwer lesbar, der Globus reicht | später als Export zum Ausdrucken, aus denselben Daten |
 
 ## Offene Punkte
 
