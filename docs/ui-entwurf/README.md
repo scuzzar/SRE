@@ -131,5 +131,7 @@ Im Ordner [`orakel-neu/`](orakel-neu/) liegt der Entwurf für den neuen Aufbau d
 |---|---|
 | `orakel-neu/Entwurf.html` | Der ganze Screen zum Anfassen: Charakter oben kompakt (Attribute und Fertigkeiten je eine Zeile; ist eine Fertigkeit gewählt, steht der DM hinter dem Wert). Unten nur noch eine Reihe mit drei Symbolen: Notiz, Würfeln, Karte. Die Stufe (6+, 8+, 10+) erscheint erst mit der Probe. Die Karte trägt oben die Frage und das Orakelfeld mit der Antwort je Stufe (Ja!, Ja, Ja?, Nein?, Nein, Nein!); Antwort und gewählte Felder werden ein Logeintrag. „Deuten“ ist ein Knopf am Ergebnis und öffnet ein Blatt, „Notiz“ ebenso. Der Log ist kompakt wie in `log-kompakt/` |
 
-Eine gewöhnliche HTML-Datei, die sich direkt im Browser öffnen lässt. Die Karte ist gekürzt: Szene,
-Besitz, Situation, Merkmale und die Themen-Tafeln bleiben wie heute.
+Eine gewöhnliche HTML-Datei, die sich direkt im Browser öffnen lässt. Die Karte ist vollständig, im
+Stil der App-Karte; ihre Einträge stammen aus acht Karten, die in der App gezogen wurden, „Neu
+ziehen“ geht sie der Reihe nach durch. Nur der Orakelwurf ist jedes Mal neu. Die drei Knöpfe unten
+sind gleich breit.
