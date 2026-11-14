@@ -98,16 +98,33 @@ describe('Start', () => {
 });
 
 describe('Orakel-Screen', () => {
-  it('fragt das Orakel mit der eingestellten Stufe; die Stufe bleibt stehen und wird gespeichert', async () => {
-    const { game, repository } = await started(fixedRandom(61, 20));
-    game.setOdds('low');
-    game.askOracle('Ist Halvek ehrlich?');
-    game.askOracle();
-    await game.whenSaved();
+  it('fragt das Orakel auf der Karte: je Stufe die Antwort, die gewählte kommt mit der Frage in den Log', async () => {
+    const { game } = await started(fixedRandom());
+    game.drawCard();
+    const card = game.snapshot().card!;
+    // Ohne Würfe liefert der Zufall immer das Kleinste: der Orakelwurf ist 1, also überall Ja!.
+    expect(card.oracle).toEqual({
+      roll: 1,
+      choices: [
+        { id: 'high', name: 'Hoch', chance: 75, answer: 'yesStrong', picked: false },
+        { id: 'medium', name: 'Mittel', chance: 50, answer: 'yesStrong', picked: false },
+        { id: 'low', name: 'Gering', chance: 25, answer: 'yesStrong', picked: false },
+      ],
+    });
+    expect(card.canConfirm).toBe(false);
+    game.toggleOdds('low');
+    expect(game.snapshot().card).toMatchObject({ pickedCount: 1, canConfirm: true });
+    game.confirmCard('  Ist Halvek ehrlich?  ');
+    expect(game.snapshot().card).toBeUndefined();
     expect(game.snapshot().log).toEqual([
-      { kind: 'oracle', at: '2026-10-23T14:02:00.000Z', question: 'Ist Halvek ehrlich?', odds: 'Gering', roll: 61, chance: 25, yes: false },
-      { kind: 'oracle', at: '2026-10-23T14:04:00.000Z', question: undefined, odds: 'Gering', roll: 20, chance: 25, yes: true },
+      { kind: 'card', at: expect.any(String), question: 'Ist Halvek ehrlich?', bell: undefined, scatter: undefined, map: undefined, answer: { odds: 'Gering', roll: 1, chance: 25, answer: 'yesStrong' }, items: [] },
     ]);
+  });
+
+  it('die Stufe der Proben bleibt stehen und wird gespeichert', async () => {
+    const { game, repository } = await started(fixedRandom());
+    game.setOdds('low');
+    await game.whenSaved();
     expect(repository.saved?.odds).toBe('low');
   });
 
@@ -880,7 +897,7 @@ describe('Begegnung und Kampfsimulation', () => {
 
   it('ein Logeintrag löschen, während Schaden verteilt wird, bricht nicht ab: die Stelle rückt mit, oder das Verteilen endet', async () => {
     const { game, random } = await onRegina();
-    game.askOracle('Vorher?');
+    game.writeNote('Vorher?');
     game.rollEncounter(15);
     game.rollSurprise();
     game.closeSurprise();

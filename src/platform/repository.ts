@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import { hexFromRolls, keepFocus, START_DAY, settleStash, upgradeDistances, upgradeNpcs, type Campaign, type CampaignId, type CampaignRepository, type Encounter, type Hex, type LegacyWorldRoll, type SyncMark } from '../model';
+import { hexFromRolls, keepFocus, START_DAY, settleStash, upgradeDistances, upgradeNpcs, upgradeOracle, type Campaign, type CampaignId, type CampaignRepository, type Encounter, type Hex, type LegacyWorldRoll, type SyncMark } from '../model';
 
 /** Eine Kampagne liegt unter ihrer Id. */
 interface StoredCampaign {
@@ -109,6 +109,7 @@ export class DexieCampaignRepository implements CampaignRepository {
  * Kampagne keinen; sie bekommt den ersten Lebenden. Vor dem Shop hatte sie keine Buchungen, vor den NSC keine Begegnungen, und ein Charakter war immer ein SC.
  * Vor der Spielzeit hatte eine Kampagne keinen Tag; sie beginnt am 001-1105.
  * Vor 2026-11-08c waren die NSC einer Begegnung eine eigene Art; heute sind sie Charaktere (`upgradeNpcs`).
+ * Vor 2026-11-14d war eine Orakelantwort ein eigener Eintrag; heute steht sie in der Kartenauswahl (`upgradeOracle`).
  */
 export function upgraded(campaign: Campaign): Campaign {
   const log = campaign.log.map((entry) => {
@@ -134,7 +135,7 @@ export function upgraded(campaign: Campaign): Campaign {
   // Begegnungen von vor den Range Bands bzw. von vor 2026-11-08d macht upgradeDistances zu solchen mit Startband.
   const encounters = (campaign.encounters ?? []).map((e): Encounter => ({ ...e, round: e.round ?? 1, acted: e.acted ?? [] }));
   // Spielstände von vor dem Gruppengepäck: Was ein SC nicht ausgerüstet hat, kommt ins Gepäck (settleStash).
-  const upgraded = settleStash(upgradeDistances(upgradeNpcs({ ...campaign, characters, log, hexes, bookings: campaign.bookings ?? [], encounters, stash: campaign.stash ?? [], day: (campaign as Partial<Campaign>).day ?? START_DAY })));
+  const upgraded = settleStash(upgradeDistances(upgradeNpcs(upgradeOracle({ ...campaign, characters, log, hexes, bookings: campaign.bookings ?? [], encounters, stash: campaign.stash ?? [], day: (campaign as Partial<Campaign>).day ?? START_DAY }))));
   return keepFocus(upgraded, upgraded);
 }
 

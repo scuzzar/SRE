@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { entryOf, ref, slotOf, slotWithId } from '..';
 import { fixedClock, fixedRandom } from '../testing';
-import { canConfirm, confirmCard, drawableEntries, drawCard, drawNames, drawnIn, isVisible, pickedCount, redrawCard, togglePick, toggleRoll } from './card';
+import { askCard, canConfirm, confirmCard, drawableEntries, drawCard, drawNames, drawnIn, isVisible, pickedCount, redrawCard, toggleOdds, togglePick, toggleRoll } from './card';
 import { bellWeights, pathCount, rollBell, rollMap, rollScatter, scatters } from '../card-roll';
 
 const visible = ref.sections.flatMap((s) => s.slots).filter(isVisible);
@@ -67,7 +67,7 @@ describe('Auswahl auf der Karte', () => {
   it('bestätigt erst mit Auswahl, dann je Feld beide Einträge, in der Reihenfolge der Karte und mit der Frage', () => {
     const asked = { ...card, question: 'Wer steckt dahinter?' };
     expect(canConfirm(asked)).toBe(false);
-    expect(() => confirmCard(asked, fixedClock())).toThrow(/mindestens ein Feld/);
+    expect(() => confirmCard(asked, fixedClock())).toThrow(/mindestens ein Feld oder eine Stufe/);
     const picked = togglePick(togglePick(asked, 'mythic.npc.appearance'), 'mythic.event.action');
     const pick = confirmCard(picked, fixedClock());
     expect(pick).toEqual({
@@ -128,6 +128,27 @@ describe('Wurffelder der Karte', () => {
     expect(toggleRoll(picked, 'map').pickedRolls).toEqual(['bell']);
     const pick = confirmCard({ ...picked, question: 'Wohin?' }, fixedClock());
     expect(pick).toEqual({ kind: 'card', at: '2026-10-23T14:00:00.000Z', question: 'Wohin?', bell: 1, map: card.map, items: [] });
+  });
+});
+
+describe('Orakelfeld der Karte', () => {
+  it('würfelt den Orakelwurf zuletzt, nach den Wurffeldern', () => {
+    expect(drawCard(fixedRandom()).oracle).toBe(1);
+  });
+
+  it('wählt höchstens eine Stufe; dieselbe noch einmal nimmt sie heraus, eine andere ersetzt sie', () => {
+    const card = drawCard(fixedRandom());
+    const low = toggleOdds(card, 'low');
+    expect([low.pickedOdds, pickedCount(low), canConfirm(low)]).toEqual(['low', 1, true]);
+    expect(toggleOdds(low, 'high').pickedOdds).toBe('high');
+    expect('pickedOdds' in toggleOdds(low, 'low')).toBe(false);
+    expect(() => toggleOdds(card, 'certain')).toThrow(/gibt es nicht/);
+  });
+
+  it('bestätigt die Antwort mit Wurf, Stufe und ihrer Chance, auch ohne Feld', () => {
+    const card = askCard(toggleOdds(drawCard(fixedRandom()), 'medium'), '  Ist das Wrack unter Druck?  ');
+    expect(confirmCard(card, fixedClock())).toEqual({ kind: 'card', at: '2026-10-23T14:00:00.000Z', question: 'Ist das Wrack unter Druck?', oracle: 1, odds: 'medium', chance: 50, items: [] });
+    expect('question' in askCard(card, '   ')).toBe(false);
   });
 });
 

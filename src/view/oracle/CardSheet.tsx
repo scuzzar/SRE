@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { CardSectionView, CardView } from '../../controller';
-import { mapShort, mapText, nameText, pairText, quoted, scatterText } from '../format';
+import { answerText, isYesAnswer, mapShort, mapText, nameText, pairText, scatterText } from '../format';
 import { useGame } from '../game-context';
 import { animated, haptic } from '../haptics';
-import { CheckIcon, CloseIcon, Emblem, SenseIcon } from '../icons';
+import { CheckIcon, CloseIcon, Emblem, PlusIcon, SenseIcon } from '../icons';
 import { BellCurve, MapIconSvg, ScatterRose } from './CardRollIcons';
 
 type SlotView = CardSectionView['slots'][number];
@@ -18,7 +18,11 @@ const REVEAL_MS = 1150;
 const LEAVE_MS = 260;
 
 /**
- * Die offene Inspirationskarte im Vordergrund. Aufbau nach der GMA2e-Karte, darunter die Themen-Tafeln. Ein Paar steht in einem Feld.
+ * Die offene Inspirationskarte im Vordergrund. Oben das Fragefeld, dann das Orakelfeld (je Stufe die
+ * Antwort; man tippt die Stufe an, die zur Frage passt), darunter Aufbau nach der GMA2e-Karte und die
+ * Themen-Tafeln. Ein Paar steht in einem Feld. Die Karte passt auf einen Bildschirm: Reicht der Platz
+ * nicht, werden Themen-Tafeln von unten her zu ganzzeiligen Knöpfen, die beim Antippen aufklappen.
+ * Die Frage während des Tippens ist reine Darstellung; übergeben wird sie beim Bestätigen.
  *
  * Animation (reine Darstellung), so inszeniert wie der Würfelwurf: Die Karte fliegt mit dem Rücken
  * nach oben von unten herein, wo „Karte ziehen“ sitzt, schwebt kurz mit rotem Glimmen und dreht sich
@@ -27,7 +31,7 @@ const LEAVE_MS = 260;
  * die Karte nach unten in den Log sinken, Verwerfen wirft sie zur Seite weg. Ein Tippen, solange sie
  * noch hereinkommt, beendet die Animation und zeigt sofort die ganze Karte, ohne etwas auszuwählen.
  */
-export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: () => void }) {
+export function CardSheet({ card }: { card: CardView }) {
   const game = useGame();
   // Zählt die Ziehungen, damit jede neue Karte ihre Drehung von vorn spielt.
   const [draw, setDraw] = useState(0);
@@ -37,6 +41,11 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
   const [revealing, setRevealing] = useState(animated);
   const [skipped, setSkipped] = useState(false);
   const [leaving, setLeaving] = useState<'confirm' | 'discard' | undefined>(undefined);
+  const [question, setQuestion] = useState(card.question ?? '');
+  // Welche Themen-Tafeln als Knopf stehen und welche man zuletzt aufgeklappt hat; reine Anzeige.
+  const [collapsed, setCollapsed] = useState<readonly number[]>([]);
+  const [open, setOpen] = useState<number | undefined>(undefined);
+  const body = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
   useEffect(() => {
@@ -61,6 +70,30 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
   };
   const cardSections = card.sections.filter((s) => s.kind === 'card');
   const themes = card.sections.filter((s) => s.kind === 'theme');
+  const boxCount = boxed(themes).length;
+
+  // Passt die Karte nicht, wird die unterste offene Tafel zum Knopf, bis sie passt oder keine mehr
+  // übrig ist; die zuletzt aufgeklappte bleibt offen. Ändert sich das Fenster, wird neu eingepasst.
+  // Gemessen wird die Höhe im Layout (offsetHeight), nicht die Scrollhöhe: Die fliegende Karte ist
+  // während der Animation verschoben und gedreht, das zählt dort mit.
+  useLayoutEffect(() => {
+    const el = body.current;
+    const content = el?.querySelector<HTMLElement>('.card-flip');
+    if (!el || !content) return;
+    const room = el.clientHeight - parseFloat(getComputedStyle(el).paddingTop) - parseFloat(getComputedStyle(el).paddingBottom);
+    if (content.offsetHeight <= room + 1) return;
+    for (let i = boxCount - 1; i >= 0; i--) {
+      if (i !== open && !collapsed.includes(i)) {
+        setCollapsed([...collapsed, i]);
+        return;
+      }
+    }
+  }, [collapsed, open, draw, boxCount]);
+  useEffect(() => {
+    const refit = () => setCollapsed([]);
+    window.addEventListener('resize', refit);
+    return () => window.removeEventListener('resize', refit);
+  }, []);
   const section = (id: string) => cardSections.find((s) => s.id === id);
   const known = ['event', 'senses', 'scene', 'belongings', 'situation', 'traits', 'flavor'];
 
@@ -77,21 +110,20 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
       }}
     >
       <section className="sheet card-sheet" role="dialog" aria-modal="true" aria-labelledby="card-title">
-        <div className="sheet-head">
-          <h2 id="card-title">Inspirationskarte</h2>
-          <span className="muted" style={{ fontSize: 13 }}>
-            Antippen, was du nutzen willst
-          </span>
+        <h2 id="card-title" className="visually-hidden">
+          Inspirationskarte
+        </h2>
+        <div className="card-question">
+          <label htmlFor="card-question" className="visually-hidden">
+            Frage an die Karte
+          </label>
+          <input id="card-question" type="text" value={question} placeholder="Frage an die Karte (freiwillig)" autoComplete="off" enterKeyHint="done" onChange={(e) => setQuestion(e.target.value)} />
         </div>
-        {card.question && (
-          <div className="card-question">
-            <span className="kicker">Frage</span> <span style={{ fontWeight: 600 }}>{quoted(card.question)}</span>
-          </div>
-        )}
-        <div className={drawing ? 'sheet-body drawing' : 'sheet-body'}>
+        <div ref={body} className={drawing ? 'sheet-body drawing' : 'sheet-body'}>
           <div key={draw} className="card-flip">
             <div className="card-front">
               <article className="card" aria-label="Karte">
+                <Oracle card={card} />
                 <Stack section={section('event')} />
                 <Senses section={section('senses')} />
                 <Rolls card={card} />
@@ -116,7 +148,17 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
                     <Banded key={s.id} section={s} />
                   ))}
               </article>
-              {themes.length > 0 && <Themes themes={themes} />}
+              {themes.length > 0 && (
+                <Themes
+                  themes={themes}
+                  collapsed={collapsed}
+                  onOpen={(i) => {
+                    haptic('pick');
+                    setOpen(i);
+                    setCollapsed([]);
+                  }}
+                />
+              )}
             </div>
             <div className="card-back" aria-hidden="true">
               <span className="card-back-frame" />
@@ -145,6 +187,8 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
               haptic('draw');
               game.redrawCard();
               setDraw((d) => d + 1);
+              setOpen(undefined);
+              setCollapsed([]);
               setDrawing(animated());
               setRevealing(animated());
               setSkipped(false);
@@ -162,16 +206,43 @@ export function CardSheet({ card, onConfirmed }: { card: CardView; onConfirmed: 
             aria-label={`${card.pickedCount} ${card.pickedCount === 1 ? 'Eintrag' : 'Einträge'} in den Log übernehmen`}
             onClick={() => {
               haptic('confirm');
-              leave('confirm', () => {
-                game.confirmCard();
-                onConfirmed();
-              });
+              leave('confirm', () => game.confirmCard(question));
             }}
           >
             <CheckIcon />
           </button>
         </div>
       </section>
+    </div>
+  );
+}
+
+/**
+ * Das Orakelfeld: ein Wurf 1–100, je Stufe die Antwort (Ja!, Ja, Ja?, Nein?, Nein, Nein!). Man tippt
+ * die Stufe an, die zur Frage passt; höchstens eine, noch einmal tippen nimmt sie heraus.
+ */
+function Oracle({ card }: { card: CardView }) {
+  const game = useGame();
+  return (
+    <div className="card-grid cols-3 card-oracle" role="group" aria-label={`Orakel, W100 ${card.oracle.roll}`}>
+      {card.oracle.choices.map((choice) => (
+        <button
+          key={choice.id}
+          type="button"
+          className="tile oracle-choice"
+          aria-pressed={choice.picked}
+          aria-label={`${choice.name}, ${choice.chance} %: ${answerText[choice.answer]}`}
+          onClick={() => {
+            haptic(choice.picked ? 'unpick' : 'pick');
+            game.toggleOdds(choice.id);
+          }}
+        >
+          <span className="tile-label">
+            {choice.name} · {choice.chance} %
+          </span>
+          <span className={isYesAnswer(choice.answer) ? 'oracle-answer' : 'oracle-answer negative'}>{answerText[choice.answer]}</span>
+        </button>
+      ))}
     </div>
   );
 }
@@ -321,10 +392,21 @@ function boxed(themes: readonly CardSectionView[]): CardSectionView[][] {
  * Welt mit Wesen). Eine Tafel ist so breit, wie sie Felder nebeneinander hat; kleine Tafeln teilen
  * sich so eine Reihe.
  */
-function Themes({ themes }: { themes: readonly CardSectionView[] }) {
+function Themes({ themes, collapsed, onOpen }: { themes: readonly CardSectionView[]; collapsed: readonly number[]; onOpen: (box: number) => void }) {
   return (
     <div className="themes">
-      {boxed(themes).map((group, i) => (
+      {boxed(themes).map((group, i) => {
+        if (collapsed.includes(i)) {
+          const picked = group.reduce((n, theme) => n + theme.slots.filter((slot) => slot.picked).length, 0);
+          return (
+            <button key={group[0]!.id} type="button" className="theme-button" style={{ '--deal': i } as CSSProperties} aria-expanded={false} onClick={() => onOpen(i)}>
+              <span className="theme-button-title">{group.map((theme) => theme.name).join(' · ')}</span>
+              {picked > 0 && <span className="theme-button-count">{picked} gewählt</span>}
+              <PlusIcon />
+            </button>
+          );
+        }
+        return (
         <div key={group[0]!.id} className="card theme-box" style={{ '--deal': i } as CSSProperties}>
           {group.map((theme) => (
             <section key={theme.id} className={`theme span-${columns(theme.slots.filter((slot) => !slot.name))}`} aria-labelledby={`theme-${theme.id}`}>
@@ -351,7 +433,8 @@ function Themes({ themes }: { themes: readonly CardSectionView[] }) {
             </section>
           ))}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

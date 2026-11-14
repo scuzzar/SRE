@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { host, openOracle } from './layout';
+import { entries, host, openOracle } from './layout';
 
 test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Begegnung die Simulation mit Runde, Entfernung und Zügen', async ({ page }) => {
   await page.goto('/');
@@ -169,8 +169,8 @@ test('Patron und Gerücht: eigene Karten im Reiter Begegnung; erst der Test, bei
   await expect(rumor.locator('.patron-last')).toContainText(/[A-Z] · .+ (allgemein|bestimmt) · \d und \d → \d\d/);
   // Der Wurf liegt im Log als Ergebnis.
   await openOracle(page);
-  await expect(page.getByText(/Patron · Liste [12]/).first()).toBeVisible();
-  await expect(page.locator('.kicker', { hasText: /^Gerücht$/ }).first()).toBeVisible();
+  await expect(entries(page).filter({ hasText: /Liste [12] · \d und \d/ }).first()).toBeVisible();
+  await expect(entries(page).filter({ hasText: /allgemein|bestimmt/ }).first()).toBeVisible();
 });
 
 test('Tiere: Gelände oben für alle Begegnungen; die Tiertabelle entsteht beim ersten Wurf, danach kann man die Zeile wählen', async ({ page }) => {

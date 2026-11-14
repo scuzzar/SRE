@@ -21,7 +21,7 @@ function seeded(seed: number) {
 type Step = (game: GameController, pick: (n: number) => number) => void;
 
 const steps: readonly [string, Step][] = [
-  ['oracle', (g) => g.askOracle('Frage?')],
+  ['oracle', (g, p) => { g.drawCard(); g.toggleOdds(['high', 'medium', 'low'][p(3)]!); g.confirmCard('Frage?'); }],
   ['dice', (g) => g.rollDice()],
   ['note', (g, p) => g.writeNote('Notiz', g.snapshot().log.length > 0 ? p(g.snapshot().log.length) : undefined)],
   ['delete', (g, p) => g.snapshot().log.length > 0 && g.deleteLogEntry(p(g.snapshot().log.length))],

@@ -27,3 +27,11 @@ export async function openOracle(page: Page) {
   const characters = nav.getByRole('button', { name: 'Charaktere', exact: true });
   if ((await characters.getAttribute('aria-current')) === 'page') await nav.getByRole('button', { name: 'Begegnung', exact: true }).click();
 }
+
+/** Die Einträge des Logs: das Neueste als Kasten, Älteres als Zeile; ohne die Trennzeilen der Spieltage. */
+export const entries = (page: Page) => oracle(page).locator('.log ol > li:not(.log-day)');
+
+/** Solange die Karte hereinkommt, beendet ein Tippen nur die Animation; das Tippen auf die Zählung tut sonst nichts. */
+export async function revealed(card: ReturnType<Page['getByRole']>) {
+  await card.locator('.sheet-foot .count').click();
+}

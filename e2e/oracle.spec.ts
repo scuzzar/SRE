@@ -1,53 +1,56 @@
-import { expect, test, type Locator } from '@playwright/test';
-
-/** Solange die Karte hereinkommt, beendet ein Tippen nur die Animation; das Tippen auf die Überschrift tut sonst nichts. */
-async function revealed(card: Locator) {
-  await card.getByRole('heading', { name: 'Inspirationskarte' }).click();
-}
+import { expect, test } from '@playwright/test';
+import { characters, entries, oracle, revealed } from './layout';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-test('Hauptscreen: leerer Log, Knöpfe unten, Stufe Mittel', async ({ page }) => {
+test('Hauptscreen: leerer Log, drei gleich breite Knöpfe unten, keine Stufe ohne Probe', async ({ page }) => {
   await expect(page.getByText('Noch nichts im Log.')).toBeVisible();
-  await expect(page.getByRole('radio', { name: /Mittel/ })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('radio')).toHaveCount(0);
   const viewport = page.viewportSize()!;
-  for (const name of [/Ja\/Nein/, /Karte ziehen/, /2W6/]) {
-    const box = (await page.getByRole('button', { name }).boundingBox())!;
+  const widths: number[] = [];
+  for (const name of ['Notiz', '2W6', 'Karte ziehen']) {
+    const box = (await oracle(page).getByRole('button', { name, exact: true }).boundingBox())!;
     expect(box.y).toBeGreaterThan(viewport.height / 2);
     expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+    widths.push(Math.round(box.width));
   }
+  expect(new Set(widths).size).toBe(1);
 });
 
-test('Ja/Nein-Orakel: Frage und Antwort landen im Log, das Fragefeld ist danach leer', async ({ page }) => {
-  await page.getByRole('radio', { name: /Gering/ }).click();
-  await page.getByPlaceholder(/Frage/).fill('Ist Halvek ehrlich?');
-  await page.getByRole('button', { name: /Ja\/Nein/ }).click();
-  const entry = page.locator('.entry').last();
+test('Orakel auf der Karte: Frage auf die Karte, je Stufe eine Antwort, die gewählte kommt in den Log', async ({ page }) => {
+  await page.getByRole('button', { name: 'Karte ziehen' }).click();
+  const card = page.getByRole('dialog', { name: 'Inspirationskarte' });
+  await revealed(card);
+  await card.getByPlaceholder(/Frage an die Karte/).fill('Ist Halvek ehrlich?');
+  const oracleField = card.getByRole('group', { name: /^Orakel, W100 \d+$/ });
+  const choices = oracleField.getByRole('button');
+  await expect(choices).toHaveCount(3);
+  for (const [i, name] of ['Hoch, 75 %', 'Mittel, 50 %', 'Gering, 25 %'].entries()) {
+    await expect(choices.nth(i)).toHaveAccessibleName(new RegExp(`^${name}: (JA|NEIN)[!?]?$`));
+  }
+  await expect(card.getByRole('button', { name: /in den Log übernehmen/ })).toBeDisabled();
+  await choices.nth(2).click();
+  await expect(choices.nth(2)).toHaveAttribute('aria-pressed', 'true');
+  await expect(card).toContainText('1 ausgewählt');
+  await card.getByRole('button', { name: /1 Eintrag in den Log übernehmen/ }).click();
+  await expect(card).toBeHidden();
+  const entry = entries(page).last();
   await expect(entry).toContainText('Orakel · Gering');
   await expect(entry).toContainText('„Ist Halvek ehrlich?“');
-  await expect(entry).toContainText(/^.*(JA|NEIN).*$/);
+  await expect(entry.locator('.verdict')).toHaveText(/^(JA|NEIN)[!?]?$/);
   await expect(entry).toContainText(/W100: \d+ · Ja bis 25/);
-  await expect(page.getByPlaceholder(/Frage/)).toHaveValue('');
-});
-
-test('2W6: ein Wurf mit Summe und Einzelwürfeln', async ({ page }) => {
-  await page.getByRole('button', { name: '2W6' }).click();
-  const entry = page.locator('.entry').last();
-  await expect(entry).toContainText('Würfel · 2W6');
-  await expect(entry).toContainText(/\d+\s*[1-6] \+ [1-6]/);
 });
 
 test('Inspirationskarte: auswählen, bestätigen, nur die Auswahl kommt in den Log', async ({ page }) => {
-  await page.getByPlaceholder(/Frage/).fill('Was steckt hinter dem Notsignal?');
   await page.getByRole('button', { name: 'Karte ziehen' }).click();
 
   const card = page.getByRole('dialog', { name: 'Inspirationskarte' });
   await revealed(card);
-  await expect(card).toContainText('„Was steckt hinter dem Notsignal?“');
+  await card.getByPlaceholder(/Frage an die Karte/).fill('Was steckt hinter dem Notsignal?');
   await expect(card.getByRole('button', { name: /in den Log übernehmen/ })).toBeDisabled();
-  await expect(page.locator('.entry')).toHaveCount(0);
+  await expect(entries(page)).toHaveCount(0);
 
   const action = card.getByRole('group', { name: 'Zufallsereignis' }).getByRole('button').first();
   // Ein Paar steht in einem Feld, jeder Begriff in einer eigenen Zeile; im Log in einer Zeile.
@@ -55,23 +58,34 @@ test('Inspirationskarte: auswählen, bestätigen, nur die Auswahl kommt in den L
   expect(actionWords).toHaveLength(2);
   await action.click();
   await expect(action).toHaveAttribute('aria-pressed', 'true');
-  // Alle Themen-Tafeln stehen mit Überschrift auf einmal da, ohne Scrollen. Ein sehr langes Wort
-  // (zufällig gezogen) kann auf drei Zeilen umbrechen; dafür bleibt eine Zeile Spielraum.
-  await expect(card.getByRole('heading', { level: 3 })).toHaveText(['NSC', 'NSC-Aktionen', 'Welt', 'Wesen', 'Handlung']);
-  await expect(card.locator('.theme-box')).toHaveCount(3);
+  // Die Karte passt ohne Scrollen auf den Bildschirm: Was nicht passt, steht als ganzzeiliger Knopf da.
+  // Die Tafel NSC ist oben und bleibt offen; die drei Kästen sind entweder Tafel oder Knopf.
+  await expect(card.locator('.theme-box, .theme-button')).toHaveCount(3);
+  await expect(card.getByRole('heading', { level: 3, name: 'NSC', exact: true })).toBeVisible();
   const body = card.locator('.sheet-body');
-  expect(await body.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(16);
+  expect(await body.evaluate((el) => (el.querySelector('.card-flip') as HTMLElement).offsetHeight - el.clientHeight)).toBeLessThanOrEqual(0);
   await card.getByRole('group', { name: 'NSC', exact: true }).getByRole('button').first().click();
   await expect(card).toContainText('2 ausgewählt');
 
   await card.getByRole('button', { name: /2 Einträge in den Log übernehmen/ }).click();
   await expect(card).toBeHidden();
-  const entry = page.locator('.entry').last();
+  const entry = entries(page).last();
   await expect(entry).toContainText('Karte');
   await expect(entry).toContainText('„Was steckt hinter dem Notsignal?“');
   await expect(entry.locator('dt')).toHaveText(['Zufallsereignis · Aktion', 'NSC · Aussehen']);
   await expect(entry.locator('dd').first()).toHaveText(actionWords.join(' · '));
-  await expect(page.getByPlaceholder(/Frage/)).toHaveValue('');
+});
+
+test('Inspirationskarte: eine Tafel, die nicht passt, ist ein Knopf und klappt beim Antippen auf', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 640 });
+  await page.getByRole('button', { name: 'Karte ziehen' }).click();
+  const card = page.getByRole('dialog', { name: 'Inspirationskarte' });
+  await revealed(card);
+  const world = card.getByRole('button', { name: /Welt · Wesen/ });
+  await expect(world).toBeVisible();
+  await world.click();
+  await expect(card.getByRole('heading', { level: 3, name: 'Welt' })).toBeVisible();
+  await expect(card.getByRole('button', { name: /Welt · Wesen/ })).toHaveCount(0);
 });
 
 test('Inspirationskarte: sechs Namen auf der Tafel NSC, im Log am Stück', async ({ page }) => {
@@ -85,7 +99,7 @@ test('Inspirationskarte: sechs Namen auf der Tafel NSC, im Log am Stück', async
   const name = await names.nth(4).innerText();
   await names.nth(4).click();
   await card.getByRole('button', { name: /1 Eintrag in den Log übernehmen/ }).click();
-  const entry = page.locator('.entry').last();
+  const entry = entries(page).last();
   await expect(entry.locator('dt')).toHaveText(['NSC · Männlich, spacig']);
   await expect(entry.locator('dd')).toHaveText(name);
 });
@@ -104,36 +118,41 @@ test('Inspirationskarte: Wurffelder 1–10, Streuwürfel und Kartensymbol; im Lo
   await rolls.nth(2).click();
   await expect(card).toContainText('2 ausgewählt');
   await card.getByRole('button', { name: /2 Einträge in den Log übernehmen/ }).click();
-  const entry = page.locator('.entry').last();
+  const entry = entries(page).last();
   await expect(entry.locator('dt')).toHaveText(['1–10', 'Kartensymbol']);
   await expect(entry.locator('dd').first()).toHaveText(bell);
   await expect(entry.getByRole('img', { name: /^Kartensymbol: / })).toBeVisible();
 });
 
 test('Inspirationskarte: verwerfen schreibt nichts in den Log, neu ziehen behält die Frage', async ({ page }) => {
-  await page.getByPlaceholder(/Frage/).fill('Und jetzt?');
   await page.getByRole('button', { name: 'Karte ziehen' }).click();
   const card = page.getByRole('dialog', { name: 'Inspirationskarte' });
   await revealed(card);
+  const question = card.getByPlaceholder(/Frage an die Karte/);
+  await question.fill('Und jetzt?');
   await card.locator('.tile').first().click();
   await expect(card).toContainText('1 ausgewählt');
   await card.getByRole('button', { name: 'Neu ziehen' }).click();
   await revealed(card);
   await expect(card).toContainText('Nichts ausgewählt');
-  await expect(card).toContainText('„Und jetzt?“');
+  await expect(question).toHaveValue('Und jetzt?');
   await card.getByRole('button', { name: 'Karte verwerfen' }).click();
   await expect(card).toBeHidden();
-  await expect(page.locator('.entry')).toHaveCount(0);
-  await expect(page.getByPlaceholder(/Frage/)).toHaveValue('Und jetzt?');
+  await expect(entries(page)).toHaveCount(0);
 });
 
-test('Spielstand und Stufe überstehen einen Neustart', async ({ page }) => {
+test('Spielstand und die Stufe der Proben überstehen einen Neustart; die Stufe steht erst mit der Probe da', async ({ page }) => {
+  const kira = characters(page).getByRole('region', { name: 'Spielercharaktere' }).getByRole('article', { name: 'Kira Vant' });
+  await kira.getByRole('button', { name: 'Pilot-2' }).click();
   await page.getByRole('radio', { name: /Hoch/ }).click();
+  await page.getByRole('button', { name: 'Probe abbrechen' }).click();
+  await expect(page.getByRole('radio')).toHaveCount(0);
   await page.getByRole('button', { name: '2W6' }).click();
-  await expect(page.locator('.entry')).toHaveCount(1);
+  await expect(entries(page)).toHaveCount(1);
   await page.reload();
+  await expect(entries(page)).toHaveCount(1);
+  await kira.getByRole('button', { name: 'Pilot-2' }).click();
   await expect(page.getByRole('radio', { name: /Hoch/ })).toHaveAttribute('aria-checked', 'true');
-  await expect(page.locator('.entry')).toHaveCount(1);
 });
 
 test('Über: Quellenangaben und Links zum Projekt', async ({ page }) => {
@@ -181,35 +200,46 @@ test('Vollbild: der Knopf neben dem i schaltet an und aus', async ({ page }) => 
   await expect(header.getByRole('button', { name: 'Vollbild' })).toHaveAttribute('aria-pressed', 'false');
 });
 
-test('Schreibzeile: Notiz für sich, Deutung im Kasten ihres Ergebnisses, Ergebnis antippen wählt das Ziel', async ({ page }) => {
-  const line = page.getByPlaceholder(/Frage, Deutung, Notiz/);
-  await page.getByRole('button', { name: /Ja\/Nein/ }).click();
-  await page.getByRole('button', { name: /2W6/ }).click();
+test('Notiz und Deutung im eigenen Blatt; Deuten am Ergebnis, ältere klappt man auf; Löschen nimmt die Deutungen mit', async ({ page }) => {
+  // Eine Frage an die Karte, dann ein Wurf.
+  await page.getByRole('button', { name: 'Karte ziehen' }).click();
+  const card = page.getByRole('dialog', { name: 'Inspirationskarte' });
+  await revealed(card);
+  await card.getByPlaceholder(/Frage an die Karte/).fill('Ist Halvek ehrlich?');
+  await card.getByRole('button', { name: /^Mittel, 50 %/ }).click();
+  await card.getByRole('button', { name: /in den Log übernehmen/ }).click();
+  await page.getByRole('button', { name: '2W6' }).click();
+  await expect(page.locator('.dice-roll')).toBeHidden();
 
-  await expect(page.getByRole('button', { name: 'Deuten' })).toBeDisabled();
-  await line.fill('Wir landen auf Regina.');
-  await page.getByRole('button', { name: 'Notiz' }).click();
-  await expect(line).toHaveValue('');
-  await expect(page.locator('.entry.note')).toContainText('Wir landen auf Regina.');
+  const sheet = page.getByRole('dialog', { name: 'Notiz' });
+  await oracle(page).getByRole('button', { name: 'Notiz', exact: true }).click();
+  await expect(sheet.getByRole('button', { name: 'Notieren' })).toBeDisabled();
+  await sheet.getByPlaceholder(/Was passiert/).fill('Wir landen auf Regina.');
+  await sheet.getByRole('button', { name: 'Notieren' }).click();
+  await expect(sheet).toBeHidden();
+  await expect(entries(page).last()).toContainText('Wir landen auf Regina.');
 
-  // Ohne Antippen gilt die Deutung dem neuesten Ergebnis, dem Wurf.
-  await line.fill('Glück gehabt.');
-  await expect(page.locator('.target-line')).toContainText('Deutung zu 2W6');
-  await page.getByRole('button', { name: 'Deuten' }).click();
-  await expect(page.locator('.entry', { hasText: 'Würfel · 2W6' }).locator('.interpretation')).toContainText('Glück gehabt.');
+  // Der Wurf ist jetzt eine Zeile; aufklappen, dann deuten.
+  const dice = entries(page).filter({ hasText: '2W6' });
+  await dice.getByRole('button', { name: /2W6/ }).click();
+  await dice.getByRole('button', { name: 'Deuten' }).click();
+  const reading = page.getByRole('dialog', { name: 'Deutung' });
+  await expect(reading).toContainText(/zu 2W6: \d+/);
+  await reading.getByPlaceholder(/Was bedeutet das/).fill('Glück gehabt.');
+  await reading.getByRole('button', { name: 'Deuten' }).click();
+  await expect(reading).toBeHidden();
+  await expect(oracle(page).locator('.entry', { hasText: 'Würfel · 2W6' }).locator('.interpretation')).toContainText('Glück gehabt.');
 
-  // Antippen des Orakels macht es zum Ziel.
-  await line.fill('Halvek lügt.');
-  await page.locator('.entry', { hasText: 'Orakel' }).click();
-  await expect(page.locator('.target-line')).toContainText(/Deutung zu (JA|NEIN)/);
-  await page.getByRole('button', { name: 'Deuten' }).click();
-  const oracle = page.locator('.entry', { hasText: 'Orakel' });
-  await expect(oracle.locator('.interpretation')).toContainText('Halvek lügt.');
-
-  // Ein Ergebnis löschen löscht seine Deutung mit.
-  await oracle.click({ button: 'right' });
-  await expect(oracle).toContainText('Eintrag mit 1 Deutung endgültig löschen?');
-  await oracle.getByRole('button', { name: 'Löschen' }).click();
+  // Die Antwort des Orakels deuten, dann mit ihrer Deutung löschen.
+  const answer = entries(page).filter({ hasText: 'Ist Halvek ehrlich?' });
+  await answer.getByRole('button', { name: /Ist Halvek ehrlich/ }).click();
+  await answer.getByRole('button', { name: 'Deuten' }).click();
+  await reading.getByPlaceholder(/Was bedeutet das/).fill('Halvek lügt.');
+  await reading.getByRole('button', { name: 'Deuten' }).click();
+  await expect(answer.locator('.interpretation')).toContainText('Halvek lügt.');
+  await answer.getByRole('button', { name: 'Ergebnis löschen' }).click();
+  await expect(answer).toContainText('Eintrag mit 1 Deutung endgültig löschen?');
+  await answer.getByRole('button', { name: 'Löschen', exact: true }).click();
   await expect(page.getByText('Halvek lügt.')).toHaveCount(0);
   await expect(page.getByText('Glück gehabt.')).toBeVisible();
 });

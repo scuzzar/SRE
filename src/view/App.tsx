@@ -42,13 +42,8 @@ export function App() {
   // Desktop-Modus (ab 1024 px): Reiterzeile unter der Kopfzeile, darunter drei Spalten: Orakel mit
   // Log, die Charaktere, der gewählte Bereich.
   const desktop = useIsDesktop();
-  // Der Text im Fragefeld gilt für Orakel und Karte; nach dem Bestätigen der Karte ist er verbraucht.
-  const [question, setQuestion] = useState('');
   // Ob das Menü offen ist, ist reine Darstellung; was man darin wählt, entscheidet der Controller.
   const [menu, setMenu] = useState(false);
-  // Das Ziel der Deutung: das angetippte Ergebnis, solange der Log gleich lang ist. Die App hält es
-  // zusammen mit dem Fragefeld, damit es den Wechsel zwischen den Bereichen übersteht.
-  const [chosen, setChosen] = useState<{ index: number; length: number } | undefined>(undefined);
   // Wen der Heilen-Dialog im Kampf zeigt; die App hält es, weil ihn im Desktop-Modus auch die
   // Charakterspalte öffnet.
   const [patient, setPatient] = useState<Patient | undefined>(undefined);
@@ -60,17 +55,11 @@ export function App() {
 
   if (!view.ready) return <div className="app" aria-busy="true" />;
   const closeResult = () => game.closeResult();
-  const picked = chosen !== undefined && chosen.length === view.log.length && view.log[chosen.index]?.kind !== 'note' ? chosen.index : undefined;
-  const newest = view.log.findLastIndex((item) => item.kind !== 'note');
-  const target = picked ?? (newest < 0 ? undefined : newest);
-  const marked = question.trim() !== '';
-  const onPick = (index: number) => setChosen({ index, length: view.log.length });
-  const onClearTarget = () => setChosen(undefined);
 
   // Im Desktop-Modus ist das Orakel kein eigener Bereich, sondern die Spalte links; wer dort noch
   // auf „Orakel“ steht (frisch gestartet oder das Fenster breit gezogen), sieht den Sektor.
   const screen = desktop && view.screen === 'oracle' ? 'sector' : view.screen;
-  const oracle = <OracleScreen view={view} question={question} onQuestion={setQuestion} target={target} picked={picked} marked={marked} onPick={onPick} onClearTarget={onClearTarget} strip={!desktop} />;
+  const oracle = <OracleScreen view={view} strip={!desktop} />;
   const heal = screen === 'combat' && view.combat && !view.combat.sim ? pcHeal(view.combat, setPatient) : undefined;
   // Die Charakterspalte entfällt, wo der Bereich die SC selbst zeigt: im Bereich Charaktere und in der
   // Kampfsimulation, deren Arena die SC mit Wunden, Waffen und Zug führt.
@@ -142,11 +131,11 @@ export function App() {
 
       {menu && <Menu view={view} onClose={() => setMenu(false)} />}
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
-      {view.generation && <GenerationSheet generation={view.generation} odds={view.odds} log={view.log} />}
+      {view.generation && <GenerationSheet generation={view.generation} log={view.log} />}
       {view.picking && <SectorPicker view={view} title={view.picking.title} />}
       {view.world && <WorldSheet key={view.world.id} world={view.world} here={view.location === view.world.id} travel={view.travel} />}
       {view.journey && <JourneySheet journey={view.journey} />}
-      {view.card && <CardSheet card={view.card} onConfirmed={() => setQuestion('')} />}
+      {view.card && <CardSheet card={view.card} />}
       {view.result?.kind === 'damage' ? (
         <DiceRoll key={view.result.at} item={view.result} seed={view.result.of} onDone={closeResult} />
       ) : (

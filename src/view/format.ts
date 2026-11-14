@@ -1,5 +1,5 @@
 import type { AttackItem, CardItem, CheckItem, DamageItem, DmPart, ButcheringItem, EventItem, JourneyItem, LogItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem } from '../controller';
-import type { ArmorClass, AttackKind, BookingKind, NpcRole, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
+import type { Answer, ArmorClass, AttackKind, BookingKind, NpcRole, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
 
@@ -147,6 +147,14 @@ export function pickText(name: boolean, texts: readonly string[]): string {
 }
 
 /** Der Streuwürfel in Worten: Richtung mit deutschen Kürzeln (Osten ist O), Volltreffer oder Fehlschlag. */
+/** Die sechs Antworten des Orakels, wie sie auf Karte und Log stehen. */
+export const answerText: Record<Answer, string> = { yesStrong: 'JA!', yes: 'JA', yesWeak: 'JA?', noWeak: 'NEIN?', no: 'NEIN', noStrong: 'NEIN!' };
+
+/** Ob eine Antwort Ja ist; Nein steht rot. */
+export function isYesAnswer(answer: Answer): boolean {
+  return answer === 'yesStrong' || answer === 'yes' || answer === 'yesWeak';
+}
+
 export const scatterText: Record<Scatter, string> = {
   n: 'N',
   ne: 'NO',
@@ -298,15 +306,15 @@ export function damageDetail(item: DamageItem): string {
   return `${item.dice.length}W6: ${item.dice.join(' + ')} = ${item.damage}${to}`;
 }
 
-/** Ein Ergebnis in einer Zeile, für die Zeile über der Schreibzeile: Urteil, dann die Frage. */
+/** Ein Ergebnis in einer Zeile, für die kompakten Zeilen des Logs und das Blatt der Deutung: Urteil, dann die Frage. */
 export function resultLine(item: LogItem): { head: string; rest: string } {
   switch (item.kind) {
-    case 'oracle':
-      return { head: item.yes ? 'JA' : 'NEIN', rest: item.question ? quoted(item.question) : item.odds };
     case 'dice':
       return { head: `2W6: ${item.total}`, rest: `${item.dice[0]} + ${item.dice[1]}` };
     case 'card':
-      return { head: 'Karte', rest: item.question ? quoted(item.question) : cardPickText(item) };
+      return item.answer
+        ? { head: answerText[item.answer.answer], rest: item.question ? quoted(item.question) : `Orakel · ${item.answer.odds}` }
+        : { head: 'Karte', rest: item.question ? quoted(item.question) : cardPickText(item) };
     case 'task':
       return { head: item.success ? 'ERFOLG' : 'FEHLSCHLAG', rest: taskTitle(item) };
     case 'attack':

@@ -111,7 +111,7 @@ rechts fest die NSC, links die SC mit ihrem Anfangsbuchstaben, ganz links Band 2
 |---|---|
 | `entfernung-je-sc/Entwurf.html` | Drei Zustände: SC-Zug, NSC-Zug mit Ziel, Berührung und entkommen. Gewöhnliche HTML-Datei, direkt im Browser zu öffnen |
 
-## Log kompakt (Entwurf vom 14. November 2026, noch nicht entschieden)
+## Log kompakt (Entwurf vom 14. November 2026, im neuen Orakel-Screen umgesetzt)
 
 Im Ordner [`log-kompakt/`](log-kompakt/) liegt ein Vorschlag für einen kompakteren Log im
 Orakel-Screen (siehe *Orakel-Screen* in der [To-do](../../TODO.md)).
@@ -122,7 +122,7 @@ Orakel-Screen (siehe *Orakel-Screen* in der [To-do](../../TODO.md)).
 
 Eine gewöhnliche HTML-Datei, die sich direkt im Browser öffnen lässt.
 
-## Orakel-Screen neu (Entwurf vom 14. November 2026, wartet auf Freigabe)
+## Orakel-Screen neu (Entwurf vom 14. November 2026, freigegeben und umgesetzt)
 
 Im Ordner [`orakel-neu/`](orakel-neu/) liegt der Entwurf für den neuen Aufbau des Orakel-Screens
 (siehe *Orakel auf der Karte* im [Domänenmodell](../domain-model.md), Kennzeichen 2026-11-14d).

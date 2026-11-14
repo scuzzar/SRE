@@ -39,8 +39,8 @@ kann ein Entwurf gar nicht in den Speicher geraten.
 Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
 
 - **Er ändert das Model**, als Einziger, und speichert den Spielstand über das Repository:
-  `askOracle(question)`, `rollDice()`, `drawCard(question)`, `togglePick(slot)`, `toggleRoll(roll)`
-  (Wurffeld), `confirmCard()`, `discardCard()`, `drawNames()` und `closeNames()` (Name von der Karte), `writeNote(text, interprets)`, `deleteLogEntry(index)`, `setOdds(odds)`; für den Charakter oben und die Probe
+  `rollDice()`, `drawCard(question)`, `toggleOdds(odds)` (Orakelfeld der Karte), `togglePick(slot)`, `toggleRoll(roll)`
+  (Wurffeld), `confirmCard(question)` (mit der Frage aus dem Feld der Karte), `discardCard()`, `drawNames()` und `closeNames()` (Name von der Karte), `writeNote(text, interprets)`, `deleteLogEntry(index)`, `setOdds(odds)`; für den Charakter oben und die Probe
   `focusCharacter(id)` (Wischen), `chooseSkill(skill)`, `chooseSkillOf(id, skill)` (Fertigkeit auf einer anderen Karte der Charakterspalte), `toggleCharacteristic(c)`, `rollTask()`,
   `endTask()`; für den Kampf `wieldWeapon(weapon)`, `chooseTarget(armor, range)`, `endAttack()`,
   `rollAttack()`, `rollDamage()`, `reload()`, für Begegnungen `rollEncounter(roll)`,
@@ -100,7 +100,7 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
   Karte sie liegen bleibt), das Erkennen von langem Drücken (auch der Knopf, der sich dabei füllt, `view/HoldButton.tsx`), die Scrollposition,
   Animationen und Vibration (`view/Dice.tsx`, `view/haptics.ts`), der Hinweis zum Installieren (`view/install.ts`). Eine Animation zeigt nur, was schon
   im Snapshot steht: Der Wurf ist geloggt, bevor die Würfel rollen. Sie darf den Aufruf des
-  Controllers kurz aufschieben (die Karte gleitet hinaus, dann `confirmCard()`), aber nie ersetzen.
+  Controllers kurz aufschieben (die Karte gleitet hinaus, dann `confirmCard(question)`), aber nie ersetzen.
   Faustregel: Braucht der Controller es für eine Entscheidung, gehört es dem Controller.
 
 ## Wie die Regeln geprüft werden
