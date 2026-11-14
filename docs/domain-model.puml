@@ -117,13 +117,13 @@ hide <<value>> stereotype
     dead: boolean
     retired: boolean
     npc: boolean
-    $new("2026-11-14", "role: NpcRole [0..1]")
+    role: NpcRole [0..1]
     /wounds: Wounds
     /hurt: number [0..1]
     /state: WoundState
     /blows: number [0..1]
   }
-  enum NpcRole <<value>> $charakter $newClass("2026-11-14") {
+  enum NpcRole <<value>> $charakter {
     patron
     encounter
     enemy
@@ -488,7 +488,7 @@ hide <<value>> stereotype
     name: string
     rumor: boolean
   }
-  class PatronSkill <<reference>> $begegnung $newClass("2026-11-14") {
+  class PatronSkill <<reference>> $begegnung {
     level: number
   }
   class AnimalTable $begegnung {
@@ -868,9 +868,9 @@ Career "*" --> "0..1" Service : /in
 Career "*" --> "0..1" Hex : homeworld
 Career "*" --> "*" Hex : worlds {ordered}
 Character "*" --> "0..1" Hex : homeworld
-Character "*" -$newArrow("2026-11-14")-> "0..1" Hex : place
-Character "*" -$newArrow("2026-11-14")-> "0..1" Patron : patron
-Character -$newArrow("2026-11-14")-> NpcRole
+Character "*" --> "0..1" Hex : place
+Character "*" --> "0..1" Patron : patron
+Character --> NpcRole
 CareerRoll --> RollKind
 CareerRoll --> "0..1" Characteristic : of
 CareerRoll "*" --> "0..1" Service : for
@@ -957,9 +957,9 @@ Recovery --> RecoveryKind
 LogEntry <|-- Note
 LogEntry <|-- PatronRoll
 PatronRoll "*" --> "1" Patron : of
-Patron "1" *-$newArrow("2026-11-14")- "*" PatronSkill : skills
-PatronSkill "*" -$newArrow("2026-11-14")-> "1" Skill : of
-Patron "*" -$newArrow("2026-11-14")-> "*" Item : gear {ordered}
+Patron "1" *-- "*" PatronSkill : skills
+PatronSkill "*" --> "1" Skill : of
+Patron "*" --> "*" Item : gear {ordered}
 LogEntry <|-- RumorRoll
 LogEntry <|-- Butchering
 Butchering "*" --> "1" Character : of

@@ -1,6 +1,6 @@
 # Patron-NSC: Fertigkeiten und Ausrüstung je Beruf
 
-**Hausregel, Vorschlag vom 14. November 2026, wartet auf Freigabe** (Kennzeichen 2026-11-14 im
+**Hausregel, am 14. November 2026 als Startpunkt freigegeben** (feste Werte; später soll ein richtiger NSC-Generator sie ablösen, ggf. nach Tabellen aus den Regeln) (Kennzeichen 2026-11-14 im
 [Domänenmodell](domain-model.md), siehe dort *Patron als NSC*). Die Regeln geben den Patrons der
 Patron Encounters Matrix (SE, Charts S. 20) keine Werte. Diese Tabelle legt fest, was ein zufällig
 erzeugter Patron-NSC nach seinem Beruf bekommt (`Patron.skills`, `Patron.gear`). Ein Beruf, der auf

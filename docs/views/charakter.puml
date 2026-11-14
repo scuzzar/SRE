@@ -84,13 +84,13 @@ hide <<value>> stereotype
     dead: boolean
     retired: boolean
     npc: boolean
-    $new("2026-11-14", "role: NpcRole [0..1]")
+    role: NpcRole [0..1]
     /wounds: Wounds
     /hurt: number [0..1]
     /state: WoundState
     /blows: number [0..1]
   }
-  enum NpcRole <<value>> $charakter $newClass("2026-11-14") {
+  enum NpcRole <<value>> $charakter {
     patron
     encounter
     enemy
@@ -144,7 +144,7 @@ hide <<value>> stereotype
   class Encounter $begegnung
   class Distance $begegnung
   class Patron <<reference>> $begegnung
-  class PatronSkill <<reference>> $begegnung $newClass("2026-11-14")
+  class PatronSkill <<reference>> $begegnung
   class AnimalRow $begegnung
 
 ' Referenzdaten
@@ -180,9 +180,9 @@ LowBerth "*" --> "0..1" Character : for
 Generation ..> Character : on finish
 Character "1" *-- "0..1" Career : career
 Character "*" --> "0..1" Hex : homeworld
-Character "*" -$newArrow("2026-11-14")-> "0..1" Hex : place
-Character "*" -$newArrow("2026-11-14")-> "0..1" Patron : patron
-Character -$newArrow("2026-11-14")-> NpcRole
+Character "*" --> "0..1" Hex : place
+Character "*" --> "0..1" Patron : patron
+Character --> NpcRole
 CareerRoll --> "0..1" Characteristic : of
 CareerRoll "*" --> "0..1" Skill : chosen
 
@@ -211,7 +211,7 @@ Weapon "*" --> "1" Skill : uses
 ' Verlauf
 Recovery "*" --> "1" Character : for
 Recovery "*" --> "0..1" Character : by
-PatronSkill "*" -$newArrow("2026-11-14")-> "1" Skill : of
+PatronSkill "*" --> "1" Skill : of
 Butchering "*" --> "1" Character : of
 TaskResult "*" --> "1" Character : for
 TaskResult "*" --> "0..1" SkillLevel : uses
@@ -249,5 +249,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Character #line:d0021b;line.bold
 @enduml

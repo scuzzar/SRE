@@ -190,7 +190,7 @@
       "id": "2026-11-14",
       "file": "2026-11-14-nsc-am-ort",
       "title": "NSC am Ort: Patron als NSC, Ort der dauerhaften NSC, Reiter NSC",
-      "approved": false,
+      "approved": true,
       "show": [
         "Hex",
         "Patron",

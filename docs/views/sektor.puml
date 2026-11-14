@@ -214,7 +214,7 @@ Journey "*" --> "1" Hex : to
 Career "*" --> "0..1" Hex : homeworld
 Career "*" --> "*" Hex : worlds {ordered}
 Character "*" --> "0..1" Hex : homeworld
-Character "*" -$newArrow("2026-11-14")-> "0..1" Hex : place
+Character "*" --> "0..1" Hex : place
 
 ' Laufbahnen (Referenzdaten)
 
@@ -260,5 +260,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Character #line:d0021b;line.bold
 @enduml

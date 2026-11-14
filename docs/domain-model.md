@@ -271,14 +271,14 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > der Verweis `Booking.won`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-13-zeit-und-reisen.png`](changes/2026-11-13-zeit-und-reisen.png).
 
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-14): **NSC am Ort** (siehe *Patron als NSC*, *Ort
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14): **NSC am Ort** (siehe *Patron als NSC*, *Ort
 > eines NSC*, *Reiter NSC*). Zu einem gewürfelten Patron entsteht auf Knopfdruck ein zufälliger
 > dauerhafter NSC; jeder dauerhafte NSC hat eine Welt, auf der er lebt, und ein eigener Reiter
 > **NSC** zeigt die NSC des Aufenthaltsorts, nach Rolle gruppiert. Neu im Bild: das Feld
 > `Character.role` mit der Werteliste `NpcRole`, die Verweise `Character.place` (auf `Hex`) und
 > `Character.patron` (auf `Patron`), als Referenzdaten Fertigkeiten und Ausrüstung je Patron
 > (`Patron.skills` mit `PatronSkill`, `Patron.gear`; Inhalt als Hausregel in
-> [`patron-nsc.md`](patron-nsc.md)). Der Ausschnitt dazu liegt unter
+> [`patron-nsc.md`](patron-nsc.md); feste Werte als Startpunkt, später ein richtiger NSC-Generator). Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-nsc-am-ort.png`](changes/2026-11-14-nsc-am-ort.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)

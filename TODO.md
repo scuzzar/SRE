@@ -60,6 +60,12 @@ Aus [`docs/regeln-kampf.md`](docs/regeln-kampf.md), noch offen:
 - [ ] **Book 4** (später): Moral für Militär, weitere Waffen, Kampffertigkeiten, abstraktes
   Schlachtsystem, Feldartillerie.
 
+### 4. NSC
+
+- [ ] **Richtiger NSC-Generator** statt der festen Werte je Beruf (`docs/patron-nsc.md`, Startpunkt
+  vom 14. November 2026): Fertigkeiten und Ausrüstung gewürfelt, nach Tabellen aus den Regeln, wo es
+  welche gibt (erst nachsehen, welche Bücher NSC-Tabellen haben).
+
 ### Ideen, noch nicht entschieden
 
 - [ ] Wunden wirken laut Regel erst am Ende der Runde (SE 6); die App lässt sie sofort wirken
