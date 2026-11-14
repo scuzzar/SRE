@@ -134,7 +134,7 @@ svg { display: block; fill: none; stroke: currentColor; stroke-width: 1.8; strok
 
 /* --- Blätter im Vordergrund: Karte, Deutung, Notiz -------------------------------------------- */
 .overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; background: rgba(0, 0, 0, 0.72); }
-.sheet { display: flex; flex-direction: column; gap: 10px; max-height: 96%; padding: 14px 12px 12px; background: #1a1a1a; border: 1px solid var(--line-strong); border-bottom: 0; border-radius: 16px 16px 0 0; }
+.sheet { display: flex; flex-direction: column; gap: 6px; max-height: 100%; padding: 10px 10px 10px; background: #1a1a1a; border: 1px solid var(--line-strong); border-bottom: 0; border-radius: 16px 16px 0 0; }
 .sheet h2 { margin: 0; font-size: 16px; }
 .sheet-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .sheet-top span { font-size: 12px; color: var(--muted); }
@@ -167,28 +167,18 @@ svg { display: block; fill: none; stroke: currentColor; stroke-width: 1.8; strok
 .tile[aria-pressed='true'] small { color: var(--accent-text); }
 .tile[aria-pressed='true']::after { content: ''; position: absolute; top: 4px; right: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 6.2l2 2 4-4.4' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px no-repeat; }
 
-/* Das Orakelfeld: ein Wurf, darunter je Stufe eine Skala 1–100 mit dem Wurf als Strich. */
-.oracle { display: flex; flex-direction: column; gap: 3px; }
-.oracle-row { position: relative; display: grid; grid-template-columns: 62px minmax(0, 1fr) 60px; align-items: center; gap: 8px; min-height: 34px; padding: 0 8px; background: #1b1b1b; border: 1px solid #2c2c2c; border-radius: 6px; text-align: left; }
-.oracle-row .o-name { font-size: 12px; font-weight: 600; line-height: 1.1; }
-.oracle-row .o-name small { display: block; font-family: var(--mono); font-size: 10px; font-weight: 400; color: var(--dim); }
-.oracle-row .o-ans { font-family: var(--mono); font-size: 15px; font-weight: 700; letter-spacing: 0.05em; text-align: right; color: var(--gold-bright); }
-.oracle-row .o-ans.negative { color: var(--accent-text); }
-.scale { position: relative; display: flex; height: 8px; border-radius: 4px; overflow: visible; }
-.scale i { display: block; height: 100%; }
-.scale i:first-child { border-radius: 4px 0 0 4px; }
-.scale i:last-of-type { border-radius: 0 4px 4px 0; }
-.scale .ys { background: var(--gold-bright); }
-.scale .y { background: rgba(217, 180, 95, 0.55); }
-.scale .yw { background: rgba(217, 180, 95, 0.25); }
-.scale .nw { background: rgba(239, 90, 95, 0.25); }
-.scale .n { background: rgba(239, 90, 95, 0.5); }
-.scale .ns { background: var(--accent-text); }
-.scale b { position: absolute; top: -4px; width: 2px; height: 16px; margin-left: -1px; background: var(--text); border-radius: 1px; box-shadow: 0 0 0 1px #111111; }
-.oracle-row[aria-checked='true'] { background: #2a1415; border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-.oracle-roll { font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: center; }
-.oracle-roll b { color: var(--text); }
-.legend { display: flex; justify-content: center; gap: 10px; font-family: var(--mono); font-size: 10px; color: var(--dim); }
+/* Das Orakelfeld: eine Reihe, je Stufe die Antwort; eine davon tippt man an. */
+.oracle { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
+.oracle .tile { align-items: center; text-align: center; padding: 3px 4px 4px; }
+.oracle .tile small { letter-spacing: 0.08em; }
+.oracle .ans { font-family: var(--mono); font-size: 18px; font-weight: 700; letter-spacing: 0.05em; line-height: 1.15; color: var(--gold-bright); }
+.oracle .ans.negative { color: var(--accent-text); }
+/* Passt die Karte nicht auf den Bildschirm, stehen Tafeln unten als ganzzeilige Knöpfe da. */
+.theme-button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 40px; padding: 0 12px; background: linear-gradient(180deg, #131313, #0e0e0e); border: 1px solid #333333; border-radius: 10px; text-align: left; }
+.theme-button::before { content: ''; flex: none; width: 3px; height: 12px; border-radius: 2px; background: var(--accent); }
+.theme-button .t { flex: 1 1 auto; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text); }
+.theme-button .n { font-size: 12px; color: var(--accent-text); font-weight: 600; }
+.theme-button svg { width: 18px; height: 18px; color: var(--muted); }
 .tile .line { display: block; }
 .tile.sense { flex-direction: row; align-items: center; justify-content: flex-start; gap: 7px; min-height: 40px; }
 .tile.sense svg { flex: none; color: var(--dim); }
@@ -332,18 +322,21 @@ function sheet() {
   const count = s.picked.size + (s.odds === undefined ? 0 : 1);
   const cols = (n) => (n === 1 ? 1 : n === 2 || n === 4 ? 2 : 3);
   const groups = c.groups.map((g, gi) => `<div class="grid c${cols(g.tiles.length)}" role="group" aria-label="${esc(g.name)}">${g.tiles.map((t, ti) => tile(t, `g${gi}.${ti}`, s)).join('')}</div>`).join('');
-  const themes = c.boxes.map((box, bi) => `<div class="card theme-box">${box.map((sec, si) => `<section class="theme span-${cols(sec.tiles.length)}"><h3 class="theme-title">${esc(sec.title)}</h3>${sec.names.length ? `<div class="grid c3 names">${sec.names.map((n, ni) => `<button type="button" class="tile name" data-tile="b${bi}.${si}.n${ni}" aria-pressed="${s.picked.has(`b${bi}.${si}.n${ni}`)}">${esc(n)}</button>`).join('')}</div>` : ''}<div class="grid c${cols(sec.tiles.length)}">${sec.tiles.map((t, ti) => tile(t, `b${bi}.${si}.${ti}`, s)).join('')}</div></section>`).join('')}</div>`).join('');
-  return `<div class="overlay"><section class="sheet" role="dialog" aria-modal="true">
-    <div class="sheet-top"><h2>Inspirationskarte</h2><span>Antippen, was du nutzen willst</span></div>
-    <input id="question" class="question" type="text" placeholder="Frage (freiwillig)" autocomplete="off" value="${esc(s.question)}">
+  const themes = c.boxes.map((box, bi) => (s.collapsed?.has(bi) ? themeButton(box, bi, s) : `<div class="card theme-box" data-box="${bi}">${box.map((sec, si) => `<section class="theme span-${cols(sec.tiles.length)}"><h3 class="theme-title">${esc(sec.title)}</h3>${sec.names.length ? `<div class="grid c3 names">${sec.names.map((n, ni) => `<button type="button" class="tile name" data-tile="b${bi}.${si}.n${ni}" aria-pressed="${s.picked.has(`b${bi}.${si}.n${ni}`)}">${esc(n)}</button>`).join('')}</div>` : ''}<div class="grid c${cols(sec.tiles.length)}">${sec.tiles.map((t, ti) => tile(t, `b${bi}.${si}.${ti}`, s)).join('')}</div></section>`).join('')}</div>`)).join('');
+  return `<div class="overlay"><section class="sheet" role="dialog" aria-modal="true" aria-label="Inspirationskarte">
+    <input id="question" class="question" type="text" placeholder="Frage an die Karte (freiwillig)" aria-label="Frage" autocomplete="off" value="${esc(s.question)}">
     <div class="sheet-body"><article class="card">
-      <div class="band">Orakel · W100 ${c.oracle}</div>
-      <div class="oracle" role="radiogroup" aria-label="Orakel: Stufe wählen">
-        ${oddsList.map((o, i) => { const a = answer(c.oracle, o.chance); return `<button type="button" class="oracle-row" role="radio" data-answer="${i}" aria-checked="${s.odds === i}" aria-label="${o.name}, ${o.chance} %: ${a}"><span class="o-name">${o.name}<small>${o.chance} %</small></span>${scale(o.chance, c.oracle)}<span class="o-ans ${a.startsWith('NEIN') ? 'negative' : ''}">${a}</span></button>`; }).join('')}
+      <div class="oracle" role="radiogroup" aria-label="Orakel, W100 ${c.oracle}: Stufe wählen">
+        ${oddsList.map((o, i) => { const a = answer(c.oracle, o.chance); return `<button type="button" class="tile" role="radio" data-answer="${i}" aria-pressed="${s.odds === i}" aria-label="${o.name}, ${o.chance} %: ${a}"><small>${o.name} · ${o.chance} %</small><span class="ans ${a.startsWith('NEIN') ? 'negative' : ''}">${a}</span></button>`; }).join('')}
       </div>
       ${groups}
     </article><div class="themes">${themes}</div></div>
     <div class="sheet-foot"><button type="button" class="ghost square" data-close aria-label="Karte verwerfen">${icon.close}</button><button type="button" class="ghost" data-redraw>Neu ziehen</button><span class="grow">${count === 0 ? 'Nichts ausgewählt' : `${count} ausgewählt`}</span><button type="button" class="round" data-confirm ${count === 0 ? 'disabled' : ''} aria-label="In den Log übernehmen">${icon.check}</button></div></section></div>`;
+}
+/** Eine Tafel als ganzzeiliger Knopf; Antippen klappt sie auf. */
+function themeButton(box, bi, s) {
+  const picked = [...s.picked].filter((id) => id.startsWith(`b${bi}.`)).length;
+  return `<button type="button" class="theme-button" data-theme="${bi}"><span class="t">${box.map((sec) => esc(sec.title)).join(' · ')}</span>${picked ? `<span class="n">${picked} gewählt</span>` : ''}<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`;
 }
 /** Ein Feld der Karte wie in der App: Sinn mit Symbol, Wurffeld mit Bild, sonst Beschriftung und Begriffe. */
 function tile(t, id, s) {
@@ -360,14 +353,22 @@ function pickedText(card, id) {
   if (parts[2].startsWith('n')) return sec.names[Number(parts[2].slice(1))];
   return sec.tiles[Number(parts[2])].lines.join(' · ');
 }
-/** Die Skala einer Stufe: Ja!, Ja, Ja?, Nein?, Nein, Nein! nebeneinander, der Wurf als Strich. */
-function scale(chance, roll) {
-  const y = Math.floor(chance / 5);
-  const n = Math.floor((100 - chance) / 5);
-  const parts = [['ys', y], ['y', chance - 2 * y], ['yw', y], ['nw', n], ['n', 100 - chance - 2 * n], ['ns', n]];
-  return `<span class="scale">${parts.map(([k, w]) => `<i class="${k}" style="width:${w}%"></i>`).join('')}<b style="left:${roll - 0.5}%"></b></span>`;
-}
 function render() {
+  paint();
+  const s = state.sheet;
+  if (s?.kind !== 'card') return;
+  // Von unten her Tafeln zu Knöpfen machen, bis die Karte ohne Scrollen passt; die zuletzt
+  // aufgeklappte bleibt offen.
+  s.collapsed = new Set();
+  paint();
+  const fits = () => { const b = document.querySelector('.sheet-body'); return b.scrollHeight <= b.clientHeight + 1; };
+  for (let i = s.card.boxes.length - 1; i >= 0 && !fits(); i--) {
+    if (i === s.open) continue;
+    s.collapsed.add(i);
+    paint();
+  }
+}
+function paint() {
   const last = state.log.length - 1;
   const log = state.log.length === 0 ? '<p class="log-empty">Noch nichts im Log. Zieh eine Karte oder würfle.</p>' : state.log.map((e, i) => (i === last ? box(e, i) : row(e, i))).join('');
   document.getElementById('app').innerHTML = `<header class="header">Kessra <span class="uwp">A766754-A</span></header>${strip()}
@@ -402,7 +403,8 @@ document.getElementById('app').addEventListener('click', (ev) => {
     else add({ kind: 'dice', dice });
   }
   else if (hit('close')) state.sheet = undefined;
-  else if (hit('redraw')) state.sheet = { ...s, card: draw(), picked: new Set(), odds: undefined };
+  else if (hit('redraw')) state.sheet = { ...s, card: draw(), picked: new Set(), odds: undefined, open: undefined };
+  else if ((el = hit('theme'))) { s.open = Number(el.dataset.theme); render(); document.querySelector(`[data-box="${s.open}"]`)?.scrollIntoView({ block: 'nearest' }); return; }
   else if ((el = hit('answer'))) { const i = Number(el.dataset.answer); s.odds = s.odds === i ? undefined : i; }
   else if ((el = hit('tile'))) { const id = el.dataset.tile; if (s.picked.has(id)) s.picked.delete(id); else s.picked.add(id); }
   else if (hit('confirm')) {
@@ -425,6 +427,7 @@ document.getElementById('app').addEventListener('input', (ev) => {
   if (ev.target.id === 'question') state.sheet.question = ev.target.value;
   if (ev.target.id === 'text') document.querySelector('[data-save]').disabled = ev.target.value.trim() === '';
 });
+window.addEventListener('resize', render);
 render();
 </script>
 </body>

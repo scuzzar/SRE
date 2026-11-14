@@ -134,4 +134,6 @@ Im Ordner [`orakel-neu/`](orakel-neu/) liegt der Entwurf für den neuen Aufbau d
 Eine gewöhnliche HTML-Datei, die sich direkt im Browser öffnen lässt. Die Karte ist vollständig, im
 Stil der App-Karte; ihre Einträge stammen aus acht Karten, die in der App gezogen wurden, „Neu
 ziehen“ geht sie der Reihe nach durch. Nur der Orakelwurf ist jedes Mal neu. Die drei Knöpfe unten
-sind gleich breit.
+sind gleich breit. Das Orakelfeld ist eine Reihe mit der Antwort je Stufe. Passt die Karte nicht auf
+den Bildschirm, werden die Tafeln von unten her zu ganzzeiligen Knöpfen (etwa „Welt · Wesen“), die
+beim Antippen aufklappen; gewählte Felder darin zählt der Knopf.

@@ -170,7 +170,13 @@ Erst nach der Freigabe in den Code.
   Ja?, Nein?, Nein, Nein!); die Antwort steht in der Kartenauswahl, `OracleAnswer` entfällt, alte
   Antworten werden beim Laden und beim Import umgestellt. Der Knopf „Ja/Nein“ entfällt, auch in
   der Leiste der Charaktererschaffung; die Frage schreibt man oben auf die Karte.
-- [ ] **Eine Reihe Knöpfe mit Symbolen:** Notiz, Würfeln, Karte. Die Schreibzeile entfällt.
+- [ ] **Karte auf einen Bildschirm:** Orakelfeld als eine Reihe (je Stufe die Antwort, ohne Skala),
+  Fragefeld oben statt der Titelzeile. Passt sie trotzdem nicht, werden die Tafeln von unten her zu
+  ganzzeiligen Knöpfen (NSC · NSC-Aktionen, Welt · Wesen, Handlung), die beim Antippen aufklappen.
+  Gezogen ist trotzdem alles beim Ziehen, das ist reine Anzeige. Gemessen im Entwurf: 412×915
+  alles offen, 390×844 Handlung als Knopf, 375×667 zwei Knöpfe, 360×640 drei. Der Test „ohne
+  Scrollen“ in `e2e/oracle.spec.ts` muss das dann prüfen.
+- [ ] **Eine Reihe Knöpfe mit Symbolen:** Notiz, Würfeln, Karte, gleich breit. Die Schreibzeile entfällt.
 - [ ] **Deuten und Notiz als Blatt:** „Deuten“ ist ein Knopf am Ergebnis (am neuesten immer, bei
   älteren nach dem Antippen), „Notiz“ der Knopf unten.
 - [ ] **Stufe nur mit der Probe:** Die Auswahl 6+ / 8+ / 10+ erscheint erst, wenn am Charakter oben
