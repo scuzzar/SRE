@@ -116,8 +116,7 @@ export interface TimeView {
   readonly maxDays: number;
   /** Wie viele Tage „Woche beenden“ weiterschaltet. */
   readonly toSunday: number;
-  /** Welche Tests heute noch fehlen bzw. diese Woche (für die Erinnerung). */
-  readonly missingDay: readonly string[];
+  /** Welche Tests diese Woche fehlen; daran erinnert „Woche beenden“. */
   readonly missingWeek: readonly string[];
   /** Warum gerade keine Zeit vergeht (laufende Begegnung). */
   readonly blocked: string | undefined;
@@ -253,7 +252,6 @@ export function timeView(campaign: Campaign, note: string | undefined, animals: 
     canSetStart: canSetStartDate(campaign),
     maxDays: MAX_DAYS,
     toSunday: daysToSunday(today),
-    missingDay: missingChecks(campaign, false, animals).map((k) => checkNames[k]),
     missingWeek: missingChecks(campaign, true, animals).map((k) => checkNames[k]),
     blocked: campaign.encounters.some((e) => !e.ended) ? 'Während einer laufenden Begegnung vergeht keine Zeit.' : undefined,
     note,

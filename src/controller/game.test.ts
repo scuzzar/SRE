@@ -569,21 +569,21 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot().log.map((e) => e.kind)).toEqual(['check', 'time', 'check', 'rumor']);
   });
 
-  it('Zeit: Tage und Woche erinnern an fehlende Tests, langes Drücken macht ohne Begegnung weiter; neue Einträge tragen den Tag', async () => {
+  it('Zeit: Tage vergehen ohne Erinnerung; Woche beenden erinnert einmal an fehlende Tests, langes Drücken macht ohne Begegnung weiter; neue Einträge tragen den Tag', async () => {
     const { game, random } = await onRegina();
-    expect(game.snapshot().time).toMatchObject({ label: 'Feiertag, 001-1105', toSunday: 7, missingDay: ['Zufallsbegegnung'] });
-    game.passDays(2);
-    expect(game.snapshot().time?.note).toBe('Noch nicht getestet: Zufallsbegegnung. Lange drücken, um ohne Begegnung weiterzumachen.');
-    expect(game.snapshot().log).toHaveLength(0);
+    expect(game.snapshot().time).toMatchObject({ label: 'Feiertag, 001-1105', toSunday: 7, missingWeek: ['Zufallsbegegnung', 'Patron', 'Gerücht', 'Polizei'] });
     random.queue.push(2);
     game.rollEncounter();
     game.passDays(2);
     expect(game.snapshot().time).toMatchObject({ label: 'Dienstag, 003-1105', note: undefined });
+    // Die Zufallsbegegnung ist diese Woche schon getestet (am Feiertag); es fehlen die Wochen-Tests.
     game.endWeek();
-    expect(game.snapshot().time?.note).toContain('Zufallsbegegnung, Patron, Gerücht, Polizei');
+    expect(game.snapshot().time?.note).toBe('Noch nicht getestet: Patron, Gerücht, Polizei. Lange drücken, um ohne Begegnung weiterzumachen.');
     game.endWeek(true);
     expect(game.snapshot().time?.label).toBe('Sonntag, 008-1105');
     expect(game.snapshot().logDays).toEqual(['Feiertag, 001-1105', 'Feiertag, 001-1105', 'Dienstag, 003-1105']);
+    // In der neuen Woche fehlt alles wieder, auch die Zufallsbegegnung.
+    expect(game.snapshot().time?.missingWeek).toEqual(['Zufallsbegegnung', 'Patron', 'Gerücht', 'Polizei']);
   });
 
   it('Polizei: einmal je Woche nach Gesetz; der zweite Test nur mit langem Drücken', async () => {

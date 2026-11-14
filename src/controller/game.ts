@@ -735,15 +735,16 @@ export class GameController {
 
   // --- Zeit und Reisen ---------------------------------------------------------------------------
 
-  /**
-   * Lässt 1 bis 6 Tage vergehen. Fehlen heute Tests (Zufallsbegegnung, Tiere), erinnert die App erst
-   * daran; mit `force` (langes Drücken) vergeht die Zeit trotzdem, ohne Begegnung.
-   */
-  passDays(days: number, force = false): void {
-    this.passTime({ days }, force);
+  /** Lässt 1 bis 6 Tage vergehen, ohne Erinnerung an Tests (Wunsch des Owners). */
+  passDays(days: number): void {
+    this.passTime({ days }, true);
   }
 
-  /** Beendet die Woche: bis zum nächsten Sonntag; erinnert wie `passDays`, dazu an Patron, Gerücht und Polizei. */
+  /**
+   * Beendet die Woche: bis zum nächsten Sonntag. Fehlen diese Woche Tests (Patron, Gerücht, Polizei;
+   * Zufallsbegegnung und Tiere, wenn sie gar nicht getestet sind), erinnert die App erst daran; mit
+   * `force` (langes Drücken) endet die Woche trotzdem, ohne Begegnung.
+   */
   endWeek(force = false): void {
     this.passTime('week', force);
   }

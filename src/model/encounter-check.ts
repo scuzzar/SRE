@@ -100,17 +100,25 @@ function hasAnimals(campaign: Campaign, animals: boolean): boolean {
   return animals && campaign.terrain !== undefined;
 }
 
+/** Wie oft der Test dieser Art in der laufenden Woche gewürfelt ist, egal ob er täglich oder wöchentlich gilt. */
+export function checksThisWeek(campaign: Campaign, kind: CheckKind): number {
+  const today = dayOf(campaign);
+  const from = weekStart(today);
+  return campaign.log.filter((e) => e.kind === 'check' && e.check === kind && e.day !== undefined && e.day >= from && e.day <= today).length;
+}
+
 /**
- * Die Tests, die im ablaufenden Zeitraum noch fehlen, ehe Zeit vergeht: bei Tagen die
- * Zufallsbegegnung und die Tiere von heute, beim Beenden der Woche dazu Patron, Gerücht und Polizei.
- * Ohne Aufenthaltsort gibt es keine Begegnungen und also nichts zu erinnern.
+ * Die Tests, an die die Zeit erinnert, ehe sie weiterläuft (Wunsch des Owners): Tage vergehen lassen
+ * erinnert nie; Woche beenden erinnert an Patron, Gerücht und Polizei, die diese Woche fehlen, und an
+ * Zufallsbegegnung und Tiere, wenn sie diese Woche gar nicht getestet sind. Ohne Aufenthaltsort gibt
+ * es keine Begegnungen und also nichts zu erinnern.
  */
 export function missingChecks(campaign: Campaign, week: boolean, animals: boolean): readonly CheckKind[] {
-  if (campaign.location === undefined) return [];
+  if (!week || campaign.location === undefined) return [];
   const kinds: CheckKind[] = ['random'];
   if (hasAnimals(campaign, animals)) kinds.push('animal');
-  if (week) kinds.push('patron', 'rumor', ...(hasPolice(campaign) ? (['legal'] as const) : []));
-  return kinds.filter((k) => !checksMet(campaign, k));
+  kinds.push('patron', 'rumor', ...(hasPolice(campaign) ? (['legal'] as const) : []));
+  return kinds.filter((k) => checksThisWeek(campaign, k) === 0);
 }
 
 /** Die Namen der Tests, wie Knopf und Erinnerung sie nennen. */
