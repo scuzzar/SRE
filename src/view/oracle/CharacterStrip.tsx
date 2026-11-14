@@ -167,7 +167,6 @@ export function CharacterStrip({
   );
 }
 
-/** Die Waffen des Charakters oben: die Hände und die aus seinem Besitz; die in der Hand ist gedrückt. */
 /**
  * Im Kampf in einer Zeile: Primärwaffe, Sekundärwaffe und Hände. Nur die Waffe in der Hand zeigt
  * ihre Fertigkeit und wird nie gekürzt; wird es eng, kürzt sich der Name der anderen.

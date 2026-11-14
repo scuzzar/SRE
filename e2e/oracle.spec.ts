@@ -276,3 +276,16 @@ test('Zufallsereignis: bei einem Pasch bis 55 erst nach der Wahl der Stufe ein B
   await card.getByRole('button', { name: /in den Log übernehmen/ }).click();
   await expect(entries(page).last()).toContainText(/Zufallsereignis: \S/);
 });
+
+test('Gleiche Würfe in Folge stehen als eine Zeile; antippen faltet sie auf', async ({ page }) => {
+  for (let i = 0; i < 3; i++) {
+    await page.getByRole('button', { name: '2W6', exact: true }).click();
+    await expect(page.locator('.dice-roll')).toBeHidden();
+  }
+  // Die zwei älteren Würfe als eine Zeile, der neueste groß.
+  await expect(entries(page)).toHaveCount(2);
+  const merged = entries(page).first().getByRole('button', { name: /^2 Würfe 2W6/ });
+  await expect(merged).toContainText('2W6 × 2');
+  await merged.click();
+  await expect(entries(page)).toHaveCount(3);
+});

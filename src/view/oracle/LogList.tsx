@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { Fragment, memo, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { DamageItem, JourneyItem, LogItem, NoteItem } from '../../controller';
 import { answerText, attackTitle, checkDetail, clockTime, damageDetail, isYesAnswer, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, resultLine, scatterText, taskDetail, taskTitle } from '../format';
 import { useGame } from '../game-context';
@@ -24,7 +24,11 @@ interface LogListProps {
  * seines Treffers; das ist nur Anzeige. Welche Zeile offen ist und welcher Eintrag gerade gelöscht
  * werden will, hält die View, das Löschen der Controller.
  */
-export function LogList({ log, days, onInterpret, onEdit }: LogListProps) {
+/** So viele Zeilen zeigt der Log auf einmal; „Ältere zeigen“ holt jeweils so viele dazu. */
+const PAGE = 150;
+
+/** Mit `memo`: Öffnet der Screen ein Blatt, zeichnet der Log nicht neu, solange sich der Log nicht ändert. */
+export const LogList = memo(function LogList({ log, days, onInterpret, onEdit }: LogListProps) {
   const game = useGame();
   // Der Log steht auf dem Smartphone im Orakel-Screen und im Desktop-Modus links; beide Instanzen
   // dürfen nicht dieselbe Überschrift-ID tragen.
@@ -77,24 +81,30 @@ export function LogList({ log, days, onInterpret, onEdit }: LogListProps) {
     </span>
   );
 
-  // Die Kästen: jedes Ergebnis und jede Notiz, mit den Deutungen, die zum Ergebnis gehören, und beim
-  // Treffer mit seinem Schadenswurf und dessen Deutungen.
-  // Die weiteren Würfe einer Garbe stehen im Kasten ihres ersten Wurfs, jeder mit seinem Schaden.
-  const groups = log.flatMap((item, index) =>
-    (item.kind === 'note' && item.interprets !== undefined) || item.kind === 'damage' || (item.kind === 'attack' && item.volley !== undefined)
-      ? []
-      : [
-          {
-            item,
-            index,
-            notes: interpretationsAt(log, index),
-            damage: damageAt(log, index),
-            volley: log.flatMap((roll, i) => (roll.kind === 'attack' && roll.volley === index ? [{ item: roll, index: i, notes: interpretationsAt(log, i), damage: damageAt(log, i) }] : [])),
-          },
-        ],
-  );
+  const groups = useMemo(() => groupLog(log), [log]);
+  // Einfache Würfe hintereinander (ohne Deutung, nicht das Neueste) stehen als eine Zeile; antippen
+  // faltet sie auf. Was aufgefaltet ist, gilt wie die offene Zeile zu einer Länge des Logs.
+  const [unfolding, setUnfolding] = useState<{ indices: readonly number[]; length: number } | undefined>(undefined);
+  const unfolded = unfolding?.length === log.length ? unfolding.indices : undefined;
+  const rows = useMemo(() => {
+    const out: (readonly number[])[] = [];
+    groups.forEach((group, g) => {
+      const plain = group.item.kind === 'dice' && group.notes.length === 0 && !group.latest && group.index !== open;
+      const previous = out.at(-1);
+      const first = previous && groups[previous[0]!]!;
+      const loose = (i: number) => unfolded?.includes(i) ?? false;
+      if (plain && !loose(group.index) && first && first.item.kind === 'dice' && first.notes.length === 0 && !first.latest && first.index !== open && !loose(first.index) && days[first.index] === days[group.index] && previous.every((p) => groups[p]!.item.kind === 'dice')) {
+        out[out.length - 1] = [...previous, g];
+      } else out.push([g]);
+    });
+    return out;
+  }, [groups, open, unfolded, days]);
+  // Nur die neuesten Zeilen zeichnen; ein langer Log bleibt so schnell.
+  const [limit, setLimit] = useState(PAGE);
+  const shown = rows.slice(-limit);
+  const hidden = rows.length - shown.length;
 
-  const noteBlock = (note: { item: NoteItem; index: number }, className: string, head: boolean) => (
+  const noteBlock = (note: NoteAt, className: string, head: boolean) => (
     <div key={note.index} className={confirm === note.index ? `${className} confirming` : className}>
       {head && (
         <div className="entry-head">
@@ -113,7 +123,7 @@ export function LogList({ log, days, onInterpret, onEdit }: LogListProps) {
     </div>
   );
 
-  const damageBlock = (damage: NonNullable<ReturnType<typeof damageAt>>) => (
+  const damageBlock = (damage: DamageAt) => (
     <div className={confirm === damage.index ? 'interpretation damage confirming' : 'interpretation damage'}>
       <div className="entry-head">
         <span className="kicker">Schaden{damage.item.victim ? ` · ${damage.item.victim}` : ''}</span>
@@ -132,8 +142,6 @@ export function LogList({ log, days, onInterpret, onEdit }: LogListProps) {
       <DeleteBar {...deletion(damage.index, damage.notes.length)} what="Schadenswurf" />
     </div>
   );
-  const last = log.length - 1;
-
   return (
     <section className="scroll log-scroll" aria-labelledby={titleId} ref={scroller}>
       <div className="log">
@@ -144,19 +152,40 @@ export function LogList({ log, days, onInterpret, onEdit }: LogListProps) {
           <p className="log-empty">Noch nichts im Log. Zieh eine Karte oder würfle.</p>
         ) : (
           <ol aria-live="polite">
-            {groups.map(({ item, index, notes, damage, volley }, g) => {
+            {hidden > 0 && (
+              <li className="log-more">
+                <button type="button" className="ghost compact" onClick={() => setLimit((l) => l + PAGE)}>
+                  Ältere zeigen ({hidden} {hidden === 1 ? 'Zeile' : 'Zeilen'})
+                </button>
+              </li>
+            )}
+            {shown.map((row, r) => {
+              const { item, index, notes, damage, volley, latest } = groups[row[0]!]!;
               const day = days[index];
-              const newDay = day !== undefined && (g === 0 || days[groups[g - 1]!.index] !== day);
-              const result = item.kind !== 'note';
-              const touches = (d: ReturnType<typeof damageAt>) => d !== undefined && (d.index === last || d.notes.some((n) => n.index === last));
-              const latest = g === groups.length - 1 || index === last || notes.some((n) => n.index === last) || touches(damage) || volley.some((v) => v.index === last || touches(v.damage) || v.notes.some((n) => n.index === last));
-              const full = latest || open === index;
-              const what = volley.length > 0 ? 'Die ganze Garbe' : result ? 'Ergebnis' : 'Notiz';
+              const before = r === 0 ? undefined : groups[shown[r - 1]![0]!]!.index;
+              const newDay = day !== undefined && (before === undefined || days[before] !== day);
               const dayLine = newDay && (
                 <li className="log-day" aria-label={`Spieltag ${day}`}>
                   {day}
                 </li>
               );
+              if (row.length > 1) {
+                const totals = row.map((g) => groups[g]!.item).map((roll) => (roll.kind === 'dice' ? roll.total : 0));
+                return (
+                  <Fragment key={index}>
+                    {dayLine}
+                    <li className="log-row">
+                      <button type="button" className="log-row-button" aria-expanded={false} aria-label={`${row.length} Würfe 2W6: ${totals.join(', ')}. Antippen zum Auffalten.`} onClick={() => setUnfolding({ indices: row.map((g) => groups[g]!.index), length: log.length })}>
+                        <span className="row-what plain">2W6 × {row.length}</span>
+                        <span className="row-result gold">{totals.join(' · ')}</span>
+                      </button>
+                    </li>
+                  </Fragment>
+                );
+              }
+              const result = item.kind !== 'note';
+              const full = latest || open === index;
+              const what = volley.length > 0 ? 'Die ganze Garbe' : result ? 'Ergebnis' : 'Notiz';
               if (!full) {
                 return (
                   <Fragment key={index}>
@@ -243,7 +272,7 @@ export function LogList({ log, days, onInterpret, onEdit }: LogListProps) {
       </div>
     </section>
   );
-}
+});
 
 /** Die Uhrzeit einer Notiz oder Deutung; nach einer Änderung mit „geändert“ und deren Uhrzeit. */
 function Edited({ at, editedAt }: { at: string; editedAt: string | undefined }) {
@@ -290,30 +319,43 @@ function CompactRow({ item, notes, extra }: { item: LogItem; notes: readonly str
   );
 }
 
-/** Der Schadenswurf des Treffers an der Stelle `index`, mit seinen Deutungen. */
-function damageAt(
-  log: readonly LogItem[],
-  index: number,
-):
-  | {
-      item: DamageItem;
-      index: number;
-      notes: { item: NoteItem; index: number }[];
-    }
-  | undefined {
-  const at = log.findIndex((item) => item.kind === 'damage' && item.of === index);
-  return at < 0
-    ? undefined
-    : {
-        item: log[at] as DamageItem,
-        index: at,
-        notes: interpretationsAt(log, at),
-      };
-}
+type NoteAt = { readonly item: NoteItem; readonly index: number };
+type DamageAt = { readonly item: DamageItem; readonly index: number; readonly notes: readonly NoteAt[] };
 
-/** Die Deutungen des Ergebnisses an der Stelle `index`, in der Reihenfolge des Logs. */
-function interpretationsAt(log: readonly LogItem[], index: number): { item: NoteItem; index: number }[] {
-  return log.flatMap((item, i) => (item.kind === 'note' && item.interprets === index ? [{ item, index: i }] : []));
+/**
+ * Die Kästen: jedes Ergebnis und jede Notiz, mit den Deutungen, die zum Ergebnis gehören, und beim
+ * Treffer mit seinem Schadenswurf und dessen Deutungen. Die weiteren Würfe einer Garbe stehen im
+ * Kasten ihres ersten Wurfs, jeder mit seinem Schaden. `latest` hat der Kasten, in dem der neueste
+ * Eintrag steht. Ein Durchgang durch den Log baut die Verweise auf, so bleibt es auch bei langem Log
+ * schnell.
+ */
+function groupLog(log: readonly LogItem[]) {
+  const notesOf = new Map<number, NoteAt[]>();
+  const damageOf = new Map<number, number>();
+  const volleyOf = new Map<number, number[]>();
+  log.forEach((item, i) => {
+    if (item.kind === 'note' && item.interprets !== undefined) notesOf.set(item.interprets, [...(notesOf.get(item.interprets) ?? []), { item, index: i }]);
+    if (item.kind === 'damage' && !damageOf.has(item.of)) damageOf.set(item.of, i);
+    if (item.kind === 'attack' && item.volley !== undefined) volleyOf.set(item.volley, [...(volleyOf.get(item.volley) ?? []), i]);
+  });
+  const notes = (index: number): readonly NoteAt[] => notesOf.get(index) ?? [];
+  const damage = (index: number): DamageAt | undefined => {
+    const at = damageOf.get(index);
+    return at === undefined ? undefined : { item: log[at] as DamageItem, index: at, notes: notes(at) };
+  };
+  const last = log.length - 1;
+  const touches = (d: DamageAt | undefined) => d !== undefined && (d.index === last || d.notes.some((n) => n.index === last));
+  const groups = log.flatMap((item, index) => {
+    if ((item.kind === 'note' && item.interprets !== undefined) || item.kind === 'damage' || (item.kind === 'attack' && item.volley !== undefined)) return [];
+    const own = notes(index);
+    const hit = damage(index);
+    const volley = (volleyOf.get(index) ?? []).map((i) => ({ item: log[i] as Extract<LogItem, { kind: 'attack' }>, index: i, notes: notes(i), damage: damage(i) }));
+    const latest = index === last || own.some((n) => n.index === last) || touches(hit) || volley.some((v) => v.index === last || touches(v.damage) || v.notes.some((n) => n.index === last));
+    return [{ item, index, notes: own, damage: hit, volley, latest }];
+  });
+  // Ohne Treffer bei den Verweisen ist der letzte Kasten der neueste.
+  if (groups.length > 0 && !groups.some((g) => g.latest)) groups[groups.length - 1] = { ...groups[groups.length - 1]!, latest: true };
+  return groups;
 }
 
 interface DeleteBarProps {
@@ -413,13 +455,13 @@ function EntryBody({ item }: { item: LogItem }) {
           )}
           <dl className="picks">
             {item.bell !== undefined && (
-              <div style={{ display: 'contents' }}>
+              <div className="pick-row">
                 <dt>1–10</dt>
                 <dd className="pick-bell">{item.bell}</dd>
               </div>
             )}
             {item.scatter !== undefined && (
-              <div style={{ display: 'contents' }}>
+              <div className="pick-row">
                 <dt>Streuwürfel</dt>
                 <dd className="pick-roll">
                   <ScatterRose value={item.scatter} />
@@ -428,7 +470,7 @@ function EntryBody({ item }: { item: LogItem }) {
               </div>
             )}
             {item.map !== undefined && (
-              <div style={{ display: 'contents' }}>
+              <div className="pick-row">
                 <dt>Kartensymbol</dt>
                 <dd className="pick-roll">
                   <MapIconSvg map={item.map} />
@@ -437,7 +479,7 @@ function EntryBody({ item }: { item: LogItem }) {
               </div>
             )}
             {item.items.map((pick, i) => (
-              <div key={i} style={{ display: 'contents' }}>
+              <div key={i} className="pick-row">
                 <dt>{pick.section === pick.slot ? pick.section : `${pick.section} · ${pick.slot}`}</dt>
                 <dd>{pickText(pick.name, pick.texts)}</dd>
               </div>
@@ -448,12 +490,12 @@ function EntryBody({ item }: { item: LogItem }) {
     case 'task':
       return (
         <>
-          <span style={{ fontSize: 14, fontWeight: 600 }}>{taskTitle(item)}</span>
-          <span className={item.success ? 'verdict' : 'verdict negative'} style={{ fontSize: 26 }}>
+          <span className="entry-title">{taskTitle(item)}</span>
+          <span className={item.success ? 'verdict medium' : 'verdict medium negative'}>
             {item.success ? 'ERFOLG' : 'FEHLSCHLAG'}
           </span>
           <span className="entry-detail">{taskDetail(item)}</span>
-          <span className="entry-question" style={{ fontSize: 12 }}>
+          <span className="entry-question small">
             {item.parts.map(partLabel).join(', ')}
           </span>
         </>
@@ -461,12 +503,12 @@ function EntryBody({ item }: { item: LogItem }) {
     case 'attack':
       return (
         <>
-          <span style={{ fontSize: 14, fontWeight: 600 }}>{attackTitle(item)}</span>
-          <span className={item.success ? 'verdict' : 'verdict negative'} style={{ fontSize: 26 }}>
+          <span className="entry-title">{attackTitle(item)}</span>
+          <span className={item.success ? 'verdict medium' : 'verdict medium negative'}>
             {item.success ? 'TREFFER' : 'DANEBEN'}
           </span>
           <span className="entry-detail">{taskDetail(item)}</span>
-          <span className="entry-question" style={{ fontSize: 12 }}>
+          <span className="entry-question small">
             {item.parts.map(partLabel).join(', ')}
           </span>
         </>
@@ -474,11 +516,11 @@ function EntryBody({ item }: { item: LogItem }) {
     case 'damage':
       return <span className="entry-detail">{damageDetail(item)}</span>;
     case 'recovery':
-      return <span style={{ fontSize: 14, fontWeight: 600 }}>{recoveryLine(item)}</span>;
+      return <span className="entry-title">{recoveryLine(item)}</span>;
     case 'patron':
       return (
         <>
-          <span className="verdict" style={{ fontSize: 22 }}>
+          <span className="verdict small">
             {patronName(item)}
           </span>
           <span className="entry-detail">{patronDetail(item)}</span>
@@ -487,7 +529,7 @@ function EntryBody({ item }: { item: LogItem }) {
     case 'event':
       return (
         <>
-          <span className="verdict" style={{ fontSize: 20 }}>
+          <span className="verdict small">
             {item.name}
           </span>
           <p className="note-text">{item.text}</p>
@@ -497,7 +539,7 @@ function EntryBody({ item }: { item: LogItem }) {
     case 'butchering':
       return (
         <>
-          <span className="verdict" style={{ fontSize: 20 }}>
+          <span className="verdict small">
             {item.meat} kg Fleisch · {item.fur} kg Fell
           </span>
           <span className="entry-detail">{butcheringDetail(item)}</span>
@@ -507,7 +549,7 @@ function EntryBody({ item }: { item: LogItem }) {
     case 'save':
       return (
         <>
-          <span className={item.success ? 'verdict' : 'verdict negative'} style={{ fontSize: 22 }}>
+          <span className={item.success ? 'verdict small' : 'verdict small negative'}>
             {item.success ? 'GESCHAFFT' : 'MISSLUNGEN'}
           </span>
           <span className="entry-detail">{saveDetail(item)}</span>
@@ -516,7 +558,7 @@ function EntryBody({ item }: { item: LogItem }) {
     case 'rumor':
       return (
         <>
-          <span className="verdict" style={{ fontSize: 20 }}>
+          <span className="verdict small">
             {rumorName(item)}
           </span>
           <span className="entry-detail">{rumorDetail(item)}</span>
@@ -525,7 +567,7 @@ function EntryBody({ item }: { item: LogItem }) {
     case 'check':
       return (
         <>
-          <span className={item.passed === (item.check !== 'legal') ? 'verdict' : 'verdict negative'} style={{ fontSize: 20 }}>
+          <span className={item.passed === (item.check !== 'legal') ? 'verdict small' : 'verdict small negative'}>
             {item.check === 'legal' ? (item.passed ? 'Ruhe' : 'Angehalten') : item.passed ? 'JA' : 'NEIN'}
           </span>
           <span className="entry-detail">{checkDetail(item)}</span>
@@ -534,7 +576,7 @@ function EntryBody({ item }: { item: LogItem }) {
     case 'time':
       return (
         <>
-          <span className="verdict" style={{ fontSize: 20 }}>
+          <span className="verdict small">
             {item.week ? 'Woche beendet' : `${item.days} ${item.days === 1 ? 'Tag' : 'Tage'} vergangen`}
           </span>
           <span className="entry-detail">
@@ -553,13 +595,13 @@ function EntryBody({ item }: { item: LogItem }) {
 export function JourneyBody({ item }: { item: JourneyItem }) {
   return (
     <>
-      <span className="verdict" style={{ fontSize: 20 }}>
+      <span className="verdict small">
         {item.from} → {item.to}
       </span>
       <span className="entry-detail">
         {item.fromDate} → {item.toDate}
       </span>
-      <span className="entry-question" style={{ fontSize: 12 }}>
+      <span className="entry-question small">
         {item.passengers.map((p) => `${p.name}: ${p.passage}`).join(' · ')}
       </span>
       {item.berths.length > 0 && (

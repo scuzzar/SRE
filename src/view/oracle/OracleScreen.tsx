@@ -49,12 +49,15 @@ export function OracleScreen({ view, strip = true }: { view: Snapshot; /** Im De
     if (animated()) setRolling(view.log.length);
   };
   const note = () => setSheet({});
+  // Gleichbleibende Handler, damit der Log (memo) beim Öffnen eines Blatts nicht neu zeichnet.
+  const interpret = useCallback((index: number) => setSheet({ reading: index }), []);
+  const edit = useCallback((index: number) => setSheet({ edit: index }), []);
   useShortcuts({ k: draw, w: roll, n: note });
 
   return (
     <div className="screen">
       {strip && <CharacterStrip view={view} />}
-      <LogList log={view.log} days={view.logDays} onInterpret={(index) => setSheet({ reading: index })} onEdit={(index) => setSheet({ edit: index })} />
+      <LogList log={view.log} days={view.logDays} onInterpret={interpret} onEdit={edit} />
       <section className="dock" aria-label="Orakel und Proben">
         {task && (
           <div className="task-bar" aria-live="polite">

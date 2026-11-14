@@ -7409,3 +7409,25 @@ button:disabled {
 .strip .chips button::after {
   inset: -4px 0;
 }
+
+/* Einträge im Log: Titel, kleinere Urteile und Zeilen der Kartenauswahl, statt Schriftgrößen im Code. */
+.entry-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.verdict.medium {
+  font-size: 26px;
+}
+
+.verdict.small {
+  font-size: 20px;
+}
+
+.entry-question.small {
+  font-size: 12px;
+}
+
+.pick-row {
+  display: contents;
+}
