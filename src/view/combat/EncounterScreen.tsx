@@ -363,7 +363,6 @@ function TimeBar({ time }: { time: TimeView }) {
   const [dayOfYear, setDayOfYear] = useState(String(time.dayOfYear));
   const [year, setYear] = useState(String(time.year));
   const disabled = time.blocked !== undefined;
-  const dayMissing = time.missingDay.length > 0;
   const weekMissing = time.missingWeek.length > 0;
   return (
     <section className="time-bar" aria-label="Spielzeit">
@@ -409,9 +408,9 @@ function TimeBar({ time }: { time: TimeView }) {
             </option>
           ))}
         </select>
-        <HoldButton className={dayMissing ? 'ghost' : 'primary'} disabled={disabled} hint="Lange drücken: Zeit vergeht ohne die fehlenden Tests" onPress={() => game.passDays(days)} onHold={() => game.passDays(days, true)}>
+        <button type="button" className="primary" disabled={disabled} onClick={() => game.passDays(days)}>
           vergehen lassen
-        </HoldButton>
+        </button>
         <HoldButton className={weekMissing ? 'ghost' : 'primary'} disabled={disabled} hint="Lange drücken: die Woche endet ohne die fehlenden Tests" onPress={() => game.endWeek()} onHold={() => game.endWeek(true)}>
           Woche beenden (+{time.toSunday})
         </HoldButton>
