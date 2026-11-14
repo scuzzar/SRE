@@ -79,3 +79,81 @@ Aus [`docs/regeln-kampf.md`](docs/regeln-kampf.md), noch offen:
 - [ ] Pfeil zu einem Ziel außerhalb des Bildschirms (bei vielen NSC scrollt die Spalte): ein Hinweis
   am Rand?
 - [ ] Das Fadenkreuz ⌖ in der roten Marke unten im Zug größer, wie auf den Karten?
+
+## Orakel-Screen
+
+Durchsicht vom 2026-11-14: die App headless bedient (390×844, 360×640, 844×390 quer, 1024×768,
+1440×900) und `src/view/oracle/` gelesen. Die Zahlen sind gemessen. Oben steht, was kaputt ist,
+darunter, was besser ginge.
+
+### 1. Fehler
+
+- [ ] **Niedrige Bildschirme schneiden die Knöpfe ab.** Leiste und Knöpfe unten geben beide nicht
+  nach (`flex: 0 0 auto`), die App scrollt nicht (`.app { overflow: hidden }`). Bei 360×640 mit
+  vorbereiteter Probe und Text im Feld liegt die Zeile mit Stufe und „Ja/Nein“ hinter der Leiste
+  mit den Bereichen, dem Log bleiben rund 35 px. Im Querformat (844×390) ist nur die halbe Schreibzeile zu
+  sehen; Karte, 2W6, Stufe und Ja/Nein sind nicht erreichbar. Mögliche Lösung: Die Leiste mit dem
+  Charakter oben klappt von selbst ein, wenn die Höhe nicht reicht; quer zwei Spalten.
+- [ ] **Karteneintrag im Log läuft aus dem Kasten**, wenn die Orakel-Spalte schmal ist (1024 px
+  Breite, Spalte 269 px): „Reichtümer“, „elektrisch“ stehen rechts über dem Rand. Ursache:
+  `.picks` gibt der Beschriftung die volle Breite (`auto`), der Wert bekommt den Rest und bricht
+  lange Wörter nicht um.
+- [ ] **Neues Ergebnis bleibt unsichtbar, wenn man hochgescrollt hat.** Nach einem Wurf bleibt der
+  Log oben stehen (gemessen: Scrollstand −1225 → −1332), ohne Hinweis. Entweder zum Neuesten
+  springen oder unten einen Knopf „Neuestes“ zeigen.
+- [ ] **Einträge im Log sind mit der Tastatur nicht erreichbar** (kein fokussierbares Element im
+  Log): Ziel der Deutung wählen und Löschen gehen nur mit Maus oder Finger, auch im Desktop-Modus.
+
+### 2. Platz
+
+- [ ] **Der Log ist das Kleinste auf dem Screen.** Bei 390×844 mit offener Leiste bleiben ihm rund
+  295 px, also ein bis zwei Einträge; mit vorbereiteter Probe und Zielzeile rund 195 px. Mit
+  eingeklappter Leiste sind es 446 px. Ideen: Attribute in der Leiste als schmale Zeile wie im
+  Kampf; Leiste klappt ein, sobald man im Log scrollt oder tippt.
+- [ ] **Das Textfeld ist zu schmal.** 183 px bei 390 px Breite, 153 px bei 360 px (der Platzhalter
+  ist abgeschnitten), 137 px im Desktop-Modus bei 1440 px. Man sieht rund 18 Zeichen einer Frage.
+  Ideen: „Deuten“ und „Notiz“ überall nur als Symbol (wie heute zwischen 1024 und 1279 px), oder
+  ein Feld, das mit dem Text in die Höhe wächst; die Orakel-Spalte (345 px) auf breiten
+  Bildschirmen breiter.
+- [ ] **Umbrüche in den Knöpfen:** „Gering 25 % · 10+“ bricht bei 360 px um, „Probe würfeln“ bei
+  360 px und im Desktop-Modus bei 1440 px auf zwei Zeilen.
+
+### 3. Bedienung
+
+- [ ] **Die Zielzeile irritiert beim Fragen.** Sie zeigt „Deutung zu NEIN“, sobald Text im Feld
+  steht, also auch, während man die nächste Frage tippt. Idee: kleiner und am Knopf „Deuten“
+  statt als eigene Zeile über dem Feld.
+- [ ] **Notiz und Deutung lassen sich nicht ändern**, nur löschen und neu schreiben. Ändern wäre
+  eine neue Eingabe an den Controller; vorher prüfen, ob es das Domänenmodell berührt.
+- [ ] **Mehrzeilige Notizen gehen nicht** (einzeiliges Feld), obwohl der Log Zeilenumbrüche zeigt.
+- [ ] **Ja/Nein hat weder Vibration noch Inszenierung**, anders als 2W6 und Karte: Die Antwort
+  steht einfach im Log. Mindestens `haptic` wie bei den anderen beiden.
+- [ ] **Der Hinweis „Ergebnis antippen zum Deuten · lange drücken zum Löschen“** steht am Anfang
+  des Logs und ist weg, sobald der Log länger als der Bildschirm ist. Mit der Maus stimmt „lange
+  drücken“ nur halb (Rechtsklick geht auch).
+- [ ] **Beschriftung „1–10“** im Karteneintrag des Logs sagt allein nichts; etwa „Zahl 1–10“.
+- [ ] **Am Gerät prüfen** (headless nicht zu sehen): Bleibt die Schreibzeile mit „Deuten“ und
+  „Notiz“ über der Bildschirmtastatur sichtbar? „Karte ziehen“ mit Frage geht vermutlich erst,
+  wenn die Tastatur zu ist.
+
+### 4. Tippziele
+
+- [ ] Unter 44 px: die Punkte unter der Leiste (28×22), Stift und Pfeil nebeneinander (32×36), die
+  Fertigkeiten (36 hoch). Die Kontraste sind in Ordnung (alle ≥ 4,7 : 1).
+
+### 5. Tempo
+
+- [ ] **Ein langer Log macht das Tippen zäh.** Mit 1500 Einträgen (10 600 Elemente) kostet jeder
+  Tastendruck im Fragefeld 80 ms (Median, Chromium am Rechner; ein Smartphone ist langsamer), ein
+  Wurf 173 ms. Ursachen: Der Text des Felds liegt in `App`, also zeichnet jeder Tastendruck den
+  ganzen Log neu (`LogList` ist nicht mit `memo` geschützt, `onPick` entsteht jedes Mal neu); die
+  Gruppen suchen je Eintrag den ganzen Log ab (`interpretationsAt`, `damageAt`, Garbe: O(n²)).
+  Lösung: `LogList` memoisieren, Deutungen und Schaden einmal je Log indizieren, nur die letzten
+  Einträge zeichnen und „Ältere zeigen“ anbieten.
+
+### 6. Aufräumen
+
+- [ ] Schriftgrößen stehen in `EntryBody` als `style` im Code (12, 14, 20, 22, 26); das Urteil ist
+  je Art des Eintrags verschieden groß. In Klassen in `styles.css` überführen und vereinheitlichen.
+- [ ] `WeaponChips` in `CharacterStrip.tsx` hat zwei Kommentarblöcke hintereinander; der erste ist
+  überholt.
