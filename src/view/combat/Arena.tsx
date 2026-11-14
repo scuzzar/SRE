@@ -23,8 +23,8 @@ export interface Selection {
   end(): void;
 }
 
-/** Übernehmen lässt sich jeder NSC, der noch lebt; Übernommene stehen nicht mehr in der Liste. */
-export const canAdopt = (f: FighterView) => f.side === 'npcs' && f.state !== 'dead' && f.state !== 'destroyed' && f.animal === undefined;
+/** Übernehmen lässt sich jeder NSC, der noch lebt, außer einem dazugenommenen; Übernommene stehen nicht mehr in der Liste. */
+export const canAdopt = (f: FighterView) => f.side === 'npcs' && !f.joined && f.state !== 'dead' && f.state !== 'destroyed' && f.animal === undefined;
 
 /** Bereits gezeichnete Pfeile eines Angriffs; jeder fliegt nur einmal. */
 const flown = new Set<string>();

@@ -33,3 +33,55 @@ test('Reiter NSC: aus einer Laufbahn erzeugen, danach steht er im Editor', async
   await editor.getByRole('button', { name: 'Schließen' }).click();
   await expect(page.getByRole('heading', { name: 'Feind' })).toBeVisible();
 });
+
+// Kampf mit dauerhaften NSC (2026-11-14g): Am NSC springt „In Begegnung“ in den Reiter Begegnung und
+// wählt ihn vor; er kämpft auf der Seite der NSC und führt.
+test('Reiter NSC: „In Begegnung“ nimmt den NSC zur Zufallsbegegnung dazu; er führt die NSC an', async ({ page }) => {
+  await page.goto('/');
+  const nav = page.getByRole('navigation', { name: 'Bereiche' });
+  await nav.getByRole('button', { name: 'NSC', exact: true }).click();
+  await page.getByRole('button', { name: '+ Neuer NSC' }).click();
+  await page.getByRole('dialog', { name: 'Neuer NSC' }).getByLabel('Rolle').selectOption({ label: 'Verbündeter' });
+  await page.getByRole('button', { name: 'Leer anlegen' }).click();
+  const editor = page.getByRole('dialog', { name: 'Neuer NSC' });
+  await editor.getByLabel('Name').fill('Tenzin Thorsen');
+  await editor.getByRole('button', { name: 'Speichern' }).click();
+  await page.getByRole('button', { name: 'Tenzin Thorsen in Begegnung' }).click();
+
+  const kind = page.getByRole('region', { name: 'Zufallsbegegnung' });
+  await expect(kind).toBeVisible();
+  const chip = kind.getByRole('group', { name: 'NSC dazunehmen' }).getByRole('button', { name: /Tenzin Thorsen/ });
+  await expect(chip).toHaveAttribute('aria-pressed', 'true');
+  await expect(chip).toContainText('Anführer');
+  await kind.getByLabel('Begegnung wählen').selectOption('23');
+
+  const intro = page.getByRole('dialog', { name: /Tenzin Thorsen \+ \d+ × Police Patrol/ });
+  await expect(intro).toBeVisible();
+  await expect(intro.locator('.intro-npcs li').first()).toContainText('Tenzin Thorsen · Anführer');
+  await intro.getByRole('button', { name: 'Weiter' }).click();
+  await expect(kind.locator('.encounter-running-title')).toHaveText(/^Tenzin Thorsen \+ \d+ × Police Patrol$/);
+  // Läuft eine Begegnung, gibt es „In Begegnung“ nicht.
+  await nav.getByRole('button', { name: 'NSC', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Tenzin Thorsen in Begegnung' })).toHaveCount(0);
+  await nav.getByRole('button', { name: 'Kampf', exact: true }).click();
+  await expect(page.locator('.fight-head-title')).toContainText('Tenzin Thorsen + ');
+});
+
+test('Zufallsbegegnung: mit Art „keine“ kommen nur die dazugenommenen NSC', async ({ page }) => {
+  await page.goto('/');
+  const nav = page.getByRole('navigation', { name: 'Bereiche' });
+  await nav.getByRole('button', { name: 'NSC', exact: true }).click();
+  await page.getByRole('button', { name: '+ Neuer NSC' }).click();
+  await page.getByRole('button', { name: 'Leer anlegen' }).click();
+  const editor = page.getByRole('dialog', { name: 'Neuer NSC' });
+  await editor.getByLabel('Name').fill('Ilka Brand');
+  await editor.getByRole('button', { name: 'Speichern' }).click();
+  await nav.getByRole('button', { name: 'Begegnung', exact: true }).click();
+  const kind = page.getByRole('region', { name: 'Zufallsbegegnung' });
+  await expect(kind.getByLabel('Begegnung wählen').locator('option[value="none"]')).toHaveCount(0);
+  await kind.getByRole('button', { name: 'Ilka Brand' }).click();
+  await kind.getByLabel('Begegnung wählen').selectOption('none');
+  const intro = page.getByRole('dialog', { name: 'Ilka Brand' });
+  await expect(intro).toContainText('Begegnung · nur NSC');
+  await page.screenshot({ path: process.env.SHOT ?? 'test-results/nur-nsc.png' });
+});

@@ -114,6 +114,8 @@ import {
   isEvading,
   evadeDmAt,
   encounterNameOf,
+  joinableNpcs,
+  npcSideIds,
   gamePricePerKg,
   possessionKey,
   itemAt,
@@ -668,6 +670,8 @@ export interface FighterView {
   readonly side: Side;
   readonly name: string;
   readonly leader: boolean;
+  /** Ein dazugenommener dauerhafter NSC (2026-11-14g); den übernimmt man nicht. */
+  readonly joined: boolean;
   readonly weapon: string;
   readonly skill: string;
   readonly armor: string | undefined;
@@ -823,6 +827,8 @@ export interface AnimalSimView {
 
 export interface SimView {
   readonly name: string;
+  /** Wer kommt, in einer Zeile: „3 × Thugs“, mit dazugenommenen NSC „Tenzin Thorsen + 3 × Polizisten“. */
+  readonly title: string;
   /** Die Reaktion; fehlt bei Tieren, dann steht ihr Verhalten in `reactionText`. */
   readonly reaction: number | undefined;
   readonly reactionText: string;
@@ -831,8 +837,8 @@ export interface SimView {
   /** Die Würfel der Reaktion und ihr DM; fehlen bei Begegnungen von vorher. */
   readonly reactionDice: readonly number[] | undefined;
   readonly reactionDm: number;
-  /** Die Zeile der Random Encounter List (11–56) bzw. der Tiertabelle (2–12), wie viele Würfel die Anzahl hat (0: ein Tier) und welcher (W6, W4, W3). */
-  readonly roll: number;
+  /** Die Zeile der Random Encounter List (11–56) bzw. der Tiertabelle (2–12), wie viele Würfel die Anzahl hat (0: ein Tier oder ohne Art) und welcher (W6, W4, W3). Ohne Art fehlt die Zeile. */
+  readonly roll: number | undefined;
   readonly quantity: number;
   readonly quantityDie: number;
   readonly round: number;
@@ -1067,6 +1073,9 @@ export interface CombatView {
   readonly quantityDie: number;
   /** Die Arten der Random Encounter List, zum Wählen. */
   readonly encounterTypes: readonly { readonly roll: number; readonly name: string; readonly quantity: number }[];
+  /** Die dauerhaften NSC vom Aufenthaltsort, die man dazunehmen kann, und wer gewählt ist (2026-11-14g). */
+  readonly joinable: readonly { readonly id: string; readonly name: string; readonly role: NpcRole }[];
+  readonly joining: readonly string[];
   /** Schaden, den der Spieler gerade verteilt. */
   readonly wounding: WoundingView | undefined;
   /** Was beim Würfeln einer Begegnung herauskam oder nicht ging. */
@@ -1306,6 +1315,8 @@ export interface ControllerState {
   readonly wounding: Wounding | undefined;
   /** Was beim Würfeln einer Begegnung herauskam, wenn es keine gibt, oder was nicht ging. */
   readonly combatNote: string | undefined;
+  /** Die dauerhaften NSC, die man zur nächsten Zufallsbegegnung dazunimmt (2026-11-14g); nur Anzeige, nicht gespeichert. */
+  readonly joining: readonly string[];
   /** Der Dialog „Beute nehmen“ bzw. „Ausweiden“ ist für diesen NSC bzw. dieses Tier offen. */
   readonly lootOpen: string | undefined;
   /** Das eben gewürfelte Ausweiden steht im Vordergrund: Stelle im Log und wer gearbeitet hat (nur Anzeige). */
@@ -1588,7 +1599,7 @@ function weaponName(id: string): string {
   return id === HANDS ? 'Hände' : weaponOf(id).name;
 }
 
-function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined, intro: boolean, simBurst: boolean | undefined, simWeakened: boolean | undefined, surpriseShown = false, animalNote: string | undefined = undefined, log: readonly LogItem[] = [], lootOpen: string | undefined = undefined, butchered: ControllerState['butchered'] = undefined): CombatView | undefined {
+function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined, intro: boolean, simBurst: boolean | undefined, simWeakened: boolean | undefined, surpriseShown = false, animalNote: string | undefined = undefined, log: readonly LogItem[] = [], lootOpen: string | undefined = undefined, butchered: ControllerState['butchered'] = undefined, joining: readonly string[] = []): CombatView | undefined {
   const character = focusOf(campaign);
   if (!character) return undefined;
   const current = attack ?? {};
@@ -1664,6 +1675,8 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
     surpriseShown: surpriseShown && encounter !== undefined && !needsSurprise(encounter),
     quantityDie: quantityDieOf(campaign),
     encounterTypes: ref.encounters.types.map((t) => ({ roll: t.roll, name: t.name, quantity: t.quantity })),
+    joinable: joinableNpcs(campaign).map((c) => ({ id: c.id, name: c.name, role: roleOf(c) })),
+    joining: joining.filter((id) => joinableNpcs(campaign).some((c) => c.id === id)),
     wounding: wounding && woundingView(campaign, wounding),
     note,
   };
@@ -1726,7 +1739,7 @@ function workerText(worker: { readonly name: string | undefined; readonly skill:
 }
 
 function lootView(campaign: Campaign, id: string | undefined): LootView | undefined {
-  if (id === undefined || !campaign.encounters.some((e) => e.npcs.some((n) => n.id === id))) return undefined;
+  if (id === undefined || !campaign.encounters.some((e) => npcSideIds(e).includes(id))) return undefined;
   const npc = anyCharacterOf(campaign, id);
   const animal = npc.animal !== undefined;
   const workers = butchers(campaign);
@@ -1817,6 +1830,7 @@ function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, 
     side: slot.side,
     name: fighter.name,
     leader: encounter.leader === slot.id,
+    joined: encounter.joined?.includes(slot.id) === true,
     weapon: weaponName(fighter.weapon.id),
     skill: fighter.animal ? `Tier ${signedText(fighter.natural)}` : `${skillOf(fighter.weapon.uses).name}-${fighter.skill}`,
     armor: fighter.animal ? (fighter.armor === 'nothing' ? undefined : `${fighter.armor.charAt(0).toUpperCase()}${fighter.armor.slice(1)}${fighter.hide ? ` ${signedText(fighter.hide)}` : ''}`) : wears === undefined ? undefined : itemLabel(itemOf(wears)),
@@ -1897,14 +1911,18 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
       attacks: options.attacks,
     };
   }
+  const rolled = encounter.npcs.length;
+  const joinedNames = (encounter.joined ?? []).map((id) => anyCharacterOf(campaign, id).name);
+  const crowd = rolled > 0 ? `${rolled} × ${encounterNameOf(campaign, encounter)}` : '';
   return {
     name: encounterNameOf(campaign, encounter),
+    title: [joinedNames.join(', '), crowd].filter(Boolean).join(' + ') || `0 × ${encounterNameOf(campaign, encounter)}`,
     reaction: encounter.reaction,
     reactionText: encounter.reaction === undefined ? behaviorText(behaviorOf(campaign, encounter)) : reactionText(encounter.reaction),
     animal: animalSimView(campaign, encounter),
     reactionDice: encounter.reactionDice,
     reactionDm: reactionDm(campaign, encounter),
-    roll: encounter.of ?? encounter.animal!,
+    roll: encounter.of ?? encounter.animal,
     quantity: encounterQuantityOf(campaign, encounter),
     quantityDie: encounter.quantityDie ?? 6,
     round: encounter.round,
@@ -2420,7 +2438,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     npcs: npcScreenView(campaign, state.npcAll),
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
-    combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.simBurst, state.simWeakened, state.surpriseShown, state.animalNote, log, state.lootOpen, state.butchered),
+    combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.simBurst, state.simWeakened, state.surpriseShown, state.animalNote, log, state.lootOpen, state.butchered, state.joining),
     patron: {
       lists: patronLists.map((list) => ({ list, parts: patronDmParts(campaign, list) })),
       last: log.findLast((item): item is PatronItem => item.kind === 'patron'),

@@ -20,7 +20,7 @@ export interface Encounter {
   readonly at: string;
   /** Der Würfel, mit dem die Anzahl gewürfelt wurde; fehlt bei Begegnungen von vorher: W6. */
   readonly quantityDie?: QuantityDie;
-  /** Die Art: der Wurf 11–56 auf der Liste; fehlt bei einer Tierbegegnung. */
+  /** Die Art: der Wurf 11–56 auf der Liste; fehlt bei einer Tierbegegnung und bei einer nur mit dazugenommenen NSC. */
   readonly of?: number;
   /** Bei einer Tierbegegnung: der Wurf 2–12 auf die Tiertabelle der Welt (`in`) im Gelände (`terrain`); im Code der Verweis auf die Zeile. */
   readonly animal?: number;
@@ -41,7 +41,12 @@ export interface Encounter {
   readonly ended: boolean;
   /** Die NSC der Begegnung: vollständige Charaktere, die an ihr hängen, nicht an der Kampagne. */
   readonly npcs: readonly Character[];
-  /** Der Anführer: einer der NSC; fehlt, wenn die Begegnung keinen hat oder er übernommen ist. */
+  /**
+   * Die dazugenommenen NSC (2026-11-14g): dauerhafte NSC der Kampagne, die auf der Seite der NSC
+   * mitkämpfen, in der gewählten Reihenfolge; die Begegnung verweist nur auf sie. Fehlt: keine.
+   */
+  readonly joined?: readonly CharacterId[];
+  /** Der Anführer: einer der NSC (mit dazugenommenen NSC der erste von ihnen); fehlt, wenn die Begegnung keinen hat oder er übernommen ist. */
   readonly leader?: CharacterId;
   /** Der Wurf auf die Encounter Ranges (mit dem DM des Geländes); fehlt bei Begegnungen von vorher. */
   readonly rangeDice?: readonly [number, number];
@@ -101,6 +106,40 @@ export function encounterTypeOfEncounter(encounter: Encounter): EncounterType {
   const type = encounter.of === undefined ? undefined : encounterTypeOf(encounter.of);
   if (!type) throw new DomainError(`Eine Begegnung ${encounter.of} gibt es nicht.`);
   return type;
+}
+
+/** Hat die Begegnung eine Art der Random Encounter List? Nicht bei Tieren und nicht bei einer nur mit dazugenommenen NSC. */
+export function hasEncounterType(encounter: Encounter): boolean {
+  return encounter.of !== undefined;
+}
+
+/** Die Ids der NSC-Seite: erst die dazugenommenen NSC, dann die gewürfelten (2026-11-14g). */
+export function npcSideIds(encounter: Encounter): readonly CharacterId[] {
+  return [...(encounter.joined ?? []), ...encounter.npcs.map((n) => n.id)];
+}
+
+/** Die NSC-Seite als Charaktere: die dazugenommenen aus der Kampagne, dann die gewürfelten. */
+export function npcSideOf(campaign: Campaign, encounter: Encounter): readonly Character[] {
+  const joined = (encounter.joined ?? []).map((id) => {
+    const character = campaign.characters.find((c) => c.id === id);
+    if (!character) throw new DomainError(`Den dazugenommenen NSC ${id} gibt es nicht.`);
+    return character;
+  });
+  return [...joined, ...encounter.npcs];
+}
+
+/** Ist dieser Charakter ein dazugenommener NSC der laufenden Begegnung? */
+export function isJoined(campaign: Campaign, id: CharacterId): boolean {
+  return currentEncounter(campaign)?.joined?.includes(id) === true;
+}
+
+/**
+ * Die dauerhaften NSC, die man zu einer Begegnung dazunehmen kann (2026-11-14g): auf dem
+ * Aufenthaltsort, lebend, nicht ausgeschieden, kein Tier; ohne Aufenthaltsort keine.
+ */
+export function joinableNpcs(campaign: Campaign): readonly Character[] {
+  if (campaign.location === undefined) return [];
+  return campaign.characters.filter((c) => c.npc && !c.dead && !c.retired && c.animal === undefined && c.place === campaign.location);
 }
 
 /** Die Stelle des ersten Logeintrags der Begegnung: der erste, der nicht vor ihr liegt. */
@@ -261,35 +300,48 @@ export interface EncounterRoll {
   readonly encounter: Encounter | undefined;
 }
 
+/** Die Art einer Begegnung: ein Wurf 11–66 auf der Liste oder „keine“, dann kommen nur die dazugenommenen NSC. */
+export type EncounterChoice = number | 'none';
+
 /**
  * Würfelt eine Begegnung auf dem Aufenthaltsort: die Art nach der Random Encounter List (oder
  * vorgegeben), die Anzahl mit dem Würfel der Anzahl der Kampagne, je NSC UPP, Name, Waffe und
  * Rüstung nach dem TL der Gruppe, dazu die Reaktion. Die Zeilen 61–66 sind leer: dann gibt es keine.
- * `count` gibt die Anzahl fest vor; das nutzen nur Tests.
+ * Dazugenommene NSC (`joined`, 2026-11-14g) kämpfen auf der Seite der NSC mit, der erste führt; mit
+ * ihnen heißen eine leere Zeile und „keine“: nur sie. `count` gibt die Anzahl fest vor; das nutzen
+ * nur Tests.
  */
-export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, chosen?: number, count?: number, terrain: string | undefined = campaign.terrain): EncounterRoll {
+export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, chosen?: EncounterChoice, count?: number, terrain: string | undefined = campaign.terrain, joined: readonly CharacterId[] = []): EncounterRoll {
   if (currentEncounter(campaign)) throw new DomainError('Es läuft schon eine Begegnung; erst sie beenden.');
   const world = locationOf(campaign);
   if (!world || campaign.location === undefined) throw new DomainError('Die Gruppe ist auf keiner Welt; erst auf der Sektorkarte den Aufenthaltsort wählen.');
-  const roll = chosen ?? d6(random) * 10 + d6(random);
-  if (chosen !== undefined && !encounterTypeOf(chosen)) throw new DomainError(`Eine Begegnung ${chosen} gibt es nicht.`);
-  const type = encounterTypeOf(roll);
-  if (!type) return { roll, campaign, encounter: undefined };
+  const joinable = joinableNpcs(campaign);
+  if (new Set(joined).size !== joined.length) throw new DomainError('Ein NSC kommt nur einmal dazu.');
+  for (const id of joined) {
+    if (!joinable.some((c) => c.id === id)) throw new DomainError(`${campaign.characters.find((c) => c.id === id)?.name ?? id} lässt sich nicht dazunehmen: nur lebende dauerhafte NSC vom Aufenthaltsort.`);
+  }
+  if (chosen === 'none' && joined.length === 0) throw new DomainError('Ohne Art braucht die Begegnung dazugenommene NSC.');
+  const roll = chosen === 'none' ? 0 : (chosen ?? d6(random) * 10 + d6(random));
+  if (typeof chosen === 'number' && !encounterTypeOf(chosen)) throw new DomainError(`Eine Begegnung ${chosen} gibt es nicht.`);
+  const type = chosen === 'none' ? undefined : encounterTypeOf(roll);
+  if (!type && joined.length === 0) return { roll, campaign, encounter: undefined };
   if (count !== undefined && (!Number.isInteger(count) || count < 1)) throw new DomainError('Eine Begegnung hat mindestens einen NSC.');
   const quantityDie = quantityDieOf(campaign);
-  const size = count ?? Math.max(1, d6(random, type.quantity, quantityDie));
-  const tl = Math.max(0, (world.uwp.tech ?? 0) + type.tl);
+  const size = type ? (count ?? Math.max(1, d6(random, type.quantity, quantityDie))) : 0;
+  // Mit dazugenommenen NSC führt der erste von ihnen; die Art bekommt keinen eigenen Anführer.
+  const typeLeader = type?.leader === true && joined.length === 0;
+  const tl = Math.max(0, (world.uwp.tech ?? 0) + (type?.tl ?? 0));
   const blades = weaponsUpTo(tl, false);
-  const weapons = weaponsUpTo(tl, type.guns);
+  const weapons = weaponsUpTo(tl, type?.guns === true);
   const guns = weaponsUpTo(tl, true);
-  const armors = armorsUpTo(tl, type.military === true);
+  const armors = armorsUpTo(tl, type?.military === true);
   const heavyArmors = armorsUpTo(tl, true);
   // Die Überlebensausrüstung, die die Welt verlangt (Charts S. 21).
   const gear = survivalGear(world.uwp.atmosphere ?? 0, tl);
   // Die Ids der NSC bleiben über alle Begegnungen eindeutig, auch wenn einer übernommen ist.
   const first = nextNumber([...campaign.characters.map((c) => c.id), ...campaign.encounters.flatMap((e) => e.npcs.map((n) => n.id))], 'n');
-  const npcs: Character[] = Array.from({ length: size }, (_, i) => {
-    const leader = type.leader && i === 0;
+  const npcs: Character[] = !type ? [] : Array.from({ length: size }, (_, i) => {
+    const leader = typeLeader && i === 0;
     const upp: Upp = { str: d6(random, 2), dex: d6(random, 2), end: d6(random, 2), int: d6(random, 2), edu: d6(random, 2), soc: d6(random, 2) };
     const name = npcName(random);
     // Ein Anführer trägt immer eine Schusswaffe und Rüstung, auch ohne G und A (SR 50).
@@ -313,15 +365,14 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
       'e',
     )}`,
     at: clock.now(),
-    quantityDie,
-    of: roll,
+    ...(type ? { quantityDie, of: roll } : {}),
     in: campaign.location,
     reaction,
     reactionDice,
     reactionDm: dm,
     ended: false,
     npcs,
-    ...(type.leader ? { leader: npcs[0]!.id } : {}),
+    ...(joined.length > 0 ? { joined: [...joined], leader: joined[0]! } : typeLeader ? { leader: npcs[0]!.id } : {}),
     rangeDice,
     startBand: start.band,
     startClose: start.close,
@@ -349,14 +400,16 @@ export function encounterAnimalRow(campaign: Campaign, encounter: Encounter): An
   return animalRowOf(campaign.hexes, animalRefOf(encounter));
 }
 
-/** Der Name einer Begegnung: die Art der Random Encounter List oder das Tier. */
+/** Der Name einer Begegnung: die Art der Random Encounter List oder das Tier; ohne Art „ohne Art“. */
 export function encounterNameOf(campaign: Campaign, encounter: Encounter): string {
-  return isAnimalEncounter(encounter) ? animalName(encounterAnimalRow(campaign, encounter)) : encounterTypeOfEncounter(encounter).name;
+  if (isAnimalEncounter(encounter)) return animalName(encounterAnimalRow(campaign, encounter));
+  return hasEncounterType(encounter) ? encounterTypeOfEncounter(encounter).name : 'ohne Art';
 }
 
-/** Wie viele Würfel die Anzahl hat; bei einem einzelnen Tier 0. */
+/** Wie viele Würfel die Anzahl hat; bei einem einzelnen Tier und ohne Art 0. */
 export function encounterQuantityOf(campaign: Campaign, encounter: Encounter): number {
-  return isAnimalEncounter(encounter) ? (encounterAnimalRow(campaign, encounter).quantity ?? 0) : encounterTypeOfEncounter(encounter).quantity;
+  if (isAnimalEncounter(encounter)) return encounterAnimalRow(campaign, encounter).quantity ?? 0;
+  return hasEncounterType(encounter) ? encounterTypeOfEncounter(encounter).quantity : 0;
 }
 
 /** Was eine Tierbegegnung würfelt: der Wurf 2–12 und die Kampagne mit Tiertabelle; mit Begegnung oder, bei einem Ereignis, ohne. */
@@ -663,16 +716,16 @@ export function pcSurpriseParts(campaign: Campaign): readonly SurpriseDmPart[] {
 }
 
 /** Die DMs der NSC auf die Überraschung: Battle Dress +2, Anführer +1, militärische Art +1, Fahrzeug −1, 8 oder mehr −1. */
-export function npcSurpriseParts(encounter: Encounter): readonly SurpriseDmPart[] {
-  const npcs = encounter.npcs;
+export function npcSurpriseParts(campaign: Campaign, encounter: Encounter): readonly SurpriseDmPart[] {
+  const npcs = npcSideOf(campaign, encounter);
   // Tiere haben nur den DM für die Gruppengröße.
   if (isAnimalEncounter(encounter)) return partsWith([[npcs.length >= 8, '8 oder mehr', -1]]);
-  const type = encounterTypeOfEncounter(encounter);
+  const type = hasEncounterType(encounter) ? encounterTypeOfEncounter(encounter) : undefined;
   return partsWith([
     [npcs.some((n) => n.wears === BATTLE_DRESS), 'Battle Dress', 2],
     [encounter.leader !== undefined, 'Anführer', 1],
-    [type.military === true, 'militärisch', 1],
-    [type.vehicle, 'Fahrzeug', -1],
+    [type?.military === true, 'militärisch', 1],
+    [type?.vehicle === true, 'Fahrzeug', -1],
     [npcs.length >= 8, '8 oder mehr', -1],
   ]);
 }
@@ -685,13 +738,13 @@ export function pcSurpriseDm(campaign: Campaign): number {
 }
 
 /** DM der NSC auf die Überraschung. */
-export function npcSurpriseDm(encounter: Encounter): number {
-  return sumOf(npcSurpriseParts(encounter));
+export function npcSurpriseDm(campaign: Campaign, encounter: Encounter): number {
+  return sumOf(npcSurpriseParts(campaign, encounter));
 }
 
 /** Die DMs auf die Überraschung je Partei, nach dem heutigen Stand der Parteien. */
 export function surpriseParts(campaign: Campaign, encounter: Encounter): { readonly pcs: readonly SurpriseDmPart[]; readonly npcs: readonly SurpriseDmPart[] } {
-  return { pcs: pcSurpriseParts(campaign), npcs: npcSurpriseParts(encounter) };
+  return { pcs: pcSurpriseParts(campaign), npcs: npcSurpriseParts(campaign, encounter) };
 }
 
 /** Ist die Überraschung der laufenden Begegnung noch nicht gewürfelt? Dann ist sie der erste Wurf im Kampf. */
@@ -708,7 +761,7 @@ export function rollSurprise(campaign: Campaign, random: Random): Campaign {
   if (!encounter) throw new DomainError('Es läuft keine Begegnung.');
   if (!needsSurprise(encounter)) throw new DomainError('Die Überraschung ist schon gewürfelt.');
   const pcSurprise = { die: d6(random), dm: pcSurpriseDm(campaign) };
-  const npcSurprise = { die: d6(random), dm: npcSurpriseDm(encounter) };
+  const npcSurprise = { die: d6(random), dm: npcSurpriseDm(campaign, encounter) };
   // Mit dem ersten Wurf im Kampf bekommt jeder SC, der kämpft, seine Entfernung: das Startband.
   const distances = livingCharacters(campaign).map((c) => distanceOf(encounter, c.id));
   const rolled: Encounter = { ...encounter, pcSurprise, npcSurprise, distances };

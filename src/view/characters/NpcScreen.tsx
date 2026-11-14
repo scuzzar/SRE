@@ -3,7 +3,7 @@ import type { NpcItem, NpcScreenView, Snapshot } from '../../controller';
 import type { NpcRole } from '../../model';
 import { hex, roleText } from '../format';
 import { useGame } from '../game-context';
-import { CloseIcon, PencilIcon } from '../icons';
+import { CloseIcon, CombatIcon, PencilIcon } from '../icons';
 
 /**
  * Der Reiter NSC: die dauerhaften NSC, vorgegeben die des Aufenthaltsorts (und die ohne Ort) nach
@@ -16,6 +16,8 @@ export function NpcScreen({ view }: { view: Snapshot }) {
   const [adding, setAdding] = useState(false);
   const filtered = !npcs.all && npcs.here !== undefined;
   const shown = npcs.worlds.reduce((sum, w) => sum + w.roles.reduce((n, r) => n + r.npcs.length, 0), 0);
+  // „In Begegnung“ gibt es für NSC vom Aufenthaltsort, solange keine Begegnung läuft (2026-11-14g).
+  const joinable = new Set(view.combat && !view.combat.sim ? view.combat.joinable.map((j) => j.id) : []);
 
   return (
     <div className="screen">
@@ -46,7 +48,7 @@ export function NpcScreen({ view }: { view: Snapshot }) {
                 <h4 className="section-title npc-role">{roleText[group.role]}</h4>
                 <ul>
                   {group.npcs.map((npc) => (
-                    <NpcRow key={npc.id} npc={npc} />
+                    <NpcRow key={npc.id} npc={npc} joinable={joinable.has(npc.id)} />
                   ))}
                 </ul>
               </div>
@@ -135,7 +137,7 @@ function NewNpcSheet({ npcs, onClose }: { npcs: NpcScreenView; onClose: () => vo
   );
 }
 
-function NpcRow({ npc, dead = false }: { npc: NpcItem; dead?: boolean }) {
+function NpcRow({ npc, dead = false, joinable = false }: { npc: NpcItem; dead?: boolean; joinable?: boolean }) {
   const game = useGame();
   return (
     <li aria-label={dead ? `${npc.name}, ${roleText[npc.role]}, tot` : `${npc.name}, ${roleText[npc.role]}`}>
@@ -150,6 +152,11 @@ function NpcRow({ npc, dead = false }: { npc: NpcItem; dead?: boolean }) {
           {npc.weapon && ` · ${npc.weapon}`}
         </span>
       </button>
+      {joinable && (
+        <button type="button" className="icon-button" aria-label={`${npc.name} in Begegnung`} title="In Begegnung" onClick={() => game.joinEncounter(npc.id)}>
+          <CombatIcon />
+        </button>
+      )}
       <button type="button" className="icon-button" aria-label={`${npc.name} bearbeiten`} onClick={() => game.editCharacter(npc.id)}>
         <PencilIcon />
       </button>

@@ -8,6 +8,7 @@ import {
   chance2d6,
   checkRounds,
   currentEncounter,
+  npcSideIds,
   DomainError,
   anyCharacterOf,
   fightOrder,
@@ -266,8 +267,8 @@ export function attackTable(campaign: Campaign, attack: Attack = {}): readonly (
 /** Die Partei des Ziels als Liste: NSC in der Reihenfolge der Begegnung, SC in der der Kampagne. */
 function partyOf(campaign: Campaign, who: CharacterId): readonly CharacterId[] {
   if (sideOf(campaign, who) === 'pcs') return livingCharacters(campaign).map((c) => c.id);
-  const encounter = campaign.encounters.find((e) => e.npcs.some((n) => n.id === who));
-  return (encounter?.npcs ?? []).map((n) => n.id);
+  const encounter = campaign.encounters.find((e) => !e.ended && npcSideIds(e).includes(who)) ?? campaign.encounters.find((e) => e.npcs.some((n) => n.id === who));
+  return encounter ? npcSideIds(encounter) : [];
 }
 
 /**

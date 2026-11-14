@@ -310,6 +310,14 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `/randomEvent` und `/focus`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-zufallsereignis.png`](changes/2026-11-14-zufallsereignis.png).
 
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14g): **Kampf mit dauerhaften NSC** (siehe *Begegnung*,
+> *Dazugenommene NSC*). Nach den Antworten des Owners: In der Karte Zufallsbegegnung nimmt man vor
+> dem Würfeln dauerhafte NSC vom Aufenthaltsort dazu, z. B. Tenzin und dazu 1W6 Polizisten; sie
+> kämpfen immer auf der Seite der NSC, und der erste von ihnen ist der Anführer. Neu im Bild nur der
+> Verweis `Encounter.joined` (geordnet) auf `Character`; die dazugenommenen NSC bleiben in der
+> Kampagne, die Begegnung verweist nur auf sie. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-14-kampf-mit-dauerhaften-nsc.png`](changes/2026-11-14-kampf-mit-dauerhaften-nsc.png).
+
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
@@ -449,7 +457,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Würfel der Anzahl | `Campaign.quantityDie`, `Encounter.quantityDie` | Der Würfel, mit dem die Anzahl der NSC gewürfelt wird: W6 nach den Regeln, W4 oder W3 zum Ausgleichen |
 | Reaktion | `Encounter.reaction` | 2W6 auf die Reactions-Tabelle (S. 21): 2 sofortiger Angriff … 12 freundlich |
 | NSC der Begegnung | `Encounter.npcs` (`Character`) | Ein Gegner oder Fremder in einer Begegnung: ein vollständiger Charakter, der an der Begegnung hängt, nicht an der Kampagne |
-| Anführer | `Encounter.leader` | Der NSC mit der besten Ausrüstung, wenn die Begegnung einen hat (L) |
+| Anführer | `Encounter.leader` | Der NSC mit der besten Ausrüstung, wenn die Begegnung einen hat (L); mit dazugenommenen NSC der erste von ihnen |
+| Dazugenommener NSC | `Encounter.joined` (`Character`) | Ein dauerhafter NSC vom Aufenthaltsort, der in einer Begegnung auf der Seite der NSC mitkämpft; er bleibt in der Kampagne |
 | Übernehmen | (von `Encounter.npcs` nach `Campaign.characters`) | Ein NSC der Begegnung wird in die Kampagne umgehängt, als SC oder als dauerhafter NSC |
 | Dauerhafter NSC | `Character` mit `npc` | Ein Charakter, der kein SC ist; er steht im Reiter NSC |
 | Ort eines NSC | `Character.place` | Die Welt, auf der ein dauerhafter NSC lebt; man trifft ihn nur dort |
@@ -1174,6 +1183,32 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (`ended`); beendete Begegnungen bleiben in der Kampagne, weil der Log auf ihre NSC verweist,
     und werden nicht mehr gezeigt. Eine Begegnung, auf die der Log nicht verweist, wird beim Beenden
     gelöscht.
+  - **Dazugenommene NSC** (2026-11-14g). In der Karte Zufallsbegegnung wählt man vor dem Würfeln
+    oder Wählen der Art beliebig viele **dauerhafte NSC vom Aufenthaltsort** dazu (lebend, nicht
+    ausgeschieden; ohne Aufenthaltsort keine). Die Begegnung verweist auf sie (`joined`, in der
+    gewählten Reihenfolge); sie bleiben in der Kampagne (`Campaign.characters`) und werden nicht
+    kopiert. Die Art würfelt oder wählt man wie sonst, neu auch **„keine“**: Dann kommen nur die
+    dazugenommenen NSC. Mit dazugenommenen NSC entfällt der **Test** (man stellt den Kampf mit
+    Absicht zusammen, wie beim Wählen der Art); eine leere Zeile (61–66) heißt dann ebenfalls: nur
+    die dazugenommenen NSC. Mindestens ein Kämpfer auf der Seite der NSC muss es geben.
+    - *Seite*: Sie kämpfen immer auf der Seite der NSC, gegen die SC. Die **NSC-Gruppe** sind die
+      dazugenommenen NSC, gefolgt von den gewürfelten (`npcs`); in dieser Reihenfolge stehen sie in
+      der Kampfsimulation, ziehen, laufen, zählen für Überraschung, Feuerstoß-Nachbarn, Beute und
+      jede Regel, die „die NSC der Begegnung“ sagt.
+    - *Anführer*: Der erste dazugenommene NSC ist der Anführer (`leader`). Die gewürfelte Art bekommt
+      dann keinen eigenen Anführer: Ihr erster NSC wird erzeugt wie die übrigen, ohne die beste
+      Ausrüstung und mit Fertigkeit 1.
+    - *Ausrüstung*: Ein dazugenommener NSC kämpft mit dem, was er hat (Primärwaffe, Waffe in der
+      Hand, getragene Rüstung, Munition im Besitz); die App gibt ihm nichts dazu.
+    - *Folgen*: Weil er derselbe Charakter bleibt, behält er nach der Begegnung seine Wunden, seine
+      verbrauchte Munition und gegebenenfalls seinen Tod (`dead`), und der Log verweist weiter auf
+      ihn. **Beute nehmen** von ihm geht wie bei jedem NSC der Begegnung; was man nimmt, verliert er.
+      **Übernehmen** gilt nur für die gewürfelten NSC; ein dazugenommener ist schon in der Kampagne.
+    - *Beenden*: Das Beenden löst nur den Verweis; der NSC bleibt, wie er ist. Ein NSC, auf den eine
+      laufende Begegnung verweist, kann nicht zum SC gemacht werden, solange sie läuft.
+    - *Reiter NSC*: Am dauerhaften NSC (vom Aufenthaltsort) springt **„In Begegnung“** in den Reiter
+      Begegnung und wählt ihn in der Karte Zufallsbegegnung schon vor. Läuft eine Begegnung, gibt es
+      den Knopf nicht (höchstens eine laufende Begegnung).
 - **Test.** Jede Begegnungsart beginnt mit ihrem **Test** nach der Encounter Checklist (SE, Charts
   S. 20): Zufallsbegegnung täglich 5+ auf 1W6, Patron wöchentlich 5+ auf 1W6, Gerücht wöchentlich
   7+ auf 2W6. Besteht er nicht, gibt es nichts, und die Karte sagt das („Test 3 (5+ nötig): diese

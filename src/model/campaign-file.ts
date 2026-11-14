@@ -296,8 +296,10 @@ const EncounterSchema = z
     pcRuns: z.number().int().min(0).optional(),
     npcRuns: z.number().int().min(0).optional(),
     alarm: z.number().int().min(1).optional(),
+    joined: z.array(z.string()).min(1).optional(),
   })
-  .refine((e) => (e.of === undefined) !== (e.animal === undefined), 'Eine Begegnung hat eine Art oder eine Tierzeile.')
+  .refine((e) => (e.of === undefined) !== (e.animal === undefined) || (e.of === undefined && e.animal === undefined && e.joined !== undefined), 'Eine Begegnung hat eine Art, eine Tierzeile oder dazugenommene NSC.')
+  .refine((e) => e.animal === undefined || e.joined === undefined, 'Zu Tieren nimmt man keine NSC dazu.')
   .refine((e) => e.animal !== undefined || e.reaction !== undefined, 'Eine Begegnung mit Personen hat eine Reaktion.')
   .refine((e) => !e.startClose || e.startBand === 0, 'In Berührung beginnt eine Begegnung nur auf Band 0.')
   .refine((e) => (e.distances ?? []).every((d) => !d.close || d.band === 0), 'In Berührung ist ein SC nur auf Band 0.');
@@ -679,7 +681,12 @@ function validateEncounters(campaign: Campaign): void {
     for (const npc of encounter.npcs) if (npc.animal !== undefined) animalRowOf(campaign.hexes, npc.animal);
     if (encounter.terrain !== undefined && !ref.encounters.terrains.some((t) => t.id === encounter.terrain)) throw new DomainError(`Das Gelände ${encounter.terrain} gibt es nicht.`);
     if (encounter.in !== undefined && !hexById(campaign.hexes, encounter.in)) throw new DomainError(`Eine Begegnung verweist auf das Feld ${encounter.in}, das es nicht gibt.`);
-    if (encounter.leader !== undefined && !encounter.npcs.some((n) => n.id === encounter.leader)) throw new DomainError(`Der Anführer ${encounter.leader} ist keiner der NSC seiner Begegnung.`);
+    const joined = encounter.joined ?? [];
+    if (new Set(joined).size !== joined.length) throw new DomainError('Ein NSC ist zweimal in derselben Begegnung dazugenommen.');
+    for (const id of joined) {
+      if (!campaign.characters.some((c) => c.id === id && c.npc)) throw new DomainError(`Eine Begegnung nimmt ${id} dazu, der kein dauerhafter NSC ist.`);
+    }
+    if (encounter.leader !== undefined && !encounter.npcs.some((n) => n.id === encounter.leader) && !joined.includes(encounter.leader)) throw new DomainError(`Der Anführer ${encounter.leader} ist keiner der NSC seiner Begegnung.`);
     const distances = encounter.distances ?? [];
     for (const d of distances) if (!campaign.characters.some((c) => c.id === d.of)) throw new DomainError(`Eine Entfernung verweist auf ${d.of}, der kein SC ist.`);
     if (new Set(distances.map((d) => d.of)).size !== distances.length) throw new DomainError('Ein SC hat in einer Begegnung zwei Entfernungen.');
