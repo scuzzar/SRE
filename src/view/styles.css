@@ -7056,6 +7056,11 @@ button:disabled {
   gap: 4px;
 }
 
+.row-picks.inline {
+  grid-column: auto;
+  align-self: center;
+}
+
 .row-picks span {
   padding: 1px 7px;
   border: 1px solid var(--rule-soft);

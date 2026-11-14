@@ -293,17 +293,20 @@ function CompactRow({ item, notes, extra }: { item: LogItem; notes: readonly str
   const line = resultLine(item);
   const negative = (item.kind === 'card' && item.answer !== undefined && !isYesAnswer(item.answer.answer)) || ((item.kind === 'task' || item.kind === 'attack' || item.kind === 'save') && !item.success);
   const picks = item.kind === 'card' ? [...(item.bell === undefined ? [] : [String(item.bell)]), ...(item.scatter === undefined ? [] : [scatterText[item.scatter]]), ...(item.map === undefined ? [] : [mapText(item.map)]), ...item.items.map((i) => pickText(i.name, i.texts))] : [];
+  // Eine Karte ohne Frage hat nur ihre Felder: Sie stehen gleich in der ersten Zeile, nicht doppelt.
+  const onlyPicks = item.kind === 'card' && !item.question && !item.answer && picks.length > 0;
+  const pickChips = (inline: boolean) => (
+    <span className={inline ? 'row-picks inline' : 'row-picks'}>
+      {picks.map((p, i) => (
+        <span key={i}>{p}</span>
+      ))}
+    </span>
+  );
   return (
     <>
-      <span className={item.kind === 'dice' ? 'row-what plain' : 'row-what'}>{item.kind === 'dice' ? `2W6 · ${line.rest}` : line.rest}</span>
+      {onlyPicks ? pickChips(true) : <span className={item.kind === 'dice' ? 'row-what plain' : 'row-what'}>{item.kind === 'dice' ? `2W6 · ${line.rest}` : line.rest}</span>}
       <span className={['row-result', negative ? 'negative' : '', item.kind === 'dice' ? 'gold' : '', item.kind === 'card' && !item.answer ? 'kind' : ''].filter(Boolean).join(' ')}>{item.kind === 'dice' ? item.total : line.head}</span>
-      {picks.length > 0 && (
-        <span className="row-picks">
-          {picks.map((p, i) => (
-            <span key={i}>{p}</span>
-          ))}
-        </span>
-      )}
+      {picks.length > 0 && !onlyPicks && pickChips(false)}
       {item.kind === 'card' && item.answer?.event && <span className="row-extra event">Zufallsereignis: {item.answer.event.name}</span>}
       {extra.map((e, i) => (
         <span key={`x${i}`} className="row-extra">
