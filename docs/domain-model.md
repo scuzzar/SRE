@@ -310,7 +310,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `/randomEvent` und `/focus`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-zufallsereignis.png`](changes/2026-11-14-zufallsereignis.png).
 
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-14g): **Kampf mit dauerhaften NSC** (siehe *Begegnung*,
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14g): **Kampf mit dauerhaften NSC** (siehe *Begegnung*,
 > *Dazugenommene NSC*). Nach den Antworten des Owners: In der Karte Zufallsbegegnung nimmt man vor
 > dem Würfeln dauerhafte NSC vom Aufenthaltsort dazu, z. B. Tenzin und dazu 1W6 Polizisten; sie
 > kämpfen immer auf der Seite der NSC, und der erste von ihnen ist der Anführer. Neu im Bild nur der
@@ -346,7 +346,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-2026-11-14g (*Kampf mit dauerhaften NSC*).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
