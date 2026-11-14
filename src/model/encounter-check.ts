@@ -109,15 +109,16 @@ export function checksThisWeek(campaign: Campaign, kind: CheckKind): number {
 
 /**
  * Die Tests, an die die Zeit erinnert, ehe sie weiterläuft (Wunsch des Owners): Tage vergehen lassen
- * erinnert nie; Woche beenden erinnert an Patron, Gerücht und Polizei, die diese Woche fehlen, und an
- * Zufallsbegegnung und Tiere, wenn sie diese Woche gar nicht getestet sind. Ohne Aufenthaltsort gibt
+ * erinnert nie; Woche beenden erinnert an die Polizei, wenn sie diese Woche fehlt, und an
+ * Zufallsbegegnung und Tiere, wenn sie diese Woche gar nicht getestet sind. Patron und Gerücht will
+ * man haben; an sie erinnert nichts. Ohne Aufenthaltsort gibt
  * es keine Begegnungen und also nichts zu erinnern.
  */
 export function missingChecks(campaign: Campaign, week: boolean, animals: boolean): readonly CheckKind[] {
   if (!week || campaign.location === undefined) return [];
   const kinds: CheckKind[] = ['random'];
   if (hasAnimals(campaign, animals)) kinds.push('animal');
-  kinds.push('patron', 'rumor', ...(hasPolice(campaign) ? (['legal'] as const) : []));
+  if (hasPolice(campaign)) kinds.push('legal');
   return kinds.filter((k) => checksThisWeek(campaign, k) === 0);
 }
 

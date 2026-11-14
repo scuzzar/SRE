@@ -111,14 +111,14 @@ describe('Tests im Log', () => {
     expect(checksDone(passTime(tomorrow, 'week', clock), 'patron')).toBe(0);
   });
 
-  it('nur Woche beenden erinnert: an Patron, Gerücht und Polizei, an Zufallsbegegnung und Tiere nur, wenn sie diese Woche gar nicht getestet sind', () => {
+  it('nur Woche beenden erinnert: an die Polizei, an Zufallsbegegnung und Tiere nur, wenn sie diese Woche gar nicht getestet sind; an Patron und Gerücht nie', () => {
     expect(missingChecks(there, false, true)).toEqual([]);
-    expect(missingChecks({ ...there, terrain: 'clear' }, true, true)).toEqual(['random', 'animal', 'patron', 'rumor', 'legal']);
-    expect(missingChecks(there, true, false)).toEqual(['random', 'patron', 'rumor', 'legal']);
+    expect(missingChecks({ ...there, terrain: 'clear' }, true, true)).toEqual(['random', 'animal', 'legal']);
+    expect(missingChecks(there, true, false)).toEqual(['random', 'legal']);
     // Am Montag getestet, am Freitag Woche beenden: die Zufallsbegegnung zählt für die ganze Woche.
     const monday = passTime(there, { days: 1 }, clock);
     const tested = passTime({ ...monday, log: [...monday.log, rollCheck(monday, 'random', fixedRandom(2), clock)] }, { days: 4 }, clock);
-    expect(missingChecks(tested, true, false)).toEqual(['patron', 'rumor', 'legal']);
+    expect(missingChecks(tested, true, false)).toEqual(['legal']);
     expect(missingChecks(setLocation(there, undefined), true, true)).toEqual([]);
   });
 

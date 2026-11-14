@@ -741,8 +741,8 @@ export class GameController {
   }
 
   /**
-   * Beendet die Woche: bis zum nächsten Sonntag. Fehlen diese Woche Tests (Patron, Gerücht, Polizei;
-   * Zufallsbegegnung und Tiere, wenn sie gar nicht getestet sind), erinnert die App erst daran; mit
+   * Beendet die Woche: bis zum nächsten Sonntag. Fehlen diese Woche Tests (Polizei; Zufallsbegegnung
+   * und Tiere, wenn sie gar nicht getestet sind; Patron und Gerücht nie), erinnert die App erst daran; mit
    * `force` (langes Drücken) endet die Woche trotzdem, ohne Begegnung.
    */
   endWeek(force = false): void {
