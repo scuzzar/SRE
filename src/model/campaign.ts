@@ -298,6 +298,11 @@ export function isCampaignCharacter(campaign: Campaign, id: CharacterId): boolea
   return campaign.characters.some((c) => c.id === id);
 }
 
+/** Ist das ein SC: ein Charakter der Kampagne, kein dauerhafter NSC und kein Tier? Dazugenommene NSC sind es nicht. */
+export function isPlayerCharacter(campaign: Campaign, id: CharacterId): boolean {
+  return campaign.characters.some((c) => c.id === id && !c.npc && c.animal === undefined);
+}
+
 /** Ersetzt einen Charakter dort, wo er hängt: in der Kampagne oder in seiner Begegnung. */
 export function replaceCharacter(campaign: Campaign, character: Character): Campaign {
   if (isCampaignCharacter(campaign, character.id)) return { ...campaign, characters: campaign.characters.map((c) => (c.id === character.id ? character : c)) };
@@ -578,6 +583,7 @@ export function updateCharacter(campaign: Campaign, id: CharacterId, input: Char
   validateCharacter(input);
   checkHomeworld(campaign, input);
   const before = characterOf(campaign, id);
+  if (before.npc && input.npc === false && fightsAsJoined(campaign, id)) throw new DomainError(`${before.name} kämpft in der laufenden Begegnung auf der Seite der NSC; erst sie beenden.`);
   const wanted = new Map(input.skills.map((s) => [s.of, s.level]));
   const kept: SkillLevel[] = [];
   for (const skill of before.skills) {
@@ -634,9 +640,23 @@ function pullFromStash(stash: readonly Possession[], possessions: readonly Posse
 
 /** Löscht den Charakter, wenn der Log nicht auf ihn verweist; sonst wird er ausgeblendet. */
 export function removeCharacter(campaign: Campaign, id: CharacterId): Campaign {
-  characterOf(campaign, id);
-  if (!isInLog(campaign, id)) return keepFocus(campaign, { ...campaign, characters: campaign.characters.filter((c) => c.id !== id), encounters: campaign.encounters.map((e) => withoutFighter(e, id)) });
+  const character = characterOf(campaign, id);
+  if (fightsAsJoined(campaign, id)) throw new DomainError(`${character.name} kämpft in der laufenden Begegnung auf der Seite der NSC; erst sie beenden.`);
+  if (!isInLog(campaign, id)) return keepFocus(campaign, { ...campaign, characters: campaign.characters.filter((c) => c.id !== id), encounters: campaign.encounters.map((e) => withoutJoined(withoutFighter(e, id), id)) });
   return keepFocus(campaign, { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? { ...c, retired: true } : c)) });
+}
+
+/** Kämpft dieser dauerhafte NSC in der laufenden Begegnung mit (2026-11-14g)? */
+export function fightsAsJoined(campaign: Campaign, id: CharacterId): boolean {
+  return campaign.encounters.some((e) => !e.ended && e.joined?.includes(id) === true);
+}
+
+/** Eine beendete Begegnung ohne den Verweis auf einen gelöschten dazugenommenen NSC. */
+function withoutJoined(encounter: Encounter, id: CharacterId): Encounter {
+  if (!encounter.joined?.includes(id)) return encounter;
+  const joined = encounter.joined.filter((j) => j !== id);
+  const rest = Object.fromEntries(Object.entries(encounter).filter(([key]) => key !== 'joined' && (key !== 'leader' || encounter.leader !== id))) as unknown as Encounter;
+  return { ...rest, ...(joined.length > 0 ? { joined } : {}) };
 }
 
 /** Eine Begegnung ohne die Entfernung und das Ausweichen eines gelöschten Charakters. */

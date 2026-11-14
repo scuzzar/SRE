@@ -4845,6 +4845,34 @@ button:disabled {
   margin-top: 6px;
 }
 
+.encounter-join {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.encounter-join-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.encounter-join-npc {
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 1px solid var(--rule-soft);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.encounter-join-npc[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  font-weight: 700;
+}
+
 .encounter-start {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

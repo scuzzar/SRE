@@ -1,4 +1,4 @@
-import { activeSkills, anyCharacterOf, livingCharacters, possessionKey, type Campaign, type Character, type CharacterId, type Possession } from './campaign';
+import { activeSkills, anyCharacterOf, fightsAsJoined, livingCharacters, possessionKey, replaceCharacter, type Campaign, type Character, type CharacterId, type Possession } from './campaign';
 import { animalRowOf, animalTypeOf, rollLootValues, terrainOf, type AnimalRef, type AnimalRow } from './animals';
 import { DomainError } from './errors';
 import type { Butchering, LogEntry } from './log';
@@ -203,7 +203,8 @@ export function checkButchering(campaign: Campaign, entry: Butchering, at: numbe
 /** Kann man diesem NSC Beute abnehmen? Er ist tot, bewusstlos oder schwer verwundet, kein Tier und hat etwas. */
 export function cannotLoot(campaign: Campaign, npc: CharacterId): string | undefined {
   const character = anyCharacterOf(campaign, npc);
-  if (campaign.characters.some((c) => c.id === npc)) return `${character.name} ist kein NSC einer Begegnung.`;
+  // Ein dazugenommener NSC der laufenden Begegnung lässt sich ausplündern wie die gewürfelten (2026-11-14g).
+  if (campaign.characters.some((c) => c.id === npc) && !fightsAsJoined(campaign, npc)) return `${character.name} ist kein NSC einer Begegnung.`;
   if (character.animal) return `${character.name} ist ein Tier; Tiere weidet man aus.`;
   const state = woundStateOf(campaign, npc);
   if (!isDead(state) && state !== 'unconscious' && state !== 'serious') return `${character.name} wehrt sich noch.`;
@@ -222,7 +223,7 @@ export function takeLoot(campaign: Campaign, npc: CharacterId, receiver: Charact
   if (!livingCharacters(campaign).some((c) => c.id === receiver)) throw new DomainError('Die Kredite bekommt ein lebender SC.');
   const from = anyCharacterOf(campaign, npc);
   const keep: Possession[] = [];
-  const owned = (p: Possession) => campaign.stash.some((q) => possessionKey(q) === possessionKey(p)) || campaign.characters.some((c) => c.possessions.some((q) => possessionKey(q) === possessionKey(p)));
+  const owned = (p: Possession) => campaign.stash.some((q) => possessionKey(q) === possessionKey(p)) || campaign.characters.some((c) => c.id !== npc && c.possessions.some((q) => possessionKey(q) === possessionKey(p)));
   let stash = campaign.stash;
   for (const p of from.possessions) {
     if (itemOf(p.of).once && owned(p)) {
@@ -232,8 +233,8 @@ export function takeLoot(campaign: Campaign, npc: CharacterId, receiver: Charact
     stash = addToStash(stash, p);
   }
   const stripped: Character = Object.fromEntries(Object.entries({ ...from, possessions: keep, credits: 0 }).filter(([key]) => !['primary', 'secondary', 'wields', 'wears'].includes(key))) as unknown as Character;
-  const encounters = campaign.encounters.map((e) => ({ ...e, npcs: e.npcs.map((n) => (n.id === npc ? stripped : n)) }));
-  return { ...campaign, encounters, stash, characters: campaign.characters.map((c) => (c.id === receiver ? { ...c, credits: c.credits + from.credits } : c)) };
+  const after = replaceCharacter({ ...campaign, stash }, stripped);
+  return { ...after, characters: after.characters.map((c) => (c.id === receiver ? { ...c, credits: c.credits + from.credits } : c)) };
 }
 
 /** Die Überlebensausrüstung, die die Welt verlangt (Charts S. 21), als Gegenstände; der beste Vacc Suit bis zum TL. */

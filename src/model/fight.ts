@@ -1,7 +1,7 @@
-import { anyCharacterOf, armedWeaponsOf, isCampaignCharacter, livingCharacters, setWields, type Campaign, type CharacterId } from './campaign';
+import { anyCharacterOf, armedWeaponsOf, isPlayerCharacter, livingCharacters, setWields, type Campaign, type CharacterId } from './campaign';
 import { ammoOf, reload } from './combat';
 import { DomainError } from './errors';
-import { currentEncounter, distanceOf, encounterAnimalRow, ESCAPED_BAND, isAnimalEncounter, isEscapedDistance, needsSurprise, steppedPosition, withDistance, type Encounter } from './encounter';
+import { currentEncounter, distanceOf, encounterAnimalRow, ESCAPED_BAND, isAnimalEncounter, isEscapedDistance, needsSurprise, npcSideIds, steppedPosition, withDistance, type Encounter } from './encounter';
 import { canFight, woundStateOf } from './wounds';
 import { isHeld } from './hold';
 
@@ -10,7 +10,7 @@ export type Side = 'pcs' | 'npcs';
 
 /** Die Partei eines Kämpfers: SC, wer zur Kampagne gehört; NSC, wer an einer Begegnung hängt. */
 export function sideOf(campaign: Campaign, who: CharacterId): Side {
-  return isCampaignCharacter(campaign, who) ? 'pcs' : 'npcs';
+  return isPlayerCharacter(campaign, who) ? 'pcs' : 'npcs';
 }
 
 /** `/surprise`: Wer 3 oder mehr über der anderen Partei liegt, hat Überraschung (S. 5). */
@@ -48,7 +48,7 @@ export interface FightSlot {
 /** Alle Kämpfer in Zugreihenfolge: erst die Partei, die zuerst zieht, dann die andere. */
 export function fightOrder(campaign: Campaign, encounter: Encounter): readonly FightSlot[] {
   const pcs: FightSlot[] = livingCharacters(campaign).map((c) => ({ id: c.id, side: 'pcs' }));
-  const npcs: FightSlot[] = encounter.npcs.map((n) => ({ id: n.id, side: 'npcs' }));
+  const npcs: FightSlot[] = npcSideIds(encounter).map((id) => ({ id, side: 'npcs' }));
   return firstSide(encounter) === 'pcs' ? [...pcs, ...npcs] : [...npcs, ...pcs];
 }
 

@@ -1,9 +1,9 @@
-import { activeSkills, anyCharacterOf, characterOf, isCampaignCharacter, keepFocus, livingCharacters, type Campaign, type CharacterId, type Upp } from './campaign';
+import { activeSkills, anyCharacterOf, characterOf, isCampaignCharacter, isPlayerCharacter, keepFocus, livingCharacters, type Campaign, type CharacterId, type Upp } from './campaign';
 import { DomainError } from './errors';
 import { damageDiceOf, damageOf, damageVictim, physical, type AttackResult, type DamageRoll, type LogEntry, type PhysicalCharacteristic, type Recovery, type RecoveryKind } from './log';
 import { animalRowOf } from './animals';
 import type { Clock, Random } from './ports';
-import { currentEncounter, encounterStart } from './encounter';
+import { currentEncounter, encounterStart, npcSideIds } from './encounter';
 import { burdenOf, isPc } from './stash';
 
 /** Wie viel STR, DEX und END jemand durch Treffer verloren hat. */
@@ -255,7 +255,7 @@ export function victimOf(attack: AttackResult): CharacterId | undefined {
  */
 export function autoWounds(campaign: Campaign, who: CharacterId, dice: readonly number[], random: Random, always = false): readonly WoundBlock[] | undefined {
   const first = isFirstHitNow(campaign, who);
-  if (!first && !always && isCampaignCharacter(campaign, who)) return undefined;
+  if (!first && !always && isPlayerCharacter(campaign, who)) return undefined;
   const upp = uppOf(campaign, who);
   const wounds = woundsOf(campaign, who);
   const critical = first ? physical[random.int(0, 2)]! : undefined;
@@ -365,7 +365,8 @@ export function recoveryOptions(campaign: Campaign, who: CharacterId): RecoveryO
  * schweren Wunde nur in einer medizinischen Einrichtung, 5W6 Tage) oder Ruhe (nur leichte Wunden).
  */
 export function recover(campaign: Campaign, how: RecoveryKind, who: CharacterId, random: Random, clock: Clock, healer?: CharacterId, facility = false): Recovery {
-  if (!isCampaignCharacter(campaign, who) && !currentEncounter(campaign)?.npcs.some((n) => n.id === who)) {
+  const encounter = currentEncounter(campaign);
+  if (!isCampaignCharacter(campaign, who) && !(encounter && npcSideIds(encounter).includes(who))) {
     throw new DomainError('Heilen lassen sich NSC nur in der laufenden Begegnung.');
   }
   const options = recoveryOptions(campaign, who);
