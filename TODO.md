@@ -68,6 +68,12 @@ Aus [`docs/regeln-kampf.md`](docs/regeln-kampf.md), noch offen:
 
 ### Ideen, noch nicht entschieden
 
+- [ ] **Tier als Begleiter**: ein Tier einer Begegnung in die Gruppe übernehmen (heute gesperrt,
+  `adoptNpc`). Etwa als dauerhafter NSC mit neuer Rolle *Begleiter*, kämpft auf Seite der SC mit
+  seinen Tierwerten (Hits, Angriffe, Speed), ohne Shop, Gepäck und Proben. Offen: wer es im Kampf
+  steuert, ob und wie es mitreist (Passage?), wie es heilt, was aus dem Verweis auf die Tiertabelle
+  seiner Welt wird, was der Editor bei einem Tier zeigt. Geht zuerst als Änderung ins Domänenmodell.
+
 - [ ] Wunden wirken laut Regel erst am Ende der Runde (SE 6); die App lässt sie sofort wirken
   (Hausregel). Bleibt das so?
 - [ ] Pfeil zu einem Ziel außerhalb des Bildschirms (bei vielen NSC scrollt die Spalte): ein Hinweis
