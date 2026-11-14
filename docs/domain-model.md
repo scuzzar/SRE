@@ -289,7 +289,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Laufbahnen steht in [`patron-nsc.md`](patron-nsc.md). Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-patron-mit-laufbahn.png`](changes/2026-11-14-patron-mit-laufbahn.png).
 
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-14c): **NSC aus einer Laufbahn und Waffen
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14c): **NSC aus einer Laufbahn und Waffen
 > erzeugter NSC** (siehe *NSC aus einer Laufbahn*, *Waffen erzeugter NSC*). Neu im Bild:
 > `Weapon.minSoc` und `Patron.criminal`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-nsc-aus-laufbahn-und-waffen.png`](changes/2026-11-14-nsc-aus-laufbahn-und-waffen.png).
@@ -435,6 +435,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Dauerhafter NSC | `Character` mit `npc` | Ein Charakter, der kein SC ist; er steht im Reiter NSC |
 | Ort eines NSC | `Character.place` | Die Welt, auf der ein dauerhafter NSC lebt; man trifft ihn nur dort |
 | Patron-NSC | `Character` mit `patron` | Ein dauerhafter NSC, der als Patron entstanden ist, z. B. „Mara Voss, Smuggler“ |
+| Mindest-SOC | `Weapon.minSoc` | Ab welchem SOC ein erzeugter NSC eine Waffe bekommt: billige Nahkampfwaffen 0, Pistolen und Klingen 6, Gewehre und Laser 10 (Hausregel) |
+| Verbrecherisch | `Patron.criminal`, Rolle Feind | Ein NSC, für den das Gesetz eher nicht gilt: DM +2 auf den Wurf, das Gesetz zu ignorieren |
 | Laufbahn eines Patrons | `Patron.career` | Die Laufbahn, in der ein Patron-NSC seine Charaktererschaffung durchläuft, z. B. Smuggler: Merchants (Hausregel) |
 | Rolle eines NSC | `Character.role`, `NpcRole` | Wozu ein dauerhafter NSC da ist, aus einer festen Liste: Patron, Begegnung, Feind, Rivale, Verbündeter, Kontakt, Behörde, Händler, Makler, Captain, Crew, Passagier, Sonstige |
 | Reiter NSC | (Reiter „NSC“) | Der Screen mit den dauerhaften NSC des Aufenthaltsorts, nach Rolle gruppiert; mit „Alle zeigen“ alle, nach Welt und darin nach Rolle |
@@ -1393,8 +1395,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       haben 1W4 Magazine, wie bei den NSC der Begegnung.
     - *Verbrecherisch* (`Patron.criminal`, Referenzdaten): Arsonist, Assassin, Cutthroat,
       Embezzler, Hijacker, Pirate, Rogue, Smuggler, Swindler, Terrorist, Underworld Leader.
-  - *Offene Fragen zu 2026-11-14c*: siehe Gespräch; Schwellen, DMs und Liste der Verbrecher sind
-    Vorschläge.
     Ohne Aufenthaltsort geht es nicht. Der Patron-Wurf selbst bleibt, wie er ist; der neue NSC
     kommt in den Reiter NSC. Ein Patron-NSC ist ein gewöhnlicher dauerhafter NSC: Man kann ihn
     bearbeiten, zum SC machen oder ausscheiden lassen; der Verweis auf den Patron bleibt.

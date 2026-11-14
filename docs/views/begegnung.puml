@@ -191,7 +191,7 @@ hide <<value>> stereotype
     roll: number
     name: string
     rumor: boolean
-    $new("2026-11-14c", "criminal: boolean")
+    criminal: boolean
   }
   class AnimalTable $begegnung {
   }
@@ -363,6 +363,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Patron #line:d0021b;line.bold
-class Weapon #line:d0021b;line.bold
 @enduml
