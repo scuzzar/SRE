@@ -1406,6 +1406,10 @@ button:disabled {
   gap: 10px;
 }
 
+.patron-npc button {
+  white-space: nowrap;
+}
+
 .patron-npc .small-label {
   font-size: 12px;
   color: var(--muted);
