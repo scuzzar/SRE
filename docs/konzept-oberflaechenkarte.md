@@ -631,15 +631,17 @@ Die Lage ist im Buch frei, mit Leitlinien nach TL. Wo eine Stadt liegen darf:
 | 0–3 | nur offenem Land (nicht Dschungel, Wüste, Ozean, Eis, zerklüftet usw.) |
 | 4–6 | zusätzlich zerklüftetem Land und Wüste |
 | 7–9 | zusätzlich Dschungel |
-| 10+ | zusätzlich Ozean und Eis; ab TL 10 darf ein Feld mehrere Städte haben, so viele wie der TL |
+| 10+ | zusätzlich Ozean und Eis. Das Buch erlaubt ab TL 10 mehrere Städte je Hex; ⚑ bei uns höchstens eine Siedlung je Feld (siehe unten) |
 
 - Städte mit Ziffer unter 5 dürfen überall auf Land liegen, das nicht Eis ist.
 - **Sonderfall:** Geht eine Stadt technisch nicht (kein erlaubtes Feld frei), setzt man sie
   trotzdem und erklärt es, z. B. eine Unterwasserstadt einer zurückgefallenen Kultur.
 
 ⚑ **Was als einzelne Stadt auf der Karte steht:** Haupt- und Nebenstädte sind einzelne Städte mit
-Feld, Ziffer, Multiplikator und Hafen. Kleinstädte gibt es zu Hunderten; sie stehen als **Zahl je
-Feld** auf der Karte (auf dem Globus als Lichter). ⚑ Einzeln stehen höchstens **10 Hauptstädte
+Feld, Ziffer, Multiplikator und Hafen. Kleinstädte gibt es zu Hunderten; sie stehen ohne Namen auf
+der Karte. ⚑ **Höchstens eine Siedlung je Feld** (Owner, 14. November 2026): Ein Feld hat entweder
+eine Stadt oder eine Kleinstadt, nie mehr; Kleinstädte, für die kein Feld frei ist, leben auf dem
+Land. ⚑ Einzeln stehen höchstens **10 Hauptstädte
 und 20 Nebenstädte** auf der Karte (die größten); weitere zählen als Kleinstädte. Bei kleiner Bevölkerung ergeben die
 Formeln sonst Hunderte von Nebenstädten mit wenigen hundert Einwohnern.
 
@@ -647,11 +649,10 @@ Formeln sonst Hunderte von Nebenstädten mit wenigen hundert Einwohnern.
 1. Jedes erlaubte Feld bekommt eine Wertung: +3 an der Küste, +2 an einem Fluss, +2 bei 0 bis
    30 °C, +1 offenes Land, −2 je Hauptstadt im Umkreis von 4 × l Schritten.
 2. Die Städte kommen der Größe nach auf das Feld mit der besten Wertung (bei Gleichstand
-   zufällig). Unter TL 10 hat jedes Feld höchstens eine Haupt- oder Nebenstadt, ab TL 10 höchstens
-   so viele wie der TL.
+   zufällig). Jedes Feld hat höchstens eine Stadt.
 3. Die erste Hauptstadt ist die Stadt des Raumhafens des UWP.
-4. Kleinstädte verteilen sich zufällig auf erlaubte Felder, gewichtet mit der Wertung plus 2 je
-   Haupt- oder Nebenstadt im Umkreis von 2 × l Schritten. Die Zahl je Feld wird gespeichert.
+4. Kleinstädte kommen je eine auf erlaubte Felder ohne Stadt, zufällig ohne Zurücklegen gezogen,
+   gewichtet mit der Wertung plus 2 nahe einer Haupt- oder Nebenstadt (Umkreis 2 × l Schritte).
 
 ### 10f. Raumhäfen platzieren
 
@@ -706,7 +707,7 @@ So steht es im Domänenmodell (Änderung 2026-11-14i, siehe dort *Oberflächenka
 | Wert | Inhalt |
 |---|---|
 | Bevölkerungsmultiplikator | 1–9, an der Welt (`Hex.populationMultiplier`) |
-| Oberflächenfelder (`SurfaceCell`) | je Feld die Geländeart (Wasser, Eis auf Wasser, Eis auf Land, Tundra, Gebirge, zerklüftet, Wüste, Dschungel, Sumpf, offen/Wald, besiedelt), die Zahl der Kleinstädte und ob ein großer Vulkan oder ein Vulkanfeld darauf liegt |
+| Oberflächenfelder (`SurfaceCell`) | je Feld die Geländeart (Wasser, Eis auf Wasser, Eis auf Land, Tundra, Gebirge, zerklüftet, Wüste, Dschungel, Sumpf, offen/Wald, besiedelt), ob eine Kleinstadt darauf liegt (höchstens eine Siedlung je Feld) und ob ein großer Vulkan oder ein Vulkanfeld darauf liegt |
 | Flüsse (`River`) | die Felder von der Quelle zur Mündung |
 | Straßen (`Road`) | die Felder der Straße |
 | Städte (`City`) | je Haupt- und Nebenstadt: Name, Feld (keins heißt Orbit), Bevölkerungsziffer, Multiplikator, Rang, Hafen |

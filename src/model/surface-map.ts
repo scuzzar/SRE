@@ -1278,7 +1278,8 @@ class Generator {
     };
     const baseScore = (c: number) => (this.touchesWater(c) && !this.water[c] ? 3 : 0) + (riverCells.has(c) ? 2 : 0) + (this.temperature[c]! >= 0 && this.temperature[c]! <= 30 ? 2 : 0) + (this.form[c] === 'open' ? 1 : 0);
     const perCell = new Map<number, number>();
-    const maxPerCell = tl >= 10 ? Math.max(1, tl) : 1;
+    // Hausregel (Owner, 14. November 2026): auf jedem Feld höchstens eine Siedlung, Stadt oder Kleinstadt.
+    const maxPerCell = 1;
     const primaries: number[] = [];
     const penalty = new Float64Array(cells);
     const cities: City[] = [];
@@ -1336,34 +1337,23 @@ class Generator {
       }
       cities.push({ cell: best, name: '', population: city.population, multiplier: city.multiplier, rank: city.rank, ...(city.port ? { port: city.port } : {}) });
     }
-    // Kleinstädte: zufällig auf erlaubte Felder, gewichtet mit der Wertung und der Nähe zu Städten.
+    // Kleinstädte: je höchstens eine auf einem Feld ohne Stadt, gewichtet mit der Wertung und der Nähe
+    // zu Städten (gezogen ohne Zurücklegen). Gibt es mehr Kleinstädte als freie Felder, lebt der Rest
+    // auf dem Land.
     const towns = new Map<number, number>();
     if (townCount > 0) {
       const placed = cities.filter((c) => c.cell !== undefined).map((c) => c.cell!);
+      const taken = new Set(placed);
       const near = placed.length ? distances(this.grid, placed, () => true, this.length(2)) : undefined;
-      const pool: number[] = [];
-      const cumulative: number[] = [];
-      let total = 0;
+      const keyed: [number, number][] = [];
       for (let c = 0; c < cells; c++) {
-        if (!allowed(c, townDigit)) continue;
-        total += 1 + baseScore(c) + (near && near[c]! >= 0 ? 2 : 0);
-        pool.push(c);
-        cumulative.push(total);
+        if (taken.has(c) || !allowed(c, townDigit)) continue;
+        const weight = 1 + baseScore(c) + (near && near[c]! >= 0 ? 2 : 0);
+        // Gewichtetes Ziehen ohne Zurücklegen: Schlüssel u^(1/Gewicht), die größten gewinnen.
+        keyed.push([c, Math.pow(Math.max(1e-9, this.unit()), 1 / weight)]);
       }
-      if (pool.length) {
-        for (let k = 0; k < townCount; k++) {
-          const r = this.unit() * total;
-          let lo = 0;
-          let hi = cumulative.length - 1;
-          while (lo < hi) {
-            const mid = (lo + hi) >> 1;
-            if (cumulative[mid]! > r) hi = mid;
-            else lo = mid + 1;
-          }
-          const c = pool[lo]!;
-          towns.set(c, (towns.get(c) ?? 0) + 1);
-        }
-      }
+      keyed.sort((x, y) => y[1] - x[1]);
+      for (const [c] of keyed.slice(0, townCount)) towns.set(c, 1);
     }
     this.placeRoads(cities);
     this.settle(cities);
