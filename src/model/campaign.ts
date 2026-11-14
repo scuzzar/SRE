@@ -23,6 +23,16 @@ export interface Upp {
 
 export type CharacterId = string;
 
+/** Die Rollen eines dauerhaften NSC, in der Reihenfolge, in der der Reiter NSC sie gruppiert (siehe domain-model.md, *Rolle eines NSC*). */
+export const npcRoles = ['patron', 'encounter', 'enemy', 'rival', 'ally', 'contact', 'official', 'merchant', 'broker', 'captain', 'crew', 'passenger', 'other'] as const;
+export type NpcRole = (typeof npcRoles)[number];
+
+/** Verweis auf eine Zeile einer Patron-Liste: Liste und Wurf 11–66. */
+export interface PatronRef {
+  readonly list: number;
+  readonly roll: number;
+}
+
 /** Die Stufe, die ein Charakter in einer Fertigkeit hat. Eine Fertigkeit kommt je Charakter höchstens einmal vor. */
 export interface SkillLevel {
   /** Verweis auf die Fertigkeit. */
@@ -73,6 +83,12 @@ export interface Character {
   readonly wears?: string;
   /** Ein dauerhafter NSC, kein SC: nicht in der Leiste oben, nicht im Shop. */
   readonly npc: boolean;
+  /** Nur bei dauerhaften NSC: seine Rolle; fehlt sie (NSC von früher), gilt Sonstige. */
+  readonly role?: NpcRole;
+  /** Nur bei dauerhaften NSC: die Welt, auf der er lebt (Spalte und Zeile, 0304); fehlt sie, reist er mit der Gruppe. */
+  readonly place?: string;
+  /** Der Patron, als der er entstanden ist; bleibt, auch wenn er später SC wird. */
+  readonly patron?: PatronRef;
   /** Ein Tier einer Begegnung: Verweis auf seine Zeile der Tiertabelle. Es kämpft mit deren Werten statt mit UPP und Besitz. */
   readonly animal?: AnimalRef;
 }
@@ -142,6 +158,12 @@ export interface CharacterInput {
   readonly wears?: string;
   /** Fehlt: ein SC. */
   readonly npc?: boolean;
+  /** Nur bei NSC: fehlt sie, bleibt die bisherige, bei einem neuen NSC Sonstige. */
+  readonly role?: NpcRole;
+  /** Nur bei NSC: die Welt, auf der er lebt; fehlt sie, hat er keine. */
+  readonly place?: string;
+  /** Fehlt er, bleibt der bisherige. */
+  readonly patron?: PatronRef;
 }
 
 /** Eine neue Kampagne, ohne Log, mit der Standardstufe und den angegebenen Charakteren. */
@@ -292,7 +314,7 @@ export function activeCharacters(campaign: Campaign): readonly Character[] {
   return campaign.characters.filter((c) => !c.retired && !c.npc);
 }
 
-/** Die dauerhaften NSC, die nicht ausgeblendet sind; sie stehen im Charakter-Screen unter „NSC“. */
+/** Die dauerhaften NSC, die nicht ausgeblendet sind; sie stehen im Reiter NSC. */
 export function npcCharacters(campaign: Campaign): readonly Character[] {
   return campaign.characters.filter((c) => !c.retired && c.npc);
 }
@@ -453,6 +475,7 @@ export function validateCharacter(input: CharacterInput): void {
     }
   }
   if (!Number.isInteger(input.credits)) throw new DomainError('Credits sind eine ganze Zahl.');
+  if (input.role !== undefined && !npcRoles.includes(input.role)) throw new DomainError(`Eine Rolle ${String(input.role)} gibt es nicht.`);
   const seen = new Set<string>();
   for (const skill of input.skills) {
     const name = skillOf(skill.of).name;
@@ -482,9 +505,27 @@ function nextId(campaign: Campaign): CharacterId {
   return `c${Math.max(0, ...numbers) + 1}`;
 }
 
-/** Die Heimatwelt muss eine fertige Welt des Subsektors sein. */
+/** Heimatwelt und Ort eines NSC müssen fertige Welten des Subsektors sein. */
 function checkHomeworld(campaign: Campaign, input: CharacterInput): void {
   if (input.homeworld !== undefined) worldOf(campaign.hexes, input.homeworld);
+  if (input.npc && input.place !== undefined) worldOf(campaign.hexes, input.place);
+}
+
+/**
+ * Rolle, Ort und Patron (siehe domain-model.md, *Rolle eines NSC*, *Ort eines NSC*): Rolle und Ort
+ * hat nur ein NSC; ein neuer NSC ist Sonstige, wenn die Eingabe nichts sagt. Der Patron bleibt.
+ */
+function npcFields(input: CharacterInput, before?: Character): Pick<Character, 'role' | 'place' | 'patron'> {
+  const patron = input.patron ?? before?.patron;
+  const kept = patron === undefined ? {} : { patron: { list: patron.list, roll: patron.roll } };
+  if (!(input.npc ?? before?.npc ?? false)) return kept;
+  const role = input.role ?? (before?.npc ? before.role : undefined) ?? 'other';
+  return { role, ...(input.place === undefined ? {} : { place: input.place }), ...kept };
+}
+
+/** Die Rolle eines dauerhaften NSC; NSC von früher ohne Rolle sind Sonstige. */
+export function roleOf(character: Character): NpcRole {
+  return character.role ?? 'other';
 }
 
 function fields(input: CharacterInput) {
@@ -510,6 +551,7 @@ export function addCharacter(campaign: Campaign, input: CharacterInput, career?:
     dead: input.dead ?? false,
     retired: false,
     npc: input.npc ?? false,
+    ...npcFields(input),
     skills: input.skills.map((s) => ({ of: s.of, level: s.level, retired: false })),
     ...(career ? { career } : {}),
     ...(input.homeworld === undefined ? {} : { homeworld: input.homeworld }),
@@ -541,9 +583,9 @@ export function updateCharacter(campaign: Campaign, id: CharacterId, input: Char
   const added = input.skills.filter((s) => !known.has(s.of)).map((s) => ({ of: s.of, level: s.level, retired: false }));
   // Die Eingabe sagt, welche Heimatwelt gilt; fehlt sie, hat der Charakter keine.
   // Ebenso Primär-, Sekundärwaffe und Waffe in der Hand; fehlt ihr Gegenstand im Besitz, fallen sie weg.
-  const rest = Object.fromEntries(Object.entries(before).filter(([key]) => !['homeworld', 'primary', 'secondary', 'wields', 'wears'].includes(key))) as Omit<
+  const rest = Object.fromEntries(Object.entries(before).filter(([key]) => !['homeworld', 'primary', 'secondary', 'wields', 'wears', 'role', 'place', 'patron'].includes(key))) as Omit<
     Character,
-    'homeworld' | 'primary' | 'secondary' | 'wields' | 'wears'
+    'homeworld' | 'primary' | 'secondary' | 'wields' | 'wears' | 'role' | 'place' | 'patron'
   >;
   // Was eine Schusswaffe geladen hat, bleibt, wenn die Eingabe nichts dazu sagt.
   const loaded = new Map(before.possessions.flatMap((p) => (p.rounds === undefined ? [] : [[p.of, p.rounds] as const])));
@@ -560,6 +602,7 @@ export function updateCharacter(campaign: Campaign, id: CharacterId, input: Char
     possessions,
     dead: input.dead ?? before.dead,
     npc: input.npc ?? before.npc,
+    ...npcFields(input, before),
     skills: [...kept, ...added],
     ...(input.homeworld === undefined ? {} : { homeworld: input.homeworld }),
     ...armsOf({ ...input, possessions }),
@@ -606,10 +649,13 @@ export function restoreCharacter(campaign: Campaign, id: CharacterId): Campaign 
 
 /** Was eine Eingabe für einen bestehenden Charakter wäre, mit seinen eingeblendeten Fertigkeiten. */
 export function inputOf(character: Character): CharacterInput {
-  const { name, background, equipment, credits, note, dead, npc, upp, possessions, homeworld, primary, secondary, wields, wears } = character;
+  const { name, background, equipment, credits, note, dead, npc, upp, possessions, homeworld, primary, secondary, wields, wears, role, place, patron } = character;
   const input = { name, background, equipment, credits, note, dead, npc, upp, possessions, skills: activeSkills(character).map(({ of, level }) => ({ of, level })) };
   return {
     ...input,
+    ...(npc ? { role: role ?? 'other' } : {}),
+    ...(place === undefined ? {} : { place }),
+    ...(patron === undefined ? {} : { patron }),
     ...(homeworld === undefined ? {} : { homeworld }),
     ...(primary === undefined ? {} : { primary }),
     ...(secondary === undefined ? {} : { secondary }),

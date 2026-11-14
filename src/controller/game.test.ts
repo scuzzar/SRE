@@ -553,6 +553,38 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot().log.map((e) => e.kind)).toEqual(['check', 'check', 'patron', 'check', 'patron', 'rumor']);
   });
 
+  it('Patron als NSC: „Als NSC“ legt einen Patron-NSC auf dem Aufenthaltsort an; der Reiter NSC zeigt ihn nach Rolle', async () => {
+    let seed = 11;
+    const random: Random = {
+      int(min: number, max: number) {
+        seed = (seed * 1103515245 + 12345) % 2 ** 31;
+        return min + (Math.floor(seed / 65536) % (max - min + 1));
+      },
+    };
+    // Ein Smuggler (Liste eins, 15) im Log, die Gruppe auf Regina.
+    const campaign = appendLog(setLocation(setHexes(createCampaign(), [regina]), '0101'), { kind: 'patron', at: '2026-10-23T14:00:00.000Z', list: 1, dice: [1, 5], dms: [0, 0] });
+    const { game } = await started(random, memoryRepository(campaign));
+    expect(game.snapshot().patron?.npc).toEqual({ blocker: undefined });
+    game.createPatronNpc();
+    const npcs = game.snapshot().npcs;
+    expect(npcs).toMatchObject({ all: false, here: 'Regina', total: 1, worlds: [{ name: 'Regina', roles: [{ role: 'patron' }] }] });
+    const npc = npcs.worlds[0]!.roles[0]!.npcs[0]!;
+    expect(npc.background).toMatch(/^Smuggler · Ex-Merchants/);
+    expect(game.snapshot().patron?.note).toBe(`${npc.name} (${npc.background}) steht jetzt im Reiter NSC.`);
+    // Nicht in der Leiste oben und nicht unter den SC.
+    expect(game.snapshot().characters.map((c) => c.id)).not.toContain(npc.id);
+    // „Alle zeigen“ gilt nur, bis man den Reiter wieder öffnet.
+    game.showScreen('npcs');
+    game.showAllNpcs(true);
+    expect(game.snapshot().npcs.all).toBe(true);
+    game.showScreen('oracle');
+    game.showScreen('npcs');
+    expect(game.snapshot().npcs.all).toBe(false);
+    // Ein neuer NSC aus dem Reiter: Rolle Sonstige, Ort der Aufenthaltsort.
+    game.newCharacter(true);
+    expect(game.snapshot().editor?.input).toMatchObject({ npc: true, role: 'other', place: '0101' });
+  });
+
   it('Gerücht: erst der Test der Woche (7+ auf 2W6), dann der Wurf auf die Rumors Matrix; Test und Wurf stehen im Log', async () => {
     const { game, random } = await onRegina();
     random.queue.push(3, 3);
@@ -892,7 +924,7 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'recovery', how: 'rest', patient: 'Kira Vant' });
 
     game.adoptNpcs(['n1'], true);
-    expect(game.snapshot().npcs).toHaveLength(1);
+    expect(game.snapshot().npcs.worlds).toMatchObject([{ name: 'Regina', roles: [{ role: 'encounter', npcs: [{ id: 'n1' }] }] }]);
     expect(game.snapshot().combat!.sim!.fighters.map((f) => f.id)).toEqual(['n2', 'c1', 'c2']);
   });
   /** Kira wird von einem NSC getroffen (Schaden 6 je Würfel); gibt zurück, wie schwer. */

@@ -8,13 +8,14 @@ import { CharacterColumn } from './characters/CharacterColumn';
 import { EncounterScreen } from './combat/EncounterScreen';
 import { ShopScreen } from './shop/ShopScreen';
 import { CharactersScreen } from './characters/CharactersScreen';
+import { NpcScreen } from './characters/NpcScreen';
 import { GenerationSheet } from './characters/GenerationSheet';
 import { FullscreenButton } from './FullscreenButton';
 import { ResultDialog } from './characters/ResultDialog';
 import { useGame, useSnapshot } from './game-context';
 import { useEscapeCloses, useShortcuts } from './keyboard';
 import { useIsDesktop } from './media';
-import { CombatIcon, EncounterIcon, MenuIcon, OracleIcon, PersonIcon, SectorIcon, ShopIcon } from './icons';
+import { CombatIcon, EncounterIcon, MenuIcon, OracleIcon, PeopleIcon, PersonIcon, SectorIcon, ShopIcon } from './icons';
 import { Menu } from './Menu';
 import { CardSheet } from './oracle/CardSheet';
 import { DiceRoll } from './oracle/DiceRoll';
@@ -30,6 +31,7 @@ const areas: readonly { readonly id: Screen; readonly label: string; readonly Ic
   { id: 'combat', label: 'Kampf', Icon: CombatIcon },
   { id: 'shop', label: 'Shop', Icon: ShopIcon },
   { id: 'characters', label: 'Charaktere', Icon: PersonIcon },
+  { id: 'npcs', label: 'NSC', Icon: PeopleIcon },
   { id: 'sector', label: 'Sektor', Icon: SectorIcon },
 ];
 
@@ -123,6 +125,7 @@ export function App() {
           {screen === 'combat' && <CombatScreen view={view} patient={patient} onPatient={setPatient} />}
           {screen === 'shop' && <ShopScreen view={view} />}
           {screen === 'characters' && <CharactersScreen view={view} />}
+          {screen === 'npcs' && <NpcScreen view={view} />}
           {screen === 'sector' && <SectorScreen view={view} />}
           {screen === 'about' && <AboutScreen persistent={view.persistent} durable={view.durable} />}
         </div>

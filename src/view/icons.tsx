@@ -43,6 +43,18 @@ export function PersonIcon() {
   );
 }
 
+/** Zwei Personen, für die NSC. */
+export function PeopleIcon() {
+  return (
+    <svg {...base} width={22} height={22} strokeLinecap="round">
+      <circle cx="9" cy="8.5" r="3" />
+      <path d="M3 19.5c.7-3.2 3-4.9 6-4.9s5.3 1.7 6 4.9" />
+      <circle cx="16.5" cy="7.5" r="2.5" />
+      <path d="M16 12.6c2.6 0 4.5 1.5 5 4.4" />
+    </svg>
+  );
+}
+
 /** Eine Einkaufstasche, für den Shop. */
 export function ShopIcon() {
   return (

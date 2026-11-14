@@ -248,6 +248,14 @@ function PatronBox({ patron, checks }: { patron: PatronView; checks: ChecksView 
           Zuletzt: <strong>{patronName(last)}</strong> <span>{patronDetail(last)}</span>
         </p>
       )}
+      {last && !last.rumor && patron.npc && (
+        <div className="patron-npc">
+          <button type="button" className="ghost" disabled={patron.npc.blocker !== undefined} onClick={() => game.createPatronNpc()}>
+            Als NSC
+          </button>
+          <span className="small-label">{patron.npc.blocker ?? 'Zufälliger NSC in der Laufbahn des Patrons, kommt in den Reiter NSC.'}</span>
+        </div>
+      )}
       <TestButton className="encounter-roll" title="Patron würfeln" check={checks?.patron} onPress={() => game.rollPatron()} onHold={() => game.rollPatron(true)} />
     </>
   );

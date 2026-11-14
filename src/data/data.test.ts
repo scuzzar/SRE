@@ -153,6 +153,15 @@ describe('Referenzdaten', () => {
     expect(() => ReferenceDataSchema.parse(broken)).toThrow(/Unbekannter Gegenstand lightsaber/);
   });
 
+  it('geben jedem Patron eine Laufbahn, den Gerüchten keine (docs/patron-nsc.md)', () => {
+    const patrons = referenceData.encounters.patrons;
+    for (const patron of patrons) expect(patron.career === undefined).toBe(patron.rumor);
+    expect(patrons.find((p) => p.name === 'Smuggler')!.career).toBe('merchants');
+    expect(patrons.filter((p) => p.name === 'Naval Officer').map((p) => p.career)).toEqual(['navy', 'navy', 'navy']);
+    const broken = patrons.map((p) => (p.name === 'Smuggler' ? { ...p, career: 'jedi' } : p));
+    expect(() => ReferenceDataSchema.parse({ ...referenceData, encounters: { ...referenceData.encounters, patrons: broken } })).toThrow(/Unbekannte Laufbahn jedi/);
+  });
+
   it('haben die sechs Laufbahnen des Regelwerks mit den Würfen der Prior Service Table', () => {
     const [navy, marines, army, scouts, merchants, other] = referenceData.services;
     expect(referenceData.services.map((s) => `${s.draft}:${s.name}`)).toEqual(['1:Navy', '2:Marines', '3:Army', '4:Scouts', '5:Merchants', '6:Other']);
