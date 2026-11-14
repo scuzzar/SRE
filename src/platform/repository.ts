@@ -237,3 +237,15 @@ export async function openRepository(name?: string): Promise<{ repository: Campa
     return { repository: new MemoryCampaignRepository(), persistent: false };
   }
 }
+
+/**
+ * Die Spielstände, wie sie roh im Gerät liegen, ohne Umstellung und Prüfung: für den Notfall, wenn
+ * die App mit ihnen nicht startet. Als JSON-Text zum Sichern.
+ */
+export async function rawCampaigns(name = 'solo-rpg-engine'): Promise<string> {
+  const db = new SreDatabase(name);
+  await db.open();
+  const rows = await db.campaigns.toArray();
+  db.close();
+  return JSON.stringify(rows, null, 1);
+}
