@@ -212,12 +212,6 @@ hide <<value>> stereotype
     at: datetime
     day: number [0..1]
   }
-  class OracleAnswer $karte {
-    $gone("2026-11-14d", "question: string [0..1]")
-    $gone("2026-11-14d", "roll: number")
-    $gone("2026-11-14d", "chance: number")
-    $gone("2026-11-14d", "/yes: boolean")
-  }
   class DiceRoll $probe {
     dice: number[2]
     /total: number
@@ -226,9 +220,9 @@ hide <<value>> stereotype
     question: string [0..1]
     bell: number [0..1]
     scatter: Scatter [0..1]
-    $new("2026-11-14d", "oracle: number [0..1]")
-    $new("2026-11-14d", "chance: number [0..1]")
-    $new("2026-11-14d", "/answer: Answer [0..1]")
+    oracle: number [0..1]
+    chance: number [0..1]
+    /answer: Answer [0..1]
   }
   class PickedItem $karte
   class Note $probe {
@@ -306,7 +300,7 @@ hide <<value>> stereotype
     bell: number
     scatter: Scatter
     pickedRolls: CardRoll [*]
-    $new("2026-11-14d", "oracle: number")
+    oracle: number
   }
   class MapIcon <<value>> $karte {
     north: PathKind
@@ -335,7 +329,7 @@ hide <<value>> stereotype
     hit
     miss
   }
-  enum Answer <<value>> $karte $newClass("2026-11-14d") {
+  enum Answer <<value>> $karte {
     yesStrong
     yes
     yesWeak
@@ -955,7 +949,6 @@ ArmorDm -[hidden]- ArmorClass
 RangeDm -[hidden]- Range
 
 ' Verlauf
-LogEntry <|-- OracleAnswer
 LogEntry <|-- DiceRoll
 LogEntry <|-- CardPick
 LogEntry <|-- TaskResult
@@ -977,7 +970,6 @@ RumorRoll "*" --> "1" Rumor : /of
 Note "*" --> "0..1" LogEntry : interprets
 CardPick "1" *-- "*" PickedItem : items {ordered}
 CardPick "1" *-- "0..1" MapIcon : map
-OracleAnswer "*" -$goneArrow("2026-11-14d")-> "1" Odds : odds
 TaskResult "*" --> "1" Character : for
 TaskResult "*" --> "0..1" SkillLevel : uses
 TaskResult --> "0..6" Characteristic : counts
@@ -1053,8 +1045,8 @@ Card "0..1" --> "1" Campaign : in
 Card "*" --> "1..*" Entry : drawn {ordered}
 Card "*" --> "*" Slot : picked
 Card ..> CardPick : on confirm
-CardPick "*" -$newArrow("2026-11-14d")-> "0..1" Odds : odds
-Card "*" -$newArrow("2026-11-14d")-> "0..1" Odds : pickedOdds
+CardPick "*" --> "0..1" Odds : odds
+Card "*" --> "0..1" Odds : pickedOdds
 Card "1" *-- "1" MapIcon : map
 PickedItem "*" --> "1" Slot : /in
 PickedItem "*" --> "1..2" Entry : picked {ordered}
