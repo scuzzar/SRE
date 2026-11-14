@@ -157,3 +157,28 @@ darunter, was besser ginge.
   je Art des Eintrags verschieden groß. In Klassen in `styles.css` überführen und vereinheitlichen.
 - [ ] `WeaponChips` in `CharacterStrip.tsx` hat zwei Kommentarblöcke hintereinander; der erste ist
   überholt.
+
+### 7. Ideen zur Bedienung, noch nicht entschieden
+
+Entwurf zum Anfassen: [`docs/ui-entwurf/log-kompakt/Entwurf.html`](docs/ui-entwurf/log-kompakt/Entwurf.html)
+(Heute und Vorschlag mit demselben Log). Alles hier ist reine Darstellung, das Domänenmodell bleibt,
+wie es ist; die README beschreibt Log und Schreibzeile und müsste mitziehen.
+
+- [ ] **Log kompakt:** Das neueste Ergebnis bleibt der große Kasten, alles Ältere wird eine Zeile:
+  links die Frage (oder die Probe, der Wurf), rechts das Ergebnis (JA, NEIN, ERFOLG, 7). Deutungen
+  stehen eingerückt darunter, Kartenauswahl als kleine Felder, Notizen als Text mit gestricheltem
+  Rand. Im Entwurf sind bei 390×844 mit offener Leiste vier Einträge ganz zu sehen statt zwei; eine
+  Zeile ist rund 39 px hoch, ein Kasten heute 95 bis 130 px.
+- [ ] **Antippen klappt auf** statt still das Ziel der Deutung zu wählen: Die Zeile zeigt dann
+  Einzelheiten (Stufe, W100, Uhrzeit) und die Knöpfe „Deuten“ und „Löschen“. Das ersetzt das lange
+  Drücken und den Hinweis oben im Log, und die Zeile ist ein Knopf, also mit der Tastatur
+  erreichbar (löst zwei Punkte aus 1 und 3). Die Uhrzeit steht nur noch aufgeklappt.
+- [ ] **„Deuten“ und „Notiz“ erst zeigen, wenn Text im Feld steht.** Leer gehört die ganze Breite
+  dem Feld (358 statt 183 px); heute stehen dort zwei ausgegraute Knöpfe.
+- [ ] **Leiste als eine Zeile:** eingeklappt Name und UPP als Traveller-Zeile (`Kira Vant 7A8975`),
+  aufgeklappt wie heute für die Probe. Dann sieht man die Attribute, ohne dass die Leiste 250 px
+  kostet.
+- [ ] **Filter „Nur Geschichte“:** Fragen mit Antwort, Deutungen und Notizen; einfache Würfe,
+  Angriffe und Schaden ausgeblendet. Zum Nachlesen, was passiert ist.
+- [ ] **Gleiche Würfe in Folge zusammenfassen:** drei 2W6 hintereinander als eine Zeile
+  (`2W6 · 7 · 4 · 10`), ebenso die Angriffe einer Kampfrunde.

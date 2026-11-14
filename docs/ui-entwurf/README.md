@@ -110,3 +110,14 @@ rechts fest die NSC, links die SC mit ihrem Anfangsbuchstaben, ganz links Band 2
 | Datei | Inhalt |
 |---|---|
 | `entfernung-je-sc/Entwurf.html` | Drei Zustände: SC-Zug, NSC-Zug mit Ziel, Berührung und entkommen. Gewöhnliche HTML-Datei, direkt im Browser zu öffnen |
+
+## Log kompakt (Entwurf vom 14. November 2026, noch nicht entschieden)
+
+Im Ordner [`log-kompakt/`](log-kompakt/) liegt ein Vorschlag für einen kompakteren Log im
+Orakel-Screen (siehe *Orakel-Screen* in der [To-do](../../TODO.md)).
+
+| Datei | Inhalt |
+|---|---|
+| `log-kompakt/Entwurf.html` | Heute und Vorschlag mit demselben Log: Das neueste Ergebnis bleibt groß, ältere Einträge sind eine Zeile (links was, rechts das Ergebnis). Antippen klappt eine Zeile auf, mit Einzelheiten, „Deuten“ und „Löschen“; „Deuten“ und „Notiz“ in der Schreibzeile erscheinen erst mit dem Text. Breit stehen beide Smartphones nebeneinander, schmal schaltet man oben um |
+
+Eine gewöhnliche HTML-Datei, die sich direkt im Browser öffnen lässt.
