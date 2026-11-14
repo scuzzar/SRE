@@ -110,7 +110,6 @@ export function useLongPress(onHold: () => void) {
  */
 function FightHead({ sim }: { sim: SimView }) {
   const game = useGame();
-  const count = sim.fighters.filter((f) => f.side === 'npcs').length;
   const reaction = sim.reactionText.split('.')[0];
   // Die Überraschung hält bis zum Alarm (SR 20); danach zieht die Partei mit dem höheren Wurf zuerst.
   const known = sim.pcSurprise !== undefined && sim.npcSurprise !== undefined;
@@ -124,10 +123,10 @@ function FightHead({ sim }: { sim: SimView }) {
           type="button"
           className="fight-head-main"
           onClick={() => game.showEncounterIntro()}
-          aria-label={`Runde ${sim.round}, ${count} × ${sim.name}, ${sim.reaction === undefined ? 'Verhalten' : `Reaktion ${sim.reaction}`}: ${sim.reactionText}${surprise ? `, ${surprise}` : ''}. Übersicht zeigen`}
+          aria-label={`Runde ${sim.round}, ${sim.title}, ${sim.reaction === undefined ? 'Verhalten' : `Reaktion ${sim.reaction}`}: ${sim.reactionText}${surprise ? `, ${surprise}` : ''}. Übersicht zeigen`}
         >
           <span className="fight-head-title">
-            Runde {sim.round} · {count} × {sim.name}
+            Runde {sim.round} · {sim.title}
           </span>
           <span className="fight-head-tail">
             {reaction}
@@ -636,14 +635,16 @@ export function EncounterIntro({ sim }: { sim: SimView }) {
     <div className="modal">
       <section className="result encounter-intro" role="dialog" aria-modal="true" aria-labelledby="intro-title" onClick={() => phase < 3 && skip(3)}>
         <span className="kicker">
-          {sim.animal ? `Tiere · ${sim.animal.terrain.split(',')[0]} · Wurf ${sim.roll}${sim.animal.tableDice ? ` (${sim.animal.tableDice[0]} + ${sim.animal.tableDice[1]})` : ''}` : `Begegnung · Wurf ${sim.roll}`}
+          {sim.animal ? `Tiere · ${sim.animal.terrain.split(',')[0]} · Wurf ${sim.roll}${sim.animal.tableDice ? ` (${sim.animal.tableDice[0]} + ${sim.animal.tableDice[1]})` : ''}` : sim.roll === undefined ? 'Begegnung · nur NSC' : `Begegnung · Wurf ${sim.roll}`}
         </span>
         <h2 id="intro-title" className="shop-buy-title">
-          {npcs.length} × {sim.name}
-          <span className="muted">
-            {' '}
-            ({sim.quantity === 0 ? 'ein Tier' : `${sim.quantity}W${sim.quantityDie}`})
-          </span>
+          {sim.title}
+          {(sim.animal || sim.roll !== undefined) && (
+            <span className="muted">
+              {' '}
+              ({sim.quantity === 0 ? 'ein Tier' : `${sim.quantity}W${sim.quantityDie}`})
+            </span>
+          )}
         </h2>
         {sim.animal ? (
           <AnimalIntro animal={sim.animal} text={sim.reactionText} landed={landed} />

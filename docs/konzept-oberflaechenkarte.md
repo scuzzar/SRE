@@ -1,7 +1,7 @@
 # Konzept: Oberflächenkarte
 
-> **Stand: freigegeben** (14. November 2026) mit den Änderungen 2026-11-14g (Oberflächenkarte) und
-> 2026-11-14h (Orte) im [Domänenmodell](domain-model.md). Die Regeln hier gelten als Teil des
+> **Stand: freigegeben** (14. November 2026) mit den Änderungen 2026-11-14i (Oberflächenkarte) und
+> 2026-11-14j (Orte) im [Domänenmodell](domain-model.md). Die Regeln hier gelten als Teil des
 > Modells, einschließlich der Hausregeln (⚑).
 >
 > Abgestimmt: feste Feldgröße von etwa 250 km (Abschnitt 1), Flüsse, Vulkane und alle Städte in der
@@ -680,7 +680,7 @@ pflegen.
 
 ## Was gespeichert wird
 
-So steht es im Domänenmodell (Änderung 2026-11-14g, siehe dort *Oberflächenkarte*):
+So steht es im Domänenmodell (Änderung 2026-11-14i, siehe dort *Oberflächenkarte*):
 
 | Wert | Inhalt |
 |---|---|

@@ -289,3 +289,20 @@ test('Gleiche Würfe in Folge stehen als eine Zeile; antippen faltet sie auf', a
   await merged.click();
   await expect(entries(page)).toHaveCount(3);
 });
+
+test('Eine ältere Karte ohne Frage zeigt ihre Felder in der Zeile nur einmal', async ({ page }) => {
+  await page.getByRole('button', { name: 'Karte ziehen' }).click();
+  const card = page.getByRole('dialog', { name: 'Inspirationskarte' });
+  await revealed(card);
+  await card.getByRole('group', { name: 'Zufallsereignis' }).getByRole('button').first().click();
+  await card.getByRole('group', { name: 'NSC', exact: true }).getByRole('button').first().click();
+  await card.getByRole('button', { name: /2 Einträge in den Log übernehmen/ }).click();
+  await expect(card).toBeHidden();
+  // Ein Wurf danach, dann steht die Karte als Zeile da.
+  await oracle(page).getByRole('button', { name: '2W6', exact: true }).click();
+  const row = entries(page).first();
+  await expect(row.locator('.row-result')).toHaveText('Karte');
+  await expect(row.locator('.row-picks span')).toHaveCount(2);
+  await expect(row.locator('.row-what')).toHaveCount(0);
+  await page.screenshot({ path: process.env.SHOT ?? 'test-results/karte-zeile.png' });
+});

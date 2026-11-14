@@ -1,4 +1,4 @@
-import { activeSkills, anyCharacterOf, isCampaignCharacter, replaceCharacter, type Campaign, type Character, type CharacterId, type Possession, type SkillLevel, type Upp } from './campaign';
+import { activeSkills, anyCharacterOf, isPlayerCharacter, replaceCharacter, type Campaign, type Character, type CharacterId, type Possession, type SkillLevel, type Upp } from './campaign';
 import { isPc } from './stash';
 import { DomainError } from './errors';
 import { damageRollsOf, isSuccess, volleyOf, type AttackResult, type DamageRoll, type LogEntry } from './log';
@@ -265,7 +265,7 @@ export function animalIds(campaign: Campaign): ReadonlySet<CharacterId> {
 /** Muss der Spieler den Schaden dieses Treffers selbst verteilen? Bei einem SC (Charakter der Kampagne) nach seinem ersten Treffer. */
 export function needsWounding(campaign: Campaign, of: number): boolean {
   const who = victimOf(hitAt(campaign.log, of));
-  return who !== undefined && isCampaignCharacter(campaign, who) && !isFirstHitNow(campaign, who);
+  return who !== undefined && isPlayerCharacter(campaign, who) && !isFirstHitNow(campaign, who);
 }
 
 /** Ein Schadenswurf aus Würfeln und, bei einem Treffer mit Ziel, den Blöcken auf den Attributen. */

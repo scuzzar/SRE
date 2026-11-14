@@ -25,6 +25,9 @@ import {
   markDeath,
   victimOf,
   rollEncounter,
+  joinableNpcs,
+  npcSideIds,
+  type EncounterChoice,
   endEncounter,
   adoptNpc,
   recover,
@@ -191,7 +194,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, selected: undefined, picking: false } as const;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -255,6 +258,7 @@ export class GameController {
       attack: undefined,
       wounding: undefined,
       combatNote: undefined,
+      joining: [],
       lootOpen: undefined,
       butchered: undefined,
       patronNote: undefined,
@@ -897,6 +901,18 @@ export class GameController {
     this.update(screen === 'npcs' && this.state.screen !== 'npcs' ? { screen, npcAll: false } : { screen });
   }
 
+  /** Nimmt einen dauerhaften NSC zur nächsten Zufallsbegegnung dazu oder wieder heraus (2026-11-14g); nur Anzeige. */
+  toggleJoining(id: string): void {
+    const joining = this.state.joining.includes(id) ? this.state.joining.filter((j) => j !== id) : [...this.state.joining, id];
+    this.update({ joining, combatNote: undefined });
+  }
+
+  /** „In Begegnung“ im Reiter NSC: wählt den NSC in der Karte Zufallsbegegnung vor und springt in den Reiter Begegnung. */
+  joinEncounter(id: string): void {
+    const joining = this.state.joining.includes(id) ? this.state.joining : [...this.state.joining, id];
+    this.update({ joining, combatNote: undefined, screen: 'encounter' });
+  }
+
   /** „Alle zeigen“ im Reiter NSC an oder aus; nur Anzeige, nicht gespeichert. */
   showAllNpcs(all: boolean): void {
     this.update({ npcAll: all });
@@ -1062,10 +1078,12 @@ export class GameController {
    * Entfernung; die Zeilen 61–66 sind leer. Mit der Begegnung beginnt die Kampfsimulation; erst
    * zeigt die Übersicht, wer kommt.
    */
-  rollEncounter(roll?: number, terrain?: string, force = false): void {
+  rollEncounter(roll?: EncounterChoice, terrain?: string, force = false): void {
     try {
-      // Erst der Test des Tages (5+ auf 1W6); wer die Art wählt, überspringt ihn.
-      const testing = roll === undefined && this.campaign.location !== undefined && !currentEncounter(this.campaign);
+      // Die dazugenommenen NSC (2026-11-14g), soweit sie noch dazukommen können.
+      const joined = this.state.joining.filter((id) => joinableNpcs(this.campaign).some((c) => c.id === id));
+      // Erst der Test des Tages (5+ auf 1W6); wer die Art wählt oder NSC dazunimmt, überspringt ihn.
+      const testing = roll === undefined && joined.length === 0 && this.campaign.location !== undefined && !currentEncounter(this.campaign);
       const tested = testing ? this.test('random', force, (note) => this.update({ combatNote: note })) : undefined;
       if (testing && !tested) return;
       const check = tested?.check;
@@ -1074,9 +1092,10 @@ export class GameController {
         this.change(base, { combatNote: `${checkText(check)}: heute keine Begegnung.` });
         return;
       }
-      const rolled = rollEncounter(base, this.deps.random, this.deps.clock, roll, undefined, terrain);
+      const rolled = rollEncounter(base, this.deps.random, this.deps.clock, roll, undefined, terrain, joined);
       const prepared = rolled.encounter ? this.prepareTurn(rolled.campaign, undefined) : { campaign: rolled.campaign, simTarget: undefined };
       this.change(prepared.campaign, {
+        ...(rolled.encounter ? { joining: [] } : {}),
         attack: undefined,
         simTarget: prepared.simTarget,
         encounterIntro: rolled.encounter !== undefined,
@@ -1216,8 +1235,8 @@ export class GameController {
     const encounter = currentEncounter(campaign);
     if (!turn || !encounter) return { campaign, simTarget: undefined };
     if (turn.side === 'pcs') {
-      const npcs = encounter.npcs.filter((n) => !isDead(woundStateOf(campaign, n.id)));
-      const keep = npcs.some((n) => n.id === target) ? target : npcs[0]?.id;
+      const npcs = npcSideIds(encounter).filter((id) => !isDead(woundStateOf(campaign, id)));
+      const keep = npcs.some((id) => id === target) ? target : npcs[0];
       return { campaign: focusOf(campaign)?.id === turn.id ? campaign : setFocus(campaign, turn.id), simTarget: keep };
     }
     // Ein entkommener SC ist kein Ziel; vorgeschlagen wird ein wacher SC in Reichweite, sonst irgendeiner.

@@ -259,6 +259,15 @@
     },
     {
       "id": "2026-11-14g",
+      "file": "2026-11-14-kampf-mit-dauerhaften-nsc",
+      "title": "Kampf mit dauerhaften NSC: NSC vom Aufenthaltsort kämpfen in einer Begegnung mit, auf der Seite der NSC",
+      "approved": true,
+      "show": [
+        "Campaign"
+      ]
+    },
+    {
+      "id": "2026-11-14i",
       "file": "2026-11-14-oberflaechenkarte",
       "title": "Oberflächenkarte: Gelände, Flüsse, Straßen, Vulkane und Städte je Welt, Bevölkerungsmultiplikator",
       "approved": true,
@@ -268,7 +277,7 @@
       ]
     },
     {
-      "id": "2026-11-14h",
+      "id": "2026-11-14j",
       "file": "2026-11-14-orte",
       "title": "Orte: Logeinträge, Gruppe und NSC auf einer Welt, einem Oberflächenfeld oder in einer Stadt",
       "approved": true,

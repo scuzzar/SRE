@@ -310,14 +310,21 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `/randomEvent` und `/focus`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-zufallsereignis.png`](changes/2026-11-14-zufallsereignis.png).
 
-> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14g): die **Oberflächenkarte** einer Welt
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14g): **Kampf mit dauerhaften NSC** (siehe *Begegnung*,
+> *Dazugenommene NSC*). Nach den Antworten des Owners: In der Karte Zufallsbegegnung nimmt man vor
+> dem Würfeln dauerhafte NSC vom Aufenthaltsort dazu, z. B. Tenzin und dazu 1W6 Polizisten; sie
+> kämpfen immer auf der Seite der NSC, und der erste von ihnen ist der Anführer. Neu im Bild nur der
+> Verweis `Encounter.joined` (geordnet) auf `Character`; die dazugenommenen NSC bleiben in der
+> Kampagne, die Begegnung verweist nur auf sie. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-14-kampf-mit-dauerhaften-nsc.png`](changes/2026-11-14-kampf-mit-dauerhaften-nsc.png).
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14i): die **Oberflächenkarte** einer Welt
 > mit Gelände, Flüssen, Straßen, Vulkanen und Städten, gezeigt als drehbarer Globus (siehe
 > *Oberflächenkarte*). Neu im Bild: `Hex.populationMultiplier`, `Hex.map`, `SurfaceMap`, `SurfaceCell`,
 > `Landform`, `Volcano`, `River`, `Road`, `City`, `CityRank`, `Port` und der Bereich *Oberflächenkarte*.
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-oberflaechenkarte.png`](changes/2026-11-14-oberflaechenkarte.png).
 
-> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14h, baut auf 2026-11-14g auf): **Orte**
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14j, baut auf 2026-11-14i auf): **Orte**
 > (siehe *Orte*). Logeinträge, die Gruppe und NSC stehen auf einer Welt, wahlweise genauer auf
 > einem Oberflächenfeld oder in einer Stadt. Neu im Bild: `Place`, `LogEntry.place`; `Campaign.location`
 > und `Character.place` zeigen auf einen `Place` statt direkt auf ein `Hex`. Der Ausschnitt dazu
@@ -463,7 +470,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Würfel der Anzahl | `Campaign.quantityDie`, `Encounter.quantityDie` | Der Würfel, mit dem die Anzahl der NSC gewürfelt wird: W6 nach den Regeln, W4 oder W3 zum Ausgleichen |
 | Reaktion | `Encounter.reaction` | 2W6 auf die Reactions-Tabelle (S. 21): 2 sofortiger Angriff … 12 freundlich |
 | NSC der Begegnung | `Encounter.npcs` (`Character`) | Ein Gegner oder Fremder in einer Begegnung: ein vollständiger Charakter, der an der Begegnung hängt, nicht an der Kampagne |
-| Anführer | `Encounter.leader` | Der NSC mit der besten Ausrüstung, wenn die Begegnung einen hat (L) |
+| Anführer | `Encounter.leader` | Der NSC mit der besten Ausrüstung, wenn die Begegnung einen hat (L); mit dazugenommenen NSC der erste von ihnen |
+| Dazugenommener NSC | `Encounter.joined` (`Character`) | Ein dauerhafter NSC vom Aufenthaltsort, der in einer Begegnung auf der Seite der NSC mitkämpft; er bleibt in der Kampagne |
 | Übernehmen | (von `Encounter.npcs` nach `Campaign.characters`) | Ein NSC der Begegnung wird in die Kampagne umgehängt, als SC oder als dauerhafter NSC |
 | Dauerhafter NSC | `Character` mit `npc` | Ein Charakter, der kein SC ist; er steht im Reiter NSC |
 | Ort eines NSC | `Character.place` | Der Ort, an dem ein dauerhafter NSC lebt: die Welt, wahlweise genauer ein Oberflächenfeld oder eine Stadt; man trifft ihn nur auf dieser Welt |
@@ -1205,6 +1213,32 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (`ended`); beendete Begegnungen bleiben in der Kampagne, weil der Log auf ihre NSC verweist,
     und werden nicht mehr gezeigt. Eine Begegnung, auf die der Log nicht verweist, wird beim Beenden
     gelöscht.
+  - **Dazugenommene NSC** (2026-11-14g). In der Karte Zufallsbegegnung wählt man vor dem Würfeln
+    oder Wählen der Art beliebig viele **dauerhafte NSC vom Aufenthaltsort** dazu (lebend, nicht
+    ausgeschieden; ohne Aufenthaltsort keine). Die Begegnung verweist auf sie (`joined`, in der
+    gewählten Reihenfolge); sie bleiben in der Kampagne (`Campaign.characters`) und werden nicht
+    kopiert. Die Art würfelt oder wählt man wie sonst, neu auch **„keine“**: Dann kommen nur die
+    dazugenommenen NSC. Mit dazugenommenen NSC entfällt der **Test** (man stellt den Kampf mit
+    Absicht zusammen, wie beim Wählen der Art); eine leere Zeile (61–66) heißt dann ebenfalls: nur
+    die dazugenommenen NSC. Mindestens ein Kämpfer auf der Seite der NSC muss es geben.
+    - *Seite*: Sie kämpfen immer auf der Seite der NSC, gegen die SC. Die **NSC-Gruppe** sind die
+      dazugenommenen NSC, gefolgt von den gewürfelten (`npcs`); in dieser Reihenfolge stehen sie in
+      der Kampfsimulation, ziehen, laufen, zählen für Überraschung, Feuerstoß-Nachbarn, Beute und
+      jede Regel, die „die NSC der Begegnung“ sagt.
+    - *Anführer*: Der erste dazugenommene NSC ist der Anführer (`leader`). Die gewürfelte Art bekommt
+      dann keinen eigenen Anführer: Ihr erster NSC wird erzeugt wie die übrigen, ohne die beste
+      Ausrüstung und mit Fertigkeit 1.
+    - *Ausrüstung*: Ein dazugenommener NSC kämpft mit dem, was er hat (Primärwaffe, Waffe in der
+      Hand, getragene Rüstung, Munition im Besitz); die App gibt ihm nichts dazu.
+    - *Folgen*: Weil er derselbe Charakter bleibt, behält er nach der Begegnung seine Wunden, seine
+      verbrauchte Munition und gegebenenfalls seinen Tod (`dead`), und der Log verweist weiter auf
+      ihn. **Beute nehmen** von ihm geht wie bei jedem NSC der Begegnung; was man nimmt, verliert er.
+      **Übernehmen** gilt nur für die gewürfelten NSC; ein dazugenommener ist schon in der Kampagne.
+    - *Beenden*: Das Beenden löst nur den Verweis; der NSC bleibt, wie er ist. Ein NSC, auf den eine
+      laufende Begegnung verweist, kann nicht zum SC gemacht werden, solange sie läuft.
+    - *Reiter NSC*: Am dauerhaften NSC (vom Aufenthaltsort) springt **„In Begegnung“** in den Reiter
+      Begegnung und wählt ihn in der Karte Zufallsbegegnung schon vor. Läuft eine Begegnung, gibt es
+      den Knopf nicht (höchstens eine laufende Begegnung).
 - **Test.** Jede Begegnungsart beginnt mit ihrem **Test** nach der Encounter Checklist (SE, Charts
   S. 20): Zufallsbegegnung täglich 5+ auf 1W6, Patron wöchentlich 5+ auf 1W6, Gerücht wöchentlich
   7+ auf 2W6. Besteht er nicht, gibt es nichts, und die Karte sagt das („Test 3 (5+ nötig): diese
@@ -2139,7 +2173,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Land Archipel bzw. alles Wasser verstreuter See (die Zahl ist die ganze Fläche in halben Hexen,
   und es gibt keine anderen Land- bzw. Wassermassen), schreibt sie „Land nur als Archipele“ bzw.
   „Wasser nur als verstreute Seen“ statt einer Zahl wie 150.
-- **Oberflächenkarte** (freigegeben am 14. November 2026, 2026-11-14g). Die Regeln stehen vollständig, mit allen Tabellen und
+- **Oberflächenkarte** (freigegeben am 14. November 2026, 2026-11-14i). Die Regeln stehen vollständig, mit allen Tabellen und
   Hausregeln, im [Konzept Oberflächenkarte](konzept-oberflaechenkarte.md); sie gelten als Teil
   dieses Modells. Das Wichtigste für das Bild:
   - Eine fertige Welt ab Größe 1 mit Oberfläche (`Surface`) kann eine Oberflächenkarte haben
@@ -2169,7 +2203,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Beim Import wird geprüft: die Zahl der Felder passt zur Größe, alle Feldnummern liegen im
     Raster, Flüsse und Straßen bestehen aus benachbarten Feldern, Städte und Kleinstädte nur bei
     Bevölkerung ab 1.
-- **Orte** (freigegeben am 14. November 2026, 2026-11-14h). Ein Ort (`Place`) ist immer eine Welt (`world`, ein Hexfeld mit
+- **Orte** (freigegeben am 14. November 2026, 2026-11-14j). Ein Ort (`Place`) ist immer eine Welt (`world`, ein Hexfeld mit
   Welt, nicht leer). Genauer kann er ein Oberflächenfeld (`cell`) oder eine Stadt (`city`) sein, nie
   beides: Das Feld einer Stadt ist ihr Feld (`City.cell`) und wird nicht noch einmal gespeichert.
   Feld und Stadt gehören zur Oberflächenkarte derselben Welt; eine Orbitalstadt hat kein Feld.
@@ -2224,7 +2258,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
-- **Oberflächenkarte und Orte** (2026-11-14g und 2026-11-14h) sind freigegeben, aber noch nicht
+- **Oberflächenkarte und Orte** (2026-11-14i und 2026-11-14j) sind freigegeben, aber noch nicht
   gebaut: Es fehlen `Hex.populationMultiplier`, `Hex.map` mit allem darunter, `Place` und
   `LogEntry.place`; `Campaign.location` und `Character.place` zeigen im Code noch direkt auf ein
   Hexfeld. Entsteht auf dem Zweig `hex-world-map`.

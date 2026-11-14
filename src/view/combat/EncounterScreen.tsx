@@ -81,10 +81,8 @@ function RunningEncounter({ sim }: { sim: SimView }) {
   const standing = npcs.filter((f) => f.state === 'unhurt' || f.state === 'wounded').length;
   return (
     <div className="encounter encounter-running">
-      <span className="kicker">Laufende Begegnung · Wurf {sim.roll}</span>
-      <h2 className="encounter-running-title">
-        {npcs.length} × {sim.name}
-      </h2>
+      <span className="kicker">Laufende Begegnung{sim.roll === undefined ? ' · nur NSC' : ` · Wurf ${sim.roll}`}</span>
+      <h2 className="encounter-running-title">{sim.title}</h2>
       <p className="encounter-running-facts">
         Runde {sim.round} · Reaktion {sim.reaction}: {sim.reactionText}
         <br />
@@ -114,8 +112,25 @@ function RunningEncounter({ sim }: { sim: SimView }) {
 function EncounterStart({ combat, checks }: { combat: CombatView; checks: ChecksView | undefined }) {
   const game = useGame();
   const disabled = !combat.canEncounter || combat.sim !== undefined;
+  const joining = combat.joining.length > 0;
   return (
     <>
+      {combat.joinable.length > 0 && (
+        <div className="encounter-join" role="group" aria-label="NSC dazunehmen">
+          <span className="small-label">NSC dazunehmen · kämpfen auf der Seite der NSC{joining ? ', ohne Test' : ''}</span>
+          <div className="encounter-join-list">
+            {combat.joinable.map((n) => {
+              const at = combat.joining.indexOf(n.id);
+              return (
+                <button key={n.id} type="button" className="encounter-join-npc" aria-pressed={at >= 0} disabled={disabled} onClick={() => game.toggleJoining(n.id)}>
+                  {n.name}
+                  {at === 0 && <span className="muted"> · Anführer</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
       {combat.note && (
         <p className="encounter-note" role="status">
           {combat.note}
@@ -129,8 +144,9 @@ function EncounterStart({ combat, checks }: { combat: CombatView; checks: Checks
           onPress={() => game.rollEncounter()}
           onHold={() => game.rollEncounter(undefined, undefined, true)}
         />
-        <select aria-label="Begegnung wählen" value="" disabled={disabled} onChange={(e) => e.target.value && game.rollEncounter(Number(e.target.value))}>
+        <select aria-label="Begegnung wählen" value="" disabled={disabled} onChange={(e) => e.target.value && game.rollEncounter(e.target.value === 'none' ? 'none' : Number(e.target.value))}>
           <option value="">oder wählen …</option>
+          {joining && <option value="none">keine · nur die NSC</option>}
           {combat.encounterTypes.map((t) => (
             <option key={t.roll} value={t.roll}>
               {t.roll} · {t.quantity}W{combat.quantityDie} {t.name}
