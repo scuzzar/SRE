@@ -310,14 +310,14 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `/randomEvent` und `/focus`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-zufallsereignis.png`](changes/2026-11-14-zufallsereignis.png).
 
-> **Offen, noch nicht freigegeben** (Kennzeichen 2026-11-14g): die **Oberflächenkarte** einer Welt
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14g): die **Oberflächenkarte** einer Welt
 > mit Gelände, Flüssen, Straßen, Vulkanen und Städten, gezeigt als drehbarer Globus (siehe
 > *Oberflächenkarte*). Neu im Bild: `Hex.populationMultiplier`, `Hex.map`, `SurfaceMap`, `SurfaceCell`,
 > `Landform`, `Volcano`, `River`, `Road`, `City`, `CityRank`, `Port` und der Bereich *Oberflächenkarte*.
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-oberflaechenkarte.png`](changes/2026-11-14-oberflaechenkarte.png).
 
-> **Offen, noch nicht freigegeben** (Kennzeichen 2026-11-14h, baut auf 2026-11-14g auf): **Orte**
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14h, baut auf 2026-11-14g auf): **Orte**
 > (siehe *Orte*). Logeinträge, die Gruppe und NSC stehen auf einer Welt, wahlweise genauer auf
 > einem Oberflächenfeld oder in einer Stadt. Neu im Bild: `Place`, `LogEntry.place`; `Campaign.location`
 > und `Character.place` zeigen auf einen `Place` statt direkt auf ein `Hex`. Der Ausschnitt dazu
@@ -352,7 +352,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-die Oberflächenkarte (2026-11-14g) und die Orte (2026-11-14h).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -2139,9 +2139,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Land Archipel bzw. alles Wasser verstreuter See (die Zahl ist die ganze Fläche in halben Hexen,
   und es gibt keine anderen Land- bzw. Wassermassen), schreibt sie „Land nur als Archipele“ bzw.
   „Wasser nur als verstreute Seen“ statt einer Zahl wie 150.
-- **Oberflächenkarte** (offen, 2026-11-14g). Die Regeln stehen vollständig, mit allen Tabellen und
-  Hausregeln, im [Konzept Oberflächenkarte](konzept-oberflaechenkarte.md); mit der Freigabe gelten
-  sie als Teil dieses Modells. Das Wichtigste für das Bild:
+- **Oberflächenkarte** (freigegeben am 14. November 2026, 2026-11-14g). Die Regeln stehen vollständig, mit allen Tabellen und
+  Hausregeln, im [Konzept Oberflächenkarte](konzept-oberflaechenkarte.md); sie gelten als Teil
+  dieses Modells. Das Wichtigste für das Bild:
   - Eine fertige Welt ab Größe 1 mit Oberfläche (`Surface`) kann eine Oberflächenkarte haben
     (`map`). Sie entsteht in einem Zug, wenn man den Globus zum ersten Mal öffnet, und ersetzt sich
     nur ganz („Neu würfeln“). Von Hand ändern lässt sie sich nicht. Größe 0 hat keine.
@@ -2169,7 +2169,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Beim Import wird geprüft: die Zahl der Felder passt zur Größe, alle Feldnummern liegen im
     Raster, Flüsse und Straßen bestehen aus benachbarten Feldern, Städte und Kleinstädte nur bei
     Bevölkerung ab 1.
-- **Orte** (offen, 2026-11-14h). Ein Ort (`Place`) ist immer eine Welt (`world`, ein Hexfeld mit
+- **Orte** (freigegeben am 14. November 2026, 2026-11-14h). Ein Ort (`Place`) ist immer eine Welt (`world`, ein Hexfeld mit
   Welt, nicht leer). Genauer kann er ein Oberflächenfeld (`cell`) oder eine Stadt (`city`) sein, nie
   beides: Das Feld einer Stadt ist ihr Feld (`City.cell`) und wird nicht noch einmal gespeichert.
   Feld und Stadt gehören zur Oberflächenkarte derselben Welt; eine Orbitalstadt hat kein Feld.
@@ -2223,6 +2223,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
+
+- **Oberflächenkarte und Orte** (2026-11-14g und 2026-11-14h) sind freigegeben, aber noch nicht
+  gebaut: Es fehlen `Hex.populationMultiplier`, `Hex.map` mit allem darunter, `Place` und
+  `LogEntry.place`; `Campaign.location` und `Character.place` zeigen im Code noch direkt auf ein
+  Hexfeld. Entsteht auf dem Zweig `hex-world-map`.
 
 - **`Conflict → Campaign : local`** ist im Code kein eigenes Feld: Der Stand von hier ist die
   Kampagne des Geräts mit dem Schlüssel des Konflikts (`localOf`), damit man in ihr weiterspielen

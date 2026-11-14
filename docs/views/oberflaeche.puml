@@ -89,13 +89,13 @@ hide <<value>> stereotype
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
 
 ' Referenzdaten
-  class SurfaceMap $oberflaeche $newClass("2026-11-14g") {
+  class SurfaceMap $oberflaeche {
     /cells: number
   }
-  class SurfaceCell <<value>> $oberflaeche $newClass("2026-11-14g") {
+  class SurfaceCell <<value>> $oberflaeche {
     towns: number
   }
-  enum Landform <<value>> $oberflaeche $newClass("2026-11-14g") {
+  enum Landform <<value>> $oberflaeche {
     water
     waterIce
     landIce
@@ -108,25 +108,25 @@ hide <<value>> stereotype
     open
     settled
   }
-  class River <<value>> $oberflaeche $newClass("2026-11-14g") {
+  class River <<value>> $oberflaeche {
   }
-  class Road <<value>> $oberflaeche $newClass("2026-11-14g") {
+  class Road <<value>> $oberflaeche {
   }
-  enum Volcano <<value>> $oberflaeche $newClass("2026-11-14g") {
+  enum Volcano <<value>> $oberflaeche {
     major
     field
   }
-  class City $oberflaeche $newClass("2026-11-14g") {
+  class City $oberflaeche {
     population: number
     multiplier: number
     rank: CityRank
     port: Port [0..1]
   }
-  enum CityRank <<value>> $oberflaeche $newClass("2026-11-14g") {
+  enum CityRank <<value>> $oberflaeche {
     primary
     secondary
   }
-  enum Port <<value>> $oberflaeche $newClass("2026-11-14g") {
+  enum Port <<value>> $oberflaeche {
     A
     B
     C
@@ -136,34 +136,34 @@ hide <<value>> stereotype
     G
     H
   }
-  class Place <<value>> $oberflaeche $newClass("2026-11-14h") {
+  class Place <<value>> $oberflaeche {
   }
 
 ' Kampagne
-Campaign "1" *-$newArrow("2026-11-14h")- "0..1" Place : location
+Campaign "1" *-- "0..1" Place : location
 
 ' Zeit und Reisen
 
 ' Charaktererschaffung und Lebenslauf
-Character "1" *-$newArrow("2026-11-14h")- "0..1" Place : place
+Character "1" *-- "0..1" Place : place
 
 ' Laufbahnen (Referenzdaten)
 
 ' Subsektor und Welten
-Hex "1" *-$newArrow("2026-11-14g")- "0..1" SurfaceMap : map
-SurfaceMap "1" *-$newArrow("2026-11-14g")- "/cells" SurfaceCell : cells {ordered}
+Hex "1" *-- "0..1" SurfaceMap : map
+SurfaceMap "1" *-- "/cells" SurfaceCell : cells {ordered}
 SurfaceCell "*" --> "1" Landform : landform
 SurfaceCell "*" --> "0..1" Volcano : volcano
-SurfaceMap "1" *-$newArrow("2026-11-14g")- "*" River : rivers
-SurfaceMap "1" *-$newArrow("2026-11-14g")- "*" Road : roads
-SurfaceMap "1" *-$newArrow("2026-11-14g")- "*" City : cities
-River "*" -$newArrow("2026-11-14g")-> "2..*" SurfaceCell : cells {ordered}
-Road "*" -$newArrow("2026-11-14g")-> "2..*" SurfaceCell : cells {ordered}
-City "*" -$newArrow("2026-11-14g")-> "0..1" SurfaceCell : cell
-LogEntry "1" *-$newArrow("2026-11-14h")- "0..1" Place : place
-Place "*" -$newArrow("2026-11-14h")-> "1" Hex : world
-Place "*" -$newArrow("2026-11-14h")-> "0..1" SurfaceCell : cell
-Place "*" -$newArrow("2026-11-14h")-> "0..1" City : city
+SurfaceMap "1" *-- "*" River : rivers
+SurfaceMap "1" *-- "*" Road : roads
+SurfaceMap "1" *-- "*" City : cities
+River "*" --> "2..*" SurfaceCell : cells {ordered}
+Road "*" --> "2..*" SurfaceCell : cells {ordered}
+City "*" --> "0..1" SurfaceCell : cell
+LogEntry "1" *-- "0..1" Place : place
+Place "*" --> "1" Hex : world
+Place "*" --> "0..1" SurfaceCell : cell
+Place "*" --> "0..1" City : city
 City --> CityRank
 City --> Port
 
@@ -188,5 +188,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Hex #line:d0021b;line.bold
 @enduml

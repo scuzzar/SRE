@@ -1,8 +1,8 @@
 # Konzept: Oberflächenkarte
 
-> **Stand: Konzept, Eckpunkte mit dem Owner abgestimmt** (14. November 2026). Noch nichts davon
-> steht im [Domänenmodell](domain-model.md) oder im Code. Bevor etwas gebaut wird, kommt es nach
-> den Regeln in `AGENTS.md` erst ins Modell und wird freigegeben.
+> **Stand: freigegeben** (14. November 2026) mit den Änderungen 2026-11-14g (Oberflächenkarte) und
+> 2026-11-14h (Orte) im [Domänenmodell](domain-model.md). Die Regeln hier gelten als Teil des
+> Modells, einschließlich der Hausregeln (⚑).
 >
 > Abgestimmt: feste Feldgröße von etwa 250 km (Abschnitt 1), Flüsse, Vulkane und alle Städte in der
 > ersten Fassung, ein drehbarer Globus als einzige Ansicht (keine flache Karte), das Gelände
