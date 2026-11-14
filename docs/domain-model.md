@@ -301,11 +301,11 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `./answer` und `CardPick → Odds : odds`; `OracleAnswer` entfällt. Der Ausschnitt dazu
 > liegt unter [`changes/2026-11-14-orakel-auf-der-karte.png`](changes/2026-11-14-orakel-auf-der-karte.png).
 
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-14e): **Notiz und Deutung ändern** (siehe *Deutungen
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14e): **Notiz und Deutung ändern** (siehe *Deutungen
 > und Notizen*). Neu im Bild: `Note.editedAt`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-notiz-aendern.png`](changes/2026-11-14-notiz-aendern.png).
 
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-14f): **Zufallsereignis** (siehe *Zufallsereignis*).
+> Am 14. November 2026 freigegeben (Kennzeichen 2026-11-14f): **Zufallsereignis** (siehe *Zufallsereignis*).
 > Neu im Bild: `EventFocus` (Referenzdaten), `Card.eventFocus`, `CardPick.eventFocus`,
 > `/randomEvent` und `/focus`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-zufallsereignis.png`](changes/2026-11-14-zufallsereignis.png).
@@ -385,8 +385,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Hausregeln | `HouseRules` | Die Zahlen, nach denen Proben gerechnet werden |
 | Log | `LogEntry` | Ein Eintrag im Verlauf |
 | Orakelantwort | `CardPick./answer` | Die Antwort des Orakels auf eine Frage; sie steht in der Kartenauswahl |
-| Zufallsereignis (2026-11-14f) | `Card./randomEvent`, `CardPick./randomEvent` | Der Orakelwurf ist ein Pasch bis 55 (11, 22, 33, 44, 55): Etwas Unerwartetes passiert, nach Mythic bei Chaosfaktor 5 |
-| Ereignisfokus (2026-11-14f) | `EventFocus` | Worum es beim Zufallsereignis geht, nach Mythic: etwa *NSC handelt*, *SC: Nachteil*, *Aktuelle Lage* |
+| Zufallsereignis | `Card./randomEvent`, `CardPick./randomEvent` | Der Orakelwurf ist ein Pasch bis 55 (11, 22, 33, 44, 55): Etwas Unerwartetes passiert, nach Mythic bei Chaosfaktor 5 |
+| Ereignisfokus | `EventFocus` | Worum es beim Zufallsereignis geht, nach Mythic: etwa *NSC handelt*, *SC: Nachteil*, *Aktuelle Lage* |
 | Antwort | `Answer` | Die sechs Antworten des Orakels: Ja!, Ja, Ja?, Nein?, Nein, Nein! |
 | Orakelfeld | `Card.oracle` | Das Feld der Karte mit der Antwort für Hoch, Mittel und Gering; man tippt die Stufe an, die zur Frage passt |
 | Notiz | `Note` ohne `interprets` | Freier Text im Log, z. B. „Wir landen auf Regina.“ |
@@ -725,16 +725,17 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     auch, also auch ihre Deutungen. Ja bleibt Ja, Nein bleibt Nein; weil `/answer` aus Wurf und
     Chance folgt, zeigen sie nun auch das Ausrufe- oder Fragezeichen (Entscheidung des Owners).
   - Ein veränderlicher Chaosfaktor und Szenen nach Mythic kommen erst nach Version 1.
-- **Zufallsereignis** (2026-11-14f, wartet auf Freigabe). Nach Mythic GME 2e bei Chaosfaktor 5.
+- **Zufallsereignis** (2026-11-14f). Nach Mythic GME 2e bei Chaosfaktor 5.
   - Ist der Orakelwurf der Karte ein **Pasch bis 55** (11, 22, 33, 44, 55; `/randomEvent`), passiert
     etwas Unerwartetes, unabhängig von der Antwort. Die Karte würfelt dann gleich beim Ziehen, nach
     dem Orakelwurf, den **Ereignisfokus** 1–100 (`eventFocus`); ohne Pasch gibt es keinen.
-  - Die Karte zeigt über dem Orakelfeld ein rotes Band „Zufallsereignis“ mit dem Fokus (etwa
-    „NSC handelt“) und hebt das Feld *Zufallsereignis* (Aktion, Beschreibung) hervor; das sind schon
-    Mythics Bedeutungstabellen für Ereignisse. Was man davon nutzt, tippt man wie sonst an.
-  - Wie bei Mythic gilt es nur für eine Frage: In den Log kommt das Ereignis nur, wenn man eine Stufe
-    im Orakelfeld gewählt hat. Dann hält die Kartenauswahl den Fokuswurf fest (`eventFocus`), und
-    der Fokus (`/focus`) folgt aus den Referenzdaten. Der Log zeigt „Zufallsereignis: NSC handelt“
+  - Wie bei Mythic gilt es nur für eine Frage: **Erst wenn man eine Stufe im Orakelfeld gewählt hat**,
+    zeigt die Karte über dem Orakelfeld ein rotes Band „Zufallsereignis“ mit dem Fokus (etwa „NSC
+    handelt“) und hebt das Feld *Zufallsereignis* (Aktion, Beschreibung) hervor; das sind schon
+    Mythics Bedeutungstabellen für Ereignisse. Was man davon nutzt, tippt man wie sonst an. Vorher
+    verrät die Karte nichts (Entscheidung des Owners).
+  - In den Log kommt das Ereignis ebenso nur mit gewählter Stufe: Die Kartenauswahl hält den
+    Fokuswurf fest (`eventFocus`), und der Fokus (`/focus`) folgt aus den Referenzdaten. Der Log zeigt „Zufallsereignis: NSC handelt“
     im Kasten der Antwort.
   - **Ereignisfokus** (`EventFocus`, Referenzdaten, Mythic GME 2e, übersetzt, CC BY-NC wie die
     übrigen Mythic-Daten): 1–5 Fernes Ereignis · 6–10 Unklares Ereignis · 11–20 Neuer NSC ·
@@ -742,9 +743,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     56–65 Von einem Handlungsfaden weg · 66–70 Ein Handlungsfaden endet · 71–80 SC: Nachteil ·
     81–85 SC: Vorteil · 86–100 Aktuelle Lage. Jeder Eintrag hat dazu einen kurzen Text, was er
     bedeutet. Listen von NSC und Handlungsfäden führt die App nicht; der Fokus ist ein Anstoß.
-  - *Offene Fragen zu 2026-11-14f*: (1) Die Bereiche des Ereignisfokus sind aus dem Gedächtnis nach
-    Mythic GME 2e; bitte mit dem Buch abgleichen. (2) Auch ohne gewählte Stufe ins Log, wenn man
-    nur Felder übernimmt? Vorschlag: nein, wie bei Mythic.
+  - Die Bereiche des Ereignisfokus sind aus dem Gedächtnis nach Mythic GME 2e übernommen; beim
+    nächsten Blick ins Buch abgleichen (steht in der To-do).
 - **Deutungen und Notizen.** Beide sind ein `Note` mit Text, der nicht leer ist (Leerraum am Rand
   fällt weg). Seit 2026-11-14d schreibt man sie in einem eigenen Blatt: *Deuten* sitzt am Ergebnis,
   *Notiz* unten in der Knopfreihe; die Frage schreibt man auf die Karte.
@@ -753,7 +753,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     früheren Eintrag. Man deutet das Ergebnis, an dem man auf *Deuten* tippt: am neuesten steht der
     Knopf immer, ein älteres klappt man dafür im Log auf. Ein Ergebnis kann mehrere Deutungen haben.
   - Eine **Notiz** verweist auf nichts; sie steht für sich im Log.
-  - Wie jeder Logeintrag wird ein `Note` angehängt. Seit 2026-11-14e (wartet auf Freigabe) lässt sich
+  - Wie jeder Logeintrag wird ein `Note` angehängt. Seit 2026-11-14e lässt sich
     sein **Text ändern**: Der Stift an der Notiz oder Deutung öffnet das Blatt mit dem alten Text;
     Speichern ersetzt den Text und setzt `editedAt`, der Log zeigt dann „geändert“ mit der Uhrzeit.
     Zeitpunkt, Stelle im Log und das gedeutete Ergebnis bleiben; ein leerer Text geht nicht (dafür
