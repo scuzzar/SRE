@@ -470,21 +470,27 @@ button:disabled {
   font-size: 30px;
 }
 
+/* Beschriftung höchstens 45 % breit, damit der Wert auch in der schmalen Orakel-Spalte Platz hat;
+   lange Wörter brechen um statt aus dem Kasten zu laufen. */
 .picks {
   margin: 0;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: fit-content(45%) minmax(0, 1fr);
   gap: 4px 12px;
 }
 
 .picks dt {
   font-size: 13px;
   color: var(--muted);
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .picks dd {
   margin: 0;
   font-weight: 600;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 /* Wurffelder im Log: Windrose und Kartensymbol als kleines Bild neben dem Text. */
@@ -7306,4 +7312,61 @@ button:disabled {
 .log-event b,
 .row-extra.event {
   color: var(--accent-text);
+}
+
+.card-sheet .sheet-foot .ghost {
+  white-space: nowrap;
+}
+
+/* Niedrige Bildschirme (etwa 360×640): die Karte rückt enger zusammen, damit die Tafel NSC passt. */
+@media (max-height: 700px) {
+  .card-sheet .card-question {
+    margin-top: 6px;
+  }
+
+  .card-question input {
+    min-height: 34px;
+    padding: 4px 10px;
+  }
+
+  .card-grid .tile {
+    padding: 2px 6px 3px;
+    font-size: 11px;
+    line-height: 1.15;
+  }
+
+  .card-grid .tile .tile-label {
+    font-size: 8px;
+  }
+
+  .card-grid .tile.sense {
+    min-height: 0;
+    font-size: 11px;
+  }
+
+  .card-oracle .oracle-answer {
+    font-size: 15px;
+  }
+
+  .card-grid .tile.card-roll .roll-svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .card-grid .tile.card-roll .bell-number {
+    font-size: 22px;
+    line-height: 30px;
+  }
+
+  .card-grid .tile.card-roll .bell-curve {
+    width: 40px;
+  }
+
+  .theme-title {
+    margin: 0 0 2px;
+  }
+
+  .theme-button {
+    min-height: 34px;
+  }
 }
