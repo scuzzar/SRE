@@ -289,6 +289,11 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Laufbahnen steht in [`patron-nsc.md`](patron-nsc.md). Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-14-patron-mit-laufbahn.png`](changes/2026-11-14-patron-mit-laufbahn.png).
 
+> **Wartet auf Freigabe** (Kennzeichen 2026-11-14c): **NSC aus einer Laufbahn und Waffen
+> erzeugter NSC** (siehe *NSC aus einer Laufbahn*, *Waffen erzeugter NSC*). Neu im Bild:
+> `Weapon.minSoc` und `Patron.criminal`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-14-nsc-aus-laufbahn-und-waffen.png`](changes/2026-11-14-nsc-aus-laufbahn-und-waffen.png).
+
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
@@ -1365,6 +1370,31 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       Zuordnung in [`patron-nsc.md`](patron-nsc.md)); ein Beruf, der mehrfach vorkommt, hat
       überall dieselbe. Die Rumor-Zeilen haben keine. Es gibt heute nur die sechs Laufbahnen des
       Regelwerks; weitere, die besser passen, kommen später dazu.
+  - **NSC aus einer Laufbahn** (2026-11-14c). „+ Neuer NSC“ im Reiter NSC fragt zuerst nach der
+    **Rolle** und bietet dann an: leer anlegen (Editor wie bisher) oder **aus einer Laufbahn
+    erzeugen**. Erzeugt wird wie beim Patron-NSC, nur in der gewählten Laufbahn: Die
+    Charaktererschaffung läuft zufällig und ohne Animation durch (abgelehnt oder tot: von vorn),
+    Name von der Tafel NSC, Ort der Aufenthaltsort, danach öffnet der Editor zum Nachbessern. Ohne
+    Aufenthaltsort geht es nicht. Er hat keinen Patron.
+  - **Waffen erzeugter NSC** (2026-11-14c; Patron-NSC und NSC aus einer Laufbahn, nicht die NSC
+    der Begegnung, die ihre eigene Regel haben). Hausregel nach Wunsch des Owners:
+    - *SOC-Stufe*: Jede Waffe hat ein Mindest-SOC (`Weapon.minSoc`): billige Nahkampfwaffen ab 0
+      (Club, Cudgel, Dagger, Spear, Pike, Blade), Pistolen, Shotgun und die übrigen Klingen ab 6,
+      Gewehre, Maschinenwaffen und Laser ab 10. Tierwaffen und Hände haben keins.
+    - *Erlaubt* ist eine Waffe, wenn SOC des NSC ≥ ihr Mindest-SOC, ihr TL ≤ TL seines Orts und
+      das Gesetz seines Orts sie nicht verbietet (`Weapon.law`, wie im Shop).
+    - *Gesetz ignorieren*: Einmal je NSC 1W6 + DMs; bei 6+ gilt für ihn das Gesetz nicht.
+      DM +2 mit Streetwise (Stufe 0 oder mehr), DM +2, wenn er verbrecherisch ist: ein Patron
+      mit `Patron.criminal` oder die Rolle Feind.
+    - *Wahl*: Seine Waffenfertigkeiten, höchste Stufe zuerst; er bekommt die Waffe der ersten,
+      die erlaubt ist. Hat er keine passende, bekommt er die teuerste erlaubte Waffe seiner
+      SOC-Stufe. Ist gar keine erlaubt, bleibt er ohne. Eine Waffe aus der Abmusterung behält er
+      zusätzlich; Primärwaffe ist die nach dieser Regel gewählte. Schusswaffen sind geladen und
+      haben 1W4 Magazine, wie bei den NSC der Begegnung.
+    - *Verbrecherisch* (`Patron.criminal`, Referenzdaten): Arsonist, Assassin, Cutthroat,
+      Embezzler, Hijacker, Pirate, Rogue, Smuggler, Swindler, Terrorist, Underworld Leader.
+  - *Offene Fragen zu 2026-11-14c*: siehe Gespräch; Schwellen, DMs und Liste der Verbrecher sind
+    Vorschläge.
     Ohne Aufenthaltsort geht es nicht. Der Patron-Wurf selbst bleibt, wie er ist; der neue NSC
     kommt in den Reiter NSC. Ein Patron-NSC ist ein gewöhnlicher dauerhafter NSC: Man kann ihn
     bearbeiten, zum SC machen oder ausscheiden lassen; der Verweis auf den Patron bleibt.
