@@ -1771,3 +1771,46 @@ describe('Tiere im Kampf', () => {
     expect(damage && damage.kind === 'damage' ? damage.fixed : undefined).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe('Globus (Oberflächenkarte)', () => {
+  it('erzeugt die Karte beim ersten Öffnen, speichert sie und zeigt das angetippte Feld', async () => {
+    const { game, repository } = await started();
+    game.openGlobeAt(4, 5);
+    const view = game.snapshot();
+    expect(view.world?.name).toBe('Kessra');
+    expect(view.globe?.name).toBe('Kessra');
+    // Größe 7: n = 28, 10 × 28² + 2 Felder.
+    expect(view.globe?.map.landforms).toHaveLength(7842);
+    await game.whenSaved();
+    const saved = repository.saved!.hexes.find((h) => h.column === 4 && h.row === 5)!;
+    expect(saved.map?.landforms).toBe(view.globe?.map.landforms);
+    expect(saved.populationMultiplier).toBeGreaterThanOrEqual(1);
+    game.pickCell(0);
+    expect(game.snapshot().globe?.picked).toMatchObject({ cell: 0, position: '90° N, 0° O' });
+    // Geschlossen und wieder geöffnet: dieselbe Karte, kein neuer Wurf.
+    game.closeGlobe();
+    expect(game.snapshot().globe).toBeUndefined();
+    expect(game.snapshot().world?.hasMap).toBe(true);
+    game.openGlobe();
+    expect(game.snapshot().globe?.map).toBe(view.globe?.map);
+  });
+
+  it('übersteht die Kampagnendatei und lässt sich neu würfeln', async () => {
+    const { game } = await started();
+    game.openGlobeAt(4, 5);
+    const before = game.snapshot().globe!.map;
+    const campaign = fromCampaignFile(toCampaignFile(game['campaign']), 'c2');
+    const hex = campaign.hexes.find((h) => h.column === 4 && h.row === 5)!;
+    expect(hex.map).toEqual(before);
+    game.rerollMap();
+    expect(game.snapshot().globe!.map).not.toBe(before);
+  });
+
+  it('weist eine beschädigte Karte beim Import zurück', async () => {
+    const { game } = await started();
+    game.openGlobeAt(4, 5);
+    const file = JSON.parse(toCampaignFile(game['campaign']));
+    file.campaign.hexes[0].map.landforms = 'w';
+    expect(() => fromCampaignFile(JSON.stringify(file), 'c2')).toThrow(/Felder/);
+  });
+});

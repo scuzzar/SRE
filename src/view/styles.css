@@ -7464,3 +7464,85 @@ button:disabled {
 .pick-row {
   display: contents;
 }
+
+/* Globus der Oberflächenkarte (siehe docs/konzept-oberflaechenkarte.md, Ansichten). */
+.globe-overlay {
+  z-index: 12;
+}
+
+.globe-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.globe-stage {
+  position: relative;
+  width: 100%;
+  height: min(70vh, calc(100vw - 24px));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.globe-canvas {
+  touch-action: none;
+  cursor: grab;
+  display: block;
+}
+
+.globe-zoom {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.globe-zoom button {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 20px;
+}
+
+.globe-scale {
+  margin: 0;
+  text-align: center;
+  color: var(--muted, #9a9a9a);
+  font-size: 12px;
+}
+
+.globe-list ul,
+.globe-picked ul {
+  margin: 0;
+}
+
+.link-button {
+  background: none;
+  border: 0;
+  padding: 4px 0;
+  min-height: 0;
+  color: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  font: inherit;
+}
+
+.world-top-globe {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.world-surface-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}

@@ -1,5 +1,9 @@
 import {
+  canHaveMap,
   ehex,
+  surfaceGrid,
+  type SurfaceGrid,
+  type SurfaceMap,
   hexAt,
   hexId,
   isWorld,
@@ -41,6 +45,8 @@ export interface WorldLook {
   readonly tech: number | undefined;
   readonly temperature: 'frozen' | 'cold' | 'temperate' | 'hot' | 'boiling' | undefined;
   readonly life: boolean | undefined;
+  /** Die Oberflächenkarte, wenn es eine gibt: Dann zeigt das Symbol die echten Felder. */
+  readonly surface?: { readonly grid: SurfaceGrid; readonly map: SurfaceMap };
 }
 
 /**
@@ -76,6 +82,7 @@ export function lookOf(hex: Hex | undefined): WorldLook | undefined {
     // wenn Luft und Wasser es erlauben.
     temperature: hex.temperature ?? 'temperate',
     life: hex.surface?.life ?? (atmosphere >= 2 && atmosphere <= 9 && hydrographics > 0),
+    ...(hex.map && size > 0 ? { surface: { grid: surfaceGrid(size), map: hex.map } } : {}),
   };
 }
 
@@ -201,6 +208,10 @@ export interface WorldView {
   readonly canNote: boolean;
   /** Das Weltsymbol, sobald die Welt fertig ist. */
   readonly look: WorldLook | undefined;
+  /** Die Welt kann einen Globus haben (fertig, ab Größe 1, mit Oberfläche). */
+  readonly canGlobe: boolean;
+  /** Die Oberflächenkarte gibt es schon. */
+  readonly hasMap: boolean;
 }
 
 function yesNo(value: boolean | undefined): string {
@@ -430,6 +441,8 @@ export function worldView(hexes: readonly Hex[], column: number, row: number, ro
     note: hex.note,
     look: lookOf(hex),
     canNote: isWorld(hex),
+    canGlobe: canHaveMap(hex),
+    hasMap: hex.map !== undefined,
     error,
   };
 }

@@ -1,4 +1,4 @@
-import type { WorldLook } from '../../controller';
+import { landformAt, nearestCell, type WorldLook } from '../../controller';
 
 // Reine Darstellung: das Weltsymbol, ein kleines 3D-Bild einer Welt, Pixel für Pixel auf ein Canvas
 // gerechnet. In der Weltenerschaffung zeigt es ab der Größe, was schon gewürfelt ist; der Rest bleibt grau. Größe als Durchmesser (0 ist ein Asteroidengürtel), Atmosphäre als Leuchten am Rand,
@@ -205,6 +205,21 @@ const C = {
   unknown2: rgb('#8a8c90'),
 };
 
+/** Farben der Geländearten, wenn die Welt eine Oberflächenkarte hat (wie auf dem Globus). */
+const MAP_COLORS: Readonly<Record<ReturnType<typeof landformAt>, Rgb>> = {
+  water: [0.09, 0.27, 0.48],
+  waterIce: [0.78, 0.86, 0.93],
+  landIce: [0.93, 0.95, 0.97],
+  tundra: [0.55, 0.58, 0.5],
+  mountain: [0.46, 0.41, 0.36],
+  rugged: [0.55, 0.49, 0.38],
+  desert: [0.8, 0.68, 0.46],
+  jungle: [0.13, 0.36, 0.16],
+  swamp: [0.28, 0.37, 0.25],
+  open: [0.3, 0.47, 0.24],
+  settled: [0.55, 0.55, 0.32],
+};
+
 const tainted = (atmosphere: number) => atmosphere === 2 || atmosphere === 4 || atmosphere === 7 || atmosphere === 9;
 
 function surfaceColor(look: WorldLook, x: number, y: number, z: number, lv: number, threshold: number, seed: number): Rgb {
@@ -307,6 +322,7 @@ export function drawWorld(look: WorldLook, px: number): HTMLCanvasElement {
   const data = img.data;
   const half = S / 2;
   const sun2 = Math.hypot(SUN.x, SUN.y) || 1;
+  let last = 0;
   for (let py = 0; py < S; py++) {
     for (let px2 = 0; px2 < S; px2++) {
       const dx = (px2 + 0.5 - half) / R;
@@ -325,8 +341,14 @@ export function drawWorld(look: WorldLook, px: number): HTMLCanvasElement {
         const bx = dx * CR + z1 * SR;
         const bz = -dx * SR + z1 * CR;
         const by = -y1;
-        const lv = landField(bx, by, bz, seed);
-        let col = surfaceColor(look, bx, by, bz, lv, threshold, seed);
+        let col: Rgb;
+        if (look.surface) {
+          // Mit Oberflächenkarte die echten Felder (Körper: y nach oben; Raster: z zum Nordpol).
+          last = nearestCell(look.surface.grid, bx, -bz, by, last);
+          col = MAP_COLORS[landformAt(look.surface.map, last)];
+          if (col === MAP_COLORS.open && !look.life) col = MAP_COLORS.desert;
+          col = mix(col, [col[0] * 0.8, col[1] * 0.8, col[2] * 0.8], detailField(bx, by, bz, seed));
+        } else col = surfaceColor(look, bx, by, bz, landField(bx, by, bz, seed), threshold, seed);
         if (cover > 0.001) {
           const ca = smooth(cloudThreshold, cloudThreshold + 0.09, cloudField(bx, by, bz, seed)) * (look.atmosphere === 13 ? 0.95 : 0.85);
           col = mix(col, cloudColor, ca);
@@ -533,7 +555,18 @@ function beltLights(ctx: CanvasRenderingContext2D, S: number, look: WorldLook, s
 
 // --- Zwischenspeicher ---------------------------------------------------------------------------
 
-const keyOf = (look: WorldLook, px: number) => `${px}|${look.seed}|${look.size}|${look.atmosphere}|${look.hydrographics}|${look.water}|${look.population}|${look.tech}|${look.temperature}|${look.life}`;
+/** Jede Oberflächenkarte bekommt eine Nummer, damit eine neu gewürfelte Karte ein neues Symbol gibt. */
+const mapIds = new WeakMap<object, number>();
+let nextMapId = 1;
+function mapId(look: WorldLook): number {
+  if (!look.surface) return 0;
+  const known = mapIds.get(look.surface.map);
+  if (known !== undefined) return known;
+  const id = nextMapId++;
+  mapIds.set(look.surface.map, id);
+  return id;
+}
+const keyOf = (look: WorldLook, px: number) => `${px}|${look.seed}|${look.size}|${look.atmosphere}|${look.hydrographics}|${look.water}|${look.population}|${look.tech}|${look.temperature}|${look.life}|${mapId(look)}`;
 const canvases = new Map<string, HTMLCanvasElement>();
 const urls = new Map<string, string>();
 

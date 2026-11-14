@@ -368,11 +368,15 @@ Das Buch teilt das Gelände in drei Arten: durch Oberflächenformen (dieser Absc
 
 ### Frostlinie, Eis und Tundra
 
-- Die **Frostlinie** liegt auf jeder Halbkugel dort, wo die Temperatur unter 0 °C fällt.
-- **Eis:** Jedes Feld (Land und Wasser) mit Temperatur unter 0 °C wird Eis. Wasser bleibt
+- Die **Frostlinie** liegt auf jeder Halbkugel dort, wo die Temperatur das ganze Jahr unter 0 °C
+  bleibt. ⚑ Wir haben nur ein Jahresmittel je Feld, keine Jahreszeiten. Bleibt es auch im Sommer
+  unter 0 °C, liegt das Jahresmittel etwa unter −10 °C (Grönland, Antarktis; Tundra mit Dauerfrost
+  liegt bei −5 bis −10 °C). Deshalb gilt bei uns: **Frostlinie bei −10 °C Jahresmittel.** Mit 0 °C
+  läge auf einer gemäßigten erdgroßen Welt schon ab 46° Breite Eis.
+- **Eis:** Jedes Feld (Land und Wasser) mit einem Jahresmittel unter −10 °C wird Eis. Wasser bleibt
   darunter Wasser (für die Zählung des Wasseranteils), wird aber als Eis gezeichnet.
 - **Tundra:** Jedes offene Landfeld, das an ein Eisfeld grenzt und selbst kein Eis ist.
-- Ist die ganze Welt unter 0 °C (z. B. *Gefroren*), ist alles Eis, ohne Tundra.
+- Ist die ganze Welt unter −10 °C (z. B. *Gefroren*), ist alles Eis, ohne Tundra.
 
 ### Vergletscherung
 
@@ -380,7 +384,7 @@ Das Buch teilt das Gelände in drei Arten: durch Oberflächenformen (dieser Absc
   8,2° Breite) von der Frostlinie Richtung Äquator reichten die Polkappen früher. Das ist die
   **Vergletscherungszone**, auf beiden Halbkugeln gleich breit.
 - Land in dieser Zone hat eher Gebirge (siehe unten).
-- Ist keine Frostlinie auf der Welt (überall über 0 °C), gibt es keine Vergletscherung.
+- Ist keine Frostlinie auf der Welt (überall über −10 °C), gibt es keine Vergletscherung.
 
 ### Gebirge
 
@@ -398,7 +402,9 @@ Das Buch teilt das Gelände in drei Arten: durch Oberflächenformen (dieser Absc
 - **Zusätzlich in der Vergletscherungszone:** Jedes Kartendreieck darf zwischen der
   Vergletscherungsgrenze und dem Pol **1W6 × f** weitere zerklüftete Felder und ebenso viele
   Gebirgsfelder haben, solange es dort offene Landfelder gibt. ⚑ Wir würfeln das für jedes
-  Kartendreieck, das Land in der Zone hat.
+  Kartendreieck, das Land in der Zone hat. ⚑ Zusammen höchstens die Hälfte der offenen Landfelder
+  der Zone in diesem Dreieck (je ein Viertel zerklüftet und Gebirge); sonst wird bei breiter Zone
+  fast alles Land dort Gebirge.
 
 ### Vulkane
 
@@ -620,7 +626,9 @@ Die Lage ist im Buch frei, mit Leitlinien nach TL. Wo eine Stadt liegen darf:
 
 ⚑ **Was als einzelne Stadt auf der Karte steht:** Haupt- und Nebenstädte sind einzelne Städte mit
 Feld, Ziffer, Multiplikator und Hafen. Kleinstädte gibt es zu Hunderten; sie stehen als **Zahl je
-Feld** auf der Karte (auf dem Globus als Lichter, auf der flachen Karte als Punktdichte).
+Feld** auf der Karte (auf dem Globus als Lichter). ⚑ Einzeln stehen höchstens **10 Hauptstädte
+und 20 Nebenstädte** auf der Karte (die größten); weitere zählen als Kleinstädte. Bei kleiner Bevölkerung ergeben die
+Formeln sonst Hunderte von Nebenstädten mit wenigen hundert Einwohnern.
 
 ⚑ **Verfahren:**
 1. Jedes erlaubte Feld bekommt eine Wertung: +3 an der Küste, +2 an einem Fluss, +2 bei 0 bis

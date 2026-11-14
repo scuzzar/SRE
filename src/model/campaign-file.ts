@@ -19,6 +19,7 @@ import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, patronOf, range
 import { characteristics } from './rules';
 import { bookingKinds, validateBookings, type Booking } from './shop';
 import { settleStash } from './stash';
+import type { City, SurfaceMap } from './surface-map';
 import { hexById, hexFromRolls, temperatureIds, uwpKinds, validateHexes, worldOf, type Hex, type LegacyWorldRoll } from './sector';
 
 /**
@@ -133,6 +134,26 @@ const CareerRollSchema = z.object({
 });
 const CareerSchema = z.object({ rolls: z.array(CareerRollSchema), homeworld: z.string().optional(), worlds: z.array(z.string()).optional() });
 
+const MapSchema = z
+  .object({
+    landforms: z.string(),
+    towns: z.array(z.tuple([z.number().int(), z.number().int()])).optional(),
+    volcanoes: z.array(z.tuple([z.number().int(), z.enum(['major', 'field'])])).optional(),
+    rivers: z.array(z.array(z.number().int())).optional(),
+    roads: z.array(z.array(z.number().int())).optional(),
+    cities: z
+      .array(
+        z.object({
+          cell: z.number().int().optional(),
+          population: z.number().int(),
+          multiplier: z.number().int(),
+          rank: z.enum(['primary', 'secondary']),
+          port: z.enum(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']).optional(),
+        }),
+      )
+      .optional(),
+  });
+
 const position = { column: z.number().int(), row: z.number().int(), name: z.string().optional() };
 const HexSchema = z.union([
   z.object({
@@ -144,6 +165,8 @@ const HexSchema = z.union([
     uwp: z.object(Object.fromEntries(uwpKinds.map((k) => [k, z.number().int().optional()])) as Record<(typeof uwpKinds)[number], z.ZodOptional<z.ZodNumber>>),
     temperature: z.enum(temperatureIds).optional(),
     note: z.string().optional(),
+    populationMultiplier: z.number().int().optional(),
+    map: MapSchema.optional(),
     surface: z
       .object({
         water: z.number().int(),
@@ -458,14 +481,26 @@ function careerOf(career: z.infer<typeof CareerSchema>): Career {
   };
 }
 
+/** Eine Oberflächenkarte ohne leere optionale Felder; Städte ohne Feld bleiben im Orbit. */
+function mapOf(map: z.infer<typeof MapSchema>): SurfaceMap {
+  return {
+    landforms: map.landforms,
+    ...(map.towns ? { towns: map.towns.map(([c, n]) => [c, n] as const) } : {}),
+    ...(map.volcanoes ? { volcanoes: map.volcanoes.map(([c, k]) => [c, k] as const) } : {}),
+    ...(map.rivers ? { rivers: map.rivers.map((r) => [...r]) } : {}),
+    ...(map.roads ? { roads: map.roads.map((r) => [...r]) } : {}),
+    ...(map.cities ? { cities: map.cities.map((c) => stripped(c) as City) } : {}),
+  };
+}
+
 /** Ein Hexfeld ohne leere optionale Felder, wie es im Spielstand steht. */
 function hexOf(hex: z.infer<typeof HexSchema>): Hex {
   if ('rolls' in hex) {
     const rolls = hex.rolls.map((r) => stripped(r) as LegacyWorldRoll);
     return hexFromRolls(hex.name === undefined ? { column: hex.column, row: hex.row, rolls } : { column: hex.column, row: hex.row, name: hex.name, rolls });
   }
-  const { animals, ...rest } = hex;
-  return { ...stripped(rest), uwp: stripped(hex.uwp), ...(animals ? { animals: animals.map((t) => ({ terrain: t.terrain, rows: t.rows.map((r) => stripped({ ...r, ...(r.attacks ? { attacks: r.attacks.map((a) => ({ ...a })) } : {}) })) })) } : {}) } as Hex;
+  const { animals, map, ...rest } = hex;
+  return { ...stripped(rest), uwp: stripped(hex.uwp), ...(map ? { map: mapOf(map) } : {}), ...(animals ? { animals: animals.map((t) => ({ terrain: t.terrain, rows: t.rows.map((r) => stripped({ ...r, ...(r.attacks ? { attacks: r.attacks.map((a) => ({ ...a })) } : {}) })) })) } : {}) } as Hex;
 }
 
 /** Ein Objekt ohne Felder, die `undefined` sind. */

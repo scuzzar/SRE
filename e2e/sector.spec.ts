@@ -165,3 +165,19 @@ test('Sektor: Eine ältere Welt ohne Temperatur würfelt sie auf der Weltkarte n
   await expect(dialog.getByRole('region', { name: 'Oberfläche' })).toContainText('% Wasser');
   await expect(dialog.locator('.generation-main')).toHaveCount(0);
 });
+
+test('Globus: aus der Kopfzeile öffnen, Feld antippen, zur Weltkarte zurück', async ({ page }) => {
+  await page.goto('/');
+  // Die Demo-Kampagne steht auf Kessra; ihr Symbol in der Kopfzeile öffnet den Globus.
+  await page.getByRole('button', { name: /Aufenthaltsort Kessra.*Globus öffnen/ }).click();
+  const globe = page.getByRole('dialog', { name: 'Globus · Kessra' });
+  await expect(globe).toBeVisible();
+  await expect(globe).toContainText('1 Feld ≈ 251 km');
+  const canvas = globe.getByRole('img', { name: /Globus von Kessra/ });
+  await canvas.click();
+  await expect(globe.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('°C im Jahresmittel');
+  await globe.getByRole('button', { name: 'Zur Weltkarte' }).click();
+  await expect(globe).toHaveCount(0);
+  const sheet = page.getByRole('dialog', { name: /Kessra · 0405/ });
+  await expect(sheet.getByRole('region', { name: 'Oberfläche', exact: true }).getByRole('button', { name: 'Globus', exact: true })).toHaveCount(1);
+});
