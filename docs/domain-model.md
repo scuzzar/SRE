@@ -695,9 +695,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Antwort und gewählte Felder stehen im selben Kasten. Eine Kartenauswahl braucht mindestens
     eines: ein Feld, ein Wurffeld oder die Antwort.
   - **Sechs Antworten** (`/answer`), allein aus `roll` und `chance`: Ja, wenn `roll` ≤ `chance`.
-    Das unterste Fünftel der Ja-Spanne ist **Ja!** (ja, und mehr als erhofft), das oberste **Ja?**
-    (ja, aber mit Haken). Das unterste Fünftel der Nein-Spanne ist **Nein?** (nein, aber nicht
-    ganz), das oberste **Nein!** (nein, und schlimmer).
+    **Ja!** (ja, und mehr als erhofft) und **Nein!** (nein, und schlimmer) folgen der Fate Chart von
+    Mythic bei Chaosfaktor 5: Hoch entspricht *Very Likely* (15/75/96), Mittel *50/50* (10/50/91),
+    Gering *Very Unlikely* (5/25/86). Das ist je ein Fünftel der Ja- bzw. Nein-Spanne, am äußeren
+    Rand. **Ja?** (ja, aber mit Haken) und **Nein?** (nein, aber nicht ganz) kennt Mythic nicht; sie
+    sind das Fünftel am inneren Rand, also gespiegelt (Hausregel). Einen Chaosfaktor führt die App
+    weiterhin nicht, er steht fest auf 5.
 
     | Stufe | Ja! | Ja | Ja? | Nein? | Nein | Nein! |
     |---|---|---|---|---|---|---|
@@ -715,10 +718,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Kartenauswahlen ohne Felder: Frage, Wurf, Stufe und Chance bleiben, ihre Stelle im Log auch,
     also auch ihre Deutungen. Ja bleibt Ja, Nein bleibt Nein; weil `/answer` aus Wurf und Chance
     folgt, zeigen sie nun auch das Ausrufe- oder Fragezeichen.
-  - *Offene Fragen zu 2026-11-14d*: (1) Stimmen die Fünftel, oder sollen ! und ? seltener sein?
-    (2) Die Antwort als Teil der Kartenauswahl (so gezeichnet), oder als eigener Logeintrag neben
-    ihr? Dann bliebe `OracleAnswer`, aber eine Frage ergäbe zwei Einträge, und die Deutung hinge
-    nur an einem. (3) Sollen alte Antworten das Zeichen bekommen, oder schlicht bleiben?
+  - *Offene Fragen zu 2026-11-14d*: (1) Die Antwort als Teil der Kartenauswahl (so gezeichnet),
+    oder als eigener Logeintrag neben ihr? Dann bliebe `OracleAnswer`, aber eine Frage ergäbe zwei
+    Einträge, und die Deutung hinge nur an einem. (2) Sollen alte Antworten das Zeichen bekommen,
+    oder schlicht bleiben? (3) Entfällt „Ja/Nein“ auch in der Leiste der Charaktererschaffung?
 - **Deutungen und Notizen.** Was in der Schreibzeile steht, wird je nach Knopf eine Frage (Ja/Nein,
   Karte ziehen), eine Deutung oder eine Notiz; einen Modus gibt es nicht. Beide sind ein `Note` mit
   Text, der nicht leer ist (Leerraum am Rand fällt weg).

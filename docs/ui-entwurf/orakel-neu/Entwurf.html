@@ -58,9 +58,10 @@ svg { display: block; fill: none; stroke: currentColor; stroke-width: 1.8; strok
 .strip-name { font-size: 16px; font-weight: 700; }
 .strip-sub { flex: 1 1 auto; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .upp { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; margin-top: 6px; }
-.upp button { min-height: 34px; display: flex; align-items: baseline; justify-content: center; gap: 4px; background: var(--deep); border: 1px solid var(--rule-soft); font-family: var(--mono); }
-.upp small { font-size: 9px; color: var(--muted); }
-.upp b { font-size: 16px; }
+.upp button { min-height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; background: var(--deep); border: 1px solid var(--rule-soft); border-radius: 4px; font-family: var(--mono); }
+.upp .val { display: flex; align-items: baseline; gap: 3px; }
+.upp b { font-size: 17px; }
+.upp small { margin-top: 2px; font-size: 9px; letter-spacing: 0.06em; color: var(--muted); }
 .upp .dm { font-size: 11px; font-weight: 700; }
 /* Ist eine Fertigkeit gewählt, steht der DM hinter dem Wert; was nichts brächte, tritt zurück. */
 .upp button.offers { border: 1px dashed var(--gold); }
@@ -71,7 +72,7 @@ svg { display: block; fill: none; stroke: currentColor; stroke-width: 1.8; strok
 .upp button[aria-pressed='true'] { background: var(--gold); border: 1px solid var(--gold); color: var(--ink); }
 .upp button[aria-pressed='true'] small, .upp button[aria-pressed='true'] .dm { color: var(--ink); }
 .chips { display: flex; gap: 3px; margin-top: 4px; overflow-x: auto; scrollbar-width: none; }
-.chips button { flex: none; min-height: 34px; padding: 0 9px; border: 1px solid var(--line-strong); font-family: var(--mono); font-weight: 600; font-size: 13px; }
+.chips button { flex: none; min-height: 34px; padding: 0 9px; border: 1px solid var(--line-strong); border-radius: 4px; font-family: var(--mono); font-weight: 600; font-size: 13px; }
 .chips button.none { border-style: dashed; }
 .chips button[aria-pressed='true'] { background: var(--text); color: var(--ink); border-color: var(--text); }
 
@@ -125,40 +126,70 @@ svg { display: block; fill: none; stroke: currentColor; stroke-width: 1.8; strok
 .odds button[aria-checked='true'] { background: var(--text); color: var(--ink); }
 .odds button[aria-checked='true'] small { color: var(--ink); }
 .actions { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 6px; }
-.action { min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 1px solid var(--line-strong); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--muted); }
-.action svg { width: 28px; height: 28px; color: var(--text); }
+.action { min-height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 1px solid var(--line-strong); border-radius: 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--muted); }
+.action svg { width: 22px; height: 22px; color: var(--text); }
 .action.draw { background: var(--accent); border-color: var(--accent); color: var(--text); }
 .action.task-roll { background: var(--gold); border-color: var(--gold); color: var(--ink); }
 .action.task-roll svg { color: var(--ink); }
 
 /* --- Blätter im Vordergrund: Karte, Deutung, Notiz -------------------------------------------- */
 .overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; background: rgba(0, 0, 0, 0.72); }
-.sheet { display: flex; flex-direction: column; gap: 10px; max-height: 96%; padding: 14px 14px 12px; background: var(--panel); border-top: 1px solid var(--line-strong); }
-.sheet h2 { margin: 0; font-size: 17px; }
-.sheet textarea, .sheet input { width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--line-strong); }
+.sheet { display: flex; flex-direction: column; gap: 10px; max-height: 96%; padding: 14px 12px 12px; background: #1a1a1a; border: 1px solid var(--line-strong); border-bottom: 0; border-radius: 16px 16px 0 0; }
+.sheet h2 { margin: 0; font-size: 16px; }
+.sheet-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.sheet-top span { font-size: 12px; color: var(--muted); }
+.sheet textarea, .sheet input { width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--line-strong); border-radius: 6px; }
+.sheet input.question { padding: 6px 10px; border-left: 3px solid var(--accent); }
 .sheet textarea { min-height: 96px; resize: none; }
 .sheet-foot { display: flex; align-items: center; gap: 8px; }
 .sheet-foot .grow { flex: 1 1 auto; font-size: 13px; color: var(--muted); text-align: right; }
-.ghost { min-height: 44px; padding: 0 14px; border: 1px solid var(--line-strong); font-weight: 600; }
-.primary { min-height: 44px; padding: 0 18px; background: var(--text); color: var(--ink); font-weight: 700; }
+.ghost { min-height: 44px; padding: 0 14px; border: 1px solid var(--line-strong); border-radius: 6px; font-weight: 600; }
+.ghost.square { width: 44px; padding: 0; display: grid; place-items: center; }
+.ghost.square svg { width: 20px; height: 20px; }
+.primary { min-height: 44px; padding: 0 18px; background: var(--text); color: var(--ink); border-radius: 6px; font-weight: 700; }
 .primary:disabled { background: #333333; color: var(--dim); }
-.round { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--gold); color: var(--ink); }
+.round { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--text); }
 .round:disabled { background: #333333; color: var(--dim); }
-.round svg { width: 28px; height: 28px; stroke-width: 2.6; }
+.round svg { width: 26px; height: 26px; stroke-width: 2.6; }
 .target { padding: 6px 10px; border-left: 3px solid var(--gold); background: #18150e; font-size: 13px; color: var(--muted); }
 .target b { color: var(--gold); }
 .sheet-body { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-.band { margin-top: 4px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
-.grid { display: grid; gap: 4px; }
+
+/* Die Karte wie in der App: dunkler Grund, schmale Bänder, kleine Felder. */
+.card { display: flex; flex-direction: column; gap: 4px; padding: 6px; background: linear-gradient(180deg, #131313, #0e0e0e); border: 1px solid #333333; border-radius: 10px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 1px 2px rgba(0, 0, 0, 0.5); }
+.band { padding: 2px 6px; background: var(--rule-soft); border-radius: 3px; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-align: center; text-transform: uppercase; color: var(--muted); }
+.grid { display: grid; gap: 3px; }
 .grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .grid.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.tile { min-height: 48px; display: flex; flex-direction: column; justify-content: center; padding: 5px 9px; text-align: left; background: var(--card); border: 1px solid var(--rule-soft); font-weight: 600; font-size: 14px; line-height: 1.25; }
-.tile small { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
-.tile[aria-pressed='true'] { background: var(--gold-wash); border-color: var(--gold); box-shadow: inset 3px 0 0 var(--gold); }
-/* Das Orakelfeld: die Antwort je Stufe, eine davon tippt man an. */
-.tile.answer { align-items: center; text-align: center; min-height: 62px; }
-.tile.answer .verdict { font-size: 22px; }
-.rest { padding: 8px; border: 1px dashed var(--rule-soft); font-size: 12px; color: var(--dim); text-align: center; }
+.tile { position: relative; display: flex; flex-direction: column; justify-content: center; padding: 3px 7px 4px; text-align: left; background: #1b1b1b; border: 1px solid #2c2c2c; border-radius: 6px; font-size: 12px; font-weight: 600; line-height: 1.2; }
+.tile small { margin-bottom: 1px; font-size: 8.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
+.tile[aria-pressed='true'] { background: #2a1415; border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.tile[aria-pressed='true'] small { color: var(--accent-text); }
+.tile[aria-pressed='true']::after { content: ''; position: absolute; top: 4px; right: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 6.2l2 2 4-4.4' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px no-repeat; }
+
+/* Das Orakelfeld: ein Wurf, darunter je Stufe eine Skala 1–100 mit dem Wurf als Strich. */
+.oracle { display: flex; flex-direction: column; gap: 3px; }
+.oracle-row { position: relative; display: grid; grid-template-columns: 62px minmax(0, 1fr) 60px; align-items: center; gap: 8px; min-height: 34px; padding: 0 8px; background: #1b1b1b; border: 1px solid #2c2c2c; border-radius: 6px; text-align: left; }
+.oracle-row .o-name { font-size: 12px; font-weight: 600; line-height: 1.1; }
+.oracle-row .o-name small { display: block; font-family: var(--mono); font-size: 10px; font-weight: 400; color: var(--dim); }
+.oracle-row .o-ans { font-family: var(--mono); font-size: 15px; font-weight: 700; letter-spacing: 0.05em; text-align: right; color: var(--gold-bright); }
+.oracle-row .o-ans.negative { color: var(--accent-text); }
+.scale { position: relative; display: flex; height: 8px; border-radius: 4px; overflow: visible; }
+.scale i { display: block; height: 100%; }
+.scale i:first-child { border-radius: 4px 0 0 4px; }
+.scale i:last-of-type { border-radius: 0 4px 4px 0; }
+.scale .ys { background: var(--gold-bright); }
+.scale .y { background: rgba(217, 180, 95, 0.55); }
+.scale .yw { background: rgba(217, 180, 95, 0.25); }
+.scale .nw { background: rgba(239, 90, 95, 0.25); }
+.scale .n { background: rgba(239, 90, 95, 0.5); }
+.scale .ns { background: var(--accent-text); }
+.scale b { position: absolute; top: -4px; width: 2px; height: 16px; margin-left: -1px; background: var(--text); border-radius: 1px; box-shadow: 0 0 0 1px #111111; }
+.oracle-row[aria-checked='true'] { background: #2a1415; border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.oracle-roll { font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: center; }
+.oracle-roll b { color: var(--text); }
+.legend { display: flex; justify-content: center; gap: 10px; font-family: var(--mono); font-size: 10px; color: var(--dim); }
+.rest { padding: 8px; border: 1px dashed var(--rule-soft); border-radius: 6px; font-size: 12px; color: var(--dim); text-align: center; }
 </style>
 </head>
 <body>
@@ -241,7 +272,7 @@ function strip() {
   const upp = character.upp.map(([k, v], i) => {
     const dm = attrDm(v);
     const cls = !t ? '' : dm === 0 ? 'neutral' : dm > 0 ? 'offers' : 'offers minus';
-    return `<button type="button" class="${cls}" data-attr="${i}" aria-pressed="${!!t && t.attrs.has(i)}" ${!t || dm === 0 ? 'disabled' : ''}><small>${k}</small><b>${hex(v)}</b>${t && dm !== 0 ? `<span class="dm">${signed(dm)}</span>` : ''}</button>`;
+    return `<button type="button" class="${cls}" data-attr="${i}" aria-pressed="${!!t && t.attrs.has(i)}" ${!t || dm === 0 ? 'disabled' : ''}><span class="val"><b>${hex(v)}</b>${t && dm !== 0 ? `<span class="dm">${signed(dm)}</span>` : ''}</span><small>${k}</small></button>`;
   }).join('');
   const skills = character.skills.map(([short], i) => `<button type="button" class="${i === 4 ? 'none' : ''}" data-skill="${i}" aria-pressed="${t?.skill === i}">${short}${i === 4 ? ' −3' : ''}</button>`).join('');
   return `<section class="strip"><div class="strip-card"><div class="strip-head"><span class="strip-name">${character.name}</span><span class="strip-sub">${character.sub}</span><span class="detail">1/2</span></div><div class="upp">${upp}</div><div class="chips">${skills}</div></div></section>`;
@@ -279,20 +310,28 @@ function sheet() {
   const c = s.card;
   const tile = (id, label, text) => `<button type="button" class="tile" data-tile="${id}" aria-pressed="${s.picked.has(id)}"><small>${label}</small>${esc(text)}</button>`;
   const count = s.picked.size + (s.odds === undefined ? 0 : 1);
-  return `<div class="overlay"><section class="sheet" role="dialog" aria-modal="true"><h2>Inspirationskarte</h2>
-    <input id="question" type="text" placeholder="Frage (freiwillig)" autocomplete="off" value="${esc(s.question)}">
-    <div class="sheet-body">
-      <div class="band">Orakel · Stufe antippen</div>
-      <div class="grid c3" role="radiogroup" aria-label="Orakel">${oddsList.map((o, i) => { const a = answer(c.oracle, o.chance); return `<button type="button" class="tile answer" role="radio" data-answer="${i}" aria-pressed="${s.odds === i}"><small>${o.name} · ${o.chance} %</small><span class="verdict ${a.startsWith('NEIN') ? 'negative' : ''}">${a}</span></button>`; }).join('')}</div>
+  return `<div class="overlay"><section class="sheet" role="dialog" aria-modal="true">
+    <div class="sheet-top"><h2>Inspirationskarte</h2><span>Antippen, was du nutzen willst</span></div>
+    <input id="question" class="question" type="text" placeholder="Frage (freiwillig)" autocomplete="off" value="${esc(s.question)}">
+    <div class="sheet-body"><article class="card">
+      <div class="band">Orakel · W100 ${c.oracle}</div>
+      <div class="oracle" role="radiogroup" aria-label="Orakel: Stufe wählen">
+        ${oddsList.map((o, i) => { const a = answer(c.oracle, o.chance); return `<button type="button" class="oracle-row" role="radio" data-answer="${i}" aria-checked="${s.odds === i}" aria-label="${o.name}, ${o.chance} %: ${a}"><span class="o-name">${o.name}<small>${o.chance} %</small></span>${scale(o.chance, c.oracle)}<span class="o-ans ${a.startsWith('NEIN') ? 'negative' : ''}">${a}</span></button>`; }).join('')}
+      </div>
       <div class="band">Zufallsereignis</div>
       <div class="grid c2">${tile('Aktion', 'Aktion', c.action)}${tile('Beschreibung', 'Beschreibung', c.description)}</div>
-      <div class="band">Sinne</div>
       <div class="grid c2">${tile('Hören', 'Hören', c.hear)}${tile('Riechen', 'Riechen', c.smell)}</div>
-      <div class="band">Wurffelder</div>
       <div class="grid c3">${tile('1–10', '1–10', c.bell)}${tile('Streuwürfel', 'Streuwürfel', c.scatter)}${tile('Wege', 'Wege', c.map)}</div>
-      <div class="rest">Szene, Besitz, Situation, Merkmale und die Themen-Tafeln (NSC, Welt, Wesen, Handlung) wie heute</div>
-    </div>
-    <div class="sheet-foot"><button type="button" class="ghost" data-close aria-label="Karte verwerfen" style="padding:0 12px"><span style="display:block;width:20px;height:20px">${icon.close}</span></button><button type="button" class="ghost" data-redraw>Neu ziehen</button><span class="grow">${count === 0 ? 'Nichts ausgewählt' : `${count} ausgewählt`}</span><button type="button" class="round" data-confirm ${count === 0 ? 'disabled' : ''} aria-label="In den Log übernehmen">${icon.check}</button></div></section></div>`;
+      <div class="rest">Szene, Besitz, Situation, Merkmale und die Themen-Tafeln wie heute</div>
+    </article></div>
+    <div class="sheet-foot"><button type="button" class="ghost square" data-close aria-label="Karte verwerfen">${icon.close}</button><button type="button" class="ghost" data-redraw>Neu ziehen</button><span class="grow">${count === 0 ? 'Nichts ausgewählt' : `${count} ausgewählt`}</span><button type="button" class="round" data-confirm ${count === 0 ? 'disabled' : ''} aria-label="In den Log übernehmen">${icon.check}</button></div></section></div>`;
+}
+/** Die Skala einer Stufe: Ja!, Ja, Ja?, Nein?, Nein, Nein! nebeneinander, der Wurf als Strich. */
+function scale(chance, roll) {
+  const y = Math.floor(chance / 5);
+  const n = Math.floor((100 - chance) / 5);
+  const parts = [['ys', y], ['y', chance - 2 * y], ['yw', y], ['nw', n], ['n', 100 - chance - 2 * n], ['ns', n]];
+  return `<span class="scale">${parts.map(([k, w]) => `<i class="${k}" style="width:${w}%"></i>`).join('')}<b style="left:${roll - 0.5}%"></b></span>`;
 }
 function render() {
   const last = state.log.length - 1;
