@@ -7675,8 +7675,13 @@ button:disabled {
   transform: translateY(0);
 }
 
-.globe-full:has(.globe-sheet.open) .globe-zoom {
-  bottom: calc(46vh + 12px);
+/* Kein Doppeltipp-Zoom der Seite und keine Textauswahl auf den Knöpfen der Karte. */
+.globe-full button,
+.globe-full select {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .globe-sheet-head {

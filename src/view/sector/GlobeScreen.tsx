@@ -70,6 +70,40 @@ export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; 
   const gesture = useRef<{ moved: number; pinch?: number; zoom?: number }>({ moved: 0 });
   const clampZoom = useCallback((z: number) => Math.min(maxZoom(globe), Math.max(1, z)), [globe]);
   const zoomBy = useCallback((factor: number) => setCamera((c) => ({ ...c, zoom: clampZoom(c.zoom * factor) })), [clampZoom]);
+  // Die Knöpfe gleiten: Ziel merken und in wenigen Bildern hinzoomen, solange in grober Auflösung.
+  const zoomTarget = useRef<number | undefined>(undefined);
+  const zoomFrame = useRef(0);
+  const glideZoom = (factor: number) => {
+    const target = clampZoom((zoomTarget.current ?? camera.zoom) * factor);
+    zoomTarget.current = target;
+    cancelAnimationFrame(zoomFrame.current);
+    setMoving(true);
+    let zoom = camera.zoom;
+    const step = () => {
+      zoom += (target - zoom) * 0.35;
+      const done = Math.abs(target - zoom) < 0.01 * target;
+      if (done) zoom = target;
+      setCamera((c) => ({ ...c, zoom }));
+      if (done) {
+        zoomTarget.current = undefined;
+        setMoving(false);
+      } else zoomFrame.current = requestAnimationFrame(step);
+    };
+    zoomFrame.current = requestAnimationFrame(step);
+  };
+  useEffect(() => () => cancelAnimationFrame(zoomFrame.current), []);
+  // Die Knöpfe stehen über dem Infofeld unten, so hoch, wie es wirklich ist.
+  const sheet = useRef<HTMLElement>(null);
+  const [sheetHeight, setSheetHeight] = useState(0);
+  useLayoutEffect(() => {
+    const el = sheet.current;
+    if (!el) return;
+    const measure = () => setSheetHeight(el.classList.contains('open') ? el.offsetHeight : 0);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [globe.picked]);
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -238,16 +272,16 @@ export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; 
         )}
       </div>
 
-      <div className="globe-zoom">
-        <button type="button" className="globe-round" aria-label="Hineinzoomen" onClick={() => zoomBy(1.5)}>
+      <div className="globe-zoom" style={sheetHeight > 0 ? { bottom: sheetHeight + 12 } : undefined}>
+        <button type="button" className="globe-round" aria-label="Hineinzoomen" onClick={() => glideZoom(1.6)}>
           +
         </button>
-        <button type="button" className="globe-round" aria-label="Herauszoomen" onClick={() => zoomBy(1 / 1.5)}>
+        <button type="button" className="globe-round" aria-label="Herauszoomen" onClick={() => glideZoom(1 / 1.6)}>
           −
         </button>
       </div>
 
-      <section className={picked ? 'globe-sheet open' : 'globe-sheet'} aria-label="Angetipptes Feld" aria-hidden={!picked}>
+      <section ref={sheet} className={picked ? 'globe-sheet open' : 'globe-sheet'} aria-label="Angetipptes Feld" aria-hidden={!picked}>
         {picked && (
           <>
             <div className="globe-sheet-head">
