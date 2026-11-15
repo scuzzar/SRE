@@ -334,8 +334,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > *Oberflächenkarte*). Jede Haupt- und Nebenstadt hat einen Namen. Neu im Bild: `City.name`. Der
 > Ausschnitt dazu liegt unter [`changes/2026-11-14-staedtenamen.png`](changes/2026-11-14-staedtenamen.png).
 
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-15, nach den Antworten des Owners vom 15. November
-> 2026): **Fahrzeuge** und **Fahrt** (siehe dort).
+> Am 15. November 2026 freigegeben (Kennzeichen 2026-11-15), nach den Antworten des Owners: **Fahrzeuge** und **Fahrt** (siehe dort).
 > Jedes Fahrzeug hat eine Tabelle, auf welchen Geländearten und Wegen (Straße, Fluss, Siedlung) es
 > wie schnell fährt; wo kein Eintrag steht, fährt es nicht. Fluggeräte fliegen gerade von
 > Landepunkt zu Landepunkt: auf ihren Geländearten oder in Städten mit passendem Hafen. Eine
@@ -376,7 +375,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-2026-11-15 (Fahrzeuge).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -2274,7 +2273,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     denen etwas geschehen ist oder NSC leben.
   - **Bestehende Kampagnen:** Ein bisheriger Aufenthaltsort bzw. Ort eines NSC wird ein Ort mit
     dieser Welt, ohne Feld und Stadt.
-- **Fahrzeuge** (wartet auf Freigabe, 2026-11-15). Grundlage der Logistik auf der Oberfläche: Die App findet
+- **Fahrzeuge** (freigegeben am 15. November 2026, 2026-11-15). Grundlage der Logistik auf der Oberfläche: Die App findet
   die schnellste Route zwischen zwei Orten einer Welt, auch wenn man dafür ein ATV oder einen
   Hubschrauber mieten muss, und die Gruppe fährt sie Tag für Tag ab.
   - Ein **Fahrzeug** (`Vehicle`) ist Referenzdaten, wie die Waffe: Ein Gegenstand der Art vehicle
@@ -2318,7 +2317,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     eines Sitzplatzes, nicht des ganzen Fahrzeugs; sonst kostete ein Flug von 3 Stunden einen Teil
     einer Linienmaschine. Fahrzeuge des Linienverkehrs stehen in der Liste der
     Gegenstände, aber nicht im Angebot des Shops.
-- **Fahrt** (wartet auf Freigabe, 2026-11-15). Eine Fahrt (`Trip`) ist gespeicherter Stand, weil sie über
+- **Fahrt** (freigegeben am 15. November 2026, 2026-11-15). Eine Fahrt (`Trip`) ist gespeicherter Stand, weil sie über
   mehrere Tage läuft und dazwischen anderes passiert (Rasten, Begegnungen, Ausspielen); sie
   übersteht einen Neustart.
   - **Planen:** Die Gruppe braucht einen Aufenthaltsort mit Feld oder Stadt. Man wählt auf dem Globus

@@ -132,7 +132,7 @@ hide <<value>> stereotype
   }
   class Place <<value>> $oberflaeche
 ' Fahrzeuge und Wege auf der Oberfläche
-  class TripDay $logistik $newClass("2026-11-15")
+  class TripDay $logistik
   enum Characteristic <<value>> $charakter
 
 ' Kampagne
@@ -149,7 +149,7 @@ LogEntry <|-- Journey
 
 ' Subsektor und Welten
 LogEntry "1" *-- "0..1" Place : place
-LogEntry <|-$newArrow("2026-11-15")- TripDay
+LogEntry <|-- TripDay
 
 ' Charakter
 

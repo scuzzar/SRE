@@ -1844,8 +1844,8 @@ Panne 12+, Geländeschwierigkeit 10+ abseits von Straße und glattem Gelände; K
 | Submersible (6) | Cr2 000 000, 500 t | 40 kph unter Wasser, etwa 20 an der Oberfläche | unbegrenzt | Zwischen Unterwasserstädten | 5 Crew + 10, 30 t |
 | Hovercraft (7) | Cr200 000, 8 t | 60 / 150 kph | 2000 km | Nur bei **Atmosphäre 4+**; Land und Wasser gleich gut, Mühe mit zerklüftetem Boden, Abhängen, Sturm | 1 + 15, 3 t |
 
-**Vorschlag für die App** ✱ (Reisegeschwindigkeit in km/h je Geländeart der Oberflächenkarte; leer
-heißt: fährt dort nicht; noch abzustimmen). Straße, Fluss und Siedlung sind die Wege aus dem Modell.
+**In der App** ✱ (Owner, 15. November 2026; Reisegeschwindigkeit in km/h je Geländeart der
+Oberflächenkarte; leer heißt: fährt dort nicht). Straße, Fluss und Siedlung sind die Wege aus dem Modell.
 „Offen“ steht für `open`, `settled`, `tundra`, `desert`; „schwierig“ für `rugged`, `jungle`, `swamp`,
 `landIce`.
 

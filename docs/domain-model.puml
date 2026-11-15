@@ -107,7 +107,7 @@ hide <<value>> stereotype
     purchase
     sale
     lottery
-    $new("2026-11-15", "rent")
+    rent
   }
   class Character $charakter {
     name: string
@@ -793,30 +793,30 @@ hide <<value>> stereotype
   class Place <<value>> $oberflaeche {
   }
 ' Fahrzeuge und Wege auf der Oberfläche
-  class Vehicle <<reference>> $logistik $newClass("2026-11-15") {
+  class Vehicle <<reference>> $logistik {
     name: string
     flight: number [0..1]
     atmosphere: number [0..1]
   }
-  class VehicleSpeed <<value>> $logistik $newClass("2026-11-15") {
+  class VehicleSpeed <<value>> $logistik {
     kmh: number
   }
-  class Trip $logistik $newClass("2026-11-15") {
+  class Trip $logistik {
     hours: number
     /totalHours: number
     /days: number
   }
-  class Leg <<value>> $logistik $newClass("2026-11-15") {
+  class Leg <<value>> $logistik {
     rented: boolean
     /hours: number
     /rent: number
   }
-  class TripDay $logistik $newClass("2026-11-15") {
+  class TripDay $logistik {
     hours: number
     rent: number
     arrived: boolean
   }
-  enum Way <<value>> $logistik $newClass("2026-11-15") {
+  enum Way <<value>> $logistik {
     road
     river
     town
@@ -1023,20 +1023,20 @@ Place "*" --> "0..1" SurfaceCell : cell
 Place "*" --> "0..1" City : city
 City --> CityRank
 City --> Port
-Item "0..1" -$newArrow("2026-11-15")-> "0..1" Vehicle : vehicle
-Vehicle "1" *-$newArrow("2026-11-15")- "*" VehicleSpeed : speeds
-VehicleSpeed "*" -$newArrow("2026-11-15")-> "0..1" Landform : on
-VehicleSpeed "*" -$newArrow("2026-11-15")-> "0..1" Way : along
-Vehicle "*" -$newArrow("2026-11-15")-> "*" Landform : landsOn
-Vehicle "*" -$newArrow("2026-11-15")-> "*" Port : landsAt
-Campaign "1" *-$newArrow("2026-11-15")- "0..1" Trip : trip
-Trip "1" *-$newArrow("2026-11-15")- "1..*" Leg : legs {ordered}
-Leg "*" -$newArrow("2026-11-15")-> "1" Vehicle : by
-Leg "*" -$newArrow("2026-11-15")-> "2..*" SurfaceCell : cells {ordered}
-Trip "*" -$newArrow("2026-11-15")-> "1" SurfaceCell : /at
-LogEntry <|-$newArrow("2026-11-15")- TripDay
-Booking "*" -$newArrow("2026-11-15")-> "0..1" TripDay : rentFor
-Possession "1" *-$newArrow("2026-11-15")- "0..1" Place : parked
+Item "0..1" --> "0..1" Vehicle : vehicle
+Vehicle "1" *-- "*" VehicleSpeed : speeds
+VehicleSpeed "*" --> "0..1" Landform : on
+VehicleSpeed "*" --> "0..1" Way : along
+Vehicle "*" --> "*" Landform : landsOn
+Vehicle "*" --> "*" Port : landsAt
+Campaign "1" *-- "0..1" Trip : trip
+Trip "1" *-- "1..*" Leg : legs {ordered}
+Leg "*" --> "1" Vehicle : by
+Leg "*" --> "2..*" SurfaceCell : cells {ordered}
+Trip "*" --> "1" SurfaceCell : /at
+LogEntry <|-- TripDay
+Booking "*" --> "0..1" TripDay : rentFor
+Possession "1" *-- "0..1" Place : parked
 SurfaceRow --> SurfaceTable
 SurfaceRow -[hidden]- DiceExpr
 WorldRoll --> WorldRollKind

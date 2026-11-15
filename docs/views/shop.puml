@@ -89,7 +89,7 @@ hide <<value>> stereotype
     purchase
     sale
     lottery
-    $new("2026-11-15", "rent")
+    rent
   }
   class Character $charakter
   class Possession $shop {
@@ -137,8 +137,8 @@ hide <<value>> stereotype
   }
   class Place <<value>> $oberflaeche
 ' Fahrzeuge und Wege auf der Oberfläche
-  class Vehicle <<reference>> $logistik $newClass("2026-11-15")
-  class TripDay $logistik $newClass("2026-11-15")
+  class Vehicle <<reference>> $logistik
+  class TripDay $logistik
 
 ' Kampagne
 Campaign "1" *-- "*" Booking : bookings {ordered}
@@ -158,9 +158,9 @@ Booking "*" --> "0..1" Journey : won
 Gain "*" --> "0..1" Item : item
 
 ' Subsektor und Welten
-Item "0..1" -$newArrow("2026-11-15")-> "0..1" Vehicle : vehicle
-Booking "*" -$newArrow("2026-11-15")-> "0..1" TripDay : rentFor
-Possession "1" *-$newArrow("2026-11-15")- "0..1" Place : parked
+Item "0..1" --> "0..1" Vehicle : vehicle
+Booking "*" --> "0..1" TripDay : rentFor
+Possession "1" *-- "0..1" Place : parked
 
 ' Charakter
 Character "1" *-- "*" Possession : possessions
@@ -193,5 +193,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class BookingKind #line:d0021b;line.bold
 @enduml
