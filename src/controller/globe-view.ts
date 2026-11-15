@@ -14,6 +14,9 @@ import {
   type NpcRole,
   type SurfaceGrid,
   type SurfaceMap,
+  type Trip,
+  flies,
+  vehicleOf,
 } from '../model';
 import { lookOf, type WorldLook } from './world-view';
 
@@ -98,6 +101,10 @@ export interface GlobeView {
   readonly events: readonly { readonly cell: number; readonly count: number; readonly label: string; readonly latest: number }[];
   /** Warum die Karte nicht neu gewürfelt werden kann; sonst `undefined`. */
   readonly rerollBlocker: string | undefined;
+  /** Die Route der geplanten bzw. laufenden Fahrt auf dieser Welt, je Abschnitt die Felder; ein Flug geht gerade. */
+  readonly route: readonly { readonly cells: readonly number[]; readonly flight: boolean }[];
+  /** Felder mit abgestellten eigenen Fahrzeugen und wie viele. */
+  readonly vehicles: readonly { readonly cell: number; readonly count: number }[];
 }
 
 /** Einwohner in Worten: 3 × 10^9 → „3 Mrd.“ */
@@ -133,7 +140,7 @@ function position(grid: SurfaceGrid, cell: number): string {
 }
 
 /** Der Globus der Welt in diesem Feld; `undefined`, solange sie keine Oberflächenkarte hat. */
-export function globeView(campaign: Campaign, column: number, row: number, picked: number | undefined): GlobeView | undefined {
+export function globeView(campaign: Campaign, column: number, row: number, picked: number | undefined, plan?: Trip): GlobeView | undefined {
   const hexes = campaign.hexes;
   const hex = hexAt(hexes, column, row);
   if (!hex?.map || !hex.name || hex.uwp.size === undefined || hex.temperature === undefined) return undefined;
@@ -192,5 +199,21 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
     npcs,
     events: [...counts.entries()].map(([cell, { count, latest }]) => ({ cell, count, latest, label: cellName(cell) })).sort((a, b) => b.latest - a.latest),
     rerollBlocker: mapLocked(campaign, column, row) ? 'Gruppe, NSC oder Logeinträge stehen auf dieser Karte; neu würfeln geht nicht mehr.' : undefined,
+    route: routeOf(partyHere ? (plan ?? campaign.trip) : undefined),
+    vehicles: parkedVehicles(campaign, id),
   };
+}
+
+function routeOf(trip: Trip | undefined): GlobeView['route'] {
+  return (trip?.legs ?? []).map((leg) => ({ cells: leg.cells, flight: flies(vehicleOf(leg.by)) }));
+}
+
+function parkedVehicles(campaign: Campaign, world: string): GlobeView['vehicles'] {
+  const counts = new Map<number, number>();
+  for (const p of campaign.stash) {
+    if (p.parked?.world !== world) continue;
+    const cell = placeCell(campaign.hexes, p.parked);
+    if (cell !== undefined) counts.set(cell, (counts.get(cell) ?? 0) + p.count);
+  }
+  return [...counts].map(([cell, count]) => ({ cell, count }));
 }

@@ -21,6 +21,10 @@ export const HouseRulesSchema = z.object({
   unskilledDm: z.number().int(),
   bonusFrom: z.number().int(),
   malusUpTo: z.number().int(),
+  /** Fahrstunden je Reisetag einer Fahrt (siehe domain-model.md, *Fahrt*). */
+  tripHoursPerDay: z.number().positive(),
+  /** Miete je Tag in Prozent des Kaufpreises (siehe domain-model.md, *Fahrzeuge*). */
+  rentPercent: z.number().positive(),
 });
 
 export const SkillSchema = z.object({
@@ -87,6 +91,33 @@ export const ItemSchema = z.object({
   armor: ArmorClassSchema.optional(),
   /** Anmerkung zu den Daten, z. B. ein Druckfehler im Chart. */
   note: z.string().optional(),
+});
+
+/** Die Geländearten der Oberflächenkarte (siehe domain-model.md, *Geländeart*). */
+export const landformIds = ['water', 'waterIce', 'landIce', 'tundra', 'mountain', 'rugged', 'desert', 'jungle', 'swamp', 'open', 'settled'] as const;
+export const LandformSchema = z.enum(landformIds);
+/** Die Wege: Straße, Fluss, Siedlung (siehe domain-model.md, *Weg*). */
+export const wayIds = ['road', 'river', 'town'] as const;
+export const WaySchema = z.enum(wayIds);
+export const PortSchema = z.enum(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']);
+
+/** Eine Zeile der Tabelle eines Fahrzeugs: auf einer Geländeart oder entlang einem Weg, nie beides. */
+export const VehicleSpeedSchema = z
+  .object({ on: LandformSchema.optional(), along: WaySchema.optional(), kmh: z.number().positive() })
+  .refine((s) => (s.on === undefined) !== (s.along === undefined), 'Eine Zeile nennt eine Geländeart oder einen Weg');
+
+/** Ein Fahrzeug (Domänenmodell: Vehicle); `item` ist der Gegenstand dazu, zu Fuß hat keinen. */
+export const VehicleSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  item: z.string().min(1).optional(),
+  /** Fluggeschwindigkeit in km/h; nur Fluggeräte. */
+  flight: z.number().positive().optional(),
+  /** Ab welcher Atmosphäre der Welt das Fahrzeug geht. */
+  atmosphere: z.number().int().min(0).optional(),
+  speeds: z.array(VehicleSpeedSchema),
+  landsOn: z.array(LandformSchema).default([]),
+  landsAt: z.array(PortSchema).default([]),
 });
 
 /** Schlag (Hände), Hieb (Klingen) oder Schuss (Schusswaffen); bei Schlag und Hieb zählt STR, beim Schuss DEX. */
@@ -424,6 +455,7 @@ export const ReferenceDataSchema = z
     demoWorld: DemoWorldSchema,
     items: z.array(ItemSchema).min(1),
     weapons: z.array(WeaponSchema).min(1),
+    vehicles: z.array(VehicleSchema).min(1),
     encounters: EncountersSchema,
     services: z.array(ServiceSchema).min(1),
     cascades: z.array(CascadeSchema),
@@ -442,6 +474,13 @@ export const ReferenceDataSchema = z
     if (slots.every((slot) => slot.columns.some((c) => c.entries.every((e) => e.retired)))) {
       ctx.addIssue({ code: 'custom', message: 'Kein Feld ist sichtbar: Jedes hat eine Spalte nur mit ausgeblendeten Einträgen' });
     }
+    uniqueIds(data.vehicles.map((v) => v.id), 'Fahrzeug', ctx);
+    uniqueIds(data.vehicles.flatMap((v) => (v.item === undefined ? [] : [v.item])), 'Gegenstand eines Fahrzeugs', ctx);
+    for (const v of data.vehicles) {
+      if (v.item !== undefined && data.items.find((i) => i.id === v.item)?.kind !== 'vehicle') ctx.addIssue({ code: 'custom', message: `Das Fahrzeug ${v.id}: ${v.item} ist kein Fahrzeug unter den Gegenständen` });
+      if ((v.flight === undefined) !== (v.landsOn.length === 0 && v.landsAt.length === 0)) ctx.addIssue({ code: 'custom', message: `Das Fahrzeug ${v.id}: genau Fluggeräte haben Landepunkte` });
+    }
+    if (!data.vehicles.some((v) => v.item === undefined)) ctx.addIssue({ code: 'custom', message: 'Es fehlt zu Fuß, das Fahrzeug ohne Gegenstand' });
     const skillIds = new Set(data.skills.map((s) => s.id));
     checkCareerData(data, skillIds, ctx);
     for (const patron of data.encounters.patrons) {
@@ -571,6 +610,9 @@ export type ExampleCharacter = z.infer<typeof ExampleCharacterSchema>;
 export type Characteristic = z.infer<typeof CharacteristicSchema>;
 export type ItemKind = z.infer<typeof ItemKindSchema>;
 export type Item = z.infer<typeof ItemSchema>;
+export type Vehicle = z.infer<typeof VehicleSchema>;
+export type VehicleSpeed = z.infer<typeof VehicleSpeedSchema>;
+export type Way = z.infer<typeof WaySchema>;
 export type ArmorClass = z.infer<typeof ArmorClassSchema>;
 export type Range = z.infer<typeof RangeSchema>;
 export type AttackKind = z.infer<typeof AttackKindSchema>;

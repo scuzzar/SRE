@@ -2257,9 +2257,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Neue Logeinträge bekommen den Aufenthaltsort.** Jeder neu angelegte Logeintrag bekommt den
     Aufenthaltsort der Gruppe, falls sie einen hat. Eine Reise (`Journey`) bekommt das Ziel. Einträge
     von vor dieser Änderung haben keinen Ort.
-  - **Bewegen:** Auf dem Globus wählt man ein Feld oder eine Stadt und dann „Gruppe hierher“ bzw.
+  - **Bewegen:** Auf dem Globus wählt man ein Feld oder eine Stadt und dann „Gruppe hierher setzen“ bzw.
     „NSC hierher“. Das kostet keine Zeit und steht nicht im Log; eine Reise über die Oberfläche mit
-    Tagen je Feld kommt später. Zwischen Welten reist die Gruppe weiter mit `Journey`; danach ist
+    Tagen ist die *Fahrt*. Zwischen Welten reist die Gruppe weiter mit `Journey`; danach ist
     ihr Ort die neue Welt ohne Feld.
   - **Was hier geschah** ist abgeleitet: die Logeinträge mit diesem Ort, auf einer Welt alle mit
     dieser Welt, auf einem Feld alle mit diesem Feld oder einer Stadt darauf.
@@ -2382,6 +2382,21 @@ Diagramm mit diesen Ausnahmen:
 - **Ort eines Logeintrags von Hand ändern** (*Orte*, 2026-11-14j): Im Code bekommt ein Eintrag
   seinen Ort nur beim Anlegen; ändern oder entfernen lässt er sich noch nicht. Alles Übrige an
   Oberflächenkarte und Orten ist gebaut (`model/surface-map.ts`, `model/place.ts`).
+
+- **Fahrzeuge und Fahrt** (2026-11-15) sind gebaut (`model/vehicle.ts`, `model/trip.ts`, Daten in
+  `src/data/vehicles.json`), mit diesen Lücken:
+  - **Linienverkehr** gibt es noch nicht: kein Fahrzeug mit Fahrpreis und Sitzplatzpreis; das Fixed
+    Wing Aircraft ist ein gewöhnliches Fahrzeug, das man kauft oder je Tag mietet.
+  - Ein eigenes Fahrzeug nimmt die Suche nur dort, wo es zu Beginn steht (mit der Gruppe am Start
+    oder abgestellt); stellt die Gruppe es unterwegs ab, holt die Suche es auf derselben Fahrt nicht
+    wieder ab. Fluggeräte fliegen nur einmal je Abschnitt und landen nur in Siedlungen, am Ziel, am
+    Start und bei abgestellten eigenen Fahrzeugen.
+  - Gemietet wird nur, was die Kasse wenigstens für einen Tag hergibt; die Suche nimmt die
+    schnellste Route, nicht die billigste.
+  - **`Leg → Vehicle : by`** und **`Booking → TripDay : rentFor`** sind im Code die Id des Fahrzeugs
+    bzw. die Stelle des Reisetags im Log, wie bei `won`; Löschen rückt die Stelle nach.
+  - **`Trip → SurfaceCell : /at`**, `/totalHours`, `/days`, `Leg./hours` und `Leg./rent` rechnet
+    `trip.ts`; gespeichert sind nur `hours` und die Abschnitte.
 
 - **`Conflict → Campaign : local`** ist im Code kein eigenes Feld: Der Stand von hier ist die
   Kampagne des Geräts mit dem Schlüssel des Konflikts (`localOf`), damit man in ihr weiterspielen

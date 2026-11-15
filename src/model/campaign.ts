@@ -3,6 +3,7 @@ import type { AnimalRef } from './animals';
 import type { Career } from './career';
 import { DomainError } from './errors';
 import type { Generation } from './generation';
+import type { Trip } from './trip';
 import type { Clock, Keys } from './ports';
 import { damageAfterOf, damageRollsOf, editNote, interpretationsOf, savesOf, volleyOf, type LogEntry } from './log';
 import { worldOf, type Hex } from './sector';
@@ -51,11 +52,14 @@ export interface Possession {
   readonly rounds?: number;
   /** Bei Jagdbeute (Fleisch, Fell): die Zeile der Tiertabelle, aus der sie stammt; sie bestimmt den Preis. */
   readonly from?: AnimalRef;
+  /** Bei eigenen Fahrzeugen im Gruppengepäck: der Ort, an dem es abgestellt ist; fehlt, fährt es mit der Gruppe (siehe `trip.ts`). */
+  readonly parked?: Place;
 }
 
 /** Ein Besitz ist eindeutig nach Gegenstand und, bei Jagdbeute, Herkunft. */
-export function possessionKey(p: { readonly of: string; readonly from?: AnimalRef }): string {
-  return p.from === undefined ? p.of : `${p.of}|${p.from.in}|${p.from.terrain}|${p.from.roll}`;
+export function possessionKey(p: { readonly of: string; readonly from?: AnimalRef; readonly parked?: Place }): string {
+  const base = p.from === undefined ? p.of : `${p.of}|${p.from.in}|${p.from.terrain}|${p.from.roll}`;
+  return p.parked === undefined ? base : `${base}@${p.parked.world}|${p.parked.cell ?? ''}|${p.parked.city ?? ''}`;
 }
 
 export interface Character {
@@ -133,6 +137,8 @@ export interface Campaign {
   readonly terrain?: string;
   /** Der heutige Tag im Spiel, gezählt im Imperialen Kalender (siehe `time.ts`). */
   readonly day: number;
+  /** Die Fahrt der Gruppe über die Oberfläche ihrer Welt; höchstens eine (siehe `trip.ts`). */
+  readonly trip?: Trip;
 }
 
 /** Was man beim Anlegen und Bearbeiten eines Charakters eingibt. */
@@ -257,7 +263,7 @@ export function removeLogEntry(campaign: Campaign, index: number): Campaign {
   if (!Number.isInteger(index) || index < 0 || index >= campaign.log.length) throw new DomainError('Diesen Logeintrag gibt es nicht.');
   // Zeit und Reisen haben den Stand geändert (Tag, Aufenthaltsort, Tote, Lotterie); sie bleiben.
   const kind = campaign.log[index]!.kind;
-  if (kind === 'time' || kind === 'journey') throw new DomainError(kind === 'time' ? 'Vergangene Zeit lässt sich nicht löschen.' : 'Eine Reise lässt sich nicht löschen.');
+  if (kind === 'time' || kind === 'journey' || kind === 'tripDay') throw new DomainError(kind === 'time' ? 'Vergangene Zeit lässt sich nicht löschen.' : kind === 'journey' ? 'Eine Reise lässt sich nicht löschen.' : 'Ein Reisetag lässt sich nicht löschen.');
   // Ein Wurf einer Garbe geht nur mit der ganzen Garbe.
   const roots = campaign.log[index]!.kind === 'attack' ? volleyOf(campaign.log, index) : [index];
   // Ein Ereignis geht mit seinen Rettungswürfen, ein Rettungswurf mit seinem Schaden.
@@ -274,7 +280,7 @@ export function removeLogEntry(campaign: Campaign, index: number): Campaign {
     return [entry];
   });
   // Ein Lotteriegewinn verweist auf seine Reise; sie bleibt, aber ihre Stelle rückt nach.
-  const bookings = campaign.bookings.map((b) => (b.won === undefined ? b : { ...b, won: shift(b.won) }));
+  const bookings = campaign.bookings.map((b) => (b.won !== undefined ? { ...b, won: shift(b.won) } : b.rentFor !== undefined ? { ...b, rentFor: shift(b.rentFor) } : b));
   return { ...campaign, log, bookings };
 }
 

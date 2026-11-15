@@ -1914,3 +1914,35 @@ describe('Orte (2026-11-14j)', () => {
     expect(() => fromCampaignFile(JSON.stringify(file), 'c2')).toThrow(/keine Oberflächenkarte|gibt es/);
   });
 });
+
+describe('Fahrt (2026-11-15)', () => {
+  it('plant auf dem Globus eine Route, fährt Tag für Tag und kommt an', async () => {
+    const { game, repository } = await started();
+    game.openGlobeAt(4, 5);
+    const capital = game.snapshot().globe!.cities[0]!;
+    game.pickCell(capital.cell);
+    game.moveParty();
+    // Ein Nachbarfeld, zu Fuß erreichbar.
+    const grid = game.snapshot().globe!.grid;
+    const map = game.snapshot().globe!.map;
+    const target = grid.neighbors[capital.cell!]!.find((q) => !['w', 'i'].includes(map.landforms[q]!))!;
+    game.pickCell(target);
+    game.planTrip(false);
+    const plan = game.snapshot().tripPlan!;
+    expect(plan.error).toBeUndefined();
+    expect(plan.plan!.legs[0]!.vehicle).toBe('Zu Fuß');
+    expect(game.snapshot().globe!.route[0]!.cells.at(-1)).toBe(target);
+    game.startTrip();
+    expect(game.snapshot().tripPlan).toBeUndefined();
+    const days = game.snapshot().trip!.daysLeft;
+    expect(days).toBeGreaterThan(0);
+    const before = game['campaign'].day;
+    for (let d = 0; d < days; d++) game.driveDay();
+    expect(game.snapshot().trip).toBeUndefined();
+    expect(game['campaign'].day).toBe(before + days);
+    expect(game['campaign'].location).toEqual({ world: '0405', cell: target });
+    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'tripDay', arrived: true });
+    await game.whenSaved();
+    expect(fromCampaignFile(toCampaignFile(repository.saved!), 'c2').log.at(-1)).toMatchObject({ kind: 'tripDay', arrived: true });
+  });
+});

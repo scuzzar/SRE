@@ -6,8 +6,8 @@ import type { Clock } from './ports';
 import { itemOf, ref, weaponOf, type Item } from './reference';
 import { hexById, worldOf, type Hex } from './sector';
 
-/** Einnahme, Ausgabe, Einzahlung eines Charakters, Auszahlung an einen Charakter, Kauf, Verkauf, Gewinn der Low Lottery. */
-export const bookingKinds = ['income', 'expense', 'deposit', 'payout', 'purchase', 'sale', 'lottery'] as const;
+/** Einnahme, Ausgabe, Einzahlung eines Charakters, Auszahlung an einen Charakter, Kauf, Verkauf, Gewinn der Low Lottery, Miete eines Fahrzeugs. */
+export const bookingKinds = ['income', 'expense', 'deposit', 'payout', 'purchase', 'sale', 'lottery', 'rent'] as const;
 export type BookingKind = (typeof bookingKinds)[number];
 
 /**
@@ -29,6 +29,8 @@ export interface Booking {
   readonly in?: string;
   /** Beim Lotteriegewinn: die Reise, im Code ihre Stelle im Log. */
   readonly won?: number;
+  /** Bei der Miete: der Reisetag, im Code seine Stelle im Log. */
+  readonly rentFor?: number;
 }
 
 /** `/funds`: der Stand der Gruppenkasse, die Summe aller Buchungen. */
@@ -43,7 +45,8 @@ export function locationOf(campaign: Campaign): (Hex & { readonly name: string }
 
 /** Setzt den Aufenthaltsort auf eine fertige Welt des Subsektors; `undefined` heißt: nirgends. */
 export function setLocation(campaign: Campaign, id: string | undefined): Campaign {
-  const rest = Object.fromEntries(Object.entries(campaign).filter(([key]) => key !== 'location')) as Omit<Campaign, 'location'>;
+  // Setzt man den Aufenthaltsort von Hand, fällt eine Fahrt weg (siehe domain-model.md, *Fahrt*).
+  const rest = Object.fromEntries(Object.entries(campaign).filter(([key]) => key !== 'location' && key !== 'trip')) as Omit<Campaign, 'location'>;
   if (id === undefined) return rest;
   worldOf(campaign.hexes, id);
   return { ...rest, location: worldPlace(id) };
@@ -95,7 +98,7 @@ function withText<T extends object>(value: T, text: string | undefined): T & { t
  * Bucht Geld in die Kasse oder hinaus. `amount` ist immer positiv; die Art sagt die Richtung.
  * Einzahlung und Auszahlung ändern die Credits des Charakters um denselben Betrag.
  */
-export function book(campaign: Campaign, kind: Exclude<BookingKind, 'purchase' | 'sale' | 'lottery'>, amount: number, clock: Clock, text?: string, character?: CharacterId): Campaign {
+export function book(campaign: Campaign, kind: Exclude<BookingKind, 'purchase' | 'sale' | 'lottery' | 'rent'>, amount: number, clock: Clock, text?: string, character?: CharacterId): Campaign {
   checkAmount(amount);
   const signed = kind === 'income' || kind === 'deposit' ? amount : -amount;
   if (kind === 'income' || kind === 'expense') {
@@ -221,6 +224,8 @@ export function validateBookings(campaign: Campaign): void {
     if (b.sold !== undefined) itemOf(b.sold);
     if ((b.kind === 'lottery') !== (b.won !== undefined)) throw new DomainError('Nur ein Lotteriegewinn verweist auf eine Reise.');
     if (b.won !== undefined && campaign.log[b.won]?.kind !== 'journey') throw new DomainError('Ein Lotteriegewinn verweist auf einen Eintrag, der keine Reise ist.');
+    if ((b.kind === 'rent') !== (b.rentFor !== undefined)) throw new DomainError('Nur eine Miete verweist auf einen Reisetag.');
+    if (b.rentFor !== undefined && campaign.log[b.rentFor]?.kind !== 'tripDay') throw new DomainError('Eine Miete verweist auf einen Eintrag, der kein Reisetag ist.');
     if (b.in !== undefined && !hexById(campaign.hexes, b.in)) throw new DomainError(`Ein Kauf verweist auf das Feld ${b.in}, das es nicht gibt.`);
     funds += b.amount;
     if (funds < 0) throw new DomainError('Die Gruppenkasse wird negativ.');

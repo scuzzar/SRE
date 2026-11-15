@@ -58,6 +58,7 @@ export function mapLocked(campaign: Campaign, column: number, row: number): bool
   return (
     pointsIntoMap(campaign.location, column, row) ||
     campaign.characters.some((c) => pointsIntoMap(c.place, column, row)) ||
+    campaign.stash.some((p) => pointsIntoMap(p.parked, column, row)) ||
     campaign.log.some((e) => pointsIntoMap(e.place, column, row))
   );
 }
@@ -66,7 +67,9 @@ export function mapLocked(campaign: Campaign, column: number, row: number): bool
 export function moveParty(campaign: Campaign, place: Place): Campaign {
   if (campaign.location?.world !== place.world) throw new DomainError('Die Gruppe ist nicht auf dieser Welt; erst hinreisen.');
   checkPlace(campaign.hexes, place);
-  return { ...campaign, location: place };
+  // Von Hand versetzt: Eine Fahrt fällt weg (siehe domain-model.md, *Fahrt*).
+  const rest = Object.fromEntries(Object.entries(campaign).filter(([key]) => key !== 'trip')) as Omit<Campaign, 'trip'>;
+  return { ...rest, location: place };
 }
 
 /** Versetzt einen dauerhaften NSC an einen Ort; er lebt dann dort. */

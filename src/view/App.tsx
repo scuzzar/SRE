@@ -65,7 +65,7 @@ export function App() {
   const screen: Screen = view.screen === 'sector' ? 'oracle' : view.screen;
   // Ein angetipptes Feld des Globus steht an der Stelle des Bereichs, ebenso ein gewähltes Feld des
   // Subsektors (das zeichnet der Subsektor selbst in den Platz, den `.field-slot` freihält).
-  const globeField = view.globe?.picked ? <FieldCard globe={view.globe} error={view.world?.error} log={view.log} logDays={view.logDays} /> : undefined;
+  const globeField = view.globe?.picked ? <FieldCard globe={view.globe} error={view.world?.error} log={view.log} logDays={view.logDays} trip={view.trip} tripPlan={view.tripPlan} /> : undefined;
   const field = globeField ?? (!view.globe && view.selected ? <div ref={setFieldSlot} className="field-slot" /> : undefined);
   const area = (
     <>
@@ -132,7 +132,7 @@ export function App() {
   const base = (
     <div className="base">
       {view.globe ? (
-        <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} world={view.world} here={view.location === view.globe.id} travel={view.travel} log={view.log} logDays={view.logDays} />
+        <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} world={view.world} here={view.location === view.globe.id} travel={view.travel} log={view.log} logDays={view.logDays} trip={view.trip} tripNote={view.tripNote} />
       ) : (
         <div className="base-sector">
           <SectorScreen view={view} fill dockTo={fieldSlot} />

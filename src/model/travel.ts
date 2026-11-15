@@ -7,6 +7,7 @@ import { itemOf } from './reference';
 import { sum, type Dice } from './rules';
 import { hexById, hexId, worldOf, type Hex } from './sector';
 import { fundsOf, locationOf, type Booking } from './shop';
+import { parkVehicles } from './trip';
 import { dayOf, JOURNEY_DAYS } from './time';
 import { woundedUpp, woundsOf } from './wounds';
 
@@ -171,6 +172,8 @@ export function travel(
 ): Campaign {
   const blocker = journeyBlocker(campaign, to);
   if (blocker) throw new DomainError(blocker);
+  // Eigene Fahrzeuge bleiben am Aufenthaltsort, eine Fahrt fällt weg (siehe domain-model.md, *Fahrt*).
+  campaign = parkVehicles(campaign);
   const from = campaign.location!.world;
   const travellers = travellersOf(campaign);
   for (const c of travellers) if (!passages.includes(choice[c.id] as PassageId)) throw new DomainError(`Für ${c.name} fehlt die Passage.`);

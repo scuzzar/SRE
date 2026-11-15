@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { landformAt, type GlobeView, type LogItem, type WorldView } from '../../controller';
+import { landformAt, type GlobeView, type LogItem, type TripPlanView, type TripView, type WorldView } from '../../controller';
+import { TripBar, TripPlanCard } from './TripPanels';
 import { roleText } from '../format';
 import { useGame } from '../game-context';
 import { CloseIcon, LocateIcon, PencilIcon } from '../icons';
 import { createGlobeRenderer, type GlobeRenderer } from './globe-gl';
 import { hideLoading, showLoading } from '../loading';
-import { cellAt, radiusOf, renderGlobe, screenOf, type Camera, type Viewport } from './globe-render';
+import { cellAt, radiusOf, renderGlobe, screenOf, screenOfPoint, type Camera, type Viewport } from './globe-render';
 import { HappenedList } from './HappenedList';
 import { NoteSection, SurfaceSection, WorldCard } from './WorldSheet';
 
@@ -42,6 +43,8 @@ export function GlobeScreen({
   travel,
   log,
   logDays,
+  trip,
+  tripNote,
 }: {
   globe: GlobeView;
   world: WorldView | undefined;
@@ -49,6 +52,8 @@ export function GlobeScreen({
   travel: { readonly blocker: string | undefined } | undefined;
   log: readonly LogItem[];
   logDays: readonly (string | undefined)[];
+  trip: TripView | undefined;
+  tripNote: string | undefined;
 }) {
   const game = useGame();
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -381,6 +386,7 @@ export function GlobeScreen({
             Einträge{globe.events.length > 0 ? ` ${globe.events.length}` : ''} ▾
           </button>
         </div>
+        {trip && globe.partyHere && panel === undefined && <TripBar trip={trip} note={tripNote} />}
         {panel === 'world' && world && (
           <div className="globe-panel globe-world" role="region" aria-label="Die Welt">
             <WorldCard world={world} onGlobe />
@@ -509,7 +515,21 @@ export function GlobeScreen({
  * Ziehblatt bzw. im Panel neben dem Log an der Stelle des Bereichs; ✕ lässt das Feld los. Der Name
  * beim Umbenennen und der NSC zum Herholen sind reine Darstellung.
  */
-export function FieldCard({ globe, error, log, logDays }: { globe: GlobeView; error: string | undefined; log: readonly LogItem[]; logDays: readonly (string | undefined)[] }) {
+export function FieldCard({
+  globe,
+  error,
+  log,
+  logDays,
+  trip,
+  tripPlan,
+}: {
+  globe: GlobeView;
+  error: string | undefined;
+  log: readonly LogItem[];
+  logDays: readonly (string | undefined)[];
+  trip: TripView | undefined;
+  tripPlan: TripPlanView | undefined;
+}) {
   const game = useGame();
   const [npcToMove, setNpcToMove] = useState('');
   const [renaming, setRenaming] = useState<number | undefined>(undefined);
@@ -567,6 +587,7 @@ export function FieldCard({ globe, error, log, logDays }: { globe: GlobeView; er
         {picked.river && <li>Fluss</li>}
         {picked.road && <li>Straße</li>}
         {globe.partyCell === picked.cell && <li>Die Gruppe ist hier</li>}
+        {globe.vehicles.some((v) => v.cell === picked.cell) && <li>Eigene Fahrzeuge stehen hier</li>}
         {picked.npcs.map((n) => (
           <li key={n.id}>
             <button type="button" className="link-button" aria-label={`NSC ${n.name} (${roleText[n.role]}) öffnen`} onClick={() => game.editCharacter(n.id)}>
@@ -577,9 +598,14 @@ export function FieldCard({ globe, error, log, logDays }: { globe: GlobeView; er
         ))}
       </ul>
       <div className="globe-actions">
+        {globe.partyHere && globe.partyCell !== undefined && globe.partyCell !== picked.cell && !trip && !tripPlan && (
+          <button type="button" className="primary compact" onClick={() => game.planTrip()}>
+            Route hierher
+          </button>
+        )}
         {globe.partyHere && globe.partyCell !== picked.cell && (
-          <button type="button" className="primary compact" onClick={() => game.moveParty()}>
-            {picked.city === undefined ? 'Gruppe hierher' : 'Gruppe in diese Stadt'}
+          <button type="button" className="ghost compact" title="Ohne Fahrt und ohne Zeit versetzen" onClick={() => game.moveParty()}>
+            {picked.city === undefined ? 'Gruppe hierher setzen' : 'Gruppe in diese Stadt setzen'}
           </button>
         )}
         {globe.npcs.length > 0 && (
@@ -598,6 +624,7 @@ export function FieldCard({ globe, error, log, logDays }: { globe: GlobeView; er
           </span>
         )}
       </div>
+      {tripPlan && <TripPlanCard plan={tripPlan} />}
       {error && (
         <p className="error" role="alert">
           {error}
@@ -700,6 +727,29 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
       ctx.fillText(c.label, x, p.y);
     }
   }
+  // Die Route: am Boden eine durchgezogene Linie von Feld zu Feld, ein Flug gestrichelt und gerade.
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (const leg of globe.route) {
+    ctx.setLineDash(leg.flight ? [6 * scale, 5 * scale] : []);
+    ctx.strokeStyle = leg.flight ? 'rgba(255,255,255,0.95)' : 'rgba(110,200,255,0.95)';
+    ctx.lineWidth = 2.5 * scale;
+    const steps = leg.flight ? flightPath(globe, camera, view, leg.cells[0]!, leg.cells.at(-1)!) : leg.cells.map((c) => at(c));
+    ctx.beginPath();
+    let drawing = false;
+    for (const p of steps) {
+      if (!p) {
+        drawing = false;
+        continue;
+      }
+      if (drawing) ctx.lineTo(p.x, p.y);
+      else ctx.moveTo(p.x, p.y);
+      drawing = true;
+    }
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  for (const v of globe.vehicles) badge(v.cell, 8, 8, 'rgba(170,230,140,0.95)', v.count > 1 ? String(v.count) : 'F');
   for (const e of globe.events) badge(e.cell, 8, -8, 'rgba(255,170,60,0.95)', e.count > 9 ? '9+' : String(e.count));
   const npcCells = new Map<number, number>();
   for (const n of globe.npcs) if (n.cell !== undefined) npcCells.set(n.cell, (npcCells.get(n.cell) ?? 0) + 1);
@@ -717,4 +767,20 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
       ctx.stroke();
     }
   }
+}
+
+/** Ein Flug als Großkreis zwischen zwei Feldern, in Punkten auf dem Bildschirm; verdeckte Stücke fehlen. */
+function flightPath(globe: GlobeView, camera: Camera, view: Viewport, a: number, b: number): readonly ({ x: number; y: number } | undefined)[] {
+  const p = globe.grid.xyz;
+  const [ax, ay, az, bx, by, bz] = [p[a * 3]!, p[a * 3 + 1]!, p[a * 3 + 2]!, p[b * 3]!, p[b * 3 + 1]!, p[b * 3 + 2]!];
+  const angle = Math.acos(Math.max(-1, Math.min(1, ax * bx + ay * by + az * bz)));
+  const steps = Math.max(2, Math.ceil(angle / 0.03));
+  const points: ({ x: number; y: number } | undefined)[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const s = Math.sin(angle);
+    const [u, v] = s < 1e-6 ? [1 - t, t] : [Math.sin((1 - t) * angle) / s, Math.sin(t * angle) / s];
+    points.push(screenOfPoint(camera, view, u * ax + v * bx, u * ay + v * by, u * az + v * bz));
+  }
+  return points;
 }

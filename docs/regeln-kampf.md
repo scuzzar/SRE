@@ -70,7 +70,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Abstraktes Schlachtsystem](#abstraktes-schlachtsystem) | B4 32–35 | ○ |
 | [Feldartillerie](#feldartillerie) | B4 48–49 | ○ |
 | [Tierbegegnungen](#tierbegegnungen) | SE 18–19, SR 46–49 | ○ |
-| [Fahrzeuge und Reisen über Land](#fahrzeuge-und-reisen-über-land) | SR 55–57, SA 1, 3, 7 | ○ (Modell im Entwurf) |
+| [Fahrzeuge und Reisen über Land](#fahrzeuge-und-reisen-über-land) | SR 55–57, SA 1, 3, 7 | ✔ ✱ (Geschwindigkeit je Geländeart, Fahrt Tag für Tag, Miete; Pannen, Reichweite, Linienverkehr ○) |
 
 ---
 
@@ -1815,8 +1815,10 @@ bis 9 ist und es keine Giftwaffe hat; essbar sind 1W6 × 5 % seines Gewichts. Ei
 ## Fahrzeuge und Reisen über Land
 
 *SR 55–57, „Vehicles“; SA 1, „Procedures“; SA 3, „Event and Encounter Tables“; SA 7, „Time and
-Travel“, „The All Terrain Vehicle“.* App: ○ (das Modell steht im Entwurf, siehe `domain-model.md`
-unter *Fahrzeuge* und *Fahrt*).
+Travel“, „The All Terrain Vehicle“.* App: ✔ ✱ Fahrzeuge mit Geschwindigkeit je Geländeart, Fahrt Tag
+für Tag, Miete (siehe `domain-model.md` unter *Fahrzeuge* und *Fahrt*; Daten in
+`src/data/vehicles.json`); ○ Pannen und Geländeschwierigkeit, Fertigkeiten, Reichweite und Tanken,
+Linienverkehr, Ereignisse unterwegs.
 
 **Allgemein (SR 55):** Auf Welten mit TL 0–3 reist man mit Last- und Reittieren (200–400 kg),
 Karren und Segelschiffen; Preise nach Lage, Tiere und Wagen in Hunderten, Schiffe in Tausenden bis

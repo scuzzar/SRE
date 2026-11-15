@@ -18,6 +18,8 @@ import { checkRecovery } from './wounds';
 import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, patronOf, ranges, ref, slotOfEntry, weaponOf } from './reference';
 import { characteristics } from './rules';
 import { bookingKinds, validateBookings, type Booking } from './shop';
+import { checkTrip } from './trip';
+import { vehicleOfItem } from './vehicle';
 import { settleStash } from './stash';
 import type { City, SurfaceMap } from './surface-map';
 import { checkPlace, type Place } from './place';
@@ -119,6 +121,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('patron'), at, day, place, list: z.union([z.literal(1), z.literal(2)]), dice, dms: z.tuple([z.number().int(), z.number().int()]) }),
   z.object({ kind: z.literal('note'), at, day, place, text: z.string().trim().min(1), interprets: z.number().int().optional(), editedAt: at.optional() }),
   z.object({ kind: z.literal('time'), at, day, place, days: z.number().int().min(1).max(7), week: z.boolean() }),
+  z.object({ kind: z.literal('tripDay'), at, day, place, hours: z.number().positive(), rent: z.number().int().min(0), arrived: z.boolean() }),
   z.object({ kind: z.literal('check'), at, day, place, check: z.enum(checkKinds), dice: z.array(die).min(1).max(2), target: z.number().int().min(0).max(20), reactionDice: dice.optional(), reactionDm: z.number().int().optional() }),
   z.object({
     kind: z.literal('journey'),
@@ -243,6 +246,13 @@ const HexSchema = z.union([
 
 const value = z.number();
 const PossessionSchema = z.object({ of: z.string(), count: z.number(), rounds: z.number().optional(), from: z.object({ in: z.string().min(1), terrain: z.string().min(1), roll: z.number().int().min(2).max(12) }).optional() });
+/** Im Gruppengepäck: dazu der Ort eines abgestellten Fahrzeugs (2026-11-15). */
+const StashPossessionSchema = PossessionSchema.extend({ parked: PlaceSchema.optional() });
+/** Die Fahrt der Gruppe (2026-11-15). */
+const TripSchema = z.object({
+  hours: z.number().min(0),
+  legs: z.array(z.object({ by: z.string().min(1), rented: z.boolean(), cells: z.array(z.number().int().min(0)).min(2) })).min(1),
+});
 const CharacterSchema = z.object({
   id: z.string().min(1),
   name: z.string(),
@@ -370,7 +380,9 @@ const CampaignFileSchema = z.object({
     /** Der heutige Tag im Spiel; fehlt in Dateien von vor der Spielzeit: 001-1105. */
     day: z.number().int().min(0).default(START_DAY),
     /** Das Gruppengepäck; fehlt in Dateien von vorher, dann ordnet settleStash den Besitz der SC ein. */
-    stash: z.array(PossessionSchema).default([]),
+    stash: z.array(StashPossessionSchema).default([]),
+    /** Fehlt in Dateien von vor den Fahrten und ohne Fahrt. */
+    trip: TripSchema.optional(),
     bookings: z
       .array(
         z.object({
@@ -384,6 +396,7 @@ const CampaignFileSchema = z.object({
           count: z.number().int().min(1).optional(),
           in: z.string().optional(),
           won: z.number().int().optional(),
+          rentFor: z.number().int().optional(),
         }),
       )
       .default([]),
@@ -392,8 +405,8 @@ const CampaignFileSchema = z.object({
 
 /** Die Kampagne als Inhalt einer Kampagnendatei. */
 export function toCampaignFile(campaign: Campaign): string {
-  const { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, stash, encounters, quantityDie, terrain, day } = campaign;
-  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, stash, encounters, quantityDie, terrain, day } }, null, 2);
+  const { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, stash, encounters, quantityDie, terrain, day, trip } = campaign;
+  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, stash, encounters, quantityDie, terrain, day, trip } }, null, 2);
 }
 
 /** Ein Dateiname aus dem Namen der Kampagne und dem Tag, z. B. „Spinward-Run-2026-10-25.json“. */
@@ -449,7 +462,8 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       ...(file.focus === undefined ? {} : { focus: file.focus }),
       ...(file.location === undefined ? {} : { location: placeFromFile(file.location) }),
       bookings: file.bookings.map((b) => stripped(b) as Booking),
-      stash: file.stash.map((p) => stripped(p) as Possession),
+      stash: file.stash.map((p) => stripped({ ...p, ...(p.parked === undefined ? {} : { parked: placeFromFile(p.parked) }) }) as Possession),
+      ...(file.trip === undefined ? {} : { trip: { hours: file.trip.hours, legs: file.trip.legs.map((l) => ({ by: l.by, rented: l.rented, cells: [...l.cells] })) } }),
       // NSC aus Dateien von vor 2026-11-08c bleiben, wie sie sind; upgradeNpcs macht Charaktere aus ihnen.
       encounters: file.encounters.map(
         (e) => ({ ...stripped(e), ...(e.distances ? { distances: e.distances.map((d) => stripped(d)) } : {}), npcs: e.npcs.map((n) => ('skill' in n ? stripped(n) : characterFromFile(n))) }) as unknown as Encounter,
@@ -562,6 +576,7 @@ function fileEntryOf(entry: WithoutDay<FileEntry>): LogEntry {
     case 'event':
     case 'save':
     case 'time':
+    case 'tripDay':
       return entry;
     case 'check':
       return stripped(entry) as CheckRoll;
@@ -618,6 +633,13 @@ function validate(campaign: Campaign): void {
   validateHexes(campaign.hexes);
   if (campaign.location !== undefined) checkPlace(campaign.hexes, campaign.location);
   validateBookings(campaign);
+  // Abgestellt werden nur eigene Fahrzeuge, an einem Ort; die Fahrt passt zur Karte der Welt der Gruppe.
+  for (const p of campaign.stash) {
+    if (p.parked === undefined) continue;
+    if (vehicleOfItem(p.of) === undefined) throw new DomainError(`${itemOf(p.of).name} ist kein Fahrzeug und lässt sich nicht abstellen.`);
+    checkPlace(campaign.hexes, p.parked);
+  }
+  if (campaign.trip !== undefined) checkTrip(campaign, campaign.trip);
   validateEncounters(campaign);
   if (campaign.terrain !== undefined) terrainOf(campaign.terrain);
   for (const hex of campaign.hexes) for (const table of hex.animals ?? []) checkAnimalTable(table);
@@ -649,6 +671,7 @@ function validate(campaign: Campaign): void {
       case 'patron':
       case 'rumor':
       case 'time':
+      case 'tripDay':
         break;
       case 'check':
         if (entry.dice.length !== encounterChecks[entry.check].dice) throw new DomainError('Ein Test hat zu viele oder zu wenige Würfel.');

@@ -197,7 +197,7 @@ test('Globus: aus dem Subsektor öffnen, Feld antippen, zurück zum Subsektor', 
   await expect(page.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('°C im Jahresmittel');
   // „Zur Gruppe“ gibt es, sobald die Gruppe ein Feld auf dieser Welt hat; wie im Navi führt er zu ihr zurück.
   await expect(globe.getByRole('button', { name: 'Zur Gruppe' })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Gruppe in diese Stadt' }).click();
+  await page.getByRole('button', { name: 'Gruppe in diese Stadt setzen' }).click();
   await globe.getByRole('button', { name: 'Zur Gruppe' }).click();
   await expect(page.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('Die Gruppe ist hier');
   // Gewürfelt wird mit der Reihe unten, ohne den Globus zu verlassen; der Wurf steht dann unter dem, was hier geschah.
