@@ -1,0 +1,178 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-15"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-15: Fahrzeuge: Geschwindigkeit je Geländeart und Weg, Fluggeräte landen auf Geländearten
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+
+' Kampagne und Charaktere
+  class Booking $shop
+  class Possession $shop
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+
+' Verlauf
+
+' Zeit und Reisen
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+
+' Referenzdaten
+  class Item <<reference>> $shop {
+    name: string
+    kind: ItemKind
+    tl: number [0..1]
+    weight: number [0..1]
+    price: number [0..1]
+    once: boolean
+    armor: ArmorClass [0..1]
+  }
+  enum ItemKind <<value>> $shop
+  class SurfaceCell <<value>> $oberflaeche
+  enum Landform <<value>> $oberflaeche {
+    water
+    waterIce
+    landIce
+    tundra
+    mountain
+    rugged
+    desert
+    jungle
+    swamp
+    open
+    settled
+  }
+  class River <<value>> $oberflaeche
+  class Road <<value>> $oberflaeche
+  class City $oberflaeche
+' Fahrzeuge und Wege auf der Oberfläche
+  class Vehicle <<reference>> $logistik $newClass("2026-11-15") {
+    name: string
+    flight: number [0..1]
+  }
+  class VehicleSpeed <<value>> $logistik $newClass("2026-11-15") {
+    kmh: number
+  }
+  enum Way <<value>> $logistik $newClass("2026-11-15") {
+    road
+    river
+    town
+  }
+
+' Kampagne
+Booking "*" --> "0..1" Item : bought
+Booking "*" --> "0..1" Item : sold
+
+' Zeit und Reisen
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+SurfaceCell "*" --> "1" Landform : landform
+Item "0..1" -$newArrow("2026-11-15")-> "0..1" Vehicle : vehicle
+Vehicle "1" *-$newArrow("2026-11-15")- "*" VehicleSpeed : speeds
+VehicleSpeed "*" -$newArrow("2026-11-15")-> "0..1" Landform : on
+VehicleSpeed "*" -$newArrow("2026-11-15")-> "0..1" Way : along
+Vehicle "*" -$newArrow("2026-11-15")-> "*" Landform : landsOn
+
+' Charakter
+Possession "*" --> "1" Item : of
+Item --> ItemKind
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+endlegend
+@enduml

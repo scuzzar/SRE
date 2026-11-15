@@ -134,6 +134,8 @@ hide <<value>> stereotype
     membership
     game
   }
+' Fahrzeuge und Wege auf der Oberfläche
+  class Vehicle <<reference>> $logistik $newClass("2026-11-15")
 
 ' Kampagne
 Campaign "1" *-- "*" Booking : bookings {ordered}
@@ -153,6 +155,7 @@ Booking "*" --> "0..1" Journey : won
 Gain "*" --> "0..1" Item : item
 
 ' Subsektor und Welten
+Item "0..1" -$newArrow("2026-11-15")-> "0..1" Vehicle : vehicle
 
 ' Charakter
 Character "1" *-- "*" Possession : possessions

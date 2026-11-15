@@ -124,6 +124,7 @@ hide <<value>> stereotype
 
 ' Referenzdaten
   class Item <<reference>> $shop
+' Fahrzeuge und Wege auf der Oberfläche
 
 ' Kampagne
 

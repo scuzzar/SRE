@@ -791,6 +791,19 @@ hide <<value>> stereotype
   }
   class Place <<value>> $oberflaeche {
   }
+' Fahrzeuge und Wege auf der Oberfläche
+  class Vehicle <<reference>> $logistik $newClass("2026-11-15") {
+    name: string
+    flight: number [0..1]
+  }
+  class VehicleSpeed <<value>> $logistik $newClass("2026-11-15") {
+    kmh: number
+  }
+  enum Way <<value>> $logistik $newClass("2026-11-15") {
+    road
+    river
+    town
+  }
   class SurfaceRow <<reference>> $sektor {
     table: SurfaceTable
     roll: number
@@ -993,6 +1006,11 @@ Place "*" --> "0..1" SurfaceCell : cell
 Place "*" --> "0..1" City : city
 City --> CityRank
 City --> Port
+Item "0..1" -$newArrow("2026-11-15")-> "0..1" Vehicle : vehicle
+Vehicle "1" *-$newArrow("2026-11-15")- "*" VehicleSpeed : speeds
+VehicleSpeed "*" -$newArrow("2026-11-15")-> "0..1" Landform : on
+VehicleSpeed "*" -$newArrow("2026-11-15")-> "0..1" Way : along
+Vehicle "*" -$newArrow("2026-11-15")-> "*" Landform : landsOn
 SurfaceRow --> SurfaceTable
 SurfaceRow -[hidden]- DiceExpr
 WorldRoll --> WorldRollKind

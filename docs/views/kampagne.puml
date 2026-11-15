@@ -117,6 +117,7 @@ hide <<value>> stereotype
 ' Referenzdaten
   class Odds <<reference>> $karte
   class Place <<value>> $oberflaeche
+' Fahrzeuge und Wege auf der Oberfläche
 
 ' Kampagne
 Campaign "1" *-- "*" Character : characters

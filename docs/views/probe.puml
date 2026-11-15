@@ -131,6 +131,7 @@ hide <<value>> stereotype
     malusUpTo: number
   }
   class Place <<value>> $oberflaeche
+' Fahrzeuge und Wege auf der Oberfläche
   enum Characteristic <<value>> $charakter
 
 ' Kampagne

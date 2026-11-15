@@ -151,6 +151,7 @@ hide <<value>> stereotype
   }
   class SurfaceMap $oberflaeche
   class Place <<value>> $oberflaeche
+' Fahrzeuge und Wege auf der Oberfläche
   class SurfaceRow <<reference>> $sektor {
     table: SurfaceTable
     roll: number

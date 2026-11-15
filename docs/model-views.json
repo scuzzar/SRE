@@ -25,6 +25,10 @@
       "title": "Oberflächenkarte"
     },
     {
+      "id": "logistik",
+      "title": "Fahrzeuge und Wege"
+    },
+    {
       "id": "karte",
       "title": "Karte und Orakel"
     },
@@ -295,6 +299,20 @@
       "approved": true,
       "show": [
         "SurfaceMap"
+      ]
+    },
+    {
+      "id": "2026-11-15",
+      "file": "2026-11-15-fahrzeuge-und-gelaende",
+      "title": "Fahrzeuge: Geschwindigkeit je Geländeart und Weg, Fluggeräte landen auf Geländearten",
+      "approved": false,
+      "show": [
+        "Item",
+        "Landform",
+        "SurfaceCell",
+        "Road",
+        "River",
+        "City"
       ]
     }
   ]

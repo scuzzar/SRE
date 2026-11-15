@@ -334,6 +334,14 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > *Oberflächenkarte*). Jede Haupt- und Nebenstadt hat einen Namen. Neu im Bild: `City.name`. Der
 > Ausschnitt dazu liegt unter [`changes/2026-11-14-staedtenamen.png`](changes/2026-11-14-staedtenamen.png).
 
+> **Entwurf, noch nicht abgestimmt** (Kennzeichen 2026-11-15): **Fahrzeuge** (siehe *Fahrzeuge*).
+> Jedes Fahrzeug hat eine Tabelle, auf welchen Geländearten und Wegen (Straße, Fluss, Siedlung) es
+> wie schnell fährt; wo kein Eintrag steht, fährt es nicht. Fluggeräte fliegen gerade von Feld zu
+> Feld und landen nur auf ihren Geländearten. Vorarbeit für die spätere Suche nach der schnellsten
+> Route über die Oberfläche. Neu im Bild: `Vehicle`, `VehicleSpeed`, `Way`, `Item.vehicle` und der
+> Bereich *Fahrzeuge und Wege*. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-15-fahrzeuge-und-gelaende.png`](changes/2026-11-15-fahrzeuge-und-gelaende.png).
+
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
@@ -356,6 +364,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Charaktererschaffung und Laufbahnen | [views/erschaffung.png](views/erschaffung.png) |
 | Subsektor und Welten | [views/sektor.png](views/sektor.png) |
 | Oberflächenkarte | [views/oberflaeche.png](views/oberflaeche.png) |
+| Fahrzeuge und Wege | [views/logistik.png](views/logistik.png) |
 | Karte und Orakel | [views/karte.png](views/karte.png) |
 | Probe und Verlauf | [views/probe.png](views/probe.png) |
 | Kampf: Waffen, Angriff, Wunden, Heilung | [views/kampf.png](views/kampf.png) |
@@ -363,7 +372,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+2026-11-15 (Fahrzeuge).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -611,6 +620,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Hauptstadt, Nebenstadt | `CityRank` | Die Städte mit den höchsten Bevölkerungsziffern (höchstens 10) bzw. eine Ziffer darunter |
 | Orbitalstadt | `City` ohne `cell` | Eine Stadt dauerhaft im Orbit |
 | Hafen einer Stadt | `City.port`, `Port` | Raumhafen A–E oder Landeplatz F–H der Stadt; Y (keiner) heißt: kein Wert |
+| Fahrzeug | `Vehicle`, `Item.vehicle` | Womit man sich über die Oberflächenkarte bewegt, mit seiner Tabelle der Geschwindigkeiten; meist zu einem Gegenstand der Art vehicle |
+| Geschwindigkeit eines Fahrzeugs | `VehicleSpeed`, `Vehicle.speeds` | Eine Zeile der Tabelle: auf welcher Geländeart (`on`) oder entlang welchem Weg (`along`) das Fahrzeug wie viele km/h fährt; ohne Zeile fährt es dort nicht |
+| Weg | `Way` | Was ein Oberflächenfeld über seine Geländeart hinaus befahrbar macht: Straße, Fluss, Siedlung (Stadt oder Kleinstadt) |
+| Fluggeschwindigkeit | `Vehicle.flight` | Wie schnell ein Fluggerät in km/h geradeaus fliegt; nur Fluggeräte haben sie |
+| Landen können | `Vehicle.landsOn` | Die Geländearten, auf denen ein Fluggerät starten und landen kann (seine Landepunkte) |
 | Kleinstadt | `SurfaceCell.towns` | Ob auf einem Oberflächenfeld ohne Stadt eine Kleinstadt liegt (1) oder nicht (0); höchstens eine je Feld, ohne Namen |
 | Bevölkerungsmultiplikator | `Hex.populationMultiplier` | Die erste Ziffer der Einwohnerzahl, 1–9: Die Welt hat Multiplikator × 10^Bevölkerung Einwohner |
 | Globus | (View, aus `SurfaceMap`) | Die drehbare Kugel mit der Oberflächenkarte; nur Darstellung |
@@ -2247,6 +2261,47 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     denen etwas geschehen ist oder NSC leben.
   - **Bestehende Kampagnen:** Ein bisheriger Aufenthaltsort bzw. Ort eines NSC wird ein Ort mit
     dieser Welt, ohne Feld und Stadt.
+- **Fahrzeuge** (Entwurf, 2026-11-15). Vorarbeit für die Logistik auf der Oberfläche: Später soll
+  die App die schnellste Route zwischen zwei Orten auf einer Welt finden, auch wenn man dafür ein
+  ATV oder einen Hubschrauber mieten muss. Dieser Schritt legt nur fest, wo welches Fahrzeug wie
+  schnell ist.
+  - Ein **Fahrzeug** (`Vehicle`) ist Referenzdaten, wie die Waffe: Ein Gegenstand der Art vehicle
+    verweist auf sein Fahrzeug (`Item.vehicle`), so wie eine Waffe auf `Weapon`.
+  - **Fahren oder nicht fahren.** Jedes Fahrzeug hat eine Tabelle (`speeds`). Eine Zeile nennt eine
+    Geländeart (`on`) **oder** einen Weg (`along`), nie beides, und die Geschwindigkeit in km/h.
+    Steht für ein Feld keine passende Zeile, kann das Fahrzeug dort nicht fahren. Mehr Abstufung
+    gibt es nicht.
+  - **Wege.** Straße (`road`): zwei benachbarte Felder derselben Straße (`Road.cells`). Fluss
+    (`river`): zwei benachbarte Felder desselben Flusses. Siedlung (`town`): ein Feld mit Stadt oder
+    Kleinstadt. Ein Weg kann schneller machen (das Auto auf der Straße) oder ein Feld erst befahrbar
+    machen (das Boot auf dem Fluss durchs Land).
+  - **Ein Schritt** geht von einem Feld zum Nachbarfeld, etwa 250 km. Führt eine Straße bzw. ein Fluss
+    über beide Felder und hat das Fahrzeug eine Zeile dafür, gilt diese. Sonst muss es auf beiden
+    Feldern fahren können (Geländeart oder Siedlung), und es gilt die langsamere der beiden; auf einem
+    Feld gilt jeweils die schnellste passende Zeile. Dauer des Schritts: 250 km / Geschwindigkeit.
+  - **Beispiele** (Werte noch offen): Ground Car nur auf Straße, Siedlung und `settled`; Wheeled und
+    Tracked ATV fast überall an Land, auf der Straße schneller; Motor Boat nur auf `water` und Fluss;
+    Hovercraft auf Wasser und flachem Land.
+  - **Fluggeräte** haben eine Fluggeschwindigkeit (`flight`) und die Geländearten, auf denen sie
+    landen können (`landsOn`). Sie fliegen gerade von einem Landepunkt zum nächsten, ohne Rücksicht auf
+    das Gelände dazwischen; Dauer: Entfernung / `flight`. Ein Hubschrauber landet überall an Land, also
+    auch in der Pampa. Ein Fahrzeug kann beides haben (Air/Raft, Grav Belt), dann gilt jeweils das
+    Schnellere.
+  - **Offene Fragen:**
+    1. **Zu Fuß:** Soll „zu Fuß“ ein Fahrzeug ohne Gegenstand sein, mit eigener Tabelle (etwa 5 km/h
+       auf offenem Land, langsamer im Gebirge)? Empfehlung ja; dann braucht `Vehicle` seinen Namen
+       (`name`), den es jetzt schon hat.
+    2. **Landepunkte:** überall auf den Geländearten des Fluggeräts (Empfehlung, so gezeichnet), oder
+       nur in Städten mit Hafen bzw. auf festen Landeplätzen? Feste Linienflüge zwischen Städten
+       wären dann etwas Eigenes.
+    3. **Werte:** Die Geschwindigkeiten aus Book 3 (Classic Traveller) übernehmen; das PDF liegt
+       nicht im Repository. Bitte die Seite schicken, oder ich setze Schätzwerte als Hausregel.
+    4. **Mieten:** Kommt mit der Route. Vorschlag: Mietpreis je Tag als fester Anteil des
+       Kaufpreises (Hausregel), Fahrzeuge zu mieten nur in Siedlungen und bis zum TL der Welt. Das
+       ändert das Bild erst mit der Route (Buchung der Miete in der Kasse).
+    5. **Die Route selbst** ist flüchtig (sie wird gesucht, gezeigt und dann gefahren) und kommt mit
+       dem nächsten Schritt ins Bild, zusammen mit der Frage, ob eine Fahrt Zeit vergehen lässt und
+       im Log steht.
 - **Notiz zur Welt.** Eine fertige Welt (mit Namen, nicht leer) kann eine Notiz haben (`note`):
   freier Text, auch über mehrere Zeilen. Anders als ein Logeintrag lässt sie sich jederzeit ändern,
   wie die Notiz eines Charakters; Leerraum am Rand fällt weg, eine leere Notiz gibt es nicht (dann

@@ -284,6 +284,7 @@ hide <<value>> stereotype
 ' Referenzdaten
   class Service <<reference>> $erschaffung
   class Weapon <<reference>> $kampf
+' Fahrzeuge und Wege auf der Oberfläche
 
 ' Kampagne
 

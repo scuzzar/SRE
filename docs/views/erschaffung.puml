@@ -139,6 +139,7 @@ hide <<value>> stereotype
   class Cascade <<reference>> $erschaffung {
     name: string
   }
+' Fahrzeuge und Wege auf der Oberfläche
   class Aging <<reference>> $erschaffung {
     fromTerm: number
     loss: number
