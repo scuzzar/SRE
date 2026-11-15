@@ -147,6 +147,39 @@ export function LocateIcon() {
   );
 }
 
+/** Eine gestrichelte Route vom Punkt zur Nadel: zum angetippten Feld fahren. */
+export function RouteIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="5.5" cy="18.5" r="2" />
+      <path d="M8 18.5h5.5a3 3 0 0 0 0-6h-3a3 3 0 0 1 0-6H13" strokeDasharray="2 2.6" />
+      <path d="M18 11c-2-2.1-3.2-3.7-3.2-5.1a3.2 3.2 0 0 1 6.4 0c0 1.4-1.2 3-3.2 5.1z" />
+      <circle cx="18" cy="5.9" r="0.9" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+/** Eine Kartennadel: die Gruppe auf das angetippte Feld setzen. */
+export function PinIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 21.5c-4.2-4.4-6.3-7.7-6.3-10.5a6.3 6.3 0 0 1 12.6 0c0 2.8-2.1 6.1-6.3 10.5z" />
+      <circle cx="12" cy="11" r="2.3" />
+    </svg>
+  );
+}
+
+/** Eine Person mit Kartennadel: einen NSC auf das angetippte Feld holen. */
+export function NpcPinIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9.5" cy="7.5" r="3.2" />
+      <path d="M3.5 20c.7-3.4 3.1-5.3 6-5.3 1.2 0 2.3.3 3.2.9" />
+      <path d="M18 21.5c-2.1-2.2-3.2-3.9-3.2-5.3a3.2 3.2 0 0 1 6.4 0c0 1.4-1.1 3.1-3.2 5.3z" />
+    </svg>
+  );
+}
+
 /** Plus: eine zugeklappte Tafel der Karte aufklappen. */
 export function PlusIcon() {
   return (

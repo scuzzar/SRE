@@ -553,26 +553,24 @@ export function GlobeScreen({
 
 /**
  * Das angetippte Feld des Globus mit allem, was dort ist, und dem, was dort geschah. Es steht im
- * Ziehblatt bzw. im Panel neben dem Log an der Stelle des Bereichs; ✕ lässt das Feld los. Der Name
- * beim Umbenennen und der NSC zum Herholen sind reine Darstellung.
+ * Ziehblatt bzw. im Panel neben dem Log an der Stelle des Bereichs; ✕ lässt das Feld los. Was man am
+ * Feld tun kann (hinreisen, Gruppe setzen, NSC platzieren), steht darunter in der Reihe `FieldDock`.
+ * Der Name beim Umbenennen ist reine Darstellung.
  */
 export function FieldCard({
   globe,
   error,
   log,
   logDays,
-  trip,
   tripPlan,
 }: {
   globe: GlobeView;
   error: string | undefined;
   log: readonly LogItem[];
   logDays: readonly (string | undefined)[];
-  trip: TripView | undefined;
   tripPlan: TripPlanView | undefined;
 }) {
   const game = useGame();
-  const [npcToMove, setNpcToMove] = useState('');
   const [renaming, setRenaming] = useState<number | undefined>(undefined);
   const [newName, setNewName] = useState('');
   const picked = globe.picked;
@@ -638,33 +636,6 @@ export function FieldCard({
           </li>
         ))}
       </ul>
-      <div className="globe-actions">
-        {globe.partyHere && globe.partyCell !== undefined && globe.partyCell !== picked.cell && !trip && !tripPlan && (
-          <button type="button" className="primary compact" onClick={() => game.planTrip()}>
-            Route hierher
-          </button>
-        )}
-        {globe.partyHere && globe.partyCell !== picked.cell && (
-          <button type="button" className="ghost compact" title="Ohne Fahrt und ohne Zeit versetzen" onClick={() => game.moveParty()}>
-            {picked.city === undefined ? 'Gruppe hierher setzen' : 'Gruppe in diese Stadt setzen'}
-          </button>
-        )}
-        {globe.npcs.length > 0 && (
-          <span className="globe-move-npc">
-            <select aria-label="NSC wählen" value={npcToMove} onChange={(e) => setNpcToMove(e.target.value)}>
-              <option value="">NSC …</option>
-              {globe.npcs.map((n) => (
-                <option key={n.id} value={n.id}>
-                  {n.name}
-                </option>
-              ))}
-            </select>
-            <button type="button" className="ghost compact" disabled={!npcToMove} onClick={() => game.moveNpc(npcToMove)}>
-              hierher
-            </button>
-          </span>
-        )}
-      </div>
       {tripPlan && <TripPlanCard plan={tripPlan} />}
       {error && (
         <p className="error" role="alert">

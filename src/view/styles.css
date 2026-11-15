@@ -812,6 +812,33 @@ button:disabled {
   border: 1px solid var(--line-strong);
 }
 
+/* Die Reihe des angetippten Felds: Über „NSC platzieren“ liegt unsichtbar das Auswahlfeld, ein Tippen
+   öffnet die Liste des Geräts. Ausgegraut wie ein gesperrter Knopf, wenn es keinen NSC zum Holen gibt. */
+.field-npc {
+  position: relative;
+  cursor: pointer;
+}
+
+.field-npc select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.field-npc:has(select:disabled) {
+  background: var(--disabled);
+  color: var(--dim);
+  cursor: default;
+}
+
+.field-npc:has(select:focus-visible) {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+}
+
 .actions {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
