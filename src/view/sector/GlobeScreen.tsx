@@ -219,7 +219,13 @@ export function GlobeScreen({
     if (pointers.current.size === 2 && gesture.current.pinch) {
       const [a, b] = [...pointers.current.values()] as [{ x: number; y: number }, { x: number; y: number }];
       setMoving(true);
-      setCamera((c) => ({ ...c, zoom: clampZoom((gesture.current.zoom ?? 1) * (Math.hypot(a.x - b.x, a.y - b.y) / gesture.current.pinch!)) }));
+      // Sofort rechnen, nicht erst im Updater: Bis React ihn ausführt, kann die Geste schon zurückgesetzt sein.
+      const distance = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
+      const wanted = (gesture.current.zoom ?? camera.zoom) * (distance / gesture.current.pinch);
+      const zoom = clampZoom(wanted);
+      // Am Anschlag neu ansetzen: Wer weiter spreizt und dann zurückkneift, zoomt sofort wieder heraus.
+      if (zoom !== wanted) gesture.current = { ...gesture.current, pinch: distance, zoom };
+      setCamera((c) => ({ ...c, zoom }));
       return;
     }
     gesture.current.moved += Math.abs(dx) + Math.abs(dy);
@@ -229,7 +235,11 @@ export function GlobeScreen({
     if (gesture.current.double) {
       const start = gesture.current.zoom ?? camera.zoom;
       const travel = e.clientY - (gesture.current.startY ?? e.clientY);
-      setCamera((c) => ({ ...c, zoom: clampZoom(start * Math.exp(travel / 160)) }));
+      const wanted = start * Math.exp(travel / 160);
+      const zoom = clampZoom(wanted);
+      // Auch hier am Anschlag neu ansetzen, damit die Gegenrichtung sofort wirkt.
+      if (zoom !== wanted) gesture.current = { ...gesture.current, zoom, startY: e.clientY };
+      setCamera((c) => ({ ...c, zoom }));
       return;
     }
     const R = radiusOf(view, camera);
