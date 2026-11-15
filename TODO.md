@@ -12,6 +12,17 @@ Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in [`docs/regeln-kampf.md`](doc
   user.email=…`; sie durch `"Bash(git commit:*)"`, `"Bash(git merge:*)"`, `"Bash(git revert:*)"`
   und `"Bash(cp .gitconfig-owner .git/owner.gitconfig)"`, `"Bash(git config include.path owner.gitconfig)"` ersetzen.
 
+## Die Karte führt
+
+Grundkarte und Ziehblatt stehen (Schritt 1 und 2: Handy und Desktop). Als Nächstes:
+
+- [ ] **Entschlacken (Schritt 3):** jeden Bereich für das Ziehblatt und das Panel neben dem Log
+  durchgehen: Kampf und Kampfsimulation kompakter, damit sie halb hochgezogen gehen; im
+  Desktop-Modus steht der Charakter oben im Log und in Kampf und Shop doppelt.
+- [ ] **Log über die Karte:** ein Tippen auf einen Logeintrag mit Ort fliegt zu seinem Feld auf dem
+  Globus.
+- [ ] **Begegnungen auf der Karte:** eine laufende Begegnung am Feld der Gruppe zeigen.
+
 ## Kampf
 
 ### 1. Ausweichen (Evade)

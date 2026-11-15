@@ -112,80 +112,6 @@ button:disabled {
   background: var(--bg);
 }
 
-.header {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 2px 4px 2px 16px;
-  padding-top: max(2px, env(safe-area-inset-top));
-  border-bottom: 1px solid var(--rule);
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  font-size: 13px;
-}
-
-.brand::before {
-  content: '';
-  flex: 0 0 auto;
-  width: 5px;
-  height: 22px;
-  background: var(--accent);
-}
-
-/* Die Kopfzeile trägt den Aufenthaltsort mit UWP; ein Tippen öffnet seine Weltkarte. */
-.header-world {
-  min-width: 0;
-  min-height: 44px;
-  padding: 0 6px 0 0;
-  background: transparent;
-  border: 0;
-  color: var(--text);
-  letter-spacing: 0.02em;
-  font-size: 15px;
-  cursor: pointer;
-}
-
-.header-world-none {
-  color: var(--muted);
-  font-weight: 400;
-  cursor: default;
-}
-
-.header-world .world-icon {
-  flex: 0 0 auto;
-  margin-left: -4px;
-}
-
-.header-world-name {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.header-world-uwp {
-  flex: 0 0 auto;
-  color: var(--accent);
-  font-weight: 400;
-  letter-spacing: 0.04em;
-}
-
-.header-right {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: var(--muted);
-}
-
 .icon-button {
   display: inline-flex;
   align-items: center;
@@ -275,20 +201,17 @@ button:disabled {
   font-weight: 600;
 }
 
-/* Die Leiste steht unten auf dem Smartphone und im Desktop-Modus als Reiter in der Kopfzeile
-   (siehe den @media-Block am Ende der Datei). */
+/* Die Reiter: oben im Ziehblatt (Smartphone) bzw. oben im Log-Panel (Desktop-Modus). */
 .nav {
   flex: 0 0 auto;
-  order: 3;
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  border-top: 1px solid var(--rule);
-  background: var(--deep);
-  padding-bottom: env(safe-area-inset-bottom);
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  border-bottom: 1px solid var(--rule);
 }
 
 .nav button {
-  min-height: 60px;
+  min-height: 52px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -296,25 +219,15 @@ button:disabled {
   gap: 2px;
   background: transparent;
   border: 0;
-  border-top: 2px solid transparent;
-  font-size: 12px;
+  border-bottom: 2px solid transparent;
+  font-size: 11px;
   color: var(--muted);
 }
 
 .nav button[aria-current='page'] {
-  border-top-color: var(--accent-text);
+  border-bottom-color: var(--accent-text);
   color: var(--text);
   font-weight: 600;
-}
-
-/* Der Spielbereich unter den Reitern: auf dem Smartphone nur der Screen, im Desktop-Modus
-   daneben rechts die Orakel-Spalte. */
-.stage {
-  order: 2;
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
 }
 
 .screen-host {
@@ -322,6 +235,176 @@ button:disabled {
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+/* --- Grundkarte und Ziehblatt ---------------------------------------------------------------- */
+/* Die Grundkarte (Globus oder Subsektor) füllt die App; auf dem Smartphone liegt unten das
+   Ziehblatt darüber, dessen Höhe als --tray-h am .app steht. */
+.app.map-app {
+  max-width: none;
+}
+
+.base {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #04060b;
+}
+
+.base .globe-full {
+  z-index: 0;
+}
+
+/* Den Streifen unten, den das Ziehblatt immer belegt (Griff und Reiter), nimmt der Globus nie ein: Er
+   zentriert sich darüber. Unter die runden Ecken des Blatts reicht er noch. */
+.base .globe-stage {
+  bottom: max(0px, calc(var(--tray-floor, 0px) - 16px));
+}
+
+/* Der Subsektor als Grundkarte: über dem Ziehblatt, die Karte ganz zu sehen (nach Breite oder
+   Höhe, was knapper ist); Welten und Legende klappen oben über ihr auf. */
+.base-sector {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: var(--tray-h, 0px);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.base-sector > .screen {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.base .sector {
+  overflow: hidden;
+}
+
+.base .sector-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  container-type: size;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.base .sector-body > .sector-zoom-frame {
+  width: min(100cqw, calc(100cqh * var(--map-ratio)));
+}
+
+.base .sector-panel {
+  left: 50%;
+  right: auto;
+  width: min(100%, 560px);
+  transform: translateX(-50%);
+  max-height: 100%;
+}
+
+/* Oben rechts über der Grundkarte das Menü; Leiste des Globus und des Subsektors lassen ihm Platz. */
+.map-menu {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  right: 12px;
+  z-index: 3;
+}
+
+.base .globe-bar,
+.base .sector-bar {
+  padding-right: 52px;
+}
+
+.sector-locate {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  box-shadow: none;
+}
+
+.base .globe-zoom {
+  bottom: calc(var(--tray-h, 0px) + 16px);
+}
+
+/* Das Ziehblatt: unten über der Grundkarte, am Kopf stufenlos hochzuziehen. */
+.tray {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  height: 50%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.6);
+  transition: height 0.2s ease;
+}
+
+.tray.dragging {
+  transition: none;
+}
+
+.tray-head {
+  flex: 0 0 auto;
+  touch-action: none;
+}
+
+.tray-grip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: grab;
+}
+
+.tray-grip span {
+  width: 40px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line-strong);
+}
+
+.tray-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tray-foot {
+  flex: 0 0 auto;
+}
+
+/* Die Reiter ganz unten im Ziehblatt, wie die Leiste einer Karten-App; der Strich steht oben. */
+.tray .nav {
+  border-top: 1px solid var(--rule);
+  border-bottom: 0;
+  background: var(--deep);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tray .nav button {
+  border-top: 2px solid transparent;
+  border-bottom: 0;
+}
+
+.tray .nav button[aria-current='page'] {
+  border-top-color: var(--accent-text);
+}
+
+/* Das angetippte Feld des Globus an der Stelle des Bereichs. */
+.field-card {
+  padding-top: 8px;
 }
 
 /* --- Stufenauswahl -------------------------------------------------------------------------- */
@@ -3598,6 +3681,9 @@ button:disabled {
 .sector-bar .section-title {
   flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .sector-bar .globe-chip {
@@ -4217,6 +4303,7 @@ button:disabled {
 }
 
 .menu-title {
+  flex: 1 1 auto;
   font-weight: 700;
 }
 
@@ -4557,6 +4644,10 @@ button:disabled {
 
 .dock .actions:has(> :nth-child(3)) {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dock .actions:has(> :nth-child(4)) {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .shop-scroll {
@@ -6663,78 +6754,26 @@ button:disabled {
 }
 
 /* --- Desktop-Modus (ab 1024 px) ------------------------------------------------------------- */
-/* Dieselbe Grenze wie DESKTOP_QUERY in media.ts: Die View zeichnet dann das Orakel rechts, die
-   Reiter stehen in der Kopfzeile, und die Screens behalten ihre Knöpfe und Komponenten. */
+/* Dieselbe Grenze wie DESKTOP_QUERY in media.ts: links fest das Log-Panel mit den Reitern, daneben
+   der gewählte Bereich als schließbares Panel, rechts die Grundkarte. Die Screens sind dieselben wie
+   auf dem Smartphone. */
 @media (min-width: 1024px) {
-  .app {
-    max-width: none;
-  }
-
-  /* Kopfzeile und Reiter sind eine Zeile: links der Aufenthaltsort, in der Mitte die Reiter, rechts
-     Vollbild und Menü. */
-  .header .brand {
-    flex: 0 1 260px;
-  }
-
-  .header-right {
-    flex: 0 1 260px;
-    justify-content: flex-end;
-  }
-
-  .nav {
-    order: 0;
-    flex: 1 1 auto;
-    min-width: 0;
-    display: flex;
-    justify-content: center;
-    gap: 4px;
-    border-top: 0;
-    padding: 0;
-    background: transparent;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .nav button {
-    flex: 0 0 auto;
-    flex-direction: row;
-    gap: 8px;
-    min-height: 44px;
-    padding: 0 14px;
-    border-top: 0;
-    border-bottom: 2px solid transparent;
-    font-size: 14px;
-  }
-
-  .nav button[aria-current='page'] {
-    border-bottom-color: var(--accent-text);
-  }
-
-  /* Drei Spalten als ein Block in der Mitte: links Orakel mit Log, daneben die Charaktere, rechts der
-     gewählte Bereich. Der Bereich wird nie breiter als 960 px, damit Knöpfe, Listen und Tabellen
-     auf großen Bildschirmen nicht auseinanderlaufen. */
-  .stage {
-    order: 3;
+  .app.map-app.desktop {
     display: grid;
-    grid-template-columns: clamp(300px, 24vw, 420px) clamp(290px, 22vw, 380px) minmax(0, 960px);
+    grid-template-columns: clamp(320px, 24vw, 400px) auto minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
-    justify-content: center;
   }
 
-  /* Ohne Charakterspalte (Bereich Charaktere, Kampfsimulation) bekommt der Bereich ihren Platz. */
-  .stage.without-characters {
-    grid-template-columns: clamp(300px, 24vw, 420px) minmax(0, 1340px);
-  }
-
-  /* Die Orakel-Spalte ist der Orakel-Screen des Smartphones ohne die Leiste: Log, Orakel und Proben. */
   .oracle-panel {
+    grid-column: 1;
     display: flex;
     flex-direction: column;
     min-height: 0;
-    border-left: 1px solid var(--rule);
+    border-right: 1px solid var(--rule);
+    background: var(--bg);
   }
 
-  /* „75 % · 6+“ passt nicht in eine Zeile der Orakel-Spalte: Chance und Zielwert untereinander. */
+  /* „75 % · 6+“ passt nicht in eine Zeile des Log-Panels: Chance und Zielwert untereinander. */
   .oracle-panel .odds-sub {
     display: flex;
     flex-direction: column;
@@ -6745,76 +6784,38 @@ button:disabled {
     display: none;
   }
 
-  /* Die Charakterspalte scrollt in sich, wenn die Karten nicht in die Höhe passen. */
-  .character-panel {
-    min-height: 0;
-    overflow-y: auto;
-    border-left: 1px solid var(--rule);
-    background: var(--deep);
-  }
-
-  .char-column {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 10px 12px;
-    border-bottom: 0;
-    box-shadow: none;
-  }
-
-  .char-column.strip-empty {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-
-  .char-column .strip-card {
-    flex: 0 0 auto;
-  }
-
-  .char-column .strip-card:not(.focus) {
-    cursor: pointer;
-    background: var(--panel);
-    border-top-color: var(--line-strong);
-  }
-
-  .char-column-possessions {
-    margin: 2px 0 0;
-    font-size: 13px;
-    line-height: 1.4;
-  }
-
-  /* Der Screen ist ein Container, damit die Sektor-Karte sich an seiner Höhe ausrichten kann. */
-  .screen-host {
-    container-type: size;
-    border-left: 1px solid var(--rule);
-    border-right: 1px solid var(--rule);
-  }
-
-  /* Sektor-Screen: Die Karte hat den Bereich für sich und passt ganz hinein (nach Breite oder Höhe,
-     was knapper ist); Welten und Legende klappen oben über ihr auf. */
-  .screen-host .sector {
-    overflow: hidden;
-  }
-
-  .screen-host .sector-body {
+  .oracle-panel > .screen {
     flex: 1 1 auto;
     min-height: 0;
-    container-type: size;
+  }
+
+  .area-panel {
+    grid-column: 2;
+    width: clamp(380px, 32vw, 560px);
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
+    flex-direction: column;
+    min-height: 0;
+    border-right: 1px solid var(--rule);
+    background: var(--bg);
   }
 
-  .screen-host .sector-body > .sector-zoom-frame {
-    width: min(100cqw, calc(100cqh * var(--map-ratio)));
+  .area-head {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 4px 2px 16px;
+    border-bottom: 1px solid var(--rule);
   }
 
-  .screen-host .sector-panel {
-    left: 50%;
-    right: auto;
-    width: min(100%, 560px);
-    transform: translateX(-50%);
-    max-height: 100%;
+  .desktop .base {
+    grid-column: 3;
+    position: relative;
+    inset: auto;
+  }
+
+  .desktop .base-sector {
+    bottom: 0;
   }
 
   /* Blätter und Popups stehen mittig, statt über die volle Breite zu laufen. */
@@ -6831,47 +6832,6 @@ button:disabled {
 
   .result {
     max-width: 560px;
-  }
-
-  .char-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(400px, 100%), 1fr));
-    gap: 12px;
-  }
-}
-
-/* --- Desktop-Modus, schmal (1024 bis 1279 px) ----------------------------------------------- */
-/* Drei Spalten sind hier eng: Orakel- und Charakterspalte werden schmaler, Attribute und
-   Fertigkeiten rücken enger zusammen. So bleiben dem Bereich rund 480 px. */
-@media (min-width: 1024px) and (max-width: 1279px) {
-  .stage {
-    grid-template-columns: 270px 270px minmax(0, 1fr);
-  }
-
-  .stage.without-characters {
-    grid-template-columns: 270px minmax(0, 1fr);
-  }
-
-  .char-column {
-    padding: 8px;
-  }
-
-  .char-column .strip-card {
-    padding: 4px 6px 8px 8px;
-  }
-
-  .char-column .upp {
-    gap: 3px;
-  }
-
-  .char-column .chips {
-    gap: 4px;
-  }
-
-  .char-column .chips button,
-  .char-column .chips .chip {
-    padding: 4px 6px;
-    font-size: 12px;
   }
 }
 
@@ -6920,10 +6880,6 @@ button:disabled {
 
   .entry.outcome:hover {
     border-color: var(--muted);
-  }
-
-  .char-column .strip-card:not(.focus):hover {
-    border-color: var(--accent-text);
   }
 
   .hex[role='button']:hover polygon:first-child {
@@ -7767,81 +7723,6 @@ button:disabled {
   transition: bottom 0.25s ease;
 }
 
-.globe-sheet {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  max-height: 46vh;
-  overflow-y: auto;
-  padding: 6px 16px max(14px, env(safe-area-inset-bottom));
-  border-radius: 16px 16px 0 0;
-  background: var(--raised, #1b1d22);
-  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.55);
-  transform: translateY(105%);
-  transition: transform 0.25s ease;
-}
-
-.globe-sheet.open {
-  transform: translateY(0);
-}
-
-/* Die Reihe Notiz, Würfeln, Karte unten im Feld: bleibt beim Blättern durch das Geschehene unten stehen. */
-.globe-dock {
-  position: sticky;
-  bottom: calc(-1 * max(14px, env(safe-area-inset-bottom)));
-  margin: 8px -16px calc(-1 * max(14px, env(safe-area-inset-bottom)));
-  z-index: 1;
-}
-
-.globe-dock .dock {
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
-  background: var(--raised, #1b1d22);
-}
-
-/* Im Desktop-Modus fährt das Feld links herein wie in einer Karten-App, unter der Leiste oben; die
-   aufgeklappten Listen oben liegen darüber. */
-@media (min-width: 1024px) {
-  .globe-top {
-    z-index: 2;
-  }
-
-  .globe-top .globe-panel {
-    width: min(100%, 520px);
-  }
-
-  .globe-sheet {
-    top: 68px;
-    left: 12px;
-    right: auto;
-    bottom: 12px;
-    width: 400px;
-    max-height: none;
-    padding-bottom: 14px;
-    border-radius: 14px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
-    transform: translateX(calc(-100% - 24px));
-  }
-
-  .globe-sheet.open {
-    transform: translateX(0);
-  }
-
-  .globe-handle {
-    display: none;
-  }
-
-  .globe-dock {
-    bottom: -14px;
-    margin-bottom: -14px;
-  }
-
-  .globe-dock .dock {
-    padding-bottom: 12px;
-    border-radius: 0 0 14px 14px;
-  }
-}
-
 /* Auf Touch-Geräten zoomt man mit Gesten (zwei Finger, Doppeltippen); die Knöpfe gibt es nur mit Maus oder Touchpad. */
 @media (pointer: coarse) {
   .globe-zoom-buttons {
@@ -7880,17 +7761,6 @@ button:disabled {
 .globe-sheet-head h3 {
   margin: 0;
   font-size: 17px;
-}
-
-.globe-handle {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 36px;
-  height: 4px;
-  margin-left: -18px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.25);
 }
 
 .globe-sheet-sub {

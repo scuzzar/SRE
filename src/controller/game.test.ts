@@ -1795,6 +1795,24 @@ describe('Globus (Oberflächenkarte)', () => {
     expect(game.snapshot().globe?.map).toBe(view.globe?.map);
   });
 
+  it('ist die Grundkarte: beim Start der Globus des Aufenthaltsorts, sobald seine Karte entstanden ist; ein Reiter lässt das Feld los', async () => {
+    const { game, repository } = await started();
+    // Die Demo-Welt hat noch keine Karte: Die Grundkarte ist der Subsektor.
+    expect(game.snapshot().globe).toBeUndefined();
+    game.openGlobeAt(4, 5);
+    game.pickCell(0);
+    game.showScreen('shop');
+    expect(game.snapshot()).toMatchObject({ screen: 'shop', globe: { picked: undefined } });
+    await game.whenSaved();
+    // Neu gestartet: Der Globus von Kessra liegt gleich unter allem.
+    const again = new GameController({ repository, random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), keys: countingKeys() });
+    await again.init();
+    expect(again.snapshot().globe?.name).toBe('Kessra');
+    // ✕ führt zum Subsektor.
+    again.closeWorld();
+    expect(again.snapshot().globe).toBeUndefined();
+  });
+
   it('übersteht die Kampagnendatei und lässt sich neu würfeln', async () => {
     const { game } = await started();
     game.openGlobeAt(4, 5);

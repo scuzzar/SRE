@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { landformAt, type GlobeView, type LogItem, type WorldView } from '../../controller';
 import { roleText } from '../format';
 import { useGame } from '../game-context';
 import { CloseIcon, LocateIcon, PencilIcon } from '../icons';
 import { createGlobeRenderer, type GlobeRenderer } from './globe-gl';
 import { hideLoading, showLoading } from '../loading';
-import { useIsDesktop } from '../media';
 import { cellAt, radiusOf, renderGlobe, screenOf, type Camera, type Viewport } from './globe-render';
 import { HappenedList } from './HappenedList';
 import { NoteSection, SurfaceSection, WorldCard } from './WorldSheet';
@@ -28,13 +27,12 @@ function maxZoom(globe: GlobeView): number {
 type Panel = 'world' | 'places' | 'logs' | undefined;
 
 /**
- * Der Globus einer Welt wie eine Karten-App, der Bildschirm einer fertigen Welt: Die Karte füllt den
- * ganzen Bildschirm. Oben eine Leiste mit Schließen, Name und UWP (klappt die Welt im Klartext auf, mit
- * Oberfläche, Aufenthalt, Reise und Notiz) und zwei aufklappbaren Listen (Orte: Städte, Vulkane, Gruppe,
- * NSC; Einträge: die Felder mit Logeinträgen). Unten fährt ein Feld herein, sobald ein Feld angetippt ist, mit allem, was
- * dort ist, dem, was dort geschah, und darunter der Reihe Notiz, Würfeln, Karte (`dock`), damit man zum
- * Würfeln nicht den Globus verlassen muss. Im Desktop-Modus fährt das Feld links herein wie in einer
- * Karten-App, statt unten über die ganze Breite. Wohin die Karte schaut und welche Liste offen ist, ist reine
+ * Der Globus einer Welt wie eine Karten-App, die Grundkarte unter allem: Die Karte füllt ihre Fläche
+ * (auf dem Smartphone liegt unten das Ziehblatt darüber). Oben eine Leiste mit Schließen (zum
+ * Subsektor, ebenso ganz herausgezoomt), Name und UWP (klappt die Welt im Klartext auf, mit
+ * Oberfläche, Aufenthalt, Reise und Notiz) und zwei aufklappbaren Listen (Orte: Städte, Vulkane,
+ * Gruppe, NSC; Einträge: die Felder mit Logeinträgen). Ein angetipptes Feld zeigt `FieldCard` im
+ * Ziehblatt bzw. im Panel neben dem Log. Wohin die Karte schaut und welche Liste offen ist, ist reine
  * Darstellung; welches Feld angetippt ist, hält der Controller.
  */
 export function GlobeScreen({
@@ -44,8 +42,6 @@ export function GlobeScreen({
   travel,
   log,
   logDays,
-  error,
-  dock,
 }: {
   globe: GlobeView;
   world: WorldView | undefined;
@@ -53,9 +49,6 @@ export function GlobeScreen({
   travel: { readonly blocker: string | undefined } | undefined;
   log: readonly LogItem[];
   logDays: readonly (string | undefined)[];
-  error: string | undefined;
-  /** Die Reihe Notiz, Würfeln, Karte unten im Feld. */
-  dock?: ReactNode;
 }) {
   const game = useGame();
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -73,9 +66,6 @@ export function GlobeScreen({
   const [showGrid, setShowGrid] = useState(false);
   const [panel, setPanel] = useState<Panel>(undefined);
   const [confirmReroll, setConfirmReroll] = useState(false);
-  const [npcToMove, setNpcToMove] = useState('');
-  const [renaming, setRenaming] = useState<number | undefined>(undefined);
-  const [newName, setNewName] = useState('');
 
   // Die Karte füllt den Platz.
   useLayoutEffect(() => {
@@ -162,6 +152,20 @@ export function GlobeScreen({
   const gesture = useRef<{ moved: number; pinch?: number; zoom?: number; double?: boolean; startY?: number }>({ moved: 0 });
   const clampZoom = useCallback((z: number) => (Number.isFinite(z) ? Math.min(maxZoom(globe), Math.max(1, z)) : 1), [globe]);
   const zoomBy = useCallback((factor: number) => setCamera((c) => ({ ...c, zoom: clampZoom(c.zoom * factor) })), [clampZoom]);
+  // Ganz herausgezoomt geht es weiter hinaus zum Subsektor, wie in einer Karten-App: mit −, mit dem
+  // Mausrad (ein paar Rasten am Anschlag) oder mit zwei Fingern (deutlich weiter zusammen als am Anschlag).
+  const leaving = useRef(false);
+  const leave = useCallback(() => {
+    if (leaving.current) return;
+    leaving.current = true;
+    game.closeWorld();
+  }, [game]);
+  const zoomNow = useRef(camera.zoom);
+  useEffect(() => {
+    zoomNow.current = camera.zoom;
+  }, [camera.zoom]);
+  const wheelOut = useRef({ count: 0, at: 0 });
+  const pinchFloor = useRef<number | undefined>(undefined);
   // Die Knöpfe gleiten: Ziel merken und in wenigen Bildern hinzoomen, solange in grober Auflösung.
   const zoomTarget = useRef<number | undefined>(undefined);
   const zoomFrame = useRef(0);
@@ -184,20 +188,6 @@ export function GlobeScreen({
     zoomFrame.current = requestAnimationFrame(step);
   };
   useEffect(() => () => cancelAnimationFrame(zoomFrame.current), []);
-  // Die Knöpfe stehen über dem Infofeld unten, so hoch, wie es wirklich ist.
-  // Im Desktop-Modus steht das Feld links, die Knöpfe bleiben unten rechts.
-  const desktop = useIsDesktop();
-  const sheet = useRef<HTMLElement>(null);
-  const [sheetHeight, setSheetHeight] = useState(0);
-  useLayoutEffect(() => {
-    const el = sheet.current;
-    if (!el) return;
-    const measure = () => setSheetHeight(el.classList.contains('open') && !desktop ? el.offsetHeight : 0);
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [globe.picked, desktop]);
   // Gesten wie in einer Karten-App: ziehen dreht, zwei Finger zoomen, Doppeltippen zoomt auf die
   // Stelle hinein, Doppeltippen und Ziehen zoomt einhändig (nach unten hinein, nach oben heraus).
   // Ein einfaches Tippen wählt das Feld erst, wenn kein zweites Tippen folgt.
@@ -214,6 +204,7 @@ export function GlobeScreen({
   };
   /** Zwei Finger: Kneifen beginnt beim jetzigen Abstand und Zoom (auch wenn ein dritter Finger gerade abhebt). */
   const startPinch = () => {
+    pinchFloor.current = undefined;
     const [a, b] = [...pointers.current.values()] as [{ x: number; y: number }, { x: number; y: number }];
     gesture.current = { moved: 99, pinch: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), zoom: camera.zoom };
   };
@@ -252,6 +243,10 @@ export function GlobeScreen({
       const distance = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
       const wanted = (gesture.current.zoom ?? camera.zoom) * (distance / gesture.current.pinch);
       const zoom = clampZoom(wanted);
+      if (zoom <= 1 && wanted < 1) {
+        if (pinchFloor.current === undefined) pinchFloor.current = distance;
+        else if (distance < pinchFloor.current * 0.7) leave();
+      } else pinchFloor.current = undefined;
       // Am Anschlag neu ansetzen: Wer weiter spreizt und dann zurückkneift, zoomt sofort wieder heraus.
       if (zoom !== wanted) gesture.current = { ...gesture.current, pinch: distance, zoom };
       setCamera((c) => ({ ...c, zoom }));
@@ -308,11 +303,19 @@ export function GlobeScreen({
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
+      if (e.deltaY > 0 && zoomNow.current <= 1) {
+        const out = wheelOut.current;
+        out.count = e.timeStamp - out.at < 500 ? out.count + 1 : 1;
+        out.at = e.timeStamp;
+        if (out.count >= 4) leave();
+        return;
+      }
+      wheelOut.current.count = 0;
       zoomBy(e.deltaY < 0 ? 1.15 : 1 / 1.15);
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, [zoomBy]);
+  }, [zoomBy, leave]);
 
   /** Wie im Navi: gleitet zur Gruppe zurück und zoomt so weit hinein, dass man die Umgebung sieht. */
   const flyFrame = useRef(0);
@@ -345,10 +348,9 @@ export function GlobeScreen({
     game.pickCell(cell);
   };
 
-  const picked = globe.picked;
   const toggle = (p: Panel) => setPanel(panel === p ? undefined : p);
   return (
-    <div className="globe-full" role="dialog" aria-modal="true" aria-label={`Globus · ${globe.name}`}>
+    <div className="globe-full" role="region" aria-label={`Globus · ${globe.name}`}>
       <div className="globe-stage" ref={stage}>
         <canvas ref={base} className="globe-canvas globe-base" aria-hidden />
         <canvas
@@ -365,7 +367,7 @@ export function GlobeScreen({
 
       <div className="globe-top">
         <div className="globe-bar">
-          <button data-escape type="button" className="globe-round" aria-label="Schließen" onClick={() => game.closeWorld()}>
+          <button type="button" className="globe-round" aria-label="Schließen" title="Zum Subsektor" onClick={() => game.closeWorld()}>
             <CloseIcon />
           </button>
           <button type="button" className={panel === 'world' ? 'globe-title on' : 'globe-title'} aria-expanded={panel === 'world'} aria-label={`${globe.name}, UWP ${world?.uwp ?? ''}: die Welt im Klartext`} onClick={() => toggle('world')}>
@@ -482,7 +484,7 @@ export function GlobeScreen({
         )}
       </div>
 
-      <div className="globe-zoom" hidden={panel === 'world'} style={sheetHeight > 0 ? { bottom: sheetHeight + 12 } : undefined}>
+      <div className="globe-zoom" hidden={panel === 'world'}>
         {globe.partyCell !== undefined && (
           <button type="button" className="globe-round globe-locate" aria-label="Zur Gruppe" title="Zur Gruppe" onClick={flyToParty}>
             <LocateIcon />
@@ -492,107 +494,117 @@ export function GlobeScreen({
           <button type="button" className="globe-round" aria-label="Hineinzoomen" onClick={() => glideZoom(1.6)}>
             +
           </button>
-          <button type="button" className="globe-round" aria-label="Herauszoomen" onClick={() => glideZoom(1 / 1.6)}>
+          <button type="button" className="globe-round" aria-label="Herauszoomen" title={camera.zoom <= 1 ? 'Zum Subsektor' : 'Herauszoomen'} onClick={() => (camera.zoom <= 1 ? leave() : glideZoom(1 / 1.6))}>
             −
           </button>
         </div>
       </div>
 
-      <section ref={sheet} className={picked ? 'globe-sheet open' : 'globe-sheet'} aria-label="Angetipptes Feld" aria-hidden={!picked}>
-        {picked && (
-          <>
-            <div className="globe-sheet-head">
-              <span className="globe-handle" aria-hidden />
-              {picked.cities[0] && renaming === picked.cities[0].index ? (
-                <form
-                  className="globe-rename"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    game.renameCity(renaming, newName);
-                    setRenaming(undefined);
-                  }}
-                >
-                  <input aria-label="Name der Stadt" value={newName} autoFocus onChange={(e) => setNewName(e.target.value)} />
-                  <button type="submit" className="primary compact" disabled={!newName.trim()}>
-                    OK
-                  </button>
-                </form>
-              ) : (
-                <h3>
-                  {picked.cities[0]?.name ?? picked.landform}
-                  {picked.cities[0] && (
-                    <button
-                      type="button"
-                      className="icon-button globe-pencil"
-                      aria-label="Stadt umbenennen"
-                      onClick={() => {
-                        setRenaming(picked.cities[0]!.index);
-                        setNewName(picked.cities[0]!.name);
-                      }}
-                    >
-                      <PencilIcon />
-                    </button>
-                  )}
-                </h3>
-              )}
-              <button type="button" className="icon-button" aria-label="Feld schließen" onClick={() => game.pickCell(undefined)}>
-                <CloseIcon />
-              </button>
-            </div>
-            <p className="globe-sheet-sub">
-              {picked.landform} · {picked.position} · {picked.temperature}
-            </p>
-            <ul className="globe-facts">
-              {picked.cities.map((c, i) => (
-                <li key={c.index}>{i === 0 ? c.detail : `${c.name}: ${c.detail}`}</li>
-              ))}
-              {picked.towns > 0 && <li>Kleinstadt</li>}
-              {picked.volcano && <li>{picked.volcano}</li>}
-              {picked.river && <li>Fluss</li>}
-              {picked.road && <li>Straße</li>}
-              {globe.partyCell === picked.cell && <li>Die Gruppe ist hier</li>}
-              {picked.npcs.map((n) => (
-                <li key={n.id}>
-                  <button type="button" className="link-button" aria-label={`NSC ${n.name} (${roleText[n.role]}) öffnen`} onClick={() => game.editCharacter(n.id)}>
-                    {n.name}
-                  </button>{' '}
-                  · NSC, {roleText[n.role]}
-                </li>
-              ))}
-            </ul>
-            <div className="globe-actions">
-              {globe.partyHere && globe.partyCell !== picked.cell && (
-                <button type="button" className="primary compact" onClick={() => game.moveParty()}>
-                  {picked.city === undefined ? 'Gruppe hierher' : 'Gruppe in diese Stadt'}
-                </button>
-              )}
-              {globe.npcs.length > 0 && (
-                <span className="globe-move-npc">
-                  <select aria-label="NSC wählen" value={npcToMove} onChange={(e) => setNpcToMove(e.target.value)}>
-                    <option value="">NSC …</option>
-                    {globe.npcs.map((n) => (
-                      <option key={n.id} value={n.id}>
-                        {n.name}
-                      </option>
-                    ))}
-                  </select>
-                  <button type="button" className="ghost compact" disabled={!npcToMove} onClick={() => game.moveNpc(npcToMove)}>
-                    hierher
-                  </button>
-                </span>
-              )}
-            </div>
-            {error && (
-              <p className="error" role="alert">
-                {error}
-              </p>
-            )}
-            {picked.happened.length > 0 ? <HappenedList title="Was hier geschah" indices={picked.happened} log={log} logDays={logDays} /> : <p className="combat-hint">Hier ist noch nichts geschehen.</p>}
-            {dock && <div className="globe-dock">{dock}</div>}
-          </>
-        )}
-      </section>
     </div>
+  );
+}
+
+/**
+ * Das angetippte Feld des Globus mit allem, was dort ist, und dem, was dort geschah. Es steht im
+ * Ziehblatt bzw. im Panel neben dem Log an der Stelle des Bereichs; ✕ lässt das Feld los. Der Name
+ * beim Umbenennen und der NSC zum Herholen sind reine Darstellung.
+ */
+export function FieldCard({ globe, error, log, logDays }: { globe: GlobeView; error: string | undefined; log: readonly LogItem[]; logDays: readonly (string | undefined)[] }) {
+  const game = useGame();
+  const [npcToMove, setNpcToMove] = useState('');
+  const [renaming, setRenaming] = useState<number | undefined>(undefined);
+  const [newName, setNewName] = useState('');
+  const picked = globe.picked;
+  if (!picked) return null;
+  return (
+    <section className="field-card scroll" aria-label="Angetipptes Feld">
+      <div className="globe-sheet-head">
+          {picked.cities[0] && renaming === picked.cities[0].index ? (
+          <form
+            className="globe-rename"
+            onSubmit={(e) => {
+              e.preventDefault();
+              game.renameCity(renaming, newName);
+              setRenaming(undefined);
+            }}
+          >
+            <input aria-label="Name der Stadt" value={newName} autoFocus onChange={(e) => setNewName(e.target.value)} />
+            <button type="submit" className="primary compact" disabled={!newName.trim()}>
+              OK
+            </button>
+          </form>
+        ) : (
+          <h3>
+            {picked.cities[0]?.name ?? picked.landform}
+            {picked.cities[0] && (
+              <button
+                type="button"
+                className="icon-button globe-pencil"
+                aria-label="Stadt umbenennen"
+                onClick={() => {
+                  setRenaming(picked.cities[0]!.index);
+                  setNewName(picked.cities[0]!.name);
+                }}
+              >
+                <PencilIcon />
+              </button>
+            )}
+          </h3>
+        )}
+        <button type="button" className="icon-button" aria-label="Feld schließen" onClick={() => game.pickCell(undefined)}>
+          <CloseIcon />
+        </button>
+      </div>
+      <p className="globe-sheet-sub">
+        {picked.landform} · {picked.position} · {picked.temperature}
+      </p>
+      <ul className="globe-facts">
+        {picked.cities.map((c, i) => (
+          <li key={c.index}>{i === 0 ? c.detail : `${c.name}: ${c.detail}`}</li>
+        ))}
+        {picked.towns > 0 && <li>Kleinstadt</li>}
+        {picked.volcano && <li>{picked.volcano}</li>}
+        {picked.river && <li>Fluss</li>}
+        {picked.road && <li>Straße</li>}
+        {globe.partyCell === picked.cell && <li>Die Gruppe ist hier</li>}
+        {picked.npcs.map((n) => (
+          <li key={n.id}>
+            <button type="button" className="link-button" aria-label={`NSC ${n.name} (${roleText[n.role]}) öffnen`} onClick={() => game.editCharacter(n.id)}>
+              {n.name}
+            </button>{' '}
+            · NSC, {roleText[n.role]}
+          </li>
+        ))}
+      </ul>
+      <div className="globe-actions">
+        {globe.partyHere && globe.partyCell !== picked.cell && (
+          <button type="button" className="primary compact" onClick={() => game.moveParty()}>
+            {picked.city === undefined ? 'Gruppe hierher' : 'Gruppe in diese Stadt'}
+          </button>
+        )}
+        {globe.npcs.length > 0 && (
+          <span className="globe-move-npc">
+            <select aria-label="NSC wählen" value={npcToMove} onChange={(e) => setNpcToMove(e.target.value)}>
+              <option value="">NSC …</option>
+              {globe.npcs.map((n) => (
+                <option key={n.id} value={n.id}>
+                  {n.name}
+                </option>
+              ))}
+            </select>
+            <button type="button" className="ghost compact" disabled={!npcToMove} onClick={() => game.moveNpc(npcToMove)}>
+              hierher
+            </button>
+          </span>
+        )}
+      </div>
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+      {picked.happened.length > 0 ? <HappenedList title="Was hier geschah" indices={picked.happened} log={log} logDays={logDays} /> : <p className="combat-hint">Hier ist noch nichts geschehen.</p>}
+    </section>
   );
 }
 

@@ -4,7 +4,7 @@ import { useGame } from '../game-context';
 import { animated } from '../haptics';
 import { HoldButton } from '../HoldButton';
 import { withLoading } from '../loading';
-import { CloseIcon, DiceIcon } from '../icons';
+import { CloseIcon, DiceIcon, LocateIcon } from '../icons';
 import { RollStage } from './WorldSheet';
 import { worldImageUrl } from './world-icon';
 
@@ -358,6 +358,8 @@ function ZoomableMap({ children }: { children: (pixelsPerUnit: number) => ReactN
 }
 
 export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; heading?: string }) {
+  // Als Grundkarte führt ein Knopf zum Globus des Aufenthaltsorts (nicht beim Wählen für die Erschaffung).
+  const here = view.picking ? undefined : view.worlds.find((w) => w.id === view.location);
   const game = useGame();
   // Das Feld, dessen Vorkommen hier gerade gewürfelt wurde, und ob sein Ergebnis schon feststeht.
   const [rolled, setRolled] = useState<string>();
@@ -395,6 +397,11 @@ export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; 
           <button type="button" className={panel === 'legend' ? 'globe-chip on' : 'globe-chip'} aria-expanded={panel === 'legend'} onClick={() => toggle('legend')}>
             Legende ▾
           </button>
+          {here && (
+            <button type="button" className="globe-round globe-locate sector-locate" aria-label={`Aufenthaltsort ${here.name}, Globus öffnen`} title={`Zur Gruppe: ${here.name}`} onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobeAt(here.column, here.row))}>
+              <LocateIcon />
+            </button>
+          )}
         </div>
         <div className="sector-body">
           <ZoomableMap>

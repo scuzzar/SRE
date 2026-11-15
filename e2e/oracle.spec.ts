@@ -5,12 +5,13 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-test('Hauptscreen: leerer Log, drei gleich breite Knöpfe unten, keine Stufe ohne Probe', async ({ page }) => {
+test('Log: leer, vier gleich breite Knöpfe unten (Deuten erst mit einem Ergebnis), keine Stufe ohne Probe', async ({ page }) => {
   await expect(page.getByText('Noch nichts im Log.')).toBeVisible();
   await expect(page.getByRole('radio')).toHaveCount(0);
   const viewport = page.viewportSize()!;
   const widths: number[] = [];
-  for (const name of ['Notiz', '2W6', 'Karte ziehen']) {
+  await expect(oracle(page).getByRole('button', { name: 'Neuestes Ergebnis deuten' })).toBeDisabled();
+  for (const name of ['Notiz', 'Neuestes Ergebnis deuten', '2W6', 'Karte ziehen']) {
     const box = (await oracle(page).getByRole('button', { name, exact: true }).boundingBox())!;
     expect(box.y).toBeGreaterThan(viewport.height / 2);
     expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
@@ -191,8 +192,9 @@ test('Über: auf dem iPhone der Weg über Teilen und der Hinweis auf den eigenen
   await context.close();
 });
 
-test('Vollbild: der Knopf neben dem i schaltet an und aus', async ({ page }) => {
-  const header = page.getByRole('banner');
+test('Vollbild: der Knopf im Menü schaltet an und aus', async ({ page }) => {
+  await page.getByRole('button', { name: 'Menü', exact: true }).click();
+  const header = page.getByRole('navigation', { name: 'Menü' });
   await header.getByRole('button', { name: 'Vollbild' }).click();
   await expect(header.getByRole('button', { name: 'Vollbild beenden' })).toHaveAttribute('aria-pressed', 'true');
   expect(await page.evaluate(() => document.fullscreenElement !== null)).toBe(true);
@@ -305,4 +307,26 @@ test('Eine ältere Karte ohne Frage zeigt ihre Felder in der Zeile nur einmal', 
   await expect(row.locator('.row-picks span')).toHaveCount(2);
   await expect(row.locator('.row-what')).toHaveCount(0);
   await page.screenshot({ path: process.env.SHOT ?? 'test-results/karte-zeile.png' });
+});
+
+test('Deuten mit dem Knopf in der Reihe unten: gilt dem neuesten Ergebnis', async ({ page }) => {
+  await oracle(page).getByRole('button', { name: '2W6', exact: true }).click();
+  await expect(page.locator('.dice-roll')).toBeHidden();
+  await oracle(page).getByRole('button', { name: 'Neuestes Ergebnis deuten' }).click();
+  const reading = page.getByRole('dialog', { name: 'Deutung' });
+  await expect(reading).toContainText(/zu 2W6: \d+/);
+  await reading.getByPlaceholder(/Was bedeutet das/).fill('Die Tür ist offen.');
+  await reading.getByRole('button', { name: 'Deuten' }).click();
+  await expect(reading).toBeHidden();
+  await expect(oracle(page).locator('.entry', { hasText: 'Würfel · 2W6' }).locator('.interpretation')).toContainText('Die Tür ist offen.');
+});
+
+test('Die Reihe unten steht auf dem Smartphone nur im Log und beim angetippten Feld', async ({ page }, testInfo) => {
+  testInfo.skip(testInfo.project.name !== 'mobil', 'Im Desktop-Modus steht sie immer im Log-Panel');
+  const nav = page.getByRole('navigation', { name: 'Bereiche' });
+  await expect(oracle(page).getByRole('button', { name: '2W6', exact: true })).toBeVisible();
+  for (const name of ['Begegnung', 'Kampf', 'Shop', 'Charaktere', 'NSC']) {
+    await nav.getByRole('button', { name, exact: true }).click();
+    await expect(page.getByRole('region', { name: 'Orakel und Proben' })).toHaveCount(0);
+  }
 });

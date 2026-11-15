@@ -6,10 +6,9 @@ test('Im abgeschotteten Rahmen: Welt benennen und Charakter speichern', async ({
   await page.setContent(`<iframe src="${baseURL}/" sandbox="allow-scripts allow-same-origin" style="border:0;width:390px;height:844px"></iframe>`);
   const app = page.frameLocator('iframe');
 
-  await app.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
   const map = app.getByRole('group', { name: 'Karte des Subsektors' });
   let named = false;
-  for (const id of ['0101', '0202', '0303', '0404', '0505', '0606', '0707', '0808', '0109', '0210']) {
+  for (const id of ['0101', '0202', '0303', '0404', '0505', '0606', '0707', '0408', '0109', '0210']) {
     await map.getByRole('button', { name: `${id}, nicht erzeugt` }).click();
     const button = app.locator('.sector-dock').getByRole('button', { name: /Vorkommen würfeln/ });
     const box = (await button.boundingBox())!;

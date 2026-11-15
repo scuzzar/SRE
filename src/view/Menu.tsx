@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react';
 import type { Snapshot } from '../controller';
 import { useGame } from './game-context';
+import { FullscreenButton } from './FullscreenButton';
 import { CloseIcon } from './icons';
 
 /**
  * Das Menü hinter ☰: unter „Kampagne“ die Kampagnenwahl (wechseln, neu, umbenennen, löschen,
  * importieren) und der Export der offenen Kampagne, unter „App“ der Bildschirm „Über“ mit
- * Installieren, Vibration und Quellen. Ob es offen ist, hält die View; jede Wahl geht an den Controller.
+ * Installieren, Vibration und Quellen; oben neben ✕ Vollbild. Ob es offen ist, hält die View; jede Wahl geht an den Controller.
  */
 export function Menu({ view, onClose }: { view: Snapshot; onClose: () => void }) {
   const game = useGame();
@@ -23,6 +24,7 @@ export function Menu({ view, onClose }: { view: Snapshot; onClose: () => void })
       <nav className="menu" aria-label="Menü">
         <div className="menu-head">
           <span className="menu-title">Menü</span>
+          <FullscreenButton />
           <button ref={close} type="button" className="icon-button" aria-label="Menü schließen" onClick={onClose}>
             <CloseIcon />
           </button>

@@ -41,7 +41,7 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
 - **Er ändert das Model**, als Einziger, und speichert den Spielstand über das Repository:
   `rollDice()`, `drawCard(question)`, `toggleOdds(odds)` (Orakelfeld der Karte), `togglePick(slot)`, `toggleRoll(roll)`
   (Wurffeld), `confirmCard(question)` (mit der Frage aus dem Feld der Karte), `discardCard()`, `drawNames()` und `closeNames()` (Name von der Karte), `writeNote(text, interprets)`, `deleteLogEntry(index)`, `setOdds(odds)`; für den Charakter oben und die Probe
-  `focusCharacter(id)` (Wischen), `chooseSkill(skill)`, `chooseSkillOf(id, skill)` (Fertigkeit auf einer anderen Karte der Charakterspalte), `toggleCharacteristic(c)`, `rollTask()`,
+  `focusCharacter(id)` (Wischen), `chooseSkill(skill)`, `chooseSkillOf(id, skill)` (Fertigkeit auf einer anderen Karte der Leiste), `toggleCharacteristic(c)`, `rollTask()`,
   `endTask()`; für den Kampf `wieldWeapon(weapon)`, `chooseTarget(armor, range)`, `endAttack()`,
   `rollAttack()`, `rollDamage()`, `reload()`, für Begegnungen `rollEncounter(roll)`,
   `endEncounter()`, `rollPatron(force)`, `createPatronNpc()` („Als NSC“ zum letzten Patron-Wurf; die Erschaffung läuft dafür in `model/generation.ts` `runCareerIn` für sich durch, ohne die offene Erschaffung der Kampagne zu berühren), `rollRumor(force)`, `rollLegal(force)` (der zweite Test im Zeitraum nur mit `force`, dem langen Druck; die Tests stehen im Log, Regeln in `model/encounter-check.ts`), für die Spielzeit `passDays(days)`, `endWeek(force)` und `setStartDate(day, year)` (`model/time.ts`; neue Logeinträge bekommen in `change` den heutigen Tag), für die Reise `openJourney()` (auf der Weltkarte; würfelt die NSC im Kälteschlaf und hält die Reise in Vorbereitung im Zustand), `choosePassage(id, passage)`, `guessSurvivors(id, n)`, `travel()` und `closeJourney()` (`model/travel.ts`), `setTerrain(terrain)`, `rollAnimals(row)`, `rollEventSaves(index)`, `struggle()`, `openLoot(id)`, `takeLoot(npc, pc)`, `butcher(animal, pc)`, `closeButchered()`, `sellGame(key, kg, total, pc)`, `adoptNpcs(npcs, asNpc)`, in der Kampfsimulation `chooseFightTarget(id)`,
@@ -63,9 +63,9 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   `runOccurrence()`, `rollWorld()`, `runWorld()`, `nameWorld(name)`, `noteWorld(note)`, `discardWorld()` und
   `closeWorld()`; für den Globus `openGlobe()` (auf der Weltkarte; erzeugt beim ersten Mal die
   Oberflächenkarte, `model/surface-map.ts` auf dem Raster aus `model/surface-grid.ts`), `openGlobeAt(column, row)`
-  (aus der Kopfzeile), `pickCell(cell)`, `rerollMap()` (gesperrt, sobald ein Ort auf die Karte zeigt),
+  (vom Knopf ⌖ im Subsektor), `pickCell(cell)`, `rerollMap()` (gesperrt, sobald ein Ort auf die Karte zeigt),
   `renameCity(index, name)`, `moveParty()` und `moveNpc(id)` (auf das angetippte Feld bzw. in die Stadt darauf, `model/place.ts`) und
-  `closeGlobe()`; eine fertige Welt mit Oberfläche öffnet `chooseHex` gleich als Globus (`openGlobeAt`), dessen Schließen-Knopf ruft `closeWorld()`; neue Logeinträge bekommen in `change` den Aufenthaltsort als Ort (`stampPlaces`); gezeichnet wird er in
+  `closeGlobe()`; eine fertige Welt mit Oberfläche öffnet `chooseHex` gleich als Globus (`openGlobeAt`), dessen Schließen-Knopf (und das Herauszoomen über den Anschlag) ruft `closeWorld()` und führt zum Subsektor; beim Öffnen einer Kampagne ist der Globus des Aufenthaltsorts die Grundkarte, wenn seine Oberflächenkarte schon entstanden ist (`home`), sonst der Subsektor; ein angetipptes Feld zeigt die View an der Stelle des Bereichs (`FieldCard`); neue Logeinträge bekommen in `change` den Aufenthaltsort als Ort (`stampPlaces`); gezeichnet wird er in
   `view/sector/globe-render.ts` aus Raster und gepackter Karte im Snapshot (`controller/globe-view.ts`), mit WebGL 2 in `view/sector/globe-gl.ts` (Muster je Geländeart einmal auf der Grafikkarte gebacken, Dreiecke zwischen den Feldmitten mit ausgefransten Übergängen, das Gitter nur als zuschaltbare Ränder; aufgebaut in Schritten hinter dem Ladebalken aus `view/loading.tsx`, den die View vor dem Öffnen einer Welt zeigt), ohne WebGL 2 als Textur auf dem Prozessor. Ein Hexfeld (`model/sector.ts`) hält die Werte seiner Welt;
   ein Wurf der Weltenerschaffung (`model/draft/world-roll.ts`) trägt sein Ergebnis ein und lebt nur,
   solange Weltkarte oder Feldwahl offen sind (im Zustand des Controllers). Die Erschaffung ist gespeicherter Stand (`model/generation.ts`,
@@ -73,12 +73,12 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   ein und reicht ihn weiter; prüfen tut das Model (`fromCampaignFile`), anbieten zum Download der
   Controller über `Download`. Offene Karte, Probe, Angriff in Vorbereitung und Schaden beim Verteilen sind Teil des
   Models (`model/draft/`), werden aber nicht gespeichert.
-- **Er wählt, welche View zu sehen ist**: Orakel-, Begegnungs-, Kampf-, Shop-, Charakter-, NSC- oder Sektor-Screen (`showScreen(screen)`; im NSC-Screen „Alle zeigen“ mit `showAllNpcs(all)`, beim Öffnen des Reiters wieder aus, gruppiert nach `model/npcs.ts`; `newCharacter(npc, role)` öffnet den Editor für einen neuen NSC, `generateNpc(service, role)` erzeugt einen aus einer Laufbahn (`model/npcs.ts`, auch die Waffen erzeugter NSC) und öffnet ihn im Editor; „Zum Kampf“ im Begegnungs-Screen wechselt so in den Kampf-Screen, „Weiter“ in der Übersicht einer Begegnung, `closeEncounterIntro()`, bleibt im Screen), das gewählte Feld im Subsektor, die Weltkarte eines Feldes, die
+- **Er wählt, welche View zu sehen ist**: die Grundkarte (Globus der offenen Welt, sonst Subsektor) und den Reiter Log, Begegnung, Kampf, Shop, Charaktere oder NSC (`showScreen(screen)`, lässt ein angetipptes Feld des Globus los; im Desktop-Modus heißt `oracle`, dass neben dem Log kein Bereich offen ist; im NSC-Screen „Alle zeigen“ mit `showAllNpcs(all)`, beim Öffnen des Reiters wieder aus, gruppiert nach `model/npcs.ts`; `newCharacter(npc, role)` öffnet den Editor für einen neuen NSC, `generateNpc(service, role)` erzeugt einen aus einer Laufbahn (`model/npcs.ts`, auch die Waffen erzeugter NSC) und öffnet ihn im Editor; „Zum Kampf“ im Begegnungs-Screen wechselt so in den Kampf-Screen, „Weiter“ in der Übersicht einer Begegnung, `closeEncounterIntro()`, bleibt im Screen), das gewählte Feld im Subsektor, die Weltkarte eines Feldes, die
   Kampagnenwahl (`showCampaigns()`, `closeCampaigns()`) und das Ergebnis-Popup (`closeResult()`),
   welcher Charakter im Charakter-Screen seine Details zeigt (`toggleDetails(id)`) und ob die Leiste
   mit dem Charakter oben eingeklappt ist (`toggleStrip()`) und ob der Hinweis über den Waffen im
-  Shop weggeklickt ist (`hideShopHint()`); beides merkt sich das Gerät über das Repository, wie die
-  offene Kampagne. Auch der Ablauf ist seine Sache: Steht nach einer Änderung
+  Shop weggeklickt ist (`hideShopHint()`) und wie weit das Ziehblatt hochgezogen ist (`setTrayHeight(fraction)`);
+  das merkt sich das Gerät über das Repository, wie die offene Kampagne. Auch der Ablauf ist seine Sache: Steht nach einer Änderung
   ein anderer Charakter oben, endet die Probe; nach der Erschaffung geht es zum Orakel-Screen, wo der
   Neue oben steht. Die Inspirationskarte steht im Vordergrund, solange es eine offene
   `Card` gibt; das folgt aus dem Model und braucht keinen eigenen Zustand.
@@ -137,7 +137,7 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
 Id; welche offen ist, steht daneben unter `settings`. Die eine Kampagne aus der Zeit vor mehreren
 Kampagnen lag unter dem Schlüssel `current` und behält ihn als Id. Geht das nicht (privates
 Fenster, eingebettete Vorschau, eine lokal geöffnete Datei auf manchen Handys), läuft die App mit
-einem Speicher im Arbeitsspeicher weiter; ein Hinweis oben unter der Kopfzeile und der
+einem Speicher im Arbeitsspeicher weiter; ein Hinweis oben im Ziehblatt bzw. im Log-Panel und der
 „Über“-Bildschirm sagen dann, dass nichts dauerhaft gespeichert wird. Läuft IndexedDB, bittet
 `requestDurable()` den Browser, den Speicher dauerhaft zu halten (`navigator.storage.persist()`). Die
 Antwort geht als Promise in den Controller und wartet nicht auf den Start, weil Firefox dafür den
