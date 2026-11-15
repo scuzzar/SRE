@@ -330,3 +330,24 @@ test('Die Reihe unten steht auf dem Smartphone nur im Log und beim angetippten F
     await expect(page.getByRole('region', { name: 'Orakel und Proben' })).toHaveCount(0);
   }
 });
+
+test('Ziehblatt ganz hinunter: Reihe und Reiter rutschen mit hinaus, nur der Griff bleibt; ein Tippen holt es zurück', async ({ page }, testInfo) => {
+  testInfo.skip(testInfo.project.name !== 'mobil', 'Das Ziehblatt gibt es nur auf dem Smartphone');
+  const viewport = page.viewportSize()!;
+  const nav = page.getByRole('navigation', { name: 'Bereiche' });
+  const grip = page.locator('.tray-grip');
+  const box = (await grip.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, viewport.height - 2, { steps: 8 });
+  await page.mouse.up();
+  // Reiter und Würfel liegen unter dem Bildschirmrand, der Griff steht unten.
+  await expect.poll(async () => (await nav.boundingBox())!.y).toBeGreaterThanOrEqual(viewport.height);
+  await expect.poll(async () => (await oracle(page).getByRole('button', { name: '2W6', exact: true }).boundingBox())!.y).toBeGreaterThanOrEqual(viewport.height);
+  expect((await grip.boundingBox())!.y).toBeLessThan(viewport.height);
+  // Das Gerät merkt es sich, auch nach dem Neuladen.
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Blatt hervorholen' })).toBeVisible();
+  await page.getByRole('button', { name: 'Blatt hervorholen' }).click();
+  await expect.poll(async () => { const b = (await nav.boundingBox())!; return b.y + b.height; }).toBeLessThanOrEqual(viewport.height + 1);
+});
