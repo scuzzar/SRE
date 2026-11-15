@@ -207,6 +207,7 @@ import {
   tripSurface,
   farePayers,
   type Trip,
+  type CheckKind,
 } from '../model';
 import {
   attackerOf,
@@ -285,6 +286,8 @@ export interface Snapshot {
   readonly tripPlan: TripPlanView | undefined;
   /** Was beim Fahren nicht ging. */
   readonly tripNote: string | undefined;
+  /** Der Würfeldialog des Begegnungstests eines Reisetags. */
+  readonly tripRoll: TripRoll | undefined;
   /** Auf der offenen Weltkarte: warum die Gruppe nicht hierher reisen kann; `undefined`, wenn sie kann. Fehlt ohne Weltkarte. */
   readonly travel: { readonly blocker: string | undefined } | undefined;
   /** Die offene Inspirationskarte; solange es sie gibt, steht sie im Vordergrund. */
@@ -1353,6 +1356,8 @@ export interface ControllerState {
   readonly tripPlan: { readonly target: number; readonly options: readonly Trip[]; readonly chosen: number; readonly error: string | undefined } | undefined;
   /** Was beim Fahren nicht ging. */
   readonly tripNote: string | undefined;
+  /** Der Begegnungstest eines Reisetags am Boden, solange sein Würfeldialog offen ist. */
+  readonly tripRoll: TripRoll | undefined;
   /** Das Ziel dessen, der in der Kampfsimulation am Zug ist (Id eines SC oder NSC). */
   readonly simTarget: string | undefined;
   /** Feuerstoß oder Einzelschuss dessen, der in der Kampfsimulation am Zug ist; fehlt: vorgewählt. */
@@ -2284,6 +2289,17 @@ function sellables(campaign: Campaign, c: Character | undefined): ShopView['memb
       });
 }
 
+/** Der Begegnungstest eines Reisetags am Boden: Art, Würfel, Zielwert, ob bestanden, was folgt. */
+export interface TripRoll {
+  readonly kind: CheckKind;
+  readonly dice: readonly number[];
+  readonly target: number;
+  readonly passed: boolean;
+  readonly text: string;
+  /** Es kam zur Begegnung; nach dem Dialog folgt ihre Übersicht. */
+  readonly encounter: boolean;
+}
+
 /** Die Planung einer Fahrt in Worten. */
 function tripPlanView(campaign: Campaign, draft: ControllerState['tripPlan']): TripPlanView | undefined {
   const surface = draft ? tripSurface(campaign) : undefined;
@@ -2448,7 +2464,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayHeight: state.trayHeight, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -2473,6 +2489,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     trip: activeTripView(campaign),
     tripPlan: tripPlanView(campaign, state.tripPlan),
     tripNote: state.tripNote,
+    tripRoll: state.tripRoll,
     travel: state.world && { blocker: travelBlocker(campaign, hexId(state.world.column, state.world.row)) },
     card: state.card && cardView(state.card),
     names: state.names,

@@ -125,7 +125,7 @@ import {
   moveParty,
   planOptions,
   startTrip,
-  driveDay,
+  travelDay,
   cancelTrip,
   moveNpc,
   type Place,
@@ -207,7 +207,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, selected: undefined, picking: false } as const;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -301,6 +301,7 @@ export class GameController {
       picking: false,
       tripPlan: undefined,
       tripNote: undefined,
+      tripRoll: undefined,
     };
     this.current = buildSnapshot(this.state);
   }
@@ -1844,10 +1845,44 @@ export class GameController {
   /** „Einen Tag fahren“: die Fahrstunden eines Tages oder bis zur Ankunft. */
   driveDay(): void {
     try {
-      this.change(driveDay(this.campaign, this.deps.clock), { tripNote: undefined, timeNote: undefined });
+      // Am Boden folgt der Begegnungstest des Tages (in der Wildnis Tiere) und, wenn er besteht, die Begegnung.
+      const day = travelDay(this.campaign, this.deps.random, this.deps.clock);
+      const prepared = day.encounter ? this.prepareTurn(day.campaign, undefined) : { campaign: day.campaign, simTarget: undefined };
+      const check = day.check;
+      const animal = check?.entry.check === 'animal';
+      const text = !check
+        ? ''
+        : !check.result.passed
+          ? animal
+            ? 'Heute keine Tiere.'
+            : 'Heute keine Begegnung.'
+          : day.event !== undefined
+            ? `Wurf ${day.roll}: Ereignis ${animalEventOf(day.event).name}.`
+            : day.encounter
+              ? animal
+                ? `Wurf ${day.roll}: Tiere!`
+                : `Wurf ${day.roll}: eine Begegnung!`
+              : `Wurf ${day.roll}: doch keine Begegnung.`;
+      this.change(prepared.campaign, {
+        tripNote: undefined,
+        timeNote: undefined,
+        ...(day.encounter ? { attack: undefined, simTarget: prepared.simTarget, joining: [] } : {}),
+        tripRoll: check ? { kind: check.entry.check, dice: check.result.dice, target: check.result.target, passed: check.result.passed, text, encounter: day.encounter !== undefined } : undefined,
+      });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ tripNote: error.message });
+    }
+  }
+
+  /** Schließt den Würfeldialog des Reisetags; kam es zur Begegnung, folgt ihre Übersicht im Reiter Begegnung. */
+  closeTripRoll(): void {
+    const roll = this.state.tripRoll;
+    if (!roll) return;
+    this.update({ tripRoll: undefined });
+    if (roll.encounter) {
+      this.showScreen('encounter');
+      this.update({ encounterIntro: true });
     }
   }
 

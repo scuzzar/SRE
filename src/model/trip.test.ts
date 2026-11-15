@@ -12,6 +12,9 @@ import {
   moveParty,
   parkVehicles,
   planOptions,
+  travelDay,
+  travelCheckKind,
+  groundToday,
   leftBehind,
   livingCharacters,
   planTrip,
@@ -30,7 +33,7 @@ import {
   type Landform,
   type SurfaceMap,
 } from '.';
-import { fixedClock } from './testing';
+import { fixedClock, fixedRandom } from './testing';
 
 const grid = surfaceGrid(2);
 const clock = fixedClock();
@@ -327,6 +330,34 @@ describe('Eigene Fahrzeuge in der Planung', () => {
     expect(leftBehind(c, flight)).toEqual([{ item: 'vehicle-ground-car', count: 1, place: { world: '0101', cell: line[0] } }]);
     // Wer nur rechnet, ändert nichts: Das Auto ist noch bei der Gruppe.
     expect(c.stash).toEqual([{ of: 'vehicle-ground-car', count: 1 }]);
+  });
+});
+
+describe('Begegnungen am Boden', () => {
+  it('jeder Reisetag am Boden würfelt den Test; in der Wildnis Tiere, im besiedelten Land die Zufallsbegegnung', () => {
+    const c0 = campaignOn(mapWith({ [line[0]!]: 'settled' }), line[0]!);
+    const trip = startTrip(c0, planTrip(c0, line[1]!, { rent: false }));
+    expect(groundToday(trip)).toBe(true);
+    // Test 1 (5+ nötig): keine Begegnung.
+    const day = travelDay(trip, fixedRandom(1), clock);
+    expect(day.check?.result.passed).toBe(false);
+    expect(day.campaign.log.at(-1)).toMatchObject({ kind: 'check', dice: [1] });
+    expect(day.campaign.log.at(-2)).toMatchObject({ kind: 'tripDay' });
+    // Noch am Start, besiedelt: Zufallsbegegnung. Offenes Land ist Wildnis (Forest hat Tiere).
+    expect(travelCheckKind(day.campaign)).toBe('random');
+    expect(travelCheckKind(moveParty(c0, { world: '0101', cell: line[2]! }))).toBe('animal');
+  });
+
+  it('besteht der Test, folgt gleich die Begegnung; ein Tag nur in der Luft würfelt nichts', () => {
+    const c0 = campaignOn(mapWith({ [line[0]!]: 'settled' }, { towns: [[line[0]!, 1]] }), line[0]!, { funds: 100_000 });
+    const walk = startTrip(c0, planTrip(c0, line[1]!, { rent: false }));
+    const met = travelDay(walk, fixedRandom(6), clock);
+    expect(met.check?.result.passed).toBe(true);
+    expect(met.encounter !== undefined || met.roll !== undefined).toBe(true);
+    const flight = startTrip(c0, planTrip(c0, grid.cells - 1, { rent: true }));
+    expect(flight.trip!.legs.map((l) => l.by)).not.toContain('walk');
+    expect(groundToday(flight)).toBe(false);
+    expect(travelDay(flight, fixedRandom(), clock).check).toBeUndefined();
   });
 });
 

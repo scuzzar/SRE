@@ -23,6 +23,7 @@ import { SectorPicker, SectorScreen } from './sector/SectorScreen';
 import { WorldSheet } from './sector/WorldSheet';
 import { JourneySheet } from './sector/JourneySheet';
 import { FieldCard, GlobeScreen } from './sector/GlobeScreen';
+import { TripRollDialog } from './sector/TripPanels';
 import { LoadingOverlay } from './loading';
 import { Tray } from './Tray';
 
@@ -195,6 +196,7 @@ export function App() {
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
       {view.journey && <JourneySheet journey={view.journey} />}
       {view.card && <CardSheet card={view.card} />}
+      {view.tripRoll && <TripRollDialog roll={view.tripRoll} />}
       {view.result?.kind === 'damage' ? (
         <DiceRoll key={view.result.at} item={view.result} seed={view.result.of} onDone={closeResult} />
       ) : (

@@ -1940,13 +1940,20 @@ describe('Fahrt (2026-11-15)', () => {
     const days = game.snapshot().trip!.daysLeft;
     expect(days).toBeGreaterThan(0);
     const before = game['campaign'].day;
-    for (let d = 0; d < days; d++) game.driveDay();
+    for (let d = 0; d < days; d++) {
+      game.driveDay();
+      // Am Boden: der Begegnungstest des Tages im Würfeldialog (der Zufall der Tests gibt 1: keine Begegnung).
+      expect(game.snapshot().tripRoll).toMatchObject({ dice: [1], target: 5, passed: false, encounter: false });
+      game.closeTripRoll();
+      expect(game.snapshot().tripRoll).toBeUndefined();
+    }
     expect(game.snapshot().trip).toBeUndefined();
     expect(game['campaign'].day).toBe(before + days);
     expect(game['campaign'].location).toEqual({ world: '0405', cell: target });
-    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'tripDay', arrived: true });
+    expect(game.snapshot().log.at(-2)).toMatchObject({ kind: 'tripDay', arrived: true });
+    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'check' });
     await game.whenSaved();
-    expect(fromCampaignFile(toCampaignFile(repository.saved!), 'c2').log.at(-1)).toMatchObject({ kind: 'tripDay', arrived: true });
+    expect(fromCampaignFile(toCampaignFile(repository.saved!), 'c2').log.at(-2)).toMatchObject({ kind: 'tripDay', arrived: true });
   });
 
   it('zeigt mit Geld in der Kasse mehrere Varianten; eine gewählte zeigt der Globus und mit ihr fährt man los', async () => {
