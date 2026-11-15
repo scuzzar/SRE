@@ -261,9 +261,10 @@ button:disabled {
   bottom: max(0px, calc(var(--tray-floor, 0px) - 16px));
 }
 
-/* Der Subsektor als Grundkarte wie eine Karten-App: Die Karte füllt die sichtbare Fläche zwischen
-   Leiste und Ziehblatt, bei Zoom 1 steht dort der ganze Subsektor (jedes Feld lässt sich antippen);
-   vergrößert reicht sie unter Leiste und Blatt. Leiste und Listen schweben darüber. */
+/* Der Subsektor als Grundkarte wie der Globus: Die Karte füllt die Fläche zwischen Leiste und dem
+   Streifen, den das Ziehblatt immer belegt (Griff und Reiter); bei Zoom 1 steht dort der ganze
+   Subsektor. Zieht man das Blatt hoch, schiebt es sich darüber, die Karte bleibt, wie sie ist;
+   verdeckte Reihen holt man durch Verschieben hervor. Leiste und Listen schweben darüber. */
 .base-sector {
   position: absolute;
   inset: 0;
@@ -301,7 +302,7 @@ button:disabled {
   top: calc(max(10px, env(safe-area-inset-top)) + 52px);
   left: 8px;
   right: 8px;
-  bottom: calc(var(--tray-h, 0px) + 8px);
+  bottom: calc(var(--tray-floor, 0px) + 8px);
 }
 
 .base .sector-viewport {
@@ -317,9 +318,9 @@ button:disabled {
   overflow: visible;
 }
 
-/* Die Zoom-Knöpfe stehen unten rechts über dem Ziehblatt. */
+/* Die Zoom-Knöpfe stehen unten rechts über dem Ziehblatt, wie hoch es auch steht. */
 .base .sector-zoom {
-  bottom: 4px;
+  bottom: calc(var(--tray-h, 0px) - var(--tray-floor, 0px) + 4px);
   z-index: 2;
 }
 
