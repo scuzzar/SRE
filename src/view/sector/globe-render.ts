@@ -1,6 +1,7 @@
 import { landformAt, nearestCell, type GlobeView } from '../../controller';
 
-// Reine Darstellung: der Globus einer Welt aus ihrer Oberflächenkarte. Aus Raster und Geländeart
+// Reine Darstellung: der Globus einer Welt aus ihrer Oberflächenkarte. `cellLook` sagt, wie jedes Feld
+// aussieht (für WebGL in globe-gl.ts). Ohne WebGL: Aus Raster und Geländeart
 // entsteht einmal je Karte eine Textur nach Breiten- und Längengrad (mit ausgefransten Küsten), die
 // jedes Bild Pixel für Pixel auf die Kugel legt. Licht von links oben, Atmosphäre als Leuchten am Rand.
 
@@ -72,31 +73,38 @@ interface Texture {
   readonly height: number;
   readonly color: Uint8ClampedArray;
   readonly gridColor: Uint8ClampedArray;
-  /** Eine Farbe je Feld (r, g, b von 0 bis 1) für die Hexkarte mit Gitter. */
-  readonly cellColor: Float32Array;
 }
 
-/** Die Farbe eines Feldes als Ganzes, ohne Ausfransen: für die Hexkarte. */
-function flatColor(form: Landform, coast: number, life: boolean, cell: number): Rgb {
-  const jitter = 0.94 + hash3(cell, 7, 11) * 0.1;
-  let col: Rgb = form === 'open' && !life ? BARREN : COLORS[form];
-  if (form === 'water') col = mix(COLORS.water, DEEP, clamp((coast - 1) / 6, 0, 1) * 0.8);
-  return [col[0] * jitter, col[1] * jitter, col[2] * jitter];
+/**
+ * Die Art eines Feldes für das Muster im Shader (`globe-gl.ts`): die Geländearten in dieser
+ * Reihenfolge, dazu `city` (ein Feld mit Stadt) und `barren` (Offen/Wald ohne Leben).
+ */
+export const CELL_KINDS = ['water', 'waterIce', 'landIce', 'tundra', 'mountain', 'rugged', 'desert', 'jungle', 'swamp', 'open', 'settled', 'city', 'barren'] as const;
+export type CellKind = (typeof CELL_KINDS)[number];
+
+const CITY: Rgb = [0.6, 0.59, 0.55];
+
+/** Wie jedes Feld aussieht: Geländeart, Abstand zur Küste, Grundfarbe und Art für das Muster. */
+export interface CellLook {
+  readonly forms: readonly Landform[];
+  readonly coast: Int32Array;
+  /** Grundfarbe je Feld (r, g, b von 0 bis 1); Wasser wird mit dem Abstand zur Küste tiefer. */
+  readonly color: Float32Array;
+  /** Die Nummer in `CELL_KINDS` je Feld. */
+  readonly kind: Uint8Array;
 }
 
-const textures = new WeakMap<object, Texture>();
+const looks = new WeakMap<object, CellLook>();
 
-/** Baut die Textur einmal je Karte (Breite nach Feinheit des Rasters). */
-export function textureOf(globe: GlobeView): Texture {
-  const known = textures.get(globe.map);
+/** Das Aussehen der Felder, einmal je Karte; schnell, ohne Textur. */
+export function cellLook(globe: GlobeView): CellLook {
+  const known = looks.get(globe.map);
   if (known) return known;
   const { grid, map } = globe;
-  const width = clamp(grid.n * 32, 512, 1536);
-  const height = width / 2;
   const cells = grid.cells;
-  // Abstand zur Küste je Feld, für flaches und tiefes Wasser.
   const forms: Landform[] = new Array(cells);
   for (let c = 0; c < cells; c++) forms[c] = landformAt(map, c);
+  // Abstand zur Küste je Feld, für flaches und tiefes Wasser.
   const isWater = (c: number) => forms[c] === 'water' || forms[c] === 'waterIce';
   const coast = new Int32Array(cells).fill(-1);
   const queue: number[] = [];
@@ -115,6 +123,33 @@ export function textureOf(globe: GlobeView): Texture {
       }
     }
   }
+  const life = globe.look.life === true;
+  const cities = new Set((map.cities ?? []).map((c) => c.cell).filter((c) => c !== undefined));
+  const color = new Float32Array(cells * 3);
+  const kind = new Uint8Array(cells);
+  for (let c = 0; c < cells; c++) {
+    const form = forms[c]!;
+    const k: CellKind = cities.has(c) && !isWater(c) ? 'city' : form === 'open' && !life ? 'barren' : form;
+    let col: Rgb = k === 'city' ? CITY : k === 'barren' ? BARREN : COLORS[form];
+    if (form === 'water') col = mix(COLORS.water, DEEP, clamp((coast[c]! - 1) / 6, 0, 1) * 0.8);
+    color.set(col, c * 3);
+    kind[c] = CELL_KINDS.indexOf(k);
+  }
+  const look = { forms, coast, color, kind };
+  looks.set(globe.map, look);
+  return look;
+}
+
+const textures = new WeakMap<object, Texture>();
+
+/** Baut die Textur einmal je Karte (Breite nach Feinheit des Rasters); nur ohne WebGL gebraucht. */
+export function textureOf(globe: GlobeView): Texture {
+  const known = textures.get(globe.map);
+  if (known) return known;
+  const { grid, map } = globe;
+  const width = clamp(grid.n * 32, 512, 1536);
+  const height = width / 2;
+  const { forms, coast } = cellLook(globe);
   const life = globe.look.life === true;
   const color = new Uint8ClampedArray(width * height * 4);
   const cellOf = new Int32Array(width * height);
@@ -221,9 +256,7 @@ export function textureOf(globe: GlobeView): Texture {
       }
     }
   }
-  const cellColor = new Float32Array(cells * 3);
-  for (let c = 0; c < cells; c++) cellColor.set(flatColor(forms[c]!, coast[c]!, life, c), c * 3);
-  const texture = { width, height, color, gridColor, cellColor };
+  const texture = { width, height, color, gridColor };
   textures.set(globe.map, texture);
   return texture;
 }

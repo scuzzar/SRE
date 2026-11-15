@@ -104,7 +104,7 @@ export function GlobeScreen({
       renderGlobe(img, globe, camera, showGrid);
       ctx.putImageData(img, 0, 0);
     }
-    drawMarkers(ctx, globe, camera, { width: w, height: h }, scale, showGrid);
+    drawMarkers(ctx, globe, camera, { width: w, height: h }, scale, gl !== null);
   }, [globe, camera, view, moving, showGrid]);
 
   // Drehen, Zoomen, Antippen.
@@ -493,26 +493,35 @@ export function GlobeScreen({
 
 /**
  * Zeichen auf dem Globus: Kleinstädte außerhalb des besiedelten Gebiets, Städte, Vulkane, Ereignisse, NSC, die Gruppe, das angetippte
- * Feld als Ring; auf der Hexkarte auch Flüsse und Straßen, die sonst in der Textur stehen.
+ * Feld als Ring; mit WebGL auch Flüsse und Straßen (ohne WebGL stehen sie in der Textur).
  */
-function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Camera, view: Viewport, scale: number, hexes: boolean): void {
+function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Camera, view: Viewport, scale: number, lines: boolean): void {
   const at = (cell: number) => screenOf(globe, camera, view, cell);
-  if (hexes) {
+  if (lines) {
+    // Geschwungen statt Zickzack: durch die Mitten zwischen den Feldern, die Felder als Stützpunkte.
     const path = (cells: readonly number[], stroke: string, width: number) => {
       ctx.beginPath();
-      let open = false;
+      let run: { x: number; y: number }[] = [];
+      const flush = () => {
+        if (run.length >= 2) {
+          ctx.moveTo(run[0]!.x, run[0]!.y);
+          for (let i = 1; i < run.length - 1; i++) {
+            const a = run[i]!;
+            const b = run[i + 1]!;
+            ctx.quadraticCurveTo(a.x, a.y, (a.x + b.x) / 2, (a.y + b.y) / 2);
+          }
+          ctx.lineTo(run[run.length - 1]!.x, run[run.length - 1]!.y);
+        }
+        run = [];
+      };
       for (const cell of cells) {
         const p = at(cell);
-        if (!p) {
-          open = false;
-          continue;
-        }
-        if (open) ctx.lineTo(p.x, p.y);
-        else ctx.moveTo(p.x, p.y);
-        open = true;
+        if (p) run.push(p);
+        else flush();
       }
+      flush();
       ctx.strokeStyle = stroke;
-      ctx.lineWidth = width * scale;
+      ctx.lineWidth = width * scale * Math.min(2, Math.max(1, camera.zoom / 2));
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.stroke();
