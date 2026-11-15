@@ -8150,3 +8150,14 @@ button:disabled {
 .trip-option-cost {
   color: var(--text, inherit) !important;
 }
+
+/* Ein eigenes Fahrzeug, das auf der Fahrt stehen bleibt. */
+.trip-option-leaves {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #ffb347;
+}
+
+.globe-trace {
+  padding: 8px 14px;
+}

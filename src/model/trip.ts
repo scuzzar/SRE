@@ -261,7 +261,41 @@ export function planOptions(campaign: Campaign, target: number): readonly Trip[]
     const had = best.get(key(s.trip));
     if (!had || s.hours < had.hours - EPS || (Math.abs(s.hours - had.hours) <= EPS && s.rent < had.rent)) best.set(key(s.trip), s);
   }
-  return [...best.values()].sort((a, b) => a.hours - b.hours || a.rent - b.rent).map((s) => s.trip);
+  // Varianten mit eigenen Fahrzeugen zuerst (Owner, 15. November 2026), sonst die schnellste zuerst.
+  const own = (t: Trip) => (t.legs.some((l) => usesOwnVehicle(l)) ? 0 : 1);
+  return [...best.values()].sort((a, b) => own(a.trip) - own(b.trip) || a.hours - b.hours || a.rent - b.rent).map((s) => s.trip);
+}
+
+/** Ob ein Abschnitt ein eigenes Fahrzeug fährt (nicht zu Fuß, nicht gemietet, kein Linienverkehr). */
+export function usesOwnVehicle(leg: Leg): boolean {
+  return !leg.rented && leg.by !== WALK.id && !scheduled(vehicleOf(leg.by));
+}
+
+/** Ein eigenes Fahrzeug, das auf einer Fahrt stehen bleibt: der Gegenstand, wie viele und wo. */
+export interface LeftBehind {
+  readonly item: string;
+  readonly count: number;
+  readonly place: Place;
+}
+
+/**
+ * Welche eigenen Fahrzeuge die Gruppe auf dieser Fahrt zurücklässt: Was nicht mitfährt, bleibt am
+ * Anfang des Abschnitts stehen, in dem die Gruppe wechselt (siehe *Eigene Fahrzeuge bleiben stehen*).
+ * Gerechnet wird ab den schon gefahrenen Stunden; ein Fahrzeug, das unterwegs wieder abgeholt wird, zählt nicht.
+ */
+export function leftBehind(campaign: Campaign, trip: Trip): readonly LeftBehind[] {
+  const surface = surfaceFor(campaign);
+  const times = legTimes(surface, trip);
+  let after = campaign;
+  trip.legs.forEach((leg, i) => {
+    if (times[i]![0] >= trip.hours - EPS) after = settleVehiclesAt(after, surface, leg);
+  });
+  const before = new Map(campaign.stash.map((p) => [possessionKey(p), p.count]));
+  return after.stash.flatMap((p) => {
+    if (p.parked === undefined) return [];
+    const count = p.count - (before.get(possessionKey(p)) ?? 0);
+    return count > 0 ? [{ item: p.of, count, place: p.parked }] : [];
+  });
 }
 
 /** Das Feld, auf dem die Gruppe steht; ohne Feld (nur die Welt oder eine Orbitalstadt) keins. */

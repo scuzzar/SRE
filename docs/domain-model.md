@@ -2379,8 +2379,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     schnellste damit (Ground Car mieten, ATV mieten, Hubschrauber mieten …) und **gemischte**, die
     mehrere Mietfahrzeuge nacheinander nehmen, wo sich das lohnt (Auto zum Hafen, Boot, Auto; Auto
     zum Flugplatz, Flug, Auto). Die gemischten wägen Zeit gegen Miete ab, mit vier Gewichten (eine
-    Fahrstunde ist 3, 30, 300 bzw. 3000 Cr wert). Je Fahrzeugfolge bleibt die schnellste Variante, die
-    schnellste zuerst, markiert als „Schnellste“ bzw. „Günstigste“. Jede mit Dauer in Tagen
+    Fahrstunde ist 3, 30, 300 bzw. 3000 Cr wert). Je Fahrzeugfolge bleibt die schnellste Variante.
+    **Varianten mit eigenen Fahrzeugen stehen immer oben** (Owner, 15. November 2026), darunter die
+    übrigen, je die schnellste zuerst; markiert als „Schnellste“ bzw. „Günstigste“. **Bleibt ein
+    eigenes Fahrzeug zurück** (die Gruppe wechselt auf ein anderes, siehe *Eigene Fahrzeuge bleiben
+    stehen*), sagt die Variante das deutlich, z. B. „⚠ Ground Car bleibt am Start stehen“ oder „⚠ Ground
+    Car bleibt in Ora stehen“; ebenso die laufende Fahrt für den Rest der Strecke. Jede mit Dauer in Tagen
     (`/days`), Fahrstunden und Miete; die gewählte steht auf dem Globus, mit „Losfahren“ wird sie
     gespeichert (`Campaign.trip`). Die Varianten vor dem Bestätigen sind nur Anzeige.
   - **Abschnitt:** Jeder Abschnitt hat seine Felder in Reihenfolge (`cells`; bei einem Flug nur Start
@@ -2395,6 +2399,22 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Wo die Gruppe ist:** Das Feld der Fahrt (`/at`) ist das letzte ganz erreichte Feld. Nach jedem
     Reisetag ist es der Aufenthaltsort; der Reisetag bekommt es als Ort. Bei der Ankunft ist der
     Aufenthaltsort das Ziel (Feld oder Stadt) und die Fahrt fällt weg.
+  - **Begegnungen am Boden** (Owner, 15. November 2026): Hat ein Reisetag Strecke am Boden (nicht nur
+    einen Flug), würfelt „Einen Tag fahren“ danach Pflicht den Begegnungstest am erreichten Ort, mit
+    Würfelanimation: in der **Wildnis** (ein Feld ohne Stadt und Kleinstadt, nicht besiedelt, dessen
+    Gelände Tiere hat) den Test auf **Tiere**, sonst den auf eine **Zufallsbegegnung** (je 5+ auf 1W6,
+    wie im Reiter Begegnung). Er steht als Test im Log und zählt als Test des Tages. Besteht er, folgt
+    gleich der Wurf auf die Tiertabelle bzw. die Random Encounter List; eine Begegnung zeigt danach
+    ihre Übersicht im Reiter Begegnung, ein Tierereignis steht im Log. Solange die Begegnung läuft,
+    fährt man nicht weiter.
+  - **Im Log** stehen die Reisetage einer Fahrt mit ihren Tests als eine Zeile („Fahrt · 5 Reisetage,
+    angekommen: Ora“); antippen klappt sie auf. Das ist nur Anzeige.
+  - **Auf dem Globus** zählen Reisetage und ihre Tests nicht als Einträge (keine Zahl am Feld, nicht
+    unter „Was hier geschah“), außer im Modus **„Wo ich war“** (Owner, 15. November 2026; Schalter in
+    der Liste „Einträge“): Dann zählen sie, und der gereiste Weg steht als gepunktete Linie auf dem
+    Planeten, je Reisetag vom Ort davor (dem letzten Logeintrag mit Feld auf dieser Welt) zum
+    erreichten Feld. Steht vor einer Fahrt kein Eintrag am Start, fehlt das erste Stück. Der Modus ist
+    nur Anzeige und wird nicht gespeichert.
   - **Dazwischen:** Zwischen zwei Reisetagen kann man alles tun: Begegnungen würfeln, ausspielen,
     **rasten** mit *Zeit vergehen lassen* (dann vergehen Tage, die Gruppe bewegt sich nicht). Während
     einer laufenden Begegnung fährt man nicht. Stunden innerhalb eines Tages rechnet die App nicht.

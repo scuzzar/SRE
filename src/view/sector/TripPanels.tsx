@@ -1,4 +1,5 @@
-import type { TripPlanView, TripView } from '../../controller';
+import type { TripPlanView, TripRoll, TripView } from '../../controller';
+import { DiceView, THROW_MS, useTimeline } from '../Dice';
 import { useGame } from '../game-context';
 
 const hoursText = (h: number) => `${String(h).replace('.', ',')} h`;
@@ -83,6 +84,11 @@ export function TripPlanCard({ plan }: { plan: TripPlanView }) {
                         ))}
                       </span>
                     )}
+                    {option.trip.leaves.map((l) => (
+                      <span key={l} className="trip-option-leaves">
+                        ⚠ {l}
+                      </span>
+                    ))}
                     {option.tags.length > 0 && (
                       <span className="trip-option-tags">
                         {option.tags.map((t) => (
@@ -137,6 +143,11 @@ export function TripBar({ trip, note, blocked }: { trip: TripView; note: string 
       <p className="trip-head">
         Unterwegs nach <strong>{trip.to}</strong> · noch {daysText(trip.daysLeft)} · bei {trip.at}
       </p>
+      {trip.leaves.map((l) => (
+        <p key={l} className="trip-option-leaves">
+          ⚠ {l}
+        </p>
+      ))}
       <details>
         <summary>Abschnitte</summary>
         <Legs trip={trip} />
@@ -156,5 +167,33 @@ export function TripBar({ trip, note, blocked }: { trip: TripView; note: string 
         </p>
       )}
     </section>
+  );
+}
+
+/**
+ * Der Begegnungstest eines Reisetags am Boden (5+ auf 1W6): der Würfel rollt, dann steht da, ob es
+ * zur Begegnung kommt; in der Wildnis sind es Tiere. Ein Tippen überspringt die Animation.
+ */
+export function TripRollDialog({ roll }: { roll: TripRoll }) {
+  const game = useGame();
+  const [phase, skip] = useTimeline([200, THROW_MS, 250]);
+  const landed = phase >= 2;
+  const total = roll.dice.reduce((s, d) => s + d, 0);
+  return (
+    <div className="modal">
+      <section className="result trip-roll" role="dialog" aria-modal="true" aria-labelledby="trip-roll-title" onClick={() => phase < 3 && skip(3)}>
+        <span className="kicker">Reisetag · Begegnung am Boden</span>
+        <h2 id="trip-roll-title" className="shop-buy-title">
+          {roll.kind === 'animal' ? 'Tiere (Wildnis)' : 'Zufallsbegegnung'}
+        </h2>
+        {phase >= 1 ? <DiceView dice={roll.dice} seed={total * 11 + roll.target} landed={landed} /> : <div className="dice-stage large" aria-hidden="true" />}
+        <p className={landed ? 'surprise-verdict shown' : 'surprise-verdict'} aria-live="polite">
+          {landed ? `${total} (${roll.target}+ nötig) · ${roll.text}` : ''}
+        </p>
+        <button type="button" className="primary" onClick={() => game.closeTripRoll()}>
+          {roll.encounter ? 'Zur Begegnung' : 'Weiter'}
+        </button>
+      </section>
+    </div>
   );
 }

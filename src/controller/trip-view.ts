@@ -6,6 +6,9 @@ import {
   landformAt,
   legHours,
   legRent,
+  leftBehind,
+  placeCell,
+  itemOf,
   legFare,
   totalFare,
   farePayers,
@@ -60,6 +63,8 @@ export interface TripView {
   readonly at: string;
   /** Die Felder der Route in Reihenfolge, zum Zeichnen. */
   readonly cells: readonly number[];
+  /** Welche eigenen Fahrzeuge zurückbleiben, z. B. „Ground Car bleibt in Ora stehen“. */
+  readonly leaves: readonly string[];
 }
 
 /** Eine Variante der Route, wie eine Karten-App sie zeigt. */
@@ -104,10 +109,11 @@ const round1 = (h: number) => Math.round(h * 10) / 10;
 export function cellLabel(surface: TripSurface, cell: number): string {
   const city = surface.ways.cityAt.get(cell);
   if (city !== undefined) return surface.map.cities![city]!.name;
+  if (surface.ways.town.has(cell)) return `Kleinstadt (Feld ${cell})`;
   return `${LANDFORM_NAMES[landformAt(surface.map, cell)]} (Feld ${cell})`;
 }
 
-export function tripView(surface: TripSurface, trip: Trip, persons: number): TripView {
+export function tripView(campaign: Campaign, surface: TripSurface, trip: Trip, persons: number): TripView {
   let t = 0;
   const legs = trip.legs.map((leg): LegView => {
     const hours = legHours(surface, leg);
@@ -136,6 +142,12 @@ export function tripView(surface: TripSurface, trip: Trip, persons: number): Tri
     rent: totalRent(surface, trip),
     fare: totalFare(surface, trip, persons),
     cost: totalRent(surface, trip) + totalFare(surface, trip, persons),
+    leaves: leftBehind(campaign, trip).map((l) => {
+      const cell = placeCell(campaign.hexes, l.place);
+      const where = cell === undefined ? 'hier' : cell === trip.legs[0]!.cells[0] && trip.hours === 0 ? 'am Start' : `in ${cellLabel(surface, cell)}`;
+      const name = itemOf(l.item).name;
+      return l.count > 1 ? `${l.count} × ${name} bleiben ${where} stehen` : `${name} bleibt ${where} stehen`;
+    }),
     at: cellLabel(surface, positionAt(surface, trip).cell),
     cells,
   };
@@ -144,7 +156,7 @@ export function tripView(surface: TripSurface, trip: Trip, persons: number): Tri
 /** Die laufende Fahrt der Kampagne; ohne Fahrt keine. */
 export function activeTripView(campaign: Campaign): TripView | undefined {
   const surface = campaign.trip ? tripSurface(campaign) : undefined;
-  return surface && campaign.trip ? tripView(surface, campaign.trip, farePayers(campaign)) : undefined;
+  return surface && campaign.trip ? tripView(campaign, surface, campaign.trip, farePayers(campaign)) : undefined;
 }
 
 export function tripDayItem(campaign: Campaign, entry: TripDay): TripDayItem {
@@ -156,8 +168,8 @@ export function tripDayItem(campaign: Campaign, entry: TripDay): TripDayItem {
 }
 
 /** Die Planung mit ihren Varianten in Worten. */
-export function tripPlanOf(surface: TripSurface, draft: { readonly target: number; readonly options: readonly Trip[]; readonly chosen: number; readonly error: string | undefined }, funds: number, persons: number): TripPlanView {
-  const views = draft.options.map((trip) => tripView(surface, trip, persons));
+export function tripPlanOf(campaign: Campaign, surface: TripSurface, draft: { readonly target: number; readonly options: readonly Trip[]; readonly chosen: number; readonly error: string | undefined }, funds: number, persons: number): TripPlanView {
+  const views = draft.options.map((trip) => tripView(campaign, surface, trip, persons));
   const fastest = views.length > 0 ? Math.min(...views.map((v) => v.totalHours)) : 0;
   const cheapest = views.length > 0 ? Math.min(...views.map((v) => v.cost)) : 0;
   const options = draft.options.map((trip, i): TripOptionView => {

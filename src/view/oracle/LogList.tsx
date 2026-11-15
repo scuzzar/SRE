@@ -1,5 +1,5 @@
 import { Fragment, memo, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { DamageItem, JourneyItem, LogItem, NoteItem } from '../../controller';
+import type { DamageItem, JourneyItem, LogItem, NoteItem, TripDayItem } from '../../controller';
 import { answerText, attackTitle, checkDetail, clockTime, damageDetail, isYesAnswer, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, resultLine, scatterText, taskDetail, taskTitle, tripDayDetail } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
@@ -88,16 +88,20 @@ export const LogList = memo(function LogList({ log, days, onInterpret, onEdit }:
   const unfolded = unfolding?.length === log.length ? unfolding.indices : undefined;
   const rows = useMemo(() => {
     const out: (readonly number[])[] = [];
+    const loose = (i: number) => unfolded?.includes(i) ?? false;
+    // Was sich falten lässt: einfache Würfe (am selben Tag) und eine Fahrt aus Reisetagen und ihren Tests.
+    const foldKind = (group: (typeof groups)[number]) =>
+      group.notes.length > 0 || group.latest || group.index === open || loose(group.index) ? undefined : group.item.kind === 'dice' ? 'dice' : group.item.kind === 'tripDay' || group.item.kind === 'check' ? 'trip' : undefined;
     groups.forEach((group, g) => {
-      const plain = group.item.kind === 'dice' && group.notes.length === 0 && !group.latest && group.index !== open;
+      const kind = foldKind(group);
       const previous = out.at(-1);
       const first = previous && groups[previous[0]!]!;
-      const loose = (i: number) => unfolded?.includes(i) ?? false;
-      if (plain && !loose(group.index) && first && first.item.kind === 'dice' && first.notes.length === 0 && !first.latest && first.index !== open && !loose(first.index) && days[first.index] === days[group.index] && previous.every((p) => groups[p]!.item.kind === 'dice')) {
+      if (kind && first && previous.every((p) => foldKind(groups[p]!) === kind) && (kind === 'trip' || days[first.index] === days[group.index])) {
         out[out.length - 1] = [...previous, g];
       } else out.push([g]);
     });
-    return out;
+    // Eine Fahrt ist nur, was einen Reisetag enthält; Tests allein bleiben einzeln.
+    return out.flatMap((row) => (row.length > 1 && groups[row[0]!]!.item.kind !== 'dice' && !row.some((g) => groups[g]!.item.kind === 'tripDay') ? row.map((g) => [g]) : [row]));
   }, [groups, open, unfolded, days]);
   // Nur die neuesten Zeilen zeichnen; ein langer Log bleibt so schnell.
   const [limit, setLimit] = useState(PAGE);
@@ -169,6 +173,24 @@ export const LogList = memo(function LogList({ log, days, onInterpret, onEdit }:
                   {day}
                 </li>
               );
+              if (row.length > 1 && item.kind !== 'dice') {
+                const tripDays = row.map((g) => groups[g]!.item).filter((t): t is TripDayItem => t.kind === 'tripDay');
+                const last = tripDays.at(-1)!;
+                const tests = row.length - tripDays.length;
+                return (
+                  <Fragment key={index}>
+                    {dayLine}
+                    <li className="log-row">
+                      <button type="button" className="log-row-button" aria-expanded={false} aria-label={`Fahrt, ${tripDays.length} Reisetage${tests ? ` und ${tests} Begegnungstests` : ''}, ${last.arrived ? 'angekommen in' : 'bis'} ${last.where}. Antippen zum Auffalten.`} onClick={() => setUnfolding({ indices: row.map((g) => groups[g]!.index), length: log.length })}>
+                        <span className="row-what plain">
+                          Fahrt · {tripDays.length} {tripDays.length === 1 ? 'Reisetag' : 'Reisetage'}
+                        </span>
+                        <span className="row-result gold">{last.arrived ? `angekommen: ${last.where}` : `bis ${last.where}`}</span>
+                      </button>
+                    </li>
+                  </Fragment>
+                );
+              }
               if (row.length > 1) {
                 const totals = row.map((g) => groups[g]!.item).map((roll) => (roll.kind === 'dice' ? roll.total : 0));
                 return (

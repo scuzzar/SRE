@@ -1895,6 +1895,10 @@ auch auf Wasser (sie schweben). Biplane, Fixed Wing, Helicopter und Hovercraft n
 - Energie (150 Punkte je Tankfüllung, 1 Punkt je Fahrstunde, 2 im Gebirge, dazu Heizung) und
   Schadenstabelle des ATV sind Abenteuerdetails und nicht aufgenommen.
 
+**Begegnungen unterwegs** ✱ (Owner, 15. November 2026): Jeder Reisetag am Boden würfelt den Test des
+Tages, in der Wildnis auf Tiere, sonst auf eine Zufallsbegegnung (statt eines Ereignisses je Hex wie in
+*Mission on Mithril*).
+
 **In der App** ✱ (Owner, 15. November 2026): 8 Fahrstunden je Tag statt 10, weil der Tag der App
 24 Stunden hat und nicht 20; Stunden innerhalb des Tages rechnet die App nicht. Geschwindigkeit je
 Geländeart der Oberflächenkarte statt Stunden je Hex.

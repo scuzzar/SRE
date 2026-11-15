@@ -12,6 +12,12 @@ import {
   moveParty,
   parkVehicles,
   planOptions,
+  isTravelEntry,
+  travelTrace,
+  travelDay,
+  travelCheckKind,
+  groundToday,
+  leftBehind,
   livingCharacters,
   planTrip,
   positionAt,
@@ -29,7 +35,7 @@ import {
   type Landform,
   type SurfaceMap,
 } from '.';
-import { fixedClock } from './testing';
+import { fixedClock, fixedRandom } from './testing';
 
 const grid = surfaceGrid(2);
 const clock = fixedClock();
@@ -312,6 +318,63 @@ describe('Linienflug (2026-11-15c)', () => {
     expect(uses('D', { tech: 8 })).toBe(false);
     expect(uses('C', { tech: 5 })).toBe(false);
     expect(uses('C', { tech: 8, atmosphere: 3 })).toBe(false);
+  });
+});
+
+describe('Eigene Fahrzeuge in der Planung', () => {
+  it('Varianten mit eigenem Fahrzeug zuerst; eine Variante sagt, welches Fahrzeug wo stehen bleibt', () => {
+    const road = line.slice(0, 5);
+    const c = { ...campaignOn(mapWith({}, { towns: [[line[0]!, 1]], roads: [road] }), line[0]!, { funds: 1_000_000 }), stash: [{ of: 'vehicle-ground-car', count: 1 }] };
+    const options = planOptions(c, line[4]!);
+    expect(options[0]!.legs.map((l) => `${l.by}${l.rented ? '*' : ''}`)).toEqual(['ground-car']);
+    expect(leftBehind(c, options[0]!)).toEqual([]);
+    const flight = options.find((t) => t.legs.some((l) => l.by === 'helicopter'))!;
+    expect(leftBehind(c, flight)).toEqual([{ item: 'vehicle-ground-car', count: 1, place: { world: '0101', cell: line[0] } }]);
+    // Wer nur rechnet, ändert nichts: Das Auto ist noch bei der Gruppe.
+    expect(c.stash).toEqual([{ of: 'vehicle-ground-car', count: 1 }]);
+  });
+});
+
+describe('Begegnungen am Boden', () => {
+  it('jeder Reisetag am Boden würfelt den Test; in der Wildnis Tiere, im besiedelten Land die Zufallsbegegnung', () => {
+    const c0 = campaignOn(mapWith({ [line[0]!]: 'settled' }), line[0]!);
+    const trip = startTrip(c0, planTrip(c0, line[1]!, { rent: false }));
+    expect(groundToday(trip)).toBe(true);
+    // Test 1 (5+ nötig): keine Begegnung.
+    const day = travelDay(trip, fixedRandom(1), clock);
+    expect(day.check?.result.passed).toBe(false);
+    expect(day.campaign.log.at(-1)).toMatchObject({ kind: 'check', dice: [1] });
+    expect(day.campaign.log.at(-2)).toMatchObject({ kind: 'tripDay' });
+    // Noch am Start, besiedelt: Zufallsbegegnung. Offenes Land ist Wildnis (Forest hat Tiere).
+    expect(travelCheckKind(day.campaign)).toBe('random');
+    expect(travelCheckKind(moveParty(c0, { world: '0101', cell: line[2]! }))).toBe('animal');
+  });
+
+  it('besteht der Test, folgt gleich die Begegnung; ein Tag nur in der Luft würfelt nichts', () => {
+    const c0 = campaignOn(mapWith({ [line[0]!]: 'settled' }, { towns: [[line[0]!, 1]] }), line[0]!, { funds: 100_000 });
+    const walk = startTrip(c0, planTrip(c0, line[1]!, { rent: false }));
+    const met = travelDay(walk, fixedRandom(6), clock);
+    expect(met.check?.result.passed).toBe(true);
+    expect(met.encounter !== undefined || met.roll !== undefined).toBe(true);
+    const flight = startTrip(c0, planTrip(c0, grid.cells - 1, { rent: true }));
+    expect(flight.trip!.legs.map((l) => l.by)).not.toContain('walk');
+    expect(groundToday(flight)).toBe(false);
+    expect(travelDay(flight, fixedRandom(), clock).check).toBeUndefined();
+  });
+});
+
+describe('Wo ich war', () => {
+  it('erkennt Reisetage und ihre Tests und zeichnet die Strecken aus dem Log nach', () => {
+    let c = campaignOn(mapWith({ [line[0]!]: 'settled' }), line[0]!);
+    c = { ...c, log: [{ kind: 'dice', at: '2026-01-01T00:00:00.000Z', dice: [1, 2], place: { world: '0101', cell: line[0]! } }] };
+    let t = startTrip(c, planTrip(c, line[2]!, { rent: false }));
+    while (t.trip) t = travelDay(t, fixedRandom(), clock).campaign;
+    const travel = t.log.map((_, i) => isTravelEntry(t.log, i));
+    expect(travel[0]).toBe(false);
+    expect(travel.slice(1).every(Boolean)).toBe(true);
+    const trace = travelTrace(t, '0101');
+    expect(trace[0]![0]).toBe(line[0]);
+    expect(trace.at(-1)![1]).toBe(line[2]);
   });
 });
 
