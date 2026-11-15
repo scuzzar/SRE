@@ -417,7 +417,7 @@ void main() {
   float a = abs(vAcross);
   float aa = max(fwidth(vAcross), 0.02);
   // Wie viel Einzelheit die Breite trägt: dünne Linien schlicht, breite Bänder mit allem.
-  float detail = smoothstep(1.5, 5.0, vWidthPx);
+  float detail = smoothstep(1.5, 4.0, vWidthPx);
   float core = 1.0 - smoothstep(1.0 - aa, 1.0 + aa, a);
   float outer = 1.0 - smoothstep(${BANK.toFixed(1)} - aa * 2.0, ${BANK.toFixed(1)}, a);
   vec3 col;
@@ -442,11 +442,13 @@ void main() {
     col *= mouth;
     alpha *= mouth;
   } else {
-    // Straße: festgefahrener Belag, Fahrspuren, Rand etwas dunkler, daneben ein schmaler Schatten.
-    vec3 dirt = vec3(0.5, 0.41, 0.3) * (0.95 + 0.08 * wave(vAlong * 23.0));
-    float rut = smoothstep(0.12, 0.0, abs(a - 0.5)) * detail;
-    float edge = smoothstep(0.65, 1.0, a);
-    vec3 road = dirt * (1.0 - 0.15 * rut) * (1.0 - 0.25 * edge);
+    // Straße wie eine Autobahn: dunkler Asphalt, helle Randlinien, gestrichelte Mittellinie,
+    // daneben ein schmaler Schatten.
+    vec3 asphalt = vec3(0.24, 0.25, 0.27) * (0.97 + 0.05 * wave(vAlong * 31.0));
+    float edgeLine = smoothstep(0.12, 0.0, abs(a - 0.8)) * detail;
+    float dash = step(0.45, fract(vAlong * 6.0));
+    float centerLine = smoothstep(0.1, 0.0, a) * dash * detail;
+    vec3 road = mix(asphalt, vec3(0.86, 0.86, 0.82), max(edgeLine * 0.8, centerLine * 0.7));
     float shoulderT = clamp((a - 1.0) / (${BANK.toFixed(1)} - 1.0), 0.0, 1.0);
     float shoulderA = (1.0 - shoulderT) * 0.3 * detail * outer;
     // Vormultipliert: der Seitenstreifen dunkelt nur ab, die Straße deckt fast ganz.
@@ -542,7 +544,7 @@ export function lineMesh(globe: GlobeView): Float32Array {
       sz /= sl;
       const flow = i / (n - 1);
       // Flüsse laufen an der Quelle spitz aus und werden zur Mündung hin breiter.
-      const halfW = kind === 0 ? cellW * (0.03 + 0.07 * flow) * Math.min(1, flow * 12) : cellW * 0.036;
+      const halfW = kind === 0 ? cellW * (0.03 + 0.07 * flow) * Math.min(1, flow * 12) : cellW * 0.026;
       out.push(c[0], c[1], c[2], sx, sy, sz, side, halfW, along, kind, flow);
     };
     const alongAt: number[] = [0];
