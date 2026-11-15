@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { GlobeView, LogItem } from '../../controller';
+import { landformAt, type GlobeView, type LogItem, type WorldView } from '../../controller';
+import { roleText } from '../format';
 import { useGame } from '../game-context';
 import { CloseIcon, PencilIcon } from '../icons';
+import { createGlobeRenderer, type GlobeRenderer } from './globe-gl';
 import { cellAt, radiusOf, renderGlobe, screenOf, type Camera, type Viewport } from './globe-render';
 import { HappenedList } from './HappenedList';
+import { NoteSection, SurfaceSection, WorldCard } from './WorldSheet';
 
 const DEG = Math.PI / 180;
 /** So lange wartet ein Tippen auf ein zweites (Doppeltippen zoomt statt zu wählen). */
@@ -19,18 +22,37 @@ function maxZoom(globe: GlobeView): number {
   return Math.max(2, (5 * globe.grid.n) / (10 * Math.PI) / 0.46);
 }
 
-type Panel = 'places' | 'logs' | undefined;
+type Panel = 'world' | 'places' | 'logs' | undefined;
 
 /**
- * Der Globus einer Welt wie eine Karten-App: Die Karte füllt den ganzen Bildschirm. Oben eine Leiste
- * mit Zurück, Name und zwei aufklappbaren Listen (Orte: Städte, Vulkane, Gruppe, NSC; Einträge: die
- * Felder mit Logeinträgen). Unten fährt ein Feld herein, sobald ein Feld angetippt ist, mit allem, was
+ * Der Globus einer Welt wie eine Karten-App, der Bildschirm einer fertigen Welt: Die Karte füllt den
+ * ganzen Bildschirm. Oben eine Leiste mit Schließen, Name und UWP (klappt die Welt im Klartext auf, mit
+ * Oberfläche, Aufenthalt, Reise und Notiz) und zwei aufklappbaren Listen (Orte: Städte, Vulkane, Gruppe,
+ * NSC; Einträge: die Felder mit Logeinträgen). Unten fährt ein Feld herein, sobald ein Feld angetippt ist, mit allem, was
  * dort ist, und dem, was dort geschah. Wohin die Karte schaut und welche Liste offen ist, ist reine
  * Darstellung; welches Feld angetippt ist, hält der Controller.
  */
-export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; log: readonly LogItem[]; logDays: readonly (string | undefined)[]; error: string | undefined }) {
+export function GlobeScreen({
+  globe,
+  world,
+  here,
+  travel,
+  log,
+  logDays,
+  error,
+}: {
+  globe: GlobeView;
+  world: WorldView | undefined;
+  here: boolean;
+  travel: { readonly blocker: string | undefined } | undefined;
+  log: readonly LogItem[];
+  logDays: readonly (string | undefined)[];
+  error: string | undefined;
+}) {
   const game = useGame();
   const canvas = useRef<HTMLCanvasElement>(null);
+  const base = useRef<HTMLCanvasElement>(null);
+  const renderer = useRef<GlobeRenderer | null | undefined>(undefined);
   const stage = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<Viewport>({ width: 390, height: 700 });
   const [camera, setCamera] = useState<Camera>(() => {
@@ -56,21 +78,32 @@ export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; 
     return () => observer.disconnect();
   }, []);
 
-  // Zeichnen: beim Bewegen in geringerer Auflösung, danach scharf.
+  // Zeichnen: die Kugel mit WebGL in voller Auflösung, auch beim Ziehen; darüber die Zeichen. Ohne
+  // WebGL rechnet der Prozessor die Kugel, beim Bewegen dann in geringerer Auflösung.
   useEffect(() => {
     const el = canvas.current;
-    if (!el) return;
+    const under = base.current;
+    if (!el || !under) return;
+    if (renderer.current === undefined) renderer.current = createGlobeRenderer(under) ?? null;
+    const gl = renderer.current;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const scale = moving ? Math.min(1, dpr) * 0.55 : dpr;
+    const scale = gl || !moving ? dpr : Math.min(1, dpr) * 0.55;
     const w = Math.round(view.width * scale);
     const h = Math.round(view.height * scale);
-    el.width = w;
-    el.height = h;
+    if (el.width !== w) el.width = w;
+    if (el.height !== h) el.height = h;
     const ctx = el.getContext('2d');
     if (!ctx) return;
-    const img = ctx.createImageData(w, h);
-    renderGlobe(img, globe, camera, showGrid);
-    ctx.putImageData(img, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    if (gl) {
+      if (under.width !== w) under.width = w;
+      if (under.height !== h) under.height = h;
+      gl.draw(globe, camera, { width: w, height: h }, showGrid);
+    } else {
+      const img = ctx.createImageData(w, h);
+      renderGlobe(img, globe, camera, showGrid);
+      ctx.putImageData(img, 0, 0);
+    }
     drawMarkers(ctx, globe, camera, { width: w, height: h }, scale);
   }, [globe, camera, view, moving, showGrid]);
 
@@ -220,6 +253,7 @@ export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; 
   return (
     <div className="globe-full" role="dialog" aria-modal="true" aria-label={`Globus · ${globe.name}`}>
       <div className="globe-stage" ref={stage}>
+        <canvas ref={base} className="globe-canvas globe-base" aria-hidden />
         <canvas
           ref={canvas}
           className="globe-canvas"
@@ -234,10 +268,13 @@ export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; 
 
       <div className="globe-top">
         <div className="globe-bar">
-          <button data-escape type="button" className="globe-round" aria-label="Zur Weltkarte" onClick={() => game.closeGlobe()}>
+          <button data-escape type="button" className="globe-round" aria-label="Schließen" onClick={() => game.closeWorld()}>
             <CloseIcon />
           </button>
-          <span className="globe-title">{globe.name}</span>
+          <button type="button" className={panel === 'world' ? 'globe-title on' : 'globe-title'} aria-expanded={panel === 'world'} aria-label={`${globe.name}, UWP ${world?.uwp ?? ''}: die Welt im Klartext`} onClick={() => toggle('world')}>
+            <span className="globe-title-name">{globe.name}</span>
+            {world && <span className="mono globe-title-uwp">{world.uwp} ▾</span>}
+          </button>
           <button type="button" className={panel === 'places' ? 'globe-chip on' : 'globe-chip'} aria-expanded={panel === 'places'} onClick={() => toggle('places')}>
             Orte ▾
           </button>
@@ -245,6 +282,27 @@ export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; 
             Einträge{globe.events.length > 0 ? ` ${globe.events.length}` : ''} ▾
           </button>
         </div>
+        {panel === 'world' && world && (
+          <div className="globe-panel globe-world" role="region" aria-label="Die Welt">
+            <WorldCard world={world} onGlobe />
+            {world.surface && <SurfaceSection lines={world.surface} globe={undefined} />}
+            {world.canNote && (
+              <button type="button" className={here ? 'primary stay-here' : 'ghost stay-here'} aria-pressed={here} onClick={() => game.stayHere()}>
+                {here ? 'Die Gruppe ist hier' : 'Gruppe ist hier'}
+              </button>
+            )}
+            {world.canNote && !here && travel && (
+              <div className="travel-here">
+                <button type="button" className="primary" disabled={travel.blocker !== undefined} onClick={() => game.openJourney()}>
+                  Hierher reisen (1 Woche)
+                </button>
+                {travel.blocker && <p className="combat-hint">{travel.blocker}</p>}
+              </div>
+            )}
+            {world.canNote && <NoteSection note={world.note} />}
+            {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
+          </div>
+        )}
         {panel === 'places' && (
           <div className="globe-panel" role="region" aria-label="Orte">
             {globe.partyCell !== undefined && (
@@ -327,7 +385,7 @@ export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; 
         )}
       </div>
 
-      <div className="globe-zoom" style={sheetHeight > 0 ? { bottom: sheetHeight + 12 } : undefined}>
+      <div className="globe-zoom" hidden={panel === 'world'} style={sheetHeight > 0 ? { bottom: sheetHeight + 12 } : undefined}>
         <button type="button" className="globe-round" aria-label="Hineinzoomen" onClick={() => glideZoom(1.6)}>
           +
         </button>
@@ -390,7 +448,12 @@ export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; 
               {picked.road && <li>Straße</li>}
               {globe.partyCell === picked.cell && <li>Die Gruppe ist hier</li>}
               {picked.npcs.map((n) => (
-                <li key={n}>NSC: {n}</li>
+                <li key={n.id}>
+                  <button type="button" className="link-button" aria-label={`NSC ${n.name} (${roleText[n.role]}) öffnen`} onClick={() => game.editCharacter(n.id)}>
+                    {n.name}
+                  </button>{' '}
+                  · NSC, {roleText[n.role]}
+                </li>
               ))}
             </ul>
             <div className="globe-actions">
@@ -428,9 +491,34 @@ export function GlobeScreen({ globe, log, logDays, error }: { globe: GlobeView; 
   );
 }
 
-/** Zeichen auf dem Globus: Städte, Vulkane, Ereignisse, NSC, die Gruppe, das angetippte Feld als Ring. */
+/**
+ * Zeichen auf dem Globus: Kleinstädte außerhalb des besiedelten Gebiets, Städte, Vulkane, Ereignisse, NSC, die Gruppe, das angetippte
+ * Feld als Ring. Flüsse und Straßen zeichnet die Grafikkarte (globe-gl.ts), ohne WebGL stehen sie in der Textur.
+ */
 function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Camera, view: Viewport, scale: number): void {
   const at = (cell: number) => screenOf(globe, camera, view, cell);
+  // Kleinstädte außerhalb des besiedelten Gebiets: ein kleines helles Haus, sobald man etwas
+  // hineinzoomt. Im besiedelten Gebiet zeigt schon die Farbe, dass dort Menschen leben.
+  if (camera.zoom >= 2.2) {
+    const s = (camera.zoom >= 3 ? 3.2 : 2.4) * scale;
+    for (const [cell] of globe.map.towns ?? []) {
+      if (landformAt(globe.map, cell) === 'settled' || globe.cities.some((c) => c.cell === cell)) continue;
+      const p = at(cell);
+      if (!p) continue;
+      ctx.beginPath();
+      ctx.moveTo(p.x - s, p.y + s);
+      ctx.lineTo(p.x - s, p.y - s * 0.2);
+      ctx.lineTo(p.x, p.y - s * 1.3);
+      ctx.lineTo(p.x + s, p.y - s * 0.2);
+      ctx.lineTo(p.x + s, p.y + s);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(232,226,210,0.95)';
+      ctx.strokeStyle = 'rgba(20,20,20,0.8)';
+      ctx.lineWidth = scale;
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
   const badge = (cell: number, dx: number, dy: number, fill: string, text: string) => {
     const p = at(cell);
     if (!p) return;

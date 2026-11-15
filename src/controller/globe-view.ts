@@ -6,10 +6,12 @@ import {
   landformAt,
   mapLocked,
   placeCell,
+  roleOf,
   surfaceGrid,
   type Campaign,
   type City,
   type Landform,
+  type NpcRole,
   type SurfaceGrid,
   type SurfaceMap,
 } from '../model';
@@ -62,7 +64,7 @@ export interface PickedCell {
   /** Die Stadt, in die „hierher“ versetzt: die erste Stadt auf dem Feld. */
   readonly city: number | undefined;
   /** Die dauerhaften NSC, die hier leben. */
-  readonly npcs: readonly string[];
+  readonly npcs: readonly GlobeNpc[];
   /** Die Stellen der Logeinträge, die hier geschahen (Was hier geschah). */
   readonly happened: readonly number[];
 }
@@ -71,6 +73,7 @@ export interface PickedCell {
 export interface GlobeNpc {
   readonly id: string;
   readonly name: string;
+  readonly role: NpcRole;
   readonly cell: number | undefined;
 }
 
@@ -148,7 +151,7 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
   );
   const volcanoes = (map.volcanoes ?? []).map(([cell, kind]): GlobeVolcano => ({ cell, label: kind === 'major' ? 'Großer Vulkan' : 'Vulkanfeld' }));
   const id = hexId(column, row);
-  const npcs = campaign.characters.filter((c) => c.npc && !c.dead && c.place?.world === id).map((c): GlobeNpc => ({ id: c.id, name: c.name, cell: placeCell(hexes, c.place) }));
+  const npcs = campaign.characters.filter((c) => c.npc && !c.dead && c.place?.world === id).map((c): GlobeNpc => ({ id: c.id, name: c.name, role: roleOf(c), cell: placeCell(hexes, c.place) }));
   const counts = new Map<number, { count: number; latest: number }>();
   for (const i of happenedAt(campaign, id)) {
     const cell = placeCell(hexes, campaign.log[i]!.place);
@@ -170,7 +173,7 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
       river: (map.rivers ?? []).some((r) => r.includes(picked)),
       road: (map.roads ?? []).some((r) => r.includes(picked)),
       city: cities.find((c) => c.cell === picked)?.index,
-      npcs: npcs.filter((n) => n.cell === picked).map((n) => n.name),
+      npcs: npcs.filter((n) => n.cell === picked),
       happened: happenedAt(campaign, id, picked),
     };
   }

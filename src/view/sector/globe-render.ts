@@ -1,6 +1,7 @@
 import { landformAt, nearestCell, type GlobeView } from '../../controller';
 
-// Reine Darstellung: der Globus einer Welt aus ihrer Oberflächenkarte. Aus Raster und Geländeart
+// Reine Darstellung: der Globus einer Welt aus ihrer Oberflächenkarte. `cellLook` sagt, wie jedes Feld
+// aussieht (für WebGL in globe-gl.ts). Ohne WebGL: Aus Raster und Geländeart
 // entsteht einmal je Karte eine Textur nach Breiten- und Längengrad (mit ausgefransten Küsten), die
 // jedes Bild Pixel für Pixel auf die Kugel legt. Licht von links oben, Atmosphäre als Leuchten am Rand.
 
@@ -74,19 +75,36 @@ interface Texture {
   readonly gridColor: Uint8ClampedArray;
 }
 
-const textures = new WeakMap<object, Texture>();
+/**
+ * Die Art eines Feldes für das Muster im Shader (`globe-gl.ts`): die Geländearten in dieser
+ * Reihenfolge, dazu `city` (ein Feld mit Stadt) und `barren` (Offen/Wald ohne Leben).
+ */
+export const CELL_KINDS = ['water', 'waterIce', 'landIce', 'tundra', 'mountain', 'rugged', 'desert', 'jungle', 'swamp', 'open', 'settled', 'city', 'barren'] as const;
+export type CellKind = (typeof CELL_KINDS)[number];
 
-/** Baut die Textur einmal je Karte (Breite nach Feinheit des Rasters). */
-export function textureOf(globe: GlobeView): Texture {
-  const known = textures.get(globe.map);
+const CITY: Rgb = [0.6, 0.59, 0.55];
+
+/** Wie jedes Feld aussieht: Geländeart, Abstand zur Küste, Grundfarbe und Art für das Muster. */
+export interface CellLook {
+  readonly forms: readonly Landform[];
+  readonly coast: Int32Array;
+  /** Grundfarbe je Feld (r, g, b von 0 bis 1); Wasser wird mit dem Abstand zur Küste tiefer. */
+  readonly color: Float32Array;
+  /** Die Nummer in `CELL_KINDS` je Feld. */
+  readonly kind: Uint8Array;
+}
+
+const looks = new WeakMap<object, CellLook>();
+
+/** Das Aussehen der Felder, einmal je Karte; schnell, ohne Textur. */
+export function cellLook(globe: GlobeView): CellLook {
+  const known = looks.get(globe.map);
   if (known) return known;
   const { grid, map } = globe;
-  const width = clamp(grid.n * 32, 512, 1536);
-  const height = width / 2;
   const cells = grid.cells;
-  // Abstand zur Küste je Feld, für flaches und tiefes Wasser.
   const forms: Landform[] = new Array(cells);
   for (let c = 0; c < cells; c++) forms[c] = landformAt(map, c);
+  // Abstand zur Küste je Feld, für flaches und tiefes Wasser.
   const isWater = (c: number) => forms[c] === 'water' || forms[c] === 'waterIce';
   const coast = new Int32Array(cells).fill(-1);
   const queue: number[] = [];
@@ -105,6 +123,33 @@ export function textureOf(globe: GlobeView): Texture {
       }
     }
   }
+  const life = globe.look.life === true;
+  const cities = new Set((map.cities ?? []).map((c) => c.cell).filter((c) => c !== undefined));
+  const color = new Float32Array(cells * 3);
+  const kind = new Uint8Array(cells);
+  for (let c = 0; c < cells; c++) {
+    const form = forms[c]!;
+    const k: CellKind = cities.has(c) && !isWater(c) ? 'city' : form === 'open' && !life ? 'barren' : form;
+    let col: Rgb = k === 'city' ? CITY : k === 'barren' ? BARREN : COLORS[form];
+    if (form === 'water') col = mix(COLORS.water, DEEP, clamp((coast[c]! - 1) / 6, 0, 1) * 0.8);
+    color.set(col, c * 3);
+    kind[c] = CELL_KINDS.indexOf(k);
+  }
+  const look = { forms, coast, color, kind };
+  looks.set(globe.map, look);
+  return look;
+}
+
+const textures = new WeakMap<object, Texture>();
+
+/** Baut die Textur einmal je Karte (Breite nach Feinheit des Rasters); nur ohne WebGL gebraucht. */
+export function textureOf(globe: GlobeView): Texture {
+  const known = textures.get(globe.map);
+  if (known) return known;
+  const { grid, map } = globe;
+  const width = clamp(grid.n * 32, 512, 1536);
+  const height = width / 2;
+  const { forms, coast } = cellLook(globe);
   const life = globe.look.life === true;
   const color = new Uint8ClampedArray(width * height * 4);
   const cellOf = new Int32Array(width * height);
@@ -229,7 +274,7 @@ interface Basis {
   readonly f: Rgb;
 }
 
-function basisOf(camera: Camera): Basis {
+export function basisOf(camera: Camera): Basis {
   const cl = Math.cos(camera.lat);
   const sl = Math.sin(camera.lat);
   const co = Math.cos(camera.lon);
@@ -276,15 +321,15 @@ export function screenOf(globe: GlobeView, camera: Camera, view: Viewport, cell:
   return { x: view.width / 2 + (bx * e[0] + by * e[1] + bz * e[2]) * R, y: view.height / 2 - (bx * n[0] + by * n[1] + bz * n[2]) * R, depth };
 }
 
-const ATMOSPHERE_GLOW: readonly (string | undefined)[] = [undefined, '#8fb4ff', '#9be35a', '#7fb0ff', '#a6e24a', '#6fa8ff', '#5c9cff', '#9fe03c', '#6aa6ff', '#a8dc3a', '#b56cff', '#c46cff', '#ff4fd8', '#9cc4ff', '#6fa8ff', '#d08cff'];
+export const ATMOSPHERE_GLOW: readonly (string | undefined)[] = [undefined, '#8fb4ff', '#9be35a', '#7fb0ff', '#a6e24a', '#6fa8ff', '#5c9cff', '#9fe03c', '#6aa6ff', '#a8dc3a', '#b56cff', '#c46cff', '#ff4fd8', '#9cc4ff', '#6fa8ff', '#d08cff'];
 
-function rgbOf(hex: string): Rgb {
+export function rgbOf(hex: string): Rgb {
   const v = parseInt(hex.slice(1), 16);
   return [((v >> 16) & 255) / 255, ((v >> 8) & 255) / 255, (v & 255) / 255];
 }
 
 /** Licht von links oben, leicht von vorn: die ganze sichtbare Seite bleibt hell genug. */
-const LIGHT = (() => {
+export const LIGHT = (() => {
   const v = [-0.55, 0.5, 0.67];
   const l = Math.hypot(v[0]!, v[1]!, v[2]!);
   return [v[0]! / l, v[1]! / l, v[2]! / l] as const;

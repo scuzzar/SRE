@@ -7510,15 +7510,67 @@ button:disabled {
 .globe-title {
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1px;
+  overflow: hidden;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.15;
+  padding: 4px 14px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(20, 22, 28, 0.85);
+  color: inherit;
+  text-align: left;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.globe-title.on {
+  border-color: rgba(232, 196, 90, 0.8);
+}
+
+.globe-title-name,
+.globe-title-uwp {
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 600;
-  font-size: 16px;
-  padding: 8px 12px;
-  border-radius: 22px;
-  background: rgba(20, 22, 28, 0.85);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.globe-title-uwp {
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+/* Die Welt im Klartext oben auf dem Globus: so hoch, wie Platz ist. */
+.globe-panel.globe-world {
+  max-height: calc(100dvh - 90px);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Die WebGL-Kugel liegt unter dem Canvas mit den Zeichen, der auch die Gesten nimmt. */
+.globe-base {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.globe-canvas:not(.globe-base) {
+  position: absolute;
+  inset: 0;
+}
+
+/* Was über dem Globus aufgeht (Editor, Reise, Karte), liegt auch darüber. */
+.globe-full ~ .overlay {
+  z-index: 13;
 }
 
 .globe-round {
