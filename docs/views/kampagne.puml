@@ -117,6 +117,8 @@ hide <<value>> stereotype
 ' Referenzdaten
   class Odds <<reference>> $karte
   class Place <<value>> $oberflaeche
+' Fahrzeuge und Wege auf der Oberfläche
+  class Trip $logistik
 
 ' Kampagne
 Campaign "1" *-- "*" Character : characters
@@ -137,6 +139,7 @@ Campaign "1" *-- "0..1" Generation : generation
 
 ' Subsektor und Welten
 Campaign "1" *-- "*" Hex : hexes
+Campaign "1" *-- "0..1" Trip : trip
 
 ' Charakter
 Campaign "1" *-- "*" Possession : stash

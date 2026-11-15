@@ -310,12 +310,14 @@ export function cellAt(globe: GlobeView, camera: Camera, view: Viewport, px: num
 
 /** Wo ein Feld auf dem Canvas liegt; `undefined` auf der Rückseite. */
 export function screenOf(globe: GlobeView, camera: Camera, view: Viewport, cell: number): { x: number; y: number; depth: number } | undefined {
+  const p = globe.grid.xyz;
+  return screenOfPoint(camera, view, p[cell * 3]!, p[cell * 3 + 1]!, p[cell * 3 + 2]!);
+}
+
+/** Ein Punkt auf der Einheitskugel auf dem Bildschirm; auf der Rückseite keiner. */
+export function screenOfPoint(camera: Camera, view: Viewport, bx: number, by: number, bz: number): { x: number; y: number; depth: number } | undefined {
   const R = radiusOf(view, camera);
   const { e, n, f } = basisOf(camera);
-  const p = globe.grid.xyz;
-  const bx = p[cell * 3]!;
-  const by = p[cell * 3 + 1]!;
-  const bz = p[cell * 3 + 2]!;
   const depth = bx * f[0] + by * f[1] + bz * f[2];
   if (depth <= 0.02) return undefined;
   return { x: view.width / 2 + (bx * e[0] + by * e[1] + bz * e[2]) * R, y: view.height / 2 - (bx * n[0] + by * n[1] + bz * n[2]) * R, depth };

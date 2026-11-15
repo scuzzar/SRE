@@ -1,4 +1,4 @@
-import type { AttackItem, CardItem, CheckItem, DamageItem, DmPart, ButcheringItem, EventItem, JourneyItem, LogItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem } from '../controller';
+import type { AttackItem, CardItem, CheckItem, DamageItem, DmPart, ButcheringItem, EventItem, JourneyItem, LogItem, TripDayItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem } from '../controller';
 import type { Answer, ArmorClass, AttackKind, BookingKind, NpcRole, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
@@ -76,6 +76,7 @@ export const bookingText: Record<BookingKind, string> = {
   purchase: 'Kauf',
   sale: 'Verkauf',
   lottery: 'Low Lottery',
+  rent: 'Miete',
 };
 
 /** Die Rüstungsklassen, wie die Matrix sie schreibt. */
@@ -339,6 +340,8 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
       return { head: item.week ? 'Woche beendet' : `${item.days} ${item.days === 1 ? 'Tag' : 'Tage'} vergangen`, rest: `bis ${item.to}` };
     case 'journey':
       return { head: `Reise nach ${item.to}`, rest: journeyDetail(item) };
+    case 'tripDay':
+      return { head: item.arrived ? `Angekommen: ${item.where}` : `Reisetag: ${item.where}`, rest: tripDayDetail(item) };
     case 'note':
       return { head: item.interprets === undefined ? 'Notiz' : 'Deutung', rest: item.text };
   }
@@ -412,4 +415,10 @@ export function needText(need: number, chance: number): string {
   if (chance >= 100) return 'Gelingt immer';
   if (chance <= 0) return 'Unmöglich';
   return `Braucht ${need}+`;
+}
+
+/** Ein Reisetag in Zahlen: „8 Fahrstunden · Miete Cr1 000“. */
+export function tripDayDetail(item: TripDayItem): string {
+  const hours = `${String(item.hours).replace('.', ',')} ${item.hours === 1 ? 'Fahrstunde' : 'Fahrstunden'}`;
+  return item.rent > 0 ? `${hours} · Miete Cr${item.rent.toLocaleString('de-DE')}` : hours;
 }

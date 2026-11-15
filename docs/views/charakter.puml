@@ -157,6 +157,7 @@ hide <<value>> stereotype
   class Weapon <<reference>> $kampf
   class Cascade <<reference>> $erschaffung
   class Place <<value>> $oberflaeche
+' Fahrzeuge und Wege auf der Oberfläche
   class Aging <<reference>> $erschaffung
   enum Characteristic <<value>> $charakter {
     STR

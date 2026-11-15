@@ -1,0 +1,468 @@
+// Die Fahrt über die Oberfläche einer Welt (Domänenmodell: Trip, Leg, TripDay; siehe
+// docs/domain-model.md, *Fahrt*): die schnellste Route suchen, sie Tag für Tag abfahren, abbrechen.
+// Eigene Fahrzeuge, die nicht mitfahren, bleiben stehen (Possession.parked).
+
+import type { Campaign, Possession } from './campaign';
+import { possessionKey } from './campaign';
+import { DomainError } from './errors';
+import type { TripDay } from './log';
+import { placeCell, type Place } from './place';
+import type { Clock } from './ports';
+import { itemOf, ref } from './reference';
+import { worldOf, type Hex } from './sector';
+import type { Booking } from './shop';
+import { surfaceGrid, type SurfaceGrid } from './surface-grid';
+import type { SurfaceMap } from './surface-map';
+import { dayOf } from './time';
+import { distanceKm, flies, landsAt, stepSpeed, vehicleOf, vehicleOfItem, vehicles, WALK, waysOf, worksIn, type Vehicle, type Ways } from './vehicle';
+
+/** Ein Abschnitt der Fahrt: ein Fahrzeug, gemietet oder nicht, über Felder in Reihenfolge (ein Flug nur Start und Landepunkt). */
+export interface Leg {
+  /** Verweis auf das Fahrzeug. */
+  readonly by: string;
+  readonly rented: boolean;
+  readonly cells: readonly number[];
+}
+
+/** Die Fahrt der Gruppe auf der Welt ihres Aufenthaltsorts; `hours` sind die schon gefahrenen Stunden. */
+export interface Trip {
+  readonly hours: number;
+  readonly legs: readonly Leg[];
+}
+
+/** Fahrstunden je Reisetag (Hausregel). */
+export const TRIP_HOURS_PER_DAY = ref.houseRules.tripHoursPerDay;
+/** Miete je Tag in Prozent des Kaufpreises (Hausregel). */
+export const RENT_PERCENT = ref.houseRules.rentPercent;
+
+const EPS = 1e-9;
+/** Ein Fahrzeugwechsel kostet in der Suche ein wenig, damit sie nicht grundlos wechselt. */
+const SWITCH_HOURS = 0.01;
+
+/** Die Oberfläche, auf der die Gruppe fährt: die Welt ihres Aufenthaltsorts mit Karte. */
+export interface TripSurface {
+  readonly world: string;
+  readonly hex: Hex & { readonly name: string };
+  readonly map: SurfaceMap;
+  readonly grid: SurfaceGrid;
+  readonly size: number;
+  readonly ways: Ways;
+  readonly atmosphere: number;
+  readonly tech: number;
+}
+
+/** Die Oberfläche des Aufenthaltsorts; ohne Welt mit Karte keine. */
+export function tripSurface(campaign: Campaign): TripSurface | undefined {
+  const world = campaign.location?.world;
+  if (world === undefined) return undefined;
+  const hex = worldOf(campaign.hexes, world);
+  const size = hex.uwp.size ?? 0;
+  if (!hex.map || size < 1) return undefined;
+  return { world, hex, map: hex.map, grid: surfaceGrid(size), size, ways: waysOf(hex.map), atmosphere: hex.uwp.atmosphere ?? 0, tech: hex.uwp.tech ?? 0 };
+}
+
+function surfaceFor(campaign: Campaign): TripSurface {
+  const surface = tripSurface(campaign);
+  if (!surface) throw new DomainError('Die Gruppe ist auf keiner Welt mit Oberflächenkarte.');
+  return surface;
+}
+
+/** Der Ort eines Feldes: die Stadt darauf, sonst das Feld. */
+export function placeAtCell(surface: TripSurface, cell: number): Place {
+  const city = surface.ways.cityAt.get(cell);
+  return city === undefined ? { world: surface.world, cell } : { world: surface.world, city };
+}
+
+/** Die Dauer eines Schritts bzw. Flugs in Stunden; Infinity, wenn er nicht geht. */
+function hoursBetween(surface: TripSurface, vehicle: Vehicle, a: number, b: number): number {
+  const km = distanceKm(surface.grid, surface.size, a, b);
+  if (flies(vehicle)) return km / vehicle.flight!;
+  const speed = stepSpeed(vehicle, surface.map, surface.ways, a, b);
+  return speed > 0 ? km / speed : Infinity;
+}
+
+/** `Leg./hours`: die Fahrstunden eines Abschnitts. */
+export function legHours(surface: TripSurface, leg: Leg): number {
+  const vehicle = vehicleOf(leg.by);
+  if (flies(vehicle)) return hoursBetween(surface, vehicle, leg.cells[0]!, leg.cells.at(-1)!);
+  let total = 0;
+  for (let i = 1; i < leg.cells.length; i++) total += hoursBetween(surface, vehicle, leg.cells[i - 1]!, leg.cells[i]!);
+  return total;
+}
+
+/** `Trip./totalHours`. */
+export function totalHours(surface: TripSurface, trip: Trip): number {
+  return trip.legs.reduce((sum, leg) => sum + legHours(surface, leg), 0);
+}
+
+/** `Trip./days`: wie viele Reisetage die ganze Fahrt braucht. */
+export function tripDays(surface: TripSurface, trip: Trip): number {
+  return Math.ceil(totalHours(surface, trip) / TRIP_HOURS_PER_DAY - EPS);
+}
+
+/** Die Reisetage, die noch fehlen. */
+export function daysLeft(surface: TripSurface, trip: Trip): number {
+  return Math.ceil((totalHours(surface, trip) - trip.hours) / TRIP_HOURS_PER_DAY - EPS);
+}
+
+/** `Leg./rent`: die Miete je Tag; nur gemietete Abschnitte kosten etwas. */
+export function legRent(leg: Leg): number {
+  if (!leg.rented) return 0;
+  const item = vehicleOf(leg.by).item;
+  return Math.round(((item === undefined ? 0 : (itemOf(item).price ?? 0)) * RENT_PERCENT) / 100);
+}
+
+/** Wann jeder Abschnitt beginnt und endet, in Fahrstunden ab dem Start. */
+function legTimes(surface: TripSurface, trip: Trip): readonly (readonly [number, number])[] {
+  let t = 0;
+  return trip.legs.map((leg) => {
+    const start = t;
+    t += legHours(surface, leg);
+    return [start, t] as const;
+  });
+}
+
+/** Die Miete für die Fahrstunden von `from` bis `to`: je gemietetem Abschnitt, der darin gefahren wird, eine Tagesmiete. */
+export function rentBetween(surface: TripSurface, trip: Trip, from: number, to: number): number {
+  const times = legTimes(surface, trip);
+  return trip.legs.reduce((sum, leg, i) => {
+    const [start, end] = times[i]!;
+    return Math.min(end, to) - Math.max(start, from) > EPS ? sum + legRent(leg) : sum;
+  }, 0);
+}
+
+/** Was die ganze Fahrt an Miete kostet, Tag für Tag gerechnet. */
+export function totalRent(surface: TripSurface, trip: Trip): number {
+  const total = totalHours(surface, trip);
+  let sum = 0;
+  for (let h = trip.hours; h < total - EPS; h += TRIP_HOURS_PER_DAY) sum += rentBetween(surface, trip, h, Math.min(h + TRIP_HOURS_PER_DAY, total));
+  return sum;
+}
+
+/** `Trip./at`: das letzte ganz erreichte Feld nach `hours` Fahrstunden, mit dem Abschnitt, in dem die Gruppe ist. */
+export function positionAt(surface: TripSurface, trip: Trip, hours = trip.hours): { readonly cell: number; readonly leg: number } {
+  let t = 0;
+  let at = { cell: trip.legs[0]!.cells[0]!, leg: 0 };
+  for (let l = 0; l < trip.legs.length; l++) {
+    const leg = trip.legs[l]!;
+    const vehicle = vehicleOf(leg.by);
+    const steps = flies(vehicle) ? [leg.cells[0]!, leg.cells.at(-1)!] : leg.cells;
+    for (let i = 1; i < steps.length; i++) {
+      t += hoursBetween(surface, vehicle, steps[i - 1]!, steps[i]!);
+      if (t > hours + EPS) return at;
+      at = { cell: steps[i]!, leg: l };
+    }
+  }
+  return at;
+}
+
+/** Die eigenen Fahrzeuge im Gruppengepäck: unterwegs mit der Gruppe oder abgestellt. */
+function ownVehicles(campaign: Campaign): readonly Possession[] {
+  return campaign.stash.filter((p) => vehicleOfItem(p.of) !== undefined);
+}
+
+interface Mode {
+  readonly vehicle: Vehicle;
+  readonly rented: boolean;
+  /** Wo man das Fahrzeug bekommt: ein Feld (eigenes) oder jede Siedlung (gemietet); zu Fuß überall. */
+  readonly source: number | 'town' | 'anywhere';
+}
+
+/** Die Wahl beim Planen: ob die App Fahrzeuge mieten darf. */
+export interface PlanOptions {
+  readonly rent: boolean;
+}
+
+/** Die Fahrzeuge, die man auf dieser Welt mieten kann: in Siedlungen, bis zum TL der Welt, wo die Atmosphäre reicht. */
+export function rentableVehicles(surface: TripSurface): readonly Vehicle[] {
+  return vehicles.filter((v) => v.item !== undefined && (itemOf(v.item).tl ?? 0) <= surface.tech && worksIn(v, surface.atmosphere));
+}
+
+/** Das Feld, auf dem die Gruppe steht; ohne Feld (nur die Welt oder eine Orbitalstadt) keins. */
+export function startCell(campaign: Campaign): number | undefined {
+  return placeCell(campaign.hexes, campaign.location);
+}
+
+/** Ein kleiner Binärheap nach Kosten. */
+class Heap {
+  private readonly ids: number[] = [];
+  private readonly costs: number[] = [];
+  get size(): number {
+    return this.ids.length;
+  }
+  push(id: number, cost: number): void {
+    const ids = this.ids;
+    const costs = this.costs;
+    let i = ids.length;
+    ids.push(id);
+    costs.push(cost);
+    while (i > 0) {
+      const parent = (i - 1) >> 1;
+      if (costs[parent]! <= cost) break;
+      ids[i] = ids[parent]!;
+      costs[i] = costs[parent]!;
+      i = parent;
+    }
+    ids[i] = id;
+    costs[i] = cost;
+  }
+  pop(): number {
+    const ids = this.ids;
+    const costs = this.costs;
+    const top = ids[0]!;
+    const lastId = ids.pop()!;
+    const lastCost = costs.pop()!;
+    if (ids.length > 0) {
+      let i = 0;
+      for (;;) {
+        const l = 2 * i + 1;
+        if (l >= ids.length) break;
+        const r = l + 1;
+        const c = r < ids.length && costs[r]! < costs[l]! ? r : l;
+        if (costs[c]! >= lastCost) break;
+        ids[i] = ids[c]!;
+        costs[i] = costs[c]!;
+        i = c;
+      }
+      ids[i] = lastId;
+      costs[i] = lastCost;
+    }
+    return top;
+  }
+}
+
+/**
+ * Sucht die schnellste Route vom Feld der Gruppe zu `target` auf derselben Welt (siehe
+ * domain-model.md, *Fahrt*, Planen): zu Fuß, mit eigenen Fahrzeugen dort, wo sie sind, und, wenn
+ * erlaubt, mit gemieteten aus Siedlungen. Fluggeräte fliegen gerade von Landepunkt zu Landepunkt.
+ * Ergebnis ist eine Fahrt mit null gefahrenen Stunden.
+ */
+export function planTrip(campaign: Campaign, target: number, options: PlanOptions): Trip {
+  const surface = surfaceFor(campaign);
+  const start = startCell(campaign);
+  if (start === undefined) throw new DomainError('Erst die Gruppe auf ein Feld oder in eine Stadt setzen.');
+  if (!Number.isInteger(target) || target < 0 || target >= surface.grid.cells) throw new DomainError('Dieses Feld gibt es nicht.');
+  if (target === start) throw new DomainError('Die Gruppe ist schon hier.');
+  if (campaign.encounters.some((e) => !e.ended)) throw new DomainError('Während einer laufenden Begegnung fährt man nicht.');
+
+  const modes: Mode[] = [{ vehicle: WALK, rented: false, source: 'anywhere' }];
+  for (const p of ownVehicles(campaign)) {
+    const vehicle = vehicleOfItem(p.of)!;
+    if (!worksIn(vehicle, surface.atmosphere)) continue;
+    const cell = p.parked === undefined ? start : p.parked.world === surface.world ? placeCell(campaign.hexes, p.parked) : undefined;
+    if (cell !== undefined) modes.push({ vehicle, rented: false, source: cell });
+  }
+  // Gemietet wird nur, was die Kasse wenigstens für einen Tag hergibt.
+  const funds = campaign.bookings.reduce((sum, b) => sum + b.amount, 0);
+  if (options.rent) for (const vehicle of rentableVehicles(surface)) if (legRent({ by: vehicle.id, rented: true, cells: [] }) <= funds) modes.push({ vehicle, rented: true, source: 'town' });
+
+  const n = surface.grid.cells;
+  const towns = surface.ways.town;
+  const landing = [...new Set([...towns, target, start, ...modes.flatMap((m) => (typeof m.source === 'number' ? [m.source] : []))])];
+  const cost = new Float64Array(n * modes.length).fill(Infinity);
+  const prev = new Int32Array(n * modes.length).fill(-1);
+  const heap = new Heap();
+  const reach = (state: number, c: number, from: number) => {
+    if (c < cost[state]! - EPS) {
+      cost[state] = c;
+      prev[state] = from;
+      heap.push(state, c);
+    }
+  };
+  const available = (m: Mode, cell: number) => m.source === 'anywhere' || (m.source === 'town' ? towns.has(cell) : m.source === cell);
+  cost[start] = 0;
+  heap.push(start, 0);
+  let found = -1;
+  while (heap.size > 0) {
+    const state = heap.pop();
+    const c = cost[state]!;
+    const cell = state % n;
+    const m = Math.floor(state / n);
+    if (cell === target) {
+      found = state;
+      break;
+    }
+    const mode = modes[m]!;
+    // Wechseln: auf ein anderes Fahrzeug, das es hier gibt.
+    modes.forEach((other, o) => {
+      if (o !== m && available(other, cell)) reach(o * n + cell, c + SWITCH_HOURS, state);
+    });
+    if (flies(mode.vehicle)) {
+      // Fliegen: nur von einem Landepunkt, und nur dort, wo man das Fluggerät bekommen hat.
+      if (!available(mode, cell) || !landsAt(mode.vehicle, surface.map, surface.ways, cell)) continue;
+      for (const d of landing) {
+        if (d !== cell && landsAt(mode.vehicle, surface.map, surface.ways, d)) reach(d, c + hoursBetween(surface, mode.vehicle, cell, d), state);
+      }
+    } else {
+      for (const q of surface.grid.neighbors[cell]!) {
+        const h = hoursBetween(surface, mode.vehicle, cell, q);
+        if (h < Infinity) reach(m * n + q, c + h, state);
+      }
+    }
+  }
+  if (found < 0) throw new DomainError('Dorthin gibt es mit diesen Fahrzeugen keinen Weg.');
+
+  const path: number[] = [];
+  for (let s = found; s >= 0; s = prev[s]!) path.push(s);
+  path.reverse();
+  const legs: { mode: number; cells: number[] }[] = [];
+  let current = { mode: 0, cells: [start] };
+  for (let i = 1; i < path.length; i++) {
+    const [a, b] = [path[i - 1]!, path[i]!];
+    const [am, bm, bc] = [Math.floor(a / n), Math.floor(b / n), b % n];
+    if (am === bm) current.cells.push(bc);
+    else if (a % n === bc) {
+      legs.push(current);
+      current = { mode: bm, cells: [bc] };
+    } else {
+      // Gelandet: Der Flug endet hier, weiter geht es zu Fuß oder mit einem Wechsel.
+      current.cells.push(bc);
+      legs.push(current);
+      current = { mode: bm, cells: [bc] };
+    }
+  }
+  legs.push(current);
+  const merged: Leg[] = [];
+  for (const { mode, cells } of legs) {
+    if (cells.length < 2) continue;
+    const leg: Leg = { by: modes[mode]!.vehicle.id, rented: modes[mode]!.rented, cells };
+    const last = merged.at(-1);
+    if (last && last.by === leg.by && last.rented === leg.rented && !flies(vehicleOf(leg.by)) && last.cells.at(-1) === cells[0]) merged[merged.length - 1] = { ...last, cells: [...last.cells, ...cells.slice(1)] };
+    else merged.push(leg);
+  }
+  return { hours: 0, legs: merged };
+}
+
+/** Prüft eine Fahrt gegen die Karte: Abschnitte schließen aneinander an, jeder Schritt geht, Flüge landen auf Landepunkten. */
+export function checkTrip(campaign: Campaign, trip: Trip): void {
+  const surface = surfaceFor(campaign);
+  if (trip.legs.length === 0) throw new DomainError('Eine Fahrt hat mindestens einen Abschnitt.');
+  trip.legs.forEach((leg, i) => {
+    const vehicle = vehicleOf(leg.by);
+    if (leg.cells.length < 2 || leg.cells.some((c) => !Number.isInteger(c) || c < 0 || c >= surface.grid.cells)) throw new DomainError('Ein Abschnitt der Fahrt hat ungültige Felder.');
+    if (i > 0 && trip.legs[i - 1]!.cells.at(-1) !== leg.cells[0]) throw new DomainError('Die Abschnitte der Fahrt schließen nicht aneinander an.');
+    if (leg.rented && vehicle.item === undefined) throw new DomainError('Zu Fuß mietet man nicht.');
+    if (flies(vehicle)) {
+      if (leg.cells.length !== 2 || !landsAt(vehicle, surface.map, surface.ways, leg.cells[0]!) || !landsAt(vehicle, surface.map, surface.ways, leg.cells[1]!)) throw new DomainError(`${vehicle.name} fliegt nur von Landepunkt zu Landepunkt.`);
+    } else if (legHours(surface, leg) === Infinity) throw new DomainError(`${vehicle.name} kommt auf diesem Abschnitt nicht durch.`);
+  });
+  if (!Number.isFinite(trip.hours) || trip.hours < 0 || trip.hours >= totalHours(surface, trip) - EPS) throw new DomainError('Die gefahrenen Stunden passen nicht zur Fahrt.');
+}
+
+/** Beginnt eine geplante Fahrt; sie beginnt am Feld der Gruppe. */
+export function startTrip(campaign: Campaign, trip: Trip): Campaign {
+  if (campaign.trip) throw new DomainError('Die Gruppe ist schon unterwegs.');
+  if (trip.hours !== 0 || trip.legs[0]?.cells[0] !== startCell(campaign)) throw new DomainError('Die Fahrt beginnt nicht hier.');
+  checkTrip(campaign, trip);
+  return { ...campaign, trip };
+}
+
+/** Bricht die Fahrt ab; die Gruppe bleibt, wo sie ist. */
+export function cancelTrip(campaign: Campaign): Campaign {
+  return withoutTrip(campaign);
+}
+
+/** Die Kampagne ohne Fahrt. */
+export function withoutTrip(campaign: Campaign): Campaign {
+  if (!campaign.trip) return campaign;
+  return Object.fromEntries(Object.entries(campaign).filter(([key]) => key !== 'trip')) as Omit<Campaign, 'trip'>;
+}
+
+/** Legt einen Besitz ins Gepäck zu gleichen (gleicher Gegenstand, gleicher Ort). */
+function addParked(stash: readonly Possession[], possession: Possession): readonly Possession[] {
+  const key = possessionKey(possession);
+  const had = stash.find((p) => possessionKey(p) === key);
+  return had ? stash.map((p) => (p === had ? { ...p, count: p.count + possession.count } : p)) : [...stash, possession];
+}
+
+/** Nimmt ein Stück von `from` weg und legt es als `to` ab. */
+function moveOne(stash: readonly Possession[], from: Possession, to: Possession): readonly Possession[] {
+  const rest = stash.flatMap((p) => (p !== from ? [p] : p.count > 1 ? [{ ...p, count: p.count - 1 }] : []));
+  return addParked(rest, { ...to, count: 1 });
+}
+
+function unparked(p: Possession): Possession {
+  return Object.fromEntries(Object.entries(p).filter(([key]) => key !== 'parked')) as unknown as Possession;
+}
+
+/**
+ * Am Anfang eines Abschnitts: Das eigene Fahrzeug des Abschnitts fährt mit (ein abgestelltes hier
+ * wird abgeholt), alle anderen eigenen Fahrzeuge, die mit der Gruppe unterwegs sind, bleiben hier stehen.
+ */
+function settleVehiclesAt(campaign: Campaign, surface: TripSurface, leg: Leg): Campaign {
+  const here = placeAtCell(surface, leg.cells[0]!);
+  const cell = leg.cells[0]!;
+  let stash = campaign.stash;
+  let used: Possession | undefined;
+  if (!leg.rented && leg.by !== WALK.id) {
+    const item = vehicleOf(leg.by).item!;
+    const parkedHere = stash.find((p) => p.of === item && p.parked !== undefined && p.parked.world === surface.world && placeCell(campaign.hexes, p.parked) === cell);
+    const withGroup = stash.find((p) => p.of === item && p.parked === undefined);
+    if (parkedHere && !withGroup) {
+      stash = moveOne(stash, parkedHere, unparked(parkedHere));
+      used = stash.find((p) => p.of === item && p.parked === undefined);
+    } else used = withGroup;
+  }
+  for (const p of stash.filter((q) => q.parked === undefined && vehicleOfItem(q.of) !== undefined)) {
+    const keep = p === used ? 1 : 0;
+    if (p.count <= keep) continue;
+    const rest = stash.flatMap((q) => (q !== p ? [q] : keep > 0 ? [{ ...q, count: keep }] : []));
+    stash = addParked(rest, { ...p, count: p.count - keep, parked: here });
+  }
+  return { ...campaign, stash };
+}
+
+/** Vor einer Reise zu einer anderen Welt: Alle eigenen Fahrzeuge, die mit der Gruppe unterwegs sind, bleiben am Aufenthaltsort. */
+export function parkVehicles(campaign: Campaign): Campaign {
+  const here = campaign.location;
+  if (!here) return campaign;
+  let stash = campaign.stash;
+  for (const p of stash.filter((q) => q.parked === undefined && vehicleOfItem(q.of) !== undefined)) {
+    stash = addParked(
+      stash.filter((q) => q !== p),
+      { ...p, parked: here },
+    );
+  }
+  return { ...withoutTrip(campaign), stash };
+}
+
+/**
+ * „Einen Tag fahren“: die Fahrstunden eines Tages oder der Rest bis zur Ankunft. Ein Reisetag im
+ * Log, ein Tag weiter, der Aufenthaltsort auf dem erreichten Feld, die Miete aus der Kasse.
+ */
+export function driveDay(campaign: Campaign, clock: Clock): Campaign {
+  const trip = campaign.trip;
+  if (!trip) throw new DomainError('Die Gruppe ist nicht unterwegs.');
+  if (campaign.encounters.some((e) => !e.ended)) throw new DomainError('Während einer laufenden Begegnung fährt man nicht.');
+  const surface = surfaceFor(campaign);
+  const total = totalHours(surface, trip);
+  const from = trip.hours;
+  const to = Math.min(from + TRIP_HOURS_PER_DAY, total);
+  const rent = rentBetween(surface, trip, from, to);
+  const funds = campaign.bookings.reduce((sum, b) => sum + b.amount, 0);
+  if (rent > funds) throw new DomainError(`Für die Miete von heute (Cr${rent.toLocaleString('de-DE')}) reicht die Kasse nicht.`);
+
+  // Eigene Fahrzeuge an jedem Abschnitt, der heute beginnt.
+  let after = campaign;
+  const times = legTimes(surface, trip);
+  trip.legs.forEach((leg, i) => {
+    const start = times[i]![0];
+    if ((i === 0 && from === 0) || (start > from + EPS && start <= to + EPS)) after = settleVehiclesAt(after, surface, leg);
+  });
+
+  const arrived = to >= total - EPS;
+  const cell = arrived ? trip.legs.at(-1)!.cells.at(-1)! : positionAt(surface, trip, to).cell;
+  const location = placeAtCell(surface, cell);
+  const today = dayOf(campaign);
+  const index = after.log.length;
+  const entry: TripDay = { kind: 'tripDay', at: clock.now(), day: today, place: location, hours: Math.round((to - from) * 100) / 100, rent, arrived };
+  const booking: Booking | undefined = rent > 0 ? { at: clock.now(), kind: 'rent', amount: -rent, rentFor: index } : undefined;
+  const moved: Campaign = {
+    ...after,
+    location,
+    day: today + 1,
+    log: [...after.log, entry],
+    bookings: booking ? [...after.bookings, booking] : after.bookings,
+  };
+  return arrived ? withoutTrip(moved) : { ...moved, trip: { ...trip, hours: to } };
+}

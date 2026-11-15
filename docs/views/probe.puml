@@ -131,6 +131,8 @@ hide <<value>> stereotype
     malusUpTo: number
   }
   class Place <<value>> $oberflaeche
+' Fahrzeuge und Wege auf der Oberfläche
+  class TripDay $logistik
   enum Characteristic <<value>> $charakter
 
 ' Kampagne
@@ -147,6 +149,7 @@ LogEntry <|-- Journey
 
 ' Subsektor und Welten
 LogEntry "1" *-- "0..1" Place : place
+LogEntry <|-- TripDay
 
 ' Charakter
 

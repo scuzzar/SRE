@@ -123,6 +123,10 @@ import {
   renameCity,
   mapLocked,
   moveParty,
+  planTrip,
+  startTrip,
+  driveDay,
+  cancelTrip,
   moveNpc,
   type Place,
   noteWorld,
@@ -203,7 +207,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, selected: undefined, picking: false } as const;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -295,6 +299,8 @@ export class GameController {
       globe: undefined,
       selected: undefined,
       picking: false,
+      tripPlan: undefined,
+      tripNote: undefined,
     };
     this.current = buildSnapshot(this.state);
   }
@@ -1463,7 +1469,7 @@ export class GameController {
   }
 
   /** Bucht Geld: Einnahme oder Ausgabe frei, Einzahlung oder Auszahlung mit einem Charakter. */
-  book(kind: Exclude<BookingKind, 'purchase' | 'sale' | 'lottery'>, amount: number, text?: string, character?: string): void {
+  book(kind: Exclude<BookingKind, 'purchase' | 'sale' | 'lottery' | 'rent'>, amount: number, text?: string, character?: string): void {
     this.inShop(() => book(this.campaign, kind, amount, this.deps.clock, text, character));
   }
 
@@ -1791,7 +1797,55 @@ export class GameController {
   /** Tippt ein Oberflächenfeld auf dem Globus an (oder hebt die Wahl auf). */
   pickCell(cell: number | undefined): void {
     if (!this.state.globe) return;
-    this.update({ globe: { picked: cell } });
+    this.update({ globe: { picked: cell }, ...(this.state.tripPlan && this.state.tripPlan.target !== cell ? { tripPlan: undefined } : {}) });
+  }
+
+  // --- Fahrt über die Oberfläche (siehe domain-model.md, *Fahrt*) ---------------------------------
+
+  /** Sucht die schnellste Route zum angetippten Feld; mit `rent` darf sie Fahrzeuge mieten. */
+  planTrip(rent = true): void {
+    const at = this.state.world;
+    const target = this.state.globe?.picked;
+    if (!at || target === undefined) return;
+    try {
+      if (this.campaign.location?.world !== hexId(at.column, at.row)) throw new DomainError('Die Gruppe ist nicht auf dieser Welt.');
+      this.update({ tripPlan: { target, rent, plan: planTrip(this.campaign, target, { rent }), error: undefined } });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ tripPlan: { target, rent, plan: undefined, error: error.message } });
+    }
+  }
+
+  /** Schließt die Planung, ohne loszufahren. */
+  closeTripPlan(): void {
+    this.update({ tripPlan: undefined });
+  }
+
+  /** „Losfahren“: Die geplante Fahrt wird gespeichert. */
+  startTrip(): void {
+    const plan = this.state.tripPlan?.plan;
+    if (!plan) return;
+    try {
+      this.change(startTrip(this.campaign, plan), { tripPlan: undefined, tripNote: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ tripPlan: { ...this.state.tripPlan!, error: error.message } });
+    }
+  }
+
+  /** „Einen Tag fahren“: die Fahrstunden eines Tages oder bis zur Ankunft. */
+  driveDay(): void {
+    try {
+      this.change(driveDay(this.campaign, this.deps.clock), { tripNote: undefined, timeNote: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ tripNote: error.message });
+    }
+  }
+
+  /** Bricht die Fahrt ab; die Gruppe bleibt, wo sie ist. */
+  cancelTrip(): void {
+    this.change(cancelTrip(this.campaign), { tripNote: undefined });
   }
 
   /** Ersetzt die Oberflächenkarte der offenen Welt durch eine neu gewürfelte; gesperrt, sobald ein Ort darauf zeigt. */

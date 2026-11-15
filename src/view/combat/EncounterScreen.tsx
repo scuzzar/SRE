@@ -4,6 +4,7 @@ import { checkDetail, patronDetail, patronName, rumorDetail, rumorName, signed }
 import { HoldButton } from '../HoldButton';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
+import { TripBar } from '../sector/TripPanels';
 import { distancesText, EncounterIntro } from './FightScreen';
 
 /**
@@ -19,6 +20,7 @@ export function EncounterScreen({ view }: { view: Snapshot }) {
     <div className="screen">
       <section className="scroll encounter-scroll" aria-label="Begegnung">
         {view.time && <TimeBar time={view.time} />}
+        {view.trip && <TripBar trip={view.trip} note={view.tripNote} blocked={view.time?.blocked} />}
         {combat && (
           <div className="encounter-settings">
             <LocationPick combat={combat} />

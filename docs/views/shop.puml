@@ -89,6 +89,7 @@ hide <<value>> stereotype
     purchase
     sale
     lottery
+    rent
   }
   class Character $charakter
   class Possession $shop {
@@ -134,6 +135,10 @@ hide <<value>> stereotype
     membership
     game
   }
+  class Place <<value>> $oberflaeche
+' Fahrzeuge und Wege auf der Oberfläche
+  class Vehicle <<reference>> $logistik
+  class TripDay $logistik
 
 ' Kampagne
 Campaign "1" *-- "*" Booking : bookings {ordered}
@@ -153,6 +158,9 @@ Booking "*" --> "0..1" Journey : won
 Gain "*" --> "0..1" Item : item
 
 ' Subsektor und Welten
+Item "0..1" --> "0..1" Vehicle : vehicle
+Booking "*" --> "0..1" TripDay : rentFor
+Possession "1" *-- "0..1" Place : parked
 
 ' Charakter
 Character "1" *-- "*" Possession : possessions

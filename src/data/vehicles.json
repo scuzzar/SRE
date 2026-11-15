@@ -1,0 +1,386 @@
+[
+ {
+  "id": "walk",
+  "name": "Zu Fuß",
+  "speeds": [
+   {
+    "along": "road",
+    "kmh": 5
+   },
+   {
+    "along": "town",
+    "kmh": 5
+   },
+   {
+    "on": "open",
+    "kmh": 4
+   },
+   {
+    "on": "settled",
+    "kmh": 4
+   },
+   {
+    "on": "tundra",
+    "kmh": 4
+   },
+   {
+    "on": "desert",
+    "kmh": 4
+   },
+   {
+    "on": "rugged",
+    "kmh": 2
+   },
+   {
+    "on": "jungle",
+    "kmh": 2
+   },
+   {
+    "on": "swamp",
+    "kmh": 2
+   },
+   {
+    "on": "landIce",
+    "kmh": 2
+   },
+   {
+    "on": "mountain",
+    "kmh": 1
+   }
+  ]
+ },
+ {
+  "id": "ground-car",
+  "name": "Ground Car",
+  "item": "vehicle-ground-car",
+  "speeds": [
+   {
+    "along": "road",
+    "kmh": 100
+   },
+   {
+    "along": "town",
+    "kmh": 50
+   },
+   {
+    "on": "settled",
+    "kmh": 50
+   }
+  ]
+ },
+ {
+  "id": "wheeled-atv",
+  "name": "Wheeled ATV",
+  "item": "vehicle-wheeled-atv",
+  "speeds": [
+   {
+    "along": "road",
+    "kmh": 60
+   },
+   {
+    "along": "town",
+    "kmh": 40
+   },
+   {
+    "on": "open",
+    "kmh": 50
+   },
+   {
+    "on": "settled",
+    "kmh": 50
+   },
+   {
+    "on": "tundra",
+    "kmh": 50
+   },
+   {
+    "on": "desert",
+    "kmh": 50
+   },
+   {
+    "on": "rugged",
+    "kmh": 20
+   },
+   {
+    "on": "jungle",
+    "kmh": 20
+   },
+   {
+    "on": "swamp",
+    "kmh": 20
+   },
+   {
+    "on": "landIce",
+    "kmh": 20
+   },
+   {
+    "on": "mountain",
+    "kmh": 10
+   }
+  ]
+ },
+ {
+  "id": "tracked-atv",
+  "name": "Tracked ATV",
+  "item": "vehicle-tracked-atv",
+  "speeds": [
+   {
+    "along": "road",
+    "kmh": 40
+   },
+   {
+    "along": "town",
+    "kmh": 30
+   },
+   {
+    "on": "open",
+    "kmh": 35
+   },
+   {
+    "on": "settled",
+    "kmh": 35
+   },
+   {
+    "on": "tundra",
+    "kmh": 35
+   },
+   {
+    "on": "desert",
+    "kmh": 35
+   },
+   {
+    "on": "rugged",
+    "kmh": 30
+   },
+   {
+    "on": "jungle",
+    "kmh": 30
+   },
+   {
+    "on": "swamp",
+    "kmh": 30
+   },
+   {
+    "on": "landIce",
+    "kmh": 30
+   },
+   {
+    "on": "mountain",
+    "kmh": 20
+   },
+   {
+    "on": "waterIce",
+    "kmh": 30
+   }
+  ]
+ },
+ {
+  "id": "motor-boat",
+  "name": "Motor Boat",
+  "item": "vehicle-motor-boat",
+  "speeds": [
+   {
+    "on": "water",
+    "kmh": 60
+   },
+   {
+    "along": "river",
+    "kmh": 60
+   }
+  ]
+ },
+ {
+  "id": "submersible",
+  "name": "Submersible",
+  "item": "vehicle-submersible",
+  "speeds": [
+   {
+    "on": "water",
+    "kmh": 40
+   }
+  ]
+ },
+ {
+  "id": "hovercraft",
+  "name": "Hovercraft",
+  "item": "vehicle-hovercraft",
+  "atmosphere": 4,
+  "speeds": [
+   {
+    "along": "road",
+    "kmh": 60
+   },
+   {
+    "along": "town",
+    "kmh": 40
+   },
+   {
+    "on": "open",
+    "kmh": 60
+   },
+   {
+    "on": "settled",
+    "kmh": 60
+   },
+   {
+    "on": "tundra",
+    "kmh": 60
+   },
+   {
+    "on": "desert",
+    "kmh": 60
+   },
+   {
+    "on": "swamp",
+    "kmh": 30
+   },
+   {
+    "on": "landIce",
+    "kmh": 30
+   },
+   {
+    "on": "water",
+    "kmh": 60
+   },
+   {
+    "on": "waterIce",
+    "kmh": 60
+   },
+   {
+    "along": "river",
+    "kmh": 60
+   }
+  ]
+ },
+ {
+  "id": "primitive-biplane",
+  "name": "Primitive Biplane",
+  "item": "vehicle-primitive-biplane",
+  "atmosphere": 4,
+  "flight": 150,
+  "speeds": [],
+  "landsAt": [
+   "A",
+   "B",
+   "C",
+   "D",
+   "E",
+   "F",
+   "G",
+   "H"
+  ]
+ },
+ {
+  "id": "fixed-wing-aircraft",
+  "name": "Fixed Wing Aircraft",
+  "item": "vehicle-fixed-wing-aircraft",
+  "atmosphere": 4,
+  "flight": 600,
+  "speeds": [],
+  "landsAt": [
+   "A",
+   "B",
+   "C",
+   "F"
+  ]
+ },
+ {
+  "id": "helicopter",
+  "name": "Helicopter",
+  "item": "vehicle-helicopter",
+  "atmosphere": 4,
+  "flight": 200,
+  "speeds": [],
+  "landsOn": [
+   "landIce",
+   "tundra",
+   "mountain",
+   "rugged",
+   "desert",
+   "jungle",
+   "swamp",
+   "open",
+   "settled"
+  ]
+ },
+ {
+  "id": "air-raft",
+  "name": "Air/Raft",
+  "item": "vehicle-air-raft",
+  "flight": 100,
+  "speeds": [],
+  "landsOn": [
+   "water",
+   "waterIce",
+   "landIce",
+   "tundra",
+   "mountain",
+   "rugged",
+   "desert",
+   "jungle",
+   "swamp",
+   "open",
+   "settled"
+  ]
+ },
+ {
+  "id": "gcarrier",
+  "name": "GCarrier",
+  "item": "vehicle-gcarrier",
+  "flight": 100,
+  "speeds": [],
+  "landsOn": [
+   "water",
+   "waterIce",
+   "landIce",
+   "tundra",
+   "mountain",
+   "rugged",
+   "desert",
+   "jungle",
+   "swamp",
+   "open",
+   "settled"
+  ]
+ },
+ {
+  "id": "speeder",
+  "name": "Speeder",
+  "item": "vehicle-speeder",
+  "flight": 1000,
+  "speeds": [],
+  "landsOn": [
+   "water",
+   "waterIce",
+   "landIce",
+   "tundra",
+   "mountain",
+   "rugged",
+   "desert",
+   "jungle",
+   "swamp",
+   "open",
+   "settled"
+  ]
+ },
+ {
+  "id": "grav-belt",
+  "name": "Grav Belt",
+  "item": "vehicle-grav-belt",
+  "flight": 100,
+  "speeds": [],
+  "landsOn": [
+   "water",
+   "waterIce",
+   "landIce",
+   "tundra",
+   "mountain",
+   "rugged",
+   "desert",
+   "jungle",
+   "swamp",
+   "open",
+   "settled"
+  ]
+ }
+]

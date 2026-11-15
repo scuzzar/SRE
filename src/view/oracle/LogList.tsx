@@ -1,6 +1,6 @@
 import { Fragment, memo, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { DamageItem, JourneyItem, LogItem, NoteItem } from '../../controller';
-import { answerText, attackTitle, checkDetail, clockTime, damageDetail, isYesAnswer, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, resultLine, scatterText, taskDetail, taskTitle } from '../format';
+import { answerText, attackTitle, checkDetail, clockTime, damageDetail, isYesAnswer, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, resultLine, scatterText, taskDetail, taskTitle, tripDayDetail } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { LightbulbIcon, PencilIcon, TrashIcon } from '../icons';
@@ -418,6 +418,8 @@ function kicker(item: LogItem, volley = false): string {
       return item.week ? 'Zeit · Woche beendet' : 'Zeit';
     case 'journey':
       return 'Reise';
+    case 'tripDay':
+      return item.arrived ? 'Fahrt · Ankunft' : 'Fahrt';
     case 'note':
       return item.interprets === undefined ? 'Notiz' : 'Deutung';
   }
@@ -574,6 +576,13 @@ function EntryBody({ item }: { item: LogItem }) {
             {item.check === 'legal' ? (item.passed ? 'Ruhe' : 'Angehalten') : item.passed ? 'JA' : 'NEIN'}
           </span>
           <span className="entry-detail">{checkDetail(item)}</span>
+        </>
+      );
+    case 'tripDay':
+      return (
+        <>
+          <span className="verdict small">{item.arrived ? `Angekommen: ${item.where}` : item.where}</span>
+          <span className="entry-detail">{tripDayDetail(item)}</span>
         </>
       );
     case 'time':

@@ -8003,3 +8003,63 @@ button:disabled {
     animation: none;
   }
 }
+
+/* Fahrt über die Oberfläche: die Leiste der laufenden Fahrt und die Planung im angetippten Feld. */
+.trip-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+}
+
+.globe-top .trip-bar {
+  pointer-events: auto;
+  border: 0;
+  border-radius: 14px;
+  background: rgba(20, 22, 28, 0.95);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+
+.trip-head {
+  margin: 0;
+}
+
+.trip-bar details summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.trip-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.trip-plan h4 {
+  margin: 0;
+}
+
+.trip-legs {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+
+.trip-legs li.done {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.trip-sum {
+  margin: 0;
+  font-weight: 600;
+}

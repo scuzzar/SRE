@@ -25,6 +25,10 @@
       "title": "Oberflächenkarte"
     },
     {
+      "id": "logistik",
+      "title": "Fahrzeuge und Wege"
+    },
+    {
       "id": "karte",
       "title": "Karte und Orakel"
     },
@@ -295,6 +299,24 @@
       "approved": true,
       "show": [
         "SurfaceMap"
+      ]
+    },
+    {
+      "id": "2026-11-15",
+      "file": "2026-11-15-fahrzeuge-und-gelaende",
+      "title": "Fahrzeuge und Fahrten: Geschwindigkeit je Geländeart und Weg, Landepunkte, Miete, Fahrt Tag für Tag, abgestellte Fahrzeuge",
+      "approved": true,
+      "show": [
+        "Item",
+        "Landform",
+        "SurfaceCell",
+        "Port",
+        "Campaign",
+        "LogEntry",
+        "Booking",
+        "BookingKind",
+        "Possession",
+        "Place"
       ]
     }
   ]

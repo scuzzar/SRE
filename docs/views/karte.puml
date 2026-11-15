@@ -171,6 +171,7 @@ hide <<value>> stereotype
     text: string
     retired: boolean
   }
+' Fahrzeuge und Wege auf der Oberfläche
   enum SectionKind <<value>> $karte {
     card
     theme

@@ -11,7 +11,7 @@ import { roll2d6, sum, type Characteristic, type Dice } from './rules';
  * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, bei der Antwort des Orakels dazu die Chance, bei Probe und Angriff DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | CheckRoll | Journey | Note;
+export type LogEntry = DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | CheckRoll | Journey | TripDay | Note;
 
 /** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
 export type LogResult = Exclude<LogEntry, Note>;
@@ -33,6 +33,18 @@ export interface TimePassed extends LogEntryBase {
   readonly kind: 'time';
   readonly days: number;
   readonly week: boolean;
+}
+
+/**
+ * Ein Reisetag einer Fahrt (siehe `trip.ts`): die gefahrenen Stunden, die Miete des Tages und ob
+ * die Gruppe angekommen ist. `day` ist der Tag, an dem gefahren wird; danach ist die Kampagne einen
+ * Tag weiter. Der Ort ist das erreichte Feld.
+ */
+export interface TripDay extends LogEntryBase {
+  readonly kind: 'tripDay';
+  readonly hours: number;
+  readonly rent: number;
+  readonly arrived: boolean;
 }
 
 /** Die Arten der Tests: Zufallsbegegnung, Tiere, Patron, Gerücht, Polizei. `check` ist im Modell `kind`. */

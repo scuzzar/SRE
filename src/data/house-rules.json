@@ -1,5 +1,7 @@
 {
   "unskilledDm": -3,
   "bonusFrom": 9,
-  "malusUpTo": 5
+  "malusUpTo": 5,
+  "tripHoursPerDay": 8,
+  "rentPercent": 1
 }
