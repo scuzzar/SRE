@@ -358,6 +358,221 @@ void main() {
 }
 `;
 
+/** Wie weit ein Band über seine Breite hinausreicht: Ufer bzw. Seitenstreifen. */
+const BANK = 2.0;
+
+const LINE_VS = `#version 300 es
+in vec3 aP;
+in vec3 aS;
+in float aSide;
+in float aHalfW;
+in float aAlong;
+in float aKind;
+in float aFlow;
+uniform vec3 uE;
+uniform vec3 uN;
+uniform vec3 uF;
+uniform vec2 uScale;
+uniform float uR;
+out vec3 vView;
+out float vAcross;
+out float vAlong;
+out float vKind;
+out float vFlow;
+out float vWidthPx;
+void main() {
+  // Nie schmaler als ein, zwei Bildpunkte, damit Flüsse und Straßen auch von weit weg zu sehen sind.
+  float px = 1.0 / uR;
+  float hw = max(aHalfW, (aKind < 0.5 ? 0.9 : 0.7) * px);
+  vec3 p = aP + aS * aSide * hw * ${BANK.toFixed(1)};
+  vec3 v = vec3(dot(p, uE), dot(p, uN), dot(p, uF));
+  vView = v;
+  vAcross = aSide * ${BANK.toFixed(1)};
+  vAlong = aAlong;
+  vKind = aKind;
+  vFlow = aFlow;
+  vWidthPx = hw / px;
+  gl_Position = vec4(v.x * uScale.x, v.y * uScale.y, 0.0, 1.0);
+}
+`;
+
+const LINE_FS = `#version 300 es
+precision highp float;
+uniform vec3 uLight;
+in vec3 vView;
+in float vAcross;
+in float vAlong;
+in float vKind;
+in float vFlow;
+in float vWidthPx;
+out vec4 outColor;
+
+float wave(float x) {
+  return sin(x) * 0.5 + sin(x * 2.3 + 1.7) * 0.3 + sin(x * 5.1 + 0.4) * 0.2;
+}
+
+void main() {
+  if (vView.z < 0.0) discard;
+  float shade = 0.45 + 0.6 * clamp(dot(normalize(vView), uLight), 0.0, 1.0);
+  float a = abs(vAcross);
+  float aa = max(fwidth(vAcross), 0.02);
+  // Wie viel Einzelheit die Breite trägt: dünne Linien schlicht, breite Bänder mit allem.
+  float detail = smoothstep(1.5, 5.0, vWidthPx);
+  float core = 1.0 - smoothstep(1.0 - aa, 1.0 + aa, a);
+  float outer = 1.0 - smoothstep(${BANK.toFixed(1)} - aa * 2.0, ${BANK.toFixed(1)}, a);
+  vec3 col;
+  float alpha;
+  if (vKind < 0.5) {
+    // Fluss: in der Mitte tief, am Rand flach; Strömung zieht Schlieren mit; nasses, dunkles Ufer.
+    float depth = 1.0 - a;
+    vec3 shallow = vec3(0.22, 0.45, 0.6);
+    vec3 deep = mix(vec3(0.12, 0.32, 0.52), vec3(0.08, 0.24, 0.44), vFlow);
+    vec3 water = mix(shallow, deep, smoothstep(0.0, 0.8, depth));
+    float streak = wave(vAlong * 9.0 + vAcross * 2.5 + wave(vAlong * 2.0) * 2.0);
+    water *= 1.0 + 0.08 * streak * detail;
+    // Glanz auf der Lichtseite der Strömung.
+    water += vec3(0.12, 0.14, 0.15) * smoothstep(0.55, 0.95, streak) * detail * (1.0 - a) * 0.6;
+    float bankT = clamp((a - 1.0) / (${BANK.toFixed(1)} - 1.0), 0.0, 1.0);
+    vec3 bank = mix(vec3(0.16, 0.15, 0.09), vec3(0.0), bankT);
+    float bankA = (1.0 - bankT) * 0.5 * detail * outer;
+    col = mix(bank * bankA, water, core);
+    alpha = mix(bankA, 1.0, core);
+    // An der Mündung geht der Fluss ins Meer über.
+    float mouth = 1.0 - smoothstep(0.93, 1.0, vFlow);
+    col *= mouth;
+    alpha *= mouth;
+  } else {
+    // Straße: festgefahrener Belag, Fahrspuren, Rand etwas dunkler, daneben ein schmaler Schatten.
+    vec3 dirt = vec3(0.5, 0.41, 0.3) * (0.95 + 0.08 * wave(vAlong * 23.0));
+    float rut = smoothstep(0.12, 0.0, abs(a - 0.5)) * detail;
+    float edge = smoothstep(0.65, 1.0, a);
+    vec3 road = dirt * (1.0 - 0.15 * rut) * (1.0 - 0.25 * edge);
+    float shoulderT = clamp((a - 1.0) / (${BANK.toFixed(1)} - 1.0), 0.0, 1.0);
+    float shoulderA = (1.0 - shoulderT) * 0.3 * detail * outer;
+    // Vormultipliert: der Seitenstreifen dunkelt nur ab, die Straße deckt fast ganz.
+    alpha = mix(shoulderA, 0.92, core);
+    col = road * 0.92 * core;
+  }
+  outColor = vec4(col * shade, alpha);
+}
+`;
+
+/** Werte je Ecke eines Bandes: Mitte (3), Seite (3), links/rechts (1), halbe Breite (1), Weg (1), Art (1), Lauf (1). */
+const LINE_STRIDE = 11;
+
+function smallHash(i: number): number {
+  return (Math.imul(i + 1, 2654435761) >>> 0) / 4294967296;
+}
+
+/**
+ * Flüsse und Straßen als Bänder auf der Kugel: weich durch die Feldmitten (Catmull-Rom), dazwischen
+ * leicht geschlängelt, je Feld zehn Stützpunkte. Flüsse werden von der Quelle zur Mündung breiter und
+ * laufen am Ende ins Wasser hinein; Straßen bleiben gleich breit und treffen jede Feldmitte.
+ */
+export function lineMesh(globe: GlobeView): Float32Array {
+  const { grid, map } = globe;
+  const { forms } = cellLook(globe);
+  const p = grid.xyz;
+  const cellW = 1.26 / grid.n;
+  const at = (c: number): [number, number, number] => [p[c * 3]!, p[c * 3 + 1]!, p[c * 3 + 2]!];
+  const out: number[] = [];
+  const band = (cells: readonly number[], kind: 0 | 1, seed: number) => {
+    const points = cells.map(at);
+    if (kind === 0) {
+      // Die Mündung: ein Stück hinein ins nächste Wasserfeld.
+      const last = cells[cells.length - 1]!;
+      const sea = grid.neighbors[last]!.find((q) => forms[q] === 'water' || forms[q] === 'waterIce');
+      if (sea !== undefined) {
+        const a = at(last);
+        const b = at(sea);
+        points.push([a[0] + (b[0] - a[0]) * 0.6, a[1] + (b[1] - a[1]) * 0.6, a[2] + (b[2] - a[2]) * 0.6]);
+      }
+    }
+    if (points.length < 2) return;
+    const steps = 10;
+    const samples: [number, number, number][] = [];
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[Math.max(0, i - 1)]!;
+      const p1 = points[i]!;
+      const p2 = points[i + 1]!;
+      const p3 = points[Math.min(points.length - 1, i + 2)]!;
+      // Schlängeln: senkrecht zur Richtung, an den Feldmitten null.
+      const sign = (smallHash(seed * 131 + i) < 0.5 ? -1 : 1) * (0.5 + 0.5 * smallHash(seed * 71 + i));
+      const amp = (kind === 0 ? 0.16 : 0.05) * cellW * sign;
+      const dir = [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]];
+      for (let s = i === 0 ? 0 : 1; s <= steps; s++) {
+        const t = s / steps;
+        const t2 = t * t;
+        const t3 = t2 * t;
+        const cr = (j: number) => 0.5 * (2 * p1[j]! + (-p0[j]! + p2[j]!) * t + (2 * p0[j]! - 5 * p1[j]! + 4 * p2[j]! - p3[j]!) * t2 + (-p0[j]! + 3 * p1[j]! - 3 * p2[j]! + p3[j]!) * t3);
+        let x = cr(0);
+        let y = cr(1);
+        let z = cr(2);
+        const l = Math.hypot(x, y, z);
+        x /= l;
+        y /= l;
+        z /= l;
+        // Seite = Lage × Richtung.
+        let sx = y * dir[2]! - z * dir[1]!;
+        let sy = z * dir[0]! - x * dir[2]!;
+        let sz = x * dir[1]! - y * dir[0]!;
+        const sl = Math.hypot(sx, sy, sz) || 1;
+        sx /= sl;
+        sy /= sl;
+        sz /= sl;
+        const m = amp * (Math.sin(Math.PI * t) + (kind === 0 ? 0.35 * Math.sin(2 * Math.PI * t) : 0));
+        samples.push([x + sx * m, y + sy * m, z + sz * m]);
+      }
+    }
+    let along = 0;
+    const n = samples.length;
+    const vertex = (i: number, side: number) => {
+      const c = samples[i]!;
+      const prev = samples[Math.max(0, i - 1)]!;
+      const next = samples[Math.min(n - 1, i + 1)]!;
+      const tx = next[0] - prev[0];
+      const ty = next[1] - prev[1];
+      const tz = next[2] - prev[2];
+      let sx = c[1] * tz - c[2] * ty;
+      let sy = c[2] * tx - c[0] * tz;
+      let sz = c[0] * ty - c[1] * tx;
+      const sl = Math.hypot(sx, sy, sz) || 1;
+      sx /= sl;
+      sy /= sl;
+      sz /= sl;
+      const flow = i / (n - 1);
+      // Flüsse laufen an der Quelle spitz aus und werden zur Mündung hin breiter.
+      const halfW = kind === 0 ? cellW * (0.03 + 0.07 * flow) * Math.min(1, flow * 12) : cellW * 0.036;
+      out.push(c[0], c[1], c[2], sx, sy, sz, side, halfW, along, kind, flow);
+    };
+    const alongAt: number[] = [0];
+    for (let i = 1; i < n; i++) {
+      const a = samples[i - 1]!;
+      const b = samples[i]!;
+      along += Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]) / cellW;
+      alongAt.push(along);
+    }
+    for (let i = 0; i < n - 1; i++) {
+      // Zwei Dreiecke je Stück; der Weg steht je Ecke.
+      const quad: [number, number][] = [
+        [i, -1],
+        [i, 1],
+        [i + 1, -1],
+        [i, 1],
+        [i + 1, 1],
+        [i + 1, -1],
+      ];
+      for (const [j, side] of quad) {
+        along = alongAt[j]!;
+        vertex(j, side);
+      }
+    }
+  };
+  (map.rivers ?? []).forEach((river, i) => band(river, 0, i + 1));
+  (map.roads ?? []).forEach((road, i) => band(road, 1, i + 1001));
+  return new Float32Array(out);
+}
+
 /** Zeichnet den Globus einer Karte; `undefined`, wenn das Gerät kein WebGL 2 kann. */
 export interface GlobeRenderer {
   draw(globe: GlobeView, camera: Camera, view: Viewport, showGrid: boolean): void;
@@ -459,7 +674,8 @@ export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | 
   const halo = compile(gl, QUAD_VS, HALO_FS);
   const bake = compile(gl, BAKE_VS, BAKE_FS);
   const cells = compile(gl, CELL_VS, CELL_FS);
-  if (!halo || !bake || !cells) return undefined;
+  const lines = compile(gl, LINE_VS, LINE_FS);
+  if (!halo || !bake || !cells || !lines) return undefined;
 
   const quad = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, quad);
@@ -499,6 +715,18 @@ export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | 
   // Das Netz gehört zu einer Karte; wird sie neu gewürfelt, entsteht es neu.
   let shown: object | undefined;
   let mesh: { buffer: WebGLBuffer | null; vertices: number } | undefined;
+  let lineBuffer: { buffer: WebGLBuffer | null; vertices: number } | undefined;
+  const lineAttribs = (
+    [
+      ['aP', 3, 0],
+      ['aS', 3, 3],
+      ['aSide', 1, 6],
+      ['aHalfW', 1, 7],
+      ['aAlong', 1, 8],
+      ['aKind', 1, 9],
+      ['aFlow', 1, 10],
+    ] as const
+  ).map(([name, size, offset]) => [gl!.getAttribLocation(lines, name), size, offset] as const);
   const attribs = (
     [
       ['aPos', 3, 0],
@@ -521,6 +749,12 @@ export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | 
         g.bindBuffer(g.ARRAY_BUFFER, buffer);
         g.bufferData(g.ARRAY_BUFFER, data, g.STATIC_DRAW);
         mesh = { buffer, vertices: data.length / STRIDE };
+        if (lineBuffer) g.deleteBuffer(lineBuffer.buffer);
+        const lineData = lineMesh(globe);
+        const lb = g.createBuffer();
+        g.bindBuffer(g.ARRAY_BUFFER, lb);
+        g.bufferData(g.ARRAY_BUFFER, lineData, g.STATIC_DRAW);
+        lineBuffer = { buffer: lb, vertices: lineData.length / LINE_STRIDE };
         shown = globe.map;
       }
       const glowHex = ATMOSPHERE_GLOW[globe.look.atmosphere ?? 0];
@@ -572,6 +806,27 @@ export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | 
       }
       g.drawArrays(g.TRIANGLES, 0, mesh.vertices);
       for (const [loc] of attribs) g.disableVertexAttribArray(loc);
+
+      // Flüsse und Straßen über dem Gelände, im selben Licht; die Ufer und Seitenstreifen halb durchsichtig.
+      if (lineBuffer && lineBuffer.vertices > 0) {
+        g.enable(g.BLEND);
+        g.blendFunc(g.ONE, g.ONE_MINUS_SRC_ALPHA);
+        g.useProgram(lines);
+        const l = (name: string) => g.getUniformLocation(lines, name);
+        g.uniform3f(l('uE'), e[0], e[1], e[2]);
+        g.uniform3f(l('uN'), n[0], n[1], n[2]);
+        g.uniform3f(l('uF'), f[0], f[1], f[2]);
+        g.uniform2f(l('uScale'), (2 * R) / W, (2 * R) / H);
+        g.uniform1f(l('uR'), R);
+        g.uniform3f(l('uLight'), LIGHT[0], LIGHT[1], LIGHT[2]);
+        g.bindBuffer(g.ARRAY_BUFFER, lineBuffer.buffer);
+        for (const [loc, size, offset] of lineAttribs) {
+          g.enableVertexAttribArray(loc);
+          g.vertexAttribPointer(loc, size, g.FLOAT, false, LINE_STRIDE * 4, offset * 4);
+        }
+        g.drawArrays(g.TRIANGLES, 0, lineBuffer.vertices);
+        for (const [loc] of lineAttribs) g.disableVertexAttribArray(loc);
+      }
     },
   };
 }
