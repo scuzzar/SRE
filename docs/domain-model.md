@@ -553,7 +553,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Block | `DamageRoll.points`, `DamageRoll.to` | Ein Stück eines Schadenswürfels, das ganz auf ein Attribut geht; ein Würfel ist ein Block oder, wenn er ein Attribut auf 0 bringt, mehrere |
 | Überlauf | (Regel) | Was ein Würfel über 0 hinaus bringt, geht als neuer Block auf ein anderes Attribut über 0 (SR 21) |
 | Kampf | (Reiter „Kampf“) | Der Screen für Angriffe: ohne Begegnung die Waffentabelle, mit Begegnung die Kampfsimulation |
-| Reiter Begegnung | (Reiter „Begegnung“) | Der Screen mit der Liste der Begegnungsarten, darüber der Aufenthaltsort |
+| Reiter Begegnung | (Reiter „Begegnung“) | Der Screen mit der Liste der Begegnungsarten, darüber Spielzeit, Fahrt und Aufenthaltsort. Unten die Reihe mit den Würfen Zufall, Tiere, Patron, Gerücht, Polizei und darunter Tage vergehen und Woche beenden bzw. bei einer Fahrt Weiterfahren: die einzige Stelle, an der Zeit vergeht oder die Fahrt weitergeht. Auf dem Blatt bleibt, was man einstellt (Welt, Gelände, Würfel, „oder wählen …“, wie viele Tage), und was herauskam |
 | Begegnungsart | (Karte im Reiter Begegnung) | Eine Art von Begegnungen nach SE S. 20 mit ihren Einstellungen und ihrem Wurf: Zufallsbegegnung, Patron, Gerücht, später Gesetz, Tiere. Nicht zu verwechseln mit der *Art der Begegnung* (`EncounterType`), einer Zeile der Random Encounter List |
 | Zufallsbegegnung | (Begegnungsart) | Personen nach der Random Encounter List (S. 21); ergibt eine Begegnung (`Encounter`) |
 | Patron | `Patron` | Ein Auftraggeber nach seinem Beruf, z. B. „Smuggler“: eine Zeile einer der beiden Patron-Listen (SE, Charts S. 20) |
@@ -2391,7 +2391,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Abschnitt:** Jeder Abschnitt hat seine Felder in Reihenfolge (`cells`; bei einem Flug nur Start
     und Landepunkt), daraus folgen seine Fahrstunden (`/hours`) und seine Miete je Tag (`/rent`). Das
     letzte Feld eines Abschnitts ist das erste des nächsten.
-  - **Tag für Tag** (wie Zeit vergehen lassen): „Einen Tag fahren“ fährt die Fahrstunden je Tag
+  - **Tag für Tag** (wie Zeit vergehen lassen): „Weiterfahren“ unten im Reiter Begegnung (die einzige Stelle dafür; nach „Losfahren“ öffnet er sich, auf dem Globus führt ein Hinweis hin) fährt die Fahrstunden je Tag
     (Hausregel: **8 Stunden** für alle Fahrzeuge; *Mission on Mithril* rechnet 10 auf einem
     20-Stunden-Tag) oder den Rest bis zur Ankunft, nie weniger. Das ist ein
     Logeintrag `TripDay` mit den gefahrenen Stunden, der Miete des Tages und ob die Gruppe
@@ -2401,7 +2401,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Reisetag ist es der Aufenthaltsort; der Reisetag bekommt es als Ort. Bei der Ankunft ist der
     Aufenthaltsort das Ziel (Feld oder Stadt) und die Fahrt fällt weg.
   - **Begegnungen am Boden** (Owner, 15. November 2026): Hat ein Reisetag Strecke am Boden (nicht nur
-    einen Flug), würfelt „Einen Tag fahren“ danach Pflicht den Begegnungstest am erreichten Ort, mit
+    einen Flug), würfelt „Weiterfahren“ danach Pflicht den Begegnungstest am erreichten Ort, mit
     Würfelanimation: in der **Wildnis** (ein Feld ohne Stadt und Kleinstadt, nicht besiedelt, dessen
     Gelände Tiere hat) den Test auf **Tiere**, sonst den auf eine **Zufallsbegegnung** (je 5+ auf 1W6,
     wie im Reiter Begegnung). Er steht als Test im Log und zählt als Test des Tages. Besteht er, folgt

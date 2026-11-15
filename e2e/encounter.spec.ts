@@ -32,7 +32,7 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   // Kampf ohne Begegnung: nur die Waffentabelle, keine Begegnungsauswahl.
   await page.getByRole('navigation').getByRole('button', { name: 'Kampf' }).click();
   await expect(page.locator('.combat-table')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Begegnung würfeln' })).toHaveCount(0);
+  await expect(dock(page)).toHaveCount(0);
   // Begegnung: Die Gruppe ist auf Kessra und zieht nach Regina um.
   await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
   await expect(page.getByLabel('Die Gruppe ist auf')).toHaveValue('0405');
@@ -147,29 +147,32 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await page.getByRole('button', { name: 'Beenden' }).click();
   await expect(page.locator('.combat-table')).toBeVisible();
   await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
-  await expect(page.getByRole('button', { name: 'Begegnung würfeln' })).toBeVisible();
+  await expect(dock(page).getByRole('button', { name: /^Zufallsbegegnung würfeln/ })).toBeEnabled();
 });
 
 test('Patron und Gerücht: eigene Karten im Reiter Begegnung; erst der Test, beim Patron wählt ein Würfel die Liste; die Würfe stehen im Log', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
-  await expect(page.getByRole('region', { name: 'Zufallsbegegnung' }).getByRole('button', { name: 'Begegnung würfeln' })).toBeVisible();
+  // Die Würfe stehen unten in der Reihe, die Karten zeigen Einstellungen und Ergebnisse.
+  await expect(dock(page).getByRole('button', { name: /^Zufallsbegegnung würfeln/ })).toBeVisible();
   const patron = page.getByRole('region', { name: 'Patron' });
   // Jonas Reyl hat Admin-1: Auf Liste 2 gibt das +1 auf den zweiten Würfel.
   await expect(patron).toContainText('Liste 2: 2. Würfel Admin +1');
   // Der Test besteht bei 5+ auf 1W6; würfeln, bis ein Patron kommt.
   // Der erste Test der Woche geht mit Tippen, jeder weitere nur lange gedrückt.
-  await patron.getByRole('button', { name: /Patron würfeln/ }).click();
-  await expect(patron.getByRole('button', { name: /Patron würfeln/ })).toContainText('diese Woche 1×');
+  await dock(page).getByRole('button', { name: /Patron würfeln/ }).click();
+  // Unten knapp „Woche 1×“, der volle Name sagt „diese Woche 1×“.
+  await expect(dock(page).getByRole('button', { name: /Patron würfeln/ })).toContainText('Woche 1×');
+  await expect(dock(page).getByRole('button', { name: 'Patron würfeln, diese Woche 1×' })).toBeVisible();
   for (let i = 0; i < 60 && !(await patron.locator('.patron-last').isVisible()); i++) {
-    await hold(page, patron.getByRole('button', { name: /Patron würfeln/ }));
+    await hold(page, dock(page).getByRole('button', { name: /Patron würfeln/ }));
     await expect(patron.getByRole('status')).toContainText(/Test \d \(5\+ nötig\): /);
   }
   await expect(patron.locator('.patron-last')).toContainText(/Liste [12] · \d und \d.* → \d\d/);
   // Gerücht: Test 7+ auf 2W6, dann die Art nach der Rumors Matrix.
   const rumor = page.getByRole('region', { name: 'Gerücht' });
   for (let i = 0; i < 60 && !(await rumor.locator('.patron-last').isVisible()); i++) {
-    await hold(page, rumor.getByRole('button', { name: /Gerücht würfeln/ }));
+    await hold(page, dock(page).getByRole('button', { name: /Gerücht würfeln/ }));
     await expect(rumor.getByRole('status')).toBeVisible();
   }
   await expect(rumor.locator('.patron-last')).toContainText(/[A-Z] · .+ (allgemein|bestimmt) · \d und \d → \d\d/);
@@ -190,7 +193,7 @@ test('Tiere: Gelände oben für alle Begegnungen; die Tiertabelle entsteht beim 
   await expect(animals.getByLabel('Tiere wählen')).toBeDisabled();
   // Würfeln, bis der Test besteht; dann gibt es die Tabelle (Tier mit Übersicht oder Ereignis).
   for (let i = 0; i < 60 && !(await animals.getByLabel('Tiere wählen').isEnabled()); i++) {
-    await hold(page, animals.getByRole('button', { name: /Tiere würfeln/ }));
+    await hold(page, dock(page).getByRole('button', { name: /Tiere würfeln/ }));
     const intro = page.getByRole('dialog');
     if (await intro.isVisible()) {
       await expect(intro).toContainText('Tiere · Clear');
@@ -205,6 +208,9 @@ test('Tiere: Gelände oben für alle Begegnungen; die Tiertabelle entsteht beim 
   await expect(page.getByRole('dialog')).toContainText(`Wurf ${option}`);
 });
 
+/** Die Reihe unten im Reiter Begegnung: die Würfe der Begegnungen und die Zeit bzw. Weiterfahren. */
+const dock = (page: Page) => page.getByRole('region', { name: 'Begegnung und Zeit' });
+
 /** Langes Drücken auf einen Knopf (HoldButton): drücken, warten, bis er sich gefüllt hat, loslassen. */
 async function hold(page: Page, button: Locator): Promise<void> {
   await button.hover();
@@ -218,8 +224,8 @@ test('Zeit und Reise: Woche beenden erinnert an Tests, lange gedrückt geht es w
   await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
   const time = page.getByRole('region', { name: 'Spielzeit' });
   await expect(time).toContainText('001-1105');
-  await time.getByRole('button', { name: /Woche beenden/ }).click();
+  await dock(page).getByRole('button', { name: /Woche beenden/ }).click();
   await expect(time.getByRole('status')).toContainText('Noch nicht getestet');
-  await hold(page, time.getByRole('button', { name: /Woche beenden/ }));
+  await hold(page, dock(page).getByRole('button', { name: /Woche beenden/ }));
   await expect(time).toContainText('Sonntag, 008-1105');
 });

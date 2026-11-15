@@ -1989,8 +1989,15 @@ describe('Fahrt (2026-11-15)', () => {
     expect(game.snapshot().globe!.route[0]!.cells.at(-1)).toBe(target);
     game.startTrip();
     expect(game.snapshot().tripPlan).toBeUndefined();
+    // Weiter geht es im Reiter Begegnung, der einzigen Stelle zum Weiterfahren; das Feld ist losgelassen.
+    expect(game.snapshot()).toMatchObject({ screen: 'encounter', globe: { picked: undefined } });
     const days = game.snapshot().trip!.daysLeft;
     expect(days).toBeGreaterThan(0);
+    // Neu gestartet mitten in der Fahrt: Die App öffnet im Reiter Begegnung.
+    await game.whenSaved();
+    const again = new GameController({ repository, random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), keys: countingKeys() });
+    await again.init();
+    expect(again.snapshot().screen).toBe('encounter');
     const before = game['campaign'].day;
     for (let d = 0; d < days; d++) {
       game.driveDay();

@@ -353,7 +353,7 @@ export class GameController {
       if (c !== loaded[i]) this.persist(() => this.deps.repository.save(c), true);
     });
     const campaign = campaigns.find((c) => c.id === open) ?? byName(campaigns)[0];
-    if (campaign) this.update({ campaigns, campaign, ...this.home(campaign) });
+    if (campaign) this.update({ campaigns, campaign, ...this.home(campaign), ...this.landing(campaign) });
     else this.addCampaign(createDemoCampaign(this.deps.clock, this.deps.keys.next()));
     await this.initSync();
   }
@@ -387,7 +387,7 @@ export class GameController {
   openCampaign(id: CampaignId): void {
     const campaign = this.state.campaigns.find((c) => c.id === id);
     if (!campaign) throw new DomainError(`Die Kampagne ${id} gibt es nicht`);
-    this.update({ ...this.closed(campaign), campaign, campaignSheet: undefined });
+    this.update({ ...this.closed(campaign), ...this.landing(campaign), campaign, campaignSheet: undefined });
     this.persist(() => this.deps.repository.saveOpen(id));
   }
 
@@ -1844,7 +1844,8 @@ export class GameController {
     const plan = draft?.options[draft.chosen];
     if (!plan) return;
     try {
-      this.change(startTrip(this.campaign, plan), { tripPlan: undefined, tripNote: undefined });
+      // Weiter geht es im Reiter Begegnung, der einzigen Stelle zum Weiterfahren.
+      this.change(startTrip(this.campaign, plan), { tripPlan: undefined, tripNote: undefined, screen: 'encounter', globe: this.state.globe && { picked: undefined } });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ tripPlan: { ...this.state.tripPlan!, error: error.message } });
@@ -2105,6 +2106,11 @@ export class GameController {
     const hex = at === undefined ? undefined : campaign.hexes.find((h) => hexId(h.column, h.row) === at);
     if (!hex || !isWorld(hex) || !hex.map) return { world: undefined, globe: undefined };
     return { world: { column: hex.column, row: hex.row, rolls: [] }, globe: { picked: undefined } };
+  }
+
+  /** Läuft eine Fahrt, öffnet die Kampagne im Reiter Begegnung, wo es weitergeht. */
+  private landing(campaign: Campaign): Pick<ControllerState, 'screen'> | Record<string, never> {
+    return campaign.trip ? { screen: 'encounter' } : {};
   }
 
   /** Alle Entwürfe zu, die Grundkarte wie beim Öffnen der Kampagne. */

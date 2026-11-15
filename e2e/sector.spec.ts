@@ -284,4 +284,17 @@ test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des 
   await actions.getByRole('button', { name: 'Hierhin reisen' }).click();
   await expect(actions.getByRole('button', { name: 'Hierhin reisen' })).toBeDisabled();
   await expect(actions.getByRole('button', { name: 'Hierhin reisen' })).toHaveAttribute('title', 'Die Route ist schon geplant');
+  // Losfahren öffnet den Reiter Begegnung: Dort unten ist Weiterfahren, die einzige Stelle dafür.
+  await page.getByRole('button', { name: 'Losfahren' }).click();
+  const nav = page.getByRole('navigation', { name: 'Bereiche' });
+  await expect(nav.getByRole('button', { name: 'Begegnung', exact: true })).toHaveAttribute('aria-current', 'page');
+  const dock = page.getByRole('region', { name: 'Begegnung und Zeit' });
+  await expect(dock.getByRole('button', { name: 'Weiterfahren' })).toBeVisible();
+  await expect(dock.getByRole('button', { name: /Tage? vergehen/ })).toHaveCount(0);
+  // Auf dem Globus steht nur ein Hinweis; er führt zurück in den Reiter Begegnung.
+  if (test.info().project.name === 'mobil') await nav.getByRole('button', { name: 'Log', exact: true }).click();
+  else await nav.getByRole('button', { name: 'Begegnung', exact: true }).click();
+  await expect(globe.getByRole('button', { name: /Einen Tag fahren/ })).toHaveCount(0);
+  await globe.getByRole('button', { name: /^Fahrt nach .* · Tag 1\// }).click();
+  await expect(dock.getByRole('button', { name: 'Weiterfahren' })).toBeVisible();
 });
