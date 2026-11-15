@@ -7729,9 +7729,19 @@ button:disabled {
 
 /* Auf Touch-Geräten zoomt man mit Gesten (zwei Finger, Doppeltippen); die Knöpfe gibt es nur mit Maus oder Touchpad. */
 @media (pointer: coarse) {
-  .globe-zoom {
+  .globe-zoom-buttons {
     display: none;
   }
+}
+
+.globe-zoom-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.globe-locate {
+  color: #6ec8ff;
 }
 
 /* Kein Doppeltipp-Zoom der Seite und keine Textauswahl auf den Knöpfen der Karte. */
@@ -7900,4 +7910,8 @@ button:disabled {
   border-radius: 8px;
   max-height: 50vh;
   overflow: auto;
+}
+
+.globe-zoom[hidden] {
+  display: none;
 }

@@ -240,6 +240,7 @@ in vec3 aChan;
 in vec3 aCol0;
 in vec3 aCol1;
 in vec3 aCol2;
+in vec3 aIds;
 uniform vec3 uE;
 uniform vec3 uN;
 uniform vec3 uF;
@@ -252,6 +253,7 @@ out vec3 vChan;
 out vec3 vCol0;
 out vec3 vCol1;
 out vec3 vCol2;
+out vec3 vIds;
 void main() {
   vec3 v = vec3(dot(aPos, uE), dot(aPos, uN), dot(aPos, uF));
   vView = v;
@@ -262,6 +264,7 @@ void main() {
   vCol0 = aCol0;
   vCol1 = aCol1;
   vCol2 = aCol2;
+  vIds = aIds;
   gl_Position = vec4(v.x * uScale.x, v.y * uScale.y, 0.0, 1.0);
 }
 `;
@@ -355,6 +358,38 @@ void main() {
     col = mix(col, col * 0.35, (1.0 - smoothstep(0.0, fwidth(edge) * 1.2, edge)) * 0.85);
   }
   outColor = vec4(col, 1.0);
+}
+`;
+
+/**
+ * Der Rahmen des angetippten Feldes, als eigener Durchgang über Flüssen und Straßen: genau auf dem
+ * Feldrand ein heller Rand, außen ein weicher Schatten, innen ein leichter Schein. Gezeichnet wird
+ * nur in Dreiecken, die das Feld berühren; die Breite ist in Bildpunkten, also auf jeder Zoomstufe gleich.
+ */
+const OUTLINE_FS = `#version 300 es
+precision highp float;
+uniform float uPicked;
+in vec3 vView;
+in vec3 vBary;
+in vec3 vIds;
+out vec4 outColor;
+void main() {
+  if (vView.z < 0.0) discard;
+  vec3 s = vBary;
+  float mine;
+  float other;
+  if (abs(vIds.x - uPicked) < 0.5) { mine = s.x; other = max(s.y, s.z); }
+  else if (abs(vIds.y - uPicked) < 0.5) { mine = s.y; other = max(s.x, s.z); }
+  else if (abs(vIds.z - uPicked) < 0.5) { mine = s.z; other = max(s.x, s.y); }
+  else discard;
+  // Abstand zum Feldrand in Bildpunkten: positiv innen, negativ außen.
+  float d = (mine - other) / max(fwidth(mine - other), 1e-6);
+  float ring = smoothstep(-0.5, 0.5, d) * (1.0 - smoothstep(3.0, 4.0, d));
+  float shadow = (1.0 - smoothstep(-0.5, 0.5, d)) * smoothstep(-5.0, -0.5, d) * 0.5;
+  float glow = smoothstep(3.0, 4.0, d) * (1.0 - smoothstep(4.0, 18.0, d)) * 0.2;
+  // Vormultipliert: Rand und Schein hell, der Schatten dunkelt nur ab.
+  vec3 light = vec3(1.0, 0.97, 0.88);
+  outColor = vec4(light * (ring + glow), ring + glow + shadow);
 }
 `;
 
@@ -577,7 +612,8 @@ export function lineMesh(globe: GlobeView): Float32Array {
 
 /** Zeichnet den Globus einer Karte; `undefined`, wenn das Gerät kein WebGL 2 kann. */
 export interface GlobeRenderer {
-  draw(globe: GlobeView, camera: Camera, view: Viewport, showGrid: boolean): void;
+  /** `picked` ist das angetippte Feld; es bekommt einen Rahmen. */
+  draw(globe: GlobeView, camera: Camera, view: Viewport, showGrid: boolean, picked: number | undefined): void;
 }
 
 function compile(gl: WebGL2RenderingContext, vs: string, fs: string): WebGLProgram | undefined {
@@ -602,8 +638,8 @@ function compile(gl: WebGL2RenderingContext, vs: string, fs: string): WebGLProgr
   return gl.getProgramParameter(program, gl.LINK_STATUS) ? program : undefined;
 }
 
-/** Werte je Ecke: Lage (3), Anteil (3), Arten (3), Rauschkanäle (3), drei Farben (9). */
-const STRIDE = 21;
+/** Werte je Ecke: Lage (3), Anteil (3), Arten (3), Rauschkanäle (3), drei Farben (9), Feldnummern (3). */
+const STRIDE = 24;
 
 /** Ein Rauschkanal je Feld (0–3), gestreut, damit Nachbarn meist verschieden ausfransen. */
 function channelOf(cell: number): number {
@@ -660,6 +696,7 @@ export function cellMesh(globe: GlobeView): Float32Array {
         out[o++] = color[c * 3 + 1]!;
         out[o++] = color[c * 3 + 2]!;
       }
+      for (const c of tri) out[o++] = c;
     }
   }
   return out;
@@ -677,7 +714,8 @@ export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | 
   const bake = compile(gl, BAKE_VS, BAKE_FS);
   const cells = compile(gl, CELL_VS, CELL_FS);
   const lines = compile(gl, LINE_VS, LINE_FS);
-  if (!halo || !bake || !cells || !lines) return undefined;
+  const outline = compile(gl, CELL_VS, OUTLINE_FS);
+  if (!halo || !bake || !cells || !lines || !outline) return undefined;
 
   const quad = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, quad);
@@ -738,11 +776,19 @@ export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | 
       ['aCol0', 3, 12],
       ['aCol1', 3, 15],
       ['aCol2', 3, 18],
+      ['aIds', 3, 21],
     ] as const
   ).map(([name, size, offset]) => [gl!.getAttribLocation(cells, name), size, offset] as const);
+  const outlineAttribs = (
+    [
+      ['aPos', 3, 0],
+      ['aBary', 3, 3],
+      ['aIds', 3, 21],
+    ] as const
+  ).map(([name, size, offset]) => [gl!.getAttribLocation(outline, name), size, offset] as const);
 
   return {
-    draw(globe, camera, view, showGrid) {
+    draw(globe, camera, view, showGrid, picked) {
       const g = gl!;
       if (shown !== globe.map || !mesh) {
         if (mesh) g.deleteBuffer(mesh.buffer);
@@ -828,6 +874,25 @@ export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | 
         }
         g.drawArrays(g.TRIANGLES, 0, lineBuffer.vertices);
         for (const [loc] of lineAttribs) g.disableVertexAttribArray(loc);
+      }
+
+      if (picked !== undefined) {
+        g.enable(g.BLEND);
+        g.blendFunc(g.ONE, g.ONE_MINUS_SRC_ALPHA);
+        g.useProgram(outline);
+        const o = (name: string) => g.getUniformLocation(outline, name);
+        g.uniform3f(o('uE'), e[0], e[1], e[2]);
+        g.uniform3f(o('uN'), n[0], n[1], n[2]);
+        g.uniform3f(o('uF'), f[0], f[1], f[2]);
+        g.uniform2f(o('uScale'), (2 * R) / W, (2 * R) / H);
+        g.uniform1f(o('uPicked'), picked);
+        g.bindBuffer(g.ARRAY_BUFFER, mesh.buffer);
+        for (const [loc, size, offset] of outlineAttribs) {
+          g.enableVertexAttribArray(loc);
+          g.vertexAttribPointer(loc, size, g.FLOAT, false, STRIDE * 4, offset * 4);
+        }
+        g.drawArrays(g.TRIANGLES, 0, mesh.vertices);
+        for (const [loc] of outlineAttribs) g.disableVertexAttribArray(loc);
       }
     },
   };

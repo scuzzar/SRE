@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { landformAt, type GlobeView, type LogItem, type WorldView } from '../../controller';
 import { roleText } from '../format';
 import { useGame } from '../game-context';
-import { CloseIcon, PencilIcon } from '../icons';
+import { CloseIcon, LocateIcon, PencilIcon } from '../icons';
 import { createGlobeRenderer, type GlobeRenderer } from './globe-gl';
 import { cellAt, radiusOf, renderGlobe, screenOf, type Camera, type Viewport } from './globe-render';
 import { HappenedList } from './HappenedList';
@@ -98,13 +98,13 @@ export function GlobeScreen({
     if (gl) {
       if (under.width !== w) under.width = w;
       if (under.height !== h) under.height = h;
-      gl.draw(globe, camera, { width: w, height: h }, showGrid);
+      gl.draw(globe, camera, { width: w, height: h }, showGrid, globe.picked?.cell);
     } else {
       const img = ctx.createImageData(w, h);
       renderGlobe(img, globe, camera, showGrid);
       ctx.putImageData(img, 0, 0);
     }
-    drawMarkers(ctx, globe, camera, { width: w, height: h }, scale);
+    drawMarkers(ctx, globe, camera, { width: w, height: h }, scale, !gl);
   }, [globe, camera, view, moving, showGrid]);
 
   // Drehen, Zoomen, Antippen.
@@ -240,6 +240,30 @@ export function GlobeScreen({
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
   }, [zoomBy]);
+
+  /** Wie im Navi: gleitet zur Gruppe zurück und zoomt so weit hinein, dass man die Umgebung sieht. */
+  const flyFrame = useRef(0);
+  const flyToParty = () => {
+    const cell = globe.partyCell;
+    if (cell === undefined) return;
+    cancelAnimationFrame(flyFrame.current);
+    const from = camera;
+    const lat = globe.grid.lat[cell]! * DEG;
+    const dLon = shortest(globe.grid.lon[cell]! * DEG - from.lon);
+    const zoom = Math.max(from.zoom, clampZoom(3));
+    const start = performance.now();
+    setMoving(true);
+    setPanel(undefined);
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / 450);
+      const e = 1 - (1 - t) ** 3;
+      setCamera({ lat: from.lat + (lat - from.lat) * e, lon: from.lon + dLon * e, zoom: from.zoom + (zoom - from.zoom) * e });
+      if (t < 1) flyFrame.current = requestAnimationFrame(step);
+      else setMoving(false);
+    };
+    flyFrame.current = requestAnimationFrame(step);
+  };
+  useEffect(() => () => cancelAnimationFrame(flyFrame.current), []);
 
   /** Dreht die Karte zu einem Feld, zoomt etwas hinein und tippt es an. */
   const flyTo = (cell: number) => {
@@ -386,12 +410,19 @@ export function GlobeScreen({
       </div>
 
       <div className="globe-zoom" hidden={panel === 'world'} style={sheetHeight > 0 ? { bottom: sheetHeight + 12 } : undefined}>
-        <button type="button" className="globe-round" aria-label="Hineinzoomen" onClick={() => glideZoom(1.6)}>
-          +
-        </button>
-        <button type="button" className="globe-round" aria-label="Herauszoomen" onClick={() => glideZoom(1 / 1.6)}>
-          −
-        </button>
+        {globe.partyCell !== undefined && (
+          <button type="button" className="globe-round globe-locate" aria-label="Zur Gruppe" title="Zur Gruppe" onClick={flyToParty}>
+            <LocateIcon />
+          </button>
+        )}
+        <div className="globe-zoom-buttons">
+          <button type="button" className="globe-round" aria-label="Hineinzoomen" onClick={() => glideZoom(1.6)}>
+            +
+          </button>
+          <button type="button" className="globe-round" aria-label="Herauszoomen" onClick={() => glideZoom(1 / 1.6)}>
+            −
+          </button>
+        </div>
       </div>
 
       <section ref={sheet} className={picked ? 'globe-sheet open' : 'globe-sheet'} aria-label="Angetipptes Feld" aria-hidden={!picked}>
@@ -493,9 +524,9 @@ export function GlobeScreen({
 
 /**
  * Zeichen auf dem Globus: Kleinstädte außerhalb des besiedelten Gebiets, Städte, Vulkane, Ereignisse, NSC, die Gruppe, das angetippte
- * Feld als Ring. Flüsse und Straßen zeichnet die Grafikkarte (globe-gl.ts), ohne WebGL stehen sie in der Textur.
+ * Feld als Ring (nur ohne WebGL). Flüsse und Straßen zeichnet die Grafikkarte (globe-gl.ts), ohne WebGL stehen sie in der Textur.
  */
-function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Camera, view: Viewport, scale: number): void {
+function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Camera, view: Viewport, scale: number, ring: boolean): void {
   const at = (cell: number) => screenOf(globe, camera, view, cell);
   // Kleinstädte außerhalb des besiedelten Gebiets: ein kleines helles Haus, sobald man etwas
   // hineinzoomt. Im besiedelten Gebiet zeigt schon die Farbe, dass dort Menschen leben.
@@ -588,8 +619,9 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
   for (const n of globe.npcs) if (n.cell !== undefined) npcCells.set(n.cell, (npcCells.get(n.cell) ?? 0) + 1);
   for (const [cell, count] of npcCells) badge(cell, -8, -8, 'rgba(190,150,255,0.95)', count > 1 ? String(count) : 'N');
   if (globe.partyCell !== undefined) badge(globe.partyCell, 0, 10, 'rgba(110,200,255,1)', 'G');
+  // Ohne WebGL ein Ring um das angetippte Feld; mit WebGL rahmt die Grafikkarte das Feld ein.
   const picked = globe.picked?.cell;
-  if (picked !== undefined) {
+  if (ring && picked !== undefined) {
     const p = at(picked);
     if (p) {
       ctx.beginPath();
