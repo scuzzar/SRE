@@ -44,6 +44,8 @@ export interface TripDay extends LogEntryBase {
   readonly kind: 'tripDay';
   readonly hours: number;
   readonly rent: number;
+  /** Der Fahrpreis des Tages im Linienverkehr; fehlt bei Reisetagen von vor dem Linienflug (dann 0). */
+  readonly fare?: number;
   readonly arrived: boolean;
 }
 

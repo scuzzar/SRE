@@ -3,7 +3,7 @@
 // Eigene Fahrzeuge, die nicht mitfahren, bleiben stehen (Possession.parked).
 
 import type { Campaign, Possession } from './campaign';
-import { possessionKey } from './campaign';
+import { livingCharacters, possessionKey } from './campaign';
 import { DomainError } from './errors';
 import type { TripDay } from './log';
 import { placeCell, withPlaceTerrain, type Place } from './place';
@@ -14,7 +14,7 @@ import type { Booking } from './shop';
 import { surfaceGrid, type SurfaceGrid } from './surface-grid';
 import type { SurfaceMap } from './surface-map';
 import { dayOf } from './time';
-import { distanceKm, flies, landsAt, stepSpeed, vehicleOf, vehicleOfItem, vehicles, WALK, waysOf, worksIn, type Vehicle, type Ways } from './vehicle';
+import { distanceKm, flies, landsAt, stepSpeed, vehicleOf, vehicleOfItem, vehicles, WALK, waysOf, worksIn, scheduled, type Vehicle, type Ways } from './vehicle';
 
 /** Ein Abschnitt der Fahrt: ein Fahrzeug, gemietet oder nicht, über Felder in Reihenfolge (ein Flug nur Start und Landepunkt). */
 export interface Leg {
@@ -114,6 +114,31 @@ export function legRent(leg: Leg): number {
   return Math.round(((item === undefined ? 0 : (itemOf(item).price ?? 0)) * RENT_PERCENT) / 100);
 }
 
+/** Wie viele Personen den Fahrpreis zahlen: alle lebenden SC. */
+export function farePayers(campaign: Campaign): number {
+  return livingCharacters(campaign).length;
+}
+
+/** `Leg./fare`: der Fahrpreis eines Abschnitts im Linienverkehr, je Person und Fahrstunde; sonst 0. */
+export function legFare(surface: TripSurface, leg: Leg, persons: number): number {
+  const fare = vehicleOf(leg.by).fare;
+  return fare === undefined ? 0 : Math.round(fare * persons * legHours(surface, leg));
+}
+
+/** Der Fahrpreis der Abschnitte im Linienverkehr, die in den Fahrstunden von `from` bis `to` beginnen. */
+export function fareBetween(surface: TripSurface, trip: Trip, from: number, to: number, persons: number): number {
+  const times = legTimes(surface, trip);
+  return trip.legs.reduce((sum, leg, i) => {
+    const start = times[i]![0];
+    return start >= from - EPS && start < to - EPS ? sum + legFare(surface, leg, persons) : sum;
+  }, 0);
+}
+
+/** Der Fahrpreis der ganzen (restlichen) Fahrt. */
+export function totalFare(surface: TripSurface, trip: Trip, persons: number): number {
+  return fareBetween(surface, trip, trip.hours, totalHours(surface, trip), persons);
+}
+
 /** Wann jeder Abschnitt beginnt und endet, in Fahrstunden ab dem Start. */
 function legTimes(surface: TripSurface, trip: Trip): readonly (readonly [number, number])[] {
   let t = 0;
@@ -180,10 +205,17 @@ export interface PlanOptions {
    * Fahrzeug zählt dann 1 + (Miete je Stunde / `hourValue`) Stunden; fehlt der Wert, zählt nur die Zeit.
    */
   readonly hourValue?: number;
+  /** Ob der Linienverkehr mitfahren darf. */
+  readonly scheduled?: boolean;
 }
 
 /** Die Gewichte für die gemischten Varianten: wie viele Cr eine Fahrstunde wert ist. */
 const HOUR_VALUES = [3, 30, 300, 3000] as const;
+
+/** Der Linienverkehr auf dieser Welt: ab seinem TL, wo die Atmosphäre reicht. */
+export function scheduledVehicles(surface: TripSurface): readonly Vehicle[] {
+  return vehicles.filter((v) => scheduled(v) && (v.tl ?? 0) <= surface.tech && worksIn(v, surface.atmosphere));
+}
 
 /** Die Fahrzeuge, die man auf dieser Welt mieten kann: in Siedlungen, bis zum TL der Welt, wo die Atmosphäre reicht. */
 export function rentableVehicles(surface: TripSurface): readonly Vehicle[] {
@@ -215,12 +247,15 @@ export function planOptions(campaign: Campaign, target: number): readonly Trip[]
   };
   attempt({ rent: false });
   for (const vehicle of affordableRentals(campaign, surface)) attempt({ rent: true, only: vehicle.id });
-  // Gemischte Varianten: mehrere Mietfahrzeuge nacheinander, wo es sich lohnt (Auto bis zum Fluss, dann Boot).
-  for (const hourValue of HOUR_VALUES) attempt({ rent: true, hourValue });
+  // Linienverkehr: zu Fuß und mit eigenen Fahrzeugen zum Flughafen, Linienflug, weiter.
+  if (scheduledVehicles(surface).length > 0) attempt({ rent: false, scheduled: true });
+  // Gemischte Varianten: mehrere Fahrzeuge nacheinander, wo es sich lohnt (Auto bis zum Fluss, dann Boot).
+  for (const hourValue of HOUR_VALUES) attempt({ rent: true, scheduled: true, hourValue });
   if (found.length === 0) throw firstError instanceof DomainError ? firstError : new DomainError('Dorthin gibt es keinen Weg.');
   // Je Fahrzeugfolge (z. B. Ground Car › Helicopter) nur die schnellste Variante.
   const key = (t: Trip) => t.legs.map((l) => `${l.by}${l.rented ? '*' : ''}`).filter((k, i, all) => i === 0 || all[i - 1] !== k).join('>');
-  const scored = found.map((trip) => ({ trip, hours: totalHours(surface, trip), rent: totalRent(surface, trip) }));
+  const persons = farePayers(campaign);
+  const scored = found.map((trip) => ({ trip, hours: totalHours(surface, trip), rent: totalRent(surface, trip) + totalFare(surface, trip, persons) }));
   const best = new Map<string, (typeof scored)[number]>();
   for (const s of scored) {
     const had = best.get(key(s.trip));
@@ -304,10 +339,14 @@ export function planTrip(campaign: Campaign, target: number, options: PlanOption
     if (cell !== undefined) modes.push({ vehicle, rented: false, source: cell });
   }
   if (options.rent) for (const vehicle of affordableRentals(campaign, surface)) if (options.only === undefined || vehicle.id === options.only) modes.push({ vehicle, rented: true, source: 'town' });
+  // Den Linienflug nimmt man, wo er abfliegt: in einer Stadt mit passendem Hafen (das prüft der Flug).
+  if (options.scheduled) for (const vehicle of scheduledVehicles(surface)) modes.push({ vehicle, rented: false, source: 'anywhere' });
 
   const n = surface.grid.cells;
   // Je Fahrzeug, wie schwer eine Stunde in der Suche wiegt: gemietet mit der Miete je Stunde abgewogen.
-  const weight = modes.map((m) => (m.rented && options.hourValue !== undefined ? 1 + legRent({ by: m.vehicle.id, rented: true, cells: [] }) / TRIP_HOURS_PER_DAY / options.hourValue : 1));
+  const persons = farePayers(campaign);
+  const costPerHour = (m: Mode) => (m.rented ? legRent({ by: m.vehicle.id, rented: true, cells: [] }) / TRIP_HOURS_PER_DAY : (m.vehicle.fare ?? 0) * persons);
+  const weight = modes.map((m) => (options.hourValue !== undefined ? 1 + costPerHour(m) / options.hourValue : 1));
   const towns = surface.ways.town;
   // Landepunkte: das Ziel, die Siedlungen nahe am Ziel (zum Umsteigen auf das letzte Stück), Start und abgestellte eigene Fahrzeuge.
   const nearTarget = [...towns].sort((a, b) => distanceKm(surface.grid, surface.size, a, target) - distanceKm(surface.grid, surface.size, b, target)).slice(0, LANDING_TOWNS);
@@ -496,8 +535,9 @@ export function driveDay(campaign: Campaign, clock: Clock): Campaign {
   const from = trip.hours;
   const to = Math.min(from + TRIP_HOURS_PER_DAY, total);
   const rent = rentBetween(surface, trip, from, to);
+  const fare = fareBetween(surface, trip, from, to, farePayers(campaign));
   const funds = campaign.bookings.reduce((sum, b) => sum + b.amount, 0);
-  if (rent > funds) throw new DomainError(`Für die Miete von heute (Cr${rent.toLocaleString('de-DE')}) reicht die Kasse nicht.`);
+  if (rent + fare > funds) throw new DomainError(`Für ${fare > 0 ? (rent > 0 ? 'Miete und Fahrpreis' : 'den Fahrpreis') : 'die Miete'} von heute (Cr${(rent + fare).toLocaleString('de-DE')}) reicht die Kasse nicht.`);
 
   // Eigene Fahrzeuge an jedem Abschnitt, der heute beginnt.
   let after = campaign;
@@ -512,14 +552,17 @@ export function driveDay(campaign: Campaign, clock: Clock): Campaign {
   const location = placeAtCell(surface, cell);
   const today = dayOf(campaign);
   const index = after.log.length;
-  const entry: TripDay = { kind: 'tripDay', at: clock.now(), day: today, place: location, hours: Math.round((to - from) * 100) / 100, rent, arrived };
-  const booking: Booking | undefined = rent > 0 ? { at: clock.now(), kind: 'rent', amount: -rent, rentFor: index } : undefined;
+  const entry: TripDay = { kind: 'tripDay', at: clock.now(), day: today, place: location, hours: Math.round((to - from) * 100) / 100, rent, fare, arrived };
+  const bookings: Booking[] = [
+    ...(rent > 0 ? [{ at: clock.now(), kind: 'rent', amount: -rent, rentFor: index } as const] : []),
+    ...(fare > 0 ? [{ at: clock.now(), kind: 'fare', amount: -fare, rentFor: index } as const] : []),
+  ];
   const moved: Campaign = {
     ...after,
     location,
     day: today + 1,
     log: [...after.log, entry],
-    bookings: booking ? [...after.bookings, booking] : after.bookings,
+    bookings: [...after.bookings, ...bookings],
   };
   // Das Gelände der Begegnungen folgt dem erreichten Feld (2026-11-15b).
   return withPlaceTerrain(arrived ? withoutTrip(moved) : { ...moved, trip: { ...trip, hours: to } });

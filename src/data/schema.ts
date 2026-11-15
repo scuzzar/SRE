@@ -115,6 +115,10 @@ export const VehicleSchema = z.object({
   flight: z.number().positive().optional(),
   /** Ab welcher Atmosphäre der Welt das Fahrzeug geht. */
   atmosphere: z.number().int().min(0).optional(),
+  /** Ab welchem TL es das Fahrzeug gibt, wenn es keinen Gegenstand hat (Linienverkehr). */
+  tl: z.number().int().min(0).optional(),
+  /** Linienverkehr: Fahrpreis in Cr je Person und Fahrstunde; man kauft und mietet es nicht. */
+  fare: z.number().positive().optional(),
   speeds: z.array(VehicleSpeedSchema),
   landsOn: z.array(LandformSchema).default([]),
   landsAt: z.array(PortSchema).default([]),
@@ -487,7 +491,11 @@ export const ReferenceDataSchema = z
       if (v.item !== undefined && data.items.find((i) => i.id === v.item)?.kind !== 'vehicle') ctx.addIssue({ code: 'custom', message: `Das Fahrzeug ${v.id}: ${v.item} ist kein Fahrzeug unter den Gegenständen` });
       if ((v.flight === undefined) !== (v.landsOn.length === 0 && v.landsAt.length === 0)) ctx.addIssue({ code: 'custom', message: `Das Fahrzeug ${v.id}: genau Fluggeräte haben Landepunkte` });
     }
-    if (!data.vehicles.some((v) => v.item === undefined)) ctx.addIssue({ code: 'custom', message: 'Es fehlt zu Fuß, das Fahrzeug ohne Gegenstand' });
+    if (data.vehicles.filter((v) => v.item === undefined && v.fare === undefined).length !== 1) ctx.addIssue({ code: 'custom', message: 'Genau ein Fahrzeug ohne Gegenstand und Fahrpreis: zu Fuß' });
+    for (const v of data.vehicles) {
+      if (v.fare !== undefined && (v.item !== undefined || v.tl === undefined)) ctx.addIssue({ code: 'custom', message: `Das Fahrzeug ${v.id}: Linienverkehr hat keinen Gegenstand, aber einen TL` });
+      if (v.fare === undefined && v.tl !== undefined) ctx.addIssue({ code: 'custom', message: `Das Fahrzeug ${v.id}: nur Linienverkehr hat einen eigenen TL` });
+    }
     const skillIds = new Set(data.skills.map((s) => s.id));
     checkCareerData(data, skillIds, ctx);
     for (const patron of data.encounters.patrons) {

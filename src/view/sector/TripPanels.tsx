@@ -17,6 +17,7 @@ function Legs({ trip }: { trip: TripView }) {
           </strong>{' '}
           {leg.flight ? 'fliegt' : 'fährt'} von {leg.from} nach {leg.to} · {hoursText(leg.hours)}
           {leg.rentPerDay > 0 ? ` · ${cr(leg.rentPerDay)} je Tag` : ''}
+          {leg.fare > 0 ? ` · Fahrpreis ${cr(leg.fare)}` : ''}
         </li>
       ))}
     </ol>
@@ -39,6 +40,7 @@ const VEHICLE_ICONS: Readonly<Record<string, string>> = {
   gcarrier: '🛸',
   speeder: '🛸',
   'grav-belt': '🛸',
+  airline: '✈️',
 };
 
 /** Die Dauer groß: unter einem Reisetag in Stunden, sonst in Tagen. */
@@ -94,7 +96,7 @@ export function TripPlanCard({ plan }: { plan: TripPlanView }) {
                   <span className="trip-option-side">
                     <strong className="trip-option-time">{time.big}</strong>
                     <small>{time.small}</small>
-                    <small className="trip-option-cost">{option.trip.rent > 0 ? cr(option.trip.rent) : 'ohne Miete'}</small>
+                    <small className="trip-option-cost">{option.trip.cost > 0 ? cr(option.trip.cost) : 'kostenlos'}</small>
                   </span>
                 </button>
               </li>
@@ -105,7 +107,7 @@ export function TripPlanCard({ plan }: { plan: TripPlanView }) {
       {chosen && (
         <>
           <Legs trip={chosen.trip} />
-          {chosen.short !== undefined && <p className="combat-hint">In der Kasse sind nur {cr(chosen.short)}; unterwegs geht es nur weiter, solange die Miete für den Tag reicht.</p>}
+          {chosen.short !== undefined && <p className="combat-hint">In der Kasse sind nur {cr(chosen.short)}; unterwegs geht es nur weiter, solange das Geld für den Tag reicht.</p>}
         </>
       )}
       {plan.error && (

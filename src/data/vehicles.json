@@ -390,5 +390,20 @@
    "open",
    "settled"
   ]
+ },
+ {
+  "id": "airline",
+  "name": "Linienflug",
+  "tl": 6,
+  "fare": 100,
+  "atmosphere": 4,
+  "flight": 600,
+  "speeds": [],
+  "landsAt": [
+   "A",
+   "B",
+   "C",
+   "F"
+  ]
  }
 ]

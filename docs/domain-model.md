@@ -351,7 +351,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > ändern geht weiter. Neu im Bild: `Landform → Terrain : terrain`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-15-gelaende-aus-dem-aufenthaltsort.png`](changes/2026-11-15-gelaende-aus-dem-aufenthaltsort.png).
 
-> **Entwurf, wartet auf Freigabe** (Kennzeichen 2026-11-15c, nach den Empfehlungen, denen der Owner
+> Am 15. November 2026 freigegeben (Kennzeichen 2026-11-15c, nach den Empfehlungen, denen der Owner
 > zugestimmt hat): **Linienflug** (siehe *Fahrzeuge*, Linienverkehr). Ein Fahrzeug des Linienverkehrs
 > hat einen Fahrpreis je Person und Flugstunde und keinen Gegenstand; es fliegt zwischen Städten mit
 > Raumhafen A–C oder Landeplatz F, ab TL 6 und Atmosphäre 4, ohne Fahrplan. Neu im Bild:
@@ -388,7 +388,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-2026-11-15c (Linienflug).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -2353,7 +2353,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Welt. Die Miete je Tag ist **1 % des Kaufpreises** (Hausregel), je angefangenem Reisetag, an dem
     ein gemieteter Abschnitt gefahren wird. Gemietete Fahrzeuge gibt man am Ende ihres Abschnitts
     ab, wo man will.
-  - **Linienverkehr** (Entwurf, 2026-11-15c; ersetzt die frühere Regel „wie Miete, nur für die
+  - **Linienverkehr** (freigegeben am 15. November 2026, 2026-11-15c; ersetzt die frühere Regel „wie Miete, nur für die
     Fahrstunden“): ein Fahrzeug **ohne Gegenstand** mit **Fahrpreis** (`fare`) in Cr je Person und
     Fahrstunde; man kauft und mietet es nicht, sondern bezahlt die Fahrt. Zurzeit gibt es nur den
     **Linienflug** (Owner, 15. November 2026):
@@ -2442,8 +2442,9 @@ Diagramm mit diesen Ausnahmen:
 
 - **Fahrzeuge und Fahrt** (2026-11-15) sind gebaut (`model/vehicle.ts`, `model/trip.ts`, Daten in
   `src/data/vehicles.json`), mit diesen Lücken:
-  - **Linienflug** (Entwurf 2026-11-15c) ist noch nicht gebaut: kein `Vehicle.fare`, `Vehicle.tl`,
-    `Leg./fare`, `TripDay.fare` und keine Buchungsart `fare` im Code.
+  - **`TripDay.fare`** ist im Code optional: Reisetage von vor dem Linienflug haben keinen und zählen
+    als 0; neue Reisetage haben immer einen. Die Buchung `fare` verweist wie die Miete mit `rentFor`
+    auf ihren Reisetag.
   - Ein eigenes Fahrzeug nimmt die Suche nur dort, wo es zu Beginn steht (mit der Gruppe am Start
     oder abgestellt); stellt die Gruppe es unterwegs ab, holt die Suche es auf derselben Fahrt nicht
     wieder ab. Fluggeräte fliegen nur einmal je Abschnitt und landen nur in Siedlungen, am Ziel, am

@@ -17,7 +17,12 @@ const byId = new Map(vehicles.map((v) => [v.id, v]));
 const byItem = new Map(vehicles.flatMap((v) => (v.item === undefined ? [] : [[v.item, v] as const])));
 
 /** Zu Fuß: das Fahrzeug ohne Gegenstand, das die Gruppe immer hat. */
-export const WALK: Vehicle = vehicles.find((v) => v.item === undefined)!;
+export const WALK: Vehicle = vehicles.find((v) => v.item === undefined && v.fare === undefined)!;
+
+/** Ob ein Fahrzeug Linienverkehr ist: mit Fahrpreis, nicht zu kaufen oder zu mieten. */
+export function scheduled(vehicle: Vehicle): boolean {
+  return vehicle.fare !== undefined;
+}
 
 export function vehicleOf(id: string): Vehicle {
   const v = byId.get(id);

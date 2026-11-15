@@ -13,7 +13,7 @@ import { animalTraits } from '../data';
 import { checkJourney } from './travel';
 import { START_DAY } from './time';
 import { checkOf, encounterChecks } from './encounter-check';
-import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type Journey, type DamageRoll, type LogEntry, type Note, type Recovery } from './log';
+import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type Journey, type DamageRoll, type LogEntry, type Note, type Recovery, type TripDay } from './log';
 import { checkRecovery } from './wounds';
 import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, patronOf, ranges, ref, slotOfEntry, weaponOf } from './reference';
 import { characteristics } from './rules';
@@ -121,7 +121,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('patron'), at, day, place, list: z.union([z.literal(1), z.literal(2)]), dice, dms: z.tuple([z.number().int(), z.number().int()]) }),
   z.object({ kind: z.literal('note'), at, day, place, text: z.string().trim().min(1), interprets: z.number().int().optional(), editedAt: at.optional() }),
   z.object({ kind: z.literal('time'), at, day, place, days: z.number().int().min(1).max(7), week: z.boolean() }),
-  z.object({ kind: z.literal('tripDay'), at, day, place, hours: z.number().positive(), rent: z.number().int().min(0), arrived: z.boolean() }),
+  z.object({ kind: z.literal('tripDay'), at, day, place, hours: z.number().positive(), rent: z.number().int().min(0), fare: z.number().int().min(0).optional(), arrived: z.boolean() }),
   z.object({ kind: z.literal('check'), at, day, place, check: z.enum(checkKinds), dice: z.array(die).min(1).max(2), target: z.number().int().min(0).max(20), reactionDice: dice.optional(), reactionDm: z.number().int().optional() }),
   z.object({
     kind: z.literal('journey'),
@@ -576,8 +576,9 @@ function fileEntryOf(entry: WithoutDay<FileEntry>): LogEntry {
     case 'event':
     case 'save':
     case 'time':
-    case 'tripDay':
       return entry;
+    case 'tripDay':
+      return stripped(entry) as TripDay;
     case 'check':
       return stripped(entry) as CheckRoll;
     case 'journey':

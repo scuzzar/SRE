@@ -1862,6 +1862,10 @@ Oberflächenkarte; leer heißt: fährt dort nicht). Straße, Fluss und Siedlung 
 | Submersible | | 20 (Hafen) | | | | 40 (nur `water`) | |
 | Hovercraft | 60 | 40 | 60 | (nur `swamp`, `landIce`: 30) | | 60 | 60 |
 
+**Linienflug** ✱ (Owner, 15. November 2026; Linienverkehr, kein Fahrzeug aus den Charts): 600 km/h
+wie das Fixed Wing Aircraft, zwischen Städten mit Raumhafen A–C oder Landeplatz F, ab TL 6 und
+Atmosphäre 4, Cr100 je Person und Flugstunde, ohne Fahrplan.
+
 Fluggeräte (Fluggeschwindigkeit, Landepunkte): Biplane 150, Landeplatz in jeder Stadt mit Hafen
 A–H; Fixed Wing Aircraft (als Linienmaschine) 600, nur an Häfen A–C und F; Helicopter 200, landet
 auf jeder Geländeart an Land; Air/Raft, GCarrier, Grav Belt 100 und Speeder 1000, landen überall,
