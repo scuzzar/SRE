@@ -1358,6 +1358,8 @@ export interface ControllerState {
   readonly tripNote: string | undefined;
   /** Der Begegnungstest eines Reisetags am Boden, solange sein Würfeldialog offen ist. */
   readonly tripRoll: TripRoll | undefined;
+  /** Der Modus „Wo ich war“ auf dem Globus. */
+  readonly trace: boolean;
   /** Das Ziel dessen, der in der Kampfsimulation am Zug ist (Id eines SC oder NSC). */
   readonly simTarget: string | undefined;
   /** Feuerstoß oder Einzelschuss dessen, der in der Kampfsimulation am Zug ist; fehlt: vorgewählt. */
@@ -2524,7 +2526,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     sector: sectorView(campaign.hexes, markedWorlds(campaign)),
     worlds: worldList(campaign.hexes),
     world: state.world && worldView(campaign.hexes, state.world.column, state.world.row, state.world.rolls, state.worldError, happenedAt(campaign, hexId(state.world.column, state.world.row))),
-    globe: state.world && state.globe ? globeView(campaign, state.world.column, state.world.row, state.globe.picked, state.tripPlan?.options[state.tripPlan.chosen]) : undefined,
+    globe: state.world && state.globe ? globeView(campaign, state.world.column, state.world.row, state.globe.picked, state.tripPlan?.options[state.tripPlan.chosen], state.trace) : undefined,
     picking: pickingView(state, campaign),
     selected: state.selected && selectedView(campaign.hexes, state.selected.column, state.selected.row, state.selected.occurrence, state.world ? undefined : state.worldError),
   };

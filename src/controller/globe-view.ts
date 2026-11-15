@@ -15,6 +15,8 @@ import {
   type SurfaceGrid,
   type SurfaceMap,
   type Trip,
+  isTravelEntry,
+  travelTrace,
   flies,
   vehicleOf,
 } from '../model';
@@ -105,6 +107,10 @@ export interface GlobeView {
   readonly route: readonly { readonly cells: readonly number[]; readonly flight: boolean }[];
   /** Felder mit abgestellten eigenen Fahrzeugen und wie viele. */
   readonly vehicles: readonly { readonly cell: number; readonly count: number }[];
+  /** Der Modus „Wo ich war“: Die Reise zählt bei den Einträgen, und ihre Strecken stehen auf dem Globus. */
+  readonly trace: boolean;
+  /** Im Modus „Wo ich war“: die gereisten Strecken, je von Feld zu Feld. */
+  readonly traceSegments: readonly (readonly [number, number])[];
 }
 
 /** Einwohner in Worten: 3 × 10^9 → „3 Mrd.“ */
@@ -140,7 +146,7 @@ function position(grid: SurfaceGrid, cell: number): string {
 }
 
 /** Der Globus der Welt in diesem Feld; `undefined`, solange sie keine Oberflächenkarte hat. */
-export function globeView(campaign: Campaign, column: number, row: number, picked: number | undefined, plan?: Trip): GlobeView | undefined {
+export function globeView(campaign: Campaign, column: number, row: number, picked: number | undefined, plan?: Trip, trace = false): GlobeView | undefined {
   const hexes = campaign.hexes;
   const hex = hexAt(hexes, column, row);
   if (!hex?.map || !hex.name || hex.uwp.size === undefined || hex.temperature === undefined) return undefined;
@@ -160,7 +166,9 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
   const id = hexId(column, row);
   const npcs = campaign.characters.filter((c) => c.npc && !c.dead && c.place?.world === id).map((c): GlobeNpc => ({ id: c.id, name: c.name, role: roleOf(c), cell: placeCell(hexes, c.place) }));
   const counts = new Map<number, { count: number; latest: number }>();
-  for (const i of happenedAt(campaign, id)) {
+  // Die Reise (Reisetage und ihre Tests) zählt auf dem Globus nur im Modus „Wo ich war“.
+  const shown = (i: number) => trace || !isTravelEntry(campaign.log, i);
+  for (const i of happenedAt(campaign, id).filter(shown)) {
     const cell = placeCell(hexes, campaign.log[i]!.place);
     if (cell !== undefined) counts.set(cell, { count: (counts.get(cell)?.count ?? 0) + 1, latest: i });
   }
@@ -181,7 +189,7 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
       road: (map.roads ?? []).some((r) => r.includes(picked)),
       city: cities.find((c) => c.cell === picked)?.index,
       npcs: npcs.filter((n) => n.cell === picked),
-      happened: happenedAt(campaign, id, picked),
+      happened: happenedAt(campaign, id, picked).filter(shown),
     };
   }
   return {
@@ -201,6 +209,8 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
     rerollBlocker: mapLocked(campaign, column, row) ? 'Gruppe, NSC oder Logeinträge stehen auf dieser Karte; neu würfeln geht nicht mehr.' : undefined,
     route: routeOf(partyHere ? (plan ?? campaign.trip) : undefined),
     vehicles: parkedVehicles(campaign, id),
+    trace,
+    traceSegments: trace ? travelTrace(campaign, id) : [],
   };
 }
 

@@ -302,6 +302,7 @@ export class GameController {
       tripPlan: undefined,
       tripNote: undefined,
       tripRoll: undefined,
+      trace: false,
     };
     this.current = buildSnapshot(this.state);
   }
@@ -940,6 +941,11 @@ export class GameController {
   joinEncounter(id: string): void {
     const joining = this.state.joining.includes(id) ? this.state.joining : [...this.state.joining, id];
     this.update({ joining, combatNote: undefined, screen: 'encounter' });
+  }
+
+  /** Der Modus „Wo ich war“ auf dem Globus an oder aus; nur Anzeige, nicht gespeichert. */
+  toggleTrace(): void {
+    this.update({ trace: !this.state.trace });
   }
 
   /** „Alle zeigen“ im Reiter NSC an oder aus; nur Anzeige, nicht gespeichert. */

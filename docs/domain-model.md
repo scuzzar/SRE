@@ -2409,6 +2409,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     fährt man nicht weiter.
   - **Im Log** stehen die Reisetage einer Fahrt mit ihren Tests als eine Zeile („Fahrt · 5 Reisetage,
     angekommen: Ora“); antippen klappt sie auf. Das ist nur Anzeige.
+  - **Auf dem Globus** zählen Reisetage und ihre Tests nicht als Einträge (keine Zahl am Feld, nicht
+    unter „Was hier geschah“), außer im Modus **„Wo ich war“** (Owner, 15. November 2026; Schalter in
+    der Liste „Einträge“): Dann zählen sie, und der gereiste Weg steht als gepunktete Linie auf dem
+    Planeten, je Reisetag vom Ort davor (dem letzten Logeintrag mit Feld auf dieser Welt) zum
+    erreichten Feld. Steht vor einer Fahrt kein Eintrag am Start, fehlt das erste Stück. Der Modus ist
+    nur Anzeige und wird nicht gespeichert.
   - **Dazwischen:** Zwischen zwei Reisetagen kann man alles tun: Begegnungen würfeln, ausspielen,
     **rasten** mit *Zeit vergehen lassen* (dann vergehen Tage, die Gruppe bewegt sich nicht). Während
     einer laufenden Begegnung fährt man nicht. Stunden innerhalb eines Tages rechnet die App nicht.

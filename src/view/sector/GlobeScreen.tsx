@@ -473,6 +473,9 @@ export function GlobeScreen({
         )}
         {panel === 'logs' && (
           <div className="globe-panel" role="region" aria-label="Felder mit Einträgen">
+            <label className="globe-check globe-trace">
+              <input type="checkbox" checked={globe.trace} onChange={() => game.toggleTrace()} /> Wo ich war: Reisen zeigen
+            </label>
             {globe.events.length === 0 && <p className="combat-hint">Auf dieser Welt ist noch nichts an einem Feld geschehen.</p>}
             {globe.events.map((e) => (
               <button key={e.cell} type="button" className="globe-row" onClick={() => flyTo(e.cell)}>
@@ -738,6 +741,24 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
     ctx.beginPath();
     let drawing = false;
     for (const p of steps) {
+      if (!p) {
+        drawing = false;
+        continue;
+      }
+      if (drawing) ctx.lineTo(p.x, p.y);
+      else ctx.moveTo(p.x, p.y);
+      drawing = true;
+    }
+    ctx.stroke();
+  }
+  // Wo ich war: die gereisten Strecken, orange und gepunktet, je als Großkreis von Tag zu Tag.
+  ctx.setLineDash([2 * scale, 4 * scale]);
+  ctx.strokeStyle = 'rgba(255,170,60,0.95)';
+  ctx.lineWidth = 2.5 * scale;
+  for (const [a, b] of globe.traceSegments) {
+    ctx.beginPath();
+    let drawing = false;
+    for (const p of flightPath(globe, camera, view, a, b)) {
       if (!p) {
         drawing = false;
         continue;

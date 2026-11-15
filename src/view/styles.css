@@ -8157,3 +8157,7 @@ button:disabled {
   font-size: 0.85rem;
   color: #ffb347;
 }
+
+.globe-trace {
+  padding: 8px 14px;
+}

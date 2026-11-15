@@ -12,6 +12,8 @@ import {
   moveParty,
   parkVehicles,
   planOptions,
+  isTravelEntry,
+  travelTrace,
   travelDay,
   travelCheckKind,
   groundToday,
@@ -358,6 +360,21 @@ describe('Begegnungen am Boden', () => {
     expect(flight.trip!.legs.map((l) => l.by)).not.toContain('walk');
     expect(groundToday(flight)).toBe(false);
     expect(travelDay(flight, fixedRandom(), clock).check).toBeUndefined();
+  });
+});
+
+describe('Wo ich war', () => {
+  it('erkennt Reisetage und ihre Tests und zeichnet die Strecken aus dem Log nach', () => {
+    let c = campaignOn(mapWith({ [line[0]!]: 'settled' }), line[0]!);
+    c = { ...c, log: [{ kind: 'dice', at: '2026-01-01T00:00:00.000Z', dice: [1, 2], place: { world: '0101', cell: line[0]! } }] };
+    let t = startTrip(c, planTrip(c, line[2]!, { rent: false }));
+    while (t.trip) t = travelDay(t, fixedRandom(), clock).campaign;
+    const travel = t.log.map((_, i) => isTravelEntry(t.log, i));
+    expect(travel[0]).toBe(false);
+    expect(travel.slice(1).every(Boolean)).toBe(true);
+    const trace = travelTrace(t, '0101');
+    expect(trace[0]![0]).toBe(line[0]);
+    expect(trace.at(-1)![1]).toBe(line[2]);
   });
 });
 

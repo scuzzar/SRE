@@ -6,7 +6,7 @@ import { hasAnimals, terrainOf } from './animals';
 import { appendLog, type Campaign } from './campaign';
 import { rollAnimalEncounter, rollEncounter, type Encounter } from './encounter';
 import { checkOf, rollCheck, type EncounterCheck } from './encounter-check';
-import type { CheckRoll, CheckKind } from './log';
+import type { CheckRoll, CheckKind, LogEntry } from './log';
 import { placeCell } from './place';
 import type { Clock, Random } from './ports';
 import { hexById } from './sector';
@@ -76,4 +76,27 @@ export function travelDay(campaign: Campaign, random: Random, clock: Clock): Tra
   }
   const rolled = rollEncounter(tested, random, clock);
   return { campaign: rolled.campaign, check: { entry, result }, roll: rolled.roll, encounter: rolled.encounter, event: undefined };
+}
+
+/** Ob ein Logeintrag zur Reise gehört: ein Reisetag oder der Begegnungstest gleich danach. */
+export function isTravelEntry(log: readonly LogEntry[], index: number): boolean {
+  const entry = log[index];
+  return entry?.kind === 'tripDay' || (entry?.kind === 'check' && log[index - 1]?.kind === 'tripDay');
+}
+
+/**
+ * Wo die Gruppe auf dieser Welt gereist ist, aus dem Log: je Reisetag eine Strecke vom Ort davor (dem
+ * letzten Eintrag mit Feld auf dieser Welt) zum erreichten Feld. Ohne Eintrag davor fehlt das erste Stück.
+ */
+export function travelTrace(campaign: Campaign, world: string): readonly (readonly [number, number])[] {
+  const segments: [number, number][] = [];
+  let last: number | undefined;
+  campaign.log.forEach((entry) => {
+    if (entry.place?.world !== world) return;
+    const cell = placeCell(campaign.hexes, entry.place);
+    if (cell === undefined) return;
+    if (entry.kind === 'tripDay' && last !== undefined && last !== cell) segments.push([last, cell]);
+    last = cell;
+  });
+  return segments;
 }
