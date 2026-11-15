@@ -38,6 +38,8 @@ export const RENT_PERCENT = ref.houseRules.rentPercent;
 const EPS = 1e-9;
 /** Ein Fahrzeugwechsel kostet in der Suche ein wenig, damit sie nicht grundlos wechselt. */
 const SWITCH_HOURS = 0.01;
+/** Wie viele Siedlungen nahe am Ziel als Landepunkte zählen. */
+const LANDING_TOWNS = 30;
 
 /** Die Oberfläche, auf der die Gruppe fährt: die Welt ihres Aufenthaltsorts mit Karte. */
 export interface TripSurface {
@@ -173,7 +175,15 @@ export interface PlanOptions {
   readonly rent: boolean;
   /** Nur dieses Fahrzeug mieten (für die Varianten der Planung); fehlt: jedes, das geht. */
   readonly only?: string;
+  /**
+   * Wägt Zeit gegen Miete ab: so viele Cr ist eine Fahrstunde wert. Eine Stunde in einem gemieteten
+   * Fahrzeug zählt dann 1 + (Miete je Stunde / `hourValue`) Stunden; fehlt der Wert, zählt nur die Zeit.
+   */
+  readonly hourValue?: number;
 }
+
+/** Die Gewichte für die gemischten Varianten: wie viele Cr eine Fahrstunde wert ist. */
+const HOUR_VALUES = [3, 30, 300, 3000] as const;
 
 /** Die Fahrzeuge, die man auf dieser Welt mieten kann: in Siedlungen, bis zum TL der Welt, wo die Atmosphäre reicht. */
 export function rentableVehicles(surface: TripSurface): readonly Vehicle[] {
@@ -188,8 +198,8 @@ function affordableRentals(campaign: Campaign, surface: TripSurface): readonly V
 
 /**
  * Die Varianten einer Route, wie bei einer Karten-App (siehe domain-model.md, *Fahrt*, Planen): ohne
- * Miete (zu Fuß und eigene Fahrzeuge) und je mietbarem Fahrzeug die schnellste Route damit. Gleiche
- * Routen fallen weg; die schnellste zuerst.
+ * Miete (zu Fuß und eigene Fahrzeuge), je mietbarem Fahrzeug die schnellste Route damit und gemischte,
+ * die Zeit gegen Miete abwägen. Je Fahrzeugfolge bleibt die schnellste; die schnellste zuerst.
  */
 export function planOptions(campaign: Campaign, target: number): readonly Trip[] {
   const surface = surfaceFor(campaign);
@@ -205,11 +215,18 @@ export function planOptions(campaign: Campaign, target: number): readonly Trip[]
   };
   attempt({ rent: false });
   for (const vehicle of affordableRentals(campaign, surface)) attempt({ rent: true, only: vehicle.id });
+  // Gemischte Varianten: mehrere Mietfahrzeuge nacheinander, wo es sich lohnt (Auto bis zum Fluss, dann Boot).
+  for (const hourValue of HOUR_VALUES) attempt({ rent: true, hourValue });
   if (found.length === 0) throw firstError instanceof DomainError ? firstError : new DomainError('Dorthin gibt es keinen Weg.');
-  const key = (t: Trip) => JSON.stringify(t.legs);
-  const unique = [...new Map(found.map((t) => [key(t), t])).values()];
-  const scored = unique.map((trip) => ({ trip, hours: totalHours(surface, trip), rent: totalRent(surface, trip) }));
-  return scored.sort((a, b) => a.hours - b.hours || a.rent - b.rent).map((s) => s.trip);
+  // Je Fahrzeugfolge (z. B. Ground Car › Helicopter) nur die schnellste Variante.
+  const key = (t: Trip) => t.legs.map((l) => `${l.by}${l.rented ? '*' : ''}`).filter((k, i, all) => i === 0 || all[i - 1] !== k).join('>');
+  const scored = found.map((trip) => ({ trip, hours: totalHours(surface, trip), rent: totalRent(surface, trip) }));
+  const best = new Map<string, (typeof scored)[number]>();
+  for (const s of scored) {
+    const had = best.get(key(s.trip));
+    if (!had || s.hours < had.hours - EPS || (Math.abs(s.hours - had.hours) <= EPS && s.rent < had.rent)) best.set(key(s.trip), s);
+  }
+  return [...best.values()].sort((a, b) => a.hours - b.hours || a.rent - b.rent).map((s) => s.trip);
 }
 
 /** Das Feld, auf dem die Gruppe steht; ohne Feld (nur die Welt oder eine Orbitalstadt) keins. */
@@ -289,10 +306,16 @@ export function planTrip(campaign: Campaign, target: number, options: PlanOption
   if (options.rent) for (const vehicle of affordableRentals(campaign, surface)) if (options.only === undefined || vehicle.id === options.only) modes.push({ vehicle, rented: true, source: 'town' });
 
   const n = surface.grid.cells;
+  // Je Fahrzeug, wie schwer eine Stunde in der Suche wiegt: gemietet mit der Miete je Stunde abgewogen.
+  const weight = modes.map((m) => (m.rented && options.hourValue !== undefined ? 1 + legRent({ by: m.vehicle.id, rented: true, cells: [] }) / TRIP_HOURS_PER_DAY / options.hourValue : 1));
   const towns = surface.ways.town;
-  const landing = [...new Set([...towns, target, start, ...modes.flatMap((m) => (typeof m.source === 'number' ? [m.source] : []))])];
-  const cost = new Float64Array(n * modes.length).fill(Infinity);
-  const prev = new Int32Array(n * modes.length).fill(-1);
+  // Landepunkte: das Ziel, die Siedlungen nahe am Ziel (zum Umsteigen auf das letzte Stück), Start und abgestellte eigene Fahrzeuge.
+  const nearTarget = [...towns].sort((a, b) => distanceKm(surface.grid, surface.size, a, target) - distanceKm(surface.grid, surface.size, b, target)).slice(0, LANDING_TOWNS);
+  const landing = [...new Set([target, ...nearTarget, start, ...modes.flatMap((m) => (typeof m.source === 'number' ? [m.source] : []))])];
+  // Zustand: Feld, Fahrzeug und ob schon geflogen wurde; höchstens ein Flug je Route.
+  const M = modes.length;
+  const cost = new Float64Array(n * M * 2).fill(Infinity);
+  const prev = new Int32Array(n * M * 2).fill(-1);
   const heap = new Heap();
   const reach = (state: number, c: number, from: number) => {
     if (c < cost[state]! - EPS) {
@@ -309,7 +332,9 @@ export function planTrip(campaign: Campaign, target: number, options: PlanOption
     const state = heap.pop();
     const c = cost[state]!;
     const cell = state % n;
-    const m = Math.floor(state / n);
+    const layer = Math.floor(state / n);
+    const m = layer % M;
+    const flown = layer >= M ? M : 0;
     if (cell === target) {
       found = state;
       break;
@@ -317,18 +342,18 @@ export function planTrip(campaign: Campaign, target: number, options: PlanOption
     const mode = modes[m]!;
     // Wechseln: auf ein anderes Fahrzeug, das es hier gibt.
     modes.forEach((other, o) => {
-      if (o !== m && available(other, cell)) reach(o * n + cell, c + SWITCH_HOURS, state);
+      if (o !== m && available(other, cell) && !(flown && flies(other.vehicle))) reach((flown + o) * n + cell, c + SWITCH_HOURS, state);
     });
     if (flies(mode.vehicle)) {
       // Fliegen: nur von einem Landepunkt, und nur dort, wo man das Fluggerät bekommen hat.
       if (!available(mode, cell) || !landsAt(mode.vehicle, surface.map, surface.ways, cell)) continue;
       for (const d of landing) {
-        if (d !== cell && landsAt(mode.vehicle, surface.map, surface.ways, d)) reach(d, c + hoursBetween(surface, mode.vehicle, cell, d), state);
+        if (d !== cell && landsAt(mode.vehicle, surface.map, surface.ways, d)) reach(M * n + d, c + hoursBetween(surface, mode.vehicle, cell, d) * weight[m]!, state);
       }
     } else {
       for (const q of surface.grid.neighbors[cell]!) {
         const h = hoursBetween(surface, mode.vehicle, cell, q);
-        if (h < Infinity) reach(m * n + q, c + h, state);
+        if (h < Infinity) reach(layer * n + q, c + h * weight[m]!, state);
       }
     }
   }
@@ -341,7 +366,7 @@ export function planTrip(campaign: Campaign, target: number, options: PlanOption
   let current = { mode: 0, cells: [start] };
   for (let i = 1; i < path.length; i++) {
     const [a, b] = [path[i - 1]!, path[i]!];
-    const [am, bm, bc] = [Math.floor(a / n), Math.floor(b / n), b % n];
+    const [am, bm, bc] = [Math.floor(a / n) % M, Math.floor(b / n) % M, b % n];
     if (am === bm) current.cells.push(bc);
     else if (a % n === bc) {
       legs.push(current);

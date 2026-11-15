@@ -61,7 +61,7 @@ export interface TripOptionView {
   /** Das Fahrzeug, das die Variante prägt (das mit den meisten Fahrstunden außer zu Fuß), für das Symbol. */
   readonly vehicle: string;
   /** Die Fahrzeuge der Abschnitte in Reihenfolge, z. B. Zu Fuß › Ground Car › Zu Fuß. */
-  readonly chain: readonly string[];
+  readonly chain: readonly { readonly vehicle: string; readonly name: string; readonly rented: boolean }[];
   /** „Schnellste“, „Günstigste“. */
   readonly tags: readonly string[];
   readonly trip: TripView;
@@ -155,11 +155,15 @@ export function tripPlanOf(surface: TripSurface, draft: { readonly target: numbe
       if (leg.by !== 'walk') hours.set(leg.by, (hours.get(leg.by) ?? 0) + legHours(surface, leg));
     });
     const main = [...hours].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'walk';
-    const rented = trip.legs.some((l) => l.by === main && l.rented);
-    const name = vehicleOf(main).name;
-    const chain = trip.legs.map((l) => vehicleOf(l.by).name).filter((n, k, all) => k === 0 || all[k - 1] !== n);
+    const chain = trip.legs
+      .map((l) => ({ vehicle: l.by, name: vehicleOf(l.by).name, rented: l.rented }))
+      .filter((c, k, all) => k === 0 || all[k - 1]!.vehicle !== c.vehicle || all[k - 1]!.rented !== c.rented);
+    const distinct = (rented: boolean) => [...new Set(trip.legs.filter((l) => l.by !== 'walk' && l.rented === rented).map((l) => vehicleOf(l.by).name))];
+    const own = distinct(false);
+    const hired = distinct(true);
+    const title = [...own.map((n) => `Eigener ${n}`), ...(hired.length > 0 ? [`${hired.join(' + ')} mieten`] : [])].join(', ') || 'Zu Fuß';
     const tags = [...(view.totalHours === fastest ? ['Schnellste'] : []), ...(view.rent === cheapest && views.length > 1 ? ['Günstigste'] : [])];
-    return { title: main === 'walk' ? 'Zu Fuß' : rented ? `${name} mieten` : `Eigener ${name}`, vehicle: main, chain, tags, trip: view, short: view.rent > funds ? funds : undefined };
+    return { title, vehicle: main, chain, tags, trip: view, short: view.rent > funds ? funds : undefined };
   });
   return { target: cellLabel(surface, draft.target), options, chosen: draft.chosen, error: draft.error };
 }

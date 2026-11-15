@@ -2317,6 +2317,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (`river`): zwei benachbarte Felder desselben Flusses. Siedlung (`town`): ein Feld mit Stadt oder
     Kleinstadt. Ein Weg kann schneller machen (das Auto auf der Straße) oder ein Feld erst befahrbar
     machen (das Boot auf dem Fluss durchs Land).
+  - **Anlegen:** Boot und U-Boot haben eine Zeile für Siedlungen (20 km/h, der Hafen): So legen sie in
+    einem Küstenort an, und dort steigt man um. Ein reines Wasserfahrzeug (keine Zeile für eine
+    Geländeart an Land) fährt aber nie von Land zu Land, also nicht von Ort zu Ort über Land.
   - **Ein Schritt** geht von einem Feld zum Nachbarfeld, etwa 250 km. Führt eine Straße bzw. ein Fluss
     über beide Felder und hat das Fahrzeug eine Zeile dafür, gilt diese. Sonst muss es auf beiden
     Feldern fahren können (Geländeart oder Siedlung), und es gilt die langsamere der beiden; auf einem
@@ -2355,8 +2358,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     einem Fahrzeug: zu Fuß, eigene Fahrzeuge aus dem Gruppengepäck, gemietete (`rented`) oder
     Linienverkehr. Ein Fahrzeugwechsel geht nur dort, wo man es mieten kann bzw. wo das Fluggerät
     landet. **Varianten wie bei einer Karten-App** (Owner, 15. November 2026): Die App zeigt mehrere
-    Routen, je die schnellste ohne Miete (zu Fuß und eigene Fahrzeuge) und je mietbarem Fahrzeug die
-    schnellste damit (Ground Car mieten, ATV mieten, Hubschrauber mieten …), gleiche nur einmal, die
+    Routen, je die schnellste ohne Miete (zu Fuß und eigene Fahrzeuge), je mietbarem Fahrzeug die
+    schnellste damit (Ground Car mieten, ATV mieten, Hubschrauber mieten …) und **gemischte**, die
+    mehrere Mietfahrzeuge nacheinander nehmen, wo sich das lohnt (Auto zum Hafen, Boot, Auto; Auto
+    zum Flugplatz, Flug, Auto). Die gemischten wägen Zeit gegen Miete ab, mit vier Gewichten (eine
+    Fahrstunde ist 3, 30, 300 bzw. 3000 Cr wert). Je Fahrzeugfolge bleibt die schnellste Variante, die
     schnellste zuerst, markiert als „Schnellste“ bzw. „Günstigste“. Jede mit Dauer in Tagen
     (`/days`), Fahrstunden und Miete; die gewählte steht auf dem Globus, mit „Losfahren“ wird sie
     gespeichert (`Campaign.trip`). Die Varianten vor dem Bestätigen sind nur Anzeige.
@@ -2425,8 +2431,9 @@ Diagramm mit diesen Ausnahmen:
     oder abgestellt); stellt die Gruppe es unterwegs ab, holt die Suche es auf derselben Fahrt nicht
     wieder ab. Fluggeräte fliegen nur einmal je Abschnitt und landen nur in Siedlungen, am Ziel, am
     Start und bei abgestellten eigenen Fahrzeugen.
-  - Gemietet wird nur, was die Kasse wenigstens für einen Tag hergibt. Jede Variante nimmt höchstens
-    eine Art Mietfahrzeug; eine Route mit zwei verschiedenen gemieteten Fahrzeugen schlägt die App nicht vor.
+  - Gemietet wird nur, was die Kasse wenigstens für einen Tag hergibt. Eine Route hat höchstens einen
+    Flug, und ein Fluggerät landet nur am Ziel, in den 30 Siedlungen nahe am Ziel, am Start und bei
+    abgestellten eigenen Fahrzeugen (sonst dauert die Suche auf großen Karten zu lange).
   - **`Leg → Vehicle : by`** und **`Booking → TripDay : rentFor`** sind im Code die Id des Fahrzeugs
     bzw. die Stelle des Reisetags im Log, wie bei `won`; Löschen rückt die Stelle nach.
   - **`Trip → SurfaceCell : /at`**, `/totalHours`, `/days`, `Leg./hours` und `Leg./rent` rechnet
