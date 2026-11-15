@@ -12,6 +12,7 @@ import {
   moveParty,
   parkVehicles,
   planOptions,
+  leftBehind,
   livingCharacters,
   planTrip,
   positionAt,
@@ -312,6 +313,20 @@ describe('Linienflug (2026-11-15c)', () => {
     expect(uses('D', { tech: 8 })).toBe(false);
     expect(uses('C', { tech: 5 })).toBe(false);
     expect(uses('C', { tech: 8, atmosphere: 3 })).toBe(false);
+  });
+});
+
+describe('Eigene Fahrzeuge in der Planung', () => {
+  it('Varianten mit eigenem Fahrzeug zuerst; eine Variante sagt, welches Fahrzeug wo stehen bleibt', () => {
+    const road = line.slice(0, 5);
+    const c = { ...campaignOn(mapWith({}, { towns: [[line[0]!, 1]], roads: [road] }), line[0]!, { funds: 1_000_000 }), stash: [{ of: 'vehicle-ground-car', count: 1 }] };
+    const options = planOptions(c, line[4]!);
+    expect(options[0]!.legs.map((l) => `${l.by}${l.rented ? '*' : ''}`)).toEqual(['ground-car']);
+    expect(leftBehind(c, options[0]!)).toEqual([]);
+    const flight = options.find((t) => t.legs.some((l) => l.by === 'helicopter'))!;
+    expect(leftBehind(c, flight)).toEqual([{ item: 'vehicle-ground-car', count: 1, place: { world: '0101', cell: line[0] } }]);
+    // Wer nur rechnet, ändert nichts: Das Auto ist noch bei der Gruppe.
+    expect(c.stash).toEqual([{ of: 'vehicle-ground-car', count: 1 }]);
   });
 });
 

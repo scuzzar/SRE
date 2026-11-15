@@ -2379,8 +2379,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     schnellste damit (Ground Car mieten, ATV mieten, Hubschrauber mieten …) und **gemischte**, die
     mehrere Mietfahrzeuge nacheinander nehmen, wo sich das lohnt (Auto zum Hafen, Boot, Auto; Auto
     zum Flugplatz, Flug, Auto). Die gemischten wägen Zeit gegen Miete ab, mit vier Gewichten (eine
-    Fahrstunde ist 3, 30, 300 bzw. 3000 Cr wert). Je Fahrzeugfolge bleibt die schnellste Variante, die
-    schnellste zuerst, markiert als „Schnellste“ bzw. „Günstigste“. Jede mit Dauer in Tagen
+    Fahrstunde ist 3, 30, 300 bzw. 3000 Cr wert). Je Fahrzeugfolge bleibt die schnellste Variante.
+    **Varianten mit eigenen Fahrzeugen stehen immer oben** (Owner, 15. November 2026), darunter die
+    übrigen, je die schnellste zuerst; markiert als „Schnellste“ bzw. „Günstigste“. **Bleibt ein
+    eigenes Fahrzeug zurück** (die Gruppe wechselt auf ein anderes, siehe *Eigene Fahrzeuge bleiben
+    stehen*), sagt die Variante das deutlich, z. B. „⚠ Ground Car bleibt am Start stehen“ oder „⚠ Ground
+    Car bleibt in Ora stehen“; ebenso die laufende Fahrt für den Rest der Strecke. Jede mit Dauer in Tagen
     (`/days`), Fahrstunden und Miete; die gewählte steht auf dem Globus, mit „Losfahren“ wird sie
     gespeichert (`Campaign.trip`). Die Varianten vor dem Bestätigen sind nur Anzeige.
   - **Abschnitt:** Jeder Abschnitt hat seine Felder in Reihenfolge (`cells`; bei einem Flug nur Start

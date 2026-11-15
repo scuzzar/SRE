@@ -83,6 +83,11 @@ export function TripPlanCard({ plan }: { plan: TripPlanView }) {
                         ))}
                       </span>
                     )}
+                    {option.trip.leaves.map((l) => (
+                      <span key={l} className="trip-option-leaves">
+                        ⚠ {l}
+                      </span>
+                    ))}
                     {option.tags.length > 0 && (
                       <span className="trip-option-tags">
                         {option.tags.map((t) => (
@@ -137,6 +142,11 @@ export function TripBar({ trip, note, blocked }: { trip: TripView; note: string 
       <p className="trip-head">
         Unterwegs nach <strong>{trip.to}</strong> · noch {daysText(trip.daysLeft)} · bei {trip.at}
       </p>
+      {trip.leaves.map((l) => (
+        <p key={l} className="trip-option-leaves">
+          ⚠ {l}
+        </p>
+      ))}
       <details>
         <summary>Abschnitte</summary>
         <Legs trip={trip} />

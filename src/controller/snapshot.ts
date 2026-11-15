@@ -2288,7 +2288,7 @@ function sellables(campaign: Campaign, c: Character | undefined): ShopView['memb
 function tripPlanView(campaign: Campaign, draft: ControllerState['tripPlan']): TripPlanView | undefined {
   const surface = draft ? tripSurface(campaign) : undefined;
   if (!draft || !surface) return undefined;
-  return tripPlanOf(surface, draft, fundsOf(campaign), farePayers(campaign));
+  return tripPlanOf(campaign, surface, draft, fundsOf(campaign), farePayers(campaign));
 }
 
 /** Die Welten, auf denen etwas geschehen ist oder dauerhafte NSC leben (Zeichen auf der Sektorkarte). */
