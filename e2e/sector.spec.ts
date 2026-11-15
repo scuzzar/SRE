@@ -50,6 +50,8 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     await expect(reopened.getByRole('region', { name: 'Oberfläche' })).toContainText(/einheimisches Leben/);
     await globe.getByRole('button', { name: 'Schließen', exact: true }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
+    // Die Welten klappen oben über der Karte auf.
+    await page.getByRole('button', { name: /^Welten \d+/ }).click();
     await expect(page.locator('.world-list')).toContainText('Regina');
     named = true;
     break;
@@ -115,9 +117,11 @@ test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis 
     await done.getByLabel('Notiz zur Welt').fill('Halveks Werft am Südpol.\nDer Zoll ist bestechlich.');
     await done.getByRole('button', { name: 'Schließen' }).first().click();
     await expect(done).toBeHidden();
+    await page.getByRole('button', { name: /^Welten \d+/ }).click();
     await expect(page.locator('.world-list-note').filter({ hasText: 'Halvek' })).toHaveText('Halveks Werft am Südpol.');
     await page.reload();
     await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
+    await page.getByRole('button', { name: /^Welten \d+/ }).click();
     await page.locator('.world-list').getByRole('button', { name: /Regina/ }).click();
     const globe = page.getByRole('dialog', { name: 'Globus · Regina' });
     await globe.getByRole('button', { name: /^Regina, UWP / }).click();
@@ -127,7 +131,7 @@ test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis 
   throw new Error('Kein Feld mit Welt gefunden');
 });
 
-test('Sektor: UWP und Handelscodes erscheinen auf der Karte, sobald sie beim Zoomen lesbar sind', async ({ page }) => {
+test('Sektor: UWP und Handelscodes erscheinen auf der Karte, sobald sie beim Zoomen lesbar sind', async ({ page }, testInfo) => {
   await page.goto('/');
   const efate = { column: 2, row: 1, empty: false, name: 'Efate', navalBase: false, scoutBase: false, gasGiant: true, uwp: { starport: 10, size: 6, atmosphere: 4, hydrographics: 6, population: 6, government: 2, law: 4, tech: 12 } };
   const file = { format: 'solo-rpg-engine/kampagne', version: 1, campaign: { name: 'Karte', odds: 'medium', characters: [], log: [], hexes: [efate] } };
@@ -140,10 +144,12 @@ test('Sektor: UWP und Handelscodes erscheinen auf der Karte, sobald sie beim Zoo
   // In der Mitte des Feldes steht das Weltsymbol.
   await expect(world.locator('.hex-icon')).toHaveCount(1);
   await expect(world.locator('.hex-icon')).toHaveAttribute('href', /^data:image\/png/);
-  // Ganz herausgezoomt: nur Zeichen und Name. Das gilt auch im Desktop-Modus, seit die Karte dort
-  // in die Höhe des Screens eingepasst ist statt die volle Breite zu füllen.
-  await expect(world.locator('.hex-uwp')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Vergrößern' }).click();
+  // Ganz herausgezoomt auf dem Smartphone: nur Zeichen und Name. Im Desktop-Modus hat die Karte den
+  // Bereich für sich und ist so groß, dass das UWP schon zu lesen ist.
+  if (testInfo.project.name !== 'desktop') {
+    await expect(world.locator('.hex-uwp')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Vergrößern' }).click();
+  }
   await expect(world.locator('.hex-uwp')).toHaveText('A646624-C');
   await expect(world.locator('.hex-trade')).toHaveCount(0);
   await page.getByRole('button', { name: 'Vergrößern' }).click();
@@ -189,9 +195,14 @@ test('Globus: aus der Kopfzeile öffnen, Feld antippen, schließen', async ({ pa
   await globe.getByRole('button', { name: 'Gruppe in diese Stadt' }).click();
   await globe.getByRole('button', { name: 'Zur Gruppe' }).click();
   await expect(globe.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('Die Gruppe ist hier');
-  // Die Liste der Felder mit Einträgen; noch ist nichts geschehen.
+  // Unten im Feld würfelt man, ohne den Globus zu verlassen; der Wurf steht dann unter dem, was hier geschah.
+  const field = globe.getByRole('region', { name: 'Angetipptes Feld' });
+  await field.getByRole('button', { name: '2W6' }).click();
+  await expect(field).toContainText('Was hier geschah');
+  await expect(field.locator('.happened')).toContainText('2W6');
+  // Die Liste der Felder mit Einträgen: der Wurf eben, am Feld der Gruppe.
   await globe.getByRole('button', { name: /^Einträge/ }).click();
-  await expect(globe.getByRole('region', { name: 'Felder mit Einträgen' })).toContainText('noch nichts');
+  await expect(globe.getByRole('region', { name: 'Felder mit Einträgen' })).toContainText('1 Eintrag');
   // Antippen der Karte wählt ein anderes Feld (die Mitte ist die Hauptstadt; nochmal antippen hebt die Wahl auf).
   const canvas = globe.getByRole('img', { name: /Globus von Kessra/ });
   const box = (await canvas.boundingBox())!;

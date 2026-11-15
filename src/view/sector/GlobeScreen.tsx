@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { landformAt, type GlobeView, type LogItem, type WorldView } from '../../controller';
 import { roleText } from '../format';
 import { useGame } from '../game-context';
 import { CloseIcon, LocateIcon, PencilIcon } from '../icons';
 import { createGlobeRenderer, type GlobeRenderer } from './globe-gl';
 import { hideLoading, showLoading } from '../loading';
+import { useIsDesktop } from '../media';
 import { cellAt, radiusOf, renderGlobe, screenOf, type Camera, type Viewport } from './globe-render';
 import { HappenedList } from './HappenedList';
 import { NoteSection, SurfaceSection, WorldCard } from './WorldSheet';
@@ -31,7 +32,9 @@ type Panel = 'world' | 'places' | 'logs' | undefined;
  * ganzen Bildschirm. Oben eine Leiste mit Schließen, Name und UWP (klappt die Welt im Klartext auf, mit
  * Oberfläche, Aufenthalt, Reise und Notiz) und zwei aufklappbaren Listen (Orte: Städte, Vulkane, Gruppe,
  * NSC; Einträge: die Felder mit Logeinträgen). Unten fährt ein Feld herein, sobald ein Feld angetippt ist, mit allem, was
- * dort ist, und dem, was dort geschah. Wohin die Karte schaut und welche Liste offen ist, ist reine
+ * dort ist, dem, was dort geschah, und darunter der Reihe Notiz, Würfeln, Karte (`dock`), damit man zum
+ * Würfeln nicht den Globus verlassen muss. Im Desktop-Modus fährt das Feld links herein wie in einer
+ * Karten-App, statt unten über die ganze Breite. Wohin die Karte schaut und welche Liste offen ist, ist reine
  * Darstellung; welches Feld angetippt ist, hält der Controller.
  */
 export function GlobeScreen({
@@ -42,6 +45,7 @@ export function GlobeScreen({
   log,
   logDays,
   error,
+  dock,
 }: {
   globe: GlobeView;
   world: WorldView | undefined;
@@ -50,6 +54,8 @@ export function GlobeScreen({
   log: readonly LogItem[];
   logDays: readonly (string | undefined)[];
   error: string | undefined;
+  /** Die Reihe Notiz, Würfeln, Karte unten im Feld. */
+  dock?: ReactNode;
 }) {
   const game = useGame();
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -179,17 +185,19 @@ export function GlobeScreen({
   };
   useEffect(() => () => cancelAnimationFrame(zoomFrame.current), []);
   // Die Knöpfe stehen über dem Infofeld unten, so hoch, wie es wirklich ist.
+  // Im Desktop-Modus steht das Feld links, die Knöpfe bleiben unten rechts.
+  const desktop = useIsDesktop();
   const sheet = useRef<HTMLElement>(null);
   const [sheetHeight, setSheetHeight] = useState(0);
   useLayoutEffect(() => {
     const el = sheet.current;
     if (!el) return;
-    const measure = () => setSheetHeight(el.classList.contains('open') ? el.offsetHeight : 0);
+    const measure = () => setSheetHeight(el.classList.contains('open') && !desktop ? el.offsetHeight : 0);
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [globe.picked]);
+  }, [globe.picked, desktop]);
   // Gesten wie in einer Karten-App: ziehen dreht, zwei Finger zoomen, Doppeltippen zoomt auf die
   // Stelle hinein, Doppeltippen und Ziehen zoomt einhändig (nach unten hinein, nach oben heraus).
   // Ein einfaches Tippen wählt das Feld erst, wenn kein zweites Tippen folgt.
@@ -580,6 +588,7 @@ export function GlobeScreen({
               </p>
             )}
             {picked.happened.length > 0 ? <HappenedList title="Was hier geschah" indices={picked.happened} log={log} logDays={logDays} /> : <p className="combat-hint">Hier ist noch nichts geschehen.</p>}
+            {dock && <div className="globe-dock">{dock}</div>}
           </>
         )}
       </section>

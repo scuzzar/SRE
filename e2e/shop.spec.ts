@@ -115,6 +115,7 @@ test('Shop: „Gruppe ist hier“ auf der Weltkarte bringt die Gruppe auf eine a
   await world.getByRole('button', { name: 'Gruppe ist hier' }).click();
   await expect(world.getByRole('button', { name: 'Die Gruppe ist hier' })).toBeVisible();
   await world.getByRole('button', { name: 'Schließen' }).first().click();
+  await page.getByRole('button', { name: /^Welten \d+/ }).click();
   await expect(page.locator('.world-list-here')).toBeVisible();
   await page.getByRole('navigation').getByRole('button', { name: 'Shop' }).click();
   await expect(page.locator('.shop-world')).toContainText('Regina');
