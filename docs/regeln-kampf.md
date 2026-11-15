@@ -1858,8 +1858,8 @@ Oberflächenkarte; leer heißt: fährt dort nicht). Straße, Fluss und Siedlung 
 | Ground Car | 100 | 50 | (nur `settled`: 50) | | | | |
 | Wheeled ATV | 60 | 40 | 50 | 20 | 10 | | |
 | Tracked ATV | 40 | 30 | 35 | 30 | 20 | (`waterIce`: 30) | |
-| Motor Boat | | | | | | 60 (nur `water`) | 60 |
-| Submersible | | | | | | 40 (nur `water`) | |
+| Motor Boat | | 20 (Hafen) | | | | 60 (nur `water`) | 60 |
+| Submersible | | 20 (Hafen) | | | | 40 (nur `water`) | |
 | Hovercraft | 60 | 40 | 60 | (nur `swamp`, `landIce`: 30) | | 60 | 60 |
 
 Fluggeräte (Fluggeschwindigkeit, Landepunkte): Biplane 150, Landeplatz in jeder Stadt mit Hafen

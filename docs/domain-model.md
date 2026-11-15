@@ -351,6 +351,13 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > ändern geht weiter. Neu im Bild: `Landform → Terrain : terrain`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-15-gelaende-aus-dem-aufenthaltsort.png`](changes/2026-11-15-gelaende-aus-dem-aufenthaltsort.png).
 
+> **Entwurf, wartet auf Freigabe** (Kennzeichen 2026-11-15c, nach den Empfehlungen, denen der Owner
+> zugestimmt hat): **Linienflug** (siehe *Fahrzeuge*, Linienverkehr). Ein Fahrzeug des Linienverkehrs
+> hat einen Fahrpreis je Person und Flugstunde und keinen Gegenstand; es fliegt zwischen Städten mit
+> Raumhafen A–C oder Landeplatz F, ab TL 6 und Atmosphäre 4, ohne Fahrplan. Neu im Bild:
+> `Vehicle.tl`, `Vehicle.fare`, `Leg./fare`, `TripDay.fare`, `BookingKind.fare`. Der Ausschnitt dazu
+> liegt unter [`changes/2026-11-15-linienflug.png`](changes/2026-11-15-linienflug.png).
+
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
@@ -381,7 +388,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+2026-11-15c (Linienflug).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -642,7 +649,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Fahrstunden | `Trip.hours`, `TripDay.hours` | Wie viele Stunden die Fahrt schon gefahren ist bzw. an einem Reisetag; ein Reisetag hat höchstens die Fahrstunden je Tag (Hausregel) |
 | Reisetag | `TripDay` | Der Logeintrag für einen Tag der Fahrt oder das letzte Stück bis zur Ankunft |
 | Miete | `BookingKind.rent`, `Leg./rent` | Was ein gemietetes Fahrzeug je Tag kostet: 1 % seines Kaufpreises (Hausregel) |
-| Fahrpreis | `Leg./rent` bei Linienverkehr | Was eine Fahrt mit Linienmaschine, Bus oder Fähre kostet: wie Miete, aber nur für die Fahrstunden des Abschnitts |
+| Linienverkehr, Linienflug | `Vehicle.fare` | Ein Fahrzeug, das man nicht kauft oder mietet, sondern mit Fahrpreis benutzt; zurzeit nur der Linienflug |
+| Fahrpreis | `Vehicle.fare`, `Leg./fare`, `TripDay.fare`, `BookingKind.fare` | Was der Linienverkehr kostet: je Person und Fahrstunde (Linienflug Cr100), für alle lebenden SC; gebucht am Reisetag, an dem der Abschnitt beginnt |
+| TL eines Fahrzeugs | `Vehicle.tl` | Ab welchem TL der Welt es ein Fahrzeug ohne Gegenstand gibt, z. B. den Linienflug ab TL 6 |
 | Abgestelltes Fahrzeug | `Possession.parked` | Ein eigenes Fahrzeug, das nicht mitgefahren ist und an einem Ort steht, bis die Gruppe es dort wieder abholt |
 | Kleinstadt | `SurfaceCell.towns` | Ob auf einem Oberflächenfeld ohne Stadt eine Kleinstadt liegt (1) oder nicht (0); höchstens eine je Feld, ohne Namen |
 | Bevölkerungsmultiplikator | `Hex.populationMultiplier` | Die erste Ziffer der Einwohnerzahl, 1–9: Die Welt hat Multiplikator × 10^Bevölkerung Einwohner |
@@ -2317,6 +2326,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (`river`): zwei benachbarte Felder desselben Flusses. Siedlung (`town`): ein Feld mit Stadt oder
     Kleinstadt. Ein Weg kann schneller machen (das Auto auf der Straße) oder ein Feld erst befahrbar
     machen (das Boot auf dem Fluss durchs Land).
+  - **Anlegen:** Boot und U-Boot haben eine Zeile für Siedlungen (20 km/h, der Hafen): So legen sie in
+    einem Küstenort an, und dort steigt man um. Ein reines Wasserfahrzeug (keine Zeile für eine
+    Geländeart an Land) fährt aber nie von Land zu Land, also nicht von Ort zu Ort über Land.
   - **Ein Schritt** geht von einem Feld zum Nachbarfeld, etwa 250 km. Führt eine Straße bzw. ein Fluss
     über beide Felder und hat das Fahrzeug eine Zeile dafür, gilt diese. Sonst muss es auf beiden
     Feldern fahren können (Geländeart oder Siedlung), und es gilt die langsamere der beiden; auf einem
@@ -2341,12 +2353,20 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Welt. Die Miete je Tag ist **1 % des Kaufpreises** (Hausregel), je angefangenem Reisetag, an dem
     ein gemieteter Abschnitt gefahren wird. Gemietete Fahrzeuge gibt man am Ende ihres Abschnitts
     ab, wo man will.
-  - **Linienverkehr** (Linienmaschine, Bus, Fähre) ist ein Fahrzeug mit Gegenstand und Preis, das man
-    nicht kaufen, nur benutzen kann; man zahlt wie bei der Miete, aber nur für die Fahrstunden des
-    Abschnitts (Fahrpreis), nicht je Tag. Der Preis eines solchen Gegenstands ist deshalb der Wert
-    eines Sitzplatzes, nicht des ganzen Fahrzeugs; sonst kostete ein Flug von 3 Stunden einen Teil
-    einer Linienmaschine. Fahrzeuge des Linienverkehrs stehen in der Liste der
-    Gegenstände, aber nicht im Angebot des Shops.
+  - **Linienverkehr** (Entwurf, 2026-11-15c; ersetzt die frühere Regel „wie Miete, nur für die
+    Fahrstunden“): ein Fahrzeug **ohne Gegenstand** mit **Fahrpreis** (`fare`) in Cr je Person und
+    Fahrstunde; man kauft und mietet es nicht, sondern bezahlt die Fahrt. Zurzeit gibt es nur den
+    **Linienflug** (Owner, 15. November 2026):
+    - fliegt mit 600 km/h (wie das Fixed Wing Aircraft) zwischen zwei Städten, deren Hafen Raumhafen
+      A, B, C oder Landeplatz F ist (`landsAt`), nie in die Pampa;
+    - gibt es ab TL 6 (`tl`, weil kein Gegenstand den TL trägt) und ab Atmosphäre 4;
+    - kostet **Cr100 je Person und Flugstunde**, für alle lebenden SC (`Leg./fare`); gebucht als
+      Fahrpreis (`fare`) am Reisetag, an dem der Flug beginnt (`TripDay.fare`, die Buchung verweist
+      wie die Miete auf den Reisetag); reicht die Kasse nicht, geht der Tag nicht;
+    - hat keinen Fahrplan: Man fliegt sofort, der Flug ist ein Abschnitt der Fahrt wie jeder andere;
+    - erscheint bei den Varianten als „Linienflug“, auch gemischt (Auto zum Flughafen, Linienflug,
+      Auto). In der Suche zählt der Fahrpreis wie die Miete gegen die Zeit.
+    Bus, Bahn und Fähre kommen vielleicht später.
 - **Fahrt** (freigegeben am 15. November 2026, 2026-11-15). Eine Fahrt (`Trip`) ist gespeicherter Stand, weil sie über
   mehrere Tage läuft und dazwischen anderes passiert (Rasten, Begegnungen, Ausspielen); sie
   übersteht einen Neustart.
@@ -2355,8 +2375,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     einem Fahrzeug: zu Fuß, eigene Fahrzeuge aus dem Gruppengepäck, gemietete (`rented`) oder
     Linienverkehr. Ein Fahrzeugwechsel geht nur dort, wo man es mieten kann bzw. wo das Fluggerät
     landet. **Varianten wie bei einer Karten-App** (Owner, 15. November 2026): Die App zeigt mehrere
-    Routen, je die schnellste ohne Miete (zu Fuß und eigene Fahrzeuge) und je mietbarem Fahrzeug die
-    schnellste damit (Ground Car mieten, ATV mieten, Hubschrauber mieten …), gleiche nur einmal, die
+    Routen, je die schnellste ohne Miete (zu Fuß und eigene Fahrzeuge), je mietbarem Fahrzeug die
+    schnellste damit (Ground Car mieten, ATV mieten, Hubschrauber mieten …) und **gemischte**, die
+    mehrere Mietfahrzeuge nacheinander nehmen, wo sich das lohnt (Auto zum Hafen, Boot, Auto; Auto
+    zum Flugplatz, Flug, Auto). Die gemischten wägen Zeit gegen Miete ab, mit vier Gewichten (eine
+    Fahrstunde ist 3, 30, 300 bzw. 3000 Cr wert). Je Fahrzeugfolge bleibt die schnellste Variante, die
     schnellste zuerst, markiert als „Schnellste“ bzw. „Günstigste“. Jede mit Dauer in Tagen
     (`/days`), Fahrstunden und Miete; die gewählte steht auf dem Globus, mit „Losfahren“ wird sie
     gespeichert (`Campaign.trip`). Die Varianten vor dem Bestätigen sind nur Anzeige.
@@ -2419,14 +2442,15 @@ Diagramm mit diesen Ausnahmen:
 
 - **Fahrzeuge und Fahrt** (2026-11-15) sind gebaut (`model/vehicle.ts`, `model/trip.ts`, Daten in
   `src/data/vehicles.json`), mit diesen Lücken:
-  - **Linienverkehr** gibt es noch nicht: kein Fahrzeug mit Fahrpreis und Sitzplatzpreis; das Fixed
-    Wing Aircraft ist ein gewöhnliches Fahrzeug, das man kauft oder je Tag mietet.
+  - **Linienflug** (Entwurf 2026-11-15c) ist noch nicht gebaut: kein `Vehicle.fare`, `Vehicle.tl`,
+    `Leg./fare`, `TripDay.fare` und keine Buchungsart `fare` im Code.
   - Ein eigenes Fahrzeug nimmt die Suche nur dort, wo es zu Beginn steht (mit der Gruppe am Start
     oder abgestellt); stellt die Gruppe es unterwegs ab, holt die Suche es auf derselben Fahrt nicht
     wieder ab. Fluggeräte fliegen nur einmal je Abschnitt und landen nur in Siedlungen, am Ziel, am
     Start und bei abgestellten eigenen Fahrzeugen.
-  - Gemietet wird nur, was die Kasse wenigstens für einen Tag hergibt. Jede Variante nimmt höchstens
-    eine Art Mietfahrzeug; eine Route mit zwei verschiedenen gemieteten Fahrzeugen schlägt die App nicht vor.
+  - Gemietet wird nur, was die Kasse wenigstens für einen Tag hergibt. Eine Route hat höchstens einen
+    Flug, und ein Fluggerät landet nur am Ziel, in den 30 Siedlungen nahe am Ziel, am Start und bei
+    abgestellten eigenen Fahrzeugen (sonst dauert die Suche auf großen Karten zu lange).
   - **`Leg → Vehicle : by`** und **`Booking → TripDay : rentFor`** sind im Code die Id des Fahrzeugs
     bzw. die Stelle des Reisetags im Log, wie bei `won`; Löschen rückt die Stelle nach.
   - **`Trip → SurfaceCell : /at`**, `/totalHours`, `/days`, `Leg./hours` und `Leg./rent` rechnet

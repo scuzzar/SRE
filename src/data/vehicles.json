@@ -186,6 +186,10 @@
    {
     "along": "river",
     "kmh": 60
+   },
+   {
+    "along": "town",
+    "kmh": 20
    }
   ]
  },
@@ -197,6 +201,10 @@
    {
     "on": "water",
     "kmh": 40
+   },
+   {
+    "along": "town",
+    "kmh": 20
    }
   ]
  },

@@ -330,6 +330,19 @@
         "SurfaceCell",
         "City"
       ]
+    },
+    {
+      "id": "2026-11-15c",
+      "file": "2026-11-15-linienflug",
+      "title": "Linienflug: Fahrzeug mit Fahrpreis je Person und Flugstunde, zwischen Städten mit Hafen A–C oder F",
+      "approved": false,
+      "show": [
+        "Item",
+        "Port",
+        "Booking",
+        "LogEntry",
+        "Trip"
+      ]
     }
   ]
 }

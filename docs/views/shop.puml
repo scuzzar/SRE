@@ -90,6 +90,7 @@ hide <<value>> stereotype
     sale
     lottery
     rent
+    $new("2026-11-15c", "fare")
   }
   class Character $charakter
   class Possession $shop {
@@ -193,4 +194,7 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class BookingKind #line:d0021b;line.bold
+class Vehicle #line:d0021b;line.bold
+class TripDay #line:d0021b;line.bold
 @enduml

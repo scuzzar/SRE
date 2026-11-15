@@ -5,7 +5,7 @@
 import type { Vehicle } from '../data';
 import { ref } from './reference';
 import { cosAngle, type SurfaceGrid } from './surface-grid';
-import { landformAt, type SurfaceMap } from './surface-map';
+import { isWaterLandform, landformAt, type SurfaceMap } from './surface-map';
 import { DomainError } from './errors';
 
 export type { Vehicle } from '../data';
@@ -95,10 +95,17 @@ function alongSpeed(vehicle: Vehicle, way: 'road' | 'river'): number {
  */
 export function stepSpeed(vehicle: Vehicle, map: SurfaceMap, ways: Ways, a: number, b: number): number {
   const key = pair(a, b);
-  let best = Math.min(cellSpeed(vehicle, map, ways, a), cellSpeed(vehicle, map, ways, b));
+  // Ein reines Wasserfahrzeug verlässt das Wasser nur, um in einer Siedlung anzulegen: nie von Land zu Land.
+  const ashore = waterOnly(vehicle) && !isWaterLandform(landformAt(map, a)) && !isWaterLandform(landformAt(map, b));
+  let best = ashore ? 0 : Math.min(cellSpeed(vehicle, map, ways, a), cellSpeed(vehicle, map, ways, b));
   if (ways.road.has(key)) best = Math.max(best, alongSpeed(vehicle, 'road'));
   if (ways.river.has(key)) best = Math.max(best, alongSpeed(vehicle, 'river'));
   return best;
+}
+
+/** Ein reines Wasserfahrzeug: Es fährt auf keiner Geländeart an Land (Boot, U-Boot; nicht das Hovercraft). */
+export function waterOnly(vehicle: Vehicle): boolean {
+  return vehicle.speeds.some((s) => s.on !== undefined) && vehicle.speeds.every((s) => s.on === undefined || isWaterLandform(s.on));
 }
 
 /** Ob ein Fluggerät auf einem Feld landen kann: auf seiner Geländeart oder in einer Stadt mit passendem Hafen. */

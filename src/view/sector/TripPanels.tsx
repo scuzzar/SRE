@@ -71,7 +71,16 @@ export function TripPlanCard({ plan }: { plan: TripPlanView }) {
                   </span>
                   <span className="trip-option-main">
                     <span className="trip-option-title">{option.title}</span>
-                    {option.chain.length > 1 && <span className="trip-option-chain">{option.chain.join(' › ')}</span>}
+                    {option.chain.length > 1 && (
+                      <span className="trip-option-chain">
+                        {option.chain.map((c, k) => (
+                          <span key={k}>
+                            {k > 0 && ' › '}
+                            <span aria-hidden>{VEHICLE_ICONS[c.vehicle] ?? ''}</span> {c.name}
+                          </span>
+                        ))}
+                      </span>
+                    )}
                     {option.tags.length > 0 && (
                       <span className="trip-option-tags">
                         {option.tags.map((t) => (

@@ -262,3 +262,24 @@ describe('Gelände aus dem Aufenthaltsort (2026-11-15b)', () => {
     expect(t.terrain).toBe('mountain');
   });
 });
+
+describe('Gemischte Varianten', () => {
+  it('mietet nacheinander Auto, Boot und wieder Auto, wo das schneller ist als zu Fuß', () => {
+    // Straße bis zum Hafen, sonst überall Wasser, drüben ein Hafen und eine Straße zum Ziel.
+    const land = new Set([line[0]!, line[1]!, line[4]!, line[5]!]);
+    const water = Object.fromEntries([...Array(grid.cells).keys()].filter((q) => !land.has(q)).map((q) => [q, 'water' as Landform]));
+    const map = mapWith(water, { towns: [[line[0]!, 1], [line[1]!, 1], [line[4]!, 1]].sort((p, q) => p[0]! - q[0]!) as [number, number][], roads: [[line[0]!, line[1]!], [line[4]!, line[5]!]] });
+    // TL 5: kein Hubschrauber, nur Auto, Boot und (ohne Flugplatz) kein Flugzeug.
+    const c = campaignOn(map, line[0]!, { tech: 5, funds: 1_000_000 });
+    const options = planOptions(c, line[5]!);
+    // Mit TL 6 lohnt das teure Boot nie: gemischt heißt dann Auto, Hubschrauber, Auto.
+    const air = planOptions(campaignOn(map, line[0]!, { tech: 6, funds: 1_000_000 }), line[5]!).map((t) => t.legs.filter((l) => l.rented).map((l) => l.by).join(' '));
+    expect(air).toContain('ground-car helicopter ground-car');
+    const kinds = options.map((t) => t.legs.filter((l) => l.rented).map((l) => l.by));
+    expect(kinds.some((k) => k.includes('ground-car') && k.includes('motor-boat'))).toBe(true);
+    // Ohne Boot oder Fluggerät kommt man nicht übers Wasser; das Boot fährt nicht über Land von Ort zu Ort.
+    expect(kinds.every((k) => k.some((v) => ['motor-boat', 'submersible', 'hovercraft', 'helicopter', 'primitive-biplane', 'fixed-wing-aircraft'].includes(v)))).toBe(true);
+    for (const t of options) for (const l of t.legs.filter((leg) => leg.by === 'motor-boat')) expect(l.cells.slice(1, -1).every((q) => !land.has(q))).toBe(true);
+  });
+});
+
