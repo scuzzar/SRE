@@ -1870,6 +1870,46 @@ describe('Städtenamen (2026-11-14k)', () => {
 });
 
 describe('Orte (2026-11-14j)', () => {
+  it('NSC platzieren: der Reiter NSC wählt mehrere NSC, auch ohne Ort; OK setzt sie aufs Feld, Abbrechen und ein Reiter ändern nichts', async () => {
+    const { game } = await started();
+    // Zwei NSC: Mara lebt auf Kessra, Tenzin hat keinen Ort (er reist mit).
+    const add = (name: string, place: string | undefined) => {
+      game.newCharacter(true, 'contact');
+      const input = { ...game.snapshot().editor!.input, name };
+      if (place === undefined) delete input.place;
+      else input.place = place;
+      game.saveCharacter(input);
+      return game['campaign'].characters.find((c) => c.name === name)!.id;
+    };
+    const mara = add('Mara', '0405');
+    const tenzin = add('Tenzin', undefined);
+    game.openGlobeAt(4, 5);
+    const capital = game.snapshot().globe!.cities[0]!;
+    game.pickCell(capital.cell);
+    // NSC platzieren öffnet den Reiter NSC zum Auswählen; das Feld ist so lange losgelassen.
+    game.startNpcPlacing();
+    expect(game.snapshot()).toMatchObject({ screen: 'npcs', globe: { picked: undefined }, npcs: { all: false, placing: { label: capital.label, here: [] } } });
+    // Abbrechen: zurück zum Feld im Reiter davor, nichts geändert.
+    game.cancelNpcPlacing();
+    expect(game.snapshot()).toMatchObject({ screen: 'oracle', globe: { picked: { cell: capital.cell } }, npcs: { placing: undefined } });
+    expect(game.snapshot().globe!.picked!.npcs).toEqual([]);
+    // Ein Reiter bricht ebenfalls ab.
+    game.startNpcPlacing();
+    game.showScreen('shop');
+    expect(game.snapshot().npcs.placing).toBeUndefined();
+    // OK mit beiden: Sie stehen danach in der Hauptstadt, das Feld ist wieder angetippt.
+    game.pickCell(capital.cell);
+    game.startNpcPlacing();
+    game.showAllNpcs(true);
+    game.placeNpcs([mara, tenzin]);
+    expect(game.snapshot()).toMatchObject({ screen: 'shop', npcs: { placing: undefined } });
+    expect(game.snapshot().globe!.picked!.npcs.map((n) => n.name).sort()).toEqual(['Mara', 'Tenzin']);
+    expect(game['campaign'].characters.find((c) => c.id === tenzin)!.place).toEqual({ world: '0405', city: 0 });
+    // Wer schon dort ist, steht beim nächsten Mal als „schon hier“ in der Auswahl.
+    game.startNpcPlacing();
+    expect([...game.snapshot().npcs.placing!.here].sort()).toEqual([mara, tenzin].sort());
+  });
+
   it('neue Logeinträge bekommen den Aufenthaltsort, die Gruppe lässt sich auf dem Globus versetzen', async () => {
     const { game, repository } = await started();
     game.rollDice();

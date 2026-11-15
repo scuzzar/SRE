@@ -233,7 +233,7 @@ test('Globus: aus dem Subsektor öffnen, Feld antippen, zurück zum Subsektor', 
   await expect(page.getByRole('group', { name: 'Karte des Subsektors' })).toBeVisible();
 });
 
-test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des Felds; sie holt einen NSC her und plant die Route', async ({ page }) => {
+test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des Felds; NSC platzieren wählt im Reiter NSC aus, Hierhin reisen plant die Route', async ({ page }) => {
   await page.goto('/');
   // Ein NSC auf Kessra, dem Aufenthaltsort, noch ohne Feld.
   await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'NSC', exact: true }).click();
@@ -264,11 +264,22 @@ test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des 
   if (test.info().project.name === 'mobil') await expect(page.locator('.tray').getByRole('region', { name: 'Orakel und Proben' })).toHaveCount(0);
   await expect(actions.getByRole('button', { name: /Gruppe .* setzen/ })).toBeEnabled();
   await expect(actions).not.toContainText('kein Feld');
-  // NSC platzieren: das Auswahlfeld unter dem Knopf holt einen NSC dieser Welt her; danach ist keiner mehr zu holen.
-  const pick = actions.getByLabel('NSC hierher holen');
-  await pick.selectOption({ label: 'Mara Voss' });
+  // NSC platzieren öffnet den Reiter NSC mit Kästchen; Abbrechen führt zurück zum Feld, ohne etwas zu ändern.
+  const placeNpcs = actions.getByRole('button', { name: 'NSC platzieren' });
+  await placeNpcs.click();
+  const placing = page.getByRole('region', { name: 'NSC platzieren' });
+  await expect(page.getByText(/^Welche NSC kommen nach /)).toBeVisible();
+  await expect(placing.getByRole('button', { name: 'OK' })).toBeDisabled();
+  await placing.getByRole('button', { name: 'Abbrechen' }).click();
+  await expect(field).toBeVisible();
+  await expect(field).not.toContainText('Mara Voss');
+  // Angehakt und OK: Mara kommt aufs Feld; danach ist keiner mehr zu holen.
+  await placeNpcs.click();
+  await expect(page.getByRole('checkbox', { name: 'Alle zeigen' })).toBeVisible();
+  await page.getByRole('checkbox', { name: 'Mara Voss hierher' }).check();
+  await placing.getByRole('button', { name: /^OK, 1 NSC nach / }).click();
   await expect(field).toContainText('Mara Voss · NSC, Kontakt');
-  await expect(pick).toBeDisabled();
+  await expect(placeNpcs).toBeDisabled();
   // Hierhin reisen plant die Route; dann ist der Knopf aus.
   await actions.getByRole('button', { name: 'Hierhin reisen' }).click();
   await expect(actions.getByRole('button', { name: 'Hierhin reisen' })).toBeDisabled();
