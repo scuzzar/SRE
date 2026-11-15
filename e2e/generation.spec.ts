@@ -36,7 +36,8 @@ test('Charaktererschaffung: Attribute einzeln, Laufbahn, Terms, Abmusterung, Nam
   const picker = page.getByRole('dialog', { name: 'Heimatwelt wählen' });
   const map = picker.getByRole('group', { name: 'Karte des Subsektors' });
   for (const id of ['0101', '0202', '0303', '0404', '0505', '0606', '0707', '0408', '0109', '0210']) {
-    await map.getByRole('button', { name: `${id}, nicht erzeugt` }).click();
+    // Untere Reihen liegen am Handy unter dem Ziehblatt; das Feld wird direkt angetippt.
+    await map.getByRole('button', { name: `${id}, nicht erzeugt` }).dispatchEvent('click');
     await picker.getByRole('button', { name: /Vorkommen würfeln/ }).click();
     if (await picker.getByText('Kein System in diesem Feld').isVisible()) continue;
     await picker.getByRole('button', { name: 'Welt erschaffen' }).click();

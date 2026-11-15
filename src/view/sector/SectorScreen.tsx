@@ -232,7 +232,8 @@ interface MapView {
  * oder mit + und − zoomen, mit einem Finger oder der gehaltenen Maustaste verschieben; der Punkt
  * unter Fingern bzw. Cursor (bei den Knöpfen die Mitte) bleibt dabei stehen. Gezeichnet wird über den
  * Ausschnitt der Zeichnung (`viewBox`); als Grundkarte (`fill`) reicht sie über ihre Fläche hinaus
- * unter Leiste und Ziehblatt. Reine Darstellung: Zoom und Ausschnitt gehören der Ansicht.
+ * unter Leiste und Ziehblatt und lässt sich auch bei Zoom 1 verschieben; das Ziehblatt schiebt sich
+ * darüber, ohne dass sie Größe oder Lage ändert. Reine Darstellung: Zoom und Ausschnitt gehören der Ansicht.
  */
 function ZoomableMap({ fill, children }: { fill: boolean; children: (pixelsPerUnit: number) => ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
@@ -254,6 +255,9 @@ function ZoomableMap({ fill, children }: { fill: boolean; children: (pixelsPerUn
   const bounded = (v: MapView): MapView => {
     const zoom = clampZoom(v.zoom);
     const upp = fit / zoom;
+    // Als Grundkarte frei verschiebbar, auch bei Zoom 1, solange die Mitte des Ausschnitts auf der Karte
+    // liegt: So holt man Reihen unter dem Ziehblatt hervor, wie auf dem Globus.
+    if (fill) return { zoom, cx: Math.min(WIDTH, Math.max(0, v.cx)), cy: Math.min(HEIGHT, Math.max(0, v.cy)) };
     const half = (span: number, full: number, c: number) => (span >= full ? full / 2 : Math.min(full - span / 2, Math.max(span / 2, c)));
     return { zoom, cx: half(size.w * upp, WIDTH, v.cx), cy: half(size.h * upp, HEIGHT, v.cy) };
   };
