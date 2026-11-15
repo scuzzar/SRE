@@ -184,6 +184,11 @@ test('Globus: aus der Kopfzeile öffnen, Feld antippen, schließen', async ({ pa
   await places.getByRole('button', { name: /Hauptstadt ·/ }).click();
   await expect(places).toHaveCount(0);
   await expect(globe.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('°C im Jahresmittel');
+  // „Zur Gruppe“ gibt es, sobald die Gruppe ein Feld auf dieser Welt hat; wie im Navi führt er zu ihr zurück.
+  await expect(globe.getByRole('button', { name: 'Zur Gruppe' })).toHaveCount(0);
+  await globe.getByRole('button', { name: 'Gruppe in diese Stadt' }).click();
+  await globe.getByRole('button', { name: 'Zur Gruppe' }).click();
+  await expect(globe.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('Die Gruppe ist hier');
   // Die Liste der Felder mit Einträgen; noch ist nichts geschehen.
   await globe.getByRole('button', { name: /^Einträge/ }).click();
   await expect(globe.getByRole('region', { name: 'Felder mit Einträgen' })).toContainText('noch nichts');

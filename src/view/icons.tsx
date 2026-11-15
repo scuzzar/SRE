@@ -124,6 +124,17 @@ export function CloseIcon() {
   );
 }
 
+/** Zur Gruppe: ein Fadenkreuz wie der Knopf „Mein Standort“ im Navi. */
+export function LocateIcon() {
+  return (
+    <svg {...base} strokeWidth={2} strokeLinecap="round">
+      <circle cx="12" cy="12" r="6.5" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
+      <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" />
+    </svg>
+  );
+}
+
 /** Plus: eine zugeklappte Tafel der Karte aufklappen. */
 export function PlusIcon() {
   return (

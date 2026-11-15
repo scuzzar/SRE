@@ -240,6 +240,7 @@ in vec3 aChan;
 in vec3 aCol0;
 in vec3 aCol1;
 in vec3 aCol2;
+in vec3 aIds;
 uniform vec3 uE;
 uniform vec3 uN;
 uniform vec3 uF;
@@ -252,6 +253,7 @@ out vec3 vChan;
 out vec3 vCol0;
 out vec3 vCol1;
 out vec3 vCol2;
+out vec3 vIds;
 void main() {
   vec3 v = vec3(dot(aPos, uE), dot(aPos, uN), dot(aPos, uF));
   vView = v;
@@ -262,6 +264,7 @@ void main() {
   vCol0 = aCol0;
   vCol1 = aCol1;
   vCol2 = aCol2;
+  vIds = aIds;
   gl_Position = vec4(v.x * uScale.x, v.y * uScale.y, 0.0, 1.0);
 }
 `;
@@ -358,6 +361,38 @@ void main() {
 }
 `;
 
+/**
+ * Der Rahmen des angetippten Feldes, als eigener Durchgang über Flüssen und Straßen: genau auf dem
+ * Feldrand ein heller Rand, außen ein weicher Schatten, innen ein leichter Schein. Gezeichnet wird
+ * nur in Dreiecken, die das Feld berühren; die Breite ist in Bildpunkten, also auf jeder Zoomstufe gleich.
+ */
+const OUTLINE_FS = `#version 300 es
+precision highp float;
+uniform float uPicked;
+in vec3 vView;
+in vec3 vBary;
+in vec3 vIds;
+out vec4 outColor;
+void main() {
+  if (vView.z < 0.0) discard;
+  vec3 s = vBary;
+  float mine;
+  float other;
+  if (abs(vIds.x - uPicked) < 0.5) { mine = s.x; other = max(s.y, s.z); }
+  else if (abs(vIds.y - uPicked) < 0.5) { mine = s.y; other = max(s.x, s.z); }
+  else if (abs(vIds.z - uPicked) < 0.5) { mine = s.z; other = max(s.x, s.y); }
+  else discard;
+  // Abstand zum Feldrand in Bildpunkten: positiv innen, negativ außen.
+  float d = (mine - other) / max(fwidth(mine - other), 1e-6);
+  float ring = smoothstep(-0.5, 0.5, d) * (1.0 - smoothstep(3.0, 4.0, d));
+  float shadow = (1.0 - smoothstep(-0.5, 0.5, d)) * smoothstep(-5.0, -0.5, d) * 0.5;
+  float glow = smoothstep(3.0, 4.0, d) * (1.0 - smoothstep(4.0, 18.0, d)) * 0.2;
+  // Vormultipliert: Rand und Schein hell, der Schatten dunkelt nur ab.
+  vec3 light = vec3(1.0, 0.97, 0.88);
+  outColor = vec4(light * (ring + glow), ring + glow + shadow);
+}
+`;
+
 /** Wie weit ein Band über seine Breite hinausreicht: Ufer bzw. Seitenstreifen. */
 const BANK = 2.0;
 
@@ -424,23 +459,27 @@ void main() {
   float alpha;
   if (vKind < 0.5) {
     // Fluss: in der Mitte tief, am Rand flach; Strömung zieht Schlieren mit; nasses, dunkles Ufer.
+    // An der Mündung (vFlow: Felder bis zum Ende) nimmt das Wasser die Farbe des Küstenwassers an und
+    // bleibt deckend; Ufer und Schlieren gehen vorher; erst ganz am Ende, wo die Farben gleich sind,
+    // blendet der Fluss aus. So geht er ins Meer über, statt als Fächer darüberzuliegen.
+    float river = smoothstep(0.15, 1.1, vFlow);
     float depth = 1.0 - a;
     vec3 shallow = vec3(0.22, 0.45, 0.6);
-    vec3 deep = mix(vec3(0.12, 0.32, 0.52), vec3(0.08, 0.24, 0.44), vFlow);
+    vec3 deep = vec3(0.1, 0.28, 0.48);
     vec3 water = mix(shallow, deep, smoothstep(0.0, 0.8, depth));
     float streak = wave(vAlong * 9.0 + vAcross * 2.5 + wave(vAlong * 2.0) * 2.0);
-    water *= 1.0 + 0.08 * streak * detail;
+    water *= 1.0 + 0.08 * streak * detail * river;
     // Glanz auf der Lichtseite der Strömung.
-    water += vec3(0.12, 0.14, 0.15) * smoothstep(0.55, 0.95, streak) * detail * (1.0 - a) * 0.6;
+    water += vec3(0.12, 0.14, 0.15) * smoothstep(0.55, 0.95, streak) * detail * (1.0 - a) * 0.6 * river;
+    water = mix(vec3(0.09, 0.27, 0.48), water, river);
     float bankT = clamp((a - 1.0) / (${BANK.toFixed(1)} - 1.0), 0.0, 1.0);
     vec3 bank = mix(vec3(0.16, 0.15, 0.09), vec3(0.0), bankT);
-    float bankA = (1.0 - bankT) * 0.5 * detail * outer;
+    float bankA = (1.0 - bankT) * 0.5 * detail * outer * smoothstep(0.5, 1.2, vFlow);
     col = mix(bank * bankA, water, core);
     alpha = mix(bankA, 1.0, core);
-    // An der Mündung geht der Fluss ins Meer über.
-    float mouth = 1.0 - smoothstep(0.93, 1.0, vFlow);
-    col *= mouth;
-    alpha *= mouth;
+    float end = smoothstep(0.0, 0.3, vFlow);
+    col *= end;
+    alpha *= end;
   } else {
     // Straße wie eine Autobahn: dunkler Asphalt, helle Randlinien, gestrichelte Mittellinie,
     // daneben ein schmaler Schatten.
@@ -481,14 +520,10 @@ export function lineMesh(globe: GlobeView): Float32Array {
   const band = (cells: readonly number[], kind: 0 | 1, seed: number) => {
     const points = cells.map(at);
     if (kind === 0) {
-      // Die Mündung: ein Stück hinein ins nächste Wasserfeld.
+      // Die Mündung: bis in die Mitte des nächsten Wasserfeldes, dort ist er ganz ins Meer übergegangen.
       const last = cells[cells.length - 1]!;
       const sea = grid.neighbors[last]!.find((q) => forms[q] === 'water' || forms[q] === 'waterIce');
-      if (sea !== undefined) {
-        const a = at(last);
-        const b = at(sea);
-        points.push([a[0] + (b[0] - a[0]) * 0.6, a[1] + (b[1] - a[1]) * 0.6, a[2] + (b[2] - a[2]) * 0.6]);
-      }
+      if (sea !== undefined) points.push(at(sea));
     }
     if (points.length < 2) return;
     const steps = 10;
@@ -528,6 +563,7 @@ export function lineMesh(globe: GlobeView): Float32Array {
     }
     let along = 0;
     const n = samples.length;
+    let total = 0;
     const vertex = (i: number, side: number) => {
       const c = samples[i]!;
       const prev = samples[Math.max(0, i - 1)]!;
@@ -543,9 +579,11 @@ export function lineMesh(globe: GlobeView): Float32Array {
       sy /= sl;
       sz /= sl;
       const flow = i / (n - 1);
-      // Flüsse laufen an der Quelle spitz aus und werden zur Mündung hin breiter.
-      const halfW = kind === 0 ? cellW * (0.03 + 0.07 * flow) * Math.min(1, flow * 12) : cellW * 0.026;
-      out.push(c[0], c[1], c[2], sx, sy, sz, side, halfW, along, kind, flow);
+      const toEnd = total - along;
+      // Flüsse laufen an der Quelle spitz aus, werden zur Mündung hin breiter und weiten sich dort zum Trichter.
+      const funnel = 1 + 0.6 * (1 - Math.min(1, toEnd / 0.9)) ** 2;
+      const halfW = kind === 0 ? cellW * (0.03 + 0.07 * flow) * Math.min(1, flow * 12) * funnel : cellW * 0.026;
+      out.push(c[0], c[1], c[2], sx, sy, sz, side, halfW, along, kind, kind === 0 ? toEnd : 0);
     };
     const alongAt: number[] = [0];
     for (let i = 1; i < n; i++) {
@@ -554,6 +592,7 @@ export function lineMesh(globe: GlobeView): Float32Array {
       along += Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]) / cellW;
       alongAt.push(along);
     }
+    total = along;
     for (let i = 0; i < n - 1; i++) {
       // Zwei Dreiecke je Stück; der Weg steht je Ecke.
       const quad: [number, number][] = [
@@ -571,13 +610,56 @@ export function lineMesh(globe: GlobeView): Float32Array {
     }
   };
   (map.rivers ?? []).forEach((river, i) => band(river, 0, i + 1));
-  (map.roads ?? []).forEach((road, i) => band(road, 1, i + 1001));
+  // Straßen teilen sich oft Felder (etwa von einer Stadt in zwei Richtungen). Daraus wird ein Netz:
+  // jeder Abschnitt zwischen zwei Feldern nur einmal, Ketten von Kreuzung zu Kreuzung (oder Ende).
+  const links = new Map<number, Set<number>>();
+  const link = (a: number, b: number) => {
+    if (!links.has(a)) links.set(a, new Set());
+    links.get(a)!.add(b);
+  };
+  for (const road of map.roads ?? []) {
+    for (let i = 1; i < road.length; i++) {
+      if (road[i - 1] === road[i]) continue;
+      link(road[i - 1]!, road[i]!);
+      link(road[i]!, road[i - 1]!);
+    }
+  }
+  const drawn = new Set<string>();
+  const edge = (a: number, b: number) => (a < b ? `${a}-${b}` : `${b}-${a}`);
+  const walk = (start: number, next: number): number[] => {
+    const chain = [start, next];
+    drawn.add(edge(start, next));
+    let prev = start;
+    let cell = next;
+    while (links.get(cell)!.size === 2) {
+      const after = [...links.get(cell)!].find((q) => q !== prev)!;
+      if (drawn.has(edge(cell, after))) break;
+      chain.push(after);
+      drawn.add(edge(cell, after));
+      prev = cell;
+      cell = after;
+    }
+    return chain;
+  };
+  const chains: number[][] = [];
+  const nodes = [...links.keys()].sort((a, b) => a - b);
+  // Erst von Kreuzungen und Enden aus, dann was übrig ist (Ringe).
+  for (const pass of [(c: number) => links.get(c)!.size !== 2, () => true]) {
+    for (const c of nodes) {
+      if (!pass(c)) continue;
+      for (const q of [...links.get(c)!].sort((a, b) => a - b)) if (!drawn.has(edge(c, q))) chains.push(walk(c, q));
+    }
+  }
+  chains.forEach((chain) => band(chain, 1, chain[0]! * 7 + chain[1]! + 1001));
   return new Float32Array(out);
 }
 
 /** Zeichnet den Globus einer Karte; `undefined`, wenn das Gerät kein WebGL 2 kann. */
 export interface GlobeRenderer {
-  draw(globe: GlobeView, camera: Camera, view: Viewport, showGrid: boolean): void;
+  /** `picked` ist das angetippte Feld; es bekommt einen Rahmen. */
+  draw(globe: GlobeView, camera: Camera, view: Viewport, showGrid: boolean, picked: number | undefined): void;
+  /** Wartet, bis die Grafikkarte alles gezeichnet hat (nach dem ersten Bild, solange der Ladebalken steht). */
+  finish(): void;
 }
 
 function compile(gl: WebGL2RenderingContext, vs: string, fs: string): WebGLProgram | undefined {
@@ -602,8 +684,8 @@ function compile(gl: WebGL2RenderingContext, vs: string, fs: string): WebGLProgr
   return gl.getProgramParameter(program, gl.LINK_STATUS) ? program : undefined;
 }
 
-/** Werte je Ecke: Lage (3), Anteil (3), Arten (3), Rauschkanäle (3), drei Farben (9). */
-const STRIDE = 21;
+/** Werte je Ecke: Lage (3), Anteil (3), Arten (3), Rauschkanäle (3), drei Farben (9), Feldnummern (3). */
+const STRIDE = 24;
 
 /** Ein Rauschkanal je Feld (0–3), gestreut, damit Nachbarn meist verschieden ausfransen. */
 function channelOf(cell: number): number {
@@ -660,12 +742,22 @@ export function cellMesh(globe: GlobeView): Float32Array {
         out[o++] = color[c * 3 + 1]!;
         out[o++] = color[c * 3 + 2]!;
       }
+      for (const c of tri) out[o++] = c;
     }
   }
   return out;
 }
 
-export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | undefined {
+/** Ein Bild abwarten, damit der Ladebalken weiterläuft, bevor der nächste Schritt rechnet. */
+function nextFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+}
+
+/**
+ * Baut die Grafik in Schritten auf, je Schritt ein Bild: Shader, die gebackenen Muster (einige Lagen je
+ * Bild), Mipmaps, dann das Netz der Karte. `progress` bekommt den Fortschritt von 0 bis 1.
+ */
+export async function createGlobeRenderer(canvas: HTMLCanvasElement, globe: GlobeView, progress: (done: number) => void): Promise<GlobeRenderer | undefined> {
   let gl: WebGL2RenderingContext | null = null;
   try {
     gl = canvas.getContext('webgl2', { premultipliedAlpha: true, antialias: true, alpha: true });
@@ -675,9 +767,15 @@ export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | 
   if (!gl) return undefined;
   const halo = compile(gl, QUAD_VS, HALO_FS);
   const bake = compile(gl, BAKE_VS, BAKE_FS);
+  if (!halo || !bake) return undefined;
+  progress(0.15);
+  await nextFrame();
   const cells = compile(gl, CELL_VS, CELL_FS);
   const lines = compile(gl, LINE_VS, LINE_FS);
-  if (!halo || !bake || !cells || !lines) return undefined;
+  const outline = compile(gl, CELL_VS, OUTLINE_FS);
+  if (!cells || !lines || !outline || gl.isContextLost()) return undefined;
+  progress(0.3);
+  await nextFrame();
 
   const quad = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, quad);
@@ -702,10 +800,24 @@ export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | 
     gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, patterns, 0, layer);
     gl.uniform1i(gl.getUniformLocation(bake, 'uLayer'), layer);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    if (layer % 3 === 2) {
+      progress(0.3 + (0.45 * (layer + 1)) / layers);
+      await nextFrame();
+      if (gl.isContextLost()) return undefined;
+      // Zwischen den Bildern kann anderes gezeichnet haben: Ziel und Programm wieder setzen.
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      gl.viewport(0, 0, BAKE_SIZE, BAKE_SIZE);
+      gl.disable(gl.BLEND);
+      gl.useProgram(bake);
+      gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+      gl.enableVertexAttribArray(bakePos);
+      gl.vertexAttribPointer(bakePos, 2, gl.FLOAT, false, 0, 0);
+    }
   }
   gl.disableVertexAttribArray(bakePos);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.deleteFramebuffer(fbo);
+  gl.bindTexture(gl.TEXTURE_2D_ARRAY, patterns);
   gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
   gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
   gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -713,6 +825,11 @@ export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | 
   gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.REPEAT);
   const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
   if (aniso) gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT, 4);
+  // Auf die Grafikkarte warten, solange der Balken steht, statt beim ersten Bild.
+  gl.finish();
+  progress(0.8);
+  await nextFrame();
+  if (gl.isContextLost()) return undefined;
 
   // Das Netz gehört zu einer Karte; wird sie neu gewürfelt, entsteht es neu.
   let shown: object | undefined;
@@ -738,27 +855,45 @@ export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | 
       ['aCol0', 3, 12],
       ['aCol1', 3, 15],
       ['aCol2', 3, 18],
+      ['aIds', 3, 21],
     ] as const
   ).map(([name, size, offset]) => [gl!.getAttribLocation(cells, name), size, offset] as const);
+  const outlineAttribs = (
+    [
+      ['aPos', 3, 0],
+      ['aBary', 3, 3],
+      ['aIds', 3, 21],
+    ] as const
+  ).map(([name, size, offset]) => [gl!.getAttribLocation(outline, name), size, offset] as const);
+
+  /** Netz und Bänder einer Karte; wird sie neu gewürfelt, entstehen sie neu. */
+  const load = (map: GlobeView) => {
+    const g = gl!;
+    if (mesh) g.deleteBuffer(mesh.buffer);
+    const data = cellMesh(map);
+    const buffer = g.createBuffer();
+    g.bindBuffer(g.ARRAY_BUFFER, buffer);
+    g.bufferData(g.ARRAY_BUFFER, data, g.STATIC_DRAW);
+    mesh = { buffer, vertices: data.length / STRIDE };
+    if (lineBuffer) g.deleteBuffer(lineBuffer.buffer);
+    const lineData = lineMesh(map);
+    const lb = g.createBuffer();
+    g.bindBuffer(g.ARRAY_BUFFER, lb);
+    g.bufferData(g.ARRAY_BUFFER, lineData, g.STATIC_DRAW);
+    lineBuffer = { buffer: lb, vertices: lineData.length / LINE_STRIDE };
+    shown = map.map;
+  };
+  load(globe);
+  progress(1);
 
   return {
-    draw(globe, camera, view, showGrid) {
+    finish() {
+      gl!.finish();
+    },
+    draw(globe, camera, view, showGrid, picked) {
       const g = gl!;
-      if (shown !== globe.map || !mesh) {
-        if (mesh) g.deleteBuffer(mesh.buffer);
-        const data = cellMesh(globe);
-        const buffer = g.createBuffer();
-        g.bindBuffer(g.ARRAY_BUFFER, buffer);
-        g.bufferData(g.ARRAY_BUFFER, data, g.STATIC_DRAW);
-        mesh = { buffer, vertices: data.length / STRIDE };
-        if (lineBuffer) g.deleteBuffer(lineBuffer.buffer);
-        const lineData = lineMesh(globe);
-        const lb = g.createBuffer();
-        g.bindBuffer(g.ARRAY_BUFFER, lb);
-        g.bufferData(g.ARRAY_BUFFER, lineData, g.STATIC_DRAW);
-        lineBuffer = { buffer: lb, vertices: lineData.length / LINE_STRIDE };
-        shown = globe.map;
-      }
+      if (shown !== globe.map || !mesh) load(globe);
+      if (!mesh) return;
       const glowHex = ATMOSPHERE_GLOW[globe.look.atmosphere ?? 0];
       const glow = glowHex ? rgbOf(glowHex) : ([0, 0, 0] as const);
       const W = view.width;
@@ -828,6 +963,25 @@ export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | 
         }
         g.drawArrays(g.TRIANGLES, 0, lineBuffer.vertices);
         for (const [loc] of lineAttribs) g.disableVertexAttribArray(loc);
+      }
+
+      if (picked !== undefined) {
+        g.enable(g.BLEND);
+        g.blendFunc(g.ONE, g.ONE_MINUS_SRC_ALPHA);
+        g.useProgram(outline);
+        const o = (name: string) => g.getUniformLocation(outline, name);
+        g.uniform3f(o('uE'), e[0], e[1], e[2]);
+        g.uniform3f(o('uN'), n[0], n[1], n[2]);
+        g.uniform3f(o('uF'), f[0], f[1], f[2]);
+        g.uniform2f(o('uScale'), (2 * R) / W, (2 * R) / H);
+        g.uniform1f(o('uPicked'), picked);
+        g.bindBuffer(g.ARRAY_BUFFER, mesh.buffer);
+        for (const [loc, size, offset] of outlineAttribs) {
+          g.enableVertexAttribArray(loc);
+          g.vertexAttribPointer(loc, size, g.FLOAT, false, STRIDE * 4, offset * 4);
+        }
+        g.drawArrays(g.TRIANGLES, 0, mesh.vertices);
+        for (const [loc] of outlineAttribs) g.disableVertexAttribArray(loc);
       }
     },
   };

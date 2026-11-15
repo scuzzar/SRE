@@ -11,6 +11,7 @@ import { HoldButton } from '../HoldButton';
 import { CloseIcon, DiceIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
 import { Form } from '../Form';
+import { withLoading } from '../loading';
 
 /** Wie lange das Ergebnis nach dem Landen braucht, bis es feststeht und die Knöpfe wieder gehen. */
 const SETTLE_MS = 350;
@@ -195,7 +196,7 @@ export function WorldCard({ world, onGlobe = false }: { world: WorldView; onGlob
             {extras}
           </div>
           {world.canGlobe && !onGlobe ? (
-            <button type="button" className="world-top-globe" aria-label={`Globus von ${world.name ?? world.id} öffnen`} onClick={() => game.openGlobe()}>
+            <button type="button" className="world-top-globe" aria-label={`Globus von ${world.name ?? world.id} öffnen`} onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobe())}>
               <WorldIcon look={world.look} className="world-top-icon" />
             </button>
           ) : (
@@ -247,7 +248,7 @@ export function SurfaceSection({ lines, globe }: { lines: readonly string[]; glo
         <h4 className="world-surface-head">
           Oberfläche
           {globe && (
-            <button type="button" className="ghost compact" onClick={() => game.openGlobe()}>
+            <button type="button" className="ghost compact" onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobe())}>
               {globe}
             </button>
           )}

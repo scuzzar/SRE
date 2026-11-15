@@ -2,13 +2,15 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { landformAt, type GlobeView, type LogItem, type WorldView } from '../../controller';
 import { roleText } from '../format';
 import { useGame } from '../game-context';
-import { CloseIcon, PencilIcon } from '../icons';
+import { CloseIcon, LocateIcon, PencilIcon } from '../icons';
 import { createGlobeRenderer, type GlobeRenderer } from './globe-gl';
+import { hideLoading, showLoading } from '../loading';
 import { cellAt, radiusOf, renderGlobe, screenOf, type Camera, type Viewport } from './globe-render';
 import { HappenedList } from './HappenedList';
 import { NoteSection, SurfaceSection, WorldCard } from './WorldSheet';
 
 const DEG = Math.PI / 180;
+const LOADING = 'Welt wird aufgebaut …';
 /** So lange wartet ein Tippen auf ein zweites (Doppeltippen zoomt statt zu wählen). */
 const DOUBLE_TAP_MS = 260;
 
@@ -53,6 +55,8 @@ export function GlobeScreen({
   const canvas = useRef<HTMLCanvasElement>(null);
   const base = useRef<HTMLCanvasElement>(null);
   const renderer = useRef<GlobeRenderer | null | undefined>(undefined);
+  const building = useRef(false);
+  const firstFrame = useRef(false);
   const stage = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<Viewport>({ width: 390, height: 700 });
   const [camera, setCamera] = useState<Camera>(() => {
@@ -78,14 +82,49 @@ export function GlobeScreen({
     return () => observer.disconnect();
   }, []);
 
+  // Verliert der Browser den Grafikkontext (etwa bei einer Systemgeste oder knappem Speicher), zeichnet
+  // sofort der Prozessor weiter; kommt der Kontext zurück, entsteht WebGL neu.
+  const [glEpoch, setGlEpoch] = useState(0);
+  useEffect(() => {
+    const under = base.current;
+    if (!under) return;
+    const lost = (e: Event) => {
+      e.preventDefault();
+      renderer.current = null;
+      setGlEpoch((n) => n + 1);
+    };
+    const restored = () => {
+      renderer.current = undefined;
+      setGlEpoch((n) => n + 1);
+    };
+    under.addEventListener('webglcontextlost', lost);
+    under.addEventListener('webglcontextrestored', restored);
+    return () => {
+      under.removeEventListener('webglcontextlost', lost);
+      under.removeEventListener('webglcontextrestored', restored);
+    };
+  }, []);
+
   // Zeichnen: die Kugel mit WebGL in voller Auflösung, auch beim Ziehen; darüber die Zeichen. Ohne
   // WebGL rechnet der Prozessor die Kugel, beim Bewegen dann in geringerer Auflösung.
   useEffect(() => {
     const el = canvas.current;
     const under = base.current;
     if (!el || !under) return;
-    if (renderer.current === undefined) renderer.current = createGlobeRenderer(under) ?? null;
-    const gl = renderer.current;
+    // Die Grafik entsteht in Schritten; solange zeigt der Ladebalken den Fortschritt.
+    if (renderer.current === undefined && !building.current) {
+      building.current = true;
+      showLoading(LOADING, 0.4, 'globe');
+      void createGlobeRenderer(under, globe, (done) => showLoading(LOADING, 0.4 + 0.6 * done, 'globe')).then((made) => {
+        renderer.current = made ?? null;
+        building.current = false;
+        // Der Balken geht erst nach dem ersten echten Bild (siehe unten).
+        firstFrame.current = true;
+        setGlEpoch((n) => n + 1);
+      });
+    }
+    if (building.current) return;
+    const gl = renderer.current ?? null;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const scale = gl || !moving ? dpr : Math.min(1, dpr) * 0.55;
     const w = Math.round(view.width * scale);
@@ -98,19 +137,24 @@ export function GlobeScreen({
     if (gl) {
       if (under.width !== w) under.width = w;
       if (under.height !== h) under.height = h;
-      gl.draw(globe, camera, { width: w, height: h }, showGrid);
+      gl.draw(globe, camera, { width: w, height: h }, showGrid, globe.picked?.cell);
     } else {
       const img = ctx.createImageData(w, h);
       renderGlobe(img, globe, camera, showGrid);
       ctx.putImageData(img, 0, 0);
     }
-    drawMarkers(ctx, globe, camera, { width: w, height: h }, scale);
-  }, [globe, camera, view, moving, showGrid]);
+    drawMarkers(ctx, globe, camera, { width: w, height: h }, scale, !gl);
+    if (firstFrame.current) {
+      firstFrame.current = false;
+      gl?.finish();
+      requestAnimationFrame(() => hideLoading('globe'));
+    }
+  }, [globe, camera, view, moving, showGrid, glEpoch]);
 
   // Drehen, Zoomen, Antippen.
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef<{ moved: number; pinch?: number; zoom?: number; double?: boolean; startY?: number }>({ moved: 0 });
-  const clampZoom = useCallback((z: number) => Math.min(maxZoom(globe), Math.max(1, z)), [globe]);
+  const clampZoom = useCallback((z: number) => (Number.isFinite(z) ? Math.min(maxZoom(globe), Math.max(1, z)) : 1), [globe]);
   const zoomBy = useCallback((factor: number) => setCamera((c) => ({ ...c, zoom: clampZoom(c.zoom * factor) })), [clampZoom]);
   // Die Knöpfe gleiten: Ziel merken und in wenigen Bildern hinzoomen, solange in grober Auflösung.
   const zoomTarget = useRef<number | undefined>(undefined);
@@ -160,15 +204,21 @@ export function GlobeScreen({
     const rect = e.currentTarget.getBoundingClientRect();
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   };
+  /** Zwei Finger: Kneifen beginnt beim jetzigen Abstand und Zoom (auch wenn ein dritter Finger gerade abhebt). */
+  const startPinch = () => {
+    const [a, b] = [...pointers.current.values()] as [{ x: number; y: number }, { x: number; y: number }];
+    gesture.current = { moved: 99, pinch: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), zoom: camera.zoom };
+  };
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     gesture.current = { moved: 0 };
-    if (pointers.current.size === 2) {
+    if (pointers.current.size >= 2) {
       cancelPendingTap();
       lastTap.current = undefined;
-      const [a, b] = [...pointers.current.values()] as [{ x: number; y: number }, { x: number; y: number }];
-      gesture.current = { moved: 99, pinch: Math.hypot(a.x - b.x, a.y - b.y), zoom: camera.zoom };
+      // Ab drei Fingern tut die Karte nichts (Systemgesten wie der Screenshot mit drei Fingern).
+      if (pointers.current.size === 2) startPinch();
+      else gesture.current = { moved: 99 };
       return;
     }
     const before = lastTap.current;
@@ -185,10 +235,18 @@ export function GlobeScreen({
     const dx = e.clientX - last.x;
     const dy = e.clientY - last.y;
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size > 2) return;
+    if (pointers.current.size === 2 && !gesture.current.pinch) startPinch();
     if (pointers.current.size === 2 && gesture.current.pinch) {
       const [a, b] = [...pointers.current.values()] as [{ x: number; y: number }, { x: number; y: number }];
       setMoving(true);
-      setCamera((c) => ({ ...c, zoom: clampZoom((gesture.current.zoom ?? 1) * (Math.hypot(a.x - b.x, a.y - b.y) / gesture.current.pinch!)) }));
+      // Sofort rechnen, nicht erst im Updater: Bis React ihn ausführt, kann die Geste schon zurückgesetzt sein.
+      const distance = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
+      const wanted = (gesture.current.zoom ?? camera.zoom) * (distance / gesture.current.pinch);
+      const zoom = clampZoom(wanted);
+      // Am Anschlag neu ansetzen: Wer weiter spreizt und dann zurückkneift, zoomt sofort wieder heraus.
+      if (zoom !== wanted) gesture.current = { ...gesture.current, pinch: distance, zoom };
+      setCamera((c) => ({ ...c, zoom }));
       return;
     }
     gesture.current.moved += Math.abs(dx) + Math.abs(dy);
@@ -198,7 +256,11 @@ export function GlobeScreen({
     if (gesture.current.double) {
       const start = gesture.current.zoom ?? camera.zoom;
       const travel = e.clientY - (gesture.current.startY ?? e.clientY);
-      setCamera((c) => ({ ...c, zoom: clampZoom(start * Math.exp(travel / 160)) }));
+      const wanted = start * Math.exp(travel / 160);
+      const zoom = clampZoom(wanted);
+      // Auch hier am Anschlag neu ansetzen, damit die Gegenrichtung sofort wirkt.
+      if (zoom !== wanted) gesture.current = { ...gesture.current, zoom, startY: e.clientY };
+      setCamera((c) => ({ ...c, zoom }));
       return;
     }
     const R = radiusOf(view, camera);
@@ -209,6 +271,9 @@ export function GlobeScreen({
     const double = gesture.current.double === true;
     pointers.current.delete(e.pointerId);
     if (pointers.current.size === 0) setMoving(false);
+    // Hebt ein Finger von mehreren ab, geht es mit den übrigen weiter, ohne Sprung und ohne Antippen.
+    if (pointers.current.size === 2) startPinch();
+    if (pointers.current.size === 1) gesture.current = { moved: 99 };
     if (!tap) return;
     setPanel(undefined);
     const point = pointAt(e);
@@ -240,6 +305,30 @@ export function GlobeScreen({
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
   }, [zoomBy]);
+
+  /** Wie im Navi: gleitet zur Gruppe zurück und zoomt so weit hinein, dass man die Umgebung sieht. */
+  const flyFrame = useRef(0);
+  const flyToParty = () => {
+    const cell = globe.partyCell;
+    if (cell === undefined) return;
+    cancelAnimationFrame(flyFrame.current);
+    const from = camera;
+    const lat = globe.grid.lat[cell]! * DEG;
+    const dLon = shortest(globe.grid.lon[cell]! * DEG - from.lon);
+    const zoom = Math.max(from.zoom, clampZoom(3));
+    const start = performance.now();
+    setMoving(true);
+    setPanel(undefined);
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / 450);
+      const e = 1 - (1 - t) ** 3;
+      setCamera({ lat: from.lat + (lat - from.lat) * e, lon: from.lon + dLon * e, zoom: from.zoom + (zoom - from.zoom) * e });
+      if (t < 1) flyFrame.current = requestAnimationFrame(step);
+      else setMoving(false);
+    };
+    flyFrame.current = requestAnimationFrame(step);
+  };
+  useEffect(() => () => cancelAnimationFrame(flyFrame.current), []);
 
   /** Dreht die Karte zu einem Feld, zoomt etwas hinein und tippt es an. */
   const flyTo = (cell: number) => {
@@ -386,12 +475,19 @@ export function GlobeScreen({
       </div>
 
       <div className="globe-zoom" hidden={panel === 'world'} style={sheetHeight > 0 ? { bottom: sheetHeight + 12 } : undefined}>
-        <button type="button" className="globe-round" aria-label="Hineinzoomen" onClick={() => glideZoom(1.6)}>
-          +
-        </button>
-        <button type="button" className="globe-round" aria-label="Herauszoomen" onClick={() => glideZoom(1 / 1.6)}>
-          −
-        </button>
+        {globe.partyCell !== undefined && (
+          <button type="button" className="globe-round globe-locate" aria-label="Zur Gruppe" title="Zur Gruppe" onClick={flyToParty}>
+            <LocateIcon />
+          </button>
+        )}
+        <div className="globe-zoom-buttons">
+          <button type="button" className="globe-round" aria-label="Hineinzoomen" onClick={() => glideZoom(1.6)}>
+            +
+          </button>
+          <button type="button" className="globe-round" aria-label="Herauszoomen" onClick={() => glideZoom(1 / 1.6)}>
+            −
+          </button>
+        </div>
       </div>
 
       <section ref={sheet} className={picked ? 'globe-sheet open' : 'globe-sheet'} aria-label="Angetipptes Feld" aria-hidden={!picked}>
@@ -493,9 +589,9 @@ export function GlobeScreen({
 
 /**
  * Zeichen auf dem Globus: Kleinstädte außerhalb des besiedelten Gebiets, Städte, Vulkane, Ereignisse, NSC, die Gruppe, das angetippte
- * Feld als Ring. Flüsse und Straßen zeichnet die Grafikkarte (globe-gl.ts), ohne WebGL stehen sie in der Textur.
+ * Feld als Ring (nur ohne WebGL). Flüsse und Straßen zeichnet die Grafikkarte (globe-gl.ts), ohne WebGL stehen sie in der Textur.
  */
-function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Camera, view: Viewport, scale: number): void {
+function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Camera, view: Viewport, scale: number, ring: boolean): void {
   const at = (cell: number) => screenOf(globe, camera, view, cell);
   // Kleinstädte außerhalb des besiedelten Gebiets: ein kleines helles Haus, sobald man etwas
   // hineinzoomt. Im besiedelten Gebiet zeigt schon die Farbe, dass dort Menschen leben.
@@ -588,8 +684,9 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
   for (const n of globe.npcs) if (n.cell !== undefined) npcCells.set(n.cell, (npcCells.get(n.cell) ?? 0) + 1);
   for (const [cell, count] of npcCells) badge(cell, -8, -8, 'rgba(190,150,255,0.95)', count > 1 ? String(count) : 'N');
   if (globe.partyCell !== undefined) badge(globe.partyCell, 0, 10, 'rgba(110,200,255,1)', 'G');
+  // Ohne WebGL ein Ring um das angetippte Feld; mit WebGL rahmt die Grafikkarte das Feld ein.
   const picked = globe.picked?.cell;
-  if (picked !== undefined) {
+  if (ring && picked !== undefined) {
     const p = at(picked);
     if (p) {
       ctx.beginPath();

@@ -3,6 +3,7 @@ import type { HexView, SelectedHexView, Snapshot } from '../../controller';
 import { useGame } from '../game-context';
 import { animated } from '../haptics';
 import { HoldButton } from '../HoldButton';
+import { withLoading } from '../loading';
 import { CloseIcon, DiceIcon } from '../icons';
 import { RollStage } from './WorldSheet';
 import { worldImageUrl } from './world-icon';
@@ -86,7 +87,7 @@ function WorldSymbol({ hex, x, y, size }: { hex: HexView; x: number; y: number; 
   return <image className="hex-icon" href={worldImageUrl(hex.look, ICON_PX)} x={x - size / 2} y={y - size / 2} width={size} height={size} />;
 }
 
-function HexCell({ hex, selected, disabled, detail, here = false }: { hex: HexView; selected: boolean; disabled: boolean; detail: Detail; here?: boolean }) {
+function HexCell({ hex, selected, disabled, detail, here = false, opensGlobe = false }: { hex: HexView; selected: boolean; disabled: boolean; detail: Detail; here?: boolean; opensGlobe?: boolean }) {
   const game = useGame();
   const { x, y: middle } = center(hex.column, hex.row);
   // Mit UWP rückt alles ein Stück nach oben, damit darunter Platz ist.
@@ -94,7 +95,10 @@ function HexCell({ hex, selected, disabled, detail, here = false }: { hex: HexVi
   const y = detailed ? middle - 9 : middle;
   const shown = hex.state === 'world' || hex.state === 'pending';
   const choose = () => {
-    if (!disabled) game.chooseHex(hex.column, hex.row);
+    if (disabled) return;
+    // Eine fertige Welt öffnet ihren Globus; der braucht einen Moment, also erst der Ladebalken.
+    if (opensGlobe && hex.state === 'world') withLoading('Welt wird aufgebaut …', () => game.chooseHex(hex.column, hex.row));
+    else game.chooseHex(hex.column, hex.row);
   };
   return (
     <g
@@ -383,7 +387,7 @@ export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; 
           {(pixelsPerUnit) => (
             <svg className="sector-map" viewBox={`0 0 ${WIDTH.toFixed(1)} ${HEIGHT.toFixed(1)}`} role="group" aria-label="Karte des Subsektors">
               {sector.map((hex) => (
-                <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} detail={detailAt(pixelsPerUnit)} here={hex.id === view.location} />
+                <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} detail={detailAt(pixelsPerUnit)} here={hex.id === view.location} opensGlobe={!view.picking} />
               ))}
             </svg>
           )}
@@ -399,7 +403,7 @@ export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; 
             <ul className="world-list">
               {view.worlds.map((w) => (
                 <li key={w.id}>
-                  <button type="button" onClick={() => game.chooseHex(w.column, w.row)}>
+                  <button type="button" onClick={() => (view.picking ? game.chooseHex(w.column, w.row) : withLoading('Welt wird aufgebaut …', () => game.chooseHex(w.column, w.row)))}>
                     <span className="world-list-name">{w.name}</span>
                     <span className="mono world-list-hex">{w.id}</span>
                     <span className="mono world-list-uwp">{w.uwp}</span>
