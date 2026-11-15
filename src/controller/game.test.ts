@@ -1797,8 +1797,13 @@ describe('Globus (Oberflächenkarte)', () => {
 
   it('ist die Grundkarte: beim Start der Globus des Aufenthaltsorts, sobald seine Karte entstanden ist; ein Reiter lässt das Feld los', async () => {
     const { game, repository } = await started();
-    // Die Demo-Welt hat noch keine Karte: Die Grundkarte ist der Subsektor.
+    // Die Demo-Welt hat noch keine Karte: Die Grundkarte ist der Subsektor. Ein Reiter lässt ein
+    // gewähltes Feld dort los.
     expect(game.snapshot().globe).toBeUndefined();
+    game.chooseHex(1, 1);
+    expect(game.snapshot().selected?.id).toBe('0101');
+    game.showScreen('encounter');
+    expect(game.snapshot().selected).toBeUndefined();
     game.openGlobeAt(4, 5);
     game.pickCell(0);
     game.showScreen('shop');

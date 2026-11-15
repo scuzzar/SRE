@@ -74,37 +74,47 @@ test('Eine Probe aus dem Charakter oben im Log lässt sich in jedem Bereich wür
   await expect(panel(page).locator('.entry').last()).toContainText('Kira Vant · Pilot-2');
 });
 
-test('Die Sektor-Karte lässt sich mit dem Mausrad zoomen und mit der Maus verschieben', async ({ page }, testInfo) => {
+test('Die Sektor-Karte lässt sich mit dem Mausrad zoomen und mit der Maus verschieben, ohne Bildlaufleisten', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
   const map = page.locator('.sector-viewport');
-  const before = await map.evaluate((el) => el.scrollWidth);
+  const svg = page.getByRole('group', { name: 'Karte des Subsektors' });
+  const box = async () => (await svg.getAttribute('viewBox'))!.split(' ').map(Number);
+  const before = await box();
   await map.hover();
   await page.mouse.wheel(0, -240);
-  await expect.poll(() => map.evaluate((el) => el.scrollWidth)).toBeGreaterThan(before);
+  await expect.poll(async () => (await box())[2]!).toBeLessThan(before[2]!);
   // Verschieben: Maustaste halten und ziehen; dabei darf kein Feld ausgewählt werden.
-  const leftBefore = await map.evaluate((el) => el.scrollLeft);
-  const box = (await map.boundingBox())!;
-  await page.mouse.move(box.x + 100, box.y + 100);
+  const zoomed = await box();
+  const r = (await map.boundingBox())!;
+  await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2);
   await page.mouse.down();
-  await page.mouse.move(box.x + 40, box.y + 80, { steps: 5 });
+  await page.mouse.move(r.x + r.width / 2 - 40, r.y + r.height / 2 - 120, { steps: 5 });
   await page.mouse.up();
-  await expect.poll(() => map.evaluate((el) => el.scrollLeft)).toBeGreaterThan(leftBefore);
+  await expect.poll(async () => (await box())[1]!).toBeGreaterThan(zoomed[1]!);
   await expect(page.locator('.hex-selected')).toHaveCount(0);
+  expect(await map.evaluate((el) => [el.scrollWidth - el.clientWidth, el.scrollHeight - el.clientHeight])).toEqual([0, 0]);
   // Die Auswahl funktioniert weiterhin, auch direkt nach dem Verschieben.
-  await map.getByRole('button', { name: '0101, nicht erzeugt' }).click();
-  await expect(page.locator('.sector-dock')).toContainText('Feld 0101');
+  const kessra = page.getByRole('button', { name: '0405, Kessra: Weltkarte öffnen' });
+  await expect(kessra).toBeVisible();
+  await page.getByRole('button', { name: '0406, nicht erzeugt' }).click();
+  await expect(page.locator('.sector-dock')).toContainText('Feld 0406');
 });
 
-test('Die Sektor-Karte passt ganz in die Grundkarte, auch mit dem Dock des gewählten Feldes', async ({ page }, testInfo) => {
+test('Die Sektor-Karte füllt die Grundkarte und passt ganz hinein; das gewählte Feld schwebt darüber', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
   const viewport = page.viewportSize()!;
-  const map = (await page.locator('.sector-viewport').boundingBox())!;
-  expect(map.y + map.height).toBeLessThanOrEqual(viewport.height);
-  await page.locator('.sector-viewport').getByRole('button', { name: '0110, nicht erzeugt' }).click();
-  const dock = (await page.locator('.sector-dock').boundingBox())!;
-  // Die Karte rückt dafür zusammen.
-  const smaller = (await page.locator('.sector-viewport').boundingBox())!;
-  expect(smaller.y + smaller.height).toBeLessThanOrEqual(dock.y);
+  const base = (await page.locator('.base').boundingBox())!;
+  const map = (await page.getByRole('group', { name: 'Karte des Subsektors' }).boundingBox())!;
+  // Die Fläche der Karte reicht über die ganze Breite und fast die ganze Höhe der Grundkarte.
+  expect(map.width).toBeGreaterThan(base.width - 20);
+  expect(map.height).toBeGreaterThan(base.height - 80);
+  expect(await page.locator('.base .sector').evaluate((el) => el.scrollHeight - el.clientHeight)).toBe(0);
+  // Die unterste Reihe ist zu sehen, auch mit dem gewählten Feld darüber.
+  const corner = page.getByRole('button', { name: '0110, nicht erzeugt' });
+  expect(((await corner.boundingBox())!.y + (await corner.boundingBox())!.height)).toBeLessThanOrEqual(viewport.height);
+  await page.getByRole('button', { name: '0310, nicht erzeugt' }).click();
+  await expect(page.locator('.sector-dock')).toContainText('Feld 0310');
+  expect((await page.getByRole('group', { name: 'Karte des Subsektors' }).boundingBox())!.height).toBe(map.height);
 });
 
 test('Kampf und Shop zeigen ihre SC selbst; ein Klick auf eine Karte holt sie nach oben', async ({ page }, testInfo) => {

@@ -49,6 +49,8 @@ export function App() {
   // Ob der Hinweis „OneDrive hat dich abgemeldet“ weggeklickt ist; reine Darstellung, beim nächsten
   // Start kommt er wieder, solange die Anmeldung fehlt.
   const [syncHintClosed, setSyncHintClosed] = useState(false);
+  // Der Platz im Ziehblatt bzw. Panel, in den der Subsektor sein gewähltes Feld zeichnet.
+  const [fieldSlot, setFieldSlot] = useState<HTMLDivElement | null>(null);
   // Die Reiter; im Desktop-Modus ohne Log, das links fest steht.
   const shown = desktop ? areas.filter((a) => a.id !== 'oracle') : areas;
   // Esc schließt das oberste Popup; die Ziffern wählen den Reiter an dieser Stelle.
@@ -61,8 +63,10 @@ export function App() {
   // Den Sektor gibt es nicht mehr als Reiter: Er ist die Grundkarte ohne Globus. Wer dort noch steht,
   // sieht das Log.
   const screen: Screen = view.screen === 'sector' ? 'oracle' : view.screen;
-  // Ein angetipptes Feld des Globus steht an der Stelle des Bereichs.
-  const field = view.globe?.picked ? <FieldCard globe={view.globe} error={view.world?.error} log={view.log} logDays={view.logDays} /> : undefined;
+  // Ein angetipptes Feld des Globus steht an der Stelle des Bereichs, ebenso ein gewähltes Feld des
+  // Subsektors (das zeichnet der Subsektor selbst in den Platz, den `.field-slot` freihält).
+  const globeField = view.globe?.picked ? <FieldCard globe={view.globe} error={view.world?.error} log={view.log} logDays={view.logDays} /> : undefined;
+  const field = globeField ?? (!view.globe && view.selected ? <div ref={setFieldSlot} className="field-slot" /> : undefined);
   const area = (
     <>
       {screen === 'encounter' && <EncounterScreen view={view} />}
@@ -122,7 +126,7 @@ export function App() {
   // Die Reihe Notiz, Deuten, Würfeln, Karte: im Log-Panel des Desktops immer, im Ziehblatt nur im Log
   // und beim angetippten Feld; die übrigen Reiter haben unten Platz für ihre eigenen Knöpfe.
   const dock = <OracleDock view={view} shortcuts />;
-  const dice = field !== undefined || screen === 'oracle';
+  const dice = globeField !== undefined || (screen === 'oracle' && field === undefined);
 
   // Die Grundkarte: der Globus der offenen Welt, sonst der Subsektor. Oben rechts das Menü.
   const base = (
@@ -131,7 +135,7 @@ export function App() {
         <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} world={view.world} here={view.location === view.globe.id} travel={view.travel} log={view.log} logDays={view.logDays} />
       ) : (
         <div className="base-sector">
-          <SectorScreen view={view} />
+          <SectorScreen view={view} fill dockTo={fieldSlot} />
         </div>
       )}
       <header className="map-menu">
@@ -174,6 +178,7 @@ export function App() {
           {base}
           <Tray
             fraction={view.trayHeight}
+            raise={view.globe?.picked?.cell ?? view.selected?.id}
             head={banners}
             body={<div className="screen-host">{field ?? (screen === 'oracle' ? <OracleScreen view={view} dock={false} /> : area)}</div>}
             foot={dice && dock}

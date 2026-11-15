@@ -916,10 +916,11 @@ export class GameController {
   // --- Charakter oben und Proben ---------------------------------------------------------------
 
   showScreen(screen: Screen): void {
-    // Ein angetipptes Feld des Globus steht an der Stelle des Bereichs; ein Reiter lässt es los.
-    const globe = this.state.globe && { picked: undefined };
+    // Ein angetipptes Feld des Globus oder ein gewähltes Feld des Subsektors steht an der Stelle des
+    // Bereichs; ein Reiter lässt es los.
+    const released = { globe: this.state.globe && { picked: undefined }, selected: undefined, worldError: this.state.globe ? this.state.worldError : undefined };
     // Der Reiter NSC zeigt beim Öffnen wieder nur die NSC des Aufenthaltsorts.
-    this.update(screen === 'npcs' && this.state.screen !== 'npcs' ? { screen, npcAll: false, globe } : { screen, globe });
+    this.update(screen === 'npcs' && this.state.screen !== 'npcs' ? { screen, npcAll: false, ...released } : { screen, ...released });
   }
 
   /** Nimmt einen dauerhaften NSC zur nächsten Zufallsbegegnung dazu oder wieder heraus (2026-11-14g); nur Anzeige. */
