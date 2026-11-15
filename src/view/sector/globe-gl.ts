@@ -79,96 +79,214 @@ varying float vKind;
 varying vec3 vPos;
 varying vec3 vView;
 
+// Ein Bildpunkt in Mustereinheiten; jede Oktave, die feiner als ein Bildpunkt wäre, blendet aus.
+float PX;
+
 float hash(vec3 p) {
   p = fract(p * 0.3183099 + 0.1);
   p *= 17.0;
   return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
 }
+vec3 hash3(vec3 p) {
+  return vec3(hash(p), hash(p + 19.19), hash(p + 47.37));
+}
 float noise(vec3 x) {
   vec3 i = floor(x);
   vec3 f = fract(x);
-  f = f * f * (3.0 - 2.0 * f);
+  f = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
   return mix(mix(mix(hash(i), hash(i + vec3(1.0, 0.0, 0.0)), f.x), mix(hash(i + vec3(0.0, 1.0, 0.0)), hash(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
              mix(mix(hash(i + vec3(0.0, 0.0, 1.0)), hash(i + vec3(1.0, 0.0, 1.0)), f.x), mix(hash(i + vec3(0.0, 1.0, 1.0)), hash(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z);
 }
-float fbm(vec3 p) {
-  return (0.5 * noise(p) + 0.25 * noise(p * 2.03 + 7.1) + 0.125 * noise(p * 4.01 + 3.7)) / 0.875;
+// Jede Oktave gedreht, damit keine Achsen im Muster sichtbar werden.
+const mat3 ROT = mat3(0.00, 0.80, 0.60, -0.80, 0.36, -0.48, -0.60, -0.48, 0.64);
+float fade(float px) {
+  return 1.0 - smoothstep(0.25, 0.6, px);
 }
-// Ein dünner Strich, wo v die Null kreuzt, w Pixel breit.
-float stroke(float v, float w) {
-  float fw = fwidth(v);
-  return 1.0 - smoothstep(fw * w * 0.5, fw * (w * 0.5 + 1.0), abs(v));
+// Fraktales Rauschen, dessen feine Oktaven erst beim Hineinzoomen dazukommen.
+float fbm(vec3 p, int octaves) {
+  float sum = 0.0;
+  float amp = 0.5;
+  float norm = 0.0;
+  float px = PX;
+  for (int i = 0; i < 8; i++) {
+    if (i >= octaves) break;
+    sum += amp * mix(0.5, noise(p), fade(px));
+    norm += amp;
+    p = ROT * p * 2.03 + 1.7;
+    px *= 2.03;
+    amp *= 0.5;
+  }
+  return sum / norm;
+}
+// Grate: jede Oktave scharf geknickt und vom Grat darüber gewichtet.
+float ridged(vec3 p, int octaves) {
+  float sum = 0.0;
+  float amp = 0.5;
+  float norm = 0.0;
+  float weight = 1.0;
+  float px = PX;
+  for (int i = 0; i < 8; i++) {
+    if (i >= octaves) break;
+    float r = 1.0 - abs(2.0 * noise(p) - 1.0);
+    r = r * r * weight;
+    weight = clamp(r * 1.6, 0.0, 1.0);
+    sum += amp * mix(0.35, r, fade(px));
+    norm += amp;
+    p = ROT * p * 2.07 + 3.1;
+    px *= 2.07;
+    amp *= 0.5;
+  }
+  return sum / norm;
+}
+// Zellen: Abstand zum nächsten und zweitnächsten Punkt, dazu eine Kennung der Zelle.
+vec3 cells(vec3 p) {
+  vec3 i = floor(p);
+  vec3 f = fract(p);
+  float d1 = 8.0;
+  float d2 = 8.0;
+  float id = 0.0;
+  for (int x = -1; x <= 1; x++) {
+    for (int y = -1; y <= 1; y++) {
+      for (int z = -1; z <= 1; z++) {
+        vec3 o = vec3(float(x), float(y), float(z));
+        vec3 h = hash3(i + o);
+        vec3 r = o + h - f;
+        float d = dot(r, r);
+        if (d < d1) {
+          d2 = d1;
+          d1 = d;
+          id = h.x;
+        } else if (d < d2) {
+          d2 = d;
+        }
+      }
+    }
+  }
+  return vec3(sqrt(d1), sqrt(d2), id);
+}
+// Licht und Schatten aus einer Höhe: Hänge zum Licht (links oben) hell, abgewandte dunkel.
+float relief(float h, float strength) {
+  vec2 g = vec2(dFdx(h), dFdy(h)) / max(PX, 1e-5);
+  return clamp(1.0 + dot(g, vec2(0.55, -0.5)) * strength, 0.55, 1.45);
+}
+// Weiche Grenze, die nie feiner als ein Bildpunkt wird.
+float soft(float edge, float v, float width) {
+  float w = max(width, fwidth(v));
+  return smoothstep(edge - w, edge + w, v);
 }
 
 void main() {
   if (vView.z < 0.0) discard;
   vec3 normal = normalize(vView);
-  // Musterraum: etwa drei Einheiten je Feld; px ist ein Bildpunkt in diesen Einheiten.
+  // Musterraum: etwa drei Einheiten je Feld.
   vec3 q = normalize(vPos) * uK;
-  float px = length(fwidth(q));
-  float coarse = 1.0 - smoothstep(0.12, 0.5, px);
-  float fine = 1.0 - smoothstep(0.03, 0.15, px);
+  PX = length(fwidth(q));
+  float near = 1.0 - smoothstep(0.08, 0.3, PX);
   int k = int(vKind + 0.5);
   vec3 col = vCol;
-  float n1 = fbm(q * 0.8);
+  // Großräumige Schwankung über alle Felder, damit kein Feld einfarbig ist.
+  float large = fbm(q * 0.22 + 11.0, 5);
+  // Verzerrte Koordinaten für organische Formen.
+  vec3 w = q + 1.6 * vec3(fbm(q * 0.35, 4), fbm(q * 0.35 + 5.2, 4), fbm(q * 0.35 + 9.7, 4));
+
   if (k == 0) {
-    // Wasser: weiche Schlieren, Schaumkronen nur ganz nah.
-    col *= 0.93 + 0.14 * n1 * coarse;
-    col = mix(col, col * 1.35, smoothstep(0.78, 0.86, noise(q * vec3(5.0, 5.0, 2.0))) * fine * 0.35);
+    // Wasser: Strömungsschlieren, aus der Nähe kräuselnde Wellen mit Glanz.
+    float current = fbm(w * 0.6, 6);
+    col *= 0.86 + 0.28 * current;
+    float waves = fbm(q * vec3(6.0, 6.0, 3.0) + current * 4.0, 4);
+    col *= relief(waves * 0.06, 1.0);
+    col = mix(col, col * 1.4 + 0.04, soft(0.74, waves, 0.02) * near * 0.3);
   } else if (k == 1 || k == 2) {
-    // Eis: Schollen mit feinen Rissen.
-    col *= 0.95 + 0.08 * n1 * coarse;
-    col = mix(col, col * 0.78, stroke(noise(q * 1.6) - 0.5, 1.0) * coarse * 0.8);
+    // Eis: Schollen mit Rissen, jede etwas anders getönt, mit Pressrücken.
+    vec3 c = cells(w * 0.9);
+    float crack = 1.0 - soft(0.05, c.y - c.x, 0.01);
+    float h = fbm(q * 1.5, 6) * 0.6 + (c.y - c.x) * 0.4;
+    col *= (0.93 + 0.1 * c.z) * relief(h * 0.25, 1.0);
+    col = mix(col, col * vec3(0.7, 0.78, 0.88), crack * 0.75);
   } else if (k == 3) {
-    // Tundra: Flechten und Moos in Flecken.
-    col = mix(col, col * vec3(0.92, 0.95, 0.78), smoothstep(0.5, 0.7, noise(q * 2.5)) * coarse);
-    col *= 0.9 + 0.18 * noise(q * 9.0) * fine;
+    // Tundra: Frostmusterboden aus Vielecken, Flechten und Moos dazwischen.
+    vec3 c = cells(q * 1.8);
+    float border = 1.0 - soft(0.06, c.y - c.x, 0.01);
+    float lichen = soft(0.55, fbm(w * 1.6, 6), 0.05);
+    col = mix(col, col * vec3(0.95, 0.98, 0.75), lichen * 0.6);
+    col = mix(col, col * 0.75, border * 0.5);
+    col *= 0.9 + 0.2 * fbm(q * 4.0, 5);
   } else if (k == 4) {
-    // Gebirge: Grate heller, Täler dunkler, auf den höchsten Graten ein Hauch Schnee.
-    float ridge = 1.0 - abs(2.0 * fbm(q * 0.9) - 1.0);
-    col *= 0.86 + 0.28 * mix(0.5, ridge, coarse);
-    col = mix(col, vec3(0.86, 0.87, 0.9), smoothstep(0.93, 0.99, ridge) * coarse * 0.5);
+    // Gebirge: verzweigte Grate mit Licht und Schatten, Geröll in den Tälern, Schnee auf den Gipfeln.
+    float h = ridged(w * 0.55, 7);
+    col = mix(col * 0.78, col * 1.18, h);
+    col *= relief(h * 0.9, 1.2);
+    col = mix(col, vec3(0.88, 0.89, 0.93) * relief(h * 0.9, 0.6), soft(0.74, h + 0.15 * fbm(q * 3.0, 4), 0.05) * 0.65);
   } else if (k == 5) {
-    // Zerklüftet: Felsbrocken und Schatten.
-    float rock = fbm(q * 1.7);
-    col *= 0.8 + 0.4 * rock * coarse + 0.2 * (1.0 - coarse);
-    col *= 0.92 + 0.16 * noise(q * 8.0) * fine;
+    // Zerklüftet: Kuppen und Schluchten, Felsbrocken aus der Nähe.
+    float h = fbm(w * 0.9, 7) * 0.7 + ridged(q * 1.4, 5) * 0.3;
+    col = mix(col * 0.82, col * 1.15, h);
+    col *= relief(h * 0.7, 1.0);
+    vec3 c = cells(q * 6.0);
+    col *= mix(1.0, 0.85 + 0.25 * soft(0.35, c.x, 0.05), near);
   } else if (k == 6) {
-    // Wüste: geschwungene Dünen.
-    float dune = sin((q.x * 0.8 + q.y * 0.5 + q.z * 0.3 + n1 * 5.0) * 3.0);
-    col *= 1.0 + 0.09 * dune * coarse;
-    col *= 0.95 + 0.1 * noise(q * 10.0) * fine;
+    // Wüste: Dünenkämme mit Lee und Luv, darauf feine Rippeln.
+    float t = dot(w, vec3(0.8, 0.5, 0.33)) * 1.4 + fbm(q * 0.6, 4) * 2.5;
+    float dune = abs(fract(t) - 0.35);
+    float h = 1.0 - smoothstep(0.0, 0.65, dune);
+    float ripple = sin(t * 26.0 + fbm(q * 3.0, 3) * 6.0) * 0.5 + 0.5;
+    col = mix(col * 0.9, col * 1.1, fbm(w * 0.4, 5));
+    // Die Kämme erst mit Licht und Schatten, wenn sie breit genug sind, sonst flimmern sie als Streifen.
+    float crest = 1.0 - smoothstep(0.04, 0.12, PX);
+    col *= mix(1.0 + 0.06 * (h - 0.5), relief(h * 0.25 + ripple * 0.01 * near, 1.0), crest);
   } else if (k == 7 || k == 9) {
-    // Dschungel und Wald: Baumkronen, im Dschungel dicht, im offenen Land mit Lichtungen.
-    float trees = smoothstep(0.42, 0.62, noise(q * 4.0)) * (k == 7 ? 1.0 : smoothstep(0.4, 0.6, n1));
-    col = mix(col * (k == 7 ? 1.0 : 1.12), col * 0.62, trees * fine * (k == 7 ? 0.9 : 0.7) + (k == 7 ? 0.25 : 0.1) * (1.0 - fine));
-    col *= 0.94 + 0.12 * n1 * coarse;
+    // Wald und Dschungel: runde Baumkronen mit Schatten; im Wald Lichtungen und Wiesen dazwischen.
+    bool jungle = k == 7;
+    float density = jungle ? 0.85 + 0.15 * large : smoothstep(0.38, 0.62, fbm(w * 0.5, 6));
+    vec3 c = cells(q * (jungle ? 5.0 : 4.0));
+    float crown = 1.0 - smoothstep(0.0, 0.75, c.x);
+    float tree = step(c.z, density);
+    vec3 meadow = col * vec3(1.2, 1.18, 0.95) * (0.9 + 0.2 * fbm(q * 3.0, 5));
+    vec3 canopy = col * (0.75 + 0.35 * crown) * (0.88 + 0.24 * c.z);
+    canopy *= relief(crown * 0.12, 1.0);
+    vec3 farAway = mix(meadow, col * 0.85, density);
+    col = mix(farAway, mix(meadow * 0.8, canopy, tree), near);
+    col *= 0.92 + 0.16 * large;
   } else if (k == 8) {
-    // Sumpf: grün mit dunklen Wasserlöchern.
-    float pool = smoothstep(0.56, 0.62, fbm(q * 1.4));
-    col = mix(col, vec3(0.1, 0.19, 0.2), pool * coarse * 0.8);
-    col *= 0.92 + 0.16 * noise(q * 7.0) * fine;
+    // Sumpf: verzweigte Wasserläufe und Tümpel, Schilf an den Ufern.
+    float m = fbm(w * 1.1, 7);
+    float pool = soft(0.56, m, 0.01);
+    float shore = soft(0.5, m, 0.02) - pool;
+    col *= 0.85 + 0.3 * fbm(q * 3.5, 5);
+    col = mix(col, col * vec3(0.8, 0.95, 0.6), shore * 0.6);
+    col = mix(col, vec3(0.08, 0.17, 0.19) * (0.9 + 0.3 * fbm(q * 2.0, 3)), pool * 0.85);
   } else if (k == 10) {
-    // Besiedelt: Kulturland in Feldern verschiedener Tönung.
-    vec3 g = q * 1.3 + 0.3 * vec3(noise(q * 0.7), noise(q * 0.7 + 5.0), noise(q * 0.7 + 9.0));
-    float tint = hash(floor(g));
-    col *= 0.95 + 0.1 * mix(0.5, tint, coarse);
+    // Besiedelt: Felder als Flickenteppich in Grün, Gelb und Braun, Hecken an den Rändern, Furchen darin.
+    vec3 c = cells(q * 1.1 + 0.5 * vec3(fbm(q * 0.5, 3)));
+    vec3 tone = c.z < 0.35 ? vec3(1.0, 1.02, 0.9) : c.z < 0.65 ? vec3(1.12, 1.06, 0.82) : c.z < 0.85 ? vec3(0.9, 0.98, 0.86) : vec3(1.02, 0.92, 0.78);
+    col = mix(col, col * tone, 0.4 + 0.6 * near);
+    float furrow = sin(dot(q, normalize(hash3(vec3(c.z * 91.0)) - 0.5)) * 40.0) * 0.5 + 0.5;
+    col *= 1.0 - 0.05 * furrow * near;
+    col = mix(col, col * 0.72, (1.0 - soft(0.03, c.y - c.x, 0.006)) * 0.55 * near);
+    col *= 0.94 + 0.12 * large;
   } else if (k == 11) {
-    // Stadt: Häuserblöcke.
-    vec3 g = q * 2.5;
-    col *= 0.85 + 0.3 * hash(floor(g)) * fine + 0.15 * (1.0 - fine);
+    // Stadt: Viertel und Blöcke mit Straßen, Dächer verschieden hell, ab und zu ein Park.
+    vec3 g = w * 2.2;
+    vec3 cell = floor(g);
+    float roof = hash(cell);
     vec3 e = 0.5 - abs(fract(g) - 0.5);
-    col = mix(col, col * 0.6, (1.0 - smoothstep(0.0, 0.08, min(min(e.x, e.y), e.z))) * fine * 0.7);
+    float street = 1.0 - soft(0.07, min(min(e.x, e.y), e.z), 0.01);
+    col *= 0.8 + 0.35 * mix(0.5, roof, near);
+    if (roof > 0.9) col = mix(col, vec3(0.3, 0.45, 0.25), near * 0.8);
+    col = mix(col, col * 0.55, street * near * 0.8);
   } else {
-    // Offen ohne Leben: Geröll und Staub.
-    col *= 0.86 + 0.24 * n1 * coarse + 0.12 * (1.0 - coarse);
-    col *= 0.93 + 0.14 * noise(q * 9.0) * fine;
+    // Ödes Land: Staub, Geröll und kleine Krater.
+    float h = fbm(w * 0.8, 7);
+    col = mix(col * 0.85, col * 1.12, h);
+    vec3 c = cells(q * 2.5);
+    float crater = smoothstep(0.25, 0.18, c.x) * step(0.8, c.z);
+    col *= relief(h * 0.4 - crater * 0.05, 1.0);
   }
   col *= 0.45 + 0.6 * clamp(dot(normal, uLight), 0.0, 1.0);
   if (uHalo > 0.0) col = mix(col, uGlow, pow(1.0 - normal.z, 2.6) * 0.75);
   if (uGrid > 0.5) {
-    float w = fwidth(vEdge);
-    col = mix(col, col * 0.35, (1.0 - smoothstep(0.0, w * 1.1, vEdge)) * 0.85);
+    float ew = fwidth(vEdge);
+    col = mix(col, col * 0.35, (1.0 - smoothstep(0.0, ew * 1.1, vEdge)) * 0.85);
   }
   gl_FragColor = vec4(col, 1.0);
 }
@@ -190,7 +308,11 @@ function compile(gl: WebGLRenderingContext, vs: string, fs: string): WebGLProgra
     if (!shader) return undefined;
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return undefined;
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      // Geht ein Shader nicht, zeichnet der Prozessor; der Grund steht in der Konsole.
+      console.warn('Globus-Shader:', gl.getShaderInfoLog(shader));
+      return undefined;
+    }
     gl.attachShader(program, shader);
   }
   gl.linkProgram(program);

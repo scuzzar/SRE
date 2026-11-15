@@ -86,7 +86,7 @@ export function GlobeScreen({
     if (!el || !under) return;
     if (renderer.current === undefined) renderer.current = createGlobeRenderer(under) ?? null;
     const gl = renderer.current;
-    const dpr = Math.min(gl ? 3 : 2, window.devicePixelRatio || 1);
+    const dpr = Math.min(gl ? 2.5 : 2, window.devicePixelRatio || 1);
     const scale = gl || !moving ? dpr : Math.min(1, dpr) * 0.55;
     const w = Math.round(view.width * scale);
     const h = Math.round(view.height * scale);
