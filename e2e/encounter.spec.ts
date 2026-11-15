@@ -173,7 +173,11 @@ test('Patron und Gerücht: unten würfeln, das Würfelfenster zeigt Test und Erg
     await expect(roll).toContainText(/\(5\+ nötig\)/);
   }
   await expect(found).toContainText(/Liste [12] · \d und \d.* → \d\d/);
-  await roll.getByRole('button', { name: 'Weiter' }).click();
+  // Beim Patron stehen „Abbrechen“ und „Als NSC“; „Als NSC“ legt ihn an und schließt das Fenster.
+  await expect(roll.getByRole('button', { name: 'Weiter' })).toHaveCount(0);
+  await expect(roll.getByRole('button', { name: 'Abbrechen' })).toBeVisible();
+  await roll.getByRole('button', { name: 'Als NSC' }).click();
+  await expect(roll).toBeHidden();
   // Gerücht: Test 7+ auf 2W6, dann die Art nach der Rumors Matrix.
   const rumor = page.getByRole('dialog', { name: 'Gerücht' });
   for (let i = 0; i < 60 && !(await rumor.locator('.patron-last').isVisible()); i++) {

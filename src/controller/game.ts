@@ -1005,10 +1005,12 @@ export class GameController {
     try {
       const { campaign, id } = createPatronNpc(this.campaign, index, this.deps.random);
       const npc = campaign.characters.find((c) => c.id === id)!;
-      this.change(campaign, { patronNote: `${npc.name} (${npc.background}) steht jetzt im Reiter NSC.` });
+      // Aus dem Würfelfenster heraus schließt es sich danach.
+      this.change(campaign, { patronNote: `${npc.name} (${npc.background}) steht jetzt im Reiter NSC.`, encounterRoll: undefined });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
-      this.update({ patronNote: error.message });
+      const roll = this.state.encounterRoll;
+      this.update({ patronNote: error.message, ...(roll ? { encounterRoll: { ...roll, text: error.message } } : {}) });
     }
   }
 
