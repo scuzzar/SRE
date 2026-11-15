@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openSector, oracle } from './layout';
+import { openOracle, openSector, oracle } from './layout';
 
 test.use({ reducedMotion: 'reduce' });
 
@@ -197,12 +197,20 @@ test('Globus: aus dem Subsektor öffnen, Feld antippen, zurück zum Subsektor', 
   await expect(page.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('°C im Jahresmittel');
   // „Zur Gruppe“ gibt es, sobald die Gruppe ein Feld auf dieser Welt hat; wie im Navi führt er zu ihr zurück.
   await expect(globe.getByRole('button', { name: 'Zur Gruppe' })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Gruppe in diese Stadt setzen' }).click();
+  // Unten beim Feld steht die Reihe des Felds: Hierhin reisen, Gruppe setzen, NSC platzieren.
+  const actions = page.getByRole('region', { name: 'Am Feld' });
+  await actions.getByRole('button', { name: 'Gruppe in diese Stadt setzen' }).click();
   await globe.getByRole('button', { name: 'Zur Gruppe' }).click();
   await expect(page.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('Die Gruppe ist hier');
-  // Gewürfelt wird mit der Reihe unten, ohne den Globus zu verlassen; der Wurf steht dann unter dem, was hier geschah.
-  const field = page.getByRole('region', { name: 'Angetipptes Feld' });
+  await expect(actions.getByRole('button', { name: 'Hierhin reisen' })).toBeDisabled();
+  await expect(actions.getByRole('button', { name: 'Gruppe in diese Stadt setzen' })).toBeDisabled();
+  // Gewürfelt wird mit der Reihe im Log; der Wurf steht dann am Feld der Gruppe unter dem, was dort geschah.
+  await openOracle(page);
   await oracle(page).getByRole('button', { name: '2W6', exact: true }).click();
+  await expect(page.locator('.dice-roll')).toBeHidden();
+  await globe.getByRole('button', { name: /^Orte/ }).click();
+  await globe.getByRole('region', { name: 'Orte' }).getByRole('button', { name: /Die Gruppe/ }).click();
+  const field = page.getByRole('region', { name: 'Angetipptes Feld' });
   await expect(field).toContainText('Was hier geschah');
   await expect(field.locator('.happened')).toContainText('2W6');
   // Die Liste der Felder mit Einträgen: der Wurf eben, am Feld der Gruppe.
@@ -223,4 +231,46 @@ test('Globus: aus dem Subsektor öffnen, Feld antippen, zurück zum Subsektor', 
   await globe.getByRole('button', { name: 'Schließen', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByRole('group', { name: 'Karte des Subsektors' })).toBeVisible();
+});
+
+test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des Felds; sie holt einen NSC her und plant die Route', async ({ page }) => {
+  await page.goto('/');
+  // Ein NSC auf Kessra, dem Aufenthaltsort, noch ohne Feld.
+  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'NSC', exact: true }).click();
+  await page.getByRole('button', { name: '+ Neuer NSC' }).click();
+  await page.getByRole('dialog', { name: 'Neuer NSC' }).getByLabel('Rolle').selectOption({ label: 'Kontakt' });
+  await page.getByRole('button', { name: 'Leer anlegen' }).click();
+  const editor = page.getByRole('dialog', { name: 'Neuer NSC' });
+  await editor.getByLabel('Name').fill('Mara Voss');
+  await editor.getByRole('button', { name: 'Speichern' }).click();
+  await expect(editor).toHaveCount(0);
+  await page.getByRole('button', { name: /Aufenthaltsort Kessra.*Globus öffnen/ }).click();
+  const globe = page.getByRole('region', { name: 'Globus · Kessra' });
+  await expect(globe).toBeVisible();
+  // Noch hat die Gruppe kein Feld: Die Reihe sagt, warum Hinreisen nicht geht.
+  await globe.getByRole('button', { name: /^Orte/ }).click();
+  await globe.getByRole('region', { name: 'Orte' }).getByRole('button', { name: /Hauptstadt ·/ }).click();
+  await expect(page.getByRole('region', { name: 'Am Feld' })).toContainText('Die Gruppe hat noch kein Feld');
+  // Die Gruppe kommt in die Hauptstadt; angetippt wird eine andere Stadt.
+  const actions = page.getByRole('region', { name: 'Am Feld' });
+  await actions.getByRole('button', { name: 'Gruppe in diese Stadt setzen' }).click();
+  const canvas = globe.getByRole('img', { name: /Globus von Kessra/ });
+  const box = (await canvas.boundingBox())!;
+  await canvas.click({ position: { x: box.width * 0.35, y: box.height * 0.4 } });
+  const field = page.getByRole('region', { name: 'Angetipptes Feld' });
+  await expect(field).not.toContainText('Die Gruppe ist hier');
+  await expect(actions).toBeVisible();
+  // Auf dem Smartphone steht die Reihe des Felds an der Stelle des Orakels, im Desktop-Modus unter dem Feld.
+  if (test.info().project.name === 'mobil') await expect(page.locator('.tray').getByRole('region', { name: 'Orakel und Proben' })).toHaveCount(0);
+  await expect(actions.getByRole('button', { name: /Gruppe .* setzen/ })).toBeEnabled();
+  await expect(actions).not.toContainText('kein Feld');
+  // NSC platzieren: das Auswahlfeld unter dem Knopf holt einen NSC dieser Welt her; danach ist keiner mehr zu holen.
+  const pick = actions.getByLabel('NSC hierher holen');
+  await pick.selectOption({ label: 'Mara Voss' });
+  await expect(field).toContainText('Mara Voss · NSC, Kontakt');
+  await expect(pick).toBeDisabled();
+  // Hierhin reisen plant die Route; dann ist der Knopf aus.
+  await actions.getByRole('button', { name: 'Hierhin reisen' }).click();
+  await expect(actions.getByRole('button', { name: 'Hierhin reisen' })).toBeDisabled();
+  await expect(actions.getByRole('button', { name: 'Hierhin reisen' })).toHaveAttribute('title', 'Die Route ist schon geplant');
 });

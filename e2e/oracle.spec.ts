@@ -321,7 +321,7 @@ test('Deuten mit dem Knopf in der Reihe unten: gilt dem neuesten Ergebnis', asyn
   await expect(oracle(page).locator('.entry', { hasText: 'Würfel · 2W6' }).locator('.interpretation')).toContainText('Die Tür ist offen.');
 });
 
-test('Die Reihe unten steht auf dem Smartphone nur im Log und beim angetippten Feld', async ({ page }, testInfo) => {
+test('Die Reihe unten steht auf dem Smartphone nur im Log', async ({ page }, testInfo) => {
   testInfo.skip(testInfo.project.name !== 'mobil', 'Im Desktop-Modus steht sie immer im Log-Panel');
   const nav = page.getByRole('navigation', { name: 'Bereiche' });
   await expect(oracle(page).getByRole('button', { name: '2W6', exact: true })).toBeVisible();

@@ -24,6 +24,7 @@ import { WorldSheet } from './sector/WorldSheet';
 import { JourneySheet } from './sector/JourneySheet';
 import { FieldCard, GlobeScreen } from './sector/GlobeScreen';
 import { TripRollDialog } from './sector/TripPanels';
+import { FieldDock } from './sector/FieldDock';
 import { LoadingOverlay } from './loading';
 import { Tray } from './Tray';
 
@@ -66,7 +67,7 @@ export function App() {
   const screen: Screen = view.screen === 'sector' ? 'oracle' : view.screen;
   // Ein angetipptes Feld des Globus steht an der Stelle des Bereichs, ebenso ein gewähltes Feld des
   // Subsektors (das zeichnet der Subsektor selbst in den Platz, den `.field-slot` freihält).
-  const globeField = view.globe?.picked ? <FieldCard globe={view.globe} error={view.world?.error} log={view.log} logDays={view.logDays} trip={view.trip} tripPlan={view.tripPlan} /> : undefined;
+  const globeField = view.globe?.picked ? <FieldCard globe={view.globe} error={view.world?.error} log={view.log} logDays={view.logDays} tripPlan={view.tripPlan} /> : undefined;
   const field = globeField ?? (!view.globe && view.selected ? <div ref={setFieldSlot} className="field-slot" /> : undefined);
   const area = (
     <>
@@ -124,10 +125,12 @@ export function App() {
     </>
   );
 
-  // Die Reihe Notiz, Deuten, Würfeln, Karte: im Log-Panel des Desktops immer, im Ziehblatt nur im Log
-  // und beim angetippten Feld; die übrigen Reiter haben unten Platz für ihre eigenen Knöpfe.
+  // Die Reihe Notiz, Deuten, Würfeln, Karte: im Log-Panel des Desktops immer, im Ziehblatt nur im Log;
+  // die übrigen Reiter haben unten Platz für ihre eigenen Knöpfe. Beim angetippten Feld des Globus
+  // steht dort (und im Desktop-Modus unter dem Feld) stattdessen die Reihe des Felds.
   const dock = <OracleDock view={view} shortcuts />;
-  const dice = globeField !== undefined || (screen === 'oracle' && field === undefined);
+  const fieldDock = view.globe?.picked ? <FieldDock globe={view.globe} trip={view.trip} tripPlan={view.tripPlan} /> : undefined;
+  const foot = fieldDock ?? (screen === 'oracle' && field === undefined ? dock : undefined);
 
   // Die Grundkarte: der Globus der offenen Welt, sonst der Subsektor. Oben rechts das Menü.
   const base = (
@@ -170,6 +173,7 @@ export function App() {
                 </div>
               )}
               <div className="screen-host">{field ?? area}</div>
+              {fieldDock}
             </section>
           )}
           {base}
@@ -182,7 +186,7 @@ export function App() {
             raise={view.globe?.picked?.cell ?? view.selected?.id}
             head={banners}
             body={<div className="screen-host">{field ?? (screen === 'oracle' ? <OracleScreen view={view} dock={false} /> : area)}</div>}
-            foot={dice && dock}
+            foot={foot}
             bar={nav}
           />
         </>
