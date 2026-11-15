@@ -2324,8 +2324,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     ein Ziel auf derselben Welt; die App sucht die schnellste Route aus Abschnitten (`legs`), je mit
     einem Fahrzeug: zu Fuß, eigene Fahrzeuge aus dem Gruppengepäck, gemietete (`rented`) oder
     Linienverkehr. Ein Fahrzeugwechsel geht nur dort, wo man es mieten kann bzw. wo das Fluggerät
-    landet. Die App zeigt Dauer in Tagen (`/days`) und Miete; mit „Losfahren“ wird die Fahrt
-    gespeichert (`Campaign.trip`). Der Vorschlag vor dem Bestätigen ist nur Anzeige.
+    landet. **Varianten wie bei einer Karten-App** (Owner, 15. November 2026): Die App zeigt mehrere
+    Routen, je die schnellste ohne Miete (zu Fuß und eigene Fahrzeuge) und je mietbarem Fahrzeug die
+    schnellste damit (Ground Car mieten, ATV mieten, Hubschrauber mieten …), gleiche nur einmal, die
+    schnellste zuerst, markiert als „Schnellste“ bzw. „Günstigste“. Jede mit Dauer in Tagen
+    (`/days`), Fahrstunden und Miete; die gewählte steht auf dem Globus, mit „Losfahren“ wird sie
+    gespeichert (`Campaign.trip`). Die Varianten vor dem Bestätigen sind nur Anzeige.
   - **Abschnitt:** Jeder Abschnitt hat seine Felder in Reihenfolge (`cells`; bei einem Flug nur Start
     und Landepunkt), daraus folgen seine Fahrstunden (`/hours`) und seine Miete je Tag (`/rent`). Das
     letzte Feld eines Abschnitts ist das erste des nächsten.
@@ -2391,8 +2395,8 @@ Diagramm mit diesen Ausnahmen:
     oder abgestellt); stellt die Gruppe es unterwegs ab, holt die Suche es auf derselben Fahrt nicht
     wieder ab. Fluggeräte fliegen nur einmal je Abschnitt und landen nur in Siedlungen, am Ziel, am
     Start und bei abgestellten eigenen Fahrzeugen.
-  - Gemietet wird nur, was die Kasse wenigstens für einen Tag hergibt; die Suche nimmt die
-    schnellste Route, nicht die billigste.
+  - Gemietet wird nur, was die Kasse wenigstens für einen Tag hergibt. Jede Variante nimmt höchstens
+    eine Art Mietfahrzeug; eine Route mit zwei verschiedenen gemieteten Fahrzeugen schlägt die App nicht vor.
   - **`Leg → Vehicle : by`** und **`Booking → TripDay : rentFor`** sind im Code die Id des Fahrzeugs
     bzw. die Stelle des Reisetags im Log, wie bei `won`; Löschen rückt die Stelle nach.
   - **`Trip → SurfaceCell : /at`**, `/totalHours`, `/days`, `Leg./hours` und `Leg./rent` rechnet

@@ -123,7 +123,7 @@ import {
   renameCity,
   mapLocked,
   moveParty,
-  planTrip,
+  planOptions,
   startTrip,
   driveDay,
   cancelTrip,
@@ -1802,18 +1802,25 @@ export class GameController {
 
   // --- Fahrt über die Oberfläche (siehe domain-model.md, *Fahrt*) ---------------------------------
 
-  /** Sucht die schnellste Route zum angetippten Feld; mit `rent` darf sie Fahrzeuge mieten. */
-  planTrip(rent = true): void {
+  /** Sucht die Varianten einer Route zum angetippten Feld (zu Fuß, je mietbarem Fahrzeug); die schnellste ist gewählt. */
+  planTrip(): void {
     const at = this.state.world;
     const target = this.state.globe?.picked;
     if (!at || target === undefined) return;
     try {
       if (this.campaign.location?.world !== hexId(at.column, at.row)) throw new DomainError('Die Gruppe ist nicht auf dieser Welt.');
-      this.update({ tripPlan: { target, rent, plan: planTrip(this.campaign, target, { rent }), error: undefined } });
+      this.update({ tripPlan: { target, options: planOptions(this.campaign, target), chosen: 0, error: undefined } });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
-      this.update({ tripPlan: { target, rent, plan: undefined, error: error.message } });
+      this.update({ tripPlan: { target, options: [], chosen: 0, error: error.message } });
     }
+  }
+
+  /** Wählt eine Variante der Route; der Globus zeigt sie. */
+  chooseTripOption(index: number): void {
+    const plan = this.state.tripPlan;
+    if (!plan || index < 0 || index >= plan.options.length) return;
+    this.update({ tripPlan: { ...plan, chosen: index, error: undefined } });
   }
 
   /** Schließt die Planung, ohne loszufahren. */
@@ -1823,7 +1830,8 @@ export class GameController {
 
   /** „Losfahren“: Die geplante Fahrt wird gespeichert. */
   startTrip(): void {
-    const plan = this.state.tripPlan?.plan;
+    const draft = this.state.tripPlan;
+    const plan = draft?.options[draft.chosen];
     if (!plan) return;
     try {
       this.change(startTrip(this.campaign, plan), { tripPlan: undefined, tripNote: undefined });

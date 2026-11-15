@@ -1927,10 +1927,13 @@ describe('Fahrt (2026-11-15)', () => {
     const map = game.snapshot().globe!.map;
     const target = grid.neighbors[capital.cell!]!.find((q) => !['w', 'i'].includes(map.landforms[q]!))!;
     game.pickCell(target);
-    game.planTrip(false);
+    game.planTrip();
     const plan = game.snapshot().tripPlan!;
     expect(plan.error).toBeUndefined();
-    expect(plan.plan!.legs[0]!.vehicle).toBe('Zu Fuß');
+    // Zu Fuß ist immer dabei, als langsamste und günstigste Variante.
+    expect(plan.options.at(-1)!.title).toBe('Zu Fuß');
+    game.chooseTripOption(plan.options.length - 1);
+    expect(game.snapshot().tripPlan!.options.at(-1)!.trip.legs[0]!.vehicle).toBe('Zu Fuß');
     expect(game.snapshot().globe!.route[0]!.cells.at(-1)).toBe(target);
     game.startTrip();
     expect(game.snapshot().tripPlan).toBeUndefined();
@@ -1944,5 +1947,32 @@ describe('Fahrt (2026-11-15)', () => {
     expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'tripDay', arrived: true });
     await game.whenSaved();
     expect(fromCampaignFile(toCampaignFile(repository.saved!), 'c2').log.at(-1)).toMatchObject({ kind: 'tripDay', arrived: true });
+  });
+
+  it('zeigt mit Geld in der Kasse mehrere Varianten; eine gewählte zeigt der Globus und mit ihr fährt man los', async () => {
+    const { game } = await started();
+    game.book('income', 1_000_000);
+    game.openGlobeAt(4, 5);
+    const capital = game.snapshot().globe!.cities[0]!;
+    game.pickCell(capital.cell);
+    game.moveParty();
+    const globe = game.snapshot().globe!;
+    const far = [...globe.map.landforms].findLastIndex((ch) => ch !== 'w' && ch !== 'i');
+    game.pickCell(far);
+    game.planTrip();
+    const plan = game.snapshot().tripPlan!;
+    expect(plan.options.length).toBeGreaterThan(1);
+    expect(plan.options[0]!.tags).toContain('Schnellste');
+    expect(plan.options.some((o) => o.tags.includes('Günstigste'))).toBe(true);
+    // Die schnellste zuerst; zu Fuß kostet nichts und ist die günstigste.
+    for (let i = 1; i < plan.options.length; i++) expect(plan.options[i]!.trip.totalHours).toBeGreaterThanOrEqual(plan.options[i - 1]!.trip.totalHours);
+    expect(plan.options.find((o) => o.title === 'Zu Fuß')?.tags).toContain('Günstigste');
+    const last = plan.options.length - 1;
+    game.chooseTripOption(last);
+    expect(game.snapshot().tripPlan!.chosen).toBe(last);
+    expect(game.snapshot().globe!.route.map((r) => r.cells)).toEqual(game['state'].tripPlan!.options[last]!.legs.map((l) => l.cells));
+    game.startTrip();
+    expect(game['campaign'].trip).toEqual(game['campaign'].trip && { hours: 0, legs: game['campaign'].trip.legs });
+    expect(game.snapshot().trip!.legs.map((l) => l.vehicle)).toEqual(plan.options[last]!.trip.legs.map((l) => l.vehicle));
   });
 });

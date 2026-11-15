@@ -171,11 +171,45 @@ interface Mode {
 /** Die Wahl beim Planen: ob die App Fahrzeuge mieten darf. */
 export interface PlanOptions {
   readonly rent: boolean;
+  /** Nur dieses Fahrzeug mieten (für die Varianten der Planung); fehlt: jedes, das geht. */
+  readonly only?: string;
 }
 
 /** Die Fahrzeuge, die man auf dieser Welt mieten kann: in Siedlungen, bis zum TL der Welt, wo die Atmosphäre reicht. */
 export function rentableVehicles(surface: TripSurface): readonly Vehicle[] {
   return vehicles.filter((v) => v.item !== undefined && (itemOf(v.item).tl ?? 0) <= surface.tech && worksIn(v, surface.atmosphere));
+}
+
+/** Was man mieten kann und die Kasse wenigstens für einen Tag hergibt. */
+function affordableRentals(campaign: Campaign, surface: TripSurface): readonly Vehicle[] {
+  const funds = campaign.bookings.reduce((sum, b) => sum + b.amount, 0);
+  return rentableVehicles(surface).filter((v) => legRent({ by: v.id, rented: true, cells: [] }) <= funds);
+}
+
+/**
+ * Die Varianten einer Route, wie bei einer Karten-App (siehe domain-model.md, *Fahrt*, Planen): ohne
+ * Miete (zu Fuß und eigene Fahrzeuge) und je mietbarem Fahrzeug die schnellste Route damit. Gleiche
+ * Routen fallen weg; die schnellste zuerst.
+ */
+export function planOptions(campaign: Campaign, target: number): readonly Trip[] {
+  const surface = surfaceFor(campaign);
+  const found: Trip[] = [];
+  let firstError: unknown;
+  const attempt = (options: PlanOptions) => {
+    try {
+      found.push(planTrip(campaign, target, options));
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      firstError ??= error;
+    }
+  };
+  attempt({ rent: false });
+  for (const vehicle of affordableRentals(campaign, surface)) attempt({ rent: true, only: vehicle.id });
+  if (found.length === 0) throw firstError instanceof DomainError ? firstError : new DomainError('Dorthin gibt es keinen Weg.');
+  const key = (t: Trip) => JSON.stringify(t.legs);
+  const unique = [...new Map(found.map((t) => [key(t), t])).values()];
+  const scored = unique.map((trip) => ({ trip, hours: totalHours(surface, trip), rent: totalRent(surface, trip) }));
+  return scored.sort((a, b) => a.hours - b.hours || a.rent - b.rent).map((s) => s.trip);
 }
 
 /** Das Feld, auf dem die Gruppe steht; ohne Feld (nur die Welt oder eine Orbitalstadt) keins. */
@@ -252,9 +286,7 @@ export function planTrip(campaign: Campaign, target: number, options: PlanOption
     const cell = p.parked === undefined ? start : p.parked.world === surface.world ? placeCell(campaign.hexes, p.parked) : undefined;
     if (cell !== undefined) modes.push({ vehicle, rented: false, source: cell });
   }
-  // Gemietet wird nur, was die Kasse wenigstens für einen Tag hergibt.
-  const funds = campaign.bookings.reduce((sum, b) => sum + b.amount, 0);
-  if (options.rent) for (const vehicle of rentableVehicles(surface)) if (legRent({ by: vehicle.id, rented: true, cells: [] }) <= funds) modes.push({ vehicle, rented: true, source: 'town' });
+  if (options.rent) for (const vehicle of affordableRentals(campaign, surface)) if (options.only === undefined || vehicle.id === options.only) modes.push({ vehicle, rented: true, source: 'town' });
 
   const n = surface.grid.cells;
   const towns = surface.ways.town;

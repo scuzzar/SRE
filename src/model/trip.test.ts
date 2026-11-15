@@ -11,6 +11,7 @@ import {
   legHours,
   moveParty,
   parkVehicles,
+  planOptions,
   planTrip,
   positionAt,
   removeLogEntry,
@@ -136,6 +137,23 @@ describe('Route', () => {
     expect(planTrip(c, far, { rent: true }).legs.map((l) => l.by)).toEqual(['helicopter']);
     const broke = campaignOn(mapWith({}, { towns: [[line[0]!, 1]] }), line[0]!);
     expect(planTrip(broke, far, { rent: true }).legs.map((l) => l.by)).toEqual(['walk']);
+  });
+});
+
+describe('Varianten der Route', () => {
+  it('bietet zu Fuß und je Mietfahrzeug eine Variante, die schnellste zuerst', () => {
+    const road = line.slice(0, 5);
+    const c = campaignOn(mapWith({}, { towns: [[line[0]!, 1]], roads: [road] }), line[0]!, { funds: 1_000_000 });
+    const options = planOptions(c, line[4]!);
+    const main = options.map((t) => t.legs.map((l) => `${l.by}${l.rented ? '*' : ''}`).join(' '));
+    expect(main.at(-1)).toBe('walk');
+    expect(main).toContain('ground-car*');
+    expect(main.some((m) => m.includes('speeder*'))).toBe(true);
+    expect(main.some((m) => m.includes('wheeled-atv*'))).toBe(true);
+    expect(new Set(main).size).toBe(main.length);
+    const surface = tripSurface(c)!;
+    const hours = options.map((t) => totalHours(surface, t));
+    expect([...hours].sort((a, b) => a - b)).toEqual(hours);
   });
 });
 

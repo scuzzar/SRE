@@ -240,7 +240,7 @@ import {
 import { careerLines, generationView, itemLabel, worldChoices, worldName, type CareerLine, type GenerationView, type WorldChoice } from './generation-view';
 import { sectorView, selectedView, worldList, worldView, type HexView, type SelectedHexView, type WorldListItem, type WorldView } from './world-view';
 import { globeView, type GlobeView } from './globe-view';
-import { activeTripView, cellLabel, tripDayItem, tripView, type TripDayItem, type TripPlanView, type TripView } from './trip-view';
+import { activeTripView, tripDayItem, tripPlanOf, type TripDayItem, type TripPlanView, type TripView } from './trip-view';
 import { checkItem, checksView, journeyItem, journeyView, legalView, timeItem, timeView, type CheckItem, type ChecksView, type JourneyDraft, type JourneyItem, type JourneyView, type LegalView, type TimeItem, type TimeView } from './time-view';
 
 /**
@@ -1349,7 +1349,7 @@ export interface ControllerState {
   /** Die Reise in Vorbereitung bzw. ihr Ergebnis. */
   readonly journey: JourneyDraft | undefined;
   /** Die Planung einer Fahrt auf dem Globus: Zielfeld, ob gemietet werden darf, der Vorschlag oder warum es keinen gibt. */
-  readonly tripPlan: { readonly target: number; readonly rent: boolean; readonly plan: Trip | undefined; readonly error: string | undefined } | undefined;
+  readonly tripPlan: { readonly target: number; readonly options: readonly Trip[]; readonly chosen: number; readonly error: string | undefined } | undefined;
   /** Was beim Fahren nicht ging. */
   readonly tripNote: string | undefined;
   /** Das Ziel dessen, der in der Kampfsimulation am Zug ist (Id eines SC oder NSC). */
@@ -2287,9 +2287,7 @@ function sellables(campaign: Campaign, c: Character | undefined): ShopView['memb
 function tripPlanView(campaign: Campaign, draft: ControllerState['tripPlan']): TripPlanView | undefined {
   const surface = draft ? tripSurface(campaign) : undefined;
   if (!draft || !surface) return undefined;
-  const plan = draft.plan && tripView(surface, draft.plan);
-  const funds = fundsOf(campaign);
-  return { target: cellLabel(surface, draft.target), rent: draft.rent, plan, error: draft.error, short: plan && plan.rent > funds ? funds : undefined };
+  return tripPlanOf(surface, draft, fundsOf(campaign));
 }
 
 /** Die Welten, auf denen etwas geschehen ist oder dauerhafte NSC leben (Zeichen auf der Sektorkarte). */
@@ -2508,7 +2506,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     sector: sectorView(campaign.hexes, markedWorlds(campaign)),
     worlds: worldList(campaign.hexes),
     world: state.world && worldView(campaign.hexes, state.world.column, state.world.row, state.world.rolls, state.worldError, happenedAt(campaign, hexId(state.world.column, state.world.row))),
-    globe: state.world && state.globe ? globeView(campaign, state.world.column, state.world.row, state.globe.picked, state.tripPlan?.plan) : undefined,
+    globe: state.world && state.globe ? globeView(campaign, state.world.column, state.world.row, state.globe.picked, state.tripPlan?.options[state.tripPlan.chosen]) : undefined,
     picking: pickingView(state, campaign),
     selected: state.selected && selectedView(campaign.hexes, state.selected.column, state.selected.row, state.selected.occurrence, state.world ? undefined : state.worldError),
   };
