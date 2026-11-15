@@ -7,6 +7,7 @@ import {
   patronNpcBlocker,
   roleOf,
   type NpcRole,
+  type TrayStop,
   type PatronRoll,
   dateLabel,
   journeyBlocker,
@@ -302,8 +303,8 @@ export interface Snapshot {
   readonly stripCollapsed: boolean;
   /** Der Hinweis über den Waffen im Shop ist weggeklickt. */
   readonly shopHintHidden: boolean;
-  /** Wie weit das Ziehblatt hochgezogen ist, als Anteil der Höhe (0 bis 1). */
-  readonly trayHeight: number;
+  /** Auf welcher Stufe das Ziehblatt steht. */
+  readonly trayStop: TrayStop;
   /** Der Reiter NSC: die dauerhaften NSC, nach Welt und Rolle gruppiert. */
   readonly npcs: NpcScreenView;
   /** Die Toten unter „Verstorben“, getrennt von den Lebenden. */
@@ -1376,8 +1377,8 @@ export interface ControllerState {
   readonly stripCollapsed: boolean;
   /** Der Hinweis über den Waffen im Shop ist weggeklickt; das Gerät merkt es sich. */
   readonly shopHintHidden: boolean;
-  /** Wie weit das Ziehblatt hochgezogen ist (Anteil der Höhe); das Gerät merkt es sich. */
-  readonly trayHeight: number;
+  /** Auf welcher Stufe das Ziehblatt steht; das Gerät merkt es sich. */
+  readonly trayStop: TrayStop;
   /** Index des Logeintrags, dessen Ergebnis-Popup offen ist. */
   readonly result: number | undefined;
   readonly editor: { readonly id: string | undefined; readonly error: string | undefined; readonly npc?: boolean; readonly role?: NpcRole } | undefined;
@@ -2464,7 +2465,7 @@ function pickingView(state: ControllerState, campaign: Campaign): { readonly tit
 
 export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
-  const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayHeight: state.trayHeight, skills, items };
+  const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, skills, items };
   if (!campaign) {
     return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, selected: undefined, picking: undefined };
   }

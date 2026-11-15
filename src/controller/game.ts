@@ -36,6 +36,7 @@ import {
   equip,
   unequip,
   type EquipSlot,
+  type TrayStop,
   fighterOf,
   endTurn,
   setDistance,
@@ -289,7 +290,7 @@ export class GameController {
       opened: undefined,
       stripCollapsed: false,
       shopHintHidden: false,
-      trayHeight: 0.5,
+      trayStop: 'half',
       result: undefined,
       editor: undefined,
       generating: false,
@@ -339,8 +340,8 @@ export class GameController {
       // Ob der Hinweis im Shop weggeklickt war, ist nur eine Bequemlichkeit; dann steht er da.
     }
     try {
-      const trayHeight = this.writable ? await this.deps.repository.loadTrayHeight() : undefined;
-      if (trayHeight !== undefined) this.update({ trayHeight });
+      const trayStop = this.writable ? await this.deps.repository.loadTrayStop() : undefined;
+      if (trayStop !== undefined) this.update({ trayStop });
     } catch {
       // Wie weit das Ziehblatt hochgezogen war, ist nur eine Bequemlichkeit; dann steht es halb.
     }
@@ -984,12 +985,11 @@ export class GameController {
     this.persist(() => this.deps.repository.saveStripCollapsed(stripCollapsed));
   }
 
-  /** Merkt sich, wie weit das Ziehblatt hochgezogen ist (Anteil der Höhe, 0 bis 1); das Gerät merkt es sich. */
-  setTrayHeight(fraction: number): void {
-    const trayHeight = Math.min(1, Math.max(0.01, fraction));
-    if (!Number.isFinite(trayHeight) || trayHeight === this.state.trayHeight) return;
-    this.update({ trayHeight });
-    this.persist(() => this.deps.repository.saveTrayHeight(trayHeight));
+  /** Stellt das Ziehblatt auf eine Stufe; das Gerät merkt es sich. */
+  setTrayStop(trayStop: TrayStop): void {
+    if (trayStop === this.state.trayStop) return;
+    this.update({ trayStop });
+    this.persist(() => this.deps.repository.saveTrayStop(trayStop));
   }
 
   /** Blendet den Hinweis über den Waffen im Shop aus; das Gerät merkt es sich. */

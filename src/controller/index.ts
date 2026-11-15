@@ -6,4 +6,4 @@ export type * from './time-view';
 export type * from './globe-view';
 export type * from './trip-view';
 export { LANDFORM_NAMES } from './globe-view';
-export { landformAt, nearestCell } from '../model';
+export { landformAt, nearestCell, TRAY_STOPS } from '../model';

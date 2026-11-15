@@ -318,10 +318,32 @@ button:disabled {
   overflow: visible;
 }
 
-/* Die Zoom-Knöpfe stehen unten rechts über dem Ziehblatt, wie hoch es auch steht. */
+/* Die Zoom-Knöpfe stehen unten rechts über dem Ziehblatt, wie hoch es auch steht; sie gleiten mit,
+   wenn es einrastet. Steht es über halb, gehen sie weg: Oben ist kein Platz mehr für sie. */
 .base .sector-zoom {
   bottom: calc(var(--tray-h, 0px) - var(--tray-floor, 0px) + 4px);
   z-index: 2;
+}
+
+.base .sector-zoom,
+.base .globe-zoom {
+  transition: bottom var(--tray-glide), opacity 0.15s ease;
+}
+
+.base .sector-panel {
+  transition: max-height var(--tray-glide);
+}
+
+.tray-dragging .base .sector-zoom,
+.tray-dragging .base .globe-zoom,
+.tray-dragging .base .sector-panel {
+  transition: opacity 0.15s ease;
+}
+
+[data-tray-high] .base .sector-zoom,
+[data-tray-high] .base .globe-zoom {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .base .sector-panel {
@@ -368,7 +390,12 @@ button:disabled {
   bottom: calc(var(--tray-h, 0px) + 16px);
 }
 
-/* Das Ziehblatt: unten über der Grundkarte, am Kopf stufenlos hochzuziehen. */
+/* Das Ziehblatt: unten über der Grundkarte, rastet auf vier Stufen ein. Es gleitet mit einer Kurve,
+   die schnell anfährt und weich ausläuft; was ihm folgt (Zoom-Knöpfe), gleitet genauso. */
+.app.map-app {
+  --tray-glide: 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .tray {
   position: absolute;
   left: 0;
@@ -381,10 +408,11 @@ button:disabled {
   background: var(--bg);
   border-radius: 16px 16px 0 0;
   box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.6);
-  transition: height 0.2s ease;
+  transition: height var(--tray-glide);
 }
 
-.tray.dragging {
+.tray.dragging,
+.tray.dragging .tray-foot {
   transition: none;
 }
 
@@ -393,17 +421,32 @@ button:disabled {
   touch-action: none;
 }
 
+/* Der Griff ist 32 px hoch; seine Fläche zum Anfassen reicht noch 12 px über die Kante des Blatts. */
 .tray-grip {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 28px;
-  min-height: 28px;
+  height: 32px;
+  min-height: 32px;
   padding: 0;
   background: transparent;
   border: 0;
   cursor: grab;
+}
+
+.tray-grip::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -12px;
+  height: 12px;
+}
+
+.tray-grip:focus-visible span {
+  background: var(--accent-text);
 }
 
 .tray-grip span {
@@ -421,8 +464,12 @@ button:disabled {
   overflow: hidden;
 }
 
+/* Fuß und Reiter lassen sich ziehen wie der Kopf; schiebt man das Blatt ins Versteck, blenden sie aus. */
 .tray-foot {
   flex: 0 0 auto;
+  touch-action: none;
+  opacity: var(--tray-foot, 1);
+  transition: opacity var(--tray-glide);
 }
 
 /* Die Reiter ganz unten im Ziehblatt, wie die Leiste einer Karten-App; der Strich steht oben. */
@@ -500,6 +547,12 @@ button:disabled {
   /* Unter der Leiste mit dem Charakter oben läuft der Log weich aus, statt hart abgeschnitten. */
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 56px);
   mask-image: linear-gradient(to bottom, transparent 0, #000 56px);
+}
+
+/* Der leere Log hat nichts, was auslaufen müsste; sonst stünde sein Hinweis im halben Blatt im Verlauf. */
+.log-scroll:has(.log-empty) {
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 .log {
