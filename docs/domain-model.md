@@ -345,6 +345,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Possession.parked` und der Bereich *Fahrzeuge und Wege*. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-15-fahrzeuge-und-gelaende.png`](changes/2026-11-15-fahrzeuge-und-gelaende.png).
 
+> **Entwurf, noch nicht abgestimmt** (Kennzeichen 2026-11-15b): **Gelände aus dem Aufenthaltsort**
+> (siehe *Gelände*). Kommt die Gruppe auf ein Feld oder in eine Stadt, belegt die App das Gelände
+> der Begegnungen vor: je Geländeart der Oberflächenkarte ein Gelände, in einer Stadt City. Von Hand
+> ändern geht weiter. Neu im Bild: `Landform → Terrain : terrain`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-15-gelaende-aus-dem-aufenthaltsort.png`](changes/2026-11-15-gelaende-aus-dem-aufenthaltsort.png).
+
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
@@ -375,7 +381,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+2026-11-15b (Gelände aus dem Aufenthaltsort).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -515,6 +521,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Entkommen | `Distance./escaped` | Mehr als 20 Bands: Der SC hat die NSC verloren (Book 1, S. 33) |
 | Ausweichen | `Encounter.evading` | Ein Kämpfer greift in seinem Zug nicht an, sondern weicht aus; bis zu seinem nächsten Zug bekommt jeder Angriff auf ihn DM −1, −2 oder −4 (SR 20) |
 | Gelände | `Terrain`, `Campaign.terrain` | Wo die Gruppe ist und die Begegnungen stattfinden, für alle Begegnungsarten gleich: DM auf die Entfernung (S. 5), z. B. Clear +3, City −4, und wo es Tiere gibt die DMs auf Tierart und Größe (S. 18) |
+| Gelände einer Geländeart | `Landform.terrain` | Das Gelände der Begegnungen, mit dem die App vorbelegt, wenn die Gruppe auf ein Feld dieser Geländeart kommt, z. B. Gebirge → Mountain |
 | Überraschung | `pcSurprise`, `npcSurprise`, `/surprise` | 1W6 je Partei mit DMs (S. 5); wer 3 oder mehr höher liegt, hat Überraschung |
 | Alarm | `Encounter.alarm` | Die Runde, in der die überraschte Partei Alarm gegeben hat; danach hält die Überraschung nicht mehr (SR 20) |
 | Überraschung hält | `/surprising` | Die Partei mit Überraschung, solange es keinen Alarm gab, einschließlich der Runde des Alarms |
@@ -1315,6 +1322,29 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   neben dem Aufenthaltsort, und es bleibt an der Kampagne (`Campaign.terrain`), bis man es ändert;
   fehlt es, gilt ±0 und es gibt keine Tiere. Jede Begegnung hält das Gelände fest, mit dem sie
   gewürfelt wurde (`Encounter.terrain`).
+  - **Vorbelegt aus dem Aufenthaltsort** (Entwurf, 2026-11-15b): Kommt die Gruppe auf ein Feld oder
+    in eine Stadt (Gruppe hierher setzen, jeder Reisetag einer Fahrt, Ankunft), setzt die App das
+    Gelände neu: in einer Haupt- oder Nebenstadt City, sonst das Gelände der Geländeart des Feldes
+    (`Landform.terrain`). Danach kann man es oben im Reiter Begegnung wie bisher ändern, etwa auf
+    River am Fluss oder Ruins; es gilt bis zum nächsten Ortswechsel. Ohne Feld (nur die Welt, nach
+    einer Reise zwischen Welten, eine Orbitalstadt) bleibt das Gelände, wie es ist.
+  - **Die Zuordnung** (Vorschlag, Hausregel):
+
+    | Geländeart | Gelände |
+    |---|---|
+    | Wasser | Maritime Surface |
+    | Eis auf Wasser, Eis auf Land | Arctic |
+    | Tundra | Prairie, Plain, Steppes |
+    | Gebirge | Mountain |
+    | Zerklüftet | Rough, Hills |
+    | Wüste | Desert |
+    | Dschungel | Jungle |
+    | Sumpf | Swamp |
+    | Offen/Wald | Forest, Woods |
+    | Besiedelt | Clear, Road, Open |
+    | (Stadt auf dem Feld) | City |
+
+    Eine Kleinstadt macht aus dem Feld keine City; dort gilt die Geländeart.
   - Die Liste vereint die Geländearten der Entfernung (SE 5) mit denen der Tiere (SE 18): jedes
     Gelände hat seinen DM auf die Entfernung (`dm`), und wo es Tiere gibt (`/animals`), die DMs auf
     Tierart und Größe (`typeDm`, `sizeDm`) und die Spalte der Besonderheiten (`traits`: Beach, Marsh,

@@ -88,6 +88,7 @@ hide <<value>> stereotype
 ' Zeit und Reisen
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Terrain <<reference>> $begegnung
 
 ' Referenzdaten
   class SurfaceMap $oberflaeche {
@@ -191,6 +192,7 @@ Possession "1" *-- "0..1" Place : parked
 ' Angriff
 
 ' Begegnung
+Landform "*" -$newArrow("2026-11-15b")-> "1" Terrain : terrain
 
 ' Karte
 
