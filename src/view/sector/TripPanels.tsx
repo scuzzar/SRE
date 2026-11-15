@@ -23,22 +23,80 @@ function Legs({ trip }: { trip: TripView }) {
   );
 }
 
-/** Die Planung im angetippten Feld: der Vorschlag mit Dauer und Miete, „Losfahren“. */
+/** Ein Symbol je Fahrzeug, wie die Verkehrsmittel einer Karten-App. */
+const VEHICLE_ICONS: Readonly<Record<string, string>> = {
+  walk: '🚶',
+  'ground-car': '🚗',
+  'wheeled-atv': '🚙',
+  'tracked-atv': '🚜',
+  'motor-boat': '🚤',
+  submersible: '🛥️',
+  hovercraft: '🛶',
+  'primitive-biplane': '🛩️',
+  'fixed-wing-aircraft': '✈️',
+  helicopter: '🚁',
+  'air-raft': '🛸',
+  gcarrier: '🛸',
+  speeder: '🛸',
+  'grav-belt': '🛸',
+};
+
+/** Die Dauer groß: unter einem Reisetag in Stunden, sonst in Tagen. */
+function duration(trip: TripView): { readonly big: string; readonly small: string } {
+  return trip.days <= 1 ? { big: hoursText(trip.totalHours), small: '1 Reisetag' } : { big: daysText(trip.days), small: `${hoursText(trip.totalHours)} Fahrt` };
+}
+
+/** Die Planung im angetippten Feld: die Varianten wie bei einer Karten-App, die gewählte mit ihren Abschnitten, „Losfahren“. */
 export function TripPlanCard({ plan }: { plan: TripPlanView }) {
   const game = useGame();
+  const chosen = plan.options[plan.chosen];
   return (
     <div className="trip-plan" role="region" aria-label="Route">
       <h4>Route nach {plan.target}</h4>
-      <label className="globe-check">
-        <input type="checkbox" checked={plan.rent} onChange={(e) => game.planTrip(e.target.checked)} /> Fahrzeuge mieten
-      </label>
-      {plan.plan && (
+      {plan.options.length > 0 && (
+        <ul className="trip-options" role="listbox" aria-label="Varianten der Route">
+          {plan.options.map((option, i) => {
+            const time = duration(option.trip);
+            return (
+              <li key={i}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={i === plan.chosen}
+                  className={i === plan.chosen ? 'trip-option on' : 'trip-option'}
+                  onClick={() => game.chooseTripOption(i)}
+                >
+                  <span className="trip-option-icon" aria-hidden>
+                    {VEHICLE_ICONS[option.vehicle] ?? '➜'}
+                  </span>
+                  <span className="trip-option-main">
+                    <span className="trip-option-title">{option.title}</span>
+                    {option.chain.length > 1 && <span className="trip-option-chain">{option.chain.join(' › ')}</span>}
+                    {option.tags.length > 0 && (
+                      <span className="trip-option-tags">
+                        {option.tags.map((t) => (
+                          <span key={t} className="trip-tag">
+                            {t}
+                          </span>
+                        ))}
+                      </span>
+                    )}
+                  </span>
+                  <span className="trip-option-side">
+                    <strong className="trip-option-time">{time.big}</strong>
+                    <small>{time.small}</small>
+                    <small className="trip-option-cost">{option.trip.rent > 0 ? cr(option.trip.rent) : 'ohne Miete'}</small>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {chosen && (
         <>
-          <Legs trip={plan.plan} />
-          <p className="trip-sum">
-            {daysText(plan.plan.days)} ({hoursText(plan.plan.totalHours)} Fahrt, 8 h je Tag){plan.plan.rent > 0 ? ` · Miete ${cr(plan.plan.rent)}` : ''}
-          </p>
-          {plan.short !== undefined && <p className="combat-hint">In der Kasse sind nur {cr(plan.short)}; unterwegs geht es nur weiter, solange die Miete für den Tag reicht.</p>}
+          <Legs trip={chosen.trip} />
+          {chosen.short !== undefined && <p className="combat-hint">In der Kasse sind nur {cr(chosen.short)}; unterwegs geht es nur weiter, solange die Miete für den Tag reicht.</p>}
         </>
       )}
       {plan.error && (
@@ -47,7 +105,7 @@ export function TripPlanCard({ plan }: { plan: TripPlanView }) {
         </p>
       )}
       <div className="globe-actions">
-        {plan.plan && (
+        {chosen && (
           <button type="button" className="primary compact" onClick={() => game.startTrip()}>
             Losfahren
           </button>

@@ -345,6 +345,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Possession.parked` und der Bereich *Fahrzeuge und Wege*. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-15-fahrzeuge-und-gelaende.png`](changes/2026-11-15-fahrzeuge-und-gelaende.png).
 
+> Am 15. November 2026 freigegeben (Kennzeichen 2026-11-15b): **Gelände aus dem Aufenthaltsort**
+> (siehe *Gelände*). Kommt die Gruppe auf ein Feld oder in eine Stadt, belegt die App das Gelände
+> der Begegnungen vor: je Geländeart der Oberflächenkarte ein Gelände, in einer Stadt City. Von Hand
+> ändern geht weiter. Neu im Bild: `Landform → Terrain : terrain`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-15-gelaende-aus-dem-aufenthaltsort.png`](changes/2026-11-15-gelaende-aus-dem-aufenthaltsort.png).
+
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
@@ -515,6 +521,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Entkommen | `Distance./escaped` | Mehr als 20 Bands: Der SC hat die NSC verloren (Book 1, S. 33) |
 | Ausweichen | `Encounter.evading` | Ein Kämpfer greift in seinem Zug nicht an, sondern weicht aus; bis zu seinem nächsten Zug bekommt jeder Angriff auf ihn DM −1, −2 oder −4 (SR 20) |
 | Gelände | `Terrain`, `Campaign.terrain` | Wo die Gruppe ist und die Begegnungen stattfinden, für alle Begegnungsarten gleich: DM auf die Entfernung (S. 5), z. B. Clear +3, City −4, und wo es Tiere gibt die DMs auf Tierart und Größe (S. 18) |
+| Gelände einer Geländeart | `Landform.terrain` | Das Gelände der Begegnungen, mit dem die App vorbelegt, wenn die Gruppe auf ein Feld dieser Geländeart kommt, z. B. Gebirge → Mountain |
 | Überraschung | `pcSurprise`, `npcSurprise`, `/surprise` | 1W6 je Partei mit DMs (S. 5); wer 3 oder mehr höher liegt, hat Überraschung |
 | Alarm | `Encounter.alarm` | Die Runde, in der die überraschte Partei Alarm gegeben hat; danach hält die Überraschung nicht mehr (SR 20) |
 | Überraschung hält | `/surprising` | Die Partei mit Überraschung, solange es keinen Alarm gab, einschließlich der Runde des Alarms |
@@ -1315,6 +1322,29 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   neben dem Aufenthaltsort, und es bleibt an der Kampagne (`Campaign.terrain`), bis man es ändert;
   fehlt es, gilt ±0 und es gibt keine Tiere. Jede Begegnung hält das Gelände fest, mit dem sie
   gewürfelt wurde (`Encounter.terrain`).
+  - **Vorbelegt aus dem Aufenthaltsort** (freigegeben am 15. November 2026, 2026-11-15b): Kommt die Gruppe auf ein Feld oder
+    in eine Stadt (Gruppe hierher setzen, jeder Reisetag einer Fahrt, Ankunft), setzt die App das
+    Gelände neu: in einer Haupt- oder Nebenstadt City, sonst das Gelände der Geländeart des Feldes
+    (`Landform.terrain`). Danach kann man es oben im Reiter Begegnung wie bisher ändern, etwa auf
+    River am Fluss oder Ruins; es gilt bis zum nächsten Ortswechsel. Ohne Feld (nur die Welt, nach
+    einer Reise zwischen Welten, eine Orbitalstadt) bleibt das Gelände, wie es ist.
+  - **Die Zuordnung** (Hausregel, Owner 15. November 2026):
+
+    | Geländeart | Gelände |
+    |---|---|
+    | Wasser | Maritime Surface |
+    | Eis auf Wasser, Eis auf Land | Arctic |
+    | Tundra | Prairie, Plain, Steppes |
+    | Gebirge | Mountain |
+    | Zerklüftet | Rough, Hills |
+    | Wüste | Desert |
+    | Dschungel | Jungle |
+    | Sumpf | Swamp |
+    | Offen/Wald | Forest, Woods |
+    | Besiedelt | Clear, Road, Open |
+    | (Stadt auf dem Feld) | City |
+
+    Eine Kleinstadt macht aus dem Feld keine City; dort gilt die Geländeart.
   - Die Liste vereint die Geländearten der Entfernung (SE 5) mit denen der Tiere (SE 18): jedes
     Gelände hat seinen DM auf die Entfernung (`dm`), und wo es Tiere gibt (`/animals`), die DMs auf
     Tierart und Größe (`typeDm`, `sizeDm`) und die Spalte der Besonderheiten (`traits`: Beach, Marsh,
@@ -2324,8 +2354,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     ein Ziel auf derselben Welt; die App sucht die schnellste Route aus Abschnitten (`legs`), je mit
     einem Fahrzeug: zu Fuß, eigene Fahrzeuge aus dem Gruppengepäck, gemietete (`rented`) oder
     Linienverkehr. Ein Fahrzeugwechsel geht nur dort, wo man es mieten kann bzw. wo das Fluggerät
-    landet. Die App zeigt Dauer in Tagen (`/days`) und Miete; mit „Losfahren“ wird die Fahrt
-    gespeichert (`Campaign.trip`). Der Vorschlag vor dem Bestätigen ist nur Anzeige.
+    landet. **Varianten wie bei einer Karten-App** (Owner, 15. November 2026): Die App zeigt mehrere
+    Routen, je die schnellste ohne Miete (zu Fuß und eigene Fahrzeuge) und je mietbarem Fahrzeug die
+    schnellste damit (Ground Car mieten, ATV mieten, Hubschrauber mieten …), gleiche nur einmal, die
+    schnellste zuerst, markiert als „Schnellste“ bzw. „Günstigste“. Jede mit Dauer in Tagen
+    (`/days`), Fahrstunden und Miete; die gewählte steht auf dem Globus, mit „Losfahren“ wird sie
+    gespeichert (`Campaign.trip`). Die Varianten vor dem Bestätigen sind nur Anzeige.
   - **Abschnitt:** Jeder Abschnitt hat seine Felder in Reihenfolge (`cells`; bei einem Flug nur Start
     und Landepunkt), daraus folgen seine Fahrstunden (`/hours`) und seine Miete je Tag (`/rent`). Das
     letzte Feld eines Abschnitts ist das erste des nächsten.
@@ -2391,8 +2425,8 @@ Diagramm mit diesen Ausnahmen:
     oder abgestellt); stellt die Gruppe es unterwegs ab, holt die Suche es auf derselben Fahrt nicht
     wieder ab. Fluggeräte fliegen nur einmal je Abschnitt und landen nur in Siedlungen, am Ziel, am
     Start und bei abgestellten eigenen Fahrzeugen.
-  - Gemietet wird nur, was die Kasse wenigstens für einen Tag hergibt; die Suche nimmt die
-    schnellste Route, nicht die billigste.
+  - Gemietet wird nur, was die Kasse wenigstens für einen Tag hergibt. Jede Variante nimmt höchstens
+    eine Art Mietfahrzeug; eine Route mit zwei verschiedenen gemieteten Fahrzeugen schlägt die App nicht vor.
   - **`Leg → Vehicle : by`** und **`Booking → TripDay : rentFor`** sind im Code die Id des Fahrzeugs
     bzw. die Stelle des Reisetags im Log, wie bei `won`; Löschen rückt die Stelle nach.
   - **`Trip → SurfaceCell : /at`**, `/totalHours`, `/days`, `Leg./hours` und `Leg./rent` rechnet

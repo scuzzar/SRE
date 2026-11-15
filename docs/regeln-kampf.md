@@ -311,7 +311,8 @@ Partei Überraschung.
 
 ### Anfangsentfernung und Gelände
 
-*SE 5, „Encounter Range“.* App: ✔
+*SE 5, „Encounter Range“.* App: ✔; das Gelände belegt die App aus dem Aufenthaltsort vor ✱ (Zuordnung
+der Geländearten in `domain-model.md` unter *Gelände*).
 
 2W6 plus DM des Geländes; über 12 gilt als 12, unter 1 als 1.
 

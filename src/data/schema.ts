@@ -275,6 +275,8 @@ export const EncountersSchema = z.object({
   reactions: z.array(z.object({ roll: z.number().int().min(2).max(12), text: z.string().min(1) })).length(11),
   /** Die Geländearten mit ihrem DM auf die Entfernung (S. 5) und, wo es Tiere gibt, den DMs auf Tierart und Größe (S. 18). */
   terrains: z.array(TerrainSchema).min(1),
+  /** `Landform.terrain`: je Geländeart der Oberflächenkarte das Gelände, mit dem die App vorbelegt (Hausregel, 2026-11-15b). */
+  landformTerrains: z.record(z.string(), z.string().min(1)),
   /** Die Encounter Ranges (S. 5): 1 bis 12 und ihre Entfernung. */
   ranges: z.array(z.object({ roll: z.number().int().min(1).max(12), range: RangeSchema })).length(12),
   /** Die Range Bands (Book 1, S. 32; Charts S. 7): je Reichweite das erste und letzte Band. */
@@ -475,6 +477,11 @@ export const ReferenceDataSchema = z
       ctx.addIssue({ code: 'custom', message: 'Kein Feld ist sichtbar: Jedes hat eine Spalte nur mit ausgeblendeten Einträgen' });
     }
     uniqueIds(data.vehicles.map((v) => v.id), 'Fahrzeug', ctx);
+    for (const landform of landformIds) {
+      const terrain = data.encounters.landformTerrains[landform];
+      if (terrain === undefined || !data.encounters.terrains.some((t) => t.id === terrain)) ctx.addIssue({ code: 'custom', message: `Die Geländeart ${landform} hat kein Gelände der Begegnungen` });
+    }
+    if (Object.keys(data.encounters.landformTerrains).some((k) => !(landformIds as readonly string[]).includes(k))) ctx.addIssue({ code: 'custom', message: 'Eine Zuordnung nennt eine Geländeart, die es nicht gibt' });
     uniqueIds(data.vehicles.flatMap((v) => (v.item === undefined ? [] : [v.item])), 'Gegenstand eines Fahrzeugs', ctx);
     for (const v of data.vehicles) {
       if (v.item !== undefined && data.items.find((i) => i.id === v.item)?.kind !== 'vehicle') ctx.addIssue({ code: 'custom', message: `Das Fahrzeug ${v.id}: ${v.item} ist kein Fahrzeug unter den Gegenständen` });

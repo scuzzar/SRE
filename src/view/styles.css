@@ -8063,3 +8063,90 @@ button:disabled {
   margin: 0;
   font-weight: 600;
 }
+
+/* Varianten der Route wie in einer Karten-App: je Variante eine Zeile mit Symbol, Kette, Dauer und Kosten. */
+.trip-options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trip-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  text-align: left;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.trip-option.on {
+  border-color: rgb(110, 200, 255);
+  background: rgba(110, 200, 255, 0.1);
+}
+
+.trip-option-icon {
+  font-size: 1.6rem;
+  width: 2rem;
+  text-align: center;
+  flex: none;
+}
+
+.trip-option-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.trip-option-title {
+  font-weight: 600;
+}
+
+.trip-option-chain {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.trip-option-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.trip-tag {
+  font-size: 0.75rem;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(110, 200, 255, 0.2);
+  color: rgb(150, 215, 255);
+}
+
+.trip-option-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: none;
+  text-align: right;
+}
+
+.trip-option-time {
+  font-size: 1.1rem;
+}
+
+.trip-option-side small {
+  color: var(--muted);
+}
+
+.trip-option-cost {
+  color: var(--text, inherit) !important;
+}

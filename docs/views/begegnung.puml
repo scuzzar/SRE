@@ -284,6 +284,7 @@ hide <<value>> stereotype
 ' Referenzdaten
   class Service <<reference>> $erschaffung
   class Weapon <<reference>> $kampf
+  enum Landform <<value>> $oberflaeche
 ' Fahrzeuge und Wege auf der Oberfläche
 
 ' Kampagne
@@ -337,6 +338,7 @@ AnimalRow --> AnimalTrait
 Encounter --> Behavior
 AnimalType --> AnimalCategory
 Campaign "*" --> "0..1" Terrain : terrain
+Landform "*" --> "1" Terrain : terrain
 AnimalTypeRow "*" --> "1" AnimalType : type
 Character "*" --> "0..1" AnimalRow : animal
 AnimalSizeRow -[hidden]- AnimalTraitRow

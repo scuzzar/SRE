@@ -11,6 +11,7 @@ import {
   legHours,
   moveParty,
   parkVehicles,
+  planOptions,
   planTrip,
   positionAt,
   removeLogEntry,
@@ -21,6 +22,7 @@ import {
   toCampaignFile,
   totalHours,
   tripSurface,
+  terrainOfPlace,
   type Campaign,
   type Hex,
   type Landform,
@@ -139,6 +141,23 @@ describe('Route', () => {
   });
 });
 
+describe('Varianten der Route', () => {
+  it('bietet zu Fuß und je Mietfahrzeug eine Variante, die schnellste zuerst', () => {
+    const road = line.slice(0, 5);
+    const c = campaignOn(mapWith({}, { towns: [[line[0]!, 1]], roads: [road] }), line[0]!, { funds: 1_000_000 });
+    const options = planOptions(c, line[4]!);
+    const main = options.map((t) => t.legs.map((l) => `${l.by}${l.rented ? '*' : ''}`).join(' '));
+    expect(main.at(-1)).toBe('walk');
+    expect(main).toContain('ground-car*');
+    expect(main.some((m) => m.includes('speeder*'))).toBe(true);
+    expect(main.some((m) => m.includes('wheeled-atv*'))).toBe(true);
+    expect(new Set(main).size).toBe(main.length);
+    const surface = tripSurface(c)!;
+    const hours = options.map((t) => totalHours(surface, t));
+    expect([...hours].sort((a, b) => a - b)).toEqual(hours);
+  });
+});
+
 describe('Fahrt Tag für Tag', () => {
   it('fährt 8 Stunden je Tag, setzt den Aufenthaltsort und kommt an', () => {
     const c0 = campaignOn(mapWith(), line[0]!);
@@ -222,5 +241,24 @@ describe('Fahrt Tag für Tag', () => {
   it('vor einer Reise zu einer anderen Welt bleiben die Fahrzeuge am Aufenthaltsort', () => {
     const c0 = { ...campaignOn(mapWith(), line[0]!), stash: [{ of: 'vehicle-ground-car', count: 2 }] };
     expect(parkVehicles(c0).stash).toEqual([{ of: 'vehicle-ground-car', count: 2, parked: { world: '0101', cell: line[0] } }]);
+  });
+});
+
+describe('Gelände aus dem Aufenthaltsort (2026-11-15b)', () => {
+  it('folgt der Geländeart des Feldes, in der Stadt City; von Hand ändern geht bis zum nächsten Ort', () => {
+    const map = mapWith({ [line[1]!]: 'mountain', [line[2]!]: 'water' }, { cities: [{ cell: line[3]!, name: 'Ora', population: 5, multiplier: 2, rank: 'primary', port: 'C' }] });
+    let c = campaignOn(map, line[1]!);
+    expect(c.terrain).toBe('mountain');
+    expect(terrainOfPlace(c.hexes, { world: '0101', cell: line[2]! })).toBe('maritime-surface');
+    expect(terrainOfPlace(c.hexes, { world: '0101', cell: line[3]! })).toBe('city');
+    expect(terrainOfPlace(c.hexes, { world: '0101', city: 0 })).toBe('city');
+    expect(terrainOfPlace(c.hexes, { world: '0101' })).toBeUndefined();
+    c = { ...c, terrain: 'ruins' };
+    c = moveParty(c, { world: '0101', cell: line[0]! });
+    expect(c.terrain).toBe('forest');
+    // Unterwegs folgt das Gelände dem erreichten Feld.
+    let t = startTrip(c, planTrip(c, line[1]!, { rent: false }));
+    while (t.trip) t = driveDay(t, clock);
+    expect(t.terrain).toBe('mountain');
   });
 });

@@ -54,14 +54,27 @@ export interface TripView {
   readonly cells: readonly number[];
 }
 
-/** Die Planung auf dem Globus: Ziel, ob gemietet werden darf, der Vorschlag oder warum es keinen gibt. */
-export interface TripPlanView {
-  readonly target: string;
-  readonly rent: boolean;
-  readonly plan: TripView | undefined;
-  readonly error: string | undefined;
+/** Eine Variante der Route, wie eine Karten-App sie zeigt. */
+export interface TripOptionView {
+  /** „Zu Fuß“, „Ground Car mieten“, „Eigener Ground Car“. */
+  readonly title: string;
+  /** Das Fahrzeug, das die Variante prägt (das mit den meisten Fahrstunden außer zu Fuß), für das Symbol. */
+  readonly vehicle: string;
+  /** Die Fahrzeuge der Abschnitte in Reihenfolge, z. B. Zu Fuß › Ground Car › Zu Fuß. */
+  readonly chain: readonly string[];
+  /** „Schnellste“, „Günstigste“. */
+  readonly tags: readonly string[];
+  readonly trip: TripView;
   /** Wenn die Miete der ganzen Fahrt die Kasse übersteigt: wie viel in der Kasse ist. */
   readonly short: number | undefined;
+}
+
+/** Die Planung auf dem Globus: Ziel, die Varianten, die gewählte oder warum es keine gibt. */
+export interface TripPlanView {
+  readonly target: string;
+  readonly options: readonly TripOptionView[];
+  readonly chosen: number;
+  readonly error: string | undefined;
 }
 
 /** Ein Reisetag im Log. */
@@ -128,4 +141,25 @@ export function tripDayItem(campaign: Campaign, entry: TripDay): TripDayItem {
   const city = place?.city === undefined ? undefined : hex?.map?.cities?.[place.city]?.name;
   const where = city ?? (place?.cell !== undefined && hex?.map ? `${LANDFORM_NAMES[landformAt(hex.map, place.cell)]} (Feld ${place.cell})` : (hex?.name ?? ''));
   return { kind: 'tripDay', at: entry.at, date: dateLabel(entry.day ?? 0), hours: round1(entry.hours), rent: entry.rent, arrived: entry.arrived, where };
+}
+
+/** Die Planung mit ihren Varianten in Worten. */
+export function tripPlanOf(surface: TripSurface, draft: { readonly target: number; readonly options: readonly Trip[]; readonly chosen: number; readonly error: string | undefined }, funds: number): TripPlanView {
+  const views = draft.options.map((trip) => tripView(surface, trip));
+  const fastest = views.length > 0 ? Math.min(...views.map((v) => v.totalHours)) : 0;
+  const cheapest = views.length > 0 ? Math.min(...views.map((v) => v.rent)) : 0;
+  const options = draft.options.map((trip, i): TripOptionView => {
+    const view = views[i]!;
+    const hours = new Map<string, number>();
+    trip.legs.forEach((leg) => {
+      if (leg.by !== 'walk') hours.set(leg.by, (hours.get(leg.by) ?? 0) + legHours(surface, leg));
+    });
+    const main = [...hours].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'walk';
+    const rented = trip.legs.some((l) => l.by === main && l.rented);
+    const name = vehicleOf(main).name;
+    const chain = trip.legs.map((l) => vehicleOf(l.by).name).filter((n, k, all) => k === 0 || all[k - 1] !== n);
+    const tags = [...(view.totalHours === fastest ? ['Schnellste'] : []), ...(view.rent === cheapest && views.length > 1 ? ['Günstigste'] : [])];
+    return { title: main === 'walk' ? 'Zu Fuß' : rented ? `${name} mieten` : `Eigener ${name}`, vehicle: main, chain, tags, trip: view, short: view.rent > funds ? funds : undefined };
+  });
+  return { target: cellLabel(surface, draft.target), options, chosen: draft.chosen, error: draft.error };
 }
