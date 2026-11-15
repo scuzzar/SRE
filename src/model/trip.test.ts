@@ -12,6 +12,7 @@ import {
   moveParty,
   parkVehicles,
   planOptions,
+  livingCharacters,
   planTrip,
   positionAt,
   removeLogEntry,
@@ -280,6 +281,37 @@ describe('Gemischte Varianten', () => {
     // Ohne Boot oder Fluggerät kommt man nicht übers Wasser; das Boot fährt nicht über Land von Ort zu Ort.
     expect(kinds.every((k) => k.some((v) => ['motor-boat', 'submersible', 'hovercraft', 'helicopter', 'primitive-biplane', 'fixed-wing-aircraft'].includes(v)))).toBe(true);
     for (const t of options) for (const l of t.legs.filter((leg) => leg.by === 'motor-boat')) expect(l.cells.slice(1, -1).every((q) => !land.has(q))).toBe(true);
+  });
+});
+
+describe('Linienflug (2026-11-15c)', () => {
+  const far = grid.cells - 1;
+  const city = (cell: number, name: string, port: 'A' | 'C' | 'D' | 'F') => ({ cell, name, population: 6, multiplier: 2, rank: 'primary' as const, port });
+
+  it('fliegt zwischen zwei Städten mit Hafen A–C oder F; der Fahrpreis gilt je SC und Flugstunde', () => {
+    const map = mapWith({}, { cities: [city(line[0]!, 'Ora', 'C'), city(far, 'Bel', 'F')].sort((a, b) => a.cell - b.cell) });
+    const c0 = campaignOn(map, line[0]!, { tech: 8, funds: 100_000 });
+    const trip = planOptions(c0, far).find((t) => t.legs.some((l) => l.by === 'airline'))!;
+    expect(trip.legs).toEqual([{ by: 'airline', rented: false, cells: [line[0], far] }]);
+    const surface = tripSurface(c0)!;
+    const persons = livingCharacters(c0).length;
+    const fare = Math.round(100 * persons * legHours(surface, trip.legs[0]!));
+    const c = driveDay(startTrip(c0, trip), clock);
+    expect(c.log.at(-1)).toMatchObject({ kind: 'tripDay', fare, rent: 0 });
+    expect(c.bookings.at(-1)).toMatchObject({ kind: 'fare', amount: -fare, rentFor: c.log.length - 1 });
+    const read = fromCampaignFile(toCampaignFile(c), c.id);
+    expect(read.bookings.at(-1)).toEqual(c.bookings.at(-1));
+  });
+
+  it('nicht bei Hafen D, nicht unter TL 6 und nicht bei dünner Atmosphäre', () => {
+    const uses = (port: 'C' | 'D', options: { tech?: number; atmosphere?: number }) => {
+      const map = mapWith({}, { cities: [city(line[0]!, 'Ora', 'C'), city(far, 'Bel', port)].sort((a, b) => a.cell - b.cell) });
+      return planOptions(campaignOn(map, line[0]!, { funds: 100_000, ...options }), far).some((t) => t.legs.some((l) => l.by === 'airline'));
+    };
+    expect(uses('C', { tech: 8 })).toBe(true);
+    expect(uses('D', { tech: 8 })).toBe(false);
+    expect(uses('C', { tech: 5 })).toBe(false);
+    expect(uses('C', { tech: 8, atmosphere: 3 })).toBe(false);
   });
 });
 

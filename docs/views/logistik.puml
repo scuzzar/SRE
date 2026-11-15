@@ -97,8 +97,8 @@ hide <<value>> stereotype
     name: string
     flight: number [0..1]
     atmosphere: number [0..1]
-    $new("2026-11-15c", "tl: number [0..1]")
-    $new("2026-11-15c", "fare: number [0..1]")
+    tl: number [0..1]
+    fare: number [0..1]
   }
   class VehicleSpeed <<value>> $logistik {
     kmh: number
@@ -112,12 +112,12 @@ hide <<value>> stereotype
     rented: boolean
     /hours: number
     /rent: number
-    $new("2026-11-15c", "/fare: number")
+    /fare: number
   }
   class TripDay $logistik {
     hours: number
     rent: number
-    $new("2026-11-15c", "fare: number")
+    fare: number
     arrived: boolean
   }
   enum Way <<value>> $logistik {
@@ -170,7 +170,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Vehicle #line:d0021b;line.bold
-class Leg #line:d0021b;line.bold
-class TripDay #line:d0021b;line.bold
 @enduml

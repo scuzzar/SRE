@@ -108,7 +108,7 @@ hide <<value>> stereotype
     sale
     lottery
     rent
-    $new("2026-11-15c", "fare")
+    fare
   }
   class Character $charakter {
     name: string
@@ -798,8 +798,8 @@ hide <<value>> stereotype
     name: string
     flight: number [0..1]
     atmosphere: number [0..1]
-    $new("2026-11-15c", "tl: number [0..1]")
-    $new("2026-11-15c", "fare: number [0..1]")
+    tl: number [0..1]
+    fare: number [0..1]
   }
   class VehicleSpeed <<value>> $logistik {
     kmh: number
@@ -813,12 +813,12 @@ hide <<value>> stereotype
     rented: boolean
     /hours: number
     /rent: number
-    $new("2026-11-15c", "/fare: number")
+    /fare: number
   }
   class TripDay $logistik {
     hours: number
     rent: number
-    $new("2026-11-15c", "fare: number")
+    fare: number
     arrived: boolean
   }
   enum Way <<value>> $logistik {

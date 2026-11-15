@@ -77,6 +77,7 @@ export const bookingText: Record<BookingKind, string> = {
   sale: 'Verkauf',
   lottery: 'Low Lottery',
   rent: 'Miete',
+  fare: 'Fahrpreis',
 };
 
 /** Die Rüstungsklassen, wie die Matrix sie schreibt. */
@@ -420,5 +421,6 @@ export function needText(need: number, chance: number): string {
 /** Ein Reisetag in Zahlen: „8 Fahrstunden · Miete Cr1 000“. */
 export function tripDayDetail(item: TripDayItem): string {
   const hours = `${String(item.hours).replace('.', ',')} ${item.hours === 1 ? 'Fahrstunde' : 'Fahrstunden'}`;
-  return item.rent > 0 ? `${hours} · Miete Cr${item.rent.toLocaleString('de-DE')}` : hours;
+  const costs = [...(item.rent > 0 ? [`Miete Cr${item.rent.toLocaleString('de-DE')}`] : []), ...(item.fare > 0 ? [`Fahrpreis Cr${item.fare.toLocaleString('de-DE')}`] : [])];
+  return [hours, ...costs].join(' · ');
 }

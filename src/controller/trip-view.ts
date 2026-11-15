@@ -6,6 +6,9 @@ import {
   landformAt,
   legHours,
   legRent,
+  legFare,
+  totalFare,
+  farePayers,
   positionAt,
   totalHours,
   totalRent,
@@ -32,6 +35,8 @@ export interface LegView {
   readonly hours: number;
   /** Miete je Tag; 0 bei eigenen Fahrzeugen und zu Fuß. */
   readonly rentPerDay: number;
+  /** Fahrpreis im Linienverkehr für alle SC; sonst 0. */
+  readonly fare: number;
   /** Schon ganz gefahren. */
   readonly done: boolean;
 }
@@ -46,8 +51,11 @@ export interface TripView {
   /** Reisetage der ganzen Fahrt und die, die noch fehlen. */
   readonly days: number;
   readonly daysLeft: number;
-  /** Was die Fahrt (bzw. der Rest) an Miete kostet. */
+  /** Was die Fahrt (bzw. der Rest) an Miete und Fahrpreis kostet. */
   readonly rent: number;
+  readonly fare: number;
+  /** Miete und Fahrpreis zusammen. */
+  readonly cost: number;
   /** Wo die Gruppe gerade ist. */
   readonly at: string;
   /** Die Felder der Route in Reihenfolge, zum Zeichnen. */
@@ -84,6 +92,7 @@ export interface TripDayItem {
   readonly date: string;
   readonly hours: number;
   readonly rent: number;
+  readonly fare: number;
   readonly arrived: boolean;
   /** Wo die Gruppe am Abend ist. */
   readonly where: string;
@@ -98,7 +107,7 @@ export function cellLabel(surface: TripSurface, cell: number): string {
   return `${LANDFORM_NAMES[landformAt(surface.map, cell)]} (Feld ${cell})`;
 }
 
-export function tripView(surface: TripSurface, trip: Trip): TripView {
+export function tripView(surface: TripSurface, trip: Trip, persons: number): TripView {
   let t = 0;
   const legs = trip.legs.map((leg): LegView => {
     const hours = legHours(surface, leg);
@@ -112,6 +121,7 @@ export function tripView(surface: TripSurface, trip: Trip): TripView {
       to: cellLabel(surface, leg.cells.at(-1)!),
       hours: round1(hours),
       rentPerDay: legRent(leg),
+      fare: legFare(surface, leg, persons),
       done: t <= trip.hours + 1e-9,
     };
   });
@@ -124,6 +134,8 @@ export function tripView(surface: TripSurface, trip: Trip): TripView {
     days: tripDays(surface, trip),
     daysLeft: daysLeft(surface, trip),
     rent: totalRent(surface, trip),
+    fare: totalFare(surface, trip, persons),
+    cost: totalRent(surface, trip) + totalFare(surface, trip, persons),
     at: cellLabel(surface, positionAt(surface, trip).cell),
     cells,
   };
@@ -132,7 +144,7 @@ export function tripView(surface: TripSurface, trip: Trip): TripView {
 /** Die laufende Fahrt der Kampagne; ohne Fahrt keine. */
 export function activeTripView(campaign: Campaign): TripView | undefined {
   const surface = campaign.trip ? tripSurface(campaign) : undefined;
-  return surface && campaign.trip ? tripView(surface, campaign.trip) : undefined;
+  return surface && campaign.trip ? tripView(surface, campaign.trip, farePayers(campaign)) : undefined;
 }
 
 export function tripDayItem(campaign: Campaign, entry: TripDay): TripDayItem {
@@ -140,14 +152,14 @@ export function tripDayItem(campaign: Campaign, entry: TripDay): TripDayItem {
   const hex = place ? hexById(campaign.hexes, place.world) : undefined;
   const city = place?.city === undefined ? undefined : hex?.map?.cities?.[place.city]?.name;
   const where = city ?? (place?.cell !== undefined && hex?.map ? `${LANDFORM_NAMES[landformAt(hex.map, place.cell)]} (Feld ${place.cell})` : (hex?.name ?? ''));
-  return { kind: 'tripDay', at: entry.at, date: dateLabel(entry.day ?? 0), hours: round1(entry.hours), rent: entry.rent, arrived: entry.arrived, where };
+  return { kind: 'tripDay', at: entry.at, date: dateLabel(entry.day ?? 0), hours: round1(entry.hours), rent: entry.rent, fare: entry.fare ?? 0, arrived: entry.arrived, where };
 }
 
 /** Die Planung mit ihren Varianten in Worten. */
-export function tripPlanOf(surface: TripSurface, draft: { readonly target: number; readonly options: readonly Trip[]; readonly chosen: number; readonly error: string | undefined }, funds: number): TripPlanView {
-  const views = draft.options.map((trip) => tripView(surface, trip));
+export function tripPlanOf(surface: TripSurface, draft: { readonly target: number; readonly options: readonly Trip[]; readonly chosen: number; readonly error: string | undefined }, funds: number, persons: number): TripPlanView {
+  const views = draft.options.map((trip) => tripView(surface, trip, persons));
   const fastest = views.length > 0 ? Math.min(...views.map((v) => v.totalHours)) : 0;
-  const cheapest = views.length > 0 ? Math.min(...views.map((v) => v.rent)) : 0;
+  const cheapest = views.length > 0 ? Math.min(...views.map((v) => v.cost)) : 0;
   const options = draft.options.map((trip, i): TripOptionView => {
     const view = views[i]!;
     const hours = new Map<string, number>();
@@ -158,12 +170,13 @@ export function tripPlanOf(surface: TripSurface, draft: { readonly target: numbe
     const chain = trip.legs
       .map((l) => ({ vehicle: l.by, name: vehicleOf(l.by).name, rented: l.rented }))
       .filter((c, k, all) => k === 0 || all[k - 1]!.vehicle !== c.vehicle || all[k - 1]!.rented !== c.rented);
-    const distinct = (rented: boolean) => [...new Set(trip.legs.filter((l) => l.by !== 'walk' && l.rented === rented).map((l) => vehicleOf(l.by).name))];
-    const own = distinct(false);
-    const hired = distinct(true);
-    const title = [...own.map((n) => `Eigener ${n}`), ...(hired.length > 0 ? [`${hired.join(' + ')} mieten`] : [])].join(', ') || 'Zu Fuß';
-    const tags = [...(view.totalHours === fastest ? ['Schnellste'] : []), ...(view.rent === cheapest && views.length > 1 ? ['Günstigste'] : [])];
-    return { title, vehicle: main, chain, tags, trip: view, short: view.rent > funds ? funds : undefined };
+    const names = (pick: (l: Trip['legs'][number]) => boolean) => [...new Set(trip.legs.filter((l) => l.by !== 'walk' && pick(l)).map((l) => vehicleOf(l.by).name))];
+    const lines = names((l) => vehicleOf(l.by).fare !== undefined);
+    const own = names((l) => !l.rented && vehicleOf(l.by).fare === undefined);
+    const hired = names((l) => l.rented);
+    const title = [...own.map((n) => `Eigener ${n}`), ...(hired.length > 0 ? [`${hired.join(' + ')} mieten`] : []), ...lines].join(', ') || 'Zu Fuß';
+    const tags = [...(view.totalHours === fastest ? ['Schnellste'] : []), ...(view.cost === cheapest && views.length > 1 ? ['Günstigste'] : [])];
+    return { title, vehicle: main, chain, tags, trip: view, short: view.cost > funds ? funds : undefined };
   });
   return { target: cellLabel(surface, draft.target), options, chosen: draft.chosen, error: draft.error };
 }
