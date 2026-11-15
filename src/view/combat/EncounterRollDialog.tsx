@@ -16,7 +16,8 @@ const RULES: Record<string, string> = {
 
 /**
  * Das Würfelfenster eines Begegnungswurfs aus der Reihe im Reiter Begegnung: Der Würfel des Tests rollt,
- * dann steht da, was herauskam, und was man danach tun kann (beim Patron „Als NSC“, bei einem
+ * dann steht da, was herauskam, und was man danach tun kann (beim Patron „Als NSC“, das ihn anlegt
+ * und das Fenster schließt, daneben „Abbrechen“; bei einem
  * Tierereignis die Rettungswürfe). Ohne Würfel (etwa schon getestet) steht nur der Hinweis da. Kam es
  * zur Begegnung, führt „Zur Begegnung“ zu ihrer Übersicht. Ein Tippen überspringt die Animation.
  */
@@ -30,6 +31,8 @@ export function EncounterRollDialog({ roll, view }: { roll: TripRoll; view: Snap
   const patron = roll.kind === 'patron' && roll.passed ? view.patron : undefined;
   const rumor = (roll.kind === 'rumor' && roll.passed) || (patron?.last?.rumor ?? false) ? view.rumor?.last : undefined;
   const event = roll.kind === 'animal' ? view.combat?.animals.lastEvent : undefined;
+  // Ein Patron (keine Gerücht-Zeile), den man als NSC anlegen kann.
+  const asNpc = patron?.last && !patron.last.rumor ? patron.npc : undefined;
   return (
     <div className="modal">
       <section className="result trip-roll encounter-roll" role="dialog" aria-modal="true" aria-labelledby="encounter-roll-title" onClick={() => thrown && phase < 3 && skip(3)}>
@@ -51,14 +54,7 @@ export function EncounterRollDialog({ roll, view }: { roll: TripRoll; view: Snap
             <strong>{rumorName(rumor)}</strong> <span>{rumorDetail(rumor)}</span>
           </p>
         )}
-        {landed && patron?.last && !patron.last.rumor && patron.npc && (
-          <div className="patron-npc">
-            <button type="button" className="ghost" disabled={patron.npc.blocker !== undefined} onClick={() => game.createPatronNpc()}>
-              Als NSC
-            </button>
-            <span className="small-label">{patron.npc.blocker ?? 'Zufälliger NSC in der Laufbahn des Patrons, kommt in den Reiter NSC.'}</span>
-          </div>
-        )}
+        {landed && asNpc && <p className="small-label">{asNpc.blocker ?? 'Als NSC: ein zufälliger NSC in der Laufbahn des Patrons, er kommt in den Reiter NSC.'}</p>}
         {landed && event && (
           <p className="patron-last">
             <span>{event.text}</span>
@@ -82,9 +78,21 @@ export function EncounterRollDialog({ roll, view }: { roll: TripRoll; view: Snap
             {view.combat.animals.note}
           </p>
         )}
-        <button type="button" className="primary" onClick={() => game.closeEncounterRoll()}>
-          {roll.encounter ? 'Zur Begegnung' : 'Weiter'}
-        </button>
+        {landed && asNpc ? (
+          // Beim Patron: „Als NSC“ legt ihn an und schließt das Fenster, „Abbrechen“ schließt nur.
+          <div className="encounter-choice-actions">
+            <button type="button" className="ghost" onClick={() => game.closeEncounterRoll()}>
+              Abbrechen
+            </button>
+            <button type="button" className="primary" disabled={asNpc.blocker !== undefined} onClick={() => game.createPatronNpc()}>
+              Als NSC
+            </button>
+          </div>
+        ) : (
+          <button type="button" className="primary" onClick={() => game.closeEncounterRoll()}>
+            {roll.encounter ? 'Zur Begegnung' : 'Weiter'}
+          </button>
+        )}
       </section>
     </div>
   );
