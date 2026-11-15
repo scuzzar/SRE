@@ -461,7 +461,7 @@ void main() {
     // Fluss: in der Mitte tief, am Rand flach; Strömung zieht Schlieren mit; nasses, dunkles Ufer.
     float depth = 1.0 - a;
     vec3 shallow = vec3(0.22, 0.45, 0.6);
-    vec3 deep = mix(vec3(0.12, 0.32, 0.52), vec3(0.08, 0.24, 0.44), vFlow);
+    vec3 deep = vec3(0.1, 0.28, 0.48);
     vec3 water = mix(shallow, deep, smoothstep(0.0, 0.8, depth));
     float streak = wave(vAlong * 9.0 + vAcross * 2.5 + wave(vAlong * 2.0) * 2.0);
     water *= 1.0 + 0.08 * streak * detail;
@@ -472,8 +472,9 @@ void main() {
     float bankA = (1.0 - bankT) * 0.5 * detail * outer;
     col = mix(bank * bankA, water, core);
     alpha = mix(bankA, 1.0, core);
-    // An der Mündung geht der Fluss ins Meer über.
-    float mouth = 1.0 - smoothstep(0.93, 1.0, vFlow);
+    // An der Mündung geht der Fluss über fast ein Feld weich ins Meer über (vFlow: Felder bis zum Ende).
+    float mouth = smoothstep(0.0, 0.9, vFlow);
+    mouth *= mouth;
     col *= mouth;
     alpha *= mouth;
   } else {
@@ -516,14 +517,10 @@ export function lineMesh(globe: GlobeView): Float32Array {
   const band = (cells: readonly number[], kind: 0 | 1, seed: number) => {
     const points = cells.map(at);
     if (kind === 0) {
-      // Die Mündung: ein Stück hinein ins nächste Wasserfeld.
+      // Die Mündung: bis in die Mitte des nächsten Wasserfeldes, dort ist er ganz ins Meer übergegangen.
       const last = cells[cells.length - 1]!;
       const sea = grid.neighbors[last]!.find((q) => forms[q] === 'water' || forms[q] === 'waterIce');
-      if (sea !== undefined) {
-        const a = at(last);
-        const b = at(sea);
-        points.push([a[0] + (b[0] - a[0]) * 0.6, a[1] + (b[1] - a[1]) * 0.6, a[2] + (b[2] - a[2]) * 0.6]);
-      }
+      if (sea !== undefined) points.push(at(sea));
     }
     if (points.length < 2) return;
     const steps = 10;
@@ -563,6 +560,7 @@ export function lineMesh(globe: GlobeView): Float32Array {
     }
     let along = 0;
     const n = samples.length;
+    let total = 0;
     const vertex = (i: number, side: number) => {
       const c = samples[i]!;
       const prev = samples[Math.max(0, i - 1)]!;
@@ -578,9 +576,11 @@ export function lineMesh(globe: GlobeView): Float32Array {
       sy /= sl;
       sz /= sl;
       const flow = i / (n - 1);
-      // Flüsse laufen an der Quelle spitz aus und werden zur Mündung hin breiter.
-      const halfW = kind === 0 ? cellW * (0.03 + 0.07 * flow) * Math.min(1, flow * 12) : cellW * 0.026;
-      out.push(c[0], c[1], c[2], sx, sy, sz, side, halfW, along, kind, flow);
+      const toEnd = total - along;
+      // Flüsse laufen an der Quelle spitz aus, werden zur Mündung hin breiter und weiten sich dort zum Trichter.
+      const funnel = 1 + 1.2 * (1 - Math.min(1, toEnd / 1.2)) ** 2;
+      const halfW = kind === 0 ? cellW * (0.03 + 0.07 * flow) * Math.min(1, flow * 12) * funnel : cellW * 0.026;
+      out.push(c[0], c[1], c[2], sx, sy, sz, side, halfW, along, kind, kind === 0 ? toEnd : 0);
     };
     const alongAt: number[] = [0];
     for (let i = 1; i < n; i++) {
@@ -589,6 +589,7 @@ export function lineMesh(globe: GlobeView): Float32Array {
       along += Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]) / cellW;
       alongAt.push(along);
     }
+    total = along;
     for (let i = 0; i < n - 1; i++) {
       // Zwei Dreiecke je Stück; der Weg steht je Ecke.
       const quad: [number, number][] = [
@@ -606,7 +607,47 @@ export function lineMesh(globe: GlobeView): Float32Array {
     }
   };
   (map.rivers ?? []).forEach((river, i) => band(river, 0, i + 1));
-  (map.roads ?? []).forEach((road, i) => band(road, 1, i + 1001));
+  // Straßen teilen sich oft Felder (etwa von einer Stadt in zwei Richtungen). Daraus wird ein Netz:
+  // jeder Abschnitt zwischen zwei Feldern nur einmal, Ketten von Kreuzung zu Kreuzung (oder Ende).
+  const links = new Map<number, Set<number>>();
+  const link = (a: number, b: number) => {
+    if (!links.has(a)) links.set(a, new Set());
+    links.get(a)!.add(b);
+  };
+  for (const road of map.roads ?? []) {
+    for (let i = 1; i < road.length; i++) {
+      if (road[i - 1] === road[i]) continue;
+      link(road[i - 1]!, road[i]!);
+      link(road[i]!, road[i - 1]!);
+    }
+  }
+  const drawn = new Set<string>();
+  const edge = (a: number, b: number) => (a < b ? `${a}-${b}` : `${b}-${a}`);
+  const walk = (start: number, next: number): number[] => {
+    const chain = [start, next];
+    drawn.add(edge(start, next));
+    let prev = start;
+    let cell = next;
+    while (links.get(cell)!.size === 2) {
+      const after = [...links.get(cell)!].find((q) => q !== prev)!;
+      if (drawn.has(edge(cell, after))) break;
+      chain.push(after);
+      drawn.add(edge(cell, after));
+      prev = cell;
+      cell = after;
+    }
+    return chain;
+  };
+  const chains: number[][] = [];
+  const nodes = [...links.keys()].sort((a, b) => a - b);
+  // Erst von Kreuzungen und Enden aus, dann was übrig ist (Ringe).
+  for (const pass of [(c: number) => links.get(c)!.size !== 2, () => true]) {
+    for (const c of nodes) {
+      if (!pass(c)) continue;
+      for (const q of [...links.get(c)!].sort((a, b) => a - b)) if (!drawn.has(edge(c, q))) chains.push(walk(c, q));
+    }
+  }
+  chains.forEach((chain) => band(chain, 1, chain[0]! * 7 + chain[1]! + 1001));
   return new Float32Array(out);
 }
 
