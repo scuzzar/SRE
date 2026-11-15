@@ -338,7 +338,7 @@ AnimalRow --> AnimalTrait
 Encounter --> Behavior
 AnimalType --> AnimalCategory
 Campaign "*" --> "0..1" Terrain : terrain
-Landform "*" -$newArrow("2026-11-15b")-> "1" Terrain : terrain
+Landform "*" --> "1" Terrain : terrain
 AnimalTypeRow "*" --> "1" AnimalType : type
 Character "*" --> "0..1" AnimalRow : animal
 AnimalSizeRow -[hidden]- AnimalTraitRow

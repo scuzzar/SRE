@@ -3,7 +3,9 @@
 
 import { DomainError } from './errors';
 import type { Campaign } from './campaign';
+import { ref } from './reference';
 import { hexById, hexId, worldOf, type Hex } from './sector';
+import { landformAt } from './surface-map';
 
 export interface Place {
   /** Das Hexfeld der Welt, als Spalte und Zeile (0304). */
@@ -69,7 +71,7 @@ export function moveParty(campaign: Campaign, place: Place): Campaign {
   checkPlace(campaign.hexes, place);
   // Von Hand versetzt: Eine Fahrt fällt weg (siehe domain-model.md, *Fahrt*).
   const rest = Object.fromEntries(Object.entries(campaign).filter(([key]) => key !== 'trip')) as Omit<Campaign, 'trip'>;
-  return { ...rest, location: place };
+  return withPlaceTerrain({ ...rest, location: place });
 }
 
 /** Versetzt einen dauerhaften NSC an einen Ort; er lebt dann dort. */
@@ -88,4 +90,26 @@ export function happenedAt(campaign: Campaign, world: string, cell?: number): re
     if (cell === undefined || placeCell(campaign.hexes, e.place) === cell) result.push(i);
   });
   return result;
+}
+
+/** Das Gelände der Begegnungen in einer Stadt. */
+export const CITY_TERRAIN = 'city';
+
+/**
+ * Das Gelände der Begegnungen, mit dem ein Ort vorbelegt (2026-11-15b, *Gelände*): auf einem Feld mit
+ * Haupt- oder Nebenstadt City, sonst das Gelände seiner Geländeart (`Landform.terrain`). Ohne Feld
+ * (nur die Welt, eine Orbitalstadt) keins.
+ */
+export function terrainOfPlace(hexes: readonly Hex[], place: Place | undefined): string | undefined {
+  const map = place === undefined ? undefined : hexById(hexes, place.world)?.map;
+  const cell = placeCell(hexes, place);
+  if (!map || cell === undefined) return undefined;
+  if ((map.cities ?? []).some((c) => c.cell === cell)) return CITY_TERRAIN;
+  return ref.encounters.landformTerrains[landformAt(map, cell)];
+}
+
+/** Belegt das Gelände der Begegnungen aus dem Aufenthaltsort vor; ohne Feld bleibt es, wie es ist. */
+export function withPlaceTerrain(campaign: Campaign): Campaign {
+  const terrain = terrainOfPlace(campaign.hexes, campaign.location);
+  return terrain === undefined || terrain === campaign.terrain ? campaign : { ...campaign, terrain };
 }

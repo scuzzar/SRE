@@ -345,7 +345,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Possession.parked` und der Bereich *Fahrzeuge und Wege*. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-15-fahrzeuge-und-gelaende.png`](changes/2026-11-15-fahrzeuge-und-gelaende.png).
 
-> **Entwurf, noch nicht abgestimmt** (Kennzeichen 2026-11-15b): **Gelände aus dem Aufenthaltsort**
+> Am 15. November 2026 freigegeben (Kennzeichen 2026-11-15b): **Gelände aus dem Aufenthaltsort**
 > (siehe *Gelände*). Kommt die Gruppe auf ein Feld oder in eine Stadt, belegt die App das Gelände
 > der Begegnungen vor: je Geländeart der Oberflächenkarte ein Gelände, in einer Stadt City. Von Hand
 > ändern geht weiter. Neu im Bild: `Landform → Terrain : terrain`. Der Ausschnitt dazu liegt unter
@@ -381,7 +381,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-2026-11-15b (Gelände aus dem Aufenthaltsort).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -1322,13 +1322,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   neben dem Aufenthaltsort, und es bleibt an der Kampagne (`Campaign.terrain`), bis man es ändert;
   fehlt es, gilt ±0 und es gibt keine Tiere. Jede Begegnung hält das Gelände fest, mit dem sie
   gewürfelt wurde (`Encounter.terrain`).
-  - **Vorbelegt aus dem Aufenthaltsort** (Entwurf, 2026-11-15b): Kommt die Gruppe auf ein Feld oder
+  - **Vorbelegt aus dem Aufenthaltsort** (freigegeben am 15. November 2026, 2026-11-15b): Kommt die Gruppe auf ein Feld oder
     in eine Stadt (Gruppe hierher setzen, jeder Reisetag einer Fahrt, Ankunft), setzt die App das
     Gelände neu: in einer Haupt- oder Nebenstadt City, sonst das Gelände der Geländeart des Feldes
     (`Landform.terrain`). Danach kann man es oben im Reiter Begegnung wie bisher ändern, etwa auf
     River am Fluss oder Ruins; es gilt bis zum nächsten Ortswechsel. Ohne Feld (nur die Welt, nach
     einer Reise zwischen Welten, eine Orbitalstadt) bleibt das Gelände, wie es ist.
-  - **Die Zuordnung** (Vorschlag, Hausregel):
+  - **Die Zuordnung** (Hausregel, Owner 15. November 2026):
 
     | Geländeart | Gelände |
     |---|---|

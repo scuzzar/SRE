@@ -71,6 +71,7 @@
     {"id": "city", "name": "City", "dm": -4},
     {"id": "interior", "name": "Building Interior", "dm": -5}
   ],
+  "landformTerrains": {"water": "maritime-surface", "waterIce": "arctic", "landIce": "arctic", "tundra": "prairie", "mountain": "mountain", "rugged": "rough", "desert": "desert", "jungle": "jungle", "swamp": "swamp", "open": "forest", "settled": "clear"},
   "ranges": [
     {"roll": 1, "range": "short"},
     {"roll": 2, "range": "close"},

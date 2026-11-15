@@ -6,7 +6,7 @@ import type { Campaign, Possession } from './campaign';
 import { possessionKey } from './campaign';
 import { DomainError } from './errors';
 import type { TripDay } from './log';
-import { placeCell, type Place } from './place';
+import { placeCell, withPlaceTerrain, type Place } from './place';
 import type { Clock } from './ports';
 import { itemOf, ref } from './reference';
 import { worldOf, type Hex } from './sector';
@@ -496,5 +496,6 @@ export function driveDay(campaign: Campaign, clock: Clock): Campaign {
     log: [...after.log, entry],
     bookings: booking ? [...after.bookings, booking] : after.bookings,
   };
-  return arrived ? withoutTrip(moved) : { ...moved, trip: { ...trip, hours: to } };
+  // Das Gelände der Begegnungen folgt dem erreichten Feld (2026-11-15b).
+  return withPlaceTerrain(arrived ? withoutTrip(moved) : { ...moved, trip: { ...trip, hours: to } });
 }
