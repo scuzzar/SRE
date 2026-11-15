@@ -4,11 +4,13 @@ import { roleText } from '../format';
 import { useGame } from '../game-context';
 import { CloseIcon, LocateIcon, PencilIcon } from '../icons';
 import { createGlobeRenderer, type GlobeRenderer } from './globe-gl';
+import { hideLoading, showLoading } from '../loading';
 import { cellAt, radiusOf, renderGlobe, screenOf, type Camera, type Viewport } from './globe-render';
 import { HappenedList } from './HappenedList';
 import { NoteSection, SurfaceSection, WorldCard } from './WorldSheet';
 
 const DEG = Math.PI / 180;
+const LOADING = 'Welt wird aufgebaut …';
 /** So lange wartet ein Tippen auf ein zweites (Doppeltippen zoomt statt zu wählen). */
 const DOUBLE_TAP_MS = 260;
 
@@ -53,6 +55,8 @@ export function GlobeScreen({
   const canvas = useRef<HTMLCanvasElement>(null);
   const base = useRef<HTMLCanvasElement>(null);
   const renderer = useRef<GlobeRenderer | null | undefined>(undefined);
+  const building = useRef(false);
+  const firstFrame = useRef(false);
   const stage = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<Viewport>({ width: 390, height: 700 });
   const [camera, setCamera] = useState<Camera>(() => {
@@ -107,8 +111,20 @@ export function GlobeScreen({
     const el = canvas.current;
     const under = base.current;
     if (!el || !under) return;
-    if (renderer.current === undefined) renderer.current = createGlobeRenderer(under) ?? null;
-    const gl = renderer.current;
+    // Die Grafik entsteht in Schritten; solange zeigt der Ladebalken den Fortschritt.
+    if (renderer.current === undefined && !building.current) {
+      building.current = true;
+      showLoading(LOADING, 0.4, 'globe');
+      void createGlobeRenderer(under, globe, (done) => showLoading(LOADING, 0.4 + 0.6 * done, 'globe')).then((made) => {
+        renderer.current = made ?? null;
+        building.current = false;
+        // Der Balken geht erst nach dem ersten echten Bild (siehe unten).
+        firstFrame.current = true;
+        setGlEpoch((n) => n + 1);
+      });
+    }
+    if (building.current) return;
+    const gl = renderer.current ?? null;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const scale = gl || !moving ? dpr : Math.min(1, dpr) * 0.55;
     const w = Math.round(view.width * scale);
@@ -128,6 +144,11 @@ export function GlobeScreen({
       ctx.putImageData(img, 0, 0);
     }
     drawMarkers(ctx, globe, camera, { width: w, height: h }, scale, !gl);
+    if (firstFrame.current) {
+      firstFrame.current = false;
+      gl?.finish();
+      requestAnimationFrame(() => hideLoading('globe'));
+    }
   }, [globe, camera, view, moving, showGrid, glEpoch]);
 
   // Drehen, Zoomen, Antippen.

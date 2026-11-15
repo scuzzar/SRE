@@ -25,6 +25,7 @@ import { WorldSheet } from './sector/WorldSheet';
 import { WorldIcon } from './sector/WorldIcon';
 import { JourneySheet } from './sector/JourneySheet';
 import { GlobeScreen } from './sector/GlobeScreen';
+import { LoadingOverlay, withLoading } from './loading';
 
 /** Die Bereiche der Leiste unten bzw. der Reiterzeile oben, in dieser Reihenfolge. */
 const areas: readonly { readonly id: Screen; readonly label: string; readonly Icon: () => ReactElement }[] = [
@@ -72,7 +73,7 @@ export function App() {
     <div className="app">
       <header className="header">
         {here ? (
-          <button type="button" className="brand header-world" aria-label={`Aufenthaltsort ${here.name}, UWP ${here.uwp}, Globus öffnen`} title="Globus des Aufenthaltsorts" onClick={() => game.openGlobeAt(here.column, here.row)}>
+          <button type="button" className="brand header-world" aria-label={`Aufenthaltsort ${here.name}, UWP ${here.uwp}, Globus öffnen`} title="Globus des Aufenthaltsorts" onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobeAt(here.column, here.row))}>
             <WorldIcon look={here.look} size={26} />
             <span className="header-world-name">{here.name}</span>
             <span className="mono header-world-uwp">{here.uwp}</span>
@@ -146,6 +147,7 @@ export function App() {
       ) : (
         view.result && <ResultDialog result={view.result} />
       )}
+      <LoadingOverlay />
       {view.campaignSheet && <CampaignSheet key={view.campaign.id} sheet={view.campaignSheet} campaigns={view.campaigns} open={view.campaign} sync={view.sync} conflicts={view.conflicts} />}
     </div>
   );

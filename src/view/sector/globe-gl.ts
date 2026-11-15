@@ -658,6 +658,8 @@ export function lineMesh(globe: GlobeView): Float32Array {
 export interface GlobeRenderer {
   /** `picked` ist das angetippte Feld; es bekommt einen Rahmen. */
   draw(globe: GlobeView, camera: Camera, view: Viewport, showGrid: boolean, picked: number | undefined): void;
+  /** Wartet, bis die Grafikkarte alles gezeichnet hat (nach dem ersten Bild, solange der Ladebalken steht). */
+  finish(): void;
 }
 
 function compile(gl: WebGL2RenderingContext, vs: string, fs: string): WebGLProgram | undefined {
@@ -746,7 +748,16 @@ export function cellMesh(globe: GlobeView): Float32Array {
   return out;
 }
 
-export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | undefined {
+/** Ein Bild abwarten, damit der Ladebalken weiterläuft, bevor der nächste Schritt rechnet. */
+function nextFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+}
+
+/**
+ * Baut die Grafik in Schritten auf, je Schritt ein Bild: Shader, die gebackenen Muster (einige Lagen je
+ * Bild), Mipmaps, dann das Netz der Karte. `progress` bekommt den Fortschritt von 0 bis 1.
+ */
+export async function createGlobeRenderer(canvas: HTMLCanvasElement, globe: GlobeView, progress: (done: number) => void): Promise<GlobeRenderer | undefined> {
   let gl: WebGL2RenderingContext | null = null;
   try {
     gl = canvas.getContext('webgl2', { premultipliedAlpha: true, antialias: true, alpha: true });
@@ -756,10 +767,15 @@ export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | 
   if (!gl) return undefined;
   const halo = compile(gl, QUAD_VS, HALO_FS);
   const bake = compile(gl, BAKE_VS, BAKE_FS);
+  if (!halo || !bake) return undefined;
+  progress(0.15);
+  await nextFrame();
   const cells = compile(gl, CELL_VS, CELL_FS);
   const lines = compile(gl, LINE_VS, LINE_FS);
   const outline = compile(gl, CELL_VS, OUTLINE_FS);
-  if (!halo || !bake || !cells || !lines || !outline) return undefined;
+  if (!cells || !lines || !outline || gl.isContextLost()) return undefined;
+  progress(0.3);
+  await nextFrame();
 
   const quad = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, quad);
@@ -784,10 +800,24 @@ export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | 
     gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, patterns, 0, layer);
     gl.uniform1i(gl.getUniformLocation(bake, 'uLayer'), layer);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    if (layer % 3 === 2) {
+      progress(0.3 + (0.45 * (layer + 1)) / layers);
+      await nextFrame();
+      if (gl.isContextLost()) return undefined;
+      // Zwischen den Bildern kann anderes gezeichnet haben: Ziel und Programm wieder setzen.
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      gl.viewport(0, 0, BAKE_SIZE, BAKE_SIZE);
+      gl.disable(gl.BLEND);
+      gl.useProgram(bake);
+      gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+      gl.enableVertexAttribArray(bakePos);
+      gl.vertexAttribPointer(bakePos, 2, gl.FLOAT, false, 0, 0);
+    }
   }
   gl.disableVertexAttribArray(bakePos);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.deleteFramebuffer(fbo);
+  gl.bindTexture(gl.TEXTURE_2D_ARRAY, patterns);
   gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
   gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
   gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -795,6 +825,11 @@ export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | 
   gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.REPEAT);
   const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
   if (aniso) gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT, 4);
+  // Auf die Grafikkarte warten, solange der Balken steht, statt beim ersten Bild.
+  gl.finish();
+  progress(0.8);
+  await nextFrame();
+  if (gl.isContextLost()) return undefined;
 
   // Das Netz gehört zu einer Karte; wird sie neu gewürfelt, entsteht es neu.
   let shown: object | undefined;
@@ -831,24 +866,34 @@ export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | 
     ] as const
   ).map(([name, size, offset]) => [gl!.getAttribLocation(outline, name), size, offset] as const);
 
+  /** Netz und Bänder einer Karte; wird sie neu gewürfelt, entstehen sie neu. */
+  const load = (map: GlobeView) => {
+    const g = gl!;
+    if (mesh) g.deleteBuffer(mesh.buffer);
+    const data = cellMesh(map);
+    const buffer = g.createBuffer();
+    g.bindBuffer(g.ARRAY_BUFFER, buffer);
+    g.bufferData(g.ARRAY_BUFFER, data, g.STATIC_DRAW);
+    mesh = { buffer, vertices: data.length / STRIDE };
+    if (lineBuffer) g.deleteBuffer(lineBuffer.buffer);
+    const lineData = lineMesh(map);
+    const lb = g.createBuffer();
+    g.bindBuffer(g.ARRAY_BUFFER, lb);
+    g.bufferData(g.ARRAY_BUFFER, lineData, g.STATIC_DRAW);
+    lineBuffer = { buffer: lb, vertices: lineData.length / LINE_STRIDE };
+    shown = map.map;
+  };
+  load(globe);
+  progress(1);
+
   return {
+    finish() {
+      gl!.finish();
+    },
     draw(globe, camera, view, showGrid, picked) {
       const g = gl!;
-      if (shown !== globe.map || !mesh) {
-        if (mesh) g.deleteBuffer(mesh.buffer);
-        const data = cellMesh(globe);
-        const buffer = g.createBuffer();
-        g.bindBuffer(g.ARRAY_BUFFER, buffer);
-        g.bufferData(g.ARRAY_BUFFER, data, g.STATIC_DRAW);
-        mesh = { buffer, vertices: data.length / STRIDE };
-        if (lineBuffer) g.deleteBuffer(lineBuffer.buffer);
-        const lineData = lineMesh(globe);
-        const lb = g.createBuffer();
-        g.bindBuffer(g.ARRAY_BUFFER, lb);
-        g.bufferData(g.ARRAY_BUFFER, lineData, g.STATIC_DRAW);
-        lineBuffer = { buffer: lb, vertices: lineData.length / LINE_STRIDE };
-        shown = globe.map;
-      }
+      if (shown !== globe.map || !mesh) load(globe);
+      if (!mesh) return;
       const glowHex = ATMOSPHERE_GLOW[globe.look.atmosphere ?? 0];
       const glow = glowHex ? rgbOf(glowHex) : ([0, 0, 0] as const);
       const W = view.width;
