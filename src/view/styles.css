@@ -8099,12 +8099,54 @@ button:disabled {
   background: var(--panel);
 }
 
-.globe-top .trip-bar {
+/* Auf dem Globus nur ein Hinweis auf die laufende Fahrt; ein Tippen öffnet den Reiter Begegnung. */
+.trip-hint {
   pointer-events: auto;
+  align-self: flex-start;
+  min-height: 40px;
+  padding: 8px 14px;
   border: 0;
-  border-radius: 14px;
+  border-radius: 20px;
   background: rgba(20, 22, 28, 0.95);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  color: var(--text);
+  font-size: 14px;
+  text-align: left;
+}
+
+/* Die Reihe im Reiter Begegnung: fünf Würfe mit Symbol, Wort und Zählung, darunter die Zeit. */
+.dock .actions.encounter-tests {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.encounter-tests .action {
+  min-height: 54px;
+  padding: 4px 2px;
+  font-size: 11px;
+  letter-spacing: 0;
+}
+
+.encounter-tests .test-count {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.encounter-tests .action.met {
+  color: var(--muted);
+}
+
+.dock .actions.encounter-time {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.time-days {
+  max-width: 240px;
 }
 
 .trip-head {
@@ -8245,4 +8287,9 @@ button:disabled {
 
 .globe-trace {
   padding: 8px 14px;
+}
+
+/* Die Würfe stehen unten in der Reihe; auf dem Blatt bleibt nur „oder wählen …“, über die ganze Breite. */
+.encounter-start:has(> :only-child) {
+  grid-template-columns: minmax(0, 1fr);
 }

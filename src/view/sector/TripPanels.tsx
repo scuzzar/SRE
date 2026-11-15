@@ -135,8 +135,11 @@ export function TripPlanCard({ plan }: { plan: TripPlanView }) {
   );
 }
 
-/** Die laufende Fahrt: wohin, wie lange noch, „Einen Tag fahren“ und abbrechen. */
-export function TripBar({ trip, note, blocked }: { trip: TripView; note: string | undefined; blocked?: string | undefined }) {
+/**
+ * Die laufende Fahrt im Reiter Begegnung: wohin, wie lange noch, die Abschnitte und abbrechen.
+ * Weiterfahren steht unten in der Reihe `EncounterDock`, die einzige Stelle dafür.
+ */
+export function TripBar({ trip, note }: { trip: TripView; note: string | undefined }) {
   const game = useGame();
   return (
     <section className="trip-bar" aria-label="Fahrt">
@@ -153,14 +156,10 @@ export function TripBar({ trip, note, blocked }: { trip: TripView; note: string 
         <Legs trip={trip} />
       </details>
       <div className="globe-actions">
-        <button type="button" className="primary compact" disabled={blocked !== undefined} onClick={() => game.driveDay()}>
-          Einen Tag fahren
-        </button>
         <button type="button" className="ghost compact" onClick={() => game.cancelTrip()}>
           Fahrt abbrechen
         </button>
       </div>
-      {blocked && <p className="combat-hint">{blocked}</p>}
       {note && (
         <p className="error" role="alert">
           {note}
@@ -174,6 +173,16 @@ export function TripBar({ trip, note, blocked }: { trip: TripView; note: string 
  * Der Begegnungstest eines Reisetags am Boden (5+ auf 1W6): der Würfel rollt, dann steht da, ob es
  * zur Begegnung kommt; in der Wildnis sind es Tiere. Ein Tippen überspringt die Animation.
  */
+/** Auf dem Globus: Eine Fahrt läuft. Ein Tippen öffnet den Reiter Begegnung, dort geht es weiter. */
+export function TripHint({ trip }: { trip: TripView }) {
+  const game = useGame();
+  return (
+    <button type="button" className="trip-hint" onClick={() => game.showScreen('encounter')}>
+      Fahrt nach <strong>{trip.to}</strong> · Tag {trip.days - trip.daysLeft + 1}/{trip.days} ›
+    </button>
+  );
+}
+
 export function TripRollDialog({ roll }: { roll: TripRoll }) {
   const game = useGame();
   const [phase, skip] = useTimeline([200, THROW_MS, 250]);

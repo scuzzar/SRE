@@ -180,6 +180,69 @@ export function NpcPinIcon() {
   );
 }
 
+/** Eine Pfote: Tierbegegnung. */
+export function PawIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 12.5c-2.6 0-5 2.6-5 5 0 1.6 1.2 2.5 2.6 2.5 1 0 1.6-.5 2.4-.5s1.4.5 2.4.5c1.4 0 2.6-.9 2.6-2.5 0-2.4-2.4-5-5-5z" />
+      <ellipse cx="8" cy="7.5" rx="1.6" ry="2.2" />
+      <ellipse cx="16" cy="7.5" rx="1.6" ry="2.2" />
+      <ellipse cx="4.6" cy="11.5" rx="1.4" ry="1.9" />
+      <ellipse cx="19.4" cy="11.5" rx="1.4" ry="1.9" />
+    </svg>
+  );
+}
+
+/** Eine Aktentasche: der Patron, ein Auftraggeber. */
+export function BriefcaseIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="7.5" width="18" height="12" rx="2" />
+      <path d="M9 7.5V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5v2M3 12.5h18" />
+    </svg>
+  );
+}
+
+/** Eine Sprechblase: ein Gerücht. */
+export function RumorIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 5.5h16v10H11l-4.5 3.5v-3.5H4z" />
+      <path d="M8 9.5h8M8 12.5h5" />
+    </svg>
+  );
+}
+
+/** Ein Wappenschild mit Stern: die Polizei. */
+export function BadgeIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3l7.5 3v5.5c0 4.5-3.2 8-7.5 9.5-4.3-1.5-7.5-5-7.5-9.5V6z" />
+      <path d="M12 8.5l1.1 2.2 2.4.3-1.8 1.6.5 2.4-2.2-1.2-2.2 1.2.5-2.4-1.8-1.6 2.4-.3z" />
+    </svg>
+  );
+}
+
+/** Eine Uhr: Tage vergehen lassen. */
+export function ClockIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </svg>
+  );
+}
+
+/** Ein Kalenderblatt: die Woche beenden. */
+export function CalendarIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3.5" y="5" width="17" height="15" rx="2" />
+      <path d="M3.5 9.5h17M8 3v4M16 3v4M14.5 15.5l2 2 3.5-4" />
+    </svg>
+  );
+}
+
 /** Plus: eine zugeklappte Tafel der Karte aufklappen. */
 export function PlusIcon() {
   return (

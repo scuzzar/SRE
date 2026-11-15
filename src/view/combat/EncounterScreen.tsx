@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from 'react';
-import type { ChecksView, CombatView, LegalView, PatronView, RumorView, SimView, Snapshot, TimeView } from '../../controller';
+import type { CombatView, LegalView, PatronView, RumorView, SimView, Snapshot, TimeView } from '../../controller';
 import { checkDetail, patronDetail, patronName, rumorDetail, rumorName, signed } from '../format';
-import { HoldButton } from '../HoldButton';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { TripBar } from '../sector/TripPanels';
@@ -14,13 +13,13 @@ import { distancesText, EncounterIntro } from './FightScreen';
  * hierher. Läuft eine, zeigt ihre Karte sie knapp, mit Zum Kampf, Übersicht und Beenden: Nicht jede
  * Begegnung wird ein Kampf, man kann sie auch anders lösen und beenden.
  */
-export function EncounterScreen({ view }: { view: Snapshot }) {
+export function EncounterScreen({ view, days, onDays }: { view: Snapshot; /** Wie viele Tage vergehen sollen; der Knopf dazu steht unten in der Reihe. */ days: number; onDays: (days: number) => void }) {
   const combat = view.combat;
   return (
     <div className="screen">
       <section className="scroll encounter-scroll" aria-label="Begegnung">
-        {view.time && <TimeBar time={view.time} />}
-        {view.trip && <TripBar trip={view.trip} note={view.tripNote} blocked={view.time?.blocked} />}
+        {view.time && <TimeBar time={view.time} days={days} onDays={onDays} trip={view.trip !== undefined} />}
+        {view.trip && <TripBar trip={view.trip} note={view.tripNote} />}
         {combat && (
           <div className="encounter-settings">
             <LocationPick combat={combat} />
@@ -34,27 +33,27 @@ export function EncounterScreen({ view }: { view: Snapshot }) {
           ) : combat.sim && !combat.sim.animal ? (
             <RunningEncounter sim={combat.sim} />
           ) : (
-            <EncounterStart combat={combat} checks={view.checks} />
+            <EncounterStart combat={combat} />
           )}
         </EncounterKind>
         {combat && (
           <EncounterKind title="Tiere" rule="Tiertabelle der Welt im Gelände (S. 18–19) · zweimal täglich, Test 5+ auf 1W6">
-            {combat.sim?.animal ? <RunningEncounter sim={combat.sim} /> : <AnimalsBox combat={combat} checks={view.checks} />}
+            {combat.sim?.animal ? <RunningEncounter sim={combat.sim} /> : <AnimalsBox combat={combat} />}
           </EncounterKind>
         )}
         {view.patron && (
           <EncounterKind title="Patron" rule="Auftraggeber nach der Patron Encounters Matrix (S. 20) · wöchentlich, Test 5+ auf 1W6, die Liste wählt ein Würfel">
-            <PatronBox patron={view.patron} checks={view.checks} />
+            <PatronBox patron={view.patron} />
           </EncounterKind>
         )}
         {view.rumor && (
           <EncounterKind title="Gerücht" rule="Art des Gerüchts nach der Rumors Matrix (S. 21) · wöchentlich, Test 7+ auf 2W6">
-            <RumorBox rumor={view.rumor} checks={view.checks} />
+            <RumorBox rumor={view.rumor} />
           </EncounterKind>
         )}
         {view.legal && combat && (
           <EncounterKind title="Polizei" rule="Legal Encounter (S. 20) · wöchentlich, 2W6 gleich oder über der Gesetzesstufe heißt Ruhe">
-            <LegalBox legal={view.legal} checks={view.checks} />
+            <LegalBox legal={view.legal} />
           </EncounterKind>
         )}
       </section>
@@ -111,7 +110,7 @@ function RunningEncounter({ sim }: { sim: SimView }) {
  * der Kampagne. Die Einstellungen stehen oben, Würfeln und Wählen darunter; dazwischen steht deutlich,
  * wenn der Wurf keine Begegnung brachte.
  */
-function EncounterStart({ combat, checks }: { combat: CombatView; checks: ChecksView | undefined }) {
+function EncounterStart({ combat }: { combat: CombatView }) {
   const game = useGame();
   const disabled = !combat.canEncounter || combat.sim !== undefined;
   const joining = combat.joining.length > 0;
@@ -139,13 +138,6 @@ function EncounterStart({ combat, checks }: { combat: CombatView; checks: Checks
         </p>
       )}
       <div className="encounter-start">
-        <TestButton
-          title="Begegnung würfeln"
-          check={checks?.random}
-          disabled={disabled}
-          onPress={() => game.rollEncounter()}
-          onHold={() => game.rollEncounter(undefined, undefined, true)}
-        />
         <select aria-label="Begegnung wählen" value="" disabled={disabled} onChange={(e) => e.target.value && game.rollEncounter(e.target.value === 'none' ? 'none' : Number(e.target.value))}>
           <option value="">oder wählen …</option>
           {joining && <option value="none">keine · nur die NSC</option>}
@@ -165,7 +157,7 @@ function EncounterStart({ combat, checks }: { combat: CombatView; checks: Checks
  * Tiertabelle von Welt und Gelände; sie entsteht beim ersten Wurf. Ein Tier wird eine Begegnung mit
  * Übersicht, ein Ereignis steht im Log und hier. Gibt es die Tabelle schon, kann man die Zeile wählen.
  */
-function AnimalsBox({ combat, checks }: { combat: CombatView; checks: ChecksView | undefined }) {
+function AnimalsBox({ combat }: { combat: CombatView }) {
   const game = useGame();
   const animals = combat.animals;
   const event = animals.lastEvent;
@@ -195,7 +187,6 @@ function AnimalsBox({ combat, checks }: { combat: CombatView; checks: ChecksView
         </button>
       )}
       <div className="encounter-start">
-        <TestButton title="Tiere würfeln" check={checks?.animal} disabled={animals.blocked !== undefined} onPress={() => game.rollAnimals()} onHold={() => game.rollAnimals(undefined, true)} />
         <select aria-label="Tiere wählen" value="" disabled={animals.blocked !== undefined || animals.rows.length === 0} onChange={(e) => e.target.value && game.rollAnimals(Number(e.target.value))}>
           <option value="">{animals.rows.length === 0 ? 'Tabelle beim 1. Wurf' : 'oder wählen …'}</option>
           {animals.rows.map((r) => (
@@ -247,7 +238,7 @@ function TerrainPick({ combat }: { combat: CombatView }) {
  * Liste und würfelt den Patron. Die DMs der lebenden SC stehen dabei, der Wurf kommt in den Log und
  * der letzte steht hier. Unabhängig von der Zufallsbegegnung.
  */
-function PatronBox({ patron, checks }: { patron: PatronView; checks: ChecksView | undefined }) {
+function PatronBox({ patron }: { patron: PatronView }) {
   const game = useGame();
   const last = patron.last;
   const dms = patron.lists.filter((l) => l.parts.length > 0);
@@ -274,14 +265,12 @@ function PatronBox({ patron, checks }: { patron: PatronView; checks: ChecksView 
           <span className="small-label">{patron.npc.blocker ?? 'Zufälliger NSC in der Laufbahn des Patrons, kommt in den Reiter NSC.'}</span>
         </div>
       )}
-      <TestButton className="encounter-roll" title="Patron würfeln" check={checks?.patron} onPress={() => game.rollPatron()} onHold={() => game.rollPatron(true)} />
     </>
   );
 }
 
 /** Die Begegnungsart Gerücht (SE, Charts S. 21): Würfeln testet erst, ob es eines gibt, und würfelt dann die Art; sie kommt in den Log. */
-function RumorBox({ rumor, checks }: { rumor: RumorView; checks: ChecksView | undefined }) {
-  const game = useGame();
+function RumorBox({ rumor }: { rumor: RumorView }) {
   const last = rumor.last;
   return (
     <>
@@ -295,7 +284,6 @@ function RumorBox({ rumor, checks }: { rumor: RumorView; checks: ChecksView | un
           Zuletzt: <strong>{rumorName(last)}</strong> <span>{rumorDetail(last)}</span>
         </p>
       )}
-      <TestButton className="encounter-roll" title="Gerücht würfeln" check={checks?.rumor} onPress={() => game.rollRumor()} onHold={() => game.rollRumor(true)} />
     </>
   );
 }
@@ -328,37 +316,8 @@ function LocationPick({ combat }: { combat: CombatView }) {
   );
 }
 
-/**
- * Der Knopf eines Tests: sagt, wie oft er in seinem Zeitraum schon gewürfelt ist („heute 1×“). Ist die
- * Regel erfüllt, sagt der Controller beim Tippen, dass es nur lange gedrückt geht; der lange Druck
- * würfelt trotzdem.
- */
-function TestButton({ title, check, disabled = false, className = '', onPress, onHold }: { title: string; check: ChecksView[keyof ChecksView] | undefined; disabled?: boolean; className?: string; onPress: () => void; onHold: () => void }) {
-  const met = check?.met ?? false;
-  return (
-    <HoldButton
-      className={`${met ? 'ghost' : 'primary'} test-button ${className}`}
-      disabled={disabled}
-      label={`${title}${check ? `, ${check.label}` : ''}`}
-      hint="Lange drücken: noch ein Test, auch wenn die Regel für diesen Zeitraum erfüllt ist"
-      onPress={() => {
-        haptic('shake');
-        onPress();
-      }}
-      onHold={() => {
-        haptic('shake');
-        onHold();
-      }}
-    >
-      <span className="test-title">{title}</span>
-      {check && <span className="test-count">{met ? `${check.label} · lange drücken` : check.label}</span>}
-    </HoldButton>
-  );
-}
-
 /** Die Polizei (S. 20): einmal je Woche 2W6 gegen die Gesetzesstufe des Aufenthaltsorts; bei Gesetz 0 keine. */
-function LegalBox({ legal, checks }: { legal: LegalView; checks: ChecksView | undefined }) {
-  const game = useGame();
+function LegalBox({ legal }: { legal: LegalView }) {
   const last = legal.last;
   return (
     <>
@@ -373,23 +332,20 @@ function LegalBox({ legal, checks }: { legal: LegalView; checks: ChecksView | un
           Zuletzt: <strong>{last.passed ? 'Ruhe' : 'Angehalten'}</strong> <span>{checkDetail(last)}</span>
         </p>
       )}
-      <TestButton className="encounter-roll" title="Polizei würfeln" check={checks?.legal} disabled={!legal.available} onPress={() => game.rollLegal()} onHold={() => game.rollLegal(true)} />
     </>
   );
 }
 
 /**
- * Die Spielzeit: Datum mit Wochentag, Tage vergehen lassen und Woche beenden (bis zum nächsten
- * Sonntag). Fehlen Tests, erinnert der Controller beim Tippen; langes Drücken macht ohne Begegnung weiter.
+ * Die Spielzeit: Datum mit Wochentag (änderbar, solange es geht) und wie viele Tage vergehen sollen.
+ * Die Knöpfe dazu (Tage vergehen, Woche beenden, bei einer Fahrt Weiterfahren) stehen unten in der
+ * Reihe `EncounterDock`; Hinweise des Controllers stehen hier.
  */
-function TimeBar({ time }: { time: TimeView }) {
+function TimeBar({ time, days, onDays, trip }: { time: TimeView; days: number; onDays: (days: number) => void; trip: boolean }) {
   const game = useGame();
-  const [days, setDays] = useState(1);
   const [editing, setEditing] = useState(false);
   const [dayOfYear, setDayOfYear] = useState(String(time.dayOfYear));
   const [year, setYear] = useState(String(time.year));
-  const disabled = time.blocked !== undefined;
-  const weekMissing = time.missingWeek.length > 0;
   return (
     <section className="time-bar" aria-label="Spielzeit">
       <div className="time-date">
@@ -426,21 +382,18 @@ function TimeBar({ time }: { time: TimeView }) {
           </button>
         </form>
       )}
-      <div className="time-actions">
-        <select aria-label="Wie viele Tage" value={days} disabled={disabled} onChange={(e) => setDays(Number(e.target.value))}>
-          {Array.from({ length: time.maxDays }, (_, i) => i + 1).map((n) => (
-            <option key={n} value={n}>
-              {n} {n === 1 ? 'Tag' : 'Tage'}
-            </option>
-          ))}
-        </select>
-        <button type="button" className="primary" disabled={disabled} onClick={() => game.passDays(days)}>
-          vergehen lassen
-        </button>
-        <HoldButton className={weekMissing ? 'ghost' : 'primary'} disabled={disabled} hint="Lange drücken: die Woche endet ohne die fehlenden Tests" onPress={() => game.endWeek()} onHold={() => game.endWeek(true)}>
-          Woche beenden (+{time.toSunday})
-        </HoldButton>
-      </div>
+      {!trip && (
+        <label className="field time-days">
+          <span>Unten vergehen lassen</span>
+          <select aria-label="Wie viele Tage" value={Math.min(days, time.maxDays)} disabled={time.blocked !== undefined} onChange={(e) => onDays(Number(e.target.value))}>
+            {Array.from({ length: time.maxDays }, (_, i) => i + 1).map((n) => (
+              <option key={n} value={n}>
+                {n} {n === 1 ? 'Tag' : 'Tage'}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       {time.blocked && <p className="combat-hint">{time.blocked}</p>}
       {time.note && (
         <p className="encounter-note" role="status">

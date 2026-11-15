@@ -36,6 +36,8 @@ export function HoldButton({
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   // Nach einem ausgelösten langen Druck gilt das Loslassen nicht als Tippen.
   const held = useRef(false);
+  // Wo der Finger aufsetzte: Wer ihn weiter schiebt (etwa das Ziehblatt zieht), hält nicht.
+  const start = useRef<{ x: number; y: number } | undefined>(undefined);
 
   const stop = () => {
     clearTimeout(timer.current);
@@ -57,6 +59,7 @@ export function HoldButton({
       onPointerDown={(e) => {
         if (e.button !== 0) return;
         held.current = false;
+        start.current = { x: e.clientX, y: e.clientY };
         setHolding(true);
         timer.current = setTimeout(() => {
           timer.current = undefined;
@@ -67,6 +70,9 @@ export function HoldButton({
         }, HOLD_MS);
       }}
       onPointerUp={stop}
+      onPointerMove={(e) => {
+        if (timer.current !== undefined && start.current && Math.hypot(e.clientX - start.current.x, e.clientY - start.current.y) > 10) stop();
+      }}
       onPointerLeave={stop}
       onPointerCancel={stop}
       onContextMenu={(e) => e.preventDefault()}

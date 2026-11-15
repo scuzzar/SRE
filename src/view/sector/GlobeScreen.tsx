@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { landformAt, type GlobeView, type LogItem, type TripPlanView, type TripView, type WorldView } from '../../controller';
-import { TripBar, TripPlanCard } from './TripPanels';
+import { TripHint, TripPlanCard } from './TripPanels';
 import { roleText } from '../format';
 import { useGame } from '../game-context';
 import { CloseIcon, LocateIcon, PencilIcon } from '../icons';
@@ -45,7 +45,6 @@ export function GlobeScreen({
   log,
   logDays,
   trip,
-  tripNote,
 }: {
   globe: GlobeView;
   world: WorldView | undefined;
@@ -54,7 +53,6 @@ export function GlobeScreen({
   log: readonly LogItem[];
   logDays: readonly (string | undefined)[];
   trip: TripView | undefined;
-  tripNote: string | undefined;
 }) {
   const game = useGame();
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -424,7 +422,7 @@ export function GlobeScreen({
             Einträge{globe.events.length > 0 ? ` ${globe.events.length}` : ''} ▾
           </button>
         </div>
-        {trip && globe.partyHere && panel === undefined && <TripBar trip={trip} note={tripNote} />}
+        {trip && globe.partyHere && panel === undefined && <TripHint trip={trip} />}
         {panel === 'world' && world && (
           <div className="globe-panel globe-world" role="region" aria-label="Die Welt">
             <WorldCard world={world} onGlobe />
