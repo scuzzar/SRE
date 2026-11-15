@@ -280,12 +280,17 @@ test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des 
   await placing.getByRole('button', { name: /^OK, 1 NSC nach / }).click();
   await expect(field).toContainText('Mara Voss · NSC, Kontakt');
   await expect(placeNpcs).toBeDisabled();
-  // Hierhin reisen plant die Route; dann ist der Knopf aus.
+  // Hierhin reisen plant die Route; dann stehen unten Abbrechen und Losfahren statt der Knöpfe des Felds.
   await actions.getByRole('button', { name: 'Hierhin reisen' }).click();
-  await expect(actions.getByRole('button', { name: 'Hierhin reisen' })).toBeDisabled();
-  await expect(actions.getByRole('button', { name: 'Hierhin reisen' })).toHaveAttribute('title', 'Die Route ist schon geplant');
+  await expect(actions.getByRole('button', { name: 'Hierhin reisen' })).toHaveCount(0);
+  await expect(actions.getByRole('button', { name: /Gruppe .* setzen/ })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Route' }).getByRole('button', { name: 'Losfahren' })).toHaveCount(0);
+  // Abbrechen führt zurück zu den Knöpfen des Felds.
+  await actions.getByRole('button', { name: 'Abbrechen' }).click();
+  await expect(page.getByRole('region', { name: 'Route' })).toHaveCount(0);
+  await actions.getByRole('button', { name: 'Hierhin reisen' }).click();
   // Losfahren öffnet den Reiter Begegnung: Dort unten ist Weiterfahren, die einzige Stelle dafür.
-  await page.getByRole('button', { name: 'Losfahren' }).click();
+  await actions.getByRole('button', { name: 'Losfahren' }).click();
   const nav = page.getByRole('navigation', { name: 'Bereiche' });
   await expect(nav.getByRole('button', { name: 'Begegnung', exact: true })).toHaveAttribute('aria-current', 'page');
   const dock = page.getByRole('region', { name: 'Begegnung und Zeit' });

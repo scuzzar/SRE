@@ -49,7 +49,7 @@ function duration(trip: TripView): { readonly big: string; readonly small: strin
   return trip.days <= 1 ? { big: hoursText(trip.totalHours), small: '1 Reisetag' } : { big: daysText(trip.days), small: `${hoursText(trip.totalHours)} Fahrt` };
 }
 
-/** Die Planung im angetippten Feld: die Varianten wie bei einer Karten-App, die gewählte mit ihren Abschnitten, „Losfahren“. */
+/** Die Planung im angetippten Feld: die Varianten wie bei einer Karten-App, die gewählte mit ihren Abschnitten. „Losfahren“ und „Abbrechen“ stehen unten in der Reihe des Felds (`FieldDock`). */
 export function TripPlanCard({ plan }: { plan: TripPlanView }) {
   const game = useGame();
   const chosen = plan.options[plan.chosen];
@@ -121,16 +121,6 @@ export function TripPlanCard({ plan }: { plan: TripPlanView }) {
           {plan.error}
         </p>
       )}
-      <div className="globe-actions">
-        {chosen && (
-          <button type="button" className="primary compact" onClick={() => game.startTrip()}>
-            Losfahren
-          </button>
-        )}
-        <button type="button" className="ghost compact" onClick={() => game.closeTripPlan()}>
-          Abbrechen
-        </button>
-      </div>
     </div>
   );
 }
