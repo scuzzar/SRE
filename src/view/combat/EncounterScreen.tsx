@@ -1,77 +1,71 @@
-import { useState, type ReactNode } from 'react';
-import type { CombatView, LegalView, PatronView, RumorView, SimView, Snapshot, TimeView } from '../../controller';
-import { checkDetail, patronDetail, patronName, rumorDetail, rumorName, signed } from '../format';
+import { useState } from 'react';
+import type { CombatView, SimView, Snapshot, TimeView } from '../../controller';
+import { signed } from '../format';
 import { useGame } from '../game-context';
-import { haptic } from '../haptics';
 import { TripBar } from '../sector/TripPanels';
 import { distancesText, EncounterIntro } from './FightScreen';
 
+/** Was im Reiter Begegnung eingestellt ist, aber nur in der Ansicht lebt: die Haken und wie viele Tage. */
+export interface EncounterOptions {
+  /** Wie viele Tage vergehen sollen; der Knopf dazu steht unten in der Reihe. */
+  readonly days: number;
+  /** „Manuell wählen“: Zufall und Tiere öffnen die Auswahl der Art bzw. Zeile statt des Wurfs. */
+  readonly manual: boolean;
+  /** „NSC dazunehmen“: Zufall öffnet erst den Reiter NSC zum Auswählen. */
+  readonly withNpcs: boolean;
+}
+
 /**
- * Der Reiter Begegnung: oben, wo die Gruppe ist, darunter eine Liste der Begegnungsarten. Jede Art ist
- * eine Karte mit ihren Einstellungen und ihrem Wurf; weitere Arten kommen als weitere Karten dazu.
- * Bei der Zufallsbegegnung zeigt die Übersicht nach dem Würfeln, wer kommt, und „Weiter“ führt zurück
- * hierher. Läuft eine, zeigt ihre Karte sie knapp, mit Zum Kampf, Übersicht und Beenden: Nicht jede
- * Begegnung wird ein Kampf, man kann sie auch anders lösen und beenden.
+ * Der Reiter Begegnung als Blatt: Die Würfe stehen unten in der Reihe (`EncounterDock`) und zeigen ihr
+ * Ergebnis im Würfelfenster. Auf dem Blatt bleibt, was gerade läuft (Fahrt, Begegnung mit Zum Kampf,
+ * Übersicht und Beenden), das Datum und was man einstellt: Gelände, Würfel der Anzahl, „Manuell wählen“,
+ * „NSC dazunehmen“ und wie viele Tage vergehen sollen. Ohne Aufenthaltsort fragt es danach.
  */
-export function EncounterScreen({ view, days, onDays }: { view: Snapshot; /** Wie viele Tage vergehen sollen; der Knopf dazu steht unten in der Reihe. */ days: number; onDays: (days: number) => void }) {
+export function EncounterScreen({ view, options, onOptions }: { view: Snapshot; options: EncounterOptions; onOptions: (options: EncounterOptions) => void }) {
+  const game = useGame();
   const combat = view.combat;
+  // Schon dazugenommen (etwa mit „In Begegnung“ im Reiter NSC): Sie kommen beim nächsten Zufall mit, ohne Test.
+  const joined = (combat?.joining ?? []).map((id, i) => `${combat?.joinable.find((n) => n.id === id)?.name ?? id}${i === 0 ? ' · Anführer' : ''}`);
+  const joinable = combat?.joinable.length ?? 0;
   return (
     <div className="screen">
       <section className="scroll encounter-scroll" aria-label="Begegnung">
-        {view.time && <TimeBar time={view.time} days={days} onDays={onDays} trip={view.trip !== undefined} />}
+        {view.time && <TimeBar time={view.time} days={options.days} onDays={(days) => onOptions({ ...options, days })} trip={view.trip !== undefined} />}
         {view.trip && <TripBar trip={view.trip} note={view.tripNote} />}
+        {!combat && <p className="log-empty">Ohne lebenden Charakter gibt es keine Begegnung.</p>}
+        {combat?.sim && <RunningEncounter sim={combat.sim} />}
         {combat && (
-          <div className="encounter-settings">
-            <LocationPick combat={combat} />
+          <section className="encounter-settings" aria-label="Einstellungen der Begegnungen">
+            {(!combat.location || combat.worlds.length === 0) && <LocationPick combat={combat} />}
             <TerrainPick combat={combat} />
             <QuantityPick combat={combat} />
-          </div>
-        )}
-        <EncounterKind title="Zufallsbegegnung" rule="Personen nach der Random Encounter List (S. 21) · täglich, Test 5+ auf 1W6">
-          {!combat ? (
-            <p className="log-empty">Ohne lebenden Charakter gibt es keine Begegnung.</p>
-          ) : combat.sim && !combat.sim.animal ? (
-            <RunningEncounter sim={combat.sim} />
-          ) : (
-            <EncounterStart combat={combat} />
-          )}
-        </EncounterKind>
-        {combat && (
-          <EncounterKind title="Tiere" rule="Tiertabelle der Welt im Gelände (S. 18–19) · zweimal täglich, Test 5+ auf 1W6">
-            {combat.sim?.animal ? <RunningEncounter sim={combat.sim} /> : <AnimalsBox combat={combat} />}
-          </EncounterKind>
-        )}
-        {view.patron && (
-          <EncounterKind title="Patron" rule="Auftraggeber nach der Patron Encounters Matrix (S. 20) · wöchentlich, Test 5+ auf 1W6, die Liste wählt ein Würfel">
-            <PatronBox patron={view.patron} />
-          </EncounterKind>
-        )}
-        {view.rumor && (
-          <EncounterKind title="Gerücht" rule="Art des Gerüchts nach der Rumors Matrix (S. 21) · wöchentlich, Test 7+ auf 2W6">
-            <RumorBox rumor={view.rumor} />
-          </EncounterKind>
-        )}
-        {view.legal && combat && (
-          <EncounterKind title="Polizei" rule="Legal Encounter (S. 20) · wöchentlich, 2W6 gleich oder über der Gesetzesstufe heißt Ruhe">
-            <LegalBox legal={view.legal} />
-          </EncounterKind>
+            {combat.animals.blocked && <p className="combat-hint encounter-settings-wide">Tiere: {combat.animals.blocked}</p>}
+            <label className="npc-all encounter-settings-wide">
+              <input type="checkbox" checked={options.manual} onChange={(e) => onOptions({ ...options, manual: e.target.checked })} />
+              Manuell wählen (Art bzw. Zeile statt Wurf, ohne Test)
+            </label>
+            <label className="npc-all encounter-settings-wide">
+              <input type="checkbox" checked={options.withNpcs && joinable > 0} disabled={joinable === 0} onChange={(e) => onOptions({ ...options, withNpcs: e.target.checked })} />
+              {joinable === 0 ? 'NSC dazunehmen (kein NSC am Aufenthaltsort)' : 'NSC dazunehmen (Zufall wählt erst im Reiter NSC, ohne Test)'}
+            </label>
+            {joined.length > 0 && !combat.sim && (
+              <p className="encounter-note encounter-settings-wide" role="status" aria-label="Kommen dazu">
+                Kommen beim nächsten Zufall dazu, ohne Test: {joined.join(', ')}{' '}
+                <button type="button" className="ghost compact" onClick={() => combat.joining.forEach((id) => game.toggleJoining(id))}>
+                  lösen
+                </button>
+              </p>
+            )}
+            {combat.note && !combat.sim && (
+              <p className="encounter-note encounter-settings-wide" role="status">
+                {combat.note}
+              </p>
+            )}
+          </section>
         )}
       </section>
       {combat?.intro && combat.sim && <EncounterIntro sim={combat.sim} />}
     </div>
-  );
-}
-
-/** Eine Begegnungsart als Karte: Name, woher die Regel kommt, darunter ihre Einstellungen und ihr Wurf. */
-function EncounterKind({ title, rule, children }: { title: string; rule: string; children: ReactNode }) {
-  return (
-    <section className="encounter-kind" aria-label={title}>
-      <header className="encounter-kind-head">
-        <h2>{title}</h2>
-        <span>{rule}</span>
-      </header>
-      {children}
-    </section>
   );
 }
 
@@ -105,189 +99,6 @@ function RunningEncounter({ sim }: { sim: SimView }) {
   );
 }
 
-/**
- * Die Zufallsbegegnung würfeln oder wählen, mit Gelände für die Entfernung und dem Würfel der Anzahl
- * der Kampagne. Die Einstellungen stehen oben, Würfeln und Wählen darunter; dazwischen steht deutlich,
- * wenn der Wurf keine Begegnung brachte.
- */
-function EncounterStart({ combat }: { combat: CombatView }) {
-  const game = useGame();
-  const disabled = !combat.canEncounter || combat.sim !== undefined;
-  const joining = combat.joining.length > 0;
-  return (
-    <>
-      {combat.joinable.length > 0 && (
-        <div className="encounter-join" role="group" aria-label="NSC dazunehmen">
-          <span className="small-label">NSC dazunehmen · kämpfen auf der Seite der NSC{joining ? ', ohne Test' : ''}</span>
-          <div className="encounter-join-list">
-            {combat.joinable.map((n) => {
-              const at = combat.joining.indexOf(n.id);
-              return (
-                <button key={n.id} type="button" className="encounter-join-npc" aria-pressed={at >= 0} disabled={disabled} onClick={() => game.toggleJoining(n.id)}>
-                  {n.name}
-                  {at === 0 && <span className="muted"> · Anführer</span>}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-      {combat.note && (
-        <p className="encounter-note" role="status">
-          {combat.note}
-        </p>
-      )}
-      <div className="encounter-start">
-        <select aria-label="Begegnung wählen" value="" disabled={disabled} onChange={(e) => e.target.value && game.rollEncounter(e.target.value === 'none' ? 'none' : Number(e.target.value))}>
-          <option value="">oder wählen …</option>
-          {joining && <option value="none">keine · nur die NSC</option>}
-          {combat.encounterTypes.map((t) => (
-            <option key={t.roll} value={t.roll}>
-              {t.roll} · {t.quantity}W{combat.quantityDie} {t.name}
-            </option>
-          ))}
-        </select>
-      </div>
-    </>
-  );
-}
-
-/**
- * Die Begegnungsart Tiere (SE 18–19): Würfeln testet erst, ob Tiere kommen, und würfelt dann auf die
- * Tiertabelle von Welt und Gelände; sie entsteht beim ersten Wurf. Ein Tier wird eine Begegnung mit
- * Übersicht, ein Ereignis steht im Log und hier. Gibt es die Tabelle schon, kann man die Zeile wählen.
- */
-function AnimalsBox({ combat }: { combat: CombatView }) {
-  const game = useGame();
-  const animals = combat.animals;
-  const event = animals.lastEvent;
-  return (
-    <>
-      {animals.blocked && <p className="combat-hint">{animals.blocked}</p>}
-      {animals.note && (
-        <p className="encounter-note" role="status">
-          {animals.note}
-        </p>
-      )}
-      {event && (
-        <p className="patron-last">
-          Zuletzt: <strong>{event.name}</strong> <span>{event.text}</span>
-        </p>
-      )}
-      {event?.canSave && (
-        <button
-          type="button"
-          className="ghost"
-          onClick={() => {
-            haptic('shake');
-            game.rollEventSaves(event.index);
-          }}
-        >
-          Rettungswürfe würfeln ({/^\d/.test(event.save!) ? event.save : `${event.save} oder weniger`}, sonst {event.damage}W6)
-        </button>
-      )}
-      <div className="encounter-start">
-        <select aria-label="Tiere wählen" value="" disabled={animals.blocked !== undefined || animals.rows.length === 0} onChange={(e) => e.target.value && game.rollAnimals(Number(e.target.value))}>
-          <option value="">{animals.rows.length === 0 ? 'Tabelle beim 1. Wurf' : 'oder wählen …'}</option>
-          {animals.rows.map((r) => (
-            <option key={r.roll} value={r.roll}>
-              {r.roll} · {r.quantity === 0 ? '1' : `${r.quantity}W${combat.quantityDie}`} {r.name}
-            </option>
-          ))}
-        </select>
-      </div>
-    </>
-  );
-}
-
-/** Der Würfel der Anzahl der Kampagne, für alle Begegnungen mit Personen und Tieren: W6 nach den Regeln, W4 oder W3 zum Ausgleichen. */
-function QuantityPick({ combat }: { combat: CombatView }) {
-  const game = useGame();
-  return (
-    <label className="field">
-      <span>Anzahl würfeln mit</span>
-      <select aria-label="Würfel der Anzahl" value={combat.quantityDie} onChange={(e) => game.setQuantityDie(Number(e.target.value))}>
-        <option value={6}>W6 (Regel)</option>
-        <option value={4}>W4</option>
-        <option value={3}>W3</option>
-      </select>
-    </label>
-  );
-}
-
-/** Das Gelände der Kampagne, für alle Begegnungsarten: DM auf die Entfernung, und ob es dort Tiere gibt. */
-function TerrainPick({ combat }: { combat: CombatView }) {
-  const game = useGame();
-  return (
-    <label className="field">
-      <span>Gelände</span>
-      <select aria-label="Gelände" value={combat.terrain ?? ''} onChange={(e) => game.setTerrain(e.target.value || undefined)}>
-        <option value="">ohne (±0)</option>
-        {combat.terrains.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.name} ({signed(t.dm)}){t.animals ? '' : ', keine Tiere'}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-/**
- * Die Begegnungsart Patron (SE, Charts S. 20): Würfeln testet erst, ob es einen gibt, wählt dann die
- * Liste und würfelt den Patron. Die DMs der lebenden SC stehen dabei, der Wurf kommt in den Log und
- * der letzte steht hier. Unabhängig von der Zufallsbegegnung.
- */
-function PatronBox({ patron }: { patron: PatronView }) {
-  const game = useGame();
-  const last = patron.last;
-  const dms = patron.lists.filter((l) => l.parts.length > 0);
-  return (
-    <>
-      <p className="patron-dms">
-        {dms.length === 0 ? 'Keine DMs' : dms.map((l) => `Liste ${l.list}: ${l.parts.map((p) => `${p.die === 0 ? '1.' : '2.'} Würfel ${p.label} ${signed(p.dm)}`).join(', ')}`).join(' · ')}
-      </p>
-      {patron.note && (
-        <p className="encounter-note" role="status">
-          {patron.note}
-        </p>
-      )}
-      {last && (
-        <p className="patron-last">
-          Zuletzt: <strong>{patronName(last)}</strong> <span>{patronDetail(last)}</span>
-        </p>
-      )}
-      {last && !last.rumor && patron.npc && (
-        <div className="patron-npc">
-          <button type="button" className="ghost" disabled={patron.npc.blocker !== undefined} onClick={() => game.createPatronNpc()}>
-            Als NSC
-          </button>
-          <span className="small-label">{patron.npc.blocker ?? 'Zufälliger NSC in der Laufbahn des Patrons, kommt in den Reiter NSC.'}</span>
-        </div>
-      )}
-    </>
-  );
-}
-
-/** Die Begegnungsart Gerücht (SE, Charts S. 21): Würfeln testet erst, ob es eines gibt, und würfelt dann die Art; sie kommt in den Log. */
-function RumorBox({ rumor }: { rumor: RumorView }) {
-  const last = rumor.last;
-  return (
-    <>
-      {rumor.note && (
-        <p className="encounter-note" role="status">
-          {rumor.note}
-        </p>
-      )}
-      {last && (
-        <p className="patron-last">
-          Zuletzt: <strong>{rumorName(last)}</strong> <span>{rumorDetail(last)}</span>
-        </p>
-      )}
-    </>
-  );
-}
-
 /** Wo die Gruppe ist; ohne Aufenthaltsort gibt es keine Begegnung. Gibt es keine fertige Welt, geht es zum Sektor. */
 function LocationPick({ combat }: { combat: CombatView }) {
   const game = useGame();
@@ -316,23 +127,36 @@ function LocationPick({ combat }: { combat: CombatView }) {
   );
 }
 
-/** Die Polizei (S. 20): einmal je Woche 2W6 gegen die Gesetzesstufe des Aufenthaltsorts; bei Gesetz 0 keine. */
-function LegalBox({ legal }: { legal: LegalView }) {
-  const last = legal.last;
+/** Das Gelände der Kampagne, für alle Begegnungsarten: DM auf die Entfernung, und ob es dort Tiere gibt. */
+function TerrainPick({ combat }: { combat: CombatView }) {
+  const game = useGame();
   return (
-    <>
-      <p className="patron-dms">{legal.law === undefined ? 'Erst den Aufenthaltsort wählen.' : legal.available ? `Gesetz ${legal.law}: Ruhe bei ${legal.law}+ auf 2W6` : 'Gesetz 0: keine Polizei-Begegnung.'}</p>
-      {legal.note && (
-        <p className="encounter-note" role="status">
-          {legal.note}
-        </p>
-      )}
-      {last && (
-        <p className="patron-last">
-          Zuletzt: <strong>{last.passed ? 'Ruhe' : 'Angehalten'}</strong> <span>{checkDetail(last)}</span>
-        </p>
-      )}
-    </>
+    <label className="field">
+      <span>Gelände</span>
+      <select aria-label="Gelände" value={combat.terrain ?? ''} onChange={(e) => game.setTerrain(e.target.value || undefined)}>
+        <option value="">ohne (±0)</option>
+        {combat.terrains.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.name} ({signed(t.dm)}){t.animals ? '' : ', keine Tiere'}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+/** Der Würfel der Anzahl der Kampagne, für alle Begegnungen mit Personen und Tieren: W6 nach den Regeln, W4 oder W3 zum Ausgleichen. */
+function QuantityPick({ combat }: { combat: CombatView }) {
+  const game = useGame();
+  return (
+    <label className="field">
+      <span>Anzahl würfeln mit</span>
+      <select aria-label="Würfel der Anzahl" value={combat.quantityDie} onChange={(e) => game.setQuantityDie(Number(e.target.value))}>
+        <option value={6}>W6 (Regel)</option>
+        <option value={4}>W4</option>
+        <option value={3}>W3</option>
+      </select>
+    </label>
   );
 }
 

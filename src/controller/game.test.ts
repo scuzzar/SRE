@@ -656,6 +656,55 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(ally.upp.str).toBeGreaterThan(0);
   });
 
+  it('Würfelfenster: Der Test steht mit Würfeln im Fenster, die Übersicht folgt erst danach; schon getestet steht als Hinweis da', async () => {
+    const { game, random } = await onRegina();
+    random.queue.push(4);
+    game.rollEncounter();
+    expect(game.snapshot().encounterRoll).toEqual({ kind: 'random', dice: [4], target: 5, passed: false, text: 'Heute keine Begegnung.', encounter: false });
+    game.closeEncounterRoll();
+    expect(game.snapshot().encounterRoll).toBeUndefined();
+    game.rollEncounter();
+    expect(game.snapshot().encounterRoll).toMatchObject({ dice: [], text: 'Zufallsbegegnung: heute 1× getestet. Lange drücken für einen weiteren Test.' });
+    // Mit Begegnung: erst das Fenster, dann die Übersicht.
+    random.queue.push(6, 1, 5);
+    game.rollEncounter(undefined, undefined, true);
+    expect(game.snapshot().encounterRoll).toMatchObject({ dice: [6], passed: true, encounter: true });
+    expect(game.snapshot().combat?.intro).toBe(false);
+    game.closeEncounterRoll();
+    expect(game.snapshot().combat?.intro).toBe(true);
+    // Manuell gewählt: kein Test, gleich die Übersicht; die Auswahl schließt.
+    game.endEncounter();
+    game.chooseEncounter('random');
+    expect(game.snapshot().encounterChoice).toBe('random');
+    game.rollEncounter(15);
+    expect(game.snapshot()).toMatchObject({ encounterChoice: undefined, encounterRoll: undefined, combat: { intro: true, sim: { roll: 15 } } });
+  });
+
+  it('NSC dazunehmen: Der Reiter NSC wählt NSC vom Aufenthaltsort, OK würfelt die Begegnung ohne Test mit ihnen', async () => {
+    const { game } = await onRegina();
+    game.newCharacter(true, 'contact');
+    game.saveCharacter({ ...game.snapshot().editor!.input, name: 'Tenzin' });
+    const tenzin = game['campaign'].characters.find((c) => c.name === 'Tenzin')!.id;
+    game.showScreen('encounter');
+    game.startNpcJoining(false);
+    expect(game.snapshot()).toMatchObject({ screen: 'npcs', npcs: { placing: { here: [], allowed: [tenzin], ok: 'dazunehmen' } } });
+    // Abbrechen: zurück in den Reiter Begegnung, nichts gewürfelt.
+    game.cancelNpcPlacing();
+    expect(game.snapshot()).toMatchObject({ screen: 'encounter', combat: { sim: undefined }, npcs: { placing: undefined } });
+    game.startNpcJoining(false);
+    game.placeNpcs([tenzin]);
+    expect(game.snapshot().screen).toBe('encounter');
+    expect(game.snapshot().combat?.sim?.fighters.some((f) => f.name === 'Tenzin')).toBe(true);
+    expect(game.snapshot().checks?.random.label).toBe('heute 0×');
+    // Mit „Manuell wählen“ kommt nach OK erst die Auswahl der Art; Abbrechen lässt die NSC wieder los.
+    game.endEncounter();
+    game.startNpcJoining(true);
+    game.placeNpcs([tenzin]);
+    expect(game.snapshot()).toMatchObject({ encounterChoice: 'random', combat: { joining: [tenzin] } });
+    game.closeEncounterChoice();
+    expect(game.snapshot()).toMatchObject({ encounterChoice: undefined, combat: { joining: [] } });
+  });
+
   it('Gerücht: erst der Test der Woche (7+ auf 2W6), dann der Wurf auf die Rumors Matrix; Test und Wurf stehen im Log', async () => {
     const { game, random } = await onRegina();
     random.queue.push(3, 3);
@@ -1888,7 +1937,7 @@ describe('Orte (2026-11-14j)', () => {
     game.pickCell(capital.cell);
     // NSC platzieren öffnet den Reiter NSC zum Auswählen; das Feld ist so lange losgelassen.
     game.startNpcPlacing();
-    expect(game.snapshot()).toMatchObject({ screen: 'npcs', globe: { picked: undefined }, npcs: { all: false, placing: { label: capital.label, here: [] } } });
+    expect(game.snapshot()).toMatchObject({ screen: 'npcs', globe: { picked: undefined }, npcs: { all: false, placing: { question: `Welche NSC kommen nach ${capital.label}?`, here: [] } } });
     // Abbrechen: zurück zum Feld im Reiter davor, nichts geändert.
     game.cancelNpcPlacing();
     expect(game.snapshot()).toMatchObject({ screen: 'oracle', globe: { picked: { cell: capital.cell } }, npcs: { placing: undefined } });

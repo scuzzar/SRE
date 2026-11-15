@@ -4,7 +4,8 @@ import { AboutScreen } from './AboutScreen';
 import { CampaignSheet } from './CampaignSheet';
 import { CharacterEditor } from './characters/CharacterEditor';
 import { CombatScreen, type Patient } from './combat/CombatScreen';
-import { EncounterScreen } from './combat/EncounterScreen';
+import { EncounterScreen, type EncounterOptions } from './combat/EncounterScreen';
+import { EncounterChoiceDialog, EncounterRollDialog } from './combat/EncounterRollDialog';
 import { EncounterDock } from './combat/EncounterDock';
 import { ShopScreen } from './shop/ShopScreen';
 import { CharactersScreen } from './characters/CharactersScreen';
@@ -49,8 +50,9 @@ export function App() {
   const [menu, setMenu] = useState(false);
   // Wen der Heilen-Dialog im Kampf zeigt.
   const [patient, setPatient] = useState<Patient | undefined>(undefined);
-  // Wie viele Tage im Reiter Begegnung vergehen sollen: gewählt auf dem Blatt, der Knopf steht unten.
-  const [days, setDays] = useState(1);
+  // Was im Reiter Begegnung eingestellt ist (wie viele Tage, Manuell wählen, NSC dazunehmen): reine
+  // Darstellung, auf dem Blatt gewählt, von der Reihe unten benutzt.
+  const [encounterOptions, setEncounterOptions] = useState<EncounterOptions>({ days: 1, manual: false, withNpcs: false });
   // Ob der Hinweis „OneDrive hat dich abgemeldet“ weggeklickt ist; reine Darstellung, beim nächsten
   // Start kommt er wieder, solange die Anmeldung fehlt.
   const [syncHintClosed, setSyncHintClosed] = useState(false);
@@ -74,7 +76,7 @@ export function App() {
   const field = globeField ?? (!view.globe && view.selected ? <div ref={setFieldSlot} className="field-slot" /> : undefined);
   const area = (
     <>
-      {screen === 'encounter' && <EncounterScreen view={view} days={days} onDays={setDays} />}
+      {screen === 'encounter' && <EncounterScreen view={view} options={encounterOptions} onOptions={setEncounterOptions} />}
       {screen === 'combat' && <CombatScreen view={view} patient={patient} onPatient={setPatient} />}
       {screen === 'shop' && <ShopScreen view={view} />}
       {screen === 'characters' && <CharactersScreen view={view} />}
@@ -134,7 +136,7 @@ export function App() {
   const dock = <OracleDock view={view} shortcuts />;
   const fieldDock = view.globe?.picked ? <FieldDock globe={view.globe} trip={view.trip} tripPlan={view.tripPlan} npcTotal={view.npcs.total} /> : undefined;
   // Im Reiter Begegnung: die Würfe der Begegnungen und die Zeit bzw. Weiterfahren.
-  const encounterDock = screen === 'encounter' && field === undefined ? <EncounterDock view={view} days={days} /> : undefined;
+  const encounterDock = screen === 'encounter' && field === undefined ? <EncounterDock view={view} options={encounterOptions} /> : undefined;
   const foot = fieldDock ?? encounterDock ?? (screen === 'oracle' && field === undefined ? dock : undefined);
 
   // Die Grundkarte: der Globus der offenen Welt, sonst der Subsektor. Oben rechts das Menü.
@@ -206,6 +208,8 @@ export function App() {
       {view.journey && <JourneySheet journey={view.journey} />}
       {view.card && <CardSheet card={view.card} />}
       {view.tripRoll && <TripRollDialog roll={view.tripRoll} />}
+      {view.encounterChoice && <EncounterChoiceDialog kind={view.encounterChoice} view={view} />}
+      {view.encounterRoll && <EncounterRollDialog key={`${view.encounterRoll.kind}-${view.log.length}`} roll={view.encounterRoll} view={view} />}
       {view.result?.kind === 'damage' ? (
         <DiceRoll key={view.result.at} item={view.result} seed={view.result.of} onDone={closeResult} />
       ) : (

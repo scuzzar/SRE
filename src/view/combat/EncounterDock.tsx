@@ -3,6 +3,7 @@ import type { ChecksView, Snapshot } from '../../controller';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { HoldButton } from '../HoldButton';
+import type { EncounterOptions } from './EncounterScreen';
 import { BadgeIcon, BriefcaseIcon, CalendarIcon, ClockIcon, EncounterIcon, PawIcon, RouteIcon, RumorIcon } from '../icons';
 
 type Check = ChecksView[keyof ChecksView] | undefined;
@@ -11,12 +12,12 @@ type Check = ChecksView[keyof ChecksView] | undefined;
  * Die Reihe unten im Reiter Begegnung, im Stil der Orakel-Reihe: oben die Würfe der Begegnungen
  * (Zufall, Tiere, Patron, Gerücht, Polizei), darunter die Zeit (Tage vergehen, Woche beenden) bzw.
  * bei laufender Fahrt „Weiterfahren“. Das ist die einzige Stelle, an der man weiterfährt oder Zeit
- * vergehen lässt. Einstellungen (Welt, Gelände, Würfel, „oder wählen …“, wie viele Tage) bleiben auf
- * dem Blatt. Jeder Begegnungsknopf zeigt, wie oft im Zeitraum schon getestet wurde; ist die Regel
- * erfüllt, würfelt nur der lange Druck noch einmal. Reine Darstellung: Was die Knöpfe bewirken,
- * entscheidet der Controller.
+ * vergehen lässt. Ein Wurf zeigt sein Ergebnis im Würfelfenster; mit den Haken auf dem Blatt öffnet
+ * Zufall erst den Reiter NSC zum Dazunehmen bzw. Zufall und Tiere die Auswahl der Art. Jeder
+ * Begegnungsknopf zeigt, wie oft im Zeitraum schon getestet wurde; ist die Regel erfüllt, würfelt nur
+ * der lange Druck noch einmal. Reine Darstellung: Was die Knöpfe bewirken, entscheidet der Controller.
  */
-export function EncounterDock({ view, days }: { view: Snapshot; /** Wie viele Tage vergehen sollen, gewählt auf dem Blatt. */ days: number }) {
+export function EncounterDock({ view, options }: { view: Snapshot; /** Auf dem Blatt eingestellt: wie viele Tage, Manuell wählen, NSC dazunehmen. */ options: EncounterOptions }) {
   const game = useGame();
   const combat = view.combat;
   const checks = view.checks;
@@ -26,12 +27,19 @@ export function EncounterDock({ view, days }: { view: Snapshot; /** Wie viele Ta
   const randomOff = !combat || !combat.canEncounter || combat.sim !== undefined;
   const animalsOff = !combat || combat.animals.blocked !== undefined;
   const legalOff = !combat || !view.legal?.available;
-  const passing = Math.min(days, time?.maxDays ?? days);
+  const passing = Math.min(options.days, time?.maxDays ?? options.days);
+  // Zufall: mit „NSC dazunehmen“ erst die Auswahl im Reiter NSC, mit „Manuell wählen“ die Auswahl der Art.
+  const random = () => {
+    if (options.withNpcs && combat && combat.joinable.length > 0) game.startNpcJoining(options.manual);
+    else if (options.manual) game.chooseEncounter('random');
+    else game.rollEncounter();
+  };
+  const animals = () => (options.manual ? game.chooseEncounter('animal') : game.rollAnimals());
   return (
     <section className="dock encounter-dock" aria-label="Begegnung und Zeit">
       <div className="actions oracle-actions encounter-tests">
-        <Test icon={<EncounterIcon />} title="Zufall" label="Zufallsbegegnung würfeln" check={checks?.random} disabled={randomOff} onPress={() => game.rollEncounter()} onHold={() => game.rollEncounter(undefined, undefined, true)} />
-        <Test icon={<PawIcon />} title="Tiere" label="Tiere würfeln" check={checks?.animal} disabled={animalsOff} onPress={() => game.rollAnimals()} onHold={() => game.rollAnimals(undefined, true)} />
+        <Test icon={<EncounterIcon />} title="Zufall" label="Zufallsbegegnung würfeln" check={checks?.random} disabled={randomOff} onPress={random} onHold={() => game.rollEncounter(undefined, undefined, true)} />
+        <Test icon={<PawIcon />} title="Tiere" label="Tiere würfeln" check={checks?.animal} disabled={animalsOff} onPress={animals} onHold={() => game.rollAnimals(undefined, true)} />
         <Test icon={<BriefcaseIcon />} title="Patron" label="Patron würfeln" check={checks?.patron} disabled={!view.patron} onPress={() => game.rollPatron()} onHold={() => game.rollPatron(true)} />
         <Test icon={<RumorIcon />} title="Gerücht" label="Gerücht würfeln" check={checks?.rumor} disabled={!view.rumor} onPress={() => game.rollRumor()} onHold={() => game.rollRumor(true)} />
         <Test icon={<BadgeIcon />} title="Polizei" label="Polizei würfeln" check={checks?.legal} disabled={legalOff} onPress={() => game.rollLegal()} onHold={() => game.rollLegal(true)} />

@@ -48,18 +48,17 @@ test('Reiter NSC: „In Begegnung“ nimmt den NSC zur Zufallsbegegnung dazu; er
   await editor.getByRole('button', { name: 'Speichern' }).click();
   await page.getByRole('button', { name: 'Tenzin Thorsen in Begegnung' }).click();
 
-  const kind = page.getByRole('region', { name: 'Zufallsbegegnung' });
-  await expect(kind).toBeVisible();
-  const chip = kind.getByRole('group', { name: 'NSC dazunehmen' }).getByRole('button', { name: /Tenzin Thorsen/ });
-  await expect(chip).toHaveAttribute('aria-pressed', 'true');
-  await expect(chip).toContainText('Anführer');
-  await kind.getByLabel('Begegnung wählen').selectOption('23');
+  // Im Reiter Begegnung steht, wer dazukommt; mit „Manuell wählen“ öffnet Zufall die Auswahl der Art.
+  await expect(page.getByRole('status', { name: 'Kommen dazu' })).toContainText('Tenzin Thorsen · Anführer');
+  await page.getByRole('checkbox', { name: /^Manuell wählen/ }).check();
+  await page.getByRole('region', { name: 'Begegnung und Zeit' }).getByRole('button', { name: /^Zufallsbegegnung würfeln/ }).click();
+  await page.getByRole('dialog', { name: 'Welche Begegnung?' }).getByRole('button', { name: /^23 · / }).click();
 
   const intro = page.getByRole('dialog', { name: /Tenzin Thorsen \+ \d+ × Police Patrol/ });
   await expect(intro).toBeVisible();
   await expect(intro.locator('.intro-npcs li').first()).toContainText('Tenzin Thorsen · Anführer');
   await intro.getByRole('button', { name: 'Weiter' }).click();
-  await expect(kind.locator('.encounter-running-title')).toHaveText(/^Tenzin Thorsen \+ \d+ × Police Patrol$/);
+  await expect(page.locator('.encounter-running-title')).toHaveText(/^Tenzin Thorsen \+ \d+ × Police Patrol$/);
   // Läuft eine Begegnung, gibt es „In Begegnung“ nicht.
   await nav.getByRole('button', { name: 'NSC', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Tenzin Thorsen in Begegnung' })).toHaveCount(0);
@@ -77,10 +76,19 @@ test('Zufallsbegegnung: mit Art „keine“ kommen nur die dazugenommenen NSC', 
   await editor.getByLabel('Name').fill('Ilka Brand');
   await editor.getByRole('button', { name: 'Speichern' }).click();
   await nav.getByRole('button', { name: 'Begegnung', exact: true }).click();
-  const kind = page.getByRole('region', { name: 'Zufallsbegegnung' });
-  await expect(kind.getByLabel('Begegnung wählen').locator('option[value="none"]')).toHaveCount(0);
-  await kind.getByRole('button', { name: 'Ilka Brand' }).click();
-  await kind.getByLabel('Begegnung wählen').selectOption('none');
+  const random = page.getByRole('region', { name: 'Begegnung und Zeit' }).getByRole('button', { name: /^Zufallsbegegnung würfeln/ });
+  // Ohne dazugenommene NSC gibt es die Art „keine“ nicht.
+  await page.getByRole('checkbox', { name: /^Manuell wählen/ }).check();
+  await random.click();
+  const choice = page.getByRole('dialog', { name: 'Welche Begegnung?' });
+  await expect(choice.getByRole('button', { name: 'keine · nur die NSC' })).toHaveCount(0);
+  await choice.getByRole('button', { name: 'Abbrechen' }).click();
+  // „NSC dazunehmen“: Zufall öffnet erst den Reiter NSC zum Auswählen, OK führt zur Auswahl der Art.
+  await page.getByRole('checkbox', { name: /^NSC dazunehmen/ }).check();
+  await random.click();
+  await page.getByRole('checkbox', { name: 'Ilka Brand wählen' }).check();
+  await page.getByRole('region', { name: 'NSC auswählen' }).getByRole('button', { name: /^OK, 1 NSC dazunehmen/ }).click();
+  await choice.getByRole('button', { name: 'keine · nur die NSC' }).click();
   const intro = page.getByRole('dialog', { name: 'Ilka Brand' });
   await expect(intro).toContainText('Begegnung · nur NSC');
   await page.screenshot({ path: process.env.SHOT ?? 'test-results/nur-nsc.png' });

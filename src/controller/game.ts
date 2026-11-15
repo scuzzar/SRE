@@ -208,7 +208,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, selected: undefined, picking: false } as const;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -267,6 +267,9 @@ export class GameController {
       screen: 'oracle',
       npcAll: false,
       npcPlacing: undefined,
+      npcJoining: undefined,
+      encounterRoll: undefined,
+      encounterChoice: undefined,
       card: undefined,
       names: undefined,
       task: undefined,
@@ -710,7 +713,7 @@ export class GameController {
     if (!tested) return;
     const { entry: test, check } = tested;
     if (!check.passed) {
-      this.change(appendLog(this.campaign, test), { patronNote: `${checkText(check)}: diese Woche kein Patron.` });
+      this.change(appendLog(this.campaign, test), { patronNote: `${checkText(check)}: diese Woche kein Patron.`, ...this.shown('patron', check, 'Diese Woche kein Patron.') });
       return;
     }
     const entry = rollPatron(this.campaign, rollPatronList(this.deps.random), this.deps.random, this.deps.clock);
@@ -720,6 +723,7 @@ export class GameController {
     this.change(appendLog(this.campaign, ...entries), {
       patronNote: `${checkText(check)}: ${rumor ? 'ein Gerücht statt eines Patrons' : 'ein Patron'}.`,
       ...(rumor ? { rumorNote: 'Ohne Test: Gerücht statt eines Patrons.' } : {}),
+      ...this.shown('patron', check, rumor ? 'Ein Gerücht statt eines Patrons.' : 'Ein Patron!'),
     });
   }
 
@@ -732,10 +736,10 @@ export class GameController {
     if (!tested) return;
     const { entry: test, check } = tested;
     if (!check.passed) {
-      this.change(appendLog(this.campaign, test), { rumorNote: `${checkText(check)}: diese Woche kein Gerücht.` });
+      this.change(appendLog(this.campaign, test), { rumorNote: `${checkText(check)}: diese Woche kein Gerücht.`, ...this.shown('rumor', check, 'Diese Woche kein Gerücht.') });
       return;
     }
-    this.change(appendLog(this.campaign, test, rollRumor(this.deps.random, this.deps.clock)), { rumorNote: `${checkText(check)}: ein Gerücht.` });
+    this.change(appendLog(this.campaign, test, rollRumor(this.deps.random, this.deps.clock)), { rumorNote: `${checkText(check)}: ein Gerücht.`, ...this.shown('rumor', check, 'Ein Gerücht!') });
   }
 
   /**
@@ -748,11 +752,45 @@ export class GameController {
       if (!tested) return;
       const { entry, check } = tested;
       const reaction = entry.reactionDice === undefined ? '' : ` Reaktion ${entry.reactionDice[0]} + ${entry.reactionDice[1]}${entry.reactionDm ? ` ${entry.reactionDm > 0 ? '+' : '−'}${Math.abs(entry.reactionDm)}` : ''}.`;
-      this.change(appendLog(this.campaign, entry), { legalNote: `${checkText(check)}: ${check.passed ? 'die Polizei lässt die Gruppe in Ruhe.' : `die Polizei hält die Gruppe an.${reaction}`}` });
+      this.change(appendLog(this.campaign, entry), { legalNote: `${checkText(check)}: ${check.passed ? 'die Polizei lässt die Gruppe in Ruhe.' : `die Polizei hält die Gruppe an.${reaction}`}`, ...this.shown('legal', check, check.passed ? 'Die Polizei lässt die Gruppe in Ruhe.' : `Die Polizei hält die Gruppe an.${reaction}`) });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
-      this.update({ legalNote: error.message });
+      this.update({ legalNote: error.message, ...this.shown('legal', undefined, error.message) });
     }
+  }
+
+  /**
+   * Das Würfelfenster eines Begegnungswurfs: mit Test die Würfel und was herauskam, ohne Test nur der
+   * Hinweis. `encounter`: Danach folgt die Übersicht der Begegnung.
+   */
+  private shown(kind: CheckKind, check: EncounterCheck | undefined, text: string, encounter = false): Pick<ControllerState, 'encounterRoll' | 'encounterChoice'> {
+    return { encounterRoll: { kind, dice: check?.dice ?? [], target: check?.target ?? 0, passed: check?.passed ?? false, text, encounter }, encounterChoice: undefined };
+  }
+
+  /** Schließt das Würfelfenster eines Begegnungswurfs; kam es zur Begegnung, folgt ihre Übersicht. */
+  closeEncounterRoll(): void {
+    const roll = this.state.encounterRoll;
+    if (!roll) return;
+    this.update({ encounterRoll: undefined, ...(roll.encounter ? { encounterIntro: true } : {}) });
+  }
+
+  /** „Manuell wählen“: öffnet die Auswahl der Art (Zufallsbegegnung) bzw. der Zeile (Tiere) statt des Wurfs. */
+  chooseEncounter(kind: 'random' | 'animal'): void {
+    this.update({ encounterChoice: kind });
+  }
+
+  /** Schließt die Auswahl ohne Wurf. */
+  closeEncounterChoice(): void {
+    // Dazugenommene NSC gelten nur für diesen Wurf.
+    this.update({ encounterChoice: undefined, joining: [] });
+  }
+
+  /**
+   * „NSC dazunehmen“: Der Reiter NSC öffnet sich zum Auswählen der NSC vom Aufenthaltsort; „OK“ nimmt
+   * sie zur Zufallsbegegnung dazu und würfelt sie (mit `manual` erst die Auswahl der Art).
+   */
+  startNpcJoining(manual: boolean): void {
+    this.update({ npcJoining: { manual }, npcPlacing: undefined, screen: 'npcs', npcAll: false, joining: [], globe: this.state.globe && { picked: undefined } });
   }
 
   /**
@@ -761,7 +799,9 @@ export class GameController {
    */
   private test(kind: CheckKind, force: boolean, blocked: (note: string) => void): { readonly entry: CheckRoll; readonly check: EncounterCheck } | undefined {
     if (!force && checksMet(this.campaign, kind)) {
-      blocked(`${checkNames[kind]}: ${checksLabel(this.campaign, kind)} getestet. Lange drücken für einen weiteren Test.`);
+      const note = `${checkNames[kind]}: ${checksLabel(this.campaign, kind)} getestet. Lange drücken für einen weiteren Test.`;
+      blocked(note);
+      this.update(this.shown(kind, undefined, note));
       return undefined;
     }
     const entry = rollCheck(this.campaign, kind, this.deps.random, this.deps.clock);
@@ -931,7 +971,7 @@ export class GameController {
     const released = { globe: this.state.globe && { picked: undefined }, selected: undefined, worldError: this.state.globe ? this.state.worldError : undefined };
     // Der Reiter NSC zeigt beim Öffnen wieder nur die NSC des Aufenthaltsorts.
     // Ein Reiter bricht auch NSC platzieren ab.
-    this.update(screen === 'npcs' && this.state.screen !== 'npcs' ? { screen, npcAll: false, npcPlacing: undefined, ...released } : { screen, npcPlacing: undefined, ...released });
+    this.update(screen === 'npcs' && this.state.screen !== 'npcs' ? { screen, npcAll: false, npcPlacing: undefined, npcJoining: undefined, ...released } : { screen, npcPlacing: undefined, npcJoining: undefined, ...released });
   }
 
   /** Nimmt einen dauerhaften NSC zur nächsten Zufallsbegegnung dazu oder wieder heraus (2026-11-14g); nur Anzeige. */
@@ -1134,21 +1174,24 @@ export class GameController {
       const check = tested?.check;
       const base = tested ? appendLog(this.campaign, tested.entry) : this.campaign;
       if (check && !check.passed) {
-        this.change(base, { combatNote: `${checkText(check)}: heute keine Begegnung.` });
+        this.change(base, { combatNote: `${checkText(check)}: heute keine Begegnung.`, ...this.shown('random', check, 'Heute keine Begegnung.') });
         return;
       }
       const rolled = rollEncounter(base, this.deps.random, this.deps.clock, roll, undefined, terrain, joined);
       const prepared = rolled.encounter ? this.prepareTurn(rolled.campaign, undefined) : { campaign: rolled.campaign, simTarget: undefined };
+      // Mit Test zeigt erst das Würfelfenster den Test, die Übersicht folgt danach; ohne Test gleich die Übersicht.
+      const outcome = rolled.encounter ? `Wurf ${rolled.roll}: eine Begegnung!` : `Wurf ${rolled.roll}: keine Begegnung.`;
       this.change(prepared.campaign, {
         ...(rolled.encounter ? { joining: [] } : {}),
         attack: undefined,
         simTarget: prepared.simTarget,
-        encounterIntro: rolled.encounter !== undefined,
+        encounterIntro: rolled.encounter !== undefined && !check,
         combatNote: rolled.encounter ? undefined : `${check ? `${checkText(check)}, ` : ''}Wurf ${rolled.roll}: keine Begegnung.`,
+        ...(check || !rolled.encounter ? this.shown('random', check, outcome, rolled.encounter !== undefined) : { encounterChoice: undefined }),
       });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
-      this.update({ combatNote: error.message });
+      this.update({ combatNote: error.message, ...this.shown('random', undefined, error.message) });
     }
   }
 
@@ -1168,20 +1211,22 @@ export class GameController {
       const check = tested?.check;
       const base = tested ? appendLog(this.campaign, tested.entry) : this.campaign;
       if (check && !check.passed) {
-        this.change(base, { animalNote: `${checkText(check)}: keine Tiere.` });
+        this.change(base, { animalNote: `${checkText(check)}: keine Tiere.`, ...this.shown('animal', check, 'Keine Tiere.') });
         return;
       }
       const rolled = rollAnimalEncounter(base, this.deps.random, this.deps.clock, row);
       const prefix = check ? `${checkText(check)}, ` : '';
       if (!rolled.encounter) {
-        this.change(rolled.campaign, { animalNote: `${prefix}Wurf ${rolled.roll}: Ereignis ${animalEventOf(rolled.row.event!).name}.` });
+        const event = `Wurf ${rolled.roll}: Ereignis ${animalEventOf(rolled.row.event!).name}.`;
+        this.change(rolled.campaign, { animalNote: `${prefix}${event}`, ...this.shown('animal', check, event) });
         return;
       }
       const prepared = this.prepareTurn(rolled.campaign, undefined);
-      this.change(prepared.campaign, { attack: undefined, simTarget: prepared.simTarget, encounterIntro: true, animalNote: `${prefix}Wurf ${rolled.roll}: ${animalName(rolled.row)}.`, combatNote: undefined });
+      const found = `Wurf ${rolled.roll}: ${animalName(rolled.row)}.`;
+      this.change(prepared.campaign, { attack: undefined, simTarget: prepared.simTarget, encounterIntro: !check, animalNote: `${prefix}${found}`, combatNote: undefined, ...(check ? this.shown('animal', check, found, true) : { encounterChoice: undefined }) });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
-      this.update({ animalNote: error.message });
+      this.update({ animalNote: error.message, ...this.shown('animal', undefined, error.message) });
     }
   }
 
@@ -1943,11 +1988,22 @@ export class GameController {
     const at = this.state.world;
     const cell = this.state.globe?.picked;
     if (!at || cell === undefined) return;
-    this.update({ npcPlacing: { world: hexId(at.column, at.row), cell, screen: this.state.screen }, screen: 'npcs', npcAll: false, globe: { picked: undefined }, worldError: undefined });
+    this.update({ npcPlacing: { world: hexId(at.column, at.row), cell, screen: this.state.screen }, npcJoining: undefined, screen: 'npcs', npcAll: false, globe: { picked: undefined }, worldError: undefined });
   }
 
-  /** „OK“ beim NSC platzieren: Die gewählten NSC kommen auf das Feld (bzw. in die Stadt darauf), danach steht wieder das Feld da. */
+  /**
+   * „OK“ beim Auswählen im Reiter NSC. Beim NSC platzieren kommen die gewählten auf das Feld (bzw. in die
+   * Stadt darauf), danach steht wieder das Feld da; beim NSC dazunehmen kommen sie zur Zufallsbegegnung,
+   * die gleich gewürfelt wird (mit „Manuell wählen“ erst die Auswahl der Art).
+   */
   placeNpcs(ids: readonly string[]): void {
+    const joining = this.state.npcJoining;
+    if (joining) {
+      this.update({ npcJoining: undefined, screen: 'encounter', joining: ids });
+      if (joining.manual) this.chooseEncounter('random');
+      else this.rollEncounter();
+      return;
+    }
     if (!this.endNpcPlacing() || ids.length === 0) return;
     this.onGlobe(() => {
       const place = this.pickedPlace();
@@ -1955,8 +2011,12 @@ export class GameController {
     });
   }
 
-  /** „Abbrechen“ beim NSC platzieren: zurück zum Feld, ohne etwas zu ändern. */
+  /** „Abbrechen“ beim Auswählen im Reiter NSC: zurück zum Feld bzw. in den Reiter Begegnung, ohne etwas zu ändern. */
   cancelNpcPlacing(): void {
+    if (this.state.npcJoining) {
+      this.update({ npcJoining: undefined, screen: 'encounter' });
+      return;
+    }
     this.endNpcPlacing();
   }
 
