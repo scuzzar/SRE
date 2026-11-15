@@ -18,10 +18,8 @@ const COLORS: Readonly<Record<Landform, Rgb>> = {
   jungle: [0.13, 0.36, 0.16],
   swamp: [0.28, 0.37, 0.25],
   open: [0.3, 0.47, 0.24],
-  // Besiedelt sieht aus wie Offen/Wald: Erkennbar sind Siedlungen an Städten und Kleinstädten, nicht an der Geländeart.
-  settled: [0.3, 0.47, 0.24],
+  settled: [0.55, 0.55, 0.32],
 };
-const TOWN: Rgb = [0.62, 0.6, 0.54];
 const DEEP: Rgb = [0.04, 0.13, 0.3];
 const BARREN: Rgb = [0.52, 0.44, 0.36];
 
@@ -81,7 +79,7 @@ interface Texture {
 /** Die Farbe eines Feldes als Ganzes, ohne Ausfransen: für die Hexkarte. */
 function flatColor(form: Landform, coast: number, life: boolean, cell: number): Rgb {
   const jitter = 0.94 + hash3(cell, 7, 11) * 0.1;
-  let col: Rgb = (form === 'open' || form === 'settled') && !life ? BARREN : COLORS[form];
+  let col: Rgb = form === 'open' && !life ? BARREN : COLORS[form];
   if (form === 'water') col = mix(COLORS.water, DEEP, clamp((coast - 1) / 6, 0, 1) * 0.8);
   return [col[0] * jitter, col[1] * jitter, col[2] * jitter];
 }
@@ -146,7 +144,7 @@ export function textureOf(globe: GlobeView): Texture {
       cellOf[y * width + x] = cell;
       const form = forms[cell]!;
       const detail = fbm(bx * 22, by * 22, bz * 22, 2);
-      let col: Rgb = (form === 'open' || form === 'settled') && !life ? BARREN : COLORS[form];
+      let col: Rgb = form === 'open' && !life ? BARREN : COLORS[form];
       if (form === 'water') col = mix(COLORS.water, DEEP, clamp((coast[cell]! - 1) / 6, 0, 1) * 0.8 + detail * 0.15);
       else if (form === 'mountain') col = mix(col, [0.92, 0.92, 0.94], clamp((detail - 0.55) * 3, 0, 0.6));
       else col = mix(col, [col[0] * 0.8, col[1] * 0.8, col[2] * 0.8], detail);
@@ -209,7 +207,6 @@ export function textureOf(globe: GlobeView): Texture {
   };
   for (const road of map.roads ?? []) line(road, [0.35, 0.26, 0.18], 0.55);
   for (const river of map.rivers ?? []) line(river, [0.16, 0.4, 0.72], 0.9);
-  for (const [cell] of map.towns ?? []) paint(cell, TOWN, 1);
   for (const city of map.cities ?? []) if (city.cell !== undefined) paint(city.cell, city.rank === 'primary' ? [0.78, 0.76, 0.7] : [0.66, 0.64, 0.56], city.rank === 'primary' ? 3 : 2);
   // Dieselbe Textur mit Hexgitter: Texel, deren Feld sich vom rechten oder unteren Nachbarn unterscheidet.
   const gridColor = new Uint8ClampedArray(color);

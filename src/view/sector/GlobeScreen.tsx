@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { GlobeView, LogItem, WorldView } from '../../controller';
+import { landformAt, type GlobeView, type LogItem, type WorldView } from '../../controller';
 import { roleText } from '../format';
 import { useGame } from '../game-context';
 import { CloseIcon, PencilIcon } from '../icons';
@@ -492,7 +492,7 @@ export function GlobeScreen({
 }
 
 /**
- * Zeichen auf dem Globus: Kleinstädte, Städte, Vulkane, Ereignisse, NSC, die Gruppe, das angetippte
+ * Zeichen auf dem Globus: Kleinstädte außerhalb des besiedelten Gebiets, Städte, Vulkane, Ereignisse, NSC, die Gruppe, das angetippte
  * Feld als Ring; auf der Hexkarte auch Flüsse und Straßen, die sonst in der Textur stehen.
  */
 function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Camera, view: Viewport, scale: number, hexes: boolean): void {
@@ -520,11 +520,12 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
     for (const road of globe.map.roads ?? []) path(road, 'rgba(90,66,46,0.8)', 1.5);
     for (const river of globe.map.rivers ?? []) path(river, 'rgba(60,130,220,0.95)', 2);
   }
-  // Kleinstädte: ein kleines graues Haus, sobald man etwas hineinzoomt; so ist besiedeltes Gebiet erkennbar.
-  if (camera.zoom >= 1.6) {
+  // Kleinstädte außerhalb des besiedelten Gebiets: ein kleines helles Haus, sobald man etwas
+  // hineinzoomt. Im besiedelten Gebiet zeigt schon die Farbe, dass dort Menschen leben.
+  if (camera.zoom >= 1.4) {
     const s = (camera.zoom >= 3 ? 3.2 : 2.4) * scale;
     for (const [cell] of globe.map.towns ?? []) {
-      if (globe.cities.some((c) => c.cell === cell)) continue;
+      if (landformAt(globe.map, cell) === 'settled' || globe.cities.some((c) => c.cell === cell)) continue;
       const p = at(cell);
       if (!p) continue;
       ctx.beginPath();
