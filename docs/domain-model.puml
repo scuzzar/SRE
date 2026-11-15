@@ -1035,6 +1035,7 @@ Leg "*" -$newArrow("2026-11-15")-> "2..*" SurfaceCell : cells {ordered}
 Trip "*" -$newArrow("2026-11-15")-> "1" SurfaceCell : /at
 LogEntry <|-$newArrow("2026-11-15")- TripDay
 Booking "*" -$newArrow("2026-11-15")-> "0..1" TripDay : rentFor
+Possession "1" *-$newArrow("2026-11-15")- "0..1" Place : parked
 SurfaceRow --> SurfaceTable
 SurfaceRow -[hidden]- DiceExpr
 WorldRoll --> WorldRollKind

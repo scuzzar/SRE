@@ -304,7 +304,7 @@
     {
       "id": "2026-11-15",
       "file": "2026-11-15-fahrzeuge-und-gelaende",
-      "title": "Fahrzeuge und Fahrten: Geschwindigkeit je Geländeart und Weg, Landepunkte, Miete, Fahrt Tag für Tag",
+      "title": "Fahrzeuge und Fahrten: Geschwindigkeit je Geländeart und Weg, Landepunkte, Miete, Fahrt Tag für Tag, abgestellte Fahrzeuge",
       "approved": false,
       "show": [
         "Item",
@@ -314,7 +314,9 @@
         "Campaign",
         "LogEntry",
         "Booking",
-        "BookingKind"
+        "BookingKind",
+        "Possession",
+        "Place"
       ]
     }
   ]

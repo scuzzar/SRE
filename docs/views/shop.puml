@@ -135,6 +135,7 @@ hide <<value>> stereotype
     membership
     game
   }
+  class Place <<value>> $oberflaeche
 ' Fahrzeuge und Wege auf der Oberfläche
   class Vehicle <<reference>> $logistik $newClass("2026-11-15")
   class TripDay $logistik $newClass("2026-11-15")
@@ -159,6 +160,7 @@ Gain "*" --> "0..1" Item : item
 ' Subsektor und Welten
 Item "0..1" -$newArrow("2026-11-15")-> "0..1" Vehicle : vehicle
 Booking "*" -$newArrow("2026-11-15")-> "0..1" TripDay : rentFor
+Possession "1" *-$newArrow("2026-11-15")- "0..1" Place : parked
 
 ' Charakter
 Character "1" *-- "*" Possession : possessions

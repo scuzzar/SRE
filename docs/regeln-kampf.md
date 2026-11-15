@@ -14,6 +14,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | **SE** | *Traveller Starter Edition*, Teil 2: *Charts and Tables* (GDW 1983) | gedruckte Seitenzahl; im PDF ist es die Seite + 2 |
 | **SR** | *Traveller Starter Edition*, Teil 1: *Rules Booklet* (GDW 1983), Kapitel *Personal Combat* (S. 19–27), *Animal Encounters* (S. 46–49), *Encounters* (S. 50–51) | gedruckte Seitenzahl; im PDF ist es die Seite + 2 |
 | **B4** | *Traveller Book 4: Mercenary* (GDW 1978) | gedruckte Seitenzahl; im PDF ist es die Seite + 6 |
+| **SA** | *Traveller Starter Edition*, Teil 3: *Adventures* (GDW 1983), darin *Mission on Mithril* (S. 1–7) | gedruckte Seitenzahl; im PDF ist es die Seite + 5 |
 | **B1** | *Traveller Book 1: Characters and Combat* | liegt nicht vor; seine Kampfregeln stehen in SR, auf die SE-Tabellen abgestimmt; nur noch genannt, wo B4 auf B1 verweist |
 
 - SE hat die Tabellen, SR den Regeltext dazu. Wo SR eine Tabelle aus SE erklärt oder ergänzt, steht
@@ -69,6 +70,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Abstraktes Schlachtsystem](#abstraktes-schlachtsystem) | B4 32–35 | ○ |
 | [Feldartillerie](#feldartillerie) | B4 48–49 | ○ |
 | [Tierbegegnungen](#tierbegegnungen) | SE 18–19, SR 46–49 | ○ |
+| [Fahrzeuge und Reisen über Land](#fahrzeuge-und-reisen-über-land) | SA 1, 3, 7 | ○ (Modell im Entwurf) |
 
 ---
 
@@ -1807,6 +1809,41 @@ bis 9 ist und es keine Giftwaffe hat; essbar sind 1W6 × 5 % seines Gewichts. Ei
    - E. Einzelheiten: 1) Gewicht und Hits, 2) Waffe und Wunden mit der Wundänderung, 3) Rüstung,
      4) Verhalten.
 3. Gesunden Menschenverstand anwenden.
+
+---
+
+## Fahrzeuge und Reisen über Land
+
+*SA 1, „Procedures“; SA 3, „Event and Encounter Tables“; SA 7, „Time and Travel“, „The All Terrain
+Vehicle“.* App: ○ (das Modell steht im Entwurf, siehe `domain-model.md` unter *Fahrzeuge* und
+*Fahrt*). Die Geschwindigkeiten der übrigen Fahrzeuge stehen in Book 3, das nicht vorliegt.
+
+**Das ATV aus *Mission on Mithril*** (ein Tracked ATV, Kettenfahrzeug mit Druckkabine, 9,5 t):
+
+| Gelände | Geschwindigkeit |
+|---|---|
+| Plain (eben) | bis 150 kph |
+| Rough (zerklüftet) | etwa 75 kph |
+| Mountain (Gebirge) | etwa 35 kph |
+| Sea (offenes Wasser) | schwimmt, treibt mit der Strömung (1 Hex in 20 Stunden) |
+
+- Ohne Fertigkeit ATV fährt man mit ATV-0 im ebenen Gelände mit etwa halber Geschwindigkeit; im
+  Abenteuer: 20 % mehr Zeit je Hex. Rough und Mountain sind ohne Fertigkeit gefährlich.
+- **Stunden je Hex** auf der Karte von Mithril (die Hexgröße der Karte steht nicht dabei): Snow
+  Plain und Ice Plain 5, Ice Shelf und Ice Shelf Edge 10, Rugged und Jagged 15, Mountain 20, Sea 20.
+  Ereignisse wie Slow-Going oder Deep Snow verdoppeln die Zeit im Hex; Impossible Passage und Chasm
+  sperren den Weg, man muss zurück und einen anderen Weg nehmen.
+- **Reisetag** (SA 7): Zeit wird in Stunden gezählt, unter 5 Minuten fällt weg. Vorschlag des
+  Abenteuers auf der 20-Stunden-Welt Mithril: 10 Stunden fahren, 10 Stunden Lager (8 Stunden
+  Schlaf, 2 Stunden Sonstiges). Ein Hex von 15 oder 20 Stunden wird über zwei Tage gefahren, mit
+  Lager dazwischen. Je Hex ein Ereignis; dauert ein Hex mehr als einen Tag, am nächsten Tag noch
+  eines, durchquert man zwei Hexe an einem Tag, je Hex eines.
+- Energie (150 Punkte je Tankfüllung, 1 Punkt je Fahrstunde, 2 im Gebirge, dazu Heizung) und
+  Schadenstabelle des ATV sind Abenteuerdetails und nicht aufgenommen.
+
+**In der App** ✱ (Owner, 15. November 2026): 8 Fahrstunden je Tag statt 10, weil der Tag der App
+24 Stunden hat und nicht 20; Stunden innerhalb des Tages rechnet die App nicht. Geschwindigkeit je
+Geländeart der Oberflächenkarte statt Stunden je Hex.
 
 ---
 

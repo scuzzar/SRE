@@ -334,14 +334,16 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > *Oberflächenkarte*). Jede Haupt- und Nebenstadt hat einen Namen. Neu im Bild: `City.name`. Der
 > Ausschnitt dazu liegt unter [`changes/2026-11-14-staedtenamen.png`](changes/2026-11-14-staedtenamen.png).
 
-> **Entwurf, noch nicht abgestimmt** (Kennzeichen 2026-11-15): **Fahrzeuge** (siehe *Fahrzeuge*).
+> **Wartet auf Freigabe** (Kennzeichen 2026-11-15, nach den Antworten des Owners vom 15. November
+> 2026): **Fahrzeuge** und **Fahrt** (siehe dort).
 > Jedes Fahrzeug hat eine Tabelle, auf welchen Geländearten und Wegen (Straße, Fluss, Siedlung) es
 > wie schnell fährt; wo kein Eintrag steht, fährt es nicht. Fluggeräte fliegen gerade von
 > Landepunkt zu Landepunkt: auf ihren Geländearten oder in Städten mit passendem Hafen. Eine
 > **Fahrt** über die Oberfläche wird gespeichert und rückt Tag für Tag vor; gemietete Fahrzeuge
-> kosten einen Anteil des Kaufpreises je Tag. Neu im Bild: `Vehicle`, `VehicleSpeed`, `Way`,
-> `Item.vehicle`, `Trip`, `Leg`, `TripDay`, `Campaign.trip`, `BookingKind.rent`, `Booking.rentFor`
-> und der Bereich *Fahrzeuge und Wege*. Der Ausschnitt dazu liegt unter
+> kosten einen Anteil des Kaufpreises je Tag; eigene Fahrzeuge, die nicht mitfahren, bleiben am Ort
+> des Wechsels stehen. Neu im Bild: `Vehicle`, `VehicleSpeed`, `Way`,
+> `Item.vehicle`, `Trip`, `Leg`, `TripDay`, `Campaign.trip`, `BookingKind.rent`, `Booking.rentFor`,
+> `Possession.parked` und der Bereich *Fahrzeuge und Wege*. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-15-fahrzeuge-und-gelaende.png`](changes/2026-11-15-fahrzeuge-und-gelaende.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
@@ -622,7 +624,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Hauptstadt, Nebenstadt | `CityRank` | Die Städte mit den höchsten Bevölkerungsziffern (höchstens 10) bzw. eine Ziffer darunter |
 | Orbitalstadt | `City` ohne `cell` | Eine Stadt dauerhaft im Orbit |
 | Hafen einer Stadt | `City.port`, `Port` | Raumhafen A–E oder Landeplatz F–H der Stadt; Y (keiner) heißt: kein Wert |
-| Fahrzeug | `Vehicle`, `Item.vehicle` | Womit man sich über die Oberflächenkarte bewegt, mit seiner Tabelle der Geschwindigkeiten; zu einem Gegenstand der Art vehicle, außer *zu Fuß* und Linienverkehr |
+| Fahrzeug | `Vehicle`, `Item.vehicle` | Womit man sich über die Oberflächenkarte bewegt, mit seiner Tabelle der Geschwindigkeiten; zu einem Gegenstand der Art vehicle, außer *zu Fuß* |
 | Zu Fuß | `Vehicle` ohne Gegenstand | Das Fahrzeug, das die Gruppe immer hat: langsam, aber fast überall |
 | Geschwindigkeit eines Fahrzeugs | `VehicleSpeed`, `Vehicle.speeds` | Eine Zeile der Tabelle: auf welcher Geländeart (`on`) oder entlang welchem Weg (`along`) das Fahrzeug wie viele km/h fährt; ohne Zeile fährt es dort nicht |
 | Weg | `Way` | Was ein Oberflächenfeld über seine Geländeart hinaus befahrbar macht: Straße, Fluss, Siedlung (Stadt oder Kleinstadt) |
@@ -632,7 +634,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Abschnitt | `Leg`, `Trip.legs` | Ein Stück der Fahrt mit einem Fahrzeug, gemietet oder nicht, über eine Folge von Oberflächenfeldern |
 | Fahrstunden | `Trip.hours`, `TripDay.hours` | Wie viele Stunden die Fahrt schon gefahren ist bzw. an einem Reisetag; ein Reisetag hat höchstens die Fahrstunden je Tag (Hausregel) |
 | Reisetag | `TripDay` | Der Logeintrag für einen Tag der Fahrt oder das letzte Stück bis zur Ankunft |
-| Miete | `BookingKind.rent`, `Leg./rent` | Was ein gemietetes Fahrzeug je Tag kostet: ein Anteil seines Kaufpreises (Hausregel) |
+| Miete | `BookingKind.rent`, `Leg./rent` | Was ein gemietetes Fahrzeug je Tag kostet: 1 % seines Kaufpreises (Hausregel) |
+| Fahrpreis | `Leg./rent` bei Linienverkehr | Was eine Fahrt mit Linienmaschine, Bus oder Fähre kostet: wie Miete, aber nur für die Fahrstunden des Abschnitts |
+| Abgestelltes Fahrzeug | `Possession.parked` | Ein eigenes Fahrzeug, das nicht mitgefahren ist und an einem Ort steht, bis die Gruppe es dort wieder abholt |
 | Kleinstadt | `SurfaceCell.towns` | Ob auf einem Oberflächenfeld ohne Stadt eine Kleinstadt liegt (1) oder nicht (0); höchstens eine je Feld, ohne Namen |
 | Bevölkerungsmultiplikator | `Hex.populationMultiplier` | Die erste Ziffer der Einwohnerzahl, 1–9: Die Welt hat Multiplikator × 10^Bevölkerung Einwohner |
 | Globus | (View, aus `SurfaceMap`) | Die drehbare Kugel mit der Oberflächenkarte; nur Darstellung |
@@ -2269,7 +2273,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     denen etwas geschehen ist oder NSC leben.
   - **Bestehende Kampagnen:** Ein bisheriger Aufenthaltsort bzw. Ort eines NSC wird ein Ort mit
     dieser Welt, ohne Feld und Stadt.
-- **Fahrzeuge** (Entwurf, 2026-11-15). Grundlage der Logistik auf der Oberfläche: Die App findet
+- **Fahrzeuge** (wartet auf Freigabe, 2026-11-15). Grundlage der Logistik auf der Oberfläche: Die App findet
   die schnellste Route zwischen zwei Orten einer Welt, auch wenn man dafür ein ATV oder einen
   Hubschrauber mieten muss, und die Gruppe fährt sie Tag für Tag ab.
   - Ein **Fahrzeug** (`Vehicle`) ist Referenzdaten, wie die Waffe: Ein Gegenstand der Art vehicle
@@ -2287,7 +2291,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     über beide Felder und hat das Fahrzeug eine Zeile dafür, gilt diese. Sonst muss es auf beiden
     Feldern fahren können (Geländeart oder Siedlung), und es gilt die langsamere der beiden; auf einem
     Feld gilt jeweils die schnellste passende Zeile. Dauer des Schritts: 250 km / Geschwindigkeit.
-  - **Beispiele** (Werte aus Book 3, sobald es hochgeladen ist): Ground Car nur auf Straße, Siedlung
+  - **Werte:** Das Tracked ATV hat nach *Mission on Mithril* 150 km/h auf ebenem Land, 75 im
+    zerklüfteten, 35 im Gebirge und schwimmt auf Wasser (siehe `regeln-kampf.md`, *Fahrzeuge und
+    Reisen über Land*). Die übrigen Werte kommen aus Book 3, sobald es vorliegt, sonst als Hausregel.
+  - **Beispiele:** Ground Car nur auf Straße, Siedlung
     und `settled`; Wheeled und Tracked ATV fast überall an Land, auf der Straße schneller; Motor Boat
     nur auf `water` und Fluss; Hovercraft auf Wasser und flachem Land.
   - **Fluggeräte** haben eine Fluggeschwindigkeit (`flight`) und ihre **Landepunkte**, je nach Art
@@ -2298,9 +2305,16 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Landepunkt zum nächsten, ohne Rücksicht auf das Gelände dazwischen; Dauer: Entfernung / `flight`.
     Ein Fahrzeug kann fahren und fliegen (Air/Raft, Grav Belt); dann gilt jeweils das Schnellere.
   - **Mieten** (Owner, 15. November 2026): Fahrzeuge mietet man in einer Siedlung, nur bis zum TL der
-    Welt. Die Miete je Tag ist ein fester Anteil des Kaufpreises (Hausregel, Vorschlag 1 %), je
-    angefangenem Reisetag, an dem ein gemieteter Abschnitt gefahren wird.
-- **Fahrt** (Entwurf, 2026-11-15). Eine Fahrt (`Trip`) ist gespeicherter Stand, weil sie über
+    Welt. Die Miete je Tag ist **1 % des Kaufpreises** (Hausregel), je angefangenem Reisetag, an dem
+    ein gemieteter Abschnitt gefahren wird. Gemietete Fahrzeuge gibt man am Ende ihres Abschnitts
+    ab, wo man will.
+  - **Linienverkehr** (Linienmaschine, Bus, Fähre) ist ein Fahrzeug mit Gegenstand und Preis, das man
+    nicht kaufen, nur benutzen kann; man zahlt wie bei der Miete, aber nur für die Fahrstunden des
+    Abschnitts (Fahrpreis), nicht je Tag. Der Preis eines solchen Gegenstands ist deshalb der Wert
+    eines Sitzplatzes, nicht des ganzen Fahrzeugs; sonst kostete ein Flug von 3 Stunden einen Teil
+    einer Linienmaschine. Fahrzeuge des Linienverkehrs stehen in der Liste der
+    Gegenstände, aber nicht im Angebot des Shops.
+- **Fahrt** (wartet auf Freigabe, 2026-11-15). Eine Fahrt (`Trip`) ist gespeicherter Stand, weil sie über
   mehrere Tage läuft und dazwischen anderes passiert (Rasten, Begegnungen, Ausspielen); sie
   übersteht einen Neustart.
   - **Planen:** Die Gruppe braucht einen Aufenthaltsort mit Feld oder Stadt. Man wählt auf dem Globus
@@ -2313,7 +2327,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     und Landepunkt), daraus folgen seine Fahrstunden (`/hours`) und seine Miete je Tag (`/rent`). Das
     letzte Feld eines Abschnitts ist das erste des nächsten.
   - **Tag für Tag** (wie Zeit vergehen lassen): „Einen Tag fahren“ fährt die Fahrstunden je Tag
-    (Hausregel, Vorschlag 8 Stunden) oder den Rest bis zur Ankunft, nie weniger. Das ist ein
+    (Hausregel: **8 Stunden** für alle Fahrzeuge; *Mission on Mithril* rechnet 10 auf einem
+    20-Stunden-Tag) oder den Rest bis zur Ankunft, nie weniger. Das ist ein
     Logeintrag `TripDay` mit den gefahrenen Stunden, der Miete des Tages und ob die Gruppe
     angekommen ist; `Campaign.day` wächst um 1, `Trip.hours` um die Stunden. Die Miete geht als
     Buchung `rent` aus der Kasse (`rentFor`). Reicht die Kasse nicht, geht der Tag nicht.
@@ -2326,16 +2341,15 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Abbrechen:** Die Fahrt fällt weg, die Gruppe bleibt auf dem erreichten Feld. Setzt man den
     Aufenthaltsort von Hand oder reist zu einer anderen Welt, fällt die Fahrt ebenfalls weg.
   - **Log:** Reisetage lassen sich nicht löschen, wie vergangene Zeit und Reisen.
-  - **Offene Fragen:**
-    1. **Fahrstunden je Tag:** 8 Stunden für alle Fahrzeuge? Ein Linienflug von 3 Stunden wäre dann
-       ein Reisetag mit Ankunft.
-    2. **Linienverkehr** (Linienmaschine, Bus, Fähre): statt Miete ein Fahrpreis je Strecke? Dann
-       brauchen diese Fahrzeuge einen Preis ohne Gegenstand. Vorschlag: wie Miete, aber nur für die
-       Fahrstunden des Abschnitts.
-    3. **Eigene Fahrzeuge zurücklassen:** Fliegt die Gruppe ein Stück und hat einen eigenen Ground Car,
-       bleibt der Wagen dann am Startpunkt stehen? Vorschlag für jetzt: eigene Fahrzeuge reisen
-       einfach mit (keine Orte für Fahrzeuge); gemietete gibt man am Ende des Abschnitts ab, wo man
-       will.
+  - **Eigene Fahrzeuge bleiben stehen** (Owner, 15. November 2026): Ein eigenes Fahrzeug fährt
+    nur in den Abschnitten mit, in denen es das Fahrzeug ist. Wechselt die Gruppe auf ein anderes
+    (sie fliegt, nimmt ein Boot, geht zu Fuß weiter), bleibt es am Anfang des neuen Abschnitts stehen
+    (`Possession.parked`, mit Feld bzw. Stadt). Abgestellte Fahrzeuge gehören weiter zum
+    Gruppengepäck, fahren aber nicht mit, bis die Gruppe an ihrem Ort ist; dort kann ein Abschnitt
+    mit ihnen beginnen, dann fällt `parked` weg. Hat die Gruppe mehrere gleiche und stellt nur einen
+    Teil ab, wird der Besitz geteilt (je Ort ein Eintrag mit Anzahl). Reist die Gruppe zu einer
+    anderen Welt (`Journey`), bleiben alle Fahrzeuge, die nicht abgestellt sind, am Aufenthaltsort
+    stehen. Der Shop zählt abgestellte Fahrzeuge beim Abzeichen mit; der Globus zeigt sie.
 - **Notiz zur Welt.** Eine fertige Welt (mit Namen, nicht leer) kann eine Notiz haben (`note`):
   freier Text, auch über mehrere Zeilen. Anders als ein Logeintrag lässt sie sich jederzeit ändern,
   wie die Notiz eines Charakters; Leerraum am Rand fällt weg, eine leere Notiz gibt es nicht (dann

@@ -75,6 +75,7 @@ hide <<value>> stereotype
 ' Kampagne und Charaktere
   class Campaign $kampagne
   class Character $charakter
+  class Possession $shop
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -177,6 +178,7 @@ Vehicle "*" -$newArrow("2026-11-15")-> "*" Landform : landsOn
 Vehicle "*" -$newArrow("2026-11-15")-> "*" Port : landsAt
 Leg "*" -$newArrow("2026-11-15")-> "2..*" SurfaceCell : cells {ordered}
 Trip "*" -$newArrow("2026-11-15")-> "1" SurfaceCell : /at
+Possession "1" *-$newArrow("2026-11-15")- "0..1" Place : parked
 
 ' Charakter
 
