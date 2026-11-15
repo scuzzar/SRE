@@ -344,6 +344,18 @@ describe('Charakter oben: Probe im Orakel-Screen', () => {
     expect(again.snapshot().stripCollapsed).toBe(true);
   });
 
+  it('stellt das Ziehblatt auf eine Stufe; das Gerät merkt sich die Stufe über einen Neustart', async () => {
+    const { game, repository } = await started();
+    expect(game.snapshot().trayStop).toBe('half');
+    game.setTrayStop('collapsed');
+    await game.whenSaved();
+    expect(game.snapshot().trayStop).toBe('collapsed');
+    expect(repository.trayStop).toBe('collapsed');
+    const again = new GameController({ repository, random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), keys: countingKeys() });
+    await again.init();
+    expect(again.snapshot().trayStop).toBe('collapsed');
+  });
+
   it('blendet den Hinweis im Shop aus; das Gerät merkt es sich über einen Neustart', async () => {
     const { game, repository } = await started();
     expect(game.snapshot().shopHintHidden).toBe(false);

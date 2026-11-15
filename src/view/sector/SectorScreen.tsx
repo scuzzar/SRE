@@ -6,6 +6,7 @@ import { animated } from '../haptics';
 import { HoldButton } from '../HoldButton';
 import { withLoading } from '../loading';
 import { CloseIcon, DiceIcon, LocateIcon } from '../icons';
+import { trayTop } from '../Tray';
 import { RollStage } from './WorldSheet';
 import { worldImageUrl } from './world-icon';
 
@@ -177,7 +178,7 @@ function SectorDock({
   const line = selected.occurrence;
   return (
     <div className="generation-dock sector-dock" aria-label={`Feld ${selected.id}`}>
-      <div className="sector-dock-head">
+      <div className="sector-dock-head" data-tray-peek>
         <span className="kicker">Feld {selected.id}</span>
         <button type="button" className="icon-button" aria-label="Feld abwählen" onClick={() => game.clearHex()}>
           <CloseIcon />
@@ -233,9 +234,11 @@ interface MapView {
  * unter Fingern bzw. Cursor (bei den Knöpfen die Mitte) bleibt dabei stehen. Gezeichnet wird über den
  * Ausschnitt der Zeichnung (`viewBox`); als Grundkarte (`fill`) reicht sie über ihre Fläche hinaus
  * unter Leiste und Ziehblatt und lässt sich auch bei Zoom 1 verschieben; das Ziehblatt schiebt sich
- * darüber, ohne dass sie Größe oder Lage ändert. Reine Darstellung: Zoom und Ausschnitt gehören der Ansicht.
+ * darüber, ohne dass sie Größe oder Lage ändert. Ein neu gewähltes Feld (`focus`), das danach unter dem
+ * Ziehblatt oder unter dem Rand läge, holt sie in die Mitte der sichtbaren Fläche, gleitend.
+ * Reine Darstellung: Zoom und Ausschnitt gehören der Ansicht.
  */
-function ZoomableMap({ fill, children }: { fill: boolean; children: (pixelsPerUnit: number) => ReactNode }) {
+function ZoomableMap({ fill, focus, children }: { fill: boolean; /** Das gewählte Feld und seine Mitte in Einheiten der Zeichnung. */ focus?: { readonly id: string; readonly x: number; readonly y: number } | undefined; children: (pixelsPerUnit: number) => ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   useLayoutEffect(() => {
@@ -280,6 +283,43 @@ function ZoomableMap({ fill, children }: { fill: boolean; children: (pixelsPerUn
   useEffect(() => {
     latest.current = { view: shown, zoomAt, bounded, upp };
   });
+
+  // Ein neu gewähltes Feld sichtbar halten. Das Ziehblatt fährt dafür erst hoch (der Controller stellt
+  // die Stufe, das Blatt rechnet seine Höhe); danach steht seine Oberkante in `--tray-h`.
+  const glide = useRef(0);
+  const focusId = focus?.id;
+  useEffect(() => {
+    if (!focus) return;
+    const timer = window.setTimeout(() => {
+      const el = box.current;
+      if (!el) return;
+      const { view: v, bounded: bound, upp: perPixel } = latest.current;
+      const r = el.getBoundingClientRect();
+      const above = r.top;
+      const below = Math.min(r.bottom, trayTop(el));
+      // Steht das Blatt ganz oben, ist von der Karte kaum etwas zu sehen; dann bleibt sie, wie sie ist.
+      if (below - above < 120) return;
+      const margin = H / perPixel + 12;
+      const x = r.left + r.width / 2 + (focus.x - v.cx) / perPixel;
+      const y = r.top + r.height / 2 + (focus.y - v.cy) / perPixel;
+      if (y >= above + margin && y <= below - margin && x >= r.left + margin && x <= r.right - margin) return;
+      const goal = bound({ zoom: v.zoom, cx: x < r.left + margin || x > r.right - margin ? focus.x : v.cx, cy: focus.y - ((above + below) / 2 - (r.top + r.height / 2)) * perPixel });
+      const from = v;
+      const begun = performance.now();
+      cancelAnimationFrame(glide.current);
+      const frame = (now: number) => {
+        const t = Math.min(1, (now - begun) / 320);
+        const e = 1 - (1 - t) ** 3;
+        setView({ zoom: from.zoom, cx: from.cx + (goal.cx - from.cx) * e, cy: from.cy + (goal.cy - from.cy) * e });
+        if (t < 1) glide.current = requestAnimationFrame(frame);
+      };
+      glide.current = requestAnimationFrame(frame);
+    }, 90);
+    return () => window.clearTimeout(timer);
+    // Nur ein neu gewähltes Feld zählt, nicht jede neue Zeichnung desselben.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusId]);
+  useEffect(() => () => cancelAnimationFrame(glide.current), []);
 
   // Verschieben und Kneifen: verfolgt am Fenster, damit die Geste weiterläuft, wenn der Finger die Fläche verlässt.
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -366,6 +406,7 @@ function ZoomableMap({ fill, children }: { fill: boolean; children: (pixelsPerUn
         style={fill ? undefined : { aspectRatio: `${WIDTH.toFixed(1)} / ${HEIGHT.toFixed(1)}` }}
         onPointerDown={(e) => {
           if (e.pointerType === 'mouse' && e.button !== 0) return;
+          cancelAnimationFrame(glide.current);
           const first = pointers.current.size === 0;
           pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
           if (first) gesture.current.moved = false;
@@ -467,7 +508,7 @@ export function SectorScreen({ view, heading = 'Subsektor', fill = false, dockTo
           )}
         </div>
         <div className="sector-body">
-          <ZoomableMap fill={fill}>
+          <ZoomableMap fill={fill} focus={fill && selected ? { id: selected.id, ...center(selected.column, selected.row) } : undefined}>
             {(pixelsPerUnit) =>
               sector.map((hex) => <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} detail={detailAt(pixelsPerUnit)} here={hex.id === view.location} opensGlobe={!view.picking} />)
             }

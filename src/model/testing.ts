@@ -1,7 +1,7 @@
 import { livingCharacters, type Campaign } from './campaign';
 import { currentEncounter, setDistance } from './encounter';
 import { fightOrder, turnOf, withEncounter } from './fight';
-import { CloudChanged, CloudOffline, type CampaignRepository, type Clock, type Cloud, type Download, type Keys, type Random } from './ports';
+import { CloudChanged, CloudOffline, type CampaignRepository, type Clock, type Cloud, type Download, type Keys, type Random, type TrayStop } from './ports';
 import type { SyncMark } from './sync';
 
 /** Eine Zufallsquelle für Tests: liefert die vorgegebenen Zahlen der Reihe nach, danach immer `min`. */
@@ -95,7 +95,7 @@ export function memoryRepository(...initial: Campaign[]): CampaignRepository & {
   open: string | undefined;
   stripCollapsed: boolean;
   shopHintHidden: boolean;
-  trayHeight: number | undefined;
+  trayStop: TrayStop | undefined;
   readonly marks: Map<string, SyncMark>;
 } {
   return {
@@ -117,7 +117,7 @@ export function memoryRepository(...initial: Campaign[]): CampaignRepository & {
     open: undefined,
     stripCollapsed: false,
     shopHintHidden: false,
-    trayHeight: undefined,
+    trayStop: undefined,
     async list() {
       return [...this.campaigns.values()];
     },
@@ -146,11 +146,11 @@ export function memoryRepository(...initial: Campaign[]): CampaignRepository & {
     async saveShopHintHidden(hidden) {
       this.shopHintHidden = hidden;
     },
-    async loadTrayHeight() {
-      return this.trayHeight;
+    async loadTrayStop() {
+      return this.trayStop;
     },
-    async saveTrayHeight(fraction) {
-      this.trayHeight = fraction;
+    async saveTrayStop(stop) {
+      this.trayStop = stop;
     },
   };
 }

@@ -6,6 +6,14 @@ import type { CloudFile, SyncMark } from './sync';
  * `main.tsx` reicht die Umsetzungen in den Controller.
  */
 
+/**
+ * Die Stufen des Ziehblatts auf dem Smartphone, von unten nach oben: versteckt (nur der Griff),
+ * eingeklappt (Kopf, Fuß und Reiter), halb und voll. Gemerkt wird die Stufe, nicht die Höhe in Pixeln:
+ * Die rechnet die Ansicht jedes Mal aus dem Platz und dem Inhalt aus.
+ */
+export const TRAY_STOPS = ['hidden', 'collapsed', 'half', 'full'] as const;
+export type TrayStop = (typeof TRAY_STOPS)[number];
+
 /** Die Zufallsquelle. Physische Würfel (später) sind eine zweite Umsetzung. */
 export interface Random {
   /** Eine ganze Zahl von `min` bis `max`, beide eingeschlossen. */
@@ -37,9 +45,9 @@ export interface CampaignRepository {
   /** Ob der Hinweis über den Waffen im Shop weggeklickt ist, merkt sich das Gerät; zum Spielstand gehört es nicht. */
   loadShopHintHidden(): Promise<boolean>;
   saveShopHintHidden(hidden: boolean): Promise<void>;
-  /** Wie weit das Ziehblatt hochgezogen ist (Anteil der Höhe, 0 bis 1), merkt sich das Gerät; zum Spielstand gehört es nicht. */
-  loadTrayHeight(): Promise<number | undefined>;
-  saveTrayHeight(fraction: number): Promise<void>;
+  /** Auf welcher Stufe das Ziehblatt steht, merkt sich das Gerät; zum Spielstand gehört es nicht. */
+  loadTrayStop(): Promise<TrayStop | undefined>;
+  saveTrayStop(stop: TrayStop): Promise<void>;
   /** Die Abgleichsmarken merkt sich das Gerät; zum Spielstand gehören sie nicht. */
   loadMarks(): Promise<readonly SyncMark[]>;
   saveMark(mark: SyncMark): Promise<void>;

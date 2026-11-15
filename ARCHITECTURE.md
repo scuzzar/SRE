@@ -77,7 +77,7 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   Kampagnenwahl (`showCampaigns()`, `closeCampaigns()`) und das Ergebnis-Popup (`closeResult()`),
   welcher Charakter im Charakter-Screen seine Details zeigt (`toggleDetails(id)`) und ob die Leiste
   mit dem Charakter oben eingeklappt ist (`toggleStrip()`) und ob der Hinweis über den Waffen im
-  Shop weggeklickt ist (`hideShopHint()`) und wie weit das Ziehblatt hochgezogen ist (`setTrayHeight(fraction)`);
+  Shop weggeklickt ist (`hideShopHint()`) und auf welcher Stufe das Ziehblatt steht (`setTrayStop(stop)`: versteckt, eingeklappt, halb oder voll; die Höhe dazu rechnet die View);
   das merkt sich das Gerät über das Repository, wie die offene Kampagne. Auch der Ablauf ist seine Sache: Steht nach einer Änderung
   ein anderer Charakter oben, endet die Probe; nach der Erschaffung geht es zum Orakel-Screen, wo der
   Neue oben steht. Die Inspirationskarte steht im Vordergrund, solange es eine offene

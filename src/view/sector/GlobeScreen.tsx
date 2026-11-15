@@ -8,6 +8,7 @@ import { createGlobeRenderer, type GlobeRenderer } from './globe-gl';
 import { hideLoading, showLoading } from '../loading';
 import { cellAt, radiusOf, renderGlobe, screenOf, screenOfPoint, type Camera, type Viewport } from './globe-render';
 import { HappenedList } from './HappenedList';
+import { trayTop } from '../Tray';
 import { NoteSection, SurfaceSection, WorldCard } from './WorldSheet';
 
 const DEG = Math.PI / 180;
@@ -346,6 +347,43 @@ export function GlobeScreen({
   };
   useEffect(() => () => cancelAnimationFrame(flyFrame.current), []);
 
+  // Ein angetipptes Feld, das hinter dem hochfahrenden Ziehblatt verschwände, dreht die Karte in die
+  // Mitte (sie liegt immer über dem halben Blatt). Gemessen wird, wenn das Blatt seine Stufe hat.
+  const seen = useRef({ camera, view });
+  useEffect(() => {
+    seen.current = { camera, view };
+  });
+  const pickedCell = globe.picked?.cell;
+  useEffect(() => {
+    if (pickedCell === undefined) return;
+    const timer = window.setTimeout(() => {
+      const el = stage.current;
+      if (!el) return;
+      const { camera: from, view: size } = seen.current;
+      const at = screenOf(globe, from, size, pickedCell);
+      const r = el.getBoundingClientRect();
+      const bottom = trayTop(el);
+      // Steht das Blatt ganz oben, ist vom Globus kaum etwas zu sehen; dann bleibt er, wie er ist.
+      if (bottom - r.top < 160 || (at && r.top + at.y < bottom - 28)) return;
+      cancelAnimationFrame(flyFrame.current);
+      const lat = globe.grid.lat[pickedCell]! * DEG;
+      const dLon = shortest(globe.grid.lon[pickedCell]! * DEG - from.lon);
+      const start = performance.now();
+      setMoving(true);
+      const glide = (now: number) => {
+        const t = Math.min(1, (now - start) / 380);
+        const e = 1 - (1 - t) ** 3;
+        setCamera((c) => ({ ...c, lat: from.lat + (lat - from.lat) * e, lon: from.lon + dLon * e }));
+        if (t < 1) flyFrame.current = requestAnimationFrame(glide);
+        else setMoving(false);
+      };
+      flyFrame.current = requestAnimationFrame(glide);
+    }, 90);
+    return () => window.clearTimeout(timer);
+    // Nur ein neu angetipptes Feld zählt.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pickedCell]);
+
   /** Dreht die Karte zu einem Feld, zoomt etwas hinein und tippt es an. */
   const flyTo = (cell: number) => {
     setCamera((c) => ({ lat: globe.grid.lat[cell]! * DEG, lon: globe.grid.lon[cell]! * DEG, zoom: Math.max(c.zoom, clampZoom(3)) }));
@@ -541,7 +579,7 @@ export function FieldCard({
   if (!picked) return null;
   return (
     <section className="field-card scroll" aria-label="Angetipptes Feld">
-      <div className="globe-sheet-head">
+      <div className="globe-sheet-head" data-tray-peek>
           {picked.cities[0] && renaming === picked.cities[0].index ? (
           <form
             className="globe-rename"

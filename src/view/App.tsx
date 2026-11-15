@@ -178,7 +178,7 @@ export function App() {
         <>
           {base}
           <Tray
-            fraction={view.trayHeight}
+            stop={view.trayStop}
             raise={view.globe?.picked?.cell ?? view.selected?.id}
             head={banners}
             body={<div className="screen-host">{field ?? (screen === 'oracle' ? <OracleScreen view={view} dock={false} /> : area)}</div>}
