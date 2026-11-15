@@ -208,4 +208,25 @@ describe('Abgleich mit OneDrive', () => {
     await game.sync();
     expect(cloud.files.get('key-1')!.text).toContain('Neu.');
   });
+
+  it('merkt beim Start, wenn die Anmeldung verloren ging, ohne dass sich jemand abgemeldet hat', async () => {
+    const cloud = memoryCloud(false);
+    const handy = await device(cloud, 'handy', '2026-11-13T10:00:00.000Z');
+    await handy.game.signIn();
+    await handy.game.whenSaved();
+    // Die Anmeldung ist weg (etwa nach einer neuen Fassung), die Abgleichsmarken sind noch da.
+    cloud.user = undefined;
+    const again = new GameController({ repository: handy.repository, random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), keys: countingKeys('handy'), cloud });
+    await again.init();
+    expect(again.snapshot().sync).toMatchObject({ status: 'expired', account: undefined });
+    await again.signIn();
+    expect(again.snapshot().sync).toMatchObject({ status: 'synced', account: 'kira@example.com' });
+
+    // Wer sich selbst abmeldet, wird beim nächsten Start nicht daran erinnert.
+    await again.signOut();
+    await again.whenSaved();
+    const third = new GameController({ repository: handy.repository, random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), keys: countingKeys('handy'), cloud });
+    await third.init();
+    expect(third.snapshot().sync.status).toBe('signedOut');
+  });
 });

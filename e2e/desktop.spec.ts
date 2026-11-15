@@ -112,7 +112,9 @@ test('Die Sektor-Karte passt ganz in den Screen, und der Screen wird nicht breit
   // Auch mit dem Dock des gewählten Feldes bleibt die unterste Reihe sichtbar.
   await page.locator('.sector-viewport').getByRole('button', { name: '0110, nicht erzeugt' }).click();
   const dock = (await page.locator('.sector-dock').boundingBox())!;
-  expect(map.y + map.height).toBeLessThanOrEqual(dock.y);
+  // Die Karte rückt dafür zusammen.
+  const smaller = (await page.locator('.sector-viewport').boundingBox())!;
+  expect(smaller.y + smaller.height).toBeLessThanOrEqual(dock.y);
   const host = (await page.locator('.screen-host').boundingBox())!;
   expect(host.width).toBeLessThanOrEqual(960);
 });

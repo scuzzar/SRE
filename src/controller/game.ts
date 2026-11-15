@@ -520,7 +520,9 @@ export class GameController {
     try {
       for (const mark of await this.deps.repository.loadMarks()) this.marks.set(mark.key, mark);
       const account = await cloud.account();
-      this.setSync({ account, status: account ? 'synced' : 'signedOut' });
+      // Ohne Anmeldung, aber mit Abgleichsmarken hat sich niemand selbst abgemeldet (das löscht die
+      // Marken): Die Anmeldung ging verloren, etwa mit einer neuen Fassung der App.
+      this.setSync({ account, status: account ? 'synced' : this.marks.size > 0 ? 'expired' : 'signedOut' });
     } catch (error) {
       this.setSync({ status: 'error', error: `Die Anmeldung ließ sich nicht prüfen: ${messageOf(error)}` });
       return;

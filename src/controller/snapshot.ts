@@ -406,7 +406,7 @@ export interface CampaignChoice {
 /**
  * Wie der Abgleich steht: `off` nicht eingerichtet (die App hat keine Wolke), `signedOut` nicht
  * angemeldet, `syncing` läuft, `synced` fertig, `offline` kein Netz, `expired` die Anmeldung ist
- * abgelaufen, `error` etwas anderes ging schief (`error` sagt was).
+ * abgelaufen oder verloren gegangen (ohne dass sich jemand abgemeldet hat), `error` etwas anderes ging schief (`error` sagt was).
  */
 export type SyncStatus = 'off' | 'signedOut' | 'syncing' | 'synced' | 'offline' | 'expired' | 'error';
 

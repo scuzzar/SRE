@@ -210,7 +210,7 @@ function SectorDock({
 /**
  * Der Subsektor: 8 × 10 Felder wie TAS Form 6. Ein nicht erzeugtes Feld (dunkel) antippen wählt es;
  * unten würfelt man dann das Vorkommen. Eine Welt antippen öffnet ihre Weltkarte, auch eine, die
- * noch entsteht. Darunter die Welten als Liste. Während die Würfel rollen, zeigt die Karte noch den
+ * noch entsteht. Die Karte hat den Platz für sich; Welten und Legende klappen oben über ihr auf. Während die Würfel rollen, zeigt die Karte noch den
  * Stand davor.
  */
 /** Wie weit die Karte sich vergrößern lässt. */
@@ -369,6 +369,9 @@ export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; 
   const sector = rolling ? shown : view.sector;
   // Ein Tippen irgendwo, solange der Würfel rollt, springt zum Ergebnis; der Zähler sagt es der Bühne.
   const [skips, setSkips] = useState(0);
+  // Welche Liste oben über der Karte aufgeklappt ist, wie im Globus; reine Darstellung.
+  const [panel, setPanel] = useState<'worlds' | 'legend' | undefined>(undefined);
+  const toggle = (p: 'worlds' | 'legend') => setPanel(panel === p ? undefined : p);
   return (
     <div
       className="screen"
@@ -380,45 +383,65 @@ export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; 
       }}
     >
       <section className="scroll sector" aria-labelledby="sector-title">
-        <h2 id="sector-title" className="section-title">
-          {heading}
-        </h2>
-        <ZoomableMap>
-          {(pixelsPerUnit) => (
-            <svg className="sector-map" viewBox={`0 0 ${WIDTH.toFixed(1)} ${HEIGHT.toFixed(1)}`} role="group" aria-label="Karte des Subsektors">
-              {sector.map((hex) => (
-                <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} detail={detailAt(pixelsPerUnit)} here={hex.id === view.location} opensGlobe={!view.picking} />
-              ))}
-            </svg>
+        <div className="sector-bar">
+          <h2 id="sector-title" className="section-title">
+            {heading}
+          </h2>
+          {view.worlds.length > 0 && (
+            <button type="button" className={panel === 'worlds' ? 'globe-chip on' : 'globe-chip'} aria-expanded={panel === 'worlds'} onClick={() => toggle('worlds')}>
+              Welten {view.worlds.length} ▾
+            </button>
           )}
-        </ZoomableMap>
-        <p className="sector-legend small-label">
-          Dunkle Felder sind nicht erzeugt: antippen, dann unten das Vorkommen würfeln. Helle ohne Zeichen sind leer. Das Bild zeigt die Welt: Größe, Atmosphäre als Leuchten, Wasser und Land, Lichter der Städte, ab TL 8 Umlaufbahnen. ★ Marinebasis, ▲ Scoutbasis, • rechts oben Gasriese.
-        </p>
-        {view.worlds.length > 0 && (
-          <>
-            <h3 className="section-title" style={{ fontSize: 11 }}>
-              Welten
-            </h3>
-            <ul className="world-list">
-              {view.worlds.map((w) => (
-                <li key={w.id}>
-                  <button type="button" onClick={() => (view.picking ? game.chooseHex(w.column, w.row) : withLoading('Welt wird aufgebaut …', () => game.chooseHex(w.column, w.row)))}>
-                    <span className="world-list-name">{w.name}</span>
-                    <span className="mono world-list-hex">{w.id}</span>
-                    <span className="mono world-list-uwp">{w.uwp}</span>
-                    <span className="mono world-list-bases">{w.bases}</span>
-                    <span className="world-list-trade">
-                      {[...w.trade, ...(w.gasGiant ? ['G'] : [])].join(' ')}
-                    </span>
-                    {w.id === view.location && <span className="world-list-here">Die Gruppe ist hier</span>}
-                    {w.note && <span className="world-list-note">{w.note}</span>}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+          <button type="button" className={panel === 'legend' ? 'globe-chip on' : 'globe-chip'} aria-expanded={panel === 'legend'} onClick={() => toggle('legend')}>
+            Legende ▾
+          </button>
+        </div>
+        <div className="sector-body">
+          <ZoomableMap>
+            {(pixelsPerUnit) => (
+              <svg className="sector-map" viewBox={`0 0 ${WIDTH.toFixed(1)} ${HEIGHT.toFixed(1)}`} role="group" aria-label="Karte des Subsektors">
+                {sector.map((hex) => (
+                  <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} detail={detailAt(pixelsPerUnit)} here={hex.id === view.location} opensGlobe={!view.picking} />
+                ))}
+              </svg>
+            )}
+          </ZoomableMap>
+          {panel === 'legend' && (
+            <div className="sector-panel" role="region" aria-label="Legende">
+              <p className="sector-legend small-label">
+                Dunkle Felder sind nicht erzeugt: antippen, dann unten das Vorkommen würfeln. Helle ohne Zeichen sind leer. Das Bild zeigt die Welt: Größe, Atmosphäre als Leuchten, Wasser und Land, Lichter der Städte, ab TL 8 Umlaufbahnen. ★ Marinebasis, ▲ Scoutbasis, • rechts oben Gasriese.
+              </p>
+            </div>
+          )}
+          {panel === 'worlds' && view.worlds.length > 0 && (
+            <div className="sector-panel" role="region" aria-label="Welten">
+              <ul className="world-list">
+                {view.worlds.map((w) => (
+                  <li key={w.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPanel(undefined);
+                        if (view.picking) game.chooseHex(w.column, w.row);
+                        else withLoading('Welt wird aufgebaut …', () => game.chooseHex(w.column, w.row));
+                      }}
+                    >
+                      <span className="world-list-name">{w.name}</span>
+                      <span className="mono world-list-hex">{w.id}</span>
+                      <span className="mono world-list-uwp">{w.uwp}</span>
+                      <span className="mono world-list-bases">{w.bases}</span>
+                      <span className="world-list-trade">
+                        {[...w.trade, ...(w.gasGiant ? ['G'] : [])].join(' ')}
+                      </span>
+                      {w.id === view.location && <span className="world-list-here">Die Gruppe ist hier</span>}
+                      {w.note && <span className="world-list-note">{w.note}</span>}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       </section>
       {selected && (
         <SectorDock

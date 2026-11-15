@@ -88,3 +88,25 @@ test('Abgleich: anmelden, zweites Gerät bekommt die Kampagne, Konflikt mit „B
   await expect(syncPanel(page)).toContainText('Nicht angemeldet');
   await expect(sheet(page).locator('.campaign-pick')).toHaveCount(4);
 });
+
+test('Abgleich: Geht die Anmeldung verloren, meldet ein Hinweis mit einem Klick wieder an', async ({ page }) => {
+  await page.goto('/?probe-wolke');
+  await openCampaigns(page);
+  await syncPanel(page).getByRole('button', { name: 'Bei OneDrive anmelden' }).click();
+  await expect(syncPanel(page)).toContainText('Angemeldet als Probe-Wolke');
+  await sheet(page).getByRole('button', { name: 'Schließen' }).first().click();
+  await rollAndWaitForSync(page);
+  // Die Anmeldung ist weg, ohne dass sich jemand abgemeldet hat (etwa nach einer neuen Fassung).
+  await page.evaluate(() => {
+    const stored = JSON.parse(localStorage.getItem('sre-probe-wolke') ?? '{}') as { user?: string };
+    delete stored.user;
+    localStorage.setItem('sre-probe-wolke', JSON.stringify(stored));
+  });
+  await page.reload();
+  const hint = page.getByRole('alert').filter({ hasText: 'OneDrive hat dich abgemeldet' });
+  await expect(hint).toBeVisible();
+  await hint.getByRole('button', { name: 'Wieder anmelden' }).click();
+  await expect(hint).toBeHidden();
+  await openCampaigns(page);
+  await expect(syncPanel(page)).toContainText('Angemeldet als Probe-Wolke');
+});

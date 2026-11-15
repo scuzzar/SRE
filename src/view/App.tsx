@@ -15,11 +15,12 @@ import { ResultDialog } from './characters/ResultDialog';
 import { useGame, useSnapshot } from './game-context';
 import { useEscapeCloses, useShortcuts } from './keyboard';
 import { useIsDesktop } from './media';
-import { CombatIcon, EncounterIcon, MenuIcon, OracleIcon, PeopleIcon, PersonIcon, SectorIcon, ShopIcon } from './icons';
+import { CloseIcon, CombatIcon, EncounterIcon, MenuIcon, OracleIcon, PeopleIcon, PersonIcon, SectorIcon, ShopIcon } from './icons';
 import { Menu } from './Menu';
 import { CardSheet } from './oracle/CardSheet';
 import { DiceRoll } from './oracle/DiceRoll';
 import { OracleScreen } from './oracle/OracleScreen';
+import { OracleDock } from './oracle/OracleDock';
 import { SectorPicker, SectorScreen } from './sector/SectorScreen';
 import { WorldSheet } from './sector/WorldSheet';
 import { WorldIcon } from './sector/WorldIcon';
@@ -27,7 +28,7 @@ import { JourneySheet } from './sector/JourneySheet';
 import { GlobeScreen } from './sector/GlobeScreen';
 import { LoadingOverlay, withLoading } from './loading';
 
-/** Die Bereiche der Leiste unten bzw. der Reiterzeile oben, in dieser Reihenfolge. */
+/** Die Bereiche der Leiste unten bzw. der Reiter in der Kopfzeile, in dieser Reihenfolge. */
 const areas: readonly { readonly id: Screen; readonly label: string; readonly Icon: () => ReactElement }[] = [
   { id: 'oracle', label: 'Orakel', Icon: OracleIcon },
   { id: 'encounter', label: 'Begegnung', Icon: EncounterIcon },
@@ -41,7 +42,7 @@ const areas: readonly { readonly id: Screen; readonly label: string; readonly Ic
 export function App() {
   const game = useGame();
   const view = useSnapshot();
-  // Desktop-Modus (ab 1024 px): Reiterzeile unter der Kopfzeile, darunter drei Spalten: Orakel mit
+  // Desktop-Modus (ab 1024 px): die Reiter in der Kopfzeile, darunter drei Spalten: Orakel mit
   // Log, die Charaktere, der gewählte Bereich.
   const desktop = useIsDesktop();
   // Ob das Menü offen ist, ist reine Darstellung; was man darin wählt, entscheidet der Controller.
@@ -49,6 +50,9 @@ export function App() {
   // Wen der Heilen-Dialog im Kampf zeigt; die App hält es, weil ihn im Desktop-Modus auch die
   // Charakterspalte öffnet.
   const [patient, setPatient] = useState<Patient | undefined>(undefined);
+  // Ob der Hinweis „OneDrive hat dich abgemeldet“ weggeklickt ist; reine Darstellung, beim nächsten
+  // Start kommt er wieder, solange die Anmeldung fehlt.
+  const [syncHintClosed, setSyncHintClosed] = useState(false);
   // Die Bereiche in der Reihenfolge der Leiste; im Desktop-Modus ohne das Orakel, das rechts steht.
   const shown = desktop ? areas.filter((a) => a.id !== 'oracle') : areas;
   // Esc schließt das oberste Popup; die Ziffern wählen den Bereich an dieser Stelle der Leiste.
@@ -68,6 +72,18 @@ export function App() {
   const characterColumn = desktop && screen !== 'characters' && !(screen === 'combat' && view.combat?.sim);
   // Der Aufenthaltsort steht mit UWP in der Kopfzeile; ein Tippen öffnet seine Weltkarte.
   const here = view.worlds.find((w) => w.id === view.location);
+  // Die Reiter: auf dem Smartphone die Leiste unten, im Desktop-Modus in der Kopfzeile zwischen
+  // Aufenthaltsort und Menü, damit oben keine zweite Zeile Platz kostet.
+  const nav = (
+    <nav className="nav" aria-label="Bereiche">
+      {shown.map(({ id, label, Icon }, i) => (
+        <button key={id} type="button" aria-current={screen === id ? 'page' : undefined} title={`${label} (${i + 1})`} aria-keyshortcuts={String(i + 1)} onClick={() => game.showScreen(id)}>
+          <Icon />
+          {label}
+        </button>
+      ))}
+    </nav>
+  );
 
   return (
     <div className="app">
@@ -81,6 +97,7 @@ export function App() {
         ) : (
           <span className="brand header-world header-world-none">Auf keiner Welt</span>
         )}
+        {desktop && nav}
         <span className="header-right">
           <FullscreenButton />
           <button type="button" className="icon-button menu-button" aria-label="Menü" aria-expanded={menu} onClick={() => setMenu(true)}>
@@ -99,14 +116,19 @@ export function App() {
         </p>
       )}
 
-      <nav className="nav" aria-label="Bereiche">
-        {shown.map(({ id, label, Icon }, i) => (
-          <button key={id} type="button" aria-current={screen === id ? 'page' : undefined} title={`${label} (${i + 1})`} aria-keyshortcuts={String(i + 1)} onClick={() => game.showScreen(id)}>
-            <Icon />
-            {label}
+      {view.sync.status === 'expired' && !syncHintClosed && (
+        <div className="banner sync-hint" role="alert">
+          <span>OneDrive hat dich abgemeldet, es wird nicht mehr abgeglichen.</span>
+          <button type="button" className="ghost compact" onClick={() => void game.signIn()}>
+            Wieder anmelden
           </button>
-        ))}
-      </nav>
+          <button type="button" className="icon-button" aria-label="Hinweis schließen" onClick={() => setSyncHintClosed(true)}>
+            <CloseIcon />
+          </button>
+        </div>
+      )}
+
+      {!desktop && nav}
 
       <div className={desktop && !characterColumn ? 'stage without-characters' : 'stage'}>
         {desktop && (
@@ -136,7 +158,7 @@ export function App() {
       {view.picking && <SectorPicker view={view} title={view.picking.title} />}
       {view.world && <WorldSheet key={view.world.id} world={view.world} here={view.location === view.world.id} travel={view.travel} log={view.log} logDays={view.logDays} />}
       {view.globe && (
-        <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} world={view.world} here={view.location === view.globe.id} travel={view.travel} log={view.log} logDays={view.logDays} error={view.world?.error} />
+        <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} world={view.world} here={view.location === view.globe.id} travel={view.travel} log={view.log} logDays={view.logDays} error={view.world?.error} dock={<OracleDock view={view} />} />
       )}
       {/* Der Editor liegt über dem Globus: Ein NSC im angetippten Feld öffnet ihn dort. */}
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
