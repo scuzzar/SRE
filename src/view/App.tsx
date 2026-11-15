@@ -119,10 +119,10 @@ export function App() {
     </>
   );
 
-  // Die Reihe Notiz, Würfeln, Karte: im Log-Panel des Desktops immer, im Ziehblatt nur, wo man würfelt
-  // (Log, Begegnung, Kampf, das angetippte Feld), nicht in Shop, Charaktere, NSC und „Über“.
+  // Die Reihe Notiz, Deuten, Würfeln, Karte: im Log-Panel des Desktops immer, im Ziehblatt nur im Log
+  // und beim angetippten Feld; die übrigen Reiter haben unten Platz für ihre eigenen Knöpfe.
   const dock = <OracleDock view={view} shortcuts />;
-  const dice = field !== undefined || screen === 'oracle' || screen === 'encounter' || screen === 'combat';
+  const dice = field !== undefined || screen === 'oracle';
 
   // Die Grundkarte: der Globus der offenen Welt, sonst der Subsektor. Oben rechts das Menü.
   const base = (

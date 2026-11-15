@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { characters, entries, openOracle, oracle, revealed } from './layout';
+import { characters, entries, oracle, revealed } from './layout';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -309,8 +309,7 @@ test('Eine ältere Karte ohne Frage zeigt ihre Felder in der Zeile nur einmal', 
   await page.screenshot({ path: process.env.SHOT ?? 'test-results/karte-zeile.png' });
 });
 
-test('Deuten in jedem Reiter: der Knopf in der Reihe unten deutet das neueste Ergebnis, ohne den Log zu sehen', async ({ page }) => {
-  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Begegnung', exact: true }).click();
+test('Deuten mit dem Knopf in der Reihe unten: gilt dem neuesten Ergebnis', async ({ page }) => {
   await oracle(page).getByRole('button', { name: '2W6', exact: true }).click();
   await expect(page.locator('.dice-roll')).toBeHidden();
   await oracle(page).getByRole('button', { name: 'Neuestes Ergebnis deuten' }).click();
@@ -319,6 +318,15 @@ test('Deuten in jedem Reiter: der Knopf in der Reihe unten deutet das neueste Er
   await reading.getByPlaceholder(/Was bedeutet das/).fill('Die Tür ist offen.');
   await reading.getByRole('button', { name: 'Deuten' }).click();
   await expect(reading).toBeHidden();
-  await openOracle(page);
   await expect(oracle(page).locator('.entry', { hasText: 'Würfel · 2W6' }).locator('.interpretation')).toContainText('Die Tür ist offen.');
+});
+
+test('Die Reihe unten steht auf dem Smartphone nur im Log und beim angetippten Feld', async ({ page }, testInfo) => {
+  testInfo.skip(testInfo.project.name !== 'mobil', 'Im Desktop-Modus steht sie immer im Log-Panel');
+  const nav = page.getByRole('navigation', { name: 'Bereiche' });
+  await expect(oracle(page).getByRole('button', { name: '2W6', exact: true })).toBeVisible();
+  for (const name of ['Begegnung', 'Kampf', 'Shop', 'Charaktere', 'NSC']) {
+    await nav.getByRole('button', { name, exact: true }).click();
+    await expect(page.getByRole('region', { name: 'Orakel und Proben' })).toHaveCount(0);
+  }
 });

@@ -7,7 +7,7 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   const map = page.getByRole('group', { name: 'Karte des Subsektors' });
   let world = undefined as undefined | ReturnType<typeof page.getByRole>;
   let worldId = '';
-  for (const id of ['0101', '0202', '0303', '0404', '0505', '0606', '0707', '0808', '0109', '0210']) {
+  for (const id of ['0101', '0202', '0303', '0404', '0505', '0606', '0707', '0408', '0109', '0210']) {
     await map.getByRole('button', { name: `${id}, nicht erzeugt` }).click();
     const button = page.locator('.sector-dock').getByRole('button', { name: /Vorkommen würfeln/ });
     const box = (await button.boundingBox())!;

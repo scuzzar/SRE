@@ -12,7 +12,7 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
 
   // Das Vorkommen wird im Subsektor gewürfelt, nicht auf der Weltkarte.
   let named = false;
-  for (const id of ['0101', '0202', '0303', '0404', '0505', '0606', '0707', '0808', '0109', '0210']) {
+  for (const id of ['0101', '0202', '0303', '0404', '0505', '0606', '0707', '0408', '0109', '0210']) {
     await map.getByRole('button', { name: `${id}, nicht erzeugt` }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
     const dock = page.locator('.sector-dock');
@@ -88,7 +88,7 @@ test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis 
   await page.goto('/');
   await openSector(page);
   const map = page.getByRole('group', { name: 'Karte des Subsektors' });
-  for (const id of ['0101', '0202', '0303', '0404', '0505', '0606', '0707', '0808', '0109', '0210']) {
+  for (const id of ['0101', '0202', '0303', '0404', '0505', '0606', '0707', '0408', '0109', '0210']) {
     await map.getByRole('button', { name: `${id}, nicht erzeugt` }).click();
     const button = page.locator('.sector-dock').getByRole('button', { name: /Vorkommen würfeln/ });
     const box = (await button.boundingBox())!;

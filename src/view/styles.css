@@ -255,6 +255,12 @@ button:disabled {
   z-index: 0;
 }
 
+/* Den Streifen unten, den das Ziehblatt immer belegt (Griff und Reiter), nimmt der Globus nie ein: Er
+   zentriert sich darüber. Unter die runden Ecken des Blatts reicht er noch. */
+.base .globe-stage {
+  bottom: max(0px, calc(var(--tray-floor, 0px) - 16px));
+}
+
 /* Der Subsektor als Grundkarte: über dem Ziehblatt, die Karte ganz zu sehen (nach Breite oder
    Höhe, was knapper ist); Welten und Legende klappen oben über ihr auf. */
 .base-sector {

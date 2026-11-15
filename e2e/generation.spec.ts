@@ -35,7 +35,7 @@ test('Charaktererschaffung: Attribute einzeln, Laufbahn, Terms, Abmusterung, Nam
   await dialog.getByRole('button', { name: /Auf der Karte wählen/ }).click();
   const picker = page.getByRole('dialog', { name: 'Heimatwelt wählen' });
   const map = picker.getByRole('group', { name: 'Karte des Subsektors' });
-  for (const id of ['0101', '0202', '0303', '0404', '0505', '0606', '0707', '0808', '0109', '0210']) {
+  for (const id of ['0101', '0202', '0303', '0404', '0505', '0606', '0707', '0408', '0109', '0210']) {
     await map.getByRole('button', { name: `${id}, nicht erzeugt` }).click();
     await picker.getByRole('button', { name: /Vorkommen würfeln/ }).click();
     if (await picker.getByText('Kein System in diesem Feld').isVisible()) continue;

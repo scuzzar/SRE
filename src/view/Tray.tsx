@@ -14,13 +14,15 @@ const DRAG_FROM = 6;
  * wo der Bereich es braucht, die Reihe Notiz, Würfeln, Karte (`foot`). Beim Loslassen rastet es in der
  * Nähe von eingeklappt (nur Kopf, Fuß und Reiter), halb und voll ein; ein Tippen auf den Griff wechselt zwischen
  * eingeklappt und halb. Wie hoch es steht, merkt sich das Gerät über den Controller (`setTrayHeight`).
- * Die Höhe steht als `--tray-h` am Elternteil, damit Knöpfe der Grundkarte darüber bleiben.
+ * Die Höhe steht als `--tray-h` am Elternteil, damit Knöpfe der Grundkarte darüber bleiben; was das
+ * Blatt immer belegt (Griff und Reiter), als `--tray-floor`, damit sich der Globus darüber zentriert.
  */
 export function Tray({ head, body, foot, bar, fraction }: { head: ReactNode; body: ReactNode; foot: ReactNode; bar: ReactNode; fraction: number }) {
   const game = useGame();
   const tray = useRef<HTMLElement>(null);
   const top = useRef<HTMLDivElement>(null);
   const bottom = useRef<HTMLDivElement>(null);
+  const tabs = useRef<HTMLDivElement>(null);
   // Wie viel Platz das Elternteil hat und wie hoch Kopf und Fuß zusammen sind (eingeklappt).
   const [room, setRoom] = useState(0);
   const [min, setMin] = useState(0);
@@ -31,12 +33,15 @@ export function Tray({ head, body, foot, bar, fraction }: { head: ReactNode; bod
     const measure = () => {
       setRoom(parent.clientHeight);
       setMin((top.current?.offsetHeight ?? 0) + (bottom.current?.offsetHeight ?? 0) + 1);
+      // Griff und Reiter belegt das Blatt immer: Darüber zentriert sich die Grundkarte (`--tray-floor`).
+      parent.style.setProperty('--tray-floor', `${(top.current?.offsetHeight ?? 0) + (tabs.current?.offsetHeight ?? 0)}px`);
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(parent);
     if (top.current) observer.observe(top.current);
     if (bottom.current) observer.observe(bottom.current);
+    if (tabs.current) observer.observe(tabs.current);
     return () => observer.disconnect();
   }, []);
   const max = Math.max(min, room - TOP_ROOM);
@@ -112,7 +117,7 @@ export function Tray({ head, body, foot, bar, fraction }: { head: ReactNode; bod
       <div className="tray-body">{body}</div>
       <div ref={bottom} className="tray-foot">
         {foot}
-        {bar}
+        <div ref={tabs}>{bar}</div>
       </div>
     </section>
   );
