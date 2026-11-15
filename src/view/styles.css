@@ -4640,6 +4640,10 @@ button:disabled {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.dock .actions:has(> :nth-child(4)) {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .shop-scroll {
   display: flex;
   flex-direction: column;

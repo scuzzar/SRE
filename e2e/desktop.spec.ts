@@ -57,7 +57,7 @@ test('Deuten geht in jedem Bereich: der Knopf am Ergebnis öffnet das Blatt der 
   await nav(page).getByRole('button', { name: 'Begegnung', exact: true }).click();
   await panel(page).getByRole('button', { name: '2W6' }).click();
   await expect(page.locator('.dice-roll')).toBeHidden();
-  await panel(page).getByRole('button', { name: 'Deuten' }).click();
+  await panel(page).getByRole('button', { name: 'Neuestes Ergebnis deuten' }).click();
   const reading = page.getByRole('dialog', { name: 'Deutung' });
   await reading.getByPlaceholder(/Was bedeutet das/).fill('Der Wurf ist gut.');
   await reading.getByRole('button', { name: 'Deuten' }).click();
@@ -140,6 +140,8 @@ test('Die Ziffern wählen die Reiter', async ({ page }, testInfo) => {
 
 test('Globus als Grundkarte: ein angetipptes Feld öffnet das Panel neben dem Log, ✕ führt zum Subsektor', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
+  // Der Globus wird zweimal aufgebaut (öffnen und nach dem Neuladen); das dauert ohne Grafikkarte.
+  test.setTimeout(90_000);
   await page.getByRole('button', { name: /Aufenthaltsort Kessra.*Globus öffnen/ }).click();
   const globe = page.getByRole('region', { name: 'Globus · Kessra' });
   await expect(globe).toBeVisible();
@@ -157,11 +159,13 @@ test('Globus als Grundkarte: ein angetipptes Feld öffnet das Panel neben dem Lo
   await expect(page.locator('.sector-viewport')).toBeVisible();
   await page.reload();
   await expect(page.getByRole('region', { name: 'Globus · Kessra' })).toBeVisible();
-  // Ganz herausgezoomt geht es mit − weiter zum Subsektor.
+  // Ganz herausgezoomt geht es mit − weiter zum Subsektor: erst bis zum Anschlag, dann hinaus.
+  await expect(page.locator('.loading-overlay')).toHaveCount(0, { timeout: 30_000 });
+  const out = page.getByRole('button', { name: 'Herauszoomen' });
   await expect(async () => {
-    await page.getByRole('button', { name: 'Herauszoomen' }).click();
-    await expect(page.locator('.sector-viewport')).toBeVisible({ timeout: 1000 });
-  }).toPass();
+    if ((await out.count()) > 0) await out.click();
+    await expect(page.locator('.sector-viewport')).toBeVisible({ timeout: 5000 });
+  }).toPass({ timeout: 45_000 });
 });
 
 test('Ausrüstung und Gepäck: per Ziehen von SC zu SC und zurück ins Gepäck', async ({ page }, testInfo) => {
