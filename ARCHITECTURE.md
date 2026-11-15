@@ -65,8 +65,8 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   Oberflächenkarte, `model/surface-map.ts` auf dem Raster aus `model/surface-grid.ts`), `openGlobeAt(column, row)`
   (aus der Kopfzeile), `pickCell(cell)`, `rerollMap()` (gesperrt, sobald ein Ort auf die Karte zeigt),
   `renameCity(index, name)`, `moveParty()` und `moveNpc(id)` (auf das angetippte Feld bzw. in die Stadt darauf, `model/place.ts`) und
-  `closeGlobe()`; neue Logeinträge bekommen in `change` den Aufenthaltsort als Ort (`stampPlaces`); gezeichnet wird er in
-  `view/sector/globe-render.ts` aus Raster und gepackter Karte im Snapshot (`controller/globe-view.ts`). Ein Hexfeld (`model/sector.ts`) hält die Werte seiner Welt;
+  `closeGlobe()`; eine fertige Welt mit Oberfläche öffnet `chooseHex` gleich als Globus (`openGlobeAt`), dessen Schließen-Knopf ruft `closeWorld()`; neue Logeinträge bekommen in `change` den Aufenthaltsort als Ort (`stampPlaces`); gezeichnet wird er in
+  `view/sector/globe-render.ts` aus Raster und gepackter Karte im Snapshot (`controller/globe-view.ts`), mit WebGL in `view/sector/globe-gl.ts` (die Hexkarte mit Gitter als echte Sechsecke), ohne WebGL auf dem Prozessor. Ein Hexfeld (`model/sector.ts`) hält die Werte seiner Welt;
   ein Wurf der Weltenerschaffung (`model/draft/world-roll.ts`) trägt sein Ergebnis ein und lebt nur,
   solange Weltkarte oder Feldwahl offen sind (im Zustand des Controllers). Die Erschaffung ist gespeicherter Stand (`model/generation.ts`,
   `model/career.ts`): Sie hält nur die Würfe, alles andere spielt `replay` daraus nach. Die View liest eine gewählte Datei nur als Text

@@ -118,14 +118,13 @@ test('Shop: „Gruppe ist hier“ auf der Weltkarte bringt die Gruppe auf eine a
   await expect(page.locator('.world-list-here')).toBeVisible();
   await page.getByRole('navigation').getByRole('button', { name: 'Shop' }).click();
   await expect(page.locator('.shop-world')).toContainText('Regina');
-  // Der Aufenthaltsort steht mit UWP in der Kopfzeile; ein Tippen öffnet seinen Globus über der Weltkarte.
+  // Der Aufenthaltsort steht mit UWP in der Kopfzeile; ein Tippen öffnet seinen Globus.
   const header = page.locator('.header').getByRole('button', { name: /^Aufenthaltsort Regina, UWP / });
   await expect(header).toBeVisible();
   await expect(header.locator('canvas.world-icon')).toBeVisible();
   await header.click();
-  await page.getByRole('dialog', { name: 'Globus · Regina' }).getByRole('button', { name: 'Zur Weltkarte' }).click();
-  const sheet = page.getByRole('dialog', { name: /^Regina · / });
-  await expect(sheet).toBeVisible();
-  // Oben auf der Weltkarte steht das Weltsymbol; es öffnet den Globus.
-  await expect(sheet.getByRole('button', { name: 'Globus von Regina öffnen' })).toBeVisible();
+  const globe = page.getByRole('dialog', { name: 'Globus · Regina' });
+  // Oben klappen Name und UWP die Welt auf; dort steht, dass die Gruppe hier ist.
+  await globe.getByRole('button', { name: /^Regina, UWP / }).click();
+  await expect(globe.getByRole('region', { name: 'Die Welt' }).getByRole('button', { name: 'Die Gruppe ist hier' })).toBeVisible();
 });

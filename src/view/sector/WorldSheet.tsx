@@ -138,8 +138,8 @@ export function WorldSheet({ world, here, travel, log, logDays }: { world: World
   );
 }
 
-/** Die Welt, wie sie gerade steht: UWP, jede Stelle im Klartext, Temperatur, Basen, Gasriese, Handelscodes. */
-function WorldCard({ world }: { world: WorldView }) {
+/** Die Welt, wie sie gerade steht (auf der Weltkarte und oben auf dem Globus): UWP, jede Stelle im Klartext, Temperatur, Basen, Gasriese, Handelscodes. */
+export function WorldCard({ world, onGlobe = false }: { world: WorldView; onGlobe?: boolean }) {
   const game = useGame();
   const yes = (value: boolean | undefined) => (value === undefined ? '–' : value ? 'ja' : 'nein');
   const head = (
@@ -194,7 +194,7 @@ function WorldCard({ world }: { world: WorldView }) {
             {head}
             {extras}
           </div>
-          {world.canGlobe ? (
+          {world.canGlobe && !onGlobe ? (
             <button type="button" className="world-top-globe" aria-label={`Globus von ${world.name ?? world.id} öffnen`} onClick={() => game.openGlobe()}>
               <WorldIcon look={world.look} className="world-top-icon" />
             </button>
@@ -239,7 +239,7 @@ function TemperatureRow({ temperature }: { temperature: WorldView['temperature']
 }
 
 /** Die Oberfläche nach dem World Builder's Handbook, an der Stelle der früheren Liste der Würfe. */
-function SurfaceSection({ lines, globe }: { lines: readonly string[]; globe: string | undefined }) {
+export function SurfaceSection({ lines, globe }: { lines: readonly string[]; globe: string | undefined }) {
   const game = useGame();
   return (
     <section className="career world-surface" aria-label="Oberfläche">
@@ -266,7 +266,7 @@ function SurfaceSection({ lines, globe }: { lines: readonly string[]; globe: str
  * Die Notiz zur Welt: freier Text, den man jederzeit ändert. Was getippt wird, ist reine Darstellung;
  * gespeichert wird beim Verlassen des Feldes, also auch, wenn man die Weltkarte schließt.
  */
-function NoteSection({ note }: { note: string | undefined }) {
+export function NoteSection({ note }: { note: string | undefined }) {
   const game = useGame();
   const [text, setText] = useState(note ?? '');
   return (

@@ -42,11 +42,14 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     await expect(done.getByRole('article', { name: 'Welt' })).toContainText(/Temperatur(Gefroren|Kalt|Gemäßigt|Heiß|Kochend)/);
     await done.getByRole('button', { name: 'Schließen' }).first().click();
     await map.getByRole('button', { name: `${id}, Regina: Weltkarte öffnen` }).click();
-    // Wieder geöffnet: die Werte mit der Oberfläche.
-    const reopened = page.getByRole('dialog', { name: `Regina · ${id}` });
+    // Wieder geöffnet: Eine fertige Welt mit Oberfläche zeigt ihren Globus; oben klappen Name und UWP die Werte auf.
+    const globe = page.getByRole('dialog', { name: 'Globus · Regina' });
+    await globe.getByRole('button', { name: /^Regina, UWP / }).click();
+    const reopened = globe.getByRole('region', { name: 'Die Welt' });
     await expect(reopened.getByRole('article', { name: 'Welt' })).toBeVisible();
     await expect(reopened.getByRole('region', { name: 'Oberfläche' })).toContainText(/einheimisches Leben/);
-    await page.getByRole('button', { name: 'Schließen' }).first().click();
+    await globe.getByRole('button', { name: 'Schließen', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.locator('.world-list')).toContainText('Regina');
     named = true;
     break;
@@ -116,7 +119,9 @@ test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis 
     await page.reload();
     await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
     await page.locator('.world-list').getByRole('button', { name: /Regina/ }).click();
-    await expect(page.getByRole('dialog', { name: `Regina · ${id}` }).getByLabel('Notiz zur Welt')).toHaveValue('Halveks Werft am Südpol.\nDer Zoll ist bestechlich.');
+    const globe = page.getByRole('dialog', { name: 'Globus · Regina' });
+    await globe.getByRole('button', { name: /^Regina, UWP / }).click();
+    await expect(globe.getByLabel('Notiz zur Welt')).toHaveValue('Halveks Werft am Südpol.\nDer Zoll ist bestechlich.');
     return;
   }
   throw new Error('Kein Feld mit Welt gefunden');
@@ -166,7 +171,7 @@ test('Sektor: Eine ältere Welt ohne Temperatur würfelt sie auf der Weltkarte n
   await expect(dialog.locator('.generation-main')).toHaveCount(0);
 });
 
-test('Globus: aus der Kopfzeile öffnen, Feld antippen, zur Weltkarte zurück', async ({ page }) => {
+test('Globus: aus der Kopfzeile öffnen, Feld antippen, schließen', async ({ page }) => {
   await page.goto('/');
   // Die Demo-Kampagne steht auf Kessra; ihr Symbol in der Kopfzeile öffnet den Globus.
   await page.getByRole('button', { name: /Aufenthaltsort Kessra.*Globus öffnen/ }).click();
@@ -187,8 +192,13 @@ test('Globus: aus der Kopfzeile öffnen, Feld antippen, zur Weltkarte zurück', 
   const box = (await canvas.boundingBox())!;
   await canvas.click({ position: { x: box.width * 0.35, y: box.height * 0.4 } });
   await expect(globe.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('°C im Jahresmittel');
-  await globe.getByRole('button', { name: 'Zur Weltkarte' }).click();
-  await expect(globe).toHaveCount(0);
-  const sheet = page.getByRole('dialog', { name: /Kessra · 0405/ });
-  await expect(sheet.getByRole('region', { name: 'Oberfläche', exact: true }).getByRole('button', { name: 'Globus', exact: true })).toHaveCount(1);
+  // Oben klappen Name und UWP die Welt im Klartext auf, mit Oberfläche und Notiz.
+  await globe.getByRole('button', { name: /^Kessra, UWP A766754-A/ }).click();
+  const world = globe.getByRole('region', { name: 'Die Welt' });
+  await expect(world.getByRole('article', { name: 'Welt' })).toContainText('Raumhafen');
+  await expect(world.getByRole('region', { name: 'Oberfläche' })).toContainText('% Wasser');
+  await expect(world.getByLabel('Notiz zur Welt')).toBeVisible();
+  // Schließen führt ganz zurück.
+  await globe.getByRole('button', { name: 'Schließen', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 });
