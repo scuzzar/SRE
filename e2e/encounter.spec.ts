@@ -1,9 +1,9 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { entries, host, openOracle } from './layout';
+import { entries, expandTray, host, openOracle, openSector } from './layout';
 
 test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Begegnung die Simulation mit Runde, Entfernung und Zügen', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
+  await openSector(page);
   const map = page.getByRole('group', { name: 'Karte des Subsektors' });
   let world = undefined as undefined | ReturnType<typeof page.getByRole>;
   let worldId = '';
@@ -116,6 +116,9 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   // „Als SC“ und „Als NSC“ statt der Zugknöpfe. Antippen hakt weitere an.
   const alive = page.locator('.fcard.npcs:not(.out) .fcard-main');
   const before = await page.locator('.fcard.npcs').count();
+  // Auf dem Smartphone das Ziehblatt ganz hoch, damit der Finger den NSC erreicht.
+  await expandTray(page);
+  await alive.first().scrollIntoViewIfNeeded();
   const box = (await alive.first().boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();

@@ -1,9 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
-import { characters } from './layout';
+import { characters, openSector } from './layout';
 
 /** Eine fertige Welt im Subsektor, lange gedrückt durchgewürfelt und Regina genannt; ihre Weltkarte bleibt offen. */
 async function makeWorld(page: Page) {
-  await page.getByRole('navigation').getByRole('button', { name: 'Sektor' }).click();
+  await openSector(page);
   const map = page.getByRole('group', { name: 'Karte des Subsektors' });
   for (const id of ['0101', '0202', '0303', '0404', '0505', '0606', '0707', '0808', '0109', '0210']) {
     await map.getByRole('button', { name: `${id}, nicht erzeugt` }).click();
@@ -33,9 +33,9 @@ test('Shop: Die Demo-Kampagne steht auf Kessra; eine neue Kampagne ist auf keine
   const sheet = page.getByRole('dialog', { name: 'Kampagnen' });
   await sheet.getByLabel('Neue Kampagne').fill('Leer');
   await sheet.getByRole('button', { name: 'Anlegen' }).click();
-  await page.getByRole('navigation').getByRole('button', { name: 'Shop' }).click();
+  // Der Shop bleibt offen (im Desktop-Modus schlösse ein zweiter Klick auf den Reiter das Panel).
+  await expect(page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Shop' })).toHaveAttribute('aria-current', 'page');
   await expect(page.locator('.shop-world')).toHaveText('Auf keiner Welt');
-  await expect(page.getByRole('banner')).toContainText('Auf keiner Welt');
   await expect(page.getByRole('tab', { name: 'Kasse' })).toHaveAttribute('aria-selected', 'true');
   await page.getByRole('spinbutton').first().fill('5000');
   await page.getByPlaceholder(/Belohnung/).fill('Belohnung von Dr. Halvek');
@@ -119,12 +119,9 @@ test('Shop: „Gruppe ist hier“ auf der Weltkarte bringt die Gruppe auf eine a
   await expect(page.locator('.world-list-here')).toBeVisible();
   await page.getByRole('navigation').getByRole('button', { name: 'Shop' }).click();
   await expect(page.locator('.shop-world')).toContainText('Regina');
-  // Der Aufenthaltsort steht mit UWP in der Kopfzeile; ein Tippen öffnet seinen Globus.
-  const header = page.locator('.header').getByRole('button', { name: /^Aufenthaltsort Regina, UWP / });
-  await expect(header).toBeVisible();
-  await expect(header.locator('canvas.world-icon')).toBeVisible();
-  await header.click();
-  const globe = page.getByRole('dialog', { name: 'Globus · Regina' });
+  // Der Knopf ⌖ in der Leiste des Subsektors öffnet den Globus des Aufenthaltsorts.
+  await page.getByRole('button', { name: 'Aufenthaltsort Regina, Globus öffnen' }).click();
+  const globe = page.getByRole('region', { name: 'Globus · Regina' });
   // Oben klappen Name und UWP die Welt auf; dort steht, dass die Gruppe hier ist.
   await globe.getByRole('button', { name: /^Regina, UWP / }).click();
   await expect(globe.getByRole('region', { name: 'Die Welt' }).getByRole('button', { name: 'Die Gruppe ist hier' })).toBeVisible();

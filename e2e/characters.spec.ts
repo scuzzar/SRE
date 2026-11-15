@@ -50,20 +50,13 @@ test('Probe oben im Orakel: Fertigkeit, dann Attribute, Stufe unten, Ergebnis al
   await expect(dock(page).getByRole('button', { name: '2W6' })).toBeVisible();
 });
 
-test('Wischen stellt den nächsten Charakter nach oben; eine Probe ohne Fertigkeit ist unmöglich, aber würfelbar', async ({ page }, testInfo) => {
+test('Wischen stellt den nächsten Charakter nach oben; eine Probe ohne Fertigkeit ist unmöglich, aber würfelbar', async ({ page }) => {
   await page.goto('/');
   await top(page, 'Kira Vant').getByRole('button', { name: 'Pilot-2' }).click();
-  const desktop = testInfo.project.name === 'desktop';
-  if (desktop) {
-    // Auf dem Desktop stehen alle Karten offen da: ein Klick auf den Namen holt Jonas nach oben.
-    await strip(page).getByRole('button', { name: 'Jonas Reyl nach oben' }).click();
-  } else {
-    await page.locator('.strip-track').evaluate((el) => el.scrollTo({ left: el.scrollWidth }));
-  }
+  await strip(page).locator('.strip-track').evaluate((el) => el.scrollTo({ left: el.scrollWidth }));
   const jonas = top(page, 'Jonas Reyl');
   await expect(jonas).toBeVisible();
-  if (desktop) await expect(top(page, 'Kira Vant')).not.toHaveClass(/focus/);
-  else await expect(top(page, 'Kira Vant')).toHaveCount(0);
+  await expect(top(page, 'Kira Vant')).toHaveCount(0);
   // Mit dem Wechsel endet die Probe für Kira.
   await expect(dock(page).getByRole('button', { name: '2W6' })).toBeVisible();
 
@@ -83,8 +76,7 @@ test('Wischen stellt den nächsten Charakter nach oben; eine Probe ohne Fertigke
   await expect(top(page, 'Kira Vant')).toBeVisible();
 });
 
-test('Leiste einklappen: nur noch der Name; bleibt nach dem Neustart zu', async ({ page }, testInfo) => {
-  testInfo.skip(testInfo.project.name === 'desktop', 'Im Desktop-Modus stehen die Karten immer offen');
+test('Leiste einklappen: nur noch der Name; bleibt nach dem Neustart zu', async ({ page }) => {
   await page.goto('/');
   const kira = top(page, 'Kira Vant');
   await kira.getByRole('button', { name: 'Leiste einklappen' }).click();

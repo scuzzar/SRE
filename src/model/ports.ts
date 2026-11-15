@@ -37,6 +37,9 @@ export interface CampaignRepository {
   /** Ob der Hinweis über den Waffen im Shop weggeklickt ist, merkt sich das Gerät; zum Spielstand gehört es nicht. */
   loadShopHintHidden(): Promise<boolean>;
   saveShopHintHidden(hidden: boolean): Promise<void>;
+  /** Wie weit das Ziehblatt hochgezogen ist (Anteil der Höhe, 0 bis 1), merkt sich das Gerät; zum Spielstand gehört es nicht. */
+  loadTrayHeight(): Promise<number | undefined>;
+  saveTrayHeight(fraction: number): Promise<void>;
   /** Die Abgleichsmarken merkt sich das Gerät; zum Spielstand gehören sie nicht. */
   loadMarks(): Promise<readonly SyncMark[]>;
   saveMark(mark: SyncMark): Promise<void>;

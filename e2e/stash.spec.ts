@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { expandTray } from './layout';
 
 // Ausrüstung und Gepäck auf dem Smartphone: Ziehen mit dem Finger heißt halten, dann ziehen;
 // wischt der Finger gleich, scrollt die Seite und nichts wird gezogen. Touch-Ereignisse schickt der
@@ -13,7 +14,9 @@ test.beforeEach(async ({ page }, testInfo) => {
   testInfo.skip(testInfo.project.name !== 'mobil', 'Ziehen mit dem Finger nur auf dem Smartphone');
   await page.goto('/');
   await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Charaktere', exact: true }).click();
-  await page.locator('.stash').scrollIntoViewIfNeeded();
+  await expandTray(page);
+  // Gepäck unten, Jonas’ Ausrüstung darüber: beide sollen im Blatt zu sehen sein.
+  await page.locator('.stash-item', { hasText: 'Vacc Suit' }).evaluate((el) => el.scrollIntoView({ block: 'end' }));
 });
 
 test('Halten, dann ziehen: der Vacc Suit aus dem Gepäck auf Jonas’ Rüstung', async ({ page }) => {

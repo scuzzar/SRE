@@ -191,8 +191,9 @@ test('Über: auf dem iPhone der Weg über Teilen und der Hinweis auf den eigenen
   await context.close();
 });
 
-test('Vollbild: der Knopf neben dem i schaltet an und aus', async ({ page }) => {
-  const header = page.getByRole('banner');
+test('Vollbild: der Knopf im Menü schaltet an und aus', async ({ page }) => {
+  await page.getByRole('button', { name: 'Menü', exact: true }).click();
+  const header = page.getByRole('navigation', { name: 'Menü' });
   await header.getByRole('button', { name: 'Vollbild' }).click();
   await expect(header.getByRole('button', { name: 'Vollbild beenden' })).toHaveAttribute('aria-pressed', 'true');
   expect(await page.evaluate(() => document.fullscreenElement !== null)).toBe(true);

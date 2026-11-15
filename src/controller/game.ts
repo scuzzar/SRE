@@ -285,6 +285,7 @@ export class GameController {
       opened: undefined,
       stripCollapsed: false,
       shopHintHidden: false,
+      trayHeight: 0.5,
       result: undefined,
       editor: undefined,
       generating: false,
@@ -329,6 +330,12 @@ export class GameController {
     } catch {
       // Ob der Hinweis im Shop weggeklickt war, ist nur eine Bequemlichkeit; dann steht er da.
     }
+    try {
+      const trayHeight = this.writable ? await this.deps.repository.loadTrayHeight() : undefined;
+      if (trayHeight !== undefined) this.update({ trayHeight });
+    } catch {
+      // Wie weit das Ziehblatt hochgezogen war, ist nur eine Bequemlichkeit; dann steht es halb.
+    }
     // Kampagnen von vor dem Abgleich bekommen Schlüssel und Änderungszeit, einmal und für immer.
     const loaded = campaigns;
     campaigns = loaded.map((c) => stamped(c, this.deps.keys, this.deps.clock));
@@ -336,7 +343,7 @@ export class GameController {
       if (c !== loaded[i]) this.persist(() => this.deps.repository.save(c), true);
     });
     const campaign = campaigns.find((c) => c.id === open) ?? byName(campaigns)[0];
-    if (campaign) this.update({ campaigns, campaign });
+    if (campaign) this.update({ campaigns, campaign, ...this.home(campaign) });
     else this.addCampaign(createDemoCampaign(this.deps.clock, this.deps.keys.next()));
     await this.initSync();
   }
@@ -370,7 +377,7 @@ export class GameController {
   openCampaign(id: CampaignId): void {
     const campaign = this.state.campaigns.find((c) => c.id === id);
     if (!campaign) throw new DomainError(`Die Kampagne ${id} gibt es nicht`);
-    this.update({ ...closedDrafts, campaign, campaignSheet: undefined });
+    this.update({ ...this.closed(campaign), campaign, campaignSheet: undefined });
     this.persist(() => this.deps.repository.saveOpen(id));
   }
 
@@ -396,7 +403,7 @@ export class GameController {
         this.update({ campaigns });
       } else {
         const campaign = byName(campaigns)[0]!;
-        this.update({ ...closedDrafts, campaigns, campaign });
+        this.update({ ...this.closed(campaign), campaigns, campaign });
         this.persist(() => this.deps.repository.saveOpen(campaign.id));
       }
       this.persist(() => this.deps.repository.remove(id));
@@ -626,7 +633,7 @@ export class GameController {
     const known = this.state.campaigns.some((c) => c.id === campaign.id);
     const campaigns = known ? this.state.campaigns.map((c) => (c.id === campaign.id ? campaign : c)) : [...this.state.campaigns, campaign];
     // Wird die offene Kampagne ersetzt, sind die Entwürfe weg, wie beim Wechseln.
-    if (this.state.campaign?.id === campaign.id) this.update({ ...closedDrafts, campaigns, campaign });
+    if (this.state.campaign?.id === campaign.id) this.update({ ...this.closed(campaign), campaigns, campaign });
     else this.update({ campaigns });
     this.persist(() => this.deps.repository.save(campaign), true);
   }
@@ -638,7 +645,7 @@ export class GameController {
       this.update({ campaigns });
     } else {
       const campaign = byName(campaigns)[0]!;
-      this.update({ ...closedDrafts, campaigns, campaign });
+      this.update({ ...this.closed(campaign), campaigns, campaign });
       this.persist(() => this.deps.repository.saveOpen(campaign.id));
     }
     this.persist(() => this.deps.repository.remove(id));
@@ -909,8 +916,10 @@ export class GameController {
   // --- Charakter oben und Proben ---------------------------------------------------------------
 
   showScreen(screen: Screen): void {
+    // Ein angetipptes Feld des Globus steht an der Stelle des Bereichs; ein Reiter lässt es los.
+    const globe = this.state.globe && { picked: undefined };
     // Der Reiter NSC zeigt beim Öffnen wieder nur die NSC des Aufenthaltsorts.
-    this.update(screen === 'npcs' && this.state.screen !== 'npcs' ? { screen, npcAll: false } : { screen });
+    this.update(screen === 'npcs' && this.state.screen !== 'npcs' ? { screen, npcAll: false, globe } : { screen, globe });
   }
 
   /** Nimmt einen dauerhaften NSC zur nächsten Zufallsbegegnung dazu oder wieder heraus (2026-11-14g); nur Anzeige. */
@@ -959,6 +968,14 @@ export class GameController {
     const stripCollapsed = !this.state.stripCollapsed;
     this.update({ stripCollapsed });
     this.persist(() => this.deps.repository.saveStripCollapsed(stripCollapsed));
+  }
+
+  /** Merkt sich, wie weit das Ziehblatt hochgezogen ist (Anteil der Höhe, 0 bis 1); das Gerät merkt es sich. */
+  setTrayHeight(fraction: number): void {
+    const trayHeight = Math.min(1, Math.max(0.01, fraction));
+    if (!Number.isFinite(trayHeight) || trayHeight === this.state.trayHeight) return;
+    this.update({ trayHeight });
+    this.persist(() => this.deps.repository.saveTrayHeight(trayHeight));
   }
 
   /** Blendet den Hinweis über den Waffen im Shop aus; das Gerät merkt es sich. */
@@ -1937,9 +1954,25 @@ export class GameController {
     this.requestSync();
   }
 
+  /**
+   * Die Grundkarte beim Öffnen einer Kampagne: der Globus des Aufenthaltsorts, wenn seine
+   * Oberflächenkarte schon entstanden ist, sonst der Subsektor (dort entsteht sie beim ersten Antippen).
+   */
+  private home(campaign: Campaign): Pick<ControllerState, 'world' | 'globe'> {
+    const at = campaign.location?.world;
+    const hex = at === undefined ? undefined : campaign.hexes.find((h) => hexId(h.column, h.row) === at);
+    if (!hex || !isWorld(hex) || !hex.map) return { world: undefined, globe: undefined };
+    return { world: { column: hex.column, row: hex.row, rolls: [] }, globe: { picked: undefined } };
+  }
+
+  /** Alle Entwürfe zu, die Grundkarte wie beim Öffnen der Kampagne. */
+  private closed(campaign: Campaign): Partial<ControllerState> {
+    return { ...closedDrafts, ...this.home(campaign) };
+  }
+
   /** Nimmt eine neue Kampagne auf, öffnet und speichert sie. */
   private addCampaign(campaign: Campaign): void {
-    this.update({ ...closedDrafts, campaigns: [...this.state.campaigns, campaign], campaign, campaignSheet: undefined });
+    this.update({ ...this.closed(campaign), campaigns: [...this.state.campaigns, campaign], campaign, campaignSheet: undefined });
     this.persist(() => this.deps.repository.save(campaign), true);
     this.persist(() => this.deps.repository.saveOpen(campaign.id));
     this.requestSync();

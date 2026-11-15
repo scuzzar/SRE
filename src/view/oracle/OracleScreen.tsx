@@ -10,9 +10,10 @@ import { OracleDock } from './OracleDock';
  * Orakel und Proben auf einem Screen: oben der Charakter oben, darunter der Log, unten eine Reihe mit
  * drei Knöpfen: Notiz, Würfeln, Karte (`OracleDock`). Das Orakel steht auf der Karte; die Frage schreibt man dort.
  * Notiz und Deutung schreibt man in einem eigenen Blatt; welches Blatt offen ist,
- * ist reine Darstellung. Im Desktop-Modus steht dieser Screen ohne die Leiste als Orakel-Spalte links.
+ * ist reine Darstellung. Als Reiter Log im Ziehblatt bzw. im Log-Panel des Desktops steht die Reihe
+ * unten fest unter allem (`dock={false}`).
  */
-export function OracleScreen({ view, strip = true }: { view: Snapshot; /** Im Desktop-Modus stehen die Charaktere in der eigenen Charakterspalte, nicht hier. */ strip?: boolean }) {
+export function OracleScreen({ view, dock = true }: { view: Snapshot; /** Ohne die Reihe unten: Im Ziehblatt und im Log-Panel steht sie fest unter allem. */ dock?: boolean }) {
   // Das offene Blatt: Notiz, Deutung zum Ergebnis an dieser Stelle des Logs, oder den Text der Notiz
   // bzw. Deutung an dieser Stelle ändern.
   const [sheet, setSheet] = useState<{ readonly reading?: number; readonly edit?: number } | undefined>(undefined);
@@ -24,9 +25,9 @@ export function OracleScreen({ view, strip = true }: { view: Snapshot; /** Im De
 
   return (
     <div className="screen">
-      {strip && <CharacterStrip view={view} />}
+      <CharacterStrip view={view} />
       <LogList log={view.log} days={view.logDays} onInterpret={interpret} onEdit={edit} />
-      <OracleDock view={view} onNote={() => setSheet({})} shortcuts />
+      {dock && <OracleDock view={view} onNote={() => setSheet({})} shortcuts />}
       {sheet && (
         <NoteSheet
           target={sheet.reading !== undefined && reading ? { index: sheet.reading, ...resultLine(reading) } : undefined}

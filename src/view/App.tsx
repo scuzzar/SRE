@@ -3,19 +3,17 @@ import type { Screen } from '../controller';
 import { AboutScreen } from './AboutScreen';
 import { CampaignSheet } from './CampaignSheet';
 import { CharacterEditor } from './characters/CharacterEditor';
-import { CombatScreen, pcHeal, type Patient } from './combat/CombatScreen';
-import { CharacterColumn } from './characters/CharacterColumn';
+import { CombatScreen, type Patient } from './combat/CombatScreen';
 import { EncounterScreen } from './combat/EncounterScreen';
 import { ShopScreen } from './shop/ShopScreen';
 import { CharactersScreen } from './characters/CharactersScreen';
 import { NpcScreen } from './characters/NpcScreen';
 import { GenerationSheet } from './characters/GenerationSheet';
-import { FullscreenButton } from './FullscreenButton';
 import { ResultDialog } from './characters/ResultDialog';
 import { useGame, useSnapshot } from './game-context';
 import { useEscapeCloses, useShortcuts } from './keyboard';
 import { useIsDesktop } from './media';
-import { CloseIcon, CombatIcon, EncounterIcon, MenuIcon, OracleIcon, PeopleIcon, PersonIcon, SectorIcon, ShopIcon } from './icons';
+import { CloseIcon, CombatIcon, EncounterIcon, LogIcon, MenuIcon, PeopleIcon, PersonIcon, ShopIcon } from './icons';
 import { Menu } from './Menu';
 import { CardSheet } from './oracle/CardSheet';
 import { DiceRoll } from './oracle/DiceRoll';
@@ -23,61 +21,71 @@ import { OracleScreen } from './oracle/OracleScreen';
 import { OracleDock } from './oracle/OracleDock';
 import { SectorPicker, SectorScreen } from './sector/SectorScreen';
 import { WorldSheet } from './sector/WorldSheet';
-import { WorldIcon } from './sector/WorldIcon';
 import { JourneySheet } from './sector/JourneySheet';
-import { GlobeScreen } from './sector/GlobeScreen';
-import { LoadingOverlay, withLoading } from './loading';
+import { FieldCard, GlobeScreen } from './sector/GlobeScreen';
+import { LoadingOverlay } from './loading';
+import { Tray } from './Tray';
 
-/** Die Bereiche der Leiste unten bzw. der Reiter in der Kopfzeile, in dieser Reihenfolge. */
+/** Die Reiter im Ziehblatt bzw. im Log-Panel, in dieser Reihenfolge. */
 const areas: readonly { readonly id: Screen; readonly label: string; readonly Icon: () => ReactElement }[] = [
-  { id: 'oracle', label: 'Orakel', Icon: OracleIcon },
+  { id: 'oracle', label: 'Log', Icon: LogIcon },
   { id: 'encounter', label: 'Begegnung', Icon: EncounterIcon },
   { id: 'combat', label: 'Kampf', Icon: CombatIcon },
   { id: 'shop', label: 'Shop', Icon: ShopIcon },
   { id: 'characters', label: 'Charaktere', Icon: PersonIcon },
   { id: 'npcs', label: 'NSC', Icon: PeopleIcon },
-  { id: 'sector', label: 'Sektor', Icon: SectorIcon },
 ];
 
 export function App() {
   const game = useGame();
   const view = useSnapshot();
-  // Desktop-Modus (ab 1024 px): die Reiter in der Kopfzeile, darunter drei Spalten: Orakel mit
-  // Log, die Charaktere, der gewählte Bereich.
+  // Desktop-Modus (ab 1024 px): links fest das Log-Panel, daneben der gewählte Bereich, rechts die
+  // Grundkarte. Auf dem Smartphone liegt die Grundkarte unter dem Ziehblatt.
   const desktop = useIsDesktop();
   // Ob das Menü offen ist, ist reine Darstellung; was man darin wählt, entscheidet der Controller.
   const [menu, setMenu] = useState(false);
-  // Wen der Heilen-Dialog im Kampf zeigt; die App hält es, weil ihn im Desktop-Modus auch die
-  // Charakterspalte öffnet.
+  // Wen der Heilen-Dialog im Kampf zeigt.
   const [patient, setPatient] = useState<Patient | undefined>(undefined);
   // Ob der Hinweis „OneDrive hat dich abgemeldet“ weggeklickt ist; reine Darstellung, beim nächsten
   // Start kommt er wieder, solange die Anmeldung fehlt.
   const [syncHintClosed, setSyncHintClosed] = useState(false);
-  // Die Bereiche in der Reihenfolge der Leiste; im Desktop-Modus ohne das Orakel, das rechts steht.
+  // Die Reiter; im Desktop-Modus ohne Log, das links fest steht.
   const shown = desktop ? areas.filter((a) => a.id !== 'oracle') : areas;
-  // Esc schließt das oberste Popup; die Ziffern wählen den Bereich an dieser Stelle der Leiste.
+  // Esc schließt das oberste Popup; die Ziffern wählen den Reiter an dieser Stelle.
   useEscapeCloses(menu);
   useShortcuts(Object.fromEntries(shown.map((a, i) => [String(i + 1), () => game.showScreen(a.id)])));
 
   if (!view.ready) return <div className="app" aria-busy="true" />;
   const closeResult = () => game.closeResult();
 
-  // Im Desktop-Modus ist das Orakel kein eigener Bereich, sondern die Spalte links; wer dort noch
-  // auf „Orakel“ steht (frisch gestartet oder das Fenster breit gezogen), sieht den Sektor.
-  const screen = desktop && view.screen === 'oracle' ? 'sector' : view.screen;
-  const oracle = <OracleScreen view={view} strip={!desktop} />;
-  const heal = screen === 'combat' && view.combat && !view.combat.sim ? pcHeal(view.combat, setPatient) : undefined;
-  // Die Charakterspalte entfällt, wo der Bereich die SC selbst zeigt: im Bereich Charaktere und in der
-  // Kampfsimulation, deren Arena die SC mit Wunden, Waffen und Zug führt.
-  const characterColumn = desktop && screen !== 'characters' && !(screen === 'combat' && view.combat?.sim);
-  // Der Aufenthaltsort steht mit UWP in der Kopfzeile; ein Tippen öffnet seine Weltkarte.
-  const here = view.worlds.find((w) => w.id === view.location);
-  // Die Reiter: auf dem Smartphone die Leiste unten, im Desktop-Modus in der Kopfzeile zwischen
-  // Aufenthaltsort und Menü, damit oben keine zweite Zeile Platz kostet.
+  // Den Sektor gibt es nicht mehr als Reiter: Er ist die Grundkarte ohne Globus. Wer dort noch steht,
+  // sieht das Log.
+  const screen: Screen = view.screen === 'sector' ? 'oracle' : view.screen;
+  // Ein angetipptes Feld des Globus steht an der Stelle des Bereichs.
+  const field = view.globe?.picked ? <FieldCard globe={view.globe} error={view.world?.error} log={view.log} logDays={view.logDays} /> : undefined;
+  const area = (
+    <>
+      {screen === 'encounter' && <EncounterScreen view={view} />}
+      {screen === 'combat' && <CombatScreen view={view} patient={patient} onPatient={setPatient} />}
+      {screen === 'shop' && <ShopScreen view={view} />}
+      {screen === 'characters' && <CharactersScreen view={view} />}
+      {screen === 'npcs' && <NpcScreen view={view} />}
+      {screen === 'about' && <AboutScreen persistent={view.persistent} durable={view.durable} />}
+    </>
+  );
+
   const nav = (
     <nav className="nav" aria-label="Bereiche">
       {shown.map(({ id, label, Icon }, i) => (
-        <button key={id} type="button" aria-current={screen === id ? 'page' : undefined} title={`${label} (${i + 1})`} aria-keyshortcuts={String(i + 1)} onClick={() => game.showScreen(id)}>
+        <button
+          key={id}
+          type="button"
+          aria-current={screen === id && !field ? 'page' : undefined}
+          title={`${label} (${i + 1})`}
+          aria-keyshortcuts={String(i + 1)}
+          // Im Desktop-Modus schließt ein zweiter Klick auf den offenen Reiter das Panel.
+          onClick={() => game.showScreen(desktop && screen === id && !field ? 'oracle' : id)}
+        >
           <Icon />
           {label}
         </button>
@@ -85,26 +93,8 @@ export function App() {
     </nav>
   );
 
-  return (
-    <div className="app">
-      <header className="header">
-        {here ? (
-          <button type="button" className="brand header-world" aria-label={`Aufenthaltsort ${here.name}, UWP ${here.uwp}, Globus öffnen`} title="Globus des Aufenthaltsorts" onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobeAt(here.column, here.row))}>
-            <WorldIcon look={here.look} size={26} />
-            <span className="header-world-name">{here.name}</span>
-            <span className="mono header-world-uwp">{here.uwp}</span>
-          </button>
-        ) : (
-          <span className="brand header-world header-world-none">Auf keiner Welt</span>
-        )}
-        {desktop && nav}
-        <span className="header-right">
-          <FullscreenButton />
-          <button type="button" className="icon-button menu-button" aria-label="Menü" aria-expanded={menu} onClick={() => setMenu(true)}>
-            <MenuIcon />
-          </button>
-        </span>
-      </header>
+  const banners = (
+    <>
       {view.storageError && (
         <p className="banner" role="alert">
           {view.storageError}
@@ -115,7 +105,6 @@ export function App() {
           Dieser Browser speichert hier nichts dauerhaft: Kampagnen, Charaktere und Sektor sind beim Schließen weg. Zum Sichern über die Kampagnenwahl exportieren.
         </p>
       )}
-
       {view.sync.status === 'expired' && !syncHintClosed && (
         <div className="banner sync-hint" role="alert">
           <span>OneDrive hat dich abgemeldet, es wird nicht mehr abgeglichen.</span>
@@ -127,40 +116,77 @@ export function App() {
           </button>
         </div>
       )}
+    </>
+  );
 
-      {!desktop && nav}
+  // Die Reihe Notiz, Würfeln, Karte: im Log-Panel des Desktops immer, im Ziehblatt nur, wo man würfelt
+  // (Log, Begegnung, Kampf, das angetippte Feld), nicht in Shop, Charaktere, NSC und „Über“.
+  const dock = <OracleDock view={view} shortcuts />;
+  const dice = field !== undefined || screen === 'oracle' || screen === 'encounter' || screen === 'combat';
 
-      <div className={desktop && !characterColumn ? 'stage without-characters' : 'stage'}>
-        {desktop && (
-          <aside className="oracle-panel" aria-label="Orakel">
-            {oracle}
-          </aside>
-        )}
-        {characterColumn && (
-          <aside className="character-panel" aria-label="Charakterspalte">
-            <CharacterColumn view={view} screen={screen} heal={heal} />
-          </aside>
-        )}
-        <div className="screen-host">
-          {screen === 'oracle' && oracle}
-          {screen === 'encounter' && <EncounterScreen view={view} />}
-          {screen === 'combat' && <CombatScreen view={view} patient={patient} onPatient={setPatient} />}
-          {screen === 'shop' && <ShopScreen view={view} />}
-          {screen === 'characters' && <CharactersScreen view={view} />}
-          {screen === 'npcs' && <NpcScreen view={view} />}
-          {screen === 'sector' && <SectorScreen view={view} />}
-          {screen === 'about' && <AboutScreen persistent={view.persistent} durable={view.durable} />}
+  // Die Grundkarte: der Globus der offenen Welt, sonst der Subsektor. Oben rechts das Menü.
+  const base = (
+    <div className="base">
+      {view.globe ? (
+        <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} world={view.world} here={view.location === view.globe.id} travel={view.travel} log={view.log} logDays={view.logDays} />
+      ) : (
+        <div className="base-sector">
+          <SectorScreen view={view} />
         </div>
-      </div>
+      )}
+      <header className="map-menu">
+        <button type="button" className="globe-round" aria-label="Menü" aria-expanded={menu} onClick={() => setMenu(true)}>
+          <MenuIcon />
+        </button>
+      </header>
+    </div>
+  );
+
+  const areaTitle = areas.find((a) => a.id === screen)?.label ?? (screen === 'about' ? 'Über die App' : '');
+
+  return (
+    <div className={desktop ? 'app map-app desktop' : 'app map-app'}>
+      {desktop ? (
+        <>
+          <aside className="oracle-panel" aria-label="Log">
+            {banners}
+            {nav}
+            <OracleScreen view={view} dock={false} />
+            {dock}
+          </aside>
+          {(field || screen !== 'oracle') && (
+            <section className="area-panel" aria-label={field ? 'Feld' : areaTitle}>
+              {!field && (
+                <div className="area-head">
+                  <h2 className="section-title">{areaTitle}</h2>
+                  <button type="button" className="icon-button" aria-label={`${areaTitle} schließen`} onClick={() => game.showScreen('oracle')}>
+                    <CloseIcon />
+                  </button>
+                </div>
+              )}
+              <div className="screen-host">{field ?? area}</div>
+            </section>
+          )}
+          {base}
+        </>
+      ) : (
+        <>
+          {base}
+          <Tray
+            fraction={view.trayHeight}
+            head={banners}
+            body={<div className="screen-host">{field ?? (screen === 'oracle' ? <OracleScreen view={view} dock={false} /> : area)}</div>}
+            foot={dice && dock}
+            bar={nav}
+          />
+        </>
+      )}
 
       {menu && <Menu view={view} onClose={() => setMenu(false)} />}
       {view.generation && <GenerationSheet generation={view.generation} log={view.log} />}
       {view.picking && <SectorPicker view={view} title={view.picking.title} />}
-      {view.world && <WorldSheet key={view.world.id} world={view.world} here={view.location === view.world.id} travel={view.travel} log={view.log} logDays={view.logDays} />}
-      {view.globe && (
-        <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} world={view.world} here={view.location === view.globe.id} travel={view.travel} log={view.log} logDays={view.logDays} error={view.world?.error} dock={<OracleDock view={view} />} />
-      )}
-      {/* Der Editor liegt über dem Globus: Ein NSC im angetippten Feld öffnet ihn dort. */}
+      {/* Eine Welt ohne Globus (in Erschaffung, ohne Oberfläche) zeigt ihre Weltkarte als Blatt. */}
+      {view.world && !view.globe && <WorldSheet key={view.world.id} world={view.world} here={view.location === view.world.id} travel={view.travel} log={view.log} logDays={view.logDays} />}
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
       {view.journey && <JourneySheet journey={view.journey} />}
       {view.card && <CardSheet card={view.card} />}

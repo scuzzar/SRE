@@ -95,6 +95,7 @@ export function memoryRepository(...initial: Campaign[]): CampaignRepository & {
   open: string | undefined;
   stripCollapsed: boolean;
   shopHintHidden: boolean;
+  trayHeight: number | undefined;
   readonly marks: Map<string, SyncMark>;
 } {
   return {
@@ -116,6 +117,7 @@ export function memoryRepository(...initial: Campaign[]): CampaignRepository & {
     open: undefined,
     stripCollapsed: false,
     shopHintHidden: false,
+    trayHeight: undefined,
     async list() {
       return [...this.campaigns.values()];
     },
@@ -143,6 +145,12 @@ export function memoryRepository(...initial: Campaign[]): CampaignRepository & {
     },
     async saveShopHintHidden(hidden) {
       this.shopHintHidden = hidden;
+    },
+    async loadTrayHeight() {
+      return this.trayHeight;
+    },
+    async saveTrayHeight(fraction) {
+      this.trayHeight = fraction;
     },
   };
 }

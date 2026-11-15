@@ -17,6 +17,7 @@ const OPEN = 'open';
 /** Unter diesem Schlüssel steht, ob die Leiste mit dem Charakter oben eingeklappt ist. */
 const STRIP = 'strip-collapsed';
 const SHOP_HINT = 'shop-hint-hidden';
+const TRAY = 'tray-height';
 
 class SreDatabase extends Dexie {
   campaigns!: EntityTable<StoredCampaign, 'key'>;
@@ -80,6 +81,15 @@ export class DexieCampaignRepository implements CampaignRepository {
 
   async saveShopHintHidden(hidden: boolean): Promise<void> {
     await this.db.settings.put({ key: SHOP_HINT, value: String(hidden) });
+  }
+
+  async loadTrayHeight(): Promise<number | undefined> {
+    const value = Number((await this.db.settings.get(TRAY))?.value);
+    return Number.isFinite(value) && value > 0 && value <= 1 ? value : undefined;
+  }
+
+  async saveTrayHeight(fraction: number): Promise<void> {
+    await this.db.settings.put({ key: TRAY, value: String(fraction) });
   }
 
   async loadMarks(): Promise<readonly SyncMark[]> {
@@ -153,6 +163,7 @@ export class MemoryCampaignRepository implements CampaignRepository {
   private open: CampaignId | undefined;
   private collapsed = false;
   private hintHidden = false;
+  private tray: number | undefined;
   private readonly marks = new Map<string, SyncMark>();
 
   async list(): Promise<readonly Campaign[]> {
@@ -189,6 +200,14 @@ export class MemoryCampaignRepository implements CampaignRepository {
 
   async saveShopHintHidden(hidden: boolean): Promise<void> {
     this.hintHidden = hidden;
+  }
+
+  async loadTrayHeight(): Promise<number | undefined> {
+    return this.tray;
+  }
+
+  async saveTrayHeight(fraction: number): Promise<void> {
+    this.tray = fraction;
   }
 
   async loadMarks(): Promise<readonly SyncMark[]> {

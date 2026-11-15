@@ -1,89 +1,81 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
-// Der Desktop-Modus (ab 1024 px): die Bereiche stehen als Reiterzeile unter der Kopfzeile, darunter
-// drei Spalten: links das Orakel mit Log, daneben die Charakterspalte, rechts der gewählte Bereich.
-// Diese Tests prüfen genau das und laufen nur im Projekt „desktop“; im Projekt „mobil“ werden sie
-// übersprungen.
+// Der Desktop-Modus (ab 1024 px): links fest das Log-Panel mit den Reitern, dem Charakter oben und der
+// Reihe Notiz, 2W6, Karte; ein Reiter öffnet daneben den Bereich als schließbares Panel; rechts die
+// Grundkarte (Globus oder Subsektor). Diese Tests laufen nur im Projekt „desktop“.
 
 const onlyDesktop = (testInfo: TestInfo) => testInfo.skip(testInfo.project.name !== 'desktop', 'nur im Desktop-Modus');
-const areas = ['Begegnung', 'Kampf', 'Shop', 'Charaktere', 'NSC', 'Sektor'];
-const column = (page: Page) => page.getByRole('complementary', { name: 'Charakterspalte' }).getByRole('region', { name: 'Spielercharaktere' });
+const areas = ['Begegnung', 'Kampf', 'Shop', 'Charaktere', 'NSC'];
+const panel = (page: Page) => page.getByRole('complementary', { name: 'Log' });
+const nav = (page: Page) => page.getByRole('navigation', { name: 'Bereiche' });
+const strip = (page: Page) => panel(page).getByRole('region', { name: 'Spielercharaktere' });
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-test('Reiter oben; darunter links Orakel, daneben die Charaktere, rechts der Bereich – auf jedem Screen', async ({ page }, testInfo) => {
+test('Links das Log mit den Reitern, daneben der Bereich als Panel, rechts die Grundkarte', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
-  const nav = page.getByRole('navigation', { name: 'Bereiche' });
-  const viewport = page.viewportSize()!;
-  const navBox = (await nav.boundingBox())!;
-  expect(navBox.y).toBeLessThan(viewport.height / 2);
-  // Das Orakel ist kein Reiter mehr; beim Start steht der Bereich Sektor offen.
-  await expect(nav.getByRole('button', { name: 'Orakel', exact: true })).toHaveCount(0);
-  await expect(nav.getByRole('button', { name: 'Sektor', exact: true })).toHaveAttribute('aria-current', 'page');
-  const oracle = page.getByRole('complementary', { name: 'Orakel' });
-  const chars = page.getByRole('complementary', { name: 'Charakterspalte' });
-  for (const name of areas.filter((a) => a !== 'Charaktere')) {
-    await nav.getByRole('button', { name, exact: true }).click();
-    const o = (await oracle.boundingBox())!;
-    const c = (await chars.boundingBox())!;
-    const h = (await page.locator('.screen-host').boundingBox())!;
-    expect(c.x).toBeGreaterThanOrEqual(o.x + o.width - 1);
-    expect(h.x).toBeGreaterThanOrEqual(c.x + c.width - 1);
-    // Log und Knöpfe im Orakel, die Charaktere nur in ihrer Spalte, keine Leiste im Bereich.
-    await expect(oracle.getByRole('button', { name: 'Karte ziehen' })).toBeVisible();
-    await expect(oracle.getByRole('button', { name: '2W6' })).toBeVisible();
-    await expect(oracle.locator('.strip')).toHaveCount(0);
-    await expect(column(page).getByRole('article')).toHaveCount(2);
-    await expect(page.locator('.screen-host .strip')).toHaveCount(0);
+  // Beim Start: kein Bereich offen, der Subsektor füllt den Rest (die Demo-Welt hat noch keinen Globus).
+  await expect(nav(page).getByRole('button', { name: 'Log', exact: true })).toHaveCount(0);
+  await expect(nav(page).getByRole('button', { name: 'Sektor', exact: true })).toHaveCount(0);
+  await expect(page.locator('.area-panel')).toHaveCount(0);
+  const log = (await panel(page).boundingBox())!;
+  const map = (await page.locator('.base').boundingBox())!;
+  expect(map.x).toBeGreaterThanOrEqual(log.x + log.width - 1);
+  await expect(page.locator('.sector-viewport')).toBeVisible();
+  for (const name of areas) {
+    await nav(page).getByRole('button', { name, exact: true }).click();
+    const area = (await page.locator('.area-panel').boundingBox())!;
+    const base = (await page.locator('.base').boundingBox())!;
+    expect(area.x).toBeGreaterThanOrEqual(log.x + log.width - 1);
+    expect(base.x).toBeGreaterThanOrEqual(area.x + area.width - 1);
+    await expect(panel(page).getByRole('button', { name: 'Karte ziehen' })).toBeVisible();
+    await expect(panel(page).getByRole('button', { name: '2W6' })).toBeVisible();
   }
-  // Der Bereich Charaktere zeigt die SC selbst: Dort entfällt die Charakterspalte.
-  await nav.getByRole('button', { name: 'Charaktere', exact: true }).click();
-  await expect(chars).toHaveCount(0);
-  const h = (await page.locator('.screen-host').boundingBox())!;
-  expect(h.x).toBeGreaterThanOrEqual((await oracle.boundingBox())!.width - 1);
+  // Ein zweiter Klick auf den offenen Reiter schließt das Panel, ebenso ✕.
+  await nav(page).getByRole('button', { name: 'NSC', exact: true }).click();
+  await expect(page.locator('.area-panel')).toHaveCount(0);
+  await nav(page).getByRole('button', { name: 'Shop', exact: true }).click();
+  await page.getByRole('button', { name: 'Shop schließen' }).click();
+  await expect(page.locator('.area-panel')).toHaveCount(0);
 });
 
-test('Ein Wurf landet im Log der Orakel-Spalte und bleibt beim Wechsel der Bereiche sichtbar', async ({ page }, testInfo) => {
+test('Ein Wurf landet im Log und bleibt beim Wechsel der Bereiche sichtbar', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
-  const panel = page.getByRole('complementary', { name: 'Orakel' });
-  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Shop', exact: true }).click();
-  await panel.getByRole('button', { name: '2W6' }).click();
+  await nav(page).getByRole('button', { name: 'Shop', exact: true }).click();
+  await panel(page).getByRole('button', { name: '2W6' }).click();
   await expect(page.locator('.dice-roll')).toBeHidden();
-  await expect(panel.locator('.entry').last()).toContainText('Würfel · 2W6');
-  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Kampf', exact: true }).click();
-  await expect(panel.locator('.entry').last()).toContainText('Würfel · 2W6');
+  await expect(panel(page).locator('.entry').last()).toContainText('Würfel · 2W6');
+  await nav(page).getByRole('button', { name: 'Kampf', exact: true }).click();
+  await expect(panel(page).locator('.entry').last()).toContainText('Würfel · 2W6');
   await expect(page.locator('.entry')).toHaveCount(1);
 });
 
 test('Deuten geht in jedem Bereich: der Knopf am Ergebnis öffnet das Blatt der Deutung', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
-  const panel = page.getByRole('complementary', { name: 'Orakel' });
-  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Sektor', exact: true }).click();
-  await panel.getByRole('button', { name: '2W6' }).click();
+  await nav(page).getByRole('button', { name: 'Begegnung', exact: true }).click();
+  await panel(page).getByRole('button', { name: '2W6' }).click();
   await expect(page.locator('.dice-roll')).toBeHidden();
-  await panel.getByRole('button', { name: 'Deuten' }).click();
+  await panel(page).getByRole('button', { name: 'Deuten' }).click();
   const reading = page.getByRole('dialog', { name: 'Deutung' });
   await reading.getByPlaceholder(/Was bedeutet das/).fill('Der Wurf ist gut.');
   await reading.getByRole('button', { name: 'Deuten' }).click();
-  await expect(panel.locator('.entry', { hasText: 'Würfel · 2W6' }).locator('.interpretation')).toContainText('Der Wurf ist gut.');
-  await expect(page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Sektor', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(panel(page).locator('.entry', { hasText: 'Würfel · 2W6' }).locator('.interpretation')).toContainText('Der Wurf ist gut.');
+  await expect(nav(page).getByRole('button', { name: 'Begegnung', exact: true })).toHaveAttribute('aria-current', 'page');
 });
 
-test('Eine Probe aus der Charakterspalte lässt sich in jedem Bereich würfeln', async ({ page }, testInfo) => {
+test('Eine Probe aus dem Charakter oben im Log lässt sich in jedem Bereich würfeln', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
-  const panel = page.getByRole('complementary', { name: 'Orakel' });
-  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Begegnung', exact: true }).click();
-  await column(page).getByRole('article', { name: 'Kira Vant' }).getByRole('button', { name: 'Pilot-2' }).click();
-  await panel.getByRole('button', { name: 'Probe würfeln' }).click();
+  await nav(page).getByRole('button', { name: 'Begegnung', exact: true }).click();
+  await strip(page).getByRole('article', { name: 'Kira Vant' }).getByRole('button', { name: 'Pilot-2' }).click();
+  await panel(page).getByRole('button', { name: 'Probe würfeln' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Weiter' }).click();
-  await expect(panel.locator('.entry').last()).toContainText('Kira Vant · Pilot-2');
+  await expect(panel(page).locator('.entry').last()).toContainText('Kira Vant · Pilot-2');
 });
 
 test('Die Sektor-Karte lässt sich mit dem Mausrad zoomen und mit der Maus verschieben', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
-  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Sektor', exact: true }).click();
   const map = page.locator('.sector-viewport');
   const before = await map.evaluate((el) => el.scrollWidth);
   await map.hover();
@@ -103,102 +95,78 @@ test('Die Sektor-Karte lässt sich mit dem Mausrad zoomen und mit der Maus versc
   await expect(page.locator('.sector-dock')).toContainText('Feld 0101');
 });
 
-test('Die Sektor-Karte passt ganz in den Screen, und der Screen wird nicht breiter als 960 px', async ({ page }, testInfo) => {
+test('Die Sektor-Karte passt ganz in die Grundkarte, auch mit dem Dock des gewählten Feldes', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
-  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Sektor', exact: true }).click();
   const viewport = page.viewportSize()!;
   const map = (await page.locator('.sector-viewport').boundingBox())!;
   expect(map.y + map.height).toBeLessThanOrEqual(viewport.height);
-  // Auch mit dem Dock des gewählten Feldes bleibt die unterste Reihe sichtbar.
   await page.locator('.sector-viewport').getByRole('button', { name: '0110, nicht erzeugt' }).click();
   const dock = (await page.locator('.sector-dock').boundingBox())!;
   // Die Karte rückt dafür zusammen.
   const smaller = (await page.locator('.sector-viewport').boundingBox())!;
   expect(smaller.y + smaller.height).toBeLessThanOrEqual(dock.y);
-  const host = (await page.locator('.screen-host').boundingBox())!;
-  expect(host.width).toBeLessThanOrEqual(960);
 });
 
-test('Die Charakterspalte blendet ein, was der Bereich braucht; ein Klick auf eine Karte holt sie nach oben', async ({ page }, testInfo) => {
+test('Kampf und Shop zeigen ihre SC selbst; ein Klick auf eine Karte holt sie nach oben', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
-  const nav = page.getByRole('navigation', { name: 'Bereiche' });
-  const kira = column(page).getByRole('article', { name: 'Kira Vant' });
-  const jonas = column(page).getByRole('article', { name: 'Jonas Reyl' });
-  // Immer: beide untereinander mit Attributen und Fertigkeiten; Punkte und Einklappen gibt es nicht.
-  const k = (await kira.boundingBox())!;
-  expect((await jonas.boundingBox())!.y).toBeGreaterThan(k.y + k.height - 1);
-  await expect(jonas).toContainText('Ste-1');
-  await expect(column(page).getByRole('button', { name: 'Leiste einklappen' })).toHaveCount(0);
-  await expect(kira.getByRole('group', { name: 'Waffe in der Hand' })).toHaveCount(0);
-
+  const area = page.locator('.area-panel');
   // Im Kampf: Rüstung und Waffen; antippen nimmt die Waffe in die Hand.
-  await nav.getByRole('button', { name: 'Kampf', exact: true }).click();
+  await nav(page).getByRole('button', { name: 'Kampf', exact: true }).click();
+  const kira = area.getByRole('article', { name: 'Kira Vant' });
   await expect(kira).toContainText('Jack');
   await kira.getByRole('button', { name: /Automatic Pistol/ }).click();
   await expect(page.getByRole('heading', { name: 'Automatic Pistol' })).toBeVisible();
-
-  // Im Shop: Credits und was er ausgerüstet hat; Jonas per Klick auf seine Karte nach oben, dann kauft man für ihn.
-  await nav.getByRole('button', { name: 'Shop', exact: true }).click();
-  await expect(kira).toContainText('Cr 12.400');
-  await expect(kira).toContainText('Ausgerüstet');
-  await expect(jonas).toContainText('Blade');
-  await jonas.locator('.upp').click();
-  await expect(jonas).toHaveClass(/focus/);
-  await expect(kira).not.toHaveClass(/focus/);
-  await expect(page.locator('.screen-host')).toContainText('Jonas Reyl hat die Fertigkeit');
+  // Im Shop: Credits; Jonas nach oben, dann kauft man für ihn.
+  await nav(page).getByRole('button', { name: 'Shop', exact: true }).click();
+  await expect(area.getByRole('article', { name: 'Kira Vant' })).toContainText('Cr 12.400');
+  await area.getByRole('button', { name: 'Jonas Reyl nach oben' }).click();
+  await expect(area).toContainText('Jonas Reyl hat die Fertigkeit');
 });
 
-test('Die Ziffern wählen die Bereiche der Reiterzeile', async ({ page }, testInfo) => {
+test('Die Ziffern wählen die Reiter', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
-  const nav = page.getByRole('navigation', { name: 'Bereiche' });
-  await expect(nav).toBeVisible();
-  for (const [key, name] of [['1', 'Begegnung'], ['2', 'Kampf'], ['3', 'Shop'], ['4', 'Charaktere'], ['5', 'NSC'], ['6', 'Sektor']]) {
+  await expect(nav(page)).toBeVisible();
+  for (const [key, name] of [['1', 'Begegnung'], ['2', 'Kampf'], ['3', 'Shop'], ['4', 'Charaktere'], ['5', 'NSC']]) {
     await page.keyboard.press(key!);
-    await expect(nav.getByRole('button', { name: name!, exact: true })).toHaveAttribute('aria-current', 'page');
+    await expect(nav(page).getByRole('button', { name: name!, exact: true })).toHaveAttribute('aria-current', 'page');
   }
   // In der Notiz gehören die Ziffern dem Text.
   await page.keyboard.press('n');
   const note = page.getByPlaceholder(/Was passiert/);
   await note.press('2');
-  await expect(nav.getByRole('button', { name: 'Sektor', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(nav(page).getByRole('button', { name: 'NSC', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(note).toHaveValue('2');
 });
 
-test('Eine Fertigkeit auf einer anderen Karte holt den Charakter nach oben und beginnt die Probe, mit einem Klick', async ({ page }, testInfo) => {
+test('Globus als Grundkarte: ein angetipptes Feld öffnet das Panel neben dem Log, ✕ führt zum Subsektor', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
-  const jonas = column(page).getByRole('article', { name: 'Jonas Reyl' });
-  await jonas.getByRole('button', { name: 'Steward-1' }).click();
-  await expect(jonas).toHaveClass(/focus/);
-  await expect(column(page).getByRole('article', { name: 'Kira Vant' })).not.toHaveClass(/focus/);
-  const oracle = page.getByRole('complementary', { name: 'Orakel' });
-  await expect(oracle.locator('.task-bar')).toContainText('Steward-1');
-  await oracle.getByRole('button', { name: 'Probe würfeln' }).click();
-  await page.getByRole('alertdialog').getByRole('button', { name: 'Weiter' }).click();
-  await expect(oracle.locator('.entry').last()).toContainText('Jonas Reyl · Steward-1');
-});
-
-test('In der Kampfsimulation entfällt die Charakterspalte; die Arena führt die SC', async ({ page }, testInfo) => {
-  onlyDesktop(testInfo);
-  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Begegnung', exact: true }).click();
-  await page.locator('select').filter({ hasText: 'oder wählen' }).selectOption({ index: 1 });
-  // Die Vorstellung der Begegnung schließt Esc; dann geht es zum Kampf.
+  await page.getByRole('button', { name: /Aufenthaltsort Kessra.*Globus öffnen/ }).click();
+  const globe = page.getByRole('region', { name: 'Globus · Kessra' });
+  await expect(globe).toBeVisible();
+  const canvas = globe.getByRole('img', { name: /Globus von Kessra/ });
+  const box = (await canvas.boundingBox())!;
+  await canvas.click({ position: { x: box.width / 2, y: box.height / 2 } });
+  const field = page.locator('.area-panel').getByRole('region', { name: 'Angetipptes Feld' });
+  await expect(field).toContainText('°C im Jahresmittel');
+  // Ein Reiter lässt das Feld los und zeigt den Bereich.
+  await nav(page).getByRole('button', { name: 'Shop', exact: true }).click();
+  await expect(field).toHaveCount(0);
+  await expect(page.locator('.area-panel')).toContainText('Cr ');
+  // ✕ auf dem Globus führt zum Subsektor; neu geladen liegt der Globus von Kessra wieder unter allem.
+  await globe.getByRole('button', { name: 'Schließen', exact: true }).click();
+  await expect(page.locator('.sector-viewport')).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('region', { name: 'Globus · Kessra' })).toBeVisible();
+  // Ganz herausgezoomt geht es mit − weiter zum Subsektor.
   await expect(async () => {
-    if ((await page.getByRole('dialog').count()) > 0) await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog')).toHaveCount(0, { timeout: 500 });
+    await page.getByRole('button', { name: 'Herauszoomen' }).click();
+    await expect(page.locator('.sector-viewport')).toBeVisible({ timeout: 1000 });
   }).toPass();
-  await page.getByRole('button', { name: 'Zum Kampf' }).click();
-  await expect(page.locator('.fcard.pcs')).toHaveCount(2);
-  await expect(page.getByRole('complementary', { name: 'Charakterspalte' })).toHaveCount(0);
-  await expect(page.getByRole('complementary', { name: 'Orakel' })).toBeVisible();
-  // Ohne Simulation (Waffentabelle) ist die Spalte wieder da.
-  await page.getByRole('button', { name: 'Beenden' }).first().click();
-  await expect(page.getByRole('complementary', { name: 'Charakterspalte' })).toBeVisible();
 });
-
 
 test('Ausrüstung und Gepäck: per Ziehen von SC zu SC und zurück ins Gepäck', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
-  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Charaktere', exact: true }).click();
+  await nav(page).getByRole('button', { name: 'Charaktere', exact: true }).click();
   const kira = page.getByRole('group', { name: 'Ausrüstung von Kira Vant' });
   const jonas = page.getByRole('group', { name: 'Ausrüstung von Jonas Reyl' });
   const pack = page.getByRole('list', { name: 'Gepäck' });
@@ -211,5 +179,5 @@ test('Ausrüstung und Gepäck: per Ziehen von SC zu SC und zurück ins Gepäck',
   await jonas.getByLabel(/Jonas Reyl, Primär: Automatic Pistol/).dragTo(pack);
   await expect(pack).toContainText('Automatic Pistol');
   // Die Last steht als Balken über dem Gepäck.
-  await expect(page.locator(".stash-load")).toContainText(/Last [\d,]+ \/ [\d,]+ kg/);
+  await expect(page.locator('.stash-load')).toContainText(/Last [\d,]+ \/ [\d,]+ kg/);
 });

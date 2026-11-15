@@ -89,6 +89,18 @@ export function EncounterIcon() {
 }
 
 /** Ein Hexfeld mit einer Welt darin, für den Subsektor. */
+/** Das Log: Zeilen wie in einem Verlauf. */
+export function LogIcon() {
+  return (
+    <svg {...base} width={22} height={22} strokeLinecap="round">
+      <path d="M8 6.5h12M8 12h12M8 17.5h8" />
+      <circle cx="4" cy="6.5" r="1" fill="currentColor" />
+      <circle cx="4" cy="12" r="1" fill="currentColor" />
+      <circle cx="4" cy="17.5" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function SectorIcon() {
   return (
     <svg {...base} width={22} height={22} strokeLinejoin="round">

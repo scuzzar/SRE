@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react';
-import { useIsDesktop } from '../media';
 import { DiceRoll } from '../oracle/DiceRoll';
 import type { CombatView, HealingView, Snapshot } from '../../controller';
 import { EncounterIntro, FightScreen, SurpriseDialog } from './FightScreen';
@@ -35,12 +34,11 @@ export interface Patient {
 export function CombatScreen({ view, patient, onPatient: setPatient }: { view: Snapshot; patient: Patient | undefined; onPatient: (patient: Patient | undefined) => void }) {
   const combat = view.combat;
   // Im Desktop-Modus stehen die Charaktere mit ihren Waffen in der Charakterspalte.
-  const desktop = useIsDesktop();
   const healing = patient && combat && (patient.npc === undefined && !combat.sim ? combat.healing : combat.sim?.fighters.find((f) => f.id === (patient.npc ?? patient.pc))?.healing);
   return (
     <div className="screen">
       {/* Ohne Begegnung steht der Charakter oben in der Leiste; in der Kampfsimulation stehen die SC links in der Arena. */}
-      {!desktop && !combat?.sim && <CharacterStrip view={view} weapons heal={combat && pcHeal(combat, setPatient)} />}
+      {!combat?.sim && <CharacterStrip view={view} weapons heal={combat && pcHeal(combat, setPatient)} />}
       {!combat ? (
         <section className="scroll combat-scroll">
           <p className="log-empty">Ohne lebenden Charakter gibt es keinen Angriff.</p>

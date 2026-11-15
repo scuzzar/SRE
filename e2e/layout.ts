@@ -1,31 +1,48 @@
 import type { Page } from '@playwright/test';
 
-// Wo etwas steht, hängt vom Layout ab: Auf dem Smartphone ist das Orakel ein eigener Bereich und die
-// Charaktere stehen als Leiste oben im Screen; im Desktop-Modus stehen Orakel und Charakterspalte
-// links neben jedem Bereich. Diese Helfer halten die Tests davon frei.
+// Wo etwas steht, hängt vom Layout ab: Auf dem Smartphone liegt unten das Ziehblatt mit den Reitern
+// (Log ist einer davon) und der Reihe Notiz, 2W6, Karte; im Desktop-Modus steht links fest das
+// Log-Panel mit dem Charakter oben, daneben der Bereich. Diese Helfer halten die Tests davon frei.
 
-/** Der gerade gewählte Bereich: auf dem Smartphone der ganze Screen, im Desktop-Modus die Fläche links. */
+/** Der gerade gewählte Bereich: auf dem Smartphone der Inhalt des Ziehblatts, im Desktop-Modus das Panel neben dem Log. */
 export const host = (page: Page) => page.locator('.screen-host');
 
-/** Das Orakel mit Log und Dock: die Orakel-Spalte, sonst der Orakel-Screen. */
-export const oracle = (page: Page) => page.locator('.oracle-panel, .app:not(:has(.oracle-panel)) .screen-host');
+/** Log und die Reihe Notiz, 2W6, Karte: das Log-Panel, sonst das Ziehblatt. */
+export const oracle = (page: Page) => page.locator('.oracle-panel, .app:not(:has(.oracle-panel)) .tray');
 
-/** Wo die Charaktere stehen: die Charakterspalte, sonst die Leiste im Screen. */
-export const characters = (page: Page) => page.locator('.character-panel, .app:not(:has(.character-panel)) .screen-host');
+/** Wo der Charakter oben steht: im Log-Panel, sonst im gewählten Reiter des Ziehblatts. */
+export const characters = (page: Page) => page.locator('.oracle-panel, .app:not(:has(.oracle-panel)) .screen-host');
 
-/**
- * Zum Orakel mit den Charakteren wechseln. Im Desktop-Modus gibt es den Reiter nicht: Orakel und
- * Charakterspalte stehen neben jedem Bereich, nur nicht neben dem Bereich Charaktere; von dort geht
- * es zur Begegnung.
- */
+/** Zum Log mit dem Charakter oben wechseln. Im Desktop-Modus steht es links; ein offener Bereich daneben geht zu. */
 export async function openOracle(page: Page) {
   const nav = page.getByRole('navigation', { name: 'Bereiche' });
-  // Erst wenn die App geladen ist, steht die Leiste da; vorher lässt sich der Reiter nicht zählen.
+  // Erst wenn die App geladen ist, stehen die Reiter da; vorher lässt sich der Reiter nicht zählen.
   await nav.waitFor();
-  const tab = nav.getByRole('button', { name: 'Orakel', exact: true });
+  const tab = nav.getByRole('button', { name: 'Log', exact: true });
   if ((await tab.count()) > 0) return tab.click();
-  const characters = nav.getByRole('button', { name: 'Charaktere', exact: true });
-  if ((await characters.getAttribute('aria-current')) === 'page') await nav.getByRole('button', { name: 'Begegnung', exact: true }).click();
+  const close = page.locator('.area-head').getByRole('button', { name: /schließen$/ });
+  if ((await close.count()) > 0) await close.click();
+}
+
+/**
+ * Zieht das Ziehblatt ganz hoch (nur auf dem Smartphone), damit Gesten wie langes Drücken oder Ziehen
+ * den ganzen Bereich erreichen. Im Desktop-Modus tut es nichts.
+ */
+export async function expandTray(page: Page) {
+  const grip = page.locator('.tray-grip');
+  if ((await grip.count()) === 0) return;
+  const box = (await grip.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, 0, { steps: 8 });
+  await page.mouse.up();
+}
+
+/** Zum Subsektor: Er ist die Grundkarte, solange kein Globus offen ist; ✕ auf dem Globus führt hin. */
+export async function openSector(page: Page) {
+  const close = page.locator('.globe-full').getByRole('button', { name: 'Schließen', exact: true });
+  if ((await close.count()) > 0) await close.click();
+  await page.getByRole('group', { name: 'Karte des Subsektors' }).waitFor();
 }
 
 /** Die Einträge des Logs: das Neueste als Kasten, Älteres als Zeile; ohne die Trennzeilen der Spieltage. */
