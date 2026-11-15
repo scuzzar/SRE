@@ -628,6 +628,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Zu Fuß | `Vehicle` ohne Gegenstand | Das Fahrzeug, das die Gruppe immer hat: langsam, aber fast überall |
 | Geschwindigkeit eines Fahrzeugs | `VehicleSpeed`, `Vehicle.speeds` | Eine Zeile der Tabelle: auf welcher Geländeart (`on`) oder entlang welchem Weg (`along`) das Fahrzeug wie viele km/h fährt; ohne Zeile fährt es dort nicht |
 | Weg | `Way` | Was ein Oberflächenfeld über seine Geländeart hinaus befahrbar macht: Straße, Fluss, Siedlung (Stadt oder Kleinstadt) |
+| Mindestatmosphäre | `Vehicle.atmosphere` | Ab welcher Atmosphäre der Welt ein Fahrzeug geht, z. B. 4 für Flugzeuge und Hovercraft; ohne Wert überall |
 | Fluggeschwindigkeit | `Vehicle.flight` | Wie schnell ein Fluggerät in km/h geradeaus fliegt; nur Fluggeräte haben sie |
 | Landepunkt | `Vehicle.landsOn`, `Vehicle.landsAt` | Wo ein Fluggerät starten und landen kann: auf seinen Geländearten (`landsOn`, Hubschrauber) oder in einer Stadt, deren Hafen in seiner Liste steht (`landsAt`, Linienmaschine nur an Raumhäfen und Flughäfen, Doppeldecker auf Landeplätzen) |
 | Fahrt | `Trip`, `Campaign.trip` | Die geplante Route der Gruppe über die Oberfläche einer Welt, die Tag für Tag abgefahren wird; höchstens eine zur Zeit |
@@ -2291,9 +2292,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     über beide Felder und hat das Fahrzeug eine Zeile dafür, gilt diese. Sonst muss es auf beiden
     Feldern fahren können (Geländeart oder Siedlung), und es gilt die langsamere der beiden; auf einem
     Feld gilt jeweils die schnellste passende Zeile. Dauer des Schritts: 250 km / Geschwindigkeit.
-  - **Werte:** Das Tracked ATV hat nach *Mission on Mithril* 150 km/h auf ebenem Land, 75 im
-    zerklüfteten, 35 im Gebirge und schwimmt auf Wasser (siehe `regeln-kampf.md`, *Fahrzeuge und
-    Reisen über Land*). Die übrigen Werte kommen aus Book 3, sobald es vorliegt, sonst als Hausregel.
+  - **Atmosphäre:** Manche Fahrzeuge gehen nur ab einer Atmosphäre der Welt (`atmosphere`):
+    Flugzeuge, Hubschrauber und Hovercraft brauchen 4+ (SR 55, 57). Auf anderen Welten stehen sie
+    nicht zur Wahl, weder gemietet noch eigene.
+  - **Werte:** Die Reisegeschwindigkeiten stehen im Regelheft (SR 55–57); welche Geländeart welche
+    Geschwindigkeit bekommt, ist ein Vorschlag als Hausregel in `regeln-kampf.md` unter *Fahrzeuge
+    und Reisen über Land*. Die Tabelle wird Referenzdaten im Repository.
   - **Beispiele:** Ground Car nur auf Straße, Siedlung
     und `settled`; Wheeled und Tracked ATV fast überall an Land, auf der Straße schneller; Motor Boat
     nur auf `water` und Fluss; Hovercraft auf Wasser und flachem Land.

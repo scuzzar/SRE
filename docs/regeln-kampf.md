@@ -70,7 +70,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Abstraktes Schlachtsystem](#abstraktes-schlachtsystem) | B4 32–35 | ○ |
 | [Feldartillerie](#feldartillerie) | B4 48–49 | ○ |
 | [Tierbegegnungen](#tierbegegnungen) | SE 18–19, SR 46–49 | ○ |
-| [Fahrzeuge und Reisen über Land](#fahrzeuge-und-reisen-über-land) | SA 1, 3, 7 | ○ (Modell im Entwurf) |
+| [Fahrzeuge und Reisen über Land](#fahrzeuge-und-reisen-über-land) | SR 55–57, SA 1, 3, 7 | ○ (Modell im Entwurf) |
 
 ---
 
@@ -1814,9 +1814,56 @@ bis 9 ist und es keine Giftwaffe hat; essbar sind 1W6 × 5 % seines Gewichts. Ei
 
 ## Fahrzeuge und Reisen über Land
 
-*SA 1, „Procedures“; SA 3, „Event and Encounter Tables“; SA 7, „Time and Travel“, „The All Terrain
-Vehicle“.* App: ○ (das Modell steht im Entwurf, siehe `domain-model.md` unter *Fahrzeuge* und
-*Fahrt*). Die Geschwindigkeiten der übrigen Fahrzeuge stehen in Book 3, das nicht vorliegt.
+*SR 55–57, „Vehicles“; SA 1, „Procedures“; SA 3, „Event and Encounter Tables“; SA 7, „Time and
+Travel“, „The All Terrain Vehicle“.* App: ○ (das Modell steht im Entwurf, siehe `domain-model.md`
+unter *Fahrzeuge* und *Fahrt*).
+
+**Allgemein (SR 55):** Auf Welten mit TL 0–3 reist man mit Last- und Reittieren (200–400 kg),
+Karren und Segelschiffen; Preise nach Lage, Tiere und Wagen in Hunderten, Schiffe in Tausenden bis
+Zehntausenden Credits. Über TL 10 sieht man fast nur noch Grav-Fahrzeuge. Jeder kann ein Radfahrzeug
+langsam und ungefährlich fahren; sonst braucht man die Fertigkeit der Kategorie (ATV für Rad und
+Kette, Air/Raft für Grav, Aircraft mit Helicopter, Propeller, Jet; Watercraft mit Small Watercraft,
+Hovercraft, Submersible, Large Watercraft; in einer anderen Unterart −1). **Flugzeuge** fliegen nur
+bei **Atmosphäre 4+**; Malfunction 11+ je Einsatz, DM +1 je ausgelassener Wartung. Radfahrzeuge:
+Panne 12+, Geländeschwierigkeit 10+ abseits von Straße und glattem Gelände; Kettenfahrzeuge: 11+ und
+11+; Gesetzesstufe+ gegen Radarfallen.
+
+| Fahrzeug (TL) | Preis, Gewicht | Reise / Spitze | Reichweite | Wo (SR) | Plätze |
+|---|---|---|---|---|---|
+| Primitive Biplane (5) | Cr20 000, 1 t | 150 / 200 kph | 3 Flugstunden | Flugzeug, braucht Landeplatz | Pilot + 1, 100 kg |
+| Fixed Wing Aircraft (6) | Cr1 000 000, 5 t | 600 / 700 kph | 3600 km, 6 h | Zweistrahliges Frachtflugzeug | 2 Crew + 6, 5 t |
+| Helicopter (6) | Cr100 000, 1 t | 200 / 250 kph | 600 km | Senkrechtstart und -landung, auch auf engem Raum | 1 + 7, 500 kg |
+| Air/Raft (8) | Cr600 000, 4 t | 100 / 120 kph | praktisch unbegrenzt (alle 10 Wochen tanken) | Grav: jede Umgebung, bis in den Orbit; windanfällig, offen | 4, 4 t |
+| GCarrier (8) | Cr1 000 000, 8 t | wie Air/Raft | wie Air/Raft | Gepanzerter Grav-Truppentransporter | 14 mit Fahrer und Schütze, 2 t |
+| Speeder (8) | Cr1 000 000, 6 t | 1000 / 1200 kph | praktisch unbegrenzt | Grav, schnell zwischen Punkten einer Welt; Air/Raft −1 | 1 + 1, 100 kg |
+| Grav Belt (12) | Cr100 000, 10 kg aus | wie Air/Raft | wie Air/Raft | Persönliches Grav-Geschirr | 1 |
+| Ground Car (5) | Cr4 000, 2 t | 100 / 150 kph | 1000 km | Für zivilisierte Gegenden und Straßen; abseits davon, wenn überhaupt, höchstens 10 kph | 1 + 5 |
+| Wheeled ATV (6) | Cr30 000, 10 t | Straße 60 / 100 kph | 5000 km | Offene Ebene fast wie Straße, schwieriges Gelände höchstens 20 kph; Druckkabine | 1 + 16 |
+| Tracked ATV (6) | Cr30 000, 10 t | Straße 40 / 80 kph | wie Wheeled | Offene Ebene fast wie Straße, schwieriges Gelände höchstens 30 kph; fast überall außer Schluchten und Steilwänden | 1 + 16 |
+| Motor Boat (5) | Cr60 000, 60 t | 60 / 100 kph | – | Tragflügelboot | 3 Crew + 8, 10 t |
+| Submersible (6) | Cr2 000 000, 500 t | 40 kph unter Wasser, etwa 20 an der Oberfläche | unbegrenzt | Zwischen Unterwasserstädten | 5 Crew + 10, 30 t |
+| Hovercraft (7) | Cr200 000, 8 t | 60 / 150 kph | 2000 km | Nur bei **Atmosphäre 4+**; Land und Wasser gleich gut, Mühe mit zerklüftetem Boden, Abhängen, Sturm | 1 + 15, 3 t |
+
+**Vorschlag für die App** ✱ (Reisegeschwindigkeit in km/h je Geländeart der Oberflächenkarte; leer
+heißt: fährt dort nicht; noch abzustimmen). Straße, Fluss und Siedlung sind die Wege aus dem Modell.
+„Offen“ steht für `open`, `settled`, `tundra`, `desert`; „schwierig“ für `rugged`, `jungle`, `swamp`,
+`landIce`.
+
+| Fahrzeug | Straße | Siedlung | offen | schwierig | `mountain` | `water`, `waterIce` | Fluss |
+|---|---|---|---|---|---|---|---|
+| Zu Fuß | 5 | 5 | 4 | 2 | 1 | | |
+| Ground Car | 100 | 50 | (nur `settled`: 50) | | | | |
+| Wheeled ATV | 60 | 40 | 50 | 20 | 10 | | |
+| Tracked ATV | 40 | 30 | 35 | 30 | 20 | (`waterIce`: 30) | |
+| Motor Boat | | | | | | 60 (nur `water`) | 60 |
+| Submersible | | | | | | 40 (nur `water`) | |
+| Hovercraft | 60 | 40 | 60 | (nur `swamp`, `landIce`: 30) | | 60 | 60 |
+
+Fluggeräte (Fluggeschwindigkeit, Landepunkte): Biplane 150, Landeplatz in jeder Stadt mit Hafen
+A–H; Fixed Wing Aircraft (als Linienmaschine) 600, nur an Häfen A–C und F; Helicopter 200, landet
+auf jeder Geländeart an Land; Air/Raft, GCarrier, Grav Belt 100 und Speeder 1000, landen überall,
+auch auf Wasser (sie schweben). Biplane, Fixed Wing, Helicopter und Hovercraft nur bei Atmosphäre
+4+. Reichweite und Tanken nimmt die App nicht auf (○).
 
 **Das ATV aus *Mission on Mithril*** (ein Tracked ATV, Kettenfahrzeug mit Druckkabine, 9,5 t):
 

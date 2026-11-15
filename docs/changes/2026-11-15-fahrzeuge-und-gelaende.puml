@@ -180,6 +180,7 @@ hide <<value>> stereotype
   class Vehicle <<reference>> $logistik $newClass("2026-11-15") {
     name: string
     flight: number [0..1]
+    atmosphere: number [0..1]
   }
   class VehicleSpeed <<value>> $logistik $newClass("2026-11-15") {
     kmh: number
