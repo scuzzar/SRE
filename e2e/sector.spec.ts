@@ -60,24 +60,24 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
   expect(named).toBe(true);
 });
 
-test('Sektor: Die Karte lässt sich vergrößern und wieder verkleinern', async ({ page }) => {
+test('Sektor: Die Karte lässt sich vergrößern und wieder verkleinern, ohne Bildlaufleisten', async ({ page }) => {
   await page.goto('/');
   await openSector(page);
   const viewport = page.locator('.sector-viewport');
-  const canvas = page.locator('.sector-canvas');
+  const svg = page.getByRole('group', { name: 'Karte des Subsektors' });
+  const width = async () => Number((await svg.getAttribute('viewBox'))!.split(' ')[2]);
   const out = page.getByRole('button', { name: 'Verkleinern' });
   await expect(out).toBeDisabled();
-  const before = (await canvas.boundingBox())!.width;
-  const width = async () => (await canvas.boundingBox())!.width;
-  // Je Tippen ein Schritt (× 1,5); gemessen wird, wenn die Karte neu gezeichnet ist.
+  const before = await width();
+  // Je Tippen ein Schritt (× 1,5): Der Ausschnitt der Zeichnung wird kleiner.
   await page.getByRole('button', { name: 'Vergrößern' }).click();
-  await expect.poll(width).toBeGreaterThan(before * 1.4);
+  await expect.poll(width).toBeLessThan(before / 1.4);
   await page.getByRole('button', { name: 'Vergrößern' }).click();
-  await expect.poll(width).toBeGreaterThan(before * 2);
-  // Größer als der Ausschnitt: verschieben geht durch Scrollen.
-  expect(await viewport.evaluate((e) => e.scrollWidth > e.clientWidth)).toBe(true);
+  await expect.poll(width).toBeLessThan(before / 2);
+  // Verschoben wird durch Ziehen, nicht durch Scrollen: Bildlaufleisten gibt es nicht.
+  expect(await viewport.evaluate((e) => [e.scrollWidth - e.clientWidth, e.scrollHeight - e.clientHeight])).toEqual([0, 0]);
   // Auch vergrößert lässt sich ein Feld antippen.
-  await page.getByRole('button', { name: /, nicht erzeugt$/ }).first().click();
+  await page.getByRole('button', { name: '0404, nicht erzeugt' }).click();
   await expect(page.locator('.sector-dock')).toBeVisible();
   await out.click();
   await out.click();
@@ -85,6 +85,8 @@ test('Sektor: Die Karte lässt sich vergrößern und wieder verkleinern', async 
 });
 
 test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis zum Namen; die fertige Welt bekommt eine Notiz', async ({ page }) => {
+  // Am Ende entsteht der Globus der neuen Welt; ohne Grafikkarte und neben anderen Tests dauert das.
+  test.setTimeout(60_000);
   await page.goto('/');
   await openSector(page);
   const map = page.getByRole('group', { name: 'Karte des Subsektors' });

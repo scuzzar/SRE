@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type TouchEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import type { HexView, SelectedHexView, Snapshot } from '../../controller';
 import { useGame } from '../game-context';
 import { animated } from '../haptics';
@@ -207,149 +208,184 @@ function SectorDock({
   );
 }
 
-/**
- * Der Subsektor: 8 × 10 Felder wie TAS Form 6. Ein nicht erzeugtes Feld (dunkel) antippen wählt es;
- * unten würfelt man dann das Vorkommen. Eine Welt antippen öffnet ihre Weltkarte, auch eine, die
- * noch entsteht. Die Karte hat den Platz für sich; Welten und Legende klappen oben über ihr auf. Während die Würfel rollen, zeigt die Karte noch den
- * Stand davor.
- */
 /** Wie weit die Karte sich vergrößern lässt. */
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 4;
 const ZOOM_STEP = 1.5;
+/** Erst ab so vielen Pixeln wird aus einem Tippen ein Verschieben. */
+const PAN_FROM = 4;
 
 function clampZoom(zoom: number): number {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
 }
 
-function distance(e: TouchEvent): number {
-  const [a, b] = [e.touches[0]!, e.touches[1]!];
-  return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+/** Wohin die Karte schaut: die Mitte in Einheiten der Zeichnung und der Zoom (1 = ganz zu sehen). */
+interface MapView {
+  readonly cx: number;
+  readonly cy: number;
+  readonly zoom: number;
 }
 
 /**
- * Die Karte im Ausschnitt: mit zwei Fingern, dem Mausrad oder mit + und − zoomen, mit einem Finger
- * oder der gehaltenen Maustaste verschieben. Beim Zoomen bleibt der Punkt unter den Fingern bzw.
- * dem Cursor (bei den Knöpfen die Mitte) an seiner Stelle. Reine Darstellung: Der Zoom gehört der Ansicht.
+ * Die Karte wie in einer Karten-App: Sie füllt ihre Fläche ohne Bildlaufleisten; bei Zoom 1 ist der
+ * ganze Subsektor zu sehen (nach Breite oder Höhe, was knapper ist). Mit zwei Fingern, dem Mausrad
+ * oder mit + und − zoomen, mit einem Finger oder der gehaltenen Maustaste verschieben; der Punkt
+ * unter Fingern bzw. Cursor (bei den Knöpfen die Mitte) bleibt dabei stehen. Gezeichnet wird über den
+ * Ausschnitt der Zeichnung (`viewBox`); als Grundkarte (`fill`) reicht sie über ihre Fläche hinaus
+ * unter Leiste und Ziehblatt. Reine Darstellung: Zoom und Ausschnitt gehören der Ansicht.
  */
-function ZoomableMap({ children }: { children: (pixelsPerUnit: number) => ReactNode }) {
-  const viewport = useRef<HTMLDivElement>(null);
-  const [zoom, setZoom] = useState(1);
-  // Wie breit der Ausschnitt ist; daraus und aus dem Zoom folgt, wie groß ein Feld gerade erscheint.
-  const [width, setWidth] = useState(0);
+function ZoomableMap({ fill, children }: { fill: boolean; children: (pixelsPerUnit: number) => ReactNode }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ w: 0, h: 0 });
   useLayoutEffect(() => {
-    const el = viewport.current;
+    const el = box.current;
     if (!el) return;
-    const measure = () => setWidth(el.clientWidth);
+    const measure = () => setSize({ w: el.clientWidth, h: el.clientHeight });
     measure();
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(measure);
     observer?.observe(el);
     return () => observer?.disconnect();
   }, []);
-  // Wohin beim nächsten Zeichnen gescrollt wird, damit der Punkt unter den Fingern stehen bleibt.
-  const anchor = useRef<{ x: number; y: number; from: number } | undefined>(undefined);
-  const pinch = useRef<{ distance: number; zoom: number } | undefined>(undefined);
+  const [view, setView] = useState<MapView>({ cx: WIDTH / 2, cy: HEIGHT / 2, zoom: 1 });
+  // Einheiten der Zeichnung je Bildschirmpixel bei Zoom 1: Der ganze Subsektor passt hinein.
+  const ready = size.w > 0 && size.h > 0;
+  const fit = ready ? Math.max(WIDTH / size.w, HEIGHT / size.h) : 1;
+  /** Hält die Karte im Bild: Ist der Ausschnitt breiter (höher) als die Karte, steht sie in der Mitte. */
+  const bounded = (v: MapView): MapView => {
+    const zoom = clampZoom(v.zoom);
+    const upp = fit / zoom;
+    const half = (span: number, full: number, c: number) => (span >= full ? full / 2 : Math.min(full - span / 2, Math.max(span / 2, c)));
+    return { zoom, cx: half(size.w * upp, WIDTH, v.cx), cy: half(size.h * upp, HEIGHT, v.cy) };
+  };
+  const shown = bounded(view);
+  const upp = fit / shown.zoom;
+  const viewBox = ready ? `${(shown.cx - (size.w * upp) / 2).toFixed(2)} ${(shown.cy - (size.h * upp) / 2).toFixed(2)} ${(size.w * upp).toFixed(2)} ${(size.h * upp).toFixed(2)}` : `0 0 ${WIDTH.toFixed(1)} ${HEIGHT.toFixed(1)}`;
 
-  function zoomTo(next: number, x?: number, y?: number) {
-    const el = viewport.current;
-    const target = clampZoom(next);
-    if (!el || target === zoom) return;
-    anchor.current = { x: x ?? el.clientWidth / 2, y: y ?? el.clientHeight / 2, from: zoom };
-    setZoom(target);
-  }
+  /** Zoomt um einen Faktor; der Punkt (px, py) im Ausschnitt bleibt stehen. */
+  const zoomAt = (from: MapView, zoom: number, px: number, py: number): MapView => {
+    const base = bounded(from);
+    const before = fit / base.zoom;
+    const after = fit / clampZoom(zoom);
+    const ox = px - size.w / 2;
+    const oy = py - size.h / 2;
+    return bounded({ zoom, cx: base.cx + ox * before - ox * after, cy: base.cy + oy * before - oy * after });
+  };
 
-  useLayoutEffect(() => {
-    const el = viewport.current;
-    const a = anchor.current;
-    if (!el || !a) return;
-    const ratio = zoom / a.from;
-    el.scrollLeft = (el.scrollLeft + a.x) * ratio - a.x;
-    el.scrollTop = (el.scrollTop + a.y) * ratio - a.y;
-    anchor.current = undefined;
-  }, [zoom]);
+  // Die neuesten Werte für die Fenster-Listener während einer Geste und für das Mausrad.
+  const latest = useRef({ view: shown, zoomAt, bounded, upp });
+  useEffect(() => {
+    latest.current = { view: shown, zoomAt, bounded, upp };
+  });
+
+  // Verschieben und Kneifen: verfolgt am Fenster, damit die Geste weiterläuft, wenn der Finger die Fläche verlässt.
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const swallowClick = useRef(false);
+  const gesture = useRef<{ start: MapView; x: number; y: number; dist?: number; moved: boolean }>({ start: shown, x: 0, y: 0, moved: false });
+  const local = (x: number, y: number) => {
+    const r = box.current!.getBoundingClientRect();
+    return { x: x - r.left, y: y - r.top };
+  };
+  const begin = () => {
+    const pts = [...pointers.current.values()];
+    const moved = gesture.current.moved;
+    if (pts.length >= 2) {
+      const [a, b] = pts as [{ x: number; y: number }, { x: number; y: number }];
+      gesture.current = { start: latest.current.view, x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, dist: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), moved };
+    } else if (pts.length === 1) gesture.current = { start: latest.current.view, x: pts[0]!.x, y: pts[0]!.y, moved };
+  };
+  const onMove = (e: PointerEvent) => {
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const g = gesture.current;
+    const pts = [...pointers.current.values()];
+    const { upp: perPixel } = latest.current;
+    if (pts.length >= 2 && g.dist) {
+      const [a, b] = pts as [{ x: number; y: number }, { x: number; y: number }];
+      const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      const zoom = g.start.zoom * (Math.hypot(a.x - b.x, a.y - b.y) / g.dist);
+      const at = local(g.x, g.y);
+      const zoomed = latest.current.zoomAt(g.start, zoom, at.x, at.y);
+      const after = fit / clampZoom(zoom);
+      g.moved = true;
+      setView(latest.current.bounded({ ...zoomed, cx: zoomed.cx - (mid.x - g.x) * after, cy: zoomed.cy - (mid.y - g.y) * after }));
+      return;
+    }
+    const dx = e.clientX - g.x;
+    const dy = e.clientY - g.y;
+    if (!g.moved && Math.hypot(dx, dy) < PAN_FROM) return;
+    g.moved = true;
+    setView(latest.current.bounded({ ...g.start, cx: g.start.cx - dx * perPixel, cy: g.start.cy - dy * perPixel }));
+  };
+  const onUp = (e: PointerEvent) => {
+    if (!pointers.current.delete(e.pointerId)) return;
+    if (pointers.current.size > 0) return begin();
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('pointercancel', onUp);
+    if (!gesture.current.moved) return;
+    swallowClick.current = true;
+    window.setTimeout(() => (swallowClick.current = false), 0);
+  };
+  useEffect(
+    () => () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+    },
+    // Die Listener hängen nur während einer Geste; beim Abbau der Karte gehen sie mit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   // Das Mausrad zoomt am Cursor; ein eigener Listener, weil React das Rad passiv registriert und es
   // ohne preventDefault an die Seite durchreichen würde.
-  const zoomBy = useRef<(factor: number, x?: number, y?: number) => void>(() => undefined);
   useEffect(() => {
-    zoomBy.current = (factor, x, y) => zoomTo(zoom * factor, x, y);
-  });
-  useEffect(() => {
-    const el = viewport.current;
+    const el = box.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const box = el.getBoundingClientRect();
-      zoomBy.current(e.deltaY < 0 ? 1.2 : 1 / 1.2, e.clientX - box.left, e.clientY - box.top);
+      const r = el.getBoundingClientRect();
+      const { view: v, zoomAt: at } = latest.current;
+      setView(at(v, v.zoom * (e.deltaY < 0 ? 1.2 : 1 / 1.2), e.clientX - r.left, e.clientY - r.top));
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
   }, []);
-  // Die gehaltene Maustaste verschiebt die Karte; erst nach ein paar Pixeln zählt es als Verschieben,
-  // damit ein kurzes Tippen auf ein Feld es weiterhin wählen kann.
-  const pan = useRef<{ x: number; y: number; left: number; top: number } | undefined>(undefined);
-  const panned = useRef(false);
+
+  const zoomButton = (factor: number) => setView(zoomAt(shown, shown.zoom * factor, size.w / 2, size.h / 2));
 
   return (
-    <div className="sector-zoom-frame" style={{ '--map-ratio': (WIDTH / HEIGHT).toFixed(4) } as CSSProperties}>
+    <div className="sector-zoom-frame">
       <div
-        ref={viewport}
+        ref={box}
         className="sector-viewport"
-        style={{ aspectRatio: `${WIDTH.toFixed(1)} / ${HEIGHT.toFixed(1)}` }}
-        onTouchStart={(e) => {
-          if (e.touches.length === 2) pinch.current = { distance: distance(e), zoom };
-        }}
-        onTouchMove={(e) => {
-          const start = pinch.current;
-          const el = viewport.current;
-          if (!start || !el || e.touches.length !== 2) return;
-          const box = el.getBoundingClientRect();
-          const [a, b] = [e.touches[0]!, e.touches[1]!];
-          zoomTo(start.zoom * (distance(e) / start.distance), (a.clientX + b.clientX) / 2 - box.left, (a.clientY + b.clientY) / 2 - box.top);
-        }}
-        onTouchEnd={(e) => {
-          if (e.touches.length < 2) pinch.current = undefined;
-        }}
-        onMouseDown={(e) => {
-          if (e.button !== 0) return;
-          const el = viewport.current;
-          if (!el) return;
-          pan.current = { x: e.clientX, y: e.clientY, left: el.scrollLeft, top: el.scrollTop };
-          panned.current = false;
-        }}
-        onMouseMove={(e) => {
-          const p = pan.current;
-          const el = viewport.current;
-          if (!p || !el) return;
-          const dx = e.clientX - p.x;
-          const dy = e.clientY - p.y;
-          if (!panned.current && Math.hypot(dx, dy) < 4) return;
-          panned.current = true;
-          el.scrollLeft = p.left - dx;
-          el.scrollTop = p.top - dy;
-        }}
-        onMouseUp={() => {
-          pan.current = undefined;
-        }}
-        onMouseLeave={() => {
-          pan.current = undefined;
+        style={fill ? undefined : { aspectRatio: `${WIDTH.toFixed(1)} / ${HEIGHT.toFixed(1)}` }}
+        onPointerDown={(e) => {
+          if (e.pointerType === 'mouse' && e.button !== 0) return;
+          const first = pointers.current.size === 0;
+          pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (first) gesture.current.moved = false;
+          begin();
+          if (!first) return;
+          window.addEventListener('pointermove', onMove);
+          window.addEventListener('pointerup', onUp);
+          window.addEventListener('pointercancel', onUp);
         }}
         onClickCapture={(e) => {
-          if (!panned.current) return;
-          panned.current = false;
+          if (!swallowClick.current) return;
           e.preventDefault();
           e.stopPropagation();
         }}
       >
-        <div className="sector-canvas" style={{ width: `${zoom * 100}%` }}>
-          {children((width * zoom) / WIDTH)}
-        </div>
+        <svg className="sector-map" viewBox={viewBox} preserveAspectRatio="xMidYMid meet" role="group" aria-label="Karte des Subsektors">
+          {children(1 / upp)}
+        </svg>
       </div>
       <div className="sector-zoom" role="group" aria-label="Zoom">
-        <button type="button" className="icon-button" aria-label="Verkleinern" disabled={zoom <= MIN_ZOOM} onClick={() => zoomTo(zoom / ZOOM_STEP)}>
+        <button type="button" className="icon-button" aria-label="Verkleinern" disabled={shown.zoom <= MIN_ZOOM} onClick={() => zoomButton(1 / ZOOM_STEP)}>
           −
         </button>
-        <button type="button" className="icon-button" aria-label="Vergrößern" disabled={zoom >= MAX_ZOOM} onClick={() => zoomTo(zoom * ZOOM_STEP)}>
+        <button type="button" className="icon-button" aria-label="Vergrößern" disabled={shown.zoom >= MAX_ZOOM} onClick={() => zoomButton(ZOOM_STEP)}>
           +
         </button>
       </div>
@@ -357,7 +393,15 @@ function ZoomableMap({ children }: { children: (pixelsPerUnit: number) => ReactN
   );
 }
 
-export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; heading?: string }) {
+/**
+ * Der Subsektor: 8 × 10 Felder wie TAS Form 6. Ein nicht erzeugtes Feld (dunkel) antippen wählt es;
+ * unten würfelt man dann das Vorkommen. Eine Welt antippen öffnet ihre Weltkarte, auch eine, die
+ * noch entsteht. Die Karte füllt ihre Fläche; Welten und Legende klappen oben über ihr auf. Während
+ * die Würfel rollen, zeigt die Karte noch den Stand davor. Als Grundkarte (`fill`) reicht sie über die
+ * ganze Fläche, die Leiste schwebt darüber, und das gewählte Feld steht im Ziehblatt bzw. im Panel neben
+ * dem Log.
+ */
+export function SectorScreen({ view, heading = 'Subsektor', fill = false, dockTo = null }: { view: Snapshot; heading?: string; fill?: boolean; /** Wohin das gewählte Feld gehört, wenn der Subsektor die Grundkarte ist. */ dockTo?: Element | null }) {
   // Als Grundkarte führt ein Knopf zum Globus des Aufenthaltsorts (nicht beim Wählen für die Erschaffung).
   const here = view.picking ? undefined : view.worlds.find((w) => w.id === view.location);
   const game = useGame();
@@ -371,6 +415,21 @@ export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; 
   const sector = rolling ? shown : view.sector;
   // Ein Tippen irgendwo, solange der Würfel rollt, springt zum Ergebnis; der Zähler sagt es der Bühne.
   const [skips, setSkips] = useState(0);
+  const dock = selected && (
+    <SectorDock
+      key={selected.id}
+      selected={selected}
+      rolled={rolled === selected.id}
+      rolling={rolling}
+      skips={skips}
+      onRoll={() => {
+        setRolled(selected.id);
+        setSettled(undefined);
+        game.rollOccurrence();
+      }}
+      onSettled={() => setSettled(selected.id)}
+    />
+  );
   // Welche Liste oben über der Karte aufgeklappt ist, wie im Globus; reine Darstellung.
   const [panel, setPanel] = useState<'worlds' | 'legend' | undefined>(undefined);
   const toggle = (p: 'worlds' | 'legend') => setPanel(panel === p ? undefined : p);
@@ -404,14 +463,10 @@ export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; 
           )}
         </div>
         <div className="sector-body">
-          <ZoomableMap>
-            {(pixelsPerUnit) => (
-              <svg className="sector-map" viewBox={`0 0 ${WIDTH.toFixed(1)} ${HEIGHT.toFixed(1)}`} role="group" aria-label="Karte des Subsektors">
-                {sector.map((hex) => (
-                  <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} detail={detailAt(pixelsPerUnit)} here={hex.id === view.location} opensGlobe={!view.picking} />
-                ))}
-              </svg>
-            )}
+          <ZoomableMap fill={fill}>
+            {(pixelsPerUnit) =>
+              sector.map((hex) => <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} detail={detailAt(pixelsPerUnit)} here={hex.id === view.location} opensGlobe={!view.picking} />)
+            }
           </ZoomableMap>
           {panel === 'legend' && (
             <div className="sector-panel" role="region" aria-label="Legende">
@@ -450,21 +505,9 @@ export function SectorScreen({ view, heading = 'Subsektor' }: { view: Snapshot; 
           )}
         </div>
       </section>
-      {selected && (
-        <SectorDock
-          key={selected.id}
-          selected={selected}
-          rolled={rolled === selected.id}
-          rolling={rolling}
-          skips={skips}
-          onRoll={() => {
-            setRolled(selected.id);
-            setSettled(undefined);
-            game.rollOccurrence();
-          }}
-          onSettled={() => setSettled(selected.id)}
-        />
-      )}
+      {/* Als Grundkarte steht das gewählte Feld im Ziehblatt bzw. im Panel neben dem Log, an der Stelle,
+          die die App dafür freihält (`dockTo`); Würfel und Zustand bleiben hier. */}
+      {dock && (fill ? dockTo && createPortal(dock, dockTo) : dock)}
     </div>
   );
 }

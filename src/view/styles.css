@@ -261,47 +261,86 @@ button:disabled {
   bottom: max(0px, calc(var(--tray-floor, 0px) - 16px));
 }
 
-/* Der Subsektor als Grundkarte: über dem Ziehblatt, die Karte ganz zu sehen (nach Breite oder
-   Höhe, was knapper ist); Welten und Legende klappen oben über ihr auf. */
+/* Der Subsektor als Grundkarte wie eine Karten-App: Die Karte füllt die sichtbare Fläche zwischen
+   Leiste und Ziehblatt, bei Zoom 1 steht dort der ganze Subsektor (jedes Feld lässt sich antippen);
+   vergrößert reicht sie unter Leiste und Blatt. Leiste und Listen schweben darüber. */
 .base-sector {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: var(--tray-h, 0px);
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
+  inset: 0;
+  background: var(--deep);
 }
 
 .base-sector > .screen {
-  flex: 1 1 auto;
-  min-height: 0;
+  position: absolute;
+  inset: 0;
 }
 
 .base .sector {
+  position: absolute;
+  inset: 0;
+  padding: 0;
   overflow: hidden;
 }
 
-.base .sector-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  container-type: size;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+.base .sector-bar {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  left: 16px;
+  right: 12px;
+  z-index: 2;
+  min-height: 44px;
 }
 
-.base .sector-body > .sector-zoom-frame {
-  width: min(100cqw, calc(100cqh * var(--map-ratio)));
+.base .sector-body {
+  position: absolute;
+  inset: 0;
+}
+
+.base .sector-zoom-frame {
+  position: absolute;
+  top: calc(max(10px, env(safe-area-inset-top)) + 52px);
+  left: 8px;
+  right: 8px;
+  bottom: calc(var(--tray-h, 0px) + 8px);
+}
+
+.base .sector-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.base .sector-map {
+  overflow: visible;
+}
+
+/* Die Zoom-Knöpfe stehen unten rechts über dem Ziehblatt. */
+.base .sector-zoom {
+  bottom: 4px;
+  z-index: 2;
 }
 
 .base .sector-panel {
+  top: calc(max(10px, env(safe-area-inset-top)) + 52px);
   left: 50%;
   right: auto;
-  width: min(100%, 560px);
+  width: min(calc(100% - 24px), 560px);
   transform: translateX(-50%);
-  max-height: 100%;
+  max-height: calc(100% - 72px - var(--tray-h, 0px));
+}
+
+/* Das gewählte Feld des Subsektors im Ziehblatt bzw. im Panel neben dem Log. */
+.field-slot {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.field-slot .sector-dock {
+  border-top: 0;
 }
 
 /* Oben rechts über der Grundkarte das Menü; Leiste des Globus und des Subsektors lassen ihm Platz. */
@@ -3915,17 +3954,18 @@ button:disabled {
 }
 
 /* --- Zoom der Karte ------------------------------------------------------------------------- */
-
+/* Die Karte füllt ihre Fläche ohne Bildlaufleisten; verschoben und gezoomt wird über den Ausschnitt
+   der Zeichnung. Über der Erschaffung steht sie in einem Rahmen im Seitenverhältnis des Subsektors. */
 .sector-zoom-frame {
   position: relative;
   flex: 0 0 auto;
 }
 
 .sector-viewport {
+  position: relative;
   width: 100%;
-  overflow: auto;
-  touch-action: pan-x pan-y;
-  overscroll-behavior: contain;
+  overflow: hidden;
+  touch-action: none;
   border: 1px solid var(--rule);
   border-radius: 6px;
   background: var(--deep);
@@ -3938,12 +3978,11 @@ button:disabled {
   cursor: grabbing;
 }
 
-.sector-canvas {
-  min-width: 100%;
-}
-
-.sector-canvas .sector-map {
+.sector-viewport .sector-map {
+  position: absolute;
+  inset: 0;
   width: 100%;
+  height: 100%;
 }
 
 /* Unten rechts im Daumenbereich, wo sie keine Feldnummer verdecken. */
@@ -6812,10 +6851,6 @@ button:disabled {
     grid-column: 3;
     position: relative;
     inset: auto;
-  }
-
-  .desktop .base-sector {
-    bottom: 0;
   }
 
   /* Blätter und Popups stehen mittig, statt über die volle Breite zu laufen. */

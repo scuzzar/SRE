@@ -2,6 +2,8 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { entries, expandTray, host, openOracle, openSector } from './layout';
 
 test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Begegnung die Simulation mit Runde, Entfernung und Zügen', async ({ page }) => {
+  // Ein langer Ablauf mit vielen Würfen und Zügen.
+  test.setTimeout(60_000);
   await page.goto('/');
   await openSector(page);
   const map = page.getByRole('group', { name: 'Karte des Subsektors' });

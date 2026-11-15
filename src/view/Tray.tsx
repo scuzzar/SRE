@@ -20,7 +20,7 @@ const DRAG_FROM = 6;
  * damit Knöpfe der Grundkarte darüber bleiben; was das Blatt sonst immer belegt (Griff und Reiter), als
  * `--tray-floor`, damit sich der Globus darüber zentriert (versteckt: nur der Griff).
  */
-export function Tray({ head, body, foot, bar, fraction }: { head: ReactNode; body: ReactNode; foot: ReactNode; bar: ReactNode; fraction: number }) {
+export function Tray({ head, body, foot, bar, fraction, raise }: { head: ReactNode; body: ReactNode; foot: ReactNode; bar: ReactNode; fraction: number; /** Wechselt der Wert (ein Feld ist angetippt), fährt das Blatt mindestens auf halbe Höhe, damit man es sieht. */ raise?: string | number | undefined }) {
   const game = useGame();
   const tray = useRef<HTMLElement>(null);
   const top = useRef<HTMLDivElement>(null);
@@ -65,6 +65,14 @@ export function Tray({ head, body, foot, bar, fraction }: { head: ReactNode; bod
     parent.style.setProperty('--tray-floor', `${Math.round(Math.min(floor, height))}px`);
   }, [height, floor]);
   const hidden = height !== undefined && height < min - 1;
+  // Ein neu angetipptes Feld steht im Blatt: Steht es tiefer als halb, fährt es auf halbe Höhe.
+  const raised = useRef(raise);
+  useEffect(() => {
+    if (raise === raised.current) return;
+    raised.current = raise;
+    if (raise === undefined || room === 0 || height === undefined || height >= room / 2 - SNAP) return;
+    game.setTrayHeight(0.5);
+  }, [raise, room, height, game]);
 
   // Nach dem Ziehen löst das Loslassen über einem Reiter keinen Klick aus.
   const swallowClick = useRef(false);
