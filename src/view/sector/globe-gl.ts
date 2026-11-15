@@ -459,24 +459,27 @@ void main() {
   float alpha;
   if (vKind < 0.5) {
     // Fluss: in der Mitte tief, am Rand flach; Strömung zieht Schlieren mit; nasses, dunkles Ufer.
+    // An der Mündung (vFlow: Felder bis zum Ende) nimmt das Wasser die Farbe des Küstenwassers an und
+    // bleibt deckend; Ufer und Schlieren gehen vorher; erst ganz am Ende, wo die Farben gleich sind,
+    // blendet der Fluss aus. So geht er ins Meer über, statt als Fächer darüberzuliegen.
+    float river = smoothstep(0.15, 1.1, vFlow);
     float depth = 1.0 - a;
     vec3 shallow = vec3(0.22, 0.45, 0.6);
     vec3 deep = vec3(0.1, 0.28, 0.48);
     vec3 water = mix(shallow, deep, smoothstep(0.0, 0.8, depth));
     float streak = wave(vAlong * 9.0 + vAcross * 2.5 + wave(vAlong * 2.0) * 2.0);
-    water *= 1.0 + 0.08 * streak * detail;
+    water *= 1.0 + 0.08 * streak * detail * river;
     // Glanz auf der Lichtseite der Strömung.
-    water += vec3(0.12, 0.14, 0.15) * smoothstep(0.55, 0.95, streak) * detail * (1.0 - a) * 0.6;
+    water += vec3(0.12, 0.14, 0.15) * smoothstep(0.55, 0.95, streak) * detail * (1.0 - a) * 0.6 * river;
+    water = mix(vec3(0.09, 0.27, 0.48), water, river);
     float bankT = clamp((a - 1.0) / (${BANK.toFixed(1)} - 1.0), 0.0, 1.0);
     vec3 bank = mix(vec3(0.16, 0.15, 0.09), vec3(0.0), bankT);
-    float bankA = (1.0 - bankT) * 0.5 * detail * outer;
+    float bankA = (1.0 - bankT) * 0.5 * detail * outer * smoothstep(0.5, 1.2, vFlow);
     col = mix(bank * bankA, water, core);
     alpha = mix(bankA, 1.0, core);
-    // An der Mündung geht der Fluss über fast ein Feld weich ins Meer über (vFlow: Felder bis zum Ende).
-    float mouth = smoothstep(0.0, 0.9, vFlow);
-    mouth *= mouth;
-    col *= mouth;
-    alpha *= mouth;
+    float end = smoothstep(0.0, 0.3, vFlow);
+    col *= end;
+    alpha *= end;
   } else {
     // Straße wie eine Autobahn: dunkler Asphalt, helle Randlinien, gestrichelte Mittellinie,
     // daneben ein schmaler Schatten.
@@ -578,7 +581,7 @@ export function lineMesh(globe: GlobeView): Float32Array {
       const flow = i / (n - 1);
       const toEnd = total - along;
       // Flüsse laufen an der Quelle spitz aus, werden zur Mündung hin breiter und weiten sich dort zum Trichter.
-      const funnel = 1 + 1.2 * (1 - Math.min(1, toEnd / 1.2)) ** 2;
+      const funnel = 1 + 0.6 * (1 - Math.min(1, toEnd / 0.9)) ** 2;
       const halfW = kind === 0 ? cellW * (0.03 + 0.07 * flow) * Math.min(1, flow * 12) * funnel : cellW * 0.026;
       out.push(c[0], c[1], c[2], sx, sy, sz, side, halfW, along, kind, kind === 0 ? toEnd : 0);
     };
