@@ -1,11 +1,15 @@
 import type { GlobeView } from '../../controller';
-import { ATMOSPHERE_GLOW, basisOf, cellLook, LIGHT, radiusOf, rgbOf, type Camera, type Viewport } from './globe-render';
+import { ATMOSPHERE_GLOW, basisOf, CELL_KINDS, cellLook, LIGHT, radiusOf, rgbOf, type Camera, type Viewport } from './globe-render';
 
-// Reine Darstellung: der Globus mit WebGL. Jedes Oberflächenfeld ist eine echte Fläche (ein Sechseck,
-// an den 12 Ecken des Rasters ein Fünfeck); Küsten und Geländegrenzen laufen an den Feldrändern, also
-// genau dort, wo man auch antippt. Jede Geländeart hat ein eigenes Muster, das die Grafikkarte in
-// Bildschirmauflösung rechnet: scharf auf jeder Zoomstufe, und erst sichtbar, wenn es groß genug ist.
-// Das Hexgitter sind nur noch die Ränder der Felder zum Zuschalten.
+// Reine Darstellung: der Globus mit WebGL 2, so sparsam, dass er auch auf dem Handy flüssig bleibt.
+//
+// 1. Muster backen: Beim Start rechnet die Grafikkarte je Geländeart einmal ein kachelbares Muster
+//    (fraktales Rauschen, Zellen, Grate) in eine Lage eines Texturstapels, mit Mipmaps. Danach kostet
+//    ein Muster nur noch Texturzugriffe, und die Mipmaps glätten es von selbst, wenn man herauszoomt.
+// 2. Felder mit Übergängen: Gezeichnet werden die Dreiecke zwischen je drei Feldmitten. Jeder Bildpunkt
+//    kennt so seine drei nächsten Felder und ihren Anteil; nahe am Rand zwischen zwei Feldern mischen
+//    sich Farbe und Muster, mit Rauschen ausgefranst. Das Hexgitter sind die genauen Feldränder.
+// 3. Licht: Die Höhe im Alphakanal des Musters gibt Schatten (Hänge zum Licht links oben hell).
 
 const QUAD_VS = `
 attribute vec2 aPos;
@@ -37,267 +41,329 @@ void main() {
 }
 `;
 
-const CELL_VS = `
-attribute vec3 aPos;
-attribute vec3 aCol;
-attribute float aEdge;
-attribute float aKind;
-uniform vec3 uE;
-uniform vec3 uN;
-uniform vec3 uF;
-uniform vec2 uScale;
-varying vec3 vCol;
-varying float vEdge;
-varying float vKind;
-varying vec3 vPos;
-varying vec3 vView;
-void main() {
-  vec3 v = vec3(dot(aPos, uE), dot(aPos, uN), dot(aPos, uF));
-  vView = v;
-  vPos = aPos;
-  vCol = aCol;
-  vEdge = aEdge;
-  vKind = aKind;
-  gl_Position = vec4(v.x * uScale.x, v.y * uScale.y, 0.0, 1.0);
-}
+const BAKE_VS = `#version 300 es
+in vec2 aPos;
+void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
 `;
 
-// Die Arten wie CELL_KINDS in globe-render.ts:
-// 0 Wasser, 1 Eis auf Wasser, 2 Eis auf Land, 3 Tundra, 4 Gebirge, 5 Zerklüftet, 6 Wüste,
-// 7 Dschungel, 8 Sumpf, 9 Offen/Wald, 10 Besiedelt, 11 Stadt, 12 Offen ohne Leben.
-const CELL_FS = `
-#extension GL_OES_standard_derivatives : enable
+/** Lage des Rauschens, das Übergänge ausfranst und große Flächen belebt (nach den Geländearten). */
+const NOISE_LAYER = CELL_KINDS.length;
+const BAKE_SIZE = 512;
+
+/**
+ * Das Muster einer Lage, kachelbar (alles mit ganzzahligen Perioden). RGB ist ein Faktor auf die
+ * Grundfarbe des Feldes, halbiert gespeichert (0,5 = unverändert), A die Höhe für Licht und Schatten.
+ * Die Arten wie CELL_KINDS: 0 Wasser, 1 Eis auf Wasser, 2 Eis auf Land, 3 Tundra, 4 Gebirge,
+ * 5 Zerklüftet, 6 Wüste, 7 Dschungel, 8 Sumpf, 9 Offen/Wald, 10 Besiedelt, 11 Stadt, 12 Öde; 13 Rauschen.
+ */
+const BAKE_FS = `#version 300 es
 precision highp float;
-uniform vec3 uLight;
-uniform vec3 uGlow;
-uniform float uHalo;
-uniform float uK;
-uniform float uGrid;
-varying vec3 vCol;
-varying float vEdge;
-varying float vKind;
-varying vec3 vPos;
-varying vec3 vView;
+uniform int uLayer;
+uniform float uSize;
+out vec4 outColor;
 
-// Ein Bildpunkt in Mustereinheiten; jede Oktave, die feiner als ein Bildpunkt wäre, blendet aus.
-float PX;
-
-float hash(vec3 p) {
-  p = fract(p * 0.3183099 + 0.1);
-  p *= 17.0;
-  return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+float hsh(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.x + p3.y) * p3.z);
 }
-vec3 hash3(vec3 p) {
-  return vec3(hash(p), hash(p + 19.19), hash(p + 47.37));
+vec2 hsh2(vec2 p) {
+  return vec2(hsh(p), hsh(p + 71.3));
 }
-float noise(vec3 x) {
-  vec3 i = floor(x);
-  vec3 f = fract(x);
-  f = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
-  return mix(mix(mix(hash(i), hash(i + vec3(1.0, 0.0, 0.0)), f.x), mix(hash(i + vec3(0.0, 1.0, 0.0)), hash(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
-             mix(mix(hash(i + vec3(0.0, 0.0, 1.0)), hash(i + vec3(1.0, 0.0, 1.0)), f.x), mix(hash(i + vec3(0.0, 1.0, 1.0)), hash(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z);
+float vnoise(vec2 p, float per) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+  float a = hsh(mod(i, per));
+  float b = hsh(mod(i + vec2(1.0, 0.0), per));
+  float c = hsh(mod(i + vec2(0.0, 1.0), per));
+  float d = hsh(mod(i + vec2(1.0, 1.0), per));
+  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 }
-// Jede Oktave gedreht, damit keine Achsen im Muster sichtbar werden.
-const mat3 ROT = mat3(0.00, 0.80, 0.60, -0.80, 0.36, -0.48, -0.60, -0.48, 0.64);
-float fade(float px) {
-  return 1.0 - smoothstep(0.25, 0.6, px);
-}
-// Fraktales Rauschen, dessen feine Oktaven erst beim Hineinzoomen dazukommen.
-float fbm(vec3 p, int octaves) {
+// Fraktales Rauschen über die Kachel t (0 bis 1), Grundfrequenz f, kachelbar.
+float fbm(vec2 t, float f, int octaves, float seed) {
   float sum = 0.0;
   float amp = 0.5;
   float norm = 0.0;
-  float px = PX;
   for (int i = 0; i < 8; i++) {
     if (i >= octaves) break;
-    sum += amp * mix(0.5, noise(p), fade(px));
+    sum += amp * vnoise(t * f + vec2(seed * 13.0 + float(i) * 7.0, seed * 29.0 + float(i) * 3.0), f);
     norm += amp;
-    p = ROT * p * 2.03 + 1.7;
-    px *= 2.03;
+    f *= 2.0;
     amp *= 0.5;
   }
   return sum / norm;
 }
-// Grate: jede Oktave scharf geknickt und vom Grat darüber gewichtet.
-float ridged(vec3 p, int octaves) {
+float ridged(vec2 t, float f, int octaves, float seed) {
   float sum = 0.0;
   float amp = 0.5;
   float norm = 0.0;
   float weight = 1.0;
-  float px = PX;
   for (int i = 0; i < 8; i++) {
     if (i >= octaves) break;
-    float r = 1.0 - abs(2.0 * noise(p) - 1.0);
+    float r = 1.0 - abs(2.0 * vnoise(t * f + vec2(seed * 11.0 + float(i) * 5.0, float(i) * 9.0), f) - 1.0);
     r = r * r * weight;
     weight = clamp(r * 1.6, 0.0, 1.0);
-    sum += amp * mix(0.35, r, fade(px));
+    sum += amp * r;
     norm += amp;
-    p = ROT * p * 2.07 + 3.1;
-    px *= 2.07;
+    f *= 2.0;
     amp *= 0.5;
   }
   return sum / norm;
 }
-// Zellen: Abstand zum nächsten und zweitnächsten Punkt, dazu eine Kennung der Zelle.
-vec3 cells(vec3 p) {
-  vec3 i = floor(p);
-  vec3 f = fract(p);
+// Zellen: Abstand zum nächsten und zweitnächsten Punkt und eine Kennung der Zelle, kachelbar.
+vec3 cells(vec2 t, float f, float seed) {
+  vec2 p = t * f;
+  vec2 i = floor(p);
+  vec2 fr = fract(p);
   float d1 = 8.0;
   float d2 = 8.0;
   float id = 0.0;
   for (int x = -1; x <= 1; x++) {
     for (int y = -1; y <= 1; y++) {
-      for (int z = -1; z <= 1; z++) {
-        vec3 o = vec3(float(x), float(y), float(z));
-        vec3 h = hash3(i + o);
-        vec3 r = o + h - f;
-        float d = dot(r, r);
-        if (d < d1) {
-          d2 = d1;
-          d1 = d;
-          id = h.x;
-        } else if (d < d2) {
-          d2 = d;
-        }
+      vec2 o = vec2(float(x), float(y));
+      vec2 h = hsh2(mod(i + o, f) + seed * 17.0);
+      vec2 r = o + h - fr;
+      float d = dot(r, r);
+      if (d < d1) {
+        d2 = d1;
+        d1 = d;
+        id = hsh(mod(i + o, f) + seed * 31.0);
+      } else if (d < d2) {
+        d2 = d;
       }
     }
   }
   return vec3(sqrt(d1), sqrt(d2), id);
 }
-// Licht und Schatten aus einer Höhe: Hänge zum Licht (links oben) hell, abgewandte dunkel.
-float relief(float h, float strength) {
-  vec2 g = vec2(dFdx(h), dFdy(h)) / max(PX, 1e-5);
-  return clamp(1.0 + dot(g, vec2(0.55, -0.5)) * strength, 0.55, 1.45);
+// Verzerrte Koordinaten für organische Formen (Verschiebung kachelbar).
+vec2 warp(vec2 t, float f, float amount) {
+  return t + amount * (vec2(fbm(t, f, 4, 3.0), fbm(t, f, 4, 8.0)) - 0.5);
 }
-// Weiche Grenze, die nie feiner als ein Bildpunkt wird.
-float soft(float edge, float v, float width) {
-  float w = max(width, fwidth(v));
-  return smoothstep(edge - w, edge + w, v);
+
+void main() {
+  vec2 t = gl_FragCoord.xy / uSize;
+  vec3 fac = vec3(1.0);
+  float h = 0.5;
+  int k = uLayer;
+  if (k == 13) {
+    // Vier unabhängige Rauschfelder für die Übergänge und große Flächen.
+    outColor = vec4(fbm(t, 4.0, 5, 1.0), fbm(t, 4.0, 5, 2.0), fbm(t, 4.0, 5, 3.0), fbm(t, 4.0, 5, 4.0));
+    return;
+  }
+  vec2 w = warp(t, 4.0, 0.25);
+  if (k == 0) {
+    float current = fbm(w, 4.0, 6, 1.0);
+    float waves = fbm(t + current * 0.1, 32.0, 3, 2.0);
+    fac = vec3(0.86 + 0.28 * current + 0.12 * smoothstep(0.7, 0.8, waves));
+    h = current * 0.3 + waves * 0.1;
+  } else if (k == 1 || k == 2) {
+    vec3 c = cells(w, 8.0, 1.0);
+    float crack = 1.0 - smoothstep(0.03, 0.07, c.y - c.x);
+    fac = vec3(0.93 + 0.1 * c.z) * (0.95 + 0.1 * fbm(t, 16.0, 4, 2.0));
+    fac = mix(fac, vec3(0.7, 0.78, 0.88), crack * 0.75);
+    h = (c.y - c.x) * 0.8 + fbm(t, 16.0, 4, 3.0) * 0.2;
+  } else if (k == 3) {
+    vec3 c = cells(t, 16.0, 2.0);
+    float border = 1.0 - smoothstep(0.04, 0.09, c.y - c.x);
+    float lichen = smoothstep(0.5, 0.62, fbm(w, 8.0, 6, 4.0));
+    fac = mix(vec3(1.0), vec3(0.95, 0.98, 0.75), lichen * 0.6) * (0.9 + 0.2 * fbm(t, 32.0, 4, 5.0));
+    fac *= 1.0 - border * 0.25;
+    h = (c.y - c.x) * 0.3 + lichen * 0.1;
+  } else if (k == 4) {
+    h = ridged(w, 4.0, 7, 1.0);
+    fac = vec3(mix(0.78, 1.18, h));
+    float snow = smoothstep(0.7, 0.8, h + 0.1 * fbm(t, 32.0, 3, 2.0));
+    fac = mix(fac, vec3(1.9, 1.95, 2.0), snow * 0.7);
+  } else if (k == 5) {
+    vec3 c = cells(t, 32.0, 3.0);
+    h = fbm(w, 4.0, 7, 2.0) * 0.7 + ridged(t, 8.0, 5, 3.0) * 0.3;
+    fac = vec3(mix(0.82, 1.15, h)) * (0.88 + 0.2 * smoothstep(0.3, 0.45, c.x));
+  } else if (k == 6) {
+    float s = (w.x * 3.0 + w.y * 2.0) * 2.0 + fbm(t, 4.0, 4, 6.0) * 2.0;
+    float dune = abs(fract(s) - 0.35);
+    float ripple = sin((t.x * 64.0 + t.y * 32.0 + fbm(t, 16.0, 3, 7.0) * 4.0) * 6.2831853) * 0.5 + 0.5;
+    h = (1.0 - smoothstep(0.0, 0.65, dune)) * 0.85 + ripple * 0.06;
+    fac = vec3(mix(0.9, 1.1, fbm(w, 4.0, 5, 8.0)));
+  } else if (k == 7 || k == 9) {
+    bool jungle = k == 7;
+    float density = jungle ? 0.9 : smoothstep(0.38, 0.62, fbm(w, 4.0, 6, 9.0));
+    vec3 c = cells(t, jungle ? 40.0 : 32.0, 4.0);
+    float crown = 1.0 - smoothstep(0.0, 0.75, c.x);
+    float tree = step(c.z, density);
+    vec3 meadow = vec3(1.2, 1.18, 0.95) * (0.9 + 0.2 * fbm(t, 16.0, 5, 10.0));
+    vec3 canopy = vec3(0.75 + 0.35 * crown) * (0.88 + 0.24 * c.z);
+    fac = mix(meadow * 0.85, canopy, tree);
+    h = tree * crown * 0.5;
+  } else if (k == 8) {
+    float m = fbm(w, 8.0, 7, 11.0);
+    float pool = smoothstep(0.55, 0.57, m);
+    float shore = smoothstep(0.5, 0.55, m) - pool;
+    fac = vec3(0.85 + 0.3 * fbm(t, 32.0, 4, 12.0));
+    fac = mix(fac, vec3(0.8, 0.95, 0.6), shore * 0.6);
+    fac = mix(fac, vec3(0.3, 0.46, 0.76), pool * 0.85);
+    h = (1.0 - pool) * 0.2;
+  } else if (k == 10) {
+    vec3 c = cells(warp(t, 4.0, 0.08), 12.0, 5.0);
+    vec3 tone = c.z < 0.35 ? vec3(1.0, 1.02, 0.9) : c.z < 0.65 ? vec3(1.12, 1.06, 0.82) : c.z < 0.85 ? vec3(0.9, 0.98, 0.86) : vec3(1.02, 0.92, 0.78);
+    float a = floor(c.z * 4.0) * 0.785;
+    float furrow = sin(dot(t, vec2(cos(a), sin(a))) * 400.0) * 0.5 + 0.5;
+    float hedge = 1.0 - smoothstep(0.02, 0.05, c.y - c.x);
+    fac = tone * (1.0 - 0.05 * furrow) * (1.0 - hedge * 0.3);
+    h = hedge * 0.15 + furrow * 0.02;
+  } else if (k == 11) {
+    vec2 g = warp(t, 4.0, 0.04) * 24.0;
+    vec2 cell = floor(g);
+    float roof = hsh(mod(cell, 24.0));
+    vec2 e = 0.5 - abs(fract(g) - 0.5);
+    float street = 1.0 - smoothstep(0.06, 0.1, min(e.x, e.y));
+    fac = vec3(0.8 + 0.35 * roof);
+    if (roof > 0.9) fac = vec3(0.55, 0.8, 0.5);
+    fac = mix(fac, vec3(0.55), street * 0.8);
+    h = (1.0 - street) * (0.3 + 0.3 * roof);
+  } else {
+    h = fbm(w, 4.0, 7, 13.0);
+    vec3 c = cells(t, 16.0, 6.0);
+    float crater = smoothstep(0.25, 0.15, c.x) * step(0.8, c.z);
+    fac = vec3(mix(0.85, 1.12, h));
+    h -= crater * 0.3;
+  }
+  outColor = vec4(clamp(fac * 0.5, 0.0, 1.0), clamp(h, 0.0, 1.0));
+}
+`;
+
+const CELL_VS = `#version 300 es
+in vec3 aPos;
+in vec3 aBary;
+in vec3 aKinds;
+in vec3 aChan;
+in vec3 aCol0;
+in vec3 aCol1;
+in vec3 aCol2;
+uniform vec3 uE;
+uniform vec3 uN;
+uniform vec3 uF;
+uniform vec2 uScale;
+out vec3 vPos;
+out vec3 vView;
+out vec3 vBary;
+out vec3 vKinds;
+out vec3 vChan;
+out vec3 vCol0;
+out vec3 vCol1;
+out vec3 vCol2;
+void main() {
+  vec3 v = vec3(dot(aPos, uE), dot(aPos, uN), dot(aPos, uF));
+  vView = v;
+  vPos = aPos;
+  vBary = aBary;
+  vKinds = aKinds;
+  vChan = aChan;
+  vCol0 = aCol0;
+  vCol1 = aCol1;
+  vCol2 = aCol2;
+  gl_Position = vec4(v.x * uScale.x, v.y * uScale.y, 0.0, 1.0);
+}
+`;
+
+const CELL_FS = `#version 300 es
+precision highp float;
+precision highp sampler2DArray;
+uniform sampler2DArray uTex;
+uniform vec3 uLight;
+uniform vec3 uGlow;
+uniform float uHalo;
+uniform float uK;
+uniform float uGrid;
+in vec3 vPos;
+in vec3 vView;
+in vec3 vBary;
+in vec3 vKinds;
+in vec3 vChan;
+in vec3 vCol0;
+in vec3 vCol1;
+in vec3 vCol2;
+out vec4 outColor;
+
+vec3 TW;
+vec2 UV0, UV1, UV2, DX0, DY0, DX1, DY1, DX2, DY2;
+
+// Ein Muster auf der Kugel: aus drei Richtungen projiziert, nach der Lage der Fläche gemischt.
+// Meist trägt nur eine Richtung, die anderen werden übersprungen.
+vec4 sampleLayer(float layer, float scale) {
+  vec4 s = vec4(0.0);
+  if (TW.x > 0.0) s += TW.x * textureGrad(uTex, vec3(UV0 * scale, layer), DX0 * scale, DY0 * scale);
+  if (TW.y > 0.0) s += TW.y * textureGrad(uTex, vec3(UV1 * scale, layer), DX1 * scale, DY1 * scale);
+  if (TW.z > 0.0) s += TW.z * textureGrad(uTex, vec3(UV2 * scale, layer), DX2 * scale, DY2 * scale);
+  return s;
+}
+float channel(vec4 n, float c) {
+  return c < 0.5 ? n.r : c < 1.5 ? n.g : c < 2.5 ? n.b : n.a;
 }
 
 void main() {
   if (vView.z < 0.0) discard;
   vec3 normal = normalize(vView);
-  // Musterraum: etwa drei Einheiten je Feld.
-  vec3 q = normalize(vPos) * uK;
-  PX = length(fwidth(q));
-  float near = 1.0 - smoothstep(0.08, 0.3, PX);
-  int k = int(vKind + 0.5);
-  vec3 col = vCol;
-  // Großräumige Schwankung über alle Felder, damit kein Feld einfarbig ist.
-  float large = fbm(q * 0.22 + 11.0, 5);
-  // Verzerrte Koordinaten für organische Formen.
-  vec3 w = q + 1.6 * vec3(fbm(q * 0.35, 4), fbm(q * 0.35 + 5.2, 4), fbm(q * 0.35 + 9.7, 4));
+  vec3 nrm = normalize(vPos);
+  // Musterraum: eine Kachel auf etwa zwei Felder.
+  vec3 q = nrm * uK;
+  vec3 tw = pow(abs(nrm), vec3(6.0));
+  tw /= tw.x + tw.y + tw.z;
+  tw *= step(0.04, tw);
+  TW = tw / (tw.x + tw.y + tw.z);
+  UV0 = q.yz; UV1 = q.xz; UV2 = q.xy;
+  DX0 = dFdx(UV0); DY0 = dFdy(UV0);
+  DX1 = dFdx(UV1); DY1 = dFdy(UV1);
+  DX2 = dFdx(UV2); DY2 = dFdy(UV2);
 
-  if (k == 0) {
-    // Wasser: Strömungsschlieren, aus der Nähe kräuselnde Wellen mit Glanz.
-    float current = fbm(w * 0.6, 6);
-    col *= 0.86 + 0.28 * current;
-    float waves = fbm(q * vec3(6.0, 6.0, 3.0) + current * 4.0, 4);
-    col *= relief(waves * 0.06, 1.0);
-    col = mix(col, col * 1.4 + 0.04, soft(0.74, waves, 0.02) * near * 0.3);
-  } else if (k == 1 || k == 2) {
-    // Eis: Schollen mit Rissen, jede etwas anders getönt, mit Pressrücken.
-    vec3 c = cells(w * 0.9);
-    float crack = 1.0 - soft(0.05, c.y - c.x, 0.01);
-    float h = fbm(q * 1.5, 6) * 0.6 + (c.y - c.x) * 0.4;
-    col *= (0.93 + 0.1 * c.z) * relief(h * 0.25, 1.0);
-    col = mix(col, col * vec3(0.7, 0.78, 0.88), crack * 0.75);
-  } else if (k == 3) {
-    // Tundra: Frostmusterboden aus Vielecken, Flechten und Moos dazwischen.
-    vec3 c = cells(q * 1.8);
-    float border = 1.0 - soft(0.06, c.y - c.x, 0.01);
-    float lichen = soft(0.55, fbm(w * 1.6, 6), 0.05);
-    col = mix(col, col * vec3(0.95, 0.98, 0.75), lichen * 0.6);
-    col = mix(col, col * 0.75, border * 0.5);
-    col *= 0.9 + 0.2 * fbm(q * 4.0, 5);
-  } else if (k == 4) {
-    // Gebirge: verzweigte Grate mit Licht und Schatten, Geröll in den Tälern, Schnee auf den Gipfeln.
-    float h = ridged(w * 0.55, 7);
-    col = mix(col * 0.78, col * 1.18, h);
-    col *= relief(h * 0.9, 1.2);
-    col = mix(col, vec3(0.88, 0.89, 0.93) * relief(h * 0.9, 0.6), soft(0.74, h + 0.15 * fbm(q * 3.0, 4), 0.05) * 0.65);
-  } else if (k == 5) {
-    // Zerklüftet: Kuppen und Schluchten, Felsbrocken aus der Nähe.
-    float h = fbm(w * 0.9, 7) * 0.7 + ridged(q * 1.4, 5) * 0.3;
-    col = mix(col * 0.82, col * 1.15, h);
-    col *= relief(h * 0.7, 1.0);
-    vec3 c = cells(q * 6.0);
-    col *= mix(1.0, 0.85 + 0.25 * soft(0.35, c.x, 0.05), near);
-  } else if (k == 6) {
-    // Wüste: Dünenkämme mit Lee und Luv, darauf feine Rippeln.
-    float t = dot(w, vec3(0.8, 0.5, 0.33)) * 1.4 + fbm(q * 0.6, 4) * 2.5;
-    float dune = abs(fract(t) - 0.35);
-    float h = 1.0 - smoothstep(0.0, 0.65, dune);
-    float ripple = sin(t * 26.0 + fbm(q * 3.0, 3) * 6.0) * 0.5 + 0.5;
-    col = mix(col * 0.9, col * 1.1, fbm(w * 0.4, 5));
-    // Die Kämme erst mit Licht und Schatten, wenn sie breit genug sind, sonst flimmern sie als Streifen.
-    float crest = 1.0 - smoothstep(0.04, 0.12, PX);
-    col *= mix(1.0 + 0.06 * (h - 0.5), relief(h * 0.25 + ripple * 0.01 * near, 1.0), crest);
-  } else if (k == 7 || k == 9) {
-    // Wald und Dschungel: runde Baumkronen mit Schatten; im Wald Lichtungen und Wiesen dazwischen.
-    bool jungle = k == 7;
-    float density = jungle ? 0.85 + 0.15 * large : smoothstep(0.38, 0.62, fbm(w * 0.5, 6));
-    vec3 c = cells(q * (jungle ? 5.0 : 4.0));
-    float crown = 1.0 - smoothstep(0.0, 0.75, c.x);
-    float tree = step(c.z, density);
-    vec3 meadow = col * vec3(1.2, 1.18, 0.95) * (0.9 + 0.2 * fbm(q * 3.0, 5));
-    vec3 canopy = col * (0.75 + 0.35 * crown) * (0.88 + 0.24 * c.z);
-    canopy *= relief(crown * 0.12, 1.0);
-    vec3 farAway = mix(meadow, col * 0.85, density);
-    col = mix(farAway, mix(meadow * 0.8, canopy, tree), near);
-    col *= 0.92 + 0.16 * large;
-  } else if (k == 8) {
-    // Sumpf: verzweigte Wasserläufe und Tümpel, Schilf an den Ufern.
-    float m = fbm(w * 1.1, 7);
-    float pool = soft(0.56, m, 0.01);
-    float shore = soft(0.5, m, 0.02) - pool;
-    col *= 0.85 + 0.3 * fbm(q * 3.5, 5);
-    col = mix(col, col * vec3(0.8, 0.95, 0.6), shore * 0.6);
-    col = mix(col, vec3(0.08, 0.17, 0.19) * (0.9 + 0.3 * fbm(q * 2.0, 3)), pool * 0.85);
-  } else if (k == 10) {
-    // Besiedelt: Felder als Flickenteppich in Grün, Gelb und Braun, Hecken an den Rändern, Furchen darin.
-    vec3 c = cells(q * 1.1 + 0.5 * vec3(fbm(q * 0.5, 3)));
-    vec3 tone = c.z < 0.35 ? vec3(1.0, 1.02, 0.9) : c.z < 0.65 ? vec3(1.12, 1.06, 0.82) : c.z < 0.85 ? vec3(0.9, 0.98, 0.86) : vec3(1.02, 0.92, 0.78);
-    col = mix(col, col * tone, 0.4 + 0.6 * near);
-    float furrow = sin(dot(q, normalize(hash3(vec3(c.z * 91.0)) - 0.5)) * 40.0) * 0.5 + 0.5;
-    col *= 1.0 - 0.05 * furrow * near;
-    col = mix(col, col * 0.72, (1.0 - soft(0.03, c.y - c.x, 0.006)) * 0.55 * near);
-    col *= 0.94 + 0.12 * large;
-  } else if (k == 11) {
-    // Stadt: Viertel und Blöcke mit Straßen, Dächer verschieden hell, ab und zu ein Park.
-    vec3 g = w * 2.2;
-    vec3 cell = floor(g);
-    float roof = hash(cell);
-    vec3 e = 0.5 - abs(fract(g) - 0.5);
-    float street = 1.0 - soft(0.07, min(min(e.x, e.y), e.z), 0.01);
-    col *= 0.8 + 0.35 * mix(0.5, roof, near);
-    if (roof > 0.9) col = mix(col, vec3(0.3, 0.45, 0.25), near * 0.8);
-    col = mix(col, col * 0.55, street * near * 0.8);
-  } else {
-    // Ödes Land: Staub, Geröll und kleine Krater.
-    float h = fbm(w * 0.8, 7);
-    col = mix(col * 0.85, col * 1.12, h);
-    vec3 c = cells(q * 2.5);
-    float crater = smoothstep(0.25, 0.18, c.x) * step(0.8, c.z);
-    col *= relief(h * 0.4 - crater * 0.05, 1.0);
-  }
+  // Übergänge: Der Anteil jedes der drei Felder, am Rand mit Rauschen verschoben und dann geschärft.
+  vec4 n = sampleLayer(${NOISE_LAYER}.0, 0.5);
+  vec3 jitter = vec3(channel(n, vChan.x), channel(n, vChan.y), channel(n, vChan.z)) - 0.5;
+  vec4 fineNoise = sampleLayer(${NOISE_LAYER}.0, 2.0);
+  vec3 fineJitter = vec3(channel(fineNoise, vChan.x), channel(fineNoise, vChan.y), channel(fineNoise, vChan.z)) - 0.5;
+  vec3 b = vBary + 0.55 * jitter + 0.22 * fineJitter;
+  // Scharf, aber nie feiner als ein Bildpunkt: Je weiter weg, desto weicher.
+  float sharp = clamp(0.6 / max(length(fwidth(vBary)), 1e-4), 8.0, 60.0);
+  vec3 wb = exp((b - max(b.x, max(b.y, b.z))) * sharp);
+  wb /= wb.x + wb.y + wb.z;
+  vec3 base = vCol0 * wb.x + vCol1 * wb.y + vCol2 * wb.z;
+
+  // Gleiche Arten teilen sich ein Muster; jedes Muster nur, wenn es merklich beiträgt.
+  vec3 k = floor(vKinds + 0.5);
+  vec3 wk = wb;
+  if (k.y == k.x) { wk.x += wk.y; wk.y = 0.0; }
+  if (k.z == k.x) { wk.x += wk.z; wk.z = 0.0; } else if (k.z == k.y) { wk.y += wk.z; wk.z = 0.0; }
+  wk *= step(0.02, wk);
+  wk /= max(wk.x + wk.y + wk.z, 1e-6);
+  vec4 d = vec4(0.0);
+  if (wk.x > 0.0) d += wk.x * sampleLayer(k.x, 1.0);
+  if (wk.y > 0.0) d += wk.y * sampleLayer(k.y, 1.0);
+  if (wk.z > 0.0) d += wk.z * sampleLayer(k.z, 1.0);
+
+  vec3 col = base * d.rgb * 2.0 * (0.9 + 0.2 * n.a);
+  // Licht und Schatten aus der Höhe des Musters.
+  vec2 g = vec2(dFdx(d.a), dFdy(d.a)) / max(length(fwidth(q)), 1e-5);
+  col *= clamp(1.0 + dot(g, vec2(0.55, -0.5)) * 0.035, 0.6, 1.4);
   col *= 0.45 + 0.6 * clamp(dot(normal, uLight), 0.0, 1.0);
   if (uHalo > 0.0) col = mix(col, uGlow, pow(1.0 - normal.z, 2.6) * 0.75);
   if (uGrid > 0.5) {
-    float ew = fwidth(vEdge);
-    col = mix(col, col * 0.35, (1.0 - smoothstep(0.0, ew * 1.1, vEdge)) * 0.85);
+    // Der genaue Feldrand: wo die zwei größten Anteile gleich sind.
+    vec3 s = vBary;
+    float hi = max(s.x, max(s.y, s.z));
+    float mid = s.x + s.y + s.z - hi - min(s.x, min(s.y, s.z));
+    float edge = hi - mid;
+    col = mix(col, col * 0.35, (1.0 - smoothstep(0.0, fwidth(edge) * 1.2, edge)) * 0.85);
   }
-  gl_FragColor = vec4(col, 1.0);
+  outColor = vec4(col, 1.0);
 }
 `;
 
-/** Zeichnet den Globus einer Karte; `undefined`, wenn das Gerät kein WebGL kann. */
+/** Zeichnet den Globus einer Karte; `undefined`, wenn das Gerät kein WebGL 2 kann. */
 export interface GlobeRenderer {
   draw(globe: GlobeView, camera: Camera, view: Viewport, showGrid: boolean): void;
 }
 
-function compile(gl: WebGLRenderingContext, vs: string, fs: string): WebGLProgram | undefined {
+function compile(gl: WebGL2RenderingContext, vs: string, fs: string): WebGLProgram | undefined {
   const program = gl.createProgram();
   if (!program) return undefined;
   for (const [type, source] of [
@@ -319,114 +385,138 @@ function compile(gl: WebGLRenderingContext, vs: string, fs: string): WebGLProgra
   return gl.getProgramParameter(program, gl.LINK_STATUS) ? program : undefined;
 }
 
-/** Werte je Ecke im Netz: Lage (3), Farbe (3), Abstand zum Rand (1), Art (1). */
-const STRIDE = 8;
+/** Werte je Ecke: Lage (3), Anteil (3), Arten (3), Rauschkanäle (3), drei Farben (9). */
+const STRIDE = 21;
+
+/** Ein Rauschkanal je Feld (0–3), gestreut, damit Nachbarn meist verschieden ausfransen. */
+function channelOf(cell: number): number {
+  return (Math.imul(cell + 1, 2654435761) >>> 29) & 3;
+}
 
 /**
- * Die Felder als Dreiecke: je Feld ein Fächer von der Mitte zu den Ecken. Eine Ecke liegt zwischen
- * dem Feld und zwei aufeinanderfolgenden Nachbarn. Ihre Farbe ist der Mittelwert der Felder gleicher
- * Art, die sich dort treffen: So verläuft etwa die Wassertiefe weich, Grenzen zwischen Arten bleiben
- * scharf. Der Abstand zum Rand ist 1 in der Mitte und 0 am Rand (für das Gitter).
+ * Die Dreiecke zwischen je drei benachbarten Feldmitten. Alle drei Ecken eines Dreiecks tragen
+ * dieselben drei Felder (Art, Rauschkanal, Farbe); nur der Anteil ist je Ecke ein anderer.
  */
-export function hexMesh(globe: GlobeView): Float32Array {
+export function cellMesh(globe: GlobeView): Float32Array {
   const { grid } = globe;
   const { color, kind } = cellLook(globe);
   const p = grid.xyz;
-  let count = 0;
-  for (let c = 0; c < grid.cells; c++) count += grid.neighbors[c]!.length;
-  const out = new Float32Array(count * 3 * STRIDE);
-  let o = 0;
-  const push = (x: number, y: number, z: number, rgb: readonly [number, number, number], edge: number, k: number) => {
-    out[o++] = x;
-    out[o++] = y;
-    out[o++] = z;
-    out[o++] = rgb[0];
-    out[o++] = rgb[1];
-    out[o++] = rgb[2];
-    out[o++] = edge;
-    out[o++] = k;
-  };
-  const rgbOfCell = (c: number) => [color[c * 3]!, color[c * 3 + 1]!, color[c * 3 + 2]!] as const;
+  const triangles: [number, number, number][] = [];
   for (let c = 0; c < grid.cells; c++) {
     const cx = p[c * 3]!;
     const cy = p[c * 3 + 1]!;
     const cz = p[c * 3 + 2]!;
-    // Eine Richtung in der Tangentialebene, dann die Nachbarn nach Winkel um das Feld.
     let ux = -cy;
     let uy = cx;
     let uz = 0;
     if (Math.hypot(ux, uy) < 1e-6) [ux, uy, uz] = [1, 0, 0];
-    const ul = Math.hypot(ux, uy, uz);
-    ux /= ul;
-    uy /= ul;
-    uz /= ul;
     const vx = cy * uz - cz * uy;
     const vy = cz * ux - cx * uz;
     const vz = cx * uy - cy * ux;
-    const angle = (q: number): number => {
+    const angle = (q: number) => {
       const dx = p[q * 3]! - cx;
       const dy = p[q * 3 + 1]! - cy;
       const dz = p[q * 3 + 2]! - cz;
       return Math.atan2(dx * vx + dy * vy + dz * vz, dx * ux + dy * uy + dz * uz);
     };
     const around = [...grid.neighbors[c]!].sort((a, b) => angle(a) - angle(b));
-    const k = kind[c]!;
-    const center = rgbOfCell(c);
-    const corners = around.map((q, i) => {
+    for (let i = 0; i < around.length; i++) {
+      const q = around[i]!;
       const r = around[(i + 1) % around.length]!;
-      const x = cx + p[q * 3]! + p[r * 3]!;
-      const y = cy + p[q * 3 + 1]! + p[r * 3 + 1]!;
-      const z = cz + p[q * 3 + 2]! + p[r * 3 + 2]!;
-      const l = Math.hypot(x, y, z);
-      let sum = [center[0], center[1], center[2]];
-      let n = 1;
-      for (const m of [q, r]) {
-        if (kind[m] !== k) continue;
-        const rgb = rgbOfCell(m);
-        sum = [sum[0]! + rgb[0], sum[1]! + rgb[1], sum[2]! + rgb[2]];
-        n++;
+      // Jedes Dreieck einmal: vom Feld mit der kleinsten Nummer aus.
+      if (c < q && c < r) triangles.push([c, q, r]);
+    }
+  }
+  const out = new Float32Array(triangles.length * 3 * STRIDE);
+  let o = 0;
+  for (const tri of triangles) {
+    for (let v = 0; v < 3; v++) {
+      const cell = tri[v]!;
+      out[o++] = p[cell * 3]!;
+      out[o++] = p[cell * 3 + 1]!;
+      out[o++] = p[cell * 3 + 2]!;
+      for (let j = 0; j < 3; j++) out[o++] = j === v ? 1 : 0;
+      for (const c of tri) out[o++] = kind[c]!;
+      for (const c of tri) out[o++] = channelOf(c);
+      for (const c of tri) {
+        out[o++] = color[c * 3]!;
+        out[o++] = color[c * 3 + 1]!;
+        out[o++] = color[c * 3 + 2]!;
       }
-      return { at: [x / l, y / l, z / l] as const, rgb: [sum[0]! / n, sum[1]! / n, sum[2]! / n] as const };
-    });
-    for (let i = 0; i < corners.length; i++) {
-      const a = corners[i]!;
-      const b = corners[(i + 1) % corners.length]!;
-      push(cx, cy, cz, center, 1, k);
-      push(a.at[0], a.at[1], a.at[2], a.rgb, 0, k);
-      push(b.at[0], b.at[1], b.at[2], b.rgb, 0, k);
     }
   }
   return out;
 }
 
 export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | undefined {
-  let gl: WebGLRenderingContext | null = null;
+  let gl: WebGL2RenderingContext | null = null;
   try {
-    gl = canvas.getContext('webgl', { premultipliedAlpha: true, antialias: true, alpha: true });
+    gl = canvas.getContext('webgl2', { premultipliedAlpha: true, antialias: true, alpha: true });
   } catch {
     gl = null;
   }
   if (!gl) return undefined;
-  // Ohne Ableitungen im Shader gehen weder Muster noch Gitter; dann rechnet der Prozessor.
-  if (!gl.getExtension('OES_standard_derivatives')) return undefined;
   const halo = compile(gl, QUAD_VS, HALO_FS);
+  const bake = compile(gl, BAKE_VS, BAKE_FS);
   const cells = compile(gl, CELL_VS, CELL_FS);
-  if (!halo || !cells) return undefined;
+  if (!halo || !bake || !cells) return undefined;
 
   const quad = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, quad);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
 
+  // Die Muster einmal backen: je Lage ein Durchgang in den Texturstapel, dann die Mipmaps.
+  const layers = NOISE_LAYER + 1;
+  const patterns = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D_ARRAY, patterns);
+  gl.texStorage3D(gl.TEXTURE_2D_ARRAY, Math.log2(BAKE_SIZE) + 1, gl.RGBA8, BAKE_SIZE, BAKE_SIZE, layers);
+  const fbo = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.viewport(0, 0, BAKE_SIZE, BAKE_SIZE);
+  gl.disable(gl.BLEND);
+  gl.useProgram(bake);
+  gl.uniform1f(gl.getUniformLocation(bake, 'uSize'), BAKE_SIZE);
+  const bakePos = gl.getAttribLocation(bake, 'aPos');
+  gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+  gl.enableVertexAttribArray(bakePos);
+  gl.vertexAttribPointer(bakePos, 2, gl.FLOAT, false, 0, 0);
+  for (let layer = 0; layer < layers; layer++) {
+    gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, patterns, 0, layer);
+    gl.uniform1i(gl.getUniformLocation(bake, 'uLayer'), layer);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+  gl.disableVertexAttribArray(bakePos);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.deleteFramebuffer(fbo);
+  gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
+  if (aniso) gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT, 4);
+
   // Das Netz gehört zu einer Karte; wird sie neu gewürfelt, entsteht es neu.
   let shown: object | undefined;
   let mesh: { buffer: WebGLBuffer | null; vertices: number } | undefined;
+  const attribs = (
+    [
+      ['aPos', 3, 0],
+      ['aBary', 3, 3],
+      ['aKinds', 3, 6],
+      ['aChan', 3, 9],
+      ['aCol0', 3, 12],
+      ['aCol1', 3, 15],
+      ['aCol2', 3, 18],
+    ] as const
+  ).map(([name, size, offset]) => [gl!.getAttribLocation(cells, name), size, offset] as const);
 
   return {
     draw(globe, camera, view, showGrid) {
       const g = gl!;
       if (shown !== globe.map || !mesh) {
         if (mesh) g.deleteBuffer(mesh.buffer);
-        const data = hexMesh(globe);
+        const data = cellMesh(globe);
         const buffer = g.createBuffer();
         g.bindBuffer(g.ARRAY_BUFFER, buffer);
         g.bufferData(g.ARRAY_BUFFER, data, g.STATIC_DRAW);
@@ -469,16 +559,13 @@ export function createGlobeRenderer(canvas: HTMLCanvasElement): GlobeRenderer | 
       g.uniform3f(h('uLight'), LIGHT[0], LIGHT[1], LIGHT[2]);
       g.uniform3f(h('uGlow'), glow[0], glow[1], glow[2]);
       g.uniform1f(h('uHalo'), haloWidth);
-      // Etwa drei Mustereinheiten je Feld: ein Feld ist rund 1,26 / n breit.
-      g.uniform1f(h('uK'), (3 * globe.grid.n) / 1.26);
+      // Eine Kachel auf etwa zwei Felder: ein Feld ist rund 1,26 / n breit.
+      g.uniform1f(h('uK'), globe.grid.n / 2.52);
       g.uniform1f(h('uGrid'), showGrid ? 1 : 0);
+      g.activeTexture(g.TEXTURE0);
+      g.bindTexture(g.TEXTURE_2D_ARRAY, patterns);
+      g.uniform1i(h('uTex'), 0);
       g.bindBuffer(g.ARRAY_BUFFER, mesh.buffer);
-      const attribs = [
-        [g.getAttribLocation(cells, 'aPos'), 3, 0],
-        [g.getAttribLocation(cells, 'aCol'), 3, 3],
-        [g.getAttribLocation(cells, 'aEdge'), 1, 6],
-        [g.getAttribLocation(cells, 'aKind'), 1, 7],
-      ] as const;
       for (const [loc, size, offset] of attribs) {
         g.enableVertexAttribArray(loc);
         g.vertexAttribPointer(loc, size, g.FLOAT, false, STRIDE * 4, offset * 4);

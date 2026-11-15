@@ -86,7 +86,7 @@ export function GlobeScreen({
     if (!el || !under) return;
     if (renderer.current === undefined) renderer.current = createGlobeRenderer(under) ?? null;
     const gl = renderer.current;
-    const dpr = Math.min(gl ? 2.5 : 2, window.devicePixelRatio || 1);
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
     const scale = gl || !moving ? dpr : Math.min(1, dpr) * 0.55;
     const w = Math.round(view.width * scale);
     const h = Math.round(view.height * scale);
@@ -531,7 +531,7 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
   }
   // Kleinstädte außerhalb des besiedelten Gebiets: ein kleines helles Haus, sobald man etwas
   // hineinzoomt. Im besiedelten Gebiet zeigt schon die Farbe, dass dort Menschen leben.
-  if (camera.zoom >= 1.4) {
+  if (camera.zoom >= 2.2) {
     const s = (camera.zoom >= 3 ? 3.2 : 2.4) * scale;
     for (const [cell] of globe.map.towns ?? []) {
       if (landformAt(globe.map, cell) === 'settled' || globe.cities.some((c) => c.cell === cell)) continue;
