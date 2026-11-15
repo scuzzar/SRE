@@ -78,6 +78,29 @@ export function GlobeScreen({
     return () => observer.disconnect();
   }, []);
 
+  // Verliert der Browser den Grafikkontext (etwa bei einer Systemgeste oder knappem Speicher), zeichnet
+  // sofort der Prozessor weiter; kommt der Kontext zurück, entsteht WebGL neu.
+  const [glEpoch, setGlEpoch] = useState(0);
+  useEffect(() => {
+    const under = base.current;
+    if (!under) return;
+    const lost = (e: Event) => {
+      e.preventDefault();
+      renderer.current = null;
+      setGlEpoch((n) => n + 1);
+    };
+    const restored = () => {
+      renderer.current = undefined;
+      setGlEpoch((n) => n + 1);
+    };
+    under.addEventListener('webglcontextlost', lost);
+    under.addEventListener('webglcontextrestored', restored);
+    return () => {
+      under.removeEventListener('webglcontextlost', lost);
+      under.removeEventListener('webglcontextrestored', restored);
+    };
+  }, []);
+
   // Zeichnen: die Kugel mit WebGL in voller Auflösung, auch beim Ziehen; darüber die Zeichen. Ohne
   // WebGL rechnet der Prozessor die Kugel, beim Bewegen dann in geringerer Auflösung.
   useEffect(() => {
@@ -105,12 +128,12 @@ export function GlobeScreen({
       ctx.putImageData(img, 0, 0);
     }
     drawMarkers(ctx, globe, camera, { width: w, height: h }, scale, !gl);
-  }, [globe, camera, view, moving, showGrid]);
+  }, [globe, camera, view, moving, showGrid, glEpoch]);
 
   // Drehen, Zoomen, Antippen.
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef<{ moved: number; pinch?: number; zoom?: number; double?: boolean; startY?: number }>({ moved: 0 });
-  const clampZoom = useCallback((z: number) => Math.min(maxZoom(globe), Math.max(1, z)), [globe]);
+  const clampZoom = useCallback((z: number) => (Number.isFinite(z) ? Math.min(maxZoom(globe), Math.max(1, z)) : 1), [globe]);
   const zoomBy = useCallback((factor: number) => setCamera((c) => ({ ...c, zoom: clampZoom(c.zoom * factor) })), [clampZoom]);
   // Die Knöpfe gleiten: Ziel merken und in wenigen Bildern hinzoomen, solange in grober Auflösung.
   const zoomTarget = useRef<number | undefined>(undefined);
@@ -160,15 +183,21 @@ export function GlobeScreen({
     const rect = e.currentTarget.getBoundingClientRect();
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   };
+  /** Zwei Finger: Kneifen beginnt beim jetzigen Abstand und Zoom (auch wenn ein dritter Finger gerade abhebt). */
+  const startPinch = () => {
+    const [a, b] = [...pointers.current.values()] as [{ x: number; y: number }, { x: number; y: number }];
+    gesture.current = { moved: 99, pinch: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), zoom: camera.zoom };
+  };
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     gesture.current = { moved: 0 };
-    if (pointers.current.size === 2) {
+    if (pointers.current.size >= 2) {
       cancelPendingTap();
       lastTap.current = undefined;
-      const [a, b] = [...pointers.current.values()] as [{ x: number; y: number }, { x: number; y: number }];
-      gesture.current = { moved: 99, pinch: Math.hypot(a.x - b.x, a.y - b.y), zoom: camera.zoom };
+      // Ab drei Fingern tut die Karte nichts (Systemgesten wie der Screenshot mit drei Fingern).
+      if (pointers.current.size === 2) startPinch();
+      else gesture.current = { moved: 99 };
       return;
     }
     const before = lastTap.current;
@@ -185,6 +214,8 @@ export function GlobeScreen({
     const dx = e.clientX - last.x;
     const dy = e.clientY - last.y;
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size > 2) return;
+    if (pointers.current.size === 2 && !gesture.current.pinch) startPinch();
     if (pointers.current.size === 2 && gesture.current.pinch) {
       const [a, b] = [...pointers.current.values()] as [{ x: number; y: number }, { x: number; y: number }];
       setMoving(true);
@@ -209,6 +240,9 @@ export function GlobeScreen({
     const double = gesture.current.double === true;
     pointers.current.delete(e.pointerId);
     if (pointers.current.size === 0) setMoving(false);
+    // Hebt ein Finger von mehreren ab, geht es mit den übrigen weiter, ohne Sprung und ohne Antippen.
+    if (pointers.current.size === 2) startPinch();
+    if (pointers.current.size === 1) gesture.current = { moved: 99 };
     if (!tap) return;
     setPanel(undefined);
     const point = pointAt(e);
