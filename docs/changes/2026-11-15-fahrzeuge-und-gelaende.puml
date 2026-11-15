@@ -47,7 +47,7 @@
 !return ""
 !endfunction
 !pragma layout smetana
-title Änderung 2026-11-15: Fahrzeuge: Geschwindigkeit je Geländeart und Weg, Fluggeräte landen auf Geländearten
+title Änderung 2026-11-15: Fahrzeuge und Fahrten: Geschwindigkeit je Geländeart und Weg, Landepunkte, Miete, Fahrt Tag für Tag
 hide empty members
 hide methods
 skinparam classAttributeIconSize 0
@@ -79,7 +79,36 @@ hide <<reference>> stereotype
 hide <<value>> stereotype
 
 ' Kampagne und Charaktere
-  class Booking $shop
+  class Campaign $kampagne {
+    name: string
+    key: string
+    changedAt: datetime
+    /funds: number
+    quantityDie: number [0..1]
+    /load: number
+    /capacity: number
+    /burden: number
+    day: number
+    /date: string
+    /weekday: number [0..1]
+  }
+  class Booking $shop {
+    at: datetime
+    kind: BookingKind
+    amount: number
+    count: number [0..1]
+    text: string [0..1]
+  }
+  enum BookingKind <<value>> $shop {
+    income
+    expense
+    deposit
+    payout
+    purchase
+    sale
+    lottery
+    $new("2026-11-15", "rent")
+  }
   class Possession $shop
 
 ' Charaktererschaffung und Lebenslauf
@@ -87,10 +116,18 @@ hide <<value>> stereotype
 ' Subsektor und Welten
 
 ' Verlauf
+  abstract class LogEntry $probe {
+    at: datetime
+    day: number [0..1]
+  }
+  class DiceRoll $probe
+  class Note $probe
 
 ' Zeit und Reisen
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Conflict <<transient>> $kampagne
+  class TaskResult $probe
 
 ' Referenzdaten
   class Item <<reference>> $shop {
@@ -103,7 +140,10 @@ hide <<value>> stereotype
     armor: ArmorClass [0..1]
   }
   enum ItemKind <<value>> $shop
-  class SurfaceCell <<value>> $oberflaeche
+  class SurfaceMap $oberflaeche
+  class SurfaceCell <<value>> $oberflaeche {
+    towns: number
+  }
   enum Landform <<value>> $oberflaeche {
     water
     waterIce
@@ -119,7 +159,19 @@ hide <<value>> stereotype
   }
   class River <<value>> $oberflaeche
   class Road <<value>> $oberflaeche
+  enum Volcano <<value>> $oberflaeche
   class City $oberflaeche
+  enum Port <<value>> $oberflaeche {
+    A
+    B
+    C
+    D
+    E
+    F
+    G
+    H
+  }
+  class Place <<value>> $oberflaeche
 ' Fahrzeuge und Wege auf der Oberfläche
   class Vehicle <<reference>> $logistik $newClass("2026-11-15") {
     name: string
@@ -128,6 +180,21 @@ hide <<value>> stereotype
   class VehicleSpeed <<value>> $logistik $newClass("2026-11-15") {
     kmh: number
   }
+  class Trip $logistik $newClass("2026-11-15") {
+    hours: number
+    /totalHours: number
+    /days: number
+  }
+  class Leg <<value>> $logistik $newClass("2026-11-15") {
+    rented: boolean
+    /hours: number
+    /rent: number
+  }
+  class TripDay $logistik $newClass("2026-11-15") {
+    hours: number
+    rent: number
+    arrived: boolean
+  }
   enum Way <<value>> $logistik $newClass("2026-11-15") {
     road
     river
@@ -135,8 +202,14 @@ hide <<value>> stereotype
   }
 
 ' Kampagne
+Campaign "1" *-- "*" LogEntry : log {ordered}
+Campaign "1" *-- "0..1" Place : location
+Campaign "1" *-- "*" Booking : bookings {ordered}
+Conflict "*" --> "0..1" Campaign : local
+Conflict "*" --> "0..1" Campaign : remote
 Booking "*" --> "0..1" Item : bought
 Booking "*" --> "0..1" Item : sold
+Booking --> BookingKind
 
 ' Zeit und Reisen
 
@@ -145,20 +218,41 @@ Booking "*" --> "0..1" Item : sold
 ' Laufbahnen (Referenzdaten)
 
 ' Subsektor und Welten
+SurfaceMap "1" *-- "/cells" SurfaceCell : cells {ordered}
 SurfaceCell "*" --> "1" Landform : landform
+SurfaceCell "*" --> "0..1" Volcano : volcano
+River "*" --> "2..*" SurfaceCell : cells {ordered}
+Road "*" --> "2..*" SurfaceCell : cells {ordered}
+City "*" --> "0..1" SurfaceCell : cell
+LogEntry "1" *-- "0..1" Place : place
+Place "*" --> "0..1" SurfaceCell : cell
+City --> Port
 Item "0..1" -$newArrow("2026-11-15")-> "0..1" Vehicle : vehicle
 Vehicle "1" *-$newArrow("2026-11-15")- "*" VehicleSpeed : speeds
 VehicleSpeed "*" -$newArrow("2026-11-15")-> "0..1" Landform : on
 VehicleSpeed "*" -$newArrow("2026-11-15")-> "0..1" Way : along
 Vehicle "*" -$newArrow("2026-11-15")-> "*" Landform : landsOn
+Vehicle "*" -$newArrow("2026-11-15")-> "*" Port : landsAt
+Campaign "1" *-$newArrow("2026-11-15")- "0..1" Trip : trip
+Trip "1" *-$newArrow("2026-11-15")- "1..*" Leg : legs {ordered}
+Leg "*" -$newArrow("2026-11-15")-> "1" Vehicle : by
+Leg "*" -$newArrow("2026-11-15")-> "2..*" SurfaceCell : cells {ordered}
+Trip "*" -$newArrow("2026-11-15")-> "1" SurfaceCell : /at
+LogEntry <|-$newArrow("2026-11-15")- TripDay
+Booking "*" -$newArrow("2026-11-15")-> "0..1" TripDay : rentFor
 
 ' Charakter
+Campaign "1" *-- "*" Possession : stash
 Possession "*" --> "1" Item : of
 Item --> ItemKind
 
 ' Waffen (Referenzdaten)
 
 ' Verlauf
+LogEntry <|-- DiceRoll
+LogEntry <|-- TaskResult
+LogEntry <|-- Note
+Note "*" --> "0..1" LogEntry : interprets
 
 ' Probe
 
@@ -175,4 +269,5 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class BookingKind #line:d0021b;line.bold
 @enduml

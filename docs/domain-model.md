@@ -336,10 +336,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 
 > **Entwurf, noch nicht abgestimmt** (Kennzeichen 2026-11-15): **Fahrzeuge** (siehe *Fahrzeuge*).
 > Jedes Fahrzeug hat eine Tabelle, auf welchen Geländearten und Wegen (Straße, Fluss, Siedlung) es
-> wie schnell fährt; wo kein Eintrag steht, fährt es nicht. Fluggeräte fliegen gerade von Feld zu
-> Feld und landen nur auf ihren Geländearten. Vorarbeit für die spätere Suche nach der schnellsten
-> Route über die Oberfläche. Neu im Bild: `Vehicle`, `VehicleSpeed`, `Way`, `Item.vehicle` und der
-> Bereich *Fahrzeuge und Wege*. Der Ausschnitt dazu liegt unter
+> wie schnell fährt; wo kein Eintrag steht, fährt es nicht. Fluggeräte fliegen gerade von
+> Landepunkt zu Landepunkt: auf ihren Geländearten oder in Städten mit passendem Hafen. Eine
+> **Fahrt** über die Oberfläche wird gespeichert und rückt Tag für Tag vor; gemietete Fahrzeuge
+> kosten einen Anteil des Kaufpreises je Tag. Neu im Bild: `Vehicle`, `VehicleSpeed`, `Way`,
+> `Item.vehicle`, `Trip`, `Leg`, `TripDay`, `Campaign.trip`, `BookingKind.rent`, `Booking.rentFor`
+> und der Bereich *Fahrzeuge und Wege*. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-15-fahrzeuge-und-gelaende.png`](changes/2026-11-15-fahrzeuge-und-gelaende.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
@@ -620,11 +622,17 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Hauptstadt, Nebenstadt | `CityRank` | Die Städte mit den höchsten Bevölkerungsziffern (höchstens 10) bzw. eine Ziffer darunter |
 | Orbitalstadt | `City` ohne `cell` | Eine Stadt dauerhaft im Orbit |
 | Hafen einer Stadt | `City.port`, `Port` | Raumhafen A–E oder Landeplatz F–H der Stadt; Y (keiner) heißt: kein Wert |
-| Fahrzeug | `Vehicle`, `Item.vehicle` | Womit man sich über die Oberflächenkarte bewegt, mit seiner Tabelle der Geschwindigkeiten; meist zu einem Gegenstand der Art vehicle |
+| Fahrzeug | `Vehicle`, `Item.vehicle` | Womit man sich über die Oberflächenkarte bewegt, mit seiner Tabelle der Geschwindigkeiten; zu einem Gegenstand der Art vehicle, außer *zu Fuß* und Linienverkehr |
+| Zu Fuß | `Vehicle` ohne Gegenstand | Das Fahrzeug, das die Gruppe immer hat: langsam, aber fast überall |
 | Geschwindigkeit eines Fahrzeugs | `VehicleSpeed`, `Vehicle.speeds` | Eine Zeile der Tabelle: auf welcher Geländeart (`on`) oder entlang welchem Weg (`along`) das Fahrzeug wie viele km/h fährt; ohne Zeile fährt es dort nicht |
 | Weg | `Way` | Was ein Oberflächenfeld über seine Geländeart hinaus befahrbar macht: Straße, Fluss, Siedlung (Stadt oder Kleinstadt) |
 | Fluggeschwindigkeit | `Vehicle.flight` | Wie schnell ein Fluggerät in km/h geradeaus fliegt; nur Fluggeräte haben sie |
-| Landen können | `Vehicle.landsOn` | Die Geländearten, auf denen ein Fluggerät starten und landen kann (seine Landepunkte) |
+| Landepunkt | `Vehicle.landsOn`, `Vehicle.landsAt` | Wo ein Fluggerät starten und landen kann: auf seinen Geländearten (`landsOn`, Hubschrauber) oder in einer Stadt, deren Hafen in seiner Liste steht (`landsAt`, Linienmaschine nur an Raumhäfen und Flughäfen, Doppeldecker auf Landeplätzen) |
+| Fahrt | `Trip`, `Campaign.trip` | Die geplante Route der Gruppe über die Oberfläche einer Welt, die Tag für Tag abgefahren wird; höchstens eine zur Zeit |
+| Abschnitt | `Leg`, `Trip.legs` | Ein Stück der Fahrt mit einem Fahrzeug, gemietet oder nicht, über eine Folge von Oberflächenfeldern |
+| Fahrstunden | `Trip.hours`, `TripDay.hours` | Wie viele Stunden die Fahrt schon gefahren ist bzw. an einem Reisetag; ein Reisetag hat höchstens die Fahrstunden je Tag (Hausregel) |
+| Reisetag | `TripDay` | Der Logeintrag für einen Tag der Fahrt oder das letzte Stück bis zur Ankunft |
+| Miete | `BookingKind.rent`, `Leg./rent` | Was ein gemietetes Fahrzeug je Tag kostet: ein Anteil seines Kaufpreises (Hausregel) |
 | Kleinstadt | `SurfaceCell.towns` | Ob auf einem Oberflächenfeld ohne Stadt eine Kleinstadt liegt (1) oder nicht (0); höchstens eine je Feld, ohne Namen |
 | Bevölkerungsmultiplikator | `Hex.populationMultiplier` | Die erste Ziffer der Einwohnerzahl, 1–9: Die Welt hat Multiplikator × 10^Bevölkerung Einwohner |
 | Globus | (View, aus `SurfaceMap`) | Die drehbare Kugel mit der Oberflächenkarte; nur Darstellung |
@@ -2261,12 +2269,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     denen etwas geschehen ist oder NSC leben.
   - **Bestehende Kampagnen:** Ein bisheriger Aufenthaltsort bzw. Ort eines NSC wird ein Ort mit
     dieser Welt, ohne Feld und Stadt.
-- **Fahrzeuge** (Entwurf, 2026-11-15). Vorarbeit für die Logistik auf der Oberfläche: Später soll
-  die App die schnellste Route zwischen zwei Orten auf einer Welt finden, auch wenn man dafür ein
-  ATV oder einen Hubschrauber mieten muss. Dieser Schritt legt nur fest, wo welches Fahrzeug wie
-  schnell ist.
+- **Fahrzeuge** (Entwurf, 2026-11-15). Grundlage der Logistik auf der Oberfläche: Die App findet
+  die schnellste Route zwischen zwei Orten einer Welt, auch wenn man dafür ein ATV oder einen
+  Hubschrauber mieten muss, und die Gruppe fährt sie Tag für Tag ab.
   - Ein **Fahrzeug** (`Vehicle`) ist Referenzdaten, wie die Waffe: Ein Gegenstand der Art vehicle
-    verweist auf sein Fahrzeug (`Item.vehicle`), so wie eine Waffe auf `Weapon`.
+    verweist auf sein Fahrzeug (`Item.vehicle`), so wie eine Waffe auf `Weapon`. **Zu Fuß** ist ein
+    Fahrzeug ohne Gegenstand, mit eigener Tabelle; die Gruppe hat es immer.
   - **Fahren oder nicht fahren.** Jedes Fahrzeug hat eine Tabelle (`speeds`). Eine Zeile nennt eine
     Geländeart (`on`) **oder** einen Weg (`along`), nie beides, und die Geschwindigkeit in km/h.
     Steht für ein Feld keine passende Zeile, kann das Fahrzeug dort nicht fahren. Mehr Abstufung
@@ -2279,29 +2287,55 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     über beide Felder und hat das Fahrzeug eine Zeile dafür, gilt diese. Sonst muss es auf beiden
     Feldern fahren können (Geländeart oder Siedlung), und es gilt die langsamere der beiden; auf einem
     Feld gilt jeweils die schnellste passende Zeile. Dauer des Schritts: 250 km / Geschwindigkeit.
-  - **Beispiele** (Werte noch offen): Ground Car nur auf Straße, Siedlung und `settled`; Wheeled und
-    Tracked ATV fast überall an Land, auf der Straße schneller; Motor Boat nur auf `water` und Fluss;
-    Hovercraft auf Wasser und flachem Land.
-  - **Fluggeräte** haben eine Fluggeschwindigkeit (`flight`) und die Geländearten, auf denen sie
-    landen können (`landsOn`). Sie fliegen gerade von einem Landepunkt zum nächsten, ohne Rücksicht auf
-    das Gelände dazwischen; Dauer: Entfernung / `flight`. Ein Hubschrauber landet überall an Land, also
-    auch in der Pampa. Ein Fahrzeug kann beides haben (Air/Raft, Grav Belt), dann gilt jeweils das
-    Schnellere.
+  - **Beispiele** (Werte aus Book 3, sobald es hochgeladen ist): Ground Car nur auf Straße, Siedlung
+    und `settled`; Wheeled und Tracked ATV fast überall an Land, auf der Straße schneller; Motor Boat
+    nur auf `water` und Fluss; Hovercraft auf Wasser und flachem Land.
+  - **Fluggeräte** haben eine Fluggeschwindigkeit (`flight`) und ihre **Landepunkte**, je nach Art
+    (Owner, 15. November 2026): Geländearten, auf denen sie überall landen können (`landsOn`;
+    Hubschrauber: alles Land), und/oder Hafenklassen (`landsAt`): Sie landen in einer Stadt, deren
+    Hafen (`City.port`, Raumhafen A–E, Landeplatz F–H) in der Liste steht (Linienmaschine nur an
+    großen Häfen, Doppeldecker auch auf einem einfachen Landeplatz). Sie fliegen gerade von einem
+    Landepunkt zum nächsten, ohne Rücksicht auf das Gelände dazwischen; Dauer: Entfernung / `flight`.
+    Ein Fahrzeug kann fahren und fliegen (Air/Raft, Grav Belt); dann gilt jeweils das Schnellere.
+  - **Mieten** (Owner, 15. November 2026): Fahrzeuge mietet man in einer Siedlung, nur bis zum TL der
+    Welt. Die Miete je Tag ist ein fester Anteil des Kaufpreises (Hausregel, Vorschlag 1 %), je
+    angefangenem Reisetag, an dem ein gemieteter Abschnitt gefahren wird.
+- **Fahrt** (Entwurf, 2026-11-15). Eine Fahrt (`Trip`) ist gespeicherter Stand, weil sie über
+  mehrere Tage läuft und dazwischen anderes passiert (Rasten, Begegnungen, Ausspielen); sie
+  übersteht einen Neustart.
+  - **Planen:** Die Gruppe braucht einen Aufenthaltsort mit Feld oder Stadt. Man wählt auf dem Globus
+    ein Ziel auf derselben Welt; die App sucht die schnellste Route aus Abschnitten (`legs`), je mit
+    einem Fahrzeug: zu Fuß, eigene Fahrzeuge aus dem Gruppengepäck, gemietete (`rented`) oder
+    Linienverkehr. Ein Fahrzeugwechsel geht nur dort, wo man es mieten kann bzw. wo das Fluggerät
+    landet. Die App zeigt Dauer in Tagen (`/days`) und Miete; mit „Losfahren“ wird die Fahrt
+    gespeichert (`Campaign.trip`). Der Vorschlag vor dem Bestätigen ist nur Anzeige.
+  - **Abschnitt:** Jeder Abschnitt hat seine Felder in Reihenfolge (`cells`; bei einem Flug nur Start
+    und Landepunkt), daraus folgen seine Fahrstunden (`/hours`) und seine Miete je Tag (`/rent`). Das
+    letzte Feld eines Abschnitts ist das erste des nächsten.
+  - **Tag für Tag** (wie Zeit vergehen lassen): „Einen Tag fahren“ fährt die Fahrstunden je Tag
+    (Hausregel, Vorschlag 8 Stunden) oder den Rest bis zur Ankunft, nie weniger. Das ist ein
+    Logeintrag `TripDay` mit den gefahrenen Stunden, der Miete des Tages und ob die Gruppe
+    angekommen ist; `Campaign.day` wächst um 1, `Trip.hours` um die Stunden. Die Miete geht als
+    Buchung `rent` aus der Kasse (`rentFor`). Reicht die Kasse nicht, geht der Tag nicht.
+  - **Wo die Gruppe ist:** Das Feld der Fahrt (`/at`) ist das letzte ganz erreichte Feld. Nach jedem
+    Reisetag ist es der Aufenthaltsort; der Reisetag bekommt es als Ort. Bei der Ankunft ist der
+    Aufenthaltsort das Ziel (Feld oder Stadt) und die Fahrt fällt weg.
+  - **Dazwischen:** Zwischen zwei Reisetagen kann man alles tun: Begegnungen würfeln, ausspielen,
+    **rasten** mit *Zeit vergehen lassen* (dann vergehen Tage, die Gruppe bewegt sich nicht). Während
+    einer laufenden Begegnung fährt man nicht. Stunden innerhalb eines Tages rechnet die App nicht.
+  - **Abbrechen:** Die Fahrt fällt weg, die Gruppe bleibt auf dem erreichten Feld. Setzt man den
+    Aufenthaltsort von Hand oder reist zu einer anderen Welt, fällt die Fahrt ebenfalls weg.
+  - **Log:** Reisetage lassen sich nicht löschen, wie vergangene Zeit und Reisen.
   - **Offene Fragen:**
-    1. **Zu Fuß:** Soll „zu Fuß“ ein Fahrzeug ohne Gegenstand sein, mit eigener Tabelle (etwa 5 km/h
-       auf offenem Land, langsamer im Gebirge)? Empfehlung ja; dann braucht `Vehicle` seinen Namen
-       (`name`), den es jetzt schon hat.
-    2. **Landepunkte:** überall auf den Geländearten des Fluggeräts (Empfehlung, so gezeichnet), oder
-       nur in Städten mit Hafen bzw. auf festen Landeplätzen? Feste Linienflüge zwischen Städten
-       wären dann etwas Eigenes.
-    3. **Werte:** Die Geschwindigkeiten aus Book 3 (Classic Traveller) übernehmen; das PDF liegt
-       nicht im Repository. Bitte die Seite schicken, oder ich setze Schätzwerte als Hausregel.
-    4. **Mieten:** Kommt mit der Route. Vorschlag: Mietpreis je Tag als fester Anteil des
-       Kaufpreises (Hausregel), Fahrzeuge zu mieten nur in Siedlungen und bis zum TL der Welt. Das
-       ändert das Bild erst mit der Route (Buchung der Miete in der Kasse).
-    5. **Die Route selbst** ist flüchtig (sie wird gesucht, gezeigt und dann gefahren) und kommt mit
-       dem nächsten Schritt ins Bild, zusammen mit der Frage, ob eine Fahrt Zeit vergehen lässt und
-       im Log steht.
+    1. **Fahrstunden je Tag:** 8 Stunden für alle Fahrzeuge? Ein Linienflug von 3 Stunden wäre dann
+       ein Reisetag mit Ankunft.
+    2. **Linienverkehr** (Linienmaschine, Bus, Fähre): statt Miete ein Fahrpreis je Strecke? Dann
+       brauchen diese Fahrzeuge einen Preis ohne Gegenstand. Vorschlag: wie Miete, aber nur für die
+       Fahrstunden des Abschnitts.
+    3. **Eigene Fahrzeuge zurücklassen:** Fliegt die Gruppe ein Stück und hat einen eigenen Ground Car,
+       bleibt der Wagen dann am Startpunkt stehen? Vorschlag für jetzt: eigene Fahrzeuge reisen
+       einfach mit (keine Orte für Fahrzeuge); gemietete gibt man am Ende des Abschnitts ab, wo man
+       will.
 - **Notiz zur Welt.** Eine fertige Welt (mit Namen, nicht leer) kann eine Notiz haben (`note`):
   freier Text, auch über mehrere Zeilen. Anders als ein Logeintrag lässt sie sich jederzeit ändern,
   wie die Notiz eines Charakters; Leerraum am Rand fällt weg, eine leere Notiz gibt es nicht (dann

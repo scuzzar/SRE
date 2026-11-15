@@ -73,12 +73,15 @@ hide <<reference>> stereotype
 hide <<value>> stereotype
 
 ' Kampagne und Charaktere
+  class Campaign $kampagne
+  class Booking $shop
 
 ' Charaktererschaffung und Lebenslauf
 
 ' Subsektor und Welten
 
 ' Verlauf
+  abstract class LogEntry $probe
 
 ' Zeit und Reisen
 
@@ -86,7 +89,9 @@ hide <<value>> stereotype
 
 ' Referenzdaten
   class Item <<reference>> $shop
+  class SurfaceCell <<value>> $oberflaeche
   enum Landform <<value>> $oberflaeche
+  enum Port <<value>> $oberflaeche
 ' Fahrzeuge und Wege auf der Oberfläche
   class Vehicle <<reference>> $logistik $newClass("2026-11-15") {
     name: string
@@ -94,6 +99,21 @@ hide <<value>> stereotype
   }
   class VehicleSpeed <<value>> $logistik $newClass("2026-11-15") {
     kmh: number
+  }
+  class Trip $logistik $newClass("2026-11-15") {
+    hours: number
+    /totalHours: number
+    /days: number
+  }
+  class Leg <<value>> $logistik $newClass("2026-11-15") {
+    rented: boolean
+    /hours: number
+    /rent: number
+  }
+  class TripDay $logistik $newClass("2026-11-15") {
+    hours: number
+    rent: number
+    arrived: boolean
   }
   enum Way <<value>> $logistik $newClass("2026-11-15") {
     road
@@ -115,6 +135,14 @@ Vehicle "1" *-$newArrow("2026-11-15")- "*" VehicleSpeed : speeds
 VehicleSpeed "*" -$newArrow("2026-11-15")-> "0..1" Landform : on
 VehicleSpeed "*" -$newArrow("2026-11-15")-> "0..1" Way : along
 Vehicle "*" -$newArrow("2026-11-15")-> "*" Landform : landsOn
+Vehicle "*" -$newArrow("2026-11-15")-> "*" Port : landsAt
+Campaign "1" *-$newArrow("2026-11-15")- "0..1" Trip : trip
+Trip "1" *-$newArrow("2026-11-15")- "1..*" Leg : legs {ordered}
+Leg "*" -$newArrow("2026-11-15")-> "1" Vehicle : by
+Leg "*" -$newArrow("2026-11-15")-> "2..*" SurfaceCell : cells {ordered}
+Trip "*" -$newArrow("2026-11-15")-> "1" SurfaceCell : /at
+LogEntry <|-$newArrow("2026-11-15")- TripDay
+Booking "*" -$newArrow("2026-11-15")-> "0..1" TripDay : rentFor
 
 ' Charakter
 
