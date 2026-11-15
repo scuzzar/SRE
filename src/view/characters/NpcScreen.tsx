@@ -41,7 +41,7 @@ export function NpcScreen({ view }: { view: Snapshot }) {
             </label>
           )}
         </div>
-        {placing && <p className="npc-placing">Welche NSC kommen nach {placing.label}?</p>}
+        {placing && <p className="npc-placing">{placing.question}</p>}
         {shown === 0 && (
           <p className="npc-empty">
             {npcs.total === 0
@@ -61,7 +61,7 @@ export function NpcScreen({ view }: { view: Snapshot }) {
                       key={npc.id}
                       npc={npc}
                       joinable={joinable.has(npc.id)}
-                      pick={placing && { here: placing.here.includes(npc.id), chosen: chosen.includes(npc.id), onToggle: () => toggle(npc.id) }}
+                      pick={placing && { here: placing.here.includes(npc.id), blocked: placing.allowed && !placing.allowed.includes(npc.id) ? placing.notAllowed : undefined, chosen: chosen.includes(npc.id), onToggle: () => toggle(npc.id) }}
                     />
                   ))}
                 </ul>
@@ -88,13 +88,13 @@ export function NpcScreen({ view }: { view: Snapshot }) {
         )}
       </section>
       {placing && (
-        <section className="dock" aria-label="NSC platzieren">
+        <section className="dock" aria-label="NSC auswählen">
           <div className="actions oracle-actions">
             <button type="button" className="action note" onClick={() => game.cancelNpcPlacing()}>
               <CloseIcon />
               Abbrechen
             </button>
-            <button type="button" className="action draw" aria-label={`OK, ${chosen.length} NSC nach ${placing.label}`} disabled={chosen.length === 0} onClick={() => game.placeNpcs(chosen)}>
+            <button type="button" className="action draw" aria-label={`OK, ${chosen.length} NSC ${placing.ok}`} disabled={chosen.length === 0} onClick={() => game.placeNpcs(chosen)}>
               <CheckIcon />
               {chosen.length === 0 ? 'OK' : `OK (${chosen.length})`}
             </button>
@@ -170,6 +170,8 @@ function NewNpcSheet({ npcs, onClose }: { npcs: NpcScreenView; onClose: () => vo
 /** Beim NSC platzieren: ob er schon auf dem Feld ist, ob er angehakt ist, und das Umschalten. */
 interface Pick {
   readonly here: boolean;
+  /** Warum er sich nicht wählen lässt (etwa nicht am Aufenthaltsort); sonst `undefined`. */
+  readonly blocked: string | undefined;
   readonly chosen: boolean;
   readonly onToggle: () => void;
 }
@@ -185,14 +187,15 @@ function NpcRow({ npc, dead = false, joinable = false, pick }: { npc: NpcItem; d
   if (pick) {
     // Die ganze Zeile hakt an; wer schon dort ist, bleibt angehakt.
     return (
-      <li aria-label={`${npc.name}, ${roleText[npc.role]}`} className={pick.here ? 'npc-pick here' : 'npc-pick'}>
+      <li aria-label={`${npc.name}, ${roleText[npc.role]}`} className={pick.here || pick.blocked ? 'npc-pick here' : 'npc-pick'}>
         <label className="npc-open">
-          <input type="checkbox" checked={pick.here || pick.chosen} disabled={pick.here} onChange={pick.onToggle} aria-label={pick.here ? `${npc.name} ist schon hier` : `${npc.name} hierher`} />
+          <input type="checkbox" checked={pick.here || pick.chosen} disabled={pick.here || pick.blocked !== undefined} onChange={pick.onToggle} aria-label={pick.here ? `${npc.name} ist schon hier` : pick.blocked ? `${npc.name}, ${pick.blocked}` : `${npc.name} wählen`} />
           <span className="npc-pick-text">
             <span className="fallen-name">
               {npc.name}
               {npc.background && <span className="pc-sub"> {npc.background}</span>}
               {pick.here && <span className="pc-sub"> · schon hier</span>}
+              {pick.blocked && <span className="pc-sub"> · {pick.blocked}</span>}
             </span>
             {stats}
           </span>

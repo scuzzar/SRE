@@ -289,6 +289,10 @@ export interface Snapshot {
   readonly tripNote: string | undefined;
   /** Der Würfeldialog des Begegnungstests eines Reisetags. */
   readonly tripRoll: TripRoll | undefined;
+  /** Das Würfelfenster eines Begegnungswurfs aus dem Reiter Begegnung. */
+  readonly encounterRoll: TripRoll | undefined;
+  /** „Manuell wählen“: die Auswahl der Art bzw. Zeile ist offen. */
+  readonly encounterChoice: 'random' | 'animal' | undefined;
   /** Auf der offenen Weltkarte: warum die Gruppe nicht hierher reisen kann; `undefined`, wenn sie kann. Fehlt ohne Weltkarte. */
   readonly travel: { readonly blocker: string | undefined } | undefined;
   /** Die offene Inspirationskarte; solange es sie gibt, steht sie im Vordergrund. */
@@ -409,8 +413,11 @@ export interface NpcScreenView {
   readonly roles: readonly NpcRole[];
   readonly services: readonly { readonly id: string; readonly name: string }[];
   readonly generateBlocker: string | undefined;
-  /** NSC platzieren läuft: der Name des Felds, auf das sie kommen, und wer schon dort ist. */
-  readonly placing: { readonly label: string; readonly here: readonly string[] } | undefined;
+  /**
+   * Der Reiter wählt NSC aus (NSC platzieren oder NSC dazunehmen): die Frage oben, wer schon dabei ist
+   * (angehakt, gesperrt), wer sich wählen lässt (fehlt: alle) und warum die übrigen nicht.
+   */
+  readonly placing: { readonly question: string; readonly here: readonly string[]; readonly allowed: readonly string[] | undefined; readonly notAllowed: string; readonly ok: string } | undefined;
 }
 
 export interface CampaignChoice {
@@ -1391,6 +1398,15 @@ export interface ControllerState {
    * Subsektors, Oberflächenfeld) und kehrt danach in den Reiter `screen` zum Feld zurück.
    */
   readonly npcPlacing: { readonly world: string; readonly cell: number; readonly screen: Screen } | undefined;
+  /**
+   * NSC dazunehmen: Der Reiter NSC wählt die NSC für die nächste Zufallsbegegnung aus; danach geht es
+   * zurück in den Reiter Begegnung, mit `manual` zur Auswahl der Art, sonst gleich zum Wurf.
+   */
+  readonly npcJoining: { readonly manual: boolean } | undefined;
+  /** Das Würfelfenster eines Begegnungswurfs (Test mit Würfeln oder nur ein Hinweis); danach ggf. die Übersicht. */
+  readonly encounterRoll: TripRoll | undefined;
+  /** „Manuell wählen“: Die Auswahl der Art (Zufallsbegegnung) bzw. Zeile (Tiere) ist offen. */
+  readonly encounterChoice: 'random' | 'animal' | undefined;
   /** Die Charaktererschaffung steht im Vordergrund. */
   readonly generating: boolean;
   readonly generationError: string | undefined;
@@ -1419,12 +1435,17 @@ function npcItem(c: Character): NpcItem {
 
 /** NSC platzieren: das Feld des Globus, auf das die gewählten NSC kommen, solange seine Welt offen ist. */
 function placingView(campaign: Campaign, state: ControllerState): NpcScreenView['placing'] {
+  if (state.npcJoining) {
+    const loc = campaign.location === undefined ? undefined : hexById(campaign.hexes, campaign.location.world)?.name;
+    return { question: 'Welche NSC kommen zur Zufallsbegegnung dazu?', here: [], allowed: joinableNpcs(campaign).map((c) => c.id), notAllowed: loc ? `nicht auf ${loc}` : 'nicht am Aufenthaltsort', ok: 'dazunehmen' };
+  }
   const p = state.npcPlacing;
   const at = state.world;
   if (!p || !at || !state.globe || hexId(at.column, at.row) !== p.world) return undefined;
   const picked = globeView(campaign, at.column, at.row, p.cell)?.picked;
   if (!picked) return undefined;
-  return { label: picked.cities[0]?.name ?? `${picked.landform} · ${picked.position}`, here: picked.npcs.map((n) => n.id) };
+  const label = picked.cities[0]?.name ?? `${picked.landform} · ${picked.position}`;
+  return { question: `Welche NSC kommen nach ${label}?`, here: picked.npcs.map((n) => n.id), allowed: undefined, notAllowed: '', ok: `nach ${label}` };
 }
 
 function npcScreenView(campaign: Campaign, all: boolean): Omit<NpcScreenView, 'placing'> {
@@ -2484,7 +2505,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -2510,6 +2531,8 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     tripPlan: tripPlanView(campaign, state.tripPlan),
     tripNote: state.tripNote,
     tripRoll: state.tripRoll,
+    encounterRoll: state.encounterRoll,
+    encounterChoice: state.encounterChoice,
     travel: state.world && { blocker: travelBlocker(campaign, hexId(state.world.column, state.world.row)) },
     card: state.card && cardView(state.card),
     names: state.names,

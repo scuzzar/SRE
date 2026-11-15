@@ -267,7 +267,7 @@ test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des 
   // NSC platzieren öffnet den Reiter NSC mit Kästchen; Abbrechen führt zurück zum Feld, ohne etwas zu ändern.
   const placeNpcs = actions.getByRole('button', { name: 'NSC platzieren' });
   await placeNpcs.click();
-  const placing = page.getByRole('region', { name: 'NSC platzieren' });
+  const placing = page.getByRole('region', { name: 'NSC auswählen' });
   await expect(page.getByText(/^Welche NSC kommen nach /)).toBeVisible();
   await expect(placing.getByRole('button', { name: 'OK' })).toBeDisabled();
   await placing.getByRole('button', { name: 'Abbrechen' }).click();
@@ -276,7 +276,7 @@ test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des 
   // Angehakt und OK: Mara kommt aufs Feld; danach ist keiner mehr zu holen.
   await placeNpcs.click();
   await expect(page.getByRole('checkbox', { name: 'Alle zeigen' })).toBeVisible();
-  await page.getByRole('checkbox', { name: 'Mara Voss hierher' }).check();
+  await page.getByRole('checkbox', { name: 'Mara Voss wählen' }).check();
   await placing.getByRole('button', { name: /^OK, 1 NSC nach / }).click();
   await expect(field).toContainText('Mara Voss · NSC, Kontakt');
   await expect(placeNpcs).toBeDisabled();
