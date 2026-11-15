@@ -409,6 +409,8 @@ export interface NpcScreenView {
   readonly roles: readonly NpcRole[];
   readonly services: readonly { readonly id: string; readonly name: string }[];
   readonly generateBlocker: string | undefined;
+  /** NSC platzieren läuft: der Name des Felds, auf das sie kommen, und wer schon dort ist. */
+  readonly placing: { readonly label: string; readonly here: readonly string[] } | undefined;
 }
 
 export interface CampaignChoice {
@@ -1384,6 +1386,11 @@ export interface ControllerState {
   readonly editor: { readonly id: string | undefined; readonly error: string | undefined; readonly npc?: boolean; readonly role?: NpcRole } | undefined;
   /** Der Reiter NSC zeigt alle NSC statt nur die des Aufenthaltsorts. */
   readonly npcAll: boolean;
+  /**
+   * NSC platzieren: Der Reiter NSC wählt NSC für dieses Feld des Globus aus (Welt als Feld des
+   * Subsektors, Oberflächenfeld) und kehrt danach in den Reiter `screen` zum Feld zurück.
+   */
+  readonly npcPlacing: { readonly world: string; readonly cell: number; readonly screen: Screen } | undefined;
   /** Die Charaktererschaffung steht im Vordergrund. */
   readonly generating: boolean;
   readonly generationError: string | undefined;
@@ -1410,7 +1417,17 @@ function npcItem(c: Character): NpcItem {
   return { id: c.id, name: c.name, background: c.background, role: roleOf(c), upp: c.upp, weapon: weapon === undefined ? undefined : weaponOf(weapon).name };
 }
 
-function npcScreenView(campaign: Campaign, all: boolean): NpcScreenView {
+/** NSC platzieren: das Feld des Globus, auf das die gewählten NSC kommen, solange seine Welt offen ist. */
+function placingView(campaign: Campaign, state: ControllerState): NpcScreenView['placing'] {
+  const p = state.npcPlacing;
+  const at = state.world;
+  if (!p || !at || !state.globe || hexId(at.column, at.row) !== p.world) return undefined;
+  const picked = globeView(campaign, at.column, at.row, p.cell)?.picked;
+  if (!picked) return undefined;
+  return { label: picked.cities[0]?.name ?? `${picked.landform} · ${picked.position}`, here: picked.npcs.map((n) => n.id) };
+}
+
+function npcScreenView(campaign: Campaign, all: boolean): Omit<NpcScreenView, 'placing'> {
   const here = campaign.location === undefined ? undefined : hexById(campaign.hexes, campaign.location.world)?.name;
   return {
     all,
@@ -2467,7 +2484,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -2499,7 +2516,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     characters: livingCharacters(campaign).map((c) => characterView(campaign, c, state)),
     focus: focusOf(campaign)?.id,
     dead: deadCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background })),
-    npcs: npcScreenView(campaign, state.npcAll),
+    npcs: { ...npcScreenView(campaign, state.npcAll), placing: placingView(campaign, state) },
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
     combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.simBurst, state.simWeakened, state.surpriseShown, state.animalNote, log, state.lootOpen, state.butchered, state.joining),

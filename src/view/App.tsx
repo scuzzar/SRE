@@ -129,7 +129,7 @@ export function App() {
   // die übrigen Reiter haben unten Platz für ihre eigenen Knöpfe. Beim angetippten Feld des Globus
   // steht dort (und im Desktop-Modus unter dem Feld) stattdessen die Reihe des Felds.
   const dock = <OracleDock view={view} shortcuts />;
-  const fieldDock = view.globe?.picked ? <FieldDock globe={view.globe} trip={view.trip} tripPlan={view.tripPlan} /> : undefined;
+  const fieldDock = view.globe?.picked ? <FieldDock globe={view.globe} trip={view.trip} tripPlan={view.tripPlan} npcTotal={view.npcs.total} /> : undefined;
   const foot = fieldDock ?? (screen === 'oracle' && field === undefined ? dock : undefined);
 
   // Die Grundkarte: der Globus der offenen Welt, sonst der Subsektor. Oben rechts das Menü.

@@ -266,6 +266,7 @@ export class GameController {
       storageError: undefined,
       screen: 'oracle',
       npcAll: false,
+      npcPlacing: undefined,
       card: undefined,
       names: undefined,
       task: undefined,
@@ -929,7 +930,8 @@ export class GameController {
     // Bereichs; ein Reiter lässt es los.
     const released = { globe: this.state.globe && { picked: undefined }, selected: undefined, worldError: this.state.globe ? this.state.worldError : undefined };
     // Der Reiter NSC zeigt beim Öffnen wieder nur die NSC des Aufenthaltsorts.
-    this.update(screen === 'npcs' && this.state.screen !== 'npcs' ? { screen, npcAll: false, ...released } : { screen, ...released });
+    // Ein Reiter bricht auch NSC platzieren ab.
+    this.update(screen === 'npcs' && this.state.screen !== 'npcs' ? { screen, npcAll: false, npcPlacing: undefined, ...released } : { screen, npcPlacing: undefined, ...released });
   }
 
   /** Nimmt einen dauerhaften NSC zur nächsten Zufallsbegegnung dazu oder wieder heraus (2026-11-14g); nur Anzeige. */
@@ -1771,7 +1773,7 @@ export class GameController {
 
   /** Schließt die Weltkarte; eine Welt in Erschaffung bleibt gespeichert. */
   closeWorld(): void {
-    this.update({ world: undefined, worldError: undefined, globe: undefined });
+    this.update({ world: undefined, worldError: undefined, globe: undefined, npcPlacing: undefined });
   }
 
   /**
@@ -1804,7 +1806,8 @@ export class GameController {
   /** Tippt ein Oberflächenfeld auf dem Globus an (oder hebt die Wahl auf). */
   pickCell(cell: number | undefined): void {
     if (!this.state.globe) return;
-    this.update({ globe: { picked: cell }, ...(this.state.tripPlan && this.state.tripPlan.target !== cell ? { tripPlan: undefined } : {}) });
+    // Ein anderes Feld anzutippen bricht NSC platzieren ab.
+    this.update({ globe: { picked: cell }, npcPlacing: undefined, ...(this.state.tripPlan && this.state.tripPlan.target !== cell ? { tripPlan: undefined } : {}) });
   }
 
   // --- Fahrt über die Oberfläche (siehe domain-model.md, *Fahrt*) ---------------------------------
@@ -1929,6 +1932,41 @@ export class GameController {
   /** Versetzt einen dauerhaften NSC auf das angetippte Feld (bzw. in die Stadt darauf). */
   moveNpc(id: string): void {
     this.onGlobe(() => moveNpc(this.campaign, id, this.pickedPlace()));
+  }
+
+  /**
+   * NSC platzieren (siehe domain-model.md, *NSC platzieren*): Der Reiter NSC öffnet sich zum Auswählen
+   * für das angetippte Feld; „Alle zeigen“ holt auch NSC von anderen Welten dazu.
+   */
+  startNpcPlacing(): void {
+    const at = this.state.world;
+    const cell = this.state.globe?.picked;
+    if (!at || cell === undefined) return;
+    this.update({ npcPlacing: { world: hexId(at.column, at.row), cell, screen: this.state.screen }, screen: 'npcs', npcAll: false, globe: { picked: undefined }, worldError: undefined });
+  }
+
+  /** „OK“ beim NSC platzieren: Die gewählten NSC kommen auf das Feld (bzw. in die Stadt darauf), danach steht wieder das Feld da. */
+  placeNpcs(ids: readonly string[]): void {
+    if (!this.endNpcPlacing() || ids.length === 0) return;
+    this.onGlobe(() => {
+      const place = this.pickedPlace();
+      return ids.reduce((campaign, id) => moveNpc(campaign, id, place), this.campaign);
+    });
+  }
+
+  /** „Abbrechen“ beim NSC platzieren: zurück zum Feld, ohne etwas zu ändern. */
+  cancelNpcPlacing(): void {
+    this.endNpcPlacing();
+  }
+
+  /** Beendet NSC platzieren und tippt das Feld wieder an; ob es noch zur offenen Welt gehörte. */
+  private endNpcPlacing(): boolean {
+    const p = this.state.npcPlacing;
+    const at = this.state.world;
+    if (!p) return false;
+    const open = at !== undefined && this.state.globe !== undefined && hexId(at.column, at.row) === p.world;
+    this.update({ npcPlacing: undefined, screen: p.screen, ...(open ? { globe: { picked: p.cell } } : {}) });
+    return open;
   }
 
   /** Führt eine Änderung auf dem Globus aus; verletzt sie eine Regel, steht das auf der Weltkarte. */

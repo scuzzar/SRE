@@ -3,11 +3,16 @@ import type { NpcItem, NpcScreenView, Snapshot } from '../../controller';
 import type { NpcRole } from '../../model';
 import { hex, roleText } from '../format';
 import { useGame } from '../game-context';
-import { CloseIcon, CombatIcon, PencilIcon } from '../icons';
+import { CheckIcon, CloseIcon, CombatIcon, PencilIcon } from '../icons';
 
 /**
  * Der Reiter NSC: die dauerhaften NSC, vorgegeben die des Aufenthaltsorts (und die ohne Ort) nach
  * Rolle; mit „Alle zeigen“ alle nach Welt und darin nach Rolle. Antippen öffnet den Editor.
+ *
+ * Beim NSC platzieren (`npcs.placing`) hat jeder NSC ein Kästchen zum Auswählen, wer schon auf dem
+ * Feld ist, ist angehakt und gesperrt; unten stehen „Abbrechen“ und „OK“. Filter wie „Alle zeigen“
+ * gelten weiter, die Auswahl bleibt dabei stehen. Welche angehakt sind, ist reine Darstellung, bis
+ * „OK“ sie dem Controller gibt.
  */
 export function NpcScreen({ view }: { view: Snapshot }) {
   const game = useGame();
@@ -18,6 +23,9 @@ export function NpcScreen({ view }: { view: Snapshot }) {
   const shown = npcs.worlds.reduce((sum, w) => sum + w.roles.reduce((n, r) => n + r.npcs.length, 0), 0);
   // „In Begegnung“ gibt es für NSC vom Aufenthaltsort, solange keine Begegnung läuft (2026-11-14g).
   const joinable = new Set(view.combat && !view.combat.sim ? view.combat.joinable.map((j) => j.id) : []);
+  const placing = npcs.placing;
+  const [chosen, setChosen] = useState<readonly string[]>([]);
+  const toggle = (id: string) => setChosen((was) => (was.includes(id) ? was.filter((c) => c !== id) : [...was, id]));
 
   return (
     <div className="screen">
@@ -33,6 +41,7 @@ export function NpcScreen({ view }: { view: Snapshot }) {
             </label>
           )}
         </div>
+        {placing && <p className="npc-placing">Welche NSC kommen nach {placing.label}?</p>}
         {shown === 0 && (
           <p className="npc-empty">
             {npcs.total === 0
@@ -48,19 +57,26 @@ export function NpcScreen({ view }: { view: Snapshot }) {
                 <h4 className="section-title npc-role">{roleText[group.role]}</h4>
                 <ul>
                   {group.npcs.map((npc) => (
-                    <NpcRow key={npc.id} npc={npc} joinable={joinable.has(npc.id)} />
+                    <NpcRow
+                      key={npc.id}
+                      npc={npc}
+                      joinable={joinable.has(npc.id)}
+                      pick={placing && { here: placing.here.includes(npc.id), chosen: chosen.includes(npc.id), onToggle: () => toggle(npc.id) }}
+                    />
                   ))}
                 </ul>
               </div>
             ))}
           </div>
         ))}
-        <div className="add-characters">
-          <button type="button" className="add-character" onClick={() => setAdding(true)}>
-            + Neuer NSC
-          </button>
-        </div>
-        {npcs.dead.length > 0 && (
+        {!placing && (
+          <div className="add-characters">
+            <button type="button" className="add-character" onClick={() => setAdding(true)}>
+              + Neuer NSC
+            </button>
+          </div>
+        )}
+        {!placing && npcs.dead.length > 0 && (
           <details className="fallen npc-dead">
             <summary className="section-title">Verstorben ({npcs.dead.length})</summary>
             <ul>
@@ -71,6 +87,20 @@ export function NpcScreen({ view }: { view: Snapshot }) {
           </details>
         )}
       </section>
+      {placing && (
+        <section className="dock" aria-label="NSC platzieren">
+          <div className="actions oracle-actions">
+            <button type="button" className="action note" onClick={() => game.cancelNpcPlacing()}>
+              <CloseIcon />
+              Abbrechen
+            </button>
+            <button type="button" className="action draw" aria-label={`OK, ${chosen.length} NSC nach ${placing.label}`} disabled={chosen.length === 0} onClick={() => game.placeNpcs(chosen)}>
+              <CheckIcon />
+              {chosen.length === 0 ? 'OK' : `OK (${chosen.length})`}
+            </button>
+          </div>
+        </section>
+      )}
       {adding && <NewNpcSheet npcs={npcs} onClose={() => setAdding(false)} />}
     </div>
   );
@@ -137,8 +167,39 @@ function NewNpcSheet({ npcs, onClose }: { npcs: NpcScreenView; onClose: () => vo
   );
 }
 
-function NpcRow({ npc, dead = false, joinable = false }: { npc: NpcItem; dead?: boolean; joinable?: boolean }) {
+/** Beim NSC platzieren: ob er schon auf dem Feld ist, ob er angehakt ist, und das Umschalten. */
+interface Pick {
+  readonly here: boolean;
+  readonly chosen: boolean;
+  readonly onToggle: () => void;
+}
+
+function NpcRow({ npc, dead = false, joinable = false, pick }: { npc: NpcItem; dead?: boolean; joinable?: boolean; pick?: Pick | undefined }) {
   const game = useGame();
+  const stats = (
+    <span className="npc-stats">
+      STR {hex(npc.upp.str)} DEX {hex(npc.upp.dex)} END {hex(npc.upp.end)} INT {hex(npc.upp.int)} EDU {hex(npc.upp.edu)} SOC {hex(npc.upp.soc)}
+      {npc.weapon && ` · ${npc.weapon}`}
+    </span>
+  );
+  if (pick) {
+    // Die ganze Zeile hakt an; wer schon dort ist, bleibt angehakt.
+    return (
+      <li aria-label={`${npc.name}, ${roleText[npc.role]}`} className={pick.here ? 'npc-pick here' : 'npc-pick'}>
+        <label className="npc-open">
+          <input type="checkbox" checked={pick.here || pick.chosen} disabled={pick.here} onChange={pick.onToggle} aria-label={pick.here ? `${npc.name} ist schon hier` : `${npc.name} hierher`} />
+          <span className="npc-pick-text">
+            <span className="fallen-name">
+              {npc.name}
+              {npc.background && <span className="pc-sub"> {npc.background}</span>}
+              {pick.here && <span className="pc-sub"> · schon hier</span>}
+            </span>
+            {stats}
+          </span>
+        </label>
+      </li>
+    );
+  }
   return (
     <li aria-label={dead ? `${npc.name}, ${roleText[npc.role]}, tot` : `${npc.name}, ${roleText[npc.role]}`}>
       <button type="button" className="npc-open" onClick={() => game.editCharacter(npc.id)}>
@@ -147,10 +208,7 @@ function NpcRow({ npc, dead = false, joinable = false }: { npc: NpcItem; dead?: 
           {npc.name}
           {npc.background && <span className="pc-sub"> {npc.background}</span>}
         </span>
-        <span className="npc-stats">
-          STR {hex(npc.upp.str)} DEX {hex(npc.upp.dex)} END {hex(npc.upp.end)} INT {hex(npc.upp.int)} EDU {hex(npc.upp.edu)} SOC {hex(npc.upp.soc)}
-          {npc.weapon && ` · ${npc.weapon}`}
-        </span>
+        {stats}
       </button>
       {joinable && (
         <button type="button" className="icon-button" aria-label={`${npc.name} in Begegnung`} title="In Begegnung" onClick={() => game.joinEncounter(npc.id)}>
