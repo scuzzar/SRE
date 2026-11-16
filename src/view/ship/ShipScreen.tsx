@@ -72,7 +72,7 @@ export function ShipScreen({ view }: { view: Snapshot }) {
           </p>
         ) : (
           <>
-            <div className="card-grid ship-tiles">
+            <div className="card-grid cols-2 ship-tiles">
               <div className="tile">
                 <span className="tile-label">Treibstoff</span>
                 <span className="tile-text">
