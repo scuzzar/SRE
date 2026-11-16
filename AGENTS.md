@@ -30,6 +30,9 @@
   schlicht `git commit …`, ebenso für Merges nach `main`. **Vor jedem Commit und jedem Merge** mit
   `git var GIT_AUTHOR_IDENT` prüfen, dass Scuzzar drinsteht. Den Commit als eigenen Befehl
   abschicken, nicht mit anderen verkettet, die Nachricht per `-F` aus einer Datei im Scratchpad.
+- **Jeder Zweig bekommt immer einen sprechenden Namen**, der sagt, woran darin gearbeitet wird
+  (z. B. `kampf-begegnungen`, nie `test` oder `neu`). Das gilt für neue Zweige ebenso wie für
+  Worktrees.
 - **Nach jeder Änderung an der App eine Vorschau schicken**: mit `npm run build:single` die ganze
   App als eine HTML-Datei bauen (`dist-single/index.html`), in den Scratchpad kopieren und dem
   Owner zum direkten Öffnen schicken. Dazu kurz sagen, was man zum Ausprobieren antippen muss.
