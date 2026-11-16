@@ -136,6 +136,17 @@ export function CloseIcon() {
   );
 }
 
+/** Eine Kugel mit Gitter: der Globus einer Welt. */
+export function GlobeIcon() {
+  return (
+    <svg {...base} strokeLinecap="round">
+      <circle cx="12" cy="12" r="9" />
+      <ellipse cx="12" cy="12" rx="4" ry="9" />
+      <path d="M3 12h18M4.5 7.2h15M4.5 16.8h15" />
+    </svg>
+  );
+}
+
 /** Zur Gruppe: ein Fadenkreuz wie der Knopf „Mein Standort“ im Navi. */
 export function LocateIcon() {
   return (

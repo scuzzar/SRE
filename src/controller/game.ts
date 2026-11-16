@@ -1789,8 +1789,9 @@ export class GameController {
 
   /**
    * Ein Feld des Subsektors antippen: Ein nicht erzeugtes oder leeres Feld wird auf der Karte
-   * gewählt (unten steht dann das Vorkommen); eine fertige Welt mit Oberfläche öffnet ihren Globus,
-   * jede andere Welt, auch in Erschaffung, ihre Weltkarte.
+   * gewählt (unten steht dann das Vorkommen); jedes erzeugte Feld öffnet seine Weltkarte, fertig
+   * oder in Erschaffung. Von dort führt „Globus öffnen“ (am Weltsymbol oder bei der Oberfläche) zum
+   * Globus.
    * Dasselbe gewählte Feld noch einmal antippen hebt die Wahl auf.
    */
   chooseHex(column: number, row: number): void {
@@ -1798,8 +1799,6 @@ export class GameController {
     // Wird für die Erschaffung gewählt, ist eine fertige Welt die Wahl.
     if (this.state.picking && isWorld(hex)) return this.chooseGenerationWorld(hexId(column, row));
     const world = hex !== undefined && !hex.empty;
-    // Eine fertige Welt mit Oberfläche öffnet gleich ihren Globus; die Werte stehen dort oben zum Aufklappen.
-    if (world && canHaveMap(hex)) return this.openGlobeAt(column, row);
     if (world) return this.update({ world: { column, row, rolls: [] }, worldError: undefined, selected: undefined });
     const same = this.state.selected?.column === column && this.state.selected.row === row;
     this.update({ selected: same ? undefined : { column, row }, worldError: undefined });

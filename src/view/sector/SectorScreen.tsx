@@ -89,7 +89,7 @@ function WorldSymbol({ hex, x, y, size }: { hex: HexView; x: number; y: number; 
   return <image className="hex-icon" href={worldImageUrl(hex.look, ICON_PX)} x={x - size / 2} y={y - size / 2} width={size} height={size} />;
 }
 
-function HexCell({ hex, selected, disabled, detail, here = false, opensGlobe = false }: { hex: HexView; selected: boolean; disabled: boolean; detail: Detail; here?: boolean; opensGlobe?: boolean }) {
+function HexCell({ hex, selected, disabled, detail, here = false }: { hex: HexView; selected: boolean; disabled: boolean; detail: Detail; here?: boolean }) {
   const game = useGame();
   const { x, y: middle } = center(hex.column, hex.row);
   // Mit UWP rückt alles ein Stück nach oben, damit darunter Platz ist.
@@ -98,9 +98,7 @@ function HexCell({ hex, selected, disabled, detail, here = false, opensGlobe = f
   const shown = hex.state === 'world' || hex.state === 'pending';
   const choose = () => {
     if (disabled) return;
-    // Eine fertige Welt öffnet ihren Globus; der braucht einen Moment, also erst der Ladebalken.
-    if (opensGlobe && hex.state === 'world') withLoading('Welt wird aufgebaut …', () => game.chooseHex(hex.column, hex.row));
-    else game.chooseHex(hex.column, hex.row);
+    game.chooseHex(hex.column, hex.row);
   };
   return (
     <g
@@ -510,7 +508,7 @@ export function SectorScreen({ view, heading = 'Subsektor', fill = false, dockTo
         <div className="sector-body">
           <ZoomableMap fill={fill} focus={fill && selected ? { id: selected.id, ...center(selected.column, selected.row) } : undefined}>
             {(pixelsPerUnit) =>
-              sector.map((hex) => <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} detail={detailAt(pixelsPerUnit)} here={hex.id === view.location} opensGlobe={!view.picking} />)
+              sector.map((hex) => <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} detail={detailAt(pixelsPerUnit)} here={hex.id === view.location} />)
             }
           </ZoomableMap>
           {panel === 'legend' && (
@@ -529,8 +527,7 @@ export function SectorScreen({ view, heading = 'Subsektor', fill = false, dockTo
                       type="button"
                       onClick={() => {
                         setPanel(undefined);
-                        if (view.picking) game.chooseHex(w.column, w.row);
-                        else withLoading('Welt wird aufgebaut …', () => game.chooseHex(w.column, w.row));
+                        game.chooseHex(w.column, w.row);
                       }}
                     >
                       <span className="world-list-name">{w.name}</span>

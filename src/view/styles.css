@@ -4765,12 +4765,6 @@ button:disabled {
   font-size: 12px;
 }
 
-.stay-here {
-  align-self: flex-start;
-  min-height: 40px;
-  margin: 8px 0;
-}
-
 .weapon-ammo {
   margin: 0;
   font-family: var(--mono);
@@ -4787,6 +4781,26 @@ button:disabled {
 
 .dock .actions:has(> :nth-child(4)) {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* Die Reihe an der Welt (Globus öffnen, Gruppe ist hier, Hierher reisen): dieselbe Technik wie beim
+   Dock, ohne dass sie in einem stecken muss, denn sie liegt mitten im Blatt der Weltkarte. */
+.world-actions:has(> :only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.world-actions:has(> :nth-child(2)) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.world-actions:has(> :nth-child(3)) {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Gruppe ist hier, solange sie es ist: wie ein gedrückter Knopf. */
+.action[aria-pressed='true'] {
+  background: var(--text);
+  color: var(--ink);
 }
 
 .shop-scroll {
@@ -7101,12 +7115,6 @@ button:disabled {
 
 .journey-berths .negative {
   color: var(--danger, #c0392b);
-}
-
-.travel-here {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 
 .journey-sheet {

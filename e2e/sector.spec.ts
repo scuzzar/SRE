@@ -44,7 +44,12 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     await expect(done.getByRole('article', { name: 'Welt' })).toContainText(/Temperatur(Gefroren|Kalt|Gemäßigt|Heiß|Kochend)/);
     await done.getByRole('button', { name: 'Schließen' }).first().click();
     await map.getByRole('button', { name: `${id}, Regina: Weltkarte öffnen` }).click();
-    // Wieder geöffnet: Eine fertige Welt mit Oberfläche zeigt ihren Globus; oben klappen Name und UWP die Werte auf.
+    // Wieder geöffnet: erst die Weltkarte mit den Werten, kein Globus gleich.
+    const sheet = page.getByRole('dialog', { name: `Regina · ${id}` });
+    await expect(sheet.getByRole('article', { name: 'Welt' })).toBeVisible();
+    await expect(sheet.getByRole('region', { name: 'Oberfläche' })).toContainText('einheimisches Leben');
+    // „Globus erzeugen“ öffnet ihn; oben klappen Name und UWP die Werte auf.
+    await sheet.getByRole('button', { name: 'Globus erzeugen' }).click();
     const globe = page.getByRole('region', { name: 'Globus · Regina' });
     await globe.getByRole('button', { name: /^Regina, UWP / }).click();
     const reopened = globe.getByRole('region', { name: 'Die Welt' });
@@ -128,9 +133,9 @@ test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis 
     await openSector(page);
     await page.getByRole('button', { name: /^Welten \d+/ }).click();
     await page.locator('.world-list').getByRole('button', { name: /Regina/ }).click();
-    const globe = page.getByRole('region', { name: 'Globus · Regina' });
-    await globe.getByRole('button', { name: /^Regina, UWP / }).click();
-    await expect(globe.getByLabel('Notiz zur Welt')).toHaveValue('Halveks Werft am Südpol.\nDer Zoll ist bestechlich.');
+    // Die Weltkarte zeigt die Notiz gleich, ohne Umweg über den Globus.
+    const sheet = page.getByRole('dialog', { name: `Regina · ${id}` });
+    await expect(sheet.getByLabel('Notiz zur Welt')).toHaveValue('Halveks Werft am Südpol.\nDer Zoll ist bestechlich.');
     return;
   }
   throw new Error('Kein Feld mit Welt gefunden');
