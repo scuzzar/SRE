@@ -56,6 +56,8 @@ skinparam class {
   BorderColor<<reference>> #4f9a4f
   BackgroundColor<<value>> #ffffff
   BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
 }
 skinparam legendBackgroundColor #ffffff
 skinparam legendBorderColor #8a8a8a
@@ -71,6 +73,7 @@ classDiagram {
 hide <<transient>> stereotype
 hide <<reference>> stereotype
 hide <<value>> stereotype
+hide <<browser>> stereotype
 
 ' Kampagne und Charaktere
   class Campaign $kampagne {
@@ -78,6 +81,7 @@ hide <<value>> stereotype
     key: string
     changedAt: datetime
     /funds: number
+    $new("2026-11-16c", "/ship: Ship [0..1]")
     quantityDie: number [0..1]
     /load: number
     /capacity: number
@@ -89,6 +93,9 @@ hide <<value>> stereotype
   class Booking $shop
   class Character $charakter
   class Possession $shop
+
+' Schiffe
+  class Ship $schiffe
 
 ' Charaktererschaffung und Lebenslauf
   class Generation $erschaffung
@@ -130,6 +137,10 @@ Campaign "1" *-- "*" Booking : bookings {ordered}
 Conflict "*" --> "0..1" Campaign : local
 Conflict "*" --> "0..1" Campaign : remote
 
+' Schiffe
+Campaign "1" *-$goneArrow("2026-11-16c")-> "0..1" Ship : ship
+Campaign "1" *-$newArrow("2026-11-16c")-> "0..*" Ship : ships
+
 ' Zeit und Reisen
 
 ' Charaktererschaffung und Lebenslauf
@@ -167,5 +178,7 @@ legend right
   |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Geräte-Daten: das Gerät hält sie über Kampagnen hinweg, nicht im Spielstand |
 endlegend
+class Campaign #line:d0021b;line.bold
 @enduml

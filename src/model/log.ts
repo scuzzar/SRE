@@ -81,8 +81,10 @@ export interface LowBerth {
 }
 
 /**
- * Eine Reise mit Passagen von `from` nach `to` (Felder wie 0304), am Abflugtag. `lot` ist bei
+ * Eine Reise von `from` nach `to` (Felder wie 0304), am Abflugtag. `lot` ist bei
  * Gleichstand in der Lotterie die Stelle der Koje, die das Los gewann.
+ * Mit eigenem Schiff (2026-11-16d): `ship` verweist auf das Schiff der Reise, `jump` ist der
+ * Sprungwurf (2W6, Fehlsprung bei 13+); ohne Passagiere, Kojen und Lotterie.
  */
 export interface Journey extends LogEntryBase {
   readonly kind: 'journey';
@@ -93,6 +95,8 @@ export interface Journey extends LogEntryBase {
   readonly berths: readonly LowBerth[];
   readonly npcDie?: number;
   readonly lot?: number;
+  readonly ship?: string;
+  readonly jump?: Dice;
 }
 
 /**

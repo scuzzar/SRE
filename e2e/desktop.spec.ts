@@ -136,7 +136,7 @@ test('Kampf und Shop zeigen ihre SC selbst; ein Klick auf eine Karte holt sie na
 test('Die Ziffern wählen die Reiter', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
   await expect(nav(page)).toBeVisible();
-  for (const [key, name] of [['1', 'Begegnung'], ['2', 'Kampf'], ['3', 'Shop'], ['4', 'Charaktere'], ['5', 'NSC']]) {
+  for (const [key, name] of [['1', 'Begegnung'], ['2', 'Kampf'], ['3', 'Shop'], ['4', 'Schiff'], ['5', 'Charaktere'], ['6', 'NSC']]) {
     await page.keyboard.press(key!);
     await expect(nav(page).getByRole('button', { name: name!, exact: true })).toHaveAttribute('aria-current', 'page');
   }

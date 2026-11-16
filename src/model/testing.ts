@@ -2,6 +2,7 @@ import { livingCharacters, type Campaign } from './campaign';
 import { currentEncounter, setDistance } from './encounter';
 import { fightOrder, turnOf, withEncounter } from './fight';
 import { CloudChanged, CloudOffline, type CampaignRepository, type Clock, type Cloud, type Download, type Keys, type Random, type TrayStop } from './ports';
+import type { DeckPlan } from './ship';
 import type { SyncMark } from './sync';
 
 /** Eine Zufallsquelle für Tests: liefert die vorgegebenen Zahlen der Reihe nach, danach immer `min`. */
@@ -97,6 +98,7 @@ export function memoryRepository(...initial: Campaign[]): CampaignRepository & {
   shopHintHidden: boolean;
   trayStop: TrayStop | undefined;
   readonly marks: Map<string, SyncMark>;
+  readonly deckPlans: DeckPlan[];
 } {
   return {
     marks: new Map(),
@@ -111,6 +113,19 @@ export function memoryRepository(...initial: Campaign[]): CampaignRepository & {
     },
     async clearMarks() {
       this.marks.clear();
+    },
+    deckPlans: [],
+    async loadDeckPlans(design) {
+      return this.deckPlans.filter((p) => p.design === design);
+    },
+    async saveDeckPlan(plan) {
+      const at = this.deckPlans.findIndex((p) => p.design === plan.design && p.name === plan.name);
+      if (at < 0) this.deckPlans.push(plan);
+      else this.deckPlans[at] = plan;
+    },
+    async removeDeckPlan(design, name) {
+      const at = this.deckPlans.findIndex((p) => p.design === design && p.name === name);
+      if (at >= 0) this.deckPlans.splice(at, 1);
     },
     saved: initial.at(-1),
     campaigns: new Map(initial.map((c) => [c.id, c])),

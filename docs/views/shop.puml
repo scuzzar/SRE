@@ -56,6 +56,8 @@ skinparam class {
   BorderColor<<reference>> #4f9a4f
   BackgroundColor<<value>> #ffffff
   BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
 }
 skinparam legendBackgroundColor #ffffff
 skinparam legendBorderColor #8a8a8a
@@ -71,6 +73,7 @@ classDiagram {
 hide <<transient>> stereotype
 hide <<reference>> stereotype
 hide <<value>> stereotype
+hide <<browser>> stereotype
 
 ' Kampagne und Charaktere
   class Campaign $kampagne
@@ -91,12 +94,16 @@ hide <<value>> stereotype
     lottery
     rent
     fare
+    ship
   }
   class Character $charakter
   class Possession $shop {
     count: number
     rounds: number [0..1]
   }
+
+' Schiffe
+  class Ship $schiffe
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -149,6 +156,9 @@ Booking "*" --> "0..1" Item : sold
 Booking "*" --> "0..1" Hex : in
 Booking --> BookingKind
 
+' Schiffe
+Booking "*" --> "0..1" Ship : forShip
+
 ' Zeit und Reisen
 Passenger "*" --> "1" Item : passage
 Booking "*" --> "0..1" Journey : won
@@ -193,5 +203,8 @@ legend right
   |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Geräte-Daten: das Gerät hält sie über Kampagnen hinweg, nicht im Spielstand |
 endlegend
+class Campaign #line:d0021b;line.bold
+class Journey #line:d0021b;line.bold
 @enduml

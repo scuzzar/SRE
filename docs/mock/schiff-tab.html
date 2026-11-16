@@ -1,0 +1,849 @@
+<!doctype html>
+<!--
+  UI-Mock: der neue Reiter „Schiff“ (freigegebenes Konzept 2026-11-16, Zweig schiffe-basis).
+  Orientiert sich an den bestehenden Reitern: Aufbau wie der Shop (Kopf mit Kasse – Name und Typ
+  des Schiffs in zwei Zeilen –, Tabellenzeilen, Dock unten mit Action-Knöpfen wie im Orakel,
+  Navigationsreihe im Ziehblatt). Die Werft ist kein Reiter, sondern ein Blatt unter dem goldenen
+  Werft-Knopf. Ratenzahlen läuft automatisch am Ende der Woche – darum kein eigener Bank-Bereich.
+  Umbenannt wird über das Stift-Symbol am Namen. Unter den Kacheln zwei Ansichten: Deckplan
+  (bis zu drei eigene Pläne im Hochformat, als PNG geladen oder fotografiert – die App baut sie
+  nicht selbst) und Details (nur was nicht in den Kacheln steht). Daten sind Beispielwerte;
+  Knöpfe sind zum Ausprobieren echt gerechnet (Bearbeiten, Treibstoff, Kauf, Umbenennen). Kein App-Code.
+-->
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UI-Mock · Reiter Schiff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* Design-Tokens und Bausteine aus src/view/styles.css, damit das Mock wie die App aussieht. */
+  :root {
+    --bg: #111111;
+    --panel: #161616;
+    --raised: #1a1a1a;
+    --deep: #0b0b0b;
+    --rule: #2a2a2a;
+    --rule-soft: #2e2e2e;
+    --line: #3a3a3a;
+    --line-strong: #555555;
+    --text: #eceae4;
+    --muted: #a3a09a;
+    --dim: #8c8a85;
+    --ink: #111111;
+    --accent: #c62f35;
+    --accent-text: #ef5a5f;
+    --accent-wash: #2a1415;
+    --gold: #d9b45f;
+    --gold-bright: #f5dc96;
+    --gold-wash: #241e10;
+    --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #050505; color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.45; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px; }
+  button { font: inherit; color: inherit; }
+
+  /* Das Telefon: Grundkarte unten, Ziehblatt darüber. */
+  .app { position: relative; width: min(430px, 100%); height: min(900px, calc(100vh - 70px)); background: var(--deep); border: 1px solid #262626; border-radius: 18px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7); }
+  .caption { width: min(430px, 100%); color: var(--dim); font-size: 12px; }
+  .caption b { color: var(--muted); }
+
+  /* Grundkarte: angedeuteter Subsektor, im Mock nur Kulisse. */
+  .base { position: absolute; inset: 0; }
+  .base svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  .mock-note { position: absolute; top: 10px; left: 12px; z-index: 2; padding: 3px 8px; border: 1px solid var(--line); border-radius: 6px; background: rgba(11, 11, 11, 0.8); color: var(--dim); font-size: 11px; }
+
+  /* Ziehblatt, hier dauerhaft hochgezogen. */
+  .tray { position: absolute; left: 0; right: 0; bottom: 0; top: 14%; display: flex; flex-direction: column; background: var(--bg); border-radius: 16px 16px 0 0; box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.6); }
+  .tray-grip { display: flex; align-items: center; justify-content: center; height: 26px; }
+  .tray-grip span { width: 40px; height: 5px; border-radius: 3px; background: var(--line-strong); }
+  .tray-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Kopf wie im Shop: Schiff links (Name und Typ in zwei Zeilen), Kasse rechts. */
+  .shop-top { flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; padding: 10px 16px 0; border-bottom: 1px solid var(--rule); background: var(--bg); }
+  .shop-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .shop-world { min-width: 0; margin: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .shop-funds { flex: 0 0 auto; margin: 0; font-size: 12px; }
+  .shop-funds strong { font-size: 20px; color: var(--gold); }
+  .head-ship { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .head-name { display: flex; align-items: baseline; gap: 2px; min-width: 0; }
+  .head-sub { margin: 0; font-size: 12px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .icon-button { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; background: transparent; border: 0; color: var(--muted); }
+
+  .screen { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .section-title { margin: 0; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .muted { color: var(--muted); }
+  .mono { font-family: var(--mono); }
+  .log-empty { padding: 24px 8px; margin: 0; text-align: center; color: var(--muted); font-size: 14px; }
+
+  /* Stände als Kacheln (wie in Karten und Formularen). */
+  .card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; }
+  .tile { position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; min-height: 44px; padding: 5px 8px; text-align: left; font-size: 13px; line-height: 1.3; background: #1b1b1b; border: 1px solid #2c2c2c; border-radius: 6px; color: var(--text); }
+  .tile .tile-label { font-size: 10px; color: var(--dim); }
+  .tile .tile-text { font-weight: 600; font-family: var(--mono); }
+  .tile.gold .tile-text { color: var(--gold); }
+  /* Eine halbe Kachel mit zwei Werten nebeneinander (Kabinen und Niedrigbetten). */
+  .tile.duo { flex-direction: row; justify-content: space-between; gap: 6px; }
+  .tile.duo .duo-col { display: flex; flex-direction: column; min-width: 0; }
+  .tile.duo .tile-label { white-space: nowrap; }
+  .tile.duo .tile-text { font-size: 12px; }
+
+  /* Referenzdaten des Entwurfs als Beschriftungsraster (wie die Weltkarte). */
+  .profile { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 10px; font-size: 13px; margin: 0; }
+  .profile > div { display: contents; }
+  .profile dt { color: var(--muted); }
+  .profile dd { margin: 0; font-family: var(--mono); font-size: 12.5px; text-align: right; overflow-wrap: anywhere; }
+
+  /* Werft: Tabellenzeilen wie die Shop-Theken, Preis als Knopf. */
+  .shop-counter { display: flex; flex-direction: column; gap: 4px; }
+  .shop-table { display: flex; flex-direction: column; }
+  .shop-row { --shop-price: calc(9ch + 18px); display: grid; align-items: center; column-gap: 8px; min-height: 48px; padding: 4px 0; border-top: 1px solid var(--rule-soft); font-family: var(--mono); font-size: 13px; }
+  .ship-row { --shop-price: calc(12ch + 18px); grid-template-columns: minmax(0, 1fr) var(--shop-price); }
+  .shop-row-head { min-height: 0; padding: 2px 0; border-top: 0; }
+  .shop-row-head > span { color: var(--dim); font-family: var(--sans); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+  .shop-name { display: flex; flex-direction: column; min-width: 0; font-family: var(--sans); font-size: 14px; }
+  .shop-label { color: var(--text); }
+  .shop-label small { color: var(--dim); font-family: var(--mono); font-size: 11px; }
+  .shop-meta { color: var(--dim); font-size: 12px; }
+  .shop-num { justify-self: end; text-align: right; }
+  .shop-num:has(.shop-price) { justify-self: stretch; }
+  .shop-price { position: relative; width: 100%; min-height: 40px; display: inline-flex; flex-direction: column; align-items: flex-end; justify-content: center; padding: 2px 8px; border: 1px solid var(--line-strong); background: transparent; font-family: var(--mono); font-size: 13px; line-height: 1.2; white-space: nowrap; }
+  .shop-price:disabled { border-color: var(--rule); color: var(--dim); text-decoration: line-through; }
+  .shop-price-sub { color: var(--dim); font-size: 10px; }
+  .shop-owned { position: absolute; top: -7px; right: -7px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--gold); color: var(--ink); font-family: var(--sans); font-size: 12px; font-weight: 700; line-height: 20px; text-align: center; }
+  .shop-hint { margin: 0; font-size: 12px; }
+
+  /* Tabs unter den Kacheln: Deckplan | Details. */
+  .shop-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--rule); }
+  .shop-tabs button { flex: 1 1 0; min-width: 0; min-height: 40px; padding: 0 4px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); font-size: 13px; }
+  .shop-tabs button[aria-selected='true'] { border-bottom-color: var(--gold); color: var(--text); font-weight: 700; }
+
+  /* Hinterlegte Deckpläne: bis zu drei Hochformat-Bilder (PNG-Upload oder Kamera),
+     jeder Plan in voller Breite, untereinander; die zwei Knöpfe sitzen ganz unten. */
+  .deck-stack { display: flex; flex-direction: column; gap: 8px; }
+  .deck-card { margin: 0; position: relative; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: #fff; }
+  .deck-card img { width: 100%; display: block; cursor: zoom-in; }
+  .deck-card figcaption { display: flex; align-items: center; justify-content: space-between; gap: 2px; padding: 1px 3px 1px 8px; background: var(--raised); font-size: 11px; color: var(--muted); }
+  .deck-card figcaption .icon-button { width: 28px; height: 28px; }
+  .deck-empty { padding: 14px 10px; border: 1px dashed var(--line); border-radius: 6px; text-align: center; font-size: 12px; color: var(--muted); }
+  .deck-adds { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 2px; }
+  .deck-adds .ghost { min-height: 40px; }
+  .deck-large { width: 100%; max-height: 58vh; object-fit: contain; background: var(--bg); border: 1px solid var(--rule); }
+
+  /* Fortschritt der Raten (nur hier, gold wie das Geld). */
+  .progress { height: 6px; background: var(--rule); }
+  .progress > i { display: block; height: 100%; background: var(--gold); }
+
+  /* Software-Liste: Name und Art, Wirkung darunter. */
+  .soft-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .soft-row .shop-name { font-size: 13px; }
+  .soft-kind { font-family: var(--sans); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); align-self: start; }
+
+  /* Menge plus Schnellknopf im Blatt. */
+  .fuel-row { display: flex; gap: 6px; align-items: stretch; }
+  .fuel-row input { flex: 1 1 auto; min-width: 0; }
+
+  /* Regelkasten wie die freie Buchung im Shop. */
+  .shop-book { display: flex; flex-direction: column; gap: 6px; padding: 12px; border: 1px solid var(--rule); background: var(--panel); font-size: 12.5px; }
+  .shop-book p { margin: 0; }
+
+  /* Dock unten mit den Knöpfen des Bereichs – Stil wie die Action-Knöpfe im Orakel. */
+  .dock { flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--rule); background: var(--panel); }
+  .actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .action { min-height: 56px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; font-weight: 700; font-size: 15px; }
+  .action.soft { background: transparent; color: var(--text); border: 1px solid var(--line-strong); }
+  .action.gold { background: var(--gold); color: var(--ink); }
+  .action:disabled { background: var(--disabled); color: var(--dim); }
+  .action svg { flex: 0 0 auto; }
+  .ghost { min-height: 48px; padding: 8px 6px; background: transparent; border: 1px solid var(--line-strong); font-size: 13px; }
+  .ghost:disabled { border-color: var(--rule); color: var(--dim); }
+  .primary { min-height: 52px; border: 0; background: var(--text); color: var(--ink); font-weight: 700; font-size: 16px; }
+  .ghost.compact { min-height: 36px; padding: 4px 10px; font-size: 13px; }
+
+  /* Blatt über dem Reiter (Kauf, Umbenennen) – Aufbau wie die Blätter der App. */
+  .overlay { position: absolute; inset: 0; z-index: 10; background: rgba(0, 0, 0, 0.72); display: flex; flex-direction: column; padding-top: 10px; }
+  .sheet { flex: 0 0 auto; margin-top: auto; display: flex; flex-direction: column; background: var(--raised); border: 1px solid var(--line-strong); border-bottom: 0; border-radius: 16px 16px 0 0; }
+  .sheet-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 10px 16px 6px; }
+  .sheet-head h2 { margin: 0; font-size: 16px; }
+  .sheet-body { max-height: 56vh; overflow-y: auto; padding: 0 16px 12px; display: flex; flex-direction: column; gap: 10px; }
+  .sheet-foot { display: flex; gap: 8px; padding: 8px 16px 14px; border-top: 1px solid #333; background: var(--panel); }
+  .sheet-foot .ghost { border-radius: 8px; flex: 1 1 40%; }
+  .sheet-foot .primary { flex: 1 1 60%; }
+  .segmented { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--line-strong); }
+  .segmented button { min-height: 40px; padding: 0 2px; border: 0; background: transparent; color: var(--muted); font-size: 12px; }
+  .segmented button[aria-checked='true'] { background: var(--text); color: var(--ink); font-weight: 700; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field span { font-size: 12px; color: var(--muted); }
+  .field input { min-height: 44px; min-font-size: 16px; padding: 8px 10px; background: var(--deep); border: 1px solid var(--line-strong); color: var(--text); font-size: 16px; }
+  .error { padding: 8px 12px; border: 1px solid var(--accent); background: var(--accent-wash); font-size: 14px; }
+  .danger { color: var(--accent-text); border-color: var(--accent); }
+
+  /* Kurzer Hinweis nach einer Tat, gold wie Buchungen. */
+  .toast { position: absolute; left: 50%; transform: translateX(-50%); bottom: 84px; z-index: 20; padding: 8px 14px; border: 1px solid var(--gold-deep, #8a6a2a); background: var(--gold-wash); color: var(--gold-bright); font-family: var(--mono); font-size: 13px; border-radius: 8px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5); opacity: 0; transition: opacity 0.25s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+
+  /* Navigationsreihe: sechs bestehende Reiter, der neue „Schiff“ dahinter. */
+  .nav { flex: 0 0 auto; display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; border-top: 1px solid var(--rule); background: var(--deep); }
+  .nav button { min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: transparent; border: 0; border-top: 2px solid transparent; font-size: 11px; color: var(--muted); }
+  .nav button[aria-current='page'] { border-top-color: var(--accent-text); color: var(--text); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <!-- Grundkarte (Kulisse): Subsektor angedeutet -->
+  <div class="base" aria-hidden="true">
+    <svg viewBox="0 0 430 900" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <pattern id="hex" width="60" height="103.9" patternUnits="userSpaceOnUse">
+          <path d="M30 0 60 17.3v34.7L30 69.3 0 52V17.3ZM30 69.3 60 86.6v34.7M30 69.3 0 86.6v34.7" fill="none" stroke="#161616" stroke-width="1" />
+        </pattern>
+      </defs>
+      <rect width="430" height="900" fill="#0b0b0b" />
+      <rect width="430" height="900" fill="url(#hex)" />
+      <g font-family="IBM Plex Mono, monospace" font-size="10" fill="#4a4a4a">
+        <circle cx="96" cy="120" r="3" fill="#5a5a5a" /><text x="104" y="116">Keth 0102</text>
+        <circle cx="255" cy="70" r="3" fill="#5a5a5a" /><text x="263" y="66">Anvil 0303</text>
+        <circle cx="330" cy="185" r="4" fill="#d9b45f" /><text x="313" y="207" fill="#8a7a4a">Marrow 0404 · hier</text>
+        <circle cx="150" cy="235" r="3" fill="#5a5a5a" /><text x="158" y="231">Sable 0205</text>
+        <circle cx="370" cy="60" r="3" fill="#5a5a5a" /><text x="300" y="52">Vorne 0601</text>
+      </g>
+    </svg>
+  </div>
+  <div class="mock-note">UI-Mock · Reiter „Schiff“ · Konzept 2026-11-16</div>
+
+  <!-- Ziehblatt -->
+  <div class="tray">
+    <div class="tray-grip"><span></span></div>
+    <div class="tray-body">
+      <div class="screen">
+        <div class="shop-top">
+          <div class="shop-head">
+            <div class="head-ship">
+              <div class="head-name">
+                <p class="shop-world" id="headLeft"></p>
+                <!-- Umbenennen wie sonst auch: über das Stift-Symbol. -->
+                <button type="button" class="icon-button" id="headRename" data-act="rename" aria-label="Schiff umbenennen">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1-4.5L15.5 5a2.1 2.1 0 0 1 3 3L8 18.5 4 20z" /><path d="M13.5 7l3 3" /></svg>
+                </button>
+              </div>
+              <p class="head-sub mono muted" id="headSub"></p>
+            </div>
+            <p class="shop-funds"><span class="muted">Kasse</span> <strong class="mono" id="headFunds"></strong></p>
+          </div>
+        </div>
+        <section class="scroll" id="scroll" role="tabpanel"></section>
+        <div class="dock" id="dock"></div>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Bereiche">
+      <button type="button" title="Log (1)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 6.5h12M8 12h12M8 17.5h8" /><circle cx="4" cy="6.5" r="1" fill="currentColor" /><circle cx="4" cy="12" r="1" fill="currentColor" /><circle cx="4" cy="17.5" r="1" fill="currentColor" /></svg>
+        Log
+      </button>
+      <button type="button" title="Begegnung (2)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3" /><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5" /><circle cx="16.5" cy="9" r="2.4" /><path d="M16 14c2.4 0 4.1 1.5 4.6 4.2" /></svg>
+        Begegnung
+      </button>
+      <button type="button" title="Kampf (3)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="7.5" /><circle cx="12" cy="12" r="1.4" fill="currentColor" /><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4" /></svg>
+        Kampf
+      </button>
+      <button type="button" title="Shop (4)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M5 8h14l-1 12H6z" /><path d="M9 10V6.5a3 3 0 0 1 6 0V10" /></svg>
+        Shop
+      </button>
+      <button type="button" aria-current="page" title="Schiff (5)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5c2.8 2.8 4.2 6.8 4.2 11.2L12 19l-4.2-5.3C7.8 9.3 9.2 5.3 12 2.5z" /><path d="M8.1 10.7 4 14.2v3.3l4.3-2.4M15.9 10.7 20 14.2v3.3l-4.3-2.4" /><circle cx="12" cy="8.5" r="1.1" fill="currentColor" stroke="none" /></svg>
+        Schiff
+      </button>
+      <button type="button" title="Charaktere (6)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5" /></svg>
+        Charaktere
+      </button>
+      <button type="button" title="NSC (7)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10.5" r="2.2" /><path d="M5.8 16c.5-1.7 1.7-2.6 3.2-2.6s2.7.9 3.2 2.6" /><path d="M14.5 10h3.5M14.5 13.5h3.5" /></svg>
+        NSC
+      </button>
+    </nav>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div id="sheet-host"></div>
+  <!-- Versteckte Auslöser für PNG-Upload und Kamera der Deckpläne. -->
+  <input type="file" id="deckFileInput" accept="image/png,image/jpeg" hidden />
+  <input type="file" id="deckCamInput" accept="image/*" capture="environment" hidden />
+</div>
+<p class="caption"><b>UI-Mock, kein App-Code.</b> Unter den Kacheln die Ansichten <b>Deckplan</b> (Pläne voll in der Breite, untereinander; „PNG hochladen“ und „Kamera“ ganz unten funktionieren wirklich) und <b>Details</b>. Dock wie im Orakel: Bearbeiten, Treibstoff und das goldene Werft-Blatt. Oben umbenennen per Stift.</p>
+
+<script>
+  // ------- Beispieldaten wie im freigegebenen Modell (Ship, ShipDesign, Kreditsumme, Restschuld) -------
+  const designs = [
+    { code: 'S', name: 'Scout/Courier', hull: 100, jump: 2, maneuver: 2, fuel: 40, computer: 'Modell/1bis', staterooms: 4, lowBerths: 0, hardpoints: 1, cargo: 3, crew: '1 (Pilot/Engineer)', basePrice: 29_430_000, months: 9 },
+    { code: 'A', name: 'Free Trader', hull: 200, jump: 1, maneuver: 1, fuel: 30, computer: 'Modell/1', staterooms: 10, lowBerths: 20, hardpoints: 2, cargo: 82, crew: 'Pilot, Engineer, Medic, Steward', basePrice: 37_080_000, months: 11 },
+    { code: 'R', name: 'Subsidized Merchant', hull: 400, jump: 1, maneuver: 1, fuel: 50, computer: 'Modell/1', staterooms: 13, lowBerths: 9, hardpoints: 2, cargo: 200, crew: '5 + Pilot für Launch', basePrice: 101_030_000, months: 14 },
+    { code: 'M', name: 'Subsidized Liner', hull: 600, jump: 3, maneuver: 1, fuel: 210, computer: 'Modell/3', staterooms: 30, lowBerths: 20, hardpoints: 3, cargo: 129, crew: '9', basePrice: 236_970_000, months: 22 },
+    { code: 'Y', name: 'Yacht', hull: 200, jump: 1, maneuver: 1, fuel: 50, computer: 'Modell/1', staterooms: 14, lowBerths: 0, hardpoints: 1, cargo: 11, crew: 'Pilot, Engineer, Medic, Steward', basePrice: 51_060_000, months: 11 },
+    { code: 'C', name: 'Mercenary Cruiser', hull: 800, jump: 3, maneuver: 3, fuel: 318, computer: 'Modell/5', staterooms: 25, lowBerths: 0, hardpoints: 8, cargo: 80, crew: '8', basePrice: 445_950_000, months: 25 },
+    { code: 'T', name: 'Patrol Cruiser', hull: 400, jump: 3, maneuver: 4, fuel: 160, computer: 'Modell/3', staterooms: 12, lowBerths: 4, hardpoints: 4, cargo: 50, crew: '10', basePrice: 221_040_000, months: 16 },
+    { code: 'L', name: 'Laboratory Ship', hull: 400, jump: 2, maneuver: 1, fuel: 90, computer: 'Modell/2', staterooms: 20, lowBerths: 0, hardpoints: 2, cargo: 23, crew: '5', basePrice: 158_980_000, months: 14 },
+    { code: 'K', name: 'Safari Ship', hull: 200, jump: 2, maneuver: 1, fuel: 60, computer: 'Modell/1bis', staterooms: 11, lowBerths: 0, hardpoints: 1, cargo: 6, crew: '5', basePrice: 81_080_000, months: 11 },
+  ];
+  const design = (code) => designs.find((d) => d.code === code);
+
+  // Der Beispiel-Spielstand: ein Free Trader auf Kredit, Kasse 8,6 MCr.
+  let funds = 8_600_000;
+  let ship = {
+    design: 'A',
+    name: 'Iron Meridian',
+    fuel: 18, // Tonnen im Tank (vom Entwurf: 30)
+    cargo: 0, // Tonnen im Laderaum (vom Entwurf: 82)
+    group: 4, // SC der Gruppe, die immer eine Kabine belegt; Passagiere kommen später dazu
+    price: 37_080_000, // tatsächlich gezahlter Preis
+    initialLoan: 74_160_000, // Kreditsumme: 200 % des Preises, einmal festgelegt
+    loanBalance: 72_306_000, // Restschuld; die Rate hebt die Bank automatisch am Ende der Woche
+  };
+  let buy = null; // offener Kauf: { code, method }
+  let fuel = null; // offener Treibstoffkauf: { qty }
+  let yard = false; // offene Werft (Blatt statt Reiter)
+  let deckTab = 'deckplan'; // aktive Ansicht unter den Kacheln: deckplan | details
+  let deckView = null; // offen angesehener Deckplan (Index) oder null
+  let deckTarget = null; // Slot, auf den ein Upload oder ein Foto gelegt wird
+
+  // Beispiel-Deckpläne; eigene lädt man als PNG hoch oder fotografiert sie mit der Kamera.
+  const planA = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"><rect width="300" height="400" fill="#f2efe6"/><g fill="none" stroke="#222" stroke-width="2.5"><rect x="18" y="18" width="264" height="364" rx="30"/><rect x="80" y="32" width="140" height="46" rx="10"/><line x1="18" y1="96" x2="282" y2="96"/><rect x="30" y="108" width="62" height="46"/><rect x="30" y="160" width="62" height="46"/><rect x="30" y="212" width="62" height="46"/><rect x="208" y="108" width="62" height="150"/><rect x="100" y="108" width="100" height="150"/><rect x="30" y="290" width="240" height="76" rx="10"/></g><g fill="#333" font-family="monospace" font-size="10"><text x="120" y="60">BRUECKE</text><text x="42" y="135">KABINE</text><text x="42" y="187">KABINE</text><text x="42" y="239">KABINE</text><text x="122" y="190">LADERAUM</text><text x="216" y="190">LOW</text><text x="118" y="333">ENGINEERING</text></g></svg>`;
+  const planB = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"><defs><linearGradient id="sh" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.18"/></linearGradient></defs><rect width="300" height="400" fill="#e8e4d8"/><rect x="10" y="14" width="280" height="372" fill="#f4f1e7" transform="rotate(1.2 150 200)"/><g fill="none" stroke="#3a3a3a" stroke-width="2" transform="rotate(1.2 150 200)"><path d="M40 60h220M40 60v290M260 60v290M40 350h220M90 100h50v40H90zM160 100h50v40h-50zM90 170h120v110H90zM70 310h160v26H70z"/></g><g fill="#555" font-family="monospace" font-size="9" transform="rotate(1.2 150 200)"><text x="98" y="125">KABINE</text><text x="168" y="125">KABINE</text><text x="120" y="230">CARGO</text><text x="86" y="328">LOW BERTHS</text></g><rect width="300" height="400" fill="url(#sh)"/></svg>`;
+  const planSrc = (svg) => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+
+  // Bis zu drei Deckpläne (Hochformat); frei gelassene Slots sind null.
+  let decks = [
+    { name: 'Deck A', src: planSrc(planA) },
+    { name: 'Deck B', src: planSrc(planB) },
+    null,
+  ];
+  let editing = false;
+  let renaming = false;
+
+  // Die Programme an Bord (SR 38–39); Routine, was der Betrieb braucht. Kampf-Software kommt mit
+  // der Bewaffnung (Schritt 3), Platzbedarf je Computer fehlt noch (Lücke in Charts and Tables).
+  const software = [
+    { name: 'Maneuver', kind: 'Routine', effect: 'nötig, um den Maneuver Drive einzusetzen' },
+    { name: 'Jump · Jump-1', kind: 'Routine', effect: 'nötig für den Sprung, mit dem Jump-Programm zur Sprungzahl' },
+    { name: 'Navigation', kind: 'Routine', effect: 'führt den Sprung nach dem Flugplan durch' },
+    { name: 'Generate', kind: 'Routine', effect: 'erstellt den Flugplan; sonst Flugplan-Kassette am Hafen (Cr 10.000)' },
+    { name: 'Anti-Hijack', kind: 'Routine', effect: 'sperrt die Kontrollbereiche gegen Entführer; Umgehung nur auf 5−' },
+    { name: 'Library', kind: 'Routine', effect: 'Nachschlagewerk zu Region und Subsektor' },
+  ];
+
+  // ------- Formatieren wie in der App (format.ts) -------
+  const credits = (n) => `Cr ${n.toLocaleString('de-DE')}`;
+  const mcr = (n) => `MCr ${(n / 1_000_000).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const monthly = (s) => (s.initialLoan ? Math.round(s.initialLoan / 480) : 0);
+  const down = (d) => Math.round(d.basePrice * 0.2);
+  const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+  // ------- Kopf: Name und Typ in zwei Zeilen -------
+  function renderHead() {
+    const d = ship && design(ship.design);
+    document.getElementById('headLeft').innerHTML = ship ? `<b>${esc(ship.name)}</b>` : '<span class="muted">Kein Schiff</span>';
+    document.getElementById('headSub').textContent = ship ? `${d.name} (${d.code})` : '';
+    document.getElementById('headRename').style.display = ship ? '' : 'none';
+    document.getElementById('headFunds').textContent = credits(funds);
+  }
+
+  // ------- Bereiche -------
+  function tileRow(label, value, gold) {
+    return `<div class="tile${gold ? ' gold' : ''}"><span class="tile-label">${label}</span><span class="tile-text">${value}</span></div>`;
+  }
+
+  function shipArea() {
+    if (!ship) {
+      return `<p class="log-empty">Die Gruppe hat noch kein Schiff. Unten die <b>Werft</b> öffnen und einen Standardentwurf kaufen; bei der Abmusterung gibt es Schiffe als Vorteil (Scout schuldenfrei, Merchant mit halber Schuld).</p>`;
+    }
+    const d = design(ship.design);
+    const cabins = ship.group + (ship.passengers || 0);
+    const tiles = `
+      <div class="card-grid">
+        ${tileRow('Treibstoff', `${ship.fuel} / ${d.fuel} t`)}
+        ${tileRow('Fracht', `${ship.cargo} / ${d.cargo} t`)}
+        <div class="tile duo">
+          <span class="duo-col"><span class="tile-label">Kabinen</span><span class="tile-text">${cabins} / ${d.staterooms}</span></span>
+          <span class="duo-col"><span class="tile-label">Niedrigbetten</span><span class="tile-text">${ship.lowPassengers || 0} / ${d.lowBerths}</span></span>
+        </div>
+        ${tileRow('Antrieb', `Jump-${d.jump} · ${d.maneuver}G`)}
+        ${tileRow('Hardpoints', `${d.hardpoints} (unbewaffnet)`)}
+        ${tileRow('Computer', d.computer)}
+      </div>`;
+    const tabs = `
+      <div class="shop-tabs" role="tablist" aria-label="Ansichten des Schiffs">
+        <button type="button" role="tab" data-decktab="deckplan" aria-selected="${deckTab === 'deckplan'}">Deckplan</button>
+        <button type="button" role="tab" data-decktab="details" aria-selected="${deckTab === 'details'}">Details</button>
+      </div>`;
+    return tiles + tabs + (deckTab === 'deckplan' ? deckplanTab(d) : detailsTab(d));
+  }
+
+  // Ansicht Deckplan: bis zu drei eigene Pläne im Hochformat, jeder voll in der Breite,
+  // untereinander; PNG-Upload und Kamera als die zwei Knöpfe ganz unten.
+  function deckplanTab(d) {
+    const zoom = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5 21 21M10.5 8v5M8 10.5h5" /></svg>';
+    const trash = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9.5 7V5h5v2M6.5 7l1 13h9l1-13" /></svg>';
+    const cards = decks
+      .map((deck, i) =>
+        deck
+          ? `<figure class="deck-card">
+              <img src="${deck.src}" alt="${esc(deck.name)}" data-act="deckOpen" data-idx="${i}" />
+              <figcaption><span>${esc(deck.name)}</span><span><button type="button" class="icon-button" data-act="deckOpen" data-idx="${i}" aria-label="${esc(deck.name)} ansehen">${zoom}</button><button type="button" class="icon-button" data-act="deckDel" data-idx="${i}" aria-label="${esc(deck.name)} entfernen">${trash}</button></span></figcaption>
+            </figure>`
+          : '',
+      )
+      .join('');
+    const free = decks.findIndex((deck) => !deck);
+    const full = free === -1;
+    const note = full ? '' : `<div class="deck-empty">Noch ${3 - decks.filter(Boolean).length} von 3 Plätzen frei</div>`;
+    return `
+      <div class="deck-stack">${cards}${note}</div>
+      <div class="deck-adds">
+        <button type="button" class="ghost" data-act="deckUpload" ${full ? 'disabled title="Alle drei Deckpläne belegt"' : ''}>PNG hochladen</button>
+        <button type="button" class="ghost" data-act="deckCam" ${full ? 'disabled title="Alle drei Deckpläne belegt"' : ''}>Kamera</button>
+      </div>`;
+  }
+
+  // Ansicht Details: alles, was nicht schon in den Kacheln steht.
+  function detailsTab(d) {
+    const debt = ship.loanBalance
+      ? `<span style="color:var(--gold)">${esc(credits(ship.loanBalance))}</span>`
+      : 'schuldenfrei';
+    const rows = [
+      ['Restschuld', debt],
+      ['Crewbedarf', esc(d.crew)],
+      ['Bauzeit', `${d.months} Monate`],
+      ['Grundpreis', esc(mcr(d.basePrice))],
+      ['Preis (gezahlt)', esc(credits(ship.price))],
+    ];
+    const soft = software
+      .map((s) => `<div class="shop-row soft-row" role="row">
+          <span role="cell" class="shop-name"><span class="shop-label">${s.name}</span><span class="shop-meta">${s.effect}</span></span>
+          <span role="cell" class="shop-num soft-kind muted">${s.kind}</span>
+        </div>`)
+      .join('');
+    return `
+      <dl class="profile">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
+      ${ship.loanBalance ? `<p class="shop-hint muted">Die Bank hebt die Monatsrate (${credits(monthly(ship))}) automatisch am Ende jeder Woche aus der Kasse; ohne Deckung bleibt die Rate als Hinweis im Log.</p>` : ''}
+      <h2 class="section-title">Software an Bord · ${d.computer}</h2>
+      <div class="shop-table" role="table" aria-label="Software an Bord">${soft}</div>
+      <p class="shop-hint muted">Kabinen und Niedrigbetten: immer die Gruppe zuerst, später zahlende Passagiere. Noch offen (Schritte 2 und 3): Bewaffnung, Kampf-Software, eigener Sprung mit Treibstoffverbrauch.</p>`;
+  }
+
+  function yardArea() {
+    const rows = designs
+      .map((d) => {
+        const cash = funds >= d.basePrice;
+        const finance = funds >= down(d);
+        const owned = ship && ship.design === d.code;
+        const sub = cash ? 'bar' : finance ? `Anzahlung ${mcr(down(d))}` : '';
+        return `
+        <div class="shop-row ship-row" role="row">
+          <span role="cell" class="shop-name">
+            <span class="shop-label">${d.name} <small>${d.code}</small></span>
+            <span class="shop-meta">${d.hull} t · Jump-${d.jump} · ${d.maneuver}G · ${d.crew}</span>
+          </span>
+          <span role="cell" class="shop-num">
+            <button type="button" class="shop-price" data-act="openBuy" data-code="${d.code}" ${cash || finance ? '' : 'disabled'}>
+              <span>${mcr(d.basePrice)}</span>
+              ${sub ? `<span class="shop-price-sub">${sub}</span>` : ''}
+              ${owned ? `<span class="shop-owned" title="das habt ihr">✓</span>` : ''}
+            </button>
+          </span>
+        </div>`;
+      })
+      .join('');
+    return `
+      <p class="shop-hint muted">Preis antippen zum Bestellen an der Werft. Bar oder über die Bank: 20&nbsp;% Anzahlung, 480 Monatsraten, zusammen 220&nbsp;% des Preises (SR&nbsp;29). Grau = nicht bezahlbar.</p>
+      <div class="shop-counter">
+        <h2 class="section-title">Standardentwürfe <span class="muted">(${designs.length})</span></h2>
+        <div class="shop-table" role="table" aria-label="Standardentwürfe">
+          <div class="shop-row ship-row shop-row-head" role="row">
+            <span role="columnheader">Entwurf</span>
+            <span role="columnheader" class="shop-num">MCr</span>
+          </div>
+          ${rows}
+        </div>
+      </div>
+      <p class="shop-hint muted">Auch bei der Abmusterung gibt es ein Schiff: der Ship-Vorteil der Laufbahn (Scout/Courier schuldenfrei, Free Trader mit halber Kreditschuld).</p>`;
+  }
+
+  function renderArea() {
+    document.getElementById('scroll').innerHTML = shipArea();
+  }
+
+  // ------- Dock: Knöpfe im Stil des Orakels, die Werft als Blatt -------
+  const pencilSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1-4.5L15.5 5a2.1 2.1 0 0 1 3 3L8 18.5 4 20z" /><path d="M13.5 7l3 3" /></svg>';
+  const dropSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3s6 6.6 6 10.6a6 6 0 0 1-12 0C6 9.6 12 3 12 3z" /></svg>';
+  const shipSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5c2.8 2.8 4.2 6.8 4.2 11.2L12 19l-4.2-5.3C7.8 9.3 9.2 5.3 12 2.5z" /><path d="M8.1 10.7 4 14.2v3.3l4.3-2.4M15.9 10.7 20 14.2v3.3l-4.3-2.4" /></svg>';
+
+  function renderDock() {
+    const el = document.getElementById('dock');
+    el.innerHTML = ship
+      ? `<div class="actions">
+          <button type="button" class="action soft" data-act="edit">${pencilSvg}Bearbeiten</button>
+          <button type="button" class="action soft" data-act="buyFuel">${dropSvg}Treibstoff</button>
+          <button type="button" class="action gold" data-act="yard">${shipSvg}Werft</button>
+        </div>`
+      : `<div class="actions"><button type="button" class="action gold" data-act="yard" style="grid-column: 1 / -1">${shipSvg}Werft öffnen</button></div>`;
+  }
+
+  function render() {
+    renderHead();
+    renderArea();
+    renderDock();
+  }
+
+  // ------- Taten -------
+  const toastEl = document.getElementById('toast');
+  let toastTimer;
+  function toast(text) {
+    toastEl.textContent = text;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+  }
+
+  // Blatt: Schiff bearbeiten – Name, Treibstoff und Fracht als Zahlen in Tonnen (wie im Modell).
+  function editSheet() {
+    const d = design(ship.design);
+    document.getElementById('sheet-host').innerHTML = `
+      <div class="overlay" data-act="sheetBg">
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Schiff bearbeiten">
+          <div class="sheet-head">
+            <h2>Schiff bearbeiten</h2>
+            <span class="muted mono" style="font-size:12px">${d.name} (${d.code})</span>
+          </div>
+          <div class="sheet-body">
+            <label class="field"><span>Name</span><input id="editName" value="${esc(ship.name)}" maxlength="40" /></label>
+            <label class="field"><span>Treibstoff (von ${d.fuel} t)</span><input id="editFuel" type="number" inputmode="numeric" min="0" max="${d.fuel}" value="${ship.fuel}" /></label>
+            <label class="field"><span>Fracht (von ${d.cargo} t)</span><input id="editCargo" type="number" inputmode="numeric" min="0" max="${d.cargo}" value="${ship.cargo}" /></label>
+            <p class="shop-hint muted">Die Belegung der Kabinen ergibt sich aus der Gruppe (${ship.group} SC); zahlende Passagiere kommen mit dem Handel.</p>
+          </div>
+          <div class="sheet-foot">
+            <button type="button" class="ghost" data-act="closeSheet">Abbrechen</button>
+            <button type="button" class="primary" data-act="saveEdit">Speichern</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function saveEdit() {
+    const d = design(ship.design);
+    const name = document.getElementById('editName').value.trim();
+    const fuelT = Math.max(0, Math.min(d.fuel, Math.floor(Number(document.getElementById('editFuel').value) || 0)));
+    const cargoT = Math.max(0, Math.min(d.cargo, Math.floor(Number(document.getElementById('editCargo').value) || 0)));
+    if (!name) return toast('Einen Namen braucht das Schiff.');
+    ship.name = name;
+    ship.fuel = fuelT;
+    ship.cargo = cargoT;
+    closeSheet();
+    toast('Gespeichert.');
+    render();
+  }
+
+  // Blatt: Treibstoff kaufen – raffiniert zu Cr500 je Tonne (SR 30).
+  function fuelSheet() {
+    const d = design(ship.design);
+    const need = d.fuel - ship.fuel;
+    document.getElementById('sheet-host').innerHTML = `
+      <div class="overlay" data-act="sheetBg">
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Treibstoff kaufen">
+          <div class="sheet-head">
+            <h2>Treibstoff kaufen</h2>
+            <span class="muted mono" style="font-size:12px">Cr 500 / t · raffiniert</span>
+          </div>
+          <div class="sheet-body">
+            <label class="field">
+              <span>Menge in Tonnen</span>
+              <span class="fuel-row">
+                <input id="fuelQty" type="number" inputmode="numeric" min="0" max="${need}" value="${fuel.qty}" />
+                <button type="button" class="ghost compact" data-act="fuelFull">Voll tanken (${need} t)</button>
+              </span>
+            </label>
+            <div id="fuelSummary"></div>
+          </div>
+          <div class="sheet-foot">
+            <button type="button" class="ghost" data-act="closeSheet">Abbrechen</button>
+            <button type="button" class="primary" id="fuelConfirm" data-act="confirmFuel">Kaufen</button>
+          </div>
+        </div>
+      </div>`;
+    updateFuelSummary();
+    document.getElementById('fuelQty').addEventListener('input', (e) => {
+      fuel.qty = Math.max(0, Math.min(need, Math.floor(Number(e.target.value) || 0)));
+      updateFuelSummary();
+    });
+  }
+
+  function updateFuelSummary() {
+    const d = design(ship.design);
+    const cost = fuel.qty * 500;
+    const el = document.getElementById('fuelSummary');
+    el.innerHTML = `
+      <dl class="profile">
+        <dt>Tank danach</dt><dd>${ship.fuel + fuel.qty} / ${d.fuel} t</dd>
+        <dt>Kosten</dt><dd>${credits(cost)}</dd>
+        <dt>Kasse danach</dt><dd>${credits(funds - cost)}</dd>
+      </dl>
+      ${fuel.qty > 0 && cost > funds ? `<p class="error">Die Kasse (${credits(funds)}) reicht dafür nicht.</p>` : ''}`;
+    document.getElementById('fuelConfirm').disabled = !(fuel.qty > 0 && cost <= funds);
+  }
+
+  function confirmFuel() {
+    const cost = fuel.qty * 500;
+    if (fuel.qty <= 0 || cost > funds) return;
+    funds -= cost;
+    ship.fuel += fuel.qty;
+    closeSheet();
+    toast(`Treibstoff gekauft · +${fuel.qty} t · −${credits(cost)}`);
+    render();
+  }
+
+  // ------- Blätter (Werft, Kaufen, Bearbeiten, Treibstoff, Umbenennen) -------
+  function closeSheet() {
+    yard = false;
+    buy = null;
+    fuel = null;
+    editing = false;
+    renaming = false;
+    deckView = null;
+    document.getElementById('sheet-host').innerHTML = '';
+  }
+
+  // Die Werft ist kein Reiter, sondern ein Blatt über dem Reiter.
+  function yardSheet() {
+    document.getElementById('sheet-host').innerHTML = `
+      <div class="overlay" data-act="sheetBg">
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Werft">
+          <div class="sheet-head">
+            <h2>Werft</h2>
+            <span class="muted mono" style="font-size:12px">Standardentwürfe · SR 35–37</span>
+          </div>
+          <div class="sheet-body">${yardArea()}</div>
+          <div class="sheet-foot">
+            <button type="button" class="ghost" data-act="closeSheet" style="flex: 1 1 100%">Schließen</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function buySheet() {
+    const d = design(buy.code);
+    const cash = funds >= d.basePrice;
+    const m = Math.round(d.basePrice * 2 / 480);
+    const canPay = buy.method === 'cash' ? cash : funds >= down(d);
+    const summary =
+      buy.method === 'cash'
+        ? `<dl class="profile">
+            <dt>Preis</dt><dd>${credits(d.basePrice)}</dd>
+            <dt>Kasse danach</dt><dd>${credits(funds - d.basePrice)}</dd>
+            <dt>Bauzeit (Referenz)</dt><dd>${d.months} Monate</dd>
+          </dl>`
+        : `<dl class="profile">
+            <dt>Anzahlung (20 %)</dt><dd>${credits(down(d))}</dd>
+            <dt>Kreditsumme (200 %)</dt><dd>${credits(d.basePrice * 2)}</dd>
+            <dt>Monatsrate</dt><dd>${credits(m)} × 480</dd>
+            <dt>Gesamt (220 %)</dt><dd>${credits(down(d) + d.basePrice * 2)}</dd>
+          </dl>`;
+    document.getElementById('sheet-host').innerHTML = `
+      <div class="overlay" data-act="sheetBg">
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Kaufen">
+          <div class="sheet-head">
+            <h2>${d.name} (${d.code}) kaufen</h2>
+            <span class="muted mono" style="font-size:12px">${d.hull} t · Jump-${d.jump} · ${d.maneuver}G</span>
+          </div>
+          <div class="sheet-body">
+            <div class="segmented" role="radiogroup" aria-label="Bezahlart">
+              <button type="button" role="radio" data-act="method" data-method="cash" aria-checked="${buy.method === 'cash'}" ${cash ? '' : 'disabled'}>Bar aus der Kasse</button>
+              <button type="button" role="radio" data-act="method" data-method="bank" aria-checked="${buy.method === 'bank'}">Bankfinanzierung</button>
+            </div>
+            ${summary}
+            ${canPay ? '' : `<p class="error">Die Kasse (${credits(funds)}) reicht dafür nicht.</p>`}
+            ${ship ? `<p class="shop-hint muted">Die Gruppe hat schon „${esc(ship.name)}“. Beim Kaufen gilt im Mock: das alte Schiff entfällt (wie beim Wechsel durch den Ship-Vorteil).</p>` : ''}
+          </div>
+          <div class="sheet-foot">
+            <button type="button" class="ghost" data-act="backYard">← Werft</button>
+            <button type="button" class="primary" data-act="confirmBuy" ${canPay ? '' : 'disabled'}>${buy.method === 'cash' ? 'Bar kaufen' : 'Finanzieren und bestellen'}</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function confirmBuy() {
+    const d = design(buy.code);
+    const group = ship ? ship.group : 4;
+    decks = [null, null, null]; // ein neues Schiff hat erst einmal keine hinterlegten Pläne
+    deckTab = 'deckplan';
+    if (buy.method === 'cash') {
+      funds -= d.basePrice;
+      ship = { design: d.code, name: d.name, fuel: d.fuel, cargo: 0, group, passengers: 0, price: d.basePrice, initialLoan: 0, loanBalance: 0 };
+      toast(`${d.name} gekauft · −${credits(d.basePrice)}`);
+    } else {
+      funds -= down(d);
+      ship = { design: d.code, name: d.name, fuel: d.fuel, cargo: 0, group, passengers: 0, price: d.basePrice, initialLoan: d.basePrice * 2, loanBalance: d.basePrice * 2 };
+      toast(`${d.name} bestellt · Anzahlung −${credits(down(d))}`);
+    }
+    closeSheet();
+    render();
+  }
+
+  // Blatt: einen Deckplan groß ansehen, samt Entfernen.
+  function deckSheet(i) {
+    const deck = decks[i];
+    document.getElementById('sheet-host').innerHTML = `
+      <div class="overlay" data-act="sheetBg">
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(deck.name)}">
+          <div class="sheet-head">
+            <h2>${esc(deck.name)}</h2>
+            <span class="muted mono" style="font-size:12px">Deckplan</span>
+          </div>
+          <div class="sheet-body" style="align-items:center">
+            <img class="deck-large" src="${deck.src}" alt="${esc(deck.name)}" />
+          </div>
+          <div class="sheet-foot">
+            <button type="button" class="ghost danger" data-act="deckDel" data-idx="${i}">Entfernen</button>
+            <button type="button" class="primary" data-act="closeSheet">Fertig</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function deckDelete(i) {
+    const name = decks[i] ? decks[i].name : 'Der Plan';
+    decks[i] = null;
+    closeSheet();
+    toast(`${name} entfernt.`);
+    render();
+  }
+
+  // PNG-Upload oder Kamera-Foto auf den frei gewählten Slot legen.
+  function onDeckFile(e) {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file || deckTarget === null) return;
+    const i = deckTarget;
+    deckTarget = null;
+    const reader = new FileReader();
+    reader.onload = () => {
+      decks[i] = { name: `Deck ${'ABC'[i]}`, src: reader.result };
+      closeSheet();
+      render();
+      toast(`Deck ${'ABC'[i]} hinterlegt.`);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function renameSheet() {
+    document.getElementById('sheet-host').innerHTML = `
+      <div class="overlay" data-act="sheetBg">
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Umbenennen">
+          <div class="sheet-head"><h2>Schiff umbenennen</h2></div>
+          <div class="sheet-body">
+            <label class="field"><span>Name</span><input id="renameInput" value="${esc(ship.name)}" maxlength="40" /></label>
+          </div>
+          <div class="sheet-foot">
+            <button type="button" class="ghost" data-act="closeSheet">Abbrechen</button>
+            <button type="button" class="primary" data-act="confirmRename">Speichern</button>
+          </div>
+        </div>
+      </div>`;
+    const input = document.getElementById('renameInput');
+    input.focus();
+    input.select();
+  }
+
+  function confirmRename() {
+    const name = document.getElementById('renameInput').value.trim();
+    if (name) {
+      ship.name = name;
+      toast(`Das Schiff heißt jetzt „${name}“.`);
+    }
+    closeSheet();
+    render();
+  }
+
+  // ------- Ereignisse -------
+  document.getElementById('app').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-act],[data-decktab]');
+    if (!t) return;
+    if (t.dataset.decktab) {
+      deckTab = t.dataset.decktab;
+      return render();
+    }
+    switch (t.dataset.act) {
+      case 'deckOpen':
+        deckView = Number(t.dataset.idx);
+        return deckSheet(deckView);
+      case 'deckDel':
+        return deckDelete(Number(t.dataset.idx));
+      case 'deckUpload': {
+        const free = decks.findIndex((deck) => !deck);
+        if (free === -1) return;
+        deckTarget = free;
+        return document.getElementById('deckFileInput').click();
+      }
+      case 'deckCam': {
+        const free = decks.findIndex((deck) => !deck);
+        if (free === -1) return;
+        deckTarget = free;
+        return document.getElementById('deckCamInput').click();
+      }
+      case 'yard':
+        yard = true;
+        return yardSheet();
+      case 'openBuy':
+        buy = { code: t.dataset.code, method: funds >= design(t.dataset.code).basePrice ? 'cash' : 'bank' };
+        return buySheet();
+      case 'backYard':
+        buy = null;
+        return yardSheet();
+      case 'method':
+        buy.method = t.dataset.method;
+        return buySheet();
+      case 'confirmBuy':
+        return confirmBuy();
+      case 'edit':
+        editing = true;
+        return editSheet();
+      case 'saveEdit':
+        return saveEdit();
+      case 'buyFuel':
+        fuel = { qty: design(ship.design).fuel - ship.fuel };
+        return fuelSheet();
+      case 'fuelFull':
+        fuel.qty = design(ship.design).fuel - ship.fuel;
+        document.getElementById('fuelQty').value = fuel.qty;
+        return updateFuelSummary();
+      case 'confirmFuel':
+        return confirmFuel();
+      case 'rename':
+        renaming = true;
+        return renameSheet();
+      case 'confirmRename':
+        return confirmRename();
+      case 'closeSheet':
+        return closeSheet();
+      case 'sheetBg':
+        if (e.target === t) return closeSheet();
+    }
+  });
+  document.getElementById('deckFileInput').addEventListener('change', onDeckFile);
+  document.getElementById('deckCamInput').addEventListener('change', onDeckFile);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && (yard || buy || fuel || editing || renaming || deckView !== null)) closeSheet();
+  });
+
+  render();
+</script>
+</body>
+</html>

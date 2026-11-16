@@ -91,6 +91,22 @@ export function GenerationSheet({ generation, log }: { generation: GenerationVie
           {latest && !(dramatic && rolling) && (
             <RollStage key={latest.index} line={latest} animate={animate && !dramatic} onSettled={setSettled} skips={skips} />
           )}
+          {/* Der Ship-Vorteil der Abmusterung, dessen Wahl noch offen ist: behalten oder wechseln. */}
+          {view.shipGain !== undefined && (
+            <div className="ship-gain" role="note">
+              <p>
+                Ship-Vorteil: „{view.shipGain.current}“ behalten oder den <b>{view.shipGain.name}</b> ({view.shipGain.design}) {view.shipGain.debtFree ? 'schuldenfrei' : 'mit Kreditschuld'} nehmen?
+              </p>
+              <span className="ship-gain-choice">
+                <button type="button" className="ghost" onClick={() => game.chooseShipGain('keep')}>
+                  Behalten
+                </button>
+                <button type="button" className="primary" onClick={() => game.chooseShipGain('switch')}>
+                  Wechseln
+                </button>
+              </span>
+            </div>
+          )}
           <p className="generation-prompt" aria-live="polite">
             {view.prompt}
           </p>

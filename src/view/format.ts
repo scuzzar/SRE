@@ -78,6 +78,7 @@ export const bookingText: Record<BookingKind, string> = {
   lottery: 'Low Lottery',
   rent: 'Miete',
   fare: 'Fahrpreis',
+  ship: 'Schiff',
 };
 
 /** Die Rüstungsklassen, wie die Matrix sie schreibt. */
@@ -242,6 +243,11 @@ export function dayTime(iso: string): string {
 
 export function credits(amount: number): string {
   return `Cr ${amount.toLocaleString('de-DE')}`;
+}
+
+/** Ein großer Betrag in Megacredits mit zwei Nachkommastellen: „MCr 37,08“. */
+export function mcr(amount: number): string {
+  return `MCr ${(amount / 1_000_000).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export function quoted(text: string): string {

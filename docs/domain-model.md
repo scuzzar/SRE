@@ -357,6 +357,47 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Raumhafen A–C oder Landeplatz F, ab TL 6 und Atmosphäre 4, ohne Fahrplan. Neu im Bild:
 > `Vehicle.tl`, `Vehicle.fare`, `Leg./fare`, `TripDay.fare`, `BookingKind.fare`. Der Ausschnitt dazu
 > liegt unter [`changes/2026-11-15-linienflug.png`](changes/2026-11-15-linienflug.png).
+>
+> Am 16. November 2026 freigegeben (Kennzeichen 2026-11-16): **Schiffe als Basis der Gruppe** (siehe
+> *Schiffe*, RAW-Regeln in [`regeln-schiffe.md`](regeln-schiffe.md)). Erster von drei Schritten
+> (danach Handel, dann Raumkampf). Neu im Bild: `Ship` (mit `price`, eigener gezahlter Preis,
+> getrennt vom `basePrice` des Entwurfs), `ShipDesign`, `Campaign.ship`, `BookingKind.ship`,
+> `Booking.forShip`, `Gain.ship`, `Gain.shipDebtFree`, `CareerRoll.shipChoice`, `ShipChoice`. Der
+> Ausschnitt dazu liegt unter
+> [`changes/2026-11-16-schiffe-basis.png`](changes/2026-11-16-schiffe-basis.png).
+>
+> Ebenfalls am 16. November 2026 freigegeben (Kennzeichen 2026-11-16b): **Software,
+> Rechner und Deckpläne zu den Schiffen** (Regeln in [`regeln-schiffe.md`](regeln-schiffe.
+> md) unter *Computer und Software*). Neu im Bild: `Software` und `SoftwareKind` (die
+> Software-Liste aus SE 13 mit Space und MCr), `ComputerModel` (SE 10; die Modellzahl
+> ist höchste Sprungzahl und Wert des Softwarepakets), `ShipSoftware` (was ein
+> konkretes Schiff dabeihat) und `DeckPlan` als **Geräte-Daten** (orange: das Gerät
+> hält sie je Entwurf über Kampagnen hinweg, Export und OneDrive holen sie nicht).
+> `Ship` bekommt `retired` (Ausblenden statt Löschen, damit Buchungen mit `forShip`
+> nicht ins Leere zeigen); `ShipDesign.computer` ist Verweis auf ein Rechnermodell
+> statt Text. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-16b-schiff-retired-und-deckplaene.png`](changes/2026-11-16b-schiff-retired-und-deckplaene.png).
+>
+> Noch offen (Kennzeichen 2026-11-16c): **Die Kampagne hält alle ihre Schiffe.** Der
+> Inhalt ist mit 16b schon freigegeben (ausgediente Schiffe bleiben mit `retired` in der
+> Kampagne, Buchungen mit `forShip` zeigen weiter auf sie) – die Zeichnung war dazu
+> unvollständig: Ein einzelnes `ship`-Feld kann kein ausgeblendetes Schiff aufnehmen, und
+> `forShip` brauchte eine stabile Id. Neu im Bild: die Komposition `Campaign.ships` (0..*,
+> alle Schiffe auch mit `retired`) und das abgeleitete `/ship` am `Campaign` – das aktive
+> Schiff, wie `focus` beim Charakter; die Schiffs-Id (s1, s2, …) ist wie bei Charakteren
+> nicht gezeichnet. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-16c-schiffe-der-kampagne.png`](changes/2026-11-16c-schiffe-der-kampagne.png).
+>
+> Noch offen (Kennzeichen 2026-11-16d): **Reisen mit eigenem Schiff.** Neben die Passage
+> (High, Middle, Low) tritt die Reise im eigenen Schiff: Sie erreicht in einer Woche jedes Ziel
+> innerhalb der Sprungzahl des Entwurfs, ohne Raumhafen zu verlangen, und kostet keinen Passagen-
+> preis, sondern Treibstoff. Neu im Bild: der Verweis `Journey.ship` auf das Schiff der Reise, der
+> Sprungwurf `Journey.jump` (2W6) mit dem abgeleiteten `/misjump` (Fehlsprung bei 13+, SR 28) und
+> das abgeleitete `ShipDesign./jumpFuel` – der Verbrauch je Sprung als Hausregel: Tankinhalt durch
+> Sprungzahl, gerundet. `Journey.passengers` wird von 1..* auf 0..* geöffnet: mit eigenem Schiff
+> reist niemand als Passagier, es gibt keine Passagen, keine Kojen und keine Lotterie. Der
+> Ausschnitt dazu liegt unter
+> [`changes/2026-11-16d-reisen-mit-eigenem-schiff.png`](changes/2026-11-16d-reisen-mit-eigenem-schiff.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -386,9 +427,11 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Kampf: Waffen, Angriff, Wunden, Heilung | [views/kampf.png](views/kampf.png) |
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
+| Schiffe | [views/schiffe.png](views/schiffe.png) |
 
-Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist
+[2026-11-16c](changes/2026-11-16c-schiffe-der-kampagne.png): die Kampagne hält alle ihre
+Schiffe (`ships`), das aktive ist abgeleitet.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -483,13 +526,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Tag im Log | `LogEntry.day` | An welchem Spieltag ein Logeintrag entstand; fehlt bei Einträgen von vor der Spielzeit |
 | Test (im Log) | `CheckRoll`, `CheckKind` | Ein gewürfelter Test einer Begegnungsart: random, animal, patron, rumor, legal |
 | Polizei, Legal Encounter | `CheckKind.legal` | Einmal je Woche 2W6 gleich oder über der Gesetzesstufe des Aufenthaltsorts, sonst hält die Polizei die Gruppe an (SE S. 20) |
-| Reise | `Journey` | Logeintrag: Die Gruppe reist mit Passagen von einer Welt zur anderen, eine Woche im Sprung |
+| Reise | `Journey` | Logeintrag: Die Gruppe reist von einer Welt zur anderen, eine Woche im Sprung – mit Passagen oder mit dem eigenen Schiff (2026-11-16d) |
 | Passagier | `Passenger` | Ein Charakter auf der Reise mit seiner Passage (High, Middle oder Low Passage) |
 | Kälteschlafkoje | `LowBerth` | Ein Low-Passagier der Reise, SC oder NSC, mit Wurf zum Aufwachen und Tipp der Lotterie |
 | Low Lottery | `Journey./pot`, `/winner`, `lot` | Cr 10 je Low Passage; wer die Zahl der Überlebenden am besten tippt und selbst überlebt, gewinnt |
 | Gruppenkasse | `Campaign./funds` | Das gemeinsame Geld der Gruppe in Cr, die Summe aller Buchungen |
 | Buchung | `Booking` | Eine Bewegung der Gruppenkasse: Einnahme, Ausgabe, Einzahlung, Auszahlung oder Kauf |
-| Art der Buchung | `BookingKind` | income (Einnahme, z. B. Belohnung), expense (Ausgabe), deposit (Einzahlung eines Charakters), payout (Auszahlung an einen Charakter), purchase (Kauf), sale (Verkauf), lottery (Gewinn der Low Lottery) |
+| Art der Buchung | `BookingKind` | income (Einnahme, z. B. Belohnung), expense (Ausgabe), deposit (Einzahlung eines Charakters), payout (Auszahlung an einen Charakter), purchase (Kauf), sale (Verkauf), lottery (Gewinn der Low Lottery), rent (Miete je Tag eines Fahrzeugs), fare (Fahrpreis im Linienverkehr), ship (Schiff: voller Preis, Anzahlung und jede Monatsrate der Bankfinanzierung) |
 | Angebot | `Hex./offer` | Was man auf der Welt kaufen kann: nach TL und Gesetz der Welt |
 | Shop | (Reiter „Shop“) | Der Screen für Kasse und Einkauf auf dem Aufenthaltsort |
 | Magazin | `Weapon.ammo` | Der Gegenstand, der eine Schusswaffe lädt, z. B. Rifle Ammo (20 rds) oder LC Power Pack |
@@ -668,6 +711,25 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Einheimisches Leben | `Surface.life` | Ob auf der Welt eigenes Leben entstanden ist; ohne Leben ist das Land später Wüste |
 | Kontinente- und Ozeane-Tabelle | `SurfaceRow`, `SurfaceTable` | Die beiden Tabellen des *World Builder's Handbook* (S. 70), aus denen die Land- bzw. Wassermassen kommen |
 | Würfelausdruck | `DiceExpr` | Wie viele W6 plus welcher DM, z. B. 2W6 + 1 oder 3W6 − 3 |
+| Schiff | `Ship`, `Campaign.ships`, `Campaign./ship` | Das eine Schiff der Gruppe als Basis: Entwurf, Name, Treibstoff und Fracht in Tonnen, offene Restschuld. Die Kampagne hält alle ihre Schiffe (auch die ausgeblendeten, 2026-11-16c); `/ship` ist das nicht ausgeblendete, wie `focus` beim Charakter; die Schiffs-Id (s1, s2, …) ist wie bei Charakteren nicht gezeichnet |
+| Schiffsentwurf | `ShipDesign` | Referenzdaten eines Standardentwurfs (Scout/Courier, Free Trader, …): Rumpf, Antriebe, Treibstofftank, Computer, Kabinen, Niedrigbetten, Hardpoints, Laderaum, Crewbedarf, Bauzeit; siehe [`regeln-schiffe.md`](regeln-schiffe.md) unter *Standardentwürfe* |
+| Grundpreis | `ShipDesign.basePrice` | Was ein neues Schiff dieses Entwurfs nach SR 35–37 kostet; ein fester Wert, weil sich Rumpf, Antriebe, Energiewerk und Computer ohne die Tabellen aus *Charts and Tables* nicht einzeln bepreisen lassen |
+| Preis | `Ship.price` | Was dieses eine Schiff tatsächlich gekostet hat; beim Erwerb gleich dem Grundpreis seines Entwurfs, kann aber abweichen (z. B. gebrauchtes Schiff, später) |
+| Kreditsumme | `Ship.initialLoan` | Was bei der Bankfinanzierung eines Schiffs insgesamt finanziert wurde (200 % des Preises); bleibt stehen, auch wenn sich der Preis des Entwurfs später ändert |
+| Restschuld | `Ship.loanBalance` | Was von der Kreditsumme noch offen ist; fehlt, wenn das Schiff schuldenfrei ist |
+| Monatsrate | `Ship./monthlyPayment` | Ein Vierhundertachtzigstel der Kreditsumme, immer gleich hoch |
+| Nächste Rate | `Ship.nextPaymentDay` | Der Kampagnentag, an dem die nächste Monatsrate fällig wird |
+| Ship-Vorteil der Abmusterung | `Gain.ship`, `Gain.shipDebtFree` | Eine Zeile der Mustering-out-Tabelle, die ein Schiff gibt: schuldenfrei (Scout) oder als Anteil an einer Restschuld (Merchant) |
+| Schiffswahl | `CareerRoll.shipChoice`, `ShipChoice` | Nur gesetzt, wenn die Kampagne beim Würfeln des Ship-Vorteils schon ein anderes Schiff hat: behalten oder wechseln (das alte Schiff wird ausgeblendet, seine Restschuld behält es nur für sich) |
+| Ausgedientes Schiff | `Ship.retired` | Ein altes Schiff, worauf noch Buchungen zeigen: ausgeblendet, bleibt aber in der Kampagne |
+| Treibstoff je Sprung | `ShipDesign./jumpFuel` | Tonnen, die ein Sprung dieses Entwurfs verbraucht: Tankinhalt durch Sprungzahl, gerundet (Hausregel, 2026-11-16d) |
+| Schiffsreise | `Journey.ship` | Das Schiff, das eine Reise getragen hat; mit ihm reist niemand als Passagier – ohne Passagen, Kojen und Lotterie |
+| Sprungwurf | `Journey.jump` | 2W6 je Sprung mit eigenem Schiff, an der Reise im Log |
+| Fehlsprung | `Journey./misjump` | Aus dem Sprungwurf gefolgt: Summe 13 oder mehr (SR 28); was daraus folgt, entscheidet der Owner |
+| Software (Programm) | `Software` | Ein Programm der Software-Liste (SR 38–39, SE 13): Platzbedarf in Space, Preis, Wirkung; Art nach `SoftwareKind` (offensiv, defensiv, routine) |
+| Rechnermodell | `ComputerModel` | Modell 1 bis 7 (je mit „bis“): Preis, Tonnen, CPU und Storage in Space, TL; die Modellzahl ist die höchste Sprungzahl und der Wert des Softwarepakets in MCr (SE 10) |
+| Software an Bord | `ShipSoftware` | Ein Programm, das ein konkretes Schiff dabeihat; beim Kauf aus dem Softwarepaket des Computers gewählt |
+| Deckplan | `DeckPlan` | Der Plan eines Schiffsentwurfs als Bild: bis zu drei eigene, als PNG hochgeladen oder fotografiert; das Gerät merkt sie sich über Kampagnen hinweg, Export und OneDrive holen sie nicht |
 
 ## Regeln, die das Bild nicht zeigt
 
@@ -1102,11 +1164,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     nach Lage will man mehr oder weniger Begegnungen. An Patron und Gerücht erinnert nichts: Die
     will man haben, man würfelt sie von selbst. Die Tests würfelt die Zeit nie selbst. Die
     Testknöpfe zählen weiter je Tag bzw. Woche (siehe *Test*).
-- **Reise** (2026-11-13d). Reisen geht zurzeit nur mit Passagen (High, Middle, Low; SE S. 8
-  f.), noch nicht mit eigenem Schiff.
+- **Reise** (2026-11-13d). Die Gruppe reist mit **Passagen** (High, Middle, Low; SE S. 8 f.) oder
+  mit dem **eigenen Schiff** (2026-11-16d, eingereicht, siehe *Eigenes Schiff*); der Reisedialog
+  bietet, was verfügbar ist.
   - *Wohin*: Auf der Weltkarte einer anderen fertigen Welt steht **Hierher reisen**, wenn die Gruppe
     einen Aufenthaltsort hat, beide Welten einen Raumhafen A bis E haben und das Ziel höchstens
     **2 Parsec** entfernt ist (Sprung 2). Weiter geht es nur über Zwischenhalte, je Halt eine Reise.
+    Mit eigenem Schiff gilt diese Grenze nicht (siehe *Eigenes Schiff*).
     Während einer laufenden Begegnung reist man nicht.
   - *Wer*: Es reisen alle lebenden, nicht ausgeblendeten Charaktere der Kampagne, je mit einer
     Passage (`Passenger`): man wählt je Charakter High, Middle oder Low Passage, vorgeschlagen ist
@@ -1120,6 +1184,26 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     beginnen neu). Nur gibt es **keine Pflicht-Begegnungen**: Die Reise erinnert nicht an fehlende
     Tests, weder vor der Abreise noch für die Tage im Sprung, und würfelt keine. Wer unterwegs eine
     Begegnung will, würfelt sie wie sonst von Hand.
+  - *Eigenes Schiff* (2026-11-16d, eingereicht). Hat die Gruppe ein Schiff, kann sie in diesem
+    reisen: Sie wählt im Reisedialog „Eigenes Schiff“ statt Passagen.
+    - *Wohin*: Das Ziel liegt höchstens so viele Parsec entfernt, wie der Entwurf Sprung kann
+      (`ShipDesign.jump`). Raumhäfen sind beide keiner nötig – das Schiff landet überall. Es
+      reisen alle lebenden Charaktere mit; niemand kauft eine Passage, niemand liegt in
+      Kälteschlaf-Lotterie. `Journey.ship` verweist auf das Schiff; `passengers` und `berths`
+      sind leer.
+    - *Treibstoff*: Jeder Sprung verbraucht `ShipDesign./jumpFuel` Tonnen – Hausregel: Tankinhalt
+      geteilt durch Sprungzahl, gerundet (die SR-30-Formel braucht Energiewerks-Ratings, die die
+      Referenzdaten nicht haben). Der Verbrauch zieht `Ship.fuel` ab; reicht der Treibstoff nicht,
+      geht die Reise nicht.
+    - *Fehlsprung* (SR 28): Pro Sprung würfelt die App **2W6** (`Journey.jump`); `/misjump`
+      folgt daraus: Summe **13 oder mehr**. Ohne DMs ist das auf bloß 2W6 nie möglich – die SR-DMs
+      (+1 unraffinierter Treibstoff, +5/+15 nahe an einem Himmelskörper) kommen erst ins Spiel,
+      wenn die App sie abbildet (Entscheidung des Owners, 16. November 2026). Der Wurf steht an
+      der Reise im Log. Was ein Fehlsprung folgt, entscheidet der Owner – die App würfelt nur,
+      sie würfelt keinen Zielort und zerstört kein Schiff.
+    - *Dauer*: ebenfalls **eine Woche**; sonst gilt wie bei der Passage.
+    - Kommen später: Lebenserhaltungskosten (Cr 2.000 je Kabine je zwei Wochen, SR 30),
+      zahlende Passagiere und Fracht.
   - *Ohne Reise*: „Gruppe platzieren“ auf der Weltkarte und die Wahl im Reiter Begegnung setzen den
     Aufenthaltsort weiter ohne Reise und ohne Zeit, etwa zu Beginn einer Kampagne oder für eine
     Reise außerhalb der Regeln.
@@ -2453,6 +2537,122 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 - **Später**, nicht in diesem Schritt: der Rand der habitablen Zone beim Temperaturwurf, Reisezonen (Amber, Red), Verbindungen
   (communications routes), Subsector Capital, ein Name für den Subsektor, mehrere Subsektoren zu
   einem Sektor und eine fertige Welt wieder löschen.
+- **Schiffe** (freigegeben am 16. November 2026, Kennzeichen 2026-11-16). Erster
+  Schritt von dreien (Basis der Gruppe; später Handel, dann Raumkampf), RAW-Regeln vollständig in
+  [`regeln-schiffe.md`](regeln-schiffe.md). Die Gruppe hat **höchstens ein Schiff** (`Campaign.ship`),
+  wie das Gruppengepäck.
+  - **Schiff und Entwurf.** `Ship` ist der gespeicherte Stand (Name, Treibstoff und Fracht in Tonnen,
+    der tatsächlich gezahlte Preis, Restschuld); `ShipDesign` sind Referenzdaten für die
+    Standardentwürfe aus SR 35–37 (Scout/Courier, Free Trader, Subsidized Merchant, Subsidized
+    Liner, Yacht, Mercenary Cruiser, Patrol Cruiser, Laboratory Ship, Safari Ship) mit Rumpf,
+    Antrieben, Treibstofftank, Computer, Kabinen, Niedrigbetten, Hardpoints, Laderaum, Crewbedarf als
+    Text und Bauzeit. Treibstoff und Fracht sind zunächst nur Zahlen in Tonnen, ohne einzelne Güter;
+    was wirklich im Laderaum liegt, kommt erst mit dem Handel. Ebenso bleiben die Hardpoints
+    vorerst unbewaffnet (Zahl aus dem Entwurf); Waffen und Turrets kommen erst mit dem Raumkampf.
+    **Noch nicht in diesem Schritt:** welcher SC welche Schiffsposition (Pilot, Navigator, Engineer,
+    Steward, Medic, Gunner) ausfüllt (dafür reicht vorerst der Crewbedarf-Text am Entwurf); mehrere
+    Schiffe gleichzeitig; eigene (Custom-)Entwürfe statt der Standardentwürfe; Small Craft (Launch,
+    Ship's Boat, …) bleiben einfache Gegenstände der Art `ship` wie bisher, ohne eigenen
+    `ShipDesign`.
+  - **Grundpreis am Entwurf, tatsächlicher Preis am Schiff** (Owner, 16. November 2026, nach einem
+    Missverständnis richtiggestellt): `ShipDesign.basePrice` ist schlicht der in SR 35–37 genannte
+    Preis eines neuen Schiffs dieses Standardentwurfs (z. B. Free Trader Cr37.080.000) – **ein
+    gespeicherter Wert, nicht abgeleitet**, denn die Tabellen aus *Charts and Tables*, aus denen
+    sich Rumpf, Antriebe, Energiewerk und Computer einzeln bepreisen ließen, fehlen (siehe
+    `regeln-schiffe.md` unter *Lücken*); eine Formel daraus vorzutäuschen wäre nur ein Umweg um
+    denselben festen Wert. Käme später ein eigener (Custom-)Entwurf aus echten Bauteilpreisen
+    hinzu, ist das ein eigener Schritt, der die fehlenden Tabellen erst besorgt.
+    `Ship.price` ist der **tatsächlich gezahlte Preis dieses einen Schiffs**: beim Erwerb gleich
+    `design.basePrice` gesetzt, aber ein eigenes, gespeichertes Feld, weil er später davon abweichen
+    kann und soll – etwa für ein **gebrauchtes Standardschiff** (SR 31: 10–40 Jahre alt, 10–40 %
+    günstiger). Ein solcher Preisnachlass ist **nicht Teil dieses Schritts** (offene Frage, siehe
+    unten), aber das Feld ist schon da, damit `price` nicht rückwirkend am Entwurf hängt, sobald es
+    ihn gibt.
+  - **Erwerb.** Drei Wege; der Ort ist Sache der Ansicht (der UI-Mock zeigt dafür ein Werft-Blatt im
+    Reiter Schiff, die Abmusterung würfelt in der Charaktererschaffung); in allen dreien wird
+    `Ship.price` zunächst auf `design.basePrice` gesetzt (kein Nachlass in diesem Schritt):
+    1. **Bar aus der Kasse:** der volle Preis (`price`) wird sofort gebucht (`BookingKind.ship`),
+       das Schiff entsteht ohne Restschuld, mit vollem Tank und leerem Laderaum.
+    2. **Bankfinanzierung** (SR 29, voll nach RAW): 20 % Anzahlung sofort aus der Kasse gebucht
+       (`BookingKind.ship`). Die **Kreditsumme** (`initialLoan`) wird beim Abschluss einmal auf
+       **200 % von `price`** festgelegt und bleibt so stehen, auch wenn sich `price` oder der Entwurf
+       später ändern (480 Monatsraten à ein Vierhundertachtzigstel der Kreditsumme ergeben zusammen
+       mit der Anzahlung die 220 % aus SR 29); die **Restschuld** (`loanBalance`) beginnt gleich der
+       Kreditsumme und sinkt mit jeder bezahlten Rate; ist sie auf 0 (bezahlt oder durch den
+       Merchant-Vorteil), entfällt `nextPaymentDay`. Die **Monatsrate** (`/monthlyPayment`) folgt
+       daraus (`initialLoan / 480`), nicht noch einmal aus `price`. Jedes Mal, wenn die Spielzeit
+       den Tag `nextPaymentDay` erreicht oder überschreitet (beim Tage-vergehen-lassen, bei Woche
+       beenden oder einer Fahrt), wird die Rate automatisch aus der Kasse gebucht (Buchung der Art
+       `ship`, mit `forShip` auf das Schiff) und die Restschuld
+       sinkt; reicht die Kasse nicht, bleibt die Rate offen (Buchung mit Hinweistext „Rate nicht
+       bezahlt“) und `nextPaymentDay` rückt trotzdem einen Monat (30 Tage) weiter. **✱
+       Hausregel/offener Punkt:** Die Pfändung bei Zahlungsverzug (SR 28, Distanz-DM zur Heimatwelt
+       des Schiffs) ist damit **nicht** nachgebaut; eine unbezahlte Rate hat vorerst keine Folge
+       außer dem Hinweis im Log. Das holt ein späterer Schritt nach, wenn Pfändung wirklich gebraucht
+       wird.
+    3. **Ship-Vorteil der Abmusterung** (SR, Mustering-out Benefits; Hausregel-Zuordnung wie bisher
+       bei `scout-ship`/`free-trader`): Eine Zeile der Benefits-Tabelle verweist jetzt über `Gain.ship`
+       auf einen `ShipDesign` statt über `Gain.item` auf einen Gegenstand. Hat die Kampagne **noch
+       kein Schiff**, legt der Vorteil es an (`price` = `design.basePrice`): beim Scout schuldenfrei
+       (`Gain.shipDebtFree`, `initialLoan` und `loanBalance` fehlen), beim Merchant mit `initialLoan`
+       und `loanBalance` auf 100 % von `price` (der halbe Kredit; ein zweiter Merchant-Ship-Vorteil
+       für denselben Entwurf zahlt die Restschuld auf 0, ohne `initialLoan` zu ändern). Hat die
+       Kampagne schon ein
+       **anderes** Schiff, entscheidet der Spieler (`CareerRoll.shipChoice`): **behalten** (der
+       Vorteil bleibt ohne Wirkung, steht aber im Lebenslauf) oder **wechseln** (das alte Schiff
+       samt seiner Restschuld wird mit `retired` ausgeblendet, statt ersatzlos zu entfallen;
+       „Kredit kündigen“ bleibt die Vereinfachung, kein Verkaufserlös (freigegeben).
+       Die alten Gegenstände `scout-ship` und `free-trader` (Art `ship`) entfallen
+       aus `items.json`, sobald der Code folgt; ihre Preise stehen jetzt als `basePrice` an
+       `ShipDesign`.
+  - **Ausblenden statt Löschen** (freigegeben am 16. November 2026). Beim **Wechseln** nach dem
+    Ship-Vorteil (und später beim Verkauf) bleibt das alte Schiff mit `retired` in der
+    Kampagne und wird nur ausgeblendet: Buchungen mit `forShip` und alte Logeinträge zeigen
+    es weiter. `Campaign.ship` und der Reiter Schiff kennen nur das nicht ausgeblendete
+    Schiff. Die Regel *Worauf der Log verweist, wird nie gelöscht* gilt damit auch für
+    Schiffe.
+  - **Alle Schiffe bleiben in der Kampagne** (Kennzeichen 2026-11-16c, Inhalt mit 16b
+    freigegeben). Die Kampagne hält eine Liste aller ihrer Schiffe (`ships`, Ids s1, s2, …,
+    wie bei Charakteren nicht gezeichnet); das aktive ist abgeleitet: das nicht
+    ausgeblendete (`/ship`), wie `focus` beim Charakter. Ein neues Schiff – Kauf oder
+    Wechseln nach dem Ship-Vorteil – kommt hinzu, das alte bleibt mit `retired` stehen.
+    Buchungen der Art `ship` verweisen mit `forShip` auf die Id und bleiben so auch für
+    ausgeblendete Schiffe lesbar.
+  - **Software, Rechner, was an Bord ist** (freigegeben am 16. November 2026). Nach SE 10 und 13:
+    `ComputerModel` hält die neun Rechnermodelle (Preis, Tonnen, CPU und Storage in Space,
+    TL; die Modellzahl ist die höchste Sprungzahl – Jump-4 braucht Modell/4 – und der Wert
+    des Softwarepakets `/softwareCredit` in MCr; „bis“-Modelle zählen beim Paketwert als die
+    untere Stufe). `Software` hält alle 36 Programme der Software-Liste (Name, Art, Space,
+    Preis, Wirkung; `writeSkills` nur für selbstgeschriebene Programme, ein späterer
+    Schritt). Was ein konkretes Schiff dabeihat, ist Spielstand: `ShipSoftware` verweist je
+    Programm auf `Software`; beim Kauf wählt der Käufer Programme bis zum Wert des Pakets
+    (kein Bargeld). Der Entwurf verweist über `computer` auf ein `ComputerModel` statt auf
+    den bisherigen Text. Welche Programme gerade in der CPU laufen, ist taktisch und kommt
+    erst mit dem Raumkampf.
+  - **Deckpläne** (freigegeben am 16. November 2026). Bis zu drei eigene Pläne je Entwurf:
+    Bilder, als PNG hochgeladen oder mit der Kamera fotografiert, je mit Namen.
+    `DeckPlan` ist orange **Geräte-Daten**: Das Gerät hält sie in einem eigenen Repository
+    über Kampagnen hinweg – ein anderes Schiff desselben Entwurfs sieht dieselben Pläne, ein
+    anderes Gerät zunächst keine; beim Export, Import und Abgleich mit OneDrive reisen sie
+    nicht mit. Am `Ship` wird nichts davon gespeichert: der Reiter Schiff zeigt die Pläne
+    seines Entwurfs.
+  - **Offene Fragen für einen späteren Schritt:**
+    - Wie die Gruppe mit dem eigenen Schiff zwischen Sternen springt (ergänzt die gekaufte
+      Passage, ersetzt sie nicht, siehe Owner-Entscheidung vom 16. November 2026) – das braucht
+      eine eigene Reise-Mechanik mit Treibstoffverbrauch pro Sprung (Formel `0,1 × Jn × M +
+      10 × Pn`, SR 32; dafür fehlen am Entwurf noch das Rating des Energiewerks und die
+      Antriebsbuchstaben, `jump` und `maneuver` halten nur die Ergebnisse) und ist bewusst
+      nicht Teil dieses Schritts.
+    - **Subventionierte Entwürfe** (Subsidized Merchant, Subsidized Liner) stehen da wie die
+      anderen; die Subventionsregeln (SR 29: feste Route, Regierung zahlt 50 % der Monatsrate,
+      schuldenfrei nach 20 Jahren, Mobilmachung im Notfall) sind nicht modelliert.
+    - Wer beim Schiffkauf das **Softwarepaket** wählt (Wert = Modellzahl in MCr): vorerst
+      ein Standard-Set je Entwurf, wie im UI-Mock (Owner, 16. November 2026); eine
+      Auswahl in der Werft, der Einbau später gekaufter Programme und der Rechner-Tausch
+      (SE 10) folgen mit dem Software-Handel.
+    - Ebenso offen: Pfändung bei Zahlungsverzug (siehe oben), Verkauf eines Schiffs, mehrere
+      Schiffe, Custom-Entwürfe, Small Craft als eigene `ShipDesign`, und der **Preisnachlass
+      für ein gebrauchtes Standardschiff** (SR 31: 10–40 % je nach Alter) über `Ship.price`.
 
 ## Wo der Code noch nicht folgt
 

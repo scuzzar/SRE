@@ -1,4 +1,5 @@
 import type { Campaign, CampaignId } from './campaign';
+import type { DeckPlan } from './ship';
 import type { CloudFile, SyncMark } from './sync';
 
 /**
@@ -53,6 +54,13 @@ export interface CampaignRepository {
   saveMark(mark: SyncMark): Promise<void>;
   removeMark(key: string): Promise<void>;
   clearMarks(): Promise<void>;
+  /**
+   * Deckpläne sind Geräte-Daten (2026-11-16): das Gerät hält sie über Kampagnen hinweg je Entwurf;
+   * Export, Import und Abgleich lassen sie liegen.
+   */
+  loadDeckPlans(design: string): Promise<readonly DeckPlan[]>;
+  saveDeckPlan(plan: DeckPlan): Promise<void>;
+  removeDeckPlan(design: string, name: string): Promise<void>;
 }
 
 /** Die Fassung in der Wolke ist nicht mehr die erwartete: Dort hat inzwischen jemand geändert. */

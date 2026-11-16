@@ -1,14 +1,15 @@
-import { referenceData, type Cascade, type Entry, type EventFocus, type Gain, type Item, type Odds, type Section, type Service, type Skill, type Slot, type Table, type Weapon, type EncounterType, type Patron, type Rumor } from '../data';
+import { referenceData, type Cascade, type ComputerModel, type Entry, type EventFocus, type Gain, type Item, type Odds, type Section, type Service, type ShipDesign, type Skill, type Slot, type Software, type Table, type Weapon, type EncounterType, type Patron, type Rumor } from '../data';
 import { DomainError } from './errors';
 
 export { nameSlotIds, nameSounds, type NameSound } from '../data';
-export { armorClasses, itemKinds, ranges } from '../data';
+export { armorClasses, itemKinds, ranges, softwareKinds } from '../data';
 export type {
   Aging,
   ArmorClass,
   AttackKind,
   Cascade,
   Column,
+  ComputerModel,
   EncounterType,
   Entry,
   AnimalCategory,
@@ -31,8 +32,11 @@ export type {
   Section,
   SectionKind,
   Service,
+  ShipDesign,
   Skill,
   Slot,
+  Software,
+  SoftwareKind,
   Table,
   Throw,
   Weapon,
@@ -61,6 +65,9 @@ for (const section of ref.sections) {
 const itemById = new Map(ref.items.map((i) => [i.id, i]));
 const weaponById = new Map(ref.weapons.map((w) => [w.id, w]));
 const itemByWeapon = new Map(ref.items.flatMap((i) => (i.weapon === undefined ? [] : [[i.weapon, i] as const])));
+const designById = new Map(ref.ships.map((s) => [s.id, s]));
+const computerById = new Map(ref.computers.map((c) => [c.id, c]));
+const softwareById = new Map(ref.software.map((s) => [s.id, s]));
 const serviceById = new Map(ref.services.map((s) => [s.id, s]));
 const cascadeById = new Map(ref.cascades.map((c) => [c.id, c]));
 const tableById = new Map<string, Table>();
@@ -116,6 +123,27 @@ export function itemOf(id: string): Item {
 
 export function serviceOf(id: string): Service {
   return found(serviceById.get(id), 'Die Laufbahn', id);
+}
+
+export function shipDesignOf(id: string): ShipDesign {
+  return found(designById.get(id), 'Der Schiffsentwurf', id);
+}
+
+export function computerModelOf(id: string): ComputerModel {
+  return found(computerById.get(id), 'Das Rechnermodell', id);
+}
+
+export function softwareOf(id: string): Software {
+  return found(softwareById.get(id), 'Das Softwareprogramm', id);
+}
+
+/**
+ * `ComputerModel./softwareCredit`: das Softwarepaket, das jeder Rechner ab Werk mitbringt –
+ * MCr je Modellzahl; die „bis"-Modelle zählen dabei als das Modell darunter (SE 10).
+ */
+export function softwareCreditOf(model: ComputerModel): number {
+  const number = model.name.endsWith('bis') ? model.jump - 1 : model.jump;
+  return number * 1_000_000;
 }
 
 export function cascadeOf(id: string): Cascade {

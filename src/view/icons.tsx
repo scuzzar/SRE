@@ -324,6 +324,25 @@ export function LightbulbIcon() {
   );
 }
 
+/** Das Schiff für den Reiter: ein Raumschiff von oben, wie im Mock gezeichnet. */
+export function ShipIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2.5c2.8 2.8 4.2 6.8 4.2 11.2L12 19l-4.2-5.3C7.8 9.3 9.2 5.3 12 2.5z" />
+      <path d="M8.1 10.7 4 14.2v3.3l4.3-2.4M15.9 10.7 20 14.2v3.3l-4.3-2.4" />
+    </svg>
+  );
+}
+
+/** Der Tropfen für Treibstoff. */
+export function DropIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3s6 6.6 6 10.6a6 6 0 0 1-12 0C6 9.6 12 3 12 3z" />
+    </svg>
+  );
+}
+
 export function PencilIcon() {
   return (
     <svg {...base} strokeLinecap="round" strokeLinejoin="round">

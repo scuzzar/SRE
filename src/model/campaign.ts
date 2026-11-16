@@ -11,6 +11,7 @@ import type { Booking } from './shop';
 import type { Encounter, QuantityDie } from './encounter';
 import { isPc, settleStash } from './stash';
 import { START_DAY } from './time';
+import type { Ship } from './ship';
 import { defaultOdds, HANDS, itemOf, itemOfWeapon, oddsOf, ref, skillOf, weaponOf, type ExampleCharacter } from './reference';
 
 /** Die sechs Attributwerte, je 0 bis 15. */
@@ -127,6 +128,8 @@ export interface Campaign {
   readonly location?: Place;
   /** Die Buchungen der Gruppenkasse, in der Reihenfolge, in der sie entstanden sind. */
   readonly bookings: readonly Booking[];
+  /** Alle Schiffe der Kampagne, auch die ausgeblendeten (siehe `ship.ts`); das aktive ist `/ship`. */
+  readonly ships: readonly Ship[];
   /** Das Gruppengepäck: was die Gruppe besitzt und kein SC ausgerüstet hat (siehe `stash.ts`). */
   readonly stash: readonly Possession[];
   /** Die Begegnungen, die laufende zuletzt; beendete bleiben, wenn der Log auf ihre NSC verweist. Ihre NSC sind Charaktere, die an der Begegnung hängen, nicht hier. */
@@ -180,7 +183,7 @@ export function createCampaign(
   id: CampaignId = 'k1',
   stamp: Stamp = { key: `key-${id}`, changedAt: EPOCH },
 ): Campaign {
-  let campaign: Campaign = { id, key: stamp.key, changedAt: stamp.changedAt, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [], bookings: [], encounters: [], stash: [], day: START_DAY };
+  let campaign: Campaign = { id, key: stamp.key, changedAt: stamp.changedAt, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [], bookings: [], ships: [], encounters: [], stash: [], day: START_DAY };
   for (const { primary, wears, ...example } of examples) campaign = addCharacter(campaign, { ...example, ...(primary === undefined ? {} : { primary }), ...(wears === undefined ? {} : { wears }) }).campaign;
   // Bei mehreren Beispielen steht der erste oben, nicht der zuletzt angelegte.
   return withFocus(campaign, livingCharacters(campaign)[0]?.id);

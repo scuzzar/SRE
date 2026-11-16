@@ -15,18 +15,23 @@ import {
   journeyBlocker,
   journeyCost,
   JOURNEY_DAYS,
+  jumpFuelOf,
   lawHere,
   legalReaction,
   locationOf,
   lotteryPaid,
   LOW_PASSAGE,
   MAX_DAYS,
+  misjumpOf,
   missingChecks,
   parsecs,
   passages,
   potOf,
   reactionText,
   reviveDm,
+  shipJourneyBlocker,
+  shipDesignOf,
+  shipOf,
   survived,
   ticketsOf,
   travellersOf,
@@ -103,6 +108,12 @@ export interface JourneyItem {
   /** Ob ein Los über den Gewinner entschied. */
   readonly lot: boolean;
   readonly reviveTarget: number;
+  /** Name des Schiffs bei einer Reise mit eigenem Schiff; fehlt bei der Passage. */
+  readonly ship: string | undefined;
+  /** Der Sprungwurf (2W6) bei einer Reise mit eigenem Schiff. */
+  readonly jump: readonly number[] | undefined;
+  /** Ob der Sprungwurf ein Fehlsprung ist (13+). */
+  readonly misjump: boolean;
 }
 
 /** Die Spielzeit oben im Reiter Begegnung. */
@@ -135,9 +146,14 @@ export interface LegalView {
   readonly note: string | undefined;
 }
 
+/** Wie die Gruppe reist: gebuchte Passage oder das eigene Schiff (2026-11-16d). */
+export type JourneyMode = 'passage' | 'ship';
+
 /** Was der Controller für die Reise in Vorbereitung hält. */
 export interface JourneyDraft {
   readonly to: string;
+  /** Mit Passage oder mit eigenem Schiff; vorgeschlagen, was verfügbar ist. */
+  readonly mode: JourneyMode;
   /** Die Zahl der NSC in Low Passage (1W6), gewürfelt beim Öffnen, damit man tippen kann. */
   readonly npcDie: number;
   readonly choice: Readonly<Record<string, PassageId>>;
@@ -155,6 +171,12 @@ export interface JourneyView {
   readonly parsecs: number;
   readonly days: number;
   readonly arrival: string;
+  /** Mit Passage oder mit eigenem Schiff. */
+  readonly mode: JourneyMode;
+  /** Was für das eigene Schiff spricht bzw. dagegen: zum Umschalten und für den Hinweis. */
+  readonly ship: { readonly name: string; readonly design: string; readonly jump: number; readonly fuel: number; readonly perJump: number; readonly after: number; readonly blocker: string | undefined } | undefined;
+  /** Warum die Passage hier nicht geht (für den deaktivierten Knopf); `undefined`, wenn sie geht. */
+  readonly passageBlocker: string | undefined;
   readonly passages: readonly { readonly id: PassageId; readonly name: string; readonly price: number; readonly tickets: number }[];
   readonly travellers: readonly { readonly id: string; readonly name: string; readonly passage: PassageId; readonly guess: number | undefined; readonly dm: number | undefined }[];
   /** Wie viele NSC in Low Passage mitreisen, wenn ein SC Low reist. */
@@ -238,6 +260,9 @@ export function journeyItem(campaign: Campaign, entry: Journey, index: number): 
     paid: lotteryPaid(entry),
     lot: entry.lot !== undefined,
     reviveTarget: REVIVE_TARGET,
+    ship: entry.ship === undefined ? undefined : campaign.ships.find((s) => s.id === entry.ship)?.name ?? entry.ship,
+    jump: entry.jump,
+    misjump: misjumpOf(entry),
   };
 }
 
@@ -277,6 +302,15 @@ export function lastPassage(campaign: Campaign, id: string): PassageId {
   return 'middle-passage';
 }
 
+/** Das Schiff der Gruppe für den Reisedialog: Name, Entwurf, Sprungzahl und Treibstoff je Sprung. */
+function shipForJourney(campaign: Campaign, shipBlocker: string | undefined) {
+  const ship = shipOf(campaign);
+  if (ship === undefined) return undefined;
+  const plan = shipDesignOf(ship.design);
+  const perJump = jumpFuelOf(ship.design);
+  return { name: ship.name, design: plan.name, jump: plan.jump, fuel: ship.fuel, perJump, after: ship.fuel - perJump, blocker: shipBlocker };
+}
+
 export function journeyView(campaign: Campaign, draft: JourneyDraft): JourneyView | undefined {
   if (draft.done !== undefined) {
     const entry = campaign.log[draft.done];
@@ -289,6 +323,9 @@ export function journeyView(campaign: Campaign, draft: JourneyDraft): JourneyVie
       parsecs: parsecs(worldOf(campaign.hexes, entry.from), worldOf(campaign.hexes, entry.to)),
       days: entry.days,
       arrival: result.toDate,
+      mode: entry.ship === undefined ? 'passage' : 'ship',
+      ship: undefined,
+      passageBlocker: undefined,
       passages: [],
       travellers: [],
       npcs: entry.npcDie ?? 0,
@@ -303,17 +340,29 @@ export function journeyView(campaign: Campaign, draft: JourneyDraft): JourneyVie
   const from = locationOf(campaign);
   const target = hexById(campaign.hexes, draft.to);
   if (!from || !target) return undefined;
-  const travellers = travellersOf(campaign);
-  const choice = Object.fromEntries(travellers.map((c) => [c.id, draft.choice[c.id] ?? lastPassage(campaign, c.id)])) as Record<string, PassageId>;
-  const lows = travellers.filter((c) => choice[c.id] === LOW_PASSAGE).length;
-  const npcs = lows === 0 ? 0 : draft.npcDie;
-  return {
+  const passageBlocker = journeyBlocker(campaign, draft.to);
+  const shipBlocker = shipJourneyBlocker(campaign, draft.to);
+  const ship = shipForJourney(campaign, shipBlocker);
+  const base = {
     to: draft.to,
     toName: target.name ?? draft.to,
     fromName: from.name,
     parsecs: parsecs(from, target),
     days: JOURNEY_DAYS,
     arrival: dateLabel(dayOf(campaign) + JOURNEY_DAYS),
+    mode: draft.mode,
+    ship,
+    passageBlocker,
+  };
+  if (draft.mode === 'ship') {
+    return { ...base, passages: [], travellers: [], npcs: 0, lowTotal: 0, pot: 0, cost: 0, funds: fundsOf(campaign), error: draft.error ?? shipBlocker, result: undefined };
+  }
+  const travellers = travellersOf(campaign);
+  const choice = Object.fromEntries(travellers.map((c) => [c.id, draft.choice[c.id] ?? lastPassage(campaign, c.id)])) as Record<string, PassageId>;
+  const lows = travellers.filter((c) => choice[c.id] === LOW_PASSAGE).length;
+  const npcs = lows === 0 ? 0 : draft.npcDie;
+  return {
+    ...base,
     passages: passages.map((id) => ({ id, name: itemOf(id).name, price: itemOf(id).price ?? 0, tickets: ticketsOf(campaign, id) })),
     travellers: travellers.map((c) => ({
       id: c.id,
@@ -327,7 +376,7 @@ export function journeyView(campaign: Campaign, draft: JourneyDraft): JourneyVie
     pot: (lows + npcs) * 10,
     cost: journeyCost(campaign, choice),
     funds: fundsOf(campaign),
-    error: draft.error ?? journeyBlocker(campaign, draft.to),
+    error: draft.error ?? passageBlocker,
     result: undefined,
   };
 }

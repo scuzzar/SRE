@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { appendLog, createCampaign, DEMO_FUNDS, fromCampaignFile, ref, rollEncounter, rollSurprise, setHexes, setLocation, toCampaignFile, type CampaignRepository, type Random } from '../model';
+import { addShip, appendLog, createCampaign, DEMO_FUNDS, fromCampaignFile, ref, rollEncounter, rollSurprise, setHexes, setLocation, toCampaignFile, type CampaignRepository, type Random } from '../model';
 import { countingKeys, fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 import { surfaceLines } from './world-view';
@@ -485,7 +485,7 @@ describe('Shop und Gruppenkasse', () => {
     game.book('income', 1000, 'Belohnung von Dr. Halvek');
     game.buy('rifle', 1, 'c2');
     game.buy('rifle-ammo', 1, 'c2');
-    game.buy('free-trader', 1, 'c2');
+    game.buy('craft-ship-s-boat', 1, 'c2');
     const shop = game.snapshot().shop!;
     expect(shop.error).toMatch(/gibt es auf Regina nicht/);
     expect(shop.funds).toBe(780);
@@ -781,6 +781,44 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot()).toMatchObject({ location: '0201', time: { label: 'Sonntag, 008-1105' } });
     game.closeJourney();
     expect(game.snapshot().journey).toBeUndefined();
+  });
+
+  it('Reise: mit eigenem Schiff – ohne Raumhafen geht nur der Sprung, Treibstoff und Wurf stehen am Log', async () => {
+    const random = queued();
+    const outpost = { ...regina, column: 1, row: 3, name: 'Außenposten', uwp: { ...regina.uwp, starport: 31 } };
+    const withShip = addShip(setHexes(createCampaign(), [regina, outpost]), 'S', undefined).campaign;
+    const { game } = await started(random, memoryRepository(withShip));
+    game.chooseHex(1, 1);
+    game.stayHere();
+    game.closeWorld();
+    game.chooseHex(1, 3);
+    expect(game.snapshot().travel).toEqual({ blocker: undefined }); // ohne Schiff: „keinen Raumhafen“
+    random.queue.push(3);
+    game.openJourney();
+    expect(game.snapshot().journey).toMatchObject({ toName: 'Außenposten', mode: 'ship', cost: 0, ship: { name: 'Scout/Courier', design: 'Scout/Courier', jump: 2, fuel: 40, perJump: 20, after: 20, blocker: undefined } });
+    random.queue.push(2, 5);
+    game.travel();
+    expect(game.snapshot().journey?.result).toMatchObject({ ship: 'Scout/Courier', jump: [2, 5], misjump: false, passengers: [], berths: [] });
+    expect(game.snapshot()).toMatchObject({ location: '0103', time: { label: 'Sonntag, 008-1105' } });
+    game.closeJourney();
+  });
+
+  it('Reise: beides geht – Umschalten zwischen Passage und eigenem Schiff, Passage ist vorgeschlagen', async () => {
+    const random = queued();
+    const nahe = { ...regina, column: 2, row: 1, name: 'Nahe' };
+    const withShip = addShip(setHexes(createCampaign(), [regina, nahe]), 'A', undefined).campaign;
+    const { game } = await started(random, memoryRepository(withShip));
+    game.chooseHex(1, 1);
+    game.stayHere();
+    game.closeWorld();
+    game.chooseHex(2, 1);
+    random.queue.push(3);
+    game.openJourney();
+    expect(game.snapshot().journey).toMatchObject({ mode: 'passage', passageBlocker: undefined, ship: { name: 'Free Trader', jump: 1, perJump: 30 } });
+    game.chooseJourneyMode('ship');
+    expect(game.snapshot().journey).toMatchObject({ mode: 'ship', error: undefined });
+    game.chooseJourneyMode('passage');
+    expect(game.snapshot().journey?.mode).toBe('passage');
   });
 
   it('im Reiter Begegnung gewürfelt, zeigt erst die Übersicht; danach bleibt der Reiter Begegnung, zum Kampf geht es erst auf Wunsch', async () => {

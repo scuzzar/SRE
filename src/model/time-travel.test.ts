@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  addShip,
   book,
   checksDone,
   checksLabel,
@@ -11,9 +12,11 @@ import {
   fromCampaignFile,
   fundsOf,
   journeyBlocker,
+  jumpFuelOf,
   legalReaction,
   livingCharacters,
   lotteryPaid,
+  misjumpOf,
   missingChecks,
   parsecs,
   passTime,
@@ -23,11 +26,13 @@ import {
   setHexes,
   setLocation,
   setStartDate,
+  shipJourneyBlocker,
   stampDays,
   START_DAY,
   survived,
   toCampaignFile,
   travel,
+  travelShip,
   weekdayOf,
   weekStart,
   winnerOf,
@@ -191,5 +196,56 @@ describe('Reise mit Passagen', () => {
     expect(journey.lot).toBe(0);
     expect(winnerOf(journey)).toBe(0);
     expect(lotteryPaid(journey)).toBe(false);
+  });
+});
+
+describe('Reise mit eigenem Schiff', () => {
+  // Der Scout/Courier: Tank 40 t, Sprung 2 – also 20 t je Sprung.
+  const scout = addShip(there, 'S', undefined).campaign;
+
+  it('braucht keinen Raumhafen, reicht bis zur Sprungzahl und verlangt Treibstoff', () => {
+    expect(jumpFuelOf('S')).toBe(20);
+    expect(shipJourneyBlocker(there, '0201')).toContain('kein Schiff');
+    expect(shipJourneyBlocker(scout, '0103')).toBeUndefined(); // Außenposten ohne Raumhafen – das Schiff landet trotzdem
+    expect(shipJourneyBlocker(scout, '0505')).toContain('zu weit');
+    const dry = { ...scout, ships: scout.ships.map((s) => ({ ...s, fuel: 10 })) };
+    expect(shipJourneyBlocker(dry, '0103')).toContain('Treibstoff');
+    expect(shipJourneyBlocker(scout, '0101')).toContain('schon hier');
+  });
+
+  it('verbraucht Treibstoff, würfelt den Sprung, dauert eine Woche und kostet nichts', () => {
+    const after = travelShip(scout, '0103', fixedRandom(2, 5), clock);
+    expect(after.ships[0]!.fuel).toBe(20);
+    expect(after.day).toBe(START_DAY + 7);
+    expect(after.location).toEqual({ world: '0103' });
+    expect(after.bookings).toEqual([]);
+    const journey = after.log.at(-1) as Journey;
+    expect(journey).toMatchObject({ kind: 'journey', from: '0101', to: '0103', days: 7, day: START_DAY, ship: 's1', jump: [2, 5], passengers: [], berths: [] });
+    expect(misjumpOf(journey)).toBe(false);
+    expect(after.characters.every((c) => !c.dead)).toBe(true);
+  });
+
+  it('der Sprungwurf steht an der Reise im Log; Fehlsprung ist nach SR erst 13+ mit DMs', () => {
+    const after = travelShip(scout, '0201', fixedRandom(6, 6), clock);
+    const journey = after.log.at(-1) as Journey;
+    expect(journey.jump).toEqual([6, 6]);
+    expect(misjumpOf(journey)).toBe(false); // ohne DMs ist 13+ auf 2W6 nicht möglich
+    expect(after.location).toEqual({ world: '0201' }); // die Folgen entscheidet ohnehin der Owner
+  });
+
+  it('die Datei hält Schiff und Sprungwurf und prüft beides beim Import', () => {
+    const after = travelShip(scout, '0103', fixedRandom(2, 5), clock);
+    const journey = after.log.at(-1) as Journey;
+    const back = fromCampaignFile(toCampaignFile(after), 'k2');
+    expect(back.log.at(-1)).toEqual(journey);
+    expect(back.ships[0]!.fuel).toBe(20);
+    const broken = (change: (entry: Record<string, unknown>) => void) => {
+      const parsed = JSON.parse(toCampaignFile(after));
+      change(parsed.campaign.log.at(-1));
+      return JSON.stringify(parsed);
+    };
+    expect(() => fromCampaignFile(broken((e) => { e.ship = 's9'; }), 'k2')).toThrow('Schiff');
+    expect(() => fromCampaignFile(broken((e) => { delete e.jump; }), 'k2')).toThrow('Sprungwurf');
+    expect(() => fromCampaignFile(broken((e) => { e.passengers = [{ for: kira, passage: 'high-passage' }]; }), 'k2')).toThrow('Passagier');
   });
 });

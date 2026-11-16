@@ -1,0 +1,204 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-16b"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-16b: Schiff: retired statt gelöscht; Software, Rechnermodell und was an Bord ist; Deckpläne als Geräte-Daten je Entwurf
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+hide <<browser>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne
+  class Booking $shop
+
+' Schiffe
+  class Ship $schiffe {
+    name: string
+    fuel: number
+    cargo: number
+    price: number
+    initialLoan: number [0..1]
+    loanBalance: number [0..1]
+    /monthlyPayment: number [0..1]
+    nextPaymentDay: number [0..1]
+    $new("2026-11-16b", "retired: boolean")
+  }
+  class ShipSoftware $schiffe $newClass("2026-11-16b") {
+  }
+  class ShipDesign <<reference>> $schiffe {
+    code: string
+    name: string
+    hull: number
+    jump: number
+    maneuver: number
+    fuel: number
+    $gone("2026-11-16b", "computer: string")
+    staterooms: number
+    lowBerths: number
+    hardpoints: number
+    cargo: number
+    crew: string
+    basePrice: number
+    months: number
+    streamlined: boolean
+  }
+  class ComputerModel <<reference>> $schiffe $newClass("2026-11-16b") {
+    name: string
+    jump: number
+    price: number
+    tons: number
+    cpu: number
+    storage: number
+    tl: number
+    /softwareCredit: number
+  }
+  class Software <<reference>> $schiffe $newClass("2026-11-16b") {
+    name: string
+    kind: SoftwareKind
+    space: number
+    price: number
+    effect: string
+    writeSkills: string [0..1]
+  }
+  enum SoftwareKind <<value>> $schiffe $newClass("2026-11-16b") {
+    offensive
+    defensive
+    routine
+  }
+  class DeckPlan <<browser>> $schiffe $newClass("2026-11-16b") {
+    name: string
+    image: string
+  }
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+
+' Verlauf
+
+' Zeit und Reisen
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+
+' Referenzdaten
+' Fahrzeuge und Wege auf der Oberfläche
+
+' Kampagne
+
+' Schiffe
+Campaign "1" *-- "0..1" Ship : ship
+Ship "*" --> "1" ShipDesign : design
+Ship "1" *-$newArrow("2026-11-16b")-> "0..*" ShipSoftware : software
+ShipSoftware "*" -$newArrow("2026-11-16b")-> "1" Software : program
+Software -$newArrow("2026-11-16b")-> SoftwareKind
+ShipDesign "*" -$newArrow("2026-11-16b")-> "1" ComputerModel : computer
+Booking "*" --> "0..1" Ship : forShip
+DeckPlan "*" -$newArrow("2026-11-16b")-> "1" ShipDesign : design
+
+' Zeit und Reisen
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Geräte-Daten: das Gerät hält sie über Kampagnen hinweg, nicht im Spielstand |
+endlegend
+class Ship #line:d0021b;line.bold
+class ShipDesign #line:d0021b;line.bold
+@enduml

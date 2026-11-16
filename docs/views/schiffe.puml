@@ -1,0 +1,204 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Ausschnitt: Schiffe
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+hide <<browser>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne
+  class Booking $shop
+
+' Schiffe
+  class Ship $schiffe {
+    name: string
+    fuel: number
+    cargo: number
+    price: number
+    initialLoan: number [0..1]
+    loanBalance: number [0..1]
+    /monthlyPayment: number [0..1]
+    nextPaymentDay: number [0..1]
+    retired: boolean
+  }
+  class ShipSoftware $schiffe {
+  }
+  class ShipDesign <<reference>> $schiffe {
+    code: string
+    $new("2026-11-16d", "/jumpFuel: number")
+    name: string
+    hull: number
+    jump: number
+    maneuver: number
+    fuel: number
+    staterooms: number
+    lowBerths: number
+    hardpoints: number
+    cargo: number
+    crew: string
+    basePrice: number
+    months: number
+    streamlined: boolean
+  }
+  class ComputerModel <<reference>> $schiffe {
+    name: string
+    jump: number
+    price: number
+    tons: number
+    cpu: number
+    storage: number
+    tl: number
+    /softwareCredit: number
+  }
+  class Software <<reference>> $schiffe {
+    name: string
+    kind: SoftwareKind
+    space: number
+    price: number
+    effect: string
+    writeSkills: string [0..1]
+  }
+  enum SoftwareKind <<value>> $schiffe {
+    offensive
+    defensive
+    routine
+  }
+  class DeckPlan <<browser>> $schiffe {
+    name: string
+    image: string
+  }
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+
+' Verlauf
+
+' Zeit und Reisen
+  class Journey $reise
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+
+' Referenzdaten
+  class Gain <<reference>> $erschaffung
+' Fahrzeuge und Wege auf der Oberfläche
+
+' Kampagne
+
+' Schiffe
+Campaign "1" *-$goneArrow("2026-11-16c")-> "0..1" Ship : ship
+Campaign "1" *-$newArrow("2026-11-16c")-> "0..*" Ship : ships
+Ship "*" --> "1" ShipDesign : design
+Ship "1" *-- "0..*" ShipSoftware : software
+ShipSoftware "*" --> "1" Software : program
+Software --> SoftwareKind
+ShipDesign "*" --> "1" ComputerModel : computer
+Booking "*" --> "0..1" Ship : forShip
+Gain "*" --> "0..1" ShipDesign : ship
+DeckPlan "*" --> "1" ShipDesign : design
+
+' Zeit und Reisen
+Journey "*" -$newArrow("2026-11-16d")-> "0..1" Ship : ship
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Geräte-Daten: das Gerät hält sie über Kampagnen hinweg, nicht im Spielstand |
+endlegend
+class Campaign #line:d0021b;line.bold
+class ShipDesign #line:d0021b;line.bold
+class Journey #line:d0021b;line.bold
+@enduml

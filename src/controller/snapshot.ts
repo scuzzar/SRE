@@ -11,6 +11,7 @@ import {
   type PatronRoll,
   dateLabel,
   journeyBlocker,
+  shipJourneyBlocker,
   activeSkills,
   ammoOf,
   fundsOf,
@@ -64,7 +65,11 @@ import {
   bellWeights,
   nameSlotIds,
   ref,
+  pendingShipGain,
+  shipDesignOf,
+  shipOf,
   retiredCharacters,
+  type DeckPlan,
   sectionOfSlot,
   shownLevel,
   skillDm,
@@ -240,7 +245,8 @@ import {
   type Conflict,
   type ConflictChoice,
 } from '../model/draft';
-import { careerLines, generationView, itemLabel, worldChoices, worldName, type CareerLine, type GenerationView, type WorldChoice } from './generation-view';
+import { careerLines, generationView, itemLabel, worldChoices, worldName, type CareerLine, type GenerationView, type ShipGainChoice, type WorldChoice } from './generation-view';
+import { buildShipView, type ShipView } from './ship-view';
 import { sectorView, selectedView, worldList, worldView, type HexView, type SelectedHexView, type WorldListItem, type WorldView } from './world-view';
 import { globeView, type GlobeView } from './globe-view';
 import { activeTripView, tripDayItem, tripPlanOf, type TripDayItem, type TripPlanView, type TripView } from './trip-view';
@@ -323,6 +329,8 @@ export interface Snapshot {
   readonly rumor: RumorView | undefined;
   /** Der Reiter Shop: Kasse und Angebot auf dem Aufenthaltsort. */
   readonly shop: ShopView | undefined;
+  /** Der Reiter Schiff: Stände des aktiven Schiffs, Deckpläne und die Werft. */
+  readonly ship: ShipView | undefined;
   readonly stash: StashView;
   /** Der Aufenthaltsort der Gruppe, als Feld (0304). */
   readonly location: string | undefined;
@@ -360,12 +368,20 @@ function animalsPossible(campaign: Campaign): boolean {
 
 /** Warum die Gruppe nicht dorthin reisen kann; ohne Aufenthaltsort oder auf dem Aufenthaltsort selbst kein Hinweis. */
 function travelBlocker(campaign: Campaign, to: string): string | undefined {
-  try {
-    return journeyBlocker(campaign, to);
-  } catch (error) {
-    if (error instanceof DomainError) return error.message;
-    throw error;
-  }
+  const blocked = (blocker: () => string | undefined): string | undefined => {
+    try {
+      return blocker();
+    } catch (error) {
+      if (error instanceof DomainError) return error.message;
+      throw error;
+    }
+  };
+  const passage = blocked(() => journeyBlocker(campaign, to));
+  if (passage === undefined) return undefined;
+  const ship = blocked(() => shipJourneyBlocker(campaign, to));
+  if (ship === undefined) return undefined;
+  // Wo beide nicht gehen: der Treibstoff ist die handfestere Warnung als die Parsec-Grenze der Passage.
+  return ship !== undefined && ship.includes('Treibstoff') ? ship : passage;
 }
 
 export interface SkillChoice extends Skill {
@@ -385,7 +401,7 @@ export interface ItemChoice {
   readonly armor: boolean;
 }
 
-export type Screen = 'oracle' | 'encounter' | 'combat' | 'shop' | 'characters' | 'npcs' | 'sector' | 'about';
+export type Screen = 'oracle' | 'encounter' | 'combat' | 'shop' | 'ship' | 'characters' | 'npcs' | 'sector' | 'about';
 
 /** Ein dauerhafter NSC im Reiter NSC. */
 export interface NpcItem {
@@ -1344,6 +1360,10 @@ export interface ControllerState {
   readonly attack: Attack | undefined;
   /** Was im Shop zuletzt nicht ging. */
   readonly shopError: string | undefined;
+  /** Was im Reiter Schiff zuletzt nicht ging. */
+  readonly shipError: string | undefined;
+  /** Die Deckpläne des aktiven Schiffs: Geräte-Daten je Entwurf, gehören nicht zum Spielstand. */
+  readonly deckPlans: readonly DeckPlan[];
   /** Schaden an einem SC, den der Spieler gerade verteilt. */
   readonly wounding: Wounding | undefined;
   /** Was beim Würfeln einer Begegnung herauskam, wenn es keine gibt, oder was nicht ging. */
@@ -2497,6 +2517,14 @@ function taskView(campaign: Campaign, task: Task): TaskView {
 const skills: readonly SkillChoice[] = ref.skills.map((s) => ({ ...s, leveled: shownLevel({ of: s.id, level: 0 }) !== undefined }));
 const items: readonly ItemChoice[] = ref.items.map((i) => ({ id: i.id, label: itemLabel(i), kind: i.kind, once: i.once, weapon: i.weapon, armor: i.armor !== undefined }));
 
+/** Der noch offene Ship-Vorteil, als Wahl auf dem Erschaffungsblatt: der angebotene Entwurf und wie das jetzige Schiff heißt. */
+function shipGainChoice(campaign: Campaign): ShipGainChoice | undefined {
+  const pending = pendingShipGain(campaign);
+  const current = shipOf(campaign);
+  if (pending === undefined || current === undefined) return undefined;
+  return { design: pending.design, name: shipDesignOf(pending.design).name, debtFree: pending.debtFree, current: current.name };
+}
+
 /** Die Karte zur Wahl einer Welt, solange die Erschaffung im Schritt Heimatwelt oder Welt eines Terms ist. */
 function pickingView(state: ControllerState, campaign: Campaign): { readonly title: string } | undefined {
   if (!state.picking || !campaign.generation) return undefined;
@@ -2510,7 +2538,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -2556,6 +2584,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     },
     rumor: { last: log.findLast((item): item is RumorItem => item.kind === 'rumor'), note: state.rumorNote },
     shop: shopView(campaign, state.shopError),
+    ship: buildShipView(campaign, state.deckPlans, state.shipError),
     stash: stashView(campaign, state.shopError),
     location: campaign.location?.world,
     result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : undefined,
@@ -2567,7 +2596,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
       worlds: worldChoices(campaign.hexes),
       roles: npcRoles,
     },
-    generation: state.generating && campaign.generation ? generationView(campaign.generation, campaign.hexes, state.generationError) : undefined,
+    generation: state.generating && campaign.generation ? generationView(campaign.generation, campaign.hexes, state.generationError, shipGainChoice(campaign)) : undefined,
     generationRunning: campaign.generation !== undefined,
     sector: sectorView(campaign.hexes, markedWorlds(campaign)),
     worlds: worldList(campaign.hexes),

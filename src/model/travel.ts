@@ -3,10 +3,11 @@ import { keepFocus, livingCharacters, type Campaign, type Character, type Charac
 import { DomainError } from './errors';
 import type { Journey, LowBerth, Passenger } from './log';
 import type { Clock, Random } from './ports';
-import { itemOf } from './reference';
+import { itemOf, shipDesignOf } from './reference';
 import { sum, type Dice } from './rules';
 import { hexById, hexId, worldOf, type Hex } from './sector';
 import { fundsOf, locationOf, type Booking } from './shop';
+import { jumpFuelOf, payLoans, shipOf } from './ship';
 import { parkVehicles } from './trip';
 import { dayOf, JOURNEY_DAYS } from './time';
 import { woundedUpp, woundsOf } from './wounds';
@@ -155,6 +156,62 @@ export function rollNpcLow(random: Random): number {
   return d6(random);
 }
 
+/** Fehlsprung bei 13 oder mehr auf 2W6 (SR 28). */
+export const MISJUMP_TARGET = 13;
+
+/** `/misjump`: der Sprungwurf einer Reise mit eigenem Schiff, auf 13+ gedeutet. */
+export function misjumpOf(journey: Journey): boolean {
+  return journey.jump !== undefined && sum(journey.jump) >= MISJUMP_TARGET;
+}
+
+/** Warum die Gruppe nicht mit dem eigenen Schiff dorthin reisen kann; `undefined`, wenn sie kann. */
+export function shipJourneyBlocker(campaign: Campaign, to: string): string | undefined {
+  const ship = shipOf(campaign);
+  if (ship === undefined) return 'Die Gruppe hat kein Schiff.';
+  const from = locationOf(campaign);
+  if (!from || campaign.location?.world === undefined) return 'Die Gruppe ist auf keiner Welt; erst den Aufenthaltsort wählen.';
+  if (campaign.location?.world === to) return 'Die Gruppe ist schon hier.';
+  const target = hexById(campaign.hexes, to);
+  if (!target || target.empty) return 'Hier gibt es keine Welt.';
+  worldOf(campaign.hexes, to);
+  const plan = shipDesignOf(ship.design);
+  const distance = parsecs(from, target);
+  if (distance > plan.jump) return `${distance} Parsec sind zu weit; ${plan.name} springt höchstens ${plan.jump}.`;
+  const per = jumpFuelOf(ship.design);
+  if (ship.fuel < per) return `Der Sprung braucht ${per} t Treibstoff; im Tank sind ${ship.fuel} t. Erst volltanken.`;
+  if (campaign.encounters.some((e) => !e.ended)) return 'Während einer laufenden Begegnung reist man nicht.';
+  if (travellersOf(campaign).length === 0) return 'Es gibt keinen lebenden Charakter, der reisen könnte.';
+  return undefined;
+}
+
+/**
+ * Die Gruppe reist mit dem eigenen Schiff nach `to` (2026-11-16d): ein Sprung über höchstens
+ * so viele Parsec, wie der Entwurf kann, ohne Raumhafen zu brauchen und ohne Passagen – alle
+ * lebenden Charaktere reisen mit. Der Sprung verbraucht `jumpFuelOf` Tonnen und würfelt 2W6;
+ * 13+ ist ein Fehlsprung (`misjumpOf`), dessen Folgen der Owner entscheidet. Eine Woche später
+ * ist die Gruppe am Ziel.
+ */
+export function travelShip(campaign: Campaign, to: string, random: Random, clock: Clock): Campaign {
+  const blocker = shipJourneyBlocker(campaign, to);
+  if (blocker) throw new DomainError(blocker);
+  // Eigene Fahrzeuge bleiben am Aufenthaltsort, eine Fahrt fällt weg (siehe domain-model.md, *Fahrt*).
+  campaign = parkVehicles(campaign);
+  const from = campaign.location!.world;
+  const ship = shipOf(campaign)!;
+  const per = jumpFuelOf(ship.design);
+  const jump: Dice = [d6(random), d6(random)];
+  const today = dayOf(campaign);
+  const journey: Journey = { kind: 'journey', at: clock.now(), day: today, from, to, days: JOURNEY_DAYS, passengers: [], berths: [], ship: ship.id, jump };
+  const after: Campaign = {
+    ...campaign,
+    ships: campaign.ships.map((s) => (s.id === ship.id ? { ...s, fuel: s.fuel - per } : s)),
+    log: [...campaign.log, journey],
+    day: today + JOURNEY_DAYS,
+    location: worldPlace(to),
+  };
+  return keepFocus(campaign, payLoans(after, clock));
+}
+
 /**
  * Die Gruppe reist von ihrem Aufenthaltsort nach `to` (SE S. 8–9). Jeder Reisende hat eine Passage
  * (`choice`); sie kommt aus dem Gepäck oder wird zum Preis der Charts gekauft. Reist ein SC in Low
@@ -235,13 +292,20 @@ export function travel(
     day: today + JOURNEY_DAYS,
     location: worldPlace(to),
   };
-  return keepFocus(campaign, after);
+  return keepFocus(campaign, payLoans(after, clock));
 }
 
-/** Prüft eine Reise aus der Kampagnendatei: Felder, Passagen, Charaktere, Kojen, Los. */
+/** Prüft eine Reise aus der Kampagnendatei: Felder, Passagen, Charaktere, Kojen, Los, Schiff und Sprungwurf. */
 export function checkJourney(campaign: Campaign, journey: Journey): void {
   if (!hexById(campaign.hexes, journey.from) || !hexById(campaign.hexes, journey.to)) throw new DomainError('Eine Reise verweist auf ein Feld, das es nicht gibt.');
   if (journey.days !== JOURNEY_DAYS) throw new DomainError(`Eine Reise dauert ${JOURNEY_DAYS} Tage.`);
+  if (journey.ship !== undefined) {
+    if (!campaign.ships.some((s) => s.id === journey.ship)) throw new DomainError('Eine Reise verweist auf ein Schiff, das es nicht gibt.');
+    if (journey.jump === undefined || journey.jump.length !== 2 || journey.jump.some((d) => !Number.isInteger(d) || d < 1 || d > 6)) throw new DomainError('Eine Reise mit eigenem Schiff hat den Sprungwurf auf 2W6.');
+    if (journey.passengers.length > 0 || journey.berths.length > 0 || journey.npcDie !== undefined || journey.lot !== undefined) throw new DomainError('Mit eigenem Schiff reist niemand als Passagier.');
+    return;
+  }
+  if (journey.jump !== undefined) throw new DomainError('Nur eine Reise mit eigenem Schiff hat einen Sprungwurf.');
   if (journey.passengers.length === 0) throw new DomainError('Eine Reise hat mindestens einen Passagier.');
   for (const p of journey.passengers) {
     if (!campaign.characters.some((c) => c.id === p.for)) throw new DomainError(`Eine Reise verweist auf ${p.for}, der kein Charakter der Kampagne ist.`);

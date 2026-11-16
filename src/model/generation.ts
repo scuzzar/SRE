@@ -17,7 +17,8 @@ import {
 import { weaponCharacteristic, type WeaponCharacteristic } from './combat';
 import { DomainError } from './errors';
 import type { Random } from './ports';
-import { cascadeOf, ref, serviceOf, skillOf, weaponFor, type Service, type Table, type Throw } from './reference';
+import { cascadeOf, gainOf, ref, serviceOf, skillOf, weaponFor, type Service, type Table, type Throw } from './reference';
+import { chooseShipGain, gainShip, pendingShipGain } from './ship';
 import { chance2d6, characteristics } from './rules';
 
 /** Eine Charaktererschaffung: je Kampagne höchstens eine; sie hält nur ihren Lebenslauf. */
@@ -257,6 +258,7 @@ export function backgroundOf(state: CareerState): string {
 export function finishGeneration(campaign: Campaign, name: string): { campaign: Campaign; id: CharacterId } {
   const generation = campaign.generation;
   if (!generation) throw new DomainError('Es läuft keine Charaktererschaffung.');
+  if (pendingShipGain(campaign) !== undefined) throw new DomainError('Die Wahl zum Schiff ist noch offen: behalten oder wechseln?');
   const state = stateOf(generation);
   expectStep(state, 'name');
   const { campaign: added, id } = addCharacter(campaign, careerInput(state, name), generation.career);
@@ -343,15 +345,27 @@ function runStep(generation: Generation, hexes: Campaign['hexes'], random: Rando
 /**
  * Lässt die Erschaffung durchlaufen: würfelt jeden Schritt und trifft jede Entscheidung zufällig,
  * bis zum Namen oder zum Tod (siehe domain-model.md, *Durchlaufen*). Gibt es für die Heimatwelt
- * keine fertige Welt, hält der Lauf dort an.
+ * keine fertige Welt, hält der Lauf dort an. Ein Ship-Vorteil, der die Gruppe vor die Wahl
+ * stellt, wird zufällig entschieden (Hausregel, 2026-11-16).
  */
 export function runGeneration(campaign: Campaign, random: Random): Campaign {
   let generation = campaign.generation;
   if (!generation) throw new DomainError('Es läuft keine Charaktererschaffung.');
+  let ships = campaign;
   for (let i = 0; i < MAX_RUN_STEPS; i++) {
     const next = runStep(generation, campaign.hexes, random);
-    if (!next) return setGeneration(campaign, generation);
-    generation = next;
+    if (next) {
+      generation = next;
+      const roll = generation.career.rolls.at(-1);
+      const gain = roll !== undefined && roll.kind === 'benefit' && roll.gained !== undefined ? gainOf(roll.gained) : undefined;
+      if (gain?.ship !== undefined) {
+        const full = setGeneration(ships, generation);
+        ships = pendingShipGain(full) === undefined ? gainShip(ships, gain.ship, gain.shipDebtFree === true) : chooseShipGain(full, random.int(0, 1) === 0 ? 'keep' : 'switch');
+        generation = ships.generation!.career === generation.career ? generation : ships.generation!;
+      }
+    } else {
+      return setGeneration(ships, generation);
+    }
   }
   throw new DomainError('Die Erschaffung kommt beim Durchlaufen nicht zum Ende.');
 }

@@ -1049,7 +1049,8 @@
           },
           {
             "id": "scouts.benefits.6",
-            "item": "scout-ship"
+            "ship": "S",
+            "shipDebtFree": true
           },
           {
             "id": "scouts.benefits.7"
@@ -1328,7 +1329,7 @@
           },
           {
             "id": "merchants.benefits.7",
-            "item": "free-trader"
+            "ship": "A"
           }
         ]
       },

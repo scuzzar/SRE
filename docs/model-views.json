@@ -47,6 +47,10 @@
     {
       "id": "reise",
       "title": "Zeit und Reisen"
+    },
+    {
+      "id": "schiffe",
+      "title": "Schiffe"
     }
   ],
   "changes": [
@@ -342,6 +346,49 @@
         "Booking",
         "LogEntry",
         "Trip"
+      ]
+    },
+    {
+      "id": "2026-11-16",
+      "file": "2026-11-16-schiffe-basis",
+      "title": "Schiffe als Basis der Gruppe: Standardentwürfe, Kauf, Bankfinanzierung, Ship-Vorteil der Abmusterung",
+      "approved": true,
+      "show": [
+        "Campaign",
+        "Booking",
+        "BookingKind",
+        "Gain",
+        "CareerRoll"
+      ]
+    },
+    {
+      "id": "2026-11-16b",
+      "file": "2026-11-16b-schiff-retired-und-deckplaene",
+      "title": "Schiff: retired statt gelöscht; Software, Rechnermodell und was an Bord ist; Deckpläne als Geräte-Daten je Entwurf",
+      "approved": true,
+      "show": [
+        "Campaign",
+        "Booking"
+      ]
+    },
+    {
+      "id": "2026-11-16c",
+      "file": "2026-11-16c-schiffe-der-kampagne",
+      "title": "Die Kampagne hält alle ihre Schiffe: ships-Liste, das aktive Schiff abgeleitet, Buchungen verweisen per Schiff-Id",
+      "approved": false,
+      "show": [
+        "Campaign",
+        "Booking"
+      ]
+    },
+    {
+      "id": "2026-11-16d",
+      "file": "2026-11-16d-reisen-mit-eigenem-schiff",
+      "title": "Reisen mit eigenem Schiff: die Reise kennt ihr Schiff, Sprungwurf mit Fehlsprung, Treibstoff je Sprung",
+      "approved": false,
+      "show": [
+        "Ship",
+        "ShipDesign"
       ]
     }
   ]

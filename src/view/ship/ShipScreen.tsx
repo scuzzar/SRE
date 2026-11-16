@@ -1,0 +1,614 @@
+import { useRef, useState, type ChangeEvent, type ReactNode } from 'react';
+import type { ShipView, ShipYardRow, Snapshot } from '../../controller';
+import { credits, mcr } from '../format';
+import { useGame } from '../game-context';
+import { haptic } from '../haptics';
+import { CloseIcon, DropIcon, ExpandIcon, PencilIcon, ShipIcon, TrashIcon } from '../icons';
+
+/** Die Ansicht unter den Kacheln: eigene Deckpläne oder was nicht in den Kacheln steht. */
+type Tab = 'deck' | 'details';
+
+/** Das Blatt, das über dem Reiter steht; die Werft ist ein Blatt, kein eigener Reiter. */
+type Sheet =
+  | { readonly kind: 'yard' }
+  | { readonly kind: 'buy'; readonly design: string; readonly method: 'cash' | 'bank' }
+  | { readonly kind: 'edit' }
+  | { readonly kind: 'fuel' }
+  | { readonly kind: 'rename' }
+  | { readonly kind: 'deck'; readonly name: string };
+
+type Boat = NonNullable<ShipView['ship']>;
+
+/**
+ * Der Reiter Schiff: oben die Leiste mit Name (Stift zum Umbenennen) und Entwurf, dazu die Kasse;
+ * darunter die Stände als Kacheln und zwei Ansichten – die eigenen Deckpläne und die Details.
+ * Unten im Dock: Bearbeiten, Treibstoff und die goldene Werft. Die Werft ist ein Blatt; dort wird
+ * bar oder über die Bank gekauft.
+ */
+export function ShipScreen({ view }: { view: Snapshot }) {
+  const game = useGame();
+  const ship = view.ship;
+  const [tab, setTab] = useState<Tab>('deck');
+  const [sheet, setSheet] = useState<Sheet | undefined>(undefined);
+  const close = () => setSheet(undefined);
+  if (ship === undefined) return null;
+  const boat = ship.ship;
+  const deck = sheet?.kind === 'deck' ? ship.deckPlans.find((p) => p.name === sheet.name) : undefined;
+  return (
+    <div className="screen">
+      <div className="shop-top">
+        <div className="shop-head">
+          <div className="head-ship">
+            <span className="head-name">
+              <p className="shop-world">{boat === undefined ? <span className="muted">Kein Schiff</span> : <b>{boat.name}</b>}</p>
+              {/* Umbenennen wie sonst auch: über das Stift-Symbol. */}
+              {boat !== undefined && (
+                <button type="button" className="icon-button" aria-label="Schiff umbenennen" onClick={() => setSheet({ kind: 'rename' })}>
+                  <PencilIcon />
+                </button>
+              )}
+            </span>
+            {boat !== undefined && (
+              <p className="head-sub mono muted">
+                {boat.designName} ({boat.designCode})
+              </p>
+            )}
+          </div>
+          <p className="shop-funds">
+            <span className="muted">Kasse</span> <strong className="mono">{credits(ship.funds)}</strong>
+          </p>
+        </div>
+      </div>
+      <section className="scroll shop-scroll" role="tabpanel">
+        {ship.error && (
+          <p className="error" role="alert">
+            {ship.error}
+          </p>
+        )}
+        {boat === undefined ? (
+          <p className="log-empty">
+            Die Gruppe hat noch kein Schiff. Unten die <b>Werft</b> öffnen und einen Standardentwurf kaufen; bei der Abmusterung gibt es Schiffe als Vorteil (Scout/Courier schuldenfrei, Subsidized
+            Merchant mit Kreditschuld).
+          </p>
+        ) : (
+          <>
+            <div className="card-grid cols-2 ship-tiles">
+              <div className="tile">
+                <span className="tile-label">Treibstoff</span>
+                <span className="tile-text">
+                  {boat.fuel} / {boat.fuelMax} t
+                </span>
+              </div>
+              <div className="tile">
+                <span className="tile-label">Fracht</span>
+                <span className="tile-text">
+                  {boat.cargo} / {boat.cargoMax} t
+                </span>
+              </div>
+              <div className="tile duo">
+                <span className="duo-col">
+                  <span className="tile-label">Kabinen</span>
+                  <span className="tile-text">
+                    {boat.cabins} / {boat.cabinsMax}
+                  </span>
+                </span>
+                <span className="duo-col">
+                  <span className="tile-label">Niedrigbetten</span>
+                  <span className="tile-text">
+                    {boat.lowBerthsUsed} / {boat.lowBerthsMax}
+                  </span>
+                </span>
+              </div>
+              <div className="tile">
+                <span className="tile-label">Antrieb</span>
+                <span className="tile-text">{boat.thruster}</span>
+              </div>
+              <div className="tile">
+                <span className="tile-label">Hardpoints</span>
+                <span className="tile-text">{boat.hardpoints} · unbewaffnet</span>
+              </div>
+              <div className="tile">
+                <span className="tile-label">Computer</span>
+                <span className="tile-text">{boat.computerName}</span>
+              </div>
+            </div>
+            <div className="shop-tabs" role="tablist" aria-label="Ansichten des Schiffs">
+              <button type="button" role="tab" aria-selected={tab === 'deck'} onClick={() => setTab('deck')}>
+                Deckplan
+              </button>
+              <button type="button" role="tab" aria-selected={tab === 'details'} onClick={() => setTab('details')}>
+                Details
+              </button>
+            </div>
+            {tab === 'deck' ? <DeckPlans ship={ship} onView={(name) => setSheet({ kind: 'deck', name })} /> : <Details boat={boat} />}
+          </>
+        )}
+      </section>
+      <div className="dock">
+        <div className="actions">
+          {boat === undefined ? (
+            <button type="button" className="action gold" onClick={() => setSheet({ kind: 'yard' })}>
+              <ShipIcon />
+              Werft öffnen
+            </button>
+          ) : (
+            <>
+              <button type="button" className="action soft" onClick={() => setSheet({ kind: 'edit' })}>
+                <PencilIcon />
+                Bearbeiten
+              </button>
+              <button type="button" className="action soft" onClick={() => setSheet({ kind: 'fuel' })}>
+                <DropIcon />
+                Treibstoff
+              </button>
+              <button type="button" className="action gold" onClick={() => setSheet({ kind: 'yard' })}>
+                <ShipIcon />
+                Werft
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {sheet?.kind === 'yard' && <YardSheet ship={ship} onBuy={(d) => setSheet({ kind: 'buy', design: d.designId, method: d.price <= ship.funds ? 'cash' : 'bank' })} onClose={close} />}
+      {sheet?.kind === 'buy' && ship.yard.some((d) => d.designId === sheet.design) && (
+        <BuySheet
+          ship={ship}
+          design={ship.yard.find((d) => d.designId === sheet.design)!}
+          method={sheet.method}
+          onMethod={(method) => setSheet({ ...sheet, method })}
+          onBack={() => setSheet({ kind: 'yard' })}
+          onBuy={() => {
+            haptic('pick');
+            game.buyShipDesign(sheet.design, sheet.method);
+            close();
+          }}
+          onClose={close}
+        />
+      )}
+      {sheet?.kind === 'edit' && boat !== undefined && <EditSheet boat={boat} onClose={close} />}
+      {sheet?.kind === 'fuel' && boat !== undefined && <FuelSheet boat={boat} ship={ship} onClose={close} />}
+      {sheet?.kind === 'rename' && boat !== undefined && <RenameSheet boat={boat} onClose={close} />}
+      {sheet?.kind === 'deck' && deck !== undefined && <DeckSheet name={deck.name} image={deck.image} onClose={close} />}
+    </div>
+  );
+}
+
+/** Das Blatt über dem Reiter: Aufbau wie die Blätter der App, Esc schließt über das Kreuz. */
+function SheetFrame({ title, aside, onClose, foot, children }: { title: string; aside?: string; onClose: () => void; foot: ReactNode; children: ReactNode }) {
+  return (
+    <div className="overlay">
+      <section className="sheet" role="dialog" aria-modal="true" aria-label={title}>
+        <div className="sheet-head" style={{ alignItems: 'center' }}>
+          <h2>{title}</h2>
+          <span className="header-right">
+            {aside !== undefined && <span className="sheet-aside mono muted">{aside}</span>}
+            <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={onClose}>
+              <CloseIcon />
+            </button>
+          </span>
+        </div>
+        <div className="sheet-body">{children}</div>
+        <div className="sheet-foot">{foot}</div>
+      </section>
+    </div>
+  );
+}
+
+/** Ansicht Deckplan: bis zu drei eigene Pläne, jeder voll in der Breite, darunter die zwei Knöpfe. */
+function DeckPlans({ ship, onView }: { ship: ShipView; onView: (name: string) => void }) {
+  const game = useGame();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const camRef = useRef<HTMLInputElement>(null);
+  const full = ship.freeDeckSlots === 0;
+  // PNG-Upload und Kamera: die Datei wird zum Data URL-Bild, das der Controller auf dem Gerät ablegt.
+  const take = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file === undefined) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') void game.addDeckPlan(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+  return (
+    <>
+      {ship.deckPlans.length > 0 && (
+        <div className="deck-stack">
+          {ship.deckPlans.map((plan) => (
+            <figure key={plan.name} className="deck-card">
+              <img src={plan.image} alt={plan.name} onClick={() => onView(plan.name)} />
+              <figcaption>
+                <span>{plan.name}</span>
+                <span>
+                  <button type="button" className="icon-button" aria-label={`${plan.name} ansehen`} onClick={() => onView(plan.name)}>
+                    <ExpandIcon />
+                  </button>
+                  <button type="button" className="icon-button" aria-label={`${plan.name} entfernen`} onClick={() => void game.removeDeckPlan(plan.name)}>
+                    <TrashIcon />
+                  </button>
+                </span>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      )}
+      <div className="deck-empty">{full ? 'Alle drei Deckpläne belegt' : `Noch ${ship.freeDeckSlots} von 3 Plätzen frei`}</div>
+      <div className="deck-adds">
+        <button type="button" className="ghost" disabled={full} title={full ? 'Alle drei Deckpläne belegt' : undefined} onClick={() => fileRef.current?.click()}>
+          PNG hochladen
+        </button>
+        <button type="button" className="ghost" disabled={full} title={full ? 'Alle drei Deckpläne belegt' : undefined} onClick={() => camRef.current?.click()}>
+          Kamera
+        </button>
+      </div>
+      <input ref={fileRef} type="file" accept="image/png,image/jpeg" hidden onChange={take} />
+      <input ref={camRef} type="file" accept="image/*" capture="environment" hidden onChange={take} />
+    </>
+  );
+}
+
+/** Ansicht Details: alles, was nicht schon in den Kacheln steht, und die Software an Bord. */
+function Details({ boat }: { boat: Boat }) {
+  const debt = boat.loanBalance === undefined ? (boat.initialLoan === undefined ? 'schuldenfrei' : 'bezahlt') : credits(boat.loanBalance);
+  return (
+    <>
+      <dl className="profile">
+        <div>
+          <dt>Restschuld</dt>
+          <dd className={boat.loanBalance === undefined ? undefined : 'gold'}>{debt}</dd>
+        </div>
+        {boat.initialLoan !== undefined && (
+          <div>
+            <dt>Kreditsumme</dt>
+            <dd>{credits(boat.initialLoan)}</dd>
+          </div>
+        )}
+        {boat.monthlyPayment !== undefined && (
+          <div>
+            <dt>Monatsrate</dt>
+            <dd>{`${credits(boat.monthlyPayment)} × 480`}</dd>
+          </div>
+        )}
+        {boat.nextPayment !== undefined && (
+          <div>
+            <dt>Nächste Rate</dt>
+            <dd>{boat.nextPayment}</dd>
+          </div>
+        )}
+        <div>
+          <dt>Crewbedarf</dt>
+          <dd>{boat.crew}</dd>
+        </div>
+        <div>
+          <dt>Bauzeit</dt>
+          <dd>{`${boat.months} Monate`}</dd>
+        </div>
+        <div>
+          <dt>Grundpreis</dt>
+          <dd>{mcr(boat.basePrice)}</dd>
+        </div>
+        <div>
+          <dt>Preis (gezahlt)</dt>
+          <dd>{credits(boat.price)}</dd>
+        </div>
+      </dl>
+      {boat.loanBalance !== undefined && <p className="shop-hint muted">Die Bank hebt die Monatsrate automatisch ein, wenn sie fällig ist; ohne Deckung bleibt die Rate als Hinweis in der Kasse stehen.</p>}
+      <h2 className="section-title">Software an Bord · {boat.computerName}</h2>
+      <div className="shop-table" role="table" aria-label="Software an Bord">
+        {boat.software.map((s) => (
+          <div key={s.name} className="shop-row soft-row" role="row">
+            <span role="cell" className="shop-name">
+              <span className="shop-label">{s.name}</span>
+              <span className="shop-meta">{s.effect}</span>
+            </span>
+            <span role="cell" className="shop-num soft-kind muted">
+              {s.kind}
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className="shop-hint muted">Kabinen und Niedrigbetten: immer die Gruppe zuerst, später zahlende Passagiere. Noch offen: Bewaffnung und Kampf-Software. Gereist wird schon: „Hierher reisen“ auf einer Weltkarte auch mit eigenem Schiff.</p>
+    </>
+  );
+}
+
+/** Die Werft als Blatt: die Standardentwürfe, der Preis als Knopf. */
+function YardSheet({ ship, onBuy, onClose }: { ship: ShipView; onBuy: (design: ShipYardRow) => void; onClose: () => void }) {
+  return (
+    <SheetFrame title="Werft" aside="Standardentwürfe · SR 35–37" onClose={onClose} foot={<button type="button" className="ghost" onClick={onClose}>Schließen</button>}>
+      <p className="shop-hint muted">Preis antippen zum Bestellen an der Werft. Bar oder über die Bank: 20&nbsp;% Anzahlung, 480 Monatsraten, zusammen 220&nbsp;% des Preises (SR&nbsp;29). Grau = nicht bezahlbar.</p>
+      <div className="shop-counter">
+        <h2 className="section-title">
+          Standardentwürfe <span className="muted">({ship.yard.length})</span>
+        </h2>
+        <div className="shop-table" role="table" aria-label="Standardentwürfe">
+          <div className="shop-row ship-row shop-row-head" role="row">
+            <span role="columnheader">Entwurf</span>
+            <span role="columnheader" className="shop-num">
+              MCr
+            </span>
+          </div>
+          {ship.yard.map((d) => (
+            <div key={d.designId} className="shop-row ship-row" role="row">
+              <span role="cell" className="shop-name">
+                <span className="shop-label">
+                  {d.name} <small>{d.code}</small>
+                </span>
+                <span className="shop-meta">
+                  {d.hull} t · Jump-{d.jump} · {d.maneuver}G · {d.crew}
+                </span>
+              </span>
+              <span role="cell" className="shop-num">
+                <button type="button" className="shop-price" disabled={!d.affordable} onClick={() => onBuy(d)}>
+                  <span>{mcr(d.price)}</span>
+                  {d.affordable && <span className="shop-price-sub">{d.price <= ship.funds ? 'bar' : `Anzahlung ${mcr(d.down)}`}</span>}
+                  {d.owned && (
+                    <span className="shop-owned" title="das habt ihr">
+                      ✓
+                    </span>
+                  )}
+                </button>
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <p className="shop-hint muted">Auch bei der Abmusterung gibt es ein Schiff: der Ship-Vorteil der Laufbahn (Scout/Courier schuldenfrei, Subsidized Merchant mit Kreditschuld).</p>
+    </SheetFrame>
+  );
+}
+
+/** Bestellung an der Werft: bar oder mit Bankfinanzierung, die Zahlungen vorausgerechnet. */
+function BuySheet({ ship, design, method, onMethod, onBack, onBuy, onClose }: { ship: ShipView; design: ShipYardRow; method: 'cash' | 'bank'; onMethod: (m: 'cash' | 'bank') => void; onBack: () => void; onBuy: () => void; onClose: () => void }) {
+  const cash = ship.funds >= design.price;
+  const canPay = method === 'cash' ? cash : ship.funds >= design.down;
+  const monthly = Math.round((design.price * 2) / 480);
+  return (
+    <SheetFrame
+      title={`${design.name} (${design.code}) kaufen`}
+      aside={`${design.hull} t · Jump-${design.jump} · ${design.maneuver}G`}
+      onClose={onClose}
+      foot={
+        <>
+          <button type="button" className="ghost" onClick={onBack}>
+            ← Werft
+          </button>
+          <button type="button" className="primary" disabled={!canPay} onClick={onBuy}>
+            {method === 'cash' ? 'Bar kaufen' : 'Finanzieren und bestellen'}
+          </button>
+        </>
+      }
+    >
+      <div className="segmented" role="radiogroup" aria-label="Bezahlart">
+        <button type="button" role="radio" aria-checked={method === 'cash'} disabled={!cash} onClick={() => onMethod('cash')}>
+          Bar aus der Kasse
+        </button>
+        <button type="button" role="radio" aria-checked={method === 'bank'} onClick={() => onMethod('bank')}>
+          Bankfinanzierung
+        </button>
+      </div>
+      {method === 'cash' ? (
+        <dl className="profile">
+          <div>
+            <dt>Preis</dt>
+            <dd>{credits(design.price)}</dd>
+          </div>
+          <div>
+            <dt>Kasse danach</dt>
+            <dd>{credits(ship.funds - design.price)}</dd>
+          </div>
+          <div>
+            <dt>Bauzeit (Referenz)</dt>
+            <dd>{`${design.months} Monate`}</dd>
+          </div>
+        </dl>
+      ) : (
+        <dl className="profile">
+          <div>
+            <dt>Anzahlung (20 %)</dt>
+            <dd>{credits(design.down)}</dd>
+          </div>
+          <div>
+            <dt>Kreditsumme (200 %)</dt>
+            <dd>{credits(design.price * 2)}</dd>
+          </div>
+          <div>
+            <dt>Monatsrate</dt>
+            <dd>{`${credits(monthly)} × 480`}</dd>
+          </div>
+          <div>
+            <dt>Gesamt (220 %)</dt>
+            <dd>{credits(design.down + design.price * 2)}</dd>
+          </div>
+        </dl>
+      )}
+      {!canPay && (
+        <p className="error" role="alert">
+          Die Kasse ({credits(ship.funds)}) reicht dafür nicht.
+        </p>
+      )}
+      {ship.ship !== undefined && <p className="shop-hint muted">Die Gruppe hat schon „{ship.ship.name}“. Beim Kaufen wird das alte Schiff ausgemustert (wie beim Wechsel durch den Ship-Vorteil).</p>}
+    </SheetFrame>
+  );
+}
+
+/** Bearbeiten des Schiffsbogens: Name, Treibstoff und Fracht in ganzen Tonnen. */
+function EditSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
+  const game = useGame();
+  const [name, setName] = useState(boat.name);
+  const [fuel, setFuel] = useState(String(boat.fuel));
+  const [cargo, setCargo] = useState(String(boat.cargo));
+  const tons = (value: string, max: number) => /^\d+$/.test(value.trim()) && Number(value) <= max;
+  const valid = name.trim() !== '' && tons(fuel, boat.fuelMax) && tons(cargo, boat.cargoMax);
+  return (
+    <SheetFrame
+      title="Schiff bearbeiten"
+      aside={`${boat.designName} (${boat.designCode})`}
+      onClose={onClose}
+      foot={
+        <>
+          <button type="button" className="ghost" onClick={onClose}>
+            Abbrechen
+          </button>
+          <button
+            type="button"
+            className="primary"
+            disabled={!valid}
+            onClick={() => {
+              haptic('pick');
+              game.editShip({ name: name.trim(), fuel: Number(fuel), cargo: Number(cargo) });
+              onClose();
+            }}
+          >
+            Speichern
+          </button>
+        </>
+      }
+    >
+      <label className="field">
+        <span>Name</span>
+        <input value={name} maxLength={40} onChange={(e) => setName(e.target.value)} />
+      </label>
+      <label className="field">
+        <span>Treibstoff (von {boat.fuelMax} t)</span>
+        <input type="number" inputMode="numeric" min={0} max={boat.fuelMax} value={fuel} onChange={(e) => setFuel(e.target.value)} />
+      </label>
+      <label className="field">
+        <span>Fracht (von {boat.cargoMax} t)</span>
+        <input type="number" inputMode="numeric" min={0} max={boat.cargoMax} value={cargo} onChange={(e) => setCargo(e.target.value)} />
+      </label>
+      <p className="shop-hint muted">Die Belegung der Kabinen ergibt sich aus der Gruppe; zahlende Passagiere kommen mit dem Handel.</p>
+    </SheetFrame>
+  );
+}
+
+/** Treibstoff kaufen: raffiniert zu Cr 500 je Tonne (SR 30), höchstens bis der Tank voll ist. */
+function FuelSheet({ boat, ship, onClose }: { boat: Boat; ship: ShipView; onClose: () => void }) {
+  const game = useGame();
+  const need = boat.fuelMax - boat.fuel;
+  const [qty, setQty] = useState(need);
+  const cost = qty * ship.fuelPrice;
+  const buyable = qty >= 1 && cost <= ship.funds;
+  return (
+    <SheetFrame
+      title="Treibstoff kaufen"
+      aside={`Cr ${ship.fuelPrice} / t · raffiniert`}
+      onClose={onClose}
+      foot={
+        <>
+          <button type="button" className="ghost" onClick={onClose}>
+            Abbrechen
+          </button>
+          <button
+            type="button"
+            className="primary"
+            disabled={!buyable}
+            onClick={() => {
+              haptic('pick');
+              game.buyFuelTons(qty);
+              onClose();
+            }}
+          >
+            Kaufen
+          </button>
+        </>
+      }
+    >
+      <label className="field">
+        <span>Menge in Tonnen</span>
+        <span className="fuel-row">
+          <input type="number" inputMode="numeric" min={0} max={need} value={qty} onChange={(e) => setQty(Math.max(0, Math.min(need, Math.floor(Number(e.target.value) || 0))))} />
+          <button type="button" className="ghost compact" disabled={need === 0} onClick={() => setQty(need)}>
+            Voll tanken ({need} t)
+          </button>
+        </span>
+      </label>
+      <dl className="profile">
+        <div>
+          <dt>Tank danach</dt>
+          <dd>
+            {boat.fuel + qty} / {boat.fuelMax} t
+          </dd>
+        </div>
+        <div>
+          <dt>Kosten</dt>
+          <dd>{credits(cost)}</dd>
+        </div>
+        <div>
+          <dt>Kasse danach</dt>
+          <dd>{credits(ship.funds - cost)}</dd>
+        </div>
+      </dl>
+      {need === 0 ? <p className="shop-hint muted">Der Tank ist voll.</p> : cost > ship.funds ? <p className="error" role="alert">Die Kasse ({credits(ship.funds)}) reicht dafür nicht.</p> : null}
+    </SheetFrame>
+  );
+}
+
+/** Umbenennen über das Stift-Symbol am Namen. */
+function RenameSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
+  const game = useGame();
+  const [name, setName] = useState(boat.name);
+  return (
+    <SheetFrame
+      title="Schiff umbenennen"
+      onClose={onClose}
+      foot={
+        <>
+          <button type="button" className="ghost" onClick={onClose}>
+            Abbrechen
+          </button>
+          <button
+            type="button"
+            className="primary"
+            disabled={name.trim() === ''}
+            onClick={() => {
+              haptic('pick');
+              game.renameShip(name.trim());
+              onClose();
+            }}
+          >
+            Speichern
+          </button>
+        </>
+      }
+    >
+      <label className="field">
+        <span>Name</span>
+        <input autoFocus value={name} maxLength={40} onChange={(e) => setName(e.target.value)} />
+      </label>
+    </SheetFrame>
+  );
+}
+
+/** Einen hinterlegten Deckplan groß ansehen; hier lässt er sich auch entfernen. */
+function DeckSheet({ name, image, onClose }: { name: string; image: string; onClose: () => void }) {
+  const game = useGame();
+  return (
+    <SheetFrame
+      title={name}
+      aside="Deckplan"
+      onClose={onClose}
+      foot={
+        <>
+          <button
+            type="button"
+            className="ghost danger"
+            onClick={() => {
+              void game.removeDeckPlan(name);
+              onClose();
+            }}
+          >
+            Entfernen
+          </button>
+          <button type="button" className="primary" onClick={onClose}>
+            Fertig
+          </button>
+        </>
+      }
+    >
+      <img className="deck-large" src={image} alt={name} />
+    </SheetFrame>
+  );
+}

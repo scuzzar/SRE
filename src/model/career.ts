@@ -33,6 +33,9 @@ export type RollKind =
   | 'cash'
   | 'benefit';
 
+/** Die Wahl zum Ship-Vorteil: das eigene Schiff behalten oder zum neuen wechseln. */
+export type ShipChoice = 'keep' | 'switch';
+
 /** Ein Wurf der Laufbahn. Welche Felder er hat, hängt von der Art ab (siehe domain-model.md). */
 export interface CareerRoll {
   readonly kind: RollKind;
@@ -54,6 +57,8 @@ export interface CareerRoll {
   readonly chosen?: string;
   /** Die Zeile der Aging Table bei `aging`. */
   readonly against?: string;
+  /** Bei einem Vorteile-Wurf mit Schiff, das die Gruppe nicht einfach bekommen kann: behalten oder wechseln. */
+  readonly shipChoice?: ShipChoice;
 }
 
 export type GenerationStep =
@@ -79,6 +84,8 @@ export type Effect =
   | { readonly kind: 'characteristic'; readonly characteristic: Characteristic; readonly value: number; readonly change?: number }
   | { readonly kind: 'skill'; readonly skill: string; readonly level: number }
   | { readonly kind: 'item'; readonly item: string; readonly count: number }
+  /** Der Ship-Vorteil der Abmusterung: der Entwurf; ob schuldenfrei, entscheidet die Kampagne. */
+  | { readonly kind: 'ship'; readonly design: string; readonly debtFree: boolean }
   | { readonly kind: 'credits'; readonly amount: number }
   | { readonly kind: 'service'; readonly service: string; readonly drafted: boolean }
   | { readonly kind: 'rank'; readonly level: number; readonly title: string }
@@ -527,6 +534,7 @@ class Replay {
       const value = this.value(gain.characteristic) + gain.change!;
       this.set(gain.characteristic, Math.min(MAX_VALUE, Math.max(0, value)), gain.change);
     } else if (gain.item !== undefined) this.addItem(gain.item, true);
+    else if (gain.ship !== undefined) this.effects.push({ kind: 'ship', design: gain.ship, debtFree: gain.shipDebtFree === true });
     else if (gain.credits !== undefined) {
       this.credits += gain.credits;
       this.effects.push({ kind: 'credits', amount: gain.credits });

@@ -2,6 +2,7 @@ import type { Campaign } from './campaign';
 import { DomainError } from './errors';
 import type { LogEntry, TimePassed } from './log';
 import type { Clock } from './ports';
+import { payLoans } from './ship';
 
 /**
  * Die Spielzeit im Imperialen Kalender: 365 Tage im Jahr, `day` = Jahr × 365 + Tag des Jahres − 1.
@@ -80,7 +81,8 @@ export function passTime(campaign: Campaign, how: { readonly days: number } | 'w
   if (!week && (!Number.isInteger(days) || days < 1 || days > MAX_DAYS)) throw new DomainError(`Es vergehen 1 bis ${MAX_DAYS} Tage.`);
   if (campaign.encounters.some((e) => !e.ended)) throw new DomainError('Während einer laufenden Begegnung vergeht keine Zeit.');
   const entry: TimePassed = { kind: 'time', at: clock.now(), day: today, days, week };
-  return { ...campaign, day: today + days, log: [...campaign.log, entry] };
+  // Mit der Zeit werden auch die Raten der Schiffe fällig (siehe `ship.ts`, *payLoans*).
+  return payLoans({ ...campaign, day: today + days, log: [...campaign.log, entry] }, clock);
 }
 
 /**

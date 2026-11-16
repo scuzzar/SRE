@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { appendLog, createCampaign, removeLogEntry, type Campaign } from './campaign';
+import { appendLog, book, buyShip, createCampaign, removeLogEntry, type Campaign } from '.';
 import { campaignFileName, fromCampaignFile, toCampaignFile } from './campaign-file';
+import { fixedClock } from './testing';
 import type { LogEntry } from './log';
 
 const log: LogEntry[] = [
@@ -184,5 +185,35 @@ describe('Kampagnendatei mit Subsektor', () => {
     expect(fromCampaignFile(text, 'k2').hexes).toEqual([{ column: 4, row: 4, empty: false, navalBase: false, scoutBase: false, uwp: { starport: 31 } }]);
     const wrong = fileWith((c) => (c.hexes = [{ column: 1, row: 1, rolls: [{ kind: 'size', dice: [3, 3], dm: -2 }] }]));
     expect(() => fromCampaignFile(wrong, 'k2')).toThrow(/verletzt eine Regel: .*Vorkommen/);
+  });
+});
+
+describe('Kampagnendatei mit Schiffen', () => {
+  /** Eine Kampagne mit zwei gekauften Schiffen: das erste ausgeblendet, das zweite aktiv. */
+  function withShips(): Campaign {
+    const clock = fixedClock();
+    const funds = book(createCampaign(undefined, 'Mit Schiff'), 'income', 120_000_000, clock, 'Testgeld');
+    return buyShip(buyShip(funds, 'S', 'cash', clock), 'A', 'cash', clock);
+  }
+
+  it('nimmt Schiffe und Schiffs-Buchungen unverändert mit', () => {
+    const original = withShips();
+    const read = fromCampaignFile(toCampaignFile(original), 'k3');
+    expect(read).toEqual({ ...original, id: 'k3', key: 'key-k3' });
+    expect(read.ships.map((s) => s.retired)).toEqual([true, false]);
+    expect(read.bookings.filter((b) => b.kind === 'ship')).toHaveLength(2);
+  });
+
+  it('liest eine Datei von vor den Schiffen mit leerer Schiffsliste', () => {
+    const text = JSON.parse(toCampaignFile(withShips())) as { campaign: Record<string, unknown> };
+    delete text.campaign.ships;
+    text.campaign.bookings = (text.campaign.bookings as { kind: string }[]).filter((b) => b.kind !== 'ship');
+    expect(fromCampaignFile(JSON.stringify(text), 'k3').ships).toEqual([]);
+  });
+
+  it('weist ein Schiff mit unbekanntem Entwurf zurück', () => {
+    const text = JSON.parse(toCampaignFile(withShips())) as { campaign: { ships: { design: string }[] } };
+    text.campaign.ships[0]!.design = 'X';
+    expect(() => fromCampaignFile(JSON.stringify(text), 'k3')).toThrow(/Schiffsentwurf|keine gültige/);
   });
 });
