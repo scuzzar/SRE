@@ -77,6 +77,8 @@ hide <<value>> stereotype
   class Character $charakter
   class Possession $shop
 
+' Schiffe
+
 ' Charaktererschaffung und Lebenslauf
 
 ' Subsektor und Welten
@@ -288,6 +290,8 @@ hide <<value>> stereotype
 ' Fahrzeuge und Wege auf der Oberfläche
 
 ' Kampagne
+
+' Schiffe
 
 ' Zeit und Reisen
 

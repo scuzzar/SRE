@@ -90,6 +90,9 @@ hide <<value>> stereotype
   class Character $charakter
   class Possession $shop
 
+' Schiffe
+  class Ship $schiffe $newClass("2026-11-16")
+
 ' Charaktererschaffung und Lebenslauf
   class Generation $erschaffung
 
@@ -130,6 +133,9 @@ Campaign "1" *-- "*" Booking : bookings {ordered}
 Conflict "*" --> "0..1" Campaign : local
 Conflict "*" --> "0..1" Campaign : remote
 
+' Schiffe
+Campaign "1" *-$newArrow("2026-11-16")-- "0..1" Ship : ship
+
 ' Zeit und Reisen
 
 ' Charaktererschaffung und Lebenslauf
@@ -168,4 +174,5 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class Ship #line:d0021b;line.bold
 @enduml

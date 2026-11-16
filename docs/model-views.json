@@ -47,6 +47,10 @@
     {
       "id": "reise",
       "title": "Zeit und Reisen"
+    },
+    {
+      "id": "schiffe",
+      "title": "Schiffe"
     }
   ],
   "changes": [
@@ -342,6 +346,19 @@
         "Booking",
         "LogEntry",
         "Trip"
+      ]
+    },
+    {
+      "id": "2026-11-16",
+      "file": "2026-11-16-schiffe-basis",
+      "title": "Schiffe als Basis der Gruppe: Standardentwürfe, Kauf, Bankfinanzierung, Ship-Vorteil der Abmusterung",
+      "approved": false,
+      "show": [
+        "Campaign",
+        "Booking",
+        "BookingKind",
+        "Gain",
+        "CareerRoll"
       ]
     }
   ]

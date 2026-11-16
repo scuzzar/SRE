@@ -76,6 +76,8 @@ hide <<value>> stereotype
   class Campaign $kampagne
   class Booking $shop
 
+' Schiffe
+
 ' Charaktererschaffung und Lebenslauf
 
 ' Subsektor und Welten
@@ -127,6 +129,8 @@ hide <<value>> stereotype
   }
 
 ' Kampagne
+
+' Schiffe
 
 ' Zeit und Reisen
 

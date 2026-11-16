@@ -357,6 +357,13 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Raumhafen A–C oder Landeplatz F, ab TL 6 und Atmosphäre 4, ohne Fahrplan. Neu im Bild:
 > `Vehicle.tl`, `Vehicle.fare`, `Leg./fare`, `TripDay.fare`, `BookingKind.fare`. Der Ausschnitt dazu
 > liegt unter [`changes/2026-11-15-linienflug.png`](changes/2026-11-15-linienflug.png).
+>
+> **Entwurf vom 16. November 2026, wartet auf Freigabe** (Kennzeichen 2026-11-16): **Schiffe als
+> Basis der Gruppe** (siehe *Schiffe*, RAW-Regeln in [`regeln-schiffe.md`](regeln-schiffe.md)). Erster
+> von drei Schritten (danach Handel, dann Raumkampf). Neu im Bild: `Ship`, `ShipDesign`,
+> `Campaign.ship`, `BookingKind.ship`, `Booking.forShip`, `Gain.ship`, `Gain.shipDebtFree`,
+> `CareerRoll.shipChoice`, `ShipChoice`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-16-schiffe-basis.png`](changes/2026-11-16-schiffe-basis.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -668,6 +675,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Einheimisches Leben | `Surface.life` | Ob auf der Welt eigenes Leben entstanden ist; ohne Leben ist das Land später Wüste |
 | Kontinente- und Ozeane-Tabelle | `SurfaceRow`, `SurfaceTable` | Die beiden Tabellen des *World Builder's Handbook* (S. 70), aus denen die Land- bzw. Wassermassen kommen |
 | Würfelausdruck | `DiceExpr` | Wie viele W6 plus welcher DM, z. B. 2W6 + 1 oder 3W6 − 3 |
+| Schiff | `Ship`, `Campaign.ship` | Das eine Schiff der Gruppe als Basis: Entwurf, Name, Treibstoff und Fracht in Tonnen, offene Restschuld |
+| Schiffsentwurf | `ShipDesign` | Referenzdaten eines Standardentwurfs (Scout/Courier, Free Trader, …): Rumpf, Antriebe, Treibstofftank, Computer, Kabinen, Niedrigbetten, Hardpoints, Laderaum, Crewbedarf, Preis, Bauzeit; siehe [`regeln-schiffe.md`](regeln-schiffe.md) unter *Standardentwürfe* |
+| Restschuld | `Ship.loanBalance` | Was von der Bankfinanzierung eines Schiffs noch offen ist; fehlt, wenn es schuldenfrei ist |
+| Nächste Rate | `Ship.nextPaymentDay` | Der Kampagnentag, an dem die nächste Monatsrate fällig wird; ihre Höhe folgt aus dem Preis des Entwurfs (ein Zweihundertvierzigstel) |
+| Ship-Vorteil der Abmusterung | `Gain.ship`, `Gain.shipDebtFree` | Eine Zeile der Mustering-out-Tabelle, die ein Schiff gibt: schuldenfrei (Scout) oder als Anteil an einer Restschuld (Merchant) |
+| Schiffswahl | `CareerRoll.shipChoice`, `ShipChoice` | Nur gesetzt, wenn die Kampagne beim Würfeln des Ship-Vorteils schon ein anderes Schiff hat: behalten oder wechseln (das alte Schiff samt Restschuld entfällt dann) |
 
 ## Regeln, die das Bild nicht zeigt
 
@@ -2453,6 +2466,55 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 - **Später**, nicht in diesem Schritt: der Rand der habitablen Zone beim Temperaturwurf, Reisezonen (Amber, Red), Verbindungen
   (communications routes), Subsector Capital, ein Name für den Subsektor, mehrere Subsektoren zu
   einem Sektor und eine fertige Welt wieder löschen.
+- **Schiffe** (Entwurf vom 16. November 2026, Kennzeichen 2026-11-16, **wartet auf Freigabe**). Erster
+  Schritt von dreien (Basis der Gruppe; später Handel, dann Raumkampf), RAW-Regeln vollständig in
+  [`regeln-schiffe.md`](regeln-schiffe.md). Die Gruppe hat **höchstens ein Schiff** (`Campaign.ship`),
+  wie das Gruppengepäck.
+  - **Schiff und Entwurf.** `Ship` ist der gespeicherte Stand (Name, Treibstoff und Fracht in Tonnen,
+    Restschuld); `ShipDesign` sind Referenzdaten für die Standardentwürfe aus SR 35–37 (Scout/Courier,
+    Free Trader, Subsidized Merchant, Subsidized Liner, Yacht, Mercenary Cruiser, Patrol Cruiser,
+    Laboratory Ship, Safari Ship) mit Rumpf, Antrieben, Treibstofftank, Computer, Kabinen,
+    Niedrigbetten, Hardpoints, Laderaum, Crewbedarf als Text, Preis und Bauzeit. Treibstoff und
+    Fracht sind zunächst nur Zahlen in Tonnen, ohne einzelne Güter; was wirklich im Laderaum liegt,
+    kommt erst mit dem Handel. Ebenso bleiben die Hardpoints vorerst unbewaffnet (Zahl aus dem
+    Entwurf); Waffen und Turrets kommen erst mit dem Raumkampf. **Noch nicht in diesem Schritt:**
+    welcher SC welche Schiffsposition (Pilot, Navigator, Engineer, Steward, Medic, Gunner) ausfüllt
+    (dafür reicht vorerst der Crewbedarf-Text am Entwurf); mehrere Schiffe gleichzeitig; eigene
+    (Custom-)Entwürfe statt der Standardentwürfe; Small Craft (Launch, Ship's Boat, …) bleiben
+    einfache Gegenstände der Art `ship` wie bisher, ohne eigenen `ShipDesign`.
+  - **Erwerb.** Drei Wege, alle im Shop bzw. in der Charaktererschaffung:
+    1. **Bar aus der Kasse:** der volle Preis des Entwurfs wird sofort gebucht (`BookingKind.ship`),
+       das Schiff entsteht ohne Restschuld, mit vollem Tank und leerem Laderaum.
+    2. **Bankfinanzierung** (SR 29, voll nach RAW): 20 % Anzahlung sofort aus der Kasse gebucht
+       (`BookingKind.ship`), die Restschuld beginnt bei **200 % des Preises** (480 Monatsraten à ein
+       Zweihundertvierzigstel ergeben zusammen mit der Anzahlung die 220 % aus SR 29). Die Monatsrate
+       selbst steht nicht am Schiff, sondern folgt rechnerisch aus `design.price`. Jedes Mal, wenn die
+       Spielzeit den Tag `nextPaymentDay` erreicht oder überschreitet (beim Tage-vergehen-lassen, bei
+       Woche beenden oder einer Fahrt), wird die Rate automatisch aus der Kasse gebucht und die
+       Restschuld sinkt; reicht die Kasse nicht, bleibt die Rate offen (Buchung mit
+       Hinweistext „Rate nicht bezahlt“) und `nextPaymentDay` rückt trotzdem einen Monat (30 Tage)
+       weiter. **✱ Hausregel/offener Punkt:** Die Pfändung bei Zahlungsverzug (SR 28, Distanz-DM zur
+       Heimatwelt des Schiffs) ist damit **nicht** nachgebaut; eine unbezahlte Rate hat vorerst keine
+       Folge außer dem Hinweis im Log. Das holt ein späterer Schritt nach, wenn Pfändung wirklich
+       gebraucht wird.
+    3. **Ship-Vorteil der Abmusterung** (SR, Mustering-out Benefits; Hausregel-Zuordnung wie bisher
+       bei `scout-ship`/`free-trader`): Eine Zeile der Benefits-Tabelle verweist jetzt über `Gain.ship`
+       auf einen `ShipDesign` statt über `Gain.item` auf einen Gegenstand. Hat die Kampagne **noch
+       kein Schiff**, legt der Vorteil es an: beim Scout schuldenfrei (`Gain.shipDebtFree`), beim
+       Merchant mit einer Restschuld von 100 % des Preises (der halbe Kredit; ein zweiter
+       Merchant-Ship-Vorteil für denselben Entwurf zahlt sie auf 0). Hat die Kampagne schon ein
+       **anderes** Schiff, entscheidet der Spieler (`CareerRoll.shipChoice`): **behalten** (der
+       Vorteil bleibt ohne Wirkung, steht aber im Lebenslauf) oder **wechseln** (das alte Schiff
+       samt seiner Restschuld entfällt ersatzlos – „Kredit kündigen“ als Vereinfachung, kein
+       Verkaufserlös). Die alten Gegenstände `scout-ship` und `free-trader` (Art `ship`) entfallen
+       aus `items.json`, sobald der Code folgt; die Preise, die sie trugen, stehen jetzt an
+       `ShipDesign`.
+  - **Offene Fragen für einen späteren Schritt:** Wie die Gruppe mit dem eigenen Schiff zwischen
+    Sternen springt (ergänzt die gekaufte Passage, ersetzt sie nicht, siehe Owner-Entscheidung vom
+    16. November 2026) – das braucht noch eine eigene Reise-Mechanik mit Treibstoffverbrauch pro
+    Sprung und ist bewusst nicht Teil dieses Schritts. Ebenso offen: Pfändung bei Zahlungsverzug
+    (siehe oben), Verkauf eines Schiffs, mehrere Schiffe, Custom-Entwürfe, Small Craft als eigene
+    `ShipDesign`.
 
 ## Wo der Code noch nicht folgt
 

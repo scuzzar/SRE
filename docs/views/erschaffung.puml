@@ -76,6 +76,9 @@ hide <<value>> stereotype
   class Campaign $kampagne
   class Character $charakter
 
+' Schiffe
+  class ShipDesign <<reference>> $schiffe $newClass("2026-11-16")
+
 ' Charaktererschaffung und Lebenslauf
   class Generation $erschaffung {
     /step: GenerationStep
@@ -95,6 +98,7 @@ hide <<value>> stereotype
     target: number [0..1]
     wants: boolean [0..1]
     /success: boolean [0..1]
+    $new("2026-11-16", "shipChoice: ShipChoice [0..1]")
   }
 
 ' Subsektor und Welten
@@ -134,6 +138,7 @@ hide <<value>> stereotype
     change: number [0..1]
     credits: number [0..1]
     weapon: boolean
+    $new("2026-11-16", "shipDebtFree: boolean [0..1]")
   }
   class Item <<reference>> $shop
   class Cascade <<reference>> $erschaffung {
@@ -159,6 +164,10 @@ hide <<value>> stereotype
     cash
     benefit
   }
+  enum ShipChoice <<value>> $erschaffung $newClass("2026-11-16") {
+    $new("2026-11-16", "keep")
+    $new("2026-11-16", "switch")
+  }
   enum GenerationStep <<value>> $erschaffung {
     characteristics
     homeworld
@@ -181,6 +190,9 @@ hide <<value>> stereotype
 
 ' Kampagne
 
+' Schiffe
+Gain "*" -$newArrow("2026-11-16")-> "0..1" ShipDesign : ship
+
 ' Zeit und Reisen
 
 ' Charaktererschaffung und Lebenslauf
@@ -194,6 +206,7 @@ Career "*" --> "0..1" Service : /in
 Career "*" --> "0..1" Hex : homeworld
 Career "*" --> "*" Hex : worlds {ordered}
 CareerRoll --> RollKind
+CareerRoll -$newArrow("2026-11-16")-> "0..1" ShipChoice
 CareerRoll --> "0..1" Characteristic : of
 CareerRoll "*" --> "0..1" Service : for
 CareerRoll "*" --> "0..1" Table : on
@@ -246,4 +259,8 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class ShipDesign #line:d0021b;line.bold
+class CareerRoll #line:d0021b;line.bold
+class Gain #line:d0021b;line.bold
+class ShipChoice #line:d0021b;line.bold
 @enduml

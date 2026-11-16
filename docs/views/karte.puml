@@ -75,6 +75,8 @@ hide <<value>> stereotype
 ' Kampagne und Charaktere
   class Campaign $kampagne
 
+' Schiffe
+
 ' Charaktererschaffung und Lebenslauf
 
 ' Subsektor und Welten
@@ -179,6 +181,8 @@ hide <<value>> stereotype
 
 ' Kampagne
 Campaign "*" --> "1" Odds : odds
+
+' Schiffe
 
 ' Zeit und Reisen
 

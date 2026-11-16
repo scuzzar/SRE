@@ -119,6 +119,8 @@ hide <<value>> stereotype
   }
   class Possession $shop
 
+' Schiffe
+
 ' Charaktererschaffung und Lebenslauf
   class Generation $erschaffung
   class Career $erschaffung
@@ -172,6 +174,8 @@ hide <<value>> stereotype
 Campaign "1" *-- "*" Character : characters
 Campaign "0..1" --> "0..1" Character : focus
 Booking "*" --> "0..1" Character : for
+
+' Schiffe
 
 ' Zeit und Reisen
 Passenger "*" --> "1" Character : for
@@ -250,4 +254,6 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
+class CareerRoll #line:d0021b;line.bold
+class Gain #line:d0021b;line.bold
 @enduml

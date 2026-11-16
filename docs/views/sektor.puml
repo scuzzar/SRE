@@ -77,6 +77,8 @@ hide <<value>> stereotype
   class Booking $shop
   class Character $charakter
 
+' Schiffe
+
 ' Charaktererschaffung und Lebenslauf
   class Career $erschaffung
 
@@ -208,6 +210,8 @@ hide <<value>> stereotype
 
 ' Kampagne
 Booking "*" --> "0..1" Hex : in
+
+' Schiffe
 
 ' Zeit und Reisen
 Journey "*" --> "1" Hex : from
