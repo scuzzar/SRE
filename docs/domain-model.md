@@ -689,7 +689,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Ship-Vorteil der Abmusterung | `Gain.ship`, `Gain.shipDebtFree` | Eine Zeile der Mustering-out-Tabelle, die ein Schiff gibt: schuldenfrei (Scout) oder als Anteil an einer Restschuld (Merchant) |
 | Schiffswahl | `CareerRoll.shipChoice`, `ShipChoice` | Nur gesetzt, wenn die Kampagne beim Würfeln des Ship-Vorteils schon ein anderes Schiff hat: behalten oder wechseln (das alte Schiff wird ausgeblendet, seine Restschuld behält es nur für sich; Änderung 2026-11-16b) |
 | Ausgedientes Schiff | `Ship.retired` | Ein altes Schiff, worauf noch Buchungen zeigen: ausgeblendet, bleibt aber in der Kampagne (Änderung 2026-11-16b) |
-| Software an Bord | `ShipDesign.software` | Welche Routine-Programme ein Schiff dieses Entwurfs dabeihat (SR 38–39); ein Text, solange es keinen Software-Kauf gibt (Änderung 2026-11-16b) |
+| Software (Programm) | `Software` | Ein Programm der Software-Liste (SR 38–39, SE 13): Platzbedarf in Space, Preis, Wirkung; Art nach `SoftwareKind` (offensiv, defensiv, routine) (Änderung 2026-11-16b) |
+| Rechnermodell | `ComputerModel` | Modell 1 bis 7 (je mit „bis“): Preis, Tonnen, CPU und Storage in Space, TL; die Modellzahl ist die höchste Sprungzahl und der Wert des Softwarepakets in MCr (SE 10) (Änderung 2026-11-16b) |
+| Software an Bord | `ShipSoftware` | Ein Programm, das ein konkretes Schiff dabeihat; beim Kauf aus dem Softwarepaket des Computers gewählt (Änderung 2026-11-16b) |
 | Deckplan | `DeckPlan` | Der Plan eines Schiffsentwurfs als Bild: bis zu drei eigene, als PNG hochgeladen oder fotografiert; das Gerät merkt sie sich über Kampagnen hinweg, Export und OneDrive holen sie nicht (Änderung 2026-11-16b) |
 
 ## Regeln, die das Bild nicht zeigt
@@ -2550,11 +2552,17 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     es weiter. `Campaign.ship` und der Reiter Schiff kennen nur das nicht ausgeblendete
     Schiff. Die Regel *Worauf der Log verweist, wird nie gelöscht* gilt damit auch für
     Schiffe.
-  - **Software an Bord** (Änderung 2026-11-16b, offen). `ShipDesign.software` hält als Text
-    fest, welche Routine-Programme ein Schiff dieses Entwurfs dabeihat (SR 38–39: Maneuver,
-    Jump mit Jump-Programm zur Sprungzahl, Navigation, Generate, Anti-Hijack, Library …).
-    Solange es keinen Software-Handel gibt, ist sie an keinem Schiff gespeichert; die Ansicht
-    zeigt den Text des Entwurfs.
+  - **Software, Rechner, was an Bord ist** (Änderung 2026-11-16b, offen). Nach SE 10 und 13:
+    `ComputerModel` hält die neun Rechnermodelle (Preis, Tonnen, CPU und Storage in Space,
+    TL; die Modellzahl ist die höchste Sprungzahl – Jump-4 braucht Modell/4 – und der Wert
+    des Softwarepakets `/softwareCredit` in MCr; „bis“-Modelle zählen beim Paketwert als die
+    untere Stufe). `Software` hält alle 36 Programme der Software-Liste (Name, Art, Space,
+    Preis, Wirkung; `writeSkills` nur für selbstgeschriebene Programme, ein späterer
+    Schritt). Was ein konkretes Schiff dabeihat, ist Spielstand: `ShipSoftware` verweist je
+    Programm auf `Software`; beim Kauf wählt der Käufer Programme bis zum Wert des Pakets
+    (kein Bargeld). Der Entwurf verweist über `computer` auf ein `ComputerModel` statt auf
+    den bisherigen Text. Welche Programme gerade in der CPU laufen, ist taktisch und kommt
+    erst mit dem Raumkampf.
   - **Deckpläne** (Änderung 2026-11-16b, offen). Bis zu drei eigene Pläne je Entwurf:
     Bilder, als PNG hochgeladen oder mit der Kamera fotografiert, je mit Namen.
     `DeckPlan` ist orange **Geräte-Daten**: Das Gerät hält sie in einem eigenen Repository
@@ -2576,9 +2584,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - **Subventionierte Entwürfe** (Subsidized Merchant, Subsidized Liner) stehen da wie die
       anderen; die Subventionsregeln (SR 29: feste Route, Regierung zahlt 50 % der Monatsrate,
       schuldenfrei nach 20 Jahren, Mobilmachung im Notfall) sind nicht modelliert.
-    - **Deckpläne und Software aus dem UI-Mock** (`docs/mock/schiff-tab.html`): Dazu liegt die
-      Änderung 2026-11-16b bereit (Deckpläne als Geräte-Daten je Entwurf, Software als
-      Referenztext am Entwurf); freigegeben ist sie noch nicht.
+    - **Deckpläne und Software aus dem UI-Mock** (`docs/mock/schiff-tab.html`): Dazu liegt
+      die Änderung 2026-11-16b bereit (Deckpläne als Geräte-Daten je Entwurf; Software-,
+      Rechner- und Bordsoftware-Klassen); freigegeben ist sie noch nicht. Offen bleibt,
+      wer beim Kauf das Softwarepaket wählt: eine Auswahl in der Werft, oder vorerst ein
+      Hausregel-Standard je Entwurf. Der Einbau später gekaufter Programme und der
+      Rechner-Tausch (SE 10) folgen mit dem Software-Handel.
     - Ebenso offen: Pfändung bei Zahlungsverzug (siehe oben), Verkauf eines Schiffs, mehrere
       Schiffe, Custom-Entwürfe, Small Craft als eigene `ShipDesign`, und der **Preisnachlass
       für ein gebrauchtes Standardschiff** (SR 31: 10–40 % je nach Alter) über `Ship.price`.

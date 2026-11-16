@@ -91,6 +91,8 @@ hide <<browser>> stereotype
     nextPaymentDay: number [0..1]
     $new("2026-11-16b", "retired: boolean")
   }
+  class ShipSoftware $schiffe $newClass("2026-11-16b") {
+  }
   class ShipDesign <<reference>> $schiffe {
     code: string
     name: string
@@ -98,8 +100,7 @@ hide <<browser>> stereotype
     jump: number
     maneuver: number
     fuel: number
-    computer: string
-    $new("2026-11-16b", "software: string")
+    $gone("2026-11-16b", "computer: string")
     staterooms: number
     lowBerths: number
     hardpoints: number
@@ -108,6 +109,29 @@ hide <<browser>> stereotype
     basePrice: number
     months: number
     streamlined: boolean
+  }
+  class ComputerModel <<reference>> $schiffe $newClass("2026-11-16b") {
+    name: string
+    jump: number
+    price: number
+    tons: number
+    cpu: number
+    storage: number
+    tl: number
+    /softwareCredit: number
+  }
+  class Software <<reference>> $schiffe $newClass("2026-11-16b") {
+    name: string
+    kind: SoftwareKind
+    space: number
+    price: number
+    effect: string
+    writeSkills: string [0..1]
+  }
+  enum SoftwareKind <<value>> $schiffe $newClass("2026-11-16b") {
+    offensive
+    defensive
+    routine
   }
   class DeckPlan <<browser>> $schiffe $newClass("2026-11-16b") {
     name: string
@@ -133,6 +157,9 @@ hide <<browser>> stereotype
 ' Schiffe
 Campaign "1" *-- "0..1" Ship : ship
 Ship "*" --> "1" ShipDesign : design
+Ship "1" *-$newArrow("2026-11-16b")-> "0..*" ShipSoftware : software
+ShipSoftware "*" -$newArrow("2026-11-16b")-> "1" Software : program
+ShipDesign "*" -$newArrow("2026-11-16b")-> "1" ComputerModel : computer
 Booking "*" --> "0..1" Ship : forShip
 Gain "*" --> "0..1" ShipDesign : ship
 DeckPlan "*" -$newArrow("2026-11-16b")-> "1" ShipDesign : design

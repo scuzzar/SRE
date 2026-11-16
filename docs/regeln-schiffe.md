@@ -17,7 +17,7 @@ modelliert, siehe `domain-model.md` unter *Zeit und Reisen*; hier geht es um das
 | Kürzel | Buch | Seitenangaben |
 |---|---|---|
 | **SR** | *Traveller Starter Edition*, Teil 1: *Rules Booklet* (GDW 1983), Kapitel *Travel* (S. 27–28), *Starship Economics* (S. 29–30), *Starships* (S. 31–37), *Computers* (S. 38–39), *Space Combat* (S. 39–42), *Trade and Commerce* (S. 52) | gedruckte Seitenzahl; im PDF ist es die Seite + 2 |
-| **SE** | *Traveller Starter Edition*, Teil 2: *Charts and Tables* (GDW 1983) | liegt nicht vor; nur die Seitenangaben aus SR sind bekannt (siehe [Lücken](#lücken-fehlende-tabellen-aus-se)) |
+| **SE** | *Traveller Starter Edition*, Teil 2: *Charts and Tables* (GDW 1983) | liegt als PDF vor (CD-ROM „Classic Traveller“, `CT Traveller Starter Edition 2 Charts.pdf`); gedruckte Seite = PDF-Seite − 2 |
 
 - Regeltexte sind auf Deutsch zusammengefasst, Tabellen (soweit aus SR bekannt) vollständig
   übernommen. Namen aus den Tabellen (Schiffstypen, Komponenten, Programme) bleiben englisch, wie in
@@ -282,36 +282,93 @@ Standardentwürfen (siehe unten) sind einige Werte bekannt: Antrieb-A liefert in
 
 ## Computer und Software
 
-*SR 38–39, „Computers“.*
+*SR 38–39, „Computers“; Tabellen SE 10 und 13.*
 
 Der Computer steuert alle Schiffsfunktionen; **CPU** (gleichzeitig laufende Programme) und
-**Storage** (bereitgehaltene Programme) sind in Größe/Space angegeben, Modelle 1 bis 7 (je mit
-einer „bis“-Version als nächsthöhere Stufe). Modell/4 oder besser ist für Jump-4+ Pflicht. Preis-/
-Tonnage-/Kapazitätswerte je Modell fehlen (siehe [Lücken](#lücken-fehlende-tabellen-aus-se)).
+**Storage** (bereitgehaltene Programme, die man in die CPU tauschen kann) sind in *Space*
+angegeben. Modelle 1 bis 7, je mit einer „bis"-Version (nächste Sprungstufe, aber Softwarewert
+und Ausrüstung des darunterliegenden Modells). Die Modellzahl ist zugleich die höchste
+unterstützte Sprungzahl: für Jump-4 braucht das Schiff einen Computer Modell/4 oder besser
+*zusätzlich* zum eingebauten Jump Drive.
 
-**Software** (Offensiv nur mit Bewaffnung nutzbar; Routine ohne Bewaffnung relevant; Defensiv zum
-Schutz):
+### Computer (SE 10, „Computers“)
 
-| Programm | Art | Wirkung |
-|---|---|---|
-| Target | offensiv (Pflicht) | identifiziert feindliche Schiffe, steuert alle Turrets; kein eigener DM |
-| Predict | offensiv | sagt die Zielposition voraus, nur für Laserfeuer, vorteilhafter DM |
-| Gunner Interact | offensiv | Fertigkeit des Gunners wird DM auf Treffer mit Laser |
-| Selective | offensiv | Ziel wählt Hauptbereich oder Engineering gezielt; DM gegen Trefferwahrscheinlichkeit |
-| Launch | offensiv | erlaubt Abschuss von Raketen/Sand aus Racks/Sandcastern |
-| Multi-Target | offensiv | mehrere Turrets greifen verschiedene Ziele in derselben Phase an; Pflicht mit Target |
-| Double Fire | offensiv | Energiewerk ≥ Maneuver-Drive-Buchstabe: doppelter Laserschuss, Überlastrisiko (siehe Raumkampf) |
-| Maneuver/Evade | defensiv | 6 Stufen, automatische Ausweichbewegung, DM nach Pilotenfertigkeit |
-| Auto-Evade | defensiv | wie Maneuver/Evade, aber schwächer, DM −2 gegen Laserfeuer |
-| ECM | defensiv | Gegenmaßnahme gegen anfliegende Raketen: Zerstörung ohne Schaden bei 7+ |
-| Return Fire | defensiv | Laser-Rückfeuer auf Schiffe, die im vorigen Laserfeuer-Zug gefeuert haben |
-| Anti-Missile | defensiv | Laserfeuer gegen Raketen im eigenen Entfernungsband |
-| Maneuver | routine | Pflicht für Einsatz des Maneuver Drive (wird im Kampf oft durch Maneuver/Evade ersetzt) |
-| Jump | routine | Pflicht für einen Sprung, braucht das passende Jump-Programm zur Sprungzahl |
-| Library | routine | Nachschlagewerk zu Region/Subsektor |
-| Generate | routine | erstellt den Flugplan für einen Sprung; alternativ Flugplan-Kassette am Hafen, Cr10.000 |
-| Navigation | routine | führt den Sprung anhand des Flugplans durch |
-| Anti-Hijack | routine | sperrt Kontrollbereiche gegen Entführer; Umgehung bei Wurf 5− |
+| Modell | Preis MCr | Tonnen | Kapazität CPU/Storage | TL |
+|---|---|---|---|---|
+| Modell/1 | 2 | 1 | 2/4 | 5 |
+| Modell/1bis | 4 | 1 | 4/0 | 6 |
+| Modell/2 | 9 | 2 | 3/6 | 7 |
+| Modell/2bis | 18 | 2 | 6/0 | 8 |
+| Modell/3 | 18 | 3 | 5/9 | 9 |
+| Modell/4 | 30 | 4 | 8/15 | A |
+| Modell/5 | 45 | 5 | 12/25 | B |
+| Modell/6 | 55 | 7 | 15/35 | C |
+| Modell/7 | 80 | 9 | 20/50 | D |
+
+Beispiel aus SR 12 (Scout/Courier „Suleiman“): Modell/1 → CPU = 2, Storage = 4; von den
+gespeicherten Programmen laufen jederzeit höchstens so viele, wie die CPU fasst; in der
+Reprogramming-Phase des Zuges tauscht man um.
+
+**Standard Software Packages** (SE 10/13): Jeder Computer kommt mit einem Softwarepaket, das
+der Käufer aus der Liste wählt; sein Wert: **MCr gleich der Modellzahl** (1bis und 2bis zählen
+dabei als 1 bzw. 2). Das Kredit ist kein Bargeld („may not be converted to cash“).
+
+### Software List (SE 13)
+
+Space = Platzbedarf in CPU *und* Storage, Preis in MCr. Die letzten Spalten (*Schreiben*) sind
+die Anforderungen an Personen, die das Programm selbst schreiben wollen (spart das Geld, kann
+aber *Fatal Flaws* geben, SR 39).
+
+**Offensiv** (nur mit Bewaffnung sinnvoll):
+
+| Programm | Space | MCr | Schreiben | Wirkung |
+|---|---|---|---|---|
+| Predict-1 | 1 | 2 | 1, Navig-1 | DM +1 auf Trefferwurf |
+| Predict-2 | 2 | 4 | 1, Navig-2 | DM +2 |
+| Predict-3 | 1 | 6 | 1, Navig-3 | DM +2 |
+| Predict-4 | 3 | 8 | 1, Navig-4 | DM +3 |
+| Predict-5 | 2 | 10 | 2, Navig-5 | DM +3 |
+| Gunner Interact | 1 | 1 | 2, Gunnery-2 | Fertigkeit des Gunners wird DM |
+| Target | 1 | 1 | 2, Navig-2 | Pflicht für jedes Feuer der Turrets |
+| Select-1 | 1 | 0,5 | 1, Gunnery-2 | Zielwahl Hauptbereich/Engineering, DM −2 |
+| Select-2 | 2 | 0,8 | 2, Gunnery-3 | wie Select-1, DM −1 |
+| Select-3 | 1 | 1 | 3, Gunnery-4 | wie Select-1, ohne DM |
+| Multi-Target-2 | 1 | 1 | 2, Gunnery-2 | Turrets auf 2 Ziele zugleich |
+| Multi-Target-3 | 2 | 2 | 2, Gunnery-3 | auf 3 Ziele |
+| Multi-Target-4 | 4 | 3 | 3, Gunnery-4 | auf 4 Ziele |
+| Launch | 1 | 2 | 1, Gunnery-2 | Raketen und Sand abschussfähig |
+| Double Fire | 4 | 4 | 2, Engineer-3 | doppelter Laserschuss, Überlastrisiko |
+
+**Defensiv**:
+
+| Programm | Space | MCr | Schreiben | Wirkung |
+|---|---|---|---|---|
+| Maneuver/Evade-1 | 1 | 1 | 1, Pilot-2 | Verteidigungs-DM −¼ Pilotenstufe |
+| Maneuver/Evade-2 | 2 | 2 | 1, Pilot-3 | −½ Pilotenstufe |
+| Maneuver/Evade-3 | 3 | 3 | 2, Pilot-4 | −¾ Pilotenstufe |
+| Maneuver/Evade-4 | 4 | 4 | 2, Pilot-5 | − volle Pilotenstufe |
+| Maneuver/Evade-5 | 5 | 5 | 3, Pilot-6 | − volle Pilotenstufe |
+| Maneuver/Evade-6 | 3 | 6 | 3, Pilot-7 | −5 |
+| Auto-Evade | 1 | 0,5 | 2, Pilot-4 | wie Maneuver/Evade, schwächer: −2 |
+| Return Fire | 1 | 0,5 | 2, Gunnery-3 | automatisches Rückfeuer |
+| Anti-Missile | 2 | 1 | 3, Gunnery-3 | Laser gegen Raketen im eigenen Band |
+| ECM | 3 | 4 | 4, Electronics-3 | Raketen explodieren folgenlos bei 7+ |
+
+**Routine** (Betrieb ohne Waffen):
+
+| Programm | Space | MCr | Schreiben | Wirkung |
+|---|---|---|---|---|
+| Maneuver | 1 | 0,1 | 1, Pilot-1 | Pflicht für den Maneuver Drive |
+| Jump-1 | 1 | 0,1 | 1, Pilot/Navig-1 | Pflicht für Sprung 1 |
+| Jump-2 | 2 | 0,3 | 2, Pilot/Navig-2 | Pflicht für Sprung 2 |
+| Jump-3 | 3 | 0,4 | 2, Pilot/Navig-3 | Pflicht für Sprung 3 |
+| Jump-4 | 4 | 0,5 | 3, Pilot/Navig-4 | Pflicht für Sprung 4 |
+| Jump-5 | 5 | 0,6 | 3, Pilot/Navig-5 | Pflicht für Sprung 5 |
+| Jump-6 | 6 | 0,7 | 4, Pilot/Navig-6 | Pflicht für Sprung 6 |
+| Navigation | 1 | 0,4 | 3, Navig-3 | führt den Sprung aus |
+| Generate | 1 | 0,8 | 3, Navig-4 | erstellt den Flugplan (sonst Kassette Cr10.000) |
+| Anti-Hijack | 1 | 0,1 | 1, Tactics-1 | sperrt Kontrollbereiche; Umgehung auf 5− |
+| Library | 1 | 0,3 | 1, keine | Nachschlagewerk zu Region/Subsektor |
 
 - **Fatal Flaws**: selbstgeschriebene Programme können einen verborgenen Fehler haben (Wurf 11+,
   Ermessen der Spielleitung).
@@ -507,24 +564,22 @@ Siehe [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system).
 
 ## Lücken (fehlende Tabellen aus SE)
 
-Diese Tabellen stehen im Heft *Charts and Tables*, das für dieses Dokument nicht vorlag. Ohne sie
-lässt sich zwar mit den **Standardentwürfen** spielen (ihre Werte stehen vollständig in SR), aber
-kein eigener Schiffsentwurf, kein spekulativer Handel mit genauen Zahlen und kein Raumkampf mit
-exakten Trefferfolgen:
+Das Heft *Charts and Tables* liegt inzwischen als PDF vor (siehe *Quellen*). Die meisten
+Tabellen fehlen damit nicht mehr, sie sind nur noch **nicht übertragen** – sie kommen, wenn das
+jeweilige Thema an der Reihe ist, vollständig hierher (Software List und Computer sind oben
+schon übertragen). Als Fundstellen in SE sind bestätigt:
 
-- **Drive Potential Table** (Antriebsbuchstaben A–Z je Rumpfgröße, SE 10).
-- **Drives and Power Plants Table** (Preis/Tonnage je Antriebsbuchstabe, SE 10).
-- **Standard Hulls Table** (sechs vergünstigte Rümpfe, SE 10).
-- **Computer Table** (Preis/Tonnage/CPU/Storage je Modell 1–7 und bis-Versionen, SE 13).
-- **Software List** (genaue Space-/MCr-Werte je Programm, SE 13; die Wirkungen stehen oben).
-- **Weapons and Mounts Table** (Preise für Turrets/Waffen, SE 12).
-- **Cargo Table**, **Passenger Traffic Table** (SE 9).
-- **Trade and Speculation Table**, **Actual Value Table** (Warenarten, Grundpreise, Kauf-/
-  Verkaufs-DMs, SE 22).
-- **Starship Encounter Table**, **Standard Small Craft Table** (Begegnungen je Hafenklasse, SE 13).
-- **Hit Location Table**, **Critical Hit Table** (SE 12–13).
-- **Crew Salary Schedule** (SE 9).
+- **Standard Hulls**, **Drives and Power Plants**, **Drive Potential**, **Computers**,
+  **Software List**, **Weapons and Mounts**, **Fittings**, **Bridge**, **Armaments** (SE 10)
+- **Crew Requirements** mit Monatsgehältern (Cr6.000 Pilot, Cr5.000 Navigator, Cr4.000 Engineer,
+  Cr3.000 Steward, Cr2.000 Medic, Cr1.000 Gunner; Mehrfachposition: Stufe −1, Gehalt 75 % beider
+  Positionen) (SE 11)
+- **Attacker’s/Defender’s DMs**, **Hit Locations**, **Critical Hits**, **Scales**, Beispiel einer
+  Schiffs-Datenkarte (SE 12)
+- **Starship Encounters**, **Standard Small Craft**, **Detection**, **Special Rules** (SE 13)
+- **Technological Levels** (SE 16)
+- **Trade and Speculation** (SE 22; die *Actual Value Table* und die *Cargo-* und
+  *Passagiertabellen* sind noch zu suchen, vermutlich SE 9/22–23)
 
-Wird eines dieser Themen für die App gebraucht, zuerst die Lücke mit der *Charts and Tables*-Tabelle
-schließen (Scan besorgen oder Hausregel festlegen), dann hier eintragen, erst danach ins
-Domänenmodell übernehmen.
+Wird eines dieser Themen für die App gebraucht, die Tabelle aus dem PDF vollständig hier
+eintragen, erst danach ins Domänenmodell übernehmen.
