@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { EditorView, ItemChoice, SkillChoice } from '../../controller';
 import type { ItemKind, Upp } from '../../model';
 import { characteristicLabel, hex, kindNames, roleText } from '../format';
 import { useGame, useSnapshot } from '../game-context';
 import { haptic } from '../haptics';
-import { CloseIcon } from '../icons';
+import { CardIcon, CloseIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
 import { CardSheet } from '../oracle/CardSheet';
 import { Form } from '../Form';
@@ -50,6 +50,14 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
   }));
   const [confirmRemove, setConfirmRemove] = useState(false);
   const isNew = editor.id === undefined;
+  // Die Notiz wächst mit ihrem Text, damit eine angehängte Kartenauswahl immer ganz zu sehen ist.
+  const noteField = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = noteField.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [form.note]);
   const unused = skills.filter((s) => !form.skills.some((f) => f.of === s.id));
   const unowned = items.filter((i) => !form.possessions.some((p) => p.of === i.id));
 
@@ -287,22 +295,21 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
             <span>Credits</span>
             <input type="number" inputMode="numeric" step={1} value={form.credits} onChange={(e) => setForm({ ...form, credits: e.target.value })} />
           </label>
-          <div className="inline-form">
-            <label className="field">
-              <span>Notiz</span>
-              <textarea value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
-            </label>
-            <button
-              type="button"
-              className="ghost"
-              onClick={() => {
-                haptic('draw');
-                game.drawCard(undefined, true);
-              }}
-            >
-              Karte ziehen
-            </button>
-          </div>
+          <label className="field">
+            <span>Notiz</span>
+            <textarea ref={noteField} className="note-grow" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
+          </label>
+          <button
+            type="button"
+            className="ghost name-from-card note-card-draw"
+            onClick={() => {
+              haptic('draw');
+              game.drawCard(undefined, true);
+            }}
+          >
+            <CardIcon />
+            Karte ziehen
+          </button>
           <label className="toggle">
             <input type="checkbox" checked={form.npc ?? false} onChange={(e) => setForm({ ...form, npc: e.target.checked })} />
             <span>
