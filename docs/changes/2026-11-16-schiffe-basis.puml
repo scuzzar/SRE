@@ -117,7 +117,9 @@ hide <<value>> stereotype
     $new("2026-11-16", "name: string")
     $new("2026-11-16", "fuel: number")
     $new("2026-11-16", "cargo: number")
+    $new("2026-11-16", "initialLoan: number [0..1]")
     $new("2026-11-16", "loanBalance: number [0..1]")
+    $new("2026-11-16", "/monthlyPayment: number [0..1]")
     $new("2026-11-16", "nextPaymentDay: number [0..1]")
   }
   class ShipDesign <<reference>> $schiffe $newClass("2026-11-16") {

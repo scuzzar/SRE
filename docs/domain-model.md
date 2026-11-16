@@ -677,8 +677,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Würfelausdruck | `DiceExpr` | Wie viele W6 plus welcher DM, z. B. 2W6 + 1 oder 3W6 − 3 |
 | Schiff | `Ship`, `Campaign.ship` | Das eine Schiff der Gruppe als Basis: Entwurf, Name, Treibstoff und Fracht in Tonnen, offene Restschuld |
 | Schiffsentwurf | `ShipDesign` | Referenzdaten eines Standardentwurfs (Scout/Courier, Free Trader, …): Rumpf, Antriebe, Treibstofftank, Computer, Kabinen, Niedrigbetten, Hardpoints, Laderaum, Crewbedarf, Preis, Bauzeit; siehe [`regeln-schiffe.md`](regeln-schiffe.md) unter *Standardentwürfe* |
-| Restschuld | `Ship.loanBalance` | Was von der Bankfinanzierung eines Schiffs noch offen ist; fehlt, wenn es schuldenfrei ist |
-| Nächste Rate | `Ship.nextPaymentDay` | Der Kampagnentag, an dem die nächste Monatsrate fällig wird; ihre Höhe folgt aus dem Preis des Entwurfs (ein Zweihundertvierzigstel) |
+| Kreditsumme | `Ship.initialLoan` | Was bei der Bankfinanzierung eines Schiffs insgesamt finanziert wurde (200 % des Preises); bleibt stehen, auch wenn sich der Preis des Entwurfs später ändert |
+| Restschuld | `Ship.loanBalance` | Was von der Kreditsumme noch offen ist; fehlt, wenn das Schiff schuldenfrei ist |
+| Monatsrate | `Ship./monthlyPayment` | Ein Vierhundertachtzigstel der Kreditsumme, immer gleich hoch |
+| Nächste Rate | `Ship.nextPaymentDay` | Der Kampagnentag, an dem die nächste Monatsrate fällig wird |
 | Ship-Vorteil der Abmusterung | `Gain.ship`, `Gain.shipDebtFree` | Eine Zeile der Mustering-out-Tabelle, die ein Schiff gibt: schuldenfrei (Scout) oder als Anteil an einer Restschuld (Merchant) |
 | Schiffswahl | `CareerRoll.shipChoice`, `ShipChoice` | Nur gesetzt, wenn die Kampagne beim Würfeln des Ship-Vorteils schon ein anderes Schiff hat: behalten oder wechseln (das alte Schiff samt Restschuld entfällt dann) |
 
@@ -2486,23 +2488,27 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     1. **Bar aus der Kasse:** der volle Preis des Entwurfs wird sofort gebucht (`BookingKind.ship`),
        das Schiff entsteht ohne Restschuld, mit vollem Tank und leerem Laderaum.
     2. **Bankfinanzierung** (SR 29, voll nach RAW): 20 % Anzahlung sofort aus der Kasse gebucht
-       (`BookingKind.ship`), die Restschuld beginnt bei **200 % des Preises** (480 Monatsraten à ein
-       Zweihundertvierzigstel ergeben zusammen mit der Anzahlung die 220 % aus SR 29). Die Monatsrate
-       selbst steht nicht am Schiff, sondern folgt rechnerisch aus `design.price`. Jedes Mal, wenn die
-       Spielzeit den Tag `nextPaymentDay` erreicht oder überschreitet (beim Tage-vergehen-lassen, bei
-       Woche beenden oder einer Fahrt), wird die Rate automatisch aus der Kasse gebucht und die
-       Restschuld sinkt; reicht die Kasse nicht, bleibt die Rate offen (Buchung mit
-       Hinweistext „Rate nicht bezahlt“) und `nextPaymentDay` rückt trotzdem einen Monat (30 Tage)
-       weiter. **✱ Hausregel/offener Punkt:** Die Pfändung bei Zahlungsverzug (SR 28, Distanz-DM zur
-       Heimatwelt des Schiffs) ist damit **nicht** nachgebaut; eine unbezahlte Rate hat vorerst keine
-       Folge außer dem Hinweis im Log. Das holt ein späterer Schritt nach, wenn Pfändung wirklich
-       gebraucht wird.
+       (`BookingKind.ship`). Die **Kreditsumme** (`initialLoan`) wird beim Abschluss einmal auf
+       **200 % des damaligen Preises** festgelegt und bleibt so stehen, auch wenn sich der Preis des
+       Entwurfs später ändert (480 Monatsraten à ein Vierhundertachtzigstel der Kreditsumme ergeben
+       zusammen mit der Anzahlung die 220 % aus SR 29); die **Restschuld** (`loanBalance`) beginnt
+       gleich der Kreditsumme und sinkt mit jeder bezahlten Rate. Die **Monatsrate**
+       (`/monthlyPayment`) folgt daraus (`initialLoan / 480`), nicht aus dem – unter Umständen
+       inzwischen geänderten – `design.price`. Jedes Mal, wenn die Spielzeit den Tag
+       `nextPaymentDay` erreicht oder überschreitet (beim Tage-vergehen-lassen, bei Woche beenden
+       oder einer Fahrt), wird die Rate automatisch aus der Kasse gebucht und die Restschuld sinkt;
+       reicht die Kasse nicht, bleibt die Rate offen (Buchung mit Hinweistext „Rate nicht bezahlt“)
+       und `nextPaymentDay` rückt trotzdem einen Monat (30 Tage) weiter. **✱ Hausregel/offener
+       Punkt:** Die Pfändung bei Zahlungsverzug (SR 28, Distanz-DM zur Heimatwelt des Schiffs) ist
+       damit **nicht** nachgebaut; eine unbezahlte Rate hat vorerst keine Folge außer dem Hinweis im
+       Log. Das holt ein späterer Schritt nach, wenn Pfändung wirklich gebraucht wird.
     3. **Ship-Vorteil der Abmusterung** (SR, Mustering-out Benefits; Hausregel-Zuordnung wie bisher
        bei `scout-ship`/`free-trader`): Eine Zeile der Benefits-Tabelle verweist jetzt über `Gain.ship`
        auf einen `ShipDesign` statt über `Gain.item` auf einen Gegenstand. Hat die Kampagne **noch
-       kein Schiff**, legt der Vorteil es an: beim Scout schuldenfrei (`Gain.shipDebtFree`), beim
-       Merchant mit einer Restschuld von 100 % des Preises (der halbe Kredit; ein zweiter
-       Merchant-Ship-Vorteil für denselben Entwurf zahlt sie auf 0). Hat die Kampagne schon ein
+       kein Schiff**, legt der Vorteil es an: beim Scout schuldenfrei (`Gain.shipDebtFree`,
+       `initialLoan` und `loanBalance` fehlen), beim Merchant mit `initialLoan` und `loanBalance`
+       auf 100 % des damaligen Preises (der halbe Kredit; ein zweiter Merchant-Ship-Vorteil für
+       denselben Entwurf zahlt die Restschuld auf 0, ohne `initialLoan` zu ändern). Hat die Kampagne schon ein
        **anderes** Schiff, entscheidet der Spieler (`CareerRoll.shipChoice`): **behalten** (der
        Vorteil bleibt ohne Wirkung, steht aber im Lebenslauf) oder **wechseln** (das alte Schiff
        samt seiner Restschuld entfällt ersatzlos – „Kredit kündigen“ als Vereinfachung, kein
