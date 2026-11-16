@@ -11,6 +11,9 @@ Domänenmodell ([`domain-model.md`](domain-model.md)).
 
 **Reisen als Passagier** (High/Middle/Low Passage, Travellers' Aid Society, Low Lottery) ist bereits
 modelliert, siehe `domain-model.md` unter *Zeit und Reisen*; hier geht es um das **eigene Schiff**.
+Das **Reisen mit eigenem Schiff** ist seit 16. November 2026 modelliert und gebaut (Änderung
+2026-11-16d, noch zur Freigabe eingereicht): Sprung bis zur Sprungzahl des Entwurfs, Treibstoffverbrauch
+je Sprung als Hausregel, Fehlsprung als Wurf – siehe `domain-model.md` unter *Eigenes Schiff*.
 
 ## Quellen und Schreibweise
 
@@ -117,7 +120,9 @@ für den Tag, an dem es losgeht.
 | Gehälter der Crew | nach der Gehaltstabelle (NSC; fehlt, siehe [Lücken](#lücken-fehlende-tabellen-aus-se)), + 10 % je Erfahrungsstufe über 1 |
 
 - **Treibstoffverbrauch** hängt von Antriebs- und Energiewerksgröße ab (siehe
-  [Schiffsaufbau](#schiffsaufbau), *Fuel*).
+  [Schiffsaufbau](#schiffsaufbau), *Fuel*). **Stand in der App:** die Formel braucht
+  Energiewerks-Ratings, die die Referenzdaten nicht haben; die App rechnet je Sprung
+  `Tank ÷ Sprungzahl` gerundet (`ShipDesign./jumpFuel`, Hausregel).
 - Ohne jährliche Wartung steigt das Ausfallrisiko (siehe [Schiffspannen](#schiffspannen)).
 
 ---
@@ -176,7 +181,10 @@ Schiffe verdienen an **Fracht**, **Passagieren** und **Post**.
   **+5** innerhalb 100 Planetendurchmessern eines Himmelskörpers, **+15** innerhalb 10
   Planetendurchmessern. Bei 16+ wird das **Schiff zerstört**. Sonst: zufälliger Fehlsprung
   (1W bestimmt, wie viele Würfel für die Distanz in Hexfeldern geworfen werden; 1W die Richtung von
-  sechs; 1W die Wochen im Jump Space, bevor das Schiff wieder auftaucht).
+  sechs; 1W die Wochen im Jump Space, bevor das Schiff wieder auftaucht). **Stand in der App:**
+  der Wurf 2W6 je Sprung mit eigenem Schiff ist umgesetzt (`Journey.jump`, `/misjump` bei 13+,
+  ohne DMs); die Folgen – zufälliger Zielort, Wochen im Jump Space, Schiff vernichtet bei 16+ –
+  entscheidet der Owner im Spiel, die App würfelt sie nicht.
 
 ---
 

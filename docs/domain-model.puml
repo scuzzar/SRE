@@ -178,6 +178,7 @@ hide <<browser>> stereotype
   }
   class ShipDesign <<reference>> $schiffe {
     code: string
+    $new("2026-11-16d", "/jumpFuel: number")
     name: string
     hull: number
     jump: number
@@ -348,6 +349,8 @@ hide <<browser>> stereotype
     npcDie: number [0..1]
     lot: number [0..1]
     /pot: number
+    $new("2026-11-16d", "jump: number[2]")
+    $new("2026-11-16d", "/misjump: boolean")
   }
   class Passenger <<value>> $reise {
   }
@@ -1032,12 +1035,14 @@ CheckRoll --> CheckKind
 LogEntry <|-- Journey
 Journey "*" --> "1" Hex : from
 Journey "*" --> "1" Hex : to
-Journey "1" *-- "1..*" Passenger : passengers
+Journey "1" *-$goneArrow("2026-11-16d")-> "1..*" Passenger : passengers
+Journey "1" *-$newArrow("2026-11-16d")-> "0..*" Passenger : passengers
 Passenger "*" --> "1" Character : for
 Passenger "*" --> "1" Item : passage
 Journey "1" *-- "*" LowBerth : berths {ordered}
 LowBerth "*" --> "0..1" Character : for
 Journey "*" --> "0..1" LowBerth : /winner
+Journey "*" -$newArrow("2026-11-16d")-> "0..1" Ship : ship
 Booking "*" --> "0..1" Journey : won
 
 ' Charaktererschaffung und Lebenslauf

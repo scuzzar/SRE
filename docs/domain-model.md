@@ -387,6 +387,17 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Schiff, wie `focus` beim Charakter; die Schiffs-Id (s1, s2, …) ist wie bei Charakteren
 > nicht gezeichnet. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-16c-schiffe-der-kampagne.png`](changes/2026-11-16c-schiffe-der-kampagne.png).
+>
+> Noch offen (Kennzeichen 2026-11-16d): **Reisen mit eigenem Schiff.** Neben die Passage
+> (High, Middle, Low) tritt die Reise im eigenen Schiff: Sie erreicht in einer Woche jedes Ziel
+> innerhalb der Sprungzahl des Entwurfs, ohne Raumhafen zu verlangen, und kostet keinen Passagen-
+> preis, sondern Treibstoff. Neu im Bild: der Verweis `Journey.ship` auf das Schiff der Reise, der
+> Sprungwurf `Journey.jump` (2W6) mit dem abgeleiteten `/misjump` (Fehlsprung bei 13+, SR 28) und
+> das abgeleitete `ShipDesign./jumpFuel` – der Verbrauch je Sprung als Hausregel: Tankinhalt durch
+> Sprungzahl, gerundet. `Journey.passengers` wird von 1..* auf 0..* geöffnet: mit eigenem Schiff
+> reist niemand als Passagier, es gibt keine Passagen, keine Kojen und keine Lotterie. Der
+> Ausschnitt dazu liegt unter
+> [`changes/2026-11-16d-reisen-mit-eigenem-schiff.png`](changes/2026-11-16d-reisen-mit-eigenem-schiff.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -515,7 +526,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Tag im Log | `LogEntry.day` | An welchem Spieltag ein Logeintrag entstand; fehlt bei Einträgen von vor der Spielzeit |
 | Test (im Log) | `CheckRoll`, `CheckKind` | Ein gewürfelter Test einer Begegnungsart: random, animal, patron, rumor, legal |
 | Polizei, Legal Encounter | `CheckKind.legal` | Einmal je Woche 2W6 gleich oder über der Gesetzesstufe des Aufenthaltsorts, sonst hält die Polizei die Gruppe an (SE S. 20) |
-| Reise | `Journey` | Logeintrag: Die Gruppe reist mit Passagen von einer Welt zur anderen, eine Woche im Sprung |
+| Reise | `Journey` | Logeintrag: Die Gruppe reist von einer Welt zur anderen, eine Woche im Sprung – mit Passagen oder mit dem eigenen Schiff (2026-11-16d) |
 | Passagier | `Passenger` | Ein Charakter auf der Reise mit seiner Passage (High, Middle oder Low Passage) |
 | Kälteschlafkoje | `LowBerth` | Ein Low-Passagier der Reise, SC oder NSC, mit Wurf zum Aufwachen und Tipp der Lotterie |
 | Low Lottery | `Journey./pot`, `/winner`, `lot` | Cr 10 je Low Passage; wer die Zahl der Überlebenden am besten tippt und selbst überlebt, gewinnt |
@@ -711,6 +722,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Ship-Vorteil der Abmusterung | `Gain.ship`, `Gain.shipDebtFree` | Eine Zeile der Mustering-out-Tabelle, die ein Schiff gibt: schuldenfrei (Scout) oder als Anteil an einer Restschuld (Merchant) |
 | Schiffswahl | `CareerRoll.shipChoice`, `ShipChoice` | Nur gesetzt, wenn die Kampagne beim Würfeln des Ship-Vorteils schon ein anderes Schiff hat: behalten oder wechseln (das alte Schiff wird ausgeblendet, seine Restschuld behält es nur für sich) |
 | Ausgedientes Schiff | `Ship.retired` | Ein altes Schiff, worauf noch Buchungen zeigen: ausgeblendet, bleibt aber in der Kampagne |
+| Treibstoff je Sprung | `ShipDesign./jumpFuel` | Tonnen, die ein Sprung dieses Entwurfs verbraucht: Tankinhalt durch Sprungzahl, gerundet (Hausregel, 2026-11-16d) |
+| Schiffsreise | `Journey.ship` | Das Schiff, das eine Reise getragen hat; mit ihm reist niemand als Passagier – ohne Passagen, Kojen und Lotterie |
+| Sprungwurf | `Journey.jump` | 2W6 je Sprung mit eigenem Schiff, an der Reise im Log |
+| Fehlsprung | `Journey./misjump` | Aus dem Sprungwurf gefolgt: Summe 13 oder mehr (SR 28); was daraus folgt, entscheidet der Owner |
 | Software (Programm) | `Software` | Ein Programm der Software-Liste (SR 38–39, SE 13): Platzbedarf in Space, Preis, Wirkung; Art nach `SoftwareKind` (offensiv, defensiv, routine) |
 | Rechnermodell | `ComputerModel` | Modell 1 bis 7 (je mit „bis“): Preis, Tonnen, CPU und Storage in Space, TL; die Modellzahl ist die höchste Sprungzahl und der Wert des Softwarepakets in MCr (SE 10) |
 | Software an Bord | `ShipSoftware` | Ein Programm, das ein konkretes Schiff dabeihat; beim Kauf aus dem Softwarepaket des Computers gewählt |
@@ -1149,11 +1164,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     nach Lage will man mehr oder weniger Begegnungen. An Patron und Gerücht erinnert nichts: Die
     will man haben, man würfelt sie von selbst. Die Tests würfelt die Zeit nie selbst. Die
     Testknöpfe zählen weiter je Tag bzw. Woche (siehe *Test*).
-- **Reise** (2026-11-13d). Reisen geht zurzeit nur mit Passagen (High, Middle, Low; SE S. 8
-  f.), noch nicht mit eigenem Schiff.
+- **Reise** (2026-11-13d). Die Gruppe reist mit **Passagen** (High, Middle, Low; SE S. 8 f.) oder
+  mit dem **eigenen Schiff** (2026-11-16d, eingereicht, siehe *Eigenes Schiff*); der Reisedialog
+  bietet, was verfügbar ist.
   - *Wohin*: Auf der Weltkarte einer anderen fertigen Welt steht **Hierher reisen**, wenn die Gruppe
     einen Aufenthaltsort hat, beide Welten einen Raumhafen A bis E haben und das Ziel höchstens
     **2 Parsec** entfernt ist (Sprung 2). Weiter geht es nur über Zwischenhalte, je Halt eine Reise.
+    Mit eigenem Schiff gilt diese Grenze nicht (siehe *Eigenes Schiff*).
     Während einer laufenden Begegnung reist man nicht.
   - *Wer*: Es reisen alle lebenden, nicht ausgeblendeten Charaktere der Kampagne, je mit einer
     Passage (`Passenger`): man wählt je Charakter High, Middle oder Low Passage, vorgeschlagen ist
@@ -1167,6 +1184,24 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     beginnen neu). Nur gibt es **keine Pflicht-Begegnungen**: Die Reise erinnert nicht an fehlende
     Tests, weder vor der Abreise noch für die Tage im Sprung, und würfelt keine. Wer unterwegs eine
     Begegnung will, würfelt sie wie sonst von Hand.
+  - *Eigenes Schiff* (2026-11-16d, eingereicht). Hat die Gruppe ein Schiff, kann sie in diesem
+    reisen: Sie wählt im Reisedialog „Eigenes Schiff“ statt Passagen.
+    - *Wohin*: Das Ziel liegt höchstens so viele Parsec entfernt, wie der Entwurf Sprung kann
+      (`ShipDesign.jump`). Raumhäfen sind beide keiner nötig – das Schiff landet überall. Es
+      reisen alle lebenden Charaktere mit; niemand kauft eine Passage, niemand liegt in
+      Kälteschlaf-Lotterie. `Journey.ship` verweist auf das Schiff; `passengers` und `berths`
+      sind leer.
+    - *Treibstoff*: Jeder Sprung verbraucht `ShipDesign./jumpFuel` Tonnen – Hausregel: Tankinhalt
+      geteilt durch Sprungzahl, gerundet (die SR-30-Formel braucht Energiewerks-Ratings, die die
+      Referenzdaten nicht haben). Der Verbrauch zieht `Ship.fuel` ab; reicht der Treibstoff nicht,
+      geht die Reise nicht.
+    - *Fehlsprung* (SR 28): Pro Sprung würfelt die App **2W6** (`Journey.jump`); `/misjump`
+      folgt daraus: Summe **13 oder mehr**. Der Wurf steht an der Reise im Log. Was ein
+      Fehlsprung folgt, entscheidet der Owner – die App würfelt nur, sie würfelt keinen
+      Zielort und zerstört kein Schiff.
+    - *Dauer*: ebenfalls **eine Woche**; sonst gilt wie bei der Passage.
+    - Kommen später: Lebenserhaltungskosten (Cr 2.000 je Kabine je zwei Wochen, SR 30),
+      zahlende Passagiere und Fracht.
   - *Ohne Reise*: „Gruppe platzieren“ auf der Weltkarte und die Wahl im Reiter Begegnung setzen den
     Aufenthaltsort weiter ohne Reise und ohne Zeit, etwa zu Beginn einer Kampagne oder für eine
     Reise außerhalb der Regeln.

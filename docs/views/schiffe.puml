@@ -95,6 +95,7 @@ hide <<browser>> stereotype
   }
   class ShipDesign <<reference>> $schiffe {
     code: string
+    $new("2026-11-16d", "/jumpFuel: number")
     name: string
     hull: number
     jump: number
@@ -144,6 +145,7 @@ hide <<browser>> stereotype
 ' Verlauf
 
 ' Zeit und Reisen
+  class Journey $reise
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
 
@@ -166,6 +168,7 @@ Gain "*" --> "0..1" ShipDesign : ship
 DeckPlan "*" --> "1" ShipDesign : design
 
 ' Zeit und Reisen
+Journey "*" -$newArrow("2026-11-16d")-> "0..1" Ship : ship
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -196,4 +199,6 @@ legend right
   |<#fdf1dc> <color:#b8862e>████</color> | Geräte-Daten: das Gerät hält sie über Kampagnen hinweg, nicht im Spielstand |
 endlegend
 class Campaign #line:d0021b;line.bold
+class ShipDesign #line:d0021b;line.bold
+class Journey #line:d0021b;line.bold
 @enduml
