@@ -89,17 +89,26 @@ function WorldSymbol({ hex, x, y, size }: { hex: HexView; x: number; y: number; 
   return <image className="hex-icon" href={worldImageUrl(hex.look, ICON_PX)} x={x - size / 2} y={y - size / 2} width={size} height={size} />;
 }
 
-function HexCell({ hex, selected, disabled, detail, here = false, opensGlobe = false }: { hex: HexView; selected: boolean; disabled: boolean; detail: Detail; here?: boolean; opensGlobe?: boolean }) {
+/** So schnell muss das zweite Tippen auf eine Welt kommen, damit es sie öffnet. */
+const DOUBLE_TAP_MS = 400;
+
+function HexCell({ hex, selected, disabled, detail, here = false, opens = false }: { hex: HexView; selected: boolean; disabled: boolean; detail: Detail; here?: boolean; /** Ob Doppeltippen eine Welt öffnet (nicht beim Wählen für die Erschaffung). */ opens?: boolean }) {
   const game = useGame();
   const { x, y: middle } = center(hex.column, hex.row);
   // Mit UWP rückt alles ein Stück nach oben, damit darunter Platz ist.
   const detailed = detail > 0 && hex.uwp !== undefined;
   const y = detailed ? middle - 9 : middle;
   const shown = hex.state === 'world' || hex.state === 'pending';
+  // Wann dieses Feld zuletzt angetippt wurde; reine Darstellung, wie das Erkennen von langem Drücken.
+  // Noch nie: -∞, denn `performance.now()` zählt ab dem Laden, kurz danach wäre 0 sonst „gerade eben“.
+  const lastTap = useRef(Number.NEGATIVE_INFINITY);
   const choose = () => {
     if (disabled) return;
-    // Eine fertige Welt öffnet ihren Globus; der braucht einen Moment, also erst der Ladebalken.
-    if (opensGlobe && hex.state === 'world') withLoading('Welt wird aufgebaut …', () => game.chooseHex(hex.column, hex.row));
+    const now = performance.now();
+    const twice = now - lastTap.current < DOUBLE_TAP_MS;
+    lastTap.current = twice ? Number.NEGATIVE_INFINITY : now;
+    // Das erste Tippen öffnet die Weltkarte, das zweite gleich darauf die Welt selbst, wie „Öffnen“.
+    if (twice && opens && hex.state === 'world') withLoading('Welt wird aufgebaut …', () => game.openGlobeAt(hex.column, hex.row));
     else game.chooseHex(hex.column, hex.row);
   };
   return (
@@ -454,6 +463,10 @@ export function SectorScreen({ view, heading = 'Subsektor', fill = false, dockTo
   const [rolled, setRolled] = useState<string>();
   const [settled, setSettled] = useState<string>();
   const selected = view.selected;
+  // Markiert ist das gewählte Feld oder die Welt, deren Weltkarte im Ziehblatt steht, wie das
+  // angetippte Feld auf dem Globus; die Karte holt es über das Blatt.
+  const worldId = view.world?.id;
+  const marked = selected ?? (worldId === undefined ? undefined : view.sector.find((h) => h.id === worldId));
   const rolling = rolled !== undefined && rolled === selected?.id && settled !== rolled && selected.occurrence !== undefined && animated();
   const [shown, setShown] = useState(view.sector);
   if (!rolling && shown !== view.sector) setShown(view.sector);
@@ -508,15 +521,15 @@ export function SectorScreen({ view, heading = 'Subsektor', fill = false, dockTo
           )}
         </div>
         <div className="sector-body">
-          <ZoomableMap fill={fill} focus={fill && selected ? { id: selected.id, ...center(selected.column, selected.row) } : undefined}>
+          <ZoomableMap fill={fill} focus={fill && marked ? { id: marked.id, ...center(marked.column, marked.row) } : undefined}>
             {(pixelsPerUnit) =>
-              sector.map((hex) => <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} detail={detailAt(pixelsPerUnit)} here={hex.id === view.location} opensGlobe={!view.picking} />)
+              sector.map((hex) => <HexCell key={hex.id} hex={hex} selected={hex.id === marked?.id} disabled={rolling} detail={detailAt(pixelsPerUnit)} here={hex.id === view.location} opens={!view.picking} />)
             }
           </ZoomableMap>
           {panel === 'legend' && (
             <div className="sector-panel" role="region" aria-label="Legende">
               <p className="sector-legend small-label">
-                Dunkle Felder sind nicht erzeugt: antippen, dann unten das Vorkommen würfeln. Helle ohne Zeichen sind leer. Das Bild zeigt die Welt: Größe, Atmosphäre als Leuchten, Wasser und Land, Lichter der Städte, ab TL 8 Umlaufbahnen. ★ Marinebasis, ▲ Scoutbasis, • rechts oben Gasriese.
+                Dunkle Felder sind nicht erzeugt: antippen, dann unten das Vorkommen würfeln. Helle ohne Zeichen sind leer. Eine Welt antippen zeigt ihre Werte, doppelt antippen öffnet sie. Das Bild zeigt die Welt: Größe, Atmosphäre als Leuchten, Wasser und Land, Lichter der Städte, ab TL 8 Umlaufbahnen. ★ Marinebasis, ▲ Scoutbasis, • rechts oben Gasriese.
               </p>
             </div>
           )}
@@ -529,8 +542,7 @@ export function SectorScreen({ view, heading = 'Subsektor', fill = false, dockTo
                       type="button"
                       onClick={() => {
                         setPanel(undefined);
-                        if (view.picking) game.chooseHex(w.column, w.row);
-                        else withLoading('Welt wird aufgebaut …', () => game.chooseHex(w.column, w.row));
+                        game.chooseHex(w.column, w.row);
                       }}
                     >
                       <span className="world-list-name">{w.name}</span>

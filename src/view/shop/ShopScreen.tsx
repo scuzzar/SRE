@@ -89,7 +89,7 @@ export function ShopScreen({ view }: { view: Snapshot }) {
             <Ledger shop={shop} />
           </>
         ) : !shop.world ? (
-          <p className="log-empty">Die Gruppe ist auf keiner Welt. Auf der Sektorkarte eine fertige Welt öffnen und „Gruppe ist hier“ wählen; dann lässt sich hier kaufen und verkaufen.</p>
+          <p className="log-empty">Die Gruppe ist auf keiner Welt. Auf der Sektorkarte eine fertige Welt öffnen und „Gruppe platzieren“ wählen; dann lässt sich hier kaufen und verkaufen.</p>
         ) : area === 'weapons' ? (
           <WeaponCounter shop={shop} hintHidden={view.shopHintHidden} onBuy={buy} />
         ) : area === 'sell' ? (

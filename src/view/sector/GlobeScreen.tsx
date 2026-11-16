@@ -9,7 +9,7 @@ import { hideLoading, showLoading } from '../loading';
 import { cellAt, radiusOf, renderGlobe, screenOf, screenOfPoint, type Camera, type Viewport } from './globe-render';
 import { HappenedList } from './HappenedList';
 import { trayTop } from '../Tray';
-import { NoteSection, SurfaceSection, WorldCard } from './WorldSheet';
+import { NoteSection, SurfaceSection, WorldActions, WorldCard } from './WorldSheet';
 
 const DEG = Math.PI / 180;
 const LOADING = 'Welt wird aufgebaut …';
@@ -425,21 +425,9 @@ export function GlobeScreen({
         {trip && globe.partyHere && panel === undefined && <TripHint trip={trip} />}
         {panel === 'world' && world && (
           <div className="globe-panel globe-world" role="region" aria-label="Die Welt">
-            <WorldCard world={world} onGlobe />
-            {world.surface && <SurfaceSection lines={world.surface} globe={undefined} />}
-            {world.canNote && (
-              <button type="button" className={here ? 'primary stay-here' : 'ghost stay-here'} aria-pressed={here} onClick={() => game.stayHere()}>
-                {here ? 'Die Gruppe ist hier' : 'Gruppe ist hier'}
-              </button>
-            )}
-            {world.canNote && !here && travel && (
-              <div className="travel-here">
-                <button type="button" className="primary" disabled={travel.blocker !== undefined} onClick={() => game.openJourney()}>
-                  Hierher reisen (1 Woche)
-                </button>
-                {travel.blocker && <p className="combat-hint">{travel.blocker}</p>}
-              </div>
-            )}
+            <WorldCard world={world} here={here} />
+            {world.surface && <SurfaceSection lines={world.surface} />}
+            <WorldActions world={world} here={here} travel={travel} onGlobe />
             {world.canNote && <NoteSection note={world.note} />}
             {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
           </div>

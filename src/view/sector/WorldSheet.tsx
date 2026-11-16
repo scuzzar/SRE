@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import type { WorldDmPart } from '../../model';
 import type { LogItem, WorldAction, WorldLine, WorldView } from '../../controller';
 import { HappenedList } from './HappenedList';
@@ -8,7 +8,7 @@ import { useGame } from '../game-context';
 import { WorldIcon } from './WorldIcon';
 import { animated, haptic, stopHaptics } from '../haptics';
 import { HoldButton } from '../HoldButton';
-import { CloseIcon, DiceIcon } from '../icons';
+import { CloseIcon, DiceIcon, GlobeIcon, PinIcon, RouteIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
 import { Form } from '../Form';
 import { withLoading } from '../loading';
@@ -29,119 +29,139 @@ function dmText(line: WorldLine): string {
 }
 
 /**
- * Die Weltkarte im Vordergrund: oben die Welt, wie sie gerade steht (UWP im Klartext, Basen,
- * Handelscodes), darunter die Würfe, seit sie offen ist; wieder geöffnet zeigt sie nur die Werte.
- * Solange sie entsteht, unten die Würfelbühne und der Knopf für den nächsten Wurf, wie in der
- * Charaktererschaffung. Eingetragen ist der Wurf schon, bevor die Würfel rollen; die Karte zeigt den neuen Stand erst, wenn das Ergebnis unten feststeht. Ein Tippen
- * irgendwo beendet die Animation.
+ * Die Weltkarte an der Stelle des Bereichs, schiebbar wie jedes angetippte Feld (Hexfeld im
+ * Subsektor, Feld auf dem Globus): oben die Welt, wie sie gerade steht (UWP im Klartext, Basen,
+ * Handelscodes); wieder geöffnet zeigt sie nur die Werte. Unten, wie die Reihe Notiz, Deuten, 2W6,
+ * Karte im Orakel: Solange sie entsteht, die Würfelbühne und der Knopf für den nächsten Wurf, wie in
+ * der Charaktererschaffung; danach Hierher reisen, Gruppe platzieren und Öffnen
+ * (`WorldActions`). Eingetragen ist ein Wurf schon, bevor die Würfel rollen; die Karte zeigt den
+ * neuen Stand erst, wenn das Ergebnis unten feststeht. Ein Tippen irgendwo beendet die Animation.
+ *
+ * Eine andere Welt (oder keine mehr) fängt frisch an, wie neu geöffnet; das gleicht einem Neustart
+ * über `key`, ohne dass dafür eine eigene Stelle im Baum nötig wäre, denn Feld und Reihe unten
+ * stehen an zwei verschiedenen Stellen (`App.tsx`), aus demselben Aufruf. Für eine neue Welt aus der
+ * Heimatwelt- bzw. Welt-eines-Terms-Wahl (`picking`), wo der Subsektor selbst schon ein Blatt ist,
+ * baut `App.tsx` aus Feld und Reihe unten stattdessen ein eigenes Blatt obendrauf (`title` nennt es).
  */
-export function WorldSheet({ world, here, travel, log, logDays }: { world: WorldView; here: boolean; travel: { readonly blocker: string | undefined } | undefined; log: readonly LogItem[]; logDays: readonly (string | undefined)[] }) {
+export function useWorldDock(
+  world: WorldView | undefined,
+  here: boolean,
+  travel: { readonly blocker: string | undefined } | undefined,
+  log: readonly LogItem[],
+  logDays: readonly (string | undefined)[],
+): { field: ReactNode; foot: ReactNode; title: string | undefined } {
   const game = useGame();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   // Was schon da war, als die Weltkarte aufging, rollt nicht noch einmal.
-  const [seen, setSeen] = useState(world.lines.length);
-  const latest = world.lines.at(-1);
+  const [seen, setSeen] = useState(world?.lines.length ?? 0);
   const [settled, setSettled] = useState(-1);
+  const [shown, setShown] = useState(world);
+  const [skips, setSkips] = useState(0);
+  const [seenId, setSeenId] = useState(world?.id);
+  if (world?.id !== seenId) {
+    setSeenId(world?.id);
+    setConfirmDiscard(false);
+    setSeen(world?.lines.length ?? 0);
+    setSettled(-1);
+    setShown(world);
+    setSkips(0);
+  }
+  if (!world) return { field: undefined, foot: undefined, title: undefined };
+
+  const latest = world.lines.at(-1);
   // Ein Wurf aus dieser Sitzung der Weltkarte; ältere rollen nicht noch einmal.
   const fresh = latest !== undefined && latest.index >= seen;
   const animate = fresh && animated();
   const rolling = animate && settled < latest.index;
-  const [shown, setShown] = useState(world);
   if (!rolling && shown !== world) setShown(world);
-  const view = rolling ? shown : world;
-  const [skips, setSkips] = useState(0);
+  const view = rolling ? (shown ?? world) : world;
   // In Erschaffung; eine fertige Welt ohne Temperatur würfelt sie nur nach.
   const running = world.step !== 'done';
   const hasRoll = world.action.kind !== 'done';
+  const title = running ? `Weltenerschaffung ${world.id}` : `${world.name ?? 'Leer'} · ${world.id}`;
 
-  const body = useRef<HTMLDivElement>(null);
-  const count = view.lines.length;
-  useEffect(() => {
-    body.current?.scrollTo({ top: body.current.scrollHeight });
-  }, [count]);
+  const skipTap = (e: React.MouseEvent) => {
+    if (!rolling) return;
+    e.stopPropagation();
+    e.preventDefault();
+    stopHaptics();
+    setSkips((n) => n + 1);
+  };
 
-  return (
-    <div
-      className="overlay"
-      onClickCapture={(e) => {
-        if (!rolling) return;
-        e.stopPropagation();
-        e.preventDefault();
-        stopHaptics();
-        setSkips((n) => n + 1);
-      }}
-    >
-      <section className="sheet generation world-sheet" role="dialog" aria-modal="true" aria-labelledby="world-title">
-        <div className="sheet-head" style={{ alignItems: 'center' }}>
-          <h2 id="world-title">{running ? `Weltenerschaffung ${world.id}` : `${world.name ?? 'Leer'} · ${world.id}`}</h2>
-          <span className="header-right">
-            {running &&
-              (confirmDiscard ? (
-                <button type="button" className="ghost danger compact" onClick={() => game.discardWorld()}>
-                  Wirklich verwerfen?
-                </button>
-              ) : (
-                <button type="button" className="ghost compact" onClick={() => setConfirmDiscard(true)}>
-                  Verwerfen
-                </button>
-              ))}
-            <button data-escape type="button" className="icon-button" aria-label={running ? 'Später weiter' : 'Schließen'} onClick={() => game.closeWorld()}>
-              <CloseIcon />
-            </button>
-          </span>
-        </div>
-
-        <div className="sheet-body" ref={body}>
-          {!view.empty && <WorldCard world={view} />}
-          {view.surface && <SurfaceSection lines={view.surface} globe={view.canGlobe ? (view.hasMap ? 'Globus' : 'Globus erzeugen') : undefined} />}
-          {world.canNote && (
-            <button type="button" className={here ? 'primary stay-here' : 'ghost stay-here'} aria-pressed={here} onClick={() => game.stayHere()}>
-              {here ? 'Die Gruppe ist hier' : 'Gruppe ist hier'}
-            </button>
-          )}
-          {world.canNote && !here && travel && (
-            <div className="travel-here">
-              <button type="button" className="primary" disabled={travel.blocker !== undefined} onClick={() => game.openJourney()}>
-                Hierher reisen (1 Woche)
+  const field = (
+    <section className="field-card scroll" aria-label={title} onClickCapture={skipTap}>
+      <div className="globe-sheet-head" data-tray-peek>
+        <h3>{running ? 'Weltenerschaffung' : (world.name ?? 'Leer')}</h3>
+        <span className="header-right">
+          {running &&
+            (confirmDiscard ? (
+              <button type="button" className="ghost danger compact" onClick={() => game.discardWorld()}>
+                Wirklich verwerfen?
               </button>
-              {travel.blocker && <p className="combat-hint">{travel.blocker}</p>}
-            </div>
-          )}
-          {world.canNote && <NoteSection note={world.note} />}
-          {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
-        </div>
-
-        {(hasRoll || fresh) && (
-          <div className="generation-dock">
-            {latest && <RollStage key={latest.index} line={latest} animate={animate} onSettled={setSettled} skips={skips} />}
-            {view.prompt && (
-              <p className="generation-prompt" aria-live="polite">
-                {view.prompt}
-              </p>
-            )}
-            {view.error && (
-              <p className="error" role="alert">
-                {view.error}
-              </p>
-            )}
-            <Actions
-              action={view.action}
-              disabled={rolling}
-              onRun={() => {
-                game.runWorld();
-                setSeen(game.snapshot().world?.lines.length ?? 0);
-              }}
-            />
-          </div>
-        )}
-      </section>
-    </div>
+            ) : (
+              <button type="button" className="ghost compact" onClick={() => setConfirmDiscard(true)}>
+                Verwerfen
+              </button>
+            ))}
+          <button type="button" className="icon-button" aria-label={running ? 'Später weiter' : 'Schließen'} onClick={() => game.closeWorld()}>
+            <CloseIcon />
+          </button>
+        </span>
+      </div>
+      {!view.empty && <WorldCard world={view} plain here={here} />}
+      {view.surface && <SurfaceSection lines={view.surface} />}
+      {world.canNote && <NoteSection note={world.note} />}
+      {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
+    </section>
   );
+
+  // Eine ältere Welt ohne Temperatur ist schon fertig (canNote), würfelt aber noch nach: dann stehen
+  // Würfelbühne und die Reihe Hierher reisen/Gruppe platzieren/Öffnen zusammen unten.
+  const rollDock = hasRoll || fresh ? (
+    <section className="generation-dock" aria-label="Weltenerschaffung" onClickCapture={skipTap}>
+      {latest && <RollStage key={latest.index} line={latest} animate={animate} onSettled={setSettled} skips={skips} />}
+      {view.prompt && (
+        <p className="generation-prompt" aria-live="polite">
+          {view.prompt}
+        </p>
+      )}
+      {view.error && (
+        <p className="error" role="alert">
+          {view.error}
+        </p>
+      )}
+      <Actions
+        action={view.action}
+        disabled={rolling}
+        onRun={() => {
+          game.runWorld();
+          setSeen(game.snapshot().world?.lines.length ?? 0);
+        }}
+      />
+    </section>
+  ) : undefined;
+  const actionsDock =
+    world.canGlobe || world.canNote ? (
+      <section className="dock" aria-label="An der Welt">
+        <WorldActions world={view} here={here} travel={travel} />
+      </section>
+    ) : undefined;
+  const foot = rollDock || actionsDock ? (
+    <>
+      {rollDock}
+      {actionsDock}
+    </>
+  ) : undefined;
+
+  return { field, foot, title };
 }
 
-/** Die Welt, wie sie gerade steht (auf der Weltkarte und oben auf dem Globus): UWP, jede Stelle im Klartext, Temperatur, Basen, Gasriese, Handelscodes. */
-export function WorldCard({ world, onGlobe = false }: { world: WorldView; onGlobe?: boolean }) {
-  const game = useGame();
+/**
+ * Die Welt, wie sie gerade steht: UWP, jede Stelle im Klartext, Temperatur, Basen, Gasriese,
+ * Handelscodes. Auf der Weltkarte schlicht wie das angetippte Feld des Globus (`plain`): ohne Kasten
+ * und ohne Weltsymbol, das steht schon auf der Karte. Oben auf dem Globus als Kasten mit Weltsymbol.
+ */
+export function WorldCard({ world, plain = false, here = false }: { world: WorldView; plain?: boolean; here?: boolean }) {
   const yes = (value: boolean | undefined) => (value === undefined ? '–' : value ? 'ja' : 'nein');
   const head = (
     <div className="pc-head static">
@@ -185,23 +205,35 @@ export function WorldCard({ world, onGlobe = false }: { world: WorldView; onGlob
       ))}
     </dl>
   );
-  // Oben steht das Weltsymbol, halb so breit wie der Block, die Tabelle darunter. In der Erschaffung
-  // erscheint es mit der Größe; was noch fehlt, ist grau und kommt Wurf für Wurf dazu.
+  // Wie am angetippten Feld des Globus: Steht die Gruppe hier, sagt es eine Zeile.
+  const hereLine = here && (
+    <ul className="globe-facts">
+      <li>Die Gruppe ist hier</li>
+    </ul>
+  );
+  if (plain) {
+    return (
+      <article className="world-plain" aria-label="Welt">
+        <p className="globe-sheet-sub mono">
+          {world.id} · {world.uwp}
+        </p>
+        {hereLine}
+        {extras}
+        {profile}
+      </article>
+    );
+  }
+  // Oben steht das Weltsymbol, halb so breit wie der Block, die Tabelle darunter.
   if (world.look) {
     return (
       <article className="pc generation-card world-card" aria-label="Welt">
         <div className="world-top">
           <div className="world-top-text">
             {head}
+            {hereLine}
             {extras}
           </div>
-          {world.canGlobe && !onGlobe ? (
-            <button type="button" className="world-top-globe" aria-label={`Globus von ${world.name ?? world.id} öffnen`} onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobe())}>
-              <WorldIcon look={world.look} className="world-top-icon" />
-            </button>
-          ) : (
-            <WorldIcon look={world.look} className="world-top-icon" label={`Weltsymbol von ${world.name ?? world.id}`} />
-          )}
+          <WorldIcon look={world.look} className="world-top-icon" label={`Weltsymbol von ${world.name ?? world.id}`} />
         </div>
         {profile}
       </article>
@@ -210,6 +242,7 @@ export function WorldCard({ world, onGlobe = false }: { world: WorldView; onGlob
   return (
     <article className="pc generation-card world-card" aria-label="Welt">
       {head}
+      {hereLine}
       {profile}
       {extras}
     </article>
@@ -240,19 +273,11 @@ function TemperatureRow({ temperature }: { temperature: WorldView['temperature']
 }
 
 /** Die Oberfläche nach dem World Builder's Handbook, an der Stelle der früheren Liste der Würfe. */
-export function SurfaceSection({ lines, globe }: { lines: readonly string[]; globe: string | undefined }) {
-  const game = useGame();
+export function SurfaceSection({ lines }: { lines: readonly string[] }) {
   return (
     <section className="career world-surface" aria-label="Oberfläche">
       <div className="career-term">
-        <h4 className="world-surface-head">
-          Oberfläche
-          {globe && (
-            <button type="button" className="ghost compact" onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobe())}>
-              {globe}
-            </button>
-          )}
-        </h4>
+        <h4 className="world-surface-head">Oberfläche</h4>
         <ul>
           {lines.map((line) => (
             <li key={line}>{line}</li>
@@ -260,6 +285,45 @@ export function SurfaceSection({ lines, globe }: { lines: readonly string[]; glo
         </ul>
       </div>
     </section>
+  );
+}
+
+/**
+ * Die Reihe an der Welt, wie die Reihe am angetippten Feld des Globus (`FieldDock`) und im Stil von
+ * Notiz, Deuten, 2W6, Karte im Orakel: Hierher reisen (eine Woche im Sprung; was nicht geht, ist
+ * ausgegraut, der Grund steht darüber), Gruppe platzieren (ohne Reise und ohne Zeit, wie „Gruppe
+ * setzen“ am Feld; ist die Gruppe schon hier, ausgegraut) und Öffnen (die Hexkarte der Welt, nicht
+ * auf dem Globus selbst).
+ */
+export function WorldActions({ world, here, travel, onGlobe = false }: { world: WorldView; here: boolean; travel: { readonly blocker: string | undefined } | undefined; onGlobe?: boolean }) {
+  const game = useGame();
+  const showGlobe = !onGlobe && world.canGlobe;
+  if (!showGlobe && !world.canNote) return null;
+  const travelBlocker = here ? 'Die Gruppe ist schon hier' : travel?.blocker;
+  return (
+    <>
+      {world.canNote && !here && travel?.blocker && <p className="combat-hint">{travel.blocker}</p>}
+      <div className="actions oracle-actions world-actions">
+        {world.canNote && travel && (
+          <button type="button" className="action draw" title={travelBlocker ?? 'Eine Woche im Sprung'} disabled={travelBlocker !== undefined} onClick={() => game.openJourney()}>
+            <RouteIcon />
+            Hierher reisen
+          </button>
+        )}
+        {world.canNote && (
+          <button type="button" className="action note" title={here ? 'Die Gruppe ist schon hier' : 'Gruppe hierher setzen, ohne Reise und ohne Zeit'} disabled={here} onClick={() => game.stayHere()}>
+            <PinIcon />
+            Gruppe platzieren
+          </button>
+        )}
+        {showGlobe && (
+          <button type="button" className="action note" title="Die Hexkarte der Welt" onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobe())}>
+            <GlobeIcon />
+            Öffnen
+          </button>
+        )}
+      </div>
+    </>
   );
 }
 

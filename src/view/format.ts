@@ -1,4 +1,4 @@
-import type { AttackItem, CardItem, CheckItem, DamageItem, DmPart, ButcheringItem, EventItem, JourneyItem, LogItem, TripDayItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem } from '../controller';
+import type { AttackItem, CardItem, CardView, CheckItem, DamageItem, DmPart, ButcheringItem, EventItem, JourneyItem, LogItem, TripDayItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem } from '../controller';
 import type { Answer, ArmorClass, AttackKind, BookingKind, NpcRole, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
@@ -208,6 +208,18 @@ export function cardPickText(item: CardItem): string {
     ...(item.scatter === undefined ? [] : [`Streuwürfel ${scatterText[item.scatter]}`]),
     ...(item.map === undefined ? [] : [`Kartensymbol ${mapText(item.map)}`]),
     ...item.items.map((i) => pickText(i.name, i.texts)),
+  ].join(', ');
+}
+
+/** Was auf der offenen Karte ausgewählt ist, in einer Zeile: die Antwort des Orakels, Wurffelder, dann die Felder. */
+export function cardSelectionText(card: CardView): string {
+  const odds = card.oracle.choices.find((c) => c.picked);
+  return [
+    ...(odds ? [`${answerText[odds.answer]} (${odds.name})`] : []),
+    ...(card.bell.picked ? [`1–10: ${card.bell.value}`] : []),
+    ...(card.scatter.picked ? [`Streuwürfel ${scatterText[card.scatter.value]}`] : []),
+    ...(card.map.picked ? [`Kartensymbol ${mapText(card.map.value)}`] : []),
+    ...card.sections.flatMap((s) => s.slots.filter((slot) => slot.picked).map((slot) => pickText(slot.name, slot.texts))),
   ].join(', ');
 }
 

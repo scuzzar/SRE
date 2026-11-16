@@ -628,6 +628,9 @@ describe('Begegnung und Kampfsimulation', () => {
     const { game } = await started(random, memoryRepository(campaign));
     expect(game.snapshot().patron?.npc).toEqual({ blocker: undefined });
     game.createPatronNpc();
+    // Die Ansicht wechselt gleich in den Reiter NSC, mit dem neuen NSC schon offen im Editor.
+    expect(game.snapshot().screen).toBe('npcs');
+    expect(game.snapshot().editor?.id).toBe(game.snapshot().npcs.worlds[0]!.roles[0]!.npcs[0]!.id);
     const npcs = game.snapshot().npcs;
     expect(npcs).toMatchObject({ all: false, here: 'Regina', total: 1, worlds: [{ name: 'Regina', roles: [{ role: 'patron' }] }] });
     const npc = npcs.worlds[0]!.roles[0]!.npcs[0]!;
@@ -1628,6 +1631,19 @@ describe('Subsektor und Weltenerschaffung', () => {
     expect(game.snapshot()).toMatchObject({ world: undefined, selected: { id: '0101', state: 'empty' } });
     game.clearHex();
     expect(game.snapshot().selected).toBeUndefined();
+  });
+
+  it('ein nicht erzeugtes oder leeres Feld antippen schließt die offene Weltkarte und wählt das Feld', async () => {
+    const world = { ...ref.demoWorld, column: 1, row: 1, name: 'Regina' };
+    const empty = { column: 3, row: 3, empty: true, uwp: {} };
+    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign([]), [world, empty])));
+    game.chooseHex(1, 1);
+    expect(game.snapshot().world?.name).toBe('Regina');
+    game.chooseHex(2, 2);
+    expect(game.snapshot()).toMatchObject({ world: undefined, selected: { id: '0202', state: 'open' } });
+    game.chooseHex(1, 1);
+    game.chooseHex(3, 3);
+    expect(game.snapshot()).toMatchObject({ world: undefined, selected: { id: '0303', state: 'empty' } });
   });
 
   it('verwirft eine Welt in Erschaffung', async () => {

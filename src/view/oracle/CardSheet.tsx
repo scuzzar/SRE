@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { CardSectionView, CardView } from '../../controller';
-import { answerText, isYesAnswer, mapShort, mapText, nameText, pairText, scatterText } from '../format';
+import { answerText, cardSelectionText, isYesAnswer, mapShort, mapText, nameText, pairText, scatterText } from '../format';
 import { useGame } from '../game-context';
 import { animated, haptic } from '../haptics';
 import { CheckIcon, CloseIcon, Emblem, PlusIcon, SenseIcon } from '../icons';
@@ -30,8 +30,11 @@ const LEAVE_MS = 260;
  * Felder erscheinen der Reihe nach. „Neu ziehen“ spielt das mit einer neuen Karte. Übernehmen lässt
  * die Karte nach unten in den Log sinken, Verwerfen wirft sie zur Seite weg. Ein Tippen, solange sie
  * noch hereinkommt, beendet die Animation und zeigt sofort die ganze Karte, ohne etwas auszuwählen.
+ *
+ * Mit `onConfirm` (aus dem Feld Notiz des Charakter-Editors gezogen, `card.forNote`) übernimmt „Bestätigen“ nicht in den
+ * Log, sondern gibt die Auswahl als Text weiter; die Karte schließt ohne Logeintrag.
  */
-export function CardSheet({ card }: { card: CardView }) {
+export function CardSheet({ card, onConfirm }: { card: CardView; onConfirm?: (text: string) => void }) {
   const game = useGame();
   // Zählt die Ziehungen, damit jede neue Karte ihre Drehung von vorn spielt.
   const [draw, setDraw] = useState(0);
@@ -217,10 +220,18 @@ export function CardSheet({ card }: { card: CardView }) {
             type="button"
             className="confirm"
             disabled={!card.canConfirm}
-            aria-label={`${card.pickedCount} ${card.pickedCount === 1 ? 'Eintrag' : 'Einträge'} in den Log übernehmen`}
+            aria-label={`${card.pickedCount} ${card.pickedCount === 1 ? 'Eintrag' : 'Einträge'} ${onConfirm ? 'in die Notiz' : 'in den Log'} übernehmen`}
             onClick={() => {
               haptic('confirm');
-              leave('confirm', () => game.confirmCard(question));
+              if (onConfirm) {
+                const text = cardSelectionText(card);
+                leave('confirm', () => {
+                  onConfirm(text);
+                  game.discardCard();
+                });
+              } else {
+                leave('confirm', () => game.confirmCard(question));
+              }
             }}
           >
             <CheckIcon />

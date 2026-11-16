@@ -1834,6 +1834,13 @@ button:disabled {
   resize: vertical;
 }
 
+/* Notiz im Charakter-Editor: wächst mit dem Text statt zu scrollen, damit eine angehängte
+   Kartenauswahl immer ganz zu sehen ist; von Hand ziehen entfällt dafür. */
+.form textarea.note-grow {
+  resize: none;
+  overflow: hidden;
+}
+
 .upp-inputs {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -2680,6 +2687,13 @@ button:disabled {
   border-color: var(--gold-deep);
   color: var(--gold-bright);
   font-weight: 600;
+}
+
+/* Karte ziehen am Feld Notiz: eine eigene Zeile darunter statt daneben, damit das Feld die volle
+   Breite behält; sonst derselbe Knopf wie „Name von der Karte“. */
+.note-card-draw {
+  width: 100%;
+  justify-content: center;
 }
 
 .name-picker-overlay {
@@ -3986,22 +4000,25 @@ button:disabled {
   color: var(--muted);
 }
 
-/* Die Welt bleibt oben stehen, nur die Würfe darunter scrollen; dafür ist sie knapp gesetzt. */
-.sheet.world-sheet .world-card {
-  gap: 6px;
+/* Die Welt im Feld: schlicht wie das angetippte Feld des Globus, knapp gesetzt. */
+.world-plain {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.sheet.world-sheet .world-card .pc-head {
-  min-height: 0;
+.world-plain .globe-sheet-sub {
+  margin: 0;
 }
 
-.sheet.world-sheet .world-profile {
+.field-card .world-profile {
   gap: 1px 10px;
   font-size: 12.5px;
   line-height: 1.35;
 }
 
-.sheet.world-sheet .world-text {
+.field-card .world-text {
   display: inline-block;
   max-width: 100%;
   overflow: hidden;
@@ -4011,7 +4028,7 @@ button:disabled {
 }
 
 /* Die Temperatur ist ein Wort mit kurzer Beschreibung; sie bricht um, statt abgeschnitten zu werden. */
-.sheet.world-sheet .world-temperature .world-text {
+.field-card .world-temperature .world-text {
   display: inline;
   white-space: normal;
 }
@@ -4028,13 +4045,13 @@ button:disabled {
   margin: -4px -6px -4px 0;
 }
 
-.sheet.world-sheet .world-profile dd {
+.field-card .world-profile dd {
   min-width: 0;
   display: flex;
   white-space: nowrap;
 }
 
-.sheet.world-sheet .world-profile .world-text {
+.field-card .world-profile .world-text {
   flex: 1 1 auto;
   min-width: 0;
 }
@@ -4751,12 +4768,6 @@ button:disabled {
   font-size: 12px;
 }
 
-.stay-here {
-  align-self: flex-start;
-  min-height: 40px;
-  margin: 8px 0;
-}
-
 .weapon-ammo {
   margin: 0;
   font-family: var(--mono);
@@ -4773,6 +4784,20 @@ button:disabled {
 
 .dock .actions:has(> :nth-child(4)) {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* Die Reihe an der Welt (Hierher reisen, Gruppe platzieren, Öffnen): dieselbe Technik wie beim
+   Dock, ohne dass sie in einem stecken muss, denn sie liegt mitten im Blatt der Weltkarte. */
+.world-actions:has(> :only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.world-actions:has(> :nth-child(2)) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.world-actions:has(> :nth-child(3)) {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .shop-scroll {
@@ -7089,12 +7114,6 @@ button:disabled {
   color: var(--danger, #c0392b);
 }
 
-.travel-here {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
 .journey-sheet {
   display: flex;
   flex-direction: column;
@@ -7921,15 +7940,6 @@ button:disabled {
   text-decoration-color: rgba(255, 255, 255, 0.35);
   cursor: pointer;
   font: inherit;
-}
-
-.world-top-globe {
-  display: block;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
 }
 
 .world-surface-head {
