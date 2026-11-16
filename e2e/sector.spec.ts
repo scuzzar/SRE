@@ -32,13 +32,12 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     await dialog.getByRole('button', { name: 'Später weiter' }).click();
     await map.getByRole('button', { name: `${id}, in Erschaffung: fortsetzen` }).click();
     await expect(dialog.getByRole('button', { name: 'Verwerfen' })).toBeVisible();
-    // Das Weltsymbol erscheint erst mit der Größe.
-    await expect(dialog.getByRole('img', { name: /^Weltsymbol von / })).toHaveCount(0);
     for (let i = 0; i < 14 && (await page.locator('.generation-main').count()) > 0; i++) await page.locator('.generation-main').click();
     // Nach dem TL steht die Oberfläche da, wo früher die Würfe standen; eine Liste der Würfe gibt es nicht.
     await expect(dialog.getByRole('region', { name: 'Oberfläche' })).toContainText('% Wasser');
     await expect(dialog.getByRole('region', { name: 'Würfe' })).toHaveCount(0);
-    await expect(dialog.getByRole('img', { name: `Weltsymbol von ${id}` })).toBeVisible();
+    // Das Weltsymbol steht auf der Karte, nicht im Blatt.
+    await expect(dialog.getByRole('img', { name: /^Weltsymbol von / })).toHaveCount(0);
     await page.getByLabel('Name der Welt').fill('Regina');
     await page.getByRole('button', { name: 'Übernehmen' }).click();
     const done = page.getByRole('region', { name: `Regina · ${id}` });
@@ -50,8 +49,10 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     const sheet = page.getByRole('region', { name: `Regina · ${id}` });
     await expect(sheet.getByRole('article', { name: 'Welt' })).toBeVisible();
     await expect(sheet.getByRole('region', { name: 'Oberfläche' })).toContainText('einheimisches Leben');
-    // „Globus erzeugen“ öffnet ihn; oben klappen Name und UWP die Werte auf.
-    await page.getByRole('button', { name: 'Globus erzeugen' }).click();
+    // Unten wie am Hexfeld des Globus: Hierher reisen, Gruppe ist hier, Öffnen. „Öffnen“ führt auf
+    // die Hexkarte; oben klappen Name und UWP die Werte auf.
+    await expect(page.getByRole('button', { name: 'Hierher reisen', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Öffnen', exact: true }).click();
     const globe = page.getByRole('region', { name: 'Globus · Regina' });
     await globe.getByRole('button', { name: /^Regina, UWP / }).click();
     const reopened = globe.getByRole('region', { name: 'Die Welt' });

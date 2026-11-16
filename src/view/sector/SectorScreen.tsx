@@ -452,6 +452,10 @@ export function SectorScreen({ view, heading = 'Subsektor', fill = false, dockTo
   const [rolled, setRolled] = useState<string>();
   const [settled, setSettled] = useState<string>();
   const selected = view.selected;
+  // Markiert ist das gewählte Feld oder die Welt, deren Weltkarte im Ziehblatt steht, wie das
+  // angetippte Feld auf dem Globus; die Karte holt es über das Blatt.
+  const worldId = view.world?.id;
+  const marked = selected ?? (worldId === undefined ? undefined : view.sector.find((h) => h.id === worldId));
   const rolling = rolled !== undefined && rolled === selected?.id && settled !== rolled && selected.occurrence !== undefined && animated();
   const [shown, setShown] = useState(view.sector);
   if (!rolling && shown !== view.sector) setShown(view.sector);
@@ -506,9 +510,9 @@ export function SectorScreen({ view, heading = 'Subsektor', fill = false, dockTo
           )}
         </div>
         <div className="sector-body">
-          <ZoomableMap fill={fill} focus={fill && selected ? { id: selected.id, ...center(selected.column, selected.row) } : undefined}>
+          <ZoomableMap fill={fill} focus={fill && marked ? { id: marked.id, ...center(marked.column, marked.row) } : undefined}>
             {(pixelsPerUnit) =>
-              sector.map((hex) => <HexCell key={hex.id} hex={hex} selected={hex.id === selected?.id} disabled={rolling} detail={detailAt(pixelsPerUnit)} here={hex.id === view.location} />)
+              sector.map((hex) => <HexCell key={hex.id} hex={hex} selected={hex.id === marked?.id} disabled={rolling} detail={detailAt(pixelsPerUnit)} here={hex.id === view.location} />)
             }
           </ZoomableMap>
           {panel === 'legend' && (

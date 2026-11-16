@@ -3986,13 +3986,16 @@ button:disabled {
   color: var(--muted);
 }
 
-/* Im Feld ist wenig Platz: die Welt knapp gesetzt. */
-.field-card .world-card {
-  gap: 6px;
+/* Die Welt im Feld: schlicht wie das angetippte Feld des Globus, knapp gesetzt. */
+.world-plain {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.field-card .world-card .pc-head {
-  min-height: 0;
+.world-plain .globe-sheet-sub {
+  margin: 0;
 }
 
 .field-card .world-profile {
@@ -7929,15 +7932,6 @@ button:disabled {
   text-decoration-color: rgba(255, 255, 255, 0.35);
   cursor: pointer;
   font: inherit;
-}
-
-.world-top-globe {
-  display: block;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
 }
 
 .world-surface-head {

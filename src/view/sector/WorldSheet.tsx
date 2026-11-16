@@ -33,7 +33,7 @@ function dmText(line: WorldLine): string {
  * Subsektor, Feld auf dem Globus): oben die Welt, wie sie gerade steht (UWP im Klartext, Basen,
  * Handelscodes); wieder geöffnet zeigt sie nur die Werte. Unten, wie die Reihe Notiz, Deuten, 2W6,
  * Karte im Orakel: Solange sie entsteht, die Würfelbühne und der Knopf für den nächsten Wurf, wie in
- * der Charaktererschaffung; danach Globus öffnen, Gruppe ist hier und Hierher reisen
+ * der Charaktererschaffung; danach Hierher reisen, Gruppe ist hier und Öffnen
  * (`WorldActions`). Eingetragen ist ein Wurf schon, bevor die Würfel rollen; die Karte zeigt den
  * neuen Stand erst, wenn das Ergebnis unten feststeht. Ein Tippen irgendwo beendet die Animation.
  *
@@ -91,7 +91,7 @@ export function useWorldDock(
   const field = (
     <section className="field-card scroll" aria-label={title} onClickCapture={skipTap}>
       <div className="globe-sheet-head" data-tray-peek>
-        <h3>{title}</h3>
+        <h3>{running ? 'Weltenerschaffung' : (world.name ?? 'Leer')}</h3>
         <span className="header-right">
           {running &&
             (confirmDiscard ? (
@@ -108,7 +108,7 @@ export function useWorldDock(
           </button>
         </span>
       </div>
-      {!view.empty && <WorldCard world={view} />}
+      {!view.empty && <WorldCard world={view} plain />}
       {view.surface && <SurfaceSection lines={view.surface} />}
       {world.canNote && <NoteSection note={world.note} />}
       {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
@@ -116,7 +116,7 @@ export function useWorldDock(
   );
 
   // Eine ältere Welt ohne Temperatur ist schon fertig (canNote), würfelt aber noch nach: dann stehen
-  // Würfelbühne und die Reihe Globus öffnen/Gruppe ist hier/Hierher reisen zusammen unten.
+  // Würfelbühne und die Reihe Hierher reisen/Gruppe ist hier/Öffnen zusammen unten.
   const rollDock = hasRoll || fresh ? (
     <section className="generation-dock" aria-label="Weltenerschaffung" onClickCapture={skipTap}>
       {latest && <RollStage key={latest.index} line={latest} animate={animate} onSettled={setSettled} skips={skips} />}
@@ -156,9 +156,12 @@ export function useWorldDock(
   return { field, foot, title };
 }
 
-/** Die Welt, wie sie gerade steht (auf der Weltkarte und oben auf dem Globus): UWP, jede Stelle im Klartext, Temperatur, Basen, Gasriese, Handelscodes. */
-export function WorldCard({ world, onGlobe = false }: { world: WorldView; onGlobe?: boolean }) {
-  const game = useGame();
+/**
+ * Die Welt, wie sie gerade steht: UWP, jede Stelle im Klartext, Temperatur, Basen, Gasriese,
+ * Handelscodes. Auf der Weltkarte schlicht wie das angetippte Feld des Globus (`plain`): ohne Kasten
+ * und ohne Weltsymbol, das steht schon auf der Karte. Oben auf dem Globus als Kasten mit Weltsymbol.
+ */
+export function WorldCard({ world, plain = false }: { world: WorldView; plain?: boolean }) {
   const yes = (value: boolean | undefined) => (value === undefined ? '–' : value ? 'ja' : 'nein');
   const head = (
     <div className="pc-head static">
@@ -202,8 +205,18 @@ export function WorldCard({ world, onGlobe = false }: { world: WorldView; onGlob
       ))}
     </dl>
   );
-  // Oben steht das Weltsymbol, halb so breit wie der Block, die Tabelle darunter. In der Erschaffung
-  // erscheint es mit der Größe; was noch fehlt, ist grau und kommt Wurf für Wurf dazu.
+  if (plain) {
+    return (
+      <article className="world-plain" aria-label="Welt">
+        <p className="globe-sheet-sub mono">
+          {world.id} · {world.uwp}
+        </p>
+        {extras}
+        {profile}
+      </article>
+    );
+  }
+  // Oben steht das Weltsymbol, halb so breit wie der Block, die Tabelle darunter.
   if (world.look) {
     return (
       <article className="pc generation-card world-card" aria-label="Welt">
@@ -212,13 +225,7 @@ export function WorldCard({ world, onGlobe = false }: { world: WorldView; onGlob
             {head}
             {extras}
           </div>
-          {world.canGlobe && !onGlobe ? (
-            <button type="button" className="world-top-globe" aria-label={`Globus von ${world.name ?? world.id} öffnen`} onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobe())}>
-              <WorldIcon look={world.look} className="world-top-icon" />
-            </button>
-          ) : (
-            <WorldIcon look={world.look} className="world-top-icon" label={`Weltsymbol von ${world.name ?? world.id}`} />
-          )}
+          <WorldIcon look={world.look} className="world-top-icon" label={`Weltsymbol von ${world.name ?? world.id}`} />
         </div>
         {profile}
       </article>
@@ -273,21 +280,25 @@ export function SurfaceSection({ lines }: { lines: readonly string[] }) {
 }
 
 /**
- * Die Reihe an der Welt, im selben Stil wie die Reihe Notiz, Deuten, 2W6, Karte im Orakel
- * (`oracle-actions`): Globus öffnen (außer auf dem Globus selbst), Gruppe ist hier (Zustand,
- * togglebar) und Hierher reisen.
+ * Die Reihe an der Welt, wie die Reihe am angetippten Feld des Globus (`FieldDock`) und im Stil von
+ * Notiz, Deuten, 2W6, Karte im Orakel: Hierher reisen (eine Woche im Sprung; was nicht geht, ist
+ * ausgegraut, der Grund steht darüber), Gruppe ist hier (ohne Reise und ohne Zeit; noch einmal
+ * getippt hebt es den Aufenthaltsort auf) und Öffnen (die Hexkarte der Welt, nicht auf dem Globus
+ * selbst).
  */
 export function WorldActions({ world, here, travel, onGlobe = false }: { world: WorldView; here: boolean; travel: { readonly blocker: string | undefined } | undefined; onGlobe?: boolean }) {
   const game = useGame();
   const showGlobe = !onGlobe && world.canGlobe;
   if (!showGlobe && !world.canNote) return null;
+  const travelBlocker = here ? 'Die Gruppe ist schon hier' : travel?.blocker;
   return (
     <>
+      {world.canNote && !here && travel?.blocker && <p className="combat-hint">{travel.blocker}</p>}
       <div className="actions oracle-actions world-actions">
-        {showGlobe && (
-          <button type="button" className="action note" onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobe())}>
-            <GlobeIcon />
-            {world.hasMap ? 'Globus öffnen' : 'Globus erzeugen'}
+        {world.canNote && travel && (
+          <button type="button" className="action draw" title={travelBlocker ?? 'Eine Woche im Sprung'} disabled={travelBlocker !== undefined} onClick={() => game.openJourney()}>
+            <RouteIcon />
+            Hierher reisen
           </button>
         )}
         {world.canNote && (
@@ -296,14 +307,13 @@ export function WorldActions({ world, here, travel, onGlobe = false }: { world: 
             {here ? 'Die Gruppe ist hier' : 'Gruppe ist hier'}
           </button>
         )}
-        {world.canNote && !here && travel && (
-          <button type="button" className="action draw" title={travel.blocker} disabled={travel.blocker !== undefined} onClick={() => game.openJourney()}>
-            <RouteIcon />
-            Hierher reisen (1 Woche)
+        {showGlobe && (
+          <button type="button" className="action note" title="Die Hexkarte der Welt" onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobe())}>
+            <GlobeIcon />
+            Öffnen
           </button>
         )}
       </div>
-      {world.canNote && !here && travel?.blocker && <p className="combat-hint">{travel.blocker}</p>}
     </>
   );
 }
