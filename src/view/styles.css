@@ -1834,6 +1834,13 @@ button:disabled {
   resize: vertical;
 }
 
+/* Notiz im Charakter-Editor: wächst mit dem Text statt zu scrollen, damit eine angehängte
+   Kartenauswahl immer ganz zu sehen ist; von Hand ziehen entfällt dafür. */
+.form textarea.note-grow {
+  resize: none;
+  overflow: hidden;
+}
+
 .upp-inputs {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -2680,6 +2687,13 @@ button:disabled {
   border-color: var(--gold-deep);
   color: var(--gold-bright);
   font-weight: 600;
+}
+
+/* Karte ziehen am Feld Notiz: eine eigene Zeile darunter statt daneben, damit das Feld die volle
+   Breite behält; sonst derselbe Knopf wie „Name von der Karte“. */
+.note-card-draw {
+  width: 100%;
+  justify-content: center;
 }
 
 .name-picker-overlay {

@@ -628,6 +628,9 @@ describe('Begegnung und Kampfsimulation', () => {
     const { game } = await started(random, memoryRepository(campaign));
     expect(game.snapshot().patron?.npc).toEqual({ blocker: undefined });
     game.createPatronNpc();
+    // Die Ansicht wechselt gleich in den Reiter NSC, mit dem neuen NSC schon offen im Editor.
+    expect(game.snapshot().screen).toBe('npcs');
+    expect(game.snapshot().editor?.id).toBe(game.snapshot().npcs.worlds[0]!.roles[0]!.npcs[0]!.id);
     const npcs = game.snapshot().npcs;
     expect(npcs).toMatchObject({ all: false, here: 'Regina', total: 1, worlds: [{ name: 'Regina', roles: [{ role: 'patron' }] }] });
     const npc = npcs.worlds[0]!.roles[0]!.npcs[0]!;
