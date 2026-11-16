@@ -6,8 +6,8 @@ import type { Clock } from './ports';
 import { itemOf, ref, weaponOf, type Item } from './reference';
 import { hexById, worldOf, type Hex } from './sector';
 
-/** Einnahme, Ausgabe, Einzahlung eines Charakters, Auszahlung an einen Charakter, Kauf, Verkauf, Gewinn der Low Lottery, Miete eines Fahrzeugs, Fahrpreis im Linienverkehr. */
-export const bookingKinds = ['income', 'expense', 'deposit', 'payout', 'purchase', 'sale', 'lottery', 'rent', 'fare'] as const;
+/** Einnahme, Ausgabe, Einzahlung eines Charakters, Auszahlung an einen Charakter, Kauf, Verkauf, Gewinn der Low Lottery, Miete eines Fahrzeugs, Fahrpreis im Linienverkehr, Zahlung für ein Schiff (Kauf, Rate, Treibstoff). */
+export const bookingKinds = ['income', 'expense', 'deposit', 'payout', 'purchase', 'sale', 'lottery', 'rent', 'fare', 'ship'] as const;
 export type BookingKind = (typeof bookingKinds)[number];
 
 /**
@@ -31,6 +31,8 @@ export interface Booking {
   readonly won?: number;
   /** Bei Miete und Fahrpreis: der Reisetag, im Code seine Stelle im Log. */
   readonly rentFor?: number;
+  /** Bei einer Schiffs-Buchung: das Schiff, worauf sie sich bezieht (auch ein ausgeblendetes). */
+  readonly forShip?: string;
 }
 
 /** `/funds`: der Stand der Gruppenkasse, die Summe aller Buchungen. */
@@ -98,7 +100,7 @@ function withText<T extends object>(value: T, text: string | undefined): T & { t
  * Bucht Geld in die Kasse oder hinaus. `amount` ist immer positiv; die Art sagt die Richtung.
  * Einzahlung und Auszahlung ändern die Credits des Charakters um denselben Betrag.
  */
-export function book(campaign: Campaign, kind: Exclude<BookingKind, 'purchase' | 'sale' | 'lottery' | 'rent' | 'fare'>, amount: number, clock: Clock, text?: string, character?: CharacterId): Campaign {
+export function book(campaign: Campaign, kind: Exclude<BookingKind, 'purchase' | 'sale' | 'lottery' | 'rent' | 'fare' | 'ship'>, amount: number, clock: Clock, text?: string, character?: CharacterId): Campaign {
   checkAmount(amount);
   const signed = kind === 'income' || kind === 'deposit' ? amount : -amount;
   if (kind === 'income' || kind === 'expense') {
@@ -115,6 +117,19 @@ export function book(campaign: Campaign, kind: Exclude<BookingKind, 'purchase' |
 /** Ob die Gruppe den Gegenstand schon hat: im Gepäck oder an einem SC. */
 function groupOwns(campaign: Campaign, itemId: string): boolean {
   return campaign.stash.some((p) => p.of === itemId) || campaign.characters.some((c) => isPc(c) && c.possessions.some((p) => p.of === itemId));
+}
+
+/**
+ * Bucht eine Zahlung für ein Schiff: Kauf, Rate oder Treibstoff. `amount` ist negativ; die einzige
+ * Ausnahme ist die unbezahlte Rate mit 0 Cr und ihrem Hinweistext. Zu einem Schiff gehört nie ein
+ * Charakter, wohl aber das Schiff selbst – auch ein ausgeblendetes.
+ */
+export function bookShip(campaign: Campaign, amount: number, forShip: string, clock: Clock, text?: string): Campaign {
+  const note = text?.trim();
+  if (!Number.isInteger(amount) || amount > 0) throw new DomainError('Eine Schiffs-Buchung geht aus der Kasse hinaus.');
+  if (amount === 0 && note === undefined) throw new DomainError('Eine Buchung von 0 Cr braucht einen Hinweistext.');
+  if (!campaign.ships.some((s) => s.id === forShip)) throw new DomainError(`Das Schiff ${forShip} gibt es nicht.`);
+  return withBooking(campaign, withText({ at: clock.now(), kind: 'ship' as BookingKind, amount, forShip }, text));
 }
 
 /** Wohin ein gekaufter Gegenstand am SC kommt: eine Waffe wird Primärwaffe, eine Rüstung getragen; sonst ins Gepäck. */
@@ -208,14 +223,17 @@ export function sellGame(campaign: Campaign, key: string, kg: number, total: num
 export function validateBookings(campaign: Campaign): void {
   let funds = 0;
   for (const b of campaign.bookings) {
-    if (!Number.isInteger(b.amount) || b.amount === 0) throw new DomainError('Eine Buchung hat einen Betrag in ganzen Cr.');
+    // Die unbezahlte Rate ist die einzige Buchung mit 0 Cr – sie hat ihren Hinweistext.
+    if (!Number.isInteger(b.amount) || (b.amount === 0 && !(b.kind === 'ship' && b.text !== undefined))) throw new DomainError('Eine Buchung hat einen Betrag in ganzen Cr.');
     const inward = b.kind === 'income' || b.kind === 'deposit' || b.kind === 'sale' || b.kind === 'lottery';
     if (inward !== b.amount > 0) throw new DomainError(`Eine Buchung der Art ${b.kind} geht in die falsche Richtung.`);
     // Kauf und Verkauf haben einen Charakter, wenn es um Ausgerüstetes geht; sonst das Gruppengepäck.
     const needs = b.kind === 'deposit' || b.kind === 'payout' || b.kind === 'lottery';
-    const never = b.kind === 'income' || b.kind === 'expense';
+    const never = b.kind === 'income' || b.kind === 'expense' || b.kind === 'ship';
     if ((needs && b.for === undefined) || (never && b.for !== undefined)) throw new DomainError(`Eine Buchung der Art ${b.kind} hat ${needs ? 'keinen' : 'einen'} Charakter.`);
     if (b.for !== undefined) characterOf(campaign, b.for);
+    if ((b.kind === 'ship') !== (b.forShip !== undefined)) throw new DomainError('Nur eine Schiffs-Buchung verweist auf ein Schiff.');
+    if (b.forShip !== undefined && !campaign.ships.some((s) => s.id === b.forShip)) throw new DomainError(`Eine Buchung verweist auf das Schiff ${b.forShip}, das es nicht gibt.`);
     if ((b.kind === 'purchase') !== (b.bought !== undefined)) throw new DomainError('Nur ein Kauf hat einen gekauften Gegenstand.');
     if ((b.kind === 'sale') !== (b.sold !== undefined)) throw new DomainError('Nur ein Verkauf hat einen verkauften Gegenstand.');
     const trade = b.kind === 'purchase' || b.kind === 'sale';

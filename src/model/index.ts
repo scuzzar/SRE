@@ -23,6 +23,7 @@ export * from './reference';
 export * from './rules';
 export * from './sector';
 export * from './place';
+export * from './ship';
 export * from './surface-grid';
 export * from './surface-map';
 export * from './shop';

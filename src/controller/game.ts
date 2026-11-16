@@ -57,6 +57,18 @@ import {
   book,
   buy,
   sell,
+  activeShip,
+  buyFuel,
+  buyShip,
+  chooseShipGain,
+  freeDeckSlot,
+  renameShip,
+  resolveShipGains,
+  shipOf,
+  updateShip,
+  type DeckPlan,
+  type ShipChoice,
+  type ShipInput,
   setLocation,
   setQuantityDie,
   type BookingKind,
@@ -208,7 +220,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, selected: undefined, picking: false } as const;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -253,6 +265,8 @@ export class GameController {
   /** Der laufende Abgleich; ein zweiter Wunsch währenddessen hängt einen weiteren Durchgang an. */
   private syncing: Promise<void> | undefined;
   private again = false;
+  /** Der Entwurf, dessen Deckpläne im Stand liegen; `undefined` wie ohne Schiff. */
+  private deckDesign: string | undefined;
 
   constructor(private readonly deps: GameDependencies) {
     this.state = {
@@ -291,6 +305,8 @@ export class GameController {
       encounterIntro: false,
       surpriseShown: false,
       shopError: undefined,
+      shipError: undefined,
+      deckPlans: [],
       opened: undefined,
       stripCollapsed: false,
       shopHintHidden: false,
@@ -1525,7 +1541,7 @@ export class GameController {
   }
 
   /** Bucht Geld: Einnahme oder Ausgabe frei, Einzahlung oder Auszahlung mit einem Charakter. */
-  book(kind: Exclude<BookingKind, 'purchase' | 'sale' | 'lottery' | 'rent' | 'fare'>, amount: number, text?: string, character?: string): void {
+  book(kind: Exclude<BookingKind, 'purchase' | 'sale' | 'lottery' | 'rent' | 'fare' | 'ship'>, amount: number, text?: string, character?: string): void {
     this.inShop(() => book(this.campaign, kind, amount, this.deps.clock, text, character));
   }
 
@@ -1555,6 +1571,60 @@ export class GameController {
   /** Legt ab, was ein SC an einer Stelle ausgerüstet hat: Es kommt ins Gepäck. */
   unequip(character: string, slot: EquipSlot): void {
     this.inShop(() => unequip(this.campaign, character, slot));
+  }
+
+  // --- Schiff ----------------------------------------------------------------------------------
+
+  /** Benennt das Schiff um; der Stift am Namen im Reiter Schiff. */
+  renameShip(name: string): void {
+    this.inShip(() => renameShip(this.campaign, activeShip(this.campaign).id, name));
+  }
+
+  /** Bearbeiten des Schiffsbogens: Name, Treibstoff und Fracht in ganzen Tonnen. */
+  editShip(input: ShipInput): void {
+    this.inShip(() => updateShip(this.campaign, activeShip(this.campaign).id, input));
+  }
+
+  /** Treibstoff in ganzen Tonnen, Cr 500 je Tonne, höchstens bis der Tank voll ist. */
+  buyFuelTons(tons: number): void {
+    this.inShip(() => buyFuel(this.campaign, tons, this.deps.clock));
+  }
+
+  /** Kauf in der Werft: bar der volle Preis, bei der Bank 20 % Anzahlung und doppelte Kreditsumme. */
+  buyShipDesign(design: string, method: 'cash' | 'bank'): void {
+    this.inShip(() => buyShip(this.campaign, design, method, this.deps.clock));
+  }
+
+  /** Legt ein Bild als nächsten freien Deckplan des Entwurfs ab; die Pläne bleiben auf dem Gerät. */
+  async addDeckPlan(image: string): Promise<void> {
+    const campaign = this.state.campaign;
+    const ship = campaign === undefined ? undefined : shipOf(campaign);
+    if (ship === undefined) {
+      this.update({ shipError: 'Die Gruppe hat kein Schiff.' });
+      return;
+    }
+    try {
+      if (!image.startsWith('data:image/')) throw new DomainError('Als Deckplan geht nur ein Bild (PNG oder JPEG).');
+      if (image.length > 8_000_000) throw new DomainError('Das Bild ist zu groß; nimm es kleiner auf.');
+      const plan: DeckPlan = { design: ship.design, name: freeDeckSlot(this.state.deckPlans), image };
+      await this.deps.repository.saveDeckPlan(plan);
+      this.update({ deckPlans: [...this.state.deckPlans, plan], shipError: undefined });
+    } catch (error) {
+      this.update({ shipError: messageOf(error) });
+    }
+  }
+
+  /** Entfernt einen Deckplan des aktiven Entwurfs vom Gerät. */
+  async removeDeckPlan(name: string): Promise<void> {
+    const campaign = this.state.campaign;
+    const ship = campaign === undefined ? undefined : shipOf(campaign);
+    if (ship === undefined) return;
+    try {
+      await this.deps.repository.removeDeckPlan(ship.design, name);
+      this.update({ deckPlans: this.state.deckPlans.filter((p) => p.name !== name), shipError: undefined });
+    } catch (error) {
+      this.update({ shipError: messageOf(error) });
+    }
   }
 
   /**
@@ -1765,9 +1835,27 @@ export class GameController {
     this.inGeneration((g) => reenlist(g, wants, this.deps.random));
   }
 
-  /** Ein Abmusterungswurf auf Geld oder Sachwerte. */
+  /** Ein Abmusterungswurf auf Geld oder Sachwerte; ein Ship-Vorteil, der sofort wirkt, wirkt gleich. */
   musterOut(kind: 'cash' | 'benefit'): void {
-    this.inGeneration((g) => muster(g, kind, this.deps.random));
+    const generation = this.campaign.generation;
+    if (!generation) throw new DomainError('Es läuft keine Charaktererschaffung.');
+    try {
+      // Derselbe Entwurf oder kein Schiff: der Vorteil wirkt sofort. Ein andrer Entwurf bleibt zur Wahl offen.
+      this.change(resolveShipGains(setGeneration(this.campaign, muster(generation, kind, this.deps.random))), { generationError: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ generationError: error.message });
+    }
+  }
+
+  /** Die Wahl zum noch offenen Ship-Vorteil: das alte Schiff behalten oder zum neuen wechseln. */
+  chooseShipGain(choice: ShipChoice): void {
+    try {
+      this.change(chooseShipGain(this.campaign, choice), { generationError: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ generationError: error.message });
+    }
   }
 
   /** Schließt die Erschaffung mit Namen ab; der neue Charakter steht oben im Orakel-Screen. */
@@ -2119,10 +2207,20 @@ export class GameController {
   /** Führt eine Eingabe im Shop aus; verletzt sie eine Regel, steht das im Shop. */
   private inShop(step: () => Campaign): void {
     try {
-      this.change(step(), { shopError: undefined });
+      this.change(step(), { shopError: undefined, shipError: undefined });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ shopError: error.message });
+    }
+  }
+
+  /** Führt eine Eingabe im Reiter Schiff aus; verletzt sie eine Regel, steht das dort. */
+  private inShip(step: () => Campaign): void {
+    try {
+      this.change(step(), { shipError: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ shipError: error.message });
     }
   }
 
@@ -2217,6 +2315,27 @@ export class GameController {
   private update(patch: Partial<ControllerState>): void {
     this.state = { ...this.state, ...patch };
     this.current = buildSnapshot(this.state);
+    this.syncDeckPlans();
     for (const listener of this.listeners) listener();
+  }
+
+  /** Deckpläne sind Geräte-Daten je Entwurf (2026-11-16): offen sind die des aktiven Schiffs. */
+  private syncDeckPlans(): void {
+    const design = this.state.campaign === undefined ? undefined : shipOf(this.state.campaign)?.design;
+    if (design === this.deckDesign) return;
+    this.deckDesign = design;
+    if (design === undefined) {
+      this.update({ deckPlans: [] });
+      return;
+    }
+    void this.deps.repository.loadDeckPlans(design).then(
+      (plans) => {
+        if (this.deckDesign === design) this.update({ deckPlans: plans });
+      },
+      () => {
+        // Ohne geladene Pläne steht die Ansicht einfach leer; beim nächsten Wechsel wird es wieder versucht.
+        if (this.deckDesign === design) this.update({ deckPlans: [] });
+      },
+    );
   }
 }

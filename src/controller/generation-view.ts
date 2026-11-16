@@ -97,6 +97,16 @@ export type GenerationAction =
   | { readonly kind: 'name' }
   | { readonly kind: 'dead' };
 
+/** Der noch offene Ship-Vorteil der Abmusterung: der angebotene Entwurf und wie das jetzige Schiff heißt. */
+export interface ShipGainChoice {
+  readonly design: string;
+  /** Der Name des angebotenen Entwurfs. */
+  readonly name: string;
+  /** Ob der Vorteil das Schiff schuldenfrei gibt (Scout) oder mit Kreditsumme (Merchant). */
+  readonly debtFree: boolean;
+  readonly current: string;
+}
+
 /** Eine Welt zur Wahl. */
 export interface WorldChoice {
   readonly id: string;
@@ -123,6 +133,8 @@ export interface GenerationView {
   /** Je Term der Name seiner Welt, soweit gewählt. */
   readonly termWorlds: readonly string[];
   readonly action: GenerationAction;
+  /** Die noch offene Wahl zum Ship-Vorteil der Abmusterung, solange sie besteht. */
+  readonly shipGain: ShipGainChoice | undefined;
   readonly error: string | undefined;
 }
 
@@ -314,7 +326,7 @@ const stepNames: Partial<Record<GenerationStep, string>> = {
   promotion: 'Beförderung',
 };
 
-export function generationView(generation: Generation, hexes: readonly Hex[], error: string | undefined): GenerationView {
+export function generationView(generation: Generation, hexes: readonly Hex[], error: string | undefined, shipGain?: ShipGainChoice): GenerationView {
   const state = stateOf(generation);
   const service = state.service;
   const rank = service && state.rank > 0 ? service.ranks[state.rank - 1]!.title : undefined;
@@ -438,6 +450,7 @@ export function generationView(generation: Generation, hexes: readonly Hex[], er
     homeworld: state.homeworld === undefined ? undefined : worldName(hexes, state.homeworld),
     termWorlds: state.worlds.map((id) => worldName(hexes, id)),
     action,
+    shipGain,
     error,
   };
 }

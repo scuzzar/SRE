@@ -124,6 +124,69 @@ export const VehicleSchema = z.object({
   landsAt: z.array(PortSchema).default([]),
 });
 
+/**
+ * Ein Standardentwurf aus SR 35–37 (SE 10/12): Rumpf und Antriebe in Tonnen bzw. Stufen, Kabinen,
+ * Niedrigbetten, Hardpoints und Laderaum als Zahlen, Crewbedarf als Text, `basePrice` in Cr.
+ * `id` ist der Buchstabencode aus den Schiffsbegegnungen (S, A, R, …).
+ */
+export const ShipDesignSchema = z.object({
+  id: z.string().min(1),
+  code: z.string().length(1),
+  name: z.string().min(1),
+  /** Das Rechnermodell ab Werk. */
+  computer: z.string().min(1),
+  hull: z.number().int().min(100),
+  jump: z.number().int().min(1).max(6),
+  /** Beschleunigung des Maneuver Drive in G. */
+  maneuver: z.number().int().min(1),
+  /** Treibstofftank in Tonnen. */
+  fuel: z.number().int().min(1),
+  staterooms: z.number().int().min(0),
+  lowBerths: z.number().int().min(0),
+  hardpoints: z.number().int().min(0),
+  /** Laderaum in Tonnen. */
+  cargo: z.number().int().min(0),
+  crew: z.string().min(1),
+  /** Barpreis in Cr. */
+  basePrice: z.number().int().min(0),
+  /** Bauzeit in Monaten. */
+  months: z.number().int().min(1),
+  /** Atmosphärische Streulinienform (SR 32); bei den Standardentwürfen nirgends gesetzt. */
+  streamlined: z.boolean().default(false),
+});
+
+/**
+ * Ein Rechnermodell aus SE 10; die Modellzahl ist zugleich die höchste unterstützte Sprungzahl.
+ * Die „bis"-Modelle erreichen die nächste Sprungstufe, zählen beim Softwarepaket aber als das
+ * Modell darunter. Preis in Cr, `cpu` und `storage` in Space.
+ */
+export const ComputerModelSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  jump: z.number().int().min(1).max(7),
+  price: z.number().int().min(0),
+  tons: z.number().int().min(1),
+  cpu: z.number().int().min(0),
+  storage: z.number().int().min(0),
+  tl: z.number().int().min(0).max(15),
+});
+
+/** Offensiv (nur mit Bewaffnung sinnvoll), defensiv oder Routine (Betrieb ohne Waffen) – SE 13. */
+export const softwareKinds = ['offensive', 'defensive', 'routine'] as const;
+export const SoftwareKindSchema = z.enum(softwareKinds);
+
+/** Ein Softwareprogramm aus der Software List (SE 13); `space` braucht es in CPU und Storage. */
+export const SoftwareSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  kind: SoftwareKindSchema,
+  space: z.number().int().min(1),
+  price: z.number().int().min(0),
+  effect: z.string().min(1),
+  /** Anforderungen an Personen, die das Programm selbst schreiben (SR 39), knapp wie im Chart. */
+  writeSkills: z.string().min(1).optional(),
+});
+
 /** Schlag (Hände), Hieb (Klingen) oder Schuss (Schusswaffen); bei Schlag und Hieb zählt STR, beim Schuss DEX. */
 export const AttackKindSchema = z.enum(['blow', 'swing', 'shot']);
 
@@ -319,6 +382,10 @@ export const GainSchema = z.object({
   change: z.number().int().optional(),
   item: z.string().min(1).optional(),
   credits: z.number().int().min(0).optional(),
+  /** Der Schiffsentwurf des Ship-Vorteils (Scouts: Scout/Courier, Merchants: Free Trader). */
+  ship: z.string().min(1).optional(),
+  /** Mit `ship`: das Schiff ist schuldenfrei (Scouts; bei den Merchants nicht). */
+  shipDebtFree: z.boolean().optional(),
 });
 
 export const TableSchema = z.object({
@@ -462,6 +529,12 @@ export const ReferenceDataSchema = z
     items: z.array(ItemSchema).min(1),
     weapons: z.array(WeaponSchema).min(1),
     vehicles: z.array(VehicleSchema).min(1),
+    /** Die Standardentwürfe der Werft (SR 35–37). */
+    ships: z.array(ShipDesignSchema).min(1),
+    /** Die Rechnermodelle (SE 10). */
+    computers: z.array(ComputerModelSchema).min(1),
+    /** Die Software List (SE 13). */
+    software: z.array(SoftwareSchema).min(1),
     encounters: EncountersSchema,
     services: z.array(ServiceSchema).min(1),
     cascades: z.array(CascadeSchema),
@@ -498,6 +571,13 @@ export const ReferenceDataSchema = z
     }
     const skillIds = new Set(data.skills.map((s) => s.id));
     checkCareerData(data, skillIds, ctx);
+    uniqueIds(data.ships.map((s) => s.id), 'Schiffsentwurf', ctx);
+    uniqueIds(data.ships.map((s) => s.code), 'Schiffscode', ctx);
+    uniqueIds(data.computers.map((c) => c.id), 'Rechnermodell', ctx);
+    uniqueIds(data.software.map((s) => s.id), 'Programm', ctx);
+    for (const design of data.ships) {
+      if (!data.computers.some((c) => c.id === design.computer)) ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id}: Rechnermodell ${design.computer} gibt es nicht` });
+    }
     for (const patron of data.encounters.patrons) {
       const label = `${patron.name} (Patron-Liste ${patron.list}, ${patron.roll})`;
       if (patron.rumor !== (patron.career === undefined)) ctx.addIssue({ code: 'custom', message: `${label}: Ein Patron hat eine Laufbahn, ein Gerücht keine` });
@@ -529,6 +609,7 @@ interface CareerData {
   readonly services: readonly z.infer<typeof ServiceSchema>[];
   readonly cascades: readonly z.infer<typeof CascadeSchema>[];
   readonly aging: readonly z.infer<typeof AgingSchema>[];
+  readonly ships: readonly z.infer<typeof ShipDesignSchema>[];
 }
 
 /** Verweise der Gegenstände und Laufbahnen; jede Zeile bringt höchstens eins. */
@@ -584,11 +665,13 @@ function checkCareerData(data: CareerData, skillIds: ReadonlySet<string>, ctx: z
     for (const option of cascade.options) if (!skillIds.has(option)) issue(`Unbekannte Fertigkeit ${option} in ${cascade.id}`);
   }
   for (const gain of gains) {
-    const effects = [gain.skill, gain.choose, gain.characteristic, gain.item, gain.credits].filter((e) => e !== undefined).length;
+    const effects = [gain.skill, gain.choose, gain.characteristic, gain.item, gain.credits, gain.ship].filter((e) => e !== undefined).length;
     if (effects > 1) issue(`Der Zugewinn ${gain.id} bringt mehr als eins`);
     if ((gain.characteristic === undefined) !== (gain.change === undefined)) issue(`Der Zugewinn ${gain.id} braucht Attribut und Änderung zusammen`);
     if (gain.skill !== undefined && !skillIds.has(gain.skill)) issue(`Unbekannte Fertigkeit ${gain.skill} in ${gain.id}`);
     if (gain.item !== undefined && !items.has(gain.item)) issue(`Unbekannter Gegenstand ${gain.item} in ${gain.id}`);
+    if (gain.ship !== undefined && !data.ships.some((s) => s.id === gain.ship)) issue(`Unbekannter Schiffsentwurf ${gain.ship} in ${gain.id}`);
+    if (gain.shipDebtFree !== undefined && gain.ship === undefined) issue(`Der Zugewinn ${gain.id} ist schuldenfrei ohne Schiff`);
     if (gain.weapon && gain.choose === undefined) issue(`Der Zugewinn ${gain.id} ist eine Waffe ohne Kaskade`);
     if (gain.choose === undefined) continue;
     const cascade = cascades.get(gain.choose);
@@ -627,6 +710,10 @@ export type ItemKind = z.infer<typeof ItemKindSchema>;
 export type Item = z.infer<typeof ItemSchema>;
 export type Vehicle = z.infer<typeof VehicleSchema>;
 export type VehicleSpeed = z.infer<typeof VehicleSpeedSchema>;
+export type ShipDesign = z.infer<typeof ShipDesignSchema>;
+export type ComputerModel = z.infer<typeof ComputerModelSchema>;
+export type Software = z.infer<typeof SoftwareSchema>;
+export type SoftwareKind = z.infer<typeof SoftwareKindSchema>;
 export type Way = z.infer<typeof WaySchema>;
 export type ArmorClass = z.infer<typeof ArmorClassSchema>;
 export type Range = z.infer<typeof RangeSchema>;

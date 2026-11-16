@@ -1,5 +1,5 @@
-import Dexie, { type EntityTable } from 'dexie';
-import { hexFromRolls, keepFocus, START_DAY, settleStash, upgradeDistances, upgradeNpcs, upgradeOracle, type Campaign, type CampaignId, type CampaignRepository, type Encounter, type Hex, type LegacyWorldRoll, type SyncMark, type TrayStop, TRAY_STOPS } from '../model';
+import Dexie, { type EntityTable, type Table } from 'dexie';
+import { hexFromRolls, keepFocus, START_DAY, settleStash, upgradeDistances, upgradeNpcs, upgradeOracle, type Campaign, type CampaignId, type CampaignRepository, type DeckPlan, type Encounter, type Hex, type LegacyWorldRoll, type SyncMark, type TrayStop, TRAY_STOPS } from '../model';
 
 /** Eine Kampagne liegt unter ihrer Id. */
 interface StoredCampaign {
@@ -24,6 +24,7 @@ class SreDatabase extends Dexie {
   campaigns!: EntityTable<StoredCampaign, 'key'>;
   settings!: EntityTable<Setting, 'key'>;
   marks!: EntityTable<SyncMark, 'key'>;
+  deckPlans!: Table<DeckPlan, [string, string]>;
 
   constructor(name: string) {
     super(name);
@@ -32,6 +33,8 @@ class SreDatabase extends Dexie {
     this.version(2).stores({ campaigns: 'key', settings: 'key' });
     // Version 3: die Abgleichsmarken, je Kampagne eine unter ihrem Schlüssel.
     this.version(3).stores({ campaigns: 'key', settings: 'key', marks: 'key' });
+    // Version 4: Deckpläne als Geräte-Daten, je Entwurf und Platz („Deck A“) – über Kampagnen hinweg.
+    this.version(4).stores({ deckPlans: '[design+name], design' });
   }
 }
 
@@ -108,6 +111,18 @@ export class DexieCampaignRepository implements CampaignRepository {
   async clearMarks(): Promise<void> {
     await this.db.marks.clear();
   }
+
+  async loadDeckPlans(design: string): Promise<readonly DeckPlan[]> {
+    return this.db.deckPlans.where('design').equals(design).toArray();
+  }
+
+  async saveDeckPlan(plan: DeckPlan): Promise<void> {
+    await this.db.deckPlans.put(plan);
+  }
+
+  async removeDeckPlan(design: string, name: string): Promise<void> {
+    await this.db.deckPlans.delete([design, name]);
+  }
 }
 
 /**
@@ -154,7 +169,7 @@ export function upgraded(campaign: Campaign): Campaign {
   // Begegnungen von vor den Range Bands bzw. von vor 2026-11-08d macht upgradeDistances zu solchen mit Startband.
   const encounters = (campaign.encounters ?? []).map((e): Encounter => ({ ...e, round: e.round ?? 1, acted: e.acted ?? [] }));
   // Spielstände von vor dem Gruppengepäck: Was ein SC nicht ausgerüstet hat, kommt ins Gepäck (settleStash).
-  const upgraded = settleStash(upgradeDistances(upgradeNpcs(upgradeOracle({ ...campaign, ...location, characters, log, hexes, bookings: campaign.bookings ?? [], encounters, stash: campaign.stash ?? [], day: (campaign as Partial<Campaign>).day ?? START_DAY }))));
+  const upgraded = settleStash(upgradeDistances(upgradeNpcs(upgradeOracle({ ...campaign, ...location, characters, log, hexes, bookings: campaign.bookings ?? [], ships: campaign.ships ?? [], encounters, stash: campaign.stash ?? [], day: (campaign as Partial<Campaign>).day ?? START_DAY }))));
   return keepFocus(upgraded, upgraded);
 }
 
@@ -166,6 +181,7 @@ export class MemoryCampaignRepository implements CampaignRepository {
   private hintHidden = false;
   private tray: TrayStop | undefined;
   private readonly marks = new Map<string, SyncMark>();
+  private readonly deckPlans: DeckPlan[] = [];
 
   async list(): Promise<readonly Campaign[]> {
     return [...this.campaigns.values()];
@@ -225,6 +241,21 @@ export class MemoryCampaignRepository implements CampaignRepository {
 
   async clearMarks(): Promise<void> {
     this.marks.clear();
+  }
+
+  async loadDeckPlans(design: string): Promise<readonly DeckPlan[]> {
+    return this.deckPlans.filter((p) => p.design === design);
+  }
+
+  async saveDeckPlan(plan: DeckPlan): Promise<void> {
+    const at = this.deckPlans.findIndex((p) => p.design === plan.design && p.name === plan.name);
+    if (at < 0) this.deckPlans.push(plan);
+    else this.deckPlans[at] = plan;
+  }
+
+  async removeDeckPlan(design: string, name: string): Promise<void> {
+    const at = this.deckPlans.findIndex((p) => p.design === design && p.name === name);
+    if (at >= 0) this.deckPlans.splice(at, 1);
   }
 }
 

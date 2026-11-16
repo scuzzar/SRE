@@ -12,6 +12,7 @@ import names from './names.json';
 import items from './items.json';
 import weapons from './weapons.json';
 import vehicles from './vehicles.json';
+import ships from './ships.json';
 import encounters from './encounters.json';
 import services from './services.json';
 import { MythicTablesSchema, withMythicTables } from './mythic';
@@ -35,6 +36,9 @@ export const referenceData: ReferenceData = ReferenceDataSchema.parse({
   items,
   weapons,
   vehicles,
+  ships: ships.designs,
+  computers: ships.computers,
+  software: ships.software,
   encounters,
   ...services,
   worlds,

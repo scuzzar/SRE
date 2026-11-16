@@ -1103,19 +1103,6 @@
     "price": 18000000
   },
   {
-    "id": "scout-ship",
-    "name": "Scout Ship",
-    "kind": "ship",
-    "price": 29430000,
-    "once": true
-  },
-  {
-    "id": "free-trader",
-    "name": "Free Trader",
-    "kind": "ship",
-    "price": 37080000
-  },
-  {
     "id": "high-passage",
     "name": "High Passage",
     "kind": "passage",

@@ -8,6 +8,7 @@ import { EncounterScreen, type EncounterOptions } from './combat/EncounterScreen
 import { EncounterChoiceDialog, EncounterRollDialog } from './combat/EncounterRollDialog';
 import { EncounterDock } from './combat/EncounterDock';
 import { ShopScreen } from './shop/ShopScreen';
+import { ShipScreen } from './ship/ShipScreen';
 import { CharactersScreen } from './characters/CharactersScreen';
 import { NpcScreen } from './characters/NpcScreen';
 import { GenerationSheet } from './characters/GenerationSheet';
@@ -15,7 +16,7 @@ import { ResultDialog } from './characters/ResultDialog';
 import { useGame, useSnapshot } from './game-context';
 import { useEscapeCloses, useShortcuts } from './keyboard';
 import { useIsDesktop } from './media';
-import { CloseIcon, CombatIcon, EncounterIcon, LogIcon, MenuIcon, PeopleIcon, PersonIcon, ShopIcon } from './icons';
+import { CloseIcon, CombatIcon, EncounterIcon, LogIcon, MenuIcon, PeopleIcon, PersonIcon, ShipIcon, ShopIcon } from './icons';
 import { Menu } from './Menu';
 import { CardSheet } from './oracle/CardSheet';
 import { DiceRoll } from './oracle/DiceRoll';
@@ -36,6 +37,7 @@ const areas: readonly { readonly id: Screen; readonly label: string; readonly Ic
   { id: 'encounter', label: 'Begegnung', Icon: EncounterIcon },
   { id: 'combat', label: 'Kampf', Icon: CombatIcon },
   { id: 'shop', label: 'Shop', Icon: ShopIcon },
+  { id: 'ship', label: 'Schiff', Icon: ShipIcon },
   { id: 'characters', label: 'Charaktere', Icon: PersonIcon },
   { id: 'npcs', label: 'NSC', Icon: PeopleIcon },
 ];
@@ -79,6 +81,7 @@ export function App() {
       {screen === 'encounter' && <EncounterScreen view={view} options={encounterOptions} onOptions={setEncounterOptions} />}
       {screen === 'combat' && <CombatScreen view={view} patient={patient} onPatient={setPatient} />}
       {screen === 'shop' && <ShopScreen view={view} />}
+      {screen === 'ship' && <ShipScreen view={view} />}
       {screen === 'characters' && <CharactersScreen view={view} />}
       {screen === 'npcs' && <NpcScreen view={view} />}
       {screen === 'about' && <AboutScreen persistent={view.persistent} durable={view.durable} />}

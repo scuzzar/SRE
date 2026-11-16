@@ -185,7 +185,10 @@ describe('Referenzdaten', () => {
     expect(army!.ranks[0]!.grants).toEqual({ id: 'army.rank.1', skill: 'submachinegun', weapon: false });
     expect(other!.skills[0]!.rows[5]).toEqual({ id: 'other.personal.6', characteristic: 'SOC', change: -1, weapon: false });
     expect(navy!.cash.rows.map((r) => r.credits)).toEqual([1000, 5000, 5000, 10000, 20000, 50000, 50000]);
-    expect(scouts!.benefits.rows.map((r) => r.item ?? r.choose ?? r.characteristic ?? '-')).toEqual(['low-passage', 'INT', 'EDU', 'blade-combat', 'gun-combat', 'scout-ship', '-']);
+    expect(scouts!.benefits.rows.map((r) => r.item ?? r.choose ?? r.characteristic ?? r.ship ?? '-')).toEqual(['low-passage', 'INT', 'EDU', 'blade-combat', 'gun-combat', 'S', '-']);
+    expect(scouts!.benefits.rows[5]).toMatchObject({ ship: 'S', shipDebtFree: true });
+    expect(merchants!.benefits.rows[6]).toMatchObject({ ship: 'A' });
+    expect(merchants!.benefits.rows[6]!.shipDebtFree).toBeUndefined();
   });
 
   it('haben jede Waffe aus Blade und Gun Combat genau einmal als Gegenstand', () => {
@@ -223,7 +226,8 @@ describe('Referenzdaten', () => {
     expect(item('vehicle-air-raft')).toMatchObject({ kind: 'vehicle', tl: 8, weight: 4000, price: 600_000 });
     expect(item('craft-ship-s-boat')).toMatchObject({ kind: 'ship', price: 16_000_000 });
     expect(item('craft-ship-s-boat').weight).toBeUndefined();
-    expect(item('free-trader')).toMatchObject({ price: 37_080_000, once: false });
+    expect(referenceData.ships.find((s) => s.code === 'A')).toMatchObject({ name: 'Free Trader', basePrice: 37_080_000, computer: 'model-1' });
+    expect(referenceData.items.some((i) => i.id === 'scout-ship' || i.id === 'free-trader')).toBe(false);
     expect(item('travellers-aid-society')).toMatchObject({ kind: 'membership', once: true });
     expect(item('vehicle-grav-belt').note).toMatch(/Druckfehler/);
     expect(referenceData.items.filter((i) => i.name === 'Vacc Suit').map((i) => i.tl)).toEqual([8, 9, 10, 11, 12, 13]);
@@ -234,6 +238,26 @@ describe('Referenzdaten', () => {
     const rows = navy!.cash.rows.map((r, i) => (i === 0 ? { ...r, item: 'low-passage' } : r));
     const broken = { ...referenceData, services: [{ ...navy!, cash: { ...navy!.cash, rows } }, ...rest] };
     expect(() => ReferenceDataSchema.parse(broken)).toThrow(/navy.cash.1 bringt mehr als eins/);
+  });
+
+  it('kennen die Standardentwürfe, Rechner und Programme aus SE 10 bis 13', () => {
+    expect(referenceData.ships.map((s) => s.code)).toEqual(['S', 'A', 'R', 'M', 'Y', 'C', 'T', 'L', 'K']);
+    const design = (code: string) => referenceData.ships.find((s) => s.code === code)!;
+    expect(design('S')).toMatchObject({ name: 'Scout/Courier', hull: 100, jump: 2, maneuver: 2, fuel: 40, computer: 'model-1bis', basePrice: 29_430_000, months: 9 });
+    expect(design('C')).toMatchObject({ hardpoints: 8, cargo: 80, computer: 'model-5' });
+    expect(referenceData.computers.map((c) => [c.name, c.jump])).toEqual([['Modell/1', 1], ['Modell/1bis', 2], ['Modell/2', 2], ['Modell/2bis', 3], ['Modell/3', 3], ['Modell/4', 4], ['Modell/5', 5], ['Modell/6', 6], ['Modell/7', 7]]);
+    const kind = (k: (typeof referenceData.software)[number]['kind']) => referenceData.software.filter((s) => s.kind === k).length;
+    expect([kind('offensive'), kind('defensive'), kind('routine')]).toEqual([15, 10, 11]);
+    const program = (id: string) => referenceData.software.find((s) => s.id === id)!;
+    expect(program('jump-2')).toMatchObject({ space: 2, price: 300_000, kind: 'routine' });
+    expect(program('anti-hijack').effect).toMatch(/5−/);
+  });
+
+  it('weisen einen Schiffsentwurf mit unbekanntem Rechner und einen fremden Ship-Vorteil zurück', () => {
+    const broken = { ...referenceData, ships: referenceData.ships.map((s) => (s.code === 'S' ? { ...s, computer: 'model-9' } : s)) };
+    expect(() => ReferenceDataSchema.parse(broken)).toThrow(/Rechnermodell model-9/);
+    const services = referenceData.services.map((s) => ({ ...s, benefits: { ...s.benefits, rows: s.benefits.rows.map((r) => (r.ship === 'S' ? { ...r, ship: 'X' } : r)) } }));
+    expect(() => ReferenceDataSchema.parse({ ...referenceData, services })).toThrow(/Unbekannter Schiffsentwurf X/);
   });
 });
 

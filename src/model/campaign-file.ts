@@ -15,9 +15,10 @@ import { START_DAY } from './time';
 import { checkOf, encounterChecks } from './encounter-check';
 import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type Journey, type DamageRoll, type LogEntry, type Note, type Recovery, type TripDay } from './log';
 import { checkRecovery } from './wounds';
-import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, patronOf, ranges, ref, slotOfEntry, weaponOf } from './reference';
+import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, patronOf, ranges, ref, shipDesignOf, slotOfEntry, softwareOf, weaponOf } from './reference';
 import { characteristics } from './rules';
 import { bookingKinds, validateBookings, type Booking } from './shop';
+import type { Ship } from './ship';
 import { checkTrip } from './trip';
 import { vehicleOfItem } from './vehicle';
 import { settleStash } from './stash';
@@ -150,6 +151,7 @@ const CareerRollSchema = z.object({
   gained: z.string().optional(),
   chosen: z.string().optional(),
   against: z.string().optional(),
+  shipChoice: z.enum(['keep', 'switch']).optional(),
 });
 const CareerSchema = z.object({ rolls: z.array(CareerRollSchema), homeworld: z.string().optional(), worlds: z.array(z.string()).optional() });
 
@@ -252,6 +254,20 @@ const StashPossessionSchema = PossessionSchema.extend({ parked: PlaceSchema.opti
 const TripSchema = z.object({
   hours: z.number().min(0),
   legs: z.array(z.object({ by: z.string().min(1), rented: z.boolean(), cells: z.array(z.number().int().min(0)).min(2) })).min(1),
+});
+/** Ein Schiff der Kampagne (2026-11-16); Deckpläne sind Geräte-Daten und nie Teil der Datei. */
+const ShipSchema = z.object({
+  id: z.string().min(1),
+  design: z.string().min(1),
+  name: z.string().min(1),
+  fuel: z.number().int().min(0),
+  cargo: z.number().int().min(0),
+  price: z.number().int().min(0),
+  initialLoan: z.number().int().min(0).optional(),
+  loanBalance: z.number().int().min(0).optional(),
+  nextPaymentDay: z.number().int().min(0).optional(),
+  retired: z.boolean().default(false),
+  software: z.array(z.object({ program: z.string().min(1) })).default([]),
 });
 const CharacterSchema = z.object({
   id: z.string().min(1),
@@ -397,16 +413,19 @@ const CampaignFileSchema = z.object({
           in: z.string().optional(),
           won: z.number().int().optional(),
           rentFor: z.number().int().optional(),
+          forShip: z.string().min(1).optional(),
         }),
       )
       .default([]),
+    /** Alle Schiffe, auch die ausgeblendeten; fehlt in Dateien von vor den Schiffen: keins. */
+    ships: z.array(ShipSchema).default([]),
   }),
 });
 
 /** Die Kampagne als Inhalt einer Kampagnendatei. */
 export function toCampaignFile(campaign: Campaign): string {
-  const { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, stash, encounters, quantityDie, terrain, day, trip } = campaign;
-  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, stash, encounters, quantityDie, terrain, day, trip } }, null, 2);
+  const { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip } = campaign;
+  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip } }, null, 2);
 }
 
 /** Ein Dateiname aus dem Namen der Kampagne und dem Tag, z. B. „Spinward-Run-2026-10-25.json“. */
@@ -462,6 +481,7 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       ...(file.focus === undefined ? {} : { focus: file.focus }),
       ...(file.location === undefined ? {} : { location: placeFromFile(file.location) }),
       bookings: file.bookings.map((b) => stripped(b) as Booking),
+      ships: file.ships.map((s) => stripped(s) as Ship),
       stash: file.stash.map((p) => stripped({ ...p, ...(p.parked === undefined ? {} : { parked: placeFromFile(p.parked) }) }) as Possession),
       ...(file.trip === undefined ? {} : { trip: { hours: file.trip.hours, legs: file.trip.legs.map((l) => ({ by: l.by, rented: l.rented, cells: [...l.cells] })) } }),
       // NSC aus Dateien von vor 2026-11-08c bleiben, wie sie sind; upgradeNpcs macht Charaktere aus ihnen.
@@ -634,6 +654,15 @@ function validate(campaign: Campaign): void {
   validateHexes(campaign.hexes);
   if (campaign.location !== undefined) checkPlace(campaign.hexes, campaign.location);
   validateBookings(campaign);
+  // Jedes Schiff hat eine eigene Id, einen Entwurf der Werft und Programme der Software-Liste; aktiv ist höchstens eins.
+  const shipIds = new Set<string>();
+  for (const ship of campaign.ships) {
+    if (shipIds.has(ship.id)) throw new DomainError(`Die Schiffs-Id ${ship.id} kommt doppelt vor.`);
+    shipIds.add(ship.id);
+    shipDesignOf(ship.design);
+    for (const board of ship.software) softwareOf(board.program);
+  }
+  if (campaign.ships.some((s) => !s.retired) && campaign.ships.filter((s) => !s.retired).length > 1) throw new DomainError('Es gibt mehr als ein aktives Schiff.');
   // Abgestellt werden nur eigene Fahrzeuge, an einem Ort; die Fahrt passt zur Karte der Welt der Gruppe.
   for (const p of campaign.stash) {
     if (p.parked === undefined) continue;

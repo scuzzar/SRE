@@ -79,7 +79,7 @@ describe('Shop', () => {
     expect(of('revolver-ammo')).toMatchObject({ price: 5, banned: 5 });
     expect(of('body-pistol')).toMatchObject({ banned: 1 });
     expect(of('laser-rifle')).toBeUndefined(); // TL 9
-    expect(of('free-trader')).toBeUndefined();
+    expect(of('craft-ship-s-boat')).toBeUndefined(); // Schiffe kauft man in der Werft
     expect(of('travellers-aid-society')).toBeUndefined();
     expect(of('club')).toBeUndefined(); // ohne Preis
   });
@@ -109,7 +109,7 @@ describe('Verkaufen', () => {
     expect(salePrice(itemOf('rifle'))).toBe(100);
     expect(salePrice(itemOf('revolver-ammo'))).toBe(2);
     expect(salePrice(itemOf('club'))).toBeUndefined();
-    expect(salePrice(itemOf('free-trader'))).toBeUndefined();
+    expect(salePrice(itemOf('craft-ship-s-boat'))).toBeUndefined();
     expect(salePrice(itemOf('travellers-aid-society'))).toBeUndefined();
   });
 

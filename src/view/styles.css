@@ -8338,3 +8338,244 @@ button:disabled {
   gap: 8px;
   justify-content: flex-end;
 }
+
+/* --- Reiter Schiff --------------------------------------------------------------------------- */
+
+/*
+ * Nach dem Mock docs/mock/schiff-tab.html: Kopf mit Name, Stift und Entwurf, Kacheln für die
+ * Stände, die Ansichten Deckplan und Details, das Dock mit Bearbeiten, Treibstoff und Werft
+ * sowie die Blätter dazu.
+ */
+
+/* Kopf: Name und Stift in einer Zeile, der Entwurfstyp darunter. */
+.head-ship {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.head-name {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  min-width: 0;
+}
+
+.head-name .shop-world {
+  flex: 0 1 auto;
+}
+
+.head-sub {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Beiblatt oben rechts im Blattkopf, z. B. „Standardentwürfe · SR 35–37“. */
+.sheet-aside {
+  font-size: 12px;
+}
+
+/* Stände als Kacheln; die halbe Kachel mit zwei Werten nebeneinander (Kabinen und Niedrigbetten). */
+.ship-tiles .tile {
+  min-height: 44px;
+}
+
+.card-grid .tile.duo {
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.tile.duo .duo-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tile.duo .tile-label {
+  white-space: nowrap;
+}
+
+.tile.duo .tile-text {
+  font-size: 12px;
+}
+
+/* Referenzdaten als Beschriftungsraster (wie die Weltkarte), Werte rechts in Mono. */
+.profile {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 3px 10px;
+  font-size: 13px;
+  margin: 0;
+}
+
+.profile > div {
+  display: contents;
+}
+
+.profile dt {
+  color: var(--muted);
+}
+
+.profile dd {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.profile dd.gold {
+  color: var(--gold);
+}
+
+/* Werftzeile: die Preisspalte braucht MCr statt Cr. */
+.ship-row {
+  --shop-price: calc(12ch + 18px);
+  grid-template-columns: minmax(0, 1fr) var(--shop-price);
+}
+
+.ship-row .shop-label {
+  color: var(--text);
+}
+
+/* Softwarezeile: Art rechts oben, Wirkung unter dem Namen. */
+.soft-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.soft-row .shop-name {
+  font-size: 13px;
+}
+
+.soft-kind {
+  font-family: var(--sans);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dim);
+  align-self: start;
+}
+
+/* Menge plus Schnellknopf im Treibstoffblatt. */
+.fuel-row {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.fuel-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Hinterlegte Deckpläne: bis zu drei Bilder, jedes voll in der Breite, darunter die zwei Knöpfe. */
+.deck-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.deck-card {
+  margin: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.deck-card img {
+  width: 100%;
+  display: block;
+  cursor: zoom-in;
+}
+
+.deck-card figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  padding: 1px 3px 1px 8px;
+  background: var(--raised);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.deck-card figcaption .icon-button {
+  width: 28px;
+  height: 28px;
+}
+
+.deck-empty {
+  padding: 14px 10px;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.deck-adds {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.deck-adds .ghost {
+  min-height: 40px;
+}
+
+.deck-large {
+  width: 100%;
+  max-height: 58vh;
+  object-fit: contain;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+}
+
+/* Dockknöpfe wie im Orakel: umrandet für Bearbeiten und Treibstoff, golden für die Werft. */
+.action.soft {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+}
+
+.action.gold {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+/* Die noch offene Wahl zum Ship-Vorteil, im Dock der Erschaffung. */
+.ship-gain {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--gold);
+  background: var(--gold-wash);
+  font-size: 13.5px;
+}
+
+.ship-gain p {
+  margin: 0;
+}
+
+.ship-gain-choice {
+  display: flex;
+  gap: 8px;
+}
+
+.ship-gain-choice .ghost,
+.ship-gain-choice .primary {
+  flex: 1 1 50%;
+  min-height: 44px;
+}

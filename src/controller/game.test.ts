@@ -485,7 +485,7 @@ describe('Shop und Gruppenkasse', () => {
     game.book('income', 1000, 'Belohnung von Dr. Halvek');
     game.buy('rifle', 1, 'c2');
     game.buy('rifle-ammo', 1, 'c2');
-    game.buy('free-trader', 1, 'c2');
+    game.buy('craft-ship-s-boat', 1, 'c2');
     const shop = game.snapshot().shop!;
     expect(shop.error).toMatch(/gibt es auf Regina nicht/);
     expect(shop.funds).toBe(780);

@@ -8,6 +8,7 @@ import { sum, type Dice } from './rules';
 import { hexById, hexId, worldOf, type Hex } from './sector';
 import { fundsOf, locationOf, type Booking } from './shop';
 import { parkVehicles } from './trip';
+import { payLoans } from './ship';
 import { dayOf, JOURNEY_DAYS } from './time';
 import { woundedUpp, woundsOf } from './wounds';
 
@@ -235,7 +236,7 @@ export function travel(
     day: today + JOURNEY_DAYS,
     location: worldPlace(to),
   };
-  return keepFocus(campaign, after);
+  return keepFocus(campaign, payLoans(after, clock));
 }
 
 /** Prüft eine Reise aus der Kampagnendatei: Felder, Passagen, Charaktere, Kojen, Los. */
