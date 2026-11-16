@@ -360,9 +360,10 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 >
 > **Entwurf vom 16. November 2026, wartet auf Freigabe** (Kennzeichen 2026-11-16): **Schiffe als
 > Basis der Gruppe** (siehe *Schiffe*, RAW-Regeln in [`regeln-schiffe.md`](regeln-schiffe.md)). Erster
-> von drei Schritten (danach Handel, dann Raumkampf). Neu im Bild: `Ship`, `ShipDesign`,
-> `Campaign.ship`, `BookingKind.ship`, `Booking.forShip`, `Gain.ship`, `Gain.shipDebtFree`,
-> `CareerRoll.shipChoice`, `ShipChoice`. Der Ausschnitt dazu liegt unter
+> von drei Schritten (danach Handel, dann Raumkampf). Neu im Bild: `Ship` (mit `price`, eigener
+> gezahlter Preis, getrennt vom `/baseCost` des Entwurfs), `ShipDesign`, `Campaign.ship`,
+> `BookingKind.ship`, `Booking.forShip`, `Gain.ship`, `Gain.shipDebtFree`, `CareerRoll.shipChoice`,
+> `ShipChoice`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-16-schiffe-basis.png`](changes/2026-11-16-schiffe-basis.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
@@ -677,8 +678,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Würfelausdruck | `DiceExpr` | Wie viele W6 plus welcher DM, z. B. 2W6 + 1 oder 3W6 − 3 |
 | Schiff | `Ship`, `Campaign.ship` | Das eine Schiff der Gruppe als Basis: Entwurf, Name, Treibstoff und Fracht in Tonnen, offene Restschuld |
 | Schiffsentwurf | `ShipDesign` | Referenzdaten eines Standardentwurfs (Scout/Courier, Free Trader, …): Rumpf, Antriebe, Treibstofftank, Computer, Kabinen, Niedrigbetten, Hardpoints, Laderaum, Crewbedarf, Bauzeit; siehe [`regeln-schiffe.md`](regeln-schiffe.md) unter *Standardentwürfe* |
-| Grundkosten | `ShipDesign.baseCost` | Rumpf, Antriebe, Energiewerk und Computer zusammen; nicht weiter aufgeteilt, weil dafür die Tabellen aus *Charts and Tables* fehlen |
-| Listenpreis | `ShipDesign./price` | Grundkosten plus Brücke, Kabinen, Niedrigbetten und Hardpoints, mit 10 % Rabatt für Standardentwürfe (SR 31) |
+| Kernkosten | `ShipDesign.coreCost` | Rumpf, Antriebe, Energiewerk und Computer zusammen; nicht weiter aufgeteilt, weil dafür die Tabellen aus *Charts and Tables* fehlen |
+| Grundpreis | `ShipDesign./baseCost` | Kernkosten plus Brücke, Kabinen, Niedrigbetten und Hardpoints, mit 10 % Rabatt für Standardentwürfe (SR 31); was ein neues Schiff dieses Entwurfs normalerweise kostet |
+| Preis | `Ship.price` | Was dieses eine Schiff tatsächlich gekostet hat; beim Erwerb gleich dem Grundpreis seines Entwurfs, kann aber abweichen (z. B. gebrauchtes Schiff, später) |
 | Kreditsumme | `Ship.initialLoan` | Was bei der Bankfinanzierung eines Schiffs insgesamt finanziert wurde (200 % des Preises); bleibt stehen, auch wenn sich der Preis des Entwurfs später ändert |
 | Restschuld | `Ship.loanBalance` | Was von der Kreditsumme noch offen ist; fehlt, wenn das Schiff schuldenfrei ist |
 | Monatsrate | `Ship./monthlyPayment` | Ein Vierhundertachtzigstel der Kreditsumme, immer gleich hoch |
@@ -2475,70 +2477,79 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   [`regeln-schiffe.md`](regeln-schiffe.md). Die Gruppe hat **höchstens ein Schiff** (`Campaign.ship`),
   wie das Gruppengepäck.
   - **Schiff und Entwurf.** `Ship` ist der gespeicherte Stand (Name, Treibstoff und Fracht in Tonnen,
-    Restschuld); `ShipDesign` sind Referenzdaten für die Standardentwürfe aus SR 35–37 (Scout/Courier,
-    Free Trader, Subsidized Merchant, Subsidized Liner, Yacht, Mercenary Cruiser, Patrol Cruiser,
-    Laboratory Ship, Safari Ship) mit Rumpf, Antrieben, Treibstofftank, Computer, Kabinen,
-    Niedrigbetten, Hardpoints, Laderaum, Crewbedarf als Text und Bauzeit. Treibstoff und
-    Fracht sind zunächst nur Zahlen in Tonnen, ohne einzelne Güter; was wirklich im Laderaum liegt,
-    kommt erst mit dem Handel. Ebenso bleiben die Hardpoints vorerst unbewaffnet (Zahl aus dem
-    Entwurf); Waffen und Turrets kommen erst mit dem Raumkampf. **Noch nicht in diesem Schritt:**
-    welcher SC welche Schiffsposition (Pilot, Navigator, Engineer, Steward, Medic, Gunner) ausfüllt
-    (dafür reicht vorerst der Crewbedarf-Text am Entwurf); mehrere Schiffe gleichzeitig; eigene
-    (Custom-)Entwürfe statt der Standardentwürfe; Small Craft (Launch, Ship's Boat, …) bleiben
-    einfache Gegenstände der Art `ship` wie bisher, ohne eigenen `ShipDesign`.
-  - **Listenpreis aus den Bauteilen** (Owner, 16. November 2026): Der Preis eines Entwurfs steht nicht
-    als fester Wert da, sondern folgt aus seinen Bauteilen, wie es die Baukosten in SR 31–33 auch
-    vorgeben (`/price`). Bekannt und ohne Lücke sind die Brücke (500 Cr je Tonne Rumpf, aus MCr0,05 je
-    100 t), Kabinen (Cr500.000 je Stück), Niedrigbetten (Cr50.000 je Stück) und Hardpoints (Cr100.000
-    je Stück); Treibstofftank und Laderaum **kosten nichts** (SR 32, ausdrücklich „there is no
-    cost“). Rumpf, Antriebe, Energiewerk und Computer lassen sich dagegen nicht einzeln bepreisen,
-    weil dafür die Tabellen aus *Charts and Tables* fehlen (siehe `regeln-schiffe.md` unter
-    *Lücken*); sie bleiben deshalb als ein Posten `baseCost` stehen. Die Formel:
-    `/price = round((baseCost + hull × 500 + staterooms × 500.000 + lowBerths × 50.000 + hardpoints
-    × 100.000) × 0,9)`, mit dem aus SR 31 bekannten Rabatt von 10 % für Standardentwürfe. `baseCost`
-    je Standardentwurf ist so gewählt, dass `/price` genau den in SR 35–37 genannten Preis ergibt
-    (z. B. Free Trader MCr37,08); die neun Werte stehen, sobald der Code folgt, in den Referenzdaten.
-    Fehlt später ein eigener (Custom-)Entwurf mit echten Rumpf-/Antriebs-/Computerkosten, ersetzt
-    das die Tabellen aus den Charts, nicht die Formel.
-  - **Erwerb.** Drei Wege, alle im Shop bzw. in der Charaktererschaffung:
-    1. **Bar aus der Kasse:** der volle Listenpreis (`/price`) des Entwurfs wird sofort gebucht
-       (`BookingKind.ship`), das Schiff entsteht ohne Restschuld, mit vollem Tank und leerem
-       Laderaum.
+    der tatsächlich gezahlte Preis, Restschuld); `ShipDesign` sind Referenzdaten für die
+    Standardentwürfe aus SR 35–37 (Scout/Courier, Free Trader, Subsidized Merchant, Subsidized
+    Liner, Yacht, Mercenary Cruiser, Patrol Cruiser, Laboratory Ship, Safari Ship) mit Rumpf,
+    Antrieben, Treibstofftank, Computer, Kabinen, Niedrigbetten, Hardpoints, Laderaum, Crewbedarf als
+    Text und Bauzeit. Treibstoff und Fracht sind zunächst nur Zahlen in Tonnen, ohne einzelne Güter;
+    was wirklich im Laderaum liegt, kommt erst mit dem Handel. Ebenso bleiben die Hardpoints
+    vorerst unbewaffnet (Zahl aus dem Entwurf); Waffen und Turrets kommen erst mit dem Raumkampf.
+    **Noch nicht in diesem Schritt:** welcher SC welche Schiffsposition (Pilot, Navigator, Engineer,
+    Steward, Medic, Gunner) ausfüllt (dafür reicht vorerst der Crewbedarf-Text am Entwurf); mehrere
+    Schiffe gleichzeitig; eigene (Custom-)Entwürfe statt der Standardentwürfe; Small Craft (Launch,
+    Ship's Boat, …) bleiben einfache Gegenstände der Art `ship` wie bisher, ohne eigenen
+    `ShipDesign`.
+  - **Grundpreis aus den Bauteilen, tatsächlicher Preis am Schiff** (Owner, 16. November 2026): Am
+    Entwurf steht kein fester Preis, sondern er folgt aus seinen Bauteilen, wie es die Baukosten in
+    SR 31–33 auch vorgeben (`ShipDesign./baseCost`). Bekannt und ohne Lücke sind die Brücke (500 Cr
+    je Tonne Rumpf, aus MCr0,05 je 100 t), Kabinen (Cr500.000 je Stück), Niedrigbetten (Cr50.000 je
+    Stück) und Hardpoints (Cr100.000 je Stück); Treibstofftank und Laderaum **kosten nichts** (SR
+    32, ausdrücklich „there is no cost“). Rumpf, Antriebe, Energiewerk und Computer lassen sich
+    dagegen nicht einzeln bepreisen, weil dafür die Tabellen aus *Charts and Tables* fehlen (siehe
+    `regeln-schiffe.md` unter *Lücken*); sie bleiben deshalb als ein gespeicherter Posten
+    `coreCost` stehen. Die Formel: `/baseCost = round((coreCost + hull × 500 + staterooms × 500.000
+    + lowBerths × 50.000 + hardpoints × 100.000) × 0,9)`, mit dem aus SR 31 bekannten Rabatt von
+    10 % für Standardentwürfe. `coreCost` je Standardentwurf ist so gewählt, dass `/baseCost` genau
+    den in SR 35–37 genannten Preis ergibt (z. B. Free Trader MCr37,08); die neun Werte stehen,
+    sobald der Code folgt, in den Referenzdaten. Fehlt später ein eigener (Custom-)Entwurf mit
+    echten Rumpf-/Antriebs-/Computerkosten, ersetzt das die Tabellen aus den Charts, nicht die
+    Formel.
+    `Ship.price` ist dagegen der **tatsächlich gezahlte Preis dieses einen Schiffs**: beim Erwerb
+    gleich `design./baseCost` gesetzt, aber ein eigenes, gespeichertes Feld, weil er später davon
+    abweichen kann und soll – etwa für ein **gebrauchtes Standardschiff** (SR 31: 10–40 Jahre alt,
+    10–40 % günstiger). Ein solcher Preisnachlass ist **nicht Teil dieses Schritts** (offene Frage,
+    siehe unten), aber das Feld ist schon da, damit `price` nicht rückwirkend am Entwurf hängt,
+    sobald es ihn gibt.
+  - **Erwerb.** Drei Wege, alle im Shop bzw. in der Charaktererschaffung; in allen dreien wird
+    `Ship.price` zunächst auf `design./baseCost` gesetzt (kein Nachlass in diesem Schritt):
+    1. **Bar aus der Kasse:** der volle Preis (`price`) wird sofort gebucht (`BookingKind.ship`),
+       das Schiff entsteht ohne Restschuld, mit vollem Tank und leerem Laderaum.
     2. **Bankfinanzierung** (SR 29, voll nach RAW): 20 % Anzahlung sofort aus der Kasse gebucht
        (`BookingKind.ship`). Die **Kreditsumme** (`initialLoan`) wird beim Abschluss einmal auf
-       **200 % des damaligen Listenpreises** (`design./price`) festgelegt und bleibt so stehen, auch
-       wenn sich `baseCost` oder sonst etwas am Entwurf später ändert (480 Monatsraten à ein
-       Vierhundertachtzigstel der Kreditsumme ergeben zusammen mit der Anzahlung die 220 % aus SR
-       29); die **Restschuld** (`loanBalance`) beginnt gleich der Kreditsumme und sinkt mit jeder
-       bezahlten Rate. Die **Monatsrate** (`/monthlyPayment`) folgt daraus (`initialLoan / 480`),
-       nicht noch einmal aus `design./price`. Jedes Mal, wenn die Spielzeit den Tag
-       `nextPaymentDay` erreicht oder überschreitet (beim Tage-vergehen-lassen, bei Woche beenden
-       oder einer Fahrt), wird die Rate automatisch aus der Kasse gebucht und die Restschuld sinkt;
-       reicht die Kasse nicht, bleibt die Rate offen (Buchung mit Hinweistext „Rate nicht bezahlt“)
-       und `nextPaymentDay` rückt trotzdem einen Monat (30 Tage) weiter. **✱ Hausregel/offener
-       Punkt:** Die Pfändung bei Zahlungsverzug (SR 28, Distanz-DM zur Heimatwelt des Schiffs) ist
-       damit **nicht** nachgebaut; eine unbezahlte Rate hat vorerst keine Folge außer dem Hinweis im
-       Log. Das holt ein späterer Schritt nach, wenn Pfändung wirklich gebraucht wird.
+       **200 % von `price`** festgelegt und bleibt so stehen, auch wenn sich `price` oder der Entwurf
+       später ändern (480 Monatsraten à ein Vierhundertachtzigstel der Kreditsumme ergeben zusammen
+       mit der Anzahlung die 220 % aus SR 29); die **Restschuld** (`loanBalance`) beginnt gleich der
+       Kreditsumme und sinkt mit jeder bezahlten Rate. Die **Monatsrate** (`/monthlyPayment`) folgt
+       daraus (`initialLoan / 480`), nicht noch einmal aus `price`. Jedes Mal, wenn die Spielzeit
+       den Tag `nextPaymentDay` erreicht oder überschreitet (beim Tage-vergehen-lassen, bei Woche
+       beenden oder einer Fahrt), wird die Rate automatisch aus der Kasse gebucht und die Restschuld
+       sinkt; reicht die Kasse nicht, bleibt die Rate offen (Buchung mit Hinweistext „Rate nicht
+       bezahlt“) und `nextPaymentDay` rückt trotzdem einen Monat (30 Tage) weiter. **✱
+       Hausregel/offener Punkt:** Die Pfändung bei Zahlungsverzug (SR 28, Distanz-DM zur Heimatwelt
+       des Schiffs) ist damit **nicht** nachgebaut; eine unbezahlte Rate hat vorerst keine Folge
+       außer dem Hinweis im Log. Das holt ein späterer Schritt nach, wenn Pfändung wirklich gebraucht
+       wird.
     3. **Ship-Vorteil der Abmusterung** (SR, Mustering-out Benefits; Hausregel-Zuordnung wie bisher
        bei `scout-ship`/`free-trader`): Eine Zeile der Benefits-Tabelle verweist jetzt über `Gain.ship`
        auf einen `ShipDesign` statt über `Gain.item` auf einen Gegenstand. Hat die Kampagne **noch
-       kein Schiff**, legt der Vorteil es an: beim Scout schuldenfrei (`Gain.shipDebtFree`,
-       `initialLoan` und `loanBalance` fehlen), beim Merchant mit `initialLoan` und `loanBalance`
-       auf 100 % des damaligen Listenpreises (`design./price`, der halbe Kredit; ein zweiter
-       Merchant-Ship-Vorteil für denselben Entwurf zahlt die Restschuld auf 0, ohne `initialLoan` zu
-       ändern). Hat die Kampagne schon ein
+       kein Schiff**, legt der Vorteil es an (`price` = `design./baseCost`): beim Scout schuldenfrei
+       (`Gain.shipDebtFree`, `initialLoan` und `loanBalance` fehlen), beim Merchant mit `initialLoan`
+       und `loanBalance` auf 100 % von `price` (der halbe Kredit; ein zweiter Merchant-Ship-Vorteil
+       für denselben Entwurf zahlt die Restschuld auf 0, ohne `initialLoan` zu ändern). Hat die
+       Kampagne schon ein
        **anderes** Schiff, entscheidet der Spieler (`CareerRoll.shipChoice`): **behalten** (der
        Vorteil bleibt ohne Wirkung, steht aber im Lebenslauf) oder **wechseln** (das alte Schiff
        samt seiner Restschuld entfällt ersatzlos – „Kredit kündigen“ als Vereinfachung, kein
        Verkaufserlös). Die alten Gegenstände `scout-ship` und `free-trader` (Art `ship`) entfallen
-       aus `items.json`, sobald der Code folgt; ihre Preise stehen jetzt als `baseCost` an
+       aus `items.json`, sobald der Code folgt; ihre Preise stehen jetzt als `coreCost` an
        `ShipDesign`.
   - **Offene Fragen für einen späteren Schritt:** Wie die Gruppe mit dem eigenen Schiff zwischen
     Sternen springt (ergänzt die gekaufte Passage, ersetzt sie nicht, siehe Owner-Entscheidung vom
     16. November 2026) – das braucht noch eine eigene Reise-Mechanik mit Treibstoffverbrauch pro
     Sprung und ist bewusst nicht Teil dieses Schritts. Ebenso offen: Pfändung bei Zahlungsverzug
     (siehe oben), Verkauf eines Schiffs, mehrere Schiffe, Custom-Entwürfe, Small Craft als eigene
-    `ShipDesign`.
+    `ShipDesign`, und der **Preisnachlass für ein gebrauchtes Standardschiff** (SR 31: 10–40 % je
+    nach Alter) über `Ship.price`.
 
 ## Wo der Code noch nicht folgt
 

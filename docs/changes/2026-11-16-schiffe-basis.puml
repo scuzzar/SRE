@@ -117,6 +117,7 @@ hide <<value>> stereotype
     $new("2026-11-16", "name: string")
     $new("2026-11-16", "fuel: number")
     $new("2026-11-16", "cargo: number")
+    $new("2026-11-16", "price: number")
     $new("2026-11-16", "initialLoan: number [0..1]")
     $new("2026-11-16", "loanBalance: number [0..1]")
     $new("2026-11-16", "/monthlyPayment: number [0..1]")
@@ -135,8 +136,8 @@ hide <<value>> stereotype
     $new("2026-11-16", "hardpoints: number")
     $new("2026-11-16", "cargo: number")
     $new("2026-11-16", "crew: string")
-    $new("2026-11-16", "baseCost: number")
-    $new("2026-11-16", "/price: number")
+    $new("2026-11-16", "coreCost: number")
+    $new("2026-11-16", "/baseCost: number")
     $new("2026-11-16", "months: number")
     $new("2026-11-16", "streamlined: boolean")
   }
