@@ -15,10 +15,9 @@ async function makeWorld(page: Page) {
     await page.waitForTimeout(1100);
     await page.mouse.up();
     if (await page.locator('.sector-dock').getByText('Kein System in diesem Feld').isVisible()) continue;
-    const dialog = page.getByRole('dialog', { name: `Weltenerschaffung ${id}` });
-    await dialog.getByLabel('Name der Welt').fill('Regina');
-    await dialog.getByRole('button', { name: 'Übernehmen' }).click();
-    return page.getByRole('dialog', { name: `Regina · ${id}` });
+    await page.getByLabel('Name der Welt').fill('Regina');
+    await page.getByRole('button', { name: 'Übernehmen' }).click();
+    return page.getByRole('region', { name: `Regina · ${id}` });
   }
   throw new Error('Keine Welt entstanden');
 }
@@ -113,9 +112,9 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
 test('Shop: „Gruppe ist hier“ auf der Weltkarte bringt die Gruppe auf eine andere Welt', async ({ page }) => {
   await page.goto('/');
   const world = await makeWorld(page);
-  await world.getByRole('button', { name: 'Gruppe ist hier' }).click();
-  await expect(world.getByRole('button', { name: 'Die Gruppe ist hier' })).toBeVisible();
-  await world.getByRole('button', { name: 'Schließen' }).first().click();
+  await page.getByRole('button', { name: 'Gruppe ist hier', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Die Gruppe ist hier', exact: true })).toBeVisible();
+  await world.getByRole('button', { name: 'Schließen' }).click();
   await page.getByRole('button', { name: /^Welten \d+/ }).click();
   await expect(page.locator('.world-list-here')).toBeVisible();
   await page.getByRole('navigation').getByRole('button', { name: 'Shop' }).click();

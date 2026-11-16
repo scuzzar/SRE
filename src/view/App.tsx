@@ -22,7 +22,7 @@ import { DiceRoll } from './oracle/DiceRoll';
 import { OracleScreen } from './oracle/OracleScreen';
 import { OracleDock } from './oracle/OracleDock';
 import { SectorPicker, SectorScreen } from './sector/SectorScreen';
-import { WorldSheet } from './sector/WorldSheet';
+import { useWorldDock } from './sector/WorldSheet';
 import { JourneySheet } from './sector/JourneySheet';
 import { FieldCard, GlobeScreen } from './sector/GlobeScreen';
 import { TripRollDialog } from './sector/TripPanels';
@@ -63,6 +63,9 @@ export function App() {
   // Esc schließt das oberste Popup; die Ziffern wählen den Reiter an dieser Stelle.
   useEscapeCloses(menu);
   useShortcuts(Object.fromEntries(shown.map((a, i) => [String(i + 1), () => game.showScreen(a.id)])));
+  // Die Weltkarte eines gewählten Feldes, als Feld und als Reihe unten, wie beim Globus; ohne Globus,
+  // sonst zeigt der seine eigene (`panel === 'world'`).
+  const worldDock = useWorldDock(view.world && !view.globe ? view.world : undefined, view.world !== undefined && view.location === view.world.id, view.travel, view.log, view.logDays);
 
   if (!view.ready) return <div className="app" aria-busy="true" />;
   const closeResult = () => game.closeResult();
@@ -70,10 +73,12 @@ export function App() {
   // Den Sektor gibt es nicht mehr als Reiter: Er ist die Grundkarte ohne Globus. Wer dort noch steht,
   // sieht das Log.
   const screen: Screen = view.screen === 'sector' ? 'oracle' : view.screen;
-  // Ein angetipptes Feld des Globus steht an der Stelle des Bereichs, ebenso ein gewähltes Feld des
-  // Subsektors (das zeichnet der Subsektor selbst in den Platz, den `.field-slot` freihält).
+  // Ein angetipptes Feld des Globus steht an der Stelle des Bereichs, ebenso eine gewählte Weltkarte
+  // und ein gewähltes Feld des Subsektors (das zeichnet der Subsektor selbst in den Platz, den
+  // `.field-slot` freihält). Für die Heimatwelt- bzw. Welt-eines-Terms-Wahl (`picking`) steht der
+  // Subsektor schon selbst in einem Blatt; die neue Welt bekommt dort ein eigenes, obendrauf.
   const globeField = view.globe?.picked ? <FieldCard globe={view.globe} error={view.world?.error} log={view.log} logDays={view.logDays} tripPlan={view.tripPlan} /> : undefined;
-  const field = globeField ?? (!view.globe && view.selected ? <div ref={setFieldSlot} className="field-slot" /> : undefined);
+  const field = globeField ?? (view.picking ? undefined : worldDock.field) ?? (!view.globe && view.selected ? <div ref={setFieldSlot} className="field-slot" /> : undefined);
   const area = (
     <>
       {screen === 'encounter' && <EncounterScreen view={view} options={encounterOptions} onOptions={setEncounterOptions} />}
@@ -137,7 +142,7 @@ export function App() {
   const fieldDock = view.globe?.picked ? <FieldDock globe={view.globe} trip={view.trip} tripPlan={view.tripPlan} npcTotal={view.npcs.total} /> : undefined;
   // Im Reiter Begegnung: die Würfe der Begegnungen und die Zeit bzw. Weiterfahren.
   const encounterDock = screen === 'encounter' && field === undefined ? <EncounterDock view={view} options={encounterOptions} /> : undefined;
-  const foot = fieldDock ?? encounterDock ?? (screen === 'oracle' && field === undefined ? dock : undefined);
+  const foot = fieldDock ?? (view.picking ? undefined : worldDock.foot) ?? encounterDock ?? (screen === 'oracle' && field === undefined ? dock : undefined);
 
   // Die Grundkarte: der Globus der offenen Welt, sonst der Subsektor. Oben rechts das Menü.
   const base = (
@@ -180,7 +185,7 @@ export function App() {
                 </div>
               )}
               <div className="screen-host">{field ?? area}</div>
-              {fieldDock ?? encounterDock}
+              {fieldDock ?? (view.picking ? undefined : worldDock.foot) ?? encounterDock}
             </section>
           )}
           {base}
@@ -190,7 +195,7 @@ export function App() {
           {base}
           <Tray
             stop={view.trayStop}
-            raise={view.globe?.picked?.cell ?? view.selected?.id}
+            raise={view.globe?.picked?.cell ?? view.selected?.id ?? (view.world && !view.globe ? view.world.id : undefined)}
             head={banners}
             body={<div className="screen-host">{field ?? (screen === 'oracle' ? <OracleScreen view={view} dock={false} /> : area)}</div>}
             foot={foot}
@@ -202,8 +207,16 @@ export function App() {
       {menu && <Menu view={view} onClose={() => setMenu(false)} />}
       {view.generation && <GenerationSheet generation={view.generation} log={view.log} />}
       {view.picking && <SectorPicker view={view} title={view.picking.title} />}
-      {/* Eine Welt ohne Globus (in Erschaffung, ohne Oberfläche) zeigt ihre Weltkarte als Blatt. */}
-      {view.world && !view.globe && <WorldSheet key={view.world.id} world={view.world} here={view.location === view.world.id} travel={view.travel} log={view.log} logDays={view.logDays} />}
+      {/* Eine neue Welt aus der Heimatwelt- bzw. Welt-eines-Terms-Wahl: Der Subsektor steht schon in
+          einem Blatt, darüber kommt ein eigenes, aus denselben Teilen wie sonst im Ziehblatt. */}
+      {view.picking && view.world && !view.globe && (
+        <div className="overlay">
+          <section className="sheet generation" role="dialog" aria-modal="true" aria-label={worldDock.title}>
+            {worldDock.field}
+            {worldDock.foot}
+          </section>
+        </div>
+      )}
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
       {view.journey && <JourneySheet journey={view.journey} />}
       {view.card && <CardSheet card={view.card} />}

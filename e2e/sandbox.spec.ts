@@ -18,12 +18,11 @@ test('Im abgeschotteten Rahmen: Welt benennen und Charakter speichern', async ({
     await page.waitForTimeout(1100);
     await page.mouse.up();
     if (await app.locator('.sector-dock').getByText('Kein System in diesem Feld').isVisible()) continue;
-    const dialog = app.getByRole('dialog', { name: `Weltenerschaffung ${id}` });
-    await dialog.getByLabel('Name der Welt').fill('Regina');
-    await dialog.getByRole('button', { name: 'Übernehmen' }).click();
-    await expect(app.getByRole('dialog', { name: `Regina · ${id}` })).toBeVisible();
+    await app.getByLabel('Name der Welt').fill('Regina');
+    await app.getByRole('button', { name: 'Übernehmen' }).click();
+    await expect(app.getByRole('region', { name: `Regina · ${id}` })).toBeVisible();
     // Enter im Namensfeld übernimmt ebenso: Das prüft der Charakter unten.
-    await app.getByRole('dialog', { name: `Regina · ${id}` }).getByRole('button', { name: 'Schließen' }).first().click();
+    await app.getByRole('region', { name: `Regina · ${id}` }).getByRole('button', { name: 'Schließen' }).click();
     named = true;
     break;
   }

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import type { WorldDmPart } from '../../model';
 import type { LogItem, WorldAction, WorldLine, WorldView } from '../../controller';
 import { HappenedList } from './HappenedList';
@@ -29,102 +29,131 @@ function dmText(line: WorldLine): string {
 }
 
 /**
- * Die Weltkarte im Vordergrund: oben die Welt, wie sie gerade steht (UWP im Klartext, Basen,
- * Handelscodes), darunter die Würfe, seit sie offen ist; wieder geöffnet zeigt sie nur die Werte.
- * Solange sie entsteht, unten die Würfelbühne und der Knopf für den nächsten Wurf, wie in der
- * Charaktererschaffung. Eingetragen ist der Wurf schon, bevor die Würfel rollen; die Karte zeigt den neuen Stand erst, wenn das Ergebnis unten feststeht. Ein Tippen
- * irgendwo beendet die Animation.
+ * Die Weltkarte an der Stelle des Bereichs, schiebbar wie jedes angetippte Feld (Hexfeld im
+ * Subsektor, Feld auf dem Globus): oben die Welt, wie sie gerade steht (UWP im Klartext, Basen,
+ * Handelscodes); wieder geöffnet zeigt sie nur die Werte. Unten, wie die Reihe Notiz, Deuten, 2W6,
+ * Karte im Orakel: Solange sie entsteht, die Würfelbühne und der Knopf für den nächsten Wurf, wie in
+ * der Charaktererschaffung; danach Globus öffnen, Gruppe ist hier und Hierher reisen
+ * (`WorldActions`). Eingetragen ist ein Wurf schon, bevor die Würfel rollen; die Karte zeigt den
+ * neuen Stand erst, wenn das Ergebnis unten feststeht. Ein Tippen irgendwo beendet die Animation.
+ *
+ * Eine andere Welt (oder keine mehr) fängt frisch an, wie neu geöffnet; das gleicht einem Neustart
+ * über `key`, ohne dass dafür eine eigene Stelle im Baum nötig wäre, denn Feld und Reihe unten
+ * stehen an zwei verschiedenen Stellen (`App.tsx`), aus demselben Aufruf. Für eine neue Welt aus der
+ * Heimatwelt- bzw. Welt-eines-Terms-Wahl (`picking`), wo der Subsektor selbst schon ein Blatt ist,
+ * baut `App.tsx` aus Feld und Reihe unten stattdessen ein eigenes Blatt obendrauf (`title` nennt es).
  */
-export function WorldSheet({ world, here, travel, log, logDays }: { world: WorldView; here: boolean; travel: { readonly blocker: string | undefined } | undefined; log: readonly LogItem[]; logDays: readonly (string | undefined)[] }) {
+export function useWorldDock(
+  world: WorldView | undefined,
+  here: boolean,
+  travel: { readonly blocker: string | undefined } | undefined,
+  log: readonly LogItem[],
+  logDays: readonly (string | undefined)[],
+): { field: ReactNode; foot: ReactNode; title: string | undefined } {
   const game = useGame();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   // Was schon da war, als die Weltkarte aufging, rollt nicht noch einmal.
-  const [seen, setSeen] = useState(world.lines.length);
-  const latest = world.lines.at(-1);
+  const [seen, setSeen] = useState(world?.lines.length ?? 0);
   const [settled, setSettled] = useState(-1);
+  const [shown, setShown] = useState(world);
+  const [skips, setSkips] = useState(0);
+  const [seenId, setSeenId] = useState(world?.id);
+  if (world?.id !== seenId) {
+    setSeenId(world?.id);
+    setConfirmDiscard(false);
+    setSeen(world?.lines.length ?? 0);
+    setSettled(-1);
+    setShown(world);
+    setSkips(0);
+  }
+  if (!world) return { field: undefined, foot: undefined, title: undefined };
+
+  const latest = world.lines.at(-1);
   // Ein Wurf aus dieser Sitzung der Weltkarte; ältere rollen nicht noch einmal.
   const fresh = latest !== undefined && latest.index >= seen;
   const animate = fresh && animated();
   const rolling = animate && settled < latest.index;
-  const [shown, setShown] = useState(world);
   if (!rolling && shown !== world) setShown(world);
-  const view = rolling ? shown : world;
-  const [skips, setSkips] = useState(0);
+  const view = rolling ? (shown ?? world) : world;
   // In Erschaffung; eine fertige Welt ohne Temperatur würfelt sie nur nach.
   const running = world.step !== 'done';
   const hasRoll = world.action.kind !== 'done';
+  const title = running ? `Weltenerschaffung ${world.id}` : `${world.name ?? 'Leer'} · ${world.id}`;
 
-  const body = useRef<HTMLDivElement>(null);
-  const count = view.lines.length;
-  useEffect(() => {
-    body.current?.scrollTo({ top: body.current.scrollHeight });
-  }, [count]);
+  const skipTap = (e: React.MouseEvent) => {
+    if (!rolling) return;
+    e.stopPropagation();
+    e.preventDefault();
+    stopHaptics();
+    setSkips((n) => n + 1);
+  };
 
-  return (
-    <div
-      className="overlay"
-      onClickCapture={(e) => {
-        if (!rolling) return;
-        e.stopPropagation();
-        e.preventDefault();
-        stopHaptics();
-        setSkips((n) => n + 1);
-      }}
-    >
-      <section className="sheet generation world-sheet" role="dialog" aria-modal="true" aria-labelledby="world-title">
-        <div className="sheet-head" style={{ alignItems: 'center' }}>
-          <h2 id="world-title">{running ? `Weltenerschaffung ${world.id}` : `${world.name ?? 'Leer'} · ${world.id}`}</h2>
-          <span className="header-right">
-            {running &&
-              (confirmDiscard ? (
-                <button type="button" className="ghost danger compact" onClick={() => game.discardWorld()}>
-                  Wirklich verwerfen?
-                </button>
-              ) : (
-                <button type="button" className="ghost compact" onClick={() => setConfirmDiscard(true)}>
-                  Verwerfen
-                </button>
-              ))}
-            <button data-escape type="button" className="icon-button" aria-label={running ? 'Später weiter' : 'Schließen'} onClick={() => game.closeWorld()}>
-              <CloseIcon />
-            </button>
-          </span>
-        </div>
-
-        <div className="sheet-body" ref={body}>
-          {!view.empty && <WorldCard world={view} />}
-          {view.surface && <SurfaceSection lines={view.surface} />}
-          <WorldActions world={view} here={here} travel={travel} />
-          {world.canNote && <NoteSection note={world.note} />}
-          {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
-        </div>
-
-        {(hasRoll || fresh) && (
-          <div className="generation-dock">
-            {latest && <RollStage key={latest.index} line={latest} animate={animate} onSettled={setSettled} skips={skips} />}
-            {view.prompt && (
-              <p className="generation-prompt" aria-live="polite">
-                {view.prompt}
-              </p>
-            )}
-            {view.error && (
-              <p className="error" role="alert">
-                {view.error}
-              </p>
-            )}
-            <Actions
-              action={view.action}
-              disabled={rolling}
-              onRun={() => {
-                game.runWorld();
-                setSeen(game.snapshot().world?.lines.length ?? 0);
-              }}
-            />
-          </div>
-        )}
-      </section>
-    </div>
+  const field = (
+    <section className="field-card scroll" aria-label={title} onClickCapture={skipTap}>
+      <div className="globe-sheet-head" data-tray-peek>
+        <h3>{title}</h3>
+        <span className="header-right">
+          {running &&
+            (confirmDiscard ? (
+              <button type="button" className="ghost danger compact" onClick={() => game.discardWorld()}>
+                Wirklich verwerfen?
+              </button>
+            ) : (
+              <button type="button" className="ghost compact" onClick={() => setConfirmDiscard(true)}>
+                Verwerfen
+              </button>
+            ))}
+          <button type="button" className="icon-button" aria-label={running ? 'Später weiter' : 'Schließen'} onClick={() => game.closeWorld()}>
+            <CloseIcon />
+          </button>
+        </span>
+      </div>
+      {!view.empty && <WorldCard world={view} />}
+      {view.surface && <SurfaceSection lines={view.surface} />}
+      {world.canNote && <NoteSection note={world.note} />}
+      {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
+    </section>
   );
+
+  // Eine ältere Welt ohne Temperatur ist schon fertig (canNote), würfelt aber noch nach: dann stehen
+  // Würfelbühne und die Reihe Globus öffnen/Gruppe ist hier/Hierher reisen zusammen unten.
+  const rollDock = hasRoll || fresh ? (
+    <section className="generation-dock" aria-label="Weltenerschaffung" onClickCapture={skipTap}>
+      {latest && <RollStage key={latest.index} line={latest} animate={animate} onSettled={setSettled} skips={skips} />}
+      {view.prompt && (
+        <p className="generation-prompt" aria-live="polite">
+          {view.prompt}
+        </p>
+      )}
+      {view.error && (
+        <p className="error" role="alert">
+          {view.error}
+        </p>
+      )}
+      <Actions
+        action={view.action}
+        disabled={rolling}
+        onRun={() => {
+          game.runWorld();
+          setSeen(game.snapshot().world?.lines.length ?? 0);
+        }}
+      />
+    </section>
+  ) : undefined;
+  const actionsDock =
+    world.canGlobe || world.canNote ? (
+      <section className="dock" aria-label="An der Welt">
+        <WorldActions world={view} here={here} travel={travel} />
+      </section>
+    ) : undefined;
+  const foot = rollDock || actionsDock ? (
+    <>
+      {rollDock}
+      {actionsDock}
+    </>
+  ) : undefined;
+
+  return { field, foot, title };
 }
 
 /** Die Welt, wie sie gerade steht (auf der Weltkarte und oben auf dem Globus): UWP, jede Stelle im Klartext, Temperatur, Basen, Gasriese, Handelscodes. */

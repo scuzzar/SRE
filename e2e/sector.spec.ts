@@ -24,32 +24,34 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
       continue;
     }
     await dock.getByRole('button', { name: 'Welt erschaffen' }).click();
-    const dialog = page.getByRole('dialog', { name: `Weltenerschaffung ${id}` });
-    await expect(dialog.locator('.generation-prompt')).toHaveText('Systeminhalt: Raumhafen');
+    // Die Weltkarte steht jetzt im Ziehblatt bzw. im Panel neben dem Log, schiebbar wie jedes Feld.
+    const dialog = page.getByRole('region', { name: `Weltenerschaffung ${id}` });
+    // Der Hinweis und der Würfelknopf stehen in der Reihe unten, wie beim Orakel, nicht im Feld.
+    await expect(page.locator('.generation-prompt')).toHaveText('Systeminhalt: Raumhafen');
     // „Später weiter“ behält die Welt in Erschaffung.
     await dialog.getByRole('button', { name: 'Später weiter' }).click();
     await map.getByRole('button', { name: `${id}, in Erschaffung: fortsetzen` }).click();
     await expect(dialog.getByRole('button', { name: 'Verwerfen' })).toBeVisible();
     // Das Weltsymbol erscheint erst mit der Größe.
     await expect(dialog.getByRole('img', { name: /^Weltsymbol von / })).toHaveCount(0);
-    for (let i = 0; i < 14 && (await dialog.locator('.generation-main').count()) > 0; i++) await dialog.locator('.generation-main').click();
+    for (let i = 0; i < 14 && (await page.locator('.generation-main').count()) > 0; i++) await page.locator('.generation-main').click();
     // Nach dem TL steht die Oberfläche da, wo früher die Würfe standen; eine Liste der Würfe gibt es nicht.
     await expect(dialog.getByRole('region', { name: 'Oberfläche' })).toContainText('% Wasser');
     await expect(dialog.getByRole('region', { name: 'Würfe' })).toHaveCount(0);
     await expect(dialog.getByRole('img', { name: `Weltsymbol von ${id}` })).toBeVisible();
-    await dialog.getByLabel('Name der Welt').fill('Regina');
-    await dialog.getByRole('button', { name: 'Übernehmen' }).click();
-    const done = page.getByRole('dialog', { name: `Regina · ${id}` });
+    await page.getByLabel('Name der Welt').fill('Regina');
+    await page.getByRole('button', { name: 'Übernehmen' }).click();
+    const done = page.getByRole('region', { name: `Regina · ${id}` });
     await expect(done.getByRole('article', { name: 'Welt' })).toContainText(/[A-EX][0-9A-Z]{6}-[0-9A-Z]/);
     await expect(done.getByRole('article', { name: 'Welt' })).toContainText(/Temperatur(Gefroren|Kalt|Gemäßigt|Heiß|Kochend)/);
-    await done.getByRole('button', { name: 'Schließen' }).first().click();
+    await done.getByRole('button', { name: 'Schließen' }).click();
     await map.getByRole('button', { name: `${id}, Regina: Weltkarte öffnen` }).click();
     // Wieder geöffnet: erst die Weltkarte mit den Werten, kein Globus gleich.
-    const sheet = page.getByRole('dialog', { name: `Regina · ${id}` });
+    const sheet = page.getByRole('region', { name: `Regina · ${id}` });
     await expect(sheet.getByRole('article', { name: 'Welt' })).toBeVisible();
     await expect(sheet.getByRole('region', { name: 'Oberfläche' })).toContainText('einheimisches Leben');
     // „Globus erzeugen“ öffnet ihn; oben klappen Name und UWP die Werte auf.
-    await sheet.getByRole('button', { name: 'Globus erzeugen' }).click();
+    await page.getByRole('button', { name: 'Globus erzeugen' }).click();
     const globe = page.getByRole('region', { name: 'Globus · Regina' });
     await globe.getByRole('button', { name: /^Regina, UWP / }).click();
     const reopened = globe.getByRole('region', { name: 'Die Welt' });
@@ -106,13 +108,13 @@ test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis 
     await page.waitForTimeout(1100);
     await page.mouse.up();
     if (await page.locator('.sector-dock').getByText('Kein System in diesem Feld').isVisible()) continue;
-    const dialog = page.getByRole('dialog', { name: `Weltenerschaffung ${id}` });
-    await expect(dialog.getByLabel('Name der Welt')).toBeVisible();
+    const dialog = page.getByRole('region', { name: `Weltenerschaffung ${id}` });
+    await expect(page.getByLabel('Name der Welt')).toBeVisible();
     await expect(dialog.getByRole('article', { name: 'Welt' })).toContainText(/[A-EX][0-9A-Z]{6}-[0-9A-Z]/);
     // In Erschaffung gibt es keine Notiz; die fertige Welt bekommt eine, die Liste zeigt ihre erste Zeile.
     await expect(dialog.getByLabel('Notiz zur Welt')).toHaveCount(0);
     // Name von der Karte: Vor- und Nachnamen getrennt; ein Nachname allein geht auch.
-    await dialog.getByRole('button', { name: 'Karte' }).click();
+    await page.getByRole('button', { name: 'Karte', exact: true }).click();
     const picker = page.getByRole('dialog', { name: 'Name von der Karte' });
     await expect(picker.getByRole('group', { name: 'Vornamen' }).getByRole('button')).toHaveCount(12);
     const surname = picker.getByRole('group', { name: 'Nachnamen' }).getByRole('button').last();
@@ -120,12 +122,12 @@ test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis 
     await surname.click();
     await picker.getByRole('button', { name: 'Übernehmen' }).click();
     await expect(picker).toBeHidden();
-    await expect(dialog.getByLabel('Name der Welt')).toHaveValue(text);
-    await dialog.getByLabel('Name der Welt').fill('Regina');
-    await dialog.getByRole('button', { name: 'Übernehmen' }).click();
-    const done = page.getByRole('dialog', { name: `Regina · ${id}` });
+    await expect(page.getByLabel('Name der Welt')).toHaveValue(text);
+    await page.getByLabel('Name der Welt').fill('Regina');
+    await page.getByRole('button', { name: 'Übernehmen' }).click();
+    const done = page.getByRole('region', { name: `Regina · ${id}` });
     await done.getByLabel('Notiz zur Welt').fill('Halveks Werft am Südpol.\nDer Zoll ist bestechlich.');
-    await done.getByRole('button', { name: 'Schließen' }).first().click();
+    await done.getByRole('button', { name: 'Schließen' }).click();
     await expect(done).toBeHidden();
     await page.getByRole('button', { name: /^Welten \d+/ }).click();
     await expect(page.locator('.world-list-note').filter({ hasText: 'Halvek' })).toHaveText('Halveks Werft am Südpol.');
@@ -134,7 +136,7 @@ test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis 
     await page.getByRole('button', { name: /^Welten \d+/ }).click();
     await page.locator('.world-list').getByRole('button', { name: /Regina/ }).click();
     // Die Weltkarte zeigt die Notiz gleich, ohne Umweg über den Globus.
-    const sheet = page.getByRole('dialog', { name: `Regina · ${id}` });
+    const sheet = page.getByRole('region', { name: `Regina · ${id}` });
     await expect(sheet.getByLabel('Notiz zur Welt')).toHaveValue('Halveks Werft am Südpol.\nDer Zoll ist bestechlich.');
     return;
   }
@@ -176,15 +178,15 @@ test('Sektor: Eine ältere Welt ohne Temperatur würfelt sie auf der Weltkarte n
   await expect(page.getByRole('dialog', { name: 'Kampagnen' })).toBeHidden();
   await openSector(page);
   await page.getByRole('group', { name: 'Karte des Subsektors' }).getByRole('button', { name: '0101, Regina: Weltkarte öffnen' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Regina · 0101' });
+  const dialog = page.getByRole('region', { name: 'Regina · 0101' });
   // Eine fertige Welt lässt sich nicht verwerfen, auch wenn sie noch etwas zu würfeln hat.
   await expect(dialog.getByRole('button', { name: 'Verwerfen' })).toHaveCount(0);
-  await dialog.locator('.generation-main').click();
+  await page.locator('.generation-main').click();
   await expect(dialog.getByRole('article', { name: 'Welt' })).toContainText(/Temperatur(Gefroren|Kalt|Gemäßigt|Heiß|Kochend)/);
   await expect(dialog.getByRole('article', { name: 'Welt' })).toContainText('C788545-7');
   // Gleich danach entsteht die Oberfläche mit; zu würfeln bleibt nichts.
   await expect(dialog.getByRole('region', { name: 'Oberfläche' })).toContainText('% Wasser');
-  await expect(dialog.locator('.generation-main')).toHaveCount(0);
+  await expect(page.locator('.generation-main')).toHaveCount(0);
 });
 
 test('Globus: aus dem Subsektor öffnen, Feld antippen, zurück zum Subsektor', async ({ page }) => {
