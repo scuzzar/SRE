@@ -8,7 +8,7 @@ import { useGame } from '../game-context';
 import { WorldIcon } from './WorldIcon';
 import { animated, haptic, stopHaptics } from '../haptics';
 import { HoldButton } from '../HoldButton';
-import { CloseIcon, DiceIcon } from '../icons';
+import { CloseIcon, DiceIcon, GlobeIcon, LocateIcon, RouteIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
 import { Form } from '../Form';
 import { withLoading } from '../loading';
@@ -93,20 +93,8 @@ export function WorldSheet({ world, here, travel, log, logDays }: { world: World
 
         <div className="sheet-body" ref={body}>
           {!view.empty && <WorldCard world={view} />}
-          {view.surface && <SurfaceSection lines={view.surface} globe={view.canGlobe ? (view.hasMap ? 'Globus' : 'Globus erzeugen') : undefined} />}
-          {world.canNote && (
-            <button type="button" className={here ? 'primary stay-here' : 'ghost stay-here'} aria-pressed={here} onClick={() => game.stayHere()}>
-              {here ? 'Die Gruppe ist hier' : 'Gruppe ist hier'}
-            </button>
-          )}
-          {world.canNote && !here && travel && (
-            <div className="travel-here">
-              <button type="button" className="primary" disabled={travel.blocker !== undefined} onClick={() => game.openJourney()}>
-                Hierher reisen (1 Woche)
-              </button>
-              {travel.blocker && <p className="combat-hint">{travel.blocker}</p>}
-            </div>
-          )}
+          {view.surface && <SurfaceSection lines={view.surface} />}
+          <WorldActions world={view} here={here} travel={travel} />
           {world.canNote && <NoteSection note={world.note} />}
           {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
         </div>
@@ -240,19 +228,11 @@ function TemperatureRow({ temperature }: { temperature: WorldView['temperature']
 }
 
 /** Die Oberfläche nach dem World Builder's Handbook, an der Stelle der früheren Liste der Würfe. */
-export function SurfaceSection({ lines, globe }: { lines: readonly string[]; globe: string | undefined }) {
-  const game = useGame();
+export function SurfaceSection({ lines }: { lines: readonly string[] }) {
   return (
     <section className="career world-surface" aria-label="Oberfläche">
       <div className="career-term">
-        <h4 className="world-surface-head">
-          Oberfläche
-          {globe && (
-            <button type="button" className="ghost compact" onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobe())}>
-              {globe}
-            </button>
-          )}
-        </h4>
+        <h4 className="world-surface-head">Oberfläche</h4>
         <ul>
           {lines.map((line) => (
             <li key={line}>{line}</li>
@@ -260,6 +240,42 @@ export function SurfaceSection({ lines, globe }: { lines: readonly string[]; glo
         </ul>
       </div>
     </section>
+  );
+}
+
+/**
+ * Die Reihe an der Welt, im selben Stil wie die Reihe Notiz, Deuten, 2W6, Karte im Orakel
+ * (`oracle-actions`): Globus öffnen (außer auf dem Globus selbst), Gruppe ist hier (Zustand,
+ * togglebar) und Hierher reisen.
+ */
+export function WorldActions({ world, here, travel, onGlobe = false }: { world: WorldView; here: boolean; travel: { readonly blocker: string | undefined } | undefined; onGlobe?: boolean }) {
+  const game = useGame();
+  const showGlobe = !onGlobe && world.canGlobe;
+  if (!showGlobe && !world.canNote) return null;
+  return (
+    <>
+      <div className="actions oracle-actions world-actions">
+        {showGlobe && (
+          <button type="button" className="action note" onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobe())}>
+            <GlobeIcon />
+            {world.hasMap ? 'Globus öffnen' : 'Globus erzeugen'}
+          </button>
+        )}
+        {world.canNote && (
+          <button type="button" className="action note" aria-pressed={here} onClick={() => game.stayHere()}>
+            <LocateIcon />
+            {here ? 'Die Gruppe ist hier' : 'Gruppe ist hier'}
+          </button>
+        )}
+        {world.canNote && !here && travel && (
+          <button type="button" className="action draw" title={travel.blocker} disabled={travel.blocker !== undefined} onClick={() => game.openJourney()}>
+            <RouteIcon />
+            Hierher reisen (1 Woche)
+          </button>
+        )}
+      </div>
+      {world.canNote && !here && travel?.blocker && <p className="combat-hint">{travel.blocker}</p>}
+    </>
   );
 }
 
