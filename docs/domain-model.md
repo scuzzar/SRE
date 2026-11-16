@@ -1196,9 +1196,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       Referenzdaten nicht haben). Der Verbrauch zieht `Ship.fuel` ab; reicht der Treibstoff nicht,
       geht die Reise nicht.
     - *Fehlsprung* (SR 28): Pro Sprung würfelt die App **2W6** (`Journey.jump`); `/misjump`
-      folgt daraus: Summe **13 oder mehr**. Der Wurf steht an der Reise im Log. Was ein
-      Fehlsprung folgt, entscheidet der Owner – die App würfelt nur, sie würfelt keinen
-      Zielort und zerstört kein Schiff.
+      folgt daraus: Summe **13 oder mehr**. Ohne DMs ist das auf bloß 2W6 nie möglich – die SR-DMs
+      (+1 unraffinierter Treibstoff, +5/+15 nahe an einem Himmelskörper) kommen erst ins Spiel,
+      wenn die App sie abbildet (Entscheidung des Owners, 16. November 2026). Der Wurf steht an
+      der Reise im Log. Was ein Fehlsprung folgt, entscheidet der Owner – die App würfelt nur,
+      sie würfelt keinen Zielort und zerstört kein Schiff.
     - *Dauer*: ebenfalls **eine Woche**; sonst gilt wie bei der Passage.
     - Kommen später: Lebenserhaltungskosten (Cr 2.000 je Kabine je zwei Wochen, SR 30),
       zahlende Passagiere und Fracht.

@@ -136,6 +136,8 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     berths: z.array(z.object({ for: z.string().min(1).optional(), revive: dice, dm: z.number().int(), guess: z.number().int() })).max(60),
     npcDie: die.optional(),
     lot: z.number().int().optional(),
+    ship: z.string().min(1).optional(),
+    jump: dice.optional(),
   }),
 ]);
 

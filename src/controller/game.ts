@@ -112,7 +112,9 @@ import {
   passTime,
   setStartDate,
   travel,
+  travelShip,
   journeyBlocker,
+  shipJourneyBlocker,
   rollNpcLow,
   travellersOf,
   hasAnimals,
@@ -218,6 +220,7 @@ import {
   type ConflictChoice,
 } from '../model/draft';
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
+import type { JourneyMode } from './time-view';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
 const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, selected: undefined, picking: false } as const;
@@ -876,9 +879,16 @@ export class GameController {
     const at = this.state.world;
     if (!at) throw new DomainError('Es ist keine Weltkarte offen.');
     const to = hexId(at.column, at.row);
-    const blocker = journeyBlocker(this.campaign, to);
-    if (blocker) throw new DomainError(blocker);
-    this.update({ journey: { to, npcDie: rollNpcLow(this.deps.random), choice: {}, guesses: {}, error: undefined, done: undefined }, world: undefined, worldError: undefined });
+    const passageBlocker = journeyBlocker(this.campaign, to);
+    if (passageBlocker !== undefined && shipJourneyBlocker(this.campaign, to) !== undefined) throw new DomainError(passageBlocker);
+    this.update({ journey: { to, mode: passageBlocker === undefined ? 'passage' : 'ship', npcDie: rollNpcLow(this.deps.random), choice: {}, guesses: {}, error: undefined, done: undefined }, world: undefined, worldError: undefined });
+  }
+
+  /** Ob die Gruppe mit Passagen reist oder mit dem eigenen Schiff. */
+  chooseJourneyMode(mode: JourneyMode): void {
+    const journey = this.state.journey;
+    if (!journey || journey.done !== undefined || journey.mode === mode) return;
+    this.update({ journey: { ...journey, mode, error: undefined } });
   }
 
   /** Wählt die Passage eines Reisenden. */
@@ -895,17 +905,23 @@ export class GameController {
     this.update({ journey: { ...journey, guesses: { ...journey.guesses, [character]: guess }, error: undefined } });
   }
 
-  /** Die Gruppe reist: Passagen, Kälteschlaf, Lotterie; danach zeigt der Dialog das Ergebnis. */
+  /** Die Gruppe reist: mit Passagen (Kauf, Kälteschlaf, Lotterie) oder mit dem eigenen Schiff; danach zeigt der Dialog das Ergebnis. */
   travel(): void {
     const journey = this.state.journey;
     if (!journey || journey.done !== undefined) return;
     try {
+      const index = this.campaign.log.length;
+      const cleanup = { combatNote: undefined, animalNote: undefined, patronNote: undefined, rumorNote: undefined, legalNote: undefined, timeNote: undefined, shopError: undefined };
+      if (journey.mode === 'ship') {
+        const after = travelShip(this.campaign, journey.to, this.deps.random, this.deps.clock);
+        this.change(after, { journey: { ...journey, done: index, error: undefined }, ...cleanup });
+        return;
+      }
       const view = this.current.journey;
       const choice = Object.fromEntries(travellersOf(this.campaign).map((c) => [c.id, journey.choice[c.id] ?? view?.travellers.find((t) => t.id === c.id)?.passage ?? 'middle-passage'])) as Record<string, PassageId>;
       const guesses = Object.fromEntries((view?.travellers ?? []).filter((t) => t.guess !== undefined).map((t) => [t.id, journey.guesses[t.id] ?? t.guess!]));
-      const index = this.campaign.log.length;
       const after = travel(this.campaign, journey.to, choice, guesses, journey.npcDie, this.deps.random, this.deps.clock);
-      this.change(after, { journey: { ...journey, choice, guesses, done: index, error: undefined }, combatNote: undefined, animalNote: undefined, patronNote: undefined, rumorNote: undefined, legalNote: undefined, timeNote: undefined, shopError: undefined });
+      this.change(after, { journey: { ...journey, choice, guesses, done: index, error: undefined }, ...cleanup });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ journey: { ...journey, error: error.message } });

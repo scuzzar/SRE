@@ -309,7 +309,7 @@ function Details({ boat }: { boat: Boat }) {
           </div>
         ))}
       </div>
-      <p className="shop-hint muted">Kabinen und Niedrigbetten: immer die Gruppe zuerst, später zahlende Passagiere. Noch offen: Bewaffnung, Kampf-Software und eigener Sprung mit Treibstoffverbrauch.</p>
+      <p className="shop-hint muted">Kabinen und Niedrigbetten: immer die Gruppe zuerst, später zahlende Passagiere. Noch offen: Bewaffnung und Kampf-Software. Gereist wird schon: „Hierher reisen“ auf einer Weltkarte auch mit eigenem Schiff.</p>
     </>
   );
 }

@@ -183,8 +183,10 @@ Schiffe verdienen an **Fracht**, **Passagieren** und **Post**.
   (1W bestimmt, wie viele Würfel für die Distanz in Hexfeldern geworfen werden; 1W die Richtung von
   sechs; 1W die Wochen im Jump Space, bevor das Schiff wieder auftaucht). **Stand in der App:**
   der Wurf 2W6 je Sprung mit eigenem Schiff ist umgesetzt (`Journey.jump`, `/misjump` bei 13+,
-  ohne DMs); die Folgen – zufälliger Zielort, Wochen im Jump Space, Schiff vernichtet bei 16+ –
-  entscheidet der Owner im Spiel, die App würfelt sie nicht.
+  ohne DMs); ohne DMs ist 13+ auf 2W6 nie möglich – die DMs der SR (Treibstoff, Nähe zu
+  Himmelskörpern) kommen erst, wenn die App sie abbildet (Entscheidung des Owners,
+  16. November 2026). Die Folgen – zufälliger Zielort, Wochen im Jump Space, Schiff vernichtet
+  bei 16+ – entscheidet der Owner im Spiel, die App würfelt sie nicht.
 
 ---
 

@@ -625,7 +625,7 @@ function EntryBody({ item }: { item: LogItem }) {
   }
 }
 
-/** Eine Reise im Log: wohin, wer mit welcher Passage, der Kälteschlaf und die Lotterie. */
+/** Eine Reise im Log: wohin, wer mit welcher Passage oder das Schiff mit seinem Sprungwurf, der Kälteschlaf und die Lotterie. */
 export function JourneyBody({ item }: { item: JourneyItem }) {
   return (
     <>
@@ -635,9 +635,16 @@ export function JourneyBody({ item }: { item: JourneyItem }) {
       <span className="entry-detail">
         {item.fromDate} → {item.toDate}
       </span>
-      <span className="entry-question small">
-        {item.passengers.map((p) => `${p.name}: ${p.passage}`).join(' · ')}
-      </span>
+      {item.ship !== undefined ? (
+        <span className={`entry-question small${item.misjump ? ' negative' : ''}`}>
+          mit {item.ship} · Sprungwurf {item.jump?.[0]} + {item.jump?.[1]} = {(item.jump?.[0] ?? 0) + (item.jump?.[1] ?? 0)}
+          {item.misjump ? ' · Fehlsprung (13+)!' : ''}
+        </span>
+      ) : (
+        <span className="entry-question small">
+          {item.passengers.map((p) => `${p.name}: ${p.passage}`).join(' · ')}
+        </span>
+      )}
       {item.berths.length > 0 && (
         <ul className="journey-berths">
           {item.berths.map((b, i) => (

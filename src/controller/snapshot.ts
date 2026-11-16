@@ -11,6 +11,7 @@ import {
   type PatronRoll,
   dateLabel,
   journeyBlocker,
+  shipJourneyBlocker,
   activeSkills,
   ammoOf,
   fundsOf,
@@ -367,12 +368,20 @@ function animalsPossible(campaign: Campaign): boolean {
 
 /** Warum die Gruppe nicht dorthin reisen kann; ohne Aufenthaltsort oder auf dem Aufenthaltsort selbst kein Hinweis. */
 function travelBlocker(campaign: Campaign, to: string): string | undefined {
-  try {
-    return journeyBlocker(campaign, to);
-  } catch (error) {
-    if (error instanceof DomainError) return error.message;
-    throw error;
-  }
+  const blocked = (blocker: () => string | undefined): string | undefined => {
+    try {
+      return blocker();
+    } catch (error) {
+      if (error instanceof DomainError) return error.message;
+      throw error;
+    }
+  };
+  const passage = blocked(() => journeyBlocker(campaign, to));
+  if (passage === undefined) return undefined;
+  const ship = blocked(() => shipJourneyBlocker(campaign, to));
+  if (ship === undefined) return undefined;
+  // Wo beide nicht gehen: der Treibstoff ist die handfestere Warnung als die Parsec-Grenze der Passage.
+  return ship !== undefined && ship.includes('Treibstoff') ? ship : passage;
 }
 
 export interface SkillChoice extends Skill {

@@ -137,6 +137,17 @@ export function freeTankOf(ship: Ship): number {
   return shipDesignOf(ship.design).fuel - ship.fuel;
 }
 
+/**
+ * Treibstoff je Sprung, in Tonnen (`ShipDesign./jumpFuel`, Hausregel 16. November 2026):
+ * Tankinhalt durch Sprungzahl, gerundet – die SR-30-Formel braucht Energiewerks-Ratings,
+ * die die Referenzdaten nicht haben. Ein voller Tank reicht damit genau für so viele
+ * Sprünge, wie der Entwurf Sprung kann.
+ */
+export function jumpFuelOf(design: string): number {
+  const plan = shipDesignOf(design);
+  return Math.round(plan.fuel / plan.jump);
+}
+
 /** Volltanken bzw. auffüllen: Cr 500 je Tonne raffinierten Treibstoff (SR 30), höchstens bis der Tank voll ist. */
 export function buyFuel(campaign: Campaign, tons: number, clock: Clock): Campaign {
   const ship = activeShip(campaign);
