@@ -365,6 +365,18 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Booking.forShip`, `Gain.ship`, `Gain.shipDebtFree`, `CareerRoll.shipChoice`, `ShipChoice`. Der
 > Ausschnitt dazu liegt unter
 > [`changes/2026-11-16-schiffe-basis.png`](changes/2026-11-16-schiffe-basis.png).
+>
+> Ebenfalls am 16. November 2026 freigegeben (Kennzeichen 2026-11-16b): **Software,
+> Rechner und Deckpläne zu den Schiffen** (Regeln in [`regeln-schiffe.md`](regeln-schiffe.
+> md) unter *Computer und Software*). Neu im Bild: `Software` und `SoftwareKind` (die
+> Software-Liste aus SE 13 mit Space und MCr), `ComputerModel` (SE 10; die Modellzahl
+> ist höchste Sprungzahl und Wert des Softwarepakets), `ShipSoftware` (was ein
+> konkretes Schiff dabeihat) und `DeckPlan` als **Geräte-Daten** (orange: das Gerät
+> hält sie je Entwurf über Kampagnen hinweg, Export und OneDrive holen sie nicht).
+> `Ship` bekommt `retired` (Ausblenden statt Löschen, damit Buchungen mit `forShip`
+> nicht ins Leere zeigen); `ShipDesign.computer` ist Verweis auf ein Rechnermodell
+> statt Text. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-16b-schiff-retired-und-deckplaene.png`](changes/2026-11-16b-schiff-retired-und-deckplaene.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -396,9 +408,8 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 | Schiffe | [views/schiffe.png](views/schiffe.png) |
 
-Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist
-[2026-11-16b](changes/2026-11-16b-schiff-retired-und-deckplaene.png): `retired` am Schiff,
-Software am Entwurf, Deckpläne als Geräte-Daten.
+Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -687,12 +698,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Monatsrate | `Ship./monthlyPayment` | Ein Vierhundertachtzigstel der Kreditsumme, immer gleich hoch |
 | Nächste Rate | `Ship.nextPaymentDay` | Der Kampagnentag, an dem die nächste Monatsrate fällig wird |
 | Ship-Vorteil der Abmusterung | `Gain.ship`, `Gain.shipDebtFree` | Eine Zeile der Mustering-out-Tabelle, die ein Schiff gibt: schuldenfrei (Scout) oder als Anteil an einer Restschuld (Merchant) |
-| Schiffswahl | `CareerRoll.shipChoice`, `ShipChoice` | Nur gesetzt, wenn die Kampagne beim Würfeln des Ship-Vorteils schon ein anderes Schiff hat: behalten oder wechseln (das alte Schiff wird ausgeblendet, seine Restschuld behält es nur für sich; Änderung 2026-11-16b) |
-| Ausgedientes Schiff | `Ship.retired` | Ein altes Schiff, worauf noch Buchungen zeigen: ausgeblendet, bleibt aber in der Kampagne (Änderung 2026-11-16b) |
-| Software (Programm) | `Software` | Ein Programm der Software-Liste (SR 38–39, SE 13): Platzbedarf in Space, Preis, Wirkung; Art nach `SoftwareKind` (offensiv, defensiv, routine) (Änderung 2026-11-16b) |
-| Rechnermodell | `ComputerModel` | Modell 1 bis 7 (je mit „bis“): Preis, Tonnen, CPU und Storage in Space, TL; die Modellzahl ist die höchste Sprungzahl und der Wert des Softwarepakets in MCr (SE 10) (Änderung 2026-11-16b) |
-| Software an Bord | `ShipSoftware` | Ein Programm, das ein konkretes Schiff dabeihat; beim Kauf aus dem Softwarepaket des Computers gewählt (Änderung 2026-11-16b) |
-| Deckplan | `DeckPlan` | Der Plan eines Schiffsentwurfs als Bild: bis zu drei eigene, als PNG hochgeladen oder fotografiert; das Gerät merkt sie sich über Kampagnen hinweg, Export und OneDrive holen sie nicht (Änderung 2026-11-16b) |
+| Schiffswahl | `CareerRoll.shipChoice`, `ShipChoice` | Nur gesetzt, wenn die Kampagne beim Würfeln des Ship-Vorteils schon ein anderes Schiff hat: behalten oder wechseln (das alte Schiff wird ausgeblendet, seine Restschuld behält es nur für sich) |
+| Ausgedientes Schiff | `Ship.retired` | Ein altes Schiff, worauf noch Buchungen zeigen: ausgeblendet, bleibt aber in der Kampagne |
+| Software (Programm) | `Software` | Ein Programm der Software-Liste (SR 38–39, SE 13): Platzbedarf in Space, Preis, Wirkung; Art nach `SoftwareKind` (offensiv, defensiv, routine) |
+| Rechnermodell | `ComputerModel` | Modell 1 bis 7 (je mit „bis“): Preis, Tonnen, CPU und Storage in Space, TL; die Modellzahl ist die höchste Sprungzahl und der Wert des Softwarepakets in MCr (SE 10) |
+| Software an Bord | `ShipSoftware` | Ein Programm, das ein konkretes Schiff dabeihat; beim Kauf aus dem Softwarepaket des Computers gewählt |
+| Deckplan | `DeckPlan` | Der Plan eines Schiffsentwurfs als Bild: bis zu drei eigene, als PNG hochgeladen oder fotografiert; das Gerät merkt sie sich über Kampagnen hinweg, Export und OneDrive holen sie nicht |
 
 ## Regeln, die das Bild nicht zeigt
 
@@ -2542,17 +2553,17 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        **anderes** Schiff, entscheidet der Spieler (`CareerRoll.shipChoice`): **behalten** (der
        Vorteil bleibt ohne Wirkung, steht aber im Lebenslauf) oder **wechseln** (das alte Schiff
        samt seiner Restschuld wird mit `retired` ausgeblendet, statt ersatzlos zu entfallen;
-       „Kredit kündigen“ bleibt die Vereinfachung, kein Verkaufserlös; Änderung 2026-11-16b).
+       „Kredit kündigen“ bleibt die Vereinfachung, kein Verkaufserlös (freigegeben).
        Die alten Gegenstände `scout-ship` und `free-trader` (Art `ship`) entfallen
        aus `items.json`, sobald der Code folgt; ihre Preise stehen jetzt als `basePrice` an
        `ShipDesign`.
-  - **Ausblenden statt Löschen** (Änderung 2026-11-16b, offen). Beim **Wechseln** nach dem
+  - **Ausblenden statt Löschen** (freigegeben am 16. November 2026). Beim **Wechseln** nach dem
     Ship-Vorteil (und später beim Verkauf) bleibt das alte Schiff mit `retired` in der
     Kampagne und wird nur ausgeblendet: Buchungen mit `forShip` und alte Logeinträge zeigen
     es weiter. `Campaign.ship` und der Reiter Schiff kennen nur das nicht ausgeblendete
     Schiff. Die Regel *Worauf der Log verweist, wird nie gelöscht* gilt damit auch für
     Schiffe.
-  - **Software, Rechner, was an Bord ist** (Änderung 2026-11-16b, offen). Nach SE 10 und 13:
+  - **Software, Rechner, was an Bord ist** (freigegeben am 16. November 2026). Nach SE 10 und 13:
     `ComputerModel` hält die neun Rechnermodelle (Preis, Tonnen, CPU und Storage in Space,
     TL; die Modellzahl ist die höchste Sprungzahl – Jump-4 braucht Modell/4 – und der Wert
     des Softwarepakets `/softwareCredit` in MCr; „bis“-Modelle zählen beim Paketwert als die
@@ -2563,7 +2574,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (kein Bargeld). Der Entwurf verweist über `computer` auf ein `ComputerModel` statt auf
     den bisherigen Text. Welche Programme gerade in der CPU laufen, ist taktisch und kommt
     erst mit dem Raumkampf.
-  - **Deckpläne** (Änderung 2026-11-16b, offen). Bis zu drei eigene Pläne je Entwurf:
+  - **Deckpläne** (freigegeben am 16. November 2026). Bis zu drei eigene Pläne je Entwurf:
     Bilder, als PNG hochgeladen oder mit der Kamera fotografiert, je mit Namen.
     `DeckPlan` ist orange **Geräte-Daten**: Das Gerät hält sie in einem eigenen Repository
     über Kampagnen hinweg – ein anderes Schiff desselben Entwurfs sieht dieselben Pläne, ein
@@ -2577,19 +2588,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       10 × Pn`, SR 32; dafür fehlen am Entwurf noch das Rating des Energiewerks und die
       Antriebsbuchstaben, `jump` und `maneuver` halten nur die Ergebnisse) und ist bewusst
       nicht Teil dieses Schritts.
-    - **Buchungen auf ein entfallenes Schiff:** Beim *Wechseln* nach dem Ship-Vorteil (und
-      später beim Verkauf) zeigen `Booking.forShip` und die Raten auf ein Schiff, das nicht
-      mehr da ist. Dagegen liegt die Änderung 2026-11-16b bereit (`retired` am Schiff);
-      freigegeben ist sie noch nicht.
     - **Subventionierte Entwürfe** (Subsidized Merchant, Subsidized Liner) stehen da wie die
       anderen; die Subventionsregeln (SR 29: feste Route, Regierung zahlt 50 % der Monatsrate,
       schuldenfrei nach 20 Jahren, Mobilmachung im Notfall) sind nicht modelliert.
-    - **Deckpläne und Software aus dem UI-Mock** (`docs/mock/schiff-tab.html`): Dazu liegt
-      die Änderung 2026-11-16b bereit (Deckpläne als Geräte-Daten je Entwurf; Software-,
-      Rechner- und Bordsoftware-Klassen); freigegeben ist sie noch nicht. Offen bleibt,
-      wer beim Kauf das Softwarepaket wählt: eine Auswahl in der Werft, oder vorerst ein
-      Hausregel-Standard je Entwurf. Der Einbau später gekaufter Programme und der
-      Rechner-Tausch (SE 10) folgen mit dem Software-Handel.
+    - Wer beim Schiffkauf das **Softwarepaket** wählt (Wert = Modellzahl in MCr): vorerst
+      ein Standard-Set je Entwurf, wie im UI-Mock (Owner, 16. November 2026); eine
+      Auswahl in der Werft, der Einbau später gekaufter Programme und der Rechner-Tausch
+      (SE 10) folgen mit dem Software-Handel.
     - Ebenso offen: Pfändung bei Zahlungsverzug (siehe oben), Verkauf eines Schiffs, mehrere
       Schiffe, Custom-Entwürfe, Small Craft als eigene `ShipDesign`, und der **Preisnachlass
       für ein gebrauchtes Standardschiff** (SR 31: 10–40 % je nach Alter) über `Ship.price`.

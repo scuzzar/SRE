@@ -365,7 +365,7 @@
       "id": "2026-11-16b",
       "file": "2026-11-16b-schiff-retired-und-deckplaene",
       "title": "Schiff: retired statt gelöscht; Software, Rechnermodell und was an Bord ist; Deckpläne als Geräte-Daten je Entwurf",
-      "approved": false,
+      "approved": true,
       "show": [
         "Campaign",
         "Booking"
