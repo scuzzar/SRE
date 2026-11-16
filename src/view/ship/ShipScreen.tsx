@@ -271,10 +271,10 @@ function Details({ boat }: { boat: Boat }) {
             <dd>{`${credits(boat.monthlyPayment)} × 480`}</dd>
           </div>
         )}
-        {boat.nextPaymentDay !== undefined && (
+        {boat.nextPayment !== undefined && (
           <div>
             <dt>Nächste Rate</dt>
-            <dd>{`Tag ${boat.nextPaymentDay}`}</dd>
+            <dd>{boat.nextPayment}</dd>
           </div>
         )}
         <div>

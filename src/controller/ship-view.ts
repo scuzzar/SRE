@@ -1,5 +1,6 @@
 import {
   computerModelOf,
+  dateLabel,
   deckSlotNames,
   FUEL_PRICE,
   fundsOf,
@@ -84,8 +85,8 @@ export interface ShipView {
         /** Restschuld; fehlt, wenn bezahlt – die Kreditsumme bleibt als Erinnerung stehen. */
         readonly loanBalance: number | undefined;
         readonly monthlyPayment: number | undefined;
-        /** Der Tag, an dem die nächste Rate fällig ist. */
-        readonly nextPaymentDay: number | undefined;
+        /** Der Tag, an dem die nächste Rate fällig ist, als kalendarisches Datum; fehlt ohne Kredit. */
+        readonly nextPayment: string | undefined;
         /** Die Bordsoftware, in der Reihenfolge des Bords. */
         readonly software: readonly ShipSoftwareRow[];
       }
@@ -133,7 +134,7 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
             initialLoan: ship.initialLoan,
             loanBalance: ship.loanBalance,
             monthlyPayment: monthlyPaymentOf(ship),
-            nextPaymentDay: ship.nextPaymentDay,
+            nextPayment: ship.nextPaymentDay === undefined ? undefined : dateLabel(ship.nextPaymentDay),
             software: ship.software.map((s) => {
               const program = softwareOf(s.program);
               return { name: program.name, kind: softwareKinds[program.kind], effect: program.effect };
