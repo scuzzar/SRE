@@ -396,8 +396,9 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 | Schiffe | [views/schiffe.png](views/schiffe.png) |
 
-Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist
+[2026-11-16b](changes/2026-11-16b-schiff-retired-und-deckplaene.png): `retired` am Schiff,
+Software am Entwurf, Deckpläne als Geräte-Daten.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -686,7 +687,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Monatsrate | `Ship./monthlyPayment` | Ein Vierhundertachtzigstel der Kreditsumme, immer gleich hoch |
 | Nächste Rate | `Ship.nextPaymentDay` | Der Kampagnentag, an dem die nächste Monatsrate fällig wird |
 | Ship-Vorteil der Abmusterung | `Gain.ship`, `Gain.shipDebtFree` | Eine Zeile der Mustering-out-Tabelle, die ein Schiff gibt: schuldenfrei (Scout) oder als Anteil an einer Restschuld (Merchant) |
-| Schiffswahl | `CareerRoll.shipChoice`, `ShipChoice` | Nur gesetzt, wenn die Kampagne beim Würfeln des Ship-Vorteils schon ein anderes Schiff hat: behalten oder wechseln (das alte Schiff samt Restschuld entfällt dann) |
+| Schiffswahl | `CareerRoll.shipChoice`, `ShipChoice` | Nur gesetzt, wenn die Kampagne beim Würfeln des Ship-Vorteils schon ein anderes Schiff hat: behalten oder wechseln (das alte Schiff wird ausgeblendet, seine Restschuld behält es nur für sich; Änderung 2026-11-16b) |
+| Ausgedientes Schiff | `Ship.retired` | Ein altes Schiff, worauf noch Buchungen zeigen: ausgeblendet, bleibt aber in der Kampagne (Änderung 2026-11-16b) |
+| Software an Bord | `ShipDesign.software` | Welche Routine-Programme ein Schiff dieses Entwurfs dabeihat (SR 38–39); ein Text, solange es keinen Software-Kauf gibt (Änderung 2026-11-16b) |
+| Deckplan | `DeckPlan` | Der Plan eines Schiffsentwurfs als Bild: bis zu drei eigene, als PNG hochgeladen oder fotografiert; das Gerät merkt sie sich über Kampagnen hinweg, Export und OneDrive holen sie nicht (Änderung 2026-11-16b) |
 
 ## Regeln, die das Bild nicht zeigt
 
@@ -2535,10 +2539,29 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        Kampagne schon ein
        **anderes** Schiff, entscheidet der Spieler (`CareerRoll.shipChoice`): **behalten** (der
        Vorteil bleibt ohne Wirkung, steht aber im Lebenslauf) oder **wechseln** (das alte Schiff
-       samt seiner Restschuld entfällt ersatzlos – „Kredit kündigen“ als Vereinfachung, kein
-       Verkaufserlös). Die alten Gegenstände `scout-ship` und `free-trader` (Art `ship`) entfallen
+       samt seiner Restschuld wird mit `retired` ausgeblendet, statt ersatzlos zu entfallen;
+       „Kredit kündigen“ bleibt die Vereinfachung, kein Verkaufserlös; Änderung 2026-11-16b).
+       Die alten Gegenstände `scout-ship` und `free-trader` (Art `ship`) entfallen
        aus `items.json`, sobald der Code folgt; ihre Preise stehen jetzt als `basePrice` an
        `ShipDesign`.
+  - **Ausblenden statt Löschen** (Änderung 2026-11-16b, offen). Beim **Wechseln** nach dem
+    Ship-Vorteil (und später beim Verkauf) bleibt das alte Schiff mit `retired` in der
+    Kampagne und wird nur ausgeblendet: Buchungen mit `forShip` und alte Logeinträge zeigen
+    es weiter. `Campaign.ship` und der Reiter Schiff kennen nur das nicht ausgeblendete
+    Schiff. Die Regel *Worauf der Log verweist, wird nie gelöscht* gilt damit auch für
+    Schiffe.
+  - **Software an Bord** (Änderung 2026-11-16b, offen). `ShipDesign.software` hält als Text
+    fest, welche Routine-Programme ein Schiff dieses Entwurfs dabeihat (SR 38–39: Maneuver,
+    Jump mit Jump-Programm zur Sprungzahl, Navigation, Generate, Anti-Hijack, Library …).
+    Solange es keinen Software-Handel gibt, ist sie an keinem Schiff gespeichert; die Ansicht
+    zeigt den Text des Entwurfs.
+  - **Deckpläne** (Änderung 2026-11-16b, offen). Bis zu drei eigene Pläne je Entwurf:
+    Bilder, als PNG hochgeladen oder mit der Kamera fotografiert, je mit Namen.
+    `DeckPlan` ist orange **Geräte-Daten**: Das Gerät hält sie in einem eigenen Repository
+    über Kampagnen hinweg – ein anderes Schiff desselben Entwurfs sieht dieselben Pläne, ein
+    anderes Gerät zunächst keine; beim Export, Import und Abgleich mit OneDrive reisen sie
+    nicht mit. Am `Ship` wird nichts davon gespeichert: der Reiter Schiff zeigt die Pläne
+    seines Entwurfs.
   - **Offene Fragen für einen späteren Schritt:**
     - Wie die Gruppe mit dem eigenen Schiff zwischen Sternen springt (ergänzt die gekaufte
       Passage, ersetzt sie nicht, siehe Owner-Entscheidung vom 16. November 2026) – das braucht
@@ -2548,18 +2571,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       nicht Teil dieses Schritts.
     - **Buchungen auf ein entfallenes Schiff:** Beim *Wechseln* nach dem Ship-Vorteil (und
       später beim Verkauf) zeigen `Booking.forShip` und die Raten auf ein Schiff, das nicht
-      mehr da ist. Wie beim Charakter ein `retired`-Feld am `Ship` (das Schiff bleibt, nur
-      ausgeblendet) oder die Regel *Worauf der Log verweist, wird nie gelöscht* auf Schiffe
-      ausweiten – noch nicht abgestimmt.
+      mehr da ist. Dagegen liegt die Änderung 2026-11-16b bereit (`retired` am Schiff);
+      freigegeben ist sie noch nicht.
     - **Subventionierte Entwürfe** (Subsidized Merchant, Subsidized Liner) stehen da wie die
       anderen; die Subventionsregeln (SR 29: feste Route, Regierung zahlt 50 % der Monatsrate,
       schuldenfrei nach 20 Jahren, Mobilmachung im Notfall) sind nicht modelliert.
-    - **Deckpläne und Software aus dem UI-Mock** (`docs/mock/schiff-tab.html`): Die Ansicht
-      zeigt beides, das Modell kennt es noch nicht. Deckpläne wären gespeicherter Stand am
-      `Ship` (bis zu drei Bilder; offen: Bild als Daten-URL in der Kampagnendatei, also mit
-      Export und OneDrive, oder Datei außerhalb); Software je Entwurf als Referenztext an
-      `ShipDesign`, solange es keinen Software-Kauf gibt. Vor dem Bauen: Begriffe zuerst in die
-      Tabelle, Diagramm auf dem üblichen Weg.
+    - **Deckpläne und Software aus dem UI-Mock** (`docs/mock/schiff-tab.html`): Dazu liegt die
+      Änderung 2026-11-16b bereit (Deckpläne als Geräte-Daten je Entwurf, Software als
+      Referenztext am Entwurf); freigegeben ist sie noch nicht.
     - Ebenso offen: Pfändung bei Zahlungsverzug (siehe oben), Verkauf eines Schiffs, mehrere
       Schiffe, Custom-Entwürfe, Small Craft als eigene `ShipDesign`, und der **Preisnachlass
       für ein gebrauchtes Standardschiff** (SR 31: 10–40 % je nach Alter) über `Ship.price`.

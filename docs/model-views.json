@@ -360,6 +360,16 @@
         "Gain",
         "CareerRoll"
       ]
+    },
+    {
+      "id": "2026-11-16b",
+      "file": "2026-11-16b-schiff-retired-und-deckplaene",
+      "title": "Schiff: retired und Software am Entwurf; Deckpläne als Geräte-Daten je Entwurf",
+      "approved": false,
+      "show": [
+        "Campaign",
+        "Booking"
+      ]
     }
   ]
 }

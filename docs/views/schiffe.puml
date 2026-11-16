@@ -56,6 +56,8 @@ skinparam class {
   BorderColor<<reference>> #4f9a4f
   BackgroundColor<<value>> #ffffff
   BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
 }
 skinparam legendBackgroundColor #ffffff
 skinparam legendBorderColor #8a8a8a
@@ -71,6 +73,7 @@ classDiagram {
 hide <<transient>> stereotype
 hide <<reference>> stereotype
 hide <<value>> stereotype
+hide <<browser>> stereotype
 
 ' Kampagne und Charaktere
   class Campaign $kampagne
@@ -86,6 +89,7 @@ hide <<value>> stereotype
     loanBalance: number [0..1]
     /monthlyPayment: number [0..1]
     nextPaymentDay: number [0..1]
+    $new("2026-11-16b", "retired: boolean")
   }
   class ShipDesign <<reference>> $schiffe {
     code: string
@@ -95,6 +99,7 @@ hide <<value>> stereotype
     maneuver: number
     fuel: number
     computer: string
+    $new("2026-11-16b", "software: string")
     staterooms: number
     lowBerths: number
     hardpoints: number
@@ -103,6 +108,10 @@ hide <<value>> stereotype
     basePrice: number
     months: number
     streamlined: boolean
+  }
+  class DeckPlan <<browser>> $schiffe $newClass("2026-11-16b") {
+    name: string
+    image: string
   }
 
 ' Charaktererschaffung und Lebenslauf
@@ -126,6 +135,7 @@ Campaign "1" *-- "0..1" Ship : ship
 Ship "*" --> "1" ShipDesign : design
 Booking "*" --> "0..1" Ship : forShip
 Gain "*" --> "0..1" ShipDesign : ship
+DeckPlan "*" -$newArrow("2026-11-16b")-> "1" ShipDesign : design
 
 ' Zeit und Reisen
 
@@ -155,5 +165,8 @@ legend right
   |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Geräte-Daten: das Gerät hält sie über Kampagnen hinweg, nicht im Spielstand |
 endlegend
+class Ship #line:d0021b;line.bold
+class ShipDesign #line:d0021b;line.bold
 @enduml
