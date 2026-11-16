@@ -95,7 +95,7 @@ hide <<browser>> stereotype
   }
   class ShipDesign <<reference>> $schiffe {
     code: string
-    $new("2026-11-16d", "/jumpFuel: number")
+    /jumpFuel: number
     name: string
     hull: number
     jump: number
@@ -156,8 +156,7 @@ hide <<browser>> stereotype
 ' Kampagne
 
 ' Schiffe
-Campaign "1" *-$goneArrow("2026-11-16c")-> "0..1" Ship : ship
-Campaign "1" *-$newArrow("2026-11-16c")-> "0..*" Ship : ships
+Campaign "1" *-- "0..*" Ship : ships
 Ship "*" --> "1" ShipDesign : design
 Ship "1" *-- "0..*" ShipSoftware : software
 ShipSoftware "*" --> "1" Software : program
@@ -168,7 +167,7 @@ Gain "*" --> "0..1" ShipDesign : ship
 DeckPlan "*" --> "1" ShipDesign : design
 
 ' Zeit und Reisen
-Journey "*" -$newArrow("2026-11-16d")-> "0..1" Ship : ship
+Journey "*" --> "0..1" Ship : ship
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -198,7 +197,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Geräte-Daten: das Gerät hält sie über Kampagnen hinweg, nicht im Spielstand |
 endlegend
-class Campaign #line:d0021b;line.bold
-class ShipDesign #line:d0021b;line.bold
-class Journey #line:d0021b;line.bold
 @enduml

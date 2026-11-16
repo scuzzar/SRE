@@ -12,7 +12,7 @@ Domänenmodell ([`domain-model.md`](domain-model.md)).
 **Reisen als Passagier** (High/Middle/Low Passage, Travellers' Aid Society, Low Lottery) ist bereits
 modelliert, siehe `domain-model.md` unter *Zeit und Reisen*; hier geht es um das **eigene Schiff**.
 Das **Reisen mit eigenem Schiff** ist seit 16. November 2026 modelliert und gebaut (Änderung
-2026-11-16d, noch zur Freigabe eingereicht): Sprung bis zur Sprungzahl des Entwurfs, Treibstoffverbrauch
+2026-11-16d, freigegeben): Sprung bis zur Sprungzahl des Entwurfs, Treibstoffverbrauch
 je Sprung als Hausregel, Fehlsprung als Wurf – siehe `domain-model.md` unter *Eigenes Schiff*.
 
 ## Quellen und Schreibweise

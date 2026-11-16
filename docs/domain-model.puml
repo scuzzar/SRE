@@ -87,7 +87,7 @@ hide <<browser>> stereotype
     key: string
     changedAt: datetime
     /funds: number
-    $new("2026-11-16c", "/ship: Ship [0..1]")
+    /ship: Ship [0..1]
     quantityDie: number [0..1]
     /load: number
     /capacity: number
@@ -178,7 +178,7 @@ hide <<browser>> stereotype
   }
   class ShipDesign <<reference>> $schiffe {
     code: string
-    $new("2026-11-16d", "/jumpFuel: number")
+    /jumpFuel: number
     name: string
     hull: number
     jump: number
@@ -349,8 +349,8 @@ hide <<browser>> stereotype
     npcDie: number [0..1]
     lot: number [0..1]
     /pot: number
-    $new("2026-11-16d", "jump: number[2]")
-    $new("2026-11-16d", "/misjump: boolean")
+    jump: number[2]
+    /misjump: boolean
   }
   class Passenger <<value>> $reise {
   }
@@ -1017,8 +1017,7 @@ Booking "*" --> "0..1" Hex : in
 Booking --> BookingKind
 
 ' Schiffe
-Campaign "1" *-$goneArrow("2026-11-16c")-> "0..1" Ship : ship
-Campaign "1" *-$newArrow("2026-11-16c")-> "0..*" Ship : ships
+Campaign "1" *-- "0..*" Ship : ships
 Ship "*" --> "1" ShipDesign : design
 Ship "1" *-- "0..*" ShipSoftware : software
 ShipSoftware "*" --> "1" Software : program
@@ -1035,14 +1034,13 @@ CheckRoll --> CheckKind
 LogEntry <|-- Journey
 Journey "*" --> "1" Hex : from
 Journey "*" --> "1" Hex : to
-Journey "1" *-$goneArrow("2026-11-16d")-> "1..*" Passenger : passengers
-Journey "1" *-$newArrow("2026-11-16d")-> "0..*" Passenger : passengers
+Journey "1" *-- "0..*" Passenger : passengers
 Passenger "*" --> "1" Character : for
 Passenger "*" --> "1" Item : passage
 Journey "1" *-- "*" LowBerth : berths {ordered}
 LowBerth "*" --> "0..1" Character : for
 Journey "*" --> "0..1" LowBerth : /winner
-Journey "*" -$newArrow("2026-11-16d")-> "0..1" Ship : ship
+Journey "*" --> "0..1" Ship : ship
 Booking "*" --> "0..1" Journey : won
 
 ' Charaktererschaffung und Lebenslauf
