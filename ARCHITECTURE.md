@@ -39,7 +39,7 @@ kann ein Entwurf gar nicht in den Speicher geraten.
 Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
 
 - **Er ändert das Model**, als Einziger, und speichert den Spielstand über das Repository:
-  `rollDice()`, `drawCard(question, forNote)` (aus dem Notizblatt gezogen, `forNote`, landet die Auswahl beim Bestätigen im Notiztext statt im Log), `toggleOdds(odds)` (Orakelfeld der Karte), `togglePick(slot)`, `toggleRoll(roll)`
+  `rollDice()`, `drawCard(question, forNote)` (aus dem Feld Notiz des Charakter-Editors gezogen, `forNote`, landet die Auswahl beim Bestätigen im Notiztext statt im Log), `toggleOdds(odds)` (Orakelfeld der Karte), `togglePick(slot)`, `toggleRoll(roll)`
   (Wurffeld), `confirmCard(question)` (mit der Frage aus dem Feld der Karte), `discardCard()`, `drawNames()` und `closeNames()` (Name von der Karte), `writeNote(text, interprets)`, `deleteLogEntry(index)`, `setOdds(odds)`; für den Charakter oben und die Probe
   `focusCharacter(id)` (Wischen), `chooseSkill(skill)`, `chooseSkillOf(id, skill)` (Fertigkeit auf einer anderen Karte der Leiste), `toggleCharacteristic(c)`, `rollTask()`,
   `endTask()`; für den Kampf `wieldWeapon(weapon)`, `chooseTarget(armor, range)`, `endAttack()`,

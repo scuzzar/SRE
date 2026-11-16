@@ -1230,7 +1230,7 @@ export interface StashView {
 
 export interface CardView {
   readonly question: string | undefined;
-  /** Aus dem Notizblatt gezogen: die Auswahl landet beim Bestätigen im Notiztext statt im Log. */
+  /** Aus dem Feld Notiz des Charakter-Editors gezogen: die Auswahl landet beim Bestätigen im Notiztext statt im Log. */
   readonly forNote: boolean;
   /** Die Wurffelder mit ihrem Wert und ob sie ausgewählt sind. */
   readonly bell: { readonly value: number; readonly picked: boolean; readonly weights: readonly number[] };
@@ -1335,7 +1335,7 @@ export interface ControllerState {
   readonly storageError: string | undefined;
   readonly screen: Screen;
   readonly card: Card | undefined;
-  /** Wofür die offene Karte gezogen wurde: aus dem Notizblatt, dann landet die Auswahl im Notiztext statt im Log. */
+  /** Wofür die offene Karte gezogen wurde: aus dem Feld Notiz des Charakter-Editors, dann landet die Auswahl im Notiztext statt im Log. */
   readonly cardFor: 'note' | undefined;
   /** Die offene Namenswahl. */
   readonly names: NameChoices | undefined;

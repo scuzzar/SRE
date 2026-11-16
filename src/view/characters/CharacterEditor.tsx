@@ -2,9 +2,11 @@ import { useState } from 'react';
 import type { EditorView, ItemChoice, SkillChoice } from '../../controller';
 import type { ItemKind, Upp } from '../../model';
 import { characteristicLabel, hex, kindNames, roleText } from '../format';
-import { useGame } from '../game-context';
+import { useGame, useSnapshot } from '../game-context';
+import { haptic } from '../haptics';
 import { CloseIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
+import { CardSheet } from '../oracle/CardSheet';
 import { Form } from '../Form';
 
 const uppFields = [
@@ -17,9 +19,18 @@ const uppFields = [
 ] as const;
 
 
-/** Charakter anlegen oder bearbeiten. Die Eingaben während des Tippens hält die View; prüfen und speichern tut der Controller. */
+/**
+ * Charakter anlegen oder bearbeiten. Die Eingaben während des Tippens hält die View; prüfen und
+ * speichern tut der Controller.
+ *
+ * Neben dem Feld Notiz zieht „Karte ziehen“ die Inspirationskarte als eigenes Overlay über den
+ * Editor; was man darauf auswählt, hängt sich beim Bestätigen an den Notiztext an (neue Zeile),
+ * statt einen eigenen Logeintrag anzulegen (`card.forNote`, siehe `CardSheet`).
+ */
 export function CharacterEditor({ editor, skills, items }: { editor: EditorView; skills: readonly SkillChoice[]; items: readonly ItemChoice[] }) {
   const game = useGame();
+  const view = useSnapshot();
+  const noteCard = view.card?.forNote ? view.card : undefined;
   const [form, setForm] = useState(() => ({
     ...editor.input,
     credits: String(editor.input.credits),
@@ -50,8 +61,19 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
 
   const setUpp = (key: keyof Upp, value: number) => setForm({ ...form, upp: { ...form.upp, [key]: value } });
 
+  // Eine für die Notiz gezogene Karte bricht mit dem Editor ab, sonst bliebe sie offen und
+  // unerreichbar stehen: Die App zeigt sie, solange der Editor läuft, extra nicht im Vordergrund.
+  const closeCard = () => {
+    if (noteCard) game.discardCard();
+  };
+  const cancel = () => {
+    closeCard();
+    game.cancelEdit();
+  };
+
   /** Speichert; der Knopf unten steht außerhalb des Formulars und ruft es direkt auf. */
   const save = () => {
+    closeCard();
     const { homeworld, primary, secondary, wields, wears, place, role, ...rest } = form;
     game.saveCharacter({
       ...rest,
@@ -72,7 +94,7 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="editor-title">
         <div className="sheet-head" style={{ alignItems: 'center' }}>
           <h2 id="editor-title">{isNew ? (editor.input.npc ? 'Neuer NSC' : 'Neuer Charakter') : 'Charakter bearbeiten'}</h2>
-          <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={() => game.cancelEdit()}>
+          <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={cancel}>
             <CloseIcon />
           </button>
         </div>
@@ -265,10 +287,22 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
             <span>Credits</span>
             <input type="number" inputMode="numeric" step={1} value={form.credits} onChange={(e) => setForm({ ...form, credits: e.target.value })} />
           </label>
-          <label className="field">
-            <span>Notiz</span>
-            <textarea value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
-          </label>
+          <div className="inline-form">
+            <label className="field">
+              <span>Notiz</span>
+              <textarea value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
+            </label>
+            <button
+              type="button"
+              className="ghost"
+              onClick={() => {
+                haptic('draw');
+                game.drawCard(undefined, true);
+              }}
+            >
+              Karte ziehen
+            </button>
+          </div>
           <label className="toggle">
             <input type="checkbox" checked={form.npc ?? false} onChange={(e) => setForm({ ...form, npc: e.target.checked })} />
             <span>
@@ -330,7 +364,7 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
           )}
         </Form>
         <div className="sheet-foot">
-          <button type="button" className="ghost" onClick={() => game.cancelEdit()}>
+          <button type="button" className="ghost" onClick={cancel}>
             Abbrechen
           </button>
           <span className="count" />
@@ -339,6 +373,15 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
           </button>
         </div>
       </section>
+      {noteCard && (
+        <CardSheet
+          card={noteCard}
+          onConfirm={(text) => {
+            if (!text) return;
+            setForm((f) => ({ ...f, note: f.note.trim() ? `${f.note}\n${text}` : text }));
+          }}
+        />
+      )}
     </div>
   );
 }

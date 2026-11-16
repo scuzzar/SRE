@@ -908,7 +908,7 @@ export class GameController {
 
   /**
    * Zieht eine Karte; die Frage schreibt man auf die offene Karte und gibt sie beim Bestätigen mit.
-   * Aus dem Notizblatt gezogen (`forNote`) landet die Auswahl beim Bestätigen im Notiztext statt im Log.
+   * Aus dem Feld Notiz des Charakter-Editors gezogen (`forNote`) landet die Auswahl beim Bestätigen im Notiztext statt im Log.
    */
   drawCard(question?: string, forNote = false): void {
     this.update({ card: drawCard(this.deps.random, question), cardFor: forNote ? 'note' : undefined });

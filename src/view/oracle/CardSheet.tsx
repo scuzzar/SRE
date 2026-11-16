@@ -31,7 +31,7 @@ const LEAVE_MS = 260;
  * die Karte nach unten in den Log sinken, Verwerfen wirft sie zur Seite weg. Ein Tippen, solange sie
  * noch hereinkommt, beendet die Animation und zeigt sofort die ganze Karte, ohne etwas auszuwählen.
  *
- * Mit `onConfirm` (aus dem Notizblatt gezogen, `card.forNote`) übernimmt „Bestätigen“ nicht in den
+ * Mit `onConfirm` (aus dem Feld Notiz des Charakter-Editors gezogen, `card.forNote`) übernimmt „Bestätigen“ nicht in den
  * Log, sondern gibt die Auswahl als Text weiter; die Karte schließt ohne Logeintrag.
  */
 export function CardSheet({ card, onConfirm }: { card: CardView; onConfirm?: (text: string) => void }) {
