@@ -1633,6 +1633,19 @@ describe('Subsektor und Weltenerschaffung', () => {
     expect(game.snapshot().selected).toBeUndefined();
   });
 
+  it('ein nicht erzeugtes oder leeres Feld antippen schließt die offene Weltkarte und wählt das Feld', async () => {
+    const world = { ...ref.demoWorld, column: 1, row: 1, name: 'Regina' };
+    const empty = { column: 3, row: 3, empty: true, uwp: {} };
+    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign([]), [world, empty])));
+    game.chooseHex(1, 1);
+    expect(game.snapshot().world?.name).toBe('Regina');
+    game.chooseHex(2, 2);
+    expect(game.snapshot()).toMatchObject({ world: undefined, selected: { id: '0202', state: 'open' } });
+    game.chooseHex(1, 1);
+    game.chooseHex(3, 3);
+    expect(game.snapshot()).toMatchObject({ world: undefined, selected: { id: '0303', state: 'empty' } });
+  });
+
   it('verwirft eine Welt in Erschaffung', async () => {
     const { game } = await started(fixedRandom(5));
     game.chooseHex(2, 2);

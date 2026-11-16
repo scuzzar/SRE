@@ -759,18 +759,17 @@ Wie eine Karten-App (Owner, 14. November 2026):
 
 ### Weltsymbol
 
-Hat eine Welt eine Oberflächenkarte, zeichnet das Weltsymbol (Sektorkarte, Kopfzeile, Weltkarte)
+Hat eine Welt eine Oberflächenkarte, zeichnet das Weltsymbol (Sektorkarte, Kopfzeile, Globus)
 die echten Felder statt Zufallsrauschen. So sieht das Symbol aus wie die Welt.
 
 ### Wo der Globus erscheint
 
 Als eigener Bildschirm über der Weltkarte:
 - Das Symbol des Aufenthaltsorts in der Kopfzeile öffnet den Globus direkt.
-- Auf der **Weltkarte** einer fertigen Welt lässt sich das große Weltsymbol oben rechts antippen.
-- Im Abschnitt **Oberfläche** der Weltkarte steht ein Knopf „Globus“.
+- Auf der **Weltkarte** einer fertigen Welt steht unten der Knopf **„Öffnen“**.
 - Hat die Welt noch keine Oberflächenkarte, entsteht sie beim ersten Öffnen.
 - Ein Knopf „Neu würfeln“ ersetzt die ganze Karte (nach Rückfrage).
-- Bei Größe 0 gibt es weder Knopf noch antippbares Symbol.
+- Bei Größe 0 gibt es den Knopf nicht.
 
 ## Was wir bewusst weglassen
 

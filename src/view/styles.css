@@ -4000,22 +4000,25 @@ button:disabled {
   color: var(--muted);
 }
 
-/* Die Welt bleibt oben stehen, nur die Würfe darunter scrollen; dafür ist sie knapp gesetzt. */
-.sheet.world-sheet .world-card {
-  gap: 6px;
+/* Die Welt im Feld: schlicht wie das angetippte Feld des Globus, knapp gesetzt. */
+.world-plain {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.sheet.world-sheet .world-card .pc-head {
-  min-height: 0;
+.world-plain .globe-sheet-sub {
+  margin: 0;
 }
 
-.sheet.world-sheet .world-profile {
+.field-card .world-profile {
   gap: 1px 10px;
   font-size: 12.5px;
   line-height: 1.35;
 }
 
-.sheet.world-sheet .world-text {
+.field-card .world-text {
   display: inline-block;
   max-width: 100%;
   overflow: hidden;
@@ -4025,7 +4028,7 @@ button:disabled {
 }
 
 /* Die Temperatur ist ein Wort mit kurzer Beschreibung; sie bricht um, statt abgeschnitten zu werden. */
-.sheet.world-sheet .world-temperature .world-text {
+.field-card .world-temperature .world-text {
   display: inline;
   white-space: normal;
 }
@@ -4042,13 +4045,13 @@ button:disabled {
   margin: -4px -6px -4px 0;
 }
 
-.sheet.world-sheet .world-profile dd {
+.field-card .world-profile dd {
   min-width: 0;
   display: flex;
   white-space: nowrap;
 }
 
-.sheet.world-sheet .world-profile .world-text {
+.field-card .world-profile .world-text {
   flex: 1 1 auto;
   min-width: 0;
 }
@@ -4783,7 +4786,7 @@ button:disabled {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-/* Die Reihe an der Welt (Globus öffnen, Gruppe ist hier, Hierher reisen): dieselbe Technik wie beim
+/* Die Reihe an der Welt (Hierher reisen, Gruppe platzieren, Öffnen): dieselbe Technik wie beim
    Dock, ohne dass sie in einem stecken muss, denn sie liegt mitten im Blatt der Weltkarte. */
 .world-actions:has(> :only-child) {
   grid-template-columns: minmax(0, 1fr);
@@ -4795,12 +4798,6 @@ button:disabled {
 
 .world-actions:has(> :nth-child(3)) {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-/* Gruppe ist hier, solange sie es ist: wie ein gedrückter Knopf. */
-.action[aria-pressed='true'] {
-  background: var(--text);
-  color: var(--ink);
 }
 
 .shop-scroll {
@@ -7943,15 +7940,6 @@ button:disabled {
   text-decoration-color: rgba(255, 255, 255, 0.35);
   cursor: pointer;
   font: inherit;
-}
-
-.world-top-globe {
-  display: block;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
 }
 
 .world-surface-head {

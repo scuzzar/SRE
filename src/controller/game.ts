@@ -1305,7 +1305,7 @@ export class GameController {
     this.update({ encounterIntro: true });
   }
 
-  /** Im Kampf: Die Gruppe ist auf dieser fertigen Welt (wie „Gruppe ist hier“ auf der Weltkarte). */
+  /** Im Kampf: Die Gruppe ist auf dieser fertigen Welt (wie „Gruppe platzieren“ auf der Weltkarte). */
   stayAt(id: string): void {
     this.inFight(() => this.change(setLocation(this.campaign, id), { combatNote: undefined }));
   }
@@ -1789,9 +1789,8 @@ export class GameController {
 
   /**
    * Ein Feld des Subsektors antippen: Ein nicht erzeugtes oder leeres Feld wird auf der Karte
-   * gewählt (unten steht dann das Vorkommen); jedes erzeugte Feld öffnet seine Weltkarte, fertig
-   * oder in Erschaffung. Von dort führt „Globus öffnen“ (am Weltsymbol oder bei der Oberfläche) zum
-   * Globus.
+   * gewählt (unten steht dann das Vorkommen) und schließt eine offene Weltkarte; jedes erzeugte Feld
+   * öffnet seine Weltkarte, fertig oder in Erschaffung. Von dort führt „Öffnen“ zum Globus.
    * Dasselbe gewählte Feld noch einmal antippen hebt die Wahl auf.
    */
   chooseHex(column: number, row: number): void {
@@ -1801,7 +1800,7 @@ export class GameController {
     const world = hex !== undefined && !hex.empty;
     if (world) return this.update({ world: { column, row, rolls: [] }, worldError: undefined, selected: undefined });
     const same = this.state.selected?.column === column && this.state.selected.row === row;
-    this.update({ selected: same ? undefined : { column, row }, worldError: undefined });
+    this.update({ selected: same ? undefined : { column, row }, world: undefined, worldError: undefined });
   }
 
   /** Hebt die Wahl eines Feldes auf. */

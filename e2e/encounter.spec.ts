@@ -19,16 +19,15 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
     await page.waitForTimeout(1100);
     await page.mouse.up();
     if (await page.locator('.sector-dock').getByText('Kein System in diesem Feld').isVisible()) continue;
-    const dialog = page.getByRole('dialog', { name: `Weltenerschaffung ${id}` });
-    await dialog.getByLabel('Name der Welt').fill('Regina');
-    await dialog.getByRole('button', { name: 'Übernehmen' }).click();
-    world = page.getByRole('dialog', { name: `Regina · ${id}` });
+    await page.getByLabel('Name der Welt').fill('Regina');
+    await page.getByRole('button', { name: 'Übernehmen' }).click();
+    world = page.getByRole('region', { name: `Regina · ${id}` });
     worldId = id;
     break;
   }
-  // Die Demo-Kampagne steht auf Kessra; „Gruppe ist hier“ auf der Weltkarte bringt sie nach Regina.
-  await world!.getByRole('button', { name: 'Gruppe ist hier' }).click();
-  await world!.getByRole('button', { name: 'Schließen' }).first().click();
+  // Die Demo-Kampagne steht auf Kessra; „Gruppe platzieren“ auf der Weltkarte bringt sie nach Regina.
+  await page.getByRole('button', { name: 'Gruppe platzieren' }).click();
+  await world!.getByRole('button', { name: 'Schließen' }).click();
 
   // Kampf ohne Begegnung: nur die Waffentabelle, keine Begegnungsauswahl.
   await page.getByRole('navigation').getByRole('button', { name: 'Kampf' }).click();
