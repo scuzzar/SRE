@@ -81,6 +81,7 @@ hide <<browser>> stereotype
     key: string
     changedAt: datetime
     /funds: number
+    $new("2026-11-16c", "/ship: Ship [0..1]")
     quantityDie: number [0..1]
     /load: number
     /capacity: number
@@ -137,7 +138,8 @@ Conflict "*" --> "0..1" Campaign : local
 Conflict "*" --> "0..1" Campaign : remote
 
 ' Schiffe
-Campaign "1" *-- "0..1" Ship : ship
+Campaign "1" *-$goneArrow("2026-11-16c")-> "0..1" Ship : ship
+Campaign "1" *-$newArrow("2026-11-16c")-> "0..*" Ship : ships
 
 ' Zeit und Reisen
 
@@ -178,4 +180,5 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Geräte-Daten: das Gerät hält sie über Kampagnen hinweg, nicht im Spielstand |
 endlegend
+class Campaign #line:d0021b;line.bold
 @enduml

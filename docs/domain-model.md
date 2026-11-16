@@ -377,6 +377,16 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > nicht ins Leere zeigen); `ShipDesign.computer` ist Verweis auf ein Rechnermodell
 > statt Text. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-16b-schiff-retired-und-deckplaene.png`](changes/2026-11-16b-schiff-retired-und-deckplaene.png).
+>
+> Noch offen (Kennzeichen 2026-11-16c): **Die Kampagne hält alle ihre Schiffe.** Der
+> Inhalt ist mit 16b schon freigegeben (ausgediente Schiffe bleiben mit `retired` in der
+> Kampagne, Buchungen mit `forShip` zeigen weiter auf sie) – die Zeichnung war dazu
+> unvollständig: Ein einzelnes `ship`-Feld kann kein ausgeblendetes Schiff aufnehmen, und
+> `forShip` brauchte eine stabile Id. Neu im Bild: die Komposition `Campaign.ships` (0..*,
+> alle Schiffe auch mit `retired`) und das abgeleitete `/ship` am `Campaign` – das aktive
+> Schiff, wie `focus` beim Charakter; die Schiffs-Id (s1, s2, …) ist wie bei Charakteren
+> nicht gezeichnet. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-16c-schiffe-der-kampagne.png`](changes/2026-11-16c-schiffe-der-kampagne.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -408,8 +418,9 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 | Schiffe | [views/schiffe.png](views/schiffe.png) |
 
-Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
-keine.
+Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist
+[2026-11-16c](changes/2026-11-16c-schiffe-der-kampagne.png): die Kampagne hält alle ihre
+Schiffe (`ships`), das aktive ist abgeleitet.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -689,7 +700,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Einheimisches Leben | `Surface.life` | Ob auf der Welt eigenes Leben entstanden ist; ohne Leben ist das Land später Wüste |
 | Kontinente- und Ozeane-Tabelle | `SurfaceRow`, `SurfaceTable` | Die beiden Tabellen des *World Builder's Handbook* (S. 70), aus denen die Land- bzw. Wassermassen kommen |
 | Würfelausdruck | `DiceExpr` | Wie viele W6 plus welcher DM, z. B. 2W6 + 1 oder 3W6 − 3 |
-| Schiff | `Ship`, `Campaign.ship` | Das eine Schiff der Gruppe als Basis: Entwurf, Name, Treibstoff und Fracht in Tonnen, offene Restschuld |
+| Schiff | `Ship`, `Campaign.ships`, `Campaign./ship` | Das eine Schiff der Gruppe als Basis: Entwurf, Name, Treibstoff und Fracht in Tonnen, offene Restschuld. Die Kampagne hält alle ihre Schiffe (auch die ausgeblendeten, 2026-11-16c); `/ship` ist das nicht ausgeblendete, wie `focus` beim Charakter; die Schiffs-Id (s1, s2, …) ist wie bei Charakteren nicht gezeichnet |
 | Schiffsentwurf | `ShipDesign` | Referenzdaten eines Standardentwurfs (Scout/Courier, Free Trader, …): Rumpf, Antriebe, Treibstofftank, Computer, Kabinen, Niedrigbetten, Hardpoints, Laderaum, Crewbedarf, Bauzeit; siehe [`regeln-schiffe.md`](regeln-schiffe.md) unter *Standardentwürfe* |
 | Grundpreis | `ShipDesign.basePrice` | Was ein neues Schiff dieses Entwurfs nach SR 35–37 kostet; ein fester Wert, weil sich Rumpf, Antriebe, Energiewerk und Computer ohne die Tabellen aus *Charts and Tables* nicht einzeln bepreisen lassen |
 | Preis | `Ship.price` | Was dieses eine Schiff tatsächlich gekostet hat; beim Erwerb gleich dem Grundpreis seines Entwurfs, kann aber abweichen (z. B. gebrauchtes Schiff, später) |
@@ -2563,6 +2574,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     es weiter. `Campaign.ship` und der Reiter Schiff kennen nur das nicht ausgeblendete
     Schiff. Die Regel *Worauf der Log verweist, wird nie gelöscht* gilt damit auch für
     Schiffe.
+  - **Alle Schiffe bleiben in der Kampagne** (Kennzeichen 2026-11-16c, Inhalt mit 16b
+    freigegeben). Die Kampagne hält eine Liste aller ihrer Schiffe (`ships`, Ids s1, s2, …,
+    wie bei Charakteren nicht gezeichnet); das aktive ist abgeleitet: das nicht
+    ausgeblendete (`/ship`), wie `focus` beim Charakter. Ein neues Schiff – Kauf oder
+    Wechseln nach dem Ship-Vorteil – kommt hinzu, das alte bleibt mit `retired` stehen.
+    Buchungen der Art `ship` verweisen mit `forShip` auf die Id und bleiben so auch für
+    ausgeblendete Schiffe lesbar.
   - **Software, Rechner, was an Bord ist** (freigegeben am 16. November 2026). Nach SE 10 und 13:
     `ComputerModel` hält die neun Rechnermodelle (Preis, Tonnen, CPU und Storage in Space,
     TL; die Modellzahl ist die höchste Sprungzahl – Jump-4 braucht Modell/4 – und der Wert

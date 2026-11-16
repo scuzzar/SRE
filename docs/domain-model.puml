@@ -87,6 +87,7 @@ hide <<browser>> stereotype
     key: string
     changedAt: datetime
     /funds: number
+    $new("2026-11-16c", "/ship: Ship [0..1]")
     quantityDie: number [0..1]
     /load: number
     /capacity: number
@@ -1013,7 +1014,8 @@ Booking "*" --> "0..1" Hex : in
 Booking --> BookingKind
 
 ' Schiffe
-Campaign "1" *-- "0..1" Ship : ship
+Campaign "1" *-$goneArrow("2026-11-16c")-> "0..1" Ship : ship
+Campaign "1" *-$newArrow("2026-11-16c")-> "0..*" Ship : ships
 Ship "*" --> "1" ShipDesign : design
 Ship "1" *-- "0..*" ShipSoftware : software
 ShipSoftware "*" --> "1" Software : program

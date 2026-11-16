@@ -370,6 +370,16 @@
         "Campaign",
         "Booking"
       ]
+    },
+    {
+      "id": "2026-11-16c",
+      "file": "2026-11-16c-schiffe-der-kampagne",
+      "title": "Die Kampagne hält alle ihre Schiffe: ships-Liste, das aktive Schiff abgeleitet, Buchungen verweisen per Schiff-Id",
+      "approved": false,
+      "show": [
+        "Campaign",
+        "Booking"
+      ]
     }
   ]
 }

@@ -202,4 +202,5 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Geräte-Daten: das Gerät hält sie über Kampagnen hinweg, nicht im Spielstand |
 endlegend
+class Campaign #line:d0021b;line.bold
 @enduml
