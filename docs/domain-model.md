@@ -394,6 +394,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Kampf: Waffen, Angriff, Wunden, Heilung | [views/kampf.png](views/kampf.png) |
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
+| Schiffe | [views/schiffe.png](views/schiffe.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist zurzeit
 keine.
@@ -497,7 +498,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Low Lottery | `Journey./pot`, `/winner`, `lot` | Cr 10 je Low Passage; wer die Zahl der Überlebenden am besten tippt und selbst überlebt, gewinnt |
 | Gruppenkasse | `Campaign./funds` | Das gemeinsame Geld der Gruppe in Cr, die Summe aller Buchungen |
 | Buchung | `Booking` | Eine Bewegung der Gruppenkasse: Einnahme, Ausgabe, Einzahlung, Auszahlung oder Kauf |
-| Art der Buchung | `BookingKind` | income (Einnahme, z. B. Belohnung), expense (Ausgabe), deposit (Einzahlung eines Charakters), payout (Auszahlung an einen Charakter), purchase (Kauf), sale (Verkauf), lottery (Gewinn der Low Lottery) |
+| Art der Buchung | `BookingKind` | income (Einnahme, z. B. Belohnung), expense (Ausgabe), deposit (Einzahlung eines Charakters), payout (Auszahlung an einen Charakter), purchase (Kauf), sale (Verkauf), lottery (Gewinn der Low Lottery), rent (Miete je Tag eines Fahrzeugs), fare (Fahrpreis im Linienverkehr), ship (Schiff: voller Preis, Anzahlung und jede Monatsrate der Bankfinanzierung) |
 | Angebot | `Hex./offer` | Was man auf der Welt kaufen kann: nach TL und Gesetz der Welt |
 | Shop | (Reiter „Shop“) | Der Screen für Kasse und Einkauf auf dem Aufenthaltsort |
 | Magazin | `Weapon.ammo` | Der Gegenstand, der eine Schusswaffe lädt, z. B. Rifle Ammo (20 rds) oder LC Power Pack |
@@ -2502,7 +2503,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     günstiger). Ein solcher Preisnachlass ist **nicht Teil dieses Schritts** (offene Frage, siehe
     unten), aber das Feld ist schon da, damit `price` nicht rückwirkend am Entwurf hängt, sobald es
     ihn gibt.
-  - **Erwerb.** Drei Wege, alle im Shop bzw. in der Charaktererschaffung; in allen dreien wird
+  - **Erwerb.** Drei Wege; der Ort ist Sache der Ansicht (der UI-Mock zeigt dafür ein Werft-Blatt im
+    Reiter Schiff, die Abmusterung würfelt in der Charaktererschaffung); in allen dreien wird
     `Ship.price` zunächst auf `design.basePrice` gesetzt (kein Nachlass in diesem Schritt):
     1. **Bar aus der Kasse:** der volle Preis (`price`) wird sofort gebucht (`BookingKind.ship`),
        das Schiff entsteht ohne Restschuld, mit vollem Tank und leerem Laderaum.
@@ -2511,10 +2513,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        **200 % von `price`** festgelegt und bleibt so stehen, auch wenn sich `price` oder der Entwurf
        später ändern (480 Monatsraten à ein Vierhundertachtzigstel der Kreditsumme ergeben zusammen
        mit der Anzahlung die 220 % aus SR 29); die **Restschuld** (`loanBalance`) beginnt gleich der
-       Kreditsumme und sinkt mit jeder bezahlten Rate. Die **Monatsrate** (`/monthlyPayment`) folgt
+       Kreditsumme und sinkt mit jeder bezahlten Rate; ist sie auf 0 (bezahlt oder durch den
+       Merchant-Vorteil), entfällt `nextPaymentDay`. Die **Monatsrate** (`/monthlyPayment`) folgt
        daraus (`initialLoan / 480`), nicht noch einmal aus `price`. Jedes Mal, wenn die Spielzeit
        den Tag `nextPaymentDay` erreicht oder überschreitet (beim Tage-vergehen-lassen, bei Woche
-       beenden oder einer Fahrt), wird die Rate automatisch aus der Kasse gebucht und die Restschuld
+       beenden oder einer Fahrt), wird die Rate automatisch aus der Kasse gebucht (Buchung der Art
+       `ship`, mit `forShip` auf das Schiff) und die Restschuld
        sinkt; reicht die Kasse nicht, bleibt die Rate offen (Buchung mit Hinweistext „Rate nicht
        bezahlt“) und `nextPaymentDay` rückt trotzdem einen Monat (30 Tage) weiter. **✱
        Hausregel/offener Punkt:** Die Pfändung bei Zahlungsverzug (SR 28, Distanz-DM zur Heimatwelt
@@ -2535,13 +2539,30 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        Verkaufserlös). Die alten Gegenstände `scout-ship` und `free-trader` (Art `ship`) entfallen
        aus `items.json`, sobald der Code folgt; ihre Preise stehen jetzt als `basePrice` an
        `ShipDesign`.
-  - **Offene Fragen für einen späteren Schritt:** Wie die Gruppe mit dem eigenen Schiff zwischen
-    Sternen springt (ergänzt die gekaufte Passage, ersetzt sie nicht, siehe Owner-Entscheidung vom
-    16. November 2026) – das braucht noch eine eigene Reise-Mechanik mit Treibstoffverbrauch pro
-    Sprung und ist bewusst nicht Teil dieses Schritts. Ebenso offen: Pfändung bei Zahlungsverzug
-    (siehe oben), Verkauf eines Schiffs, mehrere Schiffe, Custom-Entwürfe, Small Craft als eigene
-    `ShipDesign`, und der **Preisnachlass für ein gebrauchtes Standardschiff** (SR 31: 10–40 % je
-    nach Alter) über `Ship.price`.
+  - **Offene Fragen für einen späteren Schritt:**
+    - Wie die Gruppe mit dem eigenen Schiff zwischen Sternen springt (ergänzt die gekaufte
+      Passage, ersetzt sie nicht, siehe Owner-Entscheidung vom 16. November 2026) – das braucht
+      eine eigene Reise-Mechanik mit Treibstoffverbrauch pro Sprung (Formel `0,1 × Jn × M +
+      10 × Pn`, SR 32; dafür fehlen am Entwurf noch das Rating des Energiewerks und die
+      Antriebsbuchstaben, `jump` und `maneuver` halten nur die Ergebnisse) und ist bewusst
+      nicht Teil dieses Schritts.
+    - **Buchungen auf ein entfallenes Schiff:** Beim *Wechseln* nach dem Ship-Vorteil (und
+      später beim Verkauf) zeigen `Booking.forShip` und die Raten auf ein Schiff, das nicht
+      mehr da ist. Wie beim Charakter ein `retired`-Feld am `Ship` (das Schiff bleibt, nur
+      ausgeblendet) oder die Regel *Worauf der Log verweist, wird nie gelöscht* auf Schiffe
+      ausweiten – noch nicht abgestimmt.
+    - **Subventionierte Entwürfe** (Subsidized Merchant, Subsidized Liner) stehen da wie die
+      anderen; die Subventionsregeln (SR 29: feste Route, Regierung zahlt 50 % der Monatsrate,
+      schuldenfrei nach 20 Jahren, Mobilmachung im Notfall) sind nicht modelliert.
+    - **Deckpläne und Software aus dem UI-Mock** (`docs/mock/schiff-tab.html`): Die Ansicht
+      zeigt beides, das Modell kennt es noch nicht. Deckpläne wären gespeicherter Stand am
+      `Ship` (bis zu drei Bilder; offen: Bild als Daten-URL in der Kampagnendatei, also mit
+      Export und OneDrive, oder Datei außerhalb); Software je Entwurf als Referenztext an
+      `ShipDesign`, solange es keinen Software-Kauf gibt. Vor dem Bauen: Begriffe zuerst in die
+      Tabelle, Diagramm auf dem üblichen Weg.
+    - Ebenso offen: Pfändung bei Zahlungsverzug (siehe oben), Verkauf eines Schiffs, mehrere
+      Schiffe, Custom-Entwürfe, Small Craft als eigene `ShipDesign`, und der **Preisnachlass
+      für ein gebrauchtes Standardschiff** (SR 31: 10–40 % je nach Alter) über `Ship.price`.
 
 ## Wo der Code noch nicht folgt
 
