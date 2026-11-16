@@ -219,8 +219,11 @@ Lebenserhaltung, Ausrüstung, Bewaffnung, Steuerung, Computer, Laderaum. Pflicht
   zusätzlich **Notfall-Niedrigbetten** (1 t, Cr100.000, 4 Personen, keine zahlenden Passagiere).
 - **D. Treibstoff**: Formel `0,1 × Jn × M + 10 × Pn` (M = Schiffstonnage, Jn = Jump-Zahl, Pn =
   Energiewerk-Rating) für Energiewerk + Antrieb vier Wochen lang plus einen Sprung; ein niedrigerer
-  Treibstoffstand erlaubt nur einen entsprechend niedrigeren Sprung.
-- **E. Laderaum (Cargo Hold)**: kostenlos in der Planung, Kapazität begrenzt die Frachtmenge.
+  Treibstoffstand erlaubt nur einen entsprechend niedrigeren Sprung. Der **Tank selbst kostet
+  nichts** („there is no cost“, SR 32); bezahlt wird nur der Treibstoff, mit dem man ihn füllt
+  (siehe [Laufende Kosten](#laufende-kosten)).
+- **E. Laderaum (Cargo Hold)**: **kostenlos** in der Planung („there is no cost“, SR 32); die
+  Kapazität begrenzt nur, wie viel Fracht hineinpasst.
 - **F. Bewaffnung**: jeder **Hardpoint** kostet Cr100.000 (keine Tonnage), egal ob genutzt. Ein
   **Turret** braucht 1 t Feuerleitung; Single/Double/Triple-Mounts fassen 1/2/3 Waffen. Verfügbare
   Waffen: Pulse Laser, Beam Laser, Missile Rack, Sandcaster (siehe [Raumkampf](#raumkampf)). Waffen
