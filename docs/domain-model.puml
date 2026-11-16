@@ -109,7 +109,7 @@ hide <<value>> stereotype
     lottery
     rent
     fare
-    $new("2026-11-16", "ship")
+    ship
   }
   class Character $charakter {
     name: string
@@ -159,32 +159,32 @@ hide <<value>> stereotype
   }
 
 ' Schiffe
-  class Ship $schiffe $newClass("2026-11-16") {
-    $new("2026-11-16", "name: string")
-    $new("2026-11-16", "fuel: number")
-    $new("2026-11-16", "cargo: number")
-    $new("2026-11-16", "price: number")
-    $new("2026-11-16", "initialLoan: number [0..1]")
-    $new("2026-11-16", "loanBalance: number [0..1]")
-    $new("2026-11-16", "/monthlyPayment: number [0..1]")
-    $new("2026-11-16", "nextPaymentDay: number [0..1]")
+  class Ship $schiffe {
+    name: string
+    fuel: number
+    cargo: number
+    price: number
+    initialLoan: number [0..1]
+    loanBalance: number [0..1]
+    /monthlyPayment: number [0..1]
+    nextPaymentDay: number [0..1]
   }
-  class ShipDesign <<reference>> $schiffe $newClass("2026-11-16") {
-    $new("2026-11-16", "code: string")
-    $new("2026-11-16", "name: string")
-    $new("2026-11-16", "hull: number")
-    $new("2026-11-16", "jump: number")
-    $new("2026-11-16", "maneuver: number")
-    $new("2026-11-16", "fuel: number")
-    $new("2026-11-16", "computer: string")
-    $new("2026-11-16", "staterooms: number")
-    $new("2026-11-16", "lowBerths: number")
-    $new("2026-11-16", "hardpoints: number")
-    $new("2026-11-16", "cargo: number")
-    $new("2026-11-16", "crew: string")
-    $new("2026-11-16", "basePrice: number")
-    $new("2026-11-16", "months: number")
-    $new("2026-11-16", "streamlined: boolean")
+  class ShipDesign <<reference>> $schiffe {
+    code: string
+    name: string
+    hull: number
+    jump: number
+    maneuver: number
+    fuel: number
+    computer: string
+    staterooms: number
+    lowBerths: number
+    hardpoints: number
+    cargo: number
+    crew: string
+    basePrice: number
+    months: number
+    streamlined: boolean
   }
 
 ' Charaktererschaffung und Lebenslauf
@@ -206,7 +206,7 @@ hide <<value>> stereotype
     target: number [0..1]
     wants: boolean [0..1]
     /success: boolean [0..1]
-    $new("2026-11-16", "shipChoice: ShipChoice [0..1]")
+    shipChoice: ShipChoice [0..1]
   }
 
 ' Subsektor und Welten
@@ -680,7 +680,7 @@ hide <<value>> stereotype
     change: number [0..1]
     credits: number [0..1]
     weapon: boolean
-    $new("2026-11-16", "shipDebtFree: boolean [0..1]")
+    shipDebtFree: boolean [0..1]
   }
   class Item <<reference>> $shop {
     name: string
@@ -930,9 +930,9 @@ hide <<value>> stereotype
     cash
     benefit
   }
-  enum ShipChoice <<value>> $erschaffung $newClass("2026-11-16") {
-    $new("2026-11-16", "keep")
-    $new("2026-11-16", "switch")
+  enum ShipChoice <<value>> $erschaffung {
+    keep
+    switch
   }
   enum GenerationStep <<value>> $erschaffung {
     characteristics
@@ -981,10 +981,10 @@ Booking "*" --> "0..1" Hex : in
 Booking --> BookingKind
 
 ' Schiffe
-Campaign "1" *-$newArrow("2026-11-16")-- "0..1" Ship : ship
-Ship "*" -$newArrow("2026-11-16")-> "1" ShipDesign : design
-Booking "*" -$newArrow("2026-11-16")-> "0..1" Ship : forShip
-Gain "*" -$newArrow("2026-11-16")-> "0..1" ShipDesign : ship
+Campaign "1" *-- "0..1" Ship : ship
+Ship "*" --> "1" ShipDesign : design
+Booking "*" --> "0..1" Ship : forShip
+Gain "*" --> "0..1" ShipDesign : ship
 
 ' Zeit und Reisen
 LogEntry <|-- TimePassed
@@ -1016,7 +1016,7 @@ Character "1" *-- "0..1" Place : place
 Character "*" --> "0..1" Patron : patron
 Character --> NpcRole
 CareerRoll --> RollKind
-CareerRoll -$newArrow("2026-11-16")-> "0..1" ShipChoice
+CareerRoll --> "0..1" ShipChoice
 CareerRoll --> "0..1" Characteristic : of
 CareerRoll "*" --> "0..1" Service : for
 CareerRoll "*" --> "0..1" Table : on

@@ -358,12 +358,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Vehicle.tl`, `Vehicle.fare`, `Leg./fare`, `TripDay.fare`, `BookingKind.fare`. Der Ausschnitt dazu
 > liegt unter [`changes/2026-11-15-linienflug.png`](changes/2026-11-15-linienflug.png).
 >
-> **Entwurf vom 16. November 2026, wartet auf Freigabe** (Kennzeichen 2026-11-16): **Schiffe als
-> Basis der Gruppe** (siehe *Schiffe*, RAW-Regeln in [`regeln-schiffe.md`](regeln-schiffe.md)). Erster
-> von drei Schritten (danach Handel, dann Raumkampf). Neu im Bild: `Ship` (mit `price`, eigener
-> gezahlter Preis, getrennt vom `basePrice` des Entwurfs), `ShipDesign`, `Campaign.ship`,
-> `BookingKind.ship`, `Booking.forShip`, `Gain.ship`, `Gain.shipDebtFree`, `CareerRoll.shipChoice`,
-> `ShipChoice`. Der Ausschnitt dazu liegt unter
+> Am 16. November 2026 freigegeben (Kennzeichen 2026-11-16): **Schiffe als Basis der Gruppe** (siehe
+> *Schiffe*, RAW-Regeln in [`regeln-schiffe.md`](regeln-schiffe.md)). Erster von drei Schritten
+> (danach Handel, dann Raumkampf). Neu im Bild: `Ship` (mit `price`, eigener gezahlter Preis,
+> getrennt vom `basePrice` des Entwurfs), `ShipDesign`, `Campaign.ship`, `BookingKind.ship`,
+> `Booking.forShip`, `Gain.ship`, `Gain.shipDebtFree`, `CareerRoll.shipChoice`, `ShipChoice`. Der
+> Ausschnitt dazu liegt unter
 > [`changes/2026-11-16-schiffe-basis.png`](changes/2026-11-16-schiffe-basis.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
@@ -2471,7 +2471,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 - **Später**, nicht in diesem Schritt: der Rand der habitablen Zone beim Temperaturwurf, Reisezonen (Amber, Red), Verbindungen
   (communications routes), Subsector Capital, ein Name für den Subsektor, mehrere Subsektoren zu
   einem Sektor und eine fertige Welt wieder löschen.
-- **Schiffe** (Entwurf vom 16. November 2026, Kennzeichen 2026-11-16, **wartet auf Freigabe**). Erster
+- **Schiffe** (freigegeben am 16. November 2026, Kennzeichen 2026-11-16). Erster
   Schritt von dreien (Basis der Gruppe; später Handel, dann Raumkampf), RAW-Regeln vollständig in
   [`regeln-schiffe.md`](regeln-schiffe.md). Die Gruppe hat **höchstens ein Schiff** (`Campaign.ship`),
   wie das Gruppengepäck.

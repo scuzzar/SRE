@@ -77,32 +77,32 @@ hide <<value>> stereotype
   class Booking $shop
 
 ' Schiffe
-  class Ship $schiffe $newClass("2026-11-16") {
-    $new("2026-11-16", "name: string")
-    $new("2026-11-16", "fuel: number")
-    $new("2026-11-16", "cargo: number")
-    $new("2026-11-16", "price: number")
-    $new("2026-11-16", "initialLoan: number [0..1]")
-    $new("2026-11-16", "loanBalance: number [0..1]")
-    $new("2026-11-16", "/monthlyPayment: number [0..1]")
-    $new("2026-11-16", "nextPaymentDay: number [0..1]")
+  class Ship $schiffe {
+    name: string
+    fuel: number
+    cargo: number
+    price: number
+    initialLoan: number [0..1]
+    loanBalance: number [0..1]
+    /monthlyPayment: number [0..1]
+    nextPaymentDay: number [0..1]
   }
-  class ShipDesign <<reference>> $schiffe $newClass("2026-11-16") {
-    $new("2026-11-16", "code: string")
-    $new("2026-11-16", "name: string")
-    $new("2026-11-16", "hull: number")
-    $new("2026-11-16", "jump: number")
-    $new("2026-11-16", "maneuver: number")
-    $new("2026-11-16", "fuel: number")
-    $new("2026-11-16", "computer: string")
-    $new("2026-11-16", "staterooms: number")
-    $new("2026-11-16", "lowBerths: number")
-    $new("2026-11-16", "hardpoints: number")
-    $new("2026-11-16", "cargo: number")
-    $new("2026-11-16", "crew: string")
-    $new("2026-11-16", "basePrice: number")
-    $new("2026-11-16", "months: number")
-    $new("2026-11-16", "streamlined: boolean")
+  class ShipDesign <<reference>> $schiffe {
+    code: string
+    name: string
+    hull: number
+    jump: number
+    maneuver: number
+    fuel: number
+    computer: string
+    staterooms: number
+    lowBerths: number
+    hardpoints: number
+    cargo: number
+    crew: string
+    basePrice: number
+    months: number
+    streamlined: boolean
   }
 
 ' Charaktererschaffung und Lebenslauf
@@ -122,10 +122,10 @@ hide <<value>> stereotype
 ' Kampagne
 
 ' Schiffe
-Campaign "1" *-$newArrow("2026-11-16")-- "0..1" Ship : ship
-Ship "*" -$newArrow("2026-11-16")-> "1" ShipDesign : design
-Booking "*" -$newArrow("2026-11-16")-> "0..1" Ship : forShip
-Gain "*" -$newArrow("2026-11-16")-> "0..1" ShipDesign : ship
+Campaign "1" *-- "0..1" Ship : ship
+Ship "*" --> "1" ShipDesign : design
+Booking "*" --> "0..1" Ship : forShip
+Gain "*" --> "0..1" ShipDesign : ship
 
 ' Zeit und Reisen
 
@@ -156,7 +156,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class Ship #line:d0021b;line.bold
-class ShipDesign #line:d0021b;line.bold
-class Gain #line:d0021b;line.bold
 @enduml

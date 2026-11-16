@@ -91,7 +91,7 @@ hide <<value>> stereotype
     lottery
     rent
     fare
-    $new("2026-11-16", "ship")
+    ship
   }
   class Character $charakter
   class Possession $shop {
@@ -100,7 +100,7 @@ hide <<value>> stereotype
   }
 
 ' Schiffe
-  class Ship $schiffe $newClass("2026-11-16")
+  class Ship $schiffe
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -154,7 +154,7 @@ Booking "*" --> "0..1" Hex : in
 Booking --> BookingKind
 
 ' Schiffe
-Booking "*" -$newArrow("2026-11-16")-> "0..1" Ship : forShip
+Booking "*" --> "0..1" Ship : forShip
 
 ' Zeit und Reisen
 Passenger "*" --> "1" Item : passage
@@ -201,7 +201,4 @@ legend right
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
 endlegend
-class BookingKind #line:d0021b;line.bold
-class Ship #line:d0021b;line.bold
-class Gain #line:d0021b;line.bold
 @enduml
