@@ -375,7 +375,7 @@
       "id": "2026-11-16c",
       "file": "2026-11-16c-schiffe-der-kampagne",
       "title": "Die Kampagne hält alle ihre Schiffe: ships-Liste, das aktive Schiff abgeleitet, Buchungen verweisen per Schiff-Id",
-      "approved": false,
+      "approved": true,
       "show": [
         "Campaign",
         "Booking"
@@ -385,7 +385,7 @@
       "id": "2026-11-16d",
       "file": "2026-11-16d-reisen-mit-eigenem-schiff",
       "title": "Reisen mit eigenem Schiff: die Reise kennt ihr Schiff, Sprungwurf mit Fehlsprung, Treibstoff je Sprung",
-      "approved": false,
+      "approved": true,
       "show": [
         "Ship",
         "ShipDesign"

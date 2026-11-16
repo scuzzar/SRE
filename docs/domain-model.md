@@ -378,7 +378,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > statt Text. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-16b-schiff-retired-und-deckplaene.png`](changes/2026-11-16b-schiff-retired-und-deckplaene.png).
 >
-> Noch offen (Kennzeichen 2026-11-16c): **Die Kampagne hält alle ihre Schiffe.** Der
+> Ebenfalls am 16. November 2026 freigegeben (2026-11-16c): **Die Kampagne hält alle ihre Schiffe.** Der
 > Inhalt ist mit 16b schon freigegeben (ausgediente Schiffe bleiben mit `retired` in der
 > Kampagne, Buchungen mit `forShip` zeigen weiter auf sie) – die Zeichnung war dazu
 > unvollständig: Ein einzelnes `ship`-Feld kann kein ausgeblendetes Schiff aufnehmen, und
@@ -388,7 +388,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > nicht gezeichnet. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-16c-schiffe-der-kampagne.png`](changes/2026-11-16c-schiffe-der-kampagne.png).
 >
-> Noch offen (Kennzeichen 2026-11-16d): **Reisen mit eigenem Schiff.** Neben die Passage
+> Am 16. November 2026 freigegeben (2026-11-16d): **Reisen mit eigenem Schiff.** Neben die Passage
 > (High, Middle, Low) tritt die Reise im eigenen Schiff: Sie erreicht in einer Woche jedes Ziel
 > innerhalb der Sprungzahl des Entwurfs, ohne Raumhafen zu verlangen, und kostet keinen Passagen-
 > preis, sondern Treibstoff. Neu im Bild: der Verweis `Journey.ship` auf das Schiff der Reise, der
@@ -1165,7 +1165,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     will man haben, man würfelt sie von selbst. Die Tests würfelt die Zeit nie selbst. Die
     Testknöpfe zählen weiter je Tag bzw. Woche (siehe *Test*).
 - **Reise** (2026-11-13d). Die Gruppe reist mit **Passagen** (High, Middle, Low; SE S. 8 f.) oder
-  mit dem **eigenen Schiff** (2026-11-16d, eingereicht, siehe *Eigenes Schiff*); der Reisedialog
+  mit dem **eigenen Schiff** (2026-11-16d, siehe *Eigenes Schiff*); der Reisedialog
   bietet, was verfügbar ist.
   - *Wohin*: Auf der Weltkarte einer anderen fertigen Welt steht **Hierher reisen**, wenn die Gruppe
     einen Aufenthaltsort hat, beide Welten einen Raumhafen A bis E haben und das Ziel höchstens
@@ -1184,7 +1184,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     beginnen neu). Nur gibt es **keine Pflicht-Begegnungen**: Die Reise erinnert nicht an fehlende
     Tests, weder vor der Abreise noch für die Tage im Sprung, und würfelt keine. Wer unterwegs eine
     Begegnung will, würfelt sie wie sonst von Hand.
-  - *Eigenes Schiff* (2026-11-16d, eingereicht). Hat die Gruppe ein Schiff, kann sie in diesem
+  - *Eigenes Schiff* (2026-11-16d). Hat die Gruppe ein Schiff, kann sie in diesem
     reisen: Sie wählt im Reisedialog „Eigenes Schiff“ statt Passagen.
     - *Wohin*: Das Ziel liegt höchstens so viele Parsec entfernt, wie der Entwurf Sprung kann
       (`ShipDesign.jump`). Raumhäfen sind beide keiner nötig – das Schiff landet überall. Es
