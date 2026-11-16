@@ -109,11 +109,13 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
   await expect(page.getByRole('heading', { name: 'Spear' })).toBeVisible();
 });
 
-test('Shop: „Gruppe ist hier“ auf der Weltkarte bringt die Gruppe auf eine andere Welt', async ({ page }) => {
+test('Shop: „Gruppe platzieren“ auf der Weltkarte bringt die Gruppe auf eine andere Welt', async ({ page }) => {
   await page.goto('/');
   const world = await makeWorld(page);
-  await page.getByRole('button', { name: 'Gruppe ist hier', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Die Gruppe ist hier', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Gruppe platzieren' }).click();
+  // Wie „Gruppe setzen“ am Hexfeld des Globus: Ist die Gruppe hier, ist der Knopf ausgegraut, das Blatt sagt es.
+  await expect(page.getByRole('button', { name: 'Gruppe platzieren' })).toBeDisabled();
+  await expect(world).toContainText('Die Gruppe ist hier');
   await world.getByRole('button', { name: 'Schließen' }).click();
   await page.getByRole('button', { name: /^Welten \d+/ }).click();
   await expect(page.locator('.world-list-here')).toBeVisible();
@@ -124,5 +126,7 @@ test('Shop: „Gruppe ist hier“ auf der Weltkarte bringt die Gruppe auf eine a
   const globe = page.getByRole('region', { name: 'Globus · Regina' });
   // Oben klappen Name und UWP die Welt auf; dort steht, dass die Gruppe hier ist.
   await globe.getByRole('button', { name: /^Regina, UWP / }).click();
-  await expect(globe.getByRole('region', { name: 'Die Welt' }).getByRole('button', { name: 'Die Gruppe ist hier' })).toBeVisible();
+  const panel = globe.getByRole('region', { name: 'Die Welt' });
+  await expect(panel).toContainText('Die Gruppe ist hier');
+  await expect(panel.getByRole('button', { name: 'Gruppe platzieren' })).toBeDisabled();
 });

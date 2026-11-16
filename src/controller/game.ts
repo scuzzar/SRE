@@ -1300,7 +1300,7 @@ export class GameController {
     this.update({ encounterIntro: true });
   }
 
-  /** Im Kampf: Die Gruppe ist auf dieser fertigen Welt (wie „Gruppe ist hier“ auf der Weltkarte). */
+  /** Im Kampf: Die Gruppe ist auf dieser fertigen Welt (wie „Gruppe platzieren“ auf der Weltkarte). */
   stayAt(id: string): void {
     this.inFight(() => this.change(setLocation(this.campaign, id), { combatNote: undefined }));
   }

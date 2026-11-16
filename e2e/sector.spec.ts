@@ -49,7 +49,7 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     const sheet = page.getByRole('region', { name: `Regina · ${id}` });
     await expect(sheet.getByRole('article', { name: 'Welt' })).toBeVisible();
     await expect(sheet.getByRole('region', { name: 'Oberfläche' })).toContainText('einheimisches Leben');
-    // Unten wie am Hexfeld des Globus: Hierher reisen, Gruppe ist hier, Öffnen. „Öffnen“ führt auf
+    // Unten wie am Hexfeld des Globus: Hierher reisen, Gruppe platzieren, Öffnen. „Öffnen“ führt auf
     // die Hexkarte; oben klappen Name und UWP die Werte auf.
     await expect(page.getByRole('button', { name: 'Hierher reisen', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Öffnen', exact: true }).click();

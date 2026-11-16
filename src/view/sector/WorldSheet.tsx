@@ -8,7 +8,7 @@ import { useGame } from '../game-context';
 import { WorldIcon } from './WorldIcon';
 import { animated, haptic, stopHaptics } from '../haptics';
 import { HoldButton } from '../HoldButton';
-import { CloseIcon, DiceIcon, GlobeIcon, LocateIcon, RouteIcon } from '../icons';
+import { CloseIcon, DiceIcon, GlobeIcon, PinIcon, RouteIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
 import { Form } from '../Form';
 import { withLoading } from '../loading';
@@ -33,7 +33,7 @@ function dmText(line: WorldLine): string {
  * Subsektor, Feld auf dem Globus): oben die Welt, wie sie gerade steht (UWP im Klartext, Basen,
  * Handelscodes); wieder geöffnet zeigt sie nur die Werte. Unten, wie die Reihe Notiz, Deuten, 2W6,
  * Karte im Orakel: Solange sie entsteht, die Würfelbühne und der Knopf für den nächsten Wurf, wie in
- * der Charaktererschaffung; danach Hierher reisen, Gruppe ist hier und Öffnen
+ * der Charaktererschaffung; danach Hierher reisen, Gruppe platzieren und Öffnen
  * (`WorldActions`). Eingetragen ist ein Wurf schon, bevor die Würfel rollen; die Karte zeigt den
  * neuen Stand erst, wenn das Ergebnis unten feststeht. Ein Tippen irgendwo beendet die Animation.
  *
@@ -108,7 +108,7 @@ export function useWorldDock(
           </button>
         </span>
       </div>
-      {!view.empty && <WorldCard world={view} plain />}
+      {!view.empty && <WorldCard world={view} plain here={here} />}
       {view.surface && <SurfaceSection lines={view.surface} />}
       {world.canNote && <NoteSection note={world.note} />}
       {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
@@ -116,7 +116,7 @@ export function useWorldDock(
   );
 
   // Eine ältere Welt ohne Temperatur ist schon fertig (canNote), würfelt aber noch nach: dann stehen
-  // Würfelbühne und die Reihe Hierher reisen/Gruppe ist hier/Öffnen zusammen unten.
+  // Würfelbühne und die Reihe Hierher reisen/Gruppe platzieren/Öffnen zusammen unten.
   const rollDock = hasRoll || fresh ? (
     <section className="generation-dock" aria-label="Weltenerschaffung" onClickCapture={skipTap}>
       {latest && <RollStage key={latest.index} line={latest} animate={animate} onSettled={setSettled} skips={skips} />}
@@ -161,7 +161,7 @@ export function useWorldDock(
  * Handelscodes. Auf der Weltkarte schlicht wie das angetippte Feld des Globus (`plain`): ohne Kasten
  * und ohne Weltsymbol, das steht schon auf der Karte. Oben auf dem Globus als Kasten mit Weltsymbol.
  */
-export function WorldCard({ world, plain = false }: { world: WorldView; plain?: boolean }) {
+export function WorldCard({ world, plain = false, here = false }: { world: WorldView; plain?: boolean; here?: boolean }) {
   const yes = (value: boolean | undefined) => (value === undefined ? '–' : value ? 'ja' : 'nein');
   const head = (
     <div className="pc-head static">
@@ -205,12 +205,19 @@ export function WorldCard({ world, plain = false }: { world: WorldView; plain?: 
       ))}
     </dl>
   );
+  // Wie am angetippten Feld des Globus: Steht die Gruppe hier, sagt es eine Zeile.
+  const hereLine = here && (
+    <ul className="globe-facts">
+      <li>Die Gruppe ist hier</li>
+    </ul>
+  );
   if (plain) {
     return (
       <article className="world-plain" aria-label="Welt">
         <p className="globe-sheet-sub mono">
           {world.id} · {world.uwp}
         </p>
+        {hereLine}
         {extras}
         {profile}
       </article>
@@ -223,6 +230,7 @@ export function WorldCard({ world, plain = false }: { world: WorldView; plain?: 
         <div className="world-top">
           <div className="world-top-text">
             {head}
+            {hereLine}
             {extras}
           </div>
           <WorldIcon look={world.look} className="world-top-icon" label={`Weltsymbol von ${world.name ?? world.id}`} />
@@ -234,6 +242,7 @@ export function WorldCard({ world, plain = false }: { world: WorldView; plain?: 
   return (
     <article className="pc generation-card world-card" aria-label="Welt">
       {head}
+      {hereLine}
       {profile}
       {extras}
     </article>
@@ -282,9 +291,9 @@ export function SurfaceSection({ lines }: { lines: readonly string[] }) {
 /**
  * Die Reihe an der Welt, wie die Reihe am angetippten Feld des Globus (`FieldDock`) und im Stil von
  * Notiz, Deuten, 2W6, Karte im Orakel: Hierher reisen (eine Woche im Sprung; was nicht geht, ist
- * ausgegraut, der Grund steht darüber), Gruppe ist hier (ohne Reise und ohne Zeit; noch einmal
- * getippt hebt es den Aufenthaltsort auf) und Öffnen (die Hexkarte der Welt, nicht auf dem Globus
- * selbst).
+ * ausgegraut, der Grund steht darüber), Gruppe platzieren (ohne Reise und ohne Zeit, wie „Gruppe
+ * setzen“ am Feld; ist die Gruppe schon hier, ausgegraut) und Öffnen (die Hexkarte der Welt, nicht
+ * auf dem Globus selbst).
  */
 export function WorldActions({ world, here, travel, onGlobe = false }: { world: WorldView; here: boolean; travel: { readonly blocker: string | undefined } | undefined; onGlobe?: boolean }) {
   const game = useGame();
@@ -302,9 +311,9 @@ export function WorldActions({ world, here, travel, onGlobe = false }: { world: 
           </button>
         )}
         {world.canNote && (
-          <button type="button" className="action note" aria-pressed={here} onClick={() => game.stayHere()}>
-            <LocateIcon />
-            {here ? 'Die Gruppe ist hier' : 'Gruppe ist hier'}
+          <button type="button" className="action note" title={here ? 'Die Gruppe ist schon hier' : 'Gruppe hierher setzen, ohne Reise und ohne Zeit'} disabled={here} onClick={() => game.stayHere()}>
+            <PinIcon />
+            Gruppe platzieren
           </button>
         )}
         {showGlobe && (

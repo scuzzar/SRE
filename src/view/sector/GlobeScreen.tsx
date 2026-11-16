@@ -425,7 +425,7 @@ export function GlobeScreen({
         {trip && globe.partyHere && panel === undefined && <TripHint trip={trip} />}
         {panel === 'world' && world && (
           <div className="globe-panel globe-world" role="region" aria-label="Die Welt">
-            <WorldCard world={world} />
+            <WorldCard world={world} here={here} />
             {world.surface && <SurfaceSection lines={world.surface} />}
             <WorldActions world={world} here={here} travel={travel} onGlobe />
             {world.canNote && <NoteSection note={world.note} />}

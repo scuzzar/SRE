@@ -25,8 +25,8 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
     worldId = id;
     break;
   }
-  // Die Demo-Kampagne steht auf Kessra; „Gruppe ist hier“ auf der Weltkarte bringt sie nach Regina.
-  await page.getByRole('button', { name: 'Gruppe ist hier', exact: true }).click();
+  // Die Demo-Kampagne steht auf Kessra; „Gruppe platzieren“ auf der Weltkarte bringt sie nach Regina.
+  await page.getByRole('button', { name: 'Gruppe platzieren' }).click();
   await world!.getByRole('button', { name: 'Schließen' }).click();
 
   // Kampf ohne Begegnung: nur die Waffentabelle, keine Begegnungsauswahl.
