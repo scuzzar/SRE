@@ -1018,6 +1018,7 @@ Campaign "1" *-- "0..1" Ship : ship
 Ship "*" --> "1" ShipDesign : design
 Ship "1" *-$newArrow("2026-11-16b")-> "0..*" ShipSoftware : software
 ShipSoftware "*" -$newArrow("2026-11-16b")-> "1" Software : program
+Software -$newArrow("2026-11-16b")-> SoftwareKind
 ShipDesign "*" -$newArrow("2026-11-16b")-> "1" ComputerModel : computer
 Booking "*" --> "0..1" Ship : forShip
 Gain "*" --> "0..1" ShipDesign : ship
