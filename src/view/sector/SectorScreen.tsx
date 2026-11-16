@@ -100,12 +100,13 @@ function HexCell({ hex, selected, disabled, detail, here = false, opens = false 
   const y = detailed ? middle - 9 : middle;
   const shown = hex.state === 'world' || hex.state === 'pending';
   // Wann dieses Feld zuletzt angetippt wurde; reine Darstellung, wie das Erkennen von langem Drücken.
-  const lastTap = useRef(0);
+  // Noch nie: -∞, denn `performance.now()` zählt ab dem Laden, kurz danach wäre 0 sonst „gerade eben“.
+  const lastTap = useRef(Number.NEGATIVE_INFINITY);
   const choose = () => {
     if (disabled) return;
     const now = performance.now();
     const twice = now - lastTap.current < DOUBLE_TAP_MS;
-    lastTap.current = twice ? 0 : now;
+    lastTap.current = twice ? Number.NEGATIVE_INFINITY : now;
     // Das erste Tippen öffnet die Weltkarte, das zweite gleich darauf die Welt selbst, wie „Öffnen“.
     if (twice && opens && hex.state === 'world') withLoading('Welt wird aufgebaut …', () => game.openGlobeAt(hex.column, hex.row));
     else game.chooseHex(hex.column, hex.row);
