@@ -190,6 +190,18 @@ test('Sektor: Eine ältere Welt ohne Temperatur würfelt sie auf der Weltkarte n
   await expect(page.locator('.generation-main')).toHaveCount(0);
 });
 
+test('Sektor: Eine Welt doppelt antippen öffnet sie; einmal antippen zeigt nur die Weltkarte', async ({ page }) => {
+  await page.goto('/');
+  await openSector(page);
+  const kessra = page.getByRole('group', { name: 'Karte des Subsektors' }).getByRole('button', { name: /^0405, Kessra: Weltkarte öffnen/ });
+  await kessra.click();
+  await expect(page.getByRole('region', { name: 'Kessra · 0405' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Globus · Kessra' })).toHaveCount(0);
+  await page.getByRole('region', { name: 'Kessra · 0405' }).getByRole('button', { name: 'Schließen' }).click();
+  await kessra.dblclick();
+  await expect(page.getByRole('region', { name: 'Globus · Kessra' })).toBeVisible();
+});
+
 test('Globus: aus dem Subsektor öffnen, Feld antippen, zurück zum Subsektor', async ({ page }) => {
   await page.goto('/');
   // Die Demo-Kampagne steht auf Kessra; der Knopf ⌖ in der Leiste des Subsektors öffnet ihren Globus.
