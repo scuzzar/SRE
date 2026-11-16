@@ -206,7 +206,7 @@ export function App() {
       {view.world && !view.globe && <WorldSheet key={view.world.id} world={view.world} here={view.location === view.world.id} travel={view.travel} log={view.log} logDays={view.logDays} />}
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
       {view.journey && <JourneySheet journey={view.journey} />}
-      {view.card && <CardSheet card={view.card} />}
+      {view.card && !view.card.forNote && <CardSheet card={view.card} />}
       {view.tripRoll && <TripRollDialog roll={view.tripRoll} />}
       {view.encounterChoice && <EncounterChoiceDialog kind={view.encounterChoice} view={view} />}
       {view.encounterRoll && <EncounterRollDialog key={`${view.encounterRoll.kind}-${view.log.length}`} roll={view.encounterRoll} view={view} />}

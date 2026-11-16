@@ -1230,6 +1230,8 @@ export interface StashView {
 
 export interface CardView {
   readonly question: string | undefined;
+  /** Aus dem Notizblatt gezogen: die Auswahl landet beim Bestätigen im Notiztext statt im Log. */
+  readonly forNote: boolean;
   /** Die Wurffelder mit ihrem Wert und ob sie ausgewählt sind. */
   readonly bell: { readonly value: number; readonly picked: boolean; readonly weights: readonly number[] };
   readonly scatter: { readonly value: Scatter; readonly picked: boolean };
@@ -1333,6 +1335,8 @@ export interface ControllerState {
   readonly storageError: string | undefined;
   readonly screen: Screen;
   readonly card: Card | undefined;
+  /** Wofür die offene Karte gezogen wurde: aus dem Notizblatt, dann landet die Auswahl im Notiztext statt im Log. */
+  readonly cardFor: 'note' | undefined;
   /** Die offene Namenswahl. */
   readonly names: NameChoices | undefined;
   readonly task: Task | undefined;
@@ -2429,9 +2433,10 @@ function isNameSlot(slotId: string): boolean {
   return nameSlotIds.includes(slotId) || sectionOfSlot(slotId).id === 'names';
 }
 
-function cardView(card: Card): CardView {
+function cardView(card: Card, forNote: boolean): CardView {
   return {
     question: card.question,
+    forNote,
     bell: { value: card.bell, picked: card.pickedRolls.includes('bell'), weights: bellWeights },
     scatter: { value: card.scatter, picked: card.pickedRolls.includes('scatter') },
     map: { value: card.map, picked: card.pickedRolls.includes('map') },
@@ -2534,7 +2539,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     encounterRoll: state.encounterRoll,
     encounterChoice: state.encounterChoice,
     travel: state.world && { blocker: travelBlocker(campaign, hexId(state.world.column, state.world.row)) },
-    card: state.card && cardView(state.card),
+    card: state.card && cardView(state.card, state.cardFor === 'note'),
     names: state.names,
     characters: livingCharacters(campaign).map((c) => characterView(campaign, c, state)),
     focus: focusOf(campaign)?.id,

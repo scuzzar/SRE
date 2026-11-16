@@ -208,7 +208,7 @@ import {
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
-const closedDrafts = { card: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, selected: undefined, picking: false } as const;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -271,6 +271,7 @@ export class GameController {
       encounterRoll: undefined,
       encounterChoice: undefined,
       card: undefined,
+      cardFor: undefined,
       names: undefined,
       task: undefined,
       attack: undefined,
@@ -905,9 +906,12 @@ export class GameController {
     this.change(appendLog(this.campaign, writeNote(this.campaign.log, text, this.deps.clock, interprets)));
   }
 
-  /** Zieht eine Karte; die Frage schreibt man auf die offene Karte und gibt sie beim Bestätigen mit. */
-  drawCard(question?: string): void {
-    this.update({ card: drawCard(this.deps.random, question) });
+  /**
+   * Zieht eine Karte; die Frage schreibt man auf die offene Karte und gibt sie beim Bestätigen mit.
+   * Aus dem Notizblatt gezogen (`forNote`) landet die Auswahl beim Bestätigen im Notiztext statt im Log.
+   */
+  drawCard(question?: string, forNote = false): void {
+    this.update({ card: drawCard(this.deps.random, question), cardFor: forNote ? 'note' : undefined });
   }
 
   /** Wählt im Orakelfeld der offenen Karte eine Stufe oder nimmt sie wieder heraus. */
@@ -938,14 +942,14 @@ export class GameController {
   }
 
   discardCard(): void {
-    this.update({ card: undefined });
+    this.update({ card: undefined, cardFor: undefined });
   }
 
   /** Bestätigt die Karte; `question` ist der Text im Fragefeld der Karte, falls einer übergeben wird. */
   confirmCard(question?: string): void {
     const card = question === undefined ? this.openCard : askCard(this.openCard, question);
     const pick = confirmCard(card, this.deps.clock);
-    this.change(appendLog(this.campaign, pick), { card: undefined });
+    this.change(appendLog(this.campaign, pick), { card: undefined, cardFor: undefined });
   }
 
   /** Ändert den Text der Notiz oder Deutung an der Stelle `index`. */
@@ -998,7 +1002,8 @@ export class GameController {
 
   /**
    * „Als NSC“ zum letzten Patron-Wurf (siehe domain-model.md, *Patron als NSC*): Die Erschaffung läuft
-   * in der Laufbahn des Patrons durch, der neue dauerhafte NSC kommt in den Reiter NSC.
+   * in der Laufbahn des Patrons durch, der neue dauerhafte NSC kommt in den Reiter NSC; dorthin
+   * wechselt die Ansicht auch gleich, mit dem neuen NSC schon offen im Editor.
    */
   createPatronNpc(): void {
     const index = this.campaign.log.findLastIndex((e) => e.kind === 'patron');
@@ -1006,7 +1011,7 @@ export class GameController {
       const { campaign, id } = createPatronNpc(this.campaign, index, this.deps.random);
       const npc = campaign.characters.find((c) => c.id === id)!;
       // Aus dem Würfelfenster heraus schließt es sich danach.
-      this.change(campaign, { patronNote: `${npc.name} (${npc.background}) steht jetzt im Reiter NSC.`, encounterRoll: undefined });
+      this.change(campaign, { patronNote: `${npc.name} (${npc.background}) steht jetzt im Reiter NSC.`, encounterRoll: undefined, screen: 'npcs', npcAll: false, editor: { id, error: undefined } });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       const roll = this.state.encounterRoll;
