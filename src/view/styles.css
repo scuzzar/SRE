@@ -8600,3 +8600,21 @@ button:disabled {
   flex: 1 1 50%;
   min-height: 44px;
 }
+
+/* Ein Blatt des Reiters Schiff als Feld im Ziehblatt (Werft, Bestellung, Bearbeiten, Treibstoff,
+   Umbenennen, Deckplan groß): Kopf wie beim angetippten Feld des Globus, unten das Dock. */
+.ship-field .globe-sheet-head {
+  padding-top: 2px;
+  padding-bottom: 6px;
+}
+
+.ship-field .globe-sheet-head .header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.action.soft.danger {
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
