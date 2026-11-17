@@ -20,7 +20,7 @@ const SETTLE_MS = 120;
  * bei welcher Karte das Wischen liegen geblieben ist. Fertigkeit antippen startet eine Probe, danach
  * lassen sich Attribute dazuwählen. Der Kopf klappt die Leiste ein und auf. Im Reiter Kampf zeigt
  * sie statt der Fertigkeiten die Waffen des Charakters oben; antippen nimmt sie in die Hand. Ist er
- * verwundet und lässt sich etwas tun, steht dort im Kopf seiner Karte „Heilen“. Im Reiter Shop zeigt
+ * verwundet und lässt sich etwas tun, steht dort im Kopf seiner Karte „Heilen“. Im Shop zeigt
  * sie seine Credits und Attribute; für ihn kauft und verkauft man. Die Nachbarkarten zeigen schon beim
  * Wischen ihren Inhalt, nicht erst, wenn sie eingerastet sind.
  */

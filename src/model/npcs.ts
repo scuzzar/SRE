@@ -30,7 +30,7 @@ export function byRole(npcs: readonly Character[]): readonly NpcRoleGroup[] {
 }
 
 /**
- * Die lebenden dauerhaften NSC für den Reiter NSC (siehe domain-model.md, *Reiter NSC*). Vorgegeben
+ * Die lebenden dauerhaften NSC für die NSC-Liste (siehe domain-model.md, *NSC-Liste*). Vorgegeben
  * die des Aufenthaltsorts und die ohne Ort, als eine Gruppe nach Rolle. Mit `all`, oder ohne
  * Aufenthaltsort, alle: nach Welt (nach Namen der Welt, ohne Ort am Ende), darin nach Rolle.
  */

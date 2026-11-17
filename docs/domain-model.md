@@ -554,7 +554,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Buchung | `Booking` | Eine Bewegung der Gruppenkasse: Einnahme, Ausgabe, Einzahlung, Auszahlung oder Kauf |
 | Art der Buchung | `BookingKind` | income (Einnahme, z. B. Belohnung), expense (Ausgabe), deposit (Einzahlung eines Charakters), payout (Auszahlung an einen Charakter), purchase (Kauf), sale (Verkauf), lottery (Gewinn der Low Lottery), rent (Miete je Tag eines Fahrzeugs), fare (Fahrpreis im Linienverkehr), ship (Schiff: voller Preis, Anzahlung, Monatsrate, Treibstoff, Liegegebühr, Lebenserhaltung; welche, sagt `shipCost`) |
 | Angebot | `Hex./offer` | Was man auf der Welt kaufen kann: nach TL und Gesetz der Welt |
-| Shop | (Reiter „Shop“) | Der Screen für Kasse und Einkauf auf dem Aufenthaltsort |
+| Reiter | (View, `Screen`) | Die fünf Reiter unten im Ziehblatt bzw. oben in der Seitenspalte: Log, Begegnung, Kampf, Schiff, Charaktere |
+| Reiter Charaktere | (Reiter „Charaktere“; Screens `characters`, `npcs`, `funds`) | Oben ein Umschalter zwischen **SC** (Charakterkarten und Gruppengepäck), **NSC** (die *NSC-Liste*) und **Kasse** |
+| Shop | (Screen `shop`, `openShop`, `closeShop`) | Der Screen für den Einkauf auf dem Aufenthaltsort, ohne eigenen Reiter: „Einkaufen“ an der Weltkarte des Aufenthaltsorts bzw. am angetippten Feld seines Globus öffnet ihn an der Stelle des Felds, ✕ führt dorthin zurück, ein Reiter verlässt ihn |
+| Kasse | (Screen `funds`, im Reiter Charaktere) | Stand der Gruppenkasse, freie Buchungen (Einnahme, Ausgabe, Einzahlung, Auszahlung mit einem gewählten SC) und das Kassenbuch; geht auch ohne Aufenthaltsort |
 | Magazin | `Weapon.ammo` | Der Gegenstand, der eine Schusswaffe lädt, z. B. Rifle Ammo (20 rds) oder LC Power Pack |
 | Schuss im Magazin | `Possession.rounds`, `Weapon.rounds` | Wie viele Schuss eine Schusswaffe gerade geladen hat bzw. voll fasst |
 | Verboten ab Gesetz | `Weapon.law` | Ab dieser Gesetzesstufe ist die Waffe verboten (S. 14), z. B. Body Pistol ab 1 |
@@ -566,7 +569,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Anführer | `Encounter.leader` | Der NSC mit der besten Ausrüstung, wenn die Begegnung einen hat (L); mit dazugenommenen NSC der erste von ihnen |
 | Dazugenommener NSC | `Encounter.joined` (`Character`) | Ein dauerhafter NSC vom Aufenthaltsort, der in einer Begegnung auf der Seite der NSC mitkämpft; er bleibt in der Kampagne |
 | Übernehmen | (von `Encounter.npcs` nach `Campaign.characters`) | Ein NSC der Begegnung wird in die Kampagne umgehängt, als SC oder als dauerhafter NSC |
-| Dauerhafter NSC | `Character` mit `npc` | Ein Charakter, der kein SC ist; er steht im Reiter NSC |
+| Dauerhafter NSC | `Character` mit `npc` | Ein Charakter, der kein SC ist; er steht in der *NSC-Liste* |
 | Ort eines NSC | `Character.place` | Der Ort, an dem ein dauerhafter NSC lebt: die Welt, wahlweise genauer ein Oberflächenfeld oder eine Stadt; man trifft ihn nur auf dieser Welt |
 | Ort | `Place` | Eine Welt (`world`), wahlweise genauer ein Oberflächenfeld (`cell`) oder eine Stadt (`city`) darauf |
 | Ort eines Logeintrags | `LogEntry.place` | Wo etwas passiert ist; bleibt, auch wenn sich Gruppe und NSC weiterbewegen |
@@ -576,8 +579,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Verbrecherisch | `Patron.criminal`, Rolle Feind | Ein NSC, für den das Gesetz eher nicht gilt: DM +2 auf den Wurf, das Gesetz zu ignorieren |
 | Laufbahn eines Patrons | `Patron.career` | Die Laufbahn, in der ein Patron-NSC seine Charaktererschaffung durchläuft, z. B. Smuggler: Merchants (Hausregel) |
 | Rolle eines NSC | `Character.role`, `NpcRole` | Wozu ein dauerhafter NSC da ist, aus einer festen Liste: Patron, Begegnung, Feind, Rivale, Verbündeter, Kontakt, Behörde, Händler, Makler, Captain, Crew, Passagier, Sonstige |
-| Reiter NSC | (Reiter „NSC“) | Der Screen mit den dauerhaften NSC des Aufenthaltsorts, nach Rolle gruppiert; mit „Alle zeigen“ alle, nach Welt und darin nach Rolle |
-| NSC platzieren | (Ablauf, `startNpcPlacing`, `placeNpcs`) | Vom angetippten Feld des Globus aus: Der Reiter NSC öffnet sich mit einem Kästchen an jedem NSC (wer schon auf dem Feld ist, ist angehakt), unten „Abbrechen“ und „OK“; seine Filter wie „Alle zeigen“ gelten weiter, so kommen auch NSC von anderen Welten oder ohne Ort dazu. „OK“ setzt die angehakten auf das Feld (bzw. in die Stadt darauf, `Character.place`); beides führt zurück zum Feld |
+| NSC-Liste | (Screen `npcs`, im Reiter Charaktere unter „NSC“) | Der Screen mit den dauerhaften NSC des Aufenthaltsorts, nach Rolle gruppiert; mit „Alle zeigen“ alle, nach Welt und darin nach Rolle |
+| NSC platzieren | (Ablauf, `startNpcPlacing`, `placeNpcs`) | Vom angetippten Feld des Globus aus: Die NSC-Liste öffnet sich (ohne den Umschalter oben) mit einem Kästchen an jedem NSC (wer schon auf dem Feld ist, ist angehakt), unten „Abbrechen“ und „OK“; seine Filter wie „Alle zeigen“ gelten weiter, so kommen auch NSC von anderen Welten oder ohne Ort dazu. „OK“ setzt die angehakten auf das Feld (bzw. in die Stadt darauf, `Character.place`); beides führt zurück zum Feld |
 | Getragene Rüstung | `Character.wears` | Die Rüstung, die jemand gerade anhat; sie zählt, wenn er angegriffen wird |
 | Rüstungsklasse einer Rüstung | `Item.armor` | Wie eine Rüstung in der Matrix zählt, z. B. Vacc Suit als Cloth, Battle Dress als Combat |
 | Wunden | `/wounds`, `Wounds` | Wie viel STR, DEX und END jemand durch Treffer verloren hat |
@@ -618,7 +621,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Kampf | (Reiter „Kampf“) | Der Screen für Angriffe: ohne Begegnung die Waffentabelle, mit Begegnung die Kampfsimulation |
 | Reiter Begegnung | (Reiter „Begegnung“) | Unten die Reihe mit den Würfen Zufall, Tiere, Patron, Gerücht, Polizei und darunter Tage vergehen und Woche beenden bzw. bei einer Fahrt Weiterfahren: die einzige Stelle, an der Zeit vergeht oder die Fahrt weitergeht. Jeder Wurf zeigt Test und Ergebnis im *Würfelfenster*. Das Blatt darüber hat nur Datum, laufende Fahrt, laufende Begegnung und die Einstellungen: Gelände, Würfel der Anzahl, wie viele Tage, die Haken „Manuell wählen“ und *NSC dazunehmen* |
 | Würfelfenster | (View, `encounterRoll`) | Das Fenster nach einem Begegnungswurf: der rollende Würfel des Tests, was herauskam und was danach geht („Als NSC“, Rettungswürfe); kam es zur Begegnung, folgt ihre Übersicht. Ohne Würfel nur ein Hinweis, etwa dass der Test schon gemacht ist |
-| NSC dazunehmen | (Ablauf, `startNpcJoining`) | Mit dem Haken „NSC dazunehmen“ öffnet Zufall erst den Reiter NSC zum Auswählen (wie *NSC platzieren*, nur NSC vom Aufenthaltsort); „OK“ nimmt sie zur Zufallsbegegnung dazu (`Encounter.joined`) und würfelt ohne Test, mit „Manuell wählen“ erst die Art |
+| NSC dazunehmen | (Ablauf, `startNpcJoining`) | Mit dem Haken „NSC dazunehmen“ öffnet Zufall erst die NSC-Liste zum Auswählen (wie *NSC platzieren*, nur NSC vom Aufenthaltsort); „OK“ nimmt sie zur Zufallsbegegnung dazu (`Encounter.joined`) und würfelt ohne Test, mit „Manuell wählen“ erst die Art |
 | Begegnungsart | (Karte im Reiter Begegnung) | Eine Art von Begegnungen nach SE S. 20 mit ihren Einstellungen und ihrem Wurf: Zufallsbegegnung, Patron, Gerücht, später Gesetz, Tiere. Nicht zu verwechseln mit der *Art der Begegnung* (`EncounterType`), einer Zeile der Random Encounter List |
 | Zufallsbegegnung | (Begegnungsart) | Personen nach der Random Encounter List (S. 21); ergibt eine Begegnung (`Encounter`) |
 | Patron | `Patron` | Ein Auftraggeber nach seinem Beruf, z. B. „Smuggler“: eine Zeile einer der beiden Patron-Listen (SE, Charts S. 20) |
@@ -1313,7 +1316,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (eine Gegenbuchung mit dem umgekehrten Betrag).
   - Die Kampagnendatei enthält Aufenthaltsort und Buchungen; beim Import muss jede Buchung zu ihrer
     Art passen und die Kasse nach keiner Buchung negativ sein.
-- **Shop.** Im Reiter *Shop* kauft die Gruppe auf ihrem Aufenthaltsort ein, aus der Gruppenkasse.
+- **Shop.** Im *Shop* kauft die Gruppe auf ihrem Aufenthaltsort ein, aus der Gruppenkasse. Er hat keinen
+  eigenen Reiter: „Einkaufen“ am Feld bzw. an der Weltkarte des Aufenthaltsorts öffnet ihn (2026-11-17);
+  Buchungen und Kassenbuch stehen unter *Kasse* im Reiter Charaktere. Das ist reine Anzeige.
   - **Angebot** (`/offer`): jeder Gegenstand aus der Liste mit Preis, dessen TL höchstens der TL der
     Welt ist (S. 23: „TL is the minimum technological level at which the item is available“), ohne
     Schiffe und Mitgliedschaften. Auch Waffen, die auf der Welt verboten sind, kann man kaufen, aber
@@ -1435,7 +1440,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       **Übernehmen** gilt nur für die gewürfelten NSC; ein dazugenommener ist schon in der Kampagne.
     - *Beenden*: Das Beenden löst nur den Verweis; der NSC bleibt, wie er ist. Ein NSC, auf den eine
       laufende Begegnung verweist, kann nicht zum SC gemacht werden, solange sie läuft.
-    - *Reiter NSC*: Am dauerhaften NSC (vom Aufenthaltsort) springt **„In Begegnung“** in den Reiter
+    - *NSC-Liste*: Am dauerhaften NSC (vom Aufenthaltsort) springt **„In Begegnung“** in den Reiter
       Begegnung und wählt ihn in der Karte Zufallsbegegnung schon vor. Läuft eine Begegnung, gibt es
       den Knopf nicht (höchstens eine laufende Begegnung).
 - **Test.** Jede Begegnungsart beginnt mit ihrem **Test** nach der Encounter Checklist (SE, Charts
@@ -1684,8 +1689,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     nicht mehr auf ihrer Seite. Weil er derselbe Charakter bleibt, verweist der Log weiter auf ihn,
     und er behält seine **Wunden** aus dem Kampf (bisher kam der Übernommene unverwundet); heilen
     lässt er sich wie jeder Charakter.
-  - **Dauerhafte NSC** (`Character` mit `npc`) stehen nur im eigenen Reiter **NSC** (2026-11-14;
-    bisher im Charakter-Screen unter „NSC“, dort stehen sie nicht mehr), nicht in der Leiste oben, nicht unter den SC im Shop, und lassen
+  - **Dauerhafte NSC** (`Character` mit `npc`) stehen nur in der **NSC-Liste** (2026-11-14, seit 2026-11-17
+    im Reiter Charaktere unter „NSC“, nicht unter den SC), nicht in der Leiste oben, nicht unter den SC im Shop, und lassen
     sich im Editor zum SC machen und umgekehrt. Proben und Angriffe würfelt man für SC.
   - **Ort eines NSC** (2026-11-14). Ein dauerhafter NSC lebt auf höchstens einer Welt (`place`),
     einer fertigen Welt des Subsektors. Er bekommt den Aufenthaltsort, wenn er entsteht oder
@@ -1703,8 +1708,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     *Sonstige* für einen, der im Editor zum NSC gemacht wird, und für NSC von früher; im Editor
     wählt man jede andere. Ein SC hat keine Rolle; wird ein NSC zum SC, fällt sie weg, wird ein SC
     zum NSC, bekommt er *Sonstige*.
-  - **Reiter NSC** (2026-11-14). Ein eigener Reiter neben *Charaktere*, in der Leiste unten wie in
-    der Reiterzeile des Desktops, **vorgegeben nach dem Aufenthaltsort
+  - **NSC-Liste** (2026-11-14; seit 2026-11-17 kein eigener Reiter mehr, sondern im Reiter
+    *Charaktere* unter „NSC“), **vorgegeben nach dem Aufenthaltsort
     gefiltert**: Er zeigt die dauerhaften NSC, deren Ort der Aufenthaltsort ist, dazu die NSC ohne
     Ort, **immer nach Rolle gruppiert** (Gruppen in der Reihenfolge der Liste, leere weggelassen) und
     in jeder Gruppe nach Namen. **„Alle zeigen“** hebt den Filter auf: Dann stehen alle dauerhaften
@@ -1733,7 +1738,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       Zuordnung in [`patron-nsc.md`](patron-nsc.md)); ein Beruf, der mehrfach vorkommt, hat
       überall dieselbe. Die Rumor-Zeilen haben keine. Es gibt heute nur die sechs Laufbahnen des
       Regelwerks; weitere, die besser passen, kommen später dazu.
-  - **NSC aus einer Laufbahn** (2026-11-14c). „+ Neuer NSC“ im Reiter NSC fragt zuerst nach der
+  - **NSC aus einer Laufbahn** (2026-11-14c). „+ Neuer NSC“ in der NSC-Liste fragt zuerst nach der
     **Rolle** und bietet dann an: leer anlegen (Editor wie bisher) oder **aus einer Laufbahn
     erzeugen**. Erzeugt wird wie beim Patron-NSC, nur in der gewählten Laufbahn: Die
     Charaktererschaffung läuft zufällig und ohne Animation durch (abgelehnt oder tot: von vorn),
@@ -1757,7 +1762,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - *Verbrecherisch* (`Patron.criminal`, Referenzdaten): Arsonist, Assassin, Cutthroat,
       Embezzler, Hijacker, Pirate, Rogue, Smuggler, Swindler, Terrorist, Underworld Leader.
     Ohne Aufenthaltsort geht es nicht. Der Patron-Wurf selbst bleibt, wie er ist; der neue NSC
-    kommt in den Reiter NSC. Ein Patron-NSC ist ein gewöhnlicher dauerhafter NSC: Man kann ihn
+    kommt in die NSC-Liste. Ein Patron-NSC ist ein gewöhnlicher dauerhafter NSC: Man kann ihn
     bearbeiten, zum SC machen oder ausscheiden lassen; der Verweis auf den Patron bleibt.
 - **Getragene Rüstung.** Jeder Charakter trägt höchstens eine Rüstung (`wears`), einen Gegenstand
   mit Rüstungsklasse aus seinem Besitz; keine heißt Nothing. Wie er in der Matrix zählt, steht an

@@ -3,10 +3,11 @@ import { useGame } from "../game-context";
 import { PencilIcon } from "../icons";
 import { CharacterCard } from "./CharacterCard";
 import { StashDrag, StashPack } from "./StashPanel";
+import { PeopleTabs } from "./PeopleTabs";
 
 /**
  * Der Charakter-Screen zum Verwalten: anlegen, nach Regeln erschaffen, bearbeiten, Details mit
- * Lebenslauf, Ausrüstung und Gruppengepäck, Verstorbene und Ausgeblendete (die dauerhaften NSC stehen im Reiter NSC). Proben würfelt man oben im Orakel-Screen.
+ * Lebenslauf, Ausrüstung und Gruppengepäck, Verstorbene und Ausgeblendete; oben der Umschalter auf NSC und Kasse. Proben würfelt man oben im Orakel-Screen.
  */
 export function CharactersScreen({ view }: { view: Snapshot }) {
   const game = useGame();
@@ -14,6 +15,7 @@ export function CharactersScreen({ view }: { view: Snapshot }) {
   return (
     <StashDrag>
       <div className="screen">
+        <PeopleTabs screen="characters" />
         <section
           className="scroll characters"
           aria-labelledby="characters-title"

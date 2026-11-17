@@ -182,7 +182,7 @@ test('Patron und Gerücht: unten würfeln, das Würfelfenster zeigt Test und Erg
   await expect(editor).toBeVisible();
   await editor.getByRole('button', { name: 'Schließen' }).click();
   await expect(editor).toBeHidden();
-  // Dahinter steht der Reiter NSC; die Würfe gehen im Reiter Begegnung weiter.
+  // Dahinter steht die NSC-Liste; die Würfe gehen im Reiter Begegnung weiter.
   await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
   // Gerücht: Test 7+ auf 2W6, dann die Art nach der Rumors Matrix.
   const rumor = page.getByRole('dialog', { name: 'Gerücht' });

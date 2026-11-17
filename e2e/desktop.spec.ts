@@ -1,4 +1,5 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { openPeople, openShop } from './layout';
 
 // Der Desktop-Modus (ab 1024 px): links eine Spalte mit den Reitern, darunter das Log mit dem Charakter
 // oben oder an seiner Stelle der gewählte Bereich bzw. das angetippte Feld; unten die Reihe Notiz,
@@ -6,7 +7,7 @@ import { expect, test, type Page, type TestInfo } from '@playwright/test';
 // Diese Tests laufen nur im Projekt „desktop“.
 
 const onlyDesktop = (testInfo: TestInfo) => testInfo.skip(testInfo.project.name !== 'desktop', 'nur im Desktop-Modus');
-const areas = ['Kampf', 'Shop', 'Schiff', 'Charaktere', 'NSC'];
+const areas = ['Kampf', 'Schiff', 'Charaktere'];
 const panel = (page: Page) => page.getByRole('complementary', { name: 'Seitenspalte' });
 const head = (page: Page) => panel(page).locator('.area-head');
 const nav = (page: Page) => page.getByRole('navigation', { name: 'Bereiche' });
@@ -37,11 +38,13 @@ test('Links eine Spalte: das Log, an seiner Stelle der Bereich; rechts die Grund
     await expect(panel(page).getByRole('button', { name: 'Karte ziehen' })).toBeVisible();
     await expect(panel(page).getByRole('button', { name: '2W6' })).toBeVisible();
   }
-  // Ein zweiter Klick auf den offenen Reiter führt zurück zum Log, ebenso ✕ und der Reiter Log.
-  await nav(page).getByRole('button', { name: 'NSC', exact: true }).click();
+  // Ein zweiter Klick auf den offenen Reiter führt zurück zum Log, auch unter NSC; ebenso ✕ und der Reiter Log.
+  await openPeople(page, 'NSC');
+  await expect(head(page)).toContainText('Charaktere');
+  await nav(page).getByRole('button', { name: 'Charaktere', exact: true }).click();
   await expect(strip(page)).toBeVisible();
-  await nav(page).getByRole('button', { name: 'Shop', exact: true }).click();
-  await page.getByRole('button', { name: 'Shop schließen' }).click();
+  await nav(page).getByRole('button', { name: 'Schiff', exact: true }).click();
+  await page.getByRole('button', { name: 'Schiff schließen' }).click();
   await expect(strip(page)).toBeVisible();
   await nav(page).getByRole('button', { name: 'Kampf', exact: true }).click();
   await nav(page).getByRole('button', { name: 'Log', exact: true }).click();
@@ -51,10 +54,10 @@ test('Links eine Spalte: das Log, an seiner Stelle der Bereich; rechts die Grund
 
 test('Ein Wurf in einem Bereich landet im Log', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
-  await nav(page).getByRole('button', { name: 'Shop', exact: true }).click();
+  await nav(page).getByRole('button', { name: 'Schiff', exact: true }).click();
   await panel(page).getByRole('button', { name: '2W6' }).click();
   await expect(page.locator('.dice-roll')).toBeHidden();
-  await expect(nav(page).getByRole('button', { name: 'Shop', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(nav(page).getByRole('button', { name: 'Schiff', exact: true })).toHaveAttribute('aria-current', 'page');
   await nav(page).getByRole('button', { name: 'Log', exact: true }).click();
   await expect(panel(page).locator('.entry').last()).toContainText('Würfel · 2W6');
   await expect(page.locator('.entry')).toHaveCount(1);
@@ -62,14 +65,14 @@ test('Ein Wurf in einem Bereich landet im Log', async ({ page }, testInfo) => {
 
 test('Deuten geht auch in einem Bereich: der Knopf am Ergebnis öffnet das Blatt der Deutung', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
-  await nav(page).getByRole('button', { name: 'Shop', exact: true }).click();
+  await nav(page).getByRole('button', { name: 'Schiff', exact: true }).click();
   await panel(page).getByRole('button', { name: '2W6' }).click();
   await expect(page.locator('.dice-roll')).toBeHidden();
   await panel(page).getByRole('button', { name: 'Neuestes Ergebnis deuten' }).click();
   const reading = page.getByRole('dialog', { name: 'Deutung' });
   await reading.getByPlaceholder(/Was bedeutet das/).fill('Der Wurf ist gut.');
   await reading.getByRole('button', { name: 'Deuten' }).click();
-  await expect(nav(page).getByRole('button', { name: 'Shop', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(nav(page).getByRole('button', { name: 'Schiff', exact: true })).toHaveAttribute('aria-current', 'page');
   await nav(page).getByRole('button', { name: 'Log', exact: true }).click();
   await expect(panel(page).locator('.entry', { hasText: 'Würfel · 2W6' }).locator('.interpretation')).toContainText('Der Wurf ist gut.');
 });
@@ -77,7 +80,7 @@ test('Deuten geht auch in einem Bereich: der Knopf am Ergebnis öffnet das Blatt
 test('Eine Probe aus dem Charakter oben lässt sich auch in einem Bereich würfeln', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
   await strip(page).getByRole('article', { name: 'Kira Vant' }).getByRole('button', { name: 'Pilot-2' }).click();
-  await nav(page).getByRole('button', { name: 'Shop', exact: true }).click();
+  await nav(page).getByRole('button', { name: 'Schiff', exact: true }).click();
   await panel(page).getByRole('button', { name: 'Probe würfeln' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Weiter' }).click();
   await nav(page).getByRole('button', { name: 'Log', exact: true }).click();
@@ -127,7 +130,7 @@ test('Die Sektor-Karte füllt die Grundkarte und passt ganz hinein; das gewählt
   expect((await page.getByRole('group', { name: 'Karte des Subsektors' }).boundingBox())!.height).toBe(map.height);
 });
 
-test('Kampf und Shop zeigen ihre SC selbst; ein Klick auf eine Karte holt sie nach oben', async ({ page }, testInfo) => {
+test('Kampf und Shop zeigen ihre SC selbst; ein Klick auf eine Karte holt sie nach oben; ✕ am Shop führt zur Weltkarte zurück', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
   const area = panel(page);
   // Im Kampf: Rüstung und Waffen; antippen nimmt die Waffe in die Hand.
@@ -136,17 +139,22 @@ test('Kampf und Shop zeigen ihre SC selbst; ein Klick auf eine Karte holt sie na
   await expect(kira).toContainText('Jack');
   await kira.getByRole('button', { name: /Automatic Pistol/ }).click();
   await expect(page.getByRole('heading', { name: 'Automatic Pistol' })).toBeVisible();
-  // Im Shop: Credits; Jonas nach oben, dann kauft man für ihn.
-  await nav(page).getByRole('button', { name: 'Shop', exact: true }).click();
+  // Im Shop (Einkaufen an der Weltkarte von Kessra): Credits; Jonas nach oben, dann kauft man für ihn.
+  await openShop(page);
+  await expect(head(page)).toContainText('Shop');
   await expect(area.getByRole('article', { name: 'Kira Vant' })).toContainText('Cr 12.400');
   await area.getByRole('button', { name: 'Jonas Reyl nach oben' }).click();
   await expect(area).toContainText('Jonas Reyl hat die Fertigkeit');
+  // Keiner der Reiter ist dabei gewählt; ✕ im Kopf führt zur Weltkarte zurück.
+  await expect(nav(page).locator('[aria-current="page"]')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Shop schließen' }).click();
+  await expect(area.getByRole('button', { name: 'Einkaufen', exact: true })).toBeVisible();
 });
 
 test('Die Ziffern wählen die Reiter', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
   await expect(nav(page)).toBeVisible();
-  for (const [key, name] of [['2', 'Begegnung'], ['3', 'Kampf'], ['4', 'Shop'], ['5', 'Schiff'], ['6', 'Charaktere'], ['7', 'NSC'], ['1', 'Log']]) {
+  for (const [key, name] of [['2', 'Begegnung'], ['3', 'Kampf'], ['4', 'Schiff'], ['5', 'Charaktere'], ['1', 'Log']]) {
     await page.keyboard.press(key!);
     await expect(nav(page).getByRole('button', { name: name!, exact: true })).toHaveAttribute('aria-current', 'page');
   }
@@ -170,10 +178,16 @@ test('Globus als Grundkarte: ein angetipptes Feld steht in der Seitenspalte, ✕
   await canvas.click({ position: { x: box.width / 2, y: box.height / 2 } });
   const field = panel(page).getByRole('region', { name: 'Angetipptes Feld' });
   await expect(field).toContainText('°C im Jahresmittel');
-  // Ein Reiter lässt das Feld los und zeigt den Bereich.
-  await nav(page).getByRole('button', { name: 'Shop', exact: true }).click();
+  // Einkaufen zeigt den Shop an der Stelle des Felds; ✕ führt zum Feld zurück.
+  await panel(page).getByRole('button', { name: 'Einkaufen', exact: true }).click();
   await expect(field).toHaveCount(0);
-  await expect(panel(page)).toContainText('Cr ');
+  await expect(panel(page).locator('.shop-world')).toContainText('Kessra');
+  await page.getByRole('button', { name: 'Shop schließen' }).click();
+  await expect(field).toContainText('°C im Jahresmittel');
+  // Ein Reiter lässt das Feld los und zeigt den Bereich.
+  await nav(page).getByRole('button', { name: 'Charaktere', exact: true }).click();
+  await expect(field).toHaveCount(0);
+  await expect(head(page)).toContainText('Charaktere');
   // ✕ auf dem Globus führt zum Subsektor; neu geladen liegt der Globus von Kessra wieder unter allem.
   await globe.getByRole('button', { name: 'Schließen', exact: true }).click();
   await expect(page.locator('.sector-viewport')).toBeVisible();

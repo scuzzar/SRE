@@ -11,12 +11,13 @@ import { ShopScreen } from './shop/ShopScreen';
 import { ShipScreen } from './ship/ShipScreen';
 import { CharactersScreen } from './characters/CharactersScreen';
 import { NpcScreen } from './characters/NpcScreen';
+import { FundsScreen } from './characters/FundsScreen';
 import { GenerationSheet } from './characters/GenerationSheet';
 import { ResultDialog } from './characters/ResultDialog';
 import { useGame, useSnapshot } from './game-context';
 import { useEscapeCloses, useShortcuts } from './keyboard';
 import { useIsDesktop } from './media';
-import { CloseIcon, CombatIcon, EncounterIcon, LogIcon, MenuIcon, PeopleIcon, PersonIcon, ShipIcon, ShopIcon } from './icons';
+import { CloseIcon, CombatIcon, EncounterIcon, LogIcon, MenuIcon, PeopleIcon, ShipIcon } from './icons';
 import { Menu } from './Menu';
 import { CardSheet } from './oracle/CardSheet';
 import { DiceRoll } from './oracle/DiceRoll';
@@ -31,16 +32,21 @@ import { FieldDock } from './sector/FieldDock';
 import { LoadingOverlay } from './loading';
 import { Tray } from './Tray';
 
-/** Die Reiter im Ziehblatt bzw. oben in der Seitenspalte des Desktops, in dieser Reihenfolge. */
-const areas: readonly { readonly id: Screen; readonly label: string; readonly Icon: () => ReactElement }[] = [
+/**
+ * Die fünf Reiter im Ziehblatt bzw. oben in der Seitenspalte des Desktops, in dieser Reihenfolge. Im
+ * Reiter Charaktere schaltet man oben zwischen SC, NSC und Kasse um (`also`); den Shop öffnet
+ * „Einkaufen“ am Feld bzw. an der Weltkarte des Aufenthaltsorts.
+ */
+const areas: readonly { readonly id: Screen; readonly label: string; readonly Icon: () => ReactElement; readonly also?: readonly Screen[] }[] = [
   { id: 'oracle', label: 'Log', Icon: LogIcon },
   { id: 'encounter', label: 'Begegnung', Icon: EncounterIcon },
   { id: 'combat', label: 'Kampf', Icon: CombatIcon },
-  { id: 'shop', label: 'Shop', Icon: ShopIcon },
   { id: 'ship', label: 'Schiff', Icon: ShipIcon },
-  { id: 'characters', label: 'Charaktere', Icon: PersonIcon },
-  { id: 'npcs', label: 'NSC', Icon: PeopleIcon },
+  { id: 'characters', label: 'Charaktere', Icon: PeopleIcon, also: ['npcs', 'funds'] },
 ];
+
+/** Der Reiter, zu dem ein Screen gehört; der Shop und „Über die App“ gehören zu keinem. */
+const areaOf = (screen: Screen) => areas.find((a) => a.id === screen || a.also?.includes(screen));
 
 export function App() {
   const game = useGame();
@@ -84,30 +90,35 @@ export function App() {
     <>
       {screen === 'encounter' && <EncounterScreen view={view} options={encounterOptions} onOptions={setEncounterOptions} />}
       {screen === 'combat' && <CombatScreen view={view} patient={patient} onPatient={setPatient} />}
-      {screen === 'shop' && <ShopScreen view={view} />}
+      {screen === 'shop' && <ShopScreen view={view} onClose={desktop ? undefined : () => game.closeShop()} />}
       {screen === 'ship' && <ShipScreen view={view} />}
       {screen === 'characters' && <CharactersScreen view={view} />}
       {screen === 'npcs' && <NpcScreen view={view} />}
+      {screen === 'funds' && <FundsScreen view={view} />}
       {screen === 'about' && <AboutScreen persistent={view.persistent} durable={view.durable} />}
     </>
   );
 
   const nav = (
     <nav className="nav" aria-label="Bereiche">
-      {areas.map(({ id, label, Icon }, i) => (
+      {areas.map(({ id, label, Icon, also }, i) => {
+        const open = (screen === id || also?.includes(screen) === true) && !field;
+        return (
         <button
           key={id}
           type="button"
-          aria-current={screen === id && !field ? 'page' : undefined}
+          aria-current={open ? 'page' : undefined}
           title={`${label} (${i + 1})`}
           aria-keyshortcuts={String(i + 1)}
-          // Im Desktop-Modus führt ein zweiter Klick auf den offenen Reiter zurück zum Log.
-          onClick={() => game.showScreen(desktop && screen === id && !field ? 'oracle' : id)}
+          // Im Desktop-Modus führt ein zweiter Klick auf den offenen Reiter zurück zum Log; sonst
+          // bleibt ein offener Reiter, wie er ist (im Reiter Charaktere etwa bei NSC oder Kasse).
+          onClick={() => game.showScreen(open ? (desktop ? 'oracle' : screen) : id)}
         >
           <Icon />
           {label}
         </button>
-      ))}
+        );
+      })}
     </nav>
   );
 
@@ -167,7 +178,7 @@ export function App() {
 
   // Was unter den Reitern steht: das angetippte Feld, sonst das Log oder der gewählte Bereich.
   const body = <div className="screen-host">{field ?? (screen === 'oracle' ? <OracleScreen view={view} dock={false} /> : area)}</div>;
-  const areaTitle = areas.find((a) => a.id === screen)?.label ?? (screen === 'about' ? 'Über die App' : '');
+  const areaTitle = screen === 'shop' ? 'Shop' : screen === 'about' ? 'Über die App' : (areaOf(screen)?.label ?? '');
 
   return (
     <div className={desktop ? 'app map-app desktop' : 'app map-app'}>
@@ -181,7 +192,7 @@ export function App() {
             {!field && screen !== 'oracle' && (
               <div className="area-head">
                 <h2 className="section-title">{areaTitle}</h2>
-                <button type="button" className="icon-button" aria-label={`${areaTitle} schließen`} onClick={() => game.showScreen('oracle')}>
+                <button type="button" className="icon-button" aria-label={`${areaTitle} schließen`} onClick={() => (screen === 'shop' ? game.closeShop() : game.showScreen('oracle'))}>
                   <CloseIcon />
                 </button>
               </div>

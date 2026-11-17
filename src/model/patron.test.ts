@@ -184,7 +184,7 @@ describe('Rolle und Ort eines NSC', () => {
   });
 });
 
-describe('Reiter NSC: Filter und Gruppen', () => {
+describe('NSC-Liste: Filter und Gruppen', () => {
   const hexes = [
     { ...ref.demoWorld, column: 1, row: 1, name: 'Regina' },
     { ...ref.demoWorld, column: 2, row: 2, name: 'Efate' },

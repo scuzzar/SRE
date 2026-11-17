@@ -437,6 +437,28 @@ describe('Kampf', () => {
 describe('Shop und Gruppenkasse', () => {
   const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
 
+  it('Einkaufen öffnet den Shop nur am Aufenthaltsort; ✕ führt zur Weltkarte zurück, ein Reiter verlässt ihn', async () => {
+    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina])));
+    game.chooseHex(1, 1);
+    game.openShop();
+    expect(game.snapshot().screen).toBe('oracle');
+    game.stayHere();
+    game.showScreen('ship');
+    game.chooseHex(1, 1);
+    const world = game.snapshot().world?.id;
+    expect(world).toBeDefined();
+    game.openShop();
+    expect(game.snapshot()).toMatchObject({ screen: 'shop', world: undefined });
+    game.closeShop();
+    expect(game.snapshot().screen).toBe('ship');
+    expect(game.snapshot().world?.id).toBe(world);
+    game.openShop();
+    game.showScreen('funds');
+    expect(game.snapshot().screen).toBe('funds');
+    game.closeShop();
+    expect(game.snapshot().screen).toBe('oracle');
+  });
+
   it('die Beispiel-Charaktere tragen ihre Rüstung; eine gekaufte Rüstung trägt er gleich, die alte kommt ins Gepäck', async () => {
     const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina])));
     expect(game.snapshot().characters.map((c) => c.armor)).toEqual(['Jack', 'Mesh']);
@@ -615,7 +637,7 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot().log.map((e) => e.kind)).toEqual(['check', 'check', 'patron', 'check', 'patron', 'rumor']);
   });
 
-  it('Patron als NSC: „Als NSC“ legt einen Patron-NSC auf dem Aufenthaltsort an; der Reiter NSC zeigt ihn nach Rolle', async () => {
+  it('Patron als NSC: „Als NSC“ legt einen Patron-NSC auf dem Aufenthaltsort an; die NSC-Liste zeigt ihn nach Rolle', async () => {
     let seed = 11;
     const random: Random = {
       int(min: number, max: number) {
@@ -628,14 +650,14 @@ describe('Begegnung und Kampfsimulation', () => {
     const { game } = await started(random, memoryRepository(campaign));
     expect(game.snapshot().patron?.npc).toEqual({ blocker: undefined });
     game.createPatronNpc();
-    // Die Ansicht wechselt gleich in den Reiter NSC, mit dem neuen NSC schon offen im Editor.
+    // Die Ansicht wechselt gleich in die NSC-Liste, mit dem neuen NSC schon offen im Editor.
     expect(game.snapshot().screen).toBe('npcs');
     expect(game.snapshot().editor?.id).toBe(game.snapshot().npcs.worlds[0]!.roles[0]!.npcs[0]!.id);
     const npcs = game.snapshot().npcs;
     expect(npcs).toMatchObject({ all: false, here: 'Regina', total: 1, worlds: [{ name: 'Regina', roles: [{ role: 'patron' }] }] });
     const npc = npcs.worlds[0]!.roles[0]!.npcs[0]!;
     expect(npc.background).toMatch(/^Smuggler · Ex-Merchants/);
-    expect(game.snapshot().patron?.note).toBe(`${npc.name} (${npc.background}) steht jetzt im Reiter NSC.`);
+    expect(game.snapshot().patron?.note).toBe(`${npc.name} (${npc.background}) steht jetzt unter Charaktere › NSC.`);
     // Nicht in der Leiste oben und nicht unter den SC.
     expect(game.snapshot().characters.map((c) => c.id)).not.toContain(npc.id);
     // „Alle zeigen“ gilt nur, bis man den Reiter wieder öffnet.
@@ -683,7 +705,7 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot()).toMatchObject({ encounterChoice: undefined, encounterRoll: undefined, combat: { intro: true, sim: { roll: 15 } } });
   });
 
-  it('NSC dazunehmen: Der Reiter NSC wählt NSC vom Aufenthaltsort, OK würfelt die Begegnung ohne Test mit ihnen', async () => {
+  it('NSC dazunehmen: Die NSC-Liste wählt NSC vom Aufenthaltsort, OK würfelt die Begegnung ohne Test mit ihnen', async () => {
     const { game } = await onRegina();
     game.newCharacter(true, 'contact');
     game.saveCharacter({ ...game.snapshot().editor!.input, name: 'Tenzin' });
@@ -1974,7 +1996,7 @@ describe('Städtenamen (2026-11-14k)', () => {
 });
 
 describe('Orte (2026-11-14j)', () => {
-  it('NSC platzieren: der Reiter NSC wählt mehrere NSC, auch ohne Ort; OK setzt sie aufs Feld, Abbrechen und ein Reiter ändern nichts', async () => {
+  it('NSC platzieren: die NSC-Liste wählt mehrere NSC, auch ohne Ort; OK setzt sie aufs Feld, Abbrechen und ein Reiter ändern nichts', async () => {
     const { game } = await started();
     // Zwei NSC: Mara lebt auf Kessra, Tenzin hat keinen Ort (er reist mit).
     const add = (name: string, place: string | undefined) => {
@@ -1990,7 +2012,7 @@ describe('Orte (2026-11-14j)', () => {
     game.openGlobeAt(4, 5);
     const capital = game.snapshot().globe!.cities[0]!;
     game.pickCell(capital.cell);
-    // NSC platzieren öffnet den Reiter NSC zum Auswählen; das Feld ist so lange losgelassen.
+    // NSC platzieren öffnet die NSC-Liste zum Auswählen; das Feld ist so lange losgelassen.
     game.startNpcPlacing();
     expect(game.snapshot()).toMatchObject({ screen: 'npcs', globe: { picked: undefined }, npcs: { all: false, placing: { question: `Welche NSC kommen nach ${capital.label}?`, here: [] } } });
     // Abbrechen: zurück zum Feld im Reiter davor, nichts geändert.

@@ -4,15 +4,16 @@ import type { NpcRole } from '../../model';
 import { hex, roleText } from '../format';
 import { useGame } from '../game-context';
 import { CheckIcon, CloseIcon, CombatIcon, PencilIcon } from '../icons';
+import { PeopleTabs } from './PeopleTabs';
 
 /**
- * Der Reiter NSC: die dauerhaften NSC, vorgegeben die des Aufenthaltsorts (und die ohne Ort) nach
+ * NSC im Reiter Charaktere: die dauerhaften NSC, vorgegeben die des Aufenthaltsorts (und die ohne Ort) nach
  * Rolle; mit „Alle zeigen“ alle nach Welt und darin nach Rolle. Antippen öffnet den Editor.
  *
  * Beim NSC platzieren (`npcs.placing`) hat jeder NSC ein Kästchen zum Auswählen, wer schon auf dem
  * Feld ist, ist angehakt und gesperrt; unten stehen „Abbrechen“ und „OK“. Filter wie „Alle zeigen“
  * gelten weiter, die Auswahl bleibt dabei stehen. Welche angehakt sind, ist reine Darstellung, bis
- * „OK“ sie dem Controller gibt.
+ * „OK“ sie dem Controller gibt; solange steht der Umschalter SC, NSC, Kasse oben nicht da.
  */
 export function NpcScreen({ view }: { view: Snapshot }) {
   const game = useGame();
@@ -29,6 +30,7 @@ export function NpcScreen({ view }: { view: Snapshot }) {
 
   return (
     <div className="screen">
+      {!placing && <PeopleTabs screen="npcs" />}
       <section className="scroll characters npc-screen" aria-labelledby="npcs-title">
         <div className="npc-head">
           <h2 id="npcs-title" className="section-title">

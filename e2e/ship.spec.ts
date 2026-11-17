@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openPeople } from './layout';
 
 /** Ein Bild aus dem Browser, als Datei für das Feld: `type` PNG oder JPEG, in der Größe `width` × `height`. */
 async function picture(page: Page, width: number, height: number, type: 'image/png' | 'image/jpeg'): Promise<Buffer> {
@@ -28,8 +29,7 @@ async function openTab(page: Page, name: string) {
 
 /** Geld in die Kasse und einen Scout/Courier bar kaufen; der Reiter Schiff bleibt offen. */
 async function buyScout(page: Page) {
-  await openTab(page, 'Shop');
-  await page.getByRole('tab', { name: 'Kasse' }).click();
+  await openPeople(page, 'Kasse');
   await page.getByRole('spinbutton').first().fill('30000000');
   await page.getByRole('button', { name: 'Einnahme buchen' }).click();
   await openTab(page, 'Schiff');
@@ -41,8 +41,7 @@ async function buyScout(page: Page) {
 
 test('Schiff: Werft und Bestellung sind Felder im Ziehblatt, kein Dialog; ✕ und Esc schließen', async ({ page }) => {
   await page.goto('/');
-  await openTab(page, 'Shop');
-  await page.getByRole('tab', { name: 'Kasse' }).click();
+  await openPeople(page, 'Kasse');
   await page.getByRole('spinbutton').first().fill('30000000');
   await page.getByRole('button', { name: 'Einnahme buchen' }).click();
   await openTab(page, 'Schiff');

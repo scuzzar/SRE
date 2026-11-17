@@ -1,12 +1,13 @@
 import type { GlobeView, TripPlanView, TripView } from '../../controller';
 import { useGame } from '../game-context';
-import { CloseIcon, NpcPinIcon, PinIcon, RouteIcon } from '../icons';
+import { CloseIcon, NpcPinIcon, PinIcon, RouteIcon, ShopIcon } from '../icons';
 
 /**
  * Die Reihe unten beim angetippten Feld des Globus, an der Stelle der Reihe Notiz, Deuten, 2W6,
  * Karte und im selben Stil: Hierhin reisen (die Route zum Feld planen, `planTrip`), Gruppe setzen
- * (ohne Fahrt und ohne Zeit, `moveParty`) und NSC platzieren (öffnet den Reiter NSC zum Auswählen,
- * `startNpcPlacing`; mit „OK“ oder „Abbrechen“ geht es zurück zum Feld). Was gerade nicht geht, ist ausgegraut und sagt im Titel, warum. Reine
+ * (ohne Fahrt und ohne Zeit, `moveParty`) und NSC platzieren (öffnet die NSC-Liste zum Auswählen,
+ * `startNpcPlacing`; mit „OK“ oder „Abbrechen“ geht es zurück zum Feld) und Einkaufen (öffnet auf der
+ * Welt der Gruppe den Shop an der Stelle des Felds, `openShop`; ✕ führt zurück). Was gerade nicht geht, ist ausgegraut und sagt im Titel, warum. Reine
  * Darstellung: Was die Knöpfe bewirken, entscheidet der Controller. Wird eine Route geplant, stehen
  * stattdessen „Abbrechen“ und „Losfahren“ da.
  */
@@ -65,9 +66,13 @@ export function FieldDock({ globe, trip, tripPlan, npcTotal }: { globe: GlobeVie
           <PinIcon />
           Gruppe setzen
         </button>
-        <button type="button" className="action note" title={npcBlocker ?? 'Im Reiter NSC auswählen, wer hierher kommt, auch von anderen Welten'} disabled={npcBlocker !== undefined} onClick={() => game.startNpcPlacing()}>
+        <button type="button" className="action note" title={npcBlocker ?? 'Unter Charaktere › NSC auswählen, wer hierher kommt, auch von anderen Welten'} disabled={npcBlocker !== undefined} onClick={() => game.startNpcPlacing()}>
           <NpcPinIcon />
           NSC platzieren
+        </button>
+        <button type="button" className="action note" title={globe.partyHere ? 'Im Shop der Welt kaufen und verkaufen' : 'Einkaufen geht nur auf der Welt der Gruppe'} disabled={!globe.partyHere} onClick={() => game.openShop()}>
+          <ShopIcon />
+          Einkaufen
         </button>
       </div>
     </section>

@@ -54,7 +54,7 @@ export function EncounterRollDialog({ roll, view }: { roll: TripRoll; view: Snap
             <strong>{rumorName(rumor)}</strong> <span>{rumorDetail(rumor)}</span>
           </p>
         )}
-        {landed && asNpc && <p className="small-label">{asNpc.blocker ?? 'Als NSC: ein zufälliger NSC in der Laufbahn des Patrons, er kommt in den Reiter NSC.'}</p>}
+        {landed && asNpc && <p className="small-label">{asNpc.blocker ?? 'Als NSC: ein zufälliger NSC in der Laufbahn des Patrons, er kommt unter Charaktere › NSC.'}</p>}
         {landed && event && (
           <p className="patron-last">
             <span>{event.text}</span>
