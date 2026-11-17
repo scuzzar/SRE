@@ -170,6 +170,14 @@ import {
   fromCloudFile,
   markOf,
   planSync,
+  deckMarkOf,
+  fromDeckPlanFile,
+  nextDeckSlot,
+  planDeckSync,
+  toDeckPlanFile,
+  type DeckFile,
+  type DeckMark,
+  type DeckStep,
   stamped,
   touched,
   type CharacterInput,
@@ -223,6 +231,9 @@ import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type 
 import type { JourneyMode } from './time-view';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
+/** Der Schlüssel eines Deckplan-Platzes in den Marken: „Entwurf/Platz“. */
+const slotKey = (slot: { readonly design: string; readonly name: string }): string => `${slot.design}/${slot.name}`;
+
 const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, selected: undefined, picking: false } as const;
 
 function messageOf(error: unknown): string {
@@ -270,6 +281,8 @@ export class GameController {
   private again = false;
   /** Der Entwurf, dessen Deckpläne im Stand liegen; `undefined` wie ohne Schiff. */
   private deckDesign: string | undefined;
+  /** Die Abgleichsmarken der Deckplan-Plätze, je „Entwurf/Platz“ (2026-11-17). */
+  private readonly deckMarks = new Map<string, DeckMark>();
 
   constructor(private readonly deps: GameDependencies) {
     this.state = {
@@ -484,6 +497,8 @@ export class GameController {
     }
     this.marks.clear();
     this.persist(() => this.deps.repository.clearMarks());
+    this.deckMarks.clear();
+    this.persist(() => this.deps.repository.clearDeckMarks());
     this.update({ conflicts: [], sync: { status: 'signedOut', account: undefined, at: undefined, error: undefined } });
   }
 
@@ -559,6 +574,7 @@ export class GameController {
     if (!cloud || !this.writable) return;
     try {
       for (const mark of await this.deps.repository.loadMarks()) this.marks.set(mark.key, mark);
+      for (const mark of await this.deps.repository.loadDeckMarks()) this.deckMarks.set(slotKey(mark), mark);
       const account = await cloud.account();
       // Ohne Anmeldung, aber mit Abgleichsmarken hat sich niemand selbst abgemeldet (das löscht die
       // Marken): Die Anmeldung ging verloren, etwa mit einer neuen Fassung der App.
@@ -588,6 +604,7 @@ export class GameController {
           else throw error;
         }
       }
+      await this.syncDecks(problems);
       this.setSync({ status: problems.length ? 'error' : 'synced', at: this.deps.clock.now(), error: problems[0] });
     } catch (error) {
       this.again = false;
@@ -659,6 +676,109 @@ export class GameController {
   private async upload(campaign: Campaign, revision: string | undefined): Promise<void> {
     const next = await this.deps.cloud!.write(campaign.key, toCampaignFile(campaign), revision);
     this.setMark(markOf(campaign, next));
+  }
+
+  /** Gleicht die Deckpläne ab (2026-11-17): je Platz, was `planDeckSync` sagt; danach zeigt der Reiter den neuen Stand. */
+  private async syncDecks(problems: string[]): Promise<void> {
+    const remote = await this.deps.cloud!.listDeckPlans();
+    const plans = await this.deps.repository.listDeckPlans();
+    let changed = false;
+    for (const step of planDeckSync(plans, [...this.deckMarks.values()], remote)) {
+      try {
+        if (await this.deckStep(step, plans, remote)) changed = true;
+      } catch (error) {
+        // Wie bei den Kampagnen: dort inzwischen geändert sieht der nächste Durchgang, eine kaputte Datei hält die übrigen nicht auf.
+        if (error instanceof CloudChanged) this.again = true;
+        else if (error instanceof DomainError) problems.push(error.message);
+        else throw error;
+      }
+    }
+    if (changed) {
+      this.deckDesign = undefined;
+      this.update({});
+    }
+  }
+
+  /** Ein Schritt des Abgleichs an einem Deckplan-Platz; `true`, wenn sich hier ein Plan geändert hat. */
+  private async deckStep(step: DeckStep, plans: readonly DeckPlan[], remote: readonly DeckFile[]): Promise<boolean> {
+    const cloud = this.deps.cloud!;
+    const repository = this.deps.repository;
+    const { design, name } = step;
+    const local = plans.find((p) => p.design === design && p.name === name);
+    const mark = this.deckMarks.get(slotKey(step));
+    const file = remote.find((f) => f.design === design && f.name === name);
+    // Wurde hier ein Plan abgelegt oder gelöscht, während der Abgleich auf das Netz wartete, gilt der Schritt nicht mehr.
+    const stale = async (): Promise<boolean> => {
+      const now = (await repository.loadDeckPlans(design)).find((p) => p.name === name);
+      if (now?.key === local?.key) return false;
+      this.again = true;
+      return true;
+    };
+    const read = async (): Promise<{ plan: DeckPlan; revision: string } | undefined> => {
+      const got = await cloud.readDeckPlan(design, name);
+      if (!got) {
+        // Inzwischen dort gelöscht: Der nächste Durchgang sieht es.
+        this.again = true;
+        return undefined;
+      }
+      return { plan: fromDeckPlanFile(got.text, design, name), revision: got.revision };
+    };
+    switch (step.kind) {
+      case 'upload':
+        if (local) await this.uploadDeck(local, file?.revision);
+        return false;
+      case 'download': {
+        const got = await read();
+        if (!got || (await stale())) return false;
+        await repository.saveDeckPlan(got.plan);
+        this.setDeckMark(deckMarkOf(got.plan, got.revision));
+        return true;
+      }
+      case 'removeRemote':
+        if (mark) await cloud.removeDeckPlan(design, name, mark.revision);
+        this.dropDeckMark(step);
+        return false;
+      case 'removeLocal':
+        if (await stale()) return false;
+        await repository.removeDeckPlan(design, name);
+        this.dropDeckMark(step);
+        return true;
+      case 'forget':
+        this.dropDeckMark(step);
+        return false;
+      case 'compare': {
+        const got = await read();
+        if (!got || !local || (await stale())) return false;
+        if (got.plan.key === local.key) {
+          this.setDeckMark(deckMarkOf(local, got.revision));
+          return false;
+        }
+        // Beide behalten: Der Plan aus OneDrive bekommt den Platz, der von hier rückt auf den nächsten freien.
+        const taken = [...(await repository.loadDeckPlans(design)).map((p) => p.name), ...remote.filter((f) => f.design === design).map((f) => f.name)];
+        const moved: DeckPlan = { ...local, name: nextDeckSlot(taken) };
+        await repository.saveDeckPlan(moved);
+        await repository.saveDeckPlan(got.plan);
+        this.setDeckMark(deckMarkOf(got.plan, got.revision));
+        await this.uploadDeck(moved, undefined);
+        return true;
+      }
+    }
+  }
+
+  /** Lädt einen Deckplan hoch; `revision` ist die Fassung, die dort ersetzt wird, ohne sie darf es dort keine geben. */
+  private async uploadDeck(plan: DeckPlan, revision: string | undefined): Promise<void> {
+    const next = await this.deps.cloud!.writeDeckPlan(plan.design, plan.name, toDeckPlanFile(plan), revision);
+    this.setDeckMark(deckMarkOf(plan, next));
+  }
+
+  private setDeckMark(mark: DeckMark): void {
+    this.deckMarks.set(slotKey(mark), mark);
+    this.persist(() => this.deps.repository.saveDeckMark(mark));
+  }
+
+  private dropDeckMark(slot: { readonly design: string; readonly name: string }): void {
+    if (!this.deckMarks.delete(slotKey(slot))) return;
+    this.persist(() => this.deps.repository.removeDeckMark(slot.design, slot.name));
   }
 
   /** Nimmt einen Stand aus OneDrive auf: ersetzt die Kampagne mit derselben Id oder kommt als weitere dazu. */
@@ -1629,9 +1749,10 @@ export class GameController {
       if (image.length > 8_000_000) throw new DomainError('Das Bild ist zu groß; nimm es kleiner auf.');
       // Der freie Platz kommt aus dem Gerät, nicht aus der Anzeige: So überschreibt ein Bild nie einen Plan, der noch lädt.
       const stored = await this.deps.repository.loadDeckPlans(ship.design);
-      const plan: DeckPlan = { design: ship.design, name: freeDeckSlot(stored), image };
+      const plan: DeckPlan = { key: this.deps.keys.next(), design: ship.design, name: freeDeckSlot(stored), image };
       await this.deps.repository.saveDeckPlan(plan);
       if (this.deckDesign === ship.design) this.update({ deckPlans: [...stored, plan], shipError: undefined });
+      this.requestSync();
     } catch (error) {
       this.update({ shipError: messageOf(error) });
     }
@@ -1645,6 +1766,7 @@ export class GameController {
     try {
       await this.deps.repository.removeDeckPlan(ship.design, name);
       this.update({ deckPlans: this.state.deckPlans.filter((p) => p.name !== name), shipError: undefined });
+      this.requestSync();
     } catch (error) {
       this.update({ shipError: messageOf(error) });
     }

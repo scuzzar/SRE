@@ -51,15 +51,17 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   Weltkarte), `book(kind, amount, text, character)`, `buy(item, count, character)` und
   `sell(item, count, price, character)`; für den Reiter Schiff `buyShipDesign(design, method)` (Werft, bar
   oder über die Bank), `renameShip(name)`, `editShip(input)`, `buyFuelTons(tons)` (`model/ship.ts`, Entwürfe
-  in `src/data/ships.json`), `addDeckPlan(image)` und `removeDeckPlan(name)` (Deckpläne sind Geräte-Daten
-  je Entwurf; der Controller lädt die des aktiven Entwurfs über das Repository, auch nach jedem Wechsel
-  der Kampagne neu); für Kampagnen
+  in `src/data/ships.json`), `addDeckPlan(image)` und `removeDeckPlan(name)` (Deckpläne gehören keiner Kampagne,
+  sondern dem Entwurf; der Controller lädt die des aktiven Entwurfs über das Repository, auch nach jedem
+  Wechsel der Kampagne und jedem Abgleich neu); für Kampagnen
   `openCampaign(id)`, `createCampaign(name)`, `renameCampaign(name)`, `deleteCampaign(id)`,
   `exportCampaign(id)` und `importCampaign(text)`; für den Abgleich mit OneDrive `signIn()`, `signOut()`,
   `sync()` und `resolveConflict(key, choice)`: Was je Kampagne zu tun ist, sagt das Model (`planSync` in
   `model/sync.ts`), der Controller tut es über `Cloud` und `CampaignRepository` und hält offene Konflikte
-  (`model/draft/conflict.ts`) in seinem Zustand; die Abgleichsmarken merkt sich das Gerät über das
-  Repository; `main.tsx` stößt den Abgleich an, wenn die App wieder sichtbar wird oder das Netz zurück ist; für die Charaktererschaffung `openGeneration()`,
+  (`model/draft/conflict.ts`) in seinem Zustand; im selben Lauf gleicht er die Deckpläne ab (je Platz
+  nach `planDeckSync`, Dateiformat `toDeckPlanFile`/`fromDeckPlanFile` in `model/sync.ts`; in OneDrive im
+  Unterordner `Deckplaene` des App-Ordners); die Abgleichsmarken der Kampagnen und der Deckplan-Plätze
+  merkt sich das Gerät über das Repository; `main.tsx` stößt den Abgleich an, wenn die App wieder sichtbar wird oder das Netz zurück ist; für die Charaktererschaffung `openGeneration()`,
   `rollGeneration()`, `chooseService(id)`, `chooseSkillTable(id)`, `chooseCascade(skill)`,
   `reenlist(wants)`, `musterOut(kind)`, `chooseGenerationWorld(id)`, `pickGenerationWorld()`,
   `closePicker()`, `runGeneration()`, `finishGeneration(name)`, `discardGeneration()` und

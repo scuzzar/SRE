@@ -153,7 +153,7 @@ describe('Deckpläne im Reiter Schiff', () => {
 
   it('ein Bild von der alten Werft bleibt, wenn die Gruppe denselben Entwurf kauft', async () => {
     const repository = memoryRepository();
-    repository.deckPlans.push({ design: 'A', name: 'Deck A', image: png });
+    repository.deckPlans.push({ key: 'k-alt', design: 'A', name: 'Deck A', image: png });
     const { game } = await started(fixedRandom(), repository);
     fund(game, 45_000_000);
     game.buyShipDesign('A', 'cash');
@@ -185,7 +185,7 @@ describe('Deckpläne im Reiter Schiff', () => {
 
   it('ein neues Bild überschreibt nie einen Plan, der noch lädt', async () => {
     const repository = memoryRepository();
-    repository.deckPlans.push({ design: 'A', name: 'Deck A', image: png });
+    repository.deckPlans.push({ key: 'k-alt', design: 'A', name: 'Deck A', image: png });
     const { game } = await started(fixedRandom(), repository);
     fund(game, 45_000_000);
     game.buyShipDesign('A', 'cash');

@@ -253,7 +253,7 @@ function DeckPlans({ ship, onView }: { ship: ShipView; onView: (name: string) =>
           ))}
         </div>
       )}
-      <div className="deck-empty">{full ? 'Alle drei Deckpläne belegt' : `Noch ${ship.freeDeckSlots} von 3 Plätzen frei`}</div>
+      <div className="deck-empty">{full ? (ship.deckPlans.length > 3 ? `${ship.deckPlans.length} Deckpläne aus dem Abgleich; für ein neues Bild erst auf drei löschen` : 'Alle drei Deckpläne belegt') : `Noch ${ship.freeDeckSlots} von 3 Plätzen frei`}</div>
       <div className="deck-adds">
         <button type="button" className="ghost" disabled={full} title={full ? 'Alle drei Deckpläne belegt' : undefined} onClick={() => fileRef.current?.click()}>
           PNG hochladen

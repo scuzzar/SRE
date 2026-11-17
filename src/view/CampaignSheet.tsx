@@ -231,7 +231,7 @@ function SyncPanel({ sync }: { sync: SyncView }) {
         </div>
       )}
       {!signedIn && sync.status !== 'off' && (
-        <span className="small-label">Angemeldet hast du deine Kampagnen auf jedem Gerät, auf dem du dich auch anmeldest. Sie liegen im Ordner „Apps“ deines OneDrive.</span>
+        <span className="small-label">Angemeldet hast du deine Kampagnen und Deckpläne auf jedem Gerät, auf dem du dich auch anmeldest. Sie liegen im Ordner „Apps“ deines OneDrive.</span>
       )}
     </section>
   );

@@ -82,3 +82,39 @@ test('Schiff: Deckpläne hochladen, große Fotos verkleinert, Löschen erst nach
   await expect(page.locator('.deck-card')).toHaveCount(1);
   await expect(page.locator('.deck-card').first()).toContainText('Deck A');
 });
+
+test('Schiff: Deckpläne kommen über den Abgleich aufs andere Gerät, Löschen reist mit', async ({ page, context }) => {
+  // Zwei Seiten mit eigenem Speicher (`geraet`) an derselben Probe-Wolke sind zwei Geräte.
+  const suffix = test.info().project.name;
+  await page.goto(`/?probe-wolke&geraet=handy-deck-${suffix}`);
+  await page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Kampagnen wechseln und verwalten' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Kampagnen' });
+  await expect(sheet.locator('.sync')).toContainText('Kampagnen und Deckpläne');
+  await sheet.locator('.sync').getByRole('button', { name: 'Bei OneDrive anmelden' }).click();
+  await expect(sheet.locator('.sync')).toContainText('Abgeglichen um');
+  await sheet.getByRole('button', { name: 'Schließen' }).first().click();
+
+  await buyScout(page);
+  const [upload] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', { name: 'PNG hochladen' }).click()]);
+  await upload.setFiles({ name: 'deck.png', mimeType: 'image/png', buffer: await picture(page, 600, 300, 'image/png') });
+  await expect(page.locator('.deck-card')).toHaveCount(1);
+  const cloudHas = (p: Page) => p.evaluate(() => Object.keys((JSON.parse(localStorage.getItem('sre-probe-wolke') ?? '{}') as { decks?: object }).decks ?? {}));
+  await expect.poll(() => cloudHas(page)).toEqual(['S/Deck A']);
+
+  // Das Tablet ist schon angemeldet; sein Scout zeigt denselben Plan.
+  const tablet = await context.newPage();
+  await tablet.goto(`/?probe-wolke&geraet=tablet-deck-${suffix}`);
+  await buyScout(tablet);
+  await expect(tablet.locator('.deck-card')).toHaveCount(1);
+  await expect(tablet.locator('.deck-card').first()).toContainText('Deck A');
+
+  // Am Tablet gelöscht, ist er nach dem nächsten Abgleich auch am Handy weg.
+  await tablet.locator('.deck-card').first().getByRole('button', { name: 'Deck A löschen' }).click();
+  await tablet.locator('.deck-card').first().getByRole('button', { name: 'Löschen?' }).click();
+  await expect.poll(() => cloudHas(tablet)).toEqual([]);
+  await page.reload();
+  await openTab(page, 'Schiff');
+  await expect(page.locator('.deck-empty')).toHaveText('Noch 3 von 3 Plätzen frei');
+  await expect(page.locator('.deck-card')).toHaveCount(0);
+});

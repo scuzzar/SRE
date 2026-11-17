@@ -8,6 +8,7 @@ import {
   chooseShipGain,
   createCampaign,
   freeDeckSlot,
+  nextDeckSlot,
   fundsOf,
   gainShip,
   monthlyPaymentOf,
@@ -202,12 +203,23 @@ describe('Ship-Vorteil der Abmusterung', () => {
 });
 
 describe('Deckpläne', () => {
-  const plan = (name: string): DeckPlan => ({ design: 'A', name, image: 'data:image/png;base64,x' });
+  const plan = (name: string): DeckPlan => ({ key: `k-${name}`, design: 'A', name, image: 'data:image/png;base64,x' });
 
   it('sind die Plätze Deck A, B und C; drei je Entwurf sind das Ende', () => {
     expect(freeDeckSlot([])).toBe('Deck A');
     expect(freeDeckSlot([plan('Deck A')])).toBe('Deck B');
     expect(freeDeckSlot([plan('Deck B')])).toBe('Deck A');
     expect(() => freeDeckSlot([plan('Deck A'), plan('Deck B'), plan('Deck C')])).toThrow(/Mehr als 3/);
+  });
+
+  it('nach dem Abgleich zählen auch Pläne auf Deck D: drei sind drei, auch wenn Deck C frei ist', () => {
+    expect(() => freeDeckSlot([plan('Deck A'), plan('Deck B'), plan('Deck D')])).toThrow(/Mehr als 3/);
+    expect(freeDeckSlot([plan('Deck A'), plan('Deck D')])).toBe('Deck B');
+  });
+
+  it('der nächste Platz für „beide behalten“ geht nach Deck C weiter', () => {
+    expect(nextDeckSlot([])).toBe('Deck A');
+    expect(nextDeckSlot(['Deck A', 'Deck C'])).toBe('Deck B');
+    expect(nextDeckSlot(['Deck A', 'Deck B', 'Deck C'])).toBe('Deck D');
   });
 });
