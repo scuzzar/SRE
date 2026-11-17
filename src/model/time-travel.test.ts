@@ -200,8 +200,8 @@ describe('Reise mit Passagen', () => {
 });
 
 describe('Reise mit eigenem Schiff', () => {
-  // Der Scout/Courier: Tank 40 t, Sprung 2 – also 20 t je Sprung.
-  const scout = addShip(there, 'S', undefined).campaign;
+  // Der Scout/Courier: Tank 40 t, Sprung 2 – also 20 t je Sprung; 4 Kabinen. Die Kasse zahlt die Lebenserhaltung.
+  const scout = addShip(book(there, 'income', 10_000, clock), 'S', undefined).campaign;
 
   it('braucht keinen Raumhafen, reicht bis zur Sprungzahl und verlangt Treibstoff', () => {
     expect(jumpFuelOf('S')).toBe(20);
@@ -213,12 +213,13 @@ describe('Reise mit eigenem Schiff', () => {
     expect(shipJourneyBlocker(scout, '0101')).toContain('schon hier');
   });
 
-  it('verbraucht Treibstoff, würfelt den Sprung, dauert eine Woche und kostet nichts', () => {
+  it('verbraucht Treibstoff, würfelt den Sprung, dauert eine Woche und kostet nur die Lebenserhaltung', () => {
     const after = travelShip(scout, '0103', fixedRandom(2, 5), clock);
     expect(after.ships[0]!.fuel).toBe(20);
     expect(after.day).toBe(START_DAY + 7);
     expect(after.location).toEqual({ world: '0103' });
-    expect(after.bookings).toEqual([]);
+    // Zwei SC, je Cr2.000; der Außenposten hat keinen Raumhafen, also keine Liegegebühr.
+    expect(after.bookings.slice(1)).toEqual([expect.objectContaining({ kind: 'ship', amount: -4_000, forShip: 's1', shipCost: 'lifeSupport', text: 'Lebenserhaltung, 2 Reisende' })]);
     const journey = after.log.at(-1) as Journey;
     expect(journey).toMatchObject({ kind: 'journey', from: '0101', to: '0103', days: 7, day: START_DAY, ship: 's1', jump: [2, 5], passengers: [], berths: [] });
     expect(misjumpOf(journey)).toBe(false);

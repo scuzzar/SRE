@@ -91,6 +91,7 @@ import {
   type AttackKind,
   type AttackResult,
   type BookingKind,
+  type ShipCost,
   type Campaign,
   type DamageRoll,
   type ItemKind,
@@ -250,7 +251,7 @@ import { buildShipView, type ShipView } from './ship-view';
 import { sectorView, selectedView, worldList, worldView, type HexView, type SelectedHexView, type WorldListItem, type WorldView } from './world-view';
 import { globeView, type GlobeView } from './globe-view';
 import { activeTripView, tripDayItem, tripPlanOf, type TripDayItem, type TripPlanView, type TripView } from './trip-view';
-import { checkItem, checksView, journeyItem, journeyView, legalView, timeItem, timeView, type CheckItem, type ChecksView, type JourneyDraft, type JourneyItem, type JourneyView, type LegalView, type TimeItem, type TimeView } from './time-view';
+import { checkItem, checksView, journeyItem, journeyView, legalView, monthEndItem, timeItem, timeView, type CheckItem, type ChecksView, type JourneyDraft, type JourneyItem, type JourneyView, type LegalView, type MonthEndItem, type TimeItem, type TimeView } from './time-view';
 
 /**
  * Was die View zu sehen bekommt: den Spielstand aus dem Model, schon ausgewertet, und den Zustand des
@@ -495,7 +496,7 @@ export interface OddsChoice {
   readonly selected: boolean;
 }
 
-export type LogItem = DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | SaveItem | ButcheringItem | CheckItem | TimeItem | JourneyItem | TripDayItem | NoteItem;
+export type LogItem = DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | SaveItem | ButcheringItem | CheckItem | TimeItem | MonthEndItem | JourneyItem | TripDayItem | NoteItem;
 
 /** Ein Patron-Wurf: Liste, Würfel mit DMs, der Wurf 11–66 und die Zeile der Liste. */
 export interface PatronItem {
@@ -1168,6 +1169,8 @@ export interface BookingItem {
   readonly item: string | undefined;
   readonly count: number | undefined;
   readonly world: string | undefined;
+  /** Bei einer Schiffs-Buchung: wofür sie ist (fehlt bei alten). */
+  readonly shipCost: ShipCost | undefined;
 }
 
 export interface ShopView {
@@ -2314,6 +2317,7 @@ function shopView(campaign: Campaign, error: string | undefined): ShopView {
       item: b.bought ?? b.sold ? itemLabel(itemOf((b.bought ?? b.sold)!)) : undefined,
       count: b.count,
       world: b.in === undefined ? undefined : (campaign.hexes.find((h) => hexId(h.column, h.row) === b.in)?.name ?? b.in),
+      shipCost: b.shipCost,
     })),
     members: livingCharacters(campaign).map((c) => ({
       id: c.id,
@@ -2432,6 +2436,8 @@ function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
       return checkItem(entry);
     case 'time':
       return timeItem(entry);
+    case 'monthEnd':
+      return monthEndItem(campaign, entry);
     case 'journey':
       return journeyItem(campaign, entry, index);
     case 'tripDay':

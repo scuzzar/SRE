@@ -267,6 +267,7 @@ export function removeLogEntry(campaign: Campaign, index: number): Campaign {
   // Zeit und Reisen haben den Stand geändert (Tag, Aufenthaltsort, Tote, Lotterie); sie bleiben.
   const kind = campaign.log[index]!.kind;
   if (kind === 'time' || kind === 'journey' || kind === 'tripDay') throw new DomainError(kind === 'time' ? 'Vergangene Zeit lässt sich nicht löschen.' : kind === 'journey' ? 'Eine Reise lässt sich nicht löschen.' : 'Ein Reisetag lässt sich nicht löschen.');
+  if (kind === 'monthEnd') throw new DomainError('Eine Monatsabrechnung lässt sich nicht löschen.');
   // Ein Wurf einer Garbe geht nur mit der ganzen Garbe.
   const roots = campaign.log[index]!.kind === 'attack' ? volleyOf(campaign.log, index) : [index];
   // Ein Ereignis geht mit seinen Rettungswürfen, ein Rettungswurf mit seinem Schaden.

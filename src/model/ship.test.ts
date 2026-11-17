@@ -12,7 +12,6 @@ import {
   fundsOf,
   gainShip,
   monthlyPaymentOf,
-  payLoans,
   pendingShipGain,
   renameShip,
   resolveShipGains,
@@ -68,10 +67,10 @@ describe('Werft', () => {
     expect(bought.bookings.at(-1)).toMatchObject({ kind: 'ship', forShip: ship.id, amount: -29_430_000 });
   });
 
-  it('bei der Bank: 20 % Anzahlung, doppelte Kreditsumme, die erste Rate in einem Monat', () => {
+  it('bei der Bank: 20 % Anzahlung, doppelte Kreditsumme, die erste Rate am Monatsende vier Wochen später', () => {
     const bought = buyShip(withFunds(10_000_000), 'A', 'bank', clock);
     expect(fundsOf(bought)).toBe(10_000_000 - 7_416_000);
-    expect(activeShip(bought)).toMatchObject({ initialLoan: 74_160_000, loanBalance: 74_160_000, nextPaymentDay: base.day + 30 });
+    expect(activeShip(bought)).toMatchObject({ initialLoan: 74_160_000, loanBalance: 74_160_000, nextPaymentDay: base.day + 28 });
     expect(monthlyPaymentOf(activeShip(bought))).toBe(154_500);
   });
 
@@ -120,34 +119,6 @@ describe('Schiffsbogen', () => {
   it('der Stift benennt um, ohne Tank und Laderaum anzufassen', () => {
     const named = renameShip(scout, id, 'Eiserne Meridian');
     expect(activeShip(named)).toMatchObject({ name: 'Eiserne Meridian', fuel: 40, cargo: 0 });
-  });
-});
-
-describe('Raten', () => {
-  const loaned = () => buyShip(withFunds(10_000_000), 'A', 'bank', clock);
-
-  it('fällige Zeit: die Bank hebt die Monatsrate aus der Kasse', () => {
-    const due = { ...loaned(), day: base.day + 30 };
-    const paid = payLoans(due, clock);
-    expect(activeShip(paid)).toMatchObject({ loanBalance: 74_160_000 - 154_500, nextPaymentDay: base.day + 60 });
-    expect(paid.bookings.at(-1)).toMatchObject({ kind: 'ship', amount: -154_500 });
-  });
-
-  it('ohne Deckung bleibt die Rate als Hinweis in der Kasse, der Termin rückt trotzdem weiter', () => {
-    const poor = { ...buyShip(withFunds(7_416_000), 'A', 'bank', clock), day: base.day + 30 };
-    const after = payLoans(poor, clock);
-    expect(after.bookings.at(-1)).toMatchObject({ kind: 'ship', amount: 0, text: 'Rate nicht bezahlt' });
-    expect(activeShip(after).nextPaymentDay).toBe(base.day + 60);
-    expect(fundsOf(after)).toBe(0);
-  });
-
-  it('bezahlt: Restschuld und Termin entfallen, die Kreditsumme bleibt als Erinnerung', () => {
-    const almost = loaned();
-    const last = { ...almost, day: almost.day + 30, ships: almost.ships.map((s) => ({ ...s, loanBalance: 154_500 })) };
-    const ship = activeShip(payLoans(last, clock));
-    expect(ship.initialLoan).toBe(74_160_000);
-    expect(Object.keys(ship)).not.toContain('loanBalance');
-    expect(Object.keys(ship)).not.toContain('nextPaymentDay');
   });
 });
 

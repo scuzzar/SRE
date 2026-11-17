@@ -1,6 +1,6 @@
 import { Fragment, memo, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { DamageItem, JourneyItem, LogItem, NoteItem, TripDayItem } from '../../controller';
-import { answerText, attackTitle, checkDetail, clockTime, damageDetail, isYesAnswer, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, resultLine, scatterText, taskDetail, taskTitle, tripDayDetail } from '../format';
+import { answerText, attackTitle, checkDetail, clockTime, damageDetail, isYesAnswer, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, resultLine, scatterText, taskDetail, taskTitle, tripDayDetail, credits, monthEndDetail } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { LightbulbIcon, PencilIcon, TrashIcon } from '../icons';
@@ -438,6 +438,8 @@ function kicker(item: LogItem, volley = false): string {
       return `Test · ${item.name}`;
     case 'time':
       return item.week ? 'Zeit · Woche beendet' : 'Zeit';
+    case 'monthEnd':
+      return `Monatsabrechnung · ${item.month}`;
     case 'journey':
       return 'Reise';
     case 'tripDay':
@@ -449,7 +451,7 @@ function kicker(item: LogItem, volley = false): string {
 
 /** Zeit und Reisen haben den Stand geändert; sie lassen sich nicht löschen. */
 function deletable(item: LogItem | undefined): boolean {
-  return item !== undefined && item.kind !== 'time' && item.kind !== 'journey';
+  return item !== undefined && item.kind !== 'time' && item.kind !== 'journey' && item.kind !== 'monthEnd';
 }
 
 function EntryBody({ item }: { item: LogItem }) {
@@ -616,6 +618,13 @@ function EntryBody({ item }: { item: LogItem }) {
           <span className="entry-detail">
             {item.from} → {item.to}
           </span>
+        </>
+      );
+    case 'monthEnd':
+      return (
+        <>
+          <span className="verdict small">Laufende Kosten: {credits(item.total)}</span>
+          <span className="entry-detail">{monthEndDetail(item)}</span>
         </>
       );
     case 'journey':

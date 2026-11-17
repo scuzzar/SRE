@@ -148,3 +148,21 @@ test('Schiff: Deckpläne kommen über den Abgleich aufs andere Gerät, Löschen 
   await expect(page.locator('.deck-empty')).toHaveText('Noch 3 von 3 Plätzen frei');
   await expect(page.locator('.deck-card')).toHaveCount(0);
 });
+
+test('Monatsabrechnung: nach vier Wochen mit Schiff steht sie im Log, mit Liegegebühren', async ({ page }) => {
+  await page.goto('/');
+  await buyScout(page);
+  await openTab(page, 'Begegnung');
+  const dock = page.getByRole('region', { name: 'Begegnung und Zeit' });
+  // Lange gedrückt beendet „Woche beenden“ die Woche ohne Erinnerung an fehlende Tests.
+  for (let week = 0; week < 4; week++) {
+    await dock.getByRole('button', { name: /Woche beenden/ }).hover();
+    await page.mouse.down();
+    await page.waitForTimeout(1000);
+    await page.mouse.up();
+  }
+  await expect(page.getByRole('region', { name: 'Spielzeit' })).toContainText('029-1105');
+  await openTab(page, 'Log');
+  await expect(page.getByText('Monatsabrechnung · Monat 1 · 1105')).toBeVisible();
+  await expect(page.getByText(/Liegegebühren Cr 2\.200/)).toBeVisible();
+});

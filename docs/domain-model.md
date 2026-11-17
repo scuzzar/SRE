@@ -2787,9 +2787,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
-- **Monat und Monatsabrechnung** (2026-11-17b): noch nicht gebaut. Der Code
-  bucht die Rate alle 30 Tage ab dem Kauf, ohne `shipCost`, ohne Liegegebühren und Lebenserhaltung
-  und ohne Logeintrag.
+- **Monat und Monatsabrechnung** (2026-11-17b) sind gebaut (`model/upkeep.ts`, Monate in
+  `model/time.ts`). **`MonthEnd → Booking : costs`** ist im Code der Bereich der Buchungen von
+  `costsFrom` bis ausschließlich `costsTo`; gezählt werden darin die laufenden Kosten. Das geht,
+  weil Buchungen nie gelöscht werden.
 
 - **Ort eines Logeintrags von Hand ändern** (*Orte*, 2026-11-14j): Im Code bekommt ein Eintrag
   seinen Ort nur beim Anlegen; ändern oder entfernen lässt er sich noch nicht. Alles Übrige an

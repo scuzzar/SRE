@@ -2,7 +2,7 @@ import type { Campaign } from './campaign';
 import { DomainError } from './errors';
 import type { LogEntry, TimePassed } from './log';
 import type { Clock } from './ports';
-import { payLoans } from './ship';
+import { afterTime } from './upkeep';
 
 /**
  * Die Spielzeit im Imperialen Kalender: 365 Tage im Jahr, `day` = Jahr × 365 + Tag des Jahres − 1.
@@ -55,6 +55,38 @@ export function dateLabel(day: number): string {
   return `${weekdayName(day)}, ${dateOf(day)}`;
 }
 
+/** Ein Monat sind vier Wochen (2026-11-17b); ein Jahr hat damit 13 Monate. */
+export const MONTH_DAYS = 28;
+
+/** Wie viele Monate ein Jahr hat; der letzte hat dazu Tag 365. */
+export const MONTHS_PER_YEAR = 13;
+
+/** `/month`: Monat (1–13) und Jahr eines Tages. Der erste Monat beginnt mit dem Feiertag. */
+export function monthOf(day: number): { readonly month: number; readonly year: number } {
+  const { dayOfYear, year } = dateParts(day);
+  return { month: Math.min(MONTHS_PER_YEAR, Math.floor((dayOfYear - 1) / MONTH_DAYS) + 1), year };
+}
+
+/** Ob mit diesem Tag ein neuer Monat beginnt: der Feiertag oder der Sonntag vor der 5., 9., …, 49. Woche. */
+export function isMonthStart(day: number): boolean {
+  const { dayOfYear } = dateParts(day);
+  return (dayOfYear - 1) % MONTH_DAYS === 0 && dayOfYear <= (MONTHS_PER_YEAR - 1) * MONTH_DAYS + 1;
+}
+
+/** Das nächste Monatsende nach `day`: der Tag, mit dem der folgende Monat beginnt. */
+export function nextMonthStart(day: number): number {
+  let next = day + 1;
+  while (!isMonthStart(next)) next++;
+  return next;
+}
+
+/** Die Monatsenden, die die Zeit von `from` bis `to` erreicht: die Monatsanfänge in (from, to]. */
+export function monthStartsIn(from: number, to: number): readonly number[] {
+  const out: number[] = [];
+  for (let m = nextMonthStart(from); m <= to; m = nextMonthStart(m)) out.push(m);
+  return out;
+}
+
 /** Wie viele Tage bis zum nächsten Sonntag; am Sonntag 7. */
 export function daysToSunday(day: number): number {
   const weekday = weekdayOf(day);
@@ -81,8 +113,8 @@ export function passTime(campaign: Campaign, how: { readonly days: number } | 'w
   if (!week && (!Number.isInteger(days) || days < 1 || days > MAX_DAYS)) throw new DomainError(`Es vergehen 1 bis ${MAX_DAYS} Tage.`);
   if (campaign.encounters.some((e) => !e.ended)) throw new DomainError('Während einer laufenden Begegnung vergeht keine Zeit.');
   const entry: TimePassed = { kind: 'time', at: clock.now(), day: today, days, week };
-  // Mit der Zeit werden auch die Raten der Schiffe fällig (siehe `ship.ts`, *payLoans*).
-  return payLoans({ ...campaign, day: today + days, log: [...campaign.log, entry] }, clock);
+  // Mit der Zeit fallen die laufenden Kosten der Schiffe an (siehe `upkeep.ts`).
+  return afterTime({ ...campaign, day: today + days, log: [...campaign.log, entry] }, today, clock);
 }
 
 /**

@@ -6,8 +6,9 @@ import type { Clock, Random } from './ports';
 import { itemOf, shipDesignOf } from './reference';
 import { sum, type Dice } from './rules';
 import { hexById, hexId, worldOf, type Hex } from './sector';
-import { fundsOf, locationOf, type Booking } from './shop';
-import { jumpFuelOf, payLoans, shipOf } from './ship';
+import { bookShip, fundsOf, locationOf, type Booking } from './shop';
+import { jumpFuelOf, shipOf } from './ship';
+import { afterTime, arrive, LIFE_SUPPORT, PER_STATEROOM } from './upkeep';
 import { parkVehicles } from './trip';
 import { dayOf, JOURNEY_DAYS } from './time';
 import { woundedUpp, woundsOf } from './wounds';
@@ -180,16 +181,27 @@ export function shipJourneyBlocker(campaign: Campaign, to: string): string | und
   const per = jumpFuelOf(ship.design);
   if (ship.fuel < per) return `Der Sprung braucht ${per} t Treibstoff; im Tank sind ${ship.fuel} t. Erst volltanken.`;
   if (campaign.encounters.some((e) => !e.ended)) return 'Während einer laufenden Begegnung reist man nicht.';
-  if (travellersOf(campaign).length === 0) return 'Es gibt keinen lebenden Charakter, der reisen könnte.';
+  const travellers = travellersOf(campaign).length;
+  if (travellers === 0) return 'Es gibt keinen lebenden Charakter, der reisen könnte.';
+  // Die Gruppe teilt sich zur Not eine Kabine zu zweit (Doppelbelegung, 2026-11-17b).
+  if (travellers > plan.staterooms * PER_STATEROOM) return `${plan.name} hat ${plan.staterooms} Kabinen; ${travellers} Reisende passen auch zu zweit nicht hinein.`;
+  const lifeSupport = lifeSupportOf(campaign);
+  if (lifeSupport > fundsOf(campaign)) return `Die Lebenserhaltung kostet Cr ${lifeSupport.toLocaleString('de-DE')}, in der Kasse ist Cr ${fundsOf(campaign).toLocaleString('de-DE')}.`;
   return undefined;
+}
+
+/** Die Lebenserhaltung einer Reise mit dem eigenen Schiff: Cr2.000 je Reisendem (SR 30; Doppelbelegung kostet doppelt). */
+export function lifeSupportOf(campaign: Campaign): number {
+  return travellersOf(campaign).length * LIFE_SUPPORT;
 }
 
 /**
  * Die Gruppe reist mit dem eigenen Schiff nach `to` (2026-11-16d): ein Sprung über höchstens
  * so viele Parsec, wie der Entwurf kann, ohne Raumhafen zu brauchen und ohne Passagen – alle
  * lebenden Charaktere reisen mit. Der Sprung verbraucht `jumpFuelOf` Tonnen und würfelt 2W6;
- * 13+ ist ein Fehlsprung (`misjumpOf`), dessen Folgen der Owner entscheidet. Eine Woche später
- * ist die Gruppe am Ziel.
+ * 13+ ist ein Fehlsprung (`misjumpOf`), dessen Folgen der Owner entscheidet. Am Abflugtag bucht
+ * die App die Lebenserhaltung (2026-11-17b). Eine Woche später ist die Gruppe am Ziel, das Schiff
+ * liegt dort im Hafen.
  */
 export function travelShip(campaign: Campaign, to: string, random: Random, clock: Clock): Campaign {
   const blocker = shipJourneyBlocker(campaign, to);
@@ -202,14 +214,16 @@ export function travelShip(campaign: Campaign, to: string, random: Random, clock
   const jump: Dice = [d6(random), d6(random)];
   const today = dayOf(campaign);
   const journey: Journey = { kind: 'journey', at: clock.now(), day: today, from, to, days: JOURNEY_DAYS, passengers: [], berths: [], ship: ship.id, jump };
+  const supplied = bookShip(campaign, -lifeSupportOf(campaign), ship.id, 'lifeSupport', clock, `Lebenserhaltung, ${travellersOf(campaign).length} Reisende`);
   const after: Campaign = {
-    ...campaign,
-    ships: campaign.ships.map((s) => (s.id === ship.id ? { ...s, fuel: s.fuel - per } : s)),
+    ...supplied,
+    // Während des Sprungs liegt das Schiff in keinem Hafen: Die Liegezeit beginnt erst am Ziel.
+    ships: supplied.ships.map((s) => (s.id === ship.id ? { ...s, fuel: s.fuel - per, berthedSince: today + JOURNEY_DAYS } : s)),
     log: [...campaign.log, journey],
     day: today + JOURNEY_DAYS,
     location: worldPlace(to),
   };
-  return keepFocus(campaign, payLoans(after, clock));
+  return keepFocus(campaign, arrive(afterTime(after, today, clock), clock));
 }
 
 /**
@@ -291,8 +305,10 @@ export function travel(
     log: [...campaign.log, journey],
     day: today + JOURNEY_DAYS,
     location: worldPlace(to),
+    // Das Schiff ist, wo die Gruppe ist (Hausregel, 2026-11-17b): Es liegt erst am Ziel wieder im Hafen.
+    ships: campaign.ships.map((s) => (s.retired ? s : { ...s, berthedSince: today + JOURNEY_DAYS })),
   };
-  return keepFocus(campaign, payLoans(after, clock));
+  return keepFocus(campaign, arrive(afterTime(after, today, clock), clock));
 }
 
 /** Prüft eine Reise aus der Kampagnendatei: Felder, Passagen, Charaktere, Kojen, Los, Schiff und Sprungwurf. */

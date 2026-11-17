@@ -1,5 +1,5 @@
-import type { AttackItem, CardItem, CardView, CheckItem, DamageItem, DmPart, ButcheringItem, EventItem, JourneyItem, LogItem, TripDayItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem } from '../controller';
-import type { Answer, ArmorClass, AttackKind, BookingKind, NpcRole, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
+import type { AttackItem, CardItem, CardView, CheckItem, DamageItem, DmPart, ButcheringItem, EventItem, JourneyItem, LogItem, MonthEndItem, TripDayItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem } from '../controller';
+import type { Answer, ArmorClass, AttackKind, BookingKind, ShipCost, NpcRole, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
 
@@ -79,6 +79,15 @@ export const bookingText: Record<BookingKind, string> = {
   rent: 'Miete',
   fare: 'Fahrpreis',
   ship: 'Schiff',
+};
+
+/** Wofür eine Schiffs-Buchung ist, wie das Kassenbuch es schreibt. */
+export const shipCostText: Record<ShipCost, string> = {
+  price: 'Schiff · Kauf',
+  rate: 'Schiff · Rate',
+  fuel: 'Schiff · Treibstoff',
+  berthing: 'Schiff · Liegegebühr',
+  lifeSupport: 'Schiff · Lebenserhaltung',
 };
 
 /** Die Rüstungsklassen, wie die Matrix sie schreibt. */
@@ -357,6 +366,8 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
       return { head: `Test ${item.name}: ${item.passed ? 'JA' : 'NEIN'}`, rest: checkDetail(item) };
     case 'time':
       return { head: item.week ? 'Woche beendet' : `${item.days} ${item.days === 1 ? 'Tag' : 'Tage'} vergangen`, rest: `bis ${item.to}` };
+    case 'monthEnd':
+      return { head: `Monatsabrechnung: ${credits(item.total)}`, rest: `${item.month} · ${monthEndDetail(item)}` };
     case 'journey':
       return { head: `Reise nach ${item.to}`, rest: journeyDetail(item) };
     case 'tripDay':
@@ -437,6 +448,12 @@ export function needText(need: number, chance: number): string {
 }
 
 /** Ein Reisetag in Zahlen: „8 Fahrstunden · Miete Cr1 000“. */
+/** Die Zeilen der Monatsabrechnung in einem Satz: „Rate Cr 154.500 · Treibstoff Cr 20.000 (offen: 1×)“. */
+export function monthEndDetail(item: MonthEndItem): string {
+  if (item.lines.length === 0) return 'keine laufenden Kosten';
+  return item.lines.map((l) => `${l.name} ${credits(l.amount)}${l.unpaid > 0 ? ` (${l.unpaid}× nicht bezahlt)` : ''}`).join(' · ');
+}
+
 export function tripDayDetail(item: TripDayItem): string {
   const hours = `${String(item.hours).replace('.', ',')} ${item.hours === 1 ? 'Fahrstunde' : 'Fahrstunden'}`;
   const costs = [...(item.rent > 0 ? [`Miete Cr${item.rent.toLocaleString('de-DE')}`] : []), ...(item.fare > 0 ? [`Fahrpreis Cr${item.fare.toLocaleString('de-DE')}`] : [])];

@@ -107,7 +107,8 @@ describe('Reiter Schiff', () => {
     await game.whenSaved();
     const booking = game.snapshot().shop!.bookings.find((b) => b.text === 'Rate nicht bezahlt');
     expect(booking).toMatchObject({ kind: 'ship', amount: 0 });
-    expect(game.snapshot().ship!.ship!.loanBalance).toBe(74_160_000 - 154_500);
+    // Die Restschuld sinkt nur mit jeder bezahlten Rate (domain-model.md, *Erwerb*).
+    expect(game.snapshot().ship!.ship!.loanBalance).toBe(74_160_000);
   });
 });
 

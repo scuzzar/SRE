@@ -69,7 +69,7 @@ import {
   type DeckPlan,
   type ShipChoice,
   type ShipInput,
-  setLocation,
+  placeGroup,
   setQuantityDie,
   type BookingKind,
   restoreCharacter,
@@ -1459,7 +1459,7 @@ export class GameController {
 
   /** Im Kampf: Die Gruppe ist auf dieser fertigen Welt (wie „Gruppe platzieren“ auf der Weltkarte). */
   stayAt(id: string): void {
-    this.inFight(() => this.change(setLocation(this.campaign, id), { combatNote: undefined }));
+    this.inFight(() => this.change(placeGroup(this.campaign, id, this.deps.clock), { combatNote: undefined }));
   }
 
   /** Stellt den Würfel der Anzahl für kommende Begegnungen ein: W6 nach den Regeln, W4 oder W3 zum Ausgleichen. */
@@ -1678,7 +1678,7 @@ export class GameController {
     const at = this.state.world;
     if (!at) throw new DomainError('Es ist keine Weltkarte offen.');
     const id = hexId(at.column, at.row);
-    this.change(setLocation(this.campaign, this.campaign.location?.world === id ? undefined : id));
+    this.change(placeGroup(this.campaign, this.campaign.location?.world === id ? undefined : id, this.deps.clock));
   }
 
   /** Bucht Geld: Einnahme oder Ausgabe frei, Einzahlung oder Auszahlung mit einem Charakter. */

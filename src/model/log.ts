@@ -11,7 +11,7 @@ import { roll2d6, sum, type Characteristic, type Dice } from './rules';
  * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, bei der Antwort des Orakels dazu die Chance, bei Probe und Angriff DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | CheckRoll | Journey | TripDay | Note;
+export type LogEntry = DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | MonthEnd | CheckRoll | Journey | TripDay | Note;
 
 /** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
 export type LogResult = Exclude<LogEntry, Note>;
@@ -33,6 +33,18 @@ export interface TimePassed extends LogEntryBase {
   readonly kind: 'time';
   readonly days: number;
   readonly week: boolean;
+}
+
+/**
+ * Die Monatsabrechnung (2026-11-17b): Sie verweist auf die Buchungen mit laufenden Kosten seit der
+ * letzten Abrechnung (`costs`), im Code auf die Stellen `costsFrom` bis ausschließlich `costsTo` in
+ * den Buchungen; gezählt werden davon die laufenden Kosten (`isRunningCost`). `day` ist das
+ * Monatsende, also der erste Tag des neuen Monats. Buchungen werden nie gelöscht, die Stellen bleiben.
+ */
+export interface MonthEnd extends LogEntryBase {
+  readonly kind: 'monthEnd';
+  readonly costsFrom: number;
+  readonly costsTo: number;
 }
 
 /**

@@ -14,7 +14,7 @@ import type { Booking } from './shop';
 import { surfaceGrid, type SurfaceGrid } from './surface-grid';
 import type { SurfaceMap } from './surface-map';
 import { dayOf } from './time';
-import { payLoans } from './ship';
+import { afterTime } from './upkeep';
 import { distanceKm, flies, landsAt, stepSpeed, vehicleOf, vehicleOfItem, vehicles, WALK, waysOf, worksIn, scheduled, type Vehicle, type Ways } from './vehicle';
 
 /** Ein Abschnitt der Fahrt: ein Fahrzeug, gemietet oder nicht, über Felder in Reihenfolge (ein Flug nur Start und Landepunkt). */
@@ -600,6 +600,6 @@ export function driveDay(campaign: Campaign, clock: Clock): Campaign {
     bookings: [...after.bookings, ...bookings],
   };
   // Das Gelände der Begegnungen folgt dem erreichten Feld (2026-11-15b).
-  // Und mit dem neuen Tag wird vielleicht eine Schiffsrate fällig (siehe `ship.ts`).
-  return payLoans(withPlaceTerrain(arrived ? withoutTrip(moved) : { ...moved, trip: { ...trip, hours: to } }), clock);
+  // Und mit dem neuen Tag fallen die laufenden Kosten der Schiffe an (siehe `upkeep.ts`).
+  return afterTime(withPlaceTerrain(arrived ? withoutTrip(moved) : { ...moved, trip: { ...trip, hours: to } }), today, clock);
 }
