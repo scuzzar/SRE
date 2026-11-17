@@ -1625,11 +1625,13 @@ export class GameController {
       return;
     }
     try {
-      if (!image.startsWith('data:image/')) throw new DomainError('Als Deckplan geht nur ein Bild (PNG oder JPEG).');
+      if (!/^data:image\/(png|jpeg);/.test(image)) throw new DomainError('Als Deckplan geht nur ein Bild (PNG oder JPEG).');
       if (image.length > 8_000_000) throw new DomainError('Das Bild ist zu groß; nimm es kleiner auf.');
-      const plan: DeckPlan = { design: ship.design, name: freeDeckSlot(this.state.deckPlans), image };
+      // Der freie Platz kommt aus dem Gerät, nicht aus der Anzeige: So überschreibt ein Bild nie einen Plan, der noch lädt.
+      const stored = await this.deps.repository.loadDeckPlans(ship.design);
+      const plan: DeckPlan = { design: ship.design, name: freeDeckSlot(stored), image };
       await this.deps.repository.saveDeckPlan(plan);
-      this.update({ deckPlans: [...this.state.deckPlans, plan], shipError: undefined });
+      if (this.deckDesign === ship.design) this.update({ deckPlans: [...stored, plan], shipError: undefined });
     } catch (error) {
       this.update({ shipError: messageOf(error) });
     }
@@ -2294,6 +2296,8 @@ export class GameController {
 
   /** Alle Entwürfe zu, die Grundkarte wie beim Öffnen der Kampagne. */
   private closed(campaign: Campaign): Partial<ControllerState> {
+    // Die Deckpläne leert closedDrafts; auch bei gleichem Entwurf werden sie danach neu geladen.
+    this.deckDesign = undefined;
     return { ...closedDrafts, ...this.home(campaign) };
   }
 

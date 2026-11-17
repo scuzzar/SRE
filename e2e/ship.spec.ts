@@ -1,0 +1,84 @@
+import { expect, test, type Page } from '@playwright/test';
+
+/** Ein Bild aus dem Browser, als Datei für das Feld: `type` PNG oder JPEG, in der Größe `width` × `height`. */
+async function picture(page: Page, width: number, height: number, type: 'image/png' | 'image/jpeg'): Promise<Buffer> {
+  const base64 = await page.evaluate(
+    ({ width, height, type }) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d')!;
+      const gradient = context.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, '#2a6');
+      gradient.addColorStop(1, '#fd4');
+      context.fillStyle = gradient;
+      context.fillRect(0, 0, width, height);
+      return canvas.toDataURL(type, 0.95).split(',')[1]!;
+    },
+    { width, height, type },
+  );
+  return Buffer.from(base64, 'base64');
+}
+
+/** Öffnet den Reiter; im Desktop-Modus schlösse ein zweiter Klick auf den offenen Reiter das Panel. */
+async function openTab(page: Page, name: string) {
+  const tab = page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name, exact: true });
+  if ((await tab.getAttribute('aria-current')) !== 'page') await tab.click();
+}
+
+/** Geld in die Kasse und einen Scout/Courier bar kaufen; der Reiter Schiff bleibt offen. */
+async function buyScout(page: Page) {
+  await openTab(page, 'Shop');
+  await page.getByRole('tab', { name: 'Kasse' }).click();
+  await page.getByRole('spinbutton').first().fill('30000000');
+  await page.getByRole('button', { name: 'Einnahme buchen' }).click();
+  await openTab(page, 'Schiff');
+  await page.getByRole('button', { name: 'Werft öffnen' }).click();
+  const yard = page.getByRole('dialog', { name: 'Werft' });
+  await yard.getByRole('row', { name: /Scout\/Courier/ }).locator('.shop-price').click();
+  await page.getByRole('button', { name: 'Bar kaufen' }).click();
+}
+
+test('Schiff: Deckpläne hochladen, große Fotos verkleinert, Löschen erst nach Rückfrage, über Kampagnen hinweg', async ({ page }) => {
+  await page.goto('/');
+  await buyScout(page);
+  await expect(page.locator('.deck-empty')).toHaveText('Noch 3 von 3 Plätzen frei');
+
+  // Ein kleiner Plan als PNG bleibt, wie er ist.
+  const [upload] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', { name: 'PNG hochladen' }).click()]);
+  await upload.setFiles({ name: 'deck.png', mimeType: 'image/png', buffer: await picture(page, 600, 300, 'image/png') });
+  const first = page.locator('.deck-card').first();
+  await expect(first).toContainText('Deck A');
+  expect(await first.locator('img').evaluate((img: HTMLImageElement) => [img.src.slice(0, 15), img.naturalWidth])).toEqual(['data:image/png;', 600]);
+
+  // Ein großes Foto wird auf 2048 Pixel verkleinert und als JPEG abgelegt.
+  const [photo] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', { name: 'Kamera' }).click()]);
+  await photo.setFiles({ name: 'foto.jpg', mimeType: 'image/jpeg', buffer: await picture(page, 4000, 3000, 'image/jpeg') });
+  const second = page.locator('.deck-card').nth(1);
+  await expect(second).toContainText('Deck B');
+  expect(await second.locator('img').evaluate((img: HTMLImageElement) => [img.src.slice(0, 16), img.naturalWidth, img.naturalHeight])).toEqual(['data:image/jpeg;', 2048, 1536]);
+  await expect(page.locator('.deck-empty')).toHaveText('Noch 1 von 3 Plätzen frei');
+
+  // Der Mülleimer fragt erst; „Behalten“ lässt den Plan stehen.
+  await second.getByRole('button', { name: 'Deck B löschen' }).click();
+  await second.getByRole('button', { name: 'Behalten' }).click();
+  await expect(page.locator('.deck-card')).toHaveCount(2);
+  await second.getByRole('button', { name: 'Deck B löschen' }).click();
+  await second.getByRole('button', { name: 'Löschen?' }).click();
+  await expect(page.locator('.deck-card')).toHaveCount(1);
+
+  // Eine zweite Kampagne mit demselben Entwurf sieht denselben Plan, und zurück in der ersten ist er noch da.
+  await page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Kampagnen wechseln und verwalten' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Kampagnen' });
+  await sheet.getByLabel('Neue Kampagne').fill('Zweite');
+  await sheet.getByRole('button', { name: 'Anlegen' }).click();
+  await buyScout(page);
+  await expect(page.locator('.deck-card')).toHaveCount(1);
+  await page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Kampagnen wechseln und verwalten' }).click();
+  await sheet.getByText('Demo-Kampagne', { exact: true }).click();
+  await openTab(page, 'Schiff');
+  await expect(page.locator('.deck-card')).toHaveCount(1);
+  await expect(page.locator('.deck-card').first()).toContainText('Deck A');
+});

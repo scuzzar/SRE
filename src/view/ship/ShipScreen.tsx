@@ -4,6 +4,7 @@ import { credits, mcr } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { CloseIcon, DropIcon, ExpandIcon, PencilIcon, ShipIcon, TrashIcon } from '../icons';
+import { deckImage } from './deck-image';
 
 /** Die Ansicht unter den Kacheln: eigene Deckpläne oder was nicht in den Kacheln steht. */
 type Tab = 'deck' | 'details';
@@ -201,16 +202,16 @@ function DeckPlans({ ship, onView }: { ship: ShipView; onView: (name: string) =>
   const fileRef = useRef<HTMLInputElement>(null);
   const camRef = useRef<HTMLInputElement>(null);
   const full = ship.freeDeckSlots === 0;
-  // PNG-Upload und Kamera: die Datei wird zum Data URL-Bild, das der Controller auf dem Gerät ablegt.
+  // Welcher Plan gerade fragt, ob er wirklich weg soll: Löschen braucht zwei Tipper, wie bei Kampagnen.
+  const [confirming, setConfirming] = useState<string | undefined>(undefined);
+  // PNG-Upload und Kamera: die Datei wird zum Data URL-Bild (große Fotos verkleinert), das der Controller ablegt.
   const take = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (file === undefined) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') void game.addDeckPlan(reader.result);
-    };
-    reader.readAsDataURL(file);
+    void deckImage(file)
+      .catch(() => '')
+      .then((image) => game.addDeckPlan(image));
   };
   return (
     <>
@@ -225,9 +226,27 @@ function DeckPlans({ ship, onView }: { ship: ShipView; onView: (name: string) =>
                   <button type="button" className="icon-button" aria-label={`${plan.name} ansehen`} onClick={() => onView(plan.name)}>
                     <ExpandIcon />
                   </button>
-                  <button type="button" className="icon-button" aria-label={`${plan.name} entfernen`} onClick={() => void game.removeDeckPlan(plan.name)}>
-                    <TrashIcon />
-                  </button>
+                  {confirming === plan.name ? (
+                    <>
+                      <button type="button" className="ghost deck-keep" onClick={() => setConfirming(undefined)}>
+                        Behalten
+                      </button>
+                      <button
+                        type="button"
+                        className="ghost danger deck-delete"
+                        onClick={() => {
+                          setConfirming(undefined);
+                          void game.removeDeckPlan(plan.name);
+                        }}
+                      >
+                        Löschen?
+                      </button>
+                    </>
+                  ) : (
+                    <button type="button" className="icon-button" aria-label={`${plan.name} löschen`} onClick={() => setConfirming(plan.name)}>
+                      <TrashIcon />
+                    </button>
+                  )}
                 </span>
               </figcaption>
             </figure>
@@ -585,6 +604,8 @@ function RenameSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
 /** Einen hinterlegten Deckplan groß ansehen; hier lässt er sich auch entfernen. */
 function DeckSheet({ name, image, onClose }: { name: string; image: string; onClose: () => void }) {
   const game = useGame();
+  // Erst der zweite Tipper löscht, wie im Reiter und in der Kampagnenwahl.
+  const [confirming, setConfirming] = useState(false);
   return (
     <SheetFrame
       title={name}
@@ -596,11 +617,15 @@ function DeckSheet({ name, image, onClose }: { name: string; image: string; onCl
             type="button"
             className="ghost danger"
             onClick={() => {
+              if (!confirming) {
+                setConfirming(true);
+                return;
+              }
               void game.removeDeckPlan(name);
               onClose();
             }}
           >
-            Entfernen
+            {confirming ? 'Löschen?' : 'Löschen'}
           </button>
           <button type="button" className="primary" onClick={onClose}>
             Fertig

@@ -49,7 +49,11 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   `recover(how, npc, healer, facility, pc)` und für Wunden an SC
   `assignWound(to)`, `unassignWound()`, `confirmWounding()`; für Shop und Gruppenkasse `stayHere()` (auf der
   Weltkarte), `book(kind, amount, text, character)`, `buy(item, count, character)` und
-  `sell(item, count, price, character)`; für Kampagnen
+  `sell(item, count, price, character)`; für den Reiter Schiff `buyShipDesign(design, method)` (Werft, bar
+  oder über die Bank), `renameShip(name)`, `editShip(input)`, `buyFuelTons(tons)` (`model/ship.ts`, Entwürfe
+  in `src/data/ships.json`), `addDeckPlan(image)` und `removeDeckPlan(name)` (Deckpläne sind Geräte-Daten
+  je Entwurf; der Controller lädt die des aktiven Entwurfs über das Repository, auch nach jedem Wechsel
+  der Kampagne neu); für Kampagnen
   `openCampaign(id)`, `createCampaign(name)`, `renameCampaign(name)`, `deleteCampaign(id)`,
   `exportCampaign(id)` und `importCampaign(text)`; für den Abgleich mit OneDrive `signIn()`, `signOut()`,
   `sync()` und `resolveConflict(key, choice)`: Was je Kampagne zu tun ist, sagt das Model (`planSync` in
@@ -70,10 +74,11 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   ein Wurf der Weltenerschaffung (`model/draft/world-roll.ts`) trägt sein Ergebnis ein und lebt nur,
   solange Weltkarte oder Feldwahl offen sind (im Zustand des Controllers). Die Erschaffung ist gespeicherter Stand (`model/generation.ts`,
   `model/career.ts`): Sie hält nur die Würfe, alles andere spielt `replay` daraus nach. Die View liest eine gewählte Datei nur als Text
-  ein und reicht ihn weiter; prüfen tut das Model (`fromCampaignFile`), anbieten zum Download der
+  ein und reicht ihn weiter (ein Bild für einen Deckplan als Data URL, große Fotos vorher auf 2048
+  Pixel verkleinert in `view/ship/deck-image.ts`); prüfen tut das Model (`fromCampaignFile`), anbieten zum Download der
   Controller über `Download`. Offene Karte, Probe, Angriff in Vorbereitung und Schaden beim Verteilen sind Teil des
   Models (`model/draft/`), werden aber nicht gespeichert.
-- **Er wählt, welche View zu sehen ist**: die Grundkarte (Globus der offenen Welt, sonst Subsektor) und den Reiter Log, Begegnung, Kampf, Shop, Charaktere oder NSC (`showScreen(screen)`, lässt ein angetipptes Feld des Globus und ein gewähltes Feld des Subsektors los; im Desktop-Modus heißt `oracle`, dass neben dem Log kein Bereich offen ist; im NSC-Screen „Alle zeigen“ mit `showAllNpcs(all)`, beim Öffnen des Reiters wieder aus, gruppiert nach `model/npcs.ts`; `newCharacter(npc, role)` öffnet den Editor für einen neuen NSC, `generateNpc(service, role)` erzeugt einen aus einer Laufbahn (`model/npcs.ts`, auch die Waffen erzeugter NSC) und öffnet ihn im Editor; ebenso wechselt `createPatronNpc()` gleich in den Reiter NSC und öffnet den neuen NSC im Editor; „Zum Kampf“ im Begegnungs-Screen wechselt so in den Kampf-Screen, „Weiter“ in der Übersicht einer Begegnung, `closeEncounterIntro()`, bleibt im Screen), das gewählte Feld im Subsektor, die Weltkarte eines Feldes, die
+- **Er wählt, welche View zu sehen ist**: die Grundkarte (Globus der offenen Welt, sonst Subsektor) und den Reiter Log, Begegnung, Kampf, Shop, Schiff, Charaktere oder NSC (`showScreen(screen)`, lässt ein angetipptes Feld des Globus und ein gewähltes Feld des Subsektors los; im Desktop-Modus heißt `oracle`, dass neben dem Log kein Bereich offen ist; im NSC-Screen „Alle zeigen“ mit `showAllNpcs(all)`, beim Öffnen des Reiters wieder aus, gruppiert nach `model/npcs.ts`; `newCharacter(npc, role)` öffnet den Editor für einen neuen NSC, `generateNpc(service, role)` erzeugt einen aus einer Laufbahn (`model/npcs.ts`, auch die Waffen erzeugter NSC) und öffnet ihn im Editor; ebenso wechselt `createPatronNpc()` gleich in den Reiter NSC und öffnet den neuen NSC im Editor; „Zum Kampf“ im Begegnungs-Screen wechselt so in den Kampf-Screen, „Weiter“ in der Übersicht einer Begegnung, `closeEncounterIntro()`, bleibt im Screen), das gewählte Feld im Subsektor, die Weltkarte eines Feldes, die
   Kampagnenwahl (`showCampaigns()`, `closeCampaigns()`) und das Ergebnis-Popup (`closeResult()`),
   welcher Charakter im Charakter-Screen seine Details zeigt (`toggleDetails(id)`) und ob die Leiste
   mit dem Charakter oben eingeklappt ist (`toggleStrip()`) und ob der Hinweis über den Waffen im
