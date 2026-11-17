@@ -8,7 +8,7 @@ import { useGame } from '../game-context';
 import { WorldIcon } from './WorldIcon';
 import { animated, haptic, stopHaptics } from '../haptics';
 import { HoldButton } from '../HoldButton';
-import { CloseIcon, DiceIcon, GlobeIcon, PinIcon, RouteIcon, ShopIcon } from '../icons';
+import { CloseIcon, DiceIcon, GlobeIcon, PinIcon, RouteIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
 import { Form } from '../Form';
 import { withLoading } from '../loading';
@@ -33,7 +33,7 @@ function dmText(line: WorldLine): string {
  * Subsektor, Feld auf dem Globus): oben die Welt, wie sie gerade steht (UWP im Klartext, Basen,
  * Handelscodes); wieder geöffnet zeigt sie nur die Werte. Unten, wie die Reihe Notiz, Deuten, 2W6,
  * Karte im Orakel: Solange sie entsteht, die Würfelbühne und der Knopf für den nächsten Wurf, wie in
- * der Charaktererschaffung; danach Hierher reisen, Gruppe platzieren, Einkaufen (am Aufenthaltsort) und Öffnen
+ * der Charaktererschaffung; danach Hierher reisen, Gruppe platzieren und Öffnen
  * (`WorldActions`). Eingetragen ist ein Wurf schon, bevor die Würfel rollen; die Karte zeigt den
  * neuen Stand erst, wenn das Ergebnis unten feststeht. Ein Tippen irgendwo beendet die Animation.
  *
@@ -314,12 +314,6 @@ export function WorldActions({ world, here, travel, onGlobe = false }: { world: 
           <button type="button" className="action note" title={here ? 'Die Gruppe ist schon hier' : 'Gruppe hierher setzen, ohne Reise und ohne Zeit'} disabled={here} onClick={() => game.stayHere()}>
             <PinIcon />
             Gruppe platzieren
-          </button>
-        )}
-        {world.canNote && here && (
-          <button type="button" className="action note" title="Im Shop der Welt kaufen und verkaufen" onClick={() => game.openShop()}>
-            <ShopIcon />
-            Einkaufen
           </button>
         )}
         {showGlobe && (

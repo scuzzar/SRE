@@ -108,15 +108,20 @@ export function NpcScreen({ view }: { view: Snapshot }) {
   );
 }
 
-/** „+ Neuer NSC“: erst die Rolle, dann leer anlegen oder aus einer Laufbahn erzeugen (ohne Animation). */
-function NewNpcSheet({ npcs, onClose }: { npcs: NpcScreenView; onClose: () => void }) {
+/**
+ * „+ Neuer NSC“: erst die Rolle, dann leer anlegen oder aus einer Laufbahn erzeugen (ohne Animation).
+ * Mit `here` (langes Drücken auf „NSC platzieren“ am Feld) nur aus einer Laufbahn; der neue NSC lebt
+ * dann auf diesem Feld bzw. in dieser Stadt.
+ */
+export function NewNpcSheet({ npcs, onClose, here }: { npcs: NpcScreenView; onClose: () => void; /** Wo er leben wird, etwa „in Tarvik“. */ here?: string | undefined }) {
+  const blocker = here === undefined ? npcs.generateBlocker : undefined;
   const game = useGame();
   const [role, setRole] = useState<NpcRole>('other');
   return (
     <div className="overlay">
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="new-npc-title">
         <div className="sheet-head" style={{ alignItems: 'center' }}>
-          <h2 id="new-npc-title">Neuer NSC</h2>
+          <h2 id="new-npc-title">{here === undefined ? 'Neuer NSC' : `Neuer NSC ${here}`}</h2>
           <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={onClose}>
             <CloseIcon />
           </button>
@@ -135,17 +140,17 @@ function NewNpcSheet({ npcs, onClose }: { npcs: NpcScreenView; onClose: () => vo
           <fieldset>
             <legend>Aus einer Laufbahn erzeugen</legend>
             <p className="small-label">Die Charaktererschaffung läuft zufällig durch; danach lässt er sich im Editor nachbessern.</p>
-            {npcs.generateBlocker && <p className="small-label">{npcs.generateBlocker}</p>}
+            {blocker && <p className="small-label">{blocker}</p>}
             <div className="npc-services">
               {npcs.services.map((sv) => (
                 <button
                   key={sv.id}
                   type="button"
                   className="ghost"
-                  disabled={npcs.generateBlocker !== undefined}
+                  disabled={blocker !== undefined}
                   onClick={() => {
                     onClose();
-                    game.generateNpc(sv.id, role);
+                    game.generateNpc(sv.id, role, here !== undefined);
                   }}
                 >
                   {sv.name}
@@ -153,16 +158,18 @@ function NewNpcSheet({ npcs, onClose }: { npcs: NpcScreenView; onClose: () => vo
               ))}
             </div>
           </fieldset>
-          <button
-            type="button"
-            className="add-character"
-            onClick={() => {
-              onClose();
-              game.newCharacter(true, role);
-            }}
-          >
-            Leer anlegen
-          </button>
+          {here === undefined && (
+            <button
+              type="button"
+              className="add-character"
+              onClick={() => {
+                onClose();
+                game.newCharacter(true, role);
+              }}
+            >
+              Leer anlegen
+            </button>
+          )}
         </div>
       </section>
     </div>

@@ -35,13 +35,13 @@ import { Tray } from './Tray';
 /**
  * Die vier Reiter im Ziehblatt bzw. oben in der Seitenspalte des Desktops, in dieser Reihenfolge. Im
  * Reiter Begegnung schaltet man oben zwischen Begegnung und Kampf um, im Reiter Charaktere zwischen
- * SC, NSC und Kasse (`also`); den Shop öffnet „Einkaufen“ am Feld bzw. an der Weltkarte des
+ * SC, Kasse und NSC (`also`); den Shop öffnet „Einkaufen“ am Feld bzw. an der Weltkarte des
  * Aufenthaltsorts.
  */
 const areas: readonly { readonly id: Screen; readonly label: string; readonly Icon: () => ReactElement; readonly also?: readonly Screen[] }[] = [
   { id: 'oracle', label: 'Log', Icon: LogIcon },
   { id: 'encounter', label: 'Begegnung', Icon: EncounterIcon, also: ['combat'] },
-  { id: 'characters', label: 'Charaktere', Icon: PeopleIcon, also: ['npcs', 'funds'] },
+  { id: 'characters', label: 'Charaktere', Icon: PeopleIcon, also: ['funds', 'npcs'] },
   { id: 'ship', label: 'Schiff', Icon: ShipIcon },
 ];
 
@@ -152,7 +152,7 @@ export function App() {
   // Platz für ihre eigenen Knöpfe; in der Seitenspalte des Desktops unter jedem Bereich, der keine
   // eigene Reihe hat. Beim angetippten Feld des Globus steht dort stattdessen die Reihe des Felds.
   const dock = <OracleDock view={view} shortcuts />;
-  const fieldDock = view.globe?.picked ? <FieldDock globe={view.globe} trip={view.trip} tripPlan={view.tripPlan} npcTotal={view.npcs.total} /> : undefined;
+  const fieldDock = view.globe?.picked ? <FieldDock globe={view.globe} trip={view.trip} tripPlan={view.tripPlan} npcs={view.npcs} /> : undefined;
   // Im Reiter Begegnung: die Würfe der Begegnungen und die Zeit bzw. Weiterfahren.
   const encounterDock = screen === 'encounter' && field === undefined ? <EncounterDock view={view} options={encounterOptions} /> : undefined;
   const own = fieldDock ?? (view.picking ? undefined : worldDock.foot) ?? encounterDock;

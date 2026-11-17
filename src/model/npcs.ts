@@ -2,6 +2,7 @@ import { addCharacter, npcCharacters, npcRoles, roleOf, type Campaign, type Char
 import { npcName } from './encounter';
 import { DomainError } from './errors';
 import { careerInput, runCareerIn, stateOf } from './generation';
+import { checkPlace, moveNpc, type Place } from './place';
 import type { Random } from './ports';
 import { itemOf, itemOfWeapon, ref, serviceOf, type Weapon } from './reference';
 import { hexById, worldOf, type Hex } from './sector';
@@ -75,18 +76,21 @@ export function generateNpcBlocker(campaign: Campaign): string | undefined {
 /**
  * Ein erzeugter NSC (siehe domain-model.md, *Patron als NSC*, *NSC aus einer Laufbahn*): Die
  * Charaktererschaffung läuft zufällig in der Laufbahn durch, der Name kommt von der Tafel NSC, er
- * lebt auf dem Aufenthaltsort und bekommt eine Waffe nach *Waffen erzeugter NSC*.
+ * lebt auf dem Aufenthaltsort und bekommt eine Waffe nach *Waffen erzeugter NSC*. Mit `at` (langes
+ * Drücken auf „NSC platzieren“ am Feld) lebt er stattdessen dort, auf dem Feld bzw. in der Stadt, und
+ * bewaffnet sich nach dem Gesetz dieser Welt.
  */
-export function generateNpc(campaign: Campaign, template: NpcTemplate, random: Random): { campaign: Campaign; id: CharacterId } {
-  const blocker = generateNpcBlocker(campaign);
+export function generateNpc(campaign: Campaign, template: NpcTemplate, random: Random, at?: Place): { campaign: Campaign; id: CharacterId } {
+  const blocker = at === undefined ? generateNpcBlocker(campaign) : undefined;
   if (blocker) throw new DomainError(blocker);
   serviceOf(template.service);
-  const place = campaign.location!.world;
+  if (at) checkPlace(campaign.hexes, at);
+  const place = at?.world ?? campaign.location!.world;
   const generation = runCareerIn(campaign.hexes, template.service, random);
   const input = careerInput(stateOf(generation), npcName(random));
   const criminal = template.criminal === true || template.role === 'enemy';
   const armed = armGenerated(input, worldOf(campaign.hexes, place), criminal, random);
-  return addCharacter(
+  const added = addCharacter(
     campaign,
     {
       ...armed,
@@ -98,6 +102,7 @@ export function generateNpc(campaign: Campaign, template: NpcTemplate, random: R
     },
     generation.career,
   );
+  return at ? { campaign: moveNpc(added.campaign, added.id, at), id: added.id } : added;
 }
 
 /** So viele Magazine bekommt ein erzeugter NSC zu seiner Schusswaffe: 1W4, wie die NSC der Begegnung. */

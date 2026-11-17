@@ -66,12 +66,17 @@ export const openPeople = (page: Page, part: 'SC' | 'NSC' | 'Kasse') => openPart
 /** Im Reiter Begegnung oben auf Kampf umschalten. */
 export const openCombat = (page: Page) => openPart(page, 'Begegnung', 'Kampf');
 
-/**
- * Den Shop öffnen: im Subsektor die Welt der Gruppe antippen (in der Demo Kessra, 0405) und an ihrer
- * Weltkarte „Einkaufen“. Ist ein Globus offen, geht es erst zum Subsektor.
- */
-export async function openShop(page: Page, world = '0405') {
-  await openSector(page);
-  await page.getByRole('group', { name: 'Karte des Subsektors' }).getByRole('button', { name: new RegExp(`^${world}`) }).dispatchEvent('click');
+/** Auf dem Globus des Aufenthaltsorts die Hauptstadt antippen (über „Orte“); öffnet erst den Globus, wenn nötig. */
+export async function pickCapital(page: Page) {
+  const globe = page.locator('.globe-full');
+  if ((await globe.count()) === 0) await page.getByRole('button', { name: /^Aufenthaltsort .*Globus öffnen/ }).click();
+  await page.locator('.loading-overlay').waitFor({ state: 'detached', timeout: 30_000 });
+  await page.locator('.globe-full').getByRole('button', { name: /^Orte/ }).click();
+  await page.getByRole('region', { name: 'Orte' }).getByRole('button').filter({ has: page.locator('.globe-dot.capital') }).click();
+}
+
+/** Den Shop öffnen: Einkaufen geht nur in einer Stadt, also die Hauptstadt des Aufenthaltsorts antippen und dort „Einkaufen“. */
+export async function openShop(page: Page) {
+  await pickCapital(page);
   await page.getByRole('button', { name: 'Einkaufen', exact: true }).click();
 }
