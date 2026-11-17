@@ -322,7 +322,7 @@ export interface Snapshot {
   readonly dead: readonly { readonly id: string; readonly name: string; readonly background: string }[];
   readonly retired: readonly { readonly id: string; readonly name: string }[];
   readonly task: TaskView | undefined;
-  /** Der Reiter Kampf für den Charakter oben; fehlt, wenn es keinen Lebenden gibt. */
+  /** Der Kampf (im Reiter Begegnung) für den Charakter oben; fehlt, wenn es keinen Lebenden gibt. */
   readonly combat: CombatView | undefined;
   /** Der Bereich Patron im Reiter Begegnung; fehlt nur ohne Kampagne. */
   readonly patron: PatronView | undefined;
@@ -403,9 +403,9 @@ export interface ItemChoice {
 }
 
 /**
- * Was im Ziehblatt bzw. in der Seitenspalte steht. Die Reiter sind Log, Begegnung, Kampf, Schiff und
- * Charaktere; im Reiter Charaktere schaltet man zwischen `characters` (SC), `npcs` (NSC) und `funds`
- * (Kasse) um. Den Shop öffnet „Einkaufen“ am Feld bzw. an der Weltkarte des Aufenthaltsorts.
+ * Was im Ziehblatt bzw. in der Seitenspalte steht. Die Reiter sind Log, Begegnung, Charaktere und
+ * Schiff; im Reiter Begegnung schaltet man zwischen `encounter` und `combat` (Kampf) um, im Reiter
+ * Charaktere zwischen `characters` (SC), `npcs` (NSC) und `funds` (Kasse). Den Shop öffnet „Einkaufen“ am Feld bzw. an der Weltkarte des Aufenthaltsorts.
  */
 export type Screen = 'oracle' | 'encounter' | 'combat' | 'shop' | 'ship' | 'characters' | 'npcs' | 'funds' | 'sector' | 'about';
 

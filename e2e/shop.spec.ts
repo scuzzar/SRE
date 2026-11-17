@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { characters, openPeople, openSector, openShop } from './layout';
+import { characters, openPeople, openSector, openShop, openCombat } from './layout';
 
 /** Eine fertige Welt im Subsektor, lange gedrückt durchgewürfelt und Regina genannt; ihre Weltkarte bleibt offen. */
 async function makeWorld(page: Page) {
@@ -29,6 +29,12 @@ test('Shop: Einkaufen an Kessra öffnet den Shop; die Kasse im Reiter Charaktere
   await expect(page.getByRole('tab', { name: 'Waffen' })).toHaveAttribute('aria-selected', 'true');
   // Die Kasse steht nicht im Shop, sondern im Reiter Charaktere.
   await expect(page.getByRole('tab', { name: 'Kasse' })).toHaveCount(0);
+  // Fahrzeuge haben eine eigene Theke; unter Sonstiges stehen sie nicht mehr.
+  await page.getByRole('tab', { name: 'Fahrzeuge' }).click();
+  await expect(page.getByRole('button', { name: 'Air/Raft kaufen' })).toBeVisible();
+  await page.getByRole('tab', { name: 'Sonstiges' }).click();
+  await expect(page.getByRole('button', { name: 'Air/Raft kaufen' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Passagen' })).toBeVisible();
 
   await page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true }).click();
   await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Kampagnen wechseln und verwalten' }).click();
@@ -100,7 +106,7 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
 
   // Jede gekaufte Waffe wurde Kiras Primärwaffe: zuletzt die Submachinegun, in der Hand. Spear und
   // Automatic Pistol liegen im Gepäck; die Spear rüstet sie dort als Sekundärwaffe aus.
-  await page.getByRole('navigation').getByRole('button', { name: 'Kampf' }).click();
+  await openCombat(page);
   await expect(page.getByRole('heading', { name: 'Submachinegun' })).toBeVisible();
   await openPeople(page, 'SC');
   const pack = page.getByRole('list', { name: 'Gepäck' });
@@ -108,7 +114,7 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
   await page.getByLabel('Spear ausrüsten').selectOption({ label: 'Kira · Sekundär' });
   await expect(page.getByRole('group', { name: 'Ausrüstung von Kira Vant' })).toContainText('Spear');
   await expect(pack).not.toContainText('Spear');
-  await page.getByRole('navigation').getByRole('button', { name: 'Kampf' }).click();
+  await openCombat(page);
   await page.getByRole('group', { name: 'Waffe in der Hand' }).first().getByRole('button', { name: /Spear/ }).click();
   await expect(page.getByRole('heading', { name: 'Spear' })).toBeVisible();
 });

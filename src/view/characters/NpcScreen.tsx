@@ -4,7 +4,7 @@ import type { NpcRole } from '../../model';
 import { hex, roleText } from '../format';
 import { useGame } from '../game-context';
 import { CheckIcon, CloseIcon, CombatIcon, PencilIcon } from '../icons';
-import { PeopleTabs } from './PeopleTabs';
+import { SubTabs, peopleParts } from '../SubTabs';
 
 /**
  * NSC im Reiter Charaktere: die dauerhaften NSC, vorgegeben die des Aufenthaltsorts (und die ohne Ort) nach
@@ -30,7 +30,7 @@ export function NpcScreen({ view }: { view: Snapshot }) {
 
   return (
     <div className="screen">
-      {!placing && <PeopleTabs screen="npcs" />}
+      {!placing && <SubTabs label="Charaktere" parts={peopleParts} screen="npcs" />}
       <section className="scroll characters npc-screen" aria-labelledby="npcs-title">
         <div className="npc-head">
           <h2 id="npcs-title" className="section-title">

@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { DiceRoll } from '../oracle/DiceRoll';
 import type { CombatView, HealingView, Snapshot } from '../../controller';
 import { EncounterIntro, FightScreen, SurpriseDialog } from './FightScreen';
+import { SubTabs, encounterParts } from '../SubTabs';
 import { ButcheredDialog, LootDialog } from './LootDialogs';
 import { FireToggle } from './FireToggle';
 import { armorText, attackText, characteristicLabel, hex, partLabel, rangeMeters, rangeShort, rangeText, rangeTiny, signed } from '../format';
@@ -12,10 +13,11 @@ import { CombatIcon, DiceIcon } from '../icons';
 import { CharacterStrip } from '../oracle/CharacterStrip';
 
 /**
- * Der Reiter Kampf, in zwei Modi. Ohne laufende Begegnung die **Waffentabelle**: oben die Leiste mit
+ * Der Kampf im Reiter Begegnung (Umschalter oben), in zwei Modi. Ohne laufende Begegnung die **Waffentabelle**: oben die Leiste mit
  * dem Charakter oben und seinen Waffen, die getragene Rüstung und die klassische Tabelle der Waffe in
  * der Hand (Rüstung × Reichweite, in jeder Zelle der nötige Wurf). Mit laufender Begegnung die
- * **Kampfsimulation** (FightScreen). Begegnungen würfelt man im Reiter Begegnung (EncounterScreen).
+ * **Kampfsimulation** (FightScreen). Der Kampf ist der zweite Teil des Reiters Begegnung (Umschalter
+ * oben); Begegnungen würfelt man im ersten (EncounterScreen).
  * Gerechnet wird im Model; die View zeigt nur.
  */
 
@@ -37,6 +39,7 @@ export function CombatScreen({ view, patient, onPatient: setPatient }: { view: S
   const healing = patient && combat && (patient.npc === undefined && !combat.sim ? combat.healing : combat.sim?.fighters.find((f) => f.id === (patient.npc ?? patient.pc))?.healing);
   return (
     <div className="screen">
+      <SubTabs label="Begegnung" parts={encounterParts} screen="combat" />
       {/* Ohne Begegnung steht der Charakter oben in der Leiste; in der Kampfsimulation stehen die SC links in der Arena. */}
       {!combat?.sim && <CharacterStrip view={view} weapons heal={combat && pcHeal(combat, setPatient)} />}
       {!combat ? (

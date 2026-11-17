@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { characters, entries, openPeople, oracle, revealed } from './layout';
+import { characters, entries, openCombat, openPeople, oracle, revealed } from './layout';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -325,7 +325,7 @@ test('Die Reihe unten steht auf dem Smartphone nur im Log', async ({ page }, tes
   testInfo.skip(testInfo.project.name !== 'mobil', 'Im Desktop-Modus steht sie unter jedem Bereich ohne eigene Reihe');
   const nav = page.getByRole('navigation', { name: 'Bereiche' });
   await expect(oracle(page).getByRole('button', { name: '2W6', exact: true })).toBeVisible();
-  for (const name of ['Begegnung', 'Kampf', 'Schiff', 'Charaktere']) {
+  for (const name of ['Begegnung', 'Charaktere', 'Schiff']) {
     await nav.getByRole('button', { name, exact: true }).click();
     await expect(page.getByRole('region', { name: 'Orakel und Proben' })).toHaveCount(0);
   }
@@ -333,6 +333,8 @@ test('Die Reihe unten steht auf dem Smartphone nur im Log', async ({ page }, tes
     await openPeople(page, part);
     await expect(page.getByRole('region', { name: 'Orakel und Proben' })).toHaveCount(0);
   }
+  await openCombat(page);
+  await expect(page.getByRole('region', { name: 'Orakel und Proben' })).toHaveCount(0);
 });
 
 test('Ziehblatt ganz hinunter: Reihe und Reiter rutschen mit hinaus, nur der Griff bleibt; ein Tippen holt es zurück', async ({ page }, testInfo) => {

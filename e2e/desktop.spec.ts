@@ -1,5 +1,5 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
-import { openPeople, openShop } from './layout';
+import { openPeople, openShop, openCombat } from './layout';
 
 // Der Desktop-Modus (ab 1024 px): links eine Spalte mit den Reitern, darunter das Log mit dem Charakter
 // oben oder an seiner Stelle der gewählte Bereich bzw. das angetippte Feld; unten die Reihe Notiz,
@@ -7,7 +7,7 @@ import { openPeople, openShop } from './layout';
 // Diese Tests laufen nur im Projekt „desktop“.
 
 const onlyDesktop = (testInfo: TestInfo) => testInfo.skip(testInfo.project.name !== 'desktop', 'nur im Desktop-Modus');
-const areas = ['Kampf', 'Schiff', 'Charaktere'];
+const areas = ['Charaktere', 'Schiff'];
 const panel = (page: Page) => page.getByRole('complementary', { name: 'Seitenspalte' });
 const head = (page: Page) => panel(page).locator('.area-head');
 const nav = (page: Page) => page.getByRole('navigation', { name: 'Bereiche' });
@@ -46,7 +46,7 @@ test('Links eine Spalte: das Log, an seiner Stelle der Bereich; rechts die Grund
   await nav(page).getByRole('button', { name: 'Schiff', exact: true }).click();
   await page.getByRole('button', { name: 'Schiff schließen' }).click();
   await expect(strip(page)).toBeVisible();
-  await nav(page).getByRole('button', { name: 'Kampf', exact: true }).click();
+  await nav(page).getByRole('button', { name: 'Schiff', exact: true }).click();
   await nav(page).getByRole('button', { name: 'Log', exact: true }).click();
   await expect(strip(page)).toBeVisible();
   await expect(head(page)).toHaveCount(0);
@@ -134,7 +134,7 @@ test('Kampf und Shop zeigen ihre SC selbst; ein Klick auf eine Karte holt sie na
   onlyDesktop(testInfo);
   const area = panel(page);
   // Im Kampf: Rüstung und Waffen; antippen nimmt die Waffe in die Hand.
-  await nav(page).getByRole('button', { name: 'Kampf', exact: true }).click();
+  await openCombat(page);
   const kira = area.getByRole('article', { name: 'Kira Vant' });
   await expect(kira).toContainText('Jack');
   await kira.getByRole('button', { name: /Automatic Pistol/ }).click();
@@ -154,7 +154,7 @@ test('Kampf und Shop zeigen ihre SC selbst; ein Klick auf eine Karte holt sie na
 test('Die Ziffern wählen die Reiter', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
   await expect(nav(page)).toBeVisible();
-  for (const [key, name] of [['2', 'Begegnung'], ['3', 'Kampf'], ['4', 'Schiff'], ['5', 'Charaktere'], ['1', 'Log']]) {
+  for (const [key, name] of [['2', 'Begegnung'], ['3', 'Charaktere'], ['4', 'Schiff'], ['1', 'Log']]) {
     await page.keyboard.press(key!);
     await expect(nav(page).getByRole('button', { name: name!, exact: true })).toHaveAttribute('aria-current', 'page');
   }

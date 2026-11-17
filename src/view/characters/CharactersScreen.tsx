@@ -3,7 +3,7 @@ import { useGame } from "../game-context";
 import { PencilIcon } from "../icons";
 import { CharacterCard } from "./CharacterCard";
 import { StashDrag, StashPack } from "./StashPanel";
-import { PeopleTabs } from "./PeopleTabs";
+import { SubTabs, peopleParts } from "../SubTabs";
 
 /**
  * Der Charakter-Screen zum Verwalten: anlegen, nach Regeln erschaffen, bearbeiten, Details mit
@@ -15,7 +15,7 @@ export function CharactersScreen({ view }: { view: Snapshot }) {
   return (
     <StashDrag>
       <div className="screen">
-        <PeopleTabs screen="characters" />
+        <SubTabs label="Charaktere" parts={peopleParts} screen="characters" />
         <section
           className="scroll characters"
           aria-labelledby="characters-title"

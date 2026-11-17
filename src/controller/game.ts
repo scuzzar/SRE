@@ -1491,7 +1491,7 @@ export class GameController {
     this.inFight(() => this.change(setQuantityDie(this.campaign, die), { combatNote: undefined }));
   }
 
-  /** Beendet die laufende Begegnung; der Reiter Kampf zeigt wieder die Waffentabelle, der Reiter Begegnung die Auswahl. */
+  /** Beendet die laufende Begegnung; der Kampf zeigt wieder die Waffentabelle, der Reiter Begegnung die Auswahl. */
   endEncounter(): void {
     this.change(endEncounter(this.campaign), { attack: undefined, combatNote: undefined, simTarget: undefined, encounterIntro: false });
   }

@@ -17,7 +17,7 @@ import { ResultDialog } from './characters/ResultDialog';
 import { useGame, useSnapshot } from './game-context';
 import { useEscapeCloses, useShortcuts } from './keyboard';
 import { useIsDesktop } from './media';
-import { CloseIcon, CombatIcon, EncounterIcon, LogIcon, MenuIcon, PeopleIcon, ShipIcon } from './icons';
+import { CloseIcon, EncounterIcon, LogIcon, MenuIcon, PeopleIcon, ShipIcon } from './icons';
 import { Menu } from './Menu';
 import { CardSheet } from './oracle/CardSheet';
 import { DiceRoll } from './oracle/DiceRoll';
@@ -33,16 +33,16 @@ import { LoadingOverlay } from './loading';
 import { Tray } from './Tray';
 
 /**
- * Die fünf Reiter im Ziehblatt bzw. oben in der Seitenspalte des Desktops, in dieser Reihenfolge. Im
- * Reiter Charaktere schaltet man oben zwischen SC, NSC und Kasse um (`also`); den Shop öffnet
- * „Einkaufen“ am Feld bzw. an der Weltkarte des Aufenthaltsorts.
+ * Die vier Reiter im Ziehblatt bzw. oben in der Seitenspalte des Desktops, in dieser Reihenfolge. Im
+ * Reiter Begegnung schaltet man oben zwischen Begegnung und Kampf um, im Reiter Charaktere zwischen
+ * SC, NSC und Kasse (`also`); den Shop öffnet „Einkaufen“ am Feld bzw. an der Weltkarte des
+ * Aufenthaltsorts.
  */
 const areas: readonly { readonly id: Screen; readonly label: string; readonly Icon: () => ReactElement; readonly also?: readonly Screen[] }[] = [
   { id: 'oracle', label: 'Log', Icon: LogIcon },
-  { id: 'encounter', label: 'Begegnung', Icon: EncounterIcon },
-  { id: 'combat', label: 'Kampf', Icon: CombatIcon },
-  { id: 'ship', label: 'Schiff', Icon: ShipIcon },
+  { id: 'encounter', label: 'Begegnung', Icon: EncounterIcon, also: ['combat'] },
   { id: 'characters', label: 'Charaktere', Icon: PeopleIcon, also: ['npcs', 'funds'] },
+  { id: 'ship', label: 'Schiff', Icon: ShipIcon },
 ];
 
 /** Der Reiter, zu dem ein Screen gehört; der Shop und „Über die App“ gehören zu keinem. */

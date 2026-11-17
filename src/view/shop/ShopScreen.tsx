@@ -7,11 +7,12 @@ import { haptic } from '../haptics';
 import { CloseIcon } from '../icons';
 import { CharacterStrip } from '../oracle/CharacterStrip';
 
-/** Die Bereiche des Shops: drei Theken und der Verkauf. Welcher offen ist, ist reine Darstellung. */
-type Area = 'weapons' | 'armor' | 'gear' | 'sell';
+/** Die Bereiche des Shops: vier Theken und der Verkauf. Welcher offen ist, ist reine Darstellung. */
+type Area = 'weapons' | 'armor' | 'vehicles' | 'gear' | 'sell';
 const areas: readonly { readonly id: Area; readonly name: string }[] = [
   { id: 'weapons', name: 'Waffen' },
   { id: 'armor', name: 'Rüstung' },
+  { id: 'vehicles', name: 'Fahrzeuge' },
   { id: 'gear', name: 'Sonstiges' },
   { id: 'sell', name: 'Verkauf' },
 ];
@@ -20,7 +21,8 @@ const areas: readonly { readonly id: Area; readonly name: string }[] = [
  * Der Shop, gebaut wie der Laden eines Rollenspiels; „Einkaufen“ am Feld bzw. an der Weltkarte des
  * Aufenthaltsorts öffnet ihn an der Stelle des Felds. Oben die Leiste mit dem Charakter oben (für ihn
  * kauft und verkauft man), darunter Aufenthaltsort und Stand der Gruppenkasse und die Bereiche Waffen
- * (mit dem Magazin als eigener Spalte), Rüstung, Sonstiges und Verkauf (sein Besitz). Buchungen und
+ * (mit dem Magazin als eigener Spalte), Rüstung, Fahrzeuge, Sonstiges (Ausrüstung, Passagen) und
+ * Verkauf (sein Besitz). Buchungen und
  * Kassenbuch stehen im Reiter Charaktere unter Kasse (`FundsScreen`). Gerechnet und geprüft wird im
  * Model; welcher Bereich offen und welcher Kauf offen ist, hält nur die View. `onClose` (✕ oben) gibt
  * es auf dem Smartphone; im Desktop-Modus steht das ✕ im Kopf der Seitenspalte.
@@ -37,6 +39,8 @@ export function ShopScreen({ view, onClose }: { view: Snapshot; onClose?: (() =>
   const area: Area = chosen?.campaign === view.campaign.id ? chosen.area : 'weapons';
   const setArea = (a: Area) => setChosen({ campaign: view.campaign.id, area: a });
   const owner = shop.members.find((m) => m.id === shop.owner);
+  // Fahrzeuge haben eine eigene Theke, unter Sonstiges bleiben Ausrüstung und Passagen.
+  const vehicles = shop.gear.filter((group) => group.kind === 'vehicle');
   // Ein Tipp kauft ein Stück für den Charakter oben; mehr kauft man mit mehr Tipps. Nur was das
   // Gesetz der Welt verbietet, fragt erst nach.
   const buy = (item: ShopItem) => {
@@ -93,8 +97,14 @@ export function ShopScreen({ view, onClose }: { view: Snapshot; onClose?: (() =>
           <SaleCounter stash={shop.stash} owner={owner} onSell={(member, item) => setSelling({ member, item })} />
         ) : area === 'armor' ? (
           <ItemCounter title="Rüstungen" items={shop.armor} onBuy={buy} />
+        ) : area === 'vehicles' ? (
+          vehicles.length > 0 ? (
+            vehicles.map((group) => <ItemCounter key={group.kind} title={kindNames[group.kind]} items={group.items} onBuy={buy} />)
+          ) : (
+            <p className="log-empty">Auf {shop.world.name} gibt es bei TL {shop.world.tech} keine Fahrzeuge zu kaufen.</p>
+          )
         ) : (
-          shop.gear.map((group) => <ItemCounter key={group.kind} title={kindNames[group.kind]} items={group.items} onBuy={buy} />)
+          shop.gear.filter((group) => group.kind !== 'vehicle').map((group) => <ItemCounter key={group.kind} title={kindNames[group.kind]} items={group.items} onBuy={buy} />)
         )}
       </section>
       {buying && owner && <BannedDialog key={buying.id} item={buying} shop={shop} owner={owner} onClose={() => setBuying(undefined)} />}

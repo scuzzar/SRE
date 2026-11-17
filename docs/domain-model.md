@@ -554,7 +554,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Buchung | `Booking` | Eine Bewegung der Gruppenkasse: Einnahme, Ausgabe, Einzahlung, Auszahlung oder Kauf |
 | Art der Buchung | `BookingKind` | income (Einnahme, z. B. Belohnung), expense (Ausgabe), deposit (Einzahlung eines Charakters), payout (Auszahlung an einen Charakter), purchase (Kauf), sale (Verkauf), lottery (Gewinn der Low Lottery), rent (Miete je Tag eines Fahrzeugs), fare (Fahrpreis im Linienverkehr), ship (Schiff: voller Preis, Anzahlung, Monatsrate, Treibstoff, Liegegebühr, Lebenserhaltung; welche, sagt `shipCost`) |
 | Angebot | `Hex./offer` | Was man auf der Welt kaufen kann: nach TL und Gesetz der Welt |
-| Reiter | (View, `Screen`) | Die fünf Reiter unten im Ziehblatt bzw. oben in der Seitenspalte: Log, Begegnung, Kampf, Schiff, Charaktere |
+| Reiter | (View, `Screen`) | Die vier Reiter unten im Ziehblatt bzw. oben in der Seitenspalte: Log, Begegnung, Charaktere, Schiff; Begegnung und Charaktere haben oben einen Umschalter |
 | Reiter Charaktere | (Reiter „Charaktere“; Screens `characters`, `npcs`, `funds`) | Oben ein Umschalter zwischen **SC** (Charakterkarten und Gruppengepäck), **NSC** (die *NSC-Liste*) und **Kasse** |
 | Shop | (Screen `shop`, `openShop`, `closeShop`) | Der Screen für den Einkauf auf dem Aufenthaltsort, ohne eigenen Reiter: „Einkaufen“ an der Weltkarte des Aufenthaltsorts bzw. am angetippten Feld seines Globus öffnet ihn an der Stelle des Felds, ✕ führt dorthin zurück, ein Reiter verlässt ihn |
 | Kasse | (Screen `funds`, im Reiter Charaktere) | Stand der Gruppenkasse, freie Buchungen (Einnahme, Ausgabe, Einzahlung, Auszahlung mit einem gewählten SC) und das Kassenbuch; geht auch ohne Aufenthaltsort |
@@ -585,8 +585,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Rüstungsklasse einer Rüstung | `Item.armor` | Wie eine Rüstung in der Matrix zählt, z. B. Vacc Suit als Cloth, Battle Dress als Combat |
 | Wunden | `/wounds`, `Wounds` | Wie viel STR, DEX und END jemand durch Treffer verloren hat |
 | Zustand | `/state`, `WoundState` | unverletzt, verwundet, bewusstlos (ein Attribut auf 0), schwer verwundet (zwei), tot (drei) |
-| Waffentabelle | (Modus des Reiters Kampf) | Die Tabelle der Waffe in der Hand mit frei gewählter Rüstung und Reichweite, ohne Begegnung |
-| Kampfsimulation | (Modus des Reiters Kampf) | Der Kampf einer laufenden Begegnung: Entfernung, Überraschung, Runden und Züge |
+| Waffentabelle | (Modus des Kampfs) | Die Tabelle der Waffe in der Hand mit frei gewählter Rüstung und Reichweite, ohne Begegnung |
+| Kampfsimulation | (Modus des Kampfs) | Der Kampf einer laufenden Begegnung: Entfernung, Überraschung, Runden und Züge |
 | Entfernung | `Distance`, `Encounter.distances` | Wie weit ein SC von der NSC-Gruppe weg ist, in Range Bands; gilt für jeden Angriff zwischen ihm und einem NSC |
 | NSC-Gruppe | `Encounter.npcs`, `npcMoved`, `npcRuns` | Die NSC einer Begegnung; sie stehen zusammen und bewegen sich als Ganzes |
 | Range Band | `RangeBand`, `Distance.band` | Ein Abschnitt von etwa 25 m (Book 1, S. 32; Charts S. 7): Close und Short Band 0, Medium 1–2, Long 3–10, Very Long 11–20 |
@@ -618,8 +618,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Schadenswurf | `DamageRoll` | Der Wurf auf den Schaden eines Treffers, z. B. 3W6 = 11 |
 | Block | `DamageRoll.points`, `DamageRoll.to` | Ein Stück eines Schadenswürfels, das ganz auf ein Attribut geht; ein Würfel ist ein Block oder, wenn er ein Attribut auf 0 bringt, mehrere |
 | Überlauf | (Regel) | Was ein Würfel über 0 hinaus bringt, geht als neuer Block auf ein anderes Attribut über 0 (SR 21) |
-| Kampf | (Reiter „Kampf“) | Der Screen für Angriffe: ohne Begegnung die Waffentabelle, mit Begegnung die Kampfsimulation |
-| Reiter Begegnung | (Reiter „Begegnung“) | Unten die Reihe mit den Würfen Zufall, Tiere, Patron, Gerücht, Polizei und darunter Tage vergehen und Woche beenden bzw. bei einer Fahrt Weiterfahren: die einzige Stelle, an der Zeit vergeht oder die Fahrt weitergeht. Jeder Wurf zeigt Test und Ergebnis im *Würfelfenster*. Das Blatt darüber hat nur Datum, laufende Fahrt, laufende Begegnung und die Einstellungen: Gelände, Würfel der Anzahl, wie viele Tage, die Haken „Manuell wählen“ und *NSC dazunehmen* |
+| Kampf | (Screen `combat`, im Reiter Begegnung unter „Kampf“) | Der Screen für Angriffe: ohne Begegnung die Waffentabelle, mit Begegnung die Kampfsimulation |
+| Reiter Begegnung | (Reiter „Begegnung“; Screens `encounter`, `combat`) | Oben ein Umschalter zwischen Begegnung und *Kampf*. Unter Begegnung unten die Reihe mit den Würfen Zufall, Tiere, Patron, Gerücht, Polizei und darunter Tage vergehen und Woche beenden bzw. bei einer Fahrt Weiterfahren: die einzige Stelle, an der Zeit vergeht oder die Fahrt weitergeht. Jeder Wurf zeigt Test und Ergebnis im *Würfelfenster*. Das Blatt darüber hat nur Datum, laufende Fahrt, laufende Begegnung und die Einstellungen: Gelände, Würfel der Anzahl, wie viele Tage, die Haken „Manuell wählen“ und *NSC dazunehmen* |
 | Würfelfenster | (View, `encounterRoll`) | Das Fenster nach einem Begegnungswurf: der rollende Würfel des Tests, was herauskam und was danach geht („Als NSC“, Rettungswürfe); kam es zur Begegnung, folgt ihre Übersicht. Ohne Würfel nur ein Hinweis, etwa dass der Test schon gemacht ist |
 | NSC dazunehmen | (Ablauf, `startNpcJoining`) | Mit dem Haken „NSC dazunehmen“ öffnet Zufall erst die NSC-Liste zum Auswählen (wie *NSC platzieren*, nur NSC vom Aufenthaltsort); „OK“ nimmt sie zur Zufallsbegegnung dazu (`Encounter.joined`) und würfelt ohne Test, mit „Manuell wählen“ erst die Art |
 | Begegnungsart | (Karte im Reiter Begegnung) | Eine Art von Begegnungen nach SE S. 20 mit ihren Einstellungen und ihrem Wurf: Zufallsbegegnung, Patron, Gerücht, später Gesetz, Tiere. Nicht zu verwechseln mit der *Art der Begegnung* (`EncounterType`), einer Zeile der Random Encounter List |
@@ -1109,7 +1109,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - *Attribut*: STR bzw. DEX des Angreifers unter dem nötigen Wert gibt `requiredDm`, ab dem
     vorteilhaften Wert `advantageousDm`, dazwischen ±0. Das ist nicht die Hausregel ±1 der Probe;
     die Hausregeln und die gewählte Stufe (`odds`) zählen beim Angriff nicht.
-  - Angriffe würfelt man im Reiter **Kampf**. Oben steht dort dieselbe Leiste wie im Orakel-Screen,
+  - Angriffe würfelt man im **Kampf** (Reiter Begegnung, Umschalter oben). Oben steht dort dieselbe Leiste wie im Orakel-Screen,
     mit dem Charakter oben; Wischen wählt den Charakter, für den man angreift. Dort ist sie
     kompakt: die Attribute als schmale Zeile wie bei den NSC (mit Wunden), statt der Fertigkeiten
     in einer Zeile die Waffen, also Primärwaffe, Sekundärwaffe und Hände, die Waffe in der Hand
@@ -1129,7 +1129,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Ein Angriffsergebnis ist ein Ergebnis wie das Probenergebnis: Man kann es deuten, und die
     Fertigkeitsstufe und der Charakter, auf die es verweist, werden nicht gelöscht, sondern
     ausgeblendet (siehe *Löschen und Ausblenden*).
-  - **Schaden.** Nach einem Treffer bietet der Reiter Kampf an, den Schaden zu würfeln: so viele W6,
+  - **Schaden.** Nach einem Treffer bietet der Kampf an, den Schaden zu würfeln: so viele W6,
     wie die Waffe `wounds` hat. Er wird ein eigener Logeintrag, der Schadenswurf (`DamageRoll`), der
     auf seinen Treffer verweist (`of`) und die Würfel einzeln festhält; `/damage` ist ihre Summe. Für
     jeden Treffer gibt es höchstens einen Schadenswurf, für einen Fehlschlag keinen. Angeboten wird
@@ -1187,7 +1187,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Waffe (`burst`) und daraus, dass die Garbe mehr als einen Wurf hat; ein Einzelschuss ist immer
     ein einzelner Wurf.
   - **Schaden**: Jeder Treffer der Garbe bekommt seinen eigenen Schadenswurf, wie bisher; der
-    Reiter Kampf bietet sie für die Treffer der neuesten Garbe der Reihe nach an. Wunden wirken erst
+    Kampf bietet sie für die Treffer der neuesten Garbe der Reihe nach an. Wunden wirken erst
     nach dem Würfeln aller Würfe: Wer durch den ersten Treffer bewusstlos wird, bleibt Ziel des
     zweiten.
   - **Im Log** steht die Garbe in einem Kasten, die Würfe untereinander, Nachbarn als solche
@@ -1318,7 +1318,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Art passen und die Kasse nach keiner Buchung negativ sein.
 - **Shop.** Im *Shop* kauft die Gruppe auf ihrem Aufenthaltsort ein, aus der Gruppenkasse. Er hat keinen
   eigenen Reiter: „Einkaufen“ am Feld bzw. an der Weltkarte des Aufenthaltsorts öffnet ihn (2026-11-17);
-  Buchungen und Kassenbuch stehen unter *Kasse* im Reiter Charaktere. Das ist reine Anzeige.
+  Buchungen und Kassenbuch stehen unter *Kasse* im Reiter Charaktere. Das Angebot steht in den
+  Bereichen Waffen, Rüstung, Fahrzeuge, Sonstiges (Ausrüstung, Passagen); dazu Verkauf. Das ist reine Anzeige.
   - **Angebot** (`/offer`): jeder Gegenstand aus der Liste mit Preis, dessen TL höchstens der TL der
     Welt ist (S. 23: „TL is the minimum technological level at which the item is available“), ohne
     Schiffe und Mitgliedschaften. Auch Waffen, die auf der Welt verboten sind, kann man kaufen, aber
@@ -1360,7 +1361,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Eine gekaufte Schusswaffe kommt leer (`rounds` 0), wenn der Charakter sie noch nicht hatte;
     Magazine kauft man dazu. Waffen aus der Abmusterung kommen geladen.
   - Jeder Angriff mit einer Schusswaffe verbraucht einen Schuss. Mit 0 Schuss gibt es keinen Angriff.
-  - **Nachladen** im Reiter Kampf nimmt ein Magazin, bei SC aus dem Gruppengepäck, bei NSC aus ihrem
+  - **Nachladen** im Kampf nimmt ein Magazin, bei SC aus dem Gruppengepäck, bei NSC aus ihrem
     Besitz (Anzahl − 1, beim letzten ist der
     Besitz weg) und setzt `rounds` auf voll; ein angebrochenes Magazin geht dabei verloren. Ohne
     Magazin gibt es kein Nachladen.
@@ -1368,7 +1369,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Ein **Feuerstoß** verbraucht `Weapon.burst` Schuss (4) und geht nur, wenn so viele geladen
     sind; sonst bleibt der Einzelschuss, wenn die Waffe einen hat (siehe *Feuerstoß und Schrot*).
   - **Später**: angebrochene Magazine aufheben, Recharge der Power Packs.
-- **Begegnung.** Im Reiter Kampf würfelt man auf dem Aufenthaltsort eine **Begegnung** (`Encounter`),
+- **Begegnung.** Im Reiter Begegnung würfelt man auf dem Aufenthaltsort eine **Begegnung** (`Encounter`),
   ohne weitere Eingabe; man kann die Art auch aus der Liste wählen, die Anzahl wird dann trotzdem
   gewürfelt.
   - *Art*: 1W6 und 1W6 auf die Random Encounter List (S. 21), z. B. 14 = 3W6 Rowdies (L). Die Zeilen
@@ -1827,14 +1828,15 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     aber nicht (`to` fehlt).
   - **Später**: Medical Drugs, Wunden mit Zeit, Fahrzeuge, Überraschung, Entfernung,
     Moral und Kampfrunden.
-- **Reiter Begegnung und zwei Modi im Reiter Kampf.** Der Reiter **Begegnung** zeigt oben den
+- **Reiter Begegnung und zwei Modi im Kampf.** Der Reiter **Begegnung** hat oben einen Umschalter
+  zwischen **Begegnung** und **Kampf** (2026-11-17; bisher zwei Reiter). Unter Begegnung steht oben der
   Aufenthaltsort, das Gelände und den Würfel der Anzahl als allgemeine Einstellungen für alle Arten und
   darunter eine Liste der **Begegnungsarten**, je Art eine Karte mit ihren
   Einstellungen und ihrem Wurf: zurzeit die Zufallsbegegnung und der Patron (siehe *Patron*); weitere
   Arten kommen als weitere Karten dazu. Die Zufallsbegegnung würfelt oder wählt man in ihrer Karte;
   die Übersicht danach führt zurück in den Reiter Begegnung, denn nicht jede
-  Begegnung wird ein Kampf; erst „Zum Kampf“ dort wechselt in den Reiter Kampf. Läuft eine
-  Begegnung, zeigt ihre Karte sie knapp. Ohne laufende Begegnung zeigt der Reiter Kampf die
+  Begegnung wird ein Kampf; erst „Zum Kampf“ dort schaltet auf Kampf um. Läuft eine
+  Begegnung, zeigt ihre Karte sie knapp. Ohne laufende Begegnung zeigt der Kampf die
   **Waffentabelle**: die Waffe in der Hand des Charakters oben, Rüstung und Reichweite frei gewählt
   (siehe *Angriff*); mit laufender Begegnung die **Kampfsimulation**; beendet man sie, zeigt er
   wieder die Waffentabelle. Das alles ist nur Anzeige; gespeichert wird die Begegnung.

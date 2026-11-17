@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openPeople } from './layout';
+import { openPeople, openCombat } from './layout';
 
 // NSC im Reiter Charaktere: neue NSC mit Rolle, leer oder aus einer Laufbahn erzeugt; sie stehen dort nach
 // Rolle gruppiert, mit Attributen, nicht mehr im Charakter-Screen.
@@ -39,7 +39,6 @@ test('NSC: aus einer Laufbahn erzeugen, danach steht er im Editor', async ({ pag
 // wählt ihn vor; er kämpft auf der Seite der NSC und führt.
 test('NSC: „In Begegnung“ nimmt den NSC zur Zufallsbegegnung dazu; er führt die NSC an', async ({ page }) => {
   await page.goto('/');
-  const nav = page.getByRole('navigation', { name: 'Bereiche' });
   await openPeople(page, 'NSC');
   await page.getByRole('button', { name: '+ Neuer NSC' }).click();
   await page.getByRole('dialog', { name: 'Neuer NSC' }).getByLabel('Rolle').selectOption({ label: 'Verbündeter' });
@@ -63,7 +62,7 @@ test('NSC: „In Begegnung“ nimmt den NSC zur Zufallsbegegnung dazu; er führt
   // Läuft eine Begegnung, gibt es „In Begegnung“ nicht.
   await openPeople(page, 'NSC');
   await expect(page.getByRole('button', { name: 'Tenzin Thorsen in Begegnung' })).toHaveCount(0);
-  await nav.getByRole('button', { name: 'Kampf', exact: true }).click();
+  await openCombat(page);
   await expect(page.locator('.fight-head-title')).toContainText('Tenzin Thorsen + ');
 });
 

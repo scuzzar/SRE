@@ -4,6 +4,7 @@ import { signed } from '../format';
 import { useGame } from '../game-context';
 import { TripBar } from '../sector/TripPanels';
 import { distancesText, EncounterIntro } from './FightScreen';
+import { SubTabs, encounterParts } from '../SubTabs';
 
 /** Was im Reiter Begegnung eingestellt ist, aber nur in der Ansicht lebt: die Haken und wie viele Tage. */
 export interface EncounterOptions {
@@ -29,6 +30,7 @@ export function EncounterScreen({ view, options, onOptions }: { view: Snapshot; 
   const joinable = combat?.joinable.length ?? 0;
   return (
     <div className="screen">
+      <SubTabs label="Begegnung" parts={encounterParts} screen="encounter" />
       <section className="scroll encounter-scroll" aria-label="Begegnung">
         {view.time && <TimeBar time={view.time} days={options.days} onDays={(days) => onOptions({ ...options, days })} trip={view.trip !== undefined} />}
         {view.trip && <TripBar trip={view.trip} note={view.tripNote} />}

@@ -4,7 +4,7 @@ import { bookingText, clockTime, credits, shipCostText } from '../format';
 import { Form } from '../Form';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
-import { PeopleTabs } from './PeopleTabs';
+import { SubTabs, peopleParts } from '../SubTabs';
 
 type FreeKind = 'income' | 'expense' | 'deposit' | 'payout';
 const freeKinds: readonly FreeKind[] = ['income', 'expense', 'deposit', 'payout'];
@@ -18,7 +18,7 @@ export function FundsScreen({ view }: { view: Snapshot }) {
   const shop = view.shop;
   return (
     <div className="screen">
-      <PeopleTabs screen="funds" />
+      <SubTabs label="Charaktere" parts={peopleParts} screen="funds" />
       {shop && (
         <section className="scroll shop-scroll funds-screen" aria-label="Kasse">
           <p className="funds-total">
