@@ -10,6 +10,15 @@ import { hexById, worldOf, type Hex } from './sector';
 export const bookingKinds = ['income', 'expense', 'deposit', 'payout', 'purchase', 'sale', 'lottery', 'rent', 'fare', 'ship'] as const;
 export type BookingKind = (typeof bookingKinds)[number];
 
+/** Wofür eine Buchung der Art `ship` ist (2026-11-17b): Kauf oder Anzahlung, Monatsrate, Treibstoff, Liegegebühr, Lebenserhaltung. */
+export const shipCosts = ['price', 'rate', 'fuel', 'berthing', 'lifeSupport'] as const;
+export type ShipCost = (typeof shipCosts)[number];
+
+/** Die laufenden Kosten: alles außer Kauf und Anzahlung. Sie stehen in der Monatsabrechnung. */
+export function isRunningCost(booking: Booking): boolean {
+  return booking.kind === 'ship' && booking.shipCost !== undefined && booking.shipCost !== 'price';
+}
+
 /**
  * Eine Bewegung der Gruppenkasse. `amount` in ganzen Cr, positiv in die Kasse, negativ hinaus.
  * Buchungen werden nur angehängt, nie geändert oder gelöscht; einen Fehler bucht man zurück.
@@ -33,6 +42,8 @@ export interface Booking {
   readonly rentFor?: number;
   /** Bei einer Schiffs-Buchung: das Schiff, worauf sie sich bezieht (auch ein ausgeblendetes). */
   readonly forShip?: string;
+  /** Bei einer Schiffs-Buchung: wofür sie ist; fehlt bei Buchungen von vor 2026-11-17b. */
+  readonly shipCost?: ShipCost;
 }
 
 /** `/funds`: der Stand der Gruppenkasse, die Summe aller Buchungen. */
@@ -120,16 +131,17 @@ function groupOwns(campaign: Campaign, itemId: string): boolean {
 }
 
 /**
- * Bucht eine Zahlung für ein Schiff: Kauf, Rate oder Treibstoff. `amount` ist negativ; die einzige
- * Ausnahme ist die unbezahlte Rate mit 0 Cr und ihrem Hinweistext. Zu einem Schiff gehört nie ein
- * Charakter, wohl aber das Schiff selbst – auch ein ausgeblendetes.
+ * Bucht eine Zahlung für ein Schiff: Kauf, Rate, Treibstoff, Liegegebühr oder Lebenserhaltung
+ * (`cost`). `amount` ist negativ; die einzige Ausnahme ist eine unbezahlte Rate oder Liegegebühr mit
+ * 0 Cr und ihrem Hinweistext. Zu einem Schiff gehört nie ein Charakter, wohl aber das Schiff selbst –
+ * auch ein ausgeblendetes.
  */
-export function bookShip(campaign: Campaign, amount: number, forShip: string, clock: Clock, text?: string): Campaign {
+export function bookShip(campaign: Campaign, amount: number, forShip: string, cost: ShipCost, clock: Clock, text?: string): Campaign {
   const note = text?.trim();
   if (!Number.isInteger(amount) || amount > 0) throw new DomainError('Eine Schiffs-Buchung geht aus der Kasse hinaus.');
   if (amount === 0 && note === undefined) throw new DomainError('Eine Buchung von 0 Cr braucht einen Hinweistext.');
   if (!campaign.ships.some((s) => s.id === forShip)) throw new DomainError(`Das Schiff ${forShip} gibt es nicht.`);
-  return withBooking(campaign, withText({ at: clock.now(), kind: 'ship' as BookingKind, amount, forShip }, text));
+  return withBooking(campaign, withText({ at: clock.now(), kind: 'ship' as BookingKind, amount, forShip, shipCost: cost }, text));
 }
 
 /** Wohin ein gekaufter Gegenstand am SC kommt: eine Waffe wird Primärwaffe, eine Rüstung getragen; sonst ins Gepäck. */
@@ -233,6 +245,7 @@ export function validateBookings(campaign: Campaign): void {
     if ((needs && b.for === undefined) || (never && b.for !== undefined)) throw new DomainError(`Eine Buchung der Art ${b.kind} hat ${needs ? 'keinen' : 'einen'} Charakter.`);
     if (b.for !== undefined) characterOf(campaign, b.for);
     if ((b.kind === 'ship') !== (b.forShip !== undefined)) throw new DomainError('Nur eine Schiffs-Buchung verweist auf ein Schiff.');
+    if (b.shipCost !== undefined && b.kind !== 'ship') throw new DomainError('Nur eine Schiffs-Buchung hat Schiffskosten.');
     if (b.forShip !== undefined && !campaign.ships.some((s) => s.id === b.forShip)) throw new DomainError(`Eine Buchung verweist auf das Schiff ${b.forShip}, das es nicht gibt.`);
     if ((b.kind === 'purchase') !== (b.bought !== undefined)) throw new DomainError('Nur ein Kauf hat einen gekauften Gegenstand.');
     if ((b.kind === 'sale') !== (b.sold !== undefined)) throw new DomainError('Nur ein Verkauf hat einen verkauften Gegenstand.');

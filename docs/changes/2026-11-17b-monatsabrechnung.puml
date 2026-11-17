@@ -1,0 +1,196 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-17b"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-17b: Monat = 4 Wochen; Monatsabrechnung im Log mit den laufenden Schiffskosten: Rate, Treibstoff, Liegegebühren, Lebenserhaltung
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+hide <<browser>> stereotype
+
+' Kampagne und Charaktere
+  class Booking $shop {
+    at: datetime
+    kind: BookingKind
+    amount: number
+    count: number [0..1]
+    text: string [0..1]
+    $new("2026-11-17b", "shipCost: ShipCost [0..1]")
+  }
+  enum BookingKind <<value>> $shop
+
+' Schiffe
+  class Ship $schiffe {
+    name: string
+    fuel: number
+    cargo: number
+    price: number
+    initialLoan: number [0..1]
+    loanBalance: number [0..1]
+    /monthlyPayment: number [0..1]
+    nextPaymentDay: number [0..1]
+    $new("2026-11-17b", "berthedSince: number [0..1]")
+    retired: boolean
+  }
+  enum ShipCost <<value>> $schiffe $newClass("2026-11-17b") {
+    price
+    rate
+    fuel
+    berthing
+    lifeSupport
+  }
+  class ShipSoftware $schiffe
+  class ShipDesign <<reference>> $schiffe
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+
+' Verlauf
+  abstract class LogEntry $probe {
+    at: datetime
+    day: number [0..1]
+  }
+  class DiceRoll $probe
+  class Note $probe
+
+' Zeit und Reisen
+  class MonthEnd $reise $newClass("2026-11-17b") {
+    /month: number
+    /total: number
+  }
+  class Journey $reise
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class TaskResult $probe
+
+' Referenzdaten
+  class Item <<reference>> $shop
+' Fahrzeuge und Wege auf der Oberfläche
+
+' Kampagne
+Booking "*" --> "0..1" Item : bought
+Booking "*" --> "0..1" Item : sold
+Booking --> BookingKind
+
+' Schiffe
+Ship "*" --> "1" ShipDesign : design
+Ship "1" *-- "0..*" ShipSoftware : software
+Booking "*" --> "0..1" Ship : forShip
+
+' Zeit und Reisen
+LogEntry <|-- Journey
+Journey "*" --> "0..1" Ship : ship
+LogEntry <|-$newArrow("2026-11-17b")- MonthEnd
+MonthEnd "*" -$newArrow("2026-11-17b")-> "*" Booking : costs {ordered}
+Booking -$newArrow("2026-11-17b")-> ShipCost
+Booking "*" --> "0..1" Journey : won
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+LogEntry <|-- DiceRoll
+LogEntry <|-- TaskResult
+LogEntry <|-- Note
+Note "*" --> "0..1" LogEntry : interprets
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
+endlegend
+class Booking #line:d0021b;line.bold
+class Ship #line:d0021b;line.bold
+@enduml

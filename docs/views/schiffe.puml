@@ -89,7 +89,15 @@ hide <<browser>> stereotype
     loanBalance: number [0..1]
     /monthlyPayment: number [0..1]
     nextPaymentDay: number [0..1]
+    berthedSince: number [0..1]
     retired: boolean
+  }
+  enum ShipCost <<value>> $schiffe {
+    price
+    rate
+    fuel
+    berthing
+    lifeSupport
   }
   class ShipSoftware $schiffe {
   }
@@ -169,6 +177,7 @@ DeckPlan "*" --> "1" ShipDesign : design
 
 ' Zeit und Reisen
 Journey "*" --> "0..1" Ship : ship
+Booking --> ShipCost
 
 ' Charaktererschaffung und Lebenslauf
 

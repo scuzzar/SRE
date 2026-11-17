@@ -46,6 +46,11 @@ import {
   type Journey,
   type PassageId,
   type TimePassed,
+  costsOf,
+  lifeSupportOf,
+  monthOf,
+  type MonthEnd,
+  type ShipCost,
 } from '../model';
 
 /** Ein Test im Log: Art, Würfel, Zielwert, ob bestanden; bei der Polizei dazu die Reaktion. */
@@ -174,7 +179,22 @@ export interface JourneyView {
   /** Mit Passage oder mit eigenem Schiff. */
   readonly mode: JourneyMode;
   /** Was für das eigene Schiff spricht bzw. dagegen: zum Umschalten und für den Hinweis. */
-  readonly ship: { readonly name: string; readonly design: string; readonly jump: number; readonly fuel: number; readonly perJump: number; readonly after: number; readonly blocker: string | undefined } | undefined;
+  readonly ship:
+    | {
+        readonly name: string;
+        readonly design: string;
+        readonly jump: number;
+        readonly fuel: number;
+        readonly perJump: number;
+        readonly after: number;
+        /** Wie viele reisen und wie viele Kabinen das Schiff hat; mehr Reisende als Kabinen heißt Doppelbelegung. */
+        readonly travellers: number;
+        readonly staterooms: number;
+        /** Cr2.000 je Reisendem, am Abflugtag gebucht. */
+        readonly lifeSupport: number;
+        readonly blocker: string | undefined;
+      }
+    | undefined;
   /** Warum die Passage hier nicht geht (für den deaktivierten Knopf); `undefined`, wenn sie geht. */
   readonly passageBlocker: string | undefined;
   readonly passages: readonly { readonly id: PassageId; readonly name: string; readonly price: number; readonly tickets: number }[];
@@ -225,6 +245,39 @@ function checkText(kind: CheckKind, passed: boolean): string {
     case 'legal':
       return passed ? 'die Polizei lässt die Gruppe in Ruhe' : 'die Polizei hält die Gruppe an und verlangt Ausweise';
   }
+}
+
+/** Eine Zeile der Monatsabrechnung: eine Art laufender Kosten mit ihrer Summe und offenen Posten. */
+export interface MonthEndLine {
+  readonly cost: ShipCost;
+  readonly name: string;
+  /** Was gebucht ist, als positiver Betrag in Cr. */
+  readonly amount: number;
+  /** Wie oft etwas offen geblieben ist (0 Cr mit Hinweis), z. B. eine nicht bezahlte Rate. */
+  readonly unpaid: number;
+}
+
+/** Die Monatsabrechnung im Log (2026-11-17b): je Art der laufenden Kosten eine Zeile und die Summe. */
+export interface MonthEndItem {
+  readonly kind: 'monthEnd';
+  readonly at: string;
+  /** Der abgerechnete Monat, z. B. „Monat 3 · 1105“. */
+  readonly month: string;
+  readonly lines: readonly MonthEndLine[];
+  readonly total: number;
+}
+
+const costNames: Record<Exclude<ShipCost, 'price'>, string> = { rate: 'Rate', fuel: 'Treibstoff', berthing: 'Liegegebühren', lifeSupport: 'Lebenserhaltung' };
+
+export function monthEndItem(campaign: Campaign, entry: MonthEnd): MonthEndItem {
+  const costs = costsOf(campaign, entry).map((c) => c.booking);
+  const lines = (Object.keys(costNames) as (keyof typeof costNames)[]).flatMap((cost) => {
+    const of = costs.filter((b) => b.shipCost === cost);
+    return of.length === 0 ? [] : [{ cost, name: costNames[cost], amount: -of.reduce((sum, b) => sum + b.amount, 0), unpaid: of.filter((b) => b.amount === 0).length }];
+  });
+  // Abgerechnet wird der Monat, der mit dem Tag vor dem Monatsende aufhört.
+  const { month, year } = monthOf((entry.day ?? 1) - 1);
+  return { kind: 'monthEnd', at: entry.at, month: `Monat ${month} · ${year}`, lines, total: lines.reduce((sum, l) => sum + l.amount, 0) };
 }
 
 export function timeItem(entry: TimePassed): TimeItem {
@@ -308,7 +361,7 @@ function shipForJourney(campaign: Campaign, shipBlocker: string | undefined) {
   if (ship === undefined) return undefined;
   const plan = shipDesignOf(ship.design);
   const perJump = jumpFuelOf(ship.design);
-  return { name: ship.name, design: plan.name, jump: plan.jump, fuel: ship.fuel, perJump, after: ship.fuel - perJump, blocker: shipBlocker };
+  return { name: ship.name, design: plan.name, jump: plan.jump, fuel: ship.fuel, perJump, after: ship.fuel - perJump, travellers: travellersOf(campaign).length, staterooms: plan.staterooms, lifeSupport: lifeSupportOf(campaign), blocker: shipBlocker };
 }
 
 export function journeyView(campaign: Campaign, draft: JourneyDraft): JourneyView | undefined {

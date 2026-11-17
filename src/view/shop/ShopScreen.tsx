@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ShopItem, ShopView, Snapshot } from '../../controller';
 import type { ItemKind } from '../../model';
-import { bookingText, clockTime, credits, kindNames } from '../format';
+import { bookingText, clockTime, credits, kindNames, shipCostText } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { CloseIcon } from '../icons';
@@ -506,14 +506,14 @@ function Ledger({ shop }: { shop: ShopView }) {
       <h2 className="section-title">Kassenbuch</h2>
       <ol>
         {shop.bookings.map((b, i) => (
-          <li key={i} className="shop-booking">
-            <span className="kicker">{bookingText[b.kind]}</span>
+          <li key={i} className={b.amount === 0 ? 'shop-booking unpaid' : 'shop-booking'}>
+            <span className="kicker">{b.shipCost === undefined ? bookingText[b.kind] : shipCostText[b.shipCost]}</span>
             <span className="shop-booking-text">
               {b.kind === 'purchase'
                 ? `${b.count} × ${b.item} für ${b.character} auf ${b.world}`
                 : b.kind === 'sale'
                   ? `${b.count} × ${b.item} von ${b.character} auf ${b.world}`
-                  : [b.character, b.text].filter(Boolean).join(' · ') || '—'}
+                  : [b.character, b.ship, b.text].filter(Boolean).join(' · ') || '—'}
             </span>
             <span className={b.amount < 0 ? 'mono shop-out' : 'mono shop-in'}>{credits(b.amount)}</span>
             <time className="entry-time" dateTime={b.at}>

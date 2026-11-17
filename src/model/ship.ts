@@ -3,7 +3,8 @@ import type { CareerRoll, ShipChoice } from './career';
 import { DomainError } from './errors';
 import type { Clock, Random } from './ports';
 import { gainOf, shipDesignOf, type Gain } from './reference';
-import { bookShip, fundsOf } from './shop';
+import { bookShip } from './shop';
+import { MONTH_DAYS, nextMonthStart } from './time';
 
 /** Was ein konkretes Schiff an Bord hat (Domänenmodell: `ShipSoftware`): ein Verweis auf das Programm. */
 export interface ShipSoftware {
@@ -15,6 +16,7 @@ export interface ShipSoftware {
  * getrennt vom `basePrice` des Entwurfs. Mit Bankfinanzierung oder Merchant-Vorteil kommen Kreditsumme
  * (`initialLoan`, beim Abschluss fest), Restschuld (`loanBalance`) und Fälligkeit (`nextPaymentDay`)
  * dazu; ist die Restschuld bezahlt, entfallen beide bis auf die Kreditsumme als Erinnerung.
+ * `berthedSince` ist der Tag, an dem es in den Hafen kam, in dem es liegt (2026-11-17b).
  */
 export interface Ship {
   readonly id: string;
@@ -28,8 +30,10 @@ export interface Ship {
   readonly price: number;
   readonly initialLoan?: number;
   readonly loanBalance?: number;
-  /** Der Tag, an dem die nächste Rate fällig ist. */
+  /** Das Monatsende, an dem die nächste Rate fällig ist. */
   readonly nextPaymentDay?: number;
+  /** Seit welchem Tag es im Hafen liegt; Grundlage der Liegegebühr. Fehlt in Ständen von vorher. */
+  readonly berthedSince?: number;
   /** Ausgeblendet statt gelöscht: Buchungen und Log zeigen weiter auf es. */
   readonly retired: boolean;
   readonly software: readonly ShipSoftware[];
@@ -55,8 +59,6 @@ export const deckSlotNames = ['Deck A', 'Deck B', 'Deck C'] as const;
 export const FUEL_PRICE = 500;
 /** Monatsraten, bis die Kreditsumme bezahlt ist (SR 29: 40 Jahre). */
 export const LOAN_MONTHS = 480;
-/** Ein Monat Spielzeit, in Tagen. */
-export const MONTH_DAYS = 30;
 /** Anzahlung bei Bankfinanzierung, als Anteil des Preises (SR 29). */
 const DOWN_PAYMENT = 0.2;
 
@@ -98,14 +100,20 @@ export function monthlyPaymentOf(ship: Ship): number | undefined {
   return ship.initialLoan === undefined ? undefined : Math.round(ship.initialLoan / LOAN_MONTHS);
 }
 
+/** Die erste Rate: am ersten Monatsende, das mindestens vier Wochen nach dem Erwerb liegt (2026-11-17b). */
+export function firstPaymentDay(day: number): number {
+  return nextMonthStart(day + MONTH_DAYS - 1);
+}
+
 /** Aus einem Objekt die optionalen Felder entfernen, die null sind – gespeichert wird, was es gibt. */
-function without<T extends object>(value: T, ...keys: (keyof T)[]): T {
+export function without<T extends object>(value: T, ...keys: (keyof T)[]): T {
   return Object.fromEntries(Object.entries(value).filter(([key]) => !keys.some((k) => key === k))) as T;
 }
 
 /**
  * Ein Schiff kommt hinzu, das bisher aktive wird ausgeblendet. `initialLoan` ist die Kreditsumme
- * beim Abschluss – ohne bleibt es schuldenfrei; mit Kredit beginnt die erste Rate in einem Monat.
+ * beim Abschluss – ohne bleibt es schuldenfrei; mit Kredit ist die erste Rate an einem Monatsende
+ * frühestens vier Wochen später fällig. Das neue Schiff liegt von heute an im Hafen.
  */
 export function addShip(campaign: Campaign, design: string, initialLoan: number | undefined): { campaign: Campaign; ship: Ship } {
   const plan = shipDesignOf(design);
@@ -116,7 +124,8 @@ export function addShip(campaign: Campaign, design: string, initialLoan: number 
     fuel: plan.fuel,
     cargo: 0,
     price: plan.basePrice,
-    ...(initialLoan === undefined ? {} : { initialLoan, loanBalance: initialLoan, nextPaymentDay: campaign.day + MONTH_DAYS }),
+    ...(initialLoan === undefined ? {} : { initialLoan, loanBalance: initialLoan, nextPaymentDay: firstPaymentDay(campaign.day) }),
+    berthedSince: campaign.day,
     retired: false,
     software: standardSoftware(plan.id),
   };
@@ -132,7 +141,7 @@ export function buyShip(campaign: Campaign, design: string, method: 'cash' | 'ba
   const plan = shipDesignOf(design);
   const down = method === 'bank' ? Math.round(plan.basePrice * DOWN_PAYMENT) : plan.basePrice;
   const added = addShip(campaign, design, method === 'bank' ? plan.basePrice * 2 : undefined);
-  return bookShip(added.campaign, -down, added.ship.id, clock);
+  return bookShip(added.campaign, -down, added.ship.id, 'price', clock);
 }
 
 /** Der freie Tankraum in Tonnen. */
@@ -157,7 +166,7 @@ export function buyFuel(campaign: Campaign, tons: number, clock: Clock): Campaig
   if (!Number.isInteger(tons) || tons < 1) throw new DomainError('Getankt wird in ganzen Tonnen ab 1 t.');
   const free = freeTankOf(ship);
   if (tons > free) throw new DomainError(`Der Tank fasst noch ${free} t.`);
-  const booked = bookShip(campaign, -tons * FUEL_PRICE, ship.id, clock);
+  const booked = bookShip(campaign, -tons * FUEL_PRICE, ship.id, 'fuel', clock);
   return { ...booked, ships: booked.ships.map((s) => (s.id === ship.id ? { ...s, fuel: s.fuel + tons } : s)) };
 }
 
@@ -194,27 +203,6 @@ export function updateShip(campaign: Campaign, id: string, input: ShipInput): Ca
 export function renameShip(campaign: Campaign, id: string, name: string): Campaign {
   const ship = shipById(campaign, id);
   return updateShip(campaign, id, { name, fuel: ship.fuel, cargo: ship.cargo });
-}
-
-/**
- * Raten zahlen, sooft Spielzeit vergangen ist: je Schiff mit Kredit, dessen Tag fällig ist,
- * eine Rate aus der Kasse. Reicht das Geld nicht, bleibt die Rate als Hinweis in der Kasse stehen
- * (Hausregel: ohne weitere Folge) – der nächste Termin rückt trotzdem einen Monat weiter.
- */
-export function payLoans(campaign: Campaign, clock: Clock): Campaign {
-  let after = campaign;
-  for (;;) {
-    const due = after.ships.find((s) => !s.retired && s.loanBalance !== undefined && s.loanBalance > 0 && s.nextPaymentDay !== undefined && after.day >= s.nextPaymentDay);
-    if (due === undefined) return after;
-    const rate = monthlyPaymentOf(due)!;
-    const paid = fundsOf(after) >= rate;
-    const booked = bookShip(after, paid ? -rate : 0, due.id, clock, paid ? undefined : 'Rate nicht bezahlt');
-    const balance = paid ? Math.max(0, due.loanBalance! - rate) : due.loanBalance! - rate;
-    after = {
-      ...booked,
-      ships: booked.ships.map((s) => (s.id !== due.id ? s : balance <= 0 ? without(s, 'loanBalance', 'nextPaymentDay') : { ...s, loanBalance: balance, nextPaymentDay: s.nextPaymentDay! + MONTH_DAYS })),
-    };
-  }
 }
 
 /** Der noch nicht entschiedene Ship-Vorteil: Entwurf und ob er schuldenfrei wäre. */

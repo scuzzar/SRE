@@ -108,6 +108,7 @@ hide <<browser>> stereotype
 
 ' Zeit und Reisen
   class TimePassed $reise
+  class MonthEnd $reise
   class CheckRoll $reise
   class Journey $reise
 
@@ -149,6 +150,7 @@ Campaign "1" *-- "*" LogEntry : log {ordered}
 LogEntry <|-- TimePassed
 LogEntry <|-- CheckRoll
 LogEntry <|-- Journey
+LogEntry <|-- MonthEnd
 
 ' Charaktererschaffung und Lebenslauf
 

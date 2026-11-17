@@ -51,7 +51,9 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   Weltkarte), `book(kind, amount, text, character)`, `buy(item, count, character)` und
   `sell(item, count, price, character)`; für den Reiter Schiff `buyShipDesign(design, method)` (Werft, bar
   oder über die Bank), `renameShip(name)`, `editShip(input)`, `buyFuelTons(tons)` (`model/ship.ts`, Entwürfe
-  in `src/data/ships.json`), `addDeckPlan(image)` und `removeDeckPlan(name)` (Deckpläne gehören keiner Kampagne,
+  in `src/data/ships.json`; laufende Kosten wie Raten, Liegegebühren, Lebenserhaltung und die
+  Monatsabrechnung in `model/upkeep.ts`, ausgelöst, wenn Zeit vergeht, und von `stayHere()` über
+  `placeGroup`), `addDeckPlan(image)` und `removeDeckPlan(name)` (Deckpläne gehören keiner Kampagne,
   sondern dem Entwurf; der Controller lädt die des aktiven Entwurfs über das Repository, auch nach jedem
   Wechsel der Kampagne und jedem Abgleich neu); für Kampagnen
   `openCampaign(id)`, `createCampaign(name)`, `renameCampaign(name)`, `deleteCampaign(id)`,

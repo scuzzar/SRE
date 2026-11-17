@@ -83,6 +83,7 @@ hide <<browser>> stereotype
     amount: number
     count: number [0..1]
     text: string [0..1]
+    shipCost: ShipCost [0..1]
   }
   enum BookingKind <<value>> $shop {
     income
@@ -104,6 +105,7 @@ hide <<browser>> stereotype
 
 ' Schiffe
   class Ship $schiffe
+  enum ShipCost <<value>> $schiffe
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -113,6 +115,7 @@ hide <<browser>> stereotype
 ' Verlauf
 
 ' Zeit und Reisen
+  class MonthEnd $reise
   class Journey $reise
   class Passenger <<value>> $reise
 
@@ -161,6 +164,8 @@ Booking "*" --> "0..1" Ship : forShip
 
 ' Zeit und Reisen
 Passenger "*" --> "1" Item : passage
+MonthEnd "*" --> "*" Booking : costs {ordered}
+Booking --> ShipCost
 Booking "*" --> "0..1" Journey : won
 
 ' Charaktererschaffung und Lebenslauf

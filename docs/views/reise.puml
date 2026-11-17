@@ -95,6 +95,10 @@ hide <<browser>> stereotype
     days: number
     week: boolean
   }
+  class MonthEnd $reise {
+    /month: number
+    /total: number
+  }
   class CheckRoll $reise {
     kind: CheckKind
     dice: number[1..2]
@@ -152,6 +156,8 @@ Journey "1" *-- "*" LowBerth : berths {ordered}
 LowBerth "*" --> "0..1" Character : for
 Journey "*" --> "0..1" LowBerth : /winner
 Journey "*" --> "0..1" Ship : ship
+LogEntry <|-- MonthEnd
+MonthEnd "*" --> "*" Booking : costs {ordered}
 Booking "*" --> "0..1" Journey : won
 
 ' Charaktererschaffung und Lebenslauf

@@ -17,7 +17,7 @@ import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, st
 import { checkRecovery } from './wounds';
 import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, patronOf, ranges, ref, shipDesignOf, slotOfEntry, softwareOf, weaponOf } from './reference';
 import { characteristics } from './rules';
-import { bookingKinds, validateBookings, type Booking } from './shop';
+import { bookingKinds, shipCosts, validateBookings, type Booking } from './shop';
 import type { Ship } from './ship';
 import { checkTrip } from './trip';
 import { vehicleOfItem } from './vehicle';
@@ -122,6 +122,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('patron'), at, day, place, list: z.union([z.literal(1), z.literal(2)]), dice, dms: z.tuple([z.number().int(), z.number().int()]) }),
   z.object({ kind: z.literal('note'), at, day, place, text: z.string().trim().min(1), interprets: z.number().int().optional(), editedAt: at.optional() }),
   z.object({ kind: z.literal('time'), at, day, place, days: z.number().int().min(1).max(7), week: z.boolean() }),
+  z.object({ kind: z.literal('monthEnd'), at, day, place, costsFrom: z.number().int().min(0), costsTo: z.number().int().min(0) }),
   z.object({ kind: z.literal('tripDay'), at, day, place, hours: z.number().positive(), rent: z.number().int().min(0), fare: z.number().int().min(0).optional(), arrived: z.boolean() }),
   z.object({ kind: z.literal('check'), at, day, place, check: z.enum(checkKinds), dice: z.array(die).min(1).max(2), target: z.number().int().min(0).max(20), reactionDice: dice.optional(), reactionDm: z.number().int().optional() }),
   z.object({
@@ -268,6 +269,7 @@ const ShipSchema = z.object({
   initialLoan: z.number().int().min(0).optional(),
   loanBalance: z.number().int().min(0).optional(),
   nextPaymentDay: z.number().int().min(0).optional(),
+  berthedSince: z.number().int().min(0).optional(),
   retired: z.boolean().default(false),
   software: z.array(z.object({ program: z.string().min(1) })).default([]),
 });
@@ -416,6 +418,7 @@ const CampaignFileSchema = z.object({
           won: z.number().int().optional(),
           rentFor: z.number().int().optional(),
           forShip: z.string().min(1).optional(),
+          shipCost: z.enum(shipCosts).optional(),
         }),
       )
       .default([]),
@@ -598,6 +601,7 @@ function fileEntryOf(entry: WithoutDay<FileEntry>): LogEntry {
     case 'event':
     case 'save':
     case 'time':
+    case 'monthEnd':
       return entry;
     case 'tripDay':
       return stripped(entry) as TripDay;
@@ -704,6 +708,9 @@ function validate(campaign: Campaign): void {
       case 'rumor':
       case 'time':
       case 'tripDay':
+        break;
+      case 'monthEnd':
+        if (entry.costsFrom > entry.costsTo || entry.costsTo > campaign.bookings.length) throw new DomainError('Eine Monatsabrechnung verweist auf Buchungen, die es nicht gibt.');
         break;
       case 'check':
         if (entry.dice.length !== encounterChecks[entry.check].dice) throw new DomainError('Ein Test hat zu viele oder zu wenige Würfel.');

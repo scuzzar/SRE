@@ -396,6 +396,18 @@
       "file": "2026-11-17-deckplaene-abgleich",
       "title": "Deckpläne mit OneDrive abgleichen: jeder Plan bekommt einen Schlüssel, über Kampagnen und Geräte hinweg",
       "approved": true
+    },
+    {
+      "id": "2026-11-17b",
+      "file": "2026-11-17b-monatsabrechnung",
+      "title": "Monat = 4 Wochen; Monatsabrechnung im Log mit den laufenden Schiffskosten: Rate, Treibstoff, Liegegebühren, Lebenserhaltung",
+      "approved": true,
+      "show": [
+        "Ship",
+        "Booking",
+        "LogEntry",
+        "Journey"
+      ]
     }
   ]
 }

@@ -68,6 +68,16 @@ export function JourneySheet({ journey }: { journey: JourneyView }) {
                       {ship.fuel} t → {ship.after} t ({ship.perJump} t je Sprung)
                     </dd>
                   </div>
+                  <div>
+                    <dt>Kabinen</dt>
+                    <dd>
+                      {ship.travellers} Reisende, {ship.staterooms} Kabinen{ship.travellers > ship.staterooms && ship.travellers <= ship.staterooms * 2 ? ' (Doppelbelegung)' : ''}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Lebenserhaltung</dt>
+                    <dd>{cr(ship.lifeSupport)}</dd>
+                  </div>
                 </dl>
                 <p className="journey-facts">
                   Es reisen alle mit; niemand braucht eine Passage. Fehlsprung bei 13+ auf 2W6 (SR 28; ohne DMs nie) – der Wurf steht an der Reise im Log, was daraus folgt, entscheidest du.

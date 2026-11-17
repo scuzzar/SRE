@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { addShip, appendLog, createCampaign, DEMO_FUNDS, fromCampaignFile, ref, rollEncounter, rollSurprise, setHexes, setLocation, toCampaignFile, type CampaignRepository, type Random } from '../model';
+import { addShip, appendLog, book, createCampaign, DEMO_FUNDS, fromCampaignFile, ref, rollEncounter, rollSurprise, setHexes, setLocation, toCampaignFile, type CampaignRepository, type Random } from '../model';
 import { countingKeys, fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 import { surfaceLines } from './world-view';
@@ -786,7 +786,8 @@ describe('Begegnung und Kampfsimulation', () => {
   it('Reise: mit eigenem Schiff – ohne Raumhafen geht nur der Sprung, Treibstoff und Wurf stehen am Log', async () => {
     const random = queued();
     const outpost = { ...regina, column: 1, row: 3, name: 'Außenposten', uwp: { ...regina.uwp, starport: 31 } };
-    const withShip = addShip(setHexes(createCampaign(), [regina, outpost]), 'S', undefined).campaign;
+    // Die Kasse zahlt Liegegebühr und Lebenserhaltung (2026-11-17b).
+    const withShip = addShip(book(setHexes(createCampaign(), [regina, outpost]), 'income', 10_000, fixedClock()), 'S', undefined).campaign;
     const { game } = await started(random, memoryRepository(withShip));
     game.chooseHex(1, 1);
     game.stayHere();
@@ -806,7 +807,7 @@ describe('Begegnung und Kampfsimulation', () => {
   it('Reise: beides geht – Umschalten zwischen Passage und eigenem Schiff, Passage ist vorgeschlagen', async () => {
     const random = queued();
     const nahe = { ...regina, column: 2, row: 1, name: 'Nahe' };
-    const withShip = addShip(setHexes(createCampaign(), [regina, nahe]), 'A', undefined).campaign;
+    const withShip = addShip(book(setHexes(createCampaign(), [regina, nahe]), 'income', 10_000, fixedClock()), 'A', undefined).campaign;
     const { game } = await started(random, memoryRepository(withShip));
     game.chooseHex(1, 1);
     game.stayHere();

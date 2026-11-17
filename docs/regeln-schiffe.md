@@ -38,8 +38,8 @@ je Sprung als Hausregel, Fehlsprung als Wurf – siehe `domain-model.md` unter *
 | ○ | offen |
 | ✱ | Hausregel der App (weicht ab oder ergänzt) |
 
-Da noch nichts davon gebaut ist, steht bei jeder Regel unten **○**; die Spalte ist trotzdem schon da,
-für den Tag, an dem es losgeht.
+Was noch nicht gebaut ist, steht unten mit **○**; wo die App eine Regel umsetzt, steht ihr Stand
+dabei.
 
 ## Überblick
 
@@ -124,6 +124,13 @@ für den Tag, an dem es losgeht.
   Energiewerks-Ratings, die die Referenzdaten nicht haben; die App rechnet je Sprung
   `Tank ÷ Sprungzahl` gerundet (`ShipDesign./jumpFuel`, Hausregel).
 - Ohne jährliche Wartung steigt das Ausfallrisiko (siehe [Schiffspannen](#schiffspannen)).
+- **Stand in der App** (2026-11-17b, `model/upkeep.ts`): Treibstoff ◐ (nur raffiniert, Cr500/t);
+  Lebenserhaltung je Kabine ✔✱ als Cr2.000 je Reisendem und Sprung mit dem eigenen Schiff
+  (Doppelbelegung verdoppelt die Kosten; die Gruppe darf zur Not zu zweit in eine Kabine, für
+  jeden Entwurf); Lebenserhaltung je Koje ○ (auf dem eigenen Schiff reist noch niemand in
+  Kälteschlaf); Routinewartung ○; Gehälter ○ (kommen mit den Hirelings). Ein Monat ist ✱ vier
+  Wochen; an jedem Monatsende werden die Raten gebucht, und eine Monatsabrechnung mit allen
+  laufenden Kosten steht im Log.
 
 ---
 
@@ -162,7 +169,9 @@ Schiffe verdienen an **Fracht**, **Passagieren** und **Post**.
   Cr9.000 je High-Passage-Kabine **plus** Cr900 je Low-Passage-Bett. Der Eigner trägt alle Kosten
   und stellt die Crew.
 - **Berthing Costs** (Lande- und Standgebühren): Cr100 pauschal für bis zu sechs Tage, danach Cr100
-  je weiterem Tag; lokal auch niedriger oder erlassen.
+  je weiterem Tag; lokal auch niedriger oder erlassen. **Stand in der App:** ✔✱ an Welten mit
+  Raumhafen A bis E (2026-11-17b); ✱ das Schiff liegt dort, wo die Gruppe ist, solange es keinen
+  eigenen Ort hat; niedrigere oder erlassene Gebühren ○.
 
 ---
 

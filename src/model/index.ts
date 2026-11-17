@@ -32,6 +32,7 @@ export * from './stash';
 export * from './sync';
 export * from './time';
 export * from './travel';
+export * from './upkeep';
 export * from './trip';
 export * from './trip-encounter';
 export * from './vehicle';
