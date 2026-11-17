@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import type { ShipView, ShipYardRow, Snapshot } from '../../controller';
 import { credits, mcr } from '../format';
 import { useGame } from '../game-context';
@@ -9,7 +9,7 @@ import { deckImage } from './deck-image';
 /** Die Ansicht unter den Kacheln: eigene Deckpläne oder was nicht in den Kacheln steht. */
 type Tab = 'deck' | 'details';
 
-/** Das Blatt, das über dem Reiter steht; die Werft ist ein Blatt, kein eigener Reiter. */
+/** Das Blatt, das als Feld an der Stelle des Reiters steht; die Werft ist ein Blatt, kein eigener Reiter. */
 type Sheet =
   | { readonly kind: 'yard' }
   | { readonly kind: 'buy'; readonly design: string; readonly method: 'cash' | 'bank' }
@@ -23,8 +23,8 @@ type Boat = NonNullable<ShipView['ship']>;
 /**
  * Der Reiter Schiff: oben die Leiste mit Name (Stift zum Umbenennen) und Entwurf, dazu die Kasse;
  * darunter die Stände als Kacheln und zwei Ansichten – die eigenen Deckpläne und die Details.
- * Unten im Dock: Bearbeiten, Treibstoff und die goldene Werft. Die Werft ist ein Blatt; dort wird
- * bar oder über die Bank gekauft.
+ * Unten im Dock: Bearbeiten, Treibstoff und die goldene Werft. Die Werft und die übrigen Blätter
+ * stehen als Feld an der Stelle des Reiters, im Ziehblatt; in der Werft wird bar oder über die Bank gekauft.
  */
 export function ShipScreen({ view }: { view: Snapshot }) {
   const game = useGame();
@@ -35,6 +35,36 @@ export function ShipScreen({ view }: { view: Snapshot }) {
   if (ship === undefined) return null;
   const boat = ship.ship;
   const deck = sheet?.kind === 'deck' ? ship.deckPlans.find((p) => p.name === sheet.name) : undefined;
+  const buying = sheet?.kind === 'buy' ? ship.yard.find((d) => d.designId === sheet.design) : undefined;
+  // Ein offenes Blatt steht wie ein angetipptes Feld an der Stelle des Reiters: im Ziehblatt, das sich
+  // ziehen lässt, über der Karte; im Desktop-Modus im Panel neben dem Log.
+  const field =
+    sheet?.kind === 'yard' ? (
+      <YardSheet ship={ship} onBuy={(d) => setSheet({ kind: 'buy', design: d.designId, method: d.price <= ship.funds ? 'cash' : 'bank' })} onClose={close} />
+    ) : sheet?.kind === 'buy' && buying !== undefined ? (
+      <BuySheet
+        ship={ship}
+        design={buying}
+        method={sheet.method}
+        onMethod={(method) => setSheet({ ...sheet, method })}
+        onBack={() => setSheet({ kind: 'yard' })}
+        onBuy={() => {
+          haptic('pick');
+          game.buyShipDesign(sheet.design, sheet.method);
+          close();
+        }}
+        onClose={close}
+      />
+    ) : sheet?.kind === 'edit' && boat !== undefined ? (
+      <EditSheet boat={boat} onClose={close} />
+    ) : sheet?.kind === 'fuel' && boat !== undefined ? (
+      <FuelSheet boat={boat} ship={ship} onClose={close} />
+    ) : sheet?.kind === 'rename' && boat !== undefined ? (
+      <RenameSheet boat={boat} onClose={close} />
+    ) : sheet?.kind === 'deck' && deck !== undefined ? (
+      <DeckSheet name={deck.name} image={deck.image} onClose={close} />
+    ) : undefined;
+  if (field !== undefined) return <div className="screen">{field}</div>;
   return (
     <div className="screen">
       <div className="shop-top">
@@ -150,49 +180,50 @@ export function ShipScreen({ view }: { view: Snapshot }) {
           )}
         </div>
       </div>
-
-      {sheet?.kind === 'yard' && <YardSheet ship={ship} onBuy={(d) => setSheet({ kind: 'buy', design: d.designId, method: d.price <= ship.funds ? 'cash' : 'bank' })} onClose={close} />}
-      {sheet?.kind === 'buy' && ship.yard.some((d) => d.designId === sheet.design) && (
-        <BuySheet
-          ship={ship}
-          design={ship.yard.find((d) => d.designId === sheet.design)!}
-          method={sheet.method}
-          onMethod={(method) => setSheet({ ...sheet, method })}
-          onBack={() => setSheet({ kind: 'yard' })}
-          onBuy={() => {
-            haptic('pick');
-            game.buyShipDesign(sheet.design, sheet.method);
-            close();
-          }}
-          onClose={close}
-        />
-      )}
-      {sheet?.kind === 'edit' && boat !== undefined && <EditSheet boat={boat} onClose={close} />}
-      {sheet?.kind === 'fuel' && boat !== undefined && <FuelSheet boat={boat} ship={ship} onClose={close} />}
-      {sheet?.kind === 'rename' && boat !== undefined && <RenameSheet boat={boat} onClose={close} />}
-      {sheet?.kind === 'deck' && deck !== undefined && <DeckSheet name={deck.name} image={deck.image} onClose={close} />}
     </div>
   );
 }
 
-/** Das Blatt über dem Reiter: Aufbau wie die Blätter der App, Esc schließt über das Kreuz. */
-function SheetFrame({ title, aside, onClose, foot, children }: { title: string; aside?: string; onClose: () => void; foot: ReactNode; children: ReactNode }) {
+/**
+ * Ein Blatt des Reiters Schiff, als Feld an der Stelle des Reiters wie das angetippte Feld des Globus:
+ * oben Titel und ✕ (am Kopf lässt sich das Ziehblatt fassen), darunter der Inhalt, unten im Dock die
+ * Knöpfe. Esc schließt es wie das ✕.
+ */
+function SheetFrame({ title, aside, onClose, foot, children }: { title: string; aside?: string; onClose: () => void; foot?: ReactNode; children: ReactNode }) {
+  const close = useRef(onClose);
+  useEffect(() => {
+    close.current = onClose;
+  });
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // Ein Popup darüber (Ergebnis, Menü) schließt Esc zuerst.
+      if (e.key !== 'Escape' || document.querySelector('[role="dialog"], [role="alertdialog"], .menu-layer')) return;
+      e.preventDefault();
+      close.current();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   return (
-    <div className="overlay">
-      <section className="sheet" role="dialog" aria-modal="true" aria-label={title}>
-        <div className="sheet-head" style={{ alignItems: 'center' }}>
-          <h2>{title}</h2>
+    <>
+      <section className="scroll shop-scroll ship-field" aria-label={title}>
+        <div className="globe-sheet-head" data-tray-peek>
+          <h3>{title}</h3>
           <span className="header-right">
             {aside !== undefined && <span className="sheet-aside mono muted">{aside}</span>}
-            <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={onClose}>
+            <button type="button" className="icon-button" aria-label={`${title} schließen`} onClick={onClose}>
               <CloseIcon />
             </button>
           </span>
         </div>
-        <div className="sheet-body">{children}</div>
-        <div className="sheet-foot">{foot}</div>
+        {children}
       </section>
-    </div>
+      {foot !== undefined && (
+        <div className="dock">
+          <div className="actions">{foot}</div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -336,7 +367,7 @@ function Details({ boat }: { boat: Boat }) {
 /** Die Werft als Blatt: die Standardentwürfe, der Preis als Knopf. */
 function YardSheet({ ship, onBuy, onClose }: { ship: ShipView; onBuy: (design: ShipYardRow) => void; onClose: () => void }) {
   return (
-    <SheetFrame title="Werft" aside="Standardentwürfe · SR 35–37" onClose={onClose} foot={<button type="button" className="ghost" onClick={onClose}>Schließen</button>}>
+    <SheetFrame title="Werft" aside="Standardentwürfe · SR 35–37" onClose={onClose}>
       <p className="shop-hint muted">Preis antippen zum Bestellen an der Werft. Bar oder über die Bank: 20&nbsp;% Anzahlung, 480 Monatsraten, zusammen 220&nbsp;% des Preises (SR&nbsp;29). Grau = nicht bezahlbar.</p>
       <div className="shop-counter">
         <h2 className="section-title">
@@ -391,10 +422,10 @@ function BuySheet({ ship, design, method, onMethod, onBack, onBuy, onClose }: { 
       onClose={onClose}
       foot={
         <>
-          <button type="button" className="ghost" onClick={onBack}>
+          <button type="button" className="action soft" onClick={onBack}>
             ← Werft
           </button>
-          <button type="button" className="primary" disabled={!canPay} onClick={onBuy}>
+          <button type="button" className="action gold" disabled={!canPay} onClick={onBuy}>
             {method === 'cash' ? 'Bar kaufen' : 'Finanzieren und bestellen'}
           </button>
         </>
@@ -468,12 +499,12 @@ function EditSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
       onClose={onClose}
       foot={
         <>
-          <button type="button" className="ghost" onClick={onClose}>
+          <button type="button" className="action soft" onClick={onClose}>
             Abbrechen
           </button>
           <button
             type="button"
-            className="primary"
+            className="action gold"
             disabled={!valid}
             onClick={() => {
               haptic('pick');
@@ -517,12 +548,12 @@ function FuelSheet({ boat, ship, onClose }: { boat: Boat; ship: ShipView; onClos
       onClose={onClose}
       foot={
         <>
-          <button type="button" className="ghost" onClick={onClose}>
+          <button type="button" className="action soft" onClick={onClose}>
             Abbrechen
           </button>
           <button
             type="button"
-            className="primary"
+            className="action gold"
             disabled={!buyable}
             onClick={() => {
               haptic('pick');
@@ -575,12 +606,12 @@ function RenameSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
       onClose={onClose}
       foot={
         <>
-          <button type="button" className="ghost" onClick={onClose}>
+          <button type="button" className="action soft" onClick={onClose}>
             Abbrechen
           </button>
           <button
             type="button"
-            className="primary"
+            className="action gold"
             disabled={name.trim() === ''}
             onClick={() => {
               haptic('pick');
@@ -615,7 +646,7 @@ function DeckSheet({ name, image, onClose }: { name: string; image: string; onCl
         <>
           <button
             type="button"
-            className="ghost danger"
+            className="action soft danger"
             onClick={() => {
               if (!confirming) {
                 setConfirming(true);
@@ -627,7 +658,7 @@ function DeckSheet({ name, image, onClose }: { name: string; image: string; onCl
           >
             {confirming ? 'Löschen?' : 'Löschen'}
           </button>
-          <button type="button" className="primary" onClick={onClose}>
+          <button type="button" className="action gold" onClick={onClose}>
             Fertig
           </button>
         </>

@@ -34,10 +34,40 @@ async function buyScout(page: Page) {
   await page.getByRole('button', { name: 'Einnahme buchen' }).click();
   await openTab(page, 'Schiff');
   await page.getByRole('button', { name: 'Werft öffnen' }).click();
-  const yard = page.getByRole('dialog', { name: 'Werft' });
+  const yard = page.getByRole('region', { name: 'Werft' });
   await yard.getByRole('row', { name: /Scout\/Courier/ }).locator('.shop-price').click();
   await page.getByRole('button', { name: 'Bar kaufen' }).click();
 }
+
+test('Schiff: Werft und Bestellung sind Felder im Ziehblatt, kein Dialog; ✕ und Esc schließen', async ({ page }) => {
+  await page.goto('/');
+  await openTab(page, 'Shop');
+  await page.getByRole('tab', { name: 'Kasse' }).click();
+  await page.getByRole('spinbutton').first().fill('30000000');
+  await page.getByRole('button', { name: 'Einnahme buchen' }).click();
+  await openTab(page, 'Schiff');
+  await page.getByRole('button', { name: 'Werft öffnen' }).click();
+  const yard = page.getByRole('region', { name: 'Werft' });
+  await expect(yard).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  // Am Handy steht das Feld im Ziehblatt, das sich ziehen lässt; im Desktop-Modus im Panel neben dem Log.
+  const host = test.info().project.name === 'desktop' ? page.locator('.area-panel') : page.getByRole('region', { name: 'Ziehblatt' });
+  await expect(host.getByRole('region', { name: 'Werft' })).toBeVisible();
+
+  await yard.getByRole('row', { name: /Scout\/Courier/ }).locator('.shop-price').click();
+  const order = page.getByRole('region', { name: 'Scout/Courier (S) kaufen' });
+  await expect(order).toBeVisible();
+  await page.getByRole('button', { name: '← Werft' }).click();
+  await expect(yard).toBeVisible();
+  await yard.getByRole('button', { name: 'Werft schließen' }).click();
+  await expect(yard).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Werft öffnen' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Werft öffnen' }).click();
+  await expect(yard).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(yard).toHaveCount(0);
+});
 
 test('Schiff: Deckpläne hochladen, große Fotos verkleinert, Löschen erst nach Rückfrage, über Kampagnen hinweg', async ({ page }) => {
   await page.goto('/');
