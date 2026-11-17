@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { openSector, oracle } from './layout';
+import { openSector, oracle, openCombat } from './layout';
 
 // Das Ziehblatt gibt es nur auf dem Smartphone: Es rastet auf vier Stufen ein (versteckt,
 // eingeklappt, halb, voll) und merkt sich die Stufe, nicht die Höhe.
@@ -38,7 +38,7 @@ async function dragGrip(page: Page, dy: number) {
 
 test('Die Stufe bleibt beim Wechsel des Reiters und bei anderer Fenstergröße: Reiter und Reihe stehen immer ganz da', async ({ page }) => {
   const viewport = page.viewportSize()!;
-  await nav(page).getByRole('button', { name: 'Kampf', exact: true }).click();
+  await openCombat(page);
   await page.getByRole('button', { name: 'Blatt einklappen' }).click();
   await expect(page.getByRole('button', { name: 'Blatt hochziehen' })).toBeVisible();
   // Im Log ist der Fuß höher (die Reihe Notiz, 2W6, Karte); eingeklappt steht er trotzdem ganz da.

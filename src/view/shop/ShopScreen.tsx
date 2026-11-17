@@ -1,45 +1,46 @@
 import { useState } from 'react';
 import type { ShopItem, ShopView, Snapshot } from '../../controller';
 import type { ItemKind } from '../../model';
-import { bookingText, clockTime, credits, kindNames, shipCostText } from '../format';
+import { credits, kindNames } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { CloseIcon } from '../icons';
-import { Form } from '../Form';
 import { CharacterStrip } from '../oracle/CharacterStrip';
 
-type FreeKind = 'income' | 'expense' | 'deposit' | 'payout';
-const freeKinds: readonly FreeKind[] = ['income', 'expense', 'deposit', 'payout'];
-
-/** Die Bereiche des Shops: drei Theken, der Verkauf und die Kasse. Welcher offen ist, ist reine Darstellung. */
-type Area = 'weapons' | 'armor' | 'gear' | 'sell' | 'funds';
+/** Die Bereiche des Shops: vier Theken und der Verkauf. Welcher offen ist, ist reine Darstellung. */
+type Area = 'weapons' | 'armor' | 'vehicles' | 'gear' | 'sell';
 const areas: readonly { readonly id: Area; readonly name: string }[] = [
   { id: 'weapons', name: 'Waffen' },
   { id: 'armor', name: 'Rüstung' },
+  { id: 'vehicles', name: 'Fahrzeuge' },
   { id: 'gear', name: 'Sonstiges' },
   { id: 'sell', name: 'Verkauf' },
-  { id: 'funds', name: 'Kasse' },
 ];
 
 /**
- * Der Reiter Shop, gebaut wie der Laden eines Rollenspiels: oben die Leiste mit dem Charakter oben
- * (für ihn kauft und verkauft man), darunter Aufenthaltsort und Gruppenkasse und die Bereiche Waffen
- * (mit dem Magazin als eigener Spalte), Rüstung, Sonstiges, Verkauf (sein Besitz) und Kasse (freie
- * Buchungen und Kassenbuch). Gerechnet und geprüft wird im Model; was man gerade eintippt, welcher
- * Bereich offen und welcher Kauf offen ist, hält nur die View.
+ * Der Shop, gebaut wie der Laden eines Rollenspiels; „Einkaufen“ am Feld bzw. an der Weltkarte des
+ * Aufenthaltsorts öffnet ihn an der Stelle des Felds. Oben die Leiste mit dem Charakter oben (für ihn
+ * kauft und verkauft man), darunter Aufenthaltsort und Stand der Gruppenkasse und die Bereiche Waffen
+ * (mit dem Magazin als eigener Spalte), Rüstung, Fahrzeuge, Sonstiges (Ausrüstung, Passagen) und
+ * Verkauf (sein Besitz). Buchungen und
+ * Kassenbuch stehen im Reiter Charaktere unter Kasse (`FundsScreen`). Gerechnet und geprüft wird im
+ * Model; welcher Bereich offen und welcher Kauf offen ist, hält nur die View. `onClose` (✕ oben) gibt
+ * es auf dem Smartphone; im Desktop-Modus steht das ✕ im Kopf der Seitenspalte.
  */
-export function ShopScreen({ view }: { view: Snapshot }) {
+export function ShopScreen({ view, onClose }: { view: Snapshot; onClose?: (() => void) | undefined }) {
   const shop = view.shop;
-  // Der gewählte Bereich gilt für die Kampagne, in der man ihn gewählt hat; sonst öffnet der Shop auf
-  // einer Welt bei den Waffen, ohne Welt bei der Kasse.
+  // Der gewählte Bereich gilt für die Kampagne, in der man ihn gewählt hat; sonst öffnet der Shop bei
+  // den Waffen.
   const [chosen, setChosen] = useState<{ readonly campaign: string; readonly area: Area } | undefined>(undefined);
   const game = useGame();
   const [buying, setBuying] = useState<ShopItem | undefined>(undefined);
   const [selling, setSelling] = useState<Selling | undefined>(undefined);
   if (!shop) return null;
-  const area: Area = chosen?.campaign === view.campaign.id ? chosen.area : shop.world ? 'weapons' : 'funds';
+  const area: Area = chosen?.campaign === view.campaign.id ? chosen.area : 'weapons';
   const setArea = (a: Area) => setChosen({ campaign: view.campaign.id, area: a });
   const owner = shop.members.find((m) => m.id === shop.owner);
+  // Fahrzeuge haben eine eigene Theke, unter Sonstiges bleiben Ausrüstung und Passagen.
+  const vehicles = shop.gear.filter((group) => group.kind === 'vehicle');
   // Ein Tipp kauft ein Stück für den Charakter oben; mehr kauft man mit mehr Tipps. Nur was das
   // Gesetz der Welt verbietet, fragt erst nach.
   const buy = (item: ShopItem) => {
@@ -68,6 +69,11 @@ export function ShopScreen({ view }: { view: Snapshot }) {
           <p className="shop-funds">
             <span className="muted">Kasse</span> <strong className="mono">{credits(shop.funds)}</strong>
           </p>
+          {onClose && (
+            <button type="button" className="icon-button" aria-label="Shop schließen" onClick={onClose}>
+              <CloseIcon />
+            </button>
+          )}
         </div>
         <div className="shop-tabs" role="tablist" aria-label="Bereiche des Shops">
           {areas.map((a) => (
@@ -83,21 +89,22 @@ export function ShopScreen({ view }: { view: Snapshot }) {
             {shop.error}
           </p>
         )}
-        {area === 'funds' ? (
-          <>
-            <BookingForm owner={owner} />
-            <Ledger shop={shop} />
-          </>
-        ) : !shop.world ? (
-          <p className="log-empty">Die Gruppe ist auf keiner Welt. Auf der Sektorkarte eine fertige Welt öffnen und „Gruppe platzieren“ wählen; dann lässt sich hier kaufen und verkaufen.</p>
+        {!shop.world ? (
+          <p className="log-empty">Die Gruppe ist auf keiner Welt. Auf der Sektorkarte eine fertige Welt öffnen und „Gruppe platzieren“ wählen; dann lässt sich dort einkaufen.</p>
         ) : area === 'weapons' ? (
           <WeaponCounter shop={shop} hintHidden={view.shopHintHidden} onBuy={buy} />
         ) : area === 'sell' ? (
           <SaleCounter stash={shop.stash} owner={owner} onSell={(member, item) => setSelling({ member, item })} />
         ) : area === 'armor' ? (
           <ItemCounter title="Rüstungen" items={shop.armor} onBuy={buy} />
+        ) : area === 'vehicles' ? (
+          vehicles.length > 0 ? (
+            vehicles.map((group) => <ItemCounter key={group.kind} title={kindNames[group.kind]} items={group.items} onBuy={buy} />)
+          ) : (
+            <p className="log-empty">Auf {shop.world.name} gibt es bei TL {shop.world.tech} keine Fahrzeuge zu kaufen.</p>
+          )
         ) : (
-          shop.gear.map((group) => <ItemCounter key={group.kind} title={kindNames[group.kind]} items={group.items} onBuy={buy} />)
+          shop.gear.filter((group) => group.kind !== 'vehicle').map((group) => <ItemCounter key={group.kind} title={kindNames[group.kind]} items={group.items} onBuy={buy} />)
         )}
       </section>
       {buying && owner && <BannedDialog key={buying.id} item={buying} shop={shop} owner={owner} onClose={() => setBuying(undefined)} />}
@@ -107,57 +114,6 @@ export function ShopScreen({ view }: { view: Snapshot }) {
 }
 
 type Member = ShopView['members'][number];
-
-/** Buchungen ins Leere: Einnahme und Ausgabe frei, Einzahlung und Auszahlung mit dem Charakter oben. */
-function BookingForm({ owner }: { owner: Member | undefined }) {
-  const game = useGame();
-  const [kind, setKind] = useState<FreeKind>('income');
-  const [amount, setAmount] = useState('');
-  const [text, setText] = useState('');
-  const member = owner?.id;
-  const withMember = kind === 'deposit' || kind === 'payout';
-  const value = Number(amount);
-  return (
-    <Form
-      className="shop-book"
-      onSend={() => {
-        haptic('pick');
-        game.book(kind, value, text, withMember ? member : undefined);
-        setAmount('');
-        setText('');
-      }}
-    >
-      <div className="segmented" role="radiogroup" aria-label="Art der Buchung">
-        {freeKinds.map((k) => (
-          <button key={k} type="button" role="radio" aria-checked={kind === k} onClick={() => setKind(k)}>
-            {bookingText[k]}
-          </button>
-        ))}
-      </div>
-      <div className="shop-book-row">
-        <label className="field shop-amount">
-          <span>Cr</span>
-          <input type="number" inputMode="numeric" min={1} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" />
-        </label>
-        {withMember ? (
-          <p className="field shop-who">
-            <span>{kind === 'deposit' ? 'Von' : 'An'}</span>
-            <b>{owner ? `${owner.name} (${credits(owner.credits)})` : 'niemandem'}</b>
-          </p>
-        ) : (
-          <label className="field">
-            <span>Wofür</span>
-            <input value={text} onChange={(e) => setText(e.target.value)} placeholder={kind === 'income' ? 'z. B. Belohnung von Dr. Halvek' : 'z. B. Liegegebühr'} autoComplete="off" />
-          </label>
-        )}
-      </div>
-      <button type="submit" className="primary" disabled={!(value > 0) || (withMember && !member)}>
-        {bookingText[kind]} buchen
-      </button>
-      {withMember && <p className="muted shop-hint">Wer einzahlt oder bekommt, wählt man oben in der Leiste.</p>}
-    </Form>
-  );
-}
 
 /** Was unter dem Namen einer Ware steht: Fertigkeit, Besitz, Verbot. */
 function Meta({ parts, banned }: { parts: readonly (string | false | undefined)[]; banned: number | undefined }) {
@@ -495,33 +451,6 @@ function SellDialog({ selling, shop, onClose }: { selling: Selling; shop: ShopVi
           Verkaufen
         </button>
       </section>
-    </div>
-  );
-}
-
-function Ledger({ shop }: { shop: ShopView }) {
-  if (shop.bookings.length === 0) return <p className="log-empty">Noch keine Buchung. Eine Einnahme buchen, etwa eine Belohnung, oder Credits eines Charakters einzahlen.</p>;
-  return (
-    <div className="shop-ledger">
-      <h2 className="section-title">Kassenbuch</h2>
-      <ol>
-        {shop.bookings.map((b, i) => (
-          <li key={i} className={b.amount === 0 ? 'shop-booking unpaid' : 'shop-booking'}>
-            <span className="kicker">{b.shipCost === undefined ? bookingText[b.kind] : shipCostText[b.shipCost]}</span>
-            <span className="shop-booking-text">
-              {b.kind === 'purchase'
-                ? `${b.count} × ${b.item} für ${b.character} auf ${b.world}`
-                : b.kind === 'sale'
-                  ? `${b.count} × ${b.item} von ${b.character} auf ${b.world}`
-                  : [b.character, b.ship, b.text].filter(Boolean).join(' · ') || '—'}
-            </span>
-            <span className={b.amount < 0 ? 'mono shop-out' : 'mono shop-in'}>{credits(b.amount)}</span>
-            <time className="entry-time" dateTime={b.at}>
-              {clockTime(b.at)}
-            </time>
-          </li>
-        ))}
-      </ol>
     </div>
   );
 }

@@ -316,19 +316,19 @@ export interface Snapshot {
   readonly shopHintHidden: boolean;
   /** Auf welcher Stufe das Ziehblatt steht. */
   readonly trayStop: TrayStop;
-  /** Der Reiter NSC: die dauerhaften NSC, nach Welt und Rolle gruppiert. */
+  /** Die NSC-Liste: die dauerhaften NSC, nach Welt und Rolle gruppiert. */
   readonly npcs: NpcScreenView;
   /** Die Toten unter „Verstorben“, getrennt von den Lebenden. */
   readonly dead: readonly { readonly id: string; readonly name: string; readonly background: string }[];
   readonly retired: readonly { readonly id: string; readonly name: string }[];
   readonly task: TaskView | undefined;
-  /** Der Reiter Kampf für den Charakter oben; fehlt, wenn es keinen Lebenden gibt. */
+  /** Der Kampf (im Reiter Begegnung) für den Charakter oben; fehlt, wenn es keinen Lebenden gibt. */
   readonly combat: CombatView | undefined;
   /** Der Bereich Patron im Reiter Begegnung; fehlt nur ohne Kampagne. */
   readonly patron: PatronView | undefined;
   /** Die Begegnungsart Gerücht im Reiter Begegnung; fehlt nur ohne Kampagne. */
   readonly rumor: RumorView | undefined;
-  /** Der Reiter Shop: Kasse und Angebot auf dem Aufenthaltsort. */
+  /** Shop (mit „Einkaufen“ am Feld) und Kasse (im Reiter Charaktere): Kasse und Angebot auf dem Aufenthaltsort. */
   readonly shop: ShopView | undefined;
   /** Der Reiter Schiff: Stände des aktiven Schiffs, Deckpläne und die Werft. */
   readonly ship: ShipView | undefined;
@@ -402,9 +402,14 @@ export interface ItemChoice {
   readonly armor: boolean;
 }
 
-export type Screen = 'oracle' | 'encounter' | 'combat' | 'shop' | 'ship' | 'characters' | 'npcs' | 'sector' | 'about';
+/**
+ * Was im Ziehblatt bzw. in der Seitenspalte steht. Die Reiter sind Log, Begegnung, Charaktere und
+ * Schiff; im Reiter Begegnung schaltet man zwischen `encounter` und `combat` (Kampf) um, im Reiter
+ * Charaktere zwischen `characters` (SC), `npcs` (NSC) und `funds` (Kasse). Den Shop öffnet „Einkaufen“ am Feld bzw. an der Weltkarte des Aufenthaltsorts.
+ */
+export type Screen = 'oracle' | 'encounter' | 'combat' | 'shop' | 'ship' | 'characters' | 'npcs' | 'funds' | 'sector' | 'about';
 
-/** Ein dauerhafter NSC im Reiter NSC. */
+/** Ein dauerhafter NSC in der NSC-Liste. */
 export interface NpcItem {
   readonly id: string;
   readonly name: string;
@@ -415,7 +420,7 @@ export interface NpcItem {
   readonly weapon: string | undefined;
 }
 
-/** Der Reiter NSC (siehe domain-model.md, *Reiter NSC*). */
+/** Die NSC-Liste (siehe domain-model.md, *NSC-Liste*). */
 export interface NpcScreenView {
   /** „Alle zeigen“ ist an; beim Öffnen des Reiters ist es aus. */
   readonly all: boolean;
@@ -1420,15 +1425,20 @@ export interface ControllerState {
   /** Index des Logeintrags, dessen Ergebnis-Popup offen ist. */
   readonly result: number | undefined;
   readonly editor: { readonly id: string | undefined; readonly error: string | undefined; readonly npc?: boolean; readonly role?: NpcRole } | undefined;
-  /** Der Reiter NSC zeigt alle NSC statt nur die des Aufenthaltsorts. */
+  /** Die NSC-Liste zeigt alle NSC statt nur die des Aufenthaltsorts. */
   readonly npcAll: boolean;
   /**
-   * NSC platzieren: Der Reiter NSC wählt NSC für dieses Feld des Globus aus (Welt als Feld des
+   * NSC platzieren: Die NSC-Liste wählt NSC für dieses Feld des Globus aus (Welt als Feld des
    * Subsektors, Oberflächenfeld) und kehrt danach in den Reiter `screen` zum Feld zurück.
    */
   readonly npcPlacing: { readonly world: string; readonly cell: number; readonly screen: Screen } | undefined;
   /**
-   * NSC dazunehmen: Der Reiter NSC wählt die NSC für die nächste Zufallsbegegnung aus; danach geht es
+   * Der Shop ist mit „Einkaufen“ am Feld bzw. an der Weltkarte geöffnet: woher man kam, damit ✕ dorthin
+   * zurückführt (Reiter, angetipptes Feld des Globus, Weltkarte und gewähltes Feld des Subsektors).
+   */
+  readonly shopFrom: { readonly screen: Screen; readonly picked: number | undefined; readonly world: OpenWorld | undefined; readonly selected: ControllerState['selected'] } | undefined;
+  /**
+   * NSC dazunehmen: Die NSC-Liste wählt die NSC für die nächste Zufallsbegegnung aus; danach geht es
    * zurück in den Reiter Begegnung, mit `manual` zur Auswahl der Art, sonst gleich zum Wurf.
    */
   readonly npcJoining: { readonly manual: boolean } | undefined;

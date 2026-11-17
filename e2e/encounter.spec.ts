@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { entries, expandTray, host, openOracle, openSector } from './layout';
+import { entries, expandTray, host, openOracle, openSector, openCombat, openPart } from './layout';
 
 test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Begegnung die Simulation mit Runde, Entfernung und Zügen', async ({ page }) => {
   // Ein langer Ablauf mit vielen Würfen und Zügen.
@@ -30,11 +30,11 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await world!.getByRole('button', { name: 'Schließen' }).click();
 
   // Kampf ohne Begegnung: nur die Waffentabelle, keine Begegnungsauswahl.
-  await page.getByRole('navigation').getByRole('button', { name: 'Kampf' }).click();
+  await openCombat(page);
   await expect(page.locator('.combat-table')).toBeVisible();
   await expect(dock(page)).toHaveCount(0);
-  // Begegnung: Gelände und Würfel stehen auf dem Blatt, der Ort steht schon (kein Auswahlfeld mehr).
-  await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
+  // Begegnung (Umschalter oben): Gelände und Würfel stehen auf dem Blatt, der Ort steht schon (kein Auswahlfeld mehr).
+  await openPart(page, 'Begegnung', 'Begegnung');
   await expect(page.getByLabel('Die Gruppe ist auf')).toHaveCount(0);
   expect(worldId).not.toBe('');
   await page.getByLabel('Gelände', { exact: true }).selectOption('city');
@@ -57,7 +57,8 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Begegnung' })).toHaveAttribute('aria-current', 'page');
   await expect(page.locator('.encounter-running')).toContainText('Thugs');
   await page.locator('.encounter-running').getByRole('button', { name: 'Zum Kampf' }).click();
-  await expect(page.getByRole('navigation').getByRole('button', { name: 'Kampf' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('navigation').getByRole('button', { name: 'Begegnung' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('tablist', { name: 'Begegnung' }).getByRole('tab', { name: 'Kampf' })).toHaveAttribute('aria-selected', 'true');
   // Zwei Spalten: links die SC, rechts die NSC; die Leiste oben gibt es im Kampf nicht.
   await expect(host(page).locator('.strip')).toHaveCount(0);
   await expect(page.locator('.fcard.pcs')).toHaveCount(2);
@@ -138,15 +139,15 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await expect(page.locator('.fcard.npcs')).toHaveCount(before - chosen);
   await expect(page.getByRole('region', { name: 'Übernehmen' })).toHaveCount(0);
 
-  // Im Reiter Begegnung steht die laufende Begegnung knapp; „Zum Kampf“ führt zurück.
-  await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
+  // Unter Begegnung (Umschalter oben) steht die laufende Begegnung knapp; „Zum Kampf“ führt zurück.
+  await openPart(page, 'Begegnung', 'Begegnung');
   await expect(page.locator('.encounter-running')).toContainText('Thugs');
   await page.locator('.encounter-running').getByRole('button', { name: 'Zum Kampf' }).click();
   await expect(page.locator('.fight-head')).toBeVisible();
 
   await page.getByRole('button', { name: 'Beenden' }).click();
   await expect(page.locator('.combat-table')).toBeVisible();
-  await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
+  await openPart(page, 'Begegnung', 'Begegnung');
   await expect(dock(page).getByRole('button', { name: /^Zufallsbegegnung würfeln/ })).toBeEnabled();
 });
 
@@ -182,7 +183,7 @@ test('Patron und Gerücht: unten würfeln, das Würfelfenster zeigt Test und Erg
   await expect(editor).toBeVisible();
   await editor.getByRole('button', { name: 'Schließen' }).click();
   await expect(editor).toBeHidden();
-  // Dahinter steht der Reiter NSC; die Würfe gehen im Reiter Begegnung weiter.
+  // Dahinter steht die NSC-Liste; die Würfe gehen im Reiter Begegnung weiter.
   await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
   // Gerücht: Test 7+ auf 2W6, dann die Art nach der Rumors Matrix.
   const rumor = page.getByRole('dialog', { name: 'Gerücht' });

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openOracle, openSector, oracle } from './layout';
+import { openOracle, openSector, oracle, openPeople } from './layout';
 
 test.use({ reducedMotion: 'reduce' });
 
@@ -253,10 +253,10 @@ test('Globus: aus dem Subsektor öffnen, Feld antippen, zurück zum Subsektor', 
   await expect(page.getByRole('group', { name: 'Karte des Subsektors' })).toBeVisible();
 });
 
-test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des Felds; NSC platzieren wählt im Reiter NSC aus, Hierhin reisen plant die Route', async ({ page }) => {
+test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des Felds; NSC platzieren wählt in der NSC-Liste aus, Hierhin reisen plant die Route', async ({ page }) => {
   await page.goto('/');
   // Ein NSC auf Kessra, dem Aufenthaltsort, noch ohne Feld.
-  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'NSC', exact: true }).click();
+  await openPeople(page, 'NSC');
   await page.getByRole('button', { name: '+ Neuer NSC' }).click();
   await page.getByRole('dialog', { name: 'Neuer NSC' }).getByLabel('Rolle').selectOption({ label: 'Kontakt' });
   await page.getByRole('button', { name: 'Leer anlegen' }).click();
@@ -284,7 +284,7 @@ test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des 
   if (test.info().project.name === 'mobil') await expect(page.locator('.tray').getByRole('region', { name: 'Orakel und Proben' })).toHaveCount(0);
   await expect(actions.getByRole('button', { name: /Gruppe .* setzen/ })).toBeEnabled();
   await expect(actions).not.toContainText('kein Feld');
-  // NSC platzieren öffnet den Reiter NSC mit Kästchen; Abbrechen führt zurück zum Feld, ohne etwas zu ändern.
+  // NSC platzieren öffnet die NSC-Liste mit Kästchen; Abbrechen führt zurück zum Feld, ohne etwas zu ändern.
   const placeNpcs = actions.getByRole('button', { name: 'NSC platzieren' });
   await placeNpcs.click();
   const placing = page.getByRole('region', { name: 'NSC auswählen' });

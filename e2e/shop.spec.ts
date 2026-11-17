@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { characters, openSector } from './layout';
+import { characters, openPeople, openSector, openShop, openCombat } from './layout';
 
 /** Eine fertige Welt im Subsektor, lange gedrückt durchgewürfelt und Regina genannt; ihre Weltkarte bleibt offen. */
 async function makeWorld(page: Page) {
@@ -22,39 +22,49 @@ async function makeWorld(page: Page) {
   throw new Error('Keine Welt entstanden');
 }
 
-test('Shop: Die Demo-Kampagne steht auf Kessra; eine neue Kampagne ist auf keiner Welt und hat nur die Kasse', async ({ page }) => {
+test('Shop: Einkaufen an Kessra öffnet den Shop; die Kasse im Reiter Charaktere geht auch auf keiner Welt', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('navigation').getByRole('button', { name: 'Shop' }).click();
+  await openShop(page);
   await expect(page.locator('.shop-world')).toContainText('Kessra');
   await expect(page.getByRole('tab', { name: 'Waffen' })).toHaveAttribute('aria-selected', 'true');
+  // Die Kasse steht nicht im Shop, sondern im Reiter Charaktere.
+  await expect(page.getByRole('tab', { name: 'Kasse' })).toHaveCount(0);
+  // Fahrzeuge haben eine eigene Theke; unter Sonstiges stehen sie nicht mehr.
+  await page.getByRole('tab', { name: 'Fahrzeuge' }).click();
+  await expect(page.getByRole('button', { name: 'Air/Raft kaufen' })).toBeVisible();
+  await page.getByRole('tab', { name: 'Sonstiges' }).click();
+  await expect(page.getByRole('button', { name: 'Air/Raft kaufen' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Passagen' })).toBeVisible();
 
   await page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true }).click();
   await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Kampagnen wechseln und verwalten' }).click();
   const sheet = page.getByRole('dialog', { name: 'Kampagnen' });
   await sheet.getByLabel('Neue Kampagne').fill('Leer');
   await sheet.getByRole('button', { name: 'Anlegen' }).click();
-  // Der Shop bleibt offen (im Desktop-Modus schlösse ein zweiter Klick auf den Reiter das Panel).
-  await expect(page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Shop' })).toHaveAttribute('aria-current', 'page');
-  await expect(page.locator('.shop-world')).toHaveText('Auf keiner Welt');
-  await expect(page.getByRole('tab', { name: 'Kasse' })).toHaveAttribute('aria-selected', 'true');
+  // Die neue Kampagne ist auf keiner Welt: Der Shop ist zu, die Kasse geht trotzdem.
+  await expect(page.locator('.shop-world')).toHaveCount(0);
+  await openPeople(page, 'Kasse');
   await page.getByRole('spinbutton').first().fill('5000');
   await page.getByPlaceholder(/Belohnung/).fill('Belohnung von Dr. Halvek');
   await page.getByRole('button', { name: 'Einnahme buchen' }).click();
-  await expect(page.locator('.shop-funds')).toContainText('Cr 5.000');
+  await expect(page.locator('.funds-total')).toContainText('Cr 5.000');
   await expect(page.locator('.shop-booking').first()).toContainText('Belohnung von Dr. Halvek');
 });
 
 test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, verkaufen und die Waffe in die Hand nehmen', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('navigation').getByRole('button', { name: 'Shop' }).click();
-  await expect(page.locator('.shop-world')).toContainText('Kessra');
-  // Die Demo-Kampagne bringt ein Startkapital mit; eingezahlt wird in der Kasse, vom Charakter oben.
-  await expect(page.locator('.shop-funds')).toContainText('Cr 5.000');
-  await page.getByRole('tab', { name: 'Kasse' }).click();
+  // Die Demo-Kampagne bringt ein Startkapital mit; eingezahlt wird in der Kasse im Reiter Charaktere,
+  // vorgewählt vom Charakter oben.
+  await openPeople(page, 'Kasse');
+  await expect(page.locator('.funds-total')).toContainText('Cr 5.000');
   await page.getByRole('radio', { name: 'Einzahlung' }).click();
-  await expect(page.locator('.shop-who')).toContainText('Kira Vant');
+  await expect(page.getByLabel('Von')).toHaveValue('c1');
+  await expect(page.getByLabel('Von').locator('option:checked')).toContainText('Kira Vant');
   await page.getByRole('spinbutton').first().fill('1000');
   await page.getByRole('button', { name: 'Einzahlung buchen' }).click();
+  await expect(page.locator('.funds-total')).toContainText('Cr 6.000');
+  await openShop(page);
+  await expect(page.locator('.shop-world')).toContainText('Kessra');
   await expect(page.locator('.shop-funds')).toContainText('Cr 6.000');
 
   // Ein Tipp kauft genau eins; das Abzeichen zählt, wie viele die Gruppe hat. Zweimal Munition: zwei Magazine.
@@ -78,8 +88,6 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
   await expect(banned).toContainText('verboten');
   await banned.getByRole('button', { name: 'Trotzdem kaufen' }).click();
   await expect(page.locator('.shop-funds')).toContainText('Cr 5.470');
-  await page.getByRole('tab', { name: 'Kasse' }).click();
-  await expect(page.locator('.shop-booking').first()).toContainText('1 × Submachinegun für Kira Vant auf Kessra');
 
   // Jonas kommt oben in die Leiste und verkauft im Bereich Verkauf seine Blade; vorgeschlagen ist der halbe Preis, Cr 25.
   await characters(page).getByRole('button', { name: 'Jonas Reyl nach oben' }).click();
@@ -90,21 +98,23 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
   await expect(sale.getByLabel('Erlös je Stück (Cr)')).toHaveValue('25');
   await sale.getByRole('button', { name: 'Verkaufen' }).click();
   await expect(page.locator('.shop-funds')).toContainText('Cr 5.495');
-  await page.getByRole('tab', { name: 'Kasse' }).click();
-  await expect(page.locator('.shop-booking').first()).toContainText('1 × Blade von Jonas Reyl auf Kessra');
   await characters(page).getByRole('button', { name: 'Kira Vant nach oben' }).click();
+  // Im Kassenbuch (Reiter Charaktere, Kasse) stehen Kauf und Verkauf, das Neueste zuerst.
+  await openPeople(page, 'Kasse');
+  await expect(page.locator('.shop-booking').nth(0)).toContainText('1 × Blade von Jonas Reyl auf Kessra');
+  await expect(page.locator('.shop-booking').nth(1)).toContainText('1 × Submachinegun für Kira Vant auf Kessra');
 
   // Jede gekaufte Waffe wurde Kiras Primärwaffe: zuletzt die Submachinegun, in der Hand. Spear und
   // Automatic Pistol liegen im Gepäck; die Spear rüstet sie dort als Sekundärwaffe aus.
-  await page.getByRole('navigation').getByRole('button', { name: 'Kampf' }).click();
+  await openCombat(page);
   await expect(page.getByRole('heading', { name: 'Submachinegun' })).toBeVisible();
-  await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
+  await openPeople(page, 'SC');
   const pack = page.getByRole('list', { name: 'Gepäck' });
   await expect(pack).toContainText('Automatic Pistol');
   await page.getByLabel('Spear ausrüsten').selectOption({ label: 'Kira · Sekundär' });
   await expect(page.getByRole('group', { name: 'Ausrüstung von Kira Vant' })).toContainText('Spear');
   await expect(pack).not.toContainText('Spear');
-  await page.getByRole('navigation').getByRole('button', { name: 'Kampf' }).click();
+  await openCombat(page);
   await page.getByRole('group', { name: 'Waffe in der Hand' }).first().getByRole('button', { name: /Spear/ }).click();
   await expect(page.getByRole('heading', { name: 'Spear' })).toBeVisible();
 });
@@ -112,6 +122,7 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
 test('Shop: „Gruppe platzieren“ auf der Weltkarte bringt die Gruppe auf eine andere Welt', async ({ page }) => {
   await page.goto('/');
   const world = await makeWorld(page);
+  const id = (await world.getAttribute('aria-label'))!.slice(-4);
   await page.getByRole('button', { name: 'Gruppe platzieren' }).click();
   // Wie „Gruppe setzen“ am Hexfeld des Globus: Ist die Gruppe hier, ist der Knopf ausgegraut, das Blatt sagt es.
   await expect(page.getByRole('button', { name: 'Gruppe platzieren' })).toBeDisabled();
@@ -119,7 +130,8 @@ test('Shop: „Gruppe platzieren“ auf der Weltkarte bringt die Gruppe auf eine
   await world.getByRole('button', { name: 'Schließen' }).click();
   await page.getByRole('button', { name: /^Welten \d+/ }).click();
   await expect(page.locator('.world-list-here')).toBeVisible();
-  await page.getByRole('navigation').getByRole('button', { name: 'Shop' }).click();
+  await page.getByRole('button', { name: /^Welten \d+/ }).click();
+  await openShop(page, id);
   await expect(page.locator('.shop-world')).toContainText('Regina');
   // Der Knopf ⌖ in der Leiste des Subsektors öffnet den Globus des Aufenthaltsorts.
   await page.getByRole('button', { name: 'Aufenthaltsort Regina, Globus öffnen' }).click();

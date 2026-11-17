@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { openOracle } from './layout';
+import { openOracle, openCombat } from './layout';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('navigation').getByRole('button', { name: 'Kampf' }).click();
+  await openCombat(page);
 });
 
 test('Kampf: Kira zieht die Pistole, wählt das Ziel in der Tabelle und greift an', async ({ page }) => {

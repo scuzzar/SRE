@@ -26,7 +26,7 @@ export interface Upp {
 
 export type CharacterId = string;
 
-/** Die Rollen eines dauerhaften NSC, in der Reihenfolge, in der der Reiter NSC sie gruppiert (siehe domain-model.md, *Rolle eines NSC*). */
+/** Die Rollen eines dauerhaften NSC, in der Reihenfolge, in der die NSC-Liste sie gruppiert (siehe domain-model.md, *Rolle eines NSC*). */
 export const npcRoles = ['patron', 'encounter', 'enemy', 'rival', 'ally', 'contact', 'official', 'merchant', 'broker', 'captain', 'crew', 'passenger', 'other'] as const;
 export type NpcRole = (typeof npcRoles)[number];
 
@@ -336,7 +336,7 @@ export function activeCharacters(campaign: Campaign): readonly Character[] {
   return campaign.characters.filter((c) => !c.retired && !c.npc);
 }
 
-/** Die dauerhaften NSC, die nicht ausgeblendet sind; sie stehen im Reiter NSC. */
+/** Die dauerhaften NSC, die nicht ausgeblendet sind; sie stehen in der NSC-Liste. */
 export function npcCharacters(campaign: Campaign): readonly Character[] {
   return campaign.characters.filter((c) => !c.retired && c.npc);
 }

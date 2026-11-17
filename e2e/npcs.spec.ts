@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { openPeople, openCombat } from './layout';
 
-// Der Reiter NSC: neue NSC mit Rolle, leer oder aus einer Laufbahn erzeugt; sie stehen dort nach
+// NSC im Reiter Charaktere: neue NSC mit Rolle, leer oder aus einer Laufbahn erzeugt; sie stehen dort nach
 // Rolle gruppiert, mit Attributen, nicht mehr im Charakter-Screen.
-test('Reiter NSC: leer anlegen mit Rolle, er steht unter seiner Rolle', async ({ page }) => {
+test('NSC: leer anlegen mit Rolle, er steht unter seiner Rolle', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'NSC', exact: true }).click();
+  await openPeople(page, 'NSC');
   await expect(page.getByRole('heading', { name: /^(NSC auf |Alle NSC)/ })).toBeVisible();
   await expect(page.getByText(/Noch keine NSC/)).toBeVisible();
   await page.getByRole('button', { name: '+ Neuer NSC' }).click();
@@ -16,13 +17,13 @@ test('Reiter NSC: leer anlegen mit Rolle, er steht unter seiner Rolle', async ({
   await editor.getByRole('button', { name: 'Speichern' }).click();
   await expect(page.getByRole('heading', { name: 'Kontakt' })).toBeVisible();
   await expect(page.getByRole('listitem', { name: 'Mara Voss, Kontakt' })).toContainText('STR 7 DEX 7');
-  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Charaktere', exact: true }).click();
+  await openPeople(page, 'SC');
   await expect(page.getByText('Mara Voss')).toHaveCount(0);
 });
 
-test('Reiter NSC: aus einer Laufbahn erzeugen, danach steht er im Editor', async ({ page }) => {
+test('NSC: aus einer Laufbahn erzeugen, danach steht er im Editor', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'NSC', exact: true }).click();
+  await openPeople(page, 'NSC');
   await page.getByRole('button', { name: '+ Neuer NSC' }).click();
   const sheet = page.getByRole('dialog', { name: 'Neuer NSC' });
   await sheet.getByLabel('Rolle').selectOption({ label: 'Feind' });
@@ -36,10 +37,9 @@ test('Reiter NSC: aus einer Laufbahn erzeugen, danach steht er im Editor', async
 
 // Kampf mit dauerhaften NSC (2026-11-14g): Am NSC springt „In Begegnung“ in den Reiter Begegnung und
 // wählt ihn vor; er kämpft auf der Seite der NSC und führt.
-test('Reiter NSC: „In Begegnung“ nimmt den NSC zur Zufallsbegegnung dazu; er führt die NSC an', async ({ page }) => {
+test('NSC: „In Begegnung“ nimmt den NSC zur Zufallsbegegnung dazu; er führt die NSC an', async ({ page }) => {
   await page.goto('/');
-  const nav = page.getByRole('navigation', { name: 'Bereiche' });
-  await nav.getByRole('button', { name: 'NSC', exact: true }).click();
+  await openPeople(page, 'NSC');
   await page.getByRole('button', { name: '+ Neuer NSC' }).click();
   await page.getByRole('dialog', { name: 'Neuer NSC' }).getByLabel('Rolle').selectOption({ label: 'Verbündeter' });
   await page.getByRole('button', { name: 'Leer anlegen' }).click();
@@ -60,16 +60,16 @@ test('Reiter NSC: „In Begegnung“ nimmt den NSC zur Zufallsbegegnung dazu; er
   await intro.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.locator('.encounter-running-title')).toHaveText(/^Tenzin Thorsen \+ \d+ × Police Patrol$/);
   // Läuft eine Begegnung, gibt es „In Begegnung“ nicht.
-  await nav.getByRole('button', { name: 'NSC', exact: true }).click();
+  await openPeople(page, 'NSC');
   await expect(page.getByRole('button', { name: 'Tenzin Thorsen in Begegnung' })).toHaveCount(0);
-  await nav.getByRole('button', { name: 'Kampf', exact: true }).click();
+  await openCombat(page);
   await expect(page.locator('.fight-head-title')).toContainText('Tenzin Thorsen + ');
 });
 
 test('Zufallsbegegnung: mit Art „keine“ kommen nur die dazugenommenen NSC', async ({ page }) => {
   await page.goto('/');
   const nav = page.getByRole('navigation', { name: 'Bereiche' });
-  await nav.getByRole('button', { name: 'NSC', exact: true }).click();
+  await openPeople(page, 'NSC');
   await page.getByRole('button', { name: '+ Neuer NSC' }).click();
   await page.getByRole('button', { name: 'Leer anlegen' }).click();
   const editor = page.getByRole('dialog', { name: 'Neuer NSC' });
@@ -83,7 +83,7 @@ test('Zufallsbegegnung: mit Art „keine“ kommen nur die dazugenommenen NSC', 
   const choice = page.getByRole('dialog', { name: 'Welche Begegnung?' });
   await expect(choice.getByRole('button', { name: 'keine · nur die NSC' })).toHaveCount(0);
   await choice.getByRole('button', { name: 'Abbrechen' }).click();
-  // „NSC dazunehmen“: Zufall öffnet erst den Reiter NSC zum Auswählen, OK führt zur Auswahl der Art.
+  // „NSC dazunehmen“: Zufall öffnet erst die NSC-Liste zum Auswählen, OK führt zur Auswahl der Art.
   await page.getByRole('checkbox', { name: /^NSC dazunehmen/ }).check();
   await random.click();
   await page.getByRole('checkbox', { name: 'Ilka Brand wählen' }).check();

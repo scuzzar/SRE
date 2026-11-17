@@ -47,3 +47,31 @@ export const entries = (page: Page) => oracle(page).locator('.log ol > li:not(.l
 export async function revealed(card: ReturnType<Page['getByRole']>) {
   await card.locator('.sheet-foot .count').click();
 }
+
+/** Einen der fünf Reiter wählen: Log, Begegnung, Kampf, Schiff, Charaktere. */
+export async function openTab(page: Page, name: string) {
+  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name, exact: true }).click();
+}
+
+/** In einem Reiter mit Umschalter oben (Begegnung, Charaktere) einen Teil wählen; der Reiter öffnet sich dafür, wenn nötig. */
+export async function openPart(page: Page, area: 'Begegnung' | 'Charaktere', part: string) {
+  const tab = page.getByRole('tablist', { name: area }).getByRole('tab', { name: part, exact: true });
+  if ((await tab.count()) === 0) await openTab(page, area);
+  await tab.click();
+}
+
+/** Im Reiter Charaktere oben auf SC, NSC oder Kasse umschalten. */
+export const openPeople = (page: Page, part: 'SC' | 'NSC' | 'Kasse') => openPart(page, 'Charaktere', part);
+
+/** Im Reiter Begegnung oben auf Kampf umschalten. */
+export const openCombat = (page: Page) => openPart(page, 'Begegnung', 'Kampf');
+
+/**
+ * Den Shop öffnen: im Subsektor die Welt der Gruppe antippen (in der Demo Kessra, 0405) und an ihrer
+ * Weltkarte „Einkaufen“. Ist ein Globus offen, geht es erst zum Subsektor.
+ */
+export async function openShop(page: Page, world = '0405') {
+  await openSector(page);
+  await page.getByRole('group', { name: 'Karte des Subsektors' }).getByRole('button', { name: new RegExp(`^${world}`) }).dispatchEvent('click');
+  await page.getByRole('button', { name: 'Einkaufen', exact: true }).click();
+}

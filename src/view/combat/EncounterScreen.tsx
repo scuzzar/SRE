@@ -4,6 +4,7 @@ import { signed } from '../format';
 import { useGame } from '../game-context';
 import { TripBar } from '../sector/TripPanels';
 import { distancesText, EncounterIntro } from './FightScreen';
+import { SubTabs, encounterParts } from '../SubTabs';
 
 /** Was im Reiter Begegnung eingestellt ist, aber nur in der Ansicht lebt: die Haken und wie viele Tage. */
 export interface EncounterOptions {
@@ -11,7 +12,7 @@ export interface EncounterOptions {
   readonly days: number;
   /** „Manuell wählen“: Zufall und Tiere öffnen die Auswahl der Art bzw. Zeile statt des Wurfs. */
   readonly manual: boolean;
-  /** „NSC dazunehmen“: Zufall öffnet erst den Reiter NSC zum Auswählen. */
+  /** „NSC dazunehmen“: Zufall öffnet erst die NSC-Liste zum Auswählen. */
   readonly withNpcs: boolean;
 }
 
@@ -24,11 +25,12 @@ export interface EncounterOptions {
 export function EncounterScreen({ view, options, onOptions }: { view: Snapshot; options: EncounterOptions; onOptions: (options: EncounterOptions) => void }) {
   const game = useGame();
   const combat = view.combat;
-  // Schon dazugenommen (etwa mit „In Begegnung“ im Reiter NSC): Sie kommen beim nächsten Zufall mit, ohne Test.
+  // Schon dazugenommen (etwa mit „In Begegnung“ in der NSC-Liste): Sie kommen beim nächsten Zufall mit, ohne Test.
   const joined = (combat?.joining ?? []).map((id, i) => `${combat?.joinable.find((n) => n.id === id)?.name ?? id}${i === 0 ? ' · Anführer' : ''}`);
   const joinable = combat?.joinable.length ?? 0;
   return (
     <div className="screen">
+      <SubTabs label="Begegnung" parts={encounterParts} screen="encounter" />
       <section className="scroll encounter-scroll" aria-label="Begegnung">
         {view.time && <TimeBar time={view.time} days={options.days} onDays={(days) => onOptions({ ...options, days })} trip={view.trip !== undefined} />}
         {view.trip && <TripBar trip={view.trip} note={view.tripNote} />}
@@ -46,7 +48,7 @@ export function EncounterScreen({ view, options, onOptions }: { view: Snapshot; 
             </label>
             <label className="npc-all encounter-settings-wide">
               <input type="checkbox" checked={options.withNpcs && joinable > 0} disabled={joinable === 0} onChange={(e) => onOptions({ ...options, withNpcs: e.target.checked })} />
-              {joinable === 0 ? 'NSC dazunehmen (kein NSC am Aufenthaltsort)' : 'NSC dazunehmen (Zufall wählt erst im Reiter NSC, ohne Test)'}
+              {joinable === 0 ? 'NSC dazunehmen (kein NSC am Aufenthaltsort)' : 'NSC dazunehmen (Zufall lässt erst unter Charaktere › NSC wählen, ohne Test)'}
             </label>
             {joined.length > 0 && !combat.sim && (
               <p className="encounter-note encounter-settings-wide" role="status" aria-label="Kommen dazu">

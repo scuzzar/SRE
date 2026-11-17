@@ -234,7 +234,7 @@ import type { JourneyMode } from './time-view';
 /** Der Schlüssel eines Deckplan-Platzes in den Marken: „Entwurf/Platz“. */
 const slotKey = (slot: { readonly design: string; readonly name: string }): string => `${slot.design}/${slot.name}`;
 
-const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, shopFrom: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, selected: undefined, picking: false } as const;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -297,6 +297,7 @@ export class GameController {
       screen: 'oracle',
       npcAll: false,
       npcPlacing: undefined,
+      shopFrom: undefined,
       npcJoining: undefined,
       encounterRoll: undefined,
       encounterChoice: undefined,
@@ -926,7 +927,7 @@ export class GameController {
   }
 
   /**
-   * „NSC dazunehmen“: Der Reiter NSC öffnet sich zum Auswählen der NSC vom Aufenthaltsort; „OK“ nimmt
+   * „NSC dazunehmen“: Die NSC-Liste öffnet sich zum Auswählen der NSC vom Aufenthaltsort; „OK“ nimmt
    * sie zur Zufallsbegegnung dazu und würfelt sie (mit `manual` erst die Auswahl der Art).
    */
   startNpcJoining(manual: boolean): void {
@@ -1125,9 +1126,32 @@ export class GameController {
     // Ein angetipptes Feld des Globus oder ein gewähltes Feld des Subsektors steht an der Stelle des
     // Bereichs; ein Reiter lässt es los.
     const released = { globe: this.state.globe && { picked: undefined }, selected: undefined, worldError: this.state.globe ? this.state.worldError : undefined };
-    // Der Reiter NSC zeigt beim Öffnen wieder nur die NSC des Aufenthaltsorts.
-    // Ein Reiter bricht auch NSC platzieren ab.
-    this.update(screen === 'npcs' && this.state.screen !== 'npcs' ? { screen, npcAll: false, npcPlacing: undefined, npcJoining: undefined, ...released } : { screen, npcPlacing: undefined, npcJoining: undefined, ...released });
+    // Die NSC-Liste zeigt beim Öffnen wieder nur die NSC des Aufenthaltsorts.
+    // Ein Reiter bricht auch NSC platzieren ab und verlässt den Shop.
+    this.update(screen === 'npcs' && this.state.screen !== 'npcs' ? { screen, npcAll: false, npcPlacing: undefined, npcJoining: undefined, shopFrom: undefined, ...released } : { screen, npcPlacing: undefined, npcJoining: undefined, shopFrom: undefined, ...released });
+  }
+
+  /**
+   * „Einkaufen“ am Feld bzw. an der Weltkarte des Aufenthaltsorts: Der Shop steht an der Stelle des
+   * Felds bzw. Bereichs; ✕ (`closeShop`) führt dorthin zurück, woher man kam. Ohne Aufenthaltsort gibt
+   * es nichts zu kaufen.
+   */
+  openShop(): void {
+    const campaign = this.state.campaign;
+    if (!campaign || campaign.location === undefined) return;
+    const { screen, globe, world, selected } = this.state;
+    const from = this.state.shopFrom ?? { screen: screen === 'shop' ? 'oracle' : screen, picked: globe?.picked, world: globe ? undefined : world, selected };
+    // Auf dem Globus bleibt die Welt offen (er gehört zu ihr), nur das Feld wird losgelassen; im
+    // Subsektor geht die Weltkarte zu und kommt beim Schließen wieder.
+    this.update({ shopFrom: from, screen: 'shop', npcPlacing: undefined, npcJoining: undefined, selected: undefined, ...(globe ? { globe: { picked: undefined } } : { world: undefined }), worldError: undefined });
+  }
+
+  /** ✕ im Shop: zurück zum Feld, zur Weltkarte bzw. in den Reiter, aus dem „Einkaufen“ kam. */
+  closeShop(): void {
+    const from = this.state.shopFrom;
+    if (!from) return this.showScreen('oracle');
+    const back = this.state.globe ? { globe: { picked: from.picked } } : { world: this.state.world ?? from.world, selected: from.selected };
+    this.update({ shopFrom: undefined, screen: from.screen, ...back });
   }
 
   /** Nimmt einen dauerhaften NSC zur nächsten Zufallsbegegnung dazu oder wieder heraus (2026-11-14g); nur Anzeige. */
@@ -1136,7 +1160,7 @@ export class GameController {
     this.update({ joining, combatNote: undefined });
   }
 
-  /** „In Begegnung“ im Reiter NSC: wählt den NSC in der Karte Zufallsbegegnung vor und springt in den Reiter Begegnung. */
+  /** „In Begegnung“ in der NSC-Liste: wählt den NSC in der Karte Zufallsbegegnung vor und springt in den Reiter Begegnung. */
   joinEncounter(id: string): void {
     const joining = this.state.joining.includes(id) ? this.state.joining : [...this.state.joining, id];
     this.update({ joining, combatNote: undefined, screen: 'encounter' });
@@ -1147,14 +1171,14 @@ export class GameController {
     this.update({ trace: !this.state.trace });
   }
 
-  /** „Alle zeigen“ im Reiter NSC an oder aus; nur Anzeige, nicht gespeichert. */
+  /** „Alle zeigen“ in der NSC-Liste an oder aus; nur Anzeige, nicht gespeichert. */
   showAllNpcs(all: boolean): void {
     this.update({ npcAll: all });
   }
 
   /**
    * „Als NSC“ zum letzten Patron-Wurf (siehe domain-model.md, *Patron als NSC*): Die Erschaffung läuft
-   * in der Laufbahn des Patrons durch, der neue dauerhafte NSC kommt in den Reiter NSC; dorthin
+   * in der Laufbahn des Patrons durch, der neue dauerhafte NSC kommt in die NSC-Liste; dorthin
    * wechselt die Ansicht auch gleich, mit dem neuen NSC schon offen im Editor.
    */
   createPatronNpc(): void {
@@ -1163,7 +1187,7 @@ export class GameController {
       const { campaign, id } = createPatronNpc(this.campaign, index, this.deps.random);
       const npc = campaign.characters.find((c) => c.id === id)!;
       // Aus dem Würfelfenster heraus schließt es sich danach.
-      this.change(campaign, { patronNote: `${npc.name} (${npc.background}) steht jetzt im Reiter NSC.`, encounterRoll: undefined, screen: 'npcs', npcAll: false, editor: { id, error: undefined } });
+      this.change(campaign, { patronNote: `${npc.name} (${npc.background}) steht jetzt unter Charaktere › NSC.`, encounterRoll: undefined, screen: 'npcs', npcAll: false, editor: { id, error: undefined } });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       const roll = this.state.encounterRoll;
@@ -1467,7 +1491,7 @@ export class GameController {
     this.inFight(() => this.change(setQuantityDie(this.campaign, die), { combatNote: undefined }));
   }
 
-  /** Beendet die laufende Begegnung; der Reiter Kampf zeigt wieder die Waffentabelle, der Reiter Begegnung die Auswahl. */
+  /** Beendet die laufende Begegnung; der Kampf zeigt wieder die Waffentabelle, der Reiter Begegnung die Auswahl. */
   endEncounter(): void {
     this.change(endEncounter(this.campaign), { attack: undefined, combatNote: undefined, simTarget: undefined, encounterIntro: false });
   }
@@ -2214,7 +2238,7 @@ export class GameController {
   }
 
   /**
-   * NSC platzieren (siehe domain-model.md, *NSC platzieren*): Der Reiter NSC öffnet sich zum Auswählen
+   * NSC platzieren (siehe domain-model.md, *NSC platzieren*): Die NSC-Liste öffnet sich zum Auswählen
    * für das angetippte Feld; „Alle zeigen“ holt auch NSC von anderen Welten dazu.
    */
   startNpcPlacing(): void {
@@ -2225,7 +2249,7 @@ export class GameController {
   }
 
   /**
-   * „OK“ beim Auswählen im Reiter NSC. Beim NSC platzieren kommen die gewählten auf das Feld (bzw. in die
+   * „OK“ beim Auswählen in der NSC-Liste. Beim NSC platzieren kommen die gewählten auf das Feld (bzw. in die
    * Stadt darauf), danach steht wieder das Feld da; beim NSC dazunehmen kommen sie zur Zufallsbegegnung,
    * die gleich gewürfelt wird (mit „Manuell wählen“ erst die Auswahl der Art).
    */
@@ -2244,7 +2268,7 @@ export class GameController {
     });
   }
 
-  /** „Abbrechen“ beim Auswählen im Reiter NSC: zurück zum Feld bzw. in den Reiter Begegnung, ohne etwas zu ändern. */
+  /** „Abbrechen“ beim Auswählen in der NSC-Liste: zurück zum Feld bzw. in den Reiter Begegnung, ohne etwas zu ändern. */
   cancelNpcPlacing(): void {
     if (this.state.npcJoining) {
       this.update({ npcJoining: undefined, screen: 'encounter' });
@@ -2420,7 +2444,8 @@ export class GameController {
   private closed(campaign: Campaign): Partial<ControllerState> {
     // Die Deckpläne leert closedDrafts; auch bei gleichem Entwurf werden sie danach neu geladen.
     this.deckDesign = undefined;
-    return { ...closedDrafts, ...this.home(campaign) };
+    // Der Shop gehört zum Aufenthaltsort der alten Kampagne; die neue öffnet im Log.
+    return { ...closedDrafts, ...(this.state.screen === 'shop' ? { screen: 'oracle' as const } : {}), ...this.home(campaign) };
   }
 
   /** Nimmt eine neue Kampagne auf, öffnet und speichert sie. */

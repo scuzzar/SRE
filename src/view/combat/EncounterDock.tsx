@@ -13,7 +13,7 @@ type Check = ChecksView[keyof ChecksView] | undefined;
  * (Zufall, Tiere, Patron, Gerücht, Polizei), darunter die Zeit (Tage vergehen, Woche beenden) bzw.
  * bei laufender Fahrt „Weiterfahren“. Das ist die einzige Stelle, an der man weiterfährt oder Zeit
  * vergehen lässt. Ein Wurf zeigt sein Ergebnis im Würfelfenster; mit den Haken auf dem Blatt öffnet
- * Zufall erst den Reiter NSC zum Dazunehmen bzw. Zufall und Tiere die Auswahl der Art. Jeder
+ * Zufall erst die NSC-Liste zum Dazunehmen bzw. Zufall und Tiere die Auswahl der Art. Jeder
  * Begegnungsknopf zeigt, wie oft im Zeitraum schon getestet wurde; ist die Regel erfüllt, würfelt nur
  * der lange Druck noch einmal. Reine Darstellung: Was die Knöpfe bewirken, entscheidet der Controller.
  */
@@ -28,7 +28,7 @@ export function EncounterDock({ view, options }: { view: Snapshot; /** Auf dem B
   const animalsOff = !combat || combat.animals.blocked !== undefined;
   const legalOff = !combat || !view.legal?.available;
   const passing = Math.min(options.days, time?.maxDays ?? options.days);
-  // Zufall: mit „NSC dazunehmen“ erst die Auswahl im Reiter NSC, mit „Manuell wählen“ die Auswahl der Art.
+  // Zufall: mit „NSC dazunehmen“ erst die Auswahl in der NSC-Liste, mit „Manuell wählen“ die Auswahl der Art.
   const random = () => {
     if (options.withNpcs && combat && combat.joinable.length > 0) game.startNpcJoining(options.manual);
     else if (options.manual) game.chooseEncounter('random');
