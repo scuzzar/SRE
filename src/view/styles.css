@@ -201,7 +201,7 @@ button:disabled {
   font-weight: 600;
 }
 
-/* Die Reiter: oben im Ziehblatt (Smartphone) bzw. oben im Log-Panel (Desktop-Modus). */
+/* Die Reiter: im Ziehblatt (Smartphone) bzw. oben in der Seitenspalte (Desktop-Modus). */
 .nav {
   flex: 0 0 auto;
   display: grid;
@@ -355,7 +355,7 @@ button:disabled {
   max-height: calc(100% - 72px - var(--tray-h, 0px));
 }
 
-/* Das gewählte Feld des Subsektors im Ziehblatt bzw. im Panel neben dem Log. */
+/* Das gewählte Feld des Subsektors im Ziehblatt bzw. in der Seitenspalte des Desktops. */
 .field-slot {
   flex: 1 1 auto;
   min-height: 0;
@@ -6904,44 +6904,18 @@ button:disabled {
 }
 
 /* --- Desktop-Modus (ab 1024 px) ------------------------------------------------------------- */
-/* Dieselbe Grenze wie DESKTOP_QUERY in media.ts: links fest das Log-Panel mit den Reitern, daneben
-   der gewählte Bereich als schließbares Panel, rechts die Grundkarte. Die Screens sind dieselben wie
-   auf dem Smartphone. */
+/* Dieselbe Grenze wie DESKTOP_QUERY in media.ts: links eine Spalte mit den Reitern, darunter das Log
+   oder an seiner Stelle der gewählte Bereich bzw. das angetippte Feld; rechts die Grundkarte. Die
+   Screens sind dieselben wie auf dem Smartphone. */
 @media (min-width: 1024px) {
   .app.map-app.desktop {
     display: grid;
-    grid-template-columns: clamp(320px, 24vw, 400px) auto minmax(0, 1fr);
+    grid-template-columns: clamp(416px, 31vw, 520px) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
   }
 
-  .oracle-panel {
+  .side-panel {
     grid-column: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    border-right: 1px solid var(--rule);
-    background: var(--bg);
-  }
-
-  /* „75 % · 6+“ passt nicht in eine Zeile des Log-Panels: Chance und Zielwert untereinander. */
-  .oracle-panel .odds-sub {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.25;
-  }
-
-  .oracle-panel .odds-dot {
-    display: none;
-  }
-
-  .oracle-panel > .screen {
-    flex: 1 1 auto;
-    min-height: 0;
-  }
-
-  .area-panel {
-    grid-column: 2;
-    width: clamp(380px, 32vw, 560px);
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -6959,7 +6933,7 @@ button:disabled {
   }
 
   .desktop .base {
-    grid-column: 3;
+    grid-column: 2;
     position: relative;
     inset: auto;
   }

@@ -322,7 +322,7 @@ test('Deuten mit dem Knopf in der Reihe unten: gilt dem neuesten Ergebnis', asyn
 });
 
 test('Die Reihe unten steht auf dem Smartphone nur im Log', async ({ page }, testInfo) => {
-  testInfo.skip(testInfo.project.name !== 'mobil', 'Im Desktop-Modus steht sie immer im Log-Panel');
+  testInfo.skip(testInfo.project.name !== 'mobil', 'Im Desktop-Modus steht sie unter jedem Bereich ohne eigene Reihe');
   const nav = page.getByRole('navigation', { name: 'Bereiche' });
   await expect(oracle(page).getByRole('button', { name: '2W6', exact: true })).toBeVisible();
   for (const name of ['Begegnung', 'Kampf', 'Shop', 'Charaktere', 'NSC']) {

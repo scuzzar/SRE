@@ -50,8 +50,8 @@ test('Schiff: Werft und Bestellung sind Felder im Ziehblatt, kein Dialog; ✕ un
   const yard = page.getByRole('region', { name: 'Werft' });
   await expect(yard).toBeVisible();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  // Am Handy steht das Feld im Ziehblatt, das sich ziehen lässt; im Desktop-Modus im Panel neben dem Log.
-  const host = test.info().project.name === 'desktop' ? page.locator('.area-panel') : page.getByRole('region', { name: 'Ziehblatt' });
+  // Am Handy steht das Feld im Ziehblatt, das sich ziehen lässt; im Desktop-Modus in der Seitenspalte.
+  const host = test.info().project.name === 'desktop' ? page.locator('.side-panel') : page.getByRole('region', { name: 'Ziehblatt' });
   await expect(host.getByRole('region', { name: 'Werft' })).toBeVisible();
 
   await yard.getByRole('row', { name: /Scout\/Courier/ }).locator('.shop-price').click();

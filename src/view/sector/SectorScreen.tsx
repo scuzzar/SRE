@@ -562,7 +562,7 @@ export function SectorScreen({ view, heading = 'Subsektor', fill = false, dockTo
           )}
         </div>
       </section>
-      {/* Als Grundkarte steht das gewählte Feld im Ziehblatt bzw. im Panel neben dem Log, an der Stelle,
+      {/* Als Grundkarte steht das gewählte Feld im Ziehblatt bzw. in der Seitenspalte, an der Stelle,
           die die App dafür freihält (`dockTo`); Würfel und Zustand bleiben hier. */}
       {dock && (fill ? dockTo && createPortal(dock, dockTo) : dock)}
     </div>

@@ -80,7 +80,7 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   Pixel verkleinert in `view/ship/deck-image.ts`); prüfen tut das Model (`fromCampaignFile`), anbieten zum Download der
   Controller über `Download`. Offene Karte, Probe, Angriff in Vorbereitung und Schaden beim Verteilen sind Teil des
   Models (`model/draft/`), werden aber nicht gespeichert.
-- **Er wählt, welche View zu sehen ist**: die Grundkarte (Globus der offenen Welt, sonst Subsektor) und den Reiter Log, Begegnung, Kampf, Shop, Schiff, Charaktere oder NSC (`showScreen(screen)`, lässt ein angetipptes Feld des Globus und ein gewähltes Feld des Subsektors los; im Desktop-Modus heißt `oracle`, dass neben dem Log kein Bereich offen ist; im NSC-Screen „Alle zeigen“ mit `showAllNpcs(all)`, beim Öffnen des Reiters wieder aus, gruppiert nach `model/npcs.ts`; `newCharacter(npc, role)` öffnet den Editor für einen neuen NSC, `generateNpc(service, role)` erzeugt einen aus einer Laufbahn (`model/npcs.ts`, auch die Waffen erzeugter NSC) und öffnet ihn im Editor; ebenso wechselt `createPatronNpc()` gleich in den Reiter NSC und öffnet den neuen NSC im Editor; „Zum Kampf“ im Begegnungs-Screen wechselt so in den Kampf-Screen, „Weiter“ in der Übersicht einer Begegnung, `closeEncounterIntro()`, bleibt im Screen), das gewählte Feld im Subsektor, die Weltkarte eines Feldes, die
+- **Er wählt, welche View zu sehen ist**: die Grundkarte (Globus der offenen Welt, sonst Subsektor) und den Reiter Log, Begegnung, Kampf, Shop, Schiff, Charaktere oder NSC (`showScreen(screen)`, lässt ein angetipptes Feld des Globus und ein gewähltes Feld des Subsektors los; im Desktop-Modus steht der Reiter wie im Ziehblatt an der Stelle des Logs in der Seitenspalte; im NSC-Screen „Alle zeigen“ mit `showAllNpcs(all)`, beim Öffnen des Reiters wieder aus, gruppiert nach `model/npcs.ts`; `newCharacter(npc, role)` öffnet den Editor für einen neuen NSC, `generateNpc(service, role)` erzeugt einen aus einer Laufbahn (`model/npcs.ts`, auch die Waffen erzeugter NSC) und öffnet ihn im Editor; ebenso wechselt `createPatronNpc()` gleich in den Reiter NSC und öffnet den neuen NSC im Editor; „Zum Kampf“ im Begegnungs-Screen wechselt so in den Kampf-Screen, „Weiter“ in der Übersicht einer Begegnung, `closeEncounterIntro()`, bleibt im Screen), das gewählte Feld im Subsektor, die Weltkarte eines Feldes, die
   Kampagnenwahl (`showCampaigns()`, `closeCampaigns()`) und das Ergebnis-Popup (`closeResult()`),
   welcher Charakter im Charakter-Screen seine Details zeigt (`toggleDetails(id)`) und ob die Leiste
   mit dem Charakter oben eingeklappt ist (`toggleStrip()`) und ob der Hinweis über den Waffen im
@@ -144,7 +144,7 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
 Id; welche offen ist, steht daneben unter `settings`. Die eine Kampagne aus der Zeit vor mehreren
 Kampagnen lag unter dem Schlüssel `current` und behält ihn als Id. Geht das nicht (privates
 Fenster, eingebettete Vorschau, eine lokal geöffnete Datei auf manchen Handys), läuft die App mit
-einem Speicher im Arbeitsspeicher weiter; ein Hinweis oben im Ziehblatt bzw. im Log-Panel und der
+einem Speicher im Arbeitsspeicher weiter; ein Hinweis oben im Ziehblatt bzw. in der Seitenspalte und der
 „Über“-Bildschirm sagen dann, dass nichts dauerhaft gespeichert wird. Läuft IndexedDB, bittet
 `requestDurable()` den Browser, den Speicher dauerhaft zu halten (`navigator.storage.persist()`). Die
 Antwort geht als Promise in den Controller und wartet nicht auf den Start, weil Firefox dafür den

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-// Ab dieser Breite bekommt die App den Desktop-Modus: Reiterzeile oben, Orakel und Charaktere links. Dieselbe
+// Ab dieser Breite bekommt die App den Desktop-Modus: links die Seitenspalte, rechts die Grundkarte. Dieselbe
 // Grenze steht im @media-Block „Desktop-Modus“ in styles.css; beide sollen zusammen geändert
 // werden.
 export const DESKTOP_QUERY = '(min-width: 1024px)';

@@ -1,27 +1,22 @@
 import type { Page } from '@playwright/test';
 
 // Wo etwas steht, hängt vom Layout ab: Auf dem Smartphone liegt unten das Ziehblatt mit den Reitern
-// (Log ist einer davon) und der Reihe Notiz, 2W6, Karte; im Desktop-Modus steht links fest das
-// Log-Panel mit dem Charakter oben, daneben der Bereich. Diese Helfer halten die Tests davon frei.
+// (Log ist einer davon) und der Reihe Notiz, 2W6, Karte; im Desktop-Modus steht links eine Spalte
+// mit denselben Reitern, darunter das Log oder an seiner Stelle der Bereich. Diese Helfer halten die
+// Tests davon frei.
 
-/** Der gerade gewählte Bereich: auf dem Smartphone der Inhalt des Ziehblatts, im Desktop-Modus das Panel neben dem Log. */
+/** Der gerade gewählte Bereich: auf dem Smartphone der Inhalt des Ziehblatts, im Desktop-Modus der Inhalt der Seitenspalte. */
 export const host = (page: Page) => page.locator('.screen-host');
 
-/** Log und die Reihe Notiz, 2W6, Karte: das Log-Panel, sonst das Ziehblatt. */
-export const oracle = (page: Page) => page.locator('.oracle-panel, .app:not(:has(.oracle-panel)) .tray');
+/** Log und die Reihe Notiz, 2W6, Karte: die Seitenspalte, sonst das Ziehblatt. */
+export const oracle = (page: Page) => page.locator('.side-panel, .app:not(:has(.side-panel)) .tray');
 
-/** Wo der Charakter oben steht: im Log-Panel, sonst im gewählten Reiter des Ziehblatts. */
-export const characters = (page: Page) => page.locator('.oracle-panel, .app:not(:has(.oracle-panel)) .screen-host');
+/** Wo der Charakter oben steht: im gewählten Reiter, im Ziehblatt wie in der Seitenspalte. */
+export const characters = (page: Page) => page.locator('.screen-host');
 
-/** Zum Log mit dem Charakter oben wechseln. Im Desktop-Modus steht es links; ein offener Bereich daneben geht zu. */
+/** Zum Log mit dem Charakter oben wechseln, über den Reiter Log. */
 export async function openOracle(page: Page) {
-  const nav = page.getByRole('navigation', { name: 'Bereiche' });
-  // Erst wenn die App geladen ist, stehen die Reiter da; vorher lässt sich der Reiter nicht zählen.
-  await nav.waitFor();
-  const tab = nav.getByRole('button', { name: 'Log', exact: true });
-  if ((await tab.count()) > 0) return tab.click();
-  const close = page.locator('.area-head').getByRole('button', { name: /schließen$/ });
-  if ((await close.count()) > 0) await close.click();
+  await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Log', exact: true }).click();
 }
 
 /**

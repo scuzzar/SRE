@@ -21,7 +21,7 @@ export default defineConfig({
       },
     },
     {
-      // Der Desktop-Modus der App: ab 1024 px Breite Reiterzeile oben, Log links.
+      // Der Desktop-Modus der App: ab 1024 px Breite links die Seitenspalte, rechts die Grundkarte.
       name: 'desktop',
       use: {
         ...devices['Desktop Chrome'],

@@ -24,7 +24,7 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
       continue;
     }
     await dock.getByRole('button', { name: 'Welt erschaffen' }).click();
-    // Die Weltkarte steht jetzt im Ziehblatt bzw. im Panel neben dem Log, schiebbar wie jedes Feld.
+    // Die Weltkarte steht jetzt im Ziehblatt bzw. in der Seitenspalte, schiebbar wie jedes Feld.
     const dialog = page.getByRole('region', { name: `Weltenerschaffung ${id}` });
     // Der Hinweis und der Würfelknopf stehen in der Reihe unten, wie beim Orakel, nicht im Feld.
     await expect(page.locator('.generation-prompt')).toHaveText('Systeminhalt: Raumhafen');

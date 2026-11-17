@@ -31,7 +31,7 @@ import { FieldDock } from './sector/FieldDock';
 import { LoadingOverlay } from './loading';
 import { Tray } from './Tray';
 
-/** Die Reiter im Ziehblatt bzw. im Log-Panel, in dieser Reihenfolge. */
+/** Die Reiter im Ziehblatt bzw. oben in der Seitenspalte des Desktops, in dieser Reihenfolge. */
 const areas: readonly { readonly id: Screen; readonly label: string; readonly Icon: () => ReactElement }[] = [
   { id: 'oracle', label: 'Log', Icon: LogIcon },
   { id: 'encounter', label: 'Begegnung', Icon: EncounterIcon },
@@ -45,8 +45,9 @@ const areas: readonly { readonly id: Screen; readonly label: string; readonly Ic
 export function App() {
   const game = useGame();
   const view = useSnapshot();
-  // Desktop-Modus (ab 1024 px): links fest das Log-Panel, daneben der gewählte Bereich, rechts die
-  // Grundkarte. Auf dem Smartphone liegt die Grundkarte unter dem Ziehblatt.
+  // Desktop-Modus (ab 1024 px): links eine Spalte mit den Reitern und darunter dem Log oder dem
+  // gewählten Bereich bzw. Feld, rechts die Grundkarte. Auf dem Smartphone liegt die Grundkarte unter
+  // dem Ziehblatt.
   const desktop = useIsDesktop();
   // Ob das Menü offen ist, ist reine Darstellung; was man darin wählt, entscheidet der Controller.
   const [menu, setMenu] = useState(false);
@@ -60,11 +61,9 @@ export function App() {
   const [syncHintClosed, setSyncHintClosed] = useState(false);
   // Der Platz im Ziehblatt bzw. Panel, in den der Subsektor sein gewähltes Feld zeichnet.
   const [fieldSlot, setFieldSlot] = useState<HTMLDivElement | null>(null);
-  // Die Reiter; im Desktop-Modus ohne Log, das links fest steht.
-  const shown = desktop ? areas.filter((a) => a.id !== 'oracle') : areas;
   // Esc schließt das oberste Popup; die Ziffern wählen den Reiter an dieser Stelle.
   useEscapeCloses(menu);
-  useShortcuts(Object.fromEntries(shown.map((a, i) => [String(i + 1), () => game.showScreen(a.id)])));
+  useShortcuts(Object.fromEntries(areas.map((a, i) => [String(i + 1), () => game.showScreen(a.id)])));
   // Die Weltkarte eines gewählten Feldes, als Feld und als Reihe unten, wie beim Globus; ohne Globus,
   // sonst zeigt der seine eigene (`panel === 'world'`).
   const worldDock = useWorldDock(view.world && !view.globe ? view.world : undefined, view.world !== undefined && view.location === view.world.id, view.travel, view.log, view.logDays);
@@ -95,14 +94,14 @@ export function App() {
 
   const nav = (
     <nav className="nav" aria-label="Bereiche">
-      {shown.map(({ id, label, Icon }, i) => (
+      {areas.map(({ id, label, Icon }, i) => (
         <button
           key={id}
           type="button"
           aria-current={screen === id && !field ? 'page' : undefined}
           title={`${label} (${i + 1})`}
           aria-keyshortcuts={String(i + 1)}
-          // Im Desktop-Modus schließt ein zweiter Klick auf den offenen Reiter das Panel.
+          // Im Desktop-Modus führt ein zweiter Klick auf den offenen Reiter zurück zum Log.
           onClick={() => game.showScreen(desktop && screen === id && !field ? 'oracle' : id)}
         >
           <Icon />
@@ -138,14 +137,15 @@ export function App() {
     </>
   );
 
-  // Die Reihe Notiz, Deuten, Würfeln, Karte: im Log-Panel des Desktops immer, im Ziehblatt nur im Log;
-  // die übrigen Reiter haben unten Platz für ihre eigenen Knöpfe. Beim angetippten Feld des Globus
-  // steht dort (und im Desktop-Modus unter dem Feld) stattdessen die Reihe des Felds.
+  // Die Reihe Notiz, Deuten, Würfeln, Karte: im Ziehblatt nur im Log, die übrigen Reiter haben unten
+  // Platz für ihre eigenen Knöpfe; in der Seitenspalte des Desktops unter jedem Bereich, der keine
+  // eigene Reihe hat. Beim angetippten Feld des Globus steht dort stattdessen die Reihe des Felds.
   const dock = <OracleDock view={view} shortcuts />;
   const fieldDock = view.globe?.picked ? <FieldDock globe={view.globe} trip={view.trip} tripPlan={view.tripPlan} npcTotal={view.npcs.total} /> : undefined;
   // Im Reiter Begegnung: die Würfe der Begegnungen und die Zeit bzw. Weiterfahren.
   const encounterDock = screen === 'encounter' && field === undefined ? <EncounterDock view={view} options={encounterOptions} /> : undefined;
-  const foot = fieldDock ?? (view.picking ? undefined : worldDock.foot) ?? encounterDock ?? (screen === 'oracle' && field === undefined ? dock : undefined);
+  const own = fieldDock ?? (view.picking ? undefined : worldDock.foot) ?? encounterDock;
+  const foot = own ?? ((desktop || screen === 'oracle') && field === undefined ? dock : undefined);
 
   // Die Grundkarte: der Globus der offenen Welt, sonst der Subsektor. Oben rechts das Menü.
   const base = (
@@ -165,32 +165,30 @@ export function App() {
     </div>
   );
 
+  // Was unter den Reitern steht: das angetippte Feld, sonst das Log oder der gewählte Bereich.
+  const body = <div className="screen-host">{field ?? (screen === 'oracle' ? <OracleScreen view={view} dock={false} /> : area)}</div>;
   const areaTitle = areas.find((a) => a.id === screen)?.label ?? (screen === 'about' ? 'Über die App' : '');
 
   return (
     <div className={desktop ? 'app map-app desktop' : 'app map-app'}>
       {desktop ? (
         <>
-          <aside className="oracle-panel" aria-label="Log">
+          {/* Eine Spalte: oben die Reiter, darunter das Log oder an seiner Stelle der gewählte Bereich
+              bzw. das angetippte Feld; ✕ oder ein zweiter Klick auf den Reiter führt zum Log zurück. */}
+          <aside className="side-panel" aria-label="Seitenspalte">
             {banners}
             {nav}
-            <OracleScreen view={view} dock={false} />
-            {dock}
+            {!field && screen !== 'oracle' && (
+              <div className="area-head">
+                <h2 className="section-title">{areaTitle}</h2>
+                <button type="button" className="icon-button" aria-label={`${areaTitle} schließen`} onClick={() => game.showScreen('oracle')}>
+                  <CloseIcon />
+                </button>
+              </div>
+            )}
+            {body}
+            {foot}
           </aside>
-          {(field || screen !== 'oracle') && (
-            <section className="area-panel" aria-label={field ? 'Feld' : areaTitle}>
-              {!field && (
-                <div className="area-head">
-                  <h2 className="section-title">{areaTitle}</h2>
-                  <button type="button" className="icon-button" aria-label={`${areaTitle} schließen`} onClick={() => game.showScreen('oracle')}>
-                    <CloseIcon />
-                  </button>
-                </div>
-              )}
-              <div className="screen-host">{field ?? area}</div>
-              {fieldDock ?? (view.picking ? undefined : worldDock.foot) ?? encounterDock}
-            </section>
-          )}
           {base}
         </>
       ) : (
@@ -200,7 +198,7 @@ export function App() {
             stop={view.trayStop}
             raise={view.globe?.picked?.cell ?? view.selected?.id ?? (view.world && !view.globe ? view.world.id : undefined)}
             head={banners}
-            body={<div className="screen-host">{field ?? (screen === 'oracle' ? <OracleScreen view={view} dock={false} /> : area)}</div>}
+            body={body}
             foot={foot}
             bar={nav}
           />

@@ -34,7 +34,7 @@ type Panel = 'world' | 'places' | 'logs' | undefined;
  * Subsektor, ebenso ganz herausgezoomt), Name und UWP (klappt die Welt im Klartext auf, mit
  * Oberfläche, Aufenthalt, Reise und Notiz) und zwei aufklappbaren Listen (Orte: Städte, Vulkane,
  * Gruppe, NSC; Einträge: die Felder mit Logeinträgen). Ein angetipptes Feld zeigt `FieldCard` im
- * Ziehblatt bzw. im Panel neben dem Log. Wohin die Karte schaut und welche Liste offen ist, ist reine
+ * Ziehblatt bzw. in der Seitenspalte des Desktops. Wohin die Karte schaut und welche Liste offen ist, ist reine
  * Darstellung; welches Feld angetippt ist, hält der Controller.
  */
 export function GlobeScreen({
@@ -539,7 +539,7 @@ export function GlobeScreen({
 
 /**
  * Das angetippte Feld des Globus mit allem, was dort ist, und dem, was dort geschah. Es steht im
- * Ziehblatt bzw. im Panel neben dem Log an der Stelle des Bereichs; ✕ lässt das Feld los. Was man am
+ * Ziehblatt bzw. in der Seitenspalte des Desktops an der Stelle des Bereichs; ✕ lässt das Feld los. Was man am
  * Feld tun kann (hinreisen, Gruppe setzen, NSC platzieren), steht darunter in der Reihe `FieldDock`.
  * Der Name beim Umbenennen ist reine Darstellung.
  */

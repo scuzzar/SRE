@@ -37,7 +37,7 @@ export function ShipScreen({ view }: { view: Snapshot }) {
   const deck = sheet?.kind === 'deck' ? ship.deckPlans.find((p) => p.name === sheet.name) : undefined;
   const buying = sheet?.kind === 'buy' ? ship.yard.find((d) => d.designId === sheet.design) : undefined;
   // Ein offenes Blatt steht wie ein angetipptes Feld an der Stelle des Reiters: im Ziehblatt, das sich
-  // ziehen lässt, über der Karte; im Desktop-Modus im Panel neben dem Log.
+  // ziehen lässt, über der Karte; im Desktop-Modus in der Seitenspalte.
   const field =
     sheet?.kind === 'yard' ? (
       <YardSheet ship={ship} onBuy={(d) => setSheet({ kind: 'buy', design: d.designId, method: d.price <= ship.funds ? 'cash' : 'bank' })} onClose={close} />
