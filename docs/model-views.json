@@ -401,7 +401,7 @@
       "id": "2026-11-17b",
       "file": "2026-11-17b-monatsabrechnung",
       "title": "Monat = 4 Wochen; Monatsabrechnung im Log mit den laufenden Schiffskosten: Rate, Treibstoff, Liegegebühren, Lebenserhaltung",
-      "approved": false,
+      "approved": true,
       "show": [
         "Ship",
         "Booking",

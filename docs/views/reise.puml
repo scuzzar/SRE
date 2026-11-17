@@ -95,7 +95,7 @@ hide <<browser>> stereotype
     days: number
     week: boolean
   }
-  class MonthEnd $reise $newClass("2026-11-17b") {
+  class MonthEnd $reise {
     /month: number
     /total: number
   }
@@ -156,8 +156,8 @@ Journey "1" *-- "*" LowBerth : berths {ordered}
 LowBerth "*" --> "0..1" Character : for
 Journey "*" --> "0..1" LowBerth : /winner
 Journey "*" --> "0..1" Ship : ship
-LogEntry <|-$newArrow("2026-11-17b")- MonthEnd
-MonthEnd "*" -$newArrow("2026-11-17b")-> "*" Booking : costs {ordered}
+LogEntry <|-- MonthEnd
+MonthEnd "*" --> "*" Booking : costs {ordered}
 Booking "*" --> "0..1" Journey : won
 
 ' Charaktererschaffung und Lebenslauf
@@ -188,6 +188,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Booking #line:d0021b;line.bold
-class Ship #line:d0021b;line.bold
 @enduml

@@ -408,10 +408,11 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > liegt unter
 > [`changes/2026-11-17-deckplaene-abgleich.png`](changes/2026-11-17-deckplaene-abgleich.png).
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-17b): **Monat und Monatsabrechnung** (siehe
+> Am 17. November 2026 freigegeben (Kennzeichen 2026-11-17b): **Monat und Monatsabrechnung** (siehe
 > *Schiffe*, *Laufende Kosten und Monatsabrechnung*). Ein Monat sind 4 Wochen; an jedem
 > Monatsende bucht die App die Raten und schreibt eine Monatsabrechnung mit den laufenden
-> Schiffskosten in den Log. Neu dazu: Liegegebühren und Lebenserhaltung. Neu im Bild: `MonthEnd`
+> Schiffskosten in den Log. Neu dazu: Liegegebühren, Lebenserhaltung und die Kabinenprüfung mit
+> Doppelbelegung. Neu im Bild: `MonthEnd`
 > (mit `costs`, `/month` und `/total`), `Booking.shipCost` mit `ShipCost` und
 > `Ship.berthedSince`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-17b-monatsabrechnung.png`](changes/2026-11-17b-monatsabrechnung.png).
@@ -743,6 +744,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Monatsabrechnung | `MonthEnd` | Der Logeintrag am Monatsende: verweist auf die Buchungen mit laufenden Kosten seit dem letzten Monatsende (`costs`), mit Summe (`/total`) und Nummer des abgerechneten Monats (`/month`, 1–13) |
 | Liegegebühr | `ShipCost.berthing` | Cr100 für die ersten sechs Tage in einem Raumhafen, danach Cr100 je weiteren Tag (SR 31) |
 | Im Hafen seit | `Ship.berthedSince` | Der Tag, an dem das Schiff in den Hafen gekommen ist, in dem es liegt; Grundlage der Liegegebühr |
+| Doppelbelegung | (Regel) | Zwei Reisende der Gruppe in einer Kabine; erlaubt zur Not, Gäste brauchen eine Kabine für sich (Hausregel, 2026-11-17b) |
 | Lebenserhaltung | `ShipCost.lifeSupport` | Cr2.000 je Reisendem und Sprung mit dem eigenen Schiff (SR 30: je Kabine und Reise; Doppelbelegung verdoppelt die Kosten) |
 | Ship-Vorteil der Abmusterung | `Gain.ship`, `Gain.shipDebtFree` | Eine Zeile der Mustering-out-Tabelle, die ein Schiff gibt: schuldenfrei (Scout) oder als Anteil an einer Restschuld (Merchant) |
 | Schiffswahl | `CareerRoll.shipChoice`, `ShipChoice` | Nur gesetzt, wenn die Kampagne beim Würfeln des Ship-Vorteils schon ein anderes Schiff hat: behalten oder wechseln (das alte Schiff wird ausgeblendet, seine Restschuld behält es nur für sich) |
@@ -2669,7 +2671,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        Die alten Gegenstände `scout-ship` und `free-trader` (Art `ship`) entfallen
        aus `items.json`, sobald der Code folgt; ihre Preise stehen jetzt als `basePrice` an
        `ShipDesign`.
-  - **Laufende Kosten und Monatsabrechnung** (Kennzeichen 2026-11-17b, wartet auf Freigabe;
+  - **Laufende Kosten und Monatsabrechnung** (freigegeben am 17. November 2026, Kennzeichen 2026-11-17b;
     RAW in [`regeln-schiffe.md`](regeln-schiffe.md) unter *Laufende Kosten* und
     *Hafengebühren und Handelsbräuche*).
     - *Monat* (Owner, 17. November 2026): Ein Monat sind **4 Wochen**. Der Imperiale Kalender kennt
@@ -2707,11 +2709,18 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       nichts. Reicht die Kasse nicht, bleibt die Gebühr offen wie eine Rate (0 Cr, „Liegegebühr
       nicht bezahlt“), ohne weitere Folge. Örtlich niedrigere oder erlassene Gebühren (SR 31)
       bildet die App nicht ab.
+    - *Kabinen* (Owner, 17. November 2026): Eine Reise mit dem eigenen Schiff geht nur, wenn alle
+      Reisenden eine Kabine haben (`ShipDesign.staterooms`). Die Gruppe darf zur Not
+      **Doppelbelegung** machen (Hausregel, für jeden Entwurf; RAW nur bei Forschungs-, Militär- und
+      Privatschiffen): höchstens zwei Reisende der Gruppe je Kabine, also höchstens doppelt so
+      viele Reisende wie Kabinen. Sonst sagt die App, wie viele Kabinen das Schiff hat und wie
+      viele reisen. **Gäste** (später: zahlende Passagiere) brauchen je eine Kabine für sich; die
+      Gruppe teilt sich, was übrig bleibt. Einen dauerhaften NSC nimmt man mit, indem er
+      vorübergehend zur Gruppe gehört; das kommt mit den Hirelings. Bis dahin reisen nur die SC.
     - *Lebenserhaltung* (SR 30): Bei jeder Reise mit dem eigenen Schiff **Cr2.000 je Reisendem**,
       gebucht am Abflugtag (Buchung `ship`, `shipCost` lifeSupport). SR 30 rechnet je besetzter
       Kabine und Reise; weil Doppelbelegung die Kosten verdoppelt, kommt das auf Cr2.000 je Person
-      hinaus, egal wie viele Kabinen der Entwurf hat. Reicht die Kasse nicht, geht die Reise nicht
-      (wie beim Treibstoff). Cr100 je belegter Kälteschlafkoje fällt erst an, wenn auf dem eigenen
+      hinaus. Reicht die Kasse nicht, geht die Reise nicht (wie beim Treibstoff). Cr100 je belegter Kälteschlafkoje fällt erst an, wenn auf dem eigenen
       Schiff jemand in Kälteschlaf reist (zahlende Passagiere, später).
     - *Treibstoff* (SR 30): Tanken bucht wie bisher, jetzt mit `shipCost` fuel; Kauf und Anzahlung
       mit `shipCost` price.
@@ -2778,7 +2787,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
-- **Monat und Monatsabrechnung** (2026-11-17b, wartet auf Freigabe): noch nicht gebaut. Der Code
+- **Monat und Monatsabrechnung** (2026-11-17b): noch nicht gebaut. Der Code
   bucht die Rate alle 30 Tage ab dem Kauf, ohne `shipCost`, ohne Liegegebühren und Lebenserhaltung
   und ohne Logeintrag.
 

@@ -102,7 +102,7 @@ hide <<browser>> stereotype
     amount: number
     count: number [0..1]
     text: string [0..1]
-    $new("2026-11-17b", "shipCost: ShipCost [0..1]")
+    shipCost: ShipCost [0..1]
   }
   enum BookingKind <<value>> $shop {
     income
@@ -173,10 +173,10 @@ hide <<browser>> stereotype
     loanBalance: number [0..1]
     /monthlyPayment: number [0..1]
     nextPaymentDay: number [0..1]
-    $new("2026-11-17b", "berthedSince: number [0..1]")
+    berthedSince: number [0..1]
     retired: boolean
   }
-  enum ShipCost <<value>> $schiffe $newClass("2026-11-17b") {
+  enum ShipCost <<value>> $schiffe {
     price
     rate
     fuel
@@ -338,7 +338,7 @@ hide <<browser>> stereotype
     days: number
     week: boolean
   }
-  class MonthEnd $reise $newClass("2026-11-17b") {
+  class MonthEnd $reise {
     /month: number
     /total: number
   }
@@ -1055,9 +1055,9 @@ Journey "1" *-- "*" LowBerth : berths {ordered}
 LowBerth "*" --> "0..1" Character : for
 Journey "*" --> "0..1" LowBerth : /winner
 Journey "*" --> "0..1" Ship : ship
-LogEntry <|-$newArrow("2026-11-17b")- MonthEnd
-MonthEnd "*" -$newArrow("2026-11-17b")-> "*" Booking : costs {ordered}
-Booking -$newArrow("2026-11-17b")-> ShipCost
+LogEntry <|-- MonthEnd
+MonthEnd "*" --> "*" Booking : costs {ordered}
+Booking --> ShipCost
 Booking "*" --> "0..1" Journey : won
 
 ' Charaktererschaffung und Lebenslauf
