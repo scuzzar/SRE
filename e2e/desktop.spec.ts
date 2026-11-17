@@ -1,5 +1,5 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
-import { openPeople, openShop, openCombat } from './layout';
+import { openPeople, openShop, openCombat, pickCapital } from './layout';
 
 // Der Desktop-Modus (ab 1024 px): links eine Spalte mit den Reitern, darunter das Log mit dem Charakter
 // oben oder an seiner Stelle der gewählte Bereich bzw. das angetippte Feld; unten die Reihe Notiz,
@@ -139,16 +139,17 @@ test('Kampf und Shop zeigen ihre SC selbst; ein Klick auf eine Karte holt sie na
   await expect(kira).toContainText('Jack');
   await kira.getByRole('button', { name: /Automatic Pistol/ }).click();
   await expect(page.getByRole('heading', { name: 'Automatic Pistol' })).toBeVisible();
-  // Im Shop (Einkaufen an der Weltkarte von Kessra): Credits; Jonas nach oben, dann kauft man für ihn.
+  // Im Shop (Einkaufen in der Hauptstadt von Kessra): Credits; Jonas nach oben, dann kauft man für ihn.
   await openShop(page);
   await expect(head(page)).toContainText('Shop');
   await expect(area.getByRole('article', { name: 'Kira Vant' })).toContainText('Cr 12.400');
   await area.getByRole('button', { name: 'Jonas Reyl nach oben' }).click();
   await expect(area).toContainText('Jonas Reyl hat die Fertigkeit');
-  // Keiner der Reiter ist dabei gewählt; ✕ im Kopf führt zur Weltkarte zurück.
+  // Keiner der Reiter ist dabei gewählt; ✕ im Kopf führt zum Feld der Stadt zurück.
   await expect(nav(page).locator('[aria-current="page"]')).toHaveCount(0);
   await page.getByRole('button', { name: 'Shop schließen' }).click();
-  await expect(area.getByRole('button', { name: 'Einkaufen', exact: true })).toBeVisible();
+  await expect(area.getByRole('region', { name: 'Angetipptes Feld' })).toBeVisible();
+  await expect(area.getByRole('button', { name: 'Einkaufen', exact: true })).toBeEnabled();
 });
 
 test('Die Ziffern wählen die Reiter', async ({ page }, testInfo) => {
@@ -178,7 +179,8 @@ test('Globus als Grundkarte: ein angetipptes Feld steht in der Seitenspalte, ✕
   await canvas.click({ position: { x: box.width / 2, y: box.height / 2 } });
   const field = panel(page).getByRole('region', { name: 'Angetipptes Feld' });
   await expect(field).toContainText('°C im Jahresmittel');
-  // Einkaufen zeigt den Shop an der Stelle des Felds; ✕ führt zum Feld zurück.
+  // Einkaufen geht nur in einer Stadt: in der Hauptstadt zeigt es den Shop an der Stelle des Felds; ✕ führt zum Feld zurück.
+  await pickCapital(page);
   await panel(page).getByRole('button', { name: 'Einkaufen', exact: true }).click();
   await expect(field).toHaveCount(0);
   await expect(panel(page).locator('.shop-world')).toContainText('Kessra');

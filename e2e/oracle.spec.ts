@@ -24,7 +24,12 @@ test('Orakel auf der Karte: Frage auf die Karte, je Stufe eine Antwort, die gew�
   await page.getByRole('button', { name: 'Karte ziehen' }).click();
   const card = page.getByRole('dialog', { name: 'Inspirationskarte' });
   await revealed(card);
-  await card.getByPlaceholder(/Frage an die Karte/).fill('Ist Halvek ehrlich?');
+  const ask = card.getByPlaceholder(/Frage an die Karte/);
+  await ask.fill('Ist Halvek ehrlich?');
+  // Enter (✓ auf der Tastatur) fügt keine Zeile ein, sondern schließt die Tastatur.
+  await ask.press('Enter');
+  await expect(ask).not.toBeFocused();
+  await expect(ask).toHaveValue('Ist Halvek ehrlich?');
   const oracleField = card.getByRole('group', { name: /^Orakel, W100 \d+$/ });
   const choices = oracleField.getByRole('button');
   await expect(choices).toHaveCount(3);

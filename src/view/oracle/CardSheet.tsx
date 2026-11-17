@@ -128,7 +128,23 @@ export function CardSheet({ card, onConfirm }: { card: CardView; onConfirm?: (te
           <label htmlFor="card-question" className="visually-hidden">
             Frage an die Karte
           </label>
-          <input id="card-question" type="text" value={question} placeholder="Frage an die Karte (freiwillig)" autoComplete="off" enterKeyHint="done" onChange={(e) => setQuestion(e.target.value)} />
+          {/* Ein einzeiliges Textfeld statt <input>: Chrome auf Android zeigt bei <input> trotz
+              autoComplete="off" die Autofill-Leiste (Passwort, Karte, Adresse) statt Wortvorschlägen.
+              Enter (✓ auf der Tastatur) fügt keine Zeile ein, sondern schließt die Tastatur. */}
+          <textarea
+            id="card-question"
+            rows={1}
+            value={question}
+            placeholder="Frage an die Karte (freiwillig)"
+            autoComplete="off"
+            enterKeyHint="done"
+            onChange={(e) => setQuestion(e.target.value.replace(/\n/g, ' '))}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter') return;
+              e.preventDefault();
+              e.currentTarget.blur();
+            }}
+          />
         </div>
         <div ref={body} className={drawing ? 'sheet-body drawing' : 'sheet-body'}>
           <div key={draw} className="card-flip">

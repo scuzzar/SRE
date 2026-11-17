@@ -12,13 +12,13 @@ export const encounterParts: readonly Part[] = [
 /** Die Teile des Reiters Charaktere, in dieser Reihenfolge. */
 export const peopleParts: readonly Part[] = [
   { id: 'characters', name: 'SC' },
-  { id: 'npcs', name: 'NSC' },
   { id: 'funds', name: 'Kasse' },
+  { id: 'npcs', name: 'NSC' },
 ];
 
 /**
  * Der Umschalter oben in einem Reiter mit mehreren Teilen: im Reiter Begegnung Begegnung und Kampf, im
- * Reiter Charaktere SC, NSC und Kasse. Reine Darstellung; was ein Tipp bewirkt, entscheidet der
+ * Reiter Charaktere SC, Kasse und NSC. Reine Darstellung; was ein Tipp bewirkt, entscheidet der
  * Controller (`showScreen`).
  */
 export function SubTabs({ label, parts, screen }: { label: string; parts: readonly Part[]; screen: Screen }) {

@@ -1132,13 +1132,11 @@ export class GameController {
   }
 
   /**
-   * „Einkaufen“ am Feld bzw. an der Weltkarte des Aufenthaltsorts: Der Shop steht an der Stelle des
-   * Felds bzw. Bereichs; ✕ (`closeShop`) führt dorthin zurück, woher man kam. Ohne Aufenthaltsort gibt
-   * es nichts zu kaufen.
+   * „Einkaufen“ am angetippten Feld des Globus: Der Shop steht an der Stelle des Felds; ✕ (`closeShop`)
+   * führt dorthin zurück. Einkaufen geht nur in einer Stadt auf der Welt der Gruppe (`shopBlocker`).
    */
   openShop(): void {
-    const campaign = this.state.campaign;
-    if (!campaign || campaign.location === undefined) return;
+    if (this.shopBlocker() !== undefined) return;
     const { screen, globe, world, selected } = this.state;
     const from = this.state.shopFrom ?? { screen: screen === 'shop' ? 'oracle' : screen, picked: globe?.picked, world: globe ? undefined : world, selected };
     // Auf dem Globus bleibt die Welt offen (er gehört zu ihr), nur das Feld wird losgelassen; im
@@ -1146,7 +1144,18 @@ export class GameController {
     this.update({ shopFrom: from, screen: 'shop', npcPlacing: undefined, npcJoining: undefined, selected: undefined, ...(globe ? { globe: { picked: undefined } } : { world: undefined }), worldError: undefined });
   }
 
-  /** ✕ im Shop: zurück zum Feld, zur Weltkarte bzw. in den Reiter, aus dem „Einkaufen“ kam. */
+  /** Warum man am angetippten Feld nicht einkaufen kann; `undefined`, wenn es geht. */
+  private shopBlocker(): string | undefined {
+    const campaign = this.state.campaign;
+    const at = this.state.world;
+    const cell = this.state.globe?.picked;
+    if (!campaign || !at || cell === undefined) return 'Erst ein Feld auf dem Globus antippen.';
+    if (campaign.location?.world !== hexId(at.column, at.row)) return 'Einkaufen geht nur auf der Welt der Gruppe.';
+    const city = hexAt(campaign.hexes, at.column, at.row)?.map?.cities?.some((c) => c.cell === cell) ?? false;
+    return city ? undefined : 'Einkaufen geht nur in einer Stadt.';
+  }
+
+  /** ✕ im Shop: zurück zum Feld bzw. in den Reiter, aus dem „Einkaufen“ kam. */
   closeShop(): void {
     const from = this.state.shopFrom;
     if (!from) return this.showScreen('oracle');
@@ -1869,11 +1878,13 @@ export class GameController {
 
   /**
    * „+ Neuer NSC“ aus einer Laufbahn (siehe domain-model.md, *NSC aus einer Laufbahn*): Die
-   * Erschaffung läuft ohne Animation durch, danach steht der neue NSC im Editor zum Nachbessern.
+   * Erschaffung läuft ohne Animation durch, danach steht der neue NSC im Editor zum Nachbessern. Mit
+   * `here` (langes Drücken auf „NSC platzieren“) lebt er auf dem angetippten Feld des Globus bzw. in der
+   * Stadt darauf.
    */
-  generateNpc(service: string, role: NpcRole): void {
+  generateNpc(service: string, role: NpcRole, here = false): void {
     try {
-      const { campaign, id } = generateNpc(this.campaign, { service, role }, this.deps.random);
+      const { campaign, id } = generateNpc(this.campaign, { service, role }, this.deps.random, here ? this.pickedPlace() : undefined);
       this.change(campaign, { editor: { id, error: undefined } });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;

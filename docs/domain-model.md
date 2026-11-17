@@ -555,8 +555,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Art der Buchung | `BookingKind` | income (Einnahme, z. B. Belohnung), expense (Ausgabe), deposit (Einzahlung eines Charakters), payout (Auszahlung an einen Charakter), purchase (Kauf), sale (Verkauf), lottery (Gewinn der Low Lottery), rent (Miete je Tag eines Fahrzeugs), fare (Fahrpreis im Linienverkehr), ship (Schiff: voller Preis, Anzahlung, Monatsrate, Treibstoff, Liegegebühr, Lebenserhaltung; welche, sagt `shipCost`) |
 | Angebot | `Hex./offer` | Was man auf der Welt kaufen kann: nach TL und Gesetz der Welt |
 | Reiter | (View, `Screen`) | Die vier Reiter unten im Ziehblatt bzw. oben in der Seitenspalte: Log, Begegnung, Charaktere, Schiff; Begegnung und Charaktere haben oben einen Umschalter |
-| Reiter Charaktere | (Reiter „Charaktere“; Screens `characters`, `npcs`, `funds`) | Oben ein Umschalter zwischen **SC** (Charakterkarten und Gruppengepäck), **NSC** (die *NSC-Liste*) und **Kasse** |
-| Shop | (Screen `shop`, `openShop`, `closeShop`) | Der Screen für den Einkauf auf dem Aufenthaltsort, ohne eigenen Reiter: „Einkaufen“ an der Weltkarte des Aufenthaltsorts bzw. am angetippten Feld seines Globus öffnet ihn an der Stelle des Felds, ✕ führt dorthin zurück, ein Reiter verlässt ihn |
+| Reiter Charaktere | (Reiter „Charaktere“; Screens `characters`, `npcs`, `funds`) | Oben ein Umschalter zwischen **SC** (Charakterkarten und Gruppengepäck), **Kasse** und **NSC** (die *NSC-Liste*) |
+| Shop | (Screen `shop`, `openShop`, `closeShop`) | Der Screen für den Einkauf auf dem Aufenthaltsort, ohne eigenen Reiter: „Einkaufen“ am angetippten Feld einer Stadt auf dem Globus des Aufenthaltsorts öffnet ihn an der Stelle des Felds (nur in Städten), ✕ führt dorthin zurück, ein Reiter verlässt ihn |
 | Kasse | (Screen `funds`, im Reiter Charaktere) | Stand der Gruppenkasse, freie Buchungen (Einnahme, Ausgabe, Einzahlung, Auszahlung mit einem gewählten SC) und das Kassenbuch; geht auch ohne Aufenthaltsort |
 | Magazin | `Weapon.ammo` | Der Gegenstand, der eine Schusswaffe lädt, z. B. Rifle Ammo (20 rds) oder LC Power Pack |
 | Schuss im Magazin | `Possession.rounds`, `Weapon.rounds` | Wie viele Schuss eine Schusswaffe gerade geladen hat bzw. voll fasst |
@@ -580,7 +580,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Laufbahn eines Patrons | `Patron.career` | Die Laufbahn, in der ein Patron-NSC seine Charaktererschaffung durchläuft, z. B. Smuggler: Merchants (Hausregel) |
 | Rolle eines NSC | `Character.role`, `NpcRole` | Wozu ein dauerhafter NSC da ist, aus einer festen Liste: Patron, Begegnung, Feind, Rivale, Verbündeter, Kontakt, Behörde, Händler, Makler, Captain, Crew, Passagier, Sonstige |
 | NSC-Liste | (Screen `npcs`, im Reiter Charaktere unter „NSC“) | Der Screen mit den dauerhaften NSC des Aufenthaltsorts, nach Rolle gruppiert; mit „Alle zeigen“ alle, nach Welt und darin nach Rolle |
-| NSC platzieren | (Ablauf, `startNpcPlacing`, `placeNpcs`) | Vom angetippten Feld des Globus aus: Die NSC-Liste öffnet sich (ohne den Umschalter oben) mit einem Kästchen an jedem NSC (wer schon auf dem Feld ist, ist angehakt), unten „Abbrechen“ und „OK“; seine Filter wie „Alle zeigen“ gelten weiter, so kommen auch NSC von anderen Welten oder ohne Ort dazu. „OK“ setzt die angehakten auf das Feld (bzw. in die Stadt darauf, `Character.place`); beides führt zurück zum Feld |
+| NSC platzieren | (Ablauf, `startNpcPlacing`, `placeNpcs`) | Vom angetippten Feld des Globus aus: Die NSC-Liste öffnet sich (ohne den Umschalter oben) mit einem Kästchen an jedem NSC (wer schon auf dem Feld ist, ist angehakt), unten „Abbrechen“ und „OK“; seine Filter wie „Alle zeigen“ gelten weiter, so kommen auch NSC von anderen Welten oder ohne Ort dazu. „OK“ setzt die angehakten auf das Feld (bzw. in die Stadt darauf, `Character.place`); beides führt zurück zum Feld. Lange gedrückt öffnet es stattdessen „Neuer NSC“ nur mit den Laufbahnen (siehe *NSC aus einer Laufbahn*): Der erzeugte NSC lebt auf diesem Feld bzw. in dieser Stadt |
 | Getragene Rüstung | `Character.wears` | Die Rüstung, die jemand gerade anhat; sie zählt, wenn er angegriffen wird |
 | Rüstungsklasse einer Rüstung | `Item.armor` | Wie eine Rüstung in der Matrix zählt, z. B. Vacc Suit als Cloth, Battle Dress als Combat |
 | Wunden | `/wounds`, `Wounds` | Wie viel STR, DEX und END jemand durch Treffer verloren hat |
@@ -1317,7 +1317,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Die Kampagnendatei enthält Aufenthaltsort und Buchungen; beim Import muss jede Buchung zu ihrer
     Art passen und die Kasse nach keiner Buchung negativ sein.
 - **Shop.** Im *Shop* kauft die Gruppe auf ihrem Aufenthaltsort ein, aus der Gruppenkasse. Er hat keinen
-  eigenen Reiter: „Einkaufen“ am Feld bzw. an der Weltkarte des Aufenthaltsorts öffnet ihn (2026-11-17);
+  eigenen Reiter: „Einkaufen“ am angetippten Feld einer **Stadt** auf der Welt der Gruppe öffnet ihn (2026-11-17; auf
+  einem Feld ohne Stadt ist der Knopf ausgegraut);
   Buchungen und Kassenbuch stehen unter *Kasse* im Reiter Charaktere. Das Angebot steht in den
   Bereichen Waffen, Rüstung, Fahrzeuge, Sonstiges (Ausrüstung, Passagen); dazu Verkauf. Das ist reine Anzeige.
   - **Angebot** (`/offer`): jeder Gegenstand aus der Liste mit Preis, dessen TL höchstens der TL der
@@ -1744,7 +1745,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     erzeugen**. Erzeugt wird wie beim Patron-NSC, nur in der gewählten Laufbahn: Die
     Charaktererschaffung läuft zufällig und ohne Animation durch (abgelehnt oder tot: von vorn),
     Name von der Tafel NSC, Ort der Aufenthaltsort, danach öffnet der Editor zum Nachbessern. Ohne
-    Aufenthaltsort geht es nicht. Er hat keinen Patron.
+    Aufenthaltsort geht es nicht. Er hat keinen Patron. Lange auf „NSC platzieren“ am angetippten
+    Feld des Globus gedrückt (2026-11-17), lebt er stattdessen auf diesem Feld bzw. in der Stadt
+    darauf (`Character.place` mit `cell` bzw. `city`) und bewaffnet sich nach dem Gesetz dieser Welt;
+    dann geht es auch ohne Aufenthaltsort, und „leer anlegen“ gibt es dort nicht.
   - **Waffen erzeugter NSC** (2026-11-14c; Patron-NSC und NSC aus einer Laufbahn, nicht die NSC
     der Begegnung, die ihre eigene Regel haben). Hausregel nach Wunsch des Owners:
     - *SOC-Stufe*: Jede Waffe hat ein Mindest-SOC (`Weapon.minSoc`): billige Nahkampfwaffen ab 0

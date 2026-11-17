@@ -122,7 +122,6 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
 test('Shop: „Gruppe platzieren“ auf der Weltkarte bringt die Gruppe auf eine andere Welt', async ({ page }) => {
   await page.goto('/');
   const world = await makeWorld(page);
-  const id = (await world.getAttribute('aria-label'))!.slice(-4);
   await page.getByRole('button', { name: 'Gruppe platzieren' }).click();
   // Wie „Gruppe setzen“ am Hexfeld des Globus: Ist die Gruppe hier, ist der Knopf ausgegraut, das Blatt sagt es.
   await expect(page.getByRole('button', { name: 'Gruppe platzieren' })).toBeDisabled();
@@ -131,10 +130,10 @@ test('Shop: „Gruppe platzieren“ auf der Weltkarte bringt die Gruppe auf eine
   await page.getByRole('button', { name: /^Welten \d+/ }).click();
   await expect(page.locator('.world-list-here')).toBeVisible();
   await page.getByRole('button', { name: /^Welten \d+/ }).click();
-  await openShop(page, id);
+  // Der Knopf ⌖ in der Leiste des Subsektors öffnet den Globus des Aufenthaltsorts; in seiner Hauptstadt kauft man ein.
+  await openShop(page);
   await expect(page.locator('.shop-world')).toContainText('Regina');
-  // Der Knopf ⌖ in der Leiste des Subsektors öffnet den Globus des Aufenthaltsorts.
-  await page.getByRole('button', { name: 'Aufenthaltsort Regina, Globus öffnen' }).click();
+  await page.getByRole('button', { name: 'Shop schließen' }).click();
   const globe = page.getByRole('region', { name: 'Globus · Regina' });
   // Oben klappen Name und UWP die Welt auf; dort steht, dass die Gruppe hier ist.
   await globe.getByRole('button', { name: /^Regina, UWP / }).click();

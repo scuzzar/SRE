@@ -299,7 +299,22 @@ test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des 
   await page.getByRole('checkbox', { name: 'Mara Voss wählen' }).check();
   await placing.getByRole('button', { name: /^OK, 1 NSC nach / }).click();
   await expect(field).toContainText('Mara Voss · NSC, Kontakt');
-  await expect(placeNpcs).toBeDisabled();
+  // Danach ist keiner mehr zu holen: Ein Tippen tut nichts.
+  await placeNpcs.click();
+  await expect(placing).toHaveCount(0);
+  await expect(field).toBeVisible();
+  // Lange gedrückt erzeugt es einen neuen NSC aus einer Laufbahn, der hier lebt.
+  const hold = (await placeNpcs.boundingBox())!;
+  await page.mouse.move(hold.x + hold.width / 2, hold.y + hold.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(1100);
+  await page.mouse.up();
+  const create = page.getByRole('dialog', { name: /^Neuer NSC (auf diesem Feld|in )/ });
+  await expect(create.getByRole('button', { name: 'Leer anlegen' })).toHaveCount(0);
+  await create.getByLabel('Rolle').selectOption({ label: 'Händler' });
+  await create.getByRole('button', { name: 'Scouts', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Charakter bearbeiten' }).getByRole('button', { name: 'Schließen' }).click();
+  await expect(field).toContainText('NSC, Händler');
   // Hierhin reisen plant die Route; dann stehen unten Abbrechen und Losfahren statt der Knöpfe des Felds.
   await actions.getByRole('button', { name: 'Hierhin reisen' }).click();
   await expect(actions.getByRole('button', { name: 'Hierhin reisen' })).toHaveCount(0);

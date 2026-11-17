@@ -405,7 +405,7 @@ export interface ItemChoice {
 /**
  * Was im Ziehblatt bzw. in der Seitenspalte steht. Die Reiter sind Log, Begegnung, Charaktere und
  * Schiff; im Reiter Begegnung schaltet man zwischen `encounter` und `combat` (Kampf) um, im Reiter
- * Charaktere zwischen `characters` (SC), `npcs` (NSC) und `funds` (Kasse). Den Shop öffnet „Einkaufen“ am Feld bzw. an der Weltkarte des Aufenthaltsorts.
+ * Charaktere zwischen `characters` (SC), `funds` (Kasse) und `npcs` (NSC). Den Shop öffnet „Einkaufen“ am Feld bzw. an der Weltkarte des Aufenthaltsorts.
  */
 export type Screen = 'oracle' | 'encounter' | 'combat' | 'shop' | 'ship' | 'characters' | 'npcs' | 'funds' | 'sector' | 'about';
 

@@ -437,28 +437,6 @@ describe('Kampf', () => {
 describe('Shop und Gruppenkasse', () => {
   const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
 
-  it('Einkaufen öffnet den Shop nur am Aufenthaltsort; ✕ führt zur Weltkarte zurück, ein Reiter verlässt ihn', async () => {
-    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina])));
-    game.chooseHex(1, 1);
-    game.openShop();
-    expect(game.snapshot().screen).toBe('oracle');
-    game.stayHere();
-    game.showScreen('ship');
-    game.chooseHex(1, 1);
-    const world = game.snapshot().world?.id;
-    expect(world).toBeDefined();
-    game.openShop();
-    expect(game.snapshot()).toMatchObject({ screen: 'shop', world: undefined });
-    game.closeShop();
-    expect(game.snapshot().screen).toBe('ship');
-    expect(game.snapshot().world?.id).toBe(world);
-    game.openShop();
-    game.showScreen('funds');
-    expect(game.snapshot().screen).toBe('funds');
-    game.closeShop();
-    expect(game.snapshot().screen).toBe('oracle');
-  });
-
   it('die Beispiel-Charaktere tragen ihre Rüstung; eine gekaufte Rüstung trägt er gleich, die alte kommt ins Gepäck', async () => {
     const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina])));
     expect(game.snapshot().characters.map((c) => c.armor)).toEqual(['Jack', 'Mesh']);
@@ -2034,6 +2012,41 @@ describe('Orte (2026-11-14j)', () => {
     // Wer schon dort ist, steht beim nächsten Mal als „schon hier“ in der Auswahl.
     game.startNpcPlacing();
     expect([...game.snapshot().npcs.placing!.here].sort()).toEqual([mara, tenzin].sort());
+  });
+
+  it('Einkaufen geht nur in einer Stadt auf der Welt der Gruppe; ✕ führt zum Feld zurück, ein Reiter verlässt den Shop', async () => {
+    const { game } = await started();
+    game.showScreen('ship');
+    game.openGlobeAt(4, 5);
+    const capital = game.snapshot().globe!.cities[0]!;
+    const cities = new Set(game.snapshot().globe!.cities.map((c) => c.cell));
+    const empty = game.snapshot().globe!.grid.lat.findIndex((_, cell) => !cities.has(cell));
+    game.pickCell(empty);
+    game.openShop();
+    expect(game.snapshot().screen).toBe('ship');
+    game.pickCell(capital.cell);
+    game.openShop();
+    expect(game.snapshot()).toMatchObject({ screen: 'shop', globe: { picked: undefined } });
+    game.closeShop();
+    expect(game.snapshot()).toMatchObject({ screen: 'ship', globe: { picked: { cell: capital.cell } } });
+    game.openShop();
+    game.showScreen('funds');
+    expect(game.snapshot().screen).toBe('funds');
+    game.closeShop();
+    expect(game.snapshot().screen).toBe('oracle');
+  });
+
+  it('NSC platzieren lange gedrückt: ein neuer NSC aus einer Laufbahn lebt auf dem angetippten Feld bzw. in der Stadt', async () => {
+    // Ein einfacher, fester Zufall, mit dem die Laufbahn zu Ende läuft (immer das Minimum tut es nicht).
+    let seed = 7;
+    const { game } = await started({ int: (min, max) => min + ((seed = (seed * 16807) % 2147483647) % (max - min + 1)) });
+    game.openGlobeAt(4, 5);
+    const capital = game.snapshot().globe!.cities[0]!;
+    game.pickCell(capital.cell);
+    game.generateNpc('scouts', 'enemy', true);
+    const id = game.snapshot().editor!.id!;
+    expect(game['campaign'].characters.find((c) => c.id === id)!.place).toEqual({ world: '0405', city: 0 });
+    expect(game.snapshot().globe!.picked!.npcs.map((n) => n.id)).toEqual([id]);
   });
 
   it('neue Logeinträge bekommen den Aufenthaltsort, die Gruppe lässt sich auf dem Globus versetzen', async () => {

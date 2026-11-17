@@ -1,4 +1,7 @@
-import type { GlobeView, TripPlanView, TripView } from '../../controller';
+import { useState } from 'react';
+import type { GlobeView, NpcScreenView, TripPlanView, TripView } from '../../controller';
+import { NewNpcSheet } from '../characters/NpcScreen';
+import { HoldButton } from '../HoldButton';
 import { useGame } from '../game-context';
 import { CloseIcon, NpcPinIcon, PinIcon, RouteIcon, ShopIcon } from '../icons';
 
@@ -6,13 +9,17 @@ import { CloseIcon, NpcPinIcon, PinIcon, RouteIcon, ShopIcon } from '../icons';
  * Die Reihe unten beim angetippten Feld des Globus, an der Stelle der Reihe Notiz, Deuten, 2W6,
  * Karte und im selben Stil: Hierhin reisen (die Route zum Feld planen, `planTrip`), Gruppe setzen
  * (ohne Fahrt und ohne Zeit, `moveParty`) und NSC platzieren (öffnet die NSC-Liste zum Auswählen,
- * `startNpcPlacing`; mit „OK“ oder „Abbrechen“ geht es zurück zum Feld) und Einkaufen (öffnet auf der
- * Welt der Gruppe den Shop an der Stelle des Felds, `openShop`; ✕ führt zurück). Was gerade nicht geht, ist ausgegraut und sagt im Titel, warum. Reine
+ * `startNpcPlacing`; mit „OK“ oder „Abbrechen“ geht es zurück zum Feld; lange gedrückt erzeugt es einen
+ * neuen NSC aus einer Laufbahn, der hier lebt) und Einkaufen (nur in einer Stadt auf der Welt der
+ * Gruppe: öffnet den Shop an der Stelle des Felds, `openShop`; ✕ führt zurück). Was gerade nicht geht, ist ausgegraut und sagt im Titel, warum. Reine
  * Darstellung: Was die Knöpfe bewirken, entscheidet der Controller. Wird eine Route geplant, stehen
  * stattdessen „Abbrechen“ und „Losfahren“ da.
  */
-export function FieldDock({ globe, trip, tripPlan, npcTotal }: { globe: GlobeView; trip: TripView | undefined; tripPlan: TripPlanView | undefined; /** Wie viele lebende NSC es gibt, auf allen Welten. */ npcTotal: number }) {
+export function FieldDock({ globe, trip, tripPlan, npcs }: { globe: GlobeView; trip: TripView | undefined; tripPlan: TripPlanView | undefined; npcs: NpcScreenView }) {
   const game = useGame();
+  // Ob das Fenster „Neuer NSC“ (langes Drücken auf „NSC platzieren“) offen ist, ist reine Darstellung.
+  const [creating, setCreating] = useState(false);
+  const npcTotal = npcs.total;
   const picked = globe.picked;
   if (!picked) return null;
   const partyHere = globe.partyHere && globe.partyCell === picked.cell;
@@ -29,6 +36,8 @@ export function FieldDock({ globe, trip, tripPlan, npcTotal }: { globe: GlobeVie
   const moveLabel = picked.city === undefined ? 'Gruppe hierher setzen' : 'Gruppe in diese Stadt setzen';
   // Wer schon auf dem Feld steht, muss nicht hergeholt werden; geholt wird von jeder Welt.
   const npcBlocker = npcTotal === 0 ? 'Noch keine NSC' : npcTotal <= picked.npcs.length ? 'Alle NSC sind schon hier' : undefined;
+  const shopBlocker = !globe.partyHere ? 'Einkaufen geht nur auf der Welt der Gruppe' : picked.city === undefined ? 'Einkaufen geht nur in einer Stadt' : undefined;
+  const placeName = picked.cities[0] === undefined ? 'auf diesem Feld' : `in ${picked.cities[0].name}`;
   // Warum man nicht hinreisen kann, steht auf dem Handy (ohne Titel beim Zeigen) über der Reihe, wenn
   // es nicht schon das Feld selbst zeigt (Gruppe hier, Route oder Fahrt im Blatt).
   const hint = !globe.partyHere
@@ -66,15 +75,23 @@ export function FieldDock({ globe, trip, tripPlan, npcTotal }: { globe: GlobeVie
           <PinIcon />
           Gruppe setzen
         </button>
-        <button type="button" className="action note" title={npcBlocker ?? 'Unter Charaktere › NSC auswählen, wer hierher kommt, auch von anderen Welten'} disabled={npcBlocker !== undefined} onClick={() => game.startNpcPlacing()}>
+        <HoldButton
+          className="action note"
+          label="NSC platzieren"
+          hint={`Lange drücken: einen neuen NSC aus einer Laufbahn erzeugen, der ${placeName} lebt`}
+          title={`${npcBlocker ?? 'Unter Charaktere › NSC auswählen, wer hierher kommt, auch von anderen Welten'}; lange drücken erzeugt einen neuen NSC hier`}
+          onPress={() => npcBlocker === undefined && game.startNpcPlacing()}
+          onHold={() => setCreating(true)}
+        >
           <NpcPinIcon />
           NSC platzieren
-        </button>
-        <button type="button" className="action note" title={globe.partyHere ? 'Im Shop der Welt kaufen und verkaufen' : 'Einkaufen geht nur auf der Welt der Gruppe'} disabled={!globe.partyHere} onClick={() => game.openShop()}>
+        </HoldButton>
+        <button type="button" className="action note" title={shopBlocker ?? 'Im Shop der Stadt kaufen und verkaufen'} disabled={shopBlocker !== undefined} onClick={() => game.openShop()}>
           <ShopIcon />
           Einkaufen
         </button>
       </div>
+      {creating && <NewNpcSheet npcs={npcs} here={placeName} onClose={() => setCreating(false)} />}
     </section>
   );
 }
