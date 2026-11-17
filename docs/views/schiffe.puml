@@ -134,7 +134,7 @@ hide <<browser>> stereotype
     routine
   }
   class DeckPlan <<browser>> $schiffe {
-    $new("2026-11-17", "key: string")
+    key: string
     name: string
     image: string
   }
@@ -198,5 +198,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class DeckPlan #line:d0021b;line.bold
 @enduml

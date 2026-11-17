@@ -399,7 +399,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Ausschnitt dazu liegt unter
 > [`changes/2026-11-16d-reisen-mit-eigenem-schiff.png`](changes/2026-11-16d-reisen-mit-eigenem-schiff.png).
 >
-> **Entwurf vom 17. November 2026, wartet auf Freigabe** (Kennzeichen 2026-11-17): **Deckpläne mit
+> Am 17. November 2026 freigegeben (Kennzeichen 2026-11-17): **Deckpläne mit
 > OneDrive abgleichen** (siehe *Abgleich mit OneDrive*, *Deckpläne*). Bisher blieben die Deckpläne
 > auf dem Gerät; nach dem Wunsch des Owners gleicht der Abgleich sie jetzt mit OneDrive ab, über
 > Kampagnen und Geräte hinweg. Neu im Bild: `DeckPlan.key`, der Schlüssel, an dem der Abgleich ein
@@ -822,7 +822,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Der Konflikt ist flüchtig: Nach einem Neustart findet ihn der Abgleich wieder.
   - *Abmelden* lässt die Kampagnen auf dem Gerät und in OneDrive, wie sie sind, und löscht die
     Abgleichsmarken. Ebenso bei den Deckplänen.
-  - *Deckpläne* (Entwurf vom 17. November 2026, Kennzeichen 2026-11-17, **wartet auf Freigabe**).
+  - *Deckpläne* (freigegeben am 17. November 2026, Kennzeichen 2026-11-17).
     Der Abgleich bringt auch die Deckpläne (siehe *Schiffe*, *Deckpläne*) auf denselben Stand, im
     selben Lauf wie die Kampagnen.
     - *Wo.* Im Unterordner `Deckplaene` des App-Ordners, je Plan eine Datei, die nach Entwurf und
@@ -2675,8 +2675,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (kein Bargeld). Der Entwurf verweist über `computer` auf ein `ComputerModel` statt auf
     den bisherigen Text. Welche Programme gerade in der CPU laufen, ist taktisch und kommt
     erst mit dem Raumkampf.
-  - **Deckpläne** (freigegeben am 16. November 2026; Abgleich mit OneDrive als Entwurf vom 17. November
-    2026, Kennzeichen 2026-11-17, **wartet auf Freigabe**). Bis zu drei eigene Pläne je Entwurf:
+  - **Deckpläne** (freigegeben am 16. November 2026; Abgleich mit OneDrive freigegeben am 17. November
+    2026, Kennzeichen 2026-11-17). Bis zu drei eigene Pläne je Entwurf:
     Bilder, als PNG hochgeladen oder mit der Kamera fotografiert, je auf einem Platz (Deck A, B, C),
     der ihm den Namen gibt. Große Fotos werden vor dem Ablegen auf höchstens 2048 Pixel verkleinert.
     `DeckPlan` ist orange, **über Kampagnen hinweg**: Das Gerät hält sie in einem eigenen

@@ -217,7 +217,7 @@ hide <<browser>> stereotype
     routine
   }
   class DeckPlan <<browser>> $schiffe {
-    $new("2026-11-17", "key: string")
+    key: string
     name: string
     image: string
   }
