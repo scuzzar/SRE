@@ -506,7 +506,7 @@ function Ledger({ shop }: { shop: ShopView }) {
       <h2 className="section-title">Kassenbuch</h2>
       <ol>
         {shop.bookings.map((b, i) => (
-          <li key={i} className="shop-booking">
+          <li key={i} className={b.amount === 0 ? 'shop-booking unpaid' : 'shop-booking'}>
             <span className="kicker">{b.shipCost === undefined ? bookingText[b.kind] : shipCostText[b.shipCost]}</span>
             <span className="shop-booking-text">
               {b.kind === 'purchase'

@@ -4907,6 +4907,70 @@ button:disabled {
   font-weight: 700;
 }
 
+/* Das Kassenbuch: je Buchung oben Art und Uhrzeit, darunter Text und Betrag rechtsbündig. */
+.shop-ledger {
+  margin-top: 16px;
+}
+
+.shop-ledger ol {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.shop-booking {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'kind time'
+    'text amount';
+  column-gap: 12px;
+  row-gap: 2px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.shop-booking .kicker {
+  grid-area: kind;
+}
+
+.shop-booking .entry-time {
+  grid-area: time;
+  text-align: right;
+}
+
+.shop-booking-text {
+  grid-area: text;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.shop-booking .shop-in,
+.shop-booking .shop-out {
+  grid-area: amount;
+  text-align: right;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.shop-in {
+  color: var(--gold);
+}
+
+.shop-out {
+  color: var(--text);
+}
+
+/* Offen geblieben (0 Cr mit Hinweis, z. B. eine nicht bezahlte Rate). */
+.shop-booking.unpaid .shop-booking-text,
+.shop-booking.unpaid .shop-in,
+.shop-booking.unpaid .shop-out {
+  color: var(--muted);
+}
+
 .shop-hint {
   margin: 0;
   font-size: 12px;
