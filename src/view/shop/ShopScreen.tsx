@@ -513,7 +513,7 @@ function Ledger({ shop }: { shop: ShopView }) {
                 ? `${b.count} × ${b.item} für ${b.character} auf ${b.world}`
                 : b.kind === 'sale'
                   ? `${b.count} × ${b.item} von ${b.character} auf ${b.world}`
-                  : [b.character, b.text].filter(Boolean).join(' · ') || '—'}
+                  : [b.character, b.ship, b.text].filter(Boolean).join(' · ') || '—'}
             </span>
             <span className={b.amount < 0 ? 'mono shop-out' : 'mono shop-in'}>{credits(b.amount)}</span>
             <time className="entry-time" dateTime={b.at}>

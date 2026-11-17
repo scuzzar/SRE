@@ -1171,6 +1171,8 @@ export interface BookingItem {
   readonly world: string | undefined;
   /** Bei einer Schiffs-Buchung: wofür sie ist (fehlt bei alten). */
   readonly shipCost: ShipCost | undefined;
+  /** Bei einer Schiffs-Buchung: der Name des Schiffs, auch eines ausgeblendeten. */
+  readonly ship: string | undefined;
 }
 
 export interface ShopView {
@@ -2318,6 +2320,7 @@ function shopView(campaign: Campaign, error: string | undefined): ShopView {
       count: b.count,
       world: b.in === undefined ? undefined : (campaign.hexes.find((h) => hexId(h.column, h.row) === b.in)?.name ?? b.in),
       shipCost: b.shipCost,
+      ship: b.forShip === undefined ? undefined : (campaign.ships.find((s) => s.id === b.forShip)?.name ?? b.forShip),
     })),
     members: livingCharacters(campaign).map((c) => ({
       id: c.id,
