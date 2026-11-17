@@ -14,6 +14,9 @@ async function started(random: Random = fixedRandom(), repository = memoryReposi
 const fund = (game: GameController, cr: number) => game.book('income', cr, 'Testgeld');
 
 /** Der Tag vergeht um 30: fünf Kurzurlaube zu je 6 Tagen. */
+/** Wartet, bis geladene Deckpläne angekommen sind. */
+const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+
 const passMonth = (game: GameController) => {
   for (let i = 0; i < 5; i++) game.passDays(6);
 };
@@ -150,13 +153,50 @@ describe('Deckpläne im Reiter Schiff', () => {
 
   it('ein Bild von der alten Werft bleibt, wenn die Gruppe denselben Entwurf kauft', async () => {
     const repository = memoryRepository();
-    repository.deckPlans.push({ design: 'A', name: 'Deck A', image: png });
+    repository.deckPlans.push({ key: 'k-alt', design: 'A', name: 'Deck A', image: png });
     const { game } = await started(fixedRandom(), repository);
     fund(game, 45_000_000);
     game.buyShipDesign('A', 'cash');
     // Der Entwurf ist jetzt aktiv; der Plan des Geräts kommt beim nächsten Blick in den Reiter.
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(game.snapshot().ship!.deckPlans.map((p) => p.name)).toEqual(['Deck A']);
+  });
+
+  it('bleiben beim Wechsel zwischen Kampagnen mit demselben Entwurf zu sehen', async () => {
+    const { game, repository } = await started();
+    const first = game.snapshot().campaign.id;
+    fund(game, 45_000_000);
+    game.buyShipDesign('A', 'cash');
+    await game.addDeckPlan(png);
+    game.createCampaign('Zweite');
+    const second = game.snapshot().campaign.id;
+    fund(game, 45_000_000);
+    game.buyShipDesign('A', 'cash');
+    await tick();
+    expect(game.snapshot().ship!.deckPlans.map((p) => p.name)).toEqual(['Deck A']);
+    game.openCampaign(first);
+    await tick();
+    expect(game.snapshot().ship!.deckPlans.map((p) => p.name)).toEqual(['Deck A']);
+    game.openCampaign(second);
+    await tick();
+    expect(game.snapshot().ship!.deckPlans.map((p) => p.name)).toEqual(['Deck A']);
+    expect(repository.deckPlans).toHaveLength(1);
+  });
+
+  it('ein neues Bild überschreibt nie einen Plan, der noch lädt', async () => {
+    const repository = memoryRepository();
+    repository.deckPlans.push({ key: 'k-alt', design: 'A', name: 'Deck A', image: png });
+    const { game } = await started(fixedRandom(), repository);
+    fund(game, 45_000_000);
+    game.buyShipDesign('A', 'cash');
+    // Noch bevor die Pläne des Entwurfs geladen sind, kommt ein Bild dazu.
+    await game.addDeckPlan(`${png}neu`);
+    await tick();
+    expect(repository.deckPlans.map((p) => [p.name, p.image])).toEqual([
+      ['Deck A', png],
+      ['Deck B', `${png}neu`],
+    ]);
+    expect(game.snapshot().ship!.deckPlans.map((p) => p.name)).toEqual(['Deck A', 'Deck B']);
   });
 
   it('Nichtbilder weist der Reiter ab', async () => {

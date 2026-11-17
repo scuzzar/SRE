@@ -3,7 +3,7 @@ import { currentEncounter, setDistance } from './encounter';
 import { fightOrder, turnOf, withEncounter } from './fight';
 import { CloudChanged, CloudOffline, type CampaignRepository, type Clock, type Cloud, type Download, type Keys, type Random, type TrayStop } from './ports';
 import type { DeckPlan } from './ship';
-import type { SyncMark } from './sync';
+import type { DeckMark, SyncMark } from './sync';
 
 /** Eine Zufallsquelle für Tests: liefert die vorgegebenen Zahlen der Reihe nach, danach immer `min`. */
 export function fixedRandom(...values: number[]): Random & { readonly calls: number } {
@@ -32,11 +32,15 @@ export function countingKeys(prefix = 'key'): Keys {
  * Eine Wolke im Arbeitsspeicher für Tests. Zwei Controller mit derselben Wolke sind zwei Geräte.
  * `offline` lässt jeden Zugriff scheitern; mit `signedIn = false` ist anfangs niemand angemeldet.
  */
-export function memoryCloud(signedIn = true): Cloud & { readonly files: Map<string, { text: string; revision: string }>; offline: boolean; user: string | undefined } {
+export function memoryCloud(signedIn = true): Cloud & { readonly files: Map<string, { text: string; revision: string }>; readonly deckFiles: Map<string, { text: string; revision: string }>; offline: boolean; user: string | undefined } {
   let counter = 0;
   const files = new Map<string, { text: string; revision: string }>();
+  /** Die Deckplan-Dateien, unter „Entwurf/Platz“. */
+  const deckFiles = new Map<string, { text: string; revision: string }>();
+  const deckId = (design: string, name: string) => `${design}/${name}`;
   const cloud = {
     files,
+    deckFiles,
     offline: false,
     user: signedIn ? 'kira@example.com' : (undefined as string | undefined),
     check() {
@@ -73,6 +77,31 @@ export function memoryCloud(signedIn = true): Cloud & { readonly files: Map<stri
       if (file && file.revision !== revision) throw new CloudChanged();
       files.delete(key);
     },
+    async listDeckPlans() {
+      cloud.check();
+      return [...deckFiles].map(([id, file]) => {
+        const [design, name] = id.split('/') as [string, string];
+        return { design, name, revision: file.revision };
+      });
+    },
+    async readDeckPlan(design: string, name: string) {
+      cloud.check();
+      const file = deckFiles.get(deckId(design, name));
+      return file && { ...file };
+    },
+    async writeDeckPlan(design: string, name: string, text: string, revision?: string) {
+      cloud.check();
+      if (deckFiles.get(deckId(design, name))?.revision !== revision) throw new CloudChanged();
+      const next = `r${++counter}`;
+      deckFiles.set(deckId(design, name), { text, revision: next });
+      return next;
+    },
+    async removeDeckPlan(design: string, name: string, revision: string) {
+      cloud.check();
+      const file = deckFiles.get(deckId(design, name));
+      if (file && file.revision !== revision) throw new CloudChanged();
+      deckFiles.delete(deckId(design, name));
+    },
   };
   return cloud;
 }
@@ -99,6 +128,7 @@ export function memoryRepository(...initial: Campaign[]): CampaignRepository & {
   trayStop: TrayStop | undefined;
   readonly marks: Map<string, SyncMark>;
   readonly deckPlans: DeckPlan[];
+  readonly deckMarks: DeckMark[];
 } {
   return {
     marks: new Map(),
@@ -126,6 +156,25 @@ export function memoryRepository(...initial: Campaign[]): CampaignRepository & {
     async removeDeckPlan(design, name) {
       const at = this.deckPlans.findIndex((p) => p.design === design && p.name === name);
       if (at >= 0) this.deckPlans.splice(at, 1);
+    },
+    async listDeckPlans() {
+      return [...this.deckPlans];
+    },
+    deckMarks: [],
+    async loadDeckMarks() {
+      return [...this.deckMarks];
+    },
+    async saveDeckMark(mark) {
+      const at = this.deckMarks.findIndex((m) => m.design === mark.design && m.name === mark.name);
+      if (at < 0) this.deckMarks.push(mark);
+      else this.deckMarks[at] = mark;
+    },
+    async removeDeckMark(design, name) {
+      const at = this.deckMarks.findIndex((m) => m.design === design && m.name === name);
+      if (at >= 0) this.deckMarks.splice(at, 1);
+    },
+    async clearDeckMarks() {
+      this.deckMarks.splice(0);
     },
     saved: initial.at(-1),
     campaigns: new Map(initial.map((c) => [c.id, c])),

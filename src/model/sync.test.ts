@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createCampaign, EPOCH, stamped, type Campaign } from './campaign';
 import { fromCampaignFile, fromCloudFile, toCampaignFile } from './campaign-file';
 import { DomainError } from './errors';
-import { copyOf, planSync, type SyncMark } from './sync';
+import { copyOf, deckMarkOf, fromDeckPlanFile, planDeckSync, planSync, toDeckPlanFile, type DeckMark, type SyncMark } from './sync';
 import { countingKeys, fixedClock } from './testing';
 
 const campaign = (changedAt = '2026-11-13T10:00:00.000Z'): Campaign => createCampaign([], 'Spinward Run', 'k1', { key: 'a', changedAt });
@@ -60,5 +60,48 @@ describe('Schlüssel und Änderungszeit', () => {
     const json = JSON.parse(toCampaignFile(campaign()));
     delete json.campaign.changedAt;
     expect(() => fromCloudFile(JSON.stringify(json), 'k5', 'a')).toThrow(DomainError);
+  });
+});
+
+describe('Abgleich der Deckpläne je Platz (2026-11-17)', () => {
+  const slot = { design: 'S', name: 'Deck A' };
+  const plan = (key = 'p1') => ({ key, ...slot });
+  const deckMark = (rest: Partial<DeckMark> = {}): DeckMark => ({ ...slot, key: 'p1', revision: 'r1', ...rest });
+  const deckFile = (revision = 'r1') => ({ ...slot, revision });
+  const kind = (plans: ReturnType<typeof plan>[], marks: DeckMark[], remote: ReturnType<typeof deckFile>[]) => planDeckSync(plans, marks, remote)[0]?.kind;
+
+  it('ohne Marke: hochladen, herunterladen oder erst vergleichen', () => {
+    expect(kind([plan()], [], [])).toBe('upload');
+    expect(kind([], [], [deckFile()])).toBe('download');
+    expect(kind([plan()], [], [deckFile()])).toBe('compare');
+  });
+
+  it('nur auf einer Seite geändert: die Änderung reist hinüber', () => {
+    expect(kind([plan()], [deckMark()], [deckFile()])).toBeUndefined();
+    expect(kind([plan('p2')], [deckMark()], [deckFile()])).toBe('upload');
+    expect(kind([], [deckMark()], [deckFile()])).toBe('removeRemote');
+    expect(kind([plan()], [deckMark()], [deckFile('r2')])).toBe('download');
+    expect(kind([plan()], [deckMark()], [])).toBe('removeLocal');
+  });
+
+  it('auf beiden Seiten geändert: ein neues Bild gewinnt gegen ein gelöschtes, zwei Bilder werden verglichen', () => {
+    expect(kind([], [deckMark()], [])).toBe('forget');
+    expect(kind([], [deckMark()], [deckFile('r2')])).toBe('download');
+    expect(kind([plan('p2')], [deckMark()], [])).toBe('upload');
+    expect(kind([plan('p2')], [deckMark()], [deckFile('r2')])).toBe('compare');
+  });
+
+  it('jeder Platz für sich, auch über Entwürfe hinweg', () => {
+    const steps = planDeckSync([plan(), { key: 'p9', design: 'A', name: 'Deck A' }], [deckMarkOf(plan(), 'r1')], [deckFile()]);
+    expect(steps).toEqual([{ kind: 'upload', design: 'A', name: 'Deck A' }]);
+  });
+
+  it('die Datei hält Schlüssel, Entwurf, Platz und Bild; was nicht passt, wird abgewiesen', () => {
+    const full = { ...plan(), image: 'data:image/png;base64,iVBORw0KGgo=' };
+    expect(fromDeckPlanFile(toDeckPlanFile(full), 'S', 'Deck A')).toEqual(full);
+    expect(() => fromDeckPlanFile(toDeckPlanFile(full), 'S', 'Deck B')).toThrow(DomainError);
+    expect(() => fromDeckPlanFile(toDeckPlanFile({ ...full, design: 'X', name: 'Deck A' }), 'X', 'Deck A')).toThrow();
+    expect(() => fromDeckPlanFile(toDeckPlanFile({ ...full, image: 'data:text/plain,hallo' }), 'S', 'Deck A')).toThrow(DomainError);
+    expect(() => fromDeckPlanFile('kein json', 'S', 'Deck A')).toThrow(DomainError);
   });
 });

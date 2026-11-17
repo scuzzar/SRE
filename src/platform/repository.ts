@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable, type Table } from 'dexie';
-import { hexFromRolls, keepFocus, START_DAY, settleStash, upgradeDistances, upgradeNpcs, upgradeOracle, type Campaign, type CampaignId, type CampaignRepository, type DeckPlan, type Encounter, type Hex, type LegacyWorldRoll, type SyncMark, type TrayStop, TRAY_STOPS } from '../model';
+import { cryptoKeys } from './keys';
+import { hexFromRolls, keepFocus, START_DAY, settleStash, upgradeDistances, upgradeNpcs, upgradeOracle, type Campaign, type CampaignId, type CampaignRepository, type DeckMark, type DeckPlan, type Encounter, type Hex, type LegacyWorldRoll, type SyncMark, type TrayStop, TRAY_STOPS } from '../model';
 
 /** Eine Kampagne liegt unter ihrer Id. */
 interface StoredCampaign {
@@ -25,6 +26,7 @@ class SreDatabase extends Dexie {
   settings!: EntityTable<Setting, 'key'>;
   marks!: EntityTable<SyncMark, 'key'>;
   deckPlans!: Table<DeckPlan, [string, string]>;
+  deckMarks!: Table<DeckMark, [string, string]>;
 
   constructor(name: string) {
     super(name);
@@ -35,6 +37,17 @@ class SreDatabase extends Dexie {
     this.version(3).stores({ campaigns: 'key', settings: 'key', marks: 'key' });
     // Version 4: Deckpläne als Geräte-Daten, je Entwurf und Platz („Deck A“) – über Kampagnen hinweg.
     this.version(4).stores({ deckPlans: '[design+name], design' });
+    // Version 5: Abgleichsmarken der Deckplan-Plätze (2026-11-17); Pläne von vorher bekommen ihren Schlüssel.
+    this.version(5)
+      .stores({ deckMarks: '[design+name]' })
+      .upgrade((tx) =>
+        tx
+          .table('deckPlans')
+          .toCollection()
+          .modify((plan: { key?: string }) => {
+            if (!plan.key) plan.key = cryptoKeys.next();
+          }),
+      );
   }
 }
 
@@ -123,6 +136,26 @@ export class DexieCampaignRepository implements CampaignRepository {
   async removeDeckPlan(design: string, name: string): Promise<void> {
     await this.db.deckPlans.delete([design, name]);
   }
+
+  async listDeckPlans(): Promise<readonly DeckPlan[]> {
+    return this.db.deckPlans.toArray();
+  }
+
+  async loadDeckMarks(): Promise<readonly DeckMark[]> {
+    return this.db.deckMarks.toArray();
+  }
+
+  async saveDeckMark(mark: DeckMark): Promise<void> {
+    await this.db.deckMarks.put(mark);
+  }
+
+  async removeDeckMark(design: string, name: string): Promise<void> {
+    await this.db.deckMarks.delete([design, name]);
+  }
+
+  async clearDeckMarks(): Promise<void> {
+    await this.db.deckMarks.clear();
+  }
 }
 
 /**
@@ -182,6 +215,7 @@ export class MemoryCampaignRepository implements CampaignRepository {
   private tray: TrayStop | undefined;
   private readonly marks = new Map<string, SyncMark>();
   private readonly deckPlans: DeckPlan[] = [];
+  private readonly deckMarks: DeckMark[] = [];
 
   async list(): Promise<readonly Campaign[]> {
     return [...this.campaigns.values()];
@@ -256,6 +290,29 @@ export class MemoryCampaignRepository implements CampaignRepository {
   async removeDeckPlan(design: string, name: string): Promise<void> {
     const at = this.deckPlans.findIndex((p) => p.design === design && p.name === name);
     if (at >= 0) this.deckPlans.splice(at, 1);
+  }
+
+  async listDeckPlans(): Promise<readonly DeckPlan[]> {
+    return [...this.deckPlans];
+  }
+
+  async loadDeckMarks(): Promise<readonly DeckMark[]> {
+    return [...this.deckMarks];
+  }
+
+  async saveDeckMark(mark: DeckMark): Promise<void> {
+    const at = this.deckMarks.findIndex((m) => m.design === mark.design && m.name === mark.name);
+    if (at < 0) this.deckMarks.push(mark);
+    else this.deckMarks[at] = mark;
+  }
+
+  async removeDeckMark(design: string, name: string): Promise<void> {
+    const at = this.deckMarks.findIndex((m) => m.design === design && m.name === name);
+    if (at >= 0) this.deckMarks.splice(at, 1);
+  }
+
+  async clearDeckMarks(): Promise<void> {
+    this.deckMarks.splice(0);
   }
 }
 

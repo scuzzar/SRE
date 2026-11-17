@@ -1,6 +1,6 @@
 import type { Campaign, CampaignId } from './campaign';
 import type { DeckPlan } from './ship';
-import type { CloudFile, SyncMark } from './sync';
+import type { CloudFile, DeckFile, DeckMark, SyncMark } from './sync';
 
 /**
  * Was das Model von außen braucht. Das Model definiert die Schnittstellen, `platform/` setzt sie um,
@@ -55,12 +55,19 @@ export interface CampaignRepository {
   removeMark(key: string): Promise<void>;
   clearMarks(): Promise<void>;
   /**
-   * Deckpläne sind Geräte-Daten (2026-11-16): das Gerät hält sie über Kampagnen hinweg je Entwurf;
-   * Export, Import und Abgleich lassen sie liegen.
+   * Deckpläne hält das Gerät über Kampagnen hinweg je Entwurf (2026-11-16), nie in einer Kampagne;
+   * der Abgleich bringt sie mit OneDrive auf denselben Stand (2026-11-17), der Export lässt sie liegen.
    */
   loadDeckPlans(design: string): Promise<readonly DeckPlan[]>;
+  /** Alle Deckpläne aller Entwürfe, für den Abgleich. */
+  listDeckPlans(): Promise<readonly DeckPlan[]>;
   saveDeckPlan(plan: DeckPlan): Promise<void>;
   removeDeckPlan(design: string, name: string): Promise<void>;
+  /** Die Abgleichsmarken der Deckplan-Plätze merkt sich das Gerät, wie die der Kampagnen. */
+  loadDeckMarks(): Promise<readonly DeckMark[]>;
+  saveDeckMark(mark: DeckMark): Promise<void>;
+  removeDeckMark(design: string, name: string): Promise<void>;
+  clearDeckMarks(): Promise<void>;
 }
 
 /** Die Fassung in der Wolke ist nicht mehr die erwartete: Dort hat inzwischen jemand geändert. */
@@ -92,6 +99,13 @@ export interface Cloud {
   write(key: string, text: string, revision?: string): Promise<string>;
   /** Löscht die Datei, wenn sie noch diese Fassung hat; sonst `CloudChanged`. Fehlt sie schon, ist es gut. */
   remove(key: string, revision: string): Promise<void>;
+  /** Die Deckplan-Dateien (2026-11-17), getrennt von den Kampagnendateien; je Entwurf und Platz eine. */
+  listDeckPlans(): Promise<readonly DeckFile[]>;
+  readDeckPlan(design: string, name: string): Promise<{ readonly text: string; readonly revision: string } | undefined>;
+  /** Wie `write`: mit `revision` nur gegen diese Fassung, ohne nur, wenn es die Datei noch nicht gibt. */
+  writeDeckPlan(design: string, name: string, text: string, revision?: string): Promise<string>;
+  /** Wie `remove`. */
+  removeDeckPlan(design: string, name: string, revision: string): Promise<void>;
 }
 
 /** Gibt dem Spieler eine Datei zum Speichern, als Download. */

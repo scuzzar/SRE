@@ -8524,6 +8524,17 @@ button:disabled {
   height: 28px;
 }
 
+.deck-card figcaption .deck-keep,
+.deck-card figcaption .deck-delete {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.deck-card figcaption .deck-delete {
+  margin-left: 4px;
+}
+
 .deck-empty {
   padding: 14px 10px;
   border: 1px dashed var(--line);

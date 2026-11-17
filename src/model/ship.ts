@@ -36,10 +36,13 @@ export interface Ship {
 }
 
 /**
- * Ein Deckplan (Domänenmodell: `DeckPlan`): Geräte-Daten über Kampagnen hinweg, je Entwurf bis zu
- * drei. `image` ist das Bild als Data URL; ins Kampagnenarchiv und zu OneDrive reist es nicht.
+ * Ein Deckplan (Domänenmodell: `DeckPlan`): über Kampagnen hinweg gehalten, je Entwurf bis zu drei,
+ * mit OneDrive abgeglichen (2026-11-17), aber nie in einer Kampagnendatei. `image` ist das Bild als
+ * Data URL. Ein Plan ändert sich nie; ein neues Bild ist ein neuer Plan mit neuem `key`.
  */
 export interface DeckPlan {
+  /** Woran der Abgleich das Bild auf jedem Gerät wiedererkennt; zufällig, weltweit eindeutig. */
+  readonly key: string;
   readonly design: string;
   readonly name: string;
   /** Das PNG als Data URL. */
@@ -294,10 +297,27 @@ export function chooseShipGain(campaign: Campaign, choice: ShipChoice): Campaign
   return choice === 'switch' ? addShip(chosen, pending.design, pending.debtFree ? undefined : shipDesignOf(pending.design).basePrice).campaign : chosen;
 }
 
-/** Der freie Deckplan-Platz eines Entwurfs: „Deck A“, sonst „Deck B“, sonst „Deck C“; voll ist voll. */
+/**
+ * Der freie Deckplan-Platz eines Entwurfs für ein neues Bild: „Deck A“, sonst „Deck B“, sonst „Deck C“.
+ * Liegen schon drei Pläne da (über den Abgleich auch auf Deck D …), geht keiner mehr dazu.
+ */
 export function freeDeckSlot(plans: readonly DeckPlan[]): string {
-  const own = plans.filter((p) => deckSlotNames.includes(p.name as (typeof deckSlotNames)[number]));
-  const slot = deckSlotNames.find((name) => !own.some((p) => p.name === name));
+  const slot = plans.length < deckSlotNames.length ? deckSlotNames.find((name) => !plans.some((p) => p.name === name)) : undefined;
   if (slot === undefined) throw new DomainError(`Mehr als ${deckSlotNames.length} Deckpläne je Entwurf gehen nicht.`);
   return slot;
 }
+
+/**
+ * Der nächste Platz, den keiner der genannten belegt: Deck A, B, C und danach, nur über den Abgleich
+ * („beide behalten“), Deck D, Deck E … bis Deck Z.
+ */
+export function nextDeckSlot(taken: readonly string[]): string {
+  for (let i = 0; i < 26; i++) {
+    const name = `Deck ${String.fromCharCode(65 + i)}`;
+    if (!taken.includes(name)) return name;
+  }
+  throw new DomainError('Alle Deckplan-Plätze dieses Entwurfs sind belegt.');
+}
+
+/** Ein Deckplan-Platz: „Deck A“ bis „Deck Z“. */
+export const deckSlotPattern = /^Deck [A-Z]$/;

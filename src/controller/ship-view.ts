@@ -140,7 +140,7 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
               return { name: program.name, kind: softwareKinds[program.kind], effect: program.effect };
             }),
           },
-    deckPlans: [...deckPlans].sort((a, b) => deckSlotNames.indexOf(a.name as (typeof deckSlotNames)[number]) - deckSlotNames.indexOf(b.name as (typeof deckSlotNames)[number])),
+    deckPlans: [...deckPlans].sort((a, b) => a.name.localeCompare(b.name)),
     freeDeckSlots: Math.max(0, deckSlotNames.length - deckPlans.length),
     // Die Standardentwürfe in der Reihenfolge der SR-Tabelle; bezahlbar heißt: bar oder als Anzahlung.
     yard: ref.ships.map((plan) => {

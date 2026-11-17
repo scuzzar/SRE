@@ -230,3 +230,128 @@ describe('Abgleich mit OneDrive', () => {
     expect(third.snapshot().sync.status).toBe('signedOut');
   });
 });
+
+describe('Abgleich der Deckpläne (2026-11-17)', () => {
+  const png = 'data:image/png;base64,iVBORw0KGgo=';
+  const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  /** Ein Gerät mit einem Free Trader (Entwurf A) in der offenen Kampagne. */
+  async function trader(cloud: TestCloud, name: string, start: string) {
+    const { game, repository } = await device(cloud, name, start);
+    game.book('income', 45_000_000, 'Testgeld');
+    game.buyShipDesign('A', 'cash');
+    await tick();
+    return { game, repository };
+  }
+  const shown = (game: GameController) => game.snapshot().ship!.deckPlans.map((p) => [p.name, p.image]);
+  const stored = (repository: ReturnType<typeof memoryRepository>) => repository.deckPlans.map((p) => [p.name, p.image]).sort();
+
+  it('ein Plan von einem Gerät kommt auf das andere, auch in eine andere Kampagne, und Löschen reist mit', async () => {
+    const cloud = memoryCloud();
+    const handy = await trader(cloud, 'handy', '2026-11-17T10:00:00.000Z');
+    await handy.game.addDeckPlan(png);
+    await handy.game.sync();
+    expect([...cloud.deckFiles.keys()]).toEqual(['A/Deck A']);
+    // Kampagnendateien bleiben ohne Bilder.
+    expect([...cloud.files.values()].some((f) => f.text.includes('data:image'))).toBe(false);
+
+    const tablet = await trader(cloud, 'tablet', '2026-11-17T12:00:00.000Z');
+    await tablet.game.sync();
+    await tick();
+    expect(shown(tablet.game)).toEqual([['Deck A', png]]);
+    expect(tablet.repository.deckPlans[0]!.key).toBe(handy.repository.deckPlans[0]!.key);
+
+    await tablet.game.removeDeckPlan('Deck A');
+    await tablet.game.sync();
+    expect(cloud.deckFiles.size).toBe(0);
+    await handy.game.sync();
+    await tick();
+    expect(shown(handy.game)).toEqual([]);
+    expect(handy.repository.deckPlans).toEqual([]);
+  });
+
+  it('zwei verschiedene Bilder auf demselben Platz: beide bleiben, auf beiden Geräten', async () => {
+    const cloud = memoryCloud();
+    const handy = await trader(cloud, 'handy', '2026-11-17T10:00:00.000Z');
+    const tablet = await trader(cloud, 'tablet', '2026-11-17T12:00:00.000Z');
+    await handy.game.addDeckPlan(`${png}handy`);
+    await tablet.game.addDeckPlan(`${png}tablet`);
+    await handy.game.sync();
+    await tablet.game.sync();
+    await handy.game.sync();
+    await tick();
+    // Der Plan aus OneDrive (vom Handy) hat den Platz, der vom Tablet rückt auf Deck B.
+    const both = [
+      ['Deck A', `${png}handy`],
+      ['Deck B', `${png}tablet`],
+    ];
+    expect(stored(tablet.repository)).toEqual(both);
+    expect(stored(handy.repository)).toEqual(both);
+    expect(shown(handy.game)).toEqual(both);
+    expect([...cloud.deckFiles.keys()].sort()).toEqual(['A/Deck A', 'A/Deck B']);
+  });
+
+  it('hier gelöscht, dort ein neues Bild auf den Platz: das neue Bild bleibt', async () => {
+    const cloud = memoryCloud();
+    const handy = await trader(cloud, 'handy', '2026-11-17T10:00:00.000Z');
+    await handy.game.addDeckPlan(`${png}alt`);
+    await handy.game.sync();
+    const tablet = await trader(cloud, 'tablet', '2026-11-17T12:00:00.000Z');
+    await tablet.game.sync();
+    await tick();
+    // Das Tablet ersetzt den Plan, das Handy löscht ihn, beide ohne Abgleich dazwischen.
+    await tablet.game.removeDeckPlan('Deck A');
+    await tablet.game.addDeckPlan(`${png}neu`);
+    await tablet.game.sync();
+    await handy.game.removeDeckPlan('Deck A');
+    await handy.game.sync();
+    await tick();
+    expect(stored(handy.repository)).toEqual([['Deck A', `${png}neu`]]);
+    expect(shown(handy.game)).toEqual([['Deck A', `${png}neu`]]);
+  });
+
+  it('mehr als drei nur über den Abgleich: der Reiter zeigt alle, ein neues Bild geht erst wieder bei weniger als drei', async () => {
+    const cloud = memoryCloud();
+    const handy = await trader(cloud, 'handy', '2026-11-17T10:00:00.000Z');
+    const tablet = await trader(cloud, 'tablet', '2026-11-17T12:00:00.000Z');
+    for (let i = 0; i < 3; i++) await handy.game.addDeckPlan(`${png}h${i}`);
+    for (let i = 0; i < 2; i++) await tablet.game.addDeckPlan(`${png}t${i}`);
+    await handy.game.sync();
+    await tablet.game.sync();
+    await tick();
+    expect(shown(tablet.game).map(([name]) => name)).toEqual(['Deck A', 'Deck B', 'Deck C', 'Deck D', 'Deck E']);
+    expect(tablet.game.snapshot().ship!.freeDeckSlots).toBe(0);
+    await tablet.game.addDeckPlan(`${png}x`);
+    expect(tablet.game.snapshot().ship!.error).toMatch(/Mehr als 3/);
+  });
+
+  it('Abmelden vergisst die Marken der Deckpläne; die Pläne bleiben hier und dort', async () => {
+    const cloud = memoryCloud();
+    const handy = await trader(cloud, 'handy', '2026-11-17T10:00:00.000Z');
+    await handy.game.addDeckPlan(png);
+    await handy.game.sync();
+    expect(handy.repository.deckMarks).toHaveLength(1);
+    await handy.game.signOut();
+    await handy.game.whenSaved();
+    expect(handy.repository.deckMarks).toHaveLength(0);
+    expect(handy.repository.deckPlans).toHaveLength(1);
+    expect(cloud.deckFiles.size).toBe(1);
+    // Wieder angemeldet: gleicher Schlüssel hier und dort, nur die Marke kommt zurück.
+    await handy.game.signIn();
+    await handy.game.whenSaved();
+    expect(handy.repository.deckMarks).toHaveLength(1);
+    expect(handy.repository.deckPlans).toHaveLength(1);
+    expect(cloud.deckFiles.size).toBe(1);
+  });
+
+  it('eine kaputte Datei dort meldet der Abgleich, die übrigen Pläne kommen trotzdem', async () => {
+    const cloud = memoryCloud();
+    cloud.deckFiles.set('A/Deck A', { text: 'kaputt', revision: 'x1' });
+    const handy = await trader(cloud, 'handy', '2026-11-17T10:00:00.000Z');
+    cloud.deckFiles.set('A/Deck B', { text: '{"format":"solo-rpg-engine-deckplan","version":1,"plan":{"key":"q","design":"A","name":"Deck B","image":"data:image/png;base64,AA=="}}', revision: 'x2' });
+    await handy.game.sync();
+    await tick();
+    expect(handy.game.snapshot().sync.error).toMatch(/Deckplan A\/Deck A/);
+    expect(shown(handy.game).map(([name]) => name)).toEqual(['Deck B']);
+  });
+});
