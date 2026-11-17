@@ -398,6 +398,15 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > reist niemand als Passagier, es gibt keine Passagen, keine Kojen und keine Lotterie. Der
 > Ausschnitt dazu liegt unter
 > [`changes/2026-11-16d-reisen-mit-eigenem-schiff.png`](changes/2026-11-16d-reisen-mit-eigenem-schiff.png).
+>
+> **Entwurf vom 17. November 2026, wartet auf Freigabe** (Kennzeichen 2026-11-17): **Deckpläne mit
+> OneDrive abgleichen** (siehe *Abgleich mit OneDrive*, *Deckpläne*). Bisher blieben die Deckpläne
+> auf dem Gerät; nach dem Wunsch des Owners gleicht der Abgleich sie jetzt mit OneDrive ab, über
+> Kampagnen und Geräte hinweg. Neu im Bild: `DeckPlan.key`, der Schlüssel, an dem der Abgleich ein
+> Bild wiedererkennt. Orange heißt in der Legende jetzt „über Kampagnen hinweg“ statt „Geräte-Daten“:
+> nicht im Spielstand einer Kampagne, mit OneDrive abgeglichen, nicht exportiert. Der Ausschnitt dazu
+> liegt unter
+> [`changes/2026-11-17-deckplaene-abgleich.png`](changes/2026-11-17-deckplaene-abgleich.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -455,7 +464,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Abgleich | (Ablauf im Controller) | Die Kampagnen dieses Geräts und die in OneDrive auf denselben Stand bringen |
 | Schlüssel | `Campaign.key` | Woran der Abgleich eine Kampagne auf jedem Gerät wiedererkennt; zufällig, weltweit eindeutig |
 | Änderungszeit | `Campaign.changedAt` | Wann der gespeicherte Stand der Kampagne zuletzt geändert wurde |
-| Abgleichsmarke | (merkt sich das Gerät) | Je Kampagne: mit welcher Änderungszeit und welcher Fassung in OneDrive dieses Gerät zuletzt gleich war |
+| Abgleichsmarke | (merkt sich das Gerät) | Je Kampagne: mit welcher Änderungszeit und welcher Fassung in OneDrive dieses Gerät zuletzt gleich war; je Deckplan-Platz: mit welchem Bild (`key`) und welcher Fassung (2026-11-17) |
 | Konflikt | `Conflict` | Dieselbe Kampagne wurde seit dem letzten Abgleich hier und in OneDrive geändert; der Spieler wählt |
 | Charakter | `Character` | Ein Spielercharakter mit seiner Charakterkarte |
 | Charakter oben | `Campaign.focus` | Der Charakter, der oben im Orakel-Screen steht; für ihn würfelt man Proben |
@@ -729,7 +738,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Software (Programm) | `Software` | Ein Programm der Software-Liste (SR 38–39, SE 13): Platzbedarf in Space, Preis, Wirkung; Art nach `SoftwareKind` (offensiv, defensiv, routine) |
 | Rechnermodell | `ComputerModel` | Modell 1 bis 7 (je mit „bis“): Preis, Tonnen, CPU und Storage in Space, TL; die Modellzahl ist die höchste Sprungzahl und der Wert des Softwarepakets in MCr (SE 10) |
 | Software an Bord | `ShipSoftware` | Ein Programm, das ein konkretes Schiff dabeihat; beim Kauf aus dem Softwarepaket des Computers gewählt |
-| Deckplan | `DeckPlan` | Der Plan eines Schiffsentwurfs als Bild: bis zu drei eigene, als PNG hochgeladen oder fotografiert; das Gerät merkt sie sich über Kampagnen hinweg, Export und OneDrive holen sie nicht |
+| Deckplan | `DeckPlan` | Der Plan eines Schiffsentwurfs als Bild: bis zu drei eigene, als PNG hochgeladen oder fotografiert; über Kampagnen hinweg gehalten und mit OneDrive abgeglichen (2026-11-17), der Export nimmt sie nicht mit |
+| Deckplan-Platz | `DeckPlan.name` | Deck A, Deck B oder Deck C: der Platz eines Plans an seinem Entwurf, zugleich sein Name |
+| Schlüssel des Deckplans | `DeckPlan.key` | Woran der Abgleich ein Bild auf jedem Gerät wiedererkennt; zufällig, weltweit eindeutig; ein Plan ändert sich nie, ein neues Bild ist ein neuer Plan mit neuem Schlüssel (2026-11-17) |
 
 ## Regeln, die das Bild nicht zeigt
 
@@ -810,7 +821,42 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     War die Kampagne offen, bleibt der Stand von hier offen, also die Kopie. Solange er nicht wählt, spielt er hier weiter, und die Kampagne wird nicht abgeglichen.
     Der Konflikt ist flüchtig: Nach einem Neustart findet ihn der Abgleich wieder.
   - *Abmelden* lässt die Kampagnen auf dem Gerät und in OneDrive, wie sie sind, und löscht die
-    Abgleichsmarken.
+    Abgleichsmarken. Ebenso bei den Deckplänen.
+  - *Deckpläne* (Entwurf vom 17. November 2026, Kennzeichen 2026-11-17, **wartet auf Freigabe**).
+    Der Abgleich bringt auch die Deckpläne (siehe *Schiffe*, *Deckpläne*) auf denselben Stand, im
+    selben Lauf wie die Kampagnen.
+    - *Wo.* Im Unterordner `Deckplaene` des App-Ordners, je Plan eine Datei, die nach Entwurf und
+      Platz heißt (`S-Deck A.json`), mit Schlüssel, Entwurf, Platz und Bild. Der Unterordner hält
+      sie von den Kampagnendateien getrennt; eine ältere Fassung der App sieht ihn nicht.
+    - *Schlüssel.* Jeder Plan bekommt beim Ablegen einen zufälligen, weltweit eindeutigen `key`.
+      Ein Plan ändert sich nie: Wer ein anderes Bild auf den Platz will, löscht den Plan und legt
+      ein neues ab, mit neuem Schlüssel. Pläne von vor dieser Regel bekommen beim Laden einen.
+    - *Abgleichsmarke.* Je Platz merkt sich das Gerät, mit welchem Schlüssel und welcher Fassung
+      der Datei es zuletzt gleich war. *Hier geändert* heißt: Auf dem Platz liegt ein anderer
+      Schlüssel als in der Marke, oder keiner mehr. *Dort geändert* heißt: OneDrive hat eine andere
+      Fassung als in der Marke, oder keine Datei mehr.
+    - *Was der Abgleich je Platz tut:*
+
+      | Hier | In OneDrive | Folge |
+      |---|---|---|
+      | belegt, ohne Marke | fehlt | hochladen |
+      | fehlt, ohne Marke | belegt | herunterladen |
+      | geändert | unverändert | hochladen, oder dort löschen, wenn der Platz hier leer ist |
+      | unverändert | geändert | herunterladen, oder hier löschen, wenn die Datei dort fehlt |
+      | leer | leer | die Marke vergessen |
+      | auf einer Seite gelöscht | auf der anderen ein neues Bild | das neue Bild bleibt und kommt auf beide Seiten |
+      | ein Bild | ein anderes Bild (auch ohne Marke) | **beide behalten** |
+      | dasselbe Bild (gleicher Schlüssel) | | nur die Marke setzen |
+
+    - *Beide behalten.* Einen Konflikt, bei dem der Spieler wählt, gibt es bei Deckplänen nicht:
+      Bilder lassen sich nicht zusammenführen, und keins soll verloren gehen. Der Plan aus OneDrive
+      bekommt den Platz; der von hier rückt auf den nächsten freien Platz seines Entwurfs und wird
+      hochgeladen. Ist keiner der drei frei, geht es mit Deck D, Deck E … weiter: Mehr als drei
+      Pläne je Entwurf entstehen so nur über den Abgleich. Der Reiter zeigt dann alle; ein neues
+      Bild lässt sich erst wieder ablegen, wenn weniger als drei da sind.
+    - *Wann.* Wie bei den Kampagnen: beim Start, wenn die App wieder in den Vordergrund kommt, und
+      kurz nach jedem Ablegen oder Löschen eines Plans. Ohne Netz bleibt alles auf dem Gerät; der
+      nächste Abgleich holt nach.
 - **Kampagnendatei, ältere Fassungen.**
   - *Dateien und Spielstände von vor 2026-11-08c* (NSC der Begegnung als Charaktere) werden beim
     Laden umgeschrieben: Jeder NSC wird ein Charakter der Begegnung mit derselben Id, wie unter
@@ -2629,13 +2675,18 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (kein Bargeld). Der Entwurf verweist über `computer` auf ein `ComputerModel` statt auf
     den bisherigen Text. Welche Programme gerade in der CPU laufen, ist taktisch und kommt
     erst mit dem Raumkampf.
-  - **Deckpläne** (freigegeben am 16. November 2026). Bis zu drei eigene Pläne je Entwurf:
-    Bilder, als PNG hochgeladen oder mit der Kamera fotografiert, je mit Namen.
-    `DeckPlan` ist orange **Geräte-Daten**: Das Gerät hält sie in einem eigenen Repository
-    über Kampagnen hinweg – ein anderes Schiff desselben Entwurfs sieht dieselben Pläne, ein
-    anderes Gerät zunächst keine; beim Export, Import und Abgleich mit OneDrive reisen sie
-    nicht mit. Am `Ship` wird nichts davon gespeichert: der Reiter Schiff zeigt die Pläne
-    seines Entwurfs.
+  - **Deckpläne** (freigegeben am 16. November 2026; Abgleich mit OneDrive als Entwurf vom 17. November
+    2026, Kennzeichen 2026-11-17, **wartet auf Freigabe**). Bis zu drei eigene Pläne je Entwurf:
+    Bilder, als PNG hochgeladen oder mit der Kamera fotografiert, je auf einem Platz (Deck A, B, C),
+    der ihm den Namen gibt. Große Fotos werden vor dem Ablegen auf höchstens 2048 Pixel verkleinert.
+    `DeckPlan` ist orange, **über Kampagnen hinweg**: Das Gerät hält sie in einem eigenen
+    Repository, nicht im Spielstand einer Kampagne – ein anderes Schiff desselben Entwurfs sieht
+    dieselben Pläne, auch in einer anderen Kampagne. Ist der Spieler bei OneDrive angemeldet,
+    gleicht der Abgleich sie ab, sodass jedes seiner Geräte sie hat (siehe *Abgleich mit OneDrive*,
+    *Deckpläne*); ohne Anmeldung bleiben sie auf dem Gerät. Export und Import nehmen sie nicht mit
+    (die Kampagnendatei würde um Megabytes größer). Am `Ship` wird nichts davon gespeichert: der
+    Reiter Schiff zeigt die Pläne seines Entwurfs. Löschen braucht eine Rückfrage, denn der Plan
+    verschwindet aus allen Kampagnen und mit dem Abgleich von allen Geräten.
   - **Offene Fragen für einen späteren Schritt:**
     - Wie die Gruppe mit dem eigenen Schiff zwischen Sternen springt (ergänzt die gekaufte
       Passage, ersetzt sie nicht, siehe Owner-Entscheidung vom 16. November 2026) – das braucht

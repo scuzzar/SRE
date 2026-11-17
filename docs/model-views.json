@@ -390,6 +390,12 @@
         "Ship",
         "ShipDesign"
       ]
+    },
+    {
+      "id": "2026-11-17",
+      "file": "2026-11-17-deckplaene-abgleich",
+      "title": "Deckpläne mit OneDrive abgleichen: jeder Plan bekommt einen Schlüssel, über Kampagnen und Geräte hinweg",
+      "approved": false
     }
   ]
 }

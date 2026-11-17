@@ -134,6 +134,7 @@ hide <<browser>> stereotype
     routine
   }
   class DeckPlan <<browser>> $schiffe {
+    $new("2026-11-17", "key: string")
     name: string
     image: string
   }
@@ -195,6 +196,7 @@ legend right
   |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
   |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
-  |<#fdf1dc> <color:#b8862e>████</color> | Geräte-Daten: das Gerät hält sie über Kampagnen hinweg, nicht im Spielstand |
+  |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class DeckPlan #line:d0021b;line.bold
 @enduml
