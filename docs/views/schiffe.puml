@@ -89,7 +89,15 @@ hide <<browser>> stereotype
     loanBalance: number [0..1]
     /monthlyPayment: number [0..1]
     nextPaymentDay: number [0..1]
+    $new("2026-11-17b", "berthedSince: number [0..1]")
     retired: boolean
+  }
+  enum ShipCost <<value>> $schiffe $newClass("2026-11-17b") {
+    price
+    rate
+    fuel
+    berthing
+    lifeSupport
   }
   class ShipSoftware $schiffe {
   }
@@ -169,6 +177,7 @@ DeckPlan "*" --> "1" ShipDesign : design
 
 ' Zeit und Reisen
 Journey "*" --> "0..1" Ship : ship
+Booking -$newArrow("2026-11-17b")-> ShipCost
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -198,4 +207,6 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Booking #line:d0021b;line.bold
+class Ship #line:d0021b;line.bold
 @enduml

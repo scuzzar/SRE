@@ -407,6 +407,14 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > nicht im Spielstand einer Kampagne, mit OneDrive abgeglichen, nicht exportiert. Der Ausschnitt dazu
 > liegt unter
 > [`changes/2026-11-17-deckplaene-abgleich.png`](changes/2026-11-17-deckplaene-abgleich.png).
+>
+> **Wartet auf Freigabe** (Kennzeichen 2026-11-17b): **Monat und Monatsabrechnung** (siehe
+> *Schiffe*, *Laufende Kosten und Monatsabrechnung*). Ein Monat sind 4 Wochen; an jedem
+> Monatsende bucht die App die Raten und schreibt eine Monatsabrechnung mit den laufenden
+> Schiffskosten in den Log. Neu dazu: Liegegebühren und Lebenserhaltung. Neu im Bild: `MonthEnd`
+> (mit `costs`, `/month` und `/total`), `Booking.shipCost` mit `ShipCost` und
+> `Ship.berthedSince`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-17b-monatsabrechnung.png`](changes/2026-11-17b-monatsabrechnung.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -530,6 +538,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Datum | `Campaign./date` | Der Tag als Imperiales Datum „Tag des Jahres-Jahr“, z. B. 123-1105 |
 | Wochentag | `Campaign./weekday` | Montag bis Sonntag (1–7); Tag 001 jedes Jahres ist Feiertag ohne Wochentag |
 | Woche | (Regel) | Sonntag bis Samstag; „Woche beenden“ springt zum Sonntag, der die neue Woche beginnt; die erste Woche des Jahres beginnt mit dem Feiertag |
+| Monat | (Regel) | Vier Wochen; ein Jahr hat 13 Monate, der erste beginnt mit dem Feiertag, der dreizehnte hat dazu Tag 365 (2026-11-17b) |
+| Monatsende | (Regel) | Der Übergang in einen neuen Monat, also der Sonntag, der die 5., 9., …, 49. Woche beginnt, oder der Feiertag; dann werden die Raten fällig und die Monatsabrechnung entsteht |
 | Zeit vergeht | `TimePassed` | Logeintrag: Die Gruppe lässt Tage vergehen oder beendet die Woche |
 | Woche beenden | `TimePassed.week` | Springt zum nächsten Sonntag (am Sonntag eine Woche weiter) |
 | Tag im Log | `LogEntry.day` | An welchem Spieltag ein Logeintrag entstand; fehlt bei Einträgen von vor der Spielzeit |
@@ -541,7 +551,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Low Lottery | `Journey./pot`, `/winner`, `lot` | Cr 10 je Low Passage; wer die Zahl der Überlebenden am besten tippt und selbst überlebt, gewinnt |
 | Gruppenkasse | `Campaign./funds` | Das gemeinsame Geld der Gruppe in Cr, die Summe aller Buchungen |
 | Buchung | `Booking` | Eine Bewegung der Gruppenkasse: Einnahme, Ausgabe, Einzahlung, Auszahlung oder Kauf |
-| Art der Buchung | `BookingKind` | income (Einnahme, z. B. Belohnung), expense (Ausgabe), deposit (Einzahlung eines Charakters), payout (Auszahlung an einen Charakter), purchase (Kauf), sale (Verkauf), lottery (Gewinn der Low Lottery), rent (Miete je Tag eines Fahrzeugs), fare (Fahrpreis im Linienverkehr), ship (Schiff: voller Preis, Anzahlung und jede Monatsrate der Bankfinanzierung) |
+| Art der Buchung | `BookingKind` | income (Einnahme, z. B. Belohnung), expense (Ausgabe), deposit (Einzahlung eines Charakters), payout (Auszahlung an einen Charakter), purchase (Kauf), sale (Verkauf), lottery (Gewinn der Low Lottery), rent (Miete je Tag eines Fahrzeugs), fare (Fahrpreis im Linienverkehr), ship (Schiff: voller Preis, Anzahlung, Monatsrate, Treibstoff, Liegegebühr, Lebenserhaltung; welche, sagt `shipCost`) |
 | Angebot | `Hex./offer` | Was man auf der Welt kaufen kann: nach TL und Gesetz der Welt |
 | Shop | (Reiter „Shop“) | Der Screen für Kasse und Einkauf auf dem Aufenthaltsort |
 | Magazin | `Weapon.ammo` | Der Gegenstand, der eine Schusswaffe lädt, z. B. Rifle Ammo (20 rds) oder LC Power Pack |
@@ -727,7 +737,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Kreditsumme | `Ship.initialLoan` | Was bei der Bankfinanzierung eines Schiffs insgesamt finanziert wurde (200 % des Preises); bleibt stehen, auch wenn sich der Preis des Entwurfs später ändert |
 | Restschuld | `Ship.loanBalance` | Was von der Kreditsumme noch offen ist; fehlt, wenn das Schiff schuldenfrei ist |
 | Monatsrate | `Ship./monthlyPayment` | Ein Vierhundertachtzigstel der Kreditsumme, immer gleich hoch |
-| Nächste Rate | `Ship.nextPaymentDay` | Der Kampagnentag, an dem die nächste Monatsrate fällig wird |
+| Nächste Rate | `Ship.nextPaymentDay` | Das Monatsende, an dem die nächste Monatsrate fällig wird; die erste frühestens vier Wochen nach dem Kauf (2026-11-17b) |
+| Schiffskosten | `Booking.shipCost`, `ShipCost` | Wofür eine Buchung der Art `ship` ist: price (voller Preis oder Anzahlung), rate (Monatsrate), fuel (Treibstoff), berthing (Liegegebühr), lifeSupport (Lebenserhaltung) (2026-11-17b) |
+| Laufende Kosten | `ShipCost` ohne price | Was ein Schiff kostet, solange man es hat: Rate, Treibstoff, Liegegebühren, Lebenserhaltung; später die Heuer der Crew |
+| Monatsabrechnung | `MonthEnd` | Der Logeintrag am Monatsende: verweist auf die Buchungen mit laufenden Kosten seit dem letzten Monatsende (`costs`), mit Summe (`/total`) und Nummer des abgerechneten Monats (`/month`, 1–13) |
+| Liegegebühr | `ShipCost.berthing` | Cr100 für die ersten sechs Tage in einem Raumhafen, danach Cr100 je weiteren Tag (SR 31) |
+| Im Hafen seit | `Ship.berthedSince` | Der Tag, an dem das Schiff in den Hafen gekommen ist, in dem es liegt; Grundlage der Liegegebühr |
+| Lebenserhaltung | `ShipCost.lifeSupport` | Cr2.000 je Reisendem und Sprung mit dem eigenen Schiff (SR 30: je Kabine und Reise; Doppelbelegung verdoppelt die Kosten) |
 | Ship-Vorteil der Abmusterung | `Gain.ship`, `Gain.shipDebtFree` | Eine Zeile der Mustering-out-Tabelle, die ein Schiff gibt: schuldenfrei (Scout) oder als Anteil an einer Restschuld (Merchant) |
 | Schiffswahl | `CareerRoll.shipChoice`, `ShipChoice` | Nur gesetzt, wenn die Kampagne beim Würfeln des Ship-Vorteils schon ein anderes Schiff hat: behalten oder wechseln (das alte Schiff wird ausgeblendet, seine Restschuld behält es nur für sich) |
 | Ausgedientes Schiff | `Ship.retired` | Ein altes Schiff, worauf noch Buchungen zeigen: ausgeblendet, bleibt aber in der Kampagne |
@@ -1248,8 +1264,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       der Reise im Log. Was ein Fehlsprung folgt, entscheidet der Owner – die App würfelt nur,
       sie würfelt keinen Zielort und zerstört kein Schiff.
     - *Dauer*: ebenfalls **eine Woche**; sonst gilt wie bei der Passage.
-    - Kommen später: Lebenserhaltungskosten (Cr 2.000 je Kabine je zwei Wochen, SR 30),
-      zahlende Passagiere und Fracht.
+    - *Lebenserhaltung* (2026-11-17b): siehe *Schiffe*, *Laufende Kosten und Monatsabrechnung*.
+    - Kommen später: zahlende Passagiere und Fracht.
   - *Ohne Reise*: „Gruppe platzieren“ auf der Weltkarte und die Wahl im Reiter Begegnung setzen den
     Aufenthaltsort weiter ohne Reise und ohne Zeit, etwa zu Beginn einer Kampagne oder für eine
     Reise außerhalb der Regeln.
@@ -2626,15 +2642,17 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        mit der Anzahlung die 220 % aus SR 29); die **Restschuld** (`loanBalance`) beginnt gleich der
        Kreditsumme und sinkt mit jeder bezahlten Rate; ist sie auf 0 (bezahlt oder durch den
        Merchant-Vorteil), entfällt `nextPaymentDay`. Die **Monatsrate** (`/monthlyPayment`) folgt
-       daraus (`initialLoan / 480`), nicht noch einmal aus `price`. Jedes Mal, wenn die Spielzeit
-       den Tag `nextPaymentDay` erreicht oder überschreitet (beim Tage-vergehen-lassen, bei Woche
-       beenden oder einer Fahrt), wird die Rate automatisch aus der Kasse gebucht (Buchung der Art
-       `ship`, mit `forShip` auf das Schiff) und die Restschuld
+       daraus (`initialLoan / 480`), nicht noch einmal aus `price`. Fällig wird sie an einem
+       **Monatsende** (2026-11-17b, vorher alle 30 Tage ab dem Kauf): `nextPaymentDay` ist das
+       erste Monatsende, das mindestens vier Wochen nach dem Erwerb liegt, danach jedes folgende.
+       Erreicht die Spielzeit ein Monatsende, an dem oder nach dem `nextPaymentDay` liegt, wird die
+       Rate automatisch aus der Kasse gebucht (Buchung der Art `ship` mit `shipCost` rate und
+       `forShip` auf das Schiff) und die Restschuld
        sinkt; reicht die Kasse nicht, bleibt die Rate offen (Buchung mit Hinweistext „Rate nicht
-       bezahlt“) und `nextPaymentDay` rückt trotzdem einen Monat (30 Tage) weiter. **✱
+       bezahlt“) und `nextPaymentDay` rückt trotzdem zum nächsten Monatsende weiter. **✱
        Hausregel/offener Punkt:** Die Pfändung bei Zahlungsverzug (SR 28, Distanz-DM zur Heimatwelt
        des Schiffs) ist damit **nicht** nachgebaut; eine unbezahlte Rate hat vorerst keine Folge
-       außer dem Hinweis im Log. Das holt ein späterer Schritt nach, wenn Pfändung wirklich gebraucht
+       außer dem Hinweis in der Kasse und in der Monatsabrechnung. Das holt ein späterer Schritt nach, wenn Pfändung wirklich gebraucht
        wird.
     3. **Ship-Vorteil der Abmusterung** (SR, Mustering-out Benefits; Hausregel-Zuordnung wie bisher
        bei `scout-ship`/`free-trader`): Eine Zeile der Benefits-Tabelle verweist jetzt über `Gain.ship`
@@ -2651,6 +2669,56 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        Die alten Gegenstände `scout-ship` und `free-trader` (Art `ship`) entfallen
        aus `items.json`, sobald der Code folgt; ihre Preise stehen jetzt als `basePrice` an
        `ShipDesign`.
+  - **Laufende Kosten und Monatsabrechnung** (Kennzeichen 2026-11-17b, wartet auf Freigabe;
+    RAW in [`regeln-schiffe.md`](regeln-schiffe.md) unter *Laufende Kosten* und
+    *Hafengebühren und Handelsbräuche*).
+    - *Monat* (Owner, 17. November 2026): Ein Monat sind **4 Wochen**. Der Imperiale Kalender kennt
+      keine Monate; mit 52 Wochen hat ein Jahr damit genau **13 Monate**. Der erste beginnt mit dem
+      Feiertag (Tag 001–028), jeder weitere mit einem Sonntag (Tag 029, 057, …, 337); der
+      dreizehnte hat zusätzlich Tag 365. Weil ein Monat immer mit einer Woche beginnt, beendet
+      „Woche beenden“ am Monatsende auch den Monat. Ein Monat ist keine gespeicherte Größe, sondern
+      folgt aus `Campaign.day`, wie der Wochentag.
+    - *Monatsende*: Wann immer Spielzeit vergeht (Tage, Woche beenden, Reise, Fahrt) und dabei ein
+      Monatsende erreicht wird, passiert in dieser Reihenfolge: erst die fälligen **Raten** buchen
+      (siehe *Erwerb*), dann die **Monatsabrechnung** in den Log schreiben. Überspringt die Zeit
+      mehrere Monatsenden, geschieht das je Monatsende. Steht die Monatsabrechnung hinter einer
+      Reise, ist ihr Tag (`LogEntry.day`) das Monatsende, nicht der Abflugtag.
+    - *Monatsabrechnung* (`MonthEnd`, Owner: eine Abrechnung, nicht nur die Monatskosten): Der
+      Eintrag **verweist** auf die Buchungen mit laufenden Kosten (`costs`): alle Buchungen der Art
+      `ship`, deren `shipCost` nicht `price` ist, seit der letzten Monatsabrechnung, die Rate dieses
+      Monatsendes eingeschlossen. Kauf und Anzahlung gehören nicht dazu. Er kopiert keine Beträge;
+      `/total` ist die Summe der Buchungen, `/month` die Nummer des abgerechneten Monats (1–13),
+      aus dem Tag gefolgt. Eine offene Rate (0 Cr mit Hinweis) steht darin mit ihrem Hinweis. Die
+      Ansicht zeigt je Art eine Zeile (Rate, Treibstoff, Liegegebühren, Lebenserhaltung) und die
+      Summe. Eine Monatsabrechnung entsteht nur, wenn die Kampagne ein aktives Schiff hat oder
+      seit der letzten Abrechnung laufende Kosten gebucht sind. Sie lässt sich wie *Vergangene
+      Zeit* nicht löschen: Worauf sie verweist, sind Buchungen, und die verschwinden nie.
+    - *Schiffskosten an der Buchung* (`Booking.shipCost`): Jede neue Buchung der Art `ship` sagt,
+      wofür sie ist. Buchungen von vor dieser Regel haben keine; sie erscheinen in keiner
+      Monatsabrechnung.
+    - *Liegegebühren* (SR 31): Hausregel, solange Schiffe keinen eigenen Ort haben: **Das Schiff
+      liegt dort, wo die Gruppe ist.** `Ship.berthedSince` ist der Tag, an dem es dort angekommen
+      ist: gesetzt beim Erwerb, bei jeder Ankunft einer Reise (auch mit Passagen) und bei „Gruppe
+      platzieren“ an einer anderen Welt; fehlt es (alte Stände), gilt der Tag, an dem zum ersten
+      Mal danach Zeit vergeht. Hat die Welt einen Raumhafen A bis E, kostet das Liegen **Cr100**
+      bei der Ankunft (für die ersten sechs Tage) und **Cr100 je weiteren Tag**, gebucht, wenn die
+      Zeit diesen Tag erreicht (Buchung `ship`, `shipCost` berthing; je Zeitschritt eine Buchung
+      mit der Zahl der Tage im Hinweistext). Ohne Raumhafen und ohne Aufenthaltsort kostet es
+      nichts. Reicht die Kasse nicht, bleibt die Gebühr offen wie eine Rate (0 Cr, „Liegegebühr
+      nicht bezahlt“), ohne weitere Folge. Örtlich niedrigere oder erlassene Gebühren (SR 31)
+      bildet die App nicht ab.
+    - *Lebenserhaltung* (SR 30): Bei jeder Reise mit dem eigenen Schiff **Cr2.000 je Reisendem**,
+      gebucht am Abflugtag (Buchung `ship`, `shipCost` lifeSupport). SR 30 rechnet je besetzter
+      Kabine und Reise; weil Doppelbelegung die Kosten verdoppelt, kommt das auf Cr2.000 je Person
+      hinaus, egal wie viele Kabinen der Entwurf hat. Reicht die Kasse nicht, geht die Reise nicht
+      (wie beim Treibstoff). Cr100 je belegter Kälteschlafkoje fällt erst an, wenn auf dem eigenen
+      Schiff jemand in Kälteschlaf reist (zahlende Passagiere, später).
+    - *Treibstoff* (SR 30): Tanken bucht wie bisher, jetzt mit `shipCost` fuel; Kauf und Anzahlung
+      mit `shipCost` price.
+    - **Später**: die **Heuer der Crew** (SE 11: Pilot Cr6.000, Navigator 5.000, Engineer 4.000,
+      Steward 3.000, Medic 2.000, Gunner 1.000 im Monat) kommt mit angeheuerten NSC (Hirelings),
+      einem eigenen Schritt; dann gehört sie in dieselbe Monatsabrechnung. Ebenso später: die
+      **Jahreswartung** (0,1 % des Barpreises, SR 30) und ein eigener Ort für das Schiff.
   - **Ausblenden statt Löschen** (freigegeben am 16. November 2026). Beim **Wechseln** nach dem
     Ship-Vorteil (und später beim Verkauf) bleibt das alte Schiff mit `retired` in der
     Kampagne und wird nur ausgeblendet: Buchungen mit `forShip` und alte Logeinträge zeigen
@@ -2709,6 +2777,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
+
+- **Monat und Monatsabrechnung** (2026-11-17b, wartet auf Freigabe): noch nicht gebaut. Der Code
+  bucht die Rate alle 30 Tage ab dem Kauf, ohne `shipCost`, ohne Liegegebühren und Lebenserhaltung
+  und ohne Logeintrag.
 
 - **Ort eines Logeintrags von Hand ändern** (*Orte*, 2026-11-14j): Im Code bekommt ein Eintrag
   seinen Ort nur beim Anlegen; ändern oder entfernen lässt er sich noch nicht. Alles Übrige an

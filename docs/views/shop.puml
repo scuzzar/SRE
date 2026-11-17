@@ -83,6 +83,7 @@ hide <<browser>> stereotype
     amount: number
     count: number [0..1]
     text: string [0..1]
+    $new("2026-11-17b", "shipCost: ShipCost [0..1]")
   }
   enum BookingKind <<value>> $shop {
     income
@@ -104,6 +105,7 @@ hide <<browser>> stereotype
 
 ' Schiffe
   class Ship $schiffe
+  enum ShipCost <<value>> $schiffe $newClass("2026-11-17b")
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -113,6 +115,7 @@ hide <<browser>> stereotype
 ' Verlauf
 
 ' Zeit und Reisen
+  class MonthEnd $reise $newClass("2026-11-17b")
   class Journey $reise
   class Passenger <<value>> $reise
 
@@ -161,6 +164,8 @@ Booking "*" --> "0..1" Ship : forShip
 
 ' Zeit und Reisen
 Passenger "*" --> "1" Item : passage
+MonthEnd "*" -$newArrow("2026-11-17b")-> "*" Booking : costs {ordered}
+Booking -$newArrow("2026-11-17b")-> ShipCost
 Booking "*" --> "0..1" Journey : won
 
 ' Charaktererschaffung und Lebenslauf
@@ -205,4 +210,6 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Booking #line:d0021b;line.bold
+class Ship #line:d0021b;line.bold
 @enduml
