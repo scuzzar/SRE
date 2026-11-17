@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { addShip, appendLog, book, createCampaign, DEMO_FUNDS, fromCampaignFile, ref, rollEncounter, rollSurprise, setHexes, setLocation, toCampaignFile, type CampaignRepository, type Random } from '../model';
+import { addShip, appendLog, book, createCampaign, currentEncounter, DEMO_FUNDS, fromCampaignFile, ref, rollEncounter, rangeBetween, rollSurprise, setHexes, setLocation, toCampaignFile, type CampaignRepository, type Random } from '../model';
 import { countingKeys, fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 import { surfaceLines } from './world-view';
@@ -2012,6 +2012,28 @@ describe('Orte (2026-11-14j)', () => {
     // Wer schon dort ist, steht beim nächsten Mal als „schon hier“ in der Auswahl.
     game.startNpcPlacing();
     expect([...game.snapshot().npcs.placing!.here].sort()).toEqual([mara, tenzin].sort());
+  });
+
+  it('Ein mitkämpfender dauerhafter NSC (auch am Feld erzeugt) hat eine Reichweite zu den SC: beide Seiten können angreifen', async () => {
+    let seed = 11;
+    const { game } = await started({ int: (min, max) => min + ((seed = (seed * 16807) % 2147483647) % (max - min + 1)) });
+    game.openGlobeAt(4, 5);
+    game.pickCell(game.snapshot().globe!.cities[0]!.cell);
+    game.generateNpc('scouts', 'enemy', true);
+    const npc = game.snapshot().editor!.id!;
+    game.cancelEdit();
+    game.toggleJoining(npc);
+    game.rollEncounter('none');
+    game.closeEncounterIntro();
+    if (game.snapshot().combat?.sim?.needsSurprise) game.rollSurprise();
+    const campaign = game['campaign'];
+    const encounter = currentEncounter(campaign)!;
+    // Bisher galt jeder Charakter der Kampagne als SC: zwischen Kira und dem NSC gab es dann keine Reichweite.
+    expect(rangeBetween(campaign, encounter, 'c1', npc)).toBeDefined();
+    expect(rangeBetween(campaign, encounter, npc, 'c1')).toBeDefined();
+    const turn = game.snapshot().combat!.sim!.turn!;
+    expect(turn.target).toEqual(turn.side === 'pcs' ? npc : expect.stringMatching(/^c[12]$/));
+    expect(turn.attacks.some((a) => a.reaches && a.odds !== undefined)).toBe(true);
   });
 
   it('Einkaufen geht nur in einer Stadt auf der Welt der Gruppe; ✕ führt zum Feld zurück, ein Reiter verlässt den Shop', async () => {

@@ -1,4 +1,4 @@
-import { activeSkills, adoptCharacter, livingCharacters, type Campaign, type Character, type CharacterId, type Possession, type Upp } from './campaign';
+import { activeSkills, adoptCharacter, isPlayerCharacter, livingCharacters, type Campaign, type Character, type CharacterId, type Possession, type Upp } from './campaign';
 import { replay } from './career';
 import { DomainError } from './errors';
 import type { EventResult, LogEntry } from './log';
@@ -621,9 +621,12 @@ export function withDistance(encounter: Encounter, distance: Distance): Encounte
   return { ...encounter, distances: [...others, distance] };
 }
 
-/** Der SC eines Paars aus SC und NSC: Angriffe gibt es nur zwischen den Parteien. */
+/**
+ * Der SC eines Paars aus SC und NSC: Angriffe gibt es nur zwischen den Parteien. Ein dauerhafter NSC,
+ * der mitkämpft (`Encounter.joined`), gehört zwar zur Kampagne, kämpft aber auf der Seite der NSC.
+ */
 function pcOfPair(campaign: Campaign, a: CharacterId, b: CharacterId): CharacterId | undefined {
-  const isPc = (id: CharacterId) => campaign.characters.some((c) => c.id === id);
+  const isPc = (id: CharacterId) => isPlayerCharacter(campaign, id);
   if (isPc(a) === isPc(b)) return undefined;
   return isPc(a) ? a : b;
 }
