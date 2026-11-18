@@ -132,6 +132,9 @@ hide <<browser>> stereotype
 ' Subsektor und Welten
   class Hex $sektor
 
+' Missionen
+  class Mission $mission $newClass("2026-11-18")
+
 ' Verlauf
   class Butchering $begegnung
   class SaveRoll $begegnung
@@ -190,6 +193,7 @@ Character "1" *-- "0..1" Career : career
 Character "*" --> "0..1" Hex : homeworld
 Character "1" *-- "0..1" Place : place
 Character "*" --> "0..1" Patron : patron
+Mission "*" -$newArrow("2026-11-18")-> "0..1" Character : client
 Character --> NpcRole
 CareerRoll --> "0..1" Characteristic : of
 CareerRoll "*" --> "0..1" Skill : chosen

@@ -285,6 +285,22 @@ hide <<browser>> stereotype
     /success: boolean [0..1]
   }
 
+' Missionen
+  class Mission $mission $newClass("2026-11-18") {
+    title: string
+    text: string
+    state: MissionState
+    retired: boolean
+  }
+  class MissionPlace <<value>> $mission $newClass("2026-11-18") {
+    label: string [0..1]
+  }
+  enum MissionState <<value>> $mission $newClass("2026-11-18") {
+    open
+    done
+    failed
+  }
+
 ' Verlauf
   abstract class LogEntry $probe {
     at: datetime
@@ -683,6 +699,7 @@ hide <<browser>> stereotype
     to: number
     name: string
     text: string
+    $new("2026-11-18", "thread: boolean")
   }
   class HouseRules <<reference>> $probe {
     unskilledDm: number
@@ -1073,6 +1090,11 @@ Career "*" --> "*" Hex : worlds {ordered}
 Character "*" --> "0..1" Hex : homeworld
 Character "1" *-- "0..1" Place : place
 Character "*" --> "0..1" Patron : patron
+Campaign "1" *-$newArrow("2026-11-18")- "*" Mission : missions {ordered}
+Mission "*" -$newArrow("2026-11-18")-> "0..1" Character : client
+Mission "1" *-$newArrow("2026-11-18")- "*" MissionPlace : places {ordered}
+MissionPlace "1" *-$newArrow("2026-11-18")- "1" Place : place
+Mission -$newArrow("2026-11-18")-> MissionState
 Character --> NpcRole
 CareerRoll --> RollKind
 CareerRoll --> "0..1" ShipChoice
@@ -1281,6 +1303,8 @@ Card "*" --> "0..1" Odds : pickedOdds
 Card "*" --> "0..1" EventFocus : /focus
 CardPick "*" --> "0..1" EventFocus : /focus
 Card "1" *-- "1" MapIcon : map
+Card "*" -$newArrow("2026-11-18")-> "0..1" Mission : thread
+CardPick "*" -$newArrow("2026-11-18")-> "0..1" Mission : thread
 PickedItem "*" --> "1" Slot : /in
 PickedItem "*" --> "1..2" Entry : picked {ordered}
 Section "1" *-- "1..*" Slot : slots {ordered}

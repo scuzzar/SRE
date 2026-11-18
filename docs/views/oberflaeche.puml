@@ -87,6 +87,9 @@ hide <<browser>> stereotype
 ' Subsektor und Welten
   class Hex $sektor
 
+' Missionen
+  class MissionPlace <<value>> $mission $newClass("2026-11-18")
+
 ' Verlauf
   abstract class LogEntry $probe
 
@@ -161,6 +164,7 @@ Campaign "1" *-- "0..1" Place : location
 
 ' Charaktererschaffung und Lebenslauf
 Character "1" *-- "0..1" Place : place
+MissionPlace "1" *-$newArrow("2026-11-18")- "1" Place : place
 
 ' Laufbahnen (Referenzdaten)
 

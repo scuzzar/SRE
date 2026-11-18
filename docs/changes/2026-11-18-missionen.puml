@@ -1,0 +1,250 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-18"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-18: Missionen mit Auftraggeber und Orten; offene Missionen sind die Handlungsfäden des Orakels
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+hide <<browser>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne {
+    name: string
+    key: string
+    changedAt: datetime
+    /funds: number
+    /ship: Ship [0..1]
+    quantityDie: number [0..1]
+    /load: number
+    /capacity: number
+    /burden: number
+    day: number
+    /date: string
+    /weekday: number [0..1]
+  }
+  class Character $charakter {
+    name: string
+    background: string
+    equipment: string
+    credits: number
+    note: string
+    dead: boolean
+    retired: boolean
+    npc: boolean
+    role: NpcRole [0..1]
+    /wounds: Wounds
+    /hurt: number [0..1]
+    /state: WoundState
+    /blows: number [0..1]
+  }
+  enum NpcRole <<value>> $charakter
+  class Upp <<value>> $charakter
+  class SkillLevel $charakter
+
+' Schiffe
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+
+' Missionen
+  class Mission $mission $newClass("2026-11-18") {
+    title: string
+    text: string
+    state: MissionState
+    retired: boolean
+  }
+  class MissionPlace <<value>> $mission $newClass("2026-11-18") {
+    label: string [0..1]
+  }
+  enum MissionState <<value>> $mission $newClass("2026-11-18") {
+    open
+    done
+    failed
+  }
+
+' Verlauf
+  class CardPick $karte {
+    question: string [0..1]
+    bell: number [0..1]
+    scatter: Scatter [0..1]
+    oracle: number [0..1]
+    chance: number [0..1]
+    /answer: Answer [0..1]
+    eventFocus: number [0..1]
+    /randomEvent: boolean
+  }
+  class PickedItem $karte
+
+' Zeit und Reisen
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Conflict <<transient>> $kampagne
+  class Card <<transient>> $karte {
+    question: string [0..1]
+    bell: number
+    scatter: Scatter
+    pickedRolls: CardRoll [*]
+    oracle: number
+    eventFocus: number [0..1]
+    /randomEvent: boolean
+  }
+  class MapIcon <<value>> $karte
+
+' Referenzdaten
+  class Odds <<reference>> $karte
+  class EventFocus <<reference>> $karte {
+    from: number
+    to: number
+    name: string
+    text: string
+    $new("2026-11-18", "thread: boolean")
+  }
+  class Slot <<reference>> $karte
+  class Entry <<reference>> $karte
+  class SurfaceCell <<value>> $oberflaeche
+  class City $oberflaeche
+  class Place <<value>> $oberflaeche {
+  }
+' Fahrzeuge und Wege auf der Oberfläche
+
+' Kampagne
+Campaign "1" *-- "*" Character : characters
+Campaign "*" --> "1" Odds : odds
+Campaign "0..1" --> "0..1" Character : focus
+Campaign "1" *-- "0..1" Place : location
+Conflict "*" --> "0..1" Campaign : local
+Conflict "*" --> "0..1" Campaign : remote
+
+' Schiffe
+
+' Zeit und Reisen
+
+' Charaktererschaffung und Lebenslauf
+Character "1" *-- "0..1" Place : place
+Campaign "1" *-$newArrow("2026-11-18")- "*" Mission : missions {ordered}
+Mission "*" -$newArrow("2026-11-18")-> "0..1" Character : client
+Mission "1" *-$newArrow("2026-11-18")- "*" MissionPlace : places {ordered}
+MissionPlace "1" *-$newArrow("2026-11-18")- "1" Place : place
+Mission -$newArrow("2026-11-18")-> MissionState
+Character --> NpcRole
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+Place "*" --> "0..1" SurfaceCell : cell
+Place "*" --> "0..1" City : city
+
+' Charakter
+Character "1" *-- "1" Upp : upp
+Character "1" *-- "*" SkillLevel : skills
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+CardPick "1" *-- "*" PickedItem : items {ordered}
+CardPick "1" *-- "0..1" MapIcon : map
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+Card "0..1" --> "1" Campaign : in
+Card "*" --> "1..*" Entry : drawn {ordered}
+Card "*" --> "*" Slot : picked
+Card ..> CardPick : on confirm
+CardPick "*" --> "0..1" Odds : odds
+Card "*" --> "0..1" Odds : pickedOdds
+Card "*" --> "0..1" EventFocus : /focus
+CardPick "*" --> "0..1" EventFocus : /focus
+Card "1" *-- "1" MapIcon : map
+Card "*" -$newArrow("2026-11-18")-> "0..1" Mission : thread
+CardPick "*" -$newArrow("2026-11-18")-> "0..1" Mission : thread
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
+endlegend
+class EventFocus #line:d0021b;line.bold
+@enduml

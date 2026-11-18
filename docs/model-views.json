@@ -51,6 +51,10 @@
     {
       "id": "schiffe",
       "title": "Schiffe"
+    },
+    {
+      "id": "mission",
+      "title": "Missionen"
     }
   ],
   "changes": [
@@ -408,6 +412,12 @@
         "LogEntry",
         "Journey"
       ]
+    },
+    {
+      "id": "2026-11-18",
+      "file": "2026-11-18-missionen",
+      "title": "Missionen mit Auftraggeber und Orten; offene Missionen sind die Handlungsfäden des Orakels",
+      "approved": false
     }
   ]
 }
