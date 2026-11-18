@@ -2962,10 +2962,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
-- **Systemflug** (2026-11-18) und **Sternsystem** (2026-11-18b) sind freigegeben, aber noch nicht
-  gebaut: `SystemFlight`, `SpaceUnit`, `TrackPoint`, `Vec`, `StarSystem`, `Star`, `StarZones`,
-  `GasGiant`, `Satellite`, die Raumkarte und der Scout der Demo-Kampagne fehlen im Code. Der
-  Prototyp in `docs/mock/raumkarte-bewegung.html` zeigt das Bewegungsmodell.
+- **Systemflug** (2026-11-18) ist gebaut (`model/flight.ts`, Raumkarte in `view/space/`, Scout der
+  Demo-Kampagne). Abweichungen: Der Schubvektor, den der Finger gerade zieht, liegt flüchtig im
+  Zustand des Controllers (`OpenSpace.aim`) und wird erst beim Loslassen gesetzt; ebenso die Orte
+  der letzten Raumrunde für die Wiedergabe. Das Schiff startet oberhalb der Welt, damit das
+  Ziehblatt es nicht verdeckt.
+- **Sternsystem** (2026-11-18b) ist freigegeben, aber noch nicht gebaut: `StarSystem`, `Star`,
+  `StarZones`, `GasGiant`, `Satellite` und `SystemFlight.at` fehlen im Code; die Raumkarte zeigt
+  nur die Welt.
 
 - **Monat und Monatsabrechnung** (2026-11-17b) sind gebaut (`model/upkeep.ts`, Monate in
   `model/time.ts`). **`MonthEnd → Booking : costs`** ist im Code der Bereich der Buchungen von

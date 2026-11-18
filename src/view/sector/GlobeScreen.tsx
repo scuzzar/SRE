@@ -3,7 +3,7 @@ import { landformAt, type GlobeView, type LogItem, type TripPlanView, type TripV
 import { TripHint, TripPlanCard } from './TripPanels';
 import { roleText } from '../format';
 import { useGame } from '../game-context';
-import { CloseIcon, LocateIcon, PencilIcon } from '../icons';
+import { CloseIcon, LocateIcon, PencilIcon, ShipIcon } from '../icons';
 import { createGlobeRenderer, type GlobeRenderer } from './globe-gl';
 import { hideLoading, showLoading } from '../loading';
 import { cellAt, radiusOf, renderGlobe, screenOf, screenOfPoint, type Camera, type Viewport } from './globe-render';
@@ -518,6 +518,9 @@ export function GlobeScreen({
       </div>
 
       <div className="globe-zoom" hidden={panel === 'world'}>
+        <button type="button" className="globe-round" aria-label="Raumkarte" title="Raum: die Raumkarte um die Welt" onClick={() => game.openSpace()}>
+          <ShipIcon />
+        </button>
         {globe.partyCell !== undefined && (
           <button type="button" className="globe-round globe-locate" aria-label="Zur Gruppe" title="Zur Gruppe" onClick={flyToParty}>
             <LocateIcon />

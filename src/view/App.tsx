@@ -30,6 +30,8 @@ import { JourneySheet } from './sector/JourneySheet';
 import { FieldCard, GlobeScreen } from './sector/GlobeScreen';
 import { TripRollDialog } from './sector/TripPanels';
 import { FieldDock } from './sector/FieldDock';
+import { SpaceScreen } from './space/SpaceScreen';
+import { SpaceCard, SpaceDock } from './space/SpacePanel';
 import { LoadingOverlay } from './loading';
 import { Tray } from './Tray';
 
@@ -86,7 +88,9 @@ export function App() {
   // `.field-slot` freihält). Für die Heimatwelt- bzw. Welt-eines-Terms-Wahl (`picking`) steht der
   // Subsektor schon selbst in einem Blatt; die neue Welt bekommt dort ein eigenes, obendrauf.
   const globeField = view.globe?.picked ? <FieldCard globe={view.globe} error={view.world?.error} log={view.log} logDays={view.logDays} tripPlan={view.tripPlan} /> : undefined;
-  const field = globeField ?? (view.picking ? undefined : worldDock.field) ?? (!view.globe && view.selected ? <div ref={setFieldSlot} className="field-slot" /> : undefined);
+  // Auf der Raumkarte steht ihr Blatt an der Stelle des Bereichs (2026-11-18).
+  const spaceField = view.space ? <SpaceCard space={view.space} /> : undefined;
+  const field = spaceField ?? globeField ?? (view.picking ? undefined : worldDock.field) ?? (!view.globe && view.selected ? <div ref={setFieldSlot} className="field-slot" /> : undefined);
   const area = (
     <>
       {screen === 'encounter' && <EncounterScreen view={view} options={encounterOptions} onOptions={setEncounterOptions} />}
@@ -156,13 +160,16 @@ export function App() {
   const fieldDock = view.globe?.picked ? <FieldDock globe={view.globe} trip={view.trip} tripPlan={view.tripPlan} npcs={view.npcs} /> : undefined;
   // Im Reiter Begegnung: die Würfe der Begegnungen und die Zeit bzw. Weiterfahren.
   const encounterDock = screen === 'encounter' && field === undefined ? <EncounterDock view={view} options={encounterOptions} /> : undefined;
-  const own = fieldDock ?? (view.picking ? undefined : worldDock.foot) ?? encounterDock;
+  const spaceDock = view.space ? <SpaceDock space={view.space} /> : undefined;
+  const own = spaceDock ?? fieldDock ?? (view.picking ? undefined : worldDock.foot) ?? encounterDock;
   const foot = own ?? ((desktop || screen === 'oracle') && field === undefined ? dock : undefined);
 
   // Die Grundkarte: der Globus der offenen Welt, sonst der Subsektor. Oben rechts das Menü.
   const base = (
     <div className="base">
-      {view.globe ? (
+      {view.space ? (
+        <SpaceScreen key={`space-${view.space.world.id}`} space={view.space} />
+      ) : view.globe ? (
         <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} world={view.world} here={view.location === view.globe.id} travel={view.travel} log={view.log} logDays={view.logDays} trip={view.trip} />
       ) : (
         <div className="base-sector">
@@ -208,7 +215,7 @@ export function App() {
           {base}
           <Tray
             stop={view.trayStop}
-            raise={view.globe?.picked?.cell ?? view.selected?.id ?? (view.world && !view.globe ? view.world.id : undefined)}
+            raise={view.space ? `space-${view.space.world.id}` : view.globe?.picked?.cell ?? view.selected?.id ?? (view.world && !view.globe ? view.world.id : undefined)}
             head={banners}
             body={body}
             foot={foot}

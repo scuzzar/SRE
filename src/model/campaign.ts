@@ -12,6 +12,7 @@ import type { Encounter, QuantityDie } from './encounter';
 import { isPc, settleStash } from './stash';
 import { START_DAY } from './time';
 import type { Ship } from './ship';
+import type { SystemFlight } from './flight';
 import { defaultOdds, HANDS, itemOf, itemOfWeapon, oddsOf, ref, skillOf, weaponOf, type ExampleCharacter } from './reference';
 
 /** Die sechs Attributwerte, je 0 bis 15. */
@@ -142,6 +143,8 @@ export interface Campaign {
   readonly day: number;
   /** Die Fahrt der Gruppe über die Oberfläche ihrer Welt; höchstens eine (siehe `trip.ts`). */
   readonly trip?: Trip;
+  /** Der laufende Systemflug auf der Raumkarte einer Welt; höchstens einer (siehe `flight.ts`). */
+  readonly flight?: SystemFlight;
 }
 
 /** Was man beim Anlegen und Bearbeiten eines Charakters eingibt. */

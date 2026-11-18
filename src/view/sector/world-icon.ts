@@ -287,8 +287,13 @@ const ST = Math.sin(TILT);
 const CR = Math.cos(ROTATION);
 const SR = Math.sin(ROTATION);
 
+/** Wie das Symbol gezeichnet wird: `orbits: false` lässt die angedeuteten Umlaufbahnen weg (auf der Raumkarte, 2026-11-18). */
+export interface WorldDrawing {
+  readonly orbits?: boolean;
+}
+
 /** Zeichnet die Welt auf ein neues Canvas mit `px` × `px` Pixeln. */
-export function drawWorld(look: WorldLook, px: number): HTMLCanvasElement {
+export function drawWorld(look: WorldLook, px: number, drawing: WorldDrawing = {}): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   const S = Math.max(8, Math.round(px));
   canvas.width = S;
@@ -306,7 +311,7 @@ export function drawWorld(look: WorldLook, px: number): HTMLCanvasElement {
   const atm = (look.atmosphere === undefined ? undefined : ATMOSPHERES[look.atmosphere]) ?? ATMOSPHERES[0]!;
   const hydrographics = look.hydrographics ?? 0;
   const exotic = (look.atmosphere ?? 0) >= 10;
-  const R = (S / 2) * (0.3 + Math.min(10, look.size) * 0.052);
+  const R = (S / 2) * worldRadiusShare(look.size);
   const glow = atm.glow ? rgb(atm.glow) : undefined;
   const G = glow ? R * atm.width * 1.8 : 0;
   const samples = samplesOf(seed);
@@ -392,7 +397,7 @@ export function drawWorld(look: WorldLook, px: number): HTMLCanvasElement {
   }
   ctx.putImageData(img, 0, 0);
   cityLights(ctx, S, R, look, seed, samples, threshold);
-  orbits(ctx, S, R, look, seed);
+  if (drawing.orbits !== false) orbits(ctx, S, R, look, seed);
   return canvas;
 }
 
@@ -571,14 +576,19 @@ const canvases = new Map<string, HTMLCanvasElement>();
 const urls = new Map<string, string>();
 
 /** Das Symbol als Canvas mit `px` Pixeln Kantenlänge, je Welt und Größe nur einmal gerechnet. */
-export function worldCanvas(look: WorldLook, px: number): HTMLCanvasElement {
-  const key = keyOf(look, Math.round(px));
+export function worldCanvas(look: WorldLook, px: number, drawing: WorldDrawing = {}): HTMLCanvasElement {
+  const key = `${keyOf(look, Math.round(px))}|${drawing.orbits === false ? 'no-orbits' : ''}`;
   let canvas = canvases.get(key);
   if (!canvas) {
-    canvas = drawWorld(look, px);
+    canvas = drawWorld(look, px, drawing);
     canvases.set(key, canvas);
   }
   return canvas;
+}
+
+/** Anteil des Weltradius an der halben Kantenlänge des Symbols (so groß zeichnet `drawWorld` eine Welt dieser Größe). */
+export function worldRadiusShare(size: number): number {
+  return 0.3 + Math.min(10, size) * 0.052;
 }
 
 /** Das Symbol als Bild-URL, etwa für ein `<image>` in der Sektorkarte. */

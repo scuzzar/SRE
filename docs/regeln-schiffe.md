@@ -64,7 +64,7 @@ dabei.
 | [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system) | SR 42 | ○ |
 | [Handel und Gewerbe](#handel-und-gewerbe) | SR 52 | ○ |
 | [Raumkampf](#raumkampf) | SR 39–42 | ○ |
-| [Vektorbewegung (Mayday, Supplement 3)](#vektorbewegung-mayday-supplement-3) | MD, SS3 4–11 | ○ |
+| [Vektorbewegung (Mayday, Supplement 3)](#vektorbewegung-mayday-supplement-3) | MD, SS3 4–11 | ◐ ✱ (Bewegung mit echter Schwerkraft als Systemflug, 2026-11-18; Waffen, Raketen, Sand offen) |
 
 ---
 

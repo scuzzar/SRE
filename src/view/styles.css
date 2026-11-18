@@ -8758,3 +8758,30 @@ button:disabled {
   flex: 1 1 auto;
   min-width: 0;
 }
+
+/* Die Raumkarte (2026-11-18): wie der Globus eine Grundkarte; ihr Blatt zeigt Systemflug und Schiff. */
+.space-title {
+  cursor: default;
+}
+
+.space-stats {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 8px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.space-stats dt {
+  color: var(--muted, #8b97ad);
+}
+
+.space-stats dd {
+  margin: 0;
+  text-align: right;
+}
+
+.space-warn {
+  color: #ff5a6a;
+  font-weight: 600;
+}

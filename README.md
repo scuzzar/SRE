@@ -117,7 +117,7 @@ Die erste Version ist bewusst klein und **für das Smartphone** gebaut. **Die Ka
 
 **UI-Entwurf:** Der klickbare Entwurf liegt in [docs/ui-entwurf](docs/ui-entwurf/).
 
-**Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf über Angriff, Wunden, Überraschung, Ausdauer und Parade hinaus (Medical Drugs, Deckung, Moral), Kaufen und Verkaufen, Reisezonen, Sprungrouten, ganze Sektoren aus mehreren Subsektoren, Handel und Raumkampf mit dem Schiff (auch die DMs und Folgen eines Fehlsprungs), Schiffspositionen der SC, eigene Schiffsentwürfe, NSC-Karten, Chaosfaktor, Szenen, Feinjustierung ±1, eigene Fertigkeiten, Hausregeln in der App einstellen.
+**Bewusst noch nicht in Version 1:** physisches Würfeln, Kampf über Angriff, Wunden, Überraschung, Ausdauer und Parade hinaus (Medical Drugs, Deckung, Moral), Kaufen und Verkaufen, Reisezonen, Sprungrouten, ganze Sektoren aus mehreren Subsektoren, Handel und Raumkampf mit dem Schiff (gebaut ist der Systemflug ohne Gegner auf der Raumkarte; auch die DMs und Folgen eines Fehlsprungs fehlen noch), Schiffspositionen der SC, eigene Schiffsentwürfe, NSC-Karten, Chaosfaktor, Szenen, Feinjustierung ±1, eigene Fertigkeiten, Hausregeln in der App einstellen.
 
 ---
 
