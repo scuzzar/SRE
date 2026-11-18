@@ -9,6 +9,7 @@ import { oneDriveAuthority, oneDriveClientId, oneDriveRedirectUri } from './plat
 import { probeCloud } from './platform/probe-cloud';
 import { cryptoRandom } from './platform/random';
 import { openRepository, rawCampaigns, requestDurable } from './platform/repository';
+import { webWindowLock } from './platform/window-lock';
 import { App } from './view/App';
 import { GameProvider } from './view/game-context';
 import { RenderGuard, StartError, type StartErrorActions } from './view/StartError';
@@ -20,18 +21,20 @@ import './view/styles.css';
 const query = new URLSearchParams(location.search);
 const probe = query.has('probe-wolke');
 const device = probe ? query.get('geraet') : null;
+// Jedes Gerät der Probe-Wolke hat seinen eigenen Speicher, also auch seine eigene Sperre.
+const storeName = device ? `solo-rpg-engine-${device}` : 'solo-rpg-engine';
 // Startet die App nicht, zeigt sie statt eines schwarzen Bildschirms die Meldung und bietet die rohen
 // Spielstände zum Sichern an.
 const root = createRoot(document.getElementById('root')!);
 const actions: StartErrorActions = {
   saveRaw: () => {
-    rawCampaigns(device ? `solo-rpg-engine-${device}` : undefined)
+    rawCampaigns(storeName)
       .then((text) => browserDownload.offer('spielstaende-roh.json', text, 'application/json'))
       .catch((error: unknown) => alert(`Sichern ging nicht: ${String(error)}`));
   },
 };
 try {
-  const { repository, persistent } = await openRepository(device ? `solo-rpg-engine-${device}` : undefined);
+  const { repository, persistent } = await openRepository(storeName);
 
   /** OneDrive gibt es nur mit Client-ID und nur unter der registrierten Adresse (auch dort unter index.html). */
   async function openCloud(): Promise<Cloud | undefined> {
@@ -56,8 +59,20 @@ try {
   };
   // Ob der Browser den Speicher dauerhaft hält, kommt später; Firefox fragt dafür erst den Spieler.
   const durable = persistent ? requestDurable() : Promise.resolve(undefined);
-  const game = new GameController({ repository, random: cryptoRandom, clock: systemClock, download: browserDownload, keys: cryptoKeys, ...(cloud ? { cloud } : {}), later, persistent, durable });
+  // Nur ein Fenster der App schreibt; im Arbeitsspeicher teilt sich ohnehin keines etwas.
+  const lock = persistent ? { lock: webWindowLock(storeName) } : {};
+  const game = new GameController({ repository, random: cryptoRandom, clock: systemClock, download: browserDownload, keys: cryptoKeys, ...(cloud ? { cloud } : {}), later, persistent, durable, ...lock });
   await game.init();
+
+  // Was nach einer Eingabe schiefgeht und niemand auffängt (auch Fehler in Klick-Handlern, die React
+  // hierher meldet), zeigt der Controller als Hinweis, statt dass einfach nichts passiert. Ohne Fehler-
+  // objekt (etwa Meldungen des ResizeObserver oder fremder Skripte) bleibt es still.
+  window.addEventListener('error', (event) => {
+    if (event.error instanceof Error) game.showError(event.error);
+  });
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason instanceof Error) game.showError(event.reason);
+  });
 
   // Abgleichen, wenn die App wieder in den Vordergrund kommt oder das Netz zurück ist.
   document.addEventListener('visibilitychange', () => {

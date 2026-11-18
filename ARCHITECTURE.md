@@ -18,15 +18,16 @@ sagt nur, wo die Teile liegen und wie sie miteinander reden.
 | 0 | `src/data/` | Referenzdaten: Tabellen als JSON, Schemas | — |
 | 1 | `src/model/` | **Model**: der gespeicherte Stand des Domänenmodells und seine Regeln | `data` |
 | 1a | `src/model/draft/` | **Model, Entwürfe**: `Card`, `Task`, `Attack`, `Wounding`, `WorldRoll`; flüchtig, nie gespeichert | `data`, `model` |
-| 2 | `src/platform/` | Was das Model von außen braucht: Speicher (Dexie), Zufall, Uhr, Schlüssel, Download, OneDrive (MSAL und Microsoft Graph) | `model` ohne `draft` |
+| 2 | `src/platform/` | Was das Model von außen braucht: Speicher (Dexie), Zufall, Uhr, Schlüssel, Download, Sperre gegen ein zweites Fenster (Web Locks), OneDrive (MSAL und Microsoft Graph) | `model` ohne `draft` |
 | 3 | `src/controller/` | **Controller**: eine Methode pro Absicht des Spielers | `model` mit `draft` |
 | 4 | `src/view/` | **View**: React-Komponenten | `controller`, `model` mit `draft` (nur Typen) |
 | 5 | `src/main.tsx` | Verdrahtung | alles |
 | — | `src/service-worker.js` | Service Worker: legt die Dateien der App für offline ab, läuft im eigenen Kontext | nichts |
 
 Plattform und Controller kennen sich nicht. Das Model definiert die Schnittstellen
-(`CampaignRepository`, `Random`, `Clock`, `Keys`, `Download`, `Cloud`), `platform/` setzt sie um (Dexie,
-`crypto.getRandomValues`, `Date`, `crypto.randomUUID`, ein Link mit `download`, OneDrive über MSAL
+(`CampaignRepository`, `Random`, `Clock`, `Keys`, `Download`, `WindowLock`, `Cloud`), `platform/` setzt sie um (Dexie,
+`crypto.getRandomValues`, `Date`, `crypto.randomUUID`, ein Link mit `download`, die Web Locks API in
+`platform/window-lock.ts`, OneDrive über MSAL
 und Microsoft Graph in `platform/onedrive.ts`, die Client-ID in `platform/onedrive-config.ts`, zum
 Ausprobieren die Probe-Wolke in `platform/probe-cloud.ts`), und `main.tsx` reicht die Umsetzungen in den Controller. Physische Würfel (später) sind eine
 zweite Umsetzung von `Random`, die das Ergebnis vom Spieler erfragt.
@@ -87,7 +88,11 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   welcher Charakter im Charakter-Screen seine Details zeigt (`toggleDetails(id)`) und ob die Leiste
   mit dem Charakter oben eingeklappt ist (`toggleStrip()`) und ob der Hinweis über den Waffen im
   Shop weggeklickt ist (`hideShopHint()`) und auf welcher Stufe das Ziehblatt steht (`setTrayStop(stop)`: versteckt, eingeklappt, halb oder voll; die Höhe dazu rechnet die View);
-  das merkt sich das Gerät über das Repository, wie die offene Kampagne. Auch der Ablauf ist seine Sache: Steht nach einer Änderung
+  das merkt sich das Gerät über das Repository, wie die offene Kampagne. Ebenso, ob ein Hinweis oben steht,
+  was nach einer Eingabe nicht ging (`showError(error)`, `closeNotice()`; eine verletzte Regel mit ihrer
+  Meldung, sonst „Das ging nicht: …“): `main.tsx` reicht ihm jeden Fehler, den sonst niemand auffängt
+  (`error` und `unhandledrejection` am Fenster; Fehler in Klick-Handlern meldet React dorthin), damit eine
+  Eingabe nie lautlos scheitert. Auch der Ablauf ist seine Sache: Steht nach einer Änderung
   ein anderer Charakter oben, endet die Probe; nach der Erschaffung geht es zum Orakel-Screen, wo der
   Neue oben steht. Die Inspirationskarte steht im Vordergrund, solange es eine offene
   `Card` gibt; das folgt aus dem Model und braucht keinen eigenen Zustand.
@@ -151,6 +156,15 @@ einem Speicher im Arbeitsspeicher weiter; ein Hinweis oben im Ziehblatt bzw. in 
 `requestDurable()` den Browser, den Speicher dauerhaft zu halten (`navigator.storage.persist()`). Die
 Antwort geht als Promise in den Controller und wartet nicht auf den Start, weil Firefox dafür den
 Spieler fragt; der Snapshot meldet sie als `durable`, der „Über“-Bildschirm zeigt sie an.
+
+**Ein Fenster schreibt.** Ist die App auf einem Gerät in zwei Fenstern offen (etwa installiert und
+im Browser), überschrieben sich beide still den Spielstand. Darum hält das Fenster, das schreibt, eine
+Sperre über die Web Locks API (`platform/window-lock.ts`, Schnittstelle `WindowLock`; beim Start
+höchstens 1,5 Sekunden Warten, weil die alte Seite sie beim Neuladen erst kurz danach freigibt). Ein
+zweites Fenster lädt nur, speichert und gleicht nichts ab und zeigt „In einem anderen Fenster offen“;
+„Hier weiterspielen“ (`takeOver()`) nimmt dem ersten die Sperre, lädt den Spielstand neu und gleicht ab,
+das erste zeigt dann dasselbe Fenster (Snapshot `elsewhere`). Ohne Web Locks (oder wenn der Browser sie
+verweigert) und mit dem Speicher im Arbeitsspeicher schreibt jedes Fenster, wie bisher.
 
 **Installieren und offline.** `public/manifest.webmanifest` macht die App installierbar, mit PNG-Icons
 (192 und 512 px, eines maskierbar für Android) und `apple-touch-icon.png` für das iPhone; alle

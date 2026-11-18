@@ -108,6 +108,21 @@ export interface Cloud {
   removeDeckPlan(design: string, name: string, revision: string): Promise<void>;
 }
 
+/**
+ * Wer den Spielstand schreiben darf: auf einem Gerät immer nur ein Fenster der App. Zwei offene
+ * Fenster (etwa die installierte App und ein Tab im Browser) überschrieben sonst still gegenseitig
+ * ihre Änderungen.
+ */
+export interface WindowLock {
+  /**
+   * Nimmt das Recht zu schreiben; `false`, wenn ein anderes Fenster es hält. `lost` wird gerufen,
+   * wenn ein anderes Fenster es später übernimmt.
+   */
+  acquire(lost: () => void): Promise<boolean>;
+  /** Nimmt das Recht dem anderen Fenster weg; dort wird dessen `lost` gerufen. */
+  take(lost: () => void): Promise<void>;
+}
+
 /** Gibt dem Spieler eine Datei zum Speichern, als Download. */
 export interface Download {
   offer(fileName: string, content: string, type: string): void;

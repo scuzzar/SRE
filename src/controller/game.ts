@@ -190,6 +190,7 @@ import {
   type Range,
   type CardRoll,
   type Random,
+  type WindowLock,
 } from '../model';
 import {
   attackRounds,
@@ -260,6 +261,8 @@ export interface GameDependencies {
   readonly persistent?: boolean;
   /** Ob der Browser zusagt, den Speicher nicht zu löschen; `undefined`, wo er das nicht kennt. */
   readonly durable?: Promise<boolean | undefined>;
+  /** Das Recht zu schreiben, wenn die App in mehreren Fenstern offen ist; fehlt es, schreibt jedes. */
+  readonly lock?: WindowLock;
 }
 
 /**
@@ -274,6 +277,13 @@ export class GameController {
   private saving: Promise<void> = Promise.resolve();
   /** Nach einem Fehler beim Laden schreibt die App nichts mehr, damit sie den alten Spielstand nicht überschreibt. */
   private writable = true;
+  /** Ein anderes Fenster hält das Recht zu schreiben (`WindowLock`); bis zur Übernahme schreibt dieses nichts. */
+  private elsewhere = false;
+
+  /** Ob dieses Fenster den Spielstand schreiben darf. */
+  private get canWrite(): boolean {
+    return this.writable && !this.elsewhere;
+  }
   /** Die Abgleichsmarken des Geräts, je Schlüssel. */
   private readonly marks = new Map<string, SyncMark>();
   /** Der laufende Abgleich; ein zweiter Wunsch währenddessen hängt einen weiteren Durchgang an. */
@@ -294,6 +304,8 @@ export class GameController {
       persistent: deps.persistent ?? true,
       durable: undefined,
       storageError: undefined,
+      elsewhere: false,
+      notice: undefined,
       screen: 'oracle',
       npcAll: false,
       npcPlacing: undefined,
@@ -349,11 +361,23 @@ export class GameController {
   /**
    * Lädt die Kampagnen und öffnet die, die zuletzt offen war. Gibt es noch keine, beginnt die erste
    * mit den Beispielcharakteren. Lassen sich die Kampagnen nicht laden, läuft die App ohne Speichern
-   * weiter: Die neue erste Kampagne darf keine gespeicherte mit derselben Id überschreiben.
+   * weiter: Die neue erste Kampagne darf keine gespeicherte mit derselben Id überschreiben. Ist die
+   * App schon in einem anderen Fenster offen, lädt sie nur und speichert nichts (`takeOver`).
    */
   async init(): Promise<void> {
     // Die Antwort des Browsers wartet nicht auf den Start; Firefox fragt dafür erst den Spieler.
     void this.deps.durable?.then((durable) => this.update({ durable }));
+    // Hält ein anderes Fenster das Recht zu schreiben, lädt dieses nur und fragt, ob es übernehmen soll.
+    if (this.deps.lock && !(await this.deps.lock.acquire(() => this.lose()))) {
+      this.elsewhere = true;
+      this.update({ elsewhere: true });
+    }
+    await this.load();
+    await this.initSync();
+  }
+
+  /** Lädt Kampagnen und Einstellungen aus dem Speicher und öffnet die Kampagne, die zuletzt offen war. */
+  private async load(): Promise<void> {
     let campaigns: readonly Campaign[] = [];
     let open: CampaignId | undefined;
     try {
@@ -390,9 +414,46 @@ export class GameController {
       if (c !== loaded[i]) this.persist(() => this.deps.repository.save(c), true);
     });
     const campaign = campaigns.find((c) => c.id === open) ?? byName(campaigns)[0];
-    if (campaign) this.update({ campaigns, campaign, ...this.home(campaign), ...this.landing(campaign) });
-    else this.addCampaign(createDemoCampaign(this.deps.clock, this.deps.keys.next()));
+    if (campaign) this.update({ ...this.closed(campaign), ...this.landing(campaign), campaigns, campaign });
+    else {
+      this.update({ campaigns: [] });
+      this.addCampaign(createDemoCampaign(this.deps.clock, this.deps.keys.next()));
+    }
+  }
+
+  /**
+   * „Hier weiterspielen“: Dieses Fenster übernimmt das Recht zu schreiben vom anderen. Weil dort
+   * inzwischen gespielt sein kann, lädt es den Spielstand neu; offene Entwürfe verfallen.
+   */
+  async takeOver(): Promise<void> {
+    const lock = this.deps.lock;
+    if (!lock || !this.elsewhere) return;
+    await lock.take(() => this.lose());
+    this.elsewhere = false;
+    this.marks.clear();
+    this.deckMarks.clear();
+    await this.load();
+    this.update({ elsewhere: false });
     await this.initSync();
+  }
+
+  /** Ein anderes Fenster hat das Recht zu schreiben übernommen: Dieses speichert nichts mehr. */
+  private lose(): void {
+    this.elsewhere = true;
+    this.update({ elsewhere: true });
+  }
+
+  /**
+   * Was nach einer Eingabe nicht ging, steht als Hinweis da, statt lautlos zu verschwinden: eine
+   * verletzte Regel mit ihrer Meldung, jeder andere Fehler mit „Das ging nicht“. `main.tsx` reicht
+   * Fehler hierher, die sonst niemand auffängt.
+   */
+  showError(error: unknown): void {
+    this.update({ notice: error instanceof DomainError ? error.message : `Das ging nicht: ${messageOf(error)}` });
+  }
+
+  closeNotice(): void {
+    this.update({ notice: undefined });
   }
 
   // --- Verbindung zur View ---------------------------------------------------------------------
@@ -508,7 +569,7 @@ export class GameController {
    * kommt, und kurz nach jeder Änderung. Läuft schon ein Abgleich, folgt ihm ein weiterer.
    */
   sync(): Promise<void> {
-    if (!this.deps.cloud || !this.state.sync.account || !this.writable) return Promise.resolve();
+    if (!this.deps.cloud || !this.state.sync.account || !this.canWrite) return Promise.resolve();
     if (this.syncing) {
       this.again = true;
       return this.syncing;
@@ -572,7 +633,7 @@ export class GameController {
   /** Beim Start: die Marken laden und, wenn jemand angemeldet ist, abgleichen (ohne darauf zu warten). */
   private async initSync(): Promise<void> {
     const cloud = this.deps.cloud;
-    if (!cloud || !this.writable) return;
+    if (!cloud || !this.canWrite) return;
     try {
       for (const mark of await this.deps.repository.loadMarks()) this.marks.set(mark.key, mark);
       for (const mark of await this.deps.repository.loadDeckMarks()) this.deckMarks.set(slotKey(mark), mark);
@@ -1773,6 +1834,7 @@ export class GameController {
 
   /** Legt ein Bild als nächsten freien Deckplan des Entwurfs ab; die Pläne bleiben auf dem Gerät. */
   async addDeckPlan(image: string): Promise<void> {
+    if (!this.canWrite) return;
     const campaign = this.state.campaign;
     const ship = campaign === undefined ? undefined : shipOf(campaign);
     if (ship === undefined) {
@@ -1795,6 +1857,7 @@ export class GameController {
 
   /** Entfernt einen Deckplan des aktiven Entwurfs vom Gerät. */
   async removeDeckPlan(name: string): Promise<void> {
+    if (!this.canWrite) return;
     const campaign = this.state.campaign;
     const ship = campaign === undefined ? undefined : shipOf(campaign);
     if (ship === undefined) return;
@@ -2484,7 +2547,7 @@ export class GameController {
    * nimmt erst eine gespeicherte Kampagne wieder weg (`saved`), nicht schon das Merken der offenen.
    */
   private persist(write: () => Promise<void>, saved = false): void {
-    if (!this.writable) return;
+    if (!this.canWrite) return;
     this.saving = this.saving.then(() =>
       write().then(
         () => {

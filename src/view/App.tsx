@@ -19,6 +19,7 @@ import { useEscapeCloses, useShortcuts } from './keyboard';
 import { useIsDesktop } from './media';
 import { CloseIcon, EncounterIcon, LogIcon, MenuIcon, PeopleIcon, ShipIcon } from './icons';
 import { Menu } from './Menu';
+import { ElsewhereDialog, NoticeToast } from './Notices';
 import { CardSheet } from './oracle/CardSheet';
 import { DiceRoll } from './oracle/DiceRoll';
 import { OracleScreen } from './oracle/OracleScreen';
@@ -242,6 +243,8 @@ export function App() {
       )}
       <LoadingOverlay />
       {view.campaignSheet && <CampaignSheet key={view.campaign.id} sheet={view.campaignSheet} campaigns={view.campaigns} open={view.campaign} sync={view.sync} conflicts={view.conflicts} />}
+      {view.notice && <NoticeToast text={view.notice} />}
+      {view.elsewhere && <ElsewhereDialog />}
     </div>
   );
 }
