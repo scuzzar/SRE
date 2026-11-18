@@ -2851,7 +2851,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Welt und lernt die Bahnen, noch ohne Gegner und Waffen. Was auf der Raumkarte läuft, heißt
   **Systemflug** (`SystemFlight`; Owner, 18. November 2026), auch wenn später gekämpft wird. Regeln aus SR 39–42, *Mayday* und SE 12,
   zusammengefasst in [`regeln-schiffe.md`](regeln-schiffe.md); Abweichungen tragen ⚑, Entscheidungen
-  des Owners vom 18. November 2026 sind als solche genannt.
+  des Owners vom 18. November 2026 sind als solche genannt; die übrigen Hausregeln hat er am selben
+  Tag angenommen.
   - **Raumkarte.** Die dritte Grundkarte neben Subsektor und Globus, in 2D (Owner). Ein Tippen auf
     eine Welt öffnet wie bisher ihren Globus; die Raumkarte öffnet der Knopf „Raum“ am Globus und
     an der Welt im Subsektor (Owner). Auf ihr: die Welt mit dem Weltsymbol in echter Größe, ohne
@@ -2901,7 +2902,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 - **Sternsystem, Monde und Gasriesen** (Kennzeichen 2026-11-18b, wartet auf Freigabe). Damit die
   Raumkarte nicht leer ist (Wunsch des Owners, 18. November 2026), mit Stern und Bahnen (Owner:
   „den Stern bestimmen und speichern“). Regeln aus Book 6 *Scouts*, übertragen in
-  [`regeln-sternsystem.md`](regeln-sternsystem.md); Abweichungen tragen ⚑.
+  [`regeln-sternsystem.md`](regeln-sternsystem.md); Abweichungen tragen ⚑, der Owner hat sie alle
+  am 18. November 2026 angenommen. Dass die Hauptwelt Mond eines Gasriesen sein kann, ist Regel
+  (B6 35, 37), keine Hausregel.
   - **Wann gewürfelt.** ⚑ Wenn die Raumkarte einer Welt zum ersten Mal aufgeht, würfelt die App ihr
     Sternsystem (`Hex.system`) und speichert es; danach nie wieder (Werte, nicht Würfe). Das gilt
     auch für ältere Welten. Leere Hexfelder und Welten in Erschaffung haben keins.
