@@ -5,6 +5,12 @@
 > die Tabelle „Begriffe“ und die Klassen als Änderung mit Ausschnitt in `docs/changes/` ins Diagramm.
 > Bis dahin sind alle Namen hier Vorschläge.
 >
+> **Entschieden** am 18. November 2026 (Owner): 2D, gleichzeitige Bewegung, ein Schubvektor je
+> Raumrunde nur durch Tippen oder Ziehen im Schubkreis (stufenlos, mit Einrasten, ohne Auswählen,
+> jede Runde zurück auf 0 G), Raumkarte über einen Knopf „Raum“, Dichte K = 1, Weltsymbol der App
+> ohne angedeutete Umlaufbahnen, Ausweichen kostet 1 G, Standardrakete 5G6, ECM 9+, Small Craft nach
+> Mayday, **Raumkampf vor dem Handel**. Siehe *Entscheidungen* am Ende.
+>
 > Zum Ausprobieren des Bewegungsmodells gibt es einen Prototyp ohne die App:
 > [`docs/mock/raumkarte-bewegung.html`](mock/raumkarte-bewegung.html) (direkt im Browser öffnen).
 
@@ -75,16 +81,17 @@ Die App hat heute zwei Grundkarten: den **Subsektor** (Parsec, Hexfelder) und de
 Welt (Oberflächenfelder von 250 km). Die Raumkarte liegt dazwischen: **der Raum um eine Welt**, von
 ein paar tausend bis zu einigen Millionen Kilometern.
 
-⚑ Vorschlag für den Weg dorthin, als Zoom-Kette:
+**Der Weg dorthin** (Owner, 18. November 2026): Ein Tippen auf eine Welt im Subsektor öffnet wie bisher ihren
+Globus. Die Raumkarte erreicht man über einen eigenen Knopf **„Raum“** (⚑ am Globus und an der
+Welt im Subsektor), und sie öffnet sich von selbst, wenn ein Raumkampf beginnt. ✕ führt zurück
+dorthin, woher man kam.
 
 ```
-Subsektor ──Welt antippen──▶ Raumkarte der Welt ──auf die Welt zoomen──▶ Globus
-          ◀──✕ / herauszoomen──                 ◀──herauszoomen────────
+Subsektor ──Welt antippen──▶ Globus
+    │                          │
+    └──Knopf „Raum“──▶ Raumkarte der Welt ◀──Knopf „Raum“──┘
+                       (auch von selbst beim Raumkampf)
 ```
-
-Heute öffnet ein Tippen auf eine Welt im Subsektor direkt den Globus. Mit der Raumkarte käme eine
-Stufe dazwischen. Ob das jedes Mal sein soll oder nur auf Wunsch (Knopf „Raum“), ist eine offene
-Frage.
 
 ### Was darauf ist
 
@@ -100,8 +107,8 @@ Frage.
 
 ### Maßstab und Darstellung
 
-- **2D** ⚑: Alles liegt in einer Ebene. Auf dem Handy ist das lesbar und mit dem Finger steuerbar;
-  echte Bahnen in 3D wären auf dem kleinen Bildschirm kaum zu planen. (Offene Frage.)
+- **2D** (Owner, 18. November 2026): Alles liegt in einer Ebene. Auf dem Handy ist das lesbar und mit dem Finger
+  steuerbar; echte Bahnen in 3D wären auf dem kleinen Bildschirm kaum zu planen.
 - Die Karte zoomt stufenlos über drei Größenordnungen: von „Schiff neben Station“ bis „ganze
   Sprunggrenze im Bild“. Mit zwei Fingern ziehen und zoomen, wie auf dem Globus.
 - Gezeichnet mit Canvas 2D (für ein paar Dutzend Einheiten reicht das, der Globus braucht WebGL,
@@ -114,7 +121,7 @@ Frage.
     der Karte stimmt (Aufschlag, Schatten und Sichtlinie rechnen mit demselben Radius). Ganz
     herausgezoomt bleibt sie mindestens ein paar Pixel groß.
   - Das Licht kommt wie im Symbol von links, für alle Körper gleich.
-  - ⚑ Ohne die angedeuteten Umlaufbahnen, die das Symbol ab TL 8 zeichnet: Die Raumkarte zeigt
+  - Ohne die angedeuteten Umlaufbahnen, die das Symbol ab TL 8 zeichnet (Owner, 18. November 2026): Die Raumkarte zeigt
     echte Bahnen, Stationen und Orbitalstädte. Dafür braucht `drawWorld` eine Einstellung.
   - Monde nehmen dasselbe Symbol mit ihren eigenen Werten. **Gasriesen** kann das Weltsymbol noch
     nicht; sie brauchen eine eigene Darstellung im selben Stil (mit dem Sternsystem).
@@ -125,10 +132,10 @@ Frage.
 
 - ⚑ Eine **Raumrunde** dauert **1.000 Sekunden**, wie in den SR. (Eigener Begriff, damit sie nicht
   mit der *Runde* des Personenkampfs verwechselt wird.)
-- **Alle bewegen sich gleichzeitig** ⚑: Erst gibt jede Partei ihre Schubbefehle (die SC von Hand,
+- **Alle bewegen sich gleichzeitig** (Owner, 18. November 2026): Erst gibt jede Partei ihre Schubbefehle (die SC von Hand,
   die NSC aus der App, siehe Abschnitt 6), dann rechnet die Simulation die 1.000 Sekunden für alle
   zugleich. Die SR lassen die Seiten abwechselnd ziehen; auf einer Vektorkarte ist das gleichzeitige
-  Ziehen gerechter, weil keiner auf die fertige Bewegung des anderen reagieren kann. (Offene Frage.)
+  Ziehen gerechter, weil keiner auf die fertige Bewegung des anderen reagieren kann.
 
 ### Der Schubbefehl
 
@@ -136,7 +143,7 @@ Je Raumrunde bekommt jede steuerbare Einheit einen **Schubbefehl**: einen **Schu
 Richtung und Stärke. Er gilt unverändert für die ganze Runde, als feste Richtung im Raum.
 
 - **Stärke** in G, von 0 bis zur Beschleunigung des Maneuver Drive (z. B. 2 G beim Scout, 6 G beim
-  Jäger). ⚑ Stufenlos in Schritten von 0,1 G; die SR kennen nur ganze G.
+  Jäger). Stufenlos in Schritten von 0,1 G (Owner, 18. November 2026); die SR kennen nur ganze G.
 - **Eingabe nur durch Ziehen** (Entscheidung des Owners, 18. November 2026): Man zieht den Vektor
   mit dem Finger aus dem Schiff heraus. Seine Länge ist die Stärke, beim höchsten Schub ist Schluss:
   Ein Kreis um das Schiff zeigt die Grenze, und weiter als bis zum Kreis wächst der Pfeil nicht,
@@ -154,7 +161,7 @@ Richtung und Stärke. Er gilt unverändert für die ganze Runde, als feste Richt
     Schub. Ein Zug, der außerhalb jedes Kreises beginnt, verschiebt die Karte. Neben dem Pfeil steht
     der Wert, z. B. „1,4 G“. ⚑ Überlappen sich die Kreise mehrerer Einheiten, gilt der Kreis des
     nächsten Schiffs.
-  - ⚑ **Einrasten**: Am Kreis sind die nützlichen Richtungen als kleine Marken eingezeichnet: in
+  - **Einrasten** (Owner, 18. November 2026): Am Kreis sind die nützlichen Richtungen als kleine Marken eingezeichnet: in
     Flugrichtung (prograd), gegen die Flugrichtung (retrograd), auf das Ziel (⚑ das Waffenziel der Einheit, sonst der nächste
     geortete Gegner), vom Ziel weg
     und *Angleichen* (gegen die Geschwindigkeit relativ zum Ziel). Kommt der Pfeil einer Marke auf
@@ -168,8 +175,8 @@ Richtung und Stärke. Er gilt unverändert für die ganze Runde, als feste Richt
 Weil die Richtung über die Runde fest bleibt, krümmt sich die eigene Bahn nah an einer Welt
 anders, als der Pfeil zeigt. In einer niedrigen Umlaufbahn dreht sich die Flugrichtung in einer
 Runde um gut 70°. Das ist gewollt: Die Vorschau zeigt beim Ziehen sofort, wo man landet, und genau
-das ist die Kunst des Fliegens nah am Körper. ⚑ Mehr als ein Vektor je Runde (etwa zwei halbe
-Runden mit verschiedenem Schub) ist nicht vorgesehen. (Offene Frage.)
+das ist die Kunst des Fliegens nah am Körper. **Ein Vektor je Runde** (Owner, 18. November 2026): Teilvektoren
+(etwa zwei halbe Runden mit verschiedenem Schub) und kürzere Runden gibt es nicht.
 
 Ein Schubvektor, der sich während der Runde mitdreht (immer prograd, immer aufs Ziel), bleibt der
 App vorbehalten: Raketen lenken sich so, und die NSC-Schiffe dürfen beim Planen dieselben festen
@@ -177,8 +184,8 @@ Vektoren nehmen wie der Spieler.
 
 **Ausweichen kostet Schub** (Mayday, Abschnitt 4): Läuft ein Maneuver/Evade-Programm, hat das Schiff
 1 G weniger; ein 1-G-Schiff kann dann gar nicht mehr steuern. Die SR geben für die Programme nur den
-DM. ⚑ Vorschlag: übernehmen, denn damit wird Ausweichen eine echte Entscheidung zwischen Bahn und
-Deckung.
+DM. **Übernommen** (Owner, 18. November 2026): Ausweichen ist damit eine echte Entscheidung zwischen Bahn und
+Deckung. Auf der Karte wird der Schubkreis um 1 G kleiner, solange das Programm läuft.
 
 ### Schwerkraft
 
@@ -206,7 +213,7 @@ Die SR geben die Schwerkraft einer Welt über ihre Größe an (SR 22, *Different
 hat normale Schwerkraft, jede Stufe darüber oder darunter 12,5 % mehr oder weniger, bei Erddichte.
 Das ist **g = Größe ÷ 8 G**, dieselbe Regel, nach der die App schon die Traglast auf einer Welt
 rechnet (`regeln-kampf.md`, *Traglast und Schwerkraft*). Für eine andere Dichte nennen die SR einen Faktor K (meist 1, nach
-Ermessen der Spielleitung); ⚑ wir nehmen immer K = 1, bis Book 6 *Scouts* Dichten bringt. Die Masse
+Ermessen der Spielleitung); wir nehmen immer K = 1 (Owner, 18. November 2026), bis Book 6 *Scouts* Dichten bringt. Die Masse
 folgt daraus: G·M = g · R². ⚑ Ein Gasriese bekommt feste Werte, bis Book 6 die Sternsysteme bringt.
 ⚑ Für die Rechnung gilt 1 G = 10 m/s², wie im Maßstab von Supplement 3 (Mayday nennt 9,8 m/s²).
 
@@ -255,7 +262,8 @@ Daraus folgt für das Spiel:
 - ⚑ Damit Schubpausen auch für gesunde Schiffe einen Sinn haben, schlägt das Konzept vor: **Wer
   schubt, leuchtet.** Ein Schiff mit laufendem Antrieb ist auf die doppelte Reichweite zu orten
   (siehe Abschnitt 5). Wer still auf einer ballistischen Bahn treibt, wird später gesehen. So wird es
-  zur Taktik, die Schwerkraft die Arbeit machen zu lassen. (Offene Frage.)
+  zur Taktik, die Schwerkraft die Arbeit machen zu lassen. (Entscheiden wir mit der Ortung in
+  Stufe 5.)
 
 ## 3. Bahnen und Vorschau
 
@@ -312,17 +320,18 @@ Nach den SR (*Turn Sequence*), angepasst an gleichzeitige Bewegung ⚑:
   Ist der Treibstoff verbraucht, fliegt sie ballistisch weiter, und nur noch die Schwerkraft lenkt
   sie; so kann man ihr davonfliegen oder sie an einer Welt vorbeischwingen lassen. Die SR sagen
   schlicht „wie ein Schiff mit 6 G“, ohne Treibstoff.
-  - ⚑ Für den Anfang gibt es **eine Standardrakete** mit *Discretionary Burn* (frei steuerbar wie
-    ein Schiff) und Zielsuche, die sich in jedem Schritt selbst auf das Ziel lenkt
-    (*proportionale Navigation*). Die Werte (G, Brennstufen) sind eine offene Frage: Supplement 3
-    nennt als Standard *5G6* mit Dauerbrand, Mayday *6G6* mit begrenztem Brand.
+  - **Standardrakete 5G6** nach Supplement 3 (Owner, 18. November 2026): höchstens 5 G, Treibstoff für sechs
+    Runden bei vollem Schub (30 G-Runden, also 300 km/s). ⚑ Anders als in Supplement 3 (Dauerbrand,
+    nicht steuerbar) ist sie frei steuerbar wie ein Schiff (*Discretionary Burn*) und lenkt sich
+    in jedem Schritt selbst auf das Ziel. So hat sie auch nach der ersten Runde eine Chance, und
+    man braucht für den Anfang keine Bauteile.
   - **Abfangen**: Kommt die Rakete ihrem Ziel während der Bewegung auf **2.500 km** nahe (25 mm in
     Supplement 3), hat sie es abgefangen und kann in Phase 5 zünden. Trifft sie es genau (Kontakt),
     gibt es doppelt so viele Treffer. ⚑ Kontakt heißt bei uns: nächste Annäherung unter 100 km.
   - **Geschwindigkeit**: Je volle 30 km/s Relativgeschwindigkeit beim Kontakt ein Treffer mehr
     (Supplement 3: je 300 mm Vektor).
-  - **ECM** lässt sie folgenlos verpuffen: nach den SR bei 7+, nach Supplement 3 bei 9+ (offene
-    Frage).
+  - **ECM** lässt sie folgenlos verpuffen, bei **9+** nach Supplement 3 (Owner, 18. November 2026) (die SR sagen
+    7+).
   - **Später** (eigene Stufe): Raketen aus Bauteilen wie in Supplement 3, mit Antrieb (Dauerbrand,
     begrenzt, frei), Lenkung (Funk, Infrarot, Masse, Neutrino), Zünder (Kontakt, Annäherung,
     intelligent, auf Befehl) und Gefechtskopf, zu kaufen im Shop. Auch Minen (ohne Antrieb, treiben
@@ -350,11 +359,14 @@ Nach den SR (*Turn Sequence*), angepasst an gleichzeitige Bewegung ⚑:
 - **Aufnehmen**: Ist ein Small Craft dem Mutterschiff auf ⚑ 100 km nahe und langsamer als 0,1 km/s
   relativ zu ihm, kann es in der nächsten Phase 5 andocken.
 - Small Craft ohne Computer: DM −1 auf Waffen und keine zweite Waffe zugleich (SE 13).
-- **Treibstoff**: In Mayday haben Starships unbegrenzten Treibstoff, Small Craft aber Brennstufen
-  wie Raketen, z. B. Fighter *4G12* (höchstens 4 G, insgesamt 12 G-Runden), Lifeboat *1G5*. Die
-  SR geben den Small Craft Treibstoff in Tonnen für vier Wochen. ⚑ Vorschlag: Small Craft bekommen
-  im Kampf Brennstufen wie in Mayday, damit Jäger zum Mutterschiff zurückmüssen. (Offene Frage; die
-  G-Werte der SR und von Mayday weichen auch voneinander ab, der Fighter hat in den SR 6 G.)
+- **Small Craft ganz nach Mayday** (Owner, 18. November 2026): Beschleunigung und Treibstoff kommen aus Mayday,
+  geschrieben als *G und gesamte G-Runden* (Abschnitt 8 in Mayday): Lifeboat *1G5*, Ship's Boat
+  *6G9*, Pinnace *5G12*, Cutter *4G15*, Shuttle *3G9*, Fighter *4G12* (höchstens 4 G, zusammen 12
+  G-Runden). Ist der Treibstoff verbraucht, treibt das Small Craft ballistisch. Große Schiffe haben
+  im Kampf unbegrenzten Treibstoff. Die SR-Werte (z. B. Fighter 6 G, Treibstoff in Tonnen für vier
+  Wochen) gelten außerhalb des Kampfs weiter. ⚑ Typen, die Mayday nicht kennt (Slow Boat, Slow
+  Pinnace, Modular Cutter), bekommen die G der SR und so viele G-Runden wie der nächste
+  Mayday-Typ.
 
 ### Schaden
 
@@ -398,8 +410,9 @@ Nach den SR (*Detection and Tracking*):
 - Zivile Schiffe orten bis 15 Raumbänder (eine halbe Lichtsekunde), militärische und Scouts bis 60.
   Einmal geortet, kann jeder das Ziel bis 90 Raumbänder verfolgen.
 - ⚑ Ein Körper zwischen zwei Einheiten verdeckt die Ortung wie die Sichtlinie.
-- ⚑ *Wer schubt, leuchtet* (siehe Abschnitt 2): Eine Einheit, die in dieser Runde Schub gibt, ist
-  auf doppelte Reichweite zu orten. Wer still treibt, nur auf die einfache.
+- *Wer schubt, leuchtet* (siehe Abschnitt 2): Eine Einheit, die in dieser Runde Schub gibt, wäre
+  auf doppelte Reichweite zu orten, wer still treibt, nur auf die einfache. Ob das gilt, entscheiden
+  wir mit dieser Stufe.
 - ⚑ Nicht geortete Einheiten der anderen Seite zeigt die Karte gar nicht oder als zuletzt bekannten
   Ort mit verblassendem Zeitstempel („vor 3 Runden hier“). Ihre Bahn und ihr Fächer erscheinen erst
   mit der Ortung.
@@ -480,7 +493,7 @@ Jede Stufe ist für sich spielbar und bekommt ihre eigene Änderung im Modell.
 
 | Stufe | Inhalt | Ergebnis |
 |---|---|---|
-| 1 | **Raumkarte und Bewegung**: die Welt als einziger Körper, das eigene Schiff, Schubvektor durch Ziehen, Vorschau, Wiedergabe, Sprunggrenzen, Zoom-Kette Subsektor ↔ Raumkarte ↔ Globus | Man kann um eine Welt fliegen und Bahnen lernen. Klärt, ob sich das Bewegungsmodell gut anfühlt |
+| 1 | **Raumkarte und Bewegung**: die Welt als einziger Körper, das eigene Schiff, Schubvektor durch Ziehen, Vorschau, Wiedergabe, Sprunggrenzen, Knopf „Raum“ an Globus und Subsektor | Man kann um eine Welt fliegen und Bahnen lernen. Klärt, ob sich das Bewegungsmodell gut anfühlt |
 | 2 | **Gegner und Laser**: ein NSC-Schiff mit Absicht und Planer, Laserfeuer, Rückfeuer, Trefferzonen, Schaden, Ende des Kampfs | Der erste echte Raumkampf |
 | 3 | **Raketen und Sand**: Raketen als Einheiten mit Brennschluss, Anti-Missile, ECM, Sandwolken | Das volle Waffenprogramm der SR |
 | 4 | **Small Craft und Entern**: Jäger und Beiboote aussetzen, Rotten, aufnehmen; Entern mit Übergang in die Kampfsimulation | Träger, Enterkommandos |
@@ -515,7 +528,7 @@ Weitere Ideen:
 
 | Weggelassen | Warum |
 |---|---|
-| Echte 3D-Bahnen | auf dem Handy nicht planbar (offene Frage) |
+| Echte 3D-Bahnen | auf dem Handy nicht planbar (Owner: 2D) |
 | N-Körper-Simulation der Himmelskörper untereinander | im Zeitraum eines Kampfs ohne Wirkung, schwer stabil zu halten |
 | Atmosphäre, Luftbremsung, Landen im Kampf | eigener großer Bereich; Landen bleibt beim Raumhafen |
 | Drehung und Trägheit des Schiffs um sich selbst | Traveller kennt keine Ausrichtung des Rumpfs; der Schub zeigt sofort in jede Richtung |
@@ -526,25 +539,34 @@ Weitere Ideen:
 | Sprung erst 40 Felder von einer Welt (Mayday) | in den SR gelten die Sprunggrenzen mit DMs auf den Fehlsprung |
 | Programme laden und tauschen je Phase (Mayday, erweiterte Computerregel) | eigener Schritt mit dem Computer; vorerst laufen alle Programme an Bord |
 
+## Entscheidungen
+
+Alle am 18. November 2026 vom Owner getroffen.
+
+| Frage | Entscheidung |
+|---|---|
+| Eingabe des Schubs | Ein Schubvektor je Raumrunde, fest im Raum, nur durch Tippen oder Ziehen im Schubkreis; Grenze am Kreis; ohne die Einheit auszuwählen; jede Runde zurück auf 0 G |
+| 2D oder 3D | 2D |
+| Zugfolge | gleichzeitig |
+| Feinheit des Schubs | stufenlos, 0,1 G |
+| Einrasten | ja, an prograd, retrograd, Ziel, weg, angleichen |
+| Teilvektoren oder kürzere Runden | nein, ein Vektor je 1.000-Sekunden-Runde |
+| Weg zur Raumkarte | Globus bleibt beim Tippen auf eine Welt; Raumkarte über den Knopf „Raum“ und von selbst beim Raumkampf |
+| Dichte der Welten | immer K = 1, bis Book 6 kommt |
+| Himmelskörper | Weltsymbol der App in echter Größe, ohne angedeutete Umlaufbahnen |
+| Ausweichen | Maneuver/Evade kostet 1 G (Mayday) |
+| Standardrakete | 5G6 (Supplement 3), frei steuerbar |
+| ECM | 9+ (Supplement 3) |
+| Small Craft | G und Treibstoff ganz nach Mayday |
+| Reihenfolge | Raumkampf vor dem Handel |
+
 ## Offene Fragen
 
-1. **2D oder 3D?** Vorschlag: 2D.
-2. **Gleichzeitig ziehen oder abwechselnd** wie in den SR? Vorschlag: gleichzeitig.
-3. **Schub stufenlos (0,1 G) oder nur ganze G** wie in den SR? Vorschlag: stufenlos.
-4. **Ein Schubvektor je Raumrunde**, fest im Raum und nur durch Ziehen (entschieden), oder
-   später mehrere Teilvektoren je Runde? Vorschlag: einer.
-   Noch offen dabei: Soll der Vektor an prograd, retrograd, Ziel und Angleichen einrasten?
-5. **Zoom-Kette**: Öffnet ein Tippen auf eine Welt im Subsektor künftig immer die Raumkarte (und der
-   Globus kommt durch Hineinzoomen), oder bleibt es beim Globus mit einem eigenen Knopf „Raum“?
-6. **Wer schubt, leuchtet**: als Hausregel übernehmen?
-7. **Standardrakete**: *5G6* (Supplement 3) oder *6G6* (Mayday)? Und gleich mit Treibstoff nach
-   Supplement 3, oder erst „wie ein Schiff mit 6 G“ nach den SR?
-8. **ECM**: 7+ nach den SR oder 9+ nach Supplement 3?
-9. **Ausweichen kostet 1 G** (Mayday): übernehmen?
-10. **Small Craft mit Brennstufen** im Kampf (Mayday) statt Treibstoff in Tonnen, und mit welchen
-    G-Werten, wo SR und Mayday sich unterscheiden?
-11. **Dichte** immer K = 1 (SR 22), bis Book 6 kommt: einverstanden?
-12. **Book 2 (1981)** selbst fehlt noch. Mayday ist seine Brettspielfassung und Supplement 3 nennt
-    die Maßstäbe, das reicht für das Konzept. Liegt es doch vor, prüfen wir die Abweichungen.
-13. **Reihenfolge**: Kommt der Raumkampf vor oder nach dem Handel? Im Modell steht „erst Handel,
-    dann Raumkampf“.
+1. **Wer schubt, leuchtet**: als Hausregel übernehmen? Entscheiden wir mit der Ortung (Stufe 5).
+2. **Book 2 (1981)** selbst fehlt noch. Mayday ist seine Brettspielfassung und Supplement 3 nennt
+   die Maßstäbe, das reicht für das Konzept. Liegt es doch vor, prüfen wir die Abweichungen.
+3. **Hausregeln zum Abnicken** (mit ⚑ markiert): Abfangen auf 2.500 km und Kontakt unter 100 km,
+   Entern und Andocken unter 100 km und 0,1 km/s, Sand als treibende Wolke, kein Rammen, kein Landen
+   im Kampf, die Absichten und der Planer der NSC-Schiffe, Rotten, feste Werte für Gasriesen.
+4. **Tabellen aus SE 10–13** (*Charts and Tables*) fehlen für Treffer und Schaden; dafür wird das
+   PDF gebraucht.

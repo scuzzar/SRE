@@ -294,10 +294,10 @@ function runRound() {
   // Phase 5: Starts. Raketen übernehmen Ort und Geschwindigkeit, fliegen ab der nächsten Runde
   for (const L of S.launches) {
     const from = U(L.from); if (!from.alive) continue;
-    S.units.push({ id: "m" + S.nextMissile, name: "Rakete " + S.nextMissile++, side: from.side, kind: "missile", maxG: 6, alive: true,
-      fuel: 6 * 6 * G1 * ROUND, x: from.x, y: from.y, vx: from.vx, vy: from.vy,
-      order: { mode: "lenkung", g: 6, target: L.target }, trail: [] });
-    addLog(`<span class="msl">Rakete gestartet</span> auf ${U(L.target).name}, 6G6, fliegt ab der nächsten Runde.`);
+    S.units.push({ id: "m" + S.nextMissile, name: "Rakete " + S.nextMissile++, side: from.side, kind: "missile", maxG: 5, alive: true,
+      fuel: 5 * 6 * G1 * ROUND, x: from.x, y: from.y, vx: from.vx, vy: from.vy,
+      order: { mode: "lenkung", g: 5, target: L.target }, trail: [] });
+    addLog(`<span class="msl">Rakete gestartet</span> auf ${U(L.target).name}, 5G6, fliegt ab der nächsten Runde.`);
   }
   S.launches = [];
   const eo = enemy.order;
