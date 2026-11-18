@@ -28,7 +28,7 @@ etwas ergänzen, das Zeichen **⚑**.
 | Quelle | Was daraus kommt |
 |---|---|
 | *Starter Edition*, *Rules Booklet* (SR) 39–42, *Space Combat*; zusammengefasst in [`regeln-schiffe.md`](regeln-schiffe.md) unter *Raumkampf* | Runde von 1.000 Sekunden, Ablauf der Phasen, Laser, Rückfeuer, Raketen, Sand, Ortung, Schaden, Sondersituationen |
-| *Starter Edition*, *Charts and Tables* (SE) 10–13 | Waffen und Lafetten, Angriffs- und Verteidigungs-DMs, Trefferzonen, kritische Treffer, Small Craft, Ortung. **Noch nicht übertragen**, siehe *Was vorher fehlt* |
+| *Starter Edition*, *Charts and Tables* (SE) 10–13; in `regeln-schiffe.md` übertragen | Antriebe und Rümpfe, Waffen und Lafetten, Angriffs- und Verteidigungs-DMs, Trefferzonen, kritische Treffer, Maßstäbe, Schiffsbegegnungen, Small Craft, Ortung |
 | SR 38–39 und SE 13, *Software List*; in `regeln-schiffe.md` übertragen | Target, Predict, Gunner Interact, Select, Multi-Target, Launch, Maneuver/Evade, Return Fire, Anti-Missile, ECM |
 | SR 33–35, *Small Craft*; in `regeln-schiffe.md` übertragen | Jäger (Fighter), Ship's Boat, Pinnace usw. mit Beschleunigung und Bewaffnung |
 | SR 22, *Different Gravity* | Schwerkraft einer Welt nach ihrer Größe (Größe 8 = 1 G, Erddichte) |
@@ -43,6 +43,8 @@ Die Regeln aus Mayday und Supplement 3 stehen zusammengefasst in
 **Vektorbewegung gab es in Traveller schon.** Book 2 spielt den Raumkampf mit Figuren auf dem Tisch,
 *Mayday* ist laut eigenem Regelheft die Brettspielfassung davon. Die *Starter Edition*, nach der die
 App sonst geht, hat stattdessen Range Bands, in denen sich Schiffe nur vor und zurück bewegen.
+Selbst die *Starter Edition* rechnet in Vektoren (SE 12, *Scales*): „Ein 1-G-Vektor entspricht
+einem Range Band; 1.000 Sekunden Schub mit 1 G ändern die Geschwindigkeit um 10.000 km.“
 Supplement 3 ist ausdrücklich für beide geschrieben und nennt die **Standardmaßstäbe der
 Vektorbewegung**: eine Runde 1.000 Sekunden, 100 mm auf dem Tisch = 10.000 km, und 1 G eine Runde
 lang verschiebt die Bahn um 100 mm, also 10.000 km. Das sind genau die Maßstäbe der SR.
@@ -312,8 +314,9 @@ Nach den SR (*Turn Sequence*), angepasst an gleichzeitige Bewegung ⚑:
 
 - **Laser** (Pulse, Beam): Trefferwurf nach den SR. ⚑ Das **Raumband** für die Entfernungs-DMs ist
   die echte Entfernung am Ende der Bewegung, geteilt durch 10.000 km, aufgerundet. Ein Laser braucht
-  freie Sichtlinie: Liegt ein Körper dazwischen, kann man nicht schießen. Die Tabelle der DMs nach
-  Entfernung fehlt noch (SE 12).
+  freie Sichtlinie: Liegt ein Körper dazwischen, kann man nicht schießen. DMs nach SE 12: über 25
+  Raumbänder −2, über 50 Raumbänder −5. Die übrigen DMs (Predict, Gunner Interact, Select, Pulse
+  Laser, Maneuver/Evade, Auto/Evade) stehen in `regeln-schiffe.md`.
 - **Raketen** nach Supplement 3: Eine Rakete ist eine eigene Einheit mit einem **Antrieb aus
   G und Brennstufen**, geschrieben etwa *5G6*: höchstens 5 G je Runde, Treibstoff für sechs Runden
   bei vollem Schub (oder entsprechend länger bei weniger, *3G3* reicht für 1 G neun Runden lang).
@@ -341,8 +344,9 @@ Nach den SR (*Turn Sequence*), angepasst an gleichzeitige Bewegung ⚑:
   2.500 km Sand, durch die eine Rakete fliegt, wird sie bei 12+ unschädlich. ⚑ In der Simulation ist
   die Wolke eine eigene Einheit, die mit der Geschwindigkeit des Schiffs beim Ausstoß davontreibt
   und sich langsam ausdehnt. Damit ergibt sich die Regel aus Mayday von selbst: Wer keinen Schub
-  gibt, bleibt in seiner Wolke; wer schubt, fliegt aus ihr heraus. Die DMs nehmen wir aus SE 12,
-  sobald übertragen, bis dahin die aus Mayday.
+  gibt, bleibt in seiner Wolke; wer schubt, fliegt aus ihr heraus. Der DM kommt aus SE 12: **−3 je
+  Raumband Sand**, durch das der Schuss geht. ⚑ Eine Wolke, die die Sichtlinie schneidet, zählt
+  mindestens als ein Raumband.
 - **Rammen** gibt es nicht ⚑ (die SR kennen es nicht).
 
 ### Small Craft und Jäger
@@ -423,8 +427,7 @@ Die Ortung kommt erst in Stufe 5 (siehe *Stufenplan*). Davor sehen sich alle Ein
 
 Im Solo-Spiel steuert die App die andere Seite. Das braucht zwei Ebenen:
 
-- **Was will der Gegner?** Kommt aus der Begegnung: Die *Starship Encounter Table* (SE 13, noch
-  nicht übertragen) liefert Schiffstyp und ob es ein Pirat ist; die Reaktionstabelle
+- **Was will der Gegner?** Kommt aus der Begegnung: Die *Starship Encounter Table* (SE 13) liefert Schiffstyp und ob es ein Pirat ist; die Reaktionstabelle
   (`regeln-kampf.md`, *Reaktion*) oder eine Frage ans Orakel bestimmt die Haltung. ⚑ Daraus wird eine
   von wenigen **Absichten**: *Angreifen* (auf Waffenreichweite halten, Raketen schießen), *Entern*
   (Antrieb zerschießen, dann angleichen), *Abfangen* (Zoll, Patrouille: heranfliegen und angleichen),
@@ -480,9 +483,7 @@ Sprunggrenze, Schatten, Rotte, Absicht (eines NSC-Schiffs).
 
 ## 9. Was vorher fehlt
 
-1. **Tabellen aus SE 10–13 übertragen** nach `regeln-schiffe.md`, vollständig: *Weapons and
-   Mounts*, *Attacker's/Defender's DMs*, *Hit Locations*, *Critical Hits*, *Standard Small Craft*,
-   *Starship Encounters*, *Detection*. Ohne sie lassen sich Treffer und Schaden nicht würfeln.
+1. ~~Tabellen aus SE 10–13 übertragen~~: erledigt am 18. November 2026, siehe `regeln-schiffe.md`.
 2. **Bewaffnung kaufen und einbauen**: Turrets und Waffen auf die Hardpoints (Shop und Reiter Schiff).
 3. **Schiffspositionen der SC** (wer ist Pilot, wer Gunner).
 4. **Small Craft mit Werten** statt einfacher Gegenstände.
@@ -568,5 +569,3 @@ Alle am 18. November 2026 vom Owner getroffen.
 3. **Hausregeln zum Abnicken** (mit ⚑ markiert): Abfangen auf 2.500 km und Kontakt unter 100 km,
    Entern und Andocken unter 100 km und 0,1 km/s, Sand als treibende Wolke, kein Rammen, kein Landen
    im Kampf, die Absichten und der Planer der NSC-Schiffe, Rotten, feste Werte für Gasriesen.
-4. **Tabellen aus SE 10–13** (*Charts and Tables*) fehlen für Treffer und Schaden; dafür wird das
-   PDF gebraucht.
