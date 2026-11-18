@@ -3,7 +3,7 @@ import { landformAt, type GlobeView, type LogItem, type TripPlanView, type TripV
 import { TripHint, TripPlanCard } from './TripPanels';
 import { roleText } from '../format';
 import { useGame } from '../game-context';
-import { CloseIcon, LocateIcon, PencilIcon } from '../icons';
+import { CloseIcon, FlagIcon, LocateIcon, PencilIcon } from '../icons';
 import { createGlobeRenderer, type GlobeRenderer } from './globe-gl';
 import { hideLoading, showLoading } from '../loading';
 import { cellAt, radiusOf, renderGlobe, screenOf, screenOfPoint, type Camera, type Viewport } from './globe-render';
@@ -622,6 +622,24 @@ export function FieldCard({
           </li>
         ))}
       </ul>
+      {picked.missions.length > 0 && (
+        <div className="field-missions">
+          <h4 className="section-title">Missionen hier ({picked.missions.length})</h4>
+          <ul className="here-missions">
+            {picked.missions.map((m) => (
+              <li key={m.id}>
+                <button type="button" aria-label={`Mission ${m.title} öffnen`} onClick={() => game.editMission(m.id)}>
+                  <FlagIcon />
+                  <span>
+                    {m.title}
+                    {m.labels.length > 0 && <small>{m.labels.join(' · ')}</small>}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {tripPlan && <TripPlanCard plan={tripPlan} />}
       {error && (
         <p className="error" role="alert">
@@ -771,6 +789,34 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
   for (const n of globe.npcs) if (n.cell !== undefined) npcCells.set(n.cell, (npcCells.get(n.cell) ?? 0) + 1);
   for (const [cell, count] of npcCells) badge(cell, -8, -8, 'rgba(190,150,255,0.95)', count > 1 ? String(count) : 'N');
   if (globe.partyCell !== undefined) badge(globe.partyCell, 0, 10, 'rgba(110,200,255,1)', 'G');
+  // Offene Missionen: eine rote Fahne am Feld (2026-11-18).
+  for (const cell of globe.missionCells) {
+    const p = at(cell);
+    if (!p) continue;
+    const x = p.x - 2 * scale;
+    const y = p.y - 2 * scale;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y - 18 * scale);
+    ctx.strokeStyle = 'rgba(15,15,15,0.9)';
+    ctx.lineWidth = 3.5 * scale;
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(239,90,95,1)';
+    ctx.lineWidth = 1.8 * scale;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y - 18 * scale);
+    ctx.lineTo(x + 11 * scale, y - 18 * scale);
+    ctx.lineTo(x + 8 * scale, y - 14 * scale);
+    ctx.lineTo(x + 11 * scale, y - 10 * scale);
+    ctx.lineTo(x, y - 10 * scale);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(239,90,95,1)';
+    ctx.strokeStyle = 'rgba(15,15,15,0.9)';
+    ctx.lineWidth = scale;
+    ctx.fill();
+    ctx.stroke();
+  }
   // Ohne WebGL ein Ring um das angetippte Feld; mit WebGL rahmt die Grafikkarte das Feld ein.
   const picked = globe.picked?.cell;
   if (ring && picked !== undefined) {

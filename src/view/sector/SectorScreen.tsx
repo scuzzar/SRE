@@ -116,7 +116,7 @@ function HexCell({ hex, selected, disabled, detail, here = false, opens = false 
       className={`hex hex-${hex.state}${selected ? ' hex-selected' : ''}${here ? ' hex-here' : ''}`}
       role="button"
       tabIndex={0}
-      aria-label={here ? `${label(hex)}, die Gruppe ist hier` : label(hex)}
+      aria-label={`${here ? `${label(hex)}, die Gruppe ist hier` : label(hex)}${hex.mission ? ', mit offener Mission' : ''}`}
       aria-pressed={hex.state === 'open' || hex.state === 'empty' ? selected : undefined}
       onClick={choose}
       onKeyDown={(e) => {
@@ -144,6 +144,12 @@ function HexCell({ hex, selected, disabled, detail, here = false, opens = false 
       {shown && hex.scoutBase && <polygon className="hex-base" points={`${x - S * 0.45},${y + S * 0.1} ${x - S * 0.45 - 5},${y + S * 0.1 + 8.5} ${x - S * 0.45 + 5},${y + S * 0.1 + 8.5}`} />}
       {shown && hex.gasGiant && <circle className="hex-giant" cx={x + S * 0.45} cy={y - S * 0.12} r={3.2} />}
       {hex.marked && <circle className="hex-marked" cx={x + S * 0.45} cy={y + S * 0.18} r={2.8} />}
+      {hex.mission && (
+        <g className="hex-mission" aria-hidden="true">
+          <line x1={x + S * 0.66} y1={y + S * 0.34} x2={x + S * 0.66} y2={y - S * 0.04} />
+          <path d={`M${x + S * 0.66} ${y - S * 0.04}h${S * 0.22}l${-S * 0.06} ${S * 0.08} ${S * 0.06} ${S * 0.08}h${-S * 0.22}z`} />
+        </g>
+      )}
       {hex.state === 'world' && hex.name && (
         <text className={detailed ? 'hex-name small' : 'hex-name'} x={x} y={detailed ? middle + 9 : y + S * 0.62}>
           {shortName(hex.name, (hex.population ?? 0) >= 9)}

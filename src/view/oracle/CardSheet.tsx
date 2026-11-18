@@ -3,7 +3,7 @@ import type { CardSectionView, CardView } from '../../controller';
 import { answerText, cardSelectionText, isYesAnswer, mapShort, mapText, nameText, pairText, scatterText } from '../format';
 import { useGame } from '../game-context';
 import { animated, haptic } from '../haptics';
-import { CheckIcon, CloseIcon, Emblem, PlusIcon, SenseIcon } from '../icons';
+import { CheckIcon, CloseIcon, Emblem, FlagIcon, PlusIcon, SenseIcon } from '../icons';
 import { BellCurve, MapIconSvg, ScatterRose } from './CardRollIcons';
 
 type SlotView = CardSectionView['slots'][number];
@@ -153,6 +153,12 @@ export function CardSheet({ card, onConfirm }: { card: CardView; onConfirm?: (te
                 {card.oracle.event && (
                   <p className="card-event" role="status">
                     <b>Zufallsereignis: {card.oracle.event.name}</b>
+                    {card.oracle.event.thread && (
+                      <span className="card-thread">
+                        <FlagIcon />
+                        {card.oracle.event.thread.title}
+                      </span>
+                    )}
                     <span>{card.oracle.event.text}</span>
                   </p>
                 )}

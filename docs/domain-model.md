@@ -2873,11 +2873,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
-- **Missionen** (2026-11-18) sind noch nicht gebaut: `Mission`, `MissionPlace`, `MissionState`,
-  `Campaign.missions`, `EventFocus.thread` und `thread` an Karte und Kartenauswahl fehlen im Code,
-  ebenso der Reiter Missionen, „Als Mission“ beim Patron und die Zeichen auf der Karte. Vor dem
-  Bau kommt ein UI-Prototyp (`docs/mock/missionen-tab.html`).
-
 - **Monat und Monatsabrechnung** (2026-11-17b) sind gebaut (`model/upkeep.ts`, Monate in
   `model/time.ts`). **`MonthEnd → Booking : costs`** ist im Code der Bereich der Buchungen von
   `costsFrom` bis ausschließlich `costsTo`; gezählt werden darin die laufenden Kosten. Das geht,

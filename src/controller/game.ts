@@ -1,6 +1,15 @@
 import {
   HANDS,
   addCharacter,
+  addMission,
+  updateMission,
+  removeMission,
+  restoreMission,
+  missionOf,
+  missionPlaceBlocker,
+  openMissions,
+  createPatronMission,
+  type MissionInput,
   rollSurprise,
   alarmAfterAttack,
   logDamage as logDamageWithAlarm,
@@ -235,7 +244,7 @@ import type { JourneyMode } from './time-view';
 /** Der Schlüssel eines Deckplan-Platzes in den Marken: „Entwurf/Platz“. */
 const slotKey = (slot: { readonly design: string; readonly name: string }): string => `${slot.design}/${slot.name}`;
 
-const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, shopFrom: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, shopFrom: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, missionEditor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, selected: undefined, picking: false } as const;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -309,6 +318,7 @@ export class GameController {
       screen: 'oracle',
       npcAll: false,
       npcPlacing: undefined,
+      missionEditor: undefined,
       shopFrom: undefined,
       npcJoining: undefined,
       encounterRoll: undefined,
@@ -1127,7 +1137,7 @@ export class GameController {
    * Aus dem Feld Notiz des Charakter-Editors gezogen (`forNote`) landet die Auswahl beim Bestätigen im Notiztext statt im Log.
    */
   drawCard(question?: string, forNote = false): void {
-    this.update({ card: drawCard(this.deps.random, question), cardFor: forNote ? 'note' : undefined });
+    this.update({ card: drawCard(this.deps.random, question, this.threads()), cardFor: forNote ? 'note' : undefined });
   }
 
   /** Wählt im Orakelfeld der offenen Karte eine Stufe oder nimmt sie wieder heraus. */
@@ -1154,7 +1164,7 @@ export class GameController {
   }
 
   redrawCard(): void {
-    this.update({ card: redrawCard(this.openCard, this.deps.random) });
+    this.update({ card: redrawCard(this.openCard, this.deps.random, this.threads()) });
   }
 
   discardCard(): void {
@@ -1191,7 +1201,10 @@ export class GameController {
     const released = { globe: this.state.globe && { picked: undefined }, selected: undefined, worldError: this.state.globe ? this.state.worldError : undefined };
     // Die NSC-Liste zeigt beim Öffnen wieder nur die NSC des Aufenthaltsorts.
     // Ein Reiter bricht auch NSC platzieren ab und verlässt den Shop.
-    this.update(screen === 'npcs' && this.state.screen !== 'npcs' ? { screen, npcAll: false, npcPlacing: undefined, npcJoining: undefined, shopFrom: undefined, ...released } : { screen, npcPlacing: undefined, npcJoining: undefined, shopFrom: undefined, ...released });
+    // Ein Reiter bricht auch das Ort wählen einer Mission ab; der Editor bleibt mit seiner Eingabe.
+    const editor = this.state.missionEditor;
+    const mission = editor?.picking ? { missionEditor: { ...editor, picking: false, rev: editor.rev + 1 } } : {};
+    this.update(screen === 'npcs' && this.state.screen !== 'npcs' ? { screen, npcAll: false, npcPlacing: undefined, npcJoining: undefined, shopFrom: undefined, ...released, ...mission } : { screen, npcPlacing: undefined, npcJoining: undefined, shopFrom: undefined, ...released, ...mission });
   }
 
   /**
@@ -1994,6 +2007,121 @@ export class GameController {
 
   restoreCharacter(id: string): void {
     this.change(restoreCharacter(this.campaign, id));
+  }
+
+  // --- Missionen (siehe domain-model.md, *Missionen*) ------------------------------------------
+
+  /** Die Handlungsfäden fürs Orakel: die offenen Missionen. */
+  private threads(): readonly string[] {
+    return openMissions(this.campaign).map((m) => m.id);
+  }
+
+  /** „+ Neue Mission“: der Editor im Reiter Missionen, mit dem Aufenthaltsort als erstem Ort, wenn er ein Feld hat. */
+  newMission(): void {
+    const location = this.campaign.location;
+    const places = location !== undefined && missionPlaceBlocker(this.campaign, location) === undefined ? [{ place: location }] : [];
+    this.openMissionEditor(undefined, { title: '', text: '', state: 'open', places });
+  }
+
+  /** Öffnet eine Mission im Editor (aus dem Reiter, vom Feld, aus dem Log oder dem NSC-Editor). */
+  editMission(id: string): void {
+    const { title, text, state, client, places } = missionOf(this.campaign, id);
+    this.openMissionEditor(id, { title, text, state, ...(client === undefined ? {} : { client }), places });
+  }
+
+  private openMissionEditor(id: string | undefined, draft: MissionInput): void {
+    const released = { globe: this.state.globe && { picked: undefined }, selected: undefined };
+    this.update({ screen: 'missions', editor: undefined, npcPlacing: undefined, npcJoining: undefined, shopFrom: undefined, ...released, missionEditor: { id, draft, rev: (this.state.missionEditor?.rev ?? 0) + 1, error: undefined, picking: false } });
+  }
+
+  closeMissionEditor(): void {
+    this.update({ missionEditor: undefined });
+  }
+
+  /** „Speichern“ im Editor: legt die Mission an bzw. übernimmt die Eingabe; verletzt sie eine Regel, steht das im Editor. */
+  saveMission(input: MissionInput): void {
+    const editor = this.state.missionEditor;
+    if (!editor) return;
+    try {
+      const campaign = editor.id === undefined ? addMission(this.campaign, input).campaign : updateMission(this.campaign, editor.id, input);
+      this.change(campaign, { missionEditor: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ missionEditor: { ...editor, draft: input, error: error.message } });
+    }
+  }
+
+  /** Löscht die Mission im Editor; zeigt der Log auf sie als Handlungsfaden, wird sie nur ausgeblendet. */
+  deleteMission(id: string): void {
+    this.change(removeMission(this.campaign, id), { missionEditor: undefined });
+  }
+
+  restoreMission(id: string): void {
+    this.change(restoreMission(this.campaign, id));
+  }
+
+  /**
+   * „+ Auf dem Globus“ im Editor: Der Editor tritt zurück (mit der Eingabe bis hierher), und man tippt auf
+   * dem Globus ein Feld an; ohne offenen Globus der des Aufenthaltsorts, sonst der Subsektor.
+   */
+  startMissionPicking(input: MissionInput): void {
+    const editor = this.state.missionEditor;
+    if (!editor) return;
+    this.update({ missionEditor: { ...editor, draft: input, error: undefined, picking: true } });
+    if (!this.state.globe) {
+      const home = this.home(this.campaign);
+      this.update({ ...home, selected: undefined, worldError: undefined });
+    } else {
+      this.update({ globe: { picked: undefined } });
+    }
+  }
+
+  /** „OK“ beim Ort wählen: Das angetippte Feld (bzw. die Stadt darauf) kommt als Ort in den Editor. */
+  confirmMissionPlace(): void {
+    const editor = this.state.missionEditor;
+    if (!editor?.picking) return;
+    let place: Place;
+    try {
+      place = this.pickedPlace();
+      const blocker = missionPlaceBlocker(this.campaign, place);
+      if (blocker) throw new DomainError(blocker);
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ worldError: error.message });
+      return;
+    }
+    this.update({ screen: 'missions', globe: { picked: undefined }, worldError: undefined, missionEditor: { ...editor, draft: { ...editor.draft, places: [...editor.draft.places, { place }] }, rev: editor.rev + 1, picking: false } });
+  }
+
+  /** „Abbrechen“ beim Ort wählen: zurück in den Editor, ohne neuen Ort. */
+  cancelMissionPicking(): void {
+    const editor = this.state.missionEditor;
+    if (!editor?.picking) return;
+    this.update({ screen: 'missions', globe: this.state.globe && { picked: undefined }, missionEditor: { ...editor, rev: editor.rev + 1, picking: false } });
+  }
+
+  /** Ein Ort einer Mission (Chip im Reiter): öffnet den Globus seiner Welt mit dem Feld angetippt. */
+  showMissionPlace(world: string, cell: number): void {
+    const column = Number(world.slice(0, 2));
+    const row = Number(world.slice(2));
+    this.update({ missionEditor: undefined });
+    this.openGlobeAt(column, row);
+    if (this.state.globe) this.update({ globe: { picked: cell } });
+  }
+
+  /** „Als Mission“ zum letzten Patron-Wurf: Patron-NSC und offene Mission; danach steht die Mission im Editor. */
+  createPatronMission(): void {
+    const index = this.campaign.log.findLastIndex((e) => e.kind === 'patron');
+    try {
+      const { campaign, mission } = createPatronMission(this.campaign, index, this.deps.random);
+      const m = campaign.missions.find((x) => x.id === mission)!;
+      this.change(campaign, { patronNote: `Mission „${m.title}“ angelegt; der Patron steht unter Charaktere › NSC.`, encounterRoll: undefined });
+      this.editMission(mission);
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      const roll = this.state.encounterRoll;
+      this.update({ patronNote: error.message, ...(roll ? { encounterRoll: { ...roll, text: error.message } } : {}) });
+    }
   }
 
   // --- Charaktererschaffung -------------------------------------------------------------------

@@ -1,5 +1,5 @@
 import type { AttackItem, CardItem, CardView, CheckItem, DamageItem, DmPart, ButcheringItem, EventItem, JourneyItem, LogItem, MonthEndItem, TripDayItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem } from '../controller';
-import type { Answer, ArmorClass, AttackKind, BookingKind, ShipCost, NpcRole, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
+import type { Answer, ArmorClass, AttackKind, BookingKind, ShipCost, MissionState, NpcRole, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
 
@@ -43,6 +43,9 @@ export const woundStateText: Record<WoundState, string> = {
 };
 
 /** Die Rollen eines NSC, wie sie in der Tabelle „Begriffe“ heißen. */
+/** Die Zustände einer Mission in Worten, in der Reihenfolge des Umschalters (2026-11-18). */
+export const missionStateText: Record<MissionState, string> = { open: 'Offen', done: 'Erledigt', failed: 'Gescheitert' };
+
 export const roleText: Record<NpcRole, string> = {
   patron: 'Patron',
   encounter: 'Begegnung',
