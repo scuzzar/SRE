@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Raumkarte Prototyp</title>
+<style>
+  :root {
+    --bg: #05070d; --panel: rgba(16, 22, 34, 0.94); --line: #2a3448; --text: #dfe6f3; --muted: #8b97ad;
+    --own: #4fd1ff; --enemy: #ff7a59; --missile: #ffd84a; --ok: #6fdc8c; --bad: #ff5a6a; --accent: #4fd1ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 14px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
+  #top { position: fixed; top: 0; left: 0; right: 0; padding: 10px 16px; display: flex; gap: 8px;
+    align-items: center; pointer-events: none; }
+  #top .title { font-weight: 600; letter-spacing: .02em; }
+  #top .time { color: var(--muted); }
+  #top .spacer { flex: 1; }
+  #top button { pointer-events: auto; }
+  #sheet { position: fixed; left: 0; right: 0; bottom: 0; background: var(--panel); border-top: 1px solid var(--line);
+    border-radius: 14px 14px 0 0; padding: 6px 16px calc(12px + env(safe-area-inset-bottom)); max-height: 62vh;
+    overflow-y: auto; transition: transform .2s ease; }
+  #sheet.collapsed .more { display: none; }
+  #grip { width: 44px; height: 5px; border-radius: 3px; background: #4a5670; margin: 2px auto 8px; cursor: pointer; }
+  @media (min-width: 900px) {
+    #sheet { left: 12px; right: auto; bottom: 12px; top: 56px; width: 360px; border-radius: 14px; border: 1px solid var(--line); max-height: none; }
+    #grip { display: none; }
+    #sheet.collapsed .more { display: block; }
+  }
+  .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 6px 0; }
+  .row.between { justify-content: space-between; }
+  .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; margin-top: 10px; }
+  button { background: #1c2638; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px;
+    font: inherit; cursor: pointer; min-height: 36px; }
+  button:hover { border-color: #3c4a66; }
+  button.on { background: #12384a; border-color: var(--accent); color: #fff; }
+  button.primary { background: var(--accent); color: #04121a; border-color: var(--accent); font-weight: 650; width: 100%; min-height: 46px; font-size: 16px; }
+  button:disabled { opacity: .45; cursor: default; }
+  input[type=range] { flex: 1; accent-color: var(--accent); min-width: 120px; }
+  .g { font-variant-numeric: tabular-nums; min-width: 52px; text-align: right; font-weight: 600; }
+  .stat { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; font-variant-numeric: tabular-nums; }
+  .stat span:nth-child(even) { text-align: right; }
+  .warn { color: var(--bad); font-weight: 600; }
+  .okc { color: var(--ok); }
+  .own { color: var(--own); } .enemy { color: var(--enemy); } .msl { color: var(--missile); }
+  #log { font-size: 12.5px; color: var(--muted); max-height: 110px; overflow-y: auto; border-top: 1px solid var(--line); margin-top: 8px; padding-top: 6px; }
+  #log div { margin: 2px 0; }
+  .hint { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="top">
+  <span class="title">Raumkarte · Prototyp</span>
+  <span class="time" id="clock"></span>
+  <span class="spacer"></span>
+  <button id="zoomIn" aria-label="Hineinzoomen">＋</button>
+  <button id="zoomOut" aria-label="Herauszoomen">－</button>
+  <button id="center">Zentrieren</button>
+</div>
+
+<div id="sheet" class="collapsed">
+  <div id="grip" title="Blatt auf- und zuziehen"></div>
+  <div class="row between">
+    <strong class="own">Scout „Kestrel“ · 2 G</strong>
+    <span id="roundInfo" class="hint"></span>
+  </div>
+  <div class="row">
+    <span class="hint">Schub</span>
+    <input id="gSlider" type="range" min="0" max="2" step="0.1" value="0">
+    <span class="g" id="gVal">0,0 G</span>
+  </div>
+  <div class="row" id="modes">
+    <button data-mode="fest">Fest</button>
+    <button data-mode="prograd">Prograd</button>
+    <button data-mode="retrograd">Retrograd</button>
+    <button data-mode="ziel">Auf Ziel</button>
+    <button data-mode="weg">Vom Ziel weg</button>
+    <button data-mode="angleichen">Angleichen</button>
+  </div>
+  <div class="row" id="warnRow"></div>
+  <button class="primary" id="go">Runde ausführen (1.000 s)</button>
+  <div class="more">
+    <div class="label">Ziel</div>
+    <div class="stat" id="targetStat"></div>
+    <div class="row">
+      <button id="fire">Rakete starten</button>
+      <span class="hint" id="ammo"></span>
+    </div>
+    <div class="label">Eigenes Schiff</div>
+    <div class="stat" id="ownStat"></div>
+    <div class="row">
+      <button id="reset">Neu beginnen</button>
+    </div>
+    <div class="hint">Schub setzen: am eigenen Schiff ziehen (Länge = Stärke) oder einen Modus wählen.
+      Durchgezogen: Bahn dieser Runde. Gestrichelt: wie es ohne Schub weiterginge (5 Runden).
+      Rote Fläche: wohin der Korsar in dieser Runde kommen könnte.</div>
+    <div id="log"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+// ---------- Physik (km, s) ----------
+const G1 = 0.01;               // 1 G = 10 m/s² = 0,01 km/s²
+const ROUND = 1000;            // Raumrunde in s
+const DT = 10;                 // Rechenschritt in s
+const STEPS = ROUND / DT;
+const BAND = 10000;            // Raumband in km
+const INTERCEPT = 2500;        // Abfangen (Supplement 3: 25 mm)
+
+const WORLD = { name: "Regina (Größe 8)", R: 6400, GM: 409600 };       // g = 8/8 G
+const MOON = { name: "Mond (Größe 2)", R: 1600, GM: 6400, orbit: 90000, phase: 2.2 };
+MOON.w = Math.sqrt(WORLD.GM / MOON.orbit ** 3);
+
+function moonPos(t) { const a = MOON.phase + MOON.w * t; return [MOON.orbit * Math.cos(a), MOON.orbit * Math.sin(a)]; }
+function moonVel(t) { const a = MOON.phase + MOON.w * t, v = MOON.w * MOON.orbit; return [-v * Math.sin(a), v * Math.cos(a)]; }
+
+function gravity(x, y, t) {
+  let r2 = x * x + y * y, r = Math.sqrt(r2), f = -WORLD.GM / (r2 * r);
+  let ax = f * x, ay = f * y;
+  const [mx, my] = moonPos(t), dx = x - mx, dy = y - my;
+  r2 = dx * dx + dy * dy; r = Math.sqrt(r2); f = -MOON.GM / (r2 * r);
+  return [ax + f * dx, ay + f * dy];
+}
+function hitBody(x, y, t) {
+  if (x * x + y * y < WORLD.R ** 2) return WORLD.name;
+  const [mx, my] = moonPos(t);
+  if ((x - mx) ** 2 + (y - my) ** 2 < MOON.R ** 2) return MOON.name;
+  return null;
+}
+
+function circular(r, angle, prograde = 1) {
+  const v = Math.sqrt(WORLD.GM / r) * prograde;
+  return { x: r * Math.cos(angle), y: r * Math.sin(angle), vx: -v * Math.sin(angle), vy: v * Math.cos(angle) };
+}
+
+function norm(x, y) { const l = Math.hypot(x, y); return l > 1e-12 ? [x / l, y / l, l] : [0, 0, 0]; }
+
+// Schub einer Einheit als Beschleunigung in km/s², aus ihrem Befehl und dem Stand aller Einheiten
+function thrust(u, byId) {
+  const o = u.order; if (!o || o.g <= 0 || !u.alive) return [0, 0];
+  const amax = o.g * G1;
+  const tgt = o.target ? byId[o.target] : null;
+  let dx = 0, dy = 0, a = amax;
+  switch (o.mode) {
+    case "fest": dx = Math.cos(o.angle); dy = Math.sin(o.angle); break;
+    case "prograd": { const [nx, ny, l] = norm(u.vx, u.vy); dx = nx; dy = ny; break; }
+    case "retrograd": { const [nx, ny, l] = norm(u.vx, u.vy); dx = -nx; dy = -ny; a = Math.min(amax, l / DT); break; }
+    case "ziel": case "weg": {
+      if (!tgt || !tgt.alive) return [0, 0];
+      const [nx, ny] = norm(tgt.x - u.x, tgt.y - u.y); const s = o.mode === "ziel" ? 1 : -1; dx = s * nx; dy = s * ny; break;
+    }
+    case "angleichen": {
+      if (!tgt || !tgt.alive) return [0, 0];
+      const [nx, ny, l] = norm(u.vx - tgt.vx, u.vy - tgt.vy); dx = -nx; dy = -ny; a = Math.min(amax, l / DT); break;
+    }
+    case "lenkung": { // Rakete: voller Schub aufs Ziel, seitliche Drift wird weggesteuert
+      if (!tgt || !tgt.alive || u.fuel <= 0) return [0, 0];
+      const [rx, ry] = norm(tgt.x - u.x, tgt.y - u.y);
+      const vx = u.vx - tgt.vx, vy = u.vy - tgt.vy, along = vx * rx + vy * ry;
+      const lx = vx - along * rx, ly = vy - along * ry;
+      const [nx, ny] = norm(rx * amax - lx / 100, ry * amax - ly / 100);
+      dx = nx; dy = ny; a = Math.min(amax, u.fuel / DT); break;
+    }
+    default: return [0, 0];
+  }
+  return [dx * a, dy * a];
+}
+
+// Ein Schritt für alle Einheiten (Velocity Verlet, Schub aus dem Stand zu Beginn des Schritts)
+function step(units, t, onEvent) {
+  const byId = {}; for (const u of units) byId[u.id] = u;
+  const acc = units.map(u => {
+    if (!u.alive) return [0, 0, 0, 0];
+    const [gx, gy] = gravity(u.x, u.y, t), [tx, ty] = thrust(u, byId);
+    return [gx + tx, gy + ty, tx, ty];
+  });
+  units.forEach((u, i) => {
+    if (!u.alive) return;
+    const [ax, ay, tx, ty] = acc[i];
+    u.x += u.vx * DT + 0.5 * ax * DT * DT; u.y += u.vy * DT + 0.5 * ay * DT * DT;
+    const [gx, gy] = gravity(u.x, u.y, t + DT);
+    u.vx += 0.5 * (ax + gx + tx) * DT; u.vy += 0.5 * (ay + gy + ty) * DT;
+    if (u.kind === "missile") u.fuel -= Math.hypot(tx, ty) * DT;
+    const body = hitBody(u.x, u.y, t + DT);
+    if (body) { u.alive = false; onEvent && onEvent({ type: "crash", unit: u, body }); }
+  });
+  for (const m of units) {
+    if (!m.alive || m.kind !== "missile") continue;
+    const tgt = byId[m.order.target];
+    if (tgt && tgt.alive && Math.hypot(tgt.x - m.x, tgt.y - m.y) < INTERCEPT) {
+      m.alive = false;
+      onEvent && onEvent({ type: "intercept", unit: m, target: tgt, rel: Math.hypot(tgt.vx - m.vx, tgt.vy - m.vy) });
+    }
+  }
+}
+
+const clone = us => us.map(u => ({ ...u, order: u.order ? { ...u.order } : null, trail: null }));
+
+// ---------- Spielstand ----------
+let S;
+function newGame() {
+  const own = { id: "own", name: "Kestrel", side: "own", kind: "ship", maxG: 2, alive: true, missiles: 3,
+    ...circular(16000, -Math.PI / 2), order: { mode: "fest", angle: 0, g: 0, target: "enemy" }, trail: [] };
+  const enemy = { id: "enemy", name: "Korsar", side: "enemy", kind: "ship", maxG: 2, alive: true,
+    ...circular(70000, 2.4), order: { mode: "fest", angle: 0, g: 0 }, trail: [] };
+  S = { t: 0, round: 1, units: [own, enemy], launches: [], log: [], anim: null, nextMissile: 1 };
+  cam.cx = 0; cam.cy = 0; cam.s = Math.min(innerWidth, innerHeight) / 190000;
+  addLog("Ein Schiff auf Abfangkurs: der Korsar kommt aus 70.000 km.");
+  syncUi(); replan();
+}
+const U = id => S.units.find(u => u.id === id);
+
+// ---------- Vorschau ----------
+let plan = { ownNow: [], ownAfter: [], impact: null, enemyAfter: [], fan: [], missiles: {} };
+function replan() {
+  const own = U("own");
+  plan = { ownNow: [], ownAfter: [], impact: null, enemyAfter: [], fan: [], missiles: {} };
+  // eigene Bahn: diese Runde mit Schub, dann 5 Runden ohne; andere ohne Schub
+  let us = clone(S.units).filter(u => u.alive);
+  us.forEach(u => { if (u.kind === "ship" && u.id !== "own") u.order = null; });
+  let t = S.t, ev = null;
+  const rec = (arr, u) => arr.push([u.x, u.y]);
+  const me = us.find(u => u.id === "own");
+  if (me) {
+    rec(plan.ownNow, me);
+    for (let i = 0; i < STEPS; i++) { step(us, t, e => { if (e.unit.id === "own" && e.type === "crash") ev = ev || { round: 0, body: e.body }; }); t += DT; if (i % 2) rec(plan.ownNow, me); }
+    me.order = null;
+    rec(plan.ownAfter, me);
+    for (let i = 0; i < STEPS * 5 && me.alive; i++) { step(us, t, e => { if (e.unit.id === "own" && e.type === "crash") ev = ev || { round: 1 + Math.floor(i / STEPS), body: e.body }; }); t += DT; if (i % 4 === 3) rec(plan.ownAfter, me); }
+    plan.impact = ev;
+  }
+  // fremde Bahn ohne Schub und Reichweitenfächer
+  const enemy = U("enemy");
+  if (enemy.alive) {
+    let e = clone([enemy])[0]; e.order = null; t = S.t;
+    plan.enemyAfter.push([e.x, e.y]);
+    for (let i = 0; i < STEPS * 5 && e.alive; i++) { step([e], t); t += DT; if (i % 4 === 3) plan.enemyAfter.push([e.x, e.y]); }
+    for (let k = 0; k < 32; k++) {
+      const f = clone([enemy])[0]; f.order = { mode: "fest", angle: k / 32 * 2 * Math.PI, g: enemy.maxG }; t = S.t;
+      for (let i = 0; i < STEPS; i++) { step([f], t); t += DT; }
+      plan.fan.push([f.x, f.y]);
+    }
+  }
+  updateWarn();
+}
+
+// ---------- NSC: Absicht „Angreifen“, auf 2 Raumbänder heran und Kurs angleichen ----------
+function enemyOrder() {
+  const enemy = U("enemy"), own = U("own");
+  if (!enemy.alive || !own.alive) return null;
+  const cands = [{ mode: "fest", angle: 0, g: 0 }];
+  for (let k = 0; k < 16; k++) for (const f of [0.5, 1]) cands.push({ mode: "fest", angle: k / 16 * 2 * Math.PI, g: enemy.maxG * f });
+  for (const f of [0.5, 1]) cands.push({ mode: "ziel", g: enemy.maxG * f, target: "own" }, { mode: "angleichen", g: enemy.maxG * f, target: "own" });
+  let best = null, bestScore = Infinity;
+  for (const c of cands) {
+    const [e, o] = clone([enemy, own]); o.order = null; e.order = c;
+    let t = S.t, dead = false, minDist = Infinity;
+    const score1 = () => Math.abs(Math.hypot(e.x - o.x, e.y - o.y) - 2 * BAND) / 1000 + 0.6 * Math.hypot(e.vx - o.vx, e.vy - o.vy);
+    for (let i = 0; i < STEPS; i++) { step([e, o], t, ev => { if (ev.unit === e) dead = true; }); t += DT; }
+    const s1 = score1();
+    e.order = null;
+    for (let i = 0; i < STEPS; i++) { step([e, o], t, ev => { if (ev.unit === e) dead = true; }); t += DT; minDist = Math.min(minDist, Math.hypot(e.x, e.y)); }
+    const s2 = score1();
+    const score = s1 + 0.5 * s2 + (dead ? 1e6 : 0) + (minDist < WORLD.R * 1.3 ? 200 : 0);
+    if (score < bestScore) { bestScore = score; best = c; }
+  }
+  return best;
+}
+
+// ---------- Runde ausführen ----------
+function runRound() {
+  if (S.anim) return;
+  const enemy = U("enemy");
+  enemy.order = enemyOrder();
+  const events = [];
+  const frames = [];
+  const snap = () => frames.push({ t: S.t, units: S.units.map(u => ({ id: u.id, x: u.x, y: u.y, alive: u.alive })) });
+  snap();
+  for (let i = 0; i < STEPS; i++) {
+    step(S.units, S.t, e => events.push({ ...e, at: S.t }));
+    S.t += DT;
+    if (i % 2) snap();
+    S.units.forEach(u => { if (u.alive && i % 5 === 4) u.trail.push([u.x, u.y]); if (u.trail.length > 400) u.trail.shift(); });
+  }
+  S.anim = { frames, start: performance.now(), dur: 1800 };
+  // Phase 5: Starts. Raketen übernehmen Ort und Geschwindigkeit, fliegen ab der nächsten Runde
+  for (const L of S.launches) {
+    const from = U(L.from); if (!from.alive) continue;
+    S.units.push({ id: "m" + S.nextMissile, name: "Rakete " + S.nextMissile++, side: from.side, kind: "missile", maxG: 6, alive: true,
+      fuel: 6 * 6 * G1 * ROUND, x: from.x, y: from.y, vx: from.vx, vy: from.vy,
+      order: { mode: "lenkung", g: 6, target: L.target }, trail: [] });
+    addLog(`<span class="msl">Rakete gestartet</span> auf ${U(L.target).name}, 6G6, fliegt ab der nächsten Runde.`);
+  }
+  S.launches = [];
+  const eo = enemy.order;
+  if (eo) addLog(`<span class="enemy">Korsar</span>: ${describe(eo)}.`);
+  for (const e of events) {
+    if (e.type === "crash") addLog(`<span class="warn">${e.unit.name} schlägt auf ${e.body} auf.</span>`);
+    if (e.type === "intercept") addLog(`<span class="msl">${e.unit.name} fängt ${e.target.name} ab</span> (Relativgeschwindigkeit ${fmt(e.rel, 1)} km/s). Jetzt würde die Zündung gewürfelt.`);
+  }
+  S.round++;
+}
+function describe(o) {
+  if (!o || o.g === 0) return "kein Schub";
+  const names = { fest: "fest", prograd: "prograd", retrograd: "retrograd", ziel: "auf Ziel", weg: "vom Ziel weg", angleichen: "angleichen" };
+  return `${fmt(o.g, 1)} G ${names[o.mode] || o.mode}`;
+}
+
+// ---------- Darstellung ----------
+const cv = document.getElementById("c"), ctx = cv.getContext("2d");
+const cam = { cx: 0, cy: 0, s: 0.004 };
+let W = 0, H = 0, DPR = 1;
+function resize() { DPR = devicePixelRatio || 1; W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; }
+addEventListener("resize", resize); resize();
+const sx = x => W / 2 + (x - cam.cx) * cam.s, sy = y => H / 2 - (y - cam.cy) * cam.s;
+const wx = px => (px - W / 2) / cam.s + cam.cx, wy = py => -(py - H / 2) / cam.s + cam.cy;
+
+function path(pts, color, width, dash) {
+  if (pts.length < 2) return;
+  ctx.beginPath(); ctx.moveTo(sx(pts[0][0]), sy(pts[0][1]));
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(sx(pts[i][0]), sy(pts[i][1]));
+  ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash || []); ctx.stroke(); ctx.setLineDash([]);
+}
+function circle(x, y, r, stroke, fill, dash) {
+  ctx.beginPath(); ctx.arc(sx(x), sy(y), Math.max(r * cam.s, 0), 0, 2 * Math.PI);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.setLineDash(dash || []); ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]); }
+}
+function ship(x, y, vx, vy, color, size, label) {
+  const a = Math.atan2(vy, vx), X = sx(x), Y = sy(y);
+  ctx.save(); ctx.translate(X, Y); ctx.rotate(-a);
+  ctx.beginPath(); ctx.moveTo(size, 0); ctx.lineTo(-size * 0.7, size * 0.6); ctx.lineTo(-size * 0.4, 0); ctx.lineTo(-size * 0.7, -size * 0.6); ctx.closePath();
+  ctx.fillStyle = color; ctx.fill(); ctx.restore();
+  if (label) { ctx.fillStyle = color; ctx.font = "12px system-ui"; ctx.fillText(label, X + size + 4, Y - size - 2); }
+}
+function blocked(a, b) {
+  const test = (cx, cy, R) => {
+    const dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy;
+    const k = Math.max(0, Math.min(1, ((cx - a.x) * dx + (cy - a.y) * dy) / l2));
+    return Math.hypot(a.x + k * dx - cx, a.y + k * dy - cy) < R;
+  };
+  const [mx, my] = moonPos(S.t);
+  return test(0, 0, WORLD.R) ? WORLD.name : test(mx, my, MOON.R) ? MOON.name : null;
+}
+
+function draw(now) {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--bg"); ctx.fillRect(0, 0, W, H);
+  let view = null, t = S.t;
+  if (S.anim) {
+    const f = Math.max(0, Math.min(1, (now - S.anim.start) / S.anim.dur)), fr = S.anim.frames, k = f * (fr.length - 1), i = Math.floor(k), j = Math.min(fr.length - 1, i + 1), w = k - i;
+    t = fr[i].t + (fr[j].t - fr[i].t) * w;
+    view = {}; fr[i].units.forEach((u, n) => { const v = fr[j].units[n]; view[u.id] = { x: u.x + (v.x - u.x) * w, y: u.y + (v.y - u.y) * w, alive: v.alive || w < 1 && u.alive }; });
+    if (f >= 1) { S.anim = null; view = null; t = S.t; syncUi(); replan(); }
+  }
+  // Sprunggrenze 10 D, Mondbahn, Welt, Mond
+  circle(0, 0, WORLD.R * 20, "#3b2f55", null, [6, 6]);
+  if (cam.s * WORLD.R * 20 > 30) { ctx.fillStyle = "#6c5a95"; ctx.font = "11px system-ui"; ctx.fillText("Sprunggrenze 10 D (DM +15)", sx(0) + 6, sy(WORLD.R * 20) + 14); }
+  circle(0, 0, MOON.orbit, "#1d2638");
+  const g = ctx.createRadialGradient(sx(-WORLD.R * 0.3), sy(WORLD.R * 0.3), 1, sx(0), sy(0), Math.max(2, WORLD.R * cam.s));
+  g.addColorStop(0, "#5fa8e8"); g.addColorStop(1, "#163a66");
+  circle(0, 0, Math.max(WORLD.R, 3 / cam.s), null, g);
+  const [mx, my] = moonPos(t); circle(mx, my, Math.max(MOON.R, 2 / cam.s), null, "#8a8f99");
+  ctx.fillStyle = "#7d8aa3"; ctx.font = "12px system-ui";
+  ctx.fillText(WORLD.name, sx(0) + Math.max(WORLD.R * cam.s, 3) + 4, sy(0) + 4);
+  ctx.fillText(MOON.name, sx(mx) + Math.max(MOON.R * cam.s, 2) + 4, sy(my) + 4);
+
+  const own = U("own"), enemy = U("enemy");
+  const pos = u => view && view[u.id] ? view[u.id] : u;
+  // Raumbänder um das eigene Schiff
+  if (own.alive && !S.anim) for (let b = 1; b <= 5; b++) {
+    circle(own.x, own.y, b * BAND, "rgba(79,209,255,0.10)");
+    if (BAND * cam.s > 32) { ctx.fillStyle = "rgba(79,209,255,0.35)"; ctx.font = "10px system-ui"; ctx.fillText(b + " RB", sx(own.x + b * BAND) + 3, sy(own.y) - 3); }
+  }
+  // Spuren
+  for (const u of S.units) path(u.trail, u.side === "own" ? (u.kind === "missile" ? "rgba(255,216,74,.35)" : "rgba(79,209,255,.35)") : "rgba(255,122,89,.35)", 1.2);
+  if (!S.anim) {
+    // Fächer des Gegners
+    if (enemy.alive && plan.fan.length) {
+      ctx.beginPath(); plan.fan.forEach(([x, y], i) => i ? ctx.lineTo(sx(x), sy(y)) : ctx.moveTo(sx(x), sy(y))); ctx.closePath();
+      ctx.fillStyle = "rgba(255,122,89,0.10)"; ctx.fill(); ctx.strokeStyle = "rgba(255,122,89,0.45)"; ctx.lineWidth = 1; ctx.stroke();
+    }
+    path(plan.enemyAfter, "rgba(255,122,89,.7)", 1.3, [5, 5]);
+    path(plan.ownAfter, "rgba(79,209,255,.75)", 1.4, [6, 5]);
+    path(plan.ownNow, "#4fd1ff", 2.4);
+    if (plan.ownNow.length) { const [x, y] = plan.ownNow[plan.ownNow.length - 1]; ctx.beginPath(); ctx.arc(sx(x), sy(y), 6, 0, 2 * Math.PI); ctx.strokeStyle = "#4fd1ff"; ctx.lineWidth = 1.5; ctx.stroke(); }
+    if (plan.impact) { const p = plan.ownAfter[plan.ownAfter.length - 1] || plan.ownNow[plan.ownNow.length - 1]; if (p) { ctx.fillStyle = "#ff5a6a"; ctx.font = "bold 13px system-ui"; ctx.fillText("✕ Aufschlag", sx(p[0]) + 8, sy(p[1])); } }
+    // Sichtlinie
+    if (own.alive && enemy.alive) {
+      const blk = blocked(own, enemy);
+      ctx.beginPath(); ctx.moveTo(sx(own.x), sy(own.y)); ctx.lineTo(sx(enemy.x), sy(enemy.y));
+      ctx.strokeStyle = blk ? "rgba(255,90,106,.6)" : "rgba(111,220,140,.35)"; ctx.setLineDash([2, 6]); ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+    }
+    // Schubpfeil
+    if (own.alive && own.order.g > 0) {
+      const [ax, ay] = thrust(own, Object.fromEntries(S.units.map(u => [u.id, u])));
+      const [nx, ny] = norm(ax, ay), L = own.order.g * PX_PER_G;
+      const X = sx(own.x), Y = sy(own.y);
+      ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X + nx * L, Y - ny * L); ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
+      ctx.beginPath(); ctx.arc(X + nx * L, Y - ny * L, 4, 0, 2 * Math.PI); ctx.fillStyle = "#fff"; ctx.fill();
+    }
+  }
+  // Einheiten
+  for (const u of S.units) {
+    const p = pos(u); if (!p.alive && !(view && view[u.id] && view[u.id].alive)) continue;
+    const color = u.kind === "missile" ? "#ffd84a" : u.side === "own" ? "#4fd1ff" : "#ff7a59";
+    ship(p.x, p.y, u.vx, u.vy, color, u.kind === "missile" ? 5 : 9, u.kind === "missile" ? "" : u.name);
+  }
+  document.getElementById("clock").textContent = "T+" + hhmm(t);
+  requestAnimationFrame(draw);
+}
+
+// ---------- Bedienung ----------
+const PX_PER_G = 46;
+const pointers = new Map();
+let drag = null;
+cv.addEventListener("pointerdown", e => {
+  cv.setPointerCapture(e.pointerId); pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  const own = U("own");
+  if (pointers.size === 1 && !S.anim && own.alive && Math.hypot(e.clientX - sx(own.x), e.clientY - sy(own.y)) < 40) drag = { kind: "thrust" };
+  else if (pointers.size === 1) drag = { kind: "pan", x: e.clientX, y: e.clientY, cx: cam.cx, cy: cam.cy };
+  else if (pointers.size === 2) { const [a, b] = [...pointers.values()]; drag = { kind: "pinch", d: Math.hypot(a.x - b.x, a.y - b.y), s: cam.s }; }
+});
+cv.addEventListener("pointermove", e => {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (!drag) return;
+  if (drag.kind === "thrust") {
+    const own = U("own"), dx = e.clientX - sx(own.x), dy = -(e.clientY - sy(own.y));
+    const g = Math.min(own.maxG, Math.round(Math.hypot(dx, dy) / PX_PER_G * 10) / 10);
+    own.order.mode = "fest"; own.order.angle = Math.atan2(dy, dx); own.order.g = g;
+    syncUi(); replan();
+  } else if (drag.kind === "pan") {
+    cam.cx = drag.cx - (e.clientX - drag.x) / cam.s; cam.cy = drag.cy + (e.clientY - drag.y) / cam.s;
+  } else if (drag.kind === "pinch" && pointers.size === 2) {
+    const [a, b] = [...pointers.values()]; cam.s = clampS(drag.s * Math.hypot(a.x - b.x, a.y - b.y) / drag.d);
+  }
+});
+const up = e => { pointers.delete(e.pointerId); if (pointers.size === 0) drag = null; };
+cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+cv.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+const clampS = s => Math.min(0.2, Math.max(0.00002, s));
+function zoomAt(px, py, f) { const x = wx(px), y = wy(py); cam.s = clampS(cam.s * f); cam.cx = x - (px - W / 2) / cam.s; cam.cy = y + (py - H / 2) / cam.s; }
+document.getElementById("zoomIn").onclick = () => zoomAt(W / 2, H / 2, 1.6);
+document.getElementById("zoomOut").onclick = () => zoomAt(W / 2, H / 2, 1 / 1.6);
+let centerOnShip = false;
+document.getElementById("center").onclick = () => { const o = U("own"); centerOnShip = !centerOnShip; if (centerOnShip && o.alive) { cam.cx = o.x; cam.cy = o.y; } else { cam.cx = 0; cam.cy = 0; } };
+document.getElementById("grip").onclick = () => document.getElementById("sheet").classList.toggle("collapsed");
+
+const slider = document.getElementById("gSlider");
+slider.oninput = () => { const o = U("own").order; o.g = +slider.value; if (o.mode === "fest" && o.angle === undefined) o.angle = 0; syncUi(); replan(); };
+document.querySelectorAll("#modes button").forEach(b => b.onclick = () => {
+  const o = U("own").order; o.mode = b.dataset.mode; o.target = "enemy"; if (o.g === 0) o.g = U("own").maxG; syncUi(); replan();
+});
+document.getElementById("go").onclick = () => { runRound(); syncUi(); };
+document.getElementById("fire").onclick = () => {
+  const own = U("own"); if (own.missiles <= 0 || S.launches.length) return;
+  own.missiles--; S.launches.push({ from: "own", target: "enemy" }); addLog("Start vorgemerkt: Rakete löst sich nach der Bewegung (Phase 5)."); syncUi();
+};
+document.getElementById("reset").onclick = () => { S.units.forEach(u => u.trail = []); newGame(); };
+
+function syncUi() {
+  const own = U("own"), enemy = U("enemy"), o = own.order;
+  slider.max = own.maxG; slider.value = o.g;
+  document.getElementById("gVal").textContent = fmt(o.g, 1) + " G";
+  document.querySelectorAll("#modes button").forEach(b => b.classList.toggle("on", b.dataset.mode === o.mode && o.g > 0));
+  document.getElementById("roundInfo").textContent = `Raumrunde ${S.round}`;
+  document.getElementById("go").disabled = !!S.anim || !own.alive;
+  const d = Math.hypot(enemy.x - own.x, enemy.y - own.y), rv = Math.hypot(enemy.vx - own.vx, enemy.vy - own.vy);
+  const blk = own.alive && enemy.alive ? blocked(own, enemy) : null;
+  document.getElementById("targetStat").innerHTML = enemy.alive ? `
+    <span class="enemy">Korsar · 2 G</span><span>${enemy.order && enemy.order.g ? "letzte Runde " + describe(enemy.order) : ""}</span>
+    <span>Entfernung</span><span>${fmt(d, 0)} km · ${Math.ceil(d / BAND)} Raumbänder</span>
+    <span>Relativgeschwindigkeit</span><span>${fmt(rv, 2)} km/s</span>
+    <span>Sichtlinie</span><span class="${blk ? "warn" : "okc"}">${blk ? "verdeckt durch " + blk : "frei"}</span>` : `<span class="warn">Korsar zerstört</span><span></span>`;
+  const r = Math.hypot(own.x, own.y), v = Math.hypot(own.vx, own.vy), vesc = Math.sqrt(2 * WORLD.GM / r);
+  document.getElementById("ownStat").innerHTML = own.alive ? `
+    <span>Höhe über ${WORLD.name.split(" ")[0]}</span><span>${fmt(r - WORLD.R, 0)} km</span>
+    <span>Geschwindigkeit</span><span>${fmt(v, 2)} km/s</span>
+    <span>Fluchtgeschwindigkeit hier</span><span>${fmt(vesc, 2)} km/s</span>
+    <span>Schwerkraft hier</span><span>${fmt(WORLD.GM / (r * r) / G1, 3)} G</span>` : `<span class="warn">Schiff verloren</span><span></span>`;
+  document.getElementById("ammo").textContent = `${own.missiles} im Rack` + (S.launches.length ? " · Start vorgemerkt" : "");
+  document.getElementById("fire").disabled = own.missiles <= 0 || S.launches.length > 0 || !enemy.alive || !own.alive;
+  document.getElementById("log").innerHTML = S.log.slice().reverse().map(l => `<div>${l}</div>`).join("");
+}
+function updateWarn() {
+  const el = document.getElementById("warnRow");
+  el.innerHTML = plan.impact ? `<span class="warn">Ohne Schub Aufschlag auf ${plan.impact.body} ${plan.impact.round === 0 ? "in dieser Runde" : "in " + plan.impact.round + " Runde(n)"}!</span>` : "";
+}
+function addLog(s) { S.log.push(`<b>R${S.round}</b> ${s}`); if (S.log.length > 60) S.log.shift(); }
+function fmt(n, d) { return n.toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d }); }
+function hhmm(t) { const m = Math.floor(t / 60); return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); }
+
+newGame();
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

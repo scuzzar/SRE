@@ -21,6 +21,9 @@ je Sprung als Hausregel, Fehlsprung als Wurf – siehe `domain-model.md` unter *
 |---|---|---|
 | **SR** | *Traveller Starter Edition*, Teil 1: *Rules Booklet* (GDW 1983), Kapitel *Travel* (S. 27–28), *Starship Economics* (S. 29–30), *Starships* (S. 31–37), *Computers* (S. 38–39), *Space Combat* (S. 39–42), *Trade and Commerce* (S. 52) | gedruckte Seitenzahl; im PDF ist es die Seite + 2 |
 | **SE** | *Traveller Starter Edition*, Teil 2: *Charts and Tables* (GDW 1983) | liegt als PDF vor (CD-ROM „Classic Traveller“, `CT Traveller Starter Edition 2 Charts.pdf`); gedruckte Seite = PDF-Seite − 2 |
+| **MD** | *Mayday* (GDW 1978, Game 1), Regelheft; Brettspielfassung der Vektorbewegung aus Book 2 | Seite des PDF `CT_G01_Game_01a_Mayday_Game_Complete.pdf` (das Heft hat keine gedruckten Seitenzahlen) |
+| **SS3** | *Special Supplement 3: Missiles*, überarbeitete Fassung (GDW 1984/1986) | gedruckte Seitenzahl |
+| **HG** | *Book 5: High Guard* (GDW 1980) | gedruckte Seitenzahl; noch nicht ausgewertet |
 
 - Regeltexte sind auf Deutsch zusammengefasst, Tabellen (soweit aus SR bekannt) vollständig
   übernommen. Namen aus den Tabellen (Schiffstypen, Komponenten, Programme) bleiben englisch, wie in
@@ -61,6 +64,7 @@ dabei.
 | [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system) | SR 42 | ○ |
 | [Handel und Gewerbe](#handel-und-gewerbe) | SR 52 | ○ |
 | [Raumkampf](#raumkampf) | SR 39–42 | ○ |
+| [Vektorbewegung (Mayday, Supplement 3)](#vektorbewegung-mayday-supplement-3) | MD, SS3 4–11 | ○ |
 
 ---
 
@@ -578,6 +582,124 @@ Hauptbereich oder Engineering nach Wahl, 3+ normale Zufallslokalisierung) geziel
 ### Starship Encounters (im Kampf)
 
 Siehe [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system).
+
+---
+
+## Vektorbewegung (Mayday, Supplement 3)
+
+Die SR bewegen Schiffe in Range Bands. Book 2 und das Brettspiel *Mayday* bewegen sie mit Vektoren
+auf einer Karte; *Supplement 3* schreibt die Raketen für beide Systeme. Gebraucht wird das für das
+[Konzept Raumkampf](konzept-raumkampf.md) (Entwurf); dort steht auch, was die App davon übernehmen
+soll.
+
+### Maßstäbe
+
+| | Book 2 / Supplement 3 (SS3 4) | Mayday (MD 3) |
+|---|---|---|
+| Runde | 1.000 Sekunden | 100 Minuten |
+| Entfernung | 100 mm = 10.000 km | 1 Hexfeld = 1 Lichtsekunde (300.000 km) |
+| Schub | 1 G eine Runde lang verschiebt die Bahn um 100 mm | 1 G verschiebt den Zukunftsmarker um 1 Feld |
+| 1 G | – | 9,8 m/s² |
+
+### Ablauf eines Spielerzugs (MD 4; SS3 13)
+
+Die Seiten ziehen abwechselnd, jede Runde hat zwei Spielerzüge: **A. Bewegung** (eigene Schiffe,
+Raketen, Small Craft), **B. Laserfeuer**, **C. Rückfeuer** des Gegners (und Anti-Missile),
+**D. Ordnance Launch** (Raketen, Sand, Small Craft starten; Raketen, die abgefangen haben, zünden),
+**E. Computer umprogrammieren**. Zwischen den Runden bewegen sich Welten und Wracks, wenn das
+Szenario es will.
+
+### Bewegung (MD 4–6)
+
+- Jedes Schiff, jede Rakete, jedes Small Craft hat **drei Marker**: Vergangenheit, Gegenwart,
+  Zukunft.
+- Bewegung: Vergangenheitsmarker auf den Gegenwartsmarker, Gegenwartsmarker auf den Zukunftsmarker;
+  den neuen Zukunftsmarker legt man auf die Verlängerung der Linie von Vergangenheit zu Gegenwart,
+  gleich lang. Das ist der Kurs ohne Schub.
+- **Kursänderung**: den Zukunftsmarker um 1 Feld je G des Maneuver Drive verschieben, in beliebige
+  Richtung.
+- **Schwerkraft**: Die sechs Felder um eine Welt sind Schwerkraftfelder mit je einem Pfeil von einem
+  Feld zur Mitte der Welt. Jedes Schwerkraftfeld, das ein Schiff in seiner Bewegung betritt,
+  verschiebt dessen Zukunftsmarker um 1 Feld in Pfeilrichtung; Pflicht und kumulativ, für alle
+  Schiffe.
+- **Umlaufbahn**: Wer sich genau ein Feld weit von einem Schwerkraftfeld ins benachbarte derselben
+  Welt bewegt, ist im Orbit und umrundet sie ohne weiteren Schub in zehn Stunden (sechs Runden).
+- **Landen**: mit 1 Feld Geschwindigkeit auf die Welt ziehen. Schneller ist ein **Aufschlag**, das
+  Schiff ist zerstört. **Starten**: von der Welt in ein Nachbarfeld beschleunigen.
+- **Abfangen**: Stehen am Ende der Bewegung zwei Gegenwartsmarker im selben Feld, haben sich die
+  beiden abgefangen (Raketen können zünden, Schiffe zusammenstoßen). Stehen zwei Zukunftsmarker im
+  selben Feld, ist das Abfangen im nächsten Zug unvermeidlich.
+- **Angeglichener Kurs**: Gegenwarts- und Zukunftsmarker zweier Schiffe jeweils im selben Feld;
+  dann ist Entern möglich.
+- **Maneuver/Evade**: Läuft ein solches Programm, hat das Schiff 1 G weniger, auch bis auf 0 G.
+
+### Waffen in Mayday (MD 6–12)
+
+- **Laser**: alle Laser eines Schiffs auf dasselbe Ziel; Treffer werden sofort angerechnet.
+  *Shifting Fire* in Mayday: DM +1 je Laser nach dem ersten, oder ohne diesen DM Zielwechsel, wenn
+  das erste Ziel zerstört ist. Laser gegen Raketen im eigenen Laserfeuer durch Wahl als Ziel, im
+  Rückfeuer nur mit Anti-Missile und nur gegen Raketen ohne Annäherungszünder.
+- **Ordnance Launch**: höchstens eine Rakete je Schiff und Phase; wer Sand ausstößt, startet keine
+  Rakete. Neue Raketen und Small Craft übernehmen alle drei Marker des startenden Schiffs, ihr
+  Zukunftsmarker darf gleich verschoben werden.
+- **Raketen** aus Lenkung (Homing, Guided, Responsive, Unguided), Antrieb (Constant, Limited,
+  Discretionary, Unpowered) und Zünder (Contact: dreifacher Schaden; Proximity: doppelter, nicht
+  durch Anti-Missile abzuwehren; Intelligent; Command). **Standardrakete in Mayday**: 6G6 Limited,
+  Homing, Contact, Cr5.600.
+- **Sand**: Die Wolke umgibt das Schiff, solange es den Kurs nicht ändert. Laser hinein DM −3, Laser
+  hinaus DM −1, Raketen gegen das Schiff DM −1. Vorrat: so viele Ladungen wie das Schiff Tonnen hat.
+  Schützt nur das eigene Schiff.
+- **Schaden** (MD 9, 12): Ergebnisse No Effect, Weaponry, Computer, M-Drive, J-Drive, Detonate (bei
+  Raketen). Zerstört bei vier Treffern in einem Spielerzug (Laser 1, Proximity 2, Contact 3) oder je
+  mindestens drei Treffern in drei Runden hintereinander. Das Wrack fliegt auf seinem Kurs weiter.
+- **Schadenskontrolle** (MD 12): zu Beginn des eigenen Zugs, höchstens 1 G Schub, ein Bereich, 8+.
+- **Handsteuerung** ohne Computer: Laser DM −4, keine Raketen und kein Sand, Schub nur 1 G und eine
+  Runde vorher angesagt. Small Craft haben keinen Computer und keine DMs dafür.
+- **Small Craft** (MD 14) mit G und Brennstufen (höchste Kursänderung je Zug, gesamte Kursänderung):
+  Lifeboat 1G5, Ship's Boat 6G9 (1 Laser), Pinnace 5G12 (1 Laser), Cutter 4G15 (1 Laser), Shuttle
+  3G9, Fighter 4G12 (1 Laser). Starships haben unbegrenzten Treibstoff.
+- **Sprung** in Mayday: frühestens 40 Felder von jeder Welt entfernt.
+- **High Guard mit Vektorbewegung** (MD 14): angeglichener Kurs = Enterreichweite, bis 5 Felder
+  kurze, bis 15 Felder lange Reichweite, darüber außer Reichweite.
+
+### Raketen nach Supplement 3 (SS3 4–11)
+
+- **Antrieb** als *xGy*: höchstens x G je Runde, Treibstoff für y Runden bei vollem Schub (gesamt
+  x·y G-Runden; *3G3* also 3 G drei Runden lang oder 1 G neun Runden lang).
+  - **Continuous Burn** (TL 8): brennt ab dem Start mit vollem Schub, bis der Treibstoff leer ist;
+    keine Kursänderung. Trifft nur, wenn er in der ersten Runde abfängt.
+  - **Limited Burn** (TL 9): Start auch mit weniger als vollem Schub, der dann fest bleibt;
+    Kursänderung je Runde bis zur Hälfte des Unterschieds zum Höchstwert (abgerundet), 2 Brennstufen
+    je G Kursänderung. Ab der zweiten Runde fängt er nur bei 4+ ab, DM + verbleibender Treibstoff;
+    nach der dritten Runde gar nicht mehr.
+  - **Discretionary Burn** (TL 10): frei wie ein Schiff, solange Treibstoff da ist.
+  - **Ohne Antrieb** (TL 5): treibende Mine mit dem Vektor des startenden Schiffs.
+- Ohne Treibstoff fliegt jede Rakete ballistisch weiter; **Schwerkraft** wirkt auf sie wie auf
+  Schiffe.
+- **Lenkung**: Steuergerät plus Sensor (Funk: Fernlenkung, aktive oder passive Zielsuche; Infrarot;
+  Masse; Neutrino); Ausweichmodul DM +1 je G gegen Abwehr.
+- **Zünder**: Contact (doppelte Treffer, nur bei Aufprall), Proximity (beim Abfangen, durch ECM zu
+  stören), Intelligent (wie Proximity, immun gegen ECM), Command (auf Befehl, über eine Lichtsekunde
+  2+ mit DM −1 je Lichtsekunde).
+- **Gefechtsköpfe**: High Explosive 2 Treffer je 10 kg; Focused Force 4 je 10 kg; Nuklear,
+  Enhanced Radiation, Fusion mit Treffern je 0,1 kt plus Strahlungstreffer. Nuklear-, Fusions- und
+  Strahlungsköpfe ab Gesetz 4 verboten, alle Gefechtsköpfe ab Gesetz 8.
+- **Standardrakete** nach SS3: 5G6 Continuous Burn, Massesensor, Proximity, High Explosive; 48 kg,
+  Cr5.600. Ein Standardbehälter fasst 50 kg.
+- **Abfangen**: auf 25 mm (2.500 km) ans Ziel, gemessen von der Spitze seines Vektorpfeils. Aufprall
+  braucht Steuerbarkeit: in der ersten Runde immer, danach nur Limited und Discretionary, wenn ihr
+  Vektor durch das Ziel geht.
+- **Geschwindigkeit**: beim Aufprall ein Treffer mehr je volle 300 mm (30.000 km je Runde) der
+  Summe beider Vektoren.
+- **ECM** (im Rückfeuer, vor der Zündung): gegen Raketen mit Funksensor 9+; die Rakete fliegt dann
+  unbrauchbar weiter. Contact-Zünder und Treffer aus Geschwindigkeit wirken trotzdem, Intelligent
+  ist immun.
+- **Sand gegen Raketen**: je 25 mm Sand auf dem Weg 12+, dann ist die Rakete unbrauchbar.
+- **Magazine**: ein Rack hält eine Rakete schussbereit und zwei weitere; ein Turret lagert 12 dazu.
+  Nachladen der Racks nebenbei; Auffüllen des Turrets aus dem Laderaum dauert eine Runde für eine
+  Person (ein Gunner kann dann in der nächsten Runde nicht feuern). Ein Gunner baut in einer Runde
+  eine Rakete aus Bauteilen um.
+- Tabellen der Treffer: SS3 verweist auf die von *High Guard*.
 
 ---
 
