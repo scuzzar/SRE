@@ -82,6 +82,8 @@ hide <<browser>> stereotype
 
 ' Schiffe
 
+' Raumkarte und Raumflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+
 ' Charaktererschaffung und Lebenslauf
 
 ' Subsektor und Welten
@@ -156,6 +158,8 @@ hide <<browser>> stereotype
 Campaign "1" *-- "0..1" Place : location
 
 ' Schiffe
+
+' Raumkarte und Raumflug
 
 ' Zeit und Reisen
 

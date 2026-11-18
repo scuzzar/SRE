@@ -97,6 +97,9 @@ hide <<browser>> stereotype
 ' Schiffe
   class Ship $schiffe
 
+' Raumkarte und Raumflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+  class SpaceFlight $raum $newClass("2026-11-18")
+
 ' Charaktererschaffung und Lebenslauf
   class Generation $erschaffung
 
@@ -139,6 +142,9 @@ Conflict "*" --> "0..1" Campaign : remote
 
 ' Schiffe
 Campaign "1" *-- "0..*" Ship : ships
+
+' Raumkarte und Raumflug
+Campaign "1" *-$newArrow("2026-11-18")- "0..1" SpaceFlight : flight
 
 ' Zeit und Reisen
 

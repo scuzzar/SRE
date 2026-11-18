@@ -80,6 +80,8 @@ hide <<browser>> stereotype
 
 ' Schiffe
 
+' Raumkarte und Raumflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+
 ' Charaktererschaffung und Lebenslauf
 
 ' Subsektor und Welten
@@ -186,6 +188,8 @@ hide <<browser>> stereotype
 Campaign "*" --> "1" Odds : odds
 
 ' Schiffe
+
+' Raumkarte und Raumflug
 
 ' Zeit und Reisen
 

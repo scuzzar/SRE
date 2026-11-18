@@ -107,6 +107,8 @@ hide <<browser>> stereotype
   class Ship $schiffe
   enum ShipCost <<value>> $schiffe
 
+' Raumkarte und Raumflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+
 ' Charaktererschaffung und Lebenslauf
 
 ' Subsektor und Welten
@@ -161,6 +163,8 @@ Booking --> BookingKind
 
 ' Schiffe
 Booking "*" --> "0..1" Ship : forShip
+
+' Raumkarte und Raumflug
 
 ' Zeit und Reisen
 Passenger "*" --> "1" Item : passage

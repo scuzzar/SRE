@@ -457,7 +457,10 @@ läuft, zeigt der Reiter Begegnung oben „Raumkampf“ statt „Kampf“.
 
 ## 8. Was ins Domänenmodell käme (Skizze)
 
-Nur zur Orientierung, nicht freigegeben. Die echte Änderung kommt als Ausschnitt in `docs/changes/`.
+Nur zur Orientierung. Stufe 1 steht als Änderung 2026-11-18 im Domänenmodell und wartet auf
+Freigabe ([Ausschnitt](changes/2026-11-18-raumflug.png), Regeln unter *Raumflug* in
+[`domain-model.md`](domain-model.md)); dort heißt der laufende Flug `SpaceFlight` (Raumflug), nicht
+`SpaceBattle`. Die übrigen Stufen kommen als eigene Änderungen.
 
 - **`SpaceBattle`** (Raumkampf), an der Kampagne wie die laufende `Encounter`: Welt (`Hex`), Zeitpunkt,
   Raumrunde, Körper, Einheiten, Ortungsstand. Nach jeder Raumrunde gespeichert.

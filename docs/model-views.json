@@ -51,6 +51,10 @@
     {
       "id": "schiffe",
       "title": "Schiffe"
+    },
+    {
+      "id": "raum",
+      "title": "Raumkarte und Raumflug"
     }
   ],
   "changes": [
@@ -407,6 +411,18 @@
         "Booking",
         "LogEntry",
         "Journey"
+      ]
+    },
+    {
+      "id": "2026-11-18",
+      "file": "2026-11-18-raumflug",
+      "title": "Raumflug um eine Welt (Stufe 1 des Raumkampfs): Einheiten mit Ort, Geschwindigkeit und Schubvektor, Raumrunden, Spur",
+      "approved": false,
+      "show": [
+        "Campaign",
+        "Ship",
+        "ShipDesign",
+        "Hex"
       ]
     }
   ]

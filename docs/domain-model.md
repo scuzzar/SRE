@@ -416,6 +416,14 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > (mit `costs`, `/month` und `/total`), `Booking.shipCost` mit `ShipCost` und
 > `Ship.berthedSince`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-17b-monatsabrechnung.png`](changes/2026-11-17b-monatsabrechnung.png).
+>
+> **Wartet auf Freigabe** (Kennzeichen 2026-11-18): **Raumflug um eine Welt**, Stufe 1 des
+> Raumkampfs nach dem [Konzept Raumkarte und Raumkampf](konzept-raumkampf.md) (siehe *Raumflug*).
+> Der Owner hat entschieden, den Raumkampf vor dem Handel zu bauen. Neu im Bild: `SpaceFlight` an
+> der Kampagne (`flight`, mit Welt, Raumrunde und `/elapsed`), `SpaceUnit` (Ort, Geschwindigkeit,
+> Schubvektor, Aufschlag, `/maxG`, Verweis auf das Schiff), `TrackPoint` für die Spur und der Wert
+> `Vec`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-18-raumflug.png`](changes/2026-11-18-raumflug.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -446,10 +454,10 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 | Schiffe | [views/schiffe.png](views/schiffe.png) |
+| Raumkarte und Raumflug | [views/raum.png](views/raum.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist
-[2026-11-16c](changes/2026-11-16c-schiffe-der-kampagne.png): die Kampagne hält alle ihre
-Schiffe (`ships`), das aktive ist abgeleitet.
+[2026-11-18](changes/2026-11-18-raumflug.png): der Raumflug um eine Welt.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -761,6 +769,23 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Software an Bord | `ShipSoftware` | Ein Programm, das ein konkretes Schiff dabeihat; beim Kauf aus dem Softwarepaket des Computers gewählt |
 | Deckplan | `DeckPlan` | Der Plan eines Schiffsentwurfs als Bild: bis zu drei eigene, als PNG hochgeladen oder fotografiert; über Kampagnen hinweg gehalten und mit OneDrive abgeglichen (2026-11-17), der Export nimmt sie nicht mit |
 | Deckplan-Platz | `DeckPlan.name` | Deck A, Deck B oder Deck C: der Platz eines Plans an seinem Entwurf, zugleich sein Name |
+| Raumkarte | (View, Grundkarte) | Der Raum um eine Welt, von ein paar tausend bis zu Millionen Kilometern, in 2D: die Welt als Himmelskörper, die Einheiten mit Bahnen und die Sprunggrenzen. Neben Subsektor und Globus die dritte Grundkarte; man erreicht sie über den Knopf „Raum“ (2026-11-18) |
+| Knopf „Raum“ | (View) | Öffnet die Raumkarte einer Welt, am Globus und an der Welt im Subsektor; ein Tippen auf eine Welt öffnet weiter ihren Globus (2026-11-18) |
+| Raumflug | `SpaceFlight`, `Campaign.flight` | Der laufende Flug auf der Raumkarte einer Welt, Raumrunde für Raumrunde; in Stufe 1 nur mit dem eigenen Schiff, später mit Gegnern als Raumkampf (2026-11-18) |
+| Raumrunde | `SpaceFlight.round` | Eine Runde des Raumflugs: 1.000 Sekunden (SR 39); nicht zu verwechseln mit der *Runde* des Personenkampfs (2026-11-18) |
+| Flugzeit | `SpaceFlight./elapsed` | Sekunden seit Beginn des Raumflugs: (Raumrunde − 1) × 1.000 (2026-11-18) |
+| Raumband | (Regel) | 10.000 km (SR 39); Maß für Entfernungen und DMs im Raumkampf: Entfernung ÷ 10.000 km, aufgerundet (2026-11-18) |
+| Einheit | `SpaceUnit` | Was sich auf der Raumkarte frei bewegt und von der Simulation geschoben wird; in Stufe 1 nur das eigene Schiff, später auch fremde Schiffe, Small Craft, Raketen, Sand (2026-11-18) |
+| Ort, Geschwindigkeit | `SpaceUnit.position`, `.velocity` (`Vec`) | Wo eine Einheit ist (km) und wie schnell in welche Richtung sie fliegt (km/s), in der Ebene mit der Welt in der Mitte (2026-11-18) |
+| Schubvektor | `SpaceUnit.thrust` | Richtung und Stärke des Schubs für die laufende Raumrunde, in G; fest im Raum, höchstens `/maxG` lang, stufenlos in 0,1 G; nach jeder Raumrunde wieder leer (2026-11-18) |
+| Höchster Schub | `SpaceUnit./maxG` | Die G des Maneuver Drive des Schiffs (`ShipDesign.maneuver`) (2026-11-18) |
+| Schubkreis | (View) | Der Kreis um eine eigene Einheit, so groß wie ihr höchster Schub; jedes Tippen oder Ziehen darin setzt den Schubvektor vom Schiff zum Finger, ohne die Einheit auszuwählen (2026-11-18) |
+| Einrasten | (View) | Der Schubvektor springt auf eine Marke am Schubkreis, wenn er ihr auf etwa 5° nahekommt: prograd, retrograd, aufs Ziel, vom Ziel weg, angleichen (2026-11-18) |
+| Bahnvorschau | (abgeleitet, View) | Die Bahn der laufenden Raumrunde mit dem gesetzten Schubvektor und gestrichelt die nächsten fünf Raumrunden ohne Schub; gerechnet, nicht gespeichert (2026-11-18) |
+| Spur | `SpaceUnit.track` (`TrackPoint`) | Wo eine Einheit am Ende jeder vergangenen Raumrunde war, mit ihrer Geschwindigkeit dort (2026-11-18) |
+| Himmelskörper | (abgeleitet aus `Hex`) | Ein Körper mit Schwerkraft auf der Raumkarte; in Stufe 1 nur die Welt, mit Radius und Masse aus ihrer Größe (2026-11-18) |
+| Aufschlag | `SpaceUnit.crashed` | Eine Einheit ist unter die Oberfläche eines Himmelskörpers geraten; sie bewegt sich nicht mehr (2026-11-18) |
+| Sprunggrenze | (abgeleitet) | 10 und 100 Durchmesser der Welt; innerhalb davon DM +15 bzw. +5 auf den Fehlsprung (SR 28); als Ringe auf der Raumkarte (2026-11-18) |
 | Schlüssel des Deckplans | `DeckPlan.key` | Woran der Abgleich ein Bild auf jedem Gerät wiedererkennt; zufällig, weltweit eindeutig; ein Plan ändert sich nie, ein neues Bild ist ein neuer Plan mit neuem Schlüssel (2026-11-17) |
 
 ## Regeln, die das Bild nicht zeigt
@@ -2613,7 +2638,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   (communications routes), Subsector Capital, ein Name für den Subsektor, mehrere Subsektoren zu
   einem Sektor und eine fertige Welt wieder löschen.
 - **Schiffe** (freigegeben am 16. November 2026, Kennzeichen 2026-11-16). Erster
-  Schritt von dreien (Basis der Gruppe; später Handel, dann Raumkampf), RAW-Regeln vollständig in
+  Schritt von dreien (Basis der Gruppe; später Handel, dann Raumkampf; der Owner hat am
+  18. November 2026 entschieden, den Raumkampf vor dem Handel zu bauen), RAW-Regeln vollständig in
   [`regeln-schiffe.md`](regeln-schiffe.md). Die Gruppe hat **höchstens ein Schiff** (`Campaign.ship`),
   wie das Gruppengepäck.
   - **Schiff und Entwurf.** `Ship` ist der gespeicherte Stand (Name, Treibstoff und Fracht in Tonnen,
@@ -2792,6 +2818,50 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - Ebenso offen: Pfändung bei Zahlungsverzug (siehe oben), Verkauf eines Schiffs, mehrere
       Schiffe, Custom-Entwürfe, Small Craft als eigene `ShipDesign`, und der **Preisnachlass
       für ein gebrauchtes Standardschiff** (SR 31: 10–40 % je nach Alter) über `Ship.price`.
+
+- **Raumflug** (Kennzeichen 2026-11-18, wartet auf Freigabe). Stufe 1 des Raumkampfs nach dem
+  [Konzept Raumkarte und Raumkampf](konzept-raumkampf.md): Man fliegt mit dem eigenen Schiff um eine
+  Welt und lernt die Bahnen, noch ohne Gegner und Waffen. Regeln aus SR 39–42, *Mayday* und SE 12,
+  zusammengefasst in [`regeln-schiffe.md`](regeln-schiffe.md); Abweichungen tragen ⚑.
+  - **Raumkarte.** Die dritte Grundkarte neben Subsektor und Globus, in 2D (Owner, 18. November
+    2026). Ein Tippen auf eine Welt öffnet wie bisher ihren Globus; die Raumkarte öffnet der Knopf
+    „Raum“ am Globus und an der Welt im Subsektor. Auf ihr: die Welt mit dem Weltsymbol in echter
+    Größe, ohne die angedeuteten Umlaufbahnen, die Ringe der Sprunggrenzen, die Einheiten mit Spur
+    und Bahnvorschau, Ringe der Raumbänder um die zuletzt berührte Einheit.
+  - **Beginnen und beenden.** „Flug beginnen“ geht nur auf der Raumkarte der Welt, auf der die
+    Gruppe ist, und nur mit einem eigenen Schiff (`Campaign./ship`); es legt einen `SpaceFlight`
+    mit Raumrunde 1 und einer Einheit für das Schiff an. ⚑ Das Schiff startet auf einer Kreisbahn
+    mit dem doppelten Weltradius, gegen den Uhrzeigersinn; bei Größe 0 (Asteroidengürtel) ruhend in
+    20.000 km Abstand. „Flug beenden“ entfernt den Raumflug wieder. Es gibt höchstens einen.
+  - **Die Raumrunde** dauert 1.000 Sekunden (SR 39). Jede Runde: Schubvektoren setzen, „Runde
+    ausführen“, die Simulation rechnet die 1.000 Sekunden für alle Einheiten zugleich (Owner:
+    gleichzeitig), die Karte spielt sie in etwa zwei Sekunden ab. Danach wird für jede Einheit der
+    alte Ort mit Geschwindigkeit an die Spur gehängt, der Schubvektor geleert und die Raumrunde um
+    eins erhöht.
+  - **Schubvektor** (Owner, 18. November 2026): einer je Raumrunde, fest im Raum, nur durch Tippen
+    oder Ziehen im Schubkreis, stufenlos in 0,1 G, höchstens `/maxG` (der Kreis ist die Grenze),
+    ohne die Einheit vorher auszuwählen; Einrasten an prograd, retrograd, Ziel, weg und angleichen;
+    jede Raumrunde beginnt ohne Schub. Ohne Schubvektor fliegt die Einheit ballistisch.
+  - **Physik.** Gespeichert sind Ort (km) und Geschwindigkeit (km/s) in der Ebene, die Welt in der
+    Mitte. Die Simulation rechnet in festen Schritten von 10 Sekunden mit *Velocity Verlet*, ohne
+    Zufall: gleicher Stand und gleiche Schubvektoren ergeben auf jedem Gerät dieselbe Bahn. 1 G =
+    10 m/s² (Supplement 3). Der Schub wirkt während der ganzen Runde gleichmäßig; 1 G ändert die
+    Geschwindigkeit je Runde um 10 km/s, wie in SE 12.
+  - **Himmelskörper** werden nicht gespeichert, sondern aus der Welt abgeleitet: Radius = Größe ×
+    800 km (Durchmesser Größe × 1.600 km), Schwerkraft an der Oberfläche g = Größe ÷ 8 G (SR 22, mit
+    Dichte K = 1, Owner), Masse daraus (G·M = g · R²). Die Welt steht still in der Mitte. Größe 0 hat
+    keinen Körper und keine Schwerkraft. Monde und Gasriesen kommen mit dem Sternsystem.
+  - **Aufschlag.** Kommt eine Einheit unter die Oberfläche der Welt, wird `crashed` gesetzt; sie
+    bewegt sich nicht mehr und bekommt keinen Schub. ⚑ In Stufe 1 hat das keine Folgen für das
+    Schiff; Schaden und Verlust kommen mit Stufe 2. Die Bahnvorschau warnt vorher.
+  - **Was in Stufe 1 bewusst nicht passiert** ⚑: Die Zeit der Kampagne läuft nicht weiter (ein Flug
+    dauert Stunden, die Kampagne zählt Tage), es gibt keine Logeinträge, keinen Treibstoffverbrauch
+    für den Schub und keine Änderung an Liegegebühr oder Ort des Schiffs.
+  - **Spur** (`track`): je vergangene Raumrunde ein `TrackPoint` mit Ort und Geschwindigkeit; die
+    Karte zeichnet daraus eine glatte Kurve (Ort und Geschwindigkeit an beiden Enden geben die
+    Krümmung). Gespeichert, damit sie einen Neustart übersteht.
+  - **Später** (eigene Änderungen): fremde Schiffe und ihr Planer (Stufe 2), Waffen, Raketen, Sand,
+    Small Craft, Ortung, Raumkampf aus einer Schiffsbegegnung; siehe den Stufenplan im Konzept.
 
 ## Wo der Code noch nicht folgt
 

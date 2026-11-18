@@ -231,6 +231,28 @@ hide <<browser>> stereotype
     image: string
   }
 
+' Raumkarte und Raumflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+  class SpaceFlight $raum $newClass("2026-11-18") {
+    startedAt: datetime
+    round: number
+    /elapsed: number
+  }
+  class SpaceUnit $raum $newClass("2026-11-18") {
+    position: Vec
+    velocity: Vec
+    thrust: Vec [0..1]
+    crashed: boolean
+    /maxG: number
+  }
+  class TrackPoint <<value>> $raum $newClass("2026-11-18") {
+    position: Vec
+    velocity: Vec
+  }
+  class Vec <<value>> $raum $newClass("2026-11-18") {
+    x: number
+    y: number
+  }
+
 ' Charaktererschaffung und Lebenslauf
   class Generation $erschaffung {
     /step: GenerationStep
@@ -1038,6 +1060,13 @@ ShipSoftware "*" --> "1" Software : program
 Software --> SoftwareKind
 ShipDesign "*" --> "1" ComputerModel : computer
 Booking "*" --> "0..1" Ship : forShip
+
+' Raumkarte und Raumflug
+Campaign "1" *-$newArrow("2026-11-18")- "0..1" SpaceFlight : flight
+SpaceFlight "*" -$newArrow("2026-11-18")-> "1" Hex : world
+SpaceFlight "1" *-$newArrow("2026-11-18")- "1..*" SpaceUnit : units {ordered}
+SpaceUnit "*" -$newArrow("2026-11-18")-> "1" Ship : ship
+SpaceUnit "1" *-$newArrow("2026-11-18")- "*" TrackPoint : track {ordered}
 Gain "*" --> "0..1" ShipDesign : ship
 DeckPlan "*" --> "1" ShipDesign : design
 
