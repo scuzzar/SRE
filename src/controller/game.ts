@@ -676,7 +676,9 @@ export class GameController {
   /** Lädt eine Kampagne hoch; `revision` ist die Fassung, die dort ersetzt wird, ohne sie darf es dort keine geben. */
   private async upload(campaign: Campaign, revision: string | undefined): Promise<void> {
     const next = await this.deps.cloud!.write(campaign.key, toCampaignFile(campaign), revision);
-    this.setMark(markOf(campaign, next));
+    // Wurde sie gelöscht, während sie hochlud, bleibt der Löschvermerk: Der nächste Abgleich löscht sie dort.
+    const gone = !this.state.campaigns.some((c) => c.key === campaign.key);
+    this.setMark({ ...markOf(campaign, next), ...(gone ? { deleted: true } : {}) });
   }
 
   /** Gleicht die Deckpläne ab (2026-11-17): je Platz, was `planDeckSync` sagt; danach zeigt der Reiter den neuen Stand. */

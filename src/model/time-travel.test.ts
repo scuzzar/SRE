@@ -6,6 +6,7 @@ import {
   checksLabel,
   checksMet,
   createCampaign,
+  editLogNote,
   dateLabel,
   dateOf,
   daysToSunday,
@@ -28,6 +29,7 @@ import {
   setStartDate,
   shipJourneyBlocker,
   stampDays,
+  stampPlaces,
   START_DAY,
   survived,
   toCampaignFile,
@@ -36,6 +38,7 @@ import {
   weekdayOf,
   weekStart,
   winnerOf,
+  writeNote,
   type Campaign,
   type Hex,
   type Journey,
@@ -101,6 +104,24 @@ describe('Spielzeit im Imperialen Kalender', () => {
     const before = passTime(there, { days: 2 }, clock);
     const after = stampDays(before.log, { ...before, log: [...before.log, { kind: 'dice', at: clock.now(), dice: [3, 4] }] });
     expect(after.log.map((e) => e.day)).toEqual([START_DAY, START_DAY + 2]);
+  });
+
+  it('Ändern und Löschen geben alten Einträgen weder Tag noch Ort: nur neue Einträge bekommen sie', () => {
+    // Ein alter Log ohne Tag und Ort: eine Notiz, ein Wurf und eine Deutung dazu.
+    const note = writeNote([], 'Notiz', clock);
+    const dice = { kind: 'dice' as const, at: clock.now(), dice: [3, 4] as [number, number] };
+    const interpretation = writeNote([note, dice], 'Deutung', clock, 1);
+    const old: Campaign = { ...there, day: START_DAY + 9, log: [note, dice, interpretation] };
+    const stamp = (before: Campaign, after: Campaign) => stampPlaces(before.log, stampDays(before.log, after));
+    const stamps = (c: Campaign) => c.log.map((e) => [e.day, e.place]);
+    // Die Notiz ändern: Sie bleibt ohne Tag und Ort.
+    expect(stamps(stamp(old, editLogNote(old, 0, 'Notiz, geändert', clock)))).toEqual([[undefined, undefined], [undefined, undefined], [undefined, undefined]]);
+    // Die Notiz löschen: Die Deutung rückt nach und wird dabei kopiert; auch sie bleibt ohne Tag und Ort.
+    expect(stamps(stamp(old, removeLogEntry(old, 0)))).toEqual([[undefined, undefined], [undefined, undefined]]);
+    // Ein neuer Eintrag bekommt beides.
+    const added = stamp(old, { ...old, log: [...old.log, writeNote(old.log, 'Neu', clock)] });
+    expect(added.log.at(-1)).toMatchObject({ day: START_DAY + 9, place: { world: '0101' } });
+    expect(added.log.slice(0, 3)).toEqual(old.log);
   });
 });
 

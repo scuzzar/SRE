@@ -134,25 +134,35 @@ export function canSetStartDate(campaign: Campaign): boolean {
 }
 
 /**
- * Neue Logeinträge bekommen den heutigen Spieltag, wenn sie noch keinen haben. Neu ist, was nicht
- * schon im Log von vorher stand.
+ * Welche Einträge im Log neu sind, also noch nicht in `before` standen. Am Eintrag selbst lässt sich
+ * das nicht ablesen: Ändern und Löschen ersetzen alte Einträge durch Kopien (der geänderte Text, die
+ * nachgerückten Verweise einer Deutung, eines Schadens oder einer Garbe). Neu ist darum nur, was hinter
+ * dem alten Ende steht oder einen Zeitpunkt (`at`) hat, den kein alter Eintrag hat; eine Kopie behält
+ * den Zeitpunkt ihres Vorbilds.
  */
+function newEntries(before: readonly LogEntry[] | undefined): (entry: LogEntry, index: number) => boolean {
+  const old = new Set(before ?? []);
+  const times = new Set((before ?? []).map((e) => e.at));
+  const length = before?.length ?? 0;
+  return (entry, index) => !old.has(entry) && (index >= length || !times.has(entry.at));
+}
+
 /**
- * Gibt neuen Logeinträgen (die in `before` noch nicht standen) den Aufenthaltsort der Gruppe, falls
- * sie keinen eigenen Ort haben (2026-11-14j, *Orte*). Eine Reise bekommt so ihr Ziel: Die Gruppe ist
- * nach ihr dort.
+ * Gibt neuen Logeinträgen (`newEntries`) den Aufenthaltsort der Gruppe, falls sie keinen eigenen Ort
+ * haben (2026-11-14j, *Orte*). Eine Reise bekommt so ihr Ziel: Die Gruppe ist nach ihr dort.
  */
 export function stampPlaces(before: readonly LogEntry[] | undefined, campaign: Campaign): Campaign {
   const here = campaign.location;
   if (!here) return campaign;
-  const old = new Set(before ?? []);
-  if (campaign.log.every((e) => old.has(e) || e.place !== undefined)) return campaign;
-  return { ...campaign, log: campaign.log.map((e) => (old.has(e) || e.place !== undefined ? e : { ...e, place: here })) };
+  const isNew = newEntries(before);
+  if (!campaign.log.some((e, i) => isNew(e, i) && e.place === undefined)) return campaign;
+  return { ...campaign, log: campaign.log.map((e, i) => (isNew(e, i) && e.place === undefined ? { ...e, place: here } : e)) };
 }
 
+/** Neue Logeinträge (`newEntries`) bekommen den heutigen Spieltag, wenn sie noch keinen haben. */
 export function stampDays(before: readonly LogEntry[] | undefined, campaign: Campaign): Campaign {
-  const old = new Set(before ?? []);
-  if (campaign.log.every((e) => old.has(e) || e.day !== undefined)) return campaign;
+  const isNew = newEntries(before);
+  if (!campaign.log.some((e, i) => isNew(e, i) && e.day === undefined)) return campaign;
   const today = dayOf(campaign);
-  return { ...campaign, log: campaign.log.map((e) => (old.has(e) || e.day !== undefined ? e : { ...e, day: today })) };
+  return { ...campaign, log: campaign.log.map((e, i) => (isNew(e, i) && e.day === undefined ? { ...e, day: today } : e)) };
 }
