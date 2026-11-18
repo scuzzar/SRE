@@ -139,8 +139,11 @@ Richtung und Stärke. Er gilt unverändert für die ganze Runde, als feste Richt
     Flugrichtung (prograd), gegen die Flugrichtung (retrograd), auf das gewählte Ziel, vom Ziel weg
     und *Angleichen* (gegen die Geschwindigkeit relativ zum Ziel). Kommt der Pfeil einer Marke auf
     wenige Grad nahe, rastet er dort ein. Mehr Hilfe gibt es nicht, keine Knöpfe und kein Regler.
-- **Der Befehl bleibt stehen**: Ohne neuen Zug gilt in der nächsten Runde derselbe Vektor wieder.
-  Im Blatt steht ein Knopf „Kein Schub“.
+- **Jede Runde beginnt ohne Schub** (Entscheidung des Owners, 18. November 2026): Nach der
+  Bewegung fällt der Schubbefehl jeder Einheit auf 0 G zurück. Wer weiter beschleunigen will, zieht
+  den Vektor neu. Wer nichts tut, treibt ballistisch, und die Vorschau zeigt diese Bahn gleich zu
+  Beginn der Planung. Im Blatt steht ein Knopf „Kein Schub“, um einen gezogenen Vektor vor dem
+  Ausführen wieder zu verwerfen.
 
 Weil die Richtung über die Runde fest bleibt, krümmt sich die eigene Bahn nah an einer Welt
 anders, als der Pfeil zeigt. In einer niedrigen Umlaufbahn dreht sich die Flugrichtung in einer

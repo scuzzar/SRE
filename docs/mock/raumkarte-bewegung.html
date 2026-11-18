@@ -295,7 +295,7 @@ function runRound() {
     if (e.type === "crash") addLog(`<span class="warn">${e.unit.name} schlägt auf ${e.body} auf.</span>`);
     if (e.type === "intercept") addLog(`<span class="msl">${e.unit.name} fängt ${e.target.name} ab</span> (Relativgeschwindigkeit ${fmt(e.rel, 1)} km/s). Jetzt würde die Zündung gewürfelt.`);
   }
-  U("own").order.snap = null; // der Vektor bleibt stehen, die Marken wandern weiter
+  Object.assign(U("own").order, { g: 0, snap: null }); // jede Runde beginnt ohne Schub
   S.round++;
 }
 function describe(o) {
