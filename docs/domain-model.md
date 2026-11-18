@@ -423,7 +423,9 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Missionen sind die Handlungsfäden des Orakels: Fällt ein Fadenfokus, lost die Karte eine aus.
 > Neu im Bild: `Mission`, `MissionPlace`, `MissionState`, `Campaign.missions`, `EventFocus.thread`
 > und `thread` an Karte und Kartenauswahl. Der Ausschnitt dazu liegt unter
-> [`changes/2026-11-18-missionen.png`](changes/2026-11-18-missionen.png).
+> [`changes/2026-11-18-missionen.png`](changes/2026-11-18-missionen.png). Ebenfalls am 18. November
+> 2026 auf Wunsch des Owners: Ein Missionsort ist immer ein Feld der Oberfläche (oder eine Stadt auf
+> einem Feld), nie eine ganze Welt (siehe *Missionen*, *Orte*); das Bild ändert sich dadurch nicht.
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -592,7 +594,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Mission | `Mission` | Ein Auftrag oder Ziel, das die Gruppe verfolgt, mit Titel, Text, Zustand, Auftraggeber und Orten (2026-11-18) |
 | Zustand einer Mission | `Mission.state`, `MissionState` | offen (`open`), erledigt (`done`), gescheitert (`failed`) (2026-11-18) |
 | Auftraggeber einer Mission | `Mission.client` | Der dauerhafte NSC, der die Mission vergeben hat; höchstens einer. Nicht zu verwechseln mit *Patron*, der Zeile der Patron-Liste (2026-11-18) |
-| Missionsort | `MissionPlace` | Ein Ort einer Mission mit seinem Etikett (2026-11-18) |
+| Missionsort | `MissionPlace` | Ein Ort einer Mission mit seinem Etikett: immer ein Feld der Oberfläche oder eine Stadt auf einem Feld, nie eine ganze Welt (2026-11-18) |
 | Etikett | `MissionPlace.label` | Kurzer freier Text, was ein Missionsort für die Mission ist, z. B. „Treffpunkt“, „Ziel“; darf fehlen (2026-11-18) |
 | Handlungsfaden | offene `Mission`; `Card.thread`, `CardPick.thread` | Eine offene Mission, wie das Orakel sie sieht; bei einem Fadenfokus lost die Karte einen aus (2026-11-18) |
 | Fadenfokus | `EventFocus.thread` | Ein Ereignisfokus, der zu einem Handlungsfaden gehört: Auf einen Handlungsfaden zu, Von einem Handlungsfaden weg, Ein Handlungsfaden endet (2026-11-18) |
@@ -2508,9 +2510,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     verweist, wird nicht gelöscht, sondern ausgeblendet, wie bei Logeinträgen (siehe *Löschen und
     Ausblenden*).
   - *Orte* (`places`, je ein `MissionPlace`): beliebig viele, in der Reihenfolge, in der man sie
-    hinzufügt. Jeder ist ein Ort (`Place`: eine Welt, wahlweise genauer ein Feld oder eine Stadt,
-    siehe *Orte*) mit einem kurzen freien **Etikett** (`label`, z. B. „Treffpunkt“, „Ziel“; darf
-    fehlen). Derselbe Ort darf mehrmals vorkommen, mit verschiedenen Etiketten. Wie ein Logeintrag
+    hinzufügt. Jeder ist ein Ort (`Place`, siehe *Orte*) mit einem kurzen freien **Etikett**
+    (`label`, z. B. „Treffpunkt“, „Ziel“; darf fehlen). Ein Missionsort ist **immer ein Feld der
+    Oberfläche** (`cell`) oder eine Stadt auf einem Feld (`city`), nie eine ganze Welt und keine
+    Orbitalstadt (Entscheidung des Owners): Eine Mission spielt an einer Stelle, die man auf dem
+    Globus findet. Die Welt braucht dafür ihre Oberflächenkarte. Derselbe Ort darf mehrmals vorkommen, mit verschiedenen Etiketten. Wie ein Logeintrag
     sperrt ein Missionsort mit Feld oder Stadt die Oberflächenkarte (siehe *Orte*, *Karte gesperrt*).
   - *Löschen und Ausblenden*: Eine Mission, auf die keine Kartenauswahl verweist
     (`CardPick.thread`), wird wirklich gelöscht. Sonst wird sie ausgeblendet (`retired`): Sie
@@ -2520,16 +2524,19 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Taste; Missionen ist Taste 5). Oben stehen die offenen Missionen, darunter eingeklappt die
     erledigten und gescheiterten, wie die toten NSC. Jede zeigt Titel, Auftraggeber und ihre Orte
     mit Etikett; Antippen öffnet den Editor, ein Ort darin führt zu ihm auf Globus bzw. Subsektor.
-    **„+ Neue Mission“** legt eine offene Mission an, mit dem Aufenthaltsort als erstem Ort, wenn es
-    einen gibt.
-  - *Auf der Karte*: Globus und Subsektor zeigen an den Orten offener Missionen ein Zeichen. Das
-    angetippte Feld listet unter **„Missionen hier“** die offenen Missionen mit einem Ort dort, mit
-    Etikett; auf einer Welt gelten, wie bei *Was hier geschah*, alle Orte dieser Welt. Der
+    **„+ Neue Mission“** legt eine offene Mission an, mit dem Aufenthaltsort als erstem Ort, wenn er
+    ein Feld oder eine Stadt auf einem Feld ist. Im Editor kommt ein Ort hinzu mit
+    **„+ Aufenthaltsort“** (ebenso nur mit Feld) oder **„+ Auf dem Globus“**: Wie bei *NSC
+    platzieren* tippt man auf dem Globus ein Feld an und bestätigt mit „OK“; liegt dort eine
+    Stadt, wird der Ort die Stadt.
+  - *Auf der Karte*: Der Globus zeigt an den Feldern offener Missionen eine Fahne, der Subsektor an
+    Welten mit solchen Feldern. Das angetippte Feld listet unter **„Missionen hier“** die offenen
+    Missionen mit einem Ort auf diesem Feld (auch in einer Stadt darauf), mit Etikett. Der
     NSC-Editor zeigt die Missionen, deren Auftraggeber der NSC ist.
   - *Vom Patron zur Mission*: Im Würfelfenster des Patrons steht neben „Als NSC“ auch **„Als
     Mission“**. Es legt den Patron-NSC an wie „Als NSC“ und dazu eine offene Mission mit ihm als
     Auftraggeber, dem Beruf des Patrons als Titel (z. B. „Smuggler“) und dem Aufenthaltsort als
-    erstem Ort; die Ansicht wechselt in den Reiter Missionen, mit der neuen Mission im Editor. Bei
+    erstem Ort, wenn er ein Feld hat; die Ansicht wechselt in den Reiter Missionen, mit der neuen Mission im Editor. Bei
     einer Rumor-Zeile gibt es den Knopf nicht.
   - *Handlungsfäden*: Die offenen, nicht ausgeblendeten Missionen sind die **Handlungsfäden** des
     Orakels, wie die Thread-Liste in Mythic. Drei Einträge des Ereignisfokus sind **Fadenfokusse**

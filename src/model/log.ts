@@ -147,6 +147,8 @@ export interface CardPick extends LogEntryBase {
   readonly chance?: number;
   /** Der Wurf 1–100 auf den Ereignisfokus, nur bei einem Zufallsereignis mit gewählter Stufe. */
   readonly eventFocus?: number;
+  /** Der Handlungsfaden: die Mission, die die Karte bei einem Fadenfokus ausgelost hat (2026-11-18). */
+  readonly thread?: string;
   /** In der Reihenfolge der Karte. Zusammen mit Wurffeldern und Antwort mindestens eins. */
   readonly items: readonly PickedItem[];
 }
