@@ -274,6 +274,10 @@ export interface Snapshot {
   /** Ob der Browser zusagt, den Spielstand nicht zu löschen; `undefined`, solange er nicht geantwortet hat oder das nicht kennt. */
   readonly durable: boolean | undefined;
   readonly storageError: string | undefined;
+  /** Ein anderes Fenster der App schreibt den Spielstand; dieses speichert nichts, bis es übernimmt. */
+  readonly elsewhere: boolean;
+  /** Was nach einer Eingabe nicht ging, als Hinweis zum Wegklicken; sonst `undefined`. */
+  readonly notice: string | undefined;
   readonly screen: Screen;
   readonly odds: readonly OddsChoice[];
   /** In der Reihenfolge der Ereignisse; dass das Neueste unten steht, ist Sache der Anzeige. */
@@ -1359,6 +1363,8 @@ export interface ControllerState {
   readonly persistent: boolean;
   readonly durable: boolean | undefined;
   readonly storageError: string | undefined;
+  readonly elsewhere: boolean;
+  readonly notice: string | undefined;
   readonly screen: Screen;
   readonly card: Card | undefined;
   /** Wofür die offene Karte gezogen wurde: aus dem Feld Notiz des Charakter-Editors, dann landet die Auswahl im Notiztext statt im Log. */
@@ -2555,7 +2561,7 @@ function pickingView(state: ControllerState, campaign: Campaign): { readonly tit
 
 export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
-  const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, skills, items };
+  const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, elsewhere: state.elsewhere, notice: state.notice, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, skills, items };
   if (!campaign) {
     return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, selected: undefined, picking: undefined };
   }

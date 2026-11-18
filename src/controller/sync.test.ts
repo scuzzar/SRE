@@ -68,6 +68,31 @@ describe('Abgleich mit OneDrive', () => {
     expect([...handy.repository.marks.values()]).toEqual(before);
   });
 
+  it('eine Kampagne, die gelöscht wird, während sie hochlädt, bleibt gelöscht und kommt nicht zurück', async () => {
+    const { cloud, handy } = await pair();
+    const id = handy.game.snapshot().campaigns.find((c) => c.name === 'Spinward Run')!.id;
+    handy.game.writeNote('Noch schnell notiert.');
+    // Das Hochladen hängt im Netz; derweil löscht der Spieler die Kampagne.
+    const write = cloud.write.bind(cloud);
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    cloud.write = async (...args) => {
+      await held;
+      return write(...args);
+    };
+    const running = handy.game.sync();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    handy.game.showCampaigns();
+    handy.game.deleteCampaign(id);
+    release();
+    await running;
+    cloud.write = write;
+    await handy.game.sync();
+    await handy.game.sync();
+    expect(names(handy.game)).toEqual(['Demo-Kampagne', 'Demo-Kampagne']);
+    expect(cloud.files.size).toBe(2);
+  });
+
   it('löscht eine hier gelöschte Kampagne dort und auf dem anderen Gerät', async () => {
     const { cloud, handy, tablet } = await pair();
     const id = handy.game.snapshot().campaigns.find((c) => c.name === 'Spinward Run')!.id;

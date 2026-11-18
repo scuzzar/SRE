@@ -8711,3 +8711,50 @@ button:disabled {
   color: var(--accent-text);
   border-color: var(--accent);
 }
+
+/* --- Anderes Fenster und Hinweis nach einer Eingabe ------------------------------------------ */
+
+/* Die App ist in einem anderen Fenster offen: Dieses steht still, über allem, bis man übernimmt. */
+.modal.elsewhere {
+  z-index: 70;
+}
+
+.modal.elsewhere .result {
+  max-width: 420px;
+}
+
+.modal.elsewhere h2 {
+  font-size: 22px;
+  letter-spacing: 0;
+}
+
+.modal.elsewhere p {
+  margin: 0 0 8px;
+  color: var(--dim);
+  line-height: 1.45;
+}
+
+/* Was nicht ging: oben über allem, bis man es wegklickt. */
+.notice-toast {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  left: 50%;
+  z-index: 60;
+  transform: translateX(-50%);
+  width: min(440px, calc(100% - 32px));
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 14px;
+  font-size: 14px;
+  background: var(--raised);
+  color: var(--text);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+}
+
+.notice-toast > span {
+  flex: 1 1 auto;
+  min-width: 0;
+}
