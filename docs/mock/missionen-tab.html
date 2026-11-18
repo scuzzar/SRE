@@ -1,0 +1,560 @@
+<!doctype html>
+<!--
+  UI-Mock: Missionen (freigegebenes Modell 2026-11-18, siehe docs/domain-model.md unter „Missionen“).
+  Zeigt den neuen fünften Reiter „Missionen“ und die Stellen, an denen Missionen sonst auftauchen:
+  Ort wählen auf der Karte, Zeichen auf dem Subsektor mit „Missionen hier“, der Handlungsfaden auf
+  der Karte des Orakels, „Als Mission“ beim Patron und die Missionen im NSC-Editor.
+  Farben, Schrift und Bausteine aus src/view/styles.css, damit das Mock wie die App aussieht.
+  Daten sind Beispielwerte; Anlegen, Bearbeiten, Zustand, Orte und Löschen funktionieren zum
+  Ausprobieren. Kein App-Code.
+-->
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UI-Mock · Missionen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #111111; --panel: #161616; --raised: #1a1a1a; --highlight: #1f1f1f; --deep: #0b0b0b; --card: #0e0e0e;
+    --rule: #2a2a2a; --rule-soft: #2e2e2e; --line: #3a3a3a; --line-strong: #555555;
+    --text: #eceae4; --muted: #a3a09a; --dim: #8c8a85; --ink: #111111;
+    --accent: #c62f35; --accent-text: #ef5a5f; --accent-wash: #2a1415; --disabled: #333333;
+    --gold: #d9b45f; --gold-bright: #f5dc96; --gold-deep: #8a6a2a; --gold-wash: #241e10;
+    --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: #050505; color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.45; }
+  body { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 16px 24px; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  svg { display: block; }
+
+  /* Szenen-Auswahl über dem Telefon (gehört nicht zur App). */
+  .scenes { width: min(390px, 100%); display: flex; flex-wrap: wrap; gap: 4px; }
+  .scenes button { flex: 1 1 auto; min-height: 32px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 16px; background: transparent; color: var(--muted); font-size: 12px; }
+  .scenes button[aria-pressed='true'] { background: var(--text); color: var(--ink); border-color: var(--text); font-weight: 700; }
+  .caption { width: min(390px, 100%); margin: 0; color: var(--dim); font-size: 12px; }
+  .caption b { color: var(--muted); }
+  .marks { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+
+  /* Das Telefon */
+  .app { position: relative; width: min(390px, 100%); height: 844px; background: var(--deep); border: 1px solid #262626; border-radius: 18px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7); }
+  .base { position: absolute; inset: 0; }
+  .base svg { width: 100%; height: 100%; }
+  .base .world { cursor: pointer; }
+  .sector-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 3; display: flex; align-items: center; gap: 8px; padding: 10px 12px 10px 16px; }
+  .sector-bar .title { flex: 1 1 auto; font-size: 12px; letter-spacing: 0.12em; font-weight: 600; color: var(--muted); }
+  .pill { min-height: 38px; padding: 0 12px; border-radius: 19px; border: 1px solid var(--line); background: rgba(17, 17, 17, 0.85); font-size: 13px; }
+  .round { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border-radius: 20px; border: 1px solid var(--line); background: rgba(17, 17, 17, 0.85); color: var(--text); }
+
+  /* Ziehblatt mit Stufen */
+  .tray { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; display: flex; flex-direction: column; background: var(--bg); border-radius: 16px 16px 0 0; box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.6); transition: top 0.25s; }
+  .tray[data-stop='full'] { top: 64px; }
+  .tray[data-stop='half'] { top: 430px; }
+  .tray-grip { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; height: 26px; }
+  .tray-grip span { width: 40px; height: 5px; border-radius: 3px; background: var(--line-strong); }
+  .screen { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+  .nav { flex: 0 0 auto; display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; border-top: 1px solid var(--rule); background: var(--bg); }
+  .nav button { min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: transparent; border: 0; border-top: 2px solid transparent; font-size: 11px; color: var(--muted); }
+  .nav button[aria-current='page'] { border-top-color: var(--accent-text); color: var(--text); font-weight: 600; }
+
+  .section-title { margin: 0; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .small-label { margin: 0; font-size: 12px; color: var(--muted); }
+  .muted { color: var(--muted); }
+  .mono { font-family: var(--mono); }
+  .icon-button { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; background: transparent; border: 0; color: var(--muted); }
+  .add-character { min-height: 48px; padding: 14px; background: transparent; border: 1px dashed #444444; color: var(--muted); font-size: 14px; }
+  .ghost { min-height: 44px; padding: 8px 12px; background: transparent; border: 1px solid var(--line-strong); font-size: 14px; }
+  .primary { min-height: 48px; border: 0; background: var(--text); color: var(--ink); font-weight: 700; font-size: 15px; padding: 0 16px; }
+  .gold-btn { min-height: 48px; border: 0; background: var(--gold); color: var(--ink); font-weight: 700; font-size: 15px; padding: 0 12px; }
+
+  /* Neue Stellen in bestehenden Bereichen: rot gestrichelt markiert, wie Rot im Modell. */
+  .new { position: relative; outline: 1.5px dashed var(--accent-text); outline-offset: 3px; }
+  .new::after { content: 'neu'; position: absolute; top: -10px; right: -2px; padding: 0 5px; border-radius: 4px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; line-height: 16px; }
+  body.no-marks .new { outline: 0; }
+  body.no-marks .new::after { display: none; }
+
+  /* --- Reiter Missionen ----------------------------------------------------------------- */
+  .mission-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .mission { display: flex; flex-direction: column; gap: 2px; padding: 4px 4px 8px 14px; border: 1px solid var(--rule-soft); }
+  .mission-top { display: flex; align-items: flex-start; gap: 4px; }
+  .mission.closed { color: var(--muted); }
+  .mission-open { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; padding: 6px 0 0; background: transparent; border: 0; text-align: left; }
+  .mission-title { display: flex; align-items: baseline; gap: 8px; font-size: 16px; font-weight: 600; }
+  .mission.closed .mission-title { font-weight: 400; }
+  .here-tag { flex: 0 0 auto; padding: 0 6px; border: 1px solid var(--gold-deep); border-radius: 9px; color: var(--gold); font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; line-height: 16px; }
+  .mission-client { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+  .mission-client svg { width: 15px; height: 15px; }
+  .mission-text { font-size: 13px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .places { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; }
+  .place-chip { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; min-height: 28px; padding: 2px 8px 2px 6px; border: 1px solid var(--line); border-radius: 14px; background: #151515; font-size: 12px; color: var(--text); }
+  .place-chip svg { width: 14px; height: 14px; color: var(--accent-text); flex: 0 0 auto; }
+  .place-chip b { color: var(--muted); font-weight: 600; }
+  .place-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .state-badge { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .state-badge.done { color: var(--gold); }
+  .state-badge.failed { color: var(--accent-text); }
+  details.closed-group summary { cursor: pointer; padding: 6px 0; font-size: 11px; }
+  details.closed-group[open] summary { margin-bottom: 6px; }
+  .empty { margin: 0; color: var(--muted); font-size: 14px; }
+
+  /* --- Blätter ------------------------------------------------------------------------------- */
+  .overlay { position: absolute; inset: 0; z-index: 10; background: rgba(0, 0, 0, 0.72); display: flex; flex-direction: column; padding-top: 10px; }
+  .sheet { margin-top: auto; max-height: calc(100% - 20px); display: flex; flex-direction: column; background: var(--raised); border: 1px solid var(--line-strong); border-bottom: 0; border-radius: 16px 16px 0 0; }
+  .sheet.tall { flex: 1 1 auto; }
+  .sheet-head { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 8px 2px 16px; }
+  .sheet-head h2 { margin: 0; font-size: 16px; }
+  .sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 14px; }
+  .sheet-foot { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 8px 16px 12px; border-top: 1px solid #333; background: var(--panel); }
+  .sheet-foot .ghost, .sheet-foot .primary, .sheet-foot .gold-btn { flex: 1 1 0; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field > span, legend { font-size: 12px; color: var(--muted); }
+  fieldset { margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 6px; }
+  .form input, .form select, .form textarea { min-height: 44px; width: 100%; padding: 8px 10px; background: var(--bg); border: 1px solid var(--line-strong); font-size: 16px; }
+  .form textarea { min-height: 84px; resize: vertical; line-height: 1.4; }
+  .segmented { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line-strong); }
+  .segmented button { min-height: 40px; padding: 0 2px; border: 0; background: transparent; color: var(--muted); font-size: 13px; }
+  .segmented button[aria-checked='true'] { background: var(--text); color: var(--ink); font-weight: 700; }
+  .segmented button[data-v='done'][aria-checked='true'] { background: var(--gold); }
+  .segmented button[data-v='failed'][aria-checked='true'] { background: var(--accent); color: #fff; }
+  .place-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .place-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'where rm' 'label rm'; align-items: center; column-gap: 4px; row-gap: 4px; padding: 6px 0 6px 8px; border-left: 2px solid var(--accent-text); }
+  .place-row .place-where { grid-area: where; }
+  .place-row input { grid-area: label; }
+  .place-row .icon-button { grid-area: rm; }
+  .form .place-row input { min-height: 40px; font-size: 15px; }
+  .place-where { display: flex; align-items: center; gap: 4px; min-width: 0; min-height: 40px; padding: 0 2px 0 8px; border: 1px solid var(--rule-soft); background: #151515; font-size: 13px; text-align: left; }
+  .place-where span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .place-where svg { width: 16px; height: 16px; color: var(--muted); }
+  .place-adds { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .place-adds .ghost { min-height: 40px; font-size: 13px; padding: 4px 6px; }
+  .danger { color: var(--accent-text); }
+
+  /* --- Ort wählen (wie NSC platzieren) ---------------------------------------------------- */
+  .pick-banner { position: absolute; left: 12px; right: 12px; top: 62px; z-index: 5; padding: 10px 12px; border: 1px solid var(--accent); background: rgba(42, 20, 21, 0.95); font-size: 14px; }
+  .pick-banner b { color: var(--accent-text); }
+  .dock { flex: 0 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 12px 16px; border-top: 1px solid var(--rule); background: var(--panel); }
+  .action { min-height: 56px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; font-weight: 700; font-size: 15px; }
+  .action.soft { background: transparent; color: var(--text); border: 1px solid var(--line-strong); }
+  .action.red { background: var(--accent); color: #fff; }
+  .action:disabled { background: var(--disabled); color: var(--dim); }
+
+  /* --- Feld auf der Karte ------------------------------------------------------------------ */
+  .field-card { display: flex; flex-direction: column; gap: 10px; }
+  .field-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .field-head h2 { margin: 0; font-size: 20px; }
+  .field-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .field-actions button { min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 1px solid var(--line); background: transparent; font-size: 11px; color: var(--muted); }
+  .here-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+  .here-list button { width: 100%; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 4px 10px; border: 1px solid var(--rule-soft); background: transparent; text-align: left; }
+  .here-list svg { width: 16px; height: 16px; color: var(--accent-text); flex: 0 0 auto; }
+  .here-list .t { flex: 1 1 auto; min-width: 0; font-size: 14px; }
+  .here-list .t small { display: block; color: var(--muted); font-size: 12px; }
+
+  /* --- Orakel --------------------------------------------------------------------------------- */
+  .card { display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid var(--line); background: var(--card); }
+  .card-question { margin: 0; font-size: 15px; font-style: italic; }
+  .card-event { margin: 0; display: flex; flex-direction: column; gap: 2px; padding: 6px 9px; border-radius: 6px; background: var(--accent-wash); border: 1px solid var(--accent); font-size: 12px; color: var(--muted); }
+  .card-event b { font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent-text); }
+  .thread-link { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; margin: 2px 0; padding: 3px 9px 3px 6px; border: 1px solid var(--accent); border-radius: 14px; background: rgba(0, 0, 0, 0.3); color: var(--text); font-size: 13px; font-weight: 600; }
+  .thread-link svg { width: 15px; height: 15px; color: var(--accent-text); }
+  .odds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
+  .odds div { min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+  .odds div b { font-size: 15px; color: var(--text); }
+  .odds div.on { border-color: var(--gold); background: var(--gold-wash); }
+  .odds div.on b { color: var(--gold-bright); }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+  .tile { min-height: 40px; padding: 4px 8px; background: #1b1b1b; border: 1px solid #2c2c2c; border-radius: 6px; font-size: 12px; color: var(--muted); }
+  .tile.hit { border-color: var(--accent); box-shadow: 0 0 10px rgba(198, 47, 53, 0.35); color: var(--text); }
+  .log-entry { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border: 1px solid var(--line); background: var(--panel); }
+  .log-entry .q { font-size: 14px; font-style: italic; }
+  .verdict { font-size: 20px; font-weight: 700; color: var(--gold); }
+  .log-event { font-size: 13px; color: var(--muted); }
+  .log-event b { color: var(--accent-text); }
+
+  /* --- Würfelfenster Patron ------------------------------------------------------------------- */
+  .dice-row { display: flex; justify-content: center; gap: 10px; padding: 8px 0; }
+  .die { width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--gold); border-radius: 10px; background: var(--gold-wash); color: var(--gold-bright); font-family: var(--mono); font-size: 26px; font-weight: 700; }
+  .result-line { margin: 0; text-align: center; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+  .result-big { margin: 0; text-align: center; font-size: 22px; font-weight: 700; }
+
+  /* Hinweis nach einer Tat */
+  .toast { position: absolute; left: 50%; transform: translateX(-50%); bottom: 72px; z-index: 20; padding: 8px 14px; border: 1px solid var(--gold-deep); background: var(--gold-wash); color: var(--gold-bright); font-size: 13px; border-radius: 8px; opacity: 0; transition: opacity 0.25s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="scenes" id="scenes" role="group" aria-label="Szenen"></div>
+<label class="marks"><input type="checkbox" id="marks" checked /> Neue Stellen in bestehenden Bereichen rot markieren</label>
+<p class="caption" id="caption"></p>
+
+<div class="app" id="app">
+  <div class="base"><svg id="map" viewBox="0 0 390 844" preserveAspectRatio="xMidYMin slice"></svg></div>
+  <div class="sector-bar">
+    <span class="title">SUBSEKTOR</span>
+    <button class="pill" type="button">Welten 5 ▾</button>
+    <button class="pill" type="button">Legende ▾</button>
+    <span class="round" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6ea8ff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2" fill="#6ea8ff" stroke="none"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></svg></span>
+  </div>
+  <div id="banner"></div>
+  <div class="tray" id="tray" data-stop="full">
+    <div class="tray-grip"><span></span></div>
+    <div class="screen" id="screen"></div>
+    <nav class="nav" id="nav" aria-label="Bereiche"></nav>
+  </div>
+  <div id="layer"></div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+// ---- Symbole (aus src/view/icons.tsx; die Fahne ist neu) ----
+const sv = (inner, size = 22, extra = '') => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${extra} aria-hidden="true">${inner}</svg>`;
+const I = {
+  log: sv('<path d="M8 6.5h12M8 12h12M8 17.5h8"/><circle cx="4" cy="6.5" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="17.5" r="1" fill="currentColor"/>'),
+  encounter: sv('<circle cx="9" cy="8" r="3"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.5" cy="9" r="2.4"/><path d="M16 14c2.4 0 4.1 1.5 4.6 4.2"/>'),
+  people: sv('<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10.5" r="2.2"/><path d="M5.8 16c.5-1.7 1.7-2.6 3.2-2.6s2.7.9 3.2 2.6"/><path d="M14.5 10h3.5M14.5 13.5h3.5"/>'),
+  ship: sv('<path d="M12 2.5c2.8 2.8 4.2 6.8 4.2 11.2L12 19l-4.2-5.3C7.8 9.3 9.2 5.3 12 2.5z"/><path d="M8.1 10.7 4 14.2v3.3l4.3-2.4M15.9 10.7 20 14.2v3.3l-4.3-2.4"/>'),
+  flag: sv('<path d="M5.5 21V3.5"/><path d="M5.5 4h12l-2.6 4.2 2.6 4.3h-12"/>'),
+  brief: sv('<rect x="3" y="7.5" width="18" height="12" rx="2"/><path d="M9 7.5V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5v2M3 12.5h18"/>'),
+  pencil: sv('<path d="M4 20l1-4.5L15.5 5a2.1 2.1 0 0 1 3 3L8 18.5 4 20z"/><path d="M13.5 7l3 3"/>', 20),
+  close: sv('<path d="M6 6l12 12M18 6L6 18"/>', 22, 'stroke-width="2"'),
+  trash: sv('<path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5"/>', 20),
+  locate: sv('<circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/>', 20, 'stroke-width="2"'),
+  pin: sv('<path d="M12 21.5c-4.2-4.4-6.3-7.7-6.3-10.5a6.3 6.3 0 0 1 12.6 0c0 2.8-2.1 6.1-6.3 10.5z"/><circle cx="12" cy="11" r="2.3"/>'),
+  route: sv('<circle cx="5.5" cy="18.5" r="2"/><path d="M8 18.5h5.5a3 3 0 0 0 0-6h-3a3 3 0 0 1 0-6H13" stroke-dasharray="2 2.6"/><path d="M18 11c-2-2.1-3.2-3.7-3.2-5.1a3.2 3.2 0 0 1 6.4 0c0 1.4-1.2 3-3.2 5.1z"/>'),
+  npcpin: sv('<circle cx="9.5" cy="7.5" r="3.2"/><path d="M3.5 20c.7-3.4 3.1-5.3 6-5.3 1.2 0 2.3.3 3.2.9"/><path d="M18 21.5c-2.1-2.2-3.2-3.9-3.2-5.3a3.2 3.2 0 0 1 6.4 0c0 1.4-1.1 3.1-3.2 5.3z"/>'),
+  bag: sv('<path d="M5 8h14l-1 12H6z"/><path d="M9 10V6.5a3 3 0 0 1 6 0V10"/>'),
+  check: sv('<path d="M5 12.5l4.5 4.5L19 7.5"/>', 22, 'stroke-width="2.2"'),
+};
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+// ---- Beispieldaten ----
+const worlds = [
+  { id: 'kessra', name: 'Kessra', hex: '0405', x: 172, y: 400, uwp: 'A766975-B', cities: ['Startown', 'Port Hal'] },
+  { id: 'regina', name: 'Regina', hex: '0603', x: 284, y: 270, uwp: 'A788899-C', cities: ['Ninjar'] },
+  { id: 'anvil', name: 'Anvil', hex: '0303', x: 118, y: 270, uwp: 'C430698-9', cities: [] },
+  { id: 'sable', name: 'Sable', hex: '0207', x: 62, y: 528, uwp: 'E655420-6', cities: [] },
+  { id: 'vorne', name: 'Vorne', hex: '0701', x: 340, y: 140, uwp: 'B5A0556-A', cities: [] },
+];
+const here = 'kessra';
+const npcs = [
+  { id: 'mara', name: 'Mara Voss', role: 'Patron', sub: 'Smuggler' },
+  { id: 'ilka', name: 'Dr. Ilka Brand', role: 'Kontakt' },
+  { id: 'tavor', name: 'Tavor Lenk', role: 'Rivale' },
+  { id: 'okafor', name: 'Hafenmeisterin Okafor', role: 'Behörde' },
+];
+let missions = [
+  { id: 1, title: 'Fracht nach Regina schmuggeln', text: '12 t „Ersatzteile“ an Bord, ohne Zollkontrolle. Abnehmer wartet in Ninjar.', state: 'open', client: 'mara',
+    places: [{ label: 'Treffpunkt', w: 'kessra', sub: 'Startown' }, { label: 'Ziel', w: 'regina', sub: 'Ninjar' }] },
+  { id: 2, title: 'Verschollene Expedition finden', text: 'Letzte Funkmeldung aus dem Gebirge nordöstlich von Port Hal.', state: 'open', client: 'ilka',
+    places: [{ label: 'Letzte Funkmeldung', w: 'kessra', sub: 'Feld 0614 · Gebirge' }, { label: 'Lager', w: 'kessra', sub: 'Port Hal' }] },
+  { id: 3, title: 'Wer hat uns an den Zoll verraten?', text: '', state: 'open', client: null, places: [] },
+  { id: 4, title: 'Diplomatenpost nach Anvil', text: '', state: 'done', client: 'okafor', places: [{ label: 'Ziel', w: 'anvil', sub: '' }] },
+  { id: 5, title: 'Lanthan aus dem Wrack bergen', text: '', state: 'failed', client: 'tavor', places: [{ label: '', w: 'sable', sub: '' }] },
+];
+let nextId = 6;
+const stateText = { open: 'Offen', done: 'Erledigt', failed: 'Gescheitert' };
+const W = (id) => worlds.find((w) => w.id === id);
+const N = (id) => npcs.find((n) => n.id === id);
+const placeText = (p) => W(p.w).name + (p.sub ? ' · ' + p.sub : '');
+
+// ---- Zustand des Mocks ----
+let scene = 'tab';
+let editing = null; // Entwurf der Mission im Editor
+let picking = null; // Welt, die beim Ort wählen angetippt ist
+let tapped = 'kessra';
+let tab = 'missions';
+
+const scenes = [
+  ['tab', 'Reiter', 'Der neue fünfte Reiter <b>Missionen</b>: offene oben, erledigte und gescheiterte eingeklappt darunter. <b>Hier</b> heißt: ein Ort liegt auf dem Aufenthaltsort. Ein Ort-Chip führt zur Karte, der Stift öffnet den Editor.'],
+  ['edit', 'Bearbeiten', '<b>Editor</b> einer Mission: Titel, Zustand, Auftraggeber (nur dauerhafte NSC, nach Rolle), Text, Orte mit Etikett. Ein Ort kommt vom Aufenthaltsort oder von der Karte.'],
+  ['pick', 'Ort wählen', '<b>Ort auf der Karte wählen</b>, wie „NSC platzieren“: Welt antippen (auf dem Globus ein Feld oder eine Stadt), dann OK. Danach steht der Ort im Editor, das Etikett ist leer.'],
+  ['map', 'Karte', 'Auf dem Subsektor tragen Welten mit Orten offener Missionen eine rote <b>Fahne</b>. Das angetippte Feld bekommt den Abschnitt <b>Missionen hier</b>. Welt antippen zum Wechseln.'],
+  ['oracle', 'Orakel', 'Ein <b>Fadenfokus</b> auf der Karte: Die App lost eine offene Mission aus und zeigt sie im roten Band, sobald eine Stufe gewählt ist. Im Log bleibt sie stehen. Antippen öffnet die Mission.'],
+  ['patron', 'Patron', 'Im Würfelfenster des Patrons kommt <b>Als Mission</b> dazu: legt den Patron-NSC an und eine offene Mission mit ihm als Auftraggeber, Titel = Beruf, Ort = Aufenthaltsort.'],
+  ['npc', 'NSC', 'Im <b>NSC-Editor</b> stehen die Missionen, die dieser NSC vergeben hat; Antippen öffnet sie.'],
+];
+
+function setScene(s) {
+  scene = s; editing = s === 'edit' || s === 'pick' ? editing ?? draftOf(missions[1]) : null;
+  if (s === 'pick') picking = null;
+  if (s === 'tab') tab = 'missions';
+  render();
+}
+function draftOf(m) { return JSON.parse(JSON.stringify(m)); }
+
+// ---- Karte (Subsektor) ----
+function hexPath(cx, cy, r) {
+  let d = '';
+  for (let i = 0; i < 6; i++) { const a = Math.PI / 180 * (60 * i); d += (i ? 'L' : 'M') + (cx + r * Math.cos(a)).toFixed(1) + ' ' + (cy + r * Math.sin(a)).toFixed(1); }
+  return d + 'Z';
+}
+function renderMap() {
+  const r = 30, w = r * 1.5, h = r * Math.sqrt(3);
+  let g = '<rect width="390" height="844" fill="#0b0b0b"/>';
+  for (let c = 0; c < 9; c++) for (let row = 0; row < 12; row++) {
+    const cx = 14 + c * w, cy = 70 + row * h + (c % 2 ? h / 2 : 0);
+    g += `<path d="${hexPath(cx, cy, r)}" fill="none" stroke="#1d1d1d"/>`;
+  }
+  const open = missions.filter((m) => m.state === 'open');
+  const flagged = new Set(open.flatMap((m) => m.places.map((p) => p.w)));
+  for (const wd of worlds) {
+    const sel = (scene === 'map' && tapped === wd.id) || (scene === 'pick' && picking === wd.id);
+    const isHere = wd.id === here;
+    g += `<g class="world" data-world="${wd.id}">`;
+    g += `<path d="${hexPath(wd.x, wd.y, r)}" fill="${sel ? '#241e10' : '#111'}" stroke="${sel ? '#d9b45f' : isHere ? '#8a6a2a' : '#333'}" stroke-width="${sel ? 2 : 1.2}"/>`;
+    g += `<text x="${wd.x}" y="${wd.y - 12}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="8" fill="#777">${wd.hex}</text>`;
+    g += `<circle cx="${wd.x}" cy="${wd.y + 1}" r="7" fill="#2b4a6a" stroke="#6b8db0"/>`;
+    g += `<text x="${wd.x}" y="${wd.y + 22}" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="9.5" fill="${isHere ? '#d9b45f' : '#bbb'}">${wd.name}</text>`;
+    if (isHere) g += `<path d="M${wd.x - 17} ${wd.y + 8} l5 -8 l5 8z" fill="#d9b45f"/>`;
+    if (flagged.has(wd.id)) {
+      const fx = wd.x + 11, fy = wd.y - 9;
+      g += `<g class="${scene === 'map' ? '' : ''}"><path d="M${fx} ${fy + 14}V${fy}" stroke="#ef5a5f" stroke-width="1.6"/><path d="M${fx} ${fy}h9l-2.2 3.2 2.2 3.3h-9z" fill="#ef5a5f"/></g>`;
+    }
+    g += '</g>';
+  }
+  const map = document.getElementById('map');
+  map.innerHTML = g;
+  map.querySelectorAll('.world').forEach((el) => el.addEventListener('click', () => {
+    const id = el.dataset.world;
+    if (scene === 'pick') { picking = id; render(); }
+    else if (scene === 'map') { tapped = id; render(); }
+  }));
+}
+
+// ---- Reiter Missionen ----
+function missionCard(m) {
+  const c = m.client && N(m.client);
+  const isHere = m.state === 'open' && m.places.some((p) => p.w === here);
+  return `<li class="mission ${m.state === 'open' ? '' : 'closed'}" aria-label="${esc(m.title)}"><div class="mission-top">
+    <button type="button" class="mission-open" data-edit="${m.id}">
+      <span class="mission-title">${esc(m.title)}${isHere ? '<span class="here-tag">hier</span>' : ''}</span>
+      ${m.state !== 'open' ? `<span class="state-badge ${m.state}">${stateText[m.state]}</span>` : ''}
+      <span class="mission-client">${I.brief}${c ? esc(c.name) + ' · ' + c.role : '<i>kein Auftraggeber</i>'}</span>
+      ${m.state === 'open' && m.text ? `<span class="mission-text">${esc(m.text)}</span>` : ''}
+    </button>
+    <button type="button" class="icon-button" data-edit="${m.id}" aria-label="${esc(m.title)} bearbeiten">${I.pencil}</button></div>
+  ${m.state === 'open' && m.places.length ? `<ul class="places">${m.places.map((p) => `<li><button type="button" class="place-chip" data-goto="${p.w}">${I.pin}${p.label ? `<b>${esc(p.label)}</b>` : ''}<span>${esc(placeText(p))}</span></button></li>`).join('')}</ul>` : ''}</li>`;
+}
+function renderMissions() {
+  const open = missions.filter((m) => m.state === 'open');
+  const done = missions.filter((m) => m.state === 'done');
+  const failed = missions.filter((m) => m.state === 'failed');
+  return `<section class="scroll">
+    <h2 class="section-title">Offene Missionen (${open.length})</h2>
+    ${open.length ? `<ul class="mission-list">${open.map(missionCard).join('')}</ul>` : '<p class="empty">Keine offene Mission. Missionen entstehen mit „+ Neue Mission“ oder beim Patron im Reiter Begegnung („Als Mission“).</p>'}
+    <button type="button" class="add-character" data-new>+ Neue Mission</button>
+    ${done.length ? `<details class="closed-group"><summary class="section-title">Erledigt (${done.length})</summary><ul class="mission-list">${done.map(missionCard).join('')}</ul></details>` : ''}
+    ${failed.length ? `<details class="closed-group"><summary class="section-title">Gescheitert (${failed.length})</summary><ul class="mission-list">${failed.map(missionCard).join('')}</ul></details>` : ''}
+  </section>`;
+}
+
+// ---- Editor ----
+function renderEditor() {
+  const d = editing;
+  const isNew = !missions.some((m) => m.id === d.id);
+  const roles = [...new Set(npcs.map((n) => n.role))];
+  return `<div class="overlay"><section class="sheet tall form" role="dialog" aria-label="Mission bearbeiten">
+    <div class="sheet-head"><h2>${isNew ? 'Neue Mission' : 'Mission bearbeiten'}</h2><button type="button" class="icon-button" data-cancel aria-label="Schließen">${I.close}</button></div>
+    <div class="sheet-body">
+      <label class="field"><span>Titel</span><input id="f-title" value="${esc(d.title)}" placeholder="z. B. Fracht nach Regina schmuggeln" /></label>
+      <div class="field"><span>Zustand</span><div class="segmented" role="radiogroup">${['open', 'done', 'failed'].map((s) => `<button type="button" role="radio" data-v="${s}" aria-checked="${d.state === s}">${stateText[s]}</button>`).join('')}</div></div>
+      <label class="field"><span>Auftraggeber</span><select id="f-client"><option value="">keiner</option>${roles.map((r) => `<optgroup label="${r}">${npcs.filter((n) => n.role === r).map((n) => `<option value="${n.id}" ${d.client === n.id ? 'selected' : ''}>${esc(n.name)}</option>`).join('')}</optgroup>`).join('')}</select></label>
+      <label class="field"><span>Text</span><textarea id="f-text" placeholder="Worum es geht, was vereinbart ist, Belohnung, Frist …">${esc(d.text)}</textarea></label>
+      <fieldset><legend>Orte</legend>
+        ${d.places.length ? `<ul class="place-rows">${d.places.map((p, i) => `<li class="place-row">
+          <button type="button" class="place-where" data-goto="${p.w}"><span>${esc(placeText(p))}</span>${I.locate}</button>
+          <input data-label="${i}" value="${esc(p.label)}" placeholder="Etikett, z. B. Treffpunkt" aria-label="Etikett" />
+          <button type="button" class="icon-button" data-rm="${i}" aria-label="Ort entfernen">${I.close}</button></li>`).join('')}</ul>` : '<p class="small-label">Noch kein Ort.</p>'}
+        <div class="place-adds">
+          <button type="button" class="ghost" data-add-here>+ Aufenthaltsort</button>
+          <button type="button" class="ghost" data-add-pick>+ Auf der Karte</button>
+        </div>
+      </fieldset>
+    </div>
+    <div class="sheet-foot">
+      ${isNew ? '' : `<button type="button" class="icon-button danger" data-del aria-label="Mission löschen" style="flex:0 0 auto">${I.trash}</button>`}
+      <button type="button" class="ghost" data-cancel>Abbrechen</button>
+      <button type="button" class="primary" data-save>Speichern</button>
+    </div>
+  </section></div>`;
+}
+function readForm() {
+  const g = (id) => document.getElementById(id);
+  if (!g('f-title')) return;
+  editing.title = g('f-title').value; editing.text = g('f-text').value; editing.client = g('f-client').value || null;
+  document.querySelectorAll('[data-label]').forEach((el) => { editing.places[+el.dataset.label].label = el.value; });
+}
+
+// ---- Feld auf der Karte ----
+function renderField() {
+  const wd = W(tapped);
+  const hits = missions.filter((m) => m.state === 'open' && m.places.some((p) => p.w === wd.id)).map((m) => ({ m, ps: m.places.filter((p) => p.w === wd.id) }));
+  return `<section class="scroll field-card">
+    <div class="field-head"><h2>${wd.name}</h2><span class="mono muted">${wd.hex} · ${wd.uwp}</span></div>
+    <div class="field-actions">
+      <button type="button">${I.route}Hierhin reisen</button><button type="button">${I.pin}Gruppe setzen</button>
+      <button type="button">${I.npcpin}NSC platzieren</button><button type="button">${I.bag}Einkaufen</button>
+    </div>
+    <div class="new" style="display:flex;flex-direction:column;gap:6px">
+      <h3 class="section-title">Missionen hier (${hits.length})</h3>
+      ${hits.length ? `<ul class="here-list">${hits.map(({ m, ps }) => `<li><button type="button" data-edit="${m.id}">${I.flag}<span class="t">${esc(m.title)}<small>${ps.map((p) => (p.label ? esc(p.label) + ': ' : '') + esc(p.sub || p.w && W(p.w).name)).join(' · ')}</small></span></button></li>`).join('')}</ul>` : '<p class="small-label">Keine offene Mission hat hier einen Ort.</p>'}
+    </div>
+    <h3 class="section-title">Was hier geschah</h3>
+    <p class="small-label">023-1105 · Notiz: „Wir landen in Startown.“ · 024-1105 · Patron: Smuggler</p>
+  </section>`;
+}
+
+// ---- Orakel ----
+function renderOracle() {
+  const open = missions.filter((m) => m.state === 'open');
+  const t = open[0];
+  const thread = t ? `<button type="button" class="thread-link new" data-edit="${t.id}">${I.flag}${esc(t.title)}</button>` : '';
+  return `<section class="scroll">
+    <h2 class="section-title">Karte</h2>
+    <article class="card">
+      <p class="card-question">„Erreichen wir den Treffpunkt unbemerkt?“</p>
+      <div class="card-event"><b>Zufallsereignis: Auf einen Handlungsfaden zu</b>${thread}<span>Etwas bringt ein offenes Ziel näher.</span></div>
+      <div class="odds"><div><b>Ja</b>Hoch</div><div class="on"><b>Ja?</b>Mittel</div><div><b>Nein</b>Gering</div></div>
+      <div class="tiles"><div class="tile hit">Aktion: Enthüllen</div><div class="tile hit">Beschreibung: Verborgen</div></div>
+      ${t ? '' : '<p class="small-label">Ohne offene Mission bleibt es beim Fokus allein.</p>'}
+    </article>
+    <h2 class="section-title" style="margin-top:8px">Im Log</h2>
+    <div class="log-entry">
+      <span class="q">„Erreichen wir den Treffpunkt unbemerkt?“</span>
+      <span class="verdict">Ja?</span>
+      <span class="small-label mono">W100: 44 · Ja bis 50</span>
+      <span class="log-event"><b>Zufallsereignis: Auf einen Handlungsfaden zu</b> · Etwas bringt ein offenes Ziel näher.</span>
+      ${t ? `<span class="log-event new" style="align-self:flex-start">Faden: <button type="button" class="thread-link" data-edit="${t.id}" style="margin:0">${I.flag}${esc(t.title)}</button></span>` : ''}
+    </div>
+  </section>`;
+}
+
+// ---- Patron ----
+function renderPatron() {
+  return `<div class="overlay"><section class="sheet" role="dialog" aria-label="Patron">
+    <div class="sheet-head"><h2>Patron</h2><button type="button" class="icon-button" data-scene="tab" aria-label="Schließen">${I.close}</button></div>
+    <div class="sheet-body">
+      <p class="result-line">Test 5 (5+ nötig) · Liste eins</p>
+      <div class="dice-row"><span class="die">4</span><span class="die">2</span></div>
+      <p class="result-line">DM: −1 Merchant · ±0</p>
+      <p class="result-big">32 · Smuggler</p>
+      <p class="small-label">Als NSC: ein zufälliger NSC in der Laufbahn des Patrons, er kommt unter Charaktere › NSC. Als Mission: dazu eine offene Mission mit ihm als Auftraggeber.</p>
+    </div>
+    <div class="sheet-foot">
+      <button type="button" class="ghost" data-scene="tab">Abbrechen</button>
+      <button type="button" class="ghost" data-asnpc>Als NSC</button>
+      <button type="button" class="gold-btn new" data-asmission>Als Mission</button>
+    </div>
+  </section></div>`;
+}
+
+// ---- NSC-Editor ----
+function renderNpc() {
+  const n = N('mara');
+  const own = missions.filter((m) => m.client === n.id);
+  return `<div class="overlay"><section class="sheet tall form" role="dialog" aria-label="Charakter bearbeiten">
+    <div class="sheet-head"><h2>Charakter bearbeiten</h2><button type="button" class="icon-button" data-scene="tab" aria-label="Schließen">${I.close}</button></div>
+    <div class="sheet-body">
+      <label class="field"><span>Name</span><input value="${esc(n.name)}" /></label>
+      <label class="field"><span>Rolle</span><select><option>Patron</option></select></label>
+      <label class="field"><span>Ort</span><select><option>Kessra · Startown</option></select></label>
+      <label class="field"><span>Herkunft</span><input value="Smuggler · Ex-Merchant · 3 Terms" /></label>
+      <div class="new" style="display:flex;flex-direction:column;gap:6px">
+        <span class="small-label">Missionen (${own.length})</span>
+        ${own.length ? `<ul class="here-list">${own.map((m) => `<li><button type="button" data-edit="${m.id}">${I.flag}<span class="t">${esc(m.title)}<small>${stateText[m.state]}</small></span></button></li>`).join('')}</ul>` : '<p class="small-label">Keine.</p>'}
+      </div>
+      <label class="field"><span>UPP</span><input class="mono" value="STR 7 · DEX 9 · END 6 · INT 8 · EDU 7 · SOC 5" /></label>
+    </div>
+    <div class="sheet-foot"><button type="button" class="ghost" data-scene="tab">Abbrechen</button><button type="button" class="primary" data-scene="tab">Speichern</button></div>
+  </section></div>`;
+}
+
+// ---- Reiterleiste ----
+function renderNav() {
+  const tabs = [['oracle', 'Log', I.log], ['encounter', 'Begegnung', I.encounter], ['characters', 'Charaktere', I.people], ['ship', 'Schiff', I.ship], ['missions', 'Missionen', I.flag]];
+  const cur = scene === 'patron' ? 'encounter' : scene === 'npc' ? 'characters' : scene === 'oracle' ? 'oracle' : scene === 'map' ? '' : 'missions';
+  document.getElementById('nav').innerHTML = tabs.map(([id, label, icon], i) =>
+    `<button type="button" title="${label} (${i + 1})" data-tab="${id}" ${cur === id ? 'aria-current="page"' : ''} ${id === 'missions' ? 'class="new" style="outline-offset:-3px"' : ''}>${icon}${label}</button>`).join('');
+}
+
+// ---- Rendern ----
+function render() {
+  document.querySelectorAll('#scenes button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.s === scene)));
+  document.getElementById('caption').innerHTML = scenes.find((s) => s[0] === scene)[2];
+  renderMap();
+  renderNav();
+  const tray = document.getElementById('tray');
+  const screen = document.getElementById('screen');
+  const layer = document.getElementById('layer');
+  const banner = document.getElementById('banner');
+  banner.innerHTML = ''; layer.innerHTML = '';
+  tray.style.display = '';
+  tray.dataset.stop = scene === 'map' ? 'half' : 'full';
+  if (scene === 'tab' || scene === 'edit') screen.innerHTML = renderMissions();
+  if (scene === 'edit') layer.innerHTML = renderEditor();
+  if (scene === 'map') screen.innerHTML = renderField();
+  if (scene === 'oracle') screen.innerHTML = renderOracle();
+  if (scene === 'patron') { screen.innerHTML = '<section class="scroll"><h2 class="section-title">Begegnung</h2><p class="small-label">…</p></section>'; layer.innerHTML = renderPatron(); }
+  if (scene === 'npc') { screen.innerHTML = '<section class="scroll"><h2 class="section-title">NSC auf Kessra</h2></section>'; layer.innerHTML = renderNpc(); }
+  if (scene === 'pick') {
+    tray.dataset.stop = 'half';
+    banner.innerHTML = `<div class="pick-banner">Missionsort für <b>${esc(editing.title || 'Neue Mission')}</b>: Welt antippen (auf dem Globus ein Feld oder eine Stadt).</div>`;
+    screen.innerHTML = `<section class="scroll"><p class="small-label">${picking ? `Gewählt: <b style="color:var(--text)">${W(picking).name} ${W(picking).hex}</b>` : 'Noch nichts gewählt.'}</p></section>
+      <div class="dock"><button type="button" class="action soft" data-pick-cancel>${I.close}Abbrechen</button><button type="button" class="action red" data-pick-ok ${picking ? '' : 'disabled'}>${I.check}OK</button></div>`;
+    tray.style.top = '';
+  }
+  bind();
+}
+
+function toast(t) { const el = document.getElementById('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 1800); }
+
+function bind() {
+  const on = (sel, fn) => document.querySelectorAll(sel).forEach((el) => el.addEventListener('click', (e) => fn(el, e)));
+  on('[data-edit]', (el) => { readForm(); editing = draftOf(missions.find((m) => m.id === +el.dataset.edit)); scene = 'edit'; render(); });
+  on('[data-new]', () => { editing = { id: nextId++, title: '', text: '', state: 'open', client: null, places: [{ label: '', w: here, sub: 'Startown' }] }; scene = 'edit'; render(); });
+  on('[data-cancel]', () => { editing = null; scene = 'tab'; render(); });
+  on('.segmented button', (el) => { readForm(); editing.state = el.dataset.v; render(); });
+  on('[data-rm]', (el) => { readForm(); editing.places.splice(+el.dataset.rm, 1); render(); });
+  on('[data-add-here]', () => { readForm(); editing.places.push({ label: '', w: here, sub: 'Startown' }); render(); document.querySelector(`[data-label="${editing.places.length - 1}"]`)?.focus(); });
+  on('[data-add-pick]', () => { readForm(); scene = 'pick'; picking = null; render(); });
+  on('[data-pick-cancel]', () => { scene = 'edit'; render(); });
+  on('[data-pick-ok]', () => { editing.places.push({ label: '', w: picking, sub: '' }); scene = 'edit'; render(); document.querySelector(`[data-label="${editing.places.length - 1}"]`)?.focus(); });
+  on('[data-save]', () => {
+    readForm();
+    if (!editing.title.trim()) { document.getElementById('f-title').style.borderColor = 'var(--accent)'; document.getElementById('f-title').focus(); return; }
+    editing.title = editing.title.trim();
+    const i = missions.findIndex((m) => m.id === editing.id);
+    if (i >= 0) missions[i] = editing; else missions.push(editing);
+    editing = null; scene = 'tab'; render(); toast('Gespeichert');
+  });
+  on('[data-del]', () => { missions = missions.filter((m) => m.id !== editing.id); editing = null; scene = 'tab'; render(); toast('Mission gelöscht'); });
+  on('[data-goto]', (el) => { readForm(); editing = null; tapped = el.dataset.goto; scene = 'map'; render(); });
+  on('[data-scene]', (el) => setScene(el.dataset.scene));
+  on('[data-asnpc]', () => { setScene('tab'); toast('NSC angelegt (Charaktere › NSC)'); });
+  on('[data-asmission]', () => {
+    const id = nextId++;
+    npcs.push({ id: 'n' + id, name: 'Jarek Holm', role: 'Patron' });
+    editing = { id, title: 'Smuggler', text: '', state: 'open', client: 'n' + id, places: [{ label: '', w: here, sub: 'Startown' }] };
+    missions.push(draftOf(editing));
+    scene = 'edit'; render(); toast('Patron-NSC und Mission angelegt');
+  });
+  on('[data-tab]', (el) => {
+    const t = el.dataset.tab;
+    if (t === 'missions') setScene('tab'); else if (t === 'oracle') setScene('oracle'); else if (t === 'encounter') setScene('patron'); else if (t === 'characters') setScene('npc'); else toast('Reiter Schiff: unverändert');
+  });
+}
+
+document.getElementById('scenes').innerHTML = scenes.map(([id, label], i) => `<button type="button" data-s="${id}">${i + 1} ${label}</button>`).join('');
+document.querySelectorAll('#scenes button').forEach((b) => b.addEventListener('click', () => { editing = null; setScene(b.dataset.s); }));
+document.getElementById('marks').addEventListener('change', (e) => document.body.classList.toggle('no-marks', !e.target.checked));
+render();
+</script>
+</body>
+</html>
