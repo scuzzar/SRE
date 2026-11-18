@@ -94,7 +94,7 @@ Frage.
   Craft (Beiboote, Jäger), Raketen, Sandwolken. Später auch Wracks und Rettungskapseln.
 - **Orte am Himmel**: die Orbitalstädte der Welt (gibt es schon, `City` ohne `cell`) und der
   Highport, auf festen Bahnen wie die Monde.
-- **Hilfslinien**: Bahnen (siehe Abschnitt 3), Kreise der Raumbänder um die gewählte Einheit
+- **Hilfslinien**: Bahnen (siehe Abschnitt 3), Kreise der Raumbänder um die zuletzt berührte Einheit
   (alle 10.000 km), die **Sprunggrenzen** bei 10 und 100 Durchmessern der Welt (SR 28: DM +15 bzw.
   +5 auf den Fehlsprung), und der **Schatten** der Welt, wo sie die Sichtlinie verdeckt.
 
@@ -131,12 +131,18 @@ Richtung und Stärke. Er gilt unverändert für die ganze Runde, als feste Richt
   mit dem Finger aus dem Schiff heraus. Seine Länge ist die Stärke, beim höchsten Schub ist Schluss:
   Ein Kreis um das Schiff zeigt die Grenze, und weiter als bis zum Kreis wächst der Pfeil nicht,
   egal wie weit man zieht. Ein kurzer Zug, der im Schiff endet, heißt „kein Schub“.
+  - **Ohne Auswählen** (Entscheidung des Owners, 18. November 2026): Man zieht direkt aus jeder
+    eigenen Einheit heraus, ohne sie vorher anzutippen. Der Kreis erscheint, sobald der Finger auf
+    der Einheit liegt. Bei mehreren Einheiten zieht man nacheinander aus jeder ihren Pfeil.
+    ⚑ Liegen Einheiten so dicht, dass der Finger nicht klar trifft, gewinnt die nächste; zoomt man
+    hinein, trennen sie sich.
   - ⚑ Der Kreis hat auf dem Bildschirm immer dieselbe Größe (etwa 90 px), egal wie weit gezoomt
     ist. So ist der Schub immer gleich fein einzustellen.
   - ⚑ Der Pfeil lässt sich auch an seiner Spitze greifen und nachziehen, der Finger muss nicht
     zurück ins Schiff. Daneben steht der Wert, z. B. „1,4 G“.
   - ⚑ **Einrasten**: Am Kreis sind die nützlichen Richtungen als kleine Marken eingezeichnet: in
-    Flugrichtung (prograd), gegen die Flugrichtung (retrograd), auf das gewählte Ziel, vom Ziel weg
+    Flugrichtung (prograd), gegen die Flugrichtung (retrograd), auf das Ziel (⚑ das Waffenziel der Einheit, sonst der nächste
+    geortete Gegner), vom Ziel weg
     und *Angleichen* (gegen die Geschwindigkeit relativ zum Ziel). Kommt der Pfeil einer Marke auf
     wenige Grad nahe, rastet er dort ein. Mehr Hilfe gibt es nicht, keine Knöpfe und kein Regler.
 - **Jede Runde beginnt ohne Schub** (Entscheidung des Owners, 18. November 2026): Nach der
@@ -253,12 +259,13 @@ Was die Karte beim Planen zeigt, ist der Kern des Spielgefühls. Es sind die dre
   wirklich zieht, sieht man erst nach der Runde.
 - **Nächste Annäherung**: Kreuzen sich zwei Bahnen, markiert die Karte den Punkt der geringsten
   Entfernung in dieser Runde, mit Abstand und Zeitpunkt (wichtig für Raketen und Rammen).
-- **Sichtlinie**: zwischen der gewählten Einheit und ihrem Ziel; rot, wenn ein Körper sie verdeckt.
+- **Sichtlinie**: zwischen der zuletzt berührten Einheit und ihrem Ziel; rot, wenn ein Körper sie verdeckt.
 
 ### Ablauf auf dem Bildschirm
 
-1. **Planen**: Einheit antippen, Schubvektor mit dem Finger aus der Einheit herausziehen (Länge =
-   Stärke, gekappt am Kreis des höchsten Schubs). Ziele für Waffen wählen. Ein Zug, der woanders
+1. **Planen**: Schubvektor mit dem Finger direkt aus der Einheit herausziehen, ohne sie vorher
+   auszuwählen (Länge = Stärke, gekappt am Kreis des höchsten Schubs). Ziele für Waffen wählen.
+   Antippen braucht man nur, um eine Einheit im Blatt anzuzeigen. Ein Zug, der woanders
    auf der Karte beginnt, verschiebt die Karte; zwei Finger zoomen.
 2. **„Runde ausführen“**: Die NSC entscheiden, dann spielt die Karte die 1.000 Sekunden in etwa zwei
    Sekunden ab, alle Einheiten zugleich. ⚑ Man kann die Wiedergabe anhalten und mit einem Regler
@@ -411,8 +418,8 @@ rastet auf denselben vier Stufen ein wie heute (`TrayStop`):
 | Stufe | Inhalt |
 |---|---|
 | versteckt | nur der Griff; die Karte hat den ganzen Bildschirm, zum Zuschauen bei der Wiedergabe |
-| eingeklappt | Raumrunde und Uhrzeit, die gewählte Einheit mit ihrem Schub (z. B. „1,4 G“) und dem Knopf „Kein Schub“, darunter groß **Runde ausführen**; den Schub selbst zieht man auf der Karte |
-| halb | dazu die Waffen der gewählten Einheit: je Turret Ziel, Entfernung in Raumbändern, Gesamt-DM, Munition, Nachladen; Starts von Raketen, Sand und Small Craft |
+| eingeklappt | Raumrunde und Uhrzeit, die zuletzt berührte Einheit (zuletzt gezogen oder angetippt) mit ihrem Schub (z. B. „1,4 G“) und dem Knopf „Kein Schub“, darunter groß **Runde ausführen**; den Schub selbst zieht man auf der Karte |
+| halb | dazu die Waffen dieser Einheit: je Turret Ziel, Entfernung in Raumbändern, Gesamt-DM, Munition, Nachladen; Starts von Raketen, Sand und Small Craft |
 | voll | dazu der Zustand des Schiffs (Treffer je Zone, Drive- und Power-Plant-Buchstabe, Hull, Dekompression), die Schiffspositionen der SC (Pilot, Gunner, Engineer) mit ihren DMs, und das Log der laufenden Runde |
 
 Die Reiter unten (Log, Begegnung, Charaktere, Schiff) bleiben erreichbar. ⚑ Solange ein Raumkampf
