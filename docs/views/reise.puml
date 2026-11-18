@@ -82,7 +82,7 @@ hide <<browser>> stereotype
 ' Schiffe
   class Ship $schiffe
 
-' Raumkarte und Raumflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+' Raumkarte und Raumkampf (Konzept: docs/konzept-raumkampf.md, Stufe 1)
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -144,7 +144,7 @@ hide <<browser>> stereotype
 
 ' Schiffe
 
-' Raumkarte und Raumflug
+' Raumkarte und Raumkampf
 
 ' Zeit und Reisen
 LogEntry <|-- TimePassed

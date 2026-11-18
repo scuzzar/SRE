@@ -54,7 +54,7 @@
     },
     {
       "id": "raum",
-      "title": "Raumkarte und Raumflug"
+      "title": "Raumkarte und Raumkampf"
     }
   ],
   "changes": [
@@ -415,8 +415,8 @@
     },
     {
       "id": "2026-11-18",
-      "file": "2026-11-18-raumflug",
-      "title": "Raumflug um eine Welt (Stufe 1 des Raumkampfs): Einheiten mit Ort, Geschwindigkeit und Schubvektor, Raumrunden, Spur",
+      "file": "2026-11-18-raumkampf",
+      "title": "Raumkampf, Stufe 1 (eigenes Schiff um eine Welt): Einheiten mit Ort, Geschwindigkeit und Schubvektor, Raumrunden, Spur",
       "approved": false,
       "show": [
         "Campaign",

@@ -417,13 +417,14 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Ship.berthedSince`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-17b-monatsabrechnung.png`](changes/2026-11-17b-monatsabrechnung.png).
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-18): **Raumflug um eine Welt**, Stufe 1 des
-> Raumkampfs nach dem [Konzept Raumkarte und Raumkampf](konzept-raumkampf.md) (siehe *Raumflug*).
-> Der Owner hat entschieden, den Raumkampf vor dem Handel zu bauen. Neu im Bild: `SpaceFlight` an
-> der Kampagne (`flight`, mit Welt, Raumrunde und `/elapsed`), `SpaceUnit` (Ort, Geschwindigkeit,
+> **Wartet auf Freigabe** (Kennzeichen 2026-11-18): **Raumkampf, Stufe 1**: mit dem eigenen
+> Schiff um eine Welt fliegen, noch ohne Gegner, nach dem [Konzept Raumkarte und
+> Raumkampf](konzept-raumkampf.md) (siehe *Raumkampf*). Der Owner hat entschieden, den Raumkampf
+> vor dem Handel zu bauen. Neu im Bild: `SpaceBattle` an der Kampagne (`battle`, mit Welt,
+> Raumrunde und `/elapsed`), `SpaceUnit` (Ort, Geschwindigkeit,
 > Schubvektor, Aufschlag, `/maxG`, Verweis auf das Schiff), `TrackPoint` für die Spur und der Wert
 > `Vec`. Der Ausschnitt dazu liegt unter
-> [`changes/2026-11-18-raumflug.png`](changes/2026-11-18-raumflug.png).
+> [`changes/2026-11-18-raumkampf.png`](changes/2026-11-18-raumkampf.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -454,10 +455,10 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 | Schiffe | [views/schiffe.png](views/schiffe.png) |
-| Raumkarte und Raumflug | [views/raum.png](views/raum.png) |
+| Raumkarte und Raumkampf | [views/raum.png](views/raum.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist
-[2026-11-18](changes/2026-11-18-raumflug.png): der Raumflug um eine Welt.
+[2026-11-18](changes/2026-11-18-raumkampf.png): Raumkampf, Stufe 1.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -627,7 +628,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Block | `DamageRoll.points`, `DamageRoll.to` | Ein Stück eines Schadenswürfels, das ganz auf ein Attribut geht; ein Würfel ist ein Block oder, wenn er ein Attribut auf 0 bringt, mehrere |
 | Überlauf | (Regel) | Was ein Würfel über 0 hinaus bringt, geht als neuer Block auf ein anderes Attribut über 0 (SR 21) |
 | Kampf | (Screen `combat`, im Reiter Begegnung unter „Kampf“) | Der Screen für Angriffe: ohne Begegnung die Waffentabelle, mit Begegnung die Kampfsimulation |
-| Reiter Begegnung | (Reiter „Begegnung“; Screens `encounter`, `combat`) | Oben ein Umschalter zwischen Begegnung und *Kampf*. Unter Begegnung unten die Reihe mit den Würfen Zufall, Tiere, Patron, Gerücht, Polizei und darunter Tage vergehen und Woche beenden bzw. bei einer Fahrt Weiterfahren: die einzige Stelle, an der Zeit vergeht oder die Fahrt weitergeht. Jeder Wurf zeigt Test und Ergebnis im *Würfelfenster*. Das Blatt darüber hat nur Datum, laufende Fahrt, laufende Begegnung und die Einstellungen: Gelände, Würfel der Anzahl, wie viele Tage, die Haken „Manuell wählen“ und *NSC dazunehmen* |
+| Reiter Begegnung | (Reiter „Begegnung“; Screens `encounter`, `combat`) | Oben ein Umschalter zwischen Begegnung und *Kampf*. Unter Begegnung unten die Reihe mit den Würfen Zufall, Tiere, Patron, Gerücht, Polizei und darunter Tage vergehen und Woche beenden bzw. bei einer Fahrt Weiterfahren: die einzige Stelle, an der Zeit vergeht oder die Fahrt weitergeht (außer im Raumkampf, wo je 24 Stunden ein Tag vergeht, 2026-11-18). Jeder Wurf zeigt Test und Ergebnis im *Würfelfenster*. Das Blatt darüber hat nur Datum, laufende Fahrt, laufende Begegnung und die Einstellungen: Gelände, Würfel der Anzahl, wie viele Tage, die Haken „Manuell wählen“ und *NSC dazunehmen* |
 | Würfelfenster | (View, `encounterRoll`) | Das Fenster nach einem Begegnungswurf: der rollende Würfel des Tests, was herauskam und was danach geht („Als NSC“, Rettungswürfe); kam es zur Begegnung, folgt ihre Übersicht. Ohne Würfel nur ein Hinweis, etwa dass der Test schon gemacht ist |
 | NSC dazunehmen | (Ablauf, `startNpcJoining`) | Mit dem Haken „NSC dazunehmen“ öffnet Zufall erst die NSC-Liste zum Auswählen (wie *NSC platzieren*, nur NSC vom Aufenthaltsort); „OK“ nimmt sie zur Zufallsbegegnung dazu (`Encounter.joined`) und würfelt ohne Test, mit „Manuell wählen“ erst die Art |
 | Begegnungsart | (Karte im Reiter Begegnung) | Eine Art von Begegnungen nach SE S. 20 mit ihren Einstellungen und ihrem Wurf: Zufallsbegegnung, Patron, Gerücht, später Gesetz, Tiere. Nicht zu verwechseln mit der *Art der Begegnung* (`EncounterType`), einer Zeile der Random Encounter List |
@@ -771,9 +772,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Deckplan-Platz | `DeckPlan.name` | Deck A, Deck B oder Deck C: der Platz eines Plans an seinem Entwurf, zugleich sein Name |
 | Raumkarte | (View, Grundkarte) | Der Raum um eine Welt, von ein paar tausend bis zu Millionen Kilometern, in 2D: die Welt als Himmelskörper, die Einheiten mit Bahnen und die Sprunggrenzen. Neben Subsektor und Globus die dritte Grundkarte; man erreicht sie über den Knopf „Raum“ (2026-11-18) |
 | Knopf „Raum“ | (View) | Öffnet die Raumkarte einer Welt, am Globus und an der Welt im Subsektor; ein Tippen auf eine Welt öffnet weiter ihren Globus (2026-11-18) |
-| Raumflug | `SpaceFlight`, `Campaign.flight` | Der laufende Flug auf der Raumkarte einer Welt, Raumrunde für Raumrunde; in Stufe 1 nur mit dem eigenen Schiff, später mit Gegnern als Raumkampf (2026-11-18) |
-| Raumrunde | `SpaceFlight.round` | Eine Runde des Raumflugs: 1.000 Sekunden (SR 39); nicht zu verwechseln mit der *Runde* des Personenkampfs (2026-11-18) |
-| Flugzeit | `SpaceFlight./elapsed` | Sekunden seit Beginn des Raumflugs: (Raumrunde − 1) × 1.000 (2026-11-18) |
+| Raumkampf | `SpaceBattle`, `Campaign.battle` | Was auf der Raumkarte einer Welt Raumrunde für Raumrunde läuft; so heißt es immer, auch in Stufe 1, wo nur das eigene Schiff fliegt und es noch keinen Gegner gibt (Owner, 18. November 2026) |
+| Raumrunde | `SpaceBattle.round` | Eine Runde des Raumkampfs: 1.000 Sekunden (SR 39); nicht zu verwechseln mit der *Runde* des Personenkampfs (2026-11-18) |
+| Dauer des Raumkampfs | `SpaceBattle./elapsed` | Sekunden seit Beginn des Raumkampfs: (Raumrunde − 1) × 1.000; je volle 24 Stunden vergeht ein Tag (2026-11-18) |
 | Raumband | (Regel) | 10.000 km (SR 39); Maß für Entfernungen und DMs im Raumkampf: Entfernung ÷ 10.000 km, aufgerundet (2026-11-18) |
 | Einheit | `SpaceUnit` | Was sich auf der Raumkarte frei bewegt und von der Simulation geschoben wird; in Stufe 1 nur das eigene Schiff, später auch fremde Schiffe, Small Craft, Raketen, Sand (2026-11-18) |
 | Ort, Geschwindigkeit | `SpaceUnit.position`, `.velocity` (`Vec`) | Wo eine Einheit ist (km) und wie schnell in welche Richtung sie fliegt (km/s), in der Ebene mit der Welt in der Mitte (2026-11-18) |
@@ -2819,47 +2820,55 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       Schiffe, Custom-Entwürfe, Small Craft als eigene `ShipDesign`, und der **Preisnachlass
       für ein gebrauchtes Standardschiff** (SR 31: 10–40 % je nach Alter) über `Ship.price`.
 
-- **Raumflug** (Kennzeichen 2026-11-18, wartet auf Freigabe). Stufe 1 des Raumkampfs nach dem
+- **Raumkampf, Stufe 1** (Kennzeichen 2026-11-18, wartet auf Freigabe). Nach dem
   [Konzept Raumkarte und Raumkampf](konzept-raumkampf.md): Man fliegt mit dem eigenen Schiff um eine
-  Welt und lernt die Bahnen, noch ohne Gegner und Waffen. Regeln aus SR 39–42, *Mayday* und SE 12,
-  zusammengefasst in [`regeln-schiffe.md`](regeln-schiffe.md); Abweichungen tragen ⚑.
-  - **Raumkarte.** Die dritte Grundkarte neben Subsektor und Globus, in 2D (Owner, 18. November
-    2026). Ein Tippen auf eine Welt öffnet wie bisher ihren Globus; die Raumkarte öffnet der Knopf
-    „Raum“ am Globus und an der Welt im Subsektor. Auf ihr: die Welt mit dem Weltsymbol in echter
-    Größe, ohne die angedeuteten Umlaufbahnen, die Ringe der Sprunggrenzen, die Einheiten mit Spur
-    und Bahnvorschau, Ringe der Raumbänder um die zuletzt berührte Einheit.
-  - **Beginnen und beenden.** „Flug beginnen“ geht nur auf der Raumkarte der Welt, auf der die
-    Gruppe ist, und nur mit einem eigenen Schiff (`Campaign./ship`); es legt einen `SpaceFlight`
-    mit Raumrunde 1 und einer Einheit für das Schiff an. ⚑ Das Schiff startet auf einer Kreisbahn
-    mit dem doppelten Weltradius, gegen den Uhrzeigersinn; bei Größe 0 (Asteroidengürtel) ruhend in
-    20.000 km Abstand. „Flug beenden“ entfernt den Raumflug wieder. Es gibt höchstens einen.
+  Welt und lernt die Bahnen, noch ohne Gegner und Waffen. Es heißt trotzdem schon **Raumkampf**
+  (`SpaceBattle`; Owner, 18. November 2026). Regeln aus SR 39–42, *Mayday* und SE 12,
+  zusammengefasst in [`regeln-schiffe.md`](regeln-schiffe.md); Abweichungen tragen ⚑, Entscheidungen
+  des Owners vom 18. November 2026 sind als solche genannt.
+  - **Raumkarte.** Die dritte Grundkarte neben Subsektor und Globus, in 2D (Owner). Ein Tippen auf
+    eine Welt öffnet wie bisher ihren Globus; die Raumkarte öffnet der Knopf „Raum“ am Globus und
+    an der Welt im Subsektor (Owner). Auf ihr: die Welt mit dem Weltsymbol in echter Größe, ohne
+    die angedeuteten Umlaufbahnen (Owner), die Ringe der Sprunggrenzen, die Einheiten mit Spur und
+    Bahnvorschau, Ringe der Raumbänder um die zuletzt berührte Einheit.
+  - **Beginnen und beenden** (Owner). „Raumkampf beginnen“ geht nur auf der Raumkarte der Welt, auf
+    der die Gruppe ist, und nur mit dem eigenen Schiff (`Campaign./ship`); es legt einen
+    `SpaceBattle` mit Raumrunde 1 und einer Einheit für das Schiff an. Liegegebühr und Ort des
+    Schiffs ändern sich dadurch nicht. Das Schiff startet auf einer Kreisbahn mit dem doppelten
+    Weltradius, gegen den Uhrzeigersinn (Owner); bei Größe 0 (Asteroidengürtel) ruhend in 20.000 km
+    Abstand. „Raumkampf beenden“ entfernt ihn wieder. Es gibt höchstens einen.
   - **Die Raumrunde** dauert 1.000 Sekunden (SR 39). Jede Runde: Schubvektoren setzen, „Runde
     ausführen“, die Simulation rechnet die 1.000 Sekunden für alle Einheiten zugleich (Owner:
     gleichzeitig), die Karte spielt sie in etwa zwei Sekunden ab. Danach wird für jede Einheit der
     alte Ort mit Geschwindigkeit an die Spur gehängt, der Schubvektor geleert und die Raumrunde um
     eins erhöht.
-  - **Schubvektor** (Owner, 18. November 2026): einer je Raumrunde, fest im Raum, nur durch Tippen
-    oder Ziehen im Schubkreis, stufenlos in 0,1 G, höchstens `/maxG` (der Kreis ist die Grenze),
-    ohne die Einheit vorher auszuwählen; Einrasten an prograd, retrograd, Ziel, weg und angleichen;
-    jede Raumrunde beginnt ohne Schub. Ohne Schubvektor fliegt die Einheit ballistisch.
+  - **Zeit** (Owner). Je volle 24 Stunden Dauer (also wenn `/elapsed` ein Vielfaches von 86.400
+    Sekunden überschreitet, nach jeweils 86,4 Raumrunden) vergeht ein Tag, genau wie mit „Tage
+    vergehen“ im Reiter Begegnung, mit allem, was daran hängt: Logeintrag, Begegnungstests,
+    Monatsende. ⚑ Angebrochene Tage verfallen beim Beenden. Sonst schreibt der Raumkampf in Stufe 1
+    nichts ins Log.
+  - **Schubvektor** (Owner): einer je Raumrunde, fest im Raum, nur durch Tippen oder Ziehen im
+    Schubkreis, stufenlos in 0,1 G, höchstens `/maxG` (der Kreis ist die Grenze), ohne die Einheit
+    vorher auszuwählen; Einrasten an prograd, retrograd, Ziel, weg und angleichen; jede Raumrunde
+    beginnt ohne Schub. Ohne Schubvektor fliegt die Einheit ballistisch.
   - **Physik.** Gespeichert sind Ort (km) und Geschwindigkeit (km/s) in der Ebene, die Welt in der
     Mitte. Die Simulation rechnet in festen Schritten von 10 Sekunden mit *Velocity Verlet*, ohne
     Zufall: gleicher Stand und gleiche Schubvektoren ergeben auf jedem Gerät dieselbe Bahn. 1 G =
     10 m/s² (Supplement 3). Der Schub wirkt während der ganzen Runde gleichmäßig; 1 G ändert die
-    Geschwindigkeit je Runde um 10 km/s, wie in SE 12.
+    Geschwindigkeit je Runde um 10 km/s, wie in SE 12. ⚑ Kein Treibstoffverbrauch für den Schub.
   - **Himmelskörper** werden nicht gespeichert, sondern aus der Welt abgeleitet: Radius = Größe ×
     800 km (Durchmesser Größe × 1.600 km), Schwerkraft an der Oberfläche g = Größe ÷ 8 G (SR 22, mit
     Dichte K = 1, Owner), Masse daraus (G·M = g · R²). Die Welt steht still in der Mitte. Größe 0 hat
     keinen Körper und keine Schwerkraft. Monde und Gasriesen kommen mit dem Sternsystem.
-  - **Aufschlag.** Kommt eine Einheit unter die Oberfläche der Welt, wird `crashed` gesetzt; sie
-    bewegt sich nicht mehr und bekommt keinen Schub. ⚑ In Stufe 1 hat das keine Folgen für das
+  - **Aufschlag** (Owner). Kommt eine Einheit unter die Oberfläche der Welt, wird `crashed` gesetzt;
+    sie bewegt sich nicht mehr und bekommt keinen Schub. In Stufe 1 hat das keine Folgen für das
     Schiff; Schaden und Verlust kommen mit Stufe 2. Die Bahnvorschau warnt vorher.
-  - **Was in Stufe 1 bewusst nicht passiert** ⚑: Die Zeit der Kampagne läuft nicht weiter (ein Flug
-    dauert Stunden, die Kampagne zählt Tage), es gibt keine Logeinträge, keinen Treibstoffverbrauch
-    für den Schub und keine Änderung an Liegegebühr oder Ort des Schiffs.
   - **Spur** (`track`): je vergangene Raumrunde ein `TrackPoint` mit Ort und Geschwindigkeit; die
     Karte zeichnet daraus eine glatte Kurve (Ort und Geschwindigkeit an beiden Enden geben die
     Krümmung). Gespeichert, damit sie einen Neustart übersteht.
+  - **Demo-Kampagne** (Owner): Sie beginnt mit einem Scout/Courier (Type S) der Gruppe,
+    schuldenfrei wie aus dem Ship-Vorteil der Scouts, mit vollem Tank, damit man den Raumkampf
+    gleich ausprobieren kann (siehe *Demo-Kampagne*).
   - **Später** (eigene Änderungen): fremde Schiffe und ihr Planer (Stufe 2), Waffen, Raketen, Sand,
     Small Craft, Ortung, Raumkampf aus einer Schiffsbegegnung; siehe den Stufenplan im Konzept.
 
@@ -2945,7 +2954,9 @@ Diagramm mit diesen Ausnahmen:
   README (`src/data/examples.json`) und der festen Startwelt Kessra (0405, A766754-A, Scoutbasis,
   Gasriese, gemäßigt; `src/data/demo-world.json`), einer fertigen Welt, auf der die Gruppe steht
   (`location`), und Cr 5.000 in der Gruppenkasse, gebucht als Einnahme „Startkapital“, damit sich im
-  Shop gleich etwas kaufen lässt. Das Modell sagt dazu nichts; die Welt prüft das Model wie jedes Hexfeld. Die beiden
+  Shop gleich etwas kaufen lässt. Seit 2026-11-18 (wartet auf Freigabe) hat die Gruppe dazu einen
+  schuldenfreien Scout/Courier „Kestrel“ mit vollem Tank (40 t), Preis wie der Grundpreis, ohne
+  Kredit; er liegt ab Tag 1 im Hafen von Kessra. Das Modell sagt dazu nichts; die Welt prüft das Model wie jedes Hexfeld. Die beiden
   Charaktere lassen sich löschen, solange der Log nicht auf sie verweist. Jede weitere Kampagne
   beginnt leer, wie unter *Mehrere Kampagnen*; bestehende Kampagnen bekommen nichts nachgetragen.
   Kira hat die Automatic Pistol, Jonas die Blade als Primärwaffe; in der Hand haben beide zu Beginn

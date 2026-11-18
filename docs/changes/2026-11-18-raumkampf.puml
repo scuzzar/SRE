@@ -47,7 +47,7 @@
 !return ""
 !endfunction
 !pragma layout smetana
-title Änderung 2026-11-18: Raumflug um eine Welt (Stufe 1 des Raumkampfs): Einheiten mit Ort, Geschwindigkeit und Schubvektor, Raumrunden, Spur
+title Änderung 2026-11-18: Raumkampf, Stufe 1 (eigenes Schiff um eine Welt): Einheiten mit Ort, Geschwindigkeit und Schubvektor, Raumrunden, Spur
 hide empty members
 hide methods
 skinparam classAttributeIconSize 0
@@ -113,8 +113,8 @@ hide <<browser>> stereotype
   class ShipSoftware $schiffe
   class ShipDesign <<reference>> $schiffe
 
-' Raumkarte und Raumflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
-  class SpaceFlight $raum $newClass("2026-11-18") {
+' Raumkarte und Raumkampf (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+  class SpaceBattle $raum $newClass("2026-11-18") {
     startedAt: datetime
     round: number
     /elapsed: number
@@ -176,10 +176,10 @@ Campaign "1" *-- "0..*" Ship : ships
 Ship "*" --> "1" ShipDesign : design
 Ship "1" *-- "0..*" ShipSoftware : software
 
-' Raumkarte und Raumflug
-Campaign "1" *-$newArrow("2026-11-18")- "0..1" SpaceFlight : flight
-SpaceFlight "*" -$newArrow("2026-11-18")-> "1" Hex : world
-SpaceFlight "1" *-$newArrow("2026-11-18")- "1..*" SpaceUnit : units {ordered}
+' Raumkarte und Raumkampf
+Campaign "1" *-$newArrow("2026-11-18")- "0..1" SpaceBattle : battle
+SpaceBattle "*" -$newArrow("2026-11-18")-> "1" Hex : world
+SpaceBattle "1" *-$newArrow("2026-11-18")- "1..*" SpaceUnit : units {ordered}
 SpaceUnit "*" -$newArrow("2026-11-18")-> "1" Ship : ship
 SpaceUnit "1" *-$newArrow("2026-11-18")- "*" TrackPoint : track {ordered}
 
