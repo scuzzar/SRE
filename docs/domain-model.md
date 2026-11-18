@@ -417,7 +417,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Ship.berthedSince`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-17b-monatsabrechnung.png`](changes/2026-11-17b-monatsabrechnung.png).
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-18): **Missionen** (siehe *Missionen*). Eine Mission
+> Am 18. November 2026 freigegeben (Kennzeichen 2026-11-18): **Missionen** (siehe *Missionen*). Eine Mission
 > hat Titel, Text, Zustand (offen, erledigt, gescheitert), höchstens einen Auftraggeber (einen
 > dauerhaften NSC) und Orte mit Etikett; sie stehen in einem eigenen, fünften Reiter. Die offenen
 > Missionen sind die Handlungsfäden des Orakels: Fällt ein Fadenfokus, lost die Karte eine aus.
@@ -457,8 +457,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Missionen | [views/mission.png](views/mission.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist
-[2026-11-18](changes/2026-11-18-missionen.png): Missionen mit Auftraggeber und Orten, die
-zugleich die Handlungsfäden des Orakels sind.
+derzeit keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -2494,7 +2493,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     denen etwas geschehen ist oder NSC leben.
   - **Bestehende Kampagnen:** Ein bisheriger Aufenthaltsort bzw. Ort eines NSC wird ein Ort mit
     dieser Welt, ohne Feld und Stadt.
-- **Missionen** (wartet auf Freigabe, 2026-11-18). Eine **Mission** (`Mission`) ist ein Auftrag
+- **Missionen** (freigegeben am 18. November 2026, 2026-11-18). Eine **Mission** (`Mission`) ist ein Auftrag
   oder Ziel, das die Gruppe verfolgt, z. B. „Fracht nach Regina schmuggeln“. Sie gehört zur
   Kampagne (`missions`, in der Reihenfolge, in der sie angelegt wurden).
   - *Inhalt*: ein Titel (`title`, nicht leer, Leerraum am Rand fällt weg), ein freier Text (`text`,
@@ -2866,6 +2865,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
+
+- **Missionen** (2026-11-18) sind noch nicht gebaut: `Mission`, `MissionPlace`, `MissionState`,
+  `Campaign.missions`, `EventFocus.thread` und `thread` an Karte und Kartenauswahl fehlen im Code,
+  ebenso der Reiter Missionen, „Als Mission“ beim Patron und die Zeichen auf der Karte. Vor dem
+  Bau kommt ein UI-Prototyp (`docs/mock/missionen-tab.html`).
 
 - **Monat und Monatsabrechnung** (2026-11-17b) sind gebaut (`model/upkeep.ts`, Monate in
   `model/time.ts`). **`MonthEnd → Booking : costs`** ist im Code der Bereich der Buchungen von

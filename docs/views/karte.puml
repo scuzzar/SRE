@@ -85,7 +85,7 @@ hide <<browser>> stereotype
 ' Subsektor und Welten
 
 ' Missionen
-  class Mission $mission $newClass("2026-11-18")
+  class Mission $mission
 
 ' Verlauf
   abstract class LogEntry $probe
@@ -166,7 +166,7 @@ hide <<browser>> stereotype
     to: number
     name: string
     text: string
-    $new("2026-11-18", "thread: boolean")
+    thread: boolean
   }
   class Section <<reference>> $karte {
     name: string
@@ -225,8 +225,8 @@ Card "*" --> "0..1" Odds : pickedOdds
 Card "*" --> "0..1" EventFocus : /focus
 CardPick "*" --> "0..1" EventFocus : /focus
 Card "1" *-- "1" MapIcon : map
-Card "*" -$newArrow("2026-11-18")-> "0..1" Mission : thread
-CardPick "*" -$newArrow("2026-11-18")-> "0..1" Mission : thread
+Card "*" --> "0..1" Mission : thread
+CardPick "*" --> "0..1" Mission : thread
 PickedItem "*" --> "1" Slot : /in
 PickedItem "*" --> "1..2" Entry : picked {ordered}
 Section "1" *-- "1..*" Slot : slots {ordered}
@@ -242,5 +242,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class EventFocus #line:d0021b;line.bold
 @enduml

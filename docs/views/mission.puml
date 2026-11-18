@@ -86,16 +86,16 @@ hide <<browser>> stereotype
 ' Subsektor und Welten
 
 ' Missionen
-  class Mission $mission $newClass("2026-11-18") {
+  class Mission $mission {
     title: string
     text: string
     state: MissionState
     retired: boolean
   }
-  class MissionPlace <<value>> $mission $newClass("2026-11-18") {
+  class MissionPlace <<value>> $mission {
     label: string [0..1]
   }
-  enum MissionState <<value>> $mission $newClass("2026-11-18") {
+  enum MissionState <<value>> $mission {
     open
     done
     failed
@@ -120,11 +120,11 @@ hide <<browser>> stereotype
 ' Zeit und Reisen
 
 ' Charaktererschaffung und Lebenslauf
-Campaign "1" *-$newArrow("2026-11-18")- "*" Mission : missions {ordered}
-Mission "*" -$newArrow("2026-11-18")-> "0..1" Character : client
-Mission "1" *-$newArrow("2026-11-18")- "*" MissionPlace : places {ordered}
-MissionPlace "1" *-$newArrow("2026-11-18")- "1" Place : place
-Mission -$newArrow("2026-11-18")-> MissionState
+Campaign "1" *-- "*" Mission : missions {ordered}
+Mission "*" --> "0..1" Character : client
+Mission "1" *-- "*" MissionPlace : places {ordered}
+MissionPlace "1" *-- "1" Place : place
+Mission --> MissionState
 
 ' Laufbahnen (Referenzdaten)
 
@@ -143,8 +143,8 @@ Mission -$newArrow("2026-11-18")-> MissionState
 ' Begegnung
 
 ' Karte
-Card "*" -$newArrow("2026-11-18")-> "0..1" Mission : thread
-CardPick "*" -$newArrow("2026-11-18")-> "0..1" Mission : thread
+Card "*" --> "0..1" Mission : thread
+CardPick "*" --> "0..1" Mission : thread
 
 
 legend right

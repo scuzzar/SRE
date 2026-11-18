@@ -104,7 +104,7 @@ hide <<browser>> stereotype
   class Hex $sektor
 
 ' Missionen
-  class Mission $mission $newClass("2026-11-18")
+  class Mission $mission
 
 ' Verlauf
   abstract class LogEntry $probe
@@ -147,7 +147,7 @@ Campaign "1" *-- "0..*" Ship : ships
 
 ' Charaktererschaffung und Lebenslauf
 Campaign "1" *-- "0..1" Generation : generation
-Campaign "1" *-$newArrow("2026-11-18")- "*" Mission : missions {ordered}
+Campaign "1" *-- "*" Mission : missions {ordered}
 
 ' Laufbahnen (Referenzdaten)
 
