@@ -1,9 +1,9 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 // Zwei Fenster derselben App auf einem Gerät: Nur eines speichert (Web Locks); und was nach einer
 // Eingabe schiefgeht, steht als Hinweis da.
 
-const elsewhere = (page: import('@playwright/test').Page) => page.getByRole('alertdialog', { name: 'In einem anderen Fenster offen' });
+const elsewhere = (page: Page) => page.getByRole('alertdialog', { name: 'In einem anderen Fenster offen' });
 
 test('Ein zweites Fenster speichert nicht, bis es übernimmt; dann steht das erste still', async ({ page, context }) => {
   await page.goto('/');
