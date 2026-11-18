@@ -122,29 +122,35 @@ Frage.
 
 ### Der Schubbefehl
 
-Je Raumrunde bekommt jede steuerbare Einheit einen **Schubbefehl** aus zwei Teilen:
+Je Raumrunde bekommt jede steuerbare Einheit einen **Schubbefehl**: einen **Schubvektor**, also
+Richtung und Stärke. Er gilt unverändert für die ganze Runde, als feste Richtung im Raum.
 
-1. **Stärke** in G, von 0 bis zur Beschleunigung des Maneuver Drive (z. B. 2 G beim Scout, 6 G beim
-   Jäger). ⚑ Stufenlos in Schritten von 0,1 G; die SR kennen nur ganze G.
-2. **Ausrichtung**, als einer dieser Modi:
+- **Stärke** in G, von 0 bis zur Beschleunigung des Maneuver Drive (z. B. 2 G beim Scout, 6 G beim
+  Jäger). ⚑ Stufenlos in Schritten von 0,1 G; die SR kennen nur ganze G.
+- **Eingabe nur durch Ziehen** (Entscheidung des Owners, 18. November 2026): Man zieht den Vektor
+  mit dem Finger aus dem Schiff heraus. Seine Länge ist die Stärke, beim höchsten Schub ist Schluss:
+  Ein Kreis um das Schiff zeigt die Grenze, und weiter als bis zum Kreis wächst der Pfeil nicht,
+  egal wie weit man zieht. Ein kurzer Zug, der im Schiff endet, heißt „kein Schub“.
+  - ⚑ Der Kreis hat auf dem Bildschirm immer dieselbe Größe (etwa 90 px), egal wie weit gezoomt
+    ist. So ist der Schub immer gleich fein einzustellen.
+  - ⚑ Der Pfeil lässt sich auch an seiner Spitze greifen und nachziehen, der Finger muss nicht
+    zurück ins Schiff. Daneben steht der Wert, z. B. „1,4 G“.
+  - ⚑ **Einrasten**: Am Kreis sind die nützlichen Richtungen als kleine Marken eingezeichnet: in
+    Flugrichtung (prograd), gegen die Flugrichtung (retrograd), auf das gewählte Ziel, vom Ziel weg
+    und *Angleichen* (gegen die Geschwindigkeit relativ zum Ziel). Kommt der Pfeil einer Marke auf
+    wenige Grad nahe, rastet er dort ein. Mehr Hilfe gibt es nicht, keine Knöpfe und kein Regler.
+- **Der Befehl bleibt stehen**: Ohne neuen Zug gilt in der nächsten Runde derselbe Vektor wieder.
+  Im Blatt steht ein Knopf „Kein Schub“.
 
-| Modus | Schub zeigt … | Wozu |
-|---|---|---|
-| **Fest** | in eine Richtung im Raum, die man mit dem Finger zieht | der Normalfall |
-| **Prograd** | immer in Flugrichtung (dreht sich während der Runde mit) | schneller werden, Bahn anheben |
-| **Retrograd** | immer gegen die Flugrichtung | bremsen, Bahn absenken |
-| **Auf Ziel** | immer auf eine gewählte Einheit oder einen Körper | Verfolgung, Rammkurs |
-| **Vom Ziel weg** | immer von ihr weg | Flucht |
-| **Angleichen** | gegen die Geschwindigkeit relativ zu einer Einheit | längsseits gehen, Entern, Andocken |
+Weil die Richtung über die Runde fest bleibt, krümmt sich die eigene Bahn nah an einer Welt
+anders, als der Pfeil zeigt. In einer niedrigen Umlaufbahn dreht sich die Flugrichtung in einer
+Runde um gut 70°. Das ist gewollt: Die Vorschau zeigt beim Ziehen sofort, wo man landet, und genau
+das ist die Kunst des Fliegens nah am Körper. ⚑ Mehr als ein Vektor je Runde (etwa zwei halbe
+Runden mit verschiedenem Schub) ist nicht vorgesehen. (Offene Frage.)
 
-Weil die Simulation die Runde in kleinen Schritten rechnet (siehe unten), drehen sich alle Modi außer
-*Fest* **während** der Runde mit. Das ist der Grund für die Modi: In einer engen Bahn um eine Welt
-zeigt eine feste Richtung nach 1.000 Sekunden schon ganz woanders hin. ⚑ Mehr als ein Befehl je
-Runde (etwa zwei halbe Runden mit verschiedenem Schub) ist bewusst nicht vorgesehen, die Modi
-decken das meiste ab. (Offene Frage.)
-
-⚑ **Schnellwahl im Blatt**: „Kein Schub“, „Wie letzte Runde“, „Bahn halten“ (Schub so, dass die
-gewählte Kreisbahn gehalten wird, praktisch für Stationen und Wachschiffe).
+Ein Schubvektor, der sich während der Runde mitdreht (immer prograd, immer aufs Ziel), bleibt der
+App vorbehalten: Raketen lenken sich so, und die NSC-Schiffe dürfen beim Planen dieselben festen
+Vektoren nehmen wie der Spieler.
 
 **Ausweichen kostet Schub** (Mayday, Abschnitt 4): Läuft ein Maneuver/Evade-Programm, hat das Schiff
 1 G weniger; ein 1-G-Schiff kann dann gar nicht mehr steuern. Die SR geben für die Programme nur den
@@ -248,8 +254,9 @@ Was die Karte beim Planen zeigt, ist der Kern des Spielgefühls. Es sind die dre
 
 ### Ablauf auf dem Bildschirm
 
-1. **Planen**: Einheit antippen, Schub mit dem Finger aus der Einheit herausziehen (Länge = Stärke,
-   gekappt beim Maximum) oder im Blatt einen Modus wählen. Ziele für Waffen wählen.
+1. **Planen**: Einheit antippen, Schubvektor mit dem Finger aus der Einheit herausziehen (Länge =
+   Stärke, gekappt am Kreis des höchsten Schubs). Ziele für Waffen wählen. Ein Zug, der woanders
+   auf der Karte beginnt, verschiebt die Karte; zwei Finger zoomen.
 2. **„Runde ausführen“**: Die NSC entscheiden, dann spielt die Karte die 1.000 Sekunden in etwa zwei
    Sekunden ab, alle Einheiten zugleich. ⚑ Man kann die Wiedergabe anhalten und mit einem Regler
    zurück- und vorspulen.
@@ -314,8 +321,8 @@ Nach den SR (*Turn Sequence*), angepasst an gleichzeitige Bewegung ⚑:
 - **Aussetzen** in Phase 5 (militärische Schiffe alle in einer Runde, zivile eines je Runde ⚑, nach
   *Abandon Ship* in den SR). Danach sind sie eigene Einheiten mit eigenem Schubbefehl.
 - ⚑ Damit man bei sechs Jägern nicht sechs Schübe ziehen muss: **Rotte**. Mehrere Einheiten einer
-  Seite lassen sich zusammenfassen und bekommen einen gemeinsamen Befehl (z. B. „Auf Ziel 6 G“ oder
-  „Begleiten“: Position neben dem Mutterschiff halten).
+  Seite lassen sich zusammenfassen und fliegen mit einem gemeinsamen Schubvektor, den man einmal
+  zieht. ⚑ Alternativ „Begleiten“: Die App hält die Rotte neben dem Mutterschiff, ohne eigenen Zug.
 - **Aufnehmen**: Ist ein Small Craft dem Mutterschiff auf ⚑ 100 km nahe und langsamer als 0,1 km/s
   relativ zu ihm, kann es in der nächsten Phase 5 andocken.
 - Small Craft ohne Computer: DM −1 auf Waffen und keine zweite Waffe zugleich (SE 13).
@@ -343,8 +350,8 @@ Bewegungsmodell direkt spürt:
 
 Ein Schiff mit ausgefallenem Maneuver Drive kann geentert werden (SR). In Mayday geht Entern, wenn
 die Kurse angeglichen sind (Gegenwarts- und Zukunftsmarker beider Schiffe im selben Feld). ⚑ Auf der
-Raumkarte heißt das: Das enternde Schiff ist ihm auf 100 km nahe und langsamer als 0,1 km/s relativ zu ihm (Modus
-*Angleichen* hilft dabei). Dann bietet das Blatt „Entern“ an. Das öffnet eine **Begegnung** mit der
+Raumkarte heißt das: Das enternde Schiff ist ihm auf 100 km nahe und langsamer als 0,1 km/s relativ zu ihm (die Marke *Angleichen* am Schubkreis
+hilft dabei). Dann bietet das Blatt „Entern“ an. Das öffnet eine **Begegnung** mit der
 Crew des anderen Schiffs als NSC und führt in die vorhandene **Kampfsimulation** des Personenkampfs.
 Danach kehrt man auf die Raumkarte zurück, mit dem geenterten Schiff als Beute oder Wrack.
 
@@ -388,7 +395,7 @@ Im Solo-Spiel steuert die App die andere Seite. Das braucht zwei Ebenen:
   schwer getroffen ist (⚑ ab der Hälfte der Treffer auf Antrieb oder Turrets eine Frage ans Orakel:
   „Bricht es ab?“).
 - **Wie fliegt er das?** ⚑ Weil die Physik ohne Zufall ist, kann die App einfach ausprobieren: Sie
-  rechnet für ein paar Dutzend Schubbefehle (Richtungen × Stärken × Modi) die nächsten zwei bis
+  rechnet für ein paar Dutzend Schubbefehle (Richtungen × Stärken) die nächsten zwei bis
   drei Runden durch und nimmt den, der der Absicht am besten dient (Abstand zum Wunschband, keine
   Aufschläge, weg von Raketen, freie Sichtlinie). Das läuft in Millisekunden und braucht keine
   eigene KI. Der Prototyp tut genau das.
@@ -401,7 +408,7 @@ rastet auf denselben vier Stufen ein wie heute (`TrayStop`):
 | Stufe | Inhalt |
 |---|---|
 | versteckt | nur der Griff; die Karte hat den ganzen Bildschirm, zum Zuschauen bei der Wiedergabe |
-| eingeklappt | Raumrunde und Uhrzeit, die gewählte Einheit mit Schubregler und Modus, darunter groß **Runde ausführen** |
+| eingeklappt | Raumrunde und Uhrzeit, die gewählte Einheit mit ihrem Schub (z. B. „1,4 G“) und dem Knopf „Kein Schub“, darunter groß **Runde ausführen**; den Schub selbst zieht man auf der Karte |
 | halb | dazu die Waffen der gewählten Einheit: je Turret Ziel, Entfernung in Raumbändern, Gesamt-DM, Munition, Nachladen; Starts von Raketen, Sand und Small Craft |
 | voll | dazu der Zustand des Schiffs (Treffer je Zone, Drive- und Power-Plant-Buchstabe, Hull, Dekompression), die Schiffspositionen der SC (Pilot, Gunner, Engineer) mit ihren DMs, und das Log der laufenden Runde |
 
@@ -417,7 +424,7 @@ Nur zur Orientierung, nicht freigegeben. Die echte Änderung kommt als Ausschnit
 - **`Body`** (Himmelskörper): Name, Radius, G·M, Bahn (Mittelpunkt-Körper, Radius, Umlaufzeit,
   Startwinkel). Abgeleitet aus der Welt (`Hex.size`), nicht gewürfelt, solange es keine Monde gibt.
 - **`SpaceUnit`** (Einheit): Art (Schiff, Small Craft, Rakete, Sand), Partei, Ort und Geschwindigkeit,
-  Schubbefehl (`Thrust`: Stärke, Modus, Richtung oder Ziel), Spur; beim eigenen Schiff ein Verweis
+  Schubbefehl (`Thrust`: Richtung und Stärke), Spur; beim eigenen Schiff ein Verweis
   auf `Ship`, bei fremden ein Schiffsentwurf und eigene Schäden.
 - **Bewaffnung am Schiff**: Turrets mit Lafette (Single, Double, Triple) und Waffen (Pulse Laser,
   Beam Laser, Missile Rack, Sandcaster), Munition. Heute sind die Hardpoints nur eine Zahl.
@@ -431,7 +438,7 @@ Nur zur Orientierung, nicht freigegeben. Die echte Änderung kommt als Ausschnit
   Vorschau, Fächer, nächste Annäherung. Ohne React, ohne Zufall, gut testbar.
 
 **Neue Begriffe** für die Tabelle „Begriffe“: Raumkarte, Raumkampf, Raumrunde, Raumband, Himmelskörper,
-Einheit, Schubbefehl, Modus des Schubs, Bahn, Bahnvorschau, Reichweitenfächer, Nächste Annäherung,
+Einheit, Schubbefehl, Schubvektor, Schubkreis, Einrasten, Bahn, Bahnvorschau, Reichweitenfächer, Nächste Annäherung,
 Sprunggrenze, Schatten, Rotte, Absicht (eines NSC-Schiffs).
 
 ## 9. Was vorher fehlt
@@ -449,7 +456,7 @@ Jede Stufe ist für sich spielbar und bekommt ihre eigene Änderung im Modell.
 
 | Stufe | Inhalt | Ergebnis |
 |---|---|---|
-| 1 | **Raumkarte und Bewegung**: die Welt als einziger Körper, das eigene Schiff, Schubbefehle mit Modi, Vorschau, Wiedergabe, Sprunggrenzen, Zoom-Kette Subsektor ↔ Raumkarte ↔ Globus | Man kann um eine Welt fliegen und Bahnen lernen. Klärt, ob sich das Bewegungsmodell gut anfühlt |
+| 1 | **Raumkarte und Bewegung**: die Welt als einziger Körper, das eigene Schiff, Schubvektor durch Ziehen, Vorschau, Wiedergabe, Sprunggrenzen, Zoom-Kette Subsektor ↔ Raumkarte ↔ Globus | Man kann um eine Welt fliegen und Bahnen lernen. Klärt, ob sich das Bewegungsmodell gut anfühlt |
 | 2 | **Gegner und Laser**: ein NSC-Schiff mit Absicht und Planer, Laserfeuer, Rückfeuer, Trefferzonen, Schaden, Ende des Kampfs | Der erste echte Raumkampf |
 | 3 | **Raketen und Sand**: Raketen als Einheiten mit Brennschluss, Anti-Missile, ECM, Sandwolken | Das volle Waffenprogramm der SR |
 | 4 | **Small Craft und Entern**: Jäger und Beiboote aussetzen, Rotten, aufnehmen; Entern mit Übergang in die Kampfsimulation | Träger, Enterkommandos |
@@ -500,8 +507,9 @@ Weitere Ideen:
 1. **2D oder 3D?** Vorschlag: 2D.
 2. **Gleichzeitig ziehen oder abwechselnd** wie in den SR? Vorschlag: gleichzeitig.
 3. **Schub stufenlos (0,1 G) oder nur ganze G** wie in den SR? Vorschlag: stufenlos.
-4. **Ein Schubbefehl je Raumrunde mit mitdrehenden Modi**, oder mehrere Teilbefehle je Runde?
-   Vorschlag: einer, mit Modi.
+4. **Ein Schubvektor je Raumrunde**, fest im Raum und nur durch Ziehen (entschieden), oder
+   später mehrere Teilvektoren je Runde? Vorschlag: einer.
+   Noch offen dabei: Soll der Vektor an prograd, retrograd, Ziel und Angleichen einrasten?
 5. **Zoom-Kette**: Öffnet ein Tippen auf eine Welt im Subsektor künftig immer die Raumkarte (und der
    Globus kommt durch Hineinzoomen), oder bleibt es beim Globus mit einem eigenen Knopf „Raum“?
 6. **Wer schubt, leuchtet**: als Hausregel übernehmen?
