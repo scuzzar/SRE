@@ -82,7 +82,7 @@ hide <<browser>> stereotype
 
 ' Schiffe
 
-' Raumkarte und Raumkampf (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -148,7 +148,7 @@ Campaign "1" *-- "*" LogEntry : log {ordered}
 
 ' Schiffe
 
-' Raumkarte und Raumkampf
+' Raumkarte und Systemflug
 
 ' Zeit und Reisen
 LogEntry <|-- TimePassed

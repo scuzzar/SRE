@@ -458,10 +458,11 @@ läuft, zeigt der Reiter Begegnung oben „Raumkampf“ statt „Kampf“.
 ## 8. Was ins Domänenmodell käme (Skizze)
 
 Nur zur Orientierung. Stufe 1 steht als Änderung 2026-11-18 im Domänenmodell und wartet auf
-Freigabe ([Ausschnitt](changes/2026-11-18-raumkampf.png), Regeln unter *Raumkampf, Stufe 1* in
-[`domain-model.md`](domain-model.md)); er heißt auch ohne Gegner schon `SpaceBattle` (Raumkampf). Die übrigen Stufen kommen als eigene Änderungen.
+Freigabe ([Ausschnitt](changes/2026-11-18-systemflug.png), Regeln unter *Systemflug* in
+[`domain-model.md`](domain-model.md)). Was auf der Raumkarte läuft, heißt dort **Systemflug**
+(`SystemFlight`, Owner), auch wenn gekämpft wird. Die übrigen Stufen kommen als eigene Änderungen.
 
-- **`SpaceBattle`** (Raumkampf), an der Kampagne wie die laufende `Encounter`: Welt (`Hex`), Zeitpunkt,
+- **`SystemFlight`** (Systemflug), an der Kampagne wie die laufende `Encounter`: Welt (`Hex`), Zeitpunkt,
   Raumrunde, Körper, Einheiten, Ortungsstand. Nach jeder Raumrunde gespeichert.
 - **`Body`** (Himmelskörper): Name, Radius, G·M, Bahn (Mittelpunkt-Körper, Radius, Umlaufzeit,
   Startwinkel). Abgeleitet aus der Welt (`Hex.size`), nicht gewürfelt, solange es keine Monde gibt.

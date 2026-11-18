@@ -82,8 +82,8 @@ hide <<browser>> stereotype
 
 ' Schiffe
 
-' Raumkarte und Raumkampf (Konzept: docs/konzept-raumkampf.md, Stufe 1)
-  class SpaceBattle $raum $newClass("2026-11-18")
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+  class SystemFlight $raum $newClass("2026-11-18")
 
 ' Charaktererschaffung und Lebenslauf
   class Career $erschaffung
@@ -219,8 +219,8 @@ Booking "*" --> "0..1" Hex : in
 
 ' Schiffe
 
-' Raumkarte und Raumkampf
-SpaceBattle "*" -$newArrow("2026-11-18")-> "1" Hex : world
+' Raumkarte und Systemflug
+SystemFlight "*" -$newArrow("2026-11-18")-> "1" Hex : world
 
 ' Zeit und Reisen
 Journey "*" --> "1" Hex : from

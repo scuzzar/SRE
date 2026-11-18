@@ -82,7 +82,7 @@ hide <<browser>> stereotype
 ' Schiffe
   class ShipDesign <<reference>> $schiffe
 
-' Raumkarte und Raumkampf (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
 
 ' Charaktererschaffung und Lebenslauf
   class Generation $erschaffung {
@@ -197,7 +197,7 @@ hide <<browser>> stereotype
 
 ' Schiffe
 
-' Raumkarte und Raumkampf
+' Raumkarte und Systemflug
 Gain "*" --> "0..1" ShipDesign : ship
 
 ' Zeit und Reisen

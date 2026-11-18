@@ -124,7 +124,7 @@ hide <<browser>> stereotype
 
 ' Schiffe
 
-' Raumkarte und Raumkampf (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
 
 ' Charaktererschaffung und Lebenslauf
   class Generation $erschaffung
@@ -182,7 +182,7 @@ Booking "*" --> "0..1" Character : for
 
 ' Schiffe
 
-' Raumkarte und Raumkampf
+' Raumkarte und Systemflug
 
 ' Zeit und Reisen
 Passenger "*" --> "1" Character : for
