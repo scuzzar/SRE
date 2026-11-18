@@ -2525,7 +2525,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - *Reiter Missionen*: ein eigener Reiter, der fünfte, hinter Schiff (so behalten die anderen ihre
     Taste; Missionen ist Taste 5). Oben stehen die offenen Missionen, darunter eingeklappt die
     erledigten und gescheiterten, wie die toten NSC. Jede zeigt Titel, Auftraggeber und ihre Orte
-    mit Etikett; Antippen öffnet den Editor, ein Ort darin führt zu ihm auf Globus bzw. Subsektor.
+    mit Etikett; Antippen öffnet den Editor, ein Ort darin führt zu ihm auf den Globus (die Karte fliegt hin
+    und zoomt hinein).
     **„+ Neue Mission“** legt eine offene Mission an, mit dem Aufenthaltsort als erstem Ort, wenn er
     ein Feld oder eine Stadt auf einem Feld ist. Im Editor kommt ein Ort hinzu mit
     **„+ Aufenthaltsort“** (ebenso nur mit Feld) oder **„+ Auf dem Globus“**: Wie bei *NSC

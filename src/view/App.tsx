@@ -166,7 +166,7 @@ export function App() {
   const base = (
     <div className="base">
       {view.globe ? (
-        <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} world={view.world} here={view.location === view.globe.id} travel={view.travel} log={view.log} logDays={view.logDays} trip={view.trip} />
+        <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} world={view.world} here={view.location === view.globe.id} travel={view.travel} log={view.log} logDays={view.logDays} trip={view.trip} focus={view.globeFocus} />
       ) : (
         <div className="base-sector">
           <SectorScreen view={view} fill dockTo={fieldSlot} />

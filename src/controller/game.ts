@@ -244,7 +244,7 @@ import type { JourneyMode } from './time-view';
 /** Der Schlüssel eines Deckplan-Platzes in den Marken: „Entwurf/Platz“. */
 const slotKey = (slot: { readonly design: string; readonly name: string }): string => `${slot.design}/${slot.name}`;
 
-const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, shopFrom: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, missionEditor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, shopFrom: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, missionEditor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, globeFocus: undefined, selected: undefined, picking: false } as const;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -319,6 +319,7 @@ export class GameController {
       npcAll: false,
       npcPlacing: undefined,
       missionEditor: undefined,
+      globeFocus: undefined,
       shopFrom: undefined,
       npcJoining: undefined,
       encounterRoll: undefined,
@@ -2100,13 +2101,20 @@ export class GameController {
     this.update({ screen: 'missions', globe: this.state.globe && { picked: undefined }, missionEditor: { ...editor, rev: editor.rev + 1, picking: false } });
   }
 
-  /** Ein Ort einer Mission (Chip im Reiter): öffnet den Globus seiner Welt mit dem Feld angetippt. */
+  /**
+   * Ein Ort einer Mission (Chip im Reiter): öffnet den Globus seiner Welt mit dem Feld angetippt; der
+   * Globus fliegt hin und zoomt hinein (`globeFocus`). Steht das Blatt ganz oben, geht es auf halbe Höhe,
+   * damit man die Karte sieht.
+   */
   showMissionPlace(world: string, cell: number): void {
     const column = Number(world.slice(0, 2));
     const row = Number(world.slice(2));
     this.update({ missionEditor: undefined });
-    this.openGlobeAt(column, row);
-    if (this.state.globe) this.update({ globe: { picked: cell } });
+    const open = this.state.world && this.state.globe && hexId(this.state.world.column, this.state.world.row) === world;
+    if (!open) this.openGlobeAt(column, row);
+    if (!this.state.globe) return;
+    if (this.state.trayStop === 'full') this.setTrayStop('half');
+    this.update({ globe: { picked: cell }, globeFocus: { cell, n: (this.state.globeFocus?.n ?? 0) + 1 } });
   }
 
   /** „Als Mission“ zum letzten Patron-Wurf: Patron-NSC und offene Mission; danach steht die Mission im Editor. */
@@ -2279,7 +2287,7 @@ export class GameController {
 
   /** Schließt die Weltkarte; eine Welt in Erschaffung bleibt gespeichert. */
   closeWorld(): void {
-    this.update({ world: undefined, worldError: undefined, globe: undefined, npcPlacing: undefined });
+    this.update({ world: undefined, worldError: undefined, globe: undefined, globeFocus: undefined, npcPlacing: undefined });
   }
 
   /**
@@ -2299,21 +2307,22 @@ export class GameController {
   openGlobeAt(column: number, row: number): void {
     const hex = hexAt(this.campaign.hexes, column, row);
     if (!isWorld(hex)) throw new DomainError('Dort ist keine fertige Welt.');
-    this.update({ world: { column, row, rolls: [] }, worldError: undefined, selected: undefined, globe: undefined });
+    this.update({ world: { column, row, rolls: [] }, worldError: undefined, selected: undefined, globe: undefined, globeFocus: undefined });
     // Ohne Oberfläche (oder Größe 0) bleibt es bei der Weltkarte.
     if (canHaveMap(hex)) this.openGlobe();
   }
 
   /** Schließt den Globus; die Weltkarte bleibt offen. */
   closeGlobe(): void {
-    this.update({ globe: undefined });
+    this.update({ globe: undefined, globeFocus: undefined });
   }
 
   /** Tippt ein Oberflächenfeld auf dem Globus an (oder hebt die Wahl auf). */
   pickCell(cell: number | undefined): void {
     if (!this.state.globe) return;
     // Ein anderes Feld anzutippen bricht NSC platzieren ab.
-    this.update({ globe: { picked: cell }, npcPlacing: undefined, ...(this.state.tripPlan && this.state.tripPlan.target !== cell ? { tripPlan: undefined } : {}) });
+    const focus = this.state.globeFocus?.cell === cell ? {} : { globeFocus: undefined };
+    this.update({ globe: { picked: cell }, npcPlacing: undefined, ...focus, ...(this.state.tripPlan && this.state.tripPlan.target !== cell ? { tripPlan: undefined } : {}) });
   }
 
   // --- Fahrt über die Oberfläche (siehe domain-model.md, *Fahrt*) ---------------------------------

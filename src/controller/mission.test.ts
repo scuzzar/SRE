@@ -84,6 +84,21 @@ describe('Missionen (2026-11-18)', () => {
     expect(view.sector.find((h) => h.id === '0405')?.mission).toBe(true);
   });
 
+  it('ein Ortsverweis lässt den Globus hinfliegen: Feld angetippt, Blatt höchstens halb, Fokus für die Karte', async () => {
+    const game = await onField();
+    game.setTrayStop('full');
+    game.showMissionPlace('0405', 20);
+    const view = game.snapshot();
+    expect(view.globe?.picked?.cell).toBe(20);
+    expect(view.trayStop).toBe('half');
+    expect(view.globeFocus).toEqual({ cell: 20, n: 1 });
+    // Derselbe Ort noch einmal fliegt wieder hin; ein anderes Feld anzutippen nimmt den Fokus weg.
+    game.showMissionPlace('0405', 20);
+    expect(game.snapshot().globeFocus).toEqual({ cell: 20, n: 2 });
+    game.pickCell(21);
+    expect(game.snapshot().globeFocus).toBeUndefined();
+  });
+
   it('erledigte Missionen stehen getrennt; Löschen löscht wirklich, solange der Log nicht auf sie zeigt', async () => {
     const game = await onField();
     game.newMission();

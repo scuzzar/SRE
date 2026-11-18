@@ -374,6 +374,8 @@ export interface Snapshot {
   readonly world: WorldView | undefined;
   /** Der Globus der offenen Welt, wenn er im Vordergrund steht und die Welt eine Oberflächenkarte hat. */
   readonly globe: GlobeView | undefined;
+  /** Wohin der Globus fliegen und zoomen soll, nachdem ein Ortsverweis angetippt wurde (siehe ControllerState). */
+  readonly globeFocus: { readonly cell: number; readonly n: number } | undefined;
   /** Das gewählte Feld auf der Karte, mit seinem Vorkommen, sobald gewürfelt. */
   readonly selected: SelectedHexView | undefined;
   /** Die Karte steht im Vordergrund, um für die Charaktererschaffung eine Welt zu wählen oder zu erschaffen. */
@@ -1539,6 +1541,11 @@ export interface ControllerState {
   readonly worldError: string | undefined;
   /** Der Globus der offenen Welt ist die Grundkarte (sonst der Subsektor), mit dem angetippten Oberflächenfeld. */
   readonly globe: { readonly picked: number | undefined } | undefined;
+  /**
+   * Ein Ortsverweis wurde angetippt (etwa ein Ort einer Mission): Der Globus soll zu diesem Feld fliegen
+   * und hineinzoomen. `n` zählt hoch, damit derselbe Ort ein zweites Mal wieder hinfliegt.
+   */
+  readonly globeFocus: { readonly cell: number; readonly n: number } | undefined;
   /** Das gewählte Feld auf der Karte, nicht erzeugt oder leer; mit dem Vorkommen, wenn es gerade hier gewürfelt wurde. */
   readonly selected: { readonly column: number; readonly row: number; readonly occurrence?: WorldRoll } | undefined;
   /** Die Karte steht über der Charaktererschaffung, um eine Welt zu wählen. */
@@ -2700,7 +2707,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, elsewhere: state.elsewhere, notice: state.notice, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, missions: { open: [], done: [], failed: [], retired: [], editor: undefined, picking: undefined, here: undefined, hereBlocker: undefined, clients: [] }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, missions: { open: [], done: [], failed: [], retired: [], editor: undefined, picking: undefined, here: undefined, hereBlocker: undefined, clients: [] }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, globeFocus: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -2767,6 +2774,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     worlds: worldList(campaign.hexes),
     world: state.world && worldView(campaign.hexes, state.world.column, state.world.row, state.world.rolls, state.worldError, happenedAt(campaign, hexId(state.world.column, state.world.row))),
     globe: state.world && state.globe ? globeView(campaign, state.world.column, state.world.row, state.globe.picked, state.tripPlan?.options[state.tripPlan.chosen], state.trace) : undefined,
+    globeFocus: state.world && state.globe ? state.globeFocus : undefined,
     picking: pickingView(state, campaign),
     selected: state.selected && selectedView(campaign.hexes, state.selected.column, state.selected.row, state.selected.occurrence, state.world ? undefined : state.worldError),
   };

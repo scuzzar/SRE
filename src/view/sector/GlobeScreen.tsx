@@ -45,6 +45,7 @@ export function GlobeScreen({
   log,
   logDays,
   trip,
+  focus,
 }: {
   globe: GlobeView;
   world: WorldView | undefined;
@@ -53,6 +54,8 @@ export function GlobeScreen({
   log: readonly LogItem[];
   logDays: readonly (string | undefined)[];
   trip: TripView | undefined;
+  /** Ein angetippter Ortsverweis: zu diesem Feld fliegen und hineinzoomen (`n` wechselt je Verweis). */
+  focus?: { readonly cell: number; readonly n: number } | undefined;
 }) {
   const game = useGame();
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -381,6 +384,41 @@ export function GlobeScreen({
     // Nur ein neu angetipptes Feld zählt.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pickedCell]);
+
+  // Ein angetippter Ortsverweis (etwa ein Ort einer Mission): Die Karte fliegt zum Feld und zoomt hinein,
+  // so dass es mitten im sichtbaren Teil über dem Blatt steht. Gemessen wird, wenn das Blatt seine Stufe hat.
+  useEffect(() => {
+    if (!focus) return;
+    const cell = focus.cell;
+    const timer = window.setTimeout(() => {
+      const el = stage.current;
+      if (!el) return;
+      const { camera: from, view: size } = seen.current;
+      const r = el.getBoundingClientRect();
+      const bottom = Math.min(r.bottom, trayTop(el));
+      const zoom = Math.max(from.zoom, clampZoom(3));
+      // Wo das Feld stehen soll (Pixel im Canvas) und wie weit die Mitte der Kamera dafür darunter liegt.
+      const target = Math.max(40, (bottom - r.top) / 2);
+      const R = radiusOf(size, { ...from, zoom });
+      const shift = Math.asin(Math.max(-0.9, Math.min(0.9, (size.height / 2 - target) / R)));
+      const lat = globe.grid.lat[cell]! * DEG - shift;
+      const dLon = shortest(globe.grid.lon[cell]! * DEG - from.lon);
+      cancelAnimationFrame(flyFrame.current);
+      const start = performance.now();
+      setMoving(true);
+      const glide = (now: number) => {
+        const t = Math.min(1, (now - start) / 600);
+        const e = 1 - (1 - t) ** 3;
+        setCamera({ lat: from.lat + (lat - from.lat) * e, lon: from.lon + dLon * e, zoom: from.zoom + (zoom - from.zoom) * e });
+        if (t < 1) flyFrame.current = requestAnimationFrame(glide);
+        else setMoving(false);
+      };
+      flyFrame.current = requestAnimationFrame(glide);
+    }, 320);
+    return () => window.clearTimeout(timer);
+    // Nur ein neuer Verweis zählt.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus?.n, focus?.cell]);
 
   /** Dreht die Karte zu einem Feld, zoomt etwas hinein und tippt es an. */
   const flyTo = (cell: number) => {
