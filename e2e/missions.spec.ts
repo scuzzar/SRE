@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openTab } from './layout';
+import { openTab, revealed } from './layout';
 
 // Missionen (2026-11-18): der Reiter Missionen mit Editor, Orte immer als Feld auf dem Globus, „Missionen
 // hier“ am Feld.
@@ -19,6 +19,15 @@ test('Missionen: anlegen mit dem Feld der Gruppe und einem Ort vom Globus, am Fe
   await editor.getByLabel('Titel').fill('Fracht nach Regina schmuggeln');
   await editor.getByLabel(/^Etikett für /).first().fill('Treffpunkt');
   await editor.getByLabel('Auftraggeber').selectOption({ label: 'keiner' });
+  // „Karte ziehen“ unter dem Text: Die Auswahl der Karte hängt sich an den Text an, nicht an den Log.
+  await editor.getByLabel('Text').fill('Ohne Zoll.');
+  await editor.getByRole('button', { name: 'Karte ziehen' }).click();
+  const card = page.getByRole('dialog', { name: 'Inspirationskarte' });
+  await revealed(card);
+  await card.getByRole('group', { name: /^Orakel, W100 \d+$/ }).getByRole('button').nth(1).click();
+  await card.getByRole('button', { name: /1 Eintrag in die Notiz übernehmen/ }).click();
+  await expect(card).toBeHidden();
+  await expect(editor.getByLabel('Text')).toHaveValue(/^Ohne Zoll\.\n.+/);
   // Ein zweiter Ort vom Globus: Der Editor tritt zurück, ein Feld antippen, „OK“.
   await editor.getByRole('button', { name: '+ Auf dem Globus' }).click();
   await expect(editor).toHaveCount(0);

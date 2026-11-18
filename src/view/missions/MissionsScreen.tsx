@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { MissionItem, MissionPlaceView, MissionsView, Snapshot } from '../../controller';
 import type { MissionInput, MissionState } from '../../model';
 import { missionStateText, roleText } from '../format';
 import { Form } from '../Form';
-import { useGame } from '../game-context';
-import { BriefcaseIcon, CloseIcon, LocateIcon, PencilIcon, PinIcon, TrashIcon } from '../icons';
+import { useGame, useSnapshot } from '../game-context';
+import { haptic } from '../haptics';
+import { BriefcaseIcon, CardIcon, CloseIcon, LocateIcon, PencilIcon, PinIcon, TrashIcon } from '../icons';
+import { CardSheet } from '../oracle/CardSheet';
 
 /**
  * Der Reiter Missionen (siehe domain-model.md, *Missionen*): oben die offenen Missionen, darunter
@@ -141,9 +143,15 @@ function PlaceChip({ place }: { place: MissionPlaceView }) {
  * Der Editor einer Mission: Titel, Zustand, Auftraggeber, Text und Orte mit Etikett. Die Eingaben
  * während des Tippens hält die View; „+ Auf dem Globus“ gibt sie dem Controller mit, der sie über das
  * Ort wählen hinweg hält (`rev` wechselt danach, und der Editor beginnt mit dem neuen Stand).
+ *
+ * Unter dem Text zieht „Karte ziehen“ die Inspirationskarte als eigenes Overlay über den Editor, wie
+ * beim Feld Notiz des Charakter-Editors: Was man darauf auswählt, hängt sich beim Bestätigen an den
+ * Text an (neue Zeile), statt einen Logeintrag anzulegen (`card.forNote`, siehe `CardSheet`).
  */
 export function MissionEditor({ missions }: { missions: MissionsView }) {
   const game = useGame();
+  const view = useSnapshot();
+  const noteCard = view.card?.forNote ? view.card : undefined;
   const editor = missions.editor!;
   const [title, setTitle] = useState(editor.title);
   const [text, setText] = useState(editor.text);
@@ -151,6 +159,14 @@ export function MissionEditor({ missions }: { missions: MissionsView }) {
   const [client, setClient] = useState(editor.client ?? '');
   const [places, setPlaces] = useState<readonly MissionPlaceView[]>(editor.places);
   const [confirmRemove, setConfirmRemove] = useState(false);
+  // Der Text wächst mit, damit eine angehängte Kartenauswahl immer ganz zu sehen ist.
+  const textField = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = textField.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [text]);
   const isNew = editor.id === undefined;
   const input = (): MissionInput => ({ title, text, state, ...(client === '' ? {} : { client }), places: places.map((p) => ({ place: p.place, ...(p.label ? { label: p.label } : {}) })) });
   const save = () => game.saveMission(input());
@@ -204,11 +220,22 @@ export function MissionEditor({ missions }: { missions: MissionsView }) {
           </label>
           <label className="field">
             <span>Text</span>
-            <textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} placeholder="Worum es geht, was vereinbart ist, Belohnung, Frist …" />
+            <textarea ref={textField} className="note-grow" value={text} onChange={(e) => setText(e.target.value)} rows={3} placeholder="Worum es geht, was vereinbart ist, Belohnung, Frist …" />
           </label>
+          <button
+            type="button"
+            className="ghost name-from-card note-card-draw"
+            onClick={() => {
+              haptic('draw');
+              game.drawCard(undefined, true);
+            }}
+          >
+            <CardIcon />
+            Karte ziehen
+          </button>
           <fieldset>
             <legend>Orte</legend>
-            {places.length === 0 && <p className="small-label">Noch kein Ort. Ein Ort ist immer ein Feld der Oberfläche.</p>}
+            {places.length === 0 && <p className="small-label">Noch kein Ort.</p>}
             {places.length > 0 && (
               <ul className="mission-place-rows">
                 {places.map((p, i) => (
@@ -261,6 +288,15 @@ export function MissionEditor({ missions }: { missions: MissionsView }) {
           </button>
         </div>
       </section>
+      {noteCard && (
+        <CardSheet
+          card={noteCard}
+          onConfirm={(picked) => {
+            if (!picked) return;
+            setText((t) => (t.trim() ? `${t}\n${picked}` : picked));
+          }}
+        />
+      )}
     </div>
   );
 }

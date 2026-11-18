@@ -2501,7 +2501,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - *Inhalt*: ein Titel (`title`, nicht leer, Leerraum am Rand fällt weg), ein freier Text (`text`,
     darf leer sein), der Zustand (`state`), wahlweise ein Auftraggeber und beliebig viele Orte.
     Belohnung und Frist hat eine Mission nicht (Entscheidung des Owners): Eine Belohnung bucht man
-    von Hand in der Kasse, eine Frist schreibt man in den Text.
+    von Hand in der Kasse, eine Frist schreibt man in den Text. Wie bei der Notiz eines Charakters
+    zieht „Karte ziehen“ unter dem Text die Inspirationskarte; die Auswahl hängt sich an den Text an
+    und kommt nicht in den Log.
   - *Zustand* (`MissionState`): **offen** (`open`), **erledigt** (`done`), **gescheitert**
     (`failed`). Eine neue Mission ist offen; im Editor wechselt man frei, auch zurück auf offen.
   - *Auftraggeber* (`client`): höchstens ein dauerhafter NSC (`Character` mit `npc`), meist mit der
