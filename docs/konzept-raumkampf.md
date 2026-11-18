@@ -106,8 +106,18 @@ Frage.
   Sprunggrenze im Bild“. Mit zwei Fingern ziehen und zoomen, wie auf dem Globus.
 - Gezeichnet mit Canvas 2D (für ein paar Dutzend Einheiten reicht das, der Globus braucht WebGL,
   die Raumkarte nicht).
-- Die Welt wird wie das **Weltsymbol** gezeichnet (aus UWP, Temperatur, Leben), in echter Größe;
-  ganz herausgezoomt bleibt sie als Punkt mit Symbol sichtbar.
+- **Himmelskörper zeichnet die Planetendarstellung der App** (Entscheidung des Owners,
+  18. November 2026): das **Weltsymbol** (`drawWorld` in `view/sector/world-icon.ts`) aus UWP,
+  Temperatur und Leben, mit der echten Oberflächenkarte, wenn es eine gibt. So sieht eine Welt auf
+  Subsektor, Raumkarte und Globus gleich aus.
+  - Auf der Raumkarte in **echter Größe**: Das Bild wird so skaliert, dass der Radius der Welt auf
+    der Karte stimmt (Aufschlag, Schatten und Sichtlinie rechnen mit demselben Radius). Ganz
+    herausgezoomt bleibt sie mindestens ein paar Pixel groß.
+  - Das Licht kommt wie im Symbol von links, für alle Körper gleich.
+  - ⚑ Ohne die angedeuteten Umlaufbahnen, die das Symbol ab TL 8 zeichnet: Die Raumkarte zeigt
+    echte Bahnen, Stationen und Orbitalstädte. Dafür braucht `drawWorld` eine Einstellung.
+  - Monde nehmen dasselbe Symbol mit ihren eigenen Werten. **Gasriesen** kann das Weltsymbol noch
+    nicht; sie brauchen eine eigene Darstellung im selben Stil (mit dem Sternsystem).
 
 ## 2. Das Bewegungsmodell
 
