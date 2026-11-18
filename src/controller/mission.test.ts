@@ -99,6 +99,20 @@ describe('Missionen (2026-11-18)', () => {
     expect(game.snapshot().globeFocus).toBeUndefined();
   });
 
+  it('Beteiligte (2026-11-18b): SC oder NSC mit Etikett, in Reiter und Charakter-Editor', async () => {
+    const game = await onField();
+    const kira = game.snapshot().characters.find((c) => c.name === 'Kira Vant')!;
+    expect(game.snapshot().missions.persons[0]).toMatchObject({ group: 'SC' });
+    game.newMission();
+    game.saveMission({ title: 'Mord in Startown', text: '', state: 'open', places: [], people: [{ character: kira.id, label: 'Zeugin' }] });
+    expect(game.snapshot().missions.open[0]?.people).toEqual([{ id: kira.id, name: 'Kira Vant', label: 'Zeugin', dead: false }]);
+    game.editMission('m1');
+    expect(game.snapshot().missions.editor?.people.map((p) => p.label)).toEqual(['Zeugin']);
+    game.closeMissionEditor();
+    game.editCharacter(kira.id);
+    expect(game.snapshot().editor).toMatchObject({ missions: [{ id: 'm1', title: 'Mord in Startown', state: 'open', as: 'Zeugin' }], inLog: true });
+  });
+
   it('erledigte Missionen stehen getrennt; Löschen löscht wirklich, solange der Log nicht auf sie zeigt', async () => {
     const game = await onField();
     game.newMission();
@@ -119,6 +133,6 @@ describe('Missionen (2026-11-18)', () => {
     game.saveMission({ title: 'Fracht', text: '', state: 'open', client: mara.id, places: [] });
     expect(game.snapshot().missions.open[0]?.client).toMatchObject({ name: 'Mara Voss', role: 'patron' });
     game.editCharacter(mara.id);
-    expect(game.snapshot().editor?.missions).toEqual([{ id: 'm1', title: 'Fracht', state: 'open' }]);
+    expect(game.snapshot().editor?.missions).toEqual([{ id: 'm1', title: 'Fracht', state: 'open', as: 'Auftraggeber' }]);
   });
 });

@@ -658,8 +658,8 @@ function pullFromStash(stash: readonly Possession[], possessions: readonly Posse
 export function removeCharacter(campaign: Campaign, id: CharacterId): Campaign {
   const character = characterOf(campaign, id);
   if (fightsAsJoined(campaign, id)) throw new DomainError(`${character.name} kämpft in der laufenden Begegnung auf der Seite der NSC; erst sie beenden.`);
-  // Verweist eine Mission auf ihn als Auftraggeber, wird er wie bei Logeinträgen nur ausgeblendet (2026-11-18).
-  if (!isInLog(campaign, id) && !campaign.missions.some((m) => m.client === id)) return keepFocus(campaign, { ...campaign, characters: campaign.characters.filter((c) => c.id !== id), encounters: campaign.encounters.map((e) => withoutJoined(withoutFighter(e, id), id)) });
+  // Verweist eine Mission auf ihn als Auftraggeber oder Beteiligten, wird er wie bei Logeinträgen nur ausgeblendet (2026-11-18).
+  if (!isInLog(campaign, id) && !campaign.missions.some((m) => m.client === id || m.people.some((p) => p.character === id))) return keepFocus(campaign, { ...campaign, characters: campaign.characters.filter((c) => c.id !== id), encounters: campaign.encounters.map((e) => withoutJoined(withoutFighter(e, id), id)) });
   return keepFocus(campaign, { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? { ...c, retired: true } : c)) });
 }
 

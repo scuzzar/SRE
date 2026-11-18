@@ -13,6 +13,7 @@ import {
   missionsAt,
   missionsIn,
   missionWorlds,
+  missionsOfCharacter,
   moveParty,
   openMissions,
   removeCharacter,
@@ -68,7 +69,18 @@ describe('Missionen', () => {
     const { c, mara } = campaign();
     const { campaign: after, id } = addMission(c, input({ title: '  Fracht nach Regina ', client: mara, places: [{ place: { world: '0101', cell: 5 }, label: ' Treffpunkt ' }, { place: { world: '0101', city: 0 }, label: '  ' }] }));
     const m = after.missions.find((x) => x.id === id)!;
-    expect(m).toEqual({ id: 'm1', title: 'Fracht nach Regina', text: '', state: 'open', retired: false, client: mara, places: [{ place: { world: '0101', cell: 5 }, label: 'Treffpunkt' }, { place: { world: '0101', city: 0 } }] });
+    expect(m).toEqual({ id: 'm1', title: 'Fracht nach Regina', text: '', state: 'open', retired: false, client: mara, places: [{ place: { world: '0101', cell: 5 }, label: 'Treffpunkt' }, { place: { world: '0101', city: 0 } }], people: [] });
+  });
+
+  it('verknüpft Beteiligte mit Etikett, jeden höchstens einmal; ein Beteiligter wird nur ausgeblendet (2026-11-18b)', () => {
+    const { c, mara } = campaign();
+    expect(() => addMission(c, input({ people: [{ character: mara }, { character: mara }] }))).toThrow(/höchstens einmal/);
+    expect(() => addMission(c, input({ people: [{ character: 'x9' }] }))).toThrow(/nicht zur Kampagne/);
+    const { campaign: a } = addMission(c, input({ people: [{ character: mara, label: ' Opfer ' }] }));
+    expect(a.missions[0]!.people).toEqual([{ character: mara, label: 'Opfer' }]);
+    expect(missionsOfCharacter(a, mara).map((x) => [x.client, x.person?.label])).toEqual([[false, 'Opfer']]);
+    expect(removeCharacter(a, mara).characters.find((x) => x.id === mara)?.retired).toBe(true);
+    expect(fromCampaignFile(toCampaignFile(a), 'k2').missions[0]!.people).toEqual([{ character: mara, label: 'Opfer' }]);
   });
 
   it('braucht einen Titel', () => {

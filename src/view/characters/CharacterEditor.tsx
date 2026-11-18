@@ -352,7 +352,9 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
                       <FlagIcon />
                       <span>
                         {m.title}
-                        <small>{missionStateText[m.state]}</small>
+                        <small>
+                          {m.as} · {missionStateText[m.state]}
+                        </small>
                       </span>
                     </button>
                   </li>

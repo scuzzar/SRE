@@ -427,7 +427,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > 2026 auf Wunsch des Owners: Ein Missionsort ist immer ein Feld der Oberfläche (oder eine Stadt auf
 > einem Feld), nie eine ganze Welt (siehe *Missionen*, *Orte*); das Bild ändert sich dadurch nicht.
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-18b): **Beteiligte einer Mission** (siehe *Missionen*).
+> Ebenfalls am 18. November 2026 freigegeben (Kennzeichen 2026-11-18b): **Beteiligte einer Mission** (siehe *Missionen*).
 > Eine Mission verknüpft beliebig viele Charaktere der Kampagne, NSC oder SC, je mit einem freien
 > Etikett wie „Opfer“, „Fahrer“ oder „Informant“. Neu im Bild: `MissionPerson` mit `label` und
 > `Mission.people`. Der Ausschnitt dazu liegt unter
@@ -465,7 +465,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Missionen | [views/mission.png](views/mission.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist
-[2026-11-18b](changes/2026-11-18b-beteiligte.png): Beteiligte einer Mission.
+derzeit keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -2525,7 +2525,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Orbitalstadt (Entscheidung des Owners): Eine Mission spielt an einer Stelle, die man auf dem
     Globus findet. Die Welt braucht dafür ihre Oberflächenkarte. Derselbe Ort darf mehrmals vorkommen, mit verschiedenen Etiketten. Wie ein Logeintrag
     sperrt ein Missionsort mit Feld oder Stadt die Oberflächenkarte (siehe *Orte*, *Karte gesperrt*).
-  - *Beteiligte* (`people`, je ein `MissionPerson`; wartet auf Freigabe, 2026-11-18b): beliebig viele
+  - *Beteiligte* (`people`, je ein `MissionPerson`; freigegeben am 18. November 2026, 2026-11-18b): beliebig viele
     Charaktere der Kampagne, **NSC oder SC**, in der Reihenfolge, in der man sie hinzufügt, je mit einem
     freien **Etikett** (`label`, z. B. „Opfer“, „Fahrer“, „Informant“; darf fehlen). Ein Charakter kommt
     in einer Mission höchstens einmal als Beteiligter vor; der Auftraggeber kann zusätzlich Beteiligter

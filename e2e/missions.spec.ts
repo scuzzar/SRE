@@ -39,11 +39,20 @@ test('Missionen: anlegen mit dem Feld der Gruppe und einem Ort vom Globus, am Fe
   await expect(again.getByLabel('Titel')).toHaveValue('Fracht nach Regina schmuggeln');
   await expect(again.getByLabel(/^Etikett für /)).toHaveCount(2);
   await expect(again.getByLabel(/^Etikett für /).first()).toHaveValue('Treffpunkt');
+  // Beteiligte (2026-11-18b): ein SC oder NSC mit Etikett.
+  await again.getByLabel('Beteiligten hinzufügen').selectOption({ label: 'Kira Vant' });
+  await again.getByLabel('Etikett für Kira Vant').fill('Fahrerin');
   await again.getByRole('button', { name: 'Speichern' }).click();
 
   const mission = page.getByRole('listitem', { name: 'Fracht nach Regina schmuggeln' });
   await expect(mission).toContainText('hier');
   await expect(mission).toContainText('kein Auftraggeber');
+  // Ein Tippen auf die Beteiligte öffnet sie im Charakter-Editor; dort steht die Mission.
+  await mission.getByRole('button', { name: 'Fahrerin: Kira Vant öffnen' }).click();
+  const character = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
+  await expect(character).toContainText('Missionen (1)');
+  await expect(character).toContainText('Fahrerin · Offen');
+  await character.getByRole('button', { name: 'Schließen' }).click();
   // Der Chip öffnet den Globus am Feld; dort steht die Mission unter „Missionen hier“.
   await mission.getByRole('button', { name: /^Treffpunkt: .* auf dem Globus zeigen/ }).click();
   const field = page.getByRole('region', { name: 'Angetipptes Feld' });
