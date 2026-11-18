@@ -134,6 +134,7 @@ hide <<browser>> stereotype
 
 ' Missionen
   class Mission $mission
+  class MissionPerson <<value>> $mission $newClass("2026-11-18b")
 
 ' Verlauf
   class Butchering $begegnung
@@ -194,6 +195,7 @@ Character "*" --> "0..1" Hex : homeworld
 Character "1" *-- "0..1" Place : place
 Character "*" --> "0..1" Patron : patron
 Mission "*" --> "0..1" Character : client
+MissionPerson "*" -$newArrow("2026-11-18b")-> "1" Character : character
 Character --> NpcRole
 CareerRoll --> "0..1" Characteristic : of
 CareerRoll "*" --> "0..1" Skill : chosen

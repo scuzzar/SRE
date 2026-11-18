@@ -418,6 +418,12 @@
       "file": "2026-11-18-missionen",
       "title": "Missionen mit Auftraggeber und Orten; offene Missionen sind die Handlungsfäden des Orakels",
       "approved": true
+    },
+    {
+      "id": "2026-11-18b",
+      "file": "2026-11-18b-beteiligte",
+      "title": "Beteiligte einer Mission: Charaktere (NSC oder SC) mit Etikett, z. B. Opfer, Fahrer, Informant",
+      "approved": false
     }
   ]
 }
