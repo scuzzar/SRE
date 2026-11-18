@@ -417,7 +417,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Ship.berthedSince`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-17b-monatsabrechnung.png`](changes/2026-11-17b-monatsabrechnung.png).
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-18): **Systemflug**, Stufe 1 des Raumkampfs: mit dem eigenen
+> Am 18. November 2026 freigegeben (Kennzeichen 2026-11-18): **Systemflug**, Stufe 1 des Raumkampfs: mit dem eigenen
 > Schiff um eine Welt fliegen, noch ohne Gegner, nach dem [Konzept Raumkarte und
 > Raumkampf](konzept-raumkampf.md) (siehe *Systemflug*). Der Owner hat entschieden, den Raumkampf
 > vor dem Handel zu bauen. Neu im Bild: `SystemFlight` an der Kampagne (`flight`, mit Welt,
@@ -426,7 +426,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Vec`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-18-systemflug.png`](changes/2026-11-18-systemflug.png).
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-18b): **Sternsystem nach Book 6** *Scouts* (siehe
+> Ebenfalls am 18. November 2026 freigegeben (Kennzeichen 2026-11-18b): **Sternsystem nach Book 6** *Scouts* (siehe
 > *Sternsystem, Monde und Gasriesen*, Regeln in [`regeln-sternsystem.md`](regeln-sternsystem.md)):
 > Sterne, Bahnen und Zonen, Hauptwelt und Gasriesen auf ihren Bahnen, Monde und Ringe, damit die
 > Raumkarte nicht leer ist (Owner: Stern und Bahnen bestimmen und speichern). Neu im Bild:
@@ -467,9 +467,8 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Schiffe | [views/schiffe.png](views/schiffe.png) |
 | Raumkarte und Systemflug | [views/raum.png](views/raum.png) |
 
-Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist
-[2026-11-18](changes/2026-11-18-systemflug.png): Systemflug, Stufe 1 des Raumkampfs, und
-[2026-11-18b](changes/2026-11-18b-sternsystem.png): Sternsystem, Monde und Gasriesen.
+Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist derzeit
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -2846,7 +2845,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       Schiffe, Custom-Entwürfe, Small Craft als eigene `ShipDesign`, und der **Preisnachlass
       für ein gebrauchtes Standardschiff** (SR 31: 10–40 % je nach Alter) über `Ship.price`.
 
-- **Systemflug** (Stufe 1 des Raumkampfs; Kennzeichen 2026-11-18, wartet auf Freigabe). Nach dem
+- **Systemflug** (Stufe 1 des Raumkampfs; freigegeben am 18. November 2026, Kennzeichen 2026-11-18). Nach dem
   [Konzept Raumkarte und Raumkampf](konzept-raumkampf.md): Man fliegt mit dem eigenen Schiff um eine
   Welt und lernt die Bahnen, noch ohne Gegner und Waffen. Was auf der Raumkarte läuft, heißt
   **Systemflug** (`SystemFlight`; Owner, 18. November 2026), auch wenn später gekämpft wird. Regeln aus SR 39–42, *Mayday* und SE 12,
@@ -2899,7 +2898,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Später** (eigene Änderungen): fremde Schiffe und ihr Planer (Stufe 2), Waffen, Raketen, Sand,
     Small Craft, Ortung, Raumkampf aus einer Schiffsbegegnung; siehe den Stufenplan im Konzept.
 
-- **Sternsystem, Monde und Gasriesen** (Kennzeichen 2026-11-18b, wartet auf Freigabe). Damit die
+- **Sternsystem, Monde und Gasriesen** (freigegeben am 18. November 2026, Kennzeichen 2026-11-18b). Damit die
   Raumkarte nicht leer ist (Wunsch des Owners, 18. November 2026), mit Stern und Bahnen (Owner:
   „den Stern bestimmen und speichern“). Regeln aus Book 6 *Scouts*, übertragen in
   [`regeln-sternsystem.md`](regeln-sternsystem.md); Abweichungen tragen ⚑, der Owner hat sie alle
@@ -2962,6 +2961,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
+
+- **Systemflug** (2026-11-18) und **Sternsystem** (2026-11-18b) sind freigegeben, aber noch nicht
+  gebaut: `SystemFlight`, `SpaceUnit`, `TrackPoint`, `Vec`, `StarSystem`, `Star`, `StarZones`,
+  `GasGiant`, `Satellite`, die Raumkarte und der Scout der Demo-Kampagne fehlen im Code. Der
+  Prototyp in `docs/mock/raumkarte-bewegung.html` zeigt das Bewegungsmodell.
 
 - **Monat und Monatsabrechnung** (2026-11-17b) sind gebaut (`model/upkeep.ts`, Monate in
   `model/time.ts`). **`MonthEnd → Booking : costs`** ist im Code der Bereich der Buchungen von
@@ -3040,7 +3044,7 @@ Diagramm mit diesen Ausnahmen:
   README (`src/data/examples.json`) und der festen Startwelt Kessra (0405, A766754-A, Scoutbasis,
   Gasriese, gemäßigt; `src/data/demo-world.json`), einer fertigen Welt, auf der die Gruppe steht
   (`location`), und Cr 5.000 in der Gruppenkasse, gebucht als Einnahme „Startkapital“, damit sich im
-  Shop gleich etwas kaufen lässt. Seit 2026-11-18 (wartet auf Freigabe) hat die Gruppe dazu einen
+  Shop gleich etwas kaufen lässt. Seit 2026-11-18 hat die Gruppe dazu einen
   schuldenfreien Scout/Courier „Kestrel“ mit vollem Tank (40 t), Preis wie der Grundpreis, ohne
   Kredit; er liegt ab Tag 1 im Hafen von Kessra. Das Modell sagt dazu nichts; die Welt prüft das Model wie jedes Hexfeld. Die beiden
   Charaktere lassen sich löschen, solange der Log nicht auf sie verweist. Jede weitere Kampagne
