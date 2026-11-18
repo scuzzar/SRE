@@ -118,8 +118,8 @@ hide <<browser>> stereotype
     startedAt: datetime
     round: number
     /elapsed: number
-    $new("2026-11-18b", "atGiant: boolean")
   }
+  class GasGiant $raum $newClass("2026-11-18b")
   class SpaceUnit $raum $newClass("2026-11-18") {
     position: Vec
     velocity: Vec
@@ -183,6 +183,7 @@ SystemFlight "*" -$newArrow("2026-11-18")-> "1" Hex : world
 SystemFlight "1" *-$newArrow("2026-11-18")- "1..*" SpaceUnit : units {ordered}
 SpaceUnit "*" -$newArrow("2026-11-18")-> "1" Ship : ship
 SpaceUnit "1" *-$newArrow("2026-11-18")- "*" TrackPoint : track {ordered}
+SystemFlight "*" -$newArrow("2026-11-18b")-> "0..1" GasGiant : at
 
 ' Zeit und Reisen
 

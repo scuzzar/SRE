@@ -47,7 +47,7 @@
 !return ""
 !endfunction
 !pragma layout smetana
-title Änderung 2026-11-18b: Monde, Ringe und Gasriese (Book 6): Körper des Systems an der Welt, Systemflug auch am Gasriesen
+title Änderung 2026-11-18b: Sternsystem nach Book 6: Sterne, Bahnen und Zonen, Gasriesen und Hauptwelt platziert, Monde und Ringe; Systemflug auch am Gasriesen
 hide empty members
 hide methods
 skinparam classAttributeIconSize 0
@@ -90,9 +90,52 @@ hide <<browser>> stereotype
     startedAt: datetime
     round: number
     /elapsed: number
-    $new("2026-11-18b", "atGiant: boolean")
   }
-  class SystemBodies $raum $newClass("2026-11-18b") {
+  class StarSystem $raum $newClass("2026-11-18b") {
+    maxOrbits: number
+    worldOrbit: number
+    hostOrbit: number [0..1]
+    hostAngle: number [0..1]
+    /worldZone: Zone
+  }
+  class Star $raum $newClass("2026-11-18b") {
+    type: StarType
+    decimal: number [0..1]
+    size: StarSize
+    orbit: number [0..1]
+    close: boolean
+    farAu: number [0..1]
+  }
+  enum StarType <<value>> $raum $newClass("2026-11-18b") {
+    O
+    B
+    A
+    F
+    G
+    K
+    M
+  }
+  enum StarSize <<value>> $raum $newClass("2026-11-18b") {
+    Ia
+    Ib
+    II
+    III
+    IV
+    V
+    VI
+    D
+  }
+  enum Zone <<value>> $raum $newClass("2026-11-18b") {
+    inner
+    habitable
+    outer
+  }
+  class StarZones <<reference>> $raum $newClass("2026-11-18b") {
+    type: StarType
+    decimal: number [0..1]
+    size: StarSize
+    firstOrbit: number
+    habitableOrbit: number [0..1]
   }
   class Satellite $raum $newClass("2026-11-18b") {
     kind: SatelliteKind
@@ -113,6 +156,8 @@ hide <<browser>> stereotype
   class GasGiant $raum $newClass("2026-11-18b") {
     large: boolean
     radius: number
+    orbit: number
+    /zone: Zone
     /gravity: number
   }
   class SpaceUnit $raum $newClass("2026-11-18")
@@ -155,9 +200,15 @@ hide <<browser>> stereotype
 ' Raumkarte und Systemflug
 SystemFlight "*" -$newArrow("2026-11-18")-> "1" Hex : world
 SystemFlight "1" *-$newArrow("2026-11-18")- "1..*" SpaceUnit : units {ordered}
-Hex "1" *-$newArrow("2026-11-18b")- "0..1" SystemBodies : bodies
-SystemBodies "1" *-$newArrow("2026-11-18b")- "*" Satellite : satellites {ordered}
-SystemBodies "1" *-$newArrow("2026-11-18b")- "0..1" GasGiant : giant
+Hex "1" *-$newArrow("2026-11-18b")- "0..1" StarSystem : system
+StarSystem "1" *-$newArrow("2026-11-18b")- "1..3" Star : stars {ordered}
+StarSystem "1" *-$newArrow("2026-11-18b")- "*" Satellite : satellites {ordered}
+StarSystem "1" *-$newArrow("2026-11-18b")- "*" GasGiant : giants {ordered}
+StarSystem "*" -$newArrow("2026-11-18b")-> "0..1" GasGiant : host
+Star "*" -$newArrow("2026-11-18b")-> "1" StarZones : /zones
+Star --> StarType
+Star --> StarSize
+SystemFlight "*" -$newArrow("2026-11-18b")-> "0..1" GasGiant : at
 GasGiant "1" *-$newArrow("2026-11-18b")- "*" Satellite : satellites {ordered}
 Satellite --> SatelliteKind
 
@@ -198,5 +249,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class SystemFlight #line:d0021b;line.bold
 @enduml
