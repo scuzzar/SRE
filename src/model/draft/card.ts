@@ -1,5 +1,6 @@
 import {
   DomainError,
+  eventFocusOf,
   isRandomEvent,
   oddsOf,
   nameSlotIds,
@@ -45,6 +46,8 @@ export interface Card {
   readonly pickedOdds?: string;
   /** Der Wurf 1–100 auf den Ereignisfokus; nur, wenn der Orakelwurf ein Zufallsereignis ist. */
   readonly eventFocus?: number;
+  /** Bei einem Fadenfokus: die ausgeloste offene Mission (Handlungsfaden, 2026-11-18); ohne offene Mission keine. */
+  readonly thread?: string;
 }
 
 /** Die Einträge einer Spalte, die gezogen werden können: alle, die nicht ausgeblendet sind. */
@@ -59,9 +62,10 @@ export function isVisible(slot: Slot): boolean {
 
 /**
  * Zieht eine Karte: für jedes Feld aller Bereiche aus jeder seiner Spalten einen nicht ausgeblendeten
- * Eintrag zufällig. Ausgeblendete Felder werden übergangen.
+ * Eintrag zufällig. Ausgeblendete Felder werden übergangen. `threads` sind die offenen Missionen der
+ * Kampagne: Fällt ein Fadenfokus, lost die Karte gleich eine davon aus, alle gleich wahrscheinlich.
  */
-export function drawCard(random: Random, question?: string): Card {
+export function drawCard(random: Random, question?: string, threads: readonly string[] = []): Card {
   const drawn = ref.sections.flatMap((section) =>
     section.slots.filter(isVisible).flatMap((slot) =>
       slot.columns.map((column) => {
@@ -77,13 +81,15 @@ export function drawCard(random: Random, question?: string): Card {
   const map = rollMap(random);
   const oracle = random.int(1, 100);
   // Bei einem Zufallsereignis gleich danach der Ereignisfokus; sonst würfelt die Karte nichts weiter.
-  const event = isRandomEvent(oracle) ? { eventFocus: random.int(1, 100) } : {};
+  const eventFocus = isRandomEvent(oracle) ? random.int(1, 100) : undefined;
+  const thread = eventFocus !== undefined && eventFocusOf(eventFocus).thread && threads.length > 0 ? threads[random.int(0, threads.length - 1)] : undefined;
+  const event = { ...(eventFocus === undefined ? {} : { eventFocus }), ...(thread === undefined ? {} : { thread }) };
   return withQuestion({ drawn, picked: [], bell, scatter, map, pickedRolls: [], oracle, ...event }, question);
 }
 
 /** Neu ziehen: eine neue Karte, die Auswahl geht verloren, die Frage bleibt. */
-export function redrawCard(card: Card, random: Random): Card {
-  return drawCard(random, card.question);
+export function redrawCard(card: Card, random: Random, threads: readonly string[] = []): Card {
+  return drawCard(random, card.question, threads);
 }
 
 /** Was ein Feld auf der Karte gezogen hat: einen Eintrag, beim Paar beide in der Reihenfolge der Spalten. */
@@ -141,6 +147,7 @@ export function confirmCard(card: Card, clock: Clock): CardPick {
     ...(card.pickedOdds === undefined ? {} : { oracle: card.oracle, odds: card.pickedOdds, chance: oddsOf(card.pickedOdds).chance }),
     // Das Zufallsereignis gilt nur für eine Frage: ohne gewählte Stufe kommt es nicht in den Log.
     ...(card.pickedOdds !== undefined && card.eventFocus !== undefined ? { eventFocus: card.eventFocus } : {}),
+    ...(card.pickedOdds !== undefined && card.eventFocus !== undefined && card.thread !== undefined ? { thread: card.thread } : {}),
     items,
   };
   return withQuestion(pick, card.question);

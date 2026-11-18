@@ -416,6 +416,16 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > (mit `costs`, `/month` und `/total`), `Booking.shipCost` mit `ShipCost` und
 > `Ship.berthedSince`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-17b-monatsabrechnung.png`](changes/2026-11-17b-monatsabrechnung.png).
+>
+> Am 18. November 2026 freigegeben (Kennzeichen 2026-11-18): **Missionen** (siehe *Missionen*). Eine Mission
+> hat Titel, Text, Zustand (offen, erledigt, gescheitert), höchstens einen Auftraggeber (einen
+> dauerhaften NSC) und Orte mit Etikett; sie stehen in einem eigenen, fünften Reiter. Die offenen
+> Missionen sind die Handlungsfäden des Orakels: Fällt ein Fadenfokus, lost die Karte eine aus.
+> Neu im Bild: `Mission`, `MissionPlace`, `MissionState`, `Campaign.missions`, `EventFocus.thread`
+> und `thread` an Karte und Kartenauswahl. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-18-missionen.png`](changes/2026-11-18-missionen.png). Ebenfalls am 18. November
+> 2026 auf Wunsch des Owners: Ein Missionsort ist immer ein Feld der Oberfläche (oder eine Stadt auf
+> einem Feld), nie eine ganze Welt (siehe *Missionen*, *Orte*); das Bild ändert sich dadurch nicht.
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -446,10 +456,10 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Begegnung | [views/begegnung.png](views/begegnung.png) |
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 | Schiffe | [views/schiffe.png](views/schiffe.png) |
+| Missionen | [views/mission.png](views/mission.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist
-[2026-11-16c](changes/2026-11-16c-schiffe-der-kampagne.png): die Kampagne hält alle ihre
-Schiffe (`ships`), das aktive ist abgeleitet.
+derzeit keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -554,7 +564,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Buchung | `Booking` | Eine Bewegung der Gruppenkasse: Einnahme, Ausgabe, Einzahlung, Auszahlung oder Kauf |
 | Art der Buchung | `BookingKind` | income (Einnahme, z. B. Belohnung), expense (Ausgabe), deposit (Einzahlung eines Charakters), payout (Auszahlung an einen Charakter), purchase (Kauf), sale (Verkauf), lottery (Gewinn der Low Lottery), rent (Miete je Tag eines Fahrzeugs), fare (Fahrpreis im Linienverkehr), ship (Schiff: voller Preis, Anzahlung, Monatsrate, Treibstoff, Liegegebühr, Lebenserhaltung; welche, sagt `shipCost`) |
 | Angebot | `Hex./offer` | Was man auf der Welt kaufen kann: nach TL und Gesetz der Welt |
-| Reiter | (View, `Screen`) | Die vier Reiter unten im Ziehblatt bzw. oben in der Seitenspalte: Log, Begegnung, Charaktere, Schiff; Begegnung und Charaktere haben oben einen Umschalter |
+| Reiter | (View, `Screen`) | Die fünf Reiter unten im Ziehblatt bzw. oben in der Seitenspalte: Log, Begegnung, Charaktere, Schiff, Missionen (Missionen seit 2026-11-18); Begegnung und Charaktere haben oben einen Umschalter |
 | Reiter Charaktere | (Reiter „Charaktere“; Screens `characters`, `npcs`, `funds`) | Oben ein Umschalter zwischen **SC** (Charakterkarten und Gruppengepäck), **Kasse** und **NSC** (die *NSC-Liste*) |
 | Shop | (Screen `shop`, `openShop`, `closeShop`) | Der Screen für den Einkauf auf dem Aufenthaltsort, ohne eigenen Reiter: „Einkaufen“ am angetippten Feld einer Stadt auf dem Globus des Aufenthaltsorts öffnet ihn an der Stelle des Felds (nur in Städten), ✕ führt dorthin zurück, ein Reiter verlässt ihn |
 | Kasse | (Screen `funds`, im Reiter Charaktere) | Stand der Gruppenkasse, freie Buchungen (Einnahme, Ausgabe, Einzahlung, Auszahlung mit einem gewählten SC) und das Kassenbuch; geht auch ohne Aufenthaltsort |
@@ -581,6 +591,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Rolle eines NSC | `Character.role`, `NpcRole` | Wozu ein dauerhafter NSC da ist, aus einer festen Liste: Patron, Begegnung, Feind, Rivale, Verbündeter, Kontakt, Behörde, Händler, Makler, Captain, Crew, Passagier, Sonstige |
 | NSC-Liste | (Screen `npcs`, im Reiter Charaktere unter „NSC“) | Der Screen mit den dauerhaften NSC des Aufenthaltsorts, nach Rolle gruppiert; mit „Alle zeigen“ alle, nach Welt und darin nach Rolle |
 | NSC platzieren | (Ablauf, `startNpcPlacing`, `placeNpcs`) | Vom angetippten Feld des Globus aus: Die NSC-Liste öffnet sich (ohne den Umschalter oben) mit einem Kästchen an jedem NSC (wer schon auf dem Feld ist, ist angehakt), unten „Abbrechen“ und „OK“; seine Filter wie „Alle zeigen“ gelten weiter, so kommen auch NSC von anderen Welten oder ohne Ort dazu. „OK“ setzt die angehakten auf das Feld (bzw. in die Stadt darauf, `Character.place`); beides führt zurück zum Feld. Lange gedrückt öffnet es stattdessen „Neuer NSC“ nur mit den Laufbahnen (siehe *NSC aus einer Laufbahn*): Der erzeugte NSC lebt auf diesem Feld bzw. in dieser Stadt |
+| Mission | `Mission` | Ein Auftrag oder Ziel, das die Gruppe verfolgt, mit Titel, Text, Zustand, Auftraggeber und Orten (2026-11-18) |
+| Zustand einer Mission | `Mission.state`, `MissionState` | offen (`open`), erledigt (`done`), gescheitert (`failed`) (2026-11-18) |
+| Auftraggeber einer Mission | `Mission.client` | Der dauerhafte NSC, der die Mission vergeben hat; höchstens einer. Nicht zu verwechseln mit *Patron*, der Zeile der Patron-Liste (2026-11-18) |
+| Missionsort | `MissionPlace` | Ein Ort einer Mission mit seinem Etikett: immer ein Feld der Oberfläche oder eine Stadt auf einem Feld, nie eine ganze Welt (2026-11-18) |
+| Etikett | `MissionPlace.label` | Kurzer freier Text, was ein Missionsort für die Mission ist, z. B. „Treffpunkt“, „Ziel“; darf fehlen (2026-11-18) |
+| Handlungsfaden | offene `Mission`; `Card.thread`, `CardPick.thread` | Eine offene Mission, wie das Orakel sie sieht; bei einem Fadenfokus lost die Karte einen aus (2026-11-18) |
+| Fadenfokus | `EventFocus.thread` | Ein Ereignisfokus, der zu einem Handlungsfaden gehört: Auf einen Handlungsfaden zu, Von einem Handlungsfaden weg, Ein Handlungsfaden endet (2026-11-18) |
+| Reiter Missionen | (Reiter „Missionen“; Screen `missions`) | Der fünfte Reiter: oben die offenen Missionen, darunter eingeklappt die erledigten und gescheiterten (2026-11-18) |
 | Getragene Rüstung | `Character.wears` | Die Rüstung, die jemand gerade anhat; sie zählt, wenn er angegriffen wird |
 | Rüstungsklasse einer Rüstung | `Item.armor` | Wie eine Rüstung in der Matrix zählt, z. B. Vacc Suit als Cloth, Battle Dress als Combat |
 | Wunden | `/wounds`, `Wounds` | Wie viel STR, DEX und END jemand durch Treffer verloren hat |
@@ -961,7 +979,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     21–40 NSC handelt · 41–45 NSC: Nachteil · 46–50 NSC: Vorteil · 51–55 Auf einen Handlungsfaden zu ·
     56–65 Von einem Handlungsfaden weg · 66–70 Ein Handlungsfaden endet · 71–80 SC: Nachteil ·
     81–85 SC: Vorteil · 86–100 Aktuelle Lage. Jeder Eintrag hat dazu einen kurzen Text, was er
-    bedeutet. Listen von NSC und Handlungsfäden führt die App nicht; der Fokus ist ein Anstoß.
+    bedeutet. Eine Liste der NSC für den Fokus führt die App nicht; der Fokus ist ein Anstoß. Die
+    Handlungsfäden sind die offenen Missionen (2026-11-18, siehe *Missionen*).
   - Die Bereiche des Ereignisfokus sind aus dem Gedächtnis nach Mythic GME 2e übernommen; beim
     nächsten Blick ins Buch abgleichen (steht in der To-do).
 - **Deutungen und Notizen.** Beide sind ein `Note` mit Text, der nicht leer ist (Leerraum am Rand
@@ -1485,6 +1504,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Matrix (siehe *Gerücht*).
   - *Deuten*: Der Patron-Wurf ist ein Ergebnis und lässt sich deuten, z. B. mit dem Auftrag, den
     der Patron vergibt. Die Regeln geben keine Tabelle für Aufträge; die legt die Spielleitung fest.
+    Festhalten lässt sich der Auftrag als Mission („Als Mission“, 2026-11-18, siehe *Missionen*).
 - **Gelände.** Es gibt ein Gelände für alle Begegnungsarten: Man wählt es oben im Reiter Begegnung
   neben dem Aufenthaltsort, und es bleibt an der Kampagne (`Campaign.terrain`), bis man es ändert;
   fehlt es, gilt ±0 und es gibt keine Tiere. Jede Begegnung hält das Gelände fest, mit dem sie
@@ -2450,7 +2470,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   beides: Das Feld einer Stadt ist ihr Feld (`City.cell`) und wird nicht noch einmal gespeichert.
   Feld und Stadt gehören zur Oberflächenkarte derselben Welt; eine Orbitalstadt hat kein Feld.
   - **Wer einen Ort hat:** die Gruppe (`Campaign.location`, ihr Aufenthaltsort), jeder dauerhafte NSC
-    (`Character.place`) und wahlweise jeder Logeintrag (`LogEntry.place`). Spielercharaktere sind
+    (`Character.place`), wahlweise jeder Logeintrag (`LogEntry.place`) und jeder Missionsort
+    (`MissionPlace.place`, 2026-11-18). Spielercharaktere sind
     immer bei der Gruppe und haben keinen eigenen Ort.
   - **Logeinträge bewegen sich nicht.** Der Ort eines Logeintrags hält fest, wo es damals passiert
     ist. Gruppe und NSC wechseln ihren Ort, alte Einträge bleiben, wo sie waren. Den Ort eines
@@ -2474,6 +2495,63 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     denen etwas geschehen ist oder NSC leben.
   - **Bestehende Kampagnen:** Ein bisheriger Aufenthaltsort bzw. Ort eines NSC wird ein Ort mit
     dieser Welt, ohne Feld und Stadt.
+- **Missionen** (freigegeben am 18. November 2026, 2026-11-18). Eine **Mission** (`Mission`) ist ein Auftrag
+  oder Ziel, das die Gruppe verfolgt, z. B. „Fracht nach Regina schmuggeln“. Sie gehört zur
+  Kampagne (`missions`, in der Reihenfolge, in der sie angelegt wurden).
+  - *Inhalt*: ein Titel (`title`, nicht leer, Leerraum am Rand fällt weg), ein freier Text (`text`,
+    darf leer sein), der Zustand (`state`), wahlweise ein Auftraggeber und beliebig viele Orte.
+    Belohnung und Frist hat eine Mission nicht (Entscheidung des Owners): Eine Belohnung bucht man
+    von Hand in der Kasse, eine Frist schreibt man in den Text. Wie bei der Notiz eines Charakters
+    zieht „Karte ziehen“ unter dem Text die Inspirationskarte; die Auswahl hängt sich an den Text an
+    und kommt nicht in den Log.
+  - *Zustand* (`MissionState`): **offen** (`open`), **erledigt** (`done`), **gescheitert**
+    (`failed`). Eine neue Mission ist offen; im Editor wechselt man frei, auch zurück auf offen.
+  - *Auftraggeber* (`client`): höchstens ein dauerhafter NSC (`Character` mit `npc`), meist mit der
+    Rolle Patron, aber jede Rolle geht; einen SC kann man nicht wählen. Der Verweis bleibt, wenn der
+    NSC stirbt oder später zum SC wird; die Mission zeigt ihn dann so. Ein NSC, auf den eine Mission
+    verweist, wird nicht gelöscht, sondern ausgeblendet, wie bei Logeinträgen (siehe *Löschen und
+    Ausblenden*).
+  - *Orte* (`places`, je ein `MissionPlace`): beliebig viele, in der Reihenfolge, in der man sie
+    hinzufügt. Jeder ist ein Ort (`Place`, siehe *Orte*) mit einem kurzen freien **Etikett**
+    (`label`, z. B. „Treffpunkt“, „Ziel“; darf fehlen). Ein Missionsort ist **immer ein Feld der
+    Oberfläche** (`cell`) oder eine Stadt auf einem Feld (`city`), nie eine ganze Welt und keine
+    Orbitalstadt (Entscheidung des Owners): Eine Mission spielt an einer Stelle, die man auf dem
+    Globus findet. Die Welt braucht dafür ihre Oberflächenkarte. Derselbe Ort darf mehrmals vorkommen, mit verschiedenen Etiketten. Wie ein Logeintrag
+    sperrt ein Missionsort mit Feld oder Stadt die Oberflächenkarte (siehe *Orte*, *Karte gesperrt*).
+  - *Löschen und Ausblenden*: Eine Mission, auf die keine Kartenauswahl verweist
+    (`CardPick.thread`), wird wirklich gelöscht. Sonst wird sie ausgeblendet (`retired`): Sie
+    verschwindet aus dem Reiter und von der Karte und wird nicht mehr ausgelost, der Log zeigt sie
+    weiter; einblenden lässt sie sich wieder.
+  - *Reiter Missionen*: ein eigener Reiter, der fünfte, hinter Schiff (so behalten die anderen ihre
+    Taste; Missionen ist Taste 5). Oben stehen die offenen Missionen, darunter eingeklappt die
+    erledigten und gescheiterten, wie die toten NSC. Jede zeigt Titel, Auftraggeber und ihre Orte
+    mit Etikett; Antippen öffnet den Editor, ein Ort darin führt zu ihm auf den Globus (die Karte fliegt hin
+    und zoomt hinein).
+    **„+ Neue Mission“** legt eine offene Mission an, mit dem Aufenthaltsort als erstem Ort, wenn er
+    ein Feld oder eine Stadt auf einem Feld ist. Im Editor kommt ein Ort hinzu mit
+    **„+ Aufenthaltsort“** (ebenso nur mit Feld) oder **„+ Auf dem Globus“**: Wie bei *NSC
+    platzieren* tippt man auf dem Globus ein Feld an und bestätigt mit „OK“; liegt dort eine
+    Stadt, wird der Ort die Stadt.
+  - *Auf der Karte*: Der Globus zeigt an den Feldern offener Missionen eine Fahne, der Subsektor an
+    Welten mit solchen Feldern. Das angetippte Feld listet unter **„Missionen hier“** die offenen
+    Missionen mit einem Ort auf diesem Feld (auch in einer Stadt darauf), mit Etikett. Der
+    NSC-Editor zeigt die Missionen, deren Auftraggeber der NSC ist.
+  - *Vom Patron zur Mission*: Im Würfelfenster des Patrons steht neben „Als NSC“ auch **„Als
+    Mission“**. Es legt den Patron-NSC an wie „Als NSC“ und dazu eine offene Mission mit ihm als
+    Auftraggeber, dem Beruf des Patrons als Titel (z. B. „Smuggler“) und dem Aufenthaltsort als
+    erstem Ort, wenn er ein Feld hat; die Ansicht wechselt in den Reiter Missionen, mit der neuen Mission im Editor. Bei
+    einer Rumor-Zeile gibt es den Knopf nicht.
+  - *Handlungsfäden*: Die offenen, nicht ausgeblendeten Missionen sind die **Handlungsfäden** des
+    Orakels, wie die Thread-Liste in Mythic. Drei Einträge des Ereignisfokus sind **Fadenfokusse**
+    (`EventFocus.thread`): Auf einen Handlungsfaden zu, Von einem Handlungsfaden weg, Ein
+    Handlungsfaden endet. Würfelt die Karte beim Ziehen einen Fadenfokus und gibt es offene
+    Missionen, lost sie gleich eine davon aus, alle gleich wahrscheinlich (`Card.thread`). Die
+    Mission steht wie der Fokus erst mit gewählter Stufe im roten Band, neben dem Fokus („Auf einen
+    Handlungsfaden zu: Fracht nach Regina schmuggeln“). Die Kartenauswahl hält sie fest
+    (`CardPick.thread`), damit der Log auch später zeigt, welcher Faden gemeint war, selbst wenn die
+    Mission inzwischen erledigt ist. Ohne offene Mission bleibt es beim Fokus allein. „Ein
+    Handlungsfaden endet“ ändert den Zustand nicht von selbst; wie es ausgeht, entscheidet man per
+    Deutung und stellt es im Editor ein.
 - **Fahrzeuge** (freigegeben am 15. November 2026, 2026-11-15). Grundlage der Logistik auf der Oberfläche: Die App findet
   die schnellste Route zwischen zwei Orten einer Welt, auch wenn man dafür ein ATV oder einen
   Hubschrauber mieten muss, und die Gruppe fährt sie Tag für Tag ab.

@@ -86,6 +86,8 @@ hide <<browser>> stereotype
 
 ' Subsektor und Welten
 
+' Missionen
+
 ' Verlauf
   abstract class LogEntry $probe
   class SaveRoll $begegnung

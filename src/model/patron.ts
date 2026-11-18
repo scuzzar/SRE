@@ -5,6 +5,7 @@ import type { PatronRoll, RumorRoll } from './log';
 import type { Clock, Random } from './ports';
 import { patronOf, rumorOf, type Patron, type Rumor } from './reference';
 import { generateNpc } from './npcs';
+import { addMission, missionPlaceBlocker, type MissionId } from './mission';
 
 /** Die beiden Patron-Listen der Patron Encounters Matrix (SE, Charts S. 20). */
 export const patronLists = [1, 2] as const;
@@ -116,4 +117,19 @@ export function createPatronNpc(campaign: Campaign, index: number, random: Rando
   if (blocker) throw new DomainError(blocker);
   const patron = patronOfRoll(entry);
   return generateNpc(campaign, { service: patron.career!, role: 'patron', patron: { list: entry.list, roll: patronRollOf(entry) }, title: patron.name, criminal: patron.criminal }, random);
+}
+
+/**
+ * „Als Mission“ zum Patron-Wurf an dieser Stelle des Logs (2026-11-18, siehe domain-model.md,
+ * *Missionen*): der Patron-NSC wie bei „Als NSC“ und dazu eine offene Mission mit ihm als
+ * Auftraggeber, dem Beruf des Patrons als Titel und dem Aufenthaltsort als erstem Ort, wenn er ein
+ * Feld hat.
+ */
+export function createPatronMission(campaign: Campaign, index: number, random: Random): { campaign: Campaign; npc: CharacterId; mission: MissionId } {
+  const { campaign: withNpc, id: npc } = createPatronNpc(campaign, index, random);
+  const entry = campaign.log[index] as PatronRoll;
+  const location = withNpc.location;
+  const places = location !== undefined && missionPlaceBlocker(withNpc, location) === undefined ? [{ place: location }] : [];
+  const { campaign: result, id: mission } = addMission(withNpc, { title: patronOfRoll(entry).name, text: '', state: 'open', client: npc, places });
+  return { campaign: result, npc, mission };
 }

@@ -15,7 +15,8 @@ import { START_DAY } from './time';
 import { checkOf, encounterChecks } from './encounter-check';
 import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type Journey, type DamageRoll, type LogEntry, type Note, type Recovery, type TripDay } from './log';
 import { checkRecovery } from './wounds';
-import { armorClasses, encounterTypeOf, entryOf, itemOf, oddsOf, patronOf, ranges, ref, shipDesignOf, slotOfEntry, softwareOf, weaponOf } from './reference';
+import { missionStates, validateMissions, type Mission, type MissionPlace } from './mission';
+import { armorClasses, encounterTypeOf, entryOf, eventFocusOf, itemOf, oddsOf, patronOf, ranges, ref, shipDesignOf, slotOfEntry, softwareOf, weaponOf } from './reference';
 import { characteristics } from './rules';
 import { bookingKinds, shipCosts, validateBookings, type Booking } from './shop';
 import type { Ship } from './ship';
@@ -67,6 +68,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     odds: z.string().optional(),
     chance: z.number().int().min(0).max(100).optional(),
     eventFocus: z.number().int().min(1).max(100).optional(),
+    thread: z.string().min(1).optional(),
     items: z.array(z.object({ picked: z.array(z.string()).min(1).max(2) })),
   }),
   z.object({
@@ -424,13 +426,27 @@ const CampaignFileSchema = z.object({
       .default([]),
     /** Alle Schiffe, auch die ausgeblendeten; fehlt in Dateien von vor den Schiffen: keins. */
     ships: z.array(ShipSchema).default([]),
+    /** Die Missionen, auch die ausgeblendeten; fehlt in Dateien von vor den Missionen (2026-11-18): keine. */
+    missions: z
+      .array(
+        z.object({
+          id: z.string().min(1),
+          title: z.string(),
+          text: z.string(),
+          state: z.enum(missionStates),
+          retired: z.boolean(),
+          client: z.string().min(1).optional(),
+          places: z.array(z.object({ place: PlaceSchema, label: z.string().trim().min(1).optional() })),
+        }),
+      )
+      .default([]),
   }),
 });
 
 /** Die Kampagne als Inhalt einer Kampagnendatei. */
 export function toCampaignFile(campaign: Campaign): string {
-  const { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip } = campaign;
-  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip } }, null, 2);
+  const { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions } = campaign;
+  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions } }, null, 2);
 }
 
 /** Ein Dateiname aus dem Namen der Kampagne und dem Tag, z. B. „Spinward-Run-2026-10-25.json“. */
@@ -496,6 +512,7 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       ...(file.quantityDie === undefined || file.quantityDie === 6 ? {} : { quantityDie: file.quantityDie }),
       ...(file.terrain === undefined ? {} : { terrain: file.terrain }),
       day: file.day,
+      missions: file.missions.map((m) => stripped({ ...m, places: m.places.map((p) => stripped({ ...p, place: placeFromFile(p.place) }) as MissionPlace) }) as Mission),
     };
     // Begegnungen von vor 2026-11-08d haben ein Band für alle; upgradeDistances macht das Startband daraus.
     // Erst prüfen, dann ordnen: Dateien von vor dem Gruppengepäck halten allen Besitz am SC; was er
@@ -659,6 +676,7 @@ function validate(campaign: Campaign): void {
   }
   validateHexes(campaign.hexes);
   if (campaign.location !== undefined) checkPlace(campaign.hexes, campaign.location);
+  validateMissions(campaign);
   validateBookings(campaign);
   // Jedes Schiff hat eine eigene Id, einen Entwurf der Werft und Programme der Software-Liste; aktiv ist höchstens eins.
   const shipIds = new Set<string>();
@@ -757,6 +775,10 @@ function validate(campaign: Campaign): void {
         if ([entry.oracle, entry.odds, entry.chance].filter((v) => v === undefined).length % 3 !== 0) throw new DomainError('Eine Antwort des Orakels braucht Wurf, Stufe und Chance.');
         if (entry.odds !== undefined) oddsOf(entry.odds);
         if (entry.eventFocus !== undefined && (entry.oracle === undefined || !isRandomEvent(entry.oracle))) throw new DomainError('Einen Ereignisfokus gibt es nur bei einem Zufallsereignis mit Antwort.');
+        if (entry.thread !== undefined) {
+          if (entry.eventFocus === undefined || !eventFocusOf(entry.eventFocus).thread) throw new DomainError('Einen Handlungsfaden gibt es nur bei einem Fadenfokus.');
+          if (!campaign.missions.some((m) => m.id === entry.thread)) throw new DomainError(`Der Handlungsfaden ${entry.thread} ist keine Mission der Kampagne.`);
+        }
         if (entry.map && mapDirections.filter((d) => entry.map![d] !== 'none').length < minMapPaths) throw new DomainError('Ein Kartensymbol hat mindestens zwei Wege.');
         for (const item of entry.items) {
           const slot = slotOfEntry(item.picked[0]!);

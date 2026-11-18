@@ -87,6 +87,8 @@ hide <<browser>> stereotype
 ' Subsektor und Welten
   class Hex $sektor
 
+' Missionen
+
 ' Verlauf
   abstract class LogEntry $probe
   class PatronRoll $begegnung {

@@ -55,13 +55,14 @@ export function pointsIntoMap(place: Place | undefined, column: number, row: num
   return place !== undefined && place.world === hexId(column, row) && (place.cell !== undefined || place.city !== undefined);
 }
 
-/** Ob die Oberflächenkarte dieses Hexfelds gesperrt ist: Gruppe, ein NSC oder ein Logeintrag zeigt auf ein Feld oder eine Stadt darauf. */
+/** Ob die Oberflächenkarte dieses Hexfelds gesperrt ist: Gruppe, ein NSC, ein Fahrzeug, ein Logeintrag oder eine Mission zeigt auf ein Feld oder eine Stadt darauf. */
 export function mapLocked(campaign: Campaign, column: number, row: number): boolean {
   return (
     pointsIntoMap(campaign.location, column, row) ||
     campaign.characters.some((c) => pointsIntoMap(c.place, column, row)) ||
     campaign.stash.some((p) => pointsIntoMap(p.parked, column, row)) ||
-    campaign.log.some((e) => pointsIntoMap(e.place, column, row))
+    campaign.log.some((e) => pointsIntoMap(e.place, column, row)) ||
+    campaign.missions.some((m) => m.places.some((p) => pointsIntoMap(p.place, column, row)))
   );
 }
 

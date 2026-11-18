@@ -3,7 +3,7 @@ import type { DamageItem, JourneyItem, LogItem, NoteItem, TripDayItem } from '..
 import { answerText, attackTitle, checkDetail, clockTime, damageDetail, isYesAnswer, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, resultLine, scatterText, taskDetail, taskTitle, tripDayDetail, credits, monthEndDetail } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
-import { LightbulbIcon, PencilIcon, TrashIcon } from '../icons';
+import { FlagIcon, LightbulbIcon, PencilIcon, TrashIcon } from '../icons';
 import { MapIconSvg, ScatterRose } from './CardRollIcons';
 
 interface LogListProps {
@@ -455,6 +455,7 @@ function deletable(item: LogItem | undefined): boolean {
 }
 
 function EntryBody({ item }: { item: LogItem }) {
+  const game = useGame();
   switch (item.kind) {
     case 'dice':
       return (
@@ -478,6 +479,15 @@ function EntryBody({ item }: { item: LogItem }) {
               {item.answer.event && (
                 <span className="log-event">
                   <b>Zufallsereignis: {item.answer.event.name}</b> · {item.answer.event.text}
+                </span>
+              )}
+              {item.answer.event?.thread && (
+                <span className="log-thread">
+                  Faden:{' '}
+                  <button type="button" className="thread-link" aria-label={`Mission ${item.answer.event.thread.title} öffnen`} onClick={() => game.editMission(item.answer!.event!.thread!.id)}>
+                    <FlagIcon />
+                    {item.answer.event.thread.title}
+                  </button>
                 </span>
               )}
             </>

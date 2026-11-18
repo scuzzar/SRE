@@ -12,6 +12,7 @@ import type { Encounter, QuantityDie } from './encounter';
 import { isPc, settleStash } from './stash';
 import { START_DAY } from './time';
 import type { Ship } from './ship';
+import type { Mission } from './mission';
 import { defaultOdds, HANDS, itemOf, itemOfWeapon, oddsOf, ref, skillOf, weaponOf, type ExampleCharacter } from './reference';
 
 /** Die sechs Attributwerte, je 0 bis 15. */
@@ -142,6 +143,8 @@ export interface Campaign {
   readonly day: number;
   /** Die Fahrt der Gruppe über die Oberfläche ihrer Welt; höchstens eine (siehe `trip.ts`). */
   readonly trip?: Trip;
+  /** Die Missionen, in der Reihenfolge, in der sie angelegt wurden, auch die ausgeblendeten (siehe `mission.ts`). */
+  readonly missions: readonly Mission[];
 }
 
 /** Was man beim Anlegen und Bearbeiten eines Charakters eingibt. */
@@ -183,7 +186,7 @@ export function createCampaign(
   id: CampaignId = 'k1',
   stamp: Stamp = { key: `key-${id}`, changedAt: EPOCH },
 ): Campaign {
-  let campaign: Campaign = { id, key: stamp.key, changedAt: stamp.changedAt, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [], bookings: [], ships: [], encounters: [], stash: [], day: START_DAY };
+  let campaign: Campaign = { id, key: stamp.key, changedAt: stamp.changedAt, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [], bookings: [], ships: [], encounters: [], stash: [], day: START_DAY, missions: [] };
   for (const { primary, wears, ...example } of examples) campaign = addCharacter(campaign, { ...example, ...(primary === undefined ? {} : { primary }), ...(wears === undefined ? {} : { wears }) }).campaign;
   // Bei mehreren Beispielen steht der erste oben, nicht der zuletzt angelegte.
   return withFocus(campaign, livingCharacters(campaign)[0]?.id);
@@ -655,7 +658,8 @@ function pullFromStash(stash: readonly Possession[], possessions: readonly Posse
 export function removeCharacter(campaign: Campaign, id: CharacterId): Campaign {
   const character = characterOf(campaign, id);
   if (fightsAsJoined(campaign, id)) throw new DomainError(`${character.name} kämpft in der laufenden Begegnung auf der Seite der NSC; erst sie beenden.`);
-  if (!isInLog(campaign, id)) return keepFocus(campaign, { ...campaign, characters: campaign.characters.filter((c) => c.id !== id), encounters: campaign.encounters.map((e) => withoutJoined(withoutFighter(e, id), id)) });
+  // Verweist eine Mission auf ihn als Auftraggeber, wird er wie bei Logeinträgen nur ausgeblendet (2026-11-18).
+  if (!isInLog(campaign, id) && !campaign.missions.some((m) => m.client === id)) return keepFocus(campaign, { ...campaign, characters: campaign.characters.filter((c) => c.id !== id), encounters: campaign.encounters.map((e) => withoutJoined(withoutFighter(e, id), id)) });
   return keepFocus(campaign, { ...campaign, characters: campaign.characters.map((c) => (c.id === id ? { ...c, retired: true } : c)) });
 }
 

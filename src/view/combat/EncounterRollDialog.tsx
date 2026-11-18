@@ -54,7 +54,7 @@ export function EncounterRollDialog({ roll, view }: { roll: TripRoll; view: Snap
             <strong>{rumorName(rumor)}</strong> <span>{rumorDetail(rumor)}</span>
           </p>
         )}
-        {landed && asNpc && <p className="small-label">{asNpc.blocker ?? 'Als NSC: ein zufälliger NSC in der Laufbahn des Patrons, er kommt unter Charaktere › NSC.'}</p>}
+        {landed && asNpc && <p className="small-label">{asNpc.blocker ?? 'Als NSC: ein zufälliger NSC in der Laufbahn des Patrons, er kommt unter Charaktere › NSC. Als Mission: dazu eine offene Mission mit ihm als Auftraggeber.'}</p>}
         {landed && event && (
           <p className="patron-last">
             <span>{event.text}</span>
@@ -79,13 +79,17 @@ export function EncounterRollDialog({ roll, view }: { roll: TripRoll; view: Snap
           </p>
         )}
         {landed && asNpc ? (
-          // Beim Patron: „Als NSC“ legt ihn an und schließt das Fenster, „Abbrechen“ schließt nur.
-          <div className="encounter-choice-actions">
+          // Beim Patron: „Als NSC“ legt ihn an und schließt das Fenster, „Als Mission“ dazu eine Mission
+          // mit ihm als Auftraggeber (2026-11-18), „Abbrechen“ schließt nur.
+          <div className="encounter-choice-actions patron-actions">
             <button type="button" className="ghost" onClick={() => game.closeEncounterRoll()}>
               Abbrechen
             </button>
-            <button type="button" className="primary" disabled={asNpc.blocker !== undefined} onClick={() => game.createPatronNpc()}>
+            <button type="button" className="ghost" disabled={asNpc.blocker !== undefined} onClick={() => game.createPatronNpc()}>
               Als NSC
+            </button>
+            <button type="button" className="primary" disabled={asNpc.blocker !== undefined} onClick={() => game.createPatronMission()}>
+              Als Mission
             </button>
           </div>
         ) : (

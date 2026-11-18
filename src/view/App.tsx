@@ -17,7 +17,8 @@ import { ResultDialog } from './characters/ResultDialog';
 import { useGame, useSnapshot } from './game-context';
 import { useEscapeCloses, useShortcuts } from './keyboard';
 import { useIsDesktop } from './media';
-import { CloseIcon, EncounterIcon, LogIcon, MenuIcon, PeopleIcon, ShipIcon } from './icons';
+import { CloseIcon, EncounterIcon, LogIcon, MenuIcon, MissionsIcon, PeopleIcon, ShipIcon } from './icons';
+import { MissionEditor, MissionsScreen } from './missions/MissionsScreen';
 import { Menu } from './Menu';
 import { ElsewhereDialog, NoticeToast } from './Notices';
 import { CardSheet } from './oracle/CardSheet';
@@ -34,7 +35,7 @@ import { LoadingOverlay } from './loading';
 import { Tray } from './Tray';
 
 /**
- * Die vier Reiter im Ziehblatt bzw. oben in der Seitenspalte des Desktops, in dieser Reihenfolge. Im
+ * Die fünf Reiter im Ziehblatt bzw. oben in der Seitenspalte des Desktops, in dieser Reihenfolge. Im
  * Reiter Begegnung schaltet man oben zwischen Begegnung und Kampf um, im Reiter Charaktere zwischen
  * SC, Kasse und NSC (`also`); den Shop öffnet „Einkaufen“ am Feld bzw. an der Weltkarte des
  * Aufenthaltsorts.
@@ -44,6 +45,7 @@ const areas: readonly { readonly id: Screen; readonly label: string; readonly Ic
   { id: 'encounter', label: 'Begegnung', Icon: EncounterIcon, also: ['combat'] },
   { id: 'characters', label: 'Charaktere', Icon: PeopleIcon, also: ['funds', 'npcs'] },
   { id: 'ship', label: 'Schiff', Icon: ShipIcon },
+  { id: 'missions', label: 'Missionen', Icon: MissionsIcon },
 ];
 
 /** Der Reiter, zu dem ein Screen gehört; der Shop und „Über die App“ gehören zu keinem. */
@@ -96,6 +98,7 @@ export function App() {
       {screen === 'characters' && <CharactersScreen view={view} />}
       {screen === 'npcs' && <NpcScreen view={view} />}
       {screen === 'funds' && <FundsScreen view={view} />}
+      {screen === 'missions' && <MissionsScreen view={view} />}
       {screen === 'about' && <AboutScreen persistent={view.persistent} durable={view.durable} />}
     </>
   );
@@ -153,7 +156,7 @@ export function App() {
   // Platz für ihre eigenen Knöpfe; in der Seitenspalte des Desktops unter jedem Bereich, der keine
   // eigene Reihe hat. Beim angetippten Feld des Globus steht dort stattdessen die Reihe des Felds.
   const dock = <OracleDock view={view} shortcuts />;
-  const fieldDock = view.globe?.picked ? <FieldDock globe={view.globe} trip={view.trip} tripPlan={view.tripPlan} npcs={view.npcs} /> : undefined;
+  const fieldDock = view.globe?.picked ? <FieldDock globe={view.globe} trip={view.trip} tripPlan={view.tripPlan} npcs={view.npcs} missionPicking={view.missions.picking} /> : undefined;
   // Im Reiter Begegnung: die Würfe der Begegnungen und die Zeit bzw. Weiterfahren.
   const encounterDock = screen === 'encounter' && field === undefined ? <EncounterDock view={view} options={encounterOptions} /> : undefined;
   const own = fieldDock ?? (view.picking ? undefined : worldDock.foot) ?? encounterDock;
@@ -163,7 +166,7 @@ export function App() {
   const base = (
     <div className="base">
       {view.globe ? (
-        <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} world={view.world} here={view.location === view.globe.id} travel={view.travel} log={view.log} logDays={view.logDays} trip={view.trip} />
+        <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} world={view.world} here={view.location === view.globe.id} travel={view.travel} log={view.log} logDays={view.logDays} trip={view.trip} focus={view.globeFocus} />
       ) : (
         <div className="base-sector">
           <SectorScreen view={view} fill dockTo={fieldSlot} />
@@ -230,6 +233,7 @@ export function App() {
           </section>
         </div>
       )}
+      {view.missions.editor && screen === 'missions' && <MissionEditor key={view.missions.editor.rev} missions={view.missions} />}
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
       {view.journey && <JourneySheet journey={view.journey} />}
       {view.card && !view.card.forNote && <CardSheet card={view.card} />}
