@@ -71,7 +71,7 @@
     <span>Schub <span class="g" id="gVal">0,0 G</span> <span class="hint" id="snapVal"></span></span>
     <button id="noThrust">Kein Schub</button>
   </div>
-  <div class="hint">Schub am eigenen Schiff herausziehen, bis höchstens zum Kreis.</div>
+  <div class="hint">Tippen oder ziehen im Kreis setzt den Schub: vom Schiff bis zum Finger. Der Kreis ist der höchste Schub.</div>
   <div class="row" id="warnRow"></div>
   <button class="primary" id="go">Runde ausführen (1.000 s)</button>
   <div class="more">
@@ -86,7 +86,7 @@
     <div class="row">
       <button id="reset">Neu beginnen</button>
     </div>
-    <div class="hint">Schub setzen: am eigenen Schiff (oder an der Pfeilspitze) ziehen; Länge = Stärke, der Kreis ist der höchste Schub.
+    <div class="hint">Schub setzen: irgendwo in den Kreis um das eigene Schiff tippen oder darin ziehen; Länge = Stärke, der Kreis ist der höchste Schub. Mitte = kein Schub. Außerhalb des Kreises verschiebt ein Zug die Karte.
       Nahe an den Marken (prograd, retrograd, Ziel, weg, angleichen) rastet der Pfeil ein.
       Durchgezogen: Bahn dieser Runde. Gestrichelt: wie es ohne Schub weiterginge (5 Runden).
       Rote Fläche: wohin der Korsar in dieser Runde kommen könnte.</div>
@@ -434,15 +434,23 @@ function snapMarks() {
   }
   return m;
 }
+// Jeder Klick oder Zug im Schubkreis setzt den Schub: vom Schiff zum Finger, gekappt am Kreis
+function thrustAt(px, py) {
+  const own = U("own"), dx = px - sx(own.x), dy = -(py - sy(own.y)), len = Math.hypot(dx, dy);
+  let a = Math.atan2(dy, dx), snap = null;
+  for (const m of snapMarks()) if (angDiff(a, m.a) < SNAP) { a = m.a; snap = m.name; }
+  const g = len < 14 ? 0 : Math.min(own.maxG, Math.max(0.1, Math.round(len / RING * own.maxG * 10) / 10));
+  Object.assign(own.order, { mode: "fest", angle: a, g, snap });
+  syncUi(); replan();
+}
 const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
 const pointers = new Map();
 let drag = null;
 cv.addEventListener("pointerdown", e => {
   cv.setPointerCapture(e.pointerId); pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
   const own = U("own");
-  const tipX = sx(own.x) + Math.cos(own.order.angle) * own.order.g * RING / own.maxG, tipY = sy(own.y) - Math.sin(own.order.angle) * own.order.g * RING / own.maxG;
-  const nearShip = Math.hypot(e.clientX - sx(own.x), e.clientY - sy(own.y)) < 36, nearTip = own.order.g > 0 && Math.hypot(e.clientX - tipX, e.clientY - tipY) < 30;
-  if (pointers.size === 1 && !S.anim && own.alive && (nearShip || nearTip)) drag = { kind: "thrust" };
+  const inRing = Math.hypot(e.clientX - sx(own.x), e.clientY - sy(own.y)) <= RING + 12;
+  if (pointers.size === 1 && !S.anim && own.alive && inRing) { drag = { kind: "thrust" }; thrustAt(e.clientX, e.clientY); }
   else if (pointers.size === 1) drag = { kind: "pan", x: e.clientX, y: e.clientY, cx: cam.cx, cy: cam.cy };
   else if (pointers.size === 2) { const [a, b] = [...pointers.values()]; drag = { kind: "pinch", d: Math.hypot(a.x - b.x, a.y - b.y), s: cam.s }; }
 });
@@ -450,14 +458,8 @@ cv.addEventListener("pointermove", e => {
   if (!pointers.has(e.pointerId)) return;
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (!drag) return;
-  if (drag.kind === "thrust") {
-    const own = U("own"), dx = e.clientX - sx(own.x), dy = -(e.clientY - sy(own.y)), len = Math.hypot(dx, dy);
-    let a = Math.atan2(dy, dx), snap = null;
-    for (const m of snapMarks()) if (angDiff(a, m.a) < SNAP) { a = m.a; snap = m.name; }
-    const g = len < 14 ? 0 : Math.min(own.maxG, Math.max(0.1, Math.round(len / RING * own.maxG * 10) / 10));
-    Object.assign(own.order, { mode: "fest", angle: a, g, snap });
-    syncUi(); replan();
-  } else if (drag.kind === "pan") {
+  if (drag.kind === "thrust") thrustAt(e.clientX, e.clientY);
+  else if (drag.kind === "pan") {
     cam.cx = drag.cx - (e.clientX - drag.x) / cam.s; cam.cy = drag.cy + (e.clientY - drag.y) / cam.s;
   } else if (drag.kind === "pinch" && pointers.size === 2) {
     const [a, b] = [...pointers.values()]; cam.s = clampS(drag.s * Math.hypot(a.x - b.x, a.y - b.y) / drag.d);

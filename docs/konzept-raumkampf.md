@@ -138,8 +138,12 @@ Richtung und Stärke. Er gilt unverändert für die ganze Runde, als feste Richt
     hinein, trennen sie sich.
   - ⚑ Der Kreis hat auf dem Bildschirm immer dieselbe Größe (etwa 90 px), egal wie weit gezoomt
     ist. So ist der Schub immer gleich fein einzustellen.
-  - ⚑ Der Pfeil lässt sich auch an seiner Spitze greifen und nachziehen, der Finger muss nicht
-    zurück ins Schiff. Daneben steht der Wert, z. B. „1,4 G“.
+  - **Jeder Klick im Kreis setzt den Schub** (Entscheidung des Owners, 18. November 2026): Tippt
+    man irgendwo in den Kreis, zeigt der Pfeil sofort vom Schiff zu dieser Stelle; zieht man weiter,
+    folgt er dem Finger. Man muss also nicht im Schiff ansetzen. Ein Tipp in die Mitte heißt kein
+    Schub. Ein Zug, der außerhalb jedes Kreises beginnt, verschiebt die Karte. Neben dem Pfeil steht
+    der Wert, z. B. „1,4 G“. ⚑ Überlappen sich die Kreise mehrerer Einheiten, gilt der Kreis des
+    nächsten Schiffs.
   - ⚑ **Einrasten**: Am Kreis sind die nützlichen Richtungen als kleine Marken eingezeichnet: in
     Flugrichtung (prograd), gegen die Flugrichtung (retrograd), auf das Ziel (⚑ das Waffenziel der Einheit, sonst der nächste
     geortete Gegner), vom Ziel weg
@@ -263,8 +267,8 @@ Was die Karte beim Planen zeigt, ist der Kern des Spielgefühls. Es sind die dre
 
 ### Ablauf auf dem Bildschirm
 
-1. **Planen**: Schubvektor mit dem Finger direkt aus der Einheit herausziehen, ohne sie vorher
-   auszuwählen (Länge = Stärke, gekappt am Kreis des höchsten Schubs). Ziele für Waffen wählen.
+1. **Planen**: In den Schubkreis einer Einheit tippen oder darin ziehen, ohne sie vorher
+   auszuwählen; der Pfeil zeigt vom Schiff zum Finger (Länge = Stärke, gekappt am Kreis). Ziele für Waffen wählen.
    Antippen braucht man nur, um eine Einheit im Blatt anzuzeigen. Ein Zug, der woanders
    auf der Karte beginnt, verschiebt die Karte; zwei Finger zoomen.
 2. **„Runde ausführen“**: Die NSC entscheiden, dann spielt die Karte die 1.000 Sekunden in etwa zwei
