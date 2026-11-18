@@ -118,6 +118,7 @@ hide <<browser>> stereotype
     startedAt: datetime
     round: number
     /elapsed: number
+    $new("2026-11-18b", "atGiant: boolean")
   }
   class SpaceUnit $raum $newClass("2026-11-18") {
     position: Vec

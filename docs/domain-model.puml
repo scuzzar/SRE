@@ -236,6 +236,30 @@ hide <<browser>> stereotype
     startedAt: datetime
     round: number
     /elapsed: number
+    $new("2026-11-18b", "atGiant: boolean")
+  }
+  class SystemBodies $raum $newClass("2026-11-18b") {
+  }
+  class Satellite $raum $newClass("2026-11-18b") {
+    kind: SatelliteKind
+    size: number [0..1]
+    diameter: number [0..1]
+    orbit: number
+    angle: number
+    atmosphere: number [0..1]
+    hydrographics: number [0..1]
+    population: number [0..1]
+    /gravity: number
+  }
+  enum SatelliteKind <<value>> $raum $newClass("2026-11-18b") {
+    moon
+    small
+    ring
+  }
+  class GasGiant $raum $newClass("2026-11-18b") {
+    large: boolean
+    radius: number
+    /gravity: number
   }
   class SpaceUnit $raum $newClass("2026-11-18") {
     position: Vec
@@ -1067,6 +1091,11 @@ SystemFlight "*" -$newArrow("2026-11-18")-> "1" Hex : world
 SystemFlight "1" *-$newArrow("2026-11-18")- "1..*" SpaceUnit : units {ordered}
 SpaceUnit "*" -$newArrow("2026-11-18")-> "1" Ship : ship
 SpaceUnit "1" *-$newArrow("2026-11-18")- "*" TrackPoint : track {ordered}
+Hex "1" *-$newArrow("2026-11-18b")- "0..1" SystemBodies : bodies
+SystemBodies "1" *-$newArrow("2026-11-18b")- "*" Satellite : satellites {ordered}
+SystemBodies "1" *-$newArrow("2026-11-18b")- "0..1" GasGiant : giant
+GasGiant "1" *-$newArrow("2026-11-18b")- "*" Satellite : satellites {ordered}
+Satellite --> SatelliteKind
 Gain "*" --> "0..1" ShipDesign : ship
 DeckPlan "*" --> "1" ShipDesign : design
 

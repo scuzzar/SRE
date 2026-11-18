@@ -425,6 +425,14 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Schubvektor, Aufschlag, `/maxG`, Verweis auf das Schiff), `TrackPoint` für die Spur und der Wert
 > `Vec`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-18-systemflug.png`](changes/2026-11-18-systemflug.png).
+>
+> **Wartet auf Freigabe** (Kennzeichen 2026-11-18b): **Monde, Ringe und Gasriese** nach Book 6
+> *Scouts* (siehe *Monde, Ringe und Gasriese*, Regeln in
+> [`regeln-sternsystem.md`](regeln-sternsystem.md)). Neu im Bild: `SystemBodies` an der Welt (die
+> Körper des Systems, einmal gewürfelt), `Satellite` mit `SatelliteKind` (Mond, kleine Welt, Ring),
+> `GasGiant` mit seinen Monden und `SystemFlight.atGiant` für den Systemflug am Gasriesen. Der
+> Ausschnitt dazu liegt unter
+> [`changes/2026-11-18b-monde-ringe-gasriese.png`](changes/2026-11-18b-monde-ringe-gasriese.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -458,7 +466,8 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Raumkarte und Systemflug | [views/raum.png](views/raum.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist
-[2026-11-18](changes/2026-11-18-systemflug.png): Systemflug, Stufe 1 des Raumkampfs.
+[2026-11-18](changes/2026-11-18-systemflug.png): Systemflug, Stufe 1 des Raumkampfs, und
+[2026-11-18b](changes/2026-11-18b-monde-ringe-gasriese.png): Monde, Ringe und Gasriese.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -787,6 +796,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Spur | `SpaceUnit.track` (`TrackPoint`) | Wo eine Einheit am Ende jeder vergangenen Raumrunde war, mit ihrer Geschwindigkeit dort (2026-11-18) |
 | Himmelskörper | (abgeleitet aus `Hex`) | Ein Körper mit Schwerkraft auf der Raumkarte; in Stufe 1 nur die Welt, mit Radius und Masse aus ihrer Größe (2026-11-18) |
 | Aufschlag | `SpaceUnit.crashed` | Eine Einheit ist unter die Oberfläche eines Himmelskörpers geraten; sie bewegt sich nicht mehr (2026-11-18) |
+| Körper des Systems | `SystemBodies`, `Hex.bodies` | Was zu einer Welt auf ihrer Raumkarte dazukommt: ihre Monde und Ringe und der Gasriese des Systems mit seinen Monden; einmal gewürfelt, wenn die Raumkarte der Welt zum ersten Mal aufgeht (2026-11-18b) |
+| Mond | `Satellite` | Ein Körper, der um eine Welt oder einen Gasriesen kreist, nach Book 6: ein Mond mit Größe, eine kleine Welt (S) oder ein Ring (R); mit Bahn, Startwinkel und den sichtbaren Stellen des UWP (2026-11-18b) |
+| Art des Mondes | `SatelliteKind` | moon (Mond mit Größe 1 oder mehr), small (kleine Welt S, 500 bis 1.500 km Durchmesser), ring (Ring R) (2026-11-18b) |
+| Bahn eines Mondes | `Satellite.orbit` | Abstand von der Mitte des Körpers, um den er kreist, in dessen Radien (Book 6, *Satellite Orbits*) (2026-11-18b) |
+| Startwinkel | `Satellite.angle` | Wo auf seiner Bahn ein Mond am Kampagnentag 0 stand, in Grad; von dort läuft er gegen den Uhrzeigersinn (2026-11-18b) |
+| Gasriese (Körper) | `GasGiant`, `SystemBodies.giant` | Der Gasriese des Systems als Körper auf seiner eigenen Raumkarte: groß oder klein, Radius in km, Dichte ein Fünftel der Erde; nur, wenn das System einen hat (`Hex.gasGiant`) (2026-11-18b) |
+| Am Gasriesen | `SystemFlight.atGiant` | Der Systemflug läuft auf der Raumkarte des Gasriesen statt der Welt, etwa zum Auftanken (2026-11-18b) |
+| Asteroidenfeld | (abgeleitet, View) | Was die Raumkarte bei einer Welt der Größe 0 statt eines Planeten zeigt: Brocken aus dem Weltschlüssel, nicht gespeichert, ohne Schwerkraft (2026-11-18b) |
 | Sprunggrenze | (abgeleitet) | 10 und 100 Durchmesser der Welt; innerhalb davon DM +15 bzw. +5 auf den Fehlsprung (SR 28); als Ringe auf der Raumkarte (2026-11-18) |
 | Schlüssel des Deckplans | `DeckPlan.key` | Woran der Abgleich ein Bild auf jedem Gerät wiedererkennt; zufällig, weltweit eindeutig; ein Plan ändert sich nie, ein neues Bild ist ein neuer Plan mit neuem Schlüssel (2026-11-17) |
 
@@ -2872,6 +2889,50 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     gleich ausprobieren kann (siehe *Demo-Kampagne*).
   - **Später** (eigene Änderungen): fremde Schiffe und ihr Planer (Stufe 2), Waffen, Raketen, Sand,
     Small Craft, Ortung, Raumkampf aus einer Schiffsbegegnung; siehe den Stufenplan im Konzept.
+
+- **Monde, Ringe und Gasriese** (Kennzeichen 2026-11-18b, wartet auf Freigabe). Damit die Raumkarte
+  nicht leer ist (Wunsch des Owners, 18. November 2026). Regeln aus Book 6 *Scouts*, übertragen in
+  [`regeln-sternsystem.md`](regeln-sternsystem.md); Abweichungen tragen ⚑.
+  - **Wann gewürfelt.** ⚑ Wenn die Raumkarte einer Welt zum ersten Mal aufgeht, würfelt die App ihre
+    Körper des Systems (`Hex.bodies`) und speichert sie; danach nie wieder (Werte, nicht Würfe).
+    Das gilt auch für ältere Welten. Leere Hexfelder und Welten in Erschaffung haben keine.
+  - **Monde der Welt** (B6 24, 36–37): Zahl 1D − 3 bei Größe 1 oder mehr; keine bei Größe 0 (Gürtel)
+    und S. Größe des Mondes = Größe der Welt − 1D; 0 ergibt einen Ring, weniger eine kleine Welt mit
+    (2D + 3) × 100 km Durchmesser (`diameter`). Bahn: 2D, 7 oder weniger nah, 8 oder mehr fern, je
+    weiterer Mond DM −1 mehr; Abstand nach der Tabelle in Weltradien, Ringe 1D auf die Spalte
+    *Ring*; dieselbe Bahn zweimal: neu würfeln.
+  - **UWP der Monde** (B6 37): Atmosphäre, Hydrographie und Bevölkerung nach Book 6, mehr braucht das
+    Weltsymbol nicht; Regierung, Gesetz, Tech-Level und Raumhafen der Monde kommen erst mit dem
+    Sternsystem. ⚑ Ohne Stern gibt es keine Zone: Monde der Welt gelten als in der bewohnbaren Zone
+    (keine Zonen-DMs) und haben die Temperatur der Welt; Monde des Gasriesen gelten als in der
+    äußeren Zone und gefroren. Wo Kapitel und Checklist von Book 6 verschiedene DMs nennen, gilt das
+    Kapitel.
+  - **Gasriese** (B6 28, 36, 39): nur, wenn das System einen hat (`Hex.gasGiant`); ⚑ immer genau
+    einer, auch wenn Book 6 mehrere erlaubt. Größe 1D: 3 oder weniger groß, 4 oder mehr klein. ⚑
+    Radius: groß 50.000 + 1D × 10.000 km (60.000 bis 110.000), klein 13.000 + 1D × 7.000 km (20.000
+    bis 55.000); Book 6 nennt nur die Spannen. Monde: klein 2D − 4, groß 2D; Größe 2D − 6 bzw.
+    2D − 4; Bahn mit „extrem fern“ bei 12+.
+  - **Schwerkraft** (B6 43, SR 22): Mond g = Größe ÷ 8 G (K = 1); kleine Welt g = Durchmesser ÷
+    12.800 km G; Ring keine; Gasriese g = 0,2 × Durchmesser ÷ 12.800 km G (K = 0,2). Die Masse folgt
+    daraus wie bei der Welt (G·M = g · R²). Die Tabelle *World Data* (B6 48) weicht an einigen
+    Stellen ab; es gilt die Formel.
+  - **Auf der Raumkarte der Welt**: die Monde laufen auf festen Kreisbahnen gegen den Uhrzeigersinn
+    um die Welt (2D); ihr Ort ergibt sich aus Startwinkel, Umlaufzeit (T = 2π · √(r³ ÷ G·M) der
+    Welt) und der Zeit seit Kampagnentag 0 (Tag × 86.400 s plus Dauer des Systemflugs). Monde haben
+    Schwerkraft, man kann auf ihnen aufschlagen, und sie verdecken die Sichtlinie wie die Welt;
+    gezeichnet mit dem Weltsymbol (kleine Welten wie ein Mond der Größe 1, nur kleiner). ⚑ Ein Ring
+    ist ein flaches Band von (Bahn + 0,2) bis (Bahn + 0,8) Weltradien, ohne Schwerkraft, nicht
+    fest (man fliegt hindurch).
+  - **Raumkarte am Gasriesen**: Der Knopf „Raum“ bietet bei einem System mit Gasriese beide Karten an:
+    die Welt und den Gasriesen. Ein Systemflug am Gasriesen (`atGiant`) hat den Gasriesen in der
+    Mitte und seine Monde um ihn; Sprunggrenzen nach seinem Durchmesser. Er beginnt wie an der Welt
+    (Aufenthaltsort, eigenes Schiff, Kreisbahn mit doppeltem Radius). ⚑ Wie das Schiff von der Welt
+    zum Gasriesen kommt (eine Reise im System, Tage bei 1 G), bleibt offen; bis dahin darf der
+    Systemflug am Gasriesen von der Welt aus beginnen, auf der die Gruppe ist.
+  - **Asteroidengürtel** (Größe 0): keine Monde; die Raumkarte zeigt ein Asteroidenfeld aus dem
+    Weltschlüssel, nicht gespeichert, ohne Schwerkraft.
+  - **Weitere Planeten und Planetoidengürtel** des Systems laufen um den Stern, Millionen Kilometer
+    entfernt; sie kommen mit dem Sternsystem und einer Reise im System, nicht auf diese Raumkarte.
 
 ## Wo der Code noch nicht folgt
 

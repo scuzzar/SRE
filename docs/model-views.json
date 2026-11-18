@@ -424,6 +424,16 @@
         "ShipDesign",
         "Hex"
       ]
+    },
+    {
+      "id": "2026-11-18b",
+      "file": "2026-11-18b-monde-ringe-gasriese",
+      "title": "Monde, Ringe und Gasriese (Book 6): Körper des Systems an der Welt, Systemflug auch am Gasriesen",
+      "approved": false,
+      "show": [
+        "Hex",
+        "SystemFlight"
+      ]
     }
   ]
 }
