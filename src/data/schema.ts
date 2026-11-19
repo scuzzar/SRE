@@ -15,6 +15,8 @@ export const EventFocusSchema = z.object({
   to: z.number().int().min(1).max(100),
   name: z.string().min(1),
   text: z.string().min(1),
+  /** Ein Fadenfokus: Er gehört zu einem Handlungsfaden, die Karte lost dann eine offene Mission aus (2026-11-18). */
+  thread: z.boolean().default(false),
 });
 
 export const HouseRulesSchema = z.object({

@@ -54,7 +54,7 @@ export interface SpaceUnitView {
   readonly gravity: number;
 }
 
-/** Die Raumkarte einer Welt (Domänenmodell 2026-11-18). */
+/** Die Raumkarte einer Welt (Domänenmodell 2026-11-18c). */
 export interface SpaceView {
   readonly world: { readonly id: string; readonly name: string; readonly look: WorldLook; readonly radius: number | undefined };
   /** Sprunggrenzen: Abstand von der Mitte in km und der DM auf den Fehlsprung innerhalb davon. */

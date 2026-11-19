@@ -17,6 +17,7 @@ export * from './flight';
 export * from './wounds';
 export * from './stamina';
 export * from './log';
+export * from './mission';
 export * from './npcs';
 export * from './patron';
 export * from './ports';

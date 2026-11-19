@@ -287,7 +287,7 @@ const ST = Math.sin(TILT);
 const CR = Math.cos(ROTATION);
 const SR = Math.sin(ROTATION);
 
-/** Wie das Symbol gezeichnet wird: `orbits: false` lässt die angedeuteten Umlaufbahnen weg (auf der Raumkarte, 2026-11-18). */
+/** Wie das Symbol gezeichnet wird: `orbits: false` lässt die angedeuteten Umlaufbahnen weg (auf der Raumkarte, 2026-11-18c). */
 export interface WorldDrawing {
   readonly orbits?: boolean;
 }

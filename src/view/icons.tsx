@@ -214,6 +214,26 @@ export function BriefcaseIcon() {
   );
 }
 
+/** Eine Fahne: eine Mission (Reiter, Ort auf der Karte, Handlungsfaden). */
+export function FlagIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5.5 21V3.5" />
+      <path d="M5.5 4h12l-2.6 4.2 2.6 4.3h-12" />
+    </svg>
+  );
+}
+
+/** Eine Fahne für die Reiterleiste, so groß wie die anderen Reiter-Symbole. */
+export function MissionsIcon() {
+  return (
+    <svg {...base} width={22} height={22} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5.5 21V3.5" />
+      <path d="M5.5 4h12l-2.6 4.2 2.6 4.3h-12" />
+    </svg>
+  );
+}
+
 /** Eine Sprechblase: ein Gerücht. */
 export function RumorIcon() {
   return (

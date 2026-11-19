@@ -5,7 +5,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('Systemflug: Raumkarte öffnen, Schub im Schubkreis setzen, Runde ausführen, beenden', async ({ page }) => {
-  // Die Demo-Kampagne hat einen Scout im Hafen von Kessra (2026-11-18).
+  // Die Demo-Kampagne hat einen Scout im Hafen von Kessra (2026-11-18c).
   await page.getByRole('button', { name: 'Aufenthaltsort Kessra, Globus öffnen' }).click();
   await page.getByRole('button', { name: 'Raumkarte' }).click();
   await expect(page.getByRole('region', { name: 'Raumkarte · Kessra' })).toBeVisible();

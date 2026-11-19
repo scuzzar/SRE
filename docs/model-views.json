@@ -53,6 +53,10 @@
       "title": "Schiffe"
     },
     {
+      "id": "mission",
+      "title": "Missionen"
+    },
+    {
       "id": "raum",
       "title": "Raumkarte und Systemflug"
     }
@@ -415,6 +419,18 @@
     },
     {
       "id": "2026-11-18",
+      "file": "2026-11-18-missionen",
+      "title": "Missionen mit Auftraggeber und Orten; offene Missionen sind die Handlungsfäden des Orakels",
+      "approved": true
+    },
+    {
+      "id": "2026-11-18b",
+      "file": "2026-11-18b-beteiligte",
+      "title": "Beteiligte einer Mission: Charaktere (NSC oder SC) mit Etikett, z. B. Opfer, Fahrer, Informant",
+      "approved": true
+    },
+    {
+      "id": "2026-11-18c",
       "file": "2026-11-18-systemflug",
       "title": "Systemflug (Stufe 1 des Raumkampfs, eigenes Schiff um eine Welt): Einheiten mit Ort, Geschwindigkeit und Schubvektor, Raumrunden, Spur",
       "approved": true,
@@ -426,7 +442,7 @@
       ]
     },
     {
-      "id": "2026-11-18b",
+      "id": "2026-11-18d",
       "file": "2026-11-18b-sternsystem",
       "title": "Sternsystem nach Book 6: Sterne, Bahnen und Zonen, Gasriesen und Hauptwelt platziert, Monde und Ringe; Systemflug auch am Gasriesen",
       "approved": true,

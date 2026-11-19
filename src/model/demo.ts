@@ -17,7 +17,7 @@ export function createDemoCampaign(clock: Clock, key = 'key-k1'): Campaign {
   const campaign = createCampaign(ref.examples, 'Demo-Kampagne');
   const there = setLocation({ ...campaign, hexes: [world] }, hexId(world.column, world.row));
   const funded = book(there, 'income', DEMO_FUNDS, clock, 'Startkapital');
-  // Ein schuldenfreier Scout mit vollem Tank, damit man den Systemflug gleich ausprobieren kann (2026-11-18).
+  // Ein schuldenfreier Scout mit vollem Tank, damit man den Systemflug gleich ausprobieren kann (2026-11-18c).
   const { campaign: withShip, ship } = addShip(funded, DEMO_SHIP_DESIGN, undefined);
   const named = { ...withShip, ships: withShip.ships.map((s) => (s.id === ship.id ? { ...s, name: DEMO_SHIP_NAME } : s)) };
   // Die Änderungszeit ist die der Buchung; die Uhr wird dafür nicht noch einmal gefragt.
@@ -27,6 +27,6 @@ export function createDemoCampaign(clock: Clock, key = 'key-k1'): Campaign {
 /** Das Startkapital der Demo-Kampagne in der Gruppenkasse. */
 export const DEMO_FUNDS = 5000;
 
-/** Der Scout der Demo-Kampagne (2026-11-18). */
+/** Der Scout der Demo-Kampagne (2026-11-18c). */
 export const DEMO_SHIP_DESIGN = 'S';
 export const DEMO_SHIP_NAME = 'Kestrel';

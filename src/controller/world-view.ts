@@ -111,6 +111,8 @@ export interface HexView {
   readonly look: WorldLook | undefined;
   /** Auf der Welt ist etwas geschehen (Logeinträge mit Ort) oder es leben dort dauerhafte NSC. */
   readonly marked: boolean;
+  /** Eine offene Mission hat hier einen Ort (Fahne, 2026-11-18). */
+  readonly mission: boolean;
 }
 
 /** Das gewählte Feld auf der Karte: noch nicht erzeugt, oder mit seinem Vorkommen. */
@@ -268,7 +270,7 @@ function hexState(hex: Hex | undefined): HexView['state'] {
 }
 
 /** Alle 80 Felder des Subsektors, spaltenweise. */
-export function sectorView(hexes: readonly Hex[], marked: ReadonlySet<string> = new Set()): readonly HexView[] {
+export function sectorView(hexes: readonly Hex[], marked: ReadonlySet<string> = new Set(), missions: ReadonlySet<string> = new Set()): readonly HexView[] {
   const cells: HexView[] = [];
   for (let column = 1; column <= SECTOR_COLUMNS; column++) {
     for (let row = 1; row <= SECTOR_ROWS; row++) {
@@ -290,6 +292,7 @@ export function sectorView(hexes: readonly Hex[], marked: ReadonlySet<string> = 
         trade: hex && hexState(hex) === 'world' ? tradeCodesOf(hex).map((t) => t.id) : [],
         look: lookOf(hex),
         marked: marked.has(hexId(column, row)),
+        mission: missions.has(hexId(column, row)),
       });
     }
   }

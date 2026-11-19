@@ -1,5 +1,19 @@
 import {
   deadNpcs,
+  isClient,
+  isThreadInLog,
+  landformAt,
+  surfaceGrid,
+  missionPlaceBlocker,
+  missionsIn,
+  missionsOfCharacter,
+  missionWorlds,
+  placeCell,
+  retiredMissions,
+  type Mission,
+  type MissionInput,
+  type MissionState,
+  type Place,
   generateNpcBlocker,
   hexById,
   npcGroups,
@@ -250,7 +264,7 @@ import { careerLines, generationView, itemLabel, worldChoices, worldName, type C
 import { buildShipView, type ShipView } from './ship-view';
 import { sectorView, selectedView, worldList, worldView, type HexView, type SelectedHexView, type WorldListItem, type WorldView } from './world-view';
 import { spaceView, type OpenSpace, type SpaceView } from './space-view';
-import { globeView, type GlobeView } from './globe-view';
+import { globeView, LANDFORM_NAMES, position, type GlobeView } from './globe-view';
 import { activeTripView, tripDayItem, tripPlanOf, type TripDayItem, type TripPlanView, type TripView } from './trip-view';
 import { checkItem, checksView, journeyItem, journeyView, legalView, monthEndItem, timeItem, timeView, type CheckItem, type ChecksView, type JourneyDraft, type JourneyItem, type JourneyView, type LegalView, type MonthEndItem, type TimeItem, type TimeView } from './time-view';
 
@@ -323,6 +337,8 @@ export interface Snapshot {
   readonly trayStop: TrayStop;
   /** Die NSC-Liste: die dauerhaften NSC, nach Welt und Rolle gruppiert. */
   readonly npcs: NpcScreenView;
+  /** Der Reiter Missionen. */
+  readonly missions: MissionsView;
   /** Die Toten unter „Verstorben“, getrennt von den Lebenden. */
   readonly dead: readonly { readonly id: string; readonly name: string; readonly background: string }[];
   readonly retired: readonly { readonly id: string; readonly name: string }[];
@@ -359,8 +375,10 @@ export interface Snapshot {
   readonly world: WorldView | undefined;
   /** Der Globus der offenen Welt, wenn er im Vordergrund steht und die Welt eine Oberflächenkarte hat. */
   readonly globe: GlobeView | undefined;
-  /** Die Raumkarte einer Welt ist die Grundkarte (vor Globus und Subsektor), mit dem Systemflug, wenn er dort läuft (2026-11-18). */
+  /** Die Raumkarte einer Welt ist die Grundkarte (vor Globus und Subsektor), mit dem Systemflug, wenn er dort läuft (2026-11-18c). */
   readonly space: SpaceView | undefined;
+  /** Wohin der Globus fliegen und zoomen soll, nachdem ein Ortsverweis angetippt wurde (siehe ControllerState). */
+  readonly globeFocus: { readonly cell: number; readonly n: number } | undefined;
   /** Das gewählte Feld auf der Karte, mit seinem Vorkommen, sobald gewürfelt. */
   readonly selected: SelectedHexView | undefined;
   /** Die Karte steht im Vordergrund, um für die Charaktererschaffung eine Welt zu wählen oder zu erschaffen. */
@@ -414,7 +432,7 @@ export interface ItemChoice {
  * Schiff; im Reiter Begegnung schaltet man zwischen `encounter` und `combat` (Kampf) um, im Reiter
  * Charaktere zwischen `characters` (SC), `funds` (Kasse) und `npcs` (NSC). Den Shop öffnet „Einkaufen“ am Feld bzw. an der Weltkarte des Aufenthaltsorts.
  */
-export type Screen = 'oracle' | 'encounter' | 'combat' | 'shop' | 'ship' | 'characters' | 'npcs' | 'funds' | 'sector' | 'about';
+export type Screen = 'oracle' | 'encounter' | 'combat' | 'shop' | 'ship' | 'characters' | 'npcs' | 'funds' | 'missions' | 'sector' | 'about';
 
 /** Ein dauerhafter NSC in der NSC-Liste. */
 export interface NpcItem {
@@ -566,6 +584,8 @@ export interface RandomEventView {
   readonly roll: number;
   readonly name: string;
   readonly text: string;
+  /** Bei einem Fadenfokus die ausgeloste Mission (Handlungsfaden, 2026-11-18). */
+  readonly thread: { readonly id: string; readonly title: string } | undefined;
 }
 
 /** Die Antwort des Orakels in einer Kartenauswahl: Stufe, Wurf, Chance von damals und die Antwort. */
@@ -1351,6 +1371,73 @@ export interface EditorView {
   readonly worlds: readonly WorldChoice[];
   /** Die Rollen eines NSC, in ihrer Reihenfolge. */
   readonly roles: readonly NpcRole[];
+  /** Die Missionen, in denen dieser Charakter vorkommt (2026-11-18, 2026-11-18b): als Auftraggeber und bzw. oder als Beteiligter, `as` in Worten (z. B. „Auftraggeber“, „Opfer“). */
+  readonly missions: readonly { readonly id: string; readonly title: string; readonly state: MissionState; readonly as: string }[];
+}
+
+/** Ein Ort einer Mission, wie Reiter und Editor ihn zeigen. */
+export interface MissionPlaceView {
+  readonly place: Place;
+  readonly label: string | undefined;
+  /** Z. B. „Startown · Kessra“ oder „Gebirge · 12° N, 40° O · Kessra“. */
+  readonly text: string;
+  readonly world: string;
+  readonly cell: number | undefined;
+}
+
+/** Ein Beteiligter einer Mission (2026-11-18b): der Charakter mit Etikett. */
+export interface MissionPersonView {
+  readonly id: string;
+  readonly name: string;
+  readonly label: string | undefined;
+  readonly dead: boolean;
+}
+
+/** Eine Mission im Reiter Missionen. */
+export interface MissionItem {
+  readonly id: string;
+  readonly title: string;
+  readonly text: string;
+  readonly state: MissionState;
+  /** Der Auftraggeber: Name und Rolle; ob er tot ist. */
+  readonly client: { readonly id: string; readonly name: string; readonly role: NpcRole | undefined; readonly dead: boolean } | undefined;
+  readonly places: readonly MissionPlaceView[];
+  readonly people: readonly MissionPersonView[];
+  /** Ein Ort liegt auf der Welt der Gruppe. */
+  readonly here: boolean;
+}
+
+/** Der Reiter Missionen (siehe domain-model.md, *Missionen*). */
+export interface MissionsView {
+  readonly open: readonly MissionItem[];
+  readonly done: readonly MissionItem[];
+  readonly failed: readonly MissionItem[];
+  readonly retired: readonly MissionItem[];
+  /** Der Editor: neue (`id` fehlt) oder bestehende Mission, mit der Eingabe bis hierher; `rev` wechselt, wenn der Controller sie ändert. */
+  readonly editor:
+    | {
+        readonly id: string | undefined;
+        readonly rev: number;
+        readonly title: string;
+        readonly text: string;
+        readonly state: MissionState;
+        readonly client: string | undefined;
+        readonly places: readonly MissionPlaceView[];
+        readonly people: readonly MissionPersonView[];
+        readonly error: string | undefined;
+        /** Löschen blendet nur aus, weil der Log auf die Mission zeigt. */
+        readonly inLog: boolean;
+      }
+    | undefined;
+  /** Ort wählen läuft: Der Editor tritt zurück, man tippt auf dem Globus ein Feld an. */
+  readonly picking: { readonly title: string } | undefined;
+  /** Der Aufenthaltsort als Ort für „+ Aufenthaltsort“, oder warum es ihn nicht gibt. */
+  readonly here: MissionPlaceView | undefined;
+  readonly hereBlocker: string | undefined;
+  /** Die möglichen Beteiligten: alle Charaktere, die nicht ausgeblendet sind, auch tote; erst die SC, dann die NSC nach Rolle. */
+  readonly persons: readonly { readonly group: string; readonly characters: readonly MissionPersonView[] }[];
+  /** Die möglichen Auftraggeber: dauerhafte NSC (nicht ausgeblendet), nach Rolle. */
+  readonly clients: readonly { readonly role: NpcRole; readonly npcs: readonly { readonly id: string; readonly name: string }[] }[];
 }
 
 export interface ControllerState {
@@ -1437,6 +1524,12 @@ export interface ControllerState {
   /** Die NSC-Liste zeigt alle NSC statt nur die des Aufenthaltsorts. */
   readonly npcAll: boolean;
   /**
+   * Der Editor einer Mission (2026-11-18): neue (`id` fehlt) oder bestehende, mit der Eingabe bis hierher
+   * (sie überdauert das Ort wählen); `rev` zählt hoch, wenn der Controller die Eingabe ändert.
+   * `picking`: Ort wählen auf dem Globus läuft.
+   */
+  readonly missionEditor: { readonly id: string | undefined; readonly draft: MissionInput; readonly rev: number; readonly error: string | undefined; readonly picking: boolean } | undefined;
+  /**
    * NSC platzieren: Die NSC-Liste wählt NSC für dieses Feld des Globus aus (Welt als Feld des
    * Subsektors, Oberflächenfeld) und kehrt danach in den Reiter `screen` zum Feld zurück.
    */
@@ -1463,8 +1556,13 @@ export interface ControllerState {
   readonly worldError: string | undefined;
   /** Der Globus der offenen Welt ist die Grundkarte (sonst der Subsektor), mit dem angetippten Oberflächenfeld. */
   readonly globe: { readonly picked: number | undefined } | undefined;
-  /** Die offene Raumkarte (2026-11-18). */
+  /** Die offene Raumkarte (2026-11-18c). */
   readonly space: OpenSpace | undefined;
+  /**
+   * Ein Ortsverweis wurde angetippt (etwa ein Ort einer Mission): Der Globus soll zu diesem Feld fliegen
+   * und hineinzoomen. `n` zählt hoch, damit derselbe Ort ein zweites Mal wieder hinfliegt.
+   */
+  readonly globeFocus: { readonly cell: number; readonly n: number } | undefined;
   /** Das gewählte Feld auf der Karte, nicht erzeugt oder leer; mit dem Vorkommen, wenn es gerade hier gewürfelt wurde. */
   readonly selected: { readonly column: number; readonly row: number; readonly occurrence?: WorldRoll } | undefined;
   /** Die Karte steht über der Charaktererschaffung, um eine Welt zu wählen. */
@@ -1509,6 +1607,79 @@ function npcScreenView(campaign: Campaign, all: boolean): Omit<NpcScreenView, 'p
     roles: npcRoles,
     services: ref.services.map((sv) => ({ id: sv.id, name: sv.name })),
     generateBlocker: generateNpcBlocker(campaign),
+  };
+}
+
+/** Ein Ort einer Mission in Worten: die Stadt bzw. Geländeart und Lage des Felds, dazu die Welt. */
+function missionPlaceView(campaign: Campaign, place: Place, label?: string): MissionPlaceView {
+  const hex = hexById(campaign.hexes, place.world);
+  const cell = placeCell(campaign.hexes, place);
+  const city = place.city === undefined ? undefined : hex?.map?.cities?.[place.city]?.name;
+  const where = city ?? (cell !== undefined && hex?.map && hex.uwp.size !== undefined ? `${LANDFORM_NAMES[landformAt(hex.map, cell)]} · ${position(surfaceGrid(hex.uwp.size), cell)}` : undefined);
+  return { place, label, text: [where, hex?.name ?? place.world].filter((t) => t !== undefined).join(' · '), world: place.world, cell };
+}
+
+function missionPersonView(campaign: Campaign, id: string, label?: string): MissionPersonView {
+  const c = campaign.characters.find((x) => x.id === id);
+  return { id, name: c?.name ?? id, label, dead: c?.dead ?? false };
+}
+
+/** Die Rollen eines NSC in Worten, für die Gruppen der Beteiligten-Wahl. */
+const NPC_ROLE_NAMES: Record<NpcRole, string> = { patron: 'Patron', encounter: 'Begegnung', enemy: 'Feind', rival: 'Rivale', ally: 'Verbündeter', contact: 'Kontakt', official: 'Behörde', merchant: 'Händler', broker: 'Makler', captain: 'Captain', crew: 'Crew', passenger: 'Passagier', other: 'Sonstige' };
+
+function missionItem(campaign: Campaign, mission: Mission): MissionItem {
+  const client = mission.client === undefined ? undefined : campaign.characters.find((c) => c.id === mission.client);
+  const here = campaign.location?.world;
+  return {
+    id: mission.id,
+    title: mission.title,
+    text: mission.text,
+    state: mission.state,
+    client: client && { id: client.id, name: client.name, role: client.npc ? roleOf(client) : undefined, dead: client.dead },
+    places: mission.places.map((p) => missionPlaceView(campaign, p.place, p.label)),
+    people: mission.people.map((p) => missionPersonView(campaign, p.character, p.label)),
+    here: here !== undefined && mission.places.some((p) => p.place.world === here),
+  };
+}
+
+function missionsView(campaign: Campaign, editor: ControllerState['missionEditor']): MissionsView {
+  const location = campaign.location;
+  const hereBlocker = missionPlaceBlocker(campaign, location);
+  const npcs = npcCharacters(campaign);
+  const draft = editor?.draft;
+  return {
+    open: missionsIn(campaign, 'open').map((m) => missionItem(campaign, m)),
+    done: missionsIn(campaign, 'done').map((m) => missionItem(campaign, m)),
+    failed: missionsIn(campaign, 'failed').map((m) => missionItem(campaign, m)),
+    retired: retiredMissions(campaign).map((m) => missionItem(campaign, m)),
+    editor:
+      editor && draft && !editor.picking
+        ? {
+            id: editor.id,
+            rev: editor.rev,
+            title: draft.title,
+            text: draft.text,
+            state: draft.state,
+            client: draft.client,
+            places: draft.places.map((p) => missionPlaceView(campaign, p.place, p.label)),
+            people: (draft.people ?? []).map((p) => missionPersonView(campaign, p.character, p.label)),
+            error: editor.error,
+            inLog: editor.id !== undefined && isThreadInLog(campaign, editor.id),
+          }
+        : undefined,
+    picking: editor?.picking ? { title: editor.draft.title.trim() || 'Neue Mission' } : undefined,
+    here: location !== undefined && hereBlocker === undefined ? missionPlaceView(campaign, location) : undefined,
+    hereBlocker,
+    persons: [
+      { group: 'SC', characters: campaign.characters.filter((c) => !c.retired && !c.npc) },
+      ...npcRoles.map((role) => ({ group: NPC_ROLE_NAMES[role], characters: campaign.characters.filter((c) => !c.retired && c.npc && roleOf(c) === role) })),
+    ]
+      .filter((g) => g.characters.length > 0)
+      .map((g) => ({ group: g.group, characters: [...g.characters].sort((a, b) => a.name.localeCompare(b.name, 'de')).map((c) => missionPersonView(campaign, c.id)) })),
+    clients: npcRoles.flatMap((role) => {
+      const list = npcs.filter((c) => roleOf(c) === role).sort((a, b) => a.name.localeCompare(b.name, 'de'));
+      return list.length > 0 ? [{ role, npcs: list.map((c) => ({ id: c.id, name: c.name })) }] : [];
+    }),
   };
 }
 
@@ -2420,7 +2591,7 @@ function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
         bell: entry.bell,
         scatter: entry.scatter,
         map: entry.map,
-        answer: entry.odds === undefined || entry.oracle === undefined || entry.chance === undefined ? undefined : { odds: oddsOf(entry.odds).name, roll: entry.oracle, chance: entry.chance, answer: answerOfPick(entry)!, event: randomEvent(entry.eventFocus) },
+        answer: entry.odds === undefined || entry.oracle === undefined || entry.chance === undefined ? undefined : { odds: oddsOf(entry.odds).name, roll: entry.oracle, chance: entry.chance, answer: answerOfPick(entry)!, event: randomEvent(campaign, entry.eventFocus, entry.thread) },
         items: entry.items.map((item) => {
           const slot = slotOf(item);
           const section = sectionOfSlot(slot.id);
@@ -2472,10 +2643,11 @@ function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
 }
 
 /** Ein Zufallsereignis aus dem Wurf auf den Ereignisfokus; ohne Wurf keins. */
-function randomEvent(roll: number | undefined): RandomEventView | undefined {
+function randomEvent(campaign: Campaign, roll: number | undefined, thread?: string): RandomEventView | undefined {
   if (roll === undefined) return undefined;
   const focus = eventFocusOf(roll);
-  return { roll, name: focus.name, text: focus.text };
+  const mission = thread === undefined ? undefined : campaign.missions.find((m) => m.id === thread);
+  return { roll, name: focus.name, text: focus.text, thread: mission && { id: mission.id, title: mission.title } };
 }
 
 /** Ein Namensfeld: die sechs auf der Tafel NSC und die drei des früheren Bereichs *Namen*. */
@@ -2483,14 +2655,14 @@ function isNameSlot(slotId: string): boolean {
   return nameSlotIds.includes(slotId) || sectionOfSlot(slotId).id === 'names';
 }
 
-function cardView(card: Card, forNote: boolean): CardView {
+function cardView(campaign: Campaign, card: Card, forNote: boolean): CardView {
   return {
     question: card.question,
     forNote,
     bell: { value: card.bell, picked: card.pickedRolls.includes('bell'), weights: bellWeights },
     scatter: { value: card.scatter, picked: card.pickedRolls.includes('scatter') },
     map: { value: card.map, picked: card.pickedRolls.includes('map') },
-    oracle: { roll: card.oracle, event: card.pickedOdds === undefined ? undefined : randomEvent(card.eventFocus), choices: ref.odds.map((o) => ({ id: o.id, name: o.name, chance: o.chance, answer: answerOf(card.oracle, o.chance), picked: card.pickedOdds === o.id })) },
+    oracle: { roll: card.oracle, event: card.pickedOdds === undefined ? undefined : randomEvent(campaign, card.eventFocus, card.thread), choices: ref.odds.map((o) => ({ id: o.id, name: o.name, chance: o.chance, answer: answerOf(card.oracle, o.chance), picked: card.pickedOdds === o.id })) },
     // Ausgeblendete Felder hat die Karte nicht gezogen; sie fehlen, ebenso Bereiche ohne gezogenes Feld.
     sections: ref.sections
       .map((section) => ({
@@ -2568,7 +2740,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, elsewhere: state.elsewhere, notice: state.notice, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, space: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, missions: { open: [], done: [], failed: [], retired: [], editor: undefined, picking: undefined, here: undefined, hereBlocker: undefined, persons: [], clients: [] }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, space: undefined, globeFocus: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -2597,12 +2769,13 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     encounterRoll: state.encounterRoll,
     encounterChoice: state.encounterChoice,
     travel: state.world && { blocker: travelBlocker(campaign, hexId(state.world.column, state.world.row)) },
-    card: state.card && cardView(state.card, state.cardFor === 'note'),
+    card: state.card && cardView(campaign, state.card, state.cardFor === 'note'),
     names: state.names,
     characters: livingCharacters(campaign).map((c) => characterView(campaign, c, state)),
     focus: focusOf(campaign)?.id,
     dead: deadCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background })),
     npcs: { ...npcScreenView(campaign, state.npcAll), placing: placingView(campaign, state) },
+    missions: missionsView(campaign, state.missionEditor),
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
     combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.simBurst, state.simWeakened, state.surpriseShown, state.animalNote, log, state.lootOpen, state.butchered, state.joining),
@@ -2622,17 +2795,20 @@ export function buildSnapshot(state: ControllerState): Snapshot {
       id: state.editor.id,
       input: editing ? inputOf(editing) : state.editor.npc ? { ...emptyInput, npc: true, role: state.editor.role ?? 'other', ...(campaign.location === undefined ? {} : { place: campaign.location.world }) } : emptyInput,
       error: state.editor.error,
-      inLog: editing ? isInLog(campaign, editing.id) : false,
+      // Auch ein Auftraggeber einer Mission wird nur ausgeblendet (2026-11-18).
+      inLog: editing ? isInLog(campaign, editing.id) || isClient(campaign, editing.id) : false,
       worlds: worldChoices(campaign.hexes),
       roles: npcRoles,
+      missions: editing ? missionsOfCharacter(campaign, editing.id).map(({ mission, client, person }) => ({ id: mission.id, title: mission.title, state: mission.state, as: [client ? 'Auftraggeber' : undefined, person ? (person.label ?? 'beteiligt') : undefined].filter((t) => t !== undefined).join(' · ') })) : [],
     },
     generation: state.generating && campaign.generation ? generationView(campaign.generation, campaign.hexes, state.generationError, shipGainChoice(campaign)) : undefined,
     generationRunning: campaign.generation !== undefined,
-    sector: sectorView(campaign.hexes, markedWorlds(campaign)),
+    sector: sectorView(campaign.hexes, markedWorlds(campaign), missionWorlds(campaign)),
     worlds: worldList(campaign.hexes),
     world: state.world && worldView(campaign.hexes, state.world.column, state.world.row, state.world.rolls, state.worldError, happenedAt(campaign, hexId(state.world.column, state.world.row))),
     globe: state.world && state.globe ? globeView(campaign, state.world.column, state.world.row, state.globe.picked, state.tripPlan?.options[state.tripPlan.chosen], state.trace) : undefined,
     space: state.space && spaceView(campaign, state.space),
+    globeFocus: state.world && state.globe ? state.globeFocus : undefined,
     picking: pickingView(state, campaign),
     selected: state.selected && selectedView(campaign.hexes, state.selected.column, state.selected.row, state.selected.occurrence, state.world ? undefined : state.worldError),
   };

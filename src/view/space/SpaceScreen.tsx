@@ -4,7 +4,7 @@ import { useGame } from '../game-context';
 import { CloseIcon } from '../icons';
 import { worldCanvas, worldRadiusShare } from '../sector/world-icon';
 
-// Die Raumkarte (Domänenmodell 2026-11-18): der Raum um eine Welt in 2D. Alles, was eine Regel ist
+// Die Raumkarte (Domänenmodell 2026-11-18c): der Raum um eine Welt in 2D. Alles, was eine Regel ist
 // (Bahnen, Vorschau, Marken, Einrasten), kommt aus dem Snapshot; hier steht nur, wie es gezeichnet
 // wird, wo die Kamera steht und wie ein Fingerzug zu einem Schubvektor wird.
 

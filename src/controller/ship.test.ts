@@ -39,7 +39,7 @@ describe('Reiter Schiff', () => {
 
   it('ohne Schiff zeigt der Reiter den Hinweis und die Werft offen', async () => {
     const { game } = await started();
-    // Die Demo-Kampagne hat einen Scout (2026-11-18); eine neue Kampagne beginnt ohne Schiff.
+    // Die Demo-Kampagne hat einen Scout (2026-11-18c); eine neue Kampagne beginnt ohne Schiff.
     game.createCampaign('Ohne Schiff');
     game.showScreen('ship');
     const view = game.snapshot();
@@ -67,7 +67,7 @@ describe('Reiter Schiff', () => {
     await game.whenSaved();
     expect(game.snapshot().ship!.ship?.designId).toBe('A');
     const ships = repository.saved!.ships;
-    // Vorne der Scout der Demo-Kampagne (2026-11-18), dann die beiden gekauften.
+    // Vorne der Scout der Demo-Kampagne (2026-11-18c), dann die beiden gekauften.
     expect(ships).toHaveLength(3);
     expect(ships[0]).toMatchObject({ name: 'Kestrel', retired: true });
     expect(ships[1]).toMatchObject({ design: 'S', retired: true });

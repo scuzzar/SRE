@@ -81,6 +81,21 @@ describe.each([
 });
 
 describe('Ältere Spielstände', () => {
+  it('bekommen eine leere Liste der Missionen, wenn sie von davor sind (2026-11-18)', async () => {
+    const { missions: _, ...old } = createDemoCampaign(fixedClock());
+    void _;
+    expect(upgraded(old as unknown as Campaign).missions).toEqual([]);
+    const repository = await new DexieCampaignRepository(`test-${Math.random()}`).open();
+    await repository.save(old as unknown as Campaign);
+    expect((await repository.list())[0]?.missions).toEqual([]);
+  });
+
+  it('Missionen von vor den Beteiligten bekommen eine leere Liste (2026-11-18b)', () => {
+    const demo = createDemoCampaign(fixedClock());
+    const old = { ...demo, missions: [{ id: 'm1', title: 'Alt', text: '', state: 'open', retired: false, places: [] }] } as unknown as Campaign;
+    expect(upgraded(old).missions[0]?.people).toEqual([]);
+  });
+
   it('machen aus dem Aufenthaltsort und dem Ort eines NSC als Text einen Ort (2026-11-14j)', async () => {
     const demo = createDemoCampaign(fixedClock());
     const old = {

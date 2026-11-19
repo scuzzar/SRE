@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import type { EditorView, ItemChoice, SkillChoice } from '../../controller';
 import type { ItemKind, Upp } from '../../model';
-import { characteristicLabel, hex, kindNames, roleText } from '../format';
+import { characteristicLabel, hex, kindNames, missionStateText, roleText } from '../format';
 import { useGame, useSnapshot } from '../game-context';
 import { haptic } from '../haptics';
-import { CardIcon, CloseIcon } from '../icons';
+import { CardIcon, CloseIcon, FlagIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
 import { CardSheet } from '../oracle/CardSheet';
 import { Form } from '../Form';
@@ -342,6 +342,26 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
               </label>
             </>
           )}
+          {editor.missions.length > 0 && (
+            <div className="field-missions">
+              <span className="small-label">Missionen ({editor.missions.length})</span>
+              <ul className="here-missions">
+                {editor.missions.map((m) => (
+                  <li key={m.id}>
+                    <button type="button" aria-label={`Mission ${m.title} öffnen`} onClick={() => game.editMission(m.id)}>
+                      <FlagIcon />
+                      <span>
+                        {m.title}
+                        <small>
+                          {m.as} · {missionStateText[m.state]}
+                        </small>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {!isNew && (
             <label className="toggle">
               <input type="checkbox" checked={form.dead ?? false} onChange={(e) => setForm({ ...form, dead: e.target.checked })} />
@@ -364,7 +384,7 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
               )}
               <span className="small-label">
                 {editor.inLog
-                  ? 'Kommt im Log vor: wird ausgeblendet, nicht gelöscht, und lässt sich wieder einblenden.'
+                  ? `Kommt im Log${editor.missions.length > 0 ? ' oder als Auftraggeber einer Mission' : ''} vor: wird ausgeblendet, nicht gelöscht, und lässt sich wieder einblenden.`
                   : 'Kommt nicht im Log vor: wird gelöscht.'}
               </span>
             </div>

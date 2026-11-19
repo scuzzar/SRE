@@ -134,6 +134,10 @@ hide <<browser>> stereotype
 ' Subsektor und Welten
   class Hex $sektor
 
+' Missionen
+  class Mission $mission
+  class MissionPerson <<value>> $mission
+
 ' Verlauf
   class Butchering $begegnung
   class SaveRoll $begegnung
@@ -194,6 +198,8 @@ Character "1" *-- "0..1" Career : career
 Character "*" --> "0..1" Hex : homeworld
 Character "1" *-- "0..1" Place : place
 Character "*" --> "0..1" Patron : patron
+Mission "*" --> "0..1" Character : client
+MissionPerson "*" --> "1" Character : character
 Character --> NpcRole
 CareerRoll --> "0..1" Characteristic : of
 CareerRoll "*" --> "0..1" Skill : chosen

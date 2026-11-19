@@ -3,7 +3,7 @@ import type { GlobeView, NpcScreenView, TripPlanView, TripView } from '../../con
 import { NewNpcSheet } from '../characters/NpcScreen';
 import { HoldButton } from '../HoldButton';
 import { useGame } from '../game-context';
-import { CloseIcon, NpcPinIcon, PinIcon, RouteIcon, ShopIcon } from '../icons';
+import { CheckIcon, CloseIcon, FlagIcon, NpcPinIcon, PinIcon, RouteIcon, ShopIcon } from '../icons';
 
 /**
  * Die Reihe unten beim angetippten Feld des Globus, an der Stelle der Reihe Notiz, Deuten, 2W6,
@@ -13,9 +13,10 @@ import { CloseIcon, NpcPinIcon, PinIcon, RouteIcon, ShopIcon } from '../icons';
  * neuen NSC aus einer Laufbahn, der hier lebt) und Einkaufen (nur in einer Stadt auf der Welt der
  * Gruppe: öffnet den Shop an der Stelle des Felds, `openShop`; ✕ führt zurück). Was gerade nicht geht, ist ausgegraut und sagt im Titel, warum. Reine
  * Darstellung: Was die Knöpfe bewirken, entscheidet der Controller. Wird eine Route geplant, stehen
- * stattdessen „Abbrechen“ und „Losfahren“ da.
+ * stattdessen „Abbrechen“ und „Losfahren“ da; beim Ort wählen einer Mission (`missionPicking`)
+ * „Abbrechen“ und „OK“.
  */
-export function FieldDock({ globe, trip, tripPlan, npcs }: { globe: GlobeView; trip: TripView | undefined; tripPlan: TripPlanView | undefined; npcs: NpcScreenView }) {
+export function FieldDock({ globe, trip, tripPlan, npcs, missionPicking }: { globe: GlobeView; trip: TripView | undefined; tripPlan: TripPlanView | undefined; npcs: NpcScreenView; missionPicking?: { readonly title: string } | undefined }) {
   const game = useGame();
   // Ob das Fenster „Neuer NSC“ (langes Drücken auf „NSC platzieren“) offen ist, ist reine Darstellung.
   const [creating, setCreating] = useState(false);
@@ -45,6 +46,26 @@ export function FieldDock({ globe, trip, tripPlan, npcs }: { globe: GlobeView; t
     : globe.partyCell === undefined
       ? 'Die Gruppe hat noch kein Feld auf dieser Welt. „Gruppe setzen“ gibt ihr eins, dann geht „Hierhin reisen“.'
       : undefined;
+  // Beim Ort wählen einer Mission: „OK“ nimmt dieses Feld (bzw. die Stadt darauf) als Ort.
+  if (missionPicking) {
+    return (
+      <section className="dock" aria-label="Am Feld">
+        <p className="npc-placing">
+          <FlagIcon /> Missionsort für „{missionPicking.title}“: {placeName}?
+        </p>
+        <div className="actions oracle-actions field-actions trip-plan-actions">
+          <button type="button" className="action note" onClick={() => game.cancelMissionPicking()}>
+            <CloseIcon />
+            Abbrechen
+          </button>
+          <button type="button" className="action draw" aria-label={`OK, ${placeName} als Missionsort`} onClick={() => game.confirmMissionPlace()}>
+            <CheckIcon />
+            OK
+          </button>
+        </div>
+      </section>
+    );
+  }
   // Wird eine Route geplant, ersetzen „Losfahren“ und „Abbrechen“ die Knöpfe der Reihe.
   if (tripPlan) {
     const ready = tripPlan.options[tripPlan.chosen] !== undefined;

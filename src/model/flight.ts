@@ -6,7 +6,7 @@ import { worldOf, type Hex } from './sector';
 import { activeShip, shipById, without } from './ship';
 import { passTime } from './time';
 
-// Systemflug (Domänenmodell 2026-11-18, Stufe 1 des Raumkampfs; Konzept: docs/konzept-raumkampf.md).
+// Systemflug (Domänenmodell 2026-11-18c, Stufe 1 des Raumkampfs; Konzept: docs/konzept-raumkampf.md).
 // Gerechnet wird in km und Sekunden, in der Ebene, die Welt in der Mitte.
 
 /** Ein Vektor in der Ebene (Domänenmodell: `Vec`): Ort in km, Geschwindigkeit in km/s, Schub in G. */

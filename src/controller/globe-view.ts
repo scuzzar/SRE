@@ -1,6 +1,8 @@
 import {
   cellTemperature,
   happenedAt,
+  missionCells,
+  missionsAt,
   hexAt,
   hexId,
   landformAt,
@@ -72,6 +74,8 @@ export interface PickedCell {
   readonly npcs: readonly GlobeNpc[];
   /** Die Stellen der Logeinträge, die hier geschahen (Was hier geschah). */
   readonly happened: readonly number[];
+  /** Die offenen Missionen mit einem Ort hier (Missionen hier, 2026-11-18), mit den Etiketten ihrer Orte hier. */
+  readonly missions: readonly { readonly id: string; readonly title: string; readonly labels: readonly string[] }[];
 }
 
 /** Ein dauerhafter NSC dieser Welt, mit seinem Feld, wenn er eins hat. */
@@ -107,6 +111,8 @@ export interface GlobeView {
   readonly route: readonly { readonly cells: readonly number[]; readonly flight: boolean }[];
   /** Felder mit abgestellten eigenen Fahrzeugen und wie viele. */
   readonly vehicles: readonly { readonly cell: number; readonly count: number }[];
+  /** Felder, auf denen eine offene Mission einen Ort hat (Fahnen, 2026-11-18). */
+  readonly missionCells: readonly number[];
   /** Der Modus „Wo ich war“: Die Reise zählt bei den Einträgen, und ihre Strecken stehen auf dem Globus. */
   readonly trace: boolean;
   /** Im Modus „Wo ich war“: die gereisten Strecken, je von Feld zu Feld. */
@@ -139,7 +145,8 @@ function cityKind(city: City, index: number): string {
   return city.cell === undefined ? 'Orbitalstadt' : city.rank === 'primary' ? (index === 0 ? 'Hauptstadt' : 'Großstadt') : 'Stadt';
 }
 
-function position(grid: SurfaceGrid, cell: number): string {
+/** Die Lage eines Felds in Worten, z. B. „12° N, 40° O“. */
+export function position(grid: SurfaceGrid, cell: number): string {
   const lat = grid.lat[cell]!;
   const lon = grid.lon[cell]!;
   return `${Math.abs(Math.round(lat))}° ${lat >= 0 ? 'N' : 'S'}, ${Math.abs(Math.round(lon))}° ${lon >= 0 ? 'O' : 'W'}`;
@@ -190,6 +197,7 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
       city: cities.find((c) => c.cell === picked)?.index,
       npcs: npcs.filter((n) => n.cell === picked),
       happened: happenedAt(campaign, id, picked).filter(shown),
+      missions: missionsAt(campaign, id, picked).map(({ mission, places }) => ({ id: mission.id, title: mission.title, labels: places.flatMap((p) => (p.label === undefined ? [] : [p.label])) })),
     };
   }
   return {
@@ -206,9 +214,10 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
     partyCell: partyHere ? placeCell(hexes, campaign.location) : undefined,
     npcs,
     events: [...counts.entries()].map(([cell, { count, latest }]) => ({ cell, count, latest, label: cellName(cell) })).sort((a, b) => b.latest - a.latest),
-    rerollBlocker: mapLocked(campaign, column, row) ? 'Gruppe, NSC oder Logeinträge stehen auf dieser Karte; neu würfeln geht nicht mehr.' : undefined,
+    rerollBlocker: mapLocked(campaign, column, row) ? 'Gruppe, NSC, Logeinträge oder Missionen stehen auf dieser Karte; neu würfeln geht nicht mehr.' : undefined,
     route: routeOf(partyHere ? (plan ?? campaign.trip) : undefined),
     vehicles: parkedVehicles(campaign, id),
+    missionCells: missionCells(campaign, id),
     trace,
     traceSegments: trace ? travelTrace(campaign, id) : [],
   };

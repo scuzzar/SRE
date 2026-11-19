@@ -29,7 +29,7 @@ async function openTab(page: Page, name: string) {
 
 /**
  * Geld in die Kasse und einen Scout/Courier bar kaufen; der Reiter Schiff bleibt offen. Die
- * Demo-Kampagne hat schon den Scout „Kestrel“ (2026-11-18), darum heißt der Knopf dann nur „Werft“.
+ * Demo-Kampagne hat schon den Scout „Kestrel“ (2026-11-18c), darum heißt der Knopf dann nur „Werft“.
  */
 async function buyScout(page: Page) {
   await openPeople(page, 'Kasse');
