@@ -437,6 +437,8 @@ const CampaignFileSchema = z.object({
           retired: z.boolean(),
           client: z.string().min(1).optional(),
           places: z.array(z.object({ place: PlaceSchema, label: z.string().trim().min(1).optional() })),
+          /** Fehlt in Dateien von vor den Beteiligten (2026-11-18b): keine. */
+          people: z.array(z.object({ character: z.string().min(1), label: z.string().trim().min(1).optional() })).default([]),
         }),
       )
       .default([]),
@@ -512,7 +514,7 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       ...(file.quantityDie === undefined || file.quantityDie === 6 ? {} : { quantityDie: file.quantityDie }),
       ...(file.terrain === undefined ? {} : { terrain: file.terrain }),
       day: file.day,
-      missions: file.missions.map((m) => stripped({ ...m, places: m.places.map((p) => stripped({ ...p, place: placeFromFile(p.place) }) as MissionPlace) }) as Mission),
+      missions: file.missions.map((m) => stripped({ ...m, places: m.places.map((p) => stripped({ ...p, place: placeFromFile(p.place) }) as MissionPlace), people: m.people.map((p) => stripped(p)) }) as Mission),
     };
     // Begegnungen von vor 2026-11-08d haben ein Band für alle; upgradeDistances macht das Startband daraus.
     // Erst prüfen, dann ordnen: Dateien von vor dem Gruppengepäck halten allen Besitz am SC; was er

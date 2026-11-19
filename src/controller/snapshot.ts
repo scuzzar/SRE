@@ -6,7 +6,7 @@ import {
   surfaceGrid,
   missionPlaceBlocker,
   missionsIn,
-  missionsOfClient,
+  missionsOfCharacter,
   missionWorlds,
   placeCell,
   retiredMissions,
@@ -1368,8 +1368,8 @@ export interface EditorView {
   readonly worlds: readonly WorldChoice[];
   /** Die Rollen eines NSC, in ihrer Reihenfolge. */
   readonly roles: readonly NpcRole[];
-  /** Die Missionen, die dieser NSC vergeben hat (2026-11-18). */
-  readonly missions: readonly { readonly id: string; readonly title: string; readonly state: MissionState }[];
+  /** Die Missionen, in denen dieser Charakter vorkommt (2026-11-18, 2026-11-18b): als Auftraggeber und bzw. oder als Beteiligter, `as` in Worten (z. B. „Auftraggeber“, „Opfer“). */
+  readonly missions: readonly { readonly id: string; readonly title: string; readonly state: MissionState; readonly as: string }[];
 }
 
 /** Ein Ort einer Mission, wie Reiter und Editor ihn zeigen. */
@@ -1382,6 +1382,14 @@ export interface MissionPlaceView {
   readonly cell: number | undefined;
 }
 
+/** Ein Beteiligter einer Mission (2026-11-18b): der Charakter mit Etikett. */
+export interface MissionPersonView {
+  readonly id: string;
+  readonly name: string;
+  readonly label: string | undefined;
+  readonly dead: boolean;
+}
+
 /** Eine Mission im Reiter Missionen. */
 export interface MissionItem {
   readonly id: string;
@@ -1391,6 +1399,7 @@ export interface MissionItem {
   /** Der Auftraggeber: Name und Rolle; ob er tot ist. */
   readonly client: { readonly id: string; readonly name: string; readonly role: NpcRole | undefined; readonly dead: boolean } | undefined;
   readonly places: readonly MissionPlaceView[];
+  readonly people: readonly MissionPersonView[];
   /** Ein Ort liegt auf der Welt der Gruppe. */
   readonly here: boolean;
 }
@@ -1411,6 +1420,7 @@ export interface MissionsView {
         readonly state: MissionState;
         readonly client: string | undefined;
         readonly places: readonly MissionPlaceView[];
+        readonly people: readonly MissionPersonView[];
         readonly error: string | undefined;
         /** Löschen blendet nur aus, weil der Log auf die Mission zeigt. */
         readonly inLog: boolean;
@@ -1421,6 +1431,8 @@ export interface MissionsView {
   /** Der Aufenthaltsort als Ort für „+ Aufenthaltsort“, oder warum es ihn nicht gibt. */
   readonly here: MissionPlaceView | undefined;
   readonly hereBlocker: string | undefined;
+  /** Die möglichen Beteiligten: alle Charaktere, die nicht ausgeblendet sind, auch tote; erst die SC, dann die NSC nach Rolle. */
+  readonly persons: readonly { readonly group: string; readonly characters: readonly MissionPersonView[] }[];
   /** Die möglichen Auftraggeber: dauerhafte NSC (nicht ausgeblendet), nach Rolle. */
   readonly clients: readonly { readonly role: NpcRole; readonly npcs: readonly { readonly id: string; readonly name: string }[] }[];
 }
@@ -1602,6 +1614,14 @@ function missionPlaceView(campaign: Campaign, place: Place, label?: string): Mis
   return { place, label, text: [where, hex?.name ?? place.world].filter((t) => t !== undefined).join(' · '), world: place.world, cell };
 }
 
+function missionPersonView(campaign: Campaign, id: string, label?: string): MissionPersonView {
+  const c = campaign.characters.find((x) => x.id === id);
+  return { id, name: c?.name ?? id, label, dead: c?.dead ?? false };
+}
+
+/** Die Rollen eines NSC in Worten, für die Gruppen der Beteiligten-Wahl. */
+const NPC_ROLE_NAMES: Record<NpcRole, string> = { patron: 'Patron', encounter: 'Begegnung', enemy: 'Feind', rival: 'Rivale', ally: 'Verbündeter', contact: 'Kontakt', official: 'Behörde', merchant: 'Händler', broker: 'Makler', captain: 'Captain', crew: 'Crew', passenger: 'Passagier', other: 'Sonstige' };
+
 function missionItem(campaign: Campaign, mission: Mission): MissionItem {
   const client = mission.client === undefined ? undefined : campaign.characters.find((c) => c.id === mission.client);
   const here = campaign.location?.world;
@@ -1612,6 +1632,7 @@ function missionItem(campaign: Campaign, mission: Mission): MissionItem {
     state: mission.state,
     client: client && { id: client.id, name: client.name, role: client.npc ? roleOf(client) : undefined, dead: client.dead },
     places: mission.places.map((p) => missionPlaceView(campaign, p.place, p.label)),
+    people: mission.people.map((p) => missionPersonView(campaign, p.character, p.label)),
     here: here !== undefined && mission.places.some((p) => p.place.world === here),
   };
 }
@@ -1636,6 +1657,7 @@ function missionsView(campaign: Campaign, editor: ControllerState['missionEditor
             state: draft.state,
             client: draft.client,
             places: draft.places.map((p) => missionPlaceView(campaign, p.place, p.label)),
+            people: (draft.people ?? []).map((p) => missionPersonView(campaign, p.character, p.label)),
             error: editor.error,
             inLog: editor.id !== undefined && isThreadInLog(campaign, editor.id),
           }
@@ -1643,6 +1665,12 @@ function missionsView(campaign: Campaign, editor: ControllerState['missionEditor
     picking: editor?.picking ? { title: editor.draft.title.trim() || 'Neue Mission' } : undefined,
     here: location !== undefined && hereBlocker === undefined ? missionPlaceView(campaign, location) : undefined,
     hereBlocker,
+    persons: [
+      { group: 'SC', characters: campaign.characters.filter((c) => !c.retired && !c.npc) },
+      ...npcRoles.map((role) => ({ group: NPC_ROLE_NAMES[role], characters: campaign.characters.filter((c) => !c.retired && c.npc && roleOf(c) === role) })),
+    ]
+      .filter((g) => g.characters.length > 0)
+      .map((g) => ({ group: g.group, characters: [...g.characters].sort((a, b) => a.name.localeCompare(b.name, 'de')).map((c) => missionPersonView(campaign, c.id)) })),
     clients: npcRoles.flatMap((role) => {
       const list = npcs.filter((c) => roleOf(c) === role).sort((a, b) => a.name.localeCompare(b.name, 'de'));
       return list.length > 0 ? [{ role, npcs: list.map((c) => ({ id: c.id, name: c.name })) }] : [];
@@ -2707,7 +2735,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, elsewhere: state.elsewhere, notice: state.notice, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, missions: { open: [], done: [], failed: [], retired: [], editor: undefined, picking: undefined, here: undefined, hereBlocker: undefined, clients: [] }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, globeFocus: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, missions: { open: [], done: [], failed: [], retired: [], editor: undefined, picking: undefined, here: undefined, hereBlocker: undefined, persons: [], clients: [] }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, globeFocus: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -2766,7 +2794,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
       inLog: editing ? isInLog(campaign, editing.id) || isClient(campaign, editing.id) : false,
       worlds: worldChoices(campaign.hexes),
       roles: npcRoles,
-      missions: editing ? missionsOfClient(campaign, editing.id).map((m) => ({ id: m.id, title: m.title, state: m.state })) : [],
+      missions: editing ? missionsOfCharacter(campaign, editing.id).map(({ mission, client, person }) => ({ id: mission.id, title: mission.title, state: mission.state, as: [client ? 'Auftraggeber' : undefined, person ? (person.label ?? 'beteiligt') : undefined].filter((t) => t !== undefined).join(' · ') })) : [],
     },
     generation: state.generating && campaign.generation ? generationView(campaign.generation, campaign.hexes, state.generationError, shipGainChoice(campaign)) : undefined,
     generationRunning: campaign.generation !== undefined,

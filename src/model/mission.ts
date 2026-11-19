@@ -20,6 +20,13 @@ export interface MissionPlace {
   readonly label?: string;
 }
 
+/** Ein Beteiligter einer Mission (2026-11-18b): ein Charakter der Kampagne, NSC oder SC, mit einem freien Etikett. */
+export interface MissionPerson {
+  readonly character: CharacterId;
+  /** Z. B. „Opfer“, „Fahrer“ oder „Informant“; fehlt, wenn keins vergeben ist. */
+  readonly label?: string;
+}
+
 export interface Mission {
   readonly id: MissionId;
   /** Nicht leer, ohne Leerraum am Rand. */
@@ -33,6 +40,8 @@ export interface Mission {
   readonly client?: CharacterId;
   /** In der Reihenfolge, in der man sie hinzugefügt hat. */
   readonly places: readonly MissionPlace[];
+  /** Die Beteiligten, in der Reihenfolge, in der man sie hinzugefügt hat; jeder Charakter höchstens einmal. */
+  readonly people: readonly MissionPerson[];
 }
 
 /** Was man im Editor einer Mission eingibt. */
@@ -42,6 +51,8 @@ export interface MissionInput {
   readonly state: MissionState;
   readonly client?: CharacterId;
   readonly places: readonly MissionPlace[];
+  /** Fehlt bei Eingaben von vor den Beteiligten: keine. */
+  readonly people?: readonly MissionPerson[];
 }
 
 /** Eine Mission der Kampagne, auch eine ausgeblendete. */
@@ -71,9 +82,19 @@ export function missionsOfClient(campaign: Campaign, id: CharacterId): readonly 
   return campaign.missions.filter((m) => m.client === id && !m.retired);
 }
 
-/** Ob eine Mission auf diesen Charakter als Auftraggeber verweist (auch eine ausgeblendete); dann wird er nie gelöscht. */
+/** Ob eine Mission auf diesen Charakter als Auftraggeber oder Beteiligten verweist (auch eine ausgeblendete); dann wird er nie gelöscht. */
 export function isClient(campaign: Campaign, id: CharacterId): boolean {
-  return campaign.missions.some((m) => m.client === id);
+  return campaign.missions.some((m) => m.client === id || m.people.some((p) => p.character === id));
+}
+
+/** Die Missionen (nicht ausgeblendet), in denen dieser Charakter vorkommt: als Auftraggeber und bzw. oder als Beteiligter mit Etikett. */
+export function missionsOfCharacter(campaign: Campaign, id: CharacterId): readonly { readonly mission: Mission; readonly client: boolean; readonly person: MissionPerson | undefined }[] {
+  return campaign.missions.flatMap((mission) => {
+    if (mission.retired) return [];
+    const client = mission.client === id;
+    const person = mission.people.find((p) => p.character === id);
+    return client || person ? [{ mission, client, person }] : [];
+  });
 }
 
 /** Ob eine Kartenauswahl im Log auf die Mission verweist (als Handlungsfaden); dann wird sie nie gelöscht. */
@@ -138,6 +159,15 @@ function validateMission(campaign: Campaign, input: MissionInput, before?: Missi
     if (client.retired) throw new DomainError(`${client.name} ist ausgeblendet.`);
   }
   for (const p of input.places) checkMissionPlace(campaign, p.place);
+  const people = input.people ?? [];
+  const seen = new Set<string>();
+  for (const p of people) {
+    if (seen.has(p.character)) throw new DomainError('Ein Charakter ist in einer Mission höchstens einmal beteiligt.');
+    seen.add(p.character);
+    const character = campaign.characters.find((c) => c.id === p.character);
+    if (!character) throw new DomainError('Ein Beteiligter gehört nicht zur Kampagne.');
+    if (character.retired && !before?.people.some((q) => q.character === p.character)) throw new DomainError(`${character.name} ist ausgeblendet.`);
+  }
   return {
     title,
     text: input.text.trim(),
@@ -146,6 +176,10 @@ function validateMission(campaign: Campaign, input: MissionInput, before?: Missi
     places: input.places.map((p) => {
       const label = p.label?.trim() ?? '';
       return { place: copyPlace(p.place), ...(label === '' ? {} : { label }) };
+    }),
+    people: people.map((p) => {
+      const label = p.label?.trim() ?? '';
+      return { character: p.character, ...(label === '' ? {} : { label }) };
     }),
   };
 }
@@ -164,16 +198,16 @@ function nextMissionId(campaign: Campaign): MissionId {
 
 /** Legt eine Mission an. */
 export function addMission(campaign: Campaign, input: MissionInput): { campaign: Campaign; id: MissionId } {
-  const valid = validateMission(campaign, input);
+  const { people, ...valid } = validateMission(campaign, input);
   const id = nextMissionId(campaign);
-  return { campaign: { ...campaign, missions: [...campaign.missions, { id, retired: false, ...valid }] }, id };
+  return { campaign: { ...campaign, missions: [...campaign.missions, { id, retired: false, ...valid, people: people ?? [] }] }, id };
 }
 
 /** Übernimmt die Eingabe für eine bestehende Mission. */
 export function updateMission(campaign: Campaign, id: MissionId, input: MissionInput): Campaign {
   const before = missionOf(campaign, id);
-  const valid = validateMission(campaign, input, before);
-  return { ...campaign, missions: campaign.missions.map((m) => (m.id === id ? { id, retired: m.retired, ...valid } : m)) };
+  const { people, ...valid } = validateMission(campaign, input, before);
+  return { ...campaign, missions: campaign.missions.map((m) => (m.id === id ? { id, retired: m.retired, ...valid, people: people ?? [] } : m)) };
 }
 
 /** Löscht eine Mission; verweist eine Kartenauswahl auf sie, wird sie stattdessen ausgeblendet. */
@@ -198,5 +232,11 @@ export function validateMissions(campaign: Campaign): void {
     if (m.title.trim() === '' || m.title !== m.title.trim()) throw new DomainError('Eine Mission braucht einen Titel ohne Leerraum am Rand.');
     if (m.client !== undefined && !campaign.characters.some((c) => c.id === m.client)) throw new DomainError(`Der Auftraggeber der Mission ${m.title} gehört nicht zur Kampagne.`);
     for (const p of m.places) checkMissionPlace(campaign, p.place);
+    const people = new Set<string>();
+    for (const p of m.people) {
+      if (people.has(p.character)) throw new DomainError(`In der Mission ${m.title} ist ein Charakter doppelt beteiligt.`);
+      people.add(p.character);
+      if (!campaign.characters.some((c) => c.id === p.character)) throw new DomainError(`Ein Beteiligter der Mission ${m.title} gehört nicht zur Kampagne.`);
+    }
   }
 }

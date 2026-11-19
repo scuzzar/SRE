@@ -426,6 +426,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > [`changes/2026-11-18-missionen.png`](changes/2026-11-18-missionen.png). Ebenfalls am 18. November
 > 2026 auf Wunsch des Owners: Ein Missionsort ist immer ein Feld der Oberfläche (oder eine Stadt auf
 > einem Feld), nie eine ganze Welt (siehe *Missionen*, *Orte*); das Bild ändert sich dadurch nicht.
+>
+> Ebenfalls am 18. November 2026 freigegeben (Kennzeichen 2026-11-18b): **Beteiligte einer Mission** (siehe *Missionen*).
+> Eine Mission verknüpft beliebig viele Charaktere der Kampagne, NSC oder SC, je mit einem freien
+> Etikett wie „Opfer“, „Fahrer“ oder „Informant“. Neu im Bild: `MissionPerson` mit `label` und
+> `Mission.people`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-18b-beteiligte.png`](changes/2026-11-18b-beteiligte.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -595,7 +601,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Zustand einer Mission | `Mission.state`, `MissionState` | offen (`open`), erledigt (`done`), gescheitert (`failed`) (2026-11-18) |
 | Auftraggeber einer Mission | `Mission.client` | Der dauerhafte NSC, der die Mission vergeben hat; höchstens einer. Nicht zu verwechseln mit *Patron*, der Zeile der Patron-Liste (2026-11-18) |
 | Missionsort | `MissionPlace` | Ein Ort einer Mission mit seinem Etikett: immer ein Feld der Oberfläche oder eine Stadt auf einem Feld, nie eine ganze Welt (2026-11-18) |
-| Etikett | `MissionPlace.label` | Kurzer freier Text, was ein Missionsort für die Mission ist, z. B. „Treffpunkt“, „Ziel“; darf fehlen (2026-11-18) |
+| Etikett | `MissionPlace.label`, `MissionPerson.label` | Kurzer freier Text, was ein Missionsort bzw. ein Beteiligter für die Mission ist, z. B. „Treffpunkt“, „Ziel“, „Opfer“, „Fahrer“; darf fehlen (2026-11-18, 2026-11-18b) |
+| Beteiligter | `MissionPerson` | Ein Charakter der Kampagne (NSC oder SC), der mit einer Mission verknüpft ist, mit Etikett, z. B. das Opfer eines Mordes oder der gestellte Fahrer; nicht der Auftraggeber (2026-11-18b) |
 | Handlungsfaden | offene `Mission`; `Card.thread`, `CardPick.thread` | Eine offene Mission, wie das Orakel sie sieht; bei einem Fadenfokus lost die Karte einen aus (2026-11-18) |
 | Fadenfokus | `EventFocus.thread` | Ein Ereignisfokus, der zu einem Handlungsfaden gehört: Auf einen Handlungsfaden zu, Von einem Handlungsfaden weg, Ein Handlungsfaden endet (2026-11-18) |
 | Reiter Missionen | (Reiter „Missionen“; Screen `missions`) | Der fünfte Reiter: oben die offenen Missionen, darunter eingeklappt die erledigten und gescheiterten (2026-11-18) |
@@ -2518,6 +2525,16 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Orbitalstadt (Entscheidung des Owners): Eine Mission spielt an einer Stelle, die man auf dem
     Globus findet. Die Welt braucht dafür ihre Oberflächenkarte. Derselbe Ort darf mehrmals vorkommen, mit verschiedenen Etiketten. Wie ein Logeintrag
     sperrt ein Missionsort mit Feld oder Stadt die Oberflächenkarte (siehe *Orte*, *Karte gesperrt*).
+  - *Beteiligte* (`people`, je ein `MissionPerson`; freigegeben am 18. November 2026, 2026-11-18b): beliebig viele
+    Charaktere der Kampagne, **NSC oder SC**, in der Reihenfolge, in der man sie hinzufügt, je mit einem
+    freien **Etikett** (`label`, z. B. „Opfer“, „Fahrer“, „Informant“; darf fehlen). Ein Charakter kommt
+    in einer Mission höchstens einmal als Beteiligter vor; der Auftraggeber kann zusätzlich Beteiligter
+    sein, nötig ist das nicht. Gewählt wird aus den Charakteren, die nicht ausgeblendet sind, auch aus
+    toten (das Opfer). Der Verweis bleibt, wenn der Charakter stirbt oder zwischen SC und NSC wechselt;
+    ein Charakter, auf den eine Mission als Beteiligten verweist, wird nicht gelöscht, sondern
+    ausgeblendet, wie ein Auftraggeber. Die Mission im Reiter zeigt die Beteiligten mit Etikett
+    („Opfer: Jarek Holm“), ein Tippen öffnet den Charakter im Editor; der Charakter-Editor zeigt, in
+    welchen Missionen jemand vorkommt, als Auftraggeber oder mit seinem Etikett.
   - *Löschen und Ausblenden*: Eine Mission, auf die keine Kartenauswahl verweist
     (`CardPick.thread`), wird wirklich gelöscht. Sonst wird sie ausgeblendet (`retired`): Sie
     verschwindet aus dem Reiter und von der Karte und wird nicht mehr ausgelost, der Log zeigt sie

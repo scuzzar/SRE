@@ -169,7 +169,8 @@ export class DexieCampaignRepository implements CampaignRepository {
  * Vor der Spielzeit hatte eine Kampagne keinen Tag; sie beginnt am 001-1105.
  * Vor 2026-11-08c waren die NSC einer Begegnung eine eigene Art; heute sind sie Charaktere (`upgradeNpcs`).
  * Vor 2026-11-14d war eine Orakelantwort ein eigener Eintrag; heute steht sie in der Kartenauswahl (`upgradeOracle`).
- * Vor 2026-11-18 gab es keine Missionen; solche Kampagnen bekommen eine leere Liste.
+ * Vor 2026-11-18 gab es keine Missionen; solche Kampagnen bekommen eine leere Liste. Vor 2026-11-18b
+ * hatten Missionen keine Beteiligten; sie bekommen eine leere Liste.
  * Vor den Orten (2026-11-14j) waren Aufenthaltsort und Ort eines NSC nur die Welt als Text (0304);
  * heute sind sie ein Ort. Vor den Städtenamen (2026-11-14k) hatten Städte keinen Namen; sie heißen
  * „Stadt 1“, „Stadt 2“ usw.
@@ -203,7 +204,7 @@ export function upgraded(campaign: Campaign): Campaign {
   // Begegnungen von vor den Range Bands bzw. von vor 2026-11-08d macht upgradeDistances zu solchen mit Startband.
   const encounters = (campaign.encounters ?? []).map((e): Encounter => ({ ...e, round: e.round ?? 1, acted: e.acted ?? [] }));
   // Spielstände von vor dem Gruppengepäck: Was ein SC nicht ausgerüstet hat, kommt ins Gepäck (settleStash).
-  const upgraded = settleStash(upgradeDistances(upgradeNpcs(upgradeOracle({ ...campaign, ...location, characters, log, hexes, bookings: campaign.bookings ?? [], ships: campaign.ships ?? [], encounters, stash: campaign.stash ?? [], day: (campaign as Partial<Campaign>).day ?? START_DAY, missions: (campaign as Partial<Campaign>).missions ?? [] }))));
+  const upgraded = settleStash(upgradeDistances(upgradeNpcs(upgradeOracle({ ...campaign, ...location, characters, log, hexes, bookings: campaign.bookings ?? [], ships: campaign.ships ?? [], encounters, stash: campaign.stash ?? [], day: (campaign as Partial<Campaign>).day ?? START_DAY, missions: ((campaign as Partial<Campaign>).missions ?? []).map((m) => ({ ...m, people: (m as Partial<typeof m>).people ?? [] })) }))));
   return keepFocus(upgraded, upgraded);
 }
 

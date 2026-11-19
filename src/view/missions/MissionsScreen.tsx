@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import type { MissionItem, MissionPlaceView, MissionsView, Snapshot } from '../../controller';
+import type { MissionItem, MissionPersonView, MissionPlaceView, MissionsView, Snapshot } from '../../controller';
 import type { MissionInput, MissionState } from '../../model';
 import { missionStateText, roleText } from '../format';
 import { Form } from '../Form';
 import { useGame, useSnapshot } from '../game-context';
 import { haptic } from '../haptics';
-import { BriefcaseIcon, CardIcon, CloseIcon, LocateIcon, PencilIcon, PinIcon, TrashIcon } from '../icons';
+import { BriefcaseIcon, CardIcon, CloseIcon, LocateIcon, PencilIcon, PersonIcon, PinIcon, TrashIcon } from '../icons';
 import { CardSheet } from '../oracle/CardSheet';
 
 /**
@@ -115,6 +115,15 @@ function MissionRow({ mission }: { mission: MissionItem }) {
           <PencilIcon />
         </button>
       </div>
+      {mission.people.length > 0 && (
+        <ul className="mission-people">
+          {mission.people.map((p) => (
+            <li key={p.id}>
+              <PersonChip person={p} />
+            </li>
+          ))}
+        </ul>
+      )}
       {open && mission.places.length > 0 && (
         <ul className="mission-places">
           {mission.places.map((p, i) => (
@@ -125,6 +134,21 @@ function MissionRow({ mission }: { mission: MissionItem }) {
         </ul>
       )}
     </li>
+  );
+}
+
+/** Ein Beteiligter einer Mission: Etikett und Name; ein Tippen öffnet den Charakter im Editor. */
+function PersonChip({ person }: { person: MissionPersonView }) {
+  const game = useGame();
+  return (
+    <button type="button" className="person-chip" aria-label={`${person.label ? `${person.label}: ` : ''}${person.name} öffnen`} onClick={() => game.editCharacter(person.id)}>
+      <PersonIcon />
+      {person.label && <b>{person.label}</b>}
+      <span>
+        {person.name}
+        {person.dead ? ' †' : ''}
+      </span>
+    </button>
   );
 }
 
@@ -158,6 +182,7 @@ export function MissionEditor({ missions }: { missions: MissionsView }) {
   const [state, setState] = useState<MissionState>(editor.state);
   const [client, setClient] = useState(editor.client ?? '');
   const [places, setPlaces] = useState<readonly MissionPlaceView[]>(editor.places);
+  const [people, setPeople] = useState<readonly MissionPersonView[]>(editor.people);
   const [confirmRemove, setConfirmRemove] = useState(false);
   // Der Text wächst mit, damit eine angehängte Kartenauswahl immer ganz zu sehen ist.
   const textField = useRef<HTMLTextAreaElement>(null);
@@ -168,7 +193,7 @@ export function MissionEditor({ missions }: { missions: MissionsView }) {
     el.style.height = `${el.scrollHeight}px`;
   }, [text]);
   const isNew = editor.id === undefined;
-  const input = (): MissionInput => ({ title, text, state, ...(client === '' ? {} : { client }), places: places.map((p) => ({ place: p.place, ...(p.label ? { label: p.label } : {}) })) });
+  const input = (): MissionInput => ({ title, text, state, ...(client === '' ? {} : { client }), places: places.map((p) => ({ place: p.place, ...(p.label ? { label: p.label } : {}) })), people: people.map((p) => ({ character: p.id, ...(p.label ? { label: p.label } : {}) })) });
   const save = () => game.saveMission(input());
   const here = missions.here;
   // Ein Auftraggeber, der nicht mehr wählbar ist (inzwischen SC oder ausgeblendet), bleibt als eigene Zeile stehen.
@@ -233,6 +258,51 @@ export function MissionEditor({ missions }: { missions: MissionsView }) {
             <CardIcon />
             Karte ziehen
           </button>
+          <fieldset>
+            <legend>Beteiligte</legend>
+            {people.length === 0 && <p className="small-label">Noch niemand. Etwa das Opfer, der Fahrer, ein Informant; NSC oder SC.</p>}
+            {people.length > 0 && (
+              <ul className="mission-place-rows">
+                {people.map((p, i) => (
+                  <li key={p.id} className="mission-place-row mission-person-row">
+                    <span className="mission-place-where">
+                      <PersonIcon />
+                      <span>
+                        {p.name}
+                        {p.dead ? ' †' : ''}
+                      </span>
+                    </span>
+                    <input aria-label={`Etikett für ${p.name}`} value={p.label ?? ''} placeholder="Etikett, z. B. Opfer, Fahrer" onChange={(e) => setPeople(people.map((q, j) => (j === i ? { ...q, label: e.target.value } : q)))} />
+                    <button type="button" className="icon-button" aria-label={`${p.name} entfernen`} onClick={() => setPeople(people.filter((_, j) => j !== i))}>
+                      <CloseIcon />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <select
+              aria-label="Beteiligten hinzufügen"
+              value=""
+              onChange={(e) => {
+                const chosen = missions.persons.flatMap((g) => g.characters).find((c) => c.id === e.target.value);
+                if (chosen) setPeople([...people, { ...chosen, label: undefined }]);
+              }}
+            >
+              <option value="">+ Beteiligten hinzufügen</option>
+              {missions.persons.map((g) => (
+                <optgroup key={g.group} label={g.group}>
+                  {g.characters
+                    .filter((c) => !people.some((p) => p.id === c.id))
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                        {c.dead ? ' †' : ''}
+                      </option>
+                    ))}
+                </optgroup>
+              ))}
+            </select>
+          </fieldset>
           <fieldset>
             <legend>Orte</legend>
             {places.length === 0 && <p className="small-label">Noch kein Ort.</p>}

@@ -2021,13 +2021,13 @@ export class GameController {
   newMission(): void {
     const location = this.campaign.location;
     const places = location !== undefined && missionPlaceBlocker(this.campaign, location) === undefined ? [{ place: location }] : [];
-    this.openMissionEditor(undefined, { title: '', text: '', state: 'open', places });
+    this.openMissionEditor(undefined, { title: '', text: '', state: 'open', places, people: [] });
   }
 
   /** Öffnet eine Mission im Editor (aus dem Reiter, vom Feld, aus dem Log oder dem NSC-Editor). */
   editMission(id: string): void {
-    const { title, text, state, client, places } = missionOf(this.campaign, id);
-    this.openMissionEditor(id, { title, text, state, ...(client === undefined ? {} : { client }), places });
+    const { title, text, state, client, places, people } = missionOf(this.campaign, id);
+    this.openMissionEditor(id, { title, text, state, ...(client === undefined ? {} : { client }), places, people });
   }
 
   private openMissionEditor(id: string | undefined, draft: MissionInput): void {

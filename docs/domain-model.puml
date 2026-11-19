@@ -292,6 +292,9 @@ hide <<browser>> stereotype
     state: MissionState
     retired: boolean
   }
+  class MissionPerson <<value>> $mission {
+    label: string [0..1]
+  }
   class MissionPlace <<value>> $mission {
     label: string [0..1]
   }
@@ -1094,6 +1097,8 @@ Campaign "1" *-- "*" Mission : missions {ordered}
 Mission "*" --> "0..1" Character : client
 Mission "1" *-- "*" MissionPlace : places {ordered}
 MissionPlace "1" *-- "1" Place : place
+Mission "1" *-- "*" MissionPerson : people {ordered}
+MissionPerson "*" --> "1" Character : character
 Mission --> MissionState
 Character --> NpcRole
 CareerRoll --> RollKind
