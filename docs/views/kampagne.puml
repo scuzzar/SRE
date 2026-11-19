@@ -97,6 +97,9 @@ hide <<browser>> stereotype
 ' Schiffe
   class Ship $schiffe
 
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+  class SystemFlight $raum
+
 ' Charaktererschaffung und Lebenslauf
   class Generation $erschaffung
 
@@ -142,6 +145,9 @@ Conflict "*" --> "0..1" Campaign : remote
 
 ' Schiffe
 Campaign "1" *-- "0..*" Ship : ships
+
+' Raumkarte und Systemflug
+Campaign "1" *-- "0..1" SystemFlight : flight
 
 ' Zeit und Reisen
 

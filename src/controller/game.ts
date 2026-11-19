@@ -87,6 +87,17 @@ import {
   runGeneration,
   hexId,
   isWorld,
+  activeFlight,
+  endFlight,
+  maxGOf,
+  normalThrust,
+  runRound,
+  setThrust,
+  snapThrust,
+  startFlight,
+  thrustMarks,
+  without,
+  type Vec,
   stateOf,
   enlist,
   finishGeneration,
@@ -238,13 +249,14 @@ import {
   type ConflictChoice,
 } from '../model/draft';
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
+import type { OpenSpace } from './space-view';
 import type { JourneyMode } from './time-view';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
 /** Der Schlüssel eines Deckplan-Platzes in den Marken: „Entwurf/Platz“. */
 const slotKey = (slot: { readonly design: string; readonly name: string }): string => `${slot.design}/${slot.name}`;
 
-const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, shopFrom: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, missionEditor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, globeFocus: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, shopFrom: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, missionEditor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, globeFocus: undefined, space: undefined, selected: undefined, picking: false } as const;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -359,6 +371,7 @@ export class GameController {
       world: undefined,
       worldError: undefined,
       globe: undefined,
+      space: undefined,
       selected: undefined,
       picking: false,
       tripPlan: undefined,
@@ -2315,6 +2328,67 @@ export class GameController {
   /** Schließt den Globus; die Weltkarte bleibt offen. */
   closeGlobe(): void {
     this.update({ globe: undefined, globeFocus: undefined });
+  }
+
+  // --- Raumkarte und Systemflug (siehe domain-model.md, *Systemflug*) -----------------------------
+
+  /** Öffnet die Raumkarte der offenen Welt (Knopf „Raum“ an der Weltkarte und am Globus). */
+  openSpace(): void {
+    const at = this.state.world;
+    if (!at) throw new DomainError('Es ist keine Welt offen.');
+    const hex = hexAt(this.campaign.hexes, at.column, at.row);
+    if (!isWorld(hex)) throw new DomainError('Dort ist keine fertige Welt.');
+    this.update({ space: { world: hexId(at.column, at.row) }, globe: this.state.globe && { picked: undefined } });
+  }
+
+  /** Schließt die Raumkarte; Weltkarte bzw. Globus darunter bleiben, wie sie waren. Ein Systemflug läuft weiter. */
+  closeSpace(): void {
+    this.update({ space: undefined });
+  }
+
+  /** Beginnt den Systemflug auf der offenen Raumkarte. */
+  startFlight(): void {
+    const space = this.openSpaceState();
+    this.change(startFlight(this.campaign, space.world, this.deps.clock), { space: { world: space.world } });
+  }
+
+  /**
+   * Der Finger zieht einen Schubvektor (in G, Richtung im Raum); die Bahnvorschau folgt ihm. Er rastet
+   * an den Marken ein und wird erst mit `setThrust` gesetzt. `undefined`: der Finger liegt in der Mitte.
+   */
+  aimThrust(unit: number, thrust: Vec | undefined): void {
+    const space = this.openSpaceState();
+    const state = activeFlight(this.campaign).units[unit];
+    if (!state) throw new DomainError('Diese Einheit gibt es nicht.');
+    const snapped = snapThrust(normalThrust(thrust, maxGOf(this.campaign, state)), thrustMarks(state));
+    this.update({ space: { ...space, aim: { unit, thrust: snapped.thrust, ...(snapped.snap === undefined ? {} : { snap: snapped.snap }) } } });
+  }
+
+  /** Setzt den Schubvektor einer Einheit für diese Raumrunde (beim Loslassen; `undefined`: kein Schub). */
+  setThrust(unit: number, thrust: Vec | undefined): void {
+    const space = this.openSpaceState();
+    const state = activeFlight(this.campaign).units[unit];
+    if (!state) throw new DomainError('Diese Einheit gibt es nicht.');
+    const snapped = snapThrust(normalThrust(thrust, maxGOf(this.campaign, state)), thrustMarks(state)).thrust;
+    this.change(setThrust(this.campaign, unit, snapped), { space: without(space, 'aim') });
+  }
+
+  /** Führt die Raumrunde aus; die Raumkarte spielt sie danach ab. */
+  runRound(): void {
+    const space = this.openSpaceState();
+    const run = runRound(this.campaign, this.deps.clock);
+    this.change(run.campaign, { space: { world: space.world, run: { round: activeFlight(run.campaign).round, frames: run.frames } } });
+  }
+
+  /** Beendet den Systemflug; die Raumkarte bleibt offen. */
+  endFlight(): void {
+    const space = this.openSpaceState();
+    this.change(endFlight(this.campaign), { space: { world: space.world } });
+  }
+
+  private openSpaceState(): OpenSpace {
+    if (!this.state.space) throw new DomainError('Die Raumkarte ist nicht offen.');
+    return this.state.space;
   }
 
   /** Tippt ein Oberflächenfeld auf dem Globus an (oder hebt die Wahl auf). */

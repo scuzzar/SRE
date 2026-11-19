@@ -1,0 +1,243 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Ausschnitt: Raumkarte und Systemflug
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+hide <<browser>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne
+
+' Schiffe
+  class Ship $schiffe
+
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+  class SystemFlight $raum {
+    startedAt: datetime
+    round: number
+    /elapsed: number
+  }
+  class StarSystem $raum {
+    maxOrbits: number
+    worldOrbit: number
+    hostOrbit: number [0..1]
+    hostAngle: number [0..1]
+    /worldZone: Zone
+  }
+  class Star $raum {
+    type: StarType
+    decimal: number [0..1]
+    size: StarSize
+    orbit: number [0..1]
+    close: boolean
+    farAu: number [0..1]
+  }
+  enum StarType <<value>> $raum {
+    O
+    B
+    A
+    F
+    G
+    K
+    M
+  }
+  enum StarSize <<value>> $raum {
+    Ia
+    Ib
+    II
+    III
+    IV
+    V
+    VI
+    D
+  }
+  enum Zone <<value>> $raum {
+    inner
+    habitable
+    outer
+  }
+  class StarZones <<reference>> $raum {
+    type: StarType
+    decimal: number [0..1]
+    size: StarSize
+    firstOrbit: number
+    habitableOrbit: number [0..1]
+  }
+  class Satellite $raum {
+    kind: SatelliteKind
+    size: number [0..1]
+    diameter: number [0..1]
+    orbit: number
+    angle: number
+    atmosphere: number [0..1]
+    hydrographics: number [0..1]
+    population: number [0..1]
+    /gravity: number
+  }
+  enum SatelliteKind <<value>> $raum {
+    moon
+    small
+    ring
+  }
+  class GasGiant $raum {
+    large: boolean
+    radius: number
+    orbit: number
+    /zone: Zone
+    /gravity: number
+  }
+  class SpaceUnit $raum {
+    position: Vec
+    velocity: Vec
+    thrust: Vec [0..1]
+    crashed: boolean
+    /maxG: number
+  }
+  class TrackPoint <<value>> $raum {
+    position: Vec
+    velocity: Vec
+  }
+  class Vec <<value>> $raum {
+    x: number
+    y: number
+  }
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+  class Hex $sektor
+
+' Missionen
+
+' Verlauf
+
+' Zeit und Reisen
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+
+' Referenzdaten
+' Fahrzeuge und Wege auf der Oberfläche
+
+' Kampagne
+
+' Schiffe
+
+' Raumkarte und Systemflug
+Campaign "1" *-- "0..1" SystemFlight : flight
+SystemFlight "*" --> "1" Hex : world
+SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
+SpaceUnit "*" --> "1" Ship : ship
+SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
+Hex "1" *-- "0..1" StarSystem : system
+StarSystem "1" *-- "1..3" Star : stars {ordered}
+StarSystem "1" *-- "*" Satellite : satellites {ordered}
+StarSystem "1" *-- "*" GasGiant : giants {ordered}
+StarSystem "*" --> "0..1" GasGiant : host
+Star "*" --> "1" StarZones : /zones
+Star --> StarType
+Star --> StarSize
+SystemFlight "*" --> "0..1" GasGiant : at
+GasGiant "1" *-- "*" Satellite : satellites {ordered}
+Satellite --> SatelliteKind
+
+' Zeit und Reisen
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
+endlegend
+@enduml

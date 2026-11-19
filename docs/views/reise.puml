@@ -82,6 +82,8 @@ hide <<browser>> stereotype
 ' Schiffe
   class Ship $schiffe
 
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+
 ' Charaktererschaffung und Lebenslauf
 
 ' Subsektor und Welten
@@ -143,6 +145,8 @@ hide <<browser>> stereotype
 ' Kampagne
 
 ' Schiffe
+
+' Raumkarte und Systemflug
 
 ' Zeit und Reisen
 LogEntry <|-- TimePassed

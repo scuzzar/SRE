@@ -8,7 +8,7 @@ import { useGame } from '../game-context';
 import { WorldIcon } from './WorldIcon';
 import { animated, haptic, stopHaptics } from '../haptics';
 import { HoldButton } from '../HoldButton';
-import { CloseIcon, DiceIcon, GlobeIcon, PinIcon, RouteIcon } from '../icons';
+import { CloseIcon, DiceIcon, GlobeIcon, PinIcon, RouteIcon, ShipIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
 import { Form } from '../Form';
 import { withLoading } from '../loading';
@@ -320,6 +320,12 @@ export function WorldActions({ world, here, travel, onGlobe = false }: { world: 
           <button type="button" className="action note" title="Die Hexkarte der Welt" onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobe())}>
             <GlobeIcon />
             Öffnen
+          </button>
+        )}
+        {world.canNote && (
+          <button type="button" className="action note" title="Die Raumkarte um die Welt: Systemflug" onClick={() => game.openSpace()}>
+            <ShipIcon />
+            Raum
           </button>
         )}
       </div>

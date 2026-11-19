@@ -81,6 +81,8 @@ hide <<browser>> stereotype
 
 ' Schiffe
 
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+
 ' Charaktererschaffung und Lebenslauf
 
 ' Subsektor und Welten
@@ -119,6 +121,8 @@ hide <<browser>> stereotype
 ' Kampagne
 
 ' Schiffe
+
+' Raumkarte und Systemflug
 
 ' Zeit und Reisen
 

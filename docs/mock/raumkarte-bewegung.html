@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Raumkarte Prototyp</title>
+<style>
+  :root {
+    --bg: #05070d; --panel: rgba(16, 22, 34, 0.94); --line: #2a3448; --text: #dfe6f3; --muted: #8b97ad;
+    --own: #4fd1ff; --enemy: #ff7a59; --missile: #ffd84a; --ok: #6fdc8c; --bad: #ff5a6a; --accent: #4fd1ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 14px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
+  #top { position: fixed; top: 0; left: 0; right: 0; padding: 10px 16px; display: flex; gap: 8px;
+    align-items: center; pointer-events: none; }
+  #top .title { font-weight: 600; letter-spacing: .02em; }
+  #top .time { color: var(--muted); }
+  #top .spacer { flex: 1; }
+  #top button { pointer-events: auto; }
+  #sheet { position: fixed; left: 0; right: 0; bottom: 0; background: var(--panel); border-top: 1px solid var(--line);
+    border-radius: 14px 14px 0 0; padding: 6px 16px calc(12px + env(safe-area-inset-bottom)); max-height: 62vh;
+    overflow-y: auto; transition: transform .2s ease; }
+  #sheet.collapsed .more { display: none; }
+  #grip { width: 44px; height: 5px; border-radius: 3px; background: #4a5670; margin: 2px auto 8px; cursor: pointer; }
+  @media (min-width: 900px) {
+    #sheet { left: 12px; right: auto; bottom: 12px; top: 56px; width: 360px; border-radius: 14px; border: 1px solid var(--line); max-height: none; }
+    #grip { display: none; }
+    #sheet.collapsed .more { display: block; }
+  }
+  .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 6px 0; }
+  .row.between { justify-content: space-between; }
+  .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; margin-top: 10px; }
+  button { background: #1c2638; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px;
+    font: inherit; cursor: pointer; min-height: 36px; }
+  button:hover { border-color: #3c4a66; }
+  button.on { background: #12384a; border-color: var(--accent); color: #fff; }
+  button.primary { background: var(--accent); color: #04121a; border-color: var(--accent); font-weight: 650; width: 100%; min-height: 46px; font-size: 16px; }
+  button:disabled { opacity: .45; cursor: default; }
+  input[type=range] { flex: 1; accent-color: var(--accent); min-width: 120px; }
+  .g { font-variant-numeric: tabular-nums; min-width: 52px; text-align: right; font-weight: 600; }
+  .stat { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; font-variant-numeric: tabular-nums; }
+  .stat span:nth-child(even) { text-align: right; }
+  .warn { color: var(--bad); font-weight: 600; }
+  .okc { color: var(--ok); }
+  .own { color: var(--own); } .enemy { color: var(--enemy); } .msl { color: var(--missile); }
+  #log { font-size: 12.5px; color: var(--muted); max-height: 110px; overflow-y: auto; border-top: 1px solid var(--line); margin-top: 8px; padding-top: 6px; }
+  #log div { margin: 2px 0; }
+  .hint { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="top">
+  <span class="title">Raumkarte · Prototyp</span>
+  <span class="time" id="clock"></span>
+  <span class="spacer"></span>
+  <button id="zoomIn" aria-label="Hineinzoomen">＋</button>
+  <button id="zoomOut" aria-label="Herauszoomen">－</button>
+  <button id="center">Zentrieren</button>
+</div>
+
+<div id="sheet" class="collapsed">
+  <div id="grip" title="Blatt auf- und zuziehen"></div>
+  <div class="row between">
+    <strong class="own">Scout „Kestrel“ · 2 G</strong>
+    <span id="roundInfo" class="hint"></span>
+  </div>
+  <div class="row between">
+    <span>Schub <span class="g" id="gVal">0,0 G</span> <span class="hint" id="snapVal"></span></span>
+    <button id="noThrust">Kein Schub</button>
+  </div>
+  <div class="hint">Tippen oder ziehen im Kreis setzt den Schub: vom Schiff bis zum Finger. Der Kreis ist der höchste Schub.</div>
+  <div class="row" id="warnRow"></div>
+  <button class="primary" id="go">Runde ausführen (1.000 s)</button>
+  <div class="more">
+    <div class="label">Ziel</div>
+    <div class="stat" id="targetStat"></div>
+    <div class="row">
+      <button id="fire">Rakete starten</button>
+      <span class="hint" id="ammo"></span>
+    </div>
+    <div class="label">Eigenes Schiff</div>
+    <div class="stat" id="ownStat"></div>
+    <div class="row">
+      <button id="reset">Neu beginnen</button>
+    </div>
+    <div class="hint">Schub setzen: irgendwo in den Kreis um das eigene Schiff tippen oder darin ziehen; Länge = Stärke, der Kreis ist der höchste Schub. Mitte = kein Schub. Außerhalb des Kreises verschiebt ein Zug die Karte.
+      Nahe an den Marken (prograd, retrograd, Ziel, weg, angleichen) rastet der Pfeil ein.
+      Durchgezogen: Bahn dieser Runde. Gestrichelt: wie es ohne Schub weiterginge (5 Runden).
+      Rote Fläche: wohin der Korsar in dieser Runde kommen könnte.</div>
+    <div id="log"></div>
+  </div>
+</div>
+
+<script>
+// Das Weltsymbol der App: drawWorld aus src/view/sector/world-icon.ts, unverändert gebündelt
+// (die Oberflächenkarte ist durch einen Platzhalter ersetzt, der Prototyp hat keine). Neu bündeln:
+// world-icon.ts kopieren, den Import von '../../controller' auf einen Platzhalter mit WorldLook,
+// landformAt und nearestCell umbiegen, mit rolldown als IIFE bündeln, window.drawWorld setzen.
+(function(){let e=()=>{throw Error(`keine Oberflächenkarte im Prototyp`)},t=()=>{throw Error(`keine Oberflächenkarte im Prototyp`)},n=[{glow:void 0,width:0,density:0,clouds:0},{glow:`#8fb4ff`,width:.035,density:.25,clouds:0},{glow:`#9be35a`,width:.05,density:.38,clouds:.03,cloudColor:`#e4f0c8`},{glow:`#7fb0ff`,width:.05,density:.38,clouds:.03},{glow:`#a6e24a`,width:.08,density:.52,clouds:.12,cloudColor:`#e2efc0`},{glow:`#6fa8ff`,width:.08,density:.52,clouds:.12},{glow:`#5c9cff`,width:.115,density:.66,clouds:.26},{glow:`#9fe03c`,width:.115,density:.66,clouds:.26,cloudColor:`#e0ecb4`},{glow:`#6aa6ff`,width:.16,density:.8,clouds:.42},{glow:`#a8dc3a`,width:.16,density:.8,clouds:.42,cloudColor:`#dbe6a6`},{glow:`#b56cff`,width:.13,density:.75,clouds:.34,cloudColor:`#d9c2f2`},{glow:`#c46cff`,width:.15,density:.82,clouds:.55,cloudColor:`#d8c46a`},{glow:`#ff4fd8`,width:.16,density:.86,clouds:.6,cloudColor:`#c45a96`},{glow:`#9cc4ff`,width:.21,density:.9,clouds:.8},{glow:`#6fa8ff`,width:.06,density:.45,clouds:.1},{glow:`#d08cff`,width:.14,density:.72,clouds:.3,cloudColor:`#b8f0ea`}],r={frozen:{cap:0,ice:!0,tint:[.85,.9,1]},cold:{cap:.72,ice:!1,tint:[.92,.95,1]},temperate:{cap:.93,ice:!1,tint:[1,1,1]},hot:{cap:.99,ice:!1,tint:[1.06,.98,.9]},boiling:{cap:2,ice:!1,tint:[1.1,.92,.82]}},i={cap:2,ice:!1,tint:[1,1,1]};function a(e){let t=2166136261;for(let n=0;n<e.length;n++)t^=e.charCodeAt(n),t=Math.imul(t,16777619);return t>>>0}function o(e){let t=e>>>0||1;return()=>{t=t+1831565813|0;let e=Math.imul(t^t>>>15,1|t);return e=e+Math.imul(e^e>>>7,61|e)^e,((e^e>>>14)>>>0)/4294967296}}function s(e,t,n,r){let i=Math.imul(e,374761393)^Math.imul(t,668265263)^Math.imul(n,1274126177)^Math.imul(r,2246822519);return i=Math.imul(i^i>>>13,1274126177),((i^i>>>16)>>>0)/4294967296}function c(e,t,n,r){let i=Math.floor(e),a=Math.floor(t),o=Math.floor(n),c=e-i,l=t-a,u=n-o,d=c*c*(3-2*c),f=l*l*(3-2*l),p=u*u*(3-2*u),m=s(i,a,o,r)+(s(i+1,a,o,r)-s(i,a,o,r))*d,h=s(i,a+1,o,r)+(s(i+1,a+1,o,r)-s(i,a+1,o,r))*d,g=s(i,a,o+1,r)+(s(i+1,a,o+1,r)-s(i,a,o+1,r))*d,_=s(i,a+1,o+1,r)+(s(i+1,a+1,o+1,r)-s(i,a+1,o+1,r))*d,v=m+(h-m)*f;return v+(g+(_-g)*f-v)*p}function l(e,t,n,r,i){let a=0,o=.5,s=1,l=0;for(let u=0;u<i;u++)a+=o*c(e*s,t*s,n*s,r+u*17),l+=o,o*=.5,s*=2.03;return a/l}let u=(e,t,n,r)=>l(e*1.7+11.3,t*1.7+4.1,n*1.7+7.7,r,6);function d(e,t,n,r){let i=l(e*2+3,t*2,n*2,r+99,3);return l(e*2.4+i*1.4,t*5.2,n*2.4+i*1.4,r+51,5)}let f=(e,t,n,r)=>c(e*9,t*9,n*9,r+7),p=/* @__PURE__ */ new Map;function m(e){let t=p.get(e);if(t)return t;let n=o(e^40503),r=[],i=[],a=[];for(let t=0;t<2400;t++){let t=n()*2-1,o=n()*Math.PI*2,s=Math.sqrt(1-t*t),c=s*Math.cos(o),l=s*Math.sin(o),f=u(c,t,l,e);r.push(f),i.push(d(c,t,l,e)),a.push({x:c,y:t,z:l,land:f})}let s={land:r.sort((e,t)=>e-t),cloud:i.sort((e,t)=>e-t),points:a};return p.set(e,s),s}function h(e,t){return t<=0?-1:t>=1?2:e[Math.min(e.length-1,Math.floor(t*e.length))]??.5}function g(e){let t=parseInt(e.slice(1),16);return[(t>>16&255)/255,(t>>8&255)/255,(t&255)/255]}let _=(e,t,n)=>[e[0]+(t[0]-e[0])*n,e[1]+(t[1]-e[1])*n,e[2]+(t[2]-e[2])*n],v=(e,t,n)=>e<t?t:e>n?n:e;function y(e,t,n){let r=v((n-e)/(t-e),0,1);return r*r*(3-2*r)}let b={deep:g(`#0c2850`),shallow:g(`#2a6f9a`),lowGreen:g(`#3d6a34`),midGreen:g(`#6c8443`),ochre:g(`#b39062`),rust:g(`#7c573a`),sand:g(`#c2a274`),rock:g(`#8a857d`),regolith:g(`#6d6961`),regolith2:g(`#9a958c`),ice:g(`#e3ecf4`),iceBlue:g(`#b9d0e6`),basalt:g(`#3e302a`),snow:g(`#f2f5f8`),taintedSea:[.12,.3,.25],steam:[.35,.4,.42],rubble:[.55,.47,.4],unknown:g(`#55575a`),unknown2:g(`#8a8c90`)},x={water:[.09,.27,.48],waterIce:[.78,.86,.93],landIce:[.93,.95,.97],tundra:[.55,.58,.5],mountain:[.46,.41,.36],rugged:[.55,.49,.38],desert:[.8,.68,.46],jungle:[.13,.36,.16],swamp:[.28,.37,.25],open:[.3,.47,.24],settled:[.55,.55,.32]},S=e=>e===2||e===4||e===7||e===9;function C(e,t,n,a,o,s,l){let u=f(t,n,a,l);if(e.atmosphere===void 0||e.hydrographics===void 0){let t=v((o-.35)/.4,0,1),n=_(b.unknown,b.unknown2,u*.7+t*.3),a=e.temperature?r[e.temperature].tint:i.tint;return[n[0]*a[0],n[1]*a[1],n[2]*a[2]]}let d=e.atmosphere,p=e.hydrographics,m=d<=1,h=e.temperature?r[e.temperature]:i,g=Math.abs(n),x=h.cap+(u-.5)*.12;if(o<s){let t=v((s-o)/.12,0,1);if(h.ice||m)return _(b.iceBlue,b.ice,u*.6+t*.2);if(g>x)return _(b.ice,b.snow,u);let n=_(b.shallow,b.deep,t**.6);return S(d)&&(n=_(n,b.taintedSea,.35)),e.temperature===`boiling`&&(n=_(n,b.steam,.4)),n}let C=v((o-s)/Math.max(.08,1-s-.25),0,1),w;if(m)w=_(b.regolith,b.regolith2,u*.8+C*.3),c(t*14,n*14,a*14,l+3)>.72&&(w=_(w,b.regolith,.5));else if(e.temperature===`frozen`)w=_(b.iceBlue,b.rock,C*.6+u*.2);else if(e.temperature===`boiling`)w=_(b.basalt,b.rust,u*.5+C*.3);else{let t=v(1-p/5,0,1),n=e.life===!0&&(d>=2&&d<=9||d>=13),r=n?_(b.lowGreen,b.midGreen,u*.7):_(b.rust,b.ochre,u*.8);w=_(r,n?b.ochre:b.sand,t*.85),e.temperature===`hot`&&(w=_(w,b.ochre,.35)),w=_(w,b.rock,y(.45,.9,C)),e.temperature===`cold`&&(w=_(w,b.iceBlue,.15))}return g>x-.04*C&&!m&&(w=_(w,b.snow,.9)),[w[0]*h.tint[0],w[1]*h.tint[1],w[2]*h.tint[2]]}let w=(()=>{let e=[1,.04,0],t=Math.hypot(e[0],e[1],e[2]);return{x:e[0]/t,y:e[1]/t,z:e[2]/t}})(),T=(e,t,n)=>-(e*w.x+t*w.y+n*w.z),E=.38,D=40*Math.PI/180,O=Math.cos(E),k=Math.sin(E),A=Math.cos(D),j=Math.sin(D);function M(r,i){let o=document.createElement(`canvas`),s=Math.max(8,Math.round(i));o.width=s,o.height=s;let c=o.getContext(`2d`);if(!c)return o;let l=c.createImageData(s,s),p=a(r.seed);if(r.size===0)return z(l,s,p),c.putImageData(l,0,0),B(c,s,r,p),o;let b=(r.atmosphere===void 0?void 0:n[r.atmosphere])??n[0],S=r.hydrographics??0,E=(r.atmosphere??0)>=10,D=s/2*(.3+Math.min(10,r.size)*.052),M=b.glow?g(b.glow):void 0,N=M?D*b.width*1.8:0,P=m(p),F=r.water??(r.hydrographics===void 0?0:r.hydrographics>=10?.985:r.hydrographics/10),R=h(P.land,F),V=b.clouds*(.4+.6*Math.min(1,S/4+(E?.6:0)));r.temperature===`hot`&&(V=Math.min(.9,V*1.3)),r.temperature===`boiling`&&(V=Math.min(.95,V*1.5+.1)),(r.temperature===`frozen`||r.temperature===`cold`)&&(V*=.6);let H=h(P.cloud,1-V),U=b.cloudColor?g(b.cloudColor):[.97,.98,1],W=l.data,G=s/2,K=Math.hypot(w.x,w.y)||1,q=0;for(let n=0;n<s;n++)for(let i=0;i<s;i++){let a=(i+.5-G)/D,o=(n+.5-G)/D,c=a*a+o*o,l=(n*s+i)*4,m=0,h=0,g=0,S=0;if(c<=1){let n=Math.sqrt(1-c),i=o*O-n*k,s=o*k+n*O,l=a*A+s*j,w=-a*j+s*A,N=-i,P;if(r.surface?(q=t(r.surface.grid,l,-w,N,q),P=x[e(r.surface.map,q)],P===x.open&&!r.life&&(P=x.desert),P=_(P,[P[0]*.8,P[1]*.8,P[2]*.8],f(l,N,w,p))):P=C(r,l,N,w,u(l,N,w,p),R,p),V>.001){let e=y(H,H+.09,d(l,N,w,p))*(r.atmosphere===13?.95:.85);P=_(P,U,e)}let F=T(a,o,n),I=y(-.04,.25,F),L=v((F+.08)/1.08,0,1),z=.03+.97*(L<.12?L*L/.24:L-.06);if(P=[P[0]*z,P[1]*z,P[2]*z],M){let e=(1-n)**2.4*b.density;P=_(P,M,v(e*(.15+.85*y(-.25,.3,F)),0,.9)),P=_(P,M,b.density*(E?.05:.07)*I)}let B=v((1-Math.sqrt(c))*D,0,1);if([m,h,g]=P,S=B,M&&B<1){let e=(1-B)*b.density*.6;m=m*B+M[0]*e,h=h*B+M[1]*e,g=g*B+M[2]*e,S=Math.max(B,b.density*.6)}}else if(M&&N>0){let e=Math.sqrt(c)*D-D;if(e<N){let t=e/N,n=Math.sqrt(c),r=.22+.78*y(-.5,.9,-(a/n*w.x+o/n*w.y)/K);[m,h,g]=M,S=v(b.density*(1-t)**2.2*r,0,1)}}W[l]=v(m,0,1)*255,W[l+1]=v(h,0,1)*255,W[l+2]=v(g,0,1)*255,W[l+3]=S*255}return c.putImageData(l,0,0),I(c,s,D,r,p,P,R),L(c,s,D,r,p),o}let N=e=>e<=0?0:Math.round(2**e);function P(e){let{population:t=0,tech:n}=e;if(!(t<=0||n===void 0||n<5))return{alpha:v(.45+(n-5)*.07,.45,1),color:n>=12?`232,240,255`:n>=9?`255,228,170`:`255,196,110`}}function F(e,t,n,r,i,a){let o=e.createRadialGradient(t,n,0,t,n,r*2.2);o.addColorStop(0,`rgba(${i},${a})`),o.addColorStop(.35,`rgba(${i},${a*.45})`),o.addColorStop(1,`rgba(${i},0)`),e.fillStyle=o,e.fillRect(t-r*2.2,n-r*2.2,r*4.4,r*4.4)}function I(e,t,n,r,i,a,s){let c=P(r);if(!c)return;let l=a.points.filter(e=>e.land>=s),u=(l.length<30?a.points:l).slice().sort((e,t)=>Math.abs(e.land-s)-Math.abs(t.land-s)),d=Math.min(u.length,N(r.population??0)),f=o(i^3095),p=Math.max(.6,n*.012);e.save(),e.globalCompositeOperation=`lighter`;for(let r=0;r<d;r++){let i=u[r],a=i.x,o=-i.y,s=i.z,l=a*A-s*j,d=a*j+s*A,m=o*O+d*k,h=-o*k+d*O,g=p*(.6+f()*1.1)*Math.sqrt(Math.max(0,h)),_=.45+f()*.55;if(h<=.05)continue;let v=y(.05,-.18,T(l,m,h));v<=.02||F(e,t/2+l*n,t/2+m*n,g,c.color,c.alpha*v*_)}e.restore()}function L(e,t,n,r,i){let{population:a=0,tech:s}=r;if(a<=0||s===void 0||s<8)return;let c=s-8,l=Math.min(4,1+Math.floor(c/2)),u=t<140,d=v(.2+c*.035,.2,.45)*(u?1.9:1),f=Math.max(u?1.1:.6,t*.0035),p=o(i^1447),m=t/2;for(let r=0;r<l;r++){let i=Math.min(n*(1.18+r*.1),t/2*(.9+r*.025)),a=i*(.18+p()*.16),o=-.3+(p()-.5)*.4;e.save(),e.strokeStyle=`rgba(190,215,255,${Math.min(.85,d*(r===0?1:.8))})`,e.lineWidth=f,e.save(),e.beginPath(),e.rect(0,0,t,t),e.arc(m,m,n+.5,0,Math.PI*2,!0),e.clip(`evenodd`),e.beginPath(),e.ellipse(m,m,i,a,o,Math.PI,Math.PI*2),e.stroke(),e.restore(),e.beginPath(),e.ellipse(m,m,i,a,o,0,Math.PI),e.stroke(),e.restore()}}function R(e,t){let n=o(t^2647),r=[];for(let t=0;t<9;t++){let i=(t+.2+n()*.6)/9,a=t===4?1.7:t===2||t===7?1.25:.8+n()*.3;r.push({x:e*(.1+i*.8),y:e*(.68-i*.36-Math.sin(i*Math.PI)*.06+(n()-.5)*.12),r:e*(.03+n()*.03)*a,s:Math.floor(n()*1e6),rot:n()*6.28})}for(let t=0;t<18;t++){let t=n();r.push({x:e*(.08+t*.84),y:e*(.68-t*.36-Math.sin(t*Math.PI)*.06+(n()-.5)*.2),r:e*(.007+n()*.01),s:Math.floor(n()*1e6),rot:n()*6.28})}return r}function z(e,t,n){let r=e.data;for(let e of R(t,n)){let n=Math.max(0,Math.floor(e.x-e.r*1.5)),i=Math.min(t-1,Math.ceil(e.x+e.r*1.5)),a=Math.max(0,Math.floor(e.y-e.r*1.5)),o=Math.min(t-1,Math.ceil(e.y+e.r*1.5));for(let s=a;s<=o;s++)for(let a=n;a<=i;a++){let n=a+.5-e.x,i=s+.5-e.y,o=Math.atan2(i,n)+e.rot,l=e.r*(1+.56*(c(Math.cos(o)*1.6,Math.sin(o)*1.6,.5,e.s)-.5)),u=Math.hypot(n,i)/l;if(u>1)continue;let d=T(n/l,i/l,Math.sqrt(Math.max(0,1-u*u))),f=_(b.regolith,b.rubble,c(a/e.r*2.5,s/e.r*2.5,.3,e.s)),p=.05+.95*y(-.1,.35,d)*(.5+.5*v(d,0,1)),m=(s*t+a)*4;r[m]=f[0]*p*255,r[m+1]=f[1]*p*255,r[m+2]=f[2]*p*255,r[m+3]=Math.max(r[m+3]??0,v((1-u)*l,0,1)*255)}}}function B(e,t,n,r){let i=P(n);if(!i)return;let a=R(t,r),s=o(r^20817),c=Math.min(60,Math.ceil(N(n.population??0)/6));e.save(),e.globalCompositeOperation=`lighter`;for(let n=0;n<c;n++){let n=a[Math.floor(s()*9)],r=Math.atan2(w.y,w.x)+(s()-.5)*1.6,o=n.r*(.3+s()*.5);F(e,n.x+Math.cos(r)*o,n.y+Math.sin(r)*o,Math.max(.7,t*.008),i.color,i.alpha*(.5+s()*.5))}e.restore()}window.drawWorld=M})();
+</script>
+<script>
+"use strict";
+// ---------- Physik (km, s) ----------
+const G1 = 0.01;               // 1 G = 10 m/s² = 0,01 km/s²
+const ROUND = 1000;            // Raumrunde in s
+const DT = 10;                 // Rechenschritt in s
+const STEPS = ROUND / DT;
+const BAND = 10000;            // Raumband in km
+const INTERCEPT = 2500;        // Abfangen (Supplement 3: 25 mm)
+
+// look: was das Weltsymbol braucht (WorldLook). TL höchstens 7, damit das Symbol keine Umlaufbahnen
+// andeutet; die Raumkarte zeigt echte.
+const WORLD = { name: "Regina (Größe 8)", R: 6400, GM: 409600,       // g = 8/8 G
+  look: { seed: "0101", size: 8, atmosphere: 6, hydrographics: 7, water: 0.7, population: 9, tech: 7, temperature: "temperate", life: true } };
+const MOON = { name: "Mond (Größe 2)", R: 1600, GM: 6400, orbit: 90000, phase: 2.2,
+  look: { seed: "0101-mond", size: 2, atmosphere: 0, hydrographics: 0, water: 0, population: 0, tech: 0, temperature: "frozen", life: false } };
+MOON.w = Math.sqrt(WORLD.GM / MOON.orbit ** 3);
+
+function moonPos(t) { const a = MOON.phase + MOON.w * t; return [MOON.orbit * Math.cos(a), MOON.orbit * Math.sin(a)]; }
+function moonVel(t) { const a = MOON.phase + MOON.w * t, v = MOON.w * MOON.orbit; return [-v * Math.sin(a), v * Math.cos(a)]; }
+
+function gravity(x, y, t) {
+  let r2 = x * x + y * y, r = Math.sqrt(r2), f = -WORLD.GM / (r2 * r);
+  let ax = f * x, ay = f * y;
+  const [mx, my] = moonPos(t), dx = x - mx, dy = y - my;
+  r2 = dx * dx + dy * dy; r = Math.sqrt(r2); f = -MOON.GM / (r2 * r);
+  return [ax + f * dx, ay + f * dy];
+}
+function hitBody(x, y, t) {
+  if (x * x + y * y < WORLD.R ** 2) return WORLD.name;
+  const [mx, my] = moonPos(t);
+  if ((x - mx) ** 2 + (y - my) ** 2 < MOON.R ** 2) return MOON.name;
+  return null;
+}
+
+function circular(r, angle, prograde = 1) {
+  const v = Math.sqrt(WORLD.GM / r) * prograde;
+  return { x: r * Math.cos(angle), y: r * Math.sin(angle), vx: -v * Math.sin(angle), vy: v * Math.cos(angle) };
+}
+
+function norm(x, y) { const l = Math.hypot(x, y); return l > 1e-12 ? [x / l, y / l, l] : [0, 0, 0]; }
+
+// Schub einer Einheit als Beschleunigung in km/s², aus ihrem Befehl und dem Stand aller Einheiten
+function thrust(u, byId) {
+  const o = u.order; if (!o || o.g <= 0 || !u.alive) return [0, 0];
+  const amax = o.g * G1;
+  const tgt = o.target ? byId[o.target] : null;
+  let dx = 0, dy = 0, a = amax;
+  switch (o.mode) {
+    case "fest": dx = Math.cos(o.angle); dy = Math.sin(o.angle); break;
+    case "prograd": { const [nx, ny, l] = norm(u.vx, u.vy); dx = nx; dy = ny; break; }
+    case "retrograd": { const [nx, ny, l] = norm(u.vx, u.vy); dx = -nx; dy = -ny; a = Math.min(amax, l / DT); break; }
+    case "ziel": case "weg": {
+      if (!tgt || !tgt.alive) return [0, 0];
+      const [nx, ny] = norm(tgt.x - u.x, tgt.y - u.y); const s = o.mode === "ziel" ? 1 : -1; dx = s * nx; dy = s * ny; break;
+    }
+    case "angleichen": {
+      if (!tgt || !tgt.alive) return [0, 0];
+      const [nx, ny, l] = norm(u.vx - tgt.vx, u.vy - tgt.vy); dx = -nx; dy = -ny; a = Math.min(amax, l / DT); break;
+    }
+    case "lenkung": { // Rakete: voller Schub aufs Ziel, seitliche Drift wird weggesteuert
+      if (!tgt || !tgt.alive || u.fuel <= 0) return [0, 0];
+      const [rx, ry] = norm(tgt.x - u.x, tgt.y - u.y);
+      const vx = u.vx - tgt.vx, vy = u.vy - tgt.vy, along = vx * rx + vy * ry;
+      const lx = vx - along * rx, ly = vy - along * ry;
+      const [nx, ny] = norm(rx * amax - lx / 100, ry * amax - ly / 100);
+      dx = nx; dy = ny; a = Math.min(amax, u.fuel / DT); break;
+    }
+    default: return [0, 0];
+  }
+  return [dx * a, dy * a];
+}
+
+// Ein Schritt für alle Einheiten (Velocity Verlet, Schub aus dem Stand zu Beginn des Schritts)
+function step(units, t, onEvent) {
+  const byId = {}; for (const u of units) byId[u.id] = u;
+  const acc = units.map(u => {
+    if (!u.alive) return [0, 0, 0, 0];
+    const [gx, gy] = gravity(u.x, u.y, t), [tx, ty] = thrust(u, byId);
+    return [gx + tx, gy + ty, tx, ty];
+  });
+  units.forEach((u, i) => {
+    if (!u.alive) return;
+    const [ax, ay, tx, ty] = acc[i];
+    u.x += u.vx * DT + 0.5 * ax * DT * DT; u.y += u.vy * DT + 0.5 * ay * DT * DT;
+    const [gx, gy] = gravity(u.x, u.y, t + DT);
+    u.vx += 0.5 * (ax + gx + tx) * DT; u.vy += 0.5 * (ay + gy + ty) * DT;
+    if (u.kind === "missile") u.fuel -= Math.hypot(tx, ty) * DT;
+    const body = hitBody(u.x, u.y, t + DT);
+    if (body) { u.alive = false; onEvent && onEvent({ type: "crash", unit: u, body }); }
+  });
+  for (const m of units) {
+    if (!m.alive || m.kind !== "missile") continue;
+    const tgt = byId[m.order.target];
+    if (tgt && tgt.alive && Math.hypot(tgt.x - m.x, tgt.y - m.y) < INTERCEPT) {
+      m.alive = false;
+      onEvent && onEvent({ type: "intercept", unit: m, target: tgt, rel: Math.hypot(tgt.vx - m.vx, tgt.vy - m.vy) });
+    }
+  }
+}
+
+const clone = us => us.map(u => ({ ...u, order: u.order ? { ...u.order } : null, trail: null }));
+
+// ---------- Spielstand ----------
+let S;
+function newGame() {
+  const own = { id: "own", name: "Kestrel", side: "own", kind: "ship", maxG: 2, alive: true, missiles: 3,
+    ...circular(16000, -Math.PI / 2), order: { mode: "fest", angle: 0, g: 0, target: "enemy" }, trail: [] };
+  const enemy = { id: "enemy", name: "Korsar", side: "enemy", kind: "ship", maxG: 2, alive: true,
+    ...circular(70000, 2.4), order: { mode: "fest", angle: 0, g: 0 }, trail: [] };
+  S = { t: 0, round: 1, units: [own, enemy], launches: [], log: [], anim: null, nextMissile: 1 };
+  cam.cx = 0; cam.cy = 0; cam.s = Math.min(innerWidth, innerHeight) / 190000;
+  addLog("Ein Schiff auf Abfangkurs: der Korsar kommt aus 70.000 km.");
+  syncUi(); replan();
+}
+const U = id => S.units.find(u => u.id === id);
+
+// ---------- Vorschau ----------
+let plan = { ownNow: [], ownAfter: [], impact: null, enemyAfter: [], fan: [], missiles: {} };
+function replan() {
+  const own = U("own");
+  plan = { ownNow: [], ownAfter: [], impact: null, enemyAfter: [], fan: [], missiles: {} };
+  // eigene Bahn: diese Runde mit Schub, dann 5 Runden ohne; andere ohne Schub
+  let us = clone(S.units).filter(u => u.alive);
+  us.forEach(u => { if (u.kind === "ship" && u.id !== "own") u.order = null; });
+  let t = S.t, ev = null;
+  const rec = (arr, u) => arr.push([u.x, u.y]);
+  const me = us.find(u => u.id === "own");
+  if (me) {
+    rec(plan.ownNow, me);
+    for (let i = 0; i < STEPS; i++) { step(us, t, e => { if (e.unit.id === "own" && e.type === "crash") ev = ev || { round: 0, body: e.body }; }); t += DT; if (i % 2) rec(plan.ownNow, me); }
+    me.order = null;
+    rec(plan.ownAfter, me);
+    for (let i = 0; i < STEPS * 5 && me.alive; i++) { step(us, t, e => { if (e.unit.id === "own" && e.type === "crash") ev = ev || { round: 1 + Math.floor(i / STEPS), body: e.body }; }); t += DT; if (i % 4 === 3) rec(plan.ownAfter, me); }
+    plan.impact = ev;
+  }
+  // fremde Bahn ohne Schub und Reichweitenfächer
+  const enemy = U("enemy");
+  if (enemy.alive) {
+    let e = clone([enemy])[0]; e.order = null; t = S.t;
+    plan.enemyAfter.push([e.x, e.y]);
+    for (let i = 0; i < STEPS * 5 && e.alive; i++) { step([e], t); t += DT; if (i % 4 === 3) plan.enemyAfter.push([e.x, e.y]); }
+    for (let k = 0; k < 32; k++) {
+      const f = clone([enemy])[0]; f.order = { mode: "fest", angle: k / 32 * 2 * Math.PI, g: enemy.maxG }; t = S.t;
+      for (let i = 0; i < STEPS; i++) { step([f], t); t += DT; }
+      plan.fan.push([f.x, f.y]);
+    }
+  }
+  updateWarn();
+}
+
+// ---------- NSC: Absicht „Angreifen“, auf 2 Raumbänder heran und Kurs angleichen ----------
+function enemyOrder() {
+  const enemy = U("enemy"), own = U("own");
+  if (!enemy.alive || !own.alive) return null;
+  const cands = [{ mode: "fest", angle: 0, g: 0 }];
+  for (let k = 0; k < 16; k++) for (const f of [0.5, 1]) cands.push({ mode: "fest", angle: k / 16 * 2 * Math.PI, g: enemy.maxG * f });
+  for (const f of [0.5, 1]) cands.push({ mode: "ziel", g: enemy.maxG * f, target: "own" }, { mode: "angleichen", g: enemy.maxG * f, target: "own" });
+  let best = null, bestScore = Infinity;
+  for (const c of cands) {
+    const [e, o] = clone([enemy, own]); o.order = null; e.order = c;
+    let t = S.t, dead = false, minDist = Infinity;
+    const score1 = () => Math.abs(Math.hypot(e.x - o.x, e.y - o.y) - 2 * BAND) / 1000 + 0.6 * Math.hypot(e.vx - o.vx, e.vy - o.vy);
+    for (let i = 0; i < STEPS; i++) { step([e, o], t, ev => { if (ev.unit === e) dead = true; }); t += DT; }
+    const s1 = score1();
+    e.order = null;
+    for (let i = 0; i < STEPS; i++) { step([e, o], t, ev => { if (ev.unit === e) dead = true; }); t += DT; minDist = Math.min(minDist, Math.hypot(e.x, e.y)); }
+    const s2 = score1();
+    const score = s1 + 0.5 * s2 + (dead ? 1e6 : 0) + (minDist < WORLD.R * 1.3 ? 200 : 0);
+    if (score < bestScore) { bestScore = score; best = c; }
+  }
+  return best;
+}
+
+// ---------- Runde ausführen ----------
+function runRound() {
+  if (S.anim) return;
+  const enemy = U("enemy");
+  enemy.order = enemyOrder();
+  const events = [];
+  const frames = [];
+  const snap = () => frames.push({ t: S.t, units: S.units.map(u => ({ id: u.id, x: u.x, y: u.y, alive: u.alive })) });
+  snap();
+  for (let i = 0; i < STEPS; i++) {
+    step(S.units, S.t, e => events.push({ ...e, at: S.t }));
+    S.t += DT;
+    if (i % 2) snap();
+    S.units.forEach(u => { if (u.alive && i % 5 === 4) u.trail.push([u.x, u.y]); if (u.trail.length > 400) u.trail.shift(); });
+  }
+  S.anim = { frames, start: performance.now(), dur: 1800 };
+  // Phase 5: Starts. Raketen übernehmen Ort und Geschwindigkeit, fliegen ab der nächsten Runde
+  for (const L of S.launches) {
+    const from = U(L.from); if (!from.alive) continue;
+    S.units.push({ id: "m" + S.nextMissile, name: "Rakete " + S.nextMissile++, side: from.side, kind: "missile", maxG: 5, alive: true,
+      fuel: 5 * 6 * G1 * ROUND, x: from.x, y: from.y, vx: from.vx, vy: from.vy,
+      order: { mode: "lenkung", g: 5, target: L.target }, trail: [] });
+    addLog(`<span class="msl">Rakete gestartet</span> auf ${U(L.target).name}, 5G6, fliegt ab der nächsten Runde.`);
+  }
+  S.launches = [];
+  const eo = enemy.order;
+  if (eo) addLog(`<span class="enemy">Korsar</span>: ${describe(eo)}.`);
+  for (const e of events) {
+    if (e.type === "crash") addLog(`<span class="warn">${e.unit.name} schlägt auf ${e.body} auf.</span>`);
+    if (e.type === "intercept") addLog(`<span class="msl">${e.unit.name} fängt ${e.target.name} ab</span> (Relativgeschwindigkeit ${fmt(e.rel, 1)} km/s). Jetzt würde die Zündung gewürfelt.`);
+  }
+  Object.assign(U("own").order, { g: 0, snap: null }); // jede Runde beginnt ohne Schub
+  S.round++;
+}
+function describe(o) {
+  if (!o || o.g === 0) return "kein Schub";
+  const names = { fest: "fest", prograd: "prograd", retrograd: "retrograd", ziel: "auf Ziel", weg: "vom Ziel weg", angleichen: "angleichen" };
+  return `${fmt(o.g, 1)} G ${names[o.mode] || o.mode}`;
+}
+
+// ---------- Darstellung ----------
+const cv = document.getElementById("c"), ctx = cv.getContext("2d");
+const cam = { cx: 0, cy: 0, s: 0.004 };
+let W = 0, H = 0, DPR = 1;
+function resize() { DPR = devicePixelRatio || 1; W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; }
+addEventListener("resize", resize); resize();
+const sx = x => W / 2 + (x - cam.cx) * cam.s, sy = y => H / 2 - (y - cam.cy) * cam.s;
+const wx = px => (px - W / 2) / cam.s + cam.cx, wy = py => -(py - H / 2) / cam.s + cam.cy;
+
+function path(pts, color, width, dash) {
+  if (pts.length < 2) return;
+  ctx.beginPath(); ctx.moveTo(sx(pts[0][0]), sy(pts[0][1]));
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(sx(pts[i][0]), sy(pts[i][1]));
+  ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash || []); ctx.stroke(); ctx.setLineDash([]);
+}
+function circle(x, y, r, stroke, fill, dash) {
+  ctx.beginPath(); ctx.arc(sx(x), sy(y), Math.max(r * cam.s, 0), 0, 2 * Math.PI);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.setLineDash(dash || []); ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]); }
+}
+function ship(x, y, vx, vy, color, size, label) {
+  const a = Math.atan2(vy, vx), X = sx(x), Y = sy(y);
+  ctx.save(); ctx.translate(X, Y); ctx.rotate(-a);
+  ctx.beginPath(); ctx.moveTo(size, 0); ctx.lineTo(-size * 0.7, size * 0.6); ctx.lineTo(-size * 0.4, 0); ctx.lineTo(-size * 0.7, -size * 0.6); ctx.closePath();
+  ctx.fillStyle = color; ctx.fill(); ctx.restore();
+  if (label) { ctx.fillStyle = color; ctx.font = "12px system-ui"; ctx.fillText(label, X + size + 4, Y - size - 2); }
+}
+// Himmelskörper mit dem Weltsymbol der App, in echter Größe (mindestens minPx Radius)
+const planetCache = new Map();
+function planet(body, x, y, minPx) {
+  const rPx = Math.max(minPx, body.R * cam.s);
+  const k = 0.3 + Math.min(10, body.look.size) * 0.052;      // Anteil des Radius am Symbol (world-icon.ts)
+  const need = 2 * rPx / k;
+  let S = 32; while (S < need && S < 1024) S *= 2;
+  const key = body.look.seed + ":" + S;
+  let img = planetCache.get(key);
+  if (!img) { img = window.drawWorld(body.look, S); planetCache.set(key, img); }
+  ctx.drawImage(img, sx(x) - need / 2, sy(y) - need / 2, need, need);
+}
+function blocked(a, b) {
+  const test = (cx, cy, R) => {
+    const dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy;
+    const k = Math.max(0, Math.min(1, ((cx - a.x) * dx + (cy - a.y) * dy) / l2));
+    return Math.hypot(a.x + k * dx - cx, a.y + k * dy - cy) < R;
+  };
+  const [mx, my] = moonPos(S.t);
+  return test(0, 0, WORLD.R) ? WORLD.name : test(mx, my, MOON.R) ? MOON.name : null;
+}
+
+function draw(now) {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--bg"); ctx.fillRect(0, 0, W, H);
+  let view = null, t = S.t;
+  if (S.anim) {
+    const f = Math.max(0, Math.min(1, (now - S.anim.start) / S.anim.dur)), fr = S.anim.frames, k = f * (fr.length - 1), i = Math.floor(k), j = Math.min(fr.length - 1, i + 1), w = k - i;
+    t = fr[i].t + (fr[j].t - fr[i].t) * w;
+    view = {}; fr[i].units.forEach((u, n) => { const v = fr[j].units[n]; view[u.id] = { x: u.x + (v.x - u.x) * w, y: u.y + (v.y - u.y) * w, alive: v.alive || w < 1 && u.alive }; });
+    if (f >= 1) { S.anim = null; view = null; t = S.t; syncUi(); replan(); }
+  }
+  // Sprunggrenze 10 D, Mondbahn, Welt, Mond
+  circle(0, 0, WORLD.R * 20, "#3b2f55", null, [6, 6]);
+  if (cam.s * WORLD.R * 20 > 30) { ctx.fillStyle = "#6c5a95"; ctx.font = "11px system-ui"; ctx.fillText("Sprunggrenze 10 D (DM +15)", sx(0) + 6, sy(WORLD.R * 20) + 14); }
+  circle(0, 0, MOON.orbit, "#1d2638");
+  planet(WORLD, 0, 0, 6);
+  const [mx, my] = moonPos(t); planet(MOON, mx, my, 4);
+  ctx.fillStyle = "#7d8aa3"; ctx.font = "12px system-ui";
+  ctx.fillText(WORLD.name, sx(0) + Math.max(WORLD.R * cam.s, 3) + 4, sy(0) + 4);
+  ctx.fillText(MOON.name, sx(mx) + Math.max(MOON.R * cam.s, 2) + 4, sy(my) + 4);
+
+  const own = U("own"), enemy = U("enemy");
+  const pos = u => view && view[u.id] ? view[u.id] : u;
+  // Raumbänder um das eigene Schiff
+  if (own.alive && !S.anim) for (let b = 1; b <= 5; b++) {
+    circle(own.x, own.y, b * BAND, "rgba(79,209,255,0.10)");
+    if (BAND * cam.s > 32) { ctx.fillStyle = "rgba(79,209,255,0.35)"; ctx.font = "10px system-ui"; ctx.fillText(b + " RB", sx(own.x + b * BAND) + 3, sy(own.y) - 3); }
+  }
+  // Spuren
+  for (const u of S.units) path(u.trail, u.side === "own" ? (u.kind === "missile" ? "rgba(255,216,74,.35)" : "rgba(79,209,255,.35)") : "rgba(255,122,89,.35)", 1.2);
+  if (!S.anim) {
+    // Fächer des Gegners
+    if (enemy.alive && plan.fan.length) {
+      ctx.beginPath(); plan.fan.forEach(([x, y], i) => i ? ctx.lineTo(sx(x), sy(y)) : ctx.moveTo(sx(x), sy(y))); ctx.closePath();
+      ctx.fillStyle = "rgba(255,122,89,0.10)"; ctx.fill(); ctx.strokeStyle = "rgba(255,122,89,0.45)"; ctx.lineWidth = 1; ctx.stroke();
+    }
+    path(plan.enemyAfter, "rgba(255,122,89,.7)", 1.3, [5, 5]);
+    path(plan.ownAfter, "rgba(79,209,255,.75)", 1.4, [6, 5]);
+    path(plan.ownNow, "#4fd1ff", 2.4);
+    if (plan.ownNow.length) { const [x, y] = plan.ownNow[plan.ownNow.length - 1]; ctx.beginPath(); ctx.arc(sx(x), sy(y), 6, 0, 2 * Math.PI); ctx.strokeStyle = "#4fd1ff"; ctx.lineWidth = 1.5; ctx.stroke(); }
+    if (plan.impact) { const p = plan.ownAfter[plan.ownAfter.length - 1] || plan.ownNow[plan.ownNow.length - 1]; if (p) { ctx.fillStyle = "#ff5a6a"; ctx.font = "bold 13px system-ui"; ctx.fillText("✕ Aufschlag", sx(p[0]) + 8, sy(p[1])); } }
+    // Sichtlinie
+    if (own.alive && enemy.alive) {
+      const blk = blocked(own, enemy);
+      ctx.beginPath(); ctx.moveTo(sx(own.x), sy(own.y)); ctx.lineTo(sx(enemy.x), sy(enemy.y));
+      ctx.strokeStyle = blk ? "rgba(255,90,106,.6)" : "rgba(111,220,140,.35)"; ctx.setLineDash([2, 6]); ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+    }
+    // Schubkreis mit Marken und Schubpfeil
+    if (own.alive) {
+      const X = sx(own.x), Y = sy(own.y);
+      ctx.beginPath(); ctx.arc(X, Y, RING, 0, 2 * Math.PI); ctx.strokeStyle = drag && drag.kind === "thrust" ? "rgba(255,255,255,.55)" : "rgba(255,255,255,.18)"; ctx.lineWidth = 1; ctx.stroke();
+      ctx.font = "10px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      for (const m of snapMarks()) {
+        const c = Math.cos(m.a), d = Math.sin(m.a), on = own.order.snap === m.name && own.order.g > 0;
+        ctx.beginPath(); ctx.moveTo(X + c * (RING - 5), Y - d * (RING - 5)); ctx.lineTo(X + c * (RING + 5), Y - d * (RING + 5));
+        ctx.strokeStyle = on ? "#fff" : m.color; ctx.lineWidth = on ? 2.5 : 1.5; ctx.stroke();
+        if (drag && drag.kind === "thrust" || on) { ctx.fillStyle = on ? "#fff" : m.color; ctx.fillText(m.label, X + c * (RING + 16), Y - d * (RING + 16)); }
+      }
+      ctx.textAlign = "start"; ctx.textBaseline = "alphabetic";
+      if (own.order.g > 0) {
+        const nx = Math.cos(own.order.angle), ny = Math.sin(own.order.angle), L = own.order.g * RING / own.maxG;
+        ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X + nx * L, Y - ny * L); ctx.strokeStyle = "#fff"; ctx.lineWidth = 2.5; ctx.stroke();
+        ctx.beginPath(); ctx.arc(X + nx * L, Y - ny * L, 5, 0, 2 * Math.PI); ctx.fillStyle = "#fff"; ctx.fill();
+        if (drag && drag.kind === "thrust") { ctx.fillStyle = "#fff"; ctx.font = "bold 13px system-ui"; ctx.fillText(fmt(own.order.g, 1) + " G", X + nx * L + 10, Y - ny * L - 10); }
+      }
+    }
+  }
+  // Einheiten
+  for (const u of S.units) {
+    const p = pos(u); if (!p.alive && !(view && view[u.id] && view[u.id].alive)) continue;
+    const color = u.kind === "missile" ? "#ffd84a" : u.side === "own" ? "#4fd1ff" : "#ff7a59";
+    ship(p.x, p.y, u.vx, u.vy, color, u.kind === "missile" ? 5 : 9, u.kind === "missile" ? "" : u.name);
+  }
+  document.getElementById("clock").textContent = "T+" + hhmm(t);
+  requestAnimationFrame(draw);
+}
+
+// ---------- Bedienung ----------
+const RING = 90;          // Schubkreis in px, unabhängig vom Zoom
+const SNAP = 5 * Math.PI / 180;
+function snapMarks() {
+  const own = U("own"), e = U("enemy"), m = [];
+  const ang = (x, y) => Math.atan2(y, x);
+  if (Math.hypot(own.vx, own.vy) > 0.01) { m.push({ name: "prograd", label: "pro", a: ang(own.vx, own.vy), color: "#4fd1ff" }); m.push({ name: "retrograd", label: "retro", a: ang(-own.vx, -own.vy), color: "#4fd1ff" }); }
+  if (e.alive) {
+    m.push({ name: "ziel", label: "Ziel", a: ang(e.x - own.x, e.y - own.y), color: "#ff7a59" });
+    m.push({ name: "weg", label: "weg", a: ang(own.x - e.x, own.y - e.y), color: "#ff7a59" });
+    const rx = own.vx - e.vx, ry = own.vy - e.vy;
+    if (Math.hypot(rx, ry) > 0.01) m.push({ name: "angleichen", label: "angl.", a: ang(-rx, -ry), color: "#6fdc8c" });
+  }
+  return m;
+}
+// Jeder Klick oder Zug im Schubkreis setzt den Schub: vom Schiff zum Finger, gekappt am Kreis
+function thrustAt(px, py) {
+  const own = U("own"), dx = px - sx(own.x), dy = -(py - sy(own.y)), len = Math.hypot(dx, dy);
+  let a = Math.atan2(dy, dx), snap = null;
+  for (const m of snapMarks()) if (angDiff(a, m.a) < SNAP) { a = m.a; snap = m.name; }
+  const g = len < 14 ? 0 : Math.min(own.maxG, Math.max(0.1, Math.round(len / RING * own.maxG * 10) / 10));
+  Object.assign(own.order, { mode: "fest", angle: a, g, snap });
+  syncUi(); replan();
+}
+const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+const pointers = new Map();
+let drag = null;
+cv.addEventListener("pointerdown", e => {
+  cv.setPointerCapture(e.pointerId); pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  const own = U("own");
+  const inRing = Math.hypot(e.clientX - sx(own.x), e.clientY - sy(own.y)) <= RING + 12;
+  if (pointers.size === 1 && !S.anim && own.alive && inRing) { drag = { kind: "thrust" }; thrustAt(e.clientX, e.clientY); }
+  else if (pointers.size === 1) drag = { kind: "pan", x: e.clientX, y: e.clientY, cx: cam.cx, cy: cam.cy };
+  else if (pointers.size === 2) { const [a, b] = [...pointers.values()]; drag = { kind: "pinch", d: Math.hypot(a.x - b.x, a.y - b.y), s: cam.s }; }
+});
+cv.addEventListener("pointermove", e => {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (!drag) return;
+  if (drag.kind === "thrust") thrustAt(e.clientX, e.clientY);
+  else if (drag.kind === "pan") {
+    cam.cx = drag.cx - (e.clientX - drag.x) / cam.s; cam.cy = drag.cy + (e.clientY - drag.y) / cam.s;
+  } else if (drag.kind === "pinch" && pointers.size === 2) {
+    const [a, b] = [...pointers.values()]; cam.s = clampS(drag.s * Math.hypot(a.x - b.x, a.y - b.y) / drag.d);
+  }
+});
+const up = e => { pointers.delete(e.pointerId); if (pointers.size === 0) { if (drag && drag.kind === "thrust") syncUi(); drag = null; } };
+cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+cv.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+const clampS = s => Math.min(0.2, Math.max(0.00002, s));
+function zoomAt(px, py, f) { const x = wx(px), y = wy(py); cam.s = clampS(cam.s * f); cam.cx = x - (px - W / 2) / cam.s; cam.cy = y + (py - H / 2) / cam.s; }
+document.getElementById("zoomIn").onclick = () => zoomAt(W / 2, H / 2, 1.6);
+document.getElementById("zoomOut").onclick = () => zoomAt(W / 2, H / 2, 1 / 1.6);
+let centerOnShip = false;
+document.getElementById("center").onclick = () => { const o = U("own"); centerOnShip = !centerOnShip; if (centerOnShip && o.alive) { cam.cx = o.x; cam.cy = o.y; } else { cam.cx = 0; cam.cy = 0; } };
+document.getElementById("grip").onclick = () => document.getElementById("sheet").classList.toggle("collapsed");
+
+document.getElementById("noThrust").onclick = () => { Object.assign(U("own").order, { g: 0, snap: null }); syncUi(); replan(); };
+document.getElementById("go").onclick = () => { runRound(); syncUi(); };
+document.getElementById("fire").onclick = () => {
+  const own = U("own"); if (own.missiles <= 0 || S.launches.length) return;
+  own.missiles--; S.launches.push({ from: "own", target: "enemy" }); addLog("Start vorgemerkt: Rakete löst sich nach der Bewegung (Phase 5)."); syncUi();
+};
+document.getElementById("reset").onclick = () => { S.units.forEach(u => u.trail = []); newGame(); };
+
+function syncUi() {
+  const own = U("own"), enemy = U("enemy"), o = own.order;
+  document.getElementById("gVal").textContent = fmt(o.g, 1) + " G";
+  const snapNames = { prograd: "prograd", retrograd: "retrograd", ziel: "aufs Ziel", weg: "vom Ziel weg", angleichen: "angleichen" };
+  document.getElementById("snapVal").textContent = o.g > 0 ? (o.snap ? "· eingerastet " + snapNames[o.snap] : "· Richtung " + Math.round(((o.angle * 180 / Math.PI) + 360) % 360) + "°") : "";
+  document.getElementById("noThrust").disabled = o.g === 0;
+  document.getElementById("roundInfo").textContent = `Raumrunde ${S.round}`;
+  document.getElementById("go").disabled = !!S.anim || !own.alive;
+  const d = Math.hypot(enemy.x - own.x, enemy.y - own.y), rv = Math.hypot(enemy.vx - own.vx, enemy.vy - own.vy);
+  const blk = own.alive && enemy.alive ? blocked(own, enemy) : null;
+  document.getElementById("targetStat").innerHTML = enemy.alive ? `
+    <span class="enemy">Korsar · 2 G</span><span>${enemy.order && enemy.order.g ? "letzte Runde " + describe(enemy.order) : ""}</span>
+    <span>Entfernung</span><span>${fmt(d, 0)} km · ${Math.ceil(d / BAND)} Raumbänder</span>
+    <span>Relativgeschwindigkeit</span><span>${fmt(rv, 2)} km/s</span>
+    <span>Sichtlinie</span><span class="${blk ? "warn" : "okc"}">${blk ? "verdeckt durch " + blk : "frei"}</span>` : `<span class="warn">Korsar zerstört</span><span></span>`;
+  const r = Math.hypot(own.x, own.y), v = Math.hypot(own.vx, own.vy), vesc = Math.sqrt(2 * WORLD.GM / r);
+  document.getElementById("ownStat").innerHTML = own.alive ? `
+    <span>Höhe über ${WORLD.name.split(" ")[0]}</span><span>${fmt(r - WORLD.R, 0)} km</span>
+    <span>Geschwindigkeit</span><span>${fmt(v, 2)} km/s</span>
+    <span>Fluchtgeschwindigkeit hier</span><span>${fmt(vesc, 2)} km/s</span>
+    <span>Schwerkraft hier</span><span>${fmt(WORLD.GM / (r * r) / G1, 3)} G</span>` : `<span class="warn">Schiff verloren</span><span></span>`;
+  document.getElementById("ammo").textContent = `${own.missiles} im Rack` + (S.launches.length ? " · Start vorgemerkt" : "");
+  document.getElementById("fire").disabled = own.missiles <= 0 || S.launches.length > 0 || !enemy.alive || !own.alive;
+  document.getElementById("log").innerHTML = S.log.slice().reverse().map(l => `<div>${l}</div>`).join("");
+}
+function updateWarn() {
+  const el = document.getElementById("warnRow");
+  el.innerHTML = plan.impact ? `<span class="warn">Ohne Schub Aufschlag auf ${plan.impact.body} ${plan.impact.round === 0 ? "in dieser Runde" : "in " + plan.impact.round + " Runde(n)"}!</span>` : "";
+}
+function addLog(s) { S.log.push(`<b>R${S.round}</b> ${s}`); if (S.log.length > 60) S.log.shift(); }
+function fmt(n, d) { return n.toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d }); }
+function hhmm(t) { const m = Math.floor(t / 60); return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); }
+
+newGame();
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

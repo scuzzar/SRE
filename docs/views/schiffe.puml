@@ -147,6 +147,9 @@ hide <<browser>> stereotype
     image: string
   }
 
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+  class SpaceUnit $raum
+
 ' Charaktererschaffung und Lebenslauf
 
 ' Subsektor und Welten
@@ -174,6 +177,9 @@ ShipSoftware "*" --> "1" Software : program
 Software --> SoftwareKind
 ShipDesign "*" --> "1" ComputerModel : computer
 Booking "*" --> "0..1" Ship : forShip
+
+' Raumkarte und Systemflug
+SpaceUnit "*" --> "1" Ship : ship
 Gain "*" --> "0..1" ShipDesign : ship
 DeckPlan "*" --> "1" ShipDesign : design
 

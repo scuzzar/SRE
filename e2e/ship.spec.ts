@@ -27,13 +27,16 @@ async function openTab(page: Page, name: string) {
   if ((await tab.getAttribute('aria-current')) !== 'page') await tab.click();
 }
 
-/** Geld in die Kasse und einen Scout/Courier bar kaufen; der Reiter Schiff bleibt offen. */
+/**
+ * Geld in die Kasse und einen Scout/Courier bar kaufen; der Reiter Schiff bleibt offen. Die
+ * Demo-Kampagne hat schon den Scout „Kestrel“ (2026-11-18c), darum heißt der Knopf dann nur „Werft“.
+ */
 async function buyScout(page: Page) {
   await openPeople(page, 'Kasse');
   await page.getByRole('spinbutton').first().fill('30000000');
   await page.getByRole('button', { name: 'Einnahme buchen' }).click();
   await openTab(page, 'Schiff');
-  await page.getByRole('button', { name: 'Werft öffnen' }).click();
+  await page.getByRole('button', { name: /^Werft( öffnen)?$/ }).click();
   const yard = page.getByRole('region', { name: 'Werft' });
   await yard.getByRole('row', { name: /Scout\/Courier/ }).locator('.shop-price').click();
   await page.getByRole('button', { name: 'Bar kaufen' }).click();
@@ -45,7 +48,7 @@ test('Schiff: Werft und Bestellung sind Felder im Ziehblatt, kein Dialog; ✕ un
   await page.getByRole('spinbutton').first().fill('30000000');
   await page.getByRole('button', { name: 'Einnahme buchen' }).click();
   await openTab(page, 'Schiff');
-  await page.getByRole('button', { name: 'Werft öffnen' }).click();
+  await page.getByRole('button', { name: /^Werft( öffnen)?$/ }).click();
   const yard = page.getByRole('region', { name: 'Werft' });
   await expect(yard).toBeVisible();
   await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -60,9 +63,9 @@ test('Schiff: Werft und Bestellung sind Felder im Ziehblatt, kein Dialog; ✕ un
   await expect(yard).toBeVisible();
   await yard.getByRole('button', { name: 'Werft schließen' }).click();
   await expect(yard).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Werft öffnen' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Werft( öffnen)?$/ })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Werft öffnen' }).click();
+  await page.getByRole('button', { name: /^Werft( öffnen)?$/ }).click();
   await expect(yard).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(yard).toHaveCount(0);

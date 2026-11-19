@@ -124,6 +124,8 @@ hide <<browser>> stereotype
 
 ' Schiffe
 
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+
 ' Charaktererschaffung und Lebenslauf
   class Generation $erschaffung
   class Career $erschaffung
@@ -183,6 +185,8 @@ Campaign "0..1" --> "0..1" Character : focus
 Booking "*" --> "0..1" Character : for
 
 ' Schiffe
+
+' Raumkarte und Systemflug
 
 ' Zeit und Reisen
 Passenger "*" --> "1" Character : for

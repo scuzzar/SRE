@@ -1,0 +1,226 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-18"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-18: Systemflug (Stufe 1 des Raumkampfs, eigenes Schiff um eine Welt): Einheiten mit Ort, Geschwindigkeit und Schubvektor, Raumrunden, Spur
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+hide <<browser>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne {
+    name: string
+    key: string
+    changedAt: datetime
+    /funds: number
+    /ship: Ship [0..1]
+    quantityDie: number [0..1]
+    /load: number
+    /capacity: number
+    /burden: number
+    day: number
+    /date: string
+    /weekday: number [0..1]
+  }
+
+' Schiffe
+  class Ship $schiffe {
+    name: string
+    fuel: number
+    cargo: number
+    price: number
+    initialLoan: number [0..1]
+    loanBalance: number [0..1]
+    /monthlyPayment: number [0..1]
+    nextPaymentDay: number [0..1]
+    berthedSince: number [0..1]
+    retired: boolean
+  }
+  class ShipSoftware $schiffe
+  class ShipDesign <<reference>> $schiffe
+
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+  class SystemFlight $raum $newClass("2026-11-18") {
+    startedAt: datetime
+    round: number
+    /elapsed: number
+  }
+  class GasGiant $raum $newClass("2026-11-18b")
+  class SpaceUnit $raum $newClass("2026-11-18") {
+    position: Vec
+    velocity: Vec
+    thrust: Vec [0..1]
+    crashed: boolean
+    /maxG: number
+  }
+  class TrackPoint <<value>> $raum $newClass("2026-11-18") {
+    position: Vec
+    velocity: Vec
+  }
+  class Vec <<value>> $raum $newClass("2026-11-18") {
+    x: number
+    y: number
+  }
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+  class Hex $sektor {
+    column: number
+    row: number
+    empty: boolean
+    name: string [0..1]
+    navalBase: boolean [0..1]
+    scoutBase: boolean [0..1]
+    gasGiant: boolean [0..1]
+    note: string [0..1]
+    populationMultiplier: number [0..1]
+    /step: WorldStep
+  }
+  class Uwp <<value>> $sektor
+  class WorldRoll <<transient>> $sektor
+
+' Verlauf
+
+' Zeit und Reisen
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Conflict <<transient>> $kampagne
+
+' Referenzdaten
+  class Surface <<value>> $sektor
+' Fahrzeuge und Wege auf der Oberfläche
+  class Temperature <<reference>> $sektor
+  class TradeCode <<reference>> $sektor
+  enum WorldStep <<value>> $sektor
+
+' Kampagne
+Conflict "*" --> "0..1" Campaign : local
+Conflict "*" --> "0..1" Campaign : remote
+
+' Schiffe
+Campaign "1" *-- "0..*" Ship : ships
+Ship "*" --> "1" ShipDesign : design
+Ship "1" *-- "0..*" ShipSoftware : software
+
+' Raumkarte und Systemflug
+Campaign "1" *-$newArrow("2026-11-18")- "0..1" SystemFlight : flight
+SystemFlight "*" -$newArrow("2026-11-18")-> "1" Hex : world
+SystemFlight "1" *-$newArrow("2026-11-18")- "1..*" SpaceUnit : units {ordered}
+SpaceUnit "*" -$newArrow("2026-11-18")-> "1" Ship : ship
+SpaceUnit "1" *-$newArrow("2026-11-18")- "*" TrackPoint : track {ordered}
+SystemFlight "*" -$newArrow("2026-11-18b")-> "0..1" GasGiant : at
+
+' Zeit und Reisen
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+Campaign "1" *-- "*" Hex : hexes
+Hex "1" *-- "1" Uwp : uwp
+Hex --> WorldStep
+WorldRoll "*" --> "1" Hex : for
+WorldRoll ..> Hex : on roll
+Hex "*" --> "*" TradeCode : /trade
+Hex "*" --> "0..1" Temperature : temperature
+Hex "1" *-- "0..1" Surface : surface
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
+endlegend
+@enduml

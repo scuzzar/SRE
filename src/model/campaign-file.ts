@@ -21,6 +21,7 @@ import { characteristics } from './rules';
 import { bookingKinds, shipCosts, validateBookings, type Booking } from './shop';
 import type { Ship } from './ship';
 import { checkTrip } from './trip';
+import { checkFlight, type SystemFlight } from './flight';
 import { vehicleOfItem } from './vehicle';
 import { settleStash } from './stash';
 import type { City, SurfaceMap } from './surface-map';
@@ -260,6 +261,26 @@ const TripSchema = z.object({
   hours: z.number().min(0),
   legs: z.array(z.object({ by: z.string().min(1), rented: z.boolean(), cells: z.array(z.number().int().min(0)).min(2) })).min(1),
 });
+/** Ein Vektor in der Ebene (2026-11-18). */
+const VecSchema = z.object({ x: z.number().finite(), y: z.number().finite() });
+/** Der laufende Systemflug (2026-11-18c). */
+const FlightSchema = z.object({
+  world: z.string().min(1),
+  startedAt: at,
+  round: z.number().int().min(1),
+  units: z
+    .array(
+      z.object({
+        ship: z.string().min(1),
+        position: VecSchema,
+        velocity: VecSchema,
+        thrust: VecSchema.optional(),
+        crashed: z.boolean(),
+        track: z.array(z.object({ position: VecSchema, velocity: VecSchema })),
+      }),
+    )
+    .min(1),
+});
 /** Ein Schiff der Kampagne (2026-11-16); Deckpläne sind Geräte-Daten und nie Teil der Datei. */
 const ShipSchema = z.object({
   id: z.string().min(1),
@@ -405,6 +426,8 @@ const CampaignFileSchema = z.object({
     stash: z.array(StashPossessionSchema).default([]),
     /** Fehlt in Dateien von vor den Fahrten und ohne Fahrt. */
     trip: TripSchema.optional(),
+    /** Fehlt in Dateien von vor dem Systemflug und ohne Systemflug (2026-11-18c). */
+    flight: FlightSchema.optional(),
     bookings: z
       .array(
         z.object({
@@ -447,8 +470,8 @@ const CampaignFileSchema = z.object({
 
 /** Die Kampagne als Inhalt einer Kampagnendatei. */
 export function toCampaignFile(campaign: Campaign): string {
-  const { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions } = campaign;
-  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions } }, null, 2);
+  const { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions, flight } = campaign;
+  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions, flight } }, null, 2);
 }
 
 /** Ein Dateiname aus dem Namen der Kampagne und dem Tag, z. B. „Spinward-Run-2026-10-25.json“. */
@@ -507,6 +530,7 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       ships: file.ships.map((s) => stripped(s) as Ship),
       stash: file.stash.map((p) => stripped({ ...p, ...(p.parked === undefined ? {} : { parked: placeFromFile(p.parked) }) }) as Possession),
       ...(file.trip === undefined ? {} : { trip: { hours: file.trip.hours, legs: file.trip.legs.map((l) => ({ by: l.by, rented: l.rented, cells: [...l.cells] })) } }),
+      ...(file.flight === undefined ? {} : { flight: flightFromFile(file.flight) }),
       // NSC aus Dateien von vor 2026-11-08c bleiben, wie sie sind; upgradeNpcs macht Charaktere aus ihnen.
       encounters: file.encounters.map(
         (e) => ({ ...stripped(e), ...(e.distances ? { distances: e.distances.map((d) => stripped(d)) } : {}), npcs: e.npcs.map((n) => ('skill' in n ? stripped(n) : characterFromFile(n))) }) as unknown as Encounter,
@@ -580,6 +604,24 @@ function hexOf(hex: z.infer<typeof HexSchema>): Hex {
 }
 
 /** Ein Objekt ohne Felder, die `undefined` sind. */
+/** Der Systemflug aus der Datei, ohne fremde Felder. */
+function flightFromFile(flight: z.infer<typeof FlightSchema>): SystemFlight {
+  const vec = (v: { readonly x: number; readonly y: number }) => ({ x: v.x, y: v.y });
+  return {
+    world: flight.world,
+    startedAt: flight.startedAt,
+    round: flight.round,
+    units: flight.units.map((u) => ({
+      ship: u.ship,
+      position: vec(u.position),
+      velocity: vec(u.velocity),
+      ...(u.thrust === undefined ? {} : { thrust: vec(u.thrust) }),
+      crashed: u.crashed,
+      track: u.track.map((t) => ({ position: vec(t.position), velocity: vec(t.velocity) })),
+    })),
+  };
+}
+
 function stripped<T extends object>(value: T): T {
   return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as T;
 }
@@ -696,6 +738,7 @@ function validate(campaign: Campaign): void {
     checkPlace(campaign.hexes, p.parked);
   }
   if (campaign.trip !== undefined) checkTrip(campaign, campaign.trip);
+  if (campaign.flight !== undefined) checkFlight(campaign, campaign.flight);
   validateEncounters(campaign);
   if (campaign.terrain !== undefined) terrainOf(campaign.terrain);
   for (const hex of campaign.hexes) for (const table of hex.animals ?? []) checkAnimalTable(table);

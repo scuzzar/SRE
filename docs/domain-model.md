@@ -432,6 +432,25 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Etikett wie „Opfer“, „Fahrer“ oder „Informant“. Neu im Bild: `MissionPerson` mit `label` und
 > `Mission.people`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-18b-beteiligte.png`](changes/2026-11-18b-beteiligte.png).
+>
+> Am 18. November 2026 freigegeben (Kennzeichen 2026-11-18c): **Systemflug**, Stufe 1 des Raumkampfs: mit dem eigenen
+> Schiff um eine Welt fliegen, noch ohne Gegner, nach dem [Konzept Raumkarte und
+> Raumkampf](konzept-raumkampf.md) (siehe *Systemflug*). Der Owner hat entschieden, den Raumkampf
+> vor dem Handel zu bauen. Neu im Bild: `SystemFlight` an der Kampagne (`flight`, mit Welt,
+> Raumrunde und `/elapsed`), `SpaceUnit` (Ort, Geschwindigkeit,
+> Schubvektor, Aufschlag, `/maxG`, Verweis auf das Schiff), `TrackPoint` für die Spur und der Wert
+> `Vec`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-18-systemflug.png`](changes/2026-11-18-systemflug.png).
+>
+> Ebenfalls am 18. November 2026 freigegeben (Kennzeichen 2026-11-18d): **Sternsystem nach Book 6** *Scouts* (siehe
+> *Sternsystem, Monde und Gasriesen*, Regeln in [`regeln-sternsystem.md`](regeln-sternsystem.md)):
+> Sterne, Bahnen und Zonen, Hauptwelt und Gasriesen auf ihren Bahnen, Monde und Ringe, damit die
+> Raumkarte nicht leer ist (Owner: Stern und Bahnen bestimmen und speichern). Neu im Bild:
+> `StarSystem` an der Welt (`Hex.system`), `Star` mit `StarType` und `StarSize`, `Zone`, die
+> Referenzdaten `StarZones` (verdichtete Table of Zones), `GasGiant` mit Bahn, `Satellite` mit
+> `SatelliteKind`, `StarSystem.host` (die Hauptwelt als Mond eines Gasriesen) und `SystemFlight.at`
+> für den Systemflug am Gasriesen. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-18b-sternsystem.png`](changes/2026-11-18b-sternsystem.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -463,9 +482,10 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Zeit und Reisen | [views/reise.png](views/reise.png) |
 | Schiffe | [views/schiffe.png](views/schiffe.png) |
 | Missionen | [views/mission.png](views/mission.png) |
+| Raumkarte und Systemflug | [views/raum.png](views/raum.png) |
 
-Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist
-derzeit keine.
+Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist derzeit
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -644,7 +664,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Block | `DamageRoll.points`, `DamageRoll.to` | Ein Stück eines Schadenswürfels, das ganz auf ein Attribut geht; ein Würfel ist ein Block oder, wenn er ein Attribut auf 0 bringt, mehrere |
 | Überlauf | (Regel) | Was ein Würfel über 0 hinaus bringt, geht als neuer Block auf ein anderes Attribut über 0 (SR 21) |
 | Kampf | (Screen `combat`, im Reiter Begegnung unter „Kampf“) | Der Screen für Angriffe: ohne Begegnung die Waffentabelle, mit Begegnung die Kampfsimulation |
-| Reiter Begegnung | (Reiter „Begegnung“; Screens `encounter`, `combat`) | Oben ein Umschalter zwischen Begegnung und *Kampf*. Unter Begegnung unten die Reihe mit den Würfen Zufall, Tiere, Patron, Gerücht, Polizei und darunter Tage vergehen und Woche beenden bzw. bei einer Fahrt Weiterfahren: die einzige Stelle, an der Zeit vergeht oder die Fahrt weitergeht. Jeder Wurf zeigt Test und Ergebnis im *Würfelfenster*. Das Blatt darüber hat nur Datum, laufende Fahrt, laufende Begegnung und die Einstellungen: Gelände, Würfel der Anzahl, wie viele Tage, die Haken „Manuell wählen“ und *NSC dazunehmen* |
+| Reiter Begegnung | (Reiter „Begegnung“; Screens `encounter`, `combat`) | Oben ein Umschalter zwischen Begegnung und *Kampf*. Unter Begegnung unten die Reihe mit den Würfen Zufall, Tiere, Patron, Gerücht, Polizei und darunter Tage vergehen und Woche beenden bzw. bei einer Fahrt Weiterfahren: die einzige Stelle, an der Zeit vergeht oder die Fahrt weitergeht (außer im Systemflug, wo je 24 Stunden ein Tag vergeht, 2026-11-18c). Jeder Wurf zeigt Test und Ergebnis im *Würfelfenster*. Das Blatt darüber hat nur Datum, laufende Fahrt, laufende Begegnung und die Einstellungen: Gelände, Würfel der Anzahl, wie viele Tage, die Haken „Manuell wählen“ und *NSC dazunehmen* |
 | Würfelfenster | (View, `encounterRoll`) | Das Fenster nach einem Begegnungswurf: der rollende Würfel des Tests, was herauskam und was danach geht („Als NSC“, Rettungswürfe); kam es zur Begegnung, folgt ihre Übersicht. Ohne Würfel nur ein Hinweis, etwa dass der Test schon gemacht ist |
 | NSC dazunehmen | (Ablauf, `startNpcJoining`) | Mit dem Haken „NSC dazunehmen“ öffnet Zufall erst die NSC-Liste zum Auswählen (wie *NSC platzieren*, nur NSC vom Aufenthaltsort); „OK“ nimmt sie zur Zufallsbegegnung dazu (`Encounter.joined`) und würfelt ohne Test, mit „Manuell wählen“ erst die Art |
 | Begegnungsart | (Karte im Reiter Begegnung) | Eine Art von Begegnungen nach SE S. 20 mit ihren Einstellungen und ihrem Wurf: Zufallsbegegnung, Patron, Gerücht, später Gesetz, Tiere. Nicht zu verwechseln mit der *Art der Begegnung* (`EncounterType`), einer Zeile der Random Encounter List |
@@ -786,6 +806,38 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Software an Bord | `ShipSoftware` | Ein Programm, das ein konkretes Schiff dabeihat; beim Kauf aus dem Softwarepaket des Computers gewählt |
 | Deckplan | `DeckPlan` | Der Plan eines Schiffsentwurfs als Bild: bis zu drei eigene, als PNG hochgeladen oder fotografiert; über Kampagnen hinweg gehalten und mit OneDrive abgeglichen (2026-11-17), der Export nimmt sie nicht mit |
 | Deckplan-Platz | `DeckPlan.name` | Deck A, Deck B oder Deck C: der Platz eines Plans an seinem Entwurf, zugleich sein Name |
+| Raumkarte | (View, Grundkarte) | Der Raum um eine Welt, von ein paar tausend bis zu Millionen Kilometern, in 2D: die Welt als Himmelskörper, die Einheiten mit Bahnen und die Sprunggrenzen. Neben Subsektor und Globus die dritte Grundkarte; man erreicht sie über den Knopf „Raum“ (2026-11-18c) |
+| Knopf „Raum“ | (View) | Öffnet die Raumkarte einer Welt, am Globus und an der Welt im Subsektor; ein Tippen auf eine Welt öffnet weiter ihren Globus (2026-11-18c) |
+| Systemflug | `SystemFlight`, `Campaign.flight` | Was auf der Raumkarte einer Welt Raumrunde für Raumrunde läuft: in Stufe 1 nur das eigene Schiff, später mit Gegnern, Waffen und Small Craft; so heißt es immer, auch wenn gekämpft wird (Owner, 18. November 2026) |
+| Raumkampf | (Teil des `SystemFlight`) | Ein Systemflug mit Gegnern: Waffen, Raketen, Schaden; kommt ab Stufe 2. Kein eigener Begriff im Modell (2026-11-18c) |
+| Raumrunde | `SystemFlight.round` | Eine Runde des Systemflugs: 1.000 Sekunden (SR 39); nicht zu verwechseln mit der *Runde* des Personenkampfs (2026-11-18c) |
+| Dauer des Systemflugs | `SystemFlight./elapsed` | Sekunden seit Beginn des Systemflugs: (Raumrunde − 1) × 1.000; je volle 24 Stunden vergeht ein Tag (2026-11-18c) |
+| Raumband | (Regel) | 10.000 km (SR 39); Maß für Entfernungen und DMs im Raumkampf: Entfernung ÷ 10.000 km, aufgerundet (2026-11-18c) |
+| Einheit | `SpaceUnit` | Was sich auf der Raumkarte frei bewegt und von der Simulation geschoben wird; in Stufe 1 nur das eigene Schiff, später auch fremde Schiffe, Small Craft, Raketen, Sand (2026-11-18c) |
+| Ort, Geschwindigkeit | `SpaceUnit.position`, `.velocity` (`Vec`) | Wo eine Einheit ist (km) und wie schnell in welche Richtung sie fliegt (km/s), in der Ebene mit der Welt in der Mitte (2026-11-18c) |
+| Schubvektor | `SpaceUnit.thrust` | Richtung und Stärke des Schubs für die laufende Raumrunde, in G; fest im Raum, höchstens `/maxG` lang, stufenlos in 0,1 G; nach jeder Raumrunde wieder leer (2026-11-18c) |
+| Höchster Schub | `SpaceUnit./maxG` | Die G des Maneuver Drive des Schiffs (`ShipDesign.maneuver`) (2026-11-18c) |
+| Schubkreis | (View) | Der Kreis um eine eigene Einheit, so groß wie ihr höchster Schub; jedes Tippen oder Ziehen darin setzt den Schubvektor vom Schiff zum Finger, ohne die Einheit auszuwählen (2026-11-18c) |
+| Einrasten | (View) | Der Schubvektor springt auf eine Marke am Schubkreis, wenn er ihr auf etwa 5° nahekommt: prograd, retrograd, aufs Ziel, vom Ziel weg, angleichen (2026-11-18c) |
+| Bahnvorschau | (abgeleitet, View) | Die Bahn der laufenden Raumrunde mit dem gesetzten Schubvektor und gestrichelt die nächsten fünf Raumrunden ohne Schub; gerechnet, nicht gespeichert (2026-11-18c) |
+| Spur | `SpaceUnit.track` (`TrackPoint`) | Wo eine Einheit am Ende jeder vergangenen Raumrunde war, mit ihrer Geschwindigkeit dort (2026-11-18c) |
+| Himmelskörper | (abgeleitet aus `Hex`) | Ein Körper mit Schwerkraft auf der Raumkarte; in Stufe 1 nur die Welt, mit Radius und Masse aus ihrer Größe (2026-11-18c) |
+| Aufschlag | `SpaceUnit.crashed` | Eine Einheit ist unter die Oberfläche eines Himmelskörpers geraten; sie bewegt sich nicht mehr (2026-11-18c) |
+| Sternsystem | `StarSystem`, `Hex.system` | Die Sterne einer Welt, die höchste Bahn, die Bahn der Hauptwelt, ihre Monde und die Gasriesen des Systems nach Book 6; einmal gewürfelt, wenn die Raumkarte der Welt zum ersten Mal aufgeht (2026-11-18d) |
+| Stern | `Star`, `StarSystem.stars` | Ein Stern des Systems: Typ (O bis M), Zehntel (0 oder 5, bei weißen Zwergen keins) und Größe (Ia bis VI, D); der erste ist der Hauptstern, weitere sind Begleiter mit Bahn, nah oder fern (2026-11-18d) |
+| Bahn (um den Stern) | `StarSystem.worldOrbit`, `GasGiant.orbit`, `Star.orbit` | Die Nummer einer Bahn um den Hauptstern nach Book 6 (0 bis 15 und weiter), mit festem Abstand, z. B. Bahn 3 = 1 AU (2026-11-18d) |
+| Höchste Bahn | `StarSystem.maxOrbits` | Die äußerste Bahn, die der Hauptstern hat (2026-11-18d) |
+| Zone | `Zone`, `StarSystem./worldZone`, `GasGiant./zone` | Innen, bewohnbar oder außen: wie warm es auf einer Bahn ist; aus der Table of Zones (2026-11-18d) |
+| Zonen eines Sterns | `StarZones` | Referenzdaten: je Typ, Zehntel und Größe die erste verfügbare und die bewohnbare Bahn; dazwischen innen, darüber außen (Book 6, Table of Zones, verdichtet) (2026-11-18d) |
+| Mond | `Satellite` | Ein Körper, der um die Hauptwelt oder einen Gasriesen kreist, nach Book 6: ein Mond mit Größe, eine kleine Welt (S) oder ein Ring (R); mit Bahn, Startwinkel und den sichtbaren Stellen des UWP (2026-11-18d) |
+| Art des Mondes | `SatelliteKind` | moon (Mond mit Größe 1 oder mehr), small (kleine Welt S, 500 bis 1.500 km Durchmesser), ring (Ring R) (2026-11-18d) |
+| Bahn eines Mondes | `Satellite.orbit`, `StarSystem.hostOrbit` | Abstand von der Mitte des Körpers, um den er kreist, in dessen Radien (Book 6, *Satellite Orbits*) (2026-11-18d) |
+| Startwinkel | `Satellite.angle`, `StarSystem.hostAngle` | Wo auf seiner Bahn ein Mond am Kampagnentag 0 stand, in Grad; von dort läuft er gegen den Uhrzeigersinn (2026-11-18d) |
+| Gasriese (Körper) | `GasGiant`, `StarSystem.giants` | Ein Gasriese des Systems: groß oder klein, Radius in km, Bahn um den Stern, Dichte ein Fünftel der Erde, mit Monden und einer eigenen Raumkarte; nur, wenn das System welche hat (`Hex.gasGiant`) (2026-11-18d) |
+| Gastgeber | `StarSystem.host` | Der Gasriese, um den die Hauptwelt kreist, wenn sie in seiner Bahn liegt (Book 6); dann ist sie ein Mond und hat selbst keine Monde (2026-11-18d) |
+| Am Gasriesen | `SystemFlight.at` | Der Gasriese, auf dessen Raumkarte ein Systemflug läuft; ohne ihn läuft er an der Welt (2026-11-18d) |
+| Asteroidenfeld | (abgeleitet, View) | Was die Raumkarte bei einer Welt der Größe 0 statt eines Planeten zeigt: Brocken aus dem Weltschlüssel, nicht gespeichert, ohne Schwerkraft (2026-11-18d) |
+| Sprunggrenze | (abgeleitet) | 10 und 100 Durchmesser der Welt; innerhalb davon DM +15 bzw. +5 auf den Fehlsprung (SR 28); als Ringe auf der Raumkarte (2026-11-18c) |
 | Schlüssel des Deckplans | `DeckPlan.key` | Woran der Abgleich ein Bild auf jedem Gerät wiedererkennt; zufällig, weltweit eindeutig; ein Plan ändert sich nie, ein neues Bild ist ein neuer Plan mit neuem Schlüssel (2026-11-17) |
 
 ## Regeln, die das Bild nicht zeigt
@@ -2708,7 +2760,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   (communications routes), Subsector Capital, ein Name für den Subsektor, mehrere Subsektoren zu
   einem Sektor und eine fertige Welt wieder löschen.
 - **Schiffe** (freigegeben am 16. November 2026, Kennzeichen 2026-11-16). Erster
-  Schritt von dreien (Basis der Gruppe; später Handel, dann Raumkampf), RAW-Regeln vollständig in
+  Schritt von dreien (Basis der Gruppe; später Handel, dann Raumkampf; der Owner hat am
+  18. November 2026 entschieden, den Raumkampf vor dem Handel zu bauen), RAW-Regeln vollständig in
   [`regeln-schiffe.md`](regeln-schiffe.md). Die Gruppe hat **höchstens ein Schiff** (`Campaign.ship`),
   wie das Gruppengepäck.
   - **Schiff und Entwurf.** `Ship` ist der gespeicherte Stand (Name, Treibstoff und Fracht in Tonnen,
@@ -2888,10 +2941,131 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       Schiffe, Custom-Entwürfe, Small Craft als eigene `ShipDesign`, und der **Preisnachlass
       für ein gebrauchtes Standardschiff** (SR 31: 10–40 % je nach Alter) über `Ship.price`.
 
+- **Systemflug** (Stufe 1 des Raumkampfs; freigegeben am 18. November 2026, Kennzeichen 2026-11-18c). Nach dem
+  [Konzept Raumkarte und Raumkampf](konzept-raumkampf.md): Man fliegt mit dem eigenen Schiff um eine
+  Welt und lernt die Bahnen, noch ohne Gegner und Waffen. Was auf der Raumkarte läuft, heißt
+  **Systemflug** (`SystemFlight`; Owner, 18. November 2026), auch wenn später gekämpft wird. Regeln aus SR 39–42, *Mayday* und SE 12,
+  zusammengefasst in [`regeln-schiffe.md`](regeln-schiffe.md); Abweichungen tragen ⚑, Entscheidungen
+  des Owners vom 18. November 2026 sind als solche genannt; die übrigen Hausregeln hat er am selben
+  Tag angenommen.
+  - **Raumkarte.** Die dritte Grundkarte neben Subsektor und Globus, in 2D (Owner). Ein Tippen auf
+    eine Welt öffnet wie bisher ihren Globus; die Raumkarte öffnet der Knopf „Raum“ am Globus und
+    an der Welt im Subsektor (Owner). Auf ihr: die Welt mit dem Weltsymbol in echter Größe, ohne
+    die angedeuteten Umlaufbahnen (Owner), die Ringe der Sprunggrenzen, die Einheiten mit Spur und
+    Bahnvorschau, Ringe der Raumbänder um die zuletzt berührte Einheit.
+  - **Beginnen und beenden** (Owner). „Systemflug beginnen“ geht nur auf der Raumkarte der Welt, auf
+    der die Gruppe ist, und nur mit dem eigenen Schiff (`Campaign./ship`); es legt einen
+    `SystemFlight` mit Raumrunde 1 und einer Einheit für das Schiff an. Liegegebühr und Ort des
+    Schiffs ändern sich dadurch nicht. Das Schiff startet auf einer Kreisbahn mit dem doppelten
+    Weltradius, gegen den Uhrzeigersinn (Owner); bei Größe 0 (Asteroidengürtel) ruhend in 20.000 km
+    Abstand. „Systemflug beenden“ entfernt ihn wieder. Es gibt höchstens einen.
+  - **Die Raumrunde** dauert 1.000 Sekunden (SR 39). Jede Runde: Schubvektoren setzen, „Runde
+    ausführen“, die Simulation rechnet die 1.000 Sekunden für alle Einheiten zugleich (Owner:
+    gleichzeitig), die Karte spielt sie in etwa zwei Sekunden ab. Danach wird für jede Einheit der
+    alte Ort mit Geschwindigkeit an die Spur gehängt, der Schubvektor geleert und die Raumrunde um
+    eins erhöht.
+  - **Zeit** (Owner). Je volle 24 Stunden Dauer (also wenn `/elapsed` ein Vielfaches von 86.400
+    Sekunden überschreitet, nach jeweils 86,4 Raumrunden) vergeht ein Tag, genau wie mit „Tage
+    vergehen“ im Reiter Begegnung, mit allem, was daran hängt: Logeintrag, Begegnungstests,
+    Monatsende. ⚑ Angebrochene Tage verfallen beim Beenden. Sonst schreibt der Systemflug in Stufe 1
+    nichts ins Log.
+  - **Schubvektor** (Owner): einer je Raumrunde, fest im Raum, nur durch Tippen oder Ziehen im
+    Schubkreis, stufenlos in 0,1 G, höchstens `/maxG` (der Kreis ist die Grenze), ohne die Einheit
+    vorher auszuwählen; Einrasten an prograd, retrograd, Ziel, weg und angleichen; jede Raumrunde
+    beginnt ohne Schub. Ohne Schubvektor fliegt die Einheit ballistisch.
+  - **Physik.** Gespeichert sind Ort (km) und Geschwindigkeit (km/s) in der Ebene, die Welt in der
+    Mitte. Die Simulation rechnet in festen Schritten von 10 Sekunden mit *Velocity Verlet*, ohne
+    Zufall: gleicher Stand und gleiche Schubvektoren ergeben auf jedem Gerät dieselbe Bahn. 1 G =
+    10 m/s² (Supplement 3). Der Schub wirkt während der ganzen Runde gleichmäßig; 1 G ändert die
+    Geschwindigkeit je Runde um 10 km/s, wie in SE 12. ⚑ Kein Treibstoffverbrauch für den Schub.
+  - **Himmelskörper** werden nicht gespeichert, sondern aus der Welt abgeleitet: Radius = Größe ×
+    800 km (Durchmesser Größe × 1.600 km), Schwerkraft an der Oberfläche g = Größe ÷ 8 G (SR 22, mit
+    Dichte K = 1, Owner), Masse daraus (G·M = g · R²). Die Welt steht still in der Mitte. Größe 0 hat
+    keinen Körper und keine Schwerkraft. Monde und Gasriesen kommen mit dem Sternsystem.
+  - **Aufschlag** (Owner). Kommt eine Einheit unter die Oberfläche der Welt, wird `crashed` gesetzt;
+    sie bewegt sich nicht mehr und bekommt keinen Schub. In Stufe 1 hat das keine Folgen für das
+    Schiff; Schaden und Verlust kommen mit Stufe 2. Die Bahnvorschau warnt vorher.
+  - **Spur** (`track`): je vergangene Raumrunde ein `TrackPoint` mit Ort und Geschwindigkeit; die
+    Karte zeichnet daraus eine glatte Kurve (Ort und Geschwindigkeit an beiden Enden geben die
+    Krümmung). Gespeichert, damit sie einen Neustart übersteht.
+  - **Demo-Kampagne** (Owner): Sie beginnt mit einem Scout/Courier (Type S) der Gruppe,
+    schuldenfrei wie aus dem Ship-Vorteil der Scouts, mit vollem Tank, damit man den Systemflug
+    gleich ausprobieren kann (siehe *Demo-Kampagne*).
+  - **Später** (eigene Änderungen): fremde Schiffe und ihr Planer (Stufe 2), Waffen, Raketen, Sand,
+    Small Craft, Ortung, Raumkampf aus einer Schiffsbegegnung; siehe den Stufenplan im Konzept.
+
+- **Sternsystem, Monde und Gasriesen** (freigegeben am 18. November 2026, Kennzeichen 2026-11-18d). Damit die
+  Raumkarte nicht leer ist (Wunsch des Owners, 18. November 2026), mit Stern und Bahnen (Owner:
+  „den Stern bestimmen und speichern“). Regeln aus Book 6 *Scouts*, übertragen in
+  [`regeln-sternsystem.md`](regeln-sternsystem.md); Abweichungen tragen ⚑, der Owner hat sie alle
+  am 18. November 2026 angenommen. Dass die Hauptwelt Mond eines Gasriesen sein kann, ist Regel
+  (B6 35, 37), keine Hausregel.
+  - **Wann gewürfelt.** ⚑ Wenn die Raumkarte einer Welt zum ersten Mal aufgeht, würfelt die App ihr
+    Sternsystem (`Hex.system`) und speichert es; danach nie wieder (Werte, nicht Würfe). Das gilt
+    auch für ältere Welten. Leere Hexfelder und Welten in Erschaffung haben keins.
+  - **Sterne** (B6 26–28): Art des Systems (einzeln, doppelt, dreifach), Hauptstern mit Typ,
+    Zehntel und Größe (DM +4, wenn die Hauptwelt Atmosphäre 4–9 oder Bevölkerung 8+ hat), Begleiter
+    mit Typ, Größe und Bahn (nah, Bahnnummer oder fern mit 1D × 1.000 AU). ⚑ Ferne Begleiter
+    bekommen keinen eigenen Begleiter und keine eigenen Bahnen.
+  - **Bahnen und Zonen** (B6 27–31): höchste Bahn mit den DMs nach Größe und Typ; Begleiter sperren
+    Bahnen; die Zone jeder Bahn folgt aus `StarZones` des Hauptsterns (erste verfügbare und
+    bewohnbare Bahn).
+  - **Gasriesen** (B6 28, 34–35): nur, wenn das UWP einen hat (`Hex.gasGiant`); wie viele, nach der
+    Tabelle *System Features*. Jeder kommt zufällig in eine freie Bahn der bewohnbaren oder äußeren
+    Zone (sonst eine neue in der äußeren). Größe 1D (3 oder weniger groß), ⚑ Radius groß 50.000 +
+    1D × 10.000 km, klein 13.000 + 1D × 7.000 km (Book 6 nennt nur die Spannen).
+  - **Hauptwelt** (B6 35): in die bewohnbare Bahn. Liegt dort ein Gasriese, wird sie sein Mond
+    (`host`): Bahn und Startwinkel wie bei einem Mond des Gasriesen; sie hat dann selbst keine
+    Monde. ⚑ Auch mit Atmosphäre 0, 1 oder A und mehr kommt sie in die bewohnbare Bahn (Book 6
+    erlaubt eine andere). Ein Asteroidengürtel kommt in eine zufällige freie Bahn. ⚑ Hat der Stern
+    keine bewohnbare Bahn (M5 V, weiße Zwerge außer DB …), kommt die Hauptwelt in die erste
+    verfügbare Bahn. ⚑ Planetoidengürtel, leere und eingefangene Bahnen werden nicht gewürfelt.
+  - **Monde** (B6 24, 36–37): je Planet 1D − 3, kleiner Gasriese 2D − 4, großer 2D; keine bei Größe
+    0 und S und bei Monden. Größe Welt − 1D (Gasriese 2D − 6 bzw. 2D − 4); 0 ergibt einen Ring,
+    weniger eine kleine Welt mit (2D + 3) × 100 km Durchmesser. Bahn: 2D, 7 oder weniger nah, 8
+    oder mehr fern, beim Gasriesen 12+ extrem fern, je weiterer Mond DM −1 mehr; Abstand nach der
+    Tabelle in Radien des Körpers, Ringe 1D auf die Spalte *Ring*; dieselbe Bahn zweimal: neu
+    würfeln. Atmosphäre, Hydrographie und Bevölkerung nach Book 6 mit den DMs der Zone des Körpers,
+    um den sie kreisen; wo Kapitel und Checklist verschiedene DMs nennen, gilt das Kapitel.
+    Regierung, Gesetz, Tech-Level und Raumhafen der Monde kommen später. Für das Weltsymbol: ⚑ die
+    Temperatur folgt aus der Zone (innen heiß, bewohnbar wie die Hauptwelt, außen gefroren).
+  - **Schwerkraft** (B6 43, SR 22): Mond g = Größe ÷ 8 G (K = 1); kleine Welt g = Durchmesser ÷
+    12.800 km G; Ring keine; Gasriese g = 0,2 × Durchmesser ÷ 12.800 km G (K = 0,2). Die Masse
+    folgt daraus (G·M = g · R²). Die Tabelle *World Data* (B6 48) weicht an einigen Stellen ab; es
+    gilt die Formel.
+  - **Auf der Raumkarte der Welt**: Monde laufen auf festen Kreisbahnen gegen den Uhrzeigersinn
+    (2D); ihr Ort ergibt sich aus Startwinkel, Umlaufzeit (T = 2π · √(r³ ÷ G·M)) und der Zeit seit
+    Kampagnentag 0 (Tag × 86.400 s plus Dauer des Systemflugs). Monde haben Schwerkraft, man kann
+    auf ihnen aufschlagen, und sie verdecken die Sichtlinie; gezeichnet mit dem Weltsymbol (kleine
+    Welten wie Größe 1, nur kleiner). ⚑ Ein Ring ist ein flaches Band von (Bahn + 0,2) bis
+    (Bahn + 0,8) Radien, ohne Schwerkraft, man fliegt hindurch. ⚑ Das Licht kommt weiter von links,
+    in der Farbe des Hauptsterns.
+  - **Hauptwelt als Mond**: Ihre Raumkarte ist die Raumkarte des Gastgebers: der Gasriese in der
+    Mitte, die Hauptwelt und die übrigen Monde auf ihren Bahnen. Der Systemflug beginnt dann auf
+    einer Kreisbahn um die Hauptwelt mit doppeltem Weltradius, mitbewegt mit ihr.
+  - **Raumkarte am Gasriesen** (`SystemFlight.at`): Der Knopf „Raum“ bietet die Welt und jeden
+    Gasriesen des Systems an. Am Gasriesen steht er in der Mitte, seine Monde kreisen um ihn,
+    Sprunggrenzen nach seinem Durchmesser. Der Systemflug beginnt wie an der Welt (Aufenthaltsort,
+    eigenes Schiff, Kreisbahn mit doppeltem Radius). ⚑ Wie das Schiff von der Welt zum Gasriesen
+    kommt (eine Reise im System, Tage bei 1 G), bleibt offen; bis dahin darf der Systemflug am
+    Gasriesen von der Welt aus beginnen, auf der die Gruppe ist.
+  - **Asteroidengürtel** (Größe 0): keine Monde; die Raumkarte zeigt ein Asteroidenfeld aus dem
+    Weltschlüssel, nicht gespeichert, ohne Schwerkraft.
+  - **Weitere Planeten** des Systems kommen mit dem vollen Sternsystem und einer Reise im System.
+
 ## Wo der Code noch nicht folgt
 
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
+
+- **Systemflug** (2026-11-18c) ist gebaut (`model/flight.ts`, Raumkarte in `view/space/`, Scout der
+  Demo-Kampagne). Abweichungen: Der Schubvektor, den der Finger gerade zieht, liegt flüchtig im
+  Zustand des Controllers (`OpenSpace.aim`) und wird erst beim Loslassen gesetzt; ebenso die Orte
+  der letzten Raumrunde für die Wiedergabe. Das Schiff startet oberhalb der Welt, damit das
+  Ziehblatt es nicht verdeckt.
+- **Sternsystem** (2026-11-18d) ist freigegeben, aber noch nicht gebaut: `StarSystem`, `Star`,
+  `StarZones`, `GasGiant`, `Satellite` und `SystemFlight.at` fehlen im Code; die Raumkarte zeigt
+  nur die Welt.
 
 - **Monat und Monatsabrechnung** (2026-11-17b) sind gebaut (`model/upkeep.ts`, Monate in
   `model/time.ts`). **`MonthEnd → Booking : costs`** ist im Code der Bereich der Buchungen von
@@ -2970,7 +3144,9 @@ Diagramm mit diesen Ausnahmen:
   README (`src/data/examples.json`) und der festen Startwelt Kessra (0405, A766754-A, Scoutbasis,
   Gasriese, gemäßigt; `src/data/demo-world.json`), einer fertigen Welt, auf der die Gruppe steht
   (`location`), und Cr 5.000 in der Gruppenkasse, gebucht als Einnahme „Startkapital“, damit sich im
-  Shop gleich etwas kaufen lässt. Das Modell sagt dazu nichts; die Welt prüft das Model wie jedes Hexfeld. Die beiden
+  Shop gleich etwas kaufen lässt. Seit 2026-11-18c hat die Gruppe dazu einen
+  schuldenfreien Scout/Courier „Kestrel“ mit vollem Tank (40 t), Preis wie der Grundpreis, ohne
+  Kredit; er liegt ab Tag 1 im Hafen von Kessra. Das Modell sagt dazu nichts; die Welt prüft das Model wie jedes Hexfeld. Die beiden
   Charaktere lassen sich löschen, solange der Log nicht auf sie verweist. Jede weitere Kampagne
   beginnt leer, wie unter *Mehrere Kampagnen*; bestehende Kampagnen bekommen nichts nachgetragen.
   Kira hat die Automatic Pistol, Jonas die Blade als Primärwaffe; in der Hand haben beide zu Beginn

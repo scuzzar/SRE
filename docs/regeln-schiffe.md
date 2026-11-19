@@ -4,8 +4,8 @@ Dieses Dokument ersetzt beim Entwickeln das Nachschlagen in den PDFs. Es fasst *
 Tabellen zu Spielerschiffen** zusammen: Schiffsarten und -aufbau, Kauf und laufende Kosten, Crew,
 Standardentwürfe, Handel und Gewerbe, Raumkampf. Quelle ist das *Rules Booklet* der Starter Edition
 (Kapitel *Travel*, *Starship Economics*, *Starships*, *Computers*, *Space Combat*, *Trade and
-Commerce*); die zugehörigen Tabellen stehen im Heft *Charts and Tables*, das für dieses Dokument
-**nicht vorliegt** — fehlende Tabellen stehen unter [Lücken](#lücken-fehlende-tabellen-aus-se).
+Commerce*); die zugehörigen Tabellen stehen im Heft *Charts and Tables* (SE 10–13 sind übertragen,
+was noch fehlt, steht unter [Lücken](#lücken-fehlende-tabellen-aus-se)).
 Es ist ein Nachschlagewerk, kein Modell: Was die App davon baut, kommt wie immer zuerst ins
 Domänenmodell ([`domain-model.md`](domain-model.md)).
 
@@ -21,6 +21,9 @@ je Sprung als Hausregel, Fehlsprung als Wurf – siehe `domain-model.md` unter *
 |---|---|---|
 | **SR** | *Traveller Starter Edition*, Teil 1: *Rules Booklet* (GDW 1983), Kapitel *Travel* (S. 27–28), *Starship Economics* (S. 29–30), *Starships* (S. 31–37), *Computers* (S. 38–39), *Space Combat* (S. 39–42), *Trade and Commerce* (S. 52) | gedruckte Seitenzahl; im PDF ist es die Seite + 2 |
 | **SE** | *Traveller Starter Edition*, Teil 2: *Charts and Tables* (GDW 1983) | liegt als PDF vor (CD-ROM „Classic Traveller“, `CT Traveller Starter Edition 2 Charts.pdf`); gedruckte Seite = PDF-Seite − 2 |
+| **MD** | *Mayday* (GDW 1978, Game 1), Regelheft; Brettspielfassung der Vektorbewegung aus Book 2 | Seite des PDF `CT_G01_Game_01a_Mayday_Game_Complete.pdf` (das Heft hat keine gedruckten Seitenzahlen) |
+| **SS3** | *Special Supplement 3: Missiles*, überarbeitete Fassung (GDW 1984/1986) | gedruckte Seitenzahl |
+| **HG** | *Book 5: High Guard* (GDW 1980) | gedruckte Seitenzahl; noch nicht ausgewertet |
 
 - Regeltexte sind auf Deutsch zusammengefasst, Tabellen (soweit aus SR bekannt) vollständig
   übernommen. Namen aus den Tabellen (Schiffstypen, Komponenten, Programme) bleiben englisch, wie in
@@ -61,6 +64,7 @@ dabei.
 | [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system) | SR 42 | ○ |
 | [Handel und Gewerbe](#handel-und-gewerbe) | SR 52 | ○ |
 | [Raumkampf](#raumkampf) | SR 39–42 | ○ |
+| [Vektorbewegung (Mayday, Supplement 3)](#vektorbewegung-mayday-supplement-3) | MD, SS3 4–11 | ◐ ✱ (Bewegung mit echter Schwerkraft als Systemflug, 2026-11-18c; Waffen, Raketen, Sand offen) |
 
 ---
 
@@ -117,7 +121,7 @@ dabei.
 | Lebenserhaltung je besetzter Kabine | Cr2.000 pro zweiwöchiger Reise |
 | Lebenserhaltung je belegtem Niedrigpassage-Bett | Cr100 pro Nutzung |
 | Routinewartung (jährlich, Klasse-A/B-Hafen, 2 Wochen) | 0,1 % (1/1000) des Barpreises |
-| Gehälter der Crew | nach der Gehaltstabelle (NSC; fehlt, siehe [Lücken](#lücken-fehlende-tabellen-aus-se)), + 10 % je Erfahrungsstufe über 1 |
+| Gehälter der Crew | Heuer je Position nach SE 11 (siehe [Crew](#crew)), + 10 % je Erfahrungsstufe über 1 |
 
 - **Treibstoffverbrauch** hängt von Antriebs- und Energiewerksgröße ab (siehe
   [Schiffsaufbau](#schiffsaufbau), *Fuel*). **Stand in der App:** die Formel braucht
@@ -230,7 +234,8 @@ Ein Schiff besteht aus einem **Rumpf** (Hull, in Tonnen) mit Antrieben, Energiew
 Lebenserhaltung, Ausrüstung, Bewaffnung, Steuerung, Computer, Laderaum. Pflichtteile:
 
 - **A. Die Brücke**: mindestens 2 % der Schiffstonnage (min. 20 t) für Grundsteuerung,
-  Kommunikation, Avionik, Sensoren. Kostet MCr0,05 pro 100 t.
+  Kommunikation, Avionik, Sensoren. Kostet MCr0,5 pro 100 t (SR 32, SE 10; hier stand früher
+  irrtümlich MCr0,05).
 - **B. Kabinen (Staterooms)**: je eine Person, 4 t, Cr500.000. Doppelbelegung (max. 2 Personen) ist
   bei Forschungs-, Militär- und Privatschiffen möglich, verdoppelt aber den Lebenserhaltungsbedarf.
   Ein kommerzielles Schiff braucht eine Kabine je Crewmitglied.
@@ -248,12 +253,105 @@ Lebenserhaltung, Ausrüstung, Bewaffnung, Steuerung, Computer, Laderaum. Pflicht
   Waffen: Pulse Laser, Beam Laser, Missile Rack, Sandcaster (siehe [Raumkampf](#raumkampf)). Waffen
   lassen sich nachträglich aufrüsten (Pulse → Beam → Dreifachturm).
 
-**Antriebe und Energiewerk**: Rumpfgröße bestimmt den Tonnagebedarf je Antriebsbuchstabe (A–Z, ohne
-I/O); die Tabelle dazu fehlt (siehe [Lücken](#lücken-fehlende-tabellen-aus-se)). Ein Non-Starship
-braucht Maneuver Drive + Power Plant, ein Starship zusätzlich Jump Drive; das Energiewerk muss
-mindestens so stark sein wie der höhere Buchstabe von Maneuver und Jump Drive. Aus den
-Standardentwürfen (siehe unten) sind einige Werte bekannt: Antrieb-A liefert in einem 100-t-Rumpf
-1G bzw. Jump-1; Antrieb-D liefert in einem 800-t-Rumpf Jump-2.
+**Antriebe und Energiewerk**: Jeder Antrieb hat einen Buchstaben (A–Z, ohne I und O). Der
+Buchstabe legt Masse und Preis fest (*Drives and Power Plants*), die Leistung ergibt sich erst
+zusammen mit dem Rumpf (*Drive Potential*). Ein Non-Starship braucht Maneuver Drive + Power Plant,
+ein Starship zusätzlich Jump Drive; das Energiewerk muss mindestens denselben Buchstaben haben wie
+Maneuver und Jump Drive, sonst arbeiten sie nicht (SR 41).
+
+### Standard Hulls (SE 10)
+
+| Tonnen | Hauptbereich (t) | Antriebsbereich (t) | MCr | Bauzeit (Monate) |
+|---|---|---|---|---|
+| 100 | 85 | 15 | 2 | 9 |
+| 200 | 185 | 15 | 8 | 11 |
+| 400 | 350 | 50 | 16 | 14 |
+| 600 | 515 | 85 | 48 | 22 |
+| 800 | 635 | 165 | 80 | 25 |
+| 1000 | 835 | 165 | 100 | 27 |
+
+Diese Standardrümpfe gibt es zu den genannten Preisen und Zeiten; jede andere Größe wird eigens
+gefertigt und kostet MCr0,1 je Tonne.
+
+### Drives and Power Plants (SE 10)
+
+Masse in Tonnen und Preis in MCr je Buchstabe:
+
+| Buchstabe | Jump Drive t | MCr | Maneuver Drive t | MCr | Power Plant t | MCr |
+|---|---|---|---|---|---|---|
+| A | 10 | 10 | 1 | 4 | 4 | 8 |
+| B | 15 | 20 | 3 | 8 | 7 | 16 |
+| C | 20 | 30 | 5 | 12 | 10 | 24 |
+| D | 25 | 40 | 7 | 16 | 13 | 32 |
+| E | 30 | 50 | 9 | 20 | 16 | 40 |
+| F | 35 | 60 | 11 | 24 | 19 | 48 |
+| G | 40 | 70 | 13 | 28 | 22 | 56 |
+| H | 45 | 80 | 15 | 32 | 25 | 64 |
+| J | 50 | 90 | 17 | 36 | 28 | 72 |
+| K | 55 | 100 | 19 | 40 | 31 | 80 |
+| L | 60 | 110 | 21 | 44 | 34 | 88 |
+| M | 65 | 120 | 23 | 48 | 37 | 96 |
+| N | 70 | 130 | 25 | 52 | 40 | 104 |
+| P | 75 | 140 | 27 | 56 | 43 | 112 |
+| Q | 80 | 150 | 29 | 60 | 46 | 120 |
+| R | 85 | 160 | 31 | 64 | 49 | 128 |
+| S | 90 | 170 | 33 | 68 | 52 | 136 |
+| T | 95 | 180 | 35 | 72 | 55 | 144 |
+| U | 100 | 190 | 37 | 76 | 58 | 152 |
+| V | 105 | 200 | 39 | 80 | 61 | 160 |
+| W | 110 | 210 | 41 | 84 | 64 | 168 |
+| X | 115 | 220 | 43 | 88 | 67 | 176 |
+| Y | 120 | 230 | 45 | 92 | 70 | 184 |
+| Z | 125 | 240 | 47 | 96 | 73 | 192 |
+
+### Drive Potential (SE 10)
+
+Leistung eines Antriebs je Rumpfgröße: G beim Maneuver Drive, Sprungzahl beim Jump Drive,
+Energiewerkszahl beim Power Plant. Für Zwischengrößen gilt die nächstgrößere Zeile. „–“ heißt:
+Der Antrieb arbeitet in diesem Rumpf nicht. Die letzte Spalte ist die Bauzeit des Schiffs in
+Monaten.
+
+| Rumpf | A | B | C | D | E | F | G | H | J | K | L | M | N | P | Q | R | S | T | U | V | W | X | Y | Z | Bauzeit |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 100 | 2 | 4 | 6 | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | 10 |
+| 200 | 1 | 2 | 3 | 4 | 5 | 6 | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | 12 |
+| 400 | – | 1 | 1 | 2 | 2 | 3 | 3 | 4 | 4 | 5 | 5 | 6 | 6 | – | – | – | – | – | – | – | – | – | – | – | 16 |
+| 600 | – | – | 1 | 1 | 1 | 2 | 2 | 2 | 3 | 3 | 3 | 4 | 4 | 4 | 5 | 5 | 5 | 6 | 6 | 6 | – | – | – | – | 24 |
+| 800 | – | – | – | 1 | 1 | 1 | 1 | 2 | 2 | 2 | 2 | 3 | 3 | 3 | 3 | 4 | 4 | 4 | 4 | 5 | 5 | 6 | 6 | 6 | 28 |
+| 1000 | – | – | – | – | 1 | 1 | 1 | 1 | 1 | 2 | 2 | 2 | 2 | 2 | 3 | 3 | 3 | 3 | 3 | 4 | 5 | 6 | 6 | 6 | 30 |
+| 2000 | – | – | – | – | – | – | – | – | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 2 | 2 | 3 | 4 | 6 | 32 |
+| 3000 | – | – | – | – | – | – | – | – | – | – | – | – | – | – | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 2 | 2 | 4 | 34 |
+| 4000 | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | 1 | 1 | 1 | 2 | 3 | 35 |
+| 5000 | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | 1 | 1 | 1 | 2 | 36 |
+
+Beispiel: Ein A-Antrieb gibt einem 100-t-Rumpf 2 G, einem 200-t-Rumpf 1 G. Fällt ein Buchstabe
+durch Treffer auf ein Feld mit „–“, arbeitet der Antrieb nicht mehr (SR 41).
+
+### Weapons and Mounts, Fittings, Armaments (SE 10)
+
+| Bewaffnung | Preis (Cr) |
+|---|---|
+| Hardpoint | 100.000 |
+| Single Turret | 200.000 |
+| Double Turret | 500.000 |
+| Triple Turret | 1.000.000 |
+| Pulse Laser | 500.000 |
+| Beam Laser | 1.000.000 |
+| Missile Rack | 750.000 |
+| Sandcaster | 250.000 |
+
+- **Armaments**: ein Hardpoint je 100 t Schiff; jeder Hardpoint trägt ein Turret und braucht 1 t
+  für die Feuerleitung.
+
+| Ausstattung (Fittings) | Tonnen | Preis (Cr) |
+|---|---|---|
+| Stateroom | 4,0 | 500.000 |
+| Low Berth | 0,5 | 50.000 |
+| Emergency Low Berth | 1,0 | 100.000 |
+| Small Craft Stateroom | 2,0 | 50.000 |
+| Small Craft Couch | 0,5 | 25.000 |
+| Cargo | nach Bedarf | – |
+| Fuel | nach Bedarf | – |
 
 **Computer**: ein Modell-4-Computer oder besser ist Pflicht für Jump-4 und höher (siehe
 [Computer und Software](#computer-und-software)).
@@ -280,22 +378,27 @@ Standardentwürfen (siehe unten) sind einige Werte bekannt: Antrieb-A liefert in
 
 *SR 33, „Ship Crews“.*
 
-| Position | Pflicht ab | Bedingung |
-|---|---|---|
-| Pilot | jedes Schiff | mindestens Pilot-1 (Small Craft: Boat-1) |
-| Navigator | > 200 t | Pilot kann es bei ≤ 200 t übernehmen |
-| Engineer | je 35 t Antrieb + Energiewerk | mindestens Engineer-1; < 200 t nicht zwingend |
-| Steward | je 8 zahlende Hochpassagiere | mindestens Steward-0 |
-| Medic | Schiff ≥ 200 t, und je 120 Passagiere | mindestens Medic-1 bzw. -0 |
-| Gunner | je bestücktem Turret | mindestens Gunnery-1; optional, wenn keine Bedrohung erwartet wird |
+| Position | Heuer im Monat (SE 11) | Pflicht ab | Bedingung |
+|---|---|---|---|
+| Pilot | Cr6.000 | jedes Schiff | mindestens Pilot-1 (Small Craft: Ship's Boat-1, oder Pilot mit Stufe −1) |
+| Navigator | Cr5.000 | > 200 t | Pilot kann es bei ≤ 200 t übernehmen |
+| Engineer | Cr4.000 | je 35 t Antrieb + Energiewerk | mindestens Engineer-1; < 200 t nicht zwingend |
+| Steward | Cr3.000 | je 8 zahlende Hochpassagiere | mindestens Steward-0; Pflicht, sobald Hochpassagiere an Bord sind |
+| Medic | Cr2.000 | Schiff ≥ 200 t, und je 120 Passagiere | mindestens Medic-1 bzw. -0; nicht auf Non-Starships und Small Craft |
+| Gunner | Cr1.000 | je bestücktem Turret oder Small Craft | mindestens Gunnery-1; optional, wenn keine Bedrohung erwartet wird |
 
-- Eine Person kann **zwei Positionen** ausfüllen (Gehalt 75 % je Position, mindestens Stufe 2 in
-  beiden außer Steward, der Stufe 1 braucht); mehr als zwei nur im Notfall.
+- Eine Person kann **zwei Positionen** ausfüllen (SR: mindestens Stufe 2 in beiden außer Steward,
+  der Stufe 1 braucht; mehr als zwei nur im Notfall). SE 11 sagt dazu: Jede der beiden Positionen
+  wird mit Stufe −1 ausgeübt, die Heuer ist 75 % der beiden Heuern zusammen.
 - Schiffe > 1000 t: zusätzlich Captain, Executive Officer, mindestens drei Verwaltungskräfte;
   mindestens 10 Crewmitglieder je 1000 t.
 - Die ranghöchste Person einer Sektion mit mehreren Mitgliedern (Chief Engineer, Chief Steward/
   Purser, Chief Medic/Ship's Doctor) erhält 10 % mehr Gehalt.
 - Zusätzliche Positionen nach Bedarf (z. B. Laborpersonal, Kontaktspezialist für Alienkontakt).
+
+**Standard Vehicles** (SE 11), Tonnage an Bord: ATV 10, Air/Raft 4, Speeder 6, G-Carrier 8,
+Launch 20, Ship's Boat 30, Slow Boat 30, Pinnace 40, Slow Pinnace 40, Cutter 50 (Module je 30:
+Fuel, ATV, Open), Shuttle 95, Fighter 10.
 
 ---
 
@@ -335,59 +438,59 @@ dabei als 1 bzw. 2). Das Kredit ist kein Bargeld („may not be converted to cas
 ### Software List (SE 13)
 
 Space = Platzbedarf in CPU *und* Storage, Preis in MCr. Die letzten Spalten (*Schreiben*) sind
-die Anforderungen an Personen, die das Programm selbst schreiben wollen (spart das Geld, kann
-aber *Fatal Flaws* geben, SR 39).
+die Anforderungen an Personen, die das Programm selbst schreiben wollen, *Wurf* der Wurf dafür
+(SE 13). Selbst schreiben spart das Geld, kann aber *Fatal Flaws* geben (SR 39).
 
 **Offensiv** (nur mit Bewaffnung sinnvoll):
 
-| Programm | Space | MCr | Schreiben | Wirkung |
-|---|---|---|---|---|
-| Predict-1 | 1 | 2 | 1, Navig-1 | DM +1 auf Trefferwurf |
-| Predict-2 | 2 | 4 | 1, Navig-2 | DM +2 |
-| Predict-3 | 1 | 6 | 1, Navig-3 | DM +2 |
-| Predict-4 | 3 | 8 | 1, Navig-4 | DM +3 |
-| Predict-5 | 2 | 10 | 2, Navig-5 | DM +3 |
-| Gunner Interact | 1 | 1 | 2, Gunnery-2 | Fertigkeit des Gunners wird DM |
-| Target | 1 | 1 | 2, Navig-2 | Pflicht für jedes Feuer der Turrets |
-| Select-1 | 1 | 0,5 | 1, Gunnery-2 | Zielwahl Hauptbereich/Engineering, DM −2 |
-| Select-2 | 2 | 0,8 | 2, Gunnery-3 | wie Select-1, DM −1 |
-| Select-3 | 1 | 1 | 3, Gunnery-4 | wie Select-1, ohne DM |
-| Multi-Target-2 | 1 | 1 | 2, Gunnery-2 | Turrets auf 2 Ziele zugleich |
-| Multi-Target-3 | 2 | 2 | 2, Gunnery-3 | auf 3 Ziele |
-| Multi-Target-4 | 4 | 3 | 3, Gunnery-4 | auf 4 Ziele |
-| Launch | 1 | 2 | 1, Gunnery-2 | Raketen und Sand abschussfähig |
-| Double Fire | 4 | 4 | 2, Engineer-3 | doppelter Laserschuss, Überlastrisiko |
+| Programm | Space | MCr | Schreiben | Wurf | Wirkung |
+|---|---|---|---|---|---|
+| Predict-1 | 1 | 2 | 1, Navig-1 | 10+ | DM +1 auf Trefferwurf |
+| Predict-2 | 2 | 4 | 1, Navig-2 | 10+ | DM +2 |
+| Predict-3 | 1 | 6 | 1, Navig-3 | 10+ | DM +2 |
+| Predict-4 | 3 | 8 | 1, Navig-4 | 11+ | DM +3 |
+| Predict-5 | 2 | 10 | 2, Navig-5 | 10+ | DM +3 |
+| Gunner Interact | 1 | 1 | 2, Gunnery-2 | 11+ | Fertigkeit des Gunners wird DM |
+| Target | 1 | 1 | 2, Navig-2 | 10+ | Pflicht für jedes Feuer der Turrets |
+| Select-1 | 1 | 0,5 | 1, Gunnery-2 | 9+ | Zielwahl Hauptbereich/Engineering, DM −2 |
+| Select-2 | 2 | 0,8 | 2, Gunnery-3 | 9+ | wie Select-1, DM −1 |
+| Select-3 | 1 | 1 | 3, Gunnery-4 | 9+ | wie Select-1, ohne DM |
+| Multi-Target-2 | 1 | 1 | 2, Gunnery-2 | 9+ | Turrets auf 2 Ziele zugleich |
+| Multi-Target-3 | 2 | 2 | 2, Gunnery-3 | 10+ | auf 3 Ziele |
+| Multi-Target-4 | 4 | 3 | 3, Gunnery-4 | 8+ | auf 4 Ziele |
+| Launch | 1 | 2 | 1, Gunnery-2 | 11+ | Raketen und Sand abschussfähig |
+| Double Fire | 4 | 4 | 2, Engineer-3 | 11+ | doppelter Laserschuss, Überlastrisiko |
 
 **Defensiv**:
 
-| Programm | Space | MCr | Schreiben | Wirkung |
-|---|---|---|---|---|
-| Maneuver/Evade-1 | 1 | 1 | 1, Pilot-2 | Verteidigungs-DM −¼ Pilotenstufe |
-| Maneuver/Evade-2 | 2 | 2 | 1, Pilot-3 | −½ Pilotenstufe |
-| Maneuver/Evade-3 | 3 | 3 | 2, Pilot-4 | −¾ Pilotenstufe |
-| Maneuver/Evade-4 | 4 | 4 | 2, Pilot-5 | − volle Pilotenstufe |
-| Maneuver/Evade-5 | 5 | 5 | 3, Pilot-6 | − volle Pilotenstufe |
-| Maneuver/Evade-6 | 3 | 6 | 3, Pilot-7 | −5 |
-| Auto-Evade | 1 | 0,5 | 2, Pilot-4 | wie Maneuver/Evade, schwächer: −2 |
-| Return Fire | 1 | 0,5 | 2, Gunnery-3 | automatisches Rückfeuer |
-| Anti-Missile | 2 | 1 | 3, Gunnery-3 | Laser gegen Raketen im eigenen Band |
-| ECM | 3 | 4 | 4, Electronics-3 | Raketen explodieren folgenlos bei 7+ |
+| Programm | Space | MCr | Schreiben | Wurf | Wirkung |
+|---|---|---|---|---|---|
+| Maneuver/Evade-1 | 1 | 1 | 1, Pilot-2 | 10+ | Verteidigungs-DM −¼ Pilotenstufe |
+| Maneuver/Evade-2 | 2 | 2 | 1, Pilot-3 | 11+ | −½ Pilotenstufe |
+| Maneuver/Evade-3 | 3 | 3 | 2, Pilot-4 | 10+ | −¾ Pilotenstufe |
+| Maneuver/Evade-4 | 4 | 4 | 2, Pilot-5 | 11+ | − volle Pilotenstufe |
+| Maneuver/Evade-5 | 5 | 5 | 3, Pilot-6 | 10+ | − volle Pilotenstufe |
+| Maneuver/Evade-6 | 3 | 6 | 3, Pilot-7 | 11+ | −5 |
+| Auto-Evade | 1 | 0,5 | 2, Pilot-4 | 11+ | wie Maneuver/Evade, schwächer: −2 |
+| Return Fire | 1 | 0,5 | 2, Gunnery-3 | 12+ | automatisches Rückfeuer |
+| Anti-Missile | 2 | 1 | 3, Gunnery-3 | 10+ | Laser gegen Raketen im eigenen Band |
+| ECM | 3 | 4 | 4, Electronics-3 | 9+ | Raketen explodieren folgenlos bei 7+ |
 
 **Routine** (Betrieb ohne Waffen):
 
-| Programm | Space | MCr | Schreiben | Wirkung |
-|---|---|---|---|---|
-| Maneuver | 1 | 0,1 | 1, Pilot-1 | Pflicht für den Maneuver Drive |
-| Jump-1 | 1 | 0,1 | 1, Pilot/Navig-1 | Pflicht für Sprung 1 |
-| Jump-2 | 2 | 0,3 | 2, Pilot/Navig-2 | Pflicht für Sprung 2 |
-| Jump-3 | 3 | 0,4 | 2, Pilot/Navig-3 | Pflicht für Sprung 3 |
-| Jump-4 | 4 | 0,5 | 3, Pilot/Navig-4 | Pflicht für Sprung 4 |
-| Jump-5 | 5 | 0,6 | 3, Pilot/Navig-5 | Pflicht für Sprung 5 |
-| Jump-6 | 6 | 0,7 | 4, Pilot/Navig-6 | Pflicht für Sprung 6 |
-| Navigation | 1 | 0,4 | 3, Navig-3 | führt den Sprung aus |
-| Generate | 1 | 0,8 | 3, Navig-4 | erstellt den Flugplan (sonst Kassette Cr10.000) |
-| Anti-Hijack | 1 | 0,1 | 1, Tactics-1 | sperrt Kontrollbereiche; Umgehung auf 5− |
-| Library | 1 | 0,3 | 1, keine | Nachschlagewerk zu Region/Subsektor |
+| Programm | Space | MCr | Schreiben | Wurf | Wirkung |
+|---|---|---|---|---|---|
+| Maneuver | 1 | 0,1 | 1, Pilot-1 | 9+ | Pflicht für den Maneuver Drive |
+| Jump-1 | 1 | 0,1 | 1, Pilot/Navig-1 | 10+ | Pflicht für Sprung 1 |
+| Jump-2 | 2 | 0,3 | 2, Pilot/Navig-2 | 11+ | Pflicht für Sprung 2 |
+| Jump-3 | 3 | 0,4 | 2, Pilot/Navig-3 | 12+ | Pflicht für Sprung 3 |
+| Jump-4 | 4 | 0,5 | 3, Pilot/Navig-4 | 11+ | Pflicht für Sprung 4 |
+| Jump-5 | 5 | 0,6 | 3, Pilot/Navig-5 | 12+ | Pflicht für Sprung 5 |
+| Jump-6 | 6 | 0,7 | 4, Pilot/Navig-6 | 11+ | Pflicht für Sprung 6 |
+| Navigation | 1 | 0,4 | 3, Navig-3 | 10+ | führt den Sprung aus |
+| Generate | 1 | 0,8 | 3, Navig-4 | 10+ | erstellt den Flugplan (sonst Kassette Cr10.000) |
+| Anti-Hijack | 1 | 0,1 | 1, Tactics-1 | 9+ | sperrt Kontrollbereiche; Umgehung auf 5− |
+| Library | 1 | 0,3 | 1, keine | 4+ | Nachschlagewerk zu Region/Subsektor |
 
 - **Fatal Flaws**: selbstgeschriebene Programme können einen verborgenen Fehler haben (Wurf 11+,
   Ermessen der Spielleitung).
@@ -450,13 +553,46 @@ Passagier oder Co-Pilot sein.
 
 *SR 42, „Starship Encounters“.*
 
-Beim Eintritt in ein System würfelt die Spielleitung auf der **Starship Encounter Table** (fehlt,
-siehe [Lücken](#lücken-fehlende-tabellen-aus-se)), die nach Hafenklasse gestaffelt ist; zwei Würfel,
-DM je nach vorhandener Scout- oder Navy-Basis. Ein Strich bedeutet: keine Begegnung. Die
-Tabelleneinträge nennen einen Schiffstyp (Buchstabencode der Standardentwürfe); ein angehängtes
-**P** bedeutet Pirat (greift an oder versucht, in Angriffsposition zu kommen); ein **\*** bedeutet,
-dass zusätzlich ein Small Craft nach der **Standard Small Craft Table** (fehlt) begegnet, vor oder
-nach dem großen Schiff. Die Reaktion des begegneten Schiffs/der Crew kann nach der allgemeinen
+Beim Eintritt in ein System und beim Verlassen würfelt die Spielleitung auf der **Starship
+Encounter Table** (SE 13), gestaffelt nach der Raumhafenklasse; 2W6, DM **+2** mit Marinebasis
+im System, **+1** mit Scoutbasis. Ein Strich bedeutet: keine Begegnung. Die Einträge nennen einen
+Schiffstyp (Buchstabe der Standardentwürfe); ein angehängtes **P** bedeutet Pirat (greift an oder
+versucht, in Angriffsposition zu kommen); ein **\*** bedeutet, dass zusätzlich ein Small Craft
+begegnet, vor oder nach dem großen Schiff.
+
+| 2W6 | A | B | C | D | E | X |
+|---|---|---|---|---|---|---|
+| 2 | – | – | – | – | – | – |
+| 3 | – | – | – | – | – | – |
+| 4 | – | – | – | – | K | – |
+| 5 | – | – | – | – | – | L |
+| 6 | S | A | – | L | – | – |
+| 7 | A | S | R | K | – | – |
+| 8 | R | A | A | S | – | – |
+| 9 | M\* | R\* | R\* | SP | S | T |
+| 10 | Y | M | TP | A | A | TP |
+| 11 | T | R | T | R | TP | CP |
+| 12 | R\* | C\* | Y | M | CP | C |
+| 13 | M\* | Y\* | A | Y | – | – |
+| 14 | C\* | T\* | S\* | TP | – | – |
+| 15 | T\* | C\* | Y\* | – | – | – |
+
+Schiffstypen: A 200-t Free Trader, K 200-t Safari Ship, L 400-t Laboratory Ship, C 800-t Mercenary
+Cruiser, M 600-t Subsidized Liner, R 400-t Subsidized Merchant, S 100-t Scout/Courier, T 400-t
+Patrol Cruiser, Y 200-t Yacht.
+
+**Standard Small Craft** (SE 13), 1W6, DM **+1** mit Marinebasis, **−1** mit Scoutbasis:
+
+| 1W6 | Small Craft |
+|---|---|
+| 0 | 20-t Launch |
+| 1 | 30-t Ship's Boat |
+| 2 | 30-t Slow Boat |
+| 3 | 40-t Pinnace |
+| 4 | 40-t Slow Pinnace |
+| 5 | 50-t Cutter |
+| 6 | 95-t Shuttle |
+| 7 | 10-t Fighter | Die Reaktion des begegneten Schiffs/der Crew kann nach der allgemeinen
 Reaktionstabelle gewürfelt werden (siehe `regeln-kampf.md`, *Reaktion*).
 
 ---
@@ -491,8 +627,18 @@ Reaktionstabelle gewürfelt werden (siehe `regeln-kampf.md`, *Reaktion*).
 
 ## Raumkampf
 
-*SR 39–42, „Space Combat“.* Jede Spielrunde entspricht **1.000 Sekunden**; ein vollständiger
-Spielzug besteht aus zwei Spielerzügen (je einer Seite), jeder in mehrere Phasen gegliedert.
+*SR 39–42, „Space Combat“; Tabellen SE 12–13.* Jede Spielrunde entspricht **1.000 Sekunden**; ein
+vollständiger Spielzug besteht aus zwei Spielerzügen (je einer Seite), jeder in mehrere Phasen
+gegliedert.
+
+**Scales** (SE 12): Runde 1.000 Sekunden; ein Range Band 10.000 km; **ein 1-G-Vektor entspricht
+einem Range Band**: 1.000 Sekunden Schub mit 1 G ändern die Geschwindigkeit um 10.000 km (je
+Runde); Einheiten sind einzelne Starships, Non-Starships und Small Craft.
+
+**Game Turn Sequence** (SE 12), je Spielerzug: A. Bewegung (auch Raketen und Sand aus früheren
+Runden), B. Laserfeuer, C. Rückfeuer des Gegners (und Anti-Missile), D. Ordnance Launch (Raketen,
+Sand; Raketen, die Kontakt hatten, explodieren; Rettungsboote und Fahrzeuge starten), E. Computer
+umprogrammieren. Nach beiden Spielerzügen die Interphase.
 
 ### Turn Sequence und Bewegung
 
@@ -513,10 +659,41 @@ Spielzug besteht aus zwei Spielerzügen (je einer Seite), jeder in mehrere Phase
 3. Das Ziel summiert seine Verteidigungs-DMs (Ausweichprogramme, Sand, Entfernung, Beschädigung).
 4. 2W6 + Angriffs-DM − bzw. + Verteidigungs-DM ≥ 8 ⇒ Treffer; jeder feuernde Laser wird einzeln
    gewürfelt.
-5. Für jeden Treffer wird die **Hit Location Table** (fehlt) konsultiert und der Schaden markiert.
+5. Für jeden Treffer wird mit 2W6 die **Trefferzone** gewürfelt (Tabelle unten) und der Schaden
+   markiert.
 - **Pulse Laser**: DM −1 beim Treffen, dafür bei Treffer **zwei** Schadenswürfe statt einem.
 - **Shifting Fire**: ein Ziel darf nach der Zielwahl noch gewechselt werden (DM −6 zusätzlich zu
-  allen anderen DMs), solange noch nicht gefeuert wurde.
+  allen anderen DMs), solange noch nicht gefeuert wurde. SE 13: Wer in einer Runde das Ziel
+  wechselt, hat DM −6 für den Rest der Runde.
+
+**Attacker's DMs** (SE 12):
+
+| Grund | DM |
+|---|---|
+| Predict-1 | +1 |
+| Predict-2 | +2 |
+| Predict-3 | +2 |
+| Predict-4 | +3 |
+| Predict-5 | +3 |
+| Gunner Interact | + Gunnery-Stufe des Gunners |
+| Select-1 | −2 |
+| Select-2 | −1 |
+| Pulse Laser feuert | −1 |
+
+**Defender's DMs** (SE 12):
+
+| Grund | DM |
+|---|---|
+| Maneuver/Evade-1 | −¼ Pilot-Stufe |
+| Maneuver/Evade-2 | −½ Pilot-Stufe |
+| Maneuver/Evade-3 | −¾ Pilot-Stufe |
+| Maneuver/Evade-4 | − Pilot-Stufe |
+| Maneuver/Evade-5 | − Pilot-Stufe |
+| Maneuver/Evade-6 | −5 |
+| Auto/Evade | −2 |
+| Entfernung über 25 Range Bands | −2 |
+| Entfernung über 50 Range Bands | −5 |
+| Sand im Weg (je Range Band) | −3 |
 
 ### Laser Return Fire
 
@@ -530,10 +707,14 @@ Spielzug besteht aus zwei Spielerzügen (je einer Seite), jeder in mehrere Phase
 - Raketen/Sand werden in dieser Phase **ausgelöst**, bewegen sich aber erst in der folgenden
   Bewegungsphase (mit der Geschwindigkeit des startenden Schiffs; danach wie ein Schiff mit
   Maneuver-Drive-6).
-- Jeder Launcher/Sandcaster hält 3 Einheiten bereit; Nachladen dauert 3 Runden für einen vollen
-  Launcher (durch den Turret-Gunner).
-- **Missile Detonation**: trifft eine Rakete ihr Ziel (in der Bewegungsphase), detoniert sie in der
-  folgenden Ordnance-Phase: 1W Treffer, je Treffer eine eigene Schadenslokalisierung.
+- Jeder Launcher/Sandcaster hält 3 Raketen bzw. Ladungen bereit (ein Triple Turret mit drei
+  Launchern also 9). Ist er leer, lädt der Gunner des Turrets ihn in einer Runde nach; drei Launcher
+  dauern drei Runden. Wer nachlädt, kann mit dem Turret nicht feuern. (Hier stand früher
+  irrtümlich „3 Runden für einen Launcher“.) Je Launcher oder Sandcaster startet höchstens eine
+  Rakete bzw. Ladung je Phase; nötig sind die Programme Launch und Target.
+- **Missile Detonation**: trifft eine Rakete ihr Ziel (in der Bewegungsphase; bei Range Bands: sie
+  erreicht dasselbe Band) und übersteht die Abwehr, detoniert sie in der folgenden Ordnance-Phase:
+  1W Treffer, je Treffer eine eigene Trefferzone (SE 13).
 
 ### Detection und Tracking
 
@@ -548,15 +729,46 @@ Spielzug besteht aus zwei Spielerzügen (je einer Seite), jeder in mehrere Phase
 
 | Treffer auf | Wirkung |
 |---|---|
+| Maneuver, Jump, Power Plant | senkt den Buchstaben um eine Stufe (C wird B); die Leistung folgt aus dem neuen Buchstaben ([Drive Potential](#drive-potential-se-10)). Landet er auf „–“, arbeitet der Antrieb nicht; unter A ist er zerstört und muss ersetzt werden |
 | Hull | dekomprimiert das Schiff; weitere Hull-Treffer ohne Zusatzeffekt |
 | Hold | zerstört zufällig 10 t Fracht, ein Fahrzeug oder ein Small Craft |
-| Fuel | entlässt ~10 t Treibstoff; reicht der Rest nicht mehr für einen Sprung, kann nicht gesprungen werden |
-| Computer | DM −1 je Treffer auf den wöchentlichen (im Kampf: je Phase) Betriebswurf 1+; bei 12 Treffern dauerhaft ausgefallen |
-| Drive/Power Plant | senkt den Buchstaben um eine Stufe; unter dem niedrigsten Tabellenwert zerstört, muss ersetzt werden |
+| Fuel | entlässt ~10 t Treibstoff; reicht der Rest nicht mehr für einen Sprung, kann nicht gesprungen werden; ist aller Treibstoff weg, arbeiten Maneuver Drive und Laser nicht mehr |
+| Computer | DM −1 je Treffer auf den Betriebswurf 1+ (im Kampf je Phase; Computer-Fertigkeit als DM); misslingt er, fällt der Computer für die Phase aus und lähmt das Schiff; bei 12 Treffern dauerhaft ausgefallen. Small Craft ohne Computer: zählt als Drive-Treffer |
+| Critical | kritischer Treffer: 1W auf die Tabelle *Critical Hits*; das genannte Teil ist ganz zerstört bzw. außer Gefecht (bei *Crew*: die Crew ist nicht unbedingt tot, aber handlungsunfähig) |
 | Turret | das getroffene Turret fällt komplett aus |
 | Small Craft Cabin | Treffer entspricht einem Hull-Treffer (Dekompression), weitere ohne Zusatzeffekt |
 | Small Craft Weaponry | zerstört die Bewaffnung des Small Craft |
 | Small Craft Drive | das Small Craft kann sich nicht mehr bewegen/beschleunigen/feuern |
+
+**Hit Locations** (SE 12), 2W6 je Treffer:
+
+| 2W6 | Starship | Non-Starship | Small Craft |
+|---|---|---|---|
+| 2 | Power Plant | Power Plant | Drive |
+| 3 | Maneuver | Maneuver | Drive |
+| 4 | Jump | Maneuver | Drive |
+| 5 | Fuel | Fuel | Drive |
+| 6 | Hull | Hull | Cabin |
+| 7 | Hull | Hull | Computer |
+| 8 | Hold | Hold | Cabin |
+| 9 | Computer | Computer | Cabin |
+| 10 | Turret | Turret | Weapons |
+| 11 | Turret | Turret | Weapons |
+| 12 | Critical | Critical | Critical |
+
+**Critical Hits** (SE 12), 1W6:
+
+| 1W6 | Starship | Non-Starship | Small Craft |
+|---|---|---|---|
+| 1 | Power Plant | Power Plant | Drive |
+| 2 | Maneuver | Maneuver | Drive |
+| 3 | Jump | Maneuver | Drive |
+| 4 | Crew | Crew | Crew |
+| 5 | Computer | Computer | Computer |
+| 6 | Explode | Explode | Explode |
+
+Hat ein Small Craft keinen Computer, zählt ein Computer-Treffer als Drive. *Explode* nennen die
+SR nicht eigens; gemeint ist die Zerstörung des Schiffs.
 
 Mit dem **Selective**-Programm kann der Angreifer statt eines zufälligen Treffers (Wurf 1W: 1–2
 Hauptbereich oder Engineering nach Wahl, 3+ normale Zufallslokalisierung) gezielt schießen.
@@ -575,27 +787,147 @@ Hauptbereich oder Engineering nach Wahl, 3+ normale Zufallslokalisierung) geziel
   einer Werft, Kosten ca. 10–120 % des Neuwerts der Baugruppe je nach Fall (2W, in 10 %-Schritten),
   DM −2 bei Reparatur durch die eigene Crew statt einer Werft.
 
+### Ship's Data Card (SR 39–40, SE 12)
+
+Jedes Schiff im Kampf hat eine Datenkarte: Name und Typ; 1. M-Drive (Buchstabe, G), 2. J-Drive
+(Buchstabe, Sprungzahl), 3. Power Plant (Buchstabe), 4. Fuel (Tonnen), 5. Hold (Tonnen und
+Fahrzeuge), 6. Bridge (Pilot-Stufe); darunter die Turrets (T-1, T-2, …) mit ihren Waffen (B Beam
+Laser, P Pulse Laser, M Missile Rack, S Sandcaster), der Gunnery-Stufe des Gunners und den Raketen
+im Rack; rechts Computer, CPU, Storage und die Programme an Bord. Beispiel aus SE 12, *Suleiman*
+(Type S): M-Drive A (2 G), J-Drive A (Jump-2), Power Plant A, Fuel 40, Hold 3 t plus Air/Raft,
+Bridge Pilot-1, T-1 (B, M) Gunner-1, fünf Raketen an Bord; Model/1 mit CPU 2 und Storage 4,
+Programme Target, Auto/Evade, Return Fire, Anti-Missile (2), Launch, Jump-1, Predict-1, Jump-2
+(2), Navigate, Library.
+
 ### Starship Encounters (im Kampf)
 
 Siehe [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system).
 
 ---
 
+## Vektorbewegung (Mayday, Supplement 3)
+
+Die SR bewegen Schiffe in Range Bands. Book 2 und das Brettspiel *Mayday* bewegen sie mit Vektoren
+auf einer Karte; *Supplement 3* schreibt die Raketen für beide Systeme. Gebraucht wird das für das
+[Konzept Raumkampf](konzept-raumkampf.md) (Entwurf); dort steht auch, was die App davon übernehmen
+soll.
+
+### Maßstäbe
+
+| | Book 2 / Supplement 3 (SS3 4) | Mayday (MD 3) |
+|---|---|---|
+| Runde | 1.000 Sekunden | 100 Minuten |
+| Entfernung | 100 mm = 10.000 km | 1 Hexfeld = 1 Lichtsekunde (300.000 km) |
+| Schub | 1 G eine Runde lang verschiebt die Bahn um 100 mm | 1 G verschiebt den Zukunftsmarker um 1 Feld |
+| 1 G | – | 9,8 m/s² |
+
+### Ablauf eines Spielerzugs (MD 4; SS3 13)
+
+Die Seiten ziehen abwechselnd, jede Runde hat zwei Spielerzüge: **A. Bewegung** (eigene Schiffe,
+Raketen, Small Craft), **B. Laserfeuer**, **C. Rückfeuer** des Gegners (und Anti-Missile),
+**D. Ordnance Launch** (Raketen, Sand, Small Craft starten; Raketen, die abgefangen haben, zünden),
+**E. Computer umprogrammieren**. Zwischen den Runden bewegen sich Welten und Wracks, wenn das
+Szenario es will.
+
+### Bewegung (MD 4–6)
+
+- Jedes Schiff, jede Rakete, jedes Small Craft hat **drei Marker**: Vergangenheit, Gegenwart,
+  Zukunft.
+- Bewegung: Vergangenheitsmarker auf den Gegenwartsmarker, Gegenwartsmarker auf den Zukunftsmarker;
+  den neuen Zukunftsmarker legt man auf die Verlängerung der Linie von Vergangenheit zu Gegenwart,
+  gleich lang. Das ist der Kurs ohne Schub.
+- **Kursänderung**: den Zukunftsmarker um 1 Feld je G des Maneuver Drive verschieben, in beliebige
+  Richtung.
+- **Schwerkraft**: Die sechs Felder um eine Welt sind Schwerkraftfelder mit je einem Pfeil von einem
+  Feld zur Mitte der Welt. Jedes Schwerkraftfeld, das ein Schiff in seiner Bewegung betritt,
+  verschiebt dessen Zukunftsmarker um 1 Feld in Pfeilrichtung; Pflicht und kumulativ, für alle
+  Schiffe.
+- **Umlaufbahn**: Wer sich genau ein Feld weit von einem Schwerkraftfeld ins benachbarte derselben
+  Welt bewegt, ist im Orbit und umrundet sie ohne weiteren Schub in zehn Stunden (sechs Runden).
+- **Landen**: mit 1 Feld Geschwindigkeit auf die Welt ziehen. Schneller ist ein **Aufschlag**, das
+  Schiff ist zerstört. **Starten**: von der Welt in ein Nachbarfeld beschleunigen.
+- **Abfangen**: Stehen am Ende der Bewegung zwei Gegenwartsmarker im selben Feld, haben sich die
+  beiden abgefangen (Raketen können zünden, Schiffe zusammenstoßen). Stehen zwei Zukunftsmarker im
+  selben Feld, ist das Abfangen im nächsten Zug unvermeidlich.
+- **Angeglichener Kurs**: Gegenwarts- und Zukunftsmarker zweier Schiffe jeweils im selben Feld;
+  dann ist Entern möglich.
+- **Maneuver/Evade**: Läuft ein solches Programm, hat das Schiff 1 G weniger, auch bis auf 0 G.
+
+### Waffen in Mayday (MD 6–12)
+
+- **Laser**: alle Laser eines Schiffs auf dasselbe Ziel; Treffer werden sofort angerechnet.
+  *Shifting Fire* in Mayday: DM +1 je Laser nach dem ersten, oder ohne diesen DM Zielwechsel, wenn
+  das erste Ziel zerstört ist. Laser gegen Raketen im eigenen Laserfeuer durch Wahl als Ziel, im
+  Rückfeuer nur mit Anti-Missile und nur gegen Raketen ohne Annäherungszünder.
+- **Ordnance Launch**: höchstens eine Rakete je Schiff und Phase; wer Sand ausstößt, startet keine
+  Rakete. Neue Raketen und Small Craft übernehmen alle drei Marker des startenden Schiffs, ihr
+  Zukunftsmarker darf gleich verschoben werden.
+- **Raketen** aus Lenkung (Homing, Guided, Responsive, Unguided), Antrieb (Constant, Limited,
+  Discretionary, Unpowered) und Zünder (Contact: dreifacher Schaden; Proximity: doppelter, nicht
+  durch Anti-Missile abzuwehren; Intelligent; Command). **Standardrakete in Mayday**: 6G6 Limited,
+  Homing, Contact, Cr5.600.
+- **Sand**: Die Wolke umgibt das Schiff, solange es den Kurs nicht ändert. Laser hinein DM −3, Laser
+  hinaus DM −1, Raketen gegen das Schiff DM −1. Vorrat: so viele Ladungen wie das Schiff Tonnen hat.
+  Schützt nur das eigene Schiff.
+- **Schaden** (MD 9, 12): Ergebnisse No Effect, Weaponry, Computer, M-Drive, J-Drive, Detonate (bei
+  Raketen). Zerstört bei vier Treffern in einem Spielerzug (Laser 1, Proximity 2, Contact 3) oder je
+  mindestens drei Treffern in drei Runden hintereinander. Das Wrack fliegt auf seinem Kurs weiter.
+- **Schadenskontrolle** (MD 12): zu Beginn des eigenen Zugs, höchstens 1 G Schub, ein Bereich, 8+.
+- **Handsteuerung** ohne Computer: Laser DM −4, keine Raketen und kein Sand, Schub nur 1 G und eine
+  Runde vorher angesagt. Small Craft haben keinen Computer und keine DMs dafür.
+- **Small Craft** (MD 14) mit G und Brennstufen (höchste Kursänderung je Zug, gesamte Kursänderung):
+  Lifeboat 1G5, Ship's Boat 6G9 (1 Laser), Pinnace 5G12 (1 Laser), Cutter 4G15 (1 Laser), Shuttle
+  3G9, Fighter 4G12 (1 Laser). Starships haben unbegrenzten Treibstoff.
+- **Sprung** in Mayday: frühestens 40 Felder von jeder Welt entfernt.
+- **High Guard mit Vektorbewegung** (MD 14): angeglichener Kurs = Enterreichweite, bis 5 Felder
+  kurze, bis 15 Felder lange Reichweite, darüber außer Reichweite.
+
+### Raketen nach Supplement 3 (SS3 4–11)
+
+- **Antrieb** als *xGy*: höchstens x G je Runde, Treibstoff für y Runden bei vollem Schub (gesamt
+  x·y G-Runden; *3G3* also 3 G drei Runden lang oder 1 G neun Runden lang).
+  - **Continuous Burn** (TL 8): brennt ab dem Start mit vollem Schub, bis der Treibstoff leer ist;
+    keine Kursänderung. Trifft nur, wenn er in der ersten Runde abfängt.
+  - **Limited Burn** (TL 9): Start auch mit weniger als vollem Schub, der dann fest bleibt;
+    Kursänderung je Runde bis zur Hälfte des Unterschieds zum Höchstwert (abgerundet), 2 Brennstufen
+    je G Kursänderung. Ab der zweiten Runde fängt er nur bei 4+ ab, DM + verbleibender Treibstoff;
+    nach der dritten Runde gar nicht mehr.
+  - **Discretionary Burn** (TL 10): frei wie ein Schiff, solange Treibstoff da ist.
+  - **Ohne Antrieb** (TL 5): treibende Mine mit dem Vektor des startenden Schiffs.
+- Ohne Treibstoff fliegt jede Rakete ballistisch weiter; **Schwerkraft** wirkt auf sie wie auf
+  Schiffe.
+- **Lenkung**: Steuergerät plus Sensor (Funk: Fernlenkung, aktive oder passive Zielsuche; Infrarot;
+  Masse; Neutrino); Ausweichmodul DM +1 je G gegen Abwehr.
+- **Zünder**: Contact (doppelte Treffer, nur bei Aufprall), Proximity (beim Abfangen, durch ECM zu
+  stören), Intelligent (wie Proximity, immun gegen ECM), Command (auf Befehl, über eine Lichtsekunde
+  2+ mit DM −1 je Lichtsekunde).
+- **Gefechtsköpfe**: High Explosive 2 Treffer je 10 kg; Focused Force 4 je 10 kg; Nuklear,
+  Enhanced Radiation, Fusion mit Treffern je 0,1 kt plus Strahlungstreffer. Nuklear-, Fusions- und
+  Strahlungsköpfe ab Gesetz 4 verboten, alle Gefechtsköpfe ab Gesetz 8.
+- **Standardrakete** nach SS3: 5G6 Continuous Burn, Massesensor, Proximity, High Explosive; 48 kg,
+  Cr5.600. Ein Standardbehälter fasst 50 kg.
+- **Abfangen**: auf 25 mm (2.500 km) ans Ziel, gemessen von der Spitze seines Vektorpfeils. Aufprall
+  braucht Steuerbarkeit: in der ersten Runde immer, danach nur Limited und Discretionary, wenn ihr
+  Vektor durch das Ziel geht.
+- **Geschwindigkeit**: beim Aufprall ein Treffer mehr je volle 300 mm (30.000 km je Runde) der
+  Summe beider Vektoren.
+- **ECM** (im Rückfeuer, vor der Zündung): gegen Raketen mit Funksensor 9+; die Rakete fliegt dann
+  unbrauchbar weiter. Contact-Zünder und Treffer aus Geschwindigkeit wirken trotzdem, Intelligent
+  ist immun.
+- **Sand gegen Raketen**: je 25 mm Sand auf dem Weg 12+, dann ist die Rakete unbrauchbar.
+- **Magazine**: ein Rack hält eine Rakete schussbereit und zwei weitere; ein Turret lagert 12 dazu.
+  Nachladen der Racks nebenbei; Auffüllen des Turrets aus dem Laderaum dauert eine Runde für eine
+  Person (ein Gunner kann dann in der nächsten Runde nicht feuern). Ein Gunner baut in einer Runde
+  eine Rakete aus Bauteilen um.
+- Tabellen der Treffer: SS3 verweist auf die von *High Guard*.
+
+---
+
 ## Lücken (fehlende Tabellen aus SE)
 
-Das Heft *Charts and Tables* liegt inzwischen als PDF vor (siehe *Quellen*). Die meisten
-Tabellen fehlen damit nicht mehr, sie sind nur noch **nicht übertragen** – sie kommen, wenn das
-jeweilige Thema an der Reihe ist, vollständig hierher (Software List und Computer sind oben
-schon übertragen). Als Fundstellen in SE sind bestätigt:
+Die Tabellen aus SE 10–13 (Schiffsbau, Crew, Raumkampf, Schiffsbegegnungen) sind seit
+18. November 2026 vollständig oben übertragen. Noch nicht übertragen:
 
-- **Standard Hulls**, **Drives and Power Plants**, **Drive Potential**, **Computers**,
-  **Software List**, **Weapons and Mounts**, **Fittings**, **Bridge**, **Armaments** (SE 10)
-- **Crew Requirements** mit Monatsgehältern (Cr6.000 Pilot, Cr5.000 Navigator, Cr4.000 Engineer,
-  Cr3.000 Steward, Cr2.000 Medic, Cr1.000 Gunner; Mehrfachposition: Stufe −1, Gehalt 75 % beider
-  Positionen) (SE 11)
-- **Attacker’s/Defender’s DMs**, **Hit Locations**, **Critical Hits**, **Scales**, Beispiel einer
-  Schiffs-Datenkarte (SE 12)
-- **Starship Encounters**, **Standard Small Craft**, **Detection**, **Special Rules** (SE 13)
 - **Technological Levels** (SE 16)
 - **Trade and Speculation** (SE 22; die *Actual Value Table* und die *Cargo-* und
   *Passagiertabellen* sind noch zu suchen, vermutlich SE 9/22–23)
