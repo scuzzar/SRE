@@ -1069,6 +1069,7 @@ hide <<browser>> stereotype
   enum WorldStep <<value>> $sektor {
     <i>alle Arten aus WorldRollKind</i>
     surface
+    $new("2026-11-20", "system")
     name
     done
   }

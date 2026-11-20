@@ -451,6 +451,13 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `SatelliteKind`, `StarSystem.host` (die Hauptwelt als Mond eines Gasriesen) und `SystemFlight.at`
 > für den Systemflug am Gasriesen. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-18b-sternsystem.png`](changes/2026-11-18b-sternsystem.png).
+>
+> **Wartet auf Freigabe** (Kennzeichen 2026-11-20): **Sternsystem in der Weltenerschaffung** (Wunsch
+> des Owners): Das Sternsystem wird nicht mehr beim ersten Öffnen der Raumkarte gewürfelt, sondern
+> als eigener Schritt der Weltenerschaffung nach der Oberfläche, mit einem Knopf, alles auf einmal;
+> fertige Welten ohne Sternsystem bekommen es beim Öffnen der Kampagne. Neu im Bild:
+> `WorldStep.system`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-20-sternsystem-in-der-erschaffung.png`](changes/2026-11-20-sternsystem-in-der-erschaffung.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -484,8 +491,9 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Missionen | [views/mission.png](views/mission.png) |
 | Raumkarte und Systemflug | [views/raum.png](views/raum.png) |
 
-Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist derzeit
-keine.
+Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist
+[2026-11-20](changes/2026-11-20-sternsystem-in-der-erschaffung.png): das Sternsystem als Schritt der
+Weltenerschaffung.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -2426,7 +2434,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   6. *Oberfläche* (`surface`): Steht der TL fest, würfelt die App die ganze Oberfläche auf einmal und
      ohne eigenen Knopf (siehe *Oberfläche*). Sie ist kein einzelner Wurf (`WorldRoll`) und hat
      keine Würfelanimation; die Weltkarte zeigt gleich die Werte.
-  7. *Name*: Zum Schluss gibt man den Namen ein (nicht leer); dann ist die Welt fertig (`done`).
+  7. *Sternsystem* (`system`, 2026-11-20, wartet auf Freigabe): Steht die Oberfläche fest, kommt ein
+     eigener Schritt mit dem Knopf „Sternsystem würfeln“. Er würfelt das ganze Sternsystem auf
+     einmal nach Book 6 (siehe *Sternsystem, Monde und Gasriesen*): Sterne, Bahnen, Gasriesen,
+     Monde und Ringe. Wie die Oberfläche ist das kein einzelner Wurf (`WorldRoll`) und hat keine
+     Würfelanimation; die Weltkarte zeigt danach Sterne, Gasriesen, Monde und Ringe (Owner,
+     20. November 2026).
+  8. *Name*: Zum Schluss gibt man den Namen ein (nicht leer); dann ist die Welt fertig (`done`).
 
   **Welten ohne Temperatur.** Welten, deren Hydrographie vor diesem Schritt gewürfelt wurde, haben
   keine Temperatur. Das ist erlaubt: Ihre Erschaffung geht ohne Temperatur weiter, und ist die Welt
@@ -2438,6 +2452,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Oberfläche sein. Ihre Erschaffung geht mit dem Namen weiter; ist die Welt fertig, bietet ihre
   Weltkarte „Oberfläche würfeln“ an, nach der Temperatur, falls auch die fehlt (die Oberfläche
   braucht sie für das Leben).
+
+  **Welten ohne Sternsystem** (2026-11-20, wartet auf Freigabe). Fertige Welten von vor diesem
+  Schritt haben kein Sternsystem. Beim Öffnen der Kampagne würfelt die App es für jede solche Welt
+  nach, einmal, und speichert es (Owner, 20. November 2026). Fehlt der Welt die Temperatur, gelten
+  ihre Monde in der bewohnbaren Zone als gemäßigt. Eine Welt in Erschaffung ohne Sternsystem kommt
+  an dem Schritt von selbst vorbei.
 
   **Verwerfen** geht, solange die Welt in Erschaffung ist, und macht das Feld wieder zu einem nicht
   erzeugten. Ein leeres Feld und eine fertige Welt bleiben, wie sie sind. Die Weltenerschaffung
@@ -3000,9 +3020,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   [`regeln-sternsystem.md`](regeln-sternsystem.md); Abweichungen tragen ⚑, der Owner hat sie alle
   am 18. November 2026 angenommen. Dass die Hauptwelt Mond eines Gasriesen sein kann, ist Regel
   (B6 35, 37), keine Hausregel.
-  - **Wann gewürfelt.** ⚑ Wenn die Raumkarte einer Welt zum ersten Mal aufgeht, würfelt die App ihr
-    Sternsystem (`Hex.system`) und speichert es; danach nie wieder (Werte, nicht Würfe). Das gilt
-    auch für ältere Welten. Leere Hexfelder und Welten in Erschaffung haben keins.
+  - **Wann gewürfelt** (geändert am 20. November 2026, Kennzeichen 2026-11-20, wartet auf Freigabe;
+    vorher: beim ersten Öffnen der Raumkarte). In der Weltenerschaffung als eigener Schritt nach
+    der Oberfläche, mit dem Knopf „Sternsystem würfeln“, alles auf einmal (siehe
+    *Weltenerschaffung*, Schritt 7); fertige Welten ohne Sternsystem bekommen es beim Öffnen der
+    Kampagne (siehe *Welten ohne Sternsystem*). Gespeichert an der Welt (`Hex.system`), danach nie
+    wieder gewürfelt (Werte, nicht Würfe). Leere Hexfelder haben keins.
   - **Sterne** (B6 26–28): Art des Systems (einzeln, doppelt, dreifach), Hauptstern mit Typ,
     Zehntel und Größe (DM +4, wenn die Hauptwelt Atmosphäre 4–9 oder Bevölkerung 8+ hat), Begleiter
     mit Typ, Größe und Bahn (nah, Bahnnummer oder fern mit 1D × 1.000 AU). ⚑ Ferne Begleiter

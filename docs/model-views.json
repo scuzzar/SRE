@@ -450,6 +450,15 @@
         "Hex",
         "SystemFlight"
       ]
+    },
+    {
+      "id": "2026-11-20",
+      "file": "2026-11-20-sternsystem-in-der-erschaffung",
+      "title": "Sternsystem in der Weltenerschaffung: eigener Schritt mit einem Knopf; fertige Welten ohne System bekommen es beim Öffnen der Kampagne",
+      "approved": false,
+      "show": [
+        "StarSystem"
+      ]
     }
   ]
 }
