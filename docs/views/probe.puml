@@ -115,6 +115,7 @@ hide <<browser>> stereotype
   class MonthEnd $reise
   class CheckRoll $reise
   class Journey $reise
+  class SystemJourney $reise $newClass("2026-11-20d")
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Task <<transient>> $probe {
@@ -157,6 +158,7 @@ LogEntry <|-- TimePassed
 LogEntry <|-- CheckRoll
 LogEntry <|-- Journey
 LogEntry <|-- MonthEnd
+LogEntry <|-$newArrow("2026-11-20d")- SystemJourney
 
 ' Charaktererschaffung und Lebenslauf
 

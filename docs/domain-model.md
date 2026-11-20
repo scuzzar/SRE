@@ -479,6 +479,15 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > (`World.bases`, `BaseKind`); siehe *Nebenwelten*. Neu im Bild: `World.spaceport`,
 > `World.facilities`, `World.bases`, `Spaceport`, `Facility`, `BaseKind`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-20c-nebenwelten.png`](changes/2026-11-20c-nebenwelten.png).
+>
+> Wartet auf Freigabe (Kennzeichen 2026-11-20d): **Reise im System und Nebenwelten mit Globus** (Owner,
+> 20. November 2026). Die Weltkarte und der Globus hängen an der Welt statt am Hexfeld: Nebenwelten
+> bekommen Namen, Notiz, Oberfläche und Globus wie die Hauptwelt; der Globus jeder Welt entsteht nur
+> auf ausdrücklichen Knopfdruck („Globus erzeugen“). Zwischen Welten desselben Systems reist man mit
+> Ticket oder dem eigenen Schiff, die Dauer nach T = 2·√(D/A). Neu im Bild: der Logeintrag
+> `SystemJourney` mit `from`, `to`, `travellers`, `ship`, die Buchungsart `ticket` und
+> `Booking.ticketFor`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-20d-reise-im-system.png`](changes/2026-11-20d-reise-im-system.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -610,6 +619,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Tag im Log | `LogEntry.day` | An welchem Spieltag ein Logeintrag entstand; fehlt bei Einträgen von vor der Spielzeit |
 | Test (im Log) | `CheckRoll`, `CheckKind` | Ein gewürfelter Test einer Begegnungsart: random, animal, patron, rumor, legal |
 | Polizei, Legal Encounter | `CheckKind.legal` | Einmal je Woche 2W6 gleich oder über der Gesetzesstufe des Aufenthaltsorts, sonst hält die Polizei die Gruppe an (SE S. 20) |
+| Reise im System | `SystemJourney` | Logeintrag: Die Gruppe reist zu einer anderen Welt desselben Systems, mit Ticket oder eigenem Schiff; Dauer nach T = 2·√(D/A) (2026-11-20d) |
+| Ticket | Buchung `ticket` | Der Preis der Reise im System mit fremdem Schiff: Cr 25 je Stunde und Reisendem (Hausregel, 2026-11-20d) |
 | Reise | `Journey` | Logeintrag: Die Gruppe reist von einer Welt zur anderen, eine Woche im Sprung – mit Passagen oder mit dem eigenen Schiff (2026-11-16d) |
 | Passagier | `Passenger` | Ein Charakter auf der Reise mit seiner Passage (High, Middle oder Low Passage) |
 | Kälteschlafkoje | `LowBerth` | Ein Low-Passagier der Reise, SC oder NSC, mit Wurf zum Aufwachen und Tipp der Lotterie |
@@ -1387,6 +1398,30 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - *Dauer*: ebenfalls **eine Woche**; sonst gilt wie bei der Passage.
     - *Lebenserhaltung* (2026-11-17b): siehe *Schiffe*, *Laufende Kosten und Monatsabrechnung*.
     - Kommen später: zahlende Passagiere und Fracht.
+  - *Reise im System* (wartet auf Freigabe, 2026-11-20d; Owner, 20. November 2026). Zwischen Welten
+    desselben Systems (SE S. 27, Charts S. 8).
+    - *Wohin*: Auf der Weltkarte jeder anderen Welt des Systems, in dem die Gruppe ist, steht
+      **Hierher reisen**; es öffnet den Reisedialog wie beim Sprung. Ziele sind Welten, kleine
+      Welten, Gürtel und Monde, keine Gasriesen und Ringe. Nicht während einer laufenden Begegnung,
+      einer Fahrt oder eines Systemflugs.
+    - *Entfernung* (`/distance`, Owner: Abstand der Bahnen): Zwischen zwei Welten um den Stern der
+      Unterschied ihrer Abstände vom Stern (B6 28, Zwischenbahnen eingefangener Welten dazwischen);
+      für einen Mond zählt dabei die Bahn der Welt, um die er kreist. Zwischen einem Mond und seiner
+      Welt sein Bahnabstand (Radien × Radius der Welt), zwischen zwei Monden derselben Welt der
+      Unterschied ihrer Bahnabstände. Die Lage auf der Bahn spielt keine Rolle.
+    - *Dauer* (`hours`): T = 2 · √(D ÷ A) (Charts S. 8: beschleunigen bis zur Mitte, dann abbremsen),
+      D in m, A in m/s² (1 G = 10 m/s²), in Stunden aufgerundet. A ist mit Ticket 1 G, mit eigenem
+      Schiff die G seines Manöverantriebs. `/days` = Stunden ÷ 24, aufgerundet, mindestens 1 Tag
+      (Owner); so viele Tage vergehen wie bei der Reise, ohne Pflicht-Begegnungen.
+    - *Ticket* (Hausregel, Owner): je Reisendem Cr 25 je Stunde Flugzeit (der Satz der Middle Passage
+      je Tag), als Buchung `ticket` auf dem Abflugort mit Verweis auf die Reise (`ticketFor`). Nur
+      wenn Start oder Ziel einen Raumhafen hat (Starport A–E bzw. Spaceport F–H). Reicht die Kasse
+      nicht, geht die Reise nicht.
+    - *Eigenes Schiff*: wie bei der Reise mit eigenem Schiff (`ship`), ohne Preis und ohne
+      Treibstoff (der Manöverantrieb verbraucht im Classic Traveller keinen nennenswerten).
+    - *Wer*: wie bei der Reise alle lebenden, nicht ausgeblendeten Charaktere (`travellers`). Danach
+      ist der Aufenthaltsort die Zielwelt (ohne Stadt und Feld).
+    - Im Log wie die Reise: nicht löschbar.
   - *Ohne Reise*: „Gruppe platzieren“ auf der Weltkarte und die Wahl im Reiter Begegnung setzen den
     Aufenthaltsort weiter ohne Reise und ohne Zeit, etwa zu Beginn einer Kampagne oder für eine
     Reise außerhalb der Regeln.
@@ -2541,6 +2576,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Eine fertige Welt ab Größe 1 mit Oberfläche (`Surface`) kann eine Oberflächenkarte haben
     (`map`). Sie entsteht in einem Zug, wenn man den Globus zum ersten Mal öffnet, und ersetzt sich
     nur ganz („Neu würfeln“). Von Hand ändern lässt sie sich nicht. Größe 0 hat keine.
+    Geändert 2026-11-20d (Owner): Sie entsteht nur auf ausdrücklichen Knopfdruck, „Globus erzeugen“
+    auf der Weltkarte; „Öffnen“ gibt es erst danach. Das gilt für jede Welt, Hauptwelt wie
+    Nebenwelt.
   - Das Raster folgt aus der Größe und wird nicht gespeichert: ein Ikosaeder, jede Kante in
     n = 4 × Größe Abschnitte geteilt, jeder Eckpunkt ein Oberflächenfeld (`/cells` = 10 × n² + 2).
     Die Felder (`cells`) stehen in einer festen Reihenfolge, jedes hat eine Nummer ab 0.
@@ -3127,6 +3165,16 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Raumkarte kommen die weiteren Welten nicht: Sie
     liegen Millionen Kilometer entfernt. Die Weltkarte zeigt sie in einer Übersicht des Systems;
     besuchen kann man sie später mit einer Reise im System.
+  - **Nebenwelten mit Weltkarte und Globus** (wartet auf Freigabe, 2026-11-20d; Owner, 20. November
+    2026). Ein Tipp auf eine Welt in der Übersicht des Systems öffnet ihre Weltkarte, wie die der
+    Hauptwelt; Weltkarte und Globus hängen dafür an der Welt, nicht am Hexfeld. Nebenwelten
+    bekommen dort einen Namen und eine Notiz, „Oberfläche würfeln“ (wie bei Welten von vor der
+    Oberfläche; die Temperatur aus der Zone wird dabei gespeichert, damit das Leben dazu passt) und
+    „Globus erzeugen“; danach haben sie Tiertabellen, Orte und Begegnungen wie die Hauptwelt.
+    Keine Oberfläche und keinen Globus haben Größe 0 (Gürtel), kleine Welten (S), Ringe und
+    Gasriesen. ⚑ Auf der Oberflächenkarte einer Nebenwelt bekommt die erste Hauptstadt den
+    Spaceport als Hafen (Y: keinen), die übrigen Städte wie bei Starport X. Die Übersicht zeigt mit
+    einem kleinen Punkt am Namen, welche Welt einen Globus hat.
   - **Nebenwelten** (freigegeben am 20. November 2026, Kennzeichen 2026-11-20c). Nach B6 38–39 mit den Tabellen
     S. 29, übertragen in [`regeln-sternsystem.md`](regeln-sternsystem.md) (*Nebenwelten*). Für jede
     Welt außer der Hauptwelt, Gasriesen und Ringen, im selben Zug wie das übrige System, nach den
@@ -3184,7 +3232,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Nebenwelten haben Spaceports, 2026-11-20c); ab der Größe entstehen die übrigen Werte der
     Hauptwelt. Der Name der
     Hauptwelt ist der Name, den die Sektorkarte zeigt. Die übrigen Welten entstehen mit dem Schritt
-    „Sternsystem würfeln“ (2026-11-20). Namen bekommen Nebenwelten und Monde vorerst keine.
+    „Sternsystem würfeln“ (2026-11-20). Namen bekommen Nebenwelten und Monde auf ihrer Weltkarte
+    (2026-11-20d).
   - **Verweise auf eine Welt.** Orte (`Place.world`, also auch Aufenthaltsort, Orte von NSC,
     Missionsorte), Heimatwelt und Welten der Terms, Buchungen und Begegnungen (`in`) und der
     Systemflug (`world`, die Welt in der Mitte der Raumkarte; ersetzt auch `SystemFlight.at`) zeigen

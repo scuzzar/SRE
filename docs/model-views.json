@@ -481,6 +481,15 @@
         "Hex",
         "StarSystem"
       ]
+    },
+    {
+      "id": "2026-11-20d",
+      "file": "2026-11-20d-reise-im-system",
+      "title": "Reise im System: Logeintrag SystemJourney von Welt zu Welt mit Ticket (Buchung ticket) oder eigenem Schiff; Nebenwelten mit Namen, Oberfläche und Globus",
+      "approved": false,
+      "show": [
+        "Journey"
+      ]
     }
   ]
 }
