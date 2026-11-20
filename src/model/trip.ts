@@ -9,7 +9,7 @@ import type { TripDay } from './log';
 import { placeCell, withPlaceTerrain, type Place } from './place';
 import type { Clock } from './ports';
 import { itemOf, ref } from './reference';
-import { worldOf, type Hex } from './sector';
+import { worldOf, type NamedWorld } from './sector';
 import type { Booking } from './shop';
 import { surfaceGrid, type SurfaceGrid } from './surface-grid';
 import type { SurfaceMap } from './surface-map';
@@ -45,7 +45,7 @@ const LANDING_TOWNS = 30;
 /** Die Oberfläche, auf der die Gruppe fährt: die Welt ihres Aufenthaltsorts mit Karte. */
 export interface TripSurface {
   readonly world: string;
-  readonly hex: Hex & { readonly name: string };
+  readonly hex: NamedWorld;
   readonly map: SurfaceMap;
   readonly grid: SurfaceGrid;
   readonly size: number;

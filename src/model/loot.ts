@@ -4,7 +4,7 @@ import { DomainError } from './errors';
 import type { Butchering, LogEntry } from './log';
 import type { Clock, Random } from './ports';
 import { itemOf, ref, type AnimalCategory, type Item } from './reference';
-import { hexById, type Hex } from './sector';
+import { worldById, type Hex, type World } from './sector';
 import { canFight, isDead, woundStateOf } from './wounds';
 import { addToStash } from './stash';
 
@@ -137,12 +137,12 @@ export function butcheringResult(campaign: Campaign, entry: Butchering): Butcher
   const meat = edible && entry.meatDie !== undefined ? Math.max(1, Math.floor((Math.min(6, entry.meatDie + entry.meatSkill) * 5 * weight) / 100)) : 0;
   const furHalf = entry.furSkill < 1;
   const fur = hasFur ? (furHalf ? Math.floor(weight / 2) : weight) : 0;
-  const hex = hexById(campaign.hexes, at.in)!;
-  const reason = edible ? undefined : (inedible(hex, row) ?? 'Wurf: ungenießbar');
+  const world = worldById(campaign.hexes, at.in)!;
+  const reason = edible ? undefined : (inedible(world, row) ?? 'Wurf: ungenießbar');
   return { edible, reason, meat, fur, furHalf, hasFur };
 }
 
-function inedible(hex: Hex, row: AnimalRow): string | undefined {
+function inedible(hex: World, row: AnimalRow): string | undefined {
   const atmosphere = hex.uwp.atmosphere ?? 0;
   if (atmosphere < 2 || atmosphere > 9) return `Atmosphäre ${atmosphere}: ungenießbar`;
   if ((row.attacks ?? []).some((a) => a.with === 'stinger')) return 'Giftwaffe: ungenießbar';
@@ -158,11 +158,12 @@ function addGame(stash: readonly Possession[], item: string, kg: number, from: A
 function withLootValues(campaign: Campaign, at: AnimalRef, random: Random): Campaign {
   const row = animalRowOf(campaign.hexes, at);
   if (row.market !== undefined && row.edible !== undefined) return campaign;
-  const hex = hexById(campaign.hexes, at.in)!;
-  const values = rollLootValues(hex, row.attacks ?? [], random);
-  const hexes = campaign.hexes.map((h) =>
-    h !== hex ? h : { ...h, animals: (h.animals ?? []).map((t) => (t.terrain !== at.terrain ? t : { ...t, rows: t.rows.map((r) => (r.roll === at.roll ? { ...r, ...values } : r)) })) },
-  );
+  const world = worldById(campaign.hexes, at.in)!;
+  const values = rollLootValues(world, row.attacks ?? [], random);
+  const hexes = campaign.hexes.map((h) => ({
+    ...h,
+    worlds: h.worlds.map((w) => (w.id !== world.id ? w : { ...w, animals: (w.animals ?? []).map((t) => (t.terrain !== at.terrain ? t : { ...t, rows: t.rows.map((r) => (r.roll === at.roll ? { ...r, ...values } : r)) })) })),
+  }));
   return { ...campaign, hexes };
 }
 

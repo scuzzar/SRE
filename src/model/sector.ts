@@ -44,19 +44,18 @@ export interface Surface {
 /** Die Stellen des UWP, jede, sobald sie feststeht. */
 export type Uwp = Readonly<Partial<Record<UwpKind, number>>>;
 
+/** Was für ein Körper eine Welt ist (Domänenmodell 2026-11-20b): Welt, kleine Welt, Gürtel, Gasriese oder Ring. */
+export type WorldKind = 'world' | 'small' | 'belt' | 'giant' | 'ring';
+
 /**
- * Ein erzeugtes Hexfeld des Subsektors. Es hält die Werte seiner Welt, jeden, sobald er feststeht;
- * die Würfe werden nicht gespeichert. Fehlt ein Hexfeld, ist es nicht erzeugt.
+ * Eine Welt eines Systems (Domänenmodell 2026-11-20b, `World`): die Hauptwelt, ein weiterer Planet,
+ * ein Gürtel, ein Gasriese, eine kleine Welt, ein Mond oder ein Ring. Die Hauptwelt hat die Id ihres
+ * Hexfeldes (0304), damit Verweise auf sie dieselben bleiben; weitere Welten haben „0304-1“ usw.
  */
-export interface Hex {
-  readonly column: number;
-  readonly row: number;
-  /** Das Vorkommen hat keine Welt ergeben. */
-  readonly empty: boolean;
+export interface World {
+  readonly id: string;
+  readonly kind: WorldKind;
   readonly name?: string;
-  readonly navalBase?: boolean;
-  readonly scoutBase?: boolean;
-  readonly gasGiant?: boolean;
   readonly uwp: Uwp;
   /** Die Temperatur nach Mongoose Traveller; fehlt bei Welten, deren Hydrographie vorher gewürfelt wurde. */
   readonly temperature?: TemperatureId;
@@ -70,6 +69,91 @@ export interface Hex {
   readonly populationMultiplier?: number;
   /** Die Oberflächenkarte; entsteht beim ersten Öffnen des Globus (siehe `surface-map.ts`). */
   readonly map?: SurfaceMap;
+  /** Um den Hauptstern die Nummer der Bahn (eingefangene mit Nachkomma), bei einem Mond der Abstand in Radien der Welt, die er umkreist. */
+  readonly orbit?: number;
+  /** Nur Monde: wo sie am Kampagnentag 0 auf ihrer Bahn standen, in Grad. */
+  readonly angle?: number;
+  /** Auf einer Zwischenbahn außerhalb der Standardbahnen. */
+  readonly captured?: boolean;
+  /** Nur kleine Welten: Durchmesser in km. */
+  readonly diameter?: number;
+  /** Nur Gasriesen: groß oder klein und Radius in km. */
+  readonly large?: boolean;
+  readonly radius?: number;
+  /** Die Welt, um die dieser Mond (oder Ring) kreist; fehlt, wenn sie um den Hauptstern kreist. */
+  readonly moonOf?: string;
+}
+
+/**
+ * Ein erzeugtes Hexfeld des Subsektors: das System (Domänenmodell 2026-11-20b). Es hält ob es leer
+ * ist, die Basen und ob es einen Gasriesen gibt, und alle Welten des Systems; eine davon ist die
+ * Hauptwelt. Die Würfe werden nicht gespeichert. Fehlt ein Hexfeld, ist es nicht erzeugt.
+ */
+export interface Hex {
+  readonly column: number;
+  readonly row: number;
+  /** Das Vorkommen hat keine Welt ergeben. */
+  readonly empty: boolean;
+  readonly navalBase?: boolean;
+  readonly scoutBase?: boolean;
+  readonly gasGiant?: boolean;
+  /** Alle Welten des Systems, die Hauptwelt zuerst. Ein leeres Feld hat keine. */
+  readonly worlds: readonly World[];
+  /** Die Id der Hauptwelt; fehlt bei einem leeren Feld. */
+  readonly main?: string;
+  /** Das Sternsystem (Domänenmodell 2026-11-18d); fehlt, bis es gewürfelt ist (siehe `star-system.ts`). */
+  readonly system?: StarSystem;
+}
+
+/** Das Sternsystem eines Hexfeldes; der Typ steht in `star-system.ts`. */
+export interface StarSystem {
+  readonly stars: readonly Star[];
+  readonly maxOrbits: number;
+  readonly emptyOrbits: readonly number[];
+}
+
+/** Ein Stern (Domänenmodell `Star`): Typ, Zehntel, Größe; Begleiter mit Bahn, nah oder fern. */
+export interface Star {
+  readonly type: 'O' | 'B' | 'A' | 'F' | 'G' | 'K' | 'M';
+  readonly decimal?: number;
+  readonly size: 'Ia' | 'Ib' | 'II' | 'III' | 'IV' | 'V' | 'VI' | 'D';
+  readonly orbit?: number;
+  readonly close: boolean;
+  readonly farAu?: number;
+}
+
+/** Die Hauptwelt eines Hexfeldes; ein leeres Feld hat keine. */
+export function mainOf(hex: Hex): World | undefined {
+  return hex.main === undefined ? undefined : hex.worlds.find((w) => w.id === hex.main);
+}
+
+/** Die Hauptwelt; ohne sagt die Regel, dass das Feld keine Welt hat. */
+export function mainWorld(hex: Hex): World {
+  const world = mainOf(hex);
+  if (world === undefined) throw new DomainError(`Im Feld ${hexId(hex.column, hex.row)} gibt es keine Welt.`);
+  return world;
+}
+
+/** Das Hexfeld mit geänderter Hauptwelt; bleibt sie dieselbe, bleibt auch das Feld dasselbe. */
+export function withMain(hex: Hex, change: (world: World) => World): Hex {
+  const main = mainWorld(hex);
+  const changed = change(main);
+  return changed === main ? hex : { ...hex, worlds: hex.worlds.map((w) => (w === main ? changed : w)) };
+}
+
+/** Die leere Hauptwelt eines neuen Feldes mit Welt; sie hat die Id des Feldes. */
+function newMainWorld(column: number, row: number): World {
+  return { id: hexId(column, row), kind: 'world', uwp: {} };
+}
+
+/** Das Hexfeld einer Welt: die Id vor dem Bindestrich (0304-2 → 0304). */
+export function hexIdOfWorld(worldId: string): string {
+  return worldId.split('-')[0]!;
+}
+
+/** Eine Welt eines Systems, auch eine Nebenwelt oder ein Mond. */
+export function worldById(hexes: readonly Hex[], id: string): World | undefined {
+  return hexById(hexes, hexIdOfWorld(id))?.worlds.find((w) => w.id === id);
 }
 
 /** Woraus der DM eines Wurfs besteht, mit Namen: „Größe 7 +7“; ohne Namen der feste Teil der Formel (−7). */
@@ -97,16 +181,44 @@ export function hexById(hexes: readonly Hex[], id: string): Hex | undefined {
   return hexes.find((h) => hexId(h.column, h.row) === id);
 }
 
-/** Eine fertige Welt: erzeugt, nicht leer, mit Namen. */
-export function isWorld(hex: Hex | undefined): hex is Hex & { readonly name: string } {
+/** Ein Feld mit fertiger Hauptwelt: erzeugt, nicht leer, mit Namen. */
+export function isWorld(hex: Hex | undefined): hex is Hex {
   return hex !== undefined && !hex.empty && stepOf(hex) === 'done';
 }
 
-/** Die fertige Welt, auf die verwiesen wird; sonst ein DomainError. */
-export function worldOf(hexes: readonly Hex[], id: string): Hex & { readonly name: string } {
-  const hex = hexById(hexes, id);
+/** Eine fertige Welt mit Namen. */
+export type NamedWorld = World & { readonly name: string };
+
+/**
+ * Die fertige Welt, auf die verwiesen wird (Hauptwelt eines fertigen Feldes oder eine Welt seines
+ * Systems); sonst ein DomainError.
+ */
+export function worldOf(hexes: readonly Hex[], id: string): NamedWorld {
+  const hex = hexById(hexes, hexIdOfWorld(id));
+  if (!isWorld(hex)) throw new DomainError(`Im Feld ${hexIdOfWorld(id)} gibt es keine fertige Welt.`);
+  const world = hex.worlds.find((w) => w.id === id);
+  if (world === undefined) throw new DomainError(`Die Welt ${id} gibt es nicht.`);
+  return { ...world, name: world.name ?? mainWorld(hex).name! + (world.id === hex.main ? '' : ` ${world.id.split('-')[1]}`) };
+}
+
+/** Die fertige Hauptwelt eines Feldes mit Namen; sonst ein DomainError. */
+export function namedMain(hex: Hex): NamedWorld {
+  const id = hexId(hex.column, hex.row);
   if (!isWorld(hex)) throw new DomainError(`Im Feld ${id} gibt es keine fertige Welt.`);
-  return hex;
+  return mainWorld(hex) as NamedWorld;
+}
+
+/** Ein Hexfeld, wie es vor 2026-11-20b gespeichert wurde: die Werte der Hauptwelt am Feld. */
+export type FlatHex = Pick<Hex, 'column' | 'row' | 'empty' | 'navalBase' | 'scoutBase' | 'gasGiant'> & Omit<World, 'id' | 'kind'>;
+
+/** Macht aus einem Hexfeld von vor 2026-11-20b eines mit Hauptwelt (die Werte der Welt wandern in sie). */
+export function hexFromFlat(old: FlatHex): Hex {
+  const { column, row, empty, navalBase, scoutBase, gasGiant, ...world } = old;
+  const base = { column, row, empty, ...(navalBase === undefined ? {} : { navalBase }), ...(scoutBase === undefined ? {} : { scoutBase }), ...(gasGiant === undefined ? {} : { gasGiant }) };
+  const id = hexId(column, row);
+  // Ein leeres Feld hatte nur `uwp: {}`; was sonst daran stand, bleibt als Welt, damit die Prüfung es zurückweist.
+  if (empty) return { ...base, worlds: Object.keys(world).length === 1 && Object.keys(world.uwp).length === 0 ? [] : [{ id, kind: 'world', ...world }] };
+  return { ...base, worlds: [{ id, kind: (world.uwp.size ?? 1) === 0 ? 'belt' : 'world', ...world }], main: id };
 }
 
 /** Die Ziffer einer Stelle des UWP; fehlt sie in den Charts, gibt es keinen Text und keinen DM. */
@@ -160,22 +272,23 @@ export function systemRow(total: number): SystemContents {
  */
 export function stepOf(hex: Hex): WorldStep {
   if (hex.empty) return 'done';
-  if (hex.uwp.starport === undefined) return 'starport';
+  const world = mainWorld(hex);
+  if (world.uwp.starport === undefined) return 'starport';
   if (hex.navalBase === undefined) return 'navalBase';
   if (hex.scoutBase === undefined) return 'scoutBase';
   if (hex.gasGiant === undefined) return 'gasGiant';
   for (const kind of uwpKinds) {
-    if (kind === 'hydrographics' && hex.uwp.hydrographics === undefined && hex.temperature === undefined) return 'temperature';
-    if (hex.uwp[kind] === undefined) return kind;
+    if (kind === 'hydrographics' && world.uwp.hydrographics === undefined && world.temperature === undefined) return 'temperature';
+    if (world.uwp[kind] === undefined) return kind;
   }
   // Welten von vor der Temperatur bekommen die Oberfläche erst, wenn sie fertig sind.
-  if (hex.surface === undefined && hex.temperature !== undefined && hex.name === undefined) return 'surface';
-  return hex.name === undefined ? 'name' : 'done';
+  if (world.surface === undefined && world.temperature !== undefined && world.name === undefined) return 'surface';
+  return world.name === undefined ? 'name' : 'done';
 }
 
 /** Eine fertige Welt ohne Temperatur: Ihre Weltkarte bietet an, sie nachzuwürfeln. */
 export function lacksTemperature(hex: Hex): boolean {
-  return !hex.empty && hex.temperature === undefined && stepOf(hex) === 'done';
+  return !hex.empty && mainWorld(hex).temperature === undefined && stepOf(hex) === 'done';
 }
 
 /**
@@ -186,8 +299,9 @@ export function nextWorldAction(hex: Hex): WorldRollKind | 'surface' | undefined
   const step = stepOf(hex);
   if (step !== 'name' && step !== 'done') return step;
   if (step === 'name' || hex.empty) return undefined;
-  if (hex.temperature === undefined) return 'temperature';
-  return hex.surface === undefined ? 'surface' : undefined;
+  const world = mainWorld(hex);
+  if (world.temperature === undefined) return 'temperature';
+  return world.surface === undefined ? 'surface' : undefined;
 }
 
 /** Der Wurf, der als Nächstes dran ist; keiner, wenn die Oberfläche, der Name oder nichts mehr dran ist. */
@@ -201,23 +315,27 @@ export function nextRollKind(hex: Hex): WorldRollKind | undefined {
  * Temperatur) Hydrographie bei kleinen Welten.
  */
 function settle(hex: Hex): Hex {
-  const port = hex.uwp.starport === undefined ? undefined : ehex(hex.uwp.starport);
-  const uwp = { ...hex.uwp };
+  if (hex.empty) return hex;
+  const world = mainWorld(hex);
+  const port = world.uwp.starport === undefined ? undefined : ehex(world.uwp.starport);
+  const uwp = { ...world.uwp };
   let { navalBase, scoutBase } = hex;
   if (port !== undefined && navalBase === undefined && !['A', 'B'].includes(port)) navalBase = false;
   if (port !== undefined && scoutBase === undefined && ['E', 'X'].includes(port)) scoutBase = false;
   if (uwp.size === 0 && uwp.atmosphere === undefined) uwp.atmosphere = 0;
-  if (uwp.size !== undefined && uwp.size <= 1 && uwp.hydrographics === undefined && hex.temperature !== undefined) uwp.hydrographics = 0;
-  return {
-    ...hex,
-    uwp,
-    ...(navalBase === undefined ? {} : { navalBase }),
-    ...(scoutBase === undefined ? {} : { scoutBase }),
-  };
+  if (uwp.size !== undefined && uwp.size <= 1 && uwp.hydrographics === undefined && world.temperature !== undefined) uwp.hydrographics = 0;
+  return withMain(
+    {
+      ...hex,
+      ...(navalBase === undefined ? {} : { navalBase }),
+      ...(scoutBase === undefined ? {} : { scoutBase }),
+    },
+    (w) => ({ ...w, uwp }),
+  );
 }
 
 /** Der DM des nächsten Wurfs in Teilen; die Summe ist der DM des Wurfs. */
-export function worldDmParts(hex: Pick<Hex, 'uwp' | 'temperature'>, kind: WorldRollKind): readonly WorldDmPart[] {
+export function worldDmParts(hex: Pick<World, 'uwp' | 'temperature'>, kind: WorldRollKind): readonly WorldDmPart[] {
   const { uwp } = hex;
   const value = (k: UwpKind) => uwp[k] ?? 0;
   switch (kind) {
@@ -271,7 +389,8 @@ export function worldDmParts(hex: Pick<Hex, 'uwp' | 'temperature'>, kind: WorldR
 
 /** Ein neues Hexfeld nach dem Vorkommen: Summe + DM ≥ Zielwert heißt, es gibt eine Welt. */
 export function occurrenceHex(column: number, row: number, total: number, target: number): Hex {
-  return { column, row, empty: total < target, uwp: {} };
+  const empty = total < target;
+  return empty ? { column, row, empty, worlds: [] } : { column, row, empty, worlds: [newMainWorld(column, row)], main: hexId(column, row) };
 }
 
 /**
@@ -289,16 +408,16 @@ function applyRoll(hex: Hex, kind: WorldRollKind, total: number): Hex {
     case 'occurrence':
       throw new DomainError('Das Vorkommen würfelt man für ein nicht erzeugtes Feld.');
     case 'starport':
-      return settle({ ...hex, uwp: { ...hex.uwp, starport: EHEX.indexOf(systemRow(total).starport) } });
+      return settle(withMain(hex, (w) => ({ ...w, uwp: { ...w.uwp, starport: EHEX.indexOf(systemRow(total).starport) } })));
     case 'navalBase':
     case 'scoutBase':
     case 'gasGiant':
       return settle({ ...hex, [kind]: systemRow(total)[kind] });
     case 'temperature':
-      return settle({ ...hex, temperature: temperatureFor(total).id });
+      return settle(withMain(hex, (w) => ({ ...w, temperature: temperatureFor(total).id })));
     default: {
       const value = Math.max(0, kind === 'hydrographics' ? Math.min(MAX_HYDROGRAPHICS, total) : total);
-      return settle({ ...hex, uwp: { ...hex.uwp, [kind]: value } });
+      return settle(withMain(hex, (w) => ({ ...w, uwp: { ...w.uwp, [kind]: value } })));
     }
   }
 }
@@ -335,7 +454,7 @@ export const MAX_MAJOR_CONTINENTS = 6;
 export const LIFE_TARGET = 10;
 
 /** Der DM auf das einheimische Leben, in Teilen. */
-export function lifeDmParts(hex: Pick<Hex, 'uwp' | 'temperature'>): readonly WorldDmPart[] {
+export function lifeDmParts(hex: Pick<World, 'uwp' | 'temperature'>): readonly WorldDmPart[] {
   const atmosphere = hex.uwp.atmosphere ?? 0;
   const hydrographics = hex.uwp.hydrographics ?? 0;
   const parts: WorldDmPart[] = [];
@@ -351,7 +470,7 @@ export function lifeDmParts(hex: Pick<Hex, 'uwp' | 'temperature'>): readonly Wor
  * Würfelt die Oberfläche einer Welt in einem Zug (World Builder's Handbook S. 68–70): Wasseranteil,
  * Platten, Land- bzw. Wassermassen, einheimisches Leben.
  */
-export function rollSurface(hex: Hex, random: Random): Surface {
+export function rollSurface(hex: Pick<World, 'uwp' | 'temperature'>, random: Random): Surface {
   const size = hex.uwp.size ?? 0;
   const hydrographics = hex.uwp.hydrographics ?? 0;
   // Wasseranteil: Hydrographie × 10 + (2W6 − 7), eine 12 wird neu gewürfelt.
@@ -382,7 +501,7 @@ export function rollSurface(hex: Hex, random: Random): Surface {
 /** Trägt die Oberfläche ein, wenn sie dran ist; sonst ein DomainError. */
 export function enterSurface(hex: Hex, random: Random): Hex {
   if (nextWorldAction(hex) !== 'surface') throw new DomainError(`Die Oberfläche ist für das Feld ${hexId(hex.column, hex.row)} nicht dran.`);
-  return { ...hex, surface: rollSurface(hex, random) };
+  return withMain(hex, (w) => ({ ...w, surface: rollSurface(w, random) }));
 }
 
 /** Ist alles Land Archipel: keine anderen Landmassen, und die Archipele sind die ganze Landfläche in halben Hexen. */
@@ -396,10 +515,10 @@ export function onlyLakes(surface: Surface): boolean {
 }
 
 /** Prüft die Oberfläche einer Welt: Sie braucht Temperatur und TL, und jeder Wert liegt dort, wo die Regeln ihn hinbringen können. */
-function validateSurface(hex: Hex, fail: (why: string) => never): void {
+function validateSurface(hex: World, fail: (why: string) => never): void {
   const surface = hex.surface;
   if (surface === undefined) return;
-  if (hex.empty || hex.uwp.tech === undefined || hex.temperature === undefined) fail('Die Oberfläche braucht TL und Temperatur.');
+  if (hex.uwp.tech === undefined || hex.temperature === undefined) fail('Die Oberfläche braucht TL und Temperatur.');
   const counts = [surface.plates, surface.majorContinents, surface.minorContinents, surface.majorIslands, surface.archipelagos, surface.majorOceans, surface.minorOceans, surface.smallSeas, surface.scatteredLakes];
   if (!Number.isInteger(surface.water) || counts.some((n) => !Number.isInteger(n) || n < 0) || typeof surface.life !== 'boolean') fail('Die Oberfläche hat ungültige Werte.');
   const size = hex.uwp.size ?? 0;
@@ -416,7 +535,9 @@ function validateSurface(hex: Hex, fail: (why: string) => never): void {
 
 /** Ob eine Welt eine Oberflächenkarte haben kann: fertig, ab Größe 1, mit Oberfläche und Temperatur. */
 export function canHaveMap(hex: Hex): boolean {
-  return isWorld(hex) && (hex.uwp.size ?? 0) >= 1 && hex.surface !== undefined && hex.temperature !== undefined;
+  if (!isWorld(hex)) return false;
+  const world = mainWorld(hex);
+  return (world.uwp.size ?? 0) >= 1 && world.surface !== undefined && world.temperature !== undefined;
 }
 
 /**
@@ -425,7 +546,8 @@ export function canHaveMap(hex: Hex): boolean {
  */
 export function withSurfaceMap(hex: Hex, random: Random, taken: ReadonlySet<string> = new Set()): Hex {
   if (!canHaveMap(hex)) throw new DomainError(`Die Welt im Feld ${hexId(hex.column, hex.row)} kann keine Oberflächenkarte haben.`);
-  const u = hex.uwp;
+  const world = mainWorld(hex);
+  const u = world.uwp;
   const { map, populationMultiplier } = generateSurfaceMap(
     {
       size: u.size!,
@@ -434,39 +556,40 @@ export function withSurfaceMap(hex: Hex, random: Random, taken: ReadonlySet<stri
       population: u.population ?? 0,
       tech: u.tech ?? 0,
       starport: u.starport ?? 31,
-      temperature: hex.temperature!,
-      surface: hex.surface!,
-      ...(hex.populationMultiplier === undefined ? {} : { populationMultiplier: hex.populationMultiplier }),
-      ...(hex.name === undefined ? {} : { name: hex.name }),
+      temperature: world.temperature!,
+      surface: world.surface!,
+      ...(world.populationMultiplier === undefined ? {} : { populationMultiplier: world.populationMultiplier }),
+      ...(world.name === undefined ? {} : { name: world.name }),
     },
     random,
     taken,
   );
-  return { ...hex, map, ...(populationMultiplier === undefined ? {} : { populationMultiplier }) };
+  return withMain(hex, (w) => ({ ...w, map, ...(populationMultiplier === undefined ? {} : { populationMultiplier }) }));
 }
 
 /** Die Namen aller Städte auf allen Oberflächenkarten, außer der des Feldes `except` (für ihr Neuwürfeln). */
 export function cityNamesTaken(hexes: readonly Hex[], except?: Hex): ReadonlySet<string> {
   const names = new Set<string>();
-  for (const h of hexes) if (h !== except) for (const c of h.map?.cities ?? []) names.add(c.name);
+  for (const h of hexes) if (h !== except) for (const w of h.worlds) for (const c of w.map?.cities ?? []) names.add(c.name);
   return names;
 }
 
 /** Benennt die Stadt an der Stelle `index` der Karte dieses Feldes um; ein leerer Name geht nicht. */
 export function renameCity(hexes: readonly Hex[], column: number, row: number, index: number, name: string): readonly Hex[] {
   const hex = hexAt(hexes, column, row);
-  const city = hex?.map?.cities?.[index];
-  if (!hex?.map || !city) throw new DomainError('Diese Stadt gibt es nicht.');
+  const world = hex && mainOf(hex);
+  const city = world?.map?.cities?.[index];
+  if (!hex || !world?.map || !city) throw new DomainError('Diese Stadt gibt es nicht.');
   const trimmed = name.trim();
   if (!trimmed) throw new DomainError('Eine Stadt braucht einen Namen.');
-  const cities = hex.map.cities!.map((c, i) => (i === index ? { ...c, name: trimmed } : c));
-  return hexes.map((h) => (h === hex ? { ...hex, map: { ...hex.map!, cities } } : h));
+  const cities = world.map.cities!.map((c, i) => (i === index ? { ...c, name: trimmed } : c));
+  return hexes.map((h) => (h === hex ? withMain(hex, (w) => ({ ...w, map: { ...w.map!, cities } })) : h));
 }
 
 /** Die Handelscodes einer Welt, sobald das UWP vollständig ist: jeder, dessen Bedingungen alle erfüllt sind. */
-export function tradeCodesOf(hex: Hex): readonly TradeCode[] {
-  if (hex.empty || uwpKinds.some((k) => hex.uwp[k] === undefined)) return [];
-  return ref.worlds.tradeCodes.filter((code) => code.if.every((c) => c.digits.includes(hex.uwp[c.of]!)));
+export function tradeCodesOf(world: Pick<World, 'uwp'> | undefined): readonly TradeCode[] {
+  if (world === undefined || uwpKinds.some((k) => world.uwp[k] === undefined)) return [];
+  return ref.worlds.tradeCodes.filter((code) => code.if.every((c) => c.digits.includes(world.uwp[c.of]!)));
 }
 
 /** Das UWP in der üblichen Schreibweise, z. B. A788899-C; offene Stellen als „?“. */
@@ -493,17 +616,22 @@ export function nameWorld(hexes: readonly Hex[], column: number, row: number, na
   if (!hex || stepOf(hex) !== 'name') throw new DomainError('Erst alles würfeln, dann den Namen geben.');
   const trimmed = name.trim();
   if (!trimmed) throw new DomainError('Die Welt braucht einen Namen.');
-  return putHex(hexes, { ...hex, name: trimmed });
+  return putHex(hexes, withMain(hex, (w) => ({ ...w, name: trimmed })));
 }
 
 /** Setzt die Notiz einer fertigen Welt; Leerraum am Rand fällt weg, eine leere Notiz entfernt sie. */
 export function noteWorld(hexes: readonly Hex[], column: number, row: number, note: string): readonly Hex[] {
   const hex = hexAt(hexes, column, row);
   if (!isWorld(hex)) throw new DomainError('Eine Notiz hat nur eine fertige Welt.');
-  const rest: Hex = { ...hex };
-  delete (rest as { note?: string }).note;
   const trimmed = note.trim();
-  return putHex(hexes, trimmed ? { ...rest, note: trimmed } : rest);
+  return putHex(
+    hexes,
+    withMain(hex, (w) => {
+      const rest: World = { ...w };
+      delete (rest as { note?: string }).note;
+      return trimmed ? { ...rest, note: trimmed } : rest;
+    }),
+  );
 }
 
 /** Verwirft eine Welt in Erschaffung: Das Feld ist wieder nicht erzeugt. Fertiges bleibt. */
@@ -535,43 +663,61 @@ export function validateHex(hex: Hex): void {
   const fail = (why: string): never => {
     throw new DomainError(`Das Feld ${id}: ${why}`);
   };
+  if (hex.empty) {
+    if (hex.worlds.length > 0 || hex.main !== undefined || hex.navalBase !== undefined || hex.scoutBase !== undefined || hex.gasGiant !== undefined || hex.system !== undefined) fail('Ein leeres Feld hat keine Welt.');
+    return;
+  }
+  if (hex.main !== id) fail('Die Hauptwelt hat die Id ihres Feldes.');
+  const ids = new Set<string>();
+  for (const w of hex.worlds) {
+    if (ids.has(w.id)) fail(`Die Welt ${w.id} kommt doppelt vor.`);
+    ids.add(w.id);
+    if (hexIdOfWorld(w.id) !== id) fail(`Die Welt ${w.id} gehört nicht zu diesem Feld.`);
+    if (w.moonOf !== undefined && !hex.worlds.some((o) => o.id === w.moonOf && o.moonOf === undefined)) fail(`Der Mond ${w.id} kreist um keine Welt dieses Systems.`);
+  }
+  const main = mainOf(hex);
+  if (main === undefined) fail('Die Hauptwelt fehlt.');
+  validateMain(hex, main!, fail);
+}
+
+function validateMain(hex: Hex, world: World, fail: (why: string) => never): void {
   const values: [string, unknown][] = [
-    ['starport', hex.uwp.starport],
+    ['starport', world.uwp.starport],
     ['navalBase', hex.navalBase],
     ['scoutBase', hex.scoutBase],
     ['gasGiant', hex.gasGiant],
-    ...uwpKinds.slice(1).map((k): [string, unknown] => [k, hex.uwp[k]]),
-    ['name', hex.name],
+    ...uwpKinds.slice(1).map((k): [string, unknown] => [k, world.uwp[k]]),
+    ['name', world.name],
   ];
-  if (hex.empty && (hex.temperature !== undefined || values.some(([, v]) => v !== undefined))) fail('Ein leeres Feld hat keine Welt.');
-  if (hex.temperature !== undefined && !ref.worlds.temperatures.some((t) => t.id === hex.temperature)) fail('Diese Temperatur gibt es nicht.');
-  if (hex.temperature !== undefined && hex.uwp.atmosphere === undefined) fail('Die Temperatur steht da, aber die Atmosphäre fehlt.');
-  validateSurface(hex, fail);
+  if (world.kind !== 'world' && world.kind !== 'belt') fail('Die Hauptwelt ist eine Welt oder ein Gürtel.');
+  if (world.temperature !== undefined && !ref.worlds.temperatures.some((t) => t.id === world.temperature)) fail('Diese Temperatur gibt es nicht.');
+  if (world.temperature !== undefined && world.uwp.atmosphere === undefined) fail('Die Temperatur steht da, aber die Atmosphäre fehlt.');
+  validateSurface(world, fail);
   const missing = values.findIndex(([, v]) => v === undefined);
   if (missing >= 0 && values.slice(missing).some(([, v]) => v !== undefined)) fail(`Es fehlt ${values[missing]![0]}, aber Späteres steht schon da.`);
   for (const kind of uwpKinds) {
-    const value = hex.uwp[kind];
+    const value = world.uwp[kind];
     if (value === undefined) continue;
     const [min, max] = ranges[kind];
     if (!Number.isInteger(value) || value < min || value > max) fail(`${labels[kind]} ${value} kann kein Wurf ergeben.`);
   }
-  if (hex.uwp.starport !== undefined && !ref.worlds.systemContents.some((r) => EHEX.indexOf(r.starport) === hex.uwp.starport)) fail('Diesen Raumhafen gibt es nicht.');
-  if (hex.name !== undefined && !hex.name.trim()) fail('Die Welt braucht einen Namen.');
-  if (hex.note !== undefined && (hex.empty || stepOf(hex) !== 'done')) fail('Eine Notiz hat nur eine fertige Welt.');
-  if (hex.note !== undefined && !hex.note.trim()) fail('Eine leere Notiz gibt es nicht.');
-  if (hex.populationMultiplier !== undefined && (!Number.isInteger(hex.populationMultiplier) || hex.populationMultiplier < 1 || hex.populationMultiplier > 9 || !((hex.uwp.population ?? 0) >= 1))) fail('Einen Bevölkerungsmultiplikator 1–9 hat nur eine Welt mit Bevölkerung.');
-  if (hex.map !== undefined) {
+  if (world.uwp.starport !== undefined && !ref.worlds.systemContents.some((r) => EHEX.indexOf(r.starport) === world.uwp.starport)) fail('Diesen Raumhafen gibt es nicht.');
+  if (world.name !== undefined && !world.name.trim()) fail('Die Welt braucht einen Namen.');
+  if (world.note !== undefined && stepOf(hex) !== 'done') fail('Eine Notiz hat nur eine fertige Welt.');
+  if (world.note !== undefined && !world.note.trim()) fail('Eine leere Notiz gibt es nicht.');
+  if (world.populationMultiplier !== undefined && (!Number.isInteger(world.populationMultiplier) || world.populationMultiplier < 1 || world.populationMultiplier > 9 || !((world.uwp.population ?? 0) >= 1))) fail('Einen Bevölkerungsmultiplikator 1–9 hat nur eine Welt mit Bevölkerung.');
+  if (world.map !== undefined) {
     if (!canHaveMap(hex)) fail('Eine Oberflächenkarte hat nur eine fertige Welt ab Größe 1 mit Oberfläche.');
-    const why = checkSurfaceMap(hex.map, hex.uwp.size!, hex.uwp.population ?? 0);
+    const why = checkSurfaceMap(world.map, world.uwp.size!, world.uwp.population ?? 0);
     if (why) fail(why);
   }
   // Was ohne Wurf feststeht, muss so stehen, wie die Regeln es setzen.
   const settled = settle(hex);
-  const port = hex.uwp.starport === undefined ? undefined : ehex(hex.uwp.starport);
+  const port = world.uwp.starport === undefined ? undefined : ehex(world.uwp.starport);
   if (port !== undefined && !['A', 'B'].includes(port) && hex.navalBase === true) fail(`Bei Raumhafen ${port} gibt es keine Marinebasis.`);
   if (port !== undefined && ['E', 'X'].includes(port) && hex.scoutBase === true) fail(`Bei Raumhafen ${port} gibt es keine Scoutbasis.`);
-  if (hex.uwp.size === 0 && hex.uwp.atmosphere !== undefined && hex.uwp.atmosphere !== 0) fail('Größe 0 hat keine Atmosphäre.');
-  if (hex.uwp.size !== undefined && hex.uwp.size <= 1 && hex.uwp.hydrographics !== undefined && hex.uwp.hydrographics !== 0) fail('Größe 0 oder 1 hat keine Hydrographie.');
+  if (world.uwp.size === 0 && world.uwp.atmosphere !== undefined && world.uwp.atmosphere !== 0) fail('Größe 0 hat keine Atmosphäre.');
+  if (world.uwp.size !== undefined && world.uwp.size <= 1 && world.uwp.hydrographics !== undefined && world.uwp.hydrographics !== 0) fail('Größe 0 oder 1 hat keine Hydrographie.');
   if (stepOf(settled) !== stepOf(hex)) fail('Ein Wert, der ohne Wurf feststeht, fehlt.');
 }
 
@@ -607,7 +753,7 @@ export function hexFromRolls(old: { readonly column: number; readonly row: numbe
   for (const roll of rest) {
     // Damals kam nach der Atmosphäre gleich die Hydrographie, bei kleinen Welten ohne Wurf als 0.
     if (stepOf(hex) === 'temperature' && roll.kind !== 'temperature') {
-      if (hex.uwp.size !== undefined && hex.uwp.size <= 1) hex = { ...hex, uwp: { ...hex.uwp, hydrographics: 0 } };
+      if ((mainWorld(hex).uwp.size ?? 99) <= 1) hex = withMain(hex, (w) => ({ ...w, uwp: { ...w.uwp, hydrographics: 0 } }));
       else if (roll.kind === 'hydrographics') {
         hex = applyRoll(hex, roll.kind, total(roll));
         continue;
@@ -617,7 +763,8 @@ export function hexFromRolls(old: { readonly column: number; readonly row: numbe
   }
   if (old.name !== undefined) {
     if (stepOf(hex) !== 'name') throw new DomainError('Nur eine fertig gewürfelte Welt hat einen Namen.');
-    hex = { ...hex, name: old.name };
+    const name = old.name;
+    hex = withMain(hex, (w) => ({ ...w, name }));
   }
   return hex;
 }

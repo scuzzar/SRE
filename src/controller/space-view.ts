@@ -16,6 +16,8 @@ import {
   type ThrustMark,
   type TrackPoint,
   type Vec,
+  hexIdOfWorld,
+  worldOf,
 } from '../model';
 import { lookOf, type WorldLook } from './world-view';
 
@@ -86,11 +88,12 @@ function duration(seconds: number): string {
 }
 
 export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | undefined {
-  const hex = hexById(campaign.hexes, space.world);
+  const hex = hexById(campaign.hexes, hexIdOfWorld(space.world));
   if (!isWorld(hex)) return undefined;
-  const body = bodyOf(hex);
+  const world = worldOf(campaign.hexes, space.world);
+  const body = bodyOf(world);
   const look = lookOf(hex)!;
-  const [ten, hundred] = jumpLimitsOf(hex);
+  const [ten, hundred] = jumpLimitsOf(world);
   const here = campaign.location?.world === space.world;
   const flight = campaign.flight?.world === space.world ? campaign.flight : undefined;
   const blocker = flight
@@ -107,7 +110,7 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
               ? 'Erst die Fahrt beenden, dann fliegen.'
               : undefined;
   return {
-    world: { id: space.world, name: hex.name, look, radius: body?.radius },
+    world: { id: space.world, name: world.name, look, radius: body?.radius },
     jumpLimits: ten === undefined || hundred === undefined ? [] : [{ km: ten, dm: 15 }, { km: hundred, dm: 5 }],
     band: BAND_KM,
     here,

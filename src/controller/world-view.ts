@@ -7,6 +7,8 @@ import {
   hexAt,
   hexId,
   isWorld,
+  mainOf,
+  mainWorld,
   OCCURRENCE_TARGET,
   SECTOR_COLUMNS,
   SECTOR_ROWS,
@@ -23,6 +25,7 @@ import {
   type Hex,
   type Surface,
   type UwpKind,
+  type World,
   type WorldDmPart,
   type WorldRollKind,
   type WorldStep,
@@ -54,35 +57,41 @@ export interface WorldLook {
  * dem, was schon gewürfelt ist; sonst `undefined`.
  */
 export function lookOf(hex: Hex | undefined): WorldLook | undefined {
-  if (!hex || hex.empty || hex.uwp.size === undefined) return undefined;
+  const world = hex && mainOf(hex);
+  if (!hex || !world || world.uwp.size === undefined) return undefined;
   if (hexState(hex) !== 'world') {
-    const { size, atmosphere, hydrographics, population, tech } = hex.uwp;
+    const { size, atmosphere, hydrographics, population, tech } = world.uwp;
     return {
       seed: hexId(hex.column, hex.row),
       size,
       atmosphere,
       hydrographics,
-      water: hex.surface ? hex.surface.water / 100 : undefined,
+      water: world.surface ? world.surface.water / 100 : undefined,
       population,
       tech,
-      temperature: hex.temperature,
-      life: hex.surface?.life,
+      temperature: world.temperature,
+      life: world.surface?.life,
     };
   }
-  const { size = 0, atmosphere = 0, hydrographics = 0, population = 0, tech = 0 } = hex.uwp;
+  return lookOfWorld(world, hexId(hex.column, hex.row));
+}
+
+/** Das Symbol einer fertigen Welt; `seed` macht es unverwechselbar. */
+export function lookOfWorld(world: World, seed: string): WorldLook {
+  const { size = 0, atmosphere = 0, hydrographics = 0, population = 0, tech = 0 } = world.uwp;
   return {
-    seed: hexId(hex.column, hex.row),
+    seed,
     size,
     atmosphere,
     hydrographics,
-    water: hex.surface ? hex.surface.water / 100 : hydrographics >= 10 ? 0.985 : hydrographics / 10,
+    water: world.surface ? world.surface.water / 100 : hydrographics >= 10 ? 0.985 : hydrographics / 10,
     population,
     tech,
     // Welten von vor der Temperatur gelten als gemäßigt, Welten von vor der Oberfläche als belebt,
     // wenn Luft und Wasser es erlauben.
-    temperature: hex.temperature ?? 'temperate',
-    life: hex.surface?.life ?? (atmosphere >= 2 && atmosphere <= 9 && hydrographics > 0),
-    ...(hex.map && size > 0 ? { surface: { grid: surfaceGrid(size), map: hex.map } } : {}),
+    temperature: world.temperature ?? 'temperate',
+    life: world.surface?.life ?? (atmosphere >= 2 && atmosphere <= 9 && hydrographics > 0),
+    ...(world.map && size > 0 ? { surface: { grid: surfaceGrid(size), map: world.map } } : {}),
   };
 }
 
@@ -275,21 +284,22 @@ export function sectorView(hexes: readonly Hex[], marked: ReadonlySet<string> = 
   for (let column = 1; column <= SECTOR_COLUMNS; column++) {
     for (let row = 1; row <= SECTOR_ROWS; row++) {
       const hex = hexAt(hexes, column, row);
+      const world = hex && mainOf(hex);
       cells.push({
         id: hexId(column, row),
         column,
         row,
         state: hexState(hex),
-        name: hex?.name,
-        starport: hex?.uwp.starport === undefined ? undefined : ehex(hex.uwp.starport),
+        name: world?.name,
+        starport: world?.uwp.starport === undefined ? undefined : ehex(world.uwp.starport),
         navalBase: hex?.navalBase ?? false,
         scoutBase: hex?.scoutBase ?? false,
         gasGiant: hex?.gasGiant ?? false,
-        size: hex?.uwp.size,
-        hydrographics: hex?.uwp.hydrographics,
-        population: hex?.uwp.population,
-        uwp: hex && hexState(hex) === 'world' ? uwpCode(hex.uwp) : undefined,
-        trade: hex && hexState(hex) === 'world' ? tradeCodesOf(hex).map((t) => t.id) : [],
+        size: world?.uwp.size,
+        hydrographics: world?.uwp.hydrographics,
+        population: world?.uwp.population,
+        uwp: world && hexState(hex) === 'world' ? uwpCode(world.uwp) : undefined,
+        trade: world && hexState(hex) === 'world' ? tradeCodesOf(world).map((t) => t.id) : [],
         look: lookOf(hex),
         marked: marked.has(hexId(column, row)),
         mission: missions.has(hexId(column, row)),
@@ -305,17 +315,18 @@ export function worldList(hexes: readonly Hex[]): readonly WorldListItem[] {
     .sort((a, b) => a.column - b.column || a.row - b.row)
     .flatMap((hex) => {
       if (hexState(hex) !== 'world') return [];
+      const world = mainWorld(hex);
       return [
         {
           id: hexId(hex.column, hex.row),
           column: hex.column,
           row: hex.row,
-          name: hex.name!,
-          uwp: uwpCode(hex.uwp),
+          name: world.name!,
+          uwp: uwpCode(world.uwp),
           bases: basesText(hex),
-          trade: tradeCodesOf(hex).map((t) => t.id),
+          trade: tradeCodesOf(world).map((t) => t.id),
           gasGiant: hex.gasGiant ?? false,
-          note: hex.note?.split('\n')[0],
+          note: world.note?.split('\n')[0],
           look: lookOf(hex)!,
         },
       ];
@@ -399,15 +410,16 @@ export function surfaceLines(surface: Surface): readonly string[] {
   return lines;
 }
 
-function temperatureViewOf(hex: Hex): TemperatureView {
-  const { name, average, text } = temperatureOf(hex.temperature!);
-  const atmosphere = hex.uwp.atmosphere;
+function temperatureViewOf(world: World): TemperatureView {
+  const { name, average, text } = temperatureOf(world.temperature!);
+  const atmosphere = world.uwp.atmosphere;
   return { name, average, text, swings: atmosphere !== undefined && atmosphere <= 1 };
 }
 
 /** Die Weltkarte eines Feldes mit den Würfen, die man gemacht hat, seit sie offen ist. */
 export function worldView(hexes: readonly Hex[], column: number, row: number, rolls: readonly WorldRoll[], error: string | undefined, happened: readonly number[] = []): WorldView {
-  const hex: Hex = hexAt(hexes, column, row) ?? { column, row, empty: false, uwp: {} };
+  const hex: Hex = hexAt(hexes, column, row) ?? { column, row, empty: false, worlds: [{ id: hexId(column, row), kind: 'world', uwp: {} }], main: hexId(column, row) };
+  const world: World = mainOf(hex) ?? { id: hexId(column, row), kind: 'world', uwp: {} };
   const step = stepOf(hex);
   const next = nextWorldRoll(hex);
   const surfaceDue = nextWorldAction(hex) === 'surface';
@@ -429,28 +441,28 @@ export function worldView(hexes: readonly Hex[], column: number, row: number, ro
           : '';
   return {
     id: hexId(column, row),
-    name: hex.name,
+    name: world.name,
     step,
     empty: hex.empty,
     prompt,
-    uwp: uwpCode(hex.uwp),
+    uwp: uwpCode(world.uwp),
     profile: uwpKinds.map((kind) => {
-      const value = hex.uwp[kind];
+      const value = world.uwp[kind];
       return { kind, label: worldLabel(kind), code: value === undefined ? undefined : ehex(value), text: value === undefined ? undefined : uwpDigitOf(kind, value)?.text };
     }),
     navalBase: hex.navalBase,
     scoutBase: hex.scoutBase,
     gasGiant: hex.gasGiant,
-    temperature: hex.temperature === undefined ? undefined : temperatureViewOf(hex),
-    surface: hex.surface === undefined ? undefined : surfaceLines(hex.surface),
-    trade: tradeCodesOf(hex).map((t) => ({ code: t.id, name: t.name })),
+    temperature: world.temperature === undefined ? undefined : temperatureViewOf(world),
+    surface: world.surface === undefined ? undefined : surfaceLines(world.surface),
+    trade: (hex.empty ? [] : tradeCodesOf(world)).map((t) => ({ code: t.id, name: t.name })),
     lines: rolls.map(worldLine),
     action,
-    note: hex.note,
+    note: world.note,
     look: lookOf(hex),
     canNote: isWorld(hex),
     canGlobe: canHaveMap(hex),
-    hasMap: hex.map !== undefined,
+    hasMap: world.map !== undefined,
     happened,
     error,
   };

@@ -20,14 +20,14 @@ import {
   withEncounter,
   type Campaign,
   type Encounter,
-  type Hex,
+  hexFromFlat, type Hex,
   type Side,
 } from '..';
 import { fixedClock, fixedRandom, onTurn } from '../testing';
 import { aimAt, attackExtras, chooseTarget, chooseWeakened, evaluateAttack, rollAttack, turnAttack, type Attack } from './attack';
 
 // Regina: TL 7. Zwei Thugs: n1 Anführer mit Body Pistol und Mesh, n2 mit Club; beide UPP 222222.
-const regina: Hex = {
+const regina: Hex = hexFromFlat({
   column: 2,
   row: 7,
   empty: false,
@@ -36,7 +36,7 @@ const regina: Hex = {
   scoutBase: true,
   gasGiant: true,
   uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 },
-};
+});
 const clock = fixedClock();
 
 function unarmored(campaign: Campaign): Campaign {

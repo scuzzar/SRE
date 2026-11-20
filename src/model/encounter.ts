@@ -8,6 +8,7 @@ import { springTrap } from './hold';
 import { survivalGear } from './loot';
 import { encounterTypeOf, itemOf, nameSlotIds, ref, slotWithId, weaponOf, type EncounterType, type Item, type Range } from './reference';
 import { locationOf } from './shop';
+import { hexById, hexIdOfWorld, worldById } from './sector';
 
 /** Der Würfel der Anzahl: W6 nach den Regeln, W4 oder W3 zum Ausgleichen. */
 export const quantityDice = [6, 4, 3] as const;
@@ -462,8 +463,9 @@ export function rollAnimalEncounter(campaign: Campaign, random: Random, clock: C
   const ground = terrainOf(campaign.terrain);
   if (!hasAnimals(ground)) throw new DomainError(`Im Gelände ${ground.name} gibt es keine Tiere.`);
   if (chosen !== undefined && (!Number.isInteger(chosen) || chosen < 2 || chosen > 12)) throw new DomainError(`Eine Tierzeile ${chosen} gibt es nicht; 2 bis 12.`);
-  const hex = withAnimalTable(world, ground.id, random);
-  const withTable: Campaign = hex === world ? campaign : { ...campaign, hexes: campaign.hexes.map((h) => (h === world ? hex : h)) };
+  const before = hexById(campaign.hexes, hexIdOfWorld(campaign.location.world))!;
+  const hex = withAnimalTable(before, ground.id, random);
+  const withTable: Campaign = { ...campaign, hexes: campaign.hexes.map((h) => (h === before ? hex : h)) };
   const tableDice = chosen === undefined ? ([d6(random), d6(random)] as const) : undefined;
   const roll = chosen ?? tableDice![0] + tableDice![1];
   const at: AnimalRef = { in: campaign.location?.world, terrain: ground.id, roll };
@@ -897,6 +899,6 @@ export function veteranDm(campaign: Campaign): number {
  */
 export function reactionDm(campaign: Campaign, encounter: Encounter): number {
   if (encounter.reactionDm !== undefined) return encounter.reactionDm;
-  const world = encounter.in === undefined ? undefined : campaign.hexes.find((h) => `${String(h.column).padStart(2, '0')}${String(h.row).padStart(2, '0')}` === encounter.in);
+  const world = encounter.in === undefined ? undefined : worldById(campaign.hexes, encounter.in);
   return populationDm(world?.uwp.population);
 }

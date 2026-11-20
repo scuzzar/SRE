@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { addShip, appendLog, book, createCampaign, currentEncounter, DEMO_FUNDS, fromCampaignFile, ref, rollEncounter, rangeBetween, rollSurprise, setHexes, setLocation, toCampaignFile, type CampaignRepository, type Random } from '../model';
+import { addShip, appendLog, book, createCampaign, currentEncounter, DEMO_FUNDS, fromCampaignFile, ref, rollEncounter, rangeBetween, rollSurprise, setHexes, setLocation, toCampaignFile, type CampaignRepository, type Random, hexFromFlat, mainWorld } from '../model';
 import { countingKeys, fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 import { surfaceLines } from './world-view';
@@ -438,7 +438,7 @@ describe('Shop und Gruppenkasse', () => {
   const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
 
   it('die Beispiel-Charaktere tragen ihre Rüstung; eine gekaufte Rüstung trägt er gleich, die alte kommt ins Gepäck', async () => {
-    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina])));
+    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina].map(hexFromFlat))));
     expect(game.snapshot().characters.map((c) => c.armor)).toEqual(['Jack', 'Mesh']);
     game.chooseHex(1, 1);
     game.stayHere();
@@ -454,7 +454,7 @@ describe('Shop und Gruppenkasse', () => {
   });
 
   it('Gepäck: ausrüsten, zwischen SC tauschen, ablegen; Last und Traglast', async () => {
-    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina])));
+    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina].map(hexFromFlat))));
     // Kira (STR 7) und Jonas (STR 6) tragen zusammen 13 kg auf Größe 8; Regina hat Größe 7: 112,5 %.
     expect(game.snapshot().stash.capacity).toBe(13);
     game.chooseHex(1, 1);
@@ -475,7 +475,7 @@ describe('Shop und Gruppenkasse', () => {
   });
 
   it('die Gruppe ist auf Regina, bucht eine Belohnung, kauft eine Rifle mit Magazin, lädt und schießt', async () => {
-    const { game, repository } = await started(fixedRandom(6, 6), memoryRepository(setHexes(createCampaign(), [regina])));
+    const { game, repository } = await started(fixedRandom(6, 6), memoryRepository(setHexes(createCampaign(), [regina].map(hexFromFlat))));
     expect(game.snapshot().shop).toMatchObject({ funds: 0, world: undefined, offer: [] });
     game.chooseHex(1, 1);
     game.stayHere();
@@ -510,7 +510,7 @@ describe('Shop und Gruppenkasse', () => {
   });
 
   it('zeigt die Waffen mit Magazin daneben und was sie dem Charakter oben taugen', async () => {
-    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina])));
+    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina].map(hexFromFlat))));
     game.chooseHex(1, 1);
     game.stayHere();
     game.book('income', 1000);
@@ -531,7 +531,7 @@ describe('Shop und Gruppenkasse', () => {
   });
 
   it('verkauft aus dem Besitz eines Charakters, mit dem vorgeschlagenen halben Preis', async () => {
-    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina])));
+    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign(), [regina].map(hexFromFlat))));
     game.chooseHex(1, 1);
     game.stayHere();
     const jonas = game.snapshot().shop!.members.find((m) => m.name === 'Jonas Reyl')!;
@@ -563,7 +563,7 @@ describe('Begegnung und Kampfsimulation', () => {
 
   async function onRegina() {
     const random = queued();
-    const { game, repository } = await started(random, memoryRepository(setHexes(createCampaign(), [regina])));
+    const { game, repository } = await started(random, memoryRepository(setHexes(createCampaign(), [regina].map(hexFromFlat))));
     game.chooseHex(1, 1);
     game.stayHere();
     game.closeWorld();
@@ -624,7 +624,7 @@ describe('Begegnung und Kampfsimulation', () => {
       },
     };
     // Ein Smuggler (Liste eins, 15) im Log, die Gruppe auf Regina.
-    const campaign = appendLog(setLocation(setHexes(createCampaign(), [regina]), '0101'), { kind: 'patron', at: '2026-10-23T14:00:00.000Z', list: 1, dice: [1, 5], dms: [0, 0] });
+    const campaign = appendLog(setLocation(setHexes(createCampaign(), [regina].map(hexFromFlat)), '0101'), { kind: 'patron', at: '2026-10-23T14:00:00.000Z', list: 1, dice: [1, 5], dms: [0, 0] });
     const { game } = await started(random, memoryRepository(campaign));
     expect(game.snapshot().patron?.npc).toEqual({ blocker: undefined });
     game.createPatronNpc();
@@ -756,7 +756,7 @@ describe('Begegnung und Kampfsimulation', () => {
   it('Reise: von der Weltkarte zum Dialog, Passagen wählen, eine Woche später am Ziel', async () => {
     const random = queued();
     const nahe = { ...regina, column: 2, row: 1, name: 'Nahe' };
-    const { game } = await started(random, memoryRepository(setHexes(createCampaign(), [regina, nahe])));
+    const { game } = await started(random, memoryRepository(setHexes(createCampaign(), [regina, nahe].map(hexFromFlat))));
     game.chooseHex(1, 1);
     game.stayHere();
     game.closeWorld();
@@ -787,7 +787,7 @@ describe('Begegnung und Kampfsimulation', () => {
     const random = queued();
     const outpost = { ...regina, column: 1, row: 3, name: 'Außenposten', uwp: { ...regina.uwp, starport: 31 } };
     // Die Kasse zahlt Liegegebühr und Lebenserhaltung (2026-11-17b).
-    const withShip = addShip(book(setHexes(createCampaign(), [regina, outpost]), 'income', 10_000, fixedClock()), 'S', undefined).campaign;
+    const withShip = addShip(book(setHexes(createCampaign(), [regina, outpost].map(hexFromFlat)), 'income', 10_000, fixedClock()), 'S', undefined).campaign;
     const { game } = await started(random, memoryRepository(withShip));
     game.chooseHex(1, 1);
     game.stayHere();
@@ -807,7 +807,7 @@ describe('Begegnung und Kampfsimulation', () => {
   it('Reise: beides geht – Umschalten zwischen Passage und eigenem Schiff, Passage ist vorgeschlagen', async () => {
     const random = queued();
     const nahe = { ...regina, column: 2, row: 1, name: 'Nahe' };
-    const withShip = addShip(book(setHexes(createCampaign(), [regina, nahe]), 'income', 10_000, fixedClock()), 'A', undefined).campaign;
+    const withShip = addShip(book(setHexes(createCampaign(), [regina, nahe].map(hexFromFlat)), 'income', 10_000, fixedClock()), 'A', undefined).campaign;
     const { game } = await started(random, memoryRepository(withShip));
     game.chooseHex(1, 1);
     game.stayHere();
@@ -986,7 +986,7 @@ describe('Begegnung und Kampfsimulation', () => {
           return min + (Math.floor(state / 65536) % (max - min + 1));
         },
       };
-      const { game } = await started(random, memoryRepository(setHexes(createCampaign(), [regina])));
+      const { game } = await started(random, memoryRepository(setHexes(createCampaign(), [regina].map(hexFromFlat))));
       game.chooseHex(1, 1);
       game.stayHere();
       game.closeWorld();
@@ -1167,7 +1167,7 @@ describe('Flächenschaden in der Kampfsimulation', () => {
   async function fourThugs() {
     const queue: number[] = [];
     const random = { int: (min: number) => queue.shift() ?? min };
-    const there = setLocation(setHexes(createCampaign(), [regina]), '0101');
+    const there = setLocation(setHexes(createCampaign(), [regina].map(hexFromFlat)), '0101');
     const rolled = rollSurprise(rollEncounter(there, fixedRandom(1, 5), fixedClock(), undefined, 4).campaign, fixedRandom());
     const campaign = {
       ...rolled,
@@ -1520,7 +1520,7 @@ describe('Charaktererschaffung', () => {
 
   it('fasst einen Term mit den Kürzeln der Fertigkeiten zusammen', async () => {
     const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
-    const { game } = await started(fixedRandom(3, 4, 5, 5, 4, 4, 4, 5, 3, 4, 2, 3, 6, 6), memoryRepository(setHexes(createCampaign([]), [regina])));
+    const { game } = await started(fixedRandom(3, 4, 5, 5, 4, 4, 4, 5, 3, 4, 2, 3, 6, 6), memoryRepository(setHexes(createCampaign([]), [regina].map(hexFromFlat))));
     game.openGeneration();
     for (let i = 0; i < 6; i++) game.rollGeneration();
     expect(game.snapshot().generation?.action).toMatchObject({ kind: 'world', worlds: [{ id: '0101', name: 'Regina', uwp: 'C788545-7' }] });
@@ -1620,18 +1620,18 @@ describe('Subsektor und Weltenerschaffung', () => {
   it('schreibt einer fertigen Welt eine Notiz, ändert und entfernt sie; die Liste zeigt ihre erste Zeile', async () => {
     const world = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 }, temperature: 'temperate' as const, surface: { water: 80, plates: 8, majorContinents: 1, minorContinents: 4, majorIslands: 5, archipelagos: 7, majorOceans: 0, minorOceans: 0, smallSeas: 0, scatteredLakes: 0, life: true } };
     const unfinished = { column: 2, row: 1, empty: false, uwp: { starport: 12 } };
-    const { game, repository } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign([]), [world, unfinished])));
+    const { game, repository } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign([]), [world, unfinished].map(hexFromFlat))));
     game.chooseHex(1, 1);
     expect(game.snapshot().world).toMatchObject({ canNote: true, note: undefined });
     game.noteWorld('  Halveks Werft am Südpol.\nZoll ist bestechlich.  ');
     await game.whenSaved();
     expect(game.snapshot().world?.note).toBe('Halveks Werft am Südpol.\nZoll ist bestechlich.');
     expect(game.snapshot().worlds[0]?.note).toBe('Halveks Werft am Südpol.');
-    expect(repository.saved?.hexes.find((h) => h.name === 'Regina')?.note).toBe('Halveks Werft am Südpol.\nZoll ist bestechlich.');
+    expect(repository.saved?.hexes.map(mainWorld).find((w) => w.name === 'Regina')?.note).toBe('Halveks Werft am Südpol.\nZoll ist bestechlich.');
     game.noteWorld('   ');
     await game.whenSaved();
     expect(game.snapshot().world?.note).toBeUndefined();
-    expect('note' in repository.saved!.hexes.find((h) => h.name === 'Regina')!).toBe(false);
+    expect('note' in repository.saved!.hexes.map(mainWorld).find((w) => w.name === 'Regina')!).toBe(false);
 
     game.closeWorld();
     game.chooseHex(2, 1);
@@ -1642,7 +1642,7 @@ describe('Subsektor und Weltenerschaffung', () => {
 
   it('würfelt einer älteren Welt mit Temperatur die Oberfläche nach', async () => {
     const old = { column: 1, row: 1, empty: false, name: 'Alt', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 }, temperature: 'temperate' as const };
-    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign([]), [old])));
+    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign([]), [old].map(hexFromFlat))));
     game.chooseHex(1, 1);
     expect(game.snapshot().world).toMatchObject({ step: 'done', surface: undefined, action: { kind: 'surface', label: 'Oberfläche würfeln' } });
     game.rollWorld();
@@ -1675,7 +1675,7 @@ describe('Subsektor und Weltenerschaffung', () => {
   it('ein nicht erzeugtes oder leeres Feld antippen schließt die offene Weltkarte und wählt das Feld', async () => {
     const world = { ...ref.demoWorld, column: 1, row: 1, name: 'Regina' };
     const empty = { column: 3, row: 3, empty: true, uwp: {} };
-    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign([]), [world, empty])));
+    const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign([]), [world, empty].map(hexFromFlat))));
     game.chooseHex(1, 1);
     expect(game.snapshot().world?.name).toBe('Regina');
     game.chooseHex(2, 2);
@@ -1702,7 +1702,7 @@ describe('Subsektor und Weltenerschaffung', () => {
     game.rollOccurrence();
     game.exportCampaign(game.snapshot().campaign.id);
     const imported = fromCampaignFile(download.files.at(-1)!.content, 'k9');
-    expect(imported.hexes).toEqual([{ column: 5, row: 5, empty: true, uwp: {} }]);
+    expect(imported.hexes).toEqual([{ column: 5, row: 5, empty: true, worlds: [] }]);
   });
 });
 
@@ -1721,7 +1721,7 @@ describe('Durchlaufen lassen', () => {
 
   it('würfelt die ganze Erschaffung bis zum Namen oder Tod, mit Heimatwelt und Welt je Term', async () => {
     for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
-      const { game } = await started(seeded(seed), memoryRepository(setHexes(createCampaign([]), [regina])));
+      const { game } = await started(seeded(seed), memoryRepository(setHexes(createCampaign([]), [regina].map(hexFromFlat))));
       game.openGeneration();
       game.runGeneration();
       const view = game.snapshot().generation!;
@@ -1780,7 +1780,7 @@ describe('Tiere im Kampf', () => {
 
   async function withAnimals() {
     const random = queued();
-    const { game } = await started(random, memoryRepository(setHexes(createCampaign(), [regina])));
+    const { game } = await started(random, memoryRepository(setHexes(createCampaign(), [regina].map(hexFromFlat))));
     game.chooseHex(1, 1);
     game.stayHere();
     game.closeWorld();
@@ -1898,7 +1898,7 @@ describe('Globus (Oberflächenkarte)', () => {
     // Größe 7: n = 28, 10 × 28² + 2 Felder.
     expect(view.globe?.map.landforms).toHaveLength(7842);
     await game.whenSaved();
-    const saved = repository.saved!.hexes.find((h) => h.column === 4 && h.row === 5)!;
+    const saved = mainWorld(repository.saved!.hexes.find((h) => h.column === 4 && h.row === 5)!);
     expect(saved.map?.landforms).toBe(view.globe?.map.landforms);
     expect(saved.populationMultiplier).toBeGreaterThanOrEqual(1);
     game.pickCell(0);
@@ -1939,7 +1939,7 @@ describe('Globus (Oberflächenkarte)', () => {
     game.openGlobeAt(4, 5);
     const before = game.snapshot().globe!.map;
     const campaign = fromCampaignFile(toCampaignFile(game['campaign']), 'c2');
-    const hex = campaign.hexes.find((h) => h.column === 4 && h.row === 5)!;
+    const hex = mainWorld(campaign.hexes.find((h) => h.column === 4 && h.row === 5)!);
     expect(hex.map).toEqual(before);
     game.rerollMap();
     expect(game.snapshot().globe!.map).not.toBe(before);
@@ -1949,7 +1949,7 @@ describe('Globus (Oberflächenkarte)', () => {
     const { game } = await started();
     game.openGlobeAt(4, 5);
     const file = JSON.parse(toCampaignFile(game['campaign']));
-    file.campaign.hexes[0].map.landforms = 'w';
+    file.campaign.hexes[0].worlds[0].map.landforms = 'w';
     expect(() => fromCampaignFile(JSON.stringify(file), 'c2')).toThrow(/Felder/);
   });
 });
@@ -1958,18 +1958,18 @@ describe('Städtenamen (2026-11-14k)', () => {
   it('jede Stadt hat einen Namen, ohne Doppel; umbenennen; alte Karten heißen Stadt 1, 2 …', async () => {
     const { game } = await started();
     game.openGlobeAt(4, 5);
-    const cities = game['campaign'].hexes[0]!.map!.cities!;
+    const cities = mainWorld(game['campaign'].hexes[0]!).map!.cities!;
     expect(cities.length).toBeGreaterThan(0);
     expect(cities.every((c) => c.name.trim().length > 0)).toBe(true);
     expect(new Set(cities.map((c) => c.name)).size).toBe(cities.length);
     game.renameCity(0, '  Neu-Kessra ');
-    expect(game['campaign'].hexes[0]!.map!.cities![0]!.name).toBe('Neu-Kessra');
+    expect(mainWorld(game['campaign'].hexes[0]!).map!.cities![0]!.name).toBe('Neu-Kessra');
     expect(game.snapshot().globe?.cities[0]?.label).toBe('Neu-Kessra');
     game.renameCity(0, '   ');
     expect(game.snapshot().world?.error).toMatch(/braucht einen Namen/);
     const file = JSON.parse(toCampaignFile(game['campaign']));
-    for (const c of file.campaign.hexes[0].map.cities) delete c.name;
-    expect(fromCampaignFile(JSON.stringify(file), 'c2').hexes[0]!.map!.cities![1]!.name).toBe('Stadt 2');
+    for (const c of file.campaign.hexes[0].worlds[0].map.cities) delete c.name;
+    expect(mainWorld(fromCampaignFile(JSON.stringify(file), 'c2').hexes[0]!).map!.cities![1]!.name).toBe('Stadt 2');
   });
 });
 

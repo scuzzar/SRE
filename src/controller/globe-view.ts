@@ -4,6 +4,7 @@ import {
   missionCells,
   missionsAt,
   hexAt,
+  mainOf,
   hexId,
   landformAt,
   mapLocked,
@@ -156,9 +157,10 @@ export function position(grid: SurfaceGrid, cell: number): string {
 export function globeView(campaign: Campaign, column: number, row: number, picked: number | undefined, plan?: Trip, trace = false): GlobeView | undefined {
   const hexes = campaign.hexes;
   const hex = hexAt(hexes, column, row);
-  if (!hex?.map || !hex.name || hex.uwp.size === undefined || hex.temperature === undefined) return undefined;
-  const map = hex.map;
-  const size = hex.uwp.size;
+  const world = hex && mainOf(hex);
+  if (!hex || !world?.map || !world.name || world.uwp.size === undefined || world.temperature === undefined) return undefined;
+  const map = world.map;
+  const size = world.uwp.size;
   const grid = surfaceGrid(size);
   const cities = (map.cities ?? []).map(
     (city, index): GlobeCity => ({
@@ -187,7 +189,7 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
     pickedCell = {
       cell: picked,
       landform: LANDFORM_NAMES[landformAt(map, picked)],
-      temperature: `${Math.round(cellTemperature(size, hex.temperature, grid.lat[picked]!))} °C im Jahresmittel`,
+      temperature: `${Math.round(cellTemperature(size, world.temperature, grid.lat[picked]!))} °C im Jahresmittel`,
       position: position(grid, picked),
       cities: cities.filter((c) => c.cell === picked).map((c) => ({ index: c.index, name: c.label, detail: c.detail })),
       towns: map.towns?.find(([c]) => c === picked)?.[1] ?? 0,
@@ -202,7 +204,7 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
   }
   return {
     id: hexId(column, row),
-    name: hex.name,
+    name: world.name,
     look: lookOf(hex)!,
     grid,
     map,

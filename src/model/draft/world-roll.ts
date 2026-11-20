@@ -5,6 +5,7 @@ import {
   enterSurface,
   hexAt,
   hexId,
+  mainWorld,
   nextRollKind,
   nextWorldAction,
   occurrenceHex,
@@ -55,7 +56,7 @@ export function totalOf(roll: Pick<WorldRoll, 'dice' | 'dm'>): number {
 export function nextWorldRoll(hex: Hex): { readonly kind: WorldRollKind; readonly dice: 1 | 2; readonly parts: readonly WorldDmPart[] } | undefined {
   const kind = nextRollKind(hex);
   if (kind === undefined) return undefined;
-  return { kind, dice: diceCount(kind), parts: worldDmParts(hex, kind) };
+  return { kind, dice: diceCount(kind), parts: worldDmParts(mainWorld(hex), kind) };
 }
 
 function dice(count: number, random: Random): number[] {
@@ -82,7 +83,7 @@ export function rollWorld(hexes: readonly Hex[], column: number, row: number, ra
   if (nextWorldAction(after) === 'surface') after = enterSurface(after, random);
   const kind = next.kind;
   const table = kind === 'starport' || kind === 'navalBase' || kind === 'scoutBase' || kind === 'gasGiant';
-  const value = kind === 'navalBase' || kind === 'scoutBase' || kind === 'gasGiant' || kind === 'occurrence' || kind === 'temperature' ? undefined : after.uwp[kind];
+  const value = kind === 'navalBase' || kind === 'scoutBase' || kind === 'gasGiant' || kind === 'occurrence' || kind === 'temperature' ? undefined : mainWorld(after).uwp[kind];
   return {
     hexes: putHex(hexes, after),
     roll: {

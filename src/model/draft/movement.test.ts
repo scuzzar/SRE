@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { ammoOf, anyCharacterOf, blowsOf, createCampaign, evadeDm, currentEncounter, distanceOf, endTurn, evadeTurn, fromCampaignFile, hasRun, isEvading, moveSide, moveState, reloadableWeapon, replaceCharacter, rollEncounter, rollSurprise, setDistance, setHexes, setLocation, toCampaignFile, turnOf, weaponOf, type Campaign, type Hex } from '..';
+import { ammoOf, anyCharacterOf, blowsOf, createCampaign, evadeDm, currentEncounter, distanceOf, endTurn, evadeTurn, fromCampaignFile, hasRun, isEvading, moveSide, moveState, reloadableWeapon, replaceCharacter, rollEncounter, rollSurprise, setDistance, setHexes, setLocation, toCampaignFile, turnOf, weaponOf, type Campaign, hexFromFlat, type Hex } from '..';
 import { allPcsAt, fixedClock, fixedRandom } from '../testing';
 import { aimAt, attackExtras, evaluateAttack, neighbourTargets, turnAttack } from './attack';
 
 // Regina: TL 7. Zwei Thugs (15, L); die NSC ziehen zuerst (Anführer +1 auf die Überraschung), Start auf Short.
-const regina: Hex = {
+const regina: Hex = hexFromFlat({
   column: 2,
   row: 7,
   empty: false,
@@ -13,7 +13,7 @@ const regina: Hex = {
   scoutBase: true,
   gasGiant: true,
   uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 },
-};
+});
 
 /** Zwei Thugs, alle SC auf Band 5; die NSC sind zuerst dran. */
 function thugs(): Campaign {

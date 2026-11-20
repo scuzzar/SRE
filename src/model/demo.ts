@@ -1,7 +1,7 @@
 import { createCampaign, type Campaign } from './campaign';
 import type { Clock } from './ports';
 import { ref } from './reference';
-import { hexId, validateHex, type Hex } from './sector';
+import { hexFromFlat, hexId, validateHex, type FlatHex, type Hex } from './sector';
 import { addShip } from './ship';
 import { book, setLocation } from './shop';
 
@@ -12,7 +12,8 @@ import { book, setLocation } from './shop';
  * gleich etwas kaufen lässt, und im Hafen ein schuldenfreier Scout „Kestrel“ für den Systemflug. Jede weitere Kampagne beginnt leer (`createCampaign`).
  */
 export function createDemoCampaign(clock: Clock, key = 'key-k1'): Campaign {
-  const world: Hex = ref.demoWorld;
+  // Die Startwelt steht in den Referenzdaten noch flach (Werte am Feld); sie wird die Hauptwelt.
+  const world: Hex = hexFromFlat(ref.demoWorld as FlatHex);
   validateHex(world);
   const campaign = createCampaign(ref.examples, 'Demo-Kampagne');
   const there = setLocation({ ...campaign, hexes: [world] }, hexId(world.column, world.row));

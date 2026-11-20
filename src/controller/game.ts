@@ -211,6 +211,8 @@ import {
   type CardRoll,
   type Random,
   type WindowLock,
+  worldById,
+  mainOf,
 } from '../model';
 import {
   attackRounds,
@@ -1241,7 +1243,7 @@ export class GameController {
     const cell = this.state.globe?.picked;
     if (!campaign || !at || cell === undefined) return 'Erst ein Feld auf dem Globus antippen.';
     if (campaign.location?.world !== hexId(at.column, at.row)) return 'Einkaufen geht nur auf der Welt der Gruppe.';
-    const city = hexAt(campaign.hexes, at.column, at.row)?.map?.cities?.some((c) => c.cell === cell) ?? false;
+    const city = worldById(campaign.hexes, hexId(at.column, at.row))?.map?.cities?.some((c) => c.cell === cell) ?? false;
     return city ? undefined : 'Einkaufen geht nur in einer Stadt.';
   }
 
@@ -2311,7 +2313,7 @@ export class GameController {
     this.inWorld((hexes, at) => {
       const hex = hexAt(hexes, at.column, at.row);
       if (!hex || !canHaveMap(hex)) throw new DomainError('Diese Welt hat keine Oberfläche für einen Globus.');
-      return { hexes: hex.map ? hexes : hexes.map((h) => (h === hex ? withSurfaceMap(h, this.deps.random, cityNamesTaken(hexes)) : h)), world: at };
+      return { hexes: mainOf(hex)?.map ? hexes : hexes.map((h) => (h === hex ? withSurfaceMap(h, this.deps.random, cityNamesTaken(hexes)) : h)), world: at };
     });
     if (!this.state.worldError) this.update({ globe: { picked: undefined } });
   }
@@ -2510,7 +2512,7 @@ export class GameController {
     const cell = this.state.globe?.picked;
     if (!at || cell === undefined) throw new DomainError('Erst ein Feld auf dem Globus antippen.');
     const world = hexId(at.column, at.row);
-    const city = hexAt(this.campaign.hexes, at.column, at.row)?.map?.cities?.findIndex((c) => c.cell === cell) ?? -1;
+    const city = worldById(this.campaign.hexes, world)?.map?.cities?.findIndex((c) => c.cell === cell) ?? -1;
     return city >= 0 ? { world, city } : { world, cell };
   }
 
@@ -2718,7 +2720,7 @@ export class GameController {
   private home(campaign: Campaign): Pick<ControllerState, 'world' | 'globe'> {
     const at = campaign.location?.world;
     const hex = at === undefined ? undefined : campaign.hexes.find((h) => hexId(h.column, h.row) === at);
-    if (!hex || !isWorld(hex) || !hex.map) return { world: undefined, globe: undefined };
+    if (!hex || !isWorld(hex) || !mainOf(hex)?.map) return { world: undefined, globe: undefined };
     return { world: { column: hex.column, row: hex.row, rolls: [] }, globe: { picked: undefined } };
   }
 

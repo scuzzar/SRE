@@ -31,6 +31,7 @@ import {
   tripSurface,
   terrainOfPlace,
   type Campaign,
+  hexFromFlat,
   type Hex,
   type Landform,
   type SurfaceMap,
@@ -48,7 +49,7 @@ function mapWith(landform: Readonly<Record<number, Landform>> = {}, extra: Parti
 }
 
 function world(map: SurfaceMap, tech = 8, atmosphere = 6): Hex {
-  return {
+  return hexFromFlat({
     column: 1,
     row: 1,
     empty: false,
@@ -61,7 +62,7 @@ function world(map: SurfaceMap, tech = 8, atmosphere = 6): Hex {
     surface: { water: 70, plates: 5, majorContinents: 3, minorContinents: 3, majorIslands: 4, archipelagos: 6, majorOceans: 0, minorOceans: 0, smallSeas: 0, scatteredLakes: 0, life: true },
     populationMultiplier: 2,
     map,
-  };
+  });
 }
 
 /** Eine Kette benachbarter Felder ab `from`, `length` lang, immer weiter weg. */

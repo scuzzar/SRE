@@ -51,7 +51,7 @@ import {
   woundsOf,
   upgradeNpcs,
   type Campaign,
-  type Hex,
+  hexFromFlat, withMain, type Hex,
 } from '..';
 import { allPcsAt, fixedClock, fixedRandom, onTurn } from '../testing';
 import { cascadeOptions, chooseCascade, enlist, finishGeneration, muster, reenlist, rollNext, rollSkill, stateOf, tableOptions, type Generation } from '../generation';
@@ -63,7 +63,7 @@ import type { DamageRoll } from '../log';
 import { characteristicOptions } from './task';
 
 // Regina: TL 7, Bevölkerung 5.
-const regina: Hex = {
+const regina: Hex = hexFromFlat({
   column: 2,
   row: 7,
   empty: false,
@@ -72,7 +72,7 @@ const regina: Hex = {
   scoutBase: true,
   gasGiant: true,
   uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 },
-};
+});
 /** Die Beispiel-Charaktere ohne Rüstung, damit die Zahlen der Tests einfach bleiben. */
 function unarmored(campaign: Campaign): Campaign {
   return { ...campaign, characters: campaign.characters.map((c) => Object.fromEntries(Object.entries(c).filter(([key]) => key !== 'wears')) as typeof c) };
@@ -116,7 +116,7 @@ describe('Begegnung', () => {
     expect(currentEncounter(thugs())!.npcs[0]).toMatchObject({ wields: 'body-pistol', wears: 'mesh' });
     // Auf einer Welt mit TL 13 wählt jeder Wurf das Letzte der Liste: die Polizei (23, nicht militärisch)
     // bekommt höchstens Ablat, die Security Troops (25, militärisch) Battle Dress.
-    const high = setLocation(setHexes(unarmored(createCampaign()), [{ ...regina, uwp: { ...regina.uwp, tech: 13 } }]), '0207');
+    const high = setLocation(setHexes(unarmored(createCampaign()), [withMain(regina, (w) => ({ ...w, uwp: { ...w.uwp, tech: 13 } }))]), '0207');
     const last: Random = { int: (_min, max) => max };
     const wears = (roll: number) => currentEncounter(rollEncounter(high, last, clock, roll, 3).campaign)!.npcs.map((n) => n.wears);
     expect(wears(23)).toEqual(['ablat', 'ablat', 'ablat']);
@@ -684,7 +684,7 @@ describe('Reaktion', () => {
   it('hält den DM an der Begegnung fest; Bevölkerung 9+ gleicht ihn aus', () => {
     const army = veteran(there, 'army', 5);
     expect(rollEncounter(army, fixedRandom(), clock, 15, 2).encounter).toMatchObject({ reactionDm: 1 });
-    const crowded = setLocation(setHexes(army, [{ ...regina, uwp: { ...regina.uwp, population: 9 } }]), '0207');
+    const crowded = setLocation(setHexes(army, [withMain(regina, (w) => ({ ...w, uwp: { ...w.uwp, population: 9 } }))]), '0207');
     expect(rollEncounter(crowded, fixedRandom(), clock, 15, 2).encounter).toMatchObject({ reactionDm: 0 });
   });
 });

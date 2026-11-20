@@ -10,6 +10,7 @@ import { fromCampaignFile, toCampaignFile } from './campaign-file';
 import { allowedWeapons, armGenerated, generateNpc, npcGroups } from './npcs';
 import { createPatronNpc, patronDmParts, patronDms, patronNpcBlocker, patronOfRoll, patronRollOf, rollPatron, rollRumor, rumorOfRoll, rumorRollOf } from './patron';
 import { ref } from './reference';
+import { hexFromFlat, mainWorld } from './sector';
 import { fixedClock, fixedRandom } from './testing';
 
 const withSoc = (campaign: Campaign, soc: number): Campaign => ({ ...campaign, characters: campaign.characters.map((c, i) => (i === 0 ? { ...c, upp: { ...c.upp, soc } } : c)) });
@@ -85,7 +86,7 @@ function seeded(start: number): Random {
 
 /** Eine Kampagne auf der Welt 0101 mit einem Patron-Wurf auf Liste `list`, Würfel `a` und `b`, an Stelle 0 des Logs. */
 function withPatron(list: 1 | 2, a: number, b: number, located = true): Campaign {
-  const hexes = [{ ...ref.demoWorld, column: 1, row: 1, name: 'Regina' }, { ...ref.demoWorld, column: 2, row: 2, name: 'Fels' }];
+  const hexes = [hexFromFlat({ ...ref.demoWorld, column: 1, row: 1, name: 'Regina' }), hexFromFlat({ ...ref.demoWorld, column: 2, row: 2, name: 'Fels' })];
   const placed = setHexes(createCampaign([]), hexes);
   const campaign = located ? setLocation(placed, '0101') : placed;
   return appendLog(campaign, { kind: 'patron', at: '2026-10-23T14:00:00.000Z', list, dice: [a, b], dms: [0, 0] });
@@ -143,7 +144,7 @@ describe('Patron als NSC (2026-11-14, Laufbahn 2026-11-14b)', () => {
 });
 
 describe('Rolle und Ort eines NSC', () => {
-  const hexes = [{ ...ref.demoWorld, column: 1, row: 1, name: 'Regina' }];
+  const hexes = [hexFromFlat({ ...ref.demoWorld, column: 1, row: 1, name: 'Regina' })];
   const base = setLocation(setHexes(createCampaign([]), hexes), '0101');
   const input = { name: 'Mara', background: '', equipment: '', credits: 0, note: '', upp: { str: 7, dex: 7, end: 7, int: 7, edu: 7, soc: 7 }, skills: [] };
 
@@ -186,8 +187,8 @@ describe('Rolle und Ort eines NSC', () => {
 
 describe('NSC-Liste: Filter und Gruppen', () => {
   const hexes = [
-    { ...ref.demoWorld, column: 1, row: 1, name: 'Regina' },
-    { ...ref.demoWorld, column: 2, row: 2, name: 'Efate' },
+    hexFromFlat({ ...ref.demoWorld, column: 1, row: 1, name: 'Regina' }),
+    hexFromFlat({ ...ref.demoWorld, column: 2, row: 2, name: 'Efate' }),
   ];
   const input = (name: string, role: NpcRole, place?: string) => ({ name, background: '', equipment: '', credits: 0, note: '', upp: { str: 7, dex: 7, end: 7, int: 7, edu: 7, soc: 7 }, skills: [], npc: true, role, ...(place ? { place } : {}) });
   let campaign = setLocation(setHexes(createCampaign([]), hexes), '0101');
@@ -212,7 +213,7 @@ describe('NSC-Liste: Filter und Gruppen', () => {
 
 describe('Waffen erzeugter NSC (2026-11-14c)', () => {
   // Demo-Welt mit TL 12 und Gesetz 0 als Grundlage.
-  const world = (tech: number, law: number) => ({ ...ref.demoWorld, column: 1, row: 1, name: 'Regina', uwp: { ...ref.demoWorld.uwp, tech, law } });
+  const world = (tech: number, law: number) => mainWorld(hexFromFlat({ ...ref.demoWorld, column: 1, row: 1, name: 'Regina', uwp: { ...ref.demoWorld.uwp, tech, law } }));
   const npc = (soc: number, skills: { of: string; level: number }[] = []) => ({ name: 'Ilse', background: '', equipment: '', credits: 0, note: '', upp: { str: 7, dex: 7, end: 7, int: 7, edu: 7, soc }, skills });
   const ids = (soc: number, tech = 12, law = 0, ignore = false) => allowedWeapons(soc, world(tech, law), ignore).map((w) => w.id);
 
@@ -252,7 +253,7 @@ describe('Waffen erzeugter NSC (2026-11-14c)', () => {
   });
 
   it('erzeugt einen NSC aus einer Laufbahn mit der gewählten Rolle, ohne Patron; ein Feind gilt als verbrecherisch', () => {
-    const hexes = [{ ...ref.demoWorld, column: 1, row: 1, name: 'Regina' }];
+    const hexes = [hexFromFlat({ ...ref.demoWorld, column: 1, row: 1, name: 'Regina' })];
     const base = setLocation(setHexes(createCampaign([]), hexes), '0101');
     const { campaign, id } = generateNpc(base, { service: 'army', role: 'enemy' }, seeded(9));
     const made = campaign.characters.find((c) => c.id === id)!;

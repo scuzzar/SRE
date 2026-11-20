@@ -5,7 +5,7 @@ import type { Journey, LowBerth, Passenger } from './log';
 import type { Clock, Random } from './ports';
 import { itemOf, shipDesignOf } from './reference';
 import { sum, type Dice } from './rules';
-import { hexById, hexId, worldOf, type Hex } from './sector';
+import { hexById, hexId, hexIdOfWorld, worldOf, type Hex, type World } from './sector';
 import { bookShip, fundsOf, locationOf, type Booking } from './shop';
 import { jumpFuelOf, shipOf } from './ship';
 import { afterTime, arrive, LIFE_SUPPORT, PER_STATEROOM } from './upkeep';
@@ -28,7 +28,7 @@ export const REVIVE_TARGET = 5;
 export const LOTTERY_SHARE = 10;
 
 /** Die Raumhäfen mit Linienverkehr: A bis E (in eHex 10 bis 14); X hat keinen. */
-export function hasStarport(hex: Hex): boolean {
+export function hasStarport(hex: World): boolean {
   const port = hex.uwp.starport;
   return port !== undefined && port >= 10 && port <= 14;
 }
@@ -61,10 +61,10 @@ export function journeyBlocker(campaign: Campaign, to: string): string | undefin
   if (campaign.location?.world === to) return 'Die Gruppe ist schon hier.';
   const target = hexById(campaign.hexes, to);
   if (!target || target.empty) return 'Hier gibt es keine Welt.';
-  worldOf(campaign.hexes, to);
+  const targetWorld = worldOf(campaign.hexes, to);
   if (!hasStarport(from)) return `${from.name} hat keinen Raumhafen mit Linienverkehr.`;
-  if (!hasStarport(target)) return 'Diese Welt hat keinen Raumhafen mit Linienverkehr.';
-  const distance = parsecs(from, target);
+  if (!hasStarport(targetWorld)) return 'Diese Welt hat keinen Raumhafen mit Linienverkehr.';
+  const distance = parsecs(hexById(campaign.hexes, hexIdOfWorld(campaign.location.world))!, target);
   if (distance > MAX_JUMP) return `${distance} Parsec sind zu weit; eine Passage reicht bis Sprung ${MAX_JUMP}.`;
   if (campaign.encounters.some((e) => !e.ended)) return 'Während einer laufenden Begegnung reist man nicht.';
   if (travellersOf(campaign).length === 0) return 'Es gibt keinen lebenden Charakter, der reisen könnte.';
@@ -176,7 +176,7 @@ export function shipJourneyBlocker(campaign: Campaign, to: string): string | und
   if (!target || target.empty) return 'Hier gibt es keine Welt.';
   worldOf(campaign.hexes, to);
   const plan = shipDesignOf(ship.design);
-  const distance = parsecs(from, target);
+  const distance = parsecs(hexById(campaign.hexes, hexIdOfWorld(campaign.location.world))!, target);
   if (distance > plan.jump) return `${distance} Parsec sind zu weit; ${plan.name} springt höchstens ${plan.jump}.`;
   const per = jumpFuelOf(ship.design);
   if (ship.fuel < per) return `Der Sprung braucht ${per} t Treibstoff; im Tank sind ${ship.fuel} t. Erst volltanken.`;

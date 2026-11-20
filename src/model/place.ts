@@ -4,7 +4,7 @@
 import { DomainError } from './errors';
 import type { Campaign } from './campaign';
 import { ref } from './reference';
-import { hexById, hexId, worldOf, type Hex } from './sector';
+import { hexId, worldOf, worldById, type Hex } from './sector';
 import { landformAt } from './surface-map';
 
 export interface Place {
@@ -31,7 +31,7 @@ export function placeCell(hexes: readonly Hex[], place: Place | undefined): numb
   if (!place) return undefined;
   if (place.cell !== undefined) return place.cell;
   if (place.city === undefined) return undefined;
-  return hexById(hexes, place.world)?.map?.cities?.[place.city]?.cell;
+  return worldById(hexes, place.world)?.map?.cities?.[place.city]?.cell;
 }
 
 /** Ob zwei Orte gleich sind. */
@@ -102,7 +102,7 @@ export const CITY_TERRAIN = 'city';
  * (nur die Welt, eine Orbitalstadt) keins.
  */
 export function terrainOfPlace(hexes: readonly Hex[], place: Place | undefined): string | undefined {
-  const map = place === undefined ? undefined : hexById(hexes, place.world)?.map;
+  const map = place === undefined ? undefined : worldById(hexes, place.world)?.map;
   const cell = placeCell(hexes, place);
   if (!map || cell === undefined) return undefined;
   if ((map.cities ?? []).some((c) => c.cell === cell)) return CITY_TERRAIN;

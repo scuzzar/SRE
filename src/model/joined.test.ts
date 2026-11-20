@@ -6,6 +6,7 @@ import { currentEncounter, endEncounter, joinableNpcs, npcSideIds, npcSideOf, np
 import { fightOrder, sideOf } from './fight';
 import { cannotLoot } from './loot';
 import { ref } from './reference';
+import { hexFromFlat } from './sector';
 import { setLocation } from './shop';
 import { fixedClock, fixedRandom } from './testing';
 
@@ -27,8 +28,8 @@ const npcInput = (name: string, place: string | undefined): CharacterInput => ({
 
 /** Regina (0101) als Aufenthaltsort, dazu Tenzin dort, Ilka ohne Ort und Oren auf einer anderen Welt. */
 function setup(): { campaign: Campaign; tenzin: string; ilka: string; oren: string } {
-  const regina = { ...ref.demoWorld, column: 1, row: 1, name: 'Regina' };
-  const other = { ...ref.demoWorld, column: 2, row: 1, name: 'Sora' };
+  const regina = hexFromFlat({ ...ref.demoWorld, column: 1, row: 1, name: 'Regina' });
+  const other = hexFromFlat({ ...ref.demoWorld, column: 2, row: 1, name: 'Sora' });
   let campaign = setLocation(setHexes(createCampaign(), [regina, other]), '0101');
   const t = addCharacter(campaign, npcInput('Tenzin Thorsen', '0101'));
   const i = addCharacter(t.campaign, npcInput('Ilka Brand', undefined));

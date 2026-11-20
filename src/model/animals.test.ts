@@ -4,13 +4,13 @@ import { createCampaign, setHexes, type Campaign } from './campaign';
 import { fromCampaignFile, toCampaignFile } from './campaign-file';
 import { behaviorOf, rollAnimalEncounter, setTerrain } from './encounter';
 import type { Random } from './ports';
-import type { Hex } from './sector';
+import { hexFromFlat, mainWorld, type Hex } from './sector';
 import { ref } from './reference';
 import { setLocation } from './shop';
 import { fixedClock } from './testing';
 
-const regina: Hex = { ...ref.demoWorld, column: 1, row: 1, name: 'Regina' };
-const rock: Hex = { ...ref.demoWorld, column: 2, row: 2, name: 'Fels', uwp: { ...ref.demoWorld.uwp, size: 3, atmosphere: 0 }, surface: { ...ref.demoWorld.surface!, life: false } };
+const regina: Hex = hexFromFlat({ ...ref.demoWorld, column: 1, row: 1, name: 'Regina' });
+const rock: Hex = hexFromFlat({ ...ref.demoWorld, column: 2, row: 2, name: 'Fels', uwp: { ...ref.demoWorld.uwp, size: 3, atmosphere: 0 }, surface: { ...ref.demoWorld.surface!, life: false } });
 
 /** Eine Zufallsquelle, die reihum gleichverteilt würfelt (deterministisch). */
 function cycling(seed = 1): Random {
@@ -30,7 +30,7 @@ function onWorld(hex: Hex, terrain?: string): Campaign {
 
 describe('Tiertabelle', () => {
   it('hat elf Zeilen 2 bis 12; Zeile 10 ist ein Ereignis, die übrigen sind Tiere mit allen Werten', () => {
-    const table = generateAnimalTable(regina, 'clear', cycling());
+    const table = generateAnimalTable(mainWorld(regina), 'clear', cycling());
     expect(table.rows.map((r) => r.roll)).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
     expect(table.rows.filter((r) => r.event !== undefined).map((r) => r.roll)).toEqual([10]);
     for (const row of table.rows.filter((r) => r.event === undefined)) {
@@ -45,7 +45,7 @@ describe('Tiertabelle', () => {
 
   it('die Kategorie folgt den Encounter Columns: Zeile 6 bis 8 Pflanzenfresser, 9, 11, 12 Fleischfresser', () => {
     for (let seed = 1; seed < 30; seed++) {
-      const rows = generateAnimalTable(regina, 'forest', cycling(seed)).rows;
+      const rows = generateAnimalTable(mainWorld(regina), 'forest', cycling(seed)).rows;
       const category = (roll: number) => categoryOf(rows.find((r) => r.roll === roll)!.type!);
       expect([6, 7, 8].map(category)).toEqual(['herbivore', 'herbivore', 'herbivore']);
       expect([9, 11, 12].map(category)).toEqual(['carnivore', 'carnivore', 'carnivore']);
@@ -53,21 +53,21 @@ describe('Tiertabelle', () => {
   });
 
   it('eine Welt ohne Leben hat nur Ereignisse für Welten ohne Leben', () => {
-    expect(hasLife(rock)).toBe(false);
-    const table = generateAnimalTable(rock, 'crater', cycling());
+    expect(hasLife(mainWorld(rock))).toBe(false);
+    const table = generateAnimalTable(mainWorld(rock), 'crater', cycling());
     expect(table.rows.every((r) => r.event !== undefined && ['dust-pool', 'solar-storm', 'magnetic-anomaly', 'tracks', 'pressure-tent'].includes(r.event))).toBe(true);
   });
 
   it('entsteht einmal je Gelände und bleibt dann; in Stadt und Gebäude gibt es keine Tiere', () => {
     const once = withAnimalTable(regina, 'clear', cycling(3));
     expect(withAnimalTable(once, 'clear', cycling(9))).toBe(once);
-    expect(withAnimalTable(once, 'forest', cycling(9)).animals).toHaveLength(2);
-    expect(() => generateAnimalTable(regina, 'city', cycling())).toThrow(/keine Tiere/);
+    expect(mainWorld(withAnimalTable(once, 'forest', cycling(9))).animals).toHaveLength(2);
+    expect(() => generateAnimalTable(mainWorld(regina), 'city', cycling())).toThrow(/keine Tiere/);
   });
 
   it('Flieger und Triphibien haben nie Rüstung; Namen nennen die Besonderheit', () => {
     for (let seed = 1; seed < 40; seed++) {
-      for (const row of generateAnimalTable(regina, 'beach', cycling(seed)).rows) {
+      for (const row of generateAnimalTable(mainWorld(regina), 'beach', cycling(seed)).rows) {
         if (row.trait === 'flyer' || row.trait === 'triphibian') expect(row.armor).toBeUndefined();
         if (row.trait === 'flyer') expect(animalName(row)).toMatch(/^Flying /);
       }
@@ -80,7 +80,7 @@ describe('Tierbegegnung', () => {
     expect(() => rollAnimalEncounter(onWorld(regina), cycling(), fixedClock())).toThrow(/Gelände wählen/);
     expect(() => rollAnimalEncounter(onWorld(regina, 'city'), cycling(), fixedClock())).toThrow(/keine Tiere/);
     const rolled = rollAnimalEncounter(onWorld(regina, 'clear'), cycling(5), fixedClock(), 7);
-    expect(animalTableOf(rolled.campaign.hexes[0]!, 'clear')).toBeDefined();
+    expect(animalTableOf(mainWorld(rolled.campaign.hexes[0]!), 'clear')).toBeDefined();
     expect(rolled.encounter).toMatchObject({ animal: 7, terrain: 'clear', in: '0101' });
     expect(rolled.encounter!.of).toBeUndefined();
     expect(rolled.encounter!.reaction).toBeUndefined();

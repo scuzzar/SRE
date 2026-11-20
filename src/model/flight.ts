@@ -2,7 +2,7 @@ import type { Campaign } from './campaign';
 import { DomainError } from './errors';
 import type { Clock } from './ports';
 import { shipDesignOf } from './reference';
-import { worldOf, type Hex } from './sector';
+import { worldOf, type World } from './sector';
 import { activeShip, shipById, without } from './ship';
 import { passTime } from './time';
 
@@ -71,7 +71,7 @@ export interface Body {
 }
 
 /** Größe der Welt als Zahl; fehlt sie, 0. */
-function sizeOf(hex: Hex): number {
+function sizeOf(hex: World): number {
   return hex.uwp.size ?? 0;
 }
 
@@ -79,7 +79,7 @@ function sizeOf(hex: Hex): number {
  * Die Welt als Himmelskörper: Radius = Größe × 800 km, Schwerkraft g = Größe ÷ 8 G (SR 22, Dichte
  * K = 1), G·M = g · R². Größe 0 (Asteroidengürtel) hat keinen Körper.
  */
-export function bodyOf(hex: Hex): Body | undefined {
+export function bodyOf(hex: World): Body | undefined {
   const size = sizeOf(hex);
   if (size <= 0) return undefined;
   const radius = size * 800;
@@ -87,7 +87,7 @@ export function bodyOf(hex: Hex): Body | undefined {
 }
 
 /** Die Sprunggrenzen der Welt in km vom Mittelpunkt: 10 und 100 Durchmesser (SR 28); ohne Körper keine. */
-export function jumpLimitsOf(hex: Hex): readonly number[] {
+export function jumpLimitsOf(hex: World): readonly number[] {
   const body = bodyOf(hex);
   return body === undefined ? [] : [20 * body.radius, 200 * body.radius];
 }

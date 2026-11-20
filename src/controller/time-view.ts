@@ -36,7 +36,6 @@ import {
   ticketsOf,
   travellersOf,
   winnerOf,
-  worldOf,
   fundsOf,
   hexById,
   REVIVE_TARGET,
@@ -51,6 +50,9 @@ import {
   monthOf,
   type MonthEnd,
   type ShipCost,
+  worldById,
+  hexIdOfWorld,
+  mainOf,
 } from '../model';
 
 /** Ein Test im Log: Art, Würfel, Zielwert, ob bestanden; bei der Polizei dazu die Reaktion. */
@@ -286,7 +288,7 @@ export function timeItem(entry: TimePassed): TimeItem {
 }
 
 function worldName(campaign: Campaign, id: string): string {
-  return hexById(campaign.hexes, id)?.name ?? id;
+  return worldById(campaign.hexes, id)?.name ?? id;
 }
 
 function nameOf(campaign: Campaign, id: string): string {
@@ -373,7 +375,7 @@ export function journeyView(campaign: Campaign, draft: JourneyDraft): JourneyVie
       to: entry.to,
       toName: result.to,
       fromName: result.from,
-      parsecs: parsecs(worldOf(campaign.hexes, entry.from), worldOf(campaign.hexes, entry.to)),
+      parsecs: parsecs(hexById(campaign.hexes, entry.from)!, hexById(campaign.hexes, entry.to)!),
       days: entry.days,
       arrival: result.toDate,
       mode: entry.ship === undefined ? 'passage' : 'ship',
@@ -392,15 +394,16 @@ export function journeyView(campaign: Campaign, draft: JourneyDraft): JourneyVie
   }
   const from = locationOf(campaign);
   const target = hexById(campaign.hexes, draft.to);
-  if (!from || !target) return undefined;
+  const fromHex = from && hexById(campaign.hexes, hexIdOfWorld(from.id));
+  if (!from || !fromHex || !target) return undefined;
   const passageBlocker = journeyBlocker(campaign, draft.to);
   const shipBlocker = shipJourneyBlocker(campaign, draft.to);
   const ship = shipForJourney(campaign, shipBlocker);
   const base = {
     to: draft.to,
-    toName: target.name ?? draft.to,
+    toName: mainOf(target)?.name ?? draft.to,
     fromName: from.name,
-    parsecs: parsecs(from, target),
+    parsecs: parsecs(fromHex, target),
     days: JOURNEY_DAYS,
     arrival: dateLabel(dayOf(campaign) + JOURNEY_DAYS),
     mode: draft.mode,

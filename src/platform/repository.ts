@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable, type Table } from 'dexie';
 import { cryptoKeys } from './keys';
-import { hexFromRolls, keepFocus, START_DAY, settleStash, upgradeDistances, upgradeNpcs, upgradeOracle, type Campaign, type CampaignId, type CampaignRepository, type DeckMark, type DeckPlan, type Encounter, type Hex, type LegacyWorldRoll, type SyncMark, type TrayStop, TRAY_STOPS } from '../model';
+import { hexFromFlat, hexFromRolls, keepFocus, type FlatHex, START_DAY, settleStash, upgradeDistances, upgradeNpcs, upgradeOracle, type Campaign, type CampaignId, type CampaignRepository, type DeckMark, type DeckPlan, type Encounter, type Hex, type LegacyWorldRoll, type SyncMark, type TrayStop, TRAY_STOPS } from '../model';
 
 /** Eine Kampagne liegt unter ihrer Id. */
 interface StoredCampaign {
@@ -193,12 +193,18 @@ export function upgraded(campaign: Campaign): Campaign {
     possessions: c.possessions ?? [],
     ...(c.primary === undefined && c.secondary === undefined && c.wields !== undefined ? { primary: c.wields } : {}),
   }));
-  const hexes = (campaign.hexes ?? []).map((hex): Hex => {
-    const old = hex as Hex & { readonly rolls?: readonly LegacyWorldRoll[] };
+  const hexes = (campaign.hexes ?? []).map((stored): Hex => {
+    const old = stored as Hex & { readonly rolls?: readonly LegacyWorldRoll[]; readonly name?: string };
     if (old.rolls) return hexFromRolls({ column: old.column, row: old.row, ...(old.name === undefined ? {} : { name: old.name }), rolls: old.rolls });
-    const cities = hex.map?.cities;
-    if (cities?.some((c) => !c.name)) return { ...hex, map: { ...hex.map!, cities: cities.map((c, i) => (c.name ? c : { ...c, name: `Stadt ${i + 1}` })) } };
-    return hex;
+    // Vor 2026-11-20b hingen die Werte der Welt am Hexfeld; sie werden die Hauptwelt.
+    const hex = Array.isArray((stored as Partial<Hex>).worlds) ? stored : hexFromFlat(stored as unknown as FlatHex);
+    return {
+      ...hex,
+      worlds: hex.worlds.map((w) => {
+        const cities = w.map?.cities;
+        return cities?.some((c) => !c.name) ? { ...w, map: { ...w.map!, cities: cities.map((c, i) => (c.name ? c : { ...c, name: `Stadt ${i + 1}` })) } } : w;
+      }),
+    };
   });
   const location = typeof (campaign.location as unknown) === 'string' ? { location: { world: campaign.location as unknown as string } } : {};
   // Begegnungen von vor den Range Bands bzw. von vor 2026-11-08d macht upgradeDistances zu solchen mit Startband.

@@ -20,7 +20,7 @@ import {
   tableOptions,
   type Generation,
 } from './generation';
-import type { Hex } from './sector';
+import { hexFromFlat, type Hex } from './sector';
 import { fixedRandom } from './testing';
 
 /**
@@ -336,9 +336,9 @@ describe('Charaktererschaffung', () => {
 });
 
 describe('Heimatwelt und Welten der Terms', () => {
-  const regina: Hex = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
-  const efate: Hex = { ...regina, column: 2, row: 2, name: 'Efate' };
-  const pending: Hex = { column: 3, row: 3, empty: false, uwp: {} };
+  const regina: Hex = hexFromFlat({ column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } });
+  const efate: Hex = hexFromFlat({ column: 2, row: 2, empty: false, name: 'Efate', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } });
+  const pending: Hex = hexFromFlat({ column: 3, row: 3, empty: false, uwp: {} });
 
   /** Eine Kampagne mit drei Feldern und einer Erschaffung nach den Attributen (UPP wie Kira). */
   function campaignAfterCharacteristics() {

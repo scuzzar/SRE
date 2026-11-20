@@ -6,6 +6,7 @@ import { rollAnimalEncounter, setTerrain } from './encounter';
 import { rollEventSaves, saveSucceeds } from './events';
 import type { SaveRoll } from './log';
 import { ref } from './reference';
+import { hexFromFlat } from './sector';
 import { setLocation } from './shop';
 import { fixedClock, fixedRandom } from './testing';
 import { woundsOf } from './wounds';
@@ -13,7 +14,7 @@ import { woundsOf } from './wounds';
 /** Eine Welt, deren Tiertabelle in Clear nur aus diesem Ereignis besteht. */
 function withEvent(event: string): Campaign {
   const table: AnimalTable = { terrain: 'clear', rows: Array.from({ length: 11 }, (_, i) => ({ roll: i + 2, event })) };
-  const hex = { ...ref.demoWorld, column: 1, row: 1, name: 'Regina', animals: [table] };
+  const hex = hexFromFlat({ ...ref.demoWorld, column: 1, row: 1, name: 'Regina', animals: [table] });
   return setTerrain(setLocation(setHexes(createCampaign(), [hex]), '0101'), 'clear');
 }
 

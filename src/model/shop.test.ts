@@ -20,12 +20,12 @@ import {
   spendRound,
   toCampaignFile,
   type Campaign,
-  type Hex,
+  hexFromFlat, mainWorld, type Hex,
 } from '.';
 import { fixedClock } from './testing';
 
 // Regina: TL 7, Gesetz 5 (keine Pistolen und Revolver, S. 14).
-const regina: Hex = {
+const regina: Hex = hexFromFlat({
   column: 2,
   row: 7,
   empty: false,
@@ -36,7 +36,7 @@ const regina: Hex = {
   uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 },
   temperature: 'temperate',
   surface: { water: 80, plates: 8, majorContinents: 1, minorContinents: 4, majorIslands: 5, archipelagos: 7, majorOceans: 0, minorOceans: 0, smallSeas: 0, scatteredLakes: 0, life: true },
-};
+});
 const there: Campaign = setLocation(setHexes(createCampaign(), [regina]), '0207');
 const clock = fixedClock();
 
@@ -72,7 +72,7 @@ describe('Gruppenkasse', () => {
 
 describe('Shop', () => {
   it('bietet an, was es bis zum TL der Welt gibt, ohne Schiffe; verbotene Waffen mit Warnung', () => {
-    const offer = offerOf(regina);
+    const offer = offerOf(mainWorld(regina));
     const of = (id: string) => offer.find((o) => o.item.id === id);
     expect(of('rifle')).toMatchObject({ price: 200, banned: undefined });
     expect(of('revolver')).toMatchObject({ price: 150, banned: 5 });

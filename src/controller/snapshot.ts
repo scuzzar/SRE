@@ -15,7 +15,6 @@ import {
   type MissionState,
   type Place,
   generateNpcBlocker,
-  hexById,
   npcGroups,
   npcRoles,
   patronNpcBlocker,
@@ -229,6 +228,7 @@ import {
   farePayers,
   type Trip,
   type CheckKind,
+  worldById,
 } from '../model';
 import {
   attackerOf,
@@ -1584,7 +1584,7 @@ function npcItem(c: Character): NpcItem {
 /** NSC platzieren: das Feld des Globus, auf das die gewählten NSC kommen, solange seine Welt offen ist. */
 function placingView(campaign: Campaign, state: ControllerState): NpcScreenView['placing'] {
   if (state.npcJoining) {
-    const loc = campaign.location === undefined ? undefined : hexById(campaign.hexes, campaign.location.world)?.name;
+    const loc = campaign.location === undefined ? undefined : worldById(campaign.hexes, campaign.location.world)?.name;
     return { question: 'Welche NSC kommen zur Zufallsbegegnung dazu?', here: [], allowed: joinableNpcs(campaign).map((c) => c.id), notAllowed: loc ? `nicht auf ${loc}` : 'nicht am Aufenthaltsort', ok: 'dazunehmen' };
   }
   const p = state.npcPlacing;
@@ -1597,7 +1597,7 @@ function placingView(campaign: Campaign, state: ControllerState): NpcScreenView[
 }
 
 function npcScreenView(campaign: Campaign, all: boolean): Omit<NpcScreenView, 'placing'> {
-  const here = campaign.location === undefined ? undefined : hexById(campaign.hexes, campaign.location.world)?.name;
+  const here = campaign.location === undefined ? undefined : worldById(campaign.hexes, campaign.location.world)?.name;
   return {
     all,
     here,
@@ -1612,7 +1612,7 @@ function npcScreenView(campaign: Campaign, all: boolean): Omit<NpcScreenView, 'p
 
 /** Ein Ort einer Mission in Worten: die Stadt bzw. Geländeart und Lage des Felds, dazu die Welt. */
 function missionPlaceView(campaign: Campaign, place: Place, label?: string): MissionPlaceView {
-  const hex = hexById(campaign.hexes, place.world);
+  const hex = worldById(campaign.hexes, place.world);
   const cell = placeCell(campaign.hexes, place);
   const city = place.city === undefined ? undefined : hex?.map?.cities?.[place.city]?.name;
   const where = city ?? (cell !== undefined && hex?.map && hex.uwp.size !== undefined ? `${LANDFORM_NAMES[landformAt(hex.map, cell)]} · ${position(surfaceGrid(hex.uwp.size), cell)}` : undefined);
@@ -2493,7 +2493,7 @@ function shopView(campaign: Campaign, error: string | undefined): ShopView {
   const gearKinds: readonly ItemKind[] = ['equipment', 'vehicle', 'passage'];
   return {
     funds,
-    world: world && { id: hexId(world.column, world.row), name: world.name, uwp: uwpCode(world.uwp), tech: ehex(world.uwp.tech ?? 0), law: ehex(world.uwp.law ?? 0) },
+    world: world && { id: world.id, name: world.name, uwp: uwpCode(world.uwp), tech: ehex(world.uwp.tech ?? 0), law: ehex(world.uwp.law ?? 0) },
     offer: kinds.map((kind) => ({ kind, items: offer.filter((o) => o.item.kind === kind).map(shopItem) })),
     owner: owner?.id,
     weapons,
@@ -2510,7 +2510,7 @@ function shopView(campaign: Campaign, error: string | undefined): ShopView {
       character: name(b.for),
       item: b.bought ?? b.sold ? itemLabel(itemOf((b.bought ?? b.sold)!)) : undefined,
       count: b.count,
-      world: b.in === undefined ? undefined : (campaign.hexes.find((h) => hexId(h.column, h.row) === b.in)?.name ?? b.in),
+      world: b.in === undefined ? undefined : (worldById(campaign.hexes, b.in)?.name ?? b.in),
       shipCost: b.shipCost,
       ship: b.forShip === undefined ? undefined : (campaign.ships.find((s) => s.id === b.forShip)?.name ?? b.forShip),
     })),
