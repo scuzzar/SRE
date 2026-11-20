@@ -471,7 +471,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > entfallen, ebenso die Bahn der Hauptwelt am `StarSystem`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-20b-welten-getrennt.png`](changes/2026-11-20b-welten-getrennt.png).
 >
-> Wartet auf Freigabe (Kennzeichen 2026-11-20c): **Nebenwelten nach Book 6** (Owner, 20. November 2026:
+> Am 20. November 2026 freigegeben (Kennzeichen 2026-11-20c): **Nebenwelten nach Book 6** (Owner, 20. November 2026:
 > „Macht es Sinn, auch die UWP der weiteren Welten zu würfeln?“). Jede weitere Welt und jeder Mond
 > außer Ringen bekommt Regierung, Gesetz und Tech-Level im UWP, einen Raumhafen (`World.spaceport`,
 > `Spaceport`: F, G, H oder Y) und Einrichtungen (`World.facilities`, `Facility`: Farming, Mining,
@@ -3127,7 +3127,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Raumkarte kommen die weiteren Welten nicht: Sie
     liegen Millionen Kilometer entfernt. Die Weltkarte zeigt sie in einer Übersicht des Systems;
     besuchen kann man sie später mit einer Reise im System.
-  - **Nebenwelten** (wartet auf Freigabe, Kennzeichen 2026-11-20c). Nach B6 38–39 mit den Tabellen
+  - **Nebenwelten** (freigegeben am 20. November 2026, Kennzeichen 2026-11-20c). Nach B6 38–39 mit den Tabellen
     S. 29, übertragen in [`regeln-sternsystem.md`](regeln-sternsystem.md) (*Nebenwelten*). Für jede
     Welt außer der Hauptwelt, Gasriesen und Ringen, im selben Zug wie das übrige System, nach den
     Monden und in dieser Reihenfolge; die Hauptwelt behält ihren Starport (A–E, X), die übrigen
