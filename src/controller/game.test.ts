@@ -4,6 +4,13 @@ import { countingKeys, fixedClock, fixedRandom, memoryDownload, memoryRepository
 import { GameController } from './game';
 import { surfaceLines } from './world-view';
 
+/** Öffnet die Welt und erzeugt ihren Globus, falls es ihn noch nicht gibt (2026-11-20d: nur auf Knopfdruck). */
+function openWithGlobe(game: GameController, column: number, row: number): void {
+  game.openGlobeAt(column, row);
+  if (!game.snapshot().globe) game.createGlobe();
+}
+
+
 async function started(random: Random = fixedRandom(), repository = memoryRepository(), download = memoryDownload()) {
   const game = new GameController({ repository, random, clock: fixedClock(), download, keys: countingKeys() });
   await game.init();
@@ -772,7 +779,7 @@ describe('Begegnung und Kampfsimulation', () => {
     game.stayHere();
     game.closeWorld();
     game.chooseHex(2, 1);
-    expect(game.snapshot().travel).toEqual({ blocker: undefined });
+    expect(game.snapshot().travel).toEqual({ blocker: undefined, inSystem: false });
     random.queue.push(3);
     game.openJourney();
     const kira = game.snapshot().characters[0]!.id;
@@ -804,7 +811,7 @@ describe('Begegnung und Kampfsimulation', () => {
     game.stayHere();
     game.closeWorld();
     game.chooseHex(1, 3);
-    expect(game.snapshot().travel).toEqual({ blocker: undefined }); // ohne Schiff: „keinen Raumhafen“
+    expect(game.snapshot().travel).toEqual({ blocker: undefined, inSystem: false }); // ohne Schiff: „keinen Raumhafen“
     random.queue.push(3);
     game.openJourney();
     expect(game.snapshot().journey).toMatchObject({ toName: 'Außenposten', mode: 'ship', cost: 0, ship: { name: 'Scout/Courier', design: 'Scout/Courier', jump: 2, fuel: 40, perJump: 20, after: 20, blocker: undefined } });
@@ -1905,7 +1912,7 @@ describe('Tiere im Kampf', () => {
 describe('Globus (Oberflächenkarte)', () => {
   it('erzeugt die Karte beim ersten Öffnen, speichert sie und zeigt das angetippte Feld', async () => {
     const { game, repository } = await started();
-    game.openGlobeAt(4, 5);
+    openWithGlobe(game, 4, 5);
     const view = game.snapshot();
     expect(view.world?.name).toBe('Kessra');
     expect(view.globe?.name).toBe('Kessra');
@@ -1934,7 +1941,7 @@ describe('Globus (Oberflächenkarte)', () => {
     expect(game.snapshot().selected?.id).toBe('0101');
     game.showScreen('encounter');
     expect(game.snapshot().selected).toBeUndefined();
-    game.openGlobeAt(4, 5);
+    openWithGlobe(game, 4, 5);
     game.pickCell(0);
     game.showScreen('shop');
     expect(game.snapshot()).toMatchObject({ screen: 'shop', globe: { picked: undefined } });
@@ -1950,7 +1957,7 @@ describe('Globus (Oberflächenkarte)', () => {
 
   it('übersteht die Kampagnendatei und lässt sich neu würfeln', async () => {
     const { game } = await started();
-    game.openGlobeAt(4, 5);
+    openWithGlobe(game, 4, 5);
     const before = game.snapshot().globe!.map;
     const campaign = fromCampaignFile(toCampaignFile(game['campaign']), 'c2');
     const hex = mainWorld(campaign.hexes.find((h) => h.column === 4 && h.row === 5)!);
@@ -1961,7 +1968,7 @@ describe('Globus (Oberflächenkarte)', () => {
 
   it('weist eine beschädigte Karte beim Import zurück', async () => {
     const { game } = await started();
-    game.openGlobeAt(4, 5);
+    openWithGlobe(game, 4, 5);
     const file = JSON.parse(toCampaignFile(game['campaign']));
     file.campaign.hexes[0].worlds[0].map.landforms = 'w';
     expect(() => fromCampaignFile(JSON.stringify(file), 'c2')).toThrow(/Felder/);
@@ -1971,7 +1978,7 @@ describe('Globus (Oberflächenkarte)', () => {
 describe('Städtenamen (2026-11-14k)', () => {
   it('jede Stadt hat einen Namen, ohne Doppel; umbenennen; alte Karten heißen Stadt 1, 2 …', async () => {
     const { game } = await started();
-    game.openGlobeAt(4, 5);
+    openWithGlobe(game, 4, 5);
     const cities = mainWorld(game['campaign'].hexes[0]!).map!.cities!;
     expect(cities.length).toBeGreaterThan(0);
     expect(cities.every((c) => c.name.trim().length > 0)).toBe(true);
@@ -2001,7 +2008,7 @@ describe('Orte (2026-11-14j)', () => {
     };
     const mara = add('Mara', '0405');
     const tenzin = add('Tenzin', undefined);
-    game.openGlobeAt(4, 5);
+    openWithGlobe(game, 4, 5);
     const capital = game.snapshot().globe!.cities[0]!;
     game.pickCell(capital.cell);
     // NSC platzieren öffnet die NSC-Liste zum Auswählen; das Feld ist so lange losgelassen.
@@ -2031,7 +2038,7 @@ describe('Orte (2026-11-14j)', () => {
   it('Ein mitkämpfender dauerhafter NSC (auch am Feld erzeugt) hat eine Reichweite zu den SC: beide Seiten können angreifen', async () => {
     let seed = 11;
     const { game } = await started({ int: (min, max) => min + ((seed = (seed * 16807) % 2147483647) % (max - min + 1)) });
-    game.openGlobeAt(4, 5);
+    openWithGlobe(game, 4, 5);
     game.pickCell(game.snapshot().globe!.cities[0]!.cell);
     game.generateNpc('scouts', 'enemy', true);
     const npc = game.snapshot().editor!.id!;
@@ -2053,7 +2060,7 @@ describe('Orte (2026-11-14j)', () => {
   it('Einkaufen geht nur in einer Stadt auf der Welt der Gruppe; ✕ führt zum Feld zurück, ein Reiter verlässt den Shop', async () => {
     const { game } = await started();
     game.showScreen('ship');
-    game.openGlobeAt(4, 5);
+    openWithGlobe(game, 4, 5);
     const capital = game.snapshot().globe!.cities[0]!;
     const cities = new Set(game.snapshot().globe!.cities.map((c) => c.cell));
     const empty = game.snapshot().globe!.grid.lat.findIndex((_, cell) => !cities.has(cell));
@@ -2076,7 +2083,7 @@ describe('Orte (2026-11-14j)', () => {
     // Ein einfacher, fester Zufall, mit dem die Laufbahn zu Ende läuft (immer das Minimum tut es nicht).
     let seed = 7;
     const { game } = await started({ int: (min, max) => min + ((seed = (seed * 16807) % 2147483647) % (max - min + 1)) });
-    game.openGlobeAt(4, 5);
+    openWithGlobe(game, 4, 5);
     const capital = game.snapshot().globe!.cities[0]!;
     game.pickCell(capital.cell);
     game.generateNpc('scouts', 'enemy', true);
@@ -2089,7 +2096,7 @@ describe('Orte (2026-11-14j)', () => {
     const { game, repository } = await started();
     game.rollDice();
     expect(game['campaign'].log.at(-1)?.place).toEqual({ world: '0405' });
-    game.openGlobeAt(4, 5);
+    openWithGlobe(game, 4, 5);
     const globe = game.snapshot().globe!;
     const capital = globe.cities[0]!;
     game.pickCell(capital.cell);
@@ -2123,7 +2130,7 @@ describe('Orte (2026-11-14j)', () => {
     game.saveCharacter({ ...game.snapshot().editor!.input, name: 'Tenzin' } as never);
     const tenzin = game['campaign'].characters.find((c) => c.name === 'Tenzin')!;
     expect(tenzin.place).toEqual({ world: '0405' });
-    game.openGlobeAt(4, 5);
+    openWithGlobe(game, 4, 5);
     game.pickCell(100);
     game.moveNpc(tenzin.id);
     const moved = game['campaign'].characters.find((c) => c.id === tenzin.id)!;
@@ -2145,7 +2152,7 @@ describe('Orte (2026-11-14j)', () => {
 describe('Fahrt (2026-11-15)', () => {
   it('plant auf dem Globus eine Route, fährt Tag für Tag und kommt an', async () => {
     const { game, repository } = await started();
-    game.openGlobeAt(4, 5);
+    openWithGlobe(game, 4, 5);
     const capital = game.snapshot().globe!.cities[0]!;
     game.pickCell(capital.cell);
     game.moveParty();
@@ -2200,7 +2207,7 @@ describe('Fahrt (2026-11-15)', () => {
   it('zeigt mit Geld in der Kasse mehrere Varianten; eine gewählte zeigt der Globus und mit ihr fährt man los', async () => {
     const { game } = await started();
     game.book('income', 1_000_000);
-    game.openGlobeAt(4, 5);
+    openWithGlobe(game, 4, 5);
     const capital = game.snapshot().globe!.cities[0]!;
     game.pickCell(capital.cell);
     game.moveParty();
@@ -2222,5 +2229,52 @@ describe('Fahrt (2026-11-15)', () => {
     game.startTrip();
     expect(game['campaign'].trip).toEqual(game['campaign'].trip && { hours: 0, legs: game['campaign'].trip.legs });
     expect(game.snapshot().trip!.legs.map((l) => l.vehicle)).toEqual(plan.options[last]!.trip.legs.map((l) => l.vehicle));
+  });
+});
+
+describe('Nebenwelten und Reise im System (2026-11-20d)', () => {
+  it('der Globus entsteht nur auf Knopfdruck; eine Nebenwelt bekommt Namen, Oberfläche und Globus; die Gruppe reist mit dem Schiff hin', async () => {
+    const { game } = await started();
+    game.openGlobeAt(4, 5);
+    // Ohne Karte bleibt es bei der Weltkarte; „Globus erzeugen“ macht sie.
+    expect(game.snapshot().globe).toBeUndefined();
+    expect(game.snapshot().world).toMatchObject({ canGlobe: true, hasMap: false, subordinate: false });
+    game.createGlobe();
+    expect(game.snapshot().globe?.id).toBe('0405');
+    game.createGlobe();
+    expect(game.snapshot().world?.error).toMatch(/schon einen Globus/);
+
+    // Eine Nebenwelt aus der Übersicht öffnen.
+    const body = game.snapshot().world!.system!.orbits.flatMap((o) => [o.body, ...o.moons]).find((b) => b.openable && !b.main && b.code !== undefined && !b.code.includes('S') && b.label.startsWith('Welt'))!;
+    game.openWorld(body.id!);
+    const world = game.snapshot().world!;
+    expect(world).toMatchObject({ id: body.id, subordinate: true, step: 'done', action: { kind: 'surface' } });
+    game.nameWorld('  Tertius ');
+    expect(game.snapshot().world?.name).toBe('Tertius');
+    game.rollWorld();
+    expect(game.snapshot().world?.surface).toBeDefined();
+    expect(game.snapshot().world).toMatchObject({ action: { kind: 'done' }, canGlobe: true, hasMap: false });
+    game.createGlobe();
+    expect(game.snapshot().globe?.id).toBe(body.id);
+    game.closeGlobe();
+    // Die Übersicht zeigt den Punkt für den Globus.
+    const listed = game.snapshot().world!.system!.orbits.flatMap((o) => [o.body, ...o.moons]).find((b) => b.id === body.id)!;
+    expect(listed).toMatchObject({ globe: true, label: expect.stringContaining('Tertius') });
+
+    // Hierher reisen: im selben System der Dialog der Reise im System.
+    expect(game.snapshot().travel?.inSystem).toBe(true);
+    game.openJourney();
+    const dialog = game.snapshot().systemJourney!;
+    expect(dialog.toName).toBe('Tertius');
+    expect(dialog.options.map((o) => o.mode)).toEqual(['ticket', 'ship']);
+    game.chooseSystemJourneyMode('ship');
+    const day = game.snapshot().time?.label;
+    game.travelInSystem();
+    expect(game.snapshot().systemJourney?.result).toMatchObject({ to: 'Tertius', how: expect.stringContaining('mit Kestrel') });
+    expect(game.snapshot().location).toBe(body.id);
+    expect(game.snapshot().time?.label).not.toBe(day);
+    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'systemJourney', to: 'Tertius' });
+    game.closeSystemJourney();
+    expect(game.snapshot().systemJourney).toBeUndefined();
   });
 });

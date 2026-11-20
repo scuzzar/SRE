@@ -28,6 +28,7 @@ import { OracleDock } from './oracle/OracleDock';
 import { SectorPicker, SectorScreen } from './sector/SectorScreen';
 import { useWorldDock } from './sector/WorldSheet';
 import { JourneySheet } from './sector/JourneySheet';
+import { SystemJourneySheet } from './sector/SystemJourneySheet';
 import { FieldCard, GlobeScreen } from './sector/GlobeScreen';
 import { TripRollDialog } from './sector/TripPanels';
 import { FieldDock } from './sector/FieldDock';
@@ -243,6 +244,7 @@ export function App() {
       {view.missions.editor && screen === 'missions' && <MissionEditor key={view.missions.editor.rev} missions={view.missions} />}
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
       {view.journey && <JourneySheet journey={view.journey} />}
+      {view.systemJourney && <SystemJourneySheet journey={view.systemJourney} />}
       {view.card && !view.card.forNote && <CardSheet card={view.card} />}
       {view.tripRoll && <TripRollDialog roll={view.tripRoll} />}
       {view.encounterChoice && <EncounterChoiceDialog kind={view.encounterChoice} view={view} />}

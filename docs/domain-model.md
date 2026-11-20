@@ -3276,6 +3276,12 @@ Diagramm mit diesen Ausnahmen:
     bewohnbaren Bahn (nie innen).
   - Die DMs nach dem Sterntyp für das einheimische Leben (World Builder's Handbook) gibt es weiter
     nicht; die Oberfläche entsteht vor dem Sternsystem.
+  - **Reise im System und Nebenwelten mit Globus** (2026-11-20d) sind gebaut
+    (`model/system-journey.ts`, `withSurfaceMapOf`, `rollWorldSurface`, `renameWorld`). Die
+    Weltkarte hängt im Controller an Feld und, für Nebenwelten, an der Id der Welt
+    (`OpenWorld.id`). Eine Nebenwelt ohne Namen heißt in Log und Dialog nach der Hauptwelt mit ihrer
+    Nummer („Kessra 3“). Das Ticket ist eine Buchung mit Text, nicht mit Anzahl und Ort (die haben
+    nur Kauf und Verkauf).
   - **Nebenwelten** (2026-11-20c) sind gebaut (`rollSubordinates`). Systeme von davor bekommen die
     Werte beim Öffnen der Kampagne mit Würfen aus Schlüssel und Feld; bis dahin lässt die Prüfung
     Nebenwelten ohne Raumhafen zu, aber nur alle zusammen.

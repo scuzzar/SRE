@@ -9,7 +9,7 @@ import { hideLoading, showLoading } from '../loading';
 import { cellAt, radiusOf, renderGlobe, screenOf, screenOfPoint, type Camera, type Viewport } from './globe-render';
 import { HappenedList } from './HappenedList';
 import { trayTop } from '../Tray';
-import { NoteSection, SurfaceSection, SystemSection, WorldActions, WorldCard } from './WorldSheet';
+import { NoteSection, RenameSection, SurfaceSection, SystemSection, WorldActions, WorldCard } from './WorldSheet';
 
 const DEG = Math.PI / 180;
 const LOADING = 'Welt wird aufgebaut …';
@@ -467,7 +467,8 @@ export function GlobeScreen({
             {world.surface && <SurfaceSection lines={world.surface} />}
             {world.system && <SystemSection system={world.system} />}
             <WorldActions world={world} here={here} travel={travel} onGlobe />
-            {world.canNote && <NoteSection note={world.note} />}
+            {world.subordinate && <RenameSection key={world.id} name={world.name} />}
+            {world.canNote && <NoteSection key={`note-${world.id}`} note={world.note} />}
             {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
           </div>
         )}

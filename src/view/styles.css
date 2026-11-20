@@ -8140,6 +8140,27 @@ button:disabled {
 }
 
 
+.system-open {
+  background: none;
+  border: 0;
+  padding: 0;
+  min-height: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.system-open:hover .system-label,
+.system-open:focus-visible .system-label {
+  text-decoration: underline;
+}
+
+.system-globe {
+  color: #4fd1ff;
+  font-size: 0.8em;
+}
+
 .system-main .system-label {
   color: #ffd27a;
   font-weight: 600;

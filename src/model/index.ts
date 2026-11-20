@@ -25,6 +25,7 @@ export * from './reference';
 export * from './rules';
 export * from './sector';
 export * from './star-system';
+export * from './system-journey';
 export * from './place';
 export * from './ship';
 export * from './surface-grid';

@@ -4,7 +4,7 @@
 import { DomainError } from './errors';
 import type { Campaign } from './campaign';
 import { ref } from './reference';
-import { hexId, worldOf, worldById, type Hex } from './sector';
+import { worldOf, worldById, type Hex } from './sector';
 import { landformAt } from './surface-map';
 
 export interface Place {
@@ -50,19 +50,19 @@ export function checkPlace(hexes: readonly Hex[], place: Place): void {
   if (place.city !== undefined && map.cities?.[place.city] === undefined) throw new DomainError(`Die Stadt ${place.city + 1} gibt es auf ${world.name} nicht.`);
 }
 
-/** Ob ein Ort auf ein Feld oder eine Stadt der Oberflächenkarte dieses Hexfelds zeigt. */
-export function pointsIntoMap(place: Place | undefined, column: number, row: number): boolean {
-  return place !== undefined && place.world === hexId(column, row) && (place.cell !== undefined || place.city !== undefined);
+/** Ob ein Ort auf ein Feld oder eine Stadt der Oberflächenkarte dieser Welt zeigt. */
+export function pointsIntoMap(place: Place | undefined, world: string): boolean {
+  return place !== undefined && place.world === world && (place.cell !== undefined || place.city !== undefined);
 }
 
-/** Ob die Oberflächenkarte dieses Hexfelds gesperrt ist: Gruppe, ein NSC, ein Fahrzeug, ein Logeintrag oder eine Mission zeigt auf ein Feld oder eine Stadt darauf. */
-export function mapLocked(campaign: Campaign, column: number, row: number): boolean {
+/** Ob die Oberflächenkarte dieser Welt gesperrt ist: Gruppe, ein NSC, ein Fahrzeug, ein Logeintrag oder eine Mission zeigt auf ein Feld oder eine Stadt darauf. */
+export function mapLocked(campaign: Campaign, world: string): boolean {
   return (
-    pointsIntoMap(campaign.location, column, row) ||
-    campaign.characters.some((c) => pointsIntoMap(c.place, column, row)) ||
-    campaign.stash.some((p) => pointsIntoMap(p.parked, column, row)) ||
-    campaign.log.some((e) => pointsIntoMap(e.place, column, row)) ||
-    campaign.missions.some((m) => m.places.some((p) => pointsIntoMap(p.place, column, row)))
+    pointsIntoMap(campaign.location, world) ||
+    campaign.characters.some((c) => pointsIntoMap(c.place, world)) ||
+    campaign.stash.some((p) => pointsIntoMap(p.parked, world)) ||
+    campaign.log.some((e) => pointsIntoMap(e.place, world)) ||
+    campaign.missions.some((m) => m.places.some((p) => pointsIntoMap(p.place, world)))
   );
 }
 

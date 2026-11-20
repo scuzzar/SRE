@@ -11,7 +11,7 @@ import { roll2d6, sum, type Characteristic, type Dice } from './rules';
  * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, bei der Antwort des Orakels dazu die Chance, bei Probe und Angriff DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | MonthEnd | CheckRoll | Journey | TripDay | Note;
+export type LogEntry = DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | MonthEnd | CheckRoll | Journey | SystemJourney | TripDay | Note;
 
 /** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
 export type LogResult = Exclude<LogEntry, Note>;
@@ -109,6 +109,20 @@ export interface Journey extends LogEntryBase {
   readonly lot?: number;
   readonly ship?: string;
   readonly jump?: Dice;
+}
+
+/**
+ * Die Reise im System (2026-11-20d): von Welt zu Welt desselben Systems, mit Ticket (ohne `ship`)
+ * oder mit dem eigenen Schiff. `hours` ist die Flugzeit nach T = 2·√(D/A); `day` der Abflugtag,
+ * danach ist die Kampagne `/days` Tage weiter (Stunden ÷ 24, aufgerundet, mindestens 1).
+ */
+export interface SystemJourney extends LogEntryBase {
+  readonly kind: 'systemJourney';
+  readonly from: string;
+  readonly to: string;
+  readonly hours: number;
+  readonly travellers: readonly string[];
+  readonly ship?: string;
 }
 
 /**

@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 // Wo etwas steht, hängt vom Layout ab: Auf dem Smartphone liegt unten das Ziehblatt mit den Reitern
 // (Log ist einer davon) und der Reihe Notiz, 2W6, Karte; im Desktop-Modus steht links eine Spalte
@@ -66,10 +66,23 @@ export const openPeople = (page: Page, part: 'SC' | 'NSC' | 'Kasse') => openPart
 /** Im Reiter Begegnung oben auf Kampf umschalten. */
 export const openCombat = (page: Page) => openPart(page, 'Begegnung', 'Kampf');
 
+/**
+ * Der Knopf ⌖ öffnet die Weltkarte des Aufenthaltsorts und, hat sie einen, den Globus; sonst erzeugt
+ * ihn „Globus erzeugen“ (2026-11-20d: der Globus entsteht nur auf Knopfdruck).
+ */
+export async function openHomeGlobe(page: Page) {
+  await page.getByRole('button', { name: /^Aufenthaltsort .*Globus öffnen/ }).click();
+  const create = page.getByRole('button', { name: 'Globus erzeugen' });
+  await expect(page.locator('.globe-full').or(create).first()).toBeVisible();
+  if (await create.isVisible()) await create.click();
+  await page.locator('.loading-overlay').waitFor({ state: 'detached', timeout: 30_000 });
+  await expect(page.locator('.globe-full')).toBeVisible();
+}
+
 /** Auf dem Globus des Aufenthaltsorts die Hauptstadt antippen (über „Orte“); öffnet erst den Globus, wenn nötig. */
 export async function pickCapital(page: Page) {
   const globe = page.locator('.globe-full');
-  if ((await globe.count()) === 0) await page.getByRole('button', { name: /^Aufenthaltsort .*Globus öffnen/ }).click();
+  if ((await globe.count()) === 0) await openHomeGlobe(page);
   await page.locator('.loading-overlay').waitFor({ state: 'detached', timeout: 30_000 });
   await page.locator('.globe-full').getByRole('button', { name: /^Orte/ }).click();
   await page.getByRole('region', { name: 'Orte' }).getByRole('button').filter({ has: page.locator('.globe-dot.capital') }).click();

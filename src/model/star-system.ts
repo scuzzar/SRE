@@ -1,7 +1,8 @@
 import { DomainError } from './errors';
 import type { Random } from './ports';
 import { ref } from './reference';
-import { baseKinds, facilities, hexId, mainOf, mainWorld, spaceports, tradeCodesOf, type BaseKind, type Facility, type Hex, type Spaceport, type Star, type StarSystem, type TemperatureId, type World } from './sector';
+import { checkSurfaceMap } from './surface-map';
+import { baseKinds, facilities, hexId, mainOf, mainWorld, mapPossible, rollSurface, spaceports, tradeCodesOf, validateSurface, withWorld, type BaseKind, type Facility, type Hex, type Spaceport, type Star, type StarSystem, type TemperatureId, type World } from './sector';
 
 // Das Sternsystem nach Book 6 *Scouts* (Domänenmodell 2026-11-18d, 2026-11-20, 2026-11-20b): Sterne,
 // Bahnen und Zonen um den Hauptstern, Gasriesen, Planetoidengürtel, leere und eingefangene Bahnen,
@@ -490,7 +491,19 @@ export function checkStarSystems(hexes: readonly Hex[]): void {
         if (isMain && around!.kind !== 'giant') fail('Die Hauptwelt ist höchstens Mond eines Gasriesen.');
         if (moonsOf(hex, w).length > 0) fail(`Ein Mond hat keine Monde (${w.id}).`);
       }
-      if (!isMain && (w.name !== undefined || w.note !== undefined || w.map !== undefined || w.surface !== undefined)) fail(`Nebenwelten haben vorerst weder Namen noch Oberfläche (${w.id}).`);
+      if (!isMain) {
+        // Nebenwelten mit Namen, Notiz, Oberfläche und Globus (2026-11-20d).
+        if (w.name !== undefined && !w.name.trim()) fail(`Die Welt ${w.id} hat einen leeren Namen.`);
+        if (w.note !== undefined && !w.note.trim()) fail(`Eine leere Notiz gibt es nicht (${w.id}).`);
+        if ((w.surface !== undefined || w.temperature !== undefined) && (w.kind !== 'world' || (w.uwp.size ?? 0) < 1)) fail(`Oberfläche und Temperatur hat nur eine Welt ab Größe 1 (${w.id}).`);
+        if (w.surface !== undefined) validateSurface(w, fail);
+        if (w.map !== undefined) {
+          if (!mapPossible(hex, w)) fail(`Eine Oberflächenkarte braucht Oberfläche und Temperatur (${w.id}).`);
+          const why = checkSurfaceMap(w.map, w.uwp.size!, w.uwp.population ?? 0);
+          if (why) fail(why);
+        }
+        if (w.populationMultiplier !== undefined && (!Number.isInteger(w.populationMultiplier) || w.populationMultiplier < 1 || w.populationMultiplier > 9 || (w.uwp.population ?? 0) < 1)) fail(`Einen Bevölkerungsmultiplikator 1–9 hat nur eine Welt mit Bevölkerung (${w.id}).`);
+      }
       const subordinate = isSubordinate(hex, w);
       if (!subordinate && (w.spaceport !== undefined || w.facilities !== undefined || w.bases !== undefined)) fail(`Raumhafen, Einrichtungen und Basen haben nur Nebenwelten (${w.id}).`);
       if (subordinate && w.spaceport === undefined && (w.uwp.government !== undefined || w.uwp.law !== undefined || w.uwp.tech !== undefined || w.facilities !== undefined || w.bases !== undefined)) fail(`Die Nebenwelt ${w.id} hat Werte von 2026-11-20c, aber keinen Raumhafen.`);
@@ -503,6 +516,23 @@ export function checkStarSystems(hexes: readonly Hex[]): void {
       }
     }
   }
+}
+
+/** Kann diese Nebenwelt ihre Oberfläche würfeln (2026-11-20d)? Eine Welt ab Größe 1 ohne Oberfläche, mit TL. */
+export function surfaceDue(hex: Hex, world: World): boolean {
+  return world.id !== hex.main && world.kind === 'world' && (world.uwp.size ?? 0) >= 1 && world.surface === undefined && world.uwp.tech !== undefined;
+}
+
+/**
+ * Würfelt die Oberfläche einer Nebenwelt nach dem World Builder's Handbook (wie bei Welten von vor
+ * der Oberfläche); die Temperatur aus ihrer Zone wird dabei gespeichert, damit das Leben dazu passt.
+ */
+export function rollWorldSurface(hexes: readonly Hex[], id: string, random: Random): readonly Hex[] {
+  return withWorld(hexes, id, (world, hex) => {
+    if (!surfaceDue(hex, world)) throw new DomainError('Diese Welt kann keine Oberfläche würfeln.');
+    const temperature = temperatureOfWorld(hex, world);
+    return { ...world, temperature, surface: rollSurface({ uwp: world.uwp, temperature }, random) };
+  });
 }
 
 /** Eine Zufallsquelle aus einem Text (FNV-1a, dann mulberry32): derselbe Text gibt dieselben Würfe. */

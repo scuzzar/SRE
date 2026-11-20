@@ -151,8 +151,6 @@ import {
   rollNext,
   rollSkill,
   nameWorld,
-  canHaveMap,
-  withSurfaceMap,
   cityNamesTaken,
   renameCity,
   mapLocked,
@@ -211,11 +209,17 @@ import {
   type Random,
   type WindowLock,
   worldById,
-  mainOf,
   withStarSystems,
   marksOf,
   flightTime,
   hexIdOfWorld,
+  withSurfaceMapOf,
+  rollWorldSurface,
+  renameWorld,
+  travelInSystem,
+  systemJourneyBlocker,
+  type SystemJourneyMode,
+  hexById,
 } from '../model';
 import {
   attackRounds,
@@ -254,7 +258,7 @@ import {
   type ConflictChoice,
   rollSystemAt,
 } from '../model/draft';
-import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
+import { buildSnapshot, openWorldId, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
 import { spaceChoices, type OpenSpace } from './space-view';
 import type { JourneyMode } from './time-view';
 
@@ -262,7 +266,7 @@ import type { JourneyMode } from './time-view';
 /** Der Schlüssel eines Deckplan-Platzes in den Marken: „Entwurf/Platz“. */
 const slotKey = (slot: { readonly design: string; readonly name: string }): string => `${slot.design}/${slot.name}`;
 
-const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, shopFrom: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, missionEditor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, globeFocus: undefined, space: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, systemJourney: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, shopFrom: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, missionEditor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, globeFocus: undefined, space: undefined, selected: undefined, picking: false } as const;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -358,6 +362,7 @@ export class GameController {
       legalNote: undefined,
       timeNote: undefined,
       journey: undefined,
+      systemJourney: undefined,
       simTarget: undefined,
       simBurst: undefined,
       simWeakened: undefined,
@@ -1095,7 +1100,16 @@ export class GameController {
   openJourney(): void {
     const at = this.state.world;
     if (!at) throw new DomainError('Es ist keine Weltkarte offen.');
-    const to = hexId(at.column, at.row);
+    const to = openWorldId(at);
+    // Im selben System die Reise im System (2026-11-20d): Ticket vorgeschlagen, sonst das eigene Schiff.
+    const from = this.campaign.location?.world;
+    if (from !== undefined && from !== to && hexIdOfWorld(from) === hexIdOfWorld(to)) {
+      const ticket = systemJourneyBlocker(this.campaign, to, 'ticket');
+      const ship = systemJourneyBlocker(this.campaign, to, 'ship');
+      if (ticket !== undefined && ship !== undefined) throw new DomainError(ticket);
+      this.update({ systemJourney: { to, mode: ticket === undefined ? 'ticket' : 'ship', error: undefined, done: undefined }, world: undefined, worldError: undefined });
+      return;
+    }
     const passageBlocker = journeyBlocker(this.campaign, to);
     if (passageBlocker !== undefined && shipJourneyBlocker(this.campaign, to) !== undefined) throw new DomainError(passageBlocker);
     this.update({ journey: { to, mode: passageBlocker === undefined ? 'passage' : 'ship', npcDie: rollNpcLow(this.deps.random), choice: {}, guesses: {}, error: undefined, done: undefined }, world: undefined, worldError: undefined });
@@ -1148,6 +1162,32 @@ export class GameController {
   /** Schließt den Dialog der Reise, vorher oder nach dem Ergebnis. */
   closeJourney(): void {
     this.update({ journey: undefined });
+  }
+
+  /** Reise im System: mit Ticket oder mit dem eigenen Schiff. */
+  chooseSystemJourneyMode(mode: SystemJourneyMode): void {
+    const draft = this.state.systemJourney;
+    if (!draft || draft.done !== undefined) return;
+    this.update({ systemJourney: { ...draft, mode, error: undefined } });
+  }
+
+  /** Die Gruppe reist im System (2026-11-20d); danach zeigt der Dialog das Ergebnis. */
+  travelInSystem(): void {
+    const draft = this.state.systemJourney;
+    if (!draft || draft.done !== undefined) return;
+    try {
+      const index = this.campaign.log.length;
+      const after = travelInSystem(this.campaign, draft.to, draft.mode, this.deps.clock);
+      this.change(after, { systemJourney: { ...draft, done: index, error: undefined }, timeNote: undefined, shopError: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ systemJourney: { ...draft, error: error.message } });
+    }
+  }
+
+  /** Schließt den Dialog der Reise im System. */
+  closeSystemJourney(): void {
+    this.update({ systemJourney: undefined });
   }
 
   /** Eine Notiz, oder mit `interprets` (Stelle eines Ergebnisses im Log) eine Deutung dazu. */
@@ -1249,8 +1289,8 @@ export class GameController {
     const at = this.state.world;
     const cell = this.state.globe?.picked;
     if (!campaign || !at || cell === undefined) return 'Erst ein Feld auf dem Globus antippen.';
-    if (campaign.location?.world !== hexId(at.column, at.row)) return 'Einkaufen geht nur auf der Welt der Gruppe.';
-    const city = worldById(campaign.hexes, hexId(at.column, at.row))?.map?.cities?.some((c) => c.cell === cell) ?? false;
+    if (campaign.location?.world !== openWorldId(at)) return 'Einkaufen geht nur auf der Welt der Gruppe.';
+    const city = worldById(campaign.hexes, openWorldId(at))?.map?.cities?.some((c) => c.cell === cell) ?? false;
     return city ? undefined : 'Einkaufen geht nur in einer Stadt.';
   }
 
@@ -1809,12 +1849,12 @@ export class GameController {
   stayHere(): void {
     const at = this.state.world;
     if (!at) throw new DomainError('Es ist keine Weltkarte offen.');
-    const id = hexId(at.column, at.row);
+    const id = openWorldId(at);
     this.change(placeGroup(this.campaign, this.campaign.location?.world === id ? undefined : id, this.deps.clock));
   }
 
   /** Bucht Geld: Einnahme oder Ausgabe frei, Einzahlung oder Auszahlung mit einem Charakter. */
-  book(kind: Exclude<BookingKind, 'purchase' | 'sale' | 'lottery' | 'rent' | 'fare' | 'ship'>, amount: number, text?: string, character?: string): void {
+  book(kind: Exclude<BookingKind, 'purchase' | 'sale' | 'lottery' | 'rent' | 'fare' | 'ship' | 'ticket'>, amount: number, text?: string, character?: string): void {
     this.inShop(() => book(this.campaign, kind, amount, this.deps.clock, text, character));
   }
 
@@ -2130,10 +2170,10 @@ export class GameController {
    */
   showMissionPlace(world: string, cell: number): void {
     const column = Number(world.slice(0, 2));
-    const row = Number(world.slice(2));
+    const row = Number(world.slice(2, 4));
     this.update({ missionEditor: undefined });
-    const open = this.state.world && this.state.globe && hexId(this.state.world.column, this.state.world.row) === world;
-    if (!open) this.openGlobeAt(column, row);
+    const open = this.state.world && this.state.globe && openWorldId(this.state.world) === world;
+    if (!open) this.openGlobeAt(column, row, world);
     if (!this.state.globe) return;
     if (this.state.trayStop === 'full') this.setTrayStop('half');
     this.update({ globe: { picked: cell }, globeFocus: { cell, n: (this.state.globeFocus?.n ?? 0) + 1 } });
@@ -2317,21 +2357,43 @@ export class GameController {
    * (mit dem Bevölkerungsmultiplikator, falls er fehlt) und wird gespeichert.
    */
   openGlobe(): void {
+    const at = this.state.world;
+    if (!at) throw new DomainError('Es ist keine Weltkarte offen.');
+    if (!worldById(this.campaign.hexes, openWorldId(at))?.map) return this.update({ worldError: 'Diese Welt hat noch keinen Globus; erst „Globus erzeugen“.' });
+    this.update({ globe: { picked: undefined }, worldError: undefined });
+  }
+
+  /**
+   * Erzeugt die Oberflächenkarte der offenen Welt (2026-11-20d: nur auf ausdrücklichen Knopfdruck),
+   * mit dem Bevölkerungsmultiplikator, falls er fehlt, und öffnet den Globus.
+   */
+  createGlobe(): void {
     this.inWorld((hexes, at) => {
-      const hex = hexAt(hexes, at.column, at.row);
-      if (!hex || !canHaveMap(hex)) throw new DomainError('Diese Welt hat keine Oberfläche für einen Globus.');
-      return { hexes: mainOf(hex)?.map ? hexes : hexes.map((h) => (h === hex ? withSurfaceMap(h, this.deps.random, cityNamesTaken(hexes)) : h)), world: at };
+      const id = openWorldId(at);
+      if (worldById(hexes, id)?.map) throw new DomainError('Diese Welt hat schon einen Globus.');
+      return { hexes: withSurfaceMapOf(hexes, id, this.deps.random, cityNamesTaken(hexes)), world: at };
     });
     if (!this.state.worldError) this.update({ globe: { picked: undefined } });
   }
 
-  /** Öffnet Weltkarte und Globus einer fertigen Welt, z. B. des Aufenthaltsorts aus der Kopfzeile. */
-  openGlobeAt(column: number, row: number): void {
+  /** Öffnet die Weltkarte einer fertigen Welt (z. B. des Aufenthaltsorts aus der Kopfzeile) und, hat sie schon einen, ihren Globus. */
+  openGlobeAt(column: number, row: number, id?: string): void {
     const hex = hexAt(this.campaign.hexes, column, row);
     if (!isWorld(hex)) throw new DomainError('Dort ist keine fertige Welt.');
-    this.update({ world: { column, row, rolls: [] }, worldError: undefined, selected: undefined, globe: undefined, globeFocus: undefined });
-    // Ohne Oberfläche (oder Größe 0) bleibt es bei der Weltkarte.
-    if (canHaveMap(hex)) this.openGlobe();
+    const sub = id !== undefined && id !== hex.main ? id : undefined;
+    this.update({ world: { column, row, rolls: [], ...(sub ? { id: sub } : {}) }, worldError: undefined, selected: undefined, globe: undefined, globeFocus: undefined });
+    if (worldById(this.campaign.hexes, sub ?? hex.main!)?.map) this.update({ globe: { picked: undefined } });
+  }
+
+  /** Öffnet die Weltkarte einer Welt des Systems (ein Tipp in der Übersicht, 2026-11-20d); die Hauptwelt wie bisher. */
+  openWorld(id: string): void {
+    const hexIdText = hexIdOfWorld(id);
+    const column = Number(hexIdText.slice(0, 2));
+    const row = Number(hexIdText.slice(2));
+    const hex = hexAt(this.campaign.hexes, column, row);
+    const world = worldById(this.campaign.hexes, id);
+    if (!hex || !world) throw new DomainError(`Die Welt ${id} gibt es nicht.`);
+    this.update({ world: { column, row, rolls: [], ...(id === hex.main ? {} : { id }) }, worldError: undefined, selected: undefined, globe: undefined, globeFocus: undefined });
   }
 
   /** Schließt den Globus; die Weltkarte bleibt offen. */
@@ -2349,7 +2411,7 @@ export class GameController {
     if (!isWorld(hex)) throw new DomainError('Dort ist keine fertige Welt.');
     // Läuft hier ein Systemflug, geht die Raumkarte seiner Welt auf; sonst die gewählte oder die der Hauptwelt.
     const flying = this.campaign.flight && hexIdOfWorld(this.campaign.flight.world) === hexId(at.column, at.row) ? this.campaign.flight.world : undefined;
-    const id = world ?? flying ?? hex.main!;
+    const id = world ?? flying ?? (spaceChoices(hex).some((c) => c.id === openWorldId(at)) ? openWorldId(at) : hex.main!);
     if (!spaceChoices(hex).some((c) => c.id === id)) throw new DomainError('Eine Raumkarte haben die Hauptwelt und die Gasriesen.');
     this.update({ space: { world: id }, globe: this.state.globe && { picked: undefined } });
   }
@@ -2421,7 +2483,7 @@ export class GameController {
     const target = this.state.globe?.picked;
     if (!at || target === undefined) return;
     try {
-      if (this.campaign.location?.world !== hexId(at.column, at.row)) throw new DomainError('Die Gruppe ist nicht auf dieser Welt.');
+      if (this.campaign.location?.world !== openWorldId(at)) throw new DomainError('Die Gruppe ist nicht auf dieser Welt.');
       this.update({ tripPlan: { target, options: planOptions(this.campaign, target), chosen: 0, error: undefined } });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
@@ -2507,15 +2569,16 @@ export class GameController {
   /** Ersetzt die Oberflächenkarte der offenen Welt durch eine neu gewürfelte; gesperrt, sobald ein Ort darauf zeigt. */
   rerollMap(): void {
     this.inWorld((hexes, at) => {
-      if (mapLocked(this.campaign, at.column, at.row)) throw new DomainError('Gruppe, NSC oder Logeinträge stehen auf dieser Karte; neu würfeln geht nicht mehr.');
-      return { hexes: hexes.map((h) => (h.column === at.column && h.row === at.row ? withSurfaceMap(h, this.deps.random, cityNamesTaken(hexes, h)) : h)), world: at };
+      const id = openWorldId(at);
+      if (mapLocked(this.campaign, id)) throw new DomainError('Gruppe, NSC oder Logeinträge stehen auf dieser Karte; neu würfeln geht nicht mehr.');
+      return { hexes: withSurfaceMapOf(hexes, id, this.deps.random, cityNamesTaken(hexes, id)), world: at };
     });
     if (this.state.globe) this.update({ globe: { picked: undefined } });
   }
 
   /** Benennt eine Stadt der offenen Welt um. */
   renameCity(index: number, name: string): void {
-    this.inWorld((hexes, at) => ({ hexes: renameCity(hexes, at.column, at.row, index, name), world: at }));
+    this.inWorld((hexes, at) => ({ hexes: renameCity(hexes, openWorldId(at), index, name), world: at }));
   }
 
   /** Der Ort des angetippten Feldes auf dem Globus: die erste Stadt darauf, sonst das Feld. */
@@ -2523,7 +2586,7 @@ export class GameController {
     const at = this.state.world;
     const cell = this.state.globe?.picked;
     if (!at || cell === undefined) throw new DomainError('Erst ein Feld auf dem Globus antippen.');
-    const world = hexId(at.column, at.row);
+    const world = openWorldId(at);
     const city = worldById(this.campaign.hexes, world)?.map?.cities?.findIndex((c) => c.cell === cell) ?? -1;
     return city >= 0 ? { world, city } : { world, cell };
   }
@@ -2546,7 +2609,7 @@ export class GameController {
     const at = this.state.world;
     const cell = this.state.globe?.picked;
     if (!at || cell === undefined) return;
-    this.update({ npcPlacing: { world: hexId(at.column, at.row), cell, screen: this.state.screen }, npcJoining: undefined, screen: 'npcs', npcAll: false, globe: { picked: undefined }, worldError: undefined });
+    this.update({ npcPlacing: { world: openWorldId(at), cell, screen: this.state.screen }, npcJoining: undefined, screen: 'npcs', npcAll: false, globe: { picked: undefined }, worldError: undefined });
   }
 
   /**
@@ -2583,7 +2646,7 @@ export class GameController {
     const p = this.state.npcPlacing;
     const at = this.state.world;
     if (!p) return false;
-    const open = at !== undefined && this.state.globe !== undefined && hexId(at.column, at.row) === p.world;
+    const open = at !== undefined && this.state.globe !== undefined && openWorldId(at) === p.world;
     this.update({ npcPlacing: undefined, screen: p.screen, ...(open ? { globe: { picked: p.cell } } : {}) });
     return open;
   }
@@ -2601,6 +2664,8 @@ export class GameController {
   /** Würfelt den nächsten Wurf der offenen Welt; braucht sie nur noch die Oberfläche oder das Sternsystem, dieses. */
   rollWorld(): void {
     this.inWorld((hexes, at) => {
+      // Eine Nebenwelt würfelt nur ihre Oberfläche (2026-11-20d).
+      if (at.id !== undefined) return { hexes: rollWorldSurface(hexes, at.id, this.deps.random), world: at };
       const hex = hexAt(hexes, at.column, at.row);
       if (hex && nextWorldAction(hex) === 'surface') return { hexes: rollSurfaceAt(hexes, at.column, at.row, this.deps.random), world: at };
       if (hex && nextWorldAction(hex) === 'system') return { hexes: rollSystemAt(hexes, at.column, at.row, this.deps.random), world: at };
@@ -2638,6 +2703,8 @@ export class GameController {
   /** Gibt der fertig gewürfelten Welt ihren Namen. */
   nameWorld(name: string): void {
     const at = this.state.world;
+    // Eine Nebenwelt bekommt (oder ändert) ihren Namen jederzeit (2026-11-20d).
+    if (at?.id !== undefined) return this.inWorld((hexes, open) => ({ hexes: renameWorld(hexes, open.id!, name), world: open }));
     this.inWorld((hexes, open) => ({ hexes: nameWorld(hexes, open.column, open.row, name), world: open }));
     // Entstand die Welt für die Erschaffung, ist sie mit ihrem Namen gewählt.
     if (at && this.state.picking && isWorld(hexAt(this.campaign.hexes, at.column, at.row))) this.chooseGenerationWorld(hexId(at.column, at.row));
@@ -2645,7 +2712,7 @@ export class GameController {
 
   /** Setzt die Notiz der offenen Welt; eine leere Notiz entfernt sie. Nur für fertige Welten. */
   noteWorld(note: string): void {
-    this.inWorld((hexes, at) => ({ hexes: noteWorld(hexes, at.column, at.row, note), world: at }));
+    this.inWorld((hexes, at) => ({ hexes: noteWorld(hexes, openWorldId(at), note), world: at }));
   }
 
   /** Verwirft die Welt in Erschaffung; das Feld ist wieder nicht erzeugt. */
@@ -2732,9 +2799,9 @@ export class GameController {
    */
   private home(campaign: Campaign): Pick<ControllerState, 'world' | 'globe'> {
     const at = campaign.location?.world;
-    const hex = at === undefined ? undefined : campaign.hexes.find((h) => hexId(h.column, h.row) === at);
-    if (!hex || !isWorld(hex) || !mainOf(hex)?.map) return { world: undefined, globe: undefined };
-    return { world: { column: hex.column, row: hex.row, rolls: [] }, globe: { picked: undefined } };
+    const hex = at === undefined ? undefined : hexById(campaign.hexes, hexIdOfWorld(at));
+    if (!hex || !isWorld(hex) || !worldById(campaign.hexes, at!)?.map) return { world: undefined, globe: undefined };
+    return { world: { column: hex.column, row: hex.row, rolls: [], ...(at === hex.main ? {} : { id: at! }) }, globe: { picked: undefined } };
   }
 
   /** Fertige Welten ohne Sternsystem bekommen es beim Öffnen der Kampagne (2026-11-20); dann gilt sie als geändert. */

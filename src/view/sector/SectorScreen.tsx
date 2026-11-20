@@ -463,7 +463,8 @@ function ZoomableMap({ fill, focus, children }: { fill: boolean; /** Das gewähl
  */
 export function SectorScreen({ view, heading = 'Subsektor', fill = false, dockTo = null }: { view: Snapshot; heading?: string; fill?: boolean; /** Wohin das gewählte Feld gehört, wenn der Subsektor die Grundkarte ist. */ dockTo?: Element | null }) {
   // Als Grundkarte führt ein Knopf zum Globus des Aufenthaltsorts (nicht beim Wählen für die Erschaffung).
-  const here = view.picking ? undefined : view.worlds.find((w) => w.id === view.location);
+  // Der Aufenthaltsort kann eine Nebenwelt sein (0405-3); der Knopf führt zu ihrem Feld und ihrer Weltkarte.
+  const here = view.picking ? undefined : view.worlds.find((w) => w.id === view.location || view.location?.startsWith(`${w.id}-`));
   const game = useGame();
   // Das Feld, dessen Vorkommen hier gerade gewürfelt wurde, und ob sein Ergebnis schon feststeht.
   const [rolled, setRolled] = useState<string>();
@@ -521,7 +522,7 @@ export function SectorScreen({ view, heading = 'Subsektor', fill = false, dockTo
             Legende ▾
           </button>
           {here && (
-            <button type="button" className="globe-round globe-locate sector-locate" aria-label={`Aufenthaltsort ${here.name}, Globus öffnen`} title={`Zur Gruppe: ${here.name}`} onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobeAt(here.column, here.row))}>
+            <button type="button" className="globe-round globe-locate sector-locate" aria-label={`Aufenthaltsort ${here.name}, Globus öffnen`} title={`Zur Gruppe: ${here.name}`} onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobeAt(here.column, here.row, view.location))}>
               <LocateIcon />
             </button>
           )}

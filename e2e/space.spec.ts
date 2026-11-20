@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openHomeGlobe } from './layout';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -6,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 
 test('Systemflug: Raumkarte öffnen, Schub im Schubkreis setzen, Runde ausführen, beenden', async ({ page }) => {
   // Die Demo-Kampagne hat einen Scout im Hafen von Kessra (2026-11-18c).
-  await page.getByRole('button', { name: 'Aufenthaltsort Kessra, Globus öffnen' }).click();
+  await openHomeGlobe(page);
   await page.getByRole('button', { name: 'Raumkarte' }).click();
   await expect(page.getByRole('region', { name: 'Raumkarte · Kessra' })).toBeVisible();
   await page.getByRole('button', { name: 'Systemflug beginnen' }).click();
@@ -34,7 +35,7 @@ test('Systemflug: Raumkarte öffnen, Schub im Schubkreis setzen, Runde ausführe
 });
 
 test('Raumkarte am Gasriesen: Kessra ist Mond eines Gasriesen; seine Raumkarte hat eigene Monde (2026-11-18d)', async ({ page }) => {
-  await page.getByRole('button', { name: 'Aufenthaltsort Kessra, Globus öffnen' }).click();
+  await openHomeGlobe(page);
   await page.getByRole('button', { name: 'Raumkarte' }).click();
   const choices = page.getByRole('group', { name: 'Raumkarte von' });
   await expect(choices.getByRole('button', { name: 'Kessra' })).toHaveAttribute('aria-pressed', 'true');

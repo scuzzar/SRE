@@ -89,7 +89,8 @@ export function useWorldDock(
   };
 
   const field = (
-    <section className="field-card scroll" aria-label={title} onClickCapture={skipTap}>
+    // Eine andere Welt (etwa aus der Systemübersicht, 2026-11-20d) ist ein neues Blatt und beginnt oben.
+    <section key={world.id} className="field-card scroll" aria-label={title} onClickCapture={skipTap}>
       <div className="globe-sheet-head" data-tray-peek>
         <h3>{running ? 'Weltenerschaffung' : (world.name ?? 'Leer')}</h3>
         <span className="header-right">
@@ -111,7 +112,8 @@ export function useWorldDock(
       {!view.empty && <WorldCard world={view} plain here={here} />}
       {view.surface && <SurfaceSection lines={view.surface} />}
       {view.system && <SystemSection system={view.system} />}
-      {world.canNote && <NoteSection note={world.note} />}
+      {world.subordinate && <RenameSection key={world.id} name={world.name} />}
+      {world.canNote && <NoteSection key={`note-${world.id}`} note={world.note} />}
       {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
     </section>
   );
@@ -289,8 +291,32 @@ export function SurfaceSection({ lines }: { lines: readonly string[] }) {
   );
 }
 
-/** Ein Körper der Systemübersicht: Symbol (oder Punkt), Art, Ziffern und Werte. */
+/** Ein Körper der Systemübersicht: Symbol (oder Punkt), Art, Ziffern und Werte; ein Tipp öffnet seine Weltkarte. */
 function SystemBody({ body }: { body: SystemBodyView }) {
+  const game = useGame();
+  const label = (
+    <span className="system-label">
+      {body.label}
+      {body.globe && (
+        <span className="system-globe" title="Hat einen Globus" aria-label="hat einen Globus">
+          {' '}●
+        </span>
+      )}
+      {body.code && <span className="system-code"> {body.code}</span>}
+    </span>
+  );
+  if (body.openable && body.id !== undefined) {
+    const id = body.id;
+    return (
+      <button type="button" className="system-body system-open" onClick={() => game.openWorld(id)}>
+        {body.look ? <WorldIcon look={body.look} size={24} className="system-icon" /> : <span className="system-dot" aria-hidden="true" />}
+        <span className="system-text">
+          {label}
+          {body.detail && <span className="system-detail">{body.detail}</span>}
+        </span>
+      </button>
+    );
+  }
   return (
     <span className="system-body">
       {body.look ? <WorldIcon look={body.look} size={24} className="system-icon" /> : <span className="system-dot" aria-hidden="true" />}
@@ -361,8 +387,9 @@ export function SystemSection({ system }: { system: SystemView }) {
  * setzen“ am Feld; ist die Gruppe schon hier, ausgegraut) und Öffnen (die Hexkarte der Welt, nicht
  * auf dem Globus selbst).
  */
-export function WorldActions({ world, here, travel, onGlobe = false }: { world: WorldView; here: boolean; travel: { readonly blocker: string | undefined } | undefined; onGlobe?: boolean }) {
+export function WorldActions({ world, here, travel, onGlobe = false }: { world: WorldView; here: boolean; travel: { readonly blocker: string | undefined; readonly inSystem?: boolean } | undefined; onGlobe?: boolean }) {
   const game = useGame();
+  // Den Globus gibt es erst auf ausdrücklichen Knopfdruck (2026-11-20d): „Globus erzeugen“, danach „Öffnen“.
   const showGlobe = !onGlobe && world.canGlobe;
   if (!showGlobe && !world.canNote) return null;
   const travelBlocker = here ? 'Die Gruppe ist schon hier' : travel?.blocker;
@@ -371,7 +398,7 @@ export function WorldActions({ world, here, travel, onGlobe = false }: { world: 
       {world.canNote && !here && travel?.blocker && <p className="combat-hint">{travel.blocker}</p>}
       <div className="actions oracle-actions world-actions">
         {world.canNote && travel && (
-          <button type="button" className="action draw" title={travelBlocker ?? 'Eine Woche im Sprung'} disabled={travelBlocker !== undefined} onClick={() => game.openJourney()}>
+          <button type="button" className="action draw" title={travelBlocker ?? (travel.inSystem ? 'Reise im System, mit Ticket oder eigenem Schiff' : 'Eine Woche im Sprung')} disabled={travelBlocker !== undefined} onClick={() => game.openJourney()}>
             <RouteIcon />
             Hierher reisen
           </button>
@@ -382,10 +409,16 @@ export function WorldActions({ world, here, travel, onGlobe = false }: { world: 
             Gruppe platzieren
           </button>
         )}
-        {showGlobe && (
+        {showGlobe && world.hasMap && (
           <button type="button" className="action note" title="Die Hexkarte der Welt" onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobe())}>
             <GlobeIcon />
             Öffnen
+          </button>
+        )}
+        {showGlobe && !world.hasMap && (
+          <button type="button" className="action note" title="Die Oberflächenkarte der Welt würfeln: Gelände, Städte, Straßen" onClick={() => withLoading('Globus wird erzeugt …', () => game.createGlobe())}>
+            <GlobeIcon />
+            Globus erzeugen
           </button>
         )}
         {world.canNote && (
@@ -403,6 +436,26 @@ export function WorldActions({ world, here, travel, onGlobe = false }: { world: 
  * Die Notiz zur Welt: freier Text, den man jederzeit ändert. Was getippt wird, ist reine Darstellung;
  * gespeichert wird beim Verlassen des Feldes, also auch, wenn man die Weltkarte schließt.
  */
+/** Der Name einer Nebenwelt (2026-11-20d): jederzeit änderbar, leer nimmt ihn weg. */
+export function RenameSection({ name }: { name: string | undefined }) {
+  const game = useGame();
+  const [text, setText] = useState(name ?? '');
+  return (
+    <label className="field world-note">
+      <span>Name der Welt</span>
+      <input
+        value={text}
+        placeholder="Noch ohne Namen"
+        autoComplete="off"
+        onChange={(e) => setText(e.target.value)}
+        onBlur={() => {
+          if (text.trim() !== (name ?? '')) game.nameWorld(text);
+        }}
+      />
+    </label>
+  );
+}
+
 export function NoteSection({ note }: { note: string | undefined }) {
   const game = useGame();
   const [text, setText] = useState(note ?? '');

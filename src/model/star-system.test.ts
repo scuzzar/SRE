@@ -133,7 +133,10 @@ describe('Sternsystem würfeln', () => {
     expect(broken((h) => ({ ...h, system: { ...h.system!, stars: [] } }))).toThrow(/einen bis drei/);
     expect(broken((h) => ({ ...h, worlds: h.worlds.map((w) => (w.kind === 'giant' ? { ...w, radius: undefined } as never : w)) }))).toThrow(/Gasriese/);
     expect(broken((h) => ({ ...h, system: undefined }) as unknown as Hex)).toThrow(/erst mit dem Sternsystem/);
-    expect(broken((h) => ({ ...h, worlds: h.worlds.map((w) => (w.id !== h.main ? { ...w, name: 'X' } : w)) }))).toThrow(/Nebenwelten/);
+    // Nebenwelten dürfen Namen haben (2026-11-20d), aber keine leeren und keine Oberfläche ohne Größe.
+    expect(broken((h) => ({ ...h, worlds: h.worlds.map((w) => (w.id !== h.main ? { ...w, name: 'X' } : w)) }))).not.toThrow();
+    expect(broken((h) => ({ ...h, worlds: h.worlds.map((w) => (w.id !== h.main ? { ...w, name: ' ' } : w)) }))).toThrow(/leeren Namen/);
+    expect(broken((h) => ({ ...h, worlds: h.worlds.map((w) => (w.kind === 'giant' ? { ...w, temperature: 'cold' as const } : w)) }))).toThrow(/Oberfläche und Temperatur/);
   });
 
   it('würfelt mit festen Würfen ein bekanntes System', () => {

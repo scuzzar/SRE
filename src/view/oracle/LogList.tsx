@@ -442,6 +442,8 @@ function kicker(item: LogItem, volley = false): string {
       return `Monatsabrechnung · ${item.month}`;
     case 'journey':
       return 'Reise';
+    case 'systemJourney':
+      return 'Reise im System';
     case 'tripDay':
       return item.arrived ? 'Fahrt · Ankunft' : 'Fahrt';
     case 'note':
@@ -639,6 +641,20 @@ function EntryBody({ item }: { item: LogItem }) {
       );
     case 'journey':
       return <JourneyBody item={item} />;
+    case 'systemJourney':
+      return (
+        <>
+          <span className="verdict small">
+            {item.from} → {item.to}
+          </span>
+          <span className="entry-detail">
+            {item.fromDate} → {item.toDate} · {item.flight}
+          </span>
+          <span className="entry-question small">
+            {item.how} · {item.travellers.join(', ')}
+          </span>
+        </>
+      );
     case 'note':
       return <p className="note-text">{item.text}</p>;
   }

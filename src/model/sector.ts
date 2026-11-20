@@ -533,7 +533,7 @@ export function onlyLakes(surface: Surface): boolean {
 }
 
 /** Prüft die Oberfläche einer Welt: Sie braucht Temperatur und TL, und jeder Wert liegt dort, wo die Regeln ihn hinbringen können. */
-function validateSurface(hex: World, fail: (why: string) => never): void {
+export function validateSurface(hex: World, fail: (why: string) => never): void {
   const surface = hex.surface;
   if (surface === undefined) return;
   if (hex.uwp.tech === undefined || hex.temperature === undefined) fail('Die Oberfläche braucht TL und Temperatur.');
@@ -551,11 +551,58 @@ function validateSurface(hex: World, fail: (why: string) => never): void {
   if (surface.majorContinents > MAX_MAJOR_CONTINENTS) fail(`Mehr als ${MAX_MAJOR_CONTINENTS} große Kontinente gibt es nicht.`);
 }
 
-/** Ob eine Welt eine Oberflächenkarte haben kann: fertig, ab Größe 1, mit Oberfläche und Temperatur. */
+/** Ob die Hauptwelt eine Oberflächenkarte haben kann: fertig, ab Größe 1, mit Oberfläche und Temperatur. */
 export function canHaveMap(hex: Hex): boolean {
   if (!isWorld(hex)) return false;
-  const world = mainWorld(hex);
-  return (world.uwp.size ?? 0) >= 1 && world.surface !== undefined && world.temperature !== undefined;
+  return mapPossible(hex, mainWorld(hex));
+}
+
+/**
+ * Ob eine Welt des Systems eine Oberflächenkarte haben kann (2026-11-20d): eine Welt (keine kleine
+ * Welt, kein Gürtel, Ring oder Gasriese) ab Größe 1 mit Oberfläche und Temperatur; die Hauptwelt
+ * erst, wenn sie fertig ist.
+ */
+export function mapPossible(hex: Hex, world: World): boolean {
+  if (world.id === hex.main && !isWorld(hex)) return false;
+  return world.kind === 'world' && (world.uwp.size ?? 0) >= 1 && world.surface !== undefined && world.temperature !== undefined;
+}
+
+/** Die Hexfelder mit geänderter Welt `id`; gibt es sie nicht, ein DomainError. */
+export function withWorld(hexes: readonly Hex[], id: string, change: (world: World, hex: Hex) => World): readonly Hex[] {
+  const hex = hexes.find((h) => h.worlds.some((w) => w.id === id));
+  if (!hex) throw new DomainError(`Die Welt ${id} gibt es nicht.`);
+  return hexes.map((h) => (h === hex ? { ...h, worlds: h.worlds.map((w) => (w.id === id ? change(w, h) : w)) } : h));
+}
+
+/**
+ * Erzeugt die Oberflächenkarte der Welt `id` (neu oder als Ersatz); den Bevölkerungsmultiplikator
+ * würfelt sie nur, wenn die Welt noch keinen hat. Eine Nebenwelt hat keinen Starport: Ihre erste
+ * Hauptstadt bekommt den Spaceport als Hafen (2026-11-20d).
+ */
+export function withSurfaceMapOf(hexes: readonly Hex[], id: string, random: Random, taken: ReadonlySet<string> = new Set()): readonly Hex[] {
+  return withWorld(hexes, id, (world, hex) => {
+    if (!mapPossible(hex, world)) throw new DomainError(`Die Welt ${world.name ?? id} kann keine Oberflächenkarte haben.`);
+    const u = world.uwp;
+    const main = world.id === hex.main;
+    const { map, populationMultiplier } = generateSurfaceMap(
+      {
+        size: u.size!,
+        atmosphere: u.atmosphere ?? 0,
+        hydrographics: u.hydrographics ?? 0,
+        population: u.population ?? 0,
+        tech: u.tech ?? 0,
+        starport: main ? (u.starport ?? 31) : 31,
+        ...(main || world.spaceport === undefined ? {} : { spaceport: world.spaceport }),
+        temperature: world.temperature!,
+        surface: world.surface!,
+        ...(world.populationMultiplier === undefined ? {} : { populationMultiplier: world.populationMultiplier }),
+        ...(world.name === undefined ? {} : { name: world.name }),
+      },
+      random,
+      taken,
+    );
+    return { ...world, map, ...(populationMultiplier === undefined ? {} : { populationMultiplier }) };
+  });
 }
 
 /**
@@ -564,44 +611,24 @@ export function canHaveMap(hex: Hex): boolean {
  */
 export function withSurfaceMap(hex: Hex, random: Random, taken: ReadonlySet<string> = new Set()): Hex {
   if (!canHaveMap(hex)) throw new DomainError(`Die Welt im Feld ${hexId(hex.column, hex.row)} kann keine Oberflächenkarte haben.`);
-  const world = mainWorld(hex);
-  const u = world.uwp;
-  const { map, populationMultiplier } = generateSurfaceMap(
-    {
-      size: u.size!,
-      atmosphere: u.atmosphere ?? 0,
-      hydrographics: u.hydrographics ?? 0,
-      population: u.population ?? 0,
-      tech: u.tech ?? 0,
-      starport: u.starport ?? 31,
-      temperature: world.temperature!,
-      surface: world.surface!,
-      ...(world.populationMultiplier === undefined ? {} : { populationMultiplier: world.populationMultiplier }),
-      ...(world.name === undefined ? {} : { name: world.name }),
-    },
-    random,
-    taken,
-  );
-  return withMain(hex, (w) => ({ ...w, map, ...(populationMultiplier === undefined ? {} : { populationMultiplier }) }));
+  return withSurfaceMapOf([hex], hex.main!, random, taken)[0]!;
 }
 
-/** Die Namen aller Städte auf allen Oberflächenkarten, außer der des Feldes `except` (für ihr Neuwürfeln). */
-export function cityNamesTaken(hexes: readonly Hex[], except?: Hex): ReadonlySet<string> {
+/** Die Namen aller Städte auf allen Oberflächenkarten, außer der der Welt `except` (für ihr Neuwürfeln). */
+export function cityNamesTaken(hexes: readonly Hex[], except?: string): ReadonlySet<string> {
   const names = new Set<string>();
-  for (const h of hexes) if (h !== except) for (const w of h.worlds) for (const c of w.map?.cities ?? []) names.add(c.name);
+  for (const h of hexes) for (const w of h.worlds) if (w.id !== except) for (const c of w.map?.cities ?? []) names.add(c.name);
   return names;
 }
 
-/** Benennt die Stadt an der Stelle `index` der Karte dieses Feldes um; ein leerer Name geht nicht. */
-export function renameCity(hexes: readonly Hex[], column: number, row: number, index: number, name: string): readonly Hex[] {
-  const hex = hexAt(hexes, column, row);
-  const world = hex && mainOf(hex);
-  const city = world?.map?.cities?.[index];
-  if (!hex || !world?.map || !city) throw new DomainError('Diese Stadt gibt es nicht.');
+/** Benennt die Stadt an der Stelle `index` der Karte der Welt `id` um; ein leerer Name geht nicht. */
+export function renameCity(hexes: readonly Hex[], id: string, index: number, name: string): readonly Hex[] {
   const trimmed = name.trim();
-  if (!trimmed) throw new DomainError('Eine Stadt braucht einen Namen.');
-  const cities = world.map.cities!.map((c, i) => (i === index ? { ...c, name: trimmed } : c));
-  return hexes.map((h) => (h === hex ? withMain(hex, (w) => ({ ...w, map: { ...w.map!, cities } })) : h));
+  return withWorld(hexes, id, (world) => {
+    if (!world.map?.cities?.[index]) throw new DomainError('Diese Stadt gibt es nicht.');
+    if (!trimmed) throw new DomainError('Eine Stadt braucht einen Namen.');
+    return { ...world, map: { ...world.map, cities: world.map.cities.map((c, i) => (i === index ? { ...c, name: trimmed } : c)) } };
+  });
 }
 
 /** Die Handelscodes einer Welt, sobald das UWP vollständig ist: jeder, dessen Bedingungen alle erfüllt sind. */
@@ -637,19 +664,26 @@ export function nameWorld(hexes: readonly Hex[], column: number, row: number, na
   return putHex(hexes, withMain(hex, (w) => ({ ...w, name: trimmed })));
 }
 
-/** Setzt die Notiz einer fertigen Welt; Leerraum am Rand fällt weg, eine leere Notiz entfernt sie. */
-export function noteWorld(hexes: readonly Hex[], column: number, row: number, note: string): readonly Hex[] {
-  const hex = hexAt(hexes, column, row);
-  if (!isWorld(hex)) throw new DomainError('Eine Notiz hat nur eine fertige Welt.');
+/** Setzt die Notiz einer fertigen Welt (Hauptwelt oder Nebenwelt); Leerraum am Rand fällt weg, eine leere Notiz entfernt sie. */
+export function noteWorld(hexes: readonly Hex[], id: string, note: string): readonly Hex[] {
   const trimmed = note.trim();
-  return putHex(
-    hexes,
-    withMain(hex, (w) => {
-      const rest: World = { ...w };
-      delete (rest as { note?: string }).note;
-      return trimmed ? { ...rest, note: trimmed } : rest;
-    }),
-  );
+  return withWorld(hexes, id, (w, hex) => {
+    if (w.id === hex.main && !isWorld(hex)) throw new DomainError('Eine Notiz hat nur eine fertige Welt.');
+    const rest: World = { ...w };
+    delete (rest as { note?: string }).note;
+    return trimmed ? { ...rest, note: trimmed } : rest;
+  });
+}
+
+/** Benennt eine Nebenwelt (2026-11-20d); ein leerer Name nimmt ihn weg. Die Hauptwelt bekommt ihren Namen in der Erschaffung. */
+export function renameWorld(hexes: readonly Hex[], id: string, name: string): readonly Hex[] {
+  const trimmed = name.trim();
+  return withWorld(hexes, id, (w, hex) => {
+    if (w.id === hex.main) throw new DomainError('Die Hauptwelt behält ihren Namen.');
+    const rest: World = { ...w };
+    delete (rest as { name?: string }).name;
+    return trimmed ? { ...rest, name: trimmed } : rest;
+  });
 }
 
 /** Verwirft eine Welt in Erschaffung: Das Feld ist wieder nicht erzeugt. Fertiges bleibt. */
