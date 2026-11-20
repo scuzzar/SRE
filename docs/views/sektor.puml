@@ -112,6 +112,7 @@ hide <<browser>> stereotype
     radius: number [0..1]
     $new("2026-11-20c", "spaceport: Spaceport [0..1]")
     $new("2026-11-20c", "facilities: Facility [*]")
+    $new("2026-11-20c", "bases: BaseKind [*]")
     /main: boolean
     /zone: Zone [0..1]
     /gravity: number
@@ -128,6 +129,10 @@ hide <<browser>> stereotype
     G
     H
     Y
+  }
+  enum BaseKind <<value>> $sektor $newClass("2026-11-20c") {
+    naval
+    scout
   }
   enum Facility <<value>> $sektor $newClass("2026-11-20c") {
     farming
@@ -266,6 +271,7 @@ World "*" --> "0..1" World : moonOf
 World --> WorldKind
 World -$newArrow("2026-11-20c")-> Spaceport
 World -$newArrow("2026-11-20c")-> Facility
+World -$newArrow("2026-11-20c")-> BaseKind
 
 ' Zeit und Reisen
 Journey "*" --> "1" Hex : from

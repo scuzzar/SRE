@@ -475,8 +475,9 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > „Macht es Sinn, auch die UWP der weiteren Welten zu würfeln?“). Jede weitere Welt und jeder Mond
 > außer Ringen bekommt Regierung, Gesetz und Tech-Level im UWP, einen Raumhafen (`World.spaceport`,
 > `Spaceport`: F, G, H oder Y) und Einrichtungen (`World.facilities`, `Facility`: Farming, Mining,
-> Colony, Research Laboratory, Military Base); siehe *Nebenwelten*. Neu im Bild: `World.spaceport`,
-> `World.facilities`, `Spaceport`, `Facility`. Der Ausschnitt dazu liegt unter
+> Colony, Research Laboratory, Military Base); dazu Marine- und Scoutbasen im ganzen System
+> (`World.bases`, `BaseKind`); siehe *Nebenwelten*. Neu im Bild: `World.spaceport`,
+> `World.facilities`, `World.bases`, `Spaceport`, `Facility`, `BaseKind`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-20c-nebenwelten.png`](changes/2026-11-20c-nebenwelten.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
@@ -869,6 +870,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Leere Bahn | `StarSystem.emptyOrbits` | Eine verfügbare Bahn, auf der nichts liegt (Book 6) (2026-11-20b) |
 | Gasriese (Körper) | `World` der Art giant | Ein Gasriese des Systems: groß oder klein, Radius in km, Bahn um den Stern, mit Monden und einer eigenen Raumkarte; nur, wenn das System welche hat (`Hex.gasGiant`) (2026-11-18d, seit 2026-11-20b eine Welt) |
 | Raumhafen einer Nebenwelt | `World.spaceport`, `Spaceport` | Der Spaceport einer Welt außer der Hauptwelt nach Book 6: F gut, G schlecht, H einfachste Einrichtungen, Y keiner; den Starport (A–E, X) hat nur die Hauptwelt (2026-11-20c) |
+| Basis einer Nebenwelt | `World.bases`, `BaseKind` | Ein Marinestützpunkt oder eine Scoutbasis auf einer Welt außer der Hauptwelt (B6 37); die Basen der Hauptwelt stehen am Hexfeld (2026-11-20c) |
 | Einrichtung | `World.facilities`, `Facility` | Warum es auf einer Nebenwelt eine Siedlung gibt (B6 38): Farming (Landwirtschaft), Mining (Bergbau), Colony (Kolonie), Research Laboratory (Forschung), Military Base (Militärbasis) (2026-11-20c) |
 | Gastgeber | `StarSystem.host` | Der Gasriese (eine Welt der Art giant, 2026-11-20b), um den die Hauptwelt kreist, wenn sie in seiner Bahn liegt (Book 6); dann ist sie ein Mond und hat selbst keine Monde (2026-11-18d) |
 | Am Gasriesen | `SystemFlight.at` | Der Gasriese (eine Welt der Art giant, 2026-11-20b), auf dessen Raumkarte ein Systemflug läuft; ohne ihn läuft er an der Welt (2026-11-18d) |
@@ -3129,8 +3131,15 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     S. 29, übertragen in [`regeln-sternsystem.md`](regeln-sternsystem.md) (*Nebenwelten*). Für jede
     Welt außer der Hauptwelt, Gasriesen und Ringen, im selben Zug wie das übrige System, nach den
     Monden und in dieser Reihenfolge; die Hauptwelt behält ihren Starport (A–E, X), die übrigen
-    haben einen Spaceport:
-    1. *Regierung* (im UWP): 1W6 auf die Tabelle (1 → 0, 2 → 1, 3 → 2, 4 → 3, 5+ → 6); ⚑ hat die
+    haben einen Spaceport (Owner, 20. November 2026: Kapitel bei Widersprüchen, die Zusätze der
+    Tabelle S. 29 übernehmen, Gürtel wie Welten, Basen im ganzen System mitwürfeln):
+    0. *Basen im System* (`bases`, B6 37; eine Wahlregel der Spielleitung, Owner: mitwürfeln):
+       Die Marine richtet 1W6 − 3 Stützpunkte ein, je einen auf einer zufälligen Welt oder einem
+       Mond mit Bevölkerung 3+; die Scouts 1W6 − 4 Scoutbasen, je eine auf einer zufälligen Welt
+       oder einem Mond mit Bevölkerung 2+. ⚑ Höchstens ein Stützpunkt je Welt und Art; gibt es zu
+       wenige solche Welten, entsprechend weniger. Die Basen der Hauptwelt bleiben am Hexfeld
+       (`navalBase`, `scoutBase`).
+    1. *Regierung* (im UWP): 1W6 auf die Tabelle (1 → 0, 2 → 1, 3 → 2, 4 → 3, 5+ → 6); hat die
        Hauptwelt Regierung 6, ist sie 6, bei 7+ DM +2 (Kapitel und Checklist; die Tabelle S. 29
        sagt DM + Bevölkerung bzw. DM +1). Ohne Bevölkerung 0.
     2. *Gesetz* (im UWP): 1W6 − 3 + Gesetz der Hauptwelt, mindestens 0; ohne Bevölkerung 0.
@@ -3139,15 +3148,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        2+), Colony (Regierung 6, Bevölkerung 5+), Research Laboratory (2W6 11+, DM +2 bei TL der
        Hauptwelt 10+; keins bei TL der Hauptwelt 8 oder weniger oder ohne Bevölkerung), Military Base
        (2W6 12+, DM +1 bei Bevölkerung der Hauptwelt 8+, DM +2 bei gleicher Atmosphäre wie die
-       Hauptwelt, ⚑ DM +1 bei Scout- oder Marinebasis im System; keine ohne Bevölkerung oder bei
-       armer Hauptwelt).
+       Hauptwelt, DM +1 bei Scout- oder Marinebasis im System (Hexfeld oder Schritt 0, nur Tabelle
+       S. 29); keine ohne Bevölkerung oder bei armer Hauptwelt).
     4. *Tech-Level* (im UWP): TL der Hauptwelt − 1, gleich ihrem TL bei Research Laboratory oder
-       Military Base; ⚑ unter 7 bei Atmosphäre nicht 5, 6 oder 8 wird er 7.
+       Military Base; unter 7 bei Atmosphäre nicht 5, 6 oder 8 wird er 7 (nur Tabelle S. 29).
     5. *Raumhafen* (`spaceport`): 1W6 (1–2 Y, 3 H, 4–5 G, 6 F), DM +2 bei Bevölkerung 6+, −2 bei
-       Bevölkerung 1, ⚑ −3 bei Bevölkerung 0.
-    ⚑ markiert, was nur die Tabelle S. 29 sagt bzw. wo sie vom Kapitel abweicht. ⚑ Auch
-    Planetoidengürtel, die nicht die Hauptwelt sind, bekommen diese Werte (Book 6 sagt „jeder
-    Planet“). Die Basen im ganzen System (B6 37, nach Wahl der Spielleitung) gibt es nicht.
+       Bevölkerung 1, −3 bei Bevölkerung 0 (nur Tabelle S. 29; das Kapitel sagt −2 bei 0 und 1).
+    Auch Planetoidengürtel, die nicht die Hauptwelt sind, bekommen diese Werte (Book 6 sagt „jeder
+    Planet“, Owner).
     **Bestehende Systeme** bekommen die Werte beim Öffnen der Kampagne nachgewürfelt, mit Würfen
     aus Schlüssel der Kampagne und Feld wie das Sternsystem; alles andere am System bleibt. Die
     Übersicht der Weltkarte zeigt das UWP der Nebenwelt (z. B. `G552531-8`) und ihre
