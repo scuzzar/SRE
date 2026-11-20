@@ -87,8 +87,7 @@ hide <<browser>> stereotype
 ' Charaktererschaffung und Lebenslauf
 
 ' Subsektor und Welten
-  class Hex $sektor
-  class World $sektor $newClass("2026-11-20b")
+  class World $sektor
 
 ' Missionen
   class MissionPlace <<value>> $mission
@@ -174,8 +173,7 @@ MissionPlace "1" *-- "1" Place : place
 ' Laufbahnen (Referenzdaten)
 
 ' Subsektor und Welten
-Hex "1" *-$goneArrow("2026-11-20b")- "0..1" SurfaceMap : map
-World "1" *-$newArrow("2026-11-20b")- "0..1" SurfaceMap : map
+World "1" *-- "0..1" SurfaceMap : map
 SurfaceMap "1" *-- "/cells" SurfaceCell : cells {ordered}
 SurfaceCell "*" --> "1" Landform : landform
 SurfaceCell "*" --> "0..1" Volcano : volcano
@@ -186,8 +184,7 @@ River "*" --> "2..*" SurfaceCell : cells {ordered}
 Road "*" --> "2..*" SurfaceCell : cells {ordered}
 City "*" --> "0..1" SurfaceCell : cell
 LogEntry "1" *-- "0..1" Place : place
-Place "*" -$goneArrow("2026-11-20b")-> "1" Hex : world
-Place "*" -$newArrow("2026-11-20b")-> "1" World : world
+Place "*" --> "1" World : world
 Place "*" --> "0..1" SurfaceCell : cell
 Place "*" --> "0..1" City : city
 City --> CityRank
@@ -222,5 +219,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Hex #line:d0021b;line.bold
 @enduml

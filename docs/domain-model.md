@@ -452,14 +452,14 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > für den Systemflug am Gasriesen. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-18b-sternsystem.png`](changes/2026-11-18b-sternsystem.png).
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-20): **Sternsystem in der Weltenerschaffung** (Wunsch
+> Am 20. November 2026 freigegeben (Kennzeichen 2026-11-20): **Sternsystem in der Weltenerschaffung** (Wunsch
 > des Owners): Das Sternsystem wird nicht mehr beim ersten Öffnen der Raumkarte gewürfelt, sondern
 > als eigener Schritt der Weltenerschaffung nach der Oberfläche, mit einem Knopf, alles auf einmal;
 > fertige Welten ohne Sternsystem bekommen es beim Öffnen der Kampagne. Neu im Bild:
 > `WorldStep.system`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-20-sternsystem-in-der-erschaffung.png`](changes/2026-11-20-sternsystem-in-der-erschaffung.png).
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-20b): **Welten getrennt vom Hexfeld** (Wunsch des
+> Ebenfalls am 20. November 2026 freigegeben (Kennzeichen 2026-11-20b): **Welten getrennt vom Hexfeld** (Wunsch des
 > Owners, siehe *Welten und Hexfeld*). Das Hexfeld ist das System; jede Welt darin ist eine eigene
 > `World`: die Hauptwelt, weitere Planeten, Planetoidengürtel, Gasriesen, kleine Welten, Monde und
 > Ringe. Monde hängen an der Welt, die sie umkreisen (`moonOf`); eine Welt ist die Hauptwelt
@@ -503,10 +503,8 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Missionen | [views/mission.png](views/mission.png) |
 | Raumkarte und Systemflug | [views/raum.png](views/raum.png) |
 
-Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist
-[2026-11-20](changes/2026-11-20-sternsystem-in-der-erschaffung.png): das Sternsystem als Schritt der
-Weltenerschaffung, und [2026-11-20b](changes/2026-11-20b-welten-getrennt.png): Welten getrennt vom
-Hexfeld.
+Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist derzeit
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -2454,7 +2452,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   6. *Oberfläche* (`surface`): Steht der TL fest, würfelt die App die ganze Oberfläche auf einmal und
      ohne eigenen Knopf (siehe *Oberfläche*). Sie ist kein einzelner Wurf (`WorldRoll`) und hat
      keine Würfelanimation; die Weltkarte zeigt gleich die Werte.
-  7. *Sternsystem* (`system`, 2026-11-20, wartet auf Freigabe): Steht die Oberfläche fest, kommt ein
+  7. *Sternsystem* (`system`, 2026-11-20): Steht die Oberfläche fest, kommt ein
      eigener Schritt mit dem Knopf „Sternsystem würfeln“. Er würfelt das ganze Sternsystem auf
      einmal nach Book 6 (siehe *Sternsystem, Monde und Gasriesen*): Sterne, Bahnen, Gasriesen,
      Monde und Ringe. Wie die Oberfläche ist das kein einzelner Wurf (`WorldRoll`) und hat keine
@@ -2473,7 +2471,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   Weltkarte „Oberfläche würfeln“ an, nach der Temperatur, falls auch die fehlt (die Oberfläche
   braucht sie für das Leben).
 
-  **Welten ohne Sternsystem** (2026-11-20, wartet auf Freigabe). Fertige Welten von vor diesem
+  **Welten ohne Sternsystem** (2026-11-20). Fertige Welten von vor diesem
   Schritt haben kein Sternsystem. Beim Öffnen der Kampagne würfelt die App es für jede solche Welt
   nach, einmal, und speichert es (Owner, 20. November 2026). Fehlt der Welt die Temperatur, gelten
   ihre Monde in der bewohnbaren Zone als gemäßigt. Eine Welt in Erschaffung ohne Sternsystem kommt
@@ -3040,7 +3038,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   [`regeln-sternsystem.md`](regeln-sternsystem.md); Abweichungen tragen ⚑, der Owner hat sie alle
   am 18. November 2026 angenommen. Dass die Hauptwelt Mond eines Gasriesen sein kann, ist Regel
   (B6 35, 37), keine Hausregel.
-  - **Wann gewürfelt** (geändert am 20. November 2026, Kennzeichen 2026-11-20, wartet auf Freigabe;
+  - **Wann gewürfelt** (geändert und freigegeben am 20. November 2026, Kennzeichen 2026-11-20;
     vorher: beim ersten Öffnen der Raumkarte). In der Weltenerschaffung als eigener Schritt nach
     der Oberfläche, mit dem Knopf „Sternsystem würfeln“, alles auf einmal (siehe
     *Weltenerschaffung*, Schritt 7); fertige Welten ohne Sternsystem bekommen es beim Öffnen der
@@ -3094,7 +3092,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Gasriesen von der Welt aus beginnen, auf der die Gruppe ist.
   - **Asteroidengürtel** (Größe 0): keine Monde; die Raumkarte zeigt ein Asteroidenfeld aus dem
     Weltschlüssel, nicht gespeichert, ohne Schwerkraft.
-  - **Weitere Welten** (Kennzeichen 2026-11-20b, wartet auf Freigabe; Owner, 20. November 2026;
+  - **Weitere Welten** (freigegeben am 20. November 2026, Kennzeichen 2026-11-20b; Owner, 20. November 2026;
     vorher wurden Planetoidengürtel, leere und eingefangene Bahnen und weitere Welten nicht
     gewürfelt). Im selben Zug wie Sterne und Gasriesen, in dieser Reihenfolge (B6 28–29, 34–36;
     Regeln in [`regeln-sternsystem.md`](regeln-sternsystem.md)):
@@ -3116,7 +3114,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     liegen Millionen Kilometer entfernt. Die Weltkarte zeigt sie in einer Übersicht des Systems;
     besuchen kann man sie später mit einer Reise im System.
 
-- **Welten und Hexfeld** (Kennzeichen 2026-11-20b, wartet auf Freigabe; Owner, 20. November
+- **Welten und Hexfeld** (freigegeben am 20. November 2026, Kennzeichen 2026-11-20b; Owner, 20. November
   2026: „Welten sollten aus dem Hexfeld getrennt werden. Monde sind auch Welten, die als Mond an
   einer anderen Welt hängen. Eine Welt ist die Hauptwelt.“).
   - **Das Hexfeld ist das System.** Es hält Spalte und Zeile, ob es leer ist, die Basen (Marine,
@@ -3158,10 +3156,14 @@ Diagramm mit diesen Ausnahmen:
   Zustand des Controllers (`OpenSpace.aim`) und wird erst beim Loslassen gesetzt; ebenso die Orte
   der letzten Raumrunde für die Wiedergabe. Das Schiff startet oberhalb der Welt, damit das
   Ziehblatt es nicht verdeckt.
-- **Sternsystem** (2026-11-18d) ist freigegeben, aber noch nicht gebaut: `StarSystem`, `Star`,
-  `StarZones` und die Welten des Systems (`World`, 2026-11-20b) fehlen im Code; die Raumkarte zeigt
-  nur die Welt.
-
+- **Welten getrennt vom Hexfeld** (2026-11-20b) ist freigegeben, aber noch nicht gebaut: Im Code
+  hängen UWP, Name, Notiz, Temperatur, Oberfläche, Oberflächenkarte, Tiertabellen, Angebot und
+  Handelscodes noch am Hexfeld, und Orte, Heimatwelten, Welten der Terms, Buchungen, Begegnungen und
+  der Systemflug zeigen auf ein Hexfeld (`World`, `WorldKind`, `Hex.worlds`, `Hex.main`,
+  `World.moonOf` fehlen).
+- **Sternsystem** (2026-11-18d) mit dem Schritt der Weltenerschaffung (2026-11-20) und den weiteren
+  Welten (2026-11-20b) ist freigegeben, aber noch nicht gebaut: `StarSystem`, `Star`, `StarZones`,
+  `WorldStep.system` und der Knopf „Sternsystem würfeln“ fehlen; die Raumkarte zeigt nur die Welt.
 - **Monat und Monatsabrechnung** (2026-11-17b) sind gebaut (`model/upkeep.ts`, Monate in
   `model/time.ts`). **`MonthEnd → Booking : costs`** ist im Code der Bereich der Buchungen von
   `costsFrom` bis ausschließlich `costsTo`; gezählt werden darin die laufenden Kosten. Das geht,

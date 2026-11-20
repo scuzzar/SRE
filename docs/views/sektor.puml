@@ -94,15 +94,12 @@ hide <<browser>> stereotype
     column: number
     row: number
     empty: boolean
-    $gone("2026-11-20b", "name: string [0..1]")
     navalBase: boolean [0..1]
     scoutBase: boolean [0..1]
     gasGiant: boolean [0..1]
-    $gone("2026-11-20b", "note: string [0..1]")
-    $gone("2026-11-20b", "populationMultiplier: number [0..1]")
     /step: WorldStep
   }
-  class World $sektor $newClass("2026-11-20b") {
+  class World $sektor {
     kind: WorldKind
     name: string [0..1]
     note: string [0..1]
@@ -117,7 +114,7 @@ hide <<browser>> stereotype
     /zone: Zone [0..1]
     /gravity: number
   }
-  enum WorldKind <<value>> $sektor $newClass("2026-11-20b") {
+  enum WorldKind <<value>> $sektor {
     world
     small
     belt
@@ -235,24 +232,22 @@ hide <<browser>> stereotype
   enum WorldStep <<value>> $sektor {
     <i>alle Arten aus WorldRollKind</i>
     surface
-    $new("2026-11-20", "system")
+    system
     name
     done
   }
 
 ' Kampagne
-Booking "*" -$goneArrow("2026-11-20b")-> "0..1" Hex : in
-Booking "*" -$newArrow("2026-11-20b")-> "0..1" World : in
+Booking "*" --> "0..1" World : in
 
 ' Schiffe
 
 ' Raumkarte und Systemflug
-SystemFlight "*" -$goneArrow("2026-11-20b")-> "1" Hex : world
-SystemFlight "*" -$newArrow("2026-11-20b")-> "1" World : world
+SystemFlight "*" --> "1" World : world
 Hex "1" *-- "0..1" StarSystem : system
-Hex "1" *-$newArrow("2026-11-20b")- "*" World : worlds {ordered}
-Hex "*" -$newArrow("2026-11-20b")-> "0..1" World : main
-World "*" -$newArrow("2026-11-20b")-> "0..1" World : moonOf
+Hex "1" *-- "*" World : worlds {ordered}
+Hex "*" --> "0..1" World : main
+World "*" --> "0..1" World : moonOf
 World --> WorldKind
 
 ' Zeit und Reisen
@@ -260,33 +255,24 @@ Journey "*" --> "1" Hex : from
 Journey "*" --> "1" Hex : to
 
 ' Charaktererschaffung und Lebenslauf
-Career "*" -$goneArrow("2026-11-20b")-> "0..1" Hex : homeworld
-Career "*" -$newArrow("2026-11-20b")-> "0..1" World : homeworld
-Career "*" -$goneArrow("2026-11-20b")-> "*" Hex : worlds {ordered}
-Career "*" -$newArrow("2026-11-20b")-> "*" World : worlds {ordered}
-Character "*" -$goneArrow("2026-11-20b")-> "0..1" Hex : homeworld
-Character "*" -$newArrow("2026-11-20b")-> "0..1" World : homeworld
+Career "*" --> "0..1" World : homeworld
+Career "*" --> "*" World : worlds {ordered}
+Character "*" --> "0..1" World : homeworld
 
 ' Laufbahnen (Referenzdaten)
 
 ' Subsektor und Welten
 Campaign "1" *-- "*" Hex : hexes
-Hex "1" *-$goneArrow("2026-11-20b")- "1" Uwp : uwp
-World "1" *-$newArrow("2026-11-20b")- "1" Uwp : uwp
+World "1" *-- "1" Uwp : uwp
 Hex --> WorldStep
 WorldRoll "*" --> "1" Hex : for
 WorldRoll ..> Hex : on roll
-Hex "*" -$goneArrow("2026-11-20b")-> "*" TradeCode : /trade
-World "*" -$newArrow("2026-11-20b")-> "*" TradeCode : /trade
-Hex "*" -$goneArrow("2026-11-20b")-> "0..1" Temperature : temperature
-World "*" -$newArrow("2026-11-20b")-> "0..1" Temperature : temperature
-Hex "1" *-$goneArrow("2026-11-20b")- "0..1" Surface : surface
-World "1" *-$newArrow("2026-11-20b")- "0..1" Surface : surface
+World "*" --> "*" TradeCode : /trade
+World "*" --> "0..1" Temperature : temperature
+World "1" *-- "0..1" Surface : surface
 Surface "*" --> "0..1" SurfaceRow : /row
-Hex "1" *-$goneArrow("2026-11-20b")- "0..1" SurfaceMap : map
-World "1" *-$newArrow("2026-11-20b")- "0..1" SurfaceMap : map
-Place "*" -$goneArrow("2026-11-20b")-> "1" Hex : world
-Place "*" -$newArrow("2026-11-20b")-> "1" World : world
+World "1" *-- "0..1" SurfaceMap : map
+Place "*" --> "1" World : world
 SurfaceRow --> SurfaceTable
 SurfaceRow -[hidden]- DiceExpr
 WorldRoll --> WorldRollKind
@@ -298,8 +284,7 @@ TradeCondition --> "1" WorldRollKind : of
 ' Charakter
 
 ' Waffen (Referenzdaten)
-Hex "*" -$goneArrow("2026-11-20b")-> "*" Item : /offer
-World "*" -$newArrow("2026-11-20b")-> "*" Item : /offer
+World "*" --> "*" Item : /offer
 
 ' Verlauf
 
@@ -308,10 +293,8 @@ World "*" -$newArrow("2026-11-20b")-> "*" Item : /offer
 ' Angriff
 
 ' Begegnung
-Hex "1" *-$goneArrow("2026-11-20b")- "*" AnimalTable : animals
-World "1" *-$newArrow("2026-11-20b")- "*" AnimalTable : animals
-Encounter "*" -$goneArrow("2026-11-20b")-> "0..1" Hex : in
-Encounter "*" -$newArrow("2026-11-20b")-> "0..1" World : in
+World "1" *-- "*" AnimalTable : animals
+Encounter "*" --> "0..1" World : in
 
 ' Karte
 
@@ -323,7 +306,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class StarSystem #line:d0021b;line.bold
-class Hex #line:d0021b;line.bold
-class WorldStep #line:d0021b;line.bold
 @enduml

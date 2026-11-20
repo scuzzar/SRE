@@ -107,8 +107,7 @@ hide <<browser>> stereotype
   }
 
 ' Subsektor und Welten
-  class Hex $sektor
-  class World $sektor $newClass("2026-11-20b")
+  class World $sektor
 
 ' Missionen
 
@@ -213,10 +212,8 @@ Generation --> GenerationStep
 Character "1" *-- "0..1" Career : career
 Career "1" *-- "*" CareerRoll : rolls {ordered}
 Career "*" --> "0..1" Service : /in
-Career "*" -$goneArrow("2026-11-20b")-> "0..1" Hex : homeworld
-Career "*" -$newArrow("2026-11-20b")-> "0..1" World : homeworld
-Career "*" -$goneArrow("2026-11-20b")-> "*" Hex : worlds {ordered}
-Career "*" -$newArrow("2026-11-20b")-> "*" World : worlds {ordered}
+Career "*" --> "0..1" World : homeworld
+Career "*" --> "*" World : worlds {ordered}
 CareerRoll --> RollKind
 CareerRoll --> "0..1" ShipChoice
 CareerRoll --> "0..1" Characteristic : of
@@ -272,5 +269,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Hex #line:d0021b;line.bold
 @enduml

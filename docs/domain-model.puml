@@ -239,11 +239,7 @@ hide <<browser>> stereotype
   }
   class StarSystem $raum {
     maxOrbits: number
-    $gone("2026-11-20b", "worldOrbit: number")
-    $gone("2026-11-20b", "hostOrbit: number [0..1]")
-    $gone("2026-11-20b", "hostAngle: number [0..1]")
-    $gone("2026-11-20b", "/worldZone: Zone")
-    $new("2026-11-20b", "emptyOrbits: number [*]")
+    emptyOrbits: number [*]
   }
   class Star $raum {
     type: StarType
@@ -283,29 +279,6 @@ hide <<browser>> stereotype
     size: StarSize
     firstOrbit: number
     habitableOrbit: number [0..1]
-  }
-  class Satellite $raum {
-    $gone("2026-11-20b", "kind: SatelliteKind")
-    $gone("2026-11-20b", "size: number [0..1]")
-    $gone("2026-11-20b", "diameter: number [0..1]")
-    $gone("2026-11-20b", "orbit: number")
-    $gone("2026-11-20b", "angle: number")
-    $gone("2026-11-20b", "atmosphere: number [0..1]")
-    $gone("2026-11-20b", "hydrographics: number [0..1]")
-    $gone("2026-11-20b", "population: number [0..1]")
-    $gone("2026-11-20b", "/gravity: number")
-  }
-  enum SatelliteKind <<value>> $raum {
-    $gone("2026-11-20b", "moon")
-    $gone("2026-11-20b", "small")
-    $gone("2026-11-20b", "ring")
-  }
-  class GasGiant $raum {
-    $gone("2026-11-20b", "large: boolean")
-    $gone("2026-11-20b", "radius: number")
-    $gone("2026-11-20b", "orbit: number")
-    $gone("2026-11-20b", "/zone: Zone")
-    $gone("2026-11-20b", "/gravity: number")
   }
   class SpaceUnit $raum {
     position: Vec
@@ -350,15 +323,12 @@ hide <<browser>> stereotype
     column: number
     row: number
     empty: boolean
-    $gone("2026-11-20b", "name: string [0..1]")
     navalBase: boolean [0..1]
     scoutBase: boolean [0..1]
     gasGiant: boolean [0..1]
-    $gone("2026-11-20b", "note: string [0..1]")
-    $gone("2026-11-20b", "populationMultiplier: number [0..1]")
     /step: WorldStep
   }
-  class World $sektor $newClass("2026-11-20b") {
+  class World $sektor {
     kind: WorldKind
     name: string [0..1]
     note: string [0..1]
@@ -373,7 +343,7 @@ hide <<browser>> stereotype
     /zone: Zone [0..1]
     /gravity: number
   }
-  enum WorldKind <<value>> $sektor $newClass("2026-11-20b") {
+  enum WorldKind <<value>> $sektor {
     world
     small
     belt
@@ -1092,7 +1062,7 @@ hide <<browser>> stereotype
   enum WorldStep <<value>> $sektor {
     <i>alle Arten aus WorldRollKind</i>
     surface
-    $new("2026-11-20", "system")
+    system
     name
     done
   }
@@ -1162,8 +1132,7 @@ Conflict "*" --> "0..1" Campaign : remote
 Booking "*" --> "0..1" Character : for
 Booking "*" --> "0..1" Item : bought
 Booking "*" --> "0..1" Item : sold
-Booking "*" -$goneArrow("2026-11-20b")-> "0..1" Hex : in
-Booking "*" -$newArrow("2026-11-20b")-> "0..1" World : in
+Booking "*" --> "0..1" World : in
 Booking --> BookingKind
 
 ' Schiffe
@@ -1177,26 +1146,19 @@ Booking "*" --> "0..1" Ship : forShip
 
 ' Raumkarte und Systemflug
 Campaign "1" *-- "0..1" SystemFlight : flight
-SystemFlight "*" -$goneArrow("2026-11-20b")-> "1" Hex : world
-SystemFlight "*" -$newArrow("2026-11-20b")-> "1" World : world
+SystemFlight "*" --> "1" World : world
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
 SpaceUnit "*" --> "1" Ship : ship
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
 Hex "1" *-- "0..1" StarSystem : system
-Hex "1" *-$newArrow("2026-11-20b")- "*" World : worlds {ordered}
-Hex "*" -$newArrow("2026-11-20b")-> "0..1" World : main
-World "*" -$newArrow("2026-11-20b")-> "0..1" World : moonOf
+Hex "1" *-- "*" World : worlds {ordered}
+Hex "*" --> "0..1" World : main
+World "*" --> "0..1" World : moonOf
 World --> WorldKind
 StarSystem "1" *-- "1..3" Star : stars {ordered}
-StarSystem "1" *-$goneArrow("2026-11-20b")- "*" Satellite : satellites {ordered}
-StarSystem "1" *-$goneArrow("2026-11-20b")- "*" GasGiant : giants {ordered}
-StarSystem "*" -$goneArrow("2026-11-20b")-> "0..1" GasGiant : host
 Star "*" --> "1" StarZones : /zones
 Star --> StarType
 Star --> StarSize
-SystemFlight "*" -$goneArrow("2026-11-20b")-> "0..1" GasGiant : at
-GasGiant "1" *-$goneArrow("2026-11-20b")- "*" Satellite : satellites {ordered}
-Satellite --> SatelliteKind
 Gain "*" --> "0..1" ShipDesign : ship
 DeckPlan "*" --> "1" ShipDesign : design
 
@@ -1227,12 +1189,9 @@ Generation --> GenerationStep
 Character "1" *-- "0..1" Career : career
 Career "1" *-- "*" CareerRoll : rolls {ordered}
 Career "*" --> "0..1" Service : /in
-Career "*" -$goneArrow("2026-11-20b")-> "0..1" Hex : homeworld
-Career "*" -$newArrow("2026-11-20b")-> "0..1" World : homeworld
-Career "*" -$goneArrow("2026-11-20b")-> "*" Hex : worlds {ordered}
-Career "*" -$newArrow("2026-11-20b")-> "*" World : worlds {ordered}
-Character "*" -$goneArrow("2026-11-20b")-> "0..1" Hex : homeworld
-Character "*" -$newArrow("2026-11-20b")-> "0..1" World : homeworld
+Career "*" --> "0..1" World : homeworld
+Career "*" --> "*" World : worlds {ordered}
+Character "*" --> "0..1" World : homeworld
 Character "1" *-- "0..1" Place : place
 Character "*" --> "0..1" Patron : patron
 Campaign "1" *-- "*" Mission : missions {ordered}
@@ -1275,20 +1234,15 @@ Aging --> "1" Characteristic : of
 
 ' Subsektor und Welten
 Campaign "1" *-- "*" Hex : hexes
-Hex "1" *-$goneArrow("2026-11-20b")- "1" Uwp : uwp
-World "1" *-$newArrow("2026-11-20b")- "1" Uwp : uwp
+World "1" *-- "1" Uwp : uwp
 Hex --> WorldStep
 WorldRoll "*" --> "1" Hex : for
 WorldRoll ..> Hex : on roll
-Hex "*" -$goneArrow("2026-11-20b")-> "*" TradeCode : /trade
-World "*" -$newArrow("2026-11-20b")-> "*" TradeCode : /trade
-Hex "*" -$goneArrow("2026-11-20b")-> "0..1" Temperature : temperature
-World "*" -$newArrow("2026-11-20b")-> "0..1" Temperature : temperature
-Hex "1" *-$goneArrow("2026-11-20b")- "0..1" Surface : surface
-World "1" *-$newArrow("2026-11-20b")- "0..1" Surface : surface
+World "*" --> "*" TradeCode : /trade
+World "*" --> "0..1" Temperature : temperature
+World "1" *-- "0..1" Surface : surface
 Surface "*" --> "0..1" SurfaceRow : /row
-Hex "1" *-$goneArrow("2026-11-20b")- "0..1" SurfaceMap : map
-World "1" *-$newArrow("2026-11-20b")- "0..1" SurfaceMap : map
+World "1" *-- "0..1" SurfaceMap : map
 SurfaceMap "1" *-- "/cells" SurfaceCell : cells {ordered}
 SurfaceCell "*" --> "1" Landform : landform
 SurfaceCell "*" --> "0..1" Volcano : volcano
@@ -1299,8 +1253,7 @@ River "*" --> "2..*" SurfaceCell : cells {ordered}
 Road "*" --> "2..*" SurfaceCell : cells {ordered}
 City "*" --> "0..1" SurfaceCell : cell
 LogEntry "1" *-- "0..1" Place : place
-Place "*" -$goneArrow("2026-11-20b")-> "1" Hex : world
-Place "*" -$newArrow("2026-11-20b")-> "1" World : world
+Place "*" --> "1" World : world
 Place "*" --> "0..1" SurfaceCell : cell
 Place "*" --> "0..1" City : city
 City --> CityRank
@@ -1345,8 +1298,7 @@ Character "*" --> "0..1" Weapon : secondary
 Weapon "*" --> "1" Skill : uses
 Weapon "*" --> "0..1" Item : ammo
 Weapon "*" --> "0..1" Weapon : single
-Hex "*" -$goneArrow("2026-11-20b")-> "*" Item : /offer
-World "*" -$newArrow("2026-11-20b")-> "*" Item : /offer
+World "*" --> "*" Item : /offer
 Weapon --> AttackKind
 Weapon "1" *-- "7" ArmorDm : vsArmor {ordered}
 Weapon "1" *-- "5" RangeDm : atRange {ordered}
@@ -1407,8 +1359,7 @@ Wounding ..> DamageRoll : on confirm
 Campaign "1" *-- "*" Encounter : encounters {ordered}
 Encounter "*" --> "0..1" EncounterType : of
 Encounter "*" --> "0..1" AnimalRow : animal
-Hex "1" *-$goneArrow("2026-11-20b")- "*" AnimalTable : animals
-World "1" *-$newArrow("2026-11-20b")- "*" AnimalTable : animals
+World "1" *-- "*" AnimalTable : animals
 AnimalTable "*" --> "1" Terrain : terrain
 AnimalTable "1" *-- "11" AnimalRow : rows {ordered}
 AnimalRow "*" --> "0..1" AnimalType : type
@@ -1436,8 +1387,7 @@ Encounter "1" *-- "0..1" SurpriseRoll : npcSurprise
 Encounter --> Side
 EncounterRange -[hidden]- Terrain
 RangeBand -[hidden]- EncounterRange
-Encounter "*" -$goneArrow("2026-11-20b")-> "0..1" Hex : in
-Encounter "*" -$newArrow("2026-11-20b")-> "0..1" World : in
+Encounter "*" --> "0..1" World : in
 Encounter "1" *-- "*" Character : npcs {ordered}
 Encounter "*" --> "*" Character : joined {ordered}
 Encounter "*" --> "0..1" Character : leader

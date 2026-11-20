@@ -455,7 +455,7 @@
       "id": "2026-11-20",
       "file": "2026-11-20-sternsystem-in-der-erschaffung",
       "title": "Sternsystem in der Weltenerschaffung: eigener Schritt mit einem Knopf; fertige Welten ohne System bekommen es beim Öffnen der Kampagne",
-      "approved": false,
+      "approved": true,
       "show": [
         "StarSystem"
       ]
@@ -464,7 +464,7 @@
       "id": "2026-11-20b",
       "file": "2026-11-20b-welten-getrennt",
       "title": "Welten getrennt vom Hexfeld: jede Welt des Systems ist eine World (Hauptwelt, Planeten, Gürtel, Gasriesen, Monde, Ringe); Monde hängen an ihrer Welt; weitere Welten, leere und eingefangene Bahnen",
-      "approved": false,
+      "approved": true,
       "show": [
         "Hex",
         "StarSystem",
