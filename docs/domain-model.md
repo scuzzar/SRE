@@ -470,6 +470,14 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Atmosphäre, Hydrographie, Bevölkerung und Monden. `Satellite`, `SatelliteKind` und `GasGiant`
 > entfallen, ebenso die Bahn der Hauptwelt am `StarSystem`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-20b-welten-getrennt.png`](changes/2026-11-20b-welten-getrennt.png).
+>
+> Wartet auf Freigabe (Kennzeichen 2026-11-20c): **Nebenwelten nach Book 6** (Owner, 20. November 2026:
+> „Macht es Sinn, auch die UWP der weiteren Welten zu würfeln?“). Jede weitere Welt und jeder Mond
+> außer Ringen bekommt Regierung, Gesetz und Tech-Level im UWP, einen Raumhafen (`World.spaceport`,
+> `Spaceport`: F, G, H oder Y) und Einrichtungen (`World.facilities`, `Facility`: Farming, Mining,
+> Colony, Research Laboratory, Military Base); siehe *Nebenwelten*. Neu im Bild: `World.spaceport`,
+> `World.facilities`, `Spaceport`, `Facility`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-20c-nebenwelten.png`](changes/2026-11-20c-nebenwelten.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -860,6 +868,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Eingefangene Welt | `World.captured` | Eine Welt auf einer Zwischenbahn außerhalb der Standardbahnen (Book 6) (2026-11-20b) |
 | Leere Bahn | `StarSystem.emptyOrbits` | Eine verfügbare Bahn, auf der nichts liegt (Book 6) (2026-11-20b) |
 | Gasriese (Körper) | `World` der Art giant | Ein Gasriese des Systems: groß oder klein, Radius in km, Bahn um den Stern, mit Monden und einer eigenen Raumkarte; nur, wenn das System welche hat (`Hex.gasGiant`) (2026-11-18d, seit 2026-11-20b eine Welt) |
+| Raumhafen einer Nebenwelt | `World.spaceport`, `Spaceport` | Der Spaceport einer Welt außer der Hauptwelt nach Book 6: F gut, G schlecht, H einfachste Einrichtungen, Y keiner; den Starport (A–E, X) hat nur die Hauptwelt (2026-11-20c) |
+| Einrichtung | `World.facilities`, `Facility` | Warum es auf einer Nebenwelt eine Siedlung gibt (B6 38): Farming (Landwirtschaft), Mining (Bergbau), Colony (Kolonie), Research Laboratory (Forschung), Military Base (Militärbasis) (2026-11-20c) |
 | Gastgeber | `StarSystem.host` | Der Gasriese (eine Welt der Art giant, 2026-11-20b), um den die Hauptwelt kreist, wenn sie in seiner Bahn liegt (Book 6); dann ist sie ein Mond und hat selbst keine Monde (2026-11-18d) |
 | Am Gasriesen | `SystemFlight.at` | Der Gasriese (eine Welt der Art giant, 2026-11-20b), auf dessen Raumkarte ein Systemflug läuft; ohne ihn läuft er an der Welt (2026-11-18d) |
 | Asteroidenfeld | (abgeleitet, View) | Was die Raumkarte bei einer Welt der Größe 0 statt eines Planeten zeigt: Brocken aus dem Weltschlüssel, nicht gespeichert, ohne Schwerkraft (2026-11-18d) |
@@ -3068,7 +3078,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Tabelle in Radien des Körpers, Ringe 1D auf die Spalte *Ring*; dieselbe Bahn zweimal: neu
     würfeln. Atmosphäre, Hydrographie und Bevölkerung nach Book 6 mit den DMs der Zone des Körpers,
     um den sie kreisen; wo Kapitel und Checklist verschiedene DMs nennen, gilt das Kapitel.
-    Regierung, Gesetz, Tech-Level und Raumhafen der Monde kommen später. Für das Weltsymbol: ⚑ die
+    Regierung, Gesetz, Tech-Level, Raumhafen und Einrichtungen wie bei weiteren Welten (siehe
+    *Nebenwelten*, 2026-11-20c). Für das Weltsymbol: ⚑ die
     Temperatur folgt aus der Zone (innen heiß, bewohnbar wie die Hauptwelt, außen gefroren).
   - **Schwerkraft** (B6 43, SR 22): Mond g = Größe ÷ 8 G (K = 1); kleine Welt g = Durchmesser ÷
     12.800 km G; Ring keine; Gasriese g = 0,2 × Durchmesser ÷ 12.800 km G (K = 0,2). Die Masse
@@ -3108,11 +3119,39 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        Checklist verschiedene DMs nennen, gilt das Kapitel.
     5. *Monde* für jede Welt und jeden Gasriesen wie oben (Gürtel, kleine Welten, Monde und Ringe
        haben keine).
-    Nur um den Hauptstern (Owner): Begleitsterne haben keine eigenen Bahnen und Welten. Regierung,
-    Gesetz, Tech-Level, Raumhafen und Einrichtungen der Nebenwelten und Monde kommen später
-    (Owner: Physik, Bevölkerung, Monde). Auf die Raumkarte kommen die weiteren Welten nicht: Sie
+    6. *Nebenwelten* (2026-11-20c): Regierung, Gesetz, Einrichtungen, Tech-Level und Raumhafen für
+       jede weitere Welt und jeden Mond außer Ringen (siehe *Nebenwelten*).
+    Nur um den Hauptstern (Owner): Begleitsterne haben keine eigenen Bahnen und Welten. Auf die
+    Raumkarte kommen die weiteren Welten nicht: Sie
     liegen Millionen Kilometer entfernt. Die Weltkarte zeigt sie in einer Übersicht des Systems;
     besuchen kann man sie später mit einer Reise im System.
+  - **Nebenwelten** (wartet auf Freigabe, Kennzeichen 2026-11-20c). Nach B6 38–39 mit den Tabellen
+    S. 29, übertragen in [`regeln-sternsystem.md`](regeln-sternsystem.md) (*Nebenwelten*). Für jede
+    Welt außer der Hauptwelt, Gasriesen und Ringen, im selben Zug wie das übrige System, nach den
+    Monden und in dieser Reihenfolge; die Hauptwelt behält ihren Starport (A–E, X), die übrigen
+    haben einen Spaceport:
+    1. *Regierung* (im UWP): 1W6 auf die Tabelle (1 → 0, 2 → 1, 3 → 2, 4 → 3, 5+ → 6); ⚑ hat die
+       Hauptwelt Regierung 6, ist sie 6, bei 7+ DM +2 (Kapitel und Checklist; die Tabelle S. 29
+       sagt DM + Bevölkerung bzw. DM +1). Ohne Bevölkerung 0.
+    2. *Gesetz* (im UWP): 1W6 − 3 + Gesetz der Hauptwelt, mindestens 0; ohne Bevölkerung 0.
+    3. *Einrichtungen* (`facilities`), jede, deren Bedingung gilt: Farming (bewohnbare Zone,
+       Atmosphäre 4–9, Hydrographie 4–8, Bevölkerung 2+), Mining (Hauptwelt industriell, Bevölkerung
+       2+), Colony (Regierung 6, Bevölkerung 5+), Research Laboratory (2W6 11+, DM +2 bei TL der
+       Hauptwelt 10+; keins bei TL der Hauptwelt 8 oder weniger oder ohne Bevölkerung), Military Base
+       (2W6 12+, DM +1 bei Bevölkerung der Hauptwelt 8+, DM +2 bei gleicher Atmosphäre wie die
+       Hauptwelt, ⚑ DM +1 bei Scout- oder Marinebasis im System; keine ohne Bevölkerung oder bei
+       armer Hauptwelt).
+    4. *Tech-Level* (im UWP): TL der Hauptwelt − 1, gleich ihrem TL bei Research Laboratory oder
+       Military Base; ⚑ unter 7 bei Atmosphäre nicht 5, 6 oder 8 wird er 7.
+    5. *Raumhafen* (`spaceport`): 1W6 (1–2 Y, 3 H, 4–5 G, 6 F), DM +2 bei Bevölkerung 6+, −2 bei
+       Bevölkerung 1, ⚑ −3 bei Bevölkerung 0.
+    ⚑ markiert, was nur die Tabelle S. 29 sagt bzw. wo sie vom Kapitel abweicht. ⚑ Auch
+    Planetoidengürtel, die nicht die Hauptwelt sind, bekommen diese Werte (Book 6 sagt „jeder
+    Planet“). Die Basen im ganzen System (B6 37, nach Wahl der Spielleitung) gibt es nicht.
+    **Bestehende Systeme** bekommen die Werte beim Öffnen der Kampagne nachgewürfelt, mit Würfen
+    aus Schlüssel der Kampagne und Feld wie das Sternsystem; alles andere am System bleibt. Die
+    Übersicht der Weltkarte zeigt das UWP der Nebenwelt (z. B. `G552531-8`) und ihre
+    Einrichtungen.
 
 - **Welten und Hexfeld** (freigegeben am 20. November 2026, Kennzeichen 2026-11-20b; Owner, 20. November
   2026: „Welten sollten aus dem Hexfeld getrennt werden. Monde sind auch Welten, die als Mond an
@@ -3122,8 +3161,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Sternsystem (`system`) und alle Welten des Systems (`worlds`, in der Reihenfolge ihrer
     Entstehung). Eine davon ist die **Hauptwelt** (`main`).
   - **Jede Welt ist eine `World`** mit ihrer Art (`WorldKind`): Welt, kleine Welt, Gürtel, Gasriese
-    oder Ring. Zu ihr gehören jetzt, was bisher am Hexfeld hing: UWP (bei Nebenwelten und Monden nur
-    Größe, Atmosphäre, Hydrographie, Bevölkerung), Name, Notiz, Temperatur, Bevölkerungs-
+    oder Ring. Zu ihr gehören jetzt, was bisher am Hexfeld hing: UWP (bei Nebenwelten und Monden ohne
+    Raumhafen, der als `spaceport` getrennt steht, 2026-11-20c), Name, Notiz, Temperatur, Bevölkerungs-
     multiplikator, Oberfläche, Oberflächenkarte, Tiertabellen, Angebot (`/offer`) und Handelscodes
     (`/trade`). Dazu ihre Lage: Bahn, Startwinkel (nur Monde), eingefangen; bei kleinen Welten der
     Durchmesser, bei Gasriesen groß/klein und Radius. Zone und Schwerkraft sind abgeleitet.
@@ -3134,7 +3173,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     `worldOrbit`, `hostOrbit`, `hostAngle` und `/worldZone` am `StarSystem` entfallen.
   - **Die Weltenerschaffung erzeugt die Hauptwelt.** Vorkommen, Basen und Gasriese gehören dem
     Hexfeld; der Raumhafen steht im UWP der Hauptwelt (Book 6: nur die Hauptwelt hat den Starport,
-    Nebenwelten haben Spaceports, die später kommen); ab der Größe entstehen die übrigen Werte der
+    Nebenwelten haben Spaceports, 2026-11-20c); ab der Größe entstehen die übrigen Werte der
     Hauptwelt. Der Name der
     Hauptwelt ist der Name, den die Sektorkarte zeigt. Die übrigen Welten entstehen mit dem Schritt
     „Sternsystem würfeln“ (2026-11-20). Namen bekommen Nebenwelten und Monde vorerst keine.

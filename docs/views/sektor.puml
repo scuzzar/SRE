@@ -110,6 +110,8 @@ hide <<browser>> stereotype
     diameter: number [0..1]
     large: boolean [0..1]
     radius: number [0..1]
+    $new("2026-11-20c", "spaceport: Spaceport [0..1]")
+    $new("2026-11-20c", "facilities: Facility [*]")
     /main: boolean
     /zone: Zone [0..1]
     /gravity: number
@@ -120,6 +122,19 @@ hide <<browser>> stereotype
     belt
     giant
     ring
+  }
+  enum Spaceport <<value>> $sektor $newClass("2026-11-20c") {
+    F
+    G
+    H
+    Y
+  }
+  enum Facility <<value>> $sektor $newClass("2026-11-20c") {
+    farming
+    mining
+    colony
+    research
+    military
   }
   class Uwp <<value>> $sektor {
     starport: number [0..1]
@@ -249,6 +264,8 @@ Hex "1" *-- "*" World : worlds {ordered}
 Hex "*" --> "0..1" World : main
 World "*" --> "0..1" World : moonOf
 World --> WorldKind
+World -$newArrow("2026-11-20c")-> Spaceport
+World -$newArrow("2026-11-20c")-> Facility
 
 ' Zeit und Reisen
 Journey "*" --> "1" Hex : from
@@ -306,4 +323,5 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class World #line:d0021b;line.bold
 @enduml
