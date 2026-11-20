@@ -1,0 +1,873 @@
+{
+ "features": [
+  {
+   "roll": 0,
+   "nature": "single",
+   "primaryType": "B",
+   "primarySize": "Ia",
+   "companionSize": "Ia",
+   "maxOrbits": 0,
+   "companionOrbit": {
+    "kind": "close"
+   }
+  },
+  {
+   "roll": 1,
+   "nature": "single",
+   "primaryType": "B",
+   "primarySize": "Ib",
+   "companionSize": "Ib",
+   "maxOrbits": 1,
+   "companionType": "B",
+   "companionOrbit": {
+    "kind": "close"
+   },
+   "gasGiants": 1
+  },
+  {
+   "roll": 2,
+   "nature": "single",
+   "primaryType": "A",
+   "primarySize": "II",
+   "companionSize": "II",
+   "maxOrbits": 2,
+   "companionType": "A",
+   "companionOrbit": {
+    "kind": "close"
+   },
+   "gasGiants": 1
+  },
+  {
+   "roll": 3,
+   "nature": "single",
+   "primaryType": "M",
+   "primarySize": "III",
+   "companionSize": "III",
+   "maxOrbits": 3,
+   "companionType": "F",
+   "companionOrbit": {
+    "kind": "close"
+   },
+   "gasGiants": 1
+  },
+  {
+   "roll": 4,
+   "nature": "single",
+   "primaryType": "M",
+   "primarySize": "IV",
+   "companionSize": "IV",
+   "maxOrbits": 4,
+   "companionType": "F",
+   "companionOrbit": {
+    "kind": "orbit",
+    "orbit": 1
+   },
+   "gasGiants": 2
+  },
+  {
+   "roll": 5,
+   "nature": "single",
+   "primaryType": "M",
+   "primarySize": "V",
+   "companionSize": "D",
+   "maxOrbits": 5,
+   "companionType": "G",
+   "companionOrbit": {
+    "kind": "orbit",
+    "orbit": 2
+   },
+   "gasGiants": 2
+  },
+  {
+   "roll": 6,
+   "nature": "single",
+   "primaryType": "M",
+   "primarySize": "V",
+   "companionSize": "D",
+   "maxOrbits": 6,
+   "companionType": "G",
+   "companionOrbit": {
+    "kind": "orbit",
+    "orbit": 3
+   },
+   "gasGiants": 3
+  },
+  {
+   "roll": 7,
+   "nature": "single",
+   "primaryType": "M",
+   "primarySize": "V",
+   "companionSize": "V",
+   "maxOrbits": 7,
+   "companionType": "K",
+   "companionOrbit": {
+    "kind": "orbit",
+    "orbit": 4,
+    "plusDie": true
+   },
+   "gasGiants": 3
+  },
+  {
+   "roll": 8,
+   "nature": "double",
+   "primaryType": "K",
+   "primarySize": "V",
+   "companionSize": "V",
+   "maxOrbits": 8,
+   "companionType": "K",
+   "companionOrbit": {
+    "kind": "orbit",
+    "orbit": 5,
+    "plusDie": true
+   },
+   "gasGiants": 4
+  },
+  {
+   "roll": 9,
+   "nature": "double",
+   "primaryType": "G",
+   "primarySize": "V",
+   "companionSize": "VI",
+   "maxOrbits": 9,
+   "companionType": "M",
+   "companionOrbit": {
+    "kind": "orbit",
+    "orbit": 6,
+    "plusDie": true
+   },
+   "gasGiants": 4
+  },
+  {
+   "roll": 10,
+   "nature": "double",
+   "primaryType": "F",
+   "primarySize": "V",
+   "companionSize": "D",
+   "maxOrbits": 10,
+   "companionType": "M",
+   "companionOrbit": {
+    "kind": "orbit",
+    "orbit": 7,
+    "plusDie": true
+   },
+   "gasGiants": 4
+  },
+  {
+   "roll": 11,
+   "nature": "double",
+   "primaryType": "F",
+   "primarySize": "VI",
+   "companionSize": "D",
+   "maxOrbits": 11,
+   "companionType": "M",
+   "companionOrbit": {
+    "kind": "orbit",
+    "orbit": 8,
+    "plusDie": true
+   },
+   "gasGiants": 5
+  },
+  {
+   "roll": 12,
+   "nature": "triple",
+   "primaryType": "F",
+   "primarySize": "D",
+   "companionSize": "D",
+   "maxOrbits": 12,
+   "companionType": "M",
+   "companionOrbit": {
+    "kind": "far"
+   },
+   "gasGiants": 5
+  }
+ ],
+ "belts": [
+  {
+   "roll": 0,
+   "present": true,
+   "count": 3
+  },
+  {
+   "roll": 1,
+   "present": true,
+   "count": 2
+  },
+  {
+   "roll": 2,
+   "present": true,
+   "count": 2
+  },
+  {
+   "roll": 3,
+   "present": true,
+   "count": 2
+  },
+  {
+   "roll": 4,
+   "present": true,
+   "count": 2
+  },
+  {
+   "roll": 5,
+   "present": true,
+   "count": 2
+  },
+  {
+   "roll": 6,
+   "present": true,
+   "count": 2
+  },
+  {
+   "roll": 7,
+   "present": false,
+   "count": 1
+  },
+  {
+   "roll": 8,
+   "present": false,
+   "count": 1
+  },
+  {
+   "roll": 9,
+   "present": false,
+   "count": 1
+  },
+  {
+   "roll": 10,
+   "present": false,
+   "count": 1
+  },
+  {
+   "roll": 11,
+   "present": false,
+   "count": 1
+  },
+  {
+   "roll": 12,
+   "present": false,
+   "count": 1
+  }
+ ],
+ "emptyCaptured": [
+  {
+   "roll": 1,
+   "captured": false,
+   "capturedCount": 1,
+   "empty": false,
+   "emptyCount": 1
+  },
+  {
+   "roll": 2,
+   "captured": false,
+   "capturedCount": 1,
+   "empty": false,
+   "emptyCount": 1
+  },
+  {
+   "roll": 3,
+   "captured": false,
+   "capturedCount": 2,
+   "empty": false,
+   "emptyCount": 2
+  },
+  {
+   "roll": 4,
+   "captured": false,
+   "capturedCount": 2,
+   "empty": false,
+   "emptyCount": 3
+  },
+  {
+   "roll": 5,
+   "captured": true,
+   "capturedCount": 3,
+   "empty": true,
+   "emptyCount": 3
+  },
+  {
+   "roll": 6,
+   "captured": true,
+   "capturedCount": 3,
+   "empty": true,
+   "emptyCount": 3
+  }
+ ],
+ "zones": [
+  {
+   "size": "II",
+   "type": "B",
+   "decimal": 0,
+   "firstOrbit": 7,
+   "habitableOrbit": 12
+  },
+  {
+   "size": "II",
+   "type": "B",
+   "decimal": 5,
+   "firstOrbit": 5,
+   "habitableOrbit": 11
+  },
+  {
+   "size": "II",
+   "type": "A",
+   "decimal": 0,
+   "firstOrbit": 3,
+   "habitableOrbit": 9
+  },
+  {
+   "size": "II",
+   "type": "A",
+   "decimal": 5,
+   "firstOrbit": 2,
+   "habitableOrbit": 8
+  },
+  {
+   "size": "II",
+   "type": "F",
+   "decimal": 0,
+   "firstOrbit": 2,
+   "habitableOrbit": 8
+  },
+  {
+   "size": "II",
+   "type": "F",
+   "decimal": 5,
+   "firstOrbit": 2,
+   "habitableOrbit": 8
+  },
+  {
+   "size": "II",
+   "type": "G",
+   "decimal": 0,
+   "firstOrbit": 2,
+   "habitableOrbit": 8
+  },
+  {
+   "size": "II",
+   "type": "G",
+   "decimal": 5,
+   "firstOrbit": 2,
+   "habitableOrbit": 8
+  },
+  {
+   "size": "II",
+   "type": "K",
+   "decimal": 0,
+   "firstOrbit": 2,
+   "habitableOrbit": 9
+  },
+  {
+   "size": "II",
+   "type": "K",
+   "decimal": 5,
+   "firstOrbit": 3,
+   "habitableOrbit": 9
+  },
+  {
+   "size": "II",
+   "type": "M",
+   "decimal": 0,
+   "firstOrbit": 4,
+   "habitableOrbit": 10
+  },
+  {
+   "size": "II",
+   "type": "M",
+   "decimal": 5,
+   "firstOrbit": 6,
+   "habitableOrbit": 11
+  },
+  {
+   "size": "II",
+   "type": "M",
+   "decimal": 9,
+   "firstOrbit": 6,
+   "habitableOrbit": 11
+  },
+  {
+   "size": "III",
+   "type": "B",
+   "decimal": 0,
+   "firstOrbit": 7,
+   "habitableOrbit": 12
+  },
+  {
+   "size": "III",
+   "type": "B",
+   "decimal": 5,
+   "firstOrbit": 5,
+   "habitableOrbit": 10
+  },
+  {
+   "size": "III",
+   "type": "A",
+   "decimal": 0,
+   "firstOrbit": 1,
+   "habitableOrbit": 8
+  },
+  {
+   "size": "III",
+   "type": "A",
+   "decimal": 5,
+   "firstOrbit": 1,
+   "habitableOrbit": 7
+  },
+  {
+   "size": "III",
+   "type": "F",
+   "decimal": 0,
+   "firstOrbit": 1,
+   "habitableOrbit": 6
+  },
+  {
+   "size": "III",
+   "type": "F",
+   "decimal": 5,
+   "firstOrbit": 1,
+   "habitableOrbit": 6
+  },
+  {
+   "size": "III",
+   "type": "G",
+   "decimal": 0,
+   "firstOrbit": 1,
+   "habitableOrbit": 6
+  },
+  {
+   "size": "III",
+   "type": "G",
+   "decimal": 5,
+   "firstOrbit": 1,
+   "habitableOrbit": 7
+  },
+  {
+   "size": "III",
+   "type": "K",
+   "decimal": 0,
+   "firstOrbit": 1,
+   "habitableOrbit": 7
+  },
+  {
+   "size": "III",
+   "type": "K",
+   "decimal": 5,
+   "firstOrbit": 1,
+   "habitableOrbit": 8
+  },
+  {
+   "size": "III",
+   "type": "M",
+   "decimal": 0,
+   "firstOrbit": 2,
+   "habitableOrbit": 8
+  },
+  {
+   "size": "III",
+   "type": "M",
+   "decimal": 5,
+   "firstOrbit": 4,
+   "habitableOrbit": 9
+  },
+  {
+   "size": "III",
+   "type": "M",
+   "decimal": 9,
+   "firstOrbit": 5,
+   "habitableOrbit": 9
+  },
+  {
+   "size": "IV",
+   "type": "B",
+   "decimal": 0,
+   "firstOrbit": 7,
+   "habitableOrbit": 12
+  },
+  {
+   "size": "IV",
+   "type": "B",
+   "decimal": 5,
+   "firstOrbit": 3,
+   "habitableOrbit": 9
+  },
+  {
+   "size": "IV",
+   "type": "A",
+   "decimal": 0,
+   "firstOrbit": 1,
+   "habitableOrbit": 7
+  },
+  {
+   "size": "IV",
+   "type": "A",
+   "decimal": 5,
+   "firstOrbit": 0,
+   "habitableOrbit": 6
+  },
+  {
+   "size": "IV",
+   "type": "F",
+   "decimal": 0,
+   "firstOrbit": 0,
+   "habitableOrbit": 6
+  },
+  {
+   "size": "IV",
+   "type": "F",
+   "decimal": 5,
+   "firstOrbit": 0,
+   "habitableOrbit": 5
+  },
+  {
+   "size": "IV",
+   "type": "G",
+   "decimal": 0,
+   "firstOrbit": 0,
+   "habitableOrbit": 5
+  },
+  {
+   "size": "IV",
+   "type": "G",
+   "decimal": 5,
+   "firstOrbit": 0,
+   "habitableOrbit": 5
+  },
+  {
+   "size": "IV",
+   "type": "K",
+   "decimal": 0,
+   "firstOrbit": 0,
+   "habitableOrbit": 4
+  },
+  {
+   "size": "V",
+   "type": "B",
+   "decimal": 0,
+   "firstOrbit": 6,
+   "habitableOrbit": 12
+  },
+  {
+   "size": "V",
+   "type": "B",
+   "decimal": 5,
+   "firstOrbit": 3,
+   "habitableOrbit": 9
+  },
+  {
+   "size": "V",
+   "type": "A",
+   "decimal": 0,
+   "firstOrbit": 0,
+   "habitableOrbit": 7
+  },
+  {
+   "size": "V",
+   "type": "A",
+   "decimal": 5,
+   "firstOrbit": 0,
+   "habitableOrbit": 6
+  },
+  {
+   "size": "V",
+   "type": "F",
+   "decimal": 0,
+   "firstOrbit": 0,
+   "habitableOrbit": 5
+  },
+  {
+   "size": "V",
+   "type": "F",
+   "decimal": 5,
+   "firstOrbit": 0,
+   "habitableOrbit": 4
+  },
+  {
+   "size": "V",
+   "type": "G",
+   "decimal": 0,
+   "firstOrbit": 0,
+   "habitableOrbit": 3
+  },
+  {
+   "size": "V",
+   "type": "G",
+   "decimal": 5,
+   "firstOrbit": 0,
+   "habitableOrbit": 2
+  },
+  {
+   "size": "V",
+   "type": "K",
+   "decimal": 0,
+   "firstOrbit": 0,
+   "habitableOrbit": 2
+  },
+  {
+   "size": "V",
+   "type": "K",
+   "decimal": 5,
+   "firstOrbit": 0,
+   "habitableOrbit": 0
+  },
+  {
+   "size": "V",
+   "type": "M",
+   "decimal": 0,
+   "firstOrbit": 0,
+   "habitableOrbit": 0
+  },
+  {
+   "size": "V",
+   "type": "M",
+   "decimal": 5,
+   "firstOrbit": 0
+  },
+  {
+   "size": "V",
+   "type": "M",
+   "decimal": 9,
+   "firstOrbit": 0
+  },
+  {
+   "size": "VI",
+   "type": "F",
+   "decimal": 5,
+   "firstOrbit": 0,
+   "habitableOrbit": 3
+  },
+  {
+   "size": "VI",
+   "type": "G",
+   "decimal": 0,
+   "firstOrbit": 0,
+   "habitableOrbit": 2
+  },
+  {
+   "size": "VI",
+   "type": "G",
+   "decimal": 5,
+   "firstOrbit": 0,
+   "habitableOrbit": 1
+  },
+  {
+   "size": "VI",
+   "type": "K",
+   "decimal": 0,
+   "firstOrbit": 0,
+   "habitableOrbit": 1
+  },
+  {
+   "size": "VI",
+   "type": "K",
+   "decimal": 5,
+   "firstOrbit": 0
+  },
+  {
+   "size": "VI",
+   "type": "M",
+   "decimal": 0,
+   "firstOrbit": 0
+  },
+  {
+   "size": "VI",
+   "type": "M",
+   "decimal": 5,
+   "firstOrbit": 0
+  },
+  {
+   "size": "VI",
+   "type": "M",
+   "decimal": 9,
+   "firstOrbit": 0
+  },
+  {
+   "size": "D",
+   "type": "B",
+   "firstOrbit": 0,
+   "habitableOrbit": 0
+  },
+  {
+   "size": "D",
+   "type": "A",
+   "firstOrbit": 0
+  },
+  {
+   "size": "D",
+   "type": "F",
+   "firstOrbit": 0
+  },
+  {
+   "size": "D",
+   "type": "G",
+   "firstOrbit": 0
+  },
+  {
+   "size": "D",
+   "type": "K",
+   "firstOrbit": 0
+  },
+  {
+   "size": "D",
+   "type": "M",
+   "firstOrbit": 0
+  }
+ ],
+ "orbits": [
+  {
+   "orbit": 0,
+   "millionKm": 29.9,
+   "au": 0.2
+  },
+  {
+   "orbit": 1,
+   "millionKm": 59.8,
+   "au": 0.4
+  },
+  {
+   "orbit": 2,
+   "millionKm": 104.7,
+   "au": 0.7
+  },
+  {
+   "orbit": 3,
+   "millionKm": 149.6,
+   "au": 1.0
+  },
+  {
+   "orbit": 4,
+   "millionKm": 239.3,
+   "au": 1.6
+  },
+  {
+   "orbit": 5,
+   "millionKm": 418.9,
+   "au": 2.8
+  },
+  {
+   "orbit": 6,
+   "millionKm": 777.9,
+   "au": 5.2
+  },
+  {
+   "orbit": 7,
+   "millionKm": 1495.9,
+   "au": 10
+  },
+  {
+   "orbit": 8,
+   "millionKm": 2932,
+   "au": 19.6
+  },
+  {
+   "orbit": 9,
+   "millionKm": 5804,
+   "au": 38.8
+  },
+  {
+   "orbit": 10,
+   "millionKm": 11548,
+   "au": 77.2
+  },
+  {
+   "orbit": 11,
+   "millionKm": 23038,
+   "au": 154
+  },
+  {
+   "orbit": 12,
+   "millionKm": 46016,
+   "au": 307.4
+  },
+  {
+   "orbit": 13,
+   "millionKm": 91972,
+   "au": 614.8
+  },
+  {
+   "orbit": 14,
+   "millionKm": 183885,
+   "au": 1229.2
+  },
+  {
+   "orbit": 15,
+   "millionKm": 367711,
+   "au": 2458
+  }
+ ],
+ "moonOrbits": [
+  {
+   "roll": 1,
+   "ring": 1
+  },
+  {
+   "roll": 2,
+   "ring": 1,
+   "close": 3,
+   "far": 15,
+   "extreme": 75
+  },
+  {
+   "roll": 3,
+   "ring": 1,
+   "close": 4,
+   "far": 20,
+   "extreme": 100
+  },
+  {
+   "roll": 4,
+   "ring": 2,
+   "close": 5,
+   "far": 25,
+   "extreme": 125
+  },
+  {
+   "roll": 5,
+   "ring": 2,
+   "close": 6,
+   "far": 30,
+   "extreme": 150
+  },
+  {
+   "roll": 6,
+   "ring": 3,
+   "close": 7,
+   "far": 35,
+   "extreme": 175
+  },
+  {
+   "roll": 7,
+   "close": 8,
+   "far": 40,
+   "extreme": 200
+  },
+  {
+   "roll": 8,
+   "close": 9,
+   "far": 45,
+   "extreme": 225
+  },
+  {
+   "roll": 9,
+   "close": 10,
+   "far": 50,
+   "extreme": 250
+  },
+  {
+   "roll": 10,
+   "close": 11,
+   "far": 55,
+   "extreme": 275
+  },
+  {
+   "roll": 11,
+   "close": 12,
+   "far": 60,
+   "extreme": 300
+  },
+  {
+   "roll": 12,
+   "close": 13,
+   "far": 65,
+   "extreme": 325
+  }
+ ]
+}

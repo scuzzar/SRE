@@ -20,7 +20,7 @@ const ATMOSPHERE_KEEPS_WATER = 13;
 export type WorldRollKind = 'occurrence' | 'navalBase' | 'scoutBase' | 'gasGiant' | 'temperature' | UwpKind;
 
 /** Was in der Weltenerschaffung als Nächstes dran ist: ein Wurf, die Oberfläche, der Name, oder fertig. */
-export type WorldStep = WorldRollKind | 'surface' | 'name' | 'done';
+export type WorldStep = WorldRollKind | 'surface' | 'system' | 'name' | 'done';
 
 /**
  * Die Oberfläche einer Welt nach dem World Builder's Handbook, ohne Karte: Wasseranteil, Platten,
@@ -283,6 +283,8 @@ export function stepOf(hex: Hex): WorldStep {
   }
   // Welten von vor der Temperatur bekommen die Oberfläche erst, wenn sie fertig sind.
   if (world.surface === undefined && world.temperature !== undefined && world.name === undefined) return 'surface';
+  // Das Sternsystem kommt nach der Oberfläche (2026-11-20); Welten ohne Oberfläche gehen ohne es weiter.
+  if (world.surface !== undefined && hex.system === undefined && world.name === undefined) return 'system';
   return world.name === undefined ? 'name' : 'done';
 }
 
@@ -295,7 +297,7 @@ export function lacksTemperature(hex: Hex): boolean {
  * Was eine Welt als Nächstes würfelt: einen Wurf, die Oberfläche (in einem Zug) oder nichts. Eine
  * fertige Welt ohne Temperatur würfelt sie nach, danach die Oberfläche, wenn sie fehlt.
  */
-export function nextWorldAction(hex: Hex): WorldRollKind | 'surface' | undefined {
+export function nextWorldAction(hex: Hex): WorldRollKind | 'surface' | 'system' | undefined {
   const step = stepOf(hex);
   if (step !== 'name' && step !== 'done') return step;
   if (step === 'name' || hex.empty) return undefined;
@@ -307,7 +309,7 @@ export function nextWorldAction(hex: Hex): WorldRollKind | 'surface' | undefined
 /** Der Wurf, der als Nächstes dran ist; keiner, wenn die Oberfläche, der Name oder nichts mehr dran ist. */
 export function nextRollKind(hex: Hex): WorldRollKind | undefined {
   const next = nextWorldAction(hex);
-  return next === 'surface' ? undefined : next;
+  return next === 'surface' || next === 'system' ? undefined : next;
 }
 
 /**

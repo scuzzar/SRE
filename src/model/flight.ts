@@ -2,9 +2,10 @@ import type { Campaign } from './campaign';
 import { DomainError } from './errors';
 import type { Clock } from './ports';
 import { shipDesignOf } from './reference';
-import { worldOf, type World } from './sector';
+import { hexById, hexIdOfWorld, worldOf, type Hex, type World } from './sector';
+import { gravityOf, radiusOf } from './star-system';
 import { activeShip, shipById, without } from './ship';
-import { passTime } from './time';
+import { passTime, START_DAY } from './time';
 
 // Systemflug (Domänenmodell 2026-11-18c, Stufe 1 des Raumkampfs; Konzept: docs/konzept-raumkampf.md).
 // Gerechnet wird in km und Sekunden, in der Ebene, die Welt in der Mitte.
@@ -37,7 +38,7 @@ export interface SpaceUnit {
 
 /** Der laufende Flug auf der Raumkarte einer Welt (Domänenmodell: `SystemFlight`). */
 export interface SystemFlight {
-  /** Die Welt als Hexfeld-Id (0304). */
+  /** Die Welt, an der der Flug beginnt (Id der Welt, 2026-11-20b): die Hauptwelt, ein Gasriese oder eine andere Welt des Systems. */
   readonly world: string;
   readonly startedAt: string;
   /** Die laufende Raumrunde, ab 1. */
@@ -70,20 +71,101 @@ export interface Body {
   readonly gm: number;
 }
 
-/** Größe der Welt als Zahl; fehlt sie, 0. */
-function sizeOf(hex: World): number {
-  return hex.uwp.size ?? 0;
+/**
+ * Die Welt als Himmelskörper: Radius (Größe × 800 km, kleine Welt halber Durchmesser, Gasriese sein
+ * Radius) und Schwerkraft nach B6 43 / SR 22, G·M = g · R². Gürtel und Ringe haben keinen Körper.
+ */
+export function bodyOf(world: World): Body | undefined {
+  const radius = radiusOf(world);
+  const g = gravityOf(world);
+  if (radius === undefined || g <= 0) return undefined;
+  return { radius, gm: g * G_KMS2 * radius * radius };
+}
+
+/** Ein Mond auf der Raumkarte: auf einer Kreisbahn gegen den Uhrzeigersinn um den Körper in der Mitte. */
+export interface MoonBody {
+  readonly world: string;
+  /** Ohne Körper (Ring) keine Schwerkraft und kein Aufschlag. */
+  readonly body: Body | undefined;
+  /** Abstand von der Mitte in km. */
+  readonly distance: number;
+  /** Winkel am Kampagnentag 0 im Bogenmaß und Winkelgeschwindigkeit in rad/s. */
+  readonly angle: number;
+  readonly omega: number;
+}
+
+/** Ein Ring: flaches Band von `inner` bis `outer` km um die Mitte; ohne Schwerkraft, man fliegt hindurch. */
+export interface RingBand {
+  readonly world: string;
+  readonly inner: number;
+  readonly outer: number;
 }
 
 /**
- * Die Welt als Himmelskörper: Radius = Größe × 800 km, Schwerkraft g = Größe ÷ 8 G (SR 22, Dichte
- * K = 1), G·M = g · R². Größe 0 (Asteroidengürtel) hat keinen Körper.
+ * Was auf der Raumkarte Schwerkraft hat (2026-11-18d): der Körper in der Mitte, still, und seine
+ * Monde auf festen Kreisbahnen. Die Mitte ist die Welt der Raumkarte; ist sie selbst ein Mond (die
+ * Hauptwelt als Mond eines Gasriesen), ist es die Welt, um die sie kreist.
  */
-export function bodyOf(hex: World): Body | undefined {
-  const size = sizeOf(hex);
-  if (size <= 0) return undefined;
-  const radius = size * 800;
-  return { radius, gm: (size / 8) * G_KMS2 * radius * radius };
+export interface Scene {
+  readonly center: string;
+  readonly body: Body | undefined;
+  readonly moons: readonly MoonBody[];
+  readonly rings: readonly RingBand[];
+}
+
+/** Die Szene der Raumkarte einer Welt. */
+export function sceneOf(hexes: readonly Hex[], worldId: string): Scene {
+  const hex = hexById(hexes, hexIdOfWorld(worldId));
+  const world = worldOf(hexes, worldId);
+  const center = (world.moonOf !== undefined ? hex?.worlds.find((w) => w.id === world.moonOf) : undefined) ?? world;
+  const body = bodyOf(center);
+  const moons: MoonBody[] = [];
+  const rings: RingBand[] = [];
+  const unit = radiusOf(center) ?? 0;
+  for (const moon of hex?.worlds.filter((w) => w.moonOf === center.id) ?? []) {
+    const distance = (moon.orbit ?? 0) * unit;
+    if (moon.kind === 'ring') {
+      rings.push({ world: moon.id, inner: ((moon.orbit ?? 0) + 0.2) * unit, outer: ((moon.orbit ?? 0) + 0.8) * unit });
+      continue;
+    }
+    if (body === undefined || distance <= 0) continue;
+    moons.push({ world: moon.id, body: bodyOf(moon), distance, angle: ((moon.angle ?? 0) * Math.PI) / 180, omega: Math.sqrt(body.gm / distance ** 3) });
+  }
+  return { center: center.id, body, moons, rings };
+}
+
+/** Eine Szene nur mit einem Körper in der Mitte (ohne Monde). */
+export function sceneWith(body: Body | undefined): Scene {
+  return { center: '', body, moons: [], rings: [] };
+}
+
+/** Wo ein Mond zur Zeit `t` (Sekunden seit Kampagnentag 0) steht und wie schnell er sich bewegt. */
+export function moonAt(moon: MoonBody, t: number): { readonly position: Vec; readonly velocity: Vec } {
+  const a = moon.angle + moon.omega * t;
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  return { position: { x: moon.distance * c, y: moon.distance * s }, velocity: { x: -moon.distance * moon.omega * s, y: moon.distance * moon.omega * c } };
+}
+
+/**
+ * Wo die Welt `worldId` zur Zeit `t` in der Szene steht und wie schnell sie sich bewegt: die Mitte
+ * ruht im Ursprung, ein Mond läuft auf seiner Bahn. Die Raumkarte zeigt alles von ihr aus gesehen.
+ */
+export function originAt(scene: Scene, worldId: string, t: number): { readonly position: Vec; readonly velocity: Vec } {
+  const moon = scene.moons.find((m) => m.world === worldId);
+  return moon ? moonAt(moon, t) : { position: { x: 0, y: 0 }, velocity: { x: 0, y: 0 } };
+}
+
+/** Sekunden seit Kampagnentag 0 (dem ersten Tag der Kampagne) zu Beginn eines Tages. */
+export function dayStart(day: number): number {
+  return (day - START_DAY) * DAY_SECONDS;
+}
+
+/** Die Zeit jetzt im Systemflug, in Sekunden seit Kampagnentag 0: Beginn des Starttages plus Dauer des Flugs. */
+export function flightTime(campaign: Pick<Campaign, 'day'>, flight: SystemFlight): number {
+  const elapsed = elapsedOf(flight);
+  // Mit jedem vollen Tag des Flugs ist auch der Kampagnentag eins weiter.
+  return dayStart(campaign.day - Math.floor(elapsed / DAY_SECONDS)) + elapsed;
 }
 
 /** Die Sprunggrenzen der Welt in km vom Mittelpunkt: 10 und 100 Durchmesser (SR 28); ohne Körper keine. */
@@ -106,13 +188,36 @@ const add = (a: Vec, b: Vec): Vec => ({ x: a.x + b.x, y: a.y + b.y });
 const scale = (a: Vec, k: number): Vec => ({ x: a.x * k, y: a.y * k });
 export const lengthOf = (a: Vec): number => Math.hypot(a.x, a.y);
 
-/** Schwerkraft am Ort in km/s². */
-function gravity(body: Body | undefined, p: Vec): Vec {
+const sub = (a: Vec, b: Vec): Vec => ({ x: a.x - b.x, y: a.y - b.y });
+
+/** Die Anziehung eines Körpers in `at` auf den Ort `p`, in km/s². */
+function pull(body: Body | undefined, at: Vec, p: Vec): Vec {
   if (body === undefined) return { x: 0, y: 0 };
-  const r2 = p.x * p.x + p.y * p.y;
+  const d = sub(p, at);
+  const r2 = d.x * d.x + d.y * d.y;
   const r = Math.sqrt(r2);
   if (r === 0) return { x: 0, y: 0 };
-  return scale(p, -body.gm / (r2 * r));
+  return scale(d, -body.gm / (r2 * r));
+}
+
+/** Schwerkraft am Ort zur Zeit `t` in km/s²: die Mitte und alle Monde. */
+export function gravityAt(scene: Scene, p: Vec, t: number): Vec {
+  let a = pull(scene.body, { x: 0, y: 0 }, p);
+  for (const moon of scene.moons) if (moon.body) a = add(a, pull(moon.body, moonAt(moon, t).position, p));
+  return a;
+}
+
+/** Liegt `p` zur Zeit `t` in einem Körper? Dann der Ort auf seiner Oberfläche. */
+function inside(scene: Scene, p: Vec, t: number): Vec | undefined {
+  const bodies: { body: Body; at: Vec }[] = [];
+  if (scene.body) bodies.push({ body: scene.body, at: { x: 0, y: 0 } });
+  for (const moon of scene.moons) if (moon.body) bodies.push({ body: moon.body, at: moonAt(moon, t).position });
+  for (const { body, at } of bodies) {
+    const d = sub(p, at);
+    const r = lengthOf(d);
+    if (r < body.radius) return add(at, scale(d, body.radius / Math.max(r, EPS)));
+  }
+  return undefined;
 }
 
 /** Der Zustand einer Einheit in der Simulation. */
@@ -123,33 +228,32 @@ export interface State {
 }
 
 /**
- * Ein Schritt von `STEP_SECONDS` mit *Velocity Verlet*: Schwerkraft am alten und am neuen Ort, Schub
- * (in G) gleichmäßig über den Schritt. Gerät die Einheit unter die Oberfläche, schlägt sie auf.
+ * Ein Schritt von `STEP_SECONDS` ab der Zeit `t` mit *Velocity Verlet*: Schwerkraft am alten und am
+ * neuen Ort (die Monde dort, wo sie dann stehen), Schub (in G) gleichmäßig über den Schritt. Gerät
+ * die Einheit unter die Oberfläche eines Körpers, schlägt sie auf.
  */
-export function step(body: Body | undefined, state: State, thrust: Vec | undefined): State {
+export function step(scene: Scene, state: State, thrust: Vec | undefined, t = 0): State {
   if (state.crashed) return state;
   const dt = STEP_SECONDS;
   const push = thrust === undefined ? { x: 0, y: 0 } : scale(thrust, G_KMS2);
-  const a0 = add(gravity(body, state.position), push);
+  const a0 = add(gravityAt(scene, state.position, t), push);
   const position = add(add(state.position, scale(state.velocity, dt)), scale(a0, 0.5 * dt * dt));
-  const a1 = add(gravity(body, position), push);
+  const a1 = add(gravityAt(scene, position, t + dt), push);
   const velocity = add(state.velocity, scale(add(a0, a1), 0.5 * dt));
-  if (body !== undefined && lengthOf(position) < body.radius) {
-    const surface = scale(position, body.radius / Math.max(lengthOf(position), EPS));
-    return { position: surface, velocity: { x: 0, y: 0 }, crashed: true };
-  }
+  const surface = inside(scene, position, t + dt);
+  if (surface) return { position: surface, velocity: { x: 0, y: 0 }, crashed: true };
   return { position, velocity, crashed: false };
 }
 
 /**
- * Rechnet `steps` Schritte und gibt alle Zwischenstände zurück (der erste ist der Anfang). Der Schub
- * gilt für die ersten `thrustSteps` Schritte (eine Raumrunde), danach ballistisch.
+ * Rechnet `steps` Schritte ab der Zeit `t` und gibt alle Zwischenstände zurück (der erste ist der
+ * Anfang). Der Schub gilt für die ersten `thrustSteps` Schritte (eine Raumrunde), danach ballistisch.
  */
-export function propagate(body: Body | undefined, start: State, thrust: Vec | undefined, steps: number, thrustSteps = steps): readonly State[] {
+export function propagate(scene: Scene, start: State, thrust: Vec | undefined, steps: number, thrustSteps = steps, t = 0): readonly State[] {
   const states: State[] = [start];
   let state = start;
   for (let i = 0; i < steps; i++) {
-    state = step(body, state, i < thrustSteps ? thrust : undefined);
+    state = step(scene, state, i < thrustSteps ? thrust : undefined, t + i * STEP_SECONDS);
     states.push(state);
   }
   return states;
@@ -178,24 +282,31 @@ export function activeFlight(campaign: Campaign): SystemFlight {
  */
 export function startFlight(campaign: Campaign, world: string, clock: Clock): Campaign {
   if (campaign.flight !== undefined) throw new DomainError('Es läuft schon ein Systemflug.');
-  if (campaign.location?.world !== world) throw new DomainError('Ein Systemflug beginnt nur auf der Welt, auf der die Gruppe ist.');
+  // Am Gasriesen darf er von der Welt aus beginnen, auf der die Gruppe ist (wie man hinkommt, bleibt offen, 2026-11-18d).
+  if (campaign.location === undefined || hexIdOfWorld(campaign.location.world) !== hexIdOfWorld(world)) throw new DomainError('Ein Systemflug beginnt nur im System, in dem die Gruppe ist.');
+  const target = worldOf(campaign.hexes, world);
+  if (target.id !== hexById(campaign.hexes, hexIdOfWorld(world))?.main && target.kind !== 'giant') throw new DomainError('Eine Raumkarte haben die Hauptwelt und die Gasriesen.');
   if (campaign.encounters.some((e) => !e.ended)) throw new DomainError('Während einer laufenden Begegnung beginnt kein Systemflug.');
   if (campaign.trip !== undefined) throw new DomainError('Erst die Fahrt beenden, dann fliegen.');
-  const hex = worldOf(campaign.hexes, world);
   const ship = activeShip(campaign);
-  const body = bodyOf(hex);
-  let position: Vec;
-  let velocity: Vec;
-  if (body === undefined) {
-    position = { x: 0, y: BELT_START_KM };
-    velocity = { x: 0, y: 0 };
-  } else {
-    const r = 2 * body.radius;
-    position = { x: 0, y: r };
-    velocity = { x: -Math.sqrt(body.gm / r), y: 0 };
-  }
+  const { position, velocity } = startOrbit(campaign.hexes, world, dayStart(campaign.day));
   const unit: SpaceUnit = { ship: ship.id, position, velocity, crashed: false, track: [] };
   return { ...campaign, flight: { world, startedAt: clock.now(), round: 1, units: [unit] } };
+}
+
+/**
+ * Wo das Schiff zur Zeit `t` startet: auf einer Kreisbahn mit doppeltem Radius um die Welt, gegen den
+ * Uhrzeigersinn, oberhalb von ihr; ist die Welt ein Mond, mitbewegt mit ihm. Ohne Körper ruhend in
+ * 20.000 km Abstand.
+ */
+export function startOrbit(hexes: readonly Hex[], worldId: string, t: number): { readonly position: Vec; readonly velocity: Vec } {
+  const scene = sceneOf(hexes, worldId);
+  const moon = scene.moons.find((m) => m.world === worldId);
+  const at = originAt(scene, worldId, t);
+  const body = moon ? moon.body : scene.body;
+  if (body === undefined) return { position: add(at.position, { x: 0, y: BELT_START_KM }), velocity: at.velocity };
+  const r = 2 * body.radius;
+  return { position: add(at.position, { x: 0, y: r }), velocity: add(at.velocity, { x: -Math.sqrt(body.gm / r), y: 0 }) };
 }
 
 /** Setzt den Schubvektor einer Einheit für die laufende Raumrunde (undefined: kein Schub). */
@@ -223,8 +334,9 @@ export interface RoundRun {
  */
 export function runRound(campaign: Campaign, clock: Clock, every = 2): RoundRun {
   const flight = activeFlight(campaign);
-  const body = bodyOf(worldOf(campaign.hexes, flight.world));
-  const runs = flight.units.map((u) => propagate(body, u, u.thrust, ROUND_STEPS));
+  const scene = sceneOf(campaign.hexes, flight.world);
+  const t = flightTime(campaign, flight);
+  const runs = flight.units.map((u) => propagate(scene, u, u.thrust, ROUND_STEPS, ROUND_STEPS, t));
   const units = flight.units.map((u, i): SpaceUnit => {
     const end = runs[i]!.at(-1)!;
     const rest = without(u, 'thrust');
@@ -246,7 +358,7 @@ export function endFlight(campaign: Campaign): Campaign {
   return without(campaign, 'flight');
 }
 
-/** Was die Bahnvorschau einer Einheit zeigt: diese Raumrunde mit Schub, danach fünf ohne. */
+/** Was die Bahnvorschau einer Einheit zeigt: diese Raumrunde mit Schub, danach fünf ohne; Orte von `origin` aus gesehen. */
 export interface Preview {
   readonly now: readonly Vec[];
   readonly after: readonly Vec[];
@@ -257,9 +369,10 @@ export interface Preview {
 /** Raumrunden, die die Bahnvorschau ohne Schub vorausrechnet. */
 export const PREVIEW_ROUNDS = 5;
 
-/** Die Bahnvorschau einer Einheit mit einem (vielleicht nur gezogenen) Schubvektor; alle `every` Schritte ein Punkt. */
-export function previewOf(body: Body | undefined, unit: State, thrust: Vec | undefined, every = 2): Preview {
-  const states = propagate(body, unit, thrust, ROUND_STEPS * (1 + PREVIEW_ROUNDS), ROUND_STEPS);
+/** Die Bahnvorschau einer Einheit ab der Zeit `t` mit einem (vielleicht nur gezogenen) Schubvektor; alle `every` Schritte ein Punkt. */
+export function previewOf(scene: Scene, unit: State, thrust: Vec | undefined, t = 0, every = 2, origin = scene.center): Preview {
+  const absolute = propagate(scene, unit, thrust, ROUND_STEPS * (1 + PREVIEW_ROUNDS), ROUND_STEPS, t);
+  const states = absolute.map((s, i) => ({ ...s, position: sub(s.position, originAt(scene, origin, t + i * STEP_SECONDS).position) }));
   const now: Vec[] = [];
   const after: Vec[] = [];
   let impact: number | undefined;
@@ -283,6 +396,13 @@ export function checkFlight(campaign: Campaign, flight: SystemFlight): void {
     if (unit.thrust !== undefined && lengthOf(unit.thrust) > maxG + 1e-6) throw new DomainError('Der Schub einer Einheit ist größer als ihr höchster Schub.');
     if (unit.track.length !== flight.round - 1) throw new DomainError('Die Spur einer Einheit passt nicht zur Raumrunde.');
   }
+}
+
+/** Die Marken einer Einheit des laufenden Flugs, gegenüber der Welt der Raumkarte (prograd heißt: schneller um sie herum). */
+export function marksOf(campaign: Campaign, unit: SpaceUnit): readonly ThrustMark[] {
+  const flight = activeFlight(campaign);
+  const at = originAt(sceneOf(campaign.hexes, flight.world), flight.world, flightTime(campaign, flight));
+  return thrustMarks({ position: sub(unit.position, at.position), velocity: sub(unit.velocity, at.velocity), crashed: unit.crashed });
 }
 
 /** Eine Marke am Schubkreis, an der der Schubvektor einrastet (Winkel im Bogenmaß, gegen den Uhrzeigersinn ab +x). */

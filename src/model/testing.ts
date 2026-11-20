@@ -22,6 +22,20 @@ export function fixedRandom(...values: number[]): Random & { readonly calls: num
   };
 }
 
+/** Eine Zufallsquelle mit festem Startwert (mulberry32): gleichverteilt, aber in jedem Lauf gleich. */
+export function seededRandom(seed: number): Random {
+  let a = seed >>> 0 || 1;
+  return {
+    int(min, max) {
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      const u = ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      return min + Math.floor(u * (max - min + 1));
+    },
+  };
+}
+
 /** Schlüssel für Tests: `key-1`, `key-2`, …, mit `prefix` davor unterscheidbar je Gerät. */
 export function countingKeys(prefix = 'key'): Keys {
   let n = 0;

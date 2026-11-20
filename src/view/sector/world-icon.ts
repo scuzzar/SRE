@@ -302,6 +302,11 @@ export function drawWorld(look: WorldLook, px: number, drawing: WorldDrawing = {
   if (!ctx) return canvas;
   const img = ctx.createImageData(S, S);
   const seed = hashText(look.seed);
+  if (look.kind === 'giant') {
+    drawGiant(img, S, look.large ?? false, seed);
+    ctx.putImageData(img, 0, 0);
+    return canvas;
+  }
   if (look.size === 0) {
     drawBelt(img, S, seed);
     ctx.putImageData(img, 0, 0);
@@ -311,7 +316,7 @@ export function drawWorld(look: WorldLook, px: number, drawing: WorldDrawing = {
   const atm = (look.atmosphere === undefined ? undefined : ATMOSPHERES[look.atmosphere]) ?? ATMOSPHERES[0]!;
   const hydrographics = look.hydrographics ?? 0;
   const exotic = (look.atmosphere ?? 0) >= 10;
-  const R = (S / 2) * worldRadiusShare(look.size);
+  const R = (S / 2) * (look.kind === 'small' ? 0.24 : worldRadiusShare(look.size));
   const glow = atm.glow ? rgb(atm.glow) : undefined;
   const G = glow ? R * atm.width * 1.8 : 0;
   const samples = samplesOf(seed);
@@ -399,6 +404,48 @@ export function drawWorld(look: WorldLook, px: number, drawing: WorldDrawing = {
   cityLights(ctx, S, R, look, seed, samples, threshold);
   if (drawing.orbits !== false) orbits(ctx, S, R, look, seed);
   return canvas;
+}
+
+/**
+ * Ein Gasriese (2026-11-20b): eine Kugel mit Bändern parallel zum Äquator, groß in Sand- und
+ * Brauntönen, klein in Blau- und Grüntönen; beleuchtet wie die Welten, ohne Umlaufbahnen.
+ */
+function drawGiant(img: ImageData, S: number, large: boolean, seed: number): void {
+  const data = img.data;
+  const half = S / 2;
+  const R = half * 0.9;
+  const palette: readonly Rgb[] = large
+    ? [rgb('#e9d6b0'), rgb('#c79a6b'), rgb('#f3e7cf'), rgb('#a8714a'), rgb('#dcc095')]
+    : [rgb('#bfe0e6'), rgb('#7fb4c4'), rgb('#d9eef0'), rgb('#5f95a8'), rgb('#a5cdd6')];
+  const r = seeded(seed);
+  const phase = r() * 10;
+  const bands = 7 + Math.floor(r() * 5);
+  for (let py = 0; py < S; py++) {
+    for (let px = 0; px < S; px++) {
+      const dx = (px + 0.5 - half) / R;
+      const dy = (py + 0.5 - half) / R;
+      const d2 = dx * dx + dy * dy;
+      if (d2 > 1) continue;
+      const z = Math.sqrt(1 - d2);
+      // Breite auf der geneigten Kugel; die Bänder wellen sich leicht.
+      const lat = dy * CT - z * ST;
+      const wave = 0.06 * noise(dx * 3, lat * 3, z * 3, seed) + 0.03 * Math.sin(dx * 9 + phase);
+      const t = (lat + 1 + wave) * bands * 0.5;
+      const i0 = Math.floor(t);
+      const f = t - i0;
+      const a = palette[((i0 % palette.length) + palette.length) % palette.length]!;
+      const b = palette[(((i0 + 1) % palette.length) + palette.length) % palette.length]!;
+      let col = mix(a, b, smooth(0.65, 1, f));
+      const lt = clamp((litOf(dx, dy, z) + 0.08) / 1.08, 0, 1);
+      const shade = 0.04 + 0.96 * (lt < 0.12 ? (lt * lt) / 0.24 : lt - 0.06);
+      col = [col[0] * shade, col[1] * shade, col[2] * shade];
+      const i = (py * S + px) * 4;
+      data[i] = clamp(col[0], 0, 1) * 255;
+      data[i + 1] = clamp(col[1], 0, 1) * 255;
+      data[i + 2] = clamp(col[2], 0, 1) * 255;
+      data[i + 3] = clamp((1 - Math.sqrt(d2)) * R, 0, 1) * 255;
+    }
+  }
 }
 
 /** Wie viele Städte: doppelt so viele je Stufe der Bevölkerung. */
@@ -571,7 +618,7 @@ function mapId(look: WorldLook): number {
   mapIds.set(look.surface.map, id);
   return id;
 }
-const keyOf = (look: WorldLook, px: number) => `${px}|${look.seed}|${look.size}|${look.atmosphere}|${look.hydrographics}|${look.water}|${look.population}|${look.tech}|${look.temperature}|${look.life}|${mapId(look)}`;
+const keyOf = (look: WorldLook, px: number) => `${px}|${look.kind ?? ''}${look.large ? 'L' : ''}|${look.seed}|${look.size}|${look.atmosphere}|${look.hydrographics}|${look.water}|${look.population}|${look.tech}|${look.temperature}|${look.life}|${mapId(look)}`;
 const canvases = new Map<string, HTMLCanvasElement>();
 const urls = new Map<string, string>();
 

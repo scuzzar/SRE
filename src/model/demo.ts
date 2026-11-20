@@ -4,6 +4,7 @@ import { ref } from './reference';
 import { hexFromFlat, hexId, validateHex, type FlatHex, type Hex } from './sector';
 import { addShip } from './ship';
 import { book, setLocation } from './shop';
+import { withStarSystems } from './star-system';
 
 /**
  * Die Demo-Kampagne: die allererste Kampagne auf einem Gerät, damit man gleich etwas ausprobieren
@@ -22,7 +23,9 @@ export function createDemoCampaign(clock: Clock, key = 'key-k1'): Campaign {
   const { campaign: withShip, ship } = addShip(funded, DEMO_SHIP_DESIGN, undefined);
   const named = { ...withShip, ships: withShip.ships.map((s) => (s.id === ship.id ? { ...s, name: DEMO_SHIP_NAME } : s)) };
   // Die Änderungszeit ist die der Buchung; die Uhr wird dafür nicht noch einmal gefragt.
-  return { ...named, key, changedAt: named.bookings.at(-1)?.at ?? named.changedAt };
+  // Kessra hat immer dasselbe Sternsystem, gleich mit welchem Schlüssel (2026-11-20).
+  const withSystem = withStarSystems({ ...named, key }, 'Demo-Kampagne');
+  return { ...withSystem, changedAt: named.bookings.at(-1)?.at ?? named.changedAt };
 }
 
 /** Das Startkapital der Demo-Kampagne in der Gruppenkasse. */

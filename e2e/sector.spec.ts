@@ -32,9 +32,14 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     await dialog.getByRole('button', { name: 'Später weiter' }).click();
     await map.getByRole('button', { name: `${id}, in Erschaffung: fortsetzen` }).click();
     await expect(dialog.getByRole('button', { name: 'Verwerfen' })).toBeVisible();
-    for (let i = 0; i < 14 && (await page.locator('.generation-main').count()) > 0; i++) await page.locator('.generation-main').click();
     // Nach dem TL steht die Oberfläche da, wo früher die Würfe standen; eine Liste der Würfe gibt es nicht.
+    for (let i = 0; i < 30 && !(await page.getByRole('button', { name: 'Sternsystem würfeln' }).isVisible()); i++) await page.locator('.generation-main').click();
     await expect(dialog.getByRole('region', { name: 'Oberfläche' })).toContainText('% Wasser');
+    // Danach kommt das Sternsystem mit eigenem Knopf; die Übersicht zeigt Sterne und Bahnen.
+    await expect(page.locator('.generation-prompt')).toContainText('Sternsystem nach Book 6');
+    await page.getByRole('button', { name: 'Sternsystem würfeln' }).click();
+    await expect(dialog.getByRole('region', { name: 'Sternsystem' })).toContainText('Hauptstern');
+    await expect(dialog.getByRole('region', { name: 'Sternsystem' })).toContainText('(Hauptwelt)');
     await expect(dialog.getByRole('region', { name: 'Würfe' })).toHaveCount(0);
     // Das Weltsymbol steht auf der Karte, nicht im Blatt.
     await expect(dialog.getByRole('img', { name: /^Weltsymbol von / })).toHaveCount(0);

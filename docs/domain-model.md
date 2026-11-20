@@ -3156,14 +3156,30 @@ Diagramm mit diesen Ausnahmen:
   Zustand des Controllers (`OpenSpace.aim`) und wird erst beim Loslassen gesetzt; ebenso die Orte
   der letzten Raumrunde für die Wiedergabe. Das Schiff startet oberhalb der Welt, damit das
   Ziehblatt es nicht verdeckt.
-- **Welten getrennt vom Hexfeld** (2026-11-20b) ist freigegeben, aber noch nicht gebaut: Im Code
-  hängen UWP, Name, Notiz, Temperatur, Oberfläche, Oberflächenkarte, Tiertabellen, Angebot und
-  Handelscodes noch am Hexfeld, und Orte, Heimatwelten, Welten der Terms, Buchungen, Begegnungen und
-  der Systemflug zeigen auf ein Hexfeld (`World`, `WorldKind`, `Hex.worlds`, `Hex.main`,
-  `World.moonOf` fehlen).
-- **Sternsystem** (2026-11-18d) mit dem Schritt der Weltenerschaffung (2026-11-20) und den weiteren
-  Welten (2026-11-20b) ist freigegeben, aber noch nicht gebaut: `StarSystem`, `Star`, `StarZones`,
-  `WorldStep.system` und der Knopf „Sternsystem würfeln“ fehlen; die Raumkarte zeigt nur die Welt.
+- **Welten getrennt vom Hexfeld** (2026-11-20b) ist gebaut (`World` in `model/sector.ts`). Die
+  Hauptwelt hat im Code die Id ihres Feldes (0405), weitere Welten die Id des Feldes mit Nummer
+  (0405-3); so zeigen alle bestehenden Verweise ohne Umschreiben auf die Hauptwelt. Spielstände und
+  Kampagnendateien von vorher werden beim Laden umgewandelt (`hexFromFlat`). `/offer`, `/trade`,
+  `/zone`, `/gravity` und `/main` rechnen Funktionen (`offerOf`, `tradeCodesOf`, `zoneOf`,
+  `gravityOf`, `Hex.main`).
+- **Sternsystem** (2026-11-18d, 2026-11-20, 2026-11-20b) ist gebaut (`model/star-system.ts`, die
+  Tabellen aus Book 6 in `src/data/stars.json`). Abweichungen und Lücken:
+  - **Welten ohne Sternsystem** bekommen es beim Öffnen der Kampagne mit Würfen, die aus dem
+    Schlüssel der Kampagne und dem Feld entstehen, nicht aus dem Zufall des Geräts: So entsteht auf
+    jedem Gerät dasselbe System, und der Abgleich hat keinen Konflikt. Die Demo-Kampagne bekommt so
+    immer dasselbe System (Kessra ist darin Mond eines kleinen Gasriesen).
+  - **`StarZones`** liegt als Tabelle in den Daten; Ia und Ib zählen wie II, O wie B (beide kommen
+    ohne DM nicht vor). Eingefangene Welten gehören zur Zone der nächsten Bahn.
+  - **Raumkarte, wenn die Welt ein Mond ist**: Gerechnet wird wie im Bild um den Gasriesen in der
+    Mitte; gezeichnet wird aber alles von der Welt aus gesehen, die Welt bleibt in der Mitte, und
+    Gasriese, übrige Monde und die Bahnvorschau bewegen sich um sie (sonst läge sie beim Start eine
+    Million km neben dem Bild, und die Bahn des Schiffs wäre eine Schleifenkurve). Ebenso sind
+    Geschwindigkeit, Höhe und die Marken prograd/retrograd auf die Welt bezogen.
+  - Gürtel, die nicht die Hauptwelt sind, bekommen eine Bevölkerung wie weitere Welten (2W6 − 2 mit
+    den DMs der Zone); ein Gasriese, für den keine Bahn frei ist, bekommt eine neue außerhalb der
+    bewohnbaren Bahn (nie innen).
+  - Die DMs nach dem Sterntyp für das einheimische Leben (World Builder's Handbook) gibt es weiter
+    nicht; die Oberfläche entsteht vor dem Sternsystem.
 - **Monat und Monatsabrechnung** (2026-11-17b) sind gebaut (`model/upkeep.ts`, Monate in
   `model/time.ts`). **`MonthEnd → Booking : costs`** ist im Code der Bereich der Buchungen von
   `costsFrom` bis ausschließlich `costsTo`; gezählt werden darin die laufenden Kosten. Das geht,

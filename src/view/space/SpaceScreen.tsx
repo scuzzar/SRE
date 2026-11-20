@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { SpaceUnitView, SpaceView } from '../../controller';
+import type { SpaceUnitView, SpaceView, WorldLook } from '../../controller';
 import { useGame } from '../game-context';
 import { CloseIcon } from '../icons';
 import { worldCanvas, worldRadiusShare } from '../sector/world-icon';
@@ -50,6 +50,40 @@ function trailOf(unit: SpaceUnitView): Point[] {
   }
   points.push(unit.position);
   return points;
+}
+
+/** Welcher Anteil des Symbols die Kugel ist: Gasriesen füllen es fast, kleine Welten wenig. */
+function shareOf(look: WorldLook): number {
+  return look.kind === 'giant' ? 0.9 : look.kind === 'small' ? 0.24 : worldRadiusShare(look.size);
+}
+
+/** Zeichnet einen Körper im Weltsymbol in echter Größe (mindestens `min` px Halbmesser) mit Namen. */
+function drawBody(ctx: CanvasRenderingContext2D, dpr: number, look: WorldLook | undefined, radiusPx: number, x: number, y: number, name: string, min = 5): void {
+  const rPx = Math.max(min, radiusPx);
+  if (look) {
+    const size = (2 * rPx) / shareOf(look);
+    let px = 64;
+    while (px < size * dpr && px < 1024) px *= 2;
+    ctx.drawImage(worldCanvas(look, px, { orbits: false }), x - size / 2, y - size / 2, size, size);
+  } else {
+    ctx.beginPath();
+    ctx.arc(x, y, rPx, 0, 2 * Math.PI);
+    ctx.fillStyle = 'rgba(200, 200, 210, 0.6)';
+    ctx.fill();
+  }
+  ctx.fillStyle = 'rgba(200, 210, 230, 0.8)';
+  ctx.fillText(name, x + rPx + 6, y + 4);
+}
+
+/** Der Ort eines Körpers während der Wiedergabe (zwischen zwei Bildern) oder jetzt. */
+function bodyAt(frames: readonly Point[] | undefined, position: Point, progress: number, playing: boolean): Point {
+  if (!playing || !frames || frames.length === 0) return position;
+  const k = progress * (frames.length - 1);
+  const i = Math.min(frames.length - 1, Math.floor(k));
+  const j = Math.min(frames.length - 1, i + 1);
+  const a = frames[i]!;
+  const b = frames[j]!;
+  return { x: a.x + (b.x - a.x) * (k - i), y: a.y + (b.y - a.y) * (k - i) };
 }
 
 /**
@@ -108,42 +142,64 @@ export function SpaceScreen({ space }: { space: SpaceView }) {
       ctx.fillStyle = '#04060b';
       ctx.fillRect(0, 0, w, h);
 
+      const flight = view.flight;
+      const playing = play.current && flight?.run && play.current.round === flight.run.round ? play.current : undefined;
+      // Der Zeitstempel des Bildes kann knapp vor dem Start liegen: nie unter 0.
+      const progress = playing ? Math.max(0, Math.min(1, (now - playing.start) / PLAY_MS)) : 1;
+      if (playing && progress >= 1) play.current = undefined;
+
+      // Der Körper in der Mitte der Szene (ein Gasriese, wenn die Welt sein Mond ist) und die Monde.
+      const bodies = view.bodies.map((b) => ({ ...b, at: bodyAt(b.frames, b.position, progress, playing !== undefined) }));
+      const center = bodies.find((b) => b.orbit === undefined)?.at ?? { x: 0, y: 0 };
+      const shift = { x: center.x - (bodies.find((b) => b.orbit === undefined)?.position.x ?? 0), y: center.y - (bodies.find((b) => b.orbit === undefined)?.position.y ?? 0) };
+
       // Sprunggrenzen
       ctx.font = '11px system-ui, sans-serif';
       for (const limit of view.jumpLimits) {
         const r = limit.km * cam.scale;
         if (r < 8 || r > 4 * Math.max(w, h)) continue;
         ctx.beginPath();
-        ctx.arc(sx(0), sy(0), r, 0, 2 * Math.PI);
+        ctx.arc(sx(center.x), sy(center.y), r, 0, 2 * Math.PI);
         ctx.setLineDash([6, 6]);
         ctx.strokeStyle = 'rgba(150, 120, 220, 0.55)';
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.fillStyle = 'rgba(170, 145, 235, 0.85)';
-        ctx.fillText(`Sprunggrenze ${limit.km === view.jumpLimits[0]?.km ? 10 : 100} D (DM +${limit.dm})`, sx(0) + 6, sy(0) - r - 6);
+        ctx.fillText(`Sprunggrenze ${limit.km === view.jumpLimits[0]?.km ? 10 : 100} D (DM +${limit.dm})`, sx(center.x) + 6, sy(center.y) - r - 6);
       }
 
-      // Die Welt im Weltsymbol, in echter Größe (mindestens ein paar Pixel)
+      // Ringe: flache Bänder, durch die man hindurchfliegt
+      for (const ring of view.rings) {
+        const x = sx(ring.around.x + shift.x);
+        const y = sy(ring.around.y + shift.y);
+        ctx.beginPath();
+        ctx.arc(x, y, ring.outer * cam.scale, 0, 2 * Math.PI);
+        ctx.arc(x, y, ring.inner * cam.scale, 0, 2 * Math.PI, true);
+        ctx.fillStyle = 'rgba(214, 200, 170, 0.22)';
+        ctx.fill('evenodd');
+      }
+      // Bahnen der Monde und die Körper selbst
+      for (const body of bodies) {
+        if (body.orbit) {
+          ctx.beginPath();
+          ctx.arc(sx(body.orbit.around.x + shift.x), sy(body.orbit.around.y + shift.y), body.orbit.distance * cam.scale, 0, 2 * Math.PI);
+          ctx.strokeStyle = 'rgba(160, 175, 200, 0.18)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+      for (const body of bodies) drawBody(ctx, dpr, body.look, body.radius * cam.scale, sx(body.at.x), sy(body.at.y), body.name, body.orbit ? 3 : 5);
+
+      // Die Welt im Weltsymbol, in echter Größe (mindestens ein paar Pixel); sie steht immer in der Mitte.
       const look = view.world.look;
       if (view.world.radius !== undefined) {
-        const rPx = Math.max(5, view.world.radius * cam.scale);
-        const share = worldRadiusShare(look.size);
-        const size = (2 * rPx) / share;
-        let px = 64;
-        while (px < size * dpr && px < 1024) px *= 2;
-        ctx.drawImage(worldCanvas(look, px, { orbits: false }), sx(0) - size / 2, sy(0) - size / 2, size, size);
+        drawBody(ctx, dpr, look, view.world.radius * cam.scale, sx(0), sy(0), view.world.name);
       } else {
         ctx.drawImage(worldCanvas(look, 128, { orbits: false }), sx(0) - 40, sy(0) - 40, 80, 80);
+        ctx.fillStyle = 'rgba(200, 210, 230, 0.8)';
+        ctx.fillText(view.world.name, sx(0) + 46, sy(0) + 4);
       }
-      ctx.fillStyle = 'rgba(200, 210, 230, 0.8)';
-      ctx.fillText(view.world.name, sx(0) + Math.max(8, (view.world.radius ?? 30_000 / cam.scale) * cam.scale) + 6, sy(0) + 4);
-
-      const flight = view.flight;
-      const playing = play.current && flight?.run && play.current.round === flight.run.round ? play.current : undefined;
-      // Der Zeitstempel des Bildes kann knapp vor dem Start liegen: nie unter 0.
-      const progress = playing ? Math.max(0, Math.min(1, (now - playing.start) / PLAY_MS)) : 1;
-      if (playing && progress >= 1) play.current = undefined;
 
       const path = (pts: readonly Point[], color: string, width: number, dash: number[] = []) => {
         if (pts.length < 2) return;

@@ -24,9 +24,18 @@ export function SpaceCard({ space }: { space: SpaceView }) {
         </button>
       </div>
       <p className="globe-sheet-sub">{flight ? `${space.world.name} · seit ${flight.elapsed}` : space.world.name}</p>
+      {!flight && space.choices.length > 1 && (
+        <div className="chips space-choices" role="group" aria-label="Raumkarte von">
+          {space.choices.map((c) => (
+            <button key={c.id} type="button" aria-pressed={c.id === space.world.id} onClick={() => game.openSpace(c.id)}>
+              {c.name}
+            </button>
+          ))}
+        </div>
+      )}
       {!flight && space.elsewhere && <p className="combat-hint">Ein Systemflug läuft an einer anderen Welt ({space.elsewhere}).</p>}
       {!flight && !space.elsewhere && space.startBlocker && <p className="combat-hint">{space.startBlocker}</p>}
-      {!flight && !space.startBlocker && <p className="combat-hint">Das Schiff startet auf einer Kreisbahn mit doppeltem Weltradius.</p>}
+      {!flight && !space.startBlocker && <p className="combat-hint">Das Schiff startet auf einer Kreisbahn mit doppeltem Radius um {space.world.name}.</p>}
       {unit && (
         <>
           {unit.preview.impact !== undefined && !unit.crashed && (

@@ -28,18 +28,18 @@ Es ist ein Nachschlagewerk, kein Modell: Was die App davon baut, kommt zuerst in
 
 | Regel | Quelle | App |
 |---|---|---|
-| [Sterne](#sterne) | B6 26–28 | ○ |
-| [Bahnen und Zonen](#bahnen-und-zonen) | B6 26–31, 34 | ○ |
-| [Gasriesen und Hauptwelt platzieren](#gasriesen-und-hauptwelt-platzieren) | B6 24, 28, 34–35 | ○ |
-| [Planetoidengürtel, leere und eingefangene Bahnen](#planetoidengürtel-leere-und-eingefangene-bahnen) | B6 28–29, 34–35 | ○ |
-| [Weitere Welten](#weitere-welten) | B6 24, 35–36 | ○ |
-| [Zahl der Monde](#zahl-der-monde) | B6 24, 36 | ○ |
-| [Größe der Monde](#größe-der-monde) | B6 24, 36 | ○ |
-| [Bahnen der Monde](#bahnen-der-monde) | B6 28, 36–37 | ○ |
-| [UWP der Monde](#uwp-der-monde) | B6 24, 37 | ○ |
-| [Gasriesen](#gasriesen) | B6 28, 36, 39, 48 | ○ |
-| [Kleine Welten, Ringe, Gürtel](#kleine-welten-ringe-gürtel) | B6 36, 39 | ○ |
-| [Masse und Schwerkraft](#masse-und-schwerkraft) | B6 43, 48–49; SR 22 | ◐ (Schwerkraft nach SR 22 für die Traglast) |
+| [Sterne](#sterne) | B6 26–28 | ✔ (ferne Begleiter ohne eigenen Begleiter) |
+| [Bahnen und Zonen](#bahnen-und-zonen) | B6 26–31, 34 | ✔ |
+| [Gasriesen und Hauptwelt platzieren](#gasriesen-und-hauptwelt-platzieren) | B6 24, 28, 34–35 | ✔ (✱ Hauptwelt immer in die bewohnbare Bahn) |
+| [Planetoidengürtel, leere und eingefangene Bahnen](#planetoidengürtel-leere-und-eingefangene-bahnen) | B6 28–29, 34–35 | ✔ |
+| [Weitere Welten](#weitere-welten) | B6 24, 35–36 | ✔ (DMs des Kapitels; Regierung, Gesetz, TL, Raumhafen offen) |
+| [Zahl der Monde](#zahl-der-monde) | B6 24, 36 | ✔ |
+| [Größe der Monde](#größe-der-monde) | B6 24, 36 | ✔ |
+| [Bahnen der Monde](#bahnen-der-monde) | B6 28, 36–37 | ✔ (Umlauf nach Kepler auf der Raumkarte) |
+| [UWP der Monde](#uwp-der-monde) | B6 24, 37 | ✔ (DMs des Kapitels) |
+| [Gasriesen](#gasriesen) | B6 28, 36, 39, 48 | ✔ (✱ Radius gewürfelt) |
+| [Kleine Welten, Ringe, Gürtel](#kleine-welten-ringe-gürtel) | B6 36, 39 | ✔ (✱ Ring als Band auf der Raumkarte) |
+| [Masse und Schwerkraft](#masse-und-schwerkraft) | B6 43, 48–49; SR 22 | ✔ (nach der Formel; Monde und Gasriesen ziehen auf der Raumkarte) |
 | [Was Book 6 sonst noch hat](#was-book-6-sonst-noch-hat) | B6 24–49 | ○ |
 
 ---
@@ -351,4 +351,5 @@ Nicht übertragen, weil die Raumkarte es noch nicht braucht (B6 24–49):
 - Temperatur aus Albedo, Treibhauseffekt, Exzentrizität und Achsneigung; Jahreslänge.
 - Sprunggrenze am Stern: Fehlsprünge sind innerhalb von 20 und 200 Sternradien wahrscheinlicher.
 
-Diese Regeln kommen, wenn die App ganze Sternsysteme erzeugt.
+Die App würfelt das System einer schon erschaffenen Hauptwelt (`model/star-system.ts`, Tabellen in
+`src/data/stars.json`); diese Regeln kommen, wenn sie gebraucht werden.

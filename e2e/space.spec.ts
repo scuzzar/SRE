@@ -32,3 +32,22 @@ test('Systemflug: Raumkarte öffnen, Schub im Schubkreis setzen, Runde ausführe
   await page.getByRole('button', { name: 'Raumkarte schließen' }).first().click();
   await expect(page.getByRole('region', { name: 'Raumkarte · Kessra' })).toHaveCount(0);
 });
+
+test('Raumkarte am Gasriesen: Kessra ist Mond eines Gasriesen; seine Raumkarte hat eigene Monde (2026-11-18d)', async ({ page }) => {
+  await page.getByRole('button', { name: 'Aufenthaltsort Kessra, Globus öffnen' }).click();
+  await page.getByRole('button', { name: 'Raumkarte' }).click();
+  const choices = page.getByRole('group', { name: 'Raumkarte von' });
+  await expect(choices.getByRole('button', { name: 'Kessra' })).toHaveAttribute('aria-pressed', 'true');
+  await choices.getByRole('button', { name: 'Kleiner Gasriese' }).click();
+  await expect(page.getByRole('region', { name: 'Raumkarte · Kleiner Gasriese' })).toBeVisible();
+  await expect(page.getByText('Das Schiff startet auf einer Kreisbahn mit doppeltem Radius um Kleiner Gasriese.')).toBeVisible();
+  // Der Systemflug darf am Gasriesen von der Welt der Gruppe aus beginnen.
+  await page.getByRole('button', { name: 'Systemflug beginnen' }).click();
+  const card = page.getByRole('region', { name: 'Systemflug' });
+  await expect(card).toContainText('Raumrunde 1');
+  await expect(card).toContainText('Kleiner Gasriese');
+  await page.getByRole('button', { name: 'Runde ausführen' }).click();
+  await expect(card).toContainText('Raumrunde 2');
+  await card.getByRole('button', { name: 'Systemflug beenden' }).click();
+  await expect(page.getByRole('group', { name: 'Raumkarte von' })).toBeVisible();
+});

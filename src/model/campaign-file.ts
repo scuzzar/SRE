@@ -27,6 +27,7 @@ import { settleStash } from './stash';
 import type { City, SurfaceMap } from './surface-map';
 import { checkPlace, type Place } from './place';
 import { hexFromFlat, hexFromRolls, temperatureIds, uwpKinds, validateHexes, worldById, worldOf, type Hex, type LegacyWorldRoll, type World } from './sector';
+import { checkStarSystems } from './star-system';
 
 /**
  * Die Kampagnendatei: eine Kampagne als JSON, zum Sichern und Weitergeben. Sie enthält alles, was an
@@ -779,6 +780,7 @@ function validate(campaign: Campaign): void {
     if (focus.dead || focus.retired) throw new DomainError(`Der Charakter oben (${focus.name}) lebt nicht oder ist ausgeblendet.`);
   }
   validateHexes(campaign.hexes);
+  checkStarSystems(campaign.hexes);
   if (campaign.location !== undefined) checkPlace(campaign.hexes, campaign.location);
   validateMissions(campaign);
   validateBookings(campaign);

@@ -20,6 +20,7 @@ import {
   type Temperature,
   type WorldDmPart,
   type WorldRollKind,
+  rollStarSystem,
 } from '..';
 
 /**
@@ -104,7 +105,14 @@ export function rollSurfaceAt(hexes: readonly Hex[], column: number, row: number
   return putHex(hexes, enterSurface(hex, random));
 }
 
-/** Lässt eine Welt in Erschaffung durchlaufen: alle Würfe bis zum Namen, mit der Oberfläche. */
+/** Würfelt das Sternsystem einer Welt, die bis zur Oberfläche fertig ist (Schritt `system`, alles auf einmal). */
+export function rollSystemAt(hexes: readonly Hex[], column: number, row: number, random: Random): readonly Hex[] {
+  const hex = hexAt(hexes, column, row);
+  if (!hex || nextWorldAction(hex) !== 'system') throw new DomainError(`Das Sternsystem ist für das Feld ${hexId(column, row)} nicht dran.`);
+  return putHex(hexes, rollStarSystem(hex, random));
+}
+
+/** Lässt eine Welt in Erschaffung durchlaufen: alle Würfe bis zum Namen, mit Oberfläche und Sternsystem. */
 export function runWorld(hexes: readonly Hex[], column: number, row: number, random: Random): { hexes: readonly Hex[]; rolls: readonly WorldRoll[] } {
   const rolls: WorldRoll[] = [];
   let current = hexes;
@@ -115,5 +123,7 @@ export function runWorld(hexes: readonly Hex[], column: number, row: number, ran
     current = next.hexes;
     rolls.push(next.roll);
   }
+  const end = hexAt(current, column, row);
+  if (end && nextWorldAction(end) === 'system') current = rollSystemAt(current, column, row, random);
   return { hexes: current, rolls };
 }

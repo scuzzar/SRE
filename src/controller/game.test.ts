@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { addShip, appendLog, book, createCampaign, currentEncounter, DEMO_FUNDS, fromCampaignFile, ref, rollEncounter, rangeBetween, rollSurprise, setHexes, setLocation, toCampaignFile, type CampaignRepository, type Random, hexFromFlat, mainWorld } from '../model';
+import { addShip, appendLog, book, createCampaign, currentEncounter, DEMO_FUNDS, fromCampaignFile, ref, rollEncounter, rangeBetween, rollSurprise, setHexes, setLocation, toCampaignFile, type CampaignRepository, type Random, hexFromFlat, mainWorld, rollStarSystem } from '../model';
 import { countingKeys, fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 import { surfaceLines } from './world-view';
@@ -8,6 +8,17 @@ async function started(random: Random = fixedRandom(), repository = memoryReposi
   const game = new GameController({ repository, random, clock: fixedClock(), download, keys: countingKeys() });
   await game.init();
   return { game, repository, download };
+}
+
+/**
+ * Die Würfe, die das Sternsystem der Beispielwelt Regina (C788545-7, mit Gasriese) im Feld braucht,
+ * wenn jeder Wurf der kleinste ist: In eine feste Würfelreihe eingefügt, bleibt der Rest der Reihe gleich.
+ */
+function systemDice(column: number, row: number): number[] {
+  const seen: number[] = [];
+  const hex = hexFromFlat({ column, row, empty: false, navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 }, temperature: 'temperate', surface: { water: 80, plates: 8, majorContinents: 1, minorContinents: 4, majorIslands: 5, archipelagos: 7, majorOceans: 0, minorOceans: 0, smallSeas: 0, scatteredLakes: 0, life: true } });
+  rollStarSystem(hex, { int: (min) => (seen.push(min), min) });
+  return seen;
 }
 
 describe('Start', () => {
@@ -1458,7 +1469,7 @@ describe('Charaktererschaffung', () => {
     // Attribute 7, 10, 8, 9, 7, 5; Heimatwelt neu erschaffen (Vorkommen 5, dann C788545-7);
     // Other mit 6+6; überlebt; zwei Fertigkeiten; mustert ab; Geld 6.
     const world = [5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 4, 3, 4, 3, 2, 1, 1, 2, 2, 3, 3, 3, 4, 3, 3];
-    const random = fixedRandom(3, 4, 5, 5, 4, 4, 4, 5, 3, 4, 2, 3, ...world, 6, 6, 6, 6, 1, 1, 1, 1, 6);
+    const random = fixedRandom(3, 4, 5, 5, 4, 4, 4, 5, 3, 4, 2, 3, ...world, ...systemDice(3, 4), 6, 6, 6, 6, 1, 1, 1, 1, 6);
     const { game, repository } = await started(random, memoryRepository(createCampaign()));
     game.openGeneration();
     expect(game.snapshot().generation).toMatchObject({ step: 'characteristics', action: { kind: 'roll', label: 'STR würfeln' } });
@@ -1479,7 +1490,7 @@ describe('Charaktererschaffung', () => {
     game.chooseHex(3, 4);
     game.rollOccurrence();
     game.chooseHex(3, 4);
-    for (let i = 0; i < 11; i++) game.rollWorld();
+    for (let i = 0; i < 12; i++) game.rollWorld();
     game.nameWorld('Regina');
     expect(game.snapshot()).toMatchObject({ picking: undefined, world: undefined, generation: { step: 'service', homeworld: 'Regina' } });
 
@@ -1597,6 +1608,9 @@ describe('Subsektor und Weltenerschaffung', () => {
       }
     }
     expect(sized).toBe(true);
+    // Nach der Oberfläche das Sternsystem, mit eigenem Knopf.
+    expect(game.snapshot().world).toMatchObject({ step: 'system', action: { kind: 'system', label: 'Sternsystem würfeln' } });
+    game.rollWorld();
     const before = game.snapshot().world!;
     expect(before.look).toEqual({ seed: '0304', size: 7, atmosphere: 8, hydrographics: 8, water: 0.8, population: 5, tech: 7, temperature: 'temperate', life: true });
     expect(before).toMatchObject({ step: 'name', uwp: 'C788545-7', navalBase: false, scoutBase: true, gasGiant: true, action: { kind: 'name' } });

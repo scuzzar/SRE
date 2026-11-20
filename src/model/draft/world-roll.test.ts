@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { discardWorld, DomainError, hexAt, hexFromFlat, hexFromRolls, mainWorld, nameWorld, nextWorldAction, rollSurface, stepOf, tradeCodesOf, uwpCode, validateHexes, type FlatHex, type Hex } from '..';
 import { fixedRandom } from '../testing';
-import { rollOccurrence, rollSurfaceAt, rollWorld, type WorldRoll } from './world-roll';
+import { rollOccurrence, rollSurfaceAt, rollSystemAt, rollWorld, type WorldRoll } from './world-roll';
 
 /** Das Feld mit den Werten der Hauptwelt daran, wie vor 2026-11-20b gespeichert: so lesen sich die Erwartungen kurz. */
 function flat(hex: Hex): FlatHex {
@@ -68,9 +68,13 @@ describe('Weltenerschaffung', () => {
       surface: { water: 80, plates: 8, majorContinents: 1, minorContinents: 4, majorIslands: 5, archipelagos: 7, majorOceans: 0, minorOceans: 0, smallSeas: 0, scatteredLakes: 0, life: true },
     });
     expect(result.rolls.find((r) => r.kind === 'temperature')).toMatchObject({ dice: [3, 3], dm: 1, parts: [{ label: 'Atmosphäre 8', dm: 1 }], temperature: { id: 'temperate' } });
-    expect(stepOf(hex)).toBe('name');
+    expect(stepOf(hex)).toBe('system');
     expect(uwpCode(mainWorld(hex).uwp)).toBe('C788545-7');
     expect(tradeCodesOf(mainWorld(hex)).map((t) => t.id)).toEqual(['Ag', 'Ni']);
+    // Vor dem Namen kommt das Sternsystem, in einem Zug.
+    expect(() => nameWorld(hexes, 3, 4, 'Zu früh')).toThrow(/Erst alles würfeln/);
+    hexes = rollSystemAt(hexes, 3, 4, fixedRandom());
+    expect(stepOf(hexAt(hexes, 3, 4)!)).toBe('name');
 
     expect(() => nameWorld(hexes, 3, 4, '  ')).toThrow(/braucht einen Namen/);
     hexes = nameWorld(hexes, 3, 4, ' Regina ');
@@ -161,8 +165,8 @@ describe('Weltenerschaffung', () => {
 
   it('würfelt die Oberfläche nach dem TL in einem Zug; der Name kommt danach', () => {
     const hex = at(rollAll(regina).hexes);
-    expect(stepOf(H(hex))).toBe('name');
-    expect(nextWorldAction(H(hex))).toBeUndefined();
+    expect(stepOf(H(hex))).toBe('system');
+    expect(nextWorldAction(H(hex))).toBe('system');
     // Eine fertige Welt mit Temperatur, aber ohne Oberfläche, bekommt sie auf Wunsch nach.
     const without = omit({ ...hex, name: 'Alt' }, 'surface');
     expect(stepOf(without)).toBe('done');
