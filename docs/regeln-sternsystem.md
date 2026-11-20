@@ -2,9 +2,9 @@
 
 Dieses Dokument ersetzt beim Entwickeln das Nachschlagen im PDF. Es fasst die Regeln aus **Book 6
 *Scouts*** (GDW 1983) zusammen, die die **Raumkarte** braucht: die Sterne eines Systems, die
-Bahnen und Zonen um den Hauptstern, wo Hauptwelt und Gasriesen kreisen, Monde und Ringe, Größe,
-Masse und Schwerkraft von Welten. Weitere Planeten, Planetoidengürtel, leere und eingefangene Bahnen
-stehen in Book 6 ebenfalls, sind hier aber nicht übertragen (siehe *Was Book 6 sonst noch hat*).
+Bahnen und Zonen um den Hauptstern, wo Hauptwelt und Gasriesen kreisen, Planetoidengürtel, leere
+und eingefangene Bahnen, die weiteren Welten des Systems, Monde und Ringe, Größe, Masse und
+Schwerkraft von Welten. Was Book 6 darüber hinaus hat, steht unter *Was Book 6 sonst noch hat*.
 
 Es ist ein Nachschlagewerk, kein Modell: Was die App davon baut, kommt zuerst ins Domänenmodell
 ([`domain-model.md`](domain-model.md)); das Konzept dazu ist
@@ -31,6 +31,8 @@ Es ist ein Nachschlagewerk, kein Modell: Was die App davon baut, kommt zuerst in
 | [Sterne](#sterne) | B6 26–28 | ○ |
 | [Bahnen und Zonen](#bahnen-und-zonen) | B6 26–31, 34 | ○ |
 | [Gasriesen und Hauptwelt platzieren](#gasriesen-und-hauptwelt-platzieren) | B6 24, 28, 34–35 | ○ |
+| [Planetoidengürtel, leere und eingefangene Bahnen](#planetoidengürtel-leere-und-eingefangene-bahnen) | B6 28–29, 34–35 | ○ |
+| [Weitere Welten](#weitere-welten) | B6 24, 35–36 | ○ |
 | [Zahl der Monde](#zahl-der-monde) | B6 24, 36 | ○ |
 | [Größe der Monde](#größe-der-monde) | B6 24, 36 | ○ |
 | [Bahnen der Monde](#bahnen-der-monde) | B6 28, 36–37 | ○ |
@@ -145,6 +147,55 @@ vor (siehe oben).
   dieses Gasriesen**. Ein Asteroidengürtel als Hauptwelt darf in jede verfügbare Bahn. Mit
   Atmosphäre 1 oder weniger oder A und mehr muss sie nicht in der bewohnbaren Zone liegen.
 - Monde haben keine eigenen Monde (B6 36: Monde gibt es für Planeten und Gasriesen).
+
+## Planetoidengürtel, leere und eingefangene Bahnen
+
+*B6 28 (Tabelle System Features), 29 (Captured Planets and Empty Orbits), 34–35.*
+
+- **Planetoidengürtel**: 2D auf die Spalte *vorhanden* mit DM − Zahl der Gasriesen; bei „ja“ 2D
+  auf die Spalte *Anzahl*, ebenfalls mit DM − Zahl der Gasriesen. Höchstens so viele, wie nach den
+  Gasriesen Bahnen frei sind. Sie kommen in freie Bahnen, wenn möglich in die Bahn direkt innerhalb
+  eines Gasriesen (Gasriese in Bahn 8 → Gürtel in Bahn 7).
+
+| Wurf | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| vorhanden | ja | ja | ja | ja | ja | ja | ja | nein | nein | nein | nein | nein | nein |
+| Anzahl | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 1 | 1 | 1 | 1 | 1 |
+
+- **Leere und eingefangene Bahnen** (B6 29), je 1D, DM +1 auf alle Spalten bei Sterntyp B oder A:
+
+| 1W6 | eingefangen? | Anzahl | leer? | Anzahl |
+|---|---|---|---|---|
+| 1 | nein | 1 | nein | 1 |
+| 2 | nein | 1 | nein | 1 |
+| 3 | nein | 2 | nein | 2 |
+| 4 | nein | 2 | nein | 3 |
+| 5 | ja | 3 | ja | 3 |
+| 6 | ja | 3 | ja | 3 |
+
+- **Leere Bahn**: 2D ergibt die Nummer der leeren Bahn; ist sie nicht verfügbar oder schon leer,
+  neu würfeln. Leere Bahnen haben keinen Planeten (ein Begleitstern dort bleibt).
+- **Eingefangener Planet**: 2D ergibt die Bahn, der er am nächsten liegt; 2D − 7, mal 10 %, ist
+  die Abweichung davon (z. B. 40 % hinter Bahn 5 = Bahn 5,4; −10 % von Bahn 2 = Bahn 1,9). Er
+  liegt so auf einer Zwischenbahn außerhalb der Standardbahnen.
+
+## Weitere Welten
+
+*B6 35–36 („World Generation“); Checklist B6 24, Schritt 12.* Jede verfügbare, nicht leere Bahn
+ohne Gasriese, Gürtel oder Hauptwelt bekommt eine Welt, dazu jeder eingefangene Planet; man
+beginnt bei der innersten Bahn.
+
+| Wert | Wurf | DMs |
+|---|---|---|
+| Größe | 2D − 2 | Bahn 0: −5; Bahn 1: −4; Bahn 2: −3 (Checklist: −2); um einen Stern des Typs M: −2. 0 oder weniger: kleine Welt S (Größe 0 steht nur Asteroiden- und Planetoidengürteln zu) |
+| Atmosphäre | 2D − 7 + Größe | innere Zone −2; äußere Zone −4 (Checklist: −2); Größe 0 oder S: 0; mindestens zwei Bahnen jenseits der bewohnbaren Zone und genau 12 auf 2D: Atmosphäre A |
+| Hydrographie | 2D − 7 + Größe | innere Zone: 0; äußere Zone −2 (Checklist: −4); Größe 1 oder weniger (auch S): 0; Atmosphäre 1 oder weniger oder A und mehr: −4 |
+| Bevölkerung | 2D − 2 | innere Zone −5; äußere Zone −3 (Checklist: −5); Atmosphäre nicht 0, 5, 6 oder 8: −2; ist sie so groß wie die der Hauptwelt oder größer: Hauptwelt − 1 |
+
+Werte unter 0 gelten als 0, die Hydrographie höchstens als A. Wo Kapitel und Checklist
+verschiedene DMs nennen, steht die Checklist in Klammern. Danach bekommt jede Welt Monde (siehe
+unten), und B6 38–39 gibt Regierung, Gesetz, Einrichtungen, Tech-Level und Raumhafen der
+Nebenwelten (hier nicht übertragen).
 
 ## Zahl der Monde
 
@@ -294,9 +345,9 @@ Tabelle.
 Nicht übertragen, weil die Raumkarte es noch nicht braucht (B6 24–49):
 
 - Sterndaten: Leuchtkraft, Temperatur, Radius, Masse (B6 42–46).
-- Eingefangene Planeten und leere Bahnen (B6 29, 34).
-- Weitere Planeten und Planetoidengürtel mit UWP, Bestimmung der Hauptwelt (B6 34–37).
-- Systeme um ferne Begleiter.
+- Regierung, Gesetz, Einrichtungen, Tech-Level und Raumhafen der Nebenwelten und Monde (B6 38–39).
+- Bestimmung der Hauptwelt in einem ganz neu erschaffenen System (B6 37).
+- Bahnen und Welten um Begleitsterne und Systeme um ferne Begleiter.
 - Temperatur aus Albedo, Treibhauseffekt, Exzentrizität und Achsneigung; Jahreslänge.
 - Sprunggrenze am Stern: Fehlsprünge sind innerhalb von 20 und 200 Sternradien wahrscheinlicher.
 

@@ -458,6 +458,15 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > fertige Welten ohne Sternsystem bekommen es beim Öffnen der Kampagne. Neu im Bild:
 > `WorldStep.system`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-20-sternsystem-in-der-erschaffung.png`](changes/2026-11-20-sternsystem-in-der-erschaffung.png).
+>
+> **Wartet auf Freigabe** (Kennzeichen 2026-11-20b): **Weitere Welten des Systems** (Wunsch des
+> Owners): Mit demselben Knopf würfelt die App auch Planetoidengürtel, leere und eingefangene
+> Bahnen und auf jeder übrigen Bahn um den Hauptstern eine Welt mit Größe, Atmosphäre,
+> Hydrographie, Bevölkerung und Monden (siehe *Sternsystem, Monde und Gasriesen*). Neu im Bild:
+> `Planet` mit `PlanetKind` (Welt, kleine Welt, Gürtel, Gasriese) und eigenen Monden statt
+> `GasGiant` (entfällt), `StarSystem.planets`, `StarSystem.emptyOrbits`; `host` und
+> `SystemFlight.at` zeigen auf einen Planeten. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-20b-weitere-welten.png`](changes/2026-11-20b-weitere-welten.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -493,7 +502,8 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist
 [2026-11-20](changes/2026-11-20-sternsystem-in-der-erschaffung.png): das Sternsystem als Schritt der
-Weltenerschaffung.
+Weltenerschaffung, und [2026-11-20b](changes/2026-11-20b-weitere-welten.png): die weiteren Welten
+des Systems.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -841,9 +851,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Art des Mondes | `SatelliteKind` | moon (Mond mit Größe 1 oder mehr), small (kleine Welt S, 500 bis 1.500 km Durchmesser), ring (Ring R) (2026-11-18d) |
 | Bahn eines Mondes | `Satellite.orbit`, `StarSystem.hostOrbit` | Abstand von der Mitte des Körpers, um den er kreist, in dessen Radien (Book 6, *Satellite Orbits*) (2026-11-18d) |
 | Startwinkel | `Satellite.angle`, `StarSystem.hostAngle` | Wo auf seiner Bahn ein Mond am Kampagnentag 0 stand, in Grad; von dort läuft er gegen den Uhrzeigersinn (2026-11-18d) |
-| Gasriese (Körper) | `GasGiant`, `StarSystem.giants` | Ein Gasriese des Systems: groß oder klein, Radius in km, Bahn um den Stern, Dichte ein Fünftel der Erde, mit Monden und einer eigenen Raumkarte; nur, wenn das System welche hat (`Hex.gasGiant`) (2026-11-18d) |
-| Gastgeber | `StarSystem.host` | Der Gasriese, um den die Hauptwelt kreist, wenn sie in seiner Bahn liegt (Book 6); dann ist sie ein Mond und hat selbst keine Monde (2026-11-18d) |
-| Am Gasriesen | `SystemFlight.at` | Der Gasriese, auf dessen Raumkarte ein Systemflug läuft; ohne ihn läuft er an der Welt (2026-11-18d) |
+| Planet | `Planet`, `StarSystem.planets` | Was außer der Hauptwelt auf einer Bahn um den Hauptstern liegt: eine Welt, eine kleine Welt (S), ein Planetoidengürtel oder ein Gasriese; mit Bahn, Zone, Werten nach seiner Art und eigenen Monden (2026-11-20b, ersetzt `GasGiant`) |
+| Art des Planeten | `PlanetKind` | world (Welt mit Größe, Atmosphäre, Hydrographie, Bevölkerung), small (kleine Welt S mit Durchmesser), belt (Planetoidengürtel), giant (Gasriese: groß oder klein, Radius, Dichte ein Fünftel der Erde, eigene Raumkarte) (2026-11-20b) |
+| Eingefangener Planet | `Planet.captured` | Ein Planet auf einer Zwischenbahn außerhalb der Standardbahnen, z. B. 5,4 (Book 6) (2026-11-20b) |
+| Leere Bahn | `StarSystem.emptyOrbits` | Eine verfügbare Bahn, auf der nichts liegt (Book 6) (2026-11-20b) |
+| Gasriese (Körper) | `Planet` der Art giant | Ein Gasriese des Systems: groß oder klein, Radius in km, Bahn um den Stern, mit Monden und einer eigenen Raumkarte; nur, wenn das System welche hat (`Hex.gasGiant`) (2026-11-18d, seit 2026-11-20b ein `Planet`) |
+| Gastgeber | `StarSystem.host` | Der Gasriese (ein `Planet` der Art giant, 2026-11-20b), um den die Hauptwelt kreist, wenn sie in seiner Bahn liegt (Book 6); dann ist sie ein Mond und hat selbst keine Monde (2026-11-18d) |
+| Am Gasriesen | `SystemFlight.at` | Der Gasriese (ein `Planet` der Art giant, 2026-11-20b), auf dessen Raumkarte ein Systemflug läuft; ohne ihn läuft er an der Welt (2026-11-18d) |
 | Asteroidenfeld | (abgeleitet, View) | Was die Raumkarte bei einer Welt der Größe 0 statt eines Planeten zeigt: Brocken aus dem Weltschlüssel, nicht gespeichert, ohne Schwerkraft (2026-11-18d) |
 | Sprunggrenze | (abgeleitet) | 10 und 100 Durchmesser der Welt; innerhalb davon DM +15 bzw. +5 auf den Fehlsprung (SR 28); als Ringe auf der Raumkarte (2026-11-18c) |
 | Schlüssel des Deckplans | `DeckPlan.key` | Woran der Abgleich ein Bild auf jedem Gerät wiedererkennt; zufällig, weltweit eindeutig; ein Plan ändert sich nie, ein neues Bild ist ein neuer Plan mit neuem Schlüssel (2026-11-17) |
@@ -3042,7 +3056,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Monde. ⚑ Auch mit Atmosphäre 0, 1 oder A und mehr kommt sie in die bewohnbare Bahn (Book 6
     erlaubt eine andere). Ein Asteroidengürtel kommt in eine zufällige freie Bahn. ⚑ Hat der Stern
     keine bewohnbare Bahn (M5 V, weiße Zwerge außer DB …), kommt die Hauptwelt in die erste
-    verfügbare Bahn. ⚑ Planetoidengürtel, leere und eingefangene Bahnen werden nicht gewürfelt.
+    verfügbare Bahn.
   - **Monde** (B6 24, 36–37): je Planet 1D − 3, kleiner Gasriese 2D − 4, großer 2D; keine bei Größe
     0 und S und bei Monden. Größe Welt − 1D (Gasriese 2D − 6 bzw. 2D − 4); 0 ergibt einen Ring,
     weniger eine kleine Welt mit (2D + 3) × 100 km Durchmesser. Bahn: 2D, 7 oder weniger nah, 8
@@ -3074,7 +3088,28 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Gasriesen von der Welt aus beginnen, auf der die Gruppe ist.
   - **Asteroidengürtel** (Größe 0): keine Monde; die Raumkarte zeigt ein Asteroidenfeld aus dem
     Weltschlüssel, nicht gespeichert, ohne Schwerkraft.
-  - **Weitere Planeten** des Systems kommen mit dem vollen Sternsystem und einer Reise im System.
+  - **Weitere Welten** (Kennzeichen 2026-11-20b, wartet auf Freigabe; Owner, 20. November 2026;
+    vorher wurden Planetoidengürtel, leere und eingefangene Bahnen und weitere Welten nicht
+    gewürfelt). Alles auf einer Bahn außer der Hauptwelt ist ein `Planet` mit seiner Art; die
+    Gasriesen sind jetzt Planeten der Art giant (`GasGiant` entfällt). Im selben Zug wie Sterne und
+    Gasriesen, in dieser Reihenfolge (B6 28–29, 34–36; Regeln in
+    [`regeln-sternsystem.md`](regeln-sternsystem.md)):
+    1. *Planetoidengürtel*: ob und wie viele nach *System Features* (DM − Zahl der Gasriesen),
+       bevorzugt in die Bahn direkt innerhalb eines Gasriesen, sonst in freie Bahnen.
+    2. *Leere Bahnen* und *eingefangene Planeten* nach B6 29 (DM +1 bei Sterntyp B oder A); leere
+       Bahnen in `emptyOrbits`, eingefangene als Planet mit Zwischenbahn (`captured`).
+    3. *Hauptwelt* in die bewohnbare Bahn (wie oben).
+    4. *Weitere Welten*: jede übrige verfügbare, nicht leere Bahn und jeder eingefangene Planet
+       bekommt eine Welt mit Größe (2D − 2 mit den DMs nach Bahn und Sterntyp; 0 oder weniger
+       ergibt eine kleine Welt S mit (2D + 3) × 100 km), Atmosphäre, Hydrographie und Bevölkerung
+       nach Book 6 mit den DMs ihrer Zone, die Bevölkerung höchstens Hauptwelt − 1. Wo Kapitel und
+       Checklist verschiedene DMs nennen, gilt das Kapitel.
+    5. *Monde* für jede Welt und jeden Gasriesen wie oben (Gürtel und kleine Welten haben keine).
+    Nur um den Hauptstern (Owner): Begleitsterne haben keine eigenen Bahnen und Welten. Regierung,
+    Gesetz, Tech-Level, Raumhafen und Einrichtungen der Nebenwelten und Monde kommen später
+    (Owner: Physik, Bevölkerung, Monde). Auf die Raumkarte kommen die weiteren Welten nicht: Sie
+    liegen Millionen Kilometer entfernt. Die Weltkarte zeigt sie in einer Übersicht des Systems;
+    besuchen kann man sie später mit einer Reise im System.
 
 ## Wo der Code noch nicht folgt
 
@@ -3087,7 +3122,7 @@ Diagramm mit diesen Ausnahmen:
   der letzten Raumrunde für die Wiedergabe. Das Schiff startet oberhalb der Welt, damit das
   Ziehblatt es nicht verdeckt.
 - **Sternsystem** (2026-11-18d) ist freigegeben, aber noch nicht gebaut: `StarSystem`, `Star`,
-  `StarZones`, `GasGiant`, `Satellite` und `SystemFlight.at` fehlen im Code; die Raumkarte zeigt
+  `StarZones`, `GasGiant` (bzw. `Planet`, 2026-11-20b), `Satellite` und `SystemFlight.at` fehlen im Code; die Raumkarte zeigt
   nur die Welt.
 
 - **Monat und Monatsabrechnung** (2026-11-17b) sind gebaut (`model/upkeep.ts`, Monate in

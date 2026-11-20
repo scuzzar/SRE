@@ -459,6 +459,16 @@
       "show": [
         "StarSystem"
       ]
+    },
+    {
+      "id": "2026-11-20b",
+      "file": "2026-11-20b-weitere-welten",
+      "title": "Weitere Welten des Systems: Planet mit Art (Welt, kleine Welt, Gürtel, Gasriese) statt GasGiant, leere und eingefangene Bahnen, Monde aller Planeten",
+      "approved": false,
+      "show": [
+        "SystemFlight",
+        "Satellite"
+      ]
     }
   ]
 }
