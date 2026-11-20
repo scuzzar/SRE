@@ -459,14 +459,17 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `WorldStep.system`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-20-sternsystem-in-der-erschaffung.png`](changes/2026-11-20-sternsystem-in-der-erschaffung.png).
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-20b): **Weitere Welten des Systems** (Wunsch des
-> Owners): Mit demselben Knopf würfelt die App auch Planetoidengürtel, leere und eingefangene
-> Bahnen und auf jeder übrigen Bahn um den Hauptstern eine Welt mit Größe, Atmosphäre,
-> Hydrographie, Bevölkerung und Monden (siehe *Sternsystem, Monde und Gasriesen*). Neu im Bild:
-> `Planet` mit `PlanetKind` (Welt, kleine Welt, Gürtel, Gasriese) und eigenen Monden statt
-> `GasGiant` (entfällt), `StarSystem.planets`, `StarSystem.emptyOrbits`; `host` und
-> `SystemFlight.at` zeigen auf einen Planeten. Der Ausschnitt dazu liegt unter
-> [`changes/2026-11-20b-weitere-welten.png`](changes/2026-11-20b-weitere-welten.png).
+> **Wartet auf Freigabe** (Kennzeichen 2026-11-20b): **Welten getrennt vom Hexfeld** (Wunsch des
+> Owners, siehe *Welten und Hexfeld*). Das Hexfeld ist das System; jede Welt darin ist eine eigene
+> `World`: die Hauptwelt, weitere Planeten, Planetoidengürtel, Gasriesen, kleine Welten, Monde und
+> Ringe. Monde hängen an der Welt, die sie umkreisen (`moonOf`); eine Welt ist die Hauptwelt
+> (`Hex.main`). UWP, Name, Notiz, Temperatur, Oberfläche, Oberflächenkarte, Tiertabellen, Angebot und
+> Handelscodes wandern vom Hexfeld zur Welt; Orte, Heimatwelten, Welten der Terms, Buchungen,
+> Begegnungen und der Systemflug zeigen auf eine Welt. Mit dem Knopf „Sternsystem würfeln“ entstehen
+> auch Planetoidengürtel, leere und eingefangene Bahnen und die weiteren Welten mit Größe,
+> Atmosphäre, Hydrographie, Bevölkerung und Monden. `Satellite`, `SatelliteKind` und `GasGiant`
+> entfallen, ebenso die Bahn der Hauptwelt am `StarSystem`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-20b-welten-getrennt.png`](changes/2026-11-20b-welten-getrennt.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -502,8 +505,8 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist
 [2026-11-20](changes/2026-11-20-sternsystem-in-der-erschaffung.png): das Sternsystem als Schritt der
-Weltenerschaffung, und [2026-11-20b](changes/2026-11-20b-weitere-welten.png): die weiteren Welten
-des Systems.
+Weltenerschaffung, und [2026-11-20b](changes/2026-11-20b-welten-getrennt.png): Welten getrennt vom
+Hexfeld.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -851,13 +854,16 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Art des Mondes | `SatelliteKind` | moon (Mond mit Größe 1 oder mehr), small (kleine Welt S, 500 bis 1.500 km Durchmesser), ring (Ring R) (2026-11-18d) |
 | Bahn eines Mondes | `Satellite.orbit`, `StarSystem.hostOrbit` | Abstand von der Mitte des Körpers, um den er kreist, in dessen Radien (Book 6, *Satellite Orbits*) (2026-11-18d) |
 | Startwinkel | `Satellite.angle`, `StarSystem.hostAngle` | Wo auf seiner Bahn ein Mond am Kampagnentag 0 stand, in Grad; von dort läuft er gegen den Uhrzeigersinn (2026-11-18d) |
-| Planet | `Planet`, `StarSystem.planets` | Was außer der Hauptwelt auf einer Bahn um den Hauptstern liegt: eine Welt, eine kleine Welt (S), ein Planetoidengürtel oder ein Gasriese; mit Bahn, Zone, Werten nach seiner Art und eigenen Monden (2026-11-20b, ersetzt `GasGiant`) |
-| Art des Planeten | `PlanetKind` | world (Welt mit Größe, Atmosphäre, Hydrographie, Bevölkerung), small (kleine Welt S mit Durchmesser), belt (Planetoidengürtel), giant (Gasriese: groß oder klein, Radius, Dichte ein Fünftel der Erde, eigene Raumkarte) (2026-11-20b) |
-| Eingefangener Planet | `Planet.captured` | Ein Planet auf einer Zwischenbahn außerhalb der Standardbahnen, z. B. 5,4 (Book 6) (2026-11-20b) |
+| Welt (des Systems) | `World`, `Hex.worlds` | Ein Körper eines Systems mit seinen Werten: die Hauptwelt, ein weiterer Planet, ein Planetoidengürtel, ein Gasriese, eine kleine Welt, ein Mond oder ein Ring; getrennt vom Hexfeld (2026-11-20b) |
+| Hauptwelt | `Hex.main`, `World./main` | Die eine Welt des Systems, die die Weltenerschaffung nach dem UWP erzeugt und die auf der Sektorkarte steht (2026-11-20b) |
+| Art der Welt | `WorldKind` | world (Welt mit Größe), small (kleine Welt S mit Durchmesser), belt (Asteroiden- oder Planetoidengürtel), giant (Gasriese: groß oder klein, Radius, Dichte ein Fünftel der Erde), ring (Ring um eine Welt) (2026-11-20b) |
+| Mond von | `World.moonOf` | Die Welt, um die ein Mond (oder Ring) kreist; ohne sie kreist die Welt um den Hauptstern (2026-11-20b) |
+| Bahn einer Welt | `World.orbit` | Um den Hauptstern die Nummer der Bahn nach Book 6 (bei eingefangenen Welten mit Nachkomma, z. B. 5,4); bei einem Mond der Abstand in Radien der Welt, die er umkreist (2026-11-20b) |
+| Eingefangene Welt | `World.captured` | Eine Welt auf einer Zwischenbahn außerhalb der Standardbahnen (Book 6) (2026-11-20b) |
 | Leere Bahn | `StarSystem.emptyOrbits` | Eine verfügbare Bahn, auf der nichts liegt (Book 6) (2026-11-20b) |
-| Gasriese (Körper) | `Planet` der Art giant | Ein Gasriese des Systems: groß oder klein, Radius in km, Bahn um den Stern, mit Monden und einer eigenen Raumkarte; nur, wenn das System welche hat (`Hex.gasGiant`) (2026-11-18d, seit 2026-11-20b ein `Planet`) |
-| Gastgeber | `StarSystem.host` | Der Gasriese (ein `Planet` der Art giant, 2026-11-20b), um den die Hauptwelt kreist, wenn sie in seiner Bahn liegt (Book 6); dann ist sie ein Mond und hat selbst keine Monde (2026-11-18d) |
-| Am Gasriesen | `SystemFlight.at` | Der Gasriese (ein `Planet` der Art giant, 2026-11-20b), auf dessen Raumkarte ein Systemflug läuft; ohne ihn läuft er an der Welt (2026-11-18d) |
+| Gasriese (Körper) | `World` der Art giant | Ein Gasriese des Systems: groß oder klein, Radius in km, Bahn um den Stern, mit Monden und einer eigenen Raumkarte; nur, wenn das System welche hat (`Hex.gasGiant`) (2026-11-18d, seit 2026-11-20b eine Welt) |
+| Gastgeber | `StarSystem.host` | Der Gasriese (eine Welt der Art giant, 2026-11-20b), um den die Hauptwelt kreist, wenn sie in seiner Bahn liegt (Book 6); dann ist sie ein Mond und hat selbst keine Monde (2026-11-18d) |
+| Am Gasriesen | `SystemFlight.at` | Der Gasriese (eine Welt der Art giant, 2026-11-20b), auf dessen Raumkarte ein Systemflug läuft; ohne ihn läuft er an der Welt (2026-11-18d) |
 | Asteroidenfeld | (abgeleitet, View) | Was die Raumkarte bei einer Welt der Größe 0 statt eines Planeten zeigt: Brocken aus dem Weltschlüssel, nicht gespeichert, ohne Schwerkraft (2026-11-18d) |
 | Sprunggrenze | (abgeleitet) | 10 und 100 Durchmesser der Welt; innerhalb davon DM +15 bzw. +5 auf den Fehlsprung (SR 28); als Ringe auf der Raumkarte (2026-11-18c) |
 | Schlüssel des Deckplans | `DeckPlan.key` | Woran der Abgleich ein Bild auf jedem Gerät wiedererkennt; zufällig, weltweit eindeutig; ein Plan ändert sich nie, ein neues Bild ist ein neuer Plan mit neuem Schlüssel (2026-11-17) |
@@ -3090,26 +3096,57 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Weltschlüssel, nicht gespeichert, ohne Schwerkraft.
   - **Weitere Welten** (Kennzeichen 2026-11-20b, wartet auf Freigabe; Owner, 20. November 2026;
     vorher wurden Planetoidengürtel, leere und eingefangene Bahnen und weitere Welten nicht
-    gewürfelt). Alles auf einer Bahn außer der Hauptwelt ist ein `Planet` mit seiner Art; die
-    Gasriesen sind jetzt Planeten der Art giant (`GasGiant` entfällt). Im selben Zug wie Sterne und
-    Gasriesen, in dieser Reihenfolge (B6 28–29, 34–36; Regeln in
-    [`regeln-sternsystem.md`](regeln-sternsystem.md)):
+    gewürfelt). Im selben Zug wie Sterne und Gasriesen, in dieser Reihenfolge (B6 28–29, 34–36;
+    Regeln in [`regeln-sternsystem.md`](regeln-sternsystem.md)):
     1. *Planetoidengürtel*: ob und wie viele nach *System Features* (DM − Zahl der Gasriesen),
        bevorzugt in die Bahn direkt innerhalb eines Gasriesen, sonst in freie Bahnen.
-    2. *Leere Bahnen* und *eingefangene Planeten* nach B6 29 (DM +1 bei Sterntyp B oder A); leere
-       Bahnen in `emptyOrbits`, eingefangene als Planet mit Zwischenbahn (`captured`).
+    2. *Leere Bahnen* und *eingefangene Welten* nach B6 29 (DM +1 bei Sterntyp B oder A); leere
+       Bahnen in `emptyOrbits`, eingefangene als Welt mit Zwischenbahn (`captured`).
     3. *Hauptwelt* in die bewohnbare Bahn (wie oben).
-    4. *Weitere Welten*: jede übrige verfügbare, nicht leere Bahn und jeder eingefangene Planet
+    4. *Weitere Welten*: jede übrige verfügbare, nicht leere Bahn und jede eingefangene Welt
        bekommt eine Welt mit Größe (2D − 2 mit den DMs nach Bahn und Sterntyp; 0 oder weniger
        ergibt eine kleine Welt S mit (2D + 3) × 100 km), Atmosphäre, Hydrographie und Bevölkerung
        nach Book 6 mit den DMs ihrer Zone, die Bevölkerung höchstens Hauptwelt − 1. Wo Kapitel und
        Checklist verschiedene DMs nennen, gilt das Kapitel.
-    5. *Monde* für jede Welt und jeden Gasriesen wie oben (Gürtel und kleine Welten haben keine).
+    5. *Monde* für jede Welt und jeden Gasriesen wie oben (Gürtel, kleine Welten, Monde und Ringe
+       haben keine).
     Nur um den Hauptstern (Owner): Begleitsterne haben keine eigenen Bahnen und Welten. Regierung,
     Gesetz, Tech-Level, Raumhafen und Einrichtungen der Nebenwelten und Monde kommen später
     (Owner: Physik, Bevölkerung, Monde). Auf die Raumkarte kommen die weiteren Welten nicht: Sie
     liegen Millionen Kilometer entfernt. Die Weltkarte zeigt sie in einer Übersicht des Systems;
     besuchen kann man sie später mit einer Reise im System.
+
+- **Welten und Hexfeld** (Kennzeichen 2026-11-20b, wartet auf Freigabe; Owner, 20. November
+  2026: „Welten sollten aus dem Hexfeld getrennt werden. Monde sind auch Welten, die als Mond an
+  einer anderen Welt hängen. Eine Welt ist die Hauptwelt.“).
+  - **Das Hexfeld ist das System.** Es hält Spalte und Zeile, ob es leer ist, die Basen (Marine,
+    Scout) und ob es im System einen Gasriesen gibt, den Schritt der Erschaffung (`/step`), das
+    Sternsystem (`system`) und alle Welten des Systems (`worlds`, in der Reihenfolge ihrer
+    Entstehung). Eine davon ist die **Hauptwelt** (`main`).
+  - **Jede Welt ist eine `World`** mit ihrer Art (`WorldKind`): Welt, kleine Welt, Gürtel, Gasriese
+    oder Ring. Zu ihr gehören jetzt, was bisher am Hexfeld hing: UWP (bei Nebenwelten und Monden nur
+    Größe, Atmosphäre, Hydrographie, Bevölkerung), Name, Notiz, Temperatur, Bevölkerungs-
+    multiplikator, Oberfläche, Oberflächenkarte, Tiertabellen, Angebot (`/offer`) und Handelscodes
+    (`/trade`). Dazu ihre Lage: Bahn, Startwinkel (nur Monde), eingefangen; bei kleinen Welten der
+    Durchmesser, bei Gasriesen groß/klein und Radius. Zone und Schwerkraft sind abgeleitet.
+  - **Monde sind Welten** mit `moonOf`: der Welt, die sie umkreisen; ihre Bahn zählt dann in deren
+    Radien. Ohne `moonOf` kreist eine Welt um den Hauptstern; ihre Bahn ist die Nummer nach Book 6.
+    Liegt die Hauptwelt in der Bahn eines Gasriesen, ist sie dessen Mond (`moonOf` statt bisher
+    `StarSystem.host`) und hat selbst keine Monde. `Satellite`, `SatelliteKind`, `GasGiant` sowie
+    `worldOrbit`, `hostOrbit`, `hostAngle` und `/worldZone` am `StarSystem` entfallen.
+  - **Die Weltenerschaffung erzeugt die Hauptwelt.** Vorkommen, Basen und Gasriese gehören dem
+    Hexfeld; der Raumhafen steht im UWP der Hauptwelt (Book 6: nur die Hauptwelt hat den Starport,
+    Nebenwelten haben Spaceports, die später kommen); ab der Größe entstehen die übrigen Werte der
+    Hauptwelt. Der Name der
+    Hauptwelt ist der Name, den die Sektorkarte zeigt. Die übrigen Welten entstehen mit dem Schritt
+    „Sternsystem würfeln“ (2026-11-20). Namen bekommen Nebenwelten und Monde vorerst keine.
+  - **Verweise auf eine Welt.** Orte (`Place.world`, also auch Aufenthaltsort, Orte von NSC,
+    Missionsorte), Heimatwelt und Welten der Terms, Buchungen und Begegnungen (`in`) und der
+    Systemflug (`world`, die Welt in der Mitte der Raumkarte; ersetzt auch `SystemFlight.at`) zeigen
+    jetzt auf eine Welt statt auf ein Hexfeld. Reisen (`Journey.from`, `to`) gehen weiter von System
+    zu System, also von Hexfeld zu Hexfeld; man kommt an der Hauptwelt an.
+  - **Bestehende Kampagnen**: Beim Laden wird aus jedem Hexfeld mit Welt eine Hauptwelt mit den
+    bisherigen Werten; jeder Verweis auf das Hexfeld zeigt danach auf seine Hauptwelt.
 
 ## Wo der Code noch nicht folgt
 
@@ -3122,7 +3159,7 @@ Diagramm mit diesen Ausnahmen:
   der letzten Raumrunde für die Wiedergabe. Das Schiff startet oberhalb der Welt, damit das
   Ziehblatt es nicht verdeckt.
 - **Sternsystem** (2026-11-18d) ist freigegeben, aber noch nicht gebaut: `StarSystem`, `Star`,
-  `StarZones`, `GasGiant` (bzw. `Planet`, 2026-11-20b), `Satellite` und `SystemFlight.at` fehlen im Code; die Raumkarte zeigt
+  `StarZones` und die Welten des Systems (`World`, 2026-11-20b) fehlen im Code; die Raumkarte zeigt
   nur die Welt.
 
 - **Monat und Monatsabrechnung** (2026-11-17b) sind gebaut (`model/upkeep.ts`, Monate in

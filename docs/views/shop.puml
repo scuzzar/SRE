@@ -113,6 +113,7 @@ hide <<browser>> stereotype
 
 ' Subsektor und Welten
   class Hex $sektor
+  class World $sektor $newClass("2026-11-20b")
 
 ' Missionen
 
@@ -160,7 +161,8 @@ Campaign "1" *-- "*" Booking : bookings {ordered}
 Booking "*" --> "0..1" Character : for
 Booking "*" --> "0..1" Item : bought
 Booking "*" --> "0..1" Item : sold
-Booking "*" --> "0..1" Hex : in
+Booking "*" -$goneArrow("2026-11-20b")-> "0..1" Hex : in
+Booking "*" -$newArrow("2026-11-20b")-> "0..1" World : in
 Booking --> BookingKind
 
 ' Schiffe
@@ -194,7 +196,8 @@ Item "0..1" --> "0..1" Weapon : weapon
 
 ' Waffen (Referenzdaten)
 Weapon "*" --> "0..1" Item : ammo
-Hex "*" --> "*" Item : /offer
+Hex "*" -$goneArrow("2026-11-20b")-> "*" Item : /offer
+World "*" -$newArrow("2026-11-20b")-> "*" Item : /offer
 
 ' Verlauf
 Possession "*" --> "0..1" AnimalRow : from
@@ -216,4 +219,5 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Hex #line:d0021b;line.bold
 @enduml

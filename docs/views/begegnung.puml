@@ -88,6 +88,7 @@ hide <<browser>> stereotype
 
 ' Subsektor und Welten
   class Hex $sektor
+  class World $sektor $newClass("2026-11-20b")
 
 ' Missionen
 
@@ -333,7 +334,8 @@ RumorRoll "*" --> "1" Rumor : /of
 Campaign "1" *-- "*" Encounter : encounters {ordered}
 Encounter "*" --> "0..1" EncounterType : of
 Encounter "*" --> "0..1" AnimalRow : animal
-Hex "1" *-- "*" AnimalTable : animals
+Hex "1" *-$goneArrow("2026-11-20b")- "*" AnimalTable : animals
+World "1" *-$newArrow("2026-11-20b")- "*" AnimalTable : animals
 AnimalTable "*" --> "1" Terrain : terrain
 AnimalTable "1" *-- "11" AnimalRow : rows {ordered}
 AnimalRow "*" --> "0..1" AnimalType : type
@@ -361,7 +363,8 @@ Encounter "1" *-- "0..1" SurpriseRoll : npcSurprise
 Encounter --> Side
 EncounterRange -[hidden]- Terrain
 RangeBand -[hidden]- EncounterRange
-Encounter "*" --> "0..1" Hex : in
+Encounter "*" -$goneArrow("2026-11-20b")-> "0..1" Hex : in
+Encounter "*" -$newArrow("2026-11-20b")-> "0..1" World : in
 Encounter "1" *-- "*" Character : npcs {ordered}
 Encounter "*" --> "*" Character : joined {ordered}
 Encounter "*" --> "0..1" Character : leader
@@ -381,4 +384,5 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Hex #line:d0021b;line.bold
 @enduml

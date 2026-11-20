@@ -462,12 +462,14 @@
     },
     {
       "id": "2026-11-20b",
-      "file": "2026-11-20b-weitere-welten",
-      "title": "Weitere Welten des Systems: Planet mit Art (Welt, kleine Welt, Gürtel, Gasriese) statt GasGiant, leere und eingefangene Bahnen, Monde aller Planeten",
+      "file": "2026-11-20b-welten-getrennt",
+      "title": "Welten getrennt vom Hexfeld: jede Welt des Systems ist eine World (Hauptwelt, Planeten, Gürtel, Gasriesen, Monde, Ringe); Monde hängen an ihrer Welt; weitere Welten, leere und eingefangene Bahnen",
       "approved": false,
       "show": [
+        "Hex",
+        "StarSystem",
         "SystemFlight",
-        "Satellite"
+        "Place"
       ]
     }
   ]

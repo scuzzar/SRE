@@ -89,11 +89,11 @@ hide <<browser>> stereotype
   }
   class StarSystem $raum {
     maxOrbits: number
-    worldOrbit: number
-    hostOrbit: number [0..1]
-    hostAngle: number [0..1]
+    $gone("2026-11-20b", "worldOrbit: number")
+    $gone("2026-11-20b", "hostOrbit: number [0..1]")
+    $gone("2026-11-20b", "hostAngle: number [0..1]")
+    $gone("2026-11-20b", "/worldZone: Zone")
     $new("2026-11-20b", "emptyOrbits: number [*]")
-    /worldZone: Zone
   }
   class Star $raum {
     type: StarType
@@ -135,20 +135,20 @@ hide <<browser>> stereotype
     habitableOrbit: number [0..1]
   }
   class Satellite $raum {
-    kind: SatelliteKind
-    size: number [0..1]
-    diameter: number [0..1]
-    orbit: number
-    angle: number
-    atmosphere: number [0..1]
-    hydrographics: number [0..1]
-    population: number [0..1]
-    /gravity: number
+    $gone("2026-11-20b", "kind: SatelliteKind")
+    $gone("2026-11-20b", "size: number [0..1]")
+    $gone("2026-11-20b", "diameter: number [0..1]")
+    $gone("2026-11-20b", "orbit: number")
+    $gone("2026-11-20b", "angle: number")
+    $gone("2026-11-20b", "atmosphere: number [0..1]")
+    $gone("2026-11-20b", "hydrographics: number [0..1]")
+    $gone("2026-11-20b", "population: number [0..1]")
+    $gone("2026-11-20b", "/gravity: number")
   }
   enum SatelliteKind <<value>> $raum {
-    moon
-    small
-    ring
+    $gone("2026-11-20b", "moon")
+    $gone("2026-11-20b", "small")
+    $gone("2026-11-20b", "ring")
   }
   class GasGiant $raum {
     $gone("2026-11-20b", "large: boolean")
@@ -156,26 +156,6 @@ hide <<browser>> stereotype
     $gone("2026-11-20b", "orbit: number")
     $gone("2026-11-20b", "/zone: Zone")
     $gone("2026-11-20b", "/gravity: number")
-  }
-  class Planet $raum $newClass("2026-11-20b") {
-    kind: PlanetKind
-    orbit: number
-    captured: boolean
-    size: number [0..1]
-    diameter: number [0..1]
-    large: boolean [0..1]
-    radius: number [0..1]
-    atmosphere: number [0..1]
-    hydrographics: number [0..1]
-    population: number [0..1]
-    /zone: Zone
-    /gravity: number
-  }
-  enum PlanetKind <<value>> $raum $newClass("2026-11-20b") {
-    world
-    small
-    belt
-    giant
   }
   class SpaceUnit $raum {
     position: Vec
@@ -197,6 +177,7 @@ hide <<browser>> stereotype
 
 ' Subsektor und Welten
   class Hex $sektor
+  class World $sektor $newClass("2026-11-20b")
 
 ' Missionen
 
@@ -215,25 +196,21 @@ hide <<browser>> stereotype
 
 ' Raumkarte und Systemflug
 Campaign "1" *-- "0..1" SystemFlight : flight
-SystemFlight "*" --> "1" Hex : world
+SystemFlight "*" -$goneArrow("2026-11-20b")-> "1" Hex : world
+SystemFlight "*" -$newArrow("2026-11-20b")-> "1" World : world
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
 SpaceUnit "*" --> "1" Ship : ship
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
 Hex "1" *-- "0..1" StarSystem : system
 StarSystem "1" *-- "1..3" Star : stars {ordered}
-StarSystem "1" *-- "*" Satellite : satellites {ordered}
+StarSystem "1" *-$goneArrow("2026-11-20b")- "*" Satellite : satellites {ordered}
 StarSystem "1" *-$goneArrow("2026-11-20b")- "*" GasGiant : giants {ordered}
 StarSystem "*" -$goneArrow("2026-11-20b")-> "0..1" GasGiant : host
-StarSystem "1" *-$newArrow("2026-11-20b")- "*" Planet : planets {ordered}
-StarSystem "*" -$newArrow("2026-11-20b")-> "0..1" Planet : host
-Planet "1" *-$newArrow("2026-11-20b")- "*" Satellite : satellites {ordered}
-Planet --> PlanetKind
 Star "*" --> "1" StarZones : /zones
 Star --> StarType
 Star --> StarSize
 SystemFlight "*" -$goneArrow("2026-11-20b")-> "0..1" GasGiant : at
 GasGiant "1" *-$goneArrow("2026-11-20b")- "*" Satellite : satellites {ordered}
-SystemFlight "*" -$newArrow("2026-11-20b")-> "0..1" Planet : at
 Satellite --> SatelliteKind
 
 ' Zeit und Reisen
@@ -267,5 +244,8 @@ legend right
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
 class StarSystem #line:d0021b;line.bold
+class Satellite #line:d0021b;line.bold
+class SatelliteKind #line:d0021b;line.bold
 class GasGiant #line:d0021b;line.bold
+class Hex #line:d0021b;line.bold
 @enduml
