@@ -26,6 +26,7 @@ import {
   updateMission,
   type Campaign,
   type CardPick,
+  hexFromFlat,
   type Hex,
   type MissionInput,
   type PatronRoll,
@@ -39,7 +40,7 @@ const clock = fixedClock();
 function world(): Hex {
   let landforms = '';
   for (let c = 0; c < grid.cells; c++) landforms += LANDFORM_CODES.open;
-  return {
+  return hexFromFlat({
     column: 1,
     row: 1,
     empty: false,
@@ -52,7 +53,7 @@ function world(): Hex {
     surface: { water: 70, plates: 5, majorContinents: 3, minorContinents: 3, majorIslands: 4, archipelagos: 6, majorOceans: 0, minorOceans: 0, smallSeas: 0, scatteredLakes: 0, life: true },
     populationMultiplier: 2,
     map: { landforms, cities: [{ name: 'Startown', cell: 3, population: 5, multiplier: 2, rank: 'primary' }, { name: 'Orbital', population: 3, multiplier: 1, rank: 'secondary' }] },
-  };
+  });
 }
 
 /** Eine Kampagne auf Mora, die Gruppe auf Feld 2, mit dem NSC Mara Voss (Patron). */

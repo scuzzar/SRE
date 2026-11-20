@@ -9,7 +9,7 @@ import { hideLoading, showLoading } from '../loading';
 import { cellAt, radiusOf, renderGlobe, screenOf, screenOfPoint, type Camera, type Viewport } from './globe-render';
 import { HappenedList } from './HappenedList';
 import { trayTop } from '../Tray';
-import { NoteSection, SurfaceSection, WorldActions, WorldCard } from './WorldSheet';
+import { NoteSection, SurfaceSection, SystemSection, WorldActions, WorldCard } from './WorldSheet';
 
 const DEG = Math.PI / 180;
 const LOADING = 'Welt wird aufgebaut …';
@@ -465,6 +465,7 @@ export function GlobeScreen({
           <div className="globe-panel globe-world" role="region" aria-label="Die Welt">
             <WorldCard world={world} here={here} />
             {world.surface && <SurfaceSection lines={world.surface} />}
+            {world.system && <SystemSection system={world.system} />}
             <WorldActions world={world} here={here} travel={travel} onGlobe />
             {world.canNote && <NoteSection note={world.note} />}
             {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}

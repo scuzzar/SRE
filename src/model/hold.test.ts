@@ -7,6 +7,7 @@ import { currentEncounter, distanceOf, rollAnimalEncounter, rollSurprise, setTer
 import { blowsOf } from './stamina';
 import { encounterSpecial, filterDice, holdAfterAttack, isHeld, struggle, struggleNeed } from './hold';
 import { ref } from './reference';
+import { hexFromFlat } from './sector';
 import { setLocation } from './shop';
 import { fixedClock, fixedRandom } from './testing';
 import type { AttackResult } from './log';
@@ -19,7 +20,7 @@ function animal(type: string, weight = 100): AnimalRow {
 function withAnimal(row: AnimalRow): Campaign {
   const rows = Array.from({ length: 11 }, (_, i) => (i + 2 === 7 ? row : { roll: i + 2, event: 'tracks' }));
   const table: AnimalTable = { terrain: 'clear', rows };
-  const hex = { ...ref.demoWorld, column: 1, row: 1, name: 'Regina', animals: [table] };
+  const hex = hexFromFlat({ ...ref.demoWorld, column: 1, row: 1, name: 'Regina', animals: [table] });
   return setTerrain(setLocation(setHexes(createCampaign(), [hex]), '0101'), 'clear');
 }
 

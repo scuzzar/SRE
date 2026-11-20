@@ -9,7 +9,7 @@ import { checkOf, rollCheck, type EncounterCheck } from './encounter-check';
 import type { CheckRoll, CheckKind, LogEntry } from './log';
 import { placeCell } from './place';
 import type { Clock, Random } from './ports';
-import { hexById } from './sector';
+import { worldById } from './sector';
 import { landformAt } from './surface-map';
 import { driveDay, legHours, tripSurface, TRIP_HOURS_PER_DAY } from './trip';
 import { flies, vehicleOf } from './vehicle';
@@ -33,7 +33,7 @@ export function groundToday(campaign: Campaign): boolean {
 /** Ob die Gruppe in der Wildnis ist: auf einem Feld ohne Stadt und Kleinstadt, das nicht besiedelt ist. */
 export function inWilderness(campaign: Campaign): boolean {
   const place = campaign.location;
-  const map = place === undefined ? undefined : hexById(campaign.hexes, place.world)?.map;
+  const map = place === undefined ? undefined : worldById(campaign.hexes, place.world)?.map;
   const cell = placeCell(campaign.hexes, place);
   if (!map || cell === undefined) return false;
   if ((map.cities ?? []).some((c) => c.cell === cell) || (map.towns ?? []).some(([c, n]) => c === cell && n > 0)) return false;

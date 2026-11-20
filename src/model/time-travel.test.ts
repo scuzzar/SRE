@@ -40,13 +40,14 @@ import {
   winnerOf,
   writeNote,
   type Campaign,
+  hexFromFlat,
   type Hex,
   type Journey,
 } from '.';
 import { fixedClock, fixedRandom } from './testing';
 
 function world(column: number, row: number, name: string, starport = 12, law = 5, population = 5): Hex {
-  return {
+  return hexFromFlat({
     column,
     row,
     empty: false,
@@ -55,7 +56,7 @@ function world(column: number, row: number, name: string, starport = 12, law = 5
     scoutBase: false,
     gasGiant: false,
     uwp: { starport, size: 7, atmosphere: 8, hydrographics: 8, population, government: 4, law, tech: 7 },
-  };
+  });
 }
 
 const regina = world(1, 1, 'Regina');

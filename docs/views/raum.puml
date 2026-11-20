@@ -89,10 +89,7 @@ hide <<browser>> stereotype
   }
   class StarSystem $raum {
     maxOrbits: number
-    worldOrbit: number
-    hostOrbit: number [0..1]
-    hostAngle: number [0..1]
-    /worldZone: Zone
+    emptyOrbits: number [*]
   }
   class Star $raum {
     type: StarType
@@ -133,29 +130,6 @@ hide <<browser>> stereotype
     firstOrbit: number
     habitableOrbit: number [0..1]
   }
-  class Satellite $raum {
-    kind: SatelliteKind
-    size: number [0..1]
-    diameter: number [0..1]
-    orbit: number
-    angle: number
-    atmosphere: number [0..1]
-    hydrographics: number [0..1]
-    population: number [0..1]
-    /gravity: number
-  }
-  enum SatelliteKind <<value>> $raum {
-    moon
-    small
-    ring
-  }
-  class GasGiant $raum {
-    large: boolean
-    radius: number
-    orbit: number
-    /zone: Zone
-    /gravity: number
-  }
   class SpaceUnit $raum {
     position: Vec
     velocity: Vec
@@ -176,6 +150,7 @@ hide <<browser>> stereotype
 
 ' Subsektor und Welten
   class Hex $sektor
+  class World $sektor
 
 ' Missionen
 
@@ -194,21 +169,15 @@ hide <<browser>> stereotype
 
 ' Raumkarte und Systemflug
 Campaign "1" *-- "0..1" SystemFlight : flight
-SystemFlight "*" --> "1" Hex : world
+SystemFlight "*" --> "1" World : world
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
 SpaceUnit "*" --> "1" Ship : ship
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
 Hex "1" *-- "0..1" StarSystem : system
 StarSystem "1" *-- "1..3" Star : stars {ordered}
-StarSystem "1" *-- "*" Satellite : satellites {ordered}
-StarSystem "1" *-- "*" GasGiant : giants {ordered}
-StarSystem "*" --> "0..1" GasGiant : host
 Star "*" --> "1" StarZones : /zones
 Star --> StarType
 Star --> StarSize
-SystemFlight "*" --> "0..1" GasGiant : at
-GasGiant "1" *-- "*" Satellite : satellites {ordered}
-Satellite --> SatelliteKind
 
 ' Zeit und Reisen
 

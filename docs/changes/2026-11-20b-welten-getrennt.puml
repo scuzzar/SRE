@@ -1,0 +1,437 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-20b"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-20b: Welten getrennt vom Hexfeld: jede Welt des Systems ist eine World (Hauptwelt, Planeten, Gürtel, Gasriesen, Monde, Ringe); Monde hängen an ihrer Welt; weitere Welten, leere und eingefangene Bahnen
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+hide <<browser>> stereotype
+
+' Kampagne und Charaktere
+  class Booking $shop {
+    at: datetime
+    kind: BookingKind
+    amount: number
+    count: number [0..1]
+    text: string [0..1]
+    shipCost: ShipCost [0..1]
+  }
+  enum BookingKind <<value>> $shop
+  class Character $charakter {
+    name: string
+    background: string
+    equipment: string
+    credits: number
+    note: string
+    dead: boolean
+    retired: boolean
+    npc: boolean
+    role: NpcRole [0..1]
+    /wounds: Wounds
+    /hurt: number [0..1]
+    /state: WoundState
+    /blows: number [0..1]
+  }
+  enum NpcRole <<value>> $charakter
+  class Upp <<value>> $charakter
+  class SkillLevel $charakter
+  class Possession $shop
+
+' Schiffe
+
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+  class SystemFlight $raum {
+    startedAt: datetime
+    round: number
+    /elapsed: number
+  }
+  class StarSystem $raum {
+    maxOrbits: number
+    $gone("2026-11-20b", "worldOrbit: number")
+    $gone("2026-11-20b", "hostOrbit: number [0..1]")
+    $gone("2026-11-20b", "hostAngle: number [0..1]")
+    $gone("2026-11-20b", "/worldZone: Zone")
+    $new("2026-11-20b", "emptyOrbits: number [*]")
+  }
+  class Star $raum
+  class Satellite $raum {
+    $gone("2026-11-20b", "kind: SatelliteKind")
+    $gone("2026-11-20b", "size: number [0..1]")
+    $gone("2026-11-20b", "diameter: number [0..1]")
+    $gone("2026-11-20b", "orbit: number")
+    $gone("2026-11-20b", "angle: number")
+    $gone("2026-11-20b", "atmosphere: number [0..1]")
+    $gone("2026-11-20b", "hydrographics: number [0..1]")
+    $gone("2026-11-20b", "population: number [0..1]")
+    $gone("2026-11-20b", "/gravity: number")
+  }
+  enum SatelliteKind <<value>> $raum {
+    $gone("2026-11-20b", "moon")
+    $gone("2026-11-20b", "small")
+    $gone("2026-11-20b", "ring")
+  }
+  class GasGiant $raum {
+    $gone("2026-11-20b", "large: boolean")
+    $gone("2026-11-20b", "radius: number")
+    $gone("2026-11-20b", "orbit: number")
+    $gone("2026-11-20b", "/zone: Zone")
+    $gone("2026-11-20b", "/gravity: number")
+  }
+  class SpaceUnit $raum
+
+' Charaktererschaffung und Lebenslauf
+  class Generation $erschaffung
+  class Career $erschaffung {
+    /terms: number
+    /rank: number
+    /age: number
+    /drafted: boolean
+    /dead: boolean
+    /pension: number
+  }
+  class CareerRoll $erschaffung
+
+' Subsektor und Welten
+  class Hex $sektor {
+    column: number
+    row: number
+    empty: boolean
+    $gone("2026-11-20b", "name: string [0..1]")
+    navalBase: boolean [0..1]
+    scoutBase: boolean [0..1]
+    gasGiant: boolean [0..1]
+    $gone("2026-11-20b", "note: string [0..1]")
+    $gone("2026-11-20b", "populationMultiplier: number [0..1]")
+    /step: WorldStep
+  }
+  class World $sektor $newClass("2026-11-20b") {
+    kind: WorldKind
+    name: string [0..1]
+    note: string [0..1]
+    populationMultiplier: number [0..1]
+    orbit: number [0..1]
+    angle: number [0..1]
+    captured: boolean
+    diameter: number [0..1]
+    large: boolean [0..1]
+    radius: number [0..1]
+    /main: boolean
+    /zone: Zone [0..1]
+    /gravity: number
+  }
+  enum WorldKind <<value>> $sektor $newClass("2026-11-20b") {
+    world
+    small
+    belt
+    giant
+    ring
+  }
+  class Uwp <<value>> $sektor {
+    starport: number [0..1]
+    size: number [0..1]
+    atmosphere: number [0..1]
+    hydrographics: number [0..1]
+    population: number [0..1]
+    government: number [0..1]
+    law: number [0..1]
+    tech: number [0..1]
+  }
+  class WorldRoll <<transient>> $sektor
+
+' Missionen
+
+' Verlauf
+
+' Zeit und Reisen
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Encounter $begegnung {
+    at: datetime
+    quantityDie: number [0..1]
+    reactionDice: number[0..2]
+    reactionDm: number [0..1]
+    reaction: number [0..1]
+    ended: boolean
+    /reactionText: string [0..1]
+    tableDice: number[0..2]
+    attackDice: number[0..2]
+    fleeDice: number[0..2]
+    lureDice: number[0..2]
+    /behavior: Behavior [0..1]
+    rangeDice: number[2]
+    bandDie: number [0..1]
+    startBand: number
+    startClose: boolean
+    round: number
+    npcMoved: number [0..1]
+    npcRuns: number [0..1]
+    alarm: number [0..1]
+    /surprise: Side [0..1]
+    /surprising: Side [0..1]
+    /first: Side
+  }
+  class Distance $begegnung
+  class SurpriseRoll <<value>> $begegnung
+  enum Side <<value>> $begegnung
+  class Terrain <<reference>> $begegnung
+  class EncounterType <<reference>> $begegnung
+  class AnimalTable $begegnung {
+  }
+  class AnimalRow $begegnung
+  enum Behavior <<value>> $begegnung
+
+' Referenzdaten
+  class Service <<reference>> $erschaffung
+  class Item <<reference>> $shop {
+    name: string
+    kind: ItemKind
+    tl: number [0..1]
+    weight: number [0..1]
+    price: number [0..1]
+    once: boolean
+    armor: ArmorClass [0..1]
+  }
+  enum ItemKind <<value>> $shop
+  class Surface <<value>> $sektor {
+    water: number
+    plates: number
+    majorContinents: number
+    minorContinents: number
+    majorIslands: number
+    archipelagos: number
+    majorOceans: number
+    minorOceans: number
+    smallSeas: number
+    scatteredLakes: number
+    life: boolean
+  }
+  class SurfaceMap $oberflaeche {
+    /cells: number
+  }
+  class SurfaceCell <<value>> $oberflaeche
+  class River <<value>> $oberflaeche
+  class Road <<value>> $oberflaeche
+  class City $oberflaeche
+  class Place <<value>> $oberflaeche {
+  }
+' Fahrzeuge und Wege auf der Oberfläche
+  class SurfaceRow <<reference>> $sektor
+  class Temperature <<reference>> $sektor {
+    from: number [0..1]
+    to: number [0..1]
+    name: string
+    average: string
+    text: string
+    hydroDm: number
+  }
+  class TradeCode <<reference>> $sektor {
+    code: string
+    name: string
+  }
+  class TradeCondition <<value>> $sektor
+  enum WorldStep <<value>> $sektor
+
+' Kampagne
+Booking "*" --> "0..1" Character : for
+Booking "*" --> "0..1" Item : bought
+Booking "*" --> "0..1" Item : sold
+Booking "*" -$goneArrow("2026-11-20b")-> "0..1" Hex : in
+Booking "*" -$newArrow("2026-11-20b")-> "0..1" World : in
+Booking --> BookingKind
+
+' Schiffe
+
+' Raumkarte und Systemflug
+SystemFlight "*" -$goneArrow("2026-11-20b")-> "1" Hex : world
+SystemFlight "*" -$newArrow("2026-11-20b")-> "1" World : world
+SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
+Hex "1" *-- "0..1" StarSystem : system
+Hex "1" *-$newArrow("2026-11-20b")- "*" World : worlds {ordered}
+Hex "*" -$newArrow("2026-11-20b")-> "0..1" World : main
+World "*" -$newArrow("2026-11-20b")-> "0..1" World : moonOf
+World --> WorldKind
+StarSystem "1" *-- "1..3" Star : stars {ordered}
+StarSystem "1" *-$goneArrow("2026-11-20b")- "*" Satellite : satellites {ordered}
+StarSystem "1" *-$goneArrow("2026-11-20b")- "*" GasGiant : giants {ordered}
+StarSystem "*" -$goneArrow("2026-11-20b")-> "0..1" GasGiant : host
+SystemFlight "*" -$goneArrow("2026-11-20b")-> "0..1" GasGiant : at
+GasGiant "1" *-$goneArrow("2026-11-20b")- "*" Satellite : satellites {ordered}
+Satellite --> SatelliteKind
+
+' Zeit und Reisen
+
+' Charaktererschaffung und Lebenslauf
+Generation "1" *-- "1" Career : career
+Generation ..> Character : on finish
+Character "1" *-- "0..1" Career : career
+Career "1" *-- "*" CareerRoll : rolls {ordered}
+Career "*" --> "0..1" Service : /in
+Career "*" -$goneArrow("2026-11-20b")-> "0..1" Hex : homeworld
+Career "*" -$newArrow("2026-11-20b")-> "0..1" World : homeworld
+Career "*" -$goneArrow("2026-11-20b")-> "*" Hex : worlds {ordered}
+Career "*" -$newArrow("2026-11-20b")-> "*" World : worlds {ordered}
+Character "*" -$goneArrow("2026-11-20b")-> "0..1" Hex : homeworld
+Character "*" -$newArrow("2026-11-20b")-> "0..1" World : homeworld
+Character "1" *-- "0..1" Place : place
+Character --> NpcRole
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+Hex "1" *-$goneArrow("2026-11-20b")- "1" Uwp : uwp
+World "1" *-$newArrow("2026-11-20b")- "1" Uwp : uwp
+Hex --> WorldStep
+WorldRoll "*" --> "1" Hex : for
+WorldRoll ..> Hex : on roll
+Hex "*" -$goneArrow("2026-11-20b")-> "*" TradeCode : /trade
+World "*" -$newArrow("2026-11-20b")-> "*" TradeCode : /trade
+Hex "*" -$goneArrow("2026-11-20b")-> "0..1" Temperature : temperature
+World "*" -$newArrow("2026-11-20b")-> "0..1" Temperature : temperature
+Hex "1" *-$goneArrow("2026-11-20b")- "0..1" Surface : surface
+World "1" *-$newArrow("2026-11-20b")- "0..1" Surface : surface
+Surface "*" --> "0..1" SurfaceRow : /row
+Hex "1" *-$goneArrow("2026-11-20b")- "0..1" SurfaceMap : map
+World "1" *-$newArrow("2026-11-20b")- "0..1" SurfaceMap : map
+SurfaceMap "1" *-- "/cells" SurfaceCell : cells {ordered}
+SurfaceMap "1" *-- "*" River : rivers
+SurfaceMap "1" *-- "*" Road : roads
+SurfaceMap "1" *-- "*" City : cities
+Place "*" -$goneArrow("2026-11-20b")-> "1" Hex : world
+Place "*" -$newArrow("2026-11-20b")-> "1" World : world
+Place "*" --> "0..1" SurfaceCell : cell
+Place "*" --> "0..1" City : city
+Possession "1" *-- "0..1" Place : parked
+TradeCode "1" *-- "1..*" TradeCondition : if
+
+' Charakter
+Character "1" *-- "1" Upp : upp
+Character "1" *-- "*" SkillLevel : skills
+Character "1" *-- "*" Possession : possessions
+Possession "*" --> "1" Item : of
+Item --> ItemKind
+
+' Waffen (Referenzdaten)
+Hex "*" -$goneArrow("2026-11-20b")-> "*" Item : /offer
+World "*" -$newArrow("2026-11-20b")-> "*" Item : /offer
+
+' Verlauf
+
+' Probe
+
+' Angriff
+
+' Begegnung
+Encounter "*" --> "0..1" EncounterType : of
+Encounter "*" --> "0..1" AnimalRow : animal
+Hex "1" *-$goneArrow("2026-11-20b")- "*" AnimalTable : animals
+World "1" *-$newArrow("2026-11-20b")- "*" AnimalTable : animals
+AnimalTable "*" --> "1" Terrain : terrain
+AnimalTable "1" *-- "11" AnimalRow : rows {ordered}
+Encounter --> Behavior
+Character "*" --> "0..1" AnimalRow : animal
+Encounter "*" --> "0..1" Terrain : terrain
+Encounter "1" *-- "0..1" SurpriseRoll : pcSurprise
+Encounter "1" *-- "0..1" SurpriseRoll : npcSurprise
+Encounter --> Side
+Encounter "*" -$goneArrow("2026-11-20b")-> "0..1" Hex : in
+Encounter "*" -$newArrow("2026-11-20b")-> "0..1" World : in
+Encounter "1" *-- "*" Character : npcs {ordered}
+Encounter "*" --> "*" Character : joined {ordered}
+Encounter "*" --> "0..1" Character : leader
+Encounter "*" --> "*" Character : acted
+Encounter "*" --> "0..1" Character : /turn
+Encounter "1" *-- "*" Distance : distances
+Distance "*" --> "1" Character : of
+Encounter "*" --> "*" Character : evading
+Character "*" --> "0..1" Item : wears
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
+endlegend
+class StarSystem #line:d0021b;line.bold
+class Satellite #line:d0021b;line.bold
+class SatelliteKind #line:d0021b;line.bold
+class GasGiant #line:d0021b;line.bold
+class Hex #line:d0021b;line.bold
+@enduml

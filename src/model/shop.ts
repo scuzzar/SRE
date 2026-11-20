@@ -4,7 +4,7 @@ import { addToStash, equipNew, isPc, type EquipSlot } from './stash';
 import { DomainError } from './errors';
 import type { Clock } from './ports';
 import { itemOf, ref, weaponOf, type Item } from './reference';
-import { hexById, worldOf, type Hex } from './sector';
+import { worldById, worldOf, type NamedWorld, type World } from './sector';
 
 /** Einnahme, Ausgabe, Einzahlung eines Charakters, Auszahlung an einen Charakter, Kauf, Verkauf, Gewinn der Low Lottery, Miete eines Fahrzeugs, Fahrpreis im Linienverkehr, Zahlung für ein Schiff (Kauf, Rate, Treibstoff). */
 export const bookingKinds = ['income', 'expense', 'deposit', 'payout', 'purchase', 'sale', 'lottery', 'rent', 'fare', 'ship'] as const;
@@ -52,7 +52,7 @@ export function fundsOf(campaign: Campaign): number {
 }
 
 /** Der Aufenthaltsort der Gruppe, wenn sie auf einer fertigen Welt ist. */
-export function locationOf(campaign: Campaign): (Hex & { readonly name: string }) | undefined {
+export function locationOf(campaign: Campaign): NamedWorld | undefined {
   return campaign.location === undefined ? undefined : worldOf(campaign.hexes, campaign.location.world);
 }
 
@@ -82,7 +82,7 @@ export interface Offer {
 const notSold = new Set<Item['kind']>(['ship', 'membership']);
 
 /** `/offer`: jeder Gegenstand mit Preis bis zum TL der Welt, ohne Schiffe und Mitgliedschaften. Verbotene mit Warnung. */
-export function offerOf(world: Hex): readonly Offer[] {
+export function offerOf(world: World): readonly Offer[] {
   const tech = world.uwp.tech ?? 0;
   const law = world.uwp.law ?? 0;
   return ref.items.flatMap((item) => {
@@ -257,7 +257,7 @@ export function validateBookings(campaign: Campaign): void {
     if (b.won !== undefined && campaign.log[b.won]?.kind !== 'journey') throw new DomainError('Ein Lotteriegewinn verweist auf einen Eintrag, der keine Reise ist.');
     if ((b.kind === 'rent' || b.kind === 'fare') !== (b.rentFor !== undefined)) throw new DomainError('Nur Miete und Fahrpreis verweisen auf einen Reisetag.');
     if (b.rentFor !== undefined && campaign.log[b.rentFor]?.kind !== 'tripDay') throw new DomainError('Miete oder Fahrpreis verweist auf einen Eintrag, der kein Reisetag ist.');
-    if (b.in !== undefined && !hexById(campaign.hexes, b.in)) throw new DomainError(`Ein Kauf verweist auf das Feld ${b.in}, das es nicht gibt.`);
+    if (b.in !== undefined && !worldById(campaign.hexes, b.in)) throw new DomainError(`Ein Kauf verweist auf das Feld ${b.in}, das es nicht gibt.`);
     funds += b.amount;
     if (funds < 0) throw new DomainError('Die Gruppenkasse wird negativ.');
   }

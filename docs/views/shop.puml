@@ -112,7 +112,7 @@ hide <<browser>> stereotype
 ' Charaktererschaffung und Lebenslauf
 
 ' Subsektor und Welten
-  class Hex $sektor
+  class World $sektor
 
 ' Missionen
 
@@ -160,7 +160,7 @@ Campaign "1" *-- "*" Booking : bookings {ordered}
 Booking "*" --> "0..1" Character : for
 Booking "*" --> "0..1" Item : bought
 Booking "*" --> "0..1" Item : sold
-Booking "*" --> "0..1" Hex : in
+Booking "*" --> "0..1" World : in
 Booking --> BookingKind
 
 ' Schiffe
@@ -194,7 +194,7 @@ Item "0..1" --> "0..1" Weapon : weapon
 
 ' Waffen (Referenzdaten)
 Weapon "*" --> "0..1" Item : ammo
-Hex "*" --> "*" Item : /offer
+World "*" --> "*" Item : /offer
 
 ' Verlauf
 Possession "*" --> "0..1" AnimalRow : from

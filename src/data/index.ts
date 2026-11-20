@@ -18,9 +18,11 @@ import services from './services.json';
 import { MythicTablesSchema, withMythicTables } from './mythic';
 import { NamesSchema, withNames } from './names';
 import worlds from './worlds.json';
+import stars from './stars.json';
 
 export * from './schema';
 export * from './worlds';
+export * from './stars';
 export { nameSlotIds, nameSounds, type NameSound } from './names';
 export { cityNames, type CityNames } from './city-names';
 
@@ -42,4 +44,5 @@ export const referenceData: ReferenceData = ReferenceDataSchema.parse({
   encounters,
   ...services,
   worlds,
+  stars,
 });

@@ -5,8 +5,15 @@ import {
   createDemoCampaign,
   elapsedOf,
   endFlight,
+  flightTime,
   fromCampaignFile,
+  hexFromFlat,
   jumpLimitsOf,
+  moonAt,
+  originAt,
+  sceneOf,
+  setHexes,
+  setLocation,
   lengthOf,
   maxGOf,
   normalThrust,
@@ -18,6 +25,8 @@ import {
   toCampaignFile,
   worldOf,
   type Campaign,
+  type Hex,
+  type Vec,
 } from '.';
 import { fixedClock } from './testing';
 
@@ -28,6 +37,14 @@ function demo(): Campaign {
   return createDemoCampaign(clock);
 }
 const world = (c: Campaign) => c.location!.world;
+/** Wo die Welt des Flugs jetzt steht (Kessra ist in der Demo Mond eines Gasriesen). */
+const worldAt = (c: Campaign): { position: Vec; velocity: Vec } => originAt(sceneOf(c.hexes, c.flight!.world), c.flight!.world, flightTime(c, c.flight!));
+/** Der Ort der ersten Einheit von der Welt aus gesehen. */
+const relative = (c: Campaign): Vec => {
+  const at = worldAt(c).position;
+  const p = c.flight!.units[0]!.position;
+  return { x: p.x - at.x, y: p.y - at.y };
+};
 
 describe('Systemflug: Körper der Welt', () => {
   it('rechnet Radius und Masse aus der Größe (SR 22, K = 1)', () => {
@@ -54,15 +71,16 @@ describe('Systemflug: beginnen und beenden', () => {
     const body = bodyOf(worldOf(c.hexes, world(c)))!;
     const unit = c.flight!.units[0]!;
     expect(c.flight!.round).toBe(1);
-    expect(lengthOf(unit.position)).toBeCloseTo(2 * body.radius, 6);
-    expect(lengthOf(unit.velocity)).toBeCloseTo(Math.sqrt(body.gm / (2 * body.radius)), 9);
+    expect(lengthOf(relative(c))).toBeCloseTo(2 * body.radius, 6);
+    const v = worldAt(c).velocity;
+    expect(lengthOf({ x: unit.velocity.x - v.x, y: unit.velocity.y - v.y })).toBeCloseTo(Math.sqrt(body.gm / (2 * body.radius)), 9);
     expect(unit.ship).toBe(c.ships[0]!.id);
     expect(endFlight(c).flight).toBeUndefined();
   });
 
   it('geht nur auf der Welt der Gruppe und nur mit Schiff', () => {
     const c = demo();
-    expect(() => startFlight(c, '0101', clock)).toThrow(/Welt, auf der die Gruppe ist/);
+    expect(() => startFlight(c, '0101', clock)).toThrow(/System, in dem die Gruppe ist/);
     expect(() => startFlight({ ...c, ships: [] }, world(c), clock)).toThrow(/kein Schiff/);
     const flying = startFlight(c, world(c), clock);
     expect(() => startFlight(flying, world(c), clock)).toThrow(/schon/);
@@ -83,9 +101,9 @@ describe('Systemflug: Schub und Runde', () => {
 
   it('hält eine Kreisbahn ohne Schub über viele Runden stabil', () => {
     let c = startFlight(demo(), world(demo()), clock);
-    const r0 = lengthOf(c.flight!.units[0]!.position);
+    const r0 = lengthOf(relative(c));
     for (let i = 0; i < 30; i++) c = runRound(c, clock).campaign;
-    expect(Math.abs(lengthOf(c.flight!.units[0]!.position) - r0) / r0).toBeLessThan(1e-3);
+    expect(Math.abs(lengthOf(relative(c)) - r0) / r0).toBeLessThan(1e-3);
     expect(c.flight!.round).toBe(31);
     expect(c.flight!.units[0]!.track).toHaveLength(30);
   });
@@ -103,7 +121,7 @@ describe('Systemflug: Schub und Runde', () => {
     let c = startFlight(demo(), world(demo()), clock);
     // Das Schiff steht oberhalb der Welt; Schub nach unten zeigt auf ihre Mitte.
     c = setThrust(c, 0, { x: 0, y: -2 });
-    const preview = previewOf(bodyOf(worldOf(c.hexes, world(c))), c.flight!.units[0]!, c.flight!.units[0]!.thrust);
+    const preview = previewOf(sceneOf(c.hexes, world(c)), c.flight!.units[0]!, c.flight!.units[0]!.thrust, flightTime(c, c.flight!));
     expect(preview.impact).toBeDefined();
     for (let i = 0; i < 3 && !c.flight!.units[0]!.crashed; i++) c = runRound(c, clock).campaign;
     const unit = c.flight!.units[0]!;
@@ -144,5 +162,72 @@ describe('Systemflug: Kampagnendatei', () => {
     const unit = c.flight!.units[0]!;
     const broken = { ...c, flight: { ...c.flight!, units: [{ ...unit, thrust: { x: 2, y: 0 } }] } };
     expect(() => fromCampaignFile(toCampaignFile(broken), c.id)).toThrow(/höchster Schub/);
+  });
+});
+
+describe('Systemflug mit Monden (2026-11-18d)', () => {
+  const uwp = { starport: 10, size: 8, atmosphere: 6, hydrographics: 5, population: 5, government: 4, law: 3, tech: 9 };
+  /** Eine Welt der Größe 8 mit einem Mond (Größe 2, 10 Radien, am Tag 0 bei 90°) und einem Ring bei 2 Radien. */
+  function withMoon(): Campaign {
+    const flat = hexFromFlat({ column: 1, row: 1, empty: false, name: 'Terra', navalBase: false, scoutBase: false, gasGiant: false, uwp, temperature: 'temperate' });
+    const hex: Hex = {
+      ...flat,
+      system: { stars: [{ type: 'G', decimal: 0, size: 'V', close: false }], maxOrbits: 5, emptyOrbits: [] },
+      worlds: [
+        { ...flat.worlds[0]!, orbit: 3 },
+        { id: '0101-1', kind: 'world', uwp: { size: 2, atmosphere: 0, hydrographics: 0, population: 0 }, moonOf: '0101', orbit: 10, angle: 90 },
+        { id: '0101-2', kind: 'ring', uwp: { population: 0 }, moonOf: '0101', orbit: 2 },
+      ],
+    };
+    return setLocation(setHexes(demo(), [hex]), '0101');
+  }
+
+  it('baut die Szene: die Welt in der Mitte, Monde auf Kreisbahnen, Ringe ohne Schwerkraft', () => {
+    const scene = sceneOf(withMoon().hexes, '0101');
+    expect(scene.center).toBe('0101');
+    expect(scene.moons).toHaveLength(1);
+    expect(scene.rings).toEqual([{ world: '0101-2', inner: 2.2 * 6400, outer: 2.8 * 6400 }]);
+    const moon = scene.moons[0]!;
+    expect(moon.distance).toBe(64_000);
+    expect(moonAt(moon, 0).position.x).toBeCloseTo(0, 6);
+    expect(moonAt(moon, 0).position.y).toBeCloseTo(64_000, 6);
+    // Gegen den Uhrzeigersinn, nach einer Umlaufzeit wieder am selben Ort.
+    const period = (2 * Math.PI) / moon.omega;
+    expect(moonAt(moon, period / 4).position.x).toBeLessThan(-63_000);
+    expect(moonAt(moon, period).position.y).toBeCloseTo(64_000, 3);
+  });
+
+  it('lässt das Schiff auf einem Mond aufschlagen', () => {
+    let c = startFlight(withMoon(), '0101', clock);
+    // Das Schiff mitten in den Mond setzen und eine Runde laufen lassen.
+    const scene = sceneOf(c.hexes, '0101');
+    const at = moonAt(scene.moons[0]!, flightTime(c, c.flight!));
+    c = { ...c, flight: { ...c.flight!, units: [{ ...c.flight!.units[0]!, position: { x: at.position.x, y: at.position.y + 2000 }, velocity: at.velocity }] } };
+    expect(runRound(c, clock).campaign.flight!.units[0]!.crashed).toBe(true);
+  });
+
+  it('beginnt an der Hauptwelt als Mond eines Gasriesen mitbewegt; am Gasriesen von der Welt der Gruppe aus', () => {
+    const base = withMoon();
+    const hex = base.hexes[0]!;
+    const giant: Hex = {
+      ...hex,
+      gasGiant: true,
+      worlds: [
+        { ...hex.worlds[0]!, orbit: 30, moonOf: '0101-3', angle: 0 },
+        { id: '0101-3', kind: 'giant', uwp: {}, orbit: 3, large: true, radius: 70_000 },
+      ],
+    };
+    const c = setHexes(base, [giant]);
+    expect(sceneOf(c.hexes, '0101').center).toBe('0101-3');
+    const flying = startFlight(c, '0101', clock);
+    const at = originAt(sceneOf(c.hexes, '0101'), '0101', flightTime(flying, flying.flight!));
+    expect(at.position.x).toBeCloseTo(2_100_000, 3);
+    const unit = flying.flight!.units[0]!;
+    expect(unit.position.x - at.position.x).toBeCloseTo(0, 6);
+    expect(unit.position.y - at.position.y).toBeCloseTo(2 * 6400, 6);
+    // Der Gasriese hat seine eigene Raumkarte; der Flug darf dort von der Hauptwelt aus beginnen.
+    const there = startFlight(c, '0101-3', clock);
+    expect(lengthOf(there.flight!.units[0]!.position)).toBeCloseTo(140_000, 6);
+    expect(() => startFlight(c, '0101-9', clock)).toThrow();
   });
 });

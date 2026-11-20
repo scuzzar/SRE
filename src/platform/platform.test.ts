@@ -126,9 +126,19 @@ describe('Ältere Spielstände', () => {
       { kind: 'occurrence', dice: [2], dm: 0, target: 4 },
     ];
     const old = { ...createCampaign(), hexes: [{ column: 1, row: 2, rolls }] } as unknown as Campaign;
-    expect(upgraded(old).hexes).toEqual([{ column: 1, row: 2, empty: true, uwp: {} }]);
+    expect(upgraded(old).hexes).toEqual([{ column: 1, row: 2, empty: true, worlds: [] }]);
     const without = { ...createCampaign(), hexes: undefined } as unknown as Campaign;
     expect(upgraded(without).hexes).toEqual([]);
+  });
+
+  it('übernehmen Hexfelder mit den Werten der Welt am Feld (vor 2026-11-20b) als Feld mit Hauptwelt', () => {
+    const flat = { column: 2, row: 7, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 }, note: 'Werft' };
+    const old = { ...createCampaign(), hexes: [flat, { column: 1, row: 1, empty: true, uwp: {} }] } as unknown as Campaign;
+    expect(upgraded(old).hexes).toEqual([
+      { column: 2, row: 7, empty: false, navalBase: false, scoutBase: true, gasGiant: true, main: '0207', worlds: [{ id: '0207', kind: 'world', name: 'Regina', uwp: flat.uwp, note: 'Werft' }] },
+      { column: 1, row: 1, empty: true, worlds: [] },
+    ]);
+    expect(upgraded(upgraded(old)).hexes).toEqual(upgraded(old).hexes);
   });
 
   it('übernehmen die eine Kampagne aus der Zeit vor mehreren Kampagnen', async () => {

@@ -24,13 +24,14 @@ import {
   travel,
   travelShip,
   type Campaign,
+  hexFromFlat,
   type Hex,
   type MonthEnd,
 } from '.';
 import { fixedClock, fixedRandom } from './testing';
 
 function world(column: number, row: number, name: string, starport = 12): Hex {
-  return {
+  return hexFromFlat({
     column,
     row,
     empty: false,
@@ -39,7 +40,7 @@ function world(column: number, row: number, name: string, starport = 12): Hex {
     scoutBase: false,
     gasGiant: false,
     uwp: { starport, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 },
-  };
+  });
 }
 
 const clock = fixedClock();

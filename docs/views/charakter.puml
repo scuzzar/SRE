@@ -132,7 +132,7 @@ hide <<browser>> stereotype
   class CareerRoll $erschaffung
 
 ' Subsektor und Welten
-  class Hex $sektor
+  class World $sektor
 
 ' Missionen
   class Mission $mission
@@ -195,7 +195,7 @@ LowBerth "*" --> "0..1" Character : for
 ' Charaktererschaffung und Lebenslauf
 Generation ..> Character : on finish
 Character "1" *-- "0..1" Career : career
-Character "*" --> "0..1" Hex : homeworld
+Character "*" --> "0..1" World : homeworld
 Character "1" *-- "0..1" Place : place
 Character "*" --> "0..1" Patron : patron
 Mission "*" --> "0..1" Character : client

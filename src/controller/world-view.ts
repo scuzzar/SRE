@@ -7,6 +7,8 @@ import {
   hexAt,
   hexId,
   isWorld,
+  mainOf,
+  mainWorld,
   OCCURRENCE_TARGET,
   SECTOR_COLUMNS,
   SECTOR_ROWS,
@@ -23,9 +25,19 @@ import {
   type Hex,
   type Surface,
   type UwpKind,
+  type World,
   type WorldDmPart,
   type WorldRollKind,
   type WorldStep,
+  orbitMillionKm,
+  sizeCode,
+  temperatureOfWorld,
+  gravityOf,
+  zonesOf,
+  zoneOfOrbit,
+  starName,
+  moonsOf,
+  type Zone,
 } from '../model';
 import { nextWorldRoll, totalOf, type WorldRoll } from '../model/draft';
 
@@ -36,6 +48,9 @@ import { nextWorldRoll, totalOf, type WorldRoll } from '../model/draft';
  */
 export interface WorldLook {
   readonly seed: string;
+  /** Nur Gasriesen (groß oder klein) und kleine Welten (Größe S) sehen anders aus als eine Welt ihrer Größe. */
+  readonly kind?: 'giant' | 'small';
+  readonly large?: boolean;
   readonly size: number;
   readonly atmosphere: number | undefined;
   readonly hydrographics: number | undefined;
@@ -54,35 +69,41 @@ export interface WorldLook {
  * dem, was schon gewürfelt ist; sonst `undefined`.
  */
 export function lookOf(hex: Hex | undefined): WorldLook | undefined {
-  if (!hex || hex.empty || hex.uwp.size === undefined) return undefined;
+  const world = hex && mainOf(hex);
+  if (!hex || !world || world.uwp.size === undefined) return undefined;
   if (hexState(hex) !== 'world') {
-    const { size, atmosphere, hydrographics, population, tech } = hex.uwp;
+    const { size, atmosphere, hydrographics, population, tech } = world.uwp;
     return {
       seed: hexId(hex.column, hex.row),
       size,
       atmosphere,
       hydrographics,
-      water: hex.surface ? hex.surface.water / 100 : undefined,
+      water: world.surface ? world.surface.water / 100 : undefined,
       population,
       tech,
-      temperature: hex.temperature,
-      life: hex.surface?.life,
+      temperature: world.temperature,
+      life: world.surface?.life,
     };
   }
-  const { size = 0, atmosphere = 0, hydrographics = 0, population = 0, tech = 0 } = hex.uwp;
+  return lookOfWorld(world, hexId(hex.column, hex.row));
+}
+
+/** Das Symbol einer fertigen Welt; `seed` macht es unverwechselbar. */
+export function lookOfWorld(world: World, seed: string): WorldLook {
+  const { size = 0, atmosphere = 0, hydrographics = 0, population = 0, tech = 0 } = world.uwp;
   return {
-    seed: hexId(hex.column, hex.row),
+    seed,
     size,
     atmosphere,
     hydrographics,
-    water: hex.surface ? hex.surface.water / 100 : hydrographics >= 10 ? 0.985 : hydrographics / 10,
+    water: world.surface ? world.surface.water / 100 : hydrographics >= 10 ? 0.985 : hydrographics / 10,
     population,
     tech,
     // Welten von vor der Temperatur gelten als gemäßigt, Welten von vor der Oberfläche als belebt,
     // wenn Luft und Wasser es erlauben.
-    temperature: hex.temperature ?? 'temperate',
-    life: hex.surface?.life ?? (atmosphere >= 2 && atmosphere <= 9 && hydrographics > 0),
-    ...(hex.map && size > 0 ? { surface: { grid: surfaceGrid(size), map: hex.map } } : {}),
+    temperature: world.temperature ?? 'temperate',
+    life: world.surface?.life ?? (atmosphere >= 2 && atmosphere <= 9 && hydrographics > 0),
+    ...(world.map && size > 0 ? { surface: { grid: surfaceGrid(size), map: world.map } } : {}),
   };
 }
 
@@ -162,6 +183,7 @@ export interface WorldLine {
 export type WorldAction =
   | { readonly kind: 'roll'; readonly label: string; readonly dice: 1 | 2; readonly parts: readonly WorldDmPart[]; readonly target: number | undefined }
   | { readonly kind: 'surface'; readonly label: string }
+  | { readonly kind: 'system'; readonly label: string }
   | { readonly kind: 'name' }
   | { readonly kind: 'done' };
 
@@ -218,6 +240,34 @@ export interface WorldView {
   readonly hasMap: boolean;
   /** Die Stellen der Logeinträge, die auf dieser Welt geschahen (Was hier geschah), das Neueste zuletzt. */
   readonly happened: readonly number[];
+  /** Das Sternsystem, sobald es gewürfelt ist. */
+  readonly system: SystemView | undefined;
+}
+
+/** Das Sternsystem in der Übersicht der Weltkarte (2026-11-20b): Sterne und was auf jeder Bahn liegt. */
+export interface SystemView {
+  readonly stars: readonly { readonly name: string; readonly where: string }[];
+  readonly orbits: readonly OrbitView[];
+}
+
+/** Eine Bahn um den Hauptstern: ihre Welt (oder leer, oder ein Begleitstern) mit ihren Monden. */
+export interface OrbitView {
+  readonly orbit: string;
+  readonly distance: string;
+  readonly zone: string;
+  readonly body: SystemBodyView;
+  readonly moons: readonly SystemBodyView[];
+}
+
+/** Ein Körper der Übersicht: Welt, Gasriese, Gürtel, kleine Welt, Ring; oder eine leere Bahn, ein Begleitstern. */
+export interface SystemBodyView {
+  readonly id: string | undefined;
+  readonly label: string;
+  /** Größe, Atmosphäre, Hydrographie, Bevölkerung, wo es sie gibt (z. B. „7885“, „S002“). */
+  readonly code: string | undefined;
+  readonly detail: string | undefined;
+  readonly main: boolean;
+  readonly look: WorldLook | undefined;
 }
 
 function yesNo(value: boolean | undefined): string {
@@ -275,21 +325,22 @@ export function sectorView(hexes: readonly Hex[], marked: ReadonlySet<string> = 
   for (let column = 1; column <= SECTOR_COLUMNS; column++) {
     for (let row = 1; row <= SECTOR_ROWS; row++) {
       const hex = hexAt(hexes, column, row);
+      const world = hex && mainOf(hex);
       cells.push({
         id: hexId(column, row),
         column,
         row,
         state: hexState(hex),
-        name: hex?.name,
-        starport: hex?.uwp.starport === undefined ? undefined : ehex(hex.uwp.starport),
+        name: world?.name,
+        starport: world?.uwp.starport === undefined ? undefined : ehex(world.uwp.starport),
         navalBase: hex?.navalBase ?? false,
         scoutBase: hex?.scoutBase ?? false,
         gasGiant: hex?.gasGiant ?? false,
-        size: hex?.uwp.size,
-        hydrographics: hex?.uwp.hydrographics,
-        population: hex?.uwp.population,
-        uwp: hex && hexState(hex) === 'world' ? uwpCode(hex.uwp) : undefined,
-        trade: hex && hexState(hex) === 'world' ? tradeCodesOf(hex).map((t) => t.id) : [],
+        size: world?.uwp.size,
+        hydrographics: world?.uwp.hydrographics,
+        population: world?.uwp.population,
+        uwp: world && hexState(hex) === 'world' ? uwpCode(world.uwp) : undefined,
+        trade: world && hexState(hex) === 'world' ? tradeCodesOf(world).map((t) => t.id) : [],
         look: lookOf(hex),
         marked: marked.has(hexId(column, row)),
         mission: missions.has(hexId(column, row)),
@@ -305,17 +356,18 @@ export function worldList(hexes: readonly Hex[]): readonly WorldListItem[] {
     .sort((a, b) => a.column - b.column || a.row - b.row)
     .flatMap((hex) => {
       if (hexState(hex) !== 'world') return [];
+      const world = mainWorld(hex);
       return [
         {
           id: hexId(hex.column, hex.row),
           column: hex.column,
           row: hex.row,
-          name: hex.name!,
-          uwp: uwpCode(hex.uwp),
+          name: world.name!,
+          uwp: uwpCode(world.uwp),
           bases: basesText(hex),
-          trade: tradeCodesOf(hex).map((t) => t.id),
+          trade: tradeCodesOf(world).map((t) => t.id),
           gasGiant: hex.gasGiant ?? false,
-          note: hex.note?.split('\n')[0],
+          note: world.note?.split('\n')[0],
           look: lookOf(hex)!,
         },
       ];
@@ -399,59 +451,148 @@ export function surfaceLines(surface: Surface): readonly string[] {
   return lines;
 }
 
-function temperatureViewOf(hex: Hex): TemperatureView {
-  const { name, average, text } = temperatureOf(hex.temperature!);
-  const atmosphere = hex.uwp.atmosphere;
+function temperatureViewOf(world: World): TemperatureView {
+  const { name, average, text } = temperatureOf(world.temperature!);
+  const atmosphere = world.uwp.atmosphere;
   return { name, average, text, swings: atmosphere !== undefined && atmosphere <= 1 };
 }
 
 /** Die Weltkarte eines Feldes mit den Würfen, die man gemacht hat, seit sie offen ist. */
 export function worldView(hexes: readonly Hex[], column: number, row: number, rolls: readonly WorldRoll[], error: string | undefined, happened: readonly number[] = []): WorldView {
-  const hex: Hex = hexAt(hexes, column, row) ?? { column, row, empty: false, uwp: {} };
+  const hex: Hex = hexAt(hexes, column, row) ?? { column, row, empty: false, worlds: [{ id: hexId(column, row), kind: 'world', uwp: {} }], main: hexId(column, row) };
+  const world: World = mainOf(hex) ?? { id: hexId(column, row), kind: 'world', uwp: {} };
   const step = stepOf(hex);
   const next = nextWorldRoll(hex);
   const surfaceDue = nextWorldAction(hex) === 'surface';
+  const systemDue = nextWorldAction(hex) === 'system';
   const action: WorldAction = next
     ? { kind: 'roll', label: rollLabels[next.kind], dice: next.dice, parts: next.parts, target: undefined }
     : surfaceDue
       ? { kind: 'surface', label: 'Oberfläche würfeln' }
-      : step === 'name'
+      : systemDue
+        ? { kind: 'system', label: 'Sternsystem würfeln' }
+        : step === 'name'
         ? { kind: 'name' }
         : { kind: 'done' };
   const prompt = next
     ? prompts[next.kind]
     : surfaceDue
       ? "Oberfläche nach dem World Builder's Handbook: Wasser, Platten, Land, Leben"
-      : step === 'name'
+      : systemDue
+        ? 'Sternsystem nach Book 6: Sterne, Bahnen, Gasriesen, Gürtel, weitere Welten, Monde'
+        : step === 'name'
         ? 'Fertig gewürfelt: Namen eingeben und übernehmen'
         : hex.empty
           ? 'Kein System in diesem Feld'
           : '';
   return {
     id: hexId(column, row),
-    name: hex.name,
+    name: world.name,
     step,
     empty: hex.empty,
     prompt,
-    uwp: uwpCode(hex.uwp),
+    uwp: uwpCode(world.uwp),
     profile: uwpKinds.map((kind) => {
-      const value = hex.uwp[kind];
+      const value = world.uwp[kind];
       return { kind, label: worldLabel(kind), code: value === undefined ? undefined : ehex(value), text: value === undefined ? undefined : uwpDigitOf(kind, value)?.text };
     }),
     navalBase: hex.navalBase,
     scoutBase: hex.scoutBase,
     gasGiant: hex.gasGiant,
-    temperature: hex.temperature === undefined ? undefined : temperatureViewOf(hex),
-    surface: hex.surface === undefined ? undefined : surfaceLines(hex.surface),
-    trade: tradeCodesOf(hex).map((t) => ({ code: t.id, name: t.name })),
+    temperature: world.temperature === undefined ? undefined : temperatureViewOf(world),
+    surface: world.surface === undefined ? undefined : surfaceLines(world.surface),
+    trade: (hex.empty ? [] : tradeCodesOf(world)).map((t) => ({ code: t.id, name: t.name })),
     lines: rolls.map(worldLine),
     action,
-    note: hex.note,
+    note: world.note,
     look: lookOf(hex),
     canNote: isWorld(hex),
     canGlobe: canHaveMap(hex),
-    hasMap: hex.map !== undefined,
+    hasMap: world.map !== undefined,
     happened,
     error,
+    system: systemView(hex),
   };
+}
+
+const ZONE_NAMES: Record<Zone, string> = { inner: 'innen', habitable: 'bewohnbar', outer: 'außen' };
+const num = (n: number, digits = 0) => n.toLocaleString('de-DE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+
+/** Die Bahn um den Stern als Text, eingefangene mit Nachkomma (5,4). */
+function orbitText(orbit: number): string {
+  return Number.isInteger(orbit) ? String(orbit) : num(orbit, 1);
+}
+
+/** Der Abstand vom Stern: in AU, nah am Stern in Millionen km. */
+function distanceText(orbit: number): string {
+  const km = orbitMillionKm(orbit);
+  const au = km / 149.6;
+  return au < 1 ? `${num(km)} Mio. km` : `${num(au, au < 10 ? 1 : 0)} AU`;
+}
+
+/** Größe, Atmosphäre, Hydrographie, Bevölkerung einer Nebenwelt als Ziffern; Gasriesen, Ringe und Gürtel haben keine. */
+function codeOf(world: World): string | undefined {
+  if (world.kind === 'giant' || world.kind === 'ring') return undefined;
+  const digit = (v: number | undefined) => (v === undefined ? '?' : ehex(v));
+  return `${sizeCode(world)}${digit(world.uwp.atmosphere)}${digit(world.uwp.hydrographics)}${digit(world.uwp.population)}`;
+}
+
+/** Das Weltsymbol einer Welt des Systems; die Hauptwelt wie auf der Karte, Ringe und Gürtel ohne. */
+export function systemLook(hex: Hex, world: World): WorldLook | undefined {
+  if (world.id === hex.main) return lookOf(hex);
+  if (world.kind === 'ring') return undefined;
+  if (world.kind === 'giant') return { seed: world.id, kind: 'giant', large: world.large ?? false, size: 10, atmosphere: undefined, hydrographics: undefined, water: undefined, population: undefined, tech: undefined, temperature: undefined, life: undefined };
+  const look = lookOfWorld({ ...world, temperature: temperatureOfWorld(hex, world) }, world.id);
+  if (world.kind === 'belt') return { ...look, size: 0 };
+  return world.kind === 'small' ? { ...look, kind: 'small', size: 1, life: false } : { ...look, life: false };
+}
+
+function bodyView(hex: Hex, world: World): SystemBodyView {
+  const main = world.id === hex.main;
+  const name = main ? mainWorld(hex).name : undefined;
+  const kindLabel =
+    world.kind === 'giant'
+      ? `Gasriese, ${world.large ? 'groß' : 'klein'}`
+      : world.kind === 'belt'
+        ? main
+          ? 'Asteroidengürtel'
+          : 'Planetoidengürtel'
+        : world.kind === 'small'
+          ? 'Kleine Welt'
+          : world.kind === 'ring'
+            ? 'Ring'
+            : world.moonOf === undefined
+              ? 'Welt'
+              : 'Mond';
+  const label = main ? `${name ?? 'Hauptwelt'} (Hauptwelt)` : world.captured ? `${kindLabel}, eingefangen` : kindLabel;
+  const details: string[] = [];
+  if (world.moonOf !== undefined && world.orbit !== undefined) details.push(`${num(world.orbit)} Radien`);
+  if (world.kind === 'giant' && world.radius !== undefined) details.push(`Radius ${num(world.radius)} km`);
+  if (world.kind === 'small' && world.diameter !== undefined) details.push(`${num(world.diameter)} km`);
+  const g = gravityOf(world);
+  if (g > 0) details.push(`${num(g, 2)} G`);
+  return { id: world.id, label, code: main ? undefined : codeOf(world), detail: details.join(' · ') || undefined, main, look: systemLook(hex, world) };
+}
+
+/** Die Übersicht des Sternsystems: Sterne, dann jede Bahn um den Hauptstern von innen nach außen. */
+export function systemView(hex: Hex): SystemView | undefined {
+  const system = hex.system;
+  if (!system) return undefined;
+  const zones = zonesOf(system.stars[0]!);
+  const stars = system.stars.map((star, i) => ({
+    name: starName(star),
+    where: i === 0 ? 'Hauptstern' : star.close ? 'nah am Hauptstern' : star.farAu !== undefined ? `fern, ${num(star.farAu)} AU` : `Bahn ${star.orbit}`,
+  }));
+  const zone = (orbit: number) => ZONE_NAMES[zoneOfOrbit(zones, orbit) ?? 'inner'];
+  const rows: { orbit: number; row: OrbitView }[] = [];
+  for (const world of hex.worlds.filter((w) => w.moonOf === undefined && w.orbit !== undefined)) {
+    const orbit = world.orbit!;
+    rows.push({ orbit, row: { orbit: orbitText(orbit), distance: distanceText(orbit), zone: zone(orbit), body: bodyView(hex, world), moons: moonsOf(hex, world).map((m) => bodyView(hex, m)) } });
+  }
+  const empty = (label: string): SystemBodyView => ({ id: undefined, label, code: undefined, detail: undefined, main: false, look: undefined });
+  for (const orbit of system.emptyOrbits) rows.push({ orbit, row: { orbit: orbitText(orbit), distance: distanceText(orbit), zone: zone(orbit), body: empty('leere Bahn'), moons: [] } });
+  for (const star of system.stars.slice(1)) {
+    if (star.orbit !== undefined) rows.push({ orbit: star.orbit, row: { orbit: orbitText(star.orbit), distance: distanceText(star.orbit), zone: zone(star.orbit), body: empty(`Begleitstern ${starName(star)}`), moons: [] } });
+  }
+  return { stars, orbits: rows.sort((a, b) => a.orbit - b.orbit).map((r) => r.row) };
 }

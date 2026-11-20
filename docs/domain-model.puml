@@ -239,10 +239,7 @@ hide <<browser>> stereotype
   }
   class StarSystem $raum {
     maxOrbits: number
-    worldOrbit: number
-    hostOrbit: number [0..1]
-    hostAngle: number [0..1]
-    /worldZone: Zone
+    emptyOrbits: number [*]
   }
   class Star $raum {
     type: StarType
@@ -282,29 +279,6 @@ hide <<browser>> stereotype
     size: StarSize
     firstOrbit: number
     habitableOrbit: number [0..1]
-  }
-  class Satellite $raum {
-    kind: SatelliteKind
-    size: number [0..1]
-    diameter: number [0..1]
-    orbit: number
-    angle: number
-    atmosphere: number [0..1]
-    hydrographics: number [0..1]
-    population: number [0..1]
-    /gravity: number
-  }
-  enum SatelliteKind <<value>> $raum {
-    moon
-    small
-    ring
-  }
-  class GasGiant $raum {
-    large: boolean
-    radius: number
-    orbit: number
-    /zone: Zone
-    /gravity: number
   }
   class SpaceUnit $raum {
     position: Vec
@@ -349,13 +323,32 @@ hide <<browser>> stereotype
     column: number
     row: number
     empty: boolean
-    name: string [0..1]
     navalBase: boolean [0..1]
     scoutBase: boolean [0..1]
     gasGiant: boolean [0..1]
+    /step: WorldStep
+  }
+  class World $sektor {
+    kind: WorldKind
+    name: string [0..1]
     note: string [0..1]
     populationMultiplier: number [0..1]
-    /step: WorldStep
+    orbit: number [0..1]
+    angle: number [0..1]
+    captured: boolean
+    diameter: number [0..1]
+    large: boolean [0..1]
+    radius: number [0..1]
+    /main: boolean
+    /zone: Zone [0..1]
+    /gravity: number
+  }
+  enum WorldKind <<value>> $sektor {
+    world
+    small
+    belt
+    giant
+    ring
   }
   class Uwp <<value>> $sektor {
     starport: number [0..1]
@@ -1069,6 +1062,7 @@ hide <<browser>> stereotype
   enum WorldStep <<value>> $sektor {
     <i>alle Arten aus WorldRollKind</i>
     surface
+    system
     name
     done
   }
@@ -1138,7 +1132,7 @@ Conflict "*" --> "0..1" Campaign : remote
 Booking "*" --> "0..1" Character : for
 Booking "*" --> "0..1" Item : bought
 Booking "*" --> "0..1" Item : sold
-Booking "*" --> "0..1" Hex : in
+Booking "*" --> "0..1" World : in
 Booking --> BookingKind
 
 ' Schiffe
@@ -1152,21 +1146,19 @@ Booking "*" --> "0..1" Ship : forShip
 
 ' Raumkarte und Systemflug
 Campaign "1" *-- "0..1" SystemFlight : flight
-SystemFlight "*" --> "1" Hex : world
+SystemFlight "*" --> "1" World : world
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
 SpaceUnit "*" --> "1" Ship : ship
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
 Hex "1" *-- "0..1" StarSystem : system
+Hex "1" *-- "*" World : worlds {ordered}
+Hex "*" --> "0..1" World : main
+World "*" --> "0..1" World : moonOf
+World --> WorldKind
 StarSystem "1" *-- "1..3" Star : stars {ordered}
-StarSystem "1" *-- "*" Satellite : satellites {ordered}
-StarSystem "1" *-- "*" GasGiant : giants {ordered}
-StarSystem "*" --> "0..1" GasGiant : host
 Star "*" --> "1" StarZones : /zones
 Star --> StarType
 Star --> StarSize
-SystemFlight "*" --> "0..1" GasGiant : at
-GasGiant "1" *-- "*" Satellite : satellites {ordered}
-Satellite --> SatelliteKind
 Gain "*" --> "0..1" ShipDesign : ship
 DeckPlan "*" --> "1" ShipDesign : design
 
@@ -1197,9 +1189,9 @@ Generation --> GenerationStep
 Character "1" *-- "0..1" Career : career
 Career "1" *-- "*" CareerRoll : rolls {ordered}
 Career "*" --> "0..1" Service : /in
-Career "*" --> "0..1" Hex : homeworld
-Career "*" --> "*" Hex : worlds {ordered}
-Character "*" --> "0..1" Hex : homeworld
+Career "*" --> "0..1" World : homeworld
+Career "*" --> "*" World : worlds {ordered}
+Character "*" --> "0..1" World : homeworld
 Character "1" *-- "0..1" Place : place
 Character "*" --> "0..1" Patron : patron
 Campaign "1" *-- "*" Mission : missions {ordered}
@@ -1242,15 +1234,15 @@ Aging --> "1" Characteristic : of
 
 ' Subsektor und Welten
 Campaign "1" *-- "*" Hex : hexes
-Hex "1" *-- "1" Uwp : uwp
+World "1" *-- "1" Uwp : uwp
 Hex --> WorldStep
 WorldRoll "*" --> "1" Hex : for
 WorldRoll ..> Hex : on roll
-Hex "*" --> "*" TradeCode : /trade
-Hex "*" --> "0..1" Temperature : temperature
-Hex "1" *-- "0..1" Surface : surface
+World "*" --> "*" TradeCode : /trade
+World "*" --> "0..1" Temperature : temperature
+World "1" *-- "0..1" Surface : surface
 Surface "*" --> "0..1" SurfaceRow : /row
-Hex "1" *-- "0..1" SurfaceMap : map
+World "1" *-- "0..1" SurfaceMap : map
 SurfaceMap "1" *-- "/cells" SurfaceCell : cells {ordered}
 SurfaceCell "*" --> "1" Landform : landform
 SurfaceCell "*" --> "0..1" Volcano : volcano
@@ -1261,7 +1253,7 @@ River "*" --> "2..*" SurfaceCell : cells {ordered}
 Road "*" --> "2..*" SurfaceCell : cells {ordered}
 City "*" --> "0..1" SurfaceCell : cell
 LogEntry "1" *-- "0..1" Place : place
-Place "*" --> "1" Hex : world
+Place "*" --> "1" World : world
 Place "*" --> "0..1" SurfaceCell : cell
 Place "*" --> "0..1" City : city
 City --> CityRank
@@ -1306,7 +1298,7 @@ Character "*" --> "0..1" Weapon : secondary
 Weapon "*" --> "1" Skill : uses
 Weapon "*" --> "0..1" Item : ammo
 Weapon "*" --> "0..1" Weapon : single
-Hex "*" --> "*" Item : /offer
+World "*" --> "*" Item : /offer
 Weapon --> AttackKind
 Weapon "1" *-- "7" ArmorDm : vsArmor {ordered}
 Weapon "1" *-- "5" RangeDm : atRange {ordered}
@@ -1367,7 +1359,7 @@ Wounding ..> DamageRoll : on confirm
 Campaign "1" *-- "*" Encounter : encounters {ordered}
 Encounter "*" --> "0..1" EncounterType : of
 Encounter "*" --> "0..1" AnimalRow : animal
-Hex "1" *-- "*" AnimalTable : animals
+World "1" *-- "*" AnimalTable : animals
 AnimalTable "*" --> "1" Terrain : terrain
 AnimalTable "1" *-- "11" AnimalRow : rows {ordered}
 AnimalRow "*" --> "0..1" AnimalType : type
@@ -1395,7 +1387,7 @@ Encounter "1" *-- "0..1" SurpriseRoll : npcSurprise
 Encounter --> Side
 EncounterRange -[hidden]- Terrain
 RangeBand -[hidden]- EncounterRange
-Encounter "*" --> "0..1" Hex : in
+Encounter "*" --> "0..1" World : in
 Encounter "1" *-- "*" Character : npcs {ordered}
 Encounter "*" --> "*" Character : joined {ordered}
 Encounter "*" --> "0..1" Character : leader

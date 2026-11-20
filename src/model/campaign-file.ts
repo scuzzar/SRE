@@ -26,7 +26,8 @@ import { vehicleOfItem } from './vehicle';
 import { settleStash } from './stash';
 import type { City, SurfaceMap } from './surface-map';
 import { checkPlace, type Place } from './place';
-import { hexById, hexFromRolls, temperatureIds, uwpKinds, validateHexes, worldOf, type Hex, type LegacyWorldRoll } from './sector';
+import { hexFromFlat, hexFromRolls, temperatureIds, uwpKinds, validateHexes, worldById, worldOf, type Hex, type LegacyWorldRoll, type World } from './sector';
+import { checkStarSystems } from './star-system';
 
 /**
  * Die Kampagnendatei: eine Kampagne als JSON, zum Sichern und Weitergeben. Sie enthält alles, was an
@@ -183,13 +184,8 @@ const MapSchema = z
   });
 
 const position = { column: z.number().int(), row: z.number().int(), name: z.string().optional() };
-const HexSchema = z.union([
-  z.object({
-    ...position,
-    empty: z.boolean(),
-    navalBase: z.boolean().optional(),
-    scoutBase: z.boolean().optional(),
-    gasGiant: z.boolean().optional(),
+/** Was eine Welt an Werten hält (vor 2026-11-20b hingen sie am Hexfeld). */
+const worldFields = {
     uwp: z.object(Object.fromEntries(uwpKinds.map((k) => [k, z.number().int().optional()])) as Record<(typeof uwpKinds)[number], z.ZodOptional<z.ZodNumber>>),
     temperature: z.enum(temperatureIds).optional(),
     note: z.string().optional(),
@@ -237,6 +233,51 @@ const HexSchema = z.union([
         }),
       )
       .optional(),
+};
+/** Eine Welt eines Systems (2026-11-20b). */
+const WorldSchema = z.object({
+  id: z.string().min(1),
+  kind: z.enum(['world', 'small', 'belt', 'giant', 'ring']),
+  name: z.string().optional(),
+  ...worldFields,
+  orbit: z.number().optional(),
+  angle: z.number().optional(),
+  captured: z.boolean().optional(),
+  diameter: z.number().optional(),
+  large: z.boolean().optional(),
+  radius: z.number().optional(),
+  moonOf: z.string().optional(),
+});
+/** Ein Stern (2026-11-18d). */
+const StarSchema = z.object({
+  type: z.enum(['O', 'B', 'A', 'F', 'G', 'K', 'M']),
+  decimal: z.number().int().optional(),
+  size: z.enum(['Ia', 'Ib', 'II', 'III', 'IV', 'V', 'VI', 'D']),
+  orbit: z.number().int().optional(),
+  close: z.boolean(),
+  farAu: z.number().optional(),
+});
+const HexSchema = z.union([
+  /** Seit 2026-11-20b: das Hexfeld als System mit seinen Welten. */
+  z.object({
+    column: z.number().int(),
+    row: z.number().int(),
+    empty: z.boolean(),
+    navalBase: z.boolean().optional(),
+    scoutBase: z.boolean().optional(),
+    gasGiant: z.boolean().optional(),
+    main: z.string().optional(),
+    worlds: z.array(WorldSchema),
+    system: z.object({ stars: z.array(StarSchema).min(1).max(3), maxOrbits: z.number().int(), emptyOrbits: z.array(z.number()) }).optional(),
+  }),
+  /** Vor 2026-11-20b: die Werte der Hauptwelt am Hexfeld. */
+  z.object({
+    ...position,
+    empty: z.boolean(),
+    navalBase: z.boolean().optional(),
+    scoutBase: z.boolean().optional(),
+    gasGiant: z.boolean().optional(),
+    ...worldFields,
   }),
   /** Aus der Zeit, als ein Hexfeld seine Würfe hielt; wird nachgespielt und als Werte übernommen. */
   z.object({
@@ -599,8 +640,28 @@ function hexOf(hex: z.infer<typeof HexSchema>): Hex {
     const rolls = hex.rolls.map((r) => stripped(r) as LegacyWorldRoll);
     return hexFromRolls(hex.name === undefined ? { column: hex.column, row: hex.row, rolls } : { column: hex.column, row: hex.row, name: hex.name, rolls });
   }
-  const { animals, map, ...rest } = hex;
-  return { ...stripped(rest), uwp: stripped(hex.uwp), ...(map ? { map: mapOf(map) } : {}), ...(animals ? { animals: animals.map((t) => ({ terrain: t.terrain, rows: t.rows.map((r) => stripped({ ...r, ...(r.attacks ? { attacks: r.attacks.map((a) => ({ ...a })) } : {}) })) })) } : {}) } as Hex;
+  if ('worlds' in hex) {
+    const { worlds, system, ...rest } = hex;
+    return {
+      ...stripped(rest),
+      worlds: worlds.map((w) => worldValuesOf(w) as World),
+      ...(system ? { system: { stars: system.stars.map((st) => stripped(st)), maxOrbits: system.maxOrbits, emptyOrbits: [...system.emptyOrbits] } } : {}),
+    } as Hex;
+  }
+  // Vor 2026-11-20b: Die Werte am Hexfeld werden die Hauptwelt.
+  const { column, row, empty, navalBase, scoutBase, gasGiant, ...world } = hex;
+  return hexFromFlat({ column, row, empty, ...(navalBase === undefined ? {} : { navalBase }), ...(scoutBase === undefined ? {} : { scoutBase }), ...(gasGiant === undefined ? {} : { gasGiant }), ...(worldValuesOf(world) as Omit<World, 'id' | 'kind'>) });
+}
+
+/** Die Werte einer Welt ohne leere optionale Felder. */
+function worldValuesOf<T extends { readonly uwp: object; readonly map?: z.infer<typeof MapSchema> | undefined; readonly animals?: readonly { readonly terrain: string; readonly rows: readonly object[] }[] | undefined }>(world: T): object {
+  const { animals, map, ...rest } = world;
+  return {
+    ...stripped(rest),
+    uwp: stripped(world.uwp),
+    ...(map ? { map: mapOf(map) } : {}),
+    ...(animals ? { animals: animals.map((t) => ({ terrain: t.terrain, rows: t.rows.map((r) => stripped({ ...r, ...('attacks' in r && Array.isArray(r.attacks) ? { attacks: r.attacks.map((x: object) => ({ ...x })) } : {}) })) })) } : {}),
+  };
 }
 
 /** Ein Objekt ohne Felder, die `undefined` sind. */
@@ -719,6 +780,7 @@ function validate(campaign: Campaign): void {
     if (focus.dead || focus.retired) throw new DomainError(`Der Charakter oben (${focus.name}) lebt nicht oder ist ausgeblendet.`);
   }
   validateHexes(campaign.hexes);
+  checkStarSystems(campaign.hexes);
   if (campaign.location !== undefined) checkPlace(campaign.hexes, campaign.location);
   validateMissions(campaign);
   validateBookings(campaign);
@@ -741,7 +803,7 @@ function validate(campaign: Campaign): void {
   if (campaign.flight !== undefined) checkFlight(campaign, campaign.flight);
   validateEncounters(campaign);
   if (campaign.terrain !== undefined) terrainOf(campaign.terrain);
-  for (const hex of campaign.hexes) for (const table of hex.animals ?? []) checkAnimalTable(table);
+  for (const hex of campaign.hexes) for (const world of hex.worlds) for (const table of world.animals ?? []) checkAnimalTable(table);
   // Das Gepäck hält Besitz nach denselben Regeln wie ein Charakter.
   validateCharacter({ name: 'Gepäck', background: '', equipment: '', credits: 0, note: '', upp: { str: 0, dex: 0, end: 0, int: 0, edu: 0, soc: 0 }, skills: [], possessions: campaign.stash });
   // Jagdbeute verweist auf eine Zeile der Tiertabelle mit Marktwert.
@@ -864,7 +926,7 @@ function validateEncounters(campaign: Campaign): void {
     }
     for (const npc of encounter.npcs) if (npc.animal !== undefined) animalRowOf(campaign.hexes, npc.animal);
     if (encounter.terrain !== undefined && !ref.encounters.terrains.some((t) => t.id === encounter.terrain)) throw new DomainError(`Das Gelände ${encounter.terrain} gibt es nicht.`);
-    if (encounter.in !== undefined && !hexById(campaign.hexes, encounter.in)) throw new DomainError(`Eine Begegnung verweist auf das Feld ${encounter.in}, das es nicht gibt.`);
+    if (encounter.in !== undefined && !worldById(campaign.hexes, encounter.in)) throw new DomainError(`Eine Begegnung verweist auf das Feld ${encounter.in}, das es nicht gibt.`);
     const joined = encounter.joined ?? [];
     if (new Set(joined).size !== joined.length) throw new DomainError('Ein NSC ist zweimal in derselben Begegnung dazugenommen.');
     for (const id of joined) {

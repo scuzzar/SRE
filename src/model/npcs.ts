@@ -5,7 +5,7 @@ import { careerInput, runCareerIn, stateOf } from './generation';
 import { checkPlace, moveNpc, type Place } from './place';
 import type { Random } from './ports';
 import { itemOf, itemOfWeapon, ref, serviceOf, type Weapon } from './reference';
-import { hexById, worldOf, type Hex } from './sector';
+import { worldOf, worldById, type World } from './sector';
 
 /** Die NSC einer Rolle, nach Namen. */
 export interface NpcRoleGroup {
@@ -40,11 +40,11 @@ export function npcGroups(campaign: Campaign, all: boolean): readonly NpcWorldGr
   const here = campaign.location?.world;
   if (!all && here !== undefined) {
     const roles = byRole(living.filter((n) => n.place === undefined || n.place.world === here));
-    return roles.length === 0 ? [] : [{ place: here, name: hexById(campaign.hexes, here)?.name, roles }];
+    return roles.length === 0 ? [] : [{ place: here, name: worldById(campaign.hexes, here)?.name, roles }];
   }
   const places = [...new Set(living.flatMap((n) => (n.place === undefined ? [] : [n.place.world])))];
   const worlds = places
-    .map((place) => ({ place, name: hexById(campaign.hexes, place)?.name ?? place }))
+    .map((place) => ({ place, name: worldById(campaign.hexes, place)?.name ?? place }))
     .sort((a, b) => a.name.localeCompare(b.name, 'de'))
     .map(({ place, name }) => ({ place, name, roles: byRole(living.filter((n) => n.place?.world === place)) }));
   const nowhere = byRole(living.filter((n) => n.place === undefined));
@@ -115,7 +115,7 @@ const IGNORE_LAW_TARGET = 6;
  * Die Waffen, die ein erzeugter NSC bekommen kann: mit Mindest-SOC bis zu seinem SOC, mit TL bis
  * zum TL seiner Welt, und vom Gesetz seiner Welt nicht verboten, außer es gilt für ihn nicht.
  */
-export function allowedWeapons(soc: number, world: Hex, ignoreLaw: boolean): readonly Weapon[] {
+export function allowedWeapons(soc: number, world: World, ignoreLaw: boolean): readonly Weapon[] {
   const tech = world.uwp.tech ?? 0;
   const law = world.uwp.law ?? 0;
   return ref.weapons.filter((w) => {
@@ -130,7 +130,7 @@ export function allowedWeapons(soc: number, world: Hex, ignoreLaw: boolean): rea
  * höchsten Waffenfertigkeit, die erlaubt ist, sonst die teuerste erlaubte der höchsten SOC-Stufe.
  * Sie kommt mit 1W4 Magazinen in seinen Besitz und ist Primärwaffe und in der Hand.
  */
-export function armGenerated(input: CharacterInput, world: Hex, criminal: boolean, random: Random): CharacterInput {
+export function armGenerated(input: CharacterInput, world: World, criminal: boolean, random: Random): CharacterInput {
   const streetwise = input.skills.some((s) => s.of === 'streetwise');
   const ignoreLaw = random.int(1, 6) + (streetwise ? 2 : 0) + (criminal ? 2 : 0) >= IGNORE_LAW_TARGET;
   const allowed = allowedWeapons(input.upp.soc, world, ignoreLaw);

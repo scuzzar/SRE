@@ -94,13 +94,32 @@ hide <<browser>> stereotype
     column: number
     row: number
     empty: boolean
-    name: string [0..1]
     navalBase: boolean [0..1]
     scoutBase: boolean [0..1]
     gasGiant: boolean [0..1]
+    /step: WorldStep
+  }
+  class World $sektor {
+    kind: WorldKind
+    name: string [0..1]
     note: string [0..1]
     populationMultiplier: number [0..1]
-    /step: WorldStep
+    orbit: number [0..1]
+    angle: number [0..1]
+    captured: boolean
+    diameter: number [0..1]
+    large: boolean [0..1]
+    radius: number [0..1]
+    /main: boolean
+    /zone: Zone [0..1]
+    /gravity: number
+  }
+  enum WorldKind <<value>> $sektor {
+    world
+    small
+    belt
+    giant
+    ring
   }
   class Uwp <<value>> $sektor {
     starport: number [0..1]
@@ -213,42 +232,47 @@ hide <<browser>> stereotype
   enum WorldStep <<value>> $sektor {
     <i>alle Arten aus WorldRollKind</i>
     surface
+    system
     name
     done
   }
 
 ' Kampagne
-Booking "*" --> "0..1" Hex : in
+Booking "*" --> "0..1" World : in
 
 ' Schiffe
 
 ' Raumkarte und Systemflug
-SystemFlight "*" --> "1" Hex : world
+SystemFlight "*" --> "1" World : world
 Hex "1" *-- "0..1" StarSystem : system
+Hex "1" *-- "*" World : worlds {ordered}
+Hex "*" --> "0..1" World : main
+World "*" --> "0..1" World : moonOf
+World --> WorldKind
 
 ' Zeit und Reisen
 Journey "*" --> "1" Hex : from
 Journey "*" --> "1" Hex : to
 
 ' Charaktererschaffung und Lebenslauf
-Career "*" --> "0..1" Hex : homeworld
-Career "*" --> "*" Hex : worlds {ordered}
-Character "*" --> "0..1" Hex : homeworld
+Career "*" --> "0..1" World : homeworld
+Career "*" --> "*" World : worlds {ordered}
+Character "*" --> "0..1" World : homeworld
 
 ' Laufbahnen (Referenzdaten)
 
 ' Subsektor und Welten
 Campaign "1" *-- "*" Hex : hexes
-Hex "1" *-- "1" Uwp : uwp
+World "1" *-- "1" Uwp : uwp
 Hex --> WorldStep
 WorldRoll "*" --> "1" Hex : for
 WorldRoll ..> Hex : on roll
-Hex "*" --> "*" TradeCode : /trade
-Hex "*" --> "0..1" Temperature : temperature
-Hex "1" *-- "0..1" Surface : surface
+World "*" --> "*" TradeCode : /trade
+World "*" --> "0..1" Temperature : temperature
+World "1" *-- "0..1" Surface : surface
 Surface "*" --> "0..1" SurfaceRow : /row
-Hex "1" *-- "0..1" SurfaceMap : map
-Place "*" --> "1" Hex : world
+World "1" *-- "0..1" SurfaceMap : map
+Place "*" --> "1" World : world
 SurfaceRow --> SurfaceTable
 SurfaceRow -[hidden]- DiceExpr
 WorldRoll --> WorldRollKind
@@ -260,7 +284,7 @@ TradeCondition --> "1" WorldRollKind : of
 ' Charakter
 
 ' Waffen (Referenzdaten)
-Hex "*" --> "*" Item : /offer
+World "*" --> "*" Item : /offer
 
 ' Verlauf
 
@@ -269,8 +293,8 @@ Hex "*" --> "*" Item : /offer
 ' Angriff
 
 ' Begegnung
-Hex "1" *-- "*" AnimalTable : animals
-Encounter "*" --> "0..1" Hex : in
+World "1" *-- "*" AnimalTable : animals
+Encounter "*" --> "0..1" World : in
 
 ' Karte
 

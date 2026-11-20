@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import type { WorldDmPart } from '../../model';
-import type { LogItem, WorldAction, WorldLine, WorldView } from '../../controller';
+import type { LogItem, SystemBodyView, SystemView, WorldAction, WorldLine, WorldView } from '../../controller';
 import { HappenedList } from './HappenedList';
 import { DiceView, THROW_MS, useTimeline } from '../Dice';
 import { signed } from '../format';
@@ -110,6 +110,7 @@ export function useWorldDock(
       </div>
       {!view.empty && <WorldCard world={view} plain here={here} />}
       {view.surface && <SurfaceSection lines={view.surface} />}
+      {view.system && <SystemSection system={view.system} />}
       {world.canNote && <NoteSection note={world.note} />}
       {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
     </section>
@@ -288,6 +289,71 @@ export function SurfaceSection({ lines }: { lines: readonly string[] }) {
   );
 }
 
+/** Ein Körper der Systemübersicht: Symbol (oder Punkt), Art, Ziffern und Werte. */
+function SystemBody({ body }: { body: SystemBodyView }) {
+  return (
+    <span className="system-body">
+      {body.look ? <WorldIcon look={body.look} size={24} className="system-icon" /> : <span className="system-dot" aria-hidden="true" />}
+      <span className="system-text">
+        <span className="system-label">
+          {body.label}
+          {body.code && <span className="system-code"> {body.code}</span>}
+        </span>
+        {body.detail && <span className="system-detail">{body.detail}</span>}
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Das Sternsystem nach Book 6 (2026-11-20b): die Sterne, dann jede Bahn um den Hauptstern von innen
+ * nach außen mit Abstand und Zone, darunter die Monde. Die Ziffern sind Größe, Atmosphäre,
+ * Hydrographie und Bevölkerung.
+ */
+export function SystemSection({ system }: { system: SystemView }) {
+  return (
+    <section className="career world-system" aria-label="Sternsystem">
+      <div className="career-term">
+        <h4 className="world-surface-head">Sternsystem</h4>
+        <p className="system-stars">
+          {system.stars.map((s, i) => (
+            <Fragment key={i}>
+              {i > 0 && ' · '}
+              <strong>{s.name}</strong> {s.where}
+            </Fragment>
+          ))}
+        </p>
+        <ol className="system-orbits">
+          {system.orbits.map((o) => (
+            <li key={o.orbit} className={o.body.main ? 'system-orbit system-main' : 'system-orbit'}>
+              <div className="system-row">
+                <span className="system-no" title="Bahn">
+                  {o.orbit}
+                </span>
+                <SystemBody body={o.body} />
+                <span className="system-where">
+                  {o.distance}
+                  <br />
+                  {o.zone}
+                </span>
+              </div>
+              {o.moons.length > 0 && (
+                <ul className="system-moons" aria-label="Monde">
+                  {o.moons.map((m) => (
+                    <li key={m.id} className={m.main ? 'system-main' : undefined}>
+                      <SystemBody body={m} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
 /**
  * Die Reihe an der Welt, wie die Reihe am angetippten Feld des Globus (`FieldDock`) und im Stil von
  * Notiz, Deuten, 2W6, Karte im Orakel: Hierher reisen (eine Woche im Sprung; was nicht geht, ist
@@ -422,6 +488,7 @@ function Actions({ action, disabled, onRun }: { action: WorldAction; disabled: b
         </HoldButton>
       );
     case 'surface':
+    case 'system':
       return (
         <button type="button" className="roll generation-main" aria-disabled={disabled || undefined} onClick={() => game.rollWorld()}>
           <DiceIcon />

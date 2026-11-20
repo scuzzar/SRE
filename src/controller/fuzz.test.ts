@@ -1,5 +1,5 @@
 import { describe, it } from 'vitest';
-import { createCampaign, DomainError, fromCampaignFile, setHexes, toCampaignFile, type Campaign } from '../model';
+import { createCampaign, DomainError, fromCampaignFile, setHexes, toCampaignFile, type Campaign, hexFromFlat } from '../model';
 import { countingKeys, fixedClock, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 
@@ -126,7 +126,7 @@ describe('Fuzz: zufällige Eingaben', () => {
     const from = Number(process.env.FUZZ_FROM ?? 1);
     for (let seed = from; seed < from + seeds; seed++) {
       const random = seeded(seed);
-      const repository = memoryRepository(setHexes(createCampaign(), [regina]));
+      const repository = memoryRepository(setHexes(createCampaign(), [regina].map(hexFromFlat)));
       const game = new GameController({ repository, random, clock: fixedClock(), download: memoryDownload(), keys: countingKeys() });
       await game.init();
       game.chooseHex(1, 1);

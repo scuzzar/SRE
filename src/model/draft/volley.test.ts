@@ -18,13 +18,13 @@ import {
   volleyOf,
   weaponOf,
   type Campaign,
-  type Hex,
+  hexFromFlat, type Hex,
 } from '..';
 import { fixedClock, fixedRandom, onTurn } from '../testing';
 import { aimAt, attackRounds, chooseFire, chooseTarget, evaluateAttack, firesBurst, neighbourTargets, rollAttack, startAttack } from './attack';
 
 // Regina: TL 7. Vier Thugs (15, L): n1 Anführer mit Foil und Mesh, n2 bis n4 mit Club ohne Rüstung.
-const regina: Hex = {
+const regina: Hex = hexFromFlat({
   column: 2,
   row: 7,
   empty: false,
@@ -33,7 +33,7 @@ const regina: Hex = {
   scoutBase: true,
   gasGiant: true,
   uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 },
-};
+});
 const clock = fixedClock();
 
 /** Kira Vant (c1, DEX A) bekommt diese Waffe geladen in die Hand und ein Magazin dazu. */

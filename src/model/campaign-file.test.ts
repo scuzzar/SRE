@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appendLog, book, buyShip, createCampaign, removeLogEntry, type Campaign } from '.';
+import { appendLog, book, buyShip, createCampaign, hexFromFlat, removeLogEntry, type Campaign, type FlatHex } from '.';
 import { campaignFileName, fromCampaignFile, toCampaignFile } from './campaign-file';
 import { fixedClock } from './testing';
 import type { LogEntry } from './log';
@@ -158,7 +158,14 @@ describe('Kampagnendatei mit Subsektor', () => {
     delete old.temperature;
     delete old.surface;
     const text = fileWith((c) => (c.hexes = [{ ...hex, note: 'Halveks Werft am Südpol.' }, old, { column: 1, row: 1, empty: true, uwp: {} }]));
-    expect(fromCampaignFile(text, 'k2').hexes).toEqual([{ ...hex, note: 'Halveks Werft am Südpol.' }, old, { column: 1, row: 1, empty: true, uwp: {} }]);
+    // Dateien von vor 2026-11-20b halten die Werte am Feld; sie wandern in die Hauptwelt mit der Id des Feldes.
+    const read = fromCampaignFile(text, 'k2').hexes;
+    expect(read).toEqual([hexFromFlat({ ...hex, note: 'Halveks Werft am Südpol.' } as FlatHex), hexFromFlat(old as unknown as FlatHex), { column: 1, row: 1, empty: true, worlds: [] }]);
+    expect(read[0]!.main).toBe('0207');
+    expect(read[0]!.worlds[0]).toMatchObject({ id: '0207', kind: 'world', name: 'Regina', note: 'Halveks Werft am Südpol.' });
+    // Im neuen Format liest sie sich unverändert zurück.
+    const again = fileWith((c) => (c.hexes = read));
+    expect(fromCampaignFile(again, 'k2').hexes).toEqual(read);
   });
 
   it('weist eine Notiz an einem leeren Feld, einer Welt in Erschaffung oder ohne Text zurück', () => {
@@ -167,7 +174,7 @@ describe('Kampagnendatei mit Subsektor', () => {
       { column: 1, row: 1, empty: false, uwp: { starport: 12 }, note: 'Bald.' },
       { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 }, note: '  ' },
     ]) {
-      expect(() => fromCampaignFile(fileWith((c) => (c.hexes = [hex])), 'k2')).toThrow(/Notiz/);
+      expect(() => fromCampaignFile(fileWith((c) => (c.hexes = [hex])), 'k2')).toThrow(/Notiz|leeres Feld/);
     }
   });
 
@@ -182,7 +189,7 @@ describe('Kampagnendatei mit Subsektor', () => {
       { kind: 'starport', dice: [6, 6], dm: 0 },
     ];
     const text = fileWith((c) => (c.hexes = [{ column: 4, row: 4, rolls }]));
-    expect(fromCampaignFile(text, 'k2').hexes).toEqual([{ column: 4, row: 4, empty: false, navalBase: false, scoutBase: false, uwp: { starport: 31 } }]);
+    expect(fromCampaignFile(text, 'k2').hexes).toEqual([{ column: 4, row: 4, empty: false, navalBase: false, scoutBase: false, worlds: [{ id: '0404', kind: 'world', uwp: { starport: 31 } }], main: '0404' }]);
     const wrong = fileWith((c) => (c.hexes = [{ column: 1, row: 1, rolls: [{ kind: 'size', dice: [3, 3], dm: -2 }] }]));
     expect(() => fromCampaignFile(wrong, 'k2')).toThrow(/verletzt eine Regel: .*Vorkommen/);
   });

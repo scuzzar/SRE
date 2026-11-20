@@ -87,7 +87,7 @@ hide <<browser>> stereotype
 ' Charaktererschaffung und Lebenslauf
 
 ' Subsektor und Welten
-  class Hex $sektor
+  class World $sektor
 
 ' Missionen
 
@@ -333,7 +333,7 @@ RumorRoll "*" --> "1" Rumor : /of
 Campaign "1" *-- "*" Encounter : encounters {ordered}
 Encounter "*" --> "0..1" EncounterType : of
 Encounter "*" --> "0..1" AnimalRow : animal
-Hex "1" *-- "*" AnimalTable : animals
+World "1" *-- "*" AnimalTable : animals
 AnimalTable "*" --> "1" Terrain : terrain
 AnimalTable "1" *-- "11" AnimalRow : rows {ordered}
 AnimalRow "*" --> "0..1" AnimalType : type
@@ -361,7 +361,7 @@ Encounter "1" *-- "0..1" SurpriseRoll : npcSurprise
 Encounter --> Side
 EncounterRange -[hidden]- Terrain
 RangeBand -[hidden]- EncounterRange
-Encounter "*" --> "0..1" Hex : in
+Encounter "*" --> "0..1" World : in
 Encounter "1" *-- "*" Character : npcs {ordered}
 Encounter "*" --> "*" Character : joined {ordered}
 Encounter "*" --> "0..1" Character : leader

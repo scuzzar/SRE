@@ -8042,6 +8042,109 @@ button:disabled {
   gap: 8px;
 }
 
+/* Das Sternsystem auf der Weltkarte (2026-11-20b): je Bahn eine Zeile, Monde eingerückt darunter. */
+.system-stars {
+  margin: 0 0 8px;
+  color: var(--muted, #9a9a9a);
+}
+
+.system-stars strong {
+  color: var(--text, #f0f0f0);
+  font-weight: 600;
+}
+
+.system-orbits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.career-term li.system-orbit {
+  display: block;
+  padding: 4px 0;
+}
+
+.career-term .system-moons li {
+  display: block;
+  border-bottom: 0;
+  padding: 2px 0;
+}
+
+.system-row {
+  display: grid;
+  grid-template-columns: 2.2em minmax(0, 1fr) auto;
+  font-size: 13px;
+  align-items: center;
+  gap: 8px;
+}
+
+.system-no {
+  color: var(--muted, #9a9a9a);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.system-where {
+  color: var(--muted, #9a9a9a);
+  font-size: 0.8em;
+  text-align: right;
+  line-height: 1.25;
+}
+
+.system-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.system-icon {
+  flex: none;
+}
+
+.system-dot {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+}
+
+.system-dot::after {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.system-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.system-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--muted, #9a9a9a);
+}
+
+.system-detail {
+  color: var(--muted, #9a9a9a);
+  font-size: 0.8em;
+}
+
+.career-term .system-moons {
+  margin: 2px 0 0 calc(2.2em + 8px + 12px);
+  gap: 0;
+}
+
+
+.system-main .system-label {
+  color: #ffd27a;
+  font-weight: 600;
+}
+
 
 .happened ul {
   margin: 0;
@@ -9138,6 +9241,10 @@ button:disabled {
 /* Die Raumkarte (2026-11-18c): wie der Globus eine Grundkarte; ihr Blatt zeigt Systemflug und Schiff. */
 .space-title {
   cursor: default;
+}
+
+.space-choices {
+  margin: 4px 0 8px;
 }
 
 .space-stats {

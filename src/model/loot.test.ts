@@ -6,6 +6,7 @@ import { currentEncounter, rollAnimalEncounter, rollEncounter, setTerrain } from
 import type { DamageRoll } from './log';
 import { butcher, butcheringResult, butchers, cannotButcher, cannotLoot, gamePricePerKg, gameSaleTotal, lootValueOf, rarityDm, survivalGear, takeLoot } from './loot';
 import { ref } from './reference';
+import { hexFromFlat } from './sector';
 import { sellGame, setLocation } from './shop';
 import { fixedClock, fixedRandom } from './testing';
 import { woundStateOf } from './wounds';
@@ -19,7 +20,7 @@ function grazer(extra: Partial<AnimalRow> = {}): AnimalRow {
 function withAnimal(row: AnimalRow, terrain = 'mountain'): Campaign {
   const rows = Array.from({ length: 11 }, (_, i) => (i + 2 === row.roll ? row : { roll: i + 2, event: 'tracks' }));
   const table: AnimalTable = { terrain, rows };
-  const hex = { ...ref.demoWorld, column: 1, row: 1, name: 'Regina', animals: [table] };
+  const hex = hexFromFlat({ ...ref.demoWorld, column: 1, row: 1, name: 'Regina', animals: [table] });
   return setTerrain(setLocation(setHexes(createCampaign(), [hex]), '0101'), terrain);
 }
 
@@ -96,7 +97,7 @@ describe('Ausweiden', () => {
 });
 
 describe('Beute der NSC', () => {
-  const vacuum = { ...ref.demoWorld, column: 2, row: 2, name: 'Fels', uwp: { ...ref.demoWorld.uwp, atmosphere: 0, tech: 12 } };
+  const vacuum = hexFromFlat({ ...ref.demoWorld, column: 2, row: 2, name: 'Fels', uwp: { ...ref.demoWorld.uwp, atmosphere: 0, tech: 12 } });
 
   it('Überlebensausrüstung nach der Atmosphäre: Vacc Suit, Atemgerät, Filtermaske', () => {
     expect(survivalGear(0, 12)).toEqual(['vacc-suit-tl12']);

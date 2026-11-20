@@ -5,7 +5,6 @@ import {
   cascadeOptions,
   characteristics,
   gainOf,
-  hexById,
   hexId,
   isWorld,
   itemOf,
@@ -40,6 +39,7 @@ import {
   type Item,
   type ThrowOdds,
   type WeaponCharacteristic,
+  worldById,
 } from '../model';
 
 /** Eine Zeile im Lebenslauf: ein Wurf mit dem, was er bewirkt hat. */
@@ -140,12 +140,12 @@ export interface GenerationView {
 
 /** Der Name einer Welt, auf die verwiesen wird; ihr Feld, falls sie nicht (mehr) da ist. */
 export function worldName(hexes: readonly Hex[], id: string): string {
-  return hexById(hexes, id)?.name ?? id;
+  return worldById(hexes, id)?.name ?? id;
 }
 
 function worldChoice(hexes: readonly Hex[], id: string): WorldChoice {
-  const hex = hexById(hexes, id);
-  return { id, name: worldName(hexes, id), uwp: hex ? uwpCode(hex.uwp) : '' };
+  const world = worldById(hexes, id);
+  return { id, name: worldName(hexes, id), uwp: world ? uwpCode(world.uwp) : '' };
 }
 
 /** Die fertigen Welten des Subsektors zur Wahl, nach Namen. */

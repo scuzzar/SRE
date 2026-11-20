@@ -5,6 +5,7 @@ import {
   enterSurface,
   hexAt,
   hexId,
+  mainWorld,
   nextRollKind,
   nextWorldAction,
   occurrenceHex,
@@ -19,6 +20,7 @@ import {
   type Temperature,
   type WorldDmPart,
   type WorldRollKind,
+  rollStarSystem,
 } from '..';
 
 /**
@@ -55,7 +57,7 @@ export function totalOf(roll: Pick<WorldRoll, 'dice' | 'dm'>): number {
 export function nextWorldRoll(hex: Hex): { readonly kind: WorldRollKind; readonly dice: 1 | 2; readonly parts: readonly WorldDmPart[] } | undefined {
   const kind = nextRollKind(hex);
   if (kind === undefined) return undefined;
-  return { kind, dice: diceCount(kind), parts: worldDmParts(hex, kind) };
+  return { kind, dice: diceCount(kind), parts: worldDmParts(mainWorld(hex), kind) };
 }
 
 function dice(count: number, random: Random): number[] {
@@ -82,7 +84,7 @@ export function rollWorld(hexes: readonly Hex[], column: number, row: number, ra
   if (nextWorldAction(after) === 'surface') after = enterSurface(after, random);
   const kind = next.kind;
   const table = kind === 'starport' || kind === 'navalBase' || kind === 'scoutBase' || kind === 'gasGiant';
-  const value = kind === 'navalBase' || kind === 'scoutBase' || kind === 'gasGiant' || kind === 'occurrence' || kind === 'temperature' ? undefined : after.uwp[kind];
+  const value = kind === 'navalBase' || kind === 'scoutBase' || kind === 'gasGiant' || kind === 'occurrence' || kind === 'temperature' ? undefined : mainWorld(after).uwp[kind];
   return {
     hexes: putHex(hexes, after),
     roll: {
@@ -103,7 +105,14 @@ export function rollSurfaceAt(hexes: readonly Hex[], column: number, row: number
   return putHex(hexes, enterSurface(hex, random));
 }
 
-/** Lässt eine Welt in Erschaffung durchlaufen: alle Würfe bis zum Namen, mit der Oberfläche. */
+/** Würfelt das Sternsystem einer Welt, die bis zur Oberfläche fertig ist (Schritt `system`, alles auf einmal). */
+export function rollSystemAt(hexes: readonly Hex[], column: number, row: number, random: Random): readonly Hex[] {
+  const hex = hexAt(hexes, column, row);
+  if (!hex || nextWorldAction(hex) !== 'system') throw new DomainError(`Das Sternsystem ist für das Feld ${hexId(column, row)} nicht dran.`);
+  return putHex(hexes, rollStarSystem(hex, random));
+}
+
+/** Lässt eine Welt in Erschaffung durchlaufen: alle Würfe bis zum Namen, mit Oberfläche und Sternsystem. */
 export function runWorld(hexes: readonly Hex[], column: number, row: number, random: Random): { hexes: readonly Hex[]; rolls: readonly WorldRoll[] } {
   const rolls: WorldRoll[] = [];
   let current = hexes;
@@ -114,5 +123,7 @@ export function runWorld(hexes: readonly Hex[], column: number, row: number, ran
     current = next.hexes;
     rolls.push(next.roll);
   }
+  const end = hexAt(current, column, row);
+  if (end && nextWorldAction(end) === 'system') current = rollSystemAt(current, column, row, random);
   return { hexes: current, rolls };
 }

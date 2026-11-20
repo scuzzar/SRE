@@ -19,11 +19,11 @@ import {
   tripSurface,
   vehicleOf,
   dateLabel,
-  hexById,
   type Campaign,
   type Trip,
   type TripDay,
   type TripSurface,
+  worldById,
 } from '../model';
 import { LANDFORM_NAMES } from './globe-view';
 
@@ -161,7 +161,7 @@ export function activeTripView(campaign: Campaign): TripView | undefined {
 
 export function tripDayItem(campaign: Campaign, entry: TripDay): TripDayItem {
   const place = entry.place;
-  const hex = place ? hexById(campaign.hexes, place.world) : undefined;
+  const hex = place ? worldById(campaign.hexes, place.world) : undefined;
   const city = place?.city === undefined ? undefined : hex?.map?.cities?.[place.city]?.name;
   const where = city ?? (place?.cell !== undefined && hex?.map ? `${LANDFORM_NAMES[landformAt(hex.map, place.cell)]} (Feld ${place.cell})` : (hex?.name ?? ''));
   return { kind: 'tripDay', at: entry.at, date: dateLabel(entry.day ?? 0), hours: round1(entry.hours), rent: entry.rent, fare: entry.fare ?? 0, arrived: entry.arrived, where };

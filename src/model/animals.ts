@@ -1,7 +1,7 @@
 import { DomainError } from './errors';
 import type { Random } from './ports';
 import { ref, weaponOf, type AnimalCategory, type AnimalEvent, type AnimalTrait, type AnimalType, type ArmorClass, type Terrain } from './reference';
-import type { Hex } from './sector';
+import { withMain, worldById, type Hex, type World } from './sector';
 
 /** Ein Tierangriff einer Zeile: Tierwaffe (oder „as blade“), DM auf den Angriff und fester Schaden je Treffer. */
 export interface AnimalAttack {
@@ -86,7 +86,7 @@ export function animalName(row: AnimalRow): string {
 }
 
 /** Die Tiertabelle der Welt in diesem Gelände, wenn es sie schon gibt. */
-export function animalTableOf(hex: Hex, terrain: string): AnimalTable | undefined {
+export function animalTableOf(hex: World, terrain: string): AnimalTable | undefined {
   return hex.animals?.find((t) => t.terrain === terrain);
 }
 
@@ -97,8 +97,8 @@ export function eventRowOf(hexes: readonly Hex[], entry: { readonly in: string; 
 
 /** Die Zeile, auf die ein Verweis zeigt. */
 export function animalRowOf(hexes: readonly Hex[], at: AnimalRef): AnimalRow {
-  const hex = hexes.find((h) => `${String(h.column).padStart(2, '0')}${String(h.row).padStart(2, '0')}` === at.in);
-  const row = hex && animalTableOf(hex, at.terrain)?.rows.find((r) => r.roll === at.roll);
+  const world = worldById(hexes, at.in);
+  const row = world && animalTableOf(world, at.terrain)?.rows.find((r) => r.roll === at.roll);
   if (!row) throw new DomainError(`Eine Tierzeile ${at.roll} im Gelände ${at.terrain} auf ${at.in} gibt es nicht.`);
   return row;
 }
@@ -112,12 +112,12 @@ function d6(random: Random, count = 1): number {
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 /** Hat die Welt Leben? Nach der Oberfläche; ohne Oberfläche, wenn sie eine Atmosphäre hat. */
-export function hasLife(hex: Hex): boolean {
+export function hasLife(hex: World): boolean {
   return hex.surface ? hex.surface.life : (hex.uwp.atmosphere ?? 0) > 0;
 }
 
 /** DMs auf die Besonderheiten (SE 18): Größe 9+ −1, 4 oder 5 +1, 3 oder weniger +2; Atmosphäre 8+ +2, 5 oder weniger −1. */
-function traitDm(hex: Hex): number {
+function traitDm(hex: World): number {
   const size = hex.uwp.size ?? 0;
   const atmosphere = hex.uwp.atmosphere ?? 0;
   const bySize = size >= 9 ? -1 : size >= 6 ? 0 : size >= 4 ? 1 : 2;
@@ -126,7 +126,7 @@ function traitDm(hex: Hex): number {
 }
 
 /** Der Size DM der Welt (SE 18): Größe 8+ −1, 4 oder weniger +1. */
-function worldSizeDm(hex: Hex): number {
+function worldSizeDm(hex: World): number {
   const size = hex.uwp.size ?? 0;
   return size >= 8 ? -1 : size <= 4 ? 1 : 0;
 }
@@ -196,7 +196,7 @@ function eventRow(roll: number, random: Random, lifeless: boolean): AnimalRow {
 }
 
 /** Eine Tierzeile (Checklist SE 19): Tierart und Anzahl, Besonderheit, Größe mit Gewicht und Hits, Waffen, Rüstung, Verhalten. */
-function animalRow(roll: number, category: AnimalCategory, hex: Hex, terrain: Terrain, random: Random): AnimalRow {
+function animalRow(roll: number, category: AnimalCategory, hex: World, terrain: Terrain, random: Random): AnimalRow {
   const typeRoll = clamp(d6(random, 2) + terrain.typeDm!, 0, 13);
   const typeRow = animals().typeRows.find((r) => r.category === category && r.roll === typeRoll)!;
   const type = animalTypeOf(typeRow.type);
@@ -236,7 +236,7 @@ const TAINTED = [2, 4, 7, 9];
 const POISON_WEAPONS = ['stinger'];
 
 /** Warum eine Tierart nicht essbar sein kann, unabhängig vom Wurf; sonst `undefined`. */
-export function inedibleReason(hex: Hex, attacks: readonly AnimalAttack[]): string | undefined {
+export function inedibleReason(hex: World, attacks: readonly AnimalAttack[]): string | undefined {
   const atmosphere = hex.uwp.atmosphere ?? 0;
   if (atmosphere < 2 || atmosphere > 9) return `Atmosphäre ${atmosphere}: ungenießbar`;
   if (attacks.some((a) => POISON_WEAPONS.includes(a.with))) return 'Giftwaffe: ungenießbar';
@@ -244,12 +244,12 @@ export function inedibleReason(hex: Hex, attacks: readonly AnimalAttack[]): stri
 }
 
 /** Der DM auf essbar: −3 bei verdorbener Atmosphäre. */
-export function edibleDm(hex: Hex): number {
+export function edibleDm(hex: World): number {
   return TAINTED.includes(hex.uwp.atmosphere ?? 0) ? -3 : 0;
 }
 
 /** Marktwurf (3W6) und essbar (2W6 + DM ≥ 5, nur bei Atmosphäre 2–9 ohne Giftwaffe) einer Tierart. */
-export function rollLootValues(hex: Hex, attacks: readonly AnimalAttack[], random: Random): { readonly market: number; readonly edible: boolean } {
+export function rollLootValues(hex: World, attacks: readonly AnimalAttack[], random: Random): { readonly market: number; readonly edible: boolean } {
   const market = d6(random, 3);
   const roll = d6(random, 2) + edibleDm(hex);
   return { market, edible: inedibleReason(hex, attacks) === undefined && roll >= 5 };
@@ -259,7 +259,7 @@ export function rollLootValues(hex: Hex, attacks: readonly AnimalAttack[], rando
  * Erzeugt die Tiertabelle einer Welt in einem Gelände (SE 18–19): elf Zeilen nach der 2W6-Aufteilung,
  * Zeile 10 ein Ereignis. Auf einer Welt ohne Leben sind alle Zeilen Ereignisse für Welten ohne Leben.
  */
-export function generateAnimalTable(hex: Hex, terrainId: string, random: Random): AnimalTable {
+export function generateAnimalTable(hex: World, terrainId: string, random: Random): AnimalTable {
   const terrain = terrainOf(terrainId);
   if (!hasAnimals(terrain)) throw new DomainError(`Im Gelände ${terrain.name} gibt es keine Tiere.`);
   const life = hasLife(hex);
@@ -273,8 +273,7 @@ export function generateAnimalTable(hex: Hex, terrainId: string, random: Random)
 
 /** Die Welt mit ihrer Tiertabelle in diesem Gelände; gibt es sie schon, bleibt alles, wie es ist. */
 export function withAnimalTable(hex: Hex, terrain: string, random: Random): Hex {
-  if (animalTableOf(hex, terrain)) return hex;
-  return { ...hex, animals: [...(hex.animals ?? []), generateAnimalTable(hex, terrain, random)] };
+  return withMain(hex, (world) => (animalTableOf(world, terrain) ? world : { ...world, animals: [...(world.animals ?? []), generateAnimalTable(world, terrain, random)] }));
 }
 
 /** Prüft eine gespeicherte Tiertabelle: Gelände mit Tieren, elf Zeilen 2 bis 12, Verweise und Werte. */

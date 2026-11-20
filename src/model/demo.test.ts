@@ -4,6 +4,7 @@ import { createDemoCampaign, DEMO_FUNDS } from './demo';
 import { fundsOf, locationOf } from './shop';
 import { fixedClock } from './testing';
 import { stepOf } from './sector';
+import { withStarSystems } from './star-system';
 
 describe('Demo-Kampagne', () => {
   it('hat Kira, Jonas und die fertige Startwelt, die Gruppe steht dort', () => {
@@ -13,6 +14,23 @@ describe('Demo-Kampagne', () => {
     expect(demo.hexes).toHaveLength(1);
     expect(stepOf(demo.hexes[0]!)).toBe('done');
     expect(locationOf(demo)?.name).toBe('Kessra');
+  });
+
+  it('Kessra hat ein Sternsystem, immer dasselbe, gleich mit welchem Schlüssel (2026-11-20)', () => {
+    const demo = createDemoCampaign(fixedClock());
+    expect(demo.hexes[0]!.system).toBeDefined();
+    expect(demo.hexes[0]!.worlds.length).toBeGreaterThan(1);
+    expect(createDemoCampaign(fixedClock(), 'anders').hexes).toEqual(demo.hexes);
+  });
+
+  it('fertige Welten ohne Sternsystem bekommen es nachgewürfelt, je Kampagne und Feld immer gleich', () => {
+    const demo = createDemoCampaign(fixedClock());
+    const without = { ...demo, hexes: demo.hexes.map((h) => ({ ...h, system: undefined, worlds: h.worlds.filter((w) => w.id === h.main).map((w) => ({ ...w, orbit: undefined, moonOf: undefined, angle: undefined })) })) } as unknown as typeof demo;
+    const once = withStarSystems(without);
+    expect(once.hexes[0]!.system).toBeDefined();
+    expect(withStarSystems(without).hexes).toEqual(once.hexes);
+    expect(withStarSystems(once)).toBe(once);
+    expect(withStarSystems({ ...without, key: 'anderer' }).hexes).not.toEqual(once.hexes);
   });
 
   it('hat ein Startkapital in der Gruppenkasse, als Einnahme im Kassenbuch', () => {

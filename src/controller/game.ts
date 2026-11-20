@@ -95,7 +95,6 @@ import {
   setThrust,
   snapThrust,
   startFlight,
-  thrustMarks,
   without,
   type Vec,
   stateOf,
@@ -211,6 +210,12 @@ import {
   type CardRoll,
   type Random,
   type WindowLock,
+  worldById,
+  mainOf,
+  withStarSystems,
+  marksOf,
+  flightTime,
+  hexIdOfWorld,
 } from '../model';
 import {
   attackRounds,
@@ -247,9 +252,10 @@ import {
   choicesOf,
   type Conflict,
   type ConflictChoice,
+  rollSystemAt,
 } from '../model/draft';
 import { buildSnapshot, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
-import type { OpenSpace } from './space-view';
+import { spaceChoices, type OpenSpace } from './space-view';
 import type { JourneyMode } from './time-view';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
@@ -433,7 +439,7 @@ export class GameController {
     }
     // Kampagnen von vor dem Abgleich bekommen Schlüssel und Änderungszeit, einmal und für immer.
     const loaded = campaigns;
-    campaigns = loaded.map((c) => stamped(c, this.deps.keys, this.deps.clock));
+    campaigns = loaded.map((c) => this.withSystems(stamped(c, this.deps.keys, this.deps.clock)));
     campaigns.forEach((c, i) => {
       if (c !== loaded[i]) this.persist(() => this.deps.repository.save(c), true);
     });
@@ -507,9 +513,12 @@ export class GameController {
 
   /** Wechselt in eine andere Kampagne; offene Karte und Probe verfallen. */
   openCampaign(id: CampaignId): void {
-    const campaign = this.state.campaigns.find((c) => c.id === id);
-    if (!campaign) throw new DomainError(`Die Kampagne ${id} gibt es nicht`);
-    this.update({ ...this.closed(campaign), ...this.landing(campaign), campaign, campaignSheet: undefined });
+    const found = this.state.campaigns.find((c) => c.id === id);
+    if (!found) throw new DomainError(`Die Kampagne ${id} gibt es nicht`);
+    const campaign = this.withSystems(found);
+    if (campaign !== found) this.persist(() => this.deps.repository.save(campaign), true);
+    const campaigns = this.state.campaigns.map((c) => (c.id === id ? campaign : c));
+    this.update({ ...this.closed(campaign), ...this.landing(campaign), campaigns, campaign, campaignSheet: undefined });
     this.persist(() => this.deps.repository.saveOpen(id));
   }
 
@@ -1241,7 +1250,7 @@ export class GameController {
     const cell = this.state.globe?.picked;
     if (!campaign || !at || cell === undefined) return 'Erst ein Feld auf dem Globus antippen.';
     if (campaign.location?.world !== hexId(at.column, at.row)) return 'Einkaufen geht nur auf der Welt der Gruppe.';
-    const city = hexAt(campaign.hexes, at.column, at.row)?.map?.cities?.some((c) => c.cell === cell) ?? false;
+    const city = worldById(campaign.hexes, hexId(at.column, at.row))?.map?.cities?.some((c) => c.cell === cell) ?? false;
     return city ? undefined : 'Einkaufen geht nur in einer Stadt.';
   }
 
@@ -2311,7 +2320,7 @@ export class GameController {
     this.inWorld((hexes, at) => {
       const hex = hexAt(hexes, at.column, at.row);
       if (!hex || !canHaveMap(hex)) throw new DomainError('Diese Welt hat keine Oberfläche für einen Globus.');
-      return { hexes: hex.map ? hexes : hexes.map((h) => (h === hex ? withSurfaceMap(h, this.deps.random, cityNamesTaken(hexes)) : h)), world: at };
+      return { hexes: mainOf(hex)?.map ? hexes : hexes.map((h) => (h === hex ? withSurfaceMap(h, this.deps.random, cityNamesTaken(hexes)) : h)), world: at };
     });
     if (!this.state.worldError) this.update({ globe: { picked: undefined } });
   }
@@ -2333,12 +2342,16 @@ export class GameController {
   // --- Raumkarte und Systemflug (siehe domain-model.md, *Systemflug*) -----------------------------
 
   /** Öffnet die Raumkarte der offenen Welt (Knopf „Raum“ an der Weltkarte und am Globus). */
-  openSpace(): void {
+  openSpace(world?: string): void {
     const at = this.state.world;
     if (!at) throw new DomainError('Es ist keine Welt offen.');
     const hex = hexAt(this.campaign.hexes, at.column, at.row);
     if (!isWorld(hex)) throw new DomainError('Dort ist keine fertige Welt.');
-    this.update({ space: { world: hexId(at.column, at.row) }, globe: this.state.globe && { picked: undefined } });
+    // Läuft hier ein Systemflug, geht die Raumkarte seiner Welt auf; sonst die gewählte oder die der Hauptwelt.
+    const flying = this.campaign.flight && hexIdOfWorld(this.campaign.flight.world) === hexId(at.column, at.row) ? this.campaign.flight.world : undefined;
+    const id = world ?? flying ?? hex.main!;
+    if (!spaceChoices(hex).some((c) => c.id === id)) throw new DomainError('Eine Raumkarte haben die Hauptwelt und die Gasriesen.');
+    this.update({ space: { world: id }, globe: this.state.globe && { picked: undefined } });
   }
 
   /** Schließt die Raumkarte; Weltkarte bzw. Globus darunter bleiben, wie sie waren. Ein Systemflug läuft weiter. */
@@ -2360,7 +2373,7 @@ export class GameController {
     const space = this.openSpaceState();
     const state = activeFlight(this.campaign).units[unit];
     if (!state) throw new DomainError('Diese Einheit gibt es nicht.');
-    const snapped = snapThrust(normalThrust(thrust, maxGOf(this.campaign, state)), thrustMarks(state));
+    const snapped = snapThrust(normalThrust(thrust, maxGOf(this.campaign, state)), marksOf(this.campaign, state));
     this.update({ space: { ...space, aim: { unit, thrust: snapped.thrust, ...(snapped.snap === undefined ? {} : { snap: snapped.snap }) } } });
   }
 
@@ -2369,15 +2382,16 @@ export class GameController {
     const space = this.openSpaceState();
     const state = activeFlight(this.campaign).units[unit];
     if (!state) throw new DomainError('Diese Einheit gibt es nicht.');
-    const snapped = snapThrust(normalThrust(thrust, maxGOf(this.campaign, state)), thrustMarks(state)).thrust;
+    const snapped = snapThrust(normalThrust(thrust, maxGOf(this.campaign, state)), marksOf(this.campaign, state)).thrust;
     this.change(setThrust(this.campaign, unit, snapped), { space: without(space, 'aim') });
   }
 
   /** Führt die Raumrunde aus; die Raumkarte spielt sie danach ab. */
   runRound(): void {
     const space = this.openSpaceState();
+    const t = flightTime(this.campaign, activeFlight(this.campaign));
     const run = runRound(this.campaign, this.deps.clock);
-    this.change(run.campaign, { space: { world: space.world, run: { round: activeFlight(run.campaign).round, frames: run.frames } } });
+    this.change(run.campaign, { space: { world: space.world, run: { round: activeFlight(run.campaign).round, t, every: 2, frames: run.frames } } });
   }
 
   /** Beendet den Systemflug; die Raumkarte bleibt offen. */
@@ -2510,7 +2524,7 @@ export class GameController {
     const cell = this.state.globe?.picked;
     if (!at || cell === undefined) throw new DomainError('Erst ein Feld auf dem Globus antippen.');
     const world = hexId(at.column, at.row);
-    const city = hexAt(this.campaign.hexes, at.column, at.row)?.map?.cities?.findIndex((c) => c.cell === cell) ?? -1;
+    const city = worldById(this.campaign.hexes, world)?.map?.cities?.findIndex((c) => c.cell === cell) ?? -1;
     return city >= 0 ? { world, city } : { world, cell };
   }
 
@@ -2584,11 +2598,12 @@ export class GameController {
     }
   }
 
-  /** Würfelt den nächsten Wurf der offenen Welt; braucht sie nur noch die Oberfläche, diese. */
+  /** Würfelt den nächsten Wurf der offenen Welt; braucht sie nur noch die Oberfläche oder das Sternsystem, dieses. */
   rollWorld(): void {
     this.inWorld((hexes, at) => {
       const hex = hexAt(hexes, at.column, at.row);
       if (hex && nextWorldAction(hex) === 'surface') return { hexes: rollSurfaceAt(hexes, at.column, at.row, this.deps.random), world: at };
+      if (hex && nextWorldAction(hex) === 'system') return { hexes: rollSystemAt(hexes, at.column, at.row, this.deps.random), world: at };
       const { hexes: next, roll } = rollWorld(hexes, at.column, at.row, this.deps.random);
       return { hexes: next, world: { ...at, rolls: [...at.rolls, roll] } };
     });
@@ -2718,8 +2733,14 @@ export class GameController {
   private home(campaign: Campaign): Pick<ControllerState, 'world' | 'globe'> {
     const at = campaign.location?.world;
     const hex = at === undefined ? undefined : campaign.hexes.find((h) => hexId(h.column, h.row) === at);
-    if (!hex || !isWorld(hex) || !hex.map) return { world: undefined, globe: undefined };
+    if (!hex || !isWorld(hex) || !mainOf(hex)?.map) return { world: undefined, globe: undefined };
     return { world: { column: hex.column, row: hex.row, rolls: [] }, globe: { picked: undefined } };
+  }
+
+  /** Fertige Welten ohne Sternsystem bekommen es beim Öffnen der Kampagne (2026-11-20); dann gilt sie als geändert. */
+  private withSystems(campaign: Campaign): Campaign {
+    const next = withStarSystems(campaign);
+    return next === campaign ? campaign : touched(next, this.deps.clock);
   }
 
   /** Läuft eine Fahrt, öffnet die Kampagne im Reiter Begegnung, wo es weitergeht. */
@@ -2736,7 +2757,8 @@ export class GameController {
   }
 
   /** Nimmt eine neue Kampagne auf, öffnet und speichert sie. */
-  private addCampaign(campaign: Campaign): void {
+  private addCampaign(added: Campaign): void {
+    const campaign = this.withSystems(added);
     this.update({ ...this.closed(campaign), campaigns: [...this.state.campaigns, campaign], campaign, campaignSheet: undefined });
     this.persist(() => this.deps.repository.save(campaign), true);
     this.persist(() => this.deps.repository.saveOpen(campaign.id));
