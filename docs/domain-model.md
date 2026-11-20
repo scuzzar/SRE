@@ -480,7 +480,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `World.facilities`, `World.bases`, `Spaceport`, `Facility`, `BaseKind`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-20c-nebenwelten.png`](changes/2026-11-20c-nebenwelten.png).
 >
-> Wartet auf Freigabe (Kennzeichen 2026-11-20d): **Reise im System und Nebenwelten mit Globus** (Owner,
+> Am 20. November 2026 freigegeben (Kennzeichen 2026-11-20d): **Reise im System und Nebenwelten mit Globus** (Owner,
 > 20. November 2026). Die Weltkarte und der Globus hängen an der Welt statt am Hexfeld: Nebenwelten
 > bekommen Namen, Notiz, Oberfläche und Globus wie die Hauptwelt; der Globus jeder Welt entsteht nur
 > auf ausdrücklichen Knopfdruck („Globus erzeugen“). Zwischen Welten desselben Systems reist man mit
@@ -1398,7 +1398,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - *Dauer*: ebenfalls **eine Woche**; sonst gilt wie bei der Passage.
     - *Lebenserhaltung* (2026-11-17b): siehe *Schiffe*, *Laufende Kosten und Monatsabrechnung*.
     - Kommen später: zahlende Passagiere und Fracht.
-  - *Reise im System* (wartet auf Freigabe, 2026-11-20d; Owner, 20. November 2026). Zwischen Welten
+  - *Reise im System* (freigegeben am 20. November 2026, 2026-11-20d; Owner, 20. November 2026). Zwischen Welten
     desselben Systems (SE S. 27, Charts S. 8).
     - *Wohin*: Auf der Weltkarte jeder anderen Welt des Systems, in dem die Gruppe ist, steht
       **Hierher reisen**; es öffnet den Reisedialog wie beim Sprung. Ziele sind Welten, kleine
@@ -3165,7 +3165,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Raumkarte kommen die weiteren Welten nicht: Sie
     liegen Millionen Kilometer entfernt. Die Weltkarte zeigt sie in einer Übersicht des Systems;
     besuchen kann man sie später mit einer Reise im System.
-  - **Nebenwelten mit Weltkarte und Globus** (wartet auf Freigabe, 2026-11-20d; Owner, 20. November
+  - **Nebenwelten mit Weltkarte und Globus** (freigegeben am 20. November 2026, 2026-11-20d; Owner, 20. November
     2026). Ein Tipp auf eine Welt in der Übersicht des Systems öffnet ihre Weltkarte, wie die der
     Hauptwelt; Weltkarte und Globus hängen dafür an der Welt, nicht am Hexfeld. Nebenwelten
     bekommen dort einen Namen und eine Notiz, „Oberfläche würfeln“ (wie bei Welten von vor der

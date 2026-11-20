@@ -115,7 +115,7 @@ hide <<browser>> stereotype
     rent
     fare
     ship
-    $new("2026-11-20d", "ticket")
+    ticket
   }
   class Character $charakter {
     name: string
@@ -492,7 +492,7 @@ hide <<browser>> stereotype
   }
   class Passenger <<value>> $reise {
   }
-  class SystemJourney $reise $newClass("2026-11-20d") {
+  class SystemJourney $reise {
     hours: number
     /days: number
     /distance: number
@@ -1209,12 +1209,12 @@ LogEntry <|-- MonthEnd
 MonthEnd "*" --> "*" Booking : costs {ordered}
 Booking --> ShipCost
 Booking "*" --> "0..1" Journey : won
-LogEntry <|-$newArrow("2026-11-20d")- SystemJourney
-SystemJourney "*" -$newArrow("2026-11-20d")-> "1" World : from
-SystemJourney "*" -$newArrow("2026-11-20d")-> "1" World : to
-SystemJourney "*" -$newArrow("2026-11-20d")-> "*" Character : travellers
-SystemJourney "*" -$newArrow("2026-11-20d")-> "0..1" Ship : ship
-Booking "*" -$newArrow("2026-11-20d")-> "0..1" SystemJourney : ticketFor
+LogEntry <|-- SystemJourney
+SystemJourney "*" --> "1" World : from
+SystemJourney "*" --> "1" World : to
+SystemJourney "*" --> "*" Character : travellers
+SystemJourney "*" --> "0..1" Ship : ship
+Booking "*" --> "0..1" SystemJourney : ticketFor
 
 ' Charaktererschaffung und Lebenslauf
 Campaign "1" *-- "0..1" Generation : generation

@@ -144,7 +144,7 @@ hide <<browser>> stereotype
 
 ' Zeit und Reisen
   class Passenger <<value>> $reise
-  class SystemJourney $reise $newClass("2026-11-20d")
+  class SystemJourney $reise
   class LowBerth <<value>> $reise
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
@@ -192,7 +192,7 @@ Booking "*" --> "0..1" Character : for
 ' Zeit und Reisen
 Passenger "*" --> "1" Character : for
 LowBerth "*" --> "0..1" Character : for
-SystemJourney "*" -$newArrow("2026-11-20d")-> "*" Character : travellers
+SystemJourney "*" --> "*" Character : travellers
 
 ' Charaktererschaffung und Lebenslauf
 Generation ..> Character : on finish
