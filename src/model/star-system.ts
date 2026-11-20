@@ -1,7 +1,7 @@
 import { DomainError } from './errors';
 import type { Random } from './ports';
 import { ref } from './reference';
-import { hexId, mainOf, mainWorld, type Hex, type Star, type StarSystem, type TemperatureId, type World } from './sector';
+import { baseKinds, facilities, hexId, mainOf, mainWorld, spaceports, tradeCodesOf, type BaseKind, type Facility, type Hex, type Spaceport, type Star, type StarSystem, type TemperatureId, type World } from './sector';
 
 // Das Sternsystem nach Book 6 *Scouts* (Domänenmodell 2026-11-18d, 2026-11-20, 2026-11-20b): Sterne,
 // Bahnen und Zonen um den Hauptstern, Gasriesen, Planetoidengürtel, leere und eingefangene Bahnen,
@@ -307,7 +307,72 @@ export function rollStarSystem(hex: Hex, random: Random): Hex {
   }
 
   const system: StarSystem = { stars, maxOrbits, emptyOrbits: emptyOrbits.sort((a, b) => a - b) };
-  return { ...hex, system, worlds: [placedMain, ...worlds, ...moons, ...hex.worlds.filter((w) => w.id !== main.id)] };
+  return rollSubordinates({ ...hex, system, worlds: [placedMain, ...worlds, ...moons, ...hex.worlds.filter((w) => w.id !== main.id)] }, random);
+}
+
+/** Bekommt diese Welt Raumhafen, Regierung, Gesetz, TL und Einrichtungen (B6 38)? Jede außer Hauptwelt, Gasriesen und Ringen. */
+export function isSubordinate(hex: Hex, world: World): boolean {
+  return world.id !== hex.main && world.kind !== 'giant' && world.kind !== 'ring';
+}
+
+/** Die Regierung nach der Tabelle Subordinate Government (B6 29): 1 → 0, 2 → 1, 3 → 2, 4 → 3, 5+ → 6. */
+const SUBORDINATE_GOVERNMENT = [0, 1, 2, 3, 6] as const;
+/** Der Raumhafen nach der Spaceport Table (B6 29), 1 bis 6. */
+const SPACEPORT_TABLE: readonly Spaceport[] = ['Y', 'Y', 'H', 'G', 'G', 'F'];
+
+/**
+ * Die Nebenwelten (2026-11-20c, B6 37–39 mit den Tabellen S. 29): erst die Basen im ganzen System,
+ * dann je Welt außer Hauptwelt, Gasriesen und Ringen Regierung, Gesetz, Einrichtungen, Tech-Level und
+ * Raumhafen. Bei Widersprüchen gilt das Kapitel, die Zusätze der Tabelle gelten mit (Owner).
+ */
+export function rollSubordinates(hex: Hex, random: Random): Hex {
+  const main = mainWorld(hex);
+  const subs = hex.worlds.filter((w) => isSubordinate(hex, w));
+  const pop = (w: World) => w.uwp.population ?? 0;
+  // Basen im System (B6 37): Marine 1W6 − 3 auf Welten mit Bevölkerung 3+, Scouts 1W6 − 4 mit 2+; je Welt und Art höchstens eine.
+  const bases = new Map<string, BaseKind[]>();
+  const place = (kind: BaseKind, count: number, minPopulation: number) => {
+    const open = subs.filter((w) => pop(w) >= minPopulation);
+    for (let i = 0; i < count && open.length > 0; i++) {
+      const [world] = open.splice(random.int(0, open.length - 1), 1);
+      bases.set(world!.id, [...(bases.get(world!.id) ?? []), kind]);
+    }
+  };
+  place('naval', Math.max(0, d6(random) - 3), 3);
+  place('scout', Math.max(0, d6(random) - 4), 2);
+  const anyBase = hex.navalBase === true || hex.scoutBase === true || bases.size > 0;
+  const mainGovernment = main.uwp.government ?? 0;
+  const mainLaw = main.uwp.law ?? 0;
+  const mainTech = main.uwp.tech ?? 0;
+  const mainPopulation = pop(main);
+  const mainAtmosphere = main.uwp.atmosphere;
+  const codes = tradeCodesOf(main).map((t) => t.id);
+  const industrial = codes.includes('In');
+  const poor = codes.includes('Po');
+  const values = new Map<string, Pick<World, 'uwp' | 'spaceport' | 'facilities' | 'bases'>>();
+  for (const world of subs) {
+    const p = pop(world);
+    const atmosphere = world.uwp.atmosphere ?? 0;
+    const hydrographics = world.uwp.hydrographics ?? 0;
+    // Regierung: ohne Bevölkerung 0; unter einer Captive Government (6) ebenfalls 6; bei 7+ DM +2 (Kapitel).
+    const government = p === 0 ? 0 : mainGovernment === 6 ? 6 : SUBORDINATE_GOVERNMENT[Math.min(5, d6(random) + (mainGovernment >= 7 ? 2 : 0)) - 1]!;
+    // Gesetz: 1W6 − 3 + Gesetz der Hauptwelt; ohne Regierung 0 (Kapitel).
+    const law = government === 0 ? 0 : Math.max(0, d6(random) - 3 + mainLaw);
+    const found: Facility[] = [];
+    if (zoneOf(hex, world) === 'habitable' && atmosphere >= 4 && atmosphere <= 9 && hydrographics >= 4 && hydrographics <= 8 && p >= 2) found.push('farming');
+    if (industrial && p >= 2) found.push('mining');
+    if (government === 6 && p >= 5) found.push('colony');
+    if (p > 0 && mainTech > 8 && d2(random) + (mainTech >= 10 ? 2 : 0) >= 11) found.push('research');
+    if (p > 0 && !poor && d2(random) + (mainPopulation >= 8 ? 1 : 0) + (atmosphere === mainAtmosphere ? 2 : 0) + (anyBase ? 1 : 0) >= 12) found.push('military');
+    // Tech-Level: Hauptwelt − 1, gleich bei Labor oder Militärbasis; unter 7 bei lebensfeindlicher Luft 7 (Tabelle S. 29).
+    let tech = found.includes('research') || found.includes('military') ? mainTech : Math.max(0, mainTech - 1);
+    if (tech < 7 && ![5, 6, 8].includes(atmosphere)) tech = 7;
+    const portDm = p >= 6 ? 2 : p === 1 ? -2 : p === 0 ? -3 : 0;
+    const spaceport = SPACEPORT_TABLE[clamp(d6(random) + portDm, 1, 6) - 1]!;
+    const own = bases.get(world.id);
+    values.set(world.id, { uwp: { ...world.uwp, government, law, tech }, spaceport, ...(found.length > 0 ? { facilities: found } : {}), ...(own ? { bases: own } : {}) });
+  }
+  return { ...hex, worlds: hex.worlds.map((w) => (values.has(w.id) ? { ...w, ...values.get(w.id)! } : w)) };
 }
 
 /** Die Hauptwelt ohne eine frühere Lage (für den Fall, dass ein System neu entsteht). */
@@ -392,6 +457,8 @@ export function checkStarSystems(hexes: readonly Hex[]): void {
       if (others.length > 0) fail('Weitere Welten gibt es erst mit dem Sternsystem.');
       continue;
     }
+    const subs = hex.worlds.filter((w) => isSubordinate(hex, w));
+    if (subs.some((w) => w.spaceport === undefined) && subs.some((w) => w.spaceport !== undefined)) fail('Entweder alle Nebenwelten haben ihren Raumhafen oder keine (Systeme von vor 2026-11-20c).');
     if (hex.empty) fail('Ein leeres Feld hat kein Sternsystem.');
     const main = mainWorld(hex);
     if (main.uwp.tech === undefined) fail('Das Sternsystem kommt erst nach dem UWP.');
@@ -424,6 +491,16 @@ export function checkStarSystems(hexes: readonly Hex[]): void {
         if (moonsOf(hex, w).length > 0) fail(`Ein Mond hat keine Monde (${w.id}).`);
       }
       if (!isMain && (w.name !== undefined || w.note !== undefined || w.map !== undefined || w.surface !== undefined)) fail(`Nebenwelten haben vorerst weder Namen noch Oberfläche (${w.id}).`);
+      const subordinate = isSubordinate(hex, w);
+      if (!subordinate && (w.spaceport !== undefined || w.facilities !== undefined || w.bases !== undefined)) fail(`Raumhafen, Einrichtungen und Basen haben nur Nebenwelten (${w.id}).`);
+      if (subordinate && w.spaceport === undefined && (w.uwp.government !== undefined || w.uwp.law !== undefined || w.uwp.tech !== undefined || w.facilities !== undefined || w.bases !== undefined)) fail(`Die Nebenwelt ${w.id} hat Werte von 2026-11-20c, aber keinen Raumhafen.`);
+      if (subordinate && w.spaceport !== undefined) {
+        if (!spaceports.includes(w.spaceport)) fail(`Den Raumhafen ${w.spaceport} gibt es nicht.`);
+        if (!(SUBORDINATE_GOVERNMENT as readonly number[]).includes(w.uwp.government ?? -1)) fail(`Die Nebenwelt ${w.id} hat keine Regierung nach der Tabelle.`);
+        for (const v of [w.uwp.law, w.uwp.tech]) if (v === undefined || !Number.isInteger(v) || v < 0) fail(`Die Nebenwelt ${w.id} braucht Gesetz und TL.`);
+        const list = (xs: readonly string[] | undefined, allowed: readonly string[]) => xs !== undefined && (xs.length === 0 || new Set(xs).size !== xs.length || xs.some((x) => !allowed.includes(x)));
+        if (list(w.facilities, facilities) || list(w.bases, baseKinds)) fail(`Einrichtungen und Basen der Nebenwelt ${w.id}: jede bekannte einmal, keine leere Liste.`);
+      }
     }
   }
 }
@@ -444,16 +521,23 @@ export function textRandom(text: string): Random {
 }
 
 /**
- * Fertige Welten ohne Sternsystem bekommen es nachgewürfelt (Welten ohne Sternsystem, 2026-11-20), einmal.
+ * Fertige Welten ohne Sternsystem bekommen es nachgewürfelt (Welten ohne Sternsystem, 2026-11-20), einmal;
+ * Systeme von vor 2026-11-20c die Werte ihrer Nebenwelten.
  * Die Würfe kommen aus dem Schlüssel der Kampagne und dem Feld: So entsteht auf jedem Gerät dasselbe
  * System, und der Abgleich hat nichts zu entscheiden. Ohne solche Welt bleibt die Kampagne dieselbe.
  */
 export function withStarSystems<C extends { readonly key: string; readonly hexes: readonly Hex[] }>(campaign: C, seed = campaign.key): C {
   let changed = false;
   const hexes = campaign.hexes.map((hex) => {
+    const id = hexId(hex.column, hex.row);
+    // Systeme von vor 2026-11-20c bekommen Raumhafen, Regierung, Gesetz, TL, Einrichtungen und Basen nach.
+    if (hex.system && hex.worlds.some((w) => isSubordinate(hex, w) && w.spaceport === undefined)) {
+      changed = true;
+      return rollSubordinates(hex, textRandom(`${seed}/${id}/2026-11-20c`));
+    }
     if (hex.empty || hex.system || mainOf(hex)?.name === undefined || mainOf(hex)?.uwp.tech === undefined) return hex;
     changed = true;
-    return rollStarSystem(hex, textRandom(`${seed}/${hexId(hex.column, hex.row)}`));
+    return rollStarSystem(hex, textRandom(`${seed}/${id}`));
   });
   return changed ? { ...campaign, hexes } : campaign;
 }

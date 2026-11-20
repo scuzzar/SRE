@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { createCampaign, fromCampaignFile, setHexes, toCampaignFile } from '.';
-import { hexFromFlat, mainWorld, type Hex } from './sector';
+import { hexFromFlat, mainWorld, type Hex, type World } from './sector';
 import {
   availableOrbits,
   checkStarSystems,
   gravityOf,
   hostOf,
+  isSubordinate,
   moonsOf,
   orbitMillionKm,
   rollStarSystem,
+  rollSubordinates,
   starName,
   temperatureOfWorld,
   zoneOf,
@@ -142,5 +144,73 @@ describe('Sternsystem würfeln', () => {
     // Höchste Bahn 2 − 4 → 0; M0 V: bewohnbar ist Bahn 0, also die Hauptwelt dort oder als Mond des Gasriesen.
     expect(hex.system!.maxOrbits).toBe(0);
     expect(() => checkStarSystems([hex])).not.toThrow();
+  });
+});
+
+describe('Nebenwelten (2026-11-20c)', () => {
+  it('gibt jeder Welt außer Hauptwelt, Gasriesen und Ringen Raumhafen, Regierung, Gesetz und TL nach den Regeln', () => {
+    for (let seed = 1; seed <= 300; seed++) {
+      const hex = rollStarSystem(regina, seededRandom(seed));
+      expect(() => checkStarSystems([hex])).not.toThrow();
+      for (const w of hex.worlds) {
+        if (!isSubordinate(hex, w)) {
+          expect(w.spaceport).toBeUndefined();
+          continue;
+        }
+        const p = w.uwp.population ?? 0;
+        expect(['F', 'G', 'H', 'Y']).toContain(w.spaceport);
+        // Regierung der Hauptwelt 4: 1W6 ohne DM auf die Tabelle; ohne Bevölkerung 0.
+        expect([0, 1, 2, 3, 6]).toContain(w.uwp.government);
+        if (p === 0) expect(w.uwp.government).toBe(0);
+        // Gesetz 1W6 − 3 + 5, ohne Regierung 0.
+        if (w.uwp.government === 0) expect(w.uwp.law).toBe(0);
+        else expect(w.uwp.law).toBeGreaterThanOrEqual(3);
+        // TL 7 − 1 = 6, bei lebensfeindlicher Luft mindestens 7.
+        const atmosphere = w.uwp.atmosphere ?? 0;
+        const full = (w.facilities ?? []).includes('military');
+        expect(w.uwp.tech).toBe(full || ![5, 6, 8].includes(atmosphere) ? 7 : 6);
+        // Kein Forschungslabor bei TL 7 der Hauptwelt, kein Bergbau ohne Industrie; Kolonie nur mit Regierung 6.
+        expect(w.facilities ?? []).not.toContain('research');
+        expect(w.facilities ?? []).not.toContain('mining');
+        if ((w.facilities ?? []).includes('colony')) expect(w.uwp.government).toBe(6);
+        if ((w.bases ?? []).includes('naval')) expect(p).toBeGreaterThanOrEqual(3);
+        if ((w.bases ?? []).includes('scout')) expect(p).toBeGreaterThanOrEqual(2);
+      }
+    }
+  });
+
+  it('folgt einer Captive Government; unbewohnte Welten haben nie einen guten Raumhafen', () => {
+    const captive = { ...regina, worlds: regina.worlds.map((w) => ({ ...w, uwp: { ...w.uwp, government: 6, tech: 12 } })) };
+    for (let seed = 1; seed <= 100; seed++) {
+      const hex = rollStarSystem(captive, seededRandom(seed));
+      for (const w of hex.worlds.filter((x) => isSubordinate(hex, x))) {
+        expect(w.uwp.government).toBe((w.uwp.population ?? 0) === 0 ? 0 : 6);
+        if ((w.uwp.population ?? 0) === 0) expect(['Y', 'H']).toContain(w.spaceport);
+        // Mit Labor oder Militärbasis der TL der Hauptwelt, sonst eins weniger.
+        const full = (w.facilities ?? []).some((f) => f === 'research' || f === 'military');
+        expect(w.uwp.tech).toBe(full ? 12 : 11);
+      }
+    }
+  });
+
+  it('würfelt die Werte für Systeme von vor 2026-11-20c nach, sonst bleibt alles', () => {
+    const hex = rollStarSystem(regina, seededRandom(5));
+    const physical = ['size', 'atmosphere', 'hydrographics', 'population'];
+    const strip = (h: Hex): Hex => ({
+      ...h,
+      worlds: h.worlds.map((w) => {
+        if (!isSubordinate(h, w)) return w;
+        const rest = Object.fromEntries(Object.entries(w).filter(([k]) => !['spaceport', 'facilities', 'bases'].includes(k)));
+        return { ...rest, uwp: Object.fromEntries(Object.entries(w.uwp).filter(([k]) => physical.includes(k))) } as World;
+      }),
+    });
+    const old = strip(hex);
+    expect(() => checkStarSystems([old])).not.toThrow();
+    const again = rollSubordinates(old, seededRandom(9));
+    expect(strip(again)).toEqual(old);
+    expect(again.worlds.filter((w) => isSubordinate(again, w)).every((w) => w.spaceport !== undefined)).toBe(true);
+    // Halb nachgewürfelt gibt es nicht.
+    const half = { ...again, worlds: again.worlds.map((w, i) => (i === again.worlds.findIndex((x) => isSubordinate(again, x)) ? old.worlds[i]! : w)) };
+    if (again.worlds.filter((w) => isSubordinate(again, w)).length > 1) expect(() => checkStarSystems([half])).toThrow(/alle Nebenwelten/);
   });
 });

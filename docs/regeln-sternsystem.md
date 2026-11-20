@@ -37,7 +37,7 @@ Es ist ein Nachschlagewerk, kein Modell: Was die App davon baut, kommt zuerst in
 | [Größe der Monde](#größe-der-monde) | B6 24, 36 | ✔ |
 | [Bahnen der Monde](#bahnen-der-monde) | B6 28, 36–37 | ✔ (Umlauf nach Kepler auf der Raumkarte) |
 | [UWP der Monde](#uwp-der-monde) | B6 24, 37 | ✔ (DMs des Kapitels) |
-| [Nebenwelten: Regierung, Gesetz, Einrichtungen, TL, Raumhafen](#nebenwelten-regierung-gesetz-einrichtungen-tl-raumhafen) | B6 29, 38–39 | ○ |
+| [Nebenwelten: Regierung, Gesetz, Einrichtungen, TL, Raumhafen](#nebenwelten-regierung-gesetz-einrichtungen-tl-raumhafen) | B6 29, 37–39 | ✔ (Kapitel bei Widersprüchen, Zusätze der Tabelle S. 29; Gürtel wie Welten; Basen im System mitgewürfelt, je Welt und Art höchstens eine) |
 | [Gasriesen](#gasriesen) | B6 28, 36, 39, 48 | ✔ (✱ Radius gewürfelt) |
 | [Kleine Welten, Ringe, Gürtel](#kleine-welten-ringe-gürtel) | B6 36, 39 | ✔ (✱ Ring als Band auf der Raumkarte) |
 | [Masse und Schwerkraft](#masse-und-schwerkraft) | B6 43, 48–49; SR 22 | ✔ (nach der Formel; Monde und Gasriesen ziehen auf der Raumkarte) |

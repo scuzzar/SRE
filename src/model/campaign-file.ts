@@ -247,6 +247,9 @@ const WorldSchema = z.object({
   large: z.boolean().optional(),
   radius: z.number().optional(),
   moonOf: z.string().optional(),
+  spaceport: z.enum(['F', 'G', 'H', 'Y']).optional(),
+  facilities: z.array(z.enum(['farming', 'mining', 'colony', 'research', 'military'])).optional(),
+  bases: z.array(z.enum(['naval', 'scout'])).optional(),
 });
 /** Ein Stern (2026-11-18d). */
 const StarSchema = z.object({

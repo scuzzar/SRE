@@ -38,6 +38,8 @@ import {
   starName,
   moonsOf,
   type Zone,
+  type Facility,
+  type BaseKind,
 } from '../model';
 import { nextWorldRoll, totalOf, type WorldRoll } from '../model/draft';
 
@@ -530,12 +532,20 @@ function distanceText(orbit: number): string {
   return au < 1 ? `${num(km)} Mio. km` : `${num(au, au < 10 ? 1 : 0)} AU`;
 }
 
-/** Größe, Atmosphäre, Hydrographie, Bevölkerung einer Nebenwelt als Ziffern; Gasriesen, Ringe und Gürtel haben keine. */
+/**
+ * Das UWP einer Nebenwelt mit ihrem Raumhafen (2026-11-20c), z. B. G552531-8; Systeme von davor nur
+ * Größe, Atmosphäre, Hydrographie, Bevölkerung. Gasriesen und Ringe haben keins.
+ */
 function codeOf(world: World): string | undefined {
   if (world.kind === 'giant' || world.kind === 'ring') return undefined;
   const digit = (v: number | undefined) => (v === undefined ? '?' : ehex(v));
-  return `${sizeCode(world)}${digit(world.uwp.atmosphere)}${digit(world.uwp.hydrographics)}${digit(world.uwp.population)}`;
+  const middle = `${sizeCode(world)}${digit(world.uwp.atmosphere)}${digit(world.uwp.hydrographics)}${digit(world.uwp.population)}`;
+  if (world.spaceport === undefined) return middle;
+  return `${world.spaceport}${middle}${digit(world.uwp.government)}${digit(world.uwp.law)}-${digit(world.uwp.tech)}`;
 }
+
+const FACILITY_NAMES: Record<Facility, string> = { farming: 'Landwirtschaft', mining: 'Bergbau', colony: 'Kolonie', research: 'Forschungslabor', military: 'Militärbasis' };
+const BASE_NAMES: Record<BaseKind, string> = { naval: 'Marinestützpunkt', scout: 'Scoutbasis' };
 
 /** Das Weltsymbol einer Welt des Systems; die Hauptwelt wie auf der Karte, Ringe und Gürtel ohne. */
 export function systemLook(hex: Hex, world: World): WorldLook | undefined {
@@ -571,6 +581,8 @@ function bodyView(hex: Hex, world: World): SystemBodyView {
   if (world.kind === 'small' && world.diameter !== undefined) details.push(`${num(world.diameter)} km`);
   const g = gravityOf(world);
   if (g > 0) details.push(`${num(g, 2)} G`);
+  for (const b of world.bases ?? []) details.push(BASE_NAMES[b]);
+  for (const f of world.facilities ?? []) details.push(FACILITY_NAMES[f]);
   return { id: world.id, label, code: main ? undefined : codeOf(world), detail: details.join(' · ') || undefined, main, look: systemLook(hex, world) };
 }
 

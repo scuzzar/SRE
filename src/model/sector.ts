@@ -82,7 +82,23 @@ export interface World {
   readonly radius?: number;
   /** Die Welt, um die dieser Mond (oder Ring) kreist; fehlt, wenn sie um den Hauptstern kreist. */
   readonly moonOf?: string;
+  /** Nur Nebenwelten (2026-11-20c): der Spaceport; den Starport hat nur die Hauptwelt (im UWP). */
+  readonly spaceport?: Spaceport;
+  /** Nur Nebenwelten: Einrichtungen, jede höchstens einmal. */
+  readonly facilities?: readonly Facility[];
+  /** Nur Nebenwelten: Marinestützpunkt und Scoutbasis; die Basen der Hauptwelt stehen am Hexfeld. */
+  readonly bases?: readonly BaseKind[];
 }
+
+/** Der Raumhafen einer Nebenwelt (B6 39): F gut, G schlecht, H einfachste Einrichtungen, Y keiner. */
+export type Spaceport = 'F' | 'G' | 'H' | 'Y';
+export const spaceports: readonly Spaceport[] = ['F', 'G', 'H', 'Y'];
+/** Eine Einrichtung einer Nebenwelt (B6 38). */
+export type Facility = 'farming' | 'mining' | 'colony' | 'research' | 'military';
+export const facilities: readonly Facility[] = ['farming', 'mining', 'colony', 'research', 'military'];
+/** Eine Basis auf einer Nebenwelt (B6 37). */
+export type BaseKind = 'naval' | 'scout';
+export const baseKinds: readonly BaseKind[] = ['naval', 'scout'];
 
 /**
  * Ein erzeugtes Hexfeld des Subsektors: das System (Domänenmodell 2026-11-20b). Es hält ob es leer
