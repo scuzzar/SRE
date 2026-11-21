@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Snapshot } from '../../controller';
+import type { ShotEffect } from './SpaceScreen';
 import { DiceView, THROW_MS } from '../Dice';
 import { animated, haptic, stopHaptics } from '../haptics';
 
@@ -14,7 +15,7 @@ const END_MS = 1800;
  * Summe mit DM, Treffer oder daneben und die Trefferzonen; zuletzt, wenn der Raumkampf endete, wie.
  * Im Log steht alles schon; das hier ist nur Anzeige. Ein Tippen springt zum nächsten Schuss.
  */
-export function SpaceVolley({ volley, onDone }: { volley: Volley; onDone: () => void }) {
+export function SpaceVolley({ volley, onShot, onDone }: { volley: Volley; onShot?: (shot: ShotEffect) => void; onDone: () => void }) {
   // Schritt 0: warten (die Bewegung spielt ab); danach je Schuss werfen und liegen; zuletzt das Ende.
   const [step, setStep] = useState<{ shot: number; landed: boolean } | 'wait' | 'end'>(volley.delay > 0 && animated() ? 'wait' : { shot: 0, landed: !animated() });
   const shots = volley.shots;
@@ -25,6 +26,13 @@ export function SpaceVolley({ volley, onDone }: { volley: Volley; onDone: () => 
     if (step.shot + 1 < shots.length) return setStep({ shot: step.shot + 1, landed: false });
     return volley.endings.length > 0 ? setStep('end') : onDone();
   };
+  // Sobald die Würfel eines Schusses liegen, zeigt die Raumkarte darüber Strahl und Trefferzonen.
+  const landedShot = step !== 'wait' && step !== 'end' && step.landed ? step.shot : undefined;
+  useEffect(() => {
+    if (landedShot === undefined) return;
+    const s = shots[landedShot]!;
+    onShot?.({ id: `${volley.key}-${landedShot}`, attacker: s.attacker, target: s.target, hit: s.hit, hits: s.hits });
+  }, [landedShot, onShot, shots, volley.key]);
   useEffect(() => {
     const ms = step === 'wait' ? volley.delay : step === 'end' ? END_MS : step.landed ? SHOW_MS : THROW_MS;
     const timer = setTimeout(next, ms);

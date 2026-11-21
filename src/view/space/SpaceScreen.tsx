@@ -98,11 +98,29 @@ function startCamera(space: SpaceView, width: number, height: number): Camera {
   return { cx: 0, cy: -(0.17 * height) / scale, scale };
 }
 
-export function SpaceScreen({ space }: { space: SpaceView }) {
+/** Ein Laserschuss, den die Raumkarte zeigt (2026-11-21e): wer auf wen, Treffer oder nicht, die Trefferzonen. */
+export interface ShotEffect {
+  readonly id: string;
+  readonly attacker: string;
+  readonly target: string;
+  readonly hit: boolean;
+  readonly hits: readonly string[];
+}
+
+/** Wie lange ein Schuss auf der Karte zu sehen ist, in ms: Strahl, Blitz, aufsteigender Text. */
+const SHOT_MS = 2200;
+
+export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffect | undefined }) {
   const game = useGame();
   const canvas = useRef<HTMLCanvasElement>(null);
   const camera = useRef<Camera | undefined>(undefined);
   const latest = useRef(space);
+  // Schüsse auf der Karte (reine Darstellung) und wo jede Einheit zuletzt gezeichnet wurde, nach Namen.
+  const shots = useRef<{ readonly effect: ShotEffect; readonly start: number }[]>([]);
+  const seen = useRef(new Map<string, Point>());
+  useEffect(() => {
+    if (shot !== undefined && !shots.current.some((s) => s.effect.id === shot.id)) shots.current = [...shots.current, { effect: shot, start: performance.now() }];
+  }, [shot]);
   useLayoutEffect(() => {
     latest.current = space;
   }, [space]);
@@ -349,6 +367,69 @@ export function SpaceScreen({ space }: { space: SpaceView }) {
         ctx.font = '12px system-ui, sans-serif';
         ctx.fillText(unit.crashed ? `${unit.name} (Aufschlag)` : unit.foe ? `${unit.name} · ${unit.wreck ? 'Wrack' : unit.intent} · ${unit.bands} RB` : unit.name, sx(at.x) + 12, sy(at.y) - 10);
         ctx.font = '11px system-ui, sans-serif';
+        seen.current.set(unit.name, at);
+      }
+
+      // Laserschüsse (2026-11-21e): Strahl vom Schützen, ein Treffer endet mit Blitz im Ziel, ein
+      // Fehlschuss zischt daneben vorbei; die getroffenen Komponenten steigen als Text auf.
+      shots.current = shots.current.filter((s) => now - s.start < SHOT_MS);
+      for (const { effect, start } of shots.current) {
+        const from = seen.current.get(effect.attacker);
+        const to = seen.current.get(effect.target);
+        if (!from || !to) continue;
+        const k = now - start;
+        const ax = sx(from.x);
+        const ay = sy(from.y);
+        let bx = sx(to.x);
+        let by = sy(to.y);
+        if (!effect.hit) {
+          // Vorbei: seitlich versetzt und ein Stück weiter als das Ziel.
+          const dx = bx - ax;
+          const dy = by - ay;
+          const len = Math.hypot(dx, dy) || 1;
+          bx += (dx / len) * 60 + (-dy / len) * 22;
+          by += (dy / len) * 60 + (dx / len) * 22;
+        }
+        if (k < 700) {
+          const grow = Math.min(1, k / 180);
+          const fade = k < 350 ? 1 : 1 - (k - 350) / 350;
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, fade);
+          ctx.strokeStyle = effect.hit ? '#ff4d4d' : 'rgba(255, 140, 140, 0.8)';
+          ctx.shadowColor = '#ff2a2a';
+          ctx.shadowBlur = effect.hit ? 14 : 6;
+          ctx.lineWidth = effect.hit ? 3 : 1.6;
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(ax + (bx - ax) * grow, ay + (by - ay) * grow);
+          ctx.stroke();
+          ctx.restore();
+        }
+        if (effect.hit && k > 180 && k < 900) {
+          const p = (k - 180) / 720;
+          ctx.save();
+          ctx.globalAlpha = 1 - p;
+          ctx.fillStyle = '#ffd27a';
+          ctx.shadowColor = '#ff7a2a';
+          ctx.shadowBlur = 20;
+          ctx.beginPath();
+          ctx.arc(bx, by, 4 + 18 * p, 0, 2 * Math.PI);
+          ctx.fill();
+          ctx.restore();
+        }
+        if (k > 250) {
+          const p = (k - 250) / (SHOT_MS - 250);
+          const lines = effect.hit ? (effect.hits.length > 0 ? effect.hits : ['Treffer']) : ['daneben'];
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, 1 - p * p);
+          ctx.font = effect.hit ? 'bold 14px system-ui, sans-serif' : '12px system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = effect.hit ? '#ffb4b4' : 'rgba(220, 220, 220, 0.85)';
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+          ctx.shadowBlur = 4;
+          lines.forEach((line, i) => ctx.fillText(line, bx, by - 18 - 46 * p - i * 17));
+          ctx.restore();
+        }
       }
     };
     frame = requestAnimationFrame(draw);

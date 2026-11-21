@@ -33,7 +33,7 @@ import { LandingDock, LandingSheet } from './sector/LandingSheet';
 import { FieldCard, GlobeScreen } from './sector/GlobeScreen';
 import { TripRollDialog } from './sector/TripPanels';
 import { FieldDock } from './sector/FieldDock';
-import { SpaceScreen } from './space/SpaceScreen';
+import { SpaceScreen, type ShotEffect } from './space/SpaceScreen';
 import { LoadingOverlay } from './loading';
 import { Tray } from './Tray';
 import { SpaceVolley } from './space/SpaceVolley';
@@ -81,6 +81,9 @@ export function App() {
   // sonst zeigt der seine eigene (`panel === 'world'`).
   // Auf dem Globus steht dieselbe Weltkarte im Blatt, wenn man oben auf den Namen tippt (Owner, 21. November 2026).
   const worldDock = useWorldDock(view.world && (!view.globe || view.worldCard) ? view.world : undefined, view.world !== undefined && view.location === view.world.id, view.travel, view.log, view.logDays, view.globe !== undefined);
+
+  // Der Schuss, dessen Würfe gerade liegen: Die Raumkarte zeigt dazu Laserstrahl und Trefferzonen (2026-11-21e).
+  const [shot, setShot] = useState<ShotEffect | undefined>(undefined);
 
   if (!view.ready) return <div className="app" aria-busy="true" />;
   const closeResult = () => game.closeResult();
@@ -174,7 +177,7 @@ export function App() {
   const base = (
     <div className="base">
       {view.space ? (
-        <SpaceScreen key={`space-${view.space.world.id}`} space={view.space} />
+        <SpaceScreen key={`space-${view.space.world.id}`} space={view.space} shot={shot} />
       ) : view.globe ? (
         <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} world={view.world} card={view.worldCard} logDays={view.logDays} trip={view.trip} focus={view.globeFocus} />
       ) : (
@@ -257,7 +260,7 @@ export function App() {
       ) : (
         view.result && <ResultDialog result={view.result} />
       )}
-      {view.spaceVolley && <SpaceVolley key={view.spaceVolley.key} volley={view.spaceVolley} onDone={() => game.closeVolley()} />}
+      {view.spaceVolley && <SpaceVolley key={view.spaceVolley.key} volley={view.spaceVolley} onShot={setShot} onDone={() => game.closeVolley()} />}
       <LoadingOverlay />
       {view.campaignSheet && <CampaignSheet key={view.campaign.id} sheet={view.campaignSheet} campaigns={view.campaigns} open={view.campaign} sync={view.sync} conflicts={view.conflicts} />}
       {view.notice && <NoticeToast text={view.notice} />}
