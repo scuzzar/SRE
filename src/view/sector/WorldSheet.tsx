@@ -49,6 +49,8 @@ export function useWorldDock(
   travel: { readonly blocker: string | undefined } | undefined,
   log: readonly LogItem[],
   logDays: readonly (string | undefined)[],
+  /** Auf dem Globus: ✕ schließt nur das Blatt, und „Öffnen“ fehlt, weil der Globus schon offen ist. */
+  onGlobe = false,
 ): { field: ReactNode; foot: ReactNode; title: string | undefined } {
   const game = useGame();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
@@ -104,7 +106,7 @@ export function useWorldDock(
                 Verwerfen
               </button>
             ))}
-          <button type="button" className="icon-button" aria-label={running ? 'Später weiter' : 'Schließen'} onClick={() => game.closeWorld()}>
+          <button type="button" className="icon-button" aria-label={running ? 'Später weiter' : 'Schließen'} onClick={() => (onGlobe ? game.hideWorldCard() : game.closeWorld())}>
             <CloseIcon />
           </button>
         </span>
@@ -147,7 +149,7 @@ export function useWorldDock(
   const actionsDock =
     world.canGlobe || world.canNote ? (
       <section className="dock" aria-label="An der Welt">
-        <WorldActions world={view} here={here} travel={travel} />
+        <WorldActions world={view} here={here} travel={travel} onGlobe={onGlobe} />
       </section>
     ) : undefined;
   const foot = rollDock || actionsDock ? (

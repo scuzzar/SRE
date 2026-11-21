@@ -63,8 +63,9 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     await expect(page.getByRole('button', { name: 'Öffnen', exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: 'Globus erzeugen', exact: true }).click();
     const globe = page.getByRole('region', { name: 'Globus · Regina' });
+    // Der Name oben öffnet dieselbe Weltkarte wie im Subsektor, im Blatt unten (Owner, 21. November 2026).
     await globe.getByRole('button', { name: /^Regina, UWP / }).click();
-    const reopened = globe.getByRole('region', { name: 'Die Welt' });
+    const reopened = page.getByRole('region', { name: `Regina · ${id}` });
     await expect(reopened.getByRole('article', { name: 'Welt' })).toBeVisible();
     await expect(reopened.getByRole('region', { name: 'Oberfläche' })).toContainText(/einheimisches Leben/);
     await globe.getByRole('button', { name: 'Schließen', exact: true }).click();
@@ -256,9 +257,12 @@ test('Globus: aus dem Subsektor öffnen, Feld antippen, zurück zum Subsektor', 
   const box = (await canvas.boundingBox())!;
   await canvas.click({ position: { x: box.width * 0.35, y: box.height * 0.4 } });
   await expect(page.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('°C im Jahresmittel');
-  // Oben klappen Name und UWP die Welt im Klartext auf, mit Oberfläche und Notiz.
+  // Der Name oben öffnet die Weltkarte im Blatt, wie im Subsektor, mit Oberfläche, Notiz und der Reihe unten.
   await globe.getByRole('button', { name: /^Kessra, UWP A766754-A/ }).click();
-  const world = globe.getByRole('region', { name: 'Die Welt' });
+  const world = page.getByRole('region', { name: 'Kessra · 0405' });
+  await expect(page.getByRole('region', { name: 'Angetipptes Feld' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Gruppe platzieren' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Öffnen', exact: true })).toHaveCount(0);
   await expect(world.getByRole('article', { name: 'Welt' })).toContainText('Raumhafen');
   await expect(world.getByRole('region', { name: 'Oberfläche' })).toContainText('% Wasser');
   await expect(world.getByLabel('Notiz zur Welt')).toBeVisible();

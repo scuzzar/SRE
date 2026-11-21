@@ -2478,6 +2478,19 @@ export class GameController {
   }
 
   /** Tippt ein Oberflächenfeld auf dem Globus an (oder hebt die Wahl auf). */
+  /** Auf dem Globus: die Weltkarte im Blatt zeigen (ein Tipp auf den Namen oben), wie im Subsektor; noch einmal schließt sie. */
+  showWorldCard(): void {
+    if (!this.state.globe) return;
+    if (this.state.globe.card) return this.hideWorldCard();
+    this.update({ globe: { picked: undefined, card: true }, npcPlacing: undefined, tripPlan: undefined });
+  }
+
+  /** Schließt die Weltkarte auf dem Globus; der Globus bleibt. */
+  hideWorldCard(): void {
+    if (!this.state.globe) return;
+    this.update({ globe: { picked: this.state.globe.picked } });
+  }
+
   pickCell(cell: number | undefined): void {
     if (!this.state.globe) return;
     // Ein anderes Feld anzutippen bricht NSC platzieren ab.

@@ -3191,6 +3191,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     der Sektorkarte öffnet, einfach oder doppelt angetippt, im System der Gruppe zuerst die Welt, auf
     der sie ist (doppelt: ihren Globus); der Knopf ⌖ ebenso. Die Übersicht des Systems ist ein
     eigener Reiter der Weltkarte („Welt“ | „System“), nicht ein Abschnitt unter den Werten.
+    Ebenso (Owner, 21. November 2026): Ein Tipp auf den Namen oben auf dem Globus öffnet dieselbe
+    Weltkarte wie im Subsektor, im Blatt unten zum Hochschieben, mit der Reihe Hierher reisen,
+    Gruppe platzieren, Raum (ohne „Öffnen“, der Globus ist ja offen); ✕ schließt nur das Blatt. Die
+    eigene Kachel „Die Welt“ oben auf dem Globus entfällt.
   - **Nebenwelten** (freigegeben am 20. November 2026, Kennzeichen 2026-11-20c). Nach B6 38–39 mit den Tabellen
     S. 29, übertragen in [`regeln-sternsystem.md`](regeln-sternsystem.md) (*Nebenwelten*). Für jede
     Welt außer der Hauptwelt, Gasriesen und Ringen, im selben Zug wie das übrige System, nach den

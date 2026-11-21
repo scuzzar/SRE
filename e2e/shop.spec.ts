@@ -142,9 +142,8 @@ test('Shop: „Gruppe platzieren“ auf der Weltkarte bringt die Gruppe auf eine
   await expect(page.locator('.shop-world')).toContainText('Regina');
   await page.getByRole('button', { name: 'Shop schließen' }).click();
   const globe = page.getByRole('region', { name: 'Globus · Regina' });
-  // Oben klappen Name und UWP die Welt auf; dort steht, dass die Gruppe hier ist.
+  // Der Name oben öffnet die Weltkarte im Blatt; dort steht, dass die Gruppe hier ist.
   await globe.getByRole('button', { name: /^Regina, UWP / }).click();
-  const panel = globe.getByRole('region', { name: 'Die Welt' });
-  await expect(panel).toContainText('Die Gruppe ist hier');
-  await expect(panel.getByRole('button', { name: 'Gruppe platzieren' })).toBeDisabled();
+  await expect(page.getByRole('region', { name: /^Regina · / })).toContainText('Die Gruppe ist hier');
+  await expect(page.getByRole('button', { name: 'Gruppe platzieren' })).toBeDisabled();
 });
