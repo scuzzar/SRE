@@ -495,7 +495,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Gruppe bei ihm ist, und Passagen gibt es nur in einer Stadt mit Hafen. Neu im Bild: `Ship.place`.
 > Der Ausschnitt dazu liegt unter [`changes/2026-11-21-landeplatz.png`](changes/2026-11-21-landeplatz.png).
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-21b): **Treibstoff am Gasriesen schöpfen** (Owner,
+> Am 21. November 2026 freigegeben (Kennzeichen 2026-11-21b): **Treibstoff am Gasriesen schöpfen** (Owner,
 > 21. November 2026). Ein stromlinienförmiges Schiff, das im Systemflug langsam in einen Gasriesen
 > eintaucht, füllt den Tank mit unraffiniertem Treibstoff und fliegt weiter; unraffinierter
 > Treibstoff gibt DM +1 auf den Sprungwurf. Neu im Bild: der Logeintrag `Skimming` mit `at` und
@@ -3144,7 +3144,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     sinken, so setzt es sicher unter der Landegeschwindigkeit auf. Reicht der Schub nicht (zu schnell,
     zu schwach gegen die Schwerkraft), schlägt es auf. Die Bahnvorschau rechnet die Automatik mit
     und zeigt so die Landung an. Gespeichert wird dafür nichts.
-  - **Treibstoff schöpfen** (wartet auf Freigabe, Kennzeichen 2026-11-21b; Owner, 21. November
+  - **Treibstoff schöpfen** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21b; Owner, 21. November
     2026). Nach SR 32 kann ein stromlinienförmiges Schiff an einem Gasriesen Treibstoff schöpfen
     (*skimming*), unraffiniert und kostenlos (SR 30 nennt Cr100 je Tonne nur für gekauften).
     - *Eintauchen statt landen*: Ein Gasriese hat keine Oberfläche; die Wolkendecke (sein Radius)

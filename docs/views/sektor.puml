@@ -85,7 +85,7 @@ hide <<browser>> stereotype
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class SystemFlight $raum
   class StarSystem $raum
-  class Skimming $raum $newClass("2026-11-21b")
+  class Skimming $raum
 
 ' Charaktererschaffung und Lebenslauf
   class Career $erschaffung
@@ -266,7 +266,7 @@ Booking "*" --> "0..1" World : in
 
 ' Raumkarte und Systemflug
 SystemFlight "*" --> "1" World : world
-Skimming "*" -$newArrow("2026-11-21b")-> "1" World : at
+Skimming "*" --> "1" World : at
 Hex "1" *-- "0..1" StarSystem : system
 Hex "1" *-- "*" World : worlds {ordered}
 Hex "*" --> "0..1" World : main
@@ -334,5 +334,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Journey #line:d0021b;line.bold
 @enduml

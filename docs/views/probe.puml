@@ -83,7 +83,7 @@ hide <<browser>> stereotype
 ' Schiffe
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
-  class Skimming $raum $newClass("2026-11-21b")
+  class Skimming $raum
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -153,7 +153,7 @@ Campaign "1" *-- "*" LogEntry : log {ordered}
 ' Schiffe
 
 ' Raumkarte und Systemflug
-LogEntry <|-$newArrow("2026-11-21b")- Skimming
+LogEntry <|-- Skimming
 
 ' Zeit und Reisen
 LogEntry <|-- TimePassed
@@ -214,5 +214,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Journey #line:d0021b;line.bold
 @enduml
