@@ -489,7 +489,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Booking.ticketFor`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-20d-reise-im-system.png`](changes/2026-11-20d-reise-im-system.png).
 >
-> Wartet auf Freigabe (Kennzeichen 2026-11-21): **Landeplatz** (Owner, 21. November 2026). Kommt die
+> Am 21. November 2026 freigegeben (Kennzeichen 2026-11-21): **Landeplatz** (Owner, 21. November 2026). Kommt die
 > Gruppe auf eine Welt mit Globus, wählt sie zuerst ein Feld: einen Raumhafen oder, mit eigenem
 > Schiff, einen beliebigen Ort. Das Schiff hat einen eigenen Ort; abfliegen kann es nur, wenn die
 > Gruppe bei ihm ist, und Passagen gibt es nur in einer Stadt mit Hafen. Neu im Bild: `Ship.place`.
@@ -1429,7 +1429,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - *Wer*: wie bei der Reise alle lebenden, nicht ausgeblendeten Charaktere (`travellers`). Danach
       ist der Aufenthaltsort die Zielwelt (ohne Stadt und Feld).
     - Im Log wie die Reise: nicht löschbar.
-  - *Landeplatz* (wartet auf Freigabe, 2026-11-21; Owner, 21. November 2026: „egal wie ich auf eine
+  - *Landeplatz* (freigegeben am 21. November 2026, 2026-11-21; Owner, 21. November 2026: „egal wie ich auf eine
     Welt komme, ich muss immer zuerst ein Feld für die Landung auswählen“).
     - *Wann*: Ist die Gruppe auf einer Welt mit Globus, aber ohne Feld und ohne Stadt (nach einer
       Reise, einer Reise im System, einer Landung aus dem Systemflug oder „Gruppe platzieren“), geht

@@ -162,7 +162,7 @@ hide <<browser>> stereotype
 Campaign "1" *-- "0..1" Place : location
 
 ' Schiffe
-Ship "1" *-$newArrow("2026-11-21")- "0..1" Place : place
+Ship "1" *-- "0..1" Place : place
 
 ' Raumkarte und Systemflug
 

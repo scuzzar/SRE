@@ -1165,7 +1165,7 @@ Booking --> BookingKind
 Campaign "1" *-- "0..*" Ship : ships
 Ship "*" --> "1" ShipDesign : design
 Ship "1" *-- "0..*" ShipSoftware : software
-Ship "1" *-$newArrow("2026-11-21")- "0..1" Place : place
+Ship "1" *-- "0..1" Place : place
 ShipSoftware "*" --> "1" Software : program
 Software --> SoftwareKind
 ShipDesign "*" --> "1" ComputerModel : computer

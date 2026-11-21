@@ -495,7 +495,7 @@
       "id": "2026-11-21",
       "file": "2026-11-21-landeplatz",
       "title": "Landeplatz: Bei jeder Ankunft wählt man ein Feld (Raumhafen oder, mit eigenem Schiff, ein beliebiges); das Schiff hat einen eigenen Ort",
-      "approved": false,
+      "approved": true,
       "show": [
         "Campaign",
         "Character"
