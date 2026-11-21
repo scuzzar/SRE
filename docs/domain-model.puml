@@ -168,6 +168,7 @@ hide <<browser>> stereotype
   class Ship $schiffe {
     name: string
     fuel: number
+    $new("2026-11-21b", "unrefined: number")
     cargo: number
     price: number
     initialLoan: number [0..1]
@@ -280,6 +281,9 @@ hide <<browser>> stereotype
     size: StarSize
     firstOrbit: number
     habitableOrbit: number [0..1]
+  }
+  class Skimming $raum $newClass("2026-11-21b") {
+    tons: number
   }
   class SpaceUnit $raum {
     position: Vec
@@ -488,6 +492,7 @@ hide <<browser>> stereotype
     lot: number [0..1]
     /pot: number
     jump: number[2]
+    $new("2026-11-21b", "jumpDm: number")
     /misjump: boolean
   }
   class Passenger <<value>> $reise {
@@ -1177,6 +1182,9 @@ SystemFlight "*" --> "1" World : world
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
 SpaceUnit "*" --> "1" Ship : ship
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
+LogEntry <|-$newArrow("2026-11-21b")- Skimming
+Skimming "*" -$newArrow("2026-11-21b")-> "1" World : at
+Skimming "*" -$newArrow("2026-11-21b")-> "1" Ship : ship
 Hex "1" *-- "0..1" StarSystem : system
 Hex "1" *-- "*" World : worlds {ordered}
 Hex "*" --> "0..1" World : main

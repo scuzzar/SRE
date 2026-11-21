@@ -494,6 +494,13 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Schiff, einen beliebigen Ort. Das Schiff hat einen eigenen Ort; abfliegen kann es nur, wenn die
 > Gruppe bei ihm ist, und Passagen gibt es nur in einer Stadt mit Hafen. Neu im Bild: `Ship.place`.
 > Der Ausschnitt dazu liegt unter [`changes/2026-11-21-landeplatz.png`](changes/2026-11-21-landeplatz.png).
+>
+> **Wartet auf Freigabe** (Kennzeichen 2026-11-21b): **Treibstoff am Gasriesen schöpfen** (Owner,
+> 21. November 2026). Ein stromlinienförmiges Schiff, das im Systemflug langsam in einen Gasriesen
+> eintaucht, füllt den Tank mit unraffiniertem Treibstoff und fliegt weiter; unraffinierter
+> Treibstoff gibt DM +1 auf den Sprungwurf. Neu im Bild: der Logeintrag `Skimming` mit `at` und
+> `ship`, `Ship.unrefined` und `Journey.jumpDm`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-21b-gasriese-schoepfen.png`](changes/2026-11-21b-gasriese-schoepfen.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -845,7 +852,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Treibstoff je Sprung | `ShipDesign./jumpFuel` | Tonnen, die ein Sprung dieses Entwurfs verbraucht: Tankinhalt durch Sprungzahl, gerundet (Hausregel, 2026-11-16d) |
 | Schiffsreise | `Journey.ship` | Das Schiff, das eine Reise getragen hat; mit ihm reist niemand als Passagier – ohne Passagen, Kojen und Lotterie |
 | Sprungwurf | `Journey.jump` | 2W6 je Sprung mit eigenem Schiff, an der Reise im Log |
-| Fehlsprung | `Journey./misjump` | Aus dem Sprungwurf gefolgt: Summe 13 oder mehr (SR 28); was daraus folgt, entscheidet der Owner |
+| Fehlsprung | `Journey./misjump` | Aus dem Sprungwurf gefolgt: Summe plus DM 13 oder mehr (SR 28); was daraus folgt, entscheidet der Owner |
+| DM des Sprungwurfs | `Journey.jumpDm` | Der DM, mit dem der Sprungwurf damals zählte: +1, wenn der Sprung unraffinierten Treibstoff verbrauchte, sonst 0 (SR 28, 2026-11-21b) |
+| Unraffinierter Treibstoff | `Ship.unrefined` | Die Tonnen im Tank, die aus einem Gasriesen geschöpft sind (höchstens `Ship.fuel`); ein Sprung verbraucht sie zuerst (2026-11-21b) |
+| Schöpfen | `Skimming` | Logeintrag: Das Schiff taucht im Systemflug in einen Gasriesen ein und füllt den Tank mit unraffiniertem Treibstoff, kostenlos (SR 32, 2026-11-21b) |
+| Stromlinienform | `ShipDesign.streamlined` | Der Entwurf ist stromlinienförmig (*streamlined*, SR 32) und kann an Gasriesen schöpfen |
 | Software (Programm) | `Software` | Ein Programm der Software-Liste (SR 38–39, SE 13): Platzbedarf in Space, Preis, Wirkung; Art nach `SoftwareKind` (offensiv, defensiv, routine) |
 | Rechnermodell | `ComputerModel` | Modell 1 bis 7 (je mit „bis“): Preis, Tonnen, CPU und Storage in Space, TL; die Modellzahl ist die höchste Sprungzahl und der Wert des Softwarepakets in MCr (SE 10) |
 | Software an Bord | `ShipSoftware` | Ein Programm, das ein konkretes Schiff dabeihat; beim Kauf aus dem Softwarepaket des Computers gewählt |
@@ -1395,11 +1406,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - *Treibstoff*: Jeder Sprung verbraucht `ShipDesign./jumpFuel` Tonnen – Hausregel: Tankinhalt
       geteilt durch Sprungzahl, gerundet (die SR-30-Formel braucht Energiewerks-Ratings, die die
       Referenzdaten nicht haben). Der Verbrauch zieht `Ship.fuel` ab; reicht der Treibstoff nicht,
-      geht die Reise nicht.
+      geht die Reise nicht. Unraffinierter Treibstoff (`Ship.unrefined`, 2026-11-21b) wird zuerst
+      verbraucht: `unrefined` sinkt um den Verbrauch, nicht unter 0.
     - *Fehlsprung* (SR 28): Pro Sprung würfelt die App **2W6** (`Journey.jump`); `/misjump`
-      folgt daraus: Summe **13 oder mehr**. Ohne DMs ist das auf bloß 2W6 nie möglich – die SR-DMs
-      (+1 unraffinierter Treibstoff, +5/+15 nahe an einem Himmelskörper) kommen erst ins Spiel,
-      wenn die App sie abbildet (Entscheidung des Owners, 16. November 2026). Der Wurf steht an
+      folgt daraus: Summe plus `jumpDm` **13 oder mehr**. Die SR-DMs kommen erst ins Spiel, wenn
+      die App sie abbildet (Entscheidung des Owners, 16. November 2026): seit 2026-11-21b **+1**,
+      wenn der Sprung unraffinierten Treibstoff verbraucht (dann ist mit einer 12 ein Fehlsprung
+      möglich); +5/+15 nahe an einem Himmelskörper fehlen noch. Der DM steht an der Reise
+      (`jumpDm`), damit ein alter Wurf nicht rückwirkend kippt; Passagen haben 0. Der Wurf steht an
       der Reise im Log. Was ein Fehlsprung folgt, entscheidet der Owner – die App würfelt nur,
       sie würfelt keinen Zielort und zerstört kein Schiff.
     - *Dauer*: ebenfalls **eine Woche**; sonst gilt wie bei der Passage.
@@ -3119,7 +3133,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Systemflug endet, und die Gruppe ist auf dieser Welt, wie mit „Gruppe platzieren“ (Ankunft:
     Oberfläche und Globus entstehen, falls sie fehlen; das Schiff liegt dort). So erreicht man auch
     einen Mond oder eine Nebenwelt der Raumkarte. Die Bahnvorschau zeigt eine Landung (grün) statt
-    eines Aufschlags. Gespeichert wird dafür nichts Neues.
+    eines Aufschlags. Gespeichert wird dafür nichts Neues. An einem Gasriesen landet niemand;
+    dort ist langsames Auftreffen Schöpfen (siehe *Treibstoff schöpfen*, 2026-11-21b).
   - **Landeautomatik** (Owner, 21. November 2026: von Hand war Landen bei Raumrunden von 1000 s
     kaum zu schaffen). Führt die Bahn eines Schiffs auf die Oberfläche eines Körpers (der tiefste
     Punkt der Bahn um ihn liegt unter der Oberfläche, das Schiff ist höchstens drei Radien über
@@ -3129,6 +3144,29 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     sinken, so setzt es sicher unter der Landegeschwindigkeit auf. Reicht der Schub nicht (zu schnell,
     zu schwach gegen die Schwerkraft), schlägt es auf. Die Bahnvorschau rechnet die Automatik mit
     und zeigt so die Landung an. Gespeichert wird dafür nichts.
+  - **Treibstoff schöpfen** (wartet auf Freigabe, Kennzeichen 2026-11-21b; Owner, 21. November
+    2026). Nach SR 32 kann ein stromlinienförmiges Schiff an einem Gasriesen Treibstoff schöpfen
+    (*skimming*), unraffiniert und kostenlos (SR 30 nennt Cr100 je Tonne nur für gekauften).
+    - *Eintauchen statt landen*: Ein Gasriese hat keine Oberfläche; die Wolkendecke (sein Radius)
+      gilt wie eine. Trifft ein Schiff mit stromlinienförmigem Entwurf (`ShipDesign.streamlined`)
+      dort mit höchstens 5 km/s auf (wie beim Landen, auch mit der Landeautomatik), schöpft es:
+      Der Tank wird voll (`Ship.fuel` = Tank des Entwurfs), die geschöpften Tonnen kommen zu
+      `Ship.unrefined`, und ein Logeintrag `Skimming` hält sie mit Gasriese (`at`) und Schiff fest.
+      Ist der Tank schon voll, schöpft es 0 t, und der Logeintrag entfällt.
+    - *Danach* fliegt es weiter, der Systemflug endet nicht: ⚑ Das Schöpfen dauert 22 Raumrunden
+      (gut 6 Stunden, Hausregel; die SR nennen keine Dauer), um die `round` steigt (damit vergehen
+      auch Tage wie sonst), und das Schiff steht danach auf einer Kreisbahn mit doppeltem Radius
+      des Gasriesen, gegen den Uhrzeigersinn, über der Stelle, an der es eintauchte. Die Spur
+      bekommt einen Punkt an der Stelle des Eintauchens.
+    - *Ohne Stromlinie* taucht kein Schiff ein: Am Gasriesen fliegt die Landeautomatik dann nicht
+      mit, und jedes Auftreffen ist ein Aufschlag (`crashed`). Die Bahnvorschau zeigt Schöpfen
+      (wie die Landung) bzw. den Aufschlag vorher an.
+    - *Gekaufter Treibstoff* (Tanken im Reiter Schiff) ist raffiniert und ändert `unrefined` nicht.
+    - *Stromlinienform der Standardentwürfe* (Owner, 21. November 2026: aus Book 2 nach Kenntnis
+      von Claude, der Owner prüft): Scout/Courier, Free Trader, Subsidized Merchant, Yacht, Patrol
+      Cruiser, Safari Ship ja; Subsidized Liner, Mercenary Cruiser, Laboratory Ship nein. Landen
+      dürfen vorerst weiter alle Schiffe (SR 32 erlaubt es nur stromlinienförmigen; dafür fehlen
+      noch Beiboote).
   - **Spur** (`track`): je vergangene Raumrunde ein `TrackPoint` mit Ort und Geschwindigkeit; die
     Karte zeichnet daraus eine glatte Kurve (Ort und Geschwindigkeit an beiden Enden geben die
     Krümmung). Gespeichert, damit sie einen Neustart übersteht.

@@ -83,6 +83,7 @@ hide <<browser>> stereotype
   class Ship $schiffe {
     name: string
     fuel: number
+    $new("2026-11-21b", "unrefined: number")
     cargo: number
     price: number
     initialLoan: number [0..1]
@@ -148,6 +149,7 @@ hide <<browser>> stereotype
   }
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+  class Skimming $raum $newClass("2026-11-21b")
   class SpaceUnit $raum
 
 ' Charaktererschaffung und Lebenslauf
@@ -183,6 +185,7 @@ Booking "*" --> "0..1" Ship : forShip
 
 ' Raumkarte und Systemflug
 SpaceUnit "*" --> "1" Ship : ship
+Skimming "*" -$newArrow("2026-11-21b")-> "1" Ship : ship
 Gain "*" --> "0..1" ShipDesign : ship
 DeckPlan "*" --> "1" ShipDesign : design
 
@@ -219,4 +222,6 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Ship #line:d0021b;line.bold
+class Journey #line:d0021b;line.bold
 @enduml

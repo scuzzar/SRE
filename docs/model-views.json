@@ -500,6 +500,18 @@
         "Campaign",
         "Character"
       ]
+    },
+    {
+      "id": "2026-11-21b",
+      "file": "2026-11-21b-gasriese-schoepfen",
+      "title": "Treibstoff am Gasriesen schöpfen: Logeintrag Skimming, unraffinierter Treibstoff im Tank (Ship.unrefined), DM des Sprungwurfs (Journey.jumpDm)",
+      "approved": false,
+      "show": [
+        "Ship",
+        "Journey",
+        "World",
+        "LogEntry"
+      ]
     }
   ]
 }

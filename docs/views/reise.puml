@@ -126,6 +126,7 @@ hide <<browser>> stereotype
     lot: number [0..1]
     /pot: number
     jump: number[2]
+    $new("2026-11-21b", "jumpDm: number")
     /misjump: boolean
   }
   class Passenger <<value>> $reise {
@@ -206,4 +207,6 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Ship #line:d0021b;line.bold
+class Journey #line:d0021b;line.bold
 @enduml

@@ -130,6 +130,9 @@ hide <<browser>> stereotype
     firstOrbit: number
     habitableOrbit: number [0..1]
   }
+  class Skimming $raum $newClass("2026-11-21b") {
+    tons: number
+  }
   class SpaceUnit $raum {
     position: Vec
     velocity: Vec
@@ -155,6 +158,7 @@ hide <<browser>> stereotype
 ' Missionen
 
 ' Verlauf
+  abstract class LogEntry $probe
 
 ' Zeit und Reisen
 
@@ -173,6 +177,9 @@ SystemFlight "*" --> "1" World : world
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
 SpaceUnit "*" --> "1" Ship : ship
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
+LogEntry <|-$newArrow("2026-11-21b")- Skimming
+Skimming "*" -$newArrow("2026-11-21b")-> "1" World : at
+Skimming "*" -$newArrow("2026-11-21b")-> "1" Ship : ship
 Hex "1" *-- "0..1" StarSystem : system
 StarSystem "1" *-- "1..3" Star : stars {ordered}
 Star "*" --> "1" StarZones : /zones
@@ -209,4 +216,5 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Ship #line:d0021b;line.bold
 @enduml
