@@ -148,7 +148,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     jump: dice.optional(),
     jumpDm: z.number().int().optional(),
   }),
-  z.object({ kind: z.literal('skimming'), at, day, place, giant: z.string().min(1), ship: z.string().min(1), tons: z.number().int().min(1) }),
+  z.object({ kind: z.literal('skimming'), at, day, place, giant: z.string().min(1), ship: z.string().min(1), tons: z.number().positive() }),
   z.object({ kind: z.literal('spaceBattle'), at, day, place, foe: z.string().min(1), design: z.string().min(1), intent: z.enum(intents), encounter: dice.optional(), reaction: dice.optional(), attack: dice.optional() }),
   z.object({ kind: z.literal('spaceAttack'), at, day, place, round: z.number().int().min(1), attacker: z.string().min(1), target: z.string().min(1), turret: z.number().int().min(0), weapon: z.string().min(1), dice, dm: z.number().int(), bands: z.number().int().min(1).optional(), computerHits: z.number().int().min(0).optional(), hits: z.array(z.enum(hitZones)).max(4) }),
   z.object({ kind: z.literal('spaceBattleEnd'), at, day, place, foe: z.string().min(1), outcome: z.enum(battleOutcomes) }),
@@ -323,6 +323,8 @@ const FlightSchema = z.object({
   world: z.string().min(1),
   startedAt: at,
   round: z.number().int().min(1),
+  /** Die Einheit der Gruppe, als Schiffs-Id (2026-11-21b); fehlt in Ständen von vorher: die erste Einheit. */
+  party: z.string().min(1).optional(),
   units: z
     .array(
       z.object({
@@ -347,10 +349,10 @@ const ShipSchema = z.object({
   id: z.string().min(1),
   design: z.string().min(1),
   name: z.string().min(1),
-  fuel: z.number().int().min(0),
+  fuel: z.number().min(0),
   /** Davon unraffiniert (2026-11-21f); fehlt in Dateien von vorher. */
-  unrefined: z.number().int().min(0).default(0),
-  cargo: z.number().int().min(0),
+  unrefined: z.number().min(0).default(0),
+  cargo: z.number().min(0),
   price: z.number().int().min(0),
   initialLoan: z.number().int().min(0).optional(),
   loanBalance: z.number().int().min(0).optional(),
@@ -362,6 +364,10 @@ const ShipSchema = z.object({
   turrets: z.array(z.object({ type: z.string().min(1), weapons: z.array(z.string().min(1)).max(3) })).optional(),
   damage: DamageSchema.optional(),
   place: PlaceSchema.optional(),
+  mother: z.string().min(1).optional(),
+  aboard: z.boolean().optional(),
+  inOrbit: z.boolean().optional(),
+  inHold: z.boolean().optional(),
 });
 const CharacterSchema = z.object({
   id: z.string().min(1),
@@ -595,7 +601,8 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       ...(file.focus === undefined ? {} : { focus: file.focus }),
       ...(file.location === undefined ? {} : { location: placeFromFile(file.location) }),
       bookings: file.bookings.map((b) => stripped(b) as Booking),
-      ships: file.ships.map((s) => stripped({ ...s, turrets: turretsFromFile(s), ...(s.place === undefined ? {} : { place: placeFromFile(s.place) }) }) as Ship),
+      // Gespeichert werden `aboard` und `inOrbit` nur, wenn sie wahr sind (2026-11-21b).
+      ships: file.ships.map((s) => stripped({ ...s, turrets: turretsFromFile(s), aboard: s.aboard === true ? true : undefined, inOrbit: s.inOrbit === true ? true : undefined, inHold: s.inHold === true ? true : undefined, ...(s.place === undefined ? {} : { place: placeFromFile(s.place) }) }) as Ship),
       stash: file.stash.map((p) => stripped({ ...p, ...(p.parked === undefined ? {} : { parked: placeFromFile(p.parked) }) }) as Possession),
       ...(file.trip === undefined ? {} : { trip: { hours: file.trip.hours, legs: file.trip.legs.map((l) => ({ by: l.by, rented: l.rented, cells: [...l.cells] })) } }),
       ...(file.flight === undefined ? {} : { flight: flightFromFile(file.flight) }),
@@ -691,6 +698,27 @@ function worldValuesOf<T extends { readonly uwp: object; readonly map?: z.infer<
   };
 }
 
+/**
+ * Small Craft (2026-11-21b): Ein Beiboot hat ein Mutterschiff, das es gibt und das kein Small Craft
+ * ist; nur Small Craft haben eins, eigenständige Small Craft keins (2026-11-21c). Im Laderaum liegt
+ * nur ein Beiboot. An Bord hat es keinen eigenen Ort und ist nicht in der Umlaufbahn;
+ * in der Umlaufbahn hat ein Schiff einen Ort ohne Feld und Stadt. Ist das Mutterschiff ausgeblendet,
+ * sind es seine Beiboote auch.
+ */
+function checkCraft(campaign: Campaign): void {
+  for (const ship of campaign.ships) {
+    const small = shipDesignOf(ship.design).kind === 'smallCraft';
+    if (ship.mother !== undefined) {
+      const mother = campaign.ships.find((s) => s.id === ship.mother);
+      if (!small) throw new DomainError(`${ship.name} ist kein Small Craft und hat kein Mutterschiff.`);
+      if (mother === undefined || mother.mother !== undefined || shipDesignOf(mother.design).kind === 'smallCraft') throw new DomainError(`Das Mutterschiff von ${ship.name} gibt es nicht.`);
+      if (mother.retired && !ship.retired) throw new DomainError(`${ship.name} gehört zu einem ausgeblendeten Schiff.`);
+    } else if (ship.inHold === true) throw new DomainError(`${ship.name} liegt im Laderaum, hat aber kein Mutterschiff.`);
+    if (ship.aboard === true && (ship.mother === undefined || ship.place !== undefined || ship.inOrbit === true)) throw new DomainError(`${ship.name} ist an Bord und hat doch einen eigenen Ort.`);
+    if (ship.inOrbit === true && (ship.place === undefined || ship.place.cell !== undefined || ship.place.city !== undefined)) throw new DomainError(`${ship.name} ist in der Umlaufbahn, aber nicht über einer Welt.`);
+  }
+}
+
 /** Ein Objekt ohne Felder, die `undefined` sind. */
 /** Der Systemflug aus der Datei, ohne fremde Felder. */
 function flightFromFile(flight: z.infer<typeof FlightSchema>): SystemFlight {
@@ -699,6 +727,7 @@ function flightFromFile(flight: z.infer<typeof FlightSchema>): SystemFlight {
     world: flight.world,
     startedAt: flight.startedAt,
     round: flight.round,
+    party: flight.party ?? flight.units[0]!.ship!,
     units: flight.units.map((u) => ({
       ...(u.ship === undefined ? {} : { ship: u.ship }),
       ...(u.design === undefined ? {} : { design: u.design }),
@@ -842,7 +871,8 @@ function validate(campaign: Campaign): void {
     if (ship.damage !== undefined) checkDamage(ship.damage, ship.turrets.length);
     if (ship.unrefined > ship.fuel) throw new DomainError(`${ship.name} hat mehr unraffinierten Treibstoff als Treibstoff im Tank.`);
   }
-  if (campaign.ships.some((s) => !s.retired) && campaign.ships.filter((s) => !s.retired).length > 1) throw new DomainError('Es gibt mehr als ein aktives Schiff.');
+  if (campaign.ships.filter((s) => !s.retired && s.mother === undefined).length > 1) throw new DomainError('Es gibt mehr als ein aktives Schiff.');
+  checkCraft(campaign);
   // Abgestellt werden nur eigene Fahrzeuge, an einem Ort; die Fahrt passt zur Karte der Welt der Gruppe.
   for (const p of campaign.stash) {
     if (p.parked === undefined) continue;

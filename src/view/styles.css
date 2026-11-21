@@ -9317,6 +9317,11 @@ button:disabled {
   margin: 4px 0 8px;
 }
 
+/* Beiboote aussetzen und andocken (2026-11-21b). */
+.space-craft {
+  margin: 4px 0 8px;
+}
+
 .space-stats {
   display: grid;
   grid-template-columns: auto 1fr;

@@ -501,7 +501,8 @@ Jede Stufe ist für sich spielbar und bekommt ihre eigene Änderung im Modell.
 | 1b | **Sternsystem, Monde und Gasriesen** nach Book 6 (Änderung 2026-11-18d, Regeln in `regeln-sternsystem.md`): Sterne, Bahnen und Zonen, weitere Welten, Gürtel, leere und eingefangene Bahnen (2026-11-20b), Monde mit Schwerkraft und Deckung, Ringe, Asteroidenfeld bei Gürtelwelten, eine eigene Raumkarte je Gasriese | Die Raumkarte ist nicht mehr leer; Auftanken am Gasriesen wird möglich |
 | 2 | **Gegner und Laser**: ein NSC-Schiff mit Absicht und Planer, Laserfeuer, Rückfeuer, Trefferzonen, Schaden, Ende des Kampfs (gebaut und freigegeben 2026-11-21h) | Der erste echte Raumkampf |
 | 3 | **Raketen und Sand**: Raketen als Einheiten mit Brennschluss, Anti-Missile, ECM, Sandwolken | Das volle Waffenprogramm der SR |
-| 4 | **Small Craft und Entern**: Jäger und Beiboote aussetzen, Rotten, aufnehmen; Entern mit Übergang in die Kampfsimulation | Träger, Enterkommandos |
+| 4a | **Small Craft ohne Kampf** (vorgezogen, Änderung 2026-11-21b): Beiboote als eigene Schiffe, aussetzen und andocken im Systemflug, landen, Reise im System; Mutterschiff in der Umlaufbahn | Mit dem Beiboot landen, während das Schiff oben bleibt |
+| 4b | **Small Craft im Kampf und Entern**: Jäger, Rotten, Waffen der Small Craft, Brennstufen nach Mayday; Entern mit Übergang in die Kampfsimulation | Träger, Enterkommandos |
 | 5 | **Ortung und Begegnungen**: Ortung, Schatten, *Wer schubt, leuchtet*; Raumkampf aus einer Schiffsbegegnung beim Ankommen im System; Flucht per Sprung mit Fehlsprung-DMs | Der Raumkampf ist in den Spielfluss eingebunden |
 | später | **Sternsystem** (Book 6): Stern, weitere Planeten und Planetoidengürtel, Reisen im System zwischen ihren Raumkarten | Hinterhalte im Gürtel, Reisen zwischen den Welten eines Systems |
 

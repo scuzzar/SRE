@@ -12,6 +12,8 @@ import type { SpaceAttack, SpaceBattle, SpaceBattleEnd } from './log';
 import {
   activeFlight,
   BAND_KM,
+  endFlight,
+  partyIndexOf,
   flightTime,
   lengthOf,
   lineOfSight,
@@ -166,7 +168,7 @@ export function encounterBlocker(campaign: Campaign): string | undefined {
   const flight = campaign.flight;
   if (flight === undefined) return 'Es läuft kein Systemflug.';
   if (flight.units.some((u) => u.ship === undefined)) return 'Es ist schon ein fremdes Schiff da (Stufe 2: höchstens eins).';
-  if (flight.units[0]?.crashed) return 'Das eigene Schiff ist aufgeschlagen.';
+  if (flight.units[partyIndexOf(flight)]?.crashed) return 'Das Schiff der Gruppe ist aufgeschlagen.';
   return undefined;
 }
 
@@ -228,7 +230,7 @@ export function placeFoe(campaign: Campaign, design: string, intent: Intent, clo
   if (blocker) throw new DomainError(blocker);
   const plan = shipDesignOf(design);
   const flight = activeFlight(campaign);
-  const own = flight.units[0]!;
+  const own = flight.units[partyIndexOf(flight)]!;
   const ahead = lengthOf(own.velocity) > 1e-6 ? Math.atan2(own.velocity.y, own.velocity.x) : Math.PI / 2;
   const angle = offset === undefined ? ahead : (offset.angle * Math.PI) / 180;
   const km = (offset?.bands ?? 7) * BAND_KM;
@@ -277,7 +279,7 @@ export function planFoe(campaign: Campaign, scene: Scene, index: number, t: numb
   if (unit.intent === undefined || unit.intent === 'ignore') return undefined;
   const maxG = unitMaxG(campaign, unit);
   if (maxG <= 0) return undefined;
-  const own = flight.units[0]!;
+  const own = flight.units[partyIndexOf(flight)]!;
   const ownPath = propagate(scene, own, own.thrust, 2 * ROUND_STEPS, ROUND_STEPS, t);
   const candidates: (Vec | undefined)[] = [undefined];
   for (let k = 0; k < 16; k++) {
@@ -482,15 +484,16 @@ export function fireAt(campaign: Campaign, index: number, target: number, random
 export function foesFire(campaign: Campaign, random: Random, clock: Clock): Campaign {
   let after = campaign;
   for (const [i, u] of activeFlight(campaign).units.entries()) {
-    if (i === 0 || u.ship !== undefined || u.intent !== 'attack') continue;
-    if (fireBlocker(after, i, 0) === undefined) after = volley(after, i, 0, random, clock);
+    const party = partyIndexOf(activeFlight(after));
+    if (u.ship !== undefined || u.intent !== 'attack') continue;
+    if (fireBlocker(after, i, party) === undefined) after = volley(after, i, party, random, clock);
   }
   return after;
 }
 
 /** Feuert gleich ein fremdes Schiff nach der Bewegung? Dann braucht die Raumrunde Würfel. */
 export function foesWillFire(campaign: Campaign): boolean {
-  return activeFlight(campaign).units.some((u, i) => i > 0 && u.ship === undefined && u.intent === 'attack' && !u.crashed);
+  return activeFlight(campaign).units.some((u) => u.ship === undefined && u.intent === 'attack' && !u.crashed);
 }
 
 /** Hängt das Ende des Raumkampfs ans Log. */
@@ -508,17 +511,18 @@ function battleEnd(campaign: Campaign, foe: string, outcome: BattleOutcome, cloc
 export function settleBattle(campaign: Campaign, clock: Clock): { readonly campaign: Campaign; readonly lost: boolean } {
   const flight = activeFlight(campaign);
   let result = campaign;
-  const own = flight.units[0]!;
+  const own = flight.units[partyIndexOf(flight)]!;
   const ship = own.ship === undefined ? undefined : shipById(campaign, own.ship);
   if (ship !== undefined && destroyedBy(ship.damage)) {
     for (const u of flight.units) if (activeFoe(campaign, u)) result = battleEnd(result, nameOfUnit(campaign, u), 'lost', clock);
-    const { flight: _gone, ...rest } = result;
-    void _gone;
-    return { campaign: { ...rest, ships: rest.ships.map((s) => (s.id === ship.id ? { ...s, retired: true } : s)) }, lost: true };
+    // Der Systemflug endet wie mit „beenden“ (was sonst fliegt, ist danach in der Umlaufbahn); das Schiff der Gruppe ist ausgeblendet.
+    const ended = endFlight(result);
+    // Mit dem Mutterschiff werden auch seine Beiboote ausgeblendet (2026-11-21b).
+    return { campaign: { ...ended, ships: ended.ships.map((s) => (s.id === ship.id || s.mother === ship.id ? { ...s, retired: true } : s)) }, lost: true };
   }
   const units: SpaceUnit[] = [];
-  for (const [i, u] of flight.units.entries()) {
-    if (i === 0 || u.ship !== undefined || u.intent === undefined) {
+  for (const u of flight.units) {
+    if (u.ship !== undefined || u.intent === undefined) {
       units.push(u);
       continue;
     }

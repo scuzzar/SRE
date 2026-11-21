@@ -252,6 +252,7 @@ SpaceBattle "*" --> "1" ShipDesign : design
 SpaceAttack "*" --> "1" ShipWeapon : weapon
 SpaceAttack --> HitZone
 SpaceBattleEnd --> BattleOutcome
+SystemFlight "*" --> "1" SpaceUnit : party
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
 LogEntry <|-- Skimming
 Skimming "*" --> "1" World : at

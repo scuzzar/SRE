@@ -94,9 +94,9 @@ describe('Systemflug: Schub und Runde', () => {
     expect(lengthOf(normalThrust({ x: 0.123, y: 0 }, 2)!)).toBeCloseTo(0.1, 12);
     expect(normalThrust({ x: 0.02, y: 0 }, 2)).toBeUndefined();
     const c = startFlight(demo(), world(demo()), clock);
-    expect(maxGOf(c, c.flight!.units[0]!)).toBe(2);
+    expect(maxGOf(c, c.flight!.units[0]!)).toBe(1);
     const set = setThrust(c, 0, { x: 10, y: 0 });
-    expect(lengthOf(set.flight!.units[0]!.thrust!)).toBeCloseTo(2, 12);
+    expect(lengthOf(set.flight!.units[0]!.thrust!)).toBeCloseTo(1, 12);
     expect(setThrust(set, 0, undefined).flight!.units[0]!.thrust).toBeUndefined();
   });
 
@@ -316,14 +316,14 @@ describe('Treibstoff am Gasriesen schöpfen (2026-11-21f)', () => {
   it('ein Schiff mit Stromlinie taucht langsam ein, füllt den Tank unraffiniert und steht danach auf der Kreisbahn', () => {
     const c = dive(demo(), 0.5);
     const giant = c.flight!.world;
-    const preview = previewOf(sceneOf(c.hexes, giant), c.flight!.units[0]!, undefined, flightTime(c, c.flight!), 2, giant, 2, true);
+    const preview = previewOf(sceneOf(c.hexes, giant), c.flight!.units[0]!, undefined, flightTime(c, c.flight!), 2, giant, 2, true, true);
     expect(preview.landing).toEqual({ round: 0, world: giant, skims: true });
     const run = runRound(c, clock);
     expect(run.landed).toBeUndefined();
     expect(run.skimmed).toBe(true);
     const after = run.campaign;
-    expect(after.ships.find((s) => !s.retired)).toMatchObject({ fuel: 40, unrefined: 30 });
-    expect(after.log.at(-1)).toMatchObject({ kind: 'skimming', giant, ship: 's1', tons: 30 });
+    expect(after.ships.find((s) => !s.retired)).toMatchObject({ fuel: 50, unrefined: 40 });
+    expect(after.log.at(-1)).toMatchObject({ kind: 'skimming', giant, ship: 's1', tons: 40 });
     expect(after.flight!.round).toBe(2 + SKIM_ROUNDS);
     const unit = after.flight!.units[0]!;
     expect(unit.track).toHaveLength(after.flight!.round - 1);
@@ -333,7 +333,7 @@ describe('Treibstoff am Gasriesen schöpfen (2026-11-21f)', () => {
     // Gegen den Uhrzeigersinn: oben (y > 0) fliegt es nach links.
     expect(unit.velocity.x).toBeLessThan(0);
     // Übersteht die Kampagnendatei.
-    expect(fromCampaignFile(toCampaignFile(after), 'x').ships[0]!.unrefined).toBe(30);
+    expect(fromCampaignFile(toCampaignFile(after), 'x').ships[0]!.unrefined).toBe(40);
   });
 
   it('ohne Stromlinie ist das Eintauchen ein Aufschlag', () => {

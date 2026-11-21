@@ -73,6 +73,7 @@ import {
   TICKET_G,
   type SystemJourneyMode,
   worldOf,
+  journeyCraft,
 } from '../model';
 
 /** Ein Test im Log: Art, Würfel, Zielwert, ob bestanden; bei der Polizei dazu die Reaktion. */
@@ -313,6 +314,8 @@ export interface JourneyDraft {
 export interface SystemJourneyDraft {
   readonly to: string;
   readonly mode: SystemJourneyMode;
+  /** Mit `mode` = `craft`: das Small Craft (2026-11-21b). */
+  readonly craft?: string;
   readonly error: string | undefined;
   /** Nach der Reise ihre Stelle im Log; dann zeigt der Dialog das Ergebnis. */
   readonly done: number | undefined;
@@ -321,6 +324,10 @@ export interface SystemJourneyDraft {
 /** Eine Art, im System zu reisen, wie der Dialog sie anbietet. */
 export interface SystemJourneyOption {
   readonly mode: SystemJourneyMode;
+  /** Mit `mode` = `craft`: das Small Craft (2026-11-21b). */
+  readonly craft: string | undefined;
+  /** Der Knopf im Dialog: „Ticket“, „Eigenes Schiff“ oder der Name des Beiboots. */
+  readonly button: string;
   readonly label: string;
   readonly g: number;
   readonly hours: number;
@@ -339,6 +346,7 @@ export interface SystemJourneyView {
   /** „4,5 Mio. km“. */
   readonly distance: string;
   readonly mode: SystemJourneyMode;
+  readonly craft: string | undefined;
   readonly options: readonly SystemJourneyOption[];
   readonly travellers: readonly string[];
   readonly funds: number;
@@ -509,7 +517,7 @@ export function systemJourneyView(campaign: Campaign, draft: SystemJourneyDraft)
     const entry = campaign.log[draft.done];
     if (entry?.kind !== 'systemJourney') return undefined;
     const result = systemJourneyItem(campaign, entry, draft.done);
-    return { to: entry.to, toName: result.to, fromName: result.from, distance: result.flight, mode: draft.mode, options: [], travellers: result.travellers, funds: fundsOf(campaign), error: undefined, result };
+    return { to: entry.to, toName: result.to, fromName: result.from, distance: result.flight, mode: draft.mode, craft: draft.craft, options: [], travellers: result.travellers, funds: fundsOf(campaign), error: undefined, result };
   }
   if (from === undefined) return undefined;
   let km: number;
@@ -519,18 +527,24 @@ export function systemJourneyView(campaign: Campaign, draft: SystemJourneyDraft)
     return undefined;
   }
   const ship = shipOf(campaign);
-  const option = (mode: SystemJourneyMode, label: string, g: number): SystemJourneyOption => {
+  const option = (mode: SystemJourneyMode, button: string, label: string, g: number, craft?: string): SystemJourneyOption => {
     const hours = flightHours(km, g);
     const days = journeyDays(hours);
-    return { mode, label, g, hours, days, arrival: dateLabel(dayOf(campaign) + days), cost: mode === 'ticket' ? hours * TICKET_RATE * travellersOf(campaign).length : 0, blocker: systemJourneyBlocker(campaign, draft.to, mode) };
+    return { mode, craft, button, label, g, hours, days, arrival: dateLabel(dayOf(campaign) + days), cost: mode === 'ticket' ? hours * TICKET_RATE * travellersOf(campaign).length : 0, blocker: systemJourneyBlocker(campaign, draft.to, mode, craft) };
   };
-  const options = [option('ticket', 'Ticket', TICKET_G), ...(ship ? [option('ship', ship.name, shipDesignOf(ship.design).maneuver)] : [])];
+  // Dazu jedes Beiboot, mit dem die Gruppe von hier reisen kann (2026-11-21b).
+  const options = [
+    option('ticket', 'Ticket', 'Ticket', TICKET_G),
+    ...(ship ? [option('ship', 'Eigenes Schiff', ship.name, shipDesignOf(ship.design).maneuver)] : []),
+    ...journeyCraft(campaign).map((c) => option('craft', c.name, `${c.name} (${shipDesignOf(c.design).name})`, shipDesignOf(c.design).maneuver, c.id)),
+  ];
   return {
     to: draft.to,
     toName: worldName(campaign, draft.to),
     fromName: worldName(campaign, from),
     distance: mkm(km),
     mode: draft.mode,
+    craft: draft.craft,
     options,
     travellers: travellersOf(campaign).map((c) => c.name),
     funds: fundsOf(campaign),

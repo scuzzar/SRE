@@ -241,7 +241,9 @@ describe('Referenzdaten', () => {
   });
 
   it('kennen die Standardentwürfe, Rechner und Programme aus SE 10 bis 13', () => {
-    expect(referenceData.ships.map((s) => s.code)).toEqual(['S', 'A', 'R', 'M', 'Y', 'C', 'T', 'L', 'K']);
+    expect(referenceData.ships.filter((s) => s.kind === 'starship').map((s) => s.code)).toEqual(['S', 'A', 'R', 'M', 'Y', 'C', 'T', 'L', 'K']);
+    // Die Small Craft aus SR 33–35 (2026-11-21b).
+    expect(referenceData.ships.filter((s) => s.kind === 'smallCraft').map((s) => s.id)).toEqual(['launch', 'boat', 'slow-boat', 'pinnace', 'slow-pinnace', 'cutter', 'shuttle', 'fighter']);
     const design = (code: string) => referenceData.ships.find((s) => s.code === code)!;
     expect(design('S')).toMatchObject({ name: 'Scout/Courier', hull: 100, jump: 2, maneuver: 2, fuel: 40, computer: 'model-1bis', basePrice: 29_430_000, months: 9 });
     expect(design('C')).toMatchObject({ hardpoints: 8, cargo: 80, computer: 'model-5' });

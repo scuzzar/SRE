@@ -2265,7 +2265,8 @@ describe('Nebenwelten und Reise im System (2026-11-20d)', () => {
     game.openJourney();
     const dialog = game.snapshot().systemJourney!;
     expect(dialog.toName).toBe('Tertius');
-    expect(dialog.options.map((o) => o.mode)).toEqual(['ticket', 'ship']);
+    // Die Yacht der Demo bringt ihr Beiboot mit; auch damit ginge die Reise (2026-11-21b).
+    expect(dialog.options.map((o) => o.button)).toEqual(['Ticket', 'Eigenes Schiff', 'Beiboot 1']);
     game.chooseSystemJourneyMode('ship');
     const day = game.snapshot().time?.label;
     game.travelInSystem();

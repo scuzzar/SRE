@@ -1,4 +1,7 @@
 import {
+  dockBlocker,
+  dockableCraft,
+  launchableCraft,
   flightStartBlocker,
   LANDING_KMS,
   BAND_KM,
@@ -43,6 +46,8 @@ import {
   laserCountOf,
   fireBlocker,
   firePreview,
+  partyIndexOf,
+  activeFlight,
   shipWeaponOf,
 } from '../model';
 import { systemLook, type WorldLook } from './world-view';
@@ -50,7 +55,7 @@ import { dmLines, hitZoneNames, intentNames, type DmLine } from './time-view';
 
 /** Was die Laser des eigenen Schiffs auf die Einheit `index` jetzt bräuchten. */
 function fireLines(campaign: Campaign, index: number): SpaceUnitView['fire'] {
-  const preview = firePreview(campaign, 0, index);
+  const preview = firePreview(campaign, partyIndexOf(activeFlight(campaign)), index);
   if (preview === undefined) return [];
   return preview.weapons.map((w) => ({ weapon: shipWeaponOf(w.weapon).name, count: w.count, parts: dmLines(w.parts, preview.bands, preview.computerHits), dm: w.dm, need: w.need }));
 }
@@ -70,6 +75,10 @@ export interface OpenSpace {
 /** Eine Einheit auf der Raumkarte, wie die View sie zeichnet. */
 export interface SpaceUnitView {
   readonly index: number;
+  /** In dieser Einheit sitzt die Gruppe (2026-11-21b); nur sie landet. */
+  readonly party: boolean;
+  /** Ein Small Craft. */
+  readonly craft: boolean;
   readonly name: string;
   readonly designName: string;
   readonly position: Vec;
@@ -157,6 +166,14 @@ export interface SpaceView {
         /** Dauer des Systemflugs, z. B. „2 h 30 min“. */
         readonly elapsed: string;
         readonly units: readonly SpaceUnitView[];
+        /** Die Stelle der Einheit der Gruppe in `units`. */
+        readonly party: number;
+        /** Beiboote an Bord der Einheit der Gruppe, die sie jetzt aussetzen kann (2026-11-21b). */
+        readonly launchable: readonly { readonly id: string; readonly name: string }[];
+        /** Small Craft, die jetzt an ihrem Mutterschiff andocken können. */
+        readonly dockable: readonly { readonly id: string; readonly name: string }[];
+        /** Sitzt die Gruppe in einem Small Craft, das noch nicht andocken kann: warum nicht. */
+        readonly dockHint: string | undefined;
         /** Die Orte der Einheiten während der letzten Raumrunde, von der Welt aus gesehen. */
         readonly run: { readonly round: number; readonly frames: readonly (readonly Vec[])[] } | undefined;
       }
@@ -264,23 +281,35 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
     designs: ref.ships.map((d) => ({ id: d.id, name: d.name })),
     flight: flight && {
       round: flight.round,
+      party: Math.max(0, flight.units.findIndex((u) => u.ship === flight.party)),
+      launchable: launchableCraft(campaign).map((c) => ({ id: c.id, name: c.name })),
+      dockable: dockableCraft(campaign).map((c) => ({ id: c.id, name: c.name })),
+      dockHint: (() => {
+        const ship = campaign.ships.find((s) => s.id === flight.party);
+        if (ship?.mother === undefined || dockableCraft(campaign).some((c) => c.id === ship.id)) return undefined;
+        return dockBlocker(campaign, ship.id);
+      })(),
       elapsed: duration(elapsedOf(flight)),
       run: run && { round: run.round, frames: run.frames.map((frame, k) => frame.map((p) => sub(p, originAt(scene, space.world, run.t + k * run.every * STEP_SECONDS).position))) },
       units: flight.units.map((unit, index): SpaceUnitView => {
         const design = shipDesignOf(designOfUnit(campaign, unit));
         const ship = unit.ship === undefined ? undefined : campaign.ships.find((s) => s.id === unit.ship)!;
         const damage = damageOfUnit(campaign, unit);
-        const own = flight.units[0]!;
+        const own = flight.units[partyIndexOf(flight)]!;
         const km = lengthOf(sub(unit.position, own.position));
         const aim = space.aim?.unit === index ? space.aim : undefined;
         const thrust = aim ? aim.thrust : unit.thrust;
         const position = sub(unit.position, origin.position);
         const velocity = sub(unit.velocity, origin.velocity);
         const r = lengthOf(position);
+        // Nur die Einheit der Gruppe landet, mit Landeautomatik (2026-11-21b), und schöpft (2026-11-21f).
+        const party = unit.ship !== undefined && unit.ship === flight.party;
         const plan = design;
-        const preview = ship === undefined ? previewOf(scene, unit, thrust, t, 2, space.world) : previewOf(scene, unit, thrust, t, 2, space.world, maxGOf(campaign, unit), plan.streamlined);
+        const preview = party ? previewOf(scene, unit, thrust, t, 2, space.world, maxGOf(campaign, unit), true, plan.streamlined) : previewOf(scene, unit, thrust, t, 2, space.world, undefined, false);
         return {
           index,
+          party,
+          craft: ship?.mother !== undefined,
           name: nameOfUnit(campaign, unit),
           designName: plan.name,
           position,
@@ -305,7 +334,7 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
           damage: (damage?.hits ?? []).map((h) => hitZoneNames[h]),
           lasers: laserCountOf(campaign, unit),
           fired: unit.fired,
-          fireBlocker: unit.ship === undefined ? fireBlocker(campaign, 0, index) : undefined,
+          fireBlocker: unit.ship === undefined ? fireBlocker(campaign, partyIndexOf(flight), index) : undefined,
           fire: unit.ship === undefined ? fireLines(campaign, index) : [],
           bands: bandOf(km),
           rangeDm: spaceRangeDm(bandOf(km)),

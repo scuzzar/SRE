@@ -92,6 +92,9 @@ hide <<browser>> stereotype
     nextPaymentDay: number [0..1]
     berthedSince: number [0..1]
     retired: boolean
+    aboard: boolean
+    inOrbit: boolean
+    inHold: boolean
   }
   enum ShipCost <<value>> $schiffe {
     price
@@ -119,6 +122,7 @@ hide <<browser>> stereotype
   }
   class ShipDesign <<reference>> $schiffe {
     code: string
+    kind: ShipKind
     /jumpFuel: number
     name: string
     hull: number
@@ -131,8 +135,12 @@ hide <<browser>> stereotype
     cargo: number
     crew: string
     basePrice: number
-    months: number
+    months: number [0..1]
     streamlined: boolean
+  }
+  enum ShipKind <<value>> $schiffe {
+    starship
+    smallCraft
   }
   class ComputerModel <<reference>> $schiffe {
     name: string
@@ -204,7 +212,10 @@ ShipDesign "1" *-- "0..*" DesignTurret : turrets {ordered}
 DesignTurret "*" --> "1" TurretType : type
 DesignTurret "*" --> "0..3" ShipWeapon : weapons {ordered}
 Software --> SoftwareKind
-ShipDesign "*" --> "1" ComputerModel : computer
+ShipDesign "*" --> "0..1" ComputerModel : computer
+ShipDesign --> ShipKind
+ShipDesign "*" --> "*" ShipDesign : craft {ordered}
+Ship "*" --> "0..1" Ship : mother
 Booking "*" --> "0..1" Ship : forShip
 
 ' Raumkarte und Systemflug

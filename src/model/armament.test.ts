@@ -7,7 +7,7 @@ const clock = fixedClock();
 /** Die Demo auf Kessra (Raumhafen A) mit dem Scout, sein Double Turret geleert (die Demo bringt einen Beam Laser mit), und Geld in der Kasse. */
 function demo(): Campaign {
   const c = book(createDemoCampaign(clock), 'income', 5_000_000, clock);
-  return { ...c, ships: c.ships.map((s) => ({ ...s, turrets: [{ type: 'double', weapons: [] }] })) };
+  return { ...c, ships: c.ships.map((s) => (s.mother === undefined ? { ...s, turrets: [{ type: 'double', weapons: [] }] } : s)) };
 }
 
 describe('Bewaffnung in der Werft (2026-11-21g)', () => {
@@ -68,6 +68,7 @@ describe('Bewaffnung in der Werft (2026-11-21g)', () => {
     expect(fromCampaignFile(toCampaignFile(armed), 'x').ships[0]!.turrets).toEqual([{ type: 'double', weapons: ['beam-laser'] }]);
     const file = JSON.parse(toCampaignFile(demo()));
     delete file.campaign.ships[0].turrets;
-    expect(fromCampaignFile(JSON.stringify(file), 'x').ships[0]!.turrets).toEqual([{ type: 'double', weapons: [] }]);
+    // Die Yacht der Demo hat ab Werft kein Turret.
+    expect(fromCampaignFile(JSON.stringify(file), 'x').ships[0]!.turrets).toEqual([]);
   });
 });

@@ -7,7 +7,7 @@ import { itemOf, shipDesignOf } from './reference';
 import { sum, type Dice } from './rules';
 import { hexById, hexId, hexIdOfWorld, worldOf, type Hex, type World } from './sector';
 import { bookShip, fundsOf, locationOf, type Booking } from './shop';
-import { jumpFuelOf, shipOf, type Ship } from './ship';
+import { craftOf, jumpFuelOf, shipOf, type Ship } from './ship';
 import { portDepartureBlocker, shipDepartureBlocker, shipArrives, leaveShipBehind } from './landing';
 import { afterTime, arrive, LIFE_SUPPORT, PER_STATEROOM } from './upkeep';
 import { parkVehicles } from './trip';
@@ -186,9 +186,14 @@ export function shipJourneyBlocker(campaign: Campaign, to: string): string | und
   if (!target || target.empty) return 'Hier gibt es keine Welt.';
   worldOf(campaign.hexes, to);
   const plan = shipDesignOf(ship.design);
+  // Ein eigenständiges Small Craft hat keinen Sprungantrieb (2026-11-21c).
+  if (plan.jump === 0) return `${ship.name} ist ein Small Craft und springt nicht; im System reist es mit „Hierher reisen“.`;
   // Abfliegen kann das Schiff nur, wenn die Gruppe bei ihm ist (2026-11-21).
   const away = shipDepartureBlocker(campaign);
   if (away) return away;
+  // ⚑ Gesprungen wird nur mit allen Beibooten an Bord, sonst blieben sie im alten System zurück (2026-11-21b).
+  const missing = craftOf(campaign, ship.id).find((c) => !c.aboard);
+  if (missing) return `Erst ${missing.name} an Bord nehmen; ohne alle Beiboote springt ${ship.name} nicht.`;
   const distance = parsecs(hexById(campaign.hexes, hexIdOfWorld(campaign.location.world))!, target);
   // Schaden aus dem Raumkampf senkt die Sprungzahl (2026-11-21h).
   const jump = jumpAfter(ship.design, ship.damage);

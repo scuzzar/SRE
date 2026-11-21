@@ -15,7 +15,7 @@ function thrustText(g: number, snap: string | undefined): string {
 export function SpaceCard({ space }: { space: SpaceView }) {
   const game = useGame();
   const flight = space.flight;
-  const unit = flight?.units[0];
+  const unit = flight?.units[flight.party];
   return (
     <section className="field-card scroll space-card" aria-label="Systemflug">
       <div className="globe-sheet-head" data-tray-peek>
@@ -59,7 +59,7 @@ export function SpaceCard({ space }: { space: SpaceView }) {
           )}
           {unit.crashed && <p className="combat-hint space-warn">{unit.name} ist aufgeschlagen; in Stufe 1 ohne Folgen. Der Systemflug lässt sich beenden.</p>}
           <dl className="space-stats">
-            <dt>Schiff</dt>
+            <dt>{unit.craft ? 'Beiboot' : 'Schiff'}</dt>
             <dd>
               {unit.name} · {unit.designName} · {unit.maxG} G
             </dd>
@@ -82,6 +82,29 @@ export function SpaceCard({ space }: { space: SpaceView }) {
             <dt>Schwerkraft hier</dt>
             <dd>{num(unit.gravity, 3)} G</dd>
           </dl>
+          {flight.units.filter((u) => !u.foe).length > 1 && (
+            <p className="globe-sheet-sub">
+              {`Die Gruppe ist an Bord von ${unit.name}; nur sie landet. ${flight.units
+                .filter((u) => !u.party && !u.foe)
+                .map((u) => `${u.name} fliegt ${u.crashed ? 'nicht mehr (Aufschlag)' : 'ohne die Gruppe'}`)
+                .join(', ')}. Was ohne die Gruppe fliegt, bleibt beim Beenden in der Umlaufbahn.`}
+            </p>
+          )}
+          {flight.dockHint && <p className="combat-hint">Andocken an das Mutterschiff: {flight.dockHint}</p>}
+          {(flight.launchable.length > 0 || flight.dockable.length > 0) && (
+            <div className="chips space-craft" role="group" aria-label="Beiboote">
+              {flight.launchable.map((c) => (
+                <button key={c.id} type="button" onClick={() => game.launchCraft(c.id)}>
+                  {c.name} aussetzen
+                </button>
+              ))}
+              {flight.dockable.map((c) => (
+                <button key={c.id} type="button" onClick={() => game.dockCraft(c.id)}>
+                  {c.name} andocken
+                </button>
+              ))}
+            </div>
+          )}
           <EncounterChoice space={space} />
           <p className="globe-sheet-sub">Im Schubkreis tippen oder ziehen: vom Schiff zum Finger, der Rand ist der höchste Schub. Jede Raumrunde beginnt ohne Schub. Mit höchstens {num(space.landingKms)} km/s aufsetzen heißt landen; führt die Bahn auf die Oberfläche und reicht der Schub, bremst die Landeautomatik im letzten Stück selbst.</p>
           <button type="button" className="ghost compact" onClick={() => game.endFlight()}>
@@ -203,7 +226,7 @@ function EncounterChoice({ space }: { space: SpaceView }) {
 export function SpaceDock({ space }: { space: SpaceView }) {
   const game = useGame();
   const flight = space.flight;
-  const unit = flight?.units[0];
+  const unit = flight?.units[flight.party];
   if (!flight) {
     return (
       <div className="actions oracle-actions space-actions">
@@ -226,7 +249,7 @@ export function SpaceDock({ space }: { space: SpaceView }) {
       <button type="button" className={target ? 'action soft' : 'action draw'} onClick={() => game.runRound()}>
         Runde ausführen
       </button>
-      <button type="button" className="action note" disabled={!unit || unit.thrustG === 0} onClick={() => game.setThrust(0, undefined)}>
+      <button type="button" className="action note" disabled={!unit || unit.thrustG === 0} onClick={() => unit && game.setThrust(unit.index, undefined)}>
         Kein Schub
       </button>
     </div>

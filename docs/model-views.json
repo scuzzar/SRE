@@ -502,6 +502,29 @@
       ]
     },
     {
+      "id": "2026-11-21b",
+      "file": "2026-11-21b-small-craft",
+      "title": "Small Craft ohne Kampf: eigene Entwürfe (Art smallCraft), an Bord eines Mutterschiffs, aussetzen und andocken im Systemflug, landen, Reise im System; Mutterschiff in der Umlaufbahn",
+      "approved": true,
+      "show": [
+        "SystemFlight",
+        "SpaceUnit",
+        "ComputerModel",
+        "SystemJourney",
+        "Place"
+      ]
+    },
+    {
+      "id": "2026-11-21c",
+      "file": "2026-11-21c-small-craft-kaufen",
+      "title": "Small Craft einzeln kaufen: als Beiboot im Laderaum des aktiven Schiffs (Ship.inHold) oder eigenständig ohne Mutterschiff",
+      "approved": true,
+      "show": [
+        "Campaign",
+        "Booking"
+      ]
+    },
+    {
       "id": "2026-11-21f",
       "file": "2026-11-21f-gasriese-schoepfen",
       "title": "Treibstoff am Gasriesen schöpfen: Logeintrag Skimming, unraffinierter Treibstoff im Tank (Ship.unrefined), DM des Sprungwurfs (Journey.jumpDm)",

@@ -2,7 +2,7 @@ import type { Campaign } from './campaign';
 import { DomainError } from './errors';
 import { samePlace, worldPlace, type Place } from './place';
 import { worldById, type World } from './sector';
-import { shipOf, type Ship } from './ship';
+import { changeShip, shipOf, vesselsOf, whereIs, without, type Ship } from './ship';
 
 // Der Landeplatz (Domänenmodell 2026-11-21): Kommt die Gruppe auf eine Welt mit Globus, wählt sie
 // zuerst ein Feld: eine Stadt mit Hafen oder, mit eigenem Schiff, einen beliebigen Ort. Das Schiff hat
@@ -21,17 +21,19 @@ export function portCities(world: World | undefined): readonly PortCity[] {
   return (world?.map?.cities ?? []).flatMap((c, i) => (c.port === undefined ? [] : [{ city: i, name: c.name, port: c.port }]));
 }
 
-/** Das Schiff der Gruppe und wo es steht; ohne Ort steht es bei der Gruppe. */
-function groupShip(campaign: Campaign): Ship | undefined {
-  return shipOf(campaign);
+/**
+ * Das eigene Schiff oder Small Craft, mit dem die Gruppe hierher kam (2026-11-21b): Es steht auf der
+ * Welt der Gruppe noch ohne Feld und nicht in der Umlaufbahn, oder es hat als Schiff keinen Ort.
+ */
+export function arrivedVessel(campaign: Campaign): Ship | undefined {
+  const at = campaign.location?.world;
+  if (at === undefined) return undefined;
+  return vesselsOf(campaign).find((v) => !v.aboard && !v.inOrbit && (v.place === undefined ? v.mother === undefined : v.place.world === at && v.place.cell === undefined && v.place.city === undefined));
 }
 
-/** Kam die Gruppe mit dem eigenen Schiff hierher? Dann steht es auf dieser Welt noch ohne Feld (oder hat keinen Ort). */
+/** Kam die Gruppe mit dem eigenen Schiff oder Small Craft hierher? */
 export function cameByShip(campaign: Campaign): boolean {
-  const ship = groupShip(campaign);
-  const at = campaign.location?.world;
-  if (!ship || at === undefined) return false;
-  return ship.place === undefined || (ship.place.world === at && ship.place.cell === undefined && ship.place.city === undefined);
+  return arrivedVessel(campaign) !== undefined;
 }
 
 /** Muss die Gruppe einen Landeplatz wählen? Auf einer Welt mit Globus, ohne Feld und ohne Stadt. */
@@ -66,7 +68,7 @@ export function chooseLanding(campaign: Campaign, place: { readonly city: number
     const city = target.map!.cities?.findIndex((c) => c.cell === place.cell) ?? -1;
     landed = city >= 0 ? { world, city } : { world, cell: place.cell };
   }
-  const ship = cameByShip(campaign) ? groupShip(campaign) : undefined;
+  const ship = arrivedVessel(campaign);
   return {
     ...campaign,
     location: landed,
@@ -74,10 +76,15 @@ export function chooseLanding(campaign: Campaign, place: { readonly city: number
   };
 }
 
-/** Warum das eigene Schiff nicht abfliegen kann: die Gruppe ist nicht bei ihm; `undefined`, wenn sie es ist. */
-export function shipDepartureBlocker(campaign: Campaign): string | undefined {
-  const ship = groupShip(campaign);
+/**
+ * Warum ein eigenes Schiff (ohne Angabe das aktive) nicht abfliegen kann: Die Gruppe ist nicht bei ihm
+ * oder es kreist in der Umlaufbahn; ein Beiboot an Bord ist dort, wo sein Mutterschiff ist. `undefined`,
+ * wenn es kann.
+ */
+export function shipDepartureBlocker(campaign: Campaign, which: Ship | undefined = shipOf(campaign)): string | undefined {
+  const ship = which === undefined ? undefined : whereIs(campaign, which);
   const at = campaign.location;
+  if (ship?.inOrbit) return `${ship.name} ist in der Umlaufbahn; die Gruppe ist nicht an Bord.`;
   if (!ship || at === undefined || ship.place === undefined) return undefined;
   if (ship.place.world !== at.world) return `${ship.name} steht auf einer anderen Welt.`;
   if (ship.place.cell === undefined && ship.place.city === undefined) return undefined;
@@ -101,14 +108,16 @@ export function portDepartureBlocker(campaign: Campaign): string | undefined {
 
 /** Vor einer Reise ohne eigenes Schiff: Hat es keinen Ort, bleibt es, wo die Gruppe ist. */
 export function leaveShipBehind(campaign: Campaign): Campaign {
-  const ship = groupShip(campaign);
+  const ship = shipOf(campaign);
   if (!ship || ship.place !== undefined || campaign.location === undefined) return campaign;
   return { ...campaign, ships: campaign.ships.map((s) => (s.id === ship.id ? { ...s, place: campaign.location! } : s)) };
 }
 
-/** Mit dem eigenen Schiff angekommen: Es steht auf der Zielwelt, das Feld wählt der Landeplatz. */
-export function shipArrives(campaign: Campaign, world: string): Campaign {
-  const ship = groupShip(campaign);
-  if (!ship) return campaign;
-  return { ...campaign, ships: campaign.ships.map((s) => (s.id === ship.id ? { ...s, place: worldPlace(world) } : s)) };
+/**
+ * Mit dem eigenen Schiff (ohne Angabe dem aktiven) oder einem Small Craft angekommen: Es steht auf der
+ * Zielwelt, nicht an Bord und nicht in der Umlaufbahn; das Feld wählt der Landeplatz.
+ */
+export function shipArrives(campaign: Campaign, world: string, id: string | undefined = shipOf(campaign)?.id): Campaign {
+  if (id === undefined) return campaign;
+  return changeShip(campaign, id, (s) => ({ ...without(s, 'aboard', 'inOrbit'), place: worldPlace(world) }));
 }

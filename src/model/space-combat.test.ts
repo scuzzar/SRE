@@ -97,7 +97,7 @@ describe('Raumkampf: ein fremdes Schiff (2026-11-21h)', () => {
 
   it('ohne Laser kein Ziel', () => {
     const demo = createDemoCampaign(clock);
-    const unarmed = { ...demo, ships: demo.ships.map((s) => ({ ...s, turrets: [{ type: 'double', weapons: [] }] })) };
+    const unarmed = { ...demo, ships: demo.ships.map((s) => (s.mother === undefined ? { ...s, turrets: [{ type: 'double', weapons: [] }] } : s)) };
     const bare = startFlight(unarmed, demo.location!.world, clock);
     expect(fireBlocker(placeFoe(bare, 'A', 'ignore', clock), 0, 1)).toMatch(/keinen Laser/);
   });
@@ -126,7 +126,8 @@ describe('Raumkampf: ein fremdes Schiff (2026-11-21h)', () => {
     void _f;
     const damaged: Campaign = { ...grounded, ships: c.ships.map((s) => ({ ...s, damage: { hits: ['jump' as const, 'jump' as const], turretsOut: [] } })) };
     expect(jumpAfter('S', damaged.ships[0]!.damage)).toBe(0);
-    expect(maxGOf({ ...c, ships: damaged.ships }, c.flight!.units[0]!)).toBe(2);
+    // Treffer auf den Jump Drive senken den Antrieb nicht (die Yacht der Demo hat 1 G).
+    expect(maxGOf({ ...c, ships: damaged.ships }, c.flight!.units[0]!)).toBe(1);
   });
 
   it('Reparatur in der Werft: je Treffer Cr 100.000, je kritischem Cr 1.000.000', () => {

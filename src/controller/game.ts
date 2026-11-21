@@ -98,11 +98,14 @@ import {
   hexId,
   isWorld,
   activeFlight,
+  partyIndexOf,
   endFlight,
   maxGOf,
   normalThrust,
   runRound,
   setThrust,
+  launchCraft,
+  dockCraft,
   snapThrust,
   startFlight,
   flightStartBlocker,
@@ -230,6 +233,7 @@ import {
   renameWorld,
   travelInSystem,
   systemJourneyBlocker,
+  journeyCraft,
   type SystemJourneyMode,
   hexById,
   readyForParty,
@@ -1122,8 +1126,11 @@ export class GameController {
     if (from !== undefined && from !== to && hexIdOfWorld(from) === hexIdOfWorld(to)) {
       const ticket = systemJourneyBlocker(this.campaign, to, 'ticket');
       const ship = systemJourneyBlocker(this.campaign, to, 'ship');
-      if (ticket !== undefined && ship !== undefined) throw new DomainError(ticket);
-      this.update({ systemJourney: { to, mode: ticket === undefined ? 'ticket' : 'ship', error: undefined, done: undefined }, world: undefined, worldError: undefined });
+      // Sonst ein Beiboot, mit dem die Gruppe von hier reisen kann (2026-11-21b).
+      const craft = journeyCraft(this.campaign)[0];
+      if (ticket !== undefined && ship !== undefined && craft === undefined) throw new DomainError(ticket);
+      const draft = ticket === undefined ? { mode: 'ticket' as const } : ship === undefined ? { mode: 'ship' as const } : { mode: 'craft' as const, craft: craft!.id };
+      this.update({ systemJourney: { to, ...draft, error: undefined, done: undefined }, world: undefined, worldError: undefined });
       return;
     }
     const passageBlocker = journeyBlocker(this.campaign, to);
@@ -1180,11 +1187,11 @@ export class GameController {
     this.update({ journey: undefined });
   }
 
-  /** Reise im System: mit Ticket oder mit dem eigenen Schiff. */
-  chooseSystemJourneyMode(mode: SystemJourneyMode): void {
+  /** Reise im System: mit Ticket, mit dem eigenen Schiff oder mit einem Beiboot (`craft`, 2026-11-21b). */
+  chooseSystemJourneyMode(mode: SystemJourneyMode, craft?: string): void {
     const draft = this.state.systemJourney;
     if (!draft || draft.done !== undefined) return;
-    this.update({ systemJourney: { ...draft, mode, error: undefined } });
+    this.update({ systemJourney: { ...without(draft, 'craft'), mode, ...(mode === 'craft' && craft !== undefined ? { craft } : {}), error: undefined } });
   }
 
   /** Die Gruppe reist im System (2026-11-20d); danach zeigt der Dialog das Ergebnis. */
@@ -1193,7 +1200,7 @@ export class GameController {
     if (!draft || draft.done !== undefined) return;
     try {
       const index = this.campaign.log.length;
-      const after = travelInSystem(this.campaign, draft.to, draft.mode, this.deps.clock);
+      const after = travelInSystem(this.campaign, draft.to, draft.mode, this.deps.clock, draft.craft);
       this.change(after, { systemJourney: { ...draft, done: index, error: undefined }, timeNote: undefined, shopError: undefined });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
@@ -2530,7 +2537,7 @@ export class GameController {
   runRound(): void {
     const space = this.openSpaceState();
     const t = flightTime(this.campaign, activeFlight(this.campaign));
-    const ship = shipById(this.campaign, activeFlight(this.campaign).units[0]!.ship!).name;
+    const ship = shipById(this.campaign, activeFlight(this.campaign).party).name;
     const before = this.campaign.log.length;
     const run = runRound(this.campaign, this.deps.clock, this.deps.random);
     // Feuern fremde Schiffe nach der Bewegung, rollen ihre Würfe, sobald die Bewegung abgespielt ist (2026-11-21i).
@@ -2543,6 +2550,19 @@ export class GameController {
     // Geschöpft (2026-11-21f): Der Flug läuft weiter, das Schiff steht wieder auf der Kreisbahn.
     const skimmed = run.skimmed ? { notice: `${ship} hat Treibstoff geschöpft und steht wieder auf der Umlaufbahn.` } : {};
     this.change(run.campaign, { space: { world: space.world, run: { round: activeFlight(run.campaign).round, t, every: 2, frames: run.frames } }, ...skimmed, ...volley });
+  }
+
+  /** Setzt ein Beiboot der Einheit der Gruppe aus; die Gruppe steigt um (2026-11-21b). */
+  launchCraft(id: string): void {
+    const space = this.openSpaceState();
+    this.change(launchCraft(this.campaign, id), { space: without(space, 'aim'), notice: `${shipById(this.campaign, id).name} ist ausgesetzt; die Gruppe ist an Bord.` });
+  }
+
+  /** Dockt ein Small Craft an seinem Mutterschiff an (2026-11-21b). */
+  dockCraft(id: string): void {
+    const space = this.openSpaceState();
+    const craft = shipById(this.campaign, id);
+    this.change(dockCraft(this.campaign, id), { space: without(space, 'aim'), notice: `${craft.name} hat angedockt.` });
   }
 
   /** Beendet den Systemflug; die Raumkarte bleibt offen. */
@@ -2576,8 +2596,8 @@ export class GameController {
     const space = this.openSpaceState();
     const before = this.campaign.log.length;
     try {
-      const shot = fireAt(this.campaign, 0, target, this.deps.random, this.deps.clock);
-      const lost = shot.lost ? { notice: `${shipById(this.campaign, activeFlight(this.campaign).units[0]!.ship!).name} ist im Raumkampf zerstört worden. Was aus der Gruppe wird, entscheidet das Spiel.` } : {};
+      const shot = fireAt(this.campaign, partyIndexOf(activeFlight(this.campaign)), target, this.deps.random, this.deps.clock);
+      const lost = shot.lost ? { notice: `${shipById(this.campaign, activeFlight(this.campaign).party).name} ist im Raumkampf zerstört worden. Was aus der Gruppe wird, entscheidet das Spiel.` } : {};
       this.change(shot.campaign, { space: without(space, 'run'), volley: { from: before, delay: 0 }, ...lost });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;

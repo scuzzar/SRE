@@ -256,7 +256,7 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
         }
         path(trail, unit.foe ? 'rgba(255, 107, 107, 0.35)' : 'rgba(79, 209, 255, 0.35)', 1.2);
         // Raumkampf (2026-11-21i): die Sichtlinie zum fremden Schiff, rot gestrichelt, wenn frei.
-        if (!playing && unit.foe && !unit.wreck && unit.sight && flight?.units[0]) path([flight.units[0].position, unit.position], 'rgba(255, 107, 107, 0.45)', 1, [4, 6]);
+        if (!playing && unit.foe && !unit.wreck && unit.sight && flight?.units[flight.party]) path([flight.units[flight.party]!.position, unit.position], 'rgba(255, 107, 107, 0.45)', 1, [4, 6]);
         if (!playing && !unit.crashed && !unit.foe) {
           path(unit.preview.after, 'rgba(79, 209, 255, 0.75)', 1.4, [6, 5]);
           path(unit.preview.now, OWN, 2.4);
@@ -353,6 +353,8 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
         ctx.save();
         ctx.translate(sx(at.x), sy(at.y));
         ctx.rotate(-angle);
+        // Ein Small Craft ist kleiner gezeichnet, sein Name steht darunter (2026-11-21b).
+        if (unit.craft) ctx.scale(0.7, 0.7);
         ctx.beginPath();
         ctx.moveTo(9, 0);
         ctx.lineTo(-6, 5.5);
@@ -365,7 +367,7 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
         ctx.restore();
         ctx.fillStyle = tone;
         ctx.font = '12px system-ui, sans-serif';
-        ctx.fillText(unit.crashed ? `${unit.name} (Aufschlag)` : unit.foe ? `${unit.name} · ${unit.wreck ? 'Wrack' : unit.intent} · ${unit.bands} RB` : unit.name, sx(at.x) + 12, sy(at.y) - 10);
+        ctx.fillText(unit.crashed ? `${unit.name} (Aufschlag)` : unit.foe ? `${unit.name} · ${unit.wreck ? 'Wrack' : unit.intent} · ${unit.bands} RB` : unit.name, sx(at.x) + 12, sy(at.y) + (unit.craft ? 18 : -10));
         ctx.font = '11px system-ui, sans-serif';
         seen.current.set(unit.name, at);
       }
@@ -448,7 +450,8 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
     for (const unit of flight.units) {
       if (unit.crashed || unit.foe) continue;
       const d = Math.hypot(x - (w / 2 + (unit.position.x - cam.cx) * cam.scale), y - (h / 2 - (unit.position.y - cam.cy) * cam.scale));
-      if (d <= RING + 12 && (!best || d < best.d)) best = { unit, d };
+      // Liegen zwei Einheiten übereinander (ein Beiboot gerade ausgesetzt), zieht der Finger an der Einheit der Gruppe (2026-11-21b).
+      if (d <= RING + 12 && (!best || d < best.d - 1 || (Math.abs(d - best.d) <= 1 && unit.party))) best = { unit, d };
     }
     return best?.unit;
   };
@@ -527,7 +530,8 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
     const cam = camera.current;
     const el = canvas.current;
     if (!cam || !el) return;
-    const unit = latest.current.flight?.units[0];
+    const flight = latest.current.flight;
+    const unit = flight?.units[flight.party];
     if (unit && (cam.cx !== unit.position.x || cam.cy !== unit.position.y)) {
       cam.cx = unit.position.x;
       cam.cy = unit.position.y;

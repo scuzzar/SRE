@@ -373,7 +373,7 @@ function Details({ boat }: { boat: Boat }) {
         </div>
         <div>
           <dt>Bauzeit</dt>
-          <dd>{`${boat.months} Monate`}</dd>
+          <dd>{boat.months === 0 ? 'keine Angabe' : `${boat.months} Monate`}</dd>
         </div>
         <div>
           <dt>Grundpreis</dt>
@@ -385,6 +385,25 @@ function Details({ boat }: { boat: Boat }) {
         </div>
       </dl>
       {boat.loanBalance !== undefined && <p className="shop-hint muted">Die Bank hebt die Monatsrate automatisch ein, wenn sie fällig ist; ohne Deckung bleibt die Rate als Hinweis in der Kasse stehen.</p>}
+      {boat.craft.length > 0 && (
+        <>
+          <h2 className="section-title">Beiboote</h2>
+          <div className="shop-table" role="table" aria-label="Beiboote">
+            {boat.craft.map((c) => (
+              <div key={c.name} className="shop-row soft-row" role="row">
+                <span role="cell" className="shop-name">
+                  <span className="shop-label">{c.name}</span>
+                  <span className="shop-meta">{c.design}</span>
+                </span>
+                <span role="cell" className="shop-num soft-kind muted">
+                  {c.where}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="shop-hint muted">Im Systemflug aussetzen und wieder andocken; mit einem Beiboot landet die Gruppe, während das Schiff in der Umlaufbahn bleibt, oder reist damit im System. Gesprungen wird nur mit allen Beibooten an Bord.</p>
+        </>
+      )}
       <h2 className="section-title">Software an Bord · {boat.computerName}</h2>
       <div className="shop-table" role="table" aria-label="Software an Bord">
         {boat.software.map((s) => (
@@ -523,55 +542,65 @@ function RepairSection({ boat, funds }: { boat: Boat; funds: number }) {
   );
 }
 
-/** Die Werft als Blatt: die Bewaffnung des eigenen Schiffs, dann die Standardentwürfe, der Preis als Knopf. */
+/** Eine Liste der Werft: Standardentwürfe oder Small Craft, der Preis als Knopf. */
+function YardTable({ title, rows, funds, onBuy }: { title: string; rows: readonly ShipYardRow[]; funds: number; onBuy: (design: ShipYardRow) => void }) {
+  return (
+    <>
+      <h2 className="section-title">
+        {title} <span className="muted">({rows.length})</span>
+      </h2>
+      <div className="shop-table" role="table" aria-label={title}>
+        <div className="shop-row ship-row shop-row-head" role="row">
+          <span role="columnheader">Entwurf</span>
+          <span role="columnheader" className="shop-num">
+            MCr
+          </span>
+        </div>
+        {rows.map((d) => (
+          <div key={d.designId} className="shop-row ship-row" role="row" title={d.blocker}>
+            <span role="cell" className="shop-name">
+              <span className="shop-label">
+                {d.name} {!d.smallCraft && <small>{d.code}</small>}
+              </span>
+              <span className="shop-meta">
+                {d.smallCraft ? `${d.hull} t · ${d.maneuver}G · ${d.crew} · ${d.blocker ?? d.becomes}` : `${d.hull} t · Jump-${d.jump} · ${d.maneuver}G · ${d.crew}${d.craft !== '' ? ` · ${d.craft}` : ''}`}
+              </span>
+            </span>
+            <span role="cell" className="shop-num">
+              <button type="button" className="shop-price" disabled={!d.affordable} onClick={() => onBuy(d)}>
+                <span>{mcr(d.price)}</span>
+                {d.affordable && <span className="shop-price-sub">{d.price <= funds ? 'bar' : `Anzahlung ${mcr(d.down)}`}</span>}
+                {d.owned && (
+                  <span className="shop-owned" title="das habt ihr">
+                    ✓
+                  </span>
+                )}
+              </button>
+            </span>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+/** Die Werft als Blatt: Reparatur und Bewaffnung des eigenen Schiffs (2026-11-21g/h), dann die Standardentwürfe und die Small Craft (2026-11-21c), der Preis als Knopf. */
 function YardSheet({ ship, onBuy, onClose }: { ship: ShipView; onBuy: (design: ShipYardRow) => void; onClose: () => void }) {
   return (
-    <SheetFrame title="Werft" aside="Standardentwürfe · SR 35–37" onClose={onClose}>
+    <SheetFrame title="Werft" aside="Standardentwürfe · SR 33–37" onClose={onClose}>
       {ship.error && (
         <p className="error" role="alert">
           {ship.error}
         </p>
       )}
       {ship.ship !== undefined && ship.ship.damage.length > 0 && <RepairSection boat={ship.ship} funds={ship.funds} />}
-      {ship.ship !== undefined && <ArmamentSection ship={ship} boat={ship.ship} />}
+      {ship.ship !== undefined && ship.ship.hardpoints > 0 && <ArmamentSection ship={ship} boat={ship.ship} />}
       <p className="shop-hint muted">Preis antippen zum Bestellen an der Werft. Bar oder über die Bank: 20&nbsp;% Anzahlung, 480 Monatsraten, zusammen 220&nbsp;% des Preises (SR&nbsp;29). Grau = nicht bezahlbar.</p>
       <div className="shop-counter">
-        <h2 className="section-title">
-          Standardentwürfe <span className="muted">({ship.yard.length})</span>
-        </h2>
-        <div className="shop-table" role="table" aria-label="Standardentwürfe">
-          <div className="shop-row ship-row shop-row-head" role="row">
-            <span role="columnheader">Entwurf</span>
-            <span role="columnheader" className="shop-num">
-              MCr
-            </span>
-          </div>
-          {ship.yard.map((d) => (
-            <div key={d.designId} className="shop-row ship-row" role="row">
-              <span role="cell" className="shop-name">
-                <span className="shop-label">
-                  {d.name} <small>{d.code}</small>
-                </span>
-                <span className="shop-meta">
-                  {d.hull} t · Jump-{d.jump} · {d.maneuver}G · {d.crew}
-                </span>
-              </span>
-              <span role="cell" className="shop-num">
-                <button type="button" className="shop-price" disabled={!d.affordable} onClick={() => onBuy(d)}>
-                  <span>{mcr(d.price)}</span>
-                  {d.affordable && <span className="shop-price-sub">{d.price <= ship.funds ? 'bar' : `Anzahlung ${mcr(d.down)}`}</span>}
-                  {d.owned && (
-                    <span className="shop-owned" title="das habt ihr">
-                      ✓
-                    </span>
-                  )}
-                </button>
-              </span>
-            </div>
-          ))}
-        </div>
+        <YardTable title="Standardentwürfe" rows={ship.yard.filter((d) => !d.smallCraft)} funds={ship.funds} onBuy={onBuy} />
+        <YardTable title="Small Craft" rows={ship.yard.filter((d) => d.smallCraft)} funds={ship.funds} onBuy={onBuy} />
       </div>
-      <p className="shop-hint muted">Auch bei der Abmusterung gibt es ein Schiff: der Ship-Vorteil der Laufbahn (Scout/Courier schuldenfrei, Subsidized Merchant mit Kreditschuld).</p>
+      <p className="shop-hint muted">Ein Small Craft wird mit Schiff dessen Beiboot und liegt im Laderaum (so viele Tonnen wie sein Rumpf); ohne Schiff gehört es euch allein. Auch bei der Abmusterung gibt es ein Schiff: der Ship-Vorteil der Laufbahn (Scout/Courier schuldenfrei, Subsidized Merchant mit Kreditschuld).</p>
     </SheetFrame>
   );
 }
@@ -583,8 +612,8 @@ function BuySheet({ ship, design, method, onMethod, onBack, onBuy, onClose }: { 
   const monthly = Math.round((design.price * 2) / 480);
   return (
     <SheetFrame
-      title={`${design.name} (${design.code}) kaufen`}
-      aside={`${design.hull} t · Jump-${design.jump} · ${design.maneuver}G`}
+      title={design.smallCraft ? `${design.name} kaufen` : `${design.name} (${design.code}) kaufen`}
+      aside={design.smallCraft ? `${design.hull} t · ${design.maneuver}G · ${design.becomes}` : `${design.hull} t · Jump-${design.jump} · ${design.maneuver}G`}
       onClose={onClose}
       foot={
         <>
@@ -617,7 +646,7 @@ function BuySheet({ ship, design, method, onMethod, onBack, onBuy, onClose }: { 
           </div>
           <div>
             <dt>Bauzeit (Referenz)</dt>
-            <dd>{`${design.months} Monate`}</dd>
+            <dd>{design.months === 0 ? 'keine Angabe' : `${design.months} Monate`}</dd>
           </div>
         </dl>
       ) : (
