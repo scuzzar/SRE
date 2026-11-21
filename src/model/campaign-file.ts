@@ -14,11 +14,12 @@ import { checkJourney } from './travel';
 import { checkSystemJourney } from './system-journey';
 import { START_DAY } from './time';
 import { checkOf, encounterChecks } from './encounter-check';
-import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type Journey, type SystemJourney, type DamageRoll, type LogEntry, type Note, type Recovery, type TripDay } from './log';
+import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type Journey, type SystemJourney, type SpaceBattle, type SpaceAttack, type DamageRoll, type LogEntry, type Note, type Recovery, type TripDay } from './log';
 import { checkRecovery } from './wounds';
 import { missionStates, validateMissions, type Mission, type MissionPlace } from './mission';
 import { armorClasses, encounterTypeOf, entryOf, eventFocusOf, itemOf, oddsOf, patronOf, ranges, ref, shipDesignOf, slotOfEntry, softwareOf, weaponOf } from './reference';
 import { checkTurrets } from './armament';
+import { battleOutcomes, checkDamage, hitZones, intents } from './space-combat';
 import { characteristics } from './rules';
 import { bookingKinds, shipCosts, validateBookings, type Booking } from './shop';
 import type { Ship } from './ship';
@@ -148,6 +149,9 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     jumpDm: z.number().int().optional(),
   }),
   z.object({ kind: z.literal('skimming'), at, day, place, giant: z.string().min(1), ship: z.string().min(1), tons: z.number().int().min(1) }),
+  z.object({ kind: z.literal('spaceBattle'), at, day, place, foe: z.string().min(1), design: z.string().min(1), intent: z.enum(intents), encounter: dice.optional(), reaction: dice.optional(), attack: dice.optional() }),
+  z.object({ kind: z.literal('spaceAttack'), at, day, place, round: z.number().int().min(1), attacker: z.string().min(1), target: z.string().min(1), turret: z.number().int().min(0), weapon: z.string().min(1), dice, dm: z.number().int(), hits: z.array(z.enum(hitZones)).max(4) }),
+  z.object({ kind: z.literal('spaceBattleEnd'), at, day, place, foe: z.string().min(1), outcome: z.enum(battleOutcomes) }),
   z.object({ kind: z.literal('systemJourney'), at, day, place, from: z.string().min(1), to: z.string().min(1), hours: z.number().int(), travellers: z.array(z.string().min(1)), ship: z.string().min(1).optional() }),
 ]);
 
@@ -312,6 +316,8 @@ const TripSchema = z.object({
 });
 /** Ein Vektor in der Ebene (2026-11-18). */
 const VecSchema = z.object({ x: z.number().finite(), y: z.number().finite() });
+/** Schaden aus dem Raumkampf (2026-11-21d). */
+const DamageSchema = z.object({ hits: z.array(z.enum(hitZones)), turretsOut: z.array(z.number().int().min(0)) });
 /** Der laufende Systemflug (2026-11-18c). */
 const FlightSchema = z.object({
   world: z.string().min(1),
@@ -320,7 +326,12 @@ const FlightSchema = z.object({
   units: z
     .array(
       z.object({
-        ship: z.string().min(1),
+        ship: z.string().min(1).optional(),
+        design: z.string().min(1).optional(),
+        name: z.string().min(1).optional(),
+        intent: z.enum(intents).optional(),
+        damage: DamageSchema.optional(),
+        aim: z.number().int().min(0).optional(),
         position: VecSchema,
         velocity: VecSchema,
         thrust: VecSchema.optional(),
@@ -348,6 +359,7 @@ const ShipSchema = z.object({
   software: z.array(z.object({ program: z.string().min(1) })).default([]),
   /** Die Turrets (2026-11-21c); fehlen in Dateien von vorher: dann die des Entwurfs. */
   turrets: z.array(z.object({ type: z.string().min(1), weapons: z.array(z.string().min(1)).max(3) })).optional(),
+  damage: DamageSchema.optional(),
   place: PlaceSchema.optional(),
 });
 const CharacterSchema = z.object({
@@ -687,7 +699,12 @@ function flightFromFile(flight: z.infer<typeof FlightSchema>): SystemFlight {
     startedAt: flight.startedAt,
     round: flight.round,
     units: flight.units.map((u) => ({
-      ship: u.ship,
+      ...(u.ship === undefined ? {} : { ship: u.ship }),
+      ...(u.design === undefined ? {} : { design: u.design }),
+      ...(u.name === undefined ? {} : { name: u.name }),
+      ...(u.intent === undefined ? {} : { intent: u.intent }),
+      ...(u.damage === undefined ? {} : { damage: { hits: [...u.damage.hits], turretsOut: [...u.damage.turretsOut] } }),
+      ...(u.aim === undefined ? {} : { aim: u.aim }),
       position: vec(u.position),
       velocity: vec(u.velocity),
       ...(u.thrust === undefined ? {} : { thrust: vec(u.thrust) }),
@@ -745,7 +762,12 @@ function fileEntryOf(entry: WithoutDay<FileEntry>): LogEntry {
     case 'time':
     case 'monthEnd':
     case 'skimming':
+    case 'spaceBattleEnd':
       return entry;
+    case 'spaceBattle':
+      return stripped(entry) as SpaceBattle;
+    case 'spaceAttack':
+      return { ...entry, hits: [...entry.hits] } as SpaceAttack;
     case 'tripDay':
       return stripped(entry) as TripDay;
     case 'check':
@@ -816,6 +838,7 @@ function validate(campaign: Campaign): void {
     shipDesignOf(ship.design);
     for (const board of ship.software) softwareOf(board.program);
     checkTurrets(ship);
+    if (ship.damage !== undefined) checkDamage(ship.damage, ship.turrets.length);
     if (ship.unrefined > ship.fuel) throw new DomainError(`${ship.name} hat mehr unraffinierten Treibstoff als Treibstoff im Tank.`);
   }
   if (campaign.ships.some((s) => !s.retired) && campaign.ships.filter((s) => !s.retired).length > 1) throw new DomainError('Es gibt mehr als ein aktives Schiff.');

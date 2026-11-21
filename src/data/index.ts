@@ -40,6 +40,7 @@ export const referenceData: ReferenceData = ReferenceDataSchema.parse({
   vehicles,
   ships: ships.designs,
   turretTypes: ships.turretTypes,
+  starshipEncounters: ships.starshipEncounters,
   shipWeapons: ships.shipWeapons,
   computers: ships.computers,
   software: ships.software,

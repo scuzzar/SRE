@@ -21,7 +21,11 @@ import {
   shipWeaponOf,
   turretTypes,
   shipWeapons,
+  repairCostOf,
+  maneuverAfter,
+  jumpAfter,
 } from '../model';
+import { hitZoneNames } from './time-view';
 
 /** Ein Turret auf einem Hardpoint des eigenen Schiffs (2026-11-21c). */
 export interface TurretRow {
@@ -119,6 +123,14 @@ export interface ShipView {
         /** Die Turrets in der Reihenfolge der Hardpoints; warum gerade nicht umgerüstet werden kann (`undefined`: es geht). */
         readonly turrets: readonly TurretRow[];
         readonly armamentBlocker: string | undefined;
+        /** Schaden aus dem Raumkampf als Trefferzonen, ausgefallene Turrets (Hardpoint ab 1), Kosten der Reparatur (2026-11-21d). */
+        readonly damage: readonly string[];
+        readonly turretsOut: readonly number[];
+        readonly repairCost: number;
+        /** Höchstschub und Sprung nach dem Schaden. */
+        readonly maneuverNow: number;
+        readonly maneuver: number;
+        readonly jumpNow: number;
       }
     | undefined;
   /** Was die Werft an Turmarten und Schiffswaffen anbietet (2026-11-21c). */
@@ -181,6 +193,12 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
               return { typeId: kind.id, typeName: kind.name, slots: kind.slots, weapons: t.weapons.map((w) => ({ id: w, name: shipWeaponOf(w).name })) };
             }),
             armamentBlocker: armamentBlocker(campaign),
+            damage: (ship.damage?.hits ?? []).map((h) => hitZoneNames[h]),
+            turretsOut: (ship.damage?.turretsOut ?? []).map((i) => i + 1),
+            repairCost: repairCostOf(ship),
+            maneuverNow: maneuverAfter(ship.design, ship.damage),
+            maneuver: plan.maneuver,
+            jumpNow: jumpAfter(ship.design, ship.damage),
           },
     turretTypes: turretTypes().map((t) => ({ id: t.id, name: t.name, price: t.price, slots: t.slots, affordable: funds >= t.price })),
     shipWeapons: shipWeapons().map((w) => ({ id: w.id, name: w.name, price: w.price, affordable: funds >= w.price })),

@@ -10,6 +10,14 @@
     { "id": "L", "code": "L", "name": "Laboratory Ship", "computer": "model-2", "hull": 400, "jump": 2, "maneuver": 1, "fuel": 90, "staterooms": 20, "lowBerths": 0, "hardpoints": 2, "cargo": 23, "crew": "5", "basePrice": 158980000, "months": 14, "streamlined": false },
     { "id": "K", "code": "K", "name": "Safari Ship", "computer": "model-1bis", "hull": 200, "jump": 2, "maneuver": 1, "fuel": 60, "staterooms": 11, "lowBerths": 0, "hardpoints": 1, "cargo": 6, "crew": "5", "basePrice": 81080000, "months": 11, "streamlined": true, "turrets": [{ "type": "double", "weapons": [] }] }
   ],
+  "starshipEncounters": {
+    "A": [null, null, null, null, "S", "A", "R", "M*", "Y", "T", "R*", "M*", "C*", "T*"],
+    "B": [null, null, null, null, "A", "S", "A", "R*", "M", "R", "C*", "Y*", "T*", "C*"],
+    "C": [null, null, null, null, null, "R", "A", "R*", "TP", "T", "Y", "A", "S*", "Y*"],
+    "D": [null, null, null, null, "L", "K", "S", "SP", "A", "R", "M", "Y", "TP", null],
+    "E": [null, null, "K", null, null, null, null, "S", "A", "TP", "CP", null, null, null],
+    "X": [null, null, null, "L", null, null, null, "T", "TP", "CP", "C", null, null, null]
+  },
   "turretTypes": [
     { "id": "single", "name": "Single Turret", "slots": 1, "price": 200000 },
     { "id": "double", "name": "Double Turret", "slots": 2, "price": 500000 },

@@ -9590,3 +9590,33 @@ button:disabled {
 .armament select {
   max-width: 100%;
 }
+
+/* Raumkampf im Blatt der Raumkarte (2026-11-21d) */
+.space-battle {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0;
+}
+.space-battle .section-title {
+  margin: 0;
+}
+.space-foe {
+  border: 1px solid rgba(255, 107, 107, 0.45);
+  border-radius: 8px;
+  padding: 6px 8px;
+  display: grid;
+  gap: 4px;
+}
+.space-foe p {
+  margin: 0;
+}
+.space-foe.wreck {
+  opacity: 0.7;
+  border-style: dashed;
+}
+.space-encounter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}

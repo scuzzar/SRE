@@ -57,6 +57,14 @@ import {
   journeyDays,
   type SystemJourney,
   type Skimming,
+  type SpaceBattle,
+  type SpaceAttack,
+  type SpaceBattleEnd,
+  type HitZone,
+  type Intent,
+  type BattleOutcome,
+  HIT_TARGET,
+  shipWeaponOf,
   flightHours,
   systemJourneyBlocker,
   TICKET_RATE,
@@ -142,6 +150,75 @@ export interface SkimmingItem {
   readonly giant: string;
   readonly ship: string;
   readonly tons: number;
+}
+
+/** Trefferzonen, Absichten und Ausgänge des Raumkampfs, wie Log und Blatt sie schreiben (2026-11-21d). */
+export const hitZoneNames: Record<HitZone, string> = {
+  powerPlant: 'Power Plant',
+  maneuver: 'Maneuver Drive',
+  jump: 'Jump Drive',
+  fuel: 'Treibstoff',
+  hull: 'Rumpf',
+  hold: 'Laderaum',
+  computer: 'Computer',
+  turret: 'Turret',
+  criticalPowerPlant: 'Power Plant zerstört',
+  criticalManeuver: 'Maneuver Drive zerstört',
+  criticalJump: 'Jump Drive zerstört',
+  crew: 'Crew handlungsunfähig',
+  criticalComputer: 'Computer zerstört',
+  explode: 'Explosion',
+};
+export const intentNames: Record<Intent, string> = { attack: 'greift an', flee: 'flieht', ignore: 'beachtet die Gruppe nicht' };
+export const outcomeNames: Record<BattleOutcome, string> = { destroyed: 'zerstört', disabled: 'kampfunfähig', escaped: 'entkommen', broken: 'abgebrochen', lost: 'eigenes Schiff verloren' };
+
+/** Ein fremdes Schiff taucht auf, im Log (2026-11-21d). */
+export interface SpaceBattleItem {
+  readonly kind: 'spaceBattle';
+  readonly at: string;
+  readonly foe: string;
+  readonly design: string;
+  readonly intent: string;
+  readonly encounter: readonly number[] | undefined;
+  readonly reaction: readonly number[] | undefined;
+  readonly attack: readonly number[] | undefined;
+}
+
+/** Ein Laserschuss im Log (2026-11-21d). */
+export interface SpaceAttackItem {
+  readonly kind: 'spaceAttack';
+  readonly at: string;
+  readonly round: number;
+  readonly attacker: string;
+  readonly target: string;
+  readonly turret: number;
+  readonly weapon: string;
+  readonly dice: readonly number[];
+  readonly dm: number;
+  readonly total: number;
+  readonly hit: boolean;
+  readonly hits: readonly string[];
+}
+
+/** Das Ende eines Raumkampfs im Log (2026-11-21d). */
+export interface SpaceBattleEndItem {
+  readonly kind: 'spaceBattleEnd';
+  readonly at: string;
+  readonly foe: string;
+  readonly outcome: string;
+}
+
+export function spaceBattleItem(entry: SpaceBattle): SpaceBattleItem {
+  return { kind: 'spaceBattle', at: entry.at, foe: entry.foe, design: shipDesignOf(entry.design).name, intent: intentNames[entry.intent], encounter: entry.encounter, reaction: entry.reaction, attack: entry.attack };
+}
+
+export function spaceAttackItem(entry: SpaceAttack): SpaceAttackItem {
+  const total = entry.dice[0] + entry.dice[1] + entry.dm;
+  return { kind: 'spaceAttack', at: entry.at, round: entry.round, attacker: entry.attacker, target: entry.target, turret: entry.turret, weapon: shipWeaponOf(entry.weapon).name, dice: entry.dice, dm: entry.dm, total, hit: total >= HIT_TARGET, hits: entry.hits.map((h) => hitZoneNames[h]) };
+}
+
+export function spaceBattleEndItem(entry: SpaceBattleEnd): SpaceBattleEndItem {
+  return { kind: 'spaceBattleEnd', at: entry.at, foe: entry.foe, outcome: outcomeNames[entry.outcome] };
 }
 
 export function skimmingItem(campaign: Campaign, entry: Skimming): SkimmingItem {
@@ -346,7 +423,7 @@ export interface MonthEndItem {
   readonly total: number;
 }
 
-const costNames: Record<Exclude<ShipCost, 'price' | 'armament'>, string> = { rate: 'Rate', fuel: 'Treibstoff', berthing: 'Liegegebühren', lifeSupport: 'Lebenserhaltung' };
+const costNames: Record<Exclude<ShipCost, 'price' | 'armament' | 'repair'>, string> = { rate: 'Rate', fuel: 'Treibstoff', berthing: 'Liegegebühren', lifeSupport: 'Lebenserhaltung' };
 
 export function monthEndItem(campaign: Campaign, entry: MonthEnd): MonthEndItem {
   const costs = costsOf(campaign, entry).map((c) => c.booking);

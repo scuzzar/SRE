@@ -16,6 +16,8 @@ const DEAD = 14;
 const PLAY_MS = 1800;
 const OWN = '#4fd1ff';
 const WARN = '#ff5a6a';
+/** Fremde Schiffe im Raumkampf (2026-11-21d). */
+const FOE = '#ff6b6b';
 
 interface Camera {
   /** Mitte des Bildes in km. */
@@ -226,8 +228,11 @@ export function SpaceScreen({ space }: { space: SpaceView }) {
           at = { x: a.x + (b.x - a.x) * (k - i), y: a.y + (b.y - a.y) * (k - i) };
           trail = [...trailOf({ ...unit, track: unit.track.slice(0, -1), position: unit.track.at(-1)?.position ?? unit.position, velocity: unit.track.at(-1)?.velocity ?? unit.velocity }), ...frames.slice(0, i + 1).map((f) => f[unit.index]!), at];
         }
-        path(trail, 'rgba(79, 209, 255, 0.35)', 1.2);
-        if (!playing && !unit.crashed) {
+        path(trail, unit.foe ? 'rgba(255, 107, 107, 0.35)' : 'rgba(79, 209, 255, 0.35)', 1.2);
+        // Raumkampf (2026-11-21d): das Ziel dieser Raumrunde als rote Linie.
+        const target = unit.aim === undefined ? undefined : flight?.units[unit.aim];
+        if (!playing && target) path([unit.position, target.position], 'rgba(255, 107, 107, 0.8)', 1.5, [4, 4]);
+        if (!playing && !unit.crashed && !unit.foe) {
           path(unit.preview.after, 'rgba(79, 209, 255, 0.75)', 1.4, [6, 5]);
           path(unit.preview.now, OWN, 2.4);
           const end = unit.preview.now.at(-1);
@@ -329,12 +334,13 @@ export function SpaceScreen({ space }: { space: SpaceView }) {
         ctx.lineTo(-3.5, 0);
         ctx.lineTo(-6, -5.5);
         ctx.closePath();
-        ctx.fillStyle = unit.crashed ? WARN : OWN;
+        const tone = unit.crashed ? WARN : unit.foe ? FOE : OWN;
+        ctx.fillStyle = tone;
         ctx.fill();
         ctx.restore();
-        ctx.fillStyle = unit.crashed ? WARN : OWN;
+        ctx.fillStyle = tone;
         ctx.font = '12px system-ui, sans-serif';
-        ctx.fillText(unit.crashed ? `${unit.name} (Aufschlag)` : unit.name, sx(at.x) + 12, sy(at.y) - 10);
+        ctx.fillText(unit.crashed ? `${unit.name} (Aufschlag)` : unit.foe ? `${unit.name} · ${unit.wreck ? 'Wrack' : unit.intent} · ${unit.bands} RB` : unit.name, sx(at.x) + 12, sy(at.y) - 10);
         ctx.font = '11px system-ui, sans-serif';
       }
     };
@@ -352,7 +358,7 @@ export function SpaceScreen({ space }: { space: SpaceView }) {
     const h = el.clientHeight;
     let best: { unit: SpaceUnitView; d: number } | undefined;
     for (const unit of flight.units) {
-      if (unit.crashed) continue;
+      if (unit.crashed || unit.foe) continue;
       const d = Math.hypot(x - (w / 2 + (unit.position.x - cam.cx) * cam.scale), y - (h / 2 - (unit.position.y - cam.cy) * cam.scale));
       if (d <= RING + 12 && (!best || d < best.d)) best = { unit, d };
     }

@@ -147,7 +147,22 @@ export function ShipScreen({ view }: { view: Snapshot }) {
               <div className="tile">
                 <span className="tile-label">Antrieb</span>
                 <span className="tile-text">{boat.thruster}</span>
+                {(boat.maneuverNow < boat.maneuver || boat.jumpNow < boat.jump) && (
+                  <span className="tile-sub negative">
+                    beschädigt: Jump-{boat.jumpNow} · {boat.maneuverNow}G
+                  </span>
+                )}
               </div>
+              {boat.damage.length > 0 && (
+                <div className="tile">
+                  <span className="tile-label">Schaden</span>
+                  <span className="tile-text negative">{boat.damage.length} Treffer</span>
+                  <span className="tile-sub">
+                    {boat.damage.join(', ')}
+                    {boat.turretsOut.length > 0 ? ` · Turret ${boat.turretsOut.join(', ')} ausgefallen` : ''} · Reparatur in der Werft
+                  </span>
+                </div>
+              )}
               <div className="tile">
                 <span className="tile-label">Hardpoints</span>
                 <span className="tile-text">{armamentLine(boat)}</span>
@@ -490,6 +505,24 @@ function ArmamentSection({ ship, boat }: { ship: ShipView; boat: Boat }) {
   );
 }
 
+/** Reparatur des Schadens aus dem Raumkampf in der Werft (2026-11-21d, Hausregel: Cr 100.000 je Treffer, Cr 1.000.000 je kritischem). */
+function RepairSection({ boat, funds }: { boat: Boat; funds: number }) {
+  const game = useGame();
+  return (
+    <div className="shop-counter">
+      <h2 className="section-title">Reparatur</h2>
+      <p>
+        {boat.name}: {boat.damage.join(', ')}
+      </p>
+      {boat.armamentBlocker && <p className="combat-hint">{boat.armamentBlocker.replace('Umrüsten', 'Reparieren')}</p>}
+      <button type="button" className="action gold" disabled={boat.armamentBlocker !== undefined || boat.repairCost > funds} onClick={() => (haptic('pick'), game.repairShip())}>
+        Alles reparieren · {mcr(boat.repairCost)} MCr
+      </button>
+      <p className="shop-hint muted">Hausregel: Cr 100.000 je Treffer, Cr 1.000.000 je kritischem Treffer; die SR rechnen mit dem Neuwert der Baugruppen, die die App nicht kennt.</p>
+    </div>
+  );
+}
+
 /** Die Werft als Blatt: die Bewaffnung des eigenen Schiffs, dann die Standardentwürfe, der Preis als Knopf. */
 function YardSheet({ ship, onBuy, onClose }: { ship: ShipView; onBuy: (design: ShipYardRow) => void; onClose: () => void }) {
   return (
@@ -499,6 +532,7 @@ function YardSheet({ ship, onBuy, onClose }: { ship: ShipView; onBuy: (design: S
           {ship.error}
         </p>
       )}
+      {ship.ship !== undefined && ship.ship.damage.length > 0 && <RepairSection boat={ship.ship} funds={ship.funds} />}
       {ship.ship !== undefined && <ArmamentSection ship={ship} boat={ship.ship} />}
       <p className="shop-hint muted">Preis antippen zum Bestellen an der Werft. Bar oder über die Bank: 20&nbsp;% Anzahlung, 480 Monatsraten, zusammen 220&nbsp;% des Preises (SR&nbsp;29). Grau = nicht bezahlbar.</p>
       <div className="shop-counter">

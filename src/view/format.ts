@@ -1,4 +1,4 @@
-import type { AttackItem, CardItem, CardView, CheckItem, DamageItem, DmPart, ButcheringItem, EventItem, JourneyItem, LogItem, MonthEndItem, TripDayItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem } from '../controller';
+import type { AttackItem, CardItem, CardView, CheckItem, DamageItem, DmPart, ButcheringItem, EventItem, JourneyItem, LogItem, MonthEndItem, TripDayItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem, SpaceAttackItem } from '../controller';
 import type { Answer, ArmorClass, AttackKind, BookingKind, ShipCost, MissionState, NpcRole, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
@@ -93,6 +93,7 @@ export const shipCostText: Record<ShipCost, string> = {
   berthing: 'Schiff · Liegegebühr',
   lifeSupport: 'Schiff · Lebenserhaltung',
   armament: 'Schiff · Bewaffnung',
+  repair: 'Schiff · Reparatur',
 };
 
 /** Die Rüstungsklassen, wie die Matrix sie schreibt. */
@@ -379,11 +380,23 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
       return { head: `Reise im System nach ${item.to}`, rest: `${item.fromDate} → ${item.toDate} · ${item.flight} · ${item.how}` };
     case 'skimming':
       return { head: `Treibstoff geschöpft: ${item.tons} t`, rest: `${item.ship} am Gasriesen ${item.giant}, unraffiniert` };
+    case 'spaceBattle':
+      return { head: `Fremdes Schiff: ${item.foe}`, rest: `${item.design}, ${item.intent}` };
+    case 'spaceAttack':
+      return { head: `${item.attacker} → ${item.target}: ${item.hit ? 'Treffer' : 'daneben'}`, rest: spaceAttackDetail(item) };
+    case 'spaceBattleEnd':
+      return { head: `Raumkampf vorbei: ${item.foe} ${item.outcome}`, rest: '' };
     case 'tripDay':
       return { head: item.arrived ? `Angekommen: ${item.where}` : `Reisetag: ${item.where}`, rest: tripDayDetail(item) };
     case 'note':
       return { head: item.interprets === undefined ? 'Notiz' : 'Deutung', rest: item.text };
   }
+}
+
+/** Ein Laserschuss in Zahlen: „Beam Laser (Turret 1): 4 + 5 − 2 = 7 (8+)“ und die Trefferzonen. */
+export function spaceAttackDetail(item: SpaceAttackItem): string {
+  const dm = item.dm === 0 ? '' : ` ${item.dm > 0 ? '+' : '−'} ${Math.abs(item.dm)}`;
+  return `Runde ${item.round} · ${item.weapon} (Turret ${item.turret + 1}): ${item.dice[0]} + ${item.dice[1]}${dm} = ${item.total} (8+)${item.hits.length > 0 ? ` · ${item.hits.join(', ')}` : ''}`;
 }
 
 /** Ein Test in Zahlen: „3 (5+ nötig): heute keine Begegnung“, bei der Polizei mit Gesetz und Reaktion. */

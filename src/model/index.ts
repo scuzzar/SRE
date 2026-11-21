@@ -29,6 +29,7 @@ export * from './system-journey';
 export * from './place';
 export * from './ship';
 export * from './armament';
+export * from './space-combat';
 export * from './surface-grid';
 export * from './surface-map';
 export * from './shop';

@@ -169,6 +169,7 @@ hide <<browser>> stereotype
     intent: Intent
     encounter: number[2] [0..1]
     reaction: number[2] [0..1]
+    attack: number[2] [0..1]
   }
   class SpaceAttack $raum $newClass("2026-11-21d") {
     round: number

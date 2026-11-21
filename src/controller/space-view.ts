@@ -30,8 +30,20 @@ import {
   type TrackPoint,
   type Vec,
   type World,
+  encounterBlocker,
+  battleRunning,
+  encounterColumn,
+  ref,
+  designOfUnit,
+  damageOfUnit,
+  nameOfUnit,
+  bandOf,
+  spaceRangeDm,
+  lineOfSight,
+  laserCountOf,
 } from '../model';
 import { systemLook, type WorldLook } from './world-view';
+import { hitZoneNames, intentNames } from './time-view';
 
 /** Die offene Raumkarte im Zustand des Controllers: die Welt, ein gezogener (noch nicht gesetzter) Schubvektor und die letzte Wiedergabe. */
 export interface OpenSpace {
@@ -70,6 +82,18 @@ export interface SpaceUnitView {
   readonly fuelMax: number;
   /** Stromlinienförmig: kann an einem Gasriesen schöpfen (SR 32). */
   readonly streamlined: boolean;
+  /** Raumkampf (2026-11-21d): ein fremdes Schiff, seine Absicht (fehlt beim Wrack), der Schaden als Trefferzonen. */
+  readonly foe: boolean;
+  readonly intent: string | undefined;
+  readonly wreck: boolean;
+  readonly damage: readonly string[];
+  /** Laser, die noch feuern können, und das Ziel dieser Raumrunde (Stelle einer Einheit). */
+  readonly lasers: number;
+  readonly aim: number | undefined;
+  /** Vom eigenen Schiff aus: Entfernung in Raumbändern, DM der Entfernung und ob die Sichtlinie frei ist. */
+  readonly bands: number;
+  readonly rangeDm: number;
+  readonly sight: boolean;
   readonly marks: readonly ThrustMark[];
   /** km/s gegenüber der Welt der Raumkarte. */
   readonly speed: number;
@@ -125,6 +149,11 @@ export interface SpaceView {
     | undefined;
   /** Ein Systemflug läuft, aber an einer anderen Welt. */
   readonly elsewhere: string | undefined;
+  /** Raumkampf (2026-11-21d): warum gerade kein fremdes Schiff auftauchen kann, ob einer läuft, Spalte der Begegnungstabelle, Entwürfe für „von Hand“. */
+  readonly encounterBlocker: string | undefined;
+  readonly battle: boolean;
+  readonly encounterColumn: string | undefined;
+  readonly designs: readonly { readonly id: string; readonly name: string }[];
 }
 
 function duration(seconds: number): string {
@@ -215,23 +244,31 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
     startBlocker: blocker,
     landingKms: LANDING_KMS,
     elsewhere: campaign.flight && !flight ? campaign.flight.world : undefined,
+    encounterBlocker: flight ? encounterBlocker(campaign) : undefined,
+    battle: flight ? battleRunning(campaign) : false,
+    encounterColumn: flight ? (({ column, dm }) => `Raumhafen ${column}${dm ? `, DM +${dm}` : ''}`)(encounterColumn(campaign)) : undefined,
+    designs: ref.ships.map((d) => ({ id: d.id, name: d.name })),
     flight: flight && {
       round: flight.round,
       elapsed: duration(elapsedOf(flight)),
       run: run && { round: run.round, frames: run.frames.map((frame, k) => frame.map((p) => sub(p, originAt(scene, space.world, run.t + k * run.every * STEP_SECONDS).position))) },
       units: flight.units.map((unit, index): SpaceUnitView => {
-        const ship = campaign.ships.find((s) => s.id === unit.ship)!;
+        const design = shipDesignOf(designOfUnit(campaign, unit));
+        const ship = unit.ship === undefined ? undefined : campaign.ships.find((s) => s.id === unit.ship)!;
+        const damage = damageOfUnit(campaign, unit);
+        const own = flight.units[0]!;
+        const km = lengthOf(sub(unit.position, own.position));
         const aim = space.aim?.unit === index ? space.aim : undefined;
         const thrust = aim ? aim.thrust : unit.thrust;
         const position = sub(unit.position, origin.position);
         const velocity = sub(unit.velocity, origin.velocity);
         const r = lengthOf(position);
-        const plan = shipDesignOf(ship.design);
-        const preview = previewOf(scene, unit, thrust, t, 2, space.world, plan.maneuver, plan.streamlined);
+        const plan = design;
+        const preview = ship === undefined ? previewOf(scene, unit, thrust, t, 2, space.world) : previewOf(scene, unit, thrust, t, 2, space.world, maxGOf(campaign, unit), plan.streamlined);
         return {
           index,
-          name: ship.name,
-          designName: shipDesignOf(ship.design).name,
+          name: nameOfUnit(campaign, unit),
+          designName: plan.name,
           position,
           velocity,
           maxG: maxGOf(campaign, unit),
@@ -244,10 +281,19 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
             return { position: sub(p.position, at.position), velocity: sub(p.velocity, at.velocity) };
           }),
           preview: { now: preview.now, after: preview.after, impact: preview.impact, landing: preview.landing && { round: preview.landing.round, name: bodyName(hex, hex.worlds.find((w) => w.id === preview.landing!.world)!), skims: preview.landing.skims === true } },
-          fuel: ship.fuel,
-          unrefined: ship.unrefined,
+          fuel: ship?.fuel ?? 0,
+          unrefined: ship?.unrefined ?? 0,
           fuelMax: plan.fuel,
           streamlined: plan.streamlined,
+          foe: unit.ship === undefined,
+          intent: unit.intent === undefined ? undefined : intentNames[unit.intent],
+          wreck: unit.ship === undefined && unit.intent === undefined,
+          damage: (damage?.hits ?? []).map((h) => hitZoneNames[h]),
+          lasers: laserCountOf(campaign, unit),
+          aim: unit.aim,
+          bands: bandOf(km),
+          rangeDm: spaceRangeDm(bandOf(km)),
+          sight: lineOfSight(scene, own.position, unit.position, t),
           marks: thrustMarks({ position, velocity, crashed: unit.crashed }),
           speed: lengthOf(velocity),
           altitude: worldBody === undefined ? r : r - worldBody.radius,

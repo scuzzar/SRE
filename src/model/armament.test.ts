@@ -4,9 +4,10 @@ import { fixedClock } from './testing';
 
 const clock = fixedClock();
 
-/** Die Demo auf Kessra (Raumhafen A) mit dem Scout (ein leerer Double Turret auf seinem einen Hardpoint) und Geld in der Kasse. */
+/** Die Demo auf Kessra (Raumhafen A) mit dem Scout, sein Double Turret geleert (die Demo bringt einen Beam Laser mit), und Geld in der Kasse. */
 function demo(): Campaign {
-  return book(createDemoCampaign(clock), 'income', 5_000_000, clock);
+  const c = book(createDemoCampaign(clock), 'income', 5_000_000, clock);
+  return { ...c, ships: c.ships.map((s) => ({ ...s, turrets: [{ type: 'double', weapons: [] }] })) };
 }
 
 describe('Bewaffnung in der Werft (2026-11-21c)', () => {
@@ -31,7 +32,7 @@ describe('Bewaffnung in der Werft (2026-11-21c)', () => {
 
   it('kein Turret über die Hardpoints hinaus, und nichts über die Kasse hinaus', () => {
     expect(() => installTurret(demo(), 'single', clock)).toThrow(/keinen freien Hardpoint/);
-    const poor = createDemoCampaign(clock);
+    const poor = { ...createDemoCampaign(clock), ships: demo().ships };
     expect(() => installWeapon(poor, 0, 'beam-laser', clock)).toThrow(/kostet/);
   });
 

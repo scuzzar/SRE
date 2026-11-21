@@ -1,6 +1,6 @@
 import { Fragment, memo, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { DamageItem, JourneyItem, LogItem, NoteItem, TripDayItem } from '../../controller';
-import { answerText, attackTitle, checkDetail, clockTime, damageDetail, isYesAnswer, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, resultLine, scatterText, taskDetail, taskTitle, tripDayDetail, credits, monthEndDetail } from '../format';
+import { answerText, attackTitle, checkDetail, clockTime, damageDetail, isYesAnswer, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, resultLine, scatterText, taskDetail, taskTitle, tripDayDetail, credits, monthEndDetail, spaceAttackDetail } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { FlagIcon, LightbulbIcon, PencilIcon, TrashIcon } from '../icons';
@@ -446,6 +446,10 @@ function kicker(item: LogItem, volley = false): string {
       return 'Reise im System';
     case 'skimming':
       return 'Schiff · Schöpfen';
+    case 'spaceBattle':
+    case 'spaceAttack':
+    case 'spaceBattleEnd':
+      return 'Raumkampf';
     case 'tripDay':
       return item.arrived ? 'Fahrt · Ankunft' : 'Fahrt';
     case 'note':
@@ -455,7 +459,7 @@ function kicker(item: LogItem, volley = false): string {
 
 /** Zeit und Reisen haben den Stand geändert; sie lassen sich nicht löschen. */
 function deletable(item: LogItem | undefined): boolean {
-  return item !== undefined && item.kind !== 'time' && item.kind !== 'journey' && item.kind !== 'monthEnd' && item.kind !== 'skimming';
+  return item !== undefined && item.kind !== 'time' && item.kind !== 'journey' && item.kind !== 'monthEnd' && item.kind !== 'skimming' && item.kind !== 'spaceBattle' && item.kind !== 'spaceAttack' && item.kind !== 'spaceBattleEnd';
 }
 
 function EntryBody({ item }: { item: LogItem }) {
@@ -656,6 +660,35 @@ function EntryBody({ item }: { item: LogItem }) {
             {item.how} · {item.travellers.join(', ')}
           </span>
         </>
+      );
+    case 'spaceBattle':
+      return (
+        <>
+          <span className="verdict small">
+            {item.foe} {item.intent}
+          </span>
+          <span className="entry-detail">
+            {item.design}
+            {item.encounter ? ` · Begegnung ${item.encounter[0]} + ${item.encounter[1]}` : ' · von Hand'}
+            {item.reaction ? ` · Reaktion ${item.reaction[0]} + ${item.reaction[1]}` : ''}
+            {item.attack ? ` · Angriff ${item.attack[0]} + ${item.attack[1]}` : ''}
+          </span>
+        </>
+      );
+    case 'spaceAttack':
+      return (
+        <>
+          <span className={`verdict small${item.hit ? '' : ' negative'}`}>
+            {item.attacker} → {item.target}: {item.hit ? 'Treffer' : 'daneben'}
+          </span>
+          <span className="entry-detail">{spaceAttackDetail(item)}</span>
+        </>
+      );
+    case 'spaceBattleEnd':
+      return (
+        <span className="verdict small">
+          {item.foe}: {item.outcome}
+        </span>
       );
     case 'skimming':
       return (

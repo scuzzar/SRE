@@ -3243,14 +3243,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Ein fremdes Schiff.** Im Systemflug würfelt „Schiffsbegegnung“ auf der *Starship Encounter
     Table* (SE 13, Spalte nach dem Raumhafen der Hauptwelt, DM +2 Marinebasis, +1 Scoutbasis); ohne
     Ergebnis kommt keins. Ein Pirat (P) greift an; sonst entscheidet die Reaktion (2W6, SE 21): 2
-    greift an, 3 greift bei 5+ an, 4 bei 8+ (je ein weiterer Wurf auf 2W6), sonst ⚑ ignoriert es die
-    Gruppe. Beides steht im Logeintrag `SpaceBattle` (Würfe, Entwurf, Name, Absicht). ⚑ Zum
+    greift an, 3 greift bei 5+ an, 4 bei 8+ (ein weiterer Wurf auf 2W6, `attack`), sonst ⚑ ignoriert
+    es die Gruppe. Alles steht im Logeintrag `SpaceBattle` (Würfe, Entwurf, Name, Absicht). ⚑ Zum
     Ausprobieren und als Spielleiter lässt sich ein Schiff auch von Hand wählen (Entwurf und
     Absicht), dann ohne Würfe. Höchstens ein fremdes Schiff zugleich (Stufe 2).
-  - **Wo es auftaucht** ⚑: auf einer Kreisbahn um den Körper in der Mitte, gegen den Uhrzeigersinn,
-    2W6 × 1 Raumband weiter draußen als das eigene Schiff, an einem Winkel aus 1W6 × 60°; ohne Körper
-    ruhend in dieser Entfernung. Es ist eine Einheit ohne `ship`, mit `design`, `name` (aus der
-    Namensliste der Karte, sonst der Entwurf) und `intent`; seine Turrets sind die seines Entwurfs.
+  - **Wo es auftaucht** ⚑: 2W6 Raumbänder vom eigenen Schiff entfernt, in der Richtung 1W6 × 60°,
+    mit derselben Geschwindigkeit wie das eigene Schiff (von Hand gewählt: 7 Raumbänder voraus). Es
+    ist eine Einheit ohne `ship`, mit `design`, `name` (der Name des Entwurfs) und `intent`; seine
+    Turrets sind die seines Entwurfs.
   - **Wie es fliegt** (Konzept, Abschnitt 6) ⚑: Vor jeder Raumrunde probiert die App 49 Schübe aus
     (ohne Schub sowie 16 Richtungen × ⅓, ⅔ und volle Stärke), rechnet je zwei Raumrunden voraus
     (das eigene Schiff mit seinem gesetzten Schub) und nimmt den besten: *Angreifen* hält 5
@@ -3293,6 +3293,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     sind auch im Raumkampf erlaubt (das Konzept schlug „kein Landen im Kampf“ vor); Landen beendet
     ihn. ⚑ Wird das eigene Schiff zerstört, endet der Systemflug, das Schiff wird ausgeblendet, und
     was aus der Gruppe wird, entscheidet der Owner im Spiel.
+  - **Demo-Kampagne** ⚑: Der Scout hat einen Beam Laser im Doppelturm, damit man den Raumkampf
+    gleich ausprobieren kann (die Kasse der Demo reicht für keinen Laser).
   - **Reparatur** ⚑ (SR 42 nennt 10–120 % des Neuwerts der Baugruppe, die Referenzdaten haben keine
     Baugruppen): in der Werft an einem Raumhafen A oder B, Cr 100.000 je Treffer und Cr 1.000.000 je
     kritischem Treffer, alles auf einmal (Buchung mit `shipCost` repair); danach ist `Ship.damage`
@@ -3515,6 +3517,11 @@ Diagramm mit diesen Ausnahmen:
   - **Nebenwelten** (2026-11-20c) sind gebaut (`rollSubordinates`). Systeme von davor bekommen die
     Werte beim Öffnen der Kampagne mit Würfen aus Schlüssel und Feld; bis dahin lässt die Prüfung
     Nebenwelten ohne Raumhafen zu, aber nur alle zusammen.
+- **Raumkampf, Stufe 2** (2026-11-21d) ist gebaut (`model/space-combat.ts`), auf Wunsch des Owners
+  schon vor der Freigabe des Bilds. Abweichungen: **`SpaceUnit → SpaceUnit : aim`** ist im Code die
+  Stelle der Zieleinheit in `units`, wie andere Verweise auf Stellen. Die erste Einheit ist immer
+  das eigene Schiff. Ein fremdes Schiff bekommt beim Auftauchen eine Spur so lang wie die Raumrunden
+  (lauter Punkte an seinem Startort), damit sie zur Raumrunde passt.
 - **Bewaffnung** (2026-11-21c) ist gebaut (`model/armament.ts`, Referenzdaten in
   `src/data/ships.json`). Auf einer Welt ohne Globus gibt es keine Städte; dort zählt für die Werft
   der Raumhafen des UWP (A oder B). Dateien von vorher bekommen beim Laden die Turrets des Entwurfs.

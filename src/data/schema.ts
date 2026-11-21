@@ -168,6 +168,13 @@ export const TurretTypeSchema = z.object({
   price: z.number().int().min(0),
 });
 
+/**
+ * Die Starship Encounter Table (SE 13, 2026-11-21d): je Raumhafenklasse die Ergebnisse für 2W6 von 2
+ * bis 15 (mit DMs); ein Eintrag ist der Code eines Standardentwurfs, „P“ dahinter heißt Pirat, „*“ ein
+ * Small Craft dazu; `null` heißt keine Begegnung.
+ */
+export const StarshipEncountersSchema = z.record(z.enum(['A', 'B', 'C', 'D', 'E', 'X']), z.array(z.string().regex(/^[A-Z]P?\*?$/).nullable()).length(14));
+
 /** Eine Schiffswaffe aus SE 10 (2026-11-21c); Preis in Cr. */
 export const ShipWeaponSchema = z.object({
   id: z.string().min(1),
@@ -553,6 +560,7 @@ export const ReferenceDataSchema = z
     ships: z.array(ShipDesignSchema).min(1),
     /** Die Turmarten und Schiffswaffen (SE 10, 2026-11-21c). */
     turretTypes: z.array(TurretTypeSchema).min(1),
+    starshipEncounters: StarshipEncountersSchema,
     shipWeapons: z.array(ShipWeaponSchema).min(1),
     /** Die Rechnermodelle (SE 10). */
     computers: z.array(ComputerModelSchema).min(1),

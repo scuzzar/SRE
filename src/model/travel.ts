@@ -11,6 +11,7 @@ import { jumpFuelOf, shipOf, type Ship } from './ship';
 import { portDepartureBlocker, shipDepartureBlocker, shipArrives, leaveShipBehind } from './landing';
 import { afterTime, arrive, LIFE_SUPPORT, PER_STATEROOM } from './upkeep';
 import { parkVehicles } from './trip';
+import { jumpAfter } from './space-combat';
 import { dayOf, JOURNEY_DAYS } from './time';
 import { woundedUpp, woundsOf } from './wounds';
 
@@ -189,7 +190,10 @@ export function shipJourneyBlocker(campaign: Campaign, to: string): string | und
   const away = shipDepartureBlocker(campaign);
   if (away) return away;
   const distance = parsecs(hexById(campaign.hexes, hexIdOfWorld(campaign.location.world))!, target);
-  if (distance > plan.jump) return `${distance} Parsec sind zu weit; ${plan.name} springt höchstens ${plan.jump}.`;
+  // Schaden aus dem Raumkampf senkt die Sprungzahl (2026-11-21d).
+  const jump = jumpAfter(ship.design, ship.damage);
+  if (jump === 0) return `${ship.name} kann mit dem Schaden nicht springen; erst in der Werft reparieren.`;
+  if (distance > jump) return `${distance} Parsec sind zu weit; ${ship.name} springt ${jump < plan.jump ? 'mit dem Schaden ' : ''}höchstens ${jump}.`;
   const per = jumpFuelOf(ship.design);
   if (ship.fuel < per) return `Der Sprung braucht ${per} t Treibstoff; im Tank sind ${ship.fuel} t. Erst volltanken.`;
   if (campaign.encounters.some((e) => !e.ended)) return 'Während einer laufenden Begegnung reist man nicht.';

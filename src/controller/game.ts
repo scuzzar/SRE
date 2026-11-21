@@ -71,6 +71,11 @@ import {
   buyShip,
   installTurret,
   replaceTurret,
+  rollShipEncounter,
+  placeFoe,
+  setAim,
+  repairShip,
+  type Intent,
   installWeapon,
   removeWeapon,
   removeTurret,
@@ -2525,8 +2530,10 @@ export class GameController {
   runRound(): void {
     const space = this.openSpaceState();
     const t = flightTime(this.campaign, activeFlight(this.campaign));
-    const ship = shipById(this.campaign, activeFlight(this.campaign).units[0]!.ship).name;
-    const run = runRound(this.campaign, this.deps.clock);
+    const ship = shipById(this.campaign, activeFlight(this.campaign).units[0]!.ship!).name;
+    const run = runRound(this.campaign, this.deps.clock, this.deps.random);
+    // Im Raumkampf zerstört (2026-11-21d): Der Flug ist zu Ende, das Schiff ausgeblendet.
+    if (run.lost) return this.change(run.campaign, { space: { world: space.world }, notice: `${ship} ist im Raumkampf zerstört worden. Was aus der Gruppe wird, entscheidet das Spiel.` });
     // Gelandet: Der Flug ist zu Ende, die Gruppe auf dieser Welt; die Raumkarte bleibt offen (Owner, 21. November 2026).
     // Auch auf der Startwelt: Die Landung ist eine Ankunft, Oberfläche und Globus entstehen, falls sie fehlen.
     if (run.landed !== undefined) return this.change({ ...run.campaign, hexes: readyForParty(run.campaign.hexes, run.landed, this.deps.random) }, { space: { world: space.world }, notice: `${ship} ist auf ${worldOf(run.campaign.hexes, run.landed).name} gelandet. Die Gruppe ist jetzt dort.` });
@@ -2538,7 +2545,43 @@ export class GameController {
   /** Beendet den Systemflug; die Raumkarte bleibt offen. */
   endFlight(): void {
     const space = this.openSpaceState();
-    this.change(endFlight(this.campaign), { space: { world: space.world } });
+    this.change(endFlight(this.campaign, this.deps.clock), { space: { world: space.world } });
+  }
+
+  /** Würfelt eine Schiffsbegegnung im Systemflug (SE 13, 2026-11-21d); ohne Ergebnis nur ein Hinweis. */
+  rollShipEncounter(): void {
+    const space = this.openSpaceState();
+    try {
+      const rolled = rollShipEncounter(this.campaign, this.deps.random, this.deps.clock);
+      const roll = `${rolled.encounter[0]} + ${rolled.encounter[1]}${rolled.total !== rolled.encounter[0] + rolled.encounter[1] ? ` (mit DM ${rolled.total})` : ''}`;
+      if (rolled.code === undefined) return this.update({ space: without(space, 'aim'), notice: `Schiffsbegegnung: ${roll} – kein Schiff.` });
+      this.change(rolled.campaign, { space: without(space, 'aim'), notice: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ notice: error.message });
+    }
+  }
+
+  /** Lässt ein fremdes Schiff von Hand auftauchen: Entwurf und Absicht (2026-11-21d). */
+  placeFoe(design: string, intent: Intent): void {
+    const space = this.openSpaceState();
+    this.change(placeFoe(this.campaign, design, intent, this.deps.clock), { space: without(space, 'aim') });
+  }
+
+  /** Das Ziel der Laser des eigenen Schiffs für diese Raumrunde (`undefined`: kein Feuer). */
+  setAim(target: number | undefined): void {
+    const space = this.openSpaceState();
+    try {
+      this.change(setAim(this.campaign, 0, target), { space });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ notice: error.message });
+    }
+  }
+
+  /** Repariert das eigene Schiff in der Werft (2026-11-21d). */
+  repairShip(): void {
+    this.inShip(() => repairShip(this.campaign, this.deps.clock));
   }
 
   private openSpaceState(): OpenSpace {

@@ -61,9 +61,9 @@ dabei.
 | [Computer und Software](#computer-und-software) | SR 38–39 | ○ |
 | [Standardentwürfe](#standardentwürfe) | SR 35–37 | ○ |
 | [Kleine Schiffe (Small Craft)](#kleine-schiffe-small-craft) | SR 33–35 | ○ |
-| [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system) | SR 42 | ○ |
+| [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system) | SR 42 | ◐ (im Systemflug auf Knopfdruck, ohne Small Craft; 2026-11-21d) |
 | [Handel und Gewerbe](#handel-und-gewerbe) | SR 52 | ○ |
-| [Raumkampf](#raumkampf) | SR 39–42 | ○ |
+| [Raumkampf](#raumkampf) | SR 39–42 | ◐ ✱ (Laserfeuer, Rückfeuer, Trefferzonen, Schaden, ein fremdes Schiff mit Absicht; 2026-11-21d) |
 | [Vektorbewegung (Mayday, Supplement 3)](#vektorbewegung-mayday-supplement-3) | MD, SS3 4–11 | ◐ ✱ (Bewegung mit echter Schwerkraft als Systemflug, 2026-11-18c; Waffen, Raketen, Sand offen) |
 
 ---
@@ -750,6 +750,14 @@ umprogrammieren. Nach beiden Spielerzügen die Interphase.
 | Small Craft Cabin | Treffer entspricht einem Hull-Treffer (Dekompression), weitere ohne Zusatzeffekt |
 | Small Craft Weaponry | zerstört die Bewaffnung des Small Craft |
 | Small Craft Drive | das Small Craft kann sich nicht mehr bewegen/beschleunigen/feuern |
+
+**Stand in der App** (2026-11-21d, `model/space-combat.ts`, alles weitere unter *Raumkampf, Stufe 2*
+in `domain-model.md`): Laserfeuer ✔ (8+, Pulse −1, Entfernung über 25 und 50 Raumbänder) und
+Rückfeuer ✔ gleichzeitig nach der Bewegung, ✱ ohne Programme und ohne Schiffspositionen; Trefferzonen
+und kritische Treffer ✔; Schaden ✱ ohne Antriebsbuchstaben (je Treffer −1 G bzw. −1 Sprung,
+kritisch 0); Hull ohne Folgen; Turret-Treffer legt ein zufälliges Turret still; Crew: das Schiff
+handelt nicht mehr; Explode: zerstört. Raketen, Sand, Ortung, Schadenskontrolle, Entern ○.
+Schiffsbegegnungen im System ✔ als Knopf im Systemflug (SE 13 mit Reaktion nach SE 21).
 
 **Hit Locations** (SE 12), 2W6 je Treffer:
 

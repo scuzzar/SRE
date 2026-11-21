@@ -6,6 +6,7 @@ import { gainOf, shipDesignOf, type Gain } from './reference';
 import { bookShip } from './shop';
 import { MONTH_DAYS, nextMonthStart } from './time';
 import type { Place } from './place';
+import type { ShipDamage } from './space-combat';
 
 /** Ein Turret auf einem Hardpoint (Domänenmodell: `Turret`, 2026-11-21c): Turmart und Waffen, höchstens so viele wie Plätze. */
 export interface Turret {
@@ -48,6 +49,8 @@ export interface Ship {
   readonly software: readonly ShipSoftware[];
   /** Die Turrets in der Reihenfolge der Hardpoints (2026-11-21c). */
   readonly turrets: readonly Turret[];
+  /** Schaden aus dem Raumkampf, bis zur Reparatur (2026-11-21d); fehlt ohne Schaden. */
+  readonly damage?: ShipDamage;
   /** Wo es steht (2026-11-21): Welt, Feld oder Stadt; fehlt, solange es bei der Gruppe ist (alte Stände, gerade gekauft). */
   readonly place?: Place;
 }

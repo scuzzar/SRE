@@ -8,6 +8,8 @@ import { activeShip, shipById, shipOf, without } from './ship';
 import { passTime, START_DAY } from './time';
 import { placeGroup } from './upkeep';
 import { needsLanding, shipArrives, shipDepartureBlocker } from './landing';
+import type { Random } from './ports';
+import { breakOffBattle, checkDamage, firePhase, planFoe, settleBattle, unitMaxG, type Intent, type ShipDamage } from './space-combat';
 
 // Systemflug (Domänenmodell 2026-11-18c, Stufe 1 des Raumkampfs; Konzept: docs/konzept-raumkampf.md).
 // Gerechnet wird in km und Sekunden, in der Ebene, die Welt in der Mitte.
@@ -24,10 +26,17 @@ export interface TrackPoint {
   readonly velocity: Vec;
 }
 
-/** Was sich auf der Raumkarte frei bewegt; in Stufe 1 nur ein eigenes Schiff (Domänenmodell: `SpaceUnit`). */
+/** Was sich auf der Raumkarte frei bewegt: das eigene Schiff (immer die erste Einheit) und fremde Schiffe (Domänenmodell: `SpaceUnit`). */
 export interface SpaceUnit {
-  /** Das Schiff der Kampagne. */
-  readonly ship: string;
+  /** Das Schiff der Kampagne; fehlt bei einem fremden Schiff (2026-11-21d). */
+  readonly ship?: string;
+  /** Fremdes Schiff: Standardentwurf, Name, Absicht (fehlt beim Wrack) und Schaden (2026-11-21d). */
+  readonly design?: string;
+  readonly name?: string;
+  readonly intent?: Intent;
+  readonly damage?: ShipDamage;
+  /** Das Ziel der Laser in der laufenden Raumrunde: Stelle einer anderen Einheit (2026-11-21d). */
+  readonly aim?: number;
   readonly position: Vec;
   readonly velocity: Vec;
   /** Der Schubvektor der laufenden Raumrunde in G; fehlt er, fliegt die Einheit ballistisch. */
@@ -178,14 +187,14 @@ export function jumpLimitsOf(hex: World): readonly number[] {
   return body === undefined ? [] : [20 * body.radius, 200 * body.radius];
 }
 
-/** `/maxG`: die G des Maneuver Drive des Schiffs. */
+/** `/maxG`: die G des Maneuver Drive des Schiffs, nach dem Schaden (2026-11-21d). */
 export function maxGOf(campaign: Campaign, unit: SpaceUnit): number {
-  return shipDesignOf(shipById(campaign, unit.ship).design).maneuver;
+  return unitMaxG(campaign, unit);
 }
 
 /** Ob der Entwurf des Schiffs einer Einheit stromlinienförmig ist (kann an Gasriesen schöpfen, SR 32). */
 export function streamlinedOf(campaign: Campaign, unit: SpaceUnit): boolean {
-  return shipDesignOf(shipById(campaign, unit.ship).design).streamlined;
+  return unit.ship !== undefined && shipDesignOf(shipById(campaign, unit.ship).design).streamlined;
 }
 
 /** `/elapsed`: Sekunden seit Beginn des Systemflugs. */
@@ -265,6 +274,17 @@ export function autoBrake(scene: Scene, state: State, t: number, maxG: number, s
     return scale(v, -maxG / s);
   }
   return undefined;
+}
+
+/** Freie Sichtlinie von `a` nach `b` zur Zeit `t`: Kein Körper liegt dazwischen (2026-11-21d). */
+export function lineOfSight(scene: Scene, a: Vec, b: Vec, t: number): boolean {
+  const ab = sub(b, a);
+  const len2 = ab.x * ab.x + ab.y * ab.y;
+  for (const { body, at } of bodiesAt(scene, t)) {
+    const k = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((at.x - a.x) * ab.x + (at.y - a.y) * ab.y) / len2));
+    if (lengthOf(sub(add(a, scale(ab, k)), at)) < body.radius) return false;
+  }
+  return true;
 }
 
 /** Liegt `p` zur Zeit `t` in einem Körper? Dann der Ort auf seiner Oberfläche. */
@@ -418,6 +438,8 @@ export interface RoundRun {
   readonly landed?: string;
   /** Ein Schiff hat am Gasriesen geschöpft (2026-11-21b). */
   readonly skimmed?: boolean;
+  /** Das eigene Schiff ist im Raumkampf zerstört; der Systemflug ist zu Ende (2026-11-21d). */
+  readonly lost?: boolean;
 }
 
 /**
@@ -425,32 +447,58 @@ export interface RoundRun {
  * jede ihren alten Ort an die Spur, der Schub ist leer, die Raumrunde eins weiter. Überschreitet die
  * Dauer volle 24 Stunden, vergeht ein Tag wie mit „Tage vergehen“.
  */
-export function runRound(campaign: Campaign, clock: Clock, every = 2): RoundRun {
+export function runRound(campaign: Campaign, clock: Clock, random?: Random, every = 2): RoundRun {
   const flight = activeFlight(campaign);
   const scene = sceneOf(campaign.hexes, flight.world);
   const t = flightTime(campaign, flight);
-  const runs = flight.units.map((u) => propagate(scene, u, u.thrust, ROUND_STEPS, ROUND_STEPS, t, maxGOf(campaign, u), streamlinedOf(campaign, u)));
+  // Fremde Schiffe wählen ihren Schub nach ihrer Absicht (2026-11-21d); sie landen nicht und schöpfen nicht.
+  const thrusts = flight.units.map((u, i) => (u.ship === undefined ? planFoe(campaign, scene, i, t) : u.thrust));
+  const runs = flight.units.map((u, i) => (u.ship === undefined ? propagate(scene, u, thrusts[i], ROUND_STEPS, ROUND_STEPS, t) : propagate(scene, u, u.thrust, ROUND_STEPS, ROUND_STEPS, t, maxGOf(campaign, u), streamlinedOf(campaign, u))));
   const units = flight.units.map((u, i): SpaceUnit => {
     const end = runs[i]!.at(-1)!;
+    // Die Bewegung leert den Schub, das Ziel gilt noch für das Feuer danach.
     const rest = without(u, 'thrust');
-    return { ...rest, position: end.position, velocity: end.velocity, crashed: end.crashed, track: [...u.track, { position: u.position, velocity: u.velocity }] };
+    const crashed = end.crashed || (u.ship === undefined && end.landedOn !== undefined);
+    return { ...rest, position: end.position, velocity: end.velocity, crashed, track: [...u.track, { position: u.position, velocity: u.velocity }] };
   });
-  const next: SystemFlight = { ...flight, round: flight.round + 1, units };
-  let result: Campaign = { ...campaign, flight: next };
+  let result: Campaign = { ...campaign, flight: { ...flight, units } };
+  // Laserfeuer und Rückfeuer an den Orten am Ende der Bewegung, dann das Ende des Raumkampfs (2026-11-21d).
+  if (units.some((u) => u.aim !== undefined) || units.some((u, i) => u.ship === undefined && u.intent === 'attack' && i > 0)) {
+    if (random === undefined) throw new DomainError('Für das Feuer braucht es Würfel.');
+    result = firePhase(withFoeAims(result), random, clock);
+  }
+  const settled = settleBattle(result, clock);
+  if (settled.lost) return { campaign: settled.campaign, frames: framesOf(runs, every), lost: true };
+  result = settled.campaign;
+  const fought = activeFlight(result);
+  const next: SystemFlight = { ...fought, round: flight.round + 1, units: fought.units.map((u) => without(u, 'aim')) };
+  result = { ...result, flight: next };
   const daysBefore = Math.floor(elapsedOf(flight) / DAY_SECONDS);
   const daysAfter = Math.floor(elapsedOf(next) / DAY_SECONDS);
   for (let d = daysBefore; d < daysAfter; d++) result = passTime(result, { days: 1 }, clock);
-  const frames: Vec[][] = [];
-  for (let s = 0; s <= ROUND_STEPS; s += every) frames.push(runs.map((r) => r[s]!.position));
+  const frames = framesOf(runs, every);
   // Am Gasriesen eingetaucht: Das Schiff schöpft und fliegt weiter (2026-11-21b).
   runs.forEach((r, i) => {
     const end = r.at(-1)!;
     if (end.skims) result = skim(result, i, end.position, clock);
   });
   // Gelandet: Der Systemflug endet, die Gruppe ist auf dieser Welt (Owner, 21. November 2026).
-  const landed = runs.map((r) => r.at(-1)!).find((s) => s.landedOn !== undefined && !s.skims)?.landedOn;
-  if (landed !== undefined) return { campaign: placeGroup(shipArrives(endFlight(result), landed), landed, clock), frames, landed };
+  const landed = runs.map((r, i) => (flight.units[i]!.ship === undefined ? undefined : r.at(-1)!)).find((s) => s !== undefined && s.landedOn !== undefined && !s.skims)?.landedOn;
+  if (landed !== undefined) return { campaign: placeGroup(shipArrives(endFlight(result, clock), landed), landed, clock), frames, landed };
   return { campaign: result, frames, ...(runs.some((r) => r.at(-1)!.skims) ? { skimmed: true } : {}) };
+}
+
+/** Die Orte aller Einheiten alle `every` Schritte, für die Wiedergabe. */
+function framesOf(runs: readonly (readonly State[])[], every: number): Vec[][] {
+  const frames: Vec[][] = [];
+  for (let s = 0; s <= ROUND_STEPS; s += every) frames.push(runs.map((r) => r[s]!.position));
+  return frames;
+}
+
+/** Angreifende fremde Schiffe zielen immer auf das eigene Schiff (die erste Einheit), wenn sie können. */
+function withFoeAims(campaign: Campaign): Campaign {
+  const flight = activeFlight(campaign);
+  return { ...campaign, flight: { ...flight, units: flight.units.map((u, i) => (i > 0 && u.ship === undefined && u.intent === 'attack' && !u.crashed ? { ...u, aim: 0 } : u)) } };
 }
 
 /** Wie viele Raumrunden das Schöpfen dauert (Hausregel 2026-11-21b: gut 6 Stunden; die SR nennen keine Dauer). */
@@ -467,7 +515,7 @@ function skim(campaign: Campaign, index: number, at: Vec, clock: Clock): Campaig
   const unit = flight.units[index]!;
   const scene = sceneOf(campaign.hexes, flight.world);
   const body = scene.body!;
-  const ship = shipById(campaign, unit.ship);
+  const ship = shipById(campaign, unit.ship!);
   const tons = shipDesignOf(ship.design).fuel - ship.fuel;
   const r = 2 * body.radius;
   const d = lengthOf(at) || 1;
@@ -498,10 +546,10 @@ function skim(campaign: Campaign, index: number, at: Vec, clock: Clock): Campaig
   return result;
 }
 
-/** Beendet den Systemflug; angebrochene Tage verfallen. */
-export function endFlight(campaign: Campaign): Campaign {
+/** Beendet den Systemflug; angebrochene Tage verfallen. Ein laufender Raumkampf ist abgebrochen (mit `clock` im Log). */
+export function endFlight(campaign: Campaign, clock?: Clock): Campaign {
   activeFlight(campaign);
-  return without(campaign, 'flight');
+  return without(clock === undefined ? campaign : breakOffBattle(campaign, clock), 'flight');
 }
 
 /** Was die Bahnvorschau einer Einheit zeigt: diese Raumrunde mit Schub, danach fünf ohne; Orte von `origin` aus gesehen. */
@@ -541,7 +589,13 @@ export function checkFlight(campaign: Campaign, flight: SystemFlight): void {
   worldOf(campaign.hexes, flight.world);
   if (!Number.isInteger(flight.round) || flight.round < 1) throw new DomainError('Die Raumrunde eines Systemflugs beginnt bei 1.');
   if (flight.units.length === 0) throw new DomainError('Ein Systemflug hat mindestens eine Einheit.');
-  for (const unit of flight.units) {
+  // Die erste Einheit ist das eigene Schiff, fremde Schiffe haben einen Entwurf (2026-11-21d).
+  if (flight.units[0]!.ship === undefined) throw new DomainError('Die erste Einheit eines Systemflugs ist das eigene Schiff.');
+  for (const [i, unit] of flight.units.entries()) {
+    if ((unit.ship === undefined) === (unit.design === undefined)) throw new DomainError('Eine Einheit ist entweder das eigene Schiff oder ein fremdes mit Entwurf.');
+    if (unit.design !== undefined) shipDesignOf(unit.design);
+    if (unit.aim !== undefined && (unit.aim === i || flight.units[unit.aim] === undefined)) throw new DomainError('Das Ziel einer Einheit gibt es nicht.');
+    if (unit.damage !== undefined) checkDamage(unit.damage, shipDesignOf(unit.design ?? '').turrets.length);
     const maxG = maxGOf(campaign, unit);
     if (unit.thrust !== undefined && lengthOf(unit.thrust) > maxG + 1e-6) throw new DomainError('Der Schub einer Einheit ist größer als ihr höchster Schub.');
     if (unit.track.length !== flight.round - 1) throw new DomainError('Die Spur einer Einheit passt nicht zur Raumrunde.');

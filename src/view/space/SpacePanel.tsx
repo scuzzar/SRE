@@ -1,4 +1,5 @@
-import type { SpaceView } from '../../controller';
+import { useState } from 'react';
+import type { SpaceUnitView, SpaceView } from '../../controller';
 import { useGame } from '../game-context';
 import { CloseIcon } from '../icons';
 
@@ -61,6 +62,12 @@ export function SpaceCard({ space }: { space: SpaceView }) {
             <dd>
               {unit.name} · {unit.designName} · {unit.maxG} G
             </dd>
+            {unit.damage.length > 0 && (
+              <>
+                <dt>Schaden</dt>
+                <dd className="negative">{unit.damage.join(', ')}</dd>
+              </>
+            )}
             <dt>Tank</dt>
             <dd>
               {unit.fuel} / {unit.fuelMax} t{unit.unrefined > 0 ? ` (${unit.unrefined} t unraffiniert)` : ''}
@@ -74,6 +81,7 @@ export function SpaceCard({ space }: { space: SpaceView }) {
             <dt>Schwerkraft hier</dt>
             <dd>{num(unit.gravity, 3)} G</dd>
           </dl>
+          <SpaceBattlePanel space={space} own={unit} />
           <p className="globe-sheet-sub">Im Schubkreis tippen oder ziehen: vom Schiff zum Finger, der Rand ist der höchste Schub. Jede Raumrunde beginnt ohne Schub. Mit höchstens {num(space.landingKms)} km/s aufsetzen heißt landen; führt die Bahn auf die Oberfläche und reicht der Schub, bremst die Landeautomatik im letzten Stück selbst.</p>
           <button type="button" className="ghost compact" onClick={() => game.endFlight()}>
             Systemflug beenden
@@ -81,6 +89,86 @@ export function SpaceCard({ space }: { space: SpaceView }) {
         </>
       )}
     </section>
+  );
+}
+
+/**
+ * Der Raumkampf im Blatt (2026-11-21d): das fremde Schiff mit Absicht, Entfernung und Schaden, „Feuer auf“
+ * für diese Raumrunde, und ohne fremdes Schiff die Schiffsbegegnung (gewürfelt oder von Hand).
+ */
+function SpaceBattlePanel({ space, own }: { space: SpaceView; own: SpaceUnitView }) {
+  const game = useGame();
+  const [choosing, setChoosing] = useState(false);
+  const [design, setDesign] = useState('A');
+  const [intent, setIntent] = useState<'attack' | 'flee' | 'ignore'>('attack');
+  const foes = space.flight?.units.filter((u) => u.foe) ?? [];
+  return (
+    <div className="space-battle">
+      <h4 className="section-title">{space.battle ? 'Raumkampf' : 'Fremde Schiffe'}</h4>
+      {foes.map((foe) => (
+        <div key={foe.index} className={`space-foe${foe.wreck ? ' wreck' : ''}`}>
+          <p>
+            <b>{foe.name}</b> <span className="muted">({foe.designName})</span> · {foe.wreck ? 'kampfunfähig, treibt' : foe.intent}
+          </p>
+          <p className="muted">
+            {foe.bands} Raumbänder{foe.rangeDm !== 0 ? ` (DM ${foe.rangeDm})` : ''} · {foe.sight ? 'freie Sicht' : 'verdeckt'} · {foe.maxG} G · {foe.lasers} Laser
+            {foe.damage.length > 0 ? ` · Schaden: ${foe.damage.join(', ')}` : ''}
+          </p>
+          {!foe.wreck && (
+            <button
+              type="button"
+              className="ghost compact"
+              aria-pressed={own.aim === foe.index}
+              disabled={own.lasers === 0 || own.crashed}
+              title={own.lasers === 0 ? `${own.name} hat keinen Laser; Laser gibt es in der Werft.` : undefined}
+              onClick={() => game.setAim(own.aim === foe.index ? undefined : foe.index)}
+            >
+              {own.aim === foe.index ? `Feuer auf ${foe.name} (${own.lasers} Laser) ✓` : `Feuer auf ${foe.name}`}
+            </button>
+          )}
+        </div>
+      ))}
+      {own.lasers === 0 && foes.length > 0 && <p className="combat-hint">{own.name} hat keinen Laser, der feuern kann; Laser gibt es in der Werft (Raumhafen A oder B).</p>}
+      {space.encounterBlocker === undefined && (
+        <>
+          <div className="space-encounter">
+            <button type="button" className="ghost compact" onClick={() => game.rollShipEncounter()}>
+              Schiffsbegegnung würfeln
+            </button>
+            <button type="button" className="ghost compact" aria-pressed={choosing} onClick={() => setChoosing(!choosing)}>
+              Von Hand …
+            </button>
+          </div>
+          <p className="muted small">Starship Encounter Table (SE 13), {space.encounterColumn}.</p>
+          {choosing && (
+            <div className="space-encounter">
+              <select aria-label="Entwurf des fremden Schiffs" value={design} onChange={(e) => setDesign(e.target.value)}>
+                {space.designs.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+              <select aria-label="Absicht" value={intent} onChange={(e) => setIntent(e.target.value as typeof intent)}>
+                <option value="attack">greift an</option>
+                <option value="flee">flieht</option>
+                <option value="ignore">beachtet die Gruppe nicht</option>
+              </select>
+              <button
+                type="button"
+                className="ghost compact"
+                onClick={() => {
+                  setChoosing(false);
+                  game.placeFoe(design, intent);
+                }}
+              >
+                Auftauchen lassen
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 }
 

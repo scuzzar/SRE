@@ -69,3 +69,28 @@ test('Raumkarte am Gasriesen: Kessra ist Mond eines Gasriesen; seine Raumkarte h
   await card.getByRole('button', { name: 'Systemflug beenden' }).click();
   await expect(page.getByRole('group', { name: 'Raumkarte von' })).toBeVisible();
 });
+
+test('Werft und Raumkampf: der Beam Laser des Demo-Scouts, ein fremdes Schiff von Hand, Feuer auf es (2026-11-21c/d)', async ({ page }) => {
+  await openHomeGlobe(page);
+  await openTab(page, 'Schiff');
+  await page.getByRole('button', { name: 'Werft', exact: true }).click();
+  const yard = page.getByRole('region', { name: 'Werft' });
+  await expect(yard).toContainText('Bewaffnung von Kestrel');
+  // Die Demo bringt einen Beam Laser mit; ausbauen fragt erst nach.
+  await expect(yard).toContainText('Beam Laser ✕');
+  await yard.getByRole('button', { name: 'Beam Laser ✕' }).click();
+  await expect(yard.getByRole('button', { name: /ausbauen\? \(kein Erlös\)/ })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Starten', exact: true }).click();
+  const card = page.getByRole('region', { name: 'Systemflug' });
+  await card.getByRole('button', { name: 'Von Hand …' }).click();
+  await card.getByRole('combobox', { name: 'Entwurf des fremden Schiffs' }).selectOption('A');
+  await card.getByRole('combobox', { name: 'Absicht' }).selectOption('ignore');
+  await card.getByRole('button', { name: 'Auftauchen lassen' }).click();
+  await expect(card).toContainText('Free Trader');
+  await card.getByRole('button', { name: 'Feuer auf Free Trader' }).click();
+  await expect(card.getByRole('button', { name: /Feuer auf Free Trader \(1 Laser\)/ })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Runde ausführen' }).click();
+  await expect(card).toContainText('Raumrunde 2');
+  await expect(card.getByRole('button', { name: 'Feuer auf Free Trader', exact: true })).toHaveAttribute('aria-pressed', 'false');
+});

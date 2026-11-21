@@ -2,6 +2,7 @@ import type { Place } from './place';
 import type { CharacterId } from './campaign';
 import { DomainError } from './errors';
 import type { MapIcon, Scatter } from './card-roll';
+import type { HitZone } from './space-combat';
 import type { Clock, Random } from './ports';
 import { slotOfEntry, type ArmorClass, type Range, type Slot } from './reference';
 import { roll2d6, sum, type Characteristic, type Dice } from './rules';
@@ -11,7 +12,7 @@ import { roll2d6, sum, type Characteristic, type Dice } from './rules';
  * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, bei der Antwort des Orakels dazu die Chance, bei Probe und Angriff DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | MonthEnd | CheckRoll | Journey | SystemJourney | Skimming | TripDay | Note;
+export type LogEntry = DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | MonthEnd | CheckRoll | Journey | SystemJourney | Skimming | SpaceBattle | SpaceAttack | SpaceBattleEnd | TripDay | Note;
 
 /** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
 export type LogResult = Exclude<LogEntry, Note>;
@@ -123,6 +124,41 @@ export interface Skimming extends LogEntryBase {
   readonly giant: string;
   readonly ship: string;
   readonly tons: number;
+}
+
+/**
+ * Ein fremdes Schiff taucht im Systemflug auf (2026-11-21d): Entwurf, Name und Absicht; gewürfelt mit
+ * `encounter` (2W6, SE 13), `reaction` (2W6, SE 21) und `attack` (der weitere Wurf bei Reaktion 3 oder 4);
+ * von Hand gewählt ohne Würfe.
+ */
+export interface SpaceBattle extends LogEntryBase {
+  readonly kind: 'spaceBattle';
+  readonly foe: string;
+  readonly design: string;
+  readonly intent: 'attack' | 'flee' | 'ignore';
+  readonly encounter?: Dice;
+  readonly reaction?: Dice;
+  readonly attack?: Dice;
+}
+
+/** Ein Laserschuss im Raumkampf (2026-11-21d): wer auf wen, aus welchem Turret mit welcher Waffe, 2W6 + DM ≥ 8, und die Trefferzonen. */
+export interface SpaceAttack extends LogEntryBase {
+  readonly kind: 'spaceAttack';
+  readonly round: number;
+  readonly attacker: string;
+  readonly target: string;
+  readonly turret: number;
+  readonly weapon: string;
+  readonly dice: Dice;
+  readonly dm: number;
+  readonly hits: readonly HitZone[];
+}
+
+/** Das Ende eines Raumkampfs (2026-11-21d). */
+export interface SpaceBattleEnd extends LogEntryBase {
+  readonly kind: 'spaceBattleEnd';
+  readonly foe: string;
+  readonly outcome: 'destroyed' | 'disabled' | 'escaped' | 'broken' | 'lost';
 }
 
 /**
