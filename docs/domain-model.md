@@ -494,6 +494,17 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Schiff, einen beliebigen Ort. Das Schiff hat einen eigenen Ort; abfliegen kann es nur, wenn die
 > Gruppe bei ihm ist, und Passagen gibt es nur in einer Stadt mit Hafen. Neu im Bild: `Ship.place`.
 > Der Ausschnitt dazu liegt unter [`changes/2026-11-21-landeplatz.png`](changes/2026-11-21-landeplatz.png).
+>
+> Am 21. November 2026 eingezeichnet, **wartet auf Freigabe** (Kennzeichen 2026-11-21b): **Small Craft ohne
+> Kampf** (Owner, 21. November 2026: „Jetzt wo wir Systemreisen haben, wäre da nicht die Zeit die
+> Small Craft einzubauen?“; Umfang, Modellform, Reichweite und Demo-Schiff vom Owner gewählt). Small
+> Craft werden eigene Entwürfe und eigene Schiffe, die ein Mutterschiff an Bord trägt; im Systemflug
+> setzt man sie aus und dockt sie wieder an, man landet mit ihnen und reist mit ihnen im System. Das
+> Mutterschiff kann dabei in der Umlaufbahn bleiben. Waffen, Rotten und Entern kommen später mit
+> Stufe 4 des Raumkampfs. Neu im Bild: `ShipDesign.kind`, `ShipKind`, `ShipDesign.craft`,
+> `ShipDesign.months` und `ShipDesign.computer` optional, `Ship.mother`, `Ship.aboard`,
+> `Ship.inOrbit`, `SystemFlight.party`; siehe *Small Craft*. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-21b-small-craft.png`](changes/2026-11-21b-small-craft.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -826,6 +837,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Würfelausdruck | `DiceExpr` | Wie viele W6 plus welcher DM, z. B. 2W6 + 1 oder 3W6 − 3 |
 | Schiff | `Ship`, `Campaign.ships`, `Campaign./ship` | Das eine Schiff der Gruppe als Basis: Entwurf, Name, Treibstoff und Fracht in Tonnen, offene Restschuld. Die Kampagne hält alle ihre Schiffe (auch die ausgeblendeten, 2026-11-16c); `/ship` ist das nicht ausgeblendete, wie `focus` beim Charakter; die Schiffs-Id (s1, s2, …) ist wie bei Charakteren nicht gezeichnet |
 | Schiffsentwurf | `ShipDesign` | Referenzdaten eines Standardentwurfs (Scout/Courier, Free Trader, …): Rumpf, Antriebe, Treibstofftank, Computer, Kabinen, Niedrigbetten, Hardpoints, Laderaum, Crewbedarf, Bauzeit; siehe [`regeln-schiffe.md`](regeln-schiffe.md) unter *Standardentwürfe* |
+| Art des Entwurfs | `ShipDesign.kind`, `ShipKind` | Ob ein Entwurf ein Schiff (`starship`, 100 t und mehr) oder ein Small Craft (`smallCraft`, unter 100 t, ohne Sprungantrieb, SR 33) ist (2026-11-21b) |
+| Small Craft | `ShipDesign` mit `kind` = `smallCraft`; `Ship` mit diesem Entwurf | Ein kleines Raumfahrzeug unter 100 t ohne Sprungantrieb aus SR 33–35 (Launch, Ship's Boat, Pinnace, Cutter, Shuttle, Fighter …); im Gespräch auch **Beiboot**, wenn es zu einem Mutterschiff gehört (2026-11-21b) |
+| Beiboote eines Entwurfs | `ShipDesign.craft` | Die Small Craft, die ein Standardentwurf an Bord trägt (Yacht: ein Ship's Boat; Mercenary Cruiser: zwei Modular Cutter) (2026-11-21b) |
+| Mutterschiff | `Ship.mother` | Das Schiff, zu dem ein Small Craft gehört und in dessen Hangar es Platz hat (2026-11-21b) |
+| An Bord | `Ship.aboard` | Das Small Craft liegt im Hangar seines Mutterschiffs und ist dort, wo das Mutterschiff ist (2026-11-21b) |
+| In der Umlaufbahn | `Ship.inOrbit` | Das Schiff kreist um die Welt seines Orts, statt auf ihr zu stehen; so bleibt ein Mutterschiff oben, während die Gruppe mit dem Beiboot gelandet ist (2026-11-21b) |
+| Einheit der Gruppe | `SystemFlight.party` | Die Einheit im Systemflug, in der die Gruppe sitzt; nur sie kann landen und eine Reise beenden (2026-11-21b) |
 | Grundpreis | `ShipDesign.basePrice` | Was ein neues Schiff dieses Entwurfs nach SR 35–37 kostet; ein fester Wert, weil sich Rumpf, Antriebe, Energiewerk und Computer ohne die Tabellen aus *Charts and Tables* nicht einzeln bepreisen lassen |
 | Preis | `Ship.price` | Was dieses eine Schiff tatsächlich gekostet hat; beim Erwerb gleich dem Grundpreis seines Entwurfs, kann aber abweichen (z. B. gebrauchtes Schiff, später) |
 | Kreditsumme | `Ship.initialLoan` | Was bei der Bankfinanzierung eines Schiffs insgesamt finanziert wurde (200 % des Preises); bleibt stehen, auch wenn sich der Preis des Entwurfs später ändert |
@@ -3137,6 +3155,87 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     gleich ausprobieren kann (siehe *Demo-Kampagne*).
   - **Später** (eigene Änderungen): fremde Schiffe und ihr Planer (Stufe 2), Waffen, Raketen, Sand,
     Small Craft, Ortung, Raumkampf aus einer Schiffsbegegnung; siehe den Stufenplan im Konzept.
+
+- **Small Craft** (Kennzeichen 2026-11-21b, wartet auf Freigabe; Owner, 21. November 2026). Der friedliche
+  Teil von Stufe 4 des [Konzepts](konzept-raumkampf.md) (Owner: „nur friedlich“), vorgezogen, weil
+  er mit Systemflug und Reise im System schon spielbar ist. Regeln aus SR 33–35, übertragen in
+  [`regeln-schiffe.md`](regeln-schiffe.md) unter *Kleine Schiffe (Small Craft)*. Ersetzt die Regel
+  unter *Schiff und Entwurf*, dass Small Craft einfache Gegenstände der Art `ship` bleiben. Abweichungen
+  tragen ⚑.
+  - **Entwürfe** (Owner: als `ShipDesign` mit Art). Die acht Small Craft aus SR 33–35 (Launch,
+    Ship's Boat, Slow Boat, Pinnace, Slow Pinnace, Modular Cutter, Shuttle, Fighter) kommen als
+    `ShipDesign` mit `kind` = `smallCraft` zu den Standardentwürfen (`kind` = `starship`): Rumpf,
+    Beschleunigung als `maneuver`, Treibstoff, Exzess-Tonnage als `cargo`, Preis als `basePrice`,
+    alle `streamlined`, `jump` 0, keine Kabinen, Niedrigbetten und Hardpoints, Crew „Pilot + Rider“
+    (Fighter: „Pilot“). Small Craft brauchen keinen Computer (SE 13), daher ist `computer` optional;
+    ⚑ die Standardentwürfe der Small Craft haben keinen (Waffen kommen erst mit dem Kampf). Die SR
+    nennen für Small Craft keine Bauzeit, daher ist `months` optional. `code` ist für Small Craft ein
+    sprechendes Kürzel (`launch`, `boat`, …), kein Buchstabe. Die Brennstufen nach Mayday (*6G9* usw.)
+    kommen erst mit dem Kampf ins Modell.
+  - **Beiboote der Standardentwürfe** (`ShipDesign.craft`, aus der Spalte *Fahrzeuge* der
+    Standardentwürfe): Subsidized Merchant, Subsidized Liner und Safari Ship je ein Launch, Yacht ein
+    Ship's Boat (das „30-t-Boot“), Laboratory Ship eine Pinnace, Mercenary Cruiser zwei Modular
+    Cutter (ohne Module). Air/Raft und ATV sind Fahrzeuge, keine Small Craft, und bleiben außen vor.
+  - **Erwerb.** Kommt ein Schiff in die Kampagne (Kauf, Ship-Vorteil, Demo), bekommt es für jedes
+    Beiboot seines Entwurfs ein eigenes `Ship` (eigene Id, Name „Beiboot 1“ usw., umbenennbar) mit
+    `mother` auf das neue Schiff, `aboard` gesetzt, vollem Tank, Preis 0 (im Grundpreis enthalten)
+    und ohne Kredit. Wird das Mutterschiff ausgeblendet (`retired`), werden es seine Beiboote auch.
+    Einzeln kaufen, chartern oder verkaufen kann man Small Craft vorerst nicht.
+  - **Das aktive Schiff** `Campaign./ship` ist jetzt das nicht ausgeblendete Schiff **ohne
+    Mutterschiff**. Der Reiter Schiff zeigt darunter seine Beiboote mit Ort (an Bord, Welt und Feld,
+    in der Umlaufbahn).
+  - **An Bord** (`aboard`). Ein Small Craft an Bord hat keinen eigenen Ort (`place` leer); es ist,
+    wo sein Mutterschiff ist, und fliegt bei Sprung, Reise im System und Systemflug mit. Ein Small
+    Craft, das nicht an Bord ist, hat einen eigenen Ort wie ein Schiff (gelandet, oder in der
+    Umlaufbahn).
+  - **Umlaufbahn** (`inOrbit`). ⚑ Endet ein Systemflug (Landung der Gruppe, „Systemflug beenden“),
+    während ein Schiff oder Small Craft ohne Gruppe noch fliegt (weder gelandet noch aufgeschlagen),
+    ist es danach **in der Umlaufbahn** der Welt des Systemflugs: `place` ist diese Welt ohne Feld und
+    Stadt, `inOrbit` gesetzt. Ort, Geschwindigkeit und Spur gehen verloren. In der Umlaufbahn kostet
+    es keine Liegegebühr. Landet es später, wird `inOrbit` gelöscht.
+  - **Einheit der Gruppe** (`SystemFlight.party`). Die Gruppe sitzt im Systemflug immer in genau
+    einer Einheit, ⚑ alle zusammen (die Gruppe wird nicht geteilt). Beim Beginnen ist das die
+    Einheit, bei der die Gruppe steht.
+  - **Systemflug beginnen** geht wie bisher auf der Raumkarte der Welt, auf der die Gruppe ist, mit
+    dem eigenen Schiff oder jetzt auch mit einem Small Craft, bei dem die Gruppe steht (gelandet am
+    Ort der Gruppe). Ist das Mutterschiff in der Umlaufbahn dieser Welt, kommt es als zweite Einheit
+    hinzu, ⚑ auf einer Kreisbahn mit dem dreifachen Weltradius (die Einheit der Gruppe wie bisher
+    beim doppelten). Small Craft an Bord sind keine Einheiten.
+  - **Aussetzen** (im Systemflug, an der Einheit der Gruppe, wenn sie ein Mutterschiff mit einem
+    Beiboot an Bord ist): Das Beiboot wird eine neue Einheit mit Ort und Geschwindigkeit des
+    Mutterschiffs, `aboard` wird gelöscht, und ⚑ die Gruppe steigt mit um (`party` zeigt auf das
+    Beiboot). Das Mutterschiff fliegt mit seiner Crew weiter; seinen Schubvektor setzt man weiter
+    selbst. ⚑ Ein Beiboot je Raumrunde (wie zivile Schiffe nach dem Konzept).
+  - **Andocken**: Ist ein Small Craft seinem Mutterschiff ⚑ näher als 100 km und langsamer als
+    0,1 km/s gegenüber ihm (Hausregel aus dem Konzept), bietet die Karte „Andocken“ an. Die Einheit
+    des Small Craft entfällt, `aboard` wird gesetzt, und war die Gruppe darin, sitzt sie jetzt im
+    Mutterschiff.
+  - **Landen** geht wie bisher (Landeautomatik eingeschlossen), aber nur mit der Einheit der Gruppe
+    (siehe offene Frage 1). Das gelandete Schiff oder Small Craft bekommt den Landeplatz als Ort.
+  - **Reise im System mit dem Small Craft** (Owner: „auch Reise im System“). Im Reisedialog steht
+    neben Ticket und eigenem Schiff jedes Small Craft, bei dem die Gruppe ist (gelandet an ihrem Ort,
+    oder an Bord des Mutterschiffs, bei dem die Gruppe steht; dann verlässt es das Mutterschiff).
+    Dauer nach T = 2·√(D/A) mit A = seine G (Launch 1 G: bis zu Tagen), `SystemJourney.ship` zeigt auf
+    das Small Craft. ⚑ Wie beim Schiff ohne Treibstoff, mit Lebenserhaltung wie bei der Reise im
+    System mit eigenem Schiff. Am Ziel wählt die Gruppe einen Landeplatz wie mit eigenem Schiff.
+  - **Mutterschiff auf Reisen.** ⚑ Ein Sprung geht nur, wenn alle Beiboote an Bord sind (sonst
+    blieben sie im alten System zurück). Eine Reise im System mit dem Mutterschiff geht auch ohne sie;
+    nicht angedockte Beiboote bleiben, wo sie sind, und die Gruppe kann sie später mit Ticket oder
+    Schiff abholen.
+  - **Liegegebühren** ⚑: Ein Small Craft, das nicht an Bord ist, zahlt wie ein Schiff, wenn es in
+    einer Stadt mit Hafen steht; an Bord und in der Umlaufbahn zahlt es nichts.
+  - **Demo-Kampagne** (Owner: anderes Demo-Schiff). Statt des Scout/Courier, der kein Small Craft
+    tragen kann (nur Air/Raft, 3 t Laderaum), beginnt sie ⚑ mit einer **Yacht** (Type Y, 1 G,
+    Jump-1) mit ihrem Ship's Boat (6 G), schuldenfrei, vollem Tank, im Hafen von Kessra. Bestehende
+    Kampagnen bekommen nichts nachgetragen.
+  - **Offene Fragen** zu dieser Änderung:
+    1. **Landen ohne Gruppe**: Kann ein Schiff ohne die Gruppe landen, etwa das Mutterschiff, das man
+       im Systemflug weiter steuert? Empfehlung: nein, vorerst landet nur die Einheit der Gruppe;
+       erreicht eine andere Einheit die Oberfläche, schlägt sie auf, und die Bahnvorschau warnt. Sonst
+       bräuchte jede Landung ohne Gruppe einen eigenen Landeplatz-Dialog.
+    2. **Demo-Schiff**: Yacht (Ship's Boat mit 6 G, schnell und wendig, aber nur Jump-1) oder Safari
+       Ship (Jump-2, Launch mit nur 1 G) oder Laboratory Ship (Jump-2, Pinnace mit 5 G, 400 t)?
+       Empfehlung: Yacht.
 
 - **Sternsystem, Monde und Gasriesen** (freigegeben am 18. November 2026, Kennzeichen 2026-11-18d). Damit die
   Raumkarte nicht leer ist (Wunsch des Owners, 18. November 2026), mit Stern und Bahnen (Owner:
