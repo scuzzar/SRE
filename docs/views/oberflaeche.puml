@@ -81,6 +81,7 @@ hide <<browser>> stereotype
   class Possession $shop
 
 ' Schiffe
+  class Ship $schiffe
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
 
@@ -161,6 +162,7 @@ hide <<browser>> stereotype
 Campaign "1" *-- "0..1" Place : location
 
 ' Schiffe
+Ship "1" *-$newArrow("2026-11-21")- "0..1" Place : place
 
 ' Raumkarte und Systemflug
 

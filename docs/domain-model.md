@@ -488,6 +488,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `SystemJourney` mit `from`, `to`, `travellers`, `ship`, die Buchungsart `ticket` und
 > `Booking.ticketFor`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-20d-reise-im-system.png`](changes/2026-11-20d-reise-im-system.png).
+>
+> Wartet auf Freigabe (Kennzeichen 2026-11-21): **Landeplatz** (Owner, 21. November 2026). Kommt die
+> Gruppe auf eine Welt mit Globus, wählt sie zuerst ein Feld: einen Raumhafen oder, mit eigenem
+> Schiff, einen beliebigen Ort. Das Schiff hat einen eigenen Ort; abfliegen kann es nur, wenn die
+> Gruppe bei ihm ist, und Passagen gibt es nur in einer Stadt mit Hafen. Neu im Bild: `Ship.place`.
+> Der Ausschnitt dazu liegt unter [`changes/2026-11-21-landeplatz.png`](changes/2026-11-21-landeplatz.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -883,6 +889,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Raumhafen einer Nebenwelt | `World.spaceport`, `Spaceport` | Der Spaceport einer Welt außer der Hauptwelt nach Book 6: F gut, G schlecht, H einfachste Einrichtungen, Y keiner; den Starport (A–E, X) hat nur die Hauptwelt (2026-11-20c) |
 | Basis einer Nebenwelt | `World.bases`, `BaseKind` | Ein Marinestützpunkt oder eine Scoutbasis auf einer Welt außer der Hauptwelt (B6 37); die Basen der Hauptwelt stehen am Hexfeld (2026-11-20c) |
 | Einrichtung | `World.facilities`, `Facility` | Warum es auf einer Nebenwelt eine Siedlung gibt (B6 38): Farming (Landwirtschaft), Mining (Bergbau), Colony (Kolonie), Research Laboratory (Forschung), Military Base (Militärbasis) (2026-11-20c) |
+| Landeplatz | `Campaign.location`, `Ship.place` | Das Feld oder die Stadt, an der die Gruppe nach einer Ankunft steht; mit eigenem Schiff steht auch das Schiff dort (2026-11-21) |
 | Gastgeber | `StarSystem.host` | Der Gasriese (eine Welt der Art giant, 2026-11-20b), um den die Hauptwelt kreist, wenn sie in seiner Bahn liegt (Book 6); dann ist sie ein Mond und hat selbst keine Monde (2026-11-18d) |
 | Am Gasriesen | `SystemFlight.at` | Der Gasriese (eine Welt der Art giant, 2026-11-20b), auf dessen Raumkarte ein Systemflug läuft; ohne ihn läuft er an der Welt (2026-11-18d) |
 | Asteroidenfeld | (abgeleitet, View) | Was die Raumkarte bei einer Welt der Größe 0 statt eines Planeten zeigt: Brocken aus dem Weltschlüssel, nicht gespeichert, ohne Schwerkraft (2026-11-18d) |
@@ -1422,6 +1429,30 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - *Wer*: wie bei der Reise alle lebenden, nicht ausgeblendeten Charaktere (`travellers`). Danach
       ist der Aufenthaltsort die Zielwelt (ohne Stadt und Feld).
     - Im Log wie die Reise: nicht löschbar.
+  - *Landeplatz* (wartet auf Freigabe, 2026-11-21; Owner, 21. November 2026: „egal wie ich auf eine
+    Welt komme, ich muss immer zuerst ein Feld für die Landung auswählen“).
+    - *Wann*: Ist die Gruppe auf einer Welt mit Globus, aber ohne Feld und ohne Stadt (nach einer
+      Reise, einer Reise im System, einer Landung aus dem Systemflug oder „Gruppe platzieren“), geht
+      zuerst der Dialog **Landeplatz** auf; vorher geht nichts anderes. Welten ohne Globus
+      (Asteroidengürtel) haben keine Felder: Dort ist die Gruppe einfach auf der Welt.
+    - *Was*: Der Dialog bietet jede Stadt der Welt mit Hafen an (A–E Starport, F–H Spaceport, Owner:
+      alle Häfen) und, wenn die Gruppe mit dem eigenen Schiff kam, **Anderer Ort**: Dann tippt man
+      auf dem Globus ein Feld an und bestätigt. ⚑ Hat eine Welt keine Stadt mit Hafen (selten, etwa
+      dünn besiedelt), bietet der Dialog auch ohne eigenes Schiff „Anderer Ort“ an.
+    - *Folge*: Die Gruppe steht in dieser Stadt bzw. auf diesem Feld (`Campaign.location`). Kam sie mit
+      dem eigenen Schiff (Reise mit eigenem Schiff, Reise im System mit eigenem Schiff, Landung aus
+      dem Systemflug), steht auch das Schiff dort (`Ship.place`).
+    - *Abflug mit eigenem Schiff* (Sprung, Reise im System, Systemflug beginnen) geht nur, wenn die
+      Gruppe beim Schiff ist: auf seiner Welt und, hat es ein Feld oder eine Stadt, dort. Das Schiff
+      steht auf dem Globus mit einem eigenen Zeichen.
+    - *Abflug mit Passage oder Ticket* geht nur aus einer Stadt mit Hafen, nicht „aus der Pampa“; am
+      Ziel landet das fremde Schiff an einem Hafen (der Dialog bietet dann nur Häfen an).
+    - *Schiffe ohne Ort* (alte Stände, gerade gekauft): Sie stehen dort, wo die Gruppe ist, bis die
+      Gruppe ihren nächsten Landeplatz wählt; dann steht das Schiff dort.
+    - ⚑ *Liegegebühren*: Das Schiff liegt dort, wo es steht (nicht mehr, wo die Gruppe ist). Steht es
+      in einer Stadt mit Hafen, kostet es wie bisher Cr100 bei der Ankunft und Cr100 je weiteren Tag;
+      an einem beliebigen Ort kostet es nichts. Ohne Feld (Welt ohne Globus) gilt wie bisher der
+      Raumhafen der Welt.
   - *Ohne Reise*: „Gruppe platzieren“ auf der Weltkarte und die Wahl im Reiter Begegnung setzen den
     Aufenthaltsort weiter ohne Reise und ohne Zeit, etwa zu Beginn einer Kampagne oder für eine
     Reise außerhalb der Regeln.
