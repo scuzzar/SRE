@@ -3,7 +3,7 @@ import { openSector } from './layout';
 
 test.use({ reducedMotion: 'reduce' });
 
-test('Nebenwelt aus dem Reiter System öffnen, benennen und mit dem eigenen Schiff hinreisen; dort entstehen Oberfläche und Globus, die Karte zeigt sie zuerst (2026-11-20d, 2026-11-21)', async ({ page }) => {
+test('Nebenwelt aus dem Reiter System öffnen, benennen und mit dem eigenen Schiff hinreisen; dort entsteht der Globus, die Karte zeigt sie zuerst (2026-11-20d, 2026-11-21)', async ({ page }) => {
   await page.goto('/');
   await openSector(page);
   const kessraHex = page.getByRole('group', { name: 'Karte des Subsektors' }).getByRole('button', { name: /^0405, Kessra: Weltkarte öffnen/ });
@@ -17,8 +17,10 @@ test('Nebenwelt aus dem Reiter System öffnen, benennen und mit dem eigenen Schi
   await name.blur();
   const tertius = page.getByRole('region', { name: /^Tertius · 0405-/ });
   await expect(tertius).toBeVisible();
-  // Ohne Oberfläche kann man trotzdem hinreisen: Die Ankunft erzeugt sie.
-  await expect(tertius.getByRole('region', { name: 'Oberfläche' })).toHaveCount(0);
+  // Die Oberfläche kam mit der Welt (21. November 2026), den Globus gibt es noch nicht: Die Ankunft erzeugt ihn.
+  await expect(tertius.getByRole('region', { name: 'Oberfläche' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Oberfläche würfeln' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Globus erzeugen', exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: 'Hierher reisen', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: /Reise im System: Kessra → Tertius/ });

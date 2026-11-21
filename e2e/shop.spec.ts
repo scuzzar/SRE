@@ -17,7 +17,14 @@ async function makeWorld(page: Page) {
     if (await page.locator('.sector-dock').getByText('Kein System in diesem Feld').isVisible()) continue;
     await page.getByLabel('Name der Welt').fill('Regina');
     await page.getByRole('button', { name: 'Übernehmen' }).click();
-    return page.getByRole('region', { name: `Regina · ${id}` });
+    const world = page.getByRole('region', { name: `Regina · ${id}` });
+    // Ein Asteroidengürtel hat keinen Globus, eine dünn besiedelte Welt oft keine Stadt; dann die nächste Welt.
+    const uwp = (await world.getByRole('article', { name: 'Welt' }).locator('p').first().innerText()).match(/· [A-EX](\w)\w\w(\w)/);
+    if (!uwp || uwp[1] === '0' || !/[4-9A]/.test(uwp[2]!)) {
+      await world.getByRole('button', { name: 'Schließen' }).click();
+      continue;
+    }
+    return world;
   }
   throw new Error('Keine Welt entstanden');
 }

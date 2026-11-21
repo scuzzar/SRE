@@ -203,7 +203,7 @@ describe('Nebenwelten (2026-11-20c)', () => {
       ...h,
       worlds: h.worlds.map((w) => {
         if (!isSubordinate(h, w)) return w;
-        const rest = Object.fromEntries(Object.entries(w).filter(([k]) => !['spaceport', 'facilities', 'bases'].includes(k)));
+        const rest = Object.fromEntries(Object.entries(w).filter(([k]) => !['spaceport', 'facilities', 'bases', 'surface', 'temperature'].includes(k)));
         return { ...rest, uwp: Object.fromEntries(Object.entries(w.uwp).filter(([k]) => physical.includes(k))) } as World;
       }),
     });

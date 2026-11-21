@@ -2,7 +2,7 @@ import { DomainError } from './errors';
 import type { Random } from './ports';
 import { ref } from './reference';
 import { checkSurfaceMap } from './surface-map';
-import { baseKinds, cityNamesTaken, enterSurface, facilities, hexById, hexId, hexIdOfWorld, mainOf, mainWorld, mapPossible, nextWorldAction, putHex, rollSurface, withSurfaceMapOf, worldById, spaceports, tradeCodesOf, validateSurface, withWorld, type BaseKind, type Facility, type Hex, type Spaceport, type Star, type StarSystem, type TemperatureId, type World } from './sector';
+import { baseKinds, cityNamesTaken, enterSurface, facilities, hexById, hexId, hexIdOfWorld, isWorld, mainOf, mainWorld, mapPossible, nextWorldAction, putHex, rollSurface, withSurfaceMapOf, worldById, spaceports, tradeCodesOf, validateSurface, withWorld, type BaseKind, type Facility, type Hex, type Spaceport, type Star, type StarSystem, type TemperatureId, type World } from './sector';
 
 // Das Sternsystem nach Book 6 *Scouts* (Domänenmodell 2026-11-18d, 2026-11-20, 2026-11-20b): Sterne,
 // Bahnen und Zonen um den Hauptstern, Gasriesen, Planetoidengürtel, leere und eingefangene Bahnen,
@@ -308,7 +308,28 @@ export function rollStarSystem(hex: Hex, random: Random): Hex {
   }
 
   const system: StarSystem = { stars, maxOrbits, emptyOrbits: emptyOrbits.sort((a, b) => a - b) };
-  return rollSubordinates({ ...hex, system, worlds: [placedMain, ...worlds, ...moons, ...hex.worlds.filter((w) => w.id !== main.id)] }, random);
+  return withSurfaces(rollSubordinates({ ...hex, system, worlds: [placedMain, ...worlds, ...moons, ...hex.worlds.filter((w) => w.id !== main.id)] }, random), random);
+}
+
+/** Braucht diese Nebenwelt noch ihre Oberfläche? Eine Welt ab Größe 1 ohne Oberfläche. */
+function lacksSurface(hex: Hex, world: World): boolean {
+  return isSubordinate(hex, world) && world.kind === 'world' && (world.uwp.size ?? 0) >= 1 && world.surface === undefined;
+}
+
+/**
+ * Die Oberfläche jeder Nebenwelt ab Größe 1 entsteht gleich mit der Welt (Owner, 21. November 2026),
+ * nach dem World Builder's Handbook; die Temperatur aus ihrer Zone wird dabei gespeichert.
+ */
+export function withSurfaces(hex: Hex, random: Random): Hex {
+  if (!hex.worlds.some((w) => lacksSurface(hex, w))) return hex;
+  return {
+    ...hex,
+    worlds: hex.worlds.map((w) => {
+      if (!lacksSurface(hex, w)) return w;
+      const temperature = temperatureOfWorld(hex, w);
+      return { ...w, temperature, surface: rollSurface({ uwp: w.uwp, temperature }, random) };
+    }),
+  };
 }
 
 /** Bekommt diese Welt Raumhafen, Regierung, Gesetz, TL und Einrichtungen (B6 38)? Jede außer Hauptwelt, Gasriesen und Ringen. */
@@ -577,16 +598,17 @@ export function textRandom(text: string): Random {
  */
 export function withStarSystems<C extends { readonly key: string; readonly hexes: readonly Hex[] }>(campaign: C, seed = campaign.key): C {
   let changed = false;
-  const hexes = campaign.hexes.map((hex) => {
+  const hexes = campaign.hexes.map((original) => {
+    let hex = original;
     const id = hexId(hex.column, hex.row);
+    if (!hex.empty && !hex.system && mainOf(hex)?.name !== undefined && mainOf(hex)?.uwp.tech !== undefined) hex = rollStarSystem(hex, textRandom(`${seed}/${id}`));
     // Systeme von vor 2026-11-20c bekommen Raumhafen, Regierung, Gesetz, TL, Einrichtungen und Basen nach.
-    if (hex.system && hex.worlds.some((w) => isSubordinate(hex, w) && w.spaceport === undefined)) {
-      changed = true;
-      return rollSubordinates(hex, textRandom(`${seed}/${id}/2026-11-20c`));
-    }
-    if (hex.empty || hex.system || mainOf(hex)?.name === undefined || mainOf(hex)?.uwp.tech === undefined) return hex;
-    changed = true;
-    return rollStarSystem(hex, textRandom(`${seed}/${id}`));
+    if (hex.system && hex.worlds.some((w) => isSubordinate(hex, w) && w.spaceport === undefined)) hex = rollSubordinates(hex, textRandom(`${seed}/${id}/2026-11-20c`));
+    // Die Oberfläche entsteht mit der Welt (21. November 2026): Nebenwelten und ältere Hauptwelten mit Temperatur bekommen sie nach.
+    if (hex.system) hex = withSurfaces(hex, textRandom(`${seed}/${id}/oberflaeche`));
+    if (isWorld(hex) && nextWorldAction(hex) === 'surface') hex = enterSurface(hex, textRandom(`${seed}/${id}/hauptwelt`));
+    if (hex !== original) changed = true;
+    return hex;
   });
   return changed ? { ...campaign, hexes } : campaign;
 }

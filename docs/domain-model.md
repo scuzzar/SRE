@@ -2582,6 +2582,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     System, Sprung, „Gruppe platzieren“, Wahl im Reiter Begegnung), entstehen dabei ihre Oberfläche
     und ihr Globus, falls sie fehlen; „Globus erzeugen“ bleibt für alle anderen Welten. Eine
     Hauptwelt ohne Temperatur bekommt so keine Oberfläche (die Temperatur würfelt man von Hand).
+    Geändert am 21. November 2026 (Owner, „Oberfläche erzeugen sollte einfach immer mit der Welt
+    passieren“): Die **Oberfläche** (die Zahlen nach dem World Builder's Handbook, nicht die Karte)
+    braucht keinen Knopf mehr. Eine Nebenwelt ab Größe 1 bekommt sie im Schritt „Sternsystem
+    würfeln“ mit ihren übrigen Werten, die Temperatur aus ihrer Zone gespeichert; Systeme und ältere
+    Hauptwelten (mit Temperatur) von davor bekommen sie beim Öffnen der Kampagne nachgewürfelt, mit
+    Würfen aus Schlüssel und Feld. Nur der Globus entsteht weiter auf Knopfdruck oder bei Ankunft.
   - Das Raster folgt aus der Größe und wird nicht gespeichert: ein Ikosaeder, jede Kante in
     n = 4 × Größe Abschnitte geteilt, jeder Eckpunkt ein Oberflächenfeld (`/cells` = 10 × n² + 2).
     Die Felder (`cells`) stehen in einer festen Reihenfolge, jedes hat eine Nummer ab 0.
@@ -3174,9 +3180,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Nebenwelten mit Weltkarte und Globus** (freigegeben am 20. November 2026, 2026-11-20d; Owner, 20. November
     2026). Ein Tipp auf eine Welt in der Übersicht des Systems öffnet ihre Weltkarte, wie die der
     Hauptwelt; Weltkarte und Globus hängen dafür an der Welt, nicht am Hexfeld. Nebenwelten
-    bekommen dort einen Namen und eine Notiz, „Oberfläche würfeln“ (wie bei Welten von vor der
-    Oberfläche; die Temperatur aus der Zone wird dabei gespeichert, damit das Leben dazu passt) und
-    „Globus erzeugen“; danach haben sie Tiertabellen, Orte und Begegnungen wie die Hauptwelt.
+    bekommen dort einen Namen und eine Notiz und „Globus erzeugen“ (die Oberfläche haben sie seit
+    21. November 2026 schon mit dem Sternsystem, die Temperatur aus der Zone gespeichert, damit das
+    Leben dazu passt); danach haben sie Tiertabellen, Orte und Begegnungen wie die Hauptwelt.
     Keine Oberfläche und keinen Globus haben Größe 0 (Gürtel), kleine Welten (S), Ringe und
     Gasriesen. ⚑ Auf der Oberflächenkarte einer Nebenwelt bekommt die erste Hauptstadt den
     Spaceport als Hafen (Y: keinen), die übrigen Städte wie bei Starport X. Die Übersicht zeigt mit

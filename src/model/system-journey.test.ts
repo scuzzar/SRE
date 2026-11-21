@@ -74,20 +74,19 @@ describe('Reise im System (2026-11-20d)', () => {
 });
 
 describe('Nebenwelten mit Namen, Oberfläche und Globus (2026-11-20d)', () => {
-  it('Name und Notiz; Oberfläche mit der Temperatur der Zone; Globus nur auf Befehl, mit Städten', () => {
+  it('Name und Notiz; die Oberfläche kam mit der Welt (Temperatur der Zone); Globus nur auf Befehl, mit Städten', () => {
     const c = demo();
     const world = c.hexes[0]!.worlds.find((w) => w.kind === 'world' && w.id !== c.hexes[0]!.main && (w.uwp.size ?? 0) >= 1)!;
     let hexes = renameWorld(c.hexes, world.id, '  Kessra Prime ');
     hexes = noteWorld(hexes, world.id, 'Bergbaukolonie');
     expect(worldById(hexes, world.id)).toMatchObject({ name: 'Kessra Prime', note: 'Bergbaukolonie' });
     expect(() => renameWorld(hexes, c.hexes[0]!.main!, 'X')).toThrow(/behält ihren Namen/);
-    expect(surfaceDue(hexes[0]!, worldById(hexes, world.id)!)).toBe(true);
-    expect(mapPossible(hexes[0]!, worldById(hexes, world.id)!)).toBe(false);
-    hexes = rollWorldSurface(hexes, world.id, seededRandom(4));
     const rolled = worldById(hexes, world.id)!;
     expect(rolled.surface).toBeDefined();
     expect(rolled.temperature).toBeDefined();
+    expect(surfaceDue(hexes[0]!, rolled)).toBe(false);
     expect(() => rollWorldSurface(hexes, world.id, seededRandom(4))).toThrow();
+    expect(mapPossible(hexes[0]!, rolled)).toBe(true);
     hexes = withSurfaceMapOf(hexes, world.id, seededRandom(5));
     const mapped = worldById(hexes, world.id)!;
     expect(mapped.map).toBeDefined();

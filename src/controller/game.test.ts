@@ -1661,14 +1661,12 @@ describe('Subsektor und Weltenerschaffung', () => {
     expect(game.snapshot().world?.error).toMatch(/fertige Welt/);
   });
 
-  it('würfelt einer älteren Welt mit Temperatur die Oberfläche nach', async () => {
+  it('eine ältere Welt mit Temperatur bekommt ihre Oberfläche beim Öffnen der Kampagne, ohne Knopf (21. November 2026)', async () => {
     const old = { column: 1, row: 1, empty: false, name: 'Alt', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 }, temperature: 'temperate' as const };
     const { game } = await started(fixedRandom(), memoryRepository(setHexes(createCampaign([]), [old].map(hexFromFlat))));
     game.chooseHex(1, 1);
-    expect(game.snapshot().world).toMatchObject({ step: 'done', surface: undefined, action: { kind: 'surface', label: 'Oberfläche würfeln' } });
-    game.rollWorld();
-    expect(game.snapshot().world).toMatchObject({ action: { kind: 'done' }, lines: [] });
-    expect(game.snapshot().world?.surface?.[0]).toBe('75 % Wasser');
+    expect(game.snapshot().world).toMatchObject({ step: 'done', action: { kind: 'done' }, lines: [] });
+    expect(game.snapshot().world?.surface?.[0]).toMatch(/% Wasser/);
   });
 
   it('schreibt „nur Archipele“ und „nur Seen“ statt der ganzen Fläche als Zahl', () => {
@@ -2248,12 +2246,11 @@ describe('Nebenwelten und Reise im System (2026-11-20d)', () => {
     const body = game.snapshot().world!.system!.orbits.flatMap((o) => [o.body, ...o.moons]).find((b) => b.openable && !b.main && b.code !== undefined && !b.code.includes('S') && b.label.startsWith('Welt'))!;
     game.openWorld(body.id!);
     const world = game.snapshot().world!;
-    expect(world).toMatchObject({ id: body.id, subordinate: true, step: 'done', action: { kind: 'surface' } });
+    // Die Oberfläche kam mit der Welt; der Globus noch nicht.
+    expect(world).toMatchObject({ id: body.id, subordinate: true, step: 'done', action: { kind: 'done' }, canGlobe: true, hasMap: false });
+    expect(world.surface).toBeDefined();
     game.nameWorld('  Tertius ');
     expect(game.snapshot().world?.name).toBe('Tertius');
-    game.rollWorld();
-    expect(game.snapshot().world?.surface).toBeDefined();
-    expect(game.snapshot().world).toMatchObject({ action: { kind: 'done' }, canGlobe: true, hasMap: false });
     game.createGlobe();
     expect(game.snapshot().globe?.id).toBe(body.id);
     game.closeGlobe();
@@ -2306,7 +2303,7 @@ describe('Nebenwelten und Reise im System (2026-11-20d)', () => {
     game.openGlobeAt(4, 5);
     const body = game.snapshot().world!.system!.orbits.flatMap((o) => [o.body, ...o.moons]).find((b) => b.openable && !b.main && b.code !== undefined && !b.code.includes('S') && b.label.startsWith('Welt'))!;
     game.openWorld(body.id!);
-    expect(game.snapshot().world).toMatchObject({ hasMap: false, surface: undefined });
+    expect(game.snapshot().world).toMatchObject({ hasMap: false });
     game.stayHere();
     expect(game.snapshot().location).toBe(body.id);
     expect(game.snapshot().world).toMatchObject({ hasMap: true });
