@@ -2498,7 +2498,8 @@ export class GameController {
     const ship = shipById(this.campaign, activeFlight(this.campaign).units[0]!.ship).name;
     const run = runRound(this.campaign, this.deps.clock);
     // Gelandet: Der Flug ist zu Ende, die Gruppe auf dieser Welt; die Raumkarte bleibt offen (Owner, 21. November 2026).
-    if (run.landed !== undefined) return this.change(run.campaign, { space: { world: space.world }, notice: `${ship} ist auf ${worldOf(run.campaign.hexes, run.landed).name} gelandet. Die Gruppe ist jetzt dort.` });
+    // Auch auf der Startwelt: Die Landung ist eine Ankunft, Oberfläche und Globus entstehen, falls sie fehlen.
+    if (run.landed !== undefined) return this.change({ ...run.campaign, hexes: readyForParty(run.campaign.hexes, run.landed, this.deps.random) }, { space: { world: space.world }, notice: `${ship} ist auf ${worldOf(run.campaign.hexes, run.landed).name} gelandet. Die Gruppe ist jetzt dort.` });
     this.change(run.campaign, { space: { world: space.world, run: { round: activeFlight(run.campaign).round, t, every: 2, frames: run.frames } } });
   }
 
@@ -2528,6 +2529,8 @@ export class GameController {
     if (at === undefined) return;
     const hex = hexById(this.campaign.hexes, hexIdOfWorld(at));
     if (!hex) return;
+    // Nach einer Landung aus dem Systemflug geht die Raumkarte zu; die Animation spielt auf dem Globus.
+    if (this.state.space) this.update({ space: undefined });
     const open = this.state.world !== undefined && this.state.globe !== undefined && openWorldId(this.state.world) === at;
     if (!open) this.openGlobeAt(hex.column, hex.row, at);
     if (!this.state.globe) return;

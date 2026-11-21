@@ -209,8 +209,8 @@ export function gravityAt(scene: Scene, p: Vec, t: number): Vec {
   return a;
 }
 
-/** Liegt `p` zur Zeit `t` in einem Körper? Dann der Ort auf seiner Oberfläche. */
-function inside(scene: Scene, p: Vec, t: number): { readonly surface: Vec; readonly world: string; readonly velocity: Vec } | undefined {
+/** Die Körper der Szene zur Zeit `t`: wo sie stehen und wie schnell sie sich bewegen. */
+function bodiesAt(scene: Scene, t: number): { body: Body; world: string; at: Vec; velocity: Vec }[] {
   const bodies: { body: Body; world: string; at: Vec; velocity: Vec }[] = [];
   if (scene.body) bodies.push({ body: scene.body, world: scene.center, at: { x: 0, y: 0 }, velocity: { x: 0, y: 0 } });
   for (const moon of scene.moons) {
@@ -218,7 +218,50 @@ function inside(scene: Scene, p: Vec, t: number): { readonly surface: Vec; reado
     const m = moonAt(moon, t);
     bodies.push({ body: moon.body, world: moon.world, at: m.position, velocity: m.velocity });
   }
-  for (const { body, world, at, velocity } of bodies) {
+  return bodies;
+}
+
+/** Mit dieser Sinkgeschwindigkeit setzt die Landeautomatik auf, in km/s (sicher unter `LANDING_KMS`). */
+export const AUTO_TOUCHDOWN_KMS = 1;
+
+/**
+ * Die Landeautomatik (Owner, 21. November 2026): Führt die Bahn auf die Oberfläche eines Körpers (der
+ * tiefste Punkt der Bahn um ihn liegt unter seiner Oberfläche) und ist der Weg bis dorthin gerade so
+ * lang, wie das Schiff mit seinem höchsten Schub zum Abbremsen braucht, bremst es selbst: mit vollem
+ * Schub gegen die Bewegung gegenüber dem Körper. Der eingestellte Schub ruht dann. `undefined`: Die
+ * Automatik greift nicht ein.
+ */
+export function autoBrake(scene: Scene, state: State, t: number, maxG: number): Vec | undefined {
+  const brake = maxG * G_KMS2;
+  for (const { body, at, velocity } of bodiesAt(scene, t)) {
+    const d = sub(state.position, at);
+    const r = lengthOf(d);
+    const h = r - body.radius;
+    // Nur in der Nähe: höchstens drei Radien über der Oberfläche.
+    if (h <= 0 || h > 3 * body.radius) continue;
+    const v = sub(state.velocity, velocity);
+    const s = lengthOf(v);
+    const closing = -(d.x * v.x + d.y * v.y) / r;
+    // Sinkt das Schiff schon langsam genug, lässt die Automatik es weiter sinken.
+    if (closing <= AUTO_TOUCHDOWN_KMS || s < EPS) continue;
+    // Der tiefste Punkt der Bahn um diesen Körper (Zweikörper): r_p = L² / (μ (1 + e)).
+    const mu = body.gm;
+    const L = Math.abs(d.x * v.y - d.y * v.x);
+    const energy = (s * s) / 2 - mu / r;
+    const e = Math.sqrt(Math.max(0, 1 + (2 * energy * L * L) / (mu * mu)));
+    if ((L * L) / (mu * (1 + e)) > body.radius) continue;
+    // Bremsweg zur Oberfläche: die Annäherung muss weg, gegen die Schwerkraft dort; ein Schritt Vorlauf.
+    const net = (brake * closing) / s - mu / (body.radius * body.radius);
+    const stopping = net > 0 ? (closing * closing - AUTO_TOUCHDOWN_KMS * AUTO_TOUCHDOWN_KMS) / (2 * net) : Infinity;
+    if (stopping + 2 * closing * STEP_SECONDS < h) continue;
+    return scale(v, -maxG / s);
+  }
+  return undefined;
+}
+
+/** Liegt `p` zur Zeit `t` in einem Körper? Dann der Ort auf seiner Oberfläche. */
+function inside(scene: Scene, p: Vec, t: number): { readonly surface: Vec; readonly world: string; readonly velocity: Vec } | undefined {
+  for (const { body, world, at, velocity } of bodiesAt(scene, t)) {
     const d = sub(p, at);
     const r = lengthOf(d);
     if (r < body.radius) return { surface: add(at, scale(d, body.radius / Math.max(r, EPS))), world, velocity };
@@ -243,10 +286,12 @@ export interface State {
  * neuen Ort (die Monde dort, wo sie dann stehen), Schub (in G) gleichmäßig über den Schritt. Gerät
  * die Einheit unter die Oberfläche eines Körpers, schlägt sie auf.
  */
-export function step(scene: Scene, state: State, thrust: Vec | undefined, t = 0): State {
+export function step(scene: Scene, state: State, thrust: Vec | undefined, t = 0, maxG?: number): State {
   if (state.crashed || state.landedOn !== undefined) return state;
   const dt = STEP_SECONDS;
-  const push = thrust === undefined ? { x: 0, y: 0 } : scale(thrust, G_KMS2);
+  // Mit `maxG` fliegt die Landeautomatik mit (ein Schiff); sie hat Vorrang vor dem eingestellten Schub.
+  const used = (maxG === undefined ? undefined : autoBrake(scene, state, t, maxG)) ?? thrust;
+  const push = used === undefined ? { x: 0, y: 0 } : scale(used, G_KMS2);
   const a0 = add(gravityAt(scene, state.position, t), push);
   const position = add(add(state.position, scale(state.velocity, dt)), scale(a0, 0.5 * dt * dt));
   const a1 = add(gravityAt(scene, position, t + dt), push);
@@ -264,11 +309,11 @@ export function step(scene: Scene, state: State, thrust: Vec | undefined, t = 0)
  * Rechnet `steps` Schritte ab der Zeit `t` und gibt alle Zwischenstände zurück (der erste ist der
  * Anfang). Der Schub gilt für die ersten `thrustSteps` Schritte (eine Raumrunde), danach ballistisch.
  */
-export function propagate(scene: Scene, start: State, thrust: Vec | undefined, steps: number, thrustSteps = steps, t = 0): readonly State[] {
+export function propagate(scene: Scene, start: State, thrust: Vec | undefined, steps: number, thrustSteps = steps, t = 0, maxG?: number): readonly State[] {
   const states: State[] = [start];
   let state = start;
   for (let i = 0; i < steps; i++) {
-    state = step(scene, state, i < thrustSteps ? thrust : undefined, t + i * STEP_SECONDS);
+    state = step(scene, state, i < thrustSteps ? thrust : undefined, t + i * STEP_SECONDS, maxG);
     states.push(state);
   }
   return states;
@@ -369,7 +414,7 @@ export function runRound(campaign: Campaign, clock: Clock, every = 2): RoundRun 
   const flight = activeFlight(campaign);
   const scene = sceneOf(campaign.hexes, flight.world);
   const t = flightTime(campaign, flight);
-  const runs = flight.units.map((u) => propagate(scene, u, u.thrust, ROUND_STEPS, ROUND_STEPS, t));
+  const runs = flight.units.map((u) => propagate(scene, u, u.thrust, ROUND_STEPS, ROUND_STEPS, t, maxGOf(campaign, u)));
   const units = flight.units.map((u, i): SpaceUnit => {
     const end = runs[i]!.at(-1)!;
     const rest = without(u, 'thrust');
@@ -408,8 +453,8 @@ export interface Preview {
 export const PREVIEW_ROUNDS = 5;
 
 /** Die Bahnvorschau einer Einheit ab der Zeit `t` mit einem (vielleicht nur gezogenen) Schubvektor; alle `every` Schritte ein Punkt. */
-export function previewOf(scene: Scene, unit: State, thrust: Vec | undefined, t = 0, every = 2, origin = scene.center): Preview {
-  const absolute = propagate(scene, unit, thrust, ROUND_STEPS * (1 + PREVIEW_ROUNDS), ROUND_STEPS, t);
+export function previewOf(scene: Scene, unit: State, thrust: Vec | undefined, t = 0, every = 2, origin = scene.center, maxG?: number): Preview {
+  const absolute = propagate(scene, unit, thrust, ROUND_STEPS * (1 + PREVIEW_ROUNDS), ROUND_STEPS, t, maxG);
   const states = absolute.map((s, i) => ({ ...s, position: sub(s.position, originAt(scene, origin, t + i * STEP_SECONDS).position) }));
   const now: Vec[] = [];
   const after: Vec[] = [];

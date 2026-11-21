@@ -3120,6 +3120,15 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Oberfläche und Globus entstehen, falls sie fehlen; das Schiff liegt dort). So erreicht man auch
     einen Mond oder eine Nebenwelt der Raumkarte. Die Bahnvorschau zeigt eine Landung (grün) statt
     eines Aufschlags. Gespeichert wird dafür nichts Neues.
+  - **Landeautomatik** (Owner, 21. November 2026: von Hand war Landen bei Raumrunden von 1000 s
+    kaum zu schaffen). Führt die Bahn eines Schiffs auf die Oberfläche eines Körpers (der tiefste
+    Punkt der Bahn um ihn liegt unter der Oberfläche, das Schiff ist höchstens drei Radien über
+    ihr) und ist der Weg bis dorthin gerade so lang wie der Bremsweg mit dem höchsten Schub des
+    Schiffs, bremst es selbst mit vollem Schub gegen seine Bewegung gegenüber dem Körper; der
+    eingestellte Schub ruht so lange. Sinkt es langsamer als 1 km/s, lässt die Automatik es weiter
+    sinken, so setzt es sicher unter der Landegeschwindigkeit auf. Reicht der Schub nicht (zu schnell,
+    zu schwach gegen die Schwerkraft), schlägt es auf. Die Bahnvorschau rechnet die Automatik mit
+    und zeigt so die Landung an. Gespeichert wird dafür nichts.
   - **Spur** (`track`): je vergangene Raumrunde ein `TrackPoint` mit Ort und Geschwindigkeit; die
     Karte zeichnet daraus eine glatte Kurve (Ort und Geschwindigkeit an beiden Enden geben die
     Krümmung). Gespeichert, damit sie einen Neustart übersteht.

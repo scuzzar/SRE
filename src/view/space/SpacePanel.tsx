@@ -45,7 +45,7 @@ export function SpaceCard({ space }: { space: SpaceView }) {
           )}
           {unit.preview.landing !== undefined && !unit.crashed && (
             <p className="combat-hint space-land" role="status">
-              {unit.preview.landing.round === 0 ? `Landung auf ${unit.preview.landing.name} in dieser Runde.` : `Ohne Schub Landung auf ${unit.preview.landing.name} in ${unit.preview.landing.round} Raumrunde${unit.preview.landing.round === 1 ? '' : 'n'}.`}
+              {unit.preview.landing.round === 0 ? `Landung auf ${unit.preview.landing.name} in dieser Runde` : `Ohne Schub Landung auf ${unit.preview.landing.name} in ${unit.preview.landing.round} Raumrunde${unit.preview.landing.round === 1 ? '' : 'n'}`}; die Landeautomatik bremst zuletzt selbst.
             </p>
           )}
           {unit.crashed && <p className="combat-hint space-warn">{unit.name} ist aufgeschlagen; in Stufe 1 ohne Folgen. Der Systemflug lässt sich beenden.</p>}
@@ -63,7 +63,7 @@ export function SpaceCard({ space }: { space: SpaceView }) {
             <dt>Schwerkraft hier</dt>
             <dd>{num(unit.gravity, 3)} G</dd>
           </dl>
-          <p className="globe-sheet-sub">Im Schubkreis tippen oder ziehen: vom Schiff zum Finger, der Rand ist der höchste Schub. Jede Raumrunde beginnt ohne Schub. Mit höchstens {num(space.landingKms)} km/s aufsetzen heißt landen.</p>
+          <p className="globe-sheet-sub">Im Schubkreis tippen oder ziehen: vom Schiff zum Finger, der Rand ist der höchste Schub. Jede Raumrunde beginnt ohne Schub. Mit höchstens {num(space.landingKms)} km/s aufsetzen heißt landen; führt die Bahn auf die Oberfläche und reicht der Schub, bremst die Landeautomatik im letzten Stück selbst.</p>
           <button type="button" className="ghost compact" onClick={() => game.endFlight()}>
             Systemflug beenden
           </button>

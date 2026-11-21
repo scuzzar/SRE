@@ -119,7 +119,11 @@ describe('Systemflug: Schub und Runde', () => {
 
   it('lässt mit vollem Schub zur Welt hin aufschlagen, danach bewegt sich nichts mehr', () => {
     let c = startFlight(demo(), world(demo()), clock);
-    // Das Schiff steht oberhalb der Welt; Schub nach unten zeigt auf ihre Mitte.
+    // Das Schiff steht oberhalb der Welt und fällt mit 30 km/s auf sie zu; Schub nach unten zeigt auf
+    // ihre Mitte. So schnell kann auch die Landeautomatik nicht bremsen.
+    const at = worldAt(c);
+    const u0 = c.flight!.units[0]!;
+    c = { ...c, flight: { ...c.flight!, units: [{ ...u0, velocity: { x: at.velocity.x, y: at.velocity.y - 30 } }] } };
     c = setThrust(c, 0, { x: 0, y: -2 });
     const preview = previewOf(sceneOf(c.hexes, world(c)), c.flight!.units[0]!, c.flight!.units[0]!.thrust, flightTime(c, c.flight!));
     expect(preview.impact).toBeDefined();
@@ -264,6 +268,30 @@ describe('Landen (Owner, 21. November 2026)', () => {
     expect(preview.landing?.world).toBe(small.id);
     expect(preview.landing!.round).toBeGreaterThan(0);
     expect(preview.impact).toBeUndefined();
+  });
+
+  it('Landeautomatik: einmal leicht gegen die Bahn bremsen genügt, die Vorschau zeigt die Landung, die Runden bringen sie (Owner, 21. November 2026)', () => {
+    let c = startFlight(demo(), world(demo()), clock);
+    const u = c.flight!.units[0]!;
+    const at = worldAt(c);
+    const rel = { x: u.velocity.x - at.velocity.x, y: u.velocity.y - at.velocity.y };
+    const v = Math.hypot(rel.x, rel.y);
+    c = setThrust(c, 0, { x: (-rel.x / v) * 0.5, y: (-rel.y / v) * 0.5 });
+    const scene = sceneOf(c.hexes, c.flight!.world);
+    const preview = previewOf(scene, c.flight!.units[0]!, c.flight!.units[0]!.thrust, flightTime(c, c.flight!), 2, c.flight!.world, 2);
+    expect(preview.landing?.world).toBe(world(c));
+    expect(preview.impact).toBeUndefined();
+    // Ohne Automatik (ohne `maxG`) wäre es ein Aufschlag.
+    expect(previewOf(scene, c.flight!.units[0]!, c.flight!.units[0]!.thrust, flightTime(c, c.flight!), 2, c.flight!.world).impact).toBeDefined();
+    let landed: string | undefined;
+    for (let i = 0; i < 6 && landed === undefined; i++) {
+      const run = runRound(c, clock);
+      landed = run.landed;
+      c = run.campaign;
+      if (i === 0) c = setThrust(c, 0, undefined);
+    }
+    expect(landed).toBe(world(demo()));
+    expect(c.flight).toBeUndefined();
   });
 
   it('schnell auftreffen bleibt ein Aufschlag', () => {

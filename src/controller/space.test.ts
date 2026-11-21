@@ -52,6 +52,24 @@ describe('Raumkarte und Systemflug', () => {
     expect(game.snapshot().ship?.flying).toBe(false);
   });
 
+  it('Landeautomatik: ein halbes G gegen die Bahn, dann landet das Schiff; erst nach dem Landeplatz geht die Raumkarte zu (Owner, 21. November 2026)', async () => {
+    const repository = memoryRepository();
+    const game = new GameController({ repository, random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), keys: countingKeys() });
+    await game.init();
+    game.launch();
+    // Das Schiff startet über der Welt gegen den Uhrzeigersinn, also nach links; nach rechts ist gegen die Bahn.
+    game.setThrust(0, { x: 0.5, y: 0 });
+    expect(game.snapshot().space?.flight?.units[0]?.preview.landing).toBeDefined();
+    for (let i = 0; i < 6 && game.snapshot().space?.flight; i++) game.runRound();
+    const view = game.snapshot();
+    expect(view.space?.flight).toBeUndefined();
+    expect(view.space).toBeDefined();
+    expect(view.landing?.ports.length).toBeGreaterThan(0);
+    game.landAtPort(view.landing!.ports[0]!.city);
+    expect(game.snapshot().space).toBeUndefined();
+    expect(game.snapshot().globe?.touchdown).toBe(1);
+  });
+
   it('ein gezogener Schub zeigt sich in der Vorschau, gesetzt wird er erst beim Loslassen', async () => {
     const { game, repository } = await started();
     game.openSpace();

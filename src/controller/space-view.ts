@@ -219,7 +219,7 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
         const position = sub(unit.position, origin.position);
         const velocity = sub(unit.velocity, origin.velocity);
         const r = lengthOf(position);
-        const preview = previewOf(scene, unit, thrust, t, 2, space.world);
+        const preview = previewOf(scene, unit, thrust, t, 2, space.world, shipDesignOf(ship.design).maneuver);
         return {
           index,
           name: ship.name,
