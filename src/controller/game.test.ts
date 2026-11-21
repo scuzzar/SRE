@@ -2239,6 +2239,8 @@ describe('Nebenwelten und Reise im System (2026-11-20d)', () => {
     expect(game.snapshot().world).toMatchObject({ canGlobe: true, hasMap: false, subordinate: false });
     game.createGlobe();
     expect(game.snapshot().globe?.id).toBe('0405');
+    // Danach bleibt die Weltkarte unten im Blatt stehen.
+    expect(game.snapshot().worldCard).toBe(true);
     game.createGlobe();
     expect(game.snapshot().world?.error).toMatch(/schon einen Globus/);
 
