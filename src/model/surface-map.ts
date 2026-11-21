@@ -67,6 +67,8 @@ export interface MapWorld {
   readonly tech: number;
   /** 10–14 für A–E, 31 für X. */
   readonly starport: number;
+  /** Nur Nebenwelten (2026-11-20d): ihr Spaceport; die erste Hauptstadt bekommt ihn als Hafen (Y: keinen), sonst wie Starport X. */
+  readonly spaceport?: 'F' | 'G' | 'H' | 'Y';
   readonly temperature: 'frozen' | 'cold' | 'temperate' | 'hot' | 'boiling';
   readonly surface: {
     readonly water: number;
@@ -1218,7 +1220,8 @@ class Generator {
       let port: Port | undefined;
       if (city.rank === 'primary') {
         if (first) {
-          port = world === 'X' ? undefined : world;
+          const own = this.world.spaceport;
+          port = own !== undefined ? (own === 'Y' ? undefined : own) : world === 'X' ? undefined : world;
           first = false;
         } else if (this.dice(2) <= city.population) port = world === 'X' ? undefined : world;
         else {

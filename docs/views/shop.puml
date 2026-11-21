@@ -96,6 +96,7 @@ hide <<browser>> stereotype
     rent
     fare
     ship
+    ticket
   }
   class Character $charakter
   class Possession $shop {
@@ -122,6 +123,7 @@ hide <<browser>> stereotype
   class MonthEnd $reise
   class Journey $reise
   class Passenger <<value>> $reise
+  class SystemJourney $reise
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class AnimalRow $begegnung
@@ -173,6 +175,7 @@ Passenger "*" --> "1" Item : passage
 MonthEnd "*" --> "*" Booking : costs {ordered}
 Booking --> ShipCost
 Booking "*" --> "0..1" Journey : won
+Booking "*" --> "0..1" SystemJourney : ticketFor
 
 ' Charaktererschaffung und Lebenslauf
 

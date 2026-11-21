@@ -9,7 +9,6 @@ import { hideLoading, showLoading } from '../loading';
 import { cellAt, radiusOf, renderGlobe, screenOf, screenOfPoint, type Camera, type Viewport } from './globe-render';
 import { HappenedList } from './HappenedList';
 import { trayTop } from '../Tray';
-import { NoteSection, SurfaceSection, SystemSection, WorldActions, WorldCard } from './WorldSheet';
 
 const DEG = Math.PI / 180;
 const LOADING = 'Welt wird aufgebaut …';
@@ -26,7 +25,7 @@ function maxZoom(globe: GlobeView): number {
   return Math.max(2, (5 * globe.grid.n) / (10 * Math.PI) / 0.46);
 }
 
-type Panel = 'world' | 'places' | 'logs' | undefined;
+type Panel = 'places' | 'logs' | undefined;
 
 /**
  * Der Globus einer Welt wie eine Karten-App, die Grundkarte unter allem: Die Karte füllt ihre Fläche
@@ -40,18 +39,15 @@ type Panel = 'world' | 'places' | 'logs' | undefined;
 export function GlobeScreen({
   globe,
   world,
-  here,
-  travel,
-  log,
+  card,
   logDays,
   trip,
   focus,
 }: {
   globe: GlobeView;
   world: WorldView | undefined;
-  here: boolean;
-  travel: { readonly blocker: string | undefined } | undefined;
-  log: readonly LogItem[];
+  /** Die Weltkarte steht im Blatt (ein Tipp auf den Namen oben, wie im Subsektor; Owner, 21. November 2026). */
+  card: boolean;
   logDays: readonly (string | undefined)[];
   trip: TripView | undefined;
   /** Ein angetippter Ortsverweis: zu diesem Feld fliegen und hineinzoomen (`n` wechselt je Verweis). */
@@ -427,7 +423,10 @@ export function GlobeScreen({
     game.pickCell(cell);
   };
 
-  const toggle = (p: Panel) => setPanel(panel === p ? undefined : p);
+  const toggle = (p: Panel) => {
+    if (card) game.hideWorldCard();
+    setPanel(panel === p ? undefined : p);
+  };
   return (
     <div className="globe-full" role="region" aria-label={`Globus · ${globe.name}`}>
       <div className="globe-stage" ref={stage}>
@@ -449,7 +448,18 @@ export function GlobeScreen({
           <button type="button" className="globe-round" aria-label="Schließen" title="Zum Subsektor" onClick={() => game.closeWorld()}>
             <CloseIcon />
           </button>
-          <button type="button" className={panel === 'world' ? 'globe-title on' : 'globe-title'} aria-expanded={panel === 'world'} aria-label={`${globe.name}, UWP ${world?.uwp ?? ''}: die Welt im Klartext`} onClick={() => toggle('world')}>
+          <button
+            type="button"
+            className={card ? 'globe-title on' : 'globe-title'}
+            aria-expanded={card}
+            aria-label={`${globe.name}, UWP ${world?.uwp ?? ''}: die Weltkarte`}
+            onClick={() => {
+              // Ein Tipp auf den Globus, der noch auf einen möglichen Doppeltipp wartet, gilt nicht mehr.
+              cancelPendingTap();
+              setPanel(undefined);
+              game.showWorldCard();
+            }}
+          >
             <span className="globe-title-name">{globe.name}</span>
             {world && <span className="mono globe-title-uwp">{world.uwp} ▾</span>}
           </button>
@@ -461,16 +471,6 @@ export function GlobeScreen({
           </button>
         </div>
         {trip && globe.partyHere && panel === undefined && <TripHint trip={trip} />}
-        {panel === 'world' && world && (
-          <div className="globe-panel globe-world" role="region" aria-label="Die Welt">
-            <WorldCard world={world} here={here} />
-            {world.surface && <SurfaceSection lines={world.surface} />}
-            {world.system && <SystemSection system={world.system} />}
-            <WorldActions world={world} here={here} travel={travel} onGlobe />
-            {world.canNote && <NoteSection note={world.note} />}
-            {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
-          </div>
-        )}
         {panel === 'places' && (
           <div className="globe-panel" role="region" aria-label="Orte">
             {globe.partyCell !== undefined && (
@@ -556,7 +556,7 @@ export function GlobeScreen({
         )}
       </div>
 
-      <div className="globe-zoom" hidden={panel === 'world'}>
+      <div className="globe-zoom">
         <button type="button" className="globe-round" aria-label="Raumkarte" title="Raum: die Raumkarte um die Welt" onClick={() => game.openSpace()}>
           <ShipIcon />
         </button>

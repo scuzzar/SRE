@@ -229,6 +229,8 @@ import {
   type Trip,
   type CheckKind,
   worldById,
+  systemJourneyBlocker,
+  hexIdOfWorld,
 } from '../model';
 import {
   attackerOf,
@@ -266,7 +268,7 @@ import { sectorView, selectedView, worldList, worldView, type HexView, type Sele
 import { spaceView, type OpenSpace, type SpaceView } from './space-view';
 import { globeView, LANDFORM_NAMES, position, type GlobeView } from './globe-view';
 import { activeTripView, tripDayItem, tripPlanOf, type TripDayItem, type TripPlanView, type TripView } from './trip-view';
-import { checkItem, checksView, journeyItem, journeyView, legalView, monthEndItem, timeItem, timeView, type CheckItem, type ChecksView, type JourneyDraft, type JourneyItem, type JourneyView, type LegalView, type MonthEndItem, type TimeItem, type TimeView } from './time-view';
+import { checkItem, checksView, journeyItem, journeyView, legalView, monthEndItem, systemJourneyItem, systemJourneyView, timeItem, timeView, type SystemJourneyDraft, type SystemJourneyView, type SystemJourneyItem, type CheckItem, type ChecksView, type JourneyDraft, type JourneyItem, type JourneyView, type LegalView, type MonthEndItem, type TimeItem, type TimeView } from './time-view';
 
 /**
  * Was die View zu sehen bekommt: den Spielstand aus dem Model, schon ausgewertet, und den Zustand des
@@ -307,6 +309,8 @@ export interface Snapshot {
   readonly legal: LegalView | undefined;
   /** Der Dialog der Reise, solange er offen ist. */
   readonly journey: JourneyView | undefined;
+  /** Der Dialog der Reise im System, solange er offen ist. */
+  readonly systemJourney: SystemJourneyView | undefined;
   /** Die laufende Fahrt über die Oberfläche; fehlt ohne Fahrt. */
   readonly trip: TripView | undefined;
   /** Die Planung einer Fahrt auf dem Globus, solange sie offen ist. */
@@ -320,7 +324,7 @@ export interface Snapshot {
   /** „Manuell wählen“: die Auswahl der Art bzw. Zeile ist offen. */
   readonly encounterChoice: 'random' | 'animal' | undefined;
   /** Auf der offenen Weltkarte: warum die Gruppe nicht hierher reisen kann; `undefined`, wenn sie kann. Fehlt ohne Weltkarte. */
-  readonly travel: { readonly blocker: string | undefined } | undefined;
+  readonly travel: { readonly blocker: string | undefined; readonly inSystem: boolean } | undefined;
   /** Die offene Inspirationskarte; solange es sie gibt, steht sie im Vordergrund. */
   readonly card: CardView | undefined;
   /** Die offene Namenswahl (Name von der Karte); solange es sie gibt, steht sie im Vordergrund. */
@@ -375,6 +379,8 @@ export interface Snapshot {
   readonly world: WorldView | undefined;
   /** Der Globus der offenen Welt, wenn er im Vordergrund steht und die Welt eine Oberflächenkarte hat. */
   readonly globe: GlobeView | undefined;
+  /** Auf dem Globus steht die Weltkarte im Blatt (ein Tipp auf den Namen oben), wie im Subsektor. */
+  readonly worldCard: boolean;
   /** Die Raumkarte einer Welt ist die Grundkarte (vor Globus und Subsektor), mit dem Systemflug, wenn er dort läuft (2026-11-18c). */
   readonly space: SpaceView | undefined;
   /** Wohin der Globus fliegen und zoomen soll, nachdem ein Ortsverweis angetippt wurde (siehe ControllerState). */
@@ -402,6 +408,13 @@ function travelBlocker(campaign: Campaign, to: string): string | undefined {
       throw error;
     }
   };
+  // Im selben System: die Reise im System (2026-11-20d), mit Ticket oder eigenem Schiff.
+  const from = campaign.location?.world;
+  if (from !== undefined && from !== to && hexIdOfWorld(from) === hexIdOfWorld(to)) {
+    const ticket = blocked(() => systemJourneyBlocker(campaign, to, 'ticket'));
+    if (ticket === undefined || shipOf(campaign) === undefined) return ticket;
+    return blocked(() => systemJourneyBlocker(campaign, to, 'ship')) === undefined ? undefined : ticket;
+  }
   const passage = blocked(() => journeyBlocker(campaign, to));
   if (passage === undefined) return undefined;
   const ship = blocked(() => shipJourneyBlocker(campaign, to));
@@ -526,7 +539,7 @@ export interface OddsChoice {
   readonly selected: boolean;
 }
 
-export type LogItem = DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | SaveItem | ButcheringItem | CheckItem | TimeItem | MonthEndItem | JourneyItem | TripDayItem | NoteItem;
+export type LogItem = DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | SaveItem | ButcheringItem | CheckItem | TimeItem | MonthEndItem | JourneyItem | SystemJourneyItem | TripDayItem | NoteItem;
 
 /** Ein Patron-Wurf: Liste, Würfel mit DMs, der Wurf 11–66 und die Zeile der Liste. */
 export interface PatronItem {
@@ -1492,6 +1505,8 @@ export interface ControllerState {
   readonly timeNote: string | undefined;
   /** Die Reise in Vorbereitung bzw. ihr Ergebnis. */
   readonly journey: JourneyDraft | undefined;
+  /** Die Reise im System in Vorbereitung bzw. ihr Ergebnis (2026-11-20d). */
+  readonly systemJourney: SystemJourneyDraft | undefined;
   /** Die Planung einer Fahrt auf dem Globus: Zielfeld, ob gemietet werden darf, der Vorschlag oder warum es keinen gibt. */
   readonly tripPlan: { readonly target: number; readonly options: readonly Trip[]; readonly chosen: number; readonly error: string | undefined } | undefined;
   /** Was beim Fahren nicht ging. */
@@ -1555,7 +1570,8 @@ export interface ControllerState {
   readonly world: OpenWorld | undefined;
   readonly worldError: string | undefined;
   /** Der Globus der offenen Welt ist die Grundkarte (sonst der Subsektor), mit dem angetippten Oberflächenfeld. */
-  readonly globe: { readonly picked: number | undefined } | undefined;
+  /** Der offene Globus: das angetippte Feld oder (`card`) die Weltkarte im Blatt statt eines Feldes (Owner, 21. November 2026). */
+  readonly globe: { readonly picked: number | undefined; readonly card?: boolean } | undefined;
   /** Die offene Raumkarte (2026-11-18c). */
   readonly space: OpenSpace | undefined;
   /**
@@ -1574,6 +1590,19 @@ export interface OpenWorld {
   readonly column: number;
   readonly row: number;
   readonly rolls: readonly WorldRoll[];
+  /** Eine Nebenwelt des Feldes (2026-11-20d); fehlt bei der Hauptwelt. */
+  readonly id?: string;
+}
+
+/** Die Welt der offenen Weltkarte: die Nebenwelt oder die Hauptwelt des Feldes. */
+export function openWorldId(at: OpenWorld): string {
+  return at.id ?? hexId(at.column, at.row);
+}
+
+/** Liegt die Welt im System des Aufenthaltsorts (und ist nicht er selbst)? Dann ist es eine Reise im System. */
+function inSystem(campaign: Campaign, to: string): boolean {
+  const from = campaign.location?.world;
+  return from !== undefined && from !== to && hexIdOfWorld(from) === hexIdOfWorld(to);
 }
 
 function npcItem(c: Character): NpcItem {
@@ -1590,7 +1619,7 @@ function placingView(campaign: Campaign, state: ControllerState): NpcScreenView[
   const p = state.npcPlacing;
   const at = state.world;
   if (!p || !at || !state.globe || hexId(at.column, at.row) !== p.world) return undefined;
-  const picked = globeView(campaign, at.column, at.row, p.cell)?.picked;
+  const picked = globeView(campaign, openWorldId(at), p.cell)?.picked;
   if (!picked) return undefined;
   const label = picked.cities[0]?.name ?? `${picked.landform} · ${picked.position}`;
   return { question: `Welche NSC kommen nach ${label}?`, here: picked.npcs.map((n) => n.id), allowed: undefined, notAllowed: '', ok: `nach ${label}` };
@@ -2635,6 +2664,8 @@ function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
       return monthEndItem(campaign, entry);
     case 'journey':
       return journeyItem(campaign, entry, index);
+    case 'systemJourney':
+      return systemJourneyItem(campaign, entry, index);
     case 'tripDay':
       return tripDayItem(campaign, entry);
     case 'note':
@@ -2740,7 +2771,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, elsewhere: state.elsewhere, notice: state.notice, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, missions: { open: [], done: [], failed: [], retired: [], editor: undefined, picking: undefined, here: undefined, hereBlocker: undefined, persons: [], clients: [] }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, space: undefined, globeFocus: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, systemJourney: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, missions: { open: [], done: [], failed: [], retired: [], editor: undefined, picking: undefined, here: undefined, hereBlocker: undefined, persons: [], clients: [] }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, worldCard: false, space: undefined, globeFocus: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -2762,13 +2793,14 @@ export function buildSnapshot(state: ControllerState): Snapshot {
       state.legalNote,
     ),
     journey: state.journey && journeyView(campaign, state.journey),
+    systemJourney: state.systemJourney && systemJourneyView(campaign, state.systemJourney),
     trip: activeTripView(campaign),
     tripPlan: tripPlanView(campaign, state.tripPlan),
     tripNote: state.tripNote,
     tripRoll: state.tripRoll,
     encounterRoll: state.encounterRoll,
     encounterChoice: state.encounterChoice,
-    travel: state.world && { blocker: travelBlocker(campaign, hexId(state.world.column, state.world.row)) },
+    travel: state.world && { blocker: travelBlocker(campaign, openWorldId(state.world)), inSystem: inSystem(campaign, openWorldId(state.world)) },
     card: state.card && cardView(campaign, state.card, state.cardFor === 'note'),
     names: state.names,
     characters: livingCharacters(campaign).map((c) => characterView(campaign, c, state)),
@@ -2805,8 +2837,9 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     generationRunning: campaign.generation !== undefined,
     sector: sectorView(campaign.hexes, markedWorlds(campaign), missionWorlds(campaign)),
     worlds: worldList(campaign.hexes),
-    world: state.world && worldView(campaign.hexes, state.world.column, state.world.row, state.world.rolls, state.worldError, happenedAt(campaign, hexId(state.world.column, state.world.row))),
-    globe: state.world && state.globe ? globeView(campaign, state.world.column, state.world.row, state.globe.picked, state.tripPlan?.options[state.tripPlan.chosen], state.trace) : undefined,
+    world: state.world && worldView(campaign.hexes, state.world.column, state.world.row, state.world.rolls, state.worldError, happenedAt(campaign, openWorldId(state.world)), state.world.id),
+    worldCard: state.world !== undefined && state.globe?.card === true,
+    globe: state.world && state.globe ? globeView(campaign, openWorldId(state.world), state.globe.picked, state.tripPlan?.options[state.tripPlan.chosen], state.trace) : undefined,
     space: state.space && spaceView(campaign, state.space),
     globeFocus: state.world && state.globe ? state.globeFocus : undefined,
     picking: pickingView(state, campaign),

@@ -11,9 +11,10 @@ import { encounterAnimalRow, ESCAPED_BAND, upgradeDistances, upgradeNpcs, type E
 import { animalRowOf, animalTypeOf, checkAnimalTable, eventRowOf, terrainOf } from './animals';
 import { animalTraits } from '../data';
 import { checkJourney } from './travel';
+import { checkSystemJourney } from './system-journey';
 import { START_DAY } from './time';
 import { checkOf, encounterChecks } from './encounter-check';
-import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type Journey, type DamageRoll, type LogEntry, type Note, type Recovery, type TripDay } from './log';
+import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type Journey, type SystemJourney, type DamageRoll, type LogEntry, type Note, type Recovery, type TripDay } from './log';
 import { checkRecovery } from './wounds';
 import { missionStates, validateMissions, type Mission, type MissionPlace } from './mission';
 import { armorClasses, encounterTypeOf, entryOf, eventFocusOf, itemOf, oddsOf, patronOf, ranges, ref, shipDesignOf, slotOfEntry, softwareOf, weaponOf } from './reference';
@@ -144,6 +145,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     ship: z.string().min(1).optional(),
     jump: dice.optional(),
   }),
+  z.object({ kind: z.literal('systemJourney'), at, day, place, from: z.string().min(1), to: z.string().min(1), hours: z.number().int(), travellers: z.array(z.string().min(1)), ship: z.string().min(1).optional() }),
 ]);
 
 const CareerRollSchema = z.object({
@@ -247,6 +249,9 @@ const WorldSchema = z.object({
   large: z.boolean().optional(),
   radius: z.number().optional(),
   moonOf: z.string().optional(),
+  spaceport: z.enum(['F', 'G', 'H', 'Y']).optional(),
+  facilities: z.array(z.enum(['farming', 'mining', 'colony', 'research', 'military'])).optional(),
+  bases: z.array(z.enum(['naval', 'scout'])).optional(),
 });
 /** Ein Stern (2026-11-18d). */
 const StarSchema = z.object({
@@ -483,6 +488,7 @@ const CampaignFileSchema = z.object({
           in: z.string().optional(),
           won: z.number().int().optional(),
           rentFor: z.number().int().optional(),
+          ticketFor: z.number().int().optional(),
           forShip: z.string().min(1).optional(),
           shipCost: z.enum(shipCosts).optional(),
         }),
@@ -729,6 +735,8 @@ function fileEntryOf(entry: WithoutDay<FileEntry>): LogEntry {
       return stripped(entry) as TripDay;
     case 'check':
       return stripped(entry) as CheckRoll;
+    case 'systemJourney':
+      return stripped({ ...entry, travellers: [...entry.travellers] }) as SystemJourney;
     case 'journey':
       return stripped({ ...entry, passengers: entry.passengers.map((p) => ({ ...p })), berths: entry.berths.map((b) => stripped(b)) }) as Journey;
     case 'butchering':
@@ -843,6 +851,9 @@ function validate(campaign: Campaign): void {
         break;
       case 'journey':
         checkJourney(campaign, entry);
+        break;
+      case 'systemJourney':
+        checkSystemJourney(campaign, entry);
         break;
       case 'event':
         if (eventRowOf(campaign.hexes, entry).event === undefined) throw new DomainError('Ein Ereignis-Eintrag verweist auf eine Zeile mit Tier.');

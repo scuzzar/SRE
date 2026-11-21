@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { countingKeys, fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 
+/** Öffnet die Welt und erzeugt ihren Globus, falls es ihn noch nicht gibt (2026-11-20d: nur auf Knopfdruck). */
+function openWithGlobe(game: GameController, column: number, row: number): void {
+  game.openGlobeAt(column, row);
+  if (!game.snapshot().globe) game.createGlobe();
+}
+
+
 async function started() {
   const game = new GameController({ repository: memoryRepository(), random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), keys: countingKeys() });
   await game.init();
@@ -11,7 +18,7 @@ async function started() {
 /** Die Demo-Kampagne mit der Gruppe auf einem Feld von Kessra (0405). */
 async function onField(cell = 10) {
   const game = await started();
-  game.openGlobeAt(4, 5);
+  openWithGlobe(game, 4, 5);
   game.pickCell(cell);
   game.moveParty();
   game.pickCell(undefined);

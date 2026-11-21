@@ -82,6 +82,7 @@ export const bookingText: Record<BookingKind, string> = {
   rent: 'Miete',
   fare: 'Fahrpreis',
   ship: 'Schiff',
+  ticket: 'Ticket',
 };
 
 /** Wofür eine Schiffs-Buchung ist, wie das Kassenbuch es schreibt. */
@@ -373,6 +374,8 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
       return { head: `Monatsabrechnung: ${credits(item.total)}`, rest: `${item.month} · ${monthEndDetail(item)}` };
     case 'journey':
       return { head: `Reise nach ${item.to}`, rest: journeyDetail(item) };
+    case 'systemJourney':
+      return { head: `Reise im System nach ${item.to}`, rest: `${item.fromDate} → ${item.toDate} · ${item.flight} · ${item.how}` };
     case 'tripDay':
       return { head: item.arrived ? `Angekommen: ${item.where}` : `Reisetag: ${item.where}`, rest: tripDayDetail(item) };
     case 'note':

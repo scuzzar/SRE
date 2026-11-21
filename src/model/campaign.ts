@@ -272,7 +272,7 @@ export function removeLogEntry(campaign: Campaign, index: number): Campaign {
   if (!Number.isInteger(index) || index < 0 || index >= campaign.log.length) throw new DomainError('Diesen Logeintrag gibt es nicht.');
   // Zeit und Reisen haben den Stand geändert (Tag, Aufenthaltsort, Tote, Lotterie); sie bleiben.
   const kind = campaign.log[index]!.kind;
-  if (kind === 'time' || kind === 'journey' || kind === 'tripDay') throw new DomainError(kind === 'time' ? 'Vergangene Zeit lässt sich nicht löschen.' : kind === 'journey' ? 'Eine Reise lässt sich nicht löschen.' : 'Ein Reisetag lässt sich nicht löschen.');
+  if (kind === 'time' || kind === 'journey' || kind === 'systemJourney' || kind === 'tripDay') throw new DomainError(kind === 'time' ? 'Vergangene Zeit lässt sich nicht löschen.' : kind === 'tripDay' ? 'Ein Reisetag lässt sich nicht löschen.' : 'Eine Reise lässt sich nicht löschen.');
   if (kind === 'monthEnd') throw new DomainError('Eine Monatsabrechnung lässt sich nicht löschen.');
   // Ein Wurf einer Garbe geht nur mit der ganzen Garbe.
   const roots = campaign.log[index]!.kind === 'attack' ? volleyOf(campaign.log, index) : [index];
@@ -290,7 +290,7 @@ export function removeLogEntry(campaign: Campaign, index: number): Campaign {
     return [entry];
   });
   // Ein Lotteriegewinn verweist auf seine Reise; sie bleibt, aber ihre Stelle rückt nach.
-  const bookings = campaign.bookings.map((b) => (b.won !== undefined ? { ...b, won: shift(b.won) } : b.rentFor !== undefined ? { ...b, rentFor: shift(b.rentFor) } : b));
+  const bookings = campaign.bookings.map((b) => (b.won !== undefined ? { ...b, won: shift(b.won) } : b.rentFor !== undefined ? { ...b, rentFor: shift(b.rentFor) } : b.ticketFor !== undefined ? { ...b, ticketFor: shift(b.ticketFor) } : b));
   return { ...campaign, log, bookings };
 }
 
@@ -417,7 +417,8 @@ export function isInLog(campaign: Campaign, id: CharacterId): boolean {
       (e.kind === 'task' && e.for === id) ||
       (e.kind === 'attack' && (e.for === id || e.against === id)) ||
       (e.kind === 'recovery' && (e.for === id || e.by === id)) ||
-      (e.kind === 'journey' && (e.passengers.some((p) => p.for === id) || e.berths.some((b) => b.for === id))),
+      (e.kind === 'journey' && (e.passengers.some((p) => p.for === id) || e.berths.some((b) => b.for === id))) ||
+      (e.kind === 'systemJourney' && e.travellers.includes(id)),
   );
 }
 

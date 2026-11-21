@@ -3,8 +3,8 @@ import { fromCampaignFile, toCampaignFile } from './campaign-file';
 import { createDemoCampaign, DEMO_FUNDS } from './demo';
 import { fundsOf, locationOf } from './shop';
 import { fixedClock } from './testing';
-import { stepOf } from './sector';
-import { withStarSystems } from './star-system';
+import { stepOf, type World } from './sector';
+import { isSubordinate, withStarSystems } from './star-system';
 
 describe('Demo-Kampagne', () => {
   it('hat Kira, Jonas und die fertige Startwelt, die Gruppe steht dort', () => {
@@ -31,6 +31,18 @@ describe('Demo-Kampagne', () => {
     expect(withStarSystems(without).hexes).toEqual(once.hexes);
     expect(withStarSystems(once)).toBe(once);
     expect(withStarSystems({ ...without, key: 'anderer' }).hexes).not.toEqual(once.hexes);
+  });
+
+  it('Systeme von vor 2026-11-20c bekommen Raumhafen und Werte ihrer Nebenwelten nachgewürfelt, immer gleich', () => {
+    const demo = createDemoCampaign(fixedClock());
+    const hex = demo.hexes[0]!;
+    const old = { ...demo, hexes: [{ ...hex, worlds: hex.worlds.map((w) => (isSubordinate(hex, w) ? ({ ...Object.fromEntries(Object.entries(w).filter(([k]) => !['spaceport', 'facilities', 'bases'].includes(k))), uwp: Object.fromEntries(Object.entries(w.uwp).filter(([k]) => !['government', 'law', 'tech'].includes(k))) } as World) : w)) }] };
+    const once = withStarSystems(old);
+    const subs = once.hexes[0]!.worlds.filter((w) => isSubordinate(once.hexes[0]!, w));
+    expect(subs.length).toBeGreaterThan(0);
+    expect(subs.every((w) => w.spaceport !== undefined && w.uwp.tech !== undefined)).toBe(true);
+    expect(withStarSystems(old).hexes).toEqual(once.hexes);
+    expect(once.hexes[0]!.system).toEqual(hex.system);
   });
 
   it('hat ein Startkapital in der Gruppenkasse, als Einnahme im Kassenbuch', () => {

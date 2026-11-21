@@ -115,6 +115,7 @@ hide <<browser>> stereotype
     rent
     fare
     ship
+    ticket
   }
   class Character $charakter {
     name: string
@@ -339,6 +340,9 @@ hide <<browser>> stereotype
     diameter: number [0..1]
     large: boolean [0..1]
     radius: number [0..1]
+    spaceport: Spaceport [0..1]
+    facilities: Facility [*]
+    bases: BaseKind [*]
     /main: boolean
     /zone: Zone [0..1]
     /gravity: number
@@ -349,6 +353,23 @@ hide <<browser>> stereotype
     belt
     giant
     ring
+  }
+  enum Spaceport <<value>> $sektor {
+    F
+    G
+    H
+    Y
+  }
+  enum BaseKind <<value>> $sektor {
+    naval
+    scout
+  }
+  enum Facility <<value>> $sektor {
+    farming
+    mining
+    colony
+    research
+    military
   }
   class Uwp <<value>> $sektor {
     starport: number [0..1]
@@ -470,6 +491,11 @@ hide <<browser>> stereotype
     /misjump: boolean
   }
   class Passenger <<value>> $reise {
+  }
+  class SystemJourney $reise {
+    hours: number
+    /days: number
+    /distance: number
   }
   class LowBerth <<value>> $reise {
     revive: number[2]
@@ -1155,6 +1181,9 @@ Hex "1" *-- "*" World : worlds {ordered}
 Hex "*" --> "0..1" World : main
 World "*" --> "0..1" World : moonOf
 World --> WorldKind
+World --> Spaceport
+World --> Facility
+World --> BaseKind
 StarSystem "1" *-- "1..3" Star : stars {ordered}
 Star "*" --> "1" StarZones : /zones
 Star --> StarType
@@ -1180,6 +1209,12 @@ LogEntry <|-- MonthEnd
 MonthEnd "*" --> "*" Booking : costs {ordered}
 Booking --> ShipCost
 Booking "*" --> "0..1" Journey : won
+LogEntry <|-- SystemJourney
+SystemJourney "*" --> "1" World : from
+SystemJourney "*" --> "1" World : to
+SystemJourney "*" --> "*" Character : travellers
+SystemJourney "*" --> "0..1" Ship : ship
+Booking "*" --> "0..1" SystemJourney : ticketFor
 
 ' Charaktererschaffung und Lebenslauf
 Campaign "1" *-- "0..1" Generation : generation

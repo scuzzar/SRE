@@ -1,7 +1,8 @@
 import { DomainError } from './errors';
 import type { Random } from './ports';
 import { ref } from './reference';
-import { hexId, mainOf, mainWorld, type Hex, type Star, type StarSystem, type TemperatureId, type World } from './sector';
+import { checkSurfaceMap } from './surface-map';
+import { baseKinds, cityNamesTaken, enterSurface, facilities, hexById, hexId, hexIdOfWorld, isWorld, mainOf, mainWorld, mapPossible, nextWorldAction, putHex, rollSurface, withSurfaceMapOf, worldById, spaceports, tradeCodesOf, validateSurface, withWorld, type BaseKind, type Facility, type Hex, type Spaceport, type Star, type StarSystem, type TemperatureId, type World } from './sector';
 
 // Das Sternsystem nach Book 6 *Scouts* (Domänenmodell 2026-11-18d, 2026-11-20, 2026-11-20b): Sterne,
 // Bahnen und Zonen um den Hauptstern, Gasriesen, Planetoidengürtel, leere und eingefangene Bahnen,
@@ -307,7 +308,93 @@ export function rollStarSystem(hex: Hex, random: Random): Hex {
   }
 
   const system: StarSystem = { stars, maxOrbits, emptyOrbits: emptyOrbits.sort((a, b) => a - b) };
-  return { ...hex, system, worlds: [placedMain, ...worlds, ...moons, ...hex.worlds.filter((w) => w.id !== main.id)] };
+  return withSurfaces(rollSubordinates({ ...hex, system, worlds: [placedMain, ...worlds, ...moons, ...hex.worlds.filter((w) => w.id !== main.id)] }, random), random);
+}
+
+/** Braucht diese Nebenwelt noch ihre Oberfläche? Eine Welt ab Größe 1 ohne Oberfläche. */
+function lacksSurface(hex: Hex, world: World): boolean {
+  return isSubordinate(hex, world) && world.kind === 'world' && (world.uwp.size ?? 0) >= 1 && world.surface === undefined;
+}
+
+/**
+ * Die Oberfläche jeder Nebenwelt ab Größe 1 entsteht gleich mit der Welt (Owner, 21. November 2026),
+ * nach dem World Builder's Handbook; die Temperatur aus ihrer Zone wird dabei gespeichert.
+ */
+export function withSurfaces(hex: Hex, random: Random): Hex {
+  if (!hex.worlds.some((w) => lacksSurface(hex, w))) return hex;
+  return {
+    ...hex,
+    worlds: hex.worlds.map((w) => {
+      if (!lacksSurface(hex, w)) return w;
+      const temperature = temperatureOfWorld(hex, w);
+      return { ...w, temperature, surface: rollSurface({ uwp: w.uwp, temperature }, random) };
+    }),
+  };
+}
+
+/** Bekommt diese Welt Raumhafen, Regierung, Gesetz, TL und Einrichtungen (B6 38)? Jede außer Hauptwelt, Gasriesen und Ringen. */
+export function isSubordinate(hex: Hex, world: World): boolean {
+  return world.id !== hex.main && world.kind !== 'giant' && world.kind !== 'ring';
+}
+
+/** Die Regierung nach der Tabelle Subordinate Government (B6 29): 1 → 0, 2 → 1, 3 → 2, 4 → 3, 5+ → 6. */
+const SUBORDINATE_GOVERNMENT = [0, 1, 2, 3, 6] as const;
+/** Der Raumhafen nach der Spaceport Table (B6 29), 1 bis 6. */
+const SPACEPORT_TABLE: readonly Spaceport[] = ['Y', 'Y', 'H', 'G', 'G', 'F'];
+
+/**
+ * Die Nebenwelten (2026-11-20c, B6 37–39 mit den Tabellen S. 29): erst die Basen im ganzen System,
+ * dann je Welt außer Hauptwelt, Gasriesen und Ringen Regierung, Gesetz, Einrichtungen, Tech-Level und
+ * Raumhafen. Bei Widersprüchen gilt das Kapitel, die Zusätze der Tabelle gelten mit (Owner).
+ */
+export function rollSubordinates(hex: Hex, random: Random): Hex {
+  const main = mainWorld(hex);
+  const subs = hex.worlds.filter((w) => isSubordinate(hex, w));
+  const pop = (w: World) => w.uwp.population ?? 0;
+  // Basen im System (B6 37): Marine 1W6 − 3 auf Welten mit Bevölkerung 3+, Scouts 1W6 − 4 mit 2+; je Welt und Art höchstens eine.
+  const bases = new Map<string, BaseKind[]>();
+  const place = (kind: BaseKind, count: number, minPopulation: number) => {
+    const open = subs.filter((w) => pop(w) >= minPopulation);
+    for (let i = 0; i < count && open.length > 0; i++) {
+      const [world] = open.splice(random.int(0, open.length - 1), 1);
+      bases.set(world!.id, [...(bases.get(world!.id) ?? []), kind]);
+    }
+  };
+  place('naval', Math.max(0, d6(random) - 3), 3);
+  place('scout', Math.max(0, d6(random) - 4), 2);
+  const anyBase = hex.navalBase === true || hex.scoutBase === true || bases.size > 0;
+  const mainGovernment = main.uwp.government ?? 0;
+  const mainLaw = main.uwp.law ?? 0;
+  const mainTech = main.uwp.tech ?? 0;
+  const mainPopulation = pop(main);
+  const mainAtmosphere = main.uwp.atmosphere;
+  const codes = tradeCodesOf(main).map((t) => t.id);
+  const industrial = codes.includes('In');
+  const poor = codes.includes('Po');
+  const values = new Map<string, Pick<World, 'uwp' | 'spaceport' | 'facilities' | 'bases'>>();
+  for (const world of subs) {
+    const p = pop(world);
+    const atmosphere = world.uwp.atmosphere ?? 0;
+    const hydrographics = world.uwp.hydrographics ?? 0;
+    // Regierung: ohne Bevölkerung 0; unter einer Captive Government (6) ebenfalls 6; bei 7+ DM +2 (Kapitel).
+    const government = p === 0 ? 0 : mainGovernment === 6 ? 6 : SUBORDINATE_GOVERNMENT[Math.min(5, d6(random) + (mainGovernment >= 7 ? 2 : 0)) - 1]!;
+    // Gesetz: 1W6 − 3 + Gesetz der Hauptwelt; ohne Regierung 0 (Kapitel).
+    const law = government === 0 ? 0 : Math.max(0, d6(random) - 3 + mainLaw);
+    const found: Facility[] = [];
+    if (zoneOf(hex, world) === 'habitable' && atmosphere >= 4 && atmosphere <= 9 && hydrographics >= 4 && hydrographics <= 8 && p >= 2) found.push('farming');
+    if (industrial && p >= 2) found.push('mining');
+    if (government === 6 && p >= 5) found.push('colony');
+    if (p > 0 && mainTech > 8 && d2(random) + (mainTech >= 10 ? 2 : 0) >= 11) found.push('research');
+    if (p > 0 && !poor && d2(random) + (mainPopulation >= 8 ? 1 : 0) + (atmosphere === mainAtmosphere ? 2 : 0) + (anyBase ? 1 : 0) >= 12) found.push('military');
+    // Tech-Level: Hauptwelt − 1, gleich bei Labor oder Militärbasis; unter 7 bei lebensfeindlicher Luft 7 (Tabelle S. 29).
+    let tech = found.includes('research') || found.includes('military') ? mainTech : Math.max(0, mainTech - 1);
+    if (tech < 7 && ![5, 6, 8].includes(atmosphere)) tech = 7;
+    const portDm = p >= 6 ? 2 : p === 1 ? -2 : p === 0 ? -3 : 0;
+    const spaceport = SPACEPORT_TABLE[clamp(d6(random) + portDm, 1, 6) - 1]!;
+    const own = bases.get(world.id);
+    values.set(world.id, { uwp: { ...world.uwp, government, law, tech }, spaceport, ...(found.length > 0 ? { facilities: found } : {}), ...(own ? { bases: own } : {}) });
+  }
+  return { ...hex, worlds: hex.worlds.map((w) => (values.has(w.id) ? { ...w, ...values.get(w.id)! } : w)) };
 }
 
 /** Die Hauptwelt ohne eine frühere Lage (für den Fall, dass ein System neu entsteht). */
@@ -392,6 +479,8 @@ export function checkStarSystems(hexes: readonly Hex[]): void {
       if (others.length > 0) fail('Weitere Welten gibt es erst mit dem Sternsystem.');
       continue;
     }
+    const subs = hex.worlds.filter((w) => isSubordinate(hex, w));
+    if (subs.some((w) => w.spaceport === undefined) && subs.some((w) => w.spaceport !== undefined)) fail('Entweder alle Nebenwelten haben ihren Raumhafen oder keine (Systeme von vor 2026-11-20c).');
     if (hex.empty) fail('Ein leeres Feld hat kein Sternsystem.');
     const main = mainWorld(hex);
     if (main.uwp.tech === undefined) fail('Das Sternsystem kommt erst nach dem UWP.');
@@ -423,9 +512,67 @@ export function checkStarSystems(hexes: readonly Hex[]): void {
         if (isMain && around!.kind !== 'giant') fail('Die Hauptwelt ist höchstens Mond eines Gasriesen.');
         if (moonsOf(hex, w).length > 0) fail(`Ein Mond hat keine Monde (${w.id}).`);
       }
-      if (!isMain && (w.name !== undefined || w.note !== undefined || w.map !== undefined || w.surface !== undefined)) fail(`Nebenwelten haben vorerst weder Namen noch Oberfläche (${w.id}).`);
+      if (!isMain) {
+        // Nebenwelten mit Namen, Notiz, Oberfläche und Globus (2026-11-20d).
+        if (w.name !== undefined && !w.name.trim()) fail(`Die Welt ${w.id} hat einen leeren Namen.`);
+        if (w.note !== undefined && !w.note.trim()) fail(`Eine leere Notiz gibt es nicht (${w.id}).`);
+        if ((w.surface !== undefined || w.temperature !== undefined) && (w.kind !== 'world' || (w.uwp.size ?? 0) < 1)) fail(`Oberfläche und Temperatur hat nur eine Welt ab Größe 1 (${w.id}).`);
+        if (w.surface !== undefined) validateSurface(w, fail);
+        if (w.map !== undefined) {
+          if (!mapPossible(hex, w)) fail(`Eine Oberflächenkarte braucht Oberfläche und Temperatur (${w.id}).`);
+          const why = checkSurfaceMap(w.map, w.uwp.size!, w.uwp.population ?? 0);
+          if (why) fail(why);
+        }
+        if (w.populationMultiplier !== undefined && (!Number.isInteger(w.populationMultiplier) || w.populationMultiplier < 1 || w.populationMultiplier > 9 || (w.uwp.population ?? 0) < 1)) fail(`Einen Bevölkerungsmultiplikator 1–9 hat nur eine Welt mit Bevölkerung (${w.id}).`);
+      }
+      const subordinate = isSubordinate(hex, w);
+      if (!subordinate && (w.spaceport !== undefined || w.facilities !== undefined || w.bases !== undefined)) fail(`Raumhafen, Einrichtungen und Basen haben nur Nebenwelten (${w.id}).`);
+      if (subordinate && w.spaceport === undefined && (w.uwp.government !== undefined || w.uwp.law !== undefined || w.uwp.tech !== undefined || w.facilities !== undefined || w.bases !== undefined)) fail(`Die Nebenwelt ${w.id} hat Werte von 2026-11-20c, aber keinen Raumhafen.`);
+      if (subordinate && w.spaceport !== undefined) {
+        if (!spaceports.includes(w.spaceport)) fail(`Den Raumhafen ${w.spaceport} gibt es nicht.`);
+        if (!(SUBORDINATE_GOVERNMENT as readonly number[]).includes(w.uwp.government ?? -1)) fail(`Die Nebenwelt ${w.id} hat keine Regierung nach der Tabelle.`);
+        for (const v of [w.uwp.law, w.uwp.tech]) if (v === undefined || !Number.isInteger(v) || v < 0) fail(`Die Nebenwelt ${w.id} braucht Gesetz und TL.`);
+        const list = (xs: readonly string[] | undefined, allowed: readonly string[]) => xs !== undefined && (xs.length === 0 || new Set(xs).size !== xs.length || xs.some((x) => !allowed.includes(x)));
+        if (list(w.facilities, facilities) || list(w.bases, baseKinds)) fail(`Einrichtungen und Basen der Nebenwelt ${w.id}: jede bekannte einmal, keine leere Liste.`);
+      }
     }
   }
+}
+
+/** Kann diese Nebenwelt ihre Oberfläche würfeln (2026-11-20d)? Eine Welt ab Größe 1 ohne Oberfläche, mit TL. */
+export function surfaceDue(hex: Hex, world: World): boolean {
+  return world.id !== hex.main && world.kind === 'world' && (world.uwp.size ?? 0) >= 1 && world.surface === undefined && world.uwp.tech !== undefined;
+}
+
+/**
+ * Würfelt die Oberfläche einer Nebenwelt nach dem World Builder's Handbook (wie bei Welten von vor
+ * der Oberfläche); die Temperatur aus ihrer Zone wird dabei gespeichert, damit das Leben dazu passt.
+ */
+export function rollWorldSurface(hexes: readonly Hex[], id: string, random: Random): readonly Hex[] {
+  return withWorld(hexes, id, (world, hex) => {
+    if (!surfaceDue(hex, world)) throw new DomainError('Diese Welt kann keine Oberfläche würfeln.');
+    const temperature = temperatureOfWorld(hex, world);
+    return { ...world, temperature, surface: rollSurface({ uwp: world.uwp, temperature }, random) };
+  });
+}
+
+/**
+ * Die Welt, auf der die Gruppe ankommt, bekommt Oberfläche und Globus, falls sie fehlen (Owner,
+ * 21. November 2026): bei jeder Ankunft, mit Reise oder ohne. Welten ohne mögliche Oberfläche (Größe
+ * 0, kleine Welten, Ringe, Gasriesen) bleiben, wie sie sind; eine Hauptwelt ohne Temperatur auch.
+ */
+export function readyForParty(hexes: readonly Hex[], id: string, random: Random): readonly Hex[] {
+  const hex = hexById(hexes, hexIdOfWorld(id));
+  const world = worldById(hexes, id);
+  if (!hex || !world) return hexes;
+  let next = hexes;
+  if (world.id === hex.main) {
+    if (nextWorldAction(hex) === 'surface') next = putHex(next, enterSurface(hex, random));
+  } else if (surfaceDue(hex, world)) next = rollWorldSurface(next, id, random);
+  const after = hexById(next, hexIdOfWorld(id))!;
+  const ready = worldById(next, id)!;
+  if (ready.map === undefined && mapPossible(after, ready)) next = withSurfaceMapOf(next, id, random, cityNamesTaken(next));
+  return next;
 }
 
 /** Eine Zufallsquelle aus einem Text (FNV-1a, dann mulberry32): derselbe Text gibt dieselben Würfe. */
@@ -444,16 +591,24 @@ export function textRandom(text: string): Random {
 }
 
 /**
- * Fertige Welten ohne Sternsystem bekommen es nachgewürfelt (Welten ohne Sternsystem, 2026-11-20), einmal.
+ * Fertige Welten ohne Sternsystem bekommen es nachgewürfelt (Welten ohne Sternsystem, 2026-11-20), einmal;
+ * Systeme von vor 2026-11-20c die Werte ihrer Nebenwelten.
  * Die Würfe kommen aus dem Schlüssel der Kampagne und dem Feld: So entsteht auf jedem Gerät dasselbe
  * System, und der Abgleich hat nichts zu entscheiden. Ohne solche Welt bleibt die Kampagne dieselbe.
  */
 export function withStarSystems<C extends { readonly key: string; readonly hexes: readonly Hex[] }>(campaign: C, seed = campaign.key): C {
   let changed = false;
-  const hexes = campaign.hexes.map((hex) => {
-    if (hex.empty || hex.system || mainOf(hex)?.name === undefined || mainOf(hex)?.uwp.tech === undefined) return hex;
-    changed = true;
-    return rollStarSystem(hex, textRandom(`${seed}/${hexId(hex.column, hex.row)}`));
+  const hexes = campaign.hexes.map((original) => {
+    let hex = original;
+    const id = hexId(hex.column, hex.row);
+    if (!hex.empty && !hex.system && mainOf(hex)?.name !== undefined && mainOf(hex)?.uwp.tech !== undefined) hex = rollStarSystem(hex, textRandom(`${seed}/${id}`));
+    // Systeme von vor 2026-11-20c bekommen Raumhafen, Regierung, Gesetz, TL, Einrichtungen und Basen nach.
+    if (hex.system && hex.worlds.some((w) => isSubordinate(hex, w) && w.spaceport === undefined)) hex = rollSubordinates(hex, textRandom(`${seed}/${id}/2026-11-20c`));
+    // Die Oberfläche entsteht mit der Welt (21. November 2026): Nebenwelten und ältere Hauptwelten mit Temperatur bekommen sie nach.
+    if (hex.system) hex = withSurfaces(hex, textRandom(`${seed}/${id}/oberflaeche`));
+    if (isWorld(hex) && nextWorldAction(hex) === 'surface') hex = enterSurface(hex, textRandom(`${seed}/${id}/hauptwelt`));
+    if (hex !== original) changed = true;
+    return hex;
   });
   return changed ? { ...campaign, hexes } : campaign;
 }

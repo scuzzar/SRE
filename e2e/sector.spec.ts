@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openOracle, openSector, oracle, openPeople } from './layout';
+import { openOracle, openSector, oracle, openPeople, openHomeGlobe } from './layout';
 
 test.use({ reducedMotion: 'reduce' });
 
@@ -38,8 +38,11 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     // Danach kommt das Sternsystem mit eigenem Knopf; die Übersicht zeigt Sterne und Bahnen.
     await expect(page.locator('.generation-prompt')).toContainText('Sternsystem nach Book 6');
     await page.getByRole('button', { name: 'Sternsystem würfeln' }).click();
+    // Das System steht im eigenen Reiter der Weltkarte (Owner, 21. November 2026).
+    await dialog.getByRole('tab', { name: 'System' }).click();
     await expect(dialog.getByRole('region', { name: 'Sternsystem' })).toContainText('Hauptstern');
     await expect(dialog.getByRole('region', { name: 'Sternsystem' })).toContainText('(Hauptwelt)');
+    await dialog.getByRole('tab', { name: 'Welt' }).click();
     await expect(dialog.getByRole('region', { name: 'Würfe' })).toHaveCount(0);
     // Das Weltsymbol steht auf der Karte, nicht im Blatt.
     await expect(dialog.getByRole('img', { name: /^Weltsymbol von / })).toHaveCount(0);
@@ -54,13 +57,15 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     const sheet = page.getByRole('region', { name: `Regina · ${id}` });
     await expect(sheet.getByRole('article', { name: 'Welt' })).toBeVisible();
     await expect(sheet.getByRole('region', { name: 'Oberfläche' })).toContainText('einheimisches Leben');
-    // Unten wie am Hexfeld des Globus: Hierher reisen, Gruppe platzieren, Öffnen. „Öffnen“ führt auf
-    // die Hexkarte; oben klappen Name und UWP die Werte auf.
+    // Unten wie am Hexfeld des Globus: Hierher reisen, Gruppe platzieren, Globus erzeugen. Der Globus
+    // entsteht nur auf Knopfdruck (2026-11-20d); oben klappen Name und UWP die Werte auf.
     await expect(page.getByRole('button', { name: 'Hierher reisen', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Öffnen', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Öffnen', exact: true })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Globus erzeugen', exact: true }).click();
     const globe = page.getByRole('region', { name: 'Globus · Regina' });
+    // Der Name oben öffnet dieselbe Weltkarte wie im Subsektor, im Blatt unten (Owner, 21. November 2026).
     await globe.getByRole('button', { name: /^Regina, UWP / }).click();
-    const reopened = globe.getByRole('region', { name: 'Die Welt' });
+    const reopened = page.getByRole('region', { name: `Regina · ${id}` });
     await expect(reopened.getByRole('article', { name: 'Welt' })).toBeVisible();
     await expect(reopened.getByRole('region', { name: 'Oberfläche' })).toContainText(/einheimisches Leben/);
     await globe.getByRole('button', { name: 'Schließen', exact: true }).click();
@@ -203,6 +208,12 @@ test('Sektor: Eine Welt doppelt antippen öffnet sie; einmal antippen zeigt nur 
   await expect(page.getByRole('region', { name: 'Kessra · 0405' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Globus · Kessra' })).toHaveCount(0);
   await page.getByRole('region', { name: 'Kessra · 0405' }).getByRole('button', { name: 'Schließen' }).click();
+  // Ohne Globus öffnet auch doppelt antippen nur die Weltkarte; „Globus erzeugen“ macht ihn (2026-11-20d).
+  await kessra.dblclick();
+  await expect(page.getByRole('region', { name: 'Kessra · 0405' })).toBeVisible();
+  await page.getByRole('button', { name: 'Globus erzeugen', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Globus · Kessra' })).toBeVisible();
+  await page.getByRole('region', { name: 'Globus · Kessra' }).getByRole('button', { name: 'Schließen', exact: true }).click();
   await kessra.dblclick();
   await expect(page.getByRole('region', { name: 'Globus · Kessra' })).toBeVisible();
 });
@@ -210,7 +221,7 @@ test('Sektor: Eine Welt doppelt antippen öffnet sie; einmal antippen zeigt nur 
 test('Globus: aus dem Subsektor öffnen, Feld antippen, zurück zum Subsektor', async ({ page }) => {
   await page.goto('/');
   // Die Demo-Kampagne steht auf Kessra; der Knopf ⌖ in der Leiste des Subsektors öffnet ihren Globus.
-  await page.getByRole('button', { name: /Aufenthaltsort Kessra.*Globus öffnen/ }).click();
+  await openHomeGlobe(page);
   const globe = page.getByRole('region', { name: 'Globus · Kessra' });
   await expect(globe).toBeVisible();
   // Oben klappt die Liste der Orte auf, mit Maßstab und Städten; ein Tippen fliegt hin und zeigt unten das Feld.
@@ -246,9 +257,12 @@ test('Globus: aus dem Subsektor öffnen, Feld antippen, zurück zum Subsektor', 
   const box = (await canvas.boundingBox())!;
   await canvas.click({ position: { x: box.width * 0.35, y: box.height * 0.4 } });
   await expect(page.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('°C im Jahresmittel');
-  // Oben klappen Name und UWP die Welt im Klartext auf, mit Oberfläche und Notiz.
+  // Der Name oben öffnet die Weltkarte im Blatt, wie im Subsektor, mit Oberfläche, Notiz und der Reihe unten.
   await globe.getByRole('button', { name: /^Kessra, UWP A766754-A/ }).click();
-  const world = globe.getByRole('region', { name: 'Die Welt' });
+  const world = page.getByRole('region', { name: 'Kessra · 0405' });
+  await expect(page.getByRole('region', { name: 'Angetipptes Feld' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Gruppe platzieren' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Öffnen', exact: true })).toHaveCount(0);
   await expect(world.getByRole('article', { name: 'Welt' })).toContainText('Raumhafen');
   await expect(world.getByRole('region', { name: 'Oberfläche' })).toContainText('% Wasser');
   await expect(world.getByLabel('Notiz zur Welt')).toBeVisible();
@@ -269,7 +283,7 @@ test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des 
   await editor.getByLabel('Name').fill('Mara Voss');
   await editor.getByRole('button', { name: 'Speichern' }).click();
   await expect(editor).toHaveCount(0);
-  await page.getByRole('button', { name: /Aufenthaltsort Kessra.*Globus öffnen/ }).click();
+  await openHomeGlobe(page);
   const globe = page.getByRole('region', { name: 'Globus · Kessra' });
   await expect(globe).toBeVisible();
   // Noch hat die Gruppe kein Feld: Die Reihe sagt, warum Hinreisen nicht geht.

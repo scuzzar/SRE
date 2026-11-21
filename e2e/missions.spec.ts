@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { openTab, revealed } from './layout';
+import { openTab, revealed, openHomeGlobe } from './layout';
 
 // Missionen (2026-11-18): der Reiter Missionen mit Editor, Orte immer als Feld auf dem Globus, „Missionen
 // hier“ am Feld.
 test('Missionen: anlegen mit dem Feld der Gruppe und einem Ort vom Globus, am Feld wiederfinden', async ({ page }) => {
   await page.goto('/');
   // Die Gruppe kommt in die Hauptstadt von Kessra; ohne Feld gäbe es keinen Aufenthaltsort als Missionsort.
-  await page.getByRole('button', { name: /Aufenthaltsort Kessra.*Globus öffnen/ }).click();
+  await openHomeGlobe(page);
   const globe = page.getByRole('region', { name: 'Globus · Kessra' });
   await globe.getByRole('button', { name: /^Orte/ }).click();
   await globe.getByRole('region', { name: 'Orte' }).getByRole('button', { name: /Hauptstadt ·/ }).click();

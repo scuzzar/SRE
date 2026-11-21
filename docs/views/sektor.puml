@@ -110,6 +110,9 @@ hide <<browser>> stereotype
     diameter: number [0..1]
     large: boolean [0..1]
     radius: number [0..1]
+    spaceport: Spaceport [0..1]
+    facilities: Facility [*]
+    bases: BaseKind [*]
     /main: boolean
     /zone: Zone [0..1]
     /gravity: number
@@ -120,6 +123,23 @@ hide <<browser>> stereotype
     belt
     giant
     ring
+  }
+  enum Spaceport <<value>> $sektor {
+    F
+    G
+    H
+    Y
+  }
+  enum BaseKind <<value>> $sektor {
+    naval
+    scout
+  }
+  enum Facility <<value>> $sektor {
+    farming
+    mining
+    colony
+    research
+    military
   }
   class Uwp <<value>> $sektor {
     starport: number [0..1]
@@ -146,6 +166,7 @@ hide <<browser>> stereotype
 
 ' Zeit und Reisen
   class Journey $reise
+  class SystemJourney $reise
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Encounter $begegnung
@@ -249,10 +270,15 @@ Hex "1" *-- "*" World : worlds {ordered}
 Hex "*" --> "0..1" World : main
 World "*" --> "0..1" World : moonOf
 World --> WorldKind
+World --> Spaceport
+World --> Facility
+World --> BaseKind
 
 ' Zeit und Reisen
 Journey "*" --> "1" Hex : from
 Journey "*" --> "1" Hex : to
+SystemJourney "*" --> "1" World : from
+SystemJourney "*" --> "1" World : to
 
 ' Charaktererschaffung und Lebenslauf
 Career "*" --> "0..1" World : homeworld

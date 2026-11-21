@@ -470,6 +470,24 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Atmosphäre, Hydrographie, Bevölkerung und Monden. `Satellite`, `SatelliteKind` und `GasGiant`
 > entfallen, ebenso die Bahn der Hauptwelt am `StarSystem`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-20b-welten-getrennt.png`](changes/2026-11-20b-welten-getrennt.png).
+>
+> Am 20. November 2026 freigegeben (Kennzeichen 2026-11-20c): **Nebenwelten nach Book 6** (Owner, 20. November 2026:
+> „Macht es Sinn, auch die UWP der weiteren Welten zu würfeln?“). Jede weitere Welt und jeder Mond
+> außer Ringen bekommt Regierung, Gesetz und Tech-Level im UWP, einen Raumhafen (`World.spaceport`,
+> `Spaceport`: F, G, H oder Y) und Einrichtungen (`World.facilities`, `Facility`: Farming, Mining,
+> Colony, Research Laboratory, Military Base); dazu Marine- und Scoutbasen im ganzen System
+> (`World.bases`, `BaseKind`); siehe *Nebenwelten*. Neu im Bild: `World.spaceport`,
+> `World.facilities`, `World.bases`, `Spaceport`, `Facility`, `BaseKind`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-20c-nebenwelten.png`](changes/2026-11-20c-nebenwelten.png).
+>
+> Am 20. November 2026 freigegeben (Kennzeichen 2026-11-20d): **Reise im System und Nebenwelten mit Globus** (Owner,
+> 20. November 2026). Die Weltkarte und der Globus hängen an der Welt statt am Hexfeld: Nebenwelten
+> bekommen Namen, Notiz, Oberfläche und Globus wie die Hauptwelt; der Globus jeder Welt entsteht nur
+> auf ausdrücklichen Knopfdruck („Globus erzeugen“). Zwischen Welten desselben Systems reist man mit
+> Ticket oder dem eigenen Schiff, die Dauer nach T = 2·√(D/A). Neu im Bild: der Logeintrag
+> `SystemJourney` mit `from`, `to`, `travellers`, `ship`, die Buchungsart `ticket` und
+> `Booking.ticketFor`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-20d-reise-im-system.png`](changes/2026-11-20d-reise-im-system.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -601,6 +619,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Tag im Log | `LogEntry.day` | An welchem Spieltag ein Logeintrag entstand; fehlt bei Einträgen von vor der Spielzeit |
 | Test (im Log) | `CheckRoll`, `CheckKind` | Ein gewürfelter Test einer Begegnungsart: random, animal, patron, rumor, legal |
 | Polizei, Legal Encounter | `CheckKind.legal` | Einmal je Woche 2W6 gleich oder über der Gesetzesstufe des Aufenthaltsorts, sonst hält die Polizei die Gruppe an (SE S. 20) |
+| Reise im System | `SystemJourney` | Logeintrag: Die Gruppe reist zu einer anderen Welt desselben Systems, mit Ticket oder eigenem Schiff; Dauer nach T = 2·√(D/A) (2026-11-20d) |
+| Ticket | Buchung `ticket` | Der Preis der Reise im System mit fremdem Schiff: Cr 25 je Stunde und Reisendem (Hausregel, 2026-11-20d) |
 | Reise | `Journey` | Logeintrag: Die Gruppe reist von einer Welt zur anderen, eine Woche im Sprung – mit Passagen oder mit dem eigenen Schiff (2026-11-16d) |
 | Passagier | `Passenger` | Ein Charakter auf der Reise mit seiner Passage (High, Middle oder Low Passage) |
 | Kälteschlafkoje | `LowBerth` | Ein Low-Passagier der Reise, SC oder NSC, mit Wurf zum Aufwachen und Tipp der Lotterie |
@@ -860,6 +880,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Eingefangene Welt | `World.captured` | Eine Welt auf einer Zwischenbahn außerhalb der Standardbahnen (Book 6) (2026-11-20b) |
 | Leere Bahn | `StarSystem.emptyOrbits` | Eine verfügbare Bahn, auf der nichts liegt (Book 6) (2026-11-20b) |
 | Gasriese (Körper) | `World` der Art giant | Ein Gasriese des Systems: groß oder klein, Radius in km, Bahn um den Stern, mit Monden und einer eigenen Raumkarte; nur, wenn das System welche hat (`Hex.gasGiant`) (2026-11-18d, seit 2026-11-20b eine Welt) |
+| Raumhafen einer Nebenwelt | `World.spaceport`, `Spaceport` | Der Spaceport einer Welt außer der Hauptwelt nach Book 6: F gut, G schlecht, H einfachste Einrichtungen, Y keiner; den Starport (A–E, X) hat nur die Hauptwelt (2026-11-20c) |
+| Basis einer Nebenwelt | `World.bases`, `BaseKind` | Ein Marinestützpunkt oder eine Scoutbasis auf einer Welt außer der Hauptwelt (B6 37); die Basen der Hauptwelt stehen am Hexfeld (2026-11-20c) |
+| Einrichtung | `World.facilities`, `Facility` | Warum es auf einer Nebenwelt eine Siedlung gibt (B6 38): Farming (Landwirtschaft), Mining (Bergbau), Colony (Kolonie), Research Laboratory (Forschung), Military Base (Militärbasis) (2026-11-20c) |
 | Gastgeber | `StarSystem.host` | Der Gasriese (eine Welt der Art giant, 2026-11-20b), um den die Hauptwelt kreist, wenn sie in seiner Bahn liegt (Book 6); dann ist sie ein Mond und hat selbst keine Monde (2026-11-18d) |
 | Am Gasriesen | `SystemFlight.at` | Der Gasriese (eine Welt der Art giant, 2026-11-20b), auf dessen Raumkarte ein Systemflug läuft; ohne ihn läuft er an der Welt (2026-11-18d) |
 | Asteroidenfeld | (abgeleitet, View) | Was die Raumkarte bei einer Welt der Größe 0 statt eines Planeten zeigt: Brocken aus dem Weltschlüssel, nicht gespeichert, ohne Schwerkraft (2026-11-18d) |
@@ -1375,6 +1398,30 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - *Dauer*: ebenfalls **eine Woche**; sonst gilt wie bei der Passage.
     - *Lebenserhaltung* (2026-11-17b): siehe *Schiffe*, *Laufende Kosten und Monatsabrechnung*.
     - Kommen später: zahlende Passagiere und Fracht.
+  - *Reise im System* (freigegeben am 20. November 2026, 2026-11-20d; Owner, 20. November 2026). Zwischen Welten
+    desselben Systems (SE S. 27, Charts S. 8).
+    - *Wohin*: Auf der Weltkarte jeder anderen Welt des Systems, in dem die Gruppe ist, steht
+      **Hierher reisen**; es öffnet den Reisedialog wie beim Sprung. Ziele sind Welten, kleine
+      Welten, Gürtel und Monde, keine Gasriesen und Ringe. Nicht während einer laufenden Begegnung,
+      einer Fahrt oder eines Systemflugs.
+    - *Entfernung* (`/distance`, Owner: Abstand der Bahnen): Zwischen zwei Welten um den Stern der
+      Unterschied ihrer Abstände vom Stern (B6 28, Zwischenbahnen eingefangener Welten dazwischen);
+      für einen Mond zählt dabei die Bahn der Welt, um die er kreist. Zwischen einem Mond und seiner
+      Welt sein Bahnabstand (Radien × Radius der Welt), zwischen zwei Monden derselben Welt der
+      Unterschied ihrer Bahnabstände. Die Lage auf der Bahn spielt keine Rolle.
+    - *Dauer* (`hours`): T = 2 · √(D ÷ A) (Charts S. 8: beschleunigen bis zur Mitte, dann abbremsen),
+      D in m, A in m/s² (1 G = 10 m/s²), in Stunden aufgerundet. A ist mit Ticket 1 G, mit eigenem
+      Schiff die G seines Manöverantriebs. `/days` = Stunden ÷ 24, aufgerundet, mindestens 1 Tag
+      (Owner); so viele Tage vergehen wie bei der Reise, ohne Pflicht-Begegnungen.
+    - *Ticket* (Hausregel, Owner): je Reisendem Cr 25 je Stunde Flugzeit (der Satz der Middle Passage
+      je Tag), als Buchung `ticket` auf dem Abflugort mit Verweis auf die Reise (`ticketFor`). Nur
+      wenn Start oder Ziel einen Raumhafen hat (Starport A–E bzw. Spaceport F–H). Reicht die Kasse
+      nicht, geht die Reise nicht.
+    - *Eigenes Schiff*: wie bei der Reise mit eigenem Schiff (`ship`), ohne Preis und ohne
+      Treibstoff (der Manöverantrieb verbraucht im Classic Traveller keinen nennenswerten).
+    - *Wer*: wie bei der Reise alle lebenden, nicht ausgeblendeten Charaktere (`travellers`). Danach
+      ist der Aufenthaltsort die Zielwelt (ohne Stadt und Feld).
+    - Im Log wie die Reise: nicht löschbar.
   - *Ohne Reise*: „Gruppe platzieren“ auf der Weltkarte und die Wahl im Reiter Begegnung setzen den
     Aufenthaltsort weiter ohne Reise und ohne Zeit, etwa zu Beginn einer Kampagne oder für eine
     Reise außerhalb der Regeln.
@@ -2529,6 +2576,18 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - Eine fertige Welt ab Größe 1 mit Oberfläche (`Surface`) kann eine Oberflächenkarte haben
     (`map`). Sie entsteht in einem Zug, wenn man den Globus zum ersten Mal öffnet, und ersetzt sich
     nur ganz („Neu würfeln“). Von Hand ändern lässt sie sich nicht. Größe 0 hat keine.
+    Geändert 2026-11-20d (Owner): Sie entsteht nur auf ausdrücklichen Knopfdruck, „Globus erzeugen“
+    auf der Weltkarte; „Öffnen“ gibt es erst danach. Das gilt für jede Welt, Hauptwelt wie
+    Nebenwelt. Ergänzt am 21. November 2026 (Owner): Kommt die Gruppe auf einer Welt an (Reise im
+    System, Sprung, „Gruppe platzieren“, Wahl im Reiter Begegnung), entstehen dabei ihre Oberfläche
+    und ihr Globus, falls sie fehlen; „Globus erzeugen“ bleibt für alle anderen Welten. Eine
+    Hauptwelt ohne Temperatur bekommt so keine Oberfläche (die Temperatur würfelt man von Hand).
+    Geändert am 21. November 2026 (Owner, „Oberfläche erzeugen sollte einfach immer mit der Welt
+    passieren“): Die **Oberfläche** (die Zahlen nach dem World Builder's Handbook, nicht die Karte)
+    braucht keinen Knopf mehr. Eine Nebenwelt ab Größe 1 bekommt sie im Schritt „Sternsystem
+    würfeln“ mit ihren übrigen Werten, die Temperatur aus ihrer Zone gespeichert; Systeme und ältere
+    Hauptwelten (mit Temperatur) von davor bekommen sie beim Öffnen der Kampagne nachgewürfelt, mit
+    Würfen aus Schlüssel und Feld. Nur der Globus entsteht weiter auf Knopfdruck oder bei Ankunft.
   - Das Raster folgt aus der Größe und wird nicht gespeichert: ein Ikosaeder, jede Kante in
     n = 4 × Größe Abschnitte geteilt, jeder Eckpunkt ein Oberflächenfeld (`/cells` = 10 × n² + 2).
     Die Felder (`cells`) stehen in einer festen Reihenfolge, jedes hat eine Nummer ab 0.
@@ -3068,7 +3127,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Tabelle in Radien des Körpers, Ringe 1D auf die Spalte *Ring*; dieselbe Bahn zweimal: neu
     würfeln. Atmosphäre, Hydrographie und Bevölkerung nach Book 6 mit den DMs der Zone des Körpers,
     um den sie kreisen; wo Kapitel und Checklist verschiedene DMs nennen, gilt das Kapitel.
-    Regierung, Gesetz, Tech-Level und Raumhafen der Monde kommen später. Für das Weltsymbol: ⚑ die
+    Regierung, Gesetz, Tech-Level, Raumhafen und Einrichtungen wie bei weiteren Welten (siehe
+    *Nebenwelten*, 2026-11-20c). Für das Weltsymbol: ⚑ die
     Temperatur folgt aus der Zone (innen heiß, bewohnbar wie die Hauptwelt, außen gefroren).
   - **Schwerkraft** (B6 43, SR 22): Mond g = Größe ÷ 8 G (K = 1); kleine Welt g = Durchmesser ÷
     12.800 km G; Ring keine; Gasriese g = 0,2 × Durchmesser ÷ 12.800 km G (K = 0,2). Die Masse
@@ -3085,7 +3145,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Mitte, die Hauptwelt und die übrigen Monde auf ihren Bahnen. Der Systemflug beginnt dann auf
     einer Kreisbahn um die Hauptwelt mit doppeltem Weltradius, mitbewegt mit ihr.
   - **Raumkarte am Gasriesen** (`SystemFlight.at`): Der Knopf „Raum“ bietet die Welt und jeden
-    Gasriesen des Systems an. Am Gasriesen steht er in der Mitte, seine Monde kreisen um ihn,
+    Gasriesen des Systems an. Geändert am 21. November 2026 (Owner): „Raum“ öffnet die Raumkarte um
+    die Welt der offenen Weltkarte, auch um eine Nebenwelt oder einen Mond (nicht um einen Ring);
+    das Blatt bietet daneben die Hauptwelt und jeden Gasriesen an, und der Systemflug darf an jeder
+    dieser Welten beginnen. Am Gasriesen steht er in der Mitte, seine Monde kreisen um ihn,
     Sprunggrenzen nach seinem Durchmesser. Der Systemflug beginnt wie an der Welt (Aufenthaltsort,
     eigenes Schiff, Kreisbahn mit doppeltem Radius). ⚑ Wie das Schiff von der Welt zum Gasriesen
     kommt (eine Reise im System, Tage bei 1 G), bleibt offen; bis dahin darf der Systemflug am
@@ -3108,11 +3171,63 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        Checklist verschiedene DMs nennen, gilt das Kapitel.
     5. *Monde* für jede Welt und jeden Gasriesen wie oben (Gürtel, kleine Welten, Monde und Ringe
        haben keine).
-    Nur um den Hauptstern (Owner): Begleitsterne haben keine eigenen Bahnen und Welten. Regierung,
-    Gesetz, Tech-Level, Raumhafen und Einrichtungen der Nebenwelten und Monde kommen später
-    (Owner: Physik, Bevölkerung, Monde). Auf die Raumkarte kommen die weiteren Welten nicht: Sie
+    6. *Nebenwelten* (2026-11-20c): Regierung, Gesetz, Einrichtungen, Tech-Level und Raumhafen für
+       jede weitere Welt und jeden Mond außer Ringen (siehe *Nebenwelten*).
+    Nur um den Hauptstern (Owner): Begleitsterne haben keine eigenen Bahnen und Welten. Auf die
+    Raumkarte kommen die weiteren Welten nicht: Sie
     liegen Millionen Kilometer entfernt. Die Weltkarte zeigt sie in einer Übersicht des Systems;
     besuchen kann man sie später mit einer Reise im System.
+  - **Nebenwelten mit Weltkarte und Globus** (freigegeben am 20. November 2026, 2026-11-20d; Owner, 20. November
+    2026). Ein Tipp auf eine Welt in der Übersicht des Systems öffnet ihre Weltkarte, wie die der
+    Hauptwelt; Weltkarte und Globus hängen dafür an der Welt, nicht am Hexfeld. Nebenwelten
+    bekommen dort einen Namen und eine Notiz und „Globus erzeugen“ (die Oberfläche haben sie seit
+    21. November 2026 schon mit dem Sternsystem, die Temperatur aus der Zone gespeichert, damit das
+    Leben dazu passt); danach haben sie Tiertabellen, Orte und Begegnungen wie die Hauptwelt.
+    Keine Oberfläche und keinen Globus haben Größe 0 (Gürtel), kleine Welten (S), Ringe und
+    Gasriesen. ⚑ Auf der Oberflächenkarte einer Nebenwelt bekommt die erste Hauptstadt den
+    Spaceport als Hafen (Y: keinen), die übrigen Städte wie bei Starport X. Die Übersicht zeigt mit
+    einem kleinen Punkt am Namen, welche Welt einen Globus hat.
+    Geändert am 21. November 2026 (Owner, „wo die Party ist, sollte die UI beeinflussen“): Ein Feld
+    der Sektorkarte öffnet, einfach oder doppelt angetippt, im System der Gruppe zuerst die Welt, auf
+    der sie ist (doppelt: ihren Globus); der Knopf ⌖ ebenso. Die Übersicht des Systems ist ein
+    eigener Reiter der Weltkarte („Welt“ | „System“), nicht ein Abschnitt unter den Werten.
+    Ebenso (Owner, 21. November 2026): Ein Tipp auf den Namen oben auf dem Globus öffnet dieselbe
+    Weltkarte wie im Subsektor, im Blatt unten zum Hochschieben, mit der Reihe Hierher reisen,
+    Gruppe platzieren, Raum (ohne „Öffnen“, der Globus ist ja offen); ✕ schließt nur das Blatt. Die
+    eigene Kachel „Die Welt“ oben auf dem Globus entfällt.
+  - **Nebenwelten** (freigegeben am 20. November 2026, Kennzeichen 2026-11-20c). Nach B6 38–39 mit den Tabellen
+    S. 29, übertragen in [`regeln-sternsystem.md`](regeln-sternsystem.md) (*Nebenwelten*). Für jede
+    Welt außer der Hauptwelt, Gasriesen und Ringen, im selben Zug wie das übrige System, nach den
+    Monden und in dieser Reihenfolge; die Hauptwelt behält ihren Starport (A–E, X), die übrigen
+    haben einen Spaceport (Owner, 20. November 2026: Kapitel bei Widersprüchen, die Zusätze der
+    Tabelle S. 29 übernehmen, Gürtel wie Welten, Basen im ganzen System mitwürfeln):
+    0. *Basen im System* (`bases`, B6 37; eine Wahlregel der Spielleitung, Owner: mitwürfeln):
+       Die Marine richtet 1W6 − 3 Stützpunkte ein, je einen auf einer zufälligen Welt oder einem
+       Mond mit Bevölkerung 3+; die Scouts 1W6 − 4 Scoutbasen, je eine auf einer zufälligen Welt
+       oder einem Mond mit Bevölkerung 2+. ⚑ Höchstens ein Stützpunkt je Welt und Art; gibt es zu
+       wenige solche Welten, entsprechend weniger. Die Basen der Hauptwelt bleiben am Hexfeld
+       (`navalBase`, `scoutBase`).
+    1. *Regierung* (im UWP): 1W6 auf die Tabelle (1 → 0, 2 → 1, 3 → 2, 4 → 3, 5+ → 6); hat die
+       Hauptwelt Regierung 6, ist sie 6, bei 7+ DM +2 (Kapitel und Checklist; die Tabelle S. 29
+       sagt DM + Bevölkerung bzw. DM +1). Ohne Bevölkerung 0.
+    2. *Gesetz* (im UWP): 1W6 − 3 + Gesetz der Hauptwelt, mindestens 0; ohne Bevölkerung 0.
+    3. *Einrichtungen* (`facilities`), jede, deren Bedingung gilt: Farming (bewohnbare Zone,
+       Atmosphäre 4–9, Hydrographie 4–8, Bevölkerung 2+), Mining (Hauptwelt industriell, Bevölkerung
+       2+), Colony (Regierung 6, Bevölkerung 5+), Research Laboratory (2W6 11+, DM +2 bei TL der
+       Hauptwelt 10+; keins bei TL der Hauptwelt 8 oder weniger oder ohne Bevölkerung), Military Base
+       (2W6 12+, DM +1 bei Bevölkerung der Hauptwelt 8+, DM +2 bei gleicher Atmosphäre wie die
+       Hauptwelt, DM +1 bei Scout- oder Marinebasis im System (Hexfeld oder Schritt 0, nur Tabelle
+       S. 29); keine ohne Bevölkerung oder bei armer Hauptwelt).
+    4. *Tech-Level* (im UWP): TL der Hauptwelt − 1, gleich ihrem TL bei Research Laboratory oder
+       Military Base; unter 7 bei Atmosphäre nicht 5, 6 oder 8 wird er 7 (nur Tabelle S. 29).
+    5. *Raumhafen* (`spaceport`): 1W6 (1–2 Y, 3 H, 4–5 G, 6 F), DM +2 bei Bevölkerung 6+, −2 bei
+       Bevölkerung 1, −3 bei Bevölkerung 0 (nur Tabelle S. 29; das Kapitel sagt −2 bei 0 und 1).
+    Auch Planetoidengürtel, die nicht die Hauptwelt sind, bekommen diese Werte (Book 6 sagt „jeder
+    Planet“, Owner).
+    **Bestehende Systeme** bekommen die Werte beim Öffnen der Kampagne nachgewürfelt, mit Würfen
+    aus Schlüssel der Kampagne und Feld wie das Sternsystem; alles andere am System bleibt. Die
+    Übersicht der Weltkarte zeigt das UWP der Nebenwelt (z. B. `G552531-8`) und ihre
+    Einrichtungen.
 
 - **Welten und Hexfeld** (freigegeben am 20. November 2026, Kennzeichen 2026-11-20b; Owner, 20. November
   2026: „Welten sollten aus dem Hexfeld getrennt werden. Monde sind auch Welten, die als Mond an
@@ -3122,8 +3237,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Sternsystem (`system`) und alle Welten des Systems (`worlds`, in der Reihenfolge ihrer
     Entstehung). Eine davon ist die **Hauptwelt** (`main`).
   - **Jede Welt ist eine `World`** mit ihrer Art (`WorldKind`): Welt, kleine Welt, Gürtel, Gasriese
-    oder Ring. Zu ihr gehören jetzt, was bisher am Hexfeld hing: UWP (bei Nebenwelten und Monden nur
-    Größe, Atmosphäre, Hydrographie, Bevölkerung), Name, Notiz, Temperatur, Bevölkerungs-
+    oder Ring. Zu ihr gehören jetzt, was bisher am Hexfeld hing: UWP (bei Nebenwelten und Monden ohne
+    Raumhafen, der als `spaceport` getrennt steht, 2026-11-20c), Name, Notiz, Temperatur, Bevölkerungs-
     multiplikator, Oberfläche, Oberflächenkarte, Tiertabellen, Angebot (`/offer`) und Handelscodes
     (`/trade`). Dazu ihre Lage: Bahn, Startwinkel (nur Monde), eingefangen; bei kleinen Welten der
     Durchmesser, bei Gasriesen groß/klein und Radius. Zone und Schwerkraft sind abgeleitet.
@@ -3134,10 +3249,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     `worldOrbit`, `hostOrbit`, `hostAngle` und `/worldZone` am `StarSystem` entfallen.
   - **Die Weltenerschaffung erzeugt die Hauptwelt.** Vorkommen, Basen und Gasriese gehören dem
     Hexfeld; der Raumhafen steht im UWP der Hauptwelt (Book 6: nur die Hauptwelt hat den Starport,
-    Nebenwelten haben Spaceports, die später kommen); ab der Größe entstehen die übrigen Werte der
+    Nebenwelten haben Spaceports, 2026-11-20c); ab der Größe entstehen die übrigen Werte der
     Hauptwelt. Der Name der
     Hauptwelt ist der Name, den die Sektorkarte zeigt. Die übrigen Welten entstehen mit dem Schritt
-    „Sternsystem würfeln“ (2026-11-20). Namen bekommen Nebenwelten und Monde vorerst keine.
+    „Sternsystem würfeln“ (2026-11-20). Namen bekommen Nebenwelten und Monde auf ihrer Weltkarte
+    (2026-11-20d).
   - **Verweise auf eine Welt.** Orte (`Place.world`, also auch Aufenthaltsort, Orte von NSC,
     Missionsorte), Heimatwelt und Welten der Terms, Buchungen und Begegnungen (`in`) und der
     Systemflug (`world`, die Welt in der Mitte der Raumkarte; ersetzt auch `SystemFlight.at`) zeigen
@@ -3180,6 +3296,15 @@ Diagramm mit diesen Ausnahmen:
     bewohnbaren Bahn (nie innen).
   - Die DMs nach dem Sterntyp für das einheimische Leben (World Builder's Handbook) gibt es weiter
     nicht; die Oberfläche entsteht vor dem Sternsystem.
+  - **Reise im System und Nebenwelten mit Globus** (2026-11-20d) sind gebaut
+    (`model/system-journey.ts`, `withSurfaceMapOf`, `rollWorldSurface`, `renameWorld`). Die
+    Weltkarte hängt im Controller an Feld und, für Nebenwelten, an der Id der Welt
+    (`OpenWorld.id`). Eine Nebenwelt ohne Namen heißt in Log und Dialog nach der Hauptwelt mit ihrer
+    Nummer („Kessra 3“). Das Ticket ist eine Buchung mit Text, nicht mit Anzahl und Ort (die haben
+    nur Kauf und Verkauf).
+  - **Nebenwelten** (2026-11-20c) sind gebaut (`rollSubordinates`). Systeme von davor bekommen die
+    Werte beim Öffnen der Kampagne mit Würfen aus Schlüssel und Feld; bis dahin lässt die Prüfung
+    Nebenwelten ohne Raumhafen zu, aber nur alle zusammen.
 - **Monat und Monatsabrechnung** (2026-11-17b) sind gebaut (`model/upkeep.ts`, Monate in
   `model/time.ts`). **`MonthEnd → Booking : costs`** ist im Code der Bereich der Buchungen von
   `costsFrom` bis ausschließlich `costsTo`; gezählt werden darin die laufenden Kosten. Das geht,

@@ -3,9 +3,6 @@ import {
   happenedAt,
   missionCells,
   missionsAt,
-  hexAt,
-  mainOf,
-  hexId,
   landformAt,
   mapLocked,
   placeCell,
@@ -22,8 +19,12 @@ import {
   travelTrace,
   flies,
   vehicleOf,
+  hexById,
+  hexIdOfWorld,
+  worldById,
+  worldOf,
 } from '../model';
-import { lookOf, type WorldLook } from './world-view';
+import { systemLook, type WorldLook } from './world-view';
 
 /** Die Geländearten in Worten. */
 export const LANDFORM_NAMES: Readonly<Record<Landform, string>> = {
@@ -153,14 +154,15 @@ export function position(grid: SurfaceGrid, cell: number): string {
   return `${Math.abs(Math.round(lat))}° ${lat >= 0 ? 'N' : 'S'}, ${Math.abs(Math.round(lon))}° ${lon >= 0 ? 'O' : 'W'}`;
 }
 
-/** Der Globus der Welt in diesem Feld; `undefined`, solange sie keine Oberflächenkarte hat. */
-export function globeView(campaign: Campaign, column: number, row: number, picked: number | undefined, plan?: Trip, trace = false): GlobeView | undefined {
+/** Der Globus der Welt `worldId` (Hauptwelt oder Nebenwelt, 2026-11-20d); `undefined`, solange sie keine Oberflächenkarte hat. */
+export function globeView(campaign: Campaign, worldId: string, picked: number | undefined, plan?: Trip, trace = false): GlobeView | undefined {
   const hexes = campaign.hexes;
-  const hex = hexAt(hexes, column, row);
-  const world = hex && mainOf(hex);
-  if (!hex || !world?.map || !world.name || world.uwp.size === undefined || world.temperature === undefined) return undefined;
-  const map = world.map;
-  const size = world.uwp.size;
+  const hex = hexById(hexes, hexIdOfWorld(worldId));
+  const found = worldById(hexes, worldId);
+  if (!hex || !found?.map || found.uwp.size === undefined || found.temperature === undefined) return undefined;
+  const world = worldOf(hexes, worldId);
+  const map = found.map;
+  const size = found.uwp.size;
   const grid = surfaceGrid(size);
   const cities = (map.cities ?? []).map(
     (city, index): GlobeCity => ({
@@ -172,7 +174,7 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
     }),
   );
   const volcanoes = (map.volcanoes ?? []).map(([cell, kind]): GlobeVolcano => ({ cell, label: kind === 'major' ? 'Großer Vulkan' : 'Vulkanfeld' }));
-  const id = hexId(column, row);
+  const id = worldId;
   const npcs = campaign.characters.filter((c) => c.npc && !c.dead && c.place?.world === id).map((c): GlobeNpc => ({ id: c.id, name: c.name, role: roleOf(c), cell: placeCell(hexes, c.place) }));
   const counts = new Map<number, { count: number; latest: number }>();
   // Die Reise (Reisetage und ihre Tests) zählt auf dem Globus nur im Modus „Wo ich war“.
@@ -189,7 +191,7 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
     pickedCell = {
       cell: picked,
       landform: LANDFORM_NAMES[landformAt(map, picked)],
-      temperature: `${Math.round(cellTemperature(size, world.temperature, grid.lat[picked]!))} °C im Jahresmittel`,
+      temperature: `${Math.round(cellTemperature(size, found.temperature, grid.lat[picked]!))} °C im Jahresmittel`,
       position: position(grid, picked),
       cities: cities.filter((c) => c.cell === picked).map((c) => ({ index: c.index, name: c.label, detail: c.detail })),
       towns: map.towns?.find(([c]) => c === picked)?.[1] ?? 0,
@@ -203,9 +205,9 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
     };
   }
   return {
-    id: hexId(column, row),
+    id: worldId,
     name: world.name,
-    look: lookOf(hex)!,
+    look: systemLook(hex, found)!,
     grid,
     map,
     cellKm: Math.round((Math.PI * 1600 * size) / (5 * grid.n)),
@@ -216,7 +218,7 @@ export function globeView(campaign: Campaign, column: number, row: number, picke
     partyCell: partyHere ? placeCell(hexes, campaign.location) : undefined,
     npcs,
     events: [...counts.entries()].map(([cell, { count, latest }]) => ({ cell, count, latest, label: cellName(cell) })).sort((a, b) => b.latest - a.latest),
-    rerollBlocker: mapLocked(campaign, column, row) ? 'Gruppe, NSC, Logeinträge oder Missionen stehen auf dieser Karte; neu würfeln geht nicht mehr.' : undefined,
+    rerollBlocker: mapLocked(campaign, worldId) ? 'Gruppe, NSC, Logeinträge oder Missionen stehen auf dieser Karte; neu würfeln geht nicht mehr.' : undefined,
     route: routeOf(partyHere ? (plan ?? campaign.trip) : undefined),
     vehicles: parkedVehicles(campaign, id),
     missionCells: missionCells(campaign, id),

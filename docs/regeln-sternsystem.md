@@ -32,11 +32,12 @@ Es ist ein Nachschlagewerk, kein Modell: Was die App davon baut, kommt zuerst in
 | [Bahnen und Zonen](#bahnen-und-zonen) | B6 26–31, 34 | ✔ |
 | [Gasriesen und Hauptwelt platzieren](#gasriesen-und-hauptwelt-platzieren) | B6 24, 28, 34–35 | ✔ (✱ Hauptwelt immer in die bewohnbare Bahn) |
 | [Planetoidengürtel, leere und eingefangene Bahnen](#planetoidengürtel-leere-und-eingefangene-bahnen) | B6 28–29, 34–35 | ✔ |
-| [Weitere Welten](#weitere-welten) | B6 24, 35–36 | ✔ (DMs des Kapitels; Regierung, Gesetz, TL, Raumhafen offen) |
+| [Weitere Welten](#weitere-welten) | B6 24, 35–36 | ✔ (DMs des Kapitels) |
 | [Zahl der Monde](#zahl-der-monde) | B6 24, 36 | ✔ |
 | [Größe der Monde](#größe-der-monde) | B6 24, 36 | ✔ |
 | [Bahnen der Monde](#bahnen-der-monde) | B6 28, 36–37 | ✔ (Umlauf nach Kepler auf der Raumkarte) |
 | [UWP der Monde](#uwp-der-monde) | B6 24, 37 | ✔ (DMs des Kapitels) |
+| [Nebenwelten: Regierung, Gesetz, Einrichtungen, TL, Raumhafen](#nebenwelten-regierung-gesetz-einrichtungen-tl-raumhafen) | B6 29, 37–39 | ✔ (Kapitel bei Widersprüchen, Zusätze der Tabelle S. 29; Gürtel wie Welten; Basen im System mitgewürfelt, je Welt und Art höchstens eine) |
 | [Gasriesen](#gasriesen) | B6 28, 36, 39, 48 | ✔ (✱ Radius gewürfelt) |
 | [Kleine Welten, Ringe, Gürtel](#kleine-welten-ringe-gürtel) | B6 36, 39 | ✔ (✱ Ring als Band auf der Raumkarte) |
 | [Masse und Schwerkraft](#masse-und-schwerkraft) | B6 43, 48–49; SR 22 | ✔ (nach der Formel; Monde und Gasriesen ziehen auf der Raumkarte) |
@@ -194,8 +195,8 @@ beginnt bei der innersten Bahn.
 
 Werte unter 0 gelten als 0, die Hydrographie höchstens als A. Wo Kapitel und Checklist
 verschiedene DMs nennen, steht die Checklist in Klammern. Danach bekommt jede Welt Monde (siehe
-unten), und B6 38–39 gibt Regierung, Gesetz, Einrichtungen, Tech-Level und Raumhafen der
-Nebenwelten (hier nicht übertragen).
+unten), dann Regierung, Gesetz, Einrichtungen, Tech-Level und Raumhafen (siehe
+[Nebenwelten](#nebenwelten-regierung-gesetz-einrichtungen-tl-raumhafen)).
 
 ## Zahl der Monde
 
@@ -275,9 +276,72 @@ dasselbe wie T = 2π · √(r³ ÷ G·M).
 Das Kapitel und die Checklist (S. 24) nennen für dieselben Würfe zum Teil verschiedene DMs; die
 Tabelle gibt das Kapitel (S. 37) wieder, die Abweichungen der Checklist stehen in Klammern.
 
-Danach (B6 38–39, *Additional Planet and Satellite Characteristics*): Regierung, Gesetz,
-Einrichtungen (Farming, Mining, Colony, Research Laboratory, Military Base), Tech-Level und
-Raumhafen (*Spaceport*) für jeden Mond außer Ringen. Für die Raumkarte vorerst nicht nötig.
+Danach Regierung, Gesetz, Einrichtungen, Tech-Level und Raumhafen für jeden Mond außer Ringen
+(siehe [Nebenwelten](#nebenwelten-regierung-gesetz-einrichtungen-tl-raumhafen)).
+
+## Nebenwelten: Regierung, Gesetz, Einrichtungen, TL, Raumhafen
+
+*B6 38–39 (Kapitel, „Additional Planet and Satellite Characteristics“), Tabellen S. 29
+(„Subordinate Government“, „Subordinate Law Level“, „Subordinate Tech Level“, „Subordinate
+Facilities“, „Spaceport Table“), Checklist S. 24 (Schritt 15).* Für jede weitere Welt und jeden Mond,
+der kein Ring ist (B6 38: „for each planet, and for each satellite which is not type R“). In dieser
+Reihenfolge: Regierung, Gesetz, Einrichtungen, Tech-Level, Raumhafen. Die Hauptwelt hat den
+*Starport* (A–E, X); alle anderen Welten haben *Spaceports* (B6 39).
+
+**Regierung** (*Subordinate Government*): 1D auf die Tabelle; ohne Bevölkerung 0.
+
+| 1W6 | Code | Regierung |
+|---|---|---|
+| 1 | 0 | keine Regierung |
+| 2 | 1 | Company/Corporation |
+| 3 | 2 | Participating Democracy |
+| 4 | 3 | Self-Perpetuating Oligarchy |
+| 5+ | 6 | Captive Government |
+
+Die drei Stellen nennen verschiedene DMs:
+
+| Fall | Kapitel S. 38 | Tabelle S. 29 | Checklist S. 24 |
+|---|---|---|---|
+| Regierung der Hauptwelt 6 | Regierung 6 | DM + Bevölkerung | Regierung 6 |
+| Regierung der Hauptwelt 7+ | DM +2 | DM +1 | DM +2 |
+
+**Gesetz** (*Subordinate Law Level*): 1D − 3 + Gesetz der Hauptwelt; unter 0 gilt 0. Ohne Regierung
+(Kapitel) bzw. ohne Bevölkerung (Tabelle) 0.
+
+**Einrichtungen** (*Subordinate Facilities*): jede, deren Bedingung erfüllt ist; eine Welt kann
+mehrere haben. Sie sind Gründe für Siedlungen außerhalb der Hauptwelt (B6 32: notiert als
+Bemerkung, nicht auf der Subsektorkarte).
+
+| Einrichtung | Bedingung | Bedeutung (B6 32) |
+|---|---|---|
+| Farming | bewohnbare Zone, Atmosphäre 4–9, Hydrographie 4–8, Bevölkerung 2+ | Landwirtschaft für die Hauptwelt |
+| Mining | Hauptwelt ist industriell (In: Atmosphäre 0, 1, 2, 4, 7 oder 9, Bevölkerung 9+), Bevölkerung 2+ | Rohstoffe für ihre Industrie |
+| Colony | Regierung 6, Bevölkerung 5+ | Kolonie, von der Hauptwelt regiert |
+| Research Laboratory | 2D 11+; DM +2, wenn die Hauptwelt TL 10+ hat; keine bei TL der Hauptwelt 8 oder weniger oder ohne Bevölkerung | Forschung, staatlich oder privat |
+| Military Base | 2D 12+; DM +1 bei Bevölkerung der Hauptwelt 8+; DM +2, wenn die Atmosphäre der der Hauptwelt gleicht; DM +1, wenn es im System eine Scout- oder Marinebasis gibt (nur Tabelle S. 29); keine ohne Bevölkerung oder wenn die Hauptwelt arm ist (Po: Atmosphäre 2–5, Hydrographie 0–3) | Armee- oder Marinetruppen; auf der Karte als M |
+
+**Tech-Level** (*Subordinate Tech Level*): TL der Hauptwelt − 1; gleich dem TL der Hauptwelt, wenn die
+Welt ein Research Laboratory oder eine Military Base hat. Nur die Tabelle S. 29: Liegt er unter 7 und
+ist die Atmosphäre nicht 5, 6 oder 8, ist er 7 (sonst überlebt dort niemand).
+
+**Raumhafen** (*Spaceport Table*): 1D; unter 1 gilt 1, über 6 gilt 6.
+
+| 1W6 | Typ | Bedeutung |
+|---|---|---|
+| 1–2 | Y | kein Raumhafen |
+| 3 | H | einfachste Einrichtungen |
+| 4–5 | G | schlecht |
+| 6 | F | gut |
+
+DMs: Bevölkerung 6+ +2; Bevölkerung 1 −2 (Kapitel: „1−“, also auch 0); Bevölkerung 0 −3 (nur Tabelle
+S. 29).
+
+**Basen im ganzen System** (B6 37, nach Wahl der Spielleitung): Die Marine richtet 1D − 3 weitere
+Stützpunkte ein, verteilt auf Welten und Monde mit Bevölkerung 3+; die Scouts 1D − 4 Scoutbasen, je
+eine auf einer Welt oder einem Mond mit Bevölkerung 2+.
+
+Schreibweise der Nebenwelten wie beim UWP: Raumhafen, Größe, Atmosphäre, Hydrographie, Bevölkerung,
+Regierung, Gesetz, Bindestrich, TL, z. B. `G552531-8`; Ringe `R000000-0`.
 
 ## Gasriesen
 
@@ -345,7 +409,6 @@ Tabelle.
 Nicht übertragen, weil die Raumkarte es noch nicht braucht (B6 24–49):
 
 - Sterndaten: Leuchtkraft, Temperatur, Radius, Masse (B6 42–46).
-- Regierung, Gesetz, Einrichtungen, Tech-Level und Raumhafen der Nebenwelten und Monde (B6 38–39).
 - Bestimmung der Hauptwelt in einem ganz neu erschaffenen System (B6 37).
 - Bahnen und Welten um Begleitsterne und Systeme um ferne Begleiter.
 - Temperatur aus Albedo, Treibhauseffekt, Exzentrizität und Achsneigung; Jahreslänge.

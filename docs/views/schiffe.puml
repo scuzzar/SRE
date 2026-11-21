@@ -160,6 +160,7 @@ hide <<browser>> stereotype
 
 ' Zeit und Reisen
   class Journey $reise
+  class SystemJourney $reise
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
 
@@ -186,6 +187,7 @@ DeckPlan "*" --> "1" ShipDesign : design
 ' Zeit und Reisen
 Journey "*" --> "0..1" Ship : ship
 Booking --> ShipCost
+SystemJourney "*" --> "0..1" Ship : ship
 
 ' Charaktererschaffung und Lebenslauf
 

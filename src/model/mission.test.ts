@@ -123,8 +123,8 @@ describe('Missionen', () => {
   it('sperrt die Oberflächenkarte, solange ein Missionsort auf sie zeigt', () => {
     const { c } = campaign();
     const away = { ...c, location: { world: '0101' } };
-    expect(mapLocked(away, 1, 1)).toBe(false);
-    expect(mapLocked(addMission(away, input({ places: [{ place: { world: '0101', cell: 4 } }] })).campaign, 1, 1)).toBe(true);
+    expect(mapLocked(away, '0101')).toBe(false);
+    expect(mapLocked(addMission(away, input({ places: [{ place: { world: '0101', cell: 4 } }] })).campaign, '0101')).toBe(true);
   });
 
   it('löscht eine Mission; zeigt der Log auf sie als Faden, wird sie nur ausgeblendet', () => {

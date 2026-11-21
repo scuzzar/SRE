@@ -53,6 +53,15 @@ import {
   worldById,
   hexIdOfWorld,
   mainOf,
+  systemDistance,
+  journeyDays,
+  type SystemJourney,
+  flightHours,
+  systemJourneyBlocker,
+  TICKET_RATE,
+  TICKET_G,
+  type SystemJourneyMode,
+  worldOf,
 } from '../model';
 
 /** Ein Test im Log: Art, Würfel, Zielwert, ob bestanden; bei der Polizei dazu die Reaktion. */
@@ -123,6 +132,21 @@ export interface JourneyItem {
   readonly misjump: boolean;
 }
 
+/** Eine Reise im System im Log (2026-11-20d). */
+export interface SystemJourneyItem {
+  readonly kind: 'systemJourney';
+  readonly at: string;
+  readonly from: string;
+  readonly to: string;
+  readonly fromDate: string;
+  readonly toDate: string;
+  /** „37 h, 4,5 Mio. km“. */
+  readonly flight: string;
+  /** Mit Ticket (und dem Preis) oder mit dem eigenen Schiff. */
+  readonly how: string;
+  readonly travellers: readonly string[];
+}
+
 /** Die Spielzeit oben im Reiter Begegnung. */
 export interface TimeView {
   /** „Sonntag, 008-1105“. */
@@ -168,6 +192,43 @@ export interface JourneyDraft {
   readonly error: string | undefined;
   /** Nach der Reise: ihre Stelle im Log; dann zeigt der Dialog das Ergebnis. */
   readonly done: number | undefined;
+}
+
+/** Der Dialog der Reise im System, flüchtig im Zustand des Controllers (2026-11-20d). */
+export interface SystemJourneyDraft {
+  readonly to: string;
+  readonly mode: SystemJourneyMode;
+  readonly error: string | undefined;
+  /** Nach der Reise ihre Stelle im Log; dann zeigt der Dialog das Ergebnis. */
+  readonly done: number | undefined;
+}
+
+/** Eine Art, im System zu reisen, wie der Dialog sie anbietet. */
+export interface SystemJourneyOption {
+  readonly mode: SystemJourneyMode;
+  readonly label: string;
+  readonly g: number;
+  readonly hours: number;
+  readonly days: number;
+  readonly arrival: string;
+  /** Preis aller Tickets; mit eigenem Schiff 0. */
+  readonly cost: number;
+  readonly blocker: string | undefined;
+}
+
+/** Der Dialog der Reise im System. */
+export interface SystemJourneyView {
+  readonly to: string;
+  readonly toName: string;
+  readonly fromName: string;
+  /** „4,5 Mio. km“. */
+  readonly distance: string;
+  readonly mode: SystemJourneyMode;
+  readonly options: readonly SystemJourneyOption[];
+  readonly travellers: readonly string[];
+  readonly funds: number;
+  readonly error: string | undefined;
+  readonly result: SystemJourneyItem | undefined;
 }
 
 /** Der Dialog der Reise. */
@@ -288,7 +349,12 @@ export function timeItem(entry: TimePassed): TimeItem {
 }
 
 function worldName(campaign: Campaign, id: string): string {
-  return worldById(campaign.hexes, id)?.name ?? id;
+  // Eine Nebenwelt ohne Namen heißt nach der Hauptwelt mit ihrer Nummer, z. B. „Kessra 3“.
+  try {
+    return worldOf(campaign.hexes, id).name;
+  } catch {
+    return worldById(campaign.hexes, id)?.name ?? id;
+  }
 }
 
 function nameOf(campaign: Campaign, id: string): string {
@@ -318,6 +384,67 @@ export function journeyItem(campaign: Campaign, entry: Journey, index: number): 
     ship: entry.ship === undefined ? undefined : campaign.ships.find((s) => s.id === entry.ship)?.name ?? entry.ship,
     jump: entry.jump,
     misjump: misjumpOf(entry),
+  };
+}
+
+export function systemJourneyView(campaign: Campaign, draft: SystemJourneyDraft): SystemJourneyView | undefined {
+  const from = campaign.location?.world;
+  if (draft.done !== undefined) {
+    const entry = campaign.log[draft.done];
+    if (entry?.kind !== 'systemJourney') return undefined;
+    const result = systemJourneyItem(campaign, entry, draft.done);
+    return { to: entry.to, toName: result.to, fromName: result.from, distance: result.flight, mode: draft.mode, options: [], travellers: result.travellers, funds: fundsOf(campaign), error: undefined, result };
+  }
+  if (from === undefined) return undefined;
+  let km: number;
+  try {
+    km = systemDistance(campaign.hexes, from, draft.to);
+  } catch {
+    return undefined;
+  }
+  const ship = shipOf(campaign);
+  const option = (mode: SystemJourneyMode, label: string, g: number): SystemJourneyOption => {
+    const hours = flightHours(km, g);
+    const days = journeyDays(hours);
+    return { mode, label, g, hours, days, arrival: dateLabel(dayOf(campaign) + days), cost: mode === 'ticket' ? hours * TICKET_RATE * travellersOf(campaign).length : 0, blocker: systemJourneyBlocker(campaign, draft.to, mode) };
+  };
+  const options = [option('ticket', 'Ticket', TICKET_G), ...(ship ? [option('ship', ship.name, shipDesignOf(ship.design).maneuver)] : [])];
+  return {
+    to: draft.to,
+    toName: worldName(campaign, draft.to),
+    fromName: worldName(campaign, from),
+    distance: mkm(km),
+    mode: draft.mode,
+    options,
+    travellers: travellersOf(campaign).map((c) => c.name),
+    funds: fundsOf(campaign),
+    error: draft.error,
+    result: undefined,
+  };
+}
+
+const mkm = (km: number) => (km >= 1_000_000 ? `${(km / 1_000_000).toLocaleString('de-DE', { maximumFractionDigits: 1 })} Mio. km` : `${Math.round(km).toLocaleString('de-DE')} km`);
+
+export function systemJourneyItem(campaign: Campaign, entry: SystemJourney, index: number): SystemJourneyItem {
+  const from = entry.day ?? 0;
+  const ticket = campaign.bookings.find((b) => b.ticketFor === index);
+  const ship = entry.ship === undefined ? undefined : (campaign.ships.find((s) => s.id === entry.ship)?.name ?? entry.ship);
+  let distance: string | undefined;
+  try {
+    distance = mkm(systemDistance(campaign.hexes, entry.from, entry.to));
+  } catch {
+    distance = undefined;
+  }
+  return {
+    kind: 'systemJourney',
+    at: entry.at,
+    from: worldName(campaign, entry.from),
+    to: worldName(campaign, entry.to),
+    fromDate: dateLabel(from),
+    toDate: dateLabel(from + journeyDays(entry.hours)),
+    flight: [`${entry.hours} h`, distance].filter((t) => t !== undefined).join(' · '),
+    how: ship !== undefined ? `mit ${ship}` : `mit Ticket${ticket ? ` · Cr ${(-ticket.amount).toLocaleString('de-DE')}` : ''}`,
+    travellers: entry.travellers.map((id) => nameOf(campaign, id)),
   };
 }
 

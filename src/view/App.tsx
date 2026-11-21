@@ -28,6 +28,7 @@ import { OracleDock } from './oracle/OracleDock';
 import { SectorPicker, SectorScreen } from './sector/SectorScreen';
 import { useWorldDock } from './sector/WorldSheet';
 import { JourneySheet } from './sector/JourneySheet';
+import { SystemJourneySheet } from './sector/SystemJourneySheet';
 import { FieldCard, GlobeScreen } from './sector/GlobeScreen';
 import { TripRollDialog } from './sector/TripPanels';
 import { FieldDock } from './sector/FieldDock';
@@ -77,7 +78,8 @@ export function App() {
   useShortcuts(Object.fromEntries(areas.map((a, i) => [String(i + 1), () => game.showScreen(a.id)])));
   // Die Weltkarte eines gewählten Feldes, als Feld und als Reihe unten, wie beim Globus; ohne Globus,
   // sonst zeigt der seine eigene (`panel === 'world'`).
-  const worldDock = useWorldDock(view.world && !view.globe ? view.world : undefined, view.world !== undefined && view.location === view.world.id, view.travel, view.log, view.logDays);
+  // Auf dem Globus steht dieselbe Weltkarte im Blatt, wenn man oben auf den Namen tippt (Owner, 21. November 2026).
+  const worldDock = useWorldDock(view.world && (!view.globe || view.worldCard) ? view.world : undefined, view.world !== undefined && view.location === view.world.id, view.travel, view.log, view.logDays, view.globe !== undefined);
 
   if (!view.ready) return <div className="app" aria-busy="true" />;
   const closeResult = () => game.closeResult();
@@ -173,7 +175,7 @@ export function App() {
       {view.space ? (
         <SpaceScreen key={`space-${view.space.world.id}`} space={view.space} />
       ) : view.globe ? (
-        <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} world={view.world} here={view.location === view.globe.id} travel={view.travel} log={view.log} logDays={view.logDays} trip={view.trip} focus={view.globeFocus} />
+        <GlobeScreen key={`globe-${view.globe.id}`} globe={view.globe} world={view.world} card={view.worldCard} logDays={view.logDays} trip={view.trip} focus={view.globeFocus} />
       ) : (
         <div className="base-sector">
           <SectorScreen view={view} fill dockTo={fieldSlot} />
@@ -218,7 +220,7 @@ export function App() {
           {base}
           <Tray
             stop={view.trayStop}
-            raise={view.space ? `space-${view.space.world.id}` : view.globe?.picked?.cell ?? view.selected?.id ?? (view.world && !view.globe ? view.world.id : undefined)}
+            raise={view.space ? `space-${view.space.world.id}` : view.globe?.picked?.cell ?? view.selected?.id ?? (view.world && (!view.globe || view.worldCard) ? view.world.id : undefined)}
             head={banners}
             body={body}
             foot={foot}
@@ -243,6 +245,7 @@ export function App() {
       {view.missions.editor && screen === 'missions' && <MissionEditor key={view.missions.editor.rev} missions={view.missions} />}
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
       {view.journey && <JourneySheet journey={view.journey} />}
+      {view.systemJourney && <SystemJourneySheet journey={view.systemJourney} />}
       {view.card && !view.card.forNote && <CardSheet card={view.card} />}
       {view.tripRoll && <TripRollDialog roll={view.tripRoll} />}
       {view.encounterChoice && <EncounterChoiceDialog kind={view.encounterChoice} view={view} />}

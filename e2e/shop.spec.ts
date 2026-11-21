@@ -17,7 +17,14 @@ async function makeWorld(page: Page) {
     if (await page.locator('.sector-dock').getByText('Kein System in diesem Feld').isVisible()) continue;
     await page.getByLabel('Name der Welt').fill('Regina');
     await page.getByRole('button', { name: 'Übernehmen' }).click();
-    return page.getByRole('region', { name: `Regina · ${id}` });
+    const world = page.getByRole('region', { name: `Regina · ${id}` });
+    // Ein Asteroidengürtel hat keinen Globus, eine dünn besiedelte Welt oft keine Stadt; dann die nächste Welt.
+    const uwp = (await world.getByRole('article', { name: 'Welt' }).locator('p').first().innerText()).match(/· [A-EX](\w)\w\w(\w)/);
+    if (!uwp || uwp[1] === '0' || !/[4-9A]/.test(uwp[2]!)) {
+      await world.getByRole('button', { name: 'Schließen' }).click();
+      continue;
+    }
+    return world;
   }
   throw new Error('Keine Welt entstanden');
 }
@@ -135,9 +142,8 @@ test('Shop: „Gruppe platzieren“ auf der Weltkarte bringt die Gruppe auf eine
   await expect(page.locator('.shop-world')).toContainText('Regina');
   await page.getByRole('button', { name: 'Shop schließen' }).click();
   const globe = page.getByRole('region', { name: 'Globus · Regina' });
-  // Oben klappen Name und UWP die Welt auf; dort steht, dass die Gruppe hier ist.
+  // Der Name oben öffnet die Weltkarte im Blatt; dort steht, dass die Gruppe hier ist.
   await globe.getByRole('button', { name: /^Regina, UWP / }).click();
-  const panel = globe.getByRole('region', { name: 'Die Welt' });
-  await expect(panel).toContainText('Die Gruppe ist hier');
-  await expect(panel.getByRole('button', { name: 'Gruppe platzieren' })).toBeDisabled();
+  await expect(page.getByRole('region', { name: /^Regina · / })).toContainText('Die Gruppe ist hier');
+  await expect(page.getByRole('button', { name: 'Gruppe platzieren' })).toBeDisabled();
 });

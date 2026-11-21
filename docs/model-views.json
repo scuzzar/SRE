@@ -471,6 +471,25 @@
         "SystemFlight",
         "Place"
       ]
+    },
+    {
+      "id": "2026-11-20c",
+      "file": "2026-11-20c-nebenwelten",
+      "title": "Nebenwelten nach Book 6: Raumhafen (Spaceport F, G, H, Y), Einrichtungen und Basen; Regierung, Gesetz und TL im UWP jeder Welt außer Ringen und Gasriesen",
+      "approved": true,
+      "show": [
+        "Hex",
+        "StarSystem"
+      ]
+    },
+    {
+      "id": "2026-11-20d",
+      "file": "2026-11-20d-reise-im-system",
+      "title": "Reise im System: Logeintrag SystemJourney von Welt zu Welt mit Ticket (Buchung ticket) oder eigenem Schiff; Nebenwelten mit Namen, Oberfläche und Globus",
+      "approved": true,
+      "show": [
+        "Journey"
+      ]
     }
   ]
 }

@@ -88,6 +88,7 @@ hide <<browser>> stereotype
 
 ' Subsektor und Welten
   class Hex $sektor
+  class World $sektor
 
 ' Missionen
 
@@ -129,6 +130,11 @@ hide <<browser>> stereotype
   }
   class Passenger <<value>> $reise {
   }
+  class SystemJourney $reise {
+    hours: number
+    /days: number
+    /distance: number
+  }
   class LowBerth <<value>> $reise {
     revive: number[2]
     dm: number
@@ -165,6 +171,12 @@ Journey "*" --> "0..1" Ship : ship
 LogEntry <|-- MonthEnd
 MonthEnd "*" --> "*" Booking : costs {ordered}
 Booking "*" --> "0..1" Journey : won
+LogEntry <|-- SystemJourney
+SystemJourney "*" --> "1" World : from
+SystemJourney "*" --> "1" World : to
+SystemJourney "*" --> "*" Character : travellers
+SystemJourney "*" --> "0..1" Ship : ship
+Booking "*" --> "0..1" SystemJourney : ticketFor
 
 ' Charaktererschaffung und Lebenslauf
 
