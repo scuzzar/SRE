@@ -93,7 +93,7 @@ function bodyAt(frames: readonly Point[] | undefined, position: Point, progress:
  * unten das Ziehblatt liegt.
  */
 function startCamera(space: SpaceView, width: number, height: number): Camera {
-  const reach = Math.max(4 * (space.world.radius ?? 5000), ...(space.flight?.units.map((u) => 1.6 * Math.hypot(u.position.x, u.position.y)) ?? []), 30_000);
+  const reach = Math.max(4 * (space.world.radius ?? 5000), ...(space.flight?.units.map((u) => 1.3 * Math.hypot(u.position.x, u.position.y)) ?? []), 30_000);
   const scale = Math.min(width, 0.6 * height) / (2 * reach);
   return { cx: 0, cy: -(0.17 * height) / scale, scale };
 }
@@ -112,6 +112,14 @@ export function SpaceScreen({ space }: { space: SpaceView }) {
   const drag = useRef<{ kind: 'thrust'; unit: number } | { kind: 'pan'; x: number; y: number; cx: number; cy: number } | { kind: 'pinch'; d: number; scale: number } | undefined>(undefined);
   const pointers = useRef(new Map<number, Point>());
   const [, redraw] = useState(0);
+
+  // Taucht ein fremdes Schiff auf, rückt die Kamera so, dass es mit im Bild ist (2026-11-21d).
+  const foes = space.flight?.units.filter((u) => u.foe).length ?? 0;
+  const seenFoes = useRef(foes);
+  useEffect(() => {
+    if (foes > seenFoes.current) camera.current = undefined;
+    seenFoes.current = foes;
+  }, [foes]);
 
   // Eine neue Raumrunde abspielen, sobald der Snapshot sie bringt.
   const runRound = space.flight?.run?.round;

@@ -92,5 +92,6 @@ test('Werft und Raumkampf: der Beam Laser des Demo-Scouts, ein fremdes Schiff vo
   await expect(card.getByRole('button', { name: /Feuer auf Free Trader \(1 Laser\)/ })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'Runde ausführen' }).click();
   await expect(card).toContainText('Raumrunde 2');
-  await expect(card.getByRole('button', { name: 'Feuer auf Free Trader', exact: true })).toHaveAttribute('aria-pressed', 'false');
+  // Das Ziel gilt nur eine Raumrunde (das Schiff kann dabei auch zerstört worden sein).
+  await expect(card.getByRole('button', { name: /Feuer auf Free Trader \(1 Laser\)/ })).toHaveCount(0);
 });
