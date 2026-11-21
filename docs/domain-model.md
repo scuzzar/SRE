@@ -505,6 +505,14 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `ShipDesign.months` und `ShipDesign.computer` optional, `Ship.mother`, `Ship.aboard`,
 > `Ship.inOrbit`, `SystemFlight.party`; siehe *Small Craft*. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-21b-small-craft.png`](changes/2026-11-21b-small-craft.png).
+>
+> Am 21. November 2026 eingezeichnet, **wartet auf Freigabe** (Kennzeichen 2026-11-21c): **Small Craft einzeln
+> kaufen** (Owner, 21. November 2026: „Man sollte die Boote auf jeden Fall auch einzeln kaufen
+> können“; Zugehörigkeit, Platz, Bezahlung und das alte Boot beim Schiffskauf vom Owner gewählt). In
+> der Werft, bar oder über die Bank; mit Schiff wird es ein Beiboot im Laderaum, ohne Schiff gehört
+> es der Gruppe eigenständig. Neu im Bild: `Ship.inHold`; siehe *Small Craft einzeln kaufen*. Der
+> Ausschnitt dazu liegt unter
+> [`changes/2026-11-21c-small-craft-kaufen.png`](changes/2026-11-21c-small-craft-kaufen.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -843,6 +851,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Mutterschiff | `Ship.mother` | Das Schiff, zu dem ein Small Craft gehört und in dessen Hangar es Platz hat (2026-11-21b) |
 | An Bord | `Ship.aboard` | Das Small Craft liegt im Hangar seines Mutterschiffs und ist dort, wo das Mutterschiff ist (2026-11-21b) |
 | In der Umlaufbahn | `Ship.inOrbit` | Das Schiff kreist um die Welt seines Orts, statt auf ihr zu stehen; so bleibt ein Mutterschiff oben, während die Gruppe mit dem Beiboot gelandet ist (2026-11-21b) |
+| Im Laderaum | `Ship.inHold` | Ein zugekauftes Beiboot hat keinen Platz im Hangar des Entwurfs und belegt so viele Tonnen Laderaum seines Mutterschiffs wie sein Rumpf (2026-11-21c) |
+| Eigenständiges Small Craft | `Ship` mit Small-Craft-Entwurf ohne `mother` | Ein Small Craft, das der Gruppe allein gehört, ohne Mutterschiff; hat sie kein Schiff, ist es ihr aktives Schiff (2026-11-21c) |
 | Einheit der Gruppe | `SystemFlight.party` | Die Einheit im Systemflug, in der die Gruppe sitzt; nur sie kann landen und eine Reise beenden (2026-11-21b) |
 | Grundpreis | `ShipDesign.basePrice` | Was ein neues Schiff dieses Entwurfs nach SR 35–37 kostet; ein fester Wert, weil sich Rumpf, Antriebe, Energiewerk und Computer ohne die Tabellen aus *Charts and Tables* nicht einzeln bepreisen lassen |
 | Preis | `Ship.price` | Was dieses eine Schiff tatsächlich gekostet hat; beim Erwerb gleich dem Grundpreis seines Entwurfs, kann aber abweichen (z. B. gebrauchtes Schiff, später) |
@@ -3180,7 +3190,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Beiboot seines Entwurfs ein eigenes `Ship` (eigene Id, Name „Beiboot 1“ usw., umbenennbar) mit
     `mother` auf das neue Schiff, `aboard` gesetzt, vollem Tank, Preis 0 (im Grundpreis enthalten)
     und ohne Kredit. Wird das Mutterschiff ausgeblendet (`retired`), werden es seine Beiboote auch.
-    Einzeln kaufen, chartern oder verkaufen kann man Small Craft vorerst nicht.
+    Einzeln kaufen kann man Small Craft seit 2026-11-21c (siehe *Small Craft einzeln kaufen*);
+    chartern oder verkaufen vorerst nicht.
   - **Das aktive Schiff** `Campaign./ship` ist jetzt das nicht ausgeblendete Schiff **ohne
     Mutterschiff**. Der Reiter Schiff zeigt darunter seine Beiboote mit Ort (an Bord, Welt und Feld,
     in der Umlaufbahn).
@@ -3226,6 +3237,31 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Schiff abholen.
   - **Liegegebühren** ⚑: Ein Small Craft, das nicht an Bord ist, zahlt wie ein Schiff, wenn es in
     einer Stadt mit Hafen steht; an Bord und in der Umlaufbahn zahlt es nichts.
+  - **Small Craft einzeln kaufen** (Kennzeichen 2026-11-21c, wartet auf Freigabe; Owner, 21. November 2026).
+    - *Wo und wie* (Owner: Werft, bar oder Bank): In der Werft stehen unter den Standardentwürfen
+      auch die acht Small Craft. Bezahlt wird wie beim Schiff bar oder über die Bank (20 % Anzahlung,
+      die doppelte Preissumme als Kredit, 480 Monatsraten, SR 29); Preis ist der Grundpreis des
+      Small Craft. Raten und Restschuld stehen am Small Craft selbst.
+    - *Mit Schiff ein Beiboot* (Owner): Hat die Gruppe ein aktives Schiff, wird das gekaufte Small
+      Craft dessen Beiboot (`mother`), an Bord, mit vollem Tank, Name „Beiboot n“ (die nächste freie
+      Nummer).
+    - *Im Laderaum* (`inHold`, Owner): Die Beiboote des Entwurfs haben ihren eigenen Hangar; ein
+      zugekauftes liegt im Laderaum und belegt dort so viele Tonnen wie sein Rumpf (SR: Fahrzeuge an
+      Bord brauchen eigene Tonnage), auch wenn es gerade ausgesetzt ist oder anderswo steht (sein
+      Platz bleibt frei). Der freie Laderaum ist damit Laderaum des Entwurfs minus Fracht minus die
+      Rümpfe der Beiboote im Laderaum. Passt der Rumpf nicht mehr hinein, geht der Kauf nicht; ebenso
+      lässt sich die Fracht nicht über den freien Laderaum hinaus erhöhen.
+    - *Ohne Schiff eigenständig* (Owner): Hat die Gruppe kein Schiff, gehört ihr das Small Craft
+      allein, ohne Mutterschiff; es ist dann ihr aktives Schiff (`Campaign./ship`, das nicht
+      ausgeblendete ohne Mutterschiff). Es liegt von heute an im Hafen, wo die Gruppe ist, und kann
+      alles, was ein Schiff ohne Sprungantrieb kann: Systemflug, Reise im System, Landen. Springen
+      kann es nicht (Jump 0). Ein Small Craft ohne Mutterschiff war bisher nicht erlaubt.
+    - *Danach ein Schiff* (Owner): Kommt zu einem eigenständigen Small Craft ein Schiff hinzu (Kauf,
+      Ship-Vorteil), wird das Small Craft dessen Beiboot im Laderaum, wenn sein Rumpf in den Laderaum
+      passt: Es behält Ort, Restschuld und Raten; stand es bei der Gruppe ohne eigenen Ort, ist es an
+      Bord. Passt es nicht, wird es wie ein altes Schiff ausgeblendet.
+    - *Ausblenden* wie bisher: Wird ein Mutterschiff ausgeblendet, werden es alle seine Beiboote auch,
+      die zugekauften eingeschlossen.
   - **Demo-Kampagne** (Owner: anderes Demo-Schiff). Statt des Scout/Courier, der kein Small Craft
     tragen kann (nur Air/Raft, 3 t Laderaum), beginnt sie mit einer **Yacht** (Owner, 21. November 2026) (Type Y, 1 G,
     Jump-1) mit ihrem Ship's Boat (6 G), schuldenfrei, vollem Tank, im Hafen von Kessra. Bestehende

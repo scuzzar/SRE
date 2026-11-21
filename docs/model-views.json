@@ -513,6 +513,16 @@
         "SystemJourney",
         "Place"
       ]
+    },
+    {
+      "id": "2026-11-21c",
+      "file": "2026-11-21c-small-craft-kaufen",
+      "title": "Small Craft einzeln kaufen: als Beiboot im Laderaum des aktiven Schiffs (Ship.inHold) oder eigenständig ohne Mutterschiff",
+      "approved": false,
+      "show": [
+        "Campaign",
+        "Booking"
+      ]
     }
   ]
 }

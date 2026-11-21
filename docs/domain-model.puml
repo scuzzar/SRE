@@ -178,6 +178,7 @@ hide <<browser>> stereotype
     retired: boolean
     aboard: boolean
     inOrbit: boolean
+    $new("2026-11-21c", "inHold: boolean")
   }
   enum ShipCost <<value>> $schiffe {
     price
