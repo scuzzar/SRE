@@ -36,6 +36,7 @@ import { FieldDock } from './sector/FieldDock';
 import { SpaceScreen } from './space/SpaceScreen';
 import { LoadingOverlay } from './loading';
 import { Tray } from './Tray';
+import { SpaceVolley } from './space/SpaceVolley';
 
 /**
  * Die fünf Reiter im Ziehblatt bzw. oben in der Seitenspalte des Desktops, in dieser Reihenfolge. Im
@@ -256,6 +257,7 @@ export function App() {
       ) : (
         view.result && <ResultDialog result={view.result} />
       )}
+      {view.spaceVolley && <SpaceVolley key={view.spaceVolley.key} volley={view.spaceVolley} onDone={() => game.closeVolley()} />}
       <LoadingOverlay />
       {view.campaignSheet && <CampaignSheet key={view.campaign.id} sheet={view.campaignSheet} campaigns={view.campaigns} open={view.campaign} sync={view.sync} conflicts={view.conflicts} />}
       {view.notice && <NoticeToast text={view.notice} />}

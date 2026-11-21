@@ -391,6 +391,8 @@ export interface Snapshot {
   readonly landing: LandingView | undefined;
   /** Die Raumkarte einer Welt ist die Grundkarte (vor Globus und Subsektor), mit dem Systemflug, wenn er dort läuft (2026-11-18c). */
   readonly space: SpaceView | undefined;
+  /** Raumkampf (2026-11-21e): die Schüsse, deren Würfe gerade im Vordergrund rollen, und wie es danach steht. */
+  readonly spaceVolley: { readonly key: number; readonly delay: number; readonly shots: readonly SpaceAttackItem[]; readonly endings: readonly string[] } | undefined;
   /** Wohin der Globus fliegen und zoomen soll, nachdem ein Ortsverweis angetippt wurde (siehe ControllerState). */
   readonly globeFocus: { readonly cell: number; readonly n: number } | undefined;
   /** Das gewählte Feld auf der Karte, mit seinem Vorkommen, sobald gewürfelt. */
@@ -1586,6 +1588,8 @@ export interface ControllerState {
   readonly globe: { readonly picked: number | undefined; readonly card?: boolean } | undefined;
   /** Die offene Raumkarte (2026-11-18c). */
   readonly space: OpenSpace | undefined;
+  /** Salven, deren Würfe gerade im Vordergrund rollen (2026-11-21e): ab dieser Stelle im Log; `delay` ms warten (die Bewegung spielt erst ab). */
+  readonly volley?: { readonly from: number; readonly delay: number } | undefined;
   /**
    * Ein Ortsverweis wurde angetippt (etwa ein Ort einer Mission): Der Globus soll zu diesem Feld fliegen
    * und hineinzoomen. `n` zählt hoch, damit derselbe Ort ein zweites Mal wieder hinfliegt.
@@ -2636,6 +2640,16 @@ function markedWorlds(campaign: Campaign): ReadonlySet<string> {
   return marked;
 }
 
+/** Die Salven ab einer Stelle im Log, für die Würfe im Vordergrund (2026-11-21e). */
+function volleyView(campaign: Campaign, volley: ControllerState['volley']): Snapshot['spaceVolley'] {
+  if (volley === undefined) return undefined;
+  const entries = campaign.log.slice(volley.from);
+  const shots = entries.flatMap((e) => (e.kind === 'spaceAttack' ? [spaceAttackItem(e)] : []));
+  if (shots.length === 0) return undefined;
+  const endings = entries.flatMap((e) => (e.kind === 'spaceBattleEnd' ? [`${spaceBattleEndItem(e).foe}: ${spaceBattleEndItem(e).outcome}`] : []));
+  return { key: volley.from, delay: volley.delay, shots, endings };
+}
+
 function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
   switch (entry.kind) {
     case 'dice':
@@ -2807,7 +2821,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, elsewhere: state.elsewhere, notice: state.notice, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, systemJourney: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, missions: { open: [], done: [], failed: [], retired: [], editor: undefined, picking: undefined, here: undefined, hereBlocker: undefined, persons: [], clients: [] }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, worldCard: false, landing: undefined, space: undefined, globeFocus: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, systemJourney: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, missions: { open: [], done: [], failed: [], retired: [], editor: undefined, picking: undefined, here: undefined, hereBlocker: undefined, persons: [], clients: [] }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, worldCard: false, landing: undefined, space: undefined, spaceVolley: undefined, globeFocus: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -2878,6 +2892,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     globe: state.world && state.globe ? globeView(campaign, openWorldId(state.world), state.globe.picked, state.tripPlan?.options[state.tripPlan.chosen], state.trace, state.landingPick === true, state.touchdown ?? 0) : undefined,
     landing: landingView(campaign, state.landingPick === true),
     space: state.space && spaceView(campaign, state.space),
+    spaceVolley: volleyView(campaign, state.volley),
     globeFocus: state.world && state.globe ? state.globeFocus : undefined,
     picking: pickingView(state, campaign),
     selected: state.selected && selectedView(campaign.hexes, state.selected.column, state.selected.row, state.selected.occurrence, state.world ? undefined : state.worldError),

@@ -9620,3 +9620,70 @@ button:disabled {
   gap: 6px;
   align-items: center;
 }
+
+/* Raumkampf, Feuer auslösen (2026-11-21e) */
+.space-foe-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+}
+.space-intent {
+  font-size: 0.8em;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+.space-intent.intent-greift {
+  color: #ff6b6b;
+}
+.space-intent.intent-flieht {
+  color: #f2c14e;
+}
+.space-intent.intent-beachtet,
+.space-intent.intent-wreck {
+  color: var(--muted);
+}
+.space-foe-stats,
+.space-foe-damage,
+.space-own {
+  margin: 0;
+  font-size: 0.9em;
+}
+.space-foe-damage {
+  color: #ff9b9b;
+}
+.action.fire {
+  background: #b3261e;
+  border-color: #ff6b6b;
+  color: #fff;
+}
+.action.fire:disabled {
+  opacity: 0.45;
+}
+
+/* Salven im Vordergrund (2026-11-21e) */
+.space-volley .dice-roll-kicker {
+  color: #ff8a8a;
+  letter-spacing: 0.18em;
+  text-align: center;
+  padding: 0 16px;
+}
+.space-volley-weapon {
+  font-size: 13px;
+  color: var(--muted);
+}
+.space-volley .space-hit {
+  color: #ff6b6b;
+}
+.space-volley .space-miss {
+  color: var(--muted);
+}
+.space-volley-zones {
+  color: #ffb4b4;
+  font-weight: 700;
+}
+.space-volley-end {
+  font-size: 22px;
+  color: var(--gold);
+}

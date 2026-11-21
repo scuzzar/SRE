@@ -73,7 +73,7 @@ import {
   replaceTurret,
   rollShipEncounter,
   placeFoe,
-  setAim,
+  fireAt,
   repairShip,
   type Intent,
   installWeapon,
@@ -2531,15 +2531,18 @@ export class GameController {
     const space = this.openSpaceState();
     const t = flightTime(this.campaign, activeFlight(this.campaign));
     const ship = shipById(this.campaign, activeFlight(this.campaign).units[0]!.ship!).name;
+    const before = this.campaign.log.length;
     const run = runRound(this.campaign, this.deps.clock, this.deps.random);
+    // Feuern fremde Schiffe nach der Bewegung, rollen ihre Würfe, sobald die Bewegung abgespielt ist (2026-11-21e).
+    const volley = run.campaign.log.slice(before).some((e) => e.kind === 'spaceAttack') ? { volley: { from: before, delay: 2200 } } : {};
     // Im Raumkampf zerstört (2026-11-21d): Der Flug ist zu Ende, das Schiff ausgeblendet.
-    if (run.lost) return this.change(run.campaign, { space: { world: space.world }, notice: `${ship} ist im Raumkampf zerstört worden. Was aus der Gruppe wird, entscheidet das Spiel.` });
+    if (run.lost) return this.change(run.campaign, { space: { world: space.world }, ...volley, notice: `${ship} ist im Raumkampf zerstört worden. Was aus der Gruppe wird, entscheidet das Spiel.` });
     // Gelandet: Der Flug ist zu Ende, die Gruppe auf dieser Welt; die Raumkarte bleibt offen (Owner, 21. November 2026).
     // Auch auf der Startwelt: Die Landung ist eine Ankunft, Oberfläche und Globus entstehen, falls sie fehlen.
     if (run.landed !== undefined) return this.change({ ...run.campaign, hexes: readyForParty(run.campaign.hexes, run.landed, this.deps.random) }, { space: { world: space.world }, notice: `${ship} ist auf ${worldOf(run.campaign.hexes, run.landed).name} gelandet. Die Gruppe ist jetzt dort.` });
     // Geschöpft (2026-11-21b): Der Flug läuft weiter, das Schiff steht wieder auf der Kreisbahn.
     const skimmed = run.skimmed ? { notice: `${ship} hat Treibstoff geschöpft und steht wieder auf der Umlaufbahn.` } : {};
-    this.change(run.campaign, { space: { world: space.world, run: { round: activeFlight(run.campaign).round, t, every: 2, frames: run.frames } }, ...skimmed });
+    this.change(run.campaign, { space: { world: space.world, run: { round: activeFlight(run.campaign).round, t, every: 2, frames: run.frames } }, ...skimmed, ...volley });
   }
 
   /** Beendet den Systemflug; die Raumkarte bleibt offen. */
@@ -2568,15 +2571,23 @@ export class GameController {
     this.change(placeFoe(this.campaign, design, intent, this.deps.clock), { space: without(space, 'aim') });
   }
 
-  /** Das Ziel der Laser des eigenen Schiffs für diese Raumrunde (`undefined`: kein Feuer). */
-  setAim(target: number | undefined): void {
+  /** Das eigene Schiff feuert jetzt auf eine Einheit (2026-11-21e); die Würfe rollen im Vordergrund. */
+  fireAt(target: number): void {
     const space = this.openSpaceState();
+    const before = this.campaign.log.length;
     try {
-      this.change(setAim(this.campaign, 0, target), { space });
+      const shot = fireAt(this.campaign, 0, target, this.deps.random, this.deps.clock);
+      const lost = shot.lost ? { notice: `${shipById(this.campaign, activeFlight(this.campaign).units[0]!.ship!).name} ist im Raumkampf zerstört worden. Was aus der Gruppe wird, entscheidet das Spiel.` } : {};
+      this.change(shot.campaign, { space: without(space, 'run'), volley: { from: before, delay: 0 }, ...lost });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ notice: error.message });
     }
+  }
+
+  /** Die Würfe der Salven sind abgespielt (oder übersprungen). */
+  closeVolley(): void {
+    this.update({ volley: undefined });
   }
 
   /** Repariert das eigene Schiff in der Werft (2026-11-21d). */

@@ -237,9 +237,8 @@ export function SpaceScreen({ space }: { space: SpaceView }) {
           trail = [...trailOf({ ...unit, track: unit.track.slice(0, -1), position: unit.track.at(-1)?.position ?? unit.position, velocity: unit.track.at(-1)?.velocity ?? unit.velocity }), ...frames.slice(0, i + 1).map((f) => f[unit.index]!), at];
         }
         path(trail, unit.foe ? 'rgba(255, 107, 107, 0.35)' : 'rgba(79, 209, 255, 0.35)', 1.2);
-        // Raumkampf (2026-11-21d): das Ziel dieser Raumrunde als rote Linie.
-        const target = unit.aim === undefined ? undefined : flight?.units[unit.aim];
-        if (!playing && target) path([unit.position, target.position], 'rgba(255, 107, 107, 0.8)', 1.5, [4, 4]);
+        // Raumkampf (2026-11-21e): die Sichtlinie zum fremden Schiff, rot gestrichelt, wenn frei.
+        if (!playing && unit.foe && !unit.wreck && unit.sight && flight?.units[0]) path([flight.units[0].position, unit.position], 'rgba(255, 107, 107, 0.45)', 1, [4, 6]);
         if (!playing && !unit.crashed && !unit.foe) {
           path(unit.preview.after, 'rgba(79, 209, 255, 0.75)', 1.4, [6, 5]);
           path(unit.preview.now, OWN, 2.4);

@@ -234,25 +234,30 @@ export function placeFoe(campaign: Campaign, design: string, intent: Intent, clo
   const position = { x: own.position.x + km * Math.cos(angle), y: own.position.y + km * Math.sin(angle) };
   const ownName = shipOf(campaign)?.name;
   const name = plan.name === ownName ? `${plan.name} (fremd)` : plan.name;
-  const foe: SpaceUnit = { design: plan.id, name, intent, position, velocity: own.velocity, crashed: false, track: own.track.map(() => ({ position, velocity: own.velocity })) };
+  const foe: SpaceUnit = { design: plan.id, name, intent, fired: false, position, velocity: own.velocity, crashed: false, track: own.track.map(() => ({ position, velocity: own.velocity })) };
   const entry: SpaceBattle = { kind: 'spaceBattle', at: clock.now(), day: campaign.day, foe: name, design: plan.id, intent };
   return { ...campaign, flight: { ...flight, units: [...flight.units, foe] }, log: [...campaign.log, entry] };
 }
 
-/** Setzt das Ziel einer Einheit für die laufende Raumrunde (`undefined`: kein Feuer). */
-export function setAim(campaign: Campaign, index: number, target: number | undefined): Campaign {
+/**
+ * Warum die Einheit `index` jetzt nicht auf `target` feuern kann (2026-11-21e); `undefined`, wenn sie
+ * kann. Jede Einheit feuert höchstens einmal je Raumrunde.
+ */
+export function fireBlocker(campaign: Campaign, index: number, target: number): string | undefined {
   const flight = activeFlight(campaign);
   const unit = flight.units[index];
-  if (unit === undefined) throw new DomainError('Diese Einheit gibt es nicht.');
-  if (target !== undefined) {
-    const other = flight.units[target];
-    if (other === undefined || target === index) throw new DomainError('Dieses Ziel gibt es nicht.');
-    if (workingLasers(turretsOfUnit(campaign, unit), damageOfUnit(campaign, unit)).length === 0) throw new DomainError(`${nameOfUnit(campaign, unit)} hat keinen Laser, der feuern kann.`);
-  }
-  const { aim: _old, ...rest } = unit;
-  void _old;
-  const next: SpaceUnit = target === undefined ? rest : { ...rest, aim: target };
-  return { ...campaign, flight: { ...flight, units: flight.units.map((u, i) => (i === index ? next : u)) } };
+  const other = flight.units[target];
+  if (unit === undefined || other === undefined || target === index) return 'Dieses Ziel gibt es nicht.';
+  const name = nameOfUnit(campaign, unit);
+  if (unit.crashed) return `${name} ist aufgeschlagen.`;
+  if (other.crashed) return `${nameOfUnit(campaign, other)} ist aufgeschlagen.`;
+  if (unit.fired) return `${name} hat in dieser Raumrunde schon gefeuert.`;
+  if (workingLasers(turretsOfUnit(campaign, unit), damageOfUnit(campaign, unit)).length === 0) return `${name} hat keinen Laser, der feuern kann.`;
+  const bands = bandOf(lengthOf({ x: unit.position.x - other.position.x, y: unit.position.y - other.position.y }));
+  if (bands > TRACKING_BANDS) return `${nameOfUnit(campaign, other)} ist ${bands} Raumbänder entfernt, zu weit (höchstens ${TRACKING_BANDS}).`;
+  const scene = sceneOf(campaign.hexes, flight.world);
+  if (!lineOfSight(scene, unit.position, other.position, flightTime(campaign, flight))) return `Ein Körper verdeckt ${nameOfUnit(campaign, other)}.`;
+  return undefined;
 }
 
 /** Die höchste G einer Einheit nach Schaden (fremde Schiffe ohne Absicht treiben). */
@@ -393,35 +398,50 @@ function fire(campaign: Campaign, shots: readonly Shot[], random: Random, clock:
   return { campaign: { ...campaign, log }, hits };
 }
 
-/**
- * Laserfeuer und Rückfeuer nach der Bewegung (SR 40, gleichzeitig): erst alle Einheiten mit Ziel, Schaden
- * nach allen Würfen; dann feuern Beschossene ohne eigenes Ziel zurück. Ein beschossenes fremdes Schiff,
- * das nicht angriff, greift danach an (mit Laser) oder flieht.
- */
-export function firePhase(campaign: Campaign, random: Random, clock: Clock): Campaign {
+/** Eine Salve: alle arbeitenden Laser von `from` auf `to`, Schaden nach allen Würfen; `from` hat gefeuert. */
+function volley(campaign: Campaign, from: number, to: number, random: Random, clock: Clock): Campaign {
   const flight = activeFlight(campaign);
-  if (!flight.units.some((u) => u.aim !== undefined)) return campaign;
   const scene = sceneOf(campaign.hexes, flight.world);
-  const t = flightTime(campaign, flight);
-  const shooters = flight.units.map((u, i) => (u.aim !== undefined ? i : -1)).filter((i) => i >= 0);
-  const shots = shooters.flatMap((i) => shotsOf(campaign, flight, scene, i, flight.units[i]!.aim!, t));
-  const first = fire(campaign, shots, random, clock);
-  let after = first.campaign;
-  for (const [to, zones] of first.hits) after = applyHits(after, to, zones, random);
-  // Rückfeuer: wer beschossen wurde und kein eigenes Ziel hatte, auf den ersten, der auf ihn feuerte.
+  const shots = shotsOf(campaign, flight, scene, from, to, flightTime(campaign, flight));
+  const fired = fire(campaign, shots, random, clock);
+  let after = fired.campaign;
+  for (const [target, zones] of fired.hits) after = applyHits(after, target, zones, random);
   const now = activeFlight(after);
-  const targeted = [...new Set(shots.map((s) => s.to))].filter((i) => now.units[i]!.aim === undefined);
-  const back = targeted.flatMap((i) => shotsOf(after, now, scene, i, shots.find((s) => s.to === i)!.from, t));
-  const second = fire(after, back, random, clock);
-  after = second.campaign;
-  for (const [to, zones] of second.hits) after = applyHits(after, to, zones, random);
-  // Beschossene fremde Schiffe, die nicht angriffen, wehren sich oder fliehen (Hausregel).
-  const final = activeFlight(after);
-  const units = final.units.map((u, i) => {
-    if (u.ship !== undefined || u.intent === undefined || u.intent === 'attack' || !targeted.includes(i)) return u;
+  return { ...after, flight: { ...now, units: now.units.map((u, i) => (i === from ? { ...u, fired: true } : u)) } };
+}
+
+/**
+ * Die Einheit `index` feuert auf `target` (2026-11-21e): sofort, ihre Salve, dann das Rückfeuer des
+ * Ziels, wenn es in dieser Raumrunde noch nicht gefeuert hat und kann (SR 40). Ein beschossenes
+ * fremdes Schiff, das nicht angriff, greift danach an (mit Laser) oder flieht. Danach das Ende des
+ * Raumkampfs (`settleBattle`).
+ */
+export function fireAt(campaign: Campaign, index: number, target: number, random: Random, clock: Clock): { readonly campaign: Campaign; readonly lost: boolean } {
+  const blocker = fireBlocker(campaign, index, target);
+  if (blocker) throw new DomainError(blocker);
+  let after = volley(campaign, index, target, random, clock);
+  if (fireBlocker(after, target, index) === undefined) after = volley(after, target, index, random, clock);
+  const flight = activeFlight(after);
+  const units = flight.units.map((u, i) => {
+    if (i !== target || u.ship !== undefined || u.intent === undefined || u.intent === 'attack') return u;
     return { ...u, intent: (workingLasers(turretsOfUnit(after, u), u.damage).length > 0 ? 'attack' : 'flee') as Intent };
   });
-  return { ...after, flight: { ...final, units } };
+  return settleBattle({ ...after, flight: { ...flight, units } }, clock);
+}
+
+/** Nach der Bewegung (2026-11-21e): Angreifende fremde Schiffe feuern auf das eigene Schiff, wenn sie können. */
+export function foesFire(campaign: Campaign, random: Random, clock: Clock): Campaign {
+  let after = campaign;
+  for (const [i, u] of activeFlight(campaign).units.entries()) {
+    if (i === 0 || u.ship !== undefined || u.intent !== 'attack') continue;
+    if (fireBlocker(after, i, 0) === undefined) after = volley(after, i, 0, random, clock);
+  }
+  return after;
+}
+
+/** Feuert gleich ein fremdes Schiff nach der Bewegung? Dann braucht die Raumrunde Würfel. */
+export function foesWillFire(campaign: Campaign): boolean {
+  return activeFlight(campaign).units.some((u, i) => i > 0 && u.ship === undefined && u.intent === 'attack' && !u.crashed);
 }
 
 /** Hängt das Ende des Raumkampfs ans Log. */
@@ -466,9 +486,8 @@ export function settleBattle(campaign: Campaign, clock: Clock): { readonly campa
     }
     if (disabledBy(design, shipDesignOf(design).turrets, u.damage)) {
       result = battleEnd(result, name, 'disabled', clock);
-      const { intent: _i, aim: _a, ...wreck } = u;
+      const { intent: _i, ...wreck } = u;
       void _i;
-      void _a;
       units.push(wreck);
       continue;
     }

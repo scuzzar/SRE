@@ -41,6 +41,7 @@ import {
   spaceRangeDm,
   lineOfSight,
   laserCountOf,
+  fireBlocker,
 } from '../model';
 import { systemLook, type WorldLook } from './world-view';
 import { hitZoneNames, intentNames } from './time-view';
@@ -87,9 +88,11 @@ export interface SpaceUnitView {
   readonly intent: string | undefined;
   readonly wreck: boolean;
   readonly damage: readonly string[];
-  /** Laser, die noch feuern können, und das Ziel dieser Raumrunde (Stelle einer Einheit). */
+  /** Laser, die noch feuern können; ob die Einheit in dieser Raumrunde schon gefeuert hat (2026-11-21e). */
   readonly lasers: number;
-  readonly aim: number | undefined;
+  readonly fired: boolean;
+  /** Bei einem fremden Schiff: warum das eigene Schiff jetzt nicht auf es feuern kann (`undefined`: es kann). */
+  readonly fireBlocker: string | undefined;
   /** Vom eigenen Schiff aus: Entfernung in Raumbändern, DM der Entfernung und ob die Sichtlinie frei ist. */
   readonly bands: number;
   readonly rangeDm: number;
@@ -290,7 +293,8 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
           wreck: unit.ship === undefined && unit.intent === undefined,
           damage: (damage?.hits ?? []).map((h) => hitZoneNames[h]),
           lasers: laserCountOf(campaign, unit),
-          aim: unit.aim,
+          fired: unit.fired,
+          fireBlocker: unit.ship === undefined ? fireBlocker(campaign, 0, index) : undefined,
           bands: bandOf(km),
           rangeDm: spaceRangeDm(bandOf(km)),
           sight: lineOfSight(scene, own.position, unit.position, t),

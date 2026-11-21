@@ -331,7 +331,8 @@ const FlightSchema = z.object({
         name: z.string().min(1).optional(),
         intent: z.enum(intents).optional(),
         damage: DamageSchema.optional(),
-        aim: z.number().int().min(0).optional(),
+        /** Gefeuert in dieser Raumrunde (2026-11-21e); fehlt in Dateien von vorher. */
+        fired: z.boolean().default(false),
         position: VecSchema,
         velocity: VecSchema,
         thrust: VecSchema.optional(),
@@ -704,7 +705,7 @@ function flightFromFile(flight: z.infer<typeof FlightSchema>): SystemFlight {
       ...(u.name === undefined ? {} : { name: u.name }),
       ...(u.intent === undefined ? {} : { intent: u.intent }),
       ...(u.damage === undefined ? {} : { damage: { hits: [...u.damage.hits], turretsOut: [...u.damage.turretsOut] } }),
-      ...(u.aim === undefined ? {} : { aim: u.aim }),
+      fired: u.fired,
       position: vec(u.position),
       velocity: vec(u.velocity),
       ...(u.thrust === undefined ? {} : { thrust: vec(u.thrust) }),

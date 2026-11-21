@@ -88,10 +88,16 @@ test('Werft und Raumkampf: der Beam Laser des Demo-Scouts, ein fremdes Schiff vo
   await card.getByRole('combobox', { name: 'Absicht' }).selectOption('ignore');
   await card.getByRole('button', { name: 'Auftauchen lassen' }).click();
   await expect(card).toContainText('Free Trader');
-  await card.getByRole('button', { name: 'Feuer auf Free Trader' }).click();
-  await expect(card.getByRole('button', { name: /Feuer auf Free Trader \(1 Laser\)/ })).toHaveAttribute('aria-pressed', 'true');
+  // Feuer wird ausgelöst, sofort, und die Würfe rollen im Vordergrund (2026-11-21e).
+  await page.getByRole('button', { name: 'Feuer auf Free Trader' }).click();
+  const volley = page.locator('.space-volley');
+  await expect(volley).toBeVisible();
+  await expect(volley).toContainText('Beam Laser');
+  while (await volley.isVisible()) await volley.click();
+  await expect(card).toContainText('Raumrunde 1');
+  // Einmal je Raumrunde: Der Knopf ist aus (oder das Schiff ist schon zerstört).
+  const fire = page.getByRole('button', { name: 'Feuer auf Free Trader' });
+  if ((await fire.count()) > 0) await expect(fire).toBeDisabled();
   await page.getByRole('button', { name: 'Runde ausführen' }).click();
   await expect(card).toContainText('Raumrunde 2');
-  // Das Ziel gilt nur eine Raumrunde (das Schiff kann dabei auch zerstört worden sein).
-  await expect(card.getByRole('button', { name: /Feuer auf Free Trader \(1 Laser\)/ })).toHaveCount(0);
 });
