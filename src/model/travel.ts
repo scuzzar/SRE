@@ -180,6 +180,8 @@ export function shipJourneyBlocker(campaign: Campaign, to: string): string | und
   if (!target || target.empty) return 'Hier gibt es keine Welt.';
   worldOf(campaign.hexes, to);
   const plan = shipDesignOf(ship.design);
+  // Ein eigenständiges Small Craft hat keinen Sprungantrieb (2026-11-21c).
+  if (plan.jump === 0) return `${ship.name} ist ein Small Craft und springt nicht; im System reist es mit „Hierher reisen“.`;
   // Abfliegen kann das Schiff nur, wenn die Gruppe bei ihm ist (2026-11-21).
   const away = shipDepartureBlocker(campaign);
   if (away) return away;

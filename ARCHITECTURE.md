@@ -51,7 +51,7 @@ Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
   `assignWound(to)`, `unassignWound()`, `confirmWounding()`; für Shop und Gruppenkasse `stayHere()` (auf der
   Weltkarte), `openShop()` und `closeShop()` („Einkaufen“ am angetippten Feld einer Stadt auf der Welt der Gruppe und ✕ zurück dorthin), `book(kind, amount, text, character)`, `buy(item, count, character)` und
   `sell(item, count, price, character)`; für den Reiter Schiff `buyShipDesign(design, method)` (Werft, bar
-  oder über die Bank), `renameShip(name)`, `editShip(input)`, `buyFuelTons(tons)` (`model/ship.ts`, Entwürfe
+  oder über die Bank; auch Small Craft, als Beiboot im Laderaum oder eigenständig, 2026-11-21c), `renameShip(name)`, `editShip(input)`, `buyFuelTons(tons)` (`model/ship.ts`, Entwürfe
   in `src/data/ships.json`; laufende Kosten wie Raten, Liegegebühren, Lebenserhaltung und die
   Monatsabrechnung in `model/upkeep.ts`, ausgelöst, wenn Zeit vergeht, und von `stayHere()` über
   `placeGroup`), `addDeckPlan(image)` und `removeDeckPlan(name)` (Deckpläne gehören keiner Kampagne,

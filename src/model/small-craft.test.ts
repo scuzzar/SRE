@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   addShip,
   bodyOf,
+  buyShip,
   craftOf,
+  freeCargoOf,
+  updateShip,
+  book,
   createDemoCampaign,
   dockBlocker,
   dockCraft,
@@ -169,5 +173,36 @@ describe('Small Craft (2026-11-21b)', () => {
     // Zurück auf der Startwelt (ohne Reise platziert): Das Schiff springt ohne sein Beiboot nicht.
     const jump = withNeighbour({ ...after, location: shipOf(after)!.place! });
     expect(shipJourneyBlocker(jump.campaign, jump.to)).toMatch(/Beiboot 1 an Bord/);
+  });
+
+  it('einzeln gekauft (2026-11-21c): mit Schiff ein Beiboot im Laderaum, bar oder über die Bank; der Laderaum wird knapper', () => {
+    const c = book(demo(), 'income', 40_000_000, clock, 'Erbe');
+    const bought = buyShip(c, 'fighter', 'bank', clock);
+    const fighter = craftOf(bought, shipOf(bought)!.id).find((s) => s.design === 'fighter')!;
+    expect(fighter).toMatchObject({ name: 'Beiboot 2', mother: shipOf(c)!.id, aboard: true, inHold: true, price: 18_000_000, initialLoan: 36_000_000 });
+    expect(freeCargoOf(bought, shipOf(bought)!)).toBe(1);
+    expect(() => updateShip(bought, shipOf(bought)!.id, { name: 'Kestrel', fuel: 50, cargo: 2 })).toThrow(/neben den Beibooten noch 1 t/);
+    expect(() => buyShip(bought, 'fighter', 'cash', clock)).toThrow(/frei sind 1 t/);
+    expect(roundTrip(bought).ships).toEqual(bought.ships);
+  });
+
+  it('ohne Schiff eigenständig: das aktive Schiff, fliegt und reist im System, springt nicht; ein späteres Schiff nimmt es in den Laderaum', () => {
+    // Die Demo ohne ihre Yacht: Kessra, aber kein Schiff.
+    const empty = book({ ...demo(), ships: [] }, 'income', 200_000_000, clock, 'Erbe');
+    const alone = buyShip(empty, 'shuttle', 'cash', clock);
+    const shuttle = shipOf(alone)!;
+    expect(shuttle).toMatchObject({ design: 'shuttle', name: 'Shuttle' });
+    expect(shuttle.mother).toBeUndefined();
+    expect(roundTrip(alone).ships).toEqual(alone.ships);
+    expect(flightStartBlocker(alone, world(alone))).toBeUndefined();
+    const jump = withNeighbour(alone);
+    expect(shipJourneyBlocker(jump.campaign, jump.to)).toMatch(/springt nicht/);
+    // Der Free Trader hat 82 t Laderaum: das Shuttle (95 t) passt nicht und wird ausgeblendet; ein Launch (20 t) würde Beiboot.
+    const trader = buyShip(alone, 'A', 'cash', clock);
+    expect(trader.ships.find((s) => s.id === shuttle.id)!.retired).toBe(true);
+    const launch = buyShip(empty, 'launch', 'cash', clock);
+    const withTrader = buyShip(launch, 'A', 'cash', clock);
+    expect(craftOf(withTrader, shipOf(withTrader)!.id)).toMatchObject([{ design: 'launch', aboard: true, inHold: true, retired: false }]);
+    expect(freeCargoOf(withTrader, shipOf(withTrader)!)).toBe(62);
   });
 });

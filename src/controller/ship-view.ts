@@ -17,6 +17,9 @@ import {
   flightStartBlocker,
   launchWorld,
   craftOf,
+  craftPurchaseBlocker,
+  holdTonsOf,
+  isSmallCraft,
   type Ship,
 } from '../model';
 
@@ -35,6 +38,12 @@ export interface ShipSoftwareRow {
 /** Ein Standardentwurf in der Werft, mit dem, was er die Kasse kostet. */
 export interface ShipYardRow {
   readonly designId: string;
+  /** Ein Small Craft (2026-11-21c): steht in der Werft in eigener Liste. */
+  readonly smallCraft: boolean;
+  /** Was aus einem gekauften Small Craft wird: „Beiboot von Kestrel, im Laderaum“ oder „eigenständig“; bei Schiffen leer. */
+  readonly becomes: string;
+  /** Warum der Kauf nicht geht, obwohl die Kasse reicht (zu groß für den Laderaum). */
+  readonly blocker: string | undefined;
   readonly code: string;
   readonly name: string;
   readonly hull: number;
@@ -77,7 +86,7 @@ export interface ShipView {
         /** Treibstoff im Tank und Tankgröße, in Tonnen. */
         readonly fuel: number;
         readonly fuelMax: number;
-        /** Fracht im Laderaum und Laderaumgröße, in Tonnen. */
+        /** Fracht im Laderaum und Laderaumgröße ohne die Beiboote im Laderaum, in Tonnen (2026-11-21c). */
         readonly cargo: number;
         readonly cargoMax: number;
         /** Belegte Kabinen: immer die Gruppe zuerst; Passagiere kommen mit dem Handel. */
@@ -138,12 +147,12 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
             fuel: ship.fuel,
             fuelMax: plan.fuel,
             cargo: ship.cargo,
-            cargoMax: plan.cargo,
+            cargoMax: plan.cargo - holdTonsOf(campaign, ship),
             cabins: livingCharacters(campaign).filter(isPc).length,
             cabinsMax: plan.staterooms,
             lowBerthsUsed: 0,
             lowBerthsMax: plan.lowBerths,
-            thruster: `Jump-${plan.jump} · ${plan.maneuver}G`,
+            thruster: plan.jump === 0 ? `Small Craft · ${plan.maneuver}G` : `Jump-${plan.jump} · ${plan.maneuver}G`,
             jump: plan.jump,
             hardpoints: plan.hardpoints,
             computerName: plan.computer === undefined ? 'keiner' : computerModelOf(plan.computer).name,
@@ -164,11 +173,17 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
     deckPlans: [...deckPlans].sort((a, b) => a.name.localeCompare(b.name)),
     freeDeckSlots: Math.max(0, deckSlotNames.length - deckPlans.length),
     // Die Standardentwürfe in der Reihenfolge der SR-Tabelle; bezahlbar heißt: bar oder als Anzahlung.
-    // Small Craft gibt es vorerst nur mit ihrem Mutterschiff (2026-11-21b).
-    yard: ref.ships.filter((plan) => plan.kind === 'starship').map((plan) => {
+    // Dazu die Small Craft, einzeln zu kaufen (2026-11-21c): mit Schiff als Beiboot im Laderaum, ohne eigenständig.
+    yard: ref.ships.map((plan) => {
       const down = Math.round(plan.basePrice * DOWN_PAYMENT);
+      const small = plan.kind === 'smallCraft';
+      const mother = ship !== undefined && !isSmallCraft(ship) ? ship : undefined;
+      const blocker = craftPurchaseBlocker(campaign, plan.id);
       return {
         designId: plan.id,
+        smallCraft: small,
+        becomes: !small ? '' : mother ? `Beiboot von ${mother.name}, im Laderaum (${plan.hull} t)` : ship ? `ersetzt ${ship.name}` : 'eigenständig, ohne Mutterschiff',
+        blocker,
         code: plan.code,
         name: plan.name,
         hull: plan.hull,
@@ -179,7 +194,7 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
         craft: craftLabel(plan.craft),
         price: plan.basePrice,
         down,
-        affordable: funds >= down,
+        affordable: funds >= down && blocker === undefined,
         owned: ship !== undefined && ship.design === plan.id,
       };
     }),
@@ -205,7 +220,9 @@ function craftRow(campaign: Campaign, craft: Ship): CraftRow {
   const plan = shipDesignOf(craft.design);
   const worldName = (id: string) => campaign.hexes.flatMap((h) => h.worlds).find((w) => w.id === id)?.name ?? id;
   const where = craft.aboard
-    ? 'an Bord'
+    ? craft.inHold
+      ? 'im Laderaum'
+      : 'an Bord'
     : craft.place === undefined
       ? 'bei der Gruppe'
       : craft.inOrbit

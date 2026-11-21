@@ -347,6 +347,7 @@ const ShipSchema = z.object({
   mother: z.string().min(1).optional(),
   aboard: z.boolean().optional(),
   inOrbit: z.boolean().optional(),
+  inHold: z.boolean().optional(),
 });
 const CharacterSchema = z.object({
   id: z.string().min(1),
@@ -581,7 +582,7 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       ...(file.location === undefined ? {} : { location: placeFromFile(file.location) }),
       bookings: file.bookings.map((b) => stripped(b) as Booking),
       // Gespeichert werden `aboard` und `inOrbit` nur, wenn sie wahr sind (2026-11-21b).
-      ships: file.ships.map((s) => stripped({ ...s, aboard: s.aboard === true ? true : undefined, inOrbit: s.inOrbit === true ? true : undefined, ...(s.place === undefined ? {} : { place: placeFromFile(s.place) }) }) as Ship),
+      ships: file.ships.map((s) => stripped({ ...s, aboard: s.aboard === true ? true : undefined, inOrbit: s.inOrbit === true ? true : undefined, inHold: s.inHold === true ? true : undefined, ...(s.place === undefined ? {} : { place: placeFromFile(s.place) }) }) as Ship),
       stash: file.stash.map((p) => stripped({ ...p, ...(p.parked === undefined ? {} : { parked: placeFromFile(p.parked) }) }) as Possession),
       ...(file.trip === undefined ? {} : { trip: { hours: file.trip.hours, legs: file.trip.legs.map((l) => ({ by: l.by, rented: l.rented, cells: [...l.cells] })) } }),
       ...(file.flight === undefined ? {} : { flight: flightFromFile(file.flight) }),
@@ -679,7 +680,8 @@ function worldValuesOf<T extends { readonly uwp: object; readonly map?: z.infer<
 
 /**
  * Small Craft (2026-11-21b): Ein Beiboot hat ein Mutterschiff, das es gibt und das kein Small Craft
- * ist; nur Small Craft haben eins. An Bord hat es keinen eigenen Ort und ist nicht in der Umlaufbahn;
+ * ist; nur Small Craft haben eins, eigenständige Small Craft keins (2026-11-21c). Im Laderaum liegt
+ * nur ein Beiboot. An Bord hat es keinen eigenen Ort und ist nicht in der Umlaufbahn;
  * in der Umlaufbahn hat ein Schiff einen Ort ohne Feld und Stadt. Ist das Mutterschiff ausgeblendet,
  * sind es seine Beiboote auch.
  */
@@ -691,7 +693,7 @@ function checkCraft(campaign: Campaign): void {
       if (!small) throw new DomainError(`${ship.name} ist kein Small Craft und hat kein Mutterschiff.`);
       if (mother === undefined || mother.mother !== undefined || shipDesignOf(mother.design).kind === 'smallCraft') throw new DomainError(`Das Mutterschiff von ${ship.name} gibt es nicht.`);
       if (mother.retired && !ship.retired) throw new DomainError(`${ship.name} gehört zu einem ausgeblendeten Schiff.`);
-    } else if (small) throw new DomainError(`Das Small Craft ${ship.name} hat kein Mutterschiff.`);
+    } else if (ship.inHold === true) throw new DomainError(`${ship.name} liegt im Laderaum, hat aber kein Mutterschiff.`);
     if (ship.aboard === true && (ship.mother === undefined || ship.place !== undefined || ship.inOrbit === true)) throw new DomainError(`${ship.name} ist an Bord und hat doch einen eigenen Ort.`);
     if (ship.inOrbit === true && (ship.place === undefined || ship.place.cell !== undefined || ship.place.city !== undefined)) throw new DomainError(`${ship.name} ist in der Umlaufbahn, aber nicht über einer Welt.`);
   }

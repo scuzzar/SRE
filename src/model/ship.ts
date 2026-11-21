@@ -46,6 +46,8 @@ export interface Ship {
   readonly aboard?: boolean;
   /** Kreist um die Welt seines Orts, statt auf ihr zu stehen (2026-11-21b); gespeichert nur, wenn wahr. */
   readonly inOrbit?: boolean;
+  /** Ein zugekauftes Beiboot liegt im Laderaum seines Mutterschiffs statt im Hangar (2026-11-21c); gespeichert nur, wenn wahr. */
+  readonly inHold?: boolean;
 }
 
 /**
@@ -153,15 +155,59 @@ export function without<T extends object>(value: T, ...keys: (keyof T)[]): T {
 /** Das Namensmuster der Beiboote eines neuen Schiffs: „Beiboot 1“, „Beiboot 2“ … (2026-11-21b). */
 export const CRAFT_NAME = 'Beiboot';
 
+/** Tonnen im Laderaum eines Schiffs, die zugekaufte Beiboote belegen: je Beiboot sein Rumpf (2026-11-21c). */
+export function holdTonsOf(campaign: Campaign, ship: Ship): number {
+  return craftOf(campaign, ship.id)
+    .filter((c) => c.inHold)
+    .reduce((sum, c) => sum + shipDesignOf(c.design).hull, 0);
+}
+
+/** Der freie Laderaum: Laderaum des Entwurfs minus Fracht minus die Rümpfe der Beiboote im Laderaum. */
+export function freeCargoOf(campaign: Campaign, ship: Ship): number {
+  return shipDesignOf(ship.design).cargo - ship.cargo - holdTonsOf(campaign, ship);
+}
+
+/** Der Name des nächsten Beiboots eines Schiffs: „Beiboot n“ mit der nächsten freien Nummer. */
+function nextCraftName(ships: readonly Ship[], mother: string): string {
+  const taken = new Set(ships.filter((s) => !s.retired && s.mother === mother).map((s) => s.name));
+  let n = 1;
+  while (taken.has(`${CRAFT_NAME} ${n}`)) n++;
+  return `${CRAFT_NAME} ${n}`;
+}
+
+/** Warum ein Small Craft dieses Entwurfs nicht hinzukommen kann (zu groß für den Laderaum des aktiven Schiffs); `undefined`, wenn es kann. */
+export function craftPurchaseBlocker(campaign: Campaign, design: string): string | undefined {
+  const plan = shipDesignOf(design);
+  const active = shipOf(campaign);
+  if (plan.kind !== 'smallCraft' || active === undefined || isSmallCraft(active)) return undefined;
+  const free = freeCargoOf(campaign, active);
+  return plan.hull > free ? `${plan.name} braucht ${plan.hull} t im Laderaum; frei sind ${free.toLocaleString('de-DE')} t.` : undefined;
+}
+
 /**
  * Ein Schiff kommt hinzu, das bisher aktive wird samt seinen Beibooten ausgeblendet. `initialLoan` ist
  * die Kreditsumme beim Abschluss – ohne bleibt es schuldenfrei; mit Kredit ist die erste Rate an einem
  * Monatsende frühestens vier Wochen später fällig. Das neue Schiff liegt von heute an im Hafen. Für
  * jedes Beiboot seines Entwurfs kommt ein eigenes Schiff an Bord dazu, mit vollem Tank, Preis 0 (im
  * Grundpreis enthalten) und ohne Kredit (2026-11-21b).
+ *
+ * Ein Small Craft (2026-11-21c) wird mit Schiff dessen Beiboot im Laderaum, an Bord; ohne Schiff
+ * gehört es der Gruppe eigenständig und ist ihr aktives Schiff. Ein eigenständiges Small Craft wird
+ * beim nächsten Schiff dessen Beiboot im Laderaum, wenn sein Rumpf hineinpasst, sonst ausgeblendet.
+ * ⚑ Kommt zu einem eigenständigen Small Craft ein weiteres Small Craft, ersetzt es das alte wie ein
+ * Schiff (ein Small Craft trägt keine Beiboote).
  */
 export function addShip(campaign: Campaign, design: string, initialLoan: number | undefined): { campaign: Campaign; ship: Ship } {
   const plan = shipDesignOf(design);
+  const active = shipOf(campaign);
+  const small = plan.kind === 'smallCraft';
+  const loan = initialLoan === undefined ? {} : { initialLoan, loanBalance: initialLoan, nextPaymentDay: firstPaymentDay(campaign.day) };
+  if (small && active !== undefined && !isSmallCraft(active)) {
+    const blocker = craftPurchaseBlocker(campaign, design);
+    if (blocker) throw new DomainError(blocker);
+    const boat: Ship = { id: nextShipId(campaign.ships), design: plan.id, name: nextCraftName(campaign.ships, active.id), fuel: plan.fuel, cargo: 0, price: plan.basePrice, ...loan, retired: false, software: [], mother: active.id, aboard: true, inHold: true };
+    return { campaign: { ...campaign, ships: [...campaign.ships, boat] }, ship: boat };
+  }
   const ship: Ship = {
     id: nextShipId(campaign.ships),
     design: plan.id,
@@ -169,15 +215,23 @@ export function addShip(campaign: Campaign, design: string, initialLoan: number 
     fuel: plan.fuel,
     cargo: 0,
     price: plan.basePrice,
-    ...(initialLoan === undefined ? {} : { initialLoan, loanBalance: initialLoan, nextPaymentDay: firstPaymentDay(campaign.day) }),
+    ...loan,
     berthedSince: campaign.day,
     retired: false,
     software: standardSoftware(plan.id),
   };
-  const ships: Ship[] = [...campaign.ships.map((s) => (s.retired ? s : { ...s, retired: true })), ship];
-  plan.craft.forEach((craft, i) => {
+  // Ein eigenständiges Small Craft wird Beiboot im Laderaum des neuen Schiffs, wenn es hineinpasst.
+  const keep = !small && active !== undefined && isSmallCraft(active) && shipDesignOf(active.design).hull <= plan.cargo ? active : undefined;
+  const ships: Ship[] = [
+    ...campaign.ships.map((s): Ship => {
+      if (s.id === keep?.id) return s.place === undefined ? { ...s, mother: ship.id, aboard: true, inHold: true } : { ...s, mother: ship.id, inHold: true };
+      return s.retired ? s : { ...s, retired: true };
+    }),
+    ship,
+  ];
+  plan.craft.forEach((craft) => {
     const boat = shipDesignOf(craft);
-    ships.push({ id: nextShipId(ships), design: boat.id, name: `${CRAFT_NAME} ${i + 1}`, fuel: boat.fuel, cargo: 0, price: 0, retired: false, software: [], mother: ship.id, aboard: true });
+    ships.push({ id: nextShipId(ships), design: boat.id, name: nextCraftName(ships, ship.id), fuel: boat.fuel, cargo: 0, price: 0, retired: false, software: [], mother: ship.id, aboard: true });
   });
   return { campaign: { ...campaign, ships }, ship };
 }
@@ -207,7 +261,8 @@ export function freeTankOf(ship: Ship): number {
  */
 export function jumpFuelOf(design: string): number {
   const plan = shipDesignOf(design);
-  return Math.round(plan.fuel / plan.jump);
+  // Small Craft springen nicht (2026-11-21b).
+  return plan.jump === 0 ? 0 : Math.round(plan.fuel / plan.jump);
 }
 
 /** Volltanken bzw. auffüllen: Cr 500 je Tonne raffinierten Treibstoff (SR 30), höchstens bis der Tank voll ist. */
@@ -227,7 +282,7 @@ export interface ShipInput {
   readonly cargo: number;
 }
 
-export function validShipInput(design: string, input: ShipInput): ShipInput {
+export function validShipInput(design: string, input: ShipInput, holdTons = 0): ShipInput {
   const name = input.name.trim();
   if (name === '') throw new DomainError('Ein Schiff braucht einen Namen.');
   const plan = shipDesignOf(design);
@@ -240,14 +295,15 @@ export function validShipInput(design: string, input: ShipInput): ShipInput {
     if (!Number.isFinite(value) || value < 0 || (!small && !Number.isInteger(value))) throw new DomainError(small ? `${what} ist eine Zahl ab 0.` : `${what} ist eine Zahl ganzer Tonnen ab 0.`);
   }
   if (input.fuel > plan.fuel) throw new DomainError(`Der Tank fasst ${plan.fuel} t.`);
-  if (input.cargo > plan.cargo) throw new DomainError(`Der Laderaum fasst ${plan.cargo} t.`);
+  // Zugekaufte Beiboote belegen einen Teil des Laderaums (2026-11-21c).
+  if (input.cargo > plan.cargo - holdTons) throw new DomainError(holdTons > 0 ? `Der Laderaum fasst neben den Beibooten noch ${(plan.cargo - holdTons).toLocaleString('de-DE')} t.` : `Der Laderaum fasst ${plan.cargo} t.`);
   return { name, fuel: input.fuel, cargo: input.cargo };
 }
 
 /** Bearbeiten des Schiffsbogens: Name, Treibstoff und Fracht von Hand korrigieren. */
 export function updateShip(campaign: Campaign, id: string, input: ShipInput): Campaign {
   const ship = shipById(campaign, id);
-  const valid = validShipInput(ship.design, input);
+  const valid = validShipInput(ship.design, input, holdTonsOf(campaign, ship));
   return { ...campaign, ships: campaign.ships.map((s) => (s.id === id ? { ...s, ...valid } : s)) };
 }
 

@@ -3448,7 +3448,10 @@ Diagramm mit diesen Ausnahmen:
 
 - **Small Craft** (2026-11-21b) sind gebaut (`model/ship.ts`, `model/flight.ts`, `model/landing.ts`,
   `model/system-journey.ts`, Entwürfe in `src/data/ships.json`). Abweichungen: `Ship.aboard` und
-  `Ship.inOrbit` stehen nur im Spielstand, wenn sie wahr sind (fehlt heißt falsch);
+  `Ship.inOrbit` stehen nur im Spielstand, wenn sie wahr sind (fehlt heißt falsch), ebenso
+  `Ship.inHold` (2026-11-21c). Hat die Gruppe nur ein eigenständiges Small Craft und kauft ein
+  weiteres, ersetzt das neue das alte wie ein Schiff (das Modell sagt dazu nichts; ein Small Craft
+  trägt keine Beiboote);
   `SystemFlight.party` verweist mit der Id des Schiffs auf seine Einheit (Stände von vorher: die erste
   Einheit). Beiboote lassen sich noch nicht umbenennen (der Stift im Reiter Schiff gilt dem aktiven
   Schiff), und der Globus zeichnet nur das aktive Schiff, nicht ein dort gelandetes Beiboot.

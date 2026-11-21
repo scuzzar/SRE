@@ -39,12 +39,31 @@ describe('Reiter Schiff', () => {
 
   it('ohne Schiff zeigt der Reiter den Hinweis und die Werft offen', async () => {
     const { game } = await started();
-    // Die Demo-Kampagne hat einen Scout (2026-11-18c); eine neue Kampagne beginnt ohne Schiff.
+    // Die Demo-Kampagne hat eine Yacht (2026-11-21b); eine neue Kampagne beginnt ohne Schiff.
     game.createCampaign('Ohne Schiff');
     game.showScreen('ship');
     const view = game.snapshot();
     expect(view.ship?.ship).toBeUndefined();
-    expect(view.ship?.yard).toHaveLength(9);
+    // Neun Standardentwürfe und acht Small Craft (2026-11-21c); ohne Schiff wäre ein Boot eigenständig.
+    expect(view.ship?.yard).toHaveLength(17);
+    expect(view.ship?.yard.find((d) => d.designId === 'shuttle')).toMatchObject({ smallCraft: true, becomes: 'eigenständig, ohne Mutterschiff' });
+  });
+
+  it('ein Small Craft einzeln kaufen: als Beiboot im Laderaum, solange es hineinpasst (2026-11-21c)', async () => {
+    const { game } = await started();
+    fund(game, 40_000_000);
+    // Die Yacht hat 11 t Laderaum: ein Fighter (10 t) passt, ein Launch (20 t) nicht.
+    const yard = game.snapshot().ship!.yard;
+    expect(yard.find((d) => d.designId === 'launch')!.blocker).toMatch(/20 t im Laderaum; frei sind 11 t/);
+    expect(yard.find((d) => d.designId === 'fighter')).toMatchObject({ becomes: 'Beiboot von Kestrel, im Laderaum (10 t)', blocker: undefined });
+    game.buyShipDesign('fighter', 'cash');
+    const ship = game.snapshot().ship!.ship!;
+    expect(ship.name).toBe('Kestrel');
+    expect(ship.cargoMax).toBe(1);
+    expect(ship.craft.map((c) => [c.name, c.where])).toEqual([
+      ['Beiboot 1', 'an Bord'],
+      ['Beiboot 2', 'im Laderaum'],
+    ]);
   });
 
   it('bei der Bank entstehen Kreditsumme, Restschuld und Rate', async () => {
