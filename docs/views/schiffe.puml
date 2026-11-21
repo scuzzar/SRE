@@ -91,8 +91,8 @@ hide <<browser>> stereotype
     nextPaymentDay: number [0..1]
     berthedSince: number [0..1]
     retired: boolean
-    $new("2026-11-21b", "aboard: boolean")
-    $new("2026-11-21b", "inOrbit: boolean")
+    aboard: boolean
+    inOrbit: boolean
   }
   enum ShipCost <<value>> $schiffe {
     price
@@ -105,7 +105,7 @@ hide <<browser>> stereotype
   }
   class ShipDesign <<reference>> $schiffe {
     code: string
-    $new("2026-11-21b", "kind: ShipKind")
+    kind: ShipKind
     /jumpFuel: number
     name: string
     hull: number
@@ -118,11 +118,10 @@ hide <<browser>> stereotype
     cargo: number
     crew: string
     basePrice: number
-    $gone("2026-11-21b", "months: number")
-    $new("2026-11-21b", "months: number [0..1]")
+    months: number [0..1]
     streamlined: boolean
   }
-  enum ShipKind <<value>> $schiffe $newClass("2026-11-21b") {
+  enum ShipKind <<value>> $schiffe {
     starship
     smallCraft
   }
@@ -186,11 +185,10 @@ Ship "1" *-- "0..*" ShipSoftware : software
 Ship "1" *-- "0..1" Place : place
 ShipSoftware "*" --> "1" Software : program
 Software --> SoftwareKind
-ShipDesign "*" -$goneArrow("2026-11-21b")-> "1" ComputerModel : computer
-ShipDesign "*" -$newArrow("2026-11-21b")-> "0..1" ComputerModel : computer
+ShipDesign "*" --> "0..1" ComputerModel : computer
 ShipDesign --> ShipKind
-ShipDesign "*" -$newArrow("2026-11-21b")-> "*" ShipDesign : craft {ordered}
-Ship "*" -$newArrow("2026-11-21b")-> "0..1" Ship : mother
+ShipDesign "*" --> "*" ShipDesign : craft {ordered}
+Ship "*" --> "0..1" Ship : mother
 Booking "*" --> "0..1" Ship : forShip
 
 ' Raumkarte und Systemflug
@@ -231,6 +229,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Ship #line:d0021b;line.bold
-class ShipDesign #line:d0021b;line.bold
 @enduml

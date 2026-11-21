@@ -505,7 +505,7 @@
       "id": "2026-11-21b",
       "file": "2026-11-21b-small-craft",
       "title": "Small Craft ohne Kampf: eigene Entwürfe (Art smallCraft), an Bord eines Mutterschiffs, aussetzen und andocken im Systemflug, landen, Reise im System; Mutterschiff in der Umlaufbahn",
-      "approved": false,
+      "approved": true,
       "show": [
         "SystemFlight",
         "SpaceUnit",

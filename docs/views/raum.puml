@@ -172,7 +172,7 @@ Campaign "1" *-- "0..1" SystemFlight : flight
 SystemFlight "*" --> "1" World : world
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
 SpaceUnit "*" --> "1" Ship : ship
-SystemFlight "*" -$newArrow("2026-11-21b")-> "1" SpaceUnit : party
+SystemFlight "*" --> "1" SpaceUnit : party
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
 Hex "1" *-- "0..1" StarSystem : system
 StarSystem "1" *-- "1..3" Star : stars {ordered}
@@ -210,5 +210,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Ship #line:d0021b;line.bold
 @enduml

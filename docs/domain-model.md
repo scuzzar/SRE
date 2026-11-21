@@ -495,7 +495,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Gruppe bei ihm ist, und Passagen gibt es nur in einer Stadt mit Hafen. Neu im Bild: `Ship.place`.
 > Der Ausschnitt dazu liegt unter [`changes/2026-11-21-landeplatz.png`](changes/2026-11-21-landeplatz.png).
 >
-> Am 21. November 2026 eingezeichnet, **wartet auf Freigabe** (Kennzeichen 2026-11-21b): **Small Craft ohne
+> Am 21. November 2026 freigegeben (Kennzeichen 2026-11-21b): **Small Craft ohne
 > Kampf** (Owner, 21. November 2026: „Jetzt wo wir Systemreisen haben, wäre da nicht die Zeit die
 > Small Craft einzubauen?“; Umfang, Modellform, Reichweite und Demo-Schiff vom Owner gewählt). Small
 > Craft werden eigene Entwürfe und eigene Schiffe, die ein Mutterschiff an Bord trägt; im Systemflug
@@ -3156,7 +3156,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Später** (eigene Änderungen): fremde Schiffe und ihr Planer (Stufe 2), Waffen, Raketen, Sand,
     Small Craft, Ortung, Raumkampf aus einer Schiffsbegegnung; siehe den Stufenplan im Konzept.
 
-- **Small Craft** (Kennzeichen 2026-11-21b, wartet auf Freigabe; Owner, 21. November 2026). Der friedliche
+- **Small Craft** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21b; Owner, 21. November 2026). Der friedliche
   Teil von Stufe 4 des [Konzepts](konzept-raumkampf.md) (Owner: „nur friedlich“), vorgezogen, weil
   er mit Systemflug und Reise im System schon spielbar ist. Regeln aus SR 33–35, übertragen in
   [`regeln-schiffe.md`](regeln-schiffe.md) unter *Kleine Schiffe (Small Craft)*. Ersetzt die Regel
