@@ -519,7 +519,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Ausschnitt dazu liegt unter
 > [`changes/2026-11-21d-raumkampf-gegner-laser.png`](changes/2026-11-21d-raumkampf-gegner-laser.png).
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-21e): **Feuer auslösen statt vormerken** (Owner,
+> Am 21. November 2026 freigegeben (Kennzeichen 2026-11-21e): **Feuer auslösen statt vormerken** (Owner,
 > 21. November 2026). Jede Einheit feuert einmal je Raumrunde nach der Bewegung; das eigene Schiff,
 > wenn man „Feuer auf …“ tippt, mit Würfelanimation. Die DMs stehen mit ihren Gründen auf dem
 > Knopf, im Blatt, bei den Würfen und im Log. Neu im Bild: `SpaceUnit.fired`, `SpaceAttack.bands` und
@@ -3265,7 +3265,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     *Ignorieren* gibt keinen Schub. Aufschläge sind verboten. Ohne Zufall: gleicher Stand, gleicher
     Schub. Fremde Schiffe landen nicht und schöpfen nicht; trifft eines eine Oberfläche, ist es ein
     Aufschlag.
-  - **Feuer auslösen** (geändert 2026-11-21e, wartet auf Freigabe; Owner, 21. November 2026: „Angreifen
+  - **Feuer auslösen** (geändert und freigegeben am 21. November 2026, Kennzeichen 2026-11-21e; Owner, 21. November 2026: „Angreifen
     sollte mit Würfelanimation explizit getriggert werden, nicht für die nächste Runde vorgemerkt“;
     vorher setzte man mit `aim` ein Ziel, und gefeuert wurde beim Ausführen der Raumrunde). Jede
     Einheit feuert höchstens einmal je Raumrunde (`fired`), an den Orten nach der Bewegung; „Runde
@@ -3287,7 +3287,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     noch nicht, und es gibt noch keine Schiffspositionen (Gunner, Pilot). Missile Racks und
     Sandcaster feuern noch nicht (Stufe 3). Der Schaden einer Salve wirkt erst nach allen ihren
     Würfen.
-  - **DMs erklären** (2026-11-21e, wartet auf Freigabe; Owner, 21. November 2026: „DMs sauber
+  - **DMs erklären** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21e; Owner, 21. November 2026: „DMs sauber
     erklären, Zielwert auch schon im Kleinen auf dem Knopf“). Der Knopf „Feuer auf …“ zeigt klein je
     Waffe den Zielwert auf 2W6 (8 − DM, z. B. „Beam Laser 10+“); das Blatt schreibt jeden DM mit
     seinem Grund aus (Entfernung mit Raumbändern, Pulse Laser, Computer-Treffer). Jeder Schuss hält
