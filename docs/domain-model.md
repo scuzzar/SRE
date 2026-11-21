@@ -521,7 +521,9 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 >
 > **Wartet auf Freigabe** (Kennzeichen 2026-11-21e): **Feuer auslösen statt vormerken** (Owner,
 > 21. November 2026). Jede Einheit feuert einmal je Raumrunde nach der Bewegung; das eigene Schiff,
-> wenn man „Feuer auf …“ tippt, mit Würfelanimation. Neu im Bild: `SpaceUnit.fired`; `aim` entfällt.
+> wenn man „Feuer auf …“ tippt, mit Würfelanimation. Die DMs stehen mit ihren Gründen auf dem
+> Knopf, im Blatt, bei den Würfen und im Log. Neu im Bild: `SpaceUnit.fired`, `SpaceAttack.bands` und
+> `SpaceAttack.computerHits`; `aim` entfällt.
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-21e-feuer-ausloesen.png`](changes/2026-11-21e-feuer-ausloesen.png).
 
@@ -3285,6 +3287,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     noch nicht, und es gibt noch keine Schiffspositionen (Gunner, Pilot). Missile Racks und
     Sandcaster feuern noch nicht (Stufe 3). Der Schaden einer Salve wirkt erst nach allen ihren
     Würfen.
+  - **DMs erklären** (2026-11-21e, wartet auf Freigabe; Owner, 21. November 2026: „DMs sauber
+    erklären, Zielwert auch schon im Kleinen auf dem Knopf“). Der Knopf „Feuer auf …“ zeigt klein je
+    Waffe den Zielwert auf 2W6 (8 − DM, z. B. „Beam Laser 10+“); das Blatt schreibt jeden DM mit
+    seinem Grund aus (Entfernung mit Raumbändern, Pulse Laser, Computer-Treffer). Jeder Schuss hält
+    fest, woraus sein DM kam: `bands` (Entfernung in Raumbändern) und `computerHits` (Computer-Treffer
+    des Schützen); so erklären Würfe und Log den DM auch später noch, wenn sich Schaden und Entfernung
+    geändert haben.
   - **Treffer**: Ein Beam Laser macht einen Schadenswurf, ein Pulse Laser zwei; jeder ist 2W6 auf die
     Trefferzone für Starships (SE 12), bei 12 ein kritischer Treffer mit 1W6. Jeder Schuss ist ein
     Logeintrag `SpaceAttack` mit Raumrunde, Schütze, Ziel, Turret, Waffe, Würfeln, DM und den

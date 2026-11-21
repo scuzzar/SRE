@@ -42,9 +42,18 @@ import {
   lineOfSight,
   laserCountOf,
   fireBlocker,
+  firePreview,
+  shipWeaponOf,
 } from '../model';
 import { systemLook, type WorldLook } from './world-view';
-import { hitZoneNames, intentNames } from './time-view';
+import { dmLines, hitZoneNames, intentNames, type DmLine } from './time-view';
+
+/** Was die Laser des eigenen Schiffs auf die Einheit `index` jetzt bräuchten. */
+function fireLines(campaign: Campaign, index: number): SpaceUnitView['fire'] {
+  const preview = firePreview(campaign, 0, index);
+  if (preview === undefined) return [];
+  return preview.weapons.map((w) => ({ weapon: shipWeaponOf(w.weapon).name, count: w.count, parts: dmLines(w.parts, preview.bands, preview.computerHits), dm: w.dm, need: w.need }));
+}
 
 /** Die offene Raumkarte im Zustand des Controllers: die Welt, ein gezogener (noch nicht gesetzter) Schubvektor und die letzte Wiedergabe. */
 export interface OpenSpace {
@@ -93,6 +102,8 @@ export interface SpaceUnitView {
   readonly fired: boolean;
   /** Bei einem fremden Schiff: warum das eigene Schiff jetzt nicht auf es feuern kann (`undefined`: es kann). */
   readonly fireBlocker: string | undefined;
+  /** Bei einem fremden Schiff: was die Laser des eigenen Schiffs jetzt bräuchten, je Waffe mit DMs und Zielwert auf 2W6 (2026-11-21e). */
+  readonly fire: readonly { readonly weapon: string; readonly count: number; readonly parts: readonly DmLine[]; readonly dm: number; readonly need: number }[];
   /** Vom eigenen Schiff aus: Entfernung in Raumbändern, DM der Entfernung und ob die Sichtlinie frei ist. */
   readonly bands: number;
   readonly rangeDm: number;
@@ -295,6 +306,7 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
           lasers: laserCountOf(campaign, unit),
           fired: unit.fired,
           fireBlocker: unit.ship === undefined ? fireBlocker(campaign, 0, index) : undefined,
+          fire: unit.ship === undefined ? fireLines(campaign, index) : [],
           bands: bandOf(km),
           rangeDm: spaceRangeDm(bandOf(km)),
           sight: lineOfSight(scene, own.position, unit.position, t),

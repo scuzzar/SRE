@@ -538,10 +538,11 @@
     {
       "id": "2026-11-21e",
       "file": "2026-11-21e-feuer-ausloesen",
-      "title": "Raumkampf: Feuer wird ausgelöst statt vorgemerkt – jede Einheit feuert einmal je Raumrunde, nach der Bewegung (SpaceUnit.fired statt aim)",
+      "title": "Raumkampf: Feuer wird ausgelöst statt vorgemerkt – jede Einheit feuert einmal je Raumrunde, nach der Bewegung (SpaceUnit.fired statt aim); ein Schuss hält fest, woraus sein DM kam (SpaceAttack.bands, computerHits)",
       "approved": false,
       "show": [
-        "SystemFlight"
+        "SystemFlight",
+        "SpaceAttack"
       ]
     }
   ]

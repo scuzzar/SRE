@@ -343,6 +343,8 @@ hide <<browser>> stereotype
     turret: number
     dice: number[2]
     dm: number
+    $new("2026-11-21e", "bands: number")
+    $new("2026-11-21e", "computerHits: number")
     /hit: boolean
     hits: HitZone [*]
   }

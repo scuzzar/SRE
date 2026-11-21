@@ -126,6 +126,22 @@ function SpaceBattlePanel({ space, own }: { space: SpaceView; own: SpaceUnitView
           {foe.damage.length > 0 && <p className="space-foe-damage">Treffer: {foe.damage.join(', ')}</p>}
         </div>
       ))}
+      {target && target.fire.length > 0 && (
+        <div className="space-dms">
+          <p>
+            Treffer mit <b>2W6 + DM ≥ 8</b>, je Laser ein Wurf:
+          </p>
+          <ul>
+            {target.fire.map((w) => (
+              <li key={w.weapon}>
+                {w.count}× {w.weapon}: {w.parts.length === 0 ? '' : `8 ${w.parts.map((p) => `${p.dm < 0 ? '−' : '+'} ${Math.abs(p.dm)} ${p.label}`).join(' ')} → `}
+                <b>{w.need}+</b> auf 2W6
+              </li>
+            ))}
+          </ul>
+          {target.fire.every((w) => w.parts.length === 0) && <p className="muted">Keine DMs: bis 25 Raumbänder ohne Abzug.</p>}
+        </div>
+      )}
       <p className="space-own">
         <b>{own.name}</b> · {own.maxG} G · {own.lasers} Laser · {own.fired ? 'hat in dieser Raumrunde gefeuert' : target?.fireBlocker === undefined && target ? 'feuerbereit' : (target?.fireBlocker ?? 'kein Ziel')}
         {own.damage.length > 0 && <span className="negative"> · Treffer: {own.damage.join(', ')}</span>}
@@ -203,7 +219,8 @@ export function SpaceDock({ space }: { space: SpaceView }) {
     <div className="actions oracle-actions space-actions">
       {target && (
         <button type="button" className="action fire" disabled={target.fireBlocker !== undefined} title={target.fireBlocker} onClick={() => game.fireAt(target.index)}>
-          Feuer auf {target.name}
+          <span>Feuer auf {target.name}</span>
+          {target.fire.length > 0 && <small className="fire-need">{target.fire.map((w) => `${w.weapon} ${w.need}+`).join(' · ')}</small>}
         </button>
       )}
       <button type="button" className={target ? 'action soft' : 'action draw'} onClick={() => game.runRound()}>

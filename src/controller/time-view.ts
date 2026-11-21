@@ -64,6 +64,8 @@ import {
   type Intent,
   type BattleOutcome,
   HIT_TARGET,
+  dmPartsOf,
+  type SpaceDmPart,
   shipWeaponOf,
   flightHours,
   systemJourneyBlocker,
@@ -195,9 +197,27 @@ export interface SpaceAttackItem {
   readonly weapon: string;
   readonly dice: readonly number[];
   readonly dm: number;
+  /** Woraus der DM kommt, z. B. „Entfernung 31 RB (über 25)“ −2 (2026-11-21e); leer ohne DM. */
+  readonly parts: readonly DmLine[];
+  /** Was auf 2W6 nötig war: 8 − DM. */
+  readonly need: number;
   readonly total: number;
   readonly hit: boolean;
   readonly hits: readonly string[];
+}
+
+/** Ein DM mit seinem Grund, wie Blatt, Würfe und Log ihn schreiben. */
+export interface DmLine {
+  readonly label: string;
+  readonly dm: number;
+}
+
+/** Die DMs eines Laserschusses mit ihren Gründen (2026-11-21e). */
+export function dmLines(parts: readonly SpaceDmPart[], bands: number, computerHits: number): readonly DmLine[] {
+  return parts.map((p) => ({
+    label: p.reason === 'range' ? `Entfernung ${bands} RB (über ${bands > 50 ? 50 : 25})` : p.reason === 'pulse' ? 'Pulse Laser' : `Computer-Treffer${computerHits > 1 ? ` ×${computerHits}` : ''}`,
+    dm: p.dm,
+  }));
 }
 
 /** Das Ende eines Raumkampfs im Log (2026-11-21d). */
@@ -214,7 +234,9 @@ export function spaceBattleItem(entry: SpaceBattle): SpaceBattleItem {
 
 export function spaceAttackItem(entry: SpaceAttack): SpaceAttackItem {
   const total = entry.dice[0] + entry.dice[1] + entry.dm;
-  return { kind: 'spaceAttack', at: entry.at, round: entry.round, attacker: entry.attacker, target: entry.target, turret: entry.turret, weapon: shipWeaponOf(entry.weapon).name, dice: entry.dice, dm: entry.dm, total, hit: total >= HIT_TARGET, hits: entry.hits.map((h) => hitZoneNames[h]) };
+  // Einträge von vor 2026-11-21e kennen nur die Summe der DMs.
+  const parts = entry.bands === undefined ? (entry.dm === 0 ? [] : [{ label: 'DM', dm: entry.dm }]) : dmLines(dmPartsOf(entry.weapon, entry.bands, entry.computerHits ?? 0), entry.bands, entry.computerHits ?? 0);
+  return { kind: 'spaceAttack', at: entry.at, round: entry.round, attacker: entry.attacker, target: entry.target, turret: entry.turret, weapon: shipWeaponOf(entry.weapon).name, dice: entry.dice, dm: entry.dm, parts, need: HIT_TARGET - entry.dm, total, hit: total >= HIT_TARGET, hits: entry.hits.map((h) => hitZoneNames[h]) };
 }
 
 export function spaceBattleEndItem(entry: SpaceBattleEnd): SpaceBattleEndItem {

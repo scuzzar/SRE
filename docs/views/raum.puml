@@ -178,6 +178,8 @@ hide <<browser>> stereotype
     turret: number
     dice: number[2]
     dm: number
+    $new("2026-11-21e", "bands: number")
+    $new("2026-11-21e", "computerHits: number")
     /hit: boolean
     hits: HitZone [*]
   }
@@ -291,5 +293,6 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class SpaceAttack #line:d0021b;line.bold
 class SpaceUnit #line:d0021b;line.bold
 @enduml

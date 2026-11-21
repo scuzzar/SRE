@@ -45,7 +45,6 @@ export function SpaceVolley({ volley, onDone }: { volley: Volley; onDone: () => 
     );
   }
   const shot = shots[step.shot]!;
-  const dm = shot.dm === 0 ? '' : ` ${shot.dm > 0 ? '+' : '−'} ${Math.abs(shot.dm)}`;
   return (
     <div
       className="dice-roll space-volley"
@@ -61,12 +60,15 @@ export function SpaceVolley({ volley, onDone }: { volley: Volley; onDone: () => 
       <span className="space-volley-weapon">
         {shot.weapon} · Turret {shot.turret + 1} · Schuss {step.shot + 1}/{shots.length}
       </span>
+      <span className="space-volley-need">
+        braucht <b>{shot.need}+</b> auf 2W6
+        {shot.parts.length > 0 ? ` (8 ${shot.parts.map((p) => `${p.dm < 0 ? '−' : '+'} ${Math.abs(p.dm)} ${p.label}`).join(', ')})` : ' (keine DMs)'}
+      </span>
       <DiceView key={step.shot} dice={shot.dice} seed={volley.key * 31 + step.shot} landed={step.landed} />
       <div className={step.landed ? 'dice-sum shown' : 'dice-sum'}>
         <strong className={shot.hit ? 'space-hit' : 'space-miss'}>{shot.hit ? 'Treffer' : 'daneben'}</strong>
         <span>
-          {shot.dice[0]} + {shot.dice[1]}
-          {dm} = {shot.total} (8+)
+          {shot.dice[0]} + {shot.dice[1]} = {shot.total - shot.dm} · braucht {shot.need}+
         </span>
         {shot.hits.length > 0 && <span className="space-volley-zones">{shot.hits.join(' · ')}</span>}
       </div>

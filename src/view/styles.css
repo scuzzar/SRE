@@ -9687,3 +9687,30 @@ button:disabled {
   font-size: 22px;
   color: var(--gold);
 }
+
+/* DMs sauber erklärt (2026-11-21e) */
+.action.fire {
+  flex-direction: column;
+  gap: 2px;
+}
+.action.fire .fire-need {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+.space-dms {
+  font-size: 0.9em;
+}
+.space-dms p,
+.space-dms ul {
+  margin: 0;
+}
+.space-dms ul {
+  padding-left: 18px;
+}
+.space-volley-need {
+  font-size: 13px;
+  color: #f3e6c8;
+  text-align: center;
+  padding: 0 16px;
+}

@@ -395,8 +395,8 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
 
 /** Ein Laserschuss in Zahlen: „Beam Laser (Turret 1): 4 + 5 − 2 = 7 (8+)“ und die Trefferzonen. */
 export function spaceAttackDetail(item: SpaceAttackItem): string {
-  const dm = item.dm === 0 ? '' : ` ${item.dm > 0 ? '+' : '−'} ${Math.abs(item.dm)}`;
-  return `Runde ${item.round} · ${item.weapon} (Turret ${item.turret + 1}): ${item.dice[0]} + ${item.dice[1]}${dm} = ${item.total} (8+)${item.hits.length > 0 ? ` · ${item.hits.join(', ')}` : ''}`;
+  const parts = item.parts.map((p) => ` ${p.dm > 0 ? '+' : '−'} ${Math.abs(p.dm)} (${p.label})`).join('');
+  return `Runde ${item.round} · ${item.weapon} (Turret ${item.turret + 1}): ${item.dice[0]} + ${item.dice[1]}${parts} = ${item.total}, 8+ nötig${item.hits.length > 0 ? ` · ${item.hits.join(', ')}` : ''}`;
 }
 
 /** Ein Test in Zahlen: „3 (5+ nötig): heute keine Begegnung“, bei der Polizei mit Gesetz und Reaktion. */

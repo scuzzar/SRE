@@ -47,7 +47,7 @@
 !return ""
 !endfunction
 !pragma layout smetana
-title Änderung 2026-11-21e: Raumkampf: Feuer wird ausgelöst statt vorgemerkt – jede Einheit feuert einmal je Raumrunde, nach der Bewegung (SpaceUnit.fired statt aim)
+title Änderung 2026-11-21e: Raumkampf: Feuer wird ausgelöst statt vorgemerkt – jede Einheit feuert einmal je Raumrunde, nach der Bewegung (SpaceUnit.fired statt aim); ein Schuss hält fest, woraus sein DM kam (SpaceAttack.bands, computerHits)
 hide empty members
 hide methods
 skinparam classAttributeIconSize 0
@@ -88,7 +88,20 @@ hide <<browser>> stereotype
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class SystemFlight $raum
   class ShipDamage <<value>> $raum
+  enum HitZone <<value>> $raum
   enum Intent <<value>> $raum
+  class SpaceAttack $raum {
+    round: number
+    attacker: string
+    target: string
+    turret: number
+    dice: number[2]
+    dm: number
+    $new("2026-11-21e", "bands: number")
+    $new("2026-11-21e", "computerHits: number")
+    /hit: boolean
+    hits: HitZone [*]
+  }
   class SpaceUnit $raum {
     position: Vec
     velocity: Vec
@@ -125,6 +138,7 @@ SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
 SpaceUnit "1" *-- "0..1" ShipDamage : damage
 SpaceUnit "*" -$goneArrow("2026-11-21e")-> "0..1" SpaceUnit : aim
 SpaceUnit --> Intent
+SpaceAttack --> HitZone
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
 
 ' Zeit und Reisen
@@ -157,5 +171,6 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class SpaceAttack #line:d0021b;line.bold
 class SpaceUnit #line:d0021b;line.bold
 @enduml

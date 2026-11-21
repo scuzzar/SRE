@@ -152,7 +152,8 @@ export function battleRunning(campaign: Campaign): boolean {
 
 /** Das Raumband einer Entfernung: Entfernung ÷ 10.000 km, aufgerundet (Hausregel, mindestens 1). */
 export function bandOf(km: number): number {
-  return Math.max(1, Math.ceil(km / BAND_KM));
+  // Ein Hauch Spielraum, damit genau 70.000 km nicht durch Rundung 8 Raumbänder werden.
+  return Math.max(1, Math.ceil(km / BAND_KM - 1e-9));
 }
 
 /** Der DM der Entfernung (SE 12): über 25 Raumbänder −2, über 50 −5. */
@@ -312,6 +313,8 @@ interface Shot {
   readonly turret: number;
   readonly weapon: string;
   readonly dm: number;
+  readonly bands: number;
+  readonly computerHits: number;
 }
 
 /** Die Schüsse einer Einheit auf `to`: jeder arbeitende Laser einzeln, mit Sichtlinie und höchstens 90 Raumbändern. */
@@ -322,8 +325,52 @@ function shotsOf(campaign: Campaign, flight: SystemFlight, scene: Scene, from: n
   const damage = damageOfUnit(campaign, a);
   const bands = bandOf(lengthOf({ x: a.position.x - b.position.x, y: a.position.y - b.position.y }));
   if (bands > TRACKING_BANDS || !lineOfSight(scene, a.position, b.position, t)) return [];
-  const base = spaceRangeDm(bands) - count(damage, 'computer');
-  return workingLasers(turretsOfUnit(campaign, a), damage).map(({ turret, weapon }) => ({ from, to, turret, weapon, dm: base + (weapon === 'pulse-laser' ? -1 : 0) }));
+  const computerHits = count(damage, 'computer');
+  return workingLasers(turretsOfUnit(campaign, a), damage).map(({ turret, weapon }) => ({ from, to, turret, weapon, bands, computerHits, dm: sumDms(dmPartsOf(weapon, bands, computerHits)) }));
+}
+
+/** Ein Teil des DM eines Laserschusses (2026-11-21e): wofür und wie viel. */
+export interface SpaceDmPart {
+  readonly reason: 'range' | 'pulse' | 'computer';
+  readonly dm: number;
+}
+
+/** Die DMs eines Laserschusses (SE 12, Hausregel Computer): Entfernung über 25 bzw. 50 Raumbänder, Pulse Laser, je Computer-Treffer −1; nur die, die zählen. */
+export function dmPartsOf(weapon: string, bands: number, computerHits: number): readonly SpaceDmPart[] {
+  const parts: SpaceDmPart[] = [];
+  if (spaceRangeDm(bands) !== 0) parts.push({ reason: 'range', dm: spaceRangeDm(bands) });
+  if (weapon === 'pulse-laser') parts.push({ reason: 'pulse', dm: -1 });
+  if (computerHits > 0) parts.push({ reason: 'computer', dm: -computerHits });
+  return parts;
+}
+
+const sumDms = (parts: readonly SpaceDmPart[]) => parts.reduce((n, p) => n + p.dm, 0);
+
+/** Was ein Schuss von `from` auf `to` jetzt bräuchte (2026-11-21e): Entfernung, Computer-Treffer und je Waffe Anzahl, DMs und der nötige Wurf auf 2W6. */
+export interface FirePreview {
+  readonly bands: number;
+  readonly computerHits: number;
+  readonly weapons: readonly { readonly weapon: string; readonly count: number; readonly parts: readonly SpaceDmPart[]; readonly dm: number; readonly need: number }[];
+}
+
+export function firePreview(campaign: Campaign, from: number, to: number): FirePreview | undefined {
+  const flight = activeFlight(campaign);
+  const a = flight.units[from];
+  const b = flight.units[to];
+  if (a === undefined || b === undefined) return undefined;
+  const damage = damageOfUnit(campaign, a);
+  const bands = bandOf(lengthOf({ x: a.position.x - b.position.x, y: a.position.y - b.position.y }));
+  const computerHits = count(damage, 'computer');
+  const weapons = new Map<string, number>();
+  for (const { weapon } of workingLasers(turretsOfUnit(campaign, a), damage)) weapons.set(weapon, (weapons.get(weapon) ?? 0) + 1);
+  return {
+    bands,
+    computerHits,
+    weapons: [...weapons].map(([weapon, n]) => {
+      const parts = dmPartsOf(weapon, bands, computerHits);
+      return { weapon, count: n, parts, dm: sumDms(parts), need: HIT_TARGET - sumDms(parts) };
+    }),
+  };
 }
 
 /** Würfelt die Trefferzonen eines Treffers: Beam Laser einen Schadenswurf, Pulse Laser zwei; bei 12 kritisch (1W6). */
@@ -391,6 +438,8 @@ function fire(campaign: Campaign, shots: readonly Shot[], random: Random, clock:
       weapon: shot.weapon,
       dice,
       dm: shot.dm,
+      bands: shot.bands,
+      computerHits: shot.computerHits,
       hits: zones,
     };
     log.push(entry);

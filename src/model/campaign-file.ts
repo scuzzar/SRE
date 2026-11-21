@@ -150,7 +150,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
   }),
   z.object({ kind: z.literal('skimming'), at, day, place, giant: z.string().min(1), ship: z.string().min(1), tons: z.number().int().min(1) }),
   z.object({ kind: z.literal('spaceBattle'), at, day, place, foe: z.string().min(1), design: z.string().min(1), intent: z.enum(intents), encounter: dice.optional(), reaction: dice.optional(), attack: dice.optional() }),
-  z.object({ kind: z.literal('spaceAttack'), at, day, place, round: z.number().int().min(1), attacker: z.string().min(1), target: z.string().min(1), turret: z.number().int().min(0), weapon: z.string().min(1), dice, dm: z.number().int(), hits: z.array(z.enum(hitZones)).max(4) }),
+  z.object({ kind: z.literal('spaceAttack'), at, day, place, round: z.number().int().min(1), attacker: z.string().min(1), target: z.string().min(1), turret: z.number().int().min(0), weapon: z.string().min(1), dice, dm: z.number().int(), bands: z.number().int().min(1).optional(), computerHits: z.number().int().min(0).optional(), hits: z.array(z.enum(hitZones)).max(4) }),
   z.object({ kind: z.literal('spaceBattleEnd'), at, day, place, foe: z.string().min(1), outcome: z.enum(battleOutcomes) }),
   z.object({ kind: z.literal('systemJourney'), at, day, place, from: z.string().min(1), to: z.string().min(1), hours: z.number().int(), travellers: z.array(z.string().min(1)), ship: z.string().min(1).optional() }),
 ]);
@@ -768,7 +768,7 @@ function fileEntryOf(entry: WithoutDay<FileEntry>): LogEntry {
     case 'spaceBattle':
       return stripped(entry) as SpaceBattle;
     case 'spaceAttack':
-      return { ...entry, hits: [...entry.hits] } as SpaceAttack;
+      return stripped({ ...entry, hits: [...entry.hits] }) as SpaceAttack;
     case 'tripDay':
       return stripped(entry) as TripDay;
     case 'check':

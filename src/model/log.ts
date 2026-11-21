@@ -151,6 +151,9 @@ export interface SpaceAttack extends LogEntryBase {
   readonly weapon: string;
   readonly dice: Dice;
   readonly dm: number;
+  /** Woraus der DM kam (2026-11-21e): Entfernung in Raumbändern und Computer-Treffer des Schützen; fehlt in Einträgen von vorher. */
+  readonly bands?: number;
+  readonly computerHits?: number;
   readonly hits: readonly HitZone[];
 }
 

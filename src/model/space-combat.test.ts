@@ -18,6 +18,8 @@ import {
   runRound,
   fireAt,
   fireBlocker,
+  dmPartsOf,
+  firePreview,
   startFlight,
   toCampaignFile,
   type Campaign,
@@ -154,5 +156,20 @@ describe('Raumkampf: ein fremdes Schiff (2026-11-21d)', () => {
     const c = placeFoe(flying(), 'A', 'attack', clock);
     expect(endFlight(c, clock).log.at(-1)).toMatchObject({ kind: 'spaceBattleEnd', outcome: 'broken' });
     expect(addShip).toBeDefined();
+  });
+
+  it('erklärt die DMs: Entfernung, Pulse Laser, Computer-Treffer; der Zielwert ist 8 − DM (2026-11-21e)', () => {
+    expect(dmPartsOf('beam-laser', 20, 0)).toEqual([]);
+    expect(dmPartsOf('pulse-laser', 31, 2)).toEqual([
+      { reason: 'range', dm: -2 },
+      { reason: 'pulse', dm: -1 },
+      { reason: 'computer', dm: -2 },
+    ]);
+    expect(dmPartsOf('beam-laser', 51, 0)).toEqual([{ reason: 'range', dm: -5 }]);
+    const c = placeFoe(flying(), 'A', 'ignore', clock);
+    expect(firePreview(c, 0, 1)).toEqual({ bands: 7, computerHits: 0, weapons: [{ weapon: 'beam-laser', count: 1, parts: [], dm: 0, need: 8 }] });
+    // Der Schuss hält fest, woraus sein DM kam.
+    const shot = fireAt(c, 0, 1, always(2), clock).campaign.log.find((e) => e.kind === 'spaceAttack');
+    expect(shot).toMatchObject({ bands: 7, computerHits: 0, dm: 0 });
   });
 });
