@@ -2420,10 +2420,9 @@ export class GameController {
     if (!at) throw new DomainError('Es ist keine Welt offen.');
     const hex = hexAt(this.campaign.hexes, at.column, at.row);
     if (!isWorld(hex)) throw new DomainError('Dort ist keine fertige Welt.');
-    // Läuft hier ein Systemflug, geht die Raumkarte seiner Welt auf; sonst die gewählte oder die der Hauptwelt.
-    const flying = this.campaign.flight && hexIdOfWorld(this.campaign.flight.world) === hexId(at.column, at.row) ? this.campaign.flight.world : undefined;
-    const id = world ?? flying ?? (spaceChoices(hex).some((c) => c.id === openWorldId(at)) ? openWorldId(at) : hex.main!);
-    if (!spaceChoices(hex).some((c) => c.id === id)) throw new DomainError('Eine Raumkarte haben die Hauptwelt und die Gasriesen.');
+    // Die Raumkarte um die Welt der offenen Weltkarte (Owner, 21. November 2026); im Blatt lassen sich die übrigen wählen.
+    const id = world ?? openWorldId(at);
+    if (!spaceChoices(hex, openWorldId(at)).some((c) => c.id === id)) throw new DomainError('Um einen Ring gibt es keine Raumkarte.');
     this.update({ space: { world: id }, globe: this.state.globe && { picked: undefined } });
   }
 

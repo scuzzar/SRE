@@ -285,7 +285,7 @@ export function startFlight(campaign: Campaign, world: string, clock: Clock): Ca
   // Am Gasriesen darf er von der Welt aus beginnen, auf der die Gruppe ist (wie man hinkommt, bleibt offen, 2026-11-18d).
   if (campaign.location === undefined || hexIdOfWorld(campaign.location.world) !== hexIdOfWorld(world)) throw new DomainError('Ein Systemflug beginnt nur im System, in dem die Gruppe ist.');
   const target = worldOf(campaign.hexes, world);
-  if (target.id !== hexById(campaign.hexes, hexIdOfWorld(world))?.main && target.kind !== 'giant') throw new DomainError('Eine Raumkarte haben die Hauptwelt und die Gasriesen.');
+  if (target.kind === 'ring') throw new DomainError('Um einen Ring gibt es keine Raumkarte.');
   if (campaign.encounters.some((e) => !e.ended)) throw new DomainError('Während einer laufenden Begegnung beginnt kein Systemflug.');
   if (campaign.trip !== undefined) throw new DomainError('Erst die Fahrt beenden, dann fliegen.');
   const ship = activeShip(campaign);

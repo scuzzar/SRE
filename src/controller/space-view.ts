@@ -22,7 +22,6 @@ import {
   STEP_SECONDS,
   thrustMarks,
   worldById,
-  worldOf,
   type Campaign,
   type Hex,
   type Scene,
@@ -128,15 +127,20 @@ const sub = (a: Vec, b: Vec): Vec => ({ x: a.x - b.x, y: a.y - b.y });
 
 /** Der Name einer Welt des Systems auf der Raumkarte: die Hauptwelt mit ihrem Namen, sonst nach ihrer Art. */
 function bodyName(hex: Hex, world: World): string {
-  if (world.id === hex.main) return world.name ?? world.id;
+  if (world.name !== undefined) return world.name;
+  if (world.id === hex.main) return world.id;
   if (world.kind === 'giant') return world.large ? 'Großer Gasriese' : 'Kleiner Gasriese';
-  if (world.kind === 'small') return 'Kleine Welt';
-  return 'Mond';
+  // Ohne Namen heißt eine Nebenwelt wie auf Weltkarte und im Log nach der Hauptwelt mit ihrer Nummer.
+  const main = hex.worlds.find((w) => w.id === hex.main);
+  return `${main?.name ?? hex.main} ${world.id.split('-')[1]}`;
 }
 
-/** Die Raumkarten, die ein System anbietet: die Hauptwelt und jeder Gasriese (2026-11-18d). */
-export function spaceChoices(hex: Hex): readonly { readonly id: string; readonly name: string }[] {
-  return hex.worlds.filter((w) => w.id === hex.main || w.kind === 'giant').map((w) => ({ id: w.id, name: bodyName(hex, w) }));
+/**
+ * Die Raumkarten, die das Blatt zur Wahl anbietet: die Welt der Weltkarte (jede außer Ringen, Owner,
+ * 21. November 2026), die Hauptwelt und jeder Gasriese.
+ */
+export function spaceChoices(hex: Hex, current?: string): readonly { readonly id: string; readonly name: string }[] {
+  return hex.worlds.filter((w) => w.kind !== 'ring' && (w.id === current || w.id === hex.main || w.kind === 'giant')).map((w) => ({ id: w.id, name: bodyName(hex, w) }));
 }
 
 /** Die Körper der Szene außer der Welt, von ihr aus gesehen zur Zeit `t`. */
@@ -175,7 +179,7 @@ function bodiesOf(hex: Hex, scene: Scene, worldId: string, t: number, run: OpenS
 export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | undefined {
   const hex = hexById(campaign.hexes, hexIdOfWorld(space.world));
   if (!isWorld(hex) || !worldById(campaign.hexes, space.world)) return undefined;
-  const world = worldOf(campaign.hexes, space.world);
+  const world = worldById(campaign.hexes, space.world)!;
   const scene = sceneOf(campaign.hexes, space.world);
   const center = hex.worlds.find((w) => w.id === scene.center)!;
   const look = systemLook(hex, world)!;
@@ -208,7 +212,7 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
     jumpLimits: ten === undefined || hundred === undefined ? [] : [{ km: ten, dm: 15 }, { km: hundred, dm: 5 }],
     band: BAND_KM,
     here,
-    choices: spaceChoices(hex),
+    choices: spaceChoices(hex, space.world),
     startBlocker: blocker,
     elsewhere: campaign.flight && !flight ? campaign.flight.world : undefined,
     flight: flight && {

@@ -2284,6 +2284,23 @@ describe('Nebenwelten und Reise im System (2026-11-20d)', () => {
     expect(game.snapshot().globe?.id).toBe(body.id);
   });
 
+  it('„Raum“ öffnet die Raumkarte um die Welt der offenen Weltkarte, auch um eine Nebenwelt (Owner, 21. November 2026)', async () => {
+    const { game } = await started();
+    game.openGlobeAt(4, 5);
+    game.openSpace();
+    expect(game.snapshot().space?.world.id).toBe('0405');
+    game.closeSpace();
+    const body = game.snapshot().world!.system!.orbits.flatMap((o) => [o.body, ...o.moons]).find((b) => b.openable && !b.main && b.label.startsWith('Welt'))!;
+    game.openWorld(body.id!);
+    game.openSpace();
+    const space = game.snapshot().space!;
+    expect(space.world.id).toBe(body.id);
+    expect(space.choices.map((c) => c.id)).toContain(body.id);
+    expect(space.choices.map((c) => c.id)).toContain('0405');
+    game.startFlight();
+    expect(game.snapshot().space?.flight?.round).toBe(1);
+  });
+
   it('bei jeder Ankunft entstehen Oberfläche und Globus der Welt, auch ohne Reise', async () => {
     const { game } = await started();
     game.openGlobeAt(4, 5);

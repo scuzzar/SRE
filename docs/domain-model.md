@@ -3139,7 +3139,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Mitte, die Hauptwelt und die übrigen Monde auf ihren Bahnen. Der Systemflug beginnt dann auf
     einer Kreisbahn um die Hauptwelt mit doppeltem Weltradius, mitbewegt mit ihr.
   - **Raumkarte am Gasriesen** (`SystemFlight.at`): Der Knopf „Raum“ bietet die Welt und jeden
-    Gasriesen des Systems an. Am Gasriesen steht er in der Mitte, seine Monde kreisen um ihn,
+    Gasriesen des Systems an. Geändert am 21. November 2026 (Owner): „Raum“ öffnet die Raumkarte um
+    die Welt der offenen Weltkarte, auch um eine Nebenwelt oder einen Mond (nicht um einen Ring);
+    das Blatt bietet daneben die Hauptwelt und jeden Gasriesen an, und der Systemflug darf an jeder
+    dieser Welten beginnen. Am Gasriesen steht er in der Mitte, seine Monde kreisen um ihn,
     Sprunggrenzen nach seinem Durchmesser. Der Systemflug beginnt wie an der Welt (Aufenthaltsort,
     eigenes Schiff, Kreisbahn mit doppeltem Radius). ⚑ Wie das Schiff von der Welt zum Gasriesen
     kommt (eine Reise im System, Tage bei 1 G), bleibt offen; bis dahin darf der Systemflug am
