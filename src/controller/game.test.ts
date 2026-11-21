@@ -2283,6 +2283,27 @@ describe('Nebenwelten und Reise im System (2026-11-20d)', () => {
     expect(game.snapshot().globe?.id).toBe(body.id);
   });
 
+  it('Landeplatz (2026-11-21): Mit dem Globus fragt der Dialog nach Hafen oder anderem Ort; das Schiff steht danach dort', async () => {
+    const { game } = await started();
+    openWithGlobe(game, 4, 5);
+    const landing = game.snapshot().landing!;
+    expect(landing).toMatchObject({ world: '0405', name: 'Kessra', free: true, picking: false });
+    expect(landing.ports.length).toBeGreaterThan(0);
+    // „Anderer Ort“: auf dem Globus ein Feld antippen, „Zurück“ führt zum Dialog.
+    game.startFreeLanding();
+    expect(game.snapshot().landing?.picking).toBe(true);
+    expect(game.snapshot().globe?.landing).toBe(true);
+    game.cancelFreeLanding();
+    expect(game.snapshot().landing?.picking).toBe(false);
+    game.startFreeLanding();
+    const city = new Set(game.snapshot().globe!.cities.map((c) => c.cell));
+    const cell = [...Array(200).keys()].find((i) => !city.has(i))!;
+    game.pickCell(cell);
+    game.landHere();
+    expect(game.snapshot().landing).toBeUndefined();
+    expect(game.snapshot().globe?.shipCell).toBe(cell);
+  });
+
   it('„Raum“ öffnet die Raumkarte um die Welt der offenen Weltkarte, auch um eine Nebenwelt (Owner, 21. November 2026)', async () => {
     const { game } = await started();
     game.openGlobeAt(4, 5);

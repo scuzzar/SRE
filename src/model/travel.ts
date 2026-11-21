@@ -8,6 +8,7 @@ import { sum, type Dice } from './rules';
 import { hexById, hexId, hexIdOfWorld, worldOf, type Hex, type World } from './sector';
 import { bookShip, fundsOf, locationOf, type Booking } from './shop';
 import { jumpFuelOf, shipOf } from './ship';
+import { portDepartureBlocker, shipDepartureBlocker, shipArrives, leaveShipBehind } from './landing';
 import { afterTime, arrive, LIFE_SUPPORT, PER_STATEROOM } from './upkeep';
 import { parkVehicles } from './trip';
 import { dayOf, JOURNEY_DAYS } from './time';
@@ -66,6 +67,9 @@ export function journeyBlocker(campaign: Campaign, to: string): string | undefin
   if (!hasStarport(targetWorld)) return 'Diese Welt hat keinen Raumhafen mit Linienverkehr.';
   const distance = parsecs(hexById(campaign.hexes, hexIdOfWorld(campaign.location.world))!, target);
   if (distance > MAX_JUMP) return `${distance} Parsec sind zu weit; eine Passage reicht bis Sprung ${MAX_JUMP}.`;
+  // Passagen fliegen nur von einem Hafen ab, nicht aus der Pampa (2026-11-21).
+  const port = portDepartureBlocker(campaign);
+  if (port) return port;
   if (campaign.encounters.some((e) => !e.ended)) return 'Während einer laufenden Begegnung reist man nicht.';
   if (travellersOf(campaign).length === 0) return 'Es gibt keinen lebenden Charakter, der reisen könnte.';
   return undefined;
@@ -176,6 +180,9 @@ export function shipJourneyBlocker(campaign: Campaign, to: string): string | und
   if (!target || target.empty) return 'Hier gibt es keine Welt.';
   worldOf(campaign.hexes, to);
   const plan = shipDesignOf(ship.design);
+  // Abfliegen kann das Schiff nur, wenn die Gruppe bei ihm ist (2026-11-21).
+  const away = shipDepartureBlocker(campaign);
+  if (away) return away;
   const distance = parsecs(hexById(campaign.hexes, hexIdOfWorld(campaign.location.world))!, target);
   if (distance > plan.jump) return `${distance} Parsec sind zu weit; ${plan.name} springt höchstens ${plan.jump}.`;
   const per = jumpFuelOf(ship.design);
@@ -223,7 +230,8 @@ export function travelShip(campaign: Campaign, to: string, random: Random, clock
     day: today + JOURNEY_DAYS,
     location: worldPlace(to),
   };
-  return keepFocus(campaign, arrive(afterTime(after, today, clock), clock));
+  // Das Schiff steht danach auf der Zielwelt; das Feld wählt der Landeplatz (2026-11-21).
+  return keepFocus(campaign, arrive(afterTime(shipArrives(after, to), today, clock), clock));
 }
 
 /**
@@ -243,8 +251,9 @@ export function travel(
 ): Campaign {
   const blocker = journeyBlocker(campaign, to);
   if (blocker) throw new DomainError(blocker);
-  // Eigene Fahrzeuge bleiben am Aufenthaltsort, eine Fahrt fällt weg (siehe domain-model.md, *Fahrt*).
-  campaign = parkVehicles(campaign);
+  // Eigene Fahrzeuge bleiben am Aufenthaltsort, eine Fahrt fällt weg (siehe domain-model.md, *Fahrt*);
+  // das eigene Schiff bleibt, wo es steht (2026-11-21).
+  campaign = leaveShipBehind(parkVehicles(campaign));
   const from = campaign.location!.world;
   const travellers = travellersOf(campaign);
   for (const c of travellers) if (!passages.includes(choice[c.id] as PassageId)) throw new DomainError(`Für ${c.name} fehlt die Passage.`);
@@ -305,8 +314,6 @@ export function travel(
     log: [...campaign.log, journey],
     day: today + JOURNEY_DAYS,
     location: worldPlace(to),
-    // Das Schiff ist, wo die Gruppe ist (Hausregel, 2026-11-17b): Es liegt erst am Ziel wieder im Hafen.
-    ships: campaign.ships.map((s) => (s.retired ? s : { ...s, berthedSince: today + JOURNEY_DAYS })),
   };
   return keepFocus(campaign, arrive(afterTime(after, today, clock), clock));
 }

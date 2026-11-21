@@ -9275,6 +9275,27 @@ button:disabled {
   cursor: default;
 }
 
+.landing-ports {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0 12px;
+  /* Viele Häfen: Die Liste läuft für sich, „Anderer Ort“ bleibt darunter sichtbar. */
+  max-height: 50vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.landing-port {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 12px;
+}
+
 .space-land {
   color: #7ee08a;
 }

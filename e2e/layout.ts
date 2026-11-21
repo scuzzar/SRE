@@ -74,9 +74,40 @@ export async function openHomeGlobe(page: Page) {
   await page.getByRole('button', { name: /^Aufenthaltsort .*Globus öffnen/ }).click();
   const create = page.getByRole('button', { name: 'Globus erzeugen' });
   await expect(page.locator('.globe-full').or(create).first()).toBeVisible();
-  if (await create.isVisible()) await create.click();
+  const created = await create.isVisible();
+  if (created) await create.click();
   await page.locator('.loading-overlay').waitFor({ state: 'detached', timeout: 30_000 });
   await expect(page.locator('.globe-full')).toBeVisible();
+  // Mit dem neuen Globus wählt die Gruppe zuerst ihren Landeplatz (2026-11-21).
+  if (created) await land(page);
+  else await landAtFirstPort(page);
+}
+
+/** Fragt die App nach dem Landeplatz (2026-11-21), landet die Gruppe am ersten Hafen. */
+export async function landAtFirstPort(page: Page) {
+  const dialog = page.getByRole('dialog', { name: /^Landeplatz auf / });
+  if (await dialog.isVisible()) await land(page);
+}
+
+/**
+ * Wartet auf den Dialog Landeplatz (2026-11-21) und landet am ersten Hafen; hat die Welt keinen, an
+ * einem beliebigen Ort (Mitte des Globus, „Hier landen“).
+ */
+export async function land(page: Page) {
+  const dialog = page.getByRole('dialog', { name: /^Landeplatz auf / });
+  await dialog.waitFor();
+  const ports = dialog.getByRole('group', { name: 'Häfen' }).getByRole('button');
+  if ((await ports.count()) > 0) {
+    await ports.first().click();
+  } else {
+    await dialog.getByRole('button', { name: /Anderer Ort/ }).click();
+    await page.locator('.loading-overlay').waitFor({ state: 'detached', timeout: 30_000 });
+    const canvas = page.locator('.globe-full').getByRole('img', { name: /^Globus von / });
+    const box = (await canvas.boundingBox())!;
+    await canvas.click({ position: { x: box.width / 2, y: box.height / 2 } });
+    await page.getByRole('region', { name: 'Landeplatz' }).getByRole('button', { name: 'Hier landen' }).click();
+  }
+  await expect(dialog).toHaveCount(0);
 }
 
 /** Auf dem Globus des Aufenthaltsorts die Hauptstadt antippen (über „Orte“); öffnet erst den Globus, wenn nötig. */

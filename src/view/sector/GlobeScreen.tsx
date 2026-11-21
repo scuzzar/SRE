@@ -654,6 +654,7 @@ export function FieldCard({
         {picked.river && <li>Fluss</li>}
         {picked.road && <li>Straße</li>}
         {globe.partyCell === picked.cell && <li>Die Gruppe ist hier</li>}
+        {globe.shipCell === picked.cell && <li>Das Schiff steht hier</li>}
         {globe.vehicles.some((v) => v.cell === picked.cell) && <li>Eigene Fahrzeuge stehen hier</li>}
         {picked.npcs.map((n) => (
           <li key={n.id}>
@@ -831,6 +832,8 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
   for (const n of globe.npcs) if (n.cell !== undefined) npcCells.set(n.cell, (npcCells.get(n.cell) ?? 0) + 1);
   for (const [cell, count] of npcCells) badge(cell, -8, -8, 'rgba(190,150,255,0.95)', count > 1 ? String(count) : 'N');
   if (globe.partyCell !== undefined) badge(globe.partyCell, 0, 10, 'rgba(110,200,255,1)', 'G');
+  // Das Schiff der Gruppe, wo es steht (2026-11-21).
+  if (globe.shipCell !== undefined) badge(globe.shipCell, 10, 0, 'rgba(255,235,120,1)', 'S');
   // Offene Missionen: eine rote Fahne am Feld (2026-11-18).
   for (const cell of globe.missionCells) {
     const p = at(cell);

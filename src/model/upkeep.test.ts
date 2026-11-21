@@ -156,11 +156,12 @@ describe('Liegegebühren', () => {
     expect(weeks(lost, 2).bookings).toHaveLength(lost.bookings.length);
   });
 
-  it('Gruppe platzieren: das Schiff kommt mit und zahlt am neuen Hafen Cr100 für die ersten sechs Tage', () => {
+  it('Gruppe platzieren: das Schiff bleibt, wo es stand (2026-11-21), und zahlt dort weiter', () => {
     const scout = addShip(onRegina(10_000), 'S', undefined).campaign;
     const moved = placeGroup({ ...scout, day: START_DAY + 3 }, '0201', clock);
-    expect(activeShip(moved).berthedSince).toBe(START_DAY + 3);
-    expect(moved.bookings.at(-1)).toMatchObject({ amount: -100, shipCost: 'berthing', text: 'Liegegebühr bei der Ankunft' });
+    expect(activeShip(moved).place).toEqual({ world: '0101' });
+    expect(activeShip(moved).berthedSince).toBe(activeShip(scout).berthedSince);
+    expect(moved.bookings.filter((b) => b.shipCost === 'berthing')).toHaveLength(scout.bookings.filter((b) => b.shipCost === 'berthing').length);
     expect(placeGroup(scout, '0101', clock)).toEqual(scout); // dieselbe Welt: keine neue Ankunft
   });
 
@@ -209,11 +210,12 @@ describe('Reise mit eigenem Schiff: Kabinen und Lebenserhaltung', () => {
     expect(costsOf(after, after.log.at(-1) as MonthEnd).map((c) => c.booking.shipCost)).toEqual(['lifeSupport']);
   });
 
-  it('mit Passagen kommt das Schiff mit (Hausregel) und liegt erst am Ziel wieder im Hafen', () => {
+  it('mit Passagen bleibt das Schiff, wo es stand (2026-11-21), und liegt dort weiter im Hafen', () => {
     const [kira, jonas] = scout.characters.map((c) => c.id) as [string, string];
     const rich = book(scout, 'income', 100_000, clock);
     const after = travel(rich, '0201', { [kira]: 'middle-passage', [jonas]: 'middle-passage' }, {}, undefined, fixedRandom(), clock);
-    expect(activeShip(after).berthedSince).toBe(START_DAY + 7);
-    expect(after.bookings.filter((b) => b.shipCost === 'berthing').map((b) => b.text)).toEqual(['Liegegebühr bei der Ankunft']);
+    expect(activeShip(after).place).toEqual({ world: '0101' });
+    expect(after.location).toEqual({ world: '0201' });
+    expect(after.bookings.filter((b) => b.shipCost === 'berthing').map((b) => b.text)).not.toContain('Liegegebühr bei der Ankunft');
   });
 });

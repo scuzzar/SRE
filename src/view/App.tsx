@@ -29,6 +29,7 @@ import { SectorPicker, SectorScreen } from './sector/SectorScreen';
 import { useWorldDock } from './sector/WorldSheet';
 import { JourneySheet } from './sector/JourneySheet';
 import { SystemJourneySheet } from './sector/SystemJourneySheet';
+import { LandingDock, LandingSheet } from './sector/LandingSheet';
 import { FieldCard, GlobeScreen } from './sector/GlobeScreen';
 import { TripRollDialog } from './sector/TripPanels';
 import { FieldDock } from './sector/FieldDock';
@@ -166,7 +167,9 @@ export function App() {
   // Im Reiter Begegnung: die Würfe der Begegnungen und die Zeit bzw. Weiterfahren.
   const encounterDock = screen === 'encounter' && field === undefined ? <EncounterDock view={view} options={encounterOptions} /> : undefined;
   const spaceDock = view.space ? <SpaceDock space={view.space} /> : undefined;
-  const own = spaceDock ?? fieldDock ?? (view.picking ? undefined : worldDock.foot) ?? encounterDock;
+  // Beim Landeplatz auf dem Globus steht unten „Hier landen“ (2026-11-21).
+  const landingDock = view.landing?.picking && view.globe ? <LandingDock globe={view.globe} /> : undefined;
+  const own = landingDock ?? spaceDock ?? fieldDock ?? (view.picking ? undefined : worldDock.foot) ?? encounterDock;
   const foot = own ?? ((desktop || screen === 'oracle') && field === undefined ? dock : undefined);
 
   // Die Grundkarte: der Globus der offenen Welt, sonst der Subsektor. Oben rechts das Menü.
@@ -246,6 +249,7 @@ export function App() {
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
       {view.journey && <JourneySheet journey={view.journey} />}
       {view.systemJourney && <SystemJourneySheet journey={view.systemJourney} />}
+      {view.landing && !view.landing.picking && !view.systemJourney && !view.journey && <LandingSheet landing={view.landing} />}
       {view.card && !view.card.forNote && <CardSheet card={view.card} />}
       {view.tripRoll && <TripRollDialog roll={view.tripRoll} />}
       {view.encounterChoice && <EncounterChoiceDialog kind={view.encounterChoice} view={view} />}

@@ -25,6 +25,7 @@ import {
   worldOf,
   gridSize,
   diameterKm,
+  shipOf,
 } from '../model';
 import { systemLook, type WorldLook } from './world-view';
 
@@ -105,6 +106,10 @@ export interface GlobeView {
   /** Die Gruppe ist auf dieser Welt; `partyCell` ist ihr Feld, wenn sie eins hat. */
   readonly partyHere: boolean;
   readonly partyCell: number | undefined;
+  /** Das Feld, auf dem das Schiff der Gruppe auf dieser Welt steht (2026-11-21); fehlt sonst. */
+  readonly shipCell: number | undefined;
+  /** Der Landeplatz wird gerade gewählt: ein Feld antippen und „Hier landen“. */
+  readonly landing: boolean;
   /** Die dauerhaften NSC dieser Welt (lebend). */
   readonly npcs: readonly GlobeNpc[];
   /** Felder mit Logeinträgen: wie viele, ein Name für die Liste und der neueste Eintrag; das jüngste Feld zuerst. */
@@ -157,7 +162,7 @@ export function position(grid: SurfaceGrid, cell: number): string {
 }
 
 /** Der Globus der Welt `worldId` (Hauptwelt oder Nebenwelt, 2026-11-20d); `undefined`, solange sie keine Oberflächenkarte hat. */
-export function globeView(campaign: Campaign, worldId: string, picked: number | undefined, plan?: Trip, trace = false): GlobeView | undefined {
+export function globeView(campaign: Campaign, worldId: string, picked: number | undefined, plan?: Trip, trace = false, landing = false): GlobeView | undefined {
   const hexes = campaign.hexes;
   const hex = hexById(hexes, hexIdOfWorld(worldId));
   const found = worldById(hexes, worldId);
@@ -218,6 +223,11 @@ export function globeView(campaign: Campaign, worldId: string, picked: number | 
     picked: pickedCell,
     partyHere,
     partyCell: partyHere ? placeCell(hexes, campaign.location) : undefined,
+    shipCell: (() => {
+      const place = shipOf(campaign)?.place;
+      return place?.world === worldId ? placeCell(hexes, place) : undefined;
+    })(),
+    landing,
     npcs,
     events: [...counts.entries()].map(([cell, { count, latest }]) => ({ cell, count, latest, label: cellName(cell) })).sort((a, b) => b.latest - a.latest),
     rerollBlocker: mapLocked(campaign, worldId) ? 'Gruppe, NSC, Logeinträge oder Missionen stehen auf dieser Karte; neu würfeln geht nicht mehr.' : undefined,

@@ -341,6 +341,7 @@ const ShipSchema = z.object({
   berthedSince: z.number().int().min(0).optional(),
   retired: z.boolean().default(false),
   software: z.array(z.object({ program: z.string().min(1) })).default([]),
+  place: PlaceSchema.optional(),
 });
 const CharacterSchema = z.object({
   id: z.string().min(1),
@@ -574,7 +575,7 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       ...(file.focus === undefined ? {} : { focus: file.focus }),
       ...(file.location === undefined ? {} : { location: placeFromFile(file.location) }),
       bookings: file.bookings.map((b) => stripped(b) as Booking),
-      ships: file.ships.map((s) => stripped(s) as Ship),
+      ships: file.ships.map((s) => stripped({ ...s, ...(s.place === undefined ? {} : { place: placeFromFile(s.place) }) }) as Ship),
       stash: file.stash.map((p) => stripped({ ...p, ...(p.parked === undefined ? {} : { parked: placeFromFile(p.parked) }) }) as Possession),
       ...(file.trip === undefined ? {} : { trip: { hours: file.trip.hours, legs: file.trip.legs.map((l) => ({ by: l.by, rented: l.rented, cells: [...l.cells] })) } }),
       ...(file.flight === undefined ? {} : { flight: flightFromFile(file.flight) }),
@@ -790,6 +791,7 @@ function validate(campaign: Campaign): void {
   validateHexes(campaign.hexes);
   checkStarSystems(campaign.hexes);
   if (campaign.location !== undefined) checkPlace(campaign.hexes, campaign.location);
+  for (const ship of campaign.ships) if (ship.place !== undefined) checkPlace(campaign.hexes, ship.place);
   validateMissions(campaign);
   validateBookings(campaign);
   // Jedes Schiff hat eine eigene Id, einen Entwurf der Werft und Programme der Software-Liste; aktiv ist höchstens eins.

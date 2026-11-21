@@ -5,6 +5,7 @@ import type { Clock, Random } from './ports';
 import { gainOf, shipDesignOf, type Gain } from './reference';
 import { bookShip } from './shop';
 import { MONTH_DAYS, nextMonthStart } from './time';
+import type { Place } from './place';
 
 /** Was ein konkretes Schiff an Bord hat (Domänenmodell: `ShipSoftware`): ein Verweis auf das Programm. */
 export interface ShipSoftware {
@@ -37,6 +38,8 @@ export interface Ship {
   /** Ausgeblendet statt gelöscht: Buchungen und Log zeigen weiter auf es. */
   readonly retired: boolean;
   readonly software: readonly ShipSoftware[];
+  /** Wo es steht (2026-11-21): Welt, Feld oder Stadt; fehlt, solange es bei der Gruppe ist (alte Stände, gerade gekauft). */
+  readonly place?: Place;
 }
 
 /**

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { characters, openPeople, openSector, openShop, openCombat } from './layout';
+import { characters, openPeople, openSector, openShop, openCombat, land } from './layout';
 
 /** Eine fertige Welt im Subsektor, lange gedrückt durchgewürfelt und Regina genannt; ihre Weltkarte bleibt offen. */
 async function makeWorld(page: Page) {
@@ -130,6 +130,8 @@ test('Shop: „Gruppe platzieren“ auf der Weltkarte bringt die Gruppe auf eine
   await page.goto('/');
   const world = await makeWorld(page);
   await page.getByRole('button', { name: 'Gruppe platzieren' }).click();
+  // Mit der Gruppe entsteht der Globus; sie wählt zuerst ihren Landeplatz (2026-11-21).
+  await land(page);
   // Wie „Gruppe setzen“ am Hexfeld des Globus: Ist die Gruppe hier, ist der Knopf ausgegraut, das Blatt sagt es.
   await expect(page.getByRole('button', { name: 'Gruppe platzieren' })).toBeDisabled();
   await expect(world).toContainText('Die Gruppe ist hier');

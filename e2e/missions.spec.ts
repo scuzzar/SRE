@@ -5,12 +5,9 @@ import { openTab, revealed, openHomeGlobe } from './layout';
 // hier“ am Feld.
 test('Missionen: anlegen mit dem Feld der Gruppe und einem Ort vom Globus, am Feld wiederfinden', async ({ page }) => {
   await page.goto('/');
-  // Die Gruppe kommt in die Hauptstadt von Kessra; ohne Feld gäbe es keinen Aufenthaltsort als Missionsort.
+  // Die Gruppe landet an einem Hafen von Kessra (Landeplatz, 2026-11-21); ohne Feld gäbe es keinen Aufenthaltsort als Missionsort.
   await openHomeGlobe(page);
   const globe = page.getByRole('region', { name: 'Globus · Kessra' });
-  await globe.getByRole('button', { name: /^Orte/ }).click();
-  await globe.getByRole('region', { name: 'Orte' }).getByRole('button', { name: /Hauptstadt ·/ }).click();
-  await page.getByRole('region', { name: 'Am Feld' }).getByRole('button', { name: 'Gruppe in diese Stadt setzen' }).click();
 
   await openTab(page, 'Missionen');
   await expect(page.getByText(/Keine offene Mission/)).toBeVisible();

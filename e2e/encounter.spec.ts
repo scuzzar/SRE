@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { entries, expandTray, host, openOracle, openSector, openCombat, openPart } from './layout';
+import { entries, expandTray, host, openOracle, openSector, openCombat, openPart, land } from './layout';
 
 test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Begegnung die Simulation mit Runde, Entfernung und Zügen', async ({ page }) => {
   // Ein langer Ablauf mit vielen Würfen und Zügen.
@@ -27,6 +27,8 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   }
   // Die Demo-Kampagne steht auf Kessra; „Gruppe platzieren“ auf der Weltkarte bringt sie nach Regina.
   await page.getByRole('button', { name: 'Gruppe platzieren' }).click();
+  // Regina hat jetzt einen Globus: Zuerst der Landeplatz (2026-11-21).
+  await land(page);
   await world!.getByRole('button', { name: 'Schließen' }).click();
 
   // Kampf ohne Begegnung: nur die Waffentabelle, keine Begegnungsauswahl.

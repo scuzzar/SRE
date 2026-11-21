@@ -223,6 +223,7 @@ import {
   readyForParty,
   shipById,
   worldOf,
+  landAt,
 } from '../model';
 import {
   attackRounds,
@@ -2484,6 +2485,40 @@ export class GameController {
   }
 
   /** Tippt ein Oberflächenfeld auf dem Globus an (oder hebt die Wahl auf). */
+  // --- Landeplatz (2026-11-21) ----------------------------------------------------------------
+
+  /** Landet in einer Stadt mit Hafen (aus dem Dialog Landeplatz). */
+  landAtPort(city: number): void {
+    this.change(landAt(this.campaign, { city }, this.deps.clock), { landingPick: undefined, notice: undefined });
+  }
+
+  /** „Anderer Ort“: Der Globus der Welt geht auf; dort tippt man ein Feld an und landet mit „Hier landen“. */
+  startFreeLanding(): void {
+    const at = this.campaign.location?.world;
+    if (at === undefined) return;
+    const hex = hexById(this.campaign.hexes, hexIdOfWorld(at));
+    if (!hex) return;
+    this.openGlobeAt(hex.column, hex.row, at);
+    this.update({ landingPick: true });
+  }
+
+  /** Landet auf dem angetippten Feld des Globus (nach „Anderer Ort“). */
+  landHere(): void {
+    const cell = this.state.globe?.picked;
+    if (cell === undefined) return;
+    try {
+      this.change(landAt(this.campaign, { cell }, this.deps.clock), { landingPick: undefined, globe: { picked: undefined, card: true } });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ worldError: error.message });
+    }
+  }
+
+  /** Zurück zum Dialog Landeplatz, ohne auf dem Globus zu landen. */
+  cancelFreeLanding(): void {
+    this.update({ landingPick: undefined });
+  }
+
   /** Auf dem Globus: die Weltkarte im Blatt zeigen (ein Tipp auf den Namen oben), wie im Subsektor; noch einmal schließt sie. */
   showWorldCard(): void {
     if (!this.state.globe) return;

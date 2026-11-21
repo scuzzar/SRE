@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openOracle, openSector, oracle, openPeople, openHomeGlobe } from './layout';
+import { openOracle, openSector, oracle, openPeople, openHomeGlobe, land } from './layout';
 
 test.use({ reducedMotion: 'reduce' });
 
@@ -61,6 +61,12 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     // entsteht nur auf Knopfdruck (2026-11-20d); oben klappen Name und UWP die Werte auf.
     await expect(page.getByRole('button', { name: 'Hierher reisen', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Öffnen', exact: true })).toHaveCount(0);
+    // Ein Asteroidengürtel (Größe 0) hat keinen Globus; dann bleibt es bei der Weltkarte.
+    if ((await page.getByRole('button', { name: 'Globus erzeugen', exact: true }).count()) === 0) {
+      await sheet.getByRole('button', { name: 'Schließen' }).click();
+      named = true;
+      break;
+    }
     await page.getByRole('button', { name: 'Globus erzeugen', exact: true }).click();
     const globe = page.getByRole('region', { name: 'Globus · Regina' });
     // Der Globus geht auf, die Weltkarte bleibt unten im Blatt stehen; der Name oben schließt und öffnet sie (Owner, 21. November 2026).
@@ -216,6 +222,8 @@ test('Sektor: Eine Welt doppelt antippen öffnet sie; einmal antippen zeigt nur 
   await expect(page.getByRole('region', { name: 'Kessra · 0405' })).toBeVisible();
   await page.getByRole('button', { name: 'Globus erzeugen', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Globus · Kessra' })).toBeVisible();
+  // Die Gruppe ist auf Kessra: Mit dem Globus wählt sie zuerst ihren Landeplatz (2026-11-21).
+  await land(page);
   await page.getByRole('region', { name: 'Globus · Kessra' }).getByRole('button', { name: 'Schließen', exact: true }).click();
   await kessra.dblclick();
   await expect(page.getByRole('region', { name: 'Globus · Kessra' })).toBeVisible();
@@ -234,11 +242,9 @@ test('Globus: aus dem Subsektor öffnen, Feld antippen, zurück zum Subsektor', 
   await places.getByRole('button', { name: /Hauptstadt ·/ }).click();
   await expect(places).toHaveCount(0);
   await expect(page.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('°C im Jahresmittel');
-  // „Zur Gruppe“ gibt es, sobald die Gruppe ein Feld auf dieser Welt hat; wie im Navi führt er zu ihr zurück.
-  await expect(globe.getByRole('button', { name: 'Zur Gruppe' })).toHaveCount(0);
+  // „Zur Gruppe“ gibt es, sobald die Gruppe ein Feld auf dieser Welt hat (hier nach dem Landeplatz); wie im Navi führt er zu ihr zurück.
   // Unten beim Feld steht die Reihe des Felds: Hierhin reisen, Gruppe setzen, NSC platzieren.
   const actions = page.getByRole('region', { name: 'Am Feld' });
-  await actions.getByRole('button', { name: 'Gruppe in diese Stadt setzen' }).click();
   await globe.getByRole('button', { name: 'Zur Gruppe' }).click();
   await expect(page.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('Die Gruppe ist hier');
   await expect(actions.getByRole('button', { name: 'Hierhin reisen' })).toBeDisabled();
@@ -289,13 +295,8 @@ test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des 
   await openHomeGlobe(page);
   const globe = page.getByRole('region', { name: 'Globus · Kessra' });
   await expect(globe).toBeVisible();
-  // Noch hat die Gruppe kein Feld: Die Reihe sagt, warum Hinreisen nicht geht.
-  await globe.getByRole('button', { name: /^Orte/ }).click();
-  await globe.getByRole('region', { name: 'Orte' }).getByRole('button', { name: /Hauptstadt ·/ }).click();
-  await expect(page.getByRole('region', { name: 'Am Feld' })).toContainText('Die Gruppe hat noch kein Feld');
-  // Die Gruppe kommt in die Hauptstadt; angetippt wird eine andere Stadt.
+  // Die Gruppe ist am Hafen gelandet (Landeplatz, 2026-11-21); angetippt wird ein anderes Feld.
   const actions = page.getByRole('region', { name: 'Am Feld' });
-  await actions.getByRole('button', { name: 'Gruppe in diese Stadt setzen' }).click();
   const canvas = globe.getByRole('img', { name: /Globus von Kessra/ });
   const box = (await canvas.boundingBox())!;
   await canvas.click({ position: { x: box.width * 0.35, y: box.height * 0.4 } });

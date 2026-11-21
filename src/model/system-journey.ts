@@ -1,4 +1,5 @@
 import { keepFocus, type Campaign } from './campaign';
+import { leaveShipBehind, portDepartureBlocker, shipArrives, shipDepartureBlocker } from './landing';
 import { DomainError } from './errors';
 import type { SystemJourney } from './log';
 import { worldPlace } from './place';
@@ -103,7 +104,9 @@ export function systemJourneyBlocker(campaign: Campaign, to: string, mode: Syste
   if (campaign.trip) return 'Erst die Fahrt beenden, dann reisen.';
   if (campaign.flight) return 'Erst den Systemflug beenden, dann reisen.';
   if (travellersOf(campaign).length === 0) return 'Es gibt keinen lebenden Charakter, der reisen könnte.';
-  if (mode === 'ship') return shipOf(campaign) === undefined ? 'Die Gruppe hat kein Schiff.' : undefined;
+  if (mode === 'ship') return shipOf(campaign) === undefined ? 'Die Gruppe hat kein Schiff.' : shipDepartureBlocker(campaign);
+  const port = portDepartureBlocker(campaign);
+  if (port) return port;
   if (!hasPort(campaign.hexes, from) && !hasPort(campaign.hexes, to)) return 'Ein Ticket gibt es nur, wenn Start oder Ziel einen Raumhafen hat.';
   const cost = ticketCost(campaign, to);
   if (cost > fundsOf(campaign)) return `Die Tickets kosten Cr ${cost.toLocaleString('de-DE')}, in der Kasse ist Cr ${fundsOf(campaign).toLocaleString('de-DE')}.`;
@@ -118,7 +121,8 @@ export function systemJourneyBlocker(campaign: Campaign, to: string, mode: Syste
 export function travelInSystem(campaign: Campaign, to: string, mode: SystemJourneyMode, clock: Clock): Campaign {
   const blocker = systemJourneyBlocker(campaign, to, mode);
   if (blocker) throw new DomainError(blocker);
-  campaign = parkVehicles(campaign);
+  // Mit Ticket bleibt das eigene Schiff, wo es steht (2026-11-21).
+  campaign = mode === 'ticket' ? leaveShipBehind(parkVehicles(campaign)) : parkVehicles(campaign);
   const from = campaign.location!.world;
   const travellers = travellersOf(campaign).map((c) => c.id);
   const hours = flightHours(systemDistance(campaign.hexes, from, to), journeyG(campaign, mode));
@@ -135,7 +139,8 @@ export function travelInSystem(campaign: Campaign, to: string, mode: SystemJourn
     day: today + days,
     location: worldPlace(to),
   };
-  return keepFocus(campaign, arrive(afterTime(after, today, clock), clock));
+  // Mit dem eigenen Schiff steht es danach auf der Zielwelt; das Feld wählt der Landeplatz.
+  return keepFocus(campaign, arrive(afterTime(mode === 'ship' ? shipArrives(after, to) : after, today, clock), clock));
 }
 
 /** Prüft eine Reise im System aus der Kampagnendatei: Welten im selben System, Stunden, Reisende, Schiff. */

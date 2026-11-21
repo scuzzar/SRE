@@ -1448,7 +1448,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - *Abflug mit Passage oder Ticket* geht nur aus einer Stadt mit Hafen, nicht „aus der Pampa“; am
       Ziel landet das fremde Schiff an einem Hafen (der Dialog bietet dann nur Häfen an).
     - *Schiffe ohne Ort* (alte Stände, gerade gekauft): Sie stehen dort, wo die Gruppe ist, bis die
-      Gruppe ihren nächsten Landeplatz wählt; dann steht das Schiff dort.
+      Gruppe ihren nächsten Landeplatz wählt; dann steht das Schiff dort, ohne neue Liegegebühr bei
+      der Ankunft (es lag schon auf dieser Welt).
     - ⚑ *Liegegebühren*: Das Schiff liegt dort, wo es steht (nicht mehr, wo die Gruppe ist). Steht es
       in einer Stadt mit Hafen, kostet es wie bisher Cr100 bei der Ankunft und Cr100 je weiteren Tag;
       an einem beliebigen Ort kostet es nichts. Ohne Feld (Welt ohne Globus) gilt wie bisher der

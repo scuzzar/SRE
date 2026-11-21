@@ -7,6 +7,7 @@ import { gravityOf, radiusOf } from './star-system';
 import { activeShip, shipById, without } from './ship';
 import { passTime, START_DAY } from './time';
 import { placeGroup } from './upkeep';
+import { shipArrives, shipDepartureBlocker } from './landing';
 
 // Systemflug (Domänenmodell 2026-11-18c, Stufe 1 des Raumkampfs; Konzept: docs/konzept-raumkampf.md).
 // Gerechnet wird in km und Sekunden, in der Ebene, die Welt in der Mitte.
@@ -302,6 +303,8 @@ export function startFlight(campaign: Campaign, world: string, clock: Clock): Ca
   if (target.kind === 'ring') throw new DomainError('Um einen Ring gibt es keine Raumkarte.');
   if (campaign.encounters.some((e) => !e.ended)) throw new DomainError('Während einer laufenden Begegnung beginnt kein Systemflug.');
   if (campaign.trip !== undefined) throw new DomainError('Erst die Fahrt beenden, dann fliegen.');
+  const away = shipDepartureBlocker(campaign);
+  if (away) throw new DomainError(away);
   const ship = activeShip(campaign);
   const { position, velocity } = startOrbit(campaign.hexes, world, dayStart(campaign.day));
   const unit: SpaceUnit = { ship: ship.id, position, velocity, crashed: false, track: [] };
@@ -367,7 +370,7 @@ export function runRound(campaign: Campaign, clock: Clock, every = 2): RoundRun 
   for (let s = 0; s <= ROUND_STEPS; s += every) frames.push(runs.map((r) => r[s]!.position));
   // Gelandet: Der Systemflug endet, die Gruppe ist auf dieser Welt (Owner, 21. November 2026).
   const landed = runs.map((r) => r.at(-1)!.landedOn).find((w) => w !== undefined);
-  if (landed !== undefined) return { campaign: placeGroup(endFlight(result), landed, clock), frames, landed };
+  if (landed !== undefined) return { campaign: placeGroup(shipArrives(endFlight(result), landed), landed, clock), frames, landed };
   return { campaign: result, frames };
 }
 

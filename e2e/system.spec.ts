@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openSector } from './layout';
+import { land, openSector } from './layout';
 
 test.use({ reducedMotion: 'reduce' });
 
@@ -29,6 +29,13 @@ test('Nebenwelt aus dem Reiter System öffnen, benennen und mit dem eigenen Schi
   await dialog.getByRole('button', { name: 'Reisen' }).click();
   await expect(page.getByRole('dialog', { name: /Angekommen: Kessra → Tertius/ })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
+  // Mit dem eigenen Schiff gelandet: Der Dialog Landeplatz bietet auch einen beliebigen Ort (2026-11-21).
+  const landing = page.getByRole('dialog', { name: 'Landeplatz auf Tertius' });
+  await expect(landing.getByRole('button', { name: /Anderer Ort/ })).toBeVisible();
+  await land(page);
+  // Ohne Hafen landet die Gruppe auf dem Globus; der bleibt dann offen.
+  const tertiusGlobe = page.getByRole('region', { name: 'Globus · Tertius' });
+  if (await tertiusGlobe.isVisible()) await tertiusGlobe.getByRole('button', { name: 'Schließen', exact: true }).click();
 
   // Im Subsektor öffnet das Feld jetzt zuerst die Welt der Gruppe, mit Oberfläche und Globus.
   await kessraHex.click();
