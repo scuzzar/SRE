@@ -238,6 +238,15 @@ export function SpaceScreen({ space }: { space: SpaceView }) {
             ctx.lineWidth = 1.5;
             ctx.stroke();
           }
+          if (unit.preview.landing !== undefined && unit.preview.impact === undefined) {
+            const p = unit.preview.landing.round === 0 ? end : (unit.preview.after.at(-1) ?? end);
+            if (p) {
+              ctx.fillStyle = '#7ee08a';
+              ctx.font = 'bold 13px system-ui, sans-serif';
+              ctx.fillText('↓ Landung', sx(p.x) + 8, sy(p.y));
+              ctx.font = '11px system-ui, sans-serif';
+            }
+          }
           if (unit.preview.impact !== undefined) {
             const p = unit.preview.after.at(-1) ?? end;
             if (p) {

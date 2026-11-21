@@ -9275,6 +9275,10 @@ button:disabled {
   cursor: default;
 }
 
+.space-land {
+  color: #7ee08a;
+}
+
 .space-choices {
   margin: 4px 0 8px;
 }

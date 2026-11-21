@@ -221,6 +221,8 @@ import {
   type SystemJourneyMode,
   hexById,
   readyForParty,
+  shipById,
+  worldOf,
 } from '../model';
 import {
   attackRounds,
@@ -2463,7 +2465,10 @@ export class GameController {
   runRound(): void {
     const space = this.openSpaceState();
     const t = flightTime(this.campaign, activeFlight(this.campaign));
+    const ship = shipById(this.campaign, activeFlight(this.campaign).units[0]!.ship).name;
     const run = runRound(this.campaign, this.deps.clock);
+    // Gelandet: Der Flug ist zu Ende, die Gruppe auf dieser Welt; die Raumkarte bleibt offen (Owner, 21. November 2026).
+    if (run.landed !== undefined) return this.change(run.campaign, { space: { world: space.world }, notice: `${ship} ist auf ${worldOf(run.campaign.hexes, run.landed).name} gelandet. Die Gruppe ist jetzt dort.` });
     this.change(run.campaign, { space: { world: space.world, run: { round: activeFlight(run.campaign).round, t, every: 2, frames: run.frames } } });
   }
 

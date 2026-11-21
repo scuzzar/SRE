@@ -231,3 +231,31 @@ describe('Systemflug mit Monden (2026-11-18d)', () => {
     expect(() => startFlight(c, '0101-9', clock)).toThrow();
   });
 });
+
+describe('Landen (Owner, 21. November 2026)', () => {
+  /** Das Schiff knapp über der Oberfläche der Welt des Flugs, mit ihr mitbewegt, `kms` auf sie zu. */
+  function above(c: Campaign, km: number, kms: number): Campaign {
+    const at = worldAt(c);
+    const r = bodyOf(worldOf(c.hexes, c.flight!.world))!.radius;
+    const unit = { ...c.flight!.units[0]!, position: { x: at.position.x, y: at.position.y + r + km }, velocity: { x: at.velocity.x, y: at.velocity.y - kms } };
+    return { ...c, flight: { ...c.flight!, units: [unit] } };
+  }
+
+  it('langsam aufsetzen ist landen: der Systemflug endet, die Gruppe ist auf der Welt', () => {
+    const c = above(startFlight(demo(), world(demo()), clock), 5, 0.3);
+    const preview = previewOf(sceneOf(c.hexes, c.flight!.world), c.flight!.units[0]!, undefined, flightTime(c, c.flight!), 2, c.flight!.world);
+    expect(preview.landing).toEqual({ round: 0, world: c.flight!.world });
+    expect(preview.impact).toBeUndefined();
+    const run = runRound(c, clock);
+    expect(run.landed).toBe(c.flight!.world);
+    expect(run.campaign.flight).toBeUndefined();
+    expect(run.campaign.location).toEqual({ world: c.flight!.world });
+  });
+
+  it('schnell auftreffen bleibt ein Aufschlag', () => {
+    const c = above(startFlight(demo(), world(demo()), clock), 5, 3);
+    const run = runRound(c, clock);
+    expect(run.landed).toBeUndefined();
+    expect(run.campaign.flight!.units[0]!.crashed).toBe(true);
+  });
+});

@@ -6,6 +6,7 @@ import { hexById, hexIdOfWorld, worldOf, type Hex, type World } from './sector';
 import { gravityOf, radiusOf } from './star-system';
 import { activeShip, shipById, without } from './ship';
 import { passTime, START_DAY } from './time';
+import { placeGroup } from './upkeep';
 
 // Systemflug (Domänenmodell 2026-11-18c, Stufe 1 des Raumkampfs; Konzept: docs/konzept-raumkampf.md).
 // Gerechnet wird in km und Sekunden, in der Ebene, die Welt in der Mitte.
@@ -208,23 +209,32 @@ export function gravityAt(scene: Scene, p: Vec, t: number): Vec {
 }
 
 /** Liegt `p` zur Zeit `t` in einem Körper? Dann der Ort auf seiner Oberfläche. */
-function inside(scene: Scene, p: Vec, t: number): Vec | undefined {
-  const bodies: { body: Body; at: Vec }[] = [];
-  if (scene.body) bodies.push({ body: scene.body, at: { x: 0, y: 0 } });
-  for (const moon of scene.moons) if (moon.body) bodies.push({ body: moon.body, at: moonAt(moon, t).position });
-  for (const { body, at } of bodies) {
+function inside(scene: Scene, p: Vec, t: number): { readonly surface: Vec; readonly world: string; readonly velocity: Vec } | undefined {
+  const bodies: { body: Body; world: string; at: Vec; velocity: Vec }[] = [];
+  if (scene.body) bodies.push({ body: scene.body, world: scene.center, at: { x: 0, y: 0 }, velocity: { x: 0, y: 0 } });
+  for (const moon of scene.moons) {
+    if (!moon.body) continue;
+    const m = moonAt(moon, t);
+    bodies.push({ body: moon.body, world: moon.world, at: m.position, velocity: m.velocity });
+  }
+  for (const { body, world, at, velocity } of bodies) {
     const d = sub(p, at);
     const r = lengthOf(d);
-    if (r < body.radius) return add(at, scale(d, body.radius / Math.max(r, EPS)));
+    if (r < body.radius) return { surface: add(at, scale(d, body.radius / Math.max(r, EPS))), world, velocity };
   }
   return undefined;
 }
+
+/** Bis zu dieser Geschwindigkeit gegenüber der Oberfläche ist das Auftreffen eine Landung (Owner, 21. November 2026), in km/s. */
+export const LANDING_KMS = 1;
 
 /** Der Zustand einer Einheit in der Simulation. */
 export interface State {
   readonly position: Vec;
   readonly velocity: Vec;
   readonly crashed: boolean;
+  /** Langsam aufgesetzt (höchstens `LANDING_KMS`): auf dieser Welt gelandet; nur in der Rechnung, nie gespeichert. */
+  readonly landedOn?: string;
 }
 
 /**
@@ -233,15 +243,19 @@ export interface State {
  * die Einheit unter die Oberfläche eines Körpers, schlägt sie auf.
  */
 export function step(scene: Scene, state: State, thrust: Vec | undefined, t = 0): State {
-  if (state.crashed) return state;
+  if (state.crashed || state.landedOn !== undefined) return state;
   const dt = STEP_SECONDS;
   const push = thrust === undefined ? { x: 0, y: 0 } : scale(thrust, G_KMS2);
   const a0 = add(gravityAt(scene, state.position, t), push);
   const position = add(add(state.position, scale(state.velocity, dt)), scale(a0, 0.5 * dt * dt));
   const a1 = add(gravityAt(scene, position, t + dt), push);
   const velocity = add(state.velocity, scale(add(a0, a1), 0.5 * dt));
-  const surface = inside(scene, position, t + dt);
-  if (surface) return { position: surface, velocity: { x: 0, y: 0 }, crashed: true };
+  const contact = inside(scene, position, t + dt);
+  if (contact) {
+    // Langsam aufgesetzt ist gelandet, schneller aufgeschlagen.
+    if (lengthOf(sub(velocity, contact.velocity)) <= LANDING_KMS) return { position: contact.surface, velocity: contact.velocity, crashed: false, landedOn: contact.world };
+    return { position: contact.surface, velocity: { x: 0, y: 0 }, crashed: true };
+  }
   return { position, velocity, crashed: false };
 }
 
@@ -325,6 +339,8 @@ export function setThrust(campaign: Campaign, index: number, thrust: Vec | undef
 export interface RoundRun {
   readonly campaign: Campaign;
   readonly frames: readonly (readonly Vec[])[];
+  /** Ist eine Einheit gelandet, die Welt; der Systemflug ist dann zu Ende. */
+  readonly landed?: string;
 }
 
 /**
@@ -349,6 +365,9 @@ export function runRound(campaign: Campaign, clock: Clock, every = 2): RoundRun 
   for (let d = daysBefore; d < daysAfter; d++) result = passTime(result, { days: 1 }, clock);
   const frames: Vec[][] = [];
   for (let s = 0; s <= ROUND_STEPS; s += every) frames.push(runs.map((r) => r[s]!.position));
+  // Gelandet: Der Systemflug endet, die Gruppe ist auf dieser Welt (Owner, 21. November 2026).
+  const landed = runs.map((r) => r.at(-1)!.landedOn).find((w) => w !== undefined);
+  if (landed !== undefined) return { campaign: placeGroup(endFlight(result), landed, clock), frames, landed };
   return { campaign: result, frames };
 }
 
@@ -364,6 +383,8 @@ export interface Preview {
   readonly after: readonly Vec[];
   /** In welcher Raumrunde ab jetzt (0 = diese) sie aufschlüge; fehlt, wenn nicht. */
   readonly impact?: number;
+  /** In welcher Raumrunde ab jetzt sie landete (langsam aufsetzen) und wo; fehlt, wenn nicht. */
+  readonly landing?: { readonly round: number; readonly world: string };
 }
 
 /** Raumrunden, die die Bahnvorschau ohne Schub vorausrechnet. */
@@ -376,14 +397,16 @@ export function previewOf(scene: Scene, unit: State, thrust: Vec | undefined, t 
   const now: Vec[] = [];
   const after: Vec[] = [];
   let impact: number | undefined;
+  let landing: Preview['landing'];
   states.forEach((s, i) => {
     if (impact === undefined && s.crashed && !unit.crashed) impact = Math.floor(Math.max(0, i - 1) / ROUND_STEPS);
+    if (landing === undefined && s.landedOn !== undefined) landing = { round: Math.floor(Math.max(0, i - 1) / ROUND_STEPS), world: s.landedOn };
     if (i <= ROUND_STEPS) {
       if (i % every === 0 || i === ROUND_STEPS) now.push(s.position);
     } else if ((i - ROUND_STEPS) % (every * 2) === 0) after.push(s.position);
     if (i === ROUND_STEPS) after.push(s.position);
   });
-  return { now, after, ...(impact === undefined ? {} : { impact }) };
+  return { now, after, ...(impact === undefined ? {} : { impact }), ...(landing === undefined ? {} : { landing }) };
 }
 
 /** Prüft einen geladenen Systemflug gegen die Kampagne. */

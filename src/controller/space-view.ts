@@ -60,7 +60,8 @@ export interface SpaceUnitView {
   readonly crashed: boolean;
   readonly track: readonly TrackPoint[];
   /** Bahnvorschau: diese Runde mit Schub, danach fünf ohne; `impact` = Raumrunde ab jetzt, in der sie aufschlüge. */
-  readonly preview: { readonly now: readonly Vec[]; readonly after: readonly Vec[]; readonly impact: number | undefined };
+  /** `landing`: in welcher Raumrunde ab jetzt sie langsam aufsetzte und wo (Owner, 21. November 2026). */
+  readonly preview: { readonly now: readonly Vec[]; readonly after: readonly Vec[]; readonly impact: number | undefined; readonly landing: { readonly round: number; readonly name: string } | undefined };
   readonly marks: readonly ThrustMark[];
   /** km/s gegenüber der Welt der Raumkarte. */
   readonly speed: number;
@@ -242,7 +243,7 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
             const at = originAt(scene, space.world, tStart + i * ROUND_SECONDS);
             return { position: sub(p.position, at.position), velocity: sub(p.velocity, at.velocity) };
           }),
-          preview: { now: preview.now, after: preview.after, impact: preview.impact },
+          preview: { now: preview.now, after: preview.after, impact: preview.impact, landing: preview.landing && { round: preview.landing.round, name: bodyName(hex, hex.worlds.find((w) => w.id === preview.landing!.world)!) } },
           marks: thrustMarks({ position, velocity, crashed: unit.crashed }),
           speed: lengthOf(velocity),
           altitude: worldBody === undefined ? r : r - worldBody.radius,
