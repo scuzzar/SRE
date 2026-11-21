@@ -226,8 +226,8 @@ function inside(scene: Scene, p: Vec, t: number): { readonly surface: Vec; reado
   return undefined;
 }
 
-/** Bis zu dieser Geschwindigkeit gegenüber der Oberfläche ist das Auftreffen eine Landung (Owner, 21. November 2026), in km/s. */
-export const LANDING_KMS = 1;
+/** Bis zu dieser Geschwindigkeit gegenüber der Oberfläche ist das Auftreffen eine Landung (Owner, 21. November 2026: erst 1, dann 5 km/s), in km/s. */
+export const LANDING_KMS = 5;
 
 /** Der Zustand einer Einheit in der Simulation. */
 export interface State {

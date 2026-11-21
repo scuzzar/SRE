@@ -1,5 +1,6 @@
 import {
   flightStartBlocker,
+  LANDING_KMS,
   BAND_KM,
   elapsedOf,
   flightTime,
@@ -103,6 +104,8 @@ export interface SpaceView {
   readonly choices: readonly { readonly id: string; readonly name: string }[];
   /** Warum hier kein Systemflug beginnen kann; fehlt, wenn er kann (oder schon läuft). */
   readonly startBlocker: string | undefined;
+  /** Bis zu dieser Geschwindigkeit gegenüber der Oberfläche ist Aufsetzen eine Landung, in km/s. */
+  readonly landingKms: number;
   readonly flight:
     | {
         readonly round: number;
@@ -203,6 +206,7 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
     here,
     choices: spaceChoices(hex, space.world),
     startBlocker: blocker,
+    landingKms: LANDING_KMS,
     elsewhere: campaign.flight && !flight ? campaign.flight.world : undefined,
     flight: flight && {
       round: flight.round,

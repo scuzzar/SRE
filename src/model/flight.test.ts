@@ -202,7 +202,8 @@ describe('Systemflug mit Monden (2026-11-18d)', () => {
     // Das Schiff mitten in den Mond setzen und eine Runde laufen lassen.
     const scene = sceneOf(c.hexes, '0101');
     const at = moonAt(scene.moons[0]!, flightTime(c, c.flight!));
-    c = { ...c, flight: { ...c.flight!, units: [{ ...c.flight!.units[0]!, position: { x: at.position.x, y: at.position.y + 2000 }, velocity: at.velocity }] } };
+    c = { ...c, flight: { ...c.flight!, units: [{ ...c.flight!.units[0]!, position: { x: at.position.x, y: at.position.y + 2000 }, velocity: { x: at.velocity.x, y: at.velocity.y - 9 } }] } };
+    // Schneller als die Landegeschwindigkeit (5 km/s) ist es ein Aufschlag.
     expect(runRound(c, clock).campaign.flight!.units[0]!.crashed).toBe(true);
   });
 
@@ -266,7 +267,7 @@ describe('Landen (Owner, 21. November 2026)', () => {
   });
 
   it('schnell auftreffen bleibt ein Aufschlag', () => {
-    const c = above(startFlight(demo(), world(demo()), clock), 5, 3);
+    const c = above(startFlight(demo(), world(demo()), clock), 5, 9);
     const run = runRound(c, clock);
     expect(run.landed).toBeUndefined();
     expect(run.campaign.flight!.units[0]!.crashed).toBe(true);

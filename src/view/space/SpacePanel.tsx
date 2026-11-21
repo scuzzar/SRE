@@ -63,7 +63,7 @@ export function SpaceCard({ space }: { space: SpaceView }) {
             <dt>Schwerkraft hier</dt>
             <dd>{num(unit.gravity, 3)} G</dd>
           </dl>
-          <p className="globe-sheet-sub">Im Schubkreis tippen oder ziehen: vom Schiff zum Finger, der Rand ist der höchste Schub. Jede Raumrunde beginnt ohne Schub. Mit höchstens 1 km/s aufsetzen heißt landen.</p>
+          <p className="globe-sheet-sub">Im Schubkreis tippen oder ziehen: vom Schiff zum Finger, der Rand ist der höchste Schub. Jede Raumrunde beginnt ohne Schub. Mit höchstens {num(space.landingKms)} km/s aufsetzen heißt landen.</p>
           <button type="button" className="ghost compact" onClick={() => game.endFlight()}>
             Systemflug beenden
           </button>

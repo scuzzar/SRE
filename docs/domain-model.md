@@ -3114,7 +3114,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Aufschlag** (Owner). Kommt eine Einheit unter die Oberfläche der Welt, wird `crashed` gesetzt;
     sie bewegt sich nicht mehr und bekommt keinen Schub. In Stufe 1 hat das keine Folgen für das
     Schiff; Schaden und Verlust kommen mit Stufe 2. Die Bahnvorschau warnt vorher.
-  - **Landen** (Owner, 21. November 2026). Trifft eine Einheit mit höchstens 1 km/s gegenüber der
+  - **Landen** (Owner, 21. November 2026). Trifft eine Einheit mit höchstens 5 km/s (Owner, 21. November 2026; zuerst 1 km/s) gegenüber der
     Oberfläche auf (bei einem Mond mitbewegt gemessen), ist sie gelandet, nicht aufgeschlagen: Der
     Systemflug endet, und die Gruppe ist auf dieser Welt, wie mit „Gruppe platzieren“ (Ankunft:
     Oberfläche und Globus entstehen, falls sie fehlen; das Schiff liegt dort). So erreicht man auch
