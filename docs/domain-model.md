@@ -506,7 +506,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Ship.inOrbit`, `SystemFlight.party`; siehe *Small Craft*. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-21b-small-craft.png`](changes/2026-11-21b-small-craft.png).
 >
-> Am 21. November 2026 eingezeichnet, **wartet auf Freigabe** (Kennzeichen 2026-11-21c): **Small Craft einzeln
+> Am 21. November 2026 freigegeben (Kennzeichen 2026-11-21c): **Small Craft einzeln
 > kaufen** (Owner, 21. November 2026: „Man sollte die Boote auf jeden Fall auch einzeln kaufen
 > können“; Zugehörigkeit, Platz, Bezahlung und das alte Boot beim Schiffskauf vom Owner gewählt). In
 > der Werft, bar oder über die Bank; mit Schiff wird es ein Beiboot im Laderaum, ohne Schiff gehört
@@ -3237,7 +3237,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Schiff abholen.
   - **Liegegebühren** ⚑: Ein Small Craft, das nicht an Bord ist, zahlt wie ein Schiff, wenn es in
     einer Stadt mit Hafen steht; an Bord und in der Umlaufbahn zahlt es nichts.
-  - **Small Craft einzeln kaufen** (Kennzeichen 2026-11-21c, wartet auf Freigabe; Owner, 21. November 2026).
+  - **Small Craft einzeln kaufen** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21c; Owner, 21. November 2026).
     - *Wo und wie* (Owner: Werft, bar oder Bank): In der Werft stehen unter den Standardentwürfen
       auch die acht Small Craft. Bezahlt wird wie beim Schiff bar oder über die Bank (20 % Anzahlung,
       die doppelte Preissumme als Kredit, 480 Monatsraten, SR 29); Preis ist der Grundpreis des

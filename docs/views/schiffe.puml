@@ -93,7 +93,7 @@ hide <<browser>> stereotype
     retired: boolean
     aboard: boolean
     inOrbit: boolean
-    $new("2026-11-21c", "inHold: boolean")
+    inHold: boolean
   }
   enum ShipCost <<value>> $schiffe {
     price
@@ -230,5 +230,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Ship #line:d0021b;line.bold
 @enduml
