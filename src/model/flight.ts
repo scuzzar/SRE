@@ -4,10 +4,10 @@ import type { Clock } from './ports';
 import { shipDesignOf } from './reference';
 import { hexById, hexIdOfWorld, worldOf, type Hex, type World } from './sector';
 import { gravityOf, radiusOf } from './star-system';
-import { activeShip, shipById, without } from './ship';
+import { activeShip, shipById, shipOf, without } from './ship';
 import { passTime, START_DAY } from './time';
 import { placeGroup } from './upkeep';
-import { shipArrives, shipDepartureBlocker } from './landing';
+import { needsLanding, shipArrives, shipDepartureBlocker } from './landing';
 
 // Systemflug (Domänenmodell 2026-11-18c, Stufe 1 des Raumkampfs; Konzept: docs/konzept-raumkampf.md).
 // Gerechnet wird in km und Sekunden, in der Ebene, die Welt in der Mitte.
@@ -296,19 +296,33 @@ export function activeFlight(campaign: Campaign): SystemFlight {
  * Welt (dort verdeckt es das Ziehblatt nicht); bei Größe 0 ruhend in 20.000 km Abstand.
  */
 export function startFlight(campaign: Campaign, world: string, clock: Clock): Campaign {
-  if (campaign.flight !== undefined) throw new DomainError('Es läuft schon ein Systemflug.');
-  // Am Gasriesen darf er von der Welt aus beginnen, auf der die Gruppe ist (wie man hinkommt, bleibt offen, 2026-11-18d).
-  if (campaign.location === undefined || hexIdOfWorld(campaign.location.world) !== hexIdOfWorld(world)) throw new DomainError('Ein Systemflug beginnt nur im System, in dem die Gruppe ist.');
-  const target = worldOf(campaign.hexes, world);
-  if (target.kind === 'ring') throw new DomainError('Um einen Ring gibt es keine Raumkarte.');
-  if (campaign.encounters.some((e) => !e.ended)) throw new DomainError('Während einer laufenden Begegnung beginnt kein Systemflug.');
-  if (campaign.trip !== undefined) throw new DomainError('Erst die Fahrt beenden, dann fliegen.');
-  const away = shipDepartureBlocker(campaign);
-  if (away) throw new DomainError(away);
+  const blocker = flightStartBlocker(campaign, world);
+  if (blocker) throw new DomainError(blocker);
   const ship = activeShip(campaign);
   const { position, velocity } = startOrbit(campaign.hexes, world, dayStart(campaign.day));
   const unit: SpaceUnit = { ship: ship.id, position, velocity, crashed: false, track: [] };
   return { ...campaign, flight: { world, startedAt: clock.now(), round: 1, units: [unit] } };
+}
+
+/** Warum an `world` kein Systemflug beginnen kann; `undefined`, wenn er kann. */
+export function flightStartBlocker(campaign: Campaign, world: string): string | undefined {
+  if (campaign.flight !== undefined) return campaign.flight.world === world ? 'Es läuft schon ein Systemflug.' : 'Es läuft schon ein Systemflug an einer anderen Welt.';
+  // Am Gasriesen darf er von der Welt aus beginnen, auf der die Gruppe ist (wie man hinkommt, bleibt offen, 2026-11-18d).
+  if (campaign.location === undefined || hexIdOfWorld(campaign.location.world) !== hexIdOfWorld(world)) return 'Ein Systemflug beginnt nur im System, in dem die Gruppe ist.';
+  if (worldOf(campaign.hexes, world).kind === 'ring') return 'Um einen Ring gibt es keine Raumkarte.';
+  if (shipOf(campaign) === undefined) return 'Die Gruppe hat kein Schiff.';
+  if (campaign.encounters.some((e) => !e.ended)) return 'Während einer laufenden Begegnung beginnt kein Systemflug.';
+  if (campaign.trip !== undefined) return 'Erst die Fahrt beenden, dann fliegen.';
+  // Ohne Landeplatz steht das Schiff noch nirgends auf der Welt (2026-11-21).
+  if (needsLanding(campaign)) return 'Erst den Landeplatz wählen.';
+  return shipDepartureBlocker(campaign);
+}
+
+/** Von welcher Welt das Schiff der Gruppe startet: wo es steht, ohne eigenen Ort beim Aufenthaltsort der Gruppe. */
+export function launchWorld(campaign: Campaign): string | undefined {
+  const ship = shipOf(campaign);
+  if (!ship) return undefined;
+  return ship.place?.world ?? campaign.location?.world;
 }
 
 /**

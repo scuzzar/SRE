@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import type { ShipView, ShipYardRow, Snapshot } from '../../controller';
 import { credits, mcr } from '../format';
+import { SpaceCard, SpaceDock } from '../space/SpacePanel';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { CloseIcon, DropIcon, ExpandIcon, PencilIcon, ShipIcon, TrashIcon } from '../icons';
@@ -65,6 +66,17 @@ export function ShipScreen({ view }: { view: Snapshot }) {
       <DeckSheet name={deck.name} image={deck.image} onClose={close} />
     ) : undefined;
   if (field !== undefined) return <div className="screen">{field}</div>;
+  // Auf der Raumkarte steht hier die Bedienung des Systemflugs (Owner, 21. November 2026).
+  if (view.space) {
+    return (
+      <div className="screen">
+        <SpaceCard space={view.space} />
+        <div className="dock">
+          <SpaceDock space={view.space} />
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="screen">
       <div className="shop-top">
@@ -96,6 +108,7 @@ export function ShipScreen({ view }: { view: Snapshot }) {
             {ship.error}
           </p>
         )}
+        {boat !== undefined && !ship.flying && ship.launchBlocker && <p className="combat-hint ship-launch-hint">Starten: {ship.launchBlocker}</p>}
         {boat === undefined ? (
           <p className="log-empty">
             Die Gruppe hat noch kein Schiff. Unten die <b>Werft</b> öffnen und einen Standardentwurf kaufen; bei der Abmusterung gibt es Schiffe als Vorteil (Scout/Courier schuldenfrei, Subsidized
@@ -164,6 +177,17 @@ export function ShipScreen({ view }: { view: Snapshot }) {
             </button>
           ) : (
             <>
+              {ship.flying ? (
+                <button type="button" className="action draw" onClick={() => game.showFlight()}>
+                  <ShipIcon />
+                  Zum Flug
+                </button>
+              ) : (
+                <button type="button" className="action draw" disabled={ship.launchBlocker !== undefined} title={ship.launchBlocker} onClick={() => game.launch()}>
+                  <ShipIcon />
+                  Starten
+                </button>
+              )}
               <button type="button" className="action soft" onClick={() => setSheet({ kind: 'edit' })}>
                 <PencilIcon />
                 Bearbeiten

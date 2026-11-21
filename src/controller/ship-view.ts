@@ -14,6 +14,8 @@ import {
   type Campaign,
   type DeckPlan,
   type SoftwareKind,
+  flightStartBlocker,
+  launchWorld,
 } from '../model';
 
 /** Die Softwarearten, wie der Reiter Schiff sie schreibt (SR 38). */
@@ -97,6 +99,9 @@ export interface ShipView {
   readonly freeDeckSlots: number;
   readonly yard: readonly ShipYardRow[];
   readonly error: string | undefined;
+  /** Der Systemflug aus dem Reiter Schiff: warum „Starten“ nicht geht (`undefined`: es geht) und ob gerade einer läuft. */
+  readonly launchBlocker: string | undefined;
+  readonly flying: boolean;
 }
 
 /** Der Reiter Schiff, aus dem Spielstand und den Geräte-Deckplänen des aktiven Entwurfs. */
@@ -161,5 +166,11 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
       };
     }),
     error,
+    launchBlocker: (() => {
+      const world = launchWorld(campaign);
+      if (world === undefined) return ship === undefined ? 'Die Gruppe hat kein Schiff.' : 'Die Gruppe ist auf keiner Welt.';
+      return flightStartBlocker(campaign, world);
+    })(),
+    flying: campaign.flight !== undefined,
   };
 }

@@ -95,6 +95,8 @@ import {
   setThrust,
   snapThrust,
   startFlight,
+  flightStartBlocker,
+  launchWorld,
   without,
   type Vec,
   stateOf,
@@ -2427,7 +2429,34 @@ export class GameController {
     // Die Raumkarte um die Welt der offenen Weltkarte (Owner, 21. November 2026); im Blatt lassen sich die übrigen wählen.
     const id = world ?? openWorldId(at);
     if (!spaceChoices(hex, openWorldId(at)).some((c) => c.id === id)) throw new DomainError('Um einen Ring gibt es keine Raumkarte.');
-    this.update({ space: { world: id }, globe: this.state.globe && { picked: undefined } });
+    // Die Bedienung des Systemflugs steht im Reiter Schiff (Owner, 21. November 2026).
+    this.update({ space: { world: id }, globe: this.state.globe && { picked: undefined }, screen: 'ship', shipError: undefined });
+  }
+
+  /** „Starten“ im Reiter Schiff: Raumkarte um die Welt des Schiffs und gleich der Systemflug (Owner, 21. November 2026). */
+  launch(): void {
+    const world = launchWorld(this.campaign);
+    const blocker = world === undefined ? 'Die Gruppe hat kein Schiff.' : flightStartBlocker(this.campaign, world);
+    if (world === undefined || blocker) {
+      this.update({ shipError: blocker });
+      return;
+    }
+    this.openSpaceAround(world);
+    this.startFlight();
+  }
+
+  /** „Zum Flug“ im Reiter Schiff: die Raumkarte des laufenden Systemflugs. */
+  showFlight(): void {
+    const world = this.campaign.flight?.world;
+    if (world !== undefined) this.openSpaceAround(world);
+  }
+
+  /** Öffnet die Welt (mit Globus, falls es ihn gibt) und darüber ihre Raumkarte. */
+  private openSpaceAround(world: string): void {
+    const hex = hexById(this.campaign.hexes, hexIdOfWorld(world));
+    if (!hex) return;
+    if (!this.state.world || openWorldId(this.state.world) !== world) this.openGlobeAt(hex.column, hex.row, world);
+    this.openSpace(world);
   }
 
   /** Schließt die Raumkarte; Weltkarte bzw. Globus darunter bleiben, wie sie waren. Ein Systemflug läuft weiter. */

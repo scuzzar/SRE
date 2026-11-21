@@ -1,4 +1,5 @@
 import {
+  flightStartBlocker,
   BAND_KM,
   elapsedOf,
   flightTime,
@@ -18,7 +19,6 @@ import {
   ROUND_SECONDS,
   sceneOf,
   shipDesignOf,
-  shipOf,
   STEP_SECONDS,
   thrustMarks,
   worldById,
@@ -189,19 +189,7 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
   const t = flight ? flightTime(campaign, flight) : dayStart(campaign.day);
   const origin = originAt(scene, space.world, t);
   const [ten, hundred] = jumpLimitsOf(center);
-  const blocker = flight
-    ? undefined
-    : campaign.flight
-      ? 'Es läuft schon ein Systemflug an einer anderen Welt.'
-      : !here
-        ? 'Ein Systemflug beginnt nur im System, in dem die Gruppe ist.'
-        : shipOf(campaign) === undefined
-          ? 'Die Gruppe hat kein Schiff.'
-          : campaign.encounters.some((e) => !e.ended)
-            ? 'Während einer laufenden Begegnung beginnt kein Systemflug.'
-            : campaign.trip
-              ? 'Erst die Fahrt beenden, dann fliegen.'
-              : undefined;
+  const blocker = flight ? undefined : flightStartBlocker(campaign, space.world);
   const radius = radiusOf(world);
   const worldBody = scene.moons.find((m) => m.world === space.world)?.body ?? (scene.center === space.world ? scene.body : undefined);
   const tStart = flight ? t - elapsedOf(flight) : t;

@@ -32,6 +32,26 @@ describe('Raumkarte und Systemflug', () => {
     expect(repository.saved!.flight?.round).toBe(1);
   });
 
+  it('„Starten“ im Reiter Schiff öffnet die Raumkarte um die Welt des Schiffs und beginnt den Flug; die Bedienung steht im Reiter Schiff (Owner, 21. November 2026)', async () => {
+    const repository = memoryRepository();
+    const game = new GameController({ repository, random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), keys: countingKeys() });
+    await game.init();
+    expect(game.snapshot().ship).toMatchObject({ launchBlocker: undefined, flying: false });
+    game.launch();
+    const view = game.snapshot();
+    expect(view.screen).toBe('ship');
+    expect(view.space?.world.id).toBe(view.location);
+    expect(view.space?.flight?.round).toBe(1);
+    expect(view.ship?.flying).toBe(true);
+    // Raumkarte zu: „Zum Flug“ holt sie wieder.
+    game.closeSpace();
+    expect(game.snapshot().space).toBeUndefined();
+    game.showFlight();
+    expect(game.snapshot().space?.flight?.round).toBe(1);
+    game.endFlight();
+    expect(game.snapshot().ship?.flying).toBe(false);
+  });
+
   it('ein gezogener Schub zeigt sich in der Vorschau, gesetzt wird er erst beim Loslassen', async () => {
     const { game, repository } = await started();
     game.openSpace();

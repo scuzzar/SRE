@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openHomeGlobe } from './layout';
+import { openHomeGlobe, openTab } from './layout';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -32,6 +32,23 @@ test('Systemflug: Raumkarte öffnen, Schub im Schubkreis setzen, Runde ausführe
   await expect(page.getByRole('button', { name: 'Systemflug beginnen' })).toBeVisible();
   await page.getByRole('button', { name: 'Raumkarte schließen' }).first().click();
   await expect(page.getByRole('region', { name: 'Raumkarte · Kessra' })).toHaveCount(0);
+});
+
+test('Systemflug aus dem Reiter Schiff: „Starten“ öffnet die Raumkarte, die Bedienung steht im Reiter Schiff (Owner, 21. November 2026)', async ({ page }) => {
+  await openHomeGlobe(page);
+  await openTab(page, 'Schiff');
+  await page.getByRole('button', { name: 'Starten', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Raumkarte · Kessra' })).toBeVisible();
+  const card = page.getByRole('region', { name: 'Systemflug' });
+  await expect(card).toContainText('Raumrunde 1');
+  await expect(page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Schiff' })).toHaveAttribute('aria-current', 'page');
+  await page.getByRole('button', { name: 'Runde ausführen' }).click();
+  await expect(card).toContainText('Raumrunde 2');
+  // Raumkarte zu: Der Flug läuft weiter, „Zum Flug“ holt ihn zurück.
+  await page.getByRole('button', { name: 'Raumkarte schließen' }).first().click();
+  await expect(page.getByRole('region', { name: 'Raumkarte · Kessra' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Zum Flug' }).click();
+  await expect(card).toContainText('Raumrunde 2');
 });
 
 test('Raumkarte am Gasriesen: Kessra ist Mond eines Gasriesen; seine Raumkarte hat eigene Monde (2026-11-18d)', async ({ page }) => {
