@@ -4,10 +4,11 @@ import type { Clock } from './ports';
 import { shipDesignOf } from './reference';
 import { hexById, hexIdOfWorld, worldOf, type Hex, type World } from './sector';
 import { gravityOf, radiusOf } from './star-system';
-import { activeShip, shipById, shipOf, without } from './ship';
+import { changeShip, craftOf, shipById, shipOf, vesselsOf, without, type Ship } from './ship';
 import { passTime, START_DAY } from './time';
 import { placeGroup } from './upkeep';
 import { needsLanding, shipArrives, shipDepartureBlocker } from './landing';
+import { worldPlace } from './place';
 
 // Systemflug (Domänenmodell 2026-11-18c, Stufe 1 des Raumkampfs; Konzept: docs/konzept-raumkampf.md).
 // Gerechnet wird in km und Sekunden, in der Ebene, die Welt in der Mitte.
@@ -24,9 +25,9 @@ export interface TrackPoint {
   readonly velocity: Vec;
 }
 
-/** Was sich auf der Raumkarte frei bewegt; in Stufe 1 nur ein eigenes Schiff (Domänenmodell: `SpaceUnit`). */
+/** Was sich auf der Raumkarte frei bewegt: eigene Schiffe und Small Craft (Domänenmodell: `SpaceUnit`). */
 export interface SpaceUnit {
-  /** Das Schiff der Kampagne. */
+  /** Das Schiff oder Small Craft der Kampagne. */
   readonly ship: string;
   readonly position: Vec;
   readonly velocity: Vec;
@@ -45,6 +46,8 @@ export interface SystemFlight {
   readonly startedAt: string;
   /** Die laufende Raumrunde, ab 1. */
   readonly round: number;
+  /** Die Einheit der Gruppe, als Id ihres Schiffs (2026-11-21b): Nur sie landet. */
+  readonly party: string;
   readonly units: readonly SpaceUnit[];
 }
 
@@ -286,7 +289,7 @@ export interface State {
  * neuen Ort (die Monde dort, wo sie dann stehen), Schub (in G) gleichmäßig über den Schritt. Gerät
  * die Einheit unter die Oberfläche eines Körpers, schlägt sie auf.
  */
-export function step(scene: Scene, state: State, thrust: Vec | undefined, t = 0, maxG?: number): State {
+export function step(scene: Scene, state: State, thrust: Vec | undefined, t = 0, maxG?: number, land = true): State {
   if (state.crashed || state.landedOn !== undefined) return state;
   const dt = STEP_SECONDS;
   // Mit `maxG` fliegt die Landeautomatik mit (ein Schiff); sie hat Vorrang vor dem eingestellten Schub.
@@ -298,8 +301,8 @@ export function step(scene: Scene, state: State, thrust: Vec | undefined, t = 0,
   const velocity = add(state.velocity, scale(add(a0, a1), 0.5 * dt));
   const contact = inside(scene, position, t + dt);
   if (contact) {
-    // Langsam aufgesetzt ist gelandet, schneller aufgeschlagen.
-    if (lengthOf(sub(velocity, contact.velocity)) <= LANDING_KMS) return { position: contact.surface, velocity: contact.velocity, crashed: false, landedOn: contact.world };
+    // Langsam aufgesetzt ist gelandet, schneller aufgeschlagen; ohne die Gruppe landet keine Einheit (2026-11-21b).
+    if (land && lengthOf(sub(velocity, contact.velocity)) <= LANDING_KMS) return { position: contact.surface, velocity: contact.velocity, crashed: false, landedOn: contact.world };
     return { position: contact.surface, velocity: { x: 0, y: 0 }, crashed: true };
   }
   return { position, velocity, crashed: false };
@@ -309,11 +312,11 @@ export function step(scene: Scene, state: State, thrust: Vec | undefined, t = 0,
  * Rechnet `steps` Schritte ab der Zeit `t` und gibt alle Zwischenstände zurück (der erste ist der
  * Anfang). Der Schub gilt für die ersten `thrustSteps` Schritte (eine Raumrunde), danach ballistisch.
  */
-export function propagate(scene: Scene, start: State, thrust: Vec | undefined, steps: number, thrustSteps = steps, t = 0, maxG?: number): readonly State[] {
+export function propagate(scene: Scene, start: State, thrust: Vec | undefined, steps: number, thrustSteps = steps, t = 0, maxG?: number, land = true): readonly State[] {
   const states: State[] = [start];
   let state = start;
   for (let i = 0; i < steps; i++) {
-    state = step(scene, state, i < thrustSteps ? thrust : undefined, t + i * STEP_SECONDS, maxG);
+    state = step(scene, state, i < thrustSteps ? thrust : undefined, t + i * STEP_SECONDS, maxG, land);
     states.push(state);
   }
   return states;
@@ -336,17 +339,31 @@ export function activeFlight(campaign: Campaign): SystemFlight {
 }
 
 /**
- * Beginnt einen Systemflug auf der Raumkarte der Welt, auf der die Gruppe ist, mit dem eigenen Schiff.
- * Es startet auf einer Kreisbahn mit dem doppelten Weltradius gegen den Uhrzeigersinn, oberhalb der
- * Welt (dort verdeckt es das Ziehblatt nicht); bei Größe 0 ruhend in 20.000 km Abstand.
+ * Das eigene Schiff oder Small Craft, bei dem die Gruppe steht und mit dem sie abfliegen kann
+ * (2026-11-21b): zuerst das aktive Schiff, sonst ein Beiboot, das am Ort der Gruppe gelandet ist.
+ * Beiboote an Bord fliegen mit ihrem Mutterschiff.
+ */
+export function groupVessel(campaign: Campaign): Ship | undefined {
+  return vesselsOf(campaign).find((v) => !v.aboard && !v.inOrbit && shipDepartureBlocker(campaign, v) === undefined && (v.mother === undefined || v.place !== undefined));
+}
+
+/**
+ * Beginnt einen Systemflug auf der Raumkarte der Welt, auf der die Gruppe ist, mit dem eigenen Schiff
+ * oder einem Small Craft, bei dem sie steht (2026-11-21b). Es startet auf einer Kreisbahn mit dem
+ * doppelten Weltradius gegen den Uhrzeigersinn, oberhalb der Welt (dort verdeckt es das Ziehblatt
+ * nicht); bei Größe 0 ruhend in 20.000 km Abstand. Eigene Schiffe in der Umlaufbahn dieser Welt kommen
+ * dazu, auf einer Kreisbahn mit dem dreifachen Weltradius (weitere je einen halben Radius höher).
  */
 export function startFlight(campaign: Campaign, world: string, clock: Clock): Campaign {
   const blocker = flightStartBlocker(campaign, world);
   if (blocker) throw new DomainError(blocker);
-  const ship = activeShip(campaign);
-  const { position, velocity } = startOrbit(campaign.hexes, world, dayStart(campaign.day));
-  const unit: SpaceUnit = { ship: ship.id, position, velocity, crashed: false, track: [] };
-  return { ...campaign, flight: { world, startedAt: clock.now(), round: 1, units: [unit] } };
+  const vessel = groupVessel(campaign)!;
+  const t = dayStart(campaign.day);
+  const units: SpaceUnit[] = [{ ship: vessel.id, ...startOrbit(campaign.hexes, world, t), crashed: false, track: [] }];
+  vesselsOf(campaign)
+    .filter((v) => v.inOrbit && v.place?.world === world)
+    .forEach((v, i) => units.push({ ship: v.id, ...startOrbit(campaign.hexes, world, t, 3 + i / 2), crashed: false, track: [] }));
+  return { ...campaign, flight: { world, startedAt: clock.now(), round: 1, party: vessel.id, units } };
 }
 
 /** Warum an `world` kein Systemflug beginnen kann; `undefined`, wenn er kann. */
@@ -360,12 +377,13 @@ export function flightStartBlocker(campaign: Campaign, world: string): string | 
   if (campaign.trip !== undefined) return 'Erst die Fahrt beenden, dann fliegen.';
   // Ohne Landeplatz steht das Schiff noch nirgends auf der Welt (2026-11-21).
   if (needsLanding(campaign)) return 'Erst den Landeplatz wählen.';
-  return shipDepartureBlocker(campaign);
+  if (groupVessel(campaign) === undefined) return shipDepartureBlocker(campaign) ?? 'Die Gruppe ist bei keinem eigenen Schiff.';
+  return undefined;
 }
 
-/** Von welcher Welt das Schiff der Gruppe startet: wo es steht, ohne eigenen Ort beim Aufenthaltsort der Gruppe. */
+/** Von welcher Welt die Gruppe startet: wo ihr Schiff oder Small Craft steht, ohne eigenen Ort beim Aufenthaltsort der Gruppe. */
 export function launchWorld(campaign: Campaign): string | undefined {
-  const ship = shipOf(campaign);
+  const ship = groupVessel(campaign) ?? shipOf(campaign);
   if (!ship) return undefined;
   return ship.place?.world ?? campaign.location?.world;
 }
@@ -375,13 +393,13 @@ export function launchWorld(campaign: Campaign): string | undefined {
  * Uhrzeigersinn, oberhalb von ihr; ist die Welt ein Mond, mitbewegt mit ihm. Ohne Körper ruhend in
  * 20.000 km Abstand.
  */
-export function startOrbit(hexes: readonly Hex[], worldId: string, t: number): { readonly position: Vec; readonly velocity: Vec } {
+export function startOrbit(hexes: readonly Hex[], worldId: string, t: number, radii = 2): { readonly position: Vec; readonly velocity: Vec } {
   const scene = sceneOf(hexes, worldId);
   const moon = scene.moons.find((m) => m.world === worldId);
   const at = originAt(scene, worldId, t);
   const body = moon ? moon.body : scene.body;
-  if (body === undefined) return { position: add(at.position, { x: 0, y: BELT_START_KM }), velocity: at.velocity };
-  const r = 2 * body.radius;
+  if (body === undefined) return { position: add(at.position, { x: 0, y: (BELT_START_KM * radii) / 2 }), velocity: at.velocity };
+  const r = radii * body.radius;
   return { position: add(at.position, { x: 0, y: r }), velocity: add(at.velocity, { x: -Math.sqrt(body.gm / r), y: 0 }) };
 }
 
@@ -414,7 +432,8 @@ export function runRound(campaign: Campaign, clock: Clock, every = 2): RoundRun 
   const flight = activeFlight(campaign);
   const scene = sceneOf(campaign.hexes, flight.world);
   const t = flightTime(campaign, flight);
-  const runs = flight.units.map((u) => propagate(scene, u, u.thrust, ROUND_STEPS, ROUND_STEPS, t, maxGOf(campaign, u)));
+  // Nur die Einheit der Gruppe landet, mit der Landeautomatik (2026-11-21b).
+  const runs = flight.units.map((u) => (u.ship === flight.party ? propagate(scene, u, u.thrust, ROUND_STEPS, ROUND_STEPS, t, maxGOf(campaign, u)) : propagate(scene, u, u.thrust, ROUND_STEPS, ROUND_STEPS, t, undefined, false)));
   const units = flight.units.map((u, i): SpaceUnit => {
     const end = runs[i]!.at(-1)!;
     const rest = without(u, 'thrust');
@@ -429,14 +448,90 @@ export function runRound(campaign: Campaign, clock: Clock, every = 2): RoundRun 
   for (let s = 0; s <= ROUND_STEPS; s += every) frames.push(runs.map((r) => r[s]!.position));
   // Gelandet: Der Systemflug endet, die Gruppe ist auf dieser Welt (Owner, 21. November 2026).
   const landed = runs.map((r) => r.at(-1)!.landedOn).find((w) => w !== undefined);
-  if (landed !== undefined) return { campaign: placeGroup(shipArrives(endFlight(result), landed), landed, clock), frames, landed };
+  if (landed !== undefined) return { campaign: placeGroup(shipArrives(endFlight(result), landed, flight.party), landed, clock, flight.party), frames, landed };
   return { campaign: result, frames };
 }
 
-/** Beendet den Systemflug; angebrochene Tage verfallen. */
+/**
+ * Beendet den Systemflug; angebrochene Tage verfallen. Was ohne die Gruppe noch fliegt, ist danach in
+ * der Umlaufbahn der Welt des Systemflugs, Ort, Geschwindigkeit und Spur gehen verloren (2026-11-21b);
+ * was aufgeschlagen ist, steht auf ihr (in Stufe 1 ohne Folgen). Ein Beiboot der Gruppe, das in diesem
+ * Flug ausgesetzt wurde und nicht gelandet ist, steht danach dort, wo die Gruppe ist.
+ */
 export function endFlight(campaign: Campaign): Campaign {
-  activeFlight(campaign);
-  return without(campaign, 'flight');
+  const flight = activeFlight(campaign);
+  let after: Campaign = without(campaign, 'flight');
+  for (const unit of flight.units) {
+    after = changeShip(after, unit.ship, (s) => {
+      if (unit.ship === flight.party) return s.place === undefined && s.mother !== undefined && campaign.location !== undefined ? { ...without(s, 'aboard', 'inOrbit'), place: campaign.location } : s;
+      if (unit.crashed) return { ...without(s, 'aboard', 'inOrbit'), place: worldPlace(flight.world) };
+      return { ...without(s, 'aboard'), place: worldPlace(flight.world), inOrbit: true };
+    });
+  }
+  return after;
+}
+
+/** Wie nah ein Small Craft seinem Mutterschiff zum Andocken kommen muss, in km (Hausregel aus dem Konzept). */
+export const DOCK_KM = 100;
+/** Wie langsam es dabei gegenüber dem Mutterschiff sein muss, in km/s. */
+export const DOCK_KMS = 0.1;
+
+/** Die Beiboote an Bord der Einheit der Gruppe, die sie jetzt aussetzen kann (2026-11-21b). */
+export function launchableCraft(campaign: Campaign): readonly Ship[] {
+  const flight = campaign.flight;
+  if (flight === undefined) return [];
+  const party = flight.units.find((u) => u.ship === flight.party);
+  if (party === undefined || party.crashed) return [];
+  // ⚑ Ein Beiboot je Raumrunde: Steht noch eines genau dort, wo das Mutterschiff ist, ist es gerade erst ausgesetzt.
+  if (flight.units.some((u) => u !== party && u.position.x === party.position.x && u.position.y === party.position.y && campaign.ships.find((s) => s.id === u.ship)?.mother === party.ship)) return [];
+  return craftOf(campaign, party.ship).filter((c) => c.aboard);
+}
+
+/**
+ * Setzt ein Beiboot aus (2026-11-21b): Es wird eine eigene Einheit mit Ort, Geschwindigkeit und Spur
+ * des Mutterschiffs, ist nicht mehr an Bord, und die Gruppe steigt mit um.
+ */
+export function launchCraft(campaign: Campaign, id: string): Campaign {
+  const flight = activeFlight(campaign);
+  if (!launchableCraft(campaign).some((c) => c.id === id)) throw new DomainError('Dieses Beiboot lässt sich jetzt nicht aussetzen.');
+  const mother = flight.units.find((u) => u.ship === flight.party)!;
+  const unit: SpaceUnit = { ship: id, position: mother.position, velocity: mother.velocity, crashed: false, track: mother.track };
+  return { ...changeShip(campaign, id, (s) => without(s, 'aboard')), flight: { ...flight, party: id, units: [...flight.units, unit] } };
+}
+
+/** Warum ein Small Craft nicht an seinem Mutterschiff andocken kann; `undefined`, wenn es kann. */
+export function dockBlocker(campaign: Campaign, id: string): string | undefined {
+  const flight = activeFlight(campaign);
+  const craft = flight.units.find((u) => u.ship === id);
+  const ship = campaign.ships.find((s) => s.id === id);
+  const mother = flight.units.find((u) => u.ship === ship?.mother);
+  if (craft === undefined || ship === undefined || mother === undefined) return 'Das Mutterschiff fliegt nicht mit.';
+  if (craft.crashed || mother.crashed) return 'Eine aufgeschlagene Einheit dockt nicht an.';
+  if (lengthOf(sub(craft.position, mother.position)) > DOCK_KM) return `Erst näher als ${DOCK_KM} km heran.`;
+  if (lengthOf(sub(craft.velocity, mother.velocity)) > DOCK_KMS) return `Erst den Kurs angleichen: langsamer als ${DOCK_KMS.toLocaleString('de-DE')} km/s gegenüber dem Mutterschiff.`;
+  return undefined;
+}
+
+/** Die Small Craft im Flug, die jetzt andocken können. */
+export function dockableCraft(campaign: Campaign): readonly Ship[] {
+  if (campaign.flight === undefined) return [];
+  return campaign.flight.units.flatMap((u) => {
+    const ship = campaign.ships.find((s) => s.id === u.ship);
+    return ship?.mother !== undefined && dockBlocker(campaign, ship.id) === undefined ? [ship] : [];
+  });
+}
+
+/**
+ * Dockt ein Small Craft an seinem Mutterschiff an (2026-11-21b): Seine Einheit entfällt, es ist an
+ * Bord, und saß die Gruppe darin, sitzt sie jetzt im Mutterschiff.
+ */
+export function dockCraft(campaign: Campaign, id: string): Campaign {
+  const flight = activeFlight(campaign);
+  const blocker = dockBlocker(campaign, id);
+  if (blocker) throw new DomainError(blocker);
+  const mother = shipById(campaign, id).mother!;
+  const docked = changeShip(campaign, id, (s) => ({ ...without(s, 'place', 'inOrbit'), aboard: true }));
+  return { ...docked, flight: { ...flight, party: flight.party === id ? mother : flight.party, units: flight.units.filter((u) => u.ship !== id) } };
 }
 
 /** Was die Bahnvorschau einer Einheit zeigt: diese Raumrunde mit Schub, danach fünf ohne; Orte von `origin` aus gesehen. */
@@ -453,8 +548,8 @@ export interface Preview {
 export const PREVIEW_ROUNDS = 5;
 
 /** Die Bahnvorschau einer Einheit ab der Zeit `t` mit einem (vielleicht nur gezogenen) Schubvektor; alle `every` Schritte ein Punkt. */
-export function previewOf(scene: Scene, unit: State, thrust: Vec | undefined, t = 0, every = 2, origin = scene.center, maxG?: number): Preview {
-  const absolute = propagate(scene, unit, thrust, ROUND_STEPS * (1 + PREVIEW_ROUNDS), ROUND_STEPS, t, maxG);
+export function previewOf(scene: Scene, unit: State, thrust: Vec | undefined, t = 0, every = 2, origin = scene.center, maxG?: number, land = true): Preview {
+  const absolute = propagate(scene, unit, thrust, ROUND_STEPS * (1 + PREVIEW_ROUNDS), ROUND_STEPS, t, maxG, land);
   const states = absolute.map((s, i) => ({ ...s, position: sub(s.position, originAt(scene, origin, t + i * STEP_SECONDS).position) }));
   const now: Vec[] = [];
   const after: Vec[] = [];
@@ -476,7 +571,10 @@ export function checkFlight(campaign: Campaign, flight: SystemFlight): void {
   worldOf(campaign.hexes, flight.world);
   if (!Number.isInteger(flight.round) || flight.round < 1) throw new DomainError('Die Raumrunde eines Systemflugs beginnt bei 1.');
   if (flight.units.length === 0) throw new DomainError('Ein Systemflug hat mindestens eine Einheit.');
+  if (!flight.units.some((u) => u.ship === flight.party)) throw new DomainError('Die Gruppe sitzt in keiner Einheit des Systemflugs.');
+  if (new Set(flight.units.map((u) => u.ship)).size !== flight.units.length) throw new DomainError('Ein Schiff fliegt doppelt im Systemflug.');
   for (const unit of flight.units) {
+    if (shipById(campaign, unit.ship).aboard) throw new DomainError('Ein Beiboot an Bord ist keine eigene Einheit.');
     const maxG = maxGOf(campaign, unit);
     if (unit.thrust !== undefined && lengthOf(unit.thrust) > maxG + 1e-6) throw new DomainError('Der Schub einer Einheit ist größer als ihr höchster Schub.');
     if (unit.track.length !== flight.round - 1) throw new DomainError('Die Spur einer Einheit passt nicht zur Raumrunde.');

@@ -16,6 +16,11 @@ import {
   type SoftwareKind,
   flightStartBlocker,
   launchWorld,
+  craftOf,
+  craftPurchaseBlocker,
+  holdTonsOf,
+  isSmallCraft,
+  type Ship,
 } from '../model';
 
 /** Die Softwarearten, wie der Reiter Schiff sie schreibt (SR 38). */
@@ -33,6 +38,12 @@ export interface ShipSoftwareRow {
 /** Ein Standardentwurf in der Werft, mit dem, was er die Kasse kostet. */
 export interface ShipYardRow {
   readonly designId: string;
+  /** Ein Small Craft (2026-11-21c): steht in der Werft in eigener Liste. */
+  readonly smallCraft: boolean;
+  /** Was aus einem gekauften Small Craft wird: „Beiboot von Kestrel, im Laderaum“ oder „eigenständig“; bei Schiffen leer. */
+  readonly becomes: string;
+  /** Warum der Kauf nicht geht, obwohl die Kasse reicht (zu groß für den Laderaum). */
+  readonly blocker: string | undefined;
   readonly code: string;
   readonly name: string;
   readonly hull: number;
@@ -40,6 +51,8 @@ export interface ShipYardRow {
   readonly maneuver: number;
   readonly crew: string;
   readonly months: number;
+  /** Die Beiboote des Entwurfs, knapp: „Ship's Boat“, „2 × Modular Cutter“; leer ohne. */
+  readonly craft: string;
   readonly price: number;
   /** Anzahlung bei Bankfinanzierung: 20 % des Preises (SR 29). */
   readonly down: number;
@@ -47,6 +60,15 @@ export interface ShipYardRow {
   readonly affordable: boolean;
   /** Den Entwurf fährt die Gruppe gerade. */
   readonly owned: boolean;
+}
+
+/** Ein Beiboot im Reiter Schiff. */
+export interface CraftRow {
+  readonly name: string;
+  /** Entwurf und Beschleunigung, knapp: „Ship's Boat · 6G“. */
+  readonly design: string;
+  /** Wo es ist: „an Bord“, „in der Umlaufbahn von …“, „auf …“. */
+  readonly where: string;
 }
 
 /** Was der Reiter Schiff zeigt: Stände des aktiven Schiffs, Deckpläne und die Werft. */
@@ -64,7 +86,7 @@ export interface ShipView {
         /** Treibstoff im Tank und Tankgröße, in Tonnen. */
         readonly fuel: number;
         readonly fuelMax: number;
-        /** Fracht im Laderaum und Laderaumgröße, in Tonnen. */
+        /** Fracht im Laderaum und Laderaumgröße ohne die Beiboote im Laderaum, in Tonnen (2026-11-21c). */
         readonly cargo: number;
         readonly cargoMax: number;
         /** Belegte Kabinen: immer die Gruppe zuerst; Passagiere kommen mit dem Handel. */
@@ -80,6 +102,8 @@ export interface ShipView {
         readonly crew: string;
         readonly months: number;
         readonly basePrice: number;
+        /** Die Beiboote (2026-11-21b): Name, Entwurf mit G und wo es ist. */
+        readonly craft: readonly CraftRow[];
         /** Der tatsächlich gezahlte Preis. */
         readonly price: number;
         /** Kreditsumme beim Abschluss; fehlt bei einem schuldenfreien Schiff. */
@@ -123,18 +147,19 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
             fuel: ship.fuel,
             fuelMax: plan.fuel,
             cargo: ship.cargo,
-            cargoMax: plan.cargo,
+            cargoMax: plan.cargo - holdTonsOf(campaign, ship),
             cabins: livingCharacters(campaign).filter(isPc).length,
             cabinsMax: plan.staterooms,
             lowBerthsUsed: 0,
             lowBerthsMax: plan.lowBerths,
-            thruster: `Jump-${plan.jump} · ${plan.maneuver}G`,
+            thruster: plan.jump === 0 ? `Small Craft · ${plan.maneuver}G` : `Jump-${plan.jump} · ${plan.maneuver}G`,
             jump: plan.jump,
             hardpoints: plan.hardpoints,
-            computerName: computerModelOf(plan.computer).name,
+            computerName: plan.computer === undefined ? 'keiner' : computerModelOf(plan.computer).name,
             crew: plan.crew,
-            months: plan.months,
+            months: plan.months ?? 0,
             basePrice: plan.basePrice,
+            craft: craftOf(campaign, ship.id).map((c) => craftRow(campaign, c)),
             price: ship.price,
             initialLoan: ship.initialLoan,
             loanBalance: ship.loanBalance,
@@ -148,20 +173,28 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
     deckPlans: [...deckPlans].sort((a, b) => a.name.localeCompare(b.name)),
     freeDeckSlots: Math.max(0, deckSlotNames.length - deckPlans.length),
     // Die Standardentwürfe in der Reihenfolge der SR-Tabelle; bezahlbar heißt: bar oder als Anzahlung.
+    // Dazu die Small Craft, einzeln zu kaufen (2026-11-21c): mit Schiff als Beiboot im Laderaum, ohne eigenständig.
     yard: ref.ships.map((plan) => {
       const down = Math.round(plan.basePrice * DOWN_PAYMENT);
+      const small = plan.kind === 'smallCraft';
+      const mother = ship !== undefined && !isSmallCraft(ship) ? ship : undefined;
+      const blocker = craftPurchaseBlocker(campaign, plan.id);
       return {
         designId: plan.id,
+        smallCraft: small,
+        becomes: !small ? '' : mother ? `Beiboot von ${mother.name}, im Laderaum (${plan.hull} t)` : ship ? `ersetzt ${ship.name}` : 'eigenständig, ohne Mutterschiff',
+        blocker,
         code: plan.code,
         name: plan.name,
         hull: plan.hull,
         jump: plan.jump,
         maneuver: plan.maneuver,
         crew: plan.crew,
-        months: plan.months,
+        months: plan.months ?? 0,
+        craft: craftLabel(plan.craft),
         price: plan.basePrice,
         down,
-        affordable: funds >= down,
+        affordable: funds >= down && blocker === undefined,
         owned: ship !== undefined && ship.design === plan.id,
       };
     }),
@@ -173,4 +206,27 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
     })(),
     flying: campaign.flight !== undefined,
   };
+}
+
+/** Die Beiboote eines Entwurfs, knapp: gleiche zusammengefasst („2 × Modular Cutter“). */
+function craftLabel(craft: readonly string[]): string {
+  const counts = new Map<string, number>();
+  for (const c of craft) counts.set(c, (counts.get(c) ?? 0) + 1);
+  return [...counts].map(([id, n]) => `${n > 1 ? `${n} × ` : ''}${shipDesignOf(id).name}`).join(', ');
+}
+
+/** Ein Beiboot mit Entwurf und Ort. */
+function craftRow(campaign: Campaign, craft: Ship): CraftRow {
+  const plan = shipDesignOf(craft.design);
+  const worldName = (id: string) => campaign.hexes.flatMap((h) => h.worlds).find((w) => w.id === id)?.name ?? id;
+  const where = craft.aboard
+    ? craft.inHold
+      ? 'im Laderaum'
+      : 'an Bord'
+    : craft.place === undefined
+      ? 'bei der Gruppe'
+      : craft.inOrbit
+        ? `in der Umlaufbahn von ${worldName(craft.place.world)}`
+        : `auf ${worldName(craft.place.world)}`;
+  return { name: craft.name, design: `${plan.name} · ${plan.maneuver}G`, where };
 }

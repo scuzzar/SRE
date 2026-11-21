@@ -2,10 +2,10 @@ import type { Campaign } from './campaign';
 import type { MonthEnd } from './log';
 import type { Clock } from './ports';
 import { worldOf } from './sector';
-import { monthlyPaymentOf, shipOf, without, type Ship } from './ship';
+import { monthlyPaymentOf, shipOf, vesselsOf, without, type Ship } from './ship';
 import { bookShip, fundsOf, isRunningCost, setLocation } from './shop';
 import { monthStartsIn, nextMonthStart } from './time';
-import { cameByShip, chooseLanding, leaveShipBehind } from './landing';
+import { arrivedVessel, chooseLanding, leaveShipBehind } from './landing';
 
 /**
  * Die laufenden Kosten der Schiffe (2026-11-17b, siehe domain-model.md, *Laufende Kosten und
@@ -24,12 +24,14 @@ export const LIFE_SUPPORT = 2_000;
 export const PER_STATEROOM = 2;
 
 /**
- * Ob das Schiff in einem Hafen liegt; nur dort kostet das Liegen etwas (2026-11-21): in einer Stadt mit
- * Hafen ja, auf einem beliebigen Feld nein, noch ohne Feld (Welt ohne Globus) wie bisher nach dem
- * Raumhafen A bis E der Welt. Ohne eigenen Ort liegt das Schiff, wo die Gruppe ist.
+ * Ob ein Schiff (ohne Angabe das aktive) in einem Hafen liegt; nur dort kostet das Liegen etwas
+ * (2026-11-21): in einer Stadt mit Hafen ja, auf einem beliebigen Feld nein, noch ohne Feld (Welt ohne
+ * Globus) wie bisher nach dem Raumhafen A bis E der Welt. Ohne eigenen Ort liegt das Schiff, wo die
+ * Gruppe ist. An Bord und in der Umlaufbahn liegt es in keinem Hafen (2026-11-21b).
  */
-function inPort(campaign: Campaign): boolean {
-  const place = shipOf(campaign)?.place ?? campaign.location;
+function inPort(campaign: Campaign, ship: Ship | undefined = shipOf(campaign)): boolean {
+  if (ship?.aboard || ship?.inOrbit) return false;
+  const place = ship?.place ?? campaign.location;
   if (place === undefined) return false;
   const world = worldOf(campaign.hexes, place.world);
   if (place.city !== undefined) return world.map?.cities?.[place.city]?.port !== undefined;
@@ -51,16 +53,17 @@ function charge(campaign: Campaign, amount: number, ship: Ship, cost: 'rate' | '
 }
 
 /**
- * Das aktive Schiff kommt mit der Gruppe an einem neuen Ort an (Reise, „Gruppe platzieren“): Es liegt
- * von heute an dort. Mit Raumhafen kostet das Cr100 für die ersten sechs Tage.
+ * Ein eigenes Schiff (ohne Angabe das aktive) kommt mit der Gruppe an einem neuen Ort an (Reise,
+ * „Gruppe platzieren“, Landung): Es liegt von heute an dort. Mit Raumhafen kostet das Cr100 für die
+ * ersten sechs Tage. Ein Small Craft zahlt wie ein Schiff (2026-11-21b).
  */
-export function arrive(campaign: Campaign, clock: Clock): Campaign {
-  const ship = shipOf(campaign);
-  if (ship === undefined) return campaign;
+export function arrive(campaign: Campaign, clock: Clock, id: string | undefined = shipOf(campaign)?.id): Campaign {
+  const ship = campaign.ships.find((s) => s.id === id);
+  if (ship === undefined || ship.aboard || ship.inOrbit) return campaign;
   // Ein Schiff mit eigenem Ort auf einer anderen Welt ist nicht mitgekommen (2026-11-21).
   if (ship.place !== undefined && ship.place.world !== campaign.location?.world) return campaign;
   const docked = withShip(campaign, ship.id, (s) => ({ ...s, berthedSince: campaign.day }));
-  if (!inPort(docked)) return docked;
+  if (!inPort(docked, docked.ships.find((s) => s.id === ship.id))) return docked;
   return charge(docked, BERTH_FEE, ship, 'berthing', 'Liegegebühr bei der Ankunft', 'Liegegebühr nicht bezahlt', clock).campaign;
 }
 
@@ -71,27 +74,31 @@ export function arrive(campaign: Campaign, clock: Clock): Campaign {
 export function landAt(campaign: Campaign, place: { readonly city: number } | { readonly cell: number }, clock: Clock): Campaign {
   // Gerade angekommen ist das Schiff, wenn es schon auf dieser Welt steht, noch ohne Feld; eines ohne
   // eigenen Ort (ältere Stände) lag schon vorher bei der Gruppe und zahlt nicht noch einmal.
-  const justArrived = cameByShip(campaign) && shipOf(campaign)?.place !== undefined;
+  const vessel = arrivedVessel(campaign);
+  const justArrived = vessel?.place !== undefined;
   const landed = chooseLanding(campaign, place);
-  return justArrived ? arrive(landed, clock) : landed;
+  return justArrived ? arrive(landed, clock, vessel.id) : landed;
 }
 
 /**
  * „Gruppe platzieren“: setzt den Aufenthaltsort ohne Reise und ohne Zeit. Das Schiff bleibt, wo es
  * steht (2026-11-21); eines ohne eigenen Ort bleibt am bisherigen Aufenthaltsort.
  */
-export function placeGroup(campaign: Campaign, id: string | undefined, clock: Clock): Campaign {
+export function placeGroup(campaign: Campaign, id: string | undefined, clock: Clock, vessel?: string): Campaign {
   if (id === undefined || id === campaign.location?.world) return setLocation(campaign, id);
-  return arrive(setLocation(leaveShipBehind(campaign), id), clock);
+  return arrive(setLocation(leaveShipBehind(campaign), id), clock, vessel);
 }
 
-/** Die Liegegebühr für die Tage in (from, to], die nach den ersten sechs im Hafen liegen. */
+/** Die Liegegebühr für die Tage in (from, to], die nach den ersten sechs im Hafen liegen: je eigenem Schiff und Small Craft (2026-11-21b). */
 function chargeBerthing(campaign: Campaign, from: number, to: number, clock: Clock): Campaign {
-  const ship = shipOf(campaign);
-  if (ship?.berthedSince === undefined || !inPort(campaign)) return campaign;
-  const days = to - Math.max(from, ship.berthedSince + BERTH_DAYS - 1);
-  if (days <= 0) return campaign;
-  return charge(campaign, days * BERTH_FEE, ship, 'berthing', `Liegegebühr, ${days} ${days === 1 ? 'Tag' : 'Tage'}`, 'Liegegebühr nicht bezahlt', clock).campaign;
+  let after = campaign;
+  for (const ship of vesselsOf(campaign)) {
+    if (ship.berthedSince === undefined || !inPort(after, ship)) continue;
+    const days = to - Math.max(from, ship.berthedSince + BERTH_DAYS - 1);
+    if (days <= 0) continue;
+    after = charge(after, days * BERTH_FEE, ship, 'berthing', `Liegegebühr, ${days} ${days === 1 ? 'Tag' : 'Tage'}`, 'Liegegebühr nicht bezahlt', clock).campaign;
+  }
+  return after;
 }
 
 /**

@@ -176,6 +176,9 @@ hide <<browser>> stereotype
     nextPaymentDay: number [0..1]
     berthedSince: number [0..1]
     retired: boolean
+    aboard: boolean
+    inOrbit: boolean
+    inHold: boolean
   }
   enum ShipCost <<value>> $schiffe {
     price
@@ -188,6 +191,7 @@ hide <<browser>> stereotype
   }
   class ShipDesign <<reference>> $schiffe {
     code: string
+    kind: ShipKind
     /jumpFuel: number
     name: string
     hull: number
@@ -200,8 +204,12 @@ hide <<browser>> stereotype
     cargo: number
     crew: string
     basePrice: number
-    months: number
+    months: number [0..1]
     streamlined: boolean
+  }
+  enum ShipKind <<value>> $schiffe {
+    starship
+    smallCraft
   }
   class ComputerModel <<reference>> $schiffe {
     name: string
@@ -1168,7 +1176,10 @@ Ship "1" *-- "0..*" ShipSoftware : software
 Ship "1" *-- "0..1" Place : place
 ShipSoftware "*" --> "1" Software : program
 Software --> SoftwareKind
-ShipDesign "*" --> "1" ComputerModel : computer
+ShipDesign "*" --> "0..1" ComputerModel : computer
+ShipDesign --> ShipKind
+ShipDesign "*" --> "*" ShipDesign : craft {ordered}
+Ship "*" --> "0..1" Ship : mother
 Booking "*" --> "0..1" Ship : forShip
 
 ' Raumkarte und Systemflug
@@ -1176,6 +1187,7 @@ Campaign "1" *-- "0..1" SystemFlight : flight
 SystemFlight "*" --> "1" World : world
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
 SpaceUnit "*" --> "1" Ship : ship
+SystemFlight "*" --> "1" SpaceUnit : party
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
 Hex "1" *-- "0..1" StarSystem : system
 Hex "1" *-- "*" World : worlds {ordered}

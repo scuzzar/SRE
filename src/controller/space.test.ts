@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { countingKeys, fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 
-/** Ein Controller mit der Demo-Kampagne (Kessra, Scout „Kestrel“), die Weltkarte von Kessra offen. */
+/** Ein Controller mit der Demo-Kampagne (Kessra, Yacht „Kestrel“ mit Beiboot), die Weltkarte von Kessra offen. */
 async function started() {
   const repository = memoryRepository();
   const game = new GameController({ repository, random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), keys: countingKeys() });
@@ -27,7 +27,7 @@ describe('Raumkarte und Systemflug', () => {
     await game.whenSaved();
     space = game.snapshot().space!;
     expect(space.flight).toMatchObject({ round: 1, elapsed: '0 min' });
-    expect(space.flight!.units[0]).toMatchObject({ name: 'Kestrel', maxG: 2, crashed: false, thrust: undefined });
+    expect(space.flight!.units[0]).toMatchObject({ name: 'Kestrel', maxG: 1, crashed: false, thrust: undefined });
     expect(space.flight!.units[0]!.marks.map((m) => m.name)).toEqual(['prograd', 'retrograd']);
     expect(repository.saved!.flight?.round).toBe(1);
   });
@@ -78,12 +78,12 @@ describe('Raumkarte und Systemflug', () => {
     const before = game.snapshot().space!.flight!.units[0]!;
     game.aimThrust(0, { x: 0, y: 5 });
     const aimed = game.snapshot().space!.flight!.units[0]!;
-    expect(aimed.thrustG).toBe(2);
+    expect(aimed.thrustG).toBe(1);
     expect(aimed.preview.now.at(-1)).not.toEqual(before.preview.now.at(-1));
     expect(repository.saved!.flight!.units[0]!.thrust).toBeUndefined();
     game.setThrust(0, { x: 0, y: 5 });
     await game.whenSaved();
-    expect(repository.saved!.flight!.units[0]!.thrust).toEqual({ x: 0, y: 2 });
+    expect(repository.saved!.flight!.units[0]!.thrust).toEqual({ x: 0, y: 1 });
   });
 
   it('rastet in Flugrichtung ein', async () => {
@@ -128,5 +128,28 @@ describe('Raumkarte und Systemflug', () => {
     const { game } = await started();
     game.createCampaign('Ohne Schiff');
     expect(() => game.openSpace()).toThrow(/keine Welt offen/);
+  });
+
+  it('setzt das Beiboot aus, die Gruppe steigt um, und dockt es wieder an (2026-11-21b)', async () => {
+    const { game, repository } = await started();
+    game.openSpace();
+    game.startFlight();
+    let flight = game.snapshot().space!.flight!;
+    expect(flight.launchable.map((c) => c.name)).toEqual(['Beiboot 1']);
+    game.launchCraft(flight.launchable[0]!.id);
+    await game.whenSaved();
+    flight = game.snapshot().space!.flight!;
+    expect(flight.units.map((u) => [u.name, u.party, u.craft])).toEqual([
+      ['Kestrel', false, false],
+      ['Beiboot 1', true, true],
+    ]);
+    expect(flight.party).toBe(1);
+    expect(flight.units[1]!.maxG).toBe(6);
+    expect(flight.dockable.map((c) => c.name)).toEqual(['Beiboot 1']);
+    expect(repository.saved!.flight!.party).toBe(repository.saved!.ships[1]!.id);
+    game.dockCraft(flight.dockable[0]!.id);
+    flight = game.snapshot().space!.flight!;
+    expect(flight.units).toHaveLength(1);
+    expect(flight.launchable).toHaveLength(1);
   });
 });

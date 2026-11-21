@@ -6,7 +6,7 @@ import { worldPlace } from './place';
 import type { Clock } from './ports';
 import { shipDesignOf } from './reference';
 import { hexById, hexIdOfWorld, worldById, type Hex, type World } from './sector';
-import { activeShip, shipOf } from './ship';
+import { activeShip, craftOf, shipById, shipOf, whereIs, type Ship } from './ship';
 import { fundsOf } from './shop';
 import { orbitMillionKm, radiusOf } from './star-system';
 import { dayOf } from './time';
@@ -17,8 +17,8 @@ import { afterTime, arrive } from './upkeep';
 // Die Reise im System (Domänenmodell 2026-11-20d): von Welt zu Welt desselben Systems, mit Ticket
 // oder mit dem eigenen Schiff; Dauer nach den Charts S. 8, T = 2·√(D/A).
 
-/** Wie die Gruppe reist: mit Ticket auf einem fremden Schiff oder mit dem eigenen. */
-export type SystemJourneyMode = 'ticket' | 'ship';
+/** Wie die Gruppe reist: mit Ticket auf einem fremden Schiff, mit dem eigenen oder mit einem seiner Small Craft (2026-11-21b). */
+export type SystemJourneyMode = 'ticket' | 'ship' | 'craft';
 
 /** Mit Ticket fliegt das Schiff mit 1 G (Hausregel, Owner). */
 export const TICKET_G = 1;
@@ -65,9 +65,20 @@ export function journeyDays(hours: number): number {
   return Math.max(1, Math.ceil(hours / 24));
 }
 
-/** Mit wie vielen G die Gruppe reist: mit Ticket 1 G, mit dem eigenen Schiff sein Manöverantrieb. */
-export function journeyG(campaign: Campaign, mode: SystemJourneyMode): number {
-  return mode === 'ticket' ? TICKET_G : shipDesignOf(activeShip(campaign).design).maneuver;
+/** Mit wie vielen G die Gruppe reist: mit Ticket 1 G, mit dem eigenen Schiff oder Small Craft sein Manöverantrieb. */
+export function journeyG(campaign: Campaign, mode: SystemJourneyMode, craft?: string): number {
+  if (mode === 'ticket') return TICKET_G;
+  return shipDesignOf((mode === 'craft' && craft !== undefined ? shipById(campaign, craft) : activeShip(campaign)).design).maneuver;
+}
+
+/**
+ * Die Small Craft, mit denen die Gruppe jetzt im System reisen kann (2026-11-21b): gelandet an ihrem
+ * Ort oder an Bord des Mutterschiffs, bei dem sie steht.
+ */
+export function journeyCraft(campaign: Campaign): readonly Ship[] {
+  const ship = shipOf(campaign);
+  if (ship === undefined || campaign.location === undefined) return [];
+  return craftOf(campaign, ship.id).filter((c) => !whereIs(campaign, c)?.inOrbit && (c.aboard || c.place !== undefined) && shipDepartureBlocker(campaign, c) === undefined);
 }
 
 /** Hat die Welt einen Raumhafen: die Hauptwelt einen Starport A–E, eine Nebenwelt einen Spaceport F–H? */
@@ -92,7 +103,7 @@ export function isSystemDestination(world: World): boolean {
 }
 
 /** Warum die Gruppe nicht so nach `to` reisen kann; `undefined`, wenn sie kann. */
-export function systemJourneyBlocker(campaign: Campaign, to: string, mode: SystemJourneyMode): string | undefined {
+export function systemJourneyBlocker(campaign: Campaign, to: string, mode: SystemJourneyMode, craft?: string): string | undefined {
   const from = campaign.location?.world;
   if (from === undefined) return 'Die Gruppe ist auf keiner Welt; erst den Aufenthaltsort wählen.';
   if (from === to) return 'Die Gruppe ist schon hier.';
@@ -105,6 +116,7 @@ export function systemJourneyBlocker(campaign: Campaign, to: string, mode: Syste
   if (campaign.flight) return 'Erst den Systemflug beenden, dann reisen.';
   if (travellersOf(campaign).length === 0) return 'Es gibt keinen lebenden Charakter, der reisen könnte.';
   if (mode === 'ship') return shipOf(campaign) === undefined ? 'Die Gruppe hat kein Schiff.' : shipDepartureBlocker(campaign);
+  if (mode === 'craft') return journeyCraft(campaign).some((c) => c.id === craft) ? undefined : 'Mit diesem Beiboot kann die Gruppe von hier nicht reisen.';
   const port = portDepartureBlocker(campaign);
   if (port) return port;
   if (!hasPort(campaign.hexes, from) && !hasPort(campaign.hexes, to)) return 'Ein Ticket gibt es nur, wenn Start oder Ziel einen Raumhafen hat.';
@@ -118,16 +130,16 @@ export function systemJourneyBlocker(campaign: Campaign, to: string, mode: Syste
  * `ticket`) oder mit dem eigenen Schiff. Danach sind `/days` Tage vergangen, ohne
  * Pflicht-Begegnungen, und die Gruppe ist auf der Zielwelt (ohne Stadt und Feld).
  */
-export function travelInSystem(campaign: Campaign, to: string, mode: SystemJourneyMode, clock: Clock): Campaign {
-  const blocker = systemJourneyBlocker(campaign, to, mode);
+export function travelInSystem(campaign: Campaign, to: string, mode: SystemJourneyMode, clock: Clock, craft?: string): Campaign {
+  const blocker = systemJourneyBlocker(campaign, to, mode, craft);
   if (blocker) throw new DomainError(blocker);
-  // Mit Ticket bleibt das eigene Schiff, wo es steht (2026-11-21).
-  campaign = mode === 'ticket' ? leaveShipBehind(parkVehicles(campaign)) : parkVehicles(campaign);
+  // Mit Ticket oder Beiboot bleibt das eigene Schiff, wo es steht (2026-11-21, 2026-11-21b).
+  campaign = mode === 'ship' ? parkVehicles(campaign) : leaveShipBehind(parkVehicles(campaign));
   const from = campaign.location!.world;
   const travellers = travellersOf(campaign).map((c) => c.id);
-  const hours = flightHours(systemDistance(campaign.hexes, from, to), journeyG(campaign, mode));
+  const hours = flightHours(systemDistance(campaign.hexes, from, to), journeyG(campaign, mode, craft));
   const today = dayOf(campaign);
-  const ship = mode === 'ship' ? shipOf(campaign)! : undefined;
+  const ship = mode === 'ship' ? shipOf(campaign)! : mode === 'craft' ? shipById(campaign, craft!) : undefined;
   const journey: SystemJourney = { kind: 'systemJourney', at: clock.now(), day: today, from, to, hours, travellers, ...(ship ? { ship: ship.id } : {}) };
   const index = campaign.log.length;
   const days = journeyDays(hours);
@@ -139,8 +151,8 @@ export function travelInSystem(campaign: Campaign, to: string, mode: SystemJourn
     day: today + days,
     location: worldPlace(to),
   };
-  // Mit dem eigenen Schiff steht es danach auf der Zielwelt; das Feld wählt der Landeplatz.
-  return keepFocus(campaign, arrive(afterTime(mode === 'ship' ? shipArrives(after, to) : after, today, clock), clock));
+  // Mit dem eigenen Schiff oder Beiboot steht es danach auf der Zielwelt; das Feld wählt der Landeplatz.
+  return keepFocus(campaign, arrive(afterTime(ship ? shipArrives(after, to, ship.id) : after, today, clock), clock, ship?.id));
 }
 
 /** Prüft eine Reise im System aus der Kampagnendatei: Welten im selben System, Stunden, Reisende, Schiff. */

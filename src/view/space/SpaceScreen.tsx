@@ -323,6 +323,8 @@ export function SpaceScreen({ space }: { space: SpaceView }) {
         ctx.save();
         ctx.translate(sx(at.x), sy(at.y));
         ctx.rotate(-angle);
+        // Ein Small Craft ist kleiner gezeichnet, sein Name steht darunter (2026-11-21b).
+        if (unit.craft) ctx.scale(0.7, 0.7);
         ctx.beginPath();
         ctx.moveTo(9, 0);
         ctx.lineTo(-6, 5.5);
@@ -334,7 +336,7 @@ export function SpaceScreen({ space }: { space: SpaceView }) {
         ctx.restore();
         ctx.fillStyle = unit.crashed ? WARN : OWN;
         ctx.font = '12px system-ui, sans-serif';
-        ctx.fillText(unit.crashed ? `${unit.name} (Aufschlag)` : unit.name, sx(at.x) + 12, sy(at.y) - 10);
+        ctx.fillText(unit.crashed ? `${unit.name} (Aufschlag)` : unit.name, sx(at.x) + 12, sy(at.y) + (unit.craft ? 18 : -10));
         ctx.font = '11px system-ui, sans-serif';
       }
     };
@@ -354,7 +356,8 @@ export function SpaceScreen({ space }: { space: SpaceView }) {
     for (const unit of flight.units) {
       if (unit.crashed) continue;
       const d = Math.hypot(x - (w / 2 + (unit.position.x - cam.cx) * cam.scale), y - (h / 2 - (unit.position.y - cam.cy) * cam.scale));
-      if (d <= RING + 12 && (!best || d < best.d)) best = { unit, d };
+      // Liegen zwei Einheiten übereinander (ein Beiboot gerade ausgesetzt), zieht der Finger an der Einheit der Gruppe (2026-11-21b).
+      if (d <= RING + 12 && (!best || d < best.d - 1 || (Math.abs(d - best.d) <= 1 && unit.party))) best = { unit, d };
     }
     return best?.unit;
   };

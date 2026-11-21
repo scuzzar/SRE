@@ -172,6 +172,7 @@ Campaign "1" *-- "0..1" SystemFlight : flight
 SystemFlight "*" --> "1" World : world
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
 SpaceUnit "*" --> "1" Ship : ship
+SystemFlight "*" --> "1" SpaceUnit : party
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
 Hex "1" *-- "0..1" StarSystem : system
 StarSystem "1" *-- "1..3" Star : stars {ordered}

@@ -16,7 +16,7 @@ function cr(value: number): string {
 export function SystemJourneySheet({ journey }: { journey: SystemJourneyView }) {
   const game = useGame();
   const result = journey.result;
-  const chosen = journey.options.find((o) => o.mode === journey.mode);
+  const chosen = journey.options.find((o) => o.mode === journey.mode && o.craft === journey.craft);
   return (
     <div className="modal">
       <section className="result journey-sheet" role="dialog" aria-modal="true" aria-labelledby="system-journey-title">
@@ -43,10 +43,10 @@ export function SystemJourneySheet({ journey }: { journey: SystemJourneyView }) 
         ) : (
           <>
             <p className="journey-facts">{journey.distance} · beschleunigen bis zur Mitte, dann abbremsen (T = 2·√(D/A))</p>
-            <div className="segmented two" role="radiogroup" aria-label="Art zu reisen">
+            <div className="segmented" style={{ gridTemplateColumns: `repeat(${journey.options.length}, minmax(0, 1fr))` }} role="radiogroup" aria-label="Art zu reisen">
               {journey.options.map((o) => (
-                <button key={o.mode} type="button" role="radio" aria-checked={journey.mode === o.mode} disabled={o.blocker !== undefined} title={o.blocker} onClick={() => game.chooseSystemJourneyMode(o.mode)}>
-                  {o.mode === 'ticket' ? 'Ticket' : 'Eigenes Schiff'}
+                <button key={`${o.mode}-${o.craft ?? ''}`} type="button" role="radio" aria-checked={o === chosen} disabled={o.blocker !== undefined} title={o.blocker} onClick={() => game.chooseSystemJourneyMode(o.mode, o.craft)}>
+                  {o.button}
                 </button>
               ))}
             </div>

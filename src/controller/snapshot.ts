@@ -230,6 +230,7 @@ import {
   type CheckKind,
   worldById,
   systemJourneyBlocker,
+  journeyCraft,
   hexIdOfWorld,
   gridSize,
   needsLanding,
@@ -421,6 +422,7 @@ function travelBlocker(campaign: Campaign, to: string): string | undefined {
   if (from !== undefined && from !== to && hexIdOfWorld(from) === hexIdOfWorld(to)) {
     const ticket = blocked(() => systemJourneyBlocker(campaign, to, 'ticket'));
     if (ticket === undefined || shipOf(campaign) === undefined) return ticket;
+    if (journeyCraft(campaign).length > 0) return undefined;
     return blocked(() => systemJourneyBlocker(campaign, to, 'ship')) === undefined ? undefined : ticket;
   }
   const passage = blocked(() => journeyBlocker(campaign, to));
