@@ -252,6 +252,19 @@ describe('Landen (Owner, 21. November 2026)', () => {
     expect(run.campaign.location).toEqual({ world: c.flight!.world });
   });
 
+  it('zeigt auch eine Landung in einer späteren Raumrunde an, wie den Aufschlag', () => {
+    const demoCampaign = demo();
+    const small = demoCampaign.hexes[0]!.worlds.find((w) => w.kind === 'small' && w.moonOf === undefined)!;
+    const c = startFlight(demoCampaign, small.id, clock);
+    const r = bodyOf(worldOf(c.hexes, small.id))!.radius;
+    const at = worldAt(c);
+    const unit = { ...c.flight!.units[0]!, position: { x: at.position.x, y: at.position.y + r + 600 }, velocity: at.velocity };
+    const preview = previewOf(sceneOf(c.hexes, small.id), unit, undefined, flightTime(c, c.flight!), 2, small.id);
+    expect(preview.landing?.world).toBe(small.id);
+    expect(preview.landing!.round).toBeGreaterThan(0);
+    expect(preview.impact).toBeUndefined();
+  });
+
   it('schnell auftreffen bleibt ein Aufschlag', () => {
     const c = above(startFlight(demo(), world(demo()), clock), 5, 3);
     const run = runRound(c, clock);
