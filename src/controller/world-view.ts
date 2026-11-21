@@ -539,7 +539,7 @@ function subordinateView(hex: Hex, id: string, error: string | undefined, happen
   const world = hex.worlds.find((w) => w.id === id)!;
   // Die Oberfläche entsteht mit der Welt (21. November 2026); nur Stände von davor würfeln sie hier noch.
   const due = surfaceDue(hex, world);
-  const temperature = world.kind === 'world' && (world.uwp.size ?? 0) >= 1 ? (world.temperature ?? temperatureOfWorld(hex, world)) : undefined;
+  const temperature = world.kind === 'small' || (world.kind === 'world' && (world.uwp.size ?? 0) >= 1) ? (world.temperature ?? temperatureOfWorld(hex, world)) : undefined;
   return {
     id,
     name: world.name ?? `${mainWorld(hex).name ?? hexId(hex.column, hex.row)} ${id.split('-')[1]}`,

@@ -9,7 +9,7 @@ import type { TripDay } from './log';
 import { placeCell, withPlaceTerrain, type Place } from './place';
 import type { Clock } from './ports';
 import { itemOf, ref } from './reference';
-import { worldOf, type NamedWorld } from './sector';
+import { gridSize, worldOf, type NamedWorld } from './sector';
 import type { Booking } from './shop';
 import { surfaceGrid, type SurfaceGrid } from './surface-grid';
 import type { SurfaceMap } from './surface-map';
@@ -59,7 +59,7 @@ export function tripSurface(campaign: Campaign): TripSurface | undefined {
   const world = campaign.location?.world;
   if (world === undefined) return undefined;
   const hex = worldOf(campaign.hexes, world);
-  const size = hex.uwp.size ?? 0;
+  const size = gridSize(hex) ?? 0;
   if (!hex.map || size < 1) return undefined;
   return { world, hex, map: hex.map, grid: surfaceGrid(size), size, ways: waysOf(hex.map), atmosphere: hex.uwp.atmosphere ?? 0, tech: hex.uwp.tech ?? 0 };
 }

@@ -231,6 +231,7 @@ import {
   worldById,
   systemJourneyBlocker,
   hexIdOfWorld,
+  gridSize,
 } from '../model';
 import {
   attackerOf,
@@ -1644,7 +1645,8 @@ function missionPlaceView(campaign: Campaign, place: Place, label?: string): Mis
   const hex = worldById(campaign.hexes, place.world);
   const cell = placeCell(campaign.hexes, place);
   const city = place.city === undefined ? undefined : hex?.map?.cities?.[place.city]?.name;
-  const where = city ?? (cell !== undefined && hex?.map && hex.uwp.size !== undefined ? `${LANDFORM_NAMES[landformAt(hex.map, cell)]} · ${position(surfaceGrid(hex.uwp.size), cell)}` : undefined);
+  const grid = hex && gridSize(hex);
+  const where = city ?? (cell !== undefined && hex?.map && grid !== undefined ? `${LANDFORM_NAMES[landformAt(hex.map, cell)]} · ${position(surfaceGrid(grid), cell)}` : undefined);
   return { place, label, text: [where, hex?.name ?? place.world].filter((t) => t !== undefined).join(' · '), world: place.world, cell };
 }
 

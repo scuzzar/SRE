@@ -3183,8 +3183,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     bekommen dort einen Namen und eine Notiz und „Globus erzeugen“ (die Oberfläche haben sie seit
     21. November 2026 schon mit dem Sternsystem, die Temperatur aus der Zone gespeichert, damit das
     Leben dazu passt); danach haben sie Tiertabellen, Orte und Begegnungen wie die Hauptwelt.
-    Keine Oberfläche und keinen Globus haben Größe 0 (Gürtel), kleine Welten (S), Ringe und
-    Gasriesen. ⚑ Auf der Oberflächenkarte einer Nebenwelt bekommt die erste Hauptstadt den
+    Keine Oberfläche und keinen Globus haben Größe 0 (Gürtel), Ringe und Gasriesen. Kleine Welten
+    (S) bekommen seit 21. November 2026 (Owner) beides: die Oberfläche nach den Regeln für Größe 0
+    (kein Wasser, keine Platten; Book 6 behandelt sie wie Größe 0) und einen Globus mit dem kleinsten
+    Raster (wie Größe 1, `gridSize`), dessen Felder nach ihrem echten Durchmesser gemessen werden. ⚑ Auf der Oberflächenkarte einer Nebenwelt bekommt die erste Hauptstadt den
     Spaceport als Hafen (Y: keinen), die übrigen Städte wie bei Starport X. Die Übersicht zeigt mit
     einem kleinen Punkt am Namen, welche Welt einen Globus hat.
     Geändert am 21. November 2026 (Owner, „wo die Party ist, sollte die UI beeinflussen“): Ein Feld
