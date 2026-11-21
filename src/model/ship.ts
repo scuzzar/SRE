@@ -7,6 +7,12 @@ import { bookShip } from './shop';
 import { MONTH_DAYS, nextMonthStart } from './time';
 import type { Place } from './place';
 
+/** Ein Turret auf einem Hardpoint (Domänenmodell: `Turret`, 2026-11-21c): Turmart und Waffen, höchstens so viele wie Plätze. */
+export interface Turret {
+  readonly type: string;
+  readonly weapons: readonly string[];
+}
+
 /** Was ein konkretes Schiff an Bord hat (Domänenmodell: `ShipSoftware`): ein Verweis auf das Programm. */
 export interface ShipSoftware {
   readonly program: string;
@@ -40,6 +46,8 @@ export interface Ship {
   /** Ausgeblendet statt gelöscht: Buchungen und Log zeigen weiter auf es. */
   readonly retired: boolean;
   readonly software: readonly ShipSoftware[];
+  /** Die Turrets in der Reihenfolge der Hardpoints (2026-11-21c). */
+  readonly turrets: readonly Turret[];
   /** Wo es steht (2026-11-21): Welt, Feld oder Stadt; fehlt, solange es bei der Gruppe ist (alte Stände, gerade gekauft). */
   readonly place?: Place;
 }
@@ -134,6 +142,8 @@ export function addShip(campaign: Campaign, design: string, initialLoan: number 
     berthedSince: campaign.day,
     retired: false,
     software: standardSoftware(plan.id),
+    // Ab Werft mit den Turrets des Entwurfs; sie stecken im Grundpreis (2026-11-21c).
+    turrets: plan.turrets.map((t) => ({ type: t.type, weapons: [...t.weapons] })),
   };
   return { campaign: { ...campaign, ships: [...campaign.ships.map((s) => (s.retired ? s : { ...s, retired: true })), ship] }, ship };
 }

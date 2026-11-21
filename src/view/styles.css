@@ -9561,3 +9561,32 @@ button:disabled {
     display: none;
   }
 }
+
+/* Bewaffnung in der Werft (2026-11-21c) */
+.armament .turret-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.armament .turret {
+  border: 1px solid var(--line, rgba(127, 127, 127, 0.3));
+  border-radius: 8px;
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+}
+.armament .turret.free {
+  border-style: dashed;
+}
+.armament .turret-weapons,
+.armament .turret-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.armament select {
+  max-width: 100%;
+}

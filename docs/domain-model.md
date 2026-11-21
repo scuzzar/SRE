@@ -502,7 +502,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `ship`, `Ship.unrefined` und `Journey.jumpDm`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-21b-gasriese-schoepfen.png`](changes/2026-11-21b-gasriese-schoepfen.png).
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-21c): **Bewaffnung in der Werft** (Owner, 21. November
+> Am 21. November 2026 freigegeben (Kennzeichen 2026-11-21c, Owner: „Bau mal“): **Bewaffnung in der Werft** (Owner, 21. November
 > 2026). Auf jedem Hardpoint des eigenen Schiffs kann ein Turret sitzen, bestückt mit bis zu drei
 > Waffen; eingebaut und ausgebaut wird in der Werft an einem Raumhafen A oder B. Neu im Bild:
 > `Turret`, `DesignTurret`, `TurretType`, `ShipWeapon`, `Ship.turrets`, `ShipDesign.turrets` und die
@@ -3078,7 +3078,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (die Kampagnendatei würde um Megabytes größer). Am `Ship` wird nichts davon gespeichert: der
     Reiter Schiff zeigt die Pläne seines Entwurfs. Löschen braucht eine Rückfrage, denn der Plan
     verschwindet aus allen Kampagnen und mit dem Abgleich von allen Geräten.
-  - **Bewaffnung** (wartet auf Freigabe, Kennzeichen 2026-11-21c; Owner, 21. November 2026). Nach
+  - **Bewaffnung** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21c; Owner, 21. November 2026). Nach
     SE 10 und SR 32: ein Hardpoint je 100 t Rumpf, jeder trägt ein Turret, ein Single, Double oder
     Triple Turret fasst 1, 2 oder 3 Waffen.
     - *Was gespeichert ist*: Das Schiff hält seine Turrets in der Reihenfolge der Hardpoints
@@ -3435,6 +3435,9 @@ Diagramm mit diesen Ausnahmen:
   - **Nebenwelten** (2026-11-20c) sind gebaut (`rollSubordinates`). Systeme von davor bekommen die
     Werte beim Öffnen der Kampagne mit Würfen aus Schlüssel und Feld; bis dahin lässt die Prüfung
     Nebenwelten ohne Raumhafen zu, aber nur alle zusammen.
+- **Bewaffnung** (2026-11-21c) ist gebaut (`model/armament.ts`, Referenzdaten in
+  `src/data/ships.json`). Auf einer Welt ohne Globus gibt es keine Städte; dort zählt für die Werft
+  der Raumhafen des UWP (A oder B). Dateien von vorher bekommen beim Laden die Turrets des Entwurfs.
 - **Treibstoff schöpfen** (2026-11-21b) ist gebaut (`model/flight.ts`, `skim`). Abweichungen:
   **`Skimming → World : at`** heißt im Code `giant`, weil `at` schon der Zeitstempel jedes
   Logeintrags ist. **`Journey.jumpDm`** fehlt im Code wie `jump` bei Reisen mit Passage und bei

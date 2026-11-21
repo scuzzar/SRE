@@ -92,6 +92,7 @@ export const shipCostText: Record<ShipCost, string> = {
   fuel: 'Schiff · Treibstoff',
   berthing: 'Schiff · Liegegebühr',
   lifeSupport: 'Schiff · Lebenserhaltung',
+  armament: 'Schiff · Bewaffnung',
 };
 
 /** Die Rüstungsklassen, wie die Matrix sie schreibt. */

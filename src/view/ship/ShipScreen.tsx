@@ -150,7 +150,7 @@ export function ShipScreen({ view }: { view: Snapshot }) {
               </div>
               <div className="tile">
                 <span className="tile-label">Hardpoints</span>
-                <span className="tile-text">{boat.hardpoints} · unbewaffnet</span>
+                <span className="tile-text">{armamentLine(boat)}</span>
               </div>
               <div className="tile">
                 <span className="tile-label">Computer</span>
@@ -384,15 +384,122 @@ function Details({ boat }: { boat: Boat }) {
           </div>
         ))}
       </div>
-      <p className="shop-hint muted">Kabinen und Niedrigbetten: immer die Gruppe zuerst, später zahlende Passagiere. Noch offen: Bewaffnung und Kampf-Software. Gereist wird schon: „Hierher reisen“ auf einer Weltkarte auch mit eigenem Schiff.</p>
+      <p className="shop-hint muted">Kabinen und Niedrigbetten: immer die Gruppe zuerst, später zahlende Passagiere. Bewaffnung in der Werft; noch offen: Kampf-Software. Gereist wird schon: „Hierher reisen“ auf einer Weltkarte auch mit eigenem Schiff.</p>
     </>
   );
 }
 
-/** Die Werft als Blatt: die Standardentwürfe, der Preis als Knopf. */
+/** Die Bewaffnung in einer Zeile: Hardpoints, Turrets und Waffen, oder „unbewaffnet“. */
+function armamentLine(boat: Boat): string {
+  const weapons = boat.turrets.reduce((n, t) => n + t.weapons.length, 0);
+  if (boat.turrets.length === 0) return `${boat.hardpoints} · unbewaffnet`;
+  return `${boat.turrets.length} / ${boat.hardpoints} Turrets · ${weapons === 0 ? 'unbestückt' : `${weapons} Waffe${weapons === 1 ? '' : 'n'}`}`;
+}
+
+/**
+ * Bewaffnung des eigenen Schiffs in der Werft (2026-11-21c): je Hardpoint ein Turret mit seinen Waffen,
+ * Einbauen kostet den Preis aus der Kasse, Ausbauen bringt nichts zurück (erst nachfragen).
+ */
+function ArmamentSection({ ship, boat }: { ship: ShipView; boat: Boat }) {
+  const game = useGame();
+  const [asking, setAsking] = useState<string | undefined>(undefined);
+  const blocked = boat.armamentBlocker !== undefined;
+  const free = boat.hardpoints - boat.turrets.length;
+  const price = (o: { name: string; price: number }) => `${o.name} · ${mcr(o.price)} MCr`;
+  const remove = (key: string, act: () => void) => {
+    if (asking !== key) return setAsking(key);
+    setAsking(undefined);
+    haptic('pick');
+    act();
+  };
+  return (
+    <div className="shop-counter armament">
+      <h2 className="section-title">
+        Bewaffnung von {boat.name} <span className="muted">({boat.hardpoints} Hardpoints)</span>
+      </h2>
+      {boat.armamentBlocker && <p className="combat-hint">{boat.armamentBlocker}</p>}
+      {boat.hardpoints === 0 && <p className="shop-hint muted">{boat.designName} hat keine Hardpoints.</p>}
+      <ol className="turret-list">
+        {boat.turrets.map((t, i) => (
+          <li key={i} className="turret">
+            <div className="turret-head">
+              <b>Hardpoint {i + 1}</b> · {t.typeName}
+              <span className="muted">
+                {' '}
+                ({t.weapons.length}/{t.slots})
+              </span>
+            </div>
+            <div className="turret-weapons">
+              {t.weapons.map((w, k) => (
+                <button key={k} type="button" className="ghost compact" disabled={blocked} onClick={() => remove(`w${i}-${k}`, () => game.removeWeapon(i, k))}>
+                  {asking === `w${i}-${k}` ? `${w.name} ausbauen? (kein Erlös)` : `${w.name} ✕`}
+                </button>
+              ))}
+              {t.weapons.length === 0 && <span className="muted">unbestückt</span>}
+            </div>
+            <div className="turret-actions">
+              {t.weapons.length < t.slots && (
+                <select aria-label={`Waffe in Turret ${i + 1} einbauen`} value="" disabled={blocked} onChange={(e) => e.target.value && (haptic('pick'), game.installWeapon(i, e.target.value))}>
+                  <option value="">+ Waffe einbauen …</option>
+                  {ship.shipWeapons.map((w) => (
+                    <option key={w.id} value={w.id} disabled={!w.affordable}>
+                      {price(w)}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <select aria-label={`Turmart von Turret ${i + 1} ändern`} value="" disabled={blocked} onChange={(e) => e.target.value && (haptic('pick'), game.replaceTurret(i, e.target.value))}>
+                <option value="">Turmart ändern …</option>
+                {ship.turretTypes
+                  .filter((k) => k.id !== t.typeId)
+                  .map((k) => (
+                    <option key={k.id} value={k.id} disabled={!k.affordable}>
+                      {price(k)}
+                      {(k.slots ?? 0) < t.weapons.length ? ` (nur ${k.slots} Waffe${k.slots === 1 ? '' : 'n'} bleiben)` : ''}
+                    </option>
+                  ))}
+              </select>
+              <button type="button" className="ghost compact danger" disabled={blocked} onClick={() => remove(`t${i}`, () => game.removeTurret(i))}>
+                {asking === `t${i}` ? 'Turret ausbauen? (kein Erlös)' : 'Turret ausbauen'}
+              </button>
+            </div>
+          </li>
+        ))}
+        {Array.from({ length: Math.max(0, free) }, (_, k) => (
+          <li key={`free${k}`} className="turret free">
+            <div className="turret-head">
+              <b>Hardpoint {boat.turrets.length + k + 1}</b> · frei
+            </div>
+            {k === 0 && (
+              <div className="turret-actions">
+                <select aria-label="Turret einbauen" value="" disabled={blocked} onChange={(e) => e.target.value && (haptic('pick'), game.installTurret(e.target.value))}>
+                  <option value="">+ Turret einbauen …</option>
+                  {ship.turretTypes.map((k2) => (
+                    <option key={k2.id} value={k2.id} disabled={!k2.affordable}>
+                      {price(k2)} · {k2.slots} Platz{k2.slots === 1 ? '' : 'e'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </li>
+        ))}
+      </ol>
+      <p className="shop-hint muted">Preise nach SE 10; Hardpoints stecken schon im Preis des Entwurfs. Einbauen nur an einem Raumhafen A oder B, Ausbauen ohne Erlös.</p>
+    </div>
+  );
+}
+
+/** Die Werft als Blatt: die Bewaffnung des eigenen Schiffs, dann die Standardentwürfe, der Preis als Knopf. */
 function YardSheet({ ship, onBuy, onClose }: { ship: ShipView; onBuy: (design: ShipYardRow) => void; onClose: () => void }) {
   return (
     <SheetFrame title="Werft" aside="Standardentwürfe · SR 35–37" onClose={onClose}>
+      {ship.error && (
+        <p className="error" role="alert">
+          {ship.error}
+        </p>
+      )}
+      {ship.ship !== undefined && <ArmamentSection ship={ship} boat={ship.ship} />}
       <p className="shop-hint muted">Preis antippen zum Bestellen an der Werft. Bar oder über die Bank: 20&nbsp;% Anzahlung, 480 Monatsraten, zusammen 220&nbsp;% des Preises (SR&nbsp;29). Grau = nicht bezahlbar.</p>
       <div className="shop-counter">
         <h2 className="section-title">

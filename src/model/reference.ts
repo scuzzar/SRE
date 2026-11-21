@@ -1,4 +1,4 @@
-import { referenceData, type Cascade, type ComputerModel, type Entry, type EventFocus, type Gain, type Item, type Odds, type Section, type Service, type ShipDesign, type Skill, type Slot, type Software, type Table, type Weapon, type EncounterType, type Patron, type Rumor } from '../data';
+import { referenceData, type Cascade, type ComputerModel, type Entry, type EventFocus, type Gain, type Item, type Odds, type Section, type Service, type ShipDesign, type ShipWeapon, type TurretType, type Skill, type Slot, type Software, type Table, type Weapon, type EncounterType, type Patron, type Rumor } from '../data';
 import { DomainError } from './errors';
 
 export { nameSlotIds, nameSounds, type NameSound } from '../data';
@@ -67,6 +67,8 @@ const weaponById = new Map(ref.weapons.map((w) => [w.id, w]));
 const itemByWeapon = new Map(ref.items.flatMap((i) => (i.weapon === undefined ? [] : [[i.weapon, i] as const])));
 const designById = new Map(ref.ships.map((s) => [s.id, s]));
 const computerById = new Map(ref.computers.map((c) => [c.id, c]));
+const turretTypeById = new Map(ref.turretTypes.map((t) => [t.id, t]));
+const shipWeaponById = new Map(ref.shipWeapons.map((w) => [w.id, w]));
 const softwareById = new Map(ref.software.map((s) => [s.id, s]));
 const serviceById = new Map(ref.services.map((s) => [s.id, s]));
 const cascadeById = new Map(ref.cascades.map((c) => [c.id, c]));
@@ -127,6 +129,23 @@ export function serviceOf(id: string): Service {
 
 export function shipDesignOf(id: string): ShipDesign {
   return found(designById.get(id), 'Der Schiffsentwurf', id);
+}
+
+export function turretTypeOf(id: string): TurretType {
+  return found(turretTypeById.get(id), 'Die Turmart', id);
+}
+
+export function shipWeaponOf(id: string): ShipWeapon {
+  return found(shipWeaponById.get(id), 'Die Schiffswaffe', id);
+}
+
+/** Alle Turmarten und Schiffswaffen der Werft (SE 10). */
+export function turretTypes(): readonly TurretType[] {
+  return ref.turretTypes;
+}
+
+export function shipWeapons(): readonly ShipWeapon[] {
+  return ref.shipWeapons;
 }
 
 export function computerModelOf(id: string): ComputerModel {

@@ -69,6 +69,11 @@ import {
   activeShip,
   buyFuel,
   buyShip,
+  installTurret,
+  replaceTurret,
+  installWeapon,
+  removeWeapon,
+  removeTurret,
   chooseShipGain,
   freeDeckSlot,
   renameShip,
@@ -1912,6 +1917,31 @@ export class GameController {
   /** Kauf in der Werft: bar der volle Preis, bei der Bank 20 % Anzahlung und doppelte Kreditsumme. */
   buyShipDesign(design: string, method: 'cash' | 'bank'): void {
     this.inShip(() => buyShip(this.campaign, design, method, this.deps.clock));
+  }
+
+  /** Bewaffnung in der Werft (2026-11-21c): ein Turret auf dem nächsten freien Hardpoint, bezahlt aus der Kasse. */
+  installTurret(type: string): void {
+    this.inShip(() => installTurret(this.campaign, type, this.deps.clock));
+  }
+
+  /** Ersetzt ein Turret durch eine andere Turmart; die Waffen ziehen mit um, soweit Plätze da sind. */
+  replaceTurret(index: number, type: string): void {
+    this.inShip(() => replaceTurret(this.campaign, index, type, this.deps.clock));
+  }
+
+  /** Bestückt einen freien Platz eines Turrets mit einer Schiffswaffe. */
+  installWeapon(index: number, weapon: string): void {
+    this.inShip(() => installWeapon(this.campaign, index, weapon, this.deps.clock));
+  }
+
+  /** Baut eine Waffe aus, ohne Erlös. */
+  removeWeapon(index: number, slot: number): void {
+    this.inShip(() => removeWeapon(this.campaign, index, slot));
+  }
+
+  /** Baut ein Turret samt Waffen aus, ohne Erlös. */
+  removeTurret(index: number): void {
+    this.inShip(() => removeTurret(this.campaign, index));
   }
 
   /** Legt ein Bild als nächsten freien Deckplan des Entwurfs ab; die Pläne bleiben auf dem Gerät. */

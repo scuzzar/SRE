@@ -18,6 +18,7 @@ import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, st
 import { checkRecovery } from './wounds';
 import { missionStates, validateMissions, type Mission, type MissionPlace } from './mission';
 import { armorClasses, encounterTypeOf, entryOf, eventFocusOf, itemOf, oddsOf, patronOf, ranges, ref, shipDesignOf, slotOfEntry, softwareOf, weaponOf } from './reference';
+import { checkTurrets } from './armament';
 import { characteristics } from './rules';
 import { bookingKinds, shipCosts, validateBookings, type Booking } from './shop';
 import type { Ship } from './ship';
@@ -345,6 +346,8 @@ const ShipSchema = z.object({
   berthedSince: z.number().int().min(0).optional(),
   retired: z.boolean().default(false),
   software: z.array(z.object({ program: z.string().min(1) })).default([]),
+  /** Die Turrets (2026-11-21c); fehlen in Dateien von vorher: dann die des Entwurfs. */
+  turrets: z.array(z.object({ type: z.string().min(1), weapons: z.array(z.string().min(1)).max(3) })).optional(),
   place: PlaceSchema.optional(),
 });
 const CharacterSchema = z.object({
@@ -579,7 +582,7 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       ...(file.focus === undefined ? {} : { focus: file.focus }),
       ...(file.location === undefined ? {} : { location: placeFromFile(file.location) }),
       bookings: file.bookings.map((b) => stripped(b) as Booking),
-      ships: file.ships.map((s) => stripped({ ...s, ...(s.place === undefined ? {} : { place: placeFromFile(s.place) }) }) as Ship),
+      ships: file.ships.map((s) => stripped({ ...s, turrets: turretsFromFile(s), ...(s.place === undefined ? {} : { place: placeFromFile(s.place) }) }) as Ship),
       stash: file.stash.map((p) => stripped({ ...p, ...(p.parked === undefined ? {} : { parked: placeFromFile(p.parked) }) }) as Possession),
       ...(file.trip === undefined ? {} : { trip: { hours: file.trip.hours, legs: file.trip.legs.map((l) => ({ by: l.by, rented: l.rented, cells: [...l.cells] })) } }),
       ...(file.flight === undefined ? {} : { flight: flightFromFile(file.flight) }),
@@ -694,6 +697,12 @@ function flightFromFile(flight: z.infer<typeof FlightSchema>): SystemFlight {
   };
 }
 
+/** Die Turrets eines Schiffs aus der Datei; Dateien von vor 2026-11-21c haben keine: Das Schiff kam mit denen seines Entwurfs. */
+function turretsFromFile(ship: z.infer<typeof ShipSchema>): Ship['turrets'] {
+  if (ship.turrets !== undefined) return ship.turrets.map((t) => ({ type: t.type, weapons: [...t.weapons] }));
+  return shipDesignOf(ship.design).turrets.map((t) => ({ type: t.type, weapons: [...t.weapons] }));
+}
+
 function stripped<T extends object>(value: T): T {
   return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as T;
 }
@@ -806,6 +815,7 @@ function validate(campaign: Campaign): void {
     shipIds.add(ship.id);
     shipDesignOf(ship.design);
     for (const board of ship.software) softwareOf(board.program);
+    checkTurrets(ship);
     if (ship.unrefined > ship.fuel) throw new DomainError(`${ship.name} hat mehr unraffinierten Treibstoff als Treibstoff im Tank.`);
   }
   if (campaign.ships.some((s) => !s.retired) && campaign.ships.filter((s) => !s.retired).length > 1) throw new DomainError('Es gibt mehr als ein aktives Schiff.');

@@ -99,20 +99,20 @@ hide <<browser>> stereotype
     fuel
     berthing
     lifeSupport
-    $new("2026-11-21c", "armament")
+    armament
   }
   class ShipSoftware $schiffe {
   }
-  class Turret $schiffe $newClass("2026-11-21c") {
+  class Turret $schiffe {
   }
-  class DesignTurret <<reference>> $schiffe $newClass("2026-11-21c") {
+  class DesignTurret <<reference>> $schiffe {
   }
-  class TurretType <<reference>> $schiffe $newClass("2026-11-21c") {
+  class TurretType <<reference>> $schiffe {
     name: string
     slots: number
     price: number
   }
-  class ShipWeapon <<reference>> $schiffe $newClass("2026-11-21c") {
+  class ShipWeapon <<reference>> $schiffe {
     name: string
     price: number
   }
@@ -193,12 +193,12 @@ Ship "*" --> "1" ShipDesign : design
 Ship "1" *-- "0..*" ShipSoftware : software
 Ship "1" *-- "0..1" Place : place
 ShipSoftware "*" --> "1" Software : program
-Ship "1" *-$newArrow("2026-11-21c")- "0..*" Turret : turrets {ordered}
-Turret "*" -$newArrow("2026-11-21c")-> "1" TurretType : type
-Turret "*" -$newArrow("2026-11-21c")-> "0..3" ShipWeapon : weapons {ordered}
-ShipDesign "1" *-$newArrow("2026-11-21c")- "0..*" DesignTurret : turrets {ordered}
-DesignTurret "*" -$newArrow("2026-11-21c")-> "1" TurretType : type
-DesignTurret "*" -$newArrow("2026-11-21c")-> "0..3" ShipWeapon : weapons {ordered}
+Ship "1" *-- "0..*" Turret : turrets {ordered}
+Turret "*" --> "1" TurretType : type
+Turret "*" --> "0..3" ShipWeapon : weapons {ordered}
+ShipDesign "1" *-- "0..*" DesignTurret : turrets {ordered}
+DesignTurret "*" --> "1" TurretType : type
+DesignTurret "*" --> "0..3" ShipWeapon : weapons {ordered}
 Software --> SoftwareKind
 ShipDesign "*" --> "1" ComputerModel : computer
 Booking "*" --> "0..1" Ship : forShip
@@ -242,5 +242,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class ShipCost #line:d0021b;line.bold
 @enduml

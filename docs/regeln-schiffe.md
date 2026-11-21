@@ -344,6 +344,12 @@ durch Treffer auf ein Feld mit „–“, arbeitet der Antrieb nicht mehr (SR 41
 
 - **Armaments**: ein Hardpoint je 100 t Schiff; jeder Hardpoint trägt ein Turret und braucht 1 t
   für die Feuerleitung.
+- **Stand in der App** (2026-11-21c, `model/armament.ts`): Turrets und Waffen ✔ mit den Preisen
+  dieser Tabelle, eingebaut in der Werft an einem Raumhafen A oder B (SR 29), ausgebaut ohne Erlös
+  (✱); Hardpoints stecken im Preis des Entwurfs, zusätzliche gibt es nicht; die Tonne Feuerleitung
+  ist im Entwurf eingeplant (✱). Turrets ab Werft: Scout/Courier und Safari Ship ein leerer Double
+  Turret, Mercenary Cruiser acht leere Triple Turrets, Patrol Cruiser zwei Triple Turrets mit je
+  2 Beam Lasern (✱, SR 37: „Laser“) und einem Missile Rack.
 
 | Ausstattung (Fittings) | Tonnen | Preis (Cr) |
 |---|---|---|

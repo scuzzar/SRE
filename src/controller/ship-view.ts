@@ -16,7 +16,30 @@ import {
   type SoftwareKind,
   flightStartBlocker,
   launchWorld,
+  armamentBlocker,
+  turretTypeOf,
+  shipWeaponOf,
+  turretTypes,
+  shipWeapons,
 } from '../model';
+
+/** Ein Turret auf einem Hardpoint des eigenen Schiffs (2026-11-21c). */
+export interface TurretRow {
+  readonly typeId: string;
+  readonly typeName: string;
+  readonly slots: number;
+  readonly weapons: readonly { readonly id: string; readonly name: string }[];
+}
+
+/** Eine Turmart oder Schiffswaffe der Werft mit Preis (SE 10). */
+export interface ArmamentOffer {
+  readonly id: string;
+  readonly name: string;
+  readonly price: number;
+  /** Nur Turmarten: Plätze für Waffen. */
+  readonly slots?: number;
+  readonly affordable: boolean;
+}
 
 /** Die Softwarearten, wie der Reiter Schiff sie schreibt (SR 38). */
 const softwareKinds: Record<SoftwareKind, string> = { offensive: 'Offensiv', defensive: 'Defensiv', routine: 'Routine' };
@@ -93,8 +116,14 @@ export interface ShipView {
         readonly nextPayment: string | undefined;
         /** Die Bordsoftware, in der Reihenfolge des Bords. */
         readonly software: readonly ShipSoftwareRow[];
+        /** Die Turrets in der Reihenfolge der Hardpoints; warum gerade nicht umgerüstet werden kann (`undefined`: es geht). */
+        readonly turrets: readonly TurretRow[];
+        readonly armamentBlocker: string | undefined;
       }
     | undefined;
+  /** Was die Werft an Turmarten und Schiffswaffen anbietet (2026-11-21c). */
+  readonly turretTypes: readonly ArmamentOffer[];
+  readonly shipWeapons: readonly ArmamentOffer[];
   /** Die Deckpläne des aktiven Entwurfs, in der Reihenfolge Deck A, B, C. */
   readonly deckPlans: readonly { readonly name: string; readonly image: string }[];
   /** Wie viele der drei Deckplan-Plätze des aktiven Entwurfs noch frei sind. */
@@ -147,7 +176,14 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
               const program = softwareOf(s.program);
               return { name: program.name, kind: softwareKinds[program.kind], effect: program.effect };
             }),
+            turrets: ship.turrets.map((t) => {
+              const kind = turretTypeOf(t.type);
+              return { typeId: kind.id, typeName: kind.name, slots: kind.slots, weapons: t.weapons.map((w) => ({ id: w, name: shipWeaponOf(w).name })) };
+            }),
+            armamentBlocker: armamentBlocker(campaign),
           },
+    turretTypes: turretTypes().map((t) => ({ id: t.id, name: t.name, price: t.price, slots: t.slots, affordable: funds >= t.price })),
+    shipWeapons: shipWeapons().map((w) => ({ id: w.id, name: w.name, price: w.price, affordable: funds >= w.price })),
     deckPlans: [...deckPlans].sort((a, b) => a.name.localeCompare(b.name)),
     freeDeckSlots: Math.max(0, deckSlotNames.length - deckPlans.length),
     // Die Standardentwürfe in der Reihenfolge der SR-Tabelle; bezahlbar heißt: bar oder als Anzahlung.

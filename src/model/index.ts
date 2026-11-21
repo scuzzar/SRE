@@ -28,6 +28,7 @@ export * from './star-system';
 export * from './system-journey';
 export * from './place';
 export * from './ship';
+export * from './armament';
 export * from './surface-grid';
 export * from './surface-map';
 export * from './shop';

@@ -154,8 +154,25 @@ export const ShipDesignSchema = z.object({
   basePrice: z.number().int().min(0),
   /** Bauzeit in Monaten. */
   months: z.number().int().min(1),
-  /** Atmosphärische Streulinienform (SR 32); bei den Standardentwürfen nirgends gesetzt. */
+  /** Atmosphärische Streulinienform (SR 32): kann an Gasriesen schöpfen (2026-11-21b). */
   streamlined: z.boolean().default(false),
+  /** Die Turrets ab Werft, in der Reihenfolge der Hardpoints (SR 35–37, 2026-11-21c). */
+  turrets: z.array(z.object({ type: z.string().min(1), weapons: z.array(z.string().min(1)).max(3) })).default([]),
+});
+
+/** Eine Turmart aus SE 10 (2026-11-21c): Single, Double oder Triple Turret mit 1–3 Plätzen für Waffen; Preis in Cr. */
+export const TurretTypeSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  slots: z.number().int().min(1).max(3),
+  price: z.number().int().min(0),
+});
+
+/** Eine Schiffswaffe aus SE 10 (2026-11-21c); Preis in Cr. */
+export const ShipWeaponSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  price: z.number().int().min(0),
 });
 
 /**
@@ -534,6 +551,9 @@ export const ReferenceDataSchema = z
     vehicles: z.array(VehicleSchema).min(1),
     /** Die Standardentwürfe der Werft (SR 35–37). */
     ships: z.array(ShipDesignSchema).min(1),
+    /** Die Turmarten und Schiffswaffen (SE 10, 2026-11-21c). */
+    turretTypes: z.array(TurretTypeSchema).min(1),
+    shipWeapons: z.array(ShipWeaponSchema).min(1),
     /** Die Rechnermodelle (SE 10). */
     computers: z.array(ComputerModelSchema).min(1),
     /** Die Software List (SE 13). */
@@ -582,6 +602,13 @@ export const ReferenceDataSchema = z
     uniqueIds(data.software.map((s) => s.id), 'Programm', ctx);
     for (const design of data.ships) {
       if (!data.computers.some((c) => c.id === design.computer)) ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id}: Rechnermodell ${design.computer} gibt es nicht` });
+      if (design.turrets.length > design.hardpoints) ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id} hat mehr Turrets als Hardpoints` });
+      for (const turret of design.turrets) {
+        const type = data.turretTypes.find((t) => t.id === turret.type);
+        if (!type) ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id}: Turmart ${turret.type} gibt es nicht` });
+        else if (turret.weapons.length > type.slots) ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id}: zu viele Waffen im ${type.name}` });
+        for (const w of turret.weapons) if (!data.shipWeapons.some((x) => x.id === w)) ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id}: Schiffswaffe ${w} gibt es nicht` });
+      }
     }
     for (const patron of data.encounters.patrons) {
       const label = `${patron.name} (Patron-Liste ${patron.list}, ${patron.roll})`;
@@ -717,6 +744,8 @@ export type Vehicle = z.infer<typeof VehicleSchema>;
 export type VehicleSpeed = z.infer<typeof VehicleSpeedSchema>;
 export type ShipDesign = z.infer<typeof ShipDesignSchema>;
 export type ComputerModel = z.infer<typeof ComputerModelSchema>;
+export type TurretType = z.infer<typeof TurretTypeSchema>;
+export type ShipWeapon = z.infer<typeof ShipWeaponSchema>;
 export type Software = z.infer<typeof SoftwareSchema>;
 export type SoftwareKind = z.infer<typeof SoftwareKindSchema>;
 export type Way = z.infer<typeof WaySchema>;
