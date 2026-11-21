@@ -508,6 +508,17 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `Turret`, `DesignTurret`, `TurretType`, `ShipWeapon`, `Ship.turrets`, `ShipDesign.turrets` und die
 > Schiffskosten `armament`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-21c-bewaffnung.png`](changes/2026-11-21c-bewaffnung.png).
+>
+> **Wartet auf Freigabe** (Kennzeichen 2026-11-21d): **Raumkampf, Stufe 2: Gegner und Laser**
+> (Owner, 21. November 2026: „Bau mal bis einschließlich Stufe 2, ich schau mir das dann in der App
+> an“ – auf seinen Wunsch gebaut, bevor er das Bild freigibt; die Freigabe folgt nach dem
+> Ausprobieren). Im Systemflug kann ein fremdes Schiff auftauchen; es fliegt nach seiner Absicht,
+> beide Seiten feuern mit Lasern, Treffer gehen auf Trefferzonen, der Schaden bleibt am eigenen
+> Schiff. Neu im Bild: `ShipDamage`, `HitZone`, `Intent`, `BattleOutcome`, die Logeinträge
+> `SpaceBattle`, `SpaceAttack` und `SpaceBattleEnd`, an `SpaceUnit` `name`, `intent`, `design`,
+> `damage` und `aim` (`ship` wird optional), `Ship.damage` und die Schiffskosten `repair`. Der
+> Ausschnitt dazu liegt unter
+> [`changes/2026-11-21d-raumkampf-gegner-laser.png`](changes/2026-11-21d-raumkampf-gegner-laser.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -846,7 +857,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Restschuld | `Ship.loanBalance` | Was von der Kreditsumme noch offen ist; fehlt, wenn das Schiff schuldenfrei ist |
 | Monatsrate | `Ship./monthlyPayment` | Ein Vierhundertachtzigstel der Kreditsumme, immer gleich hoch |
 | Nächste Rate | `Ship.nextPaymentDay` | Das Monatsende, an dem die nächste Monatsrate fällig wird; die erste frühestens vier Wochen nach dem Kauf (2026-11-17b) |
-| Schiffskosten | `Booking.shipCost`, `ShipCost` | Wofür eine Buchung der Art `ship` ist: price (voller Preis oder Anzahlung), rate (Monatsrate), fuel (Treibstoff), berthing (Liegegebühr), lifeSupport (Lebenserhaltung) (2026-11-17b), armament (Bewaffnung, 2026-11-21c) |
+| Schiffskosten | `Booking.shipCost`, `ShipCost` | Wofür eine Buchung der Art `ship` ist: price (voller Preis oder Anzahlung), rate (Monatsrate), fuel (Treibstoff), berthing (Liegegebühr), lifeSupport (Lebenserhaltung) (2026-11-17b), armament (Bewaffnung, 2026-11-21c), repair (Reparatur, 2026-11-21d) |
+| Raumkampf | `SpaceBattle`, `SpaceAttack`, `SpaceBattleEnd` | Ein Systemflug mit einem fremden Schiff, das nicht nur zuschaut: Laserfeuer je Raumrunde bis zum Ende des Raumkampfs (2026-11-21d) |
+| Fremdes Schiff | `SpaceUnit.design`, `SpaceUnit.name` | Eine Einheit des Systemflugs ohne `ship`: ein Standardentwurf mit Namen und eigenem Schaden, gesteuert von der App (2026-11-21d) |
+| Absicht | `SpaceUnit.intent`, `Intent` | Was ein fremdes Schiff will: angreifen, fliehen oder nichts (ignorieren); danach wählt die App seinen Schub (2026-11-21d) |
+| Ziel | `SpaceUnit.aim` | Auf welche Einheit die Laser einer Einheit in dieser Raumrunde feuern; wie der Schub jede Runde neu (2026-11-21d) |
+| Schaden am Schiff | `ShipDamage`, `Ship.damage`, `SpaceUnit.damage` | Die Treffer eines Schiffs in der Reihenfolge, in der sie kamen, und die ausgefallenen Turrets; am eigenen Schiff bleibt er bis zur Reparatur (2026-11-21d) |
+| Trefferzone | `HitZone` | Wohin ein Treffer geht (SE 12, *Hit Locations* und *Critical Hits*) (2026-11-21d) |
+| Ausgang | `SpaceBattleEnd.outcome`, `BattleOutcome` | Wie ein Raumkampf endete: zerstört, kampfunfähig, entkommen, abgebrochen, verloren (2026-11-21d) |
 | Turret | `Turret`, `Ship.turrets` | Ein Waffenturm auf einem Hardpoint des eigenen Schiffs, mit seinen Waffen; höchstens so viele, wie der Entwurf Hardpoints hat (2026-11-21c) |
 | Turmart | `TurretType` | Referenzdaten: Single, Double oder Triple Turret mit 1, 2 oder 3 Plätzen für Waffen und Preis (SE 10, 2026-11-21c) |
 | Schiffswaffe | `ShipWeapon` | Referenzdaten: Pulse Laser, Beam Laser, Missile Rack, Sandcaster mit Preis (SE 10, 2026-11-21c) |
@@ -3215,8 +3233,70 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Demo-Kampagne** (Owner): Sie beginnt mit einem Scout/Courier (Type S) der Gruppe,
     schuldenfrei wie aus dem Ship-Vorteil der Scouts, mit vollem Tank, damit man den Systemflug
     gleich ausprobieren kann (siehe *Demo-Kampagne*).
-  - **Später** (eigene Änderungen): fremde Schiffe und ihr Planer (Stufe 2), Waffen, Raketen, Sand,
-    Small Craft, Ortung, Raumkampf aus einer Schiffsbegegnung; siehe den Stufenplan im Konzept.
+  - **Später** (eigene Änderungen): Raketen, Sand, Small Craft, Ortung, Raumkampf aus einer
+    Schiffsbegegnung beim Ankommen; siehe den Stufenplan im Konzept.
+
+- **Raumkampf, Stufe 2: Gegner und Laser** (wartet auf Freigabe, Kennzeichen 2026-11-21d; gebaut auf
+  Wunsch des Owners vor der Freigabe, siehe Status). Nach dem
+  [Konzept](konzept-raumkampf.md) (Abschnitte 4, 6, 7) und SR 39–42, SE 12–13. Hausregeln tragen ⚑;
+  der Owner entscheidet sie mit dem Ausprobieren.
+  - **Ein fremdes Schiff.** Im Systemflug würfelt „Schiffsbegegnung“ auf der *Starship Encounter
+    Table* (SE 13, Spalte nach dem Raumhafen der Hauptwelt, DM +2 Marinebasis, +1 Scoutbasis); ohne
+    Ergebnis kommt keins. Ein Pirat (P) greift an; sonst entscheidet die Reaktion (2W6, SE 21): 2
+    greift an, 3 greift bei 5+ an, 4 bei 8+ (je ein weiterer Wurf auf 2W6), sonst ⚑ ignoriert es die
+    Gruppe. Beides steht im Logeintrag `SpaceBattle` (Würfe, Entwurf, Name, Absicht). ⚑ Zum
+    Ausprobieren und als Spielleiter lässt sich ein Schiff auch von Hand wählen (Entwurf und
+    Absicht), dann ohne Würfe. Höchstens ein fremdes Schiff zugleich (Stufe 2).
+  - **Wo es auftaucht** ⚑: auf einer Kreisbahn um den Körper in der Mitte, gegen den Uhrzeigersinn,
+    2W6 × 1 Raumband weiter draußen als das eigene Schiff, an einem Winkel aus 1W6 × 60°; ohne Körper
+    ruhend in dieser Entfernung. Es ist eine Einheit ohne `ship`, mit `design`, `name` (aus der
+    Namensliste der Karte, sonst der Entwurf) und `intent`; seine Turrets sind die seines Entwurfs.
+  - **Wie es fliegt** (Konzept, Abschnitt 6) ⚑: Vor jeder Raumrunde probiert die App 49 Schübe aus
+    (ohne Schub sowie 16 Richtungen × ⅓, ⅔ und volle Stärke), rechnet je zwei Raumrunden voraus
+    (das eigene Schiff mit seinem gesetzten Schub) und nimmt den besten: *Angreifen* hält 5
+    Raumbänder Abstand mit freier Sichtlinie; *Fliehen* möglichst weit weg vom eigenen Schiff;
+    *Ignorieren* gibt keinen Schub. Aufschläge sind verboten. Ohne Zufall: gleicher Stand, gleicher
+    Schub. Fremde Schiffe landen nicht und schöpfen nicht; trifft eines eine Oberfläche, ist es ein
+    Aufschlag.
+  - **Ziel** (`aim`): Für das eigene Schiff wählt man im Blatt „Feuer auf …“; es gilt wie der Schub
+    nur für die laufende Raumrunde. Ein angreifendes fremdes Schiff zielt immer auf das eigene.
+  - **Laserfeuer** (nach der Bewegung, an den Orten am Ende der Raumrunde, beide Seiten gleichzeitig,
+    Schaden erst nach allen Würfen). Jeder Laser jedes Turrets, das nicht ausgefallen ist, würfelt
+    einzeln 2W6 + DM, **8+** trifft (SR 40). DM: Pulse Laser −1; Entfernung über 25 Raumbänder −2,
+    über 50 −5 (Raumband = Entfernung ÷ 10.000 km, aufgerundet); ⚑ je Computer-Treffer −1. Kein
+    Schuss ohne freie Sichtlinie (ein Körper dazwischen) und ⚑ über 90 Raumbänder (Tracking). ⚑ Die
+    Programme (Target, Predict, Gunner Interact, Maneuver/Evade, Return Fire) prüft und zählt Stufe 2
+    noch nicht, und es gibt noch keine Schiffspositionen (Gunner, Pilot). Missile Racks und
+    Sandcaster feuern noch nicht (Stufe 3).
+  - **Rückfeuer** (SR 40): Wer in dieser Raumrunde beschossen wurde und selbst kein Ziel hatte,
+    feuert danach auf die, die auf ihn gefeuert haben, nach denselben Regeln. ⚑ Ein fremdes Schiff,
+    das beschossen wird und nicht angreift, greift ab dann an, wenn es Laser hat, sonst flieht es.
+  - **Treffer**: Ein Beam Laser macht einen Schadenswurf, ein Pulse Laser zwei; jeder ist 2W6 auf die
+    Trefferzone für Starships (SE 12), bei 12 ein kritischer Treffer mit 1W6. Jeder Schuss ist ein
+    Logeintrag `SpaceAttack` mit Raumrunde, Schütze, Ziel, Turret, Waffe, Würfeln, DM und den
+    Trefferzonen. ⚑ Die Würfe der Trefferzonen stehen nicht im Log, nur ihre Zonen.
+  - **Schaden** (`ShipDamage`, SR 41) ⚑ ohne Antriebsbuchstaben (die Referenzdaten haben keine):
+    jeder Treffer auf Maneuver oder Power Plant senkt `/maneuver` (die G des Antriebs) um 1, auf
+    Jump `/jump` um 1, jeweils nicht unter 0; ein kritischer Treffer auf eines davon setzt es auf 0.
+    Fuel: das eigene Schiff verliert 10 t Treibstoff (zuerst unraffinierten); Hold: 10 t Fracht.
+    Hull: Dekompression, ⚑ ohne Folgen in Stufe 2. Computer: DM −1 auf das eigene Feuer; kritisch:
+    keine Laser mehr. Turret: ⚑ ein zufälliges (1W6) Turret, das noch arbeitet, fällt aus
+    (`turretsOut`); arbeitet keins mehr, zählt der Treffer wie Hull. Crew (kritisch): die Crew ist
+    handlungsunfähig, das Schiff gibt keinen Schub und feuert nicht. Explode (kritisch): das Schiff
+    ist zerstört (`/destroyed`). `/disabled`: zerstört, Crew handlungsunfähig, oder ohne Antrieb und
+    ohne arbeitenden Laser. Der Höchstschub einer Einheit (`SpaceUnit./maxG`) ist `/maneuver`; ⚑
+    eine Reise mit eigenem Schiff springt höchstens `/jump` Parsec.
+  - **Ende des Raumkampfs** (`SpaceBattleEnd`): das fremde Schiff ist zerstört (*destroyed*, es
+    verschwindet) oder kampfunfähig (*disabled*, es treibt als Wrack weiter, Entern kommt mit Stufe
+    4); es ist über 90 Raumbänder entfernt (*escaped*, es verschwindet); der Systemflug endet durch
+    Landen oder Beenden (*broken*); das eigene Schiff ist zerstört (*lost*). ⚑ Landen und Schöpfen
+    sind auch im Raumkampf erlaubt (das Konzept schlug „kein Landen im Kampf“ vor); Landen beendet
+    ihn. ⚑ Wird das eigene Schiff zerstört, endet der Systemflug, das Schiff wird ausgeblendet, und
+    was aus der Gruppe wird, entscheidet der Owner im Spiel.
+  - **Reparatur** ⚑ (SR 42 nennt 10–120 % des Neuwerts der Baugruppe, die Referenzdaten haben keine
+    Baugruppen): in der Werft an einem Raumhafen A oder B, Cr 100.000 je Treffer und Cr 1.000.000 je
+    kritischem Treffer, alles auf einmal (Buchung mit `shipCost` repair); danach ist `Ship.damage`
+    leer. Ausgefallene Turrets arbeiten wieder.
 
 - **Sternsystem, Monde und Gasriesen** (freigegeben am 18. November 2026, Kennzeichen 2026-11-18d). Damit die
   Raumkarte nicht leer ist (Wunsch des Owners, 18. November 2026), mit Stern und Bahnen (Owner:

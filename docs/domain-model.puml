@@ -185,6 +185,7 @@ hide <<browser>> stereotype
     berthing
     lifeSupport
     armament
+    $new("2026-11-21d", "repair")
   }
   class ShipSoftware $schiffe {
   }
@@ -299,11 +300,69 @@ hide <<browser>> stereotype
   class Skimming $raum {
     tons: number
   }
+  class ShipDamage <<value>> $raum $newClass("2026-11-21d") {
+    hits: HitZone [*]
+    turretsOut: number [*]
+    /maneuver: number
+    /jump: number
+    /disabled: boolean
+    /destroyed: boolean
+  }
+  enum HitZone <<value>> $raum $newClass("2026-11-21d") {
+    powerPlant
+    maneuver
+    jump
+    fuel
+    hull
+    hold
+    computer
+    turret
+    criticalPowerPlant
+    criticalManeuver
+    criticalJump
+    crew
+    criticalComputer
+    explode
+  }
+  enum Intent <<value>> $raum $newClass("2026-11-21d") {
+    attack
+    flee
+    ignore
+  }
+  class SpaceBattle $raum $newClass("2026-11-21d") {
+    foe: string
+    intent: Intent
+    encounter: number[2] [0..1]
+    reaction: number[2] [0..1]
+  }
+  class SpaceAttack $raum $newClass("2026-11-21d") {
+    round: number
+    attacker: string
+    target: string
+    turret: number
+    dice: number[2]
+    dm: number
+    /hit: boolean
+    hits: HitZone [*]
+  }
+  class SpaceBattleEnd $raum $newClass("2026-11-21d") {
+    foe: string
+    outcome: BattleOutcome
+  }
+  enum BattleOutcome <<value>> $raum $newClass("2026-11-21d") {
+    destroyed
+    disabled
+    escaped
+    broken
+    lost
+  }
   class SpaceUnit $raum {
     position: Vec
     velocity: Vec
     thrust: Vec [0..1]
     crashed: boolean
+    $new("2026-11-21d", "name: string [0..1]")
+    $new("2026-11-21d", "intent: Intent [0..1]")
     /maxG: number
   }
   class TrackPoint <<value>> $raum {
@@ -1200,7 +1259,21 @@ Booking "*" --> "0..1" Ship : forShip
 Campaign "1" *-- "0..1" SystemFlight : flight
 SystemFlight "*" --> "1" World : world
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
-SpaceUnit "*" --> "1" Ship : ship
+SpaceUnit "*" -$goneArrow("2026-11-21d")-> "1" Ship : ship
+SpaceUnit "*" -$newArrow("2026-11-21d")-> "0..1" Ship : ship
+SpaceUnit "*" -$newArrow("2026-11-21d")-> "0..1" ShipDesign : design
+SpaceUnit "1" *-$newArrow("2026-11-21d")- "0..1" ShipDamage : damage
+SpaceUnit "*" -$newArrow("2026-11-21d")-> "0..1" SpaceUnit : aim
+Ship "1" *-$newArrow("2026-11-21d")- "0..1" ShipDamage : damage
+ShipDamage -$newArrow("2026-11-21d")-> HitZone
+SpaceUnit -$newArrow("2026-11-21d")-> Intent
+LogEntry <|-$newArrow("2026-11-21d")- SpaceBattle
+LogEntry <|-$newArrow("2026-11-21d")- SpaceAttack
+LogEntry <|-$newArrow("2026-11-21d")- SpaceBattleEnd
+SpaceBattle "*" -$newArrow("2026-11-21d")-> "1" ShipDesign : design
+SpaceAttack "*" -$newArrow("2026-11-21d")-> "1" ShipWeapon : weapon
+SpaceAttack -$newArrow("2026-11-21d")-> HitZone
+SpaceBattleEnd -$newArrow("2026-11-21d")-> BattleOutcome
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
 LogEntry <|-- Skimming
 Skimming "*" --> "1" World : at
