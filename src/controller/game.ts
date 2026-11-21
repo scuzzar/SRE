@@ -2376,7 +2376,8 @@ export class GameController {
       if (worldById(hexes, id)?.map) throw new DomainError('Diese Welt hat schon einen Globus.');
       return { hexes: withSurfaceMapOf(hexes, id, this.deps.random, cityNamesTaken(hexes)), world: at };
     });
-    if (!this.state.worldError) this.update({ globe: { picked: undefined } });
+    // Der Globus geht auf, die Weltkarte bleibt unten im Blatt stehen (Owner, 21. November 2026).
+    if (!this.state.worldError) this.update({ globe: { picked: undefined, card: true } });
   }
 
   /** Öffnet die Weltkarte einer fertigen Welt (z. B. des Aufenthaltsorts aus der Kopfzeile) und, hat sie schon einen, ihren Globus. */
