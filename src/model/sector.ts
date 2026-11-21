@@ -564,7 +564,22 @@ export function canHaveMap(hex: Hex): boolean {
  */
 export function mapPossible(hex: Hex, world: World): boolean {
   if (world.id === hex.main && !isWorld(hex)) return false;
-  return world.kind === 'world' && (world.uwp.size ?? 0) >= 1 && world.surface !== undefined && world.temperature !== undefined;
+  return gridSize(world) !== undefined && world.surface !== undefined && world.temperature !== undefined;
+}
+
+/**
+ * Die Größe, nach der das Raster des Globus gebaut wird: bei einer Welt ihre Größe ab 1, bei einer
+ * kleinen Welt (S) das kleinste Raster wie Größe 1 (Owner, 21. November 2026); Gürtel, Ringe und
+ * Gasriesen haben keins.
+ */
+export function gridSize(world: World): number | undefined {
+  if (world.kind === 'small') return 1;
+  return world.kind === 'world' && (world.uwp.size ?? 0) >= 1 ? world.uwp.size : undefined;
+}
+
+/** Der Durchmesser einer Welt mit Raster in km: Größe × 1.600, eine kleine Welt ihr eigener. */
+export function diameterKm(world: World): number {
+  return world.kind === 'small' ? (world.diameter ?? 1000) : (world.uwp.size ?? 0) * 1600;
 }
 
 /** Die Hexfelder mit geänderter Welt `id`; gibt es sie nicht, ein DomainError. */
@@ -586,7 +601,7 @@ export function withSurfaceMapOf(hexes: readonly Hex[], id: string, random: Rand
     const main = world.id === hex.main;
     const { map, populationMultiplier } = generateSurfaceMap(
       {
-        size: u.size!,
+        size: gridSize(world)!,
         atmosphere: u.atmosphere ?? 0,
         hydrographics: u.hydrographics ?? 0,
         population: u.population ?? 0,
@@ -760,7 +775,7 @@ function validateMain(hex: Hex, world: World, fail: (why: string) => never): voi
   if (world.populationMultiplier !== undefined && (!Number.isInteger(world.populationMultiplier) || world.populationMultiplier < 1 || world.populationMultiplier > 9 || !((world.uwp.population ?? 0) >= 1))) fail('Einen Bevölkerungsmultiplikator 1–9 hat nur eine Welt mit Bevölkerung.');
   if (world.map !== undefined) {
     if (!canHaveMap(hex)) fail('Eine Oberflächenkarte hat nur eine fertige Welt ab Größe 1 mit Oberfläche.');
-    const why = checkSurfaceMap(world.map, world.uwp.size!, world.uwp.population ?? 0);
+    const why = checkSurfaceMap(world.map, gridSize(world)!, world.uwp.population ?? 0);
     if (why) fail(why);
   }
   // Was ohne Wurf feststeht, muss so stehen, wie die Regeln es setzen.

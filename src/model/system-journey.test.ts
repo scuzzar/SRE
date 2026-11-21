@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDemoCampaign, fromCampaignFile, fundsOf, mapLocked, mapPossible, removeLogEntry, renameCity, renameWorld, noteWorld, rollWorldSurface, surfaceDue, toCampaignFile, withSurfaceMapOf, worldById, type Campaign } from '.';
+import { createDemoCampaign, readyForParty, fromCampaignFile, fundsOf, mapLocked, mapPossible, removeLogEntry, renameCity, renameWorld, noteWorld, rollWorldSurface, surfaceDue, toCampaignFile, withSurfaceMapOf, worldById, type Campaign } from '.';
 import { flightHours, journeyDays, systemDistance, systemJourneyBlocker, ticketCost, travelInSystem, TICKET_RATE } from './system-journey';
 import { fixedClock, seededRandom } from './testing';
 
@@ -96,10 +96,24 @@ describe('Nebenwelten mit Namen, Oberfläche und Globus (2026-11-20d)', () => {
     expect(mapLocked({ ...c, hexes }, world.id)).toBe(false);
   });
 
-  it('kleine Welten, Gürtel und Ringe bekommen keine Oberfläche', () => {
+  it('Gürtel und Ringe bekommen keine Oberfläche', () => {
     const c = demo();
-    for (const w of c.hexes[0]!.worlds.filter((x) => x.kind === 'small' || x.kind === 'belt' || x.kind === 'ring')) {
+    for (const w of c.hexes[0]!.worlds.filter((x) => x.kind === 'belt' || x.kind === 'ring')) {
+      expect(w.surface).toBeUndefined();
       expect(surfaceDue(c.hexes[0]!, w)).toBe(false);
     }
+  });
+
+  it('kleine Welten (S): Oberfläche wie Größe 0, Globus mit dem kleinsten Raster; bei Ankunft entsteht er (21. November 2026)', () => {
+    const c = demo();
+    const small = c.hexes[0]!.worlds.find((w) => w.kind === 'small')!;
+    expect(small.surface).toMatchObject({ water: 0, plates: 0, life: false });
+    expect(small.temperature).toBeDefined();
+    expect(mapPossible(c.hexes[0]!, small)).toBe(true);
+    const hexes = readyForParty(c.hexes, small.id, seededRandom(2));
+    const map = worldById(hexes, small.id)!.map!;
+    expect(map.landforms).toHaveLength(162);
+    const back = fromCampaignFile(toCampaignFile({ ...c, hexes }), c.id);
+    expect(worldById(back.hexes, small.id)).toEqual(worldById(hexes, small.id));
   });
 });

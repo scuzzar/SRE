@@ -23,6 +23,8 @@ import {
   hexIdOfWorld,
   worldById,
   worldOf,
+  gridSize,
+  diameterKm,
 } from '../model';
 import { systemLook, type WorldLook } from './world-view';
 
@@ -159,10 +161,10 @@ export function globeView(campaign: Campaign, worldId: string, picked: number | 
   const hexes = campaign.hexes;
   const hex = hexById(hexes, hexIdOfWorld(worldId));
   const found = worldById(hexes, worldId);
-  if (!hex || !found?.map || found.uwp.size === undefined || found.temperature === undefined) return undefined;
+  if (!hex || !found?.map || gridSize(found) === undefined || found.temperature === undefined) return undefined;
   const world = worldOf(hexes, worldId);
   const map = found.map;
-  const size = found.uwp.size;
+  const size = gridSize(found)!;
   const grid = surfaceGrid(size);
   const cities = (map.cities ?? []).map(
     (city, index): GlobeCity => ({
@@ -210,7 +212,7 @@ export function globeView(campaign: Campaign, worldId: string, picked: number | 
     look: systemLook(hex, found)!,
     grid,
     map,
-    cellKm: Math.round((Math.PI * 1600 * size) / (5 * grid.n)),
+    cellKm: Math.round((Math.PI * diameterKm(found)) / (5 * grid.n)),
     cities,
     volcanoes,
     picked: pickedCell,

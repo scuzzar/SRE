@@ -2,7 +2,7 @@ import { DomainError } from './errors';
 import type { Random } from './ports';
 import { ref } from './reference';
 import { checkSurfaceMap } from './surface-map';
-import { baseKinds, cityNamesTaken, enterSurface, facilities, hexById, hexId, hexIdOfWorld, isWorld, mainOf, mainWorld, mapPossible, nextWorldAction, putHex, rollSurface, withSurfaceMapOf, worldById, spaceports, tradeCodesOf, validateSurface, withWorld, type BaseKind, type Facility, type Hex, type Spaceport, type Star, type StarSystem, type TemperatureId, type World } from './sector';
+import { baseKinds, cityNamesTaken, enterSurface, facilities, gridSize, hexById, hexId, hexIdOfWorld, isWorld, mainOf, mainWorld, mapPossible, nextWorldAction, putHex, rollSurface, withSurfaceMapOf, worldById, spaceports, tradeCodesOf, validateSurface, withWorld, type BaseKind, type Facility, type Hex, type Spaceport, type Star, type StarSystem, type TemperatureId, type World } from './sector';
 
 // Das Sternsystem nach Book 6 *Scouts* (Domänenmodell 2026-11-18d, 2026-11-20, 2026-11-20b): Sterne,
 // Bahnen und Zonen um den Hauptstern, Gasriesen, Planetoidengürtel, leere und eingefangene Bahnen,
@@ -313,7 +313,7 @@ export function rollStarSystem(hex: Hex, random: Random): Hex {
 
 /** Braucht diese Nebenwelt noch ihre Oberfläche? Eine Welt ab Größe 1 ohne Oberfläche. */
 function lacksSurface(hex: Hex, world: World): boolean {
-  return isSubordinate(hex, world) && world.kind === 'world' && (world.uwp.size ?? 0) >= 1 && world.surface === undefined;
+  return isSubordinate(hex, world) && (world.kind === 'small' || (world.kind === 'world' && (world.uwp.size ?? 0) >= 1)) && world.surface === undefined;
 }
 
 /**
@@ -516,11 +516,11 @@ export function checkStarSystems(hexes: readonly Hex[]): void {
         // Nebenwelten mit Namen, Notiz, Oberfläche und Globus (2026-11-20d).
         if (w.name !== undefined && !w.name.trim()) fail(`Die Welt ${w.id} hat einen leeren Namen.`);
         if (w.note !== undefined && !w.note.trim()) fail(`Eine leere Notiz gibt es nicht (${w.id}).`);
-        if ((w.surface !== undefined || w.temperature !== undefined) && (w.kind !== 'world' || (w.uwp.size ?? 0) < 1)) fail(`Oberfläche und Temperatur hat nur eine Welt ab Größe 1 (${w.id}).`);
+        if ((w.surface !== undefined || w.temperature !== undefined) && w.kind !== 'small' && (w.kind !== 'world' || (w.uwp.size ?? 0) < 1)) fail(`Oberfläche und Temperatur hat nur eine Welt ab Größe 1 oder eine kleine Welt (${w.id}).`);
         if (w.surface !== undefined) validateSurface(w, fail);
         if (w.map !== undefined) {
           if (!mapPossible(hex, w)) fail(`Eine Oberflächenkarte braucht Oberfläche und Temperatur (${w.id}).`);
-          const why = checkSurfaceMap(w.map, w.uwp.size!, w.uwp.population ?? 0);
+          const why = checkSurfaceMap(w.map, gridSize(w)!, w.uwp.population ?? 0);
           if (why) fail(why);
         }
         if (w.populationMultiplier !== undefined && (!Number.isInteger(w.populationMultiplier) || w.populationMultiplier < 1 || w.populationMultiplier > 9 || (w.uwp.population ?? 0) < 1)) fail(`Einen Bevölkerungsmultiplikator 1–9 hat nur eine Welt mit Bevölkerung (${w.id}).`);
@@ -541,7 +541,7 @@ export function checkStarSystems(hexes: readonly Hex[]): void {
 
 /** Kann diese Nebenwelt ihre Oberfläche würfeln (2026-11-20d)? Eine Welt ab Größe 1 ohne Oberfläche, mit TL. */
 export function surfaceDue(hex: Hex, world: World): boolean {
-  return world.id !== hex.main && world.kind === 'world' && (world.uwp.size ?? 0) >= 1 && world.surface === undefined && world.uwp.tech !== undefined;
+  return world.id !== hex.main && (world.kind === 'small' || (world.kind === 'world' && (world.uwp.size ?? 0) >= 1)) && world.surface === undefined && world.uwp.tech !== undefined;
 }
 
 /**
@@ -559,7 +559,8 @@ export function rollWorldSurface(hexes: readonly Hex[], id: string, random: Rand
 /**
  * Die Welt, auf der die Gruppe ankommt, bekommt Oberfläche und Globus, falls sie fehlen (Owner,
  * 21. November 2026): bei jeder Ankunft, mit Reise oder ohne. Welten ohne mögliche Oberfläche (Größe
- * 0, kleine Welten, Ringe, Gasriesen) bleiben, wie sie sind; eine Hauptwelt ohne Temperatur auch.
+ * 0, Ringe, Gasriesen) bleiben, wie sie sind; eine Hauptwelt ohne Temperatur auch. Kleine Welten
+ * bekommen beides, mit dem kleinsten Raster.
  */
 export function readyForParty(hexes: readonly Hex[], id: string, random: Random): readonly Hex[] {
   const hex = hexById(hexes, hexIdOfWorld(id));
