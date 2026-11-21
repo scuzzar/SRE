@@ -4888,12 +4888,14 @@ button:disabled {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+/* Welt | System auf der Weltkarte: dieselben Unterreiter wie Begegnung | Kampf, nur ohne eigenen Rand im Blatt. */
 .world-tabs {
   margin: 4px 0 8px;
+  padding: 0;
+  background: transparent;
 }
 
-.segmented button[aria-checked='true'],
-.segmented button[role='tab'][aria-selected='true'] {
+.segmented button[aria-checked='true'] {
   background: var(--text);
   color: var(--ink);
   font-weight: 700;

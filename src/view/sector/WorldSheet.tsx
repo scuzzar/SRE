@@ -447,7 +447,7 @@ export function WorldTabs({ system, children }: { system: SystemView | undefined
   if (!system) return <>{children}</>;
   return (
     <>
-      <div className="segmented two world-tabs" role="tablist" aria-label="Weltkarte">
+      <div className="sub-tabs world-tabs" role="tablist" aria-label="Weltkarte">
         <button type="button" role="tab" aria-selected={tab === 'world'} onClick={() => setTab('world')}>
           Welt
         </button>
