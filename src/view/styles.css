@@ -7917,6 +7917,13 @@ button:disabled {
 .globe-dot.party {
   background: #6ec8ff;
 }
+.globe-dot.ship {
+  background: #ffe05c;
+}
+.globe-dot.ship svg {
+  width: 14px;
+  height: 14px;
+}
 .globe-dot.npc {
   background: #be96ff;
 }

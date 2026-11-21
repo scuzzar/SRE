@@ -108,6 +108,8 @@ export interface GlobeView {
   readonly partyCell: number | undefined;
   /** Das Feld, auf dem das Schiff der Gruppe auf dieser Welt steht (2026-11-21); fehlt sonst. */
   readonly shipCell: number | undefined;
+  /** Der Name des Schiffs der Gruppe, für die Liste der Orte. */
+  readonly shipName: string | undefined;
   /** Der Landeplatz wird gerade gewählt: ein Feld antippen und „Hier landen“. */
   readonly landing: boolean;
   /** Zählt die Landungen; ein neuer Wert heißt: Die Gruppe ist gerade auf `partyCell` gelandet (Landeanimation). */
@@ -226,9 +228,12 @@ export function globeView(campaign: Campaign, worldId: string, picked: number | 
     partyHere,
     partyCell: partyHere ? placeCell(hexes, campaign.location) : undefined,
     shipCell: (() => {
-      const place = shipOf(campaign)?.place;
+      // Ein Schiff ohne eigenen Ort steht dort, wo die Gruppe ist (2026-11-21, *Schiffe ohne Ort*).
+      const ship = shipOf(campaign);
+      const place = ship?.place ?? (ship ? campaign.location : undefined);
       return place?.world === worldId ? placeCell(hexes, place) : undefined;
     })(),
+    shipName: shipOf(campaign)?.name,
     landing,
     touchdown,
     npcs,

@@ -31,6 +31,14 @@ type Panel = 'places' | 'logs' | undefined;
 /** Die zuletzt gespielte Landung (`GlobeView.touchdown`): Öffnet man den Globus später wieder, spielt sie nicht noch einmal. */
 let playedTouchdown = 0;
 
+/** Die Linien des Schiffssymbols (wie `ShipIcon`) für das Abzeichen auf dem Globus; erst beim ersten Zeichnen gebaut. */
+const SHIP_HULL_D = 'M12 2.5c2.8 2.8 4.2 6.8 4.2 11.2L12 19l-4.2-5.3C7.8 9.3 9.2 5.3 12 2.5z';
+const SHIP_WINGS_D = 'M8.1 10.7 4 14.2v3.3l4.3-2.4M15.9 10.7 20 14.2v3.3l-4.3-2.4';
+let shipPaths: { hull: Path2D; wings: Path2D } | undefined;
+function shipPath(): { hull: Path2D; wings: Path2D } {
+  return (shipPaths ??= { hull: new Path2D(SHIP_HULL_D), wings: new Path2D(SHIP_WINGS_D) });
+}
+
 /**
  * Der Globus einer Welt wie eine Karten-App, die Grundkarte unter allem: Die Karte füllt ihre Fläche
  * (auf dem Smartphone liegt unten das Ziehblatt darüber). Oben eine Leiste mit Schließen (zum
@@ -554,6 +562,14 @@ export function GlobeScreen({
                 <span className="globe-dot party">G</span> Die Gruppe
               </button>
             )}
+            {globe.shipCell !== undefined && (
+              <button type="button" className="globe-row" onClick={() => flyTo(globe.shipCell!)}>
+                <span className="globe-dot ship">
+                  <ShipIcon />
+                </span>{' '}
+                Das Schiff{globe.shipName ? ` · ${globe.shipName}` : ''}
+              </button>
+            )}
             {globe.npcs.filter((n) => n.cell !== undefined).map((n) => (
               <button key={n.id} type="button" className="globe-row" onClick={() => flyTo(n.cell!)}>
                 <span className="globe-dot npc">N</span> {n.name}
@@ -909,8 +925,34 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
   for (const [cell, count] of npcCells) badge(cell, -8, -8, 'rgba(190,150,255,0.95)', count > 1 ? String(count) : 'N');
   if (globe.partyCell !== undefined) badge(globe.partyCell, 0, 10, 'rgba(110,200,255,1)', 'G');
   // Das Schiff der Gruppe, wo es steht (2026-11-21).
-  // Während der Landeanimation steht dort das landende Schiff statt des Zeichens.
-  if (globe.shipCell !== undefined && !landing) badge(globe.shipCell, 10, 0, 'rgba(255,235,120,1)', 'S');
+  // Das Schiff der Gruppe: ein gelbes Abzeichen mit dem Keil des Schiffs, etwas größer als die
+  // anderen. Während der Landeanimation steht dort das landende Schiff statt des Zeichens.
+  if (globe.shipCell !== undefined && !landing) {
+    const p = at(globe.shipCell);
+    if (p) {
+      const x = p.x + 12 * scale;
+      const y = p.y - 4 * scale;
+      const r = 9.5 * scale;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,224,92,1)';
+      ctx.strokeStyle = 'rgba(15,15,15,0.95)';
+      ctx.lineWidth = 1.5 * scale;
+      ctx.fill();
+      ctx.stroke();
+      // Dasselbe Schiff wie im Knopf „Raumkarte“ und in der Liste der Orte (ShipIcon, 24er Raster).
+      ctx.save();
+      ctx.translate(x - 6.6 * scale, y - 6.6 * scale);
+      ctx.scale(0.55 * scale, 0.55 * scale);
+      ctx.strokeStyle = '#16140c';
+      ctx.lineWidth = 2.4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke(shipPath().hull);
+      ctx.stroke(shipPath().wings);
+      ctx.restore();
+    }
+  }
   // Offene Missionen: eine rote Fahne am Feld (2026-11-18).
   for (const cell of globe.missionCells) {
     const p = at(cell);
