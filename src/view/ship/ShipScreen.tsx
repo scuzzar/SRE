@@ -369,6 +369,25 @@ function Details({ boat }: { boat: Boat }) {
         </div>
       </dl>
       {boat.loanBalance !== undefined && <p className="shop-hint muted">Die Bank hebt die Monatsrate automatisch ein, wenn sie fällig ist; ohne Deckung bleibt die Rate als Hinweis in der Kasse stehen.</p>}
+      {boat.craft.length > 0 && (
+        <>
+          <h2 className="section-title">Beiboote</h2>
+          <div className="shop-table" role="table" aria-label="Beiboote">
+            {boat.craft.map((c) => (
+              <div key={c.name} className="shop-row soft-row" role="row">
+                <span role="cell" className="shop-name">
+                  <span className="shop-label">{c.name}</span>
+                  <span className="shop-meta">{c.design}</span>
+                </span>
+                <span role="cell" className="shop-num soft-kind muted">
+                  {c.where}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="shop-hint muted">Im Systemflug aussetzen und wieder andocken; mit einem Beiboot landet die Gruppe, während das Schiff in der Umlaufbahn bleibt, oder reist damit im System. Gesprungen wird nur mit allen Beibooten an Bord.</p>
+        </>
+      )}
       <h2 className="section-title">Software an Bord · {boat.computerName}</h2>
       <div className="shop-table" role="table" aria-label="Software an Bord">
         {boat.software.map((s) => (
@@ -412,6 +431,7 @@ function YardSheet({ ship, onBuy, onClose }: { ship: ShipView; onBuy: (design: S
                 </span>
                 <span className="shop-meta">
                   {d.hull} t · Jump-{d.jump} · {d.maneuver}G · {d.crew}
+                  {d.craft !== '' && ` · ${d.craft}`}
                 </span>
               </span>
               <span role="cell" className="shop-num">

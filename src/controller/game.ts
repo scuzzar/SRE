@@ -93,6 +93,8 @@ import {
   normalThrust,
   runRound,
   setThrust,
+  launchCraft,
+  dockCraft,
   snapThrust,
   startFlight,
   flightStartBlocker,
@@ -220,6 +222,7 @@ import {
   renameWorld,
   travelInSystem,
   systemJourneyBlocker,
+  journeyCraft,
   type SystemJourneyMode,
   hexById,
   readyForParty,
@@ -1112,8 +1115,11 @@ export class GameController {
     if (from !== undefined && from !== to && hexIdOfWorld(from) === hexIdOfWorld(to)) {
       const ticket = systemJourneyBlocker(this.campaign, to, 'ticket');
       const ship = systemJourneyBlocker(this.campaign, to, 'ship');
-      if (ticket !== undefined && ship !== undefined) throw new DomainError(ticket);
-      this.update({ systemJourney: { to, mode: ticket === undefined ? 'ticket' : 'ship', error: undefined, done: undefined }, world: undefined, worldError: undefined });
+      // Sonst ein Beiboot, mit dem die Gruppe von hier reisen kann (2026-11-21b).
+      const craft = journeyCraft(this.campaign)[0];
+      if (ticket !== undefined && ship !== undefined && craft === undefined) throw new DomainError(ticket);
+      const draft = ticket === undefined ? { mode: 'ticket' as const } : ship === undefined ? { mode: 'ship' as const } : { mode: 'craft' as const, craft: craft!.id };
+      this.update({ systemJourney: { to, ...draft, error: undefined, done: undefined }, world: undefined, worldError: undefined });
       return;
     }
     const passageBlocker = journeyBlocker(this.campaign, to);
@@ -1170,11 +1176,11 @@ export class GameController {
     this.update({ journey: undefined });
   }
 
-  /** Reise im System: mit Ticket oder mit dem eigenen Schiff. */
-  chooseSystemJourneyMode(mode: SystemJourneyMode): void {
+  /** Reise im System: mit Ticket, mit dem eigenen Schiff oder mit einem Beiboot (`craft`, 2026-11-21b). */
+  chooseSystemJourneyMode(mode: SystemJourneyMode, craft?: string): void {
     const draft = this.state.systemJourney;
     if (!draft || draft.done !== undefined) return;
-    this.update({ systemJourney: { ...draft, mode, error: undefined } });
+    this.update({ systemJourney: { ...without(draft, 'craft'), mode, ...(mode === 'craft' && craft !== undefined ? { craft } : {}), error: undefined } });
   }
 
   /** Die Gruppe reist im System (2026-11-20d); danach zeigt der Dialog das Ergebnis. */
@@ -1183,7 +1189,7 @@ export class GameController {
     if (!draft || draft.done !== undefined) return;
     try {
       const index = this.campaign.log.length;
-      const after = travelInSystem(this.campaign, draft.to, draft.mode, this.deps.clock);
+      const after = travelInSystem(this.campaign, draft.to, draft.mode, this.deps.clock, draft.craft);
       this.change(after, { systemJourney: { ...draft, done: index, error: undefined }, timeNote: undefined, shopError: undefined });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
@@ -2495,12 +2501,25 @@ export class GameController {
   runRound(): void {
     const space = this.openSpaceState();
     const t = flightTime(this.campaign, activeFlight(this.campaign));
-    const ship = shipById(this.campaign, activeFlight(this.campaign).units[0]!.ship).name;
+    const ship = shipById(this.campaign, activeFlight(this.campaign).party).name;
     const run = runRound(this.campaign, this.deps.clock);
     // Gelandet: Der Flug ist zu Ende, die Gruppe auf dieser Welt; die Raumkarte bleibt offen (Owner, 21. November 2026).
     // Auch auf der Startwelt: Die Landung ist eine Ankunft, Oberfläche und Globus entstehen, falls sie fehlen.
     if (run.landed !== undefined) return this.change({ ...run.campaign, hexes: readyForParty(run.campaign.hexes, run.landed, this.deps.random) }, { space: { world: space.world }, notice: `${ship} ist auf ${worldOf(run.campaign.hexes, run.landed).name} gelandet. Die Gruppe ist jetzt dort.` });
     this.change(run.campaign, { space: { world: space.world, run: { round: activeFlight(run.campaign).round, t, every: 2, frames: run.frames } } });
+  }
+
+  /** Setzt ein Beiboot der Einheit der Gruppe aus; die Gruppe steigt um (2026-11-21b). */
+  launchCraft(id: string): void {
+    const space = this.openSpaceState();
+    this.change(launchCraft(this.campaign, id), { space: without(space, 'aim'), notice: `${shipById(this.campaign, id).name} ist ausgesetzt; die Gruppe ist an Bord.` });
+  }
+
+  /** Dockt ein Small Craft an seinem Mutterschiff an (2026-11-21b). */
+  dockCraft(id: string): void {
+    const space = this.openSpaceState();
+    const craft = shipById(this.campaign, id);
+    this.change(dockCraft(this.campaign, id), { space: without(space, 'aim'), notice: `${craft.name} hat angedockt.` });
   }
 
   /** Beendet den Systemflug; die Raumkarte bleibt offen. */

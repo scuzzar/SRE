@@ -127,33 +127,40 @@ export const VehicleSchema = z.object({
   landsAt: z.array(PortSchema).default([]),
 });
 
+/** Die Art eines Entwurfs (2026-11-21b): Schiff ab 100 t oder Small Craft unter 100 t ohne Sprungantrieb (SR 33). */
+export const shipKinds = ['starship', 'smallCraft'] as const;
+
 /**
- * Ein Standardentwurf aus SR 35–37 (SE 10/12): Rumpf und Antriebe in Tonnen bzw. Stufen, Kabinen,
- * Niedrigbetten, Hardpoints und Laderaum als Zahlen, Crewbedarf als Text, `basePrice` in Cr.
- * `id` ist der Buchstabencode aus den Schiffsbegegnungen (S, A, R, …).
+ * Ein Standardentwurf aus SR 35–37 (SE 10/12) oder ein Small Craft aus SR 33–35 (2026-11-21b): Rumpf
+ * und Antriebe in Tonnen bzw. Stufen, Kabinen, Niedrigbetten, Hardpoints und Laderaum als Zahlen,
+ * Crewbedarf als Text, `basePrice` in Cr. `id` ist bei Schiffen der Buchstabencode aus den
+ * Schiffsbegegnungen (S, A, R, …), bei Small Craft ein sprechendes Kürzel (`launch`, `boat`, …).
  */
 export const ShipDesignSchema = z.object({
   id: z.string().min(1),
-  code: z.string().length(1),
+  code: z.string().min(1),
+  kind: z.enum(shipKinds).default('starship'),
   name: z.string().min(1),
-  /** Das Rechnermodell ab Werk. */
-  computer: z.string().min(1),
-  hull: z.number().int().min(100),
-  jump: z.number().int().min(1).max(6),
+  /** Das Rechnermodell ab Werk; Small Craft brauchen keins (SE 13). */
+  computer: z.string().min(1).optional(),
+  hull: z.number().int().min(1),
+  jump: z.number().int().min(0).max(6),
   /** Beschleunigung des Maneuver Drive in G. */
   maneuver: z.number().int().min(1),
-  /** Treibstofftank in Tonnen. */
-  fuel: z.number().int().min(1),
+  /** Treibstofftank in Tonnen; bei Small Craft auch Bruchteile (Ship's Boat 1,8 t). */
+  fuel: z.number().positive(),
   staterooms: z.number().int().min(0),
   lowBerths: z.number().int().min(0),
   hardpoints: z.number().int().min(0),
-  /** Laderaum in Tonnen. */
-  cargo: z.number().int().min(0),
+  /** Laderaum in Tonnen; bei Small Craft die Exzess-Tonnage, auch mit Bruchteilen. */
+  cargo: z.number().min(0),
   crew: z.string().min(1),
   /** Barpreis in Cr. */
   basePrice: z.number().int().min(0),
-  /** Bauzeit in Monaten. */
-  months: z.number().int().min(1),
+  /** Bauzeit in Monaten; für Small Craft nennen die SR keine. */
+  months: z.number().int().min(1).optional(),
+  /** Die Small Craft, die der Entwurf an Bord trägt (Ids, je Stück ein Eintrag). */
+  craft: z.array(z.string().min(1)).default([]),
   /** Atmosphärische Streulinienform (SR 32); bei den Standardentwürfen nirgends gesetzt. */
   streamlined: z.boolean().default(false),
 });
@@ -581,7 +588,14 @@ export const ReferenceDataSchema = z
     uniqueIds(data.computers.map((c) => c.id), 'Rechnermodell', ctx);
     uniqueIds(data.software.map((s) => s.id), 'Programm', ctx);
     for (const design of data.ships) {
-      if (!data.computers.some((c) => c.id === design.computer)) ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id}: Rechnermodell ${design.computer} gibt es nicht` });
+      if (design.computer !== undefined && !data.computers.some((c) => c.id === design.computer)) ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id}: Rechnermodell ${design.computer} gibt es nicht` });
+      const small = design.kind === 'smallCraft';
+      if (small ? design.hull >= 100 || design.jump !== 0 : design.hull < 100 || design.jump < 1 || design.computer === undefined || design.months === undefined) ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id} passt nicht zu seiner Art (Small Craft unter 100 t ohne Sprung; Schiffe mit Sprung, Rechner und Bauzeit)` });
+      if (!small && (!Number.isInteger(design.fuel) || !Number.isInteger(design.cargo))) ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id}: Tank und Laderaum eines Schiffs sind ganze Tonnen` });
+      for (const c of design.craft) {
+        if (small) ctx.addIssue({ code: 'custom', message: `Das Small Craft ${design.id} trägt keine Beiboote` });
+        if (data.ships.find((d) => d.id === c)?.kind !== 'smallCraft') ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id}: Beiboot ${c} ist kein Small Craft` });
+      }
     }
     for (const patron of data.encounters.patrons) {
       const label = `${patron.name} (Patron-Liste ${patron.list}, ${patron.roll})`;

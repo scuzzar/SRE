@@ -38,8 +38,14 @@ export interface Ship {
   /** Ausgeblendet statt gelöscht: Buchungen und Log zeigen weiter auf es. */
   readonly retired: boolean;
   readonly software: readonly ShipSoftware[];
-  /** Wo es steht (2026-11-21): Welt, Feld oder Stadt; fehlt, solange es bei der Gruppe ist (alte Stände, gerade gekauft). */
+  /** Wo es steht (2026-11-21): Welt, Feld oder Stadt; fehlt, solange es bei der Gruppe ist (alte Stände, gerade gekauft) oder an Bord. */
   readonly place?: Place;
+  /** Das Mutterschiff eines Small Craft (2026-11-21b), seine Id. */
+  readonly mother?: string;
+  /** Liegt im Hangar seines Mutterschiffs (2026-11-21b); gespeichert nur, wenn wahr. */
+  readonly aboard?: boolean;
+  /** Kreist um die Welt seines Orts, statt auf ihr zu stehen (2026-11-21b); gespeichert nur, wenn wahr. */
+  readonly inOrbit?: boolean;
 }
 
 /**
@@ -65,9 +71,37 @@ export const LOAN_MONTHS = 480;
 /** Anzahlung bei Bankfinanzierung, als Anteil des Preises (SR 29). */
 const DOWN_PAYMENT = 0.2;
 
-/** `/ship`: das nicht ausgeblendete Schiff, wie `focus` beim Charakter. */
+/** `/ship`: das nicht ausgeblendete Schiff ohne Mutterschiff, wie `focus` beim Charakter (2026-11-21b). */
 export function shipOf(campaign: Campaign): Ship | undefined {
-  return campaign.ships.find((s) => !s.retired);
+  return campaign.ships.find((s) => !s.retired && s.mother === undefined);
+}
+
+/** Ist der Entwurf des Schiffs ein Small Craft? */
+export function isSmallCraft(ship: Ship): boolean {
+  return shipDesignOf(ship.design).kind === 'smallCraft';
+}
+
+/** Die nicht ausgeblendeten Beiboote eines Schiffs, in der Reihenfolge der Kampagne. */
+export function craftOf(campaign: Campaign, mother: string): readonly Ship[] {
+  return campaign.ships.filter((s) => !s.retired && s.mother === mother);
+}
+
+/** Alle eigenen Schiffe und Small Craft, die nicht ausgeblendet sind: das aktive Schiff und seine Beiboote. */
+export function vesselsOf(campaign: Campaign): readonly Ship[] {
+  const ship = shipOf(campaign);
+  return ship === undefined ? [] : [ship, ...craftOf(campaign, ship.id)];
+}
+
+/** Wo ein Schiff ist: an Bord dort, wo sein Mutterschiff ist; ohne eigenen Ort `undefined` (bei der Gruppe). */
+export function whereIs(campaign: Campaign, ship: Ship): Ship | undefined {
+  if (!ship.aboard || ship.mother === undefined) return ship;
+  const mother = campaign.ships.find((s) => s.id === ship.mother);
+  return mother === undefined ? undefined : whereIs(campaign, mother);
+}
+
+/** Ein Schiff mit neuen Werten, die übrigen bleiben. */
+export function changeShip(campaign: Campaign, id: string, change: (ship: Ship) => Ship): Campaign {
+  return { ...campaign, ships: campaign.ships.map((s) => (s.id === id ? change(s) : s)) };
 }
 
 export function shipById(campaign: Campaign, id: string): Ship {
@@ -83,8 +117,8 @@ export function activeShip(campaign: Campaign): Ship {
   return ship;
 }
 
-function nextShipId(campaign: Campaign): string {
-  const numbers = campaign.ships.map((s) => Number(s.id.slice(1))).filter((n) => Number.isInteger(n) && n > 0);
+function nextShipId(ships: readonly Ship[]): string {
+  const numbers = ships.map((s) => Number(s.id.slice(1))).filter((n) => Number.isInteger(n) && n > 0);
   return `s${Math.max(0, ...numbers) + 1}`;
 }
 
@@ -94,7 +128,10 @@ function nextShipId(campaign: Campaign): string {
  * Anti-Hijack und Bibliothek.
  */
 export function standardSoftware(design: string): readonly ShipSoftware[] {
-  const jump = shipDesignOf(design).jump;
+  const plan = shipDesignOf(design);
+  // Small Craft haben keinen Rechner und damit keine Programme (SE 13, 2026-11-21b).
+  if (plan.computer === undefined) return [];
+  const jump = plan.jump;
   return ['maneuver', `jump-${jump}`, 'navigation', 'generate', 'anti-hijack', 'library'].map((program) => ({ program }));
 }
 
@@ -113,15 +150,20 @@ export function without<T extends object>(value: T, ...keys: (keyof T)[]): T {
   return Object.fromEntries(Object.entries(value).filter(([key]) => !keys.some((k) => key === k))) as T;
 }
 
+/** Das Namensmuster der Beiboote eines neuen Schiffs: „Beiboot 1“, „Beiboot 2“ … (2026-11-21b). */
+export const CRAFT_NAME = 'Beiboot';
+
 /**
- * Ein Schiff kommt hinzu, das bisher aktive wird ausgeblendet. `initialLoan` ist die Kreditsumme
- * beim Abschluss – ohne bleibt es schuldenfrei; mit Kredit ist die erste Rate an einem Monatsende
- * frühestens vier Wochen später fällig. Das neue Schiff liegt von heute an im Hafen.
+ * Ein Schiff kommt hinzu, das bisher aktive wird samt seinen Beibooten ausgeblendet. `initialLoan` ist
+ * die Kreditsumme beim Abschluss – ohne bleibt es schuldenfrei; mit Kredit ist die erste Rate an einem
+ * Monatsende frühestens vier Wochen später fällig. Das neue Schiff liegt von heute an im Hafen. Für
+ * jedes Beiboot seines Entwurfs kommt ein eigenes Schiff an Bord dazu, mit vollem Tank, Preis 0 (im
+ * Grundpreis enthalten) und ohne Kredit (2026-11-21b).
  */
 export function addShip(campaign: Campaign, design: string, initialLoan: number | undefined): { campaign: Campaign; ship: Ship } {
   const plan = shipDesignOf(design);
   const ship: Ship = {
-    id: nextShipId(campaign),
+    id: nextShipId(campaign.ships),
     design: plan.id,
     name: plan.name,
     fuel: plan.fuel,
@@ -132,7 +174,12 @@ export function addShip(campaign: Campaign, design: string, initialLoan: number 
     retired: false,
     software: standardSoftware(plan.id),
   };
-  return { campaign: { ...campaign, ships: [...campaign.ships.map((s) => (s.retired ? s : { ...s, retired: true })), ship] }, ship };
+  const ships: Ship[] = [...campaign.ships.map((s) => (s.retired ? s : { ...s, retired: true })), ship];
+  plan.craft.forEach((craft, i) => {
+    const boat = shipDesignOf(craft);
+    ships.push({ id: nextShipId(ships), design: boat.id, name: `${CRAFT_NAME} ${i + 1}`, fuel: boat.fuel, cargo: 0, price: 0, retired: false, software: [], mother: ship.id, aboard: true });
+  });
+  return { campaign: { ...campaign, ships }, ship };
 }
 
 /**
@@ -184,11 +231,13 @@ export function validShipInput(design: string, input: ShipInput): ShipInput {
   const name = input.name.trim();
   if (name === '') throw new DomainError('Ein Schiff braucht einen Namen.');
   const plan = shipDesignOf(design);
+  // Small Craft haben Tanks und Exzess-Tonnage mit Bruchteilen (Ship's Boat 1,8 t), Schiffe ganze Tonnen.
+  const small = plan.kind === 'smallCraft';
   for (const [value, what] of [
     [input.fuel, 'Der Treibstoff'],
     [input.cargo, 'Die Fracht'],
   ] as const) {
-    if (!Number.isInteger(value) || value < 0) throw new DomainError(`${what} ist eine Zahl ganzer Tonnen ab 0.`);
+    if (!Number.isFinite(value) || value < 0 || (!small && !Number.isInteger(value))) throw new DomainError(small ? `${what} ist eine Zahl ab 0.` : `${what} ist eine Zahl ganzer Tonnen ab 0.`);
   }
   if (input.fuel > plan.fuel) throw new DomainError(`Der Tank fasst ${plan.fuel} t.`);
   if (input.cargo > plan.cargo) throw new DomainError(`Der Laderaum fasst ${plan.cargo} t.`);

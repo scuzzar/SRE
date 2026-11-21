@@ -60,7 +60,7 @@ dabei.
 | [Crew](#crew) | SR 33 | ○ |
 | [Computer und Software](#computer-und-software) | SR 38–39 | ○ |
 | [Standardentwürfe](#standardentwürfe) | SR 35–37 | ○ |
-| [Kleine Schiffe (Small Craft)](#kleine-schiffe-small-craft) | SR 33–35 | ○ |
+| [Kleine Schiffe (Small Craft)](#kleine-schiffe-small-craft) | SR 33–35 | ◐ (die acht Entwürfe als Beiboote der Standardentwürfe, aussetzen, andocken, landen und Reise im System, 2026-11-21b; Fittings, Module, Waffen, Kauf und Charter offen) |
 | [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system) | SR 42 | ○ |
 | [Handel und Gewerbe](#handel-und-gewerbe) | SR 52 | ○ |
 | [Raumkampf](#raumkampf) | SR 39–42 | ○ |

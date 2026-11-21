@@ -3410,7 +3410,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
-- **Systemflug** (2026-11-18c) ist gebaut (`model/flight.ts`, Raumkarte in `view/space/`, Scout der
+- **Small Craft** (2026-11-21b) sind gebaut (`model/ship.ts`, `model/flight.ts`, `model/landing.ts`,
+  `model/system-journey.ts`, Entwürfe in `src/data/ships.json`). Abweichungen: `Ship.aboard` und
+  `Ship.inOrbit` stehen nur im Spielstand, wenn sie wahr sind (fehlt heißt falsch);
+  `SystemFlight.party` verweist mit der Id des Schiffs auf seine Einheit (Stände von vorher: die erste
+  Einheit). Beiboote lassen sich noch nicht umbenennen (der Stift im Reiter Schiff gilt dem aktiven
+  Schiff), und der Globus zeichnet nur das aktive Schiff, nicht ein dort gelandetes Beiboot.
+- **Systemflug** (2026-11-18c) ist gebaut (`model/flight.ts`, Raumkarte in `view/space/`, Yacht der
   Demo-Kampagne). Abweichungen: Der Schubvektor, den der Finger gerade zieht, liegt flüchtig im
   Zustand des Controllers (`OpenSpace.aim`) und wird erst beim Loslassen gesetzt; ebenso die Orte
   der letzten Raumrunde für die Wiedergabe. Das Schiff startet oberhalb der Welt, damit das
@@ -3525,9 +3531,10 @@ Diagramm mit diesen Ausnahmen:
   README (`src/data/examples.json`) und der festen Startwelt Kessra (0405, A766754-A, Scoutbasis,
   Gasriese, gemäßigt; `src/data/demo-world.json`), einer fertigen Welt, auf der die Gruppe steht
   (`location`), und Cr 5.000 in der Gruppenkasse, gebucht als Einnahme „Startkapital“, damit sich im
-  Shop gleich etwas kaufen lässt. Seit 2026-11-18c hat die Gruppe dazu einen
-  schuldenfreien Scout/Courier „Kestrel“ mit vollem Tank (40 t), Preis wie der Grundpreis, ohne
-  Kredit; er liegt ab Tag 1 im Hafen von Kessra. Das Modell sagt dazu nichts; die Welt prüft das Model wie jedes Hexfeld. Die beiden
+  Shop gleich etwas kaufen lässt. Seit 2026-11-21b hat die Gruppe dazu eine
+  schuldenfreie Yacht „Kestrel“ mit vollem Tank (50 t) und ihrem Ship's Boat „Beiboot 1“ an Bord,
+  Preis wie der Grundpreis, ohne Kredit; sie liegt ab Tag 1 im Hafen von Kessra (von 2026-11-18c bis
+  dahin ein Scout/Courier). Das Modell sagt dazu nichts; die Welt prüft das Model wie jedes Hexfeld. Die beiden
   Charaktere lassen sich löschen, solange der Log nicht auf sie verweist. Jede weitere Kampagne
   beginnt leer, wie unter *Mehrere Kampagnen*; bestehende Kampagnen bekommen nichts nachgetragen.
   Kira hat die Automatic Pistol, Jonas die Blade als Primärwaffe; in der Hand haben beide zu Beginn

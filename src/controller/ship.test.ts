@@ -67,10 +67,11 @@ describe('Reiter Schiff', () => {
     await game.whenSaved();
     expect(game.snapshot().ship!.ship?.designId).toBe('A');
     const ships = repository.saved!.ships;
-    // Vorne der Scout der Demo-Kampagne (2026-11-18c), dann die beiden gekauften.
-    expect(ships).toHaveLength(3);
+    // Vorne die Yacht der Demo-Kampagne mit ihrem Beiboot (2026-11-21b), dann die beiden gekauften.
+    expect(ships).toHaveLength(4);
     expect(ships[0]).toMatchObject({ name: 'Kestrel', retired: true });
-    expect(ships[1]).toMatchObject({ design: 'S', retired: true });
+    expect(ships[1]).toMatchObject({ design: 'boat', mother: ships[0]!.id, retired: true });
+    expect(ships[2]).toMatchObject({ design: 'S', retired: true });
   });
 
   it('Bearbeiten, Umbenennen und Treibstoff gehen durch den Reiter', async () => {

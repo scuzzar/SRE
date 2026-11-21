@@ -93,9 +93,9 @@ describe('Systemflug: Schub und Runde', () => {
     expect(lengthOf(normalThrust({ x: 0.123, y: 0 }, 2)!)).toBeCloseTo(0.1, 12);
     expect(normalThrust({ x: 0.02, y: 0 }, 2)).toBeUndefined();
     const c = startFlight(demo(), world(demo()), clock);
-    expect(maxGOf(c, c.flight!.units[0]!)).toBe(2);
+    expect(maxGOf(c, c.flight!.units[0]!)).toBe(1);
     const set = setThrust(c, 0, { x: 10, y: 0 });
-    expect(lengthOf(set.flight!.units[0]!.thrust!)).toBeCloseTo(2, 12);
+    expect(lengthOf(set.flight!.units[0]!.thrust!)).toBeCloseTo(1, 12);
     expect(setThrust(set, 0, undefined).flight!.units[0]!.thrust).toBeUndefined();
   });
 

@@ -7,7 +7,7 @@ import { itemOf, shipDesignOf } from './reference';
 import { sum, type Dice } from './rules';
 import { hexById, hexId, hexIdOfWorld, worldOf, type Hex, type World } from './sector';
 import { bookShip, fundsOf, locationOf, type Booking } from './shop';
-import { jumpFuelOf, shipOf } from './ship';
+import { craftOf, jumpFuelOf, shipOf } from './ship';
 import { portDepartureBlocker, shipDepartureBlocker, shipArrives, leaveShipBehind } from './landing';
 import { afterTime, arrive, LIFE_SUPPORT, PER_STATEROOM } from './upkeep';
 import { parkVehicles } from './trip';
@@ -183,6 +183,9 @@ export function shipJourneyBlocker(campaign: Campaign, to: string): string | und
   // Abfliegen kann das Schiff nur, wenn die Gruppe bei ihm ist (2026-11-21).
   const away = shipDepartureBlocker(campaign);
   if (away) return away;
+  // ⚑ Gesprungen wird nur mit allen Beibooten an Bord, sonst blieben sie im alten System zurück (2026-11-21b).
+  const missing = craftOf(campaign, ship.id).find((c) => !c.aboard);
+  if (missing) return `Erst ${missing.name} an Bord nehmen; ohne alle Beiboote springt ${ship.name} nicht.`;
   const distance = parsecs(hexById(campaign.hexes, hexIdOfWorld(campaign.location.world))!, target);
   if (distance > plan.jump) return `${distance} Parsec sind zu weit; ${plan.name} springt höchstens ${plan.jump}.`;
   const per = jumpFuelOf(ship.design);

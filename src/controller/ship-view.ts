@@ -16,6 +16,8 @@ import {
   type SoftwareKind,
   flightStartBlocker,
   launchWorld,
+  craftOf,
+  type Ship,
 } from '../model';
 
 /** Die Softwarearten, wie der Reiter Schiff sie schreibt (SR 38). */
@@ -40,6 +42,8 @@ export interface ShipYardRow {
   readonly maneuver: number;
   readonly crew: string;
   readonly months: number;
+  /** Die Beiboote des Entwurfs, knapp: „Ship's Boat“, „2 × Modular Cutter“; leer ohne. */
+  readonly craft: string;
   readonly price: number;
   /** Anzahlung bei Bankfinanzierung: 20 % des Preises (SR 29). */
   readonly down: number;
@@ -47,6 +51,15 @@ export interface ShipYardRow {
   readonly affordable: boolean;
   /** Den Entwurf fährt die Gruppe gerade. */
   readonly owned: boolean;
+}
+
+/** Ein Beiboot im Reiter Schiff. */
+export interface CraftRow {
+  readonly name: string;
+  /** Entwurf und Beschleunigung, knapp: „Ship's Boat · 6G“. */
+  readonly design: string;
+  /** Wo es ist: „an Bord“, „in der Umlaufbahn von …“, „auf …“. */
+  readonly where: string;
 }
 
 /** Was der Reiter Schiff zeigt: Stände des aktiven Schiffs, Deckpläne und die Werft. */
@@ -80,6 +93,8 @@ export interface ShipView {
         readonly crew: string;
         readonly months: number;
         readonly basePrice: number;
+        /** Die Beiboote (2026-11-21b): Name, Entwurf mit G und wo es ist. */
+        readonly craft: readonly CraftRow[];
         /** Der tatsächlich gezahlte Preis. */
         readonly price: number;
         /** Kreditsumme beim Abschluss; fehlt bei einem schuldenfreien Schiff. */
@@ -131,10 +146,11 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
             thruster: `Jump-${plan.jump} · ${plan.maneuver}G`,
             jump: plan.jump,
             hardpoints: plan.hardpoints,
-            computerName: computerModelOf(plan.computer).name,
+            computerName: plan.computer === undefined ? 'keiner' : computerModelOf(plan.computer).name,
             crew: plan.crew,
-            months: plan.months,
+            months: plan.months ?? 0,
             basePrice: plan.basePrice,
+            craft: craftOf(campaign, ship.id).map((c) => craftRow(campaign, c)),
             price: ship.price,
             initialLoan: ship.initialLoan,
             loanBalance: ship.loanBalance,
@@ -148,7 +164,8 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
     deckPlans: [...deckPlans].sort((a, b) => a.name.localeCompare(b.name)),
     freeDeckSlots: Math.max(0, deckSlotNames.length - deckPlans.length),
     // Die Standardentwürfe in der Reihenfolge der SR-Tabelle; bezahlbar heißt: bar oder als Anzahlung.
-    yard: ref.ships.map((plan) => {
+    // Small Craft gibt es vorerst nur mit ihrem Mutterschiff (2026-11-21b).
+    yard: ref.ships.filter((plan) => plan.kind === 'starship').map((plan) => {
       const down = Math.round(plan.basePrice * DOWN_PAYMENT);
       return {
         designId: plan.id,
@@ -158,7 +175,8 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
         jump: plan.jump,
         maneuver: plan.maneuver,
         crew: plan.crew,
-        months: plan.months,
+        months: plan.months ?? 0,
+        craft: craftLabel(plan.craft),
         price: plan.basePrice,
         down,
         affordable: funds >= down,
@@ -173,4 +191,25 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
     })(),
     flying: campaign.flight !== undefined,
   };
+}
+
+/** Die Beiboote eines Entwurfs, knapp: gleiche zusammengefasst („2 × Modular Cutter“). */
+function craftLabel(craft: readonly string[]): string {
+  const counts = new Map<string, number>();
+  for (const c of craft) counts.set(c, (counts.get(c) ?? 0) + 1);
+  return [...counts].map(([id, n]) => `${n > 1 ? `${n} × ` : ''}${shipDesignOf(id).name}`).join(', ');
+}
+
+/** Ein Beiboot mit Entwurf und Ort. */
+function craftRow(campaign: Campaign, craft: Ship): CraftRow {
+  const plan = shipDesignOf(craft.design);
+  const worldName = (id: string) => campaign.hexes.flatMap((h) => h.worlds).find((w) => w.id === id)?.name ?? id;
+  const where = craft.aboard
+    ? 'an Bord'
+    : craft.place === undefined
+      ? 'bei der Gruppe'
+      : craft.inOrbit
+        ? `in der Umlaufbahn von ${worldName(craft.place.world)}`
+        : `auf ${worldName(craft.place.world)}`;
+  return { name: craft.name, design: `${plan.name} · ${plan.maneuver}G`, where };
 }

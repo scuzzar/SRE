@@ -58,7 +58,7 @@ describe('Reise im System (2026-11-20d)', () => {
     const c = demo();
     const to = target(c);
     const after = travelInSystem(c, to.id, 'ship', clock);
-    expect(after.log.at(-1)).toMatchObject({ kind: 'systemJourney', ship: c.ships[0]!.id, hours: flightHours(systemDistance(c.hexes, c.location!.world, to.id), 2) });
+    expect(after.log.at(-1)).toMatchObject({ kind: 'systemJourney', ship: c.ships[0]!.id, hours: flightHours(systemDistance(c.hexes, c.location!.world, to.id), 1) });
     expect(after.bookings.some((b) => b.kind === 'ticket')).toBe(false);
   });
 

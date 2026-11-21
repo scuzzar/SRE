@@ -25,7 +25,7 @@ test('Nebenwelt aus dem Reiter System öffnen, benennen und mit dem eigenen Schi
   await page.getByRole('button', { name: 'Hierher reisen', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: /Reise im System: Kessra → Tertius/ });
   await dialog.getByRole('radio', { name: 'Eigenes Schiff' }).click();
-  await expect(dialog).toContainText('Kestrel mit 2 G');
+  await expect(dialog).toContainText('Kestrel mit 1 G');
   await dialog.getByRole('button', { name: 'Reisen' }).click();
   await expect(page.getByRole('dialog', { name: /Angekommen: Kessra → Tertius/ })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();

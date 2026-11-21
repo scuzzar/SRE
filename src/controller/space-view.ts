@@ -1,4 +1,7 @@
 import {
+  dockBlocker,
+  dockableCraft,
+  launchableCraft,
   flightStartBlocker,
   LANDING_KMS,
   BAND_KM,
@@ -48,6 +51,10 @@ export interface OpenSpace {
 /** Eine Einheit auf der Raumkarte, wie die View sie zeichnet. */
 export interface SpaceUnitView {
   readonly index: number;
+  /** In dieser Einheit sitzt die Gruppe (2026-11-21b); nur sie landet. */
+  readonly party: boolean;
+  /** Ein Small Craft. */
+  readonly craft: boolean;
   readonly name: string;
   readonly designName: string;
   readonly position: Vec;
@@ -112,6 +119,14 @@ export interface SpaceView {
         /** Dauer des Systemflugs, z. B. „2 h 30 min“. */
         readonly elapsed: string;
         readonly units: readonly SpaceUnitView[];
+        /** Die Stelle der Einheit der Gruppe in `units`. */
+        readonly party: number;
+        /** Beiboote an Bord der Einheit der Gruppe, die sie jetzt aussetzen kann (2026-11-21b). */
+        readonly launchable: readonly { readonly id: string; readonly name: string }[];
+        /** Small Craft, die jetzt an ihrem Mutterschiff andocken können. */
+        readonly dockable: readonly { readonly id: string; readonly name: string }[];
+        /** Sitzt die Gruppe in einem Small Craft, das noch nicht andocken kann: warum nicht. */
+        readonly dockHint: string | undefined;
         /** Die Orte der Einheiten während der letzten Raumrunde, von der Welt aus gesehen. */
         readonly run: { readonly round: number; readonly frames: readonly (readonly Vec[])[] } | undefined;
       }
@@ -210,6 +225,14 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
     elsewhere: campaign.flight && !flight ? campaign.flight.world : undefined,
     flight: flight && {
       round: flight.round,
+      party: Math.max(0, flight.units.findIndex((u) => u.ship === flight.party)),
+      launchable: launchableCraft(campaign).map((c) => ({ id: c.id, name: c.name })),
+      dockable: dockableCraft(campaign).map((c) => ({ id: c.id, name: c.name })),
+      dockHint: (() => {
+        const ship = campaign.ships.find((s) => s.id === flight.party);
+        if (ship?.mother === undefined || dockableCraft(campaign).some((c) => c.id === ship.id)) return undefined;
+        return dockBlocker(campaign, ship.id);
+      })(),
       elapsed: duration(elapsedOf(flight)),
       run: run && { round: run.round, frames: run.frames.map((frame, k) => frame.map((p) => sub(p, originAt(scene, space.world, run.t + k * run.every * STEP_SECONDS).position))) },
       units: flight.units.map((unit, index): SpaceUnitView => {
@@ -219,9 +242,13 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
         const position = sub(unit.position, origin.position);
         const velocity = sub(unit.velocity, origin.velocity);
         const r = lengthOf(position);
-        const preview = previewOf(scene, unit, thrust, t, 2, space.world, shipDesignOf(ship.design).maneuver);
+        // Nur die Einheit der Gruppe landet, mit Landeautomatik (2026-11-21b).
+        const party = unit.ship === flight.party;
+        const preview = party ? previewOf(scene, unit, thrust, t, 2, space.world, shipDesignOf(ship.design).maneuver) : previewOf(scene, unit, thrust, t, 2, space.world, undefined, false);
         return {
           index,
+          party,
+          craft: ship.mother !== undefined,
           name: ship.name,
           designName: shipDesignOf(ship.design).name,
           position,
