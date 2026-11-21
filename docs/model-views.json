@@ -512,6 +512,15 @@
         "World",
         "LogEntry"
       ]
+    },
+    {
+      "id": "2026-11-21c",
+      "file": "2026-11-21c-bewaffnung",
+      "title": "Bewaffnung in der Werft: Turrets auf den Hardpoints des eigenen Schiffs, mit Waffen bestückt; Turrets der Standardentwürfe; Schiffskosten armament",
+      "approved": false,
+      "show": [
+        "Booking"
+      ]
     }
   ]
 }

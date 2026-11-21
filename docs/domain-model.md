@@ -501,6 +501,13 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Treibstoff gibt DM +1 auf den Sprungwurf. Neu im Bild: der Logeintrag `Skimming` mit `at` und
 > `ship`, `Ship.unrefined` und `Journey.jumpDm`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-21b-gasriese-schoepfen.png`](changes/2026-11-21b-gasriese-schoepfen.png).
+>
+> **Wartet auf Freigabe** (Kennzeichen 2026-11-21c): **Bewaffnung in der Werft** (Owner, 21. November
+> 2026). Auf jedem Hardpoint des eigenen Schiffs kann ein Turret sitzen, bestückt mit bis zu drei
+> Waffen; eingebaut und ausgebaut wird in der Werft an einem Raumhafen A oder B. Neu im Bild:
+> `Turret`, `DesignTurret`, `TurretType`, `ShipWeapon`, `Ship.turrets`, `ShipDesign.turrets` und die
+> Schiffskosten `armament`. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-21c-bewaffnung.png`](changes/2026-11-21c-bewaffnung.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -839,7 +846,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Restschuld | `Ship.loanBalance` | Was von der Kreditsumme noch offen ist; fehlt, wenn das Schiff schuldenfrei ist |
 | Monatsrate | `Ship./monthlyPayment` | Ein Vierhundertachtzigstel der Kreditsumme, immer gleich hoch |
 | Nächste Rate | `Ship.nextPaymentDay` | Das Monatsende, an dem die nächste Monatsrate fällig wird; die erste frühestens vier Wochen nach dem Kauf (2026-11-17b) |
-| Schiffskosten | `Booking.shipCost`, `ShipCost` | Wofür eine Buchung der Art `ship` ist: price (voller Preis oder Anzahlung), rate (Monatsrate), fuel (Treibstoff), berthing (Liegegebühr), lifeSupport (Lebenserhaltung) (2026-11-17b) |
+| Schiffskosten | `Booking.shipCost`, `ShipCost` | Wofür eine Buchung der Art `ship` ist: price (voller Preis oder Anzahlung), rate (Monatsrate), fuel (Treibstoff), berthing (Liegegebühr), lifeSupport (Lebenserhaltung) (2026-11-17b), armament (Bewaffnung, 2026-11-21c) |
+| Turret | `Turret`, `Ship.turrets` | Ein Waffenturm auf einem Hardpoint des eigenen Schiffs, mit seinen Waffen; höchstens so viele, wie der Entwurf Hardpoints hat (2026-11-21c) |
+| Turmart | `TurretType` | Referenzdaten: Single, Double oder Triple Turret mit 1, 2 oder 3 Plätzen für Waffen und Preis (SE 10, 2026-11-21c) |
+| Schiffswaffe | `ShipWeapon` | Referenzdaten: Pulse Laser, Beam Laser, Missile Rack, Sandcaster mit Preis (SE 10, 2026-11-21c) |
+| Turret des Entwurfs | `DesignTurret`, `ShipDesign.turrets` | Referenzdaten: womit ein Standardentwurf aus der Werft kommt, etwa der leere Doppelturm des Scout (SR 35–37, 2026-11-21c) |
+| Bewaffnung | `Ship.turrets` | Alle Turrets eines Schiffs mit ihren Waffen; umgerüstet in der Werft (2026-11-21c) |
 | Laufende Kosten | `ShipCost` ohne price | Was ein Schiff kostet, solange man es hat: Rate, Treibstoff, Liegegebühren, Lebenserhaltung; später die Heuer der Crew |
 | Monatsabrechnung | `MonthEnd` | Der Logeintrag am Monatsende: verweist auf die Buchungen mit laufenden Kosten seit dem letzten Monatsende (`costs`), mit Summe (`/total`) und Nummer des abgerechneten Monats (`/month`, 1–13) |
 | Liegegebühr | `ShipCost.berthing` | Cr100 für die ersten sechs Tage in einem Raumhafen, danach Cr100 je weiteren Tag (SR 31) |
@@ -3066,6 +3078,36 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (die Kampagnendatei würde um Megabytes größer). Am `Ship` wird nichts davon gespeichert: der
     Reiter Schiff zeigt die Pläne seines Entwurfs. Löschen braucht eine Rückfrage, denn der Plan
     verschwindet aus allen Kampagnen und mit dem Abgleich von allen Geräten.
+  - **Bewaffnung** (wartet auf Freigabe, Kennzeichen 2026-11-21c; Owner, 21. November 2026). Nach
+    SE 10 und SR 32: ein Hardpoint je 100 t Rumpf, jeder trägt ein Turret, ein Single, Double oder
+    Triple Turret fasst 1, 2 oder 3 Waffen.
+    - *Was gespeichert ist*: Das Schiff hält seine Turrets in der Reihenfolge der Hardpoints
+      (`Ship.turrets`, höchstens `ShipDesign.hardpoints`), jedes mit Turmart (`type`) und Waffen
+      (`weapons`, höchstens `TurretType.slots`). Die Hardpoints selbst stecken schon im Grundpreis
+      des Entwurfs (Cr100.000 je Hardpoint, SR 32); zusätzliche lassen sich nicht nachrüsten.
+      ⚑ Die Tonne Feuerleitung je Turret ist im Entwurf schon eingeplant; der Laderaum ändert sich
+      durch Turrets nicht.
+    - *Turmarten und Waffen* sind Referenzdaten mit den Preisen aus SE 10: Single Turret Cr200.000,
+      Double Cr500.000, Triple Cr1.000.000; Pulse Laser Cr500.000, Beam Laser Cr1.000.000, Missile
+      Rack Cr750.000, Sandcaster Cr250.000 (in `src/data/ships.json`).
+    - *Ab Werft*: Ein neues Schiff (Kauf, Bank oder Abmusterung) bekommt die Turrets seines
+      Entwurfs (`ShipDesign.turrets`, SR 35–37): Scout/Courier und Safari Ship je einen leeren
+      Double Turret, Mercenary Cruiser acht leere Triple Turrets, Patrol Cruiser zwei Triple Turrets
+      mit je zwei Beam Lasern und einem Missile Rack (⚑ SR 37 sagt nur „Laser“), alle übrigen
+      keine. Sie stecken im Grundpreis.
+    - *Umrüsten in der Werft* (nur das eigene Schiff, `Campaign./ship`): Auf einem freien Hardpoint
+      ein Turret einbauen, einen freien Platz mit einer Waffe bestücken oder ein Turret durch eine
+      andere Turmart ersetzen (seine Waffen ziehen mit um, soweit Plätze da sind; die übrigen sind
+      ausgebaut). Jeder Einbau bucht den Preis aus der Kasse (Buchung der Art `ship` mit
+      `shipCost` armament, `forShip` auf das Schiff und einem Text wie „Beam Laser in Turret 1“);
+      reicht die Kasse nicht, geht er nicht. Kein Kredit.
+    - *Ausbauen* (Owner): eine Waffe oder ein Turret samt seiner Waffen; Geld gibt es dafür nicht
+      zurück, und es wird nichts gebucht.
+    - *Wo* (Owner): nur, wenn das Schiff in einer Stadt mit Raumhafen A oder B steht (SR 29: nur
+      dort gibt es Werften) und die Gruppe bei ihm ist, nicht während eines Systemflugs. Sonst ist
+      Umrüsten ausgegraut, mit Grund. Ansehen kann man die Bewaffnung überall.
+    - *Später*: Raketen und Sand als Vorrat (Stufe 3 des Raumkampfs), Gunner je bestücktem Turret
+      (mit den Schiffspositionen), Feuern (Stufe 2).
   - **Offene Fragen für einen späteren Schritt:**
     - Wie die Gruppe mit dem eigenen Schiff zwischen Sternen springt (ergänzt die gekaufte
       Passage, ersetzt sie nicht, siehe Owner-Entscheidung vom 16. November 2026) – das braucht
