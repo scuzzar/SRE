@@ -59,6 +59,8 @@ test('Shop: Einkaufen an Kessra öffnet den Shop; die Kasse im Reiter Charaktere
 });
 
 test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, verkaufen und die Waffe in die Hand nehmen', async ({ page }) => {
+  // Ein langer Ablauf: Globus bauen, landen, kaufen, verkaufen, ausrüsten.
+  test.setTimeout(60_000);
   await page.goto('/');
   // Die Demo-Kampagne bringt ein Startkapital mit; eingezahlt wird in der Kasse im Reiter Charaktere,
   // vorgewählt vom Charakter oben.
@@ -135,7 +137,8 @@ test('Shop: „Gruppe platzieren“ auf der Weltkarte bringt die Gruppe auf eine
   // Wie „Gruppe setzen“ am Hexfeld des Globus: Ist die Gruppe hier, ist der Knopf ausgegraut, das Blatt sagt es.
   await expect(page.getByRole('button', { name: 'Gruppe platzieren' })).toBeDisabled();
   await expect(world).toContainText('Die Gruppe ist hier');
-  await world.getByRole('button', { name: 'Schließen' }).click();
+  // Nach der Landung steht der Globus von Regina offen (mit der Landeanimation); Schließen führt zum Subsektor.
+  await page.getByRole('region', { name: 'Globus · Regina' }).getByRole('button', { name: 'Schließen', exact: true }).click();
   await page.getByRole('button', { name: /^Welten \d+/ }).click();
   await expect(page.locator('.world-list-here')).toBeVisible();
   await page.getByRole('button', { name: /^Welten \d+/ }).click();

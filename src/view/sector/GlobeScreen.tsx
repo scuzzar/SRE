@@ -9,6 +9,7 @@ import { hideLoading, showLoading } from '../loading';
 import { cellAt, radiusOf, renderGlobe, screenOf, screenOfPoint, type Camera, type Viewport } from './globe-render';
 import { HappenedList } from './HappenedList';
 import { trayTop } from '../Tray';
+import { Touchdown, TOUCHDOWN_MS } from './Touchdown';
 
 const DEG = Math.PI / 180;
 const LOADING = 'Welt wird aufgebaut …';
@@ -26,6 +27,9 @@ function maxZoom(globe: GlobeView): number {
 }
 
 type Panel = 'places' | 'logs' | undefined;
+
+/** Die zuletzt gespielte Landung (`GlobeView.touchdown`): Öffnet man den Globus später wieder, spielt sie nicht noch einmal. */
+let playedTouchdown = 0;
 
 /**
  * Der Globus einer Welt wie eine Karten-App, die Grundkarte unter allem: Die Karte füllt ihre Fläche
@@ -69,6 +73,9 @@ export function GlobeScreen({
   const [showGrid, setShowGrid] = useState(false);
   const [panel, setPanel] = useState<Panel>(undefined);
   const [confirmReroll, setConfirmReroll] = useState(false);
+  // Die Landeanimation am Bildschirmpunkt des Landeplatzes (siehe unten).
+  const [touch, setTouch] = useState<{ x: number; y: number; label: string } | undefined>(undefined);
+  const touchTimer = useRef(0);
 
   // Die Karte füllt den Platz.
   useLayoutEffect(() => {
@@ -142,13 +149,13 @@ export function GlobeScreen({
       renderGlobe(img, globe, camera, showGrid);
       ctx.putImageData(img, 0, 0);
     }
-    drawMarkers(ctx, globe, camera, { width: w, height: h }, scale, !gl);
+    drawMarkers(ctx, globe, camera, { width: w, height: h }, scale, !gl, touch !== undefined);
     if (firstFrame.current) {
       firstFrame.current = false;
       gl?.finish();
       requestAnimationFrame(() => hideLoading('globe'));
     }
-  }, [globe, camera, view, moving, showGrid, glEpoch]);
+  }, [globe, camera, view, moving, showGrid, glEpoch, touch]);
 
   // Drehen, Zoomen, Antippen.
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -212,6 +219,11 @@ export function GlobeScreen({
     gesture.current = { moved: 99, pinch: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), zoom: camera.zoom };
   };
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    // Wer die Karte anfasst, beendet die Landeanimation (sie stünde sonst am falschen Fleck).
+    if (touch) {
+      window.clearTimeout(touchTimer.current);
+      setTouch(undefined);
+    }
     e.currentTarget.setPointerCapture(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     gesture.current = { moved: 0 };
@@ -416,6 +428,69 @@ export function GlobeScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focus?.n, focus?.cell]);
 
+  // Die Landeanimation (2026-11-21): Nach einer Landung fliegt die Karte zum Landeplatz und zoomt
+  // hinein, so dass er über dem Blatt steht; dann sinkt das Schiff dort herab. Ohne Bewegung (reduzierte
+  // Bewegung) springt die Karte nur hin.
+  useEffect(() => {
+    const n = globe.touchdown;
+    const cell = globe.partyCell;
+    if (n <= playedTouchdown || cell === undefined) return;
+    const city = globe.cities.find((c) => c.cell === cell);
+    const label = city ? `Gelandet in ${city.label}` : `Gelandet auf ${globe.name}`;
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    let cancelled = false;
+    const begin = () => {
+      if (cancelled) return;
+      // Erst wenn die Kugel gebaut ist (der Ladebalken ist weg).
+      if (renderer.current === undefined || building.current) {
+        touchTimer.current = window.setTimeout(begin, 120);
+        return;
+      }
+      const el = stage.current;
+      if (!el) return;
+      playedTouchdown = n;
+      const { camera: from, view: size } = seen.current;
+      const r = el.getBoundingClientRect();
+      const bottom = Math.min(r.bottom, trayTop(el));
+      const zoom = Math.max(from.zoom, clampZoom(3.2));
+      const target = Math.max(80, (bottom - r.top) * 0.55);
+      const R = radiusOf(size, { ...from, zoom });
+      const shift = Math.asin(Math.max(-0.9, Math.min(0.9, (size.height / 2 - target) / R)));
+      const to: Camera = { lat: globe.grid.lat[cell]! * DEG - shift, lon: from.lon + shortest(globe.grid.lon[cell]! * DEG - from.lon), zoom };
+      if (reduced) {
+        setCamera(to);
+        return;
+      }
+      const land = () => {
+        const at = screenOf(globe, to, size, cell);
+        if (!at || cancelled) return;
+        setTouch({ x: at.x, y: at.y, label });
+        touchTimer.current = window.setTimeout(() => setTouch(undefined), TOUCHDOWN_MS);
+      };
+      cancelAnimationFrame(flyFrame.current);
+      const start = performance.now();
+      setMoving(true);
+      const glide = (now: number) => {
+        const t = Math.min(1, (now - start) / 900);
+        const e = t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
+        setCamera({ lat: from.lat + (to.lat - from.lat) * e, lon: from.lon + (to.lon - from.lon) * e, zoom: from.zoom + (to.zoom - from.zoom) * e });
+        if (t < 1) flyFrame.current = requestAnimationFrame(glide);
+        else {
+          setMoving(false);
+          land();
+        }
+      };
+      flyFrame.current = requestAnimationFrame(glide);
+    };
+    touchTimer.current = window.setTimeout(begin, 320);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(touchTimer.current);
+    };
+    // Nur eine neue Landung zählt.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [globe.touchdown]);
+
   /** Dreht die Karte zu einem Feld, zoomt etwas hinein und tippt es an. */
   const flyTo = (cell: number) => {
     setCamera((c) => ({ lat: globe.grid.lat[cell]! * DEG, lon: globe.grid.lon[cell]! * DEG, zoom: Math.max(c.zoom, clampZoom(3)) }));
@@ -441,6 +516,7 @@ export function GlobeScreen({
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
         />
+        {touch && <Touchdown x={touch.x} y={touch.y} label={touch.label} />}
       </div>
 
       <div className="globe-top">
@@ -698,7 +774,7 @@ export function FieldCard({
  * Zeichen auf dem Globus: Kleinstädte außerhalb des besiedelten Gebiets, Städte, Vulkane, Ereignisse, NSC, die Gruppe, das angetippte
  * Feld als Ring (nur ohne WebGL). Flüsse und Straßen zeichnet die Grafikkarte (globe-gl.ts), ohne WebGL stehen sie in der Textur.
  */
-function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Camera, view: Viewport, scale: number, ring: boolean): void {
+function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Camera, view: Viewport, scale: number, ring: boolean, landing = false): void {
   const at = (cell: number) => screenOf(globe, camera, view, cell);
   // Kleinstädte außerhalb des besiedelten Gebiets: ein kleines helles Haus, sobald man etwas
   // hineinzoomt. Im besiedelten Gebiet zeigt schon die Farbe, dass dort Menschen leben.
@@ -833,7 +909,8 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
   for (const [cell, count] of npcCells) badge(cell, -8, -8, 'rgba(190,150,255,0.95)', count > 1 ? String(count) : 'N');
   if (globe.partyCell !== undefined) badge(globe.partyCell, 0, 10, 'rgba(110,200,255,1)', 'G');
   // Das Schiff der Gruppe, wo es steht (2026-11-21).
-  if (globe.shipCell !== undefined) badge(globe.shipCell, 10, 0, 'rgba(255,235,120,1)', 'S');
+  // Während der Landeanimation steht dort das landende Schiff statt des Zeichens.
+  if (globe.shipCell !== undefined && !landing) badge(globe.shipCell, 10, 0, 'rgba(255,235,120,1)', 'S');
   // Offene Missionen: eine rote Fahne am Feld (2026-11-18).
   for (const cell of globe.missionCells) {
     const p = at(cell);

@@ -110,6 +110,8 @@ export interface GlobeView {
   readonly shipCell: number | undefined;
   /** Der Landeplatz wird gerade gewählt: ein Feld antippen und „Hier landen“. */
   readonly landing: boolean;
+  /** Zählt die Landungen; ein neuer Wert heißt: Die Gruppe ist gerade auf `partyCell` gelandet (Landeanimation). */
+  readonly touchdown: number;
   /** Die dauerhaften NSC dieser Welt (lebend). */
   readonly npcs: readonly GlobeNpc[];
   /** Felder mit Logeinträgen: wie viele, ein Name für die Liste und der neueste Eintrag; das jüngste Feld zuerst. */
@@ -162,7 +164,7 @@ export function position(grid: SurfaceGrid, cell: number): string {
 }
 
 /** Der Globus der Welt `worldId` (Hauptwelt oder Nebenwelt, 2026-11-20d); `undefined`, solange sie keine Oberflächenkarte hat. */
-export function globeView(campaign: Campaign, worldId: string, picked: number | undefined, plan?: Trip, trace = false, landing = false): GlobeView | undefined {
+export function globeView(campaign: Campaign, worldId: string, picked: number | undefined, plan?: Trip, trace = false, landing = false, touchdown = 0): GlobeView | undefined {
   const hexes = campaign.hexes;
   const hex = hexById(hexes, hexIdOfWorld(worldId));
   const found = worldById(hexes, worldId);
@@ -228,6 +230,7 @@ export function globeView(campaign: Campaign, worldId: string, picked: number | 
       return place?.world === worldId ? placeCell(hexes, place) : undefined;
     })(),
     landing,
+    touchdown,
     npcs,
     events: [...counts.entries()].map(([cell, { count, latest }]) => ({ cell, count, latest, label: cellName(cell) })).sort((a, b) => b.latest - a.latest),
     rerollBlocker: mapLocked(campaign, worldId) ? 'Gruppe, NSC, Logeinträge oder Missionen stehen auf dieser Karte; neu würfeln geht nicht mehr.' : undefined,

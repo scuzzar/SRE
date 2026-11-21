@@ -1580,6 +1580,8 @@ export interface ControllerState {
   /** Der Globus der offenen Welt ist die Grundkarte (sonst der Subsektor), mit dem angetippten Oberflächenfeld. */
   /** Der Landeplatz wird auf dem Globus angetippt (2026-11-21). */
   readonly landingPick?: boolean | undefined;
+  /** Zählt jede Landung (2026-11-21); die View spielt bei einem neuen Wert die Landeanimation. */
+  readonly touchdown?: number | undefined;
   /** Der offene Globus: das angetippte Feld oder (`card`) die Weltkarte im Blatt statt eines Feldes (Owner, 21. November 2026). */
   readonly globe: { readonly picked: number | undefined; readonly card?: boolean } | undefined;
   /** Die offene Raumkarte (2026-11-18c). */
@@ -2865,7 +2867,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     worlds: worldList(campaign.hexes),
     world: state.world && worldView(campaign.hexes, state.world.column, state.world.row, state.world.rolls, state.worldError, happenedAt(campaign, openWorldId(state.world)), state.world.id),
     worldCard: state.world !== undefined && state.globe?.card === true,
-    globe: state.world && state.globe ? globeView(campaign, openWorldId(state.world), state.globe.picked, state.tripPlan?.options[state.tripPlan.chosen], state.trace, state.landingPick === true) : undefined,
+    globe: state.world && state.globe ? globeView(campaign, openWorldId(state.world), state.globe.picked, state.tripPlan?.options[state.tripPlan.chosen], state.trace, state.landingPick === true, state.touchdown ?? 0) : undefined,
     landing: landingView(campaign, state.landingPick === true),
     space: state.space && spaceView(campaign, state.space),
     globeFocus: state.world && state.globe ? state.globeFocus : undefined,

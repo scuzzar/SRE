@@ -2490,6 +2490,19 @@ export class GameController {
   /** Landet in einer Stadt mit Hafen (aus dem Dialog Landeplatz). */
   landAtPort(city: number): void {
     this.change(landAt(this.campaign, { city }, this.deps.clock), { landingPick: undefined, notice: undefined });
+    this.showTouchdown();
+  }
+
+  /** Nach der Landung: der Globus der Welt mit der Weltkarte unten, und die Landeanimation spielt (`touchdown` zählt hoch). */
+  private showTouchdown(): void {
+    const at = this.campaign.location?.world;
+    if (at === undefined) return;
+    const hex = hexById(this.campaign.hexes, hexIdOfWorld(at));
+    if (!hex) return;
+    const open = this.state.world !== undefined && this.state.globe !== undefined && openWorldId(this.state.world) === at;
+    if (!open) this.openGlobeAt(hex.column, hex.row, at);
+    if (!this.state.globe) return;
+    this.update({ globe: { picked: undefined, card: true }, touchdown: (this.state.touchdown ?? 0) + 1 });
   }
 
   /** „Anderer Ort“: Der Globus der Welt geht auf; dort tippt man ein Feld an und landet mit „Hier landen“. */
@@ -2508,6 +2521,7 @@ export class GameController {
     if (cell === undefined) return;
     try {
       this.change(landAt(this.campaign, { cell }, this.deps.clock), { landingPick: undefined, globe: { picked: undefined, card: true } });
+      this.showTouchdown();
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ worldError: error.message });

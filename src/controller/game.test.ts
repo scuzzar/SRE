@@ -2302,6 +2302,9 @@ describe('Nebenwelten und Reise im System (2026-11-20d)', () => {
     game.landHere();
     expect(game.snapshot().landing).toBeUndefined();
     expect(game.snapshot().globe?.shipCell).toBe(cell);
+    // Die Landeanimation spielt einmal je Landung; die Weltkarte steht unten.
+    expect(game.snapshot().globe).toMatchObject({ touchdown: 1, partyCell: cell });
+    expect(game.snapshot().worldCard).toBe(true);
   });
 
   it('„Raum“ öffnet die Raumkarte um die Welt der offenen Weltkarte, auch um eine Nebenwelt (Owner, 21. November 2026)', async () => {
