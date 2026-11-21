@@ -2276,5 +2276,23 @@ describe('Nebenwelten und Reise im System (2026-11-20d)', () => {
     expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'systemJourney', to: 'Tertius' });
     game.closeSystemJourney();
     expect(game.snapshot().systemJourney).toBeUndefined();
+    // Im Subsektor kommt im System der Gruppe zuerst ihre Welt (Owner, 21. November 2026), auch doppelt angetippt.
+    game.chooseHex(4, 5);
+    expect(game.snapshot().world?.id).toBe(body.id);
+    game.closeWorld();
+    game.openGlobeAt(4, 5);
+    expect(game.snapshot().globe?.id).toBe(body.id);
+  });
+
+  it('bei jeder Ankunft entstehen Oberfläche und Globus der Welt, auch ohne Reise', async () => {
+    const { game } = await started();
+    game.openGlobeAt(4, 5);
+    const body = game.snapshot().world!.system!.orbits.flatMap((o) => [o.body, ...o.moons]).find((b) => b.openable && !b.main && b.code !== undefined && !b.code.includes('S') && b.label.startsWith('Welt'))!;
+    game.openWorld(body.id!);
+    expect(game.snapshot().world).toMatchObject({ hasMap: false, surface: undefined });
+    game.stayHere();
+    expect(game.snapshot().location).toBe(body.id);
+    expect(game.snapshot().world).toMatchObject({ hasMap: true });
+    expect(game.snapshot().world?.surface).toBeDefined();
   });
 });

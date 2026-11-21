@@ -38,8 +38,11 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     // Danach kommt das Sternsystem mit eigenem Knopf; die Übersicht zeigt Sterne und Bahnen.
     await expect(page.locator('.generation-prompt')).toContainText('Sternsystem nach Book 6');
     await page.getByRole('button', { name: 'Sternsystem würfeln' }).click();
+    // Das System steht im eigenen Reiter der Weltkarte (Owner, 21. November 2026).
+    await dialog.getByRole('tab', { name: 'System' }).click();
     await expect(dialog.getByRole('region', { name: 'Sternsystem' })).toContainText('Hauptstern');
     await expect(dialog.getByRole('region', { name: 'Sternsystem' })).toContainText('(Hauptwelt)');
+    await dialog.getByRole('tab', { name: 'Welt' }).click();
     await expect(dialog.getByRole('region', { name: 'Würfe' })).toHaveCount(0);
     // Das Weltsymbol steht auf der Karte, nicht im Blatt.
     await expect(dialog.getByRole('img', { name: /^Weltsymbol von / })).toHaveCount(0);

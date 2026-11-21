@@ -2578,7 +2578,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     nur ganz („Neu würfeln“). Von Hand ändern lässt sie sich nicht. Größe 0 hat keine.
     Geändert 2026-11-20d (Owner): Sie entsteht nur auf ausdrücklichen Knopfdruck, „Globus erzeugen“
     auf der Weltkarte; „Öffnen“ gibt es erst danach. Das gilt für jede Welt, Hauptwelt wie
-    Nebenwelt.
+    Nebenwelt. Ergänzt am 21. November 2026 (Owner): Kommt die Gruppe auf einer Welt an (Reise im
+    System, Sprung, „Gruppe platzieren“, Wahl im Reiter Begegnung), entstehen dabei ihre Oberfläche
+    und ihr Globus, falls sie fehlen; „Globus erzeugen“ bleibt für alle anderen Welten. Eine
+    Hauptwelt ohne Temperatur bekommt so keine Oberfläche (die Temperatur würfelt man von Hand).
   - Das Raster folgt aus der Größe und wird nicht gespeichert: ein Ikosaeder, jede Kante in
     n = 4 × Größe Abschnitte geteilt, jeder Eckpunkt ein Oberflächenfeld (`/cells` = 10 × n² + 2).
     Die Felder (`cells`) stehen in einer festen Reihenfolge, jedes hat eine Nummer ab 0.
@@ -3175,6 +3178,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Gasriesen. ⚑ Auf der Oberflächenkarte einer Nebenwelt bekommt die erste Hauptstadt den
     Spaceport als Hafen (Y: keinen), die übrigen Städte wie bei Starport X. Die Übersicht zeigt mit
     einem kleinen Punkt am Namen, welche Welt einen Globus hat.
+    Geändert am 21. November 2026 (Owner, „wo die Party ist, sollte die UI beeinflussen“): Ein Feld
+    der Sektorkarte öffnet, einfach oder doppelt angetippt, im System der Gruppe zuerst die Welt, auf
+    der sie ist (doppelt: ihren Globus); der Knopf ⌖ ebenso. Die Übersicht des Systems ist ein
+    eigener Reiter der Weltkarte („Welt“ | „System“), nicht ein Abschnitt unter den Werten.
   - **Nebenwelten** (freigegeben am 20. November 2026, Kennzeichen 2026-11-20c). Nach B6 38–39 mit den Tabellen
     S. 29, übertragen in [`regeln-sternsystem.md`](regeln-sternsystem.md) (*Nebenwelten*). Für jede
     Welt außer der Hauptwelt, Gasriesen und Ringen, im selben Zug wie das übrige System, nach den

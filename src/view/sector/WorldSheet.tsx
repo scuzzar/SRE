@@ -109,12 +109,13 @@ export function useWorldDock(
           </button>
         </span>
       </div>
-      {!view.empty && <WorldCard world={view} plain here={here} />}
-      {view.surface && <SurfaceSection lines={view.surface} />}
-      {view.system && <SystemSection system={view.system} />}
-      {world.subordinate && <RenameSection key={world.id} name={world.name} />}
-      {world.canNote && <NoteSection key={`note-${world.id}`} note={world.note} />}
-      {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
+      <WorldTabs key={world.id} system={view.system}>
+        {!view.empty && <WorldCard world={view} plain here={here} />}
+        {view.surface && <SurfaceSection lines={view.surface} />}
+        {world.subordinate && <RenameSection key={world.id} name={world.name} />}
+        {world.canNote && <NoteSection key={`note-${world.id}`} note={world.note} />}
+        {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
+      </WorldTabs>
     </section>
   );
 
@@ -436,6 +437,29 @@ export function WorldActions({ world, here, travel, onGlobe = false }: { world: 
  * Die Notiz zur Welt: freier Text, den man jederzeit ändert. Was getippt wird, ist reine Darstellung;
  * gespeichert wird beim Verlassen des Feldes, also auch, wenn man die Weltkarte schließt.
  */
+/**
+ * Welt und System als Reiter der Weltkarte (Owner, 21. November 2026): „Welt“ zeigt Werte,
+ * Oberfläche, Name, Notiz und Verlauf, „System“ die Übersicht des Sternsystems. Ohne System nur die
+ * Welt. Eine andere Welt beginnt wieder bei „Welt“ (der Aufrufer gibt die Welt als `key`).
+ */
+export function WorldTabs({ system, children }: { system: SystemView | undefined; children: ReactNode }) {
+  const [tab, setTab] = useState<'world' | 'system'>('world');
+  if (!system) return <>{children}</>;
+  return (
+    <>
+      <div className="segmented two world-tabs" role="tablist" aria-label="Weltkarte">
+        <button type="button" role="tab" aria-selected={tab === 'world'} onClick={() => setTab('world')}>
+          Welt
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'system'} onClick={() => setTab('system')}>
+          System
+        </button>
+      </div>
+      {tab === 'world' ? children : <SystemSection system={system} />}
+    </>
+  );
+}
+
 /** Der Name einer Nebenwelt (2026-11-20d): jederzeit änderbar, leer nimmt ihn weg. */
 export function RenameSection({ name }: { name: string | undefined }) {
   const game = useGame();

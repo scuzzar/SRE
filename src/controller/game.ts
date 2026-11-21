@@ -220,6 +220,7 @@ import {
   systemJourneyBlocker,
   type SystemJourneyMode,
   hexById,
+  readyForParty,
 } from '../model';
 import {
   attackRounds,
@@ -2324,7 +2325,9 @@ export class GameController {
     // Wird für die Erschaffung gewählt, ist eine fertige Welt die Wahl.
     if (this.state.picking && isWorld(hex)) return this.chooseGenerationWorld(hexId(column, row));
     const world = hex !== undefined && !hex.empty;
-    if (world) return this.update({ world: { column, row, rolls: [] }, worldError: undefined, selected: undefined });
+    // Ist die Gruppe in diesem System, kommt zuerst ihre Welt (Owner, 21. November 2026).
+    const party = this.partyWorldIn(column, row);
+    if (world) return this.update({ world: { column, row, rolls: [], ...(party ? { id: party } : {}) }, worldError: undefined, selected: undefined });
     const same = this.state.selected?.column === column && this.state.selected.row === row;
     this.update({ selected: same ? undefined : { column, row }, world: undefined, worldError: undefined });
   }
@@ -2380,9 +2383,17 @@ export class GameController {
   openGlobeAt(column: number, row: number, id?: string): void {
     const hex = hexAt(this.campaign.hexes, column, row);
     if (!isWorld(hex)) throw new DomainError('Dort ist keine fertige Welt.');
-    const sub = id !== undefined && id !== hex.main ? id : undefined;
+    const chosen = id ?? this.partyWorldIn(column, row);
+    const sub = chosen !== undefined && chosen !== hex.main ? chosen : undefined;
     this.update({ world: { column, row, rolls: [], ...(sub ? { id: sub } : {}) }, worldError: undefined, selected: undefined, globe: undefined, globeFocus: undefined });
     if (worldById(this.campaign.hexes, sub ?? hex.main!)?.map) this.update({ globe: { picked: undefined } });
+  }
+
+  /** Die Nebenwelt dieses Feldes, auf der die Gruppe ist; die Hauptwelt oder ein anderes System heißt: keine. */
+  private partyWorldIn(column: number, row: number): string | undefined {
+    const at = this.state.campaign?.location?.world;
+    if (at === undefined || hexIdOfWorld(at) !== hexId(column, row)) return undefined;
+    return at === hexAt(this.campaign.hexes, column, row)?.main ? undefined : at;
   }
 
   /** Öffnet die Weltkarte einer Welt des Systems (ein Tipp in der Übersicht, 2026-11-20d); die Hauptwelt wie bisher. */
@@ -2785,6 +2796,9 @@ export class GameController {
   /** Ändert die offene Kampagne und speichert sie. Steht danach ein anderer Charakter oben, enden Probe und Angriff. */
   private change(campaign: Campaign, rest: Partial<ControllerState> = {}): void {
     if (this.state.campaign && focusOf(this.state.campaign)?.id !== focusOf(campaign)?.id) rest = { ...rest, task: undefined, attack: undefined };
+    // Kommt die Gruppe auf einer anderen Welt an, bekommt diese Oberfläche und Globus, falls sie fehlen (Owner, 21. November 2026).
+    const arrived = campaign.location?.world;
+    if (arrived !== undefined && arrived !== this.state.campaign?.location?.world) campaign = { ...campaign, hexes: readyForParty(campaign.hexes, arrived, this.deps.random) };
     // Jede Änderung am gespeicherten Stand setzt die Änderungszeit; daran merkt der Abgleich, dass hier etwas neu ist.
     campaign = touched(stampPlaces(this.state.campaign?.log, stampDays(this.state.campaign?.log, campaign)), this.deps.clock);
     const campaigns = this.state.campaigns.map((c) => (c.id === campaign.id ? campaign : c));

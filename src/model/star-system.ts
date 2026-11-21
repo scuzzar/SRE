@@ -2,7 +2,7 @@ import { DomainError } from './errors';
 import type { Random } from './ports';
 import { ref } from './reference';
 import { checkSurfaceMap } from './surface-map';
-import { baseKinds, facilities, hexId, mainOf, mainWorld, mapPossible, rollSurface, spaceports, tradeCodesOf, validateSurface, withWorld, type BaseKind, type Facility, type Hex, type Spaceport, type Star, type StarSystem, type TemperatureId, type World } from './sector';
+import { baseKinds, cityNamesTaken, enterSurface, facilities, hexById, hexId, hexIdOfWorld, mainOf, mainWorld, mapPossible, nextWorldAction, putHex, rollSurface, withSurfaceMapOf, worldById, spaceports, tradeCodesOf, validateSurface, withWorld, type BaseKind, type Facility, type Hex, type Spaceport, type Star, type StarSystem, type TemperatureId, type World } from './sector';
 
 // Das Sternsystem nach Book 6 *Scouts* (Domänenmodell 2026-11-18d, 2026-11-20, 2026-11-20b): Sterne,
 // Bahnen und Zonen um den Hauptstern, Gasriesen, Planetoidengürtel, leere und eingefangene Bahnen,
@@ -533,6 +533,25 @@ export function rollWorldSurface(hexes: readonly Hex[], id: string, random: Rand
     const temperature = temperatureOfWorld(hex, world);
     return { ...world, temperature, surface: rollSurface({ uwp: world.uwp, temperature }, random) };
   });
+}
+
+/**
+ * Die Welt, auf der die Gruppe ankommt, bekommt Oberfläche und Globus, falls sie fehlen (Owner,
+ * 21. November 2026): bei jeder Ankunft, mit Reise oder ohne. Welten ohne mögliche Oberfläche (Größe
+ * 0, kleine Welten, Ringe, Gasriesen) bleiben, wie sie sind; eine Hauptwelt ohne Temperatur auch.
+ */
+export function readyForParty(hexes: readonly Hex[], id: string, random: Random): readonly Hex[] {
+  const hex = hexById(hexes, hexIdOfWorld(id));
+  const world = worldById(hexes, id);
+  if (!hex || !world) return hexes;
+  let next = hexes;
+  if (world.id === hex.main) {
+    if (nextWorldAction(hex) === 'surface') next = putHex(next, enterSurface(hex, random));
+  } else if (surfaceDue(hex, world)) next = rollWorldSurface(next, id, random);
+  const after = hexById(next, hexIdOfWorld(id))!;
+  const ready = worldById(next, id)!;
+  if (ready.map === undefined && mapPossible(after, ready)) next = withSurfaceMapOf(next, id, random, cityNamesTaken(next));
+  return next;
 }
 
 /** Eine Zufallsquelle aus einem Text (FNV-1a, dann mulberry32): derselbe Text gibt dieselben Würfe. */

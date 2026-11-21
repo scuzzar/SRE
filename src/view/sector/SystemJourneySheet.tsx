@@ -43,7 +43,7 @@ export function SystemJourneySheet({ journey }: { journey: SystemJourneyView }) 
         ) : (
           <>
             <p className="journey-facts">{journey.distance} · beschleunigen bis zur Mitte, dann abbremsen (T = 2·√(D/A))</p>
-            <div className="segmented" role="radiogroup" aria-label="Art zu reisen">
+            <div className="segmented two" role="radiogroup" aria-label="Art zu reisen">
               {journey.options.map((o) => (
                 <button key={o.mode} type="button" role="radio" aria-checked={journey.mode === o.mode} disabled={o.blocker !== undefined} title={o.blocker} onClick={() => game.chooseSystemJourneyMode(o.mode)}>
                   {o.mode === 'ticket' ? 'Ticket' : 'Eigenes Schiff'}
