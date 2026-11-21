@@ -509,10 +509,9 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Schiffskosten `armament`. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-21c-bewaffnung.png`](changes/2026-11-21c-bewaffnung.png).
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-21d): **Raumkampf, Stufe 2: Gegner und Laser**
-> (Owner, 21. November 2026: „Bau mal bis einschließlich Stufe 2, ich schau mir das dann in der App
-> an“ – auf seinen Wunsch gebaut, bevor er das Bild freigibt; die Freigabe folgt nach dem
-> Ausprobieren). Im Systemflug kann ein fremdes Schiff auftauchen; es fliegt nach seiner Absicht,
+> Am 21. November 2026 freigegeben (Kennzeichen 2026-11-21d, nach dem Ausprobieren in der App):
+> **Raumkampf, Stufe 2: Gegner und Laser** (Owner, 21. November 2026: „Bau mal bis einschließlich
+> Stufe 2“). Im Systemflug kann ein fremdes Schiff auftauchen; es fliegt nach seiner Absicht,
 > beide Seiten feuern mit Lasern, Treffer gehen auf Trefferzonen, der Schaden bleibt am eigenen
 > Schiff. Neu im Bild: `ShipDamage`, `HitZone`, `Intent`, `BattleOutcome`, die Logeinträge
 > `SpaceBattle`, `SpaceAttack` und `SpaceBattleEnd`, an `SpaceUnit` `name`, `intent`, `design`,
@@ -3236,8 +3235,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Später** (eigene Änderungen): Raketen, Sand, Small Craft, Ortung, Raumkampf aus einer
     Schiffsbegegnung beim Ankommen; siehe den Stufenplan im Konzept.
 
-- **Raumkampf, Stufe 2: Gegner und Laser** (wartet auf Freigabe, Kennzeichen 2026-11-21d; gebaut auf
-  Wunsch des Owners vor der Freigabe, siehe Status). Nach dem
+- **Raumkampf, Stufe 2: Gegner und Laser** (freigegeben am 21. November 2026, Kennzeichen
+  2026-11-21d). Nach dem
   [Konzept](konzept-raumkampf.md) (Abschnitte 4, 6, 7) und SR 39–42, SE 12–13. Hausregeln tragen ⚑;
   der Owner entscheidet sie mit dem Ausprobieren.
   - **Ein fremdes Schiff.** Im Systemflug würfelt „Schiffsbegegnung“ auf der *Starship Encounter

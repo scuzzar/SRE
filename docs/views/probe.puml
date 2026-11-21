@@ -84,9 +84,9 @@ hide <<browser>> stereotype
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class Skimming $raum
-  class SpaceBattle $raum $newClass("2026-11-21d")
-  class SpaceAttack $raum $newClass("2026-11-21d")
-  class SpaceBattleEnd $raum $newClass("2026-11-21d")
+  class SpaceBattle $raum
+  class SpaceAttack $raum
+  class SpaceBattleEnd $raum
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -156,9 +156,9 @@ Campaign "1" *-- "*" LogEntry : log {ordered}
 ' Schiffe
 
 ' Raumkarte und Systemflug
-LogEntry <|-$newArrow("2026-11-21d")- SpaceBattle
-LogEntry <|-$newArrow("2026-11-21d")- SpaceAttack
-LogEntry <|-$newArrow("2026-11-21d")- SpaceBattleEnd
+LogEntry <|-- SpaceBattle
+LogEntry <|-- SpaceAttack
+LogEntry <|-- SpaceBattleEnd
 LogEntry <|-- Skimming
 
 ' Zeit und Reisen

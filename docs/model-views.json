@@ -526,7 +526,7 @@
       "id": "2026-11-21d",
       "file": "2026-11-21d-raumkampf-gegner-laser",
       "title": "Raumkampf Stufe 2: ein fremdes Schiff mit Absicht, Laserfeuer und Rückfeuer, Trefferzonen und Schaden am Schiff, Ende des Raumkampfs; Schiffskosten repair",
-      "approved": false,
+      "approved": true,
       "show": [
         "Ship",
         "ShipDesign",
