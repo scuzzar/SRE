@@ -274,7 +274,7 @@ import { sectorView, selectedView, worldList, worldView, type HexView, type Sele
 import { spaceView, type OpenSpace, type SpaceView } from './space-view';
 import { globeView, LANDFORM_NAMES, position, type GlobeView } from './globe-view';
 import { activeTripView, tripDayItem, tripPlanOf, type TripDayItem, type TripPlanView, type TripView } from './trip-view';
-import { checkItem, checksView, journeyItem, journeyView, legalView, monthEndItem, systemJourneyItem, systemJourneyView, timeItem, timeView, type SystemJourneyDraft, type SystemJourneyView, type SystemJourneyItem, type CheckItem, type ChecksView, type JourneyDraft, type JourneyItem, type JourneyView, type LegalView, type MonthEndItem, type TimeItem, type TimeView } from './time-view';
+import { skimmingItem, type SkimmingItem, checkItem, checksView, journeyItem, journeyView, legalView, monthEndItem, systemJourneyItem, systemJourneyView, timeItem, timeView, type SystemJourneyDraft, type SystemJourneyView, type SystemJourneyItem, type CheckItem, type ChecksView, type JourneyDraft, type JourneyItem, type JourneyView, type LegalView, type MonthEndItem, type TimeItem, type TimeView } from './time-view';
 
 /**
  * Was die View zu sehen bekommt: den Spielstand aus dem Model, schon ausgewertet, und den Zustand des
@@ -547,7 +547,7 @@ export interface OddsChoice {
   readonly selected: boolean;
 }
 
-export type LogItem = DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | SaveItem | ButcheringItem | CheckItem | TimeItem | MonthEndItem | JourneyItem | SystemJourneyItem | TripDayItem | NoteItem;
+export type LogItem = DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | SaveItem | ButcheringItem | CheckItem | TimeItem | MonthEndItem | JourneyItem | SystemJourneyItem | SkimmingItem | TripDayItem | NoteItem;
 
 /** Ein Patron-Wurf: Liste, Würfel mit DMs, der Wurf 11–66 und die Zeile der Liste. */
 export interface PatronItem {
@@ -2694,6 +2694,8 @@ function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
       return journeyItem(campaign, entry, index);
     case 'systemJourney':
       return systemJourneyItem(campaign, entry, index);
+    case 'skimming':
+      return skimmingItem(campaign, entry);
     case 'tripDay':
       return tripDayItem(campaign, entry);
     case 'note':

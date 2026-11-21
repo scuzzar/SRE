@@ -3435,6 +3435,12 @@ Diagramm mit diesen Ausnahmen:
   - **Nebenwelten** (2026-11-20c) sind gebaut (`rollSubordinates`). Systeme von davor bekommen die
     Werte beim Öffnen der Kampagne mit Würfen aus Schlüssel und Feld; bis dahin lässt die Prüfung
     Nebenwelten ohne Raumhafen zu, aber nur alle zusammen.
+- **Treibstoff schöpfen** (2026-11-21b) ist gebaut (`model/flight.ts`, `skim`). Abweichungen:
+  **`Skimming → World : at`** heißt im Code `giant`, weil `at` schon der Zeitstempel jedes
+  Logeintrags ist. **`Journey.jumpDm`** fehlt im Code wie `jump` bei Reisen mit Passage und bei
+  Reisen von vorher (zählt als 0). Die Spur hält für die 22 Raumrunden des Schöpfens je einen Punkt
+  an der Stelle des Eintauchens (sie muss so lang sein wie die Raumrunden); andere Einheiten treiben
+  in dieser Zeit ballistisch weiter.
 - **Monat und Monatsabrechnung** (2026-11-17b) sind gebaut (`model/upkeep.ts`, Monate in
   `model/time.ts`). **`MonthEnd → Booking : costs`** ist im Code der Bereich der Buchungen von
   `costsFrom` bis ausschließlich `costsTo`; gezählt werden darin die laufenden Kosten. Das geht,

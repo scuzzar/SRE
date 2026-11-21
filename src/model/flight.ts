@@ -111,6 +111,8 @@ export interface RingBand {
 export interface Scene {
   readonly center: string;
   readonly body: Body | undefined;
+  /** Die Mitte ist ein Gasriese: Seine Wolkendecke gilt als Oberfläche, dort schöpft man statt zu landen (2026-11-21b). */
+  readonly giant?: boolean;
   readonly moons: readonly MoonBody[];
   readonly rings: readonly RingBand[];
 }
@@ -133,7 +135,7 @@ export function sceneOf(hexes: readonly Hex[], worldId: string): Scene {
     if (body === undefined || distance <= 0) continue;
     moons.push({ world: moon.id, body: bodyOf(moon), distance, angle: ((moon.angle ?? 0) * Math.PI) / 180, omega: Math.sqrt(body.gm / distance ** 3) });
   }
-  return { center: center.id, body, moons, rings };
+  return { center: center.id, body, moons, rings, ...(center.kind === 'giant' ? { giant: true } : {}) };
 }
 
 /** Eine Szene nur mit einem Körper in der Mitte (ohne Monde). */
@@ -181,6 +183,11 @@ export function maxGOf(campaign: Campaign, unit: SpaceUnit): number {
   return shipDesignOf(shipById(campaign, unit.ship).design).maneuver;
 }
 
+/** Ob der Entwurf des Schiffs einer Einheit stromlinienförmig ist (kann an Gasriesen schöpfen, SR 32). */
+export function streamlinedOf(campaign: Campaign, unit: SpaceUnit): boolean {
+  return shipDesignOf(shipById(campaign, unit.ship).design).streamlined;
+}
+
 /** `/elapsed`: Sekunden seit Beginn des Systemflugs. */
 export function elapsedOf(flight: SystemFlight): number {
   return (flight.round - 1) * ROUND_SECONDS;
@@ -210,9 +217,9 @@ export function gravityAt(scene: Scene, p: Vec, t: number): Vec {
 }
 
 /** Die Körper der Szene zur Zeit `t`: wo sie stehen und wie schnell sie sich bewegen. */
-function bodiesAt(scene: Scene, t: number): { body: Body; world: string; at: Vec; velocity: Vec }[] {
-  const bodies: { body: Body; world: string; at: Vec; velocity: Vec }[] = [];
-  if (scene.body) bodies.push({ body: scene.body, world: scene.center, at: { x: 0, y: 0 }, velocity: { x: 0, y: 0 } });
+function bodiesAt(scene: Scene, t: number): { body: Body; world: string; at: Vec; velocity: Vec; giant?: boolean }[] {
+  const bodies: { body: Body; world: string; at: Vec; velocity: Vec; giant?: boolean }[] = [];
+  if (scene.body) bodies.push({ body: scene.body, world: scene.center, at: { x: 0, y: 0 }, velocity: { x: 0, y: 0 }, ...(scene.giant ? { giant: true } : {}) });
   for (const moon of scene.moons) {
     if (!moon.body) continue;
     const m = moonAt(moon, t);
@@ -229,11 +236,12 @@ export const AUTO_TOUCHDOWN_KMS = 1;
  * tiefste Punkt der Bahn um ihn liegt unter seiner Oberfläche) und ist der Weg bis dorthin gerade so
  * lang, wie das Schiff mit seinem höchsten Schub zum Abbremsen braucht, bremst es selbst: mit vollem
  * Schub gegen die Bewegung gegenüber dem Körper. Der eingestellte Schub ruht dann. `undefined`: Die
- * Automatik greift nicht ein.
+ * Automatik greift nicht ein. Am Gasriesen fliegt sie nur mit Stromlinie mit (Schöpfen, 2026-11-21b).
  */
-export function autoBrake(scene: Scene, state: State, t: number, maxG: number): Vec | undefined {
+export function autoBrake(scene: Scene, state: State, t: number, maxG: number, streamlined = false): Vec | undefined {
   const brake = maxG * G_KMS2;
-  for (const { body, at, velocity } of bodiesAt(scene, t)) {
+  for (const { body, at, velocity, giant } of bodiesAt(scene, t)) {
+    if (giant && !streamlined) continue;
     const d = sub(state.position, at);
     const r = lengthOf(d);
     const h = r - body.radius;
@@ -260,11 +268,11 @@ export function autoBrake(scene: Scene, state: State, t: number, maxG: number): 
 }
 
 /** Liegt `p` zur Zeit `t` in einem Körper? Dann der Ort auf seiner Oberfläche. */
-function inside(scene: Scene, p: Vec, t: number): { readonly surface: Vec; readonly world: string; readonly velocity: Vec } | undefined {
-  for (const { body, world, at, velocity } of bodiesAt(scene, t)) {
+function inside(scene: Scene, p: Vec, t: number): { readonly surface: Vec; readonly world: string; readonly velocity: Vec; readonly giant: boolean } | undefined {
+  for (const { body, world, at, velocity, giant } of bodiesAt(scene, t)) {
     const d = sub(p, at);
     const r = lengthOf(d);
-    if (r < body.radius) return { surface: add(at, scale(d, body.radius / Math.max(r, EPS))), world, velocity };
+    if (r < body.radius) return { surface: add(at, scale(d, body.radius / Math.max(r, EPS))), world, velocity, giant: giant === true };
   }
   return undefined;
 }
@@ -277,20 +285,23 @@ export interface State {
   readonly position: Vec;
   readonly velocity: Vec;
   readonly crashed: boolean;
-  /** Langsam aufgesetzt (höchstens `LANDING_KMS`): auf dieser Welt gelandet; nur in der Rechnung, nie gespeichert. */
+  /** Langsam aufgesetzt (höchstens `LANDING_KMS`): auf dieser Welt gelandet bzw. am Gasriesen eingetaucht; nur in der Rechnung, nie gespeichert. */
   readonly landedOn?: string;
+  /** Mit `landedOn`: es war ein Gasriese, das Schiff schöpft (2026-11-21b). */
+  readonly skims?: boolean;
 }
 
 /**
  * Ein Schritt von `STEP_SECONDS` ab der Zeit `t` mit *Velocity Verlet*: Schwerkraft am alten und am
  * neuen Ort (die Monde dort, wo sie dann stehen), Schub (in G) gleichmäßig über den Schritt. Gerät
- * die Einheit unter die Oberfläche eines Körpers, schlägt sie auf.
+ * die Einheit unter die Oberfläche eines Körpers, schlägt sie auf. Am Gasriesen taucht ein Schiff mit
+ * Stromlinie (`streamlined`) langsam ein und schöpft; ohne Stromlinie schlägt es auf (2026-11-21b).
  */
-export function step(scene: Scene, state: State, thrust: Vec | undefined, t = 0, maxG?: number): State {
+export function step(scene: Scene, state: State, thrust: Vec | undefined, t = 0, maxG?: number, streamlined = false): State {
   if (state.crashed || state.landedOn !== undefined) return state;
   const dt = STEP_SECONDS;
   // Mit `maxG` fliegt die Landeautomatik mit (ein Schiff); sie hat Vorrang vor dem eingestellten Schub.
-  const used = (maxG === undefined ? undefined : autoBrake(scene, state, t, maxG)) ?? thrust;
+  const used = (maxG === undefined ? undefined : autoBrake(scene, state, t, maxG, streamlined)) ?? thrust;
   const push = used === undefined ? { x: 0, y: 0 } : scale(used, G_KMS2);
   const a0 = add(gravityAt(scene, state.position, t), push);
   const position = add(add(state.position, scale(state.velocity, dt)), scale(a0, 0.5 * dt * dt));
@@ -299,7 +310,9 @@ export function step(scene: Scene, state: State, thrust: Vec | undefined, t = 0,
   const contact = inside(scene, position, t + dt);
   if (contact) {
     // Langsam aufgesetzt ist gelandet, schneller aufgeschlagen.
-    if (lengthOf(sub(velocity, contact.velocity)) <= LANDING_KMS) return { position: contact.surface, velocity: contact.velocity, crashed: false, landedOn: contact.world };
+    const slow = lengthOf(sub(velocity, contact.velocity)) <= LANDING_KMS;
+    if (slow && contact.giant && streamlined) return { position: contact.surface, velocity: contact.velocity, crashed: false, landedOn: contact.world, skims: true };
+    if (slow && !contact.giant) return { position: contact.surface, velocity: contact.velocity, crashed: false, landedOn: contact.world };
     return { position: contact.surface, velocity: { x: 0, y: 0 }, crashed: true };
   }
   return { position, velocity, crashed: false };
@@ -309,11 +322,11 @@ export function step(scene: Scene, state: State, thrust: Vec | undefined, t = 0,
  * Rechnet `steps` Schritte ab der Zeit `t` und gibt alle Zwischenstände zurück (der erste ist der
  * Anfang). Der Schub gilt für die ersten `thrustSteps` Schritte (eine Raumrunde), danach ballistisch.
  */
-export function propagate(scene: Scene, start: State, thrust: Vec | undefined, steps: number, thrustSteps = steps, t = 0, maxG?: number): readonly State[] {
+export function propagate(scene: Scene, start: State, thrust: Vec | undefined, steps: number, thrustSteps = steps, t = 0, maxG?: number, streamlined = false): readonly State[] {
   const states: State[] = [start];
   let state = start;
   for (let i = 0; i < steps; i++) {
-    state = step(scene, state, i < thrustSteps ? thrust : undefined, t + i * STEP_SECONDS, maxG);
+    state = step(scene, state, i < thrustSteps ? thrust : undefined, t + i * STEP_SECONDS, maxG, streamlined);
     states.push(state);
   }
   return states;
@@ -403,6 +416,8 @@ export interface RoundRun {
   readonly frames: readonly (readonly Vec[])[];
   /** Ist eine Einheit gelandet, die Welt; der Systemflug ist dann zu Ende. */
   readonly landed?: string;
+  /** Ein Schiff hat am Gasriesen geschöpft (2026-11-21b). */
+  readonly skimmed?: boolean;
 }
 
 /**
@@ -414,7 +429,7 @@ export function runRound(campaign: Campaign, clock: Clock, every = 2): RoundRun 
   const flight = activeFlight(campaign);
   const scene = sceneOf(campaign.hexes, flight.world);
   const t = flightTime(campaign, flight);
-  const runs = flight.units.map((u) => propagate(scene, u, u.thrust, ROUND_STEPS, ROUND_STEPS, t, maxGOf(campaign, u)));
+  const runs = flight.units.map((u) => propagate(scene, u, u.thrust, ROUND_STEPS, ROUND_STEPS, t, maxGOf(campaign, u), streamlinedOf(campaign, u)));
   const units = flight.units.map((u, i): SpaceUnit => {
     const end = runs[i]!.at(-1)!;
     const rest = without(u, 'thrust');
@@ -427,10 +442,60 @@ export function runRound(campaign: Campaign, clock: Clock, every = 2): RoundRun 
   for (let d = daysBefore; d < daysAfter; d++) result = passTime(result, { days: 1 }, clock);
   const frames: Vec[][] = [];
   for (let s = 0; s <= ROUND_STEPS; s += every) frames.push(runs.map((r) => r[s]!.position));
+  // Am Gasriesen eingetaucht: Das Schiff schöpft und fliegt weiter (2026-11-21b).
+  runs.forEach((r, i) => {
+    const end = r.at(-1)!;
+    if (end.skims) result = skim(result, i, end.position, clock);
+  });
   // Gelandet: Der Systemflug endet, die Gruppe ist auf dieser Welt (Owner, 21. November 2026).
-  const landed = runs.map((r) => r.at(-1)!.landedOn).find((w) => w !== undefined);
+  const landed = runs.map((r) => r.at(-1)!).find((s) => s.landedOn !== undefined && !s.skims)?.landedOn;
   if (landed !== undefined) return { campaign: placeGroup(shipArrives(endFlight(result), landed), landed, clock), frames, landed };
-  return { campaign: result, frames };
+  return { campaign: result, frames, ...(runs.some((r) => r.at(-1)!.skims) ? { skimmed: true } : {}) };
+}
+
+/** Wie viele Raumrunden das Schöpfen dauert (Hausregel 2026-11-21b: gut 6 Stunden; die SR nennen keine Dauer). */
+export const SKIM_ROUNDS = 22;
+
+/**
+ * Die Einheit `index` ist an der Stelle `at` in den Gasriesen in der Mitte eingetaucht (2026-11-21b):
+ * Der Tank wird mit unraffiniertem Treibstoff voll (Logeintrag, wenn es etwas zu schöpfen gab), das
+ * Schöpfen dauert `SKIM_ROUNDS` Raumrunden (die Spur hält dafür die Stelle des Eintauchens), danach
+ * steht das Schiff auf der Kreisbahn mit doppeltem Radius über dieser Stelle, gegen den Uhrzeigersinn.
+ */
+function skim(campaign: Campaign, index: number, at: Vec, clock: Clock): Campaign {
+  const flight = activeFlight(campaign);
+  const unit = flight.units[index]!;
+  const scene = sceneOf(campaign.hexes, flight.world);
+  const body = scene.body!;
+  const ship = shipById(campaign, unit.ship);
+  const tons = shipDesignOf(ship.design).fuel - ship.fuel;
+  const r = 2 * body.radius;
+  const d = lengthOf(at) || 1;
+  const position = scale(at, r / d);
+  const speed = Math.sqrt(body.gm / r);
+  const velocity = { x: (-at.y / d) * speed, y: (at.x / d) * speed };
+  const dive = { position: at, velocity: { x: 0, y: 0 } };
+  const units = flight.units.map((u, i): SpaceUnit => (i === index ? { ...u, position, velocity, crashed: false, track: [...u.track.slice(0, -1), ...Array.from({ length: SKIM_ROUNDS + 1 }, () => dive)] } : u));
+  // Die übrigen Einheiten treiben die Raumrunden ballistisch weiter.
+  const t = flightTime(campaign, flight);
+  const others = units.map((u, i): SpaceUnit => {
+    if (i === index || u.crashed) return u;
+    const states = propagate(scene, u, undefined, SKIM_ROUNDS * ROUND_STEPS, 0, t, maxGOf(campaign, u), streamlinedOf(campaign, u));
+    const track = Array.from({ length: SKIM_ROUNDS }, (_, k) => ({ position: states[k * ROUND_STEPS]!.position, velocity: states[k * ROUND_STEPS]!.velocity }));
+    const end = states.at(-1)!;
+    return { ...u, position: end.position, velocity: end.velocity, crashed: end.crashed, track: [...u.track, ...track] };
+  });
+  const next: SystemFlight = { ...flight, round: flight.round + SKIM_ROUNDS, units: others };
+  let result: Campaign = {
+    ...campaign,
+    flight: next,
+    ships: campaign.ships.map((s) => (s.id === ship.id ? { ...s, fuel: s.fuel + tons, unrefined: s.unrefined + tons } : s)),
+    log: tons > 0 ? [...campaign.log, { kind: 'skimming', at: clock.now(), day: campaign.day, giant: scene.center, ship: ship.id, tons }] : campaign.log,
+  };
+  const daysBefore = Math.floor(elapsedOf(flight) / DAY_SECONDS);
+  const daysAfter = Math.floor(elapsedOf(next) / DAY_SECONDS);
+  for (let k = daysBefore; k < daysAfter; k++) result = passTime(result, { days: 1 }, clock);
+  return result;
 }
 
 /** Beendet den Systemflug; angebrochene Tage verfallen. */
@@ -445,16 +510,16 @@ export interface Preview {
   readonly after: readonly Vec[];
   /** In welcher Raumrunde ab jetzt (0 = diese) sie aufschlüge; fehlt, wenn nicht. */
   readonly impact?: number;
-  /** In welcher Raumrunde ab jetzt sie landete (langsam aufsetzen) und wo; fehlt, wenn nicht. */
-  readonly landing?: { readonly round: number; readonly world: string };
+  /** In welcher Raumrunde ab jetzt sie landete (langsam aufsetzen) und wo; `skims`: am Gasriesen, sie schöpfte; fehlt, wenn nicht. */
+  readonly landing?: { readonly round: number; readonly world: string; readonly skims?: boolean };
 }
 
 /** Raumrunden, die die Bahnvorschau ohne Schub vorausrechnet. */
 export const PREVIEW_ROUNDS = 5;
 
 /** Die Bahnvorschau einer Einheit ab der Zeit `t` mit einem (vielleicht nur gezogenen) Schubvektor; alle `every` Schritte ein Punkt. */
-export function previewOf(scene: Scene, unit: State, thrust: Vec | undefined, t = 0, every = 2, origin = scene.center, maxG?: number): Preview {
-  const absolute = propagate(scene, unit, thrust, ROUND_STEPS * (1 + PREVIEW_ROUNDS), ROUND_STEPS, t, maxG);
+export function previewOf(scene: Scene, unit: State, thrust: Vec | undefined, t = 0, every = 2, origin = scene.center, maxG?: number, streamlined = false): Preview {
+  const absolute = propagate(scene, unit, thrust, ROUND_STEPS * (1 + PREVIEW_ROUNDS), ROUND_STEPS, t, maxG, streamlined);
   const states = absolute.map((s, i) => ({ ...s, position: sub(s.position, originAt(scene, origin, t + i * STEP_SECONDS).position) }));
   const now: Vec[] = [];
   const after: Vec[] = [];
@@ -462,7 +527,7 @@ export function previewOf(scene: Scene, unit: State, thrust: Vec | undefined, t 
   let landing: Preview['landing'];
   states.forEach((s, i) => {
     if (impact === undefined && s.crashed && !unit.crashed) impact = Math.floor(Math.max(0, i - 1) / ROUND_STEPS);
-    if (landing === undefined && s.landedOn !== undefined) landing = { round: Math.floor(Math.max(0, i - 1) / ROUND_STEPS), world: s.landedOn };
+    if (landing === undefined && s.landedOn !== undefined) landing = { round: Math.floor(Math.max(0, i - 1) / ROUND_STEPS), world: s.landedOn, ...(s.skims ? { skims: true } : {}) };
     if (i <= ROUND_STEPS) {
       if (i % every === 0 || i === ROUND_STEPS) now.push(s.position);
     } else if ((i - ROUND_STEPS) % (every * 2) === 0) after.push(s.position);

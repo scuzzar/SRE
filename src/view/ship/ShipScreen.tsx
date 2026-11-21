@@ -122,6 +122,7 @@ export function ShipScreen({ view }: { view: Snapshot }) {
                 <span className="tile-text">
                   {boat.fuel} / {boat.fuelMax} t
                 </span>
+                {boat.unrefined > 0 && <span className="tile-sub">davon {boat.unrefined} t unraffiniert (Sprung DM +1)</span>}
               </div>
               <div className="tile">
                 <span className="tile-label">Fracht</span>

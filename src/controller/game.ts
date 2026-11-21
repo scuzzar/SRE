@@ -2500,7 +2500,9 @@ export class GameController {
     // Gelandet: Der Flug ist zu Ende, die Gruppe auf dieser Welt; die Raumkarte bleibt offen (Owner, 21. November 2026).
     // Auch auf der Startwelt: Die Landung ist eine Ankunft, Oberfläche und Globus entstehen, falls sie fehlen.
     if (run.landed !== undefined) return this.change({ ...run.campaign, hexes: readyForParty(run.campaign.hexes, run.landed, this.deps.random) }, { space: { world: space.world }, notice: `${ship} ist auf ${worldOf(run.campaign.hexes, run.landed).name} gelandet. Die Gruppe ist jetzt dort.` });
-    this.change(run.campaign, { space: { world: space.world, run: { round: activeFlight(run.campaign).round, t, every: 2, frames: run.frames } } });
+    // Geschöpft (2026-11-21b): Der Flug läuft weiter, das Schiff steht wieder auf der Kreisbahn.
+    const skimmed = run.skimmed ? { notice: `${ship} hat Treibstoff geschöpft und steht wieder auf der Umlaufbahn.` } : {};
+    this.change(run.campaign, { space: { world: space.world, run: { round: activeFlight(run.campaign).round, t, every: 2, frames: run.frames } }, ...skimmed });
   }
 
   /** Beendet den Systemflug; die Raumkarte bleibt offen. */

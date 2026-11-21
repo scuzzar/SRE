@@ -248,6 +248,19 @@ describe('Reise mit eigenem Schiff', () => {
     expect(after.characters.every((c) => !c.dead)).toBe(true);
   });
 
+  it('verbraucht unraffinierten Treibstoff zuerst; der Sprung bekommt dann DM +1, und mit einer 12 ist es ein Fehlsprung (2026-11-21b)', () => {
+    const skimmed = { ...scout, ships: scout.ships.map((s) => ({ ...s, unrefined: 25 })) };
+    const after = travelShip(skimmed, '0103', fixedRandom(6, 6), clock);
+    expect(after.ships[0]).toMatchObject({ fuel: 20, unrefined: 5 });
+    const journey = after.log.at(-1) as Journey;
+    expect(journey.jumpDm).toBe(1);
+    expect(misjumpOf(journey)).toBe(true);
+    // Mit raffiniertem Treibstoff bleibt 12 ohne Fehlsprung.
+    const clean = travelShip(scout, '0103', fixedRandom(6, 6), clock).log.at(-1) as Journey;
+    expect(clean.jumpDm).toBe(0);
+    expect(misjumpOf(clean)).toBe(false);
+  });
+
   it('der Sprungwurf steht an der Reise im Log; Fehlsprung ist nach SR erst 13+ mit DMs', () => {
     const after = travelShip(scout, '0201', fixedRandom(6, 6), clock);
     const journey = after.log.at(-1) as Journey;

@@ -27,6 +27,7 @@ import {
   type Campaign,
   type Hex,
   type Vec,
+  SKIM_ROUNDS,
 } from '.';
 import { fixedClock } from './testing';
 
@@ -298,6 +299,53 @@ describe('Landen (Owner, 21. November 2026)', () => {
     const c = above(startFlight(demo(), world(demo()), clock), 5, 9);
     const run = runRound(c, clock);
     expect(run.landed).toBeUndefined();
+    expect(run.campaign.flight!.units[0]!.crashed).toBe(true);
+  });
+});
+
+describe('Treibstoff am Gasriesen schöpfen (2026-11-21b)', () => {
+  /** Die Demo mit Systemflug am Gasriesen, um den Kessra kreist; das Schiff knapp über den Wolken, `kms` auf sie zu, halber Tank. */
+  function dive(c: Campaign, kms: number): Campaign {
+    const giant = sceneOf(c.hexes, world(c)).center;
+    const flying = startFlight(c, giant, clock);
+    const r = bodyOf(worldOf(c.hexes, giant))!.radius;
+    const unit = { ...flying.flight!.units[0]!, position: { x: 0, y: r + 5 }, velocity: { x: 0, y: -kms } };
+    return { ...flying, ships: flying.ships.map((s) => ({ ...s, fuel: 10 })), flight: { ...flying.flight!, units: [unit] } };
+  }
+
+  it('ein Schiff mit Stromlinie taucht langsam ein, füllt den Tank unraffiniert und steht danach auf der Kreisbahn', () => {
+    const c = dive(demo(), 0.5);
+    const giant = c.flight!.world;
+    const preview = previewOf(sceneOf(c.hexes, giant), c.flight!.units[0]!, undefined, flightTime(c, c.flight!), 2, giant, 2, true);
+    expect(preview.landing).toEqual({ round: 0, world: giant, skims: true });
+    const run = runRound(c, clock);
+    expect(run.landed).toBeUndefined();
+    expect(run.skimmed).toBe(true);
+    const after = run.campaign;
+    expect(after.ships.find((s) => !s.retired)).toMatchObject({ fuel: 40, unrefined: 30 });
+    expect(after.log.at(-1)).toMatchObject({ kind: 'skimming', giant, ship: 's1', tons: 30 });
+    expect(after.flight!.round).toBe(2 + SKIM_ROUNDS);
+    const unit = after.flight!.units[0]!;
+    expect(unit.track).toHaveLength(after.flight!.round - 1);
+    const r = bodyOf(worldOf(c.hexes, giant))!.radius;
+    expect(lengthOf(unit.position)).toBeCloseTo(2 * r, 3);
+    expect(lengthOf(unit.velocity)).toBeCloseTo(Math.sqrt(bodyOf(worldOf(c.hexes, giant))!.gm / (2 * r)), 6);
+    // Gegen den Uhrzeigersinn: oben (y > 0) fliegt es nach links.
+    expect(unit.velocity.x).toBeLessThan(0);
+    // Übersteht die Kampagnendatei.
+    expect(fromCampaignFile(toCampaignFile(after), 'x').ships[0]!.unrefined).toBe(30);
+  });
+
+  it('ohne Stromlinie ist das Eintauchen ein Aufschlag', () => {
+    const lab = addShip(demo(), 'L', undefined).campaign;
+    const run = runRound(dive(lab, 0.5), clock);
+    expect(run.skimmed).toBeUndefined();
+    expect(run.campaign.flight!.units[0]!.crashed).toBe(true);
+    expect(run.campaign.log.some((e) => e.kind === 'skimming')).toBe(false);
+  });
+
+  it('zu schnell eingetaucht bleibt ein Aufschlag', () => {
+    const run = runRound(dive(demo(), 9), clock);
     expect(run.campaign.flight!.units[0]!.crashed).toBe(true);
   });
 });

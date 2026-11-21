@@ -64,6 +64,8 @@ export interface ShipView {
         /** Treibstoff im Tank und Tankgröße, in Tonnen. */
         readonly fuel: number;
         readonly fuelMax: number;
+        /** Davon unraffiniert, aus einem Gasriesen geschöpft (2026-11-21b). */
+        readonly unrefined: number;
         /** Fracht im Laderaum und Laderaumgröße, in Tonnen. */
         readonly cargo: number;
         readonly cargoMax: number;
@@ -122,6 +124,7 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
             designName: plan.name,
             fuel: ship.fuel,
             fuelMax: plan.fuel,
+            unrefined: ship.unrefined,
             cargo: ship.cargo,
             cargoMax: plan.cargo,
             cabins: livingCharacters(campaign).filter(isPc).length,

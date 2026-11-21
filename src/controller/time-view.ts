@@ -56,6 +56,7 @@ import {
   systemDistance,
   journeyDays,
   type SystemJourney,
+  type Skimming,
   flightHours,
   systemJourneyBlocker,
   TICKET_RATE,
@@ -128,8 +129,23 @@ export interface JourneyItem {
   readonly ship: string | undefined;
   /** Der Sprungwurf (2W6) bei einer Reise mit eigenem Schiff. */
   readonly jump: readonly number[] | undefined;
+  /** Der DM des Sprungwurfs: +1 mit unraffiniertem Treibstoff (2026-11-21b). */
+  readonly jumpDm: number;
   /** Ob der Sprungwurf ein Fehlsprung ist (13+). */
   readonly misjump: boolean;
+}
+
+/** Treibstoff am Gasriesen geschöpft, im Log (2026-11-21b). */
+export interface SkimmingItem {
+  readonly kind: 'skimming';
+  readonly at: string;
+  readonly giant: string;
+  readonly ship: string;
+  readonly tons: number;
+}
+
+export function skimmingItem(campaign: Campaign, entry: Skimming): SkimmingItem {
+  return { kind: 'skimming', at: entry.at, giant: worldName(campaign, entry.giant), ship: campaign.ships.find((s) => s.id === entry.ship)?.name ?? entry.ship, tons: entry.tons };
 }
 
 /** Eine Reise im System im Log (2026-11-20d). */
@@ -383,6 +399,7 @@ export function journeyItem(campaign: Campaign, entry: Journey, index: number): 
     reviveTarget: REVIVE_TARGET,
     ship: entry.ship === undefined ? undefined : campaign.ships.find((s) => s.id === entry.ship)?.name ?? entry.ship,
     jump: entry.jump,
+    jumpDm: entry.jumpDm ?? 0,
     misjump: misjumpOf(entry),
   };
 }

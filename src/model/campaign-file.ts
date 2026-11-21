@@ -144,7 +144,9 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     lot: z.number().int().optional(),
     ship: z.string().min(1).optional(),
     jump: dice.optional(),
+    jumpDm: z.number().int().optional(),
   }),
+  z.object({ kind: z.literal('skimming'), at, day, place, giant: z.string().min(1), ship: z.string().min(1), tons: z.number().int().min(1) }),
   z.object({ kind: z.literal('systemJourney'), at, day, place, from: z.string().min(1), to: z.string().min(1), hours: z.number().int(), travellers: z.array(z.string().min(1)), ship: z.string().min(1).optional() }),
 ]);
 
@@ -333,6 +335,8 @@ const ShipSchema = z.object({
   design: z.string().min(1),
   name: z.string().min(1),
   fuel: z.number().int().min(0),
+  /** Davon unraffiniert (2026-11-21b); fehlt in Dateien von vorher. */
+  unrefined: z.number().int().min(0).default(0),
   cargo: z.number().int().min(0),
   price: z.number().int().min(0),
   initialLoan: z.number().int().min(0).optional(),
@@ -731,6 +735,7 @@ function fileEntryOf(entry: WithoutDay<FileEntry>): LogEntry {
     case 'save':
     case 'time':
     case 'monthEnd':
+    case 'skimming':
       return entry;
     case 'tripDay':
       return stripped(entry) as TripDay;
@@ -801,6 +806,7 @@ function validate(campaign: Campaign): void {
     shipIds.add(ship.id);
     shipDesignOf(ship.design);
     for (const board of ship.software) softwareOf(board.program);
+    if (ship.unrefined > ship.fuel) throw new DomainError(`${ship.name} hat mehr unraffinierten Treibstoff als Treibstoff im Tank.`);
   }
   if (campaign.ships.some((s) => !s.retired) && campaign.ships.filter((s) => !s.retired).length > 1) throw new DomainError('Es gibt mehr als ein aktives Schiff.');
   // Abgestellt werden nur eigene Fahrzeuge, an einem Ort; die Fahrt passt zur Karte der Welt der Gruppe.

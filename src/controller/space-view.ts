@@ -62,7 +62,14 @@ export interface SpaceUnitView {
   readonly track: readonly TrackPoint[];
   /** Bahnvorschau: diese Runde mit Schub, danach fünf ohne; `impact` = Raumrunde ab jetzt, in der sie aufschlüge. */
   /** `landing`: in welcher Raumrunde ab jetzt sie langsam aufsetzte und wo (Owner, 21. November 2026). */
-  readonly preview: { readonly now: readonly Vec[]; readonly after: readonly Vec[]; readonly impact: number | undefined; readonly landing: { readonly round: number; readonly name: string } | undefined };
+  /** `landing.skims`: am Gasriesen, das Schiff schöpft dort (2026-11-21b). */
+  readonly preview: { readonly now: readonly Vec[]; readonly after: readonly Vec[]; readonly impact: number | undefined; readonly landing: { readonly round: number; readonly name: string; readonly skims: boolean } | undefined };
+  /** Treibstoff im Tank, davon unraffiniert, und was der Tank fasst, in Tonnen. */
+  readonly fuel: number;
+  readonly unrefined: number;
+  readonly fuelMax: number;
+  /** Stromlinienförmig: kann an einem Gasriesen schöpfen (SR 32). */
+  readonly streamlined: boolean;
   readonly marks: readonly ThrustMark[];
   /** km/s gegenüber der Welt der Raumkarte. */
   readonly speed: number;
@@ -89,7 +96,7 @@ export interface SpaceBodyView {
 /** Die Raumkarte einer Welt (Domänenmodell 2026-11-18c, mit Monden 2026-11-18d). */
 export interface SpaceView {
   /** Die Welt der Raumkarte; sie steht immer in der Mitte, alles andere ist von ihr aus gesehen. */
-  readonly world: { readonly id: string; readonly name: string; readonly look: WorldLook; readonly radius: number | undefined };
+  readonly world: { readonly id: string; readonly name: string; readonly look: WorldLook; readonly radius: number | undefined; /** Ein Gasriese: Dort schöpft man (2026-11-21b). */ readonly giant: boolean };
   /** Die übrigen Körper: der Gasriese, um den die Welt kreist, und die Monde. */
   readonly bodies: readonly SpaceBodyView[];
   /** Ringe: Bänder um `around` von `inner` bis `outer` km. */
@@ -198,7 +205,7 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
   const tStart = flight ? t - elapsedOf(flight) : t;
   const run = flight && space.run?.round === flight.round ? space.run : undefined;
   return {
-    world: { id: space.world, name: bodyName(hex, world), look, radius: worldBody?.radius ?? radius },
+    world: { id: space.world, name: bodyName(hex, world), look, radius: worldBody?.radius ?? radius, giant: world.kind === 'giant' },
     bodies: bodiesOf(hex, scene, space.world, t, run),
     rings: scene.rings.map((r) => ({ id: r.world, around: sub({ x: 0, y: 0 }, origin.position), inner: r.inner, outer: r.outer })),
     jumpLimits: ten === undefined || hundred === undefined ? [] : [{ km: ten, dm: 15 }, { km: hundred, dm: 5 }],
@@ -219,7 +226,8 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
         const position = sub(unit.position, origin.position);
         const velocity = sub(unit.velocity, origin.velocity);
         const r = lengthOf(position);
-        const preview = previewOf(scene, unit, thrust, t, 2, space.world, shipDesignOf(ship.design).maneuver);
+        const plan = shipDesignOf(ship.design);
+        const preview = previewOf(scene, unit, thrust, t, 2, space.world, plan.maneuver, plan.streamlined);
         return {
           index,
           name: ship.name,
@@ -235,7 +243,11 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
             const at = originAt(scene, space.world, tStart + i * ROUND_SECONDS);
             return { position: sub(p.position, at.position), velocity: sub(p.velocity, at.velocity) };
           }),
-          preview: { now: preview.now, after: preview.after, impact: preview.impact, landing: preview.landing && { round: preview.landing.round, name: bodyName(hex, hex.worlds.find((w) => w.id === preview.landing!.world)!) } },
+          preview: { now: preview.now, after: preview.after, impact: preview.impact, landing: preview.landing && { round: preview.landing.round, name: bodyName(hex, hex.worlds.find((w) => w.id === preview.landing!.world)!), skims: preview.landing.skims === true } },
+          fuel: ship.fuel,
+          unrefined: ship.unrefined,
+          fuelMax: plan.fuel,
+          streamlined: plan.streamlined,
           marks: thrustMarks({ position, velocity, crashed: unit.crashed }),
           speed: lengthOf(velocity),
           altitude: worldBody === undefined ? r : r - worldBody.radius,

@@ -444,6 +444,8 @@ function kicker(item: LogItem, volley = false): string {
       return 'Reise';
     case 'systemJourney':
       return 'Reise im System';
+    case 'skimming':
+      return 'Schiff · Schöpfen';
     case 'tripDay':
       return item.arrived ? 'Fahrt · Ankunft' : 'Fahrt';
     case 'note':
@@ -453,7 +455,7 @@ function kicker(item: LogItem, volley = false): string {
 
 /** Zeit und Reisen haben den Stand geändert; sie lassen sich nicht löschen. */
 function deletable(item: LogItem | undefined): boolean {
-  return item !== undefined && item.kind !== 'time' && item.kind !== 'journey' && item.kind !== 'monthEnd';
+  return item !== undefined && item.kind !== 'time' && item.kind !== 'journey' && item.kind !== 'monthEnd' && item.kind !== 'skimming';
 }
 
 function EntryBody({ item }: { item: LogItem }) {
@@ -655,6 +657,15 @@ function EntryBody({ item }: { item: LogItem }) {
           </span>
         </>
       );
+    case 'skimming':
+      return (
+        <>
+          <span className="verdict small">{item.tons} t unraffinierter Treibstoff</span>
+          <span className="entry-detail">
+            {item.ship} am Gasriesen {item.giant}
+          </span>
+        </>
+      );
     case 'note':
       return <p className="note-text">{item.text}</p>;
   }
@@ -672,7 +683,8 @@ export function JourneyBody({ item }: { item: JourneyItem }) {
       </span>
       {item.ship !== undefined ? (
         <span className={`entry-question small${item.misjump ? ' negative' : ''}`}>
-          mit {item.ship} · Sprungwurf {item.jump?.[0]} + {item.jump?.[1]} = {(item.jump?.[0] ?? 0) + (item.jump?.[1] ?? 0)}
+          mit {item.ship} · Sprungwurf {item.jump?.[0]} + {item.jump?.[1]}
+          {item.jumpDm === 0 ? '' : ` + ${item.jumpDm} (unraffiniert)`} = {(item.jump?.[0] ?? 0) + (item.jump?.[1] ?? 0) + item.jumpDm}
           {item.misjump ? ' · Fehlsprung (13+)!' : ''}
         </span>
       ) : (

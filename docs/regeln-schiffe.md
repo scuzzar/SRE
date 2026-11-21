@@ -128,7 +128,8 @@ dabei.
   Energiewerks-Ratings, die die Referenzdaten nicht haben; die App rechnet je Sprung
   `Tank ÷ Sprungzahl` gerundet (`ShipDesign./jumpFuel`, Hausregel).
 - Ohne jährliche Wartung steigt das Ausfallrisiko (siehe [Schiffspannen](#schiffspannen)).
-- **Stand in der App** (2026-11-17b, `model/upkeep.ts`): Treibstoff ◐ (nur raffiniert, Cr500/t);
+- **Stand in der App** (2026-11-17b, `model/upkeep.ts`): Treibstoff ◐ (gekauft nur raffiniert, Cr500/t;
+  unraffiniert kostenlos am Gasriesen geschöpft, 2026-11-21b);
   Lebenserhaltung je Kabine ✔✱ als Cr2.000 je Reisendem und Sprung mit dem eigenen Schiff
   (Doppelbelegung verdoppelt die Kosten; die Gruppe darf zur Not zu zweit in eine Kabine, für
   jeden Entwurf); Lebenserhaltung je Koje ○ (auf dem eigenen Schiff reist noch niemand in
@@ -195,9 +196,10 @@ Schiffe verdienen an **Fracht**, **Passagieren** und **Post**.
   Planetendurchmessern. Bei 16+ wird das **Schiff zerstört**. Sonst: zufälliger Fehlsprung
   (1W bestimmt, wie viele Würfel für die Distanz in Hexfeldern geworfen werden; 1W die Richtung von
   sechs; 1W die Wochen im Jump Space, bevor das Schiff wieder auftaucht). **Stand in der App:**
-  der Wurf 2W6 je Sprung mit eigenem Schiff ist umgesetzt (`Journey.jump`, `/misjump` bei 13+,
-  ohne DMs); ohne DMs ist 13+ auf 2W6 nie möglich – die DMs der SR (Treibstoff, Nähe zu
-  Himmelskörpern) kommen erst, wenn die App sie abbildet (Entscheidung des Owners,
+  der Wurf 2W6 je Sprung mit eigenem Schiff ist umgesetzt (`Journey.jump`, `/misjump` bei 13+);
+  DM +1 bei unraffiniertem Treibstoff ✔ seit 2026-11-21b (`Journey.jumpDm`, der Sprung
+  verbraucht unraffinierten Treibstoff zuerst); die DMs für die Nähe zu Himmelskörpern kommen
+  erst, wenn die App sie abbildet (Entscheidung des Owners,
   16. November 2026). Die Folgen – zufälliger Zielort, Wochen im Jump Space, Schiff vernichtet
   bei 16+ – entscheidet der Owner im Spiel, die App würfelt sie nicht.
 
@@ -364,7 +366,10 @@ durch Treffer auf ein Feld mit „–“, arbeitet der Antrieb nicht mehr (SR 41
 
 - **Atmosphärische Streulinienform (Streamlining)**: MCr1 pro 100 t, erlaubt Landung auf
   Planetenoberflächen und das Auftanken an Gasriesen (Skimming) oder in Gewässern; muss beim Bau
-  vorgesehen werden, nicht nachrüstbar.
+  vorgesehen werden, nicht nachrüstbar. **Stand in der App** (2026-11-21b): `ShipDesign.streamlined`
+  ✔ (Scout/Courier, Free Trader, Subsidized Merchant, Yacht, Patrol Cruiser, Safari Ship; aus Book 2
+  nach Kenntnis von Claude, nicht am PDF geprüft); Schöpfen am Gasriesen im Systemflug ✔ (✱
+  Eintauchen mit höchstens 5 km/s, 22 Raumrunden); Landen dürfen vorerst alle ✱; in Gewässern ○.
 - **Ship's Locker**: Grundausstattung (Schutzkleidung, Vacc Suits, Handfeuerwaffen, Munition,
   Kompasse, Überlebensausrüstung); Kosten vernachlässigbar, Inhalt liegt im Ermessen der
   Spielleitung.

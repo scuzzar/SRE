@@ -376,6 +376,8 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
       return { head: `Reise nach ${item.to}`, rest: journeyDetail(item) };
     case 'systemJourney':
       return { head: `Reise im System nach ${item.to}`, rest: `${item.fromDate} → ${item.toDate} · ${item.flight} · ${item.how}` };
+    case 'skimming':
+      return { head: `Treibstoff geschöpft: ${item.tons} t`, rest: `${item.ship} am Gasriesen ${item.giant}, unraffiniert` };
     case 'tripDay':
       return { head: item.arrived ? `Angekommen: ${item.where}` : `Reisetag: ${item.where}`, rest: tripDayDetail(item) };
     case 'note':

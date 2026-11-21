@@ -7,7 +7,7 @@ import { itemOf, shipDesignOf } from './reference';
 import { sum, type Dice } from './rules';
 import { hexById, hexId, hexIdOfWorld, worldOf, type Hex, type World } from './sector';
 import { bookShip, fundsOf, locationOf, type Booking } from './shop';
-import { jumpFuelOf, shipOf } from './ship';
+import { jumpFuelOf, shipOf, type Ship } from './ship';
 import { portDepartureBlocker, shipDepartureBlocker, shipArrives, leaveShipBehind } from './landing';
 import { afterTime, arrive, LIFE_SUPPORT, PER_STATEROOM } from './upkeep';
 import { parkVehicles } from './trip';
@@ -164,9 +164,14 @@ export function rollNpcLow(random: Random): number {
 /** Fehlsprung bei 13 oder mehr auf 2W6 (SR 28). */
 export const MISJUMP_TARGET = 13;
 
-/** `/misjump`: der Sprungwurf einer Reise mit eigenem Schiff, auf 13+ gedeutet. */
+/** `/misjump`: der Sprungwurf einer Reise mit eigenem Schiff plus sein DM, auf 13+ gedeutet. */
 export function misjumpOf(journey: Journey): boolean {
-  return journey.jump !== undefined && sum(journey.jump) >= MISJUMP_TARGET;
+  return journey.jump !== undefined && sum(journey.jump) + (journey.jumpDm ?? 0) >= MISJUMP_TARGET;
+}
+
+/** DM +1 auf den Sprungwurf, wenn der Sprung unraffinierten Treibstoff verbraucht (SR 28, 2026-11-21b); er wird zuerst verbraucht. */
+export function jumpDmOf(ship: Pick<Ship, 'unrefined'>): number {
+  return ship.unrefined > 0 ? 1 : 0;
 }
 
 /** Warum die Gruppe nicht mit dem eigenen Schiff dorthin reisen kann; `undefined`, wenn sie kann. */
@@ -220,12 +225,12 @@ export function travelShip(campaign: Campaign, to: string, random: Random, clock
   const per = jumpFuelOf(ship.design);
   const jump: Dice = [d6(random), d6(random)];
   const today = dayOf(campaign);
-  const journey: Journey = { kind: 'journey', at: clock.now(), day: today, from, to, days: JOURNEY_DAYS, passengers: [], berths: [], ship: ship.id, jump };
+  const journey: Journey = { kind: 'journey', at: clock.now(), day: today, from, to, days: JOURNEY_DAYS, passengers: [], berths: [], ship: ship.id, jump, jumpDm: jumpDmOf(ship) };
   const supplied = bookShip(campaign, -lifeSupportOf(campaign), ship.id, 'lifeSupport', clock, `Lebenserhaltung, ${travellersOf(campaign).length} Reisende`);
   const after: Campaign = {
     ...supplied,
     // Während des Sprungs liegt das Schiff in keinem Hafen: Die Liegezeit beginnt erst am Ziel.
-    ships: supplied.ships.map((s) => (s.id === ship.id ? { ...s, fuel: s.fuel - per, berthedSince: today + JOURNEY_DAYS } : s)),
+    ships: supplied.ships.map((s) => (s.id === ship.id ? { ...s, fuel: s.fuel - per, unrefined: Math.max(0, s.unrefined - per), berthedSince: today + JOURNEY_DAYS } : s)),
     log: [...campaign.log, journey],
     day: today + JOURNEY_DAYS,
     location: worldPlace(to),

@@ -1008,6 +1008,12 @@ button:disabled {
   display: block;
 }
 
+.tile .tile-sub {
+  display: block;
+  font-size: 0.8em;
+  color: var(--muted, inherit);
+}
+
 .card-columns {
   display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);

@@ -11,7 +11,7 @@ import { roll2d6, sum, type Characteristic, type Dice } from './rules';
  * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, bei der Antwort des Orakels dazu die Chance, bei Probe und Angriff DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | MonthEnd | CheckRoll | Journey | SystemJourney | TripDay | Note;
+export type LogEntry = DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | MonthEnd | CheckRoll | Journey | SystemJourney | Skimming | TripDay | Note;
 
 /** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
 export type LogResult = Exclude<LogEntry, Note>;
@@ -109,6 +109,20 @@ export interface Journey extends LogEntryBase {
   readonly lot?: number;
   readonly ship?: string;
   readonly jump?: Dice;
+  /** Mit `jump`: der DM, mit dem der Sprungwurf zählte (+1 mit unraffiniertem Treibstoff, SR 28; 2026-11-21b). Fehlt in Ständen von vorher: 0. */
+  readonly jumpDm?: number;
+}
+
+/**
+ * Treibstoff geschöpft (2026-11-21b): Das Schiff tauchte im Systemflug langsam in den Gasriesen
+ * `giant` ein (im Domänenmodell der Pfeil `at`; `at` ist hier der Zeitstempel) und füllte den Tank
+ * mit `tons` Tonnen unraffiniertem Treibstoff.
+ */
+export interface Skimming extends LogEntryBase {
+  readonly kind: 'skimming';
+  readonly giant: string;
+  readonly ship: string;
+  readonly tons: number;
 }
 
 /**

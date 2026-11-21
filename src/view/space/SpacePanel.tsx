@@ -45,7 +45,14 @@ export function SpaceCard({ space }: { space: SpaceView }) {
           )}
           {unit.preview.landing !== undefined && !unit.crashed && (
             <p className="combat-hint space-land" role="status">
-              {unit.preview.landing.round === 0 ? `Landung auf ${unit.preview.landing.name} in dieser Runde` : `Ohne Schub Landung auf ${unit.preview.landing.name} in ${unit.preview.landing.round} Raumrunde${unit.preview.landing.round === 1 ? '' : 'n'}`}; die Landeautomatik bremst zuletzt selbst.
+              {unit.preview.landing.skims
+                ? `${unit.preview.landing.round === 0 ? 'In dieser Runde' : `Ohne Schub in ${unit.preview.landing.round} Raumrunde${unit.preview.landing.round === 1 ? '' : 'n'}`} taucht ${unit.name} in ${unit.preview.landing.name} ein und schöpft Treibstoff (gut 6 Stunden); die Automatik bremst zuletzt selbst.`
+                : `${unit.preview.landing.round === 0 ? `Landung auf ${unit.preview.landing.name} in dieser Runde` : `Ohne Schub Landung auf ${unit.preview.landing.name} in ${unit.preview.landing.round} Raumrunde${unit.preview.landing.round === 1 ? '' : 'n'}`}; die Landeautomatik bremst zuletzt selbst.`}
+            </p>
+          )}
+          {space.world.giant && (
+            <p className="combat-hint">
+              {unit.streamlined ? `Langsam in die Wolken von ${space.world.name} eintauchen (höchstens ${num(space.landingKms)} km/s) füllt den Tank mit unraffiniertem Treibstoff.` : `${unit.designName} ist nicht stromlinienförmig und kann hier keinen Treibstoff schöpfen; in die Wolken fliegen ist ein Aufschlag.`}
             </p>
           )}
           {unit.crashed && <p className="combat-hint space-warn">{unit.name} ist aufgeschlagen; in Stufe 1 ohne Folgen. Der Systemflug lässt sich beenden.</p>}
@@ -53,6 +60,10 @@ export function SpaceCard({ space }: { space: SpaceView }) {
             <dt>Schiff</dt>
             <dd>
               {unit.name} · {unit.designName} · {unit.maxG} G
+            </dd>
+            <dt>Tank</dt>
+            <dd>
+              {unit.fuel} / {unit.fuelMax} t{unit.unrefined > 0 ? ` (${unit.unrefined} t unraffiniert)` : ''}
             </dd>
             <dt>Schub</dt>
             <dd>{thrustText(unit.thrustG, unit.snap)}</dd>

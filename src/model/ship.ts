@@ -26,6 +26,8 @@ export interface Ship {
   readonly name: string;
   /** Treibstoff im Tank, in Tonnen. */
   readonly fuel: number;
+  /** Davon unraffiniert, aus einem Gasriesen geschöpft (2026-11-21b); höchstens `fuel`. */
+  readonly unrefined: number;
   /** Fracht im Laderaum, in Tonnen. */
   readonly cargo: number;
   readonly price: number;
@@ -125,6 +127,7 @@ export function addShip(campaign: Campaign, design: string, initialLoan: number 
     design: plan.id,
     name: plan.name,
     fuel: plan.fuel,
+    unrefined: 0,
     cargo: 0,
     price: plan.basePrice,
     ...(initialLoan === undefined ? {} : { initialLoan, loanBalance: initialLoan, nextPaymentDay: firstPaymentDay(campaign.day) }),
@@ -199,7 +202,8 @@ export function validShipInput(design: string, input: ShipInput): ShipInput {
 export function updateShip(campaign: Campaign, id: string, input: ShipInput): Campaign {
   const ship = shipById(campaign, id);
   const valid = validShipInput(ship.design, input);
-  return { ...campaign, ships: campaign.ships.map((s) => (s.id === id ? { ...s, ...valid } : s)) };
+  // Unraffinierter Treibstoff ist ein Teil des Tankinhalts (2026-11-21b).
+  return { ...campaign, ships: campaign.ships.map((s) => (s.id === id ? { ...s, ...valid, unrefined: Math.min(s.unrefined, valid.fuel) } : s)) };
 }
 
 /** Umbenennen über das Stift-Symbol am Namen. */
