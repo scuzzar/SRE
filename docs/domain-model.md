@@ -3211,7 +3211,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     des Small Craft entfällt, `aboard` wird gesetzt, und war die Gruppe darin, sitzt sie jetzt im
     Mutterschiff.
   - **Landen** geht wie bisher (Landeautomatik eingeschlossen), aber nur mit der Einheit der Gruppe
-    (siehe offene Frage 1). Das gelandete Schiff oder Small Craft bekommt den Landeplatz als Ort.
+    (Owner, 21. November 2026: nur mit Gruppe). Erreicht eine andere Einheit die Oberfläche, schlägt
+    sie auf; die Bahnvorschau warnt vorher, die Landeautomatik gilt für sie nicht. Das gelandete
+    Schiff oder Small Craft bekommt den Landeplatz als Ort.
   - **Reise im System mit dem Small Craft** (Owner: „auch Reise im System“). Im Reisedialog steht
     neben Ticket und eigenem Schiff jedes Small Craft, bei dem die Gruppe ist (gelandet an ihrem Ort,
     oder an Bord des Mutterschiffs, bei dem die Gruppe steht; dann verlässt es das Mutterschiff).
@@ -3225,17 +3227,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Liegegebühren** ⚑: Ein Small Craft, das nicht an Bord ist, zahlt wie ein Schiff, wenn es in
     einer Stadt mit Hafen steht; an Bord und in der Umlaufbahn zahlt es nichts.
   - **Demo-Kampagne** (Owner: anderes Demo-Schiff). Statt des Scout/Courier, der kein Small Craft
-    tragen kann (nur Air/Raft, 3 t Laderaum), beginnt sie ⚑ mit einer **Yacht** (Type Y, 1 G,
+    tragen kann (nur Air/Raft, 3 t Laderaum), beginnt sie mit einer **Yacht** (Owner, 21. November 2026) (Type Y, 1 G,
     Jump-1) mit ihrem Ship's Boat (6 G), schuldenfrei, vollem Tank, im Hafen von Kessra. Bestehende
     Kampagnen bekommen nichts nachgetragen.
-  - **Offene Fragen** zu dieser Änderung:
-    1. **Landen ohne Gruppe**: Kann ein Schiff ohne die Gruppe landen, etwa das Mutterschiff, das man
-       im Systemflug weiter steuert? Empfehlung: nein, vorerst landet nur die Einheit der Gruppe;
-       erreicht eine andere Einheit die Oberfläche, schlägt sie auf, und die Bahnvorschau warnt. Sonst
-       bräuchte jede Landung ohne Gruppe einen eigenen Landeplatz-Dialog.
-    2. **Demo-Schiff**: Yacht (Ship's Boat mit 6 G, schnell und wendig, aber nur Jump-1) oder Safari
-       Ship (Jump-2, Launch mit nur 1 G) oder Laboratory Ship (Jump-2, Pinnace mit 5 G, 400 t)?
-       Empfehlung: Yacht.
 
 - **Sternsystem, Monde und Gasriesen** (freigegeben am 18. November 2026, Kennzeichen 2026-11-18d). Damit die
   Raumkarte nicht leer ist (Wunsch des Owners, 18. November 2026), mit Stern und Bahnen (Owner:
