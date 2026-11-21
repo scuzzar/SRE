@@ -199,6 +199,7 @@ hide <<browser>> stereotype
     crashed: boolean
     name: string [0..1]
     intent: Intent [0..1]
+    $new("2026-11-21e", "fired: boolean")
     /maxG: number
   }
   class TrackPoint <<value>> $raum {
@@ -239,7 +240,7 @@ SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
 SpaceUnit "*" --> "0..1" Ship : ship
 SpaceUnit "*" --> "0..1" ShipDesign : design
 SpaceUnit "1" *-- "0..1" ShipDamage : damage
-SpaceUnit "*" --> "0..1" SpaceUnit : aim
+SpaceUnit "*" -$goneArrow("2026-11-21e")-> "0..1" SpaceUnit : aim
 Ship "1" *-- "0..1" ShipDamage : damage
 ShipDamage --> HitZone
 SpaceUnit --> Intent
@@ -290,4 +291,5 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class SpaceUnit #line:d0021b;line.bold
 @enduml

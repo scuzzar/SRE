@@ -518,6 +518,12 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `damage` und `aim` (`ship` wird optional), `Ship.damage` und die Schiffskosten `repair`. Der
 > Ausschnitt dazu liegt unter
 > [`changes/2026-11-21d-raumkampf-gegner-laser.png`](changes/2026-11-21d-raumkampf-gegner-laser.png).
+>
+> **Wartet auf Freigabe** (Kennzeichen 2026-11-21e): **Feuer auslösen statt vormerken** (Owner,
+> 21. November 2026). Jede Einheit feuert einmal je Raumrunde nach der Bewegung; das eigene Schiff,
+> wenn man „Feuer auf …“ tippt, mit Würfelanimation. Neu im Bild: `SpaceUnit.fired`; `aim` entfällt.
+> Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-21e-feuer-ausloesen.png`](changes/2026-11-21e-feuer-ausloesen.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -860,7 +866,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Raumkampf | `SpaceBattle`, `SpaceAttack`, `SpaceBattleEnd` | Ein Systemflug mit einem fremden Schiff, das nicht nur zuschaut: Laserfeuer je Raumrunde bis zum Ende des Raumkampfs (2026-11-21d) |
 | Fremdes Schiff | `SpaceUnit.design`, `SpaceUnit.name` | Eine Einheit des Systemflugs ohne `ship`: ein Standardentwurf mit Namen und eigenem Schaden, gesteuert von der App (2026-11-21d) |
 | Absicht | `SpaceUnit.intent`, `Intent` | Was ein fremdes Schiff will: angreifen, fliehen oder nichts (ignorieren); danach wählt die App seinen Schub (2026-11-21d) |
-| Ziel | `SpaceUnit.aim` | Auf welche Einheit die Laser einer Einheit in dieser Raumrunde feuern; wie der Schub jede Runde neu (2026-11-21d) |
+| Gefeuert | `SpaceUnit.fired` | Die Einheit hat in dieser Raumrunde schon gefeuert; „Runde ausführen“ setzt es zurück (2026-11-21e, ersetzt das Ziel `aim`) |
 | Schaden am Schiff | `ShipDamage`, `Ship.damage`, `SpaceUnit.damage` | Die Treffer eines Schiffs in der Reihenfolge, in der sie kamen, und die ausgefallenen Turrets; am eigenen Schiff bleibt er bis zur Reparatur (2026-11-21d) |
 | Trefferzone | `HitZone` | Wohin ein Treffer geht (SE 12, *Hit Locations* und *Critical Hits*) (2026-11-21d) |
 | Ausgang | `SpaceBattleEnd.outcome`, `BattleOutcome` | Wie ein Raumkampf endete: zerstört, kampfunfähig, entkommen, abgebrochen, verloren (2026-11-21d) |
@@ -3257,19 +3263,28 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     *Ignorieren* gibt keinen Schub. Aufschläge sind verboten. Ohne Zufall: gleicher Stand, gleicher
     Schub. Fremde Schiffe landen nicht und schöpfen nicht; trifft eines eine Oberfläche, ist es ein
     Aufschlag.
-  - **Ziel** (`aim`): Für das eigene Schiff wählt man im Blatt „Feuer auf …“; es gilt wie der Schub
-    nur für die laufende Raumrunde. Ein angreifendes fremdes Schiff zielt immer auf das eigene.
-  - **Laserfeuer** (nach der Bewegung, an den Orten am Ende der Raumrunde, beide Seiten gleichzeitig,
-    Schaden erst nach allen Würfen). Jeder Laser jedes Turrets, das nicht ausgefallen ist, würfelt
+  - **Feuer auslösen** (geändert 2026-11-21e, wartet auf Freigabe; Owner, 21. November 2026: „Angreifen
+    sollte mit Würfelanimation explizit getriggert werden, nicht für die nächste Runde vorgemerkt“;
+    vorher setzte man mit `aim` ein Ziel, und gefeuert wurde beim Ausführen der Raumrunde). Jede
+    Einheit feuert höchstens einmal je Raumrunde (`fired`), an den Orten nach der Bewegung; „Runde
+    ausführen“ bewegt alle und setzt `fired` zurück. Danach:
+    - Ein **angreifendes fremdes Schiff** feuert gleich nach der Bewegung auf das eigene Schiff.
+    - Das **eigene Schiff** feuert, wenn man im Blatt **„Feuer auf …“** tippt: sofort, die Würfe
+      rollen im Vordergrund (Schütze, Ziel, Waffe, 2W6 + DM, Treffer und Trefferzonen), der Schaden
+      wirkt gleich. Danach steht der Knopf erst in der nächsten Raumrunde wieder bereit. Man kann
+      auch ohne Bewegung in der ersten Raumrunde feuern.
+    - **Rückfeuer** (SR 40): Ein fremdes Schiff, auf das gefeuert wird und das in dieser Raumrunde
+      noch nicht gefeuert hat, feuert gleich zurück, wenn es noch kann. ⚑ Greift es nicht an, greift
+      es ab dann an, wenn es Laser hat, sonst flieht es. Das eigene Schiff erwidert Feuer, indem man
+      selbst „Feuer auf …“ tippt.
+  - **Laserfeuer**. Jeder Laser jedes Turrets, das nicht ausgefallen ist, würfelt
     einzeln 2W6 + DM, **8+** trifft (SR 40). DM: Pulse Laser −1; Entfernung über 25 Raumbänder −2,
     über 50 −5 (Raumband = Entfernung ÷ 10.000 km, aufgerundet); ⚑ je Computer-Treffer −1. Kein
     Schuss ohne freie Sichtlinie (ein Körper dazwischen) und ⚑ über 90 Raumbänder (Tracking). ⚑ Die
     Programme (Target, Predict, Gunner Interact, Maneuver/Evade, Return Fire) prüft und zählt Stufe 2
     noch nicht, und es gibt noch keine Schiffspositionen (Gunner, Pilot). Missile Racks und
-    Sandcaster feuern noch nicht (Stufe 3).
-  - **Rückfeuer** (SR 40): Wer in dieser Raumrunde beschossen wurde und selbst kein Ziel hatte,
-    feuert danach auf die, die auf ihn gefeuert haben, nach denselben Regeln. ⚑ Ein fremdes Schiff,
-    das beschossen wird und nicht angreift, greift ab dann an, wenn es Laser hat, sonst flieht es.
+    Sandcaster feuern noch nicht (Stufe 3). Der Schaden einer Salve wirkt erst nach allen ihren
+    Würfen.
   - **Treffer**: Ein Beam Laser macht einen Schadenswurf, ein Pulse Laser zwei; jeder ist 2W6 auf die
     Trefferzone für Starships (SE 12), bei 12 ein kritischer Treffer mit 1W6. Jeder Schuss ist ein
     Logeintrag `SpaceAttack` mit Raumrunde, Schütze, Ziel, Turret, Waffe, Würfeln, DM und den
@@ -3517,8 +3532,7 @@ Diagramm mit diesen Ausnahmen:
     Werte beim Öffnen der Kampagne mit Würfen aus Schlüssel und Feld; bis dahin lässt die Prüfung
     Nebenwelten ohne Raumhafen zu, aber nur alle zusammen.
 - **Raumkampf, Stufe 2** (2026-11-21d) ist gebaut (`model/space-combat.ts`), auf Wunsch des Owners
-  schon vor der Freigabe des Bilds. Abweichungen: **`SpaceUnit → SpaceUnit : aim`** ist im Code die
-  Stelle der Zieleinheit in `units`, wie andere Verweise auf Stellen. Die erste Einheit ist immer
+  schon vor der Freigabe des Bilds. Abweichungen: Die erste Einheit ist immer
   das eigene Schiff. Ein fremdes Schiff bekommt beim Auftauchen eine Spur so lang wie die Raumrunden
   (lauter Punkte an seinem Startort), damit sie zur Raumrunde passt.
 - **Bewaffnung** (2026-11-21c) ist gebaut (`model/armament.ts`, Referenzdaten in

@@ -534,6 +534,15 @@
         "LogEntry",
         "ShipCost"
       ]
+    },
+    {
+      "id": "2026-11-21e",
+      "file": "2026-11-21e-feuer-ausloesen",
+      "title": "Raumkampf: Feuer wird ausgelöst statt vorgemerkt – jede Einheit feuert einmal je Raumrunde, nach der Bewegung (SpaceUnit.fired statt aim)",
+      "approved": false,
+      "show": [
+        "SystemFlight"
+      ]
     }
   ]
 }
