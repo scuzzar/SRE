@@ -8,7 +8,7 @@ import { bookShip, fundsOf } from './shop';
 import { starportLetter } from './surface-map';
 import { shipDepartureBlocker } from './landing';
 
-// Bewaffnung in der Werft (Domänenmodell 2026-11-21c): Auf jedem Hardpoint des eigenen Schiffs kann ein
+// Bewaffnung in der Werft (Domänenmodell 2026-11-21g): Auf jedem Hardpoint des eigenen Schiffs kann ein
 // Turret sitzen, bestückt mit so vielen Waffen, wie die Turmart Plätze hat (SE 10, SR 32). Eingebaut und
 // ausgebaut wird nur an einem Raumhafen A oder B (SR 29: dort gibt es Werften), mit der Gruppe beim
 // Schiff. Jeder Einbau kostet den Preis aus der Kasse; Ausbauen bringt nichts zurück (Owner).

@@ -139,13 +139,13 @@ export interface JourneyItem {
   readonly ship: string | undefined;
   /** Der Sprungwurf (2W6) bei einer Reise mit eigenem Schiff. */
   readonly jump: readonly number[] | undefined;
-  /** Der DM des Sprungwurfs: +1 mit unraffiniertem Treibstoff (2026-11-21b). */
+  /** Der DM des Sprungwurfs: +1 mit unraffiniertem Treibstoff (2026-11-21f). */
   readonly jumpDm: number;
   /** Ob der Sprungwurf ein Fehlsprung ist (13+). */
   readonly misjump: boolean;
 }
 
-/** Treibstoff am Gasriesen geschöpft, im Log (2026-11-21b). */
+/** Treibstoff am Gasriesen geschöpft, im Log (2026-11-21f). */
 export interface SkimmingItem {
   readonly kind: 'skimming';
   readonly at: string;
@@ -154,7 +154,7 @@ export interface SkimmingItem {
   readonly tons: number;
 }
 
-/** Trefferzonen, Absichten und Ausgänge des Raumkampfs, wie Log und Blatt sie schreiben (2026-11-21d). */
+/** Trefferzonen, Absichten und Ausgänge des Raumkampfs, wie Log und Blatt sie schreiben (2026-11-21h). */
 export const hitZoneNames: Record<HitZone, string> = {
   powerPlant: 'Power Plant',
   maneuver: 'Maneuver Drive',
@@ -174,7 +174,7 @@ export const hitZoneNames: Record<HitZone, string> = {
 export const intentNames: Record<Intent, string> = { attack: 'greift an', flee: 'flieht', ignore: 'beachtet die Gruppe nicht' };
 export const outcomeNames: Record<BattleOutcome, string> = { destroyed: 'zerstört', disabled: 'kampfunfähig', escaped: 'entkommen', broken: 'abgebrochen', lost: 'eigenes Schiff verloren' };
 
-/** Ein fremdes Schiff taucht auf, im Log (2026-11-21d). */
+/** Ein fremdes Schiff taucht auf, im Log (2026-11-21h). */
 export interface SpaceBattleItem {
   readonly kind: 'spaceBattle';
   readonly at: string;
@@ -186,7 +186,7 @@ export interface SpaceBattleItem {
   readonly attack: readonly number[] | undefined;
 }
 
-/** Ein Laserschuss im Log (2026-11-21d). */
+/** Ein Laserschuss im Log (2026-11-21h). */
 export interface SpaceAttackItem {
   readonly kind: 'spaceAttack';
   readonly at: string;
@@ -197,7 +197,7 @@ export interface SpaceAttackItem {
   readonly weapon: string;
   readonly dice: readonly number[];
   readonly dm: number;
-  /** Woraus der DM kommt, z. B. „Entfernung 31 RB (über 25)“ −2 (2026-11-21e); leer ohne DM. */
+  /** Woraus der DM kommt, z. B. „Entfernung 31 RB (über 25)“ −2 (2026-11-21i); leer ohne DM. */
   readonly parts: readonly DmLine[];
   /** Was auf 2W6 nötig war: 8 − DM. */
   readonly need: number;
@@ -212,7 +212,7 @@ export interface DmLine {
   readonly dm: number;
 }
 
-/** Die DMs eines Laserschusses mit ihren Gründen (2026-11-21e). */
+/** Die DMs eines Laserschusses mit ihren Gründen (2026-11-21i). */
 export function dmLines(parts: readonly SpaceDmPart[], bands: number, computerHits: number): readonly DmLine[] {
   return parts.map((p) => ({
     label: p.reason === 'range' ? `Entfernung ${bands} RB (über ${bands > 50 ? 50 : 25})` : p.reason === 'pulse' ? 'Pulse Laser' : `Computer-Treffer${computerHits > 1 ? ` ×${computerHits}` : ''}`,
@@ -220,7 +220,7 @@ export function dmLines(parts: readonly SpaceDmPart[], bands: number, computerHi
   }));
 }
 
-/** Das Ende eines Raumkampfs im Log (2026-11-21d). */
+/** Das Ende eines Raumkampfs im Log (2026-11-21h). */
 export interface SpaceBattleEndItem {
   readonly kind: 'spaceBattleEnd';
   readonly at: string;
@@ -234,7 +234,7 @@ export function spaceBattleItem(entry: SpaceBattle): SpaceBattleItem {
 
 export function spaceAttackItem(entry: SpaceAttack): SpaceAttackItem {
   const total = entry.dice[0] + entry.dice[1] + entry.dm;
-  // Einträge von vor 2026-11-21e kennen nur die Summe der DMs.
+  // Einträge von vor 2026-11-21i kennen nur die Summe der DMs.
   const parts = entry.bands === undefined ? (entry.dm === 0 ? [] : [{ label: 'DM', dm: entry.dm }]) : dmLines(dmPartsOf(entry.weapon, entry.bands, entry.computerHits ?? 0), entry.bands, entry.computerHits ?? 0);
   return { kind: 'spaceAttack', at: entry.at, round: entry.round, attacker: entry.attacker, target: entry.target, turret: entry.turret, weapon: shipWeaponOf(entry.weapon).name, dice: entry.dice, dm: entry.dm, parts, need: HIT_TARGET - entry.dm, total, hit: total >= HIT_TARGET, hits: entry.hits.map((h) => hitZoneNames[h]) };
 }

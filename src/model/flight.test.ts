@@ -303,7 +303,7 @@ describe('Landen (Owner, 21. November 2026)', () => {
   });
 });
 
-describe('Treibstoff am Gasriesen schöpfen (2026-11-21b)', () => {
+describe('Treibstoff am Gasriesen schöpfen (2026-11-21f)', () => {
   /** Die Demo mit Systemflug am Gasriesen, um den Kessra kreist; das Schiff knapp über den Wolken, `kms` auf sie zu, halber Tank. */
   function dive(c: Campaign, kms: number): Campaign {
     const giant = sceneOf(c.hexes, world(c)).center;

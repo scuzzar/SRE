@@ -70,7 +70,7 @@ test('Raumkarte am Gasriesen: Kessra ist Mond eines Gasriesen; seine Raumkarte h
   await expect(page.getByRole('group', { name: 'Raumkarte von' })).toBeVisible();
 });
 
-test('Werft und Raumkampf: der Beam Laser des Demo-Scouts, ein fremdes Schiff von Hand, Feuer auf es (2026-11-21c/d)', async ({ page }) => {
+test('Werft und Raumkampf: der Beam Laser des Demo-Scouts, ein fremdes Schiff von Hand, Feuer auf es (2026-11-21g/d)', async ({ page }) => {
   await openHomeGlobe(page);
   await openTab(page, 'Schiff');
   await page.getByRole('button', { name: 'Werft', exact: true }).click();
@@ -88,7 +88,7 @@ test('Werft und Raumkampf: der Beam Laser des Demo-Scouts, ein fremdes Schiff vo
   await card.getByRole('combobox', { name: 'Absicht' }).selectOption('ignore');
   await card.getByRole('button', { name: 'Auftauchen lassen' }).click();
   await expect(card).toContainText('Free Trader');
-  // Feuer wird ausgelöst, sofort, und die Würfe rollen im Vordergrund (2026-11-21e).
+  // Feuer wird ausgelöst, sofort, und die Würfe rollen im Vordergrund (2026-11-21i).
   await page.getByRole('button', { name: 'Feuer auf Free Trader' }).click();
   const volley = page.locator('.space-volley');
   await expect(volley).toBeVisible();

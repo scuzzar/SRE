@@ -82,7 +82,7 @@ export function App() {
   // Auf dem Globus steht dieselbe Weltkarte im Blatt, wenn man oben auf den Namen tippt (Owner, 21. November 2026).
   const worldDock = useWorldDock(view.world && (!view.globe || view.worldCard) ? view.world : undefined, view.world !== undefined && view.location === view.world.id, view.travel, view.log, view.logDays, view.globe !== undefined);
 
-  // Der Schuss, dessen Würfe gerade liegen: Die Raumkarte zeigt dazu Laserstrahl und Trefferzonen (2026-11-21e).
+  // Der Schuss, dessen Würfe gerade liegen: Die Raumkarte zeigt dazu Laserstrahl und Trefferzonen (2026-11-21i).
   const [shot, setShot] = useState<ShotEffect | undefined>(undefined);
 
   if (!view.ready) return <div className="app" aria-busy="true" />;

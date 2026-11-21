@@ -27,7 +27,7 @@ import {
 } from '../model';
 import { hitZoneNames } from './time-view';
 
-/** Ein Turret auf einem Hardpoint des eigenen Schiffs (2026-11-21c). */
+/** Ein Turret auf einem Hardpoint des eigenen Schiffs (2026-11-21g). */
 export interface TurretRow {
   readonly typeId: string;
   readonly typeName: string;
@@ -91,7 +91,7 @@ export interface ShipView {
         /** Treibstoff im Tank und Tankgröße, in Tonnen. */
         readonly fuel: number;
         readonly fuelMax: number;
-        /** Davon unraffiniert, aus einem Gasriesen geschöpft (2026-11-21b). */
+        /** Davon unraffiniert, aus einem Gasriesen geschöpft (2026-11-21f). */
         readonly unrefined: number;
         /** Fracht im Laderaum und Laderaumgröße, in Tonnen. */
         readonly cargo: number;
@@ -123,7 +123,7 @@ export interface ShipView {
         /** Die Turrets in der Reihenfolge der Hardpoints; warum gerade nicht umgerüstet werden kann (`undefined`: es geht). */
         readonly turrets: readonly TurretRow[];
         readonly armamentBlocker: string | undefined;
-        /** Schaden aus dem Raumkampf als Trefferzonen, ausgefallene Turrets (Hardpoint ab 1), Kosten der Reparatur (2026-11-21d). */
+        /** Schaden aus dem Raumkampf als Trefferzonen, ausgefallene Turrets (Hardpoint ab 1), Kosten der Reparatur (2026-11-21h). */
         readonly damage: readonly string[];
         readonly turretsOut: readonly number[];
         readonly repairCost: number;
@@ -133,7 +133,7 @@ export interface ShipView {
         readonly jumpNow: number;
       }
     | undefined;
-  /** Was die Werft an Turmarten und Schiffswaffen anbietet (2026-11-21c). */
+  /** Was die Werft an Turmarten und Schiffswaffen anbietet (2026-11-21g). */
   readonly turretTypes: readonly ArmamentOffer[];
   readonly shipWeapons: readonly ArmamentOffer[];
   /** Die Deckpläne des aktiven Entwurfs, in der Reihenfolge Deck A, B, C. */

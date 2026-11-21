@@ -28,14 +28,14 @@ export interface TrackPoint {
 
 /** Was sich auf der Raumkarte frei bewegt: das eigene Schiff (immer die erste Einheit) und fremde Schiffe (Domänenmodell: `SpaceUnit`). */
 export interface SpaceUnit {
-  /** Das Schiff der Kampagne; fehlt bei einem fremden Schiff (2026-11-21d). */
+  /** Das Schiff der Kampagne; fehlt bei einem fremden Schiff (2026-11-21h). */
   readonly ship?: string;
-  /** Fremdes Schiff: Standardentwurf, Name, Absicht (fehlt beim Wrack) und Schaden (2026-11-21d). */
+  /** Fremdes Schiff: Standardentwurf, Name, Absicht (fehlt beim Wrack) und Schaden (2026-11-21h). */
   readonly design?: string;
   readonly name?: string;
   readonly intent?: Intent;
   readonly damage?: ShipDamage;
-  /** Hat in dieser Raumrunde schon gefeuert (2026-11-21e). */
+  /** Hat in dieser Raumrunde schon gefeuert (2026-11-21i). */
   readonly fired: boolean;
   readonly position: Vec;
   readonly velocity: Vec;
@@ -120,7 +120,7 @@ export interface RingBand {
 export interface Scene {
   readonly center: string;
   readonly body: Body | undefined;
-  /** Die Mitte ist ein Gasriese: Seine Wolkendecke gilt als Oberfläche, dort schöpft man statt zu landen (2026-11-21b). */
+  /** Die Mitte ist ein Gasriese: Seine Wolkendecke gilt als Oberfläche, dort schöpft man statt zu landen (2026-11-21f). */
   readonly giant?: boolean;
   readonly moons: readonly MoonBody[];
   readonly rings: readonly RingBand[];
@@ -187,7 +187,7 @@ export function jumpLimitsOf(hex: World): readonly number[] {
   return body === undefined ? [] : [20 * body.radius, 200 * body.radius];
 }
 
-/** `/maxG`: die G des Maneuver Drive des Schiffs, nach dem Schaden (2026-11-21d). */
+/** `/maxG`: die G des Maneuver Drive des Schiffs, nach dem Schaden (2026-11-21h). */
 export function maxGOf(campaign: Campaign, unit: SpaceUnit): number {
   return unitMaxG(campaign, unit);
 }
@@ -245,7 +245,7 @@ export const AUTO_TOUCHDOWN_KMS = 1;
  * tiefste Punkt der Bahn um ihn liegt unter seiner Oberfläche) und ist der Weg bis dorthin gerade so
  * lang, wie das Schiff mit seinem höchsten Schub zum Abbremsen braucht, bremst es selbst: mit vollem
  * Schub gegen die Bewegung gegenüber dem Körper. Der eingestellte Schub ruht dann. `undefined`: Die
- * Automatik greift nicht ein. Am Gasriesen fliegt sie nur mit Stromlinie mit (Schöpfen, 2026-11-21b).
+ * Automatik greift nicht ein. Am Gasriesen fliegt sie nur mit Stromlinie mit (Schöpfen, 2026-11-21f).
  */
 export function autoBrake(scene: Scene, state: State, t: number, maxG: number, streamlined = false): Vec | undefined {
   const brake = maxG * G_KMS2;
@@ -276,7 +276,7 @@ export function autoBrake(scene: Scene, state: State, t: number, maxG: number, s
   return undefined;
 }
 
-/** Freie Sichtlinie von `a` nach `b` zur Zeit `t`: Kein Körper liegt dazwischen (2026-11-21d). */
+/** Freie Sichtlinie von `a` nach `b` zur Zeit `t`: Kein Körper liegt dazwischen (2026-11-21h). */
 export function lineOfSight(scene: Scene, a: Vec, b: Vec, t: number): boolean {
   const ab = sub(b, a);
   const len2 = ab.x * ab.x + ab.y * ab.y;
@@ -307,7 +307,7 @@ export interface State {
   readonly crashed: boolean;
   /** Langsam aufgesetzt (höchstens `LANDING_KMS`): auf dieser Welt gelandet bzw. am Gasriesen eingetaucht; nur in der Rechnung, nie gespeichert. */
   readonly landedOn?: string;
-  /** Mit `landedOn`: es war ein Gasriese, das Schiff schöpft (2026-11-21b). */
+  /** Mit `landedOn`: es war ein Gasriese, das Schiff schöpft (2026-11-21f). */
   readonly skims?: boolean;
 }
 
@@ -315,7 +315,7 @@ export interface State {
  * Ein Schritt von `STEP_SECONDS` ab der Zeit `t` mit *Velocity Verlet*: Schwerkraft am alten und am
  * neuen Ort (die Monde dort, wo sie dann stehen), Schub (in G) gleichmäßig über den Schritt. Gerät
  * die Einheit unter die Oberfläche eines Körpers, schlägt sie auf. Am Gasriesen taucht ein Schiff mit
- * Stromlinie (`streamlined`) langsam ein und schöpft; ohne Stromlinie schlägt es auf (2026-11-21b).
+ * Stromlinie (`streamlined`) langsam ein und schöpft; ohne Stromlinie schlägt es auf (2026-11-21f).
  */
 export function step(scene: Scene, state: State, thrust: Vec | undefined, t = 0, maxG?: number, streamlined = false): State {
   if (state.crashed || state.landedOn !== undefined) return state;
@@ -436,9 +436,9 @@ export interface RoundRun {
   readonly frames: readonly (readonly Vec[])[];
   /** Ist eine Einheit gelandet, die Welt; der Systemflug ist dann zu Ende. */
   readonly landed?: string;
-  /** Ein Schiff hat am Gasriesen geschöpft (2026-11-21b). */
+  /** Ein Schiff hat am Gasriesen geschöpft (2026-11-21f). */
   readonly skimmed?: boolean;
-  /** Das eigene Schiff ist im Raumkampf zerstört; der Systemflug ist zu Ende (2026-11-21d). */
+  /** Das eigene Schiff ist im Raumkampf zerstört; der Systemflug ist zu Ende (2026-11-21h). */
   readonly lost?: boolean;
 }
 
@@ -451,12 +451,12 @@ export function runRound(campaign: Campaign, clock: Clock, random?: Random, ever
   const flight = activeFlight(campaign);
   const scene = sceneOf(campaign.hexes, flight.world);
   const t = flightTime(campaign, flight);
-  // Fremde Schiffe wählen ihren Schub nach ihrer Absicht (2026-11-21d); sie landen nicht und schöpfen nicht.
+  // Fremde Schiffe wählen ihren Schub nach ihrer Absicht (2026-11-21h); sie landen nicht und schöpfen nicht.
   const thrusts = flight.units.map((u, i) => (u.ship === undefined ? planFoe(campaign, scene, i, t) : u.thrust));
   const runs = flight.units.map((u, i) => (u.ship === undefined ? propagate(scene, u, thrusts[i], ROUND_STEPS, ROUND_STEPS, t) : propagate(scene, u, u.thrust, ROUND_STEPS, ROUND_STEPS, t, maxGOf(campaign, u), streamlinedOf(campaign, u))));
   const units = flight.units.map((u, i): SpaceUnit => {
     const end = runs[i]!.at(-1)!;
-    // Die Bewegung leert den Schub; in der neuen Raumrunde darf jede Einheit wieder feuern (2026-11-21e).
+    // Die Bewegung leert den Schub; in der neuen Raumrunde darf jede Einheit wieder feuern (2026-11-21i).
     const rest = without(u, 'thrust');
     const crashed = end.crashed || (u.ship === undefined && end.landedOn !== undefined);
     return { ...rest, fired: false, position: end.position, velocity: end.velocity, crashed, track: [...u.track, { position: u.position, velocity: u.velocity }] };
@@ -467,7 +467,7 @@ export function runRound(campaign: Campaign, clock: Clock, random?: Random, ever
   const daysAfter = Math.floor(elapsedOf(next) / DAY_SECONDS);
   for (let d = daysBefore; d < daysAfter; d++) result = passTime(result, { days: 1 }, clock);
   const frames = framesOf(runs, every);
-  // Am Gasriesen eingetaucht: Das Schiff schöpft und fliegt weiter (2026-11-21b).
+  // Am Gasriesen eingetaucht: Das Schiff schöpft und fliegt weiter (2026-11-21f).
   runs.forEach((r, i) => {
     const end = r.at(-1)!;
     if (end.skims) result = skim(result, i, end.position, clock);
@@ -475,7 +475,7 @@ export function runRound(campaign: Campaign, clock: Clock, random?: Random, ever
   // Gelandet: Der Systemflug endet, die Gruppe ist auf dieser Welt (Owner, 21. November 2026).
   const landed = runs.map((r, i) => (flight.units[i]!.ship === undefined ? undefined : r.at(-1)!)).find((s) => s !== undefined && s.landedOn !== undefined && !s.skims)?.landedOn;
   if (landed !== undefined) return { campaign: placeGroup(shipArrives(endFlight(result, clock), landed), landed, clock), frames, landed };
-  // Nach der Bewegung feuern angreifende fremde Schiffe, dann das Ende des Raumkampfs (2026-11-21e).
+  // Nach der Bewegung feuern angreifende fremde Schiffe, dann das Ende des Raumkampfs (2026-11-21i).
   if (foesWillFire(result)) {
     if (random === undefined) throw new DomainError('Für das Feuer braucht es Würfel.');
     result = foesFire(result, random, clock);
@@ -493,11 +493,11 @@ function framesOf(runs: readonly (readonly State[])[], every: number): Vec[][] {
 }
 
 
-/** Wie viele Raumrunden das Schöpfen dauert (Hausregel 2026-11-21b: gut 6 Stunden; die SR nennen keine Dauer). */
+/** Wie viele Raumrunden das Schöpfen dauert (Hausregel 2026-11-21f: gut 6 Stunden; die SR nennen keine Dauer). */
 export const SKIM_ROUNDS = 22;
 
 /**
- * Die Einheit `index` ist an der Stelle `at` in den Gasriesen in der Mitte eingetaucht (2026-11-21b):
+ * Die Einheit `index` ist an der Stelle `at` in den Gasriesen in der Mitte eingetaucht (2026-11-21f):
  * Der Tank wird mit unraffiniertem Treibstoff voll (Logeintrag, wenn es etwas zu schöpfen gab), das
  * Schöpfen dauert `SKIM_ROUNDS` Raumrunden (die Spur hält dafür die Stelle des Eintauchens), danach
  * steht das Schiff auf der Kreisbahn mit doppeltem Radius über dieser Stelle, gegen den Uhrzeigersinn.
@@ -581,7 +581,7 @@ export function checkFlight(campaign: Campaign, flight: SystemFlight): void {
   worldOf(campaign.hexes, flight.world);
   if (!Number.isInteger(flight.round) || flight.round < 1) throw new DomainError('Die Raumrunde eines Systemflugs beginnt bei 1.');
   if (flight.units.length === 0) throw new DomainError('Ein Systemflug hat mindestens eine Einheit.');
-  // Die erste Einheit ist das eigene Schiff, fremde Schiffe haben einen Entwurf (2026-11-21d).
+  // Die erste Einheit ist das eigene Schiff, fremde Schiffe haben einen Entwurf (2026-11-21h).
   if (flight.units[0]!.ship === undefined) throw new DomainError('Die erste Einheit eines Systemflugs ist das eigene Schiff.');
   for (const unit of flight.units) {
     if ((unit.ship === undefined) === (unit.design === undefined)) throw new DomainError('Eine Einheit ist entweder das eigene Schiff oder ein fremdes mit Entwurf.');

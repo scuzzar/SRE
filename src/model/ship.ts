@@ -8,7 +8,7 @@ import { MONTH_DAYS, nextMonthStart } from './time';
 import type { Place } from './place';
 import type { ShipDamage } from './space-combat';
 
-/** Ein Turret auf einem Hardpoint (Domänenmodell: `Turret`, 2026-11-21c): Turmart und Waffen, höchstens so viele wie Plätze. */
+/** Ein Turret auf einem Hardpoint (Domänenmodell: `Turret`, 2026-11-21g): Turmart und Waffen, höchstens so viele wie Plätze. */
 export interface Turret {
   readonly type: string;
   readonly weapons: readonly string[];
@@ -33,7 +33,7 @@ export interface Ship {
   readonly name: string;
   /** Treibstoff im Tank, in Tonnen. */
   readonly fuel: number;
-  /** Davon unraffiniert, aus einem Gasriesen geschöpft (2026-11-21b); höchstens `fuel`. */
+  /** Davon unraffiniert, aus einem Gasriesen geschöpft (2026-11-21f); höchstens `fuel`. */
   readonly unrefined: number;
   /** Fracht im Laderaum, in Tonnen. */
   readonly cargo: number;
@@ -47,9 +47,9 @@ export interface Ship {
   /** Ausgeblendet statt gelöscht: Buchungen und Log zeigen weiter auf es. */
   readonly retired: boolean;
   readonly software: readonly ShipSoftware[];
-  /** Die Turrets in der Reihenfolge der Hardpoints (2026-11-21c). */
+  /** Die Turrets in der Reihenfolge der Hardpoints (2026-11-21g). */
   readonly turrets: readonly Turret[];
-  /** Schaden aus dem Raumkampf, bis zur Reparatur (2026-11-21d); fehlt ohne Schaden. */
+  /** Schaden aus dem Raumkampf, bis zur Reparatur (2026-11-21h); fehlt ohne Schaden. */
   readonly damage?: ShipDamage;
   /** Wo es steht (2026-11-21): Welt, Feld oder Stadt; fehlt, solange es bei der Gruppe ist (alte Stände, gerade gekauft). */
   readonly place?: Place;
@@ -145,7 +145,7 @@ export function addShip(campaign: Campaign, design: string, initialLoan: number 
     berthedSince: campaign.day,
     retired: false,
     software: standardSoftware(plan.id),
-    // Ab Werft mit den Turrets des Entwurfs; sie stecken im Grundpreis (2026-11-21c).
+    // Ab Werft mit den Turrets des Entwurfs; sie stecken im Grundpreis (2026-11-21g).
     turrets: plan.turrets.map((t) => ({ type: t.type, weapons: [...t.weapons] })),
   };
   return { campaign: { ...campaign, ships: [...campaign.ships.map((s) => (s.retired ? s : { ...s, retired: true })), ship] }, ship };
@@ -215,7 +215,7 @@ export function validShipInput(design: string, input: ShipInput): ShipInput {
 export function updateShip(campaign: Campaign, id: string, input: ShipInput): Campaign {
   const ship = shipById(campaign, id);
   const valid = validShipInput(ship.design, input);
-  // Unraffinierter Treibstoff ist ein Teil des Tankinhalts (2026-11-21b).
+  // Unraffinierter Treibstoff ist ein Teil des Tankinhalts (2026-11-21f).
   return { ...campaign, ships: campaign.ships.map((s) => (s.id === id ? { ...s, ...valid, unrefined: Math.min(s.unrefined, valid.fuel) } : s)) };
 }
 

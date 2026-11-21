@@ -99,7 +99,7 @@ function targetOf(space: SpaceView): SpaceUnitView | undefined {
 }
 
 /**
- * Der Raumkampf oben im Blatt (2026-11-21d/e): je fremdes Schiff Absicht, Entfernung, Sicht, Antrieb,
+ * Der Raumkampf oben im Blatt (2026-11-21h/e): je fremdes Schiff Absicht, Entfernung, Sicht, Antrieb,
  * Laser und Schaden, dazu der Stand des eigenen Schiffs. Gefeuert wird mit dem roten Knopf unten.
  */
 function SpaceBattlePanel({ space, own }: { space: SpaceView; own: SpaceUnitView }) {
@@ -213,7 +213,7 @@ export function SpaceDock({ space }: { space: SpaceView }) {
       </div>
     );
   }
-  // Raumkampf (2026-11-21e): Feuer wird ausgelöst, sofort, mit den Würfen im Vordergrund.
+  // Raumkampf (2026-11-21i): Feuer wird ausgelöst, sofort, mit den Würfen im Vordergrund.
   const target = targetOf(space);
   return (
     <div className="actions oracle-actions space-actions">

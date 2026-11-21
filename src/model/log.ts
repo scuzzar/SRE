@@ -110,12 +110,12 @@ export interface Journey extends LogEntryBase {
   readonly lot?: number;
   readonly ship?: string;
   readonly jump?: Dice;
-  /** Mit `jump`: der DM, mit dem der Sprungwurf zählte (+1 mit unraffiniertem Treibstoff, SR 28; 2026-11-21b). Fehlt in Ständen von vorher: 0. */
+  /** Mit `jump`: der DM, mit dem der Sprungwurf zählte (+1 mit unraffiniertem Treibstoff, SR 28; 2026-11-21f). Fehlt in Ständen von vorher: 0. */
   readonly jumpDm?: number;
 }
 
 /**
- * Treibstoff geschöpft (2026-11-21b): Das Schiff tauchte im Systemflug langsam in den Gasriesen
+ * Treibstoff geschöpft (2026-11-21f): Das Schiff tauchte im Systemflug langsam in den Gasriesen
  * `giant` ein (im Domänenmodell der Pfeil `at`; `at` ist hier der Zeitstempel) und füllte den Tank
  * mit `tons` Tonnen unraffiniertem Treibstoff.
  */
@@ -127,7 +127,7 @@ export interface Skimming extends LogEntryBase {
 }
 
 /**
- * Ein fremdes Schiff taucht im Systemflug auf (2026-11-21d): Entwurf, Name und Absicht; gewürfelt mit
+ * Ein fremdes Schiff taucht im Systemflug auf (2026-11-21h): Entwurf, Name und Absicht; gewürfelt mit
  * `encounter` (2W6, SE 13), `reaction` (2W6, SE 21) und `attack` (der weitere Wurf bei Reaktion 3 oder 4);
  * von Hand gewählt ohne Würfe.
  */
@@ -141,7 +141,7 @@ export interface SpaceBattle extends LogEntryBase {
   readonly attack?: Dice;
 }
 
-/** Ein Laserschuss im Raumkampf (2026-11-21d): wer auf wen, aus welchem Turret mit welcher Waffe, 2W6 + DM ≥ 8, und die Trefferzonen. */
+/** Ein Laserschuss im Raumkampf (2026-11-21h): wer auf wen, aus welchem Turret mit welcher Waffe, 2W6 + DM ≥ 8, und die Trefferzonen. */
 export interface SpaceAttack extends LogEntryBase {
   readonly kind: 'spaceAttack';
   readonly round: number;
@@ -151,13 +151,13 @@ export interface SpaceAttack extends LogEntryBase {
   readonly weapon: string;
   readonly dice: Dice;
   readonly dm: number;
-  /** Woraus der DM kam (2026-11-21e): Entfernung in Raumbändern und Computer-Treffer des Schützen; fehlt in Einträgen von vorher. */
+  /** Woraus der DM kam (2026-11-21i): Entfernung in Raumbändern und Computer-Treffer des Schützen; fehlt in Einträgen von vorher. */
   readonly bands?: number;
   readonly computerHits?: number;
   readonly hits: readonly HitZone[];
 }
 
-/** Das Ende eines Raumkampfs (2026-11-21d). */
+/** Das Ende eines Raumkampfs (2026-11-21h). */
 export interface SpaceBattleEnd extends LogEntryBase {
   readonly kind: 'spaceBattleEnd';
   readonly foe: string;

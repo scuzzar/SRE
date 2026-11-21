@@ -170,7 +170,7 @@ export function misjumpOf(journey: Journey): boolean {
   return journey.jump !== undefined && sum(journey.jump) + (journey.jumpDm ?? 0) >= MISJUMP_TARGET;
 }
 
-/** DM +1 auf den Sprungwurf, wenn der Sprung unraffinierten Treibstoff verbraucht (SR 28, 2026-11-21b); er wird zuerst verbraucht. */
+/** DM +1 auf den Sprungwurf, wenn der Sprung unraffinierten Treibstoff verbraucht (SR 28, 2026-11-21f); er wird zuerst verbraucht. */
 export function jumpDmOf(ship: Pick<Ship, 'unrefined'>): number {
   return ship.unrefined > 0 ? 1 : 0;
 }
@@ -190,7 +190,7 @@ export function shipJourneyBlocker(campaign: Campaign, to: string): string | und
   const away = shipDepartureBlocker(campaign);
   if (away) return away;
   const distance = parsecs(hexById(campaign.hexes, hexIdOfWorld(campaign.location.world))!, target);
-  // Schaden aus dem Raumkampf senkt die Sprungzahl (2026-11-21d).
+  // Schaden aus dem Raumkampf senkt die Sprungzahl (2026-11-21h).
   const jump = jumpAfter(ship.design, ship.damage);
   if (jump === 0) return `${ship.name} kann mit dem Schaden nicht springen; erst in der Werft reparieren.`;
   if (distance > jump) return `${distance} Parsec sind zu weit; ${ship.name} springt ${jump < plan.jump ? 'mit dem Schaden ' : ''}höchstens ${jump}.`;

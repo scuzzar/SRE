@@ -37,7 +37,7 @@ function flying(): Campaign {
   return startFlight(c, c.location!.world, clock);
 }
 
-describe('Raumkampf: ein fremdes Schiff (2026-11-21d)', () => {
+describe('Raumkampf: ein fremdes Schiff (2026-11-21h)', () => {
   it('taucht von Hand auf: eine Einheit ohne Schiff, mit Entwurf, Namen und Absicht, und ein Logeintrag', () => {
     const c = placeFoe(flying(), 'A', 'ignore', clock);
     const foe = c.flight!.units[1]!;
@@ -68,7 +68,7 @@ describe('Raumkampf: ein fremdes Schiff (2026-11-21d)', () => {
 
   it('Feuer auf ein Ziel: 12 trifft, 12 auf die Trefferzone ist kritisch, 6 ist Explode – das fremde Schiff ist zerstört', () => {
     const c = placeFoe(flying(), 'A', 'ignore', clock);
-    // Sofort, ohne die Raumrunde auszuführen (2026-11-21e).
+    // Sofort, ohne die Raumrunde auszuführen (2026-11-21i).
     const run = fireAt(c, 0, 1, always(6), clock);
     const log = run.campaign.log;
     expect(log.find((e) => e.kind === 'spaceAttack')).toMatchObject({ attacker: c.ships[0]!.name, target: 'Free Trader', weapon: 'beam-laser', dice: [6, 6], hits: ['explode'] });
@@ -78,7 +78,7 @@ describe('Raumkampf: ein fremdes Schiff (2026-11-21d)', () => {
     expect(run.campaign.flight!.round).toBe(1);
   });
 
-  it('jede Einheit feuert einmal je Raumrunde; das Ziel feuert zurück und greift dann an (2026-11-21e)', () => {
+  it('jede Einheit feuert einmal je Raumrunde; das Ziel feuert zurück und greift dann an (2026-11-21i)', () => {
     let c = placeFoe(flying(), 'T', 'ignore', clock);
     // Alle Würfe 2: 2 + 2 = 4 verfehlt immer.
     const shot = fireAt(c, 0, 1, always(2), clock);
@@ -158,7 +158,7 @@ describe('Raumkampf: ein fremdes Schiff (2026-11-21d)', () => {
     expect(addShip).toBeDefined();
   });
 
-  it('erklärt die DMs: Entfernung, Pulse Laser, Computer-Treffer; der Zielwert ist 8 − DM (2026-11-21e)', () => {
+  it('erklärt die DMs: Entfernung, Pulse Laser, Computer-Treffer; der Zielwert ist 8 − DM (2026-11-21i)', () => {
     expect(dmPartsOf('beam-laser', 20, 0)).toEqual([]);
     expect(dmPartsOf('pulse-laser', 31, 2)).toEqual([
       { reason: 'range', dm: -2 },

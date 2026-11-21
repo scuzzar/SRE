@@ -84,7 +84,7 @@ export interface SpaceUnitView {
   readonly track: readonly TrackPoint[];
   /** Bahnvorschau: diese Runde mit Schub, danach fünf ohne; `impact` = Raumrunde ab jetzt, in der sie aufschlüge. */
   /** `landing`: in welcher Raumrunde ab jetzt sie langsam aufsetzte und wo (Owner, 21. November 2026). */
-  /** `landing.skims`: am Gasriesen, das Schiff schöpft dort (2026-11-21b). */
+  /** `landing.skims`: am Gasriesen, das Schiff schöpft dort (2026-11-21f). */
   readonly preview: { readonly now: readonly Vec[]; readonly after: readonly Vec[]; readonly impact: number | undefined; readonly landing: { readonly round: number; readonly name: string; readonly skims: boolean } | undefined };
   /** Treibstoff im Tank, davon unraffiniert, und was der Tank fasst, in Tonnen. */
   readonly fuel: number;
@@ -92,17 +92,17 @@ export interface SpaceUnitView {
   readonly fuelMax: number;
   /** Stromlinienförmig: kann an einem Gasriesen schöpfen (SR 32). */
   readonly streamlined: boolean;
-  /** Raumkampf (2026-11-21d): ein fremdes Schiff, seine Absicht (fehlt beim Wrack), der Schaden als Trefferzonen. */
+  /** Raumkampf (2026-11-21h): ein fremdes Schiff, seine Absicht (fehlt beim Wrack), der Schaden als Trefferzonen. */
   readonly foe: boolean;
   readonly intent: string | undefined;
   readonly wreck: boolean;
   readonly damage: readonly string[];
-  /** Laser, die noch feuern können; ob die Einheit in dieser Raumrunde schon gefeuert hat (2026-11-21e). */
+  /** Laser, die noch feuern können; ob die Einheit in dieser Raumrunde schon gefeuert hat (2026-11-21i). */
   readonly lasers: number;
   readonly fired: boolean;
   /** Bei einem fremden Schiff: warum das eigene Schiff jetzt nicht auf es feuern kann (`undefined`: es kann). */
   readonly fireBlocker: string | undefined;
-  /** Bei einem fremden Schiff: was die Laser des eigenen Schiffs jetzt bräuchten, je Waffe mit DMs und Zielwert auf 2W6 (2026-11-21e). */
+  /** Bei einem fremden Schiff: was die Laser des eigenen Schiffs jetzt bräuchten, je Waffe mit DMs und Zielwert auf 2W6 (2026-11-21i). */
   readonly fire: readonly { readonly weapon: string; readonly count: number; readonly parts: readonly DmLine[]; readonly dm: number; readonly need: number }[];
   /** Vom eigenen Schiff aus: Entfernung in Raumbändern, DM der Entfernung und ob die Sichtlinie frei ist. */
   readonly bands: number;
@@ -134,7 +134,7 @@ export interface SpaceBodyView {
 /** Die Raumkarte einer Welt (Domänenmodell 2026-11-18c, mit Monden 2026-11-18d). */
 export interface SpaceView {
   /** Die Welt der Raumkarte; sie steht immer in der Mitte, alles andere ist von ihr aus gesehen. */
-  readonly world: { readonly id: string; readonly name: string; readonly look: WorldLook; readonly radius: number | undefined; /** Ein Gasriese: Dort schöpft man (2026-11-21b). */ readonly giant: boolean };
+  readonly world: { readonly id: string; readonly name: string; readonly look: WorldLook; readonly radius: number | undefined; /** Ein Gasriese: Dort schöpft man (2026-11-21f). */ readonly giant: boolean };
   /** Die übrigen Körper: der Gasriese, um den die Welt kreist, und die Monde. */
   readonly bodies: readonly SpaceBodyView[];
   /** Ringe: Bänder um `around` von `inner` bis `outer` km. */
@@ -163,7 +163,7 @@ export interface SpaceView {
     | undefined;
   /** Ein Systemflug läuft, aber an einer anderen Welt. */
   readonly elsewhere: string | undefined;
-  /** Raumkampf (2026-11-21d): warum gerade kein fremdes Schiff auftauchen kann, ob einer läuft, Spalte der Begegnungstabelle, Entwürfe für „von Hand“. */
+  /** Raumkampf (2026-11-21h): warum gerade kein fremdes Schiff auftauchen kann, ob einer läuft, Spalte der Begegnungstabelle, Entwürfe für „von Hand“. */
   readonly encounterBlocker: string | undefined;
   readonly battle: boolean;
   readonly encounterColumn: string | undefined;

@@ -11,7 +11,7 @@ const SHOW_MS = 1300;
 const END_MS = 1800;
 
 /**
- * Die Salven des Raumkampfs im Vordergrund (2026-11-21e): Schuss für Schuss rollen 2W6, dann stehen
+ * Die Salven des Raumkampfs im Vordergrund (2026-11-21i): Schuss für Schuss rollen 2W6, dann stehen
  * Summe mit DM, Treffer oder daneben und die Trefferzonen; zuletzt, wenn der Raumkampf endete, wie.
  * Im Log steht alles schon; das hier ist nur Anzeige. Ein Tippen springt zum nächsten Schuss.
  */

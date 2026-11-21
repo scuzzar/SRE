@@ -316,7 +316,7 @@ const TripSchema = z.object({
 });
 /** Ein Vektor in der Ebene (2026-11-18). */
 const VecSchema = z.object({ x: z.number().finite(), y: z.number().finite() });
-/** Schaden aus dem Raumkampf (2026-11-21d). */
+/** Schaden aus dem Raumkampf (2026-11-21h). */
 const DamageSchema = z.object({ hits: z.array(z.enum(hitZones)), turretsOut: z.array(z.number().int().min(0)) });
 /** Der laufende Systemflug (2026-11-18c). */
 const FlightSchema = z.object({
@@ -331,7 +331,7 @@ const FlightSchema = z.object({
         name: z.string().min(1).optional(),
         intent: z.enum(intents).optional(),
         damage: DamageSchema.optional(),
-        /** Gefeuert in dieser Raumrunde (2026-11-21e); fehlt in Dateien von vorher. */
+        /** Gefeuert in dieser Raumrunde (2026-11-21i); fehlt in Dateien von vorher. */
         fired: z.boolean().default(false),
         position: VecSchema,
         velocity: VecSchema,
@@ -348,7 +348,7 @@ const ShipSchema = z.object({
   design: z.string().min(1),
   name: z.string().min(1),
   fuel: z.number().int().min(0),
-  /** Davon unraffiniert (2026-11-21b); fehlt in Dateien von vorher. */
+  /** Davon unraffiniert (2026-11-21f); fehlt in Dateien von vorher. */
   unrefined: z.number().int().min(0).default(0),
   cargo: z.number().int().min(0),
   price: z.number().int().min(0),
@@ -358,7 +358,7 @@ const ShipSchema = z.object({
   berthedSince: z.number().int().min(0).optional(),
   retired: z.boolean().default(false),
   software: z.array(z.object({ program: z.string().min(1) })).default([]),
-  /** Die Turrets (2026-11-21c); fehlen in Dateien von vorher: dann die des Entwurfs. */
+  /** Die Turrets (2026-11-21g); fehlen in Dateien von vorher: dann die des Entwurfs. */
   turrets: z.array(z.object({ type: z.string().min(1), weapons: z.array(z.string().min(1)).max(3) })).optional(),
   damage: DamageSchema.optional(),
   place: PlaceSchema.optional(),
@@ -715,7 +715,7 @@ function flightFromFile(flight: z.infer<typeof FlightSchema>): SystemFlight {
   };
 }
 
-/** Die Turrets eines Schiffs aus der Datei; Dateien von vor 2026-11-21c haben keine: Das Schiff kam mit denen seines Entwurfs. */
+/** Die Turrets eines Schiffs aus der Datei; Dateien von vor 2026-11-21g haben keine: Das Schiff kam mit denen seines Entwurfs. */
 function turretsFromFile(ship: z.infer<typeof ShipSchema>): Ship['turrets'] {
   if (ship.turrets !== undefined) return ship.turrets.map((t) => ({ type: t.type, weapons: [...t.weapons] }));
   return shipDesignOf(ship.design).turrets.map((t) => ({ type: t.type, weapons: [...t.weapons] }));

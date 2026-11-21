@@ -154,13 +154,13 @@ export const ShipDesignSchema = z.object({
   basePrice: z.number().int().min(0),
   /** Bauzeit in Monaten. */
   months: z.number().int().min(1),
-  /** Atmosphärische Streulinienform (SR 32): kann an Gasriesen schöpfen (2026-11-21b). */
+  /** Atmosphärische Streulinienform (SR 32): kann an Gasriesen schöpfen (2026-11-21f). */
   streamlined: z.boolean().default(false),
-  /** Die Turrets ab Werft, in der Reihenfolge der Hardpoints (SR 35–37, 2026-11-21c). */
+  /** Die Turrets ab Werft, in der Reihenfolge der Hardpoints (SR 35–37, 2026-11-21g). */
   turrets: z.array(z.object({ type: z.string().min(1), weapons: z.array(z.string().min(1)).max(3) })).default([]),
 });
 
-/** Eine Turmart aus SE 10 (2026-11-21c): Single, Double oder Triple Turret mit 1–3 Plätzen für Waffen; Preis in Cr. */
+/** Eine Turmart aus SE 10 (2026-11-21g): Single, Double oder Triple Turret mit 1–3 Plätzen für Waffen; Preis in Cr. */
 export const TurretTypeSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -169,13 +169,13 @@ export const TurretTypeSchema = z.object({
 });
 
 /**
- * Die Starship Encounter Table (SE 13, 2026-11-21d): je Raumhafenklasse die Ergebnisse für 2W6 von 2
+ * Die Starship Encounter Table (SE 13, 2026-11-21h): je Raumhafenklasse die Ergebnisse für 2W6 von 2
  * bis 15 (mit DMs); ein Eintrag ist der Code eines Standardentwurfs, „P“ dahinter heißt Pirat, „*“ ein
  * Small Craft dazu; `null` heißt keine Begegnung.
  */
 export const StarshipEncountersSchema = z.record(z.enum(['A', 'B', 'C', 'D', 'E', 'X']), z.array(z.string().regex(/^[A-Z]P?\*?$/).nullable()).length(14));
 
-/** Eine Schiffswaffe aus SE 10 (2026-11-21c); Preis in Cr. */
+/** Eine Schiffswaffe aus SE 10 (2026-11-21g); Preis in Cr. */
 export const ShipWeaponSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -558,7 +558,7 @@ export const ReferenceDataSchema = z
     vehicles: z.array(VehicleSchema).min(1),
     /** Die Standardentwürfe der Werft (SR 35–37). */
     ships: z.array(ShipDesignSchema).min(1),
-    /** Die Turmarten und Schiffswaffen (SE 10, 2026-11-21c). */
+    /** Die Turmarten und Schiffswaffen (SE 10, 2026-11-21g). */
     turretTypes: z.array(TurretTypeSchema).min(1),
     starshipEncounters: StarshipEncountersSchema,
     shipWeapons: z.array(ShipWeaponSchema).min(1),

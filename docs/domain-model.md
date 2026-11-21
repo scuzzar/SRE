@@ -495,21 +495,21 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Gruppe bei ihm ist, und Passagen gibt es nur in einer Stadt mit Hafen. Neu im Bild: `Ship.place`.
 > Der Ausschnitt dazu liegt unter [`changes/2026-11-21-landeplatz.png`](changes/2026-11-21-landeplatz.png).
 >
-> Am 21. November 2026 freigegeben (Kennzeichen 2026-11-21b): **Treibstoff am Gasriesen schöpfen** (Owner,
+> Am 21. November 2026 freigegeben (Kennzeichen 2026-11-21f): **Treibstoff am Gasriesen schöpfen** (Owner,
 > 21. November 2026). Ein stromlinienförmiges Schiff, das im Systemflug langsam in einen Gasriesen
 > eintaucht, füllt den Tank mit unraffiniertem Treibstoff und fliegt weiter; unraffinierter
 > Treibstoff gibt DM +1 auf den Sprungwurf. Neu im Bild: der Logeintrag `Skimming` mit `at` und
 > `ship`, `Ship.unrefined` und `Journey.jumpDm`. Der Ausschnitt dazu liegt unter
-> [`changes/2026-11-21b-gasriese-schoepfen.png`](changes/2026-11-21b-gasriese-schoepfen.png).
+> [`changes/2026-11-21f-gasriese-schoepfen.png`](changes/2026-11-21f-gasriese-schoepfen.png).
 >
-> Am 21. November 2026 freigegeben (Kennzeichen 2026-11-21c, Owner: „Bau mal“): **Bewaffnung in der Werft** (Owner, 21. November
+> Am 21. November 2026 freigegeben (Kennzeichen 2026-11-21g, Owner: „Bau mal“): **Bewaffnung in der Werft** (Owner, 21. November
 > 2026). Auf jedem Hardpoint des eigenen Schiffs kann ein Turret sitzen, bestückt mit bis zu drei
 > Waffen; eingebaut und ausgebaut wird in der Werft an einem Raumhafen A oder B. Neu im Bild:
 > `Turret`, `DesignTurret`, `TurretType`, `ShipWeapon`, `Ship.turrets`, `ShipDesign.turrets` und die
 > Schiffskosten `armament`. Der Ausschnitt dazu liegt unter
-> [`changes/2026-11-21c-bewaffnung.png`](changes/2026-11-21c-bewaffnung.png).
+> [`changes/2026-11-21g-bewaffnung.png`](changes/2026-11-21g-bewaffnung.png).
 >
-> Am 21. November 2026 freigegeben (Kennzeichen 2026-11-21d, nach dem Ausprobieren in der App):
+> Am 21. November 2026 freigegeben (Kennzeichen 2026-11-21h, nach dem Ausprobieren in der App):
 > **Raumkampf, Stufe 2: Gegner und Laser** (Owner, 21. November 2026: „Bau mal bis einschließlich
 > Stufe 2“). Im Systemflug kann ein fremdes Schiff auftauchen; es fliegt nach seiner Absicht,
 > beide Seiten feuern mit Lasern, Treffer gehen auf Trefferzonen, der Schaden bleibt am eigenen
@@ -517,15 +517,15 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `SpaceBattle`, `SpaceAttack` und `SpaceBattleEnd`, an `SpaceUnit` `name`, `intent`, `design`,
 > `damage` und `aim` (`ship` wird optional), `Ship.damage` und die Schiffskosten `repair`. Der
 > Ausschnitt dazu liegt unter
-> [`changes/2026-11-21d-raumkampf-gegner-laser.png`](changes/2026-11-21d-raumkampf-gegner-laser.png).
+> [`changes/2026-11-21h-raumkampf-gegner-laser.png`](changes/2026-11-21h-raumkampf-gegner-laser.png).
 >
-> Am 21. November 2026 freigegeben (Kennzeichen 2026-11-21e): **Feuer auslösen statt vormerken** (Owner,
+> Am 21. November 2026 freigegeben (Kennzeichen 2026-11-21i): **Feuer auslösen statt vormerken** (Owner,
 > 21. November 2026). Jede Einheit feuert einmal je Raumrunde nach der Bewegung; das eigene Schiff,
 > wenn man „Feuer auf …“ tippt, mit Würfelanimation. Die DMs stehen mit ihren Gründen auf dem
 > Knopf, im Blatt, bei den Würfen und im Log. Neu im Bild: `SpaceUnit.fired`, `SpaceAttack.bands` und
 > `SpaceAttack.computerHits`; `aim` entfällt.
 > Der Ausschnitt dazu liegt unter
-> [`changes/2026-11-21e-feuer-ausloesen.png`](changes/2026-11-21e-feuer-ausloesen.png).
+> [`changes/2026-11-21i-feuer-ausloesen.png`](changes/2026-11-21i-feuer-ausloesen.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -864,19 +864,19 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Restschuld | `Ship.loanBalance` | Was von der Kreditsumme noch offen ist; fehlt, wenn das Schiff schuldenfrei ist |
 | Monatsrate | `Ship./monthlyPayment` | Ein Vierhundertachtzigstel der Kreditsumme, immer gleich hoch |
 | Nächste Rate | `Ship.nextPaymentDay` | Das Monatsende, an dem die nächste Monatsrate fällig wird; die erste frühestens vier Wochen nach dem Kauf (2026-11-17b) |
-| Schiffskosten | `Booking.shipCost`, `ShipCost` | Wofür eine Buchung der Art `ship` ist: price (voller Preis oder Anzahlung), rate (Monatsrate), fuel (Treibstoff), berthing (Liegegebühr), lifeSupport (Lebenserhaltung) (2026-11-17b), armament (Bewaffnung, 2026-11-21c), repair (Reparatur, 2026-11-21d) |
-| Raumkampf | `SpaceBattle`, `SpaceAttack`, `SpaceBattleEnd` | Ein Systemflug mit einem fremden Schiff, das nicht nur zuschaut: Laserfeuer je Raumrunde bis zum Ende des Raumkampfs (2026-11-21d) |
-| Fremdes Schiff | `SpaceUnit.design`, `SpaceUnit.name` | Eine Einheit des Systemflugs ohne `ship`: ein Standardentwurf mit Namen und eigenem Schaden, gesteuert von der App (2026-11-21d) |
-| Absicht | `SpaceUnit.intent`, `Intent` | Was ein fremdes Schiff will: angreifen, fliehen oder nichts (ignorieren); danach wählt die App seinen Schub (2026-11-21d) |
-| Gefeuert | `SpaceUnit.fired` | Die Einheit hat in dieser Raumrunde schon gefeuert; „Runde ausführen“ setzt es zurück (2026-11-21e, ersetzt das Ziel `aim`) |
-| Schaden am Schiff | `ShipDamage`, `Ship.damage`, `SpaceUnit.damage` | Die Treffer eines Schiffs in der Reihenfolge, in der sie kamen, und die ausgefallenen Turrets; am eigenen Schiff bleibt er bis zur Reparatur (2026-11-21d) |
-| Trefferzone | `HitZone` | Wohin ein Treffer geht (SE 12, *Hit Locations* und *Critical Hits*) (2026-11-21d) |
-| Ausgang | `SpaceBattleEnd.outcome`, `BattleOutcome` | Wie ein Raumkampf endete: zerstört, kampfunfähig, entkommen, abgebrochen, verloren (2026-11-21d) |
-| Turret | `Turret`, `Ship.turrets` | Ein Waffenturm auf einem Hardpoint des eigenen Schiffs, mit seinen Waffen; höchstens so viele, wie der Entwurf Hardpoints hat (2026-11-21c) |
-| Turmart | `TurretType` | Referenzdaten: Single, Double oder Triple Turret mit 1, 2 oder 3 Plätzen für Waffen und Preis (SE 10, 2026-11-21c) |
-| Schiffswaffe | `ShipWeapon` | Referenzdaten: Pulse Laser, Beam Laser, Missile Rack, Sandcaster mit Preis (SE 10, 2026-11-21c) |
-| Turret des Entwurfs | `DesignTurret`, `ShipDesign.turrets` | Referenzdaten: womit ein Standardentwurf aus der Werft kommt, etwa der leere Doppelturm des Scout (SR 35–37, 2026-11-21c) |
-| Bewaffnung | `Ship.turrets` | Alle Turrets eines Schiffs mit ihren Waffen; umgerüstet in der Werft (2026-11-21c) |
+| Schiffskosten | `Booking.shipCost`, `ShipCost` | Wofür eine Buchung der Art `ship` ist: price (voller Preis oder Anzahlung), rate (Monatsrate), fuel (Treibstoff), berthing (Liegegebühr), lifeSupport (Lebenserhaltung) (2026-11-17b), armament (Bewaffnung, 2026-11-21g), repair (Reparatur, 2026-11-21h) |
+| Raumkampf | `SpaceBattle`, `SpaceAttack`, `SpaceBattleEnd` | Ein Systemflug mit einem fremden Schiff, das nicht nur zuschaut: Laserfeuer je Raumrunde bis zum Ende des Raumkampfs (2026-11-21h) |
+| Fremdes Schiff | `SpaceUnit.design`, `SpaceUnit.name` | Eine Einheit des Systemflugs ohne `ship`: ein Standardentwurf mit Namen und eigenem Schaden, gesteuert von der App (2026-11-21h) |
+| Absicht | `SpaceUnit.intent`, `Intent` | Was ein fremdes Schiff will: angreifen, fliehen oder nichts (ignorieren); danach wählt die App seinen Schub (2026-11-21h) |
+| Gefeuert | `SpaceUnit.fired` | Die Einheit hat in dieser Raumrunde schon gefeuert; „Runde ausführen“ setzt es zurück (2026-11-21i, ersetzt das Ziel `aim`) |
+| Schaden am Schiff | `ShipDamage`, `Ship.damage`, `SpaceUnit.damage` | Die Treffer eines Schiffs in der Reihenfolge, in der sie kamen, und die ausgefallenen Turrets; am eigenen Schiff bleibt er bis zur Reparatur (2026-11-21h) |
+| Trefferzone | `HitZone` | Wohin ein Treffer geht (SE 12, *Hit Locations* und *Critical Hits*) (2026-11-21h) |
+| Ausgang | `SpaceBattleEnd.outcome`, `BattleOutcome` | Wie ein Raumkampf endete: zerstört, kampfunfähig, entkommen, abgebrochen, verloren (2026-11-21h) |
+| Turret | `Turret`, `Ship.turrets` | Ein Waffenturm auf einem Hardpoint des eigenen Schiffs, mit seinen Waffen; höchstens so viele, wie der Entwurf Hardpoints hat (2026-11-21g) |
+| Turmart | `TurretType` | Referenzdaten: Single, Double oder Triple Turret mit 1, 2 oder 3 Plätzen für Waffen und Preis (SE 10, 2026-11-21g) |
+| Schiffswaffe | `ShipWeapon` | Referenzdaten: Pulse Laser, Beam Laser, Missile Rack, Sandcaster mit Preis (SE 10, 2026-11-21g) |
+| Turret des Entwurfs | `DesignTurret`, `ShipDesign.turrets` | Referenzdaten: womit ein Standardentwurf aus der Werft kommt, etwa der leere Doppelturm des Scout (SR 35–37, 2026-11-21g) |
+| Bewaffnung | `Ship.turrets` | Alle Turrets eines Schiffs mit ihren Waffen; umgerüstet in der Werft (2026-11-21g) |
 | Laufende Kosten | `ShipCost` ohne price | Was ein Schiff kostet, solange man es hat: Rate, Treibstoff, Liegegebühren, Lebenserhaltung; später die Heuer der Crew |
 | Monatsabrechnung | `MonthEnd` | Der Logeintrag am Monatsende: verweist auf die Buchungen mit laufenden Kosten seit dem letzten Monatsende (`costs`), mit Summe (`/total`) und Nummer des abgerechneten Monats (`/month`, 1–13) |
 | Liegegebühr | `ShipCost.berthing` | Cr100 für die ersten sechs Tage in einem Raumhafen, danach Cr100 je weiteren Tag (SR 31) |
@@ -890,9 +890,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Schiffsreise | `Journey.ship` | Das Schiff, das eine Reise getragen hat; mit ihm reist niemand als Passagier – ohne Passagen, Kojen und Lotterie |
 | Sprungwurf | `Journey.jump` | 2W6 je Sprung mit eigenem Schiff, an der Reise im Log |
 | Fehlsprung | `Journey./misjump` | Aus dem Sprungwurf gefolgt: Summe plus DM 13 oder mehr (SR 28); was daraus folgt, entscheidet der Owner |
-| DM des Sprungwurfs | `Journey.jumpDm` | Der DM, mit dem der Sprungwurf damals zählte: +1, wenn der Sprung unraffinierten Treibstoff verbrauchte, sonst 0 (SR 28, 2026-11-21b) |
-| Unraffinierter Treibstoff | `Ship.unrefined` | Die Tonnen im Tank, die aus einem Gasriesen geschöpft sind (höchstens `Ship.fuel`); ein Sprung verbraucht sie zuerst (2026-11-21b) |
-| Schöpfen | `Skimming` | Logeintrag: Das Schiff taucht im Systemflug in einen Gasriesen ein und füllt den Tank mit unraffiniertem Treibstoff, kostenlos (SR 32, 2026-11-21b) |
+| DM des Sprungwurfs | `Journey.jumpDm` | Der DM, mit dem der Sprungwurf damals zählte: +1, wenn der Sprung unraffinierten Treibstoff verbrauchte, sonst 0 (SR 28, 2026-11-21f) |
+| Unraffinierter Treibstoff | `Ship.unrefined` | Die Tonnen im Tank, die aus einem Gasriesen geschöpft sind (höchstens `Ship.fuel`); ein Sprung verbraucht sie zuerst (2026-11-21f) |
+| Schöpfen | `Skimming` | Logeintrag: Das Schiff taucht im Systemflug in einen Gasriesen ein und füllt den Tank mit unraffiniertem Treibstoff, kostenlos (SR 32, 2026-11-21f) |
 | Stromlinienform | `ShipDesign.streamlined` | Der Entwurf ist stromlinienförmig (*streamlined*, SR 32) und kann an Gasriesen schöpfen |
 | Software (Programm) | `Software` | Ein Programm der Software-Liste (SR 38–39, SE 13): Platzbedarf in Space, Preis, Wirkung; Art nach `SoftwareKind` (offensiv, defensiv, routine) |
 | Rechnermodell | `ComputerModel` | Modell 1 bis 7 (je mit „bis“): Preis, Tonnen, CPU und Storage in Space, TL; die Modellzahl ist die höchste Sprungzahl und der Wert des Softwarepakets in MCr (SE 10) |
@@ -1443,11 +1443,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - *Treibstoff*: Jeder Sprung verbraucht `ShipDesign./jumpFuel` Tonnen – Hausregel: Tankinhalt
       geteilt durch Sprungzahl, gerundet (die SR-30-Formel braucht Energiewerks-Ratings, die die
       Referenzdaten nicht haben). Der Verbrauch zieht `Ship.fuel` ab; reicht der Treibstoff nicht,
-      geht die Reise nicht. Unraffinierter Treibstoff (`Ship.unrefined`, 2026-11-21b) wird zuerst
+      geht die Reise nicht. Unraffinierter Treibstoff (`Ship.unrefined`, 2026-11-21f) wird zuerst
       verbraucht: `unrefined` sinkt um den Verbrauch, nicht unter 0.
     - *Fehlsprung* (SR 28): Pro Sprung würfelt die App **2W6** (`Journey.jump`); `/misjump`
       folgt daraus: Summe plus `jumpDm` **13 oder mehr**. Die SR-DMs kommen erst ins Spiel, wenn
-      die App sie abbildet (Entscheidung des Owners, 16. November 2026): seit 2026-11-21b **+1**,
+      die App sie abbildet (Entscheidung des Owners, 16. November 2026): seit 2026-11-21f **+1**,
       wenn der Sprung unraffinierten Treibstoff verbraucht (dann ist mit einer 12 ein Fehlsprung
       möglich); +5/+15 nahe an einem Himmelskörper fehlen noch. Der DM steht an der Reise
       (`jumpDm`), damit ein alter Wurf nicht rückwirkend kippt; Passagen haben 0. Der Wurf steht an
@@ -3103,7 +3103,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     (die Kampagnendatei würde um Megabytes größer). Am `Ship` wird nichts davon gespeichert: der
     Reiter Schiff zeigt die Pläne seines Entwurfs. Löschen braucht eine Rückfrage, denn der Plan
     verschwindet aus allen Kampagnen und mit dem Abgleich von allen Geräten.
-  - **Bewaffnung** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21c; Owner, 21. November 2026). Nach
+  - **Bewaffnung** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21g; Owner, 21. November 2026). Nach
     SE 10 und SR 32: ein Hardpoint je 100 t Rumpf, jeder trägt ein Turret, ein Single, Double oder
     Triple Turret fasst 1, 2 oder 3 Waffen.
     - *Was gespeichert ist*: Das Schiff hält seine Turrets in der Reihenfolge der Hardpoints
@@ -3201,7 +3201,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Oberfläche und Globus entstehen, falls sie fehlen; das Schiff liegt dort). So erreicht man auch
     einen Mond oder eine Nebenwelt der Raumkarte. Die Bahnvorschau zeigt eine Landung (grün) statt
     eines Aufschlags. Gespeichert wird dafür nichts Neues. An einem Gasriesen landet niemand;
-    dort ist langsames Auftreffen Schöpfen (siehe *Treibstoff schöpfen*, 2026-11-21b).
+    dort ist langsames Auftreffen Schöpfen (siehe *Treibstoff schöpfen*, 2026-11-21f).
   - **Landeautomatik** (Owner, 21. November 2026: von Hand war Landen bei Raumrunden von 1000 s
     kaum zu schaffen). Führt die Bahn eines Schiffs auf die Oberfläche eines Körpers (der tiefste
     Punkt der Bahn um ihn liegt unter der Oberfläche, das Schiff ist höchstens drei Radien über
@@ -3211,7 +3211,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     sinken, so setzt es sicher unter der Landegeschwindigkeit auf. Reicht der Schub nicht (zu schnell,
     zu schwach gegen die Schwerkraft), schlägt es auf. Die Bahnvorschau rechnet die Automatik mit
     und zeigt so die Landung an. Gespeichert wird dafür nichts.
-  - **Treibstoff schöpfen** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21b; Owner, 21. November
+  - **Treibstoff schöpfen** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21f; Owner, 21. November
     2026). Nach SR 32 kann ein stromlinienförmiges Schiff an einem Gasriesen Treibstoff schöpfen
     (*skimming*), unraffiniert und kostenlos (SR 30 nennt Cr100 je Tonne nur für gekauften).
     - *Eintauchen statt landen*: Ein Gasriese hat keine Oberfläche; die Wolkendecke (sein Radius)
@@ -3244,7 +3244,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Schiffsbegegnung beim Ankommen; siehe den Stufenplan im Konzept.
 
 - **Raumkampf, Stufe 2: Gegner und Laser** (freigegeben am 21. November 2026, Kennzeichen
-  2026-11-21d). Nach dem
+  2026-11-21h). Nach dem
   [Konzept](konzept-raumkampf.md) (Abschnitte 4, 6, 7) und SR 39–42, SE 12–13. Hausregeln tragen ⚑;
   der Owner entscheidet sie mit dem Ausprobieren.
   - **Ein fremdes Schiff.** Im Systemflug würfelt „Schiffsbegegnung“ auf der *Starship Encounter
@@ -3265,7 +3265,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     *Ignorieren* gibt keinen Schub. Aufschläge sind verboten. Ohne Zufall: gleicher Stand, gleicher
     Schub. Fremde Schiffe landen nicht und schöpfen nicht; trifft eines eine Oberfläche, ist es ein
     Aufschlag.
-  - **Feuer auslösen** (geändert und freigegeben am 21. November 2026, Kennzeichen 2026-11-21e; Owner, 21. November 2026: „Angreifen
+  - **Feuer auslösen** (geändert und freigegeben am 21. November 2026, Kennzeichen 2026-11-21i; Owner, 21. November 2026: „Angreifen
     sollte mit Würfelanimation explizit getriggert werden, nicht für die nächste Runde vorgemerkt“;
     vorher setzte man mit `aim` ein Ziel, und gefeuert wurde beim Ausführen der Raumrunde). Jede
     Einheit feuert höchstens einmal je Raumrunde (`fired`), an den Orten nach der Bewegung; „Runde
@@ -3287,7 +3287,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     noch nicht, und es gibt noch keine Schiffspositionen (Gunner, Pilot). Missile Racks und
     Sandcaster feuern noch nicht (Stufe 3). Der Schaden einer Salve wirkt erst nach allen ihren
     Würfen.
-  - **DMs erklären** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21e; Owner, 21. November 2026: „DMs sauber
+  - **DMs erklären** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21i; Owner, 21. November 2026: „DMs sauber
     erklären, Zielwert auch schon im Kleinen auf dem Knopf“). Der Knopf „Feuer auf …“ zeigt klein je
     Waffe den Zielwert auf 2W6 (8 − DM, z. B. „Beam Laser 10+“); das Blatt schreibt jeden DM mit
     seinem Grund aus (Entfernung mit Raumbändern, Pulse Laser, Computer-Treffer). Jeder Schuss hält
@@ -3540,14 +3540,14 @@ Diagramm mit diesen Ausnahmen:
   - **Nebenwelten** (2026-11-20c) sind gebaut (`rollSubordinates`). Systeme von davor bekommen die
     Werte beim Öffnen der Kampagne mit Würfen aus Schlüssel und Feld; bis dahin lässt die Prüfung
     Nebenwelten ohne Raumhafen zu, aber nur alle zusammen.
-- **Raumkampf, Stufe 2** (2026-11-21d) ist gebaut (`model/space-combat.ts`), auf Wunsch des Owners
+- **Raumkampf, Stufe 2** (2026-11-21h) ist gebaut (`model/space-combat.ts`), auf Wunsch des Owners
   schon vor der Freigabe des Bilds. Abweichungen: Die erste Einheit ist immer
   das eigene Schiff. Ein fremdes Schiff bekommt beim Auftauchen eine Spur so lang wie die Raumrunden
   (lauter Punkte an seinem Startort), damit sie zur Raumrunde passt.
-- **Bewaffnung** (2026-11-21c) ist gebaut (`model/armament.ts`, Referenzdaten in
+- **Bewaffnung** (2026-11-21g) ist gebaut (`model/armament.ts`, Referenzdaten in
   `src/data/ships.json`). Auf einer Welt ohne Globus gibt es keine Städte; dort zählt für die Werft
   der Raumhafen des UWP (A oder B). Dateien von vorher bekommen beim Laden die Turrets des Entwurfs.
-- **Treibstoff schöpfen** (2026-11-21b) ist gebaut (`model/flight.ts`, `skim`). Abweichungen:
+- **Treibstoff schöpfen** (2026-11-21f) ist gebaut (`model/flight.ts`, `skim`). Abweichungen:
   **`Skimming → World : at`** heißt im Code `giant`, weil `at` schon der Zeitstempel jedes
   Logeintrags ist. **`Journey.jumpDm`** fehlt im Code wie `jump` bei Reisen mit Passage und bei
   Reisen von vorher (zählt als 0). Die Spur hält für die 22 Raumrunden des Schöpfens je einen Punkt

@@ -412,7 +412,7 @@ function armamentLine(boat: Boat): string {
 }
 
 /**
- * Bewaffnung des eigenen Schiffs in der Werft (2026-11-21c): je Hardpoint ein Turret mit seinen Waffen,
+ * Bewaffnung des eigenen Schiffs in der Werft (2026-11-21g): je Hardpoint ein Turret mit seinen Waffen,
  * Einbauen kostet den Preis aus der Kasse, Ausbauen bringt nichts zurück (erst nachfragen).
  */
 function ArmamentSection({ ship, boat }: { ship: ShipView; boat: Boat }) {
@@ -505,7 +505,7 @@ function ArmamentSection({ ship, boat }: { ship: ShipView; boat: Boat }) {
   );
 }
 
-/** Reparatur des Schadens aus dem Raumkampf in der Werft (2026-11-21d, Hausregel: Cr 100.000 je Treffer, Cr 1.000.000 je kritischem). */
+/** Reparatur des Schadens aus dem Raumkampf in der Werft (2026-11-21h, Hausregel: Cr 100.000 je Treffer, Cr 1.000.000 je kritischem). */
 function RepairSection({ boat, funds }: { boat: Boat; funds: number }) {
   const game = useGame();
   return (

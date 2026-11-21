@@ -391,7 +391,7 @@ export interface Snapshot {
   readonly landing: LandingView | undefined;
   /** Die Raumkarte einer Welt ist die Grundkarte (vor Globus und Subsektor), mit dem Systemflug, wenn er dort läuft (2026-11-18c). */
   readonly space: SpaceView | undefined;
-  /** Raumkampf (2026-11-21e): die Schüsse, deren Würfe gerade im Vordergrund rollen, und wie es danach steht. */
+  /** Raumkampf (2026-11-21i): die Schüsse, deren Würfe gerade im Vordergrund rollen, und wie es danach steht. */
   readonly spaceVolley: { readonly key: number; readonly delay: number; readonly shots: readonly SpaceAttackItem[]; readonly endings: readonly string[] } | undefined;
   /** Wohin der Globus fliegen und zoomen soll, nachdem ein Ortsverweis angetippt wurde (siehe ControllerState). */
   readonly globeFocus: { readonly cell: number; readonly n: number } | undefined;
@@ -1588,7 +1588,7 @@ export interface ControllerState {
   readonly globe: { readonly picked: number | undefined; readonly card?: boolean } | undefined;
   /** Die offene Raumkarte (2026-11-18c). */
   readonly space: OpenSpace | undefined;
-  /** Salven, deren Würfe gerade im Vordergrund rollen (2026-11-21e): ab dieser Stelle im Log; `delay` ms warten (die Bewegung spielt erst ab). */
+  /** Salven, deren Würfe gerade im Vordergrund rollen (2026-11-21i): ab dieser Stelle im Log; `delay` ms warten (die Bewegung spielt erst ab). */
   readonly volley?: { readonly from: number; readonly delay: number } | undefined;
   /**
    * Ein Ortsverweis wurde angetippt (etwa ein Ort einer Mission): Der Globus soll zu diesem Feld fliegen
@@ -2640,7 +2640,7 @@ function markedWorlds(campaign: Campaign): ReadonlySet<string> {
   return marked;
 }
 
-/** Die Salven ab einer Stelle im Log, für die Würfe im Vordergrund (2026-11-21e). */
+/** Die Salven ab einer Stelle im Log, für die Würfe im Vordergrund (2026-11-21i). */
 function volleyView(campaign: Campaign, volley: ControllerState['volley']): Snapshot['spaceVolley'] {
   if (volley === undefined) return undefined;
   const entries = campaign.log.slice(volley.from);

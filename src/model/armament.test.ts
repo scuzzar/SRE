@@ -10,7 +10,7 @@ function demo(): Campaign {
   return { ...c, ships: c.ships.map((s) => ({ ...s, turrets: [{ type: 'double', weapons: [] }] })) };
 }
 
-describe('Bewaffnung in der Werft (2026-11-21c)', () => {
+describe('Bewaffnung in der Werft (2026-11-21g)', () => {
   it('ein neues Schiff kommt mit den Turrets seines Entwurfs', () => {
     expect(demo().ships[0]!.turrets).toEqual([{ type: 'double', weapons: [] }]);
     const patrol = addShip(demo(), 'T', undefined).ship;

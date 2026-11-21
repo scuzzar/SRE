@@ -61,9 +61,9 @@ dabei.
 | [Computer und Software](#computer-und-software) | SR 38–39 | ○ |
 | [Standardentwürfe](#standardentwürfe) | SR 35–37 | ○ |
 | [Kleine Schiffe (Small Craft)](#kleine-schiffe-small-craft) | SR 33–35 | ○ |
-| [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system) | SR 42 | ◐ (im Systemflug auf Knopfdruck, ohne Small Craft; 2026-11-21d) |
+| [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system) | SR 42 | ◐ (im Systemflug auf Knopfdruck, ohne Small Craft; 2026-11-21h) |
 | [Handel und Gewerbe](#handel-und-gewerbe) | SR 52 | ○ |
-| [Raumkampf](#raumkampf) | SR 39–42 | ◐ ✱ (Laserfeuer, Rückfeuer, Trefferzonen, Schaden, ein fremdes Schiff mit Absicht; 2026-11-21d) |
+| [Raumkampf](#raumkampf) | SR 39–42 | ◐ ✱ (Laserfeuer, Rückfeuer, Trefferzonen, Schaden, ein fremdes Schiff mit Absicht; 2026-11-21h) |
 | [Vektorbewegung (Mayday, Supplement 3)](#vektorbewegung-mayday-supplement-3) | MD, SS3 4–11 | ◐ ✱ (Bewegung mit echter Schwerkraft als Systemflug, 2026-11-18c; Waffen, Raketen, Sand offen) |
 
 ---
@@ -129,7 +129,7 @@ dabei.
   `Tank ÷ Sprungzahl` gerundet (`ShipDesign./jumpFuel`, Hausregel).
 - Ohne jährliche Wartung steigt das Ausfallrisiko (siehe [Schiffspannen](#schiffspannen)).
 - **Stand in der App** (2026-11-17b, `model/upkeep.ts`): Treibstoff ◐ (gekauft nur raffiniert, Cr500/t;
-  unraffiniert kostenlos am Gasriesen geschöpft, 2026-11-21b);
+  unraffiniert kostenlos am Gasriesen geschöpft, 2026-11-21f);
   Lebenserhaltung je Kabine ✔✱ als Cr2.000 je Reisendem und Sprung mit dem eigenen Schiff
   (Doppelbelegung verdoppelt die Kosten; die Gruppe darf zur Not zu zweit in eine Kabine, für
   jeden Entwurf); Lebenserhaltung je Koje ○ (auf dem eigenen Schiff reist noch niemand in
@@ -197,7 +197,7 @@ Schiffe verdienen an **Fracht**, **Passagieren** und **Post**.
   (1W bestimmt, wie viele Würfel für die Distanz in Hexfeldern geworfen werden; 1W die Richtung von
   sechs; 1W die Wochen im Jump Space, bevor das Schiff wieder auftaucht). **Stand in der App:**
   der Wurf 2W6 je Sprung mit eigenem Schiff ist umgesetzt (`Journey.jump`, `/misjump` bei 13+);
-  DM +1 bei unraffiniertem Treibstoff ✔ seit 2026-11-21b (`Journey.jumpDm`, der Sprung
+  DM +1 bei unraffiniertem Treibstoff ✔ seit 2026-11-21f (`Journey.jumpDm`, der Sprung
   verbraucht unraffinierten Treibstoff zuerst); die DMs für die Nähe zu Himmelskörpern kommen
   erst, wenn die App sie abbildet (Entscheidung des Owners,
   16. November 2026). Die Folgen – zufälliger Zielort, Wochen im Jump Space, Schiff vernichtet
@@ -344,7 +344,7 @@ durch Treffer auf ein Feld mit „–“, arbeitet der Antrieb nicht mehr (SR 41
 
 - **Armaments**: ein Hardpoint je 100 t Schiff; jeder Hardpoint trägt ein Turret und braucht 1 t
   für die Feuerleitung.
-- **Stand in der App** (2026-11-21c, `model/armament.ts`): Turrets und Waffen ✔ mit den Preisen
+- **Stand in der App** (2026-11-21g, `model/armament.ts`): Turrets und Waffen ✔ mit den Preisen
   dieser Tabelle, eingebaut in der Werft an einem Raumhafen A oder B (SR 29), ausgebaut ohne Erlös
   (✱); Hardpoints stecken im Preis des Entwurfs, zusätzliche gibt es nicht; die Tonne Feuerleitung
   ist im Entwurf eingeplant (✱). Turrets ab Werft: Scout/Courier und Safari Ship ein leerer Double
@@ -372,7 +372,7 @@ durch Treffer auf ein Feld mit „–“, arbeitet der Antrieb nicht mehr (SR 41
 
 - **Atmosphärische Streulinienform (Streamlining)**: MCr1 pro 100 t, erlaubt Landung auf
   Planetenoberflächen und das Auftanken an Gasriesen (Skimming) oder in Gewässern; muss beim Bau
-  vorgesehen werden, nicht nachrüstbar. **Stand in der App** (2026-11-21b): `ShipDesign.streamlined`
+  vorgesehen werden, nicht nachrüstbar. **Stand in der App** (2026-11-21f): `ShipDesign.streamlined`
   ✔ (Scout/Courier, Free Trader, Subsidized Merchant, Yacht, Patrol Cruiser, Safari Ship; aus Book 2
   nach Kenntnis von Claude, nicht am PDF geprüft); Schöpfen am Gasriesen im Systemflug ✔ (✱
   Eintauchen mit höchstens 5 km/s, 22 Raumrunden); Landen dürfen vorerst alle ✱; in Gewässern ○.
@@ -751,7 +751,7 @@ umprogrammieren. Nach beiden Spielerzügen die Interphase.
 | Small Craft Weaponry | zerstört die Bewaffnung des Small Craft |
 | Small Craft Drive | das Small Craft kann sich nicht mehr bewegen/beschleunigen/feuern |
 
-**Stand in der App** (2026-11-21d, `model/space-combat.ts`, alles weitere unter *Raumkampf, Stufe 2*
+**Stand in der App** (2026-11-21h, `model/space-combat.ts`, alles weitere unter *Raumkampf, Stufe 2*
 in `domain-model.md`): Laserfeuer ✔ (8+, Pulse −1, Entfernung über 25 und 50 Raumbänder) und
 Rückfeuer ✔ gleichzeitig nach der Bewegung, ✱ ohne Programme und ohne Schiffspositionen; Trefferzonen
 und kritische Treffer ✔; Schaden ✱ ohne Antriebsbuchstaben (je Treffer −1 G bzw. −1 Sprung,

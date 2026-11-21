@@ -27,7 +27,7 @@ import {
 
 const d6 = (random: Random): number => random.int(1, 6);
 
-// Raumkampf, Stufe 2: Gegner und Laser (Domänenmodell 2026-11-21d; Konzept: docs/konzept-raumkampf.md,
+// Raumkampf, Stufe 2: Gegner und Laser (Domänenmodell 2026-11-21h; Konzept: docs/konzept-raumkampf.md,
 // Abschnitte 4, 6, 7; Regeln SR 39–42, SE 12–13 in docs/regeln-schiffe.md).
 
 /** Wohin ein Treffer geht (SE 12, Hit Locations und Critical Hits). */
@@ -72,7 +72,7 @@ export const HIT_TARGET = 8;
 const ATTACK_KM = 5 * BAND_KM;
 /** Über diese Entfernung kein Schuss, und ein fremdes Schiff ist entkommen (Tracking, SR 42): 90 Raumbänder. */
 export const TRACKING_BANDS = 90;
-/** Reparatur je Treffer und je kritischem Treffer in Cr (Hausregel 2026-11-21d). */
+/** Reparatur je Treffer und je kritischem Treffer in Cr (Hausregel 2026-11-21h). */
 export const REPAIR_HIT = 100_000;
 export const REPAIR_CRITICAL = 1_000_000;
 
@@ -241,7 +241,7 @@ export function placeFoe(campaign: Campaign, design: string, intent: Intent, clo
 }
 
 /**
- * Warum die Einheit `index` jetzt nicht auf `target` feuern kann (2026-11-21e); `undefined`, wenn sie
+ * Warum die Einheit `index` jetzt nicht auf `target` feuern kann (2026-11-21i); `undefined`, wenn sie
  * kann. Jede Einheit feuert höchstens einmal je Raumrunde.
  */
 export function fireBlocker(campaign: Campaign, index: number, target: number): string | undefined {
@@ -329,7 +329,7 @@ function shotsOf(campaign: Campaign, flight: SystemFlight, scene: Scene, from: n
   return workingLasers(turretsOfUnit(campaign, a), damage).map(({ turret, weapon }) => ({ from, to, turret, weapon, bands, computerHits, dm: sumDms(dmPartsOf(weapon, bands, computerHits)) }));
 }
 
-/** Ein Teil des DM eines Laserschusses (2026-11-21e): wofür und wie viel. */
+/** Ein Teil des DM eines Laserschusses (2026-11-21i): wofür und wie viel. */
 export interface SpaceDmPart {
   readonly reason: 'range' | 'pulse' | 'computer';
   readonly dm: number;
@@ -346,7 +346,7 @@ export function dmPartsOf(weapon: string, bands: number, computerHits: number): 
 
 const sumDms = (parts: readonly SpaceDmPart[]) => parts.reduce((n, p) => n + p.dm, 0);
 
-/** Was ein Schuss von `from` auf `to` jetzt bräuchte (2026-11-21e): Entfernung, Computer-Treffer und je Waffe Anzahl, DMs und der nötige Wurf auf 2W6. */
+/** Was ein Schuss von `from` auf `to` jetzt bräuchte (2026-11-21i): Entfernung, Computer-Treffer und je Waffe Anzahl, DMs und der nötige Wurf auf 2W6. */
 export interface FirePreview {
   readonly bands: number;
   readonly computerHits: number;
@@ -460,7 +460,7 @@ function volley(campaign: Campaign, from: number, to: number, random: Random, cl
 }
 
 /**
- * Die Einheit `index` feuert auf `target` (2026-11-21e): sofort, ihre Salve, dann das Rückfeuer des
+ * Die Einheit `index` feuert auf `target` (2026-11-21i): sofort, ihre Salve, dann das Rückfeuer des
  * Ziels, wenn es in dieser Raumrunde noch nicht gefeuert hat und kann (SR 40). Ein beschossenes
  * fremdes Schiff, das nicht angriff, greift danach an (mit Laser) oder flieht. Danach das Ende des
  * Raumkampfs (`settleBattle`).
@@ -478,7 +478,7 @@ export function fireAt(campaign: Campaign, index: number, target: number, random
   return settleBattle({ ...after, flight: { ...flight, units } }, clock);
 }
 
-/** Nach der Bewegung (2026-11-21e): Angreifende fremde Schiffe feuern auf das eigene Schiff, wenn sie können. */
+/** Nach der Bewegung (2026-11-21i): Angreifende fremde Schiffe feuern auf das eigene Schiff, wenn sie können. */
 export function foesFire(campaign: Campaign, random: Random, clock: Clock): Campaign {
   let after = campaign;
   for (const [i, u] of activeFlight(campaign).units.entries()) {

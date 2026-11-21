@@ -21,7 +21,7 @@ export function createDemoCampaign(clock: Clock, key = 'key-k1'): Campaign {
   const funded = book(there, 'income', DEMO_FUNDS, clock, 'Startkapital');
   // Ein schuldenfreier Scout mit vollem Tank, damit man den Systemflug gleich ausprobieren kann (2026-11-18c).
   const { campaign: withShip, ship } = addShip(funded, DEMO_SHIP_DESIGN, undefined);
-  // Mit einem Beam Laser im Doppelturm, damit man auch den Raumkampf gleich ausprobieren kann (2026-11-21d).
+  // Mit einem Beam Laser im Doppelturm, damit man auch den Raumkampf gleich ausprobieren kann (2026-11-21h).
   const named = { ...withShip, ships: withShip.ships.map((s) => (s.id === ship.id ? { ...s, name: DEMO_SHIP_NAME, turrets: [{ type: 'double', weapons: ['beam-laser'] }] } : s)) };
   // Die Änderungszeit ist die der Buchung; die Uhr wird dafür nicht noch einmal gefragt.
   // Kessra hat immer dasselbe Sternsystem, gleich mit welchem Schlüssel (2026-11-20).

@@ -10,11 +10,11 @@ import { worldById, worldOf, type NamedWorld, type World } from './sector';
 export const bookingKinds = ['income', 'expense', 'deposit', 'payout', 'purchase', 'sale', 'lottery', 'rent', 'fare', 'ship', 'ticket'] as const;
 export type BookingKind = (typeof bookingKinds)[number];
 
-/** Wofür eine Buchung der Art `ship` ist (2026-11-17b): Kauf oder Anzahlung, Monatsrate, Treibstoff, Liegegebühr, Lebenserhaltung, Bewaffnung (2026-11-21c). */
+/** Wofür eine Buchung der Art `ship` ist (2026-11-17b): Kauf oder Anzahlung, Monatsrate, Treibstoff, Liegegebühr, Lebenserhaltung, Bewaffnung (2026-11-21g). */
 export const shipCosts = ['price', 'rate', 'fuel', 'berthing', 'lifeSupport', 'armament', 'repair'] as const;
 export type ShipCost = (typeof shipCosts)[number];
 
-/** Die laufenden Kosten: alles außer Kauf, Anzahlung und Bewaffnung (2026-11-21c). Sie stehen in der Monatsabrechnung. */
+/** Die laufenden Kosten: alles außer Kauf, Anzahlung und Bewaffnung (2026-11-21g). Sie stehen in der Monatsabrechnung. */
 export function isRunningCost(booking: Booking): boolean {
   return booking.kind === 'ship' && booking.shipCost !== undefined && booking.shipCost !== 'price' && booking.shipCost !== 'armament' && booking.shipCost !== 'repair';
 }

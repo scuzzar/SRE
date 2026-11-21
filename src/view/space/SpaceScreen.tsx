@@ -16,7 +16,7 @@ const DEAD = 14;
 const PLAY_MS = 1800;
 const OWN = '#4fd1ff';
 const WARN = '#ff5a6a';
-/** Fremde Schiffe im Raumkampf (2026-11-21d). */
+/** Fremde Schiffe im Raumkampf (2026-11-21h). */
 const FOE = '#ff6b6b';
 
 interface Camera {
@@ -98,7 +98,7 @@ function startCamera(space: SpaceView, width: number, height: number): Camera {
   return { cx: 0, cy: -(0.17 * height) / scale, scale };
 }
 
-/** Ein Laserschuss, den die Raumkarte zeigt (2026-11-21e): wer auf wen, Treffer oder nicht, die Trefferzonen. */
+/** Ein Laserschuss, den die Raumkarte zeigt (2026-11-21i): wer auf wen, Treffer oder nicht, die Trefferzonen. */
 export interface ShotEffect {
   readonly id: string;
   readonly attacker: string;
@@ -131,7 +131,7 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
   const pointers = useRef(new Map<number, Point>());
   const [, redraw] = useState(0);
 
-  // Taucht ein fremdes Schiff auf, rückt die Kamera so, dass es mit im Bild ist (2026-11-21d).
+  // Taucht ein fremdes Schiff auf, rückt die Kamera so, dass es mit im Bild ist (2026-11-21h).
   const foes = space.flight?.units.filter((u) => u.foe).length ?? 0;
   const seenFoes = useRef(foes);
   useEffect(() => {
@@ -255,7 +255,7 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
           trail = [...trailOf({ ...unit, track: unit.track.slice(0, -1), position: unit.track.at(-1)?.position ?? unit.position, velocity: unit.track.at(-1)?.velocity ?? unit.velocity }), ...frames.slice(0, i + 1).map((f) => f[unit.index]!), at];
         }
         path(trail, unit.foe ? 'rgba(255, 107, 107, 0.35)' : 'rgba(79, 209, 255, 0.35)', 1.2);
-        // Raumkampf (2026-11-21e): die Sichtlinie zum fremden Schiff, rot gestrichelt, wenn frei.
+        // Raumkampf (2026-11-21i): die Sichtlinie zum fremden Schiff, rot gestrichelt, wenn frei.
         if (!playing && unit.foe && !unit.wreck && unit.sight && flight?.units[0]) path([flight.units[0].position, unit.position], 'rgba(255, 107, 107, 0.45)', 1, [4, 6]);
         if (!playing && !unit.crashed && !unit.foe) {
           path(unit.preview.after, 'rgba(79, 209, 255, 0.75)', 1.4, [6, 5]);
@@ -370,7 +370,7 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
         seen.current.set(unit.name, at);
       }
 
-      // Laserschüsse (2026-11-21e): Strahl vom Schützen, ein Treffer endet mit Blitz im Ziel, ein
+      // Laserschüsse (2026-11-21i): Strahl vom Schützen, ein Treffer endet mit Blitz im Ziel, ein
       // Fehlschuss zischt daneben vorbei; die getroffenen Komponenten steigen als Text auf.
       shots.current = shots.current.filter((s) => now - s.start < SHOT_MS);
       for (const { effect, start } of shots.current) {

@@ -248,7 +248,7 @@ describe('Reise mit eigenem Schiff', () => {
     expect(after.characters.every((c) => !c.dead)).toBe(true);
   });
 
-  it('verbraucht unraffinierten Treibstoff zuerst; der Sprung bekommt dann DM +1, und mit einer 12 ist es ein Fehlsprung (2026-11-21b)', () => {
+  it('verbraucht unraffinierten Treibstoff zuerst; der Sprung bekommt dann DM +1, und mit einer 12 ist es ein Fehlsprung (2026-11-21f)', () => {
     const skimmed = { ...scout, ships: scout.ships.map((s) => ({ ...s, unrefined: 25 })) };
     const after = travelShip(skimmed, '0103', fixedRandom(6, 6), clock);
     expect(after.ships[0]).toMatchObject({ fuel: 20, unrefined: 5 });

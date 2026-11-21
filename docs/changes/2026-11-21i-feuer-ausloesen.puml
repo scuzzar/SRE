@@ -1,6 +1,6 @@
 ' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
 @startuml
-!$change = "2026-11-21b"
+!$change = "2026-11-21i"
 ' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
 ' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
 ' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
@@ -47,7 +47,7 @@
 !return ""
 !endfunction
 !pragma layout smetana
-title Änderung 2026-11-21b: Treibstoff am Gasriesen schöpfen: Logeintrag Skimming, unraffinierter Treibstoff im Tank (Ship.unrefined), DM des Sprungwurfs (Journey.jumpDm)
+title Änderung 2026-11-21i: Raumkampf: Feuer wird ausgelöst statt vorgemerkt – jede Einheit feuert einmal je Raumrunde, nach der Bewegung (SpaceUnit.fired statt aim); ein Schuss hält fest, woraus sein DM kam (SpaceAttack.bands, computerHits)
 hide empty members
 hide methods
 skinparam classAttributeIconSize 0
@@ -84,133 +84,76 @@ hide <<browser>> stereotype
 ' Kampagne und Charaktere
 
 ' Schiffe
-  class Ship $schiffe {
-    name: string
-    fuel: number
-    $new("2026-11-21b", "unrefined: number")
-    cargo: number
-    price: number
-    initialLoan: number [0..1]
-    loanBalance: number [0..1]
-    /monthlyPayment: number [0..1]
-    nextPaymentDay: number [0..1]
-    berthedSince: number [0..1]
-    retired: boolean
-  }
-  class ShipSoftware $schiffe
-  class ShipDesign <<reference>> $schiffe
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
-  class Skimming $raum $newClass("2026-11-21b") {
-    tons: number
+  class SystemFlight $raum
+  class ShipDamage <<value>> $raum
+  enum HitZone <<value>> $raum
+  enum Intent <<value>> $raum
+  class SpaceAttack $raum {
+    round: number
+    attacker: string
+    target: string
+    turret: number
+    dice: number[2]
+    dm: number
+    $new("2026-11-21i", "bands: number")
+    $new("2026-11-21i", "computerHits: number")
+    /hit: boolean
+    hits: HitZone [*]
   }
+  class SpaceUnit $raum {
+    position: Vec
+    velocity: Vec
+    thrust: Vec [0..1]
+    crashed: boolean
+    name: string [0..1]
+    intent: Intent [0..1]
+    $new("2026-11-21i", "fired: boolean")
+    /maxG: number
+  }
+  class TrackPoint <<value>> $raum
 
 ' Charaktererschaffung und Lebenslauf
 
 ' Subsektor und Welten
-  class Hex $sektor
-  class World $sektor {
-    kind: WorldKind
-    name: string [0..1]
-    note: string [0..1]
-    populationMultiplier: number [0..1]
-    orbit: number [0..1]
-    angle: number [0..1]
-    captured: boolean
-    diameter: number [0..1]
-    large: boolean [0..1]
-    radius: number [0..1]
-    spaceport: Spaceport [0..1]
-    facilities: Facility [*]
-    bases: BaseKind [*]
-    /main: boolean
-    /zone: Zone [0..1]
-    /gravity: number
-  }
-  enum WorldKind <<value>> $sektor
-  enum Spaceport <<value>> $sektor
-  enum BaseKind <<value>> $sektor
-  enum Facility <<value>> $sektor
-  class Uwp <<value>> $sektor
 
 ' Missionen
 
 ' Verlauf
-  abstract class LogEntry $probe {
-    at: datetime
-    day: number [0..1]
-  }
-  class DiceRoll $probe
-  class Note $probe
 
 ' Zeit und Reisen
-  class Journey $reise {
-    days: number
-    npcDie: number [0..1]
-    lot: number [0..1]
-    /pot: number
-    jump: number[2]
-    $new("2026-11-21b", "jumpDm: number")
-    /misjump: boolean
-  }
-  class Passenger <<value>> $reise
-  class LowBerth <<value>> $reise
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
-  class TaskResult $probe
 
 ' Referenzdaten
-  class Surface <<value>> $sektor
 ' Fahrzeuge und Wege auf der Oberfläche
-  class Temperature <<reference>> $sektor
-  class TradeCode <<reference>> $sektor
 
 ' Kampagne
 
 ' Schiffe
-Ship "*" --> "1" ShipDesign : design
-Ship "1" *-- "0..*" ShipSoftware : software
 
 ' Raumkarte und Systemflug
-LogEntry <|-$newArrow("2026-11-21b")- Skimming
-Skimming "*" -$newArrow("2026-11-21b")-> "1" World : at
-Skimming "*" -$newArrow("2026-11-21b")-> "1" Ship : ship
-Hex "1" *-- "*" World : worlds {ordered}
-Hex "*" --> "0..1" World : main
-World "*" --> "0..1" World : moonOf
-World --> WorldKind
-World --> Spaceport
-World --> Facility
-World --> BaseKind
+SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
+SpaceUnit "1" *-- "0..1" ShipDamage : damage
+SpaceUnit "*" -$goneArrow("2026-11-21i")-> "0..1" SpaceUnit : aim
+SpaceUnit --> Intent
+SpaceAttack --> HitZone
+SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
 
 ' Zeit und Reisen
-LogEntry <|-- Journey
-Journey "*" --> "1" Hex : from
-Journey "*" --> "1" Hex : to
-Journey "1" *-- "0..*" Passenger : passengers
-Journey "1" *-- "*" LowBerth : berths {ordered}
-Journey "*" --> "0..1" LowBerth : /winner
-Journey "*" --> "0..1" Ship : ship
 
 ' Charaktererschaffung und Lebenslauf
 
 ' Laufbahnen (Referenzdaten)
 
 ' Subsektor und Welten
-World "1" *-- "1" Uwp : uwp
-World "*" --> "*" TradeCode : /trade
-World "*" --> "0..1" Temperature : temperature
-World "1" *-- "0..1" Surface : surface
 
 ' Charakter
 
 ' Waffen (Referenzdaten)
 
 ' Verlauf
-LogEntry <|-- DiceRoll
-LogEntry <|-- TaskResult
-LogEntry <|-- Note
-Note "*" --> "0..1" LogEntry : interprets
 
 ' Probe
 
@@ -228,6 +171,6 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Ship #line:d0021b;line.bold
-class Journey #line:d0021b;line.bold
+class SpaceAttack #line:d0021b;line.bold
+class SpaceUnit #line:d0021b;line.bold
 @enduml

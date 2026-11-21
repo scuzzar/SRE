@@ -1924,7 +1924,7 @@ export class GameController {
     this.inShip(() => buyShip(this.campaign, design, method, this.deps.clock));
   }
 
-  /** Bewaffnung in der Werft (2026-11-21c): ein Turret auf dem nächsten freien Hardpoint, bezahlt aus der Kasse. */
+  /** Bewaffnung in der Werft (2026-11-21g): ein Turret auf dem nächsten freien Hardpoint, bezahlt aus der Kasse. */
   installTurret(type: string): void {
     this.inShip(() => installTurret(this.campaign, type, this.deps.clock));
   }
@@ -2533,14 +2533,14 @@ export class GameController {
     const ship = shipById(this.campaign, activeFlight(this.campaign).units[0]!.ship!).name;
     const before = this.campaign.log.length;
     const run = runRound(this.campaign, this.deps.clock, this.deps.random);
-    // Feuern fremde Schiffe nach der Bewegung, rollen ihre Würfe, sobald die Bewegung abgespielt ist (2026-11-21e).
+    // Feuern fremde Schiffe nach der Bewegung, rollen ihre Würfe, sobald die Bewegung abgespielt ist (2026-11-21i).
     const volley = run.campaign.log.slice(before).some((e) => e.kind === 'spaceAttack') ? { volley: { from: before, delay: 2200 } } : {};
-    // Im Raumkampf zerstört (2026-11-21d): Der Flug ist zu Ende, das Schiff ausgeblendet.
+    // Im Raumkampf zerstört (2026-11-21h): Der Flug ist zu Ende, das Schiff ausgeblendet.
     if (run.lost) return this.change(run.campaign, { space: { world: space.world }, ...volley, notice: `${ship} ist im Raumkampf zerstört worden. Was aus der Gruppe wird, entscheidet das Spiel.` });
     // Gelandet: Der Flug ist zu Ende, die Gruppe auf dieser Welt; die Raumkarte bleibt offen (Owner, 21. November 2026).
     // Auch auf der Startwelt: Die Landung ist eine Ankunft, Oberfläche und Globus entstehen, falls sie fehlen.
     if (run.landed !== undefined) return this.change({ ...run.campaign, hexes: readyForParty(run.campaign.hexes, run.landed, this.deps.random) }, { space: { world: space.world }, notice: `${ship} ist auf ${worldOf(run.campaign.hexes, run.landed).name} gelandet. Die Gruppe ist jetzt dort.` });
-    // Geschöpft (2026-11-21b): Der Flug läuft weiter, das Schiff steht wieder auf der Kreisbahn.
+    // Geschöpft (2026-11-21f): Der Flug läuft weiter, das Schiff steht wieder auf der Kreisbahn.
     const skimmed = run.skimmed ? { notice: `${ship} hat Treibstoff geschöpft und steht wieder auf der Umlaufbahn.` } : {};
     this.change(run.campaign, { space: { world: space.world, run: { round: activeFlight(run.campaign).round, t, every: 2, frames: run.frames } }, ...skimmed, ...volley });
   }
@@ -2551,7 +2551,7 @@ export class GameController {
     this.change(endFlight(this.campaign, this.deps.clock), { space: { world: space.world } });
   }
 
-  /** Würfelt eine Schiffsbegegnung im Systemflug (SE 13, 2026-11-21d); ohne Ergebnis nur ein Hinweis. */
+  /** Würfelt eine Schiffsbegegnung im Systemflug (SE 13, 2026-11-21h); ohne Ergebnis nur ein Hinweis. */
   rollShipEncounter(): void {
     const space = this.openSpaceState();
     try {
@@ -2565,13 +2565,13 @@ export class GameController {
     }
   }
 
-  /** Lässt ein fremdes Schiff von Hand auftauchen: Entwurf und Absicht (2026-11-21d). */
+  /** Lässt ein fremdes Schiff von Hand auftauchen: Entwurf und Absicht (2026-11-21h). */
   placeFoe(design: string, intent: Intent): void {
     const space = this.openSpaceState();
     this.change(placeFoe(this.campaign, design, intent, this.deps.clock), { space: without(space, 'aim') });
   }
 
-  /** Das eigene Schiff feuert jetzt auf eine Einheit (2026-11-21e); die Würfe rollen im Vordergrund. */
+  /** Das eigene Schiff feuert jetzt auf eine Einheit (2026-11-21i); die Würfe rollen im Vordergrund. */
   fireAt(target: number): void {
     const space = this.openSpaceState();
     const before = this.campaign.log.length;
@@ -2590,7 +2590,7 @@ export class GameController {
     this.update({ volley: undefined });
   }
 
-  /** Repariert das eigene Schiff in der Werft (2026-11-21d). */
+  /** Repariert das eigene Schiff in der Werft (2026-11-21h). */
   repairShip(): void {
     this.inShip(() => repairShip(this.campaign, this.deps.clock));
   }

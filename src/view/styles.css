@@ -9562,7 +9562,7 @@ button:disabled {
   }
 }
 
-/* Bewaffnung in der Werft (2026-11-21c) */
+/* Bewaffnung in der Werft (2026-11-21g) */
 .armament .turret-list {
   list-style: none;
   margin: 0;
@@ -9591,7 +9591,7 @@ button:disabled {
   max-width: 100%;
 }
 
-/* Raumkampf im Blatt der Raumkarte (2026-11-21d) */
+/* Raumkampf im Blatt der Raumkarte (2026-11-21h) */
 .space-battle {
   display: grid;
   gap: 6px;
@@ -9621,7 +9621,7 @@ button:disabled {
   align-items: center;
 }
 
-/* Raumkampf, Feuer auslösen (2026-11-21e) */
+/* Raumkampf, Feuer auslösen (2026-11-21i) */
 .space-foe-head {
   display: flex;
   justify-content: space-between;
@@ -9662,7 +9662,7 @@ button:disabled {
   opacity: 0.45;
 }
 
-/* Salven im Vordergrund (2026-11-21e) */
+/* Salven im Vordergrund (2026-11-21i) */
 .space-volley .dice-roll-kicker {
   color: #ff8a8a;
   letter-spacing: 0.18em;
@@ -9688,7 +9688,7 @@ button:disabled {
   color: var(--gold);
 }
 
-/* DMs sauber erklärt (2026-11-21e) */
+/* DMs sauber erklärt (2026-11-21i) */
 .action.fire {
   flex-direction: column;
   gap: 2px;
@@ -9715,7 +9715,7 @@ button:disabled {
   padding: 0 16px;
 }
 
-/* Die Würfe des Raumkampfs nur in der unteren Hälfte, damit oben die Karte Strahl und Treffer zeigt (2026-11-21e) */
+/* Die Würfe des Raumkampfs nur in der unteren Hälfte, damit oben die Karte Strahl und Treffer zeigt (2026-11-21i) */
 .dice-roll.space-volley {
   inset: auto 0 0 0;
   height: 60%;

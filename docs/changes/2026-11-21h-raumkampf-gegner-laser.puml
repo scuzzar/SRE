@@ -1,6 +1,6 @@
 ' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
 @startuml
-!$change = "2026-11-21d"
+!$change = "2026-11-21h"
 ' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
 ' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
 ' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
@@ -47,7 +47,7 @@
 !return ""
 !endfunction
 !pragma layout smetana
-title Änderung 2026-11-21d: Raumkampf Stufe 2: ein fremdes Schiff mit Absicht, Laserfeuer und Rückfeuer, Trefferzonen und Schaden am Schiff, Ende des Raumkampfs; Schiffskosten repair
+title Änderung 2026-11-21h: Raumkampf Stufe 2: ein fremdes Schiff mit Absicht, Laserfeuer und Rückfeuer, Trefferzonen und Schaden am Schiff, Ende des Raumkampfs; Schiffskosten repair
 hide empty members
 hide methods
 skinparam classAttributeIconSize 0
@@ -104,7 +104,7 @@ hide <<browser>> stereotype
     berthing
     lifeSupport
     armament
-    $new("2026-11-21d", "repair")
+    $new("2026-11-21h", "repair")
   }
   class ShipSoftware $schiffe
   class Turret $schiffe
@@ -135,7 +135,7 @@ hide <<browser>> stereotype
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class SystemFlight $raum
-  class ShipDamage <<value>> $raum $newClass("2026-11-21d") {
+  class ShipDamage <<value>> $raum $newClass("2026-11-21h") {
     hits: HitZone [*]
     turretsOut: number [*]
     /maneuver: number
@@ -143,7 +143,7 @@ hide <<browser>> stereotype
     /disabled: boolean
     /destroyed: boolean
   }
-  enum HitZone <<value>> $raum $newClass("2026-11-21d") {
+  enum HitZone <<value>> $raum $newClass("2026-11-21h") {
     powerPlant
     maneuver
     jump
@@ -159,19 +159,19 @@ hide <<browser>> stereotype
     criticalComputer
     explode
   }
-  enum Intent <<value>> $raum $newClass("2026-11-21d") {
+  enum Intent <<value>> $raum $newClass("2026-11-21h") {
     attack
     flee
     ignore
   }
-  class SpaceBattle $raum $newClass("2026-11-21d") {
+  class SpaceBattle $raum $newClass("2026-11-21h") {
     foe: string
     intent: Intent
     encounter: number[2] [0..1]
     reaction: number[2] [0..1]
     attack: number[2] [0..1]
   }
-  class SpaceAttack $raum $newClass("2026-11-21d") {
+  class SpaceAttack $raum $newClass("2026-11-21h") {
     round: number
     attacker: string
     target: string
@@ -181,11 +181,11 @@ hide <<browser>> stereotype
     /hit: boolean
     hits: HitZone [*]
   }
-  class SpaceBattleEnd $raum $newClass("2026-11-21d") {
+  class SpaceBattleEnd $raum $newClass("2026-11-21h") {
     foe: string
     outcome: BattleOutcome
   }
-  enum BattleOutcome <<value>> $raum $newClass("2026-11-21d") {
+  enum BattleOutcome <<value>> $raum $newClass("2026-11-21h") {
     destroyed
     disabled
     escaped
@@ -197,8 +197,8 @@ hide <<browser>> stereotype
     velocity: Vec
     thrust: Vec [0..1]
     crashed: boolean
-    $new("2026-11-21d", "name: string [0..1]")
-    $new("2026-11-21d", "intent: Intent [0..1]")
+    $new("2026-11-21h", "name: string [0..1]")
+    $new("2026-11-21h", "intent: Intent [0..1]")
     /maxG: number
   }
   class TrackPoint <<value>> $raum
@@ -238,21 +238,21 @@ ShipDesign "*" --> "1" ComputerModel : computer
 
 ' Raumkarte und Systemflug
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
-SpaceUnit "*" -$goneArrow("2026-11-21d")-> "1" Ship : ship
-SpaceUnit "*" -$newArrow("2026-11-21d")-> "0..1" Ship : ship
-SpaceUnit "*" -$newArrow("2026-11-21d")-> "0..1" ShipDesign : design
-SpaceUnit "1" *-$newArrow("2026-11-21d")- "0..1" ShipDamage : damage
-SpaceUnit "*" -$newArrow("2026-11-21d")-> "0..1" SpaceUnit : aim
-Ship "1" *-$newArrow("2026-11-21d")- "0..1" ShipDamage : damage
-ShipDamage -$newArrow("2026-11-21d")-> HitZone
-SpaceUnit -$newArrow("2026-11-21d")-> Intent
-LogEntry <|-$newArrow("2026-11-21d")- SpaceBattle
-LogEntry <|-$newArrow("2026-11-21d")- SpaceAttack
-LogEntry <|-$newArrow("2026-11-21d")- SpaceBattleEnd
-SpaceBattle "*" -$newArrow("2026-11-21d")-> "1" ShipDesign : design
-SpaceAttack "*" -$newArrow("2026-11-21d")-> "1" ShipWeapon : weapon
-SpaceAttack -$newArrow("2026-11-21d")-> HitZone
-SpaceBattleEnd -$newArrow("2026-11-21d")-> BattleOutcome
+SpaceUnit "*" -$goneArrow("2026-11-21h")-> "1" Ship : ship
+SpaceUnit "*" -$newArrow("2026-11-21h")-> "0..1" Ship : ship
+SpaceUnit "*" -$newArrow("2026-11-21h")-> "0..1" ShipDesign : design
+SpaceUnit "1" *-$newArrow("2026-11-21h")- "0..1" ShipDamage : damage
+SpaceUnit "*" -$newArrow("2026-11-21h")-> "0..1" SpaceUnit : aim
+Ship "1" *-$newArrow("2026-11-21h")- "0..1" ShipDamage : damage
+ShipDamage -$newArrow("2026-11-21h")-> HitZone
+SpaceUnit -$newArrow("2026-11-21h")-> Intent
+LogEntry <|-$newArrow("2026-11-21h")- SpaceBattle
+LogEntry <|-$newArrow("2026-11-21h")- SpaceAttack
+LogEntry <|-$newArrow("2026-11-21h")- SpaceBattleEnd
+SpaceBattle "*" -$newArrow("2026-11-21h")-> "1" ShipDesign : design
+SpaceAttack "*" -$newArrow("2026-11-21h")-> "1" ShipWeapon : weapon
+SpaceAttack -$newArrow("2026-11-21h")-> HitZone
+SpaceBattleEnd -$newArrow("2026-11-21h")-> BattleOutcome
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
 DeckPlan "*" --> "1" ShipDesign : design
 
