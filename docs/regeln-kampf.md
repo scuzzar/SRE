@@ -71,6 +71,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Feldartillerie](#feldartillerie) | B4 48–49 | ○ |
 | [Tierbegegnungen](#tierbegegnungen) | SE 18–19, SR 46–49 | ○ |
 | [Fahrzeuge und Reisen über Land](#fahrzeuge-und-reisen-über-land) | SR 55–57, SA 1, 3, 7 | ✔ ✱ (Geschwindigkeit je Geländeart, Fahrt Tag für Tag, Miete; Pannen, Reichweite, Linienverkehr ○) |
+| [Bewaffnung von Small Craft](#bewaffnung-von-small-craft) | SR 32–35 | ○ |
 
 ---
 
@@ -1905,6 +1906,53 @@ Geländeart der Oberflächenkarte statt Stunden je Hex.
 
 ---
 
+## Bewaffnung von Small Craft
+
+*SR 32, „Armaments“; SR 33, „Crew“ (Gunner), „Weaponry“, „Small Craft“; SR 34–35, „Standard Small
+Craft“.* App: ○ Die App kennt keine Raumschiffe und keinen Raumkampf; aufgenommen, weil die Frage nach
+der Bewaffnung kam. Den Raumkampf selbst (SE 12–13) beschreibt dieser Abschnitt nicht.
+
+**Small Craft** sind Fahrzeuge **unter 100 t**; keines kann springen (SR 33). Es gibt acht
+Standardtypen, alle stromlinienförmig, mit Treibstoffschaufeln, Bauplan Cr100, etwa 12 Monate Bauzeit.
+Jeder Typ hat **Excess Space**, freie Tonnage, die der Käufer mit Ausstattung aus der Fittings-Tabelle
+belegt; deren Preise sind im Typpreis enthalten.
+
+**Bewaffnung (SR 34):** Anders als große Schiffe haben Small Craft **keine Hardpoints und keine
+Türme**. Jedes Small Craft darf **1 t für Bewaffnung** abzweigen und darin **bis zu drei Waffen**
+einbauen; welche, regelt der Typ (Tabelle). Woher die Tonne kommt, sagt SR nicht allgemein; nur beim Modular Cutter
+steht, dass seine 2,5 t Excess Space für Waffen, Computer und eventuell einen dritten Sitz gedacht sind.
+
+**Besatzung (SR 33–34):** Die Standardbesatzung ist 2 (außer Fighter: 1), Pilot und *Rider*; der
+Pilot braucht Ship's Boat (oder Pilot −1), kann das Fahrzeug auch allein fliegen. Der Rider kann
+Gunner, Passagier oder Kopilot sein. Ein bewaffnetes Small Craft braucht einen **Gunner** zusätzlich
+zum Piloten (Gunnery-1 oder besser); fehlt die Bedrohung, kann er wegfallen. **Ohne Gunner** darf der
+Pilot die Waffe selbst abfeuern, mit **DM −1**.
+
+**Waffen (SR 33):** Pulse Laser (mehr Schaden), Beam Laser (trifft leichter), Missile Racks (Raketen
+je etwa 50 kg, Cr5.000; auch als Bombe oder Sonde umbaubar) und Sandcaster (Abwehr gegen Laser;
+Nachfüllkanister etwa 50 kg, Cr400). Preise der Waffen selbst stehen in der *Weapons and Mounts*-Tabelle.
+
+**Computer und Laser:** Bei den meisten Typen verdrängt ein größerer Computer die Laser. Computer werden
+zum normalen Preis zugekauft.
+
+| Typ | Hull | Laser (Beam oder Pulse) | übrige Waffen | Größter Computer | Laser je Computer |
+|---|---|---|---|---|---|
+| Launch (Lifeboat) | 20 t | keine | Missile Racks, Sandcaster | Model/2bis | – |
+| Ship's Boat | 30 t | höchstens 1 | Missile Racks, Sandcaster | Model/3 | Model/3: keine |
+| Slow Boat | 30 t | höchstens 1 | Missile Racks, Sandcaster | Model/3 | Model/3: keine |
+| Pinnace | 40 t | höchstens 2 | Missile Racks, Sandcaster | Model/4 | Model/3: höchstens 1; Model/4: keine |
+| Slow Pinnace | 40 t | höchstens 1 | Missile Racks, Sandcaster | Model/3 | Model/3: keine |
+| Modular Cutter | 50 t | höchstens 2 | Missile Racks, Sandcaster | Model/4 | Model/3: höchstens 1; Model/4: keine |
+| Shuttle | 95 t | höchstens 2 | Missile Racks, Sandcaster | Model/4 | Model/3: höchstens 1; Model/4: keine |
+| Fighter | 10 t | nur **eine** Waffenart: 1 Laser **oder** bis zu 3 Missile Racks **oder** bis zu 3 Sandcaster | | Model/3 (Model/1 eingebaut) | Model/3: keine |
+
+**Zum Vergleich, Schiffe ab 100 t (SR 32–33):** 1 Hardpoint je 100 t (ohne Tonnage, Cr100.000; darf
+leer bleiben). Auf jeden Hardpoint kommt ein Turm (Single, Double, Triple für 1, 2, 3 Waffen) und
+dafür 1 t Feuerleitung; Türme und Waffen lassen sich nachrüsten. Je Turm darf ein Gunner angeheuert
+werden.
+
+---
+
 ## Lücken: was nur in Book 1 steht
 
 B4 nennt diese Regeln, beschreibt sie aber nicht, und auch SR hat sie nicht. Fehlt B1, legen wir
@@ -1946,7 +1994,8 @@ Aus den drei Heften nicht in diesem Dokument, weil sie nicht zum Kampf gehören:
   *The Raggedy Old Man*) sind nicht in der App.
 - **SE:** Charaktererschaffung (S. 1–3), Reisen und Schiffe (S. 8–11), Raumkampf (S. 12–13), Welten
   (S. 14–17), Handel (S. 22), sonstige Ausrüstung (S. 23 außer Waffen und Rüstung), Psionik (S. 24).
-- **SR:** alles außer den Kapiteln *Personal Combat*, *Animal Encounters* und *Encounters*; aus diesen
+- **SR:** alles außer den Kapiteln *Personal Combat*, *Animal Encounters* und *Encounters* und der
+  [Bewaffnung von Small Craft](#bewaffnung-von-small-craft) (S. 32–35); aus diesen
   die Begegnungen ohne Kampf (wie bei SE), die *Antique Equivalents* (Vorbilder der Waffen aus den
   1980ern, S. 27), essbare Tiere und Jagd (S. 47) und die Ereignisse ohne Kampf (S. 49–50).
 - **SR 23, „Square Grid Activity“:** Bewegung auf einem Quadratraster mit Feldern zu 1,5 m (Gehen 8
