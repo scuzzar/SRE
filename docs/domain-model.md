@@ -3211,6 +3211,16 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Schubkreis, stufenlos in 0,1 G, höchstens `/maxG` (der Kreis ist die Grenze), ohne die Einheit
     vorher auszuwählen; Einrasten an prograd, retrograd, Ziel, weg und angleichen; jede Raumrunde
     beginnt ohne Schub. Ohne Schubvektor fliegt die Einheit ballistisch.
+  - **Zieleingabe** (Owner, 22. November 2026: „Das Ziehen sollte wie bei den ursprünglichen
+    Vektorkämpfen aus den Regeln vom Zielpunkt aus sein … der neue Zielpunkt ist dann der Ort, an den
+    ich ziehe“; vorher zog man im Schubkreis vom Schiff aus). Wie in *Mayday* zieht man vom Punkt
+    **„ohne Schub“** aus: dem Ort, an dem die Einheit am Ende der Raumrunde ohne Schub stünde. Wohin
+    man zieht, dort steht sie nach der Runde; daraus rechnet die App den Schubvektor (mit der echten
+    Schwerkraft angenähert) und rundet und rastet ihn wie bisher ein. Der **Zielkreis** um den Punkt
+    „ohne Schub“ ist so groß, wie der höchste Schub den Endpunkt verschiebt: ⚑ 5.000 km je G
+    (½ · 10 m/s² · (1.000 s)², weil der Schub die ganze Runde gleichmäßig wirkt; in *Mayday* rückt
+    1 G den Zukunftsmarker um ein Feld, 10.000 km). Die Geschwindigkeit ändert sich wie bisher um
+    10 km/s je G. Am Schubvektor als gespeichertem Wert ändert sich nichts.
   - **Physik.** Gespeichert sind Ort (km) und Geschwindigkeit (km/s) in der Ebene, die Welt in der
     Mitte. Die Simulation rechnet in festen Schritten von 10 Sekunden mit *Velocity Verlet*, ohne
     Zufall: gleicher Stand und gleiche Schubvektoren ergeben auf jedem Gerät dieselbe Bahn. 1 G =

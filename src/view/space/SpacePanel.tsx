@@ -106,7 +106,7 @@ export function SpaceCard({ space }: { space: SpaceView }) {
             </div>
           )}
           <EncounterChoice space={space} />
-          <p className="globe-sheet-sub">Im Schubkreis tippen oder ziehen: vom Schiff zum Finger, der Rand ist der höchste Schub. Jede Raumrunde beginnt ohne Schub. Mit höchstens {num(space.landingKms)} km/s aufsetzen heißt landen; führt die Bahn auf die Oberfläche und reicht der Schub, bremst die Landeautomatik im letzten Stück selbst.</p>
+          <p className="globe-sheet-sub">Vom weißen Punkt „ohne Schub“ aus ziehen oder in seinen Kreis tippen: Wohin der Finger zeigt, dort steht das Schiff nach der Runde; der Kreis ist der höchste Schub (5.000 km je G). Jede Raumrunde beginnt ohne Schub. Mit höchstens {num(space.landingKms)} km/s aufsetzen heißt landen; führt die Bahn auf die Oberfläche und reicht der Schub, bremst die Landeautomatik im letzten Stück selbst.</p>
           <button type="button" className="ghost compact" onClick={() => game.endFlight()}>
             Systemflug beenden
           </button>
@@ -122,7 +122,7 @@ function targetOf(space: SpaceView): SpaceUnitView | undefined {
 }
 
 /**
- * Der Raumkampf oben im Blatt (2026-11-21h/e): je fremdes Schiff Absicht, Entfernung, Sicht, Antrieb,
+ * Der Raumkampf oben im Blatt (2026-11-21h/i): je fremdes Schiff Absicht, Entfernung, Sicht, Antrieb,
  * Laser und Schaden, dazu der Stand des eigenen Schiffs. Gefeuert wird mit dem roten Knopf unten.
  */
 function SpaceBattlePanel({ space, own }: { space: SpaceView; own: SpaceUnitView }) {

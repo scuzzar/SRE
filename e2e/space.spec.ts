@@ -16,13 +16,14 @@ test('Systemflug: Raumkarte öffnen, Schub im Schubkreis setzen, Runde ausführe
   await expect(card).toContainText('Kestrel · Yacht · 1 G');
   await expect(card).toContainText('kein Schub');
 
-  // Das Schiff steht über der Welt; ein Tipp in seinen Schubkreis setzt den Schub vom Schiff zum Finger.
+  // Zieleingabe (2026-11-22): Ein Tipp in den Zielkreis um den Punkt „ohne Schub“ setzt das Ziel; halb zum Rand ist der halbe Schub.
   const canvas = page.locator('canvas.globe-canvas');
+  await expect(canvas).toHaveAttribute('data-coast', /\d/);
   const box = (await canvas.boundingBox())!;
-  const scale = Math.min(box.width, 0.6 * box.height) / 60_000;
-  const ship = { x: box.x + box.width / 2, y: box.y + box.height / 2 - 0.17 * box.height - 11_200 * scale };
-  await page.mouse.click(ship.x + 45, ship.y);
-  await expect(card).toContainText(/0,5 G/);
+  const [cx, cy, r] = (await canvas.getAttribute('data-coast'))!.split(',').map(Number) as [number, number, number];
+  await page.mouse.click(box.x + cx + Math.max(r / 2, 18), box.y + cy);
+  await expect(card).toContainText(/\d,\d G/);
+  await expect(card).not.toContainText('kein Schub');
 
   await page.getByRole('button', { name: 'Runde ausführen' }).click();
   await expect(card).toContainText('Raumrunde 2');
@@ -83,7 +84,7 @@ test('Raumkarte am Gasriesen: Kessra ist Mond eines Gasriesen; seine Raumkarte h
   await expect(page.getByRole('group', { name: 'Raumkarte von' })).toBeVisible();
 });
 
-test('Werft und Raumkampf: der Beam Laser des Demo-Scouts, ein fremdes Schiff von Hand, Feuer auf es (2026-11-21g/d)', async ({ page }) => {
+test('Werft und Raumkampf: der Beam Laser der Demo-Yacht, ein fremdes Schiff von Hand, Feuer auf es (2026-11-21g/h)', async ({ page }) => {
   await openHomeGlobe(page);
   await openTab(page, 'Schiff');
   await page.getByRole('button', { name: 'Werft', exact: true }).click();

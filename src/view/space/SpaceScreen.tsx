@@ -6,12 +6,12 @@ import { worldCanvas, worldRadiusShare } from '../sector/world-icon';
 
 // Die Raumkarte (Domänenmodell 2026-11-18c): der Raum um eine Welt in 2D. Alles, was eine Regel ist
 // (Bahnen, Vorschau, Marken, Einrasten), kommt aus dem Snapshot; hier steht nur, wie es gezeichnet
-// wird, wo die Kamera steht und wie ein Fingerzug zu einem Schubvektor wird.
+// wird, wo die Kamera steht und wie ein Fingerzug zu einem Ziel und damit zu einem Schubvektor wird.
 
-/** Der Schubkreis auf dem Bildschirm in px, unabhängig vom Zoom: sein Rand ist der höchste Schub. */
-const RING = 90;
 /** Ein Finger näher an der Mitte als das heißt kein Schub. */
 const DEAD = 14;
+/** Kleinster Zielkreis in Bildpunkten; ist der echte kleiner, zählt der Abstand trotzdem in km. */
+const MIN_TARGET = 34;
 /** So lange spielt die Karte eine Raumrunde ab, in ms. */
 const PLAY_MS = 1800;
 const OWN = '#4fd1ff';
@@ -109,6 +109,11 @@ export interface ShotEffect {
 
 /** Wie lange ein Schuss auf der Karte zu sehen ist, in ms: Strahl, Blitz, aufsteigender Text. */
 const SHOT_MS = 2200;
+
+/** Der Zielkreis auf dem Bildschirm: so weit wie der höchste Schub den Endpunkt verschiebt, mindestens so groß, dass der Finger ihn trifft. */
+function targetRadius(unit: SpaceUnitView, scale: number): number {
+  return Math.max(MIN_TARGET, unit.reach * scale);
+}
 
 export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffect | undefined }) {
   const game = useGame();
@@ -298,15 +303,25 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
               ctx.fillText(`${b} RB`, sx(at.x + b * view.band) + 3, sy(at.y) - 3);
             }
           }
-          // Schubkreis mit Marken und Schubvektor
-          const X = sx(at.x);
-          const Y = sy(at.y);
+          // Zieleingabe (Owner, 2026-11-22): Um den Punkt „ohne Schub“ liegt der Zielkreis, so weit wie der
+          // höchste Schub den Endpunkt der Raumrunde verschiebt; der Endpunkt mit Schub ist das Ziel.
+          const X = sx(unit.coast.x);
+          const Y = sy(unit.coast.y);
+          const R = targetRadius(unit, cam.scale);
           const active = drag.current?.kind === 'thrust' && drag.current.unit === unit.index;
+          ctx.save();
+          ctx.setLineDash([5, 5]);
           ctx.beginPath();
-          ctx.arc(X, Y, RING, 0, 2 * Math.PI);
-          ctx.strokeStyle = active ? 'rgba(255, 255, 255, 0.55)' : 'rgba(255, 255, 255, 0.2)';
+          ctx.arc(X, Y, R, 0, 2 * Math.PI);
+          ctx.strokeStyle = active ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255, 255, 255, 0.25)';
           ctx.lineWidth = 1;
           ctx.stroke();
+          ctx.restore();
+          // Der Punkt „ohne Schub“: wo die Einheit ohne Schub nach der Runde stünde.
+          ctx.beginPath();
+          ctx.arc(X, Y, 3.5, 0, 2 * Math.PI);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.fill();
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           for (const mark of unit.marks) {
@@ -314,39 +329,39 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
             const s = Math.sin(mark.angle);
             const on = unit.snap === mark.name;
             ctx.beginPath();
-            ctx.moveTo(X + c * (RING - 5), Y - s * (RING - 5));
-            ctx.lineTo(X + c * (RING + 5), Y - s * (RING + 5));
+            ctx.moveTo(X + c * (R - 5), Y - s * (R - 5));
+            ctx.lineTo(X + c * (R + 5), Y - s * (R + 5));
             ctx.strokeStyle = on ? '#fff' : OWN;
             ctx.lineWidth = on ? 2.5 : 1.5;
             ctx.stroke();
             if (active || on) {
               ctx.fillStyle = on ? '#fff' : OWN;
-              ctx.fillText(mark.name === 'prograd' ? 'pro' : 'retro', X + c * (RING + 16), Y - s * (RING + 16));
+              ctx.fillText(mark.name === 'prograd' ? 'pro' : 'retro', X + c * (R + 16), Y - s * (R + 16));
             }
           }
           ctx.textAlign = 'start';
           ctx.textBaseline = 'alphabetic';
-          if (unit.thrust) {
-            const L = (Math.hypot(unit.thrust.x, unit.thrust.y) / unit.maxG) * RING;
-            const g = Math.hypot(unit.thrust.x, unit.thrust.y);
-            const nx = unit.thrust.x / g;
-            const ny = unit.thrust.y / g;
+          const goal = unit.preview.now.at(-1);
+          if (unit.thrust && goal) {
+            // Vom Punkt „ohne Schub“ zum Ziel: dorthin verschiebt der Schub das Schiff in dieser Runde.
             ctx.beginPath();
             ctx.moveTo(X, Y);
-            ctx.lineTo(X + nx * L, Y - ny * L);
+            ctx.lineTo(sx(goal.x), sy(goal.y));
             ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2.5;
+            ctx.lineWidth = 2;
             ctx.stroke();
             ctx.beginPath();
-            ctx.arc(X + nx * L, Y - ny * L, 5, 0, 2 * Math.PI);
+            ctx.arc(sx(goal.x), sy(goal.y), 6, 0, 2 * Math.PI);
             ctx.fillStyle = '#fff';
             ctx.fill();
             if (active) {
               ctx.font = 'bold 13px system-ui, sans-serif';
-              ctx.fillText(`${unit.thrustG.toLocaleString('de-DE', { minimumFractionDigits: 1 })} G`, X + nx * L + 10, Y - ny * L - 10);
+              ctx.fillText(`${unit.thrustG.toLocaleString('de-DE', { minimumFractionDigits: 1 })} G`, sx(goal.x) + 10, sy(goal.y) - 10);
               ctx.font = '11px system-ui, sans-serif';
             }
           }
+          // Für die GUI-Tests: wo der Punkt „ohne Schub“ der Einheit der Gruppe auf dem Bildschirm liegt.
+          if (unit.party) el.dataset['coast'] = `${Math.round(X)},${Math.round(Y)},${Math.round(R)}`;
         }
         // Das Schiff, zur Flugrichtung gedreht
         const angle = Math.atan2(unit.velocity.y, unit.velocity.x);
@@ -438,7 +453,7 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
     return () => cancelAnimationFrame(frame);
   }, []);
 
-  /** Welche eigene Einheit hat ihren Schubkreis unter dem Finger? Die nächste gewinnt. */
+  /** Welche eigene Einheit hat ihren Zielkreis unter dem Finger? Die nächste gewinnt. */
   const unitAt = (x: number, y: number): SpaceUnitView | undefined => {
     const el = canvas.current;
     const cam = camera.current;
@@ -449,23 +464,24 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
     let best: { unit: SpaceUnitView; d: number } | undefined;
     for (const unit of flight.units) {
       if (unit.crashed || unit.foe) continue;
-      const d = Math.hypot(x - (w / 2 + (unit.position.x - cam.cx) * cam.scale), y - (h / 2 - (unit.position.y - cam.cy) * cam.scale));
+      const d = Math.hypot(x - (w / 2 + (unit.coast.x - cam.cx) * cam.scale), y - (h / 2 - (unit.coast.y - cam.cy) * cam.scale));
       // Liegen zwei Einheiten übereinander (ein Beiboot gerade ausgesetzt), zieht der Finger an der Einheit der Gruppe (2026-11-21b).
-      if (d <= RING + 12 && (!best || d < best.d - 1 || (Math.abs(d - best.d) <= 1 && unit.party))) best = { unit, d };
+      if (d <= targetRadius(unit, cam.scale) + 16 && (!best || d < best.d - 1 || (Math.abs(d - best.d) <= 1 && unit.party))) best = { unit, d };
     }
     return best?.unit;
   };
 
-  /** Der Schubvektor in G für einen Finger an (x, y): vom Schiff zum Finger, der Kreisrand ist der höchste Schub. */
-  const thrustAt = (unit: SpaceUnitView, x: number, y: number) => {
+  /** Das Ziel für einen Finger an (x, y), von der Welt aus gesehen; auf dem Punkt „ohne Schub“ keins (kein Schub). */
+  const pointAt = (unit: SpaceUnitView, x: number, y: number) => {
     const el = canvas.current!;
     const cam = camera.current!;
-    const dx = x - (el.clientWidth / 2 + (unit.position.x - cam.cx) * cam.scale);
-    const dy = -(y - (el.clientHeight / 2 - (unit.position.y - cam.cy) * cam.scale));
+    const dx = x - (el.clientWidth / 2 + (unit.coast.x - cam.cx) * cam.scale);
+    const dy = -(y - (el.clientHeight / 2 - (unit.coast.y - cam.cy) * cam.scale));
     const len = Math.hypot(dx, dy);
     if (len < DEAD) return undefined;
-    const g = (Math.min(len, RING) / RING) * unit.maxG;
-    return { x: (dx / len) * g, y: (dy / len) * g };
+    // Ist der echte Zielkreis kleiner als der gezeichnete, rechnet der Finger auf ihn herunter.
+    const k = unit.reach * cam.scale < MIN_TARGET ? unit.reach / (MIN_TARGET / cam.scale) : 1;
+    return { x: unit.coast.x + (dx / cam.scale) * k, y: unit.coast.y + (dy / cam.scale) * k };
   };
 
   const local = (e: React.PointerEvent) => {
@@ -483,7 +499,7 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
       const unit = unitAt(p.x, p.y);
       if (unit) {
         drag.current = { kind: 'thrust', unit: unit.index };
-        game.aimThrust(unit.index, thrustAt(unit, p.x, p.y));
+        game.aimAt(unit.index, pointAt(unit, p.x, p.y));
       } else drag.current = { kind: 'pan', x: p.x, y: p.y, cx: cam.cx, cy: cam.cy };
     } else if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()];
@@ -500,7 +516,7 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
     if (!d || !cam) return;
     if (d.kind === 'thrust') {
       const unit = latest.current.flight?.units[d.unit];
-      if (unit) game.aimThrust(d.unit, thrustAt(unit, p.x, p.y));
+      if (unit) game.aimAt(d.unit, pointAt(unit, p.x, p.y));
     } else if (d.kind === 'pan') {
       cam.cx = d.cx - (p.x - d.x) / cam.scale;
       cam.cy = d.cy + (p.y - d.y) / cam.scale;

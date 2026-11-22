@@ -28,6 +28,9 @@ import {
   type Hex,
   type Vec,
   SKIM_ROUNDS,
+  coastOf,
+  thrustToward,
+  REACH_PER_G,
 } from '.';
 import { fixedClock } from './testing';
 
@@ -347,5 +350,25 @@ describe('Treibstoff am Gasriesen schöpfen (2026-11-21f)', () => {
   it('zu schnell eingetaucht bleibt ein Aufschlag', () => {
     const run = runRound(dive(demo(), 9), clock);
     expect(run.campaign.flight!.units[0]!.crashed).toBe(true);
+  });
+});
+
+describe('Zieleingabe vom Punkt „ohne Schub“ aus (Owner, 22. November 2026)', () => {
+  it('der Schubvektor bringt die Einheit nach der Runde an den gezogenen Punkt; 1 G verschiebt um 5.000 km', () => {
+    const c = startFlight(demo(), world(demo()), clock);
+    const scene = sceneOf(c.hexes, c.flight!.world);
+    const unit = c.flight!.units[0]!;
+    const t = flightTime(c, c.flight!);
+    expect(REACH_PER_G).toBe(5000);
+    const coast = coastOf(scene, unit, t);
+    const target = { x: coast.x + 2000, y: coast.y - 1000 };
+    const thrust = thrustToward(scene, unit, target, t, 1)!;
+    const end = previewOf(scene, unit, thrust, t, 1, scene.center).now.at(-1)!;
+    const at = originAt(scene, scene.center, t + ROUND_SECONDS).position;
+    expect(Math.hypot(end.x + at.x - target.x, end.y + at.y - target.y)).toBeLessThan(20);
+    expect(lengthOf(thrust)).toBeCloseTo(Math.hypot(2000, 1000) / 5000, 1);
+    // Zu weit: voller Schub in diese Richtung.
+    expect(lengthOf(thrustToward(scene, unit, { x: coast.x + 50_000, y: coast.y }, t, 1)!)).toBeCloseTo(1, 6);
+    expect(thrustToward(scene, unit, coast, t, 1)).toBeUndefined();
   });
 });

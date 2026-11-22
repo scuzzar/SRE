@@ -361,6 +361,31 @@ export function propagate(scene: Scene, start: State, thrust: Vec | undefined, s
   return states;
 }
 
+/** Wie weit 1 G den Endpunkt einer Raumrunde verschiebt, in km: ½ · 10 m/s² · (1.000 s)² = 5.000 km. */
+export const REACH_PER_G = 0.5 * G_KMS2 * ROUND_SECONDS * ROUND_SECONDS;
+
+/** Wo die Einheit am Ende dieser Raumrunde ohne Schub stünde (der Punkt „ohne Schub“ der Zieleingabe, 2026-11-22). */
+export function coastOf(scene: Scene, state: State, t: number): Vec {
+  return propagate(scene, state, undefined, ROUND_STEPS, ROUND_STEPS, t, undefined, false).at(-1)!.position;
+}
+
+/**
+ * Der Schubvektor (in G), mit dem die Einheit am Ende dieser Raumrunde bei `target` steht (Zieleingabe wie
+ * bei den Vektorregeln von Mayday, Owner 2026-11-22: man zieht vom Punkt „ohne Schub“ aus, und wohin man
+ * zieht, dort steht das Schiff nach der Runde). Gerechnet mit der echten Schwerkraft, in drei Schritten
+ * angenähert; höchstens `maxG` (reicht er nicht, voller Schub in diese Richtung).
+ */
+export function thrustToward(scene: Scene, state: State, target: Vec, t: number, maxG: number): Vec | undefined {
+  let thrust: Vec = { x: 0, y: 0 };
+  for (let k = 0; k < 3; k++) {
+    const end = propagate(scene, state, thrust, ROUND_STEPS, ROUND_STEPS, t, undefined, false).at(-1)!.position;
+    thrust = add(thrust, scale(sub(target, end), 1 / REACH_PER_G));
+    const g = lengthOf(thrust);
+    if (g > maxG) thrust = scale(thrust, maxG / g);
+  }
+  return lengthOf(thrust) < EPS ? undefined : thrust;
+}
+
 /** Der Schubvektor, wie die Regel ihn speichert: Stärke auf 0,1 G gerundet, höchstens `maxG`; unter 0,05 G kein Schub. */
 export function normalThrust(thrust: Vec | undefined, maxG: number): Vec | undefined {
   if (thrust === undefined) return undefined;

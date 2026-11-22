@@ -99,6 +99,10 @@ import {
   isWorld,
   activeFlight,
   partyIndexOf,
+  thrustToward,
+  sceneOf,
+  originAt,
+  ROUND_SECONDS,
   endFlight,
   maxGOf,
   normalThrust,
@@ -2522,6 +2526,23 @@ export class GameController {
     if (!state) throw new DomainError('Diese Einheit gibt es nicht.');
     const snapped = snapThrust(normalThrust(thrust, maxGOf(this.campaign, state)), marksOf(this.campaign, state));
     this.update({ space: { ...space, aim: { unit, thrust: snapped.thrust, ...(snapped.snap === undefined ? {} : { snap: snapped.snap }) } } });
+  }
+
+  /**
+   * Zieleingabe (Owner, 2026-11-22): Der Finger zieht vom Punkt „ohne Schub“ aus; `point` (von der Welt
+   * der Raumkarte aus gesehen, am Ende der Raumrunde) ist, wo das Schiff nach der Runde stehen soll. Daraus
+   * wird der Schubvektor, er rastet wie sonst ein. `undefined`: der Finger liegt auf dem Punkt „ohne Schub“.
+   */
+  aimAt(unit: number, point: Vec | undefined): void {
+    const flight = activeFlight(this.campaign);
+    const state = flight.units[unit];
+    if (!state) throw new DomainError('Diese Einheit gibt es nicht.');
+    if (point === undefined) return this.aimThrust(unit, undefined);
+    const space = this.openSpaceState();
+    const scene = sceneOf(this.campaign.hexes, flight.world);
+    const t = flightTime(this.campaign, flight);
+    const origin = originAt(scene, space.world, t + ROUND_SECONDS).position;
+    this.aimThrust(unit, thrustToward(scene, state, { x: point.x + origin.x, y: point.y + origin.y }, t, maxGOf(this.campaign, state)));
   }
 
   /** Setzt den Schubvektor einer Einheit für diese Raumrunde (beim Loslassen; `undefined`: kein Schub). */

@@ -47,6 +47,8 @@ import {
   fireBlocker,
   firePreview,
   partyIndexOf,
+  coastOf,
+  REACH_PER_G,
   activeFlight,
   shipWeaponOf,
 } from '../model';
@@ -124,6 +126,9 @@ export interface SpaceUnitView {
   readonly altitude: number;
   /** Schwerkraft am Ort in G, von allen Körpern zusammen. */
   readonly gravity: number;
+  /** Zieleingabe (2026-11-22): wo die Einheit am Ende der Raumrunde ohne Schub stünde (von der Welt aus gesehen) und wie weit der höchste Schub den Endpunkt verschiebt, in km. */
+  readonly coast: Vec;
+  readonly reach: number;
 }
 
 /** Ein Körper auf der Raumkarte außer der Welt selbst: die Mitte (wenn die Welt ein Mond ist) und die Monde. */
@@ -343,6 +348,8 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
           speed: lengthOf(velocity),
           altitude: worldBody === undefined ? r : r - worldBody.radius,
           gravity: lengthOf(gravityAt(scene, unit.position, t)) / G_KMS2,
+          coast: sub(coastOf(scene, unit, t), originAt(scene, space.world, t + ROUND_SECONDS).position),
+          reach: maxGOf(campaign, unit) * REACH_PER_G,
         };
       }),
     },
