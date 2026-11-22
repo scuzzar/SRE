@@ -123,8 +123,11 @@ hide <<browser>> stereotype
   class Possession $shop
 
 ' Schiffe
+  class CrewPost $schiffe $newClass("2026-11-22d")
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+  class SpaceAttack $raum
+  class DamageControl $raum $newClass("2026-11-22d")
 
 ' Charaktererschaffung und Lebenslauf
   class Generation $erschaffung
@@ -186,8 +189,11 @@ Campaign "0..1" --> "0..1" Character : focus
 Booking "*" --> "0..1" Character : for
 
 ' Schiffe
+CrewPost "*" -$newArrow("2026-11-22d")-> "1" Character : who
 
 ' Raumkarte und Systemflug
+SpaceAttack "*" -$newArrow("2026-11-22d")-> "0..1" Character : gunner
+DamageControl "*" -$newArrow("2026-11-22d")-> "0..1" Character : by
 
 ' Zeit und Reisen
 Passenger "*" --> "1" Character : for
@@ -270,4 +276,5 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class SpaceAttack #line:d0021b;line.bold
 @enduml

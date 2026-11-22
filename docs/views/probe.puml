@@ -87,6 +87,7 @@ hide <<browser>> stereotype
   class SpaceBattle $raum
   class SpaceAttack $raum
   class SpaceBattleEnd $raum
+  class DamageControl $raum $newClass("2026-11-22d")
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -159,6 +160,7 @@ Campaign "1" *-- "*" LogEntry : log {ordered}
 LogEntry <|-- SpaceBattle
 LogEntry <|-- SpaceAttack
 LogEntry <|-- SpaceBattleEnd
+LogEntry <|-$newArrow("2026-11-22d")- DamageControl
 LogEntry <|-- Skimming
 
 ' Zeit und Reisen
@@ -220,4 +222,5 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class SpaceAttack #line:d0021b;line.bold
 @enduml
