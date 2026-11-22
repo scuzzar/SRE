@@ -546,7 +546,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-21i-feuer-ausloesen.png`](changes/2026-11-21i-feuer-ausloesen.png).
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-22): **Bewaffnung der Small Craft** (Owner,
+> Am 22. November 2026 freigegeben (Kennzeichen 2026-11-22): **Bewaffnung der Small Craft** (Owner,
 > 22. November 2026: „implementieren dieses System. Die Small Craft kommen mit Lasern. Der Rest
 > existiert ja auch noch nicht in der App“). Small Craft haben statt Hardpoints eine Bewaffnung mit
 > bis zu drei Waffen (SR 34) und kommen ab Werft mit so vielen Lasern, wie ihr Typ erlaubt; im
@@ -3381,7 +3381,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     kritischem Treffer, alles auf einmal (Buchung mit `shipCost` repair); danach ist `Ship.damage`
     leer. Ausgefallene Turrets arbeiten wieder.
 
-- **Bewaffnung der Small Craft** (wartet auf Freigabe, Kennzeichen 2026-11-22; Owner, 22. November
+- **Bewaffnung der Small Craft** (freigegeben am 22. November 2026, Kennzeichen 2026-11-22; Owner, 22. November
   2026: „Die Small Craft kommen mit Lasern. Der Rest existiert ja auch noch nicht in der App“). Ein
   Teil von Stufe 4b des [Konzepts](konzept-raumkampf.md). Regeln aus SR 33–35, übertragen in
   [`regeln-schiffe.md`](regeln-schiffe.md) unter *Kleine Schiffe (Small Craft)* und in

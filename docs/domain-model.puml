@@ -200,7 +200,7 @@ hide <<browser>> stereotype
     name: string
     slots: number
     price: number
-    $new("2026-11-22", "smallCraft: boolean")
+    smallCraft: boolean
   }
   class ShipWeapon <<reference>> $schiffe {
     name: string
@@ -223,7 +223,7 @@ hide <<browser>> stereotype
     basePrice: number
     months: number [0..1]
     streamlined: boolean
-    $new("2026-11-22", "lasers: number [0..1]")
+    lasers: number [0..1]
   }
   enum ShipKind <<value>> $schiffe {
     starship
@@ -333,10 +333,10 @@ hide <<browser>> stereotype
     crew
     criticalComputer
     explode
-    $new("2026-11-22", "drive")
-    $new("2026-11-22", "cabin")
-    $new("2026-11-22", "weapons")
-    $new("2026-11-22", "criticalDrive")
+    drive
+    cabin
+    weapons
+    criticalDrive
   }
   enum Intent <<value>> $raum {
     attack
@@ -359,7 +359,7 @@ hide <<browser>> stereotype
     dm: number
     bands: number
     computerHits: number
-    $new("2026-11-22", "noComputer: boolean")
+    noComputer: boolean
     /hit: boolean
     hits: HitZone [*]
   }

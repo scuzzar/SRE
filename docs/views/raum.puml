@@ -158,10 +158,10 @@ hide <<browser>> stereotype
     crew
     criticalComputer
     explode
-    $new("2026-11-22", "drive")
-    $new("2026-11-22", "cabin")
-    $new("2026-11-22", "weapons")
-    $new("2026-11-22", "criticalDrive")
+    drive
+    cabin
+    weapons
+    criticalDrive
   }
   enum Intent <<value>> $raum {
     attack
@@ -184,7 +184,7 @@ hide <<browser>> stereotype
     dm: number
     bands: number
     computerHits: number
-    $new("2026-11-22", "noComputer: boolean")
+    noComputer: boolean
     /hit: boolean
     hits: HitZone [*]
   }
@@ -298,7 +298,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class ShipDesign #line:d0021b;line.bold
-class HitZone #line:d0021b;line.bold
-class SpaceAttack #line:d0021b;line.bold
 @enduml

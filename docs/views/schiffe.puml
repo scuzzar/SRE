@@ -115,7 +115,7 @@ hide <<browser>> stereotype
     name: string
     slots: number
     price: number
-    $new("2026-11-22", "smallCraft: boolean")
+    smallCraft: boolean
   }
   class ShipWeapon <<reference>> $schiffe {
     name: string
@@ -138,7 +138,7 @@ hide <<browser>> stereotype
     basePrice: number
     months: number [0..1]
     streamlined: boolean
-    $new("2026-11-22", "lasers: number [0..1]")
+    lasers: number [0..1]
   }
   enum ShipKind <<value>> $schiffe {
     starship
@@ -263,7 +263,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class TurretType #line:d0021b;line.bold
-class ShipDesign #line:d0021b;line.bold
-class SpaceAttack #line:d0021b;line.bold
 @enduml
