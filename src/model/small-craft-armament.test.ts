@@ -3,6 +3,7 @@ import {
   addShip,
   armamentBlocker,
   book,
+  buyShip,
   checkTurrets,
   craftOf,
   createDemoCampaign,
@@ -14,6 +15,8 @@ import {
   placeFoe,
   repairCostOf,
   repairShip,
+  retireShip,
+  retireShipBlocker,
   shipOf,
   startFlight,
   toCampaignFile,
@@ -103,5 +106,24 @@ describe('Bewaffnung der Small Craft (2026-11-22)', () => {
     const hurt: Campaign = { ...c, ships: c.ships.map((s) => (s.mother !== undefined ? { ...s, damage: { hits: ['drive' as const], turretsOut: [] } } : s)) };
     expect(repairCostOf(hurt, shipOf(hurt)!)).toBe(100_000);
     expect(boatOf(repairShip(hurt, clock)).damage).toBeUndefined();
+  });
+});
+
+describe('Schiff von Hand ausblenden (Owner, 22. November 2026)', () => {
+  it('blendet das aktive Schiff samt Beibooten aus, löscht nichts; danach ein eigenständiges Small Craft', () => {
+    const c = demo();
+    const retired = retireShip(c);
+    expect(retired.ships).toHaveLength(c.ships.length);
+    expect(retired.ships.every((s) => s.retired)).toBe(true);
+    expect(shipOf(retired)).toBeUndefined();
+    const bought = buyShip(book(retired, 'income', 20_000_000, clock), 'fighter', 'cash', clock);
+    expect(shipOf(bought)).toMatchObject({ design: 'fighter' });
+    expect(shipOf(bought)!.mother).toBeUndefined();
+  });
+
+  it('nicht während eines Systemflugs und nicht ohne Schiff', () => {
+    const c = demo();
+    expect(retireShipBlocker(startFlight(c, c.location!.world, clock))).toMatch(/Systemflug/);
+    expect(() => retireShip(retireShip(c))).toThrow(/kein Schiff/);
   });
 });

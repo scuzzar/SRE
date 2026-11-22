@@ -82,6 +82,7 @@ import {
   chooseShipGain,
   freeDeckSlot,
   renameShip,
+  retireShip,
   resolveShipGains,
   shipOf,
   updateShip,
@@ -1914,6 +1915,11 @@ export class GameController {
   }
 
   // --- Schiff ----------------------------------------------------------------------------------
+
+  /** Blendet das aktive Schiff samt Beibooten aus (Owner, 22. November 2026); gelöscht wird nichts. */
+  retireShip(): void {
+    this.inShip(() => retireShip(this.campaign));
+  }
 
   /** Benennt das Schiff um; der Stift am Namen im Reiter Schiff. */
   renameShip(name: string): void {

@@ -796,6 +796,8 @@ function FuelSheet({ boat, ship, onClose }: { boat: Boat; ship: ShipView; onClos
 function RenameSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
   const game = useGame();
   const [name, setName] = useState(boat.name);
+  // Ausblenden erst beim zweiten Tippen, wie Löschen sonst auch.
+  const [retiring, setRetiring] = useState(false);
   return (
     <SheetFrame
       title="Schiff umbenennen"
@@ -824,6 +826,25 @@ function RenameSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
         <span>Name</span>
         <input autoFocus value={name} maxLength={40} onChange={(e) => setName(e.target.value)} />
       </label>
+      <h2 className="section-title">Schiff ausblenden</h2>
+      <p className="shop-hint muted">
+        Für die Spielleitung: {boat.name}
+        {boat.craft.length > 0 ? ' und seine Beiboote verschwinden' : ' verschwindet'} aus dem Reiter Schiff, gelöscht wird nichts – Buchungen und Log zeigen {boat.craft.length > 0 ? 'sie' : 'es'} weiter. Raten fallen keine mehr an. Danach lässt sich ein neues Schiff oder ein eigenständiges Small Craft kaufen.
+      </p>
+      {boat.retireBlocker && <p className="combat-hint">{boat.retireBlocker}</p>}
+      <button
+        type="button"
+        className="ghost compact danger"
+        disabled={boat.retireBlocker !== undefined}
+        onClick={() => {
+          if (!retiring) return setRetiring(true);
+          haptic('pick');
+          game.retireShip();
+          onClose();
+        }}
+      >
+        {retiring ? `${boat.name} wirklich ausblenden?` : `${boat.name} ausblenden`}
+      </button>
     </SheetFrame>
   );
 }

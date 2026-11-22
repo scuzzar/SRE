@@ -335,6 +335,25 @@ export function renameShip(campaign: Campaign, id: string, name: string): Campai
   return updateShip(campaign, id, { name, fuel: ship.fuel, cargo: ship.cargo });
 }
 
+/** Warum das aktive Schiff jetzt nicht ausgeblendet werden kann; `undefined`, wenn es geht. */
+export function retireShipBlocker(campaign: Campaign): string | undefined {
+  if (shipOf(campaign) === undefined) return 'Die Gruppe hat kein Schiff.';
+  if (campaign.flight !== undefined) return 'Während eines Systemflugs wird kein Schiff ausgeblendet.';
+  return undefined;
+}
+
+/**
+ * Blendet das aktive Schiff von Hand aus (Owner, 22. November 2026: die Spielleitung, etwa um danach
+ * ein eigenständiges Small Craft zu kaufen). Nichts wird gelöscht: Das Schiff und seine Beiboote
+ * bekommen `retired`, Buchungen und Log zeigen sie weiter; Raten zahlt ein ausgeblendetes Schiff nicht.
+ */
+export function retireShip(campaign: Campaign): Campaign {
+  const blocker = retireShipBlocker(campaign);
+  if (blocker) throw new DomainError(blocker);
+  const ship = activeShip(campaign);
+  return { ...campaign, ships: campaign.ships.map((s) => (s.id === ship.id || s.mother === ship.id ? { ...s, retired: true } : s)) };
+}
+
 /** Der noch nicht entschiedene Ship-Vorteil: Entwurf und ob er schuldenfrei wäre. */
 export interface PendingShipGain {
   readonly design: string;

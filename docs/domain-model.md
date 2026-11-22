@@ -3113,6 +3113,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     es weiter. `Campaign.ship` und der Reiter Schiff kennen nur das nicht ausgeblendete
     Schiff. Die Regel *Worauf der Log verweist, wird nie gelöscht* gilt damit auch für
     Schiffe.
+  - **Von Hand ausblenden** (Owner, 22. November 2026: „Ich sollte als GM auch das Schiff manuell
+    retire können, z. B. um ein alleiniges Small Craft kaufen zu können“). Im Reiter Schiff (Stift am
+    Namen) kann die Spielleitung das aktive Schiff ausblenden: Es und alle seine Beiboote bekommen
+    `retired`, gelöscht wird nichts. Danach hat die Gruppe kein Schiff; ein gekauftes Small Craft
+    gehört ihr eigenständig. ⚑ Eine Restschuld bleibt am ausgeblendeten Schiff stehen, Raten werden
+    keine mehr eingezogen (wie beim Wechsel nach dem Ship-Vorteil). Nicht während eines Systemflugs.
+    Zurückholen lässt sich ein ausgeblendetes Schiff noch nicht. Im Bild ändert sich nichts
+    (`Ship.retired` gibt es seit 2026-11-16b).
   - **Alle Schiffe bleiben in der Kampagne** (Kennzeichen 2026-11-16c, Inhalt mit 16b
     freigegeben). Die Kampagne hält eine Liste aller ihrer Schiffe (`ships`, Ids s1, s2, …,
     wie bei Charakteren nicht gezeichnet); das aktive ist abgeleitet: das nicht

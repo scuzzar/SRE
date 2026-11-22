@@ -18,6 +18,7 @@ import {
   launchWorld,
   armamentBlocker,
   shipyardBlocker,
+  retireShipBlocker,
   damagedAtYard,
   turretTypeOf,
   shipWeaponOf,
@@ -149,6 +150,8 @@ export interface ShipView {
         /** Die Turrets in der Reihenfolge der Hardpoints; warum gerade nicht umgerüstet werden kann (`undefined`: es geht). */
         readonly turrets: readonly TurretRow[];
         readonly armamentBlocker: string | undefined;
+        /** Warum das Schiff gerade nicht ausgeblendet werden kann (`undefined`: es geht). */
+        readonly retireBlocker: string | undefined;
         /** Warum die Werft gerade nicht reparieren kann (`undefined`: es geht). */
         readonly repairBlocker: string | undefined;
         /** Die Bewaffnung eines Small Craft in einer Zeile, z. B. „2 × Beam Laser“; fehlt bei Schiffen (2026-11-22). */
@@ -224,6 +227,7 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
               return { typeId: kind.id, typeName: kind.name, slots: kind.slots, weapons: t.weapons.map((w) => ({ id: w, name: shipWeaponOf(w).name })) };
             }),
             armamentBlocker: armamentBlocker(campaign),
+            retireBlocker: retireShipBlocker(campaign),
             repairBlocker: shipyardBlocker(campaign)?.replace('umgerüstet', 'repariert').replace('Umrüsten', 'Reparieren'),
             craftWeapons: isSmallCraft(ship) ? weaponsLine(ship) : undefined,
             damage: damagedAtYard(campaign, ship).flatMap((s) => (s.damage?.hits ?? []).map((h) => (s.id === ship.id ? hitZoneNames[h] : `${s.name}: ${hitZoneNames[h]}`))),
