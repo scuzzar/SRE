@@ -238,6 +238,8 @@ import {
   freeLanding,
   type PortCity,
   worldOf,
+  manualEncounterBlocker,
+  encounterBlocker,
 } from '../model';
 import {
   attackerOf,
@@ -268,7 +270,9 @@ import {
   localOf,
   type Conflict,
   type ConflictChoice,
+  type ShipEncounterCheck,
 } from '../model/draft';
+import { shipCheckView, type ShipCheckView } from './ship-check-view';
 import { careerLines, generationView, itemLabel, worldChoices, worldName, type CareerLine, type GenerationView, type ShipGainChoice, type WorldChoice } from './generation-view';
 import { buildShipView, type ShipView } from './ship-view';
 import { sectorView, selectedView, worldList, worldView, type HexView, type SelectedHexView, type WorldListItem, type WorldView } from './world-view';
@@ -390,6 +394,10 @@ export interface Snapshot {
   readonly worldCard: boolean;
   /** Der Landeplatz, solange die Gruppe einen wählen muss (2026-11-21). */
   readonly landing: LandingView | undefined;
+  /** Der Dialog der Begegnungsprüfung (2026-11-22b): vor dem Wurf auf der Starship Encounter Table, danach sein Ergebnis. */
+  readonly shipCheck: ShipCheckView | undefined;
+  /** Der Knopf „Schiff“ im Reiter Begegnung (2026-11-22b): nur mit eigenem Schiff; warum er gerade nicht würfeln kann. */
+  readonly shipEncounter: { readonly blocker: string | undefined } | undefined;
   /** Die Raumkarte einer Welt ist die Grundkarte (vor Globus und Subsektor), mit dem Systemflug, wenn er dort läuft (2026-11-18c). */
   readonly space: SpaceView | undefined;
   /** Raumkampf (2026-11-21i): die Schüsse, deren Würfe gerade im Vordergrund rollen, und wie es danach steht. */
@@ -1592,6 +1600,10 @@ export interface ControllerState {
   readonly space: OpenSpace | undefined;
   /** Salven, deren Würfe gerade im Vordergrund rollen (2026-11-21i): ab dieser Stelle im Log; `delay` ms warten (die Bewegung spielt erst ab). */
   readonly volley?: { readonly from: number; readonly delay: number } | undefined;
+  /** Die offene Begegnungsprüfung (2026-11-22b, `model/draft/ship-check.ts`). */
+  readonly shipCheck?: ShipEncounterCheck | undefined;
+  /** Die Prüfung der Ankunft, die nach dem Dialog der Reise kommt (beim Start fand die Reise statt). */
+  readonly nextShipCheck?: ShipEncounterCheck | undefined;
   /**
    * Ein Ortsverweis wurde angetippt (etwa ein Ort einer Mission): Der Globus soll zu diesem Feld fliegen
    * und hineinzoomen. `n` zählt hoch, damit derselbe Ort ein zweites Mal wieder hinfliegt.
@@ -1622,7 +1634,8 @@ export interface LandingView {
 }
 
 function landingView(campaign: Campaign, picking: boolean): LandingView | undefined {
-  if (!needsLanding(campaign)) return undefined;
+  // Bei einer Begegnung bei der Ankunft wartet der Landeplatz, solange der Systemflug läuft (2026-11-22b).
+  if (!needsLanding(campaign) || campaign.flight !== undefined) return undefined;
   const world = campaign.location!.world;
   return { world, name: worldOf(campaign.hexes, world).name, ports: portCities(worldById(campaign.hexes, world)), free: freeLanding(campaign), picking };
 }
@@ -2022,7 +2035,7 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
     animals: animalsView(campaign, animalNote, log),
     loot: lootView(campaign, lootOpen),
     butchered: butcheredView(campaign, butchered),
-    canEncounter: campaign.location !== undefined,
+    canEncounter: campaign.location !== undefined || campaign.voyage !== undefined,
     location: campaign.location?.world,
     worlds: worldChoices(campaign.hexes),
     intro: intro && encounter !== undefined,
@@ -2823,7 +2836,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, elsewhere: state.elsewhere, notice: state.notice, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, systemJourney: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, missions: { open: [], done: [], failed: [], retired: [], editor: undefined, picking: undefined, here: undefined, hereBlocker: undefined, persons: [], clients: [] }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, worldCard: false, landing: undefined, space: undefined, spaceVolley: undefined, globeFocus: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, systemJourney: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, missions: { open: [], done: [], failed: [], retired: [], editor: undefined, picking: undefined, here: undefined, hereBlocker: undefined, persons: [], clients: [] }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, worldCard: false, landing: undefined, shipCheck: undefined, shipEncounter: undefined, space: undefined, spaceVolley: undefined, globeFocus: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -2893,6 +2906,8 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     worldCard: state.world !== undefined && state.globe?.card === true,
     globe: state.world && state.globe ? globeView(campaign, openWorldId(state.world), state.globe.picked, state.tripPlan?.options[state.tripPlan.chosen], state.trace, state.landingPick === true, state.touchdown ?? 0) : undefined,
     landing: landingView(campaign, state.landingPick === true),
+    shipCheck: state.shipCheck && shipCheckView(campaign, state.shipCheck),
+    shipEncounter: shipOf(campaign) === undefined ? undefined : { blocker: manualEncounterBlocker(campaign) ?? (campaign.flight ? encounterBlocker(campaign) : undefined) },
     space: state.space && spaceView(campaign, state.space),
     spaceVolley: volleyView(campaign, state.volley),
     globeFocus: state.world && state.globe ? state.globeFocus : undefined,

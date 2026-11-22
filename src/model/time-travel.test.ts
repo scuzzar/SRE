@@ -43,8 +43,11 @@ import {
   hexFromFlat,
   type Hex,
   type Journey,
+  voyageDay,
+  voyageDaysLeft,
+  rollEncounter,
 } from '.';
-import { fixedClock, fixedRandom } from './testing';
+import { fixedClock, fixedRandom, arriveNow, lastJourney, seededRandom } from './testing';
 
 function world(column: number, row: number, name: string, starport = 12, law = 5, population = 5): Hex {
   return hexFromFlat({
@@ -173,16 +176,16 @@ describe('Reise mit Passagen', () => {
 
   it('kauft fehlende Passagen, dauert eine Woche und setzt den Aufenthaltsort', () => {
     const rich = book(there, 'income', 30000, clock);
-    const after = travel(rich, '0201', { [kira]: 'high-passage', [jonas]: 'middle-passage' }, {}, undefined, fixedRandom(), clock);
+    const after = arriveNow(travel(rich, '0201', { [kira]: 'high-passage', [jonas]: 'middle-passage' }, {}, undefined, fixedRandom(), clock), clock);
     expect(fundsOf(after)).toBe(30000 - 10000 - 8000);
     expect(after.location).toEqual({ world: '0201' });
     expect(after.day).toBe(START_DAY + 7);
-    expect(after.log.at(-1)).toMatchObject({ kind: 'journey', from: '0101', to: '0201', days: 7, day: START_DAY, berths: [] });
+    expect(lastJourney(after)).toMatchObject({ kind: 'journey', from: '0101', to: '0201', days: 7, day: START_DAY, berths: [] });
   });
 
   it('nimmt Passagen aus dem Gepäck; ohne Geld und ohne Passage geht es nicht', () => {
     const packed = { ...there, stash: [{ of: 'middle-passage', count: 2 }] };
-    const after = travel(packed, '0201', { [kira]: 'middle-passage', [jonas]: 'middle-passage' }, {}, undefined, fixedRandom(), clock);
+    const after = arriveNow(travel(packed, '0201', { [kira]: 'middle-passage', [jonas]: 'middle-passage' }, {}, undefined, fixedRandom(), clock), clock);
     expect(after.stash).toEqual([]);
     expect(after.bookings).toEqual([]);
     expect(() => travel(there, '0201', { [kira]: 'high-passage', [jonas]: 'high-passage' }, {}, undefined, fixedRandom(), clock)).toThrow('kosten');
@@ -192,29 +195,29 @@ describe('Reise mit Passagen', () => {
     const packed = { ...there, stash: [{ of: 'low-passage', count: 2 }] };
     // Kira wacht auf (3 + 4), Jonas nicht (1 + 2); zwei NSC: der erste wacht auf (6 + 6, Tipp 0), der zweite nicht (2 + 1, Tipp 4).
     const random = fixedRandom(3, 4, 1, 2, 6, 6, 0, 2, 1, 4);
-    const after = travel(packed, '0201', { [kira]: 'low-passage', [jonas]: 'low-passage' }, { [kira]: 2, [jonas]: 3 }, 2, random, clock);
-    const journey = after.log.at(-1) as Journey;
+    const after = arriveNow(travel(packed, '0201', { [kira]: 'low-passage', [jonas]: 'low-passage' }, { [kira]: 2, [jonas]: 3 }, 2, random, clock), clock);
+    const journey = lastJourney(after) as Journey;
     expect(journey.berths.map(survived)).toEqual([true, false, true, false]);
     expect(potOf(journey)).toBe(40);
     // Zwei überleben: Kiras Tipp 2 ist genau richtig.
     expect(winnerOf(journey)).toBe(0);
     expect(lotteryPaid(journey)).toBe(true);
     expect(fundsOf(after)).toBe(40);
-    expect(after.bookings.at(-1)).toMatchObject({ kind: 'lottery', amount: 40, for: kira, won: after.log.length - 1 });
+    expect(after.bookings.at(-1)).toMatchObject({ kind: 'lottery', amount: 40, for: kira, won: after.log.indexOf(journey) });
     expect(after.characters.find((c) => c.id === jonas)?.dead).toBe(true);
     expect(after.focus).toBe(kira);
     // Die Datei hält das alles und prüft es beim Import.
     const back = fromCampaignFile(toCampaignFile(after), 'k2');
-    expect(back.log.at(-1)).toEqual(journey);
+    expect(lastJourney(back)).toEqual(journey);
     expect(back.day).toBe(after.day);
-    expect(() => removeLogEntry(after, after.log.length - 1)).toThrow('Reise');
+    expect(() => removeLogEntry(after, after.log.indexOf(journey))).toThrow('Reise');
   });
 
   it('bei Gleichstand entscheidet das Los; überlebt der Gewinner nicht, behält der Kapitän den Topf', () => {
     const packed = book({ ...there, stash: [{ of: 'low-passage', count: 1 }] }, 'income', 10000, clock);
     // Kira wacht nicht auf (1 + 1); ein NSC wacht auf (5 + 5) und tippt 0. Überlebende 1: beide liegen 1 daneben, das Los fällt auf Kira.
-    const after = travel(packed, '0201', { [kira]: 'low-passage', [jonas]: 'high-passage' }, { [kira]: 2 }, 1, fixedRandom(1, 1, 5, 5, 0, 0), clock);
-    const journey = after.log.at(-1) as Journey;
+    const after = arriveNow(travel(packed, '0201', { [kira]: 'low-passage', [jonas]: 'high-passage' }, { [kira]: 2 }, 1, fixedRandom(1, 1, 5, 5, 0, 0), clock), clock);
+    const journey = lastJourney(after) as Journey;
     expect(journey.lot).toBe(0);
     expect(winnerOf(journey)).toBe(0);
     expect(lotteryPaid(journey)).toBe(false);
@@ -236,13 +239,13 @@ describe('Reise mit eigenem Schiff', () => {
   });
 
   it('verbraucht Treibstoff, würfelt den Sprung, dauert eine Woche und kostet nur die Lebenserhaltung', () => {
-    const after = travelShip(scout, '0103', fixedRandom(2, 5), clock);
+    const after = arriveNow(travelShip(scout, '0103', fixedRandom(2, 5), clock), clock);
     expect(after.ships[0]!.fuel).toBe(20);
     expect(after.day).toBe(START_DAY + 7);
     expect(after.location).toEqual({ world: '0103' });
     // Zwei SC, je Cr2.000; der Außenposten hat keinen Raumhafen, also keine Liegegebühr.
     expect(after.bookings.slice(1)).toEqual([expect.objectContaining({ kind: 'ship', amount: -4_000, forShip: 's1', shipCost: 'lifeSupport', text: 'Lebenserhaltung, 2 Reisende' })]);
-    const journey = after.log.at(-1) as Journey;
+    const journey = lastJourney(after) as Journey;
     expect(journey).toMatchObject({ kind: 'journey', from: '0101', to: '0103', days: 7, day: START_DAY, ship: 's1', jump: [2, 5], passengers: [], berths: [] });
     expect(misjumpOf(journey)).toBe(false);
     expect(after.characters.every((c) => !c.dead)).toBe(true);
@@ -250,9 +253,9 @@ describe('Reise mit eigenem Schiff', () => {
 
   it('verbraucht unraffinierten Treibstoff zuerst; der Sprung bekommt dann DM +1, und mit einer 12 ist es ein Fehlsprung (2026-11-21f)', () => {
     const skimmed = { ...scout, ships: scout.ships.map((s) => ({ ...s, unrefined: 25 })) };
-    const after = travelShip(skimmed, '0103', fixedRandom(6, 6), clock);
+    const after = arriveNow(travelShip(skimmed, '0103', fixedRandom(6, 6), clock), clock);
     expect(after.ships[0]).toMatchObject({ fuel: 20, unrefined: 5 });
-    const journey = after.log.at(-1) as Journey;
+    const journey = lastJourney(after) as Journey;
     expect(journey.jumpDm).toBe(1);
     expect(misjumpOf(journey)).toBe(true);
     // Mit raffiniertem Treibstoff bleibt 12 ohne Fehlsprung.
@@ -262,26 +265,82 @@ describe('Reise mit eigenem Schiff', () => {
   });
 
   it('der Sprungwurf steht an der Reise im Log; Fehlsprung ist nach SR erst 13+ mit DMs', () => {
-    const after = travelShip(scout, '0201', fixedRandom(6, 6), clock);
-    const journey = after.log.at(-1) as Journey;
+    const after = arriveNow(travelShip(scout, '0201', fixedRandom(6, 6), clock), clock);
+    const journey = lastJourney(after) as Journey;
     expect(journey.jump).toEqual([6, 6]);
     expect(misjumpOf(journey)).toBe(false); // ohne DMs ist 13+ auf 2W6 nicht möglich
     expect(after.location).toEqual({ world: '0201' }); // die Folgen entscheidet ohnehin der Owner
   });
 
   it('die Datei hält Schiff und Sprungwurf und prüft beides beim Import', () => {
-    const after = travelShip(scout, '0103', fixedRandom(2, 5), clock);
-    const journey = after.log.at(-1) as Journey;
+    const after = arriveNow(travelShip(scout, '0103', fixedRandom(2, 5), clock), clock);
+    const journey = lastJourney(after) as Journey;
     const back = fromCampaignFile(toCampaignFile(after), 'k2');
-    expect(back.log.at(-1)).toEqual(journey);
+    expect(lastJourney(back)).toEqual(journey);
     expect(back.ships[0]!.fuel).toBe(20);
     const broken = (change: (entry: Record<string, unknown>) => void) => {
       const parsed = JSON.parse(toCampaignFile(after));
-      change(parsed.campaign.log.at(-1));
+      change(parsed.campaign.log.findLast((e: { kind: string }) => e.kind === 'journey'));
       return JSON.stringify(parsed);
     };
     expect(() => fromCampaignFile(broken((e) => { e.ship = 's9'; }), 'k2')).toThrow('Schiff');
     expect(() => fromCampaignFile(broken((e) => { delete e.jump; }), 'k2')).toThrow('Sprungwurf');
     expect(() => fromCampaignFile(broken((e) => { e.passengers = [{ for: kira, passage: 'high-passage' }]; }), 'k2')).toThrow('Passagier');
+  });
+});
+
+describe('Unterwegs: die Reise Tag für Tag (2026-11-22c)', () => {
+  const scout = addShip(book(there, 'income', 10_000, clock), 'S', undefined).campaign;
+
+  it('beim Abflug bleibt der Tag, die Gruppe ist an keinem Ort; „Weiterreisen“ zählt die Tage, nach sieben ist sie am Ziel', () => {
+    const left = travelShip(scout, '0103', fixedRandom(2, 5), clock);
+    expect(left.day).toBe(START_DAY);
+    expect(left.location).toBeUndefined();
+    expect(left.voyage).toEqual({ entry: left.log.length - 1, days: 0 });
+    expect(left.ships[0]!.place).toBeUndefined();
+    expect(voyageDaysLeft(left)).toBe(7);
+    // Andere Zeit vergeht unterwegs nicht, und eine weitere Reise geht nicht.
+    expect(() => passTime(left, { days: 1 }, clock)).toThrow('Weiterreisen');
+    expect(shipJourneyBlocker(left, '0101')).toBeDefined();
+    let c = left;
+    for (let i = 1; i < 7; i++) {
+      const day = voyageDay(c, clock);
+      expect(day.arrived).toBe(false);
+      c = day.campaign;
+      expect(c.voyage?.days).toBe(i);
+    }
+    expect(c.day).toBe(START_DAY + 6);
+    // Die Datei hält die Reise unterwegs.
+    expect(fromCampaignFile(toCampaignFile(c), 'k').voyage).toEqual(c.voyage);
+    const last = voyageDay(c, clock);
+    expect(last.arrived).toBe(true);
+    expect(last.campaign.voyage).toBeUndefined();
+    expect(last.campaign.location).toEqual({ world: '0103' });
+    expect(last.campaign.ships[0]!.place).toEqual({ world: '0103' });
+    expect(last.campaign.day).toBe(START_DAY + 7);
+  });
+
+  it('unterwegs geht eine Zufallsbegegnung an Bord, mit der Abflugwelt als Ort der Begegnung', () => {
+    const left = travelShip(scout, '0103', fixedRandom(2, 5), clock);
+    const rolled = rollEncounter(left, seededRandom(4), clock, 11);
+    expect(rolled.encounter?.in).toBe('0101');
+  });
+
+  it('Kälteschlaf und Lotterie wirken erst bei der Ankunft', () => {
+    const packed = { ...there, stash: [{ of: 'low-passage', count: 2 }] };
+    const left = travel(packed, '0201', { [kira]: 'low-passage', [jonas]: 'low-passage' }, { [kira]: 2, [jonas]: 3 }, 2, fixedRandom(3, 4, 1, 2, 6, 6, 0, 2, 1, 4), clock);
+    expect(left.characters.every((c) => !c.dead)).toBe(true);
+    expect(left.bookings.some((b) => b.kind === 'lottery')).toBe(false);
+    const after = arriveNow(left, clock);
+    expect(after.characters.find((c) => c.id === jonas)?.dead).toBe(true);
+    expect(after.bookings.some((b) => b.kind === 'lottery')).toBe(true);
+  });
+
+  it('löscht man unterwegs eine Notiz vor der Reise, rückt ihr Verweis nach', () => {
+    const noted: Campaign = { ...scout, log: [...scout.log, writeNote(scout.log, 'vorher', clock)] };
+    const left = travelShip(noted, '0103', fixedRandom(2, 5), clock);
+    const removed = removeLogEntry(left, noted.log.length - 1);
+    expect(removed.voyage?.entry).toBe(left.voyage!.entry - 1);
+    expect(removed.log[removed.voyage!.entry]?.kind).toBe('journey');
   });
 });

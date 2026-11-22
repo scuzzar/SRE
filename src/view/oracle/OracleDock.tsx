@@ -1,19 +1,20 @@
 import { useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Snapshot } from '../../controller';
-import { needText, resultLine, signed, taskFigures, taskHeadline } from '../format';
+import { needText, signed, taskFigures, taskHeadline } from '../format';
 import { useGame } from '../game-context';
 import { animated, haptic } from '../haptics';
-import { CardIcon, CloseIcon, DiceIcon, LightbulbIcon, PencilIcon } from '../icons';
+import { CardIcon, ClockIcon, CloseIcon, DiceIcon, PencilIcon, RouteIcon } from '../icons';
 import { useShortcuts } from '../keyboard';
 import { OddsBar } from '../OddsBar';
 import { DiceRoll } from './DiceRoll';
 import { NoteSheet } from './NoteSheet';
 
 /**
- * Die Reihe unter dem Log: Notiz, Deuten, Würfeln, Karte; ist eine Fertigkeit gewählt, steht die Probe
- * mit der Stufe darüber, und aus „2W6“ wird „Probe“. Deuten gilt immer dem neuesten Ergebnis, damit es
- * auch geht, wo man den Log nicht sieht (in einem anderen Reiter, auf dem Globus). Steht im Orakel und im Feld des Globus, damit man dort
+ * Die Reihe unter dem Log: Notiz, Tag, Würfeln, Karte; ist eine Fertigkeit gewählt, steht die Probe
+ * mit der Stufe darüber, und aus „2W6“ wird „Probe“. Der Tag (2026-11-22c, statt „Deuten“, das am
+ * Ergebnis selbst sitzt) lässt einen Tag vergehen: während einer Fahrt „Weiterfahren“, unterwegs
+ * „Weiterreisen“, sonst „1 Tag“; was er tut, entscheidet der Controller. Steht im Orakel und im Feld des Globus, damit man dort
  * nicht erst wechseln muss. Wurf und Notizblatt gehen über der ganzen App auf (auch über dem Globus);
  * welcher Wurf gerade rollt und ob das Blatt offen ist, ist reine Darstellung.
  */
@@ -35,9 +36,9 @@ export function OracleDock({
   const [rolling, setRolling] = useState<number | undefined>(undefined);
   const rolled = rolling === undefined ? undefined : view.log[rolling];
   const done = useCallback(() => setRolling(undefined), []);
-  // Welches Blatt die Reihe selbst geöffnet hat: eine Notiz oder die Deutung des neuesten Ergebnisses.
-  const [sheet, setSheet] = useState<'note' | 'reading' | undefined>(undefined);
-  const target = view.log.findLastIndex((item) => item.kind !== 'note');
+  // Ob die Reihe selbst das Notizblatt geöffnet hat.
+  const [sheet, setSheet] = useState<'note' | undefined>(undefined);
+  const day = view.time?.oneDay;
   const task = view.task?.ready ? view.task : undefined;
 
   const draw = () => {
@@ -55,17 +56,19 @@ export function OracleDock({
     if (animated()) setRolling(view.log.length);
   };
   const note = onNote ?? (() => setSheet('note'));
-  const interpret = () => {
-    if (target >= 0) setSheet('reading');
+  const passDay = () => {
+    if (day === undefined || day.blocker !== undefined) return;
+    haptic('shake');
+    game.oneDay();
   };
-  useShortcuts(shortcuts ? { k: draw, w: roll, n: note, d: interpret } : {});
+  useShortcuts(shortcuts ? { k: draw, w: roll, n: note, t: passDay } : {});
 
   // Über der ganzen App, damit Wurf und Blatt nicht im Feld des Globus eingesperrt sind.
   const host = typeof document === 'undefined' ? null : document.querySelector('.app');
   const layers = (
     <>
       {rolled?.kind === 'dice' && <DiceRoll key={rolling} item={rolled} seed={rolling ?? 0} onDone={done} />}
-      {sheet && <NoteSheet target={sheet === 'reading' && target >= 0 ? { index: target, ...resultLine(view.log[target]!) } : undefined} onClose={() => setSheet(undefined)} />}
+      {sheet && <NoteSheet target={undefined} onClose={() => setSheet(undefined)} />}
     </>
   );
 
@@ -95,15 +98,15 @@ export function OracleDock({
         </button>
         <button
           type="button"
-          className="action note interpret"
-          title={target < 0 ? 'Noch kein Ergebnis zum Deuten' : shortcuts ? 'Das neueste Ergebnis deuten (D)' : 'Das neueste Ergebnis deuten'}
-          aria-keyshortcuts={shortcuts ? 'D' : undefined}
-          aria-label="Neuestes Ergebnis deuten"
-          disabled={target < 0}
-          onClick={interpret}
+          className="action note one-day"
+          title={day?.blocker ?? `${day?.kind === 'day' ? 'Einen Tag vergehen lassen' : day?.label ?? ''}${shortcuts ? ' (T)' : ''}`}
+          aria-keyshortcuts={shortcuts ? 'T' : undefined}
+          aria-label={day?.kind === 'day' ? '1 Tag vergehen lassen' : day?.label}
+          disabled={day === undefined || day.blocker !== undefined}
+          onClick={passDay}
         >
-          <LightbulbIcon />
-          Deuten
+          {day?.kind === 'day' ? <ClockIcon /> : <RouteIcon />}
+          {day?.label ?? '1 Tag'}
         </button>
         {task ? (
           <button type="button" className="action task-roll" title={shortcuts ? 'Probe würfeln (W)' : 'Probe würfeln'} aria-keyshortcuts={shortcuts ? 'W' : undefined} aria-label="Probe würfeln" onClick={roll}>

@@ -28,7 +28,7 @@ import {
   type Hex,
   type MonthEnd,
 } from '.';
-import { fixedClock, fixedRandom } from './testing';
+import { fixedClock, fixedRandom, arriveNow } from './testing';
 
 function world(column: number, row: number, name: string, starport = 12): Hex {
   return hexFromFlat({
@@ -192,7 +192,7 @@ describe('Reise mit eigenem Schiff: Kabinen und Lebenserhaltung', () => {
   });
 
   it('im Sprung liegt das Schiff nirgends; am Ziel kostet die Ankunft Cr100', () => {
-    const after = travelShip(scout, '0201', fixedRandom(2, 5), clock);
+    const after = arriveNow(travelShip(scout, '0201', fixedRandom(2, 5), clock), clock);
     expect(after.bookings.slice(1).map((b) => [b.shipCost, b.amount])).toEqual([
       ['lifeSupport', -4_000],
       ['berthing', -100],
@@ -202,18 +202,21 @@ describe('Reise mit eigenem Schiff: Kabinen und Lebenserhaltung', () => {
 
   it('springt die Reise über ein Monatsende, steht die Abrechnung hinter ihr, mit dem Monatsende als Tag', () => {
     const late = { ...scout, day: START_DAY + 21, ships: scout.ships.map((s) => ({ ...s, berthedSince: START_DAY + 21 })) };
-    const after = travelShip(late, '0201', fixedRandom(2, 5), clock);
-    expect(after.log.slice(-2).map((e) => [e.kind, e.day])).toEqual([
+    const after = arriveNow(travelShip(late, '0201', fixedRandom(2, 5), clock), clock);
+    // Unterwegs vergehen die Tage einzeln (2026-11-22c); das Monatsende steht hinter dem Reisetag, der es überschreitet.
+    const kinds = after.log.filter((e) => e.kind === 'journey' || e.kind === 'monthEnd').map((e) => [e.kind, e.day]);
+    expect(kinds).toEqual([
       ['journey', START_DAY + 21],
       ['monthEnd', START_DAY + 28],
     ]);
-    expect(costsOf(after, after.log.at(-1) as MonthEnd).map((c) => c.booking.shipCost)).toEqual(['lifeSupport']);
+    const end = after.log.findLast((e) => e.kind === 'monthEnd') as MonthEnd;
+    expect(costsOf(after, end).map((c) => c.booking.shipCost)).toEqual(['lifeSupport']);
   });
 
   it('mit Passagen bleibt das Schiff, wo es stand (2026-11-21), und liegt dort weiter im Hafen', () => {
     const [kira, jonas] = scout.characters.map((c) => c.id) as [string, string];
     const rich = book(scout, 'income', 100_000, clock);
-    const after = travel(rich, '0201', { [kira]: 'middle-passage', [jonas]: 'middle-passage' }, {}, undefined, fixedRandom(), clock);
+    const after = arriveNow(travel(rich, '0201', { [kira]: 'middle-passage', [jonas]: 'middle-passage' }, {}, undefined, fixedRandom(), clock), clock);
     expect(activeShip(after).place).toEqual({ world: '0101' });
     expect(after.location).toEqual({ world: '0201' });
     expect(after.bookings.filter((b) => b.shipCost === 'berthing').map((b) => b.text)).not.toContain('Liegegebühr bei der Ankunft');

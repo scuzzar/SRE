@@ -555,6 +555,28 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `cabin`, `weapons`, `criticalDrive` und `SpaceAttack.noComputer`; siehe *Bewaffnung der Small
 > Craft*. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-22-bewaffnung-small-craft.png`](changes/2026-11-22-bewaffnung-small-craft.png).
+>
+> Am 22. November 2026 freigegeben (Kennzeichen 2026-11-22b): **Schiffsbegegnungen bei Abreise und Ankunft**
+> (Owner, 22. November 2026: „Wäre nicht die Raum Begegnung beim Verlassen und betreten des Sektors
+> etc der nächste Schritt? Weil aktuell fehlen Begegnungen. Völlig“). Wer mit dem eigenen Schiff
+> springt oder im System reist, würfelt beim Start von der Welt und bei der Ankunft auf der
+> *Starship Encounter Table* (SR 42); ein Angreifer öffnet die Raumkarte, eine friedliche Sichtung
+> fragt, und aus dem Systemflug geht die geplante Reise weiter. Neu im Bild: `SpaceBattle.occasion`
+> mit `EncounterOccasion`, `SpaceBattle.jumpTo` und `travelTo`, `SystemFlight.departure`,
+> `BattleOutcome.departed`, `departureRoll` und `arrivalRoll` an `Journey` und `SystemJourney`, und
+> flüchtig `EncounterCheck` (der Dialog vor dem Wurf, mit Zielwert, „Würfeln“ und „Abbrechen“ zum
+> Auslassen des Wurfs, lang gedrückt; auch von Hand im Reiter Begegnung); siehe *Schiffsbegegnungen bei Abreise und Ankunft*. Der Ausschnitt dazu
+> liegt unter
+> [`changes/2026-11-22b-raumbegegnungen-reise.png`](changes/2026-11-22b-raumbegegnungen-reise.png).
+>
+> Am 22. November 2026 freigegeben (Kennzeichen 2026-11-22c): **Reise Tag für Tag** (Owner, 22. November 2026:
+> „Die Zeit der Reise sollte ich selbst vergehen lassen. Also wie bei einer Reise auf dem Globus. Das
+> Ankunftswürfeln folgt nach einer Woche.“). Jede Reise (Sprung und Reise im System, mit Passage,
+> Ticket oder eigenem Schiff) läuft wie eine Fahrt: Beim Abflug beginnt sie, „Weiterreisen“ im Reiter
+> Begegnung lässt je einen Tag vergehen, nach ihrer Dauer kommt die Gruppe an. Neu im Bild: `Voyage`
+> mit `days` und `/left`, `Campaign.voyage`, die Verweise `jump` und `inSystem`; siehe *Unterwegs*.
+> Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-22c-reise-tag-fuer-tag.png`](changes/2026-11-22c-reise-tag-fuer-tag.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -644,8 +666,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Deutung | `Note` mit `interprets` | Was man aus einem Ergebnis macht, z. B. „Die Tür ist offen, aber jemand war schon hier.“ |
 | Ergebnis | `DiceRoll`, `CardPick`, `TaskResult`, `AttackResult`, `DamageRoll`, `PatronRoll`, `RumorRoll` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
 | Grundkarte | (View) | Was auf dem Handy wie im Desktop-Modus unter allem liegt: der Globus der offenen Welt, beim Start der des Aufenthaltsorts (sobald seine Oberflächenkarte entstanden ist); mit ✕ oder ganz herausgezoomt der Subsektor, in dem ein Tippen auf eine Welt deren Globus öffnet |
-| Ziehblatt | (View, Smartphone; Stufe `TrayStop`) | Das Blatt unten über der Grundkarte, wie in einer Karten-App. Es rastet beim Loslassen immer auf einer von vier **Stufen** ein: versteckt (nur der Griff, mit Abstand zum Rand; Reihe und Reiter rutschen hinaus), eingeklappt (Kopf, Reihe und Reiter, bei einem offenen Feld auch dessen Kopfzeile), halb und voll; nach einem Wisch eine Stufe weiter in seine Richtung. Ziehen lässt es sich am Griff, an Reihe und Reitern und im Inhalt nach unten, wenn der ganz oben steht. Das Gerät merkt sich die Stufe, nicht die Höhe. Oben der Griff, darunter der gewählte Bereich oder das angetippte Feld des Globus bzw. das gewählte Feld des Subsektors (dafür fährt es mindestens auf halbe Höhe, und die Karte holt das Feld über das Blatt), darunter im Log die Reihe Notiz, Deuten, 2W6, Karte, beim angetippten Feld des Globus stattdessen die Reihe Hierhin reisen (Route der *Fahrt* planen), Gruppe setzen, *NSC platzieren*, ganz unten die Reiter Log, Begegnung, Kampf, Shop, Charaktere, NSC |
-| Desktop-Modus | (View, media query) | Das Layout ab 1024 px Bildschirmbreite: links eine Spalte mit denselben Reitern wie im Ziehblatt, darunter das Log mit dem Charakter oben; ein Reiter (oder ein angetipptes Feld des Globus bzw. ein gewähltes des Subsektors) öffnet den Bereich an der Stelle des Logs in derselben Spalte, ✕ führt zurück; unten die Reihe Notiz, Deuten, 2W6, Karte, wo der Bereich keine eigene hat; den Rest füllt die Grundkarte. Gleiche Screens, gleiche Komponenten wie auf dem Smartphone |
+| Ziehblatt | (View, Smartphone; Stufe `TrayStop`) | Das Blatt unten über der Grundkarte, wie in einer Karten-App. Es rastet beim Loslassen immer auf einer von vier **Stufen** ein: versteckt (nur der Griff, mit Abstand zum Rand; Reihe und Reiter rutschen hinaus), eingeklappt (Kopf, Reihe und Reiter, bei einem offenen Feld auch dessen Kopfzeile), halb und voll; nach einem Wisch eine Stufe weiter in seine Richtung. Ziehen lässt es sich am Griff, an Reihe und Reitern und im Inhalt nach unten, wenn der ganz oben steht. Das Gerät merkt sich die Stufe, nicht die Höhe. Oben der Griff, darunter der gewählte Bereich oder das angetippte Feld des Globus bzw. das gewählte Feld des Subsektors (dafür fährt es mindestens auf halbe Höhe, und die Karte holt das Feld über das Blatt), darunter im Log die Reihe Notiz, Tag, 2W6, Karte (bis 2026-11-22c Notiz, Deuten, 2W6, Karte), beim angetippten Feld des Globus stattdessen die Reihe Hierhin reisen (Route der *Fahrt* planen), Gruppe setzen, *NSC platzieren*, ganz unten die Reiter Log, Begegnung, Kampf, Shop, Charaktere, NSC |
+| Desktop-Modus | (View, media query) | Das Layout ab 1024 px Bildschirmbreite: links eine Spalte mit denselben Reitern wie im Ziehblatt, darunter das Log mit dem Charakter oben; ein Reiter (oder ein angetipptes Feld des Globus bzw. ein gewähltes des Subsektors) öffnet den Bereich an der Stelle des Logs in derselben Spalte, ✕ führt zurück; unten die Reihe Notiz, Tag, 2W6, Karte, wo der Bereich keine eigene hat; den Rest füllt die Grundkarte. Gleiche Screens, gleiche Komponenten wie auf dem Smartphone |
 | Würfelwurf (2W6) | `DiceRoll` | Ein einfacher Wurf mit zwei Würfeln |
 | Inspirationskarte | `Card` | Eine gezogene Karte, solange sie offen ist |
 | Kartenauswahl | `CardPick` | Was man von einer Karte in den Log übernimmt, mit der Frage |
@@ -909,7 +931,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Gefeuert | `SpaceUnit.fired` | Die Einheit hat in dieser Raumrunde schon gefeuert; „Runde ausführen“ setzt es zurück (2026-11-21i, ersetzt das Ziel `aim`) |
 | Schaden am Schiff | `ShipDamage`, `Ship.damage`, `SpaceUnit.damage` | Die Treffer eines Schiffs in der Reihenfolge, in der sie kamen, und die ausgefallenen Turrets; am eigenen Schiff bleibt er bis zur Reparatur (2026-11-21h) |
 | Trefferzone | `HitZone` | Wohin ein Treffer geht (SE 12, *Hit Locations* und *Critical Hits*) (2026-11-21h) |
-| Ausgang | `SpaceBattleEnd.outcome`, `BattleOutcome` | Wie ein Raumkampf endete: zerstört, kampfunfähig, entkommen, abgebrochen, verloren (2026-11-21h) |
+| Ausgang | `SpaceBattleEnd.outcome`, `BattleOutcome` | Wie ein Raumkampf endete: zerstört, kampfunfähig, entkommen, abgebrochen, verloren (2026-11-21h); abgereist: das eigene Schiff ist aus dem Systemflug gesprungen oder im System weitergereist (2026-11-22b) |
+| Anlass | `SpaceBattle.occasion`, `EncounterOccasion` | Warum auf der Starship Encounter Table gewürfelt wurde: beim Start von der Welt (`departure`) oder bei der Ankunft (`arrival`); fehlt beim Knopf „Schiffsbegegnung“ (2026-11-22b) |
+| Begegnungswurf | `Journey.departureRoll`, `arrivalRoll`, `SystemJourney.departureRoll`, `arrivalRoll` | Die 2W6 auf der Starship Encounter Table bei Abreise bzw. Ankunft, wenn kein Schiff kam; kam eines, stehen sie am `SpaceBattle` (2026-11-22b) |
+| Begegnungsprüfung | `EncounterCheck` (flüchtig) | Der Dialog vor dem Begegnungswurf bei Abreise oder Ankunft: Zielwert, „Würfeln“ und „Abbrechen“ (lang drücken lässt den Wurf ausfallen); danach, bei einer Sichtung, die Frage „Zur Raumkarte“ oder „Weiter“ (2026-11-22b) |
+| Unterwegs | `Voyage`, `Campaign.voyage` | Eine Reise, die begonnen hat und noch nicht angekommen ist; die Gruppe lässt ihre Tage mit „Weiterreisen“ selbst vergehen (2026-11-22c) |
+| Reisetage | `Voyage.days`, `/left` | Wie viele Tage der Reise schon vergangen sind bzw. noch fehlen (2026-11-22c) |
+| Sichtung | `EncounterCheck.sighting` | Ein fremdes Schiff, das die Gruppe bei Abreise oder Ankunft ignoriert (2026-11-22b) |
+| Weiterreise | `SpaceBattle.jumpTo`, `travelTo`, `SystemFlight.departure` | Die Reise, die beim Start von der Welt durch eine Begegnung unterbrochen wurde; der Knopf „Springen nach …“ bzw. „Reisen nach …“ im Systemflug setzt sie fort (2026-11-22b) |
 | Turret | `Turret`, `Ship.turrets` | Ein Waffenturm auf einem Hardpoint des eigenen Schiffs, mit seinen Waffen; höchstens so viele, wie der Entwurf Hardpoints hat (2026-11-21g) |
 | Turmart | `TurretType` | Referenzdaten: Single, Double oder Triple Turret mit 1, 2 oder 3 Plätzen für Waffen und Preis (SE 10, 2026-11-21g) |
 | Schiffswaffe | `ShipWeapon` | Referenzdaten: Pulse Laser, Beam Laser, Missile Rack, Sandcaster mit Preis (SE 10, 2026-11-21g) |
@@ -1188,7 +1217,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     nächsten Blick ins Buch abgleichen (steht in der To-do).
 - **Deutungen und Notizen.** Beide sind ein `Note` mit Text, der nicht leer ist (Leerraum am Rand
   fällt weg). Seit 2026-11-14d schreibt man sie in einem eigenen Blatt: *Deuten* sitzt am Ergebnis,
-  *Notiz* unten in der Knopfreihe; die Frage schreibt man auf die Karte.
+  *Notiz* unten in der Knopfreihe; die Frage schreibt man auf die Karte. Seit 2026-11-22c gibt es
+  unten in der Reihe kein *Deuten* mehr (dort steht der Knopf für einen Tag, siehe *Zeit vergehen
+  lassen*).
   - Eine **Deutung** verweist auf genau ein Ergebnis (`interprets`): eine Orakelantwort, einen Wurf,
     eine Kartenauswahl, eine Probe, einen Angriff oder einen Schadenswurf, nie auf eine Notiz oder Deutung, und immer auf einen
     früheren Eintrag. Man deutet das Ergebnis, an dem man auf *Deuten* tippt: am neuesten steht der
@@ -1453,6 +1484,17 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     nach Lage will man mehr oder weniger Begegnungen. An Patron und Gerücht erinnert nichts: Die
     will man haben, man würfelt sie von selbst. Die Tests würfelt die Zeit nie selbst. Die
     Testknöpfe zählen weiter je Tag bzw. Woche (siehe *Test*).
+  - **Ein Tag in der Reihe des Logs** (Owner, 22. November 2026: „den einen Tag vergehen lassen Knopf
+    könnten wir grundsätzlich auch noch in dem Log unterbringen. Da würde er den Deuten-Knopf
+    ersetzen … Damit kann ich dann die Reise in dem Oracle-Log-Bildschirm durchführen und muss nicht
+    immer wechseln, was auch für Landreisen gut ist“). Die Reihe unter dem Log heißt jetzt **Notiz,
+    Tag, 2W6, Karte**: Der Knopf „Deuten“ entfällt dort (gedeutet wird am Ergebnis selbst, siehe
+    *Deutungen und Notizen*), an seiner Stelle steht ein Knopf für **einen Tag**, je nach Lage:
+    **„Weiterfahren“** während einer *Fahrt*, **„Weiterreisen“** während einer Reise *unterwegs*,
+    sonst **„1 Tag“** (wie „1 Tag vergehen“ im Reiter Begegnung). Er tut genau dasselbe wie der Knopf
+    im Reiter Begegnung, mit denselben Sperren (etwa während einer laufenden Begegnung); gesperrt sagt
+    er, warum. Das Würfelfenster der Fahrt (Pflicht-Test am Boden) geht wie dort über der App auf.
+    Die Reihe steht auch im Feld des Globus; dort gilt dasselbe.
 - **Reise** (2026-11-13d). Die Gruppe reist mit **Passagen** (High, Middle, Low; SE S. 8 f.) oder
   mit dem **eigenen Schiff** (2026-11-16d, siehe *Eigenes Schiff*); der Reisedialog
   bietet, was verfügbar ist.
@@ -1467,8 +1509,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     kauft die App sie zum Preis der Charts (Buchung `purchase` auf dem Abflugort). Reicht die Kasse
     nicht, geht die Reise nicht.
   - *Dauer*: Jede Reise dauert **eine Woche** (`days` = 7), egal wie weit (SE S. 8). Der Logeintrag
-    `Journey` steht am Abflugtag; danach ist `Campaign.day` 7 Tage weiter und der Aufenthaltsort das
-    Ziel (`to`). Die Zeit vergeht dabei ganz normal: 7 Tage, der Wochentag bei der Ankunft ist der
+    `Journey` steht am Abflugtag. Seit 2026-11-22c vergehen die 7 Tage nicht mehr auf einmal: Die
+    Gruppe ist *unterwegs* und lässt sie mit „Weiterreisen“ selbst vergehen; nach dem siebten ist der
+    Aufenthaltsort das Ziel (`to`), siehe *Unterwegs*. Die Zeit vergeht dabei ganz normal: 7 Tage, der Wochentag bei der Ankunft ist der
     der Abreise, und ein Sonntag dazwischen beendet die Woche wie sonst auch (die Zähler der Tests
     beginnen neu). Nur gibt es **keine Pflicht-Begegnungen**: Die Reise erinnert nicht an fehlende
     Tests, weder vor der Abreise noch für die Tage im Sprung, und würfelt keine. Wer unterwegs eine
@@ -1489,7 +1532,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       folgt daraus: Summe plus `jumpDm` **13 oder mehr**. Die SR-DMs kommen erst ins Spiel, wenn
       die App sie abbildet (Entscheidung des Owners, 16. November 2026): seit 2026-11-21f **+1**,
       wenn der Sprung unraffinierten Treibstoff verbraucht (dann ist mit einer 12 ein Fehlsprung
-      möglich); +5/+15 nahe an einem Himmelskörper fehlen noch. Der DM steht an der Reise
+      möglich); seit 2026-11-22b **+5/+15** nahe an einem Himmelskörper beim Sprung aus dem
+      Systemflug (siehe *Schiffsbegegnungen bei Abreise und Ankunft*). Der DM steht an der Reise
       (`jumpDm`), damit ein alter Wurf nicht rückwirkend kippt; Passagen haben 0. Der Wurf steht an
       der Reise im Log. Was ein Fehlsprung folgt, entscheidet der Owner – die App würfelt nur,
       sie würfelt keinen Zielort und zerstört kein Schiff.
@@ -1510,7 +1554,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - *Dauer* (`hours`): T = 2 · √(D ÷ A) (Charts S. 8: beschleunigen bis zur Mitte, dann abbremsen),
       D in m, A in m/s² (1 G = 10 m/s²), in Stunden aufgerundet. A ist mit Ticket 1 G, mit eigenem
       Schiff die G seines Manöverantriebs. `/days` = Stunden ÷ 24, aufgerundet, mindestens 1 Tag
-      (Owner); so viele Tage vergehen wie bei der Reise, ohne Pflicht-Begegnungen.
+      (Owner); so viele Tage vergehen wie bei der Reise, ohne Pflicht-Begegnungen, seit 2026-11-22c
+      Tag für Tag mit „Weiterreisen“ (siehe *Unterwegs*).
     - *Ticket* (Hausregel, Owner): je Reisendem Cr 25 je Stunde Flugzeit (der Satz der Middle Passage
       je Tag), als Buchung `ticket` auf dem Abflugort mit Verweis auf die Reise (`ticketFor`). Nur
       wenn Start oder Ziel einen Raumhafen hat (Starport A–E bzw. Spaceport F–H). Reicht die Kasse
@@ -1553,6 +1598,44 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Reise im Log; wird davor etwas gelöscht, rückt der Verweis nach.
   - Gepäckgrenzen (High 1000 kg, Middle 100 kg, Low 10 kg), Bumping der Middle Passage, Hijacking
     und Working Passage kommen später.
+- **Unterwegs** (freigegeben am 22. November 2026, Kennzeichen 2026-11-22c; Owner, 22. November 2026). Jede Reise
+  läuft wie eine *Fahrt*: Sie beginnt beim Abflug und endet erst, wenn ihre Tage vergangen sind. Das
+  ändert die *Dauer* unter *Reise* und *Reise im System*: Die Zeit springt nicht mehr um die Dauer
+  weiter. Entscheidungen des Owners vom 22. November 2026 sind als solche genannt; Hausregeln tragen ⚑.
+  - **Für alle Reisen** (Owner): Sprung mit Passage oder eigenem Schiff (`Journey`, 7 Tage) und Reise
+    im System mit Ticket, eigenem Schiff oder Beiboot (`SystemJourney`, `/days` Tage).
+  - **Abflug.** Was die Reise beim Abflug tut, tut sie wie bisher am Abflugtag: Logeintrag `Journey`
+    bzw. `SystemJourney` mit allen Würfen (Sprungwurf, Kälteschlaf, Lotterie), Passagen, Tickets und
+    Lebenserhaltung bezahlt, Treibstoff verbraucht. Neu ist **`Campaign.voyage`**: eine Reise
+    unterwegs (`Voyage`) mit `days` = 0, die auf ihren Logeintrag verweist (`jump` bzw. `inSystem`,
+    genau einer). Der Tag bleibt, und die Gruppe ist **an keinem Ort** (Owner): `Campaign.location`
+    fehlt, bis sie ankommt. Das eigene Schiff, mit dem sie reist, hat keinen Ort (es ist bei der Gruppe),
+    ein zurückgelassenes bleibt, wo es steht. Es gibt höchstens eine Reise unterwegs.
+  - **Weiterreisen** (Owner: wie bei der Fahrt). Unten im Reiter Begegnung steht statt „Tage vergehen“
+    der Knopf **„Weiterreisen“**, ebenso in der Reihe unter dem Log (siehe *Ein Tag in der Reihe des
+    Logs*): Er lässt **einen Tag** vergehen, genau wie „1 Tag vergehen“, mit
+    allem, was daran hängt (Logeintrag, laufende Kosten, Monatsende), und zählt `days` um eins hoch.
+    `/left` = Dauer − `days`. Wie bisher gibt es unterwegs **keine Pflicht-Begegnungen**: Die Reise
+    erinnert nicht an fehlende Tests. ⚑ „Woche beenden“ ist unterwegs gesperrt (die Woche endet mit
+    den Reisetagen, wenn ein Sonntag dazwischen liegt, wie sonst auch).
+  - **Ankunft**, wenn `days` die Dauer erreicht (nach dem letzten „Weiterreisen“): `Campaign.voyage`
+    fällt weg, der Aufenthaltsort ist das Ziel (ohne Feld, also *Landeplatz*), das eigene Schiff kommt
+    dort an (Liegegebühr ab dem Ankunftstag). Erst jetzt wirkt der **Kälteschlaf** (Owner: Aufwachwurf
+    und Lotterie bei der Ankunft): Wer nicht aufwacht, ist tot, und der Lotteriegewinn wird gebucht. ⚑
+    Gewürfelt wird beides weiter beim Abflug (die Würfel stehen an der Reise, damit ein Neustart nichts
+    neu würfelt), gezeigt wird es erst bei der Ankunft: Der Dialog der Reise zeigt beim Abflug nur
+    Ziel, Dauer und Sprungwurf, bei der Ankunft Kälteschlaf und Lotterie. Danach folgt mit eigenem
+    Schiff die Begegnungsprüfung der Ankunft (siehe *Schiffsbegegnungen bei Abreise und Ankunft*).
+  - **Unterwegs möglich** (Owner: Begegnungen an Bord): die Würfe im Reiter Begegnung, die keinen Ort
+    brauchen (Zufallsbegegnung, Patron, Gerücht), von Hand; ⚑ eine Zufallsbegegnung an Bord nimmt TL
+    und Bevölkerung der Abflugwelt, und die Begegnung steht dort (`Encounter.in`); Karte und Orakel, Proben, Charaktere.
+    Gesperrt, weil die Gruppe an keinem Ort ist: Tiere, Polizei, Shop, Werft, Tanken, Landeplatz,
+    Systemflug, eine weitere Reise, Fahrten, „Gruppe platzieren“.
+  - **Abbrechen** geht nicht (Owner): Die Reise läuft bis zur Ankunft.
+  - **Weiterreise aus dem Systemflug** (2026-11-22b) beginnt die Reise ebenso; die Prüfung der Ankunft
+    kommt nach ihren Tagen.
+  - **Reisen von vorher** sind sofort angekommen und haben keine `Voyage`.
+
 - **Low Passage** (2026-11-13d). Jeder Low-Passagier würfelt beim Aufwachen **5+ auf 2W6**
   (SE S. 9). DMs: +1, wenn ein mitreisender Charakter in High oder Middle Passage Medical-2 oder
   besser hat (er hilft dem Schiffsmedic; Hausregel, die Regeln sagen „attending medic“); −1 bei END 6
@@ -2919,7 +3002,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Abschnitt:** Jeder Abschnitt hat seine Felder in Reihenfolge (`cells`; bei einem Flug nur Start
     und Landepunkt), daraus folgen seine Fahrstunden (`/hours`) und seine Miete je Tag (`/rent`). Das
     letzte Feld eines Abschnitts ist das erste des nächsten.
-  - **Tag für Tag** (wie Zeit vergehen lassen): „Weiterfahren“ unten im Reiter Begegnung (die einzige Stelle dafür; nach „Losfahren“ öffnet er sich, auf dem Globus führt ein Hinweis hin) fährt die Fahrstunden je Tag
+  - **Tag für Tag** (wie Zeit vergehen lassen): „Weiterfahren“ unten im Reiter Begegnung (nach „Losfahren“ öffnet er sich, auf dem Globus führt ein Hinweis hin; seit 2026-11-22c auch in der Reihe unter dem Log, siehe *Ein Tag in der Reihe des Logs*) fährt die Fahrstunden je Tag
     (Hausregel: **8 Stunden** für alle Fahrzeuge; *Mission on Mithril* rechnet 10 auf einem
     20-Stunden-Tag) oder den Rest bis zur Ankunft, nie weniger. Das ist ein
     Logeintrag `TripDay` mit den gefahrenen Stunden, der Miete des Tages und ob die Gruppe
@@ -3381,6 +3464,98 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     kritischem Treffer, alles auf einmal (Buchung mit `shipCost` repair); danach ist `Ship.damage`
     leer. Ausgefallene Turrets arbeiten wieder.
 
+- **Schiffsbegegnungen bei Abreise und Ankunft** (freigegeben am 22. November 2026, Kennzeichen 2026-11-22b; Owner,
+  22. November 2026). Teil von Stufe 5 des [Konzepts](konzept-raumkampf.md), vorgezogen, weil im
+  normalen Spiel bisher gar keine Schiffsbegegnungen vorkamen. Nach SR 42 wird beim Eintritt in ein
+  System und beim Verlassen auf der *Starship Encounter Table* gewürfelt
+  ([`regeln-schiffe.md`](regeln-schiffe.md), *Schiffsbegegnungen im System*). Entscheidungen des
+  Owners vom 22. November 2026 sind als solche genannt; Hausregeln tragen ⚑.
+  - **Wann** (Owner). Gewürfelt wird bei jeder **Reise mit eigenem Schiff** (`Journey` mit `ship`)
+    und jeder **Reise im System mit eigenem Schiff** (`SystemJourney` mit `ship`), je zweimal:
+    beim **Start von der Welt**, bevor die Reise beginnt, und bei der **Ankunft**, gleich nachdem
+    sie endet (nach dem Sprung: beim Auftauchen). Reisen mit Passage oder Ticket würfeln nicht
+    (Owner, ⚑ die Gruppe reist nur mit). „Systemflug beginnen“ würfelt nicht; dafür bleibt der
+    Knopf „Schiffsbegegnung“. Während einer laufenden Begegnung, Fahrt oder eines Systemflugs reist
+    man wie bisher nicht ab (außer mit der Weiterreise, siehe unten).
+  - **Der Wurf** ist derselbe wie beim Knopf „Schiffsbegegnung“ (siehe *Raumkampf, Stufe 2*): SE 13,
+    Spalte nach dem Raumhafen der Hauptwelt des Systems, von dem man abreist bzw. in dem man
+    ankommt, DM +2 Marinebasis, +1 Scoutbasis; danach Pirat oder Reaktion (SE 21). Bei einer Reise
+    im System sind Start und Ziel im selben System. ⚑ Das \* (zusätzliches Small Craft) bleibt
+    weiter ohne Folgen.
+  - **Dialog vor dem Wurf** (Owner, 22. November 2026: „Für das Würfeln einen Dialog, der den
+    Zielwert anzeigt, und Buttons für Würfeln und Abbrechen. Abbrechen lässt den Wurf ausfallen,
+    wenn man lange drückt. Damit kann ich den Wurf weg-GM-en“). Vor jedem Wurf bei Abreise oder
+    Ankunft entsteht eine flüchtige **Begegnungsprüfung** (`EncounterCheck`) mit dem Anlass
+    (`occasion`) und, beim Start, dem Ziel der Reise (`jumpTo` bzw. `travelTo`). Der Dialog zeigt
+    Anlass, Spalte (`/column`) und DM (`/dm`, mit Grund: Marinebasis, Scoutbasis) und als
+    **Zielwert** die Summen auf 2W6, bei denen ein Schiff kommt (`/shipOn`: jede Summe, deren
+    Ergebnis mit DM, höchstens 15, in der Spalte kein Strich ist), zusammengefasst wie „6+“ oder
+    „4, 9+“; kommt bei keiner Summe ein Schiff, sagt er das.
+    - **„Würfeln“** würfelt mit Würfelanimation wie beim Feuer und zeigt das Ergebnis im Dialog
+      (Wurf, Schiff oder keins, Reaktion).
+    - **„Abbrechen“** wirkt nur **lang gedrückt** (⚑ so lange wie die übrigen lang gedrückten Knöpfe
+      der App; ein kurzes Tippen hebt nur den Hinweis „Lange drücken: …“ hervor): Der Wurf fällt aus, als wäre kein Schiff gekommen, und die Reise geht
+      weiter. Dann steht kein Wurf an der Reise (`departureRoll` bzw. `arrivalRoll` fehlt) und kein
+      `SpaceBattle` im Log. ⚑ Ein ausgelassener Wurf ist also im Log nicht von einer Reise von
+      vor dieser Änderung zu unterscheiden.
+    - Geht die App zu, solange der Dialog offen ist, ist die Prüfung verloren wie eine offene Karte:
+      Beim Start fand keine Reise statt; bei der Ankunft steht die Gruppe am Ziel ohne Wurf.
+  - **Von Hand auslösen** (Owner, 22. November 2026: „man sollte auch über Begegnung manuell den
+    Wurf triggern können“). Im Reiter **Begegnung** steht der Knopf **„Schiffsbegegnung“**, wenn die
+    Gruppe ein eigenes Schiff hat und bei ihm ist (wie bei „Systemflug beginnen“) und keine
+    Begegnung läuft. Er öffnet denselben Dialog, ohne Anlass (`occasion` fehlt) und ohne Ziel. Ein
+    Angreifer öffnet die Raumkarte mit einem neuen Systemflug an der Welt der Gruppe, das eigene
+    Schiff startet wie bei „Systemflug beginnen“; eine Sichtung fragt „Zur Raumkarte“ oder
+    „Weiter“ (dann nur der Logeintrag). Läuft schon ein Systemflug, öffnet der Knopf die Raumkarte
+    und würfelt dort. Der Knopf „Schiffsbegegnung würfeln“ im Systemflug öffnet ebenfalls diesen
+    Dialog; ein fremdes Schiff taucht dort auf wie bisher. Das Wählen von Hand (Entwurf und Absicht)
+    bleibt im Systemflug.
+  - **Ohne Schiff** (Strich in der Tabelle) geht die Reise weiter wie bisher. Die Würfel stehen an
+    der Reise: `departureRoll` für den Start, `arrivalRoll` für die Ankunft. Kam ein Schiff, fehlt
+    das Feld dort, und die Würfel stehen am `SpaceBattle` (`encounter`), nie an beiden. Reisen von
+    vorher und Reisen mit Passage oder Ticket haben keins von beiden.
+  - **Der Logeintrag** `SpaceBattle` hält den Anlass fest (`occasion`: `departure` oder `arrival`;
+    ohne beim Knopf). Beim Start trägt er auch das Ziel der unterbrochenen Reise: das Hexfeld des
+    Sprungs (`jumpTo`) oder die Welt der Reise im System (`travelTo`), genau eins davon; bei der
+    Ankunft und beim Knopf keins.
+  - **Angriff** (Pirat oder Reaktion „greift an“): Die Raumkarte öffnet sich von selbst mit einem
+    neuen Systemflug, das fremde Schiff taucht auf wie beim Knopf (2W6 Raumbänder, 1W6 × 60°,
+    gleiche Geschwindigkeit wie das eigene Schiff).
+    - *Beim Start* auf der Raumkarte der Welt, von der man abreist; das eigene Schiff startet wie bei
+      „Systemflug beginnen“ (Kreisbahn mit doppeltem Weltradius). Die Reise findet noch nicht statt:
+      kein Logeintrag `Journey` bzw. `SystemJourney`, keine Zeit, kein Treibstoff. Der Systemflug
+      verweist auf den Raumkampf, aus dem er entstand (`departure`).
+    - *Bei der Ankunft* (Owner) auf der Raumkarte der Zielwelt (bei einem Mond: auf der seiner
+      Welt, ⚑), das eigene Schiff **an der Sprunggrenze**: 100 Durchmesser der Zielwelt von ihr
+      entfernt, ⚑ ruhend gegenüber der Welt, ⚑ in Richtung 1W6 × 60°; bei Größe 0 wie beim Beginn in
+      20.000 km. Die Reise hat stattgefunden (Tage, Treibstoff, Aufenthaltsort wie bisher).
+      ⚑ Der Dialog **Landeplatz** wartet, solange der Systemflug läuft; landet das Schiff im
+      Systemflug oder endet er, geht er auf wie sonst.
+  - **Sichtung** (Owner: fragen). Ignoriert das fremde Schiff die Gruppe, hält die Begegnungsprüfung
+    den noch nicht gespeicherten `SpaceBattle` als Sichtung (`sighting`), und der Dialog fragt: **„Zur Raumkarte“** öffnet den Systemflug wie beim Angriff, mit dem fremden Schiff,
+    das ignoriert (`intent` ignore); **„Weiter“** setzt die Reise fort (beim Start: sie findet statt;
+    bei der Ankunft: weiter zum Landeplatz). In beiden Fällen kommt der `SpaceBattle` ins Log, bei
+    „Weiter“ ohne Systemflug („Free Trader *Name* in Sicht“). ⚑ Geht die App vor der Antwort zu,
+    ist die Sichtung verloren wie eine offene Karte: Beim Start fand dann keine Reise statt, bei der
+    Ankunft steht die Gruppe am Ziel, ohne dass die Sichtung im Log steht.
+  - **Weiterreise aus dem Systemflug** (Owner). Hat der Systemflug einen `departure`, steht im Blatt
+    der Knopf **„Springen nach …“** (bei `jumpTo`) bzw. **„Reisen nach …“** (bei `travelTo`),
+    jederzeit, auch mitten im Kampf. Er löst die Reise aus, wie sie der Reisedialog ausgelöst hätte,
+    mit denselben Bedingungen (Sprungweite höchstens `ShipDamage./jump`, Treibstoff) und **ohne
+    neuen Wurf beim Start** (der kam schon); bei der Ankunft wird gewürfelt wie sonst.
+    - *Fehlsprung* (SR 28, Owner): Beim Sprung aus dem Systemflug kommt zu `Journey.jumpDm` **+5**,
+      wenn das Schiff innerhalb 100 Durchmesser eines Himmelskörpers der Raumkarte ist, **+15**
+      innerhalb 10 Durchmesser (der höchste zählt, nicht beide). Das ist auch die **Flucht per
+      Sprung**. Beim Sprung aus dem Reisedialog bleibt es wie bisher (das Schiff fliegt dort
+      gedanklich bis zur Sprunggrenze).
+    - Der Systemflug endet damit. War ein fremdes Schiff noch da, endet der Raumkampf mit
+      `SpaceBattleEnd` und dem Ausgang **abgereist** (`departed`). Der Ort des Schiffs ist danach
+      der der Reise (am Ziel ohne Feld, also wieder *Landeplatz*).
+    - Endet der Systemflug anders (Landen, Beenden), verfällt die unterbrochene Reise; wer weiter
+      will, reist neu und würfelt beim Start neu.
+  - **Später**: Ortung und Schatten, fremde Small Craft (das \*), Begegnungen bei Reisen mit
+    Passage (Piraten entern das Passagierschiff, braucht das Entern).
+
 - **Bewaffnung der Small Craft** (freigegeben am 22. November 2026, Kennzeichen 2026-11-22; Owner, 22. November
   2026: „Die Small Craft kommen mit Lasern. Der Rest existiert ja auch noch nicht in der App“). Ein
   Teil von Stufe 4b des [Konzepts](konzept-raumkampf.md). Regeln aus SR 33–35, übertragen in
@@ -3756,6 +3931,20 @@ Diagramm mit diesen Ausnahmen:
   - **Nebenwelten** (2026-11-20c) sind gebaut (`rollSubordinates`). Systeme von davor bekommen die
     Werte beim Öffnen der Kampagne mit Würfen aus Schlüssel und Feld; bis dahin lässt die Prüfung
     Nebenwelten ohne Raumhafen zu, aber nur alle zusammen.
+- **Unterwegs** (2026-11-22c) ist gebaut (`model/voyage.ts`; „Weiterreisen“ ist `voyageDay`, im
+  Controller `travelOn()`, der Tag-Knopf der Log-Reihe `oneDay()`). Abweichungen:
+  - **`Voyage → Journey : jump`** und **`Voyage → SystemJourney : inSystem`** sind im Code ein Feld
+    `entry`, die Stelle des Logeintrags (wie `won`); Löschen davor rückt die Stelle nach.
+  - Ein **Beiboot**, mit dem die Gruppe im System reist, ist unterwegs nicht mehr an Bord seines
+    Mutterschiffs (wie vorher bei der Ankunft).
+- **Schiffsbegegnungen bei Abreise und Ankunft** (2026-11-22b) sind gebaut (`model/ship-encounter.ts`,
+  `model/draft/ship-check.ts`, Wurf in `model/space-combat.ts`). Abweichungen:
+  - **`EncounterCheck`** heißt im Code `ShipEncounterCheck`, weil `EncounterCheck` schon der Test der
+    Encounter Checklist ist (`model/encounter-check.ts`). `/column`, `/dm` und `/shipOn` rechnen
+    `checkColumn` und `checkShipOn`; der Wurf selbst liegt in der Prüfung als `result`.
+  - **`SystemFlight → SpaceBattle : departure`** ist im Code das Ziel selbst (`departure` mit
+    `jumpTo` bzw. `travelTo`), nicht der Verweis auf den Logeintrag.
+  - Eine **Reise im System mit Beiboot** würfelt noch nicht, nur die mit dem eigenen Schiff.
 - **Raumkampf, Stufe 2** (2026-11-21h) ist gebaut (`model/space-combat.ts`), auf Wunsch des Owners
   schon vor der Freigabe des Bilds. Abweichungen: Gefeuert wird von der Einheit der Gruppe
   (`SystemFlight.party`, 2026-11-21b) aus, und fremde Schiffe zielen auf sie; andere eigene Einheiten

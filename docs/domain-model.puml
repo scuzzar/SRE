@@ -349,6 +349,17 @@ hide <<browser>> stereotype
     encounter: number[2] [0..1]
     reaction: number[2] [0..1]
     attack: number[2] [0..1]
+    occasion: EncounterOccasion [0..1]
+  }
+  enum EncounterOccasion <<value>> $raum {
+    departure
+    arrival
+  }
+  class EncounterCheck <<transient>> $raum {
+    occasion: EncounterOccasion [0..1]
+    /column: string
+    /dm: number
+    /shipOn: number [*]
   }
   class SpaceAttack $raum {
     round: number
@@ -373,6 +384,7 @@ hide <<browser>> stereotype
     escaped
     broken
     lost
+    departed
   }
   class SpaceUnit $raum {
     position: Vec
@@ -586,13 +598,21 @@ hide <<browser>> stereotype
     jump: number[2]
     jumpDm: number
     /misjump: boolean
+    departureRoll: number[2] [0..1]
+    arrivalRoll: number[2] [0..1]
   }
   class Passenger <<value>> $reise {
+  }
+  class Voyage $reise {
+    days: number
+    /left: number
   }
   class SystemJourney $reise {
     hours: number
     /days: number
     /distance: number
+    departureRoll: number[2] [0..1]
+    arrivalRoll: number[2] [0..1]
   }
   class LowBerth <<value>> $reise {
     revive: number[2]
@@ -1294,6 +1314,14 @@ SpaceBattle "*" --> "1" ShipDesign : design
 SpaceAttack "*" --> "1" ShipWeapon : weapon
 SpaceAttack --> HitZone
 SpaceBattleEnd --> BattleOutcome
+SpaceBattle --> EncounterOccasion
+SpaceBattle "*" --> "0..1" Hex : jumpTo
+SpaceBattle "*" --> "0..1" World : travelTo
+SystemFlight "*" --> "0..1" SpaceBattle : departure
+EncounterCheck "0..1" --> "0..1" SpaceBattle : sighting
+EncounterCheck --> EncounterOccasion
+EncounterCheck "*" --> "0..1" Hex : jumpTo
+EncounterCheck "*" --> "0..1" World : travelTo
 SystemFlight "*" --> "1" SpaceUnit : party
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
 LogEntry <|-- Skimming
@@ -1337,6 +1365,9 @@ SystemJourney "*" --> "1" World : from
 SystemJourney "*" --> "1" World : to
 SystemJourney "*" --> "*" Character : travellers
 SystemJourney "*" --> "0..1" Ship : ship
+Campaign "1" *-- "0..1" Voyage : voyage
+Voyage "0..1" --> "0..1" Journey : jump
+Voyage "0..1" --> "0..1" SystemJourney : inSystem
 Booking "*" --> "0..1" SystemJourney : ticketFor
 
 ' Charaktererschaffung und Lebenslauf

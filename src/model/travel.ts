@@ -1,5 +1,4 @@
-import { worldPlace } from './place';
-import { keepFocus, livingCharacters, type Campaign, type Character, type CharacterId, type Possession } from './campaign';
+import { livingCharacters, type Campaign, type Character, type CharacterId, type Possession } from './campaign';
 import { DomainError } from './errors';
 import type { Journey, LowBerth, Passenger } from './log';
 import type { Clock, Random } from './ports';
@@ -7,9 +6,10 @@ import { itemOf, shipDesignOf } from './reference';
 import { sum, type Dice } from './rules';
 import { hexById, hexId, hexIdOfWorld, worldOf, type Hex, type World } from './sector';
 import { bookShip, fundsOf, locationOf, type Booking } from './shop';
-import { craftOf, jumpFuelOf, shipOf, type Ship } from './ship';
-import { portDepartureBlocker, shipDepartureBlocker, shipArrives, leaveShipBehind } from './landing';
-import { afterTime, arrive, LIFE_SUPPORT, PER_STATEROOM } from './upkeep';
+import { craftOf, jumpFuelOf, shipOf, without, type Ship } from './ship';
+import { portDepartureBlocker, shipDepartureBlocker, leaveShipBehind } from './landing';
+import { LIFE_SUPPORT, PER_STATEROOM } from './upkeep';
+import { startVoyage } from './voyage';
 import { parkVehicles } from './trip';
 import { jumpAfter } from './space-combat';
 import { dayOf, JOURNEY_DAYS } from './time';
@@ -224,7 +224,7 @@ export function lifeSupportOf(campaign: Campaign): number {
  * die App die Lebenserhaltung (2026-11-17b). Eine Woche später ist die Gruppe am Ziel, das Schiff
  * liegt dort im Hafen.
  */
-export function travelShip(campaign: Campaign, to: string, random: Random, clock: Clock): Campaign {
+export function travelShip(campaign: Campaign, to: string, random: Random, clock: Clock, options: { readonly departureRoll?: Dice; readonly extraDm?: number } = {}): Campaign {
   const blocker = shipJourneyBlocker(campaign, to);
   if (blocker) throw new DomainError(blocker);
   // Eigene Fahrzeuge bleiben am Aufenthaltsort, eine Fahrt fällt weg (siehe domain-model.md, *Fahrt*).
@@ -234,18 +234,18 @@ export function travelShip(campaign: Campaign, to: string, random: Random, clock
   const per = jumpFuelOf(ship.design);
   const jump: Dice = [d6(random), d6(random)];
   const today = dayOf(campaign);
-  const journey: Journey = { kind: 'journey', at: clock.now(), day: today, from, to, days: JOURNEY_DAYS, passengers: [], berths: [], ship: ship.id, jump, jumpDm: jumpDmOf(ship) };
+  // Beim Sprung aus dem Systemflug kommt der DM der Nähe zu einem Körper dazu (SR 28, 2026-11-22b).
+  const jumpDm = jumpDmOf(ship) + (options.extraDm ?? 0);
+  const journey: Journey = { kind: 'journey', at: clock.now(), day: today, from, to, days: JOURNEY_DAYS, passengers: [], berths: [], ship: ship.id, jump, jumpDm, ...(options.departureRoll ? { departureRoll: options.departureRoll } : {}) };
   const supplied = bookShip(campaign, -lifeSupportOf(campaign), ship.id, 'lifeSupport', clock, `Lebenserhaltung, ${travellersOf(campaign).length} Reisende`);
   const after: Campaign = {
     ...supplied,
-    // Während des Sprungs liegt das Schiff in keinem Hafen: Die Liegezeit beginnt erst am Ziel.
-    ships: supplied.ships.map((s) => (s.id === ship.id ? { ...s, fuel: s.fuel - per, unrefined: Math.max(0, s.unrefined - per), berthedSince: today + JOURNEY_DAYS } : s)),
+    // Unterwegs ist das Schiff bei der Gruppe, an keinem Ort und in keinem Hafen (2026-11-22c); die Liegezeit beginnt erst am Ziel.
+    ships: supplied.ships.map((s) => (s.id === ship.id ? without({ ...s, fuel: s.fuel - per, unrefined: Math.max(0, s.unrefined - per) }, 'place', 'berthedSince') : s)),
     log: [...campaign.log, journey],
-    day: today + JOURNEY_DAYS,
-    location: worldPlace(to),
   };
-  // Das Schiff steht danach auf der Zielwelt; das Feld wählt der Landeplatz (2026-11-21).
-  return keepFocus(campaign, arrive(afterTime(shipArrives(after, to), today, clock), clock));
+  // Die Reise ist unterwegs; die Gruppe lässt ihre Tage mit „Weiterreisen“ vergehen (2026-11-22c).
+  return startVoyage(after, campaign.log.length);
 }
 
 /**
@@ -314,22 +314,10 @@ export function travel(
     ...(ties.length > 1 ? { lot: ties[random.int(0, ties.length - 1)]! } : {}),
   };
   const index = campaign.log.length;
-  const winner = winnerOf(journey);
-  const pc = winner === undefined ? undefined : berths[winner]!.for;
-  if (pc !== undefined && lotteryPaid(journey)) bookings.push({ at: clock.now(), kind: 'lottery', amount: potOf(journey), for: pc, won: index });
 
-  // Wer nicht aufwacht, stirbt.
-  const dead = new Set(berths.filter((b) => b.for !== undefined && !survived(b)).map((b) => b.for!));
-  const after: Campaign = {
-    ...campaign,
-    stash,
-    bookings,
-    characters: campaign.characters.map((c) => (dead.has(c.id) ? { ...c, dead: true } : c)),
-    log: [...campaign.log, journey],
-    day: today + JOURNEY_DAYS,
-    location: worldPlace(to),
-  };
-  return keepFocus(campaign, arrive(afterTime(after, today, clock), clock));
+  // Wer nicht aufwacht, stirbt, und die Lotterie zahlt aus: beides erst bei der Ankunft (2026-11-22c, `voyage.ts`).
+  const after: Campaign = { ...campaign, stash, bookings, log: [...campaign.log, journey] };
+  return startVoyage(after, index);
 }
 
 /** Prüft eine Reise aus der Kampagnendatei: Felder, Passagen, Charaktere, Kojen, Los, Schiff und Sprungwurf. */

@@ -4,7 +4,7 @@ import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { HoldButton } from '../HoldButton';
 import type { EncounterOptions } from './EncounterScreen';
-import { BadgeIcon, BriefcaseIcon, CalendarIcon, ClockIcon, EncounterIcon, PawIcon, RouteIcon, RumorIcon } from '../icons';
+import { BadgeIcon, BriefcaseIcon, CalendarIcon, ClockIcon, EncounterIcon, PawIcon, RouteIcon, RumorIcon, ShipIcon } from '../icons';
 
 type Check = ChecksView[keyof ChecksView] | undefined;
 
@@ -37,12 +37,20 @@ export function EncounterDock({ view, options }: { view: Snapshot; /** Auf dem B
   const animals = () => (options.manual ? game.chooseEncounter('animal') : game.rollAnimals());
   return (
     <section className="dock encounter-dock" aria-label="Begegnung und Zeit">
-      <div className="actions oracle-actions encounter-tests">
+      <div className={`actions oracle-actions encounter-tests${view.shipEncounter ? ' with-ship' : ''}`}>
         <Test icon={<EncounterIcon />} title="Zufall" label="Zufallsbegegnung würfeln" check={checks?.random} disabled={randomOff} onPress={random} onHold={() => game.rollEncounter(undefined, undefined, true)} />
         <Test icon={<PawIcon />} title="Tiere" label="Tiere würfeln" check={checks?.animal} disabled={animalsOff} onPress={animals} onHold={() => game.rollAnimals(undefined, true)} />
         <Test icon={<BriefcaseIcon />} title="Patron" label="Patron würfeln" check={checks?.patron} disabled={!view.patron} onPress={() => game.rollPatron()} onHold={() => game.rollPatron(true)} />
         <Test icon={<RumorIcon />} title="Gerücht" label="Gerücht würfeln" check={checks?.rumor} disabled={!view.rumor} onPress={() => game.rollRumor()} onHold={() => game.rollRumor(true)} />
         <Test icon={<BadgeIcon />} title="Polizei" label="Polizei würfeln" check={checks?.legal} disabled={legalOff} onPress={() => game.rollLegal()} onHold={() => game.rollLegal(true)} />
+        {view.shipEncounter && (
+          // Schiffsbegegnung von Hand (2026-11-22b): öffnet den Dialog mit Zielwert, Würfeln und Abbrechen.
+          // Gesperrt bleibt er antippbar: Der Hinweis sagt dann, warum nicht.
+          <button type="button" className={`action ${view.shipEncounter.blocker ? 'note met' : 'dice'} encounter-test`} title={view.shipEncounter.blocker ?? 'Schiffsbegegnung würfeln (SE 13)'} aria-label="Schiffsbegegnung würfeln" onClick={() => game.openShipEncounter()}>
+            <ShipIcon />
+            <span className="test-title">Schiff</span>
+          </button>
+        )}
       </div>
       {time && (
         <div className="actions oracle-actions encounter-time">
@@ -51,13 +59,19 @@ export function EncounterDock({ view, options }: { view: Snapshot; /** Auf dem B
               <RouteIcon />
               Weiterfahren
             </button>
+          ) : time.voyage ? (
+            // Unterwegs (2026-11-22c): je ein Reisetag, nach dem letzten ist die Gruppe am Ziel.
+            <button type="button" className="action draw" title={time.oneDay.blocker ?? `Unterwegs nach ${time.voyage.to}, noch ${time.voyage.left} Tage`} disabled={time.oneDay.blocker !== undefined} onClick={() => game.travelOn()}>
+              <RouteIcon />
+              Weiterreisen (noch {time.voyage.left})
+            </button>
           ) : (
             <button type="button" className="action draw" title={blocked} disabled={blocked !== undefined} onClick={() => game.passDays(passing)}>
               <ClockIcon />
               {passing === 1 ? '1 Tag vergehen' : `${passing} Tage vergehen`}
             </button>
           )}
-          <HoldButton className={time.missingWeek.length > 0 ? 'action note' : 'action dice'} disabled={blocked !== undefined} hint="Lange drücken: die Woche endet ohne die fehlenden Tests" onPress={() => game.endWeek()} onHold={() => game.endWeek(true)}>
+          <HoldButton className={time.missingWeek.length > 0 ? 'action note' : 'action dice'} disabled={blocked !== undefined || time.voyage !== undefined} title={time.voyage ? 'Unterwegs vergeht die Zeit mit „Weiterreisen“.' : undefined} hint="Lange drücken: die Woche endet ohne die fehlenden Tests" onPress={() => game.endWeek()} onHold={() => game.endWeek(true)}>
             <CalendarIcon />
             <span>Woche beenden (+{time.toSunday})</span>
           </HoldButton>

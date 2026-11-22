@@ -581,6 +581,29 @@
         "SpaceAttack",
         "ShipDamage"
       ]
+    },
+    {
+      "id": "2026-11-22b",
+      "file": "2026-11-22b-raumbegegnungen-reise",
+      "title": "Schiffsbegegnungen bei Abreise und Ankunft: Wurf auf der Starship Encounter Table bei Sprung und Reise im System mit eigenem Schiff (SpaceBattle.occasion, departureRoll, arrivalRoll); Dialog vor dem Wurf (auch von Hand im Reiter Begegnung) mit Zielwert, Würfeln und Abbrechen (lang drücken), friedliche Sichtung fragt (EncounterCheck); Weiterreise aus dem Systemflug (jumpTo, travelTo, departure, BattleOutcome.departed)",
+      "approved": true,
+      "show": [
+        "Journey",
+        "SystemJourney",
+        "Hex",
+        "World"
+      ]
+    },
+    {
+      "id": "2026-11-22c",
+      "file": "2026-11-22c-reise-tag-fuer-tag",
+      "title": "Reise Tag für Tag: Jede Reise läuft wie eine Fahrt (Voyage); die Gruppe lässt die Tage mit „Weiterreisen“ selbst vergehen und kommt nach der Dauer an, erst dann Ankunft, Aufwachwurf, Lotterie und der Begegnungswurf der Ankunft",
+      "approved": true,
+      "show": [
+        "Campaign",
+        "Journey",
+        "SystemJourney"
+      ]
     }
   ]
 }

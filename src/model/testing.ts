@@ -4,6 +4,7 @@ import { fightOrder, turnOf, withEncounter } from './fight';
 import { CloudChanged, CloudOffline, type CampaignRepository, type Clock, type Cloud, type Download, type Keys, type Random, type TrayStop } from './ports';
 import type { DeckPlan } from './ship';
 import type { DeckMark, SyncMark } from './sync';
+import { voyageDay } from './voyage';
 
 /** Eine Zufallsquelle für Tests: liefert die vorgegebenen Zahlen der Reihe nach, danach immer `min`. */
 export function fixedRandom(...values: number[]): Random & { readonly calls: number } {
@@ -261,4 +262,16 @@ export function onTurn(campaign: Campaign, id: string): Campaign {
 /** Setzt die Entfernung aller SC, die kämpfen, frei auf ein Band; für Tests. */
 export function allPcsAt(campaign: Campaign, band: number, close = false): Campaign {
   return livingCharacters(campaign).reduce((c, pc) => setDistance(c, pc.id, band, close), campaign);
+}
+
+/** Reist unterwegs Tag für Tag weiter, bis die Gruppe ankommt (2026-11-22c); ohne Reise unterwegs bleibt alles. */
+export function arriveNow(campaign: Campaign, clock: Clock = fixedClock()): Campaign {
+  let c = campaign;
+  for (let i = 0; i < 400 && c.voyage !== undefined; i++) c = voyageDay(c, clock).campaign;
+  return c;
+}
+
+/** Die letzte Reise im Log (Sprung oder Reise im System); nach ihr stehen unterwegs die Reisetage. */
+export function lastJourney(campaign: Campaign): Campaign['log'][number] | undefined {
+  return campaign.log.findLast((e) => e.kind === 'journey' || e.kind === 'systemJourney');
 }

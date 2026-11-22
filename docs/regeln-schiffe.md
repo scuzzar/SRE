@@ -61,7 +61,7 @@ dabei.
 | [Computer und Software](#computer-und-software) | SR 38–39 | ○ |
 | [Standardentwürfe](#standardentwürfe) | SR 35–37 | ○ |
 | [Kleine Schiffe (Small Craft)](#kleine-schiffe-small-craft) | SR 33–35 | ◐ (die acht Entwürfe als Beiboote der Standardentwürfe, aussetzen, andocken, landen und Reise im System, 2026-11-21b; einzeln zu kaufen als Beiboot im Laderaum oder eigenständig, 2026-11-21c; ab Werft mit Beam Lasern, feuern im Raumkampf, Trefferzonen der Small Craft, 2026-11-22; Fittings, Module, Raketen, Sand, Computer und Charter offen) |
-| [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system) | SR 42 | ◐ (im Systemflug auf Knopfdruck, ohne Small Craft; 2026-11-21h) |
+| [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system) | SR 42 | ◐ (bei Abreise und Ankunft mit eigenem Schiff und von Hand, mit Dialog; ohne Small Craft; 2026-11-21h, 2026-11-22b) |
 | [Handel und Gewerbe](#handel-und-gewerbe) | SR 52 | ○ |
 | [Raumkampf](#raumkampf) | SR 39–42 | ◐ ✱ (Laserfeuer, Rückfeuer, Trefferzonen, Schaden, ein fremdes Schiff mit Absicht; 2026-11-21h) |
 | [Vektorbewegung (Mayday, Supplement 3)](#vektorbewegung-mayday-supplement-3) | MD, SS3 4–11 | ◐ ✱ (Bewegung mit echter Schwerkraft als Systemflug, 2026-11-18c; Waffen, Raketen, Sand offen) |
@@ -198,9 +198,9 @@ Schiffe verdienen an **Fracht**, **Passagieren** und **Post**.
   sechs; 1W die Wochen im Jump Space, bevor das Schiff wieder auftaucht). **Stand in der App:**
   der Wurf 2W6 je Sprung mit eigenem Schiff ist umgesetzt (`Journey.jump`, `/misjump` bei 13+);
   DM +1 bei unraffiniertem Treibstoff ✔ seit 2026-11-21f (`Journey.jumpDm`, der Sprung
-  verbraucht unraffinierten Treibstoff zuerst); die DMs für die Nähe zu Himmelskörpern kommen
-  erst, wenn die App sie abbildet (Entscheidung des Owners,
-  16. November 2026). Die Folgen – zufälliger Zielort, Wochen im Jump Space, Schiff vernichtet
+  verbraucht unraffinierten Treibstoff zuerst); +5/+15 für die Nähe zu Himmelskörpern ✔ seit
+  2026-11-22b beim Sprung aus dem Systemflug (Weiterreise nach einer Begegnung beim Start); beim
+  Sprung aus dem Reisedialog fliegt das Schiff gedanklich bis zur Sprunggrenze (ohne DM). Die Folgen – zufälliger Zielort, Wochen im Jump Space, Schiff vernichtet
   bei 16+ – entscheidet der Owner im Spiel, die App würfelt sie nicht.
 
 ---
@@ -766,7 +766,10 @@ Rückfeuer ✔ gleichzeitig nach der Bewegung, ✱ ohne Programme und ohne Schif
 und kritische Treffer ✔; Schaden ✱ ohne Antriebsbuchstaben (je Treffer −1 G bzw. −1 Sprung,
 kritisch 0); Hull ohne Folgen; Turret-Treffer legt ein zufälliges Turret still; Crew: das Schiff
 handelt nicht mehr; Explode: zerstört. Raketen, Sand, Ortung, Schadenskontrolle, Entern ○.
-Schiffsbegegnungen im System ✔ als Knopf im Systemflug (SE 13 mit Reaktion nach SE 21).
+Schiffsbegegnungen im System ✔ als Knopf im Systemflug (SE 13 mit Reaktion nach SE 21), ✔ seit
+2026-11-22b beim Start von der Welt und bei der Ankunft jeder Reise mit eigenem Schiff (Sprung und
+Reise im System) und von Hand im Reiter Begegnung, je mit Dialog (Zielwert, Würfeln, Abbrechen lang
+gedrückt). Flucht per Sprung aus dem Systemflug ✔ mit DM +5/+15 nahe an einem Körper (SR 28).
 
 **Hit Locations** (SE 12), 2W6 je Treffer:
 

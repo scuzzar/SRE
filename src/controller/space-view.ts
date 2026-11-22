@@ -51,7 +51,11 @@ import {
   REACH_PER_G,
   activeFlight,
   shipWeaponOf,
+  departureBlocker,
+  departureOf,
+  flightJumpDm,
 } from '../model';
+import { worldName } from './generation-view';
 import { systemLook, type WorldLook } from './world-view';
 import { dmLines, hitZoneNames, intentNames, type DmLine } from './time-view';
 
@@ -190,6 +194,11 @@ export interface SpaceView {
   readonly battle: boolean;
   readonly encounterColumn: string | undefined;
   readonly designs: readonly { readonly id: string; readonly name: string }[];
+  /**
+   * Die Weiterreise (2026-11-22b): Unterbrach eine Begegnung beim Start eine Reise, der Knopf „Springen
+   * nach …“ bzw. „Reisen nach …“, mit dem DM auf den Fehlsprung jetzt und warum es gerade nicht geht.
+   */
+  readonly departure: { readonly label: string; readonly jumpDm: number | undefined; readonly blocker: string | undefined } | undefined;
 }
 
 function duration(seconds: number): string {
@@ -284,6 +293,12 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
     battle: flight ? battleRunning(campaign) : false,
     encounterColumn: flight ? (({ column, dm }) => `Raumhafen ${column}${dm ? `, DM +${dm}` : ''}`)(encounterColumn(campaign)) : undefined,
     designs: ref.ships.map((d) => ({ id: d.id, name: d.name })),
+    departure: (() => {
+      const departure = flight ? departureOf(campaign) : undefined;
+      if (departure === undefined) return undefined;
+      const name = worldName(campaign.hexes, departure.to);
+      return { label: departure.kind === 'jump' ? `Springen nach ${name}` : `Reisen nach ${name}`, jumpDm: departure.kind === 'jump' ? flightJumpDm(campaign) : undefined, blocker: departureBlocker(campaign) };
+    })(),
     flight: flight && {
       round: flight.round,
       party: Math.max(0, flight.units.findIndex((u) => u.ship === flight.party)),

@@ -86,6 +86,8 @@ hide <<browser>> stereotype
   class SystemFlight $raum
   class StarSystem $raum
   class Skimming $raum
+  class SpaceBattle $raum
+  class EncounterCheck <<transient>> $raum
 
 ' Charaktererschaffung und Lebenslauf
   class Career $erschaffung
@@ -266,6 +268,10 @@ Booking "*" --> "0..1" World : in
 
 ' Raumkarte und Systemflug
 SystemFlight "*" --> "1" World : world
+SpaceBattle "*" --> "0..1" Hex : jumpTo
+SpaceBattle "*" --> "0..1" World : travelTo
+EncounterCheck "*" --> "0..1" Hex : jumpTo
+EncounterCheck "*" --> "0..1" World : travelTo
 Skimming "*" --> "1" World : at
 Hex "1" *-- "0..1" StarSystem : system
 Hex "1" *-- "*" World : worlds {ordered}

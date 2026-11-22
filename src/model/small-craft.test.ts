@@ -33,7 +33,7 @@ import {
   type Vec,
 } from '.';
 import { landAt } from './upkeep';
-import { fixedClock } from './testing';
+import { fixedClock, arriveNow, lastJourney } from './testing';
 
 // Small Craft ohne Kampf (Domänenmodell 2026-11-21b).
 
@@ -164,8 +164,8 @@ describe('Small Craft (2026-11-21b)', () => {
     expect(journeyCraft(c).map((s) => s.id)).toEqual([boat.id]);
     const to = c.hexes[0]!.worlds.find((w) => w.id !== c.hexes[0]!.main && w.kind === 'world')!;
     expect(systemJourneyBlocker(c, to.id, 'craft', boat.id)).toBeUndefined();
-    const after = travelInSystem(c, to.id, 'craft', clock, boat.id);
-    expect(after.log.at(-1)).toMatchObject({ kind: 'systemJourney', ship: boat.id });
+    const after = arriveNow(travelInSystem(c, to.id, 'craft', clock, boat.id), clock);
+    expect(lastJourney(after)).toMatchObject({ kind: 'systemJourney', ship: boat.id });
     expect(boatOf(after)).toMatchObject({ place: { world: to.id } });
     expect(boatOf(after).aboard).toBeUndefined();
     expect(shipOf(after)!.place).toEqual(c.location);

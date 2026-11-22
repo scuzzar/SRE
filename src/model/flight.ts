@@ -57,7 +57,19 @@ export interface SystemFlight {
   readonly round: number;
   /** Die Einheit der Gruppe, als Id ihres Schiffs (2026-11-21b): Nur sie landet. */
   readonly party: string;
+  /**
+   * Die Reise, die eine Begegnung beim Start von der Welt unterbrach (2026-11-22b): ihr Ziel, das Feld
+   * des Sprungs (`jumpTo`) oder die Welt der Reise im System (`travelTo`). Im Domänenmodell der Pfeil
+   * `departure` auf den `SpaceBattle`; hier das Ziel selbst.
+   */
+  readonly departure?: Departure;
   readonly units: readonly SpaceUnit[];
+}
+
+/** Das Ziel einer unterbrochenen Reise (2026-11-22b): genau eins von beiden. */
+export interface Departure {
+  readonly jumpTo?: string;
+  readonly travelTo?: string;
 }
 
 /** Eine Raumrunde in Sekunden (SR 39). */
@@ -467,6 +479,44 @@ export function startOrbit(hexes: readonly Hex[], worldId: string, t: number, ra
   return { position: add(at.position, { x: 0, y: r }), velocity: add(at.velocity, { x: -Math.sqrt(body.gm / r), y: 0 }) };
 }
 
+/**
+ * Wo das Schiff bei einer Begegnung bei der Ankunft auftaucht (2026-11-22b): an der Sprunggrenze,
+ * 100 Durchmesser der Welt von ihr entfernt in Richtung `angle` (Grad), ruhend gegenüber der Welt
+ * (bei einem Mond mitbewegt); ohne Körper in 20.000 km.
+ */
+export function arrivalPoint(hexes: readonly Hex[], worldId: string, t: number, angle: number): { readonly position: Vec; readonly velocity: Vec } {
+  const scene = sceneOf(hexes, worldId);
+  const moon = scene.moons.find((m) => m.world === worldId);
+  const at = originAt(scene, worldId, t);
+  const body = moon ? moon.body : scene.body;
+  const r = body === undefined ? BELT_START_KM : 200 * body.radius;
+  const a = (angle * Math.PI) / 180;
+  return { position: add(at.position, { x: r * Math.cos(a), y: r * Math.sin(a) }), velocity: at.velocity };
+}
+
+/**
+ * Beginnt einen Systemflug bei der Ankunft an `world` (2026-11-22b): mit dem eigenen Schiff, das eben
+ * angekommen ist, an der Sprunggrenze (`arrivalPoint`). Der Landeplatz wartet, solange er läuft.
+ */
+export function startArrivalFlight(campaign: Campaign, world: string, angle: number, clock: Clock): Campaign {
+  if (campaign.flight !== undefined) throw new DomainError('Es läuft schon ein Systemflug.');
+  const ship = shipOf(campaign);
+  if (ship === undefined) throw new DomainError('Die Gruppe hat kein Schiff.');
+  const unit: SpaceUnit = { ship: ship.id, ...arrivalPoint(campaign.hexes, world, dayStart(campaign.day), angle), crashed: false, fired: false, track: [] };
+  return { ...campaign, flight: { world, startedAt: clock.now(), round: 1, party: ship.id, units: [unit] } };
+}
+
+/** DM auf den Fehlsprung nahe an einem Körper der Raumkarte (SR 28, 2026-11-22b): innerhalb 10 Durchmesser +15, innerhalb 100 +5; der höchste zählt. */
+export function jumpLimitDm(scene: Scene, p: Vec, t: number): number {
+  let dm = 0;
+  for (const { body, at } of bodiesAt(scene, t)) {
+    const diameters = lengthOf(sub(p, at)) / (2 * body.radius);
+    if (diameters < 10) dm = Math.max(dm, 15);
+    else if (diameters < 100) dm = Math.max(dm, 5);
+  }
+  return dm;
+}
+
 /** Setzt den Schubvektor einer Einheit für die laufende Raumrunde (undefined: kein Schub). */
 export function setThrust(campaign: Campaign, index: number, thrust: Vec | undefined): Campaign {
   const flight = activeFlight(campaign);
@@ -723,6 +773,12 @@ export function checkFlight(campaign: Campaign, flight: SystemFlight): void {
     const maxG = maxGOf(campaign, unit);
     if (unit.thrust !== undefined && lengthOf(unit.thrust) > maxG + 1e-6) throw new DomainError('Der Schub einer Einheit ist größer als ihr höchster Schub.');
     if (unit.track.length !== flight.round - 1) throw new DomainError('Die Spur einer Einheit passt nicht zur Raumrunde.');
+  }
+  if (flight.departure !== undefined) {
+    const { jumpTo, travelTo } = flight.departure;
+    if ((jumpTo === undefined) === (travelTo === undefined)) throw new DomainError('Eine unterbrochene Reise hat genau ein Ziel.');
+    if (jumpTo !== undefined && !hexById(campaign.hexes, jumpTo)) throw new DomainError('Die unterbrochene Reise führt zu einem Feld, das es nicht gibt.');
+    if (travelTo !== undefined) worldOf(campaign.hexes, travelTo);
   }
 }
 

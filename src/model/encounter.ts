@@ -8,7 +8,7 @@ import { springTrap } from './hold';
 import { survivalGear } from './loot';
 import { encounterTypeOf, itemOf, nameSlotIds, ref, slotWithId, weaponOf, type EncounterType, type Item, type Range } from './reference';
 import { locationOf } from './shop';
-import { hexById, hexIdOfWorld, worldById } from './sector';
+import { hexById, hexIdOfWorld, worldById, worldOf } from './sector';
 
 /** Der Würfel der Anzahl: W6 nach den Regeln, W4 oder W3 zum Ausgleichen. */
 export const quantityDice = [6, 4, 3] as const;
@@ -301,6 +301,12 @@ export interface EncounterRoll {
   readonly encounter: Encounter | undefined;
 }
 
+/** Unterwegs (2026-11-22c): die Welt, von der die Reise abflog. */
+function voyageFrom(campaign: Campaign): string | undefined {
+  const entry = campaign.voyage === undefined ? undefined : campaign.log[campaign.voyage.entry];
+  return entry?.kind === 'journey' || entry?.kind === 'systemJourney' ? entry.from : undefined;
+}
+
 /** Die Art einer Begegnung: ein Wurf 11–66 auf der Liste oder „keine“, dann kommen nur die dazugenommenen NSC. */
 export type EncounterChoice = number | 'none';
 
@@ -314,8 +320,10 @@ export type EncounterChoice = number | 'none';
  */
 export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, chosen?: EncounterChoice, count?: number, terrain: string | undefined = campaign.terrain, joined: readonly CharacterId[] = []): EncounterRoll {
   if (currentEncounter(campaign)) throw new DomainError('Es läuft schon eine Begegnung; erst sie beenden.');
-  const world = locationOf(campaign);
-  if (!world || campaign.location?.world === undefined) throw new DomainError('Die Gruppe ist auf keiner Welt; erst auf der Sektorkarte den Aufenthaltsort wählen.');
+  // Unterwegs ist es eine Begegnung an Bord, mit TL und Bevölkerung der Abflugwelt (2026-11-22c, Hausregel).
+  const here = campaign.location?.world ?? voyageFrom(campaign);
+  const world = here === undefined ? undefined : worldOf(campaign.hexes, here);
+  if (!world || here === undefined) throw new DomainError('Die Gruppe ist auf keiner Welt; erst auf der Sektorkarte den Aufenthaltsort wählen.');
   const joinable = joinableNpcs(campaign);
   if (new Set(joined).size !== joined.length) throw new DomainError('Ein NSC kommt nur einmal dazu.');
   for (const id of joined) {
@@ -367,7 +375,7 @@ export function rollEncounter(campaign: Campaign, random: Random, clock: Clock, 
     )}`,
     at: clock.now(),
     ...(type ? { quantityDie, of: roll } : {}),
-    in: campaign.location?.world,
+    in: here,
     reaction,
     reactionDice,
     reactionDm: dm,

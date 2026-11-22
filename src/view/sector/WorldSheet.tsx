@@ -31,7 +31,7 @@ function dmText(line: WorldLine): string {
 /**
  * Die Weltkarte an der Stelle des Bereichs, schiebbar wie jedes angetippte Feld (Hexfeld im
  * Subsektor, Feld auf dem Globus): oben die Welt, wie sie gerade steht (UWP im Klartext, Basen,
- * Handelscodes); wieder geöffnet zeigt sie nur die Werte. Unten, wie die Reihe Notiz, Deuten, 2W6,
+ * Handelscodes); wieder geöffnet zeigt sie nur die Werte. Unten, wie die Reihe Notiz, Tag, 2W6,
  * Karte im Orakel: Solange sie entsteht, die Würfelbühne und der Knopf für den nächsten Wurf, wie in
  * der Charaktererschaffung; danach Hierher reisen, Gruppe platzieren und Öffnen
  * (`WorldActions`). Eingetragen ist ein Wurf schon, bevor die Würfel rollen; die Karte zeigt den
@@ -385,7 +385,7 @@ export function SystemSection({ system }: { system: SystemView }) {
 
 /**
  * Die Reihe an der Welt, wie die Reihe am angetippten Feld des Globus (`FieldDock`) und im Stil von
- * Notiz, Deuten, 2W6, Karte im Orakel: Hierher reisen (eine Woche im Sprung; was nicht geht, ist
+ * Notiz, Tag, 2W6, Karte im Orakel: Hierher reisen (eine Woche im Sprung; was nicht geht, ist
  * ausgegraut, der Grund steht darüber), Gruppe platzieren (ohne Reise und ohne Zeit, wie „Gruppe
  * setzen“ am Feld; ist die Gruppe schon hier, ausgegraut) und Öffnen (die Hexkarte der Welt, nicht
  * auf dem Globus selbst).

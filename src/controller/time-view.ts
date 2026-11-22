@@ -74,6 +74,9 @@ import {
   type SystemJourneyMode,
   worldOf,
   journeyCraft,
+  voyageDaysLeft,
+  voyageEntry,
+  voyageDayBlocker,
 } from '../model';
 
 /** Ein Test im Log: Art, Würfel, Zielwert, ob bestanden; bei der Polizei dazu die Reaktion. */
@@ -121,6 +124,10 @@ export interface JourneyItem {
   readonly kind: 'journey';
   readonly at: string;
   readonly index: number;
+  /** Ob die Gruppe schon angekommen ist; unterwegs fehlen Kälteschlaf und Lotterie noch (2026-11-22c). */
+  readonly arrived: boolean;
+  /** Unterwegs: wie viele Reisetage noch fehlen. */
+  readonly left: number | undefined;
   readonly from: string;
   readonly to: string;
   readonly fromDate: string;
@@ -144,6 +151,10 @@ export interface JourneyItem {
   readonly jumpDm: number;
   /** Ob der Sprungwurf ein Fehlsprung ist (13+). */
   readonly misjump: boolean;
+  /** Woraus der DM kam, z. B. „unraffiniert“ oder „Sprunggrenze +15“ (2026-11-22b). */
+  readonly jumpDmText: string;
+  /** Die Begegnungswürfe ohne Schiff (2026-11-22b), z. B. „Begegnung beim Start 3 + 2, bei der Ankunft 1 + 4: kein Schiff“. */
+  readonly encounterRolls: string | undefined;
 }
 
 /** Treibstoff am Gasriesen geschöpft, im Log (2026-11-21f). */
@@ -177,7 +188,7 @@ export const hitZoneNames: Record<HitZone, string> = {
   criticalDrive: 'Drive zerstört',
 };
 export const intentNames: Record<Intent, string> = { attack: 'greift an', flee: 'flieht', ignore: 'beachtet die Gruppe nicht' };
-export const outcomeNames: Record<BattleOutcome, string> = { destroyed: 'zerstört', disabled: 'kampfunfähig', escaped: 'entkommen', broken: 'abgebrochen', lost: 'eigenes Schiff verloren' };
+export const outcomeNames: Record<BattleOutcome, string> = { destroyed: 'zerstört', disabled: 'kampfunfähig', escaped: 'entkommen', broken: 'abgebrochen', lost: 'eigenes Schiff verloren', departed: 'abgereist' };
 
 /** Ein fremdes Schiff taucht auf, im Log (2026-11-21h). */
 export interface SpaceBattleItem {
@@ -189,6 +200,8 @@ export interface SpaceBattleItem {
   readonly encounter: readonly number[] | undefined;
   readonly reaction: readonly number[] | undefined;
   readonly attack: readonly number[] | undefined;
+  /** Gewürfelt beim Start bzw. bei der Ankunft (2026-11-22b). */
+  readonly occasion: string | undefined;
 }
 
 /** Ein Laserschuss im Log (2026-11-21h). */
@@ -234,7 +247,7 @@ export interface SpaceBattleEndItem {
 }
 
 export function spaceBattleItem(entry: SpaceBattle): SpaceBattleItem {
-  return { kind: 'spaceBattle', at: entry.at, foe: entry.foe, design: shipDesignOf(entry.design).name, intent: intentNames[entry.intent], encounter: entry.encounter, reaction: entry.reaction, attack: entry.attack };
+  return { kind: 'spaceBattle', at: entry.at, foe: entry.foe, design: shipDesignOf(entry.design).name, intent: intentNames[entry.intent], encounter: entry.encounter, reaction: entry.reaction, attack: entry.attack, occasion: entry.occasion === 'departure' ? 'beim Start' : entry.occasion === 'arrival' ? 'bei der Ankunft' : undefined };
 }
 
 export function spaceAttackItem(entry: SpaceAttack): SpaceAttackItem {
@@ -256,6 +269,10 @@ export function skimmingItem(campaign: Campaign, entry: Skimming): SkimmingItem 
 export interface SystemJourneyItem {
   readonly kind: 'systemJourney';
   readonly at: string;
+  /** Ob die Gruppe schon angekommen ist (2026-11-22c). */
+  readonly arrived: boolean;
+  /** Unterwegs: wie viele Reisetage noch fehlen. */
+  readonly left: number | undefined;
   readonly from: string;
   readonly to: string;
   readonly fromDate: string;
@@ -265,6 +282,8 @@ export interface SystemJourneyItem {
   /** Mit Ticket (und dem Preis) oder mit dem eigenen Schiff. */
   readonly how: string;
   readonly travellers: readonly string[];
+  /** Die Begegnungswürfe ohne Schiff (2026-11-22b). */
+  readonly encounterRolls: string | undefined;
 }
 
 /** Die Spielzeit oben im Reiter Begegnung. */
@@ -283,6 +302,13 @@ export interface TimeView {
   /** Warum gerade keine Zeit vergeht (laufende Begegnung). */
   readonly blocked: string | undefined;
   readonly note: string | undefined;
+  /** Unterwegs (2026-11-22c): wohin und wie viele Reisetage noch fehlen; „Woche beenden“ ist dann gesperrt. */
+  readonly voyage: { readonly to: string; readonly left: number } | undefined;
+  /**
+   * Der Knopf für einen Tag (2026-11-22c), im Reiter Begegnung und in der Reihe unter dem Log: während
+   * einer Fahrt „Weiterfahren“, unterwegs „Weiterreisen“, sonst „1 Tag“; gesperrt mit Grund.
+   */
+  readonly oneDay: { readonly kind: 'trip' | 'voyage' | 'day'; readonly label: string; readonly blocker: string | undefined };
 }
 
 /** Je Test: „heute 1×“ bzw. „diese Woche 1×“ und ob die Regel schon erfüllt ist (dann langes Drücken). */
@@ -492,10 +518,13 @@ export function journeyItem(campaign: Campaign, entry: Journey, index: number): 
   const winner = winnerOf(entry);
   const from = entry.day ?? 0;
   const winnerBerth = winner === undefined ? undefined : entry.berths[winner];
+  const travelling = campaign.voyage?.entry === index;
   return {
     kind: 'journey',
     at: entry.at,
     index,
+    arrived: !travelling,
+    left: travelling ? voyageDaysLeft(campaign) : undefined,
     from: worldName(campaign, entry.from),
     to: worldName(campaign, entry.to),
     fromDate: dateLabel(from),
@@ -512,6 +541,8 @@ export function journeyItem(campaign: Campaign, entry: Journey, index: number): 
     jump: entry.jump,
     jumpDm: entry.jumpDm ?? 0,
     misjump: misjumpOf(entry),
+    jumpDmText: jumpDmText(entry.jumpDm ?? 0),
+    encounterRolls: encounterRollsText(entry),
   };
 }
 
@@ -569,9 +600,12 @@ export function systemJourneyItem(campaign: Campaign, entry: SystemJourney, inde
   } catch {
     distance = undefined;
   }
+  const travelling = campaign.voyage?.entry === index;
   return {
     kind: 'systemJourney',
     at: entry.at,
+    arrived: !travelling,
+    left: travelling ? voyageDaysLeft(campaign) : undefined,
     from: worldName(campaign, entry.from),
     to: worldName(campaign, entry.to),
     fromDate: dateLabel(from),
@@ -579,7 +613,20 @@ export function systemJourneyItem(campaign: Campaign, entry: SystemJourney, inde
     flight: [`${entry.hours} h`, distance].filter((t) => t !== undefined).join(' · '),
     how: ship !== undefined ? `mit ${ship}` : `mit Ticket${ticket ? ` · Cr ${(-ticket.amount).toLocaleString('de-DE')}` : ''}`,
     travellers: entry.travellers.map((id) => nameOf(campaign, id)),
+    encounterRolls: encounterRollsText(entry),
   };
+}
+
+/** Woraus der DM des Sprungwurfs kam: +15 bzw. +5 nahe an einem Körper (2026-11-22b), +1 mit unraffiniertem Treibstoff. */
+function jumpDmText(dm: number): string {
+  const near = dm >= 15 ? 15 : dm >= 5 ? 5 : 0;
+  return [near ? `Sprunggrenze +${near}` : '', dm - near > 0 ? `unraffiniert +${dm - near}` : ''].filter(Boolean).join(', ');
+}
+
+/** Die Begegnungswürfe ohne Schiff an einer Reise (2026-11-22b). */
+function encounterRollsText(entry: { readonly departureRoll?: readonly number[]; readonly arrivalRoll?: readonly number[] }): string | undefined {
+  const parts = [entry.departureRoll ? `beim Start ${entry.departureRoll[0]} + ${entry.departureRoll[1]}` : '', entry.arrivalRoll ? `bei der Ankunft ${entry.arrivalRoll[0]} + ${entry.arrivalRoll[1]}` : ''].filter(Boolean);
+  return parts.length === 0 ? undefined : `Schiffsbegegnung ${parts.join(', ')}: kein Schiff`;
 }
 
 /** Die Tierbegegnung gehört zu den täglichen Tests, wenn es auf der Welt im Gelände Tiere geben kann. */
@@ -596,6 +643,13 @@ export function timeView(campaign: Campaign, note: string | undefined, animals: 
     missingWeek: missingChecks(campaign, true, animals).map((k) => checkNames[k]),
     blocked: campaign.encounters.some((e) => !e.ended) ? 'Während einer laufenden Begegnung vergeht keine Zeit.' : undefined,
     note,
+    voyage: campaign.voyage === undefined ? undefined : { to: worldName(campaign, voyageEntry(campaign).to), left: voyageDaysLeft(campaign) },
+    oneDay: (() => {
+      const blocked = campaign.encounters.some((e) => !e.ended) ? 'Während einer laufenden Begegnung vergeht keine Zeit.' : undefined;
+      if (campaign.trip !== undefined) return { kind: 'trip' as const, label: 'Weiterfahren', blocker: blocked };
+      if (campaign.voyage !== undefined) return { kind: 'voyage' as const, label: 'Weiterreisen', blocker: voyageDayBlocker(campaign) };
+      return { kind: 'day' as const, label: '1 Tag', blocker: blocked };
+    })(),
   };
 }
 

@@ -5,3 +5,4 @@ export * from './attack';
 export * from './wounding';
 export * from './world-roll';
 export * from './conflict';
+export * from './ship-check';

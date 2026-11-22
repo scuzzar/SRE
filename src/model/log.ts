@@ -112,6 +112,9 @@ export interface Journey extends LogEntryBase {
   readonly jump?: Dice;
   /** Mit `jump`: der DM, mit dem der Sprungwurf zählte (+1 mit unraffiniertem Treibstoff, SR 28; 2026-11-21f). Fehlt in Ständen von vorher: 0. */
   readonly jumpDm?: number;
+  /** Der Begegnungswurf beim Start bzw. bei der Ankunft (2W6, SE 13), wenn kein Schiff kam (2026-11-22b). */
+  readonly departureRoll?: Dice;
+  readonly arrivalRoll?: Dice;
 }
 
 /**
@@ -139,6 +142,11 @@ export interface SpaceBattle extends LogEntryBase {
   readonly encounter?: Dice;
   readonly reaction?: Dice;
   readonly attack?: Dice;
+  /** Gewürfelt beim Start von der Welt oder bei der Ankunft (2026-11-22b); fehlt beim Knopf „Schiffsbegegnung“. */
+  readonly occasion?: 'departure' | 'arrival';
+  /** Beim Start: das Ziel der unterbrochenen Reise, das Feld des Sprungs oder die Welt der Reise im System (2026-11-22b). */
+  readonly jumpTo?: string;
+  readonly travelTo?: string;
 }
 
 /** Ein Laserschuss im Raumkampf (2026-11-21h): wer auf wen, aus welchem Turret mit welcher Waffe, 2W6 + DM ≥ 8, und die Trefferzonen. */
@@ -163,7 +171,7 @@ export interface SpaceAttack extends LogEntryBase {
 export interface SpaceBattleEnd extends LogEntryBase {
   readonly kind: 'spaceBattleEnd';
   readonly foe: string;
-  readonly outcome: 'destroyed' | 'disabled' | 'escaped' | 'broken' | 'lost';
+  readonly outcome: 'destroyed' | 'disabled' | 'escaped' | 'broken' | 'lost' | 'departed';
 }
 
 /**
@@ -178,6 +186,9 @@ export interface SystemJourney extends LogEntryBase {
   readonly hours: number;
   readonly travellers: readonly string[];
   readonly ship?: string;
+  /** Der Begegnungswurf beim Start bzw. bei der Ankunft (2W6, SE 13), wenn kein Schiff kam (2026-11-22b). */
+  readonly departureRoll?: Dice;
+  readonly arrivalRoll?: Dice;
 }
 
 /**

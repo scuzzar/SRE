@@ -25,7 +25,7 @@ export function JourneySheet({ journey }: { journey: JourneyView }) {
       <section className="result journey-sheet" role="dialog" aria-modal="true" aria-labelledby="journey-title">
         <div className="sheet-head" style={{ alignItems: 'center' }}>
           <h2 id="journey-title" className="journey-title">
-            {result ? 'Angekommen' : journey.mode === 'ship' ? 'Sprung' : 'Reise'}: {journey.fromName} → {journey.toName}
+            {result ? (result.arrived ? 'Angekommen' : 'Unterwegs') : journey.mode === 'ship' ? 'Sprung' : 'Reise'}: {journey.fromName} → {journey.toName}
           </h2>
           <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={() => game.closeJourney()}>
             <CloseIcon />

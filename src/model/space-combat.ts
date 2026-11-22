@@ -13,6 +13,7 @@ import {
   activeFlight,
   BAND_KM,
   endFlight,
+  launchWorld,
   partyIndexOf,
   flightTime,
   lengthOf,
@@ -21,6 +22,8 @@ import {
   ROUND_SECONDS,
   ROUND_STEPS,
   sceneOf,
+  startArrivalFlight,
+  startFlight,
   type Scene,
   type SpaceUnit,
   type SystemFlight,
@@ -60,8 +63,8 @@ export type Intent = 'attack' | 'flee' | 'ignore';
 export const intents = ['attack', 'flee', 'ignore'] as const;
 
 /** Wie ein Raumkampf endete. */
-export type BattleOutcome = 'destroyed' | 'disabled' | 'escaped' | 'broken' | 'lost';
-export const battleOutcomes = ['destroyed', 'disabled', 'escaped', 'broken', 'lost'] as const;
+export type BattleOutcome = 'destroyed' | 'disabled' | 'escaped' | 'broken' | 'lost' | 'departed';
+export const battleOutcomes = ['destroyed', 'disabled', 'escaped', 'broken', 'lost', 'departed'] as const;
 
 /** Der Schaden eines Schiffs (Domänenmodell: `ShipDamage`): die Treffer in ihrer Reihenfolge und die ausgefallenen Turrets. */
 export interface ShipDamage {
@@ -202,44 +205,131 @@ function parseEncounter(code: string): { design: string; pirate: boolean } {
   return { design: design.id, pirate: code.includes('P') };
 }
 
-/** Die Spalte der Starship Encounter Table und ihre DMs für das System des Flugs: Raumhafen der Hauptwelt, Marine- und Scoutbasis. */
-export function encounterColumn(campaign: Campaign): { readonly column: 'A' | 'B' | 'C' | 'D' | 'E' | 'X'; readonly dm: number } {
-  const flight = activeFlight(campaign);
-  const hex = hexById(campaign.hexes, hexIdOfWorld(flight.world));
-  const main = hex?.main === undefined ? undefined : worldById(campaign.hexes, hex.main);
+/** Spalte und DM der Starship Encounter Table (SE 13) für ein System. */
+export interface EncounterColumn {
+  readonly column: 'A' | 'B' | 'C' | 'D' | 'E' | 'X';
+  readonly dm: number;
+  readonly navalBase: boolean;
+  readonly scoutBase: boolean;
+}
+
+/** Die Spalte der Starship Encounter Table und ihre DMs für das System der Welt `world`: Raumhafen der Hauptwelt, Marine- und Scoutbasis (2026-11-22b). */
+export function encounterColumnAt(hexes: Campaign['hexes'], world: string): EncounterColumn {
+  const hex = hexById(hexes, hexIdOfWorld(world));
+  const main = hex?.main === undefined ? undefined : worldById(hexes, hex.main);
   const letter = main?.uwp.starport === undefined ? 'X' : starportLetter(main.uwp.starport);
   const port = (['A', 'B', 'C', 'D', 'E'] as const).find((p) => p === letter) ?? 'X';
-  return { column: port, dm: (hex?.navalBase ? 2 : 0) + (hex?.scoutBase ? 1 : 0) };
+  const navalBase = hex?.navalBase === true;
+  const scoutBase = hex?.scoutBase === true;
+  return { column: port, dm: (navalBase ? 2 : 0) + (scoutBase ? 1 : 0), navalBase, scoutBase };
+}
+
+/** Die Spalte der Starship Encounter Table und ihre DMs für das System des Flugs. */
+export function encounterColumn(campaign: Campaign): EncounterColumn {
+  return encounterColumnAt(campaign.hexes, activeFlight(campaign).world);
+}
+
+/** Der Eintrag der Tabelle zu einer Summe mit DM (höchstens 15); `undefined`: kein Schiff. */
+function encounterCode(column: EncounterColumn['column'], total: number): string | undefined {
+  return ref.starshipEncounters[column]?.[Math.min(15, total) - 2] ?? undefined;
+}
+
+/** Der Zielwert (2026-11-22b): die Summen auf 2W6, bei denen ein Schiff kommt (`/shipOn`). */
+export function shipOnSums(at: Pick<EncounterColumn, 'column' | 'dm'>): readonly number[] {
+  const sums: number[] = [];
+  for (let n = 2; n <= 12; n++) if (encounterCode(at.column, n + at.dm) !== undefined) sums.push(n);
+  return sums;
+}
+
+/** Ein Wurf auf der Starship Encounter Table mit Reaktion (SE 13, SE 21), noch ohne Folgen. */
+export interface ShipEncounterRoll {
+  readonly encounter: Dice;
+  readonly total: number;
+  /** Der Eintrag der Tabelle; fehlt: kein Schiff. */
+  readonly code?: string;
+  readonly design?: string;
+  readonly intent?: Intent;
+  readonly reaction?: Dice;
+  readonly attack?: Dice;
+}
+
+/**
+ * Würfelt auf der Starship Encounter Table (SE 13): 2W6 + DM auf die Spalte. Ohne Ergebnis kommt kein
+ * Schiff. Ein Pirat greift an; sonst entscheidet die Reaktion (SE 21): 2 greift an, 3 bei 5+, 4 bei 8+
+ * auf einen weiteren Wurf, sonst ignoriert es die Gruppe.
+ */
+export function rollEncounterTable(at: Pick<EncounterColumn, 'column' | 'dm'>, random: Random): ShipEncounterRoll {
+  const encounter = roll2d6(random);
+  const total = Math.min(15, sum(encounter) + at.dm);
+  const code = encounterCode(at.column, total);
+  if (code === undefined || code === null) return { encounter, total };
+  const { design, pirate } = parseEncounter(code);
+  if (pirate) return { encounter, total, code, design, intent: 'attack' };
+  const reaction = roll2d6(random);
+  const r = sum(reaction);
+  const attack = r === 3 || r === 4 ? roll2d6(random) : undefined;
+  const intent: Intent = r === 2 || (attack !== undefined && sum(attack) >= (r === 3 ? 5 : 8)) ? 'attack' : 'ignore';
+  return { encounter, total, code, design, intent, reaction, ...(attack ? { attack } : {}) };
+}
+
+/** Wo ein gewürfeltes fremdes Schiff auftaucht: 2W6 Raumbänder, Richtung 1W6 × 60° (Hausregel). */
+function foeOffset(random: Random): { readonly bands: number; readonly angle: number } {
+  return { bands: sum(roll2d6(random)), angle: d6(random) * 60 };
+}
+
+/** Die Würfe eines Begegnungswurfs für den Logeintrag. */
+function rolledFields(roll: ShipEncounterRoll): Pick<SpaceBattle, 'encounter' | 'reaction' | 'attack'> {
+  return { encounter: roll.encounter, ...(roll.reaction ? { reaction: roll.reaction } : {}), ...(roll.attack ? { attack: roll.attack } : {}) };
 }
 
 /**
  * Würfelt eine Schiffsbegegnung im Systemflug (SE 13): 2W6 + DM auf die Spalte des Raumhafens. Ohne
- * Ergebnis kommt kein Schiff (`campaign` bleibt). Ein Pirat greift an; sonst entscheidet die Reaktion
- * (SE 21): 2 greift an, 3 bei 5+, 4 bei 8+ auf einen weiteren Wurf, sonst ignoriert es die Gruppe.
+ * Ergebnis kommt kein Schiff (`campaign` bleibt); sonst taucht es auf (`placeFoe`).
  */
 export function rollShipEncounter(campaign: Campaign, random: Random, clock: Clock): { readonly campaign: Campaign; readonly encounter: Dice; readonly total: number; readonly code: string | undefined } {
   const blocker = encounterBlocker(campaign);
   if (blocker) throw new DomainError(blocker);
-  const { column, dm } = encounterColumn(campaign);
-  const encounter = roll2d6(random);
-  const total = Math.min(15, sum(encounter) + dm);
-  const code = ref.starshipEncounters[column]?.[total - 2] ?? undefined;
-  if (code === undefined || code === null) return { campaign, encounter, total, code: undefined };
-  const { design, pirate } = parseEncounter(code);
-  let intent: Intent = 'attack';
-  let reaction: Dice | undefined;
-  let attack: Dice | undefined;
-  if (!pirate) {
-    reaction = roll2d6(random);
-    const r = sum(reaction);
-    if (r === 3 || r === 4) attack = roll2d6(random);
-    intent = r === 2 || (attack !== undefined && sum(attack) >= (r === 3 ? 5 : 8)) ? 'attack' : 'ignore';
+  const roll = rollEncounterTable(encounterColumn(campaign), random);
+  if (roll.code === undefined) return { campaign, encounter: roll.encounter, total: roll.total, code: undefined };
+  return { campaign: placeFoe(campaign, roll.design!, roll.intent!, clock, foeOffset(random), rolledFields(roll)), encounter: roll.encounter, total: roll.total, code: roll.code };
+}
+
+/** Anlass und Ziel einer Begegnung bei Abreise oder Ankunft (2026-11-22b). */
+export interface EncounterContext {
+  readonly occasion?: 'departure' | 'arrival';
+  readonly jumpTo?: string;
+  readonly travelTo?: string;
+}
+
+/** Der Logeintrag einer Begegnung aus einem Wurf mit Schiff, ohne Systemflug (eine Sichtung, 2026-11-22b). */
+export function sightingEntry(campaign: Campaign, roll: ShipEncounterRoll, context: EncounterContext, clock: Clock): SpaceBattle {
+  if (roll.design === undefined || roll.intent === undefined) throw new DomainError('Bei diesem Wurf kam kein Schiff.');
+  const plan = shipDesignOf(roll.design);
+  const name = plan.name === shipOf(campaign)?.name ? `${plan.name} (fremd)` : plan.name;
+  return { kind: 'spaceBattle', at: clock.now(), day: campaign.day, foe: name, design: plan.id, intent: roll.intent, ...rolledFields(roll), ...context };
+}
+
+/**
+ * Eine Begegnung bei Abreise, Ankunft oder von Hand öffnet die Raumkarte (2026-11-22b): ein neuer
+ * Systemflug, beim Start an der Welt des Schiffs (wie „Systemflug beginnen“), bei der Ankunft an der
+ * Sprunggrenze der Zielwelt (Richtung 1W6 × 60°); dann taucht das fremde Schiff auf wie beim Knopf.
+ * Beim Start hält der Flug das Ziel der unterbrochenen Reise (`departure`).
+ */
+export function encounterFlight(campaign: Campaign, roll: ShipEncounterRoll, context: EncounterContext, random: Random, clock: Clock): Campaign {
+  if (roll.design === undefined || roll.intent === undefined) throw new DomainError('Bei diesem Wurf kam kein Schiff.');
+  let started: Campaign;
+  if (context.occasion === 'arrival') {
+    const world = campaign.location?.world;
+    if (world === undefined) throw new DomainError('Die Gruppe ist auf keiner Welt.');
+    started = startArrivalFlight(campaign, world, d6(random) * 60, clock);
+  } else {
+    const world = launchWorld(campaign);
+    if (world === undefined) throw new DomainError('Die Gruppe hat kein Schiff.');
+    started = startFlight(campaign, world, clock);
   }
-  const offset = { bands: sum(roll2d6(random)), angle: d6(random) * 60 };
-  const placed = placeFoe(campaign, design, intent, clock, offset);
-  // Die Würfe gehören in den Logeintrag der Begegnung, der eben angehängt wurde.
-  const log = placed.log.map((e, i) => (i === placed.log.length - 1 && e.kind === 'spaceBattle' ? { ...e, encounter, ...(reaction ? { reaction } : {}), ...(attack ? { attack } : {}) } : e));
-  return { campaign: { ...placed, log }, encounter, total, code };
+  const departure = context.occasion === 'departure' ? { ...(context.jumpTo ? { jumpTo: context.jumpTo } : {}), ...(context.travelTo ? { travelTo: context.travelTo } : {}) } : undefined;
+  if (departure !== undefined) started = { ...started, flight: { ...activeFlight(started), departure } };
+  return placeFoe(started, roll.design, roll.intent, clock, foeOffset(random), { ...rolledFields(roll), ...context });
 }
 
 /**
@@ -247,7 +337,7 @@ export function rollShipEncounter(campaign: Campaign, random: Random, clock: Clo
  * `offset.bands` Raumbänder vom eigenen Schiff in Richtung `offset.angle` (Grad), mit dessen
  * Geschwindigkeit; von Hand 7 Raumbänder voraus. Logeintrag `SpaceBattle`.
  */
-export function placeFoe(campaign: Campaign, design: string, intent: Intent, clock: Clock, offset?: { readonly bands: number; readonly angle: number }): Campaign {
+export function placeFoe(campaign: Campaign, design: string, intent: Intent, clock: Clock, offset?: { readonly bands: number; readonly angle: number }, extra: Partial<Pick<SpaceBattle, 'encounter' | 'reaction' | 'attack' | 'occasion' | 'jumpTo' | 'travelTo'>> = {}): Campaign {
   const blocker = encounterBlocker(campaign);
   if (blocker) throw new DomainError(blocker);
   const plan = shipDesignOf(design);
@@ -260,7 +350,7 @@ export function placeFoe(campaign: Campaign, design: string, intent: Intent, clo
   const ownName = shipOf(campaign)?.name;
   const name = plan.name === ownName ? `${plan.name} (fremd)` : plan.name;
   const foe: SpaceUnit = { design: plan.id, name, intent, fired: false, position, velocity: own.velocity, crashed: false, track: own.track.map(() => ({ position, velocity: own.velocity })) };
-  const entry: SpaceBattle = { kind: 'spaceBattle', at: clock.now(), day: campaign.day, foe: name, design: plan.id, intent };
+  const entry: SpaceBattle = { kind: 'spaceBattle', at: clock.now(), day: campaign.day, foe: name, design: plan.id, intent, ...extra };
   return { ...campaign, flight: { ...flight, units: [...flight.units, foe] }, log: [...campaign.log, entry] };
 }
 

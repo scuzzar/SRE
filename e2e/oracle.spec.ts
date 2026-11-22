@@ -5,13 +5,13 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-test('Log: leer, vier gleich breite Knöpfe unten (Deuten erst mit einem Ergebnis), keine Stufe ohne Probe', async ({ page }) => {
+test('Log: leer, vier gleich breite Knöpfe unten (Notiz, Tag, 2W6, Karte), keine Stufe ohne Probe', async ({ page }) => {
   await expect(page.getByText('Noch nichts im Log.')).toBeVisible();
   await expect(page.getByRole('radio')).toHaveCount(0);
   const viewport = page.viewportSize()!;
   const widths: number[] = [];
-  await expect(oracle(page).getByRole('button', { name: 'Neuestes Ergebnis deuten' })).toBeDisabled();
-  for (const name of ['Notiz', 'Neuestes Ergebnis deuten', '2W6', 'Karte ziehen']) {
+  await expect(oracle(page).getByRole('button', { name: '1 Tag vergehen lassen' })).toBeEnabled();
+  for (const name of ['Notiz', '1 Tag vergehen lassen', '2W6', 'Karte ziehen']) {
     const box = (await oracle(page).getByRole('button', { name, exact: true }).boundingBox())!;
     expect(box.y).toBeGreaterThan(viewport.height / 2);
     expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
@@ -314,16 +314,9 @@ test('Eine ältere Karte ohne Frage zeigt ihre Felder in der Zeile nur einmal', 
   await page.screenshot({ path: process.env.SHOT ?? 'test-results/karte-zeile.png' });
 });
 
-test('Deuten mit dem Knopf in der Reihe unten: gilt dem neuesten Ergebnis', async ({ page }) => {
-  await oracle(page).getByRole('button', { name: '2W6', exact: true }).click();
-  await expect(page.locator('.dice-roll')).toBeHidden();
-  await oracle(page).getByRole('button', { name: 'Neuestes Ergebnis deuten' }).click();
-  const reading = page.getByRole('dialog', { name: 'Deutung' });
-  await expect(reading).toContainText(/zu 2W6: \d+/);
-  await reading.getByPlaceholder(/Was bedeutet das/).fill('Die Tür ist offen.');
-  await reading.getByRole('button', { name: 'Deuten' }).click();
-  await expect(reading).toBeHidden();
-  await expect(oracle(page).locator('.entry', { hasText: 'Würfel · 2W6' }).locator('.interpretation')).toContainText('Die Tür ist offen.');
+test('Ein Tag mit dem Knopf in der Reihe unten (2026-11-22c, statt Deuten): ein Logeintrag Zeit', async ({ page }) => {
+  await oracle(page).getByRole('button', { name: '1 Tag vergehen lassen' }).click();
+  await expect(entries(page).last()).toContainText('Zeit');
 });
 
 test('Die Reihe unten steht auf dem Smartphone nur im Log', async ({ page }, testInfo) => {

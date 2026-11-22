@@ -106,12 +106,14 @@ export function weekStart(day: number): number {
 }
 
 /** Lässt 1 bis 6 Tage vergehen (`week` = false) oder beendet die Woche: bis zum nächsten Sonntag. */
-export function passTime(campaign: Campaign, how: { readonly days: number } | 'week', clock: Clock): Campaign {
+export function passTime(campaign: Campaign, how: { readonly days: number } | 'week', clock: Clock, voyaging = false): Campaign {
   const today = dayOf(campaign);
   const week = how === 'week';
   const days = week ? daysToSunday(today) : how.days;
   if (!week && (!Number.isInteger(days) || days < 1 || days > MAX_DAYS)) throw new DomainError(`Es vergehen 1 bis ${MAX_DAYS} Tage.`);
   if (campaign.encounters.some((e) => !e.ended)) throw new DomainError('Während einer laufenden Begegnung vergeht keine Zeit.');
+  // Unterwegs vergehen die Tage nur mit „Weiterreisen“ (2026-11-22c).
+  if (campaign.voyage !== undefined && !voyaging) throw new DomainError('Unterwegs vergeht die Zeit mit „Weiterreisen“, Tag für Tag.');
   const entry: TimePassed = { kind: 'time', at: clock.now(), day: today, days, week };
   // Mit der Zeit fallen die laufenden Kosten der Schiffe an (siehe `upkeep.ts`).
   return afterTime({ ...campaign, day: today + days, log: [...campaign.log, entry] }, today, clock);
