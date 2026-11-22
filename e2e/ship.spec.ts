@@ -169,13 +169,13 @@ test('Monatsabrechnung: nach vier Wochen mit Schiff steht sie im Log, mit Liegeg
   await expect(page.getByText(/Liegegebühren Cr 2\.200/)).toBeVisible();
 });
 
-test('Schiff von Hand ausblenden: der Stift am Namen, erst der zweite Tipper; danach kein Schiff', async ({ page }) => {
+test('Schiff von Hand ausblenden: unter Bearbeiten, erst der zweite Tipper; danach kein Schiff', async ({ page }) => {
   await page.goto('/');
   await openTab(page, 'Schiff');
-  await page.getByRole('button', { name: 'Schiff umbenennen' }).click();
-  const retire = page.getByRole('button', { name: /ausblenden\??$/ });
+  await page.getByRole('button', { name: 'Bearbeiten' }).click();
+  const retire = page.getByRole('button', { name: /^(Wirklich )?ausblenden\??$/i });
   await retire.click();
-  await expect(retire).toHaveText(/wirklich ausblenden\?/);
+  await expect(retire).toHaveText('Wirklich ausblenden?');
   await retire.click();
   await expect(page.getByRole('button', { name: 'Schiff umbenennen' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: /^Werft( öffnen)?$/ })).toBeVisible();

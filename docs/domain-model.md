@@ -3114,8 +3114,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Schiff. Die Regel *Worauf der Log verweist, wird nie gelöscht* gilt damit auch für
     Schiffe.
   - **Von Hand ausblenden** (Owner, 22. November 2026: „Ich sollte als GM auch das Schiff manuell
-    retire können, z. B. um ein alleiniges Small Craft kaufen zu können“). Im Reiter Schiff (Stift am
-    Namen) kann die Spielleitung das aktive Schiff ausblenden: Es und alle seine Beiboote bekommen
+    retire können, z. B. um ein alleiniges Small Craft kaufen zu können“). Im Reiter Schiff (Knopf
+    „Ausblenden“ unter *Bearbeiten*, Owner) kann die Spielleitung das aktive Schiff ausblenden: Es und alle seine Beiboote bekommen
     `retired`, gelöscht wird nichts. Danach hat die Gruppe kein Schiff; ein gekauftes Small Craft
     gehört ihr eigenständig. ⚑ Eine Restschuld bleibt am ausgeblendeten Schiff stehen, Raten werden
     keine mehr eingezogen (wie beim Wechsel nach dem Ship-Vorteil). Nicht während eines Systemflugs.
