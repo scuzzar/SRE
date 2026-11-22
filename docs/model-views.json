@@ -593,6 +593,17 @@
         "Hex",
         "World"
       ]
+    },
+    {
+      "id": "2026-11-22c",
+      "file": "2026-11-22c-reise-tag-fuer-tag",
+      "title": "Reise Tag für Tag: Jede Reise läuft wie eine Fahrt (Voyage); die Gruppe lässt die Tage mit „Weiterreisen“ selbst vergehen und kommt nach der Dauer an, erst dann Ankunft, Aufwachwurf, Lotterie und der Begegnungswurf der Ankunft",
+      "approved": false,
+      "show": [
+        "Campaign",
+        "Journey",
+        "SystemJourney"
+      ]
     }
   ]
 }

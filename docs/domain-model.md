@@ -568,6 +568,15 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Auslassen des Wurfs, lang gedrückt; auch von Hand im Reiter Begegnung); siehe *Schiffsbegegnungen bei Abreise und Ankunft*. Der Ausschnitt dazu
 > liegt unter
 > [`changes/2026-11-22b-raumbegegnungen-reise.png`](changes/2026-11-22b-raumbegegnungen-reise.png).
+>
+> **Wartet auf Freigabe** (Kennzeichen 2026-11-22c): **Reise Tag für Tag** (Owner, 22. November 2026:
+> „Die Zeit der Reise sollte ich selbst vergehen lassen. Also wie bei einer Reise auf dem Globus. Das
+> Ankunftswürfeln folgt nach einer Woche.“). Jede Reise (Sprung und Reise im System, mit Passage,
+> Ticket oder eigenem Schiff) läuft wie eine Fahrt: Beim Abflug beginnt sie, „Weiterreisen“ im Reiter
+> Begegnung lässt je einen Tag vergehen, nach ihrer Dauer kommt die Gruppe an. Neu im Bild: `Voyage`
+> mit `days` und `/left`, `Campaign.voyage`, die Verweise `jump` und `inSystem`; siehe *Unterwegs*.
+> Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-22c-reise-tag-fuer-tag.png`](changes/2026-11-22c-reise-tag-fuer-tag.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -602,7 +611,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Raumkarte und Systemflug | [views/raum.png](views/raum.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist derzeit
-keine.
+2026-11-22c (Reise Tag für Tag).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -926,6 +935,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Anlass | `SpaceBattle.occasion`, `EncounterOccasion` | Warum auf der Starship Encounter Table gewürfelt wurde: beim Start von der Welt (`departure`) oder bei der Ankunft (`arrival`); fehlt beim Knopf „Schiffsbegegnung“ (2026-11-22b) |
 | Begegnungswurf | `Journey.departureRoll`, `arrivalRoll`, `SystemJourney.departureRoll`, `arrivalRoll` | Die 2W6 auf der Starship Encounter Table bei Abreise bzw. Ankunft, wenn kein Schiff kam; kam eines, stehen sie am `SpaceBattle` (2026-11-22b) |
 | Begegnungsprüfung | `EncounterCheck` (flüchtig) | Der Dialog vor dem Begegnungswurf bei Abreise oder Ankunft: Zielwert, „Würfeln“ und „Abbrechen“ (lang drücken lässt den Wurf ausfallen); danach, bei einer Sichtung, die Frage „Zur Raumkarte“ oder „Weiter“ (2026-11-22b) |
+| Unterwegs | `Voyage`, `Campaign.voyage` | Eine Reise, die begonnen hat und noch nicht angekommen ist; die Gruppe lässt ihre Tage mit „Weiterreisen“ selbst vergehen (2026-11-22c) |
+| Reisetage | `Voyage.days`, `/left` | Wie viele Tage der Reise schon vergangen sind bzw. noch fehlen (2026-11-22c) |
 | Sichtung | `EncounterCheck.sighting` | Ein fremdes Schiff, das die Gruppe bei Abreise oder Ankunft ignoriert (2026-11-22b) |
 | Weiterreise | `SpaceBattle.jumpTo`, `travelTo`, `SystemFlight.departure` | Die Reise, die beim Start von der Welt durch eine Begegnung unterbrochen wurde; der Knopf „Springen nach …“ bzw. „Reisen nach …“ im Systemflug setzt sie fort (2026-11-22b) |
 | Turret | `Turret`, `Ship.turrets` | Ein Waffenturm auf einem Hardpoint des eigenen Schiffs, mit seinen Waffen; höchstens so viele, wie der Entwurf Hardpoints hat (2026-11-21g) |
@@ -1485,8 +1496,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     kauft die App sie zum Preis der Charts (Buchung `purchase` auf dem Abflugort). Reicht die Kasse
     nicht, geht die Reise nicht.
   - *Dauer*: Jede Reise dauert **eine Woche** (`days` = 7), egal wie weit (SE S. 8). Der Logeintrag
-    `Journey` steht am Abflugtag; danach ist `Campaign.day` 7 Tage weiter und der Aufenthaltsort das
-    Ziel (`to`). Die Zeit vergeht dabei ganz normal: 7 Tage, der Wochentag bei der Ankunft ist der
+    `Journey` steht am Abflugtag. Seit 2026-11-22c vergehen die 7 Tage nicht mehr auf einmal: Die
+    Gruppe ist *unterwegs* und lässt sie mit „Weiterreisen“ selbst vergehen; nach dem siebten ist der
+    Aufenthaltsort das Ziel (`to`), siehe *Unterwegs*. Die Zeit vergeht dabei ganz normal: 7 Tage, der Wochentag bei der Ankunft ist der
     der Abreise, und ein Sonntag dazwischen beendet die Woche wie sonst auch (die Zähler der Tests
     beginnen neu). Nur gibt es **keine Pflicht-Begegnungen**: Die Reise erinnert nicht an fehlende
     Tests, weder vor der Abreise noch für die Tage im Sprung, und würfelt keine. Wer unterwegs eine
@@ -1529,7 +1541,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - *Dauer* (`hours`): T = 2 · √(D ÷ A) (Charts S. 8: beschleunigen bis zur Mitte, dann abbremsen),
       D in m, A in m/s² (1 G = 10 m/s²), in Stunden aufgerundet. A ist mit Ticket 1 G, mit eigenem
       Schiff die G seines Manöverantriebs. `/days` = Stunden ÷ 24, aufgerundet, mindestens 1 Tag
-      (Owner); so viele Tage vergehen wie bei der Reise, ohne Pflicht-Begegnungen.
+      (Owner); so viele Tage vergehen wie bei der Reise, ohne Pflicht-Begegnungen, seit 2026-11-22c
+      Tag für Tag mit „Weiterreisen“ (siehe *Unterwegs*).
     - *Ticket* (Hausregel, Owner): je Reisendem Cr 25 je Stunde Flugzeit (der Satz der Middle Passage
       je Tag), als Buchung `ticket` auf dem Abflugort mit Verweis auf die Reise (`ticketFor`). Nur
       wenn Start oder Ziel einen Raumhafen hat (Starport A–E bzw. Spaceport F–H). Reicht die Kasse
@@ -1572,6 +1585,42 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Reise im Log; wird davor etwas gelöscht, rückt der Verweis nach.
   - Gepäckgrenzen (High 1000 kg, Middle 100 kg, Low 10 kg), Bumping der Middle Passage, Hijacking
     und Working Passage kommen später.
+- **Unterwegs** (wartet auf Freigabe, Kennzeichen 2026-11-22c; Owner, 22. November 2026). Jede Reise
+  läuft wie eine *Fahrt*: Sie beginnt beim Abflug und endet erst, wenn ihre Tage vergangen sind. Das
+  ändert die *Dauer* unter *Reise* und *Reise im System*: Die Zeit springt nicht mehr um die Dauer
+  weiter. Entscheidungen des Owners vom 22. November 2026 sind als solche genannt; Hausregeln tragen ⚑.
+  - **Für alle Reisen** (Owner): Sprung mit Passage oder eigenem Schiff (`Journey`, 7 Tage) und Reise
+    im System mit Ticket, eigenem Schiff oder Beiboot (`SystemJourney`, `/days` Tage).
+  - **Abflug.** Was die Reise beim Abflug tut, tut sie wie bisher am Abflugtag: Logeintrag `Journey`
+    bzw. `SystemJourney` mit allen Würfen (Sprungwurf, Kälteschlaf, Lotterie), Passagen, Tickets und
+    Lebenserhaltung bezahlt, Treibstoff verbraucht. Neu ist **`Campaign.voyage`**: eine Reise
+    unterwegs (`Voyage`) mit `days` = 0, die auf ihren Logeintrag verweist (`jump` bzw. `inSystem`,
+    genau einer). Der Tag bleibt, und die Gruppe ist **an keinem Ort** (Owner): `Campaign.location`
+    fehlt, bis sie ankommt. Das eigene Schiff, mit dem sie reist, hat keinen Ort (es ist bei der Gruppe),
+    ein zurückgelassenes bleibt, wo es steht. Es gibt höchstens eine Reise unterwegs.
+  - **Weiterreisen** (Owner: wie bei der Fahrt). Unten im Reiter Begegnung steht statt „Tage vergehen“
+    der Knopf **„Weiterreisen“**: Er lässt **einen Tag** vergehen, genau wie „1 Tag vergehen“, mit
+    allem, was daran hängt (Logeintrag, laufende Kosten, Monatsende), und zählt `days` um eins hoch.
+    `/left` = Dauer − `days`. Wie bisher gibt es unterwegs **keine Pflicht-Begegnungen**: Die Reise
+    erinnert nicht an fehlende Tests. ⚑ „Woche beenden“ ist unterwegs gesperrt (die Woche endet mit
+    den Reisetagen, wenn ein Sonntag dazwischen liegt, wie sonst auch).
+  - **Ankunft**, wenn `days` die Dauer erreicht (nach dem letzten „Weiterreisen“): `Campaign.voyage`
+    fällt weg, der Aufenthaltsort ist das Ziel (ohne Feld, also *Landeplatz*), das eigene Schiff kommt
+    dort an (Liegegebühr ab dem Ankunftstag). Erst jetzt wirkt der **Kälteschlaf** (Owner: Aufwachwurf
+    und Lotterie bei der Ankunft): Wer nicht aufwacht, ist tot, und der Lotteriegewinn wird gebucht. ⚑
+    Gewürfelt wird beides weiter beim Abflug (die Würfel stehen an der Reise, damit ein Neustart nichts
+    neu würfelt), gezeigt wird es erst bei der Ankunft: Der Dialog der Reise zeigt beim Abflug nur
+    Ziel, Dauer und Sprungwurf, bei der Ankunft Kälteschlaf und Lotterie. Danach folgt mit eigenem
+    Schiff die Begegnungsprüfung der Ankunft (siehe *Schiffsbegegnungen bei Abreise und Ankunft*).
+  - **Unterwegs möglich** (Owner: Begegnungen an Bord): die Würfe im Reiter Begegnung, die keinen Ort
+    brauchen (Zufallsbegegnung, Patron, Gerücht), von Hand, Karte und Orakel, Proben, Charaktere.
+    Gesperrt, weil die Gruppe an keinem Ort ist: Tiere, Polizei, Shop, Werft, Tanken, Landeplatz,
+    Systemflug, eine weitere Reise, Fahrten, „Gruppe platzieren“.
+  - **Abbrechen** geht nicht (Owner): Die Reise läuft bis zur Ankunft.
+  - **Weiterreise aus dem Systemflug** (2026-11-22b) beginnt die Reise ebenso; die Prüfung der Ankunft
+    kommt nach ihren Tagen.
+  - **Reisen von vorher** sind sofort angekommen und haben keine `Voyage`.
+
 - **Low Passage** (2026-11-13d). Jeder Low-Passagier würfelt beim Aufwachen **5+ auf 2W6**
   (SE S. 9). DMs: +1, wenn ein mitreisender Charakter in High oder Middle Passage Medical-2 oder
   besser hat (er hilft dem Schiffsmedic; Hausregel, die Regeln sagen „attending medic“); −1 bei END 6
