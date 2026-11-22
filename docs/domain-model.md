@@ -569,7 +569,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > liegt unter
 > [`changes/2026-11-22b-raumbegegnungen-reise.png`](changes/2026-11-22b-raumbegegnungen-reise.png).
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-22c): **Reise Tag für Tag** (Owner, 22. November 2026:
+> Am 22. November 2026 freigegeben (Kennzeichen 2026-11-22c): **Reise Tag für Tag** (Owner, 22. November 2026:
 > „Die Zeit der Reise sollte ich selbst vergehen lassen. Also wie bei einer Reise auf dem Globus. Das
 > Ankunftswürfeln folgt nach einer Woche.“). Jede Reise (Sprung und Reise im System, mit Passage,
 > Ticket oder eigenem Schiff) läuft wie eine Fahrt: Beim Abflug beginnt sie, „Weiterreisen“ im Reiter
@@ -611,7 +611,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Raumkarte und Systemflug | [views/raum.png](views/raum.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist derzeit
-2026-11-22c (Reise Tag für Tag).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -666,8 +666,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Deutung | `Note` mit `interprets` | Was man aus einem Ergebnis macht, z. B. „Die Tür ist offen, aber jemand war schon hier.“ |
 | Ergebnis | `DiceRoll`, `CardPick`, `TaskResult`, `AttackResult`, `DamageRoll`, `PatronRoll`, `RumorRoll` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
 | Grundkarte | (View) | Was auf dem Handy wie im Desktop-Modus unter allem liegt: der Globus der offenen Welt, beim Start der des Aufenthaltsorts (sobald seine Oberflächenkarte entstanden ist); mit ✕ oder ganz herausgezoomt der Subsektor, in dem ein Tippen auf eine Welt deren Globus öffnet |
-| Ziehblatt | (View, Smartphone; Stufe `TrayStop`) | Das Blatt unten über der Grundkarte, wie in einer Karten-App. Es rastet beim Loslassen immer auf einer von vier **Stufen** ein: versteckt (nur der Griff, mit Abstand zum Rand; Reihe und Reiter rutschen hinaus), eingeklappt (Kopf, Reihe und Reiter, bei einem offenen Feld auch dessen Kopfzeile), halb und voll; nach einem Wisch eine Stufe weiter in seine Richtung. Ziehen lässt es sich am Griff, an Reihe und Reitern und im Inhalt nach unten, wenn der ganz oben steht. Das Gerät merkt sich die Stufe, nicht die Höhe. Oben der Griff, darunter der gewählte Bereich oder das angetippte Feld des Globus bzw. das gewählte Feld des Subsektors (dafür fährt es mindestens auf halbe Höhe, und die Karte holt das Feld über das Blatt), darunter im Log die Reihe Notiz, Deuten, 2W6, Karte, beim angetippten Feld des Globus stattdessen die Reihe Hierhin reisen (Route der *Fahrt* planen), Gruppe setzen, *NSC platzieren*, ganz unten die Reiter Log, Begegnung, Kampf, Shop, Charaktere, NSC |
-| Desktop-Modus | (View, media query) | Das Layout ab 1024 px Bildschirmbreite: links eine Spalte mit denselben Reitern wie im Ziehblatt, darunter das Log mit dem Charakter oben; ein Reiter (oder ein angetipptes Feld des Globus bzw. ein gewähltes des Subsektors) öffnet den Bereich an der Stelle des Logs in derselben Spalte, ✕ führt zurück; unten die Reihe Notiz, Deuten, 2W6, Karte, wo der Bereich keine eigene hat; den Rest füllt die Grundkarte. Gleiche Screens, gleiche Komponenten wie auf dem Smartphone |
+| Ziehblatt | (View, Smartphone; Stufe `TrayStop`) | Das Blatt unten über der Grundkarte, wie in einer Karten-App. Es rastet beim Loslassen immer auf einer von vier **Stufen** ein: versteckt (nur der Griff, mit Abstand zum Rand; Reihe und Reiter rutschen hinaus), eingeklappt (Kopf, Reihe und Reiter, bei einem offenen Feld auch dessen Kopfzeile), halb und voll; nach einem Wisch eine Stufe weiter in seine Richtung. Ziehen lässt es sich am Griff, an Reihe und Reitern und im Inhalt nach unten, wenn der ganz oben steht. Das Gerät merkt sich die Stufe, nicht die Höhe. Oben der Griff, darunter der gewählte Bereich oder das angetippte Feld des Globus bzw. das gewählte Feld des Subsektors (dafür fährt es mindestens auf halbe Höhe, und die Karte holt das Feld über das Blatt), darunter im Log die Reihe Notiz, Tag, 2W6, Karte (bis 2026-11-22c Notiz, Deuten, 2W6, Karte), beim angetippten Feld des Globus stattdessen die Reihe Hierhin reisen (Route der *Fahrt* planen), Gruppe setzen, *NSC platzieren*, ganz unten die Reiter Log, Begegnung, Kampf, Shop, Charaktere, NSC |
+| Desktop-Modus | (View, media query) | Das Layout ab 1024 px Bildschirmbreite: links eine Spalte mit denselben Reitern wie im Ziehblatt, darunter das Log mit dem Charakter oben; ein Reiter (oder ein angetipptes Feld des Globus bzw. ein gewähltes des Subsektors) öffnet den Bereich an der Stelle des Logs in derselben Spalte, ✕ führt zurück; unten die Reihe Notiz, Tag, 2W6, Karte, wo der Bereich keine eigene hat; den Rest füllt die Grundkarte. Gleiche Screens, gleiche Komponenten wie auf dem Smartphone |
 | Würfelwurf (2W6) | `DiceRoll` | Ein einfacher Wurf mit zwei Würfeln |
 | Inspirationskarte | `Card` | Eine gezogene Karte, solange sie offen ist |
 | Kartenauswahl | `CardPick` | Was man von einer Karte in den Log übernimmt, mit der Frage |
@@ -1217,7 +1217,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     nächsten Blick ins Buch abgleichen (steht in der To-do).
 - **Deutungen und Notizen.** Beide sind ein `Note` mit Text, der nicht leer ist (Leerraum am Rand
   fällt weg). Seit 2026-11-14d schreibt man sie in einem eigenen Blatt: *Deuten* sitzt am Ergebnis,
-  *Notiz* unten in der Knopfreihe; die Frage schreibt man auf die Karte.
+  *Notiz* unten in der Knopfreihe; die Frage schreibt man auf die Karte. Seit 2026-11-22c gibt es
+  unten in der Reihe kein *Deuten* mehr (dort steht der Knopf für einen Tag, siehe *Zeit vergehen
+  lassen*).
   - Eine **Deutung** verweist auf genau ein Ergebnis (`interprets`): eine Orakelantwort, einen Wurf,
     eine Kartenauswahl, eine Probe, einen Angriff oder einen Schadenswurf, nie auf eine Notiz oder Deutung, und immer auf einen
     früheren Eintrag. Man deutet das Ergebnis, an dem man auf *Deuten* tippt: am neuesten steht der
@@ -1482,6 +1484,17 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     nach Lage will man mehr oder weniger Begegnungen. An Patron und Gerücht erinnert nichts: Die
     will man haben, man würfelt sie von selbst. Die Tests würfelt die Zeit nie selbst. Die
     Testknöpfe zählen weiter je Tag bzw. Woche (siehe *Test*).
+  - **Ein Tag in der Reihe des Logs** (Owner, 22. November 2026: „den einen Tag vergehen lassen Knopf
+    könnten wir grundsätzlich auch noch in dem Log unterbringen. Da würde er den Deuten-Knopf
+    ersetzen … Damit kann ich dann die Reise in dem Oracle-Log-Bildschirm durchführen und muss nicht
+    immer wechseln, was auch für Landreisen gut ist“). Die Reihe unter dem Log heißt jetzt **Notiz,
+    Tag, 2W6, Karte**: Der Knopf „Deuten“ entfällt dort (gedeutet wird am Ergebnis selbst, siehe
+    *Deutungen und Notizen*), an seiner Stelle steht ein Knopf für **einen Tag**, je nach Lage:
+    **„Weiterfahren“** während einer *Fahrt*, **„Weiterreisen“** während einer Reise *unterwegs*,
+    sonst **„1 Tag“** (wie „1 Tag vergehen“ im Reiter Begegnung). Er tut genau dasselbe wie der Knopf
+    im Reiter Begegnung, mit denselben Sperren (etwa während einer laufenden Begegnung); gesperrt sagt
+    er, warum. Das Würfelfenster der Fahrt (Pflicht-Test am Boden) geht wie dort über der App auf.
+    Die Reihe steht auch im Feld des Globus; dort gilt dasselbe.
 - **Reise** (2026-11-13d). Die Gruppe reist mit **Passagen** (High, Middle, Low; SE S. 8 f.) oder
   mit dem **eigenen Schiff** (2026-11-16d, siehe *Eigenes Schiff*); der Reisedialog
   bietet, was verfügbar ist.
@@ -1585,7 +1598,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Reise im Log; wird davor etwas gelöscht, rückt der Verweis nach.
   - Gepäckgrenzen (High 1000 kg, Middle 100 kg, Low 10 kg), Bumping der Middle Passage, Hijacking
     und Working Passage kommen später.
-- **Unterwegs** (wartet auf Freigabe, Kennzeichen 2026-11-22c; Owner, 22. November 2026). Jede Reise
+- **Unterwegs** (freigegeben am 22. November 2026, Kennzeichen 2026-11-22c; Owner, 22. November 2026). Jede Reise
   läuft wie eine *Fahrt*: Sie beginnt beim Abflug und endet erst, wenn ihre Tage vergangen sind. Das
   ändert die *Dauer* unter *Reise* und *Reise im System*: Die Zeit springt nicht mehr um die Dauer
   weiter. Entscheidungen des Owners vom 22. November 2026 sind als solche genannt; Hausregeln tragen ⚑.
@@ -1599,7 +1612,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     fehlt, bis sie ankommt. Das eigene Schiff, mit dem sie reist, hat keinen Ort (es ist bei der Gruppe),
     ein zurückgelassenes bleibt, wo es steht. Es gibt höchstens eine Reise unterwegs.
   - **Weiterreisen** (Owner: wie bei der Fahrt). Unten im Reiter Begegnung steht statt „Tage vergehen“
-    der Knopf **„Weiterreisen“**: Er lässt **einen Tag** vergehen, genau wie „1 Tag vergehen“, mit
+    der Knopf **„Weiterreisen“**, ebenso in der Reihe unter dem Log (siehe *Ein Tag in der Reihe des
+    Logs*): Er lässt **einen Tag** vergehen, genau wie „1 Tag vergehen“, mit
     allem, was daran hängt (Logeintrag, laufende Kosten, Monatsende), und zählt `days` um eins hoch.
     `/left` = Dauer − `days`. Wie bisher gibt es unterwegs **keine Pflicht-Begegnungen**: Die Reise
     erinnert nicht an fehlende Tests. ⚑ „Woche beenden“ ist unterwegs gesperrt (die Woche endet mit
@@ -2987,7 +3001,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **Abschnitt:** Jeder Abschnitt hat seine Felder in Reihenfolge (`cells`; bei einem Flug nur Start
     und Landepunkt), daraus folgen seine Fahrstunden (`/hours`) und seine Miete je Tag (`/rent`). Das
     letzte Feld eines Abschnitts ist das erste des nächsten.
-  - **Tag für Tag** (wie Zeit vergehen lassen): „Weiterfahren“ unten im Reiter Begegnung (die einzige Stelle dafür; nach „Losfahren“ öffnet er sich, auf dem Globus führt ein Hinweis hin) fährt die Fahrstunden je Tag
+  - **Tag für Tag** (wie Zeit vergehen lassen): „Weiterfahren“ unten im Reiter Begegnung (nach „Losfahren“ öffnet er sich, auf dem Globus führt ein Hinweis hin; seit 2026-11-22c auch in der Reihe unter dem Log, siehe *Ein Tag in der Reihe des Logs*) fährt die Fahrstunden je Tag
     (Hausregel: **8 Stunden** für alle Fahrzeuge; *Mission on Mithril* rechnet 10 auf einem
     20-Stunden-Tag) oder den Rest bis zur Ankunft, nie weniger. Das ist ein
     Logeintrag `TripDay` mit den gefahrenen Stunden, der Miete des Tages und ob die Gruppe

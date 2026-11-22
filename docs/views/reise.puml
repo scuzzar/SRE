@@ -134,7 +134,7 @@ hide <<browser>> stereotype
   }
   class Passenger <<value>> $reise {
   }
-  class Voyage $reise $newClass("2026-11-22c") {
+  class Voyage $reise {
     days: number
     /left: number
   }
@@ -186,9 +186,9 @@ SystemJourney "*" --> "1" World : from
 SystemJourney "*" --> "1" World : to
 SystemJourney "*" --> "*" Character : travellers
 SystemJourney "*" --> "0..1" Ship : ship
-Campaign "1" *-$newArrow("2026-11-22c")- "0..1" Voyage : voyage
-Voyage "0..1" -$newArrow("2026-11-22c")-> "0..1" Journey : jump
-Voyage "0..1" -$newArrow("2026-11-22c")-> "0..1" SystemJourney : inSystem
+Campaign "1" *-- "0..1" Voyage : voyage
+Voyage "0..1" --> "0..1" Journey : jump
+Voyage "0..1" --> "0..1" SystemJourney : inSystem
 Booking "*" --> "0..1" SystemJourney : ticketFor
 
 ' Charaktererschaffung und Lebenslauf

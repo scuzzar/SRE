@@ -113,7 +113,7 @@ hide <<browser>> stereotype
   abstract class LogEntry $probe
 
 ' Zeit und Reisen
-  class Voyage $reise $newClass("2026-11-22c")
+  class Voyage $reise
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Conflict <<transient>> $kampagne {
@@ -151,7 +151,7 @@ Campaign "1" *-- "0..*" Ship : ships
 Campaign "1" *-- "0..1" SystemFlight : flight
 
 ' Zeit und Reisen
-Campaign "1" *-$newArrow("2026-11-22c")- "0..1" Voyage : voyage
+Campaign "1" *-- "0..1" Voyage : voyage
 
 ' Charaktererschaffung und Lebenslauf
 Campaign "1" *-- "0..1" Generation : generation
