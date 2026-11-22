@@ -1,0 +1,707 @@
+<!doctype html>
+<!--
+  UI-Mock: Crew-Zuweisung per Drag & Drop (Entwurf zu Änderung 2026-11-22d, noch nicht freigegeben).
+  Der neue Bereich „Crew“ im Reiter Schiff: unten die an Bord befindlichen Charaktere (SC und NSC)
+  als Chips, darüber die Posten des Schiffs als Felder. Ziehen legt einen Charakter auf einen Posten,
+  Ziehen von einem Posten auf einen anderen verschiebt ihn, Ziehen aus einem Posten auf den Pool
+  setzt ihn frei. Tippen geht auch (Posten antippen = Charakter wählen; Charakter antippen = seine
+  Posten aufleuchten lassen) für Gerät und Finger. Regeln wie im Entwurf des Domänenmodells:
+  ein Charakter pro Posten, höchstens zwei Posten je Charakter über alle Schiffe, mit zweien zählt
+  seine Fertigkeit um 1 niedriger; Mindeststufen nach SR 33 sind Hinweis, nicht Verbot; auf einem
+  Small Craft gilt für den Piloten das bessere aus Ship's Boat und Pilot − 1 (SR 33).
+  Daten sind Beispielwerte aus den Standardentwürfen (SE 10) und den Beispielcharakteren der App.
+  Kein App-Code.
+-->
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UI-Mock · Crew zuweisen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* Design-Tokens und Bausteine aus src/view/styles.css, damit das Mock wie die App aussieht. */
+  :root {
+    --bg: #111111;
+    --panel: #161616;
+    --raised: #1a1a1a;
+    --deep: #0b0b0b;
+    --rule: #2a2a2a;
+    --rule-soft: #2e2e2e;
+    --line: #3a3a3a;
+    --line-strong: #555555;
+    --text: #eceae4;
+    --muted: #a3a09a;
+    --dim: #8c8a85;
+    --ink: #111111;
+    --accent: #c62f35;
+    --accent-text: #ef5a5f;
+    --accent-wash: #2a1415;
+    --gold: #d9b45f;
+    --gold-bright: #f5dc96;
+    --gold-wash: #241e10;
+    --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #050505; color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.45; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px; }
+  button { font: inherit; color: inherit; }
+
+  .app { position: relative; width: min(430px, 100%); height: min(900px, calc(100vh - 70px)); background: var(--deep); border: 1px solid #262626; border-radius: 18px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7); user-select: none; -webkit-user-select: none; }
+  .caption { width: min(430px, 100%); color: var(--dim); font-size: 12px; }
+  .caption b { color: var(--muted); }
+  .mock-note { position: absolute; top: 10px; left: 12px; z-index: 5; padding: 3px 8px; border: 1px solid var(--line); border-radius: 6px; background: rgba(11, 11, 11, 0.8); color: var(--dim); font-size: 11px; }
+
+  /* Ziehblatt, hier dauerhaft hochgezogen (Crew sitzt im Reiter Schiff). */
+  .tray { position: absolute; left: 0; right: 0; bottom: 0; top: 4%; display: flex; flex-direction: column; background: var(--bg); border-radius: 16px 16px 0 0; box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.6); }
+  .tray-grip { display: flex; align-items: center; justify-content: center; height: 26px; }
+  .tray-grip span { width: 40px; height: 5px; border-radius: 3px; background: var(--line-strong); }
+  .tray-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+  .shop-top { flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; padding: 10px 16px 0; border-bottom: 1px solid var(--rule); background: var(--bg); }
+  .shop-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .shop-world { min-width: 0; margin: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .shop-funds { flex: 0 0 auto; margin: 0; font-size: 12px; }
+  .shop-funds strong { font-size: 20px; color: var(--gold); }
+  .head-ship { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .head-sub { margin: 0; font-size: 12px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .screen { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 10px 16px 14px; display: flex; flex-direction: column; gap: 8px; touch-action: pan-y; }
+  .section-title { margin: 0; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .section-title span { color: var(--dim); letter-spacing: 0; text-transform: none; font-weight: 400; }
+  .muted { color: var(--muted); }
+  .mono { font-family: var(--mono); }
+
+  /* Schiffe als Kacheln wie im Reiter Schiff (Mutterschiff und Beiboot). */
+  .card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; }
+  .tile { position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; min-height: 44px; padding: 5px 8px; text-align: left; font-size: 13px; line-height: 1.3; background: #1b1b1b; border: 1px solid #2c2c2c; border-radius: 6px; color: var(--text); }
+  .tile .tile-label { font-size: 10px; color: var(--dim); }
+  .tile .tile-text { font-weight: 600; font-family: var(--mono); font-size: 12.5px; }
+  .tile[aria-pressed='true'] { border-color: var(--gold); }
+  .tile[aria-pressed='true'] .tile-text { color: var(--gold); }
+
+  /* Die Wirkung der Besetzung, live gerechnet. */
+  .effect { margin: 0; padding: 7px 10px; border: 1px solid var(--rule); background: var(--panel); font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+  .effect b { color: var(--text); }
+
+  /* Posten als Felder. */
+  .posts { display: flex; flex-direction: column; gap: 6px; }
+  .post { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px; min-height: 52px; padding: 5px 8px 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); }
+  .post.empty { border-style: dashed; background: transparent; }
+  .post-main { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .post-role { font-size: 13px; font-weight: 700; letter-spacing: 0.02em; }
+  .post-role small { font-weight: 400; letter-spacing: 0; color: var(--dim); font-family: var(--mono); font-size: 11px; }
+  .post-role .tag { color: var(--gold); font-family: var(--sans); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .pool-hint { margin: 0; font-size: 11.5px; color: var(--dim); }
+  .post-who { font-size: 13px; cursor: grab; user-select: none; -webkit-user-select: none; }
+  .post-who.free { cursor: pointer; }
+  .post-who .grip { color: var(--line-strong); font-size: 11px; letter-spacing: -2px; margin-right: 5px; }
+  .post-who.free { color: var(--muted); font-size: 12.5px; }
+  .post-note { font-size: 11px; color: var(--dim); }
+  .post-note.warn { color: var(--accent-text); }
+  .post-skill { min-width: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px 6px; border: 1px solid var(--line-strong); border-radius: 6px; font-family: var(--mono); font-size: 17px; font-weight: 700; }
+  .post-skill small { font-size: 9px; font-family: var(--sans); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); }
+  .post-skill.none { color: var(--dim); border-color: var(--rule); }
+  .post-x { width: 34px; height: 40px; display: flex; align-items: center; justify-content: center; border: 0; background: transparent; color: var(--dim); border-radius: 6px; font-size: 13px; }
+  .post-x:hover { color: var(--accent-text); }
+  .post-x:active { background: var(--accent-wash); color: var(--accent-text); }
+  .post.beam { border-color: var(--accent); }
+  .post.ok { border-color: var(--gold); }
+  .post.bad { border-color: var(--accent); background: var(--accent-wash); }
+  .post.hint { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-wash); }
+
+  /* Kopf über der Liste: Schiffe und die Wirkung der Besetzung. */
+  .extra { flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; padding: 10px 16px 6px; }
+
+  /* Reiter unter den Schiffs-Kacheln, wie im Reiter Schiff: Deckplan | Details | Crew. */
+  .shop-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--rule); }
+  .shop-tabs button { flex: 1 1 0; min-width: 0; min-height: 38px; padding: 0 4px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); font-size: 13px; }
+  .shop-tabs button[aria-selected='true'] { border-bottom-color: var(--gold); color: var(--text); font-weight: 700; }
+
+  /* Die Reihe der an Bord: immer sichtbar, die Posten darunter scrollen. */
+  .crewbar { flex: 0 0 auto; max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 7px 16px 9px; border-top: 1px solid var(--rule); background: var(--panel); }
+  .crewbar .section-title { font-size: 11px; }
+
+  /* Der Pool: wer an Bord ist und schon auf einem Posten sitzt. */
+  .pool { display: flex; flex-direction: column; gap: 6px; padding: 8px; border: 1px dashed var(--line); border-radius: 8px; min-height: 62px; }
+  .pool.ok { border-color: var(--gold); border-style: solid; background: var(--gold-wash); }
+  .pool.bad { border-color: var(--accent); }
+  .pool-empty { margin: 6px 2px; font-size: 12.5px; color: var(--dim); }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chips .chip { flex: 0 1 auto; min-width: 0; }
+  .chip { position: relative; display: flex; align-items: center; gap: 6px; min-height: 38px; padding: 3px 7px; border: 1px solid var(--line-strong); border-radius: 7px; background: #1b1b1b; font-size: 12.5px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .chip.dragging { opacity: 0.35; }
+  .chip.on-post { border-style: solid; border-color: var(--rule); background: var(--panel); color: var(--muted); }
+  .chip .grip { color: var(--line-strong); font-size: 11px; letter-spacing: -2px; align-self: center; }
+  .chip-body { display: flex; flex-direction: column; min-width: 0; }
+  .chip-name { font-weight: 600; }
+  .chip-kind { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); }
+  .chip-skills { font-family: var(--mono); font-size: 10px; color: var(--muted); white-space: nowrap; }
+  .chip-posts { font-size: 10.5px; color: var(--gold); white-space: nowrap; }
+  .chip-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chip-badges { display: flex; gap: 3px; align-items: center; }
+  .badge { min-width: 19px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--gold); color: var(--ink); font-family: var(--sans); font-size: 9.5px; font-weight: 700; line-height: 17px; text-align: center; white-space: nowrap; }
+  .badge.npc { background: var(--line-strong); color: var(--text); }
+  .chip.blocked { border-color: var(--accent); }
+  .chip.hint { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-wash); }
+
+  /* Die gezogene Figur. */
+  #ghost { position: fixed; z-index: 40; pointer-events: none; display: none; }
+  #ghost .chip { box-shadow: 0 10px 26px rgba(0, 0, 0, 0.6); transform: scale(1.04); }
+
+  /* Dock unten. */
+  .dock { flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; padding: 10px 16px 12px; border-top: 1px solid var(--rule); background: var(--panel); }
+  .dock-line { font-size: 12px; color: var(--muted); }
+  .dock-line b { color: var(--text); font-family: var(--mono); }
+  .actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .ghost-btn { min-height: 44px; padding: 6px 8px; background: transparent; border: 1px solid var(--line-strong); font-size: 13px; }
+  .ghost-btn.danger { border-color: var(--accent); color: var(--accent-text); }
+
+  /* Blatt über dem Bereich (Charakter wählen, Hinweise) – Aufbau wie die Blätter der App. */
+  .overlay { position: absolute; inset: 0; z-index: 10; background: rgba(0, 0, 0, 0.72); display: flex; flex-direction: column; padding-top: 10px; }
+  .sheet { flex: 0 0 auto; margin-top: auto; display: flex; flex-direction: column; background: var(--raised); border: 1px solid var(--line-strong); border-bottom: 0; border-radius: 16px 16px 0 0; }
+  .sheet-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 10px 16px 6px; }
+  .sheet-head h2 { margin: 0; font-size: 16px; }
+  .sheet-body { max-height: 56vh; overflow-y: auto; padding: 0 16px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .sheet-foot { display: flex; gap: 8px; padding: 8px 16px 14px; border-top: 1px solid #333; background: var(--panel); }
+  .sheet-foot .ghost-btn { border-radius: 8px; flex: 1 1 auto; }
+  .pick { display: grid; grid-template-columns: minmax(0, 1fr) 62px; align-items: center; gap: 8px; min-height: 52px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); text-align: left; }
+  .pick:disabled { opacity: 0.5; }
+  .pick .skill { font-family: var(--mono); font-size: 15px; font-weight: 700; text-align: right; }
+  .pick .skill small { display: block; font-size: 10px; color: var(--dim); font-family: var(--sans); font-weight: 400; }
+  .pick-note { font-size: 11px; color: var(--dim); }
+  .pick-note.warn { color: var(--accent-text); }
+  .pick-post { color: var(--gold); }
+
+  .toast { position: absolute; left: 50%; transform: translateX(-50%); bottom: 84px; z-index: 20; max-width: 90%; padding: 8px 14px; border: 1px solid #8a6a2a; background: var(--gold-wash); color: var(--gold-bright); font-family: var(--mono); font-size: 12.5px; border-radius: 8px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5); opacity: 0; transition: opacity 0.25s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .toast.bad { border-color: var(--accent); background: var(--accent-wash); color: var(--accent-text); }
+
+  .nav { flex: 0 0 auto; display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; border-top: 1px solid var(--rule); background: var(--deep); }
+  .nav button { min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: transparent; border: 0; border-top: 2px solid transparent; font-size: 11px; color: var(--muted); }
+  .nav button[aria-current='page'] { border-top-color: var(--accent-text); color: var(--text); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="mock-note">UI-Mock · Crew zuweisen · Entwurf 2026-11-22d</div>
+
+  <div class="tray">
+    <div class="tray-grip"><span></span></div>
+    <div class="tray-body">
+      <div class="screen">
+        <div class="shop-top">
+          <div class="shop-head">
+            <div class="head-ship">
+              <p class="shop-world" id="headLeft"></p>
+              <p class="head-sub mono muted" id="headSub"></p>
+            </div>
+            <p class="shop-funds"><span class="muted">Kasse</span> <strong class="mono" id="headFunds"></strong></p>
+          </div>
+        </div>
+        <div class="extra" id="extra"></div>
+        <section class="scroll" id="scroll"></section>
+        <div class="crewbar" id="crewbar"></div>
+        <div class="dock" id="dock"></div>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Bereiche">
+      <button type="button">Log</button>
+      <button type="button">Begegnung</button>
+      <button type="button">Kampf</button>
+      <button type="button">Shop</button>
+      <button type="button" aria-current="page">Schiff</button>
+      <button type="button">Charaktere</button>
+      <button type="button">NSC</button>
+    </nav>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div id="sheet-host"></div>
+  <div id="ghost"></div>
+</div>
+<p class="caption"><b>UI-Mock, kein App-Code.</b> Gedacht als dritter Reiter <b>Crew</b> im bestehenden Reiter Schiff (neben Deckplan und Details).<b>Ziehen</b>: aus der Reihe unten auf ein Posten-Feld = <b>Posten dazu</b>; aus einem Posten-Feld in ein anderes = <b>umziehen</b> (die alte Stelle wird frei); aus einem Feld zurück in die Reihe = frei gesetzt. <b>Tippen</b>: Charakter antippen, dann ein Posten-Feld; oder das Feld antippen und in der Liste wählen – dort steht die Stufe, die auf diesem Posten zählt. Ein Charakter hat <b>höchstens zwei Posten</b> über alle Schiffe, mit zweien zählt die Fertigkeit auf beiden <b>um 1 niedriger</b> (SE 11) – der dritte Versuch ist rot und wird abgelehnt. Mindeststufen nach SR 33 stehen als Hinweis, verbieten nichts. Auf dem <b>Small Craft</b> zählt für den Piloten das bessere aus Ship's Boat und Pilot − 1; ohne Piloten kein Schub (Pflichtprogramm Maneuver, Stufe 2b). Oben die <b>Wirkungslinie</b>: Schub, Turrets mit Gunner, Schadenskontrolle.</p>
+
+<script>
+  // ------- Beispieldaten -------
+  // Fertigkeiten wie in src/data/examples.json (Kira Vant, Jonas Reyl), dazu drei NSC der Werft.
+  const SKILL_OF_ROLE = {
+    pilot: 'pilot', navigator: 'navigation', engineer: 'engineering',
+    steward: 'steward', medic: 'medical', gunner: 'gunnery',
+  };
+  const ABBR = { pilot: 'Pilot', navigation: 'Navig', engineering: 'Engineer', steward: 'Steward', medical: 'Medic', gunnery: 'Gunnery', 'ship-boat': "Ship's Boat" };
+
+  const chars = [
+    { id: 'kira', name: 'Kira Vant', kind: 'SC', bg: 'Ex-Scout', skills: { pilot: 2, navigation: 1 }, hidden: false, dead: false },
+    { id: 'jonas', name: 'Jonas Reyl', kind: 'SC', bg: 'Ex-Merchant', skills: { steward: 1, admin: 1 }, hidden: false, dead: false },
+    { id: 'marta', name: 'Marta Kesh', kind: 'NSC', bg: 'Technikerin', skills: { engineering: 2, electronics: 1 }, hidden: false, dead: false },
+    { id: 'dok', name: 'Dr. Halvek', kind: 'NSC', bg: 'Schiffsarzt', skills: { medical: 2, science: 1 }, hidden: false, dead: false },
+    { id: 'bram', name: 'Bram Tol', kind: 'NSC', bg: 'Heuer, ex-Militär', skills: { gunnery: 2, engineering: 1 }, hidden: false, dead: false },
+    { id: 'ildi', name: 'Ildi Sarn', kind: 'NSC', bg: 'Heuer', skills: { gunnery: 0, steward: 1 }, hidden: false, dead: false },
+  ];
+  const byId = (id) => chars.find((c) => c.id === id);
+
+  // Posten nach SR 33: je Schiff Pilot, Navigator, Engineer, Steward, Medic und je Turret ein Gunner.
+  const ships = [
+    {
+      id: 'schiff', name: 'Kessra Runner', sub: 'Free Trader · 200 t · Modell/1', smallCraft: false,
+      roles: ['pilot', 'navigator', 'engineer', 'steward', 'medic'], turrets: 2,
+      // Mindeststufen aus docs/regeln-schiffe.md (SR 33) – nur als Hinweis.
+      min: { pilot: 1, engineer: 1, steward: 0, medic: 1, gunner: 1 },
+    },
+    { id: 'boot', name: 'Beiboot 1', sub: "Ship's Boat · 15 t · kein Rechner", smallCraft: true, roles: ['pilot'], turrets: 0, min: {} },
+  ];
+
+  // posts[postId] = Charakter-Id. postId: `${shipId}:${role}:${turretIndex}`
+  const posts = {};
+  const pid = (ship, role, turret) => `${ship.id}:${role}${turret === undefined ? '' : '#' + turret}`;
+  posts[pid(ships[0], 'pilot')] = 'kira';
+  posts[pid(ships[0], 'engineer')] = 'marta';
+  posts[pid(ships[0], 'gunner', 0)] = 'bram';
+
+  let activeShip = ships[0].id;
+  let tab = 'crew';          // Deckplan | Details | Crew – wie im Reiter Schiff
+  let focusChar = null;      // Charakter, dessen Posten gerade aufleuchten
+  let pickedChar = null;     // über „Tippen“ gewählter Charakter
+  let pickedMoving = false;  // und ob er von einem Posten gehoben wurde (Umziehen)
+  let toastTimer = null;
+
+  // ------- Regeln -------
+  const postList = (ship) => [
+    ...ship.roles.map((role) => ({ role, label: ROLE_LABEL[role], skillRole: role })),
+    ...Array.from({ length: ship.turrets }, (_, i) => ({ role: 'gunner', turret: i, label: `Gunner · Turret ${i + 1}`, skillRole: 'gunner' })),
+  ];
+  const ROLE_LABEL = { pilot: 'Pilot', navigator: 'Navigator', engineer: 'Engineer', steward: 'Steward', medic: 'Medic' };
+
+  const postsOf = (charId) => Object.entries(posts).filter(([, c]) => c === charId);
+  const countOf = (charId) => postsOf(charId).length;
+
+  /** Rohstufe der passenden Fertigkeit (SR 33; Small Craft: Ship's Boat oder Pilot − 1). */
+  function rawSkill(char, post, ship) {
+    if (ship.smallCraft && post.role === 'pilot') {
+      return Math.max(char.skills['ship-boat'] ?? -99, (char.skills.pilot ?? 0) - 1, 0);
+    }
+    return char.skills[SKILL_OF_ROLE[post.role]] ?? 0;
+  }
+  /** Stufe auf dem Posten, mit −1, wenn der Charakter zwei Posten hat (SE 11). Ohne Fertigkeit 0. */
+  function skillOn(char, post, ship) {
+    const raw = rawSkill(char, post, ship);
+    return countOf(char.id) >= 2 ? raw - 1 : raw;
+  }
+  const canHold = (char, extra) => countOf(char.id) + extra <= 2;
+
+  // ------- Anzeige -------
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const scroll = document.getElementById('scroll');
+  const dock = document.getElementById('dock');
+
+
+  function render() {
+    const ship = ships.find((s) => s.id === activeShip);
+    document.getElementById('headLeft').textContent = ship.name;
+    document.getElementById('headSub').textContent = ship.sub;
+    document.getElementById('headFunds').textContent = 'Cr 8,62 Mio';
+
+    const filled = postList(ship).filter((p) => posts[pid(ship, p.role, p.turret)]).length;
+    const total = postList(ship).length;
+
+    const shipTiles = ships.map((s) => {
+      const n = postList(s).filter((p) => posts[pid(s, p.role, p.turret)]).length;
+      return `<button type="button" class="tile" data-ship="${s.id}" aria-pressed="${s.id === activeShip}">
+        <span class="tile-label">${esc(s.sub.split(' · ')[0])}</span>
+        <span class="tile-text">${esc(s.name)} · ${n}/${postList(s).length}</span>
+      </button>`;
+    }).join('');
+
+    const postRows = postList(ship).map((p) => {
+      const id = pid(ship, p.role, p.turret);
+      const c = posts[id] ? byId(posts[id]) : null;
+      const min = ship.min[p.role];
+      const notes = [];
+      if (c) {
+        if (countOf(c.id) >= 2) notes.push({ t: 'zwei Posten · Fertigkeit −1', warn: true });
+        const raw = rawSkill(c, p, ship);
+        if (min !== undefined && raw < min) notes.push({ t: `unter Mindeststufe ${min} (SR 33)`, warn: true });
+        if (ship.smallCraft && p.role === 'pilot') notes.push({ t: "Ship's Boat oder Pilot − 1 (SR 33)" });
+      }
+      if (!c && min !== undefined) notes.push({ t: `am besten ab Stufe ${min} (SR 33)` });
+      const skill = c ? skillOn(c, p, ship) : null;
+      return `<div class="post ${c ? '' : 'empty'} ${focusChar && posts[id] === focusChar ? 'hint' : ''}" data-post="${esc(id)}" data-drop="1">
+        <div class="post-main">
+          <div class="post-role">${esc(p.label)}${postRoleHint(p, ship) ? ` <small>${postRoleHint(p, ship)}</small>` : ''}</div>
+          <div class="post-who ${c ? '' : 'free'}" data-who="${c ? esc(c.id) : ''}">${c ? `<span class="grip" aria-hidden="true">⋮⋮</span>${esc(c.name)}` : 'frei · Charakter hierher ziehen'}</div>
+          ${notes.slice(0, 1).map((n) => `<div class="post-note ${n.warn ? 'warn' : ''}">${esc(n.t)}</div>`).join('')}
+        </div>
+        <div class="post-skill ${c ? '' : 'none'}">${c ? skill : '–'}<small>${c ? 'DM-Stufe' : 'ohne'}</small></div>
+      ${c ? `<button type="button" class="post-x" data-remove="${esc(id)}" aria-label="${esc(c.name)} von ${esc(p.label)} setzen">✕</button>` : ''}
+      </div>`;
+    }).join('');
+
+    const free = chars.filter((c) => countOf(c.id) === 0);
+    // Die Reihe zeigt alle an Bord. Ziehen aus der Reihe gibt einen Posten dazu; gezogen aus einem
+    // Posten-Feld zieht die Person um (die alte Stelle wird frei).
+    const chips = chars.map((c) => chipHtml(c)).join('');
+
+    document.getElementById('extra').innerHTML = `
+      <div class="card-grid">${shipTiles}</div>
+      <div class="shop-tabs" role="tablist">
+        <button type="button" role="tab" aria-selected="${tab === 'deck'}" data-tab="deck">Deckplan</button>
+        <button type="button" role="tab" aria-selected="${tab === 'details'}" data-tab="details">Details</button>
+        <button type="button" role="tab" aria-selected="${tab === 'crew'}" data-tab="crew">Crew</button>
+      </div>`;
+
+    if (tab !== 'crew') {
+      scroll.innerHTML = tab === 'deck'
+        ? '<p class="log-empty">Der Reiter Deckplan wie heute (bis zu drei hinterlegte Pläne). Hier ändert nichts.</p>'
+        : '<p class="log-empty">Der Reiter Details wie heute (Werte des Entwurfs, Software an Bord). Die Software-Zuweisung kommt im selben Stil: CPU, Speicher, Archiv.</p>';
+      document.getElementById('crewbar').innerHTML = '';
+      dock.innerHTML = `<p class="dock-line">Besetzt <b>${filled}/${total}</b></p><div class="actions"><button type="button" class="ghost-btn" data-tab="crew">Zur Crew</button></div>`;
+      return;
+    }
+
+    scroll.innerHTML = `
+      <h2 class="section-title">Posten · <span>${filled}/${total} besetzt</span></h2>
+      <p class="pool-hint">Ohne Piloten kein Schub, ohne Gunner kein Gunnery-DM, ohne Engineer keine Schadenskontrolle.</p>
+      <div class="posts">${postRows}</div>`;
+
+    document.getElementById('crewbar').innerHTML = `
+      <h2 class="section-title">An Bord · <span>${free.length} ohne Posten, ${chars.length - free.length} auf Posten</span></h2>
+      <div class="pool" data-pool="1" data-drop="1">
+        <div class="chips">${chips}</div>
+      </div>`;
+    dock.innerHTML = `
+      <p class="effect">${effectLine(ship)}</p>
+      <div class="actions">
+        <button type="button" class="ghost-btn" data-act="pick">So geht Zuweisung</button>
+        <button type="button" class="ghost-btn danger" data-act="clear">Alle Posten leeren</button>
+      </div>`;
+  }
+
+  function postRoleHint(p, ship) {
+    if (ship.smallCraft && p.role === 'pilot') return "Ship's Boat · Pilot −1 (SR 33)";
+    return { engineer: 'Engineering', medic: 'Medical' }[p.role] ?? '';
+  }
+
+  /** Die Wirkung der Besetzung, wie Stufe 2b sie braucht. */
+  const SHORT = { pilot: 'Pilot', navigator: 'Navig', engineer: 'Engineer', steward: 'Steward', medic: 'Medic', gunner: 'Gunner' };
+
+  const CODE = { pilot: 'P', navigation: 'N', engineering: 'E', steward: 'S', medical: 'M', gunnery: 'G', 'ship-boat': 'B' };
+
+  /** Fertigkeiten kurz, wie sie auf dem Chip stehen: P2 N1 */
+  function skillCodes(c) {
+    const keys = ['pilot', 'ship-boat', 'navigation', 'engineering', 'steward', 'medical', 'gunnery'];
+    return keys.filter((k) => c.skills[k] !== undefined).map((k) => CODE[k] + c.skills[k]).join(' ') || '–';
+  }
+
+  /** Kurzetikett des Posten einer Person, mit dem Schiff, wenn es ein Small Craft ist. */
+  function shortPost(postId) {
+    const ship = ships.find((s) => s.id === postId.split(':')[0]);
+    const post = postList(ship).find((p) => pid(ship, p.role, p.turret) === postId);
+    const base = (SHORT[post.role] ?? post.role) + (post.role === 'gunner' ? ' ' + (post.turret + 1) : '');
+    return ship.smallCraft ? 'Boot ' + base : base;
+  }
+
+  /** Eine Figur als Chip (die Reihe unten und der Schatten beim Ziehen). */
+  function chipHtml(c) {
+    const n = countOf(c.id);
+    const held = postsOf(c.id).map(([k]) => shortPost(k)).join(' · ');
+    return `<div class="chip ${n ? 'on-post' : ''} ${n >= 2 ? 'blocked' : ''} ${focusChar === c.id ? 'hint' : ''}" data-chip="${c.id}" data-id="${c.id}">
+      <span class="grip" aria-hidden="true">⋮⋮</span>
+      <span class="chip-name">${esc(c.name)}</span>
+      <span class="chip-skills">${esc(skillCodes(c))}</span>
+      ${held ? `<span class="chip-posts">${esc(held)}</span>` : ''}
+      <span class="chip-badges">${n ? `<span class="badge">${n}/2</span>` : ''}${c.kind === 'NSC' ? '<span class="badge npc">NSC</span>' : ''}</span>
+    </div>`;
+  }
+
+  function effectLine(ship) {
+    if (ship.smallCraft) {
+      const id = pid(ship, 'pilot');
+      const c = posts[id] ? byId(posts[id]) : null;
+      return c
+        ? `Pilot <b>${esc(c.name)}</b> · Ausweichen <b>−1</b> (kein Rechner, SE 13) · Schub bis <b>6 G</b>`
+        : `kein Pilot · <b>kein Schub</b> ohne Piloten · Ausweichen <b>−1</b> (kein Rechner)`;
+    }
+    const pilot = posts[pid(ship, 'pilot')] ? byId(posts[pid(ship, 'pilot')]) : null;
+    const gunners = Array.from({ length: ship.turrets }, (_, i) => posts[pid(ship, 'gunner', i)]).filter(Boolean).length;
+    const engineer = posts[pid(ship, 'engineer')] ? byId(posts[pid(ship, 'engineer')]) : null;
+    return `Schub <b>${pilot ? '2 G' : '0 G · kein Pilot'}</b> · ${ship.turrets} Turrets: <b>${gunners} mit Gunner</b> (Gunner Interact +Gunnery) · Schadenskontrolle <b>${engineer ? '9+' : 'keiner'}</b>`;
+  }
+
+  // ------- Wirken -------
+  function toast(msg, bad) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (bad ? ' bad' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.className = 'toast'; }, 2600);
+  }
+
+  function assign(charId, postId, moving) {
+    const c = byId(charId);
+    const target = postId.split(':');
+    const ship = ships.find((s) => s.id === target[0]);
+    const list = postList(ship);
+    const post = list.find((p) => pid(ship, p.role, p.turret) === postId);
+    // Ein Charakter, den man von einem Posten abhebt, darf umziehen; einer aus dem Pool nicht
+    // über zwei Posten hinaus.
+    const here = moving ? countOf(charId) - 1 : countOf(charId);
+    const same = posts[postId] === charId;
+    if (same) { toast(`${c.name} bleibt auf ${post.label}`); return false; }
+    if (here >= 2) { toast(`${c.name} hat schon ${countOf(charId)} Posten · höchstens zwei`, true); return false; }
+    const old = posts[postId] ? byId(posts[postId]) : null;
+    // Umziehen (der Zug begann in einem Posten) gibt die alte Stelle frei; aus der Reihe geholt
+    // bleibt der Charakter zusätzlich auf seinem bisherigen Posten.
+    const from = moving ? postsOf(charId).map(([k]) => k) : [];
+    from.forEach((k) => delete posts[k]);
+    posts[postId] = charId;
+    focusChar = null; pickedChar = null;
+    render();
+    if (old && from.length) toast(`${c.name} → ${post.label} · alte Stelle frei`);
+    else if (old) toast(`${old.name} weicht ${c.name} · ${post.label}`);
+    else if (from.length === 1) toast(`${c.name} umgezogen auf ${post.label}`);
+    else if (here >= 1) toast(`${c.name} → ${post.label} · zwei Posten, Fertigkeit −1`);
+    else toast(`${c.name} → ${post.label}`);
+    return true;
+  }
+
+  function unassign(charId) {
+    postsOf(charId).forEach(([k]) => delete posts[k]);
+    render();
+  }
+
+  // ------- Zeiger: Ziehen und Tippen -------
+  const ghost = document.getElementById('ghost');
+  let drag = null;
+  let suppressClick = false; // der Klick nach einem Zug zählt nicht
+
+  function underPointer(x, y) {
+    const list = document.elementsFromPoint(x, y);
+    return list.find((el) => el !== ghost && !ghost.contains(el) && el.closest('[data-drop]'))?.closest('[data-drop]') || null;
+  }
+
+  function moveGhost(x, y) {
+    const g = ghost.firstChild;
+    const r = g.getBoundingClientRect();
+    ghost.style.left = (x - r.width / 2) + 'px';
+    ghost.style.top = (y - 26) + 'px';
+  }
+
+  function clearMarks() {
+    document.querySelectorAll('.post.ok, .post.bad, .pool.ok, .pool.bad').forEach((el) => el.classList.remove('ok', 'bad'));
+  }
+
+  /* Rand der Postenliste: dort wird gerollt, aber nur innerhalb der Liste und nur, wenn kein
+     Ziel unter dem Finger liegt – sonst wandert das Ziel im selben Moment davon. */
+  function autoScroll(x, y) {
+    const sc = document.getElementById('scroll');
+    const r = sc.getBoundingClientRect();
+    if (y <= r.top || y >= r.bottom) return;
+    if (y < r.top + 18) sc.scrollTop -= 12;
+    else if (y > r.bottom - 18) sc.scrollTop += 12;
+  }
+
+  document.addEventListener('pointerdown', (ev) => {
+    suppressClick = false;
+    if (ev.target.closest('[data-remove]')) return;
+    // Ein Blatt ist offen: das erste Tippen daneben schließt es nur (wie überall in der App).
+    const host = document.getElementById('sheet-host');
+    if (host.innerHTML && !ev.target.closest('#sheet-host')) {
+      host.innerHTML = '';
+      host.dataset.post = '';
+      pickedChar = null;
+      focusChar = null;
+      render();
+      return;
+    }
+    if (host.innerHTML) return;
+    // Ziehen kann, wer eine Person in der Hand hat: ein Charakter aus der Reihe, oder der
+    // besetzte Name in einem Posten-Feld (das ist dann ein Umziehen).
+    const chipEl = ev.target.closest('.chip');
+    const postEl = chipEl ? null : ev.target.closest('[data-post]');
+    const who = postEl ? posts[postEl.dataset.post] : undefined;
+    if (!chipEl && !who) return;
+    const el = chipEl || postEl;
+    drag = {
+      id: chipEl ? chipEl.dataset.id : who, chipEl: el, moved: false, ghost: false,
+      startX: ev.clientX, startY: ev.clientY,
+      moving: !!postEl, fromPost: !!postEl,
+    };
+  });
+
+  document.addEventListener('pointermove', (ev) => {
+    if (!drag) return;
+    if (!drag.moved) {
+      if (Math.abs(ev.clientY - drag.startY) + Math.abs(ev.clientX - drag.startX) <= 10) return;
+      drag.moved = true;
+      drag.ghost = true;
+      drag.chipEl.classList.add('dragging');
+      // Der Schatten ist immer eine Figur – auch wenn der Zug in einem Posten-Feld begann.
+      ghost.innerHTML = drag.fromPost ? chipHtml(byId(drag.id)) : drag.chipEl.outerHTML;
+      ghost.firstChild.classList.remove('dragging', 'hint');
+      ghost.style.display = 'block';
+    }
+    ev.preventDefault();
+    moveGhost(ev.clientX, ev.clientY);
+    clearMarks();
+    const over = underPointer(ev.clientX, ev.clientY);
+    if (!over) autoScroll(ev.clientX, ev.clientY);
+    if (!over) return;
+    if (over.dataset.pool) { over.classList.add(countOf(drag.id) ? 'ok' : 'bad'); return; }
+    const free = drag.moving ? countOf(drag.id) - 1 : countOf(drag.id);
+    over.classList.add(free <= 1 ? 'ok' : 'bad');
+  }, { passive: false });
+
+  document.addEventListener('pointerup', (ev) => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    clearMarks();
+    if (d.ghost) {
+      suppressClick = true;
+      ghost.style.display = 'none';
+      ghost.innerHTML = '';
+      d.chipEl.classList.remove('dragging');
+    }
+
+    if (!d.moved) {
+      // Tippen auf ein besetztes Posten-Feld: das Blatt öffnet sich über den Klick darunter.
+      if (d.fromPost) return;
+      // Tippen: Charakter wählen. Seine freien Posten leuchten auf; das nächste Tippen auf einen
+      // Posten weist ihn zu. Ein zweiter Tipp auf denselben Charakter hebt die Wahl wieder auf.
+      if (focusChar === d.id) { focusChar = null; pickedChar = null; render(); return; }
+      focusChar = d.id;
+      pickedChar = d.id;
+      pickedMoving = d.moving && postsOf(d.id).length === 1;
+      render();
+      toast(`${byId(d.id).name} gewählt · jetzt einen Posten antippen`);
+      return;
+    }
+    const over = underPointer(ev.clientX, ev.clientY);
+    if (!over) { render(); return; }
+    if (over.dataset.pool) {
+      if (countOf(d.id) === 0) { toast(`${byId(d.id).name} hat keinen Posten`); render(); return; }
+      unassign(d.id);
+      toast(`${byId(d.id).name} von allen Posten abgezogen`);
+      return;
+    }
+    assign(d.id, over.dataset.post, d.moving);
+  });
+
+  document.addEventListener('pointercancel', () => {
+    if (!drag) return;
+    if (drag.ghost) {
+      drag.chipEl.classList.remove('dragging');
+      ghost.style.display = 'none';
+      ghost.innerHTML = '';
+    }
+    clearMarks();
+    drag = null;
+  });
+
+  // ------- Klicks (Knöpfe, Posten antippen, Schiffe wechseln) -------
+  document.addEventListener('click', (ev) => {
+    // Nach einem Zug folgen Pointer-Events noch ein Klick; der soll nichts anderes treffen.
+    if (suppressClick) { suppressClick = false; return; }
+    // Klicks im Blatt (Overlay) bleiben unter dem Bereich – die Posten dahinter dürfen nicht treffen.
+    const inSheet = ev.target.closest('#sheet-host');
+    const rm = ev.target.closest('[data-remove]');
+    if (rm) {
+      const c = byId(posts[rm.dataset.remove]);
+      delete posts[rm.dataset.remove];
+      toast(`${c.name} von dem Posten gesetzt`);
+      render();
+      return;
+    }
+    const shipBtn = ev.target.closest('[data-ship]');
+    if (shipBtn) { activeShip = shipBtn.dataset.ship; focusChar = null; pickedChar = null; render(); return; }
+    const postEl = inSheet ? null : ev.target.closest('[data-post]');
+    if (postEl) {
+      // Gewählter Charakter kommt auf den angetippten Posten.
+      if (pickedChar) { const c = pickedChar; const mv = pickedMoving; pickedChar = null; focusChar = null; assign(c, postEl.dataset.post, mv); return; }
+      const ship = ships.find((s) => s.id === postEl.dataset.post.split(':')[0]);
+      openSheet(postEl.dataset.post, null, ship);
+      return;
+    }
+    const act = inSheet ? null : ev.target.closest('[data-act]');
+    if (act) {
+      if (act.dataset.act === 'clear') {
+        Object.keys(posts).forEach((k) => delete posts[k]);
+        focusChar = null; pickedChar = null;
+        toast('Alle Posten geleert');
+        render();
+      } else {
+        openHelp();
+      }
+      return;
+    }
+    const tabBtn = ev.target.closest('[data-tab]');
+    if (tabBtn) { tab = tabBtn.dataset.tab; focusChar = null; pickedChar = null; render(); return; }
+    const close = ev.target.closest('[data-close]');
+    if (close) { document.getElementById('sheet-host').innerHTML = ''; return; }
+    const pick = ev.target.closest('[data-pick]');
+    if (pick) {
+      const host = document.getElementById('sheet-host');
+      const postId = host.dataset.post || '';
+      host.innerHTML = '';
+      if (postId) assign(pick.dataset.pick, postId);
+      else { pickedChar = pick.dataset.pick; toast(`${byId(pickedChar).name} gewählt – jetzt ein Posten antippen`); render(); }
+    }
+  });
+
+  /** Blatt: wer für diesen Posten in Frage kommt (ohne die beiden, die schon zwei Posten haben). */
+  function openSheet(postId, note, ship) {
+    ship = ship || ships.find((s) => s.id === activeShip);
+    const host = document.getElementById('sheet-host');
+    host.dataset.post = postId || '';
+    const list = postList(ship);
+    const post = list.find((p) => pid(ship, p.role, p.turret) === postId);
+    const title = `${post.label} · ${ship.name}`;
+    const min = ship.min[post.role];
+    const rows = chars
+      .filter((c) => posts[postId] !== c.id && canHold(c, posts[postId] ? 0 : 1))
+      .map((c) => {
+        const s = skillOn(c, post, ship);
+        const second = countOf(c.id) >= 1;
+        const held = postsOf(c.id).map(([k]) => shortPost(k)).join(' · ');
+        return `<button type="button" class="pick" data-pick="${c.id}">
+          <span class="chip-body">
+            <span class="chip-name">${esc(c.name)} <small class="mono muted">${c.kind}</small></span>
+            <span class="pick-note">${esc(c.bg)} · ${esc(skillCodes(c))}${held ? ` <span class="pick-post">${esc(held)}</span>` : ''}${second ? ' <span class="pick-note warn">zweiter Posten −1</span>' : ''}</span>
+          </span>
+          <span class="skill">${s}<small>DM-Stufe${min !== undefined && rawSkill(c, post, ship) < min ? ' · min ' + min : ''}</small></span>
+        </button>`;
+      }).join('');
+    const foot = posts[postId] ? `<button type="button" class="ghost-btn danger" data-remove="${esc(postId)}">${esc(byId(posts[postId]).name)} vom Posten setzen</button>` : '';
+    const empty = rows ? '' : '<p class="pick-note warn">Alle an Bord haben schon zwei Posten – erst jemanden setzen.</p>';
+
+    host.innerHTML = `<div class="overlay"><div class="sheet" role="dialog" aria-modal="true">
+      <div class="sheet-head"><h2>${esc(title)}</h2><span class="muted mono" style="font-size:12px">SR 33 · SE 11</span></div>
+      <div class="sheet-body">${note ? `<p class="pick-note">${esc(note)}</p>` : ''}${empty}${rows}</div>
+      <div class="sheet-foot">${foot}<button type="button" class="ghost-btn" data-close="1">Zurück</button></div>
+    </div></div>`;
+  }
+
+  /** Blatt mit den drei Wegen der Zuweisung (für Finger und Maus). */
+  function openHelp() {
+    const host = document.getElementById('sheet-host');
+    host.dataset.post = '';
+    host.innerHTML = `<div class="overlay"><div class="sheet" role="dialog" aria-modal="true">
+      <div class="sheet-head"><h2>Crew zuweisen</h2><span class="muted mono" style="font-size:12px">SR 33 · SE 11</span></div>
+      <div class="sheet-body">
+        <p class="pick-note"><b>Ziehen</b> (Maus oder Finger): einen Charakter aus der Reihe „An Bord, ohne Posten“ auf ein Posten-Feld ziehen. Ziehen von einem Posten zum andern verschiebt ihn; zurück in die Reihe setzt ihn frei.</p>
+        <p class="pick-note"><b>Tippen</b>: Charakter antippen (seine Posten leuchten auf), dann den Posten antippen. Ein zweiter Tipp auf denselben Charakter hebt die Wahl auf.</p>
+        <p class="pick-note"><b>Posten antippen</b>: öffnet die Liste der Charaktere mit ihrer Stufe auf diesem Posten.</p>
+        <p class="pick-note warn">Ein Charakter hat höchstens <b>zwei Posten</b> über alle Schiffe; mit zweien zählt seine Fertigkeit auf beiden <b>um 1 niedriger</b>. Der dritte Versuch ist rot.</p>
+        <p class="pick-note">Mindeststufen nach SR 33 stehen als Hinweis, verbieten nichts. Tote und ausgeblendete Charaktere stehen nicht zur Wahl. Fremde Schiffe behalten ihre Besatzung – Posten gibt es nur an den eigenen Schiffen.</p>
+      </div>
+      <div class="sheet-foot"><button type="button" class="ghost-btn" data-close="1">Zurück</button></div>
+    </div></div>`;
+  }
+
+  render();
+</script>
+</body>
+</html>
