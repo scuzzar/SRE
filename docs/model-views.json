@@ -567,6 +567,20 @@
         "SystemFlight",
         "SpaceAttack"
       ]
+    },
+    {
+      "id": "2026-11-22",
+      "file": "2026-11-22-bewaffnung-small-craft",
+      "title": "Bewaffnung der Small Craft: statt Hardpoints eine Small Craft Weaponry mit bis zu drei Waffen, ab Werft mit Lasern (ShipDesign.lasers, TurretType.smallCraft); Trefferzonen der Small Craft; DM −1 ohne Computer (SpaceAttack.noComputer)",
+      "approved": false,
+      "show": [
+        "Ship",
+        "Turret",
+        "DesignTurret",
+        "ShipWeapon",
+        "SpaceAttack",
+        "ShipDamage"
+      ]
     }
   ]
 }

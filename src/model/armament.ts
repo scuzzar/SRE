@@ -3,7 +3,7 @@ import { DomainError } from './errors';
 import type { Clock } from './ports';
 import { shipDesignOf, shipWeaponOf, turretTypeOf } from './reference';
 import { worldById } from './sector';
-import { activeShip, type Ship, type Turret } from './ship';
+import { activeShip, isSmallCraft, type Ship, type Turret } from './ship';
 import { bookShip, fundsOf } from './shop';
 import { starportLetter } from './surface-map';
 import { shipDepartureBlocker } from './landing';
@@ -26,8 +26,8 @@ export function shipPortOf(campaign: Campaign, ship: Ship): string | undefined {
   return starport === undefined ? undefined : starportLetter(starport);
 }
 
-/** Warum das eigene Schiff jetzt nicht umgerüstet werden kann; `undefined`, wenn es geht. */
-export function armamentBlocker(campaign: Campaign): string | undefined {
+/** Warum das eigene Schiff jetzt nicht an die Werft kann (Umrüsten, Reparieren); `undefined`, wenn es geht. */
+export function shipyardBlocker(campaign: Campaign): string | undefined {
   const ship = activeShip(campaign);
   if (campaign.flight !== undefined) return 'Während eines Systemflugs wird nicht umgerüstet.';
   const away = shipDepartureBlocker(campaign);
@@ -35,6 +35,13 @@ export function armamentBlocker(campaign: Campaign): string | undefined {
   const port = shipPortOf(campaign, ship);
   if (port === undefined || !SHIPYARD_PORTS.includes(port)) return `Umrüsten geht nur an einer Werft: ${ship.name} muss in einer Stadt mit Raumhafen A oder B stehen.`;
   return undefined;
+}
+
+/** Warum das eigene Schiff jetzt nicht umgerüstet werden kann; `undefined`, wenn es geht. Small Craft kommen ab Werft mit Lasern und werden noch nicht umgerüstet (2026-11-22). */
+export function armamentBlocker(campaign: Campaign): string | undefined {
+  const ship = activeShip(campaign);
+  if (isSmallCraft(ship)) return `${ship.name} ist ein Small Craft: Es kommt ab Werft mit seiner Bewaffnung; Umrüsten gibt es noch nicht.`;
+  return shipyardBlocker(campaign);
 }
 
 function withTurrets(campaign: Campaign, ship: Ship, turrets: readonly Turret[]): Campaign {
@@ -104,13 +111,19 @@ function turretAt(ship: Ship, index: number): Turret {
   return turret;
 }
 
-/** Prüft die Bewaffnung eines geladenen Schiffs: höchstens ein Turret je Hardpoint, Waffen nur auf freien Plätzen. */
+/**
+ * Prüft die Bewaffnung eines geladenen Schiffs: höchstens ein Turret je Hardpoint, Waffen nur auf freien
+ * Plätzen; ein Small Craft hat höchstens eine Bewaffnung mit so vielen Lasern, wie es tragen darf (2026-11-22).
+ */
 export function checkTurrets(ship: Ship): void {
-  const hardpoints = shipDesignOf(ship.design).hardpoints;
-  if (ship.turrets.length > hardpoints) throw new DomainError(`${ship.name} hat mehr Turrets als Hardpoints.`);
+  const plan = shipDesignOf(ship.design);
+  const small = plan.kind === 'smallCraft';
+  if (ship.turrets.length > (small ? 1 : plan.hardpoints)) throw new DomainError(small ? `${ship.name} hat mehr als eine Bewaffnung.` : `${ship.name} hat mehr Turrets als Hardpoints.`);
   for (const turret of ship.turrets) {
     const kind = turretTypeOf(turret.type);
+    if (kind.smallCraft !== small) throw new DomainError(`${ship.name}: Ein ${kind.name} passt nicht auf ${small ? 'ein Small Craft' : 'ein Schiff'}.`);
     if (turret.weapons.length > kind.slots) throw new DomainError(`${ship.name}: Ein ${kind.name} hat mehr Waffen als Plätze.`);
     for (const w of turret.weapons) shipWeaponOf(w);
   }
+  if (small && ship.turrets.flatMap((t) => t.weapons).filter((w) => w.endsWith('laser')).length > (plan.lasers ?? 0)) throw new DomainError(`${ship.name} hat mehr Laser, als ein ${plan.name} tragen darf.`);
 }

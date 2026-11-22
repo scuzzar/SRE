@@ -71,7 +71,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Feldartillerie](#feldartillerie) | B4 48–49 | ○ |
 | [Tierbegegnungen](#tierbegegnungen) | SE 18–19, SR 46–49 | ○ |
 | [Fahrzeuge und Reisen über Land](#fahrzeuge-und-reisen-über-land) | SR 55–57, SA 1, 3, 7 | ✔ ✱ (Geschwindigkeit je Geländeart, Fahrt Tag für Tag, Miete; Pannen, Reichweite, Linienverkehr ○) |
-| [Bewaffnung von Small Craft](#bewaffnung-von-small-craft) | SR 32–35 | ○ |
+| [Bewaffnung von Small Craft](#bewaffnung-von-small-craft) | SR 32–35 | ◐ ✱ (ab Werft mit Beam Lasern, ohne Umrüsten; Raketen, Sand, Gunner ○) |
 
 ---
 
@@ -1909,8 +1909,10 @@ Geländeart der Oberflächenkarte statt Stunden je Hex.
 ## Bewaffnung von Small Craft
 
 *SR 32, „Armaments“; SR 33, „Crew“ (Gunner), „Weaponry“, „Small Craft“; SR 34–35, „Standard Small
-Craft“.* App: ○ Die App kennt keine Raumschiffe und keinen Raumkampf; aufgenommen, weil die Frage nach
-der Bewaffnung kam. Den Raumkampf selbst (SE 12–13) beschreibt dieser Abschnitt nicht.
+Craft“.* App: ◐ ✱ Die Small Craft kommen ab Werft mit so vielen Beam Lasern, wie ihr Typ erlaubt, und
+feuern damit im Raumkampf (siehe `domain-model.md` unter *Bewaffnung der Small Craft*, 2026-11-22);
+Umrüsten, Raketen, Sandcaster und Gunner ○. Den Raumkampf selbst (SE 12–13, SR 39–42) beschreibt
+[`regeln-schiffe.md`](regeln-schiffe.md), dort stehen auch die Werte der Small Craft.
 
 **Small Craft** sind Fahrzeuge **unter 100 t**; keines kann springen (SR 33). Es gibt acht
 Standardtypen, alle stromlinienförmig, mit Treibstoffschaufeln, Bauplan Cr100, etwa 12 Monate Bauzeit.

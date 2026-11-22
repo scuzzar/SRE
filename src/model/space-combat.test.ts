@@ -134,8 +134,8 @@ describe('Raumkampf: ein fremdes Schiff (2026-11-21h)', () => {
     const c = flying();
     const { flight: _g, ...landed } = c;
     void _g;
-    const hurt: Campaign = { ...landed, ships: c.ships.map((s) => ({ ...s, damage: { hits: ['hull' as const, 'criticalManeuver' as const], turretsOut: [0] } })) };
-    expect(repairCostOf(hurt.ships[0]!)).toBe(1_100_000);
+    const hurt: Campaign = { ...landed, ships: c.ships.map((s, i) => (i === 0 ? { ...s, damage: { hits: ['hull' as const, 'criticalManeuver' as const], turretsOut: [0] } } : s)) };
+    expect(repairCostOf(hurt, hurt.ships[0]!)).toBe(1_100_000);
     const fixed = repairShip(hurt, clock);
     expect(fixed.ships[0]!.damage).toBeUndefined();
     expect(fundsOf(fixed)).toBe(fundsOf(hurt) - 1_100_000);

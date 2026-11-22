@@ -210,6 +210,11 @@ export function craftPurchaseBlocker(campaign: Campaign, design: string): string
  * ⚑ Kommt zu einem eigenständigen Small Craft ein weiteres Small Craft, ersetzt es das alte wie ein
  * Schiff (ein Small Craft trägt keine Beiboote).
  */
+/** Die Turrets ab Werft (2026-11-21g); ein Small Craft kommt mit seiner Bewaffnung, meist Lasern (2026-11-22). */
+export function designTurrets(design: string): Turret[] {
+  return shipDesignOf(design).turrets.map((t) => ({ type: t.type, weapons: [...t.weapons] }));
+}
+
 export function addShip(campaign: Campaign, design: string, initialLoan: number | undefined): { campaign: Campaign; ship: Ship } {
   const plan = shipDesignOf(design);
   const active = shipOf(campaign);
@@ -218,7 +223,7 @@ export function addShip(campaign: Campaign, design: string, initialLoan: number 
   if (small && active !== undefined && !isSmallCraft(active)) {
     const blocker = craftPurchaseBlocker(campaign, design);
     if (blocker) throw new DomainError(blocker);
-    const boat: Ship = { id: nextShipId(campaign.ships), design: plan.id, name: nextCraftName(campaign.ships, active.id), fuel: plan.fuel, unrefined: 0, cargo: 0, price: plan.basePrice, ...loan, retired: false, software: [], turrets: [], mother: active.id, aboard: true, inHold: true };
+    const boat: Ship = { id: nextShipId(campaign.ships), design: plan.id, name: nextCraftName(campaign.ships, active.id), fuel: plan.fuel, unrefined: 0, cargo: 0, price: plan.basePrice, ...loan, retired: false, software: [], turrets: designTurrets(plan.id), mother: active.id, aboard: true, inHold: true };
     return { campaign: { ...campaign, ships: [...campaign.ships, boat] }, ship: boat };
   }
   const ship: Ship = {
@@ -233,8 +238,8 @@ export function addShip(campaign: Campaign, design: string, initialLoan: number 
     berthedSince: campaign.day,
     retired: false,
     software: standardSoftware(plan.id),
-    // Ab Werft mit den Turrets des Entwurfs; sie stecken im Grundpreis (2026-11-21g).
-    turrets: plan.turrets.map((t) => ({ type: t.type, weapons: [...t.weapons] })),
+    // Ab Werft mit den Turrets des Entwurfs; sie stecken im Grundpreis (2026-11-21g), bei Small Craft mit Lasern (2026-11-22).
+    turrets: designTurrets(plan.id),
   };
   // Ein eigenständiges Small Craft wird Beiboot im Laderaum des neuen Schiffs, wenn es hineinpasst.
   const keep = !small && active !== undefined && isSmallCraft(active) && shipDesignOf(active.design).hull <= plan.cargo ? active : undefined;
@@ -247,7 +252,7 @@ export function addShip(campaign: Campaign, design: string, initialLoan: number 
   ];
   plan.craft.forEach((craft) => {
     const boat = shipDesignOf(craft);
-    ships.push({ id: nextShipId(ships), design: boat.id, name: nextCraftName(ships, ship.id), fuel: boat.fuel, unrefined: 0, cargo: 0, price: 0, retired: false, software: [], turrets: [], mother: ship.id, aboard: true });
+    ships.push({ id: nextShipId(ships), design: boat.id, name: nextCraftName(ships, ship.id), fuel: boat.fuel, unrefined: 0, cargo: 0, price: 0, retired: false, software: [], turrets: designTurrets(boat.id), mother: ship.id, aboard: true });
   });
   return { campaign: { ...campaign, ships }, ship };
 }

@@ -502,7 +502,7 @@ Jede Stufe ist für sich spielbar und bekommt ihre eigene Änderung im Modell.
 | 2 | **Gegner und Laser**: ein NSC-Schiff mit Absicht und Planer, Laserfeuer, Rückfeuer, Trefferzonen, Schaden, Ende des Kampfs (gebaut und freigegeben 2026-11-21h) | Der erste echte Raumkampf |
 | 3 | **Raketen und Sand**: Raketen als Einheiten mit Brennschluss, Anti-Missile, ECM, Sandwolken | Das volle Waffenprogramm der SR |
 | 4a | **Small Craft ohne Kampf** (vorgezogen, Änderung 2026-11-21b): Beiboote als eigene Schiffe, aussetzen und andocken im Systemflug, landen, Reise im System; Mutterschiff in der Umlaufbahn | Mit dem Beiboot landen, während das Schiff oben bleibt |
-| 4b | **Small Craft im Kampf und Entern**: Jäger, Rotten, Waffen der Small Craft, Brennstufen nach Mayday; Entern mit Übergang in die Kampfsimulation | Träger, Enterkommandos |
+| 4b | **Small Craft im Kampf und Entern**: Jäger, Rotten, Waffen der Small Craft (Laser ab Werft, Trefferzonen und DM ohne Computer vorgezogen als Änderung 2026-11-22), Brennstufen nach Mayday; Entern mit Übergang in die Kampfsimulation | Träger, Enterkommandos |
 | 5 | **Ortung und Begegnungen**: Ortung, Schatten, *Wer schubt, leuchtet*; Raumkampf aus einer Schiffsbegegnung beim Ankommen im System; Flucht per Sprung mit Fehlsprung-DMs | Der Raumkampf ist in den Spielfluss eingebunden |
 | später | **Sternsystem** (Book 6): Stern, weitere Planeten und Planetoidengürtel, Reisen im System zwischen ihren Raumkarten | Hinterhalte im Gürtel, Reisen zwischen den Welten eines Systems |
 

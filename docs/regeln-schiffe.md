@@ -60,7 +60,7 @@ dabei.
 | [Crew](#crew) | SR 33 | ○ |
 | [Computer und Software](#computer-und-software) | SR 38–39 | ○ |
 | [Standardentwürfe](#standardentwürfe) | SR 35–37 | ○ |
-| [Kleine Schiffe (Small Craft)](#kleine-schiffe-small-craft) | SR 33–35 | ◐ (die acht Entwürfe als Beiboote der Standardentwürfe, aussetzen, andocken, landen und Reise im System, 2026-11-21b; einzeln zu kaufen als Beiboot im Laderaum oder eigenständig, 2026-11-21c; Fittings, Module, Waffen und Charter offen) |
+| [Kleine Schiffe (Small Craft)](#kleine-schiffe-small-craft) | SR 33–35 | ◐ (die acht Entwürfe als Beiboote der Standardentwürfe, aussetzen, andocken, landen und Reise im System, 2026-11-21b; einzeln zu kaufen als Beiboot im Laderaum oder eigenständig, 2026-11-21c; ab Werft mit Beam Lasern, feuern im Raumkampf, Trefferzonen der Small Craft, 2026-11-22; Fittings, Module, Raketen, Sand, Computer und Charter offen) |
 | [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system) | SR 42 | ◐ (im Systemflug auf Knopfdruck, ohne Small Craft; 2026-11-21h) |
 | [Handel und Gewerbe](#handel-und-gewerbe) | SR 52 | ○ |
 | [Raumkampf](#raumkampf) | SR 39–42 | ◐ ✱ (Laserfeuer, Rückfeuer, Trefferzonen, Schaden, ein fremdes Schiff mit Absicht; 2026-11-21h) |
@@ -545,9 +545,9 @@ Passagier oder Co-Pilot sein.
 | Slow Boat | 30 t | 3G | 1 t | 1 Beam/Pulse Laser + Rest Raketen/Sand | Modell/3 | 19,9 t | MCr15 |
 | Pinnace | 40 t | 5G | 2 t | 2 Laser + Rest Raketen/Sand | Modell/4 | 22,4 t | MCr20 |
 | Slow Pinnace | 40 t | 2G | 1 t | 1 Beam/Pulse Laser + Rest Raketen/Sand | Modell/3 | 31,6 t | MCr18 |
-| Modular Cutter | 50 t | 2G | 2 t | bis 2 Laser + Rest Raketen/Sand | Modell/4 | 2,5 t (+ austauschbare Module) | MCr28 (ohne Module) |
-| Shuttle | 95 t | 3G | 2,85 t | nur Raketen/Sandcaster (max. Modell/4, dann keine Laser) | Modell/4 | 71 t | MCr33 |
-| Fighter | 10 t | 6G | 1 t | 1 Laser **oder** bis 3 Raketen/Sandcaster | Modell/1 (eingebaut) | 1 t | MCr18 |
+| Modular Cutter | 50 t | 4G | 2 t | bis 2 Laser + Rest Raketen/Sand | Modell/4 | 2,5 t (+ austauschbare Module) | MCr28 (ohne Module) |
+| Shuttle | 95 t | 3G | 2,85 t | bis 2 Laser + Rest Raketen/Sand | Modell/4 | 71 t | MCr33 |
+| Fighter | 10 t | 6G | 1 t | 1 Laser **oder** bis 3 Raketen **oder** bis 3 Sandcaster | Modell/3 (Modell/1 eingebaut) | 1 t | MCr18 |
 
 - **Fittings** (Exzess-Tonnage frei wählbar): Kabine (4 t), Passagiersitz (1 t je Person, kein
   eigenes Gewicht nötig für Pilot/Rider), Cargo (1 t = 1 t Fracht), Fuel (1 t = 1 t Treibstoff, trägt
@@ -555,8 +555,17 @@ Passagier oder Co-Pilot sein.
 - **Module für den Modular Cutter** (je 30 t): **ATV-Modul** (MCr1,8, verstaut/landet ein ATV),
   **Fuel-Modul** (MCr1, 30 t Treibstofftank + Skimming-Ausrüstung), **Open-Modul** (MCr2, frei
   einteilbar: Sitze, Treibstoff, Fracht, Kabine).
-- Bewaffnung: 1 t je installierter Waffe, bis zu drei Waffen (außer Fighter: fest zwei eingebaute
-  Halterungen).
+- **Bewaffnung** (SR 34): Jedes Small Craft darf **1 t** für Bewaffnung abzweigen und darin **bis zu
+  drei Waffen** einbauen, welche, sagt die Tabelle. Ein größerer Computer verdrängt Laser: mit
+  Modell/3 dürfen Pinnace, Cutter und Shuttle nur einen Laser tragen, die übrigen keinen; mit Modell/4
+  keiner. Ein bewaffnetes Small Craft braucht einen Gunner zusätzlich zum Piloten; ohne Gunner schießt
+  der Pilot mit DM −1. Mehr in [`regeln-kampf.md`](regeln-kampf.md) unter *Bewaffnung von Small Craft*.
+  (Korrigiert am 22. November 2026: Hier stand „1 t je Waffe“, Cutter 2G, Shuttle ohne Laser und
+  Fighter höchstens Modell/1; SR 34–35 sagen es wie oben.)
+- **Stand in der App** (2026-11-22): Die Standardentwürfe kommen mit so vielen Beam Lasern, wie sie
+  tragen dürfen (Launch ohne); sie feuern im Raumkampf mit DM −1 ohne Computer, nur ein Laser je
+  Raumrunde, und werden auf der Spalte *Small Craft* getroffen. Umrüsten, Raketen, Sand, Computer und
+  Gunner ○.
 
 ---
 

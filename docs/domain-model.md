@@ -545,6 +545,16 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `SpaceAttack.computerHits`; `aim` entfällt.
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-21i-feuer-ausloesen.png`](changes/2026-11-21i-feuer-ausloesen.png).
+>
+> **Wartet auf Freigabe** (Kennzeichen 2026-11-22): **Bewaffnung der Small Craft** (Owner,
+> 22. November 2026: „implementieren dieses System. Die Small Craft kommen mit Lasern. Der Rest
+> existiert ja auch noch nicht in der App“). Small Craft haben statt Hardpoints eine Bewaffnung mit
+> bis zu drei Waffen (SR 34) und kommen ab Werft mit so vielen Lasern, wie ihr Typ erlaubt; im
+> Raumkampf feuern sie, werden auf der Tabelle der Small Craft getroffen und schießen ohne Computer
+> mit DM −1. Neu im Bild: `ShipDesign.lasers`, `TurretType.smallCraft`, die Trefferzonen `drive`,
+> `cabin`, `weapons`, `criticalDrive` und `SpaceAttack.noComputer`; siehe *Bewaffnung der Small
+> Craft*. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-22-bewaffnung-small-craft.png`](changes/2026-11-22-bewaffnung-small-craft.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -904,6 +914,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Turmart | `TurretType` | Referenzdaten: Single, Double oder Triple Turret mit 1, 2 oder 3 Plätzen für Waffen und Preis (SE 10, 2026-11-21g) |
 | Schiffswaffe | `ShipWeapon` | Referenzdaten: Pulse Laser, Beam Laser, Missile Rack, Sandcaster mit Preis (SE 10, 2026-11-21g) |
 | Turret des Entwurfs | `DesignTurret`, `ShipDesign.turrets` | Referenzdaten: womit ein Standardentwurf aus der Werft kommt, etwa der leere Doppelturm des Scout (SR 35–37, 2026-11-21g) |
+| Bewaffnung eines Small Craft | `Turret` der Turmart `weaponry` (`TurretType.smallCraft`) | Statt Hardpoints und Türmen hat ein Small Craft eine Bewaffnung: eine Tonne mit bis zu drei Waffen (SR 34, *Small Craft Weaponry*); im Modell ein Turret einer eigenen Turmart (2026-11-22) |
+| Laser eines Small Craft | `ShipDesign.lasers` | Wie viele Laser ein Small-Craft-Typ höchstens tragen darf (SR 34–35: Launch 0, Pinnace 2, Fighter 1 …) (2026-11-22) |
 | Bewaffnung | `Ship.turrets` | Alle Turrets eines Schiffs mit ihren Waffen; umgerüstet in der Werft (2026-11-21g) |
 | Laufende Kosten | `ShipCost` ohne price | Was ein Schiff kostet, solange man es hat: Rate, Treibstoff, Liegegebühren, Lebenserhaltung; später die Heuer der Crew |
 | Monatsabrechnung | `MonthEnd` | Der Logeintrag am Monatsende: verweist auf die Buchungen mit laufenden Kosten seit dem letzten Monatsende (`costs`), mit Summe (`/total`) und Nummer des abgerechneten Monats (`/month`, 1–13) |
@@ -3361,6 +3373,54 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     kritischem Treffer, alles auf einmal (Buchung mit `shipCost` repair); danach ist `Ship.damage`
     leer. Ausgefallene Turrets arbeiten wieder.
 
+- **Bewaffnung der Small Craft** (wartet auf Freigabe, Kennzeichen 2026-11-22; Owner, 22. November
+  2026: „Die Small Craft kommen mit Lasern. Der Rest existiert ja auch noch nicht in der App“). Ein
+  Teil von Stufe 4b des [Konzepts](konzept-raumkampf.md). Regeln aus SR 33–35, übertragen in
+  [`regeln-schiffe.md`](regeln-schiffe.md) unter *Kleine Schiffe (Small Craft)* und in
+  [`regeln-kampf.md`](regeln-kampf.md) unter *Bewaffnung von Small Craft*; Trefferzonen aus SE 12.
+  Abweichungen tragen ⚑.
+  - **Bewaffnung statt Turrets** (SR 34). Ein Small Craft hat keine Hardpoints; es darf eine Tonne
+    für Bewaffnung abzweigen und darin bis zu drei Waffen einbauen. Im Modell ist das ein `Turret`
+    der Turmart **Small Craft Weaponry** (`weaponry`, 3 Plätze, Preis 0, `smallCraft` gesetzt), so
+    feuert und fällt sie im Raumkampf wie ein Turret. Turmarten mit `smallCraft` gibt es nur auf
+    Small Craft (höchstens eine), die übrigen nur auf Schiffen; die Werft bietet sie Schiffen nicht an.
+  - **Laser je Typ** (`ShipDesign.lasers`, nur bei Small Craft, SR 34–35): Launch 0, Ship's Boat 1,
+    Slow Boat 1, Pinnace 2, Slow Pinnace 1, Modular Cutter 2, Shuttle 2, Fighter 1. Mit Computer
+    sinkt die Zahl (Model/3: Pinnace, Cutter, Shuttle 1, die übrigen 0; Model/4: 0; der Fighter darf
+    nur eine Waffenart tragen); ⚑ die Standardentwürfe der Small Craft haben keinen Computer, und
+    nachrüsten lässt er sich noch nicht, deshalb gilt vorerst die Zahl ohne Computer.
+  - **Ab Werft mit Lasern** (Owner). Jeder Small-Craft-Entwurf außer der Launch hat als Turret des
+    Entwurfs eine Small Craft Weaponry mit so vielen Lasern, wie er tragen darf: ⚑ **Beam Laser**
+    (er trifft leichter; die SR sagen nicht, welcher), ⚑ im Grundpreis enthalten. Die Launch kommt
+    ohne Bewaffnung (keine Laser erlaubt, Raketen und Sand gibt es noch nicht). Das gilt für Beiboote
+    der Standardentwürfe wie für einzeln gekaufte.
+  - **Umrüsten** ⚑ gibt es für Small Craft noch nicht (Owner: der Rest existiert noch nicht): Ist das
+    aktive Schiff ein eigenständiges Small Craft, ist die Werft ausgegraut, mit Grund. Raketen und
+    Sandcaster kommen mit Stufe 3.
+  - **Ohne Computer** (SE 13): Ein Small Craft ohne Computer schießt mit **DM −1** und kann nicht
+    zwei Waffen zugleich einsetzen: Je Raumrunde feuert nur ein Laser (der erste, der noch arbeitet).
+    Der Schuss hält fest, dass der DM daher kam (`SpaceAttack.noComputer`), und Knopf, Blatt und Log
+    schreiben ihn aus („ohne Computer −1“). ⚑ Der DM −1 für einen Piloten, der ohne Gunner schießt
+    (SR 34), kommt erst mit den Schiffspositionen.
+  - **Trefferzonen der Small Craft** (SE 12, Spalte *Small Craft*). Wird ein Small Craft getroffen,
+    würfelt die Trefferzone 2W6: 2–5 Drive (`drive`), 6 und 8–9 Cabin (`cabin`), 7 Computer, 10–11
+    Weapons (`weapons`), 12 kritisch mit 1W6: 1–3 Drive (`criticalDrive`), 4 Crew, 5 Computer,
+    6 Explode. Ohne Computer zählt ein Computer-Treffer als Drive; gespeichert wird dann gleich
+    `drive` bzw. `criticalDrive`. Wirkung (SR 41): *Drive*: das Small Craft kann sich nicht mehr
+    bewegen, beschleunigen und feuern (`/maneuver` 0, kampfunfähig); *Cabin* wie Hull (Dekompression,
+    ⚑ ohne Folgen); *Weapons*: die Bewaffnung ist zerstört (ihr Turret fällt aus, `turretsOut`);
+    *Crew* und *Explode* wie beim Schiff. Fremde Small Craft gibt es noch nicht; getroffen wird ein
+    Small Craft, wenn die Gruppe damit fliegt.
+  - **Reparatur** wie beim Schiff: Cr 100.000 je Treffer, Cr 1.000.000 je kritischem. ⚑ Die Werft
+    repariert das aktive Schiff samt seinen Beibooten an Bord in einem Zug (vorher nur das aktive
+    Schiff; ein beschädigtes Beiboot ließ sich nicht reparieren). Ein eigenständiges Small Craft wird
+    repariert wie ein Schiff, obwohl es nicht umgerüstet werden kann.
+  - **Spielstände von vorher** ⚑: Ein Small Craft ohne Turrets bekommt beim Laden die Turrets seines
+    Entwurfs (vorher konnte keines bewaffnet sein).
+  - **Modular Cutter** mit 4 G statt 2 G (SR 34; die Referenzdaten hatten einen Übertragungsfehler).
+  - **Später** (Stufe 4b): fremde Small Craft (das \* der Starship Encounter Table), Rotten,
+    Brennstufen nach Mayday, Computer nachrüsten, Gunner.
+
 - **Small Craft** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21b; Owner, 21. November 2026). Der friedliche
   Teil von Stufe 4 des [Konzepts](konzept-raumkampf.md) (Owner: „nur friedlich“), vorgezogen, weil
   er mit Systemflug und Reise im System schon spielbar ist. Regeln aus SR 33–35, übertragen in
@@ -3693,6 +3753,8 @@ Diagramm mit diesen Ausnahmen:
   (`SystemFlight.party`, 2026-11-21b) aus, und fremde Schiffe zielen auf sie; andere eigene Einheiten
   (ein Mutterschiff ohne Gruppe) nehmen am Raumkampf nicht teil. Ein fremdes Schiff bekommt beim Auftauchen eine Spur so lang wie die Raumrunden
   (lauter Punkte an seinem Startort), damit sie zur Raumrunde passt.
+- **Bewaffnung der Small Craft** (2026-11-22) ist gebaut (`model/armament.ts`, `model/space-combat.ts`,
+  Referenzdaten in `src/data/ships.json`), auf Wunsch des Owners schon vor der Freigabe des Bilds.
 - **Bewaffnung** (2026-11-21g) ist gebaut (`model/armament.ts`, Referenzdaten in
   `src/data/ships.json`). Auf einer Welt ohne Globus gibt es keine Städte; dort zählt für die Werft
   der Raumhafen des UWP (A oder B). Dateien von vorher bekommen beim Laden die Turrets des Entwurfs.

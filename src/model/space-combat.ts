@@ -5,9 +5,9 @@ import { ref, shipDesignOf } from './reference';
 import { roll2d6, sum, type Dice } from './rules';
 import { hexById, hexIdOfWorld, worldById } from './sector';
 import { starportLetter } from './surface-map';
-import { shipById, shipOf, type Ship, type Turret } from './ship';
+import { craftOf, shipById, shipOf, type Ship, type Turret } from './ship';
 import { bookShip, fundsOf } from './shop';
-import { armamentBlocker } from './armament';
+import { shipyardBlocker } from './armament';
 import type { SpaceAttack, SpaceBattle, SpaceBattleEnd } from './log';
 import {
   activeFlight,
@@ -47,8 +47,13 @@ export type HitZone =
   | 'criticalJump'
   | 'crew'
   | 'criticalComputer'
-  | 'explode';
-export const hitZones = ['powerPlant', 'maneuver', 'jump', 'fuel', 'hull', 'hold', 'computer', 'turret', 'criticalPowerPlant', 'criticalManeuver', 'criticalJump', 'crew', 'criticalComputer', 'explode'] as const;
+  | 'explode'
+  // Nur Small Craft (SE 12, 2026-11-22):
+  | 'drive'
+  | 'cabin'
+  | 'weapons'
+  | 'criticalDrive';
+export const hitZones = ['powerPlant', 'maneuver', 'jump', 'fuel', 'hull', 'hold', 'computer', 'turret', 'criticalPowerPlant', 'criticalManeuver', 'criticalJump', 'crew', 'criticalComputer', 'explode', 'drive', 'cabin', 'weapons', 'criticalDrive'] as const;
 
 /** Was ein fremdes Schiff will (Konzept, Abschnitt 6). */
 export type Intent = 'attack' | 'flee' | 'ignore';
@@ -68,6 +73,10 @@ export interface ShipDamage {
 const HIT_TABLE: readonly HitZone[] = ['powerPlant', 'maneuver', 'jump', 'fuel', 'hull', 'hull', 'hold', 'computer', 'turret', 'turret'];
 /** Kritische Treffer nach 1W6 (SE 12). */
 const CRITICAL_TABLE: readonly HitZone[] = ['criticalPowerPlant', 'criticalManeuver', 'criticalJump', 'crew', 'criticalComputer', 'explode'];
+/** Trefferzonen für Small Craft nach 2W6 (SE 12, 2026-11-22), Index = Summe − 2; 12 ist kritisch. */
+const CRAFT_HIT_TABLE: readonly HitZone[] = ['drive', 'drive', 'drive', 'drive', 'cabin', 'computer', 'cabin', 'cabin', 'weapons', 'weapons'];
+/** Kritische Treffer auf Small Craft nach 1W6 (SE 12). */
+const CRAFT_CRITICAL_TABLE: readonly HitZone[] = ['criticalDrive', 'criticalDrive', 'criticalDrive', 'crew', 'criticalComputer', 'explode'];
 /** Trefferwurf: 8+ (SR 40). */
 export const HIT_TARGET = 8;
 /** Abstand, den ein angreifendes fremdes Schiff hält: 5 Raumbänder (Hausregel). */
@@ -83,7 +92,8 @@ const count = (damage: ShipDamage | undefined, ...zones: HitZone[]) => (damage?.
 
 /** `/maneuver`: die G des Antriebs nach dem Schaden; Maneuver und Power Plant je −1, kritisch 0. */
 export function maneuverAfter(design: string, damage: ShipDamage | undefined): number {
-  if (count(damage, 'criticalManeuver', 'criticalPowerPlant', 'crew', 'explode') > 0) return 0;
+  // Drive eines Small Craft: es kann sich nicht mehr bewegen (SR 41, 2026-11-22).
+  if (count(damage, 'criticalManeuver', 'criticalPowerPlant', 'crew', 'explode', 'drive', 'criticalDrive') > 0) return 0;
   return Math.max(0, shipDesignOf(design).maneuver - count(damage, 'maneuver', 'powerPlant'));
 }
 
@@ -98,26 +108,38 @@ export function destroyedBy(damage: ShipDamage | undefined): boolean {
   return count(damage, 'explode') > 0;
 }
 
-/** Kann das Schiff feuern? Nicht ohne Crew, nicht mit zerstörtem Computer, nicht zerstört. */
+/** Kann das Schiff feuern? Nicht ohne Crew, nicht mit zerstörtem Computer, nicht zerstört; ein Small Craft nicht mit Drive-Treffer (SR 41). */
 function canFire(damage: ShipDamage | undefined): boolean {
-  return count(damage, 'crew', 'criticalComputer', 'explode') === 0;
+  return count(damage, 'crew', 'criticalComputer', 'explode', 'drive', 'criticalDrive') === 0;
 }
 
-/** Die Laser eines Schiffs, die noch feuern können: je Turret, das nicht ausgefallen ist. */
-function workingLasers(turrets: readonly Turret[], damage: ShipDamage | undefined): readonly { turret: number; weapon: string }[] {
+/** Ein Small Craft ohne Computer (SE 13, 2026-11-22): DM −1 und nur eine Waffe zugleich. */
+export function withoutComputer(design: string): boolean {
+  const plan = shipDesignOf(design);
+  return plan.kind === 'smallCraft' && plan.computer === undefined;
+}
+
+/** Die Laser eines Schiffs, die noch feuern können: je Turret, das nicht ausgefallen ist; ohne Computer nur der erste. */
+function workingLasers(design: string, turrets: readonly Turret[], damage: ShipDamage | undefined): readonly { turret: number; weapon: string }[] {
   if (!canFire(damage)) return [];
-  return turrets.flatMap((t, i) => (damage?.turretsOut.includes(i) ? [] : t.weapons.filter((w) => w.endsWith('laser')).map((weapon) => ({ turret: i, weapon }))));
+  const lasers = turrets.flatMap((t, i) => (damage?.turretsOut.includes(i) ? [] : t.weapons.filter((w) => w.endsWith('laser')).map((weapon) => ({ turret: i, weapon }))));
+  return withoutComputer(design) ? lasers.slice(0, 1) : lasers;
+}
+
+/** Die Laser einer Einheit, die jetzt feuern können. */
+function lasersOfUnit(campaign: Campaign, unit: SpaceUnit): readonly { turret: number; weapon: string }[] {
+  return workingLasers(designOfUnit(campaign, unit), turretsOfUnit(campaign, unit), damageOfUnit(campaign, unit));
 }
 
 /** Wie viele Laser einer Einheit noch feuern können. */
 export function laserCountOf(campaign: Campaign, unit: SpaceUnit): number {
-  return workingLasers(turretsOfUnit(campaign, unit), damageOfUnit(campaign, unit)).length;
+  return lasersOfUnit(campaign, unit).length;
 }
 
 /** `/disabled`: zerstört, Crew handlungsunfähig, oder ohne Antrieb und ohne arbeitenden Laser. */
 export function disabledBy(design: string, turrets: readonly Turret[], damage: ShipDamage | undefined): boolean {
   if (destroyedBy(damage) || count(damage, 'crew') > 0) return true;
-  return maneuverAfter(design, damage) === 0 && workingLasers(turrets, damage).length === 0;
+  return maneuverAfter(design, damage) === 0 && workingLasers(design, turrets, damage).length === 0;
 }
 
 /** Der Entwurf einer Einheit: der des eigenen Schiffs oder der des fremden. */
@@ -255,7 +277,7 @@ export function fireBlocker(campaign: Campaign, index: number, target: number): 
   if (unit.crashed) return `${name} ist aufgeschlagen.`;
   if (other.crashed) return `${nameOfUnit(campaign, other)} ist aufgeschlagen.`;
   if (unit.fired) return `${name} hat in dieser Raumrunde schon gefeuert.`;
-  if (workingLasers(turretsOfUnit(campaign, unit), damageOfUnit(campaign, unit)).length === 0) return `${name} hat keinen Laser, der feuern kann.`;
+  if (lasersOfUnit(campaign, unit).length === 0) return `${name} hat keinen Laser, der feuern kann.`;
   const bands = bandOf(lengthOf({ x: unit.position.x - other.position.x, y: unit.position.y - other.position.y }));
   if (bands > TRACKING_BANDS) return `${nameOfUnit(campaign, other)} ist ${bands} Raumbänder entfernt, zu weit (höchstens ${TRACKING_BANDS}).`;
   const scene = sceneOf(campaign.hexes, flight.world);
@@ -317,6 +339,7 @@ interface Shot {
   readonly dm: number;
   readonly bands: number;
   readonly computerHits: number;
+  readonly noComputer: boolean;
 }
 
 /** Die Schüsse einer Einheit auf `to`: jeder arbeitende Laser einzeln, mit Sichtlinie und höchstens 90 Raumbändern. */
@@ -328,21 +351,23 @@ function shotsOf(campaign: Campaign, flight: SystemFlight, scene: Scene, from: n
   const bands = bandOf(lengthOf({ x: a.position.x - b.position.x, y: a.position.y - b.position.y }));
   if (bands > TRACKING_BANDS || !lineOfSight(scene, a.position, b.position, t)) return [];
   const computerHits = count(damage, 'computer');
-  return workingLasers(turretsOfUnit(campaign, a), damage).map(({ turret, weapon }) => ({ from, to, turret, weapon, bands, computerHits, dm: sumDms(dmPartsOf(weapon, bands, computerHits)) }));
+  const noComputer = withoutComputer(designOfUnit(campaign, a));
+  return lasersOfUnit(campaign, a).map(({ turret, weapon }) => ({ from, to, turret, weapon, bands, computerHits, noComputer, dm: sumDms(dmPartsOf(weapon, bands, computerHits, noComputer)) }));
 }
 
 /** Ein Teil des DM eines Laserschusses (2026-11-21i): wofür und wie viel. */
 export interface SpaceDmPart {
-  readonly reason: 'range' | 'pulse' | 'computer';
+  readonly reason: 'range' | 'pulse' | 'computer' | 'noComputer';
   readonly dm: number;
 }
 
-/** Die DMs eines Laserschusses (SE 12, Hausregel Computer): Entfernung über 25 bzw. 50 Raumbänder, Pulse Laser, je Computer-Treffer −1; nur die, die zählen. */
-export function dmPartsOf(weapon: string, bands: number, computerHits: number): readonly SpaceDmPart[] {
+/** Die DMs eines Laserschusses (SE 12, Hausregel Computer): Entfernung über 25 bzw. 50 Raumbänder, Pulse Laser, je Computer-Treffer −1, Small Craft ohne Computer −1 (SE 13); nur die, die zählen. */
+export function dmPartsOf(weapon: string, bands: number, computerHits: number, noComputer = false): readonly SpaceDmPart[] {
   const parts: SpaceDmPart[] = [];
   if (spaceRangeDm(bands) !== 0) parts.push({ reason: 'range', dm: spaceRangeDm(bands) });
   if (weapon === 'pulse-laser') parts.push({ reason: 'pulse', dm: -1 });
   if (computerHits > 0) parts.push({ reason: 'computer', dm: -computerHits });
+  if (noComputer) parts.push({ reason: 'noComputer', dm: -1 });
   return parts;
 }
 
@@ -363,24 +388,32 @@ export function firePreview(campaign: Campaign, from: number, to: number): FireP
   const damage = damageOfUnit(campaign, a);
   const bands = bandOf(lengthOf({ x: a.position.x - b.position.x, y: a.position.y - b.position.y }));
   const computerHits = count(damage, 'computer');
+  const noComputer = withoutComputer(designOfUnit(campaign, a));
   const weapons = new Map<string, number>();
-  for (const { weapon } of workingLasers(turretsOfUnit(campaign, a), damage)) weapons.set(weapon, (weapons.get(weapon) ?? 0) + 1);
+  for (const { weapon } of lasersOfUnit(campaign, a)) weapons.set(weapon, (weapons.get(weapon) ?? 0) + 1);
   return {
     bands,
     computerHits,
     weapons: [...weapons].map(([weapon, n]) => {
-      const parts = dmPartsOf(weapon, bands, computerHits);
+      const parts = dmPartsOf(weapon, bands, computerHits, noComputer);
       return { weapon, count: n, parts, dm: sumDms(parts), need: HIT_TARGET - sumDms(parts) };
     }),
   };
 }
 
-/** Würfelt die Trefferzonen eines Treffers: Beam Laser einen Schadenswurf, Pulse Laser zwei; bei 12 kritisch (1W6). */
-function rollHits(weapon: string, random: Random): readonly HitZone[] {
+/**
+ * Würfelt die Trefferzonen eines Treffers: Beam Laser einen Schadenswurf, Pulse Laser zwei; bei 12
+ * kritisch (1W6). Ein Small Craft als Ziel würfelt in seiner Spalte; ohne Computer zählt ein
+ * Computer-Treffer als Drive (SE 12, 2026-11-22).
+ */
+function rollHits(weapon: string, target: string, random: Random): readonly HitZone[] {
+  const craft = shipDesignOf(target).kind === 'smallCraft';
   const zones: HitZone[] = [];
   for (let k = 0; k < (weapon === 'pulse-laser' ? 2 : 1); k++) {
     const roll = sum(roll2d6(random));
-    zones.push(roll === 12 ? CRITICAL_TABLE[d6(random) - 1]! : HIT_TABLE[roll - 2]!);
+    let zone = roll === 12 ? (craft ? CRAFT_CRITICAL_TABLE : CRITICAL_TABLE)[d6(random) - 1]! : (craft ? CRAFT_HIT_TABLE : HIT_TABLE)[roll - 2]!;
+    if (craft && shipDesignOf(target).computer === undefined) zone = zone === 'computer' ? 'drive' : zone === 'criticalComputer' ? 'criticalDrive' : zone;
+    zones.push(zone);
   }
   return zones;
 }
@@ -396,6 +429,11 @@ function applyHits(campaign: Campaign, index: number, zones: readonly HitZone[],
   let cargoLost = 0;
   for (const zone of zones) {
     let hit = zone;
+    // Weapons eines Small Craft: seine Bewaffnung ist zerstört (SR 41); ohne zählt er wie Cabin.
+    if (zone === 'weapons') {
+      if (turrets.length === 0 || damage.turretsOut.includes(0)) hit = 'cabin';
+      else damage = { ...damage, turretsOut: [...damage.turretsOut, 0] };
+    }
     if (zone === 'turret') {
       const working = turrets.map((_, i) => i).filter((i) => !damage.turretsOut.includes(i));
       if (working.length === 0) hit = 'hull';
@@ -427,7 +465,7 @@ function fire(campaign: Campaign, shots: readonly Shot[], random: Random, clock:
   for (const shot of shots) {
     const dice = roll2d6(random);
     const hit = sum(dice) + shot.dm >= HIT_TARGET;
-    const zones = hit ? rollHits(shot.weapon, random) : [];
+    const zones = hit ? rollHits(shot.weapon, designOfUnit(campaign, flight.units[shot.to]!), random) : [];
     hits.set(shot.to, [...(hits.get(shot.to) ?? []), ...zones]);
     const entry: SpaceAttack = {
       kind: 'spaceAttack',
@@ -442,6 +480,7 @@ function fire(campaign: Campaign, shots: readonly Shot[], random: Random, clock:
       dm: shot.dm,
       bands: shot.bands,
       computerHits: shot.computerHits,
+      ...(shot.noComputer ? { noComputer: true } : {}),
       hits: zones,
     };
     log.push(entry);
@@ -475,7 +514,7 @@ export function fireAt(campaign: Campaign, index: number, target: number, random
   const flight = activeFlight(after);
   const units = flight.units.map((u, i) => {
     if (i !== target || u.ship !== undefined || u.intent === undefined || u.intent === 'attack') return u;
-    return { ...u, intent: (workingLasers(turretsOfUnit(after, u), u.damage).length > 0 ? 'attack' : 'flee') as Intent };
+    return { ...u, intent: (lasersOfUnit(after, u).length > 0 ? 'attack' : 'flee') as Intent };
   });
   return settleBattle({ ...after, flight: { ...flight, units } }, clock);
 }
@@ -556,22 +595,32 @@ export function breakOffBattle(campaign: Campaign, clock: Clock): Campaign {
   return result;
 }
 
-/** Was die Reparatur des eigenen Schiffs kostet: Cr 100.000 je Treffer, Cr 1.000.000 je kritischem (Hausregel). */
-export function repairCostOf(ship: Ship): number {
-  return (ship.damage?.hits ?? []).reduce((n, h) => n + (isCritical(h) ? REPAIR_CRITICAL : REPAIR_HIT), 0);
+/** Die Schiffe mit Schaden, die mit dem eigenen Schiff in die Werft kommen: es selbst und seine Beiboote an Bord (2026-11-22). */
+export function damagedAtYard(campaign: Campaign, ship: Ship): readonly Ship[] {
+  return [ship, ...craftOf(campaign, ship.id).filter((c) => c.aboard === true)].filter((s) => s.damage !== undefined && s.damage.hits.length > 0);
 }
 
-/** Repariert das eigene Schiff an einer Werft (Raumhafen A oder B), alles auf einmal. */
+/** Was die Reparatur kostet: Cr 100.000 je Treffer, Cr 1.000.000 je kritischem (Hausregel), für das Schiff und seine Beiboote an Bord. */
+export function repairCostOf(campaign: Campaign, ship: Ship): number {
+  return damagedAtYard(campaign, ship)
+    .flatMap((s) => s.damage?.hits ?? [])
+    .reduce((n, h) => n + (isCritical(h) ? REPAIR_CRITICAL : REPAIR_HIT), 0);
+}
+
+/** Repariert das eigene Schiff samt seinen Beibooten an Bord an einer Werft (Raumhafen A oder B), alles auf einmal. */
 export function repairShip(campaign: Campaign, clock: Clock): Campaign {
   const ship = shipOf(campaign);
   if (ship === undefined) throw new DomainError('Die Gruppe hat kein Schiff.');
-  if (ship.damage === undefined) throw new DomainError(`${ship.name} hat keinen Schaden.`);
-  const blocker = armamentBlocker(campaign);
-  if (blocker) throw new DomainError(blocker.replace('Umrüsten', 'Reparieren'));
-  const cost = repairCostOf(ship);
+  const damaged = damagedAtYard(campaign, ship);
+  if (damaged.length === 0) throw new DomainError(`${ship.name} hat keinen Schaden.`);
+  const blocker = shipyardBlocker(campaign);
+  if (blocker) throw new DomainError(blocker.replace('umgerüstet', 'repariert').replace('Umrüsten', 'Reparieren'));
+  const cost = repairCostOf(campaign, ship);
   if (cost > fundsOf(campaign)) throw new DomainError(`Die Reparatur kostet Cr ${cost.toLocaleString('de-DE')}, in der Kasse ist Cr ${fundsOf(campaign).toLocaleString('de-DE')}.`);
-  const paid = bookShip(campaign, -cost, ship.id, 'repair', clock, `Reparatur, ${ship.damage.hits.length} Treffer`);
-  return { ...paid, ships: paid.ships.map((s) => (s.id === ship.id ? (({ damage: _d, ...rest }) => (void _d, rest))(s) : s)) };
+  const hits = damaged.reduce((n, s) => n + (s.damage?.hits.length ?? 0), 0);
+  const paid = bookShip(campaign, -cost, ship.id, 'repair', clock, `Reparatur, ${hits} Treffer`);
+  const ids = new Set(damaged.map((s) => s.id));
+  return { ...paid, ships: paid.ships.map((s) => (ids.has(s.id) ? (({ damage: _d, ...rest }) => (void _d, rest))(s) : s)) };
 }
 
 /** Prüft einen geladenen Schaden. */

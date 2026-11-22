@@ -165,6 +165,8 @@ export const ShipDesignSchema = z.object({
   streamlined: z.boolean().default(false),
   /** Die Turrets ab Werft, in der Reihenfolge der Hardpoints (SR 35–37, 2026-11-21g). */
   turrets: z.array(z.object({ type: z.string().min(1), weapons: z.array(z.string().min(1)).max(3) })).default([]),
+  /** Nur Small Craft: wie viele Laser der Typ höchstens tragen darf (SR 34–35, 2026-11-22). */
+  lasers: z.number().int().min(0).max(3).optional(),
 });
 
 /** Eine Turmart aus SE 10 (2026-11-21g): Single, Double oder Triple Turret mit 1–3 Plätzen für Waffen; Preis in Cr. */
@@ -173,6 +175,8 @@ export const TurretTypeSchema = z.object({
   name: z.string().min(1),
   slots: z.number().int().min(1).max(3),
   price: z.number().int().min(0),
+  /** Die Bewaffnung eines Small Craft (SR 34, 2026-11-22): nur auf Small Craft, die übrigen nur auf Schiffen. */
+  smallCraft: z.boolean().default(false),
 });
 
 /**
@@ -624,10 +628,14 @@ export const ReferenceDataSchema = z
         if (small) ctx.addIssue({ code: 'custom', message: `Das Small Craft ${design.id} trägt keine Beiboote` });
         if (data.ships.find((d) => d.id === c)?.kind !== 'smallCraft') ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id}: Beiboot ${c} ist kein Small Craft` });
       }
-      if (design.turrets.length > design.hardpoints) ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id} hat mehr Turrets als Hardpoints` });
+      if (design.turrets.length > (small ? 1 : design.hardpoints)) ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id} hat mehr Turrets als Hardpoints (Small Craft: eine Bewaffnung)` });
+      if (small !== (design.lasers !== undefined)) ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id}: genau Small Craft haben eine Zahl erlaubter Laser` });
+      const lasers = design.turrets.flatMap((t) => t.weapons).filter((w) => w.endsWith('laser')).length;
+      if (small && lasers > (design.lasers ?? 0)) ctx.addIssue({ code: 'custom', message: `Das Small Craft ${design.id} hat mehr Laser, als es tragen darf` });
       for (const turret of design.turrets) {
         const type = data.turretTypes.find((t) => t.id === turret.type);
         if (!type) ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id}: Turmart ${turret.type} gibt es nicht` });
+        else if (type.smallCraft !== small) ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id}: ${type.name} passt nicht zu seiner Art` });
         else if (turret.weapons.length > type.slots) ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id}: zu viele Waffen im ${type.name}` });
         for (const w of turret.weapons) if (!data.shipWeapons.some((x) => x.id === w)) ctx.addIssue({ code: 'custom', message: `Der Schiffsentwurf ${design.id}: Schiffswaffe ${w} gibt es nicht` });
       }

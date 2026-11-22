@@ -17,6 +17,8 @@ import {
   flightStartBlocker,
   launchWorld,
   armamentBlocker,
+  shipyardBlocker,
+  damagedAtYard,
   turretTypeOf,
   shipWeaponOf,
   turretTypes,
@@ -147,7 +149,11 @@ export interface ShipView {
         /** Die Turrets in der Reihenfolge der Hardpoints; warum gerade nicht umgerüstet werden kann (`undefined`: es geht). */
         readonly turrets: readonly TurretRow[];
         readonly armamentBlocker: string | undefined;
-        /** Schaden aus dem Raumkampf als Trefferzonen, ausgefallene Turrets (Hardpoint ab 1), Kosten der Reparatur (2026-11-21h). */
+        /** Warum die Werft gerade nicht reparieren kann (`undefined`: es geht). */
+        readonly repairBlocker: string | undefined;
+        /** Die Bewaffnung eines Small Craft in einer Zeile, z. B. „2 × Beam Laser“; fehlt bei Schiffen (2026-11-22). */
+        readonly craftWeapons: string | undefined;
+        /** Schaden aus dem Raumkampf als Trefferzonen, ausgefallene Turrets (Hardpoint ab 1), Kosten der Reparatur (2026-11-21h); Beiboote an Bord mit ihrem Namen davor (2026-11-22). */
         readonly damage: readonly string[];
         readonly turretsOut: readonly number[];
         readonly repairCost: number;
@@ -218,14 +224,16 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
               return { typeId: kind.id, typeName: kind.name, slots: kind.slots, weapons: t.weapons.map((w) => ({ id: w, name: shipWeaponOf(w).name })) };
             }),
             armamentBlocker: armamentBlocker(campaign),
-            damage: (ship.damage?.hits ?? []).map((h) => hitZoneNames[h]),
+            repairBlocker: shipyardBlocker(campaign)?.replace('umgerüstet', 'repariert').replace('Umrüsten', 'Reparieren'),
+            craftWeapons: isSmallCraft(ship) ? weaponsLine(ship) : undefined,
+            damage: damagedAtYard(campaign, ship).flatMap((s) => (s.damage?.hits ?? []).map((h) => (s.id === ship.id ? hitZoneNames[h] : `${s.name}: ${hitZoneNames[h]}`))),
             turretsOut: (ship.damage?.turretsOut ?? []).map((i) => i + 1),
-            repairCost: repairCostOf(ship),
+            repairCost: repairCostOf(campaign, ship),
             maneuverNow: maneuverAfter(ship.design, ship.damage),
             maneuver: plan.maneuver,
             jumpNow: jumpAfter(ship.design, ship.damage),
           },
-    turretTypes: turretTypes().map((t) => ({ id: t.id, name: t.name, price: t.price, slots: t.slots, affordable: funds >= t.price })),
+    turretTypes: turretTypes().filter((t) => !t.smallCraft).map((t) => ({ id: t.id, name: t.name, price: t.price, slots: t.slots, affordable: funds >= t.price })),
     shipWeapons: shipWeapons().map((w) => ({ id: w.id, name: w.name, price: w.price, affordable: funds >= w.price })),
     deckPlans: [...deckPlans].sort((a, b) => a.name.localeCompare(b.name)),
     freeDeckSlots: Math.max(0, deckSlotNames.length - deckPlans.length),
@@ -285,5 +293,15 @@ function craftRow(campaign: Campaign, craft: Ship): CraftRow {
       : craft.inOrbit
         ? `in der Umlaufbahn von ${worldName(craft.place.world)}`
         : `auf ${worldName(craft.place.world)}`;
-  return { name: craft.name, design: `${plan.name} · ${plan.maneuver}G`, where };
+  return { name: craft.name, design: `${plan.name} · ${plan.maneuver}G · ${weaponsLine(craft)}`, where };
+}
+
+/** Die Waffen eines Small Craft in einer Zeile (2026-11-22): „2 × Beam Laser“, „unbewaffnet“, mit „ausgefallen“ nach einem Treffer. */
+function weaponsLine(craft: Ship): string {
+  const weapons = craft.turrets.flatMap((t) => t.weapons);
+  if (weapons.length === 0) return 'unbewaffnet';
+  const counts = new Map<string, number>();
+  for (const w of weapons) counts.set(w, (counts.get(w) ?? 0) + 1);
+  const line = [...counts].map(([w, n]) => `${n > 1 ? `${n} × ` : ''}${shipWeaponOf(w).name}`).join(', ');
+  return (craft.damage?.turretsOut.length ?? 0) > 0 ? `${line} (ausgefallen)` : line;
 }

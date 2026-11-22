@@ -150,7 +150,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
   }),
   z.object({ kind: z.literal('skimming'), at, day, place, giant: z.string().min(1), ship: z.string().min(1), tons: z.number().positive() }),
   z.object({ kind: z.literal('spaceBattle'), at, day, place, foe: z.string().min(1), design: z.string().min(1), intent: z.enum(intents), encounter: dice.optional(), reaction: dice.optional(), attack: dice.optional() }),
-  z.object({ kind: z.literal('spaceAttack'), at, day, place, round: z.number().int().min(1), attacker: z.string().min(1), target: z.string().min(1), turret: z.number().int().min(0), weapon: z.string().min(1), dice, dm: z.number().int(), bands: z.number().int().min(1).optional(), computerHits: z.number().int().min(0).optional(), hits: z.array(z.enum(hitZones)).max(4) }),
+  z.object({ kind: z.literal('spaceAttack'), at, day, place, round: z.number().int().min(1), attacker: z.string().min(1), target: z.string().min(1), turret: z.number().int().min(0), weapon: z.string().min(1), dice, dm: z.number().int(), bands: z.number().int().min(1).optional(), computerHits: z.number().int().min(0).optional(), noComputer: z.boolean().optional(), hits: z.array(z.enum(hitZones)).max(4) }),
   z.object({ kind: z.literal('spaceBattleEnd'), at, day, place, foe: z.string().min(1), outcome: z.enum(battleOutcomes) }),
   z.object({ kind: z.literal('systemJourney'), at, day, place, from: z.string().min(1), to: z.string().min(1), hours: z.number().int(), travellers: z.array(z.string().min(1)), ship: z.string().min(1).optional() }),
 ]);
@@ -746,7 +746,9 @@ function flightFromFile(flight: z.infer<typeof FlightSchema>): SystemFlight {
 
 /** Die Turrets eines Schiffs aus der Datei; Dateien von vor 2026-11-21g haben keine: Das Schiff kam mit denen seines Entwurfs. */
 function turretsFromFile(ship: z.infer<typeof ShipSchema>): Ship['turrets'] {
-  if (ship.turrets !== undefined) return ship.turrets.map((t) => ({ type: t.type, weapons: [...t.weapons] }));
+  // Vor 2026-11-22 war kein Small Craft bewaffnet: Eines ohne Turrets bekommt die seines Entwurfs.
+  const unarmedCraft = ship.turrets?.length === 0 && shipDesignOf(ship.design).kind === 'smallCraft';
+  if (ship.turrets !== undefined && !unarmedCraft) return ship.turrets.map((t) => ({ type: t.type, weapons: [...t.weapons] }));
   return shipDesignOf(ship.design).turrets.map((t) => ({ type: t.type, weapons: [...t.weapons] }));
 }
 
