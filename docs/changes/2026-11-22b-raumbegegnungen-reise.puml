@@ -47,7 +47,7 @@
 !return ""
 !endfunction
 !pragma layout smetana
-title Änderung 2026-11-22b: Schiffsbegegnungen bei Abreise und Ankunft: Wurf auf der Starship Encounter Table bei Sprung und Reise im System mit eigenem Schiff (SpaceBattle.occasion, departureRoll, arrivalRoll); friedliche Sichtung fragt (ShipSighting); Weiterreise aus dem Systemflug (jumpTo, travelTo, departure, BattleOutcome.departed)
+title Änderung 2026-11-22b: Schiffsbegegnungen bei Abreise und Ankunft: Wurf auf der Starship Encounter Table bei Sprung und Reise im System mit eigenem Schiff (SpaceBattle.occasion, departureRoll, arrivalRoll); Dialog vor dem Wurf mit Zielwert, Würfeln und Abbrechen (lang drücken), friedliche Sichtung fragt (EncounterCheck); Weiterreise aus dem Systemflug (jumpTo, travelTo, departure, BattleOutcome.departed)
 hide empty members
 hide methods
 skinparam classAttributeIconSize 0
@@ -103,7 +103,11 @@ hide <<browser>> stereotype
     departure
     arrival
   }
-  class ShipSighting <<transient>> $raum $newClass("2026-11-22b") {
+  class EncounterCheck <<transient>> $raum $newClass("2026-11-22b") {
+    occasion: EncounterOccasion
+    /column: string
+    /dm: number
+    /shipOn: number [*]
   }
   class SpaceBattleEnd $raum
   enum BattleOutcome <<value>> $raum {
@@ -200,7 +204,10 @@ SpaceBattle -$newArrow("2026-11-22b")-> EncounterOccasion
 SpaceBattle "*" -$newArrow("2026-11-22b")-> "0..1" Hex : jumpTo
 SpaceBattle "*" -$newArrow("2026-11-22b")-> "0..1" World : travelTo
 SystemFlight "*" -$newArrow("2026-11-22b")-> "0..1" SpaceBattle : departure
-ShipSighting "0..1" -$newArrow("2026-11-22b")-> "1" SpaceBattle : battle
+EncounterCheck "0..1" -$newArrow("2026-11-22b")-> "0..1" SpaceBattle : sighting
+EncounterCheck -$newArrow("2026-11-22b")-> EncounterOccasion
+EncounterCheck "*" -$newArrow("2026-11-22b")-> "0..1" Hex : jumpTo
+EncounterCheck "*" -$newArrow("2026-11-22b")-> "0..1" World : travelTo
 SystemFlight "*" --> "1" SpaceUnit : party
 Hex "1" *-- "*" World : worlds {ordered}
 Hex "*" --> "0..1" World : main

@@ -585,7 +585,7 @@
     {
       "id": "2026-11-22b",
       "file": "2026-11-22b-raumbegegnungen-reise",
-      "title": "Schiffsbegegnungen bei Abreise und Ankunft: Wurf auf der Starship Encounter Table bei Sprung und Reise im System mit eigenem Schiff (SpaceBattle.occasion, departureRoll, arrivalRoll); friedliche Sichtung fragt (ShipSighting); Weiterreise aus dem Systemflug (jumpTo, travelTo, departure, BattleOutcome.departed)",
+      "title": "Schiffsbegegnungen bei Abreise und Ankunft: Wurf auf der Starship Encounter Table bei Sprung und Reise im System mit eigenem Schiff (SpaceBattle.occasion, departureRoll, arrivalRoll); Dialog vor dem Wurf mit Zielwert, Würfeln und Abbrechen (lang drücken), friedliche Sichtung fragt (EncounterCheck); Weiterreise aus dem Systemflug (jumpTo, travelTo, departure, BattleOutcome.departed)",
       "approved": false,
       "show": [
         "Journey",

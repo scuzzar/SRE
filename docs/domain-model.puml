@@ -355,7 +355,11 @@ hide <<browser>> stereotype
     departure
     arrival
   }
-  class ShipSighting <<transient>> $raum $newClass("2026-11-22b") {
+  class EncounterCheck <<transient>> $raum $newClass("2026-11-22b") {
+    occasion: EncounterOccasion
+    /column: string
+    /dm: number
+    /shipOn: number [*]
   }
   class SpaceAttack $raum {
     round: number
@@ -1310,7 +1314,10 @@ SpaceBattle -$newArrow("2026-11-22b")-> EncounterOccasion
 SpaceBattle "*" -$newArrow("2026-11-22b")-> "0..1" Hex : jumpTo
 SpaceBattle "*" -$newArrow("2026-11-22b")-> "0..1" World : travelTo
 SystemFlight "*" -$newArrow("2026-11-22b")-> "0..1" SpaceBattle : departure
-ShipSighting "0..1" -$newArrow("2026-11-22b")-> "1" SpaceBattle : battle
+EncounterCheck "0..1" -$newArrow("2026-11-22b")-> "0..1" SpaceBattle : sighting
+EncounterCheck -$newArrow("2026-11-22b")-> EncounterOccasion
+EncounterCheck "*" -$newArrow("2026-11-22b")-> "0..1" Hex : jumpTo
+EncounterCheck "*" -$newArrow("2026-11-22b")-> "0..1" World : travelTo
 SystemFlight "*" --> "1" SpaceUnit : party
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
 LogEntry <|-- Skimming

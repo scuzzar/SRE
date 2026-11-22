@@ -564,7 +564,8 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > fragt, und aus dem Systemflug geht die geplante Reise weiter. Neu im Bild: `SpaceBattle.occasion`
 > mit `EncounterOccasion`, `SpaceBattle.jumpTo` und `travelTo`, `SystemFlight.departure`,
 > `BattleOutcome.departed`, `departureRoll` und `arrivalRoll` an `Journey` und `SystemJourney`, und
-> flüchtig `ShipSighting`; siehe *Schiffsbegegnungen bei Abreise und Ankunft*. Der Ausschnitt dazu
+> flüchtig `EncounterCheck` (der Dialog vor dem Wurf, mit Zielwert, „Würfeln“ und „Abbrechen“ zum
+> Auslassen des Wurfs, lang gedrückt); siehe *Schiffsbegegnungen bei Abreise und Ankunft*. Der Ausschnitt dazu
 > liegt unter
 > [`changes/2026-11-22b-raumbegegnungen-reise.png`](changes/2026-11-22b-raumbegegnungen-reise.png).
 
@@ -924,7 +925,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Ausgang | `SpaceBattleEnd.outcome`, `BattleOutcome` | Wie ein Raumkampf endete: zerstört, kampfunfähig, entkommen, abgebrochen, verloren (2026-11-21h); abgereist: das eigene Schiff ist aus dem Systemflug gesprungen oder im System weitergereist (2026-11-22b) |
 | Anlass | `SpaceBattle.occasion`, `EncounterOccasion` | Warum auf der Starship Encounter Table gewürfelt wurde: beim Start von der Welt (`departure`) oder bei der Ankunft (`arrival`); fehlt beim Knopf „Schiffsbegegnung“ (2026-11-22b) |
 | Begegnungswurf | `Journey.departureRoll`, `arrivalRoll`, `SystemJourney.departureRoll`, `arrivalRoll` | Die 2W6 auf der Starship Encounter Table bei Abreise bzw. Ankunft, wenn kein Schiff kam; kam eines, stehen sie am `SpaceBattle` (2026-11-22b) |
-| Sichtung | `ShipSighting` (flüchtig) | Ein fremdes Schiff, das die Gruppe bei Abreise oder Ankunft ignoriert; die App fragt „Zur Raumkarte“ oder „Weiter“ (2026-11-22b) |
+| Begegnungsprüfung | `EncounterCheck` (flüchtig) | Der Dialog vor dem Begegnungswurf bei Abreise oder Ankunft: Zielwert, „Würfeln“ und „Abbrechen“ (lang drücken lässt den Wurf ausfallen); danach, bei einer Sichtung, die Frage „Zur Raumkarte“ oder „Weiter“ (2026-11-22b) |
+| Sichtung | `EncounterCheck.sighting` | Ein fremdes Schiff, das die Gruppe bei Abreise oder Ankunft ignoriert (2026-11-22b) |
 | Weiterreise | `SpaceBattle.jumpTo`, `travelTo`, `SystemFlight.departure` | Die Reise, die beim Start von der Welt durch eine Begegnung unterbrochen wurde; der Knopf „Springen nach …“ bzw. „Reisen nach …“ im Systemflug setzt sie fort (2026-11-22b) |
 | Turret | `Turret`, `Ship.turrets` | Ein Waffenturm auf einem Hardpoint des eigenen Schiffs, mit seinen Waffen; höchstens so viele, wie der Entwurf Hardpoints hat (2026-11-21g) |
 | Turmart | `TurretType` | Referenzdaten: Single, Double oder Triple Turret mit 1, 2 oder 3 Plätzen für Waffen und Preis (SE 10, 2026-11-21g) |
@@ -3415,6 +3417,24 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     ankommt, DM +2 Marinebasis, +1 Scoutbasis; danach Pirat oder Reaktion (SE 21). Bei einer Reise
     im System sind Start und Ziel im selben System. ⚑ Das \* (zusätzliches Small Craft) bleibt
     weiter ohne Folgen.
+  - **Dialog vor dem Wurf** (Owner, 22. November 2026: „Für das Würfeln einen Dialog, der den
+    Zielwert anzeigt, und Buttons für Würfeln und Abbrechen. Abbrechen lässt den Wurf ausfallen,
+    wenn man lange drückt. Damit kann ich den Wurf weg-GM-en“). Vor jedem Wurf bei Abreise oder
+    Ankunft entsteht eine flüchtige **Begegnungsprüfung** (`EncounterCheck`) mit dem Anlass
+    (`occasion`) und, beim Start, dem Ziel der Reise (`jumpTo` bzw. `travelTo`). Der Dialog zeigt
+    Anlass, Spalte (`/column`) und DM (`/dm`, mit Grund: Marinebasis, Scoutbasis) und als
+    **Zielwert** die Summen auf 2W6, bei denen ein Schiff kommt (`/shipOn`: jede Summe, deren
+    Ergebnis mit DM, höchstens 15, in der Spalte kein Strich ist), zusammengefasst wie „6+“ oder
+    „4, 9+“; kommt bei keiner Summe ein Schiff, sagt er das.
+    - **„Würfeln“** würfelt mit Würfelanimation wie beim Feuer und zeigt das Ergebnis im Dialog
+      (Wurf, Schiff oder keins, Reaktion).
+    - **„Abbrechen“** wirkt nur **lang gedrückt** (⚑ eine halbe Sekunde; ein kurzes Tippen sagt
+      nur „lang drücken“): Der Wurf fällt aus, als wäre kein Schiff gekommen, und die Reise geht
+      weiter. Dann steht kein Wurf an der Reise (`departureRoll` bzw. `arrivalRoll` fehlt) und kein
+      `SpaceBattle` im Log. ⚑ Ein ausgelassener Wurf ist also im Log nicht von einer Reise von
+      vor dieser Änderung zu unterscheiden.
+    - Geht die App zu, solange der Dialog offen ist, ist die Prüfung verloren wie eine offene Karte:
+      Beim Start fand keine Reise statt; bei der Ankunft steht die Gruppe am Ziel ohne Wurf.
   - **Ohne Schiff** (Strich in der Tabelle) geht die Reise weiter wie bisher. Die Würfel stehen an
     der Reise: `departureRoll` für den Start, `arrivalRoll` für die Ankunft. Kam ein Schiff, fehlt
     das Feld dort, und die Würfel stehen am `SpaceBattle` (`encounter`), nie an beiden. Reisen von
@@ -3436,9 +3456,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       20.000 km. Die Reise hat stattgefunden (Tage, Treibstoff, Aufenthaltsort wie bisher).
       ⚑ Der Dialog **Landeplatz** wartet, solange der Systemflug läuft; landet das Schiff im
       Systemflug oder endet er, geht er auf wie sonst.
-  - **Sichtung** (Owner: fragen). Ignoriert das fremde Schiff die Gruppe, entsteht eine flüchtige
-    **Sichtung** (`ShipSighting`) mit dem noch nicht gespeicherten `SpaceBattle` (`battle`), und die
-    App fragt: **„Zur Raumkarte“** öffnet den Systemflug wie beim Angriff, mit dem fremden Schiff,
+  - **Sichtung** (Owner: fragen). Ignoriert das fremde Schiff die Gruppe, hält die Begegnungsprüfung
+    den noch nicht gespeicherten `SpaceBattle` als Sichtung (`sighting`), und der Dialog fragt: **„Zur Raumkarte“** öffnet den Systemflug wie beim Angriff, mit dem fremden Schiff,
     das ignoriert (`intent` ignore); **„Weiter“** setzt die Reise fort (beim Start: sie findet statt;
     bei der Ankunft: weiter zum Landeplatz). In beiden Fällen kommt der `SpaceBattle` ins Log, bei
     „Weiter“ ohne Systemflug („Free Trader *Name* in Sicht“). ⚑ Geht die App vor der Antwort zu,
