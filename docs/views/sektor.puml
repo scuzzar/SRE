@@ -87,7 +87,7 @@ hide <<browser>> stereotype
   class StarSystem $raum
   class Skimming $raum
   class SpaceBattle $raum
-  class EncounterCheck <<transient>> $raum $newClass("2026-11-22b")
+  class EncounterCheck <<transient>> $raum
 
 ' Charaktererschaffung und Lebenslauf
   class Career $erschaffung
@@ -268,10 +268,10 @@ Booking "*" --> "0..1" World : in
 
 ' Raumkarte und Systemflug
 SystemFlight "*" --> "1" World : world
-SpaceBattle "*" -$newArrow("2026-11-22b")-> "0..1" Hex : jumpTo
-SpaceBattle "*" -$newArrow("2026-11-22b")-> "0..1" World : travelTo
-EncounterCheck "*" -$newArrow("2026-11-22b")-> "0..1" Hex : jumpTo
-EncounterCheck "*" -$newArrow("2026-11-22b")-> "0..1" World : travelTo
+SpaceBattle "*" --> "0..1" Hex : jumpTo
+SpaceBattle "*" --> "0..1" World : travelTo
+EncounterCheck "*" --> "0..1" Hex : jumpTo
+EncounterCheck "*" --> "0..1" World : travelTo
 Skimming "*" --> "1" World : at
 Hex "1" *-- "0..1" StarSystem : system
 Hex "1" *-- "*" World : worlds {ordered}
@@ -340,7 +340,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class SpaceBattle #line:d0021b;line.bold
-class Journey #line:d0021b;line.bold
-class SystemJourney #line:d0021b;line.bold
 @enduml

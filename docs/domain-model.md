@@ -556,7 +556,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Craft*. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-22-bewaffnung-small-craft.png`](changes/2026-11-22-bewaffnung-small-craft.png).
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-22b): **Schiffsbegegnungen bei Abreise und Ankunft**
+> Am 22. November 2026 freigegeben (Kennzeichen 2026-11-22b): **Schiffsbegegnungen bei Abreise und Ankunft**
 > (Owner, 22. November 2026: „Wäre nicht die Raum Begegnung beim Verlassen und betreten des Sektors
 > etc der nächste Schritt? Weil aktuell fehlen Begegnungen. Völlig“). Wer mit dem eigenen Schiff
 > springt oder im System reist, würfelt beim Start von der Welt und bei der Ankunft auf der
@@ -565,7 +565,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > mit `EncounterOccasion`, `SpaceBattle.jumpTo` und `travelTo`, `SystemFlight.departure`,
 > `BattleOutcome.departed`, `departureRoll` und `arrivalRoll` an `Journey` und `SystemJourney`, und
 > flüchtig `EncounterCheck` (der Dialog vor dem Wurf, mit Zielwert, „Würfeln“ und „Abbrechen“ zum
-> Auslassen des Wurfs, lang gedrückt); siehe *Schiffsbegegnungen bei Abreise und Ankunft*. Der Ausschnitt dazu
+> Auslassen des Wurfs, lang gedrückt; auch von Hand im Reiter Begegnung); siehe *Schiffsbegegnungen bei Abreise und Ankunft*. Der Ausschnitt dazu
 > liegt unter
 > [`changes/2026-11-22b-raumbegegnungen-reise.png`](changes/2026-11-22b-raumbegegnungen-reise.png).
 
@@ -602,7 +602,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Raumkarte und Systemflug | [views/raum.png](views/raum.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist derzeit
-2026-11-22b (Schiffsbegegnungen bei Abreise und Ankunft).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -3399,7 +3399,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     kritischem Treffer, alles auf einmal (Buchung mit `shipCost` repair); danach ist `Ship.damage`
     leer. Ausgefallene Turrets arbeiten wieder.
 
-- **Schiffsbegegnungen bei Abreise und Ankunft** (wartet auf Freigabe, Kennzeichen 2026-11-22b; Owner,
+- **Schiffsbegegnungen bei Abreise und Ankunft** (freigegeben am 22. November 2026, Kennzeichen 2026-11-22b; Owner,
   22. November 2026). Teil von Stufe 5 des [Konzepts](konzept-raumkampf.md), vorgezogen, weil im
   normalen Spiel bisher gar keine Schiffsbegegnungen vorkamen. Nach SR 42 wird beim Eintritt in ein
   System und beim Verlassen auf der *Starship Encounter Table* gewürfelt
@@ -3435,6 +3435,16 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       vor dieser Änderung zu unterscheiden.
     - Geht die App zu, solange der Dialog offen ist, ist die Prüfung verloren wie eine offene Karte:
       Beim Start fand keine Reise statt; bei der Ankunft steht die Gruppe am Ziel ohne Wurf.
+  - **Von Hand auslösen** (Owner, 22. November 2026: „man sollte auch über Begegnung manuell den
+    Wurf triggern können“). Im Reiter **Begegnung** steht der Knopf **„Schiffsbegegnung“**, wenn die
+    Gruppe ein eigenes Schiff hat und bei ihm ist (wie bei „Systemflug beginnen“) und keine
+    Begegnung läuft. Er öffnet denselben Dialog, ohne Anlass (`occasion` fehlt) und ohne Ziel. Ein
+    Angreifer öffnet die Raumkarte mit einem neuen Systemflug an der Welt der Gruppe, das eigene
+    Schiff startet wie bei „Systemflug beginnen“; eine Sichtung fragt „Zur Raumkarte“ oder
+    „Weiter“ (dann nur der Logeintrag). Läuft schon ein Systemflug, öffnet der Knopf die Raumkarte
+    und würfelt dort. Der Knopf „Schiffsbegegnung würfeln“ im Systemflug öffnet ebenfalls diesen
+    Dialog; ein fremdes Schiff taucht dort auf wie bisher. Das Wählen von Hand (Entwurf und Absicht)
+    bleibt im Systemflug.
   - **Ohne Schiff** (Strich in der Tabelle) geht die Reise weiter wie bisher. Die Würfel stehen an
     der Reise: `departureRoll` für den Start, `arrivalRoll` für die Ankunft. Kam ein Schiff, fehlt
     das Feld dort, und die Würfel stehen am `SpaceBattle` (`encounter`), nie an beiden. Reisen von

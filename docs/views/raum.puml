@@ -174,14 +174,14 @@ hide <<browser>> stereotype
     encounter: number[2] [0..1]
     reaction: number[2] [0..1]
     attack: number[2] [0..1]
-    $new("2026-11-22b", "occasion: EncounterOccasion [0..1]")
+    occasion: EncounterOccasion [0..1]
   }
-  enum EncounterOccasion <<value>> $raum $newClass("2026-11-22b") {
+  enum EncounterOccasion <<value>> $raum {
     departure
     arrival
   }
-  class EncounterCheck <<transient>> $raum $newClass("2026-11-22b") {
-    occasion: EncounterOccasion
+  class EncounterCheck <<transient>> $raum {
+    occasion: EncounterOccasion [0..1]
     /column: string
     /dm: number
     /shipOn: number [*]
@@ -209,7 +209,7 @@ hide <<browser>> stereotype
     escaped
     broken
     lost
-    $new("2026-11-22b", "departed")
+    departed
   }
   class SpaceUnit $raum {
     position: Vec
@@ -269,14 +269,14 @@ SpaceBattle "*" --> "1" ShipDesign : design
 SpaceAttack "*" --> "1" ShipWeapon : weapon
 SpaceAttack --> HitZone
 SpaceBattleEnd --> BattleOutcome
-SpaceBattle -$newArrow("2026-11-22b")-> EncounterOccasion
-SpaceBattle "*" -$newArrow("2026-11-22b")-> "0..1" Hex : jumpTo
-SpaceBattle "*" -$newArrow("2026-11-22b")-> "0..1" World : travelTo
-SystemFlight "*" -$newArrow("2026-11-22b")-> "0..1" SpaceBattle : departure
-EncounterCheck "0..1" -$newArrow("2026-11-22b")-> "0..1" SpaceBattle : sighting
-EncounterCheck -$newArrow("2026-11-22b")-> EncounterOccasion
-EncounterCheck "*" -$newArrow("2026-11-22b")-> "0..1" Hex : jumpTo
-EncounterCheck "*" -$newArrow("2026-11-22b")-> "0..1" World : travelTo
+SpaceBattle --> EncounterOccasion
+SpaceBattle "*" --> "0..1" Hex : jumpTo
+SpaceBattle "*" --> "0..1" World : travelTo
+SystemFlight "*" --> "0..1" SpaceBattle : departure
+EncounterCheck "0..1" --> "0..1" SpaceBattle : sighting
+EncounterCheck --> EncounterOccasion
+EncounterCheck "*" --> "0..1" Hex : jumpTo
+EncounterCheck "*" --> "0..1" World : travelTo
 SystemFlight "*" --> "1" SpaceUnit : party
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
 LogEntry <|-- Skimming
@@ -318,6 +318,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class SpaceBattle #line:d0021b;line.bold
-class BattleOutcome #line:d0021b;line.bold
 @enduml
