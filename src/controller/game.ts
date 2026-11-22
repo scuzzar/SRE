@@ -71,7 +71,9 @@ import {
   buyShip,
   installTurret,
   replaceTurret,
-  rollShipEncounter,
+  encounterBlocker,
+  manualEncounterBlocker,
+  departFromFlight,
   placeFoe,
   fireAt,
   repairShip,
@@ -151,7 +153,6 @@ import {
   passTime,
   setStartDate,
   travel,
-  travelShip,
   journeyBlocker,
   shipJourneyBlocker,
   rollNpcLow,
@@ -282,6 +283,12 @@ import {
   type Conflict,
   type ConflictChoice,
   rollSystemAt,
+  answerSighting,
+  openShipCheck,
+  rollShipCheck,
+  skipShipCheck,
+  type CheckStep,
+  type ShipEncounterCheck,
 } from '../model/draft';
 import { buildSnapshot, openWorldId, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
 import { spaceChoices, type OpenSpace } from './space-view';
@@ -291,7 +298,7 @@ import type { JourneyMode } from './time-view';
 /** Der Schlüssel eines Deckplan-Platzes in den Marken: „Entwurf/Platz“. */
 const slotKey = (slot: { readonly design: string; readonly name: string }): string => `${slot.design}/${slot.name}`;
 
-const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, systemJourney: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, shopFrom: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, missionEditor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, globeFocus: undefined, space: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, systemJourney: undefined, shipCheck: undefined, nextShipCheck: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, shopFrom: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, missionEditor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, globeFocus: undefined, space: undefined, selected: undefined, picking: false } as const;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -1172,8 +1179,10 @@ export class GameController {
       const index = this.campaign.log.length;
       const cleanup = { combatNote: undefined, animalNote: undefined, patronNote: undefined, rumorNote: undefined, legalNote: undefined, timeNote: undefined, shopError: undefined };
       if (journey.mode === 'ship') {
-        const after = travelShip(this.campaign, journey.to, this.deps.random, this.deps.clock);
-        this.change(after, { journey: { ...journey, done: index, error: undefined }, ...cleanup });
+        // Erst die Begegnungsprüfung beim Start von der Welt (2026-11-22b); die Reise folgt aus ihr.
+        const blocker = shipJourneyBlocker(this.campaign, journey.to);
+        if (blocker) throw new DomainError(blocker);
+        this.update({ journey: { ...journey, error: undefined }, shipCheck: openShipCheck(this.campaign.location!.world, { occasion: 'departure', jumpTo: journey.to }), ...cleanup });
         return;
       }
       const view = this.current.journey;
@@ -1187,9 +1196,9 @@ export class GameController {
     }
   }
 
-  /** Schließt den Dialog der Reise, vorher oder nach dem Ergebnis. */
+  /** Schließt den Dialog der Reise, vorher oder nach dem Ergebnis; danach kommt die Prüfung der Ankunft, falls sie wartet. */
   closeJourney(): void {
-    this.update({ journey: undefined });
+    this.update({ journey: undefined, ...this.arrivalNext() });
   }
 
   /** Reise im System: mit Ticket, mit dem eigenen Schiff oder mit einem Beiboot (`craft`, 2026-11-21b). */
@@ -1205,6 +1214,13 @@ export class GameController {
     if (!draft || draft.done !== undefined) return;
     try {
       const index = this.campaign.log.length;
+      if (draft.mode === 'ship') {
+        // Mit dem eigenen Schiff erst die Begegnungsprüfung beim Start (2026-11-22b).
+        const blocker = systemJourneyBlocker(this.campaign, draft.to, 'ship');
+        if (blocker) throw new DomainError(blocker);
+        this.update({ systemJourney: { ...draft, error: undefined }, shipCheck: openShipCheck(this.campaign.location!.world, { occasion: 'departure', travelTo: draft.to }), timeNote: undefined, shopError: undefined });
+        return;
+      }
       const after = travelInSystem(this.campaign, draft.to, draft.mode, this.deps.clock, draft.craft);
       this.change(after, { systemJourney: { ...draft, done: index, error: undefined }, timeNote: undefined, shopError: undefined });
     } catch (error) {
@@ -1213,9 +1229,112 @@ export class GameController {
     }
   }
 
-  /** Schließt den Dialog der Reise im System. */
+  /** Schließt den Dialog der Reise im System; danach kommt die Prüfung der Ankunft, falls sie wartet. */
   closeSystemJourney(): void {
-    this.update({ systemJourney: undefined });
+    this.update({ systemJourney: undefined, ...this.arrivalNext() });
+  }
+
+  // --- Schiffsbegegnungen bei Abreise und Ankunft (siehe domain-model.md, 2026-11-22b) -------------
+
+  /** Die wartende Prüfung der Ankunft wird zur offenen, wenn gerade keine andere offen ist. */
+  private arrivalNext(): Partial<ControllerState> {
+    if (this.state.nextShipCheck === undefined || this.state.shipCheck !== undefined) return {};
+    return { shipCheck: this.state.nextShipCheck, nextShipCheck: undefined };
+  }
+
+  /** Die Prüfung der Ankunft an der Welt, an der die Gruppe jetzt ist. */
+  private arrivalCheck(campaign: Campaign): ShipEncounterCheck | undefined {
+    const world = campaign.location?.world;
+    return world === undefined ? undefined : openShipCheck(world, { occasion: 'arrival' });
+  }
+
+  /** Nach einem Schritt der Prüfung: speichern, bei einer Reise deren Ergebnis zeigen und die Ankunft vormerken, bei einem Kampf die Raumkarte öffnen. */
+  private afterCheck(step: CheckStep, index: number): void {
+    const rest: Partial<ControllerState> = { shipCheck: step.check, notice: undefined };
+    if (step.travelled) {
+      const journey = this.state.journey;
+      const system = this.state.systemJourney;
+      const arrival = this.arrivalCheck(step.campaign);
+      // Der Dialog der Reise zeigt ihr Ergebnis; die Ankunft kommt, wenn er zu ist.
+      Object.assign(rest, journey ? { journey: { ...journey, done: index, error: undefined } } : system ? { systemJourney: { ...system, done: index, error: undefined } } : {});
+      if (journey || system || step.check !== undefined) Object.assign(rest, { nextShipCheck: arrival });
+      else Object.assign(rest, { shipCheck: arrival });
+    }
+    if (step.flight) Object.assign(rest, { journey: undefined, systemJourney: undefined });
+    this.change(step.campaign, rest);
+    if (step.flight && step.campaign.flight) this.openSpaceAround(step.campaign.flight.world);
+  }
+
+  /** „Würfeln“ im Dialog der Begegnungsprüfung. */
+  rollShipCheck(): void {
+    const check = this.state.shipCheck;
+    if (!check) return;
+    const index = this.campaign.log.length;
+    try {
+      this.afterCheck(rollShipCheck(this.campaign, check, this.deps.random, this.deps.clock), index);
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ shipCheck: undefined, notice: error.message });
+    }
+  }
+
+  /** „Abbrechen“, lang gedrückt: Der Wurf fällt aus (2026-11-22b). */
+  skipShipCheck(): void {
+    const check = this.state.shipCheck;
+    if (!check) return;
+    const index = this.campaign.log.length;
+    try {
+      this.afterCheck(skipShipCheck(this.campaign, check, this.deps.random, this.deps.clock), index);
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ shipCheck: undefined, notice: error.message });
+    }
+  }
+
+  /** Die Antwort auf eine Sichtung: „Zur Raumkarte“ (`toMap`) oder „Weiter“. */
+  answerSighting(toMap: boolean): void {
+    const check = this.state.shipCheck;
+    if (!check) return;
+    const index = this.campaign.log.length + 1;
+    try {
+      this.afterCheck(answerSighting(this.campaign, check, toMap, this.deps.random, this.deps.clock), index);
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ shipCheck: undefined, notice: error.message });
+    }
+  }
+
+  /** Schließt den Dialog nach dem Ergebnis; wartet die Ankunft und ist kein Dialog der Reise offen, kommt sie. */
+  closeShipCheck(): void {
+    const waiting = this.state.journey === undefined && this.state.systemJourney === undefined ? this.state.nextShipCheck : undefined;
+    this.update({ shipCheck: waiting, ...(waiting ? { nextShipCheck: undefined } : {}) });
+  }
+
+  /**
+   * „Schiffsbegegnung“ von Hand (2026-11-22b): im Reiter Begegnung und im Systemflug. Läuft ein
+   * Systemflug, öffnet es seine Raumkarte und würfelt dort.
+   */
+  openShipEncounter(): void {
+    const blocker = manualEncounterBlocker(this.campaign) ?? (this.campaign.flight ? encounterBlocker(this.campaign) : undefined);
+    if (blocker) {
+      this.update({ notice: blocker });
+      return;
+    }
+    const flight = this.campaign.flight;
+    if (flight) this.openSpaceAround(flight.world);
+    const world = flight?.world ?? launchWorld(this.campaign)!;
+    this.update({ shipCheck: openShipCheck(world), notice: undefined });
+  }
+
+  /** „Springen nach …“ bzw. „Reisen nach …“ im Systemflug: Die unterbrochene Reise geht weiter (2026-11-22b). */
+  departFlight(): void {
+    try {
+      const after = departFromFlight(this.campaign, this.deps.random, this.deps.clock);
+      this.change(after, { space: undefined, shipCheck: this.arrivalCheck(after), notice: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ notice: error.message });
+    }
   }
 
   /** Eine Notiz, oder mit `interprets` (Stelle eines Ergebnisses im Log) eine Deutung dazu. */
@@ -2598,18 +2717,12 @@ export class GameController {
     this.change(endFlight(this.campaign, this.deps.clock), { space: { world: space.world } });
   }
 
-  /** Würfelt eine Schiffsbegegnung im Systemflug (SE 13, 2026-11-21h); ohne Ergebnis nur ein Hinweis. */
+  /** „Schiffsbegegnung würfeln“ im Systemflug: öffnet den Dialog der Begegnungsprüfung (2026-11-22b). */
   rollShipEncounter(): void {
     const space = this.openSpaceState();
-    try {
-      const rolled = rollShipEncounter(this.campaign, this.deps.random, this.deps.clock);
-      const roll = `${rolled.encounter[0]} + ${rolled.encounter[1]}${rolled.total !== rolled.encounter[0] + rolled.encounter[1] ? ` (mit DM ${rolled.total})` : ''}`;
-      if (rolled.code === undefined) return this.update({ space: without(space, 'aim'), notice: `Schiffsbegegnung: ${roll} – kein Schiff.` });
-      this.change(rolled.campaign, { space: without(space, 'aim'), notice: undefined });
-    } catch (error) {
-      if (!(error instanceof DomainError)) throw error;
-      this.update({ notice: error.message });
-    }
+    const blocker = encounterBlocker(this.campaign);
+    if (blocker) return this.update({ notice: blocker });
+    this.update({ space: without(space, 'aim'), shipCheck: openShipCheck(activeFlight(this.campaign).world), notice: undefined });
   }
 
   /** Lässt ein fremdes Schiff von Hand auftauchen: Entwurf und Absicht (2026-11-21h). */

@@ -30,6 +30,7 @@ import { useWorldDock } from './sector/WorldSheet';
 import { JourneySheet } from './sector/JourneySheet';
 import { SystemJourneySheet } from './sector/SystemJourneySheet';
 import { LandingDock, LandingSheet } from './sector/LandingSheet';
+import { ShipCheckDialog } from './space/ShipCheckDialog';
 import { FieldCard, GlobeScreen } from './sector/GlobeScreen';
 import { TripRollDialog } from './sector/TripPanels';
 import { FieldDock } from './sector/FieldDock';
@@ -250,7 +251,7 @@ export function App() {
       {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
       {view.journey && <JourneySheet journey={view.journey} />}
       {view.systemJourney && <SystemJourneySheet journey={view.systemJourney} />}
-      {view.landing && !view.landing.picking && !view.systemJourney && !view.journey && <LandingSheet landing={view.landing} />}
+      {view.landing && !view.landing.picking && !view.systemJourney && !view.journey && !view.shipCheck && <LandingSheet landing={view.landing} />}
       {view.card && !view.card.forNote && <CardSheet card={view.card} />}
       {view.tripRoll && <TripRollDialog roll={view.tripRoll} />}
       {view.encounterChoice && <EncounterChoiceDialog kind={view.encounterChoice} view={view} />}
@@ -260,6 +261,7 @@ export function App() {
       ) : (
         view.result && <ResultDialog result={view.result} />
       )}
+      {view.shipCheck && <ShipCheckDialog key={`${view.shipCheck.kicker}-${view.shipCheck.phase}-${view.shipCheck.dice ? 'r' : 'n'}`} check={view.shipCheck} />}
       {view.spaceVolley && <SpaceVolley key={view.spaceVolley.key} volley={view.spaceVolley} onShot={setShot} onDone={() => game.closeVolley()} />}
       <LoadingOverlay />
       {view.campaignSheet && <CampaignSheet key={view.campaign.id} sheet={view.campaignSheet} campaigns={view.campaigns} open={view.campaign} sync={view.sync} conflicts={view.conflicts} />}

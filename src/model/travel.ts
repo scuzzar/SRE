@@ -224,7 +224,7 @@ export function lifeSupportOf(campaign: Campaign): number {
  * die App die Lebenserhaltung (2026-11-17b). Eine Woche später ist die Gruppe am Ziel, das Schiff
  * liegt dort im Hafen.
  */
-export function travelShip(campaign: Campaign, to: string, random: Random, clock: Clock): Campaign {
+export function travelShip(campaign: Campaign, to: string, random: Random, clock: Clock, options: { readonly departureRoll?: Dice; readonly extraDm?: number } = {}): Campaign {
   const blocker = shipJourneyBlocker(campaign, to);
   if (blocker) throw new DomainError(blocker);
   // Eigene Fahrzeuge bleiben am Aufenthaltsort, eine Fahrt fällt weg (siehe domain-model.md, *Fahrt*).
@@ -234,7 +234,9 @@ export function travelShip(campaign: Campaign, to: string, random: Random, clock
   const per = jumpFuelOf(ship.design);
   const jump: Dice = [d6(random), d6(random)];
   const today = dayOf(campaign);
-  const journey: Journey = { kind: 'journey', at: clock.now(), day: today, from, to, days: JOURNEY_DAYS, passengers: [], berths: [], ship: ship.id, jump, jumpDm: jumpDmOf(ship) };
+  // Beim Sprung aus dem Systemflug kommt der DM der Nähe zu einem Körper dazu (SR 28, 2026-11-22b).
+  const jumpDm = jumpDmOf(ship) + (options.extraDm ?? 0);
+  const journey: Journey = { kind: 'journey', at: clock.now(), day: today, from, to, days: JOURNEY_DAYS, passengers: [], berths: [], ship: ship.id, jump, jumpDm, ...(options.departureRoll ? { departureRoll: options.departureRoll } : {}) };
   const supplied = bookShip(campaign, -lifeSupportOf(campaign), ship.id, 'lifeSupport', clock, `Lebenserhaltung, ${travellersOf(campaign).length} Reisende`);
   const after: Campaign = {
     ...supplied,

@@ -2,6 +2,7 @@ import { keepFocus, type Campaign } from './campaign';
 import { leaveShipBehind, portDepartureBlocker, shipArrives, shipDepartureBlocker } from './landing';
 import { DomainError } from './errors';
 import type { SystemJourney } from './log';
+import type { Dice } from './rules';
 import { worldPlace } from './place';
 import type { Clock } from './ports';
 import { shipDesignOf } from './reference';
@@ -130,7 +131,7 @@ export function systemJourneyBlocker(campaign: Campaign, to: string, mode: Syste
  * `ticket`) oder mit dem eigenen Schiff. Danach sind `/days` Tage vergangen, ohne
  * Pflicht-Begegnungen, und die Gruppe ist auf der Zielwelt (ohne Stadt und Feld).
  */
-export function travelInSystem(campaign: Campaign, to: string, mode: SystemJourneyMode, clock: Clock, craft?: string): Campaign {
+export function travelInSystem(campaign: Campaign, to: string, mode: SystemJourneyMode, clock: Clock, craft?: string, departureRoll?: Dice): Campaign {
   const blocker = systemJourneyBlocker(campaign, to, mode, craft);
   if (blocker) throw new DomainError(blocker);
   // Mit Ticket oder Beiboot bleibt das eigene Schiff, wo es steht (2026-11-21, 2026-11-21b).
@@ -140,7 +141,7 @@ export function travelInSystem(campaign: Campaign, to: string, mode: SystemJourn
   const hours = flightHours(systemDistance(campaign.hexes, from, to), journeyG(campaign, mode, craft));
   const today = dayOf(campaign);
   const ship = mode === 'ship' ? shipOf(campaign)! : mode === 'craft' ? shipById(campaign, craft!) : undefined;
-  const journey: SystemJourney = { kind: 'systemJourney', at: clock.now(), day: today, from, to, hours, travellers, ...(ship ? { ship: ship.id } : {}) };
+  const journey: SystemJourney = { kind: 'systemJourney', at: clock.now(), day: today, from, to, hours, travellers, ...(ship ? { ship: ship.id } : {}), ...(departureRoll ? { departureRoll } : {}) };
   const index = campaign.log.length;
   const days = journeyDays(hours);
   const cost = mode === 'ticket' ? hours * TICKET_RATE * travellers.length : 0;

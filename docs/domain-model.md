@@ -1507,7 +1507,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       folgt daraus: Summe plus `jumpDm` **13 oder mehr**. Die SR-DMs kommen erst ins Spiel, wenn
       die App sie abbildet (Entscheidung des Owners, 16. November 2026): seit 2026-11-21f **+1**,
       wenn der Sprung unraffinierten Treibstoff verbraucht (dann ist mit einer 12 ein Fehlsprung
-      möglich); +5/+15 nahe an einem Himmelskörper fehlen noch. Der DM steht an der Reise
+      möglich); seit 2026-11-22b **+5/+15** nahe an einem Himmelskörper beim Sprung aus dem
+      Systemflug (siehe *Schiffsbegegnungen bei Abreise und Ankunft*). Der DM steht an der Reise
       (`jumpDm`), damit ein alter Wurf nicht rückwirkend kippt; Passagen haben 0. Der Wurf steht an
       der Reise im Log. Was ein Fehlsprung folgt, entscheidet der Owner – die App würfelt nur,
       sie würfelt keinen Zielort und zerstört kein Schiff.
@@ -3428,8 +3429,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     „4, 9+“; kommt bei keiner Summe ein Schiff, sagt er das.
     - **„Würfeln“** würfelt mit Würfelanimation wie beim Feuer und zeigt das Ergebnis im Dialog
       (Wurf, Schiff oder keins, Reaktion).
-    - **„Abbrechen“** wirkt nur **lang gedrückt** (⚑ eine halbe Sekunde; ein kurzes Tippen sagt
-      nur „lang drücken“): Der Wurf fällt aus, als wäre kein Schiff gekommen, und die Reise geht
+    - **„Abbrechen“** wirkt nur **lang gedrückt** (⚑ so lange wie die übrigen lang gedrückten Knöpfe
+      der App; ein kurzes Tippen hebt nur den Hinweis „Lange drücken: …“ hervor): Der Wurf fällt aus, als wäre kein Schiff gekommen, und die Reise geht
       weiter. Dann steht kein Wurf an der Reise (`departureRoll` bzw. `arrivalRoll` fehlt) und kein
       `SpaceBattle` im Log. ⚑ Ein ausgelassener Wurf ist also im Log nicht von einer Reise von
       vor dieser Änderung zu unterscheiden.
@@ -3866,6 +3867,14 @@ Diagramm mit diesen Ausnahmen:
   - **Nebenwelten** (2026-11-20c) sind gebaut (`rollSubordinates`). Systeme von davor bekommen die
     Werte beim Öffnen der Kampagne mit Würfen aus Schlüssel und Feld; bis dahin lässt die Prüfung
     Nebenwelten ohne Raumhafen zu, aber nur alle zusammen.
+- **Schiffsbegegnungen bei Abreise und Ankunft** (2026-11-22b) sind gebaut (`model/ship-encounter.ts`,
+  `model/draft/ship-check.ts`, Wurf in `model/space-combat.ts`). Abweichungen:
+  - **`EncounterCheck`** heißt im Code `ShipEncounterCheck`, weil `EncounterCheck` schon der Test der
+    Encounter Checklist ist (`model/encounter-check.ts`). `/column`, `/dm` und `/shipOn` rechnen
+    `checkColumn` und `checkShipOn`; der Wurf selbst liegt in der Prüfung als `result`.
+  - **`SystemFlight → SpaceBattle : departure`** ist im Code das Ziel selbst (`departure` mit
+    `jumpTo` bzw. `travelTo`), nicht der Verweis auf den Logeintrag.
+  - Eine **Reise im System mit Beiboot** würfelt noch nicht, nur die mit dem eigenen Schiff.
 - **Raumkampf, Stufe 2** (2026-11-21h) ist gebaut (`model/space-combat.ts`), auf Wunsch des Owners
   schon vor der Freigabe des Bilds. Abweichungen: Gefeuert wird von der Einheit der Gruppe
   (`SystemFlight.party`, 2026-11-21b) aus, und fremde Schiffe zielen auf sie; andere eigene Einheiten

@@ -4,7 +4,7 @@ import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { HoldButton } from '../HoldButton';
 import type { EncounterOptions } from './EncounterScreen';
-import { BadgeIcon, BriefcaseIcon, CalendarIcon, ClockIcon, EncounterIcon, PawIcon, RouteIcon, RumorIcon } from '../icons';
+import { BadgeIcon, BriefcaseIcon, CalendarIcon, ClockIcon, EncounterIcon, PawIcon, RouteIcon, RumorIcon, ShipIcon } from '../icons';
 
 type Check = ChecksView[keyof ChecksView] | undefined;
 
@@ -37,12 +37,20 @@ export function EncounterDock({ view, options }: { view: Snapshot; /** Auf dem B
   const animals = () => (options.manual ? game.chooseEncounter('animal') : game.rollAnimals());
   return (
     <section className="dock encounter-dock" aria-label="Begegnung und Zeit">
-      <div className="actions oracle-actions encounter-tests">
+      <div className={`actions oracle-actions encounter-tests${view.shipEncounter ? ' with-ship' : ''}`}>
         <Test icon={<EncounterIcon />} title="Zufall" label="Zufallsbegegnung würfeln" check={checks?.random} disabled={randomOff} onPress={random} onHold={() => game.rollEncounter(undefined, undefined, true)} />
         <Test icon={<PawIcon />} title="Tiere" label="Tiere würfeln" check={checks?.animal} disabled={animalsOff} onPress={animals} onHold={() => game.rollAnimals(undefined, true)} />
         <Test icon={<BriefcaseIcon />} title="Patron" label="Patron würfeln" check={checks?.patron} disabled={!view.patron} onPress={() => game.rollPatron()} onHold={() => game.rollPatron(true)} />
         <Test icon={<RumorIcon />} title="Gerücht" label="Gerücht würfeln" check={checks?.rumor} disabled={!view.rumor} onPress={() => game.rollRumor()} onHold={() => game.rollRumor(true)} />
         <Test icon={<BadgeIcon />} title="Polizei" label="Polizei würfeln" check={checks?.legal} disabled={legalOff} onPress={() => game.rollLegal()} onHold={() => game.rollLegal(true)} />
+        {view.shipEncounter && (
+          // Schiffsbegegnung von Hand (2026-11-22b): öffnet den Dialog mit Zielwert, Würfeln und Abbrechen.
+          // Gesperrt bleibt er antippbar: Der Hinweis sagt dann, warum nicht.
+          <button type="button" className={`action ${view.shipEncounter.blocker ? 'note met' : 'dice'} encounter-test`} title={view.shipEncounter.blocker ?? 'Schiffsbegegnung würfeln (SE 13)'} aria-label="Schiffsbegegnung würfeln" onClick={() => game.openShipEncounter()}>
+            <ShipIcon />
+            <span className="test-title">Schiff</span>
+          </button>
+        )}
       </div>
       {time && (
         <div className="actions oracle-actions encounter-time">

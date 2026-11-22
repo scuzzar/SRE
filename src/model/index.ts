@@ -43,3 +43,4 @@ export * from './trip';
 export * from './trip-encounter';
 export * from './vehicle';
 export * from './landing';
+export * from './ship-encounter';

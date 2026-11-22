@@ -105,6 +105,18 @@ export function SpaceCard({ space }: { space: SpaceView }) {
               ))}
             </div>
           )}
+          {space.departure && (
+            // Die Reise, die eine Begegnung beim Start unterbrach, geht weiter (2026-11-22b).
+            <div className="space-departure">
+              <button type="button" className="primary compact" title={space.departure.blocker} disabled={space.departure.blocker !== undefined} onClick={() => game.departFlight()}>
+                {space.departure.label}
+              </button>
+              <p className="muted small">
+                {space.departure.blocker ??
+                  (space.departure.jumpDm === undefined ? 'Ohne neuen Wurf beim Start; bei der Ankunft wird gewürfelt.' : `Fehlsprung bei 13+ auf 2W6${space.departure.jumpDm ? `, hier DM +${space.departure.jumpDm} (innerhalb ${space.departure.jumpDm === 15 ? '10' : '100'} Durchmessern)` : ', außerhalb der Sprunggrenzen ohne DM'}.`)}
+              </p>
+            </div>
+          )}
           <EncounterChoice space={space} />
           <p className="globe-sheet-sub">Vom weißen Punkt „ohne Schub“ aus ziehen oder in seinen Kreis tippen: Wohin der Finger zeigt, dort steht das Schiff nach der Runde; der Kreis ist der höchste Schub (5.000 km je G). Jede Raumrunde beginnt ohne Schub. Mit höchstens {num(space.landingKms)} km/s aufsetzen heißt landen; führt die Bahn auf die Oberfläche und reicht der Schub, bremst die Landeautomatik im letzten Stück selbst.</p>
           <button type="button" className="ghost compact" onClick={() => game.endFlight()}>

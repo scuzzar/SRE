@@ -656,6 +656,7 @@ function EntryBody({ item }: { item: LogItem }) {
           <span className="entry-detail">
             {item.fromDate} → {item.toDate} · {item.flight}
           </span>
+          {item.encounterRolls && <span className="entry-detail">{item.encounterRolls}</span>}
           <span className="entry-question small">
             {item.how} · {item.travellers.join(', ')}
           </span>
@@ -669,7 +670,7 @@ function EntryBody({ item }: { item: LogItem }) {
           </span>
           <span className="entry-detail">
             {item.design}
-            {item.encounter ? ` · Begegnung ${item.encounter[0]} + ${item.encounter[1]}` : ' · von Hand'}
+            {item.encounter ? ` · Begegnung${item.occasion ? ` ${item.occasion}` : ''} ${item.encounter[0]} + ${item.encounter[1]}` : ' · von Hand'}
             {item.reaction ? ` · Reaktion ${item.reaction[0]} + ${item.reaction[1]}` : ''}
             {item.attack ? ` · Angriff ${item.attack[0]} + ${item.attack[1]}` : ''}
           </span>
@@ -717,7 +718,7 @@ export function JourneyBody({ item }: { item: JourneyItem }) {
       {item.ship !== undefined ? (
         <span className={`entry-question small${item.misjump ? ' negative' : ''}`}>
           mit {item.ship} · Sprungwurf {item.jump?.[0]} + {item.jump?.[1]}
-          {item.jumpDm === 0 ? '' : ` + ${item.jumpDm} (unraffiniert)`} = {(item.jump?.[0] ?? 0) + (item.jump?.[1] ?? 0) + item.jumpDm}
+          {item.jumpDm === 0 ? '' : ` + ${item.jumpDm} (${item.jumpDmText})`} = {(item.jump?.[0] ?? 0) + (item.jump?.[1] ?? 0) + item.jumpDm}
           {item.misjump ? ' · Fehlsprung (13+)!' : ''}
         </span>
       ) : (
@@ -725,6 +726,7 @@ export function JourneyBody({ item }: { item: JourneyItem }) {
           {item.passengers.map((p) => `${p.name}: ${p.passage}`).join(' · ')}
         </span>
       )}
+      {item.encounterRolls && <span className="entry-detail">{item.encounterRolls}</span>}
       {item.berths.length > 0 && (
         <ul className="journey-berths">
           {item.berths.map((b, i) => (

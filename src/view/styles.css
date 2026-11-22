@@ -8371,6 +8371,11 @@ button:disabled {
   gap: 4px;
 }
 
+/* Mit eigenem Schiff kommt die Schiffsbegegnung dazu (2026-11-22b). */
+.dock .actions.encounter-tests.with-ship {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
 .encounter-tests .action {
   min-height: 54px;
   padding: 4px 2px;
@@ -9729,4 +9734,20 @@ button:disabled {
   padding-bottom: 24px;
   gap: 12px;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.88) 18%, rgba(0, 0, 0, 0.94));
+}
+
+/* Begegnungsprüfung (2026-11-22b): Zielwert über den Würfeln, der Hinweis zum langen Druck nach kurzem Tippen hervorgehoben. */
+.ship-check-target {
+  margin: 4px 0 8px;
+  text-align: center;
+}
+
+.ship-check-nudge {
+  color: var(--accent, inherit);
+  font-weight: 600;
+}
+
+.ship-check .shop-buy-title {
+  font-size: clamp(22px, 7vw, 30px);
+  overflow-wrap: anywhere;
 }

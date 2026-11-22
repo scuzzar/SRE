@@ -815,11 +815,50 @@ describe('Begegnung und Kampfsimulation', () => {
     random.queue.push(3);
     game.openJourney();
     expect(game.snapshot().journey).toMatchObject({ toName: 'Außenposten', mode: 'ship', cost: 0, ship: { name: 'Scout/Courier', design: 'Scout/Courier', jump: 2, fuel: 40, perJump: 20, after: 20, blocker: undefined } });
-    random.queue.push(2, 5);
+    // Erst die Begegnungsprüfung beim Start (2026-11-22b): Zielwert, dann der Wurf ohne Schiff (2).
     game.travel();
+    expect(game.snapshot().shipCheck).toMatchObject({ phase: 'ready', column: 'C', kicker: expect.stringContaining('Start von Regina') });
+    expect(game.snapshot().shipCheck?.target).toMatch(/\+/);
+    random.queue.push(1, 1, 2, 5);
+    game.rollShipCheck();
+    expect(game.snapshot().shipCheck).toMatchObject({ phase: 'rolled', dice: [1, 1], text: 'Kein Schiff.', next: 'Weiterreisen' });
     expect(game.snapshot().journey?.result).toMatchObject({ ship: 'Scout/Courier', jump: [2, 5], misjump: false, passengers: [], berths: [] });
     expect(game.snapshot()).toMatchObject({ location: '0103', time: { label: 'Sonntag, 008-1105' } });
+    game.closeShipCheck();
+    expect(game.snapshot().shipCheck).toBeUndefined();
+    // Nach dem Dialog der Reise die Prüfung der Ankunft; lang gedrücktes Abbrechen lässt den Wurf aus.
     game.closeJourney();
+    expect(game.snapshot().shipCheck).toMatchObject({ phase: 'ready', kicker: expect.stringContaining('Ankunft in Außenposten'), column: 'X' });
+    game.skipShipCheck();
+    expect(game.snapshot().shipCheck).toBeUndefined();
+    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'journey' });
+  });
+
+  it('Reise: Ein Pirat beim Start öffnet die Raumkarte; „Springen nach …“ springt von dort mit DM +15 (2026-11-22b)', async () => {
+    const random = queued();
+    const outpost = { ...regina, column: 1, row: 3, name: 'Außenposten', uwp: { ...regina.uwp, starport: 31 } };
+    const withShip = addShip(book(setHexes(createCampaign(), [regina, outpost].map(hexFromFlat)), 'income', 10_000, fixedClock()), 'S', undefined).campaign;
+    const { game } = await started(random, memoryRepository(withShip));
+    game.chooseHex(1, 1);
+    game.stayHere();
+    game.closeWorld();
+    game.chooseHex(1, 3);
+    random.queue.push(3);
+    game.openJourney();
+    game.travel();
+    const dm = game.snapshot().shipCheck!.dm;
+    // Spalte C, 10 ist ein Patrol Cruiser als Pirat; Abstand 1 + 1 Raumbänder, Richtung 1 × 60°.
+    random.queue.push(5, 5 - dm, 1, 1, 1);
+    game.rollShipCheck();
+    expect(game.snapshot().shipCheck).toMatchObject({ phase: 'rolled', next: 'Zur Raumkarte', text: expect.stringContaining('Pirat') });
+    expect(game.snapshot().journey).toBeUndefined();
+    expect(game.snapshot().space?.departure).toMatchObject({ label: 'Springen nach Außenposten', jumpDm: 15, blocker: undefined });
+    game.closeShipCheck();
+    random.queue.push(3, 3);
+    game.departFlight();
+    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'journey', to: 'Außenposten', jumpDm: 15 });
+    expect(game.snapshot().log.at(-2)).toMatchObject({ kind: 'spaceBattleEnd', outcome: 'abgereist' });
+    expect(game.snapshot().shipCheck?.kicker).toContain('Ankunft in Außenposten');
   });
 
   it('Reise: beides geht – Umschalten zwischen Passage und eigenem Schiff, Passage ist vorgeschlagen', async () => {
@@ -2270,12 +2309,17 @@ describe('Nebenwelten und Reise im System (2026-11-20d)', () => {
     game.chooseSystemJourneyMode('ship');
     const day = game.snapshot().time?.label;
     game.travelInSystem();
+    // Mit dem eigenen Schiff erst die Begegnungsprüfung (2026-11-22b); lang gedrückt fällt der Wurf aus.
+    expect(game.snapshot().shipCheck?.phase).toBe('ready');
+    game.skipShipCheck();
     expect(game.snapshot().systemJourney?.result).toMatchObject({ to: 'Tertius', how: expect.stringContaining('mit Kestrel') });
     expect(game.snapshot().location).toBe(body.id);
     expect(game.snapshot().time?.label).not.toBe(day);
     expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'systemJourney', to: 'Tertius' });
     game.closeSystemJourney();
     expect(game.snapshot().systemJourney).toBeUndefined();
+    expect(game.snapshot().shipCheck?.kicker).toContain('Ankunft in Tertius');
+    game.skipShipCheck();
     // Im Subsektor kommt im System der Gruppe zuerst ihre Welt (Owner, 21. November 2026), auch doppelt angetippt.
     game.chooseHex(4, 5);
     expect(game.snapshot().world?.id).toBe(body.id);
