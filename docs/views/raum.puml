@@ -158,6 +158,10 @@ hide <<browser>> stereotype
     crew
     criticalComputer
     explode
+    drive
+    cabin
+    weapons
+    criticalDrive
   }
   enum Intent <<value>> $raum {
     attack
@@ -180,6 +184,7 @@ hide <<browser>> stereotype
     dm: number
     bands: number
     computerHits: number
+    noComputer: boolean
     /hit: boolean
     hits: HitZone [*]
   }

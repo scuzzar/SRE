@@ -154,6 +154,8 @@ export interface SpaceAttack extends LogEntryBase {
   /** Woraus der DM kam (2026-11-21i): Entfernung in Raumbändern und Computer-Treffer des Schützen; fehlt in Einträgen von vorher. */
   readonly bands?: number;
   readonly computerHits?: number;
+  /** Ein Small Craft ohne Computer schoss mit DM −1 (SE 13, 2026-11-22); fehlt heißt nein. */
+  readonly noComputer?: boolean;
   readonly hits: readonly HitZone[];
 }
 

@@ -159,12 +159,12 @@ export function ShipScreen({ view }: { view: Snapshot }) {
                   <span className="tile-text negative">{boat.damage.length} Treffer</span>
                   <span className="tile-sub">
                     {boat.damage.join(', ')}
-                    {boat.turretsOut.length > 0 ? ` · Turret ${boat.turretsOut.join(', ')} ausgefallen` : ''} · Reparatur in der Werft
+                    {boat.turretsOut.length > 0 && boat.craftWeapons === undefined ? ` · Turret ${boat.turretsOut.join(', ')} ausgefallen` : ''} · Reparatur in der Werft
                   </span>
                 </div>
               )}
               <div className="tile">
-                <span className="tile-label">Hardpoints</span>
+                <span className="tile-label">{boat.craftWeapons !== undefined ? 'Bewaffnung' : 'Hardpoints'}</span>
                 <span className="tile-text">{armamentLine(boat)}</span>
               </div>
               <div className="tile">
@@ -425,6 +425,7 @@ function Details({ boat }: { boat: Boat }) {
 
 /** Die Bewaffnung in einer Zeile: Hardpoints, Turrets und Waffen, oder „unbewaffnet“. */
 function armamentLine(boat: Boat): string {
+  if (boat.craftWeapons !== undefined) return boat.craftWeapons;
   const weapons = boat.turrets.reduce((n, t) => n + t.weapons.length, 0);
   if (boat.turrets.length === 0) return `${boat.hardpoints} · unbewaffnet`;
   return `${boat.turrets.length} / ${boat.hardpoints} Turrets · ${weapons === 0 ? 'unbestückt' : `${weapons} Waffe${weapons === 1 ? '' : 'n'}`}`;
@@ -533,8 +534,8 @@ function RepairSection({ boat, funds }: { boat: Boat; funds: number }) {
       <p>
         {boat.name}: {boat.damage.join(', ')}
       </p>
-      {boat.armamentBlocker && <p className="combat-hint">{boat.armamentBlocker.replace('Umrüsten', 'Reparieren')}</p>}
-      <button type="button" className="action gold" disabled={boat.armamentBlocker !== undefined || boat.repairCost > funds} onClick={() => (haptic('pick'), game.repairShip())}>
+      {boat.repairBlocker && <p className="combat-hint">{boat.repairBlocker}</p>}
+      <button type="button" className="action gold" disabled={boat.repairBlocker !== undefined || boat.repairCost > funds} onClick={() => (haptic('pick'), game.repairShip())}>
         Alles reparieren · {mcr(boat.repairCost)} MCr
       </button>
       <p className="shop-hint muted">Hausregel: Cr 100.000 je Treffer, Cr 1.000.000 je kritischem Treffer; die SR rechnen mit dem Neuwert der Baugruppen, die die App nicht kennt.</p>
@@ -687,6 +688,8 @@ function EditSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
   const [cargo, setCargo] = useState(String(boat.cargo));
   const tons = (value: string, max: number) => /^\d+$/.test(value.trim()) && Number(value) <= max;
   const valid = name.trim() !== '' && tons(fuel, boat.fuelMax) && tons(cargo, boat.cargoMax);
+  // Ausblenden erst beim zweiten Tippen, wie Löschen sonst auch (Owner, 22. November 2026).
+  const [retiring, setRetiring] = useState(false);
   return (
     <SheetFrame
       title="Schiff bearbeiten"
@@ -694,6 +697,20 @@ function EditSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
       onClose={onClose}
       foot={
         <>
+          <button
+            type="button"
+            className="action soft danger"
+            disabled={boat.retireBlocker !== undefined}
+            title={boat.retireBlocker}
+            onClick={() => {
+              if (!retiring) return setRetiring(true);
+              haptic('pick');
+              game.retireShip();
+              onClose();
+            }}
+          >
+            {retiring ? 'Wirklich ausblenden?' : 'Ausblenden'}
+          </button>
           <button type="button" className="action soft" onClick={onClose}>
             Abbrechen
           </button>
@@ -725,6 +742,11 @@ function EditSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
         <input type="number" inputMode="numeric" min={0} max={boat.cargoMax} value={cargo} onChange={(e) => setCargo(e.target.value)} />
       </label>
       <p className="shop-hint muted">Die Belegung der Kabinen ergibt sich aus der Gruppe; zahlende Passagiere kommen mit dem Handel.</p>
+      <p className="shop-hint muted">
+        Ausblenden (für die Spielleitung): {boat.name}
+        {boat.craft.length > 0 ? ' und seine Beiboote verschwinden' : ' verschwindet'} aus dem Reiter Schiff, gelöscht wird nichts – Buchungen und Log zeigen {boat.craft.length > 0 ? 'sie' : 'es'} weiter. Raten fallen keine mehr an. Danach lässt sich ein neues Schiff oder ein eigenständiges Small Craft kaufen.
+      </p>
+      {boat.retireBlocker && <p className="combat-hint">Ausblenden: {boat.retireBlocker}</p>}
     </SheetFrame>
   );
 }

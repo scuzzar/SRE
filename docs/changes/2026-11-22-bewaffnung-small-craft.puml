@@ -1,0 +1,222 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-22"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-22: Bewaffnung der Small Craft: statt Hardpoints eine Small Craft Weaponry mit bis zu drei Waffen, ab Werft mit Lasern (ShipDesign.lasers, TurretType.smallCraft); Trefferzonen der Small Craft; DM −1 ohne Computer (SpaceAttack.noComputer)
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+hide <<browser>> stereotype
+
+' Kampagne und Charaktere
+
+' Schiffe
+  class Ship $schiffe
+  class Turret $schiffe
+  class DesignTurret <<reference>> $schiffe
+  class TurretType <<reference>> $schiffe {
+    name: string
+    slots: number
+    price: number
+    $new("2026-11-22", "smallCraft: boolean")
+  }
+  class ShipWeapon <<reference>> $schiffe
+  class ShipDesign <<reference>> $schiffe {
+    code: string
+    kind: ShipKind
+    /jumpFuel: number
+    name: string
+    hull: number
+    jump: number
+    maneuver: number
+    fuel: number
+    staterooms: number
+    lowBerths: number
+    hardpoints: number
+    cargo: number
+    crew: string
+    basePrice: number
+    months: number [0..1]
+    streamlined: boolean
+    $new("2026-11-22", "lasers: number [0..1]")
+  }
+  enum ShipKind <<value>> $schiffe
+  class ComputerModel <<reference>> $schiffe
+  class DeckPlan <<browser>> $schiffe
+
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+  class ShipDamage <<value>> $raum
+  enum HitZone <<value>> $raum {
+    powerPlant
+    maneuver
+    jump
+    fuel
+    hull
+    hold
+    computer
+    turret
+    criticalPowerPlant
+    criticalManeuver
+    criticalJump
+    crew
+    criticalComputer
+    explode
+    $new("2026-11-22", "drive")
+    $new("2026-11-22", "cabin")
+    $new("2026-11-22", "weapons")
+    $new("2026-11-22", "criticalDrive")
+  }
+  class SpaceAttack $raum {
+    round: number
+    attacker: string
+    target: string
+    turret: number
+    dice: number[2]
+    dm: number
+    bands: number
+    computerHits: number
+    $new("2026-11-22", "noComputer: boolean")
+    /hit: boolean
+    hits: HitZone [*]
+  }
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+
+' Missionen
+
+' Verlauf
+
+' Zeit und Reisen
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+
+' Referenzdaten
+' Fahrzeuge und Wege auf der Oberfläche
+
+' Kampagne
+
+' Schiffe
+Ship "*" --> "1" ShipDesign : design
+Turret "*" --> "1" TurretType : type
+ShipDesign "1" *-- "0..*" DesignTurret : turrets {ordered}
+DesignTurret "*" --> "1" TurretType : type
+ShipDesign "*" --> "0..1" ComputerModel : computer
+ShipDesign --> ShipKind
+ShipDesign "*" --> "*" ShipDesign : craft {ordered}
+
+' Raumkarte und Systemflug
+ShipDamage --> HitZone
+SpaceAttack "*" --> "1" ShipWeapon : weapon
+SpaceAttack --> HitZone
+DeckPlan "*" --> "1" ShipDesign : design
+
+' Zeit und Reisen
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
+endlegend
+class TurretType #line:d0021b;line.bold
+class ShipDesign #line:d0021b;line.bold
+class HitZone #line:d0021b;line.bold
+class SpaceAttack #line:d0021b;line.bold
+@enduml
