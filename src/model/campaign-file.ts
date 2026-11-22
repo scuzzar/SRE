@@ -23,6 +23,7 @@ import { battleOutcomes, checkDamage, hitZones, intents } from './space-combat';
 import { characteristics } from './rules';
 import { bookingKinds, shipCosts, validateBookings, type Booking } from './shop';
 import type { Ship } from './ship';
+import { storedTurrets } from './ship';
 import { checkTrip } from './trip';
 import { checkFlight, type Departure, type SystemFlight } from './flight';
 import { checkVoyage } from './voyage';
@@ -754,10 +755,7 @@ function flightFromFile(flight: z.infer<typeof FlightSchema>): SystemFlight {
 
 /** Die Turrets eines Schiffs aus der Datei; Dateien von vor 2026-11-21g haben keine: Das Schiff kam mit denen seines Entwurfs. */
 function turretsFromFile(ship: z.infer<typeof ShipSchema>): Ship['turrets'] {
-  // Vor 2026-11-22 war kein Small Craft bewaffnet: Eines ohne Turrets bekommt die seines Entwurfs.
-  const unarmedCraft = ship.turrets?.length === 0 && shipDesignOf(ship.design).kind === 'smallCraft';
-  if (ship.turrets !== undefined && !unarmedCraft) return ship.turrets.map((t) => ({ type: t.type, weapons: [...t.weapons] }));
-  return shipDesignOf(ship.design).turrets.map((t) => ({ type: t.type, weapons: [...t.weapons] }));
+  return storedTurrets(ship.design, ship.turrets);
 }
 
 function stripped<T extends object>(value: T): T {

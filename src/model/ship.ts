@@ -215,6 +215,16 @@ export function designTurrets(design: string): Turret[] {
   return shipDesignOf(design).turrets.map((t) => ({ type: t.type, weapons: [...t.weapons] }));
 }
 
+/**
+ * Die Turrets eines gespeicherten Schiffs: die gespeicherten, soweit es welche hat (2026-11-21g).
+ * Spielstände von davor haben keine; vor 2026-11-22 war kein Small Craft bewaffnet, eines ohne
+ * Turrets bekommt die seines Entwurfs – beide bekommen die des Entwurfs.
+ */
+export function storedTurrets(design: string, stored: readonly Turret[] | undefined): Turret[] {
+  if (stored !== undefined && !(stored.length === 0 && shipDesignOf(design).kind === 'smallCraft')) return stored.map((t) => ({ type: t.type, weapons: [...t.weapons] }));
+  return designTurrets(design);
+}
+
 export function addShip(campaign: Campaign, design: string, initialLoan: number | undefined): { campaign: Campaign; ship: Ship } {
   const plan = shipDesignOf(design);
   const active = shipOf(campaign);

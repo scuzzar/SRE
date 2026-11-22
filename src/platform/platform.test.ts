@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { describe, expect, it } from 'vitest';
-import { appendLog, createCampaign, createDemoCampaign, type Campaign, type Character, type LogEntry } from '../model';
+import { appendLog, createCampaign, createDemoCampaign, designTurrets, type Campaign, type Character, type LogEntry } from '../model';
 import { fixedClock } from '../model/testing';
 import { systemClock } from './clock';
 import { cryptoRandom } from './random';
@@ -139,6 +139,28 @@ describe('Ältere Spielstände', () => {
       { column: 1, row: 1, empty: true, worlds: [] },
     ]);
     expect(upgraded(upgraded(old)).hexes).toEqual(upgraded(old).hexes);
+  });
+
+  it('gibt Schiffen von vor den Turrets am Schiff (2026-11-21g) die des Entwurfs und ergänzt fehlende Felder (2026-11-22d)', () => {
+    const demo = createDemoCampaign(fixedClock());
+    const ship = demo.ships[0]!;
+    // Ein Schiff von vor 2026-11-21g hält keine Turrets, von vor 2026-11-21f keinen unraffinierten Treibstoff; ein Small Craft von vor 2026-11-22 hat leere Turrets.
+    const old = {
+      ...demo,
+      ships: [
+        { ...ship, turrets: undefined, software: undefined, unrefined: undefined, retired: undefined },
+        { id: 's9', design: 'boat', name: 'Boot', fuel: 1, cargo: 0, price: 0, turrets: [] },
+      ],
+    } as unknown as Campaign;
+    const back = upgraded(old);
+    expect(back.ships[0]?.turrets).toEqual(designTurrets(ship.design));
+    expect(back.ships[0]?.software).toEqual([]);
+    expect(back.ships[0]?.unrefined).toBe(0);
+    expect(back.ships[0]?.retired).toBe(false);
+    // Ein Small Craft mit leeren Turrets (von vor 2026-11-22) bekommt die des Entwurfs.
+    expect(back.ships[1]?.turrets).toEqual(designTurrets('boat'));
+    const armed = { ...demo, ships: [{ ...ship, turrets: [{ type: 'double', weapons: [] }] }] };
+    expect(upgraded(armed).ships[0]?.turrets).toEqual([{ type: 'double', weapons: [] }]);
   });
 
   it('übernehmen die eine Kampagne aus der Zeit vor mehreren Kampagnen', async () => {

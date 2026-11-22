@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable, type Table } from 'dexie';
 import { cryptoKeys } from './keys';
-import { hexFromFlat, hexFromRolls, keepFocus, type FlatHex, START_DAY, settleStash, upgradeDistances, upgradeNpcs, upgradeOracle, type Campaign, type CampaignId, type CampaignRepository, type DeckMark, type DeckPlan, type Encounter, type Hex, type LegacyWorldRoll, type SyncMark, type TrayStop, TRAY_STOPS } from '../model';
+import { hexFromFlat, hexFromRolls, keepFocus, type FlatHex, START_DAY, settleStash, storedTurrets, upgradeDistances, upgradeNpcs, upgradeOracle, type Campaign, type CampaignId, type CampaignRepository, type DeckMark, type DeckPlan, type Encounter, type Hex, type LegacyWorldRoll, type Ship, type SyncMark, type TrayStop, TRAY_STOPS } from '../model';
 
 /** Eine Kampagne liegt unter ihrer Id. */
 interface StoredCampaign {
@@ -170,7 +170,10 @@ export class DexieCampaignRepository implements CampaignRepository {
  * Vor 2026-11-08c waren die NSC einer Begegnung eine eigene Art; heute sind sie Charaktere (`upgradeNpcs`).
  * Vor 2026-11-14d war eine Orakelantwort ein eigener Eintrag; heute steht sie in der Kartenauswahl (`upgradeOracle`).
  * Vor 2026-11-18 gab es keine Missionen; solche Kampagnen bekommen eine leere Liste. Vor 2026-11-18b
- * hatten Missionen keine Beteiligten; sie bekommen eine leere Liste.
+ * hatten Missionen keine Beteiligten; sie bekommen eine leere Liste. Vor den Turrets am Schiff
+ * (2026-11-21g) hatten Schiffe keine eigenen; sie bekommen die ihres Entwurfs, fehlenden
+ * unraffinierten Treibstoff und Software als 0 bzw. keine Programme, und fehlendes `retired` heißt
+ * „nicht ausgeblendet“ (2026-11-22d).
  * Vor den Orten (2026-11-14j) waren Aufenthaltsort und Ort eines NSC nur die Welt als Text (0304);
  * heute sind sie ein Ort. Vor den Städtenamen (2026-11-14k) hatten Städte keinen Namen; sie heißen
  * „Stadt 1“, „Stadt 2“ usw.
@@ -207,10 +210,15 @@ export function upgraded(campaign: Campaign): Campaign {
     };
   });
   const location = typeof (campaign.location as unknown) === 'string' ? { location: { world: campaign.location as unknown as string } } : {};
+  // Schiffe von vor den Turrets am Schiff (2026-11-21g), dem unraffinierten Treibstoff (2026-11-21f) und der Software: die Turrets des Entwurfs, kein unraffinierter Treibstoff, keine Software; ausgeblendet war keins.
+  const ships = (campaign.ships ?? []).map((s) => {
+    const old = s as Partial<Ship>;
+    return { ...s, unrefined: old.unrefined ?? 0, retired: old.retired ?? false, software: old.software ?? [], turrets: storedTurrets(s.design, old.turrets) };
+  });
   // Begegnungen von vor den Range Bands bzw. von vor 2026-11-08d macht upgradeDistances zu solchen mit Startband.
   const encounters = (campaign.encounters ?? []).map((e): Encounter => ({ ...e, round: e.round ?? 1, acted: e.acted ?? [] }));
   // Spielstände von vor dem Gruppengepäck: Was ein SC nicht ausgerüstet hat, kommt ins Gepäck (settleStash).
-  const upgraded = settleStash(upgradeDistances(upgradeNpcs(upgradeOracle({ ...campaign, ...location, characters, log, hexes, bookings: campaign.bookings ?? [], ships: campaign.ships ?? [], encounters, stash: campaign.stash ?? [], day: (campaign as Partial<Campaign>).day ?? START_DAY, missions: ((campaign as Partial<Campaign>).missions ?? []).map((m) => ({ ...m, people: (m as Partial<typeof m>).people ?? [] })) }))));
+  const upgraded = settleStash(upgradeDistances(upgradeNpcs(upgradeOracle({ ...campaign, ...location, characters, log, hexes, bookings: campaign.bookings ?? [], ships, encounters, stash: campaign.stash ?? [], day: (campaign as Partial<Campaign>).day ?? START_DAY, missions: ((campaign as Partial<Campaign>).missions ?? []).map((m) => ({ ...m, people: (m as Partial<typeof m>).people ?? [] })) }))));
   return keepFocus(upgraded, upgraded);
 }
 
