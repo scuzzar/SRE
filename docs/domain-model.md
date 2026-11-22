@@ -555,6 +555,18 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `cabin`, `weapons`, `criticalDrive` und `SpaceAttack.noComputer`; siehe *Bewaffnung der Small
 > Craft*. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-22-bewaffnung-small-craft.png`](changes/2026-11-22-bewaffnung-small-craft.png).
+>
+> **Wartet auf Freigabe** (Kennzeichen 2026-11-22b): **Schiffsbegegnungen bei Abreise und Ankunft**
+> (Owner, 22. November 2026: „Wäre nicht die Raum Begegnung beim Verlassen und betreten des Sektors
+> etc der nächste Schritt? Weil aktuell fehlen Begegnungen. Völlig“). Wer mit dem eigenen Schiff
+> springt oder im System reist, würfelt beim Start von der Welt und bei der Ankunft auf der
+> *Starship Encounter Table* (SR 42); ein Angreifer öffnet die Raumkarte, eine friedliche Sichtung
+> fragt, und aus dem Systemflug geht die geplante Reise weiter. Neu im Bild: `SpaceBattle.occasion`
+> mit `EncounterOccasion`, `SpaceBattle.jumpTo` und `travelTo`, `SystemFlight.departure`,
+> `BattleOutcome.departed`, `departureRoll` und `arrivalRoll` an `Journey` und `SystemJourney`, und
+> flüchtig `ShipSighting`; siehe *Schiffsbegegnungen bei Abreise und Ankunft*. Der Ausschnitt dazu
+> liegt unter
+> [`changes/2026-11-22b-raumbegegnungen-reise.png`](changes/2026-11-22b-raumbegegnungen-reise.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -589,7 +601,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Raumkarte und Systemflug | [views/raum.png](views/raum.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist derzeit
-keine.
+2026-11-22b (Schiffsbegegnungen bei Abreise und Ankunft).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -909,7 +921,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Gefeuert | `SpaceUnit.fired` | Die Einheit hat in dieser Raumrunde schon gefeuert; „Runde ausführen“ setzt es zurück (2026-11-21i, ersetzt das Ziel `aim`) |
 | Schaden am Schiff | `ShipDamage`, `Ship.damage`, `SpaceUnit.damage` | Die Treffer eines Schiffs in der Reihenfolge, in der sie kamen, und die ausgefallenen Turrets; am eigenen Schiff bleibt er bis zur Reparatur (2026-11-21h) |
 | Trefferzone | `HitZone` | Wohin ein Treffer geht (SE 12, *Hit Locations* und *Critical Hits*) (2026-11-21h) |
-| Ausgang | `SpaceBattleEnd.outcome`, `BattleOutcome` | Wie ein Raumkampf endete: zerstört, kampfunfähig, entkommen, abgebrochen, verloren (2026-11-21h) |
+| Ausgang | `SpaceBattleEnd.outcome`, `BattleOutcome` | Wie ein Raumkampf endete: zerstört, kampfunfähig, entkommen, abgebrochen, verloren (2026-11-21h); abgereist: das eigene Schiff ist aus dem Systemflug gesprungen oder im System weitergereist (2026-11-22b) |
+| Anlass | `SpaceBattle.occasion`, `EncounterOccasion` | Warum auf der Starship Encounter Table gewürfelt wurde: beim Start von der Welt (`departure`) oder bei der Ankunft (`arrival`); fehlt beim Knopf „Schiffsbegegnung“ (2026-11-22b) |
+| Begegnungswurf | `Journey.departureRoll`, `arrivalRoll`, `SystemJourney.departureRoll`, `arrivalRoll` | Die 2W6 auf der Starship Encounter Table bei Abreise bzw. Ankunft, wenn kein Schiff kam; kam eines, stehen sie am `SpaceBattle` (2026-11-22b) |
+| Sichtung | `ShipSighting` (flüchtig) | Ein fremdes Schiff, das die Gruppe bei Abreise oder Ankunft ignoriert; die App fragt „Zur Raumkarte“ oder „Weiter“ (2026-11-22b) |
+| Weiterreise | `SpaceBattle.jumpTo`, `travelTo`, `SystemFlight.departure` | Die Reise, die beim Start von der Welt durch eine Begegnung unterbrochen wurde; der Knopf „Springen nach …“ bzw. „Reisen nach …“ im Systemflug setzt sie fort (2026-11-22b) |
 | Turret | `Turret`, `Ship.turrets` | Ein Waffenturm auf einem Hardpoint des eigenen Schiffs, mit seinen Waffen; höchstens so viele, wie der Entwurf Hardpoints hat (2026-11-21g) |
 | Turmart | `TurretType` | Referenzdaten: Single, Double oder Triple Turret mit 1, 2 oder 3 Plätzen für Waffen und Preis (SE 10, 2026-11-21g) |
 | Schiffswaffe | `ShipWeapon` | Referenzdaten: Pulse Laser, Beam Laser, Missile Rack, Sandcaster mit Preis (SE 10, 2026-11-21g) |
@@ -3380,6 +3396,71 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Baugruppen): in der Werft an einem Raumhafen A oder B, Cr 100.000 je Treffer und Cr 1.000.000 je
     kritischem Treffer, alles auf einmal (Buchung mit `shipCost` repair); danach ist `Ship.damage`
     leer. Ausgefallene Turrets arbeiten wieder.
+
+- **Schiffsbegegnungen bei Abreise und Ankunft** (wartet auf Freigabe, Kennzeichen 2026-11-22b; Owner,
+  22. November 2026). Teil von Stufe 5 des [Konzepts](konzept-raumkampf.md), vorgezogen, weil im
+  normalen Spiel bisher gar keine Schiffsbegegnungen vorkamen. Nach SR 42 wird beim Eintritt in ein
+  System und beim Verlassen auf der *Starship Encounter Table* gewürfelt
+  ([`regeln-schiffe.md`](regeln-schiffe.md), *Schiffsbegegnungen im System*). Entscheidungen des
+  Owners vom 22. November 2026 sind als solche genannt; Hausregeln tragen ⚑.
+  - **Wann** (Owner). Gewürfelt wird bei jeder **Reise mit eigenem Schiff** (`Journey` mit `ship`)
+    und jeder **Reise im System mit eigenem Schiff** (`SystemJourney` mit `ship`), je zweimal:
+    beim **Start von der Welt**, bevor die Reise beginnt, und bei der **Ankunft**, gleich nachdem
+    sie endet (nach dem Sprung: beim Auftauchen). Reisen mit Passage oder Ticket würfeln nicht
+    (Owner, ⚑ die Gruppe reist nur mit). „Systemflug beginnen“ würfelt nicht; dafür bleibt der
+    Knopf „Schiffsbegegnung“. Während einer laufenden Begegnung, Fahrt oder eines Systemflugs reist
+    man wie bisher nicht ab (außer mit der Weiterreise, siehe unten).
+  - **Der Wurf** ist derselbe wie beim Knopf „Schiffsbegegnung“ (siehe *Raumkampf, Stufe 2*): SE 13,
+    Spalte nach dem Raumhafen der Hauptwelt des Systems, von dem man abreist bzw. in dem man
+    ankommt, DM +2 Marinebasis, +1 Scoutbasis; danach Pirat oder Reaktion (SE 21). Bei einer Reise
+    im System sind Start und Ziel im selben System. ⚑ Das \* (zusätzliches Small Craft) bleibt
+    weiter ohne Folgen.
+  - **Ohne Schiff** (Strich in der Tabelle) geht die Reise weiter wie bisher. Die Würfel stehen an
+    der Reise: `departureRoll` für den Start, `arrivalRoll` für die Ankunft. Kam ein Schiff, fehlt
+    das Feld dort, und die Würfel stehen am `SpaceBattle` (`encounter`), nie an beiden. Reisen von
+    vorher und Reisen mit Passage oder Ticket haben keins von beiden.
+  - **Der Logeintrag** `SpaceBattle` hält den Anlass fest (`occasion`: `departure` oder `arrival`;
+    ohne beim Knopf). Beim Start trägt er auch das Ziel der unterbrochenen Reise: das Hexfeld des
+    Sprungs (`jumpTo`) oder die Welt der Reise im System (`travelTo`), genau eins davon; bei der
+    Ankunft und beim Knopf keins.
+  - **Angriff** (Pirat oder Reaktion „greift an“): Die Raumkarte öffnet sich von selbst mit einem
+    neuen Systemflug, das fremde Schiff taucht auf wie beim Knopf (2W6 Raumbänder, 1W6 × 60°,
+    gleiche Geschwindigkeit wie das eigene Schiff).
+    - *Beim Start* auf der Raumkarte der Welt, von der man abreist; das eigene Schiff startet wie bei
+      „Systemflug beginnen“ (Kreisbahn mit doppeltem Weltradius). Die Reise findet noch nicht statt:
+      kein Logeintrag `Journey` bzw. `SystemJourney`, keine Zeit, kein Treibstoff. Der Systemflug
+      verweist auf den Raumkampf, aus dem er entstand (`departure`).
+    - *Bei der Ankunft* (Owner) auf der Raumkarte der Zielwelt (bei einem Mond: auf der seiner
+      Welt, ⚑), das eigene Schiff **an der Sprunggrenze**: 100 Durchmesser der Zielwelt von ihr
+      entfernt, ⚑ ruhend gegenüber der Welt, ⚑ in Richtung 1W6 × 60°; bei Größe 0 wie beim Beginn in
+      20.000 km. Die Reise hat stattgefunden (Tage, Treibstoff, Aufenthaltsort wie bisher).
+      ⚑ Der Dialog **Landeplatz** wartet, solange der Systemflug läuft; landet das Schiff im
+      Systemflug oder endet er, geht er auf wie sonst.
+  - **Sichtung** (Owner: fragen). Ignoriert das fremde Schiff die Gruppe, entsteht eine flüchtige
+    **Sichtung** (`ShipSighting`) mit dem noch nicht gespeicherten `SpaceBattle` (`battle`), und die
+    App fragt: **„Zur Raumkarte“** öffnet den Systemflug wie beim Angriff, mit dem fremden Schiff,
+    das ignoriert (`intent` ignore); **„Weiter“** setzt die Reise fort (beim Start: sie findet statt;
+    bei der Ankunft: weiter zum Landeplatz). In beiden Fällen kommt der `SpaceBattle` ins Log, bei
+    „Weiter“ ohne Systemflug („Free Trader *Name* in Sicht“). ⚑ Geht die App vor der Antwort zu,
+    ist die Sichtung verloren wie eine offene Karte: Beim Start fand dann keine Reise statt, bei der
+    Ankunft steht die Gruppe am Ziel, ohne dass die Sichtung im Log steht.
+  - **Weiterreise aus dem Systemflug** (Owner). Hat der Systemflug einen `departure`, steht im Blatt
+    der Knopf **„Springen nach …“** (bei `jumpTo`) bzw. **„Reisen nach …“** (bei `travelTo`),
+    jederzeit, auch mitten im Kampf. Er löst die Reise aus, wie sie der Reisedialog ausgelöst hätte,
+    mit denselben Bedingungen (Sprungweite höchstens `ShipDamage./jump`, Treibstoff) und **ohne
+    neuen Wurf beim Start** (der kam schon); bei der Ankunft wird gewürfelt wie sonst.
+    - *Fehlsprung* (SR 28, Owner): Beim Sprung aus dem Systemflug kommt zu `Journey.jumpDm` **+5**,
+      wenn das Schiff innerhalb 100 Durchmesser eines Himmelskörpers der Raumkarte ist, **+15**
+      innerhalb 10 Durchmesser (der höchste zählt, nicht beide). Das ist auch die **Flucht per
+      Sprung**. Beim Sprung aus dem Reisedialog bleibt es wie bisher (das Schiff fliegt dort
+      gedanklich bis zur Sprunggrenze).
+    - Der Systemflug endet damit. War ein fremdes Schiff noch da, endet der Raumkampf mit
+      `SpaceBattleEnd` und dem Ausgang **abgereist** (`departed`). Der Ort des Schiffs ist danach
+      der der Reise (am Ziel ohne Feld, also wieder *Landeplatz*).
+    - Endet der Systemflug anders (Landen, Beenden), verfällt die unterbrochene Reise; wer weiter
+      will, reist neu und würfelt beim Start neu.
+  - **Später**: Ortung und Schatten, fremde Small Craft (das \*), Begegnungen bei Reisen mit
+    Passage (Piraten entern das Passagierschiff, braucht das Entern).
 
 - **Bewaffnung der Small Craft** (freigegeben am 22. November 2026, Kennzeichen 2026-11-22; Owner, 22. November
   2026: „Die Small Craft kommen mit Lasern. Der Rest existiert ja auch noch nicht in der App“). Ein

@@ -1,0 +1,261 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-22b"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-22b: Schiffsbegegnungen bei Abreise und Ankunft: Wurf auf der Starship Encounter Table bei Sprung und Reise im System mit eigenem Schiff (SpaceBattle.occasion, departureRoll, arrivalRoll); friedliche Sichtung fragt (ShipSighting); Weiterreise aus dem Systemflug (jumpTo, travelTo, departure, BattleOutcome.departed)
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+hide <<browser>> stereotype
+
+' Kampagne und Charaktere
+
+' Schiffe
+
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+  class SystemFlight $raum {
+    startedAt: datetime
+    round: number
+    /elapsed: number
+  }
+  class SpaceBattle $raum {
+    foe: string
+    intent: Intent
+    encounter: number[2] [0..1]
+    reaction: number[2] [0..1]
+    attack: number[2] [0..1]
+    $new("2026-11-22b", "occasion: EncounterOccasion [0..1]")
+  }
+  enum EncounterOccasion <<value>> $raum $newClass("2026-11-22b") {
+    departure
+    arrival
+  }
+  class ShipSighting <<transient>> $raum $newClass("2026-11-22b") {
+  }
+  class SpaceBattleEnd $raum
+  enum BattleOutcome <<value>> $raum {
+    destroyed
+    disabled
+    escaped
+    broken
+    lost
+    $new("2026-11-22b", "departed")
+  }
+  class SpaceUnit $raum
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+  class Hex $sektor {
+    column: number
+    row: number
+    empty: boolean
+    navalBase: boolean [0..1]
+    scoutBase: boolean [0..1]
+    gasGiant: boolean [0..1]
+    /step: WorldStep
+  }
+  class World $sektor {
+    kind: WorldKind
+    name: string [0..1]
+    note: string [0..1]
+    populationMultiplier: number [0..1]
+    orbit: number [0..1]
+    angle: number [0..1]
+    captured: boolean
+    diameter: number [0..1]
+    large: boolean [0..1]
+    radius: number [0..1]
+    spaceport: Spaceport [0..1]
+    facilities: Facility [*]
+    bases: BaseKind [*]
+    /main: boolean
+    /zone: Zone [0..1]
+    /gravity: number
+  }
+  enum WorldKind <<value>> $sektor
+  enum Spaceport <<value>> $sektor
+  enum BaseKind <<value>> $sektor
+  enum Facility <<value>> $sektor
+  class Uwp <<value>> $sektor
+  class WorldRoll <<transient>> $sektor
+
+' Missionen
+
+' Verlauf
+
+' Zeit und Reisen
+  class Journey $reise {
+    days: number
+    npcDie: number [0..1]
+    lot: number [0..1]
+    /pot: number
+    jump: number[2]
+    jumpDm: number
+    /misjump: boolean
+    $new("2026-11-22b", "departureRoll: number[2] [0..1]")
+    $new("2026-11-22b", "arrivalRoll: number[2] [0..1]")
+  }
+  class Passenger <<value>> $reise
+  class SystemJourney $reise {
+    hours: number
+    /days: number
+    /distance: number
+    $new("2026-11-22b", "departureRoll: number[2] [0..1]")
+    $new("2026-11-22b", "arrivalRoll: number[2] [0..1]")
+  }
+  class LowBerth <<value>> $reise
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+
+' Referenzdaten
+  class Surface <<value>> $sektor
+' Fahrzeuge und Wege auf der Oberfläche
+  class Temperature <<reference>> $sektor
+  class TradeCode <<reference>> $sektor
+  enum WorldStep <<value>> $sektor
+
+' Kampagne
+
+' Schiffe
+
+' Raumkarte und Systemflug
+SystemFlight "*" --> "1" World : world
+SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
+SpaceBattleEnd --> BattleOutcome
+SpaceBattle -$newArrow("2026-11-22b")-> EncounterOccasion
+SpaceBattle "*" -$newArrow("2026-11-22b")-> "0..1" Hex : jumpTo
+SpaceBattle "*" -$newArrow("2026-11-22b")-> "0..1" World : travelTo
+SystemFlight "*" -$newArrow("2026-11-22b")-> "0..1" SpaceBattle : departure
+ShipSighting "0..1" -$newArrow("2026-11-22b")-> "1" SpaceBattle : battle
+SystemFlight "*" --> "1" SpaceUnit : party
+Hex "1" *-- "*" World : worlds {ordered}
+Hex "*" --> "0..1" World : main
+World "*" --> "0..1" World : moonOf
+World --> WorldKind
+World --> Spaceport
+World --> Facility
+World --> BaseKind
+
+' Zeit und Reisen
+Journey "*" --> "1" Hex : from
+Journey "*" --> "1" Hex : to
+Journey "1" *-- "0..*" Passenger : passengers
+Journey "1" *-- "*" LowBerth : berths {ordered}
+Journey "*" --> "0..1" LowBerth : /winner
+SystemJourney "*" --> "1" World : from
+SystemJourney "*" --> "1" World : to
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+World "1" *-- "1" Uwp : uwp
+Hex --> WorldStep
+WorldRoll "*" --> "1" Hex : for
+WorldRoll ..> Hex : on roll
+World "*" --> "*" TradeCode : /trade
+World "*" --> "0..1" Temperature : temperature
+World "1" *-- "0..1" Surface : surface
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
+endlegend
+class SpaceBattle #line:d0021b;line.bold
+class BattleOutcome #line:d0021b;line.bold
+class Journey #line:d0021b;line.bold
+class SystemJourney #line:d0021b;line.bold
+@enduml
