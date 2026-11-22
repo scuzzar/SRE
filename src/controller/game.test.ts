@@ -795,10 +795,23 @@ describe('Begegnung und Kampfsimulation', () => {
     // Kira 6 + 6, Jonas 6 + 6, drei NSC je 6 + 6 mit Tipp 5.
     random.queue.push(6, 6, 6, 6, 6, 6, 5, 6, 6, 5, 6, 6, 5, 0);
     game.travel();
-    expect(game.snapshot().journey?.result).toMatchObject({ survivors: 5, pot: 50, paid: true });
+    // Unterwegs (2026-11-22c): Der Dialog sagt es; Kälteschlaf und Lotterie kommen erst bei der Ankunft.
+    expect(game.snapshot().journey?.result).toMatchObject({ arrived: false, left: 7 });
+    expect(game.snapshot().location).toBeUndefined();
+    game.closeJourney();
+    // Der Tag-Knopf (in der Reihe unter dem Log und im Reiter Begegnung) heißt jetzt „Weiterreisen“.
+    expect(game.snapshot().time?.oneDay).toMatchObject({ kind: 'voyage', label: 'Weiterreisen', blocker: undefined });
+    for (let i = 0; i < 6; i++) game.oneDay();
+    expect(game.snapshot().time?.voyage).toMatchObject({ to: 'Nahe', left: 1 });
+    expect(game.snapshot().journey).toBeUndefined();
+    game.oneDay();
+    expect(game.snapshot().journey?.result).toMatchObject({ arrived: true, survivors: 5, pot: 50, paid: true });
     expect(game.snapshot()).toMatchObject({ location: '0201', time: { label: 'Sonntag, 008-1105' } });
+    expect(game.snapshot().time?.oneDay).toMatchObject({ kind: 'day', label: '1 Tag' });
     game.closeJourney();
     expect(game.snapshot().journey).toBeUndefined();
+    // Mit Passage gibt es keine Begegnungsprüfung.
+    expect(game.snapshot().shipCheck).toBeUndefined();
   });
 
   it('Reise: mit eigenem Schiff – ohne Raumhafen geht nur der Sprung, Treibstoff und Wurf stehen am Log', async () => {
@@ -822,16 +835,19 @@ describe('Begegnung und Kampfsimulation', () => {
     random.queue.push(1, 1, 2, 5);
     game.rollShipCheck();
     expect(game.snapshot().shipCheck).toMatchObject({ phase: 'rolled', dice: [1, 1], text: 'Kein Schiff.', next: 'Weiterreisen' });
-    expect(game.snapshot().journey?.result).toMatchObject({ ship: 'Scout/Courier', jump: [2, 5], misjump: false, passengers: [], berths: [] });
-    expect(game.snapshot()).toMatchObject({ location: '0103', time: { label: 'Sonntag, 008-1105' } });
+    expect(game.snapshot().journey?.result).toMatchObject({ ship: 'Scout/Courier', jump: [2, 5], misjump: false, passengers: [], berths: [], arrived: false });
     game.closeShipCheck();
     expect(game.snapshot().shipCheck).toBeUndefined();
-    // Nach dem Dialog der Reise die Prüfung der Ankunft; lang gedrücktes Abbrechen lässt den Wurf aus.
+    game.closeJourney();
+    // Unterwegs keine Prüfung; erst nach sieben Reisetagen die Ankunft und dann ihre Prüfung (2026-11-22c).
+    expect(game.snapshot().shipCheck).toBeUndefined();
+    for (let i = 0; i < 7; i++) game.travelOn();
+    expect(game.snapshot()).toMatchObject({ location: '0103', time: { label: 'Sonntag, 008-1105' } });
+    expect(game.snapshot().journey?.result).toMatchObject({ arrived: true });
     game.closeJourney();
     expect(game.snapshot().shipCheck).toMatchObject({ phase: 'ready', kicker: expect.stringContaining('Ankunft in Außenposten'), column: 'X' });
     game.skipShipCheck();
     expect(game.snapshot().shipCheck).toBeUndefined();
-    expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'journey' });
   });
 
   it('Reise: Ein Pirat beim Start öffnet die Raumkarte; „Springen nach …“ springt von dort mit DM +15 (2026-11-22b)', async () => {
@@ -858,6 +874,10 @@ describe('Begegnung und Kampfsimulation', () => {
     game.departFlight();
     expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'journey', to: 'Außenposten', jumpDm: 15 });
     expect(game.snapshot().log.at(-2)).toMatchObject({ kind: 'spaceBattleEnd', outcome: 'abgereist' });
+    // Unterwegs; die Prüfung der Ankunft nach sieben Tagen.
+    expect(game.snapshot().shipCheck).toBeUndefined();
+    for (let i = 0; i < 7; i++) game.oneDay();
+    game.closeJourney();
     expect(game.snapshot().shipCheck?.kicker).toContain('Ankunft in Außenposten');
   });
 
@@ -2312,12 +2332,16 @@ describe('Nebenwelten und Reise im System (2026-11-20d)', () => {
     // Mit dem eigenen Schiff erst die Begegnungsprüfung (2026-11-22b); lang gedrückt fällt der Wurf aus.
     expect(game.snapshot().shipCheck?.phase).toBe('ready');
     game.skipShipCheck();
-    expect(game.snapshot().systemJourney?.result).toMatchObject({ to: 'Tertius', how: expect.stringContaining('mit Kestrel') });
-    expect(game.snapshot().location).toBe(body.id);
-    expect(game.snapshot().time?.label).not.toBe(day);
+    expect(game.snapshot().systemJourney?.result).toMatchObject({ to: 'Tertius', how: expect.stringContaining('mit Kestrel'), arrived: false });
     expect(game.snapshot().log.at(-1)).toMatchObject({ kind: 'systemJourney', to: 'Tertius' });
     game.closeSystemJourney();
     expect(game.snapshot().systemJourney).toBeUndefined();
+    // Tag für Tag weiterreisen, bis die Gruppe ankommt (2026-11-22c).
+    while (game.snapshot().time?.voyage) game.oneDay();
+    expect(game.snapshot().location).toBe(body.id);
+    expect(game.snapshot().time?.label).not.toBe(day);
+    expect(game.snapshot().systemJourney?.result).toMatchObject({ arrived: true });
+    game.closeSystemJourney();
     expect(game.snapshot().shipCheck?.kicker).toContain('Ankunft in Tertius');
     game.skipShipCheck();
     // Im Subsektor kommt im System der Gruppe zuerst ihre Welt (Owner, 21. November 2026), auch doppelt angetippt.

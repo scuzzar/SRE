@@ -657,6 +657,7 @@ function EntryBody({ item }: { item: LogItem }) {
             {item.fromDate} → {item.toDate} · {item.flight}
           </span>
           {item.encounterRolls && <span className="entry-detail">{item.encounterRolls}</span>}
+          {!item.arrived && <span className="entry-detail">Unterwegs · noch {item.left === 1 ? '1 Tag' : `${item.left} Tage`}</span>}
           <span className="entry-question small">
             {item.how} · {item.travellers.join(', ')}
           </span>
@@ -727,7 +728,8 @@ export function JourneyBody({ item }: { item: JourneyItem }) {
         </span>
       )}
       {item.encounterRolls && <span className="entry-detail">{item.encounterRolls}</span>}
-      {item.berths.length > 0 && (
+      {!item.arrived && <span className="entry-detail">Unterwegs · noch {item.left === 1 ? '1 Tag' : `${item.left} Tage`}: „Weiterreisen“ unter dem Log oder im Reiter Begegnung</span>}
+      {item.arrived && item.berths.length > 0 && (
         <ul className="journey-berths">
           {item.berths.map((b, i) => (
             <li key={i} className={b.survived ? '' : 'negative'}>
@@ -738,7 +740,7 @@ export function JourneyBody({ item }: { item: JourneyItem }) {
           ))}
         </ul>
       )}
-      {item.winner !== undefined && (
+      {item.arrived && item.winner !== undefined && (
         <span className="entry-detail">
           {item.survivors} von {item.berths.length} überlebt · Lotterie Cr {item.pot}
           {item.lot ? ' (Los)' : ''}: {item.paid ? `${item.winner} gewinnt` : `${item.winner} überlebte nicht, der Kapitän behält den Topf`}

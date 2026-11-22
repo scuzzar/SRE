@@ -6,7 +6,7 @@ import { useGame } from '../game-context';
 import { CheckIcon, CloseIcon, FlagIcon, NpcPinIcon, PinIcon, RouteIcon, ShopIcon } from '../icons';
 
 /**
- * Die Reihe unten beim angetippten Feld des Globus, an der Stelle der Reihe Notiz, Deuten, 2W6,
+ * Die Reihe unten beim angetippten Feld des Globus, an der Stelle der Reihe Notiz, Tag, 2W6,
  * Karte und im selben Stil: Hierhin reisen (die Route zum Feld planen, `planTrip`), Gruppe setzen
  * (ohne Fahrt und ohne Zeit, `moveParty`) und NSC platzieren (öffnet die NSC-Liste zum Auswählen,
  * `startNpcPlacing`; mit „OK“ oder „Abbrechen“ geht es zurück zum Feld; lange gedrückt erzeugt es einen

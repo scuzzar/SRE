@@ -25,6 +25,7 @@ import { bookingKinds, shipCosts, validateBookings, type Booking } from './shop'
 import type { Ship } from './ship';
 import { checkTrip } from './trip';
 import { checkFlight, type Departure, type SystemFlight } from './flight';
+import { checkVoyage } from './voyage';
 import { vehicleOfItem } from './vehicle';
 import { settleStash } from './stash';
 import type { City, SurfaceMap } from './surface-map';
@@ -505,6 +506,7 @@ const CampaignFileSchema = z.object({
     trip: TripSchema.optional(),
     /** Fehlt in Dateien von vor dem Systemflug und ohne Systemflug (2026-11-18c). */
     flight: FlightSchema.optional(),
+    voyage: z.object({ entry: z.number().int().min(0), days: z.number().int().min(0) }).optional(),
     bookings: z
       .array(
         z.object({
@@ -548,8 +550,8 @@ const CampaignFileSchema = z.object({
 
 /** Die Kampagne als Inhalt einer Kampagnendatei. */
 export function toCampaignFile(campaign: Campaign): string {
-  const { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions, flight } = campaign;
-  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions, flight } }, null, 2);
+  const { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions, flight, voyage } = campaign;
+  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions, flight, voyage } }, null, 2);
 }
 
 /** Ein Dateiname aus dem Namen der Kampagne und dem Tag, z. B. „Spinward-Run-2026-10-25.json“. */
@@ -610,6 +612,7 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       stash: file.stash.map((p) => stripped({ ...p, ...(p.parked === undefined ? {} : { parked: placeFromFile(p.parked) }) }) as Possession),
       ...(file.trip === undefined ? {} : { trip: { hours: file.trip.hours, legs: file.trip.legs.map((l) => ({ by: l.by, rented: l.rented, cells: [...l.cells] })) } }),
       ...(file.flight === undefined ? {} : { flight: flightFromFile(file.flight) }),
+      ...(file.voyage === undefined ? {} : { voyage: { entry: file.voyage.entry, days: file.voyage.days } }),
       // NSC aus Dateien von vor 2026-11-08c bleiben, wie sie sind; upgradeNpcs macht Charaktere aus ihnen.
       encounters: file.encounters.map(
         (e) => ({ ...stripped(e), ...(e.distances ? { distances: e.distances.map((d) => stripped(d)) } : {}), npcs: e.npcs.map((n) => ('skill' in n ? stripped(n) : characterFromFile(n))) }) as unknown as Encounter,
@@ -888,6 +891,7 @@ function validate(campaign: Campaign): void {
   }
   if (campaign.trip !== undefined) checkTrip(campaign, campaign.trip);
   if (campaign.flight !== undefined) checkFlight(campaign, campaign.flight);
+  if (campaign.voyage !== undefined) checkVoyage(campaign, campaign.voyage);
   validateEncounters(campaign);
   if (campaign.terrain !== undefined) terrainOf(campaign.terrain);
   for (const hex of campaign.hexes) for (const world of hex.worlds) for (const table of world.animals ?? []) checkAnimalTable(table);

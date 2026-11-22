@@ -2035,7 +2035,7 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
     animals: animalsView(campaign, animalNote, log),
     loot: lootView(campaign, lootOpen),
     butchered: butcheredView(campaign, butchered),
-    canEncounter: campaign.location !== undefined,
+    canEncounter: campaign.location !== undefined || campaign.voyage !== undefined,
     location: campaign.location?.world,
     worlds: worldChoices(campaign.hexes),
     intro: intro && encounter !== undefined,

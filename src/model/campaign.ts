@@ -4,6 +4,7 @@ import type { Career } from './career';
 import { DomainError } from './errors';
 import type { Generation } from './generation';
 import type { Trip } from './trip';
+import type { Voyage } from './voyage';
 import type { Clock, Keys } from './ports';
 import { damageAfterOf, damageRollsOf, editNote, interpretationsOf, savesOf, volleyOf, type LogEntry } from './log';
 import { worldOf, type Hex } from './sector';
@@ -146,6 +147,8 @@ export interface Campaign {
   readonly trip?: Trip;
   /** Der laufende Systemflug auf der Raumkarte einer Welt; höchstens einer (siehe `flight.ts`). */
   readonly flight?: SystemFlight;
+  /** Die Reise unterwegs; höchstens eine (siehe `voyage.ts`, 2026-11-22c). */
+  readonly voyage?: Voyage;
   /** Die Missionen, in der Reihenfolge, in der sie angelegt wurden, auch die ausgeblendeten (siehe `mission.ts`). */
   readonly missions: readonly Mission[];
 }
@@ -292,7 +295,9 @@ export function removeLogEntry(campaign: Campaign, index: number): Campaign {
   });
   // Ein Lotteriegewinn verweist auf seine Reise; sie bleibt, aber ihre Stelle rückt nach.
   const bookings = campaign.bookings.map((b) => (b.won !== undefined ? { ...b, won: shift(b.won) } : b.rentFor !== undefined ? { ...b, rentFor: shift(b.rentFor) } : b.ticketFor !== undefined ? { ...b, ticketFor: shift(b.ticketFor) } : b));
-  return { ...campaign, log, bookings };
+  // Die Reise unterwegs verweist auf ihren Logeintrag; auch ihre Stelle rückt nach (2026-11-22c).
+  const voyage = campaign.voyage === undefined ? {} : { voyage: { ...campaign.voyage, entry: shift(campaign.voyage.entry) } };
+  return { ...campaign, log, bookings, ...voyage };
 }
 
 export function characterOf(campaign: Campaign, id: CharacterId): Character {

@@ -59,13 +59,19 @@ export function EncounterDock({ view, options }: { view: Snapshot; /** Auf dem B
               <RouteIcon />
               Weiterfahren
             </button>
+          ) : time.voyage ? (
+            // Unterwegs (2026-11-22c): je ein Reisetag, nach dem letzten ist die Gruppe am Ziel.
+            <button type="button" className="action draw" title={time.oneDay.blocker ?? `Unterwegs nach ${time.voyage.to}, noch ${time.voyage.left} Tage`} disabled={time.oneDay.blocker !== undefined} onClick={() => game.travelOn()}>
+              <RouteIcon />
+              Weiterreisen (noch {time.voyage.left})
+            </button>
           ) : (
             <button type="button" className="action draw" title={blocked} disabled={blocked !== undefined} onClick={() => game.passDays(passing)}>
               <ClockIcon />
               {passing === 1 ? '1 Tag vergehen' : `${passing} Tage vergehen`}
             </button>
           )}
-          <HoldButton className={time.missingWeek.length > 0 ? 'action note' : 'action dice'} disabled={blocked !== undefined} hint="Lange drücken: die Woche endet ohne die fehlenden Tests" onPress={() => game.endWeek()} onHold={() => game.endWeek(true)}>
+          <HoldButton className={time.missingWeek.length > 0 ? 'action note' : 'action dice'} disabled={blocked !== undefined || time.voyage !== undefined} title={time.voyage ? 'Unterwegs vergeht die Zeit mit „Weiterreisen“.' : undefined} hint="Lange drücken: die Woche endet ohne die fehlenden Tests" onPress={() => game.endWeek()} onHold={() => game.endWeek(true)}>
             <CalendarIcon />
             <span>Woche beenden (+{time.toSunday})</span>
           </HoldButton>

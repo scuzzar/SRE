@@ -18,7 +18,7 @@ import {
   type Campaign,
 } from '..';
 import { answerSighting, openShipCheck, rollShipCheck, skipShipCheck } from '.';
-import { fixedClock, fixedRandom } from '../testing';
+import { arriveNow, fixedClock, fixedRandom, lastJourney } from '../testing';
 
 const clock = fixedClock();
 
@@ -49,8 +49,11 @@ describe('Schiffsbegegnungen bei Abreise und Ankunft (2026-11-22b)', () => {
     expect(step).toMatchObject({ travelled: true, flight: false });
     expect(step.check?.result?.code).toBeUndefined();
     expect(step.campaign.log.at(-1)).toMatchObject({ kind: 'systemJourney', to, departureRoll: [1, 1] });
-    const arrival = rollShipCheck(step.campaign, openShipCheck(to, { occasion: 'arrival' }), fixedRandom(1, 2), clock);
-    expect(arrival.campaign.log.at(-1)).toMatchObject({ kind: 'systemJourney', departureRoll: [1, 1], arrivalRoll: [1, 2] });
+    // Unterwegs (2026-11-22c): Die Prüfung der Ankunft kommt nach den Reisetagen.
+    expect(step.campaign.voyage).toEqual({ entry: step.campaign.log.length - 1, days: 0 });
+    const there = arriveNow(step.campaign, clock);
+    const arrival = rollShipCheck(there, openShipCheck(to, { occasion: 'arrival' }), fixedRandom(1, 2), clock);
+    expect(lastJourney(arrival.campaign)).toMatchObject({ kind: 'systemJourney', departureRoll: [1, 1], arrivalRoll: [1, 2] });
   });
 
   it('Abbrechen lässt den Wurf aus: Die Reise findet ohne Wurf statt, nichts sonst im Log', () => {
@@ -77,17 +80,17 @@ describe('Schiffsbegegnungen bei Abreise und Ankunft (2026-11-22b)', () => {
     expect(loaded.log.at(-1)).toMatchObject({ occasion: 'departure', travelTo: to });
     // Weiterreisen: ohne neuen Wurf beim Start; das fremde Schiff bleibt zurück.
     expect(departureBlocker(c)).toBeUndefined();
-    const gone = departFromFlight(c, fixedRandom(), clock);
+    const gone = arriveNow(departFromFlight(c, fixedRandom(), clock), clock);
     expect(gone.flight).toBeUndefined();
     expect(gone.location?.world).toBe(to);
     const tail = gone.log.slice(c.log.length);
-    expect(tail.map((e) => e.kind)).toEqual(['spaceBattleEnd', 'systemJourney']);
+    expect(tail.map((e) => e.kind).slice(0, 2)).toEqual(['spaceBattleEnd', 'systemJourney']);
     expect(tail[0]).toMatchObject({ outcome: 'departed', foe: 'Scout/Courier' });
   });
 
   it('Angriff bei der Ankunft: Systemflug an der Zielwelt, das Schiff an der Sprunggrenze (100 Durchmesser), ruhend', () => {
     const { campaign, to } = demo();
-    const arrived = travelInSystem(campaign, to, 'ship', clock);
+    const arrived = arriveNow(travelInSystem(campaign, to, 'ship', clock), clock);
     const step = rollShipCheck(arrived, openShipCheck(to, { occasion: 'arrival' }), attacking(arrived, to, 2, 3, 1, 2), clock);
     const flight = step.campaign.flight!;
     expect(flight.world).toBe(to);

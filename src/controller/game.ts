@@ -246,6 +246,8 @@ import {
   shipById,
   worldOf,
   landAt,
+  voyageDay,
+  voyageEntry,
 } from '../model';
 import {
   attackRounds,
@@ -1084,6 +1086,39 @@ export class GameController {
 
   // --- Zeit und Reisen ---------------------------------------------------------------------------
 
+  /**
+   * „Weiterreisen“ (2026-11-22c): Ein Reisetag vergeht. Nach dem letzten ist die Gruppe am Ziel; dann
+   * zeigt der Dialog der Reise die Ankunft (Kälteschlaf, Lotterie), und mit eigenem Schiff folgt die
+   * Begegnungsprüfung der Ankunft.
+   */
+  travelOn(): void {
+    try {
+      const index = this.campaign.voyage?.entry;
+      const day = voyageDay(this.campaign, this.deps.clock);
+      const cleanup = { timeNote: undefined, combatNote: undefined, animalNote: undefined, patronNote: undefined, rumorNote: undefined, legalNote: undefined };
+      if (!day.arrived || index === undefined) return this.change(day.campaign, cleanup);
+      const entry = day.campaign.log[index]!;
+      const check = (entry.kind === 'journey' || entry.kind === 'systemJourney') && entry.ship !== undefined ? this.arrivalCheck(day.campaign) : undefined;
+      const dialog =
+        entry.kind === 'journey'
+          ? { journey: { to: entry.to, mode: entry.ship === undefined ? ('passage' as const) : ('ship' as const), npcDie: entry.npcDie ?? 0, choice: {}, guesses: {}, error: undefined, done: index } }
+          : entry.kind === 'systemJourney'
+            ? { systemJourney: { to: entry.to, mode: entry.ship === undefined ? ('ticket' as const) : ('ship' as const), error: undefined, done: index } }
+            : {};
+      this.change(day.campaign, { ...cleanup, ...dialog, nextShipCheck: check });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ timeNote: error.message });
+    }
+  }
+
+  /** Der Knopf für einen Tag (2026-11-22c): während einer Fahrt weiterfahren, unterwegs weiterreisen, sonst ein Tag. */
+  oneDay(): void {
+    if (this.campaign.trip !== undefined) this.driveDay();
+    else if (this.campaign.voyage !== undefined) this.travelOn();
+    else this.passDays(1);
+  }
+
   /** Lässt 1 bis 6 Tage vergehen, ohne Erinnerung an Tests (Wunsch des Owners). */
   passDays(days: number): void {
     this.passTime({ days }, true);
@@ -1252,13 +1287,10 @@ export class GameController {
   private afterCheck(step: CheckStep, index: number): void {
     const rest: Partial<ControllerState> = { shipCheck: step.check, notice: undefined };
     if (step.travelled) {
+      // Der Dialog der Reise zeigt, dass sie unterwegs ist; die Prüfung der Ankunft kommt nach ihren Tagen (2026-11-22c).
       const journey = this.state.journey;
       const system = this.state.systemJourney;
-      const arrival = this.arrivalCheck(step.campaign);
-      // Der Dialog der Reise zeigt ihr Ergebnis; die Ankunft kommt, wenn er zu ist.
       Object.assign(rest, journey ? { journey: { ...journey, done: index, error: undefined } } : system ? { systemJourney: { ...system, done: index, error: undefined } } : {});
-      if (journey || system || step.check !== undefined) Object.assign(rest, { nextShipCheck: arrival });
-      else Object.assign(rest, { shipCheck: arrival });
     }
     if (step.flight) Object.assign(rest, { journey: undefined, systemJourney: undefined });
     this.change(step.campaign, rest);
@@ -1330,7 +1362,8 @@ export class GameController {
   departFlight(): void {
     try {
       const after = departFromFlight(this.campaign, this.deps.random, this.deps.clock);
-      this.change(after, { space: undefined, shipCheck: this.arrivalCheck(after), notice: undefined });
+      // Die Reise ist unterwegs; die Prüfung der Ankunft kommt nach ihren Tagen (2026-11-22c).
+      this.change(after, { space: undefined, notice: `Unterwegs nach ${worldOf(after.hexes, voyageEntry(after).to).name}: „Weiterreisen“ unter dem Log oder im Reiter Begegnung.` });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ notice: error.message });

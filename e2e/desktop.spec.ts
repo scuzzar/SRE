@@ -3,7 +3,7 @@ import { openPeople, openShop, openCombat, pickCapital, openHomeGlobe } from './
 
 // Der Desktop-Modus (ab 1024 px): links eine Spalte mit den Reitern, darunter das Log mit dem Charakter
 // oben oder an seiner Stelle der gewählte Bereich bzw. das angetippte Feld; unten die Reihe Notiz,
-// Deuten, 2W6, Karte, wo der Bereich keine eigene hat; rechts die Grundkarte (Globus oder Subsektor).
+// Tag, 2W6, Karte, wo der Bereich keine eigene hat; rechts die Grundkarte (Globus oder Subsektor).
 // Diese Tests laufen nur im Projekt „desktop“.
 
 const onlyDesktop = (testInfo: TestInfo) => testInfo.skip(testInfo.project.name !== 'desktop', 'nur im Desktop-Modus');
@@ -63,18 +63,13 @@ test('Ein Wurf in einem Bereich landet im Log', async ({ page }, testInfo) => {
   await expect(page.locator('.entry')).toHaveCount(1);
 });
 
-test('Deuten geht auch in einem Bereich: der Knopf am Ergebnis öffnet das Blatt der Deutung', async ({ page }, testInfo) => {
+test('Ein Tag geht auch in einem Bereich: der Knopf in der Reihe unten (2026-11-22c, statt Deuten)', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
   await nav(page).getByRole('button', { name: 'Schiff', exact: true }).click();
-  await panel(page).getByRole('button', { name: '2W6' }).click();
-  await expect(page.locator('.dice-roll')).toBeHidden();
-  await panel(page).getByRole('button', { name: 'Neuestes Ergebnis deuten' }).click();
-  const reading = page.getByRole('dialog', { name: 'Deutung' });
-  await reading.getByPlaceholder(/Was bedeutet das/).fill('Der Wurf ist gut.');
-  await reading.getByRole('button', { name: 'Deuten' }).click();
+  await panel(page).getByRole('button', { name: '1 Tag vergehen lassen' }).click();
   await expect(nav(page).getByRole('button', { name: 'Schiff', exact: true })).toHaveAttribute('aria-current', 'page');
   await nav(page).getByRole('button', { name: 'Log', exact: true }).click();
-  await expect(panel(page).locator('.entry', { hasText: 'Würfel · 2W6' }).locator('.interpretation')).toContainText('Der Wurf ist gut.');
+  await expect(panel(page).locator('.entry').last()).toContainText('Zeit');
 });
 
 test('Eine Probe aus dem Charakter oben lässt sich auch in einem Bereich würfeln', async ({ page }, testInfo) => {

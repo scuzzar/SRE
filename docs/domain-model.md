@@ -1627,7 +1627,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Ziel, Dauer und Sprungwurf, bei der Ankunft Kälteschlaf und Lotterie. Danach folgt mit eigenem
     Schiff die Begegnungsprüfung der Ankunft (siehe *Schiffsbegegnungen bei Abreise und Ankunft*).
   - **Unterwegs möglich** (Owner: Begegnungen an Bord): die Würfe im Reiter Begegnung, die keinen Ort
-    brauchen (Zufallsbegegnung, Patron, Gerücht), von Hand, Karte und Orakel, Proben, Charaktere.
+    brauchen (Zufallsbegegnung, Patron, Gerücht), von Hand; ⚑ eine Zufallsbegegnung an Bord nimmt TL
+    und Bevölkerung der Abflugwelt, und die Begegnung steht dort (`Encounter.in`); Karte und Orakel, Proben, Charaktere.
     Gesperrt, weil die Gruppe an keinem Ort ist: Tiere, Polizei, Shop, Werft, Tanken, Landeplatz,
     Systemflug, eine weitere Reise, Fahrten, „Gruppe platzieren“.
   - **Abbrechen** geht nicht (Owner): Die Reise läuft bis zur Ankunft.
@@ -3930,6 +3931,12 @@ Diagramm mit diesen Ausnahmen:
   - **Nebenwelten** (2026-11-20c) sind gebaut (`rollSubordinates`). Systeme von davor bekommen die
     Werte beim Öffnen der Kampagne mit Würfen aus Schlüssel und Feld; bis dahin lässt die Prüfung
     Nebenwelten ohne Raumhafen zu, aber nur alle zusammen.
+- **Unterwegs** (2026-11-22c) ist gebaut (`model/voyage.ts`; „Weiterreisen“ ist `voyageDay`, im
+  Controller `travelOn()`, der Tag-Knopf der Log-Reihe `oneDay()`). Abweichungen:
+  - **`Voyage → Journey : jump`** und **`Voyage → SystemJourney : inSystem`** sind im Code ein Feld
+    `entry`, die Stelle des Logeintrags (wie `won`); Löschen davor rückt die Stelle nach.
+  - Ein **Beiboot**, mit dem die Gruppe im System reist, ist unterwegs nicht mehr an Bord seines
+    Mutterschiffs (wie vorher bei der Ankunft).
 - **Schiffsbegegnungen bei Abreise und Ankunft** (2026-11-22b) sind gebaut (`model/ship-encounter.ts`,
   `model/draft/ship-check.ts`, Wurf in `model/space-combat.ts`). Abweichungen:
   - **`EncounterCheck`** heißt im Code `ShipEncounterCheck`, weil `EncounterCheck` schon der Test der

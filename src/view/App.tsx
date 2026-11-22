@@ -162,7 +162,7 @@ export function App() {
     </>
   );
 
-  // Die Reihe Notiz, Deuten, Würfeln, Karte: im Ziehblatt nur im Log, die übrigen Reiter haben unten
+  // Die Reihe Notiz, Tag, Würfeln, Karte: im Ziehblatt nur im Log, die übrigen Reiter haben unten
   // Platz für ihre eigenen Knöpfe; in der Seitenspalte des Desktops unter jedem Bereich, der keine
   // eigene Reihe hat. Beim angetippten Feld des Globus steht dort stattdessen die Reihe des Felds.
   const dock = <OracleDock view={view} shortcuts />;

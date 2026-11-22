@@ -74,6 +74,9 @@ import {
   type SystemJourneyMode,
   worldOf,
   journeyCraft,
+  voyageDaysLeft,
+  voyageEntry,
+  voyageDayBlocker,
 } from '../model';
 
 /** Ein Test im Log: Art, Würfel, Zielwert, ob bestanden; bei der Polizei dazu die Reaktion. */
@@ -121,6 +124,10 @@ export interface JourneyItem {
   readonly kind: 'journey';
   readonly at: string;
   readonly index: number;
+  /** Ob die Gruppe schon angekommen ist; unterwegs fehlen Kälteschlaf und Lotterie noch (2026-11-22c). */
+  readonly arrived: boolean;
+  /** Unterwegs: wie viele Reisetage noch fehlen. */
+  readonly left: number | undefined;
   readonly from: string;
   readonly to: string;
   readonly fromDate: string;
@@ -262,6 +269,10 @@ export function skimmingItem(campaign: Campaign, entry: Skimming): SkimmingItem 
 export interface SystemJourneyItem {
   readonly kind: 'systemJourney';
   readonly at: string;
+  /** Ob die Gruppe schon angekommen ist (2026-11-22c). */
+  readonly arrived: boolean;
+  /** Unterwegs: wie viele Reisetage noch fehlen. */
+  readonly left: number | undefined;
   readonly from: string;
   readonly to: string;
   readonly fromDate: string;
@@ -291,6 +302,13 @@ export interface TimeView {
   /** Warum gerade keine Zeit vergeht (laufende Begegnung). */
   readonly blocked: string | undefined;
   readonly note: string | undefined;
+  /** Unterwegs (2026-11-22c): wohin und wie viele Reisetage noch fehlen; „Woche beenden“ ist dann gesperrt. */
+  readonly voyage: { readonly to: string; readonly left: number } | undefined;
+  /**
+   * Der Knopf für einen Tag (2026-11-22c), im Reiter Begegnung und in der Reihe unter dem Log: während
+   * einer Fahrt „Weiterfahren“, unterwegs „Weiterreisen“, sonst „1 Tag“; gesperrt mit Grund.
+   */
+  readonly oneDay: { readonly kind: 'trip' | 'voyage' | 'day'; readonly label: string; readonly blocker: string | undefined };
 }
 
 /** Je Test: „heute 1×“ bzw. „diese Woche 1×“ und ob die Regel schon erfüllt ist (dann langes Drücken). */
@@ -500,10 +518,13 @@ export function journeyItem(campaign: Campaign, entry: Journey, index: number): 
   const winner = winnerOf(entry);
   const from = entry.day ?? 0;
   const winnerBerth = winner === undefined ? undefined : entry.berths[winner];
+  const travelling = campaign.voyage?.entry === index;
   return {
     kind: 'journey',
     at: entry.at,
     index,
+    arrived: !travelling,
+    left: travelling ? voyageDaysLeft(campaign) : undefined,
     from: worldName(campaign, entry.from),
     to: worldName(campaign, entry.to),
     fromDate: dateLabel(from),
@@ -579,9 +600,12 @@ export function systemJourneyItem(campaign: Campaign, entry: SystemJourney, inde
   } catch {
     distance = undefined;
   }
+  const travelling = campaign.voyage?.entry === index;
   return {
     kind: 'systemJourney',
     at: entry.at,
+    arrived: !travelling,
+    left: travelling ? voyageDaysLeft(campaign) : undefined,
     from: worldName(campaign, entry.from),
     to: worldName(campaign, entry.to),
     fromDate: dateLabel(from),
@@ -619,6 +643,13 @@ export function timeView(campaign: Campaign, note: string | undefined, animals: 
     missingWeek: missingChecks(campaign, true, animals).map((k) => checkNames[k]),
     blocked: campaign.encounters.some((e) => !e.ended) ? 'Während einer laufenden Begegnung vergeht keine Zeit.' : undefined,
     note,
+    voyage: campaign.voyage === undefined ? undefined : { to: worldName(campaign, voyageEntry(campaign).to), left: voyageDaysLeft(campaign) },
+    oneDay: (() => {
+      const blocked = campaign.encounters.some((e) => !e.ended) ? 'Während einer laufenden Begegnung vergeht keine Zeit.' : undefined;
+      if (campaign.trip !== undefined) return { kind: 'trip' as const, label: 'Weiterfahren', blocker: blocked };
+      if (campaign.voyage !== undefined) return { kind: 'voyage' as const, label: 'Weiterreisen', blocker: voyageDayBlocker(campaign) };
+      return { kind: 'day' as const, label: '1 Tag', blocker: blocked };
+    })(),
   };
 }
 

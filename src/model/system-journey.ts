@@ -1,19 +1,18 @@
-import { keepFocus, type Campaign } from './campaign';
-import { leaveShipBehind, portDepartureBlocker, shipArrives, shipDepartureBlocker } from './landing';
+import type { Campaign } from './campaign';
+import { leaveShipBehind, portDepartureBlocker, shipDepartureBlocker } from './landing';
 import { DomainError } from './errors';
 import type { SystemJourney } from './log';
 import type { Dice } from './rules';
-import { worldPlace } from './place';
 import type { Clock } from './ports';
 import { shipDesignOf } from './reference';
 import { hexById, hexIdOfWorld, worldById, type Hex, type World } from './sector';
-import { activeShip, craftOf, shipById, shipOf, whereIs, type Ship } from './ship';
+import { activeShip, craftOf, shipById, shipOf, whereIs, without, type Ship } from './ship';
 import { fundsOf } from './shop';
 import { orbitMillionKm, radiusOf } from './star-system';
 import { dayOf } from './time';
 import { travellersOf } from './travel';
 import { parkVehicles } from './trip';
-import { afterTime, arrive } from './upkeep';
+import { startVoyage } from './voyage';
 
 // Die Reise im System (Domänenmodell 2026-11-20d): von Welt zu Welt desselben Systems, mit Ticket
 // oder mit dem eigenen Schiff; Dauer nach den Charts S. 8, T = 2·√(D/A).
@@ -143,17 +142,16 @@ export function travelInSystem(campaign: Campaign, to: string, mode: SystemJourn
   const ship = mode === 'ship' ? shipOf(campaign)! : mode === 'craft' ? shipById(campaign, craft!) : undefined;
   const journey: SystemJourney = { kind: 'systemJourney', at: clock.now(), day: today, from, to, hours, travellers, ...(ship ? { ship: ship.id } : {}), ...(departureRoll ? { departureRoll } : {}) };
   const index = campaign.log.length;
-  const days = journeyDays(hours);
   const cost = mode === 'ticket' ? hours * TICKET_RATE * travellers.length : 0;
   const after: Campaign = {
     ...campaign,
     bookings: cost > 0 ? [...campaign.bookings, { at: clock.now(), kind: 'ticket', amount: -cost, text: `Ticket, ${travellers.length} Reisende`, ticketFor: index }] : campaign.bookings,
+    // Unterwegs ist das eigene Schiff oder Beiboot bei der Gruppe, an keinem Ort (2026-11-22c).
+    ships: ship ? campaign.ships.map((s) => (s.id === ship.id ? without(s, 'place', 'berthedSince', 'aboard', 'inOrbit') : s)) : campaign.ships,
     log: [...campaign.log, journey],
-    day: today + days,
-    location: worldPlace(to),
   };
-  // Mit dem eigenen Schiff oder Beiboot steht es danach auf der Zielwelt; das Feld wählt der Landeplatz.
-  return keepFocus(campaign, arrive(afterTime(ship ? shipArrives(after, to, ship.id) : after, today, clock), clock, ship?.id));
+  // Die Reise ist unterwegs; die Gruppe lässt ihre Tage mit „Weiterreisen“ vergehen; am Ziel wählt sie den Landeplatz.
+  return startVoyage(after, index);
 }
 
 /** Prüft eine Reise im System aus der Kampagnendatei: Welten im selben System, Stunden, Reisende, Schiff. */

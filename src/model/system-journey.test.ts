@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createDemoCampaign, readyForParty, fromCampaignFile, fundsOf, mapLocked, mapPossible, removeLogEntry, renameCity, renameWorld, noteWorld, rollWorldSurface, surfaceDue, toCampaignFile, withSurfaceMapOf, worldById, type Campaign } from '.';
 import { flightHours, journeyDays, systemDistance, systemJourneyBlocker, ticketCost, travelInSystem, TICKET_RATE } from './system-journey';
-import { fixedClock, seededRandom } from './testing';
+import { fixedClock, seededRandom, arriveNow, lastJourney } from './testing';
 
 const clock = fixedClock();
 const demo = (): Campaign => createDemoCampaign(clock);
@@ -43,22 +43,22 @@ describe('Reise im System (2026-11-20d)', () => {
     c = { ...c, bookings: [...c.bookings, { at: clock.now(), kind: 'income', amount: cost }] };
     const day = c.day;
     const before = fundsOf(c);
-    const after = travelInSystem(c, to.id, 'ticket', clock);
-    const entry = after.log.at(-1)!;
+    const after = arriveNow(travelInSystem(c, to.id, 'ticket', clock), clock);
+    const entry = lastJourney(after)!;
     expect(entry).toMatchObject({ kind: 'systemJourney', from: c.location!.world, to: to.id, hours });
     expect(after.bookings.find((b) => b.kind === 'ticket')).toMatchObject({ amount: -cost, ticketFor: after.log.indexOf(entry) });
     expect(fundsOf(after)).toBeLessThanOrEqual(before - cost);
     expect(after.day).toBe(day + journeyDays(hours));
     expect(after.location).toEqual({ world: to.id });
     expect(() => removeLogEntry(after, after.log.indexOf(entry))).toThrow(/Reise/);
-    expect(fromCampaignFile(toCampaignFile(after), after.id).log.at(-1)).toEqual(entry);
+    expect(lastJourney(fromCampaignFile(toCampaignFile(after), after.id))).toEqual(entry);
   });
 
   it('mit eigenem Schiff: kein Preis, Flug mit dem Manöverantrieb', () => {
     const c = demo();
     const to = target(c);
-    const after = travelInSystem(c, to.id, 'ship', clock);
-    expect(after.log.at(-1)).toMatchObject({ kind: 'systemJourney', ship: c.ships[0]!.id, hours: flightHours(systemDistance(c.hexes, c.location!.world, to.id), 1) });
+    const after = arriveNow(travelInSystem(c, to.id, 'ship', clock), clock);
+    expect(lastJourney(after)).toMatchObject({ kind: 'systemJourney', ship: c.ships[0]!.id, hours: flightHours(systemDistance(c.hexes, c.location!.world, to.id), 1) });
     expect(after.bookings.some((b) => b.kind === 'ticket')).toBe(false);
   });
 

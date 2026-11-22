@@ -22,7 +22,7 @@ export function SystemJourneySheet({ journey }: { journey: SystemJourneyView }) 
       <section className="result journey-sheet" role="dialog" aria-modal="true" aria-labelledby="system-journey-title">
         <div className="sheet-head" style={{ alignItems: 'center' }}>
           <h2 id="system-journey-title" className="journey-title">
-            {result ? 'Angekommen' : 'Reise im System'}: {journey.fromName} → {journey.toName}
+            {result ? (result.arrived ? 'Angekommen' : 'Unterwegs') : 'Reise im System'}: {journey.fromName} → {journey.toName}
           </h2>
           <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={() => game.closeSystemJourney()}>
             <CloseIcon />
@@ -36,6 +36,7 @@ export function SystemJourneySheet({ journey }: { journey: SystemJourneyView }) 
             <p className="journey-facts">
               {result.fromDate} → {result.toDate} · {result.flight} · {result.how}
             </p>
+            {!result.arrived && <p className="journey-facts">Unterwegs · noch {result.left === 1 ? '1 Tag' : `${result.left} Tage`}: „Weiterreisen“ unter dem Log oder im Reiter Begegnung.</p>}
             <button type="button" className="primary" onClick={() => game.closeSystemJourney()}>
               Weiter
             </button>

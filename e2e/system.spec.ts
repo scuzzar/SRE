@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { land, openSector } from './layout';
+import { land, openOracle, openSector } from './layout';
 
 test.use({ reducedMotion: 'reduce' });
 
@@ -33,8 +33,14 @@ test('Nebenwelt aus dem Reiter System öffnen, benennen und mit dem eigenen Schi
   await expect(check).toContainText('Start von Kessra');
   await expect(check).toContainText(/Schiff bei \d/);
   await skipCheck(page);
+  // Unterwegs (2026-11-22c): Die Tage vergehen mit „Weiterreisen“ in der Reihe unter dem Log.
+  await expect(page.getByRole('dialog', { name: /Unterwegs: Kessra → Tertius/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter', exact: true }).click();
+  await openOracle(page);
+  const travelOn = page.getByRole('region', { name: 'Orakel und Proben' }).getByRole('button', { name: 'Weiterreisen' });
+  for (let i = 0; i < 30 && !(await page.getByRole('dialog', { name: /Angekommen: Kessra → Tertius/ }).isVisible()); i++) await travelOn.click();
   await expect(page.getByRole('dialog', { name: /Angekommen: Kessra → Tertius/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Weiter' }).click();
+  await page.getByRole('button', { name: 'Weiter', exact: true }).click();
   // Danach die Prüfung der Ankunft.
   await expect(check).toContainText('Ankunft in Tertius');
   await skipCheck(page);
