@@ -139,18 +139,21 @@ export function ShipScreen({ view }: { view: Snapshot }) {
         ) : (
           <>
             <div className="card-grid cols-2 ship-tiles">
-              <div className="tile">
-                <span className="tile-label">Treibstoff</span>
-                <span className="tile-text">
-                  {boat.fuel} / {boat.fuelMax} t
+              {/* Treibstoff und Fracht in einer Kachel wie Kabinen und Niedrigbetten. */}
+              <div className="tile duo">
+                <span className="duo-col">
+                  <span className="tile-label">Treibstoff</span>
+                  <span className="tile-text">
+                    {boat.fuel} / {boat.fuelMax} t
+                  </span>
+                </span>
+                <span className="duo-col">
+                  <span className="tile-label">Fracht</span>
+                  <span className="tile-text">
+                    {boat.cargo} / {boat.cargoMax} t
+                  </span>
                 </span>
                 {boat.unrefined > 0 && <span className="tile-sub">davon {boat.unrefined} t unraffiniert (Sprung DM +1)</span>}
-              </div>
-              <div className="tile">
-                <span className="tile-label">Fracht</span>
-                <span className="tile-text">
-                  {boat.cargo} / {boat.cargoMax} t
-                </span>
               </div>
               <div className="tile duo">
                 <span className="duo-col">
@@ -192,6 +195,12 @@ export function ShipScreen({ view }: { view: Snapshot }) {
               <div className="tile">
                 <span className="tile-label">Computer</span>
                 <span className="tile-text">{boat.computerName}</span>
+              </div>
+              {/* Die Restschuld steht als letzte Kache, nicht mehr im Reiter Details. */}
+              <div className="tile">
+                <span className="tile-label">Restschuld</span>
+                <span className={`tile-text${boat.loanBalance === undefined ? '' : ' gold'}`}>{debtLine(boat)}</span>
+                {boat.monthlyPayment !== undefined && boat.loanBalance !== undefined && <span className="tile-sub">{`${credits(boat.monthlyPayment)} im Monat`}</span>}
               </div>
             </div>
             <div className="shop-tabs" role="tablist" aria-label="Ansichten des Schiffs">
@@ -335,18 +344,18 @@ function DeckPlans({ ship, onView }: { ship: ShipView; onView: (name: string) =>
 }
 
 /** Ansicht Details: alles, was nicht schon in den Kacheln steht, und die Software an Bord. */
+/** Was in die Kachel „Restschuld“ gehört: der offene Rest, sonst „schuldenfrei“ oder „bezahlt“. */
+function debtLine(boat: Boat): string {
+  return boat.loanBalance === undefined ? (boat.initialLoan === undefined ? 'schuldenfrei' : 'bezahlt') : credits(boat.loanBalance);
+}
+
 function Details({ boat }: { boat: Boat }) {
-  const debt = boat.loanBalance === undefined ? (boat.initialLoan === undefined ? 'schuldenfrei' : 'bezahlt') : credits(boat.loanBalance);
   return (
     <>
       <dl className="profile">
-        <div>
-          <dt>Restschuld</dt>
-          <dd className={boat.loanBalance === undefined ? undefined : 'gold'}>{debt}</dd>
-        </div>
         {boat.initialLoan !== undefined && (
           <div>
-            <dt>Kreditsumme</dt>
+            <dt>Kredit</dt>
             <dd>{credits(boat.initialLoan)}</dd>
           </div>
         )}
