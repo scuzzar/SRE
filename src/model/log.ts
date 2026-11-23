@@ -164,6 +164,12 @@ export interface SpaceAttack extends LogEntryBase {
   readonly computerHits?: number;
   /** Ein Small Craft ohne Computer schoss mit DM −1 (SE 13, 2026-11-22); fehlt heißt nein. */
   readonly noComputer?: boolean;
+  /** Die DM der Programme in der CPU (2026-11-23, Domänenmodell 2026-11-22d): Predict und Gunner beim Schützen, Ausweichen beim Ziel. */
+  readonly predict?: number;
+  readonly gunnery?: number;
+  readonly evade?: number;
+  /** Der Schuss war ein Rückfeuer (2026-11-23); fehlt heißt nein. */
+  readonly returnFire?: boolean;
   readonly hits: readonly HitZone[];
 }
 

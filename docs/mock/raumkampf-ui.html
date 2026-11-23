@@ -1,0 +1,494 @@
+<!doctype html>
+<!--
+  UI-Mock: Raumkampf-Interface (Entwurf nach der Skizze „CombatUI v1", noch nicht freigegeben).
+  Design: Klassen und Farben sind aus src/view/styles.css übernommen, damit das Mock so aussieht
+  wie die App – .app, .screen, .scroll, .dock, .actions/.action, .chips, .space-battle,
+  .space-foe, .space-foe-head, .space-intent, .space-foe-stats, .space-foe-damage, .combat-hint,
+  .globe-sheet-head, .globe-sheet-sub, .icon-button, .entry, .section-title, .kicker, .mono, .muted.
+  Neu (mit „NEU" markiert) sind nur die Stellen, die die App noch nicht hat: die zwei Schiffs-
+  karten nebeneinander mit ▲/▼, die Hardpoint-Leiste über alle eigenen Schiffe, das Kampf-Log
+  und der Phasenknopf. Die Farben der Karte sind die der App (OWN #4fd1ff, FOE #ff6b6b).
+
+  Bedienung nach dem Gespräch vom 23. November 2026:
+  · Karte: Tippen auf ein fremdes Schiff = Ziel. Schub je eigenes Schiff, wie heute im Schubring.
+  · Linke Karte: mein Schiff, ▲/▼ blättert durch meine Schiffe; rechte Karte: das Ziel.
+  · Hardpoint-Leiste: ein Knopf je Hardpoint über ALLE meine Schiffe, mit Schiffsnummer (M1, M2 wie
+    auf der Karte), Waffen, Trefferzahl, bei Raketen 5G5 und Anzahl. Ein Tipp feuert sofort.
+  · Ein Knopf unten schaltet die Phasen: „Bewegen" (Schub ausführen) → „End Turn" (Salve schließen,
+    Retourvente des Gegners) → „End Turn" (meine Retourvente, neue Raumrunde).
+-->
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>UI-Mock · Raumkampf</title>
+<style>
+  /* ── Tokens aus src/view/styles.css ─────────────────────────────────────────────────────── */
+  :root {
+    --bg: #111111;
+    --panel: #161616;
+    --raised: #1a1a1a;
+    --highlight: #1f1f1f;
+    --deep: #0b0b0b;
+    --card: #0e0e0e;
+    --rule: #2a2a2a;
+    --rule-soft: #2e2e2e;
+    --line: #3a3a3a;
+    --line-strong: #555555;
+    --text: #eceae4;
+    --muted: #a3a09a;
+    --dim: #8c8a85;
+    --ink: #111111;
+    --accent: #c62f35;
+    --accent-text: #ef5a5f;
+    --accent-wash: #2a1415;
+    --disabled: #333333;
+    --gold: #d9b45f;
+    --gold-bright: #f5dc96;
+    --gold-deep: #8a6a2a;
+    --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; background: var(--deep); color: var(--text);
+    font-family: var(--sans); font-size: 15px; line-height: 1.45; -webkit-text-size-adjust: 100%;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  button:disabled { cursor: not-allowed; }
+  :focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+  .mono { font-family: var(--mono); }
+  .muted { color: var(--muted); }
+
+  /* ── Rahmen, Blatt, Dock (aus styles.css) ────────────────────────────────────────────────── */
+  body { display: flex; justify-content: center; padding: 16px 10px; }
+  .app {
+    position: relative; display: flex; flex-direction: column; width: 100%; max-width: 480px;
+    height: min(900px, calc(100% - 0px)); margin: 0 auto; overflow: hidden;
+    background: var(--bg); border: 1px solid var(--rule);
+  }
+  .screen { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px; }
+  .dock {
+    flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; padding: 12px 16px;
+    border-top: 1px solid var(--rule); background: var(--panel);
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .section-title { margin: 0; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .kicker { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-text); }
+  .icon-button { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; background: transparent; border: 0; color: var(--muted); }
+  .globe-sheet-head { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 10px; }
+  .globe-sheet-head h3 { margin: 0; font-size: 17px; }
+  .globe-sheet-sub { margin: 2px 0 8px; color: var(--muted); font-size: 13px; }
+  .combat-hint { margin: 0; font-size: 12px; color: var(--muted); }
+
+  /* Actions im Dock (aus styles.css): genauso viele Spalten wie Knöpfe. */
+  .actions { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 6px; }
+  .dock .actions:has(> :nth-child(3)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dock .actions:has(> :nth-child(4)) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .action { min-height: 56px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; font-weight: 700; font-size: 15px; }
+  .action.draw { background: var(--accent); color: #fff; }
+  .action.dice { background: transparent; color: var(--text); border: 1px solid var(--text); }
+  .action.fire { background: #b3261e; border-color: #ff6b6b; color: #fff; }
+  .action:disabled { background: var(--disabled); color: var(--dim); border-color: var(--disabled); }
+  .action, .roll { transition: transform 0.08s ease-out; }
+  .action:active:not(:disabled) { transform: scale(0.97); }
+
+  /* Chips (aus styles.css) – hier die Hardpoints. */
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; list-style: none; }
+  .chips button, .chips .chip { min-height: 40px; padding: 6px 8px; font-size: 14px; background: transparent; border: 1px solid var(--line-strong); }
+  .chips button[aria-pressed='true'] { background: var(--text); border-color: var(--text); color: var(--ink); font-weight: 700; }
+  .chips button.unskilled { border-style: dashed; }
+
+  /* ── NEU: der Raumkampf unten auf der Karte ──────────────────────────────────────────────── */
+  .rk-map { flex: 0 0 auto; background: #05070d; border-bottom: 1px solid var(--rule); }
+  .rk-map canvas { display: block; width: 100%; height: 250px; touch-action: none; }
+
+  /* Zwei Karten nebeneinander: links mein Schiff, rechts das Ziel. */
+  .rk-cards { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; margin: 8px 0 0; }
+  .space-battle { display: grid; gap: 6px; margin: 8px 0; }
+  .space-foe { border: 1px solid rgba(255, 107, 107, 0.45); border-radius: 8px; padding: 6px 8px; display: grid; gap: 4px; }
+  .space-foe p { margin: 0; }
+  .space-foe-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .space-intent { font-size: 0.8em; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; }
+  .space-intent.intent-greift { color: #ff6b6b; }
+  .space-intent.intent-flieht { color: #f2c14e; }
+  .space-intent.intent-beachtet, .space-intent.intent-wreck { color: var(--muted); }
+  .space-foe-stats, .space-foe-damage, .space-own { margin: 0; font-size: 0.9em; }
+  .space-foe-damage { color: #ff9b9b; }
+  .space-foe-damage.muted { color: var(--muted); }
+  .rk-own { border: 1px solid rgba(79, 209, 255, 0.45); border-radius: 8px; padding: 6px 8px; display: grid; gap: 4px; position: relative; }
+  .rk-card { position: relative; padding-right: 26px; }
+  .rk-page {
+    position: absolute; right: 2px; top: 2px; width: 24px; height: 22px; padding: 0;
+    background: transparent; border: 0; color: var(--muted); font-size: 10px; line-height: 1;
+  }
+  .rk-page.down { top: auto; bottom: 2px; }
+  .rk-page:disabled { color: var(--disabled); }
+
+  /* Hardpoint-Knöpfe: Nummer, Waffen, Trefferzahl, bei Raketen Schub, Ladungen, Anzahl. */
+  .rk-hp { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .rk-hp button { display: flex; align-items: baseline; gap: 6px; }
+  .rk-hp .no { font-family: var(--mono); font-size: 12px; color: var(--gold-bright); border: 1px solid var(--line-strong); padding: 0 4px; }
+  .rk-hp .need { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .rk-hp button:disabled { border-style: dashed; color: var(--dim); }
+  .rk-hp button:disabled .no { color: var(--dim); }
+
+  /* Kampf-Log: Einträge wie im Log, nur dichter. */
+  .rk-log { margin-top: 12px; display: grid; gap: 4px; }
+  .rk-log .entry { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; padding: 6px 8px; background: var(--panel); border: 1px solid var(--rule-soft); font-size: 13px; }
+  .rk-log .entry-time { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .rk-log .entry.hit { color: #ff9b9b; }
+  .rk-log .entry.ok { color: var(--gold-bright); }
+  .rk-log .entry.move { color: #7fd8f7; }
+  .rk-log .entry.round { border-color: var(--gold-deep); color: var(--gold-bright); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="screen">
+    <div class="rk-map"><canvas id="map" width="900" height="500"></canvas></div>
+
+    <div class="scroll">
+      <div class="globe-sheet-head">
+        <h3 id="title">Raumrunde 1</h3>
+        <button class="icon-button" id="close" aria-label="Raumkampf schließen">✕</button>
+      </div>
+      <p class="globe-sheet-sub"><span id="where">Kessra · seit 00:16:40</span></p>
+      <p class="combat-hint" id="note"></p>
+
+      <div class="rk-cards">
+        <div class="rk-own rk-card">
+          <p class="kicker">Mein Schiff</p>
+          <p class="space-own" id="ownName"><b>Kestrel · M1</b></p>
+          <p class="space-foe-stats mono" id="ownStats"></p>
+          <p class="space-foe-damage" id="ownHits"></p>
+          <button class="rk-page" id="ownUp" aria-label="Vorheriges eigenes Schiff">▲</button>
+          <button class="rk-page down" id="ownDown" aria-label="Nächstes eigenes Schiff">▼</button>
+        </div>
+        <div class="space-foe rk-card">
+          <p class="kicker">Ziel</p>
+          <div class="space-foe-head">
+            <b id="foeName">Suleiman · F1</b>
+            <span class="space-intent intent-greift" id="foeIntent">greift an</span>
+          </div>
+          <p class="space-foe-stats mono" id="foeStats"></p>
+          <p class="space-foe-damage" id="foeHits"></p>
+          <button class="rk-page" id="foeUp" aria-label="Vorheriges fremdes Schiff">▲</button>
+          <button class="rk-page down" id="foeDown" aria-label="Nächstes fremdes Schiff">▼</button>
+        </div>
+      </div>
+
+      <h4 class="section-title">Hardpoints · alle meine Schiffe</h4>
+      <div class="rk-hp" id="hardpoints" role="group" aria-label="Hardpoints"></div>
+
+      <div class="rk-log" id="log" aria-live="polite"></div>
+    </div>
+
+    <div class="dock">
+      <div class="actions" id="shipActions"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Beispielstand ──────────────────────────────────────────────────────────────
+const own = [
+  { id: 'yacht', no: 1, name: 'Kestrel', design: 'Free Trader', g: 4, hp: 32, hurt: 24, hits: [], hardpoints: [
+    { weapons: [{ name: 'P. Laser', count: 2, need: 5 }] },
+    { weapons: [{ name: 'Beam Laser', count: 1, need: 7 }] },
+  ] },
+  { id: 'boat', no: 2, name: 'Beiboot 1', design: 'Fighter', g: 6, hp: 12, hurt: 12, hits: [], hardpoints: [
+    { weapons: [{ name: 'P. Laser', count: 1, need: 5 }] },
+    { weapons: [{ name: 'Missile', size: 2, g: 5, charges: 5, need: 5 }], ammo: 3 },
+  ] },
+];
+const foe = [
+  { id: 'raider', no: 1, name: 'Suleiman', design: 'Raider', g: 5, hp: 28, hurt: 28, hits: [], intent: 'greift an', intentClass: 'greift', lasers: 4 },
+  { id: 'skirm', no: 2, name: 'Corsair', design: 'Pinnace', g: 6, hp: 14, hurt: 14, hits: [], intent: 'flieht', intentClass: 'flieht', lasers: 2 },
+];
+const pos = {
+  yacht: { x: -90, y: 40, coast: { x: -90, y: 40 } },
+  boat: { x: -40, y: 95, coast: { x: -40, y: 95 } },
+  raider: { x: 95, y: -35, coast: { x: 120, y: -60 } },
+  skirm: { x: -20, y: -86, coast: { x: 10, y: -104 } },
+};
+const thrust = { yacht: undefined, boat: undefined };
+const OWN = '#4fd1ff', FOE = '#ff6b6b';
+
+const state = { round: 1, phase: 'thrust', shown: 0, target: 0, time: 1000 };
+
+// ── Ausgabe ────────────────────────────────────────────────────────────────────
+const $ = (id) => document.getElementById(id);
+const num = (n, d = 0) => n.toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
+const clock = (s) => `${num(Math.floor(s / 3600) % 24).padStart(2, '0')}:${num(Math.floor(s / 60) % 60).padStart(2, '0')}:${num(s % 60).padStart(2, '0')}`;
+
+function log(text, kind) {
+  const p = document.createElement('p');
+  p.className = `entry${kind ? ` ${kind}` : ''}`;
+  p.innerHTML = `<span class="entry-time">${clock(state.time)}</span><span></span>`;
+  p.lastElementChild.textContent = text;
+  $('log').prepend(p);
+}
+
+const shipLine = (s) => {
+  const hp = s.hp === s.hurt ? `HP ${num(s.hp)}` : `HP ${num(s.hurt)}/${num(s.hp)}`;
+  return `${s.design} · ${num(s.g)} G · ${hp} · Wunden ${num(s.hits.length)}`;
+};
+
+function render() {
+  $('title').textContent = `Raumrunde ${state.round}`;
+  $('where').textContent = `Kessra · seit ${clock(state.time)}`;
+  const me = own[state.shown], target = foe[state.target];
+
+  $('ownName').innerHTML = `<b>M${me.no} ${me.name}</b>`;
+  $('ownStats').textContent = shipLine(me);
+  $('ownHits').textContent = me.hits.length ? `Treffer: ${me.hits.join(', ')}` : 'keine Treffer';
+  $('ownHits').className = `space-foe-damage${me.hits.length ? '' : ' muted'}`;
+  $('ownUp').disabled = $('ownDown').disabled = own.length < 2;
+  $('foeName').textContent = `F${target.no} ${target.name}`;
+  $('foeIntent').textContent = target.intent;
+  $('foeIntent').className = `space-intent intent-${target.intentClass}`;
+  $('foeStats').textContent = `${shipLine(target)} · ${target.lasers} Laser`;
+  $('foeHits').textContent = target.hits.length ? `Treffer: ${target.hits.join(', ')}` : 'keine Treffer';
+  $('foeHits').className = `space-foe-damage${target.hits.length ? '' : ' muted'}`;
+  $('foeUp').disabled = $('foeDown').disabled = foe.length < 2;
+
+  // Hardpoints über alle eigenen Schiffe.
+  const hp = $('hardpoints');
+  hp.innerHTML = '';
+  for (const s of own) {
+    for (const point of s.hardpoints) {
+      const b = document.createElement('button');
+      const label = point.weapons
+        .map((w) => (point.ammo !== undefined ? w.name : w.count > 1 ? `${w.count}× ${w.name}` : w.name) + (point.ammo !== undefined ? ` ${w.g}G${w.charges} ×${point.ammo}` : ''))
+        .join(' + ');
+      const need = [...new Set(point.weapons.map((w) => `${w.need}+`))].join('/');
+      b.innerHTML = `<span class="no">${s.no}</span><span></span><span class="need">${need}</span>`;
+      b.children[1].textContent = label;
+      const why = fireBlocker(s, point);
+      if (why) { b.disabled = true; b.title = why; } else b.title = `Feuert auf ${target.name}`;
+      b.onclick = () => fire(s, point);
+      hp.append(b);
+    }
+  }
+
+  // Die Reihe im Dock: Launch, Anlanden, Entern und der eine Zugknopf.
+  const launchable = me.id === 'yacht' ? 2 : 0;
+  const acts = $('shipActions');
+  acts.innerHTML = '';
+  const launch = action('Launch', launchable ? ` (${launchable})` : '', state.phase !== 'thrust' || launchable === 0, state.phase === 'thrust' ? 'Nächstes Beiboot aus dem Stapel frei' : 'Beiboote startet man vor der Bewegung');
+  launch.onclick = () => log(`M${me.no} ${me.name}: Beiboot 2 startet und ist eine eigene Einheit auf der Karte.`, 'round');
+  const anlanden = action('Anlanden', '', true, 'Stufe 4b');
+  const entern = action('Entern', '', true, 'Stufe 4b');
+  const next = action(state.phase === 'thrust' ? 'Bewegen' : 'End Turn', '', false, { thrust: 'Schub der Runde ausführen', own: 'Salve schließen: Retourvente des Gegners', foe: 'Meine Retourvente, dann neue Raumrunde' }[state.phase]);
+  next.className = 'action draw';
+  next.id = 'next';
+  next.onclick = step;
+  acts.append(launch, anlanden, entern, next);
+
+  $('note').innerHTML = {
+    thrust: `Schub wählen – <b>${own.length} eigene Schiffe</b> im Schubring, die Gegner zieht das Programm. <b>Bewegen</b> führt die Raumrunde aus.`,
+    own: `<b>${target.name}</b> ist das Ziel. Ein Tipp auf den Hardpoint feuert. <b>End Turn</b> schließt die Salve und bringt die Retourvente des Gegners.`,
+    foe: `${target.name} erwidert das Feuer. <b>End Turn</b> bringt meine Retourvente und die nächste Raumrunde.`,
+  }[state.phase];
+  draw();
+}
+
+function action(label, rest, disabled, title) {
+  const b = document.createElement('button');
+  b.className = 'action dice';
+  b.innerHTML = `<span></span>${rest ? `<span class="mono" style="font-size:12px"></span>` : ''}`;
+  b.firstChild.textContent = label;
+  if (rest) b.lastElementChild.textContent = rest;
+  b.disabled = disabled;
+  b.title = title;
+  return b;
+}
+
+/** Was dem Feuer gerade im Weg steht; undefined, wenn der Hardpoint feuern darf. */
+function fireBlocker(ship, point) {
+  if (state.phase !== 'own') return 'Erst die Bewegung abwarten';
+  if (point.ammo === 0) return 'Keine Rakete mehr im Werfer';
+  if (ship.firedRound === state.round) return `${ship.name} hat in dieser Runde schon gefeuert`;
+  return undefined;
+}
+
+// ── Eingabe ────────────────────────────────────────────────────────────────────
+$('ownUp').onclick = () => { state.shown = (state.shown + own.length - 1) % own.length; render(); };
+$('ownDown').onclick = () => { state.shown = (state.shown + 1) % own.length; render(); };
+$('foeUp').onclick = () => { state.target = (state.target + foe.length - 1) % foe.length; render(); };
+$('foeDown').onclick = () => { state.target = (state.target + 1) % foe.length; render(); };
+$('close').onclick = () => log('Raumkampf beenden (in der App: das Blatt schließen).', 'round');
+
+function step() {
+  if (state.phase === 'thrust') {
+    state.phase = 'own';
+    state.time += 1000;
+    for (const s of own) {
+      const t = thrust[s.id];
+      pos[s.id].x += (t?.x ?? 0) / 1000 / 40;
+      pos[s.id].y += (t?.y ?? 0) / 1000 / 40;
+      pos[s.id].coast = { ...pos[s.id] };
+      log(`M${s.no} ${s.name}: ${t ? `${num(Math.hypot(t.x, t.y) / 1000 / 1000, 1)} G nach ${t.dir}` : 'ohne Schub'}`, 'move');
+    }
+    log(`F1 ${foe[0].name} und F2 ${foe[1].name} sind gezogen.`, 'move');
+  } else if (state.phase === 'own') {
+    state.phase = 'foe';
+    if (Math.random() < 0.5) { foe[state.target].hits.push('Rumpf C'); log(`Retourvente von ${foe[state.target].name}: trifft M${own[state.shown].no} ${own[state.shown].name} am Rumpf C.`, 'hit'); }
+    log(`${foe[state.target].name} erwidert das Feuer – Retourvente gelaufen.`, 'round');
+  } else {
+    for (const f of foe) if (Math.random() < 0.4) { const s = own[Math.floor(Math.random() * own.length)]; s.hits.push('Antrieb B'); log(`${f.name} trifft M${s.no} ${s.name}: Antrieb B.`, 'hit'); }
+    state.round += 1;
+    state.phase = 'thrust';
+    state.time += 1000;
+    for (const s of own) { s.firedRound = undefined; thrust[s.id] = undefined; }
+    log(`Raumrunde ${state.round}`, 'round');
+  }
+  render();
+}
+
+/** Ein Tipp auf den Hardpoint: sofortiges Feuer auf das Ziel. */
+function fire(ship, point) {
+  const target = foe[state.target];
+  ship.firedRound = state.round;
+  if (point.ammo !== undefined) point.ammo -= 1;
+  for (const w of point.weapons) {
+    const salve = point.ammo !== undefined ? 1 : w.count;
+    for (let i = 0; i < salve; i++) {
+      const d1 = 1 + Math.floor(Math.random() * 6), d2 = 1 + Math.floor(Math.random() * 6), roll = d1 + d2;
+      if (roll >= w.need) {
+        const letter = ['Rechner A', 'Antrieb B', 'Rumpf C', 'Schilde D', 'Besatzung E'][Math.floor(Math.random() * 5)];
+        target.hits.push(letter);
+        log(`M${ship.no} ${w.name} (${d1}+${d2} = ${roll}) trifft ${target.name}: ${letter}.`, 'ok');
+      } else log(`M${ship.no} ${w.name} (${d1}+${d2} = ${roll}) an ${target.name} vorbei, nötig ${w.need}+.`, 'hit');
+    }
+  }
+  render();
+}
+
+// ── Karte (Farben wie in SpaceScreen.tsx) ──────────────────────────────────────
+const cv = $('map'), ctx = cv.getContext('2d');
+const W = 450, H = 250, cx = () => W / 2, cy = () => H / 2, BAND = 26;
+const sx = (x) => cx() + x * 0.9, sy = (y) => cy() + y * 0.9;
+
+function ship(x, y, color, label, angle, marked) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.moveTo(9, 0); ctx.lineTo(-6, 6); ctx.lineTo(-3, 0); ctx.lineTo(-6, -6); ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = color;
+  ctx.font = '11px var(--mono), ui-monospace, monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(label, x + 11, y - 8);
+  if (marked) {
+    ctx.beginPath();
+    ctx.arc(x, y, 15, 0, Math.PI * 2);
+    ctx.strokeStyle = FOE;
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+  }
+}
+
+function draw() {
+  ctx.setTransform(2, 0, 0, 2, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  ctx.beginPath();
+  ctx.arc(cx(), cy() + 210, 190, 0, Math.PI * 2);
+  ctx.fillStyle = '#101a2c';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(79,209,255,.16)';
+  for (let b = 1; b <= 4; b++) {
+    ctx.beginPath();
+    ctx.arc(cx(), cy(), b * BAND, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.arc(cx() - 130, cy() - 66, 6, 0, Math.PI * 2);
+  ctx.fillStyle = '#3a4152';
+  ctx.fill();
+
+  own.forEach((s, i) => {
+    const at = pos[s.id], coast = at.coast, r = s.g * 7;
+    ctx.save();
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = i === state.shown ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.2)';
+    ctx.beginPath();
+    ctx.arc(sx(coast.x), sy(coast.y), r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+    ctx.beginPath();
+    ctx.arc(sx(coast.x), sy(coast.y), 3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,.7)';
+    ctx.fill();
+    const t = thrust[s.id];
+    if (t) {
+      const gx = sx(coast.x + t.x / 1000 / 40), gy = sy(coast.y + t.y / 1000 / 40);
+      ctx.beginPath();
+      ctx.moveTo(sx(at.x), sy(at.y));
+      ctx.lineTo(gx, gy);
+      ctx.strokeStyle = OWN;
+      ctx.lineWidth = 1.3;
+      ctx.stroke();
+      ctx.fillStyle = OWN;
+      ctx.font = '10px ui-monospace, monospace';
+      ctx.fillText(`${num(Math.hypot(t.x, t.y) / 1000 / 1000, 1)} G ${t.dir}`, gx + 6, gy - 6);
+    }
+    ship(sx(at.x), sy(at.y), i === state.shown ? '#7fe3ff' : OWN, `M${s.no}`, i === state.shown ? -0.5 : 0.4, false);
+  });
+
+  foe.forEach((f, i) => {
+    const at = pos[f.id];
+    ctx.save();
+    ctx.setLineDash([3, 5]);
+    ctx.strokeStyle = 'rgba(255,107,107,.5)';
+    ctx.beginPath();
+    ctx.moveTo(sx(at.x), sy(at.y));
+    ctx.lineTo(sx(pos[f.id].coast.x), sy(pos[f.id].coast.y));
+    ctx.stroke();
+    ctx.restore();
+    ship(sx(at.x), sy(at.y), FOE, `F${f.no}`, 2.6, i === state.target);
+  });
+}
+
+let drag = undefined;
+cv.addEventListener('pointerdown', (e) => {
+  const p = point(e);
+  const hit = foe.findIndex((f) => Math.hypot(sx(pos[f.id].x) - p.x, sy(pos[f.id].y) - p.y) < 16);
+  if (hit >= 0) { state.target = hit; render(); return; }
+  const mine = own.findIndex((s) => Math.hypot(sx(pos[s.id].coast.x) - p.x, sy(pos[s.id].coast.y) - p.y) <= s.g * 7);
+  if (mine >= 0 && state.phase === 'thrust') {
+    drag = mine;
+    state.shown = mine;
+    cv.setPointerCapture(e.pointerId);
+    setThrust(p);
+  }
+});
+cv.addEventListener('pointermove', (e) => { if (drag !== undefined) setThrust(point(e)); });
+cv.addEventListener('pointerup', (e) => { if (drag !== undefined) { cv.releasePointerCapture(e.pointerId); drag = undefined; render(); } });
+
+function point(e) {
+  const r = cv.getBoundingClientRect();
+  return { x: ((e.clientX - r.left) / r.width) * W, y: ((e.clientY - r.top) / r.height) * H };
+}
+function setThrust(p) {
+  const s = own[drag], coast = pos[s.id].coast;
+  const dx = p.x - sx(coast.x), dy = p.y - sy(coast.y), d = Math.hypot(dx, dy);
+  const g = Math.max(0, s.g - Math.max(0, s.g - d / 7));
+  const dir = d < 6 ? undefined : ['O', 'NO', 'N', 'NW', 'W', 'SW', 'S', 'SO'][Math.round((((Math.atan2(-dy, dx) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI / 4))) % 8];
+  thrust[s.id] = d < 6 ? undefined : { x: (dx / (d || 1)) * g * 1000 * 1000, y: (dy / (d || 1)) * g * 1000 * 1000, dir };
+  render();
+}
+
+log('F1 Suleiman taucht auf: 6 RB, Absicht „greift an".');
+log('Raumrunde 1', 'round');
+render();
+</script>
+</body>
+</html>

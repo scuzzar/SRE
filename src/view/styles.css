@@ -9725,6 +9725,65 @@ button:disabled {
   padding: 0 16px;
 }
 
+/* Der Raumkampf im Blatt (2026-11-23, Entwurf docs/mock/raumkampf-ui.html): die beiden Karten
+   nebeneinander mit ▲/▼ durch die eigenen und die fremden Schiffe, darunter die Hardpoints über alle
+   eigenen Schiffe. Die Karten selbst sind die .space-foe-Schalen der App. */
+.rk-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px;
+}
+.rk-card {
+  position: relative;
+  padding-right: 26px;
+}
+.rk-card .kicker {
+  margin: 0;
+}
+.rk-own {
+  border-color: rgba(79, 209, 255, 0.45);
+}
+.rk-page {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1;
+}
+.rk-page.down {
+  top: auto;
+  bottom: 2px;
+}
+.rk-hardpoints button {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.rk-hp-no {
+  font-size: 12px;
+  color: var(--gold-bright);
+  border: 1px solid var(--line-strong);
+  padding: 0 4px;
+}
+.rk-hp-need {
+  font-size: 12px;
+  color: var(--muted);
+}
+/* Was jetzt nicht feuert, ist gestrichelt wie ein Posten ohne Fertigkeit (SR 33). */
+.rk-hardpoints button:disabled {
+  border-style: dashed;
+  color: var(--dim);
+}
+.rk-hardpoints button:disabled .rk-hp-no {
+  color: var(--dim);
+}
+
 /* Die Würfe des Raumkampfs nur in der unteren Hälfte, damit oben die Karte Strahl und Treffer zeigt (2026-11-21i) */
 .dice-roll.space-volley {
   inset: auto 0 0 0;

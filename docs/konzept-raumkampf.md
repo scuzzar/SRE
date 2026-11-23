@@ -323,6 +323,14 @@ Nach den SR (*Turn Sequence*), angepasst an gleichzeitige Bewegung ⚑:
 | 5. Detonation und Start | Raketen, die in Phase 2 ihr Ziel erreicht haben, detonieren (1W Treffer); neue Raketen, Sandwolken und Small Craft lösen sich mit Ort und Geschwindigkeit ihres Schiffs, sie fliegen ab der nächsten Bewegung | *Ordnance Launch*, *Missile Detonation* |
 | 6. Schiffsbetrieb | Schadenskontrolle (9+), Nachladen (3 Runden je Launcher), Repressurisieren | *Special Situations* |
 
+⚑ **Gebaut ist die Raumrunde in zwei Knöpfen** (2026-11-23a, Modell
+[`mock/raumkampf-ui.html`](mock/raumkampf-ui.html)): Der eine Knopf unten heißt in der Schubphase
+**Bewegen** (Phase 1 und 2 – Schub wählen und Bewegung, die Raumrunde rückt *nicht* weiter) und in der
+Feuerphase **End Turn** (Phase 3 bis 6 – eigene Salven werden getippt, am Ende feuern die fremden
+Schiffe und das Rückfeuer, dann rückt die Raumrunde weiter). Raketen, Sand, Schadenskontrolle und
+Nachladen folgen in den nächsten Stufen; `SystemFlight.phase` (`thrust`, `fire`) hält die Phase im
+Spielstand.
+
 ### Waffen
 
 - **Laser** (Pulse, Beam): Trefferwurf nach den SR. ⚑ Das **Raumband** für die Entfernungs-DMs ist
@@ -467,6 +475,13 @@ rastet auf denselben vier Stufen ein wie heute (`TrayStop`):
 
 Die Reiter unten (Log, Begegnung, Charaktere, Schiff) bleiben erreichbar. ⚑ Solange ein Raumkampf
 läuft, zeigt der Reiter Begegnung oben „Raumkampf“ statt „Kampf“.
+
+⚑ **Gebaut ist das Blatt anders** (2026-11-23a, nach der Skizze des Owners und
+[`mock/raumkampf-ui.html`](mock/raumkampf-ui.html)): oben zwei Karten nebeneinander – mein Schiff
+(▲/▼ durch die eigenen) und das Ziel (▲/▼ durch die fremden, ein Tipp auf der Karte wählt es) –,
+darunter die **Hardpoints über alle eigenen Schiffe** mit Schiffsnummer, Waffen und nötigem Wurf; ein
+Tipp feuert sofort. Der Zustand des Schiffs (Treffer je Zone) steht in den Karten und im Reiter Schiff,
+die Schiffspositionen im Reiter Crew. Das Log der laufenden Runde folgt mit Stufe 3.
 
 ## 8. Was ins Domänenmodell käme (Skizze)
 

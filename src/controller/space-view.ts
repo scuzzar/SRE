@@ -1,5 +1,6 @@
 import {
   dockBlocker,
+  dockPlan,
   dockableCraft,
   launchableCraft,
   flightStartBlocker,
@@ -46,10 +47,12 @@ import {
   laserCountOf,
   fireBlocker,
   firePreview,
+  hardpointBlocker,
+  hardpointsOf,
+  phaseOf,
   partyIndexOf,
   coastOf,
   REACH_PER_G,
-  activeFlight,
   shipWeaponOf,
   departureBlocker,
   departureOf,
@@ -59,9 +62,9 @@ import { worldName } from './generation-view';
 import { systemLook, type WorldLook } from './world-view';
 import { dmLines, hitZoneNames, intentNames, type DmLine } from './time-view';
 
-/** Was die Laser des eigenen Schiffs auf die Einheit `index` jetzt bräuchten. */
-function fireLines(campaign: Campaign, index: number): SpaceUnitView['fire'] {
-  const preview = firePreview(campaign, partyIndexOf(activeFlight(campaign)), index);
+/** Was die Laser des Schiffs `from` auf die Einheit `index` jetzt bräuchten; `turret` beschränkt es auf einen Hardpoint. */
+function fireLines(campaign: Campaign, from: number, index: number, turret?: number): SpaceUnitView['fire'] {
+  const preview = firePreview(campaign, from, index, turret);
   if (preview === undefined) return [];
   return preview.weapons.map((w) => ({ weapon: shipWeaponOf(w.weapon).name, count: w.count, parts: dmLines(w.parts, preview.bands, preview.computerHits), dm: w.dm, need: w.need }));
 }
@@ -69,6 +72,8 @@ function fireLines(campaign: Campaign, index: number): SpaceUnitView['fire'] {
 /** Die offene Raumkarte im Zustand des Controllers: die Welt, ein gezogener (noch nicht gesetzter) Schubvektor und die letzte Wiedergabe. */
 export interface OpenSpace {
   readonly world: string;
+  /** Das angetippte fremde Schiff, auf das die Hardpoints zielen (2026-11-23); sonst das erste, das kämpft. */
+  readonly target?: number;
   /** Der Schubvektor, den der Finger gerade zieht; erst beim Loslassen wird er gesetzt (`setThrust`). */
   readonly aim?: { readonly unit: number; readonly thrust: Vec | undefined; readonly snap?: ThrustMark['name'] };
   /**
@@ -76,6 +81,20 @@ export interface OpenSpace {
    * `every` Schritte ab der Zeit `t`; `round` ist die Runde danach.
    */
   readonly run?: { readonly round: number; readonly t: number; readonly every: number; readonly frames: readonly (readonly Vec[])[] };
+}
+
+/** Ein Hardpoint im Kampfblatt (2026-11-23): was dort liegt, was er braucht und warum er stillsteht. */
+export interface SpaceHardpointView {
+  readonly turret: number;
+  readonly name: string;
+  /** Die Waffen zusammengefasst, z. B. „2× Pulse Laser“. */
+  readonly label: string;
+  /** Der nötige Wurf auf das gewählte Ziel, z. B. „5+“; ohne Ziel der DM je Waffe. */
+  readonly need: string;
+  readonly fired: boolean;
+  readonly out: boolean;
+  /** Warum der Hardpoint jetzt nicht feuert; `undefined`, wenn er feuern darf. */
+  readonly blocker: string | undefined;
 }
 
 /** Eine Einheit auf der Raumkarte, wie die View sie zeichnet. */
@@ -112,9 +131,13 @@ export interface SpaceUnitView {
   readonly intent: string | undefined;
   readonly wreck: boolean;
   readonly damage: readonly string[];
-  /** Laser, die noch feuern können; ob die Einheit in dieser Raumrunde schon gefeuert hat (2026-11-21i). */
+  /** Laser, die noch feuern können; welche Hardpoints in dieser Raumrunde schon gefeuert haben (2026-11-21i, 2026-11-23). */
   readonly lasers: number;
-  readonly fired: boolean;
+  readonly firedTurrets: readonly number[];
+  /** Die Nummer auf der Karte und im Blatt: M1, M2 … bei eigenen Schiffen, F1, F2 … bei fremden (2026-11-23). */
+  readonly mark: string;
+  /** Die Hardpoints des Schiffs mit Waffen und Stand (2026-11-23); ein fremdes Schiff hat keine im Blatt. */
+  readonly hardpoints: readonly SpaceHardpointView[];
   /** Bei einem fremden Schiff: warum das eigene Schiff jetzt nicht auf es feuern kann (`undefined`: es kann). */
   readonly fireBlocker: string | undefined;
   /** Bei einem fremden Schiff: was die Laser des eigenen Schiffs jetzt bräuchten, je Waffe mit DMs und Zielwert auf 2W6 (2026-11-21i). */
@@ -172,6 +195,10 @@ export interface SpaceView {
   readonly flight:
     | {
         readonly round: number;
+        /** Phase der Raumrunde im Raumkampf (2026-11-23): Schub wählen oder feuern. */
+        readonly phase: 'thrust' | 'fire';
+        /** Das gewählte Ziel der Hardpoints (2026-11-23): die Stelle in `units`; ohne fremdes Schiff fehlt es. */
+        readonly target: number | undefined;
         /** Dauer des Systemflugs, z. B. „2 h 30 min“. */
         readonly elapsed: string;
         readonly units: readonly SpaceUnitView[];
@@ -179,8 +206,17 @@ export interface SpaceView {
         readonly party: number;
         /** Beiboote an Bord der Einheit der Gruppe, die sie jetzt aussetzen kann (2026-11-21b). */
         readonly launchable: readonly { readonly id: string; readonly name: string }[];
-        /** Small Craft, die jetzt an ihrem Mutterschiff andocken können. */
-        readonly dockable: readonly { readonly id: string; readonly name: string }[];
+        /**
+         * Das Small Craft, in dem die Gruppe sitzt und das zu seinem Mutterschiff zurückkönnte
+         * (2026-11-23, Andockflug 2026-11-23c): Id, Name, warum es jetzt nicht kann (`undefined`: der
+         * Knopf „Andocken“ geht), ob es schon näher als 100 km steht (`now`), ob der Andockflug schon
+         * läuft (`armed`), und wie viel G bis zum Andockpunkt gegen die höchsten G des Small Craft.
+         */
+        readonly dock:
+          | { readonly id: string; readonly name: string; readonly mother: string; readonly blocker: string | undefined; readonly now: boolean; readonly armed: boolean; readonly g: number; readonly maxG: number }
+          | undefined;
+        /** Small Craft, die jetzt an ihrem Mutterschiff andocken können (`armed`: ihr Andockflug läuft). */
+        readonly dockable: readonly { readonly id: string; readonly name: string; readonly armed: boolean }[];
         /** Sitzt die Gruppe in einem Small Craft, das noch nicht andocken kann: warum nicht. */
         readonly dockHint: string | undefined;
         /** Die Orte der Einheiten während der letzten Raumrunde, von der Welt aus gesehen. */
@@ -261,6 +297,19 @@ function bodiesOf(hex: Hex, scene: Scene, worldId: string, t: number, run: OpenS
   return result;
 }
 
+/**
+ * Das gewählte Ziel der Hardpoints (2026-11-23): das zuletzt angetippte fremde Schiff, sonst das
+ * erste, das kämpft; `undefined` ohne fremdes Schiff.
+ */
+export function targetIndex(campaign: Campaign, space: OpenSpace): number | undefined {
+  const flight = campaign.flight;
+  if (flight === undefined) return undefined;
+  const chosen = flight.units.findIndex((u, i) => i === space.target && u.ship === undefined && !u.crashed);
+  if (chosen >= 0) return space.target;
+  const fighting = flight.units.findIndex((u) => u.ship === undefined && u.intent !== undefined && !u.crashed);
+  return fighting >= 0 ? fighting : undefined;
+}
+
 export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | undefined {
   const hex = hexById(campaign.hexes, hexIdOfWorld(space.world));
   if (!isWorld(hex) || !worldById(campaign.hexes, space.world)) return undefined;
@@ -278,6 +327,11 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
   const worldBody = scene.moons.find((m) => m.world === space.world)?.body ?? (scene.center === space.world ? scene.body : undefined);
   const tStart = flight ? t - elapsedOf(flight) : t;
   const run = flight && space.run?.round === flight.round ? space.run : undefined;
+  // Das gewählte Ziel der Hardpoints (2026-11-23): das zuletzt angetippte fremde Schiff, sonst das
+  // erste, das kämpft. Nummern auf der Karte: eigene Schiffe M1, M2 …, fremde F1, F2 …
+  const target = targetIndex(campaign, space);
+  let ownCount = 0;
+  let foeCount = 0;
   return {
     world: { id: space.world, name: bodyName(hex, world), look, radius: worldBody?.radius ?? radius, giant: world.kind === 'giant' },
     bodies: bodiesOf(hex, scene, space.world, t, run),
@@ -301,13 +355,37 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
     })(),
     flight: flight && {
       round: flight.round,
+      phase: phaseOf(flight),
+      target,
       party: Math.max(0, flight.units.findIndex((u) => u.ship === flight.party)),
       launchable: launchableCraft(campaign).map((c) => ({ id: c.id, name: c.name })),
-      dockable: dockableCraft(campaign).map((c) => ({ id: c.id, name: c.name })),
+      dock: (() => {
+        // Die Gruppe sitzt in einem Small Craft? Dann gehört ihr der Knopf „Andocken“ (2026-11-23).
+        const craft = campaign.ships.find((s) => s.id === flight.party);
+        if (craft?.mother === undefined) return undefined;
+        const mother = campaign.ships.find((s) => s.id === craft.mother);
+        const plan = dockPlan(campaign, craft.id);
+        const unit = flight.units.find((u) => u.ship === craft.id);
+        return {
+          id: craft.id,
+          name: craft.name,
+          mother: mother?.name ?? 'Mutterschiff',
+          blocker: dockBlocker(campaign, craft.id),
+          now: plan?.now === true,
+          armed: unit?.docking === true,
+          g: plan?.g ?? 0,
+          maxG: plan?.maxG ?? 0,
+        };
+      })(),
+      dockable: dockableCraft(campaign).map((c) => ({ id: c.id, name: c.name, armed: flight.units.some((u) => u.ship === c.id && u.docking === true) })),
       dockHint: (() => {
         const ship = campaign.ships.find((s) => s.id === flight.party);
-        if (ship?.mother === undefined || dockableCraft(campaign).some((c) => c.id === ship.id)) return undefined;
-        return dockBlocker(campaign, ship.id);
+        if (ship?.mother === undefined) return undefined;
+        if (flight.units.some((u) => u.ship === ship.id && u.docking === true)) {
+          const mother = campaign.ships.find((s) => s.id === ship.mother);
+          return `Andockflug: mit der nächsten Bewegung an ${mother?.name ?? 'Mutterschiff'} andocken; ein eigener Schub hebt ihn auf.`;
+        }
+        return dockableCraft(campaign).some((c) => c.id === ship.id) ? undefined : dockBlocker(campaign, ship.id);
       })(),
       elapsed: duration(elapsedOf(flight)),
       run: run && { round: run.round, frames: run.frames.map((frame, k) => frame.map((p) => sub(p, originAt(scene, space.world, run.t + k * run.every * STEP_SECONDS).position))) },
@@ -329,6 +407,7 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
         return {
           index,
           party,
+          mark: unit.ship === undefined ? `F${++foeCount}` : `M${++ownCount}`,
           craft: ship?.mother !== undefined,
           name: nameOfUnit(campaign, unit),
           designName: plan.name,
@@ -353,9 +432,24 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
           wreck: unit.ship === undefined && unit.intent === undefined,
           damage: (damage?.hits ?? []).map((h) => hitZoneNames[h]),
           lasers: laserCountOf(campaign, unit),
-          fired: unit.fired,
+          firedTurrets: unit.firedTurrets ?? [],
+          hardpoints:
+            unit.ship === undefined
+              ? []
+              : hardpointsOf(campaign, index).map((h) => {
+                  const lines = target === undefined ? [] : fireLines(campaign, index, target, h.turret);
+                  return {
+                    turret: h.turret,
+                    name: h.name,
+                    label: h.weapons.length === 1 ? shipWeaponOf(h.weapons[0]!).name : `${h.weapons.length}× ${shipWeaponOf(h.weapons[0]!).name}`,
+                    need: lines.length === 0 ? '−' : [...new Set(lines.map((w) => `${w.need}+`))].join('/'),
+                    fired: h.fired,
+                    out: h.out,
+                    blocker: target === undefined ? 'Kein Ziel' : hardpointBlocker(campaign, index, target, h.turret),
+                  };
+                }),
           fireBlocker: unit.ship === undefined ? fireBlocker(campaign, partyIndexOf(flight), index) : undefined,
-          fire: unit.ship === undefined ? fireLines(campaign, index) : [],
+          fire: unit.ship === undefined ? [] : target === undefined || index === target ? [] : fireLines(campaign, index, target),
           bands: bandOf(km),
           rangeDm: spaceRangeDm(bandOf(km)),
           sight: lineOfSight(scene, own.position, unit.position, t),

@@ -590,6 +590,28 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > und `gunner`, der Logeintrag `DamageControl` und die Schiffskosten `software`; siehe *Crew und
 > Programme*. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-22d-crew-und-programme.png`](changes/2026-11-22d-crew-und-programme.png).
+>
+> Noch nicht freigegeben (Kennzeichen 2026-11-23a): **Raumkampf-Interface** (nach der Skizze des Owners
+> und dem Modell [`mock/raumkampf-ui.html`](mock/raumkampf-ui.html)). Die Raumrunde bekommt im
+> Raumkampf zwei Phasen: **Schub** und **Feuer** – „Bewegen“ führt die Bewegung aus und lässt die
+> Raumrunde stehen, „End Turn“ lässt die fremden Schiffe feuern und rückt weiter. Neu im Bild:
+> `SystemFlight.phase` mit `BattlePhase`. Gefeuert wird je **Hardpoint**: `SpaceUnit.fired` entfällt,
+> stattdessen `firedTurrets` – jeder Hardpoint feuert einmal je Raumrunde. Die Wirkungen der Programme
+> in der CPU (Target, Predict, Gunner Interact, Maneuver/Evade, Auto-Evade, Return Fire) und der
+> Pflichtprogramme rechnet jetzt der Code; siehe *Raumkampf*. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-23a-raumkampf-interface.png`](changes/2026-11-23a-raumkampf-interface.png).
+>
+> Noch nicht freigegeben (Kennzeichen 2026-11-23c): **Andockflug** – „Andocken“ ist nicht mehr der
+> Augenblick an der Nahgrenze, sondern ein Flug. Ein Small Craft darf andocken, wenn das Mutterschiff
+> **Platz** hat (Liegeplatz des Entwurfs, sonst freier Laderaum für den Rumpf) und das Small Craft
+> genug **Schub** hat, um den Ort zu erreichen, an dem sein Mutterschiff nach der nächsten Bewegung
+> steht – dieselbe Rechnung wie beim Schub wählen: 5.000 km je G vom Punkt „ohne Schub“ aus. Ist das
+> Mutterschiff schon näher als 100 km, dockt es sofort an; ist es weiter weg, setzt der Knopf den
+> neuen Wert `SpaceUnit.docking`: den **Andockflug**, der in der nächsten Bewegung ausgeflogen und
+> beendet wird, sonst weiter geflogen wird. Nähe (100 km) und Geschwindigkeit (0,1 km/s, beim
+> Anfliegen 2 km/s) als eigene Bedingungen entfallen. Der Knopf „Andocken“ steht in der Knopfreihe des
+> Blatts am Platz von **Launch**. Siehe *Andocken* und *Andockflug* unter *Systemflug*. Der Ausschnitt
+> dazu liegt unter [`changes/2026-11-23c-andockflug.png`](changes/2026-11-23c-andockflug.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -941,7 +963,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Raumkampf | `SpaceBattle`, `SpaceAttack`, `SpaceBattleEnd` | Ein Systemflug mit einem fremden Schiff, das nicht nur zuschaut: Laserfeuer je Raumrunde bis zum Ende des Raumkampfs (2026-11-21h) |
 | Fremdes Schiff | `SpaceUnit.design`, `SpaceUnit.name` | Eine Einheit des Systemflugs ohne `ship`: ein Standardentwurf mit Namen und eigenem Schaden, gesteuert von der App (2026-11-21h) |
 | Absicht | `SpaceUnit.intent`, `Intent` | Was ein fremdes Schiff will: angreifen, fliehen oder nichts (ignorieren); danach wählt die App seinen Schub (2026-11-21h) |
-| Gefeuert | `SpaceUnit.fired` | Die Einheit hat in dieser Raumrunde schon gefeuert; „Runde ausführen“ setzt es zurück (2026-11-21i, ersetzt das Ziel `aim`) |
+| Gefeuert | `SpaceUnit.firedTurrets` | Die Hardpoints (`Ship.turrets`), die in dieser Raumrunde schon gefeuert haben; die Bewegung setzt sie leer – jeder Hardpoint feuert je Raumrunde einmal (2026-11-21i als `fired`, 2026-11-23a je Hardpoint) |
+| Andockflug | `SpaceUnit.docking` | Das Small Craft steuert in der nächsten Bewegung den Ort an, an dem sein Mutterschiff stehen wird, und dockt dort an; wer selbst einen Schub setzt, gibt ihn auf (2026-11-23c) |
+| Phase der Raumrunde | `SystemFlight.phase`, `BattlePhase` | Was das Blatt in der laufenden Raumrunde zeigt: `thrust` = Schub wählen, `fire` = feuern. Im Raumkampf rückt die Raumrunde erst mit „End Turn“ weiter; ohne Angabe die Schubphase (2026-11-23a) |
 | Schaden am Schiff | `ShipDamage`, `Ship.damage`, `SpaceUnit.damage` | Die Treffer eines Schiffs in der Reihenfolge, in der sie kamen, und die ausgefallenen Turrets; am eigenen Schiff bleibt er bis zur Reparatur (2026-11-21h) |
 | Trefferzone | `HitZone` | Wohin ein Treffer geht (SE 12, *Hit Locations* und *Critical Hits*) (2026-11-21h) |
 | Ausgang | `SpaceBattleEnd.outcome`, `BattleOutcome` | Wie ein Raumkampf endete: zerstört, kampfunfähig, entkommen, abgebrochen, verloren (2026-11-21h); abgereist: das eigene Schiff ist aus dem Systemflug gesprungen oder im System weitergereist (2026-11-22b) |
@@ -995,7 +1019,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Systemflug | `SystemFlight`, `Campaign.flight` | Was auf der Raumkarte einer Welt Raumrunde für Raumrunde läuft: in Stufe 1 nur das eigene Schiff, später mit Gegnern, Waffen und Small Craft; so heißt es immer, auch wenn gekämpft wird (Owner, 18. November 2026) |
 | Raumkampf | (Teil des `SystemFlight`) | Ein Systemflug mit Gegnern: Waffen, Raketen, Schaden; kommt ab Stufe 2. Kein eigener Begriff im Modell (2026-11-18c) |
 | Raumrunde | `SystemFlight.round` | Eine Runde des Systemflugs: 1.000 Sekunden (SR 39); nicht zu verwechseln mit der *Runde* des Personenkampfs (2026-11-18c) |
-| Dauer des Systemflugs | `SystemFlight./elapsed` | Sekunden seit Beginn des Systemflugs: (Raumrunde − 1) × 1.000; je volle 24 Stunden vergeht ein Tag (2026-11-18c) |
+| Dauer des Systemflugs | `SystemFlight./elapsed` | Sekunden seit Beginn des Systemflugs: (Raumrunde − 1) × 1.000, in der Feuerphase plus 1.000 für die Bewegung, die dann schon gelaufen ist; je volle 24 Stunden vergeht ein Tag (2026-11-18c, Feuerphase 2026-11-23a) |
 | Raumband | (Regel) | 10.000 km (SR 39); Maß für Entfernungen und DMs im Raumkampf: Entfernung ÷ 10.000 km, aufgerundet (2026-11-18c) |
 | Einheit | `SpaceUnit` | Was sich auf der Raumkarte frei bewegt und von der Simulation geschoben wird; in Stufe 1 nur das eigene Schiff, später auch fremde Schiffe, Small Craft, Raketen, Sand (2026-11-18c) |
 | Ort, Geschwindigkeit | `SpaceUnit.position`, `.velocity` (`Vec`) | Wo eine Einheit ist (km) und wie schnell in welche Richtung sie fliegt (km/s), in der Ebene mit der Welt in der Mitte (2026-11-18c) |
@@ -3428,35 +3452,45 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     *Ignorieren* gibt keinen Schub. Aufschläge sind verboten. Ohne Zufall: gleicher Stand, gleicher
     Schub. Fremde Schiffe landen nicht und schöpfen nicht; trifft eines eine Oberfläche, ist es ein
     Aufschlag.
-  - **Feuer auslösen** (geändert und freigegeben am 21. November 2026, Kennzeichen 2026-11-21i; Owner, 21. November 2026: „Angreifen
-    sollte mit Würfelanimation explizit getriggert werden, nicht für die nächste Runde vorgemerkt“;
-    vorher setzte man mit `aim` ein Ziel, und gefeuert wurde beim Ausführen der Raumrunde). Jede
-    Einheit feuert höchstens einmal je Raumrunde (`fired`), an den Orten nach der Bewegung; „Runde
-    ausführen“ bewegt alle und setzt `fired` zurück. Danach:
-    - Ein **angreifendes fremdes Schiff** feuert gleich nach der Bewegung auf das eigene Schiff.
-    - Das **eigene Schiff** feuert, wenn man im Blatt **„Feuer auf …“** tippt: sofort, die Würfe
-      rollen im Vordergrund (Schütze, Ziel, Waffe, 2W6 + DM, Treffer und Trefferzonen), der Schaden
-      wirkt gleich. Danach steht der Knopf erst in der nächsten Raumrunde wieder bereit. Man kann
-      auch ohne Bewegung in der ersten Raumrunde feuern.
+  - **Feuer auslösen** (geändert am 23. November 2026, Kennzeichen 2026-11-23a; vorher 2026-11-21i
+    mit dem einen Knopf „Feuer auf …“ und dem Flag `fired`; vorher setzte man mit `aim` ein Ziel, und
+    gefeuert wurde beim Ausführen der Raumrunde). Die Raumrunde hat im Raumkampf zwei Phasen
+    (`SystemFlight.phase`): **Schub** (`thrust`) und **Feuer** (`fire`). Der eine Knopf unten heißt in
+    der Schubphase **„Bewegen“** und führt die Bewegung aller Einheiten aus – die Raumrunde rückt
+    *nicht* weiter, es folgt die Feuerphase; in der Feuerphase heißt er **„End Turn“**: erst feuern die
+    fremden Schiffe, dann rückt die Raumrunde weiter und jeder Hardpoint darf wieder. Ohne Raumkampf
+    ist die Raumrunde – wie in Stufe 1 – mit der Bewegung zu Ende (`phase` bleibt `thrust`).
+    - In der **Feuerphase** tippt man im Blatt den **Hardpoint** an, der feuern soll (alle Hardpoints
+      aller eigenen Schiffe stehen in einer Leiste, mit der Nummer des Schiffs wie auf der Karte): ein
+      Tipp feuert sofort auf das gewählte Ziel, die Würfe rollen im Vordergrund (Schütze, Ziel, Waffe,
+      2W6 + DM, Treffer und Trefferzonen), der Schaden wirkt gleich. Jeder Hardpoint feuert je
+      Raumrunde einmal (`firedTurrets`); andere Hardpoints desselben Schiffs bleiben frei.
+    - **Ziel** ist das fremde Schiff, das man auf der Karte antippt; ohne Tipp ist es das erste, das
+      kämpft. Die Karte zeigt es mit rotem Ring, das Blatt in seiner Karte rechts. Die Zielwahl ist
+      Anzeige, kein Spielstand.
+    - Ein **angreifendes fremdes Schiff** feuert am Ende der Raumrunde („End Turn“) auf das eigene
+      Schiff, wenn es in dieser Raumrunde noch nicht gefeuert hat.
     - **Rückfeuer** (SR 40): Ein fremdes Schiff, auf das gefeuert wird und das in dieser Raumrunde
       noch nicht gefeuert hat, feuert gleich zurück, wenn es noch kann. ⚑ Greift es nicht an, greift
-      es ab dann an, wenn es Laser hat, sonst flieht es. Das eigene Schiff erwidert Feuer, indem man
-      selbst „Feuer auf …“ tippt.
+      es ab dann an, wenn es Laser hat, sonst flieht es. Das **eigene Schiff** erwidert Feuer von
+      selbst nur mit dem Programm *Return Fire* (`returned`, einmal je Raumrunde); ohne das Programm
+      feuert die Gruppe selbst.
   - **Laserfeuer**. Jeder Laser jedes Turrets, das nicht ausgefallen ist, würfelt
     einzeln 2W6 + DM, **8+** trifft (SR 40). DM: Pulse Laser −1; Entfernung über 25 Raumbänder −2,
     über 50 −5 (Raumband = Entfernung ÷ 10.000 km, aufgerundet); ⚑ je Computer-Treffer −1. Kein
-    Schuss ohne freie Sichtlinie (ein Körper dazwischen) und ⚑ über 90 Raumbänder (Tracking). ⚑ Die
-    Programme (Target, Predict, Gunner Interact, Maneuver/Evade, Return Fire) prüft und zählt Stufe 2
-    noch nicht, und es gibt noch keine Schiffspositionen (Gunner, Pilot). Missile Racks und
+    Schuss ohne freie Sichtlinie (ein Körper dazwischen) und ⚑ über 90 Raumbänder (Tracking). Dazu die
+    Programme in der CPU des Schützen und des Ziels (Stufe 2b, 2026-11-23a): ohne **Target** kein Schuss
+    eines Turrets, **Predict** und die Fertigkeit des Gunners (**Gunner Interact**) als DM des Schusses,
+    das Ausweichprogramm des Ziels als sein Verteidigungs-DM. Missile Racks und
     Sandcaster feuern noch nicht (Stufe 3). Der Schaden einer Salve wirkt erst nach allen ihren
     Würfen.
-  - **DMs erklären** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21i; Owner, 21. November 2026: „DMs sauber
-    erklären, Zielwert auch schon im Kleinen auf dem Knopf“). Der Knopf „Feuer auf …“ zeigt klein je
-    Waffe den Zielwert auf 2W6 (8 − DM, z. B. „Beam Laser 10+“); das Blatt schreibt jeden DM mit
-    seinem Grund aus (Entfernung mit Raumbändern, Pulse Laser, Computer-Treffer). Jeder Schuss hält
-    fest, woraus sein DM kam: `bands` (Entfernung in Raumbändern) und `computerHits` (Computer-Treffer
-    des Schützen); so erklären Würfe und Log den DM auch später noch, wenn sich Schaden und Entfernung
-    geändert haben.
+  - **DMs erklären** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21i; Zielwert auf dem
+    Hardpoint-Knopf seit 2026-11-23a). Jeder Hardpoint-Knopf zeigt klein die Waffe und den Zielwert auf
+    2W6 (8 − DM, z. B. „Beam Laser 10+“); das Blatt schreibt jeden DM mit seinem Grund aus (Entfernung
+    mit Raumbändern, Pulse Laser, Computer-Treffer, Predict, Gunner, Ausweichen). Jeder Schuss hält
+    fest, woraus sein DM kam: `bands` (Entfernung in Raumbändern), `computerHits` (Computer-Treffer
+    des Schützen), `predict`, `gunnery`, `evade` und ob es Rückfeuer war (`returnFire`); so erklären
+    Würfe und Log den DM auch später noch, wenn sich Schaden und Entfernung geändert haben.
   - **Treffer**: Ein Beam Laser macht einen Schadenswurf, ein Pulse Laser zwei; jeder ist 2W6 auf die
     Trefferzone für Starships (SE 12), bei 12 ein kritischer Treffer mit 1W6. Jeder Schuss ist ein
     Logeintrag `SpaceAttack` mit Raumrunde, Schütze, Ziel, Turret, Waffe, Würfeln, DM und den
@@ -3775,10 +3809,26 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Mutterschiffs, `aboard` wird gelöscht, und ⚑ die Gruppe steigt mit um (`party` zeigt auf das
     Beiboot). Das Mutterschiff fliegt mit seiner Crew weiter; seinen Schubvektor setzt man weiter
     selbst. ⚑ Ein Beiboot je Raumrunde (wie zivile Schiffe nach dem Konzept).
-  - **Andocken**: Ist ein Small Craft seinem Mutterschiff ⚑ näher als 100 km und langsamer als
-    0,1 km/s gegenüber ihm (Hausregel aus dem Konzept), bietet die Karte „Andocken“ an. Die Einheit
-    des Small Craft entfällt, `aboard` wird gesetzt, und war die Gruppe darin, sitzt sie jetzt im
-    Mutterschiff.
+  - **Andocken** (Hausregeln 2026-11-23, seit 2026-11-23c ein Flug statt einer Nahgrenze): Zwei
+    Bedingungen muss ein Small Craft erfüllen, damit die Karte „Andocken“ anbietet. **Platz** beim
+    Mutterschiff: einer der Liegeplätze, für die es gebaut ist (`ShipDesign.craft`), oder, wenn alle
+    belegt sind, freier Laderaum für seinen Rumpf. Und **Schub**: Das Small Craft muss den
+    **Andockpunkt** der nächsten Bewegung erreichen – den Ort, an dem sein Mutterschiff nach dieser
+    Bewegung steht. Erreichbar heißt, was beim Schub wählen im Ring liegt: 5.000 km je G vom Punkt
+    „ohne Schub“ aus, mit der echten Schwerkraft gerechnet. Nähe und Geschwindigkeit für sich sind
+    keine Bedingung mehr: Wer weit weg ist oder schnell vorbeifliegt, braucht nur mehr G. Reicht der
+    Schub nicht, bleibt der Knopf gesperrt und sagt, wie viel G fehlen.
+  - **Andockflug** (`SpaceUnit.docking`, 2026-11-23c): „Andocken“ heißt nicht immer „sofort andocken“.
+    Steht das Mutterschiff schon näher als 100 km (`DOCK_KM`), dockt die Einheit an. Ist sie weiter
+    weg, setzt der Knopf den **Andockflug**: In der nächsten Bewegung steuert die Einheit mit vollem
+    Schub den Andockpunkt an (der eigene Schubpunkt ist damit hinfällig; wer selbst zieht, gibt den
+    Andockflug auf) und dockt an, wenn sie dort näher als 100 km steht. Reichte der Schub nicht,
+    fliegt sie dem Mutterschiff nach und behält den Andockflug für die nächste Bewegung. Angedockt:
+    Die Einheit entfällt, `aboard` wird gesetzt, und war die Gruppe darin, sitzt sie jetzt im
+    Mutterschiff. Im Blatt sitzt „Andocken“ in der Knopfreihe am Platz von **Launch**, solange die
+    Gruppe in dem Small Craft sitzt (sonst steht „Andocken“ als Chips an der Karte); in beiden Phasen
+    der Raumrunde zu haben. ⚑ „Andocken“ heißt nie „Landen“: **Landen** bleibt das Aufsetzen auf einer
+    Welt.
   - **Landen** geht wie bisher (Landeautomatik eingeschlossen), aber nur mit der Einheit der Gruppe
     (Owner, 21. November 2026: nur mit Gruppe). Erreicht eine andere Einheit die Oberfläche, schlägt
     sie auf; die Bahnvorschau warnt vorher, die Landeautomatik gilt für sie nicht. Das gelandete

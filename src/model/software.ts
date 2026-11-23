@@ -17,6 +17,10 @@ export const softwareSlotNames: Record<SoftwareSlot, string> = { cpu: 'CPU · l�
 /** Die Pflichtprogramme: ohne sie steht der Antrieb still, bzw. feuert kein Turret (Owner: streng). */
 export const THRUST_PROGRAM = 'maneuver';
 export const TARGET_PROGRAM = 'target';
+/** Die Programme, die im Raumkampf wirken (2026-11-23): Ausweichen, Rückfeuer und der Gunner. */
+export const AUTO_EVADE_PROGRAM = 'auto-evade';
+export const RETURN_FIRE_PROGRAM = 'return-fire';
+export const GUNNER_PROGRAM = 'gunner-interact';
 
 /**
  * Die Programme, die in Stufe 2b schon wirken (Owner, 22. November 2026): Predict, Gunner
@@ -93,6 +97,49 @@ export function missingPrograms(ship: Ship): readonly string[] {
   if (!runs(ship, THRUST_PROGRAM)) fehlt.push(softwareOf(THRUST_PROGRAM).name);
   if (ship.turrets.length > 0 && !runs(ship, TARGET_PROGRAM)) fehlt.push(softwareOf(TARGET_PROGRAM).name);
   return fehlt;
+}
+
+/** Der DM je *Predict*-Programm (SE 13): Predict-1 +1, -2 und -3 +2, -4 und -5 +3. */
+const PREDICT_DM: Record<string, number> = { 'predict-1': 1, 'predict-2': 2, 'predict-3': 2, 'predict-4': 3, 'predict-5': 3 };
+/** Der Teil der Pilotenstufe je *Maneuver/Evade*-Programm (SE 13). */
+const EVADE_PILOT: Record<string, number> = { 'maneuver-evade-1': 0.25, 'maneuver-evade-2': 0.5, 'maneuver-evade-3': 0.75, 'maneuver-evade-4': 1, 'maneuver-evade-5': 1 };
+
+/**
+ * Der DM, den die laufenden *Predict*-Programme auf jeden eigenen Laserschuss geben
+ * (Domänenmodell 2026-11-22d): läuft mehr als eines, zählt ⚑ das stärkste.
+ */
+export function predictDm(ship: Ship): number {
+  return Math.max(0, ...Object.entries(PREDICT_DM).filter(([id]) => runs(ship, id)).map(([, dm]) => dm));
+}
+
+/**
+ * Der Verteidigungs-DM eines ausweichenden Schiffs gegen jeden Laserschuss (Domänenmodell
+ * 2026-11-22d, SE 13): *Maneuver/Evade-1 bis -3* −¼, −½, −¾ der Pilotenstufe, *-4* und *-5* die volle
+ * Pilotenstufe, *-6* −5, *Auto-Evade* −2. Läuft mehr als eines, zählt ⚑ das stärkste, gebrochen wird
+ * ⚑ abgerundet. `pilot` ist die Fertigkeit des Piloten (0, wenn keiner am Posten sitzt).
+ */
+export function evadeDmOf(ship: Ship, pilot: number): number {
+  if (computerOf(ship) === undefined) return 0;
+  const parts: number[] = [];
+  for (const [id, factor] of Object.entries(EVADE_PILOT)) if (runs(ship, id)) parts.push(Math.floor(factor * pilot));
+  if (runs(ship, 'maneuver-evade-6')) parts.push(5);
+  if (runs(ship, AUTO_EVADE_PROGRAM)) parts.push(2);
+  return parts.length === 0 ? 0 : -Math.max(...parts);
+}
+
+/** Weicht das Schiff aus (2026-11-23)? Das kostet 1 G seines Schubkreises (Owner, nach Mayday). */
+export function evades(ship: Ship): boolean {
+  return computerOf(ship) !== undefined && [...Object.keys(EVADE_PILOT), 'maneuver-evade-6', AUTO_EVADE_PROGRAM].some((id) => runs(ship, id));
+}
+
+/** Feuert das Schiff von selbst zurück, sobald es beschossen wird (Programm *Return Fire*)? */
+export function returnsFire(ship: Ship): boolean {
+  return runs(ship, RETURN_FIRE_PROGRAM);
+}
+
+/** Läuft *Gunner Interact*? Dann ist die Fertigkeit des Gunners des Turrets der DM seines Feuers. */
+export function usesGunner(ship: Ship): boolean {
+  return runs(ship, GUNNER_PROGRAM);
 }
 
 /**

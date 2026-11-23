@@ -222,6 +222,8 @@ export interface SpaceAttackItem {
   readonly total: number;
   readonly hit: boolean;
   readonly hits: readonly string[];
+  /** Der Schuss war ein Rückfeuer (2026-11-23). */
+  readonly returnFire?: boolean;
 }
 
 /** Ein DM mit seinem Grund, wie Blatt, Würfe und Log ihn schreiben. */
@@ -230,10 +232,23 @@ export interface DmLine {
   readonly dm: number;
 }
 
-/** Die DMs eines Laserschusses mit ihren Gründen (2026-11-21i). */
+/** Die DMs eines Laserschusses mit ihren Gründen (2026-11-21i, Programme 2026-11-23). */
 export function dmLines(parts: readonly SpaceDmPart[], bands: number, computerHits: number): readonly DmLine[] {
   return parts.map((p) => ({
-    label: p.reason === 'range' ? `Entfernung ${bands} RB (über ${bands > 50 ? 50 : 25})` : p.reason === 'pulse' ? 'Pulse Laser' : p.reason === 'noComputer' ? 'ohne Computer' : `Computer-Treffer${computerHits > 1 ? ` ×${computerHits}` : ''}`,
+    label:
+      p.reason === 'range'
+        ? `Entfernung ${bands} RB (über ${bands > 50 ? 50 : 25})`
+        : p.reason === 'pulse'
+          ? 'Pulse Laser'
+          : p.reason === 'noComputer'
+            ? 'ohne Computer'
+            : p.reason === 'predict'
+              ? 'Predict'
+              : p.reason === 'gunnery'
+                ? 'Gunner'
+                : p.reason === 'evade'
+                  ? 'Ausweichen'
+                  : `Computer-Treffer${computerHits > 1 ? ` ×${computerHits}` : ''}`,
     dm: p.dm,
   }));
 }
@@ -253,8 +268,21 @@ export function spaceBattleItem(entry: SpaceBattle): SpaceBattleItem {
 export function spaceAttackItem(entry: SpaceAttack): SpaceAttackItem {
   const total = entry.dice[0] + entry.dice[1] + entry.dm;
   // Einträge von vor 2026-11-21i kennen nur die Summe der DMs.
-  const parts = entry.bands === undefined ? (entry.dm === 0 ? [] : [{ label: 'DM', dm: entry.dm }]) : dmLines(dmPartsOf(entry.weapon, entry.bands, entry.computerHits ?? 0, entry.noComputer === true), entry.bands, entry.computerHits ?? 0);
-  return { kind: 'spaceAttack', at: entry.at, round: entry.round, attacker: entry.attacker, target: entry.target, turret: entry.turret, weapon: shipWeaponOf(entry.weapon).name, dice: entry.dice, dm: entry.dm, parts, need: HIT_TARGET - entry.dm, total, hit: total >= HIT_TARGET, hits: entry.hits.map((h) => hitZoneNames[h]) };
+  const parts =
+    entry.bands === undefined
+      ? entry.dm === 0
+        ? []
+        : [{ label: 'DM', dm: entry.dm }]
+      : dmLines(
+          dmPartsOf(entry.weapon, entry.bands, entry.computerHits ?? 0, entry.noComputer === true, {
+            ...(entry.predict === undefined ? {} : { predict: entry.predict }),
+            ...(entry.gunnery === undefined ? {} : { gunnery: entry.gunnery }),
+            ...(entry.evade === undefined ? {} : { evade: entry.evade }),
+          }),
+          entry.bands,
+          entry.computerHits ?? 0,
+        );
+  return { kind: 'spaceAttack', at: entry.at, round: entry.round, attacker: entry.attacker, target: entry.target, turret: entry.turret, weapon: shipWeaponOf(entry.weapon).name, dice: entry.dice, dm: entry.dm, parts, need: HIT_TARGET - entry.dm, total, hit: total >= HIT_TARGET, hits: entry.hits.map((h) => hitZoneNames[h]), ...(entry.returnFire === true ? { returnFire: true } : {}) };
 }
 
 export function spaceBattleEndItem(entry: SpaceBattleEnd): SpaceBattleEndItem {

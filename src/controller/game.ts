@@ -80,7 +80,8 @@ import {
   manualEncounterBlocker,
   departFromFlight,
   placeFoe,
-  fireAt,
+  endFirePhase,
+  fireHardpoint,
   repairShip,
   type Intent,
   installWeapon,
@@ -107,7 +108,6 @@ import {
   hexId,
   isWorld,
   activeFlight,
-  partyIndexOf,
   thrustToward,
   sceneOf,
   originAt,
@@ -119,6 +119,8 @@ import {
   setThrust,
   launchCraft,
   dockCraft,
+  docksNow,
+  cancelDock,
   snapThrust,
   startFlight,
   flightStartBlocker,
@@ -299,7 +301,7 @@ import {
   type ShipEncounterCheck,
 } from '../model/draft';
 import { buildSnapshot, openWorldId, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
-import { spaceChoices, type OpenSpace } from './space-view';
+import { spaceChoices, targetIndex, type OpenSpace } from './space-view';
 import type { JourneyMode } from './time-view';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
@@ -2758,8 +2760,10 @@ export class GameController {
     // Auch auf der Startwelt: Die Landung ist eine Ankunft, Oberfläche und Globus entstehen, falls sie fehlen.
     if (run.landed !== undefined) return this.change({ ...run.campaign, hexes: readyForParty(run.campaign.hexes, run.landed, this.deps.random) }, { space: { world: space.world }, notice: `${ship} ist auf ${worldOf(run.campaign.hexes, run.landed).name} gelandet. Die Gruppe ist jetzt dort.` });
     // Geschöpft (2026-11-21f): Der Flug läuft weiter, das Schiff steht wieder auf der Kreisbahn.
+    // Angekommen (2026-11-23c): Der Andockflug ist zu Ende, das Small Craft ist an Bord.
+    const home = run.docked === undefined ? {} : { notice: `${run.docked} ist heimgeflogen und hat an ${shipById(run.campaign, activeFlight(run.campaign).party).name} angedockt.` };
     const skimmed = run.skimmed ? { notice: `${ship} hat Treibstoff geschöpft und steht wieder auf der Umlaufbahn.` } : {};
-    this.change(run.campaign, { space: { world: space.world, run: { round: activeFlight(run.campaign).round, t, every: 2, frames: run.frames } }, ...skimmed, ...volley });
+    this.change(run.campaign, { space: { world: space.world, run: { round: activeFlight(run.campaign).round, t, every: 2, frames: run.frames } }, ...skimmed, ...home, ...volley });
   }
 
   /** Setzt ein Beiboot der Einheit der Gruppe aus; die Gruppe steigt um (2026-11-21b). */
@@ -2768,11 +2772,23 @@ export class GameController {
     this.change(launchCraft(this.campaign, id), { space: without(space, 'aim'), notice: `${shipById(this.campaign, id).name} ist ausgesetzt; die Gruppe ist an Bord.` });
   }
 
-  /** Dockt ein Small Craft an seinem Mutterschiff an (2026-11-21b). */
+  /**
+   * Dockt ein Small Craft an seinem Mutterschiff an oder schickt es auf den Andockflug (2026-11-21b,
+   * 2026-11-23c): Aus 100 km Entfernung dockt es sofort an, weiter weg fliegt es heim und dockt mit
+   * der nächsten Bewegung an.
+   */
   dockCraft(id: string): void {
     const space = this.openSpaceState();
     const craft = shipById(this.campaign, id);
-    this.change(dockCraft(this.campaign, id), { space: without(space, 'aim'), notice: `${craft.name} hat angedockt.` });
+    const now = docksNow(this.campaign, id);
+    const mother = shipById(this.campaign, craft.mother!).name;
+    this.change(dockCraft(this.campaign, id), { space: without(space, 'aim'), notice: now ? `${craft.name} hat angedockt.` : `${craft.name} fliegt heim: Mit der nächsten Bewegung dockt es an ${mother} an.` });
+  }
+
+  /** Hebt den Andockflug eines Small Craft auf; es fliegt wieder, wie ihm befohlen (2026-11-23c). */
+  undockCraft(id: string): void {
+    const space = this.openSpaceState();
+    this.change(cancelDock(this.campaign, id), { space: without(space, 'aim'), notice: `${shipById(this.campaign, id).name} fliegt wieder selbst.` });
   }
 
   /** Beendet den Systemflug; die Raumkarte bleibt offen. */
@@ -2795,18 +2811,43 @@ export class GameController {
     this.change(placeFoe(this.campaign, design, intent, this.deps.clock), { space: without(space, 'aim') });
   }
 
-  /** Das eigene Schiff feuert jetzt auf eine Einheit (2026-11-21i); die Würfe rollen im Vordergrund. */
-  fireAt(target: number): void {
+  /** Tippt ein fremdes Schiff an: es wird das Ziel der Hardpoints (2026-11-23). */
+  spaceTarget(unit: number): void {
     const space = this.openSpaceState();
+    this.update({ space: { ...space, target: unit } });
+  }
+
+  /**
+   * Der Hardpoint `turret` des eigenen Schiffs `ship` feuert auf das gewählte Ziel – ein Tipp im Blatt
+   * (2026-11-23); die Würfe rollen im Vordergrund.
+   */
+  fireHardpoint(ship: number, turret: number): void {
+    const space = this.openSpaceState();
+    const target = targetIndex(this.campaign, space);
+    if (target === undefined) return this.update({ notice: 'Kein Ziel gewählt.' });
     const before = this.campaign.log.length;
     try {
-      const shot = fireAt(this.campaign, partyIndexOf(activeFlight(this.campaign)), target, this.deps.random, this.deps.clock);
+      const shot = fireHardpoint(this.campaign, ship, target, turret, this.deps.random, this.deps.clock);
       const lost = shot.lost ? { notice: `${shipById(this.campaign, activeFlight(this.campaign).party).name} ist im Raumkampf zerstört worden. Was aus der Gruppe wird, entscheidet das Spiel.` } : {};
       this.change(shot.campaign, { space: without(space, 'run'), volley: { from: before, delay: 0 }, ...lost });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ notice: error.message });
     }
+  }
+
+  /**
+   * „End Turn“ (2026-11-23): Die fremden Schiffe feuern, die noch nicht gefeuert haben, dann rückt die
+   * Raumrunde weiter.
+   */
+  endTurn(): void {
+    const space = this.openSpaceState();
+    const ship = shipById(this.campaign, activeFlight(this.campaign).party).name;
+    const before = this.campaign.log.length;
+    const run = endFirePhase(this.campaign, this.deps.clock, this.deps.random);
+    const volley = run.campaign.log.length > before ? { volley: { from: before, delay: 0 } } : {};
+    if (run.lost) return this.change(run.campaign, { space: { world: space.world }, ...volley, notice: `${ship} ist im Raumkampf zerstört worden. Was aus der Gruppe wird, entscheidet das Spiel.` });
+    this.change(run.campaign, { space: { world: space.world }, ...volley });
   }
 
   /** Die Würfe der Salven sind abgespielt (oder übersprungen). */

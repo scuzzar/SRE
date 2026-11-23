@@ -10,6 +10,8 @@ import {
   createDemoCampaign,
   dockBlocker,
   dockCraft,
+  docksNow,
+  setThrust,
   endFlight,
   flightStartBlocker,
   flightTime,
@@ -97,19 +99,66 @@ describe('Small Craft (2026-11-21b)', () => {
     expect(roundTrip(c).flight).toEqual(c.flight);
   });
 
-  it('andocken: nah genug und mit angeglichenem Kurs; die Einheit entfällt, die Gruppe sitzt wieder im Mutterschiff', () => {
+  it('andocken: steht das Mutterschiff nah genug, dockt die Einheit sofort an', () => {
     const c = launched();
     const boat = boatOf(c).id;
-    expect(dockBlocker(c, boat)).toBeUndefined();
+    expect(docksNow(c, boat)).toBe(true);
     const docked = dockCraft(c, boat);
     expect(docked.flight!.units).toHaveLength(1);
     expect(docked.flight!.party).toBe(shipOf(c)!.id);
     expect(boatOf(docked).aboard).toBe(true);
-    // Weit weg oder zu schnell geht es nicht.
-    const far = { ...c, flight: { ...c.flight!, units: c.flight!.units.map((u) => (u.ship === boat ? { ...u, position: { x: u.position.x + 500, y: u.position.y } } : u)) } };
-    expect(dockBlocker(far, boat)).toMatch(/näher als 100 km/);
-    const fast = { ...c, flight: { ...c.flight!, units: c.flight!.units.map((u) => (u.ship === boat ? { ...u, velocity: { x: u.velocity.x + 1, y: u.velocity.y } } : u)) } };
-    expect(dockBlocker(fast, boat)).toMatch(/angleichen/);
+  });
+
+  it('andocken aus der Ferne: der Andockflug steuert das Mutterschiff an und dockt mit der nächsten Bewegung an (2026-11-23c)', () => {
+    // Das Beiboot 500 km neben dem Mutterschiff, die Gruppe bleibt oben: 0,1 G genügten ihm.
+    const c = launched();
+    const boat = boatOf(c).id;
+    const mother = shipOf(c)!.id;
+    const away: Campaign = {
+      ...c,
+      flight: { ...c.flight!, party: mother, units: c.flight!.units.map((u) => (u.ship === boat ? { ...u, position: { x: u.position.x + 500, y: u.position.y } } : u)) },
+    };
+    expect(docksNow(away, boat)).toBe(false);
+    expect(dockBlocker(away, boat)).toBeUndefined();
+    // Der Knopf setzt den Andockflug; geflogen und angedockt wird mit der nächsten Bewegung.
+    const armed = dockCraft(away, boat);
+    expect(armed.flight!.units).toHaveLength(2);
+    expect(armed.flight!.units.find((u) => u.ship === boat)!.docking).toBe(true);
+    expect(roundTrip(armed).flight).toEqual(armed.flight);
+    const run = runRound(armed, clock);
+    expect(run.docked).toBe('Beiboot 1');
+    expect(run.campaign.flight!.units).toHaveLength(1);
+    expect(boatOf(run.campaign).aboard).toBe(true);
+    expect(run.campaign.flight!.units.find((u) => u.ship === boat)).toBeUndefined();
+    expect(roundTrip(run.campaign).flight!.units).toHaveLength(1);
+  });
+
+  it('der Andockflug braucht Schub: zu weit weg sperrt der Knopf, wer selbst zieht, gibt ihn auf (2026-11-23c)', () => {
+    const c = launched();
+    const boat = boatOf(c).id;
+    const [mother] = c.flight!.units;
+    const index = c.flight!.units.findIndex((u) => u.ship === boat);
+    // 400.000 km weg: das sind 80 G – ein Beiboot mit 4 G hat keine Chance.
+    const far: Campaign = { ...c, flight: { ...c.flight!, units: c.flight!.units.map((u) => (u.ship === boat ? { ...u, position: { x: mother!.position.x + 400_000, y: mother!.position.y } } : u)) } };
+    expect(dockBlocker(far, boat)).toMatch(/Zu weit weg: 80 G bis Kestrel, Beiboot 1 hat .* G/);
+    // Schnell am Mutterschiff vorbei ist keine eigene Sperre mehr: Der Punkt „ohne Schub“ liegt weit
+    // fort, und zurückholen kostet G – hat es die, darf es andocken (Hausregel 2026-11-23c).
+    const racing: Campaign = { ...c, flight: { ...c.flight!, units: c.flight!.units.map((u) => (u.ship === boat ? { ...u, position: { x: mother!.position.x + 60, y: mother!.position.y }, velocity: { x: mother!.velocity.x + 1.5, y: mother!.velocity.y } } : u)) } };
+    expect(dockBlocker(racing, boat)).toBeUndefined();
+    // Ein eigener Schub hebt den Andockflug auf.
+    const armed = dockCraft({ ...c, flight: { ...c.flight!, units: c.flight!.units.map((u) => (u.ship === boat ? { ...u, position: { x: u.position.x + 5_000, y: u.position.y } } : u)) } }, boat);
+    expect(armed.flight!.units.find((u) => u.ship === boat)!.docking).toBe(true);
+    expect(setThrust(armed, index, { x: 1, y: 0 }).flight!.units.find((u) => u.ship === boat)!.docking).toBeUndefined();
+  });
+
+    it('andocken braucht Platz: einen Liegeplatz des Entwurfs oder freien Laderaum', () => {
+    const c = launched();
+    const boat = boatOf(c).id;
+    // Die Yacht ist für ein Small Craft gebaut. Solange der Platz frei ist, dockt das Beiboot an.
+    expect(dockBlocker(c, boat)).toBeUndefined();
+    // Belegter Liegeplatz: dann müsste der Rumpf in den Laderaum – bei der Yacht sind es nur 11 t.
+    const occupied: Campaign = { ...c, ships: [...c.ships, { ...boatOf(c), id: 'boot-2', name: 'Beiboot 2', aboard: true }] };
+    expect(dockBlocker(occupied, boat)).toMatch(/Kein Platz für Beiboot 1 in Kestrel: kein Liegeplatz frei/);
   });
 
   it('nur die Einheit der Gruppe landet; das Mutterschiff bleibt danach in der Umlaufbahn', () => {
