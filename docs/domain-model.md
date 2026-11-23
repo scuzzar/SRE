@@ -601,13 +601,17 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Pflichtprogramme rechnet jetzt der Code; siehe *Raumkampf*. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-23a-raumkampf-interface.png`](changes/2026-11-23a-raumkampf-interface.png).
 >
-> Noch nicht freigegeben (Kennzeichen 2026-11-23b): **Andocken eines Small Craft** – nichts Neues im
-> Bild, nur die Regel. Der eine **Knopf „Andocken“** in der Knopfreihe des Raumkampfblatts takes den
-> Platz von **Launch**, sobald die Gruppe in einem Small Craft sitzt, und sagt im Titel, was noch
-> fehlt. Drei Bedingungen: näher als 100 km, der Bewegungsvektor darf höchstens 0,1 km/s verschieden
-> sein, **beim Anfliegen** (der Abstand wird kleiner) höchstens 2 km/s, und das Mutterschiff hat
-> **Platz** – einen der Liegeplätze, für die es gebaut ist (`ShipDesign.craft`), oder, wenn alle
-> belegt sind, freien Laderaum für den Rumpf. Siehe *Andocken* unter *Systemflug*.
+> Noch nicht freigegeben (Kennzeichen 2026-11-23c): **Andockflug** – „Andocken“ ist nicht mehr der
+> Augenblick an der Nahgrenze, sondern ein Flug. Ein Small Craft darf andocken, wenn das Mutterschiff
+> **Platz** hat (Liegeplatz des Entwurfs, sonst freier Laderaum für den Rumpf) und das Small Craft
+> genug **Schub** hat, um den Ort zu erreichen, an dem sein Mutterschiff nach der nächsten Bewegung
+> steht – dieselbe Rechnung wie beim Schub wählen: 5.000 km je G vom Punkt „ohne Schub“ aus. Ist das
+> Mutterschiff schon näher als 100 km, dockt es sofort an; ist es weiter weg, setzt der Knopf den
+> neuen Wert `SpaceUnit.docking`: den **Andockflug**, der in der nächsten Bewegung ausgeflogen und
+> beendet wird, sonst weiter geflogen wird. Nähe (100 km) und Geschwindigkeit (0,1 km/s, beim
+> Anfliegen 2 km/s) als eigene Bedingungen entfallen. Der Knopf „Andocken“ steht in der Knopfreihe des
+> Blatts am Platz von **Launch**. Siehe *Andocken* und *Andockflug* unter *Systemflug*. Der Ausschnitt
+> dazu liegt unter [`changes/2026-11-23c-andockflug.png`](changes/2026-11-23c-andockflug.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -960,6 +964,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Fremdes Schiff | `SpaceUnit.design`, `SpaceUnit.name` | Eine Einheit des Systemflugs ohne `ship`: ein Standardentwurf mit Namen und eigenem Schaden, gesteuert von der App (2026-11-21h) |
 | Absicht | `SpaceUnit.intent`, `Intent` | Was ein fremdes Schiff will: angreifen, fliehen oder nichts (ignorieren); danach wählt die App seinen Schub (2026-11-21h) |
 | Gefeuert | `SpaceUnit.firedTurrets` | Die Hardpoints (`Ship.turrets`), die in dieser Raumrunde schon gefeuert haben; die Bewegung setzt sie leer – jeder Hardpoint feuert je Raumrunde einmal (2026-11-21i als `fired`, 2026-11-23a je Hardpoint) |
+| Andockflug | `SpaceUnit.docking` | Das Small Craft steuert in der nächsten Bewegung den Ort an, an dem sein Mutterschiff stehen wird, und dockt dort an; wer selbst einen Schub setzt, gibt ihn auf (2026-11-23c) |
 | Phase der Raumrunde | `SystemFlight.phase`, `BattlePhase` | Was das Blatt in der laufenden Raumrunde zeigt: `thrust` = Schub wählen, `fire` = feuern. Im Raumkampf rückt die Raumrunde erst mit „End Turn“ weiter; ohne Angabe die Schubphase (2026-11-23a) |
 | Schaden am Schiff | `ShipDamage`, `Ship.damage`, `SpaceUnit.damage` | Die Treffer eines Schiffs in der Reihenfolge, in der sie kamen, und die ausgefallenen Turrets; am eigenen Schiff bleibt er bis zur Reparatur (2026-11-21h) |
 | Trefferzone | `HitZone` | Wohin ein Treffer geht (SE 12, *Hit Locations* und *Critical Hits*) (2026-11-21h) |
@@ -3804,17 +3809,25 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Mutterschiffs, `aboard` wird gelöscht, und ⚑ die Gruppe steigt mit um (`party` zeigt auf das
     Beiboot). Das Mutterschiff fliegt mit seiner Crew weiter; seinen Schubvektor setzt man weiter
     selbst. ⚑ Ein Beiboot je Raumrunde (wie zivile Schiffe nach dem Konzept).
-  - **Andocken** (Hausregeln 2026-11-23): Drei Bedingungen muss ein Small Craft erfüllen, damit die
-    Karte „Andocken“ anbietet. **Nähe**: näher als 100 km an sein Mutterschiff. **Vektor**: der
-    Unterschied der Geschwindigkeit höchstens 0,1 km/s – beim **Anfliegen**, also wenn der Abstand
-    kleiner wird, höchstens 2 km/s (⚑ sonst findet ein Beiboot, das einmal zurückblieb, nie wieder
-    hinein; darüber wäre es ein Zusammenstoß). **Platz** beim Mutterschiff: einer der Liegeplätze, für
-    die es gebaut ist (`ShipDesign.craft`), oder, wenn alle belegt sind, freier Laderaum für seinen
-    Rumpf. Erfüllt es eine Bedingung nicht, bleibt der Knopf gesperrt und nennt sie. Im Blatt sitzt
-    „Andocken“ in der Knopfreihe am Platz von **Launch**, solange die Gruppe in dem Small Craft sitzt
-    (sonst steht „Andocken“ als Chips an der Karte); in beiden Phasen der Raumrunde zu haben.
-    Die Einheit des Small Craft entfällt, `aboard` wird gesetzt, und war die Gruppe darin, sitzt sie
-    jetzt im Mutterschiff. ⚑ „Andocken“ heißt nie „Landen“: **Landen** bleibt das Aufsetzen auf einer
+  - **Andocken** (Hausregeln 2026-11-23, seit 2026-11-23c ein Flug statt einer Nahgrenze): Zwei
+    Bedingungen muss ein Small Craft erfüllen, damit die Karte „Andocken“ anbietet. **Platz** beim
+    Mutterschiff: einer der Liegeplätze, für die es gebaut ist (`ShipDesign.craft`), oder, wenn alle
+    belegt sind, freier Laderaum für seinen Rumpf. Und **Schub**: Das Small Craft muss den
+    **Andockpunkt** der nächsten Bewegung erreichen – den Ort, an dem sein Mutterschiff nach dieser
+    Bewegung steht. Erreichbar heißt, was beim Schub wählen im Ring liegt: 5.000 km je G vom Punkt
+    „ohne Schub“ aus, mit der echten Schwerkraft gerechnet. Nähe und Geschwindigkeit für sich sind
+    keine Bedingung mehr: Wer weit weg ist oder schnell vorbeifliegt, braucht nur mehr G. Reicht der
+    Schub nicht, bleibt der Knopf gesperrt und sagt, wie viel G fehlen.
+  - **Andockflug** (`SpaceUnit.docking`, 2026-11-23c): „Andocken“ heißt nicht immer „sofort andocken“.
+    Steht das Mutterschiff schon näher als 100 km (`DOCK_KM`), dockt die Einheit an. Ist sie weiter
+    weg, setzt der Knopf den **Andockflug**: In der nächsten Bewegung steuert die Einheit mit vollem
+    Schub den Andockpunkt an (der eigene Schubpunkt ist damit hinfällig; wer selbst zieht, gibt den
+    Andockflug auf) und dockt an, wenn sie dort näher als 100 km steht. Reichte der Schub nicht,
+    fliegt sie dem Mutterschiff nach und behält den Andockflug für die nächste Bewegung. Angedockt:
+    Die Einheit entfällt, `aboard` wird gesetzt, und war die Gruppe darin, sitzt sie jetzt im
+    Mutterschiff. Im Blatt sitzt „Andocken“ in der Knopfreihe am Platz von **Launch**, solange die
+    Gruppe in dem Small Craft sitzt (sonst steht „Andocken“ als Chips an der Karte); in beiden Phasen
+    der Raumrunde zu haben. ⚑ „Andocken“ heißt nie „Landen“: **Landen** bleibt das Aufsetzen auf einer
     Welt.
   - **Landen** geht wie bisher (Landeautomatik eingeschlossen), aber nur mit der Einheit der Gruppe
     (Owner, 21. November 2026: nur mit Gruppe). Erreicht eine andere Einheit die Oberfläche, schlägt

@@ -627,6 +627,12 @@
         "Ship",
         "Turret"
       ]
+    },
+    {
+      "id": "2026-11-23c",
+      "file": "2026-11-23c-andockflug",
+      "title": "Andockflug: ein Small Craft fliegt heim und dockt mit der nächsten Bewegung an",
+      "approved": false
     }
   ]
 }

@@ -434,6 +434,7 @@ hide <<browser>> stereotype
     $gone("2026-11-23a", "fired: boolean")
     $new("2026-11-23a", "firedTurrets: number [0..*]")
     returned: boolean
+    $new("2026-11-23c", "docking: boolean")
     /maxG: number
     /evading: boolean
   }
