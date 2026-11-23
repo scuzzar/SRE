@@ -17,9 +17,10 @@ import { checkOf, encounterChecks } from './encounter-check';
 import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type Journey, type SystemJourney, type SpaceBattle, type SpaceAttack, type DamageRoll, type LogEntry, type Note, type Recovery, type TripDay } from './log';
 import { checkRecovery } from './wounds';
 import { missionStates, validateMissions, type Mission, type MissionPlace } from './mission';
-import { armorClasses, encounterTypeOf, entryOf, eventFocusOf, itemOf, oddsOf, patronOf, ranges, ref, shipDesignOf, slotOfEntry, softwareOf, weaponOf } from './reference';
+import { armorClasses, computerModelOf, encounterTypeOf, entryOf, eventFocusOf, itemOf, oddsOf, patronOf, ranges, ref, shipDesignOf, slotOfEntry, softwareOf, weaponOf } from './reference';
 import { checkTurrets } from './armament';
 import { checkCrew, CrewRoleSchema } from './crew';
+import { SoftwareSlotSchema, withSlots, TARGET_PROGRAM, type SoftwareSlot } from './software';
 import { battleOutcomes, checkDamage, hitZones, intents } from './space-combat';
 import { characteristics } from './rules';
 import { bookingKinds, shipCosts, validateBookings, type Booking } from './shop';
@@ -366,7 +367,7 @@ const ShipSchema = z.object({
   nextPaymentDay: z.number().int().min(0).optional(),
   berthedSince: z.number().int().min(0).optional(),
   retired: z.boolean().default(false),
-  software: z.array(z.object({ program: z.string().min(1) })).default([]),
+  software: z.array(z.object({ program: z.string().min(1), slot: SoftwareSlotSchema.optional() })).default([]),
   /** Die besetzten Posten (2026-11-22d); fehlt die Liste, ist jeder Posten des Schiffs frei. */
   crew: z.array(z.object({ post: CrewRoleSchema, turret: z.number().int().min(0).optional(), who: z.string().min(1).optional() })).optional(),
   /** Die Turrets (2026-11-21g); fehlen in Dateien von vorher: dann die des Entwurfs. */
@@ -612,7 +613,7 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       ...(file.location === undefined ? {} : { location: placeFromFile(file.location) }),
       bookings: file.bookings.map((b) => stripped(b) as Booking),
       // Gespeichert werden `aboard` und `inOrbit` nur, wenn sie wahr sind (2026-11-21b).
-      ships: file.ships.map((s) => stripped({ ...s, turrets: turretsFromFile(s), aboard: s.aboard === true ? true : undefined, inOrbit: s.inOrbit === true ? true : undefined, inHold: s.inHold === true ? true : undefined, ...(s.place === undefined ? {} : { place: placeFromFile(s.place) }) }) as Ship),
+      ships: file.ships.map((s) => stripped({ ...s, turrets: turretsFromFile(s), software: softwareFromFile(s), aboard: s.aboard === true ? true : undefined, inOrbit: s.inOrbit === true ? true : undefined, inHold: s.inHold === true ? true : undefined, ...(s.place === undefined ? {} : { place: placeFromFile(s.place) }) }) as Ship),
       stash: file.stash.map((p) => stripped({ ...p, ...(p.parked === undefined ? {} : { parked: placeFromFile(p.parked) }) }) as Possession),
       ...(file.trip === undefined ? {} : { trip: { hours: file.trip.hours, legs: file.trip.legs.map((l) => ({ by: l.by, rented: l.rented, cells: [...l.cells] })) } }),
       ...(file.flight === undefined ? {} : { flight: flightFromFile(file.flight) }),
@@ -759,6 +760,23 @@ function flightFromFile(flight: z.infer<typeof FlightSchema>): SystemFlight {
 /** Die Turrets eines Schiffs aus der Datei; Dateien von vor 2026-11-21g haben keine: Das Schiff kam mit denen seines Entwurfs. */
 function turretsFromFile(ship: z.infer<typeof ShipSchema>): Ship['turrets'] {
   return storedTurrets(ship.design, ship.turrets);
+}
+
+/**
+ * Die Bordsoftware aus der Datei, mit Ablagen (2026-11-22d): eine Datei von vor der Änderung nennt
+ * keine Ablage, dann verteilt sie der Bestand – erst, was in die CPU passt (zuerst Maneuver, dann
+ * Target), dann der Speicher, der Rest ins Archiv. Dazu bekommt jedes Schiff mit Turret und
+ * Rechner *Target*, das es noch nicht hat (Owner, 23. November 2026); eine Datei von jetzt behält
+ * genau, was in ihr steht.
+ */
+function softwareFromFile(ship: z.infer<typeof ShipSchema>): Ship['software'] {
+  const plan = shipDesignOf(ship.design);
+  const computer = plan.computer === undefined ? undefined : computerModelOf(plan.computer);
+  const turrets = storedTurrets(ship.design, ship.turrets);
+  if (ship.software.every((s) => s.slot !== undefined)) return ship.software.map((s) => ({ program: s.program, slot: s.slot as SoftwareSlot }));
+  const programme = ship.software.map((s) => s.program);
+  if (computer !== undefined && turrets.length > 0 && !programme.includes(TARGET_PROGRAM)) programme.push(TARGET_PROGRAM);
+  return withSlots(computer, programme);
 }
 
 function stripped<T extends object>(value: T): T {

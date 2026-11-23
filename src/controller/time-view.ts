@@ -483,7 +483,7 @@ export interface MonthEndItem {
   readonly total: number;
 }
 
-const costNames: Record<Exclude<ShipCost, 'price' | 'armament' | 'repair'>, string> = { rate: 'Rate', fuel: 'Treibstoff', berthing: 'Liegegebühren', lifeSupport: 'Lebenserhaltung' };
+const costNames: Record<Exclude<ShipCost, 'price' | 'armament' | 'repair' | 'software'>, string> = { rate: 'Rate', fuel: 'Treibstoff', berthing: 'Liegegebühren', lifeSupport: 'Lebenserhaltung' };
 
 export function monthEndItem(campaign: Campaign, entry: MonthEnd): MonthEndItem {
   const costs = costsOf(campaign, entry).map((c) => c.booking);

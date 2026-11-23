@@ -93,6 +93,7 @@ export const shipCostText: Record<ShipCost, string> = {
   berthing: 'Schiff · Liegegebühr',
   lifeSupport: 'Schiff · Lebenserhaltung',
   armament: 'Schiff · Bewaffnung',
+  software: 'Schiff · Software',
   repair: 'Schiff · Reparatur',
 };
 

@@ -8,6 +8,7 @@ import { MONTH_DAYS, nextMonthStart } from './time';
 import type { Place } from './place';
 import type { ShipDamage } from './space-combat';
 import type { CrewPost } from './crew';
+import { packageOf, type SoftwareSlot } from './software';
 
 /** Ein Turret auf einem Hardpoint (Domänenmodell: `Turret`, 2026-11-21g): Turmart und Waffen, höchstens so viele wie Plätze. */
 export interface Turret {
@@ -15,9 +16,13 @@ export interface Turret {
   readonly weapons: readonly string[];
 }
 
-/** Was ein konkretes Schiff an Bord hat (Domänenmodell: `ShipSoftware`): ein Verweis auf das Programm. */
+/**
+ * Was ein konkretes Schiff an Bord hat (Domänenmodell: `ShipSoftware`): ein Verweis auf das
+ * Programm und die Ablage, in der es liegt (2026-11-22d). Nur was in der CPU liegt, läuft.
+ */
 export interface ShipSoftware {
   readonly program: string;
+  readonly slot: SoftwareSlot;
 }
 
 /**
@@ -141,16 +146,11 @@ function nextShipId(ships: readonly Ship[]): string {
 }
 
 /**
- * Standard-Bordsoftware eines neuen Schiffs (Hausregel, 16. November 2026): die Pflichtprogramme
- * des Flugs – Maneuver und Jump je Sprungzahl des Entwurfs – dazu Navigation, Flugplan,
- * Anti-Hijack und Bibliothek.
+ * Standard-Bordsoftware eines neuen Schiffs, mit Ablagen (Hausregel, 16. November 2026; Ablagen
+ * seit 2026-11-22d): das Standardpaket des Entwurfs, ein Schiff mit Turret dazu *Target*.
  */
 export function standardSoftware(design: string): readonly ShipSoftware[] {
-  const plan = shipDesignOf(design);
-  // Small Craft haben keinen Rechner und damit keine Programme (SE 13, 2026-11-21b).
-  if (plan.computer === undefined) return [];
-  const jump = plan.jump;
-  return ['maneuver', `jump-${jump}`, 'navigation', 'generate', 'anti-hijack', 'library'].map((program) => ({ program }));
+  return packageOf(design, designTurrets(design));
 }
 
 /** `/monthlyPayment`: ein Vierhundertachtzigstel der Kreditsumme (SR 29); ein schuldenfreies Schiff hat keine. */
