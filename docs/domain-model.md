@@ -577,6 +577,19 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > mit `days` und `/left`, `Campaign.voyage`, die Verweise `jump` und `inSystem`; siehe *Unterwegs*.
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-22c-reise-tag-fuer-tag.png`](changes/2026-11-22c-reise-tag-fuer-tag.png).
+>
+> Am 23. November 2026 freigegeben (Kennzeichen 2026-11-22d): **Raumkampf, Stufe 2b: Crew und Programme** (Owner,
+> 22. November 2026: „Ja, crew und Programme. Wir müssen da auch auf jeden Fall dann ein ui für die
+> Zuweisung der crew und eines für die Software entwerfen.“). SC und NSC besetzen die
+> Schiffspositionen aus SR 33, ihre Fertigkeiten werden DMs. Jedes Programm an Bord liegt in CPU,
+> Speicher oder Archiv; nur was in der CPU läuft, wirkt, und *Target* und *Maneuver* sind Pflicht.
+> Programme kauft man in der Werft. Antriebe haben Buchstaben, Treffer senken sie. Der Engineer
+> versucht die Schadenskontrolle. Neu im Bild: `CrewPost`, `CrewRole`, `ShipSoftware.slot`,
+> `SoftwareSlot`, `DrivePotential`, die Antriebsbuchstaben am `ShipDesign`, `ShipDamage.patched`,
+> `SpaceUnit.returned` und `/evading`, an `SpaceAttack` `predict`, `gunnery`, `evade`, `returnFire`
+> und `gunner`, der Logeintrag `DamageControl` und die Schiffskosten `software`; siehe *Crew und
+> Programme*. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-22d-crew-und-programme.png`](changes/2026-11-22d-crew-und-programme.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -966,6 +979,15 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Software (Programm) | `Software` | Ein Programm der Software-Liste (SR 38–39, SE 13): Platzbedarf in Space, Preis, Wirkung; Art nach `SoftwareKind` (offensiv, defensiv, routine) |
 | Rechnermodell | `ComputerModel` | Modell 1 bis 7 (je mit „bis“): Preis, Tonnen, CPU und Storage in Space, TL; die Modellzahl ist die höchste Sprungzahl und der Wert des Softwarepakets in MCr (SE 10) |
 | Software an Bord | `ShipSoftware` | Ein Programm, das ein konkretes Schiff dabeihat; beim Kauf aus dem Softwarepaket des Computers gewählt |
+| Platz eines Programms | `ShipSoftware.slot`, `SoftwareSlot` | Wo ein Programm an Bord liegt: in der **CPU** (es läuft und wirkt), im **Speicher** (Storage, bereit zum Umstecken) oder im **Archiv** (an Bord, aber nicht im Rechner) (2026-11-22d) |
+| Umstecken | (Ändern von `ShipSoftware.slot`) | Ein Programm in einen anderen Platz legen; im Raumkampf nur zwischen CPU und Speicher, solange das eigene Schiff in der Raumrunde noch nicht gefeuert hat (Reprogramming-Phase der SR) (2026-11-22d) |
+| Schiffsposition | `CrewPost`, `CrewRole`, `Ship.crew` | Ein Posten an Bord nach SR 33 (Pilot, Navigator, Engineer, Steward, Medic, Gunner je Turret), besetzt mit einem SC oder NSC (2026-11-22d) |
+| Fertigkeit auf dem Posten | `CrewPost./skill` | Die Stufe der passenden Fertigkeit des Charakters auf seinem Posten, mit −1, wenn er zwei Posten hat (SE 11) (2026-11-22d) |
+| Antriebsbuchstabe | `ShipDesign.maneuverDrive`, `jumpDrive`, `powerPlant` | Der Buchstabe von Maneuver Drive, Jump Drive und Power Plant (A–Z, SE 10); seine Leistung folgt aus dem Drive Potential (2026-11-22d) |
+| Drive Potential | `DrivePotential` | Referenzdaten: Leistung eines Antriebsbuchstabens in einem Rumpf (G, Sprungzahl oder Energiewerkszahl, SE 10) (2026-11-22d) |
+| Schadenskontrolle | `DamageControl`, `ShipDamage.patched` | Logeintrag: Der Engineer flickt im Raumkampf einen Treffer, 2W6 + Engineering, 9+ (SR 42); geflickt wirkt der Treffer nicht mehr, kostet in der Werft aber weiter (2026-11-22d) |
+| Ausweichen | `SpaceUnit./evading` | In der CPU läuft Maneuver/Evade oder Auto-Evade: Verteidigungs-DM gegen Laser, dafür 1 G weniger Schub (Mayday) (2026-11-22d) |
+| Rückfeuer | `SpaceUnit.returned`, `SpaceAttack.returnFire` | Mit dem Programm Return Fire feuert eine beschossene Einheit einmal je Raumrunde zurück, auch wenn sie schon gefeuert hat (2026-11-22d) |
 | Deckplan | `DeckPlan` | Der Plan eines Schiffsentwurfs als Bild: bis zu drei eigene, als PNG hochgeladen oder fotografiert; über Kampagnen hinweg gehalten und mit OneDrive abgeglichen (2026-11-17), der Export nimmt sie nicht mit |
 | Deckplan-Platz | `DeckPlan.name` | Deck A, Deck B oder Deck C: der Platz eines Plans an seinem Entwurf, zugleich sein Name |
 | Raumkarte | (View, Grundkarte) | Der Raum um eine Welt, von ein paar tausend bis zu Millionen Kilometern, in 2D: die Welt als Himmelskörper, die Einheiten mit Bahnen und die Sprunggrenzen. Neben Subsektor und Globus die dritte Grundkarte; man erreicht sie über den Knopf „Raum“ (2026-11-18c) |
@@ -3463,6 +3485,104 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Baugruppen): in der Werft an einem Raumhafen A oder B, Cr 100.000 je Treffer und Cr 1.000.000 je
     kritischem Treffer, alles auf einmal (Buchung mit `shipCost` repair); danach ist `Ship.damage`
     leer. Ausgefallene Turrets arbeiten wieder.
+
+- **Crew und Programme** (Stufe 2b des Raumkampfs; freigegeben am 23. November 2026, Kennzeichen 2026-11-22d; Owner,
+  22. November 2026). Bis hierhin vereinfachte Stufe 2 den Laserkampf (keine Programme, keine
+  Schiffspositionen, Antriebsschaden als −1 G). Jetzt gelten die SR (SR 33, 38–42; SE 10–13,
+  zusammengefasst in [`regeln-schiffe.md`](regeln-schiffe.md)). Entscheidungen des Owners vom
+  22. November 2026 sind als solche genannt, Hausregeln tragen ⚑.
+  - **Schiffspositionen** (`Ship.crew`, `CrewPost`). Jedes eigene Schiff hat die Posten aus SR 33
+    (Owner: alle): **Pilot**, **Navigator**, **Engineer**, **Steward**, **Medic** und je Turret
+    einen **Gunner** (`turret` ist dann die Stelle des Turrets in `Ship.turrets`). Besetzen kann sie
+    jeder lebende, nicht ausgeblendete Charakter der Kampagne, **SC wie NSC** (Owner). ⚑ Jeder Posten
+    hat höchstens einen Charakter; mehrere Engineers, Stewards oder Medics, wie große Schiffe sie
+    brauchen, kommen mit der Heuer.
+    - *Zwei Posten*: Ein Charakter darf höchstens **zwei** Posten haben, über alle Schiffe der
+      Kampagne zusammen. Mit zweien zählt seine Fertigkeit auf beiden **um 1 niedriger** (SE 11).
+    - *Fertigkeit* (`/skill`): Pilot → Pilot (auf einem Small Craft das bessere von Ship's Boat und
+      Pilot − 1, SR 33), Navigator → Navigation, Engineer → Engineering, Steward → Steward, Medic →
+      Medical, Gunner → Gunnery. Ohne die Fertigkeit zählt ⚑ 0; die Mindeststufen der SR zeigt die
+      App als Hinweis an, verbietet aber nichts.
+    - *Wirkung in Stufe 2b*: nur Pilot, Gunner und Engineer (siehe unten). Navigator, Steward und
+      Medic stehen da und wirken später (Sprung, Passagiere, Heuer).
+    - Ein **leerer Posten** sperrt nichts: Der Rechner fliegt und feuert ohne Crew, es fehlen nur die
+      DMs. Ohne Engineer gibt es keine Schadenskontrolle.
+    - Stirbt ein Charakter oder wird er ausgeblendet, verliert er seine Posten; wer **gelöscht**
+      wird, ebenfalls. Eine Datei, die einen gelöschten Charakter noch auf einem Posten nennt, gibt
+      den Posten beim Lesen frei (23. November 2026) – sonst wäre der Stand nicht mehr zu laden.
+      Wird ein Turret
+      ausgebaut, entfällt sein Gunner-Posten.
+    - ⚑ **Fremde Schiffe** haben keine Posten: Für sie zählt jede Fertigkeit als 1.
+  - **Programme in CPU, Speicher oder Archiv** (`ShipSoftware.slot`). Nach SR 38: Was in der **CPU**
+    liegt, läuft. Der **Speicher** hält bereit, was man umstecken kann. Ein Schiff kann mehr
+    Programme besitzen, als hineinpassen (SE 12, *Suleiman*); der Rest liegt im **Archiv**. Die
+    Summe der Space aller Programme in der CPU ist höchstens die CPU des Rechners, die im Speicher
+    höchstens sein Storage (Model/1: 2 und 4; Model/1bis: 4 und 0). Jedes Programm liegt höchstens
+    einmal an Bord.
+    - *Umstecken* (Owner): außerhalb des Raumkampfs frei. Im Raumkampf nur zwischen CPU und Speicher,
+      und nur, solange das eigene Schiff in dieser Raumrunde noch nicht gefeuert hat (die
+      Reprogramming-Phase der SR); ⚑ Archiv ↔ Speicher geht im Raumkampf nicht.
+    - Ein Small Craft hat keinen Rechner und keine Programme; es fliegt und feuert ohne sie, mit DM −1
+      (2026-11-22).
+  - **Pflichtprogramme** (Owner: streng). Ohne **Maneuver** in der CPU gibt der Maneuver Drive keinen
+    Schub (`SpaceUnit./maxG` ist 0). Ohne **Target** in der CPU feuert kein Turret. Fällt der Rechner
+    aus (kritischer Computer-Treffer), läuft nichts mehr.
+  - **Wirkende Programme** in Stufe 2b, je nur in der CPU:
+    - **Predict-1 bis -5**: DM +1, +2, +2, +3, +3 auf jeden eigenen Laserschuss (`SpaceAttack.predict`).
+    - **Gunner Interact**: die Fertigkeit des Gunners dieses Turrets als DM (`SpaceAttack.gunnery`,
+      `gunner`); ohne Gunner 0.
+    - **Maneuver/Evade-1 bis -6** und **Auto-Evade**: Verteidigungs-DM gegen jeden Laserschuss auf
+      die Einheit, −¼, −½, −¾, −1, −1 × Pilot (⚑ abgerundet) bzw. −5, Auto-Evade −2 (`SpaceAttack.evade`,
+      beim Schützen gespeichert). Laufen mehrere, zählt ⚑ nur das beste. Solange eines läuft
+      (`/evading`), hat das Schiff **1 G weniger** (Owner, 18. November 2026, nach Mayday; ⚑ auch bei
+      Auto-Evade). Der Schubkreis wird entsprechend kleiner.
+    - **Return Fire**: Wird die Einheit beschossen, feuert sie gleich zurück, einmal je Raumrunde
+      (`returned`), auch wenn sie schon gefeuert hat (`SpaceAttack.returnFire`). Das eigene Schiff
+      feuert dann mit Würfelanimation von selbst. Ohne Return Fire bleibt es wie in Stufe 2: Wer
+      noch nicht gefeuert hat, darf es jetzt tun.
+    - Select, Multi-Target, Launch, Double Fire, Anti-Missile und ECM liegen an Bord, wirken aber
+      noch nicht (Stufe 3 und später). Jump und Navigation prüft der Sprung ⚑ noch nicht.
+    - ⚑ **Fremde Schiffe** haben Maneuver und Target in der CPU, sonst nichts, wie ein neues Schiff
+      der Gruppe.
+  - **DMs am Schuss**. Jeder Schuss hält fest, woraus sein DM kam (wie `bands` und `computerHits`
+    seit 2026-11-21i): `predict`, `gunnery`, `evade` und ob es Rückfeuer war. Blatt, Würfe und Log
+    erklären den DM damit auch später noch.
+  - **Oberflächen** (Owner, 22. und 23. November 2026: „Wir müssen da auch auf jeden Fall dann ein ui
+    für die Zuweisung der crew und eines für die Software entwerfen.“). Zwei neue Reiter im Reiter
+    Schiff, neben Deckplan und Details: **Crew** und **Computer**. Crew zeigt die Posten als Felder,
+    Zuweisung über das Blatt am Feld, Umziehen und Tauschen durch Ziehen zwischen den Feldern, oben
+    die besetzten Posten, darunter die freien als schmale Zeile, zuunterst die ohne Posten. Computer
+    zeigt CPU, Speicher und Archiv als drei Ablagen über der Rechnerzeile; Umstecken durch Ziehen
+    oder im Blatt, Werfen ebenda. Modelle: [`mock/crew-zuweisen.html`](mock/crew-zuweisen.html) und
+    [`mock/computer-programme.html`](mock/computer-programme.html).
+  - **Software kaufen** (Owner: ein UI für die Software). In der Werft an einem Raumhafen A oder B,
+    wie die Bewaffnung: jedes Programm der Software-Liste zum Listenpreis (SE 13), bar aus der
+    Kasse (Buchung `ship` mit `shipCost` software). Ein gekauftes Programm kommt in den Speicher,
+    wenn dort Platz ist, sonst ins Archiv. Löschen geht überall, ohne Erstattung. ⚑ Das
+    Softwarepaket beim Schiffskauf bleibt das Standard-Set; ein Schiff mit Turret bekommt dazu
+    Target.
+  - **Antriebsbuchstaben** (SE 10). Die Standardentwürfe tragen die Buchstaben aus SR 35–37
+    (Scout A/A/A, Yacht A/A/A, Patrol Cruiser F/H/H usw.); Small Craft haben keine. Die Leistung
+    kommt aus `DrivePotential` (Rumpf, Buchstabe → G, Sprungzahl oder Energiewerkszahl; für
+    Zwischengrößen die nächstgrößere Zeile; fehlt die Zeile, arbeitet der Antrieb nicht).
+    - Jeder Treffer auf Maneuver, Jump oder Power Plant senkt dessen Buchstaben um eine Stufe
+      (SR 41, ersetzt das −1 aus Stufe 2). `/maneuver` = das kleinere aus der Leistung des Maneuver
+      Drive und der des Power Plant; ebenso `/jump`. Ein kritischer Treffer darauf setzt es auf 0.
+    - Small Craft bleiben wie 2026-11-22: ein Drive-Treffer legt sie still.
+  - **Schadenskontrolle** (`DamageControl`, SR 42). Einmal je Raumrunde und Schiff, solange das
+    eigene Schiff einen Engineer hat: Im Blatt einen ungeflickten, nicht kritischen Treffer wählen,
+    2W6 + Engineering (`dm`), **9+** flickt ihn (`ShipDamage.patched` hält die Stelle in `hits`).
+    Ein geflickter Treffer wirkt nicht mehr (Antrieb, Turret, Computer), ⚑ kostet in der Werft aber
+    weiter (provisorisch, SR 42). Kritische Treffer lassen sich nicht flicken. ⚑ Ein fremdes Schiff
+    versucht es nach dem Feuer von selbst, mit Engineering 1, zuerst Maneuver und Power Plant, dann
+    Turret, dann den Rest.
+  - **Was bleibt wie in Stufe 2**: Hull-Treffer ohne Folgen (Dekompression später), Computer-Treffer
+    DM −1 auf das eigene Feuer statt des Betriebswurfs.
+  - **Bestand** ⚑. Beim Laden kommen die Programme vorhandener Schiffe in die CPU, solange Platz ist
+    (zuerst Maneuver, dann Target), dann in den Speicher, der Rest ins Archiv. Jedes vorhandene
+    Schiff mit Turret und Rechner bekommt **Target** geschenkt (Owner), auch die Yacht der
+    Demo-Kampagne, die damit Maneuver und Target in der CPU hat. Posten sind zunächst leer; die
+    Demo-Kampagne setzt Kira Vant als Pilot und Jonas Reyl als Gunner des Turrets ein.
 
 - **Schiffsbegegnungen bei Abreise und Ankunft** (freigegeben am 22. November 2026, Kennzeichen 2026-11-22b; Owner,
   22. November 2026). Teil von Stufe 5 des [Konzepts](konzept-raumkampf.md), vorgezogen, weil im

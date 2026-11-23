@@ -1,9 +1,10 @@
 # Konzept: Raumkarte und Raumkampf mit Vektorbewegung
 
-> **Stand: Entwurf, nicht freigegeben** (18. November 2026). Nichts davon steht im
-> [Domänenmodell](domain-model.md). Erst wenn der Owner das Konzept freigibt, kommen die Begriffe in
-> die Tabelle „Begriffe“ und die Klassen als Änderung mit Ausschnitt in `docs/changes/` ins Diagramm.
-> Bis dahin sind alle Namen hier Vorschläge.
+> **Stand: Entwurf, Plan aktualisiert am 22. November 2026.** Gebaut und freigegeben sind die
+> Stufen 1, 1b, 2, 4a und der Begegnungsteil von Stufe 5 (siehe *Stufenplan*), jede als eigene
+> Änderung im [Domänenmodell](domain-model.md). Was dort noch nicht steht, ist weiter Vorschlag: Erst
+> wenn der Owner eine Stufe freigibt, kommen ihre Begriffe in die Tabelle „Begriffe“ und ihre Klassen
+> als Änderung mit Ausschnitt in `docs/changes/` ins Diagramm.
 >
 > **Entschieden** am 18. November 2026 (Owner): 2D, gleichzeitige Bewegung, ein Schubvektor je
 > Raumrunde nur durch Tippen oder Ziehen im Schubkreis (stufenlos, mit Einrasten, ohne Auswählen,
@@ -13,6 +14,18 @@
 >
 > Zum Ausprobieren des Bewegungsmodells gibt es einen Prototyp ohne die App:
 > [`docs/mock/raumkarte-bewegung.html`](mock/raumkarte-bewegung.html) (direkt im Browser öffnen).
+> Für die Stufe 2b (Änderung 2026-11-22d) liegen zwei Klick-Modelle bereit:
+> [`docs/mock/crew-zuweisen.html`](mock/crew-zuweisen.html) – Posten als Felder, Zuweisung über das
+> Blatt am Feld, Umziehen und Tauschen durch Ziehen zwischen den Feldern, mit den zwei Posten je
+> Charakter und dem Small Craft. Und
+> [`docs/mock/computer-programme.html`](mock/computer-programme.html) – Programme in CPU, Speicher
+> und Archiv, Umstecken durch Ziehen (im Raumkampf nur zwischen CPU und Speicher und nur vor dem
+> eigenen Schuss), Warnung ohne *Maneuver* und ohne *Target* in der CPU, Kauf in der Werft.
+> Was davon im Kampf läuft und was fehlt, zeigt das Kampf-Interface selbst; ein eigenes Modell
+> dafür gibt es nicht (Owner, 23. November 2026). Software kosten **MCr, unter 0,2 MCr in Cr**
+> (Owner, 23. November 2026) – also „MCr 2,00“, aber „Cr 100.000“ für *Maneuver*; die Kasse steht
+> auf der Oberfläche in MCr. Der Reiter heißt **Computer**, die **Werft** öffnet sich aus diesem
+> Reiter heraus (Owner, 23. November 2026).
 
 Die Idee des Owners in einem Satz: **Der Raumkampf bleibt rundenbasiert, und in jeder Runde legt man
 fest, wie viel Schub jedes Schiff in welche Richtung gibt. Wie sich das Schiff dann bewegt, rechnet
@@ -487,24 +500,44 @@ Sprunggrenze, Schatten, Rotte, Absicht (eines NSC-Schiffs).
 ## 9. Was vorher fehlt
 
 1. ~~Tabellen aus SE 10–13 übertragen~~: erledigt am 18. November 2026, siehe `regeln-schiffe.md`.
-2. **Bewaffnung kaufen und einbauen**: Turrets und Waffen auf die Hardpoints (Shop und Reiter Schiff).
-3. **Schiffspositionen der SC** (wer ist Pilot, wer Gunner).
-4. **Small Craft mit Werten** statt einfacher Gegenstände.
+2. ~~Bewaffnung kaufen und einbauen~~: erledigt mit Änderung 2026-11-21g (Werft), für Small Craft
+   mit 2026-11-22.
+3. **Schiffspositionen der SC** (wer ist Pilot, wer Gunner): offen, gehört jetzt zu Stufe 2b.
+4. ~~Small Craft mit Werten~~: erledigt mit Änderung 2026-11-21b (eigene Entwürfe und Schiffe).
 
 ## 10. Stufenplan
 
-Jede Stufe ist für sich spielbar und bekommt ihre eigene Änderung im Modell.
+Jede Stufe ist für sich spielbar und bekommt ihre eigene Änderung im Modell. Stand: 22. November 2026.
+
+### Gebaut
+
+| Stufe | Inhalt | Änderung |
+|---|---|---|
+| 1 | **Raumkarte und Bewegung**: Welt als Körper, Schubvektor durch Ziehen, Vorschau, Wiedergabe, Sprunggrenzen, Knopf „Raum“ | 2026-11-18c |
+| 1b | **Sternsystem, Monde und Gasriesen** nach Book 6, eine Raumkarte je Gasriese; Treibstoff schöpfen | 2026-11-18d, 2026-11-20 bis 20d, 2026-11-21f |
+| 2 | **Gegner und Laser**: fremdes Schiff mit Absicht (angreifen, fliehen, ignorieren) und Planer, Laserfeuer und Rückfeuer gleichzeitig, Trefferzonen, Schaden bleibt am Schiff, Reparatur, Ende des Kampfs; Feuer auslösen statt vormerken | 2026-11-21h, 2026-11-21i |
+| 4a | **Small Craft ohne Kampf**: Beiboote als eigene Schiffe, aussetzen, andocken, landen, im System reisen; einzeln kaufen | 2026-11-21b, 2026-11-21c |
+| 4b (Teil) | **Waffen der Small Craft**: Laser ab Werft, eigene Trefferzonen, DM −1 ohne Computer | 2026-11-22 |
+| 5 (Teil) | **Begegnungen**: Wurf auf der Starship Encounter Table bei Abreise und Ankunft, Sichtung, Weiterreise aus dem Systemflug, Flucht per Sprung mit DM +5/+15; Reise Tag für Tag | 2026-11-22b, 2026-11-22c |
+
+**Was Stufe 2 bewusst vereinfacht hat** (✱ in `regeln-schiffe.md`): keine Programme (jedes Schiff
+schießt, als liefe *Target*), keine Schiffspositionen und damit keine Fertigkeits-DMs, kein
+Ausweichen, Antriebsschaden als −1 G je Treffer statt über den Buchstaben, Hull-Treffer ohne
+Folgen, keine Schadenskontrolle. Nur die Gruppe kämpft (`SystemFlight.party`), ein Mutterschiff ohne
+Gruppe nicht. Von den fünf Absichten im Konzept gibt es drei; *Entern* und *Abfangen* fehlen, weil es
+das Entern noch nicht gibt.
+
+### Offen (Reihenfolge vom Owner bestätigt am 22. November 2026)
 
 | Stufe | Inhalt | Ergebnis |
 |---|---|---|
-| 1 | **Raumkarte und Bewegung**: die Welt als einziger Körper, das eigene Schiff, Schubvektor durch Ziehen, Vorschau, Wiedergabe, Sprunggrenzen, Knopf „Raum“ an Globus und Subsektor | Man kann um eine Welt fliegen und Bahnen lernen. Klärt, ob sich das Bewegungsmodell gut anfühlt |
-| 1b | **Sternsystem, Monde und Gasriesen** nach Book 6 (Änderung 2026-11-18d, Regeln in `regeln-sternsystem.md`): Sterne, Bahnen und Zonen, weitere Welten, Gürtel, leere und eingefangene Bahnen (2026-11-20b), Monde mit Schwerkraft und Deckung, Ringe, Asteroidenfeld bei Gürtelwelten, eine eigene Raumkarte je Gasriese | Die Raumkarte ist nicht mehr leer; Auftanken am Gasriesen wird möglich |
-| 2 | **Gegner und Laser**: ein NSC-Schiff mit Absicht und Planer, Laserfeuer, Rückfeuer, Trefferzonen, Schaden, Ende des Kampfs (gebaut und freigegeben 2026-11-21h) | Der erste echte Raumkampf |
-| 3 | **Raketen und Sand**: Raketen als Einheiten mit Brennschluss, Anti-Missile, ECM, Sandwolken | Das volle Waffenprogramm der SR |
-| 4a | **Small Craft ohne Kampf** (vorgezogen, Änderung 2026-11-21b): Beiboote als eigene Schiffe, aussetzen und andocken im Systemflug, landen, Reise im System; Mutterschiff in der Umlaufbahn | Mit dem Beiboot landen, während das Schiff oben bleibt |
-| 4b | **Small Craft im Kampf und Entern**: Jäger, Rotten, Waffen der Small Craft (Laser ab Werft, Trefferzonen und DM ohne Computer vorgezogen als Änderung 2026-11-22), Brennstufen nach Mayday; Entern mit Übergang in die Kampfsimulation | Träger, Enterkommandos |
-| 5 | **Ortung und Begegnungen**: Ortung, Schatten, *Wer schubt, leuchtet*; Raumkampf aus einer Schiffsbegegnung beim Ankommen im System und beim Abflug, Flucht per Sprung mit Fehlsprung-DMs (vorgezogen als Änderung 2026-11-22b, auch für Reisen im System) | Der Raumkampf ist in den Spielfluss eingebunden |
-| später | **Sternsystem** (Book 6): Stern, weitere Planeten und Planetoidengürtel, Reisen im System zwischen ihren Raumkarten | Hinterhalte im Gürtel, Reisen zwischen den Welten eines Systems |
+| **2b** | **Crew und Programme**: Schiffspositionen der SC (Pilot, Gunner, Engineer), Programme an Bord wirken (Target, Predict, Gunner Interact, Maneuver/Evade und Auto-Evade, Return Fire); Ausweichen kostet 1 G (schon entschieden); Antriebsschaden über den Buchstaben (Drive Potential, Power Plant begrenzt den Antrieb); Schadenskontrolle 9+; Software kaufen in der Werft; Oberflächen für Crew und Computer (Änderung 2026-11-22d, freigegeben am 23. November 2026; Dekompression bleibt für später) | Der Laserkampf folgt den SR statt der Vereinfachung, und die Fertigkeiten der SC zählen |
+| **3** | **Raketen und Sand**: Standardrakete 5G6 als eigene Einheit mit Brennschluss, Abfangen auf 2.500 km, Kontakt, Detonation 1W Treffer, Anti-Missile, ECM 9+, Nachladen, Munition in der Werft kaufen; Sandwolke als treibende Einheit, −3 je Raumband | Das volle Waffenprogramm der SR |
+| **4b** | **Small Craft im Kampf und Entern**: Aussetzen während des Kampfs, Brennstufen nach Mayday, Rotten (ein Schub für mehrere), alle eigenen Einheiten kämpfen; Entern unter 100 km und 0,1 km/s mit Übergang in die Kampfsimulation; Absichten *Entern* und *Abfangen* für NSC | Träger, Enterkommandos, Piraten, die wirklich entern |
+| **5** | **Ortung**: Reichweiten 15/60/90 Raumbänder, Schatten der Körper, *Wer schubt, leuchtet* (offen), nicht geortete Einheiten als zuletzt bekannter Ort | Verstecken und Überraschen werden möglich |
+
+Danach (keine eigene Stufe des Raumkampfs): Raketen aus Bauteilen nach Supplement 3, Minen,
+Zoll und Patrouille mit dem Handel, Bergung von Wracks.
 
 ## Weiteres Gameplay auf der Raumkarte
 
@@ -547,7 +580,7 @@ Weitere Ideen:
 
 ## Entscheidungen
 
-Alle am 18. November 2026 vom Owner getroffen.
+Vom Owner getroffen, am 18. November 2026, wo nicht anders angegeben.
 
 | Frage | Entscheidung |
 |---|---|
@@ -565,12 +598,16 @@ Alle am 18. November 2026 vom Owner getroffen.
 | ECM | 9+ (Supplement 3) |
 | Small Craft | G und Treibstoff ganz nach Mayday |
 | Reihenfolge | Raumkampf vor dem Handel |
+| Offene Stufen (23. November 2026) | 2b Crew und Programme (gebaut am 23. November 2026, die Wirkung der Programme im Laserkampf folgt als Nächstes) → 3 Raketen und Sand → 4b Small Craft im Kampf und Entern → 5 Ortung |
+| Hausregeln (22. November 2026) | werden je Stufe am Ausschnitt der Änderung abgenickt, nicht alle auf einmal |
+| Wer schubt, leuchtet (22. November 2026) | bleibt offen bis Stufe 5 |
 
 ## Offene Fragen
 
 1. **Wer schubt, leuchtet**: als Hausregel übernehmen? Entscheiden wir mit der Ortung (Stufe 5).
 2. **Book 2 (1981)** selbst fehlt noch. Mayday ist seine Brettspielfassung und Supplement 3 nennt
    die Maßstäbe, das reicht für das Konzept. Liegt es doch vor, prüfen wir die Abweichungen.
-3. **Hausregeln zum Abnicken** (mit ⚑ markiert): Abfangen auf 2.500 km und Kontakt unter 100 km,
-   Entern und Andocken unter 100 km und 0,1 km/s, Sand als treibende Wolke, kein Rammen, kein Landen
-   im Kampf, die Absichten und der Planer der NSC-Schiffe, Rotten, feste Werte für Gasriesen.
+3. **Hausregeln zum Abnicken** (mit ⚑ markiert), noch offen, je mit der Stufe zu entscheiden, die sie braucht: Abfangen auf 2.500 km und Kontakt
+   unter 100 km, Entern unter 100 km und 0,1 km/s, Sand als treibende Wolke, kein Rammen, kein Landen
+   im Kampf, Rotten, feste Werte für Gasriesen. (Die Absichten und der Planer der NSC-Schiffe sind
+   mit Stufe 2 freigegeben, das Andocken der Small Craft mit 4a.)

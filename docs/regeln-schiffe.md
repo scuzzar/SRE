@@ -57,8 +57,8 @@ dabei.
 | [Piraterie, Entführung und Zahlungsausfall](#piraterie-entführung-und-zahlungsausfall) | SR 28–29 | ○ |
 | [Schiffsaufbau](#schiffsaufbau) | SR 31–33 | ○ |
 | [Optionale Komponenten](#optionale-komponenten) | SR 32–33 | ○ |
-| [Crew](#crew) | SR 33 | ○ |
-| [Computer und Software](#computer-und-software) | SR 38–39 | ○ |
+| [Crew](#crew) | SR 33 | ◐ (Posten im Reiter Crew des Schiffes: Pilot, Gunner je Turret, Navigator, Engineer, Steward, Medic; Zuweisung durch Ziehen oder Blatt, zwei Posten mit je einem Punkt Abzug, Grundwert als Hinweis; 2026-11-22d. Heuer, Pflicht ab Tonnage und Crewbedarf bleiben offen) |
+| [Computer und Software](#computer-und-software) | SR 38–39 | ◐ (CPU, Speicher und Archiv im Reiter Computer des Schiffes; Umstecken durch Ziehen oder Blatt, Werfen jederzeit; Kauf in der Werft des Reiters; Pflichtprogramme Maneuver und Target in der CPU; Wirkung in Stufe 2b für Target, Maneuver, Predict, Gunner Interact, Auto-Evade und Return Fire; 2026-11-22d. Schreiben eigener Programme und Fehlermeldungen dazu bleiben offen) |
 | [Standardentwürfe](#standardentwürfe) | SR 35–37 | ○ |
 | [Kleine Schiffe (Small Craft)](#kleine-schiffe-small-craft) | SR 33–35 | ◐ (die acht Entwürfe als Beiboote der Standardentwürfe, aussetzen, andocken, landen und Reise im System, 2026-11-21b; einzeln zu kaufen als Beiboot im Laderaum oder eigenständig, 2026-11-21c; ab Werft mit Beam Lasern, feuern im Raumkampf, Trefferzonen der Small Craft, 2026-11-22; Fittings, Module, Raketen, Sand, Computer und Charter offen) |
 | [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system) | SR 42 | ◐ (bei Abreise und Ankunft mit eigenem Schiff und von Hand, mit Dialog; ohne Small Craft; 2026-11-21h, 2026-11-22b) |
@@ -411,6 +411,18 @@ durch Treffer auf ein Feld mit „–“, arbeitet der Antrieb nicht mehr (SR 41
 Launch 20, Ship's Boat 30, Slow Boat 30, Pinnace 40, Slow Pinnace 40, Cutter 50 (Module je 30:
 Fuel, ATV, Open), Shuttle 95, Fighter 10.
 
+**Stand in der App** (2026-11-22d, `model/crew.ts`, Reiter Schiff → **Crew**): die Posten des
+Schiffs stehen als Karten untereinander, zuerst die besetzten, dann die freien als schmale Zeile,
+darunter, wer keinen Posten hat. Reihenfolge Pilot, Gunner (je Turret einer), Navigator, Engineer,
+Steward, Medic. Zugewiesen wird durch Ziehen auf einen anderen Posten (der belegt getauscht) oder
+durch Tippen auf den Posten mit der Liste der Personen an Bord; ✕ im Kopf oder Ziehen zu „Ohne
+Posten“ gibt frei. Zwei Posten für eine Person sind erlaubt, jeder der beiden zählt dann einen
+Punkt weniger (SE 11) – die Karte zeigt den Aufkleber „2“. Der Grundwert aus der Tabelle steht als
+Hinweis `ab 1` am Posten (Navigator und Medic ab 1, Engineer ab 1, Gunner ab 1); verboten ist
+nichts, die Person bleibt auch ohne Stufe am Posten und der Wert ist ihr Stufenwert. Small Craft
+hat nur den Pilotensitz, sein Wert ist Ship's Boat oder Pilot − 1. Gebaut ist damit die *Besetzung*;
+Heuern, Pflicht nach Tonnage und der Crewbedarf (der im Blatt **Bearbeiten** steht) sind offen.
+
 ---
 
 ## Computer und Software
@@ -507,6 +519,23 @@ die Anforderungen an Personen, die das Programm selbst schreiben wollen, *Wurf* 
   Ermessen der Spielleitung).
 - **Small Craft**: brauchen keinen Computer; ohne Computer DM −1 auf Waffeneinsatz und keine
   zweite Waffe gleichzeitig nutzbar.
+
+**Stand in der App** (2026-11-22d, `model/software.ts`, Reiter Schiff → **Computer**): der Rechner
+des Schiffs steht mit drei Ablagen da – **CPU** (läuft), **Speicher** (bereit) und **Archiv**
+(davon). Space ist der Platz, den ein Programm in der Ablage kostet; die CPU fasst, was gleichzeitig
+läuft, der Speicher, was bereitgehalten wird (SR 38). Umgesteckt wird durch Ziehen in eine andere
+Ablage oder durch Tippen auf das Programm (Blatt mit den drei Ablagen und „Werfen“); wirft man ein
+Programm von Bord, ist es weg und muss neu gekauft werden. Fehlt ein Pflichtprogramm in der CPU –
+**Maneuver** für den Antrieb und **Target** für jedes Feuer der Turrets –, sagt es die Zeile unter dem
+Rechnernamen. Gekauft wird in der **Werft** desselben Reiters: die Software-Liste der SE 13 in
+Offensiv, Defensiv und Routine, bar aus der Kasse, jedes Programm höchstens einmal an Bord; Preise in
+MCr, unter 0,2 MCr in Cr („MCr 2,00“, „Cr 100.000“). Ein neues Programm liegt im Archiv. Während
+eines Systemflugs ist Umstecken nur zwischen CPU und Speicher erlaubt und nur, bevor das Schiff in
+der Runde geschossen hat (die Reprogramming-Phase der SR). Wirkung zeigen in Stufe 2b Target,
+Maneuver, Predict, Gunner Interact, Auto-Evade und Return Fire; die übrigen Programme stehen
+ausgegraut da. Small Craft hat keinen Rechner: „kein Rechner, fliegt und feuert ohne Programme,
+DM −1“. Offen bleiben das Schreiben eigener Programme (Tabelle „Schreiben“ und „Wurf“) mit den
+Fatal Flaws.
 
 ---
 

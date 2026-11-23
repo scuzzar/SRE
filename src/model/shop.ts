@@ -11,12 +11,12 @@ export const bookingKinds = ['income', 'expense', 'deposit', 'payout', 'purchase
 export type BookingKind = (typeof bookingKinds)[number];
 
 /** Wofür eine Buchung der Art `ship` ist (2026-11-17b): Kauf oder Anzahlung, Monatsrate, Treibstoff, Liegegebühr, Lebenserhaltung, Bewaffnung (2026-11-21g). */
-export const shipCosts = ['price', 'rate', 'fuel', 'berthing', 'lifeSupport', 'armament', 'repair'] as const;
+export const shipCosts = ['price', 'rate', 'fuel', 'berthing', 'lifeSupport', 'armament', 'repair', 'software'] as const;
 export type ShipCost = (typeof shipCosts)[number];
 
-/** Die laufenden Kosten: alles außer Kauf, Anzahlung und Bewaffnung (2026-11-21g). Sie stehen in der Monatsabrechnung. */
+/** Die laufenden Kosten: alles außer Kauf, Anzahlung, Bewaffnung und Software (2026-11-21g, 2026-11-22d). Sie stehen in der Monatsabrechnung. */
 export function isRunningCost(booking: Booking): boolean {
-  return booking.kind === 'ship' && booking.shipCost !== undefined && booking.shipCost !== 'price' && booking.shipCost !== 'armament' && booking.shipCost !== 'repair';
+  return booking.kind === 'ship' && booking.shipCost !== undefined && booking.shipCost !== 'price' && booking.shipCost !== 'armament' && booking.shipCost !== 'repair' && booking.shipCost !== 'software';
 }
 
 /**

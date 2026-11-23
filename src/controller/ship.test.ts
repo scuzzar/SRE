@@ -33,7 +33,7 @@ describe('Reiter Schiff', () => {
     expect(view.screen).toBe('ship');
     expect(view.ship?.funds).toBe(before - 29_430_000);
     expect(view.ship?.ship).toMatchObject({ designCode: 'S', designName: 'Scout/Courier', name: 'Scout/Courier', fuel: 40, fuelMax: 40, cabins: 2, thruster: 'Jump-2 · 2G', computerName: 'Modell/1bis' });
-    expect(view.ship?.ship?.software.map((s) => s.name)).toEqual(['Maneuver', 'Jump-2', 'Navigation', 'Generate', 'Anti-Hijack', 'Library']);
+    expect(view.ship?.ship?.computers[0]?.programs.map((p) => `${p.name}:${p.slot}`).join(' ')).toBe('Maneuver:cpu Jump-2:archive Navigation:archive Generate:archive Anti-Hijack:archive Library:archive Target:cpu');
     expect(view.ship?.yard.find((d) => d.designId === 'S')?.owned).toBe(true);
   });
 

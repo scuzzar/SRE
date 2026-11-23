@@ -28,6 +28,8 @@ export * from './star-system';
 export * from './system-journey';
 export * from './place';
 export * from './ship';
+export * from './crew';
+export * from './software';
 export * from './armament';
 export * from './space-combat';
 export * from './surface-grid';

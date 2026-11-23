@@ -7,6 +7,10 @@ import { activeShip, isSmallCraft, type Ship, type Turret } from './ship';
 import { bookShip, fundsOf } from './shop';
 import { starportLetter } from './surface-map';
 import { shipDepartureBlocker } from './landing';
+import { withPostsOf } from './crew';
+import { computerOf, discard, hasProgram, plugIn, stow, type SoftwareSlot } from './software';
+import { softwareOf } from './reference';
+import type { ShipCost } from './shop';
 
 // Bewaffnung in der Werft (Domänenmodell 2026-11-21g): Auf jedem Hardpoint des eigenen Schiffs kann ein
 // Turret sitzen, bestückt mit so vielen Waffen, wie die Turmart Plätze hat (SE 10, SR 32). Eingebaut und
@@ -44,8 +48,14 @@ export function armamentBlocker(campaign: Campaign): string | undefined {
   return shipyardBlocker(campaign);
 }
 
-function withTurrets(campaign: Campaign, ship: Ship, turrets: readonly Turret[]): Campaign {
-  return { ...campaign, ships: campaign.ships.map((s) => (s.id === ship.id ? { ...s, turrets } : s)) };
+/**
+ * Setzt die Turrets des Schiffs und baut dabei die Gunner-Posten um (2026-11-22d): `oldOf` sagt,
+ * welcher alte Turret auf jeder neuen Stelle sitzt, damit sein Gunner ihm folgt.
+ */
+function withTurrets(campaign: Campaign, ship: Ship, turrets: readonly Turret[], oldOf?: (at: number) => number): Campaign {
+  const crew = withPostsOf({ ...ship, turrets }, ship.crew, oldOf);
+  const held = crew.some((p) => p.who !== undefined) ? { crew } : {};
+  return { ...campaign, ships: campaign.ships.map((s) => (s.id === ship.id ? { ...s, turrets, ...held } : s)) };
 }
 
 function ready(campaign: Campaign): Ship {
@@ -54,9 +64,52 @@ function ready(campaign: Campaign): Ship {
   return activeShip(campaign);
 }
 
-function pay(campaign: Campaign, ship: Ship, price: number, text: string, clock: Clock): Campaign {
+function pay(campaign: Campaign, ship: Ship, price: number, text: string, clock: Clock, cost: ShipCost = 'armament'): Campaign {
   if (price > fundsOf(campaign)) throw new DomainError(`${text} kostet Cr ${price.toLocaleString('de-DE')}, in der Kasse ist Cr ${fundsOf(campaign).toLocaleString('de-DE')}.`);
-  return bookShip(campaign, -price, ship.id, 'armament', clock, text);
+  return bookShip(campaign, -price, ship.id, cost, clock, text);
+}
+
+/**
+ * Warum sich jetzt keine Software kaufen lässt: die Werft ist zu, oder das Schiff hat keinen
+ * Rechner (2026-11-22d). Geworfen wird überall (Owner).
+ */
+export function softwareBlocker(campaign: Campaign): string | undefined {
+  const ship = activeShip(campaign);
+  const rechner = computerOf(ship);
+  if (rechner === undefined) return `${ship.name} hat keinen Rechner; ein Small Craft hat keine Programme.`;
+  return shipyardBlocker(campaign);
+}
+
+/**
+ * Kauft ein Softwareprogramm für das eigene Schiff (Werft, 2026-11-22d): jedes Programm der
+ * Software-Liste zum Listenpreis (SE 13), bar aus der Kasse, jedes höchstens einmal an Bord. Es
+ * kommt in den Speicher, ist dort kein Platz, ins Archiv.
+ */
+export function buySoftware(campaign: Campaign, program: string, clock: Clock): Campaign {
+  const blocker = softwareBlocker(campaign);
+  if (blocker !== undefined) throw new DomainError(blocker);
+  const ship = activeShip(campaign);
+  const kind = softwareOf(program);
+  if (hasProgram(ship, program)) throw new DomainError(`${kind.name} ist schon an Bord.`);
+  const paid = pay(campaign, ship, kind.price, `${kind.name} · Software`, clock, 'software');
+  return withSoftware(paid, ship, stow(ship, program));
+}
+
+/** Wirft ein Programm von Bord, überall und ohne Erstattung (Owner, 2026-11-22d). */
+export function discardSoftware(campaign: Campaign, program: string): Campaign {
+  const ship = activeShip(campaign);
+  if (!hasProgram(ship, program)) throw new DomainError(`${softwareOf(program).name} ist nicht an Bord.`);
+  return withSoftware(campaign, ship, discard(ship, program));
+}
+
+/** Steckt ein Programm in eine andere Ablage (2026-11-22d). */
+export function plugSoftware(campaign: Campaign, program: string, slot: SoftwareSlot): Campaign {
+  const ship = activeShip(campaign);
+  return withSoftware(campaign, ship, plugIn(ship, program, slot));
+}
+
+function withSoftware(campaign: Campaign, ship: Ship, next: Ship): Campaign {
+  return { ...campaign, ships: campaign.ships.map((s) => (s.id === ship.id ? next : s)) };
 }
 
 /** Baut auf dem nächsten freien Hardpoint ein Turret der Turmart `type` ein. */
@@ -102,7 +155,7 @@ export function removeWeapon(campaign: Campaign, index: number, slot: number): C
 export function removeTurret(campaign: Campaign, index: number): Campaign {
   const ship = ready(campaign);
   turretAt(ship, index);
-  return withTurrets(campaign, ship, ship.turrets.filter((_, i) => i !== index));
+  return withTurrets(campaign, ship, ship.turrets.filter((_, i) => i !== index), (at) => (at < index ? at : at + 1));
 }
 
 function turretAt(ship: Ship, index: number): Turret {

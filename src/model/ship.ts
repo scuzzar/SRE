@@ -1,4 +1,4 @@
-import type { Campaign } from './campaign';
+import type { Campaign, CharacterId } from './campaign';
 import type { CareerRoll, ShipChoice } from './career';
 import { DomainError } from './errors';
 import type { Clock, Random } from './ports';
@@ -7,6 +7,8 @@ import { bookShip } from './shop';
 import { MONTH_DAYS, nextMonthStart } from './time';
 import type { Place } from './place';
 import type { ShipDamage } from './space-combat';
+import type { CrewPost } from './crew';
+import { packageOf, type SoftwareSlot } from './software';
 
 /** Ein Turret auf einem Hardpoint (Domänenmodell: `Turret`, 2026-11-21g): Turmart und Waffen, höchstens so viele wie Plätze. */
 export interface Turret {
@@ -14,9 +16,13 @@ export interface Turret {
   readonly weapons: readonly string[];
 }
 
-/** Was ein konkretes Schiff an Bord hat (Domänenmodell: `ShipSoftware`): ein Verweis auf das Programm. */
+/**
+ * Was ein konkretes Schiff an Bord hat (Domänenmodell: `ShipSoftware`): ein Verweis auf das
+ * Programm und die Ablage, in der es liegt (2026-11-22d). Nur was in der CPU liegt, läuft.
+ */
 export interface ShipSoftware {
   readonly program: string;
+  readonly slot: SoftwareSlot;
 }
 
 /**
@@ -47,6 +53,8 @@ export interface Ship {
   /** Ausgeblendet statt gelöscht: Buchungen und Log zeigen weiter auf es. */
   readonly retired: boolean;
   readonly software: readonly ShipSoftware[];
+  /** Die besetzten Posten der Crew (2026-11-22d); fehlt das Feld, ist jeder Posten frei. */
+  readonly crew?: readonly CrewPost[];
   /** Die Turrets in der Reihenfolge der Hardpoints (2026-11-21g). */
   readonly turrets: readonly Turret[];
   /** Schaden aus dem Raumkampf, bis zur Reparatur (2026-11-21h); fehlt ohne Schaden. */
@@ -138,16 +146,11 @@ function nextShipId(ships: readonly Ship[]): string {
 }
 
 /**
- * Standard-Bordsoftware eines neuen Schiffs (Hausregel, 16. November 2026): die Pflichtprogramme
- * des Flugs – Maneuver und Jump je Sprungzahl des Entwurfs – dazu Navigation, Flugplan,
- * Anti-Hijack und Bibliothek.
+ * Standard-Bordsoftware eines neuen Schiffs, mit Ablagen (Hausregel, 16. November 2026; Ablagen
+ * seit 2026-11-22d): das Standardpaket des Entwurfs, ein Schiff mit Turret dazu *Target*.
  */
 export function standardSoftware(design: string): readonly ShipSoftware[] {
-  const plan = shipDesignOf(design);
-  // Small Craft haben keinen Rechner und damit keine Programme (SE 13, 2026-11-21b).
-  if (plan.computer === undefined) return [];
-  const jump = plan.jump;
-  return ['maneuver', `jump-${jump}`, 'navigation', 'generate', 'anti-hijack', 'library'].map((program) => ({ program }));
+  return packageOf(design, designTurrets(design));
 }
 
 /** `/monthlyPayment`: ein Vierhundertachtzigstel der Kreditsumme (SR 29); ein schuldenfreies Schiff hat keine. */
@@ -158,6 +161,15 @@ export function monthlyPaymentOf(ship: Ship): number | undefined {
 /** Die erste Rate: am ersten Monatsende, das mindestens vier Wochen nach dem Erwerb liegt (2026-11-17b). */
 export function firstPaymentDay(day: number): number {
   return nextMonthStart(day + MONTH_DAYS - 1);
+}
+
+/**
+ * Gibt alle Posten eines Charakters frei (2026-11-22d): wird er gelöscht, verliert er sie wie beim
+ * Sterben. Steht er noch auf einem Posten, wäre die Datei beim nächsten Lesen nicht zu gebrauchen.
+ */
+export function unseat(campaign: Campaign, id: CharacterId): Campaign {
+  if (!campaign.ships.some((s) => s.crew?.some((p) => p.who === id))) return campaign;
+  return { ...campaign, ships: campaign.ships.map((s) => (s.crew === undefined ? s : { ...s, crew: s.crew.filter((p) => p.who !== id) })) };
 }
 
 /** Aus einem Objekt die optionalen Felder entfernen, die null sind – gespeichert wird, was es gibt. */

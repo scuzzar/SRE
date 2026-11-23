@@ -123,8 +123,11 @@ hide <<browser>> stereotype
   class Possession $shop
 
 ' Schiffe
+  class CrewPost $schiffe
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+  class SpaceAttack $raum
+  class DamageControl $raum
 
 ' Charaktererschaffung und Lebenslauf
   class Generation $erschaffung
@@ -186,8 +189,11 @@ Campaign "0..1" --> "0..1" Character : focus
 Booking "*" --> "0..1" Character : for
 
 ' Schiffe
+CrewPost "*" --> "1" Character : who
 
 ' Raumkarte und Systemflug
+SpaceAttack "*" --> "0..1" Character : gunner
+DamageControl "*" --> "0..1" Character : by
 
 ' Zeit und Reisen
 Passenger "*" --> "1" Character : for

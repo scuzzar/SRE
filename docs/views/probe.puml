@@ -87,6 +87,7 @@ hide <<browser>> stereotype
   class SpaceBattle $raum
   class SpaceAttack $raum
   class SpaceBattleEnd $raum
+  class DamageControl $raum
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -159,6 +160,7 @@ Campaign "1" *-- "*" LogEntry : log {ordered}
 LogEntry <|-- SpaceBattle
 LogEntry <|-- SpaceAttack
 LogEntry <|-- SpaceBattleEnd
+LogEntry <|-- DamageControl
 LogEntry <|-- Skimming
 
 ' Zeit und Reisen

@@ -93,6 +93,7 @@ export const shipCostText: Record<ShipCost, string> = {
   berthing: 'Schiff · Liegegebühr',
   lifeSupport: 'Schiff · Lebenserhaltung',
   armament: 'Schiff · Bewaffnung',
+  software: 'Schiff · Software',
   repair: 'Schiff · Reparatur',
 };
 
@@ -258,6 +259,14 @@ export function dayTime(iso: string): string {
 
 export function credits(amount: number): string {
   return `Cr ${amount.toLocaleString('de-DE')}`;
+}
+
+/**
+ * Der Preis eines Softwareprogramms: in MCr, unter 0,2 MCr in Cr (Owner, 23. November 2026) –
+ * also „MCr 2,00“, aber „Cr 100.000“ für *Maneuver*.
+ */
+export function softwarePrice(cr: number): string {
+  return cr < 200_000 ? credits(cr) : mcr(cr);
 }
 
 /** Ein großer Betrag in Megacredits mit zwei Nachkommastellen: „MCr 37,08“. */

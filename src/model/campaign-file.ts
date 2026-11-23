@@ -17,8 +17,10 @@ import { checkOf, encounterChecks } from './encounter-check';
 import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type Journey, type SystemJourney, type SpaceBattle, type SpaceAttack, type DamageRoll, type LogEntry, type Note, type Recovery, type TripDay } from './log';
 import { checkRecovery } from './wounds';
 import { missionStates, validateMissions, type Mission, type MissionPlace } from './mission';
-import { armorClasses, encounterTypeOf, entryOf, eventFocusOf, itemOf, oddsOf, patronOf, ranges, ref, shipDesignOf, slotOfEntry, softwareOf, weaponOf } from './reference';
+import { armorClasses, computerModelOf, encounterTypeOf, entryOf, eventFocusOf, itemOf, oddsOf, patronOf, ranges, ref, shipDesignOf, slotOfEntry, softwareOf, weaponOf } from './reference';
 import { checkTurrets } from './armament';
+import { checkCrew, CrewRoleSchema, type CrewPost } from './crew';
+import { SoftwareSlotSchema, slotsFit, withSlots, TARGET_PROGRAM, type SoftwareSlot } from './software';
 import { battleOutcomes, checkDamage, hitZones, intents } from './space-combat';
 import { characteristics } from './rules';
 import { bookingKinds, shipCosts, validateBookings, type Booking } from './shop';
@@ -365,7 +367,9 @@ const ShipSchema = z.object({
   nextPaymentDay: z.number().int().min(0).optional(),
   berthedSince: z.number().int().min(0).optional(),
   retired: z.boolean().default(false),
-  software: z.array(z.object({ program: z.string().min(1) })).default([]),
+  software: z.array(z.object({ program: z.string().min(1), slot: SoftwareSlotSchema.optional() })).default([]),
+  /** Die besetzten Posten (2026-11-22d); fehlt die Liste, ist jeder Posten des Schiffs frei. */
+  crew: z.array(z.object({ post: CrewRoleSchema, turret: z.number().int().min(0).optional(), who: z.string().min(1).optional() })).optional(),
   /** Die Turrets (2026-11-21g); fehlen in Dateien von vorher: dann die des Entwurfs. */
   turrets: z.array(z.object({ type: z.string().min(1), weapons: z.array(z.string().min(1)).max(3) })).optional(),
   damage: DamageSchema.optional(),
@@ -609,7 +613,7 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       ...(file.location === undefined ? {} : { location: placeFromFile(file.location) }),
       bookings: file.bookings.map((b) => stripped(b) as Booking),
       // Gespeichert werden `aboard` und `inOrbit` nur, wenn sie wahr sind (2026-11-21b).
-      ships: file.ships.map((s) => stripped({ ...s, turrets: turretsFromFile(s), aboard: s.aboard === true ? true : undefined, inOrbit: s.inOrbit === true ? true : undefined, inHold: s.inHold === true ? true : undefined, ...(s.place === undefined ? {} : { place: placeFromFile(s.place) }) }) as Ship),
+      ships: file.ships.map((s) => stripped({ ...s, turrets: turretsFromFile(s), software: softwareFromFile(s), crew: crewFromFile(s, characters), aboard: s.aboard === true ? true : undefined, inOrbit: s.inOrbit === true ? true : undefined, inHold: s.inHold === true ? true : undefined, ...(s.place === undefined ? {} : { place: placeFromFile(s.place) }) }) as Ship),
       stash: file.stash.map((p) => stripped({ ...p, ...(p.parked === undefined ? {} : { parked: placeFromFile(p.parked) }) }) as Possession),
       ...(file.trip === undefined ? {} : { trip: { hours: file.trip.hours, legs: file.trip.legs.map((l) => ({ by: l.by, rented: l.rented, cells: [...l.cells] })) } }),
       ...(file.flight === undefined ? {} : { flight: flightFromFile(file.flight) }),
@@ -758,6 +762,40 @@ function turretsFromFile(ship: z.infer<typeof ShipSchema>): Ship['turrets'] {
   return storedTurrets(ship.design, ship.turrets);
 }
 
+/**
+ * Die Crew aus der Datei: ein Charakter, der gelöscht wurde, verliert seine Posten auch nachträglich
+ * (23. November 2026) – sonst stünde in der Datei eine Id ohne Charakter und das Lesen wäre verloren.
+ */
+function crewFromFile(ship: z.infer<typeof ShipSchema>, characters: readonly Character[]): readonly CrewPost[] | undefined {
+  if (ship.crew === undefined) return undefined;
+  return ship.crew
+    .filter((p) => p.who === undefined || characters.some((c) => c.id === p.who))
+    .map((p) => ({ post: p.post, ...(p.turret === undefined ? {} : { turret: p.turret }), ...(p.who === undefined ? {} : { who: p.who }) }));
+}
+
+/**
+ * Die Bordsoftware aus der Datei, mit Ablagen (2026-11-22d). Eine Datei von jetzt behält genau,
+ * was in ihr steht; neu hinlegen lässt sie nur in drei Fällen:
+ *
+ * 1. eine Datei von vor der Änderung nennt keine Ablage,
+ * 2. ihr Schiff hat einen Turret und kein *Target* – das es braucht (SR 38, SE 13) und das es sich
+ *    nie selbst gekauft haben kann, also vom Einbau kommt (Owner, 23. November 2026),
+ * 3. die Ablagen passen nicht zum Rechner – von Hand geändert oder für einen anderen Entwurf.
+ *
+ * Dann verteilt sie der Bestand: erst, was in die CPU passt (zuerst Maneuver, dann Target), dann
+ * der Speicher, der Rest ins Archiv.
+ */
+function softwareFromFile(ship: z.infer<typeof ShipSchema>): Ship['software'] {
+  const plan = shipDesignOf(ship.design);
+  const computer = plan.computer === undefined ? undefined : computerModelOf(plan.computer);
+  const turrets = storedTurrets(ship.design, ship.turrets);
+  const programme = ship.software.map((s) => s.program);
+  const brauchtTarget = computer !== undefined && turrets.length > 0 && !programme.includes(TARGET_PROGRAM);
+  const stored = ship.software.map((s) => ({ program: s.program, slot: s.slot as SoftwareSlot }));
+  if (!brauchtTarget && ship.software.every((s) => s.slot !== undefined) && slotsFit(computer, stored)) return stored;
+  return withSlots(computer, brauchtTarget ? [...programme, TARGET_PROGRAM] : programme);
+}
+
 function stripped<T extends object>(value: T): T {
   return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as T;
 }
@@ -876,6 +914,7 @@ function validate(campaign: Campaign): void {
     shipDesignOf(ship.design);
     for (const board of ship.software) softwareOf(board.program);
     checkTurrets(ship);
+    checkCrew(campaign.ships, campaign.characters, ship);
     if (ship.damage !== undefined) checkDamage(ship.damage, ship.turrets.length);
     if (ship.unrefined > ship.fuel) throw new DomainError(`${ship.name} hat mehr unraffinierten Treibstoff als Treibstoff im Tank.`);
   }

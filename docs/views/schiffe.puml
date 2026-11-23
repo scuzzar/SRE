@@ -78,6 +78,7 @@ hide <<browser>> stereotype
 ' Kampagne und Charaktere
   class Campaign $kampagne
   class Booking $shop
+  class Character $charakter
 
 ' Schiffe
   class Ship $schiffe {
@@ -104,8 +105,33 @@ hide <<browser>> stereotype
     lifeSupport
     armament
     repair
+    software
   }
   class ShipSoftware $schiffe {
+    slot: SoftwareSlot
+  }
+  enum SoftwareSlot <<value>> $schiffe {
+    cpu
+    storage
+    archive
+  }
+  class CrewPost $schiffe {
+    post: CrewRole
+    turret: number [0..1]
+    /skill: number
+  }
+  enum CrewRole <<value>> $schiffe {
+    pilot
+    navigator
+    engineer
+    steward
+    medic
+    gunner
+  }
+  class DrivePotential <<reference>> $schiffe {
+    hull: number
+    letter: string
+    rating: number
   }
   class Turret $schiffe {
   }
@@ -139,6 +165,9 @@ hide <<browser>> stereotype
     months: number [0..1]
     streamlined: boolean
     lasers: number [0..1]
+    maneuverDrive: string [0..1]
+    jumpDrive: string [0..1]
+    powerPlant: string [0..1]
   }
   enum ShipKind <<value>> $schiffe {
     starship
@@ -207,6 +236,10 @@ Ship "*" --> "1" ShipDesign : design
 Ship "1" *-- "0..*" ShipSoftware : software
 Ship "1" *-- "0..1" Place : place
 ShipSoftware "*" --> "1" Software : program
+ShipSoftware --> SoftwareSlot
+Ship "1" *-- "0..*" CrewPost : crew
+CrewPost "*" --> "1" Character : who
+CrewPost --> CrewRole
 Ship "1" *-- "0..*" Turret : turrets {ordered}
 Turret "*" --> "1" TurretType : type
 Turret "*" --> "0..3" ShipWeapon : weapons {ordered}

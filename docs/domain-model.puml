@@ -189,8 +189,33 @@ hide <<browser>> stereotype
     lifeSupport
     armament
     repair
+    software
   }
   class ShipSoftware $schiffe {
+    slot: SoftwareSlot
+  }
+  enum SoftwareSlot <<value>> $schiffe {
+    cpu
+    storage
+    archive
+  }
+  class CrewPost $schiffe {
+    post: CrewRole
+    turret: number [0..1]
+    /skill: number
+  }
+  enum CrewRole <<value>> $schiffe {
+    pilot
+    navigator
+    engineer
+    steward
+    medic
+    gunner
+  }
+  class DrivePotential <<reference>> $schiffe {
+    hull: number
+    letter: string
+    rating: number
   }
   class Turret $schiffe {
   }
@@ -224,6 +249,9 @@ hide <<browser>> stereotype
     months: number [0..1]
     streamlined: boolean
     lasers: number [0..1]
+    maneuverDrive: string [0..1]
+    jumpDrive: string [0..1]
+    powerPlant: string [0..1]
   }
   enum ShipKind <<value>> $schiffe {
     starship
@@ -312,6 +340,7 @@ hide <<browser>> stereotype
   }
   class ShipDamage <<value>> $raum {
     hits: HitZone [*]
+    patched: number [*]
     turretsOut: number [*]
     /maneuver: number
     /jump: number
@@ -371,6 +400,10 @@ hide <<browser>> stereotype
     bands: number
     computerHits: number
     noComputer: boolean
+    predict: number
+    gunnery: number
+    evade: number
+    returnFire: boolean
     /hit: boolean
     hits: HitZone [*]
   }
@@ -394,7 +427,17 @@ hide <<browser>> stereotype
     name: string [0..1]
     intent: Intent [0..1]
     fired: boolean
+    returned: boolean
     /maxG: number
+    /evading: boolean
+  }
+  class DamageControl $raum {
+    round: number
+    unit: string
+    dice: number[2]
+    dm: number
+    zone: HitZone
+    /success: boolean
   }
   class TrackPoint <<value>> $raum {
     position: Vec
@@ -1284,6 +1327,10 @@ Ship "*" --> "1" ShipDesign : design
 Ship "1" *-- "0..*" ShipSoftware : software
 Ship "1" *-- "0..1" Place : place
 ShipSoftware "*" --> "1" Software : program
+ShipSoftware --> SoftwareSlot
+Ship "1" *-- "0..*" CrewPost : crew
+CrewPost "*" --> "1" Character : who
+CrewPost --> CrewRole
 Ship "1" *-- "0..*" Turret : turrets {ordered}
 Turret "*" --> "1" TurretType : type
 Turret "*" --> "0..3" ShipWeapon : weapons {ordered}
@@ -1312,6 +1359,10 @@ LogEntry <|-- SpaceAttack
 LogEntry <|-- SpaceBattleEnd
 SpaceBattle "*" --> "1" ShipDesign : design
 SpaceAttack "*" --> "1" ShipWeapon : weapon
+SpaceAttack "*" --> "0..1" Character : gunner
+LogEntry <|-- DamageControl
+DamageControl --> HitZone
+DamageControl "*" --> "0..1" Character : by
 SpaceAttack --> HitZone
 SpaceBattleEnd --> BattleOutcome
 SpaceBattle --> EncounterOccasion
