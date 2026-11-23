@@ -7,6 +7,7 @@ import { activeShip, isSmallCraft, type Ship, type Turret } from './ship';
 import { bookShip, fundsOf } from './shop';
 import { starportLetter } from './surface-map';
 import { shipDepartureBlocker } from './landing';
+import { withPostsOf } from './crew';
 
 // Bewaffnung in der Werft (Domänenmodell 2026-11-21g): Auf jedem Hardpoint des eigenen Schiffs kann ein
 // Turret sitzen, bestückt mit so vielen Waffen, wie die Turmart Plätze hat (SE 10, SR 32). Eingebaut und
@@ -44,8 +45,14 @@ export function armamentBlocker(campaign: Campaign): string | undefined {
   return shipyardBlocker(campaign);
 }
 
-function withTurrets(campaign: Campaign, ship: Ship, turrets: readonly Turret[]): Campaign {
-  return { ...campaign, ships: campaign.ships.map((s) => (s.id === ship.id ? { ...s, turrets } : s)) };
+/**
+ * Setzt die Turrets des Schiffs und baut dabei die Gunner-Posten um (2026-11-22d): `oldOf` sagt,
+ * welcher alte Turret auf jeder neuen Stelle sitzt, damit sein Gunner ihm folgt.
+ */
+function withTurrets(campaign: Campaign, ship: Ship, turrets: readonly Turret[], oldOf?: (at: number) => number): Campaign {
+  const crew = withPostsOf({ ...ship, turrets }, ship.crew, oldOf);
+  const held = crew.some((p) => p.who !== undefined) ? { crew } : {};
+  return { ...campaign, ships: campaign.ships.map((s) => (s.id === ship.id ? { ...s, turrets, ...held } : s)) };
 }
 
 function ready(campaign: Campaign): Ship {
@@ -102,7 +109,7 @@ export function removeWeapon(campaign: Campaign, index: number, slot: number): C
 export function removeTurret(campaign: Campaign, index: number): Campaign {
   const ship = ready(campaign);
   turretAt(ship, index);
-  return withTurrets(campaign, ship, ship.turrets.filter((_, i) => i !== index));
+  return withTurrets(campaign, ship, ship.turrets.filter((_, i) => i !== index), (at) => (at < index ? at : at + 1));
 }
 
 function turretAt(ship: Ship, index: number): Turret {

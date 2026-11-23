@@ -7,6 +7,7 @@ import { bookShip } from './shop';
 import { MONTH_DAYS, nextMonthStart } from './time';
 import type { Place } from './place';
 import type { ShipDamage } from './space-combat';
+import type { CrewPost } from './crew';
 
 /** Ein Turret auf einem Hardpoint (Domänenmodell: `Turret`, 2026-11-21g): Turmart und Waffen, höchstens so viele wie Plätze. */
 export interface Turret {
@@ -47,6 +48,8 @@ export interface Ship {
   /** Ausgeblendet statt gelöscht: Buchungen und Log zeigen weiter auf es. */
   readonly retired: boolean;
   readonly software: readonly ShipSoftware[];
+  /** Die besetzten Posten der Crew (2026-11-22d); fehlt das Feld, ist jeder Posten frei. */
+  readonly crew?: readonly CrewPost[];
   /** Die Turrets in der Reihenfolge der Hardpoints (2026-11-21g). */
   readonly turrets: readonly Turret[];
   /** Schaden aus dem Raumkampf, bis zur Reparatur (2026-11-21h); fehlt ohne Schaden. */

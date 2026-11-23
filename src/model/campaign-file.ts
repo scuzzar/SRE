@@ -19,6 +19,7 @@ import { checkRecovery } from './wounds';
 import { missionStates, validateMissions, type Mission, type MissionPlace } from './mission';
 import { armorClasses, encounterTypeOf, entryOf, eventFocusOf, itemOf, oddsOf, patronOf, ranges, ref, shipDesignOf, slotOfEntry, softwareOf, weaponOf } from './reference';
 import { checkTurrets } from './armament';
+import { checkCrew, CrewRoleSchema } from './crew';
 import { battleOutcomes, checkDamage, hitZones, intents } from './space-combat';
 import { characteristics } from './rules';
 import { bookingKinds, shipCosts, validateBookings, type Booking } from './shop';
@@ -366,6 +367,8 @@ const ShipSchema = z.object({
   berthedSince: z.number().int().min(0).optional(),
   retired: z.boolean().default(false),
   software: z.array(z.object({ program: z.string().min(1) })).default([]),
+  /** Die besetzten Posten (2026-11-22d); fehlt die Liste, ist jeder Posten des Schiffs frei. */
+  crew: z.array(z.object({ post: CrewRoleSchema, turret: z.number().int().min(0).optional(), who: z.string().min(1).optional() })).optional(),
   /** Die Turrets (2026-11-21g); fehlen in Dateien von vorher: dann die des Entwurfs. */
   turrets: z.array(z.object({ type: z.string().min(1), weapons: z.array(z.string().min(1)).max(3) })).optional(),
   damage: DamageSchema.optional(),
@@ -876,6 +879,7 @@ function validate(campaign: Campaign): void {
     shipDesignOf(ship.design);
     for (const board of ship.software) softwareOf(board.program);
     checkTurrets(ship);
+    checkCrew(campaign.ships, campaign.characters, ship);
     if (ship.damage !== undefined) checkDamage(ship.damage, ship.turrets.length);
     if (ship.unrefined > ship.fuel) throw new DomainError(`${ship.name} hat mehr unraffinierten Treibstoff als Treibstoff im Tank.`);
   }
