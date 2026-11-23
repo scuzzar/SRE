@@ -6,6 +6,7 @@ import { roll2d6, sum, type Dice } from './rules';
 import { hexById, hexIdOfWorld, worldById } from './sector';
 import { starportLetter } from './surface-map';
 import { craftOf, shipById, shipOf, type Ship, type Turret } from './ship';
+import { slotOfProgram, type SoftwareSlot } from './software';
 import { bookShip, fundsOf } from './shop';
 import { shipyardBlocker } from './armament';
 import type { SpaceAttack, SpaceBattle, SpaceBattleEnd } from './log';
@@ -175,6 +176,22 @@ export function activeFoe(_campaign: Campaign, unit: SpaceUnit): boolean {
 /** Läuft ein Raumkampf? Ein fremdes Schiff ist da, das nicht kampfunfähig ist. */
 export function battleRunning(campaign: Campaign): boolean {
   return campaign.flight?.units.some((u) => activeFoe(campaign, u)) ?? false;
+}
+
+/**
+ * Warum ein Programm jetzt nicht in die Ablage gesteckt werden kann (Domänenmodell 2026-11-22d):
+ * außerhalb des Raumkampfs frei, im Raumkampf nur zwischen CPU und Speicher und nur, solange das
+ * eigene Schiff in dieser Raumrunde noch nicht gefeuert hat (die Reprogramming-Phase der SR);
+ * ⚑ Archiv ↔ Speicher geht im Raumkampf nicht.
+ */
+export function plugBlocker(campaign: Campaign, shipId: string, program: string, to: SoftwareSlot): string | undefined {
+  const from = slotOfProgram(shipById(campaign, shipId), program);
+  if (from === undefined || from === to) return undefined;
+  if (!battleRunning(campaign)) return undefined;
+  const unit = campaign.flight?.units.find((u) => u.ship === shipId);
+  if (unit !== undefined && unit.fired) return 'Nach dem eigenen Schuss wird in dieser Raumrunde nichts mehr umgesteckt.';
+  if (from === 'archive' || to === 'archive') return 'Im Raumkampf wird nur zwischen CPU und Speicher umgesteckt.';
+  return undefined;
 }
 
 /** Das Raumband einer Entfernung: Entfernung ÷ 10.000 km, aufgerundet (Hausregel, mindestens 1). */

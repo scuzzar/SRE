@@ -1,14 +1,17 @@
-import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import type { ShipView, ShipYardRow, Snapshot } from '../../controller';
 import { credits, mcr } from '../format';
 import { SpaceCard, SpaceDock } from '../space/SpacePanel';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
-import { CloseIcon, DropIcon, ExpandIcon, PencilIcon, ShipIcon, TrashIcon } from '../icons';
+import { DropIcon, ExpandIcon, PencilIcon, ShipIcon, TrashIcon } from '../icons';
+import { SheetFrame } from './SheetFrame';
+import { CrewPersonSheet, CrewPostSheet, CrewTab } from './CrewTab';
+import { ComputerTab, ProgramSheet, SoftwareYard } from './ComputerTab';
 import { deckImage } from './deck-image';
 
-/** Die Ansicht unter den Kacheln: eigene Deckpläne oder was nicht in den Kacheln steht. */
-type Tab = 'deck' | 'details';
+/** Die Ansicht unter den Kacheln: eigene Deckpläne, die Details, die Crew und der Rechner. */
+type Tab = 'deck' | 'details' | 'crew' | 'computer';
 
 /** Das Blatt, das als Feld an der Stelle des Reiters steht; die Werft ist ein Blatt, kein eigener Reiter. */
 type Sheet =
@@ -17,7 +20,11 @@ type Sheet =
   | { readonly kind: 'edit' }
   | { readonly kind: 'fuel' }
   | { readonly kind: 'rename' }
-  | { readonly kind: 'deck'; readonly name: string };
+  | { readonly kind: 'deck'; readonly name: string }
+  | { readonly kind: 'post'; readonly shipId: string; readonly at: number }
+  | { readonly kind: 'person'; readonly shipId: string; readonly who: string }
+  | { readonly kind: 'program'; readonly shipId: string; readonly program: string }
+  | { readonly kind: 'software' };
 
 type Boat = NonNullable<ShipView['ship']>;
 
@@ -36,6 +43,13 @@ export function ShipScreen({ view }: { view: Snapshot }) {
   if (ship === undefined) return null;
   const boat = ship.ship;
   const deck = sheet?.kind === 'deck' ? ship.deckPlans.find((p) => p.name === sheet.name) : undefined;
+  // Die Blätter von Crew und Rechner brauchen das Schiff aus der Liste der Schiffe, den Posten
+  // oder das Programm daraus.
+  const vessel = boat !== undefined && sheet !== undefined && 'shipId' in sheet ? sheet.shipId : undefined;
+  const crewBoat = vessel === undefined || boat === undefined ? undefined : boat.crews.find((c) => c.shipId === vessel);
+  const crewPost = sheet?.kind === 'post' ? crewBoat?.posts[sheet.at] : undefined;
+  const compBoat = vessel === undefined || boat === undefined ? undefined : boat.computers.find((c) => c.shipId === vessel);
+  const program = sheet?.kind === 'program' ? compBoat?.programs.find((p) => p.id === sheet.program) : undefined;
   const buying = sheet?.kind === 'buy' ? ship.yard.find((d) => d.designId === sheet.design) : undefined;
   // Ein offenes Blatt steht wie ein angetipptes Feld an der Stelle des Reiters: im Ziehblatt, das sich
   // ziehen lässt, über der Karte; im Desktop-Modus in der Seitenspalte.
@@ -64,6 +78,14 @@ export function ShipScreen({ view }: { view: Snapshot }) {
       <RenameSheet boat={boat} onClose={close} />
     ) : sheet?.kind === 'deck' && deck !== undefined ? (
       <DeckSheet name={deck.name} image={deck.image} onClose={close} />
+    ) : sheet?.kind === 'post' && crewBoat !== undefined && crewPost !== undefined ? (
+      <CrewPostSheet boat={crewBoat} post={crewPost} onClose={close} />
+    ) : sheet?.kind === 'person' && crewBoat !== undefined ? (
+      <CrewPersonSheet boat={crewBoat} who={sheet.who} onClose={close} />
+    ) : sheet?.kind === 'program' && compBoat !== undefined && program !== undefined ? (
+      <ProgramSheet boat={compBoat} program={program} onClose={close} />
+    ) : sheet?.kind === 'software' ? (
+      <SoftwareYard ship={ship} onClose={close} />
     ) : undefined;
   if (field !== undefined) return <div className="screen">{field}</div>;
   // Auf der Raumkarte steht hier die Bedienung des Systemflugs (Owner, 21. November 2026).
@@ -179,8 +201,24 @@ export function ShipScreen({ view }: { view: Snapshot }) {
               <button type="button" role="tab" aria-selected={tab === 'details'} onClick={() => setTab('details')}>
                 Details
               </button>
+              <button type="button" role="tab" aria-selected={tab === 'crew'} onClick={() => setTab('crew')}>
+                Crew
+              </button>
+              <button type="button" role="tab" aria-selected={tab === 'computer'} onClick={() => setTab('computer')}>
+                Computer
+              </button>
             </div>
-            {tab === 'deck' ? <DeckPlans ship={ship} onView={(name) => setSheet({ kind: 'deck', name })} /> : <Details boat={boat} />}
+            <div className="ship-panel" role="tabpanel" aria-label={tab === 'deck' ? 'Deckplan' : tab === 'details' ? 'Details' : tab === 'crew' ? 'Crew' : 'Computer'}>
+              {tab === 'deck' ? (
+              <DeckPlans ship={ship} onView={(name) => setSheet({ kind: 'deck', name })} />
+            ) : tab === 'details' ? (
+              <Details boat={boat} />
+            ) : tab === 'crew' ? (
+              <CrewTab crews={boat?.crews ?? []} onOpenPost={(shipId, at) => setSheet({ kind: 'post', shipId, at })} onOpenPerson={(shipId, who) => setSheet({ kind: 'person', shipId, who })} />
+            ) : (
+              <ComputerTab ship={ship} onOpenProgram={(shipId, program) => setSheet({ kind: 'program', shipId, program })} onOpenYard={() => setSheet({ kind: 'software' })} />
+            )}
+            </div>
           </>
         )}
       </section>
@@ -221,49 +259,6 @@ export function ShipScreen({ view }: { view: Snapshot }) {
         </div>
       </div>
     </div>
-  );
-}
-
-/**
- * Ein Blatt des Reiters Schiff, als Feld an der Stelle des Reiters wie das angetippte Feld des Globus:
- * oben Titel und ✕ (am Kopf lässt sich das Ziehblatt fassen), darunter der Inhalt, unten im Dock die
- * Knöpfe. Esc schließt es wie das ✕.
- */
-function SheetFrame({ title, aside, onClose, foot, children }: { title: string; aside?: string; onClose: () => void; foot?: ReactNode; children: ReactNode }) {
-  const close = useRef(onClose);
-  useEffect(() => {
-    close.current = onClose;
-  });
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      // Ein Popup darüber (Ergebnis, Menü) schließt Esc zuerst.
-      if (e.key !== 'Escape' || document.querySelector('[role="dialog"], [role="alertdialog"], .menu-layer')) return;
-      e.preventDefault();
-      close.current();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-  return (
-    <>
-      <section className="scroll shop-scroll ship-field" aria-label={title}>
-        <div className="globe-sheet-head" data-tray-peek>
-          <h3>{title}</h3>
-          <span className="header-right">
-            {aside !== undefined && <span className="sheet-aside mono muted">{aside}</span>}
-            <button type="button" className="icon-button" aria-label={`${title} schließen`} onClick={onClose}>
-              <CloseIcon />
-            </button>
-          </span>
-        </div>
-        {children}
-      </section>
-      {foot !== undefined && (
-        <div className="dock">
-          <div className="actions">{foot}</div>
-        </div>
-      )}
-    </>
   );
 }
 

@@ -69,6 +69,11 @@ import {
   activeShip,
   buyFuel,
   buyShip,
+  buySoftware,
+  discardSoftware,
+  movePost,
+  plugSoftware,
+  seat,
   installTurret,
   replaceTurret,
   encounterBlocker,
@@ -81,6 +86,7 @@ import {
   installWeapon,
   removeWeapon,
   removeTurret,
+  type SoftwareSlot,
   chooseShipGain,
   freeDeckSlot,
   renameShip,
@@ -2116,6 +2122,31 @@ export class GameController {
   /** Baut ein Turret samt Waffen aus, ohne Erlös. */
   removeTurret(index: number): void {
     this.inShip(() => removeTurret(this.campaign, index));
+  }
+
+  /** Besetzt einen Posten mit einem Charakter, der seinen bisherigen behält, oder gibt ihn frei (2026-11-22d). */
+  seatPost(shipId: string, at: number, who?: string): void {
+    this.inShip(() => seat(this.campaign, shipId, at, who));
+  }
+
+  /** Zieht den Charakter von einem Posten auf einen anderen, auch über die Schiffe hinweg. */
+  movePost(from: { ship: string; at: number }, to: { ship: string; at: number }): void {
+    this.inShip(() => movePost(this.campaign, from, to));
+  }
+
+  /** Steckt ein Programm des aktiven Schiffs in eine andere Ablage (2026-11-22d). */
+  plugProgram(program: string, slot: SoftwareSlot): void {
+    this.inShip(() => plugSoftware(this.campaign, program, slot));
+  }
+
+  /** Kauft ein Softwareprogramm in der Werft, bar aus der Kasse. */
+  buyProgram(program: string): void {
+    this.inShip(() => buySoftware(this.campaign, program, this.deps.clock));
+  }
+
+  /** Wirft ein Programm von Bord, ohne Erstattung. */
+  discardProgram(program: string): void {
+    this.inShip(() => discardSoftware(this.campaign, program));
   }
 
   /** Legt ein Bild als nächsten freien Deckplan des Entwurfs ab; die Pläne bleiben auf dem Gerät. */

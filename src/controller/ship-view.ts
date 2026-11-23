@@ -1,5 +1,28 @@
 import {
+  candidatesFor,
   computerModelOf,
+  computerOf,
+  crewOf,
+  crewRoleNames,
+  crewRoles,
+  fitsIn,
+  plugBlocker,
+  hasProgram,
+  holderOf,
+  minimumSkill,
+  missingPrograms,
+  onboard,
+  postsHeldBy,
+  softwareSlots,
+  slotUsed,
+  postSkill,
+  roleSkill,
+  softwareBlocker,
+  THRUST_PROGRAM,
+  TARGET_PROGRAM,
+  worksIn2b,
+  type CrewRole,
+  type SoftwareSlot,
   dateLabel,
   deckSlotNames,
   FUEL_PRICE,
@@ -10,6 +33,7 @@ import {
   ref,
   shipDesignOf,
   shipOf,
+  vesselsOf,
   softwareOf,
   type Campaign,
   type DeckPlan,
@@ -53,8 +77,95 @@ export interface ArmamentOffer {
   readonly affordable: boolean;
 }
 
+/** Die Ablagen des Rechners in der Reihenfolge der Oberfläche, mit ihrem Namen (SR 38). */
+export const softwareSlotRows: readonly { readonly slot: SoftwareSlot; readonly label: string }[] = [
+  { slot: 'cpu', label: 'CPU · läuft' },
+  { slot: 'storage', label: 'Speicher · bereit' },
+  { slot: 'archive', label: 'Archiv' },
+];
+export type { SoftwareSlot };
+
 /** Die Softwarearten, wie der Reiter Schiff sie schreibt (SR 38). */
 const softwareKinds: Record<SoftwareKind, string> = { offensive: 'Offensiv', defensive: 'Defensiv', routine: 'Routine' };
+
+/** Ein Posten im Reiter Crew (2026-11-22d): Stelle, Name, Besetzung und was die Fertigkeit wert ist. */
+export interface CrewPostRow {
+  /** Die Stelle in `Ship.crew`; das Blatt am Posten arbeitet mit ihr. */
+  readonly at: number;
+  readonly role: CrewRole;
+  /** Der Name des Posten, beim Gunner mit Nummer: „Gunner 2“. */
+  readonly label: string;
+  readonly who: string | undefined;
+  readonly whoId: string | undefined;
+  /** `/skill`: was die Fertigkeit des Besetzten auf diesem Posten wert ist. */
+  readonly skill: number;
+  /** Die Mindeststufe aus SR 33 als Hinweis; fehlt, wenn es keine gibt. */
+  readonly minimum: number | undefined;
+  /** Wie viele Posten der Besetzte hat; ab zwei zählt seine Fertigkeit überall um 1 weniger. */
+  readonly posts: number;
+}
+
+/** Ein Charakter, der einen Posten bekommen kann, mit seiner Fertigkeit je Postenart. */
+export interface CrewPersonRow {
+  readonly id: string;
+  readonly name: string;
+  /** Die Posten, die er schon hat – zwei sind das Maximum. */
+  readonly posts: number;
+  /** Die Fertigkeit je Postenart, schon mit dem Abschlag für zwei Posten und der Small-Craft-Regel. */
+  readonly skill: Record<CrewRole, number>;
+}
+
+/** Die Crew eines Schiffs oder Beiboots: seine Posten und alle, die in Frage kommen. */
+export interface VesselCrewRow {
+  readonly shipId: string;
+  readonly name: string;
+  readonly smallCraft: boolean;
+  readonly posts: readonly CrewPostRow[];
+  readonly people: readonly CrewPersonRow[];
+}
+
+/** Ein Programm an Bord im Reiter Computer (2026-11-22d). */
+export interface ProgramRow {
+  readonly id: string;
+  readonly name: string;
+  readonly slot: SoftwareSlot;
+  readonly space: number;
+  readonly kind: string;
+  readonly effect: string;
+  readonly price: number;
+  /** Wirkt es in Stufe 2b? Was es nicht tut, steht ausgegraut da; in der CPU läuft nur, was dort liegt. */
+  readonly works: boolean;
+  /** Pflichtprogramm: ohne es kein Schub bzw. kein Turretfeuer. */
+  readonly mandatory: boolean;
+  /** Warum es gerade nicht in die Ablage kann; `undefined`: es passt und die Zeit ist frei. */
+  readonly blocked: Readonly<Record<SoftwareSlot, string | undefined>>;
+}
+
+/** Der Rechner eines Schiffs mit seinen Ablagen; ein Small Craft hat keinen. */
+export interface VesselSoftwareRow {
+  readonly shipId: string;
+  readonly name: string;
+  readonly computer: string;
+  readonly cpu: number;
+  readonly cpuMax: number;
+  readonly storage: number;
+  readonly storageMax: number;
+  readonly programs: readonly ProgramRow[];
+  /** Was von den Pflichtprogrammen in der CPU fehlt. */
+  readonly missing: readonly string[];
+}
+
+/** Ein Programm, das die Werft verkauft (SE 13). */
+export interface SoftwareOfferRow {
+  readonly id: string;
+  readonly name: string;
+  readonly kind: string;
+  readonly space: number;
+  readonly price: number;
+  readonly effect: string;
+  /** Warum es gerade nicht zu kaufen ist: „an Bord“, „Kasse zu klein“, der Grund der Werft; `undefined`: es geht. */
+  readonly blocker: string | undefined;
+}
 /** Anzahlung bei Bankfinanzierung, als Anteil des Preises (SR 29). */
 const DOWN_PAYMENT = 0.2;
 
@@ -147,6 +258,10 @@ export interface ShipView {
         readonly nextPayment: string | undefined;
         /** Die Bordsoftware, in der Reihenfolge des Bords. */
         readonly software: readonly ShipSoftwareRow[];
+        /** Die Posten der Crew und wer sie besetzen kann, je eigenes Schiff und Beiboot (2026-11-22d). */
+        readonly crews: readonly VesselCrewRow[];
+        /** Die Rechner mit CPU, Speicher und Archiv, je eigenes Schiff und Beiboot (2026-11-22d). */
+        readonly computers: readonly VesselSoftwareRow[];
         /** Die Turrets in der Reihenfolge der Hardpoints; warum gerade nicht umgerüstet werden kann (`undefined`: es geht). */
         readonly turrets: readonly TurretRow[];
         readonly armamentBlocker: string | undefined;
@@ -169,6 +284,10 @@ export interface ShipView {
   /** Was die Werft an Turmarten und Schiffswaffen anbietet (2026-11-21g). */
   readonly turretTypes: readonly ArmamentOffer[];
   readonly shipWeapons: readonly ArmamentOffer[];
+  /** Was die Werft an Software verkauft (SE 13), in der Reihenfolge der Liste (2026-11-22d). */
+  readonly softwareOffer: readonly SoftwareOfferRow[];
+  /** Warum sich gerade keine Software kaufen lässt (`undefined`: es geht). */
+  readonly softwareBlocker: string | undefined;
   /** Die Deckpläne des aktiven Entwurfs, in der Reihenfolge Deck A, B, C. */
   readonly deckPlans: readonly { readonly name: string; readonly image: string }[];
   /** Wie viele der drei Deckplan-Plätze des aktiven Entwurfs noch frei sind. */
@@ -178,6 +297,61 @@ export interface ShipView {
   /** Der Systemflug aus dem Reiter Schiff: warum „Starten“ nicht geht (`undefined`: es geht) und ob gerade einer läuft. */
   readonly launchBlocker: string | undefined;
   readonly flying: boolean;
+}
+
+/** Der Postenname, beim Gunner mit der Stelle des Turrets (SR 33). */
+function postLabel(ship: Ship, at: number): string {
+  const post = crewOf(ship)[at]!;
+  return post.post === 'gunner' ? `${crewRoleNames.gunner} ${(post.turret ?? 0) + 1}` : crewRoleNames[post.post];
+}
+
+/** Die Crew eines Schiffs: jeder Posten mit Besetzung und Fertigkeit, dazu jeder Charakter, der in Frage kommt. */
+function crewRow(campaign: Campaign, ship: Ship): VesselCrewRow {
+  const posts = crewOf(ship).map((p, at): CrewPostRow => {
+    const person = holderOf(campaign, ship, at);
+    return {
+      at,
+      role: p.post,
+      label: postLabel(ship, at),
+      who: person?.name,
+      whoId: person?.id,
+      skill: postSkill(campaign, ship, at),
+      minimum: minimumSkill[p.post],
+      posts: person === undefined ? 0 : postsHeldBy(campaign, person.id).length,
+    };
+  });
+  const people = candidatesFor(campaign).map((person): CrewPersonRow => {
+    const held = postsHeldBy(campaign, person.id).length;
+    const penalty = held >= 2 ? 1 : 0;
+    const skill = Object.fromEntries(crewRoles.map((role) => [role, Math.max(0, roleSkill(person, role, ship) - penalty)])) as Record<CrewRole, number>;
+    return { id: person.id, name: person.name, posts: held, skill };
+  });
+  return { shipId: ship.id, name: ship.name, smallCraft: isSmallCraft(ship), posts, people };
+}
+
+/** Der Rechner eines Schiffs mit CPU, Speicher und Archiv (SE 10, SE 13). */
+function computerRow(campaign: Campaign, ship: Ship): VesselSoftwareRow {
+  const computer = computerOf(ship);
+  return {
+    shipId: ship.id,
+    name: ship.name,
+    computer: computer === undefined ? 'kein Rechner' : computer.name,
+    cpu: slotUsed(ship, 'cpu'),
+    cpuMax: computer?.cpu ?? 0,
+    storage: slotUsed(ship, 'storage'),
+    storageMax: computer?.storage ?? 0,
+    programs: onboard(ship).map((s): ProgramRow => {
+      const program = softwareOf(s.program);
+      const blocked = Object.fromEntries(
+        softwareSlots.map((slot) => [
+          slot,
+          slot === s.slot ? undefined : plugBlocker(campaign, ship.id, program.id, slot) ?? (fitsIn(ship, program.id, slot) ? undefined : 'zu wenig Platz'),
+        ]),
+      ) as Record<SoftwareSlot, string | undefined>;
+      return { id: program.id, name: program.name, slot: s.slot, space: program.space, kind: softwareKinds[program.kind], effect: program.effect, price: program.price, works: worksIn2b(program.id), mandatory: s.program === THRUST_PROGRAM || s.program === TARGET_PROGRAM, blocked };
+    }),
+    missing: missingPrograms(ship),
+  };
 }
 
 /** Der Reiter Schiff, aus dem Spielstand und den Geräte-Deckplänen des aktiven Entwurfs. */
@@ -222,6 +396,8 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
               const program = softwareOf(s.program);
               return { name: program.name, kind: softwareKinds[program.kind], effect: program.effect };
             }),
+            crews: vesselsOf(campaign).map((v) => crewRow(campaign, v)),
+            computers: vesselsOf(campaign).map((v) => computerRow(campaign, v)),
             turrets: ship.turrets.map((t) => {
               const kind = turretTypeOf(t.type);
               return { typeId: kind.id, typeName: kind.name, slots: kind.slots, weapons: t.weapons.map((w) => ({ id: w, name: shipWeaponOf(w).name })) };
@@ -237,6 +413,11 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
             maneuver: plan.maneuver,
             jumpNow: jumpAfter(ship.design, ship.damage),
           },
+    softwareOffer: ref.software.map((p) => {
+      const aboard = ship === undefined ? false : hasProgram(ship, p.id);
+      return { id: p.id, name: p.name, kind: softwareKinds[p.kind], space: p.space, price: p.price, effect: p.effect, blocker: ship === undefined ? 'kein Schiff' : aboard ? 'an Bord' : softwareBlocker(campaign) ?? (p.price > funds ? 'Kasse zu klein' : undefined) };
+    }),
+    softwareBlocker: ship === undefined ? 'kein Schiff' : softwareBlocker(campaign),
     turretTypes: turretTypes().filter((t) => !t.smallCraft).map((t) => ({ id: t.id, name: t.name, price: t.price, slots: t.slots, affordable: funds >= t.price })),
     shipWeapons: shipWeapons().map((w) => ({ id: w.id, name: w.name, price: w.price, affordable: funds >= w.price })),
     deckPlans: [...deckPlans].sort((a, b) => a.name.localeCompare(b.name)),

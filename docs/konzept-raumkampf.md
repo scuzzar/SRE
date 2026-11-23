@@ -598,7 +598,7 @@ Vom Owner getroffen, am 18. November 2026, wo nicht anders angegeben.
 | ECM | 9+ (Supplement 3) |
 | Small Craft | G und Treibstoff ganz nach Mayday |
 | Reihenfolge | Raumkampf vor dem Handel |
-| Offene Stufen (22. November 2026) | 2b Crew und Programme → 3 Raketen und Sand → 4b Small Craft im Kampf und Entern → 5 Ortung; als Nächstes 2b |
+| Offene Stufen (23. November 2026) | 2b Crew und Programme (gebaut am 23. November 2026, die Wirkung der Programme im Laserkampf folgt als Nächstes) → 3 Raketen und Sand → 4b Small Craft im Kampf und Entern → 5 Ortung |
 | Hausregeln (22. November 2026) | werden je Stufe am Ausschnitt der Änderung abgenickt, nicht alle auf einmal |
 | Wer schubt, leuchtet (22. November 2026) | bleibt offen bis Stufe 5 |
 

@@ -18,6 +18,19 @@ export const softwareSlotNames: Record<SoftwareSlot, string> = { cpu: 'CPU · l�
 export const THRUST_PROGRAM = 'maneuver';
 export const TARGET_PROGRAM = 'target';
 
+/**
+ * Die Programme, die in Stufe 2b schon wirken (Owner, 22. November 2026): Predict, Gunner
+ * Interact, Maneuver/Evade, Auto-Evade und Return Fire dazu die Pflichtprogramme. Select,
+ * Multi-Target, Launch, Double Fire, Anti-Missile und ECM folgen mit Stufe 3 und später, Jump
+ * und Navigation prüft der Sprung noch nicht.
+ */
+export const EFFECTS_2B = ['predict-1', 'predict-2', 'predict-3', 'predict-4', 'predict-5', 'gunner-interact', 'maneuver-evade-1', 'maneuver-evade-2', 'maneuver-evade-3', 'maneuver-evade-4', 'maneuver-evade-5', 'maneuver-evade-6', 'auto-evade', 'return-fire', THRUST_PROGRAM, TARGET_PROGRAM] as const;
+
+/** Wirkt das Programm in Stufe 2b? */
+export function worksIn2b(program: string): boolean {
+  return (EFFECTS_2B as readonly string[]).includes(program);
+}
+
 /** Der Rechner des Schiffs (SE 10); ein Small Craft hat keinen und fliegt ohne Programme. */
 export function computerOf(ship: Ship): ComputerModel | undefined {
   const model = shipDesignOf(ship.design).computer;

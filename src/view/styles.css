@@ -9751,3 +9751,310 @@ button:disabled {
   font-size: clamp(22px, 7vw, 30px);
   overflow-wrap: anywhere;
 }
+
+/*
+ * Crew und Rechner im Reiter Schiff (Änderung 2026-11-22d, Vorbild docs/mock/crew-zuweisen.html und
+ * docs/mock/computer-programme.html). Die Posten sind Karten mit der Karte des Charakters darin, die
+ * Ablagen des Rechners drei Zonen mit den Programmen; beides lässt sich ziehen (view/drag.ts).
+ * Gebaute Posten stehen oben, die freien als schmale Zeile darunter, darunter, wer keinen Posten hat.
+ * Alles unter .crew bzw. .computer, damit die Chips der Charaktere und Waffen unberührt bleiben.
+ */
+.spacer {
+  flex: 1;
+}
+
+.group-label {
+  margin: 14px 0 6px;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sheet-effect {
+  margin: 6px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Das, was beim Ziehen an der Maus hängt. */
+.drag-ghost {
+  position: fixed;
+  z-index: 60;
+  padding: 7px 10px;
+  transform: translate(-14px, -18px);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  background: var(--highlight);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.drag-ghost.refused {
+  border-color: var(--accent);
+}
+
+/* Blätter mit zwei Spalten: Name links, Zahl rechts. */
+.two-col .shop-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+/* Eine Zeile, die selbst Knopf ist – wie in den Blättern von Crew und Rechner: ohne eigene Fläche
+   und ohne Rahmen außer der Trennlinie, damit sie sich in die Tabellen der Werft einreiht. */
+.shop-table button.shop-row {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--rule-soft);
+  background: transparent;
+  text-align: left;
+}
+
+.shop-table button.shop-row:disabled {
+  color: var(--dim);
+}
+
+.shop-row > .val {
+  justify-self: end;
+  text-align: right;
+  color: var(--gold);
+}
+
+.shop-row > .val small {
+  display: block;
+  color: var(--dim);
+  font-family: var(--sans);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.shop-row .shop-name small {
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 12px;
+}
+
+.crew-note {
+  margin: 6px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.crew-warn {
+  margin-left: 8px;
+  color: var(--gold);
+  font-size: 11px;
+}
+
+.crew-hint {
+  margin-left: 8px;
+  color: var(--dim);
+  font-size: 11px;
+}
+
+.crew .post-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.crew .post,
+.computer .zone {
+  padding: 8px 10px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+}
+
+.computer .zone {
+  margin-top: 10px;
+}
+
+/* Worüber etwas gezogen wird, hebt sich hervor; was es nicht annimmt, randet rot. */
+.computer .zone.drop {
+  border-color: var(--gold);
+  background: var(--gold-wash);
+}
+
+.computer .zone.nope {
+  border-color: var(--accent);
+}
+
+.computer .zone.nope .zone-use {
+  color: var(--accent-text);
+}
+
+.crew .post-head,
+.computer .zone-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.crew .post-name,
+.computer .post-name {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.zone-use {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.crew .chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--raised);
+  font-size: 14px;
+  touch-action: none;
+  cursor: grab;
+}
+
+.crew .chip .grip {
+  width: 10px;
+  height: 14px;
+  border-left: 2px dotted var(--line-strong);
+  border-right: 2px dotted var(--line-strong);
+}
+
+.crew .chip-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crew .chip-dm {
+  color: var(--gold);
+  font-size: 12px;
+}
+
+/* Der Aufkleber: zwei Posten auf einmal, jeder Wert ein Punkt weniger (SE 11). */
+.crew .chip-two {
+  padding: 0 6px;
+  border: 1px solid var(--gold-deep);
+  border-radius: 999px;
+  color: var(--gold);
+  font-size: 11px;
+}
+
+.crew .post-free {
+  display: flex;
+  align-items: center;
+  padding: 9px 10px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+}
+
+.crew .post-plus {
+  color: var(--gold);
+  font-family: var(--mono);
+}
+
+.crew .crew-idle {
+  margin-top: 16px;
+  padding: 8px 10px 10px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+}
+
+.crew .chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.crew .chip.ghost {
+  margin-top: 0;
+  border-style: dashed;
+  background: transparent;
+}
+
+.comp-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.comp-use {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Was in der CPU fehlt, damit überhaupt gefeuert und geflogen werden kann. */
+.comp-warn {
+  display: inline-block;
+  margin: 8px 0 0;
+  padding: 3px 8px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: var(--accent-text);
+  font-size: 11px;
+}
+
+.computer .prog-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.computer .prog {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 7px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--raised);
+  font-size: 13px;
+  touch-action: none;
+  cursor: grab;
+}
+
+/* Was in der CPU liegt, läuft; was in Stufe 2b nichts tut, steht ausgegraut da. */
+.computer .prog.runs {
+  border-color: var(--gold-deep);
+}
+
+.computer .prog.off {
+  border-style: dashed;
+  color: var(--dim);
+}
+
+.prog-space {
+  margin-left: 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.computer .prog-effect {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.computer .yard-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  text-align: left;
+}
