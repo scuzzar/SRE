@@ -1,0 +1,537 @@
+<!doctype html>
+<!--
+  UI-Mock: Rechner und Programme (Entwurf zu Änderung 2026-11-22d, noch nicht freigegeben).
+  Gedacht als vierter Reiter „Computer" im Reiter Schiff, neben Deckplan, Details und Crew.
+  Programme liegen in CPU, Speicher oder Archiv (ShipSoftware.slot). Nur was in der CPU liegt,
+  wirkt; die Summe des Space in der CPU passt höchstens in die CPU des Rechners, die im Speicher
+  höchstens in sein Storage (SR 38, SE 10). Maneuver und Target sind Pflicht: ohne Maneuver in der
+  CPU kein Schub, ohne Target kein Tuerrenfeuer. Umgesteckt wird außerhalb des Kampfs frei; im
+  Raumkampf nur zwischen CPU und Speicher und nur, bevor das Schiff in dieser Runde gefeuert hat
+  (Reprogramming-Phase, SE 12). Kaufen in der Werft an einem Raumhafen A oder B, bar aus der Kasse;
+  ein Kauf kommt in den Speicher, wenn dort Platz ist, sonst ins Archiv. Geworfen wird überall,
+  ohne Erstattung. Listenpreis, Space und Wirkung aus SE 13 (siehe docs/regeln-schiffe.md).
+  Unter dem Frame schaltet ein Mock-Kasten Kampf, Feuern und Raumhafen, um die Zustände zu sehen.
+  Kein App-Code.
+-->
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>UI-Mock · Rechner und Programme</title>
+<style>
+  /* Entlehnt src/view/styles.css, damit das Mock wie die App aussieht (Tokens dort). */
+  :root {
+    --bg: #08090d;
+    --surface: #14161d;
+    --surface-raised: #1b1e27;
+    --overlay: rgba(8, 9, 13, 0.78);
+    --line: #2b2f3b;
+    --line-strong: #454b5c;
+    --text: #eceae4;
+    --text-muted: #9ba1b0;
+    --accent: #e0a93c;
+    --accent-wash: rgba(224, 169, 60, 0.06);
+    --accent-text: #f4d79b;
+    --success: #55b973;
+    --danger: #e5544b;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); }
+  body { display: flex; flex-direction: column; align-items: center; padding: 18px 12px 40px; }
+  .app {
+    position: relative; width: 100%; max-width: 430px; height: min(860px, 92vh);
+    display: flex; flex-direction: column; background: var(--bg);
+    border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+    font-size: 14px; line-height: 1.4; user-select: none;
+  }
+
+  .ship-head { flex: 0 0 auto; padding: 12px 16px 8px; }
+  .ship-head .row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  h1 { margin: 0; font-size: 21px; font-weight: 600; letter-spacing: .01em; }
+  .ship-head .sub { font-size: 12px; color: var(--text-muted); letter-spacing: .04em; text-transform: uppercase; }
+  .cred { font-family: var(--mono); color: var(--accent-text); font-size: 17px; }
+  .ships { display: flex; gap: 8px; margin-top: 10px; }
+  .ship-tile {
+    flex: 1 1 0; min-width: 0; text-align: left; padding: 8px 10px; cursor: pointer;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
+    color: var(--text-muted); font: inherit; font-size: 11.5px;
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+  .ship-tile b { display: block; font-size: 14px; color: var(--text); letter-spacing: 0; text-transform: none; font-weight: 600; }
+  .ship-tile.on { border-color: var(--accent); background: var(--accent-wash); color: var(--accent-text); }
+  .ship-tile.on b { color: var(--accent-text); }
+
+  .tabs { flex: 0 0 auto; display: flex; gap: 2px; padding: 0 16px; border-bottom: 1px solid var(--line); }
+  .tab { appearance: none; border: 0; background: none; padding: 10px 9px 9px; cursor: pointer; font: inherit; font-size: 13.5px; color: var(--text-muted); border-bottom: 2px solid transparent; }
+  .tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+  .tab:disabled { color: var(--line-strong); }
+
+  .scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0 16px 16px; -webkit-overflow-scrolling: touch; }
+
+  /* Rechner-Kopf: Modell, CPU und Speicher mit Belegung. */
+  .rig { display: flex; align-items: center; gap: 10px; margin: 14px 0 4px; }
+  .rig .model { font-size: 15px; font-weight: 600; }
+  .rig .spacer { flex: 1 1 auto; }
+  .cap { font-family: var(--mono); font-size: 12.5px; color: var(--text-muted); }
+  .cap b { color: var(--text); font-weight: 500; }
+  .cap.full b { color: var(--accent-text); }
+
+  /* Die drei Ablagen. CPU liegt oben, darunter Speicher, darunter Archiv. */
+  .zone { margin-top: 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 8px 10px 10px; }
+  .zone > h2 { margin: 2px 0 8px; font-size: 11.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; display: flex; align-items: baseline; gap: 8px; }
+  .zone > h2 .spacer { flex: 1 1 auto; }
+  .zone > h2 .use { font-family: var(--mono); font-size: 12px; letter-spacing: 0; text-transform: none; }
+  .zone.drop { border-color: var(--accent); background: var(--accent-wash); }
+  .zone.nope { border-color: var(--danger); }
+  .zone.nope .use { color: var(--danger); }
+  .empty-zone { font-size: 12.5px; color: var(--line-strong); padding: 6px 2px; }
+
+  .progs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .prog {
+    display: inline-flex; align-items: center; gap: 7px; padding: 7px 9px 7px 8px; cursor: grab;
+    border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface-raised);
+    touch-action: none; max-width: 100%;
+  }
+  .prog .grip { color: var(--text-muted); font-size: 12px; letter-spacing: -2px; }
+  .prog b { font-weight: 600; font-size: 13.5px; white-space: nowrap; }
+  .prog .space { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
+  .prog .kurz { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+  .prog.pflicht { border-color: var(--accent); }
+  .prog.spater { opacity: .62; }
+  .zone.speicher .prog, .zone.archiv .prog { opacity: .8; }
+  .ghost { position: fixed; left: 0; top: 0; z-index: 40; pointer-events: none; display: none; box-shadow: 0 10px 24px rgba(0, 0, 0, .6); }
+
+  .warn { display: inline-flex; align-items: center; gap: 5px; padding: 2px 7px; border: 1px solid var(--danger); border-radius: 999px; color: var(--danger); font-size: 11px; letter-spacing: 0; text-transform: none; }
+
+  .row-btn { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 9px 10px; margin-top: 6px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; font-size: 14px; cursor: pointer; }
+  .row-btn .who { flex: 1 1 auto; min-width: 0; }
+  .row-btn b { font-weight: 600; }
+  .row-btn .sub { font-size: 11.5px; color: var(--text-muted); }
+  .row-btn .val { flex: 0 0 auto; font-family: var(--mono); font-size: 13.5px; text-align: right; }
+  .row-btn .val small { display: block; font-family: var(--sans); font-size: 11px; color: var(--text-muted); }
+  .row-btn:disabled { opacity: .55; cursor: default; }
+  .row-btn.here { border-color: var(--accent); }
+
+  .dock { flex: 0 0 auto; border-top: 1px solid var(--line); background: var(--surface); }
+  .nav { display: flex; overflow-x: auto; scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav button { flex: 1 0 auto; appearance: none; border: 0; background: none; color: var(--text-muted); font: inherit; font-size: 12px; padding: 11px 10px 12px; cursor: pointer; border-top: 2px solid transparent; white-space: nowrap; }
+  .nav button[aria-current="page"] { color: var(--text); border-top-color: var(--accent); }
+
+  .toast { position: absolute; left: 50%; transform: translateX(-50%); bottom: 96px; z-index: 20; max-width: 88%; padding: 8px 12px; border: 1px solid var(--accent); border-radius: 8px; background: var(--surface-raised); color: var(--accent-text); font-family: var(--mono); font-size: 12px; opacity: 0; transition: opacity .18s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+
+  .scrim { position: absolute; inset: 0; z-index: 30; display: none; background: var(--overlay); }
+  .scrim.show { display: block; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 31; display: flex; flex-direction: column; max-height: 88%; background: var(--surface-raised); border-top: 1px solid var(--line-strong); border-radius: 14px 14px 0 0; padding: 10px 14px 14px; transform: translateY(102%); transition: transform .2s ease; }
+  .sheet.show { transform: translateY(0); }
+  .sheet .grab { width: 38px; height: 4px; border-radius: 999px; background: var(--line-strong); margin: 0 auto 10px; flex: 0 0 auto; }
+  .sheet-head { flex: 0 0 auto; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+  .sheet-title { font-size: 17px; font-weight: 600; }
+  .sheet-src { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); text-align: right; }
+  .sheet-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+  .sec { margin: 14px 0 2px; font-size: 11.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+  .sheet-foot { flex: 0 0 auto; display: flex; gap: 8px; padding-top: 12px; }
+  .btn { flex: 1 1 0; appearance: none; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; font-size: 14px; padding: 11px 12px; cursor: pointer; }
+  .btn.danger { border-color: var(--danger); color: var(--danger); }
+
+  .card { padding: 12px; margin-top: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+  .card p { margin: 0; font-size: 13px; color: var(--text-muted); }
+
+  /* Kasten außerhalb des Frames: schaltet die Zustände durch, die die App aus der Lage hat. */
+  .mockctl { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; max-width: 430px; margin-top: 12px; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 10px; font-size: 12.5px; color: var(--text-muted); }
+  .mockctl label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+  .mockctl button { appearance: none; border: 1px solid var(--line-strong); border-radius: 6px; background: none; color: var(--text-muted); font: inherit; font-size: 12px; padding: 4px 9px; cursor: pointer; }
+  .mock-note { max-width: 430px; margin: 10px 0 0; color: var(--text-muted); font-size: 11.5px; }
+</style>
+</head>
+<body>
+  <div class="app" id="app">
+    <section class="screen">
+      <div class="ship-head" id="shipHead"></div>
+      <nav class="tabs" id="tabs" role="tablist"></nav>
+      <section class="scroll" id="scroll"></section>
+      <div class="dock" id="dock"></div>
+    </section>
+    <div class="toast" id="toast"></div>
+    <div class="scrim" id="scrim"></div>
+    <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+    <div class="ghost" id="ghost"></div>
+  </div>
+
+  <div class="mockctl">
+    <span>Mock-Lage:</span>
+    <label><input type="checkbox" id="mCombat" /> im Raumkampf</label>
+    <label><input type="checkbox" id="mFired" /> Schiff hat schon gefeuert</label>
+    <label><input type="checkbox" id="mPort" checked /> Raumhafen A/B</label>
+    <button id="mReset">zurücksetzen</button>
+  </div>
+  <p class="mock-note">UI-Mock, kein App-Code · vierter Reiter <b>Computer</b> im Reiter Schiff · Entwurf zu Änderung 2026-11-22d.</p>
+
+<script>
+(() => {
+  'use strict';
+
+  // ── Daten ────────────────────────────────────────────────────────────────
+  // Space, Preis und Wirkung nach SE 13; zusammengefasst in docs/regeln-schiffe.md.
+  // wirkt: schon in Stufe 2b. pflicht: muss in der CPU liegen, damit etwas geht.
+  const CAT = {
+    'Predict-1': { space: 1, mcr: 2, kurz: 'DM +1', gruppe: 'offensiv', wirkt: true },
+    'Predict-2': { space: 2, mcr: 4, kurz: 'DM +2', gruppe: 'offensiv', wirkt: true },
+    'Predict-3': { space: 1, mcr: 6, kurz: 'DM +2', gruppe: 'offensiv', wirkt: true },
+    'Predict-4': { space: 3, mcr: 8, kurz: 'DM +3', gruppe: 'offensiv', wirkt: true },
+    'Predict-5': { space: 2, mcr: 10, kurz: 'DM +3', gruppe: 'offensiv', wirkt: true },
+    'Gunner Interact': { space: 1, mcr: 1, kurz: 'Gunner als DM', gruppe: 'offensiv', wirkt: true },
+    'Target': { space: 1, mcr: 1, kurz: 'Pflicht Turret', gruppe: 'offensiv', wirkt: true, pflicht: true },
+    'Select-1': { space: 1, mcr: 0.5, kurz: 'später', gruppe: 'offensiv' },
+    'Select-2': { space: 2, mcr: 0.8, kurz: 'später', gruppe: 'offensiv' },
+    'Select-3': { space: 1, mcr: 1, kurz: 'später', gruppe: 'offensiv' },
+    'Multi-Target-2': { space: 1, mcr: 1, kurz: 'später', gruppe: 'offensiv' },
+    'Multi-Target-3': { space: 2, mcr: 2, kurz: 'später', gruppe: 'offensiv' },
+    'Multi-Target-4': { space: 4, mcr: 3, kurz: 'später', gruppe: 'offensiv' },
+    'Launch': { space: 1, mcr: 2, kurz: 'später', gruppe: 'offensiv' },
+    'Double Fire': { space: 4, mcr: 4, kurz: 'später', gruppe: 'offensiv' },
+    'Maneuver/Evade-1': { space: 1, mcr: 1, kurz: '−¼ Pilot', gruppe: 'defensiv', wirkt: true },
+    'Maneuver/Evade-2': { space: 2, mcr: 2, kurz: '−½ Pilot', gruppe: 'defensiv', wirkt: true },
+    'Maneuver/Evade-3': { space: 3, mcr: 3, kurz: '−¾ Pilot', gruppe: 'defensiv', wirkt: true },
+    'Maneuver/Evade-4': { space: 4, mcr: 4, kurz: '−1 Pilot', gruppe: 'defensiv', wirkt: true },
+    'Maneuver/Evade-5': { space: 5, mcr: 5, kurz: '−1 Pilot', gruppe: 'defensiv', wirkt: true },
+    'Maneuver/Evade-6': { space: 3, mcr: 6, kurz: '−5', gruppe: 'defensiv', wirkt: true },
+    'Auto-Evade': { space: 1, mcr: 0.5, kurz: '−2', gruppe: 'defensiv', wirkt: true },
+    'Return Fire': { space: 1, mcr: 0.5, kurz: 'Rückfeuer', gruppe: 'defensiv', wirkt: true },
+    'Anti-Missile': { space: 2, mcr: 1, kurz: 'später', gruppe: 'defensiv' },
+    'ECM': { space: 3, mcr: 4, kurz: 'später', gruppe: 'defensiv' },
+    'Maneuver': { space: 1, mcr: 0.1, kurz: 'Pflicht Schub', gruppe: 'routine', wirkt: true, pflicht: true },
+    'Jump-1': { space: 1, mcr: 0.1, kurz: 'Sprung 1', gruppe: 'routine' },
+    'Jump-2': { space: 2, mcr: 0.3, kurz: 'Sprung 2', gruppe: 'routine' },
+    'Jump-3': { space: 3, mcr: 0.4, kurz: 'Sprung 3', gruppe: 'routine' },
+    'Jump-4': { space: 4, mcr: 0.5, kurz: 'Sprung 4', gruppe: 'routine' },
+    'Jump-5': { space: 5, mcr: 0.6, kurz: 'Sprung 5', gruppe: 'routine' },
+    'Jump-6': { space: 6, mcr: 0.7, kurz: 'Sprung 6', gruppe: 'routine' },
+  };
+  const GRUPPEN = [
+    ['offensiv', 'Offensiv'], ['defensiv', 'Defensiv'], ['routine', 'Routine'],
+  ];
+
+  // Kapazität nach SE 10: Modellzahl → CPU/Storage in Space.
+  const SCHIFFE = [
+    { id: 'schiff', name: 'Kessra Runner', klass: 'Free Trader', ton: '200 t', modell: 'Modell 1/1',
+      rechner: 'Modell/1', cpu: 2, storage: 4, turrets: 2 },
+    { id: 'boot', name: 'Beiboot 1', klass: "Ship's Boat", ton: '15 t', modell: 'kein Rechner',
+      rechner: null, cpu: 0, storage: 0, turrets: 0 },
+  ];
+  // Anfangsbestand: das Softwarepaket beim Kauf (Wert = Modellzahl in MCr) plus Target für den Turret.
+  const anfang = {
+    schiff: { cpu: ['Maneuver', 'Target'], speicher: ['Predict-1'],
+              archiv: ['Jump-1', 'Auto-Evade', 'Maneuver/Evade-2', 'Gunner Interact', 'Return Fire', 'Anti-Missile'] },
+    boot: { cpu: [], speicher: [], archiv: [] },
+  };
+
+  const SLOT_NAME = { cpu: 'CPU', speicher: 'Speicher', archiv: 'Archiv' };
+  let slots = {};          // slots[shipId] = { cpu: [name], speicher: [name], archiv: [name] }
+  let kasse = 8.62;        // MCr, wie die Kasse der App (Cr 8,62 Mio)
+  let shipId = 'schiff';
+  let tab = 'computer';
+  let sheet = null;
+
+  const schiff = () => SCHIFFE.find((s) => s.id === shipId);
+  const lege = () => slots[shipId];
+  const where = (name) => {
+    const l = slots[shipId];
+    return Object.keys(l).find((k) => l[k].includes(name)) || null;
+  };
+  const braucht = (list) => list.reduce((n, x) => n + CAT[x].space, 0);
+  const frei = (slot) => (slot === 'archiv' ? Infinity : schiff()[slot === 'cpu' ? 'cpu' : 'storage'] - braucht(lege()[slot]));
+  const hatInCpu = (name) => lege().cpu.includes(name);
+
+  // ── Bausteine ────────────────────────────────────────────────────────────
+  const $ = (id) => document.getElementById(id);
+  const scroll = $('scroll'), dock = $('dock'), toastEl = $('toast');
+  const scrim = $('scrim'), sheetEl = $('sheet'), ghost = $('ghost'), app = $('app');
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  // MCr mit Komma, auf zwei Stellen, ohne Nullen am Ende: 8,62 · 1 · 0,5
+  const mcr = (x) => (Math.round(x * 100) / 100).toLocaleString('de-DE', { maximumFractionDigits: 2 });
+
+  let toastTimer = 0;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2800);
+  }
+
+  // ── Zeichnen ─────────────────────────────────────────────────────────────
+  function render() {
+    const s = schiff();
+    $('shipHead').innerHTML = `
+      <div class="row"><h1>${esc(s.name)}</h1><span class="cred">Cr ${mcr(kasse)}&nbsp;Mio</span></div>
+      <div class="sub">${esc(s.klass)} &middot; ${esc(s.ton)} &middot; ${esc(s.modell)}</div>
+      <div class="ships">
+        ${SCHIFFE.map((x) => `<button class="ship-tile ${x.id === shipId ? 'on' : ''}" data-ship="${x.id}">
+            ${esc(x.klass)}<b>${esc(x.name)}${x.rechner ? ` &middot; CPU ${braucht(slots[x.id].cpu)}/${x.cpu}` : ''}</b>
+          </button>`).join('')}
+      </div>`;
+
+    $('tabs').innerHTML = ['deck', 'details', 'crew', 'computer'].map((t) =>
+      `<button class="tab" role="tab" data-tab="${t}" aria-selected="${t === tab}" ${t === 'deck' || t === 'crew' ? 'disabled' : ''}>${
+        { deck: 'Deckplan', details: 'Details', crew: 'Crew', computer: 'Computer' }[t]}</button>`).join('');
+
+    if (tab === 'details') {
+      scroll.innerHTML = `<div class="card"><p>Duplikat der echten App. Der neue Reiter ist <b>Computer</b>.</p></div>`;
+    } else if (!s.rechner) {
+      scroll.innerHTML = `<div class="card"><p><b>kein Rechner.</b> Fliegt und feuert ohne Programme, DM −1.</p></div>`;
+    } else {
+      const meldungen = [];
+      if (!hatInCpu('Maneuver')) meldungen.push('<span class="warn">kein Schub</span>');
+      if (s.turrets && !hatInCpu('Target')) meldungen.push('<span class="warn">Turrets offline</span>');
+      scroll.innerHTML = `
+        <div class="rig"><span class="model">Rechner ${esc(s.rechner)}</span><span class="spacer"></span>
+          <span class="cap ${braucht(lege().cpu) === s.cpu ? 'full' : ''}">CPU <b>${braucht(lege().cpu)}/${s.cpu}</b></span>
+          <span class="cap ${braucht(lege().speicher) === s.storage ? 'full' : ''}">Speicher <b>${braucht(lege().speicher)}/${s.storage}</b></span>
+        </div>
+        ${meldungen.length ? `<div class="rig" style="gap:6px;margin:6px 0 0">${meldungen.join('')}</div>` : ''}
+        ${zone('cpu', 'CPU · läuft')}
+        ${zone('speicher', 'Speicher · bereit')}
+        ${zone('archiv', 'Archiv')}
+        <button class="row-btn" data-werft="1" style="margin-top:14px">
+          <span class="who"><b>Werft</b> <span class="sub">Software kaufen</span></span>
+          <span class="val">${mcr(kasse)}<small>MCr Kasse</small></span>
+        </button>`;
+    }
+
+    dock.innerHTML = `<nav class="nav">${['Log', 'Begegnung', 'Kampf', 'Shop', 'Schiff', 'Charaktere', 'NSC']
+      .map((n) => `<button ${n === 'Schiff' ? 'aria-current="page"' : ''}>${n}</button>`).join('')}</nav>`;
+  }
+  const legeOf = (x) => slots[x.id];
+
+  function zone(slot, titel) {
+    const s = schiff();
+    const liste = lege()[slot];
+    const kap = slot === 'archiv' ? null : s[slot === 'cpu' ? 'cpu' : 'storage'];
+    const use = kap === null ? `${liste.length}` : `${braucht(liste)}/${kap}`;
+    return `<section class="zone ${slot}" data-slot="${slot}">
+      <h2>${esc(titel)}<span class="spacer"></span><span class="use" data-use="${use}">${use}</span></h2>
+      ${liste.length ? `<div class="progs">${liste.map(progHtml).join('')}</div>`
+                     : `<div class="empty-zone">leer</div>`}
+    </section>`;
+  }
+
+  function progHtml(name) {
+    const p = CAT[name];
+    return `<div class="prog ${p.pflicht && slotOf(name) === 'cpu' ? 'pflicht' : ''} ${p.wirkt ? '' : 'spater'}" data-prog="${esc(name)}">
+      <span class="grip">⋮⋮</span><b>${esc(name)}</b>
+      <span class="space">${p.space}</span>
+      <span class="kurz">${esc(p.kurz)}</span>
+    </div>`;
+  }
+  const slotOf = (name) => where(name);
+
+  // ── Umstecken, Werfen, Kaufen ────────────────────────────────────────────
+  // Im Raumkampf nur zwischen CPU und Speicher und nur vor dem eigenen Schuss (Reprogramming).
+  function grund(name, von, nach) {
+    if (von === nach) return null;
+    if ($('mCombat').checked) {
+      if (von === 'archiv' || nach === 'archiv') return 'Archiv im Kampf zu';
+      if ($('mFired').checked) return 'nach dem Schuss nichts mehr';
+    }
+    if (nach !== 'archiv') {
+      const weg = CAT[name].space;
+      if (frei(nach) + (von === nach ? weg : 0) < weg) return 'zu wenig Platz';
+    }
+    return null;
+  }
+
+  function umstecken(name, nach) {
+    const von = where(name);
+    if (!von || von === nach) return;
+    const hindernis = grund(name, von, nach);
+    if (hindernis) { toast(`${name}: ${hindernis}`); return; }
+    lege()[von] = lege()[von].filter((x) => x !== name);
+    lege()[nach].push(name);
+    render();
+    toast(`${name} → ${SLOT_NAME[nach]}`);
+  }
+
+  function werfen(name) {
+    const von = where(name);
+    if (!von) return;
+    lege()[von] = lege()[von].filter((x) => x !== name);
+    closeSheet();
+    render();
+    toast(`${name} geworfen`);
+  }
+
+  function kaufen(name) {
+    const p = CAT[name];
+    if (where(name)) return;
+    if (!$('mPort').checked) return;
+    if (p.mcr > kasse) { toast(`${name}: Kasse zu klein`); return; }
+    const nach = frei('speicher') >= p.space ? 'speicher' : 'archiv';
+    kasse -= p.mcr;
+    lege()[nach].push(name);
+    render();
+    toast(`${name} · ${mcr(p.mcr)} MCr · ${SLOT_NAME[nach]}`);
+  }
+
+  // ── Blätter ──────────────────────────────────────────────────────────────
+  function openProgSheet(name) {
+    const p = CAT[name];
+    const von = where(name);
+    const wohin = ['cpu', 'speicher', 'archiv'].map((slot) => {
+      const hier = slot === von;
+      const h = hier ? null : grund(name, von, slot);
+      const kap = slot === 'archiv' ? null : schiff()[slot === 'cpu' ? 'cpu' : 'storage'];
+      return `<button class="row-btn ${hier ? 'here' : ''}" data-ziel="${slot}" ${h ? 'disabled' : ''}>
+          <span class="who"><b>${SLOT_NAME[slot]}</b>
+            <span class="sub">${hier ? 'hier' : h || (slot === 'archiv' ? 'ready' : `noch ${frei(slot)} frei`)}</span></span>
+          <span class="val">${slot === 'archiv' ? lege()[slot].length : `${braucht(lege()[slot])}/${kap}`}<small>${slot === 'archiv' ? 'Programme' : 'Space'}</small></span>
+        </button>`;
+    }).join('');
+    sheet = { prog: name };
+    sheetEl.innerHTML = `
+      <div class="grab"></div>
+      <div class="sheet-head"><span class="sheet-title">${esc(name)}</span>
+        <span class="sheet-src">${p.space} Space · ${mcr(p.mcr)} MCr</span></div>
+      <div class="sheet-scroll">
+        <div class="sec" style="margin-top:6px">Umstecken</div>${wohin}
+      </div>
+      <div class="sheet-foot">
+        <button class="btn danger" data-discard="1">Werfen</button>
+        <button class="btn" data-close="1">Zurück</button>
+      </div>`;
+    open();
+  }
+
+  function openWerft() {
+    const offen = $('mPort').checked;
+    const Gruppen = GRUPPEN.map(([g, titel]) => {
+      const zeilen = Object.keys(CAT).filter((n) => CAT[n].gruppe === g).map((n) => {
+        const p = CAT[n];
+        const anBord = !!where(n);
+        const zuKlein = p.mcr > kasse;
+        const grundKauf = !offen ? 'Raumhafen A/B' : anBord ? 'an Bord' : zuKlein ? 'Kasse zu klein' : '';
+        return `<button class="row-btn" data-buy="${esc(n)}" ${grundKauf ? 'disabled' : ''}>
+            <span class="who"><b>${esc(n)}</b> <span class="sub">${p.space} Space · ${esc(p.kurz)}</span></span>
+            <span class="val">${grundKauf ? `<small style="font-family:var(--sans)">${grundKauf}</small>` : `${mcr(p.mcr)}<small>MCr</small>`}</span>
+          </button>`;
+      }).join('');
+      return `<div class="sec">${titel}</div>${zeilen}`;
+    }).join('');
+    sheet = { werft: true };
+    sheetEl.innerHTML = `
+      <div class="grab"></div>
+      <div class="sheet-head"><span class="sheet-title">Werft · Software</span>
+        <span class="sheet-src">Kasse ${mcr(kasse)} MCr</span></div>
+      <div class="sheet-scroll">
+        ${Gruppen}
+      </div>
+      <div class="sheet-foot"><button class="btn" data-close="1">Zurück</button></div>`;
+    open();
+  }
+
+  function open() { scrim.classList.add('show'); sheetEl.classList.add('show'); }
+  function closeSheet() { sheet = null; scrim.classList.remove('show'); sheetEl.classList.remove('show'); }
+
+  // ── Ziehen ───────────────────────────────────────────────────────────────
+  // Ziehen legt ein Programm in eine andere Ablage; ein Tipp öffnet das Blatt.
+  let drag = null, suppressUntil = 0;
+
+  function markierungenWeg() {
+    document.querySelectorAll('.zone.drop, .zone.nope').forEach((el) => el.classList.remove('drop', 'nope'));
+    document.querySelectorAll('.zone .use').forEach((el) => { el.textContent = el.dataset.use; });
+  }
+
+  const zoneUnter = (x, y) => document.elementsFromPoint(x, y)
+    .find((el) => el !== ghost && !ghost.contains(el) && el.closest('[data-slot]'))
+    ?.closest('[data-slot]') || null;
+
+  app.addEventListener('pointerdown', (ev) => {
+    if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+    const card = ev.target.closest('[data-prog]');
+    if (!card) return;
+    drag = { name: card.dataset.prog, el: card, x0: ev.clientX, y0: ev.clientY, ghost: false };
+  });
+
+  window.addEventListener('pointermove', (ev) => {
+    if (!drag) return;
+    if (!drag.ghost) {
+      if (Math.hypot(ev.clientX - drag.x0, ev.clientY - drag.y0) < 10) return;
+      ev.preventDefault();
+      const r = drag.el.getBoundingClientRect();
+      drag.ox = drag.x0 - r.left; drag.oy = drag.y0 - r.top;
+      ghost.style.width = r.width + 'px';
+      ghost.innerHTML = progHtml(drag.name);
+      ghost.style.display = 'block';
+      drag.el.style.opacity = '0.35';
+      drag.ghost = true;
+    }
+    ghost.style.transform = `translate(${ev.clientX - drag.ox}px, ${ev.clientY - drag.oy}px)`;
+    markierungenWeg();
+    const ziel = zoneUnter(ev.clientX, ev.clientY);
+    if (!ziel) return;
+    const von = where(drag.name);
+    const h = grund(drag.name, von, ziel.dataset.slot);
+    ziel.classList.add(h ? 'nope' : 'drop');
+    // Die Ablage sagt beim Drüberfahren, was gegen sie spricht.
+    if (h) ziel.querySelector('.use').textContent = h;
+  }, { passive: false });
+
+  window.addEventListener('pointerup', (ev) => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    markierungenWeg();
+    if (d.ghost) {
+      suppressUntil = Date.now() + 400;
+      const ziel = zoneUnter(ev.clientX, ev.clientY);
+      ghost.style.display = 'none'; ghost.innerHTML = '';
+      d.el.style.opacity = '';
+      if (ziel) umstecken(d.name, ziel.dataset.slot); else render();
+      return;
+    }
+  });
+  window.addEventListener('pointercancel', () => {
+    if (!drag) return;
+    if (drag.ghost) { ghost.style.display = 'none'; ghost.innerHTML = ''; drag.el.style.opacity = ''; }
+    drag = null;
+    render();
+  });
+
+  app.addEventListener('click', (ev) => {
+    const s = ev.target.closest('[data-ship]');
+    if (s) { shipId = s.dataset.ship; render(); return; }
+    const t = ev.target.closest('[data-tab]');
+    if (t && !t.disabled) { tab = t.dataset.tab; render(); return; }
+    if (Date.now() < suppressUntil) return;
+    if (ev.target.closest('[data-close]') || ev.target === scrim || ev.target.closest('.grab')) { closeSheet(); return; }
+    if (sheet && sheet.werft) {
+      const b = ev.target.closest('[data-buy]');
+      if (b && !b.disabled) { kaufen(b.dataset.buy); openWerft(); }
+      return;
+    }
+    if (sheet) {
+      if (ev.target.closest('[data-discard]')) { werfen(sheet.prog); return; }
+      const z = ev.target.closest('[data-ziel]');
+      if (z && !z.disabled) { umstecken(sheet.prog, z.dataset.ziel); closeSheet(); }
+      return;
+    }
+    if (ev.target.closest('[data-werft]')) { openWerft(); return; }
+    const card = ev.target.closest('[data-prog]');
+    if (card) openProgSheet(card.dataset.prog);
+  });
+
+  ['mCombat', 'mFired', 'mPort'].forEach((id) => $(id).addEventListener('change', () => { render(); if (sheet) (sheet.werft ? openWerft() : openProgSheet(sheet.prog)); }));
+  $('mReset').addEventListener('click', () => {
+    slots = JSON.parse(JSON.stringify(anfang));
+    kasse = 8.62;
+    closeSheet();
+    render();
+  });
+
+  slots = JSON.parse(JSON.stringify(anfang));
+  render();
+})();
+</script>
+</body>
+</html>

@@ -14,10 +14,13 @@
 >
 > Zum Ausprobieren des Bewegungsmodells gibt es einen Prototyp ohne die App:
 > [`docs/mock/raumkarte-bewegung.html`](mock/raumkarte-bewegung.html) (direkt im Browser öffnen).
-> Für die Crew-Zuweisung der Stufe 2b (Änderung 2026-11-22d) liegt ein Klick-Modell bereit:
+> Für die Stufe 2b (Änderung 2026-11-22d) liegen zwei Klick-Modelle bereit:
 > [`docs/mock/crew-zuweisen.html`](mock/crew-zuweisen.html) – Posten als Felder, Zuweisung über das
 > Blatt am Feld, Umziehen und Tauschen durch Ziehen zwischen den Feldern, mit den zwei Posten je
-> Charakter und dem Small Craft.
+> Charakter und dem Small Craft. Und
+> [`docs/mock/computer-programme.html`](mock/computer-programme.html) – Programme in CPU, Speicher
+> und Archiv, Umstecken durch Ziehen (im Raumkampf nur zwischen CPU und Speicher und nur vor dem
+> eigenen Schuss), Warnung ohne *Maneuver* und ohne *Target* in der CPU, Kauf in der Werft.
 
 Die Idee des Owners in einem Satz: **Der Raumkampf bleibt rundenbasiert, und in jeder Runde legt man
 fest, wie viel Schub jedes Schiff in welche Richtung gibt. Wie sich das Schiff dann bewegt, rechnet
