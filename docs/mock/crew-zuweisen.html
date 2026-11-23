@@ -78,13 +78,12 @@
   .scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0 16px 16px; -webkit-overflow-scrolling: touch; }
   .section-title { margin: 16px 0 8px; font-size: 11.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
 
-  /* Posten: eine Zeile pro Posten. Rechts die DM-Stufe, gelb wenn unter der Mindeststufe. */
+  /* Posten: eine Karte pro besetzten Posten. Rechts die DM-Stufe, gelb unter der Mindeststufe. */
   .posts { display: flex; flex-direction: column; gap: 8px; }
   .post { display: flex; align-items: stretch; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); cursor: pointer; }
   .post > .main { flex: 1 1 auto; min-width: 0; }
   .post .name { font-size: 14.5px; font-weight: 600; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
   .post .name .tag { font-size: 11px; font-weight: 400; color: var(--text-muted); }
-  .post .min { margin-top: 3px; font-size: 11px; color: var(--text-muted); }
   .dm {
     flex: 0 0 auto; align-self: center; min-width: 58px; padding: 5px 8px; text-align: center;
     border: 1px solid var(--line); border-radius: 8px; background: var(--bg);
@@ -93,10 +92,20 @@
   .dm small { display: block; font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted); font-family: var(--sans); }
   .dm.low { color: var(--accent-text); border-color: var(--accent); }
 
-  .field { min-height: 42px; margin-top: 6px; display: flex; align-items: center; border-radius: 8px; }
-  .field.empty { border: 1px dashed var(--line); justify-content: center; color: var(--line-strong); font-size: 19px; line-height: 1; }
+  .field { min-height: 40px; margin-top: 4px; display: flex; align-items: center; }
   .post.ok { border-color: var(--accent); background: var(--accent-wash); }
   .post.swap { border-color: var(--success); background: rgba(85, 185, 115, 0.1); }
+
+  /* Leere Posten sind eine schmale Zeile, ganz unten in der Liste. */
+  .free { display: flex; flex-direction: column; gap: 6px; }
+  .arow { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px dashed var(--line); border-radius: 8px; cursor: pointer; }
+  .arow .name { font-size: 14px; font-weight: 600; white-space: nowrap; }
+  .arow .tag { font-size: 11.5px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .arow .sp { flex: 1 1 auto; min-width: 6px; }
+  .arow .min { font-size: 11.5px; color: var(--text-muted); }
+  .arow .plus { color: var(--line-strong); font-size: 18px; line-height: 1; }
+  .arow.ok { border-style: solid; border-color: var(--accent); background: var(--accent-wash); }
+  .arow.blocked { opacity: .45; cursor: default; }
 
   .chip {
     display: inline-flex; align-items: center; gap: 7px; max-width: 100%; padding: 7px 10px 7px 8px;
@@ -205,6 +214,8 @@
     { role: 'medic', label: 'Medic', sys: 'Medical Bay', min: 1 },
   ];
   const GUNNER = { role: 'gunner', label: 'Gunner', sys: 'Fire Control', min: 1 };
+  // Reihenfolge in der Liste: erst Pilot, dann die Gunner, dann der Rest.
+  const ORDER = ['pilot', 'gunner', 'navigator', 'engineer', 'steward', 'medic'];
   // Small Craft: nur ein Pilot, ohne Pilot Controls, Pilot-Wert aus Ship's Boat oder Pilot − 1.
   const SMALL_ROLES = [{ role: 'pilot', label: 'Pilot', sys: null, tag: "Ship's Boat · Pilot − 1", min: 0 }];
 
@@ -214,7 +225,8 @@
     (p.sys === null) || (ship.smallCraft && p.role === 'pilot') || (ship.systems || []).includes(p.sys);
   const postList = (ship) => ship.smallCraft
     ? SMALL_ROLES
-    : ROLES.concat(Array.from({ length: ship.turrets }, (_, i) => ({ ...GUNNER, turret: i })));
+    : ORDER.flatMap((r) => ROLES.concat(Array.from({ length: ship.turrets }, (_, i) => ({ ...GUNNER, turret: i })))
+        .filter((p) => p.role === r));
 
   const chars = [
     { id: 'kira', name: 'Kira Vant', kind: 'SC', bg: 'Ex-Scout', skills: { pilot: 2, navigator: 1, engineering: 0, steward: 0, gunnery: 0, medicskill: 0 } },
@@ -319,36 +331,38 @@
       scroll.innerHTML = `<div class="card"><h3>Rumpf</h3><p>Duplikat der echten App. Der neue Reiter ist <b>Crew</b>.</p></div>`;
     } else {
       const all = postList(s);
-      const rows = all.map((p) => {
+      // Karte für einen besetzten Posten, schmale Zeile für einen freien.
+      const row = (p) => {
         const k = key(s.id, p);
-        if (!hasSystem(s, p)) {
-          return `<div class="post" style="opacity:.45;cursor:default">
-              <div class="main"><div class="name">${esc(postName(s, p))} <span class="tag">${esc(p.sys)}</span></div>
-                <div class="field empty" style="border-style:dotted;color:var(--line-strong)">—</div></div>
-            </div>`;
-        }
         const c = byId(posts[k]);
-        const min = p.min;
-        const val = c ? skillOn(c, p) : 0;
-        const low = c ? rawSkill(c, p) < min : false;
+        const low = rawSkill(c, p) < p.min;
         return `<div class="post" data-drop="1" data-post="${k}">
           <div class="main">
             <div class="name">${esc(postName(s, p))} <span class="tag">${esc(p.tag || p.sys || '')}</span></div>
-            <div class="field ${c ? '' : 'empty'}">${c ? chipHtml(c) : '+'}</div>
-            ${!c && min > 0 ? `<div class="min">ab Stufe ${min}</div>` : ''}
+            <div class="field">${chipHtml(c)}</div>
           </div>
-          <div class="dm ${c && low ? 'low' : ''}">${c ? val : '–'}<small>DM-Stufe</small></div>
+          <div class="dm ${low ? 'low' : ''}">${skillOn(c, p)}<small>DM-Stufe</small></div>
         </div>`;
-      }).join('');
+      };
+      const arow = (p, ohneAnlage) => `<div class="arow ${ohneAnlage ? 'blocked' : ''}" ${ohneAnlage ? '' : `data-drop="1" data-post="${key(s.id, p)}"`}>
+          <span class="name">${esc(postName(s, p))}</span>
+          <span class="tag">${esc(ohneAnlage ? p.sys + ' fehlt' : (p.tag || p.sys || ''))}</span>
+          <span class="sp"></span>
+          ${ohneAnlage ? '' : `<span class="min">${p.min > 0 ? 'ab ' + p.min : ''}</span><span class="plus">+</span>`}
+        </div>`;
+      const besetzt = all.filter((x) => posts[key(s.id, x)]);
+      const frei = all.filter((x) => !posts[key(s.id, x)] && hasSystem(s, x));
+      const defekt = all.filter((x) => !hasSystem(s, x));
       const idle = chars.filter((c) => countOf(c.id) === 0);
+      // Erst, wer steht, dann wer frei ist, dann die leeren Posten.
       scroll.innerHTML = `
-        <div class="posts">${rows}</div>
+        ${besetzt.length ? `<div class="posts">${besetzt.map(row).join('')}</div>` : ''}
         <h2 class="section-title">Ohne Posten · <span>${idle.length}</span></h2>
-        <div class="freezone" data-drop="1" data-free="1">
-          ${idle.length ? idle.map((c) => `<span class="who">${esc(c.name)}</span>`).join('') : ''}
-        </div>`;
-      // „Ohne Posten" ist nur Ziel, wenn gezogen wird; leer ist das Feld schlicht.
-      if (!idle.length) scroll.querySelector('.freezone').style.display = 'none';
+        <div class="freezone" data-drop="1" data-free="1"${idle.length ? '' : ' style="min-height:34px"'}>
+          ${idle.map((c) => `<span class="who">${esc(c.name)}</span>`).join('')}
+        </div>
+        ${frei.length || defekt.length ? `<h2 class="section-title">Freie Posten · <span>${frei.length}</span></h2>
+        <div class="free">${frei.map((x) => arow(x, false)).join('')}${defekt.map((x) => arow(x, true)).join('')}</div>` : ''}`;
     }
 
     dock.innerHTML = `<nav class="nav">${['Log', 'Begegnung', 'Kampf', 'Shop', 'Schiff', 'Charaktere', 'NSC']
@@ -460,7 +474,7 @@
   let suppressUntil = 0;
 
   function clearMarks() {
-    document.querySelectorAll('.post.ok, .post.swap').forEach((el) => el.classList.remove('ok', 'swap'));
+    document.querySelectorAll('.post.ok, .post.swap, .arow.ok').forEach((el) => el.classList.remove('ok', 'swap'));
     document.querySelectorAll('.freezone.ok').forEach((el) => el.classList.remove('ok'));
   }
   const armFree = (on) => document.querySelectorAll('.freezone').forEach((el) => el.classList.toggle('armed', on));
