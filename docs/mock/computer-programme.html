@@ -251,8 +251,10 @@
   const scroll = $('scroll'), dock = $('dock'), toastEl = $('toast');
   const scrim = $('scrim'), sheetEl = $('sheet'), ghost = $('ghost'), app = $('app');
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  // MCr mit Komma, auf zwei Stellen, ohne Nullen am Ende: 8,62 · 1 · 0,5
-  const mcr = (x) => (Math.round(x * 100) / 100).toLocaleString('de-DE', { maximumFractionDigits: 2 });
+  // MCr mit Komma, auf zwei Stellen: 8,62 · 2,00 · 0,50
+  const mcr = (x) => (Math.round(x * 100) / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // Preis eines Programms: in MCr, unter 0,2 MCr in Cr (Owner, 23. November 2026).
+  const preis = (mc) => (mc < 0.2 ? `Cr ${Math.round(mc * 1e6).toLocaleString('de-DE')}` : `MCr ${mcr(mc)}`);
 
   let toastTimer = 0;
   function toast(msg) {
@@ -266,7 +268,7 @@
   function render() {
     const s = schiff();
     $('shipHead').innerHTML = `
-      <div class="row"><h1>${esc(s.name)}</h1><span class="cred">Cr ${mcr(kasse)}&nbsp;Mio</span></div>
+      <div class="row"><h1>${esc(s.name)}</h1><span class="cred">MCr ${mcr(kasse)}</span></div>
       <div class="sub">${esc(s.klass)} &middot; ${esc(s.ton)} &middot; ${esc(s.modell)}</div>
       <div class="ships">
         ${SCHIFFE.map((x) => `<button class="ship-tile ${x.id === shipId ? 'on' : ''}" data-ship="${x.id}">
@@ -297,7 +299,7 @@
         ${zone('archiv', 'Archiv')}
         <button class="row-btn" data-werft="1" style="margin-top:14px">
           <span class="who"><b>Werft</b> <span class="sub">Software kaufen</span></span>
-          <span class="val">${mcr(kasse)}<small>MCr Kasse</small></span>
+          <span class="val">${mcr(kasse)}<small>Kasse in MCr</small></span>
         </button>`;
     }
 
@@ -372,7 +374,7 @@
     kasse -= p.mcr;
     lege()[nach].push(name);
     render();
-    toast(`${name} · ${mcr(p.mcr)} MCr · ${SLOT_NAME[nach]}`);
+    toast(`${name} · ${preis(p.mcr)} · ${SLOT_NAME[nach]}`);
   }
 
   // ── Blätter ──────────────────────────────────────────────────────────────
@@ -393,7 +395,7 @@
     sheetEl.innerHTML = `
       <div class="grab"></div>
       <div class="sheet-head"><span class="sheet-title">${esc(name)}</span>
-        <span class="sheet-src">${p.space} Space · ${mcr(p.mcr)} MCr</span></div>
+        <span class="sheet-src">${p.space} Space · ${preis(p.mcr)}</span></div>
       <div class="sheet-scroll">
         <div class="sec" style="margin-top:6px">Umstecken</div>${wohin}
       </div>
@@ -414,7 +416,7 @@
         const grundKauf = !offen ? 'Raumhafen A/B' : anBord ? 'an Bord' : zuKlein ? 'Kasse zu klein' : '';
         return `<button class="row-btn" data-buy="${esc(n)}" ${grundKauf ? 'disabled' : ''}>
             <span class="who"><b>${esc(n)}</b> <span class="sub">${p.space} Space · ${esc(p.kurz)}</span></span>
-            <span class="val">${grundKauf ? `<small style="font-family:var(--sans)">${grundKauf}</small>` : `${mcr(p.mcr)}<small>MCr</small>`}</span>
+            <span class="val">${grundKauf ? `<small style="font-family:var(--sans)">${grundKauf}</small>` : preis(p.mcr)}</span>
           </button>`;
       }).join('');
       return `<div class="sec">${titel}</div>${zeilen}`;
@@ -423,7 +425,7 @@
     sheetEl.innerHTML = `
       <div class="grab"></div>
       <div class="sheet-head"><span class="sheet-title">Werft · Software</span>
-        <span class="sheet-src">Kasse ${mcr(kasse)} MCr</span></div>
+        <span class="sheet-src">Kasse MCr ${mcr(kasse)}</span></div>
       <div class="sheet-scroll">
         ${Gruppen}
       </div>

@@ -22,7 +22,10 @@
 > und Archiv, Umstecken durch Ziehen (im Raumkampf nur zwischen CPU und Speicher und nur vor dem
 > eigenen Schuss), Warnung ohne *Maneuver* und ohne *Target* in der CPU, Kauf in der Werft.
 > Was davon im Kampf läuft und was fehlt, zeigt das Kampf-Interface selbst; ein eigenes Modell
-> dafür gibt es nicht (Owner, 23. November 2026).
+> dafür gibt es nicht (Owner, 23. November 2026). Software kosten **MCr, unter 0,2 MCr in Cr**
+> (Owner, 23. November 2026) – also „MCr 2,00“, aber „Cr 100.000“ für *Maneuver*; die Kasse steht
+> auf der Oberfläche in MCr. Der Reiter heißt **Computer**, die **Werft** öffnet sich aus diesem
+> Reiter heraus (Owner, 23. November 2026).
 
 Die Idee des Owners in einem Satz: **Der Raumkampf bleibt rundenbasiert, und in jeder Runde legt man
 fest, wie viel Schub jedes Schiff in welche Richtung gibt. Wie sich das Schiff dann bewegt, rechnet
