@@ -205,6 +205,11 @@ export interface SpaceView {
         readonly party: number;
         /** Beiboote an Bord der Einheit der Gruppe, die sie jetzt aussetzen kann (2026-11-21b). */
         readonly launchable: readonly { readonly id: string; readonly name: string }[];
+        /**
+         * Das Small Craft, in dem die Gruppe sitzt und das zu seinem Mutterschiff zurückkönnte
+         * (2026-11-23): Id, Name und warum es jetzt nicht kann (`undefined`: der Knopf „Landen“ geht).
+         */
+        readonly dock: { readonly id: string; readonly name: string; readonly mother: string; readonly blocker: string | undefined } | undefined;
         /** Small Craft, die jetzt an ihrem Mutterschiff andocken können. */
         readonly dockable: readonly { readonly id: string; readonly name: string }[];
         /** Sitzt die Gruppe in einem Small Craft, das noch nicht andocken kann: warum nicht. */
@@ -349,6 +354,13 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
       target,
       party: Math.max(0, flight.units.findIndex((u) => u.ship === flight.party)),
       launchable: launchableCraft(campaign).map((c) => ({ id: c.id, name: c.name })),
+      dock: (() => {
+        // Die Gruppe sitzt in einem Small Craft? Dann gehört ihr der Knopf „Landen“ (2026-11-23).
+        const craft = campaign.ships.find((s) => s.id === flight.party);
+        if (craft?.mother === undefined) return undefined;
+        const mother = campaign.ships.find((s) => s.id === craft.mother);
+        return { id: craft.id, name: craft.name, mother: mother?.name ?? 'Mutterschiff', blocker: dockBlocker(campaign, craft.id) };
+      })(),
       dockable: dockableCraft(campaign).map((c) => ({ id: c.id, name: c.name })),
       dockHint: (() => {
         const ship = campaign.ships.find((s) => s.id === flight.party);

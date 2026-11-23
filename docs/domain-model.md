@@ -600,6 +600,14 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > in der CPU (Target, Predict, Gunner Interact, Maneuver/Evade, Auto-Evade, Return Fire) und der
 > Pflichtprogramme rechnet jetzt der Code; siehe *Raumkampf*. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-23a-raumkampf-interface.png`](changes/2026-11-23a-raumkampf-interface.png).
+>
+> Noch nicht freigegeben (Kennzeichen 2026-11-23b): **Andocken eines Small Craft** – nichts Neues im
+> Bild, nur die Regel. Der eine **Knopf „Andocken“** in der Knopfreihe des Raumkampfblatts takes den
+> Platz von **Launch**, sobald die Gruppe in einem Small Craft sitzt, und sagt im Titel, was noch
+> fehlt. Drei Bedingungen: näher als 100 km, der Bewegungsvektor darf höchstens 0,1 km/s verschieden
+> sein, **beim Anfliegen** (der Abstand wird kleiner) höchstens 2 km/s, und das Mutterschiff hat
+> **Platz** – einen der Liegeplätze, für die es gebaut ist (`ShipDesign.craft`), oder, wenn alle
+> belegt sind, freien Laderaum für den Rumpf. Siehe *Andocken* unter *Systemflug*.
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -3796,10 +3804,18 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Mutterschiffs, `aboard` wird gelöscht, und ⚑ die Gruppe steigt mit um (`party` zeigt auf das
     Beiboot). Das Mutterschiff fliegt mit seiner Crew weiter; seinen Schubvektor setzt man weiter
     selbst. ⚑ Ein Beiboot je Raumrunde (wie zivile Schiffe nach dem Konzept).
-  - **Andocken**: Ist ein Small Craft seinem Mutterschiff ⚑ näher als 100 km und langsamer als
-    0,1 km/s gegenüber ihm (Hausregel aus dem Konzept), bietet die Karte „Andocken“ an. Die Einheit
-    des Small Craft entfällt, `aboard` wird gesetzt, und war die Gruppe darin, sitzt sie jetzt im
-    Mutterschiff.
+  - **Andocken** (Hausregeln 2026-11-23): Drei Bedingungen muss ein Small Craft erfüllen, damit die
+    Karte „Andocken“ anbietet. **Nähe**: näher als 100 km an sein Mutterschiff. **Vektor**: der
+    Unterschied der Geschwindigkeit höchstens 0,1 km/s – beim **Anfliegen**, also wenn der Abstand
+    kleiner wird, höchstens 2 km/s (⚑ sonst findet ein Beiboot, das einmal zurückblieb, nie wieder
+    hinein; darüber wäre es ein Zusammenstoß). **Platz** beim Mutterschiff: einer der Liegeplätze, für
+    die es gebaut ist (`ShipDesign.craft`), oder, wenn alle belegt sind, freier Laderaum für seinen
+    Rumpf. Erfüllt es eine Bedingung nicht, bleibt der Knopf gesperrt und nennt sie. Im Blatt sitzt
+    „Andocken“ in der Knopfreihe am Platz von **Launch**, solange die Gruppe in dem Small Craft sitzt
+    (sonst steht „Andocken“ als Chips an der Karte); in beiden Phasen der Raumrunde zu haben.
+    Die Einheit des Small Craft entfällt, `aboard` wird gesetzt, und war die Gruppe darin, sitzt sie
+    jetzt im Mutterschiff. ⚑ „Andocken“ heißt nie „Landen“: **Landen** bleibt das Aufsetzen auf einer
+    Welt.
   - **Landen** geht wie bisher (Landeautomatik eingeschlossen), aber nur mit der Einheit der Gruppe
     (Owner, 21. November 2026: nur mit Gruppe). Erreicht eine andere Einheit die Oberfläche, schlägt
     sie auf; die Bahnvorschau warnt vorher, die Landeautomatik gilt für sie nicht. Das gelandete

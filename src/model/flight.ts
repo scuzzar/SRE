@@ -4,7 +4,7 @@ import type { Clock } from './ports';
 import { shipDesignOf } from './reference';
 import { hexById, hexIdOfWorld, worldOf, type Hex, type World } from './sector';
 import { gravityOf, radiusOf } from './star-system';
-import { changeShip, craftOf, shipById, shipOf, vesselsOf, without, type Ship } from './ship';
+import { changeShip, craftOf, freeCargoOf, shipById, shipOf, vesselsOf, without, type Ship } from './ship';
 import { passTime, START_DAY } from './time';
 import { placeGroup } from './upkeep';
 import { needsLanding, shipArrives, shipDepartureBlocker } from './landing';
@@ -712,6 +712,49 @@ export function endFlight(campaign: Campaign, clock?: Clock): Campaign {
 export const DOCK_KM = 100;
 /** Wie langsam es dabei gegenüber dem Mutterschiff sein muss, in km/s. */
 export const DOCK_KMS = 0.1;
+/**
+ * ⚑ Wie schnell es sein darf, wenn es sich **annähert** – der Abstand also kleiner wird –, in km/s
+ * (Hausregel 2026-11-23: sonst findet ein Beiboot, das einmal zurückblieb, nie wieder hinein).
+ */
+export const DOCK_APPROACH_KMS = 2;
+
+/** Näher sich die Einheit `craft` der Einheit `mother` an? Der Abstand zwischen ihnen wird kleiner. */
+function closing(craft: SpaceUnit, mother: SpaceUnit): boolean {
+  return (craft.velocity.x - mother.velocity.x) * (mother.position.x - craft.position.x) + (craft.velocity.y - mother.velocity.y) * (mother.position.y - craft.position.y) > 0;
+}
+
+/**
+ * Warum ein Small Craft jetzt nicht an sein Mutterschiff andocken kann; `undefined`, wenn es kann
+ * (2026-11-21b, Hausregeln 2026-11-23). Drei Bedingungen: Das Mutterschiff hat **Platz** – einen der
+ * Liegeplätze, für die es gebaut ist (`craft` im Entwurf), oder, wenn alle belegt sind, freien
+ * Laderaum für den Rumpf. Der Abstand bleibt unter 100 km. Und der **Bewegungsvektor** darf nicht zu
+ * verschieden sein: höchstens 0,1 km/s Unterschied, beim Annähern höchstens 2 km/s.
+ */
+export function dockBlocker(campaign: Campaign, id: string): string | undefined {
+  const flight = activeFlight(campaign);
+  const craft = flight.units.find((u) => u.ship === id);
+  const ship = campaign.ships.find((s) => s.id === id);
+  const motherShip = ship?.mother === undefined ? undefined : campaign.ships.find((s) => s.id === ship.mother);
+  const mother = flight.units.find((u) => u.ship === ship?.mother);
+  if (craft === undefined || ship === undefined || mother === undefined || motherShip === undefined) return 'Das Mutterschiff fliegt nicht mit.';
+  if (craft.crashed || mother.crashed) return 'Eine aufgeschlagene Einheit dockt nicht an.';
+  const berths = shipDesignOf(motherShip.design).craft.length;
+  if (craftOf(campaign, motherShip.id).filter((c) => c.aboard).length >= berths) {
+    const hull = shipDesignOf(ship.design).hull;
+    const free = freeCargoOf(campaign, motherShip);
+    if (hull > free) return `Kein Platz für ${ship.name} in ${motherShip.name}: kein Liegeplatz frei und nur ${free.toLocaleString('de-DE')} t Laderaum offen, ${hull.toLocaleString('de-DE')} t nötig.`;
+  }
+  const km = lengthOf(sub(craft.position, mother.position));
+  if (km > DOCK_KM) return `Erst näher als ${DOCK_KM} km heran: noch ${Math.round(km).toLocaleString('de-DE')} km.`;
+  const rate = lengthOf(sub(craft.velocity, mother.velocity));
+  const toward = closing(craft, mother);
+  const limit = toward ? DOCK_APPROACH_KMS : DOCK_KMS;
+  if (rate > limit)
+    return toward
+      ? `Beim Annähern zu schnell: ${rate.toLocaleString('de-DE', { maximumFractionDigits: 2 })} km/s gegenüber ${motherShip.name}, höchstens ${DOCK_APPROACH_KMS.toLocaleString('de-DE')} km/s.`
+      : `Erst den Kurs angleichen: ${rate.toLocaleString('de-DE', { maximumFractionDigits: 2 })} km/s gegenüber ${motherShip.name}, höchstens ${DOCK_KMS.toLocaleString('de-DE')} km/s.`;
+  return undefined;
+}
 
 /** Die Beiboote an Bord der Einheit der Gruppe, die sie jetzt aussetzen kann (2026-11-21b). */
 export function launchableCraft(campaign: Campaign): readonly Ship[] {
@@ -734,19 +777,6 @@ export function launchCraft(campaign: Campaign, id: string): Campaign {
   const mother = flight.units.find((u) => u.ship === flight.party)!;
   const unit: SpaceUnit = { ship: id, position: mother.position, velocity: mother.velocity, crashed: false, track: mother.track };
   return { ...changeShip(campaign, id, (s) => without(s, 'aboard')), flight: { ...flight, party: id, units: [...flight.units, unit] } };
-}
-
-/** Warum ein Small Craft nicht an seinem Mutterschiff andocken kann; `undefined`, wenn es kann. */
-export function dockBlocker(campaign: Campaign, id: string): string | undefined {
-  const flight = activeFlight(campaign);
-  const craft = flight.units.find((u) => u.ship === id);
-  const ship = campaign.ships.find((s) => s.id === id);
-  const mother = flight.units.find((u) => u.ship === ship?.mother);
-  if (craft === undefined || ship === undefined || mother === undefined) return 'Das Mutterschiff fliegt nicht mit.';
-  if (craft.crashed || mother.crashed) return 'Eine aufgeschlagene Einheit dockt nicht an.';
-  if (lengthOf(sub(craft.position, mother.position)) > DOCK_KM) return `Erst näher als ${DOCK_KM} km heran.`;
-  if (lengthOf(sub(craft.velocity, mother.velocity)) > DOCK_KMS) return `Erst den Kurs angleichen: langsamer als ${DOCK_KMS.toLocaleString('de-DE')} km/s gegenüber dem Mutterschiff.`;
-  return undefined;
 }
 
 /** Die Small Craft im Flug, die jetzt andocken können. */

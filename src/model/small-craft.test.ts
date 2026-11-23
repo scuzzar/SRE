@@ -112,6 +112,35 @@ describe('Small Craft (2026-11-21b)', () => {
     expect(dockBlocker(fast, boat)).toMatch(/angleichen/);
   });
 
+  it('undocken beim Anfliegen: beim Annähern darf der Bewegungsvektor mehr verschieden sein (Hausregel)', () => {
+    const c = launched();
+    const boat = boatOf(c).id;
+    const [mother] = c.flight!.units;
+    // Das Beiboot `km` rechts neben dem Mutterschiff, mit `dvx` km/s relativ zu ihm.
+    const anflug = (km: number, dvx: number): Campaign => ({
+      ...c,
+      flight: { ...c.flight!, units: c.flight!.units.map((u) => (u.ship === boat ? { ...u, position: { x: mother!.position.x + km, y: mother!.position.y }, velocity: { x: mother!.velocity.x + dvx, y: mother!.velocity.y } } : u)) },
+    });
+    // 60 km entfernt und mit 1,5 km/s auf das Mutterschiff zu: angeflogen, es geht.
+    expect(dockBlocker(anflug(60, -1.5), boat)).toBeUndefined();
+    // Gleiche Geschwindigkeit, aber der Abstand wächst: erst den Kurs angleichen.
+    expect(dockBlocker(anflug(60, 1.5), boat)).toMatch(/angleichen/);
+    // Beim Annähern über 2 km/s wäre es ein Zusammenstoß, kein Andocken.
+    expect(dockBlocker(anflug(60, -3), boat)).toMatch(/Beim Annähern zu schnell/);
+    // Und nie weiter als 100 km.
+    expect(dockBlocker(anflug(140, -0.5), boat)).toMatch(/näher als 100 km/);
+  });
+
+  it('andocken braucht Platz: einen Liegeplatz des Entwurfs oder freien Laderaum', () => {
+    const c = launched();
+    const boat = boatOf(c).id;
+    // Die Yacht ist für ein Small Craft gebaut. Solange der Platz frei ist, dockt das Beiboot an.
+    expect(dockBlocker(c, boat)).toBeUndefined();
+    // Belegter Liegeplatz: dann müsste der Rumpf in den Laderaum – bei der Yacht sind es nur 11 t.
+    const occupied: Campaign = { ...c, ships: [...c.ships, { ...boatOf(c), id: 'boot-2', name: 'Beiboot 2', aboard: true }] };
+    expect(dockBlocker(occupied, boat)).toMatch(/Kein Platz für Beiboot 1 in Kestrel: kein Liegeplatz frei/);
+  });
+
   it('nur die Einheit der Gruppe landet; das Mutterschiff bleibt danach in der Umlaufbahn', () => {
     const c = launched();
     const boat = boatOf(c).id;

@@ -98,18 +98,20 @@ export function SpaceCard({ space }: { space: SpaceView }) {
             </p>
           )}
           {flight.dockHint && <p className="combat-hint">Andocken an das Mutterschiff: {flight.dockHint}</p>}
-          {(flight.launchable.length > 0 || flight.dockable.length > 0) && (
+          {(flight.launchable.length > 0 || flight.dockable.some((c) => c.id !== flight.dock?.id)) && (
             <div className="chips space-craft" role="group" aria-label="Beiboote">
               {flight.launchable.map((c) => (
                 <button key={c.id} type="button" onClick={() => game.launchCraft(c.id)}>
                   {c.name} aussetzen
                 </button>
               ))}
-              {flight.dockable.map((c) => (
-                <button key={c.id} type="button" onClick={() => game.dockCraft(c.id)}>
-                  {c.name} andocken
-                </button>
-              ))}
+              {flight.dockable
+                .filter((c) => c.id !== flight.dock?.id)
+                .map((c) => (
+                  <button key={c.id} type="button" onClick={() => game.dockCraft(c.id)}>
+                    {c.name} andocken
+                  </button>
+                ))}
             </div>
           )}
           {space.departure && (
@@ -329,17 +331,34 @@ export function SpaceDock({ space }: { space: SpaceView }) {
   }
   const thrust = flight.phase === 'thrust';
   const launchable = flight.launchable;
+  const dock = flight.dock;
+  // Der eine Platz in der Reihe: „Andocken“ zurück zum Mutterschiff, sobald die Gruppe in einem Small
+  // Craft sitzt, sonst „Launch“ aus dem Stapel (2026-11-23). Auf der Welt aufsetzen heißt im Modell
+  // „Landen“ und bleibt die Landeautomatik. Der Knopf ist in beiden Phasen zu haben: Wer heimfliegt,
+  // dockt auch nach dem Feuer noch an.
   return (
     <div className="actions oracle-actions space-actions">
-      <button
-        type="button"
-        className="action dice"
-        disabled={launchable.length === 0 || !thrust}
-        title={launchable.length === 0 ? 'Kein Beiboot am Mutterschiff' : thrust ? 'Nächstes Beiboot aus dem Stapel frei' : 'Beiboote startet man vor der Bewegung'}
-        onClick={() => launchable[0] !== undefined && game.launchCraft(launchable[0].id)}
-      >
-        Launch{launchable.length > 0 ? ` (${launchable.length})` : ''}
-      </button>
+      {dock === undefined ? (
+        <button
+          type="button"
+          className="action dice"
+          disabled={launchable.length === 0 || !thrust}
+          title={launchable.length === 0 ? 'Kein Beiboot am Mutterschiff' : thrust ? 'Nächstes Beiboot aus dem Stapel frei' : 'Beiboote startet man vor der Bewegung'}
+          onClick={() => launchable[0] !== undefined && game.launchCraft(launchable[0].id)}
+        >
+          Launch{launchable.length > 0 ? ` (${launchable.length})` : ''}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="action draw"
+          disabled={dock.blocker !== undefined}
+          title={dock.blocker ?? `${dock.name} an ${dock.mother} andocken`}
+          onClick={() => game.dockCraft(dock.id)}
+        >
+          Andocken
+        </button>
+      )}
       <button type="button" className="action dice" disabled title="Stufe 4b: ein Small Craft landet an Bord">
         Anlanden
       </button>

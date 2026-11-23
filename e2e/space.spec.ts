@@ -39,7 +39,7 @@ test('Systemflug: Raumkarte öffnen, Schub im Schubkreis setzen, bewegen, beende
   await expect(page.getByRole('region', { name: 'Raumkarte · Kessra' })).toHaveCount(0);
 });
 
-test('Beiboot im Systemflug aussetzen und wieder andocken (2026-11-21b)', async ({ page }) => {
+test('Beiboot im Systemflug aussetzen und mit „Andocken“ wieder an Bord (2026-11-21b, der Knopf 2026-11-23)', async ({ page }) => {
   await openHomeGlobe(page);
   await page.getByRole('button', { name: 'Raumkarte' }).click();
   await page.getByRole('button', { name: 'Systemflug beginnen' }).click();
@@ -47,9 +47,23 @@ test('Beiboot im Systemflug aussetzen und wieder andocken (2026-11-21b)', async 
   await card.getByRole('button', { name: 'Beiboot 1 aussetzen' }).click();
   await expect(card).toContainText("Beiboot 1 · Ship's Boat · 6 G");
   await expect(card).toContainText('Die Gruppe ist an Bord von Beiboot 1');
-  await card.getByRole('button', { name: 'Beiboot 1 andocken' }).click();
+  // Am Platz des Launch-Knopfs sitzt jetzt „Andocken“: nah, gleicher Kurs, freier Liegeplatz.
+  const landen = page.getByRole('button', { name: 'Andocken', exact: true });
+  await expect(landen).toBeEnabled();
+  await expect(landen).toHaveAttribute('title', /Beiboot 1 an Kestrel andocken/);
+  await landen.click();
   await expect(card).toContainText('Kestrel · Yacht · 1 G');
-  await expect(card.getByRole('button', { name: 'Beiboot 1 aussetzen' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Launch (1)' })).toBeEnabled();
+
+  // Eigenen Schub gegeben, bleibt das Beiboot zurück: „Andocken“ ist gesperrt und sagt warum.
+  await page.getByRole('button', { name: 'Launch (1)' }).click();
+  const canvas = page.locator('canvas.globe-canvas');
+  const box = (await canvas.boundingBox())!;
+  const [cx, cy, r] = (await canvas.getAttribute('data-coast'))!.split(',').map(Number) as [number, number, number];
+  await page.mouse.click(box.x + cx + Math.max(r / 2, 18), box.y + cy);
+  await page.getByRole('button', { name: 'Bewegen' }).click();
+  await expect(landen).toBeDisabled();
+  await expect(landen).toHaveAttribute('title', /100 km|angleichen/);
 });
 
 test('Systemflug aus dem Reiter Schiff: „Starten“ öffnet die Raumkarte, die Bedienung steht im Reiter Schiff (Owner, 21. November 2026)', async ({ page }) => {
