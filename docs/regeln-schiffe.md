@@ -421,7 +421,7 @@ Punkt weniger (SE 11) – die Karte zeigt den Aufkleber „2“. Der Grundwert a
 Hinweis `ab 1` am Posten (Navigator und Medic ab 1, Engineer ab 1, Gunner ab 1); verboten ist
 nichts, die Person bleibt auch ohne Stufe am Posten und der Wert ist ihr Stufenwert. Small Craft
 hat nur den Pilotensitz, sein Wert ist Ship's Boat oder Pilot − 1. Gebaut ist damit die *Besetzung*;
-Heuern, Pflicht nach Tonnage und der Crewbedarf im Reiter Details sind offen.
+Heuern, Pflicht nach Tonnage und der Crewbedarf (der im Blatt **Bearbeiten** steht) sind offen.
 
 ---
 

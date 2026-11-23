@@ -10,8 +10,8 @@ import { CrewPersonSheet, CrewPostSheet, CrewTab } from './CrewTab';
 import { ComputerTab, ProgramSheet, SoftwareYard } from './ComputerTab';
 import { deckImage } from './deck-image';
 
-/** Die Ansicht unter den Kacheln: eigene Deckpläne, die Details, die Crew und der Rechner. */
-type Tab = 'deck' | 'details' | 'crew' | 'computer';
+/** Die Ansicht unter den Kacheln: eigene Deckpläne, die Crew und der Rechner. */
+type Tab = 'deck' | 'crew' | 'computer';
 
 /** Das Blatt, das als Feld an der Stelle des Reiters steht; die Werft ist ein Blatt, kein eigener Reiter. */
 type Sheet =
@@ -207,9 +207,6 @@ export function ShipScreen({ view }: { view: Snapshot }) {
               <button type="button" role="tab" aria-selected={tab === 'deck'} onClick={() => setTab('deck')}>
                 Deckplan
               </button>
-              <button type="button" role="tab" aria-selected={tab === 'details'} onClick={() => setTab('details')}>
-                Details
-              </button>
               <button type="button" role="tab" aria-selected={tab === 'crew'} onClick={() => setTab('crew')}>
                 Crew
               </button>
@@ -217,11 +214,9 @@ export function ShipScreen({ view }: { view: Snapshot }) {
                 Computer
               </button>
             </div>
-            <div className="ship-panel" role="tabpanel" aria-label={tab === 'deck' ? 'Deckplan' : tab === 'details' ? 'Details' : tab === 'crew' ? 'Crew' : 'Computer'}>
+            <div className="ship-panel" role="tabpanel" aria-label={tab === 'deck' ? 'Deckplan' : tab === 'crew' ? 'Crew' : 'Computer'}>
               {tab === 'deck' ? (
               <DeckPlans ship={ship} onView={(name) => setSheet({ kind: 'deck', name })} />
-            ) : tab === 'details' ? (
-              <Details boat={boat} />
             ) : tab === 'crew' ? (
               <CrewTab crews={boat?.crews ?? []} onOpenPost={(shipId, at) => setSheet({ kind: 'post', shipId, at })} onOpenPerson={(shipId, who) => setSheet({ kind: 'person', shipId, who })} />
             ) : (
@@ -343,88 +338,9 @@ function DeckPlans({ ship, onView }: { ship: ShipView; onView: (name: string) =>
   );
 }
 
-/** Ansicht Details: alles, was nicht schon in den Kacheln steht, und die Software an Bord. */
 /** Was in die Kachel „Restschuld“ gehört: der offene Rest, sonst „schuldenfrei“ oder „bezahlt“. */
 function debtLine(boat: Boat): string {
   return boat.loanBalance === undefined ? (boat.initialLoan === undefined ? 'schuldenfrei' : 'bezahlt') : credits(boat.loanBalance);
-}
-
-function Details({ boat }: { boat: Boat }) {
-  return (
-    <>
-      <dl className="profile">
-        {boat.initialLoan !== undefined && (
-          <div>
-            <dt>Kredit</dt>
-            <dd>{credits(boat.initialLoan)}</dd>
-          </div>
-        )}
-        {boat.monthlyPayment !== undefined && (
-          <div>
-            <dt>Monatsrate</dt>
-            <dd>{`${credits(boat.monthlyPayment)} × 480`}</dd>
-          </div>
-        )}
-        {boat.nextPayment !== undefined && (
-          <div>
-            <dt>Nächste Rate</dt>
-            <dd>{boat.nextPayment}</dd>
-          </div>
-        )}
-        <div>
-          <dt>Crewbedarf</dt>
-          <dd>{boat.crew}</dd>
-        </div>
-        <div>
-          <dt>Bauzeit</dt>
-          <dd>{boat.months === 0 ? 'keine Angabe' : `${boat.months} Monate`}</dd>
-        </div>
-        <div>
-          <dt>Grundpreis</dt>
-          <dd>{mcr(boat.basePrice)}</dd>
-        </div>
-        <div>
-          <dt>Preis (gezahlt)</dt>
-          <dd>{credits(boat.price)}</dd>
-        </div>
-      </dl>
-      {boat.loanBalance !== undefined && <p className="shop-hint muted">Die Bank hebt die Monatsrate automatisch ein, wenn sie fällig ist; ohne Deckung bleibt die Rate als Hinweis in der Kasse stehen.</p>}
-      {boat.craft.length > 0 && (
-        <>
-          <h2 className="section-title">Beiboote</h2>
-          <div className="shop-table" role="table" aria-label="Beiboote">
-            {boat.craft.map((c) => (
-              <div key={c.name} className="shop-row soft-row" role="row">
-                <span role="cell" className="shop-name">
-                  <span className="shop-label">{c.name}</span>
-                  <span className="shop-meta">{c.design}</span>
-                </span>
-                <span role="cell" className="shop-num soft-kind muted">
-                  {c.where}
-                </span>
-              </div>
-            ))}
-          </div>
-          <p className="shop-hint muted">Im Systemflug aussetzen und wieder andocken; mit einem Beiboot landet die Gruppe, während das Schiff in der Umlaufbahn bleibt, oder reist damit im System. Gesprungen wird nur mit allen Beibooten an Bord.</p>
-        </>
-      )}
-      <h2 className="section-title">Software an Bord · {boat.computerName}</h2>
-      <div className="shop-table" role="table" aria-label="Software an Bord">
-        {boat.software.map((s) => (
-          <div key={s.name} className="shop-row soft-row" role="row">
-            <span role="cell" className="shop-name">
-              <span className="shop-label">{s.name}</span>
-              <span className="shop-meta">{s.effect}</span>
-            </span>
-            <span role="cell" className="shop-num soft-kind muted">
-              {s.kind}
-            </span>
-          </div>
-        ))}
-      </div>
-      <p className="shop-hint muted">Kabinen und Niedrigbetten: immer die Gruppe zuerst, später zahlende Passagiere. Bewaffnung in der Werft; noch offen: Kampf-Software. Gereist wird schon: „Hierher reisen“ auf einer Weltkarte auch mit eigenem Schiff.</p>
-    </>
-  );
 }
 
 /** Die Bewaffnung in einer Zeile: Hardpoints, Turrets und Waffen, oder „unbewaffnet“. */
@@ -746,6 +662,58 @@ function EditSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
         <input type="number" inputMode="numeric" min={0} max={boat.cargoMax} value={cargo} onChange={(e) => setCargo(e.target.value)} />
       </label>
       <p className="shop-hint muted">Die Belegung der Kabinen ergibt sich aus der Gruppe; zahlende Passagiere kommen mit dem Handel.</p>
+      <dl className="profile">
+        {boat.initialLoan !== undefined && (
+          <div>
+            <dt>Kredit</dt>
+            <dd>{credits(boat.initialLoan)}</dd>
+          </div>
+        )}
+        {boat.monthlyPayment !== undefined && (
+          <div>
+            <dt>Monatsrate</dt>
+            <dd>{`${credits(boat.monthlyPayment)} × 480`}</dd>
+          </div>
+        )}
+        {boat.nextPayment !== undefined && (
+          <div>
+            <dt>Nächste Rate</dt>
+            <dd>{boat.nextPayment}</dd>
+          </div>
+        )}
+        <div>
+          <dt>Crewbedarf</dt>
+          <dd>{boat.crew}</dd>
+        </div>
+        <div>
+          <dt>Grundpreis</dt>
+          <dd>{mcr(boat.basePrice)}</dd>
+        </div>
+        <div>
+          <dt>Preis (gezahlt)</dt>
+          <dd>{credits(boat.price)}</dd>
+        </div>
+      </dl>
+      {boat.loanBalance !== undefined && <p className="shop-hint muted">Die Bank hebt die Monatsrate automatisch ein, wenn sie fällig ist; ohne Deckung bleibt die Rate als Hinweis in der Kasse stehen.</p>}
+      {boat.craft.length > 0 && (
+        <>
+          <h2 className="section-title">Beiboote</h2>
+          <div className="shop-table" role="table" aria-label="Beiboote">
+            {boat.craft.map((c) => (
+              <div key={c.name} className="shop-row soft-row" role="row">
+                <span role="cell" className="shop-name">
+                  <span className="shop-label">{c.name}</span>
+                  <span className="shop-meta">{c.design}</span>
+                </span>
+                <span role="cell" className="shop-num soft-kind muted">
+                  {c.where}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="shop-hint muted">Im Systemflug aussetzen und wieder andocken; mit einem Beiboot landet die Gruppe, während das Schiff in der Umlaufbahn bleibt, oder reist damit im System. Gesprungen wird nur mit allen Beibooten an Bord.</p>
+        </>
+      )}
       <p className="shop-hint muted">
         Ausblenden (für die Spielleitung): {boat.name}
         {boat.craft.length > 0 ? ' und seine Beiboote verschwinden' : ' verschwindet'} aus dem Reiter Schiff, gelöscht wird nichts – Buchungen und Log zeigen {boat.craft.length > 0 ? 'sie' : 'es'} weiter. Raten fallen keine mehr an. Danach lässt sich ein neues Schiff oder ein eigenständiges Small Craft kaufen.

@@ -169,13 +169,6 @@ export interface SoftwareOfferRow {
 /** Anzahlung bei Bankfinanzierung, als Anteil des Preises (SR 29). */
 const DOWN_PAYMENT = 0.2;
 
-/** Ein Programm an Bord: Name, Art und was es wirkt. */
-export interface ShipSoftwareRow {
-  readonly name: string;
-  readonly kind: string;
-  readonly effect: string;
-}
-
 /** Ein Standardentwurf in der Werft, mit dem, was er die Kasse kostet. */
 export interface ShipYardRow {
   readonly designId: string;
@@ -243,7 +236,6 @@ export interface ShipView {
         readonly hardpoints: number;
         readonly computerName: string;
         readonly crew: string;
-        readonly months: number;
         readonly basePrice: number;
         /** Die Beiboote (2026-11-21b): Name, Entwurf mit G und wo es ist. */
         readonly craft: readonly CraftRow[];
@@ -256,8 +248,6 @@ export interface ShipView {
         readonly monthlyPayment: number | undefined;
         /** Der Tag, an dem die nächste Rate fällig ist, als kalendarisches Datum; fehlt ohne Kredit. */
         readonly nextPayment: string | undefined;
-        /** Die Bordsoftware, in der Reihenfolge des Bords. */
-        readonly software: readonly ShipSoftwareRow[];
         /** Die Posten der Crew und wer sie besetzen kann, je eigenes Schiff und Beiboot (2026-11-22d). */
         readonly crews: readonly VesselCrewRow[];
         /** Die Rechner mit CPU, Speicher und Archiv, je eigenes Schiff und Beiboot (2026-11-22d). */
@@ -384,7 +374,6 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
             hardpoints: plan.hardpoints,
             computerName: plan.computer === undefined ? 'keiner' : computerModelOf(plan.computer).name,
             crew: plan.crew,
-            months: plan.months ?? 0,
             basePrice: plan.basePrice,
             craft: craftOf(campaign, ship.id).map((c) => craftRow(campaign, c)),
             price: ship.price,
@@ -392,10 +381,6 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
             loanBalance: ship.loanBalance,
             monthlyPayment: monthlyPaymentOf(ship),
             nextPayment: ship.nextPaymentDay === undefined ? undefined : dateLabel(ship.nextPaymentDay),
-            software: ship.software.map((s) => {
-              const program = softwareOf(s.program);
-              return { name: program.name, kind: softwareKinds[program.kind], effect: program.effect };
-            }),
             crews: vesselsOf(campaign).map((v) => crewRow(campaign, v)),
             computers: vesselsOf(campaign).map((v) => computerRow(campaign, v)),
             turrets: ship.turrets.map((t) => {
