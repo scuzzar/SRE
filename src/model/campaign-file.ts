@@ -348,6 +348,8 @@ const FlightSchema = z.object({
         fired: z.boolean().optional(),
         /** Hat in dieser Raumrunde schon zurückgefeuert (2026-11-23). */
         returned: z.boolean().optional(),
+        /** Der Andockflug: die Einheit steuert in der nächsten Bewegung ihr Mutterschiff an (2026-11-23c). */
+        docking: z.boolean().optional(),
         position: VecSchema,
         velocity: VecSchema,
         thrust: VecSchema.optional(),
@@ -757,6 +759,7 @@ function flightFromFile(flight: z.infer<typeof FlightSchema>): SystemFlight {
       // kannten nur `fired`; beim Laden darf jede Einheit wieder feuern.
       ...(u.firedTurrets === undefined ? {} : { firedTurrets: [...u.firedTurrets] }),
       ...(u.returned === undefined ? {} : { returned: u.returned }),
+      ...(u.docking === undefined ? {} : { docking: u.docking }),
       position: vec(u.position),
       velocity: vec(u.velocity),
       ...(u.thrust === undefined ? {} : { thrust: vec(u.thrust) }),

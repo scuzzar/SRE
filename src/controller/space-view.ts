@@ -1,5 +1,6 @@
 import {
   dockBlocker,
+  dockPlan,
   dockableCraft,
   launchableCraft,
   flightStartBlocker,
@@ -207,11 +208,15 @@ export interface SpaceView {
         readonly launchable: readonly { readonly id: string; readonly name: string }[];
         /**
          * Das Small Craft, in dem die Gruppe sitzt und das zu seinem Mutterschiff zurückkönnte
-         * (2026-11-23): Id, Name und warum es jetzt nicht kann (`undefined`: der Knopf „Landen“ geht).
+         * (2026-11-23, Andockflug 2026-11-23c): Id, Name, warum es jetzt nicht kann (`undefined`: der
+         * Knopf „Andocken“ geht), ob es schon näher als 100 km steht (`now`), ob der Andockflug schon
+         * läuft (`armed`), und wie viel G bis zum Andockpunkt gegen die höchsten G des Small Craft.
          */
-        readonly dock: { readonly id: string; readonly name: string; readonly mother: string; readonly blocker: string | undefined } | undefined;
-        /** Small Craft, die jetzt an ihrem Mutterschiff andocken können. */
-        readonly dockable: readonly { readonly id: string; readonly name: string }[];
+        readonly dock:
+          | { readonly id: string; readonly name: string; readonly mother: string; readonly blocker: string | undefined; readonly now: boolean; readonly armed: boolean; readonly g: number; readonly maxG: number }
+          | undefined;
+        /** Small Craft, die jetzt an ihrem Mutterschiff andocken können (`armed`: ihr Andockflug läuft). */
+        readonly dockable: readonly { readonly id: string; readonly name: string; readonly armed: boolean }[];
         /** Sitzt die Gruppe in einem Small Craft, das noch nicht andocken kann: warum nicht. */
         readonly dockHint: string | undefined;
         /** Die Orte der Einheiten während der letzten Raumrunde, von der Welt aus gesehen. */
@@ -355,17 +360,32 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
       party: Math.max(0, flight.units.findIndex((u) => u.ship === flight.party)),
       launchable: launchableCraft(campaign).map((c) => ({ id: c.id, name: c.name })),
       dock: (() => {
-        // Die Gruppe sitzt in einem Small Craft? Dann gehört ihr der Knopf „Landen“ (2026-11-23).
+        // Die Gruppe sitzt in einem Small Craft? Dann gehört ihr der Knopf „Andocken“ (2026-11-23).
         const craft = campaign.ships.find((s) => s.id === flight.party);
         if (craft?.mother === undefined) return undefined;
         const mother = campaign.ships.find((s) => s.id === craft.mother);
-        return { id: craft.id, name: craft.name, mother: mother?.name ?? 'Mutterschiff', blocker: dockBlocker(campaign, craft.id) };
+        const plan = dockPlan(campaign, craft.id);
+        const unit = flight.units.find((u) => u.ship === craft.id);
+        return {
+          id: craft.id,
+          name: craft.name,
+          mother: mother?.name ?? 'Mutterschiff',
+          blocker: dockBlocker(campaign, craft.id),
+          now: plan?.now === true,
+          armed: unit?.docking === true,
+          g: plan?.g ?? 0,
+          maxG: plan?.maxG ?? 0,
+        };
       })(),
-      dockable: dockableCraft(campaign).map((c) => ({ id: c.id, name: c.name })),
+      dockable: dockableCraft(campaign).map((c) => ({ id: c.id, name: c.name, armed: flight.units.some((u) => u.ship === c.id && u.docking === true) })),
       dockHint: (() => {
         const ship = campaign.ships.find((s) => s.id === flight.party);
-        if (ship?.mother === undefined || dockableCraft(campaign).some((c) => c.id === ship.id)) return undefined;
-        return dockBlocker(campaign, ship.id);
+        if (ship?.mother === undefined) return undefined;
+        if (flight.units.some((u) => u.ship === ship.id && u.docking === true)) {
+          const mother = campaign.ships.find((s) => s.id === ship.mother);
+          return `Andockflug: mit der nächsten Bewegung an ${mother?.name ?? 'Mutterschiff'} andocken; ein eigener Schub hebt ihn auf.`;
+        }
+        return dockableCraft(campaign).some((c) => c.id === ship.id) ? undefined : dockBlocker(campaign, ship.id);
       })(),
       elapsed: duration(elapsedOf(flight)),
       run: run && { round: run.round, frames: run.frames.map((frame, k) => frame.map((p) => sub(p, originAt(scene, space.world, run.t + k * run.every * STEP_SECONDS).position))) },

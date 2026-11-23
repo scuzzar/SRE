@@ -39,31 +39,53 @@ test('Systemflug: Raumkarte öffnen, Schub im Schubkreis setzen, bewegen, beende
   await expect(page.getByRole('region', { name: 'Raumkarte · Kessra' })).toHaveCount(0);
 });
 
-test('Beiboot im Systemflug aussetzen und mit „Andocken“ wieder an Bord (2026-11-21b, der Knopf 2026-11-23)', async ({ page }) => {
+test('Beiboot im Systemflug aussetzen und mit „Andocken“ wieder an Bord (2026-11-21b, der Andockflug 2026-11-23c)', async ({ page }) => {
   await openHomeGlobe(page);
   await page.getByRole('button', { name: 'Raumkarte' }).click();
   await page.getByRole('button', { name: 'Systemflug beginnen' }).click();
   const card = page.getByRole('region', { name: 'Systemflug' });
+  const boot = (name: string | RegExp) => page.getByRole('button', { name });
   await card.getByRole('button', { name: 'Beiboot 1 aussetzen' }).click();
   await expect(card).toContainText("Beiboot 1 · Ship's Boat · 6 G");
   await expect(card).toContainText('Die Gruppe ist an Bord von Beiboot 1');
-  // Am Platz des Launch-Knopfs sitzt jetzt „Andocken“: nah, gleicher Kurs, freier Liegeplatz.
-  const landen = page.getByRole('button', { name: 'Andocken', exact: true });
-  await expect(landen).toBeEnabled();
-  await expect(landen).toHaveAttribute('title', /Beiboot 1 an Kestrel andocken/);
-  await landen.click();
+  // Am Platz des Launch-Knopfs sitzt jetzt „Andocken“: nah, freier Liegeplatz – es dockt sofort an.
+  await expect(boot(/^Andocken/)).toBeEnabled();
+  await expect(boot(/^Andocken/)).toHaveAttribute('title', /Beiboot 1 an Kestrel andocken/);
+  await boot(/^Andocken/).click();
   await expect(card).toContainText('Kestrel · Yacht · 1 G');
-  await expect(page.getByRole('button', { name: 'Launch (1)' })).toBeEnabled();
+  await expect(boot('Launch (1)')).toBeEnabled();
 
-  // Eigenen Schub gegeben, bleibt das Beiboot zurück: „Andocken“ ist gesperrt und sagt warum.
-  await page.getByRole('button', { name: 'Launch (1)' }).click();
+  // Zurückgeblieben: „Andocken“ bleibt frei, setzt aber den Andockflug und dockt erst mit der
+  // nächsten Bewegung an – genug Schub vorausgesetzt (der Schubring hier: 6 G = 30.000 km).
   const canvas = page.locator('canvas.globe-canvas');
   const box = (await canvas.boundingBox())!;
   const [cx, cy, r] = (await canvas.getAttribute('data-coast'))!.split(',').map(Number) as [number, number, number];
+  await boot('Launch (1)').click();
   await page.mouse.click(box.x + cx + Math.max(r / 2, 18), box.y + cy);
-  await page.getByRole('button', { name: 'Bewegen' }).click();
-  await expect(landen).toBeDisabled();
-  await expect(landen).toHaveAttribute('title', /100 km|angleichen/);
+  await boot('Bewegen').click();
+  await page.waitForTimeout(2200);
+  await expect(boot(/^Andocken/)).toHaveAttribute('title', /G bis Kestrel, Beiboot 1 hat 6 G/);
+  await boot(/^Andocken/).click();
+  await expect(boot(/^Andocken ✓/)).toBeEnabled();
+  await expect(card).toContainText('Andockflug');
+  await boot('Bewegen').click();
+  await page.waitForTimeout(2200);
+  await expect(card).toContainText('Kestrel · Yacht · 1 G');
+  await expect(boot('Launch (1)')).toBeEnabled();
+
+  // Weit draußen reicht der Schub nicht: der Knopf sperrt und sagt, wie viel G fehlten.
+  for (let i = 0; i < 3; i++) {
+    await boot('Launch (1)').click();
+    await page.mouse.click(box.x + cx + Math.min(box.width / 2 - 6, r * 0.9), box.y + cy);
+    await boot('Bewegen').click();
+    await page.waitForTimeout(2200);
+    if (await boot(/^Andocken/).isDisabled()) break;
+    await boot(/^Andocken/).click();
+    await boot('Bewegen').click();
+    await page.waitForTimeout(2200);
+  }
+  await expect(boot(/^Andocken/)).toBeDisabled();
+  await expect(boot(/^Andocken/)).toHaveAttribute('title', /Zu weit weg/);
 });
 
 test('Systemflug aus dem Reiter Schiff: „Starten“ öffnet die Raumkarte, die Bedienung steht im Reiter Schiff (Owner, 21. November 2026)', async ({ page }) => {

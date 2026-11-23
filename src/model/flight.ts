@@ -51,6 +51,12 @@ export interface SpaceUnit {
   readonly velocity: Vec;
   /** Der Schubvektor der laufenden Raumrunde in G; fehlt er, fliegt die Einheit ballistisch. */
   readonly thrust?: Vec;
+  /**
+   * Der **Andockflug** (2026-11-23c): Die Einheit steuert in der nächsten Bewegung den Ort an, an dem
+   * ihr Mutterschiff stehen wird, und dockt dort an, wenn sie näher als 100 km an ihm steht. Ein
+   * selbst gesetzter Schub hebt ihn auf; reichte der Schub nicht, bleibt der Flug bestehen.
+   */
+  readonly docking?: boolean;
   /** Unter die Oberfläche geraten: bewegt sich nicht mehr. */
   readonly crashed: boolean;
   /** Ort und Geschwindigkeit am Ende jeder vergangenen Raumrunde. */
@@ -552,7 +558,8 @@ export function setThrust(campaign: Campaign, index: number, thrust: Vec | undef
   if (unit === undefined) throw new DomainError('Diese Einheit gibt es nicht.');
   if (unit.crashed && thrust !== undefined) throw new DomainError('Eine aufgeschlagene Einheit gibt keinen Schub.');
   const normal = normalThrust(thrust, maxGOf(campaign, unit));
-  const rest = without(unit, 'thrust');
+  // Wer selbst steuert, gibt den Andockflug auf (2026-11-23c).
+  const rest = without(unit, 'thrust', 'docking');
   const next: SpaceUnit = normal === undefined ? rest : { ...rest, thrust: normal };
   return { ...campaign, flight: { ...flight, units: flight.units.map((u, i) => (i === index ? next : u)) } };
 }
@@ -565,6 +572,8 @@ export interface RoundRun {
   readonly landed?: string;
   /** Ein Schiff hat am Gasriesen geschöpft (2026-11-21f). */
   readonly skimmed?: boolean;
+  /** Ein Small Craft ist mit dieser Bewegung angekommen und hat angedockt (2026-11-23c). */
+  readonly docked?: string;
   /** Das eigene Schiff ist im Raumkampf zerstört; der Systemflug ist zu Ende (2026-11-21h). */
   readonly lost?: boolean;
 }
@@ -581,9 +590,21 @@ export function runRound(campaign: Campaign, clock: Clock, random?: Random, ever
   // Fremde Schiffe wählen ihren Schub nach ihrer Absicht (2026-11-21h); nur die Einheit der Gruppe landet,
   // mit der Landeautomatik, und schöpft am Gasriesen (2026-11-21b, 2026-11-21f).
   const thrusts = flight.units.map((u, i) => (u.ship === undefined ? planFoe(campaign, scene, i, t) : u.thrust));
-  const runs = flight.units.map((u, i) =>
-    u.ship === flight.party ? propagate(scene, u, u.thrust, ROUND_STEPS, ROUND_STEPS, t, maxGOf(campaign, u), true, streamlinedOf(campaign, u)) : propagate(scene, u, thrusts[i], ROUND_STEPS, ROUND_STEPS, t, undefined, false),
-  );
+  const runOf = (u: SpaceUnit, thrust: Vec | undefined): readonly State[] =>
+    u.ship === flight.party ? propagate(scene, u, u.thrust, ROUND_STEPS, ROUND_STEPS, t, maxGOf(campaign, u), true, streamlinedOf(campaign, u)) : propagate(scene, u, thrust, ROUND_STEPS, ROUND_STEPS, t, undefined, false);
+  let runs = flight.units.map((u, i) => runOf(u, thrusts[i]));
+  // Andockflug (2026-11-23c): Eine Einheit mit `docking` steuert den Ort an, an dem ihr Mutterschiff
+  // nach dieser Bewegung steht, und dockt dort an; ihr eigener Schubpunkt ist ihr dabei gleich.
+  const homes = flight.units.flatMap((u, i) => {
+    const mother = u.docking === true ? flight.units.findIndex((m) => m.ship === campaign.ships.find((s) => s.id === u.ship)?.mother) : -1;
+    return mother < 0 ? [] : [{ index: i, mother }];
+  });
+  for (const home of homes) {
+    const unit = flight.units[home.index]!;
+    const target = runs[home.mother]!.at(-1)!.position;
+    const maxG = maxGOf(campaign, unit);
+    runs = runs.map((r, k) => (k === home.index ? propagate(scene, unit, thrustToward(scene, unit, target, t, maxG), ROUND_STEPS, ROUND_STEPS, t, maxG, unit.ship === flight.party, streamlinedOf(campaign, unit)) : r));
+  }
   const units = flight.units.map((u, i): SpaceUnit => {
     const end = runs[i]!.at(-1)!;
     // Die Bewegung leert den Schub; in der neuen Feuerphase darf jede Einheit wieder feuern (2026-11-21i).
@@ -605,9 +626,13 @@ export function runRound(campaign: Campaign, clock: Clock, random?: Random, ever
     const end = r.at(-1)!;
     if (end.skims) result = skim(result, i, end.position, clock);
   });
+  // Am Ziel angekommen: Der Andockflug ist zu Ende, das Small Craft ist an Bord (2026-11-23c).
+  const homeIds = homes.flatMap((home) => (lengthOf(sub(units[home.index]!.position, units[home.mother]!.position)) <= DOCK_KM ? [flight.units[home.index]!.ship!] : []));
+  for (const id of homeIds) result = finishDock(result, id);
+  const note = homeIds.length === 0 ? {} : { docked: shipById(campaign, homeIds[0]!).name };
   // Gelandet: Der Systemflug endet, die Gruppe ist auf dieser Welt (Owner, 21. November 2026).
   const landed = runs.map((r) => r.at(-1)!).find((s) => s.landedOn !== undefined && !s.skims)?.landedOn;
-  if (landed !== undefined) return { campaign: placeGroup(shipArrives(endFlight(result, clock), landed, flight.party), landed, clock, flight.party), frames, landed };
+  if (landed !== undefined) return { campaign: placeGroup(shipArrives(endFlight(result, clock), landed, flight.party), landed, clock, flight.party), frames, landed, ...note };
   // Ohne Raumkampf (2026-11-23) ist die Raumrunde mit der Bewegung zu Ende, wie bisher. Im Raumkampf
   // folgt erst die Feuerphase; fremde Schiffe feuern am Ende der Raumrunde (`endFirePhase`).
   if (!battle && foesWillFire(result)) {
@@ -615,8 +640,8 @@ export function runRound(campaign: Campaign, clock: Clock, random?: Random, ever
     result = foesFire(result, random, clock);
   }
   const settled = settleBattle(result, clock);
-  if (settled.lost) return { campaign: settled.campaign, frames, lost: true };
-  return { campaign: settled.campaign, frames, ...(runs.some((r) => r.at(-1)!.skims) ? { skimmed: true } : {}) };
+  if (settled.lost) return { campaign: settled.campaign, frames, lost: true, ...note };
+  return { campaign: settled.campaign, frames, ...(runs.some((r) => r.at(-1)!.skims) ? { skimmed: true } : {}), ...note };
 }
 
 /**
@@ -710,50 +735,69 @@ export function endFlight(campaign: Campaign, clock?: Clock): Campaign {
 
 /** Wie nah ein Small Craft seinem Mutterschiff zum Andocken kommen muss, in km (Hausregel aus dem Konzept). */
 export const DOCK_KM = 100;
-/** Wie langsam es dabei gegenüber dem Mutterschiff sein muss, in km/s. */
-export const DOCK_KMS = 0.1;
-/**
- * ⚑ Wie schnell es sein darf, wenn es sich **annähert** – der Abstand also kleiner wird –, in km/s
- * (Hausregel 2026-11-23: sonst findet ein Beiboot, das einmal zurückblieb, nie wieder hinein).
- */
-export const DOCK_APPROACH_KMS = 2;
 
-/** Näher sich die Einheit `craft` der Einheit `mother` an? Der Abstand zwischen ihnen wird kleiner. */
-function closing(craft: SpaceUnit, mother: SpaceUnit): boolean {
-  return (craft.velocity.x - mother.velocity.x) * (mother.position.x - craft.position.x) + (craft.velocity.y - mother.velocity.y) * (mother.position.y - craft.position.y) > 0;
+/** Die Einheit und ihr Mutterschiff im Flug; `undefined`, wenn eines von beiden nicht mitfliegt. */
+function motherPair(campaign: Campaign, id: string): { readonly craft: SpaceUnit; readonly mother: SpaceUnit } | undefined {
+  const flight = campaign.flight;
+  if (flight === undefined) return undefined;
+  const craft = flight.units.find((u) => u.ship === id);
+  const ship = campaign.ships.find((s) => s.id === id);
+  const mother = ship?.mother === undefined ? undefined : flight.units.find((u) => u.ship === ship.mother);
+  return craft === undefined || mother === undefined ? undefined : { craft, mother };
+}
+
+/** Wo die Einheit am Ende dieser Bewegung mit ihrem (vielleicht leeren) Schub stünde. */
+function endState(scene: Scene, state: State, thrust: Vec | undefined, t: number): State {
+  return propagate(scene, state, thrust, ROUND_STEPS, ROUND_STEPS, t, undefined, false).at(-1)!;
 }
 
 /**
- * Warum ein Small Craft jetzt nicht an sein Mutterschiff andocken kann; `undefined`, wenn es kann
- * (2026-11-21b, Hausregeln 2026-11-23). Drei Bedingungen: Das Mutterschiff hat **Platz** – einen der
- * Liegeplätze, für die es gebaut ist (`craft` im Entwurf), oder, wenn alle belegt sind, freien
- * Laderaum für den Rumpf. Der Abstand bleibt unter 100 km. Und der **Bewegungsvektor** darf nicht zu
- * verschieden sein: höchstens 0,1 km/s Unterschied, beim Annähern höchstens 2 km/s.
+ * Was ein Small Craft zum Andocken braucht (2026-11-23c): `g` = so viel G, um den **Andockpunkt** zu
+ * erreichen – den Ort, an dem sein Mutterschiff nach dieser Bewegung steht; `maxG` = was das Small
+ * Craft höchsten kann; `now` = das Mutterschiff steht schon näher als 100 km, da wird sofort angedockt.
+ * Gerechnet wie bei der Zieleingabe des Schubs: vom Punkt „ohne Schub" aus, 5.000 km je G.
+ */
+export function dockPlan(campaign: Campaign, id: string): { readonly g: number; readonly maxG: number; readonly now: boolean } | undefined {
+  const pair = motherPair(campaign, id);
+  if (campaign.flight === undefined || pair === undefined) return undefined;
+  const scene = sceneOf(campaign.hexes, campaign.flight.world);
+  const t = flightTime(campaign, campaign.flight);
+  const point = endState(scene, pair.mother, pair.mother.thrust, t).position;
+  return { g: lengthOf(sub(point, coastOf(scene, pair.craft, t))) / REACH_PER_G, maxG: maxGOf(campaign, pair.craft), now: lengthOf(sub(pair.craft.position, pair.mother.position)) <= DOCK_KM };
+}
+
+/** Steht das Small Craft schon näher als 100 km an seinem Mutterschiff? Dann dockt „Andocken" sofort an. */
+export function docksNow(campaign: Campaign, id: string): boolean {
+  return dockPlan(campaign, id)?.now === true;
+}
+
+/**
+ * Warum ein Small Craft jetzt nicht andocken kann; `undefined`, wenn es kann (2026-11-21b, Hausregel
+ * 2026-11-23c). Zwei Bedingungen: Das Mutterschiff hat **Platz** – einen der Liegeplätze, für die es
+ * gebaut ist (`craft` im Entwurf), oder, wenn alle belegt sind, freien Laderaum für den Rumpf. Und
+ * das Small Craft hat genug **Schub**, um den Andockpunkt der nächsten Bewegung zu erreichen; Nähe und
+ * Geschwindigkeit für sich sind keine Bedingung (2026-11-23c).
  */
 export function dockBlocker(campaign: Campaign, id: string): string | undefined {
-  const flight = activeFlight(campaign);
-  const craft = flight.units.find((u) => u.ship === id);
+  const pair = motherPair(campaign, id);
   const ship = campaign.ships.find((s) => s.id === id);
   const motherShip = ship?.mother === undefined ? undefined : campaign.ships.find((s) => s.id === ship.mother);
-  const mother = flight.units.find((u) => u.ship === ship?.mother);
-  if (craft === undefined || ship === undefined || mother === undefined || motherShip === undefined) return 'Das Mutterschiff fliegt nicht mit.';
-  if (craft.crashed || mother.crashed) return 'Eine aufgeschlagene Einheit dockt nicht an.';
+  if (pair === undefined || ship === undefined || motherShip === undefined) return 'Das Mutterschiff fliegt nicht mit.';
+  if (pair.craft.crashed || pair.mother.crashed) return 'Eine aufgeschlagene Einheit dockt nicht an.';
   const berths = shipDesignOf(motherShip.design).craft.length;
   if (craftOf(campaign, motherShip.id).filter((c) => c.aboard).length >= berths) {
     const hull = shipDesignOf(ship.design).hull;
     const free = freeCargoOf(campaign, motherShip);
     if (hull > free) return `Kein Platz für ${ship.name} in ${motherShip.name}: kein Liegeplatz frei und nur ${free.toLocaleString('de-DE')} t Laderaum offen, ${hull.toLocaleString('de-DE')} t nötig.`;
   }
-  const km = lengthOf(sub(craft.position, mother.position));
-  if (km > DOCK_KM) return `Erst näher als ${DOCK_KM} km heran: noch ${Math.round(km).toLocaleString('de-DE')} km.`;
-  const rate = lengthOf(sub(craft.velocity, mother.velocity));
-  const toward = closing(craft, mother);
-  const limit = toward ? DOCK_APPROACH_KMS : DOCK_KMS;
-  if (rate > limit)
-    return toward
-      ? `Beim Annähern zu schnell: ${rate.toLocaleString('de-DE', { maximumFractionDigits: 2 })} km/s gegenüber ${motherShip.name}, höchstens ${DOCK_APPROACH_KMS.toLocaleString('de-DE')} km/s.`
-      : `Erst den Kurs angleichen: ${rate.toLocaleString('de-DE', { maximumFractionDigits: 2 })} km/s gegenüber ${motherShip.name}, höchstens ${DOCK_KMS.toLocaleString('de-DE')} km/s.`;
-  return undefined;
+  const plan = dockPlan(campaign, id)!;
+  if (plan.now || plan.g <= plan.maxG) return undefined;
+  return `Zu weit weg: ${gText(plan.g)} G bis ${motherShip.name}, ${ship.name} hat ${gText(plan.maxG)} G.`;
+}
+
+/** G so auf 0,1 gerundet, wie die App Schub anzeigt. */
+function gText(g: number): string {
+  return (Math.round(g * 10) / 10).toLocaleString('de-DE', { maximumFractionDigits: 1 });
 }
 
 /** Die Beiboote an Bord der Einheit der Gruppe, die sie jetzt aussetzen kann (2026-11-21b). */
@@ -789,13 +833,30 @@ export function dockableCraft(campaign: Campaign): readonly Ship[] {
 }
 
 /**
- * Dockt ein Small Craft an seinem Mutterschiff an (2026-11-21b): Seine Einheit entfällt, es ist an
- * Bord, und saß die Gruppe darin, sitzt sie jetzt im Mutterschiff.
+ * Dockt ein Small Craft an seinem Mutterschiff an oder schickt es auf den **Andockflug**
+ * (2026-11-21b, 2026-11-23c): Steht das Mutterschiff schon näher als 100 km, entfällt die Einheit
+ * sofort, es ist an Bord, und saß die Gruppe darin, sitzt sie jetzt im Mutterschiff. Weiter weg setzt
+ * der Knopf den Andockflug: erst mit der nächsten Bewegung wird angeflogen und angedockt.
  */
 export function dockCraft(campaign: Campaign, id: string): Campaign {
   const flight = activeFlight(campaign);
   const blocker = dockBlocker(campaign, id);
   if (blocker) throw new DomainError(blocker);
+  if (!docksNow(campaign, id)) {
+    return { ...campaign, flight: { ...flight, units: flight.units.map((u) => (u.ship === id ? { ...u, docking: true } : u)) } };
+  }
+  return finishDock(campaign, id);
+}
+
+/** Hebt den Andockflug eines Small Craft auf; es fliegt wieder, wie ihm befohlen (2026-11-23c). */
+export function cancelDock(campaign: Campaign, id: string): Campaign {
+  const flight = activeFlight(campaign);
+  return { ...campaign, flight: { ...flight, units: flight.units.map((u) => (u.ship === id ? without(u, 'docking') : u)) } };
+}
+
+/** Macht den Andockflug zu Ende: die Einheit entfällt, sie ist an Bord, die Gruppe wechselt hinüber. */
+function finishDock(campaign: Campaign, id: string): Campaign {
+  const flight = activeFlight(campaign);
   const mother = shipById(campaign, id).mother!;
   const docked = changeShip(campaign, id, (s) => ({ ...without(s, 'place', 'inOrbit'), aboard: true }));
   return { ...docked, flight: { ...flight, party: flight.party === id ? mother : flight.party, units: flight.units.filter((u) => u.ship !== id) } };

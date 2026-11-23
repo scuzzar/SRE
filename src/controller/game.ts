@@ -119,6 +119,8 @@ import {
   setThrust,
   launchCraft,
   dockCraft,
+  docksNow,
+  cancelDock,
   snapThrust,
   startFlight,
   flightStartBlocker,
@@ -2758,8 +2760,10 @@ export class GameController {
     // Auch auf der Startwelt: Die Landung ist eine Ankunft, Oberfläche und Globus entstehen, falls sie fehlen.
     if (run.landed !== undefined) return this.change({ ...run.campaign, hexes: readyForParty(run.campaign.hexes, run.landed, this.deps.random) }, { space: { world: space.world }, notice: `${ship} ist auf ${worldOf(run.campaign.hexes, run.landed).name} gelandet. Die Gruppe ist jetzt dort.` });
     // Geschöpft (2026-11-21f): Der Flug läuft weiter, das Schiff steht wieder auf der Kreisbahn.
+    // Angekommen (2026-11-23c): Der Andockflug ist zu Ende, das Small Craft ist an Bord.
+    const home = run.docked === undefined ? {} : { notice: `${run.docked} ist heimgeflogen und hat an ${shipById(run.campaign, activeFlight(run.campaign).party).name} angedockt.` };
     const skimmed = run.skimmed ? { notice: `${ship} hat Treibstoff geschöpft und steht wieder auf der Umlaufbahn.` } : {};
-    this.change(run.campaign, { space: { world: space.world, run: { round: activeFlight(run.campaign).round, t, every: 2, frames: run.frames } }, ...skimmed, ...volley });
+    this.change(run.campaign, { space: { world: space.world, run: { round: activeFlight(run.campaign).round, t, every: 2, frames: run.frames } }, ...skimmed, ...home, ...volley });
   }
 
   /** Setzt ein Beiboot der Einheit der Gruppe aus; die Gruppe steigt um (2026-11-21b). */
@@ -2768,11 +2772,23 @@ export class GameController {
     this.change(launchCraft(this.campaign, id), { space: without(space, 'aim'), notice: `${shipById(this.campaign, id).name} ist ausgesetzt; die Gruppe ist an Bord.` });
   }
 
-  /** Dockt ein Small Craft an seinem Mutterschiff an (2026-11-21b). */
+  /**
+   * Dockt ein Small Craft an seinem Mutterschiff an oder schickt es auf den Andockflug (2026-11-21b,
+   * 2026-11-23c): Aus 100 km Entfernung dockt es sofort an, weiter weg fliegt es heim und dockt mit
+   * der nächsten Bewegung an.
+   */
   dockCraft(id: string): void {
     const space = this.openSpaceState();
     const craft = shipById(this.campaign, id);
-    this.change(dockCraft(this.campaign, id), { space: without(space, 'aim'), notice: `${craft.name} hat angedockt.` });
+    const now = docksNow(this.campaign, id);
+    const mother = shipById(this.campaign, craft.mother!).name;
+    this.change(dockCraft(this.campaign, id), { space: without(space, 'aim'), notice: now ? `${craft.name} hat angedockt.` : `${craft.name} fliegt heim: Mit der nächsten Bewegung dockt es an ${mother} an.` });
+  }
+
+  /** Hebt den Andockflug eines Small Craft auf; es fliegt wieder, wie ihm befohlen (2026-11-23c). */
+  undockCraft(id: string): void {
+    const space = this.openSpaceState();
+    this.change(cancelDock(this.campaign, id), { space: without(space, 'aim'), notice: `${shipById(this.campaign, id).name} fliegt wieder selbst.` });
   }
 
   /** Beendet den Systemflug; die Raumkarte bleibt offen. */

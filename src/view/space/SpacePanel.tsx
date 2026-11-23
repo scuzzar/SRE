@@ -97,7 +97,7 @@ export function SpaceCard({ space }: { space: SpaceView }) {
               </button>
             </p>
           )}
-          {flight.dockHint && <p className="combat-hint">Andocken an das Mutterschiff: {flight.dockHint}</p>}
+          {flight.dockHint && <p className="combat-hint">{flight.dockHint}</p>}
           {(flight.launchable.length > 0 || flight.dockable.some((c) => c.id !== flight.dock?.id)) && (
             <div className="chips space-craft" role="group" aria-label="Beiboote">
               {flight.launchable.map((c) => (
@@ -108,8 +108,8 @@ export function SpaceCard({ space }: { space: SpaceView }) {
               {flight.dockable
                 .filter((c) => c.id !== flight.dock?.id)
                 .map((c) => (
-                  <button key={c.id} type="button" onClick={() => game.dockCraft(c.id)}>
-                    {c.name} andocken
+                  <button key={c.id} type="button" onClick={() => (c.armed ? game.undockCraft(c.id) : game.dockCraft(c.id))} title={c.armed ? 'Andockflug aufheben' : undefined}>
+                    {c.armed ? `${c.name} Andockflug ✓` : `${c.name} andocken`}
                   </button>
                 ))}
             </div>
@@ -317,6 +317,9 @@ function EncounterChoice({ space }: { space: SpaceView }) {
  * und Entern links, rechts der eine Knopf durch die Phasen – „Bewegen“ führt den Schub aus, im Raumkampf
  * folgt „End Turn“ mit dem Feuer der fremden Schiffe. Ohne Systemflug: der Start.
  */
+/** G so gerundet, wie die App Schub anzeigt (0,1 G). */
+const gLabel = (g: number): string => (Math.round(g * 10) / 10).toLocaleString('de-DE', { maximumFractionDigits: 1 });
+
 export function SpaceDock({ space }: { space: SpaceView }) {
   const game = useGame();
   const flight = space.flight;
@@ -335,7 +338,8 @@ export function SpaceDock({ space }: { space: SpaceView }) {
   // Der eine Platz in der Reihe: „Andocken“ zurück zum Mutterschiff, sobald die Gruppe in einem Small
   // Craft sitzt, sonst „Launch“ aus dem Stapel (2026-11-23). Auf der Welt aufsetzen heißt im Modell
   // „Landen“ und bleibt die Landeautomatik. Der Knopf ist in beiden Phasen zu haben: Wer heimfliegt,
-  // dockt auch nach dem Feuer noch an.
+  // dockt auch nach dem Feuer noch an. Weiter als 100 km weg ist kein Grund: „Andocken“ setzt dann
+  // den Andockflug und dockt mit der nächsten Bewegung an (2026-11-23c).
   return (
     <div className="actions oracle-actions space-actions">
       {dock === undefined ? (
@@ -353,10 +357,14 @@ export function SpaceDock({ space }: { space: SpaceView }) {
           type="button"
           className="action draw"
           disabled={dock.blocker !== undefined}
-          title={dock.blocker ?? `${dock.name} an ${dock.mother} andocken`}
-          onClick={() => game.dockCraft(dock.id)}
+          title={
+            dock.armed
+              ? `Andockflug: dockt mit der nächsten Bewegung an ${dock.mother} an – nochmal tippen hebt ihn auf`
+              : dock.blocker ?? (dock.now ? `${dock.name} an ${dock.mother} andocken` : `Heimflug: ${gLabel(dock.g)} G bis ${dock.mother}, ${dock.name} hat ${gLabel(dock.maxG)} G`)
+          }
+          onClick={() => (dock.armed ? game.undockCraft(dock.id) : game.dockCraft(dock.id))}
         >
-          Andocken
+          {dock.armed ? 'Andocken ✓' : 'Andocken'}
         </button>
       )}
       <button type="button" className="action dice" disabled title="Stufe 4b: ein Small Craft landet an Bord">
