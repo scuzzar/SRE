@@ -19,8 +19,8 @@ import { checkRecovery } from './wounds';
 import { missionStates, validateMissions, type Mission, type MissionPlace } from './mission';
 import { armorClasses, computerModelOf, encounterTypeOf, entryOf, eventFocusOf, itemOf, oddsOf, patronOf, ranges, ref, shipDesignOf, slotOfEntry, softwareOf, weaponOf } from './reference';
 import { checkTurrets } from './armament';
-import { checkCrew, CrewRoleSchema } from './crew';
-import { SoftwareSlotSchema, withSlots, TARGET_PROGRAM, type SoftwareSlot } from './software';
+import { checkCrew, CrewRoleSchema, type CrewPost } from './crew';
+import { SoftwareSlotSchema, slotsFit, withSlots, TARGET_PROGRAM, type SoftwareSlot } from './software';
 import { battleOutcomes, checkDamage, hitZones, intents } from './space-combat';
 import { characteristics } from './rules';
 import { bookingKinds, shipCosts, validateBookings, type Booking } from './shop';
@@ -613,7 +613,7 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       ...(file.location === undefined ? {} : { location: placeFromFile(file.location) }),
       bookings: file.bookings.map((b) => stripped(b) as Booking),
       // Gespeichert werden `aboard` und `inOrbit` nur, wenn sie wahr sind (2026-11-21b).
-      ships: file.ships.map((s) => stripped({ ...s, turrets: turretsFromFile(s), software: softwareFromFile(s), aboard: s.aboard === true ? true : undefined, inOrbit: s.inOrbit === true ? true : undefined, inHold: s.inHold === true ? true : undefined, ...(s.place === undefined ? {} : { place: placeFromFile(s.place) }) }) as Ship),
+      ships: file.ships.map((s) => stripped({ ...s, turrets: turretsFromFile(s), software: softwareFromFile(s), crew: crewFromFile(s, characters), aboard: s.aboard === true ? true : undefined, inOrbit: s.inOrbit === true ? true : undefined, inHold: s.inHold === true ? true : undefined, ...(s.place === undefined ? {} : { place: placeFromFile(s.place) }) }) as Ship),
       stash: file.stash.map((p) => stripped({ ...p, ...(p.parked === undefined ? {} : { parked: placeFromFile(p.parked) }) }) as Possession),
       ...(file.trip === undefined ? {} : { trip: { hours: file.trip.hours, legs: file.trip.legs.map((l) => ({ by: l.by, rented: l.rented, cells: [...l.cells] })) } }),
       ...(file.flight === undefined ? {} : { flight: flightFromFile(file.flight) }),
@@ -763,20 +763,37 @@ function turretsFromFile(ship: z.infer<typeof ShipSchema>): Ship['turrets'] {
 }
 
 /**
- * Die Bordsoftware aus der Datei, mit Ablagen (2026-11-22d): eine Datei von vor der Änderung nennt
- * keine Ablage, dann verteilt sie der Bestand – erst, was in die CPU passt (zuerst Maneuver, dann
- * Target), dann der Speicher, der Rest ins Archiv. Dazu bekommt jedes Schiff mit Turret und
- * Rechner *Target*, das es noch nicht hat (Owner, 23. November 2026); eine Datei von jetzt behält
- * genau, was in ihr steht.
+ * Die Crew aus der Datei: ein Charakter, der gelöscht wurde, verliert seine Posten auch nachträglich
+ * (23. November 2026) – sonst stünde in der Datei eine Id ohne Charakter und das Lesen wäre verloren.
+ */
+function crewFromFile(ship: z.infer<typeof ShipSchema>, characters: readonly Character[]): readonly CrewPost[] | undefined {
+  if (ship.crew === undefined) return undefined;
+  return ship.crew
+    .filter((p) => p.who === undefined || characters.some((c) => c.id === p.who))
+    .map((p) => ({ post: p.post, ...(p.turret === undefined ? {} : { turret: p.turret }), ...(p.who === undefined ? {} : { who: p.who }) }));
+}
+
+/**
+ * Die Bordsoftware aus der Datei, mit Ablagen (2026-11-22d). Eine Datei von jetzt behält genau,
+ * was in ihr steht; neu hinlegen lässt sie nur in drei Fällen:
+ *
+ * 1. eine Datei von vor der Änderung nennt keine Ablage,
+ * 2. ihr Schiff hat einen Turret und kein *Target* – das es braucht (SR 38, SE 13) und das es sich
+ *    nie selbst gekauft haben kann, also vom Einbau kommt (Owner, 23. November 2026),
+ * 3. die Ablagen passen nicht zum Rechner – von Hand geändert oder für einen anderen Entwurf.
+ *
+ * Dann verteilt sie der Bestand: erst, was in die CPU passt (zuerst Maneuver, dann Target), dann
+ * der Speicher, der Rest ins Archiv.
  */
 function softwareFromFile(ship: z.infer<typeof ShipSchema>): Ship['software'] {
   const plan = shipDesignOf(ship.design);
   const computer = plan.computer === undefined ? undefined : computerModelOf(plan.computer);
   const turrets = storedTurrets(ship.design, ship.turrets);
-  if (ship.software.every((s) => s.slot !== undefined)) return ship.software.map((s) => ({ program: s.program, slot: s.slot as SoftwareSlot }));
   const programme = ship.software.map((s) => s.program);
-  if (computer !== undefined && turrets.length > 0 && !programme.includes(TARGET_PROGRAM)) programme.push(TARGET_PROGRAM);
-  return withSlots(computer, programme);
+  const brauchtTarget = computer !== undefined && turrets.length > 0 && !programme.includes(TARGET_PROGRAM);
+  const stored = ship.software.map((s) => ({ program: s.program, slot: s.slot as SoftwareSlot }));
+  if (!brauchtTarget && ship.software.every((s) => s.slot !== undefined) && slotsFit(computer, stored)) return stored;
+  return withSlots(computer, brauchtTarget ? [...programme, TARGET_PROGRAM] : programme);
 }
 
 function stripped<T extends object>(value: T): T {

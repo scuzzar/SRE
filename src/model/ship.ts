@@ -1,4 +1,4 @@
-import type { Campaign } from './campaign';
+import type { Campaign, CharacterId } from './campaign';
 import type { CareerRoll, ShipChoice } from './career';
 import { DomainError } from './errors';
 import type { Clock, Random } from './ports';
@@ -161,6 +161,15 @@ export function monthlyPaymentOf(ship: Ship): number | undefined {
 /** Die erste Rate: am ersten Monatsende, das mindestens vier Wochen nach dem Erwerb liegt (2026-11-17b). */
 export function firstPaymentDay(day: number): number {
   return nextMonthStart(day + MONTH_DAYS - 1);
+}
+
+/**
+ * Gibt alle Posten eines Charakters frei (2026-11-22d): wird er gelöscht, verliert er sie wie beim
+ * Sterben. Steht er noch auf einem Posten, wäre die Datei beim nächsten Lesen nicht zu gebrauchen.
+ */
+export function unseat(campaign: Campaign, id: CharacterId): Campaign {
+  if (!campaign.ships.some((s) => s.crew?.some((p) => p.who === id))) return campaign;
+  return { ...campaign, ships: campaign.ships.map((s) => (s.crew === undefined ? s : { ...s, crew: s.crew.filter((p) => p.who !== id) })) };
 }
 
 /** Aus einem Objekt die optionalen Felder entfernen, die null sind – gespeichert wird, was es gibt. */

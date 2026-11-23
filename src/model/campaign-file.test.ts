@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appendLog, book, buyShip, createCampaign, hexFromFlat, removeLogEntry, type Campaign, type FlatHex } from '.';
+import { appendLog, book, buyShip, createCampaign, createDemoCampaign, crewOf, hexFromFlat, removeCharacter, removeLogEntry, seat, type Campaign, type CharacterId, type FlatHex } from '.';
 import { campaignFileName, fromCampaignFile, toCampaignFile } from './campaign-file';
 import { fixedClock } from './testing';
 import type { LogEntry } from './log';
@@ -216,6 +216,62 @@ describe('Kampagnendatei mit Schiffen', () => {
     delete text.campaign.ships;
     text.campaign.bookings = (text.campaign.bookings as { kind: string }[]).filter((b) => b.kind !== 'ship');
     expect(fromCampaignFile(JSON.stringify(text), 'k3').ships).toEqual([]);
+  });
+
+  const idVon = (c: Campaign, name: string): CharacterId => c.characters.find((x) => x.name === name)!.id;
+
+  /** Die Demo mit Yacht (Entwurf A, Rechner Modell/1: 2/4) und Beiboot. */
+  function fahrt(): Campaign {
+    return createDemoCampaign(fixedClock());
+  }
+  const yachtVon = (c: Campaign) => c.ships.find((s) => s.mother === undefined)!;
+
+  it('legt die Ablagen von selbst hin, wenn eine Datei von vor 2026-11-22d keine kennt', () => {
+    const text = JSON.parse(toCampaignFile(fahrt())) as { campaign: { ships: Record<string, unknown>[] } };
+    for (const s of text.campaign.ships) {
+      delete s.crew;
+      s.software = (s.software as { program: string }[]).map((p) => ({ program: p.program }));
+    }
+    const yacht = yachtVon(fromCampaignFile(JSON.stringify(text), 'k3'));
+    // Maneuver und Target laufen, der Rest liegt bereit, die Bibliothek ist angelegt; die Posten sind leer.
+    expect(yacht.software.filter((p) => p.slot === 'cpu').map((p) => p.program).sort()).toEqual(['maneuver', 'target']);
+    expect(yacht.software.filter((p) => p.slot === 'storage').map((p) => p.program).sort()).toEqual(['anti-hijack', 'generate', 'jump-1', 'navigation']);
+    expect(yacht.software.filter((p) => p.slot === 'archive').map((p) => p.program)).toEqual(['library']);
+    expect(crewOf(yacht).every((p) => p.who === undefined)).toBe(true);
+  });
+
+  it('gibt ein Schiff ohne Target wieder mit Target, weil es einen Turret hat', () => {
+    let c = fahrt();
+    const yacht = yachtVon(c);
+    c = { ...c, ships: c.ships.map((s) => (s.id === yacht.id ? { ...s, software: s.software.filter((p) => p.program !== 'target') } : s)) };
+    const gelesen = yachtVon(fromCampaignFile(toCampaignFile(c), 'k3'));
+    expect(gelesen.software.some((p) => p.program === 'target' && p.slot === 'cpu')).toBe(true);
+  });
+
+  it('nimmt Crew und Ablagen unverändert mit', () => {
+    const original = seat(fahrt(), yachtVon(fahrt()).id, 0, idVon(fahrt(), 'Jonas Reyl'));
+    const read = fromCampaignFile(toCampaignFile(original), 'k3');
+    expect(read.ships).toEqual(original.ships);
+    expect(crewOf(yachtVon(read))[0]).toMatchObject({ post: 'pilot', who: idVon(original, 'Jonas Reyl') });
+  });
+
+  it('gibt einem gelöschten Charakter seine Posten zurück, die eine alte Datei noch nennt', () => {
+    const text = JSON.parse(toCampaignFile(fahrt())) as { campaign: { ships: { crew?: unknown[] }[] } };
+    for (const s of text.campaign.ships) s.crew = [{ post: 'pilot', who: 'wars-einmal' }];
+    expect(crewOf(yachtVon(fromCampaignFile(JSON.stringify(text), 'k3')))[0]).toEqual({ post: 'pilot' });
+  });
+
+  it('löscht einen Charakter mitsamt seinen Posten', () => {
+    const c = seat(fahrt(), yachtVon(fahrt()).id, 0, idVon(fahrt(), 'Jonas Reyl'));
+    const read = fromCampaignFile(toCampaignFile(removeCharacter(c, idVon(c, 'Jonas Reyl'))), 'k3');
+    expect(crewOf(yachtVon(read))[0]).toEqual({ post: 'pilot' });
+  });
+
+  it('legt eine Verteilung über dem Platz der CPU beim Lesen neu hin', () => {
+    const text = JSON.parse(toCampaignFile(fahrt())) as { campaign: { ships: { software?: { slot: string }[] }[] } };
+    for (const s of text.campaign.ships) for (const p of s.software ?? []) p.slot = 'cpu';
+    const yacht = yachtVon(fromCampaignFile(JSON.stringify(text), 'k3'));
+    expect(yacht.software.filter((p) => p.slot === 'cpu').map((p) => p.program).sort()).toEqual(['maneuver', 'target']);
   });
 
   it('weist ein Schiff mit unbekanntem Entwurf zurück', () => {

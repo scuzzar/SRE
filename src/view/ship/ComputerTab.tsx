@@ -140,7 +140,7 @@ export function ProgramSheet({ boat, program, onClose }: { readonly boat: Vessel
               <span>{label}</span>
               <span className="val mono">
                 {here ? 'hier' : (why ?? `${free(boat, slot)}`)}
-                {!here && why === undefined && <small>frei</small>}
+                {!here && why === undefined && <small>{slot === 'archive' ? 'angelegt' : 'frei'}</small>}
               </span>
             </button>
           );

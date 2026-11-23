@@ -26,6 +26,13 @@ export const TARGET_PROGRAM = 'target';
  */
 export const EFFECTS_2B = ['predict-1', 'predict-2', 'predict-3', 'predict-4', 'predict-5', 'gunner-interact', 'maneuver-evade-1', 'maneuver-evade-2', 'maneuver-evade-3', 'maneuver-evade-4', 'maneuver-evade-5', 'maneuver-evade-6', 'auto-evade', 'return-fire', THRUST_PROGRAM, TARGET_PROGRAM] as const;
 
+/** Passt eine gespeicherte Verteilung zu den Ablagen des Rechners? Prüft beim Lesen (23. November 2026). */
+export function slotsFit(computer: ComputerModel | undefined, programs: readonly ShipSoftware[]): boolean {
+  if (computer === undefined) return programs.every((p) => p.slot === 'archive');
+  const needs = (slot: SoftwareSlot) => programs.filter((p) => p.slot === slot).reduce((n, p) => n + softwareOf(p.program).space, 0);
+  return needs('cpu') <= computer.cpu && needs('storage') <= computer.storage;
+}
+
 /** Wirkt das Programm in Stufe 2b? */
 export function worksIn2b(program: string): boolean {
   return (EFFECTS_2B as readonly string[]).includes(program);

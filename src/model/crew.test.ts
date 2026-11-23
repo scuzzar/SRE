@@ -8,6 +8,7 @@ import {
   postSkill,
   postsHeldBy,
   postsOf,
+  removeCharacter,
   removeTurret,
   roleSkill,
   seat,
@@ -133,14 +134,22 @@ describe('Posten der Crew (2026-11-22d)', () => {
     expect(yacht(tot).crew?.[0]?.who).toBe(kira);
   });
 
-  it('die Datei hält die Crew; drei Posten und ein fehlender Charakter sind kein Stand', () => {
+  it('ein gelöschter Charakter gibt seine Posten frei, die Datei bleibt zu lesen', () => {
+    const c = stellen(leer(), 0, idOf(leer(), 'Jonas Reyl'));
+    const weg = removeCharacter(c, idOf(c, 'Jonas Reyl'));
+    expect(crewOf(yacht(weg))[1]?.who).toBeUndefined();
+    expect(() => fromCampaignFile(toCampaignFile(weg), 'x')).not.toThrow();
+  });
+
+  it('die Datei hält die Crew; drei Posten sind kein Stand, ein fehlender Charakter verliert seinen', () => {
     const kira = idOf(leer(), 'Kira Vant');
     const c = stellen(leer(), 0, kira);
     expect(fromCampaignFile(toCampaignFile(c), 'x').ships).toEqual(c.ships);
     const drei = { ...c, ships: c.ships.map((s) => (s.mother === undefined ? { ...s, crew: [{ post: 'pilot' as const, who: kira }, { post: 'gunner' as const, turret: 0, who: kira }, { post: 'navigator' as const, who: kira }] } : s)) };
     expect(() => fromCampaignFile(toCampaignFile(drei), 'x')).toThrow(/3 Posten/);
+    // Ein Charakter, den die Datei nicht mehr nennt – etwa einen gelöschten – verliert seinen Posten.
     const fremd = { ...c, ships: c.ships.map((s) => (s.mother === undefined ? { ...s, crew: [{ post: 'pilot' as const, who: 'c99' }] } : s)) };
-    expect(() => fromCampaignFile(toCampaignFile(fremd), 'x')).toThrow(/c99/);
+    expect(yacht(fromCampaignFile(toCampaignFile(fremd), 'x')).crew?.[0]?.who).toBeUndefined();
     // Ein Posten, den das Schiff nicht (mehr) hat, fällt beim Lesen weg.
     const postenfremd = { ...c, ships: c.ships.map((s) => (s.mother === undefined ? { ...s, crew: [{ post: 'gunner' as const, turret: 4, who: kira }, { post: 'pilot' as const }] } : s)) };
     expect(yacht(fromCampaignFile(toCampaignFile(postenfremd), 'x')).crew?.[1]?.who).toBeUndefined();

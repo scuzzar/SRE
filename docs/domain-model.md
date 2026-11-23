@@ -3507,7 +3507,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
       Medic stehen da und wirken später (Sprung, Passagiere, Heuer).
     - Ein **leerer Posten** sperrt nichts: Der Rechner fliegt und feuert ohne Crew, es fehlen nur die
       DMs. Ohne Engineer gibt es keine Schadenskontrolle.
-    - Stirbt ein Charakter oder wird er ausgeblendet, verliert er seine Posten. Wird ein Turret
+    - Stirbt ein Charakter oder wird er ausgeblendet, verliert er seine Posten; wer **gelöscht**
+      wird, ebenfalls. Eine Datei, die einen gelöschten Charakter noch auf einem Posten nennt, gibt
+      den Posten beim Lesen frei (23. November 2026) – sonst wäre der Stand nicht mehr zu laden.
+      Wird ein Turret
       ausgebaut, entfällt sein Gunner-Posten.
     - ⚑ **Fremde Schiffe** haben keine Posten: Für sie zählt jede Fertigkeit als 1.
   - **Programme in CPU, Speicher oder Archiv** (`ShipSoftware.slot`). Nach SR 38: Was in der **CPU**
